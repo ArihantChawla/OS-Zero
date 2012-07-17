@@ -1,0 +1,27 @@
+This text is a collection of notes on the game Core Wars. For more information,
+see
+
+	http://www.corewars.org/
+
+Redcode
+-------
+
+DAT	- kill process
+MOV	- copy data
+ADD	- add a number to another
+SUB	- subtract a number from another
+MUL	- multiply number by another
+DIV	- divide number by another
+JMP	- jump to address
+JMZ	- jump if number zero
+JMN	- jump if number not zero
+DJN	- decrement and jump if number not zero
+SPL	- start a new process at another address
+CMP	- see SEQ
+SEQ	- skip if equal (instructions)
+SNE	- skip if not equal (instructions)
+SLT	- skip if first instruction lower than second
+LDP	- load a number from private storage
+STP	- save a number to private storage
+NOP	- no operation
+

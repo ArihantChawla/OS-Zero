@@ -1,0 +1,17 @@
+usr/lib/zero/
+-------------
+asm.h
+- interface to machine-dependent operations such as atomic compare and swap
+cdecl.h
+- C compiler characteristics and features
+mtx.h
+- custom implementation of mutexes (likely to run faster than -pthread)
+param.h
+- machine parameters
+trix.h
+- tricks (optimisation-oriented)
+types.h
+- machine dependent types (typically prefixed with 'm_')
+unix.h
+- Unix system interface
+

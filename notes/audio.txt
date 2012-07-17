@@ -1,0 +1,16 @@
+- timeline editor
+  - filters (effects)
+  - reverb/echo
+- subtractive synthesis
+  - sine, pulse, triangle, saw, supersaw, noise waves
+- lowpass, highpass, bandpass, bandstop filters
+- envelopes to control volume, filters, and oscillators
+- oscillators for different waveforms
+- mixer
+- sequencer
+- sampler interface
+- MIDI
+- synthesizers
+  - modules
+    - oscillator, envelope, filters, equalizers
+  - support VST virtual instruments?

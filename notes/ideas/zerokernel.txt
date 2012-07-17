@@ -1,0 +1,24 @@
+Zero Kernel
+-----------
+
+low kernel
+----------
+
+- bootstrap with grub
+- memory map
+  - segmentation; gdt and ldt
+  - kernel segments
+- linker script
+- interrupt management
+- virtual memory
+  - recursive page directory
+  - table of page tables
+  - page replacement
+
+- multiprocessor support
+- dma i/o
+- vga text output
+- ps/2 keyboard input
+
+high kernel
+-----------

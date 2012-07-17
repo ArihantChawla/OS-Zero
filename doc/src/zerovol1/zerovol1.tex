@@ -1,0 +1,1052 @@
+\documentclass[llpt, twoside, a4paper]{book}
+\usepackage[T1]{fontenc}
+\usepackage{parskip}
+\usepackage{listings}
+\usepackage{fancyvrb}
+\lstset{language=C, showspaces=false, breaklines=false}
+
+\begin{document}
+
+\title{\LARGE{Zero Operating System}
+       \LARGE{Volume One, the Kernel}
+       \LARGE{DRAFT VERSION 1}}
+\author{Tuomo Petteri Venäläinen}
+\date{\today}
+\maketitle
+
+\setcounter{secnumdepth}{3}
+\setcounter{tocdepth}{4}
+\setlength{\parindent}{0cm}
+
+	Design and Implementation of the Zero Kernel.
+
+	Copyright (C) 2012 Tuomo Petteri Venäläinen
+
+\tableofcontents
+
+\part{Preface}
+
+\chapter{Goals}
+
+	\textbf{POSIX}
+
+	Zero kernel aims to implement a POSIX-compatible Unix-like system.
+	POSIX-compliance will be provided at library level, where the base
+	kernel's system call and other interfaces will provide the required
+	functionality.
+
+	\textbf{Software Development}
+
+	As a software developer, I find it crucial that an operating system has
+	good, modern tools for software development. I will eventually look into
+	porting GNU and other tools such as the GNU C Compiler (GCC), the GNU
+	Debugger (gdb), and the GNU Profiler (gprof), as well as experiment with
+	new functionality such as graphical frontends for them.
+
+	\textbf{Multimedia}
+
+	Another goal of Zero is to provide good support for multimedia; both
+	playback and production. Such functionality would include libraries and
+	APIs for audio, video, still images, and so forth. One idea is to port
+	software such as SDL early on to provide support for applications such
+	as audio and video editors as well as games.
+
+	\textbf{Research and Education}
+
+	I see it as an important goal of the project to provide an open source
+	system for use in research and education. The system should capture some
+	of the original, elegant philosophy of early Unix. The kernel should be
+	[relatively] easy to modify for targeted use. I have chosen a relatively
+	liberal '2-clause BSD' license which projects such as the FreeBSD
+	operating system use. I chose it over the GNU General Public License
+	(GPL) for easier adoption to commercial projects such as smart phones.
+
+	\textbf{Portability}
+
+	The plan is to make the kernel portable to different platforms, and
+	provide support for IA-32, X86-64, as well as ARM from early on.
+
+\chapter{Overview}
+
+\section{Multithread Kernel}
+
+	Zero will be a multithread kernel, designed for multiprocessor and
+	multicore systems from the ground up. Zero will have a few separate
+	threads and processes for certain system functionality. For example, the
+	page daemon might run as its own thread, where init will most likely be
+	a separate process, spawning new processes as its children.
+
+\section{Multiuser System}
+
+	Zero will be a multitasking, multiprocessing kernel. Zero shall support
+	virtual memory as a required part of a multiuser system to provide
+	protection and separation on per-process basis.
+
+\section{Networking}
+
+	Even though networking is not one of the first things to do, I plan to
+	support IPv4 and IPv6 with the BSD Unix sockets API.
+
+\section{User Interfaces}
+
+	Zero will have both command line and graphical interfaces. The graphical
+	interface is going to be a network-enabled, event-based system; I will
+	probably support the X Window System as well to let us run the myriad of
+	existing applications [also known as clients] in circulation.
+
+\section{C Library}
+
+	The kernel will be distributed with other software such as a C library
+	with support for functionality from standards like ISO C, POSIX, X/Open
+	and other relevant standards.
+
+	At the time of writing this, some machine dependent parts of the C
+	library such as setjmp(), longjmp(), and alloca() are implemented for
+	IA-32, X86-64, and ARM. This choice of platforms reflects most modern
+	desktop and embedded systems, with plans to make it easy to port the
+	kernel and accompanying software to other platforms as well.
+
+\section{Zero Library}
+
+	Zero implements functionality for both the kernel and user environment
+	in a library called Zero. Currently, there's support for mutexes using
+	atomic compare and swap; these mutexes tend to be faster than those
+	implemented as a part of the POSIX Thread Library (pthread). I will see
+	about implementing the ISO C11 API for multithread functionality.
+
+\part{Zero Kernel}
+
+\chapter{Build Environment}
+
+\section{System Parameters}
+
+	Some system parameters are declared for the programmers through
+	\textbf{<zero/param.h>}. These declarations include sizes of certain
+	types, pages, and cachelines. The following is the file
+	\textbf{<zero/ia32/param.h>} which gets included on IA-32 systems.
+
+	\textbf{<zero/param.h>}
+
+\VerbatimInput{../../../usr/lib/zero/ia32/param.h}
+
+\newpage
+
+\section{Compiler Attributes}
+
+	<zero/cdecl.h> declares attributes specific to the C compiler in use.
+	Some of these attributes are specified in ways of both ISO C standards
+	as well as compiler-specific ones which often predate standardisation by
+	the ISO C Committee. The following is the file \textbf{<zero/cdecl.h>}.
+
+	\textbf{<zero/cdecl.h>}
+
+\VerbatimInput{../../../usr/lib/zero/cdecl.h}
+
+\newpage
+
+\chapter{Bootstrap}
+
+\section{GRUB Support}
+
+	\textbf{Multiboot}
+
+	Zero uses the Grand Unified Boot Loader (GRUB) to start the system.
+	Using GRUB requires a multiboot header; the following is the file
+	\textbf{kern/ia32/boot.h} which shows the multiboot header and
+	parameters in C syntax (see \textbf{struct mboothdr}).
+
+\newpage
+
+	\textbf{kern/ia32/boot.h}
+
+\VerbatimInput{../../../kern/ia32/boot.h}
+
+	\textbf{TODO: use memory map provided by GRUB.}
+
+\newpage
+
+	\textbf{Bootstrap Code}
+
+	The following is our bootstrap code utilising GRUB with a multiboot
+	header.
+
+	\textbf{kern/ia32/boot.S}
+
+\VerbatimInput{../../../kern/ia32/boot.S}
+
+\newpage
+
+\section{System Initialisation}
+
+	\textbf{Assembly Routines}
+
+	The following code is \textbf{kern/ia32/setup.S}, which implements
+	assembly routines for system initialisation. I will refer to parts of
+	this code later in the related subsections of this chapter.
+
+	\textbf{kern/ia32/setup.S}
+
+\VerbatimInput{../../../kern/ia32/setup.S}
+
+\newpage
+
+\subsection{Segmentation}
+
+	\textbf{Kernel Segments}
+
+	IA-32 architecture requires use of segmentation. Zero implements this
+	in a simple way, relying on paging for protection and other tasks. The
+	base segments are defined as follows.
+
+\begin{tabular}{ | l | l | l | l | }
+	\hline
+	ID & Segment & Protection & Purpose \\
+	\hline
+	0  & NULL    & no access                & NULL/zero segment required by the CPU \\
+	1  & TEXT    & read + execute           & kernel code segment \\
+	2  & DATA    & read + write             & kernel data segment \\
+	3  & STK     & read + write + grow-down & kernel stack \\
+	4  & TSS     & read + write             & kernel task state segment \\
+	5  & UTEXT   & read + execute + user    & user code segment \\
+	6  & UDATA   & read + write             & user data segment \\
+	7  & CPU     & read + write             & per-CPU data \\
+	\hline
+\end{tabular}
+
+\subsection{Paging}
+
+	\textbf{Page Structures}
+
+	IA-32 uses two-level page structure; a single page for page directory
+	whose entries point to page tables, the entries of which in turn point
+	to pages.
+
+	\textbf{Recursive Paging}
+
+	I use Jolitz-style recursive paging, which is covered in depth in the
+	chapter \textbf{Memory Management}.
+
+\newpage
+
+\subsection{Interrupt Initialisation}
+
+	\textbf{Interrupt Vector}
+
+	Interrupt vector, or \textbf{IDT} (interrupt descriptor table), sets up
+	handler functions for interrupts. This table is initialised in
+	\textbf{kern/ia32/trap.c} and activated in \textbf{kern/ia32/setup.S}.
+
+	\textbf{kern/ia32/trap.c}
+
+\VerbatimInput{../../../kern/ia32/trap.c}
+
+	\textbf{idtset()}
+
+	Our interrupt vector is enabled with the \textbf{idtset} function in
+	\textbf{kern/ia32/setup.S} shown earlier in this chapter.
+
+\newpage
+
+\section{Multiprocessor Bootstrap}
+
+	I'm working on multiprocessor scheduling and execution for my operating
+	system project called Zero.
+
+	The following is \textbf{currently unworking code} for our
+	IA-32 multiprocessor startup sequence.
+	\textbf{Please help me fix this	code}.
+
+	\textbf{kern/ia32/mpentry.S}
+
+\VerbatimInput{../../../kern/ia32/mpentry.S}
+
+\newpage
+
+\section{Linker Script}
+
+	\textbf{Physical Memory}
+
+	The linker script describes the physical memory layout of our loaded
+	kernel image. We use GNU linker script syntax to achieve this goal. The
+	following is the linker script for the IA-32 kernel. The segments are
+	discussed in more detail in the \textbf{Memory Management} chapter.
+
+	\textbf{kern/ia32/kern.lds}
+
+\VerbatimInput{../../../kern/ia32/kern.lds}
+
+\newpage
+
+\chapter{Interrupt Management}
+
+\section{General Information}
+
+	\textbf{Interrupts by Nature}
+
+	Interrupts are asynchronous events indicating things such as hardware
+	and software errors as well as I/O (input and output) operations.
+
+	\textbf{Hardware and Software}
+
+	Interrupts can be triggered by hardware (e.g. user or device I/O
+	request) as well as software (e.g. division by zero).
+
+	\textbf{Terminology}
+
+	Traditional Unix terminology calls internal interrupts, i.e. those
+	occurring as the result of event internal to CPU, \textbf{traps}.
+	External interrupts, i.e. requests from devices, are called
+	\textbf{interrupts}. I chose to use more traditional PC terminology of
+	\textbf{interrupt requests} (\textbf{IRQs}) for external interrupts.
+	When necessary, I refer to traps and interrupt requests collectively as
+	interrupts.
+
+	\textbf{Traps vs. Interrupt Requests}
+
+	A \textbf{noteworthy difference} between traps and interrupt
+	requests is that the CPU \textbf{triggers interrupt handlers right off
+	on traps}. However, with \textbf{interrupt requests},
+	their \textbf{disposition may be postponed} if other higher priority
+	interrupts are being dealt with.
+
+	\textbf{Interrupt Service Routines}
+
+	Interrupts are managed by hooking special handler routines, called
+	interrupts service routines, to them. The mechanism to do this is CPU
+	dependent and is described for the IA-32 platform later in this chapter.
+
+\section{Special Interrupts}
+
+\subsection{System Call Interrupt}
+
+	\textbf{Library Support}
+
+	System call interrupts are software generated ones used to request the
+	kernel for services. Zero C library shall implement a library-level
+	interface to this kernel functionality. The system call interface is
+	described elsewhere in this book in a chapter called
+	\textbf{System Call Interface}.
+
+	\textbf{System Call Implementation}
+
+	It is noteworthy that there exist other ways of implementing system
+	calls; these ways tend to be used to speed system call processing up.
+	On later IA-32 implementations, this may be done with the machine
+	instructions \textbf{SYSENTER} and \textbf{SYSEXIT}.
+
+	The 'slow' way of doing system calls with interrupts is implemented
+	in the name of tradition as well as to support older hardware.
+
+\subsection{Page Fault Exception}
+
+	\textbf{Details}
+
+	Page faults are interrupts of special interest as the means to
+	implement kernel page daemon. A page fault is generated every time a
+	page not in physical memory is accessed. The kernel can then do its
+	magic. This exception pushes an error code with the fault address and a
+	few flag bits (\textbf{system/user},
+	\textbf{read/write}, and \textbf{present} flags). The kernel bases its
+	[virtual] memory management based on this error code and its paging
+	algorithm. Virtual memory is covered in more depth in the
+	\textbf{Memory Management} chapter.
+
+\section{Interrupt List}
+
+	\textbf{Traps and IRQs}
+
+	This section lists standard IA-32 traps, i.e. CPU exceptions as
+	well as hardware IRQs (interrupt requests).
+
+	Note that interrupt numbers \textbf{0x14 through 0x20} are
+	\textbf{reserved}.
+
+	\textbf{Notes}
+
+\begin{itemize}
+	\item{The \textbf{Page Fault} exception (interrupt) (0x0e) is of special
+	interest to implementors of kernel-level page management}
+	\item{Some interrupts push an error-code on stack, other's don't; I take
+	care to take this in account in our interrupt handler/service
+	routines}
+	\item{The \textbf{NMI}, i.e. non maskable interrupt, is a result of a
+	hardware failure (like a memory parity error), or watchdog timer which
+	can be used to detect kernel lock-ups}
+	\item{\textbf{Faults} leave the EIP point at the faulting instruction}
+	\item{\textbf{Traps} leave the EIP point at the instruction right after
+	the one that caused the interrupt}
+    	\item{\textbf{Aborts} may not set the return instruction pointer right,
+	so should be acted on by shutting the process down}
+\end{itemize}
+
+\begin{tabular}{ | l | l | l | l | l | }
+	\hline
+	Mnemonic & Number & Class & Error Code & Explanation \\
+	\hline
+	DE   & 0x00 & fault      &  no & Divide Error \\
+	DB   & 0x01 & fault/trap &  no & Reserved \\
+	NMI  & 0x02 & interrupt  &  no & Non Maskable Interrupt \\
+	BP   & 0x03 & trap       &  no & Breakpoint \\
+	OF   & 0x04 & trap       &  no & Overflow \\
+	BR   & 0x05 & fault      &  no & BOUND Range Exceeded \\
+	UD   & 0x06 & fault      &  no & Invalid (Undefined) Opcode \\
+	NM   & 0x07 & fault      &  no & No Math Coprocessor \\
+	DF   & 0x08 & fault      &  0  & Double Fault \\
+	RES1 & 0x09 & fault      &  no & Coprocessor Segment Overrun (reserved) \\
+	TS   & 0x0a & fault      & yes & invalid TSS (task state segment) \\
+	NP   & 0x0b & fault      & yes & Segment Not Present \\
+	SS   & 0x0c & fault      & yes & Stack-Segment Fault \\
+	GP   & 0x0d & fault      & yes & General Protection \\
+	PF   & 0x0e & fault      & yes & Page Fault \\
+	RES2 & 0x0f & N/A        &  no & Intel Reserved \\
+	MF   & 0x10 & fault      & yes & x87 FPU Floating-Point Error (Math Fault) \\
+	AC   & 0x11 & fault      &  0  & Alignment Check \\
+	MC   & 0x12 & abort      &  no & Machine Check \\
+	XF   & 0x13 & fault      &  no & SIMD Exception \\
+	\hline
+\end{tabular}
+
+\section{Signal Map}
+
+	\textbf{Trap Signals}
+
+	The table below describes mapping of traps to software signals to be
+	delivered to the corresponding process.
+
+\begin{tabular}{ | l | l | }
+	\hline
+	Interrupt & Signal \\
+	\hline
+	DE        & SIGFPE \\
+	DB        & not mapped \\
+	NMI       & not mapped \\
+	BP        & SIGTRAP \\
+	OF        & not mapped \\
+	BR        & SIGBUS \\
+	UD        & SIGILL \\
+	NM        & SIGILL \\
+	DF        & not mapped \\
+	RES1      & not mapped \\
+	TS        & not mapped \\
+	NP        & SIGSEGV \\
+	SS        & SIGSTKFLT \\
+	GP        & SIGSEGV \\
+	PF        & not mapped \\
+	RES2      & not mapped \\
+	MF        & SIGFPE \\
+	AC        & SIBGUS \\
+	MC        & SIGABRT \\
+	XF        & SIGFPE \\
+	\hline
+\end{tabular}
+
+\section{Interrupt Requests (IRQs)}
+
+\subsection{IRQ Map}
+
+	Interrupt controllers can be programmed to map IRQs as the system
+	wishes; our kernel maps interrupt requests conventionally to interrupts
+	\textbf{0x20 through 0x2f}.
+
+\begin{tabular}{ | l | l | l | l | }
+	\hline
+	Interrupt & Function & Number    & Brief \\
+	\hline
+	0x20      & Timer           & 0  & interrupt timer \\
+	0x21      & Keyboard        & 1  & keyboard interface \\
+	0x22      & Cascade         & 2  & Tied to IRQs 8-15 \\
+	0x23      & COM2/COM4       & 3  & serial ports \#2 and \#4 \\
+	0x24      & COM1/COM3       & 4  & serial ports \#1 and \#3 \\
+	0x25      & Printer Port 2  & 5  & parallel port \#2, often soundcard \\
+	0x26      & Floppy Drive    & 6  & floppy drive interface \\
+	0x27      & Printer Port 1  & 7  & parallel port \#1 \\
+	0x28      & Real-Time Clock & 8  & clock \\
+	0x29      & IRQ2 Substitute & 9  & \\
+	0x2c      & Mouse           & 12 & PS/2 mouse interface \\
+	0x2d      & FPU             & 13 & floating point coprocessor \\
+	0x2e      & IDE Channel 0   & 14 & disk controller \#1 \\
+	0x2f      & IDE Channel 1   & 15 & disk controller \#2 \\
+	\hline
+\end{tabular}
+
+\chapter{Thread Scheduler}
+
+\section{Scheduler Classes}
+
+	Zero scheduler has several different scheduler classes encapsulated
+	into the table below.
+
+\begin{tabular}{ | l | l | l | }
+	\hline
+	Class & Characteristis & Example \\
+	\hline
+	RT     & real-time, fixed priority         & optrec \\
+	INTACT & interactive, short CPU bursts     & terminal session \\
+	BATCH  & batch processing, CPU-intensive   & compiler instance \\
+	IDLE   & executed when system is idle      & zeroing pages \\
+	\hline
+\end{tabular}
+
+	\textbf{Interval Tasks}
+
+	In addition to these, Zero runs certain services every few timer
+	interrupts to achieve tasks such as high-speed screen synchronisation.
+	These interval tasks should be fast to execute not to degrade speed of
+	other threads.
+
+\section{Thread Priorities}
+
+	Zero supports 32 priorities per scheduler class, hence having a total
+	of 128 run queues to pick threads to run from.
+
+\section{Timer Interrupts}
+
+	Interval tasks run using the standard PIT (programmable interrupt
+	timer). Per-CPU thread scheduling is done with local APIC timer
+	interrupts.
+
+\newpage
+
+\subsection{PIT/8253 Timer}
+
+	The following header file is a part of our driver for the 8253 timer
+	chip (also known as the PIT, short for programmable interrupt timer).
+
+\VerbatimInput{../../../kern/ia32/pit.h}
+
+\newpage
+
+	The following code implements our PIT initialisation.
+
+\VerbatimInput{../../../kern/ia32/pit.c}
+
+\newpage
+
+\subsection{Local APIC Timers}
+
+\chapter{Memory Management}
+
+\section{Segmentation}
+
+	Zero mostly uses so-called 'flat memory model', where each segment
+	maps the whole address space with access suitable for the use. The
+	segments are set as follows.
+
+	\textbf{Flat Memory Model}
+
+\begin{tabular}{ | l | l | l | l | }
+	\hline
+	Segment & Base        & Limit              & Permissions \\
+	\hline
+	NULL    & 0x00000000  & 0x00000000         & none \\
+	TEXT    & 0x00000000  & 0xffffffff         & RX \\
+	DATA    & 0x00000000  & 0xffffffff         & RW \\
+	TSS     & tss \#coreid & sizeof(struct tss) & RW \\
+	UTEXT   & 0x00000000  & 0xffffffff         & URX \\
+	DATA    & 0x00000000  & 0xffffffff         & URW \\
+	CPU     & cpu \#coreid & sizeof(struct cpu) & RW \\
+	\hline
+\end{tabular}
+
+	\textbf{Permissions}
+
+\begin{itemize}
+	\item{U stands for user permission}
+	\item{R stands for read permission}
+	\item{W stands for write permission}
+	\item{X stands for execute permission}
+\end{itemize}
+
+\section{Virtual Memory}
+
+\subsection{Page Structures}
+
+	\textbf{IA-32}
+
+	On IA-32 architecture, we use Jolitz-style recursive page directory.
+	This page directory maps our 4-megabyte table of page tables, which in
+	turn map the individual pages. This simplifies our page address
+	calculations and so makes the pager run faster.
+
+	\textbf{Recursive Page Directory}
+
+	The page directory is declared in \textbf{kern/ia32/boot.S}. It's just
+	a single page of physical memory identity-mapped at the same virtual as
+	physical address. A single page directory entry points to the page
+	directory itself, creating a recursion when looking for page addresses.
+
+	\textbf{Table of Page Tables}
+
+	The page tables are located at 8 megabytes physical, identity mapped to
+	8 megabytes virtual. Effectively, this table is indexed with the page
+	directory index and page table index of addresses to fetch addresses of
+	the corresponding physical pages.
+
+\newpage
+
+	\textbf{Diagram}
+
+	Below you can see a simple visualisation of our page structure
+	hierarchy.
+
+\begin{Verbatim}
+        pagedir         pagetab
+        -------         -------
+        -------         -------
+    --->| #0  |-------->| PG0 |
+    |   -------         -------
+    |     ...             ...
+    |     ...             ...
+    |     ...             ...
+    |   -------         -------
+    |---| DIR |    ---->| ADR | \
+        -------    |    -------  |
+          ...      |    | ... |  --- last page of pagetab
+        -------    |    -------  |
+        |#1023|----|    | ADR | /
+        -------         -------
+
+        pagedir
+        -------
+	- 4096 bytes (one page)
+        - 1024 page table entries pointing to pages in pagetab
+
+        pagetab
+        -------
+	- 4 megabytes
+        - flat table of page pointers
+\end{Verbatim}
+
+\subsection{Identity Maps}
+
+	Identity maps are mapped with their virtual addresses equal to their
+	physical ones.
+
+\subsubsection{HICORE}
+
+	The HICORE segment contains code and data for early kernel bootstrap
+	and initialisation.
+
+\subsubsection{MP}
+
+	The MP segment contains application processor startup code for
+	multiprocessor systems.
+
+\subsubsection{DMA}
+
+	The DMA segment contains DMA buffers for device I/O.
+
+\subsubsection{PAGETAB}
+
+	The PAGETAB segment contains a flat table of page tables (containing
+	page pointers).
+
+\subsubsection{KERNVIRT}
+
+	The KERNVIRT segment is mapped at the virtual address 0xc0000000
+	(3 gigabytes) and contains kernel TEXT, DATA, and BSS segments.
+
+\subsubsection{Kernel Map}
+
+\begin{tabular}{ | l | l | l | }
+\hline
+Address             & Segment  & Brief \\
+\hline
+0 M                 & LOCORE   & low 1 megabyte \\
+MPSTKSIZE           & MPSTK0   & processor 0 kernel-mode stack \\
+1 M                 & HICORE   & early kernel bootstrap \\
+1 M + SIZEOF(.boot) & MP       & multiprocessor startup code \\
+4 M                 & DMA      & DMA I/O buffers \\
+8 M                 & PAGETAB  & table of page tables \\
+0xc0000000          & KERNVIRT & kernel TEXT, DATA, and BSS segments \\
+\hline
+\end{tabular}
+
+\subsection{Memory Interface}
+
+	This header file declares parts of our virtual memory manager.
+
+	\textbf{kern/ia32/vm.h}
+
+\VerbatimInput{../../../kern/ia32/vm.h}
+
+\chapter{I/O Operations}
+
+\section{DMA Interface}
+
+	This header file declares our DMA I/O interface.
+
+	\textbf{kern/ia32/dma.h}
+
+\VerbatimInput{../../../kern/ia32/dma.h}
+
+\newpage
+
+\chapter{System Call Interface}
+
+\section{Process Interface}
+
+\subsection{void halt(long flg);}
+
+	The \textbf{halt} system call shuts the operating system down.
+
+	\textbf{Arguments}
+
+\begin{itemize}
+	\item{if flg argument is \textbf{HALT\_REBOOT}, the system will be
+	restarted}
+\end{itemize}
+
+\subsection{long exit(long val, long flg);}
+
+	The \textbf{exit} system call exits a running process.
+
+	\textbf{Arguments}
+
+\begin{itemize}
+	\item{the val argument will be passed as return value to a shell}
+	\item{if the flg argument has \textbf{EXIT\_SYNC} bit set, synchronise
+	stdin, stdout, and stderr}
+	\item{if the flg argument has \textbf{EXIT\_PROFRES} bit set, print
+	statistics on resource usage}
+\end{itemize}
+
+\subsection{void abort(void);}
+
+	The \textbf{abort} system call exits a process erraneously and writes
+	out a core dump. This dump can later be used to analyse program
+	execution with a debugger.
+
+\subsection{long fork(long flg);}
+
+	The \textbf{fork} system call creates a copy of the running process and
+	starts executing it.
+
+	\textbf{Arguments}
+
+\begin{itemize}
+	\item{if the flg argument has \textbf{FORK\_COPYONWR} bit set,
+	don't copy parent address space before pages are written on}
+	\item{if the flg argument has \textbf{FORK\_SHARMEM} bit set,
+	share address space with parent (a'la Unix vfork())}
+\end{itemize}
+
+\subsection{long exec(char *file, char *argv[], char *env[]);}
+
+	The \textbf{exec} system call executes \textbf{file}, passing it the
+	runtime arguments in \textbf{argv} and environment in \textbf{env}.
+
+	\textbf{Arguments}
+
+	Both \textbf{argv} and \textbf{env} need to be terminated with NULL
+	entries.
+
+\subsection{long throp(long cmd, long parm, void *arg);}
+
+	The \textbf{throp} system call provides control of running threads,
+	creation of new threads, and other thread functionality.
+
+	\textbf{Arguments}
+
+\begin{tabular}{ | l | l | }
+	\hline
+	\textbf{cmd} & Brief \\
+	THR\_NEW     & create new thread \\
+	THR\_JOIN    & join running thread (wait for exit) \\
+	THR\_DETACH  & detach running thread \\
+	THR\_EXIT    & exit thread \\
+	THR\_MTXOP   & mutex operation \\
+	THR\_CLEANOP & cleanup; pop and execute cleanup functions \\
+	THR\_KEYOP   & create or delete thread \\
+	THR\_CONDOP  & condition operations; signal, broadcast, ... \\
+	THR\_SYSOP   & system attribute settings \\
+	THR\_STKOP   & stack operation \\
+	THR\_RTOP    & realtime thread settings \\
+	THR\_SETATTR & set thread attributes \\
+	\hline
+\end{tabular}
+
+\subsection{long pctl(long cmd, long parm, void *arg);}
+
+	The \textbf{pctl} system call provides some process control operations.
+
+	\textbf{Arguments}
+
+\begin{itemize}
+	\item{if cmd is \textbf{PROC\_WAIT}, wait for process termination}
+	\item{if cmd is \textbf{PROC\_USLEEP}, sleep for a given number of microseconds}
+	\item{if cmd is \textbf{PROC\_NANOSLEEP}, sleep for a given number of nanoseconds}
+\end{itemize}
+
+	\textbf{PROC\_WAIT}
+
+\begin{tabular}{ | l | l | }
+	\hline
+	\textbf{parm} & Operation \\
+	\hline
+	PROC\_WAITPID & wait for given process to terminate \\
+	PROC\_WAITCLD & wait for a child process in a group to terminate \\
+	PROC\_WAITGRP & wait for a child process in caller's group to terminate \\
+	PROC\_WAITANY & wait for any child process to terminate \\
+	\hline
+\end{tabular}
+
+\subsection{long sigop(long pid, long cmd, void *arg);}
+
+	\textbf{Arguments}
+
+\begin{tabular}{ | l | l | }
+	\hline
+	\textbf{cmd} & Operation \\
+	\hline
+	SIG\_WAIT    & wait for a signal; pause() \\
+	SIG\_SETFUNC & set signal handler; signal(), sigaction() \\
+	SIG\_SETMASK & set signal mask; sigsetmask() \\
+	SIG\_SEND    & send signal to process; raise(), ... \\
+	SIG\_SETSTK  & configure signal stack; sigaltstack() \\
+	SIG\_SUSPEND & suspend until signal received; sigsuspend() \\
+	\hline
+\end{tabular}
+
+	\textbf{SIG\_SETFUNC}
+
+	Set signal disposition.
+
+\begin{tabular}{ | l | l | }
+	\hline
+	\textbf{arg} & Operation \\
+	\hline
+	SIG\_DEFAULT & initialise default signal disposition \\
+	SIG\_IGNORE  & ignore signal \\
+	\hline
+\end{tabular}
+
+	\textbf{SIG\_SEND}
+
+	Send signal to \textbf{pid}.
+
+\begin{tabular}{ | l | l | }
+	\hline
+	\textbf{pid} & Operation \\
+	\hline
+	SIG\_SELF    & send signal to self \\
+	SIG\_CLD     & send signal to child processes \\
+	SIG\_GRP     & send signal to process group \\
+	SIG\_PROPCLD & propagate signal to child processes \\
+	SIG\_PROPGRP & propagate signal to process group \\
+	\hline
+\end{tabular}
+
+	\textbf{SIG\_PAUSE}
+
+	Suspend process. Flag bits are passed in \textbf{arg}.
+
+\begin{tabular}{ | l | l | }
+	\hline
+	\textbf{arg} bit & Operation \\
+	\hline
+	SIG\_EXIT        & exit process on signal \\
+	SIG\_DUMP        & dump core on signal \\
+	\hline
+\end{tabular}
+
+\section{Memory Interface}
+
+\subsection{long brk(void *adr);}
+
+	The \textbf{brk} system call adjusts process break, i.e. the current top
+	of heap.
+
+	\textbf{Arguments}
+
+\begin{itemize}
+	\item{\textbf{adr} is the new break}
+\end{itemize}
+
+\subsection{void *map(long desc, long flg, struct memreg *reg);}
+
+	\textbf{struct memreg}
+
+\begin{Verbatim}
+    struct memreg {
+        void *base;
+        long  ofs;
+        long  len;
+        long  perm;
+    };
+\end{Verbatim}
+
+	\textbf{Arguments}
+
+\begin{tabular}{ | l | l | }
+	\hline
+	\textbf{flg} & Operation \\
+	\hline
+	MAP\_FILE       & map file (or /dev/zero for anonymous memory \\
+	MAP\_ANON       & map anonymous memory \\
+	MAP\_NORMAL     & default map behavior \\
+	MAP\_SEQUENTIAL & sequential access \\
+	MAP\_RANDOM     & non-sequential access \\
+	MAP\_WILLNEED   & needed in the near future \\
+	MAP\_DONTNEED   & not needed soon \\
+	MAP\_DONTFORK   & don't share with forked child processes \\
+	\hline
+\end{tabular}
+
+\subsection{long umap(void *adr, size\_t size);}
+
+	The \textbf{umap} system call unmaps file or anonymous memory.
+
+\subsection{long mhint(void *adr, long flg, struct memreg *arg);}
+
+	The \textbf{mhint} system call is used to hint the kernel about the type
+	of use for mapped regions.
+
+	\textbf{Arguments}
+
+	For values for the \textbf{flg} argument, see \textbf{map} earlier in
+	this chapter.
+
+\subsection{void *bmap(long desc, size\_t size, long flg);}
+
+	The \textbf{bmap} system call is used to map memory from kernel buffer
+	cache. This memory will be mapped to virtual address spaces of both the
+	kernel and a user process to avoid copying memory for I/O requests.
+
+	\textbf{Arguments}
+
+	For values for the \textbf{flg} argument, see \textbf{map} earlier in
+	this chapter.
+
+\section{Shared Memory Interface}
+
+\subsection{long shmget(long key, size\_t size, long flg);}
+
+	The \textbf{shmget} system call returns the shared memory identifier
+	associated with \textbf{key}.
+
+\subsection{void *shmat(long id, void *adr, long flg);}
+
+	The \textbf{shmat} system call attaches shared memory segment
+	\textbf{id} to the address space of the calling process.
+
+	\textbf{Arguments}
+
+\begin{itemize}
+	\item{if \textbf{adr} is nonzero, it will be used as the base address
+	for the attached segment; otherwise, a new virtual region shall be
+	allocated}
+	\item{\textbf{TODO: flg argument?}}
+\end{itemize}
+
+\subsection{long shmdt(void *adr);}
+
+	The \textbf{shmdt} system call detaches a shared memory segment attached
+	at \textbf{adr} in the calling process's address space.
+
+\subsection{long shmctl(long id, long cmd, void *arg);}
+
+	The \textbf{shmctl} system call is used for controllling attributes of
+	shared memory segments.
+
+	\textbf{TODO}
+
+\part{Base Drivers}
+
+\chapter{VGA Text Consoles}
+
+	VGA text console is the base user interface for Zero before the advent
+	of graphics drivers. There's always a place for separate consoles as
+	command line interfaces, to display console messages from system, and
+	so forth.
+
+	VGA color buffer is located at \textbf{0xb8000} (under one megabyte) and
+	identity-mapped to the same region in kernel virtual address space.
+	Hence drawing text becomes simple writing of character + attribute
+	values into this memory region.
+
+\newpage
+
+\section{VGA Text Interface}
+
+	This header file declares our VGA text interface.
+
+\textbf{kern/io/drv/pc/vga.h}
+
+\VerbatimInput{../../../kern/io/drv/pc/vga.h}
+
+\newpage
+
+\section{VGA Console Interface}
+
+	The following is our VGA text console driver.
+
+\textbf{kern/io/drv/pc/vga.c}
+
+\VerbatimInput{../../../kern/io/drv/pc/vga.c}
+
+\chapter{PS/2 Keyboard and Mouse}
+
+\section{Keyboard Driver}
+
+	Here is a source file for our PS/2-connector or emulated USB keyboards.
+
+\textbf{kern/io/drv/pc/ps2/kbd.c}
+
+\VerbatimInput{../../../kern/io/drv/pc/ps2/kbd.c}
+
+\newpage
+
+\section{Mouse Driver}
+
+	Here is a source file for our PS/2-connector mice.
+
+\textbf{kern/io/drv/pc/ps2/mouse.c}
+
+\VerbatimInput{../../../kern/io/drv/pc/ps2/mouse.c}
+
+\chapter{AC97 Audio Interface}
+
+	I chose to develop drivers for AC97 because it's not only very
+	wide-spread, but also well documented.
+
+	\textbf{TODO: extend this chapter}
+
+\appendix
+
+\chapter{Profiler Tools}
+
+	Zero has simple tools for timing code execution both in
+	microsecond-resolution wall clock time as well as CPU clock cycles.
+
+	This chapter shows the implementation of these profiling tools as well
+	as examples of their use.
+
+\newpage
+
+\section{Wall Clock Profiler}
+
+\VerbatimInput{../../../usr/lib/zero/prof.h}
+
+\newpage
+
+\section{Cycle Profiler}
+
+\VerbatimInput{../../../usr/lib/zero/ia32/prof.h}
+
+\section{Examples}
+
+\newpage
+
+\subsection{Wall Clock Profiler}
+
+\VerbatimInput{wallprof.c}
+
+\newpage
+
+\subsection{Cycle Profiler}
+
+\VerbatimInput{wallprof.c}
+
+\end{document}
+

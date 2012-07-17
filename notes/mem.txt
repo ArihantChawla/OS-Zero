@@ -1,0 +1,531 @@
+physical memory
+---------------
+- RAM is mapped on-write
+  - zero heap on allocation if dirty
+
+virtual memory
+--------------
+- VM uses dual-layer cache for allocated pages as described below
+
+		--------
+		| mag  |
+		--------
+		    |
+		--------
+		| slab |
+		--------
+	--------  |  |	 -------
+	| heap |--|  |---| map |
+	--------	 -------
+
+	mag
+	---
+	- magazine cache with allocation stack of pointers into the slab
+	  - LIFO to reuse freed blocks of virtual memory
+
+	slab
+	 ----
+	 - slab allocator bottom layer
+	 - power-of-two size slab allocations
+	   - supports both heap and mapped regions
+
+	heap
+	----
+	- process heap segment, located below map segment (dynamic size)
+
+	map
+	---
+	- process map segment, located right below stack
+
+kernel memory
+-------------
+- single zone of RAM for all processes
+- single virtual address space (kernel or user) per process
+
+	--------	---------
+	| slab |	|  buf  |
+	--------	---------
+  	    |		   |
+	    |	--------   |
+	    |---| page |---|
+		--------
+		    |
+		--------
+		| virt |
+		--------
+		    |
+	------- -------- -------
+	| CPU |-| phys |-| GPU |
+	-------	-------- -------
+
+	slab
+	----
+	- physical or virtual page allocation/map
+
+	buf
+	---
+	- buffer/block cache zone
+	  - statically allocated
+	  - option to wire buffers into RAM permanently
+
+	page
+	----
+	- page layer under the buf and slab layers
+	  - on-demand paging on devices such as disks and network hosts
+	    - on a fast LAN, we could have dedicated memory servers
+
+	virt
+	----
+	- process virtual address space
+
+	phys
+	----
+	- single global physical zone per host
+	- support NUMA with allocation priority system later
+	  - fastest first
+
+/* EDIT BELOW */
+
+MEMORY MANAGEMENT
+-----------------
+- implement [I/O scheduler] block/buffer cache with per-device V-trees?
+  - page size buffers for tree subtables to make allocations efficient
+  - make the tree grow bottom-up, level by level, on demand (fewer levels for
+    devices with fewer blocks)
+    - reduce memory footprint
+    - speed tree operations ups
+
+IA-32 physical memory
+---------------------
+- 32-byte (256-bit) cacheline
+  - if memory (data or code) is read and not found in cache, fetch the
+    cacheline into cache
+    - prefetch code; it's good to avoid branching (jumps)
+  - writeback systems write directly to RAM if not in cache
+- small amount of [fast] L2 (onboard) + L1 (on-chip) caches
+- usually large amount of RAM (storage)
+
+[IA-32] virtual memory
+----------------------
+- map/allocation resolution of a page [4K]
+- when paging is enabled, all addresses (in C, pointers) get translated to the
+  corresponding physical addresses through [per-process] page directory
+- provides mapping of logical [consecutive linear] address space to physical
+  memory on per-process basis
+  - true for user processes
+  - some kernel structures (IDT, GDT, page directory) can be linked 1-to-1 so
+    that their virtual addresses equal the physical addresses
+    - no need for in-code address translation
+- protects process memory [at kernel level] from access by other processes
+- supports sparse address spaces (the stack and often mapped regions tend to be
+  far away from code, data, and heap segments) efficiently; no gaps of unused
+  [physical] memory
+- processes may share physical memory
+  - libraries
+    - position independent code allows operating systems to map library code to
+      arbitrary process addresses
+  - shared memory segments (to avoid excess [slow] copying of memory)
+- memory hierarchies
+  - RAM
+  - disk
+  - network?
+
+TimRobinson's GDT trick
+-----------------------
+- make 'fake' GDT use the base of
+	0x40000000U
+  - this way, we can simulate a situation where we have loaded the kernel at
+	0xc0000000U
+  - a jump to 0xc0100000U would then jump to
+	0xc0100000U + 0x40000000U == 0x00100000U (1 megabyte)
+- the CPU needs the physical address of GDT; link it into a section with 1-to-1
+  virtual-to-physical mapping
+
+kernel physical memory (IA-32)
+------------------------------
+- 0..1M			unused
+- 1..4M			DMA buffers (16-bit/ISA DMA only works at low 16 megs)
+- 4 megabytes		kernel IDT
+- 4M + PAGESIZE		kernel GDT
+- 4M + 2 * PAGESIZE..8M	task structures; LDT, TSS?
+- 8M   	   		kernel page directory (Jolitz/386BSD-style recursive)
+- 12M			kernel text
+- 12M + ktextsize	kernel data
+- ... 			kernel stack (1M)
+
+process virtual memory
+----------------------
+- 0			zero-page (zeroed)
+- PAGESIZE		LDT
+- 2 * PAGESIZE		text	(code, read-only data)
+- _etext		data
+- ...			bss
+- _ebss			heap
+			...
+- 3G			stack	(grows down)
+- 3G			kernel
+
+order of memory operations
+--------------------------
+- unmap before mapping more
+- free before allocating more
+  - easier to satisfy new allocation requests
+system calls
+------------
+- brk
+  - negative offsets first
+- umap
+- map
+- mhint
+  - NOCACHE (no need to put in page cache)
+    - for tasks such as initializing large arrays, file input buffers that are
+      scanned linearly, and so on
+
+page daemon
+-----------
+- typically write process pages out before reading more in
+- three LRU (least-recently) queues (per process?)
+  - in map/access order
+  - used; mapped and accessed pages
+  - mapped; mapped but not [yet] accessed pages
+  - unmapped; unmapped pages (heap/brk, fork)
+- track per-page number of faults?
+
+paging algorithms
+-----------------
+- no prior knowledge of reference stream
+- fetch policy, replacement policy, placement policy
+- demand fetch approach
+  - page fault is first indication that page must be moved into physical memory
+- static paging
+  - fetch paged requests by page faults; constant fetch policy
+  - replace removed page by incoming page; fixed placement policy
+  - static replacement algorithms
+    - best case scenario
+      - belady's optimal algorithm (perfect prediction)
+      - only with full prior knowledge of reference stream or a record of past
+        behavior that is incredibly consistent
+      - replaced pages either never needed again or have the longest number of
+        page requests before referenced
+      - benchmarking only
+    - random replacement
+      - choose removed page at random
+      - stream or locality not considered
+      - behavior is random and unreliable
+      - generally not useful
+    - FIFO (first-in, first out)
+      - predictable
+      - remove oldest page first
+      - ignores trends
+      - doesn't 'consciously' take advantage of locality
+    - FINUFO (first-in not-used- first-out)
+      - modified FIFO with a bit indicating whether pages have been referenced
+      - remove the oldest unreferenced page first
+    - LRU (least recently used)
+      - 'normal' program operation
+        - loops with calls to rarely executed code
+        - majority of code in a small number of pages
+      - takes advantage of locality
+      - assume recently referenced pages are likely to be referenced again soon
+      - measure 'time' elapsed by backward distance
+        - always greater than zero
+        - infinite for pages never referenced
+        - remove the page with the maximum backward distance
+          - if more than one, remove arbitrarily
+      - implementation
+        - reference stack
+          - fast identification
+          - sorting overhead
+        - Unix
+          - increment age counter for active pages
+            - set to zero on reference or page fault bring-in
+            - maximum age value
+    - LFU (least frequently used)
+      - define frequency of use for pages
+        - ways to calculate
+          - from beginning of reference stream, ever-increasing interval
+            - most accurate representation
+            - reactions to locality changes extremely slow
+            - if program changes working set or terminates and is replaced,
+              the pages in the new locality are immediately replaced
+              - frequency much less than pages of previous program
+            - swapped out pages likely to be needed soon
+              - trashing period likely to occur
+          - if the beginning of reference stream is used, pages associated with
+            initial code can influence replacement long after main body has
+            started
+            - remedy by using frequency from last load rather than beginning;
+              reset count on each load
+              - mostly prevents 'old' pages from having a huge influence
+              - tends to respond slowly to locality changes
+    - stack algorithms
+      - cost of page fetches can be calculated by a pass over the stream;
+        possible to predict the number of page faults by analyzing memory state
+      - memory state can be used to predict performance improvement from
+        increasiung a process's memory allocation
+      - examples: LRU, LFU
+    - hysteresis point; number of page allocations where the rate of increase
+      of page faults peaks
+      - target page allocation
+  - working set algorithms
+    - WSR (working set replacement)
+      - interval
+        - during interval, allow page faults and adds
+        - grow until time has expired
+          - remove all unused references
+        - interval may be adjusted dynamically to minimize trashing
+          - provide correspondence with locality changes
+          - adjustments usually determined as a function of page fault rate
+    - PFF (page-fault frequency)
+      - monitor program fault frequency
+      - similar to modifying interval (WSR), but not subject to minimal time for
+        change to occur
+        - allocation or release may occur rapidly during locality transition
+          rather than sudden attempt to minimize interval
+          - no dynamic change to add complexity
+      - limitations
+        - program with unrelated references to database
+          - would not benefit from keeping old references in memory
+          - rapid changes in fault frequency would result in wasted allocation
+            or rapid trashing
+          - most often these types of unrelated references are uncommon
+    - clocked LRU approximation (working set clock)
+      - circular frame arrangement (as on a clock face); virtual clock face
+      - frames considered for replacement by pointer moving clockwise
+        - evaluated on some criteria, replaced or pointer moves on
+      - to simulate LRU, use page entrys valid bit (software settable reference)
+        - rely on hardware's ability to check this bit
+        - system clock routine periodically scans per-program page tables,
+          resets valid bits
+          - if page referenced, a page fault occurs
+            - hardware will reference software valid bit, discover page is in
+              memory; if so, fault handler sets page table entry's valid bit and
+              continues
+            - next clock routine run
+              - if invalid page with software valid bit set found, it has not
+                been referenced
+                - no longer part of working set, can be removed
+
+linux page replacement design
+-----------------------------
+- two LRU lists
+  - 2.4.10
+    - active, inactive
+    - allow to detect cache pollution before starting to replace working set
+    - pages in the inactive list collected much more quickly
+      - pollution collected more quickly than active set
+  - 2.5
+    - memory size has increased a lot more than disk speed
+    - proposed split to page cache and mapped pages
+      - patches; move page lazily at reclaim-time based on whether it's mapped
+      - tuning ideas
+        - keep track of size of list, the rate at which list is scanned, and the
+          fraction of (non-new) pages that get referenced
+          - determine list with the largest fraction of idle pages
+            - which list should be scanned more aggressively
+
+              pressure = ref_percent * scan_rate / list_size;
+
+              - equalize by scanning lists with lower usage less than others
+          - if working set bigger than list's memory, pages refaulted in quickly
+      - why keep the lists separated?
+
+clock-pro
+---------
+- move beyond LRU by tracking how often pages are accessed
+  - tweak VM behavior to match
+  - try to ensure inactive pages are referenced less frequently than active
+    - keep track of evicted (non-resident) pages
+    - when faulting page in
+      - calculate distance (number of evicted pages since this one last evicted)
+      - compute distance for the oldest page in active list
+        - if new page accessed more frequently than the oldest in-memory one,
+          decrease maximum desired size of active list to make room for more-
+          often accessed pages in secondary storage
+        - add new page directly to active list 
+        - if faulted-in more 'distant' than in-core, increase active list slowly
+          up to maximum limit
+
+clock-pro approximation
+-----------------------
+- new pages added to inactive list
+- referenced pages go to active list
+- active pages moved to the head if referenced
+  - inactive list if not referenced
+- if empty slot in non-resident table recycled, do nothing
+- if occupied slot in non-resident table recycled, reduce number of inactive
+  pages kept around
+- if faulting in a page on non-resident table (recently evicted) and its
+  distance is smaller than that of least active page on active list, add the
+  page to active lsit and increase number of inactive pages kept around
+- active pages being referenced should be used as indication of working set
+  being cached
+  - active list should not be shrunk too much
+(- if refaulting too much, i.e. too many pages have distance < 2 times size of
+  memory and system load is high, enable swap token mechanism to prevent
+  trashing
+ - inactive list small -> caching working set fine, swap token logic can be
+   switched off)
+
+- correlated references filter
+  - promote pages from inactive to active list when referenced again after
+    initial page-fault and reference
+    - filter out correlated references
+    - one idea: have a new page list (perhaps 5-10 % the size of inactive)
+      - put new pages here, clear reference bit when leaving the list
+    - another idea
+      - flag new (not refaulted from recently evicted, or evicted from active)
+        pages with a PAGENEW flag
+        - pages with PAGENEW set that were referenced left on inactive instead
+          of being promoted to active
+        - if referenced again, promote to active
+      - refault pressure ensures active and inactive remain right size to give
+        new pages a fair chance at being promoted before getting evicted
+- readahead & inactive target adjustments
+  - faulting into memory, not necessarily needed right now
+  - idea: 'catch correlated references'
+    - if page was referenced when it reaches the end of the new pages list,
+      treat it as if a fresh page fault (clear bit in non-resident table, adjust
+      inactive as needed)
+- detecting readahead trashing
+  - when page evicted, see if still in recently-evicted table
+    - if so, evicted before use, could have avoided I/O
+    - if happens frequently, think about reducing readahead or load control
+- inter reference distance
+  - non-resident set
+    - hash bucket, FIFO/circular replacement of entries
+    - by looking at only N last entries within each buffer, can limit the size
+      of non-resident list
+    - T(x) is time spent on list x
+      - if we keep T(inactive) + T(evicted) < T(active), can be reasonably
+        sure that when a faulted page from evicted list to active, the page has
+        a smaller distance than the least recently used page on active list
+        - assumes hash function spreads load evenly between hash bucket
+    - 3 possible invariants
+      Mevicted < Mactive + Minactive
+      - limit too low for second level caches?
+      Sactive * (Mactive + Minactive + Mevicted) < Sinactive * Mactive
+      - invariant kept by limiting Mevicted
+      Sactive + Sinactive < Mactive + Minactive
+      - Sactive and Sinactive divided by two when limit reached
+    - need to prejudice against Mevicted pages that are being faulted in again
+      - in favor of the incumbent active pages
+      - streaming through large amounts of data, accessing pages equally often
+      	- speed up by unfairly caching part of the data set and not the rest
+        - faulted Mevict page can only displace an active page if sure that the
+          distance for the evicted page is smaller than the distance for the
+          least active page on active list
+          - when in doubt, protect working set, dynamic list resizing takes
+            care of the rest
+
+linux 2.6.28
+------------
+- evicts pages with minimal scanning
+- most page churn comes from reading large files; evict those pages first
+- evict other pages when not enough memory for readahead or reading same file
+  data over and over again
+- filesystem i/o is much more efficient than swap i/o; only evict file cache if
+  we can
+- balance filesystem cache and anonymous (process) memory with reference and
+  refault data
+- optimise the normal case and the worst case; robustness
+
+- file cache
+  - disk and network filesystem data and metadata
+    - filesystems generally much larger than memory
+    - most file data accessed infrequently, often in bulk (streaming)
+    - small amount of file data (working set) accessed often; protect from
+      streams
+  - used-once page replacement
+    - new pages on inactive list
+    - pages used multiple times promoted to active list
+    - pages used once or never reclaimed when hit end of inactive list
+  - when active list larger than inactive, some active pages moved to inactive
+    - as long as working set < half of file cache, protected from eviction
+    - sizing of active list could be done better with data on recently evicted
+      pages; the simple approach 'seems to work well enough'
+
+- anonymous memory
+  - memory from processes, shared memory, swap backed filesystem (tmpfs)
+    - relatively little data, similar to amount of memory
+    - usually accessed relatively frequently
+  - minimise page scanning
+    - consumes a majority of memory
+    - often only swapped out occasionally
+    - every page starts out referenced
+  - SEQ replacement
+    - pages from end o factive anon list go into inactive anon list, referenced
+      or not
+    - referenced inactive pages back to active anon list
+    - page that reaches end of inactive list without references gets evicted
+    - limits maximum number scanned pages to twice the size of inactive list
+  - inactive list should be reasonable size
+    - large enough for pages to get a chance to be reused
+      - background aging to avoid starting with FIFO
+    - small enough to limit VM work
+    - maybe 30 % of anon pages on a 1 GB system, 1 % on 1 TB system?
+  - most of the time, only file pages evicted; anonymous pages scanned rarely
+  - when no swap space available, don't scan anon pages
+
+- non-reclaimable memory
+  - memlocked processes, memlocked shared memory segments, ramfs, ramdisk
+  - memlocked pages added to this pool
+  - munlocked pages moved to file or anon lists
+  - never scanned
+
+- non-resident (recently evicted)
+  - not implemented in then-current 2.6 kernel; VM 'seems to work well without'
+    - would only be used for additional feedback in placing faulted-in pages
+      and sizing the lists
+  - would not contain actual pages, only recently-evicted information
+  - very low space overhead; page cache radix tree
+
+- OOM killer
+  - kill something when swap is full, memory is full, and filesystem-backed
+    memory is really low
+
+4.4BSD
+------
+- wired pages; cannot be swapped out
+  - usually used by the kernel
+- active
+- inactive
+- free
+
+- page daemon
+  - scan inactive list
+    - if page is clean and unreferenced, move to free list
+    - if page referenced by active process, move to active list
+    - if page dirty and being swapped, skip it
+    - if page not dirty and not actively used, write to disk
+  - check whether inactive < inactive_target
+    - if so, scan active list to put some pages to inactive
+  - swapping
+    - if pager can't keep up with page faults or process inactive > 20 seconds,
+      write entire process to swap
+
+randomized paging algorithm
+---------------------------
+- slow memory with N distinct pages
+- fast memory (cache) with at most k pages, k < N
+- unknown sequence of page requests
+  - if in cache, no cost
+  - if not, evicted from cache
+- RANDMARK
+  - initially all pages in fast memory are unmarked
+  - on request X
+    if fast memory is not full, bring page x into fast memory and mark it
+      cost = 1
+    else
+      if all pages in fast memory are marked, unmark all of them
+      endif
+      if X is in fast memory, mark X
+        cost = 0
+      else
+        choose Y uniformly at random from unmarked pages in fast memory
+        replace Y by X
+        mark X
+          cost = 1
+      endif
+    endif
+

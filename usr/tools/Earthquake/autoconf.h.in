@@ -1,0 +1,337 @@
+/* autoconf.h.in.  Generated from configure.ac by autoheader.  */
+
+/* Define to non-zero if you Alpha x86 CPU */
+#undef CPU_ALPHA
+
+/* Define to non-zero if you have m68k CPU */
+#undef CPU_M68K
+
+/* Define to non-zero if you have x86 CPU */
+#undef CPU_X86
+
+/* Define to double-precision floating-point type */
+#undef DOUBLE
+
+/* Define to single-precision floating-point type */
+#undef FLOAT
+
+/* Define if your CPU supports 3DNOW extensions (x86) */
+#undef HAVE_3DNOW
+
+/* */
+#undef HAVE_AUTOCONF_H
+
+/* Define to 1 if you have the <dlfcn.h> header file. */
+#undef HAVE_DLFCN_H
+
+/* Define if you have double type */
+#undef HAVE_DOUBLE
+
+/* Define if you have float type */
+#undef HAVE_FLOAT
+
+/* Do NOT define this yourself */
+#undef HAVE_LALIGN128_T
+
+/* Do NOT define this yourself */
+#undef HAVE_LALIGN16_T
+
+/* Do NOT define this yourself */
+#undef HAVE_LALIGN256_T
+
+/* Do NOT define this yourself */
+#undef HAVE_LALIGN32_T
+
+/* Do NOT define this yourself */
+#undef HAVE_LALIGN64_T
+
+/* Do NOT define this yourself */
+#undef HAVE_LALIGN8_T
+
+/* Do NOT define this yourself */
+#undef HAVE_LF128_T
+
+/* Do NOT define this yourself */
+#undef HAVE_LF16_T
+
+/* Do NOT define this yourself */
+#undef HAVE_LF256_T
+
+/* Do NOT define this yourself */
+#undef HAVE_LF32_T
+
+/* Do NOT define this yourself */
+#undef HAVE_LF64_T
+
+/* Do NOT define this yourself */
+#undef HAVE_LF8_T
+
+/* Do NOT define this yourself */
+#undef HAVE_LFLT128_T
+
+/* Do NOT define this yourself */
+#undef HAVE_LFLT256_T
+
+/* Do NOT define this yourself */
+#undef HAVE_LFLT32_T
+
+/* Do NOT define this yourself */
+#undef HAVE_LFLT64_T
+
+/* Define if you have long double type */
+#undef HAVE_LONG_DOUBLE
+
+/* Define if you have long long type */
+#undef HAVE_LONG_LONG
+
+/* Do NOT define this yourself */
+#undef HAVE_LUINT128_T
+
+/* Do NOT define this yourself */
+#undef HAVE_LUINT16_T
+
+/* Do NOT define this yourself */
+#undef HAVE_LUINT256_T
+
+/* Do NOT define this yourself */
+#undef HAVE_LUINT32_T
+
+/* Do NOT define this yourself */
+#undef HAVE_LUINT64_T
+
+/* Do NOT define this yourself */
+#undef HAVE_LUINT8_T
+
+/* Define if your CPU supports MMX extensions (x86) */
+#undef HAVE_MMX
+
+/* Define if you have ptrdiff_t type */
+#undef HAVE_PTRDIFF_T
+
+/* Define if you have ptrint_t type */
+#undef HAVE_PTRINT_T
+
+/* Define if you have ptruint_t type */
+#undef HAVE_PTRUINT_T
+
+/* Define if you have sig_atomic_t type */
+#undef HAVE_SIG_ATOMIC_T
+
+/* Define if your CPU supports SSE extensions (x86) */
+#undef HAVE_SSE
+
+/* Define if your CPU supports SSE2 extensions (x86) */
+#undef HAVE_SSE2
+
+/* Define if you have unsigned long long type */
+#undef HAVE_UNSIGNED_LONG_LONG
+
+/* Define if you have uword_t type */
+#undef HAVE_UWORD_T
+
+/* Define if your compiler supports volatile keyword */
+#undef HAVE_VOLATILE
+
+/* Define if you have word_t type */
+#undef HAVE_WORD_T
+
+/* */
+#undef KERNEL_DEBUG
+
+/* */
+#undef KERNEL_PROFILE
+
+/* */
+#undef KERNEL_TEST
+
+/* */
+#undef KERNEL_USER_PROCESS
+
+/* Define to signed 128-bit type */
+#undef LALIGN128_T
+
+/* Define to signed 16-bit type */
+#undef LALIGN16_T
+
+/* Define to signed 256-bit type */
+#undef LALIGN256_T
+
+/* Define to signed 32-bit type */
+#undef LALIGN32_T
+
+/* Define to signed 64-bit type */
+#undef LALIGN64_T
+
+/* Define to signed 8-bit type */
+#undef LALIGN8_T
+
+/* Define to 128-bit floating point type */
+#undef LFLOAT128_T
+
+/* Define to 32-bit floating point type */
+#undef LFLOAT32_T
+
+/* Define to 64-bit floating point type */
+#undef LFLOAT64_T
+
+/* Define to signed 128-bit floating-point type */
+#undef LFLT128_T
+
+/* Define to signed 256-bit integer type */
+#undef LFLT256_T
+
+/* Define to signed 32-bit floating-point type */
+#undef LFLT32_T
+
+/* Define to signed 64-bit floating-point type */
+#undef LFLT64_T
+
+/* */
+#undef LIGHTNING_AUTHORS
+
+/* */
+#undef LIGHTNING_BUILD_DATE
+
+/* Define to signed 128-bit integer type */
+#undef LINT128_T
+
+/* Define to signed 16-bit integer type */
+#undef LINT16_T
+
+/* Define to signed 256-bit integer type */
+#undef LINT256_T
+
+/* Define to signed 32-bit integer type */
+#undef LINT32_T
+
+/* Define to signed 64-bit integer type */
+#undef LINT64_T
+
+/* Define to signed 8-bit integer type */
+#undef LINT8_T
+
+/* Define if you have long double type */
+#undef LONG_DOUBLE
+
+/* Define if you have long long type */
+#undef LONG_LONG
+
+/* Define to the sub-directory in which libtool stores uninstalled libraries.
+   */
+#undef LT_OBJDIR
+
+/* Define to unsigned 128-bit integer type */
+#undef LUINT128_T
+
+/* Define to unsigned 16-bit integer type */
+#undef LUINT16_T
+
+/* Define to unsigned 256-bit integer type */
+#undef LUINT256_T
+
+/* Define to unsigned 32-bit integer type */
+#undef LUINT32_T
+
+/* Define to unsigned 64-bit integer type */
+#undef LUINT64_T
+
+/* Define to unsigned 8-bit integer type */
+#undef LUINT8_T
+
+/* Define to 1 if your C compiler doesn't accept -c and -o together. */
+#undef NO_MINUS_C_MINUS_O
+
+/* Name of package */
+#undef PACKAGE
+
+/* Define to the address where bug reports for this package should be sent. */
+#undef PACKAGE_BUGREPORT
+
+/* Define to the full name of this package. */
+#undef PACKAGE_NAME
+
+/* Define to the full name and version of this package. */
+#undef PACKAGE_STRING
+
+/* Define to the one symbol short name of this package. */
+#undef PACKAGE_TARNAME
+
+/* Define to the home page for this package. */
+#undef PACKAGE_URL
+
+/* Define to the version of this package. */
+#undef PACKAGE_VERSION
+
+/* Define to pointer difference type */
+#undef PTRDIFF_T
+
+/* Define to signed pointer-size type */
+#undef PTRINT_T
+
+/* Define to unsigned pointer-size type */
+#undef PTRUINT_T
+
+/* Define to type that is atomic to manipulate */
+#undef SIG_ATOMIC_T
+
+/* Define if you have unsigned long long type */
+#undef UNSIGNED_LONG_LONG
+
+/* Enable extensions on AIX 3, Interix.  */
+#ifndef _ALL_SOURCE
+# undef _ALL_SOURCE
+#endif
+/* Enable GNU extensions on systems that have them.  */
+#ifndef _GNU_SOURCE
+# undef _GNU_SOURCE
+#endif
+/* Enable threading extensions on Solaris.  */
+#ifndef _POSIX_PTHREAD_SEMANTICS
+# undef _POSIX_PTHREAD_SEMANTICS
+#endif
+/* Enable extensions on HP NonStop.  */
+#ifndef _TANDEM_SOURCE
+# undef _TANDEM_SOURCE
+#endif
+/* Enable general extensions on Solaris.  */
+#ifndef __EXTENSIONS__
+# undef __EXTENSIONS__
+#endif
+
+
+/* Define to unsigned machine word type */
+#undef UWORD_T
+
+/* Version number of package */
+#undef VERSION
+
+/* Define to signed machine word type */
+#undef WORD_T
+
+/* Define to 1 if on MINIX. */
+#undef _MINIX
+
+/* Define to 2 if the system does not provide POSIX.1 features except with
+   this defined. */
+#undef _POSIX_1_SOURCE
+
+/* Define to 1 if you need to in order for `stat' and other things to work. */
+#undef _POSIX_SOURCE
+
+/* */
+#undef __BIG_ENDIAN
+
+/* */
+#undef __BYTE_ORDER
+
+/* */
+#undef __LITTLE_ENDIAN
+
+/* */
+#undef __PDP_ENDIAN
+
+/* */
+#undef libcincludedir
+
+/* */
+#undef thunderincludedir

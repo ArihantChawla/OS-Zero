@@ -1,0 +1,17 @@
+void *brk(intptr_t ofs);
+void *balloc(size_t nbytes, long flags);
+void *bmap(size_t nbytes, long flags, void *adr);
+void *umalloc(size_t nbytes);
+
+struct heap {
+   uintptr_t  brk;
+   void      *pdir;
+};
+
+#define BUFWIRED  0x01
+#define BUFSINGLE 0x02
+#define BUFDEV    0x04
+#define BUFNET    0x08
+#define BUFFILE   0x10
+#define BUFSEQ    0x20
+#define BUFSYNC   0x40

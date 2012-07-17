@@ -1,0 +1,18 @@
+Zero Deck API
+-------------
+- deckopen()
+  - open deck
+    - provide standard descriptors stdin, stdout, and stderr
+    - provide POSIX support for pseudoteletypes
+      - devices tty0000..ttyffff, ttySXX (serial), ttyLXX (parallel)
+    - provide system console messages
+      - typically /dev/console
+- deckclose()
+  - close connection
+    - standard descriptors
+    - tty devices
+- deckwrite()
+- deckread()
+- deckprintf()
+- deckrec()
+

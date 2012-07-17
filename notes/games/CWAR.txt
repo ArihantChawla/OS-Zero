@@ -1,0 +1,87 @@
+Cyber War
+---------
+
+Cyber War shall be a programming game. We will have a virtual machine with a
+simple instruction set as well as possibly code generation and other programming
+tools for it.
+
+CW Machine Environment
+----------------------
+
+Machine Status Word
+-------------------
+- ZF	- zero flag
+- CF	- carry flag
+- SF	- sign flag
+
+Registers
+---------
+
+- 8 64-bit general purpose registers, including stack and frame pointers
+  - ra (eax), rb (ebx), rc (ecx), rd (edx), re (edi), rf (esi)
+  - rsp (esp), rfp (ebp)
+
+Instruction Format
+------------------
+
+- allow for 8-bit immediate values, otherwise use additional 32-bit words
+
+0..7	- opcode (8-bit)
+8..15	- operation source and destination register IDs
+16..31	- operation flags
+32..63	- max 32-bit immediate operand in LSB byte order
+
+CW Instruction Set
+------------------
+
+Logical Operations
+------------------
+
+and	- logical AND of two operands
+or	- logical OR of two operands
+xor	- logical exclusive OR of two operands
+compl	- take 2's complement (negate bits)
+
+Arithmetic Operations
+---------------------
+
+inc	- increment operand by one
+dec	- decrement operand by one
+add	- add two operands
+sub	- subtract one operand from another
+mul	- multiply two operands
+shl	- shift operand left
+shr	- shift operand right, arithmetic (fill with sign)
+shrl	- shift operand right, logical (fill with zero)
+div	- divide operand by another
+mod	- modulus
+
+Memory Operations
+-----------------
+
+mov	- move data between registers and memory
+
+Branch Instructions
+-------------------
+
+bz	- branch if zero
+bg	- branch if greater than
+bge	- branch if greater than or equal
+bl	- branch if less than
+ble	- branch if less than or equal to
+jmp	- branch unconditionally
+
+Miscellaneous Instructions
+--------------------------
+
+ret	- return from subroutine
+wpt	- write process terminate
+
+Memory References
+-----------------
+
+immediate		- $i - constant values; 8-, 16-, 32-, or 64-bit
+indexed			- reg0[$i] - allow using program counter as base;
+indexed indirect	- reg0[reg1]
+indexed indirect scaled	- reg0[reg1, f] - f is shift count
+

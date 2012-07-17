@@ -1,0 +1,38 @@
+Earthquake C Environment Ideas
+------------------------------
+
+Copyright (C) Tuomo Venäläinen 2004-2012
+
+Here are some ideas for Earthquake. I will try to list the functions for the
+different parts in the order they would be typically invoked in a C
+preprocessor, assembler, and C compiler.
+
+In case you're running a computer hardware company or something close enough
+and are able to utilize these ideas for software development systems, I
+wouldn't turn down hardware donations for working on my projects. :) It would
+rock to port some of my software to different architectures. One thing I'm
+really interested in would be to develop a base software system for the Micro-
+soft Xbox console. It's basically x86-hardware, I just need to get the exact
+hardware manuals and possibly a console and some C development utilities + a
+kernel for it to develop projects on.
+
+Assembler
+---------
+
+This is my first idea of implementing an assembler library for Lightning.
+
+- Eassemble(source, target)	- generate assembly from preprocessed C code.
+- Egencode(code, target)	- generate machine code from assembly.
+- Eoptasm(asm, flags)		- run code optimizer on assembly code.
+
+Code Optimiser
+--------------
+
+This is my first idea for implementing a C code optimiser
+
+- Eoptswitch()		- optimize switch statement; use jump table if possible
+- Eoptifelse()		- optimize if-else statement for when we cannot guess
+  			  the maximum value for jump table size.
+- Eoptloop()		- optimize for, do-while, and while loops.
+- Epeephole()		- peephole optimizations; use whole functions as peep-
+			  holes to eliminate common expressions.

@@ -1,0 +1,10 @@
+Earthquake C Compiler Ideas
+---------------------------
+
+Basic Ideas
+-----------
+
+- the Earthquake Environment needs to use native CPU and exactly-sized words as
+  building blocks. 64-bit and bigger words need to be easy to activate.
+- Sizes bigger than and smaller than the native CPU word size need to be
+  defined in <Earthquake/typedef.h>.

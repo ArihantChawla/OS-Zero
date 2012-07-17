@@ -1,0 +1,8 @@
+.define PZERO  0
+.define PALLOC 1
+.define PFREE  2
+.define FOPEN  3
+.define FCLOSE 4
+.define FREAD  5
+.define FWRITE 6
+.define FSEEK  7

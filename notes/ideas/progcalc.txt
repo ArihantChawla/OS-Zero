@@ -1,0 +1,72 @@
+Ideas for a Programmer's Calculator
+-----------------------------------
+
+Display
+-------
+
+width	128	      16    16    16    32    32    128            16
+--------------------------------------------------------------------------------
+| stack item #7 | ARG | DSP | CPY |  +  |  -  | register EHX | ARG | DSP | CPY |
+--------------------------------------------------------------------------------
+| stack item #6 | ARG | DSP | CPY |  *  |  /  | register EGX | ARG | DSP | CPY |
+--------------------------------------------------------------------------------
+| stack item #5 | ARG | DSP | CPY |  %  |  ~  | register EFX | ARG | DSP | CPY |
+--------------------------------------------------------------------------------
+| stack item #4 | ARG | DSP | CPY |  &  |  |  | register EEX | ARG | DSP | CPY |
+--------------------------------------------------------------------------------
+| stack item #3 | ARG | DSP | CPY |  ^  | ++  | register EDX | ARG | DSP | CPY |
+--------------------------------------------------------------------------------
+| stack item #2 | ARG | DSP | CPY | --  |  (  | register ECX | ARG | DSP | CPY |
+--------------------------------------------------------------------------------
+| stack item #1 | ARG | DSP | CPY |  )  | []  | register EBX | ARG | DSP | CPY |
+--------------------------------------------------------------------------------
+| stack item #0 | ARG | DSP | CPY | ->  |  *  | register EAX | ARG | DSP | CPY |
+--------------------------------------------------------------------------------
+| expression window                           |		                       |
+|					      |     EVAL	               |
+|					      |		                       |
+--------------------------------------------------------------------------------
+| input window			              |     ENTER                      |
+--------------------------------------------------------------------------------
+
+- display mode
+  - per stack item switch display (decimal, hexadecimal, octal, binary
+- basic C operations; a simple compiler
+
+Base Operations	Brief					Operation
+---------------	-----					---------
++		addition of two bottom values		b = b0 + b1;
+-		subtraction of bottom two values	b = b0 - b1;
+*		multiplication of bottom two values	b = b0 * b1;
+/		division of bottom two values		b = b0 / b1;
+%		modulus of bottom two values		b = b0 % b1;
+ARG		toggle argument state (args #1 and #2)
+DUP		duplicate bottom value			b = b0;
+CLR		clear bottom value			b = b1;
+CPY		copy stack value to expression		arg += b0;
+POP		pop bottom value    			arg += b0; b = b1;
+PUSH		push to bottom				b0 = b = val;
+DSP		per-entry display mode			dec, hex, oct, bin
+STO		store value into memory location	*adr = val;
+RCL		retrieve value from memory location	val = *adr;
+
+C Operations
+------------
+
+Bitwise Operations
+------------------
+
+Operator	Brief			Example		# of arguments
+--------	-----			-------		--------------
+~		2's complement		a = ~0;		1
+&		bitwise AND		a &= b;		2
+|		bitwise OR		a |= b;		2
+^		bitwise exclusive OR	a ^= a;		2
+++		increment by one  	a++; 		1
+--		decrement by one	a--;		1
+(		start expression			0
+)		end expression				0
+[]		pointer indexing	ptr[x]		2
+->		pointer dereference;	ptr->x		2
+*		memory move		*ptr		1
+

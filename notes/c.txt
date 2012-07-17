@@ -1,0 +1,40 @@
+C INTERFACE
+-----------
+
+calling conventions
+-------------------
+- callee-save registers
+  - EBX, EDI, ESI, EBP, DS, ES, SS
+- caller-save registers
+  - EAX, ECX, EDX, FS, GS, EFLAGS, FPU/SIMD-registers
+
+fastcall
+--------
+- arguments in EAX, EDX, and ECX
+
+stack frame
+-----------
+struct callframe {
+    int32_t ebp; // caller frame pointer
+    int32_t eip; // return address
+};
+
+function prologue
+-----------------
+- save callee-save registers
+- push function arguments in reverse order
+- push call frame
+- push callee-save registers
+- allocate automatic variables
+  - initialize if requested
+  - uninitialized automatic variables contain garbage
+    - initialize if need be
+
+function epilogue
+-----------------
+- adjust stack pointer to point beyond automatic variables
+- pop callee-save registers
+- move frame pointer to stack pointer
+- pop frame pointer
+- return (popping return address)
+

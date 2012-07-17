@@ -1,0 +1,11 @@
+Ideas for a Graphical GDB Frontend
+----------------------------------
+
+- show contents of registers and the variables they are mapped to
+- show some code surrounding the instruction pointer disassembled (symbol-map?)
+- show hardware context (GDT segments, IDT entries, page directory and page
+  tables, etc.)
+- show I/O permission bitmaps
+- visualise things to analyse code behavior
+
+

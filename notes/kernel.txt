@@ -1,0 +1,870 @@
+Parts of the SCHEDULING section Adopted from Operating Systems Lecture Notes,
+Copyright 1997 Martin C. Rinard
+
+MULTITASKING
+------------
+- TSS must be present; has SS and ESP fields
+- ksavethr() and krunthr()
+  - similar to C library setjmp() and longjmp()
+  - driven by timer interrupt and I/O events; yield()
+  - EFLAGS must be saved
+  - stack swap done automatically by interrupt mechanism
+    - kernel entry caused by interrupt, trap, or exception
+    - kernel SS and ESP loaded from TSS
+    - user SS, ESP, EFLAGS, CS, and EIP are pushed
+    - use IRET to switch tasks
+      - runs at privilege level 0
+      - current kernel SS and ESP must be stored in a TSS (task state segment)
+
+INTERRUPT MANAGEMENT
+--------------------
+- 32 reserved exceptions (CPU/FPU) + 16 IRQs for devices
+- timer interrupt is special; used for scheduling threads in the time-sharing
+  class
+  - short slices for interactive tasks
+    - user input
+- CPU exceptions mapped to signals
+
+IA-32 cpu exceptions
+--------------------
+
+Mnemonic Number	Class	   Error Explanation
+-------- ------	-----	   ----- -----------
+DE	 0x00	fault	   no	 Divide Error
+DB	 0x01	fault/trap no	 Reserved				
+NMI	 0x02	interrupt  no	 NMI Interrupt
+BP	 0x03	trap	   no	 Breakpoint
+OF	 0x04	trap	   no	 Overflow
+BR	 0x05	fault	   no	 BOUND Range Exceeded
+UD	 0x06	fault	   no	 Invalid (Undefined) Opcode
+NM	 0x07	fault	   no	 No Math Coprocessor
+DF	 0x08	fault	   0	 Double Fault
+RES1	 0x09	????	   no	 Coprocessor Segment Overrun (reserved)
+TS	 0x0a	fault	   yes	 invalid TSS (task state segment)
+NP	 0x0b	fault	   yes	 Segment Not Present
+SS	 0x0c	fault	   yes	 Stack-Segment Fault
+GP	 0x0d	fault	   yes	 General Protection
+PF	 0x0e	fault	   yes	 Page Fault
+RES2	 0x0f	????	   no	 Intel Reserved
+MF	 0x10	????	   yes	 x87 FPU Floating-Point Error/Math Fault
+AC	 0x11	fault	   0	 Alignment Check
+MC	 0x12	abort	   no	 Machine Check
+XF	 0x13	fault	   no	 SIMD Exception
+
+faults
+------
+- stored instruction pointer (EIP) points to fault instruction
+  - may be restarted
+
+- DE
+- BR
+- UD
+- NM
+- DF
+- TS
+- GP
+- PF
+- MF
+- MC
+- XF
+
+traps
+-----
+- stored instruction pointer (EIP) points to next instruction
+  - debugging etc.
+
+- BP
+- OF
+
+aborts
+------
+- location of exception cannot be determined
+
+- MC
+
+interrupt vector (IDT)
+----------------------
+- system call interrupt is the only interrupt with a ring 3 (user) descriptor
+- program PIC to map IRQs 0x00..0x0f to interrupts 0x20..0x2f
+- use LIDT to load IDTR with physical address of IDT
+  - 6-byte (2-byte limit followed by 4-byte address) far-pointer argument
+  - map into 1-to-1 virtual-to-physical section
+
+descriptor format
+-----------------
+byte	brief
+0	EIP 7:0
+1	EIP 15:8
+2	CS 7:0
+3	CS 15:8
+4	unused (zero)
+5	access
+6	EIP 23:6
+7	EIP 31:24
+
+access byte
+-----------
+- ring 0: 0x8e for interrupt, 0x8f for trap gates (leave IF unchanged)
+- ring 3: 0xee for interrupt, 0xef for trap gates
+
+interrupt entry
+---------------
+- in case of privilege transition
+  - CPU loads SS and ESP from TSS
+  - SS and ESP are pushed on the new stack
+- CPU pushes CS, EIP, and EFLAGS + possible error code
+- CPU clears IF bit in EFLAGS to disable further interrupts (not with trap gate)
+- CPU far-jumps; loads CS and EIP
+
+interrupt stack frame
+---------------------
+
+struct intstk {
+    /* general purpose registers */
+    struct {
+        int32_t edi;
+        int32_t esi;
+        int32_t ebp;
+        int32_t ebx;
+        int32_t edx;
+        int32_t ecx;
+        int32_t eax;
+    } genregs;
+    /* prologue frame */
+    struct {
+        int32_t ds;		// data segment selector
+        int32_t es;		// ES-selector
+        int32_t fs;		// FS-selector
+        int32_t gs;		// GS-selector
+        int32_t err;		// error code, 0 if not present
+    } prolog;
+    /* arguments for IRET */
+    struct {
+        int32_t eip;	// old instruction pointer
+        int16_t cs;		// code segment selector
+        int16_t pad;	// pad to 32-bit boundary
+        int32_t eflags;	// machine status word
+    /* present in case of privilege transition */
+        int32_t uesp;	// user stack pointer
+        int32_t uss;	// user stack segment selector
+    } iret;
+};
+
+interrupt handlers
+------------------
+- must be reentrant
+  - atomic, avoid race conditions
+- simple and elegant
+  - efficient
+  - low interrupt latency
+
+interrupt entry
+---------------
+- if privilege changed, CPU pushes user SS and ESP
+- some interrupts push error code
+
+interrupt handler prologue
+--------------------------
+- if no error code, push 0
+(- push interrupt number)
+- push segment registers GS, FS, ES, and DS
+- push all registers (using PUSHA machine instruction)
+
+interrupt handler epilogue
+--------------------------
+- pop all registers (POPA machine instruction)
+(- pop interrupt number)
+- pop error code (or 0)
+- execute IRET
+  - pops EIP, CS, and EFLAGS
+  - if privilege changed, pops SS and ESP (stack switch)
+
+interrupt handler proper
+------------------------
+- prologue
+- execute handler code
+  - possibly raise a signal for process
+- epilogue
+
+kernel-mapped interrupt requests (IRQs)
+---------------------------------------
+- 16 IRQs
+- mapped to 0x20..0x2f at kernel initialization
+
+interrupt	IRQ	brief
+---------	---	-----
+0x20		0x00	timer
+0x21		0x01	[PS/2] keyboard
+0x22		0x02	cascade
+0x23		0x03	COM 2/4 (serial port)
+0x24		0x04	COM 1/3 (serial port)
+0x25		0x05	LPT (parallel port)
+0x26		0x06	floppy drive
+0x27		0x07	...
+0x28		0x08	RTC (real-time clock)
+0x29		0x09	...
+0x2a		0x0a	...
+0x2b		0x0b	...
+0x2c		0x0c	[PS/2] mouse
+0x2d		0x0d	i387 (FPU)
+0x2e		0x0e	IDE channel 0
+0x2f		0x0f	IDE channel 1
+
+exception to signal map
+-----------------------
+- Unix-style signals
+- 32 regular signals + 32 realtime ones
+
+user-mode signals
+-----------------
+
+Exception    Number  Signal
+---------    ------  ------
+DE	     0x00    SIGFPE
+DB	     0x01    N/A
+NMI	     0x02    N/A
+BP	     0x03    SIGTRAP
+OF	     0x04    N/A
+BR	     0x05    SIGBUS
+UD	     0x06    SIGILL
+NM	     0x07    SIGILL
+DF	     0x08    N/A
+RES1	     0x09    N/A
+TS	     0x0a    N/A
+NP	     0x0b    SIGSEGV
+SS	     0x0c    SIGSTKFLT
+GP	     0x0d    SIGSEGV
+PF	     0x0e    N/A
+RES2	     0x0f    N/A    
+MF	     0x10    SIGFPE
+AC	     0x11    SIGBUS
+MC	     0x12    N/A
+XF	     0x13    SIGFPE
+
+DMA I/O
+-------
+- need to flush cache lines before output, invalidate before input
+- mask DMA channel before programming it
+
+single mode
+-----------
+- a single byte is transferred
+- release and re-acquire bus for every byte
+- used by floppy disk controllers
+
+block/demand mode
+-----------------
+- transfer blocks of up to 64 kilobytes
+- READY signal used to suspend transfers briefly; not excessively, should use
+  single mode for slow peripherals instead
+- block mode transfers until count reaches zero
+  - demand transfers single bytes until DRQ is deasserted; when asserted later,
+    transfer resumes where it was suspended
+    - used by old hard disk controllers until CPUs came faster to transfer data
+
+cascade mode
+------------
+- allows DMA channel to request the bus; device responsible for placing address
+  information on the bus instead of the DMA
+  - DMA only asserts -DACK for the active channel
+  - device can do reads and writes anywhere below 16 megabytes
+    - when finished, device deasserts DRQ; DMA can return control to CPU or
+      another DMA channel
+- used to implement bus mastering
+- can be used to chain multiple DMA controllers together; DMA channel 4 for this
+- on request on DMA channels 0-3
+  - slave DMA controller asserts HLDREQ -> DRQ4
+  - primary DMA controller requests the bus from CPU using HLDREQ
+  - once bus granted, -DACK4 is asserted -> HLDA on slave
+  - slave DMA transfers data for DMA 0-3, or grants the bus to busmaster device
+
+autoinitialize mode
+-------------------
+- byte, block, or deaman transfers
+- when DMA transfer count reaches zero, counter and address set back to original
+  values
+  - as long as peripheral requests transfers, they are granted
+  - CPU must move data to fixed buffers for DMA output; out of buffers where
+    input is done
+- used on audio devices with small or no hardware sample buffers
+  - additional overhead with cicular buffer, may be necessary to eliminate
+    DMA prgramming latency when counter reaches zero
+
+SCHEDULING
+----------
+
+Here's some notes on existing schedulers as well as ideas for a possible new
+one. // vendu
+
+zero cpu scheduler (ZCS)
+------------------------
+- per-die run/wait queues (V-tree or red-black tree if CFS-like)
+- scheduler classes
+  - bottom-half kernel	(interrupts)
+  - top-half kernel	(system calls)
+  - realtime
+  - time-sharing	(interactive, batch)
+  - idle
+- interactive tasks
+  - likely to wait long time for user activity, low-latency short bursts of CPU
+    activity on user input
+  - identify by keyboard/mouse/pointer (high priority) and network (tty) input?
+  - desktop hints?
+- realtime tasks
+  - optical burns, audio-video recording, etc.
+- fork()
+  - flag for child/parent first
+- groups
+  - user
+  - process group
+  - [arbitrary] collection of processes / process groups
+- process behavior
+  - Unix philosophy; terminals and compilers
+    - terminal; long wait times, fast response
+    - compiler; CPU bound, lots of CPU bursts with little user input
+  - CPU burst, I/O burst, next CPU burst
+  - I/O bound processes perform lots of I/O operations followed by short CPU
+    bursts
+  - CPU bound processes perform lots of computations, little I/O; tend to have
+    a few long CPU bursts
+  - typically switch threads when one does I/O
+    - don't leave the CPU idle while waiting for I/O to finish
+- process states
+  - running
+  - ready [to run], aka runnable
+  - waiting [on an event / wait channel]
+  - zombie (exit status has not been read)
+  - scheduling decisions
+    - switch from running to waiting
+      - I/O request
+      - child termination
+      - synchronization
+    - switch from running to ready
+      - interrupt handler
+        - e.g. timer interrupt, I/O completion
+    - switch from waiting to ready
+      - e.g. I/O completion, lock acquisition
+    - process termination
+  - become zombie
+    - child termination
+- scheduling evaluation
+  - cpu utilization; keep high
+  - throughput; number of processes completed per unit time
+  - turnaround time; mean time from submission to completion
+  - waiting time; spent ready but not running
+  - response time; time between request and first response
+  - scheduler efficiency; keep it fast
+- batch systems
+  - want good throughput or turnaround
+- interactive systems
+  - good throughput and turnaround time, but response time is critical
+    - for some systems, throughput and turnaround not important; processes that
+      run forever
+- long term scheduling
+  - choose which ones of a process set should start to run
+    - may suspend because of I/O or preemption
+- short term scheduling
+  - decide which jobs to actually run
+- scheduling strategies
+  - FCFS (first come, first served)
+  - SJF (shortest job first)
+    - optimal with respect to average waiting time
+    - different to estimate run time
+    - long term; user gives estimate
+    - short term; must use the past to predict the future
+      - standard way
+          T(n) is time of the nth burst
+	  S(n) is predicted time of the next [CPU] burst
+	  W is weighting factor so that 0 <= w <= 1
+	  S(n+1) = W * T(n) + (1- W) * S(n).
+	  S(0) is default constant or system average
+	  - with w == 0.5, last observation has as much weight as rest of the
+            history
+	  - with w == 1, only last observation counts
+    - preemptive
+      rerun scheduling decision when process becomes ready
+      - if new process has priority over running one, preempt running and give
+        CPU up
+    - non-preemptive
+      - let running process voluntarily give CPU up
+        - allow running processes to finish their CPU bursts
+      - real-time tasks?
+  - priority scheduling
+    - CPU executes process with highest priority
+      - for processes with the same priority, use other criteria such as FCFS
+    - starvation problem
+      - need to ensure low-priority tasks get to run by adjusting priority
+  - round-robin
+    - similar to FCFS, but preemptive
+    - use time slices
+      - use timer interrupts
+      - context-switch at expiration
+    - 'rule of thumb'; want 80 % of CPU bursts to be shorter than time slice
+      - avoid excess context switching overhead
+  - multilevel queue scheduling
+    - like round-robin, but multiple queues
+    - classify processes into categories; a queue for each category
+      - e.g. system, interactive, and batch
+      - could allocate a CPU percentage for each queue
+  - multilevel feedback queue scheduling
+    - in general, complex and must be tuned
+    - anomalies and system effects
+    - priority interacts with synchronization
+      - priority inversion; low-priority locks, high-priority tries to lock and
+        blocks; middle-priority threads prevent the low-priority from running
+        and unlocking, effectively blocking the high-priority thread
+	- prevent with priority inheritance
+          - holders of locks other threads are waiting on given the priority of
+            the highest-priority waiter
+          - makes scheduling less efficient and increases overhead
+    - like multilevel, but processes can move between queues as their priorities
+      change
+    - can be used to give I/O bound and interactive processes priority over CPU
+      bound ones
+    - can prevent starvation by increasing priorities of processes that have
+      been idle for long times
+    - batch processes can benefit from long time slices
+    - example: Unix
+      - allocate the CPU fairly between processes
+      	- give priority to processes that have not recently used a lof of CPU
+          over those that have
+      - base priority 60, lower numbers represent higher priorities
+        - system clock interrupt 50-100 times a second; assume 60
+      	  - increment CPU usage field every time the interrupt handler runs
+	    - O(n) decay algorithm on number of processes - bad
+        - always run the highest priority process
+      	  - if there's a tie, run the process with the longest ready-time
+        - recalculate priority and CPU usage every second
+      	  cpuest = cpuest >> 1;
+	  prio = cpuest >> 1 + base; (base is 60)
+	  - when not using CPU, priority rises
+	  - the priorities of I/O bound and interactive processes tends to be
+            high
+	  - the priorities of CPU bound processes tends to be slow
+        - nice
+      	  priority = cpuest >> 1 + base + nice;
+  - preemption on multiprocessor systems can create convoy effect
+    - one thread acquires lock and suspends
+    - other threads come along, need to acquire the lock to proceed
+    - everyone suspends until the lock wakes up
+    - threads are synchronized, and will convoy their way through the lock,
+      serializing the computation
+      - drives down processor utilization
+  - non-blocking synchronization doesn't have convoy effect
+    - threads don't hold resources and prevent other threads from accessing them
+  - avoid idling I/O devices when CPU bound processes are being run by giving
+    I/O bound processes priority over CPU boun ones
+    - better utilization of I/O devices
+  - convoy effect happens when a set of processes need to use a resource for a
+    short time, and one process holds it for a long time, blocking the others
+    - causes poor utilization of system resources
+
+zero i/o scheduler (ZIOS)
+------------------------
+- provide QoS, fairness
+- reduce number of seeks to improve throughput
+  - merge requests
+  - wait for a while for adjacent requests (such as interrupted system calls on
+    'fast' devices)
+- avoid starvation
+  - use deadlines for operations, check during read and write intervals
+
+i/o classes
+-----------
+- realtime	(QoS, deadline)
+- sync
+  - audio
+  - video
+- human
+  - device attribute changes
+  - input
+    - keyboard
+    - mouse
+    - [other] pointer
+- disk
+  - device operations
+    - unmount
+    - mount
+  - block/buffer operations
+    - read
+    - write
+  - file/node operations
+    - read
+    - write
+    - other system calls (mkdir, open, close, seek, ...)
+- network
+  - read
+  - write
+  - DNS requests
+  - bind
+  - listen
+  - accept
+- nonseeking
+  - read
+  - write
+
+/* I/O; interrupts typically served quickly, release CPU for other use
+ * interrupts have high priority (drop into following classes)
+ */
+#define IO_INTERRUPT       0	// I/O interrupts
+/* writes may be critical; optical burns may fail if deadline not met
+ * audio device recording needs high priority, too
+ */
+
+/* on-going realtime operations prevent preemption */
+#define IO_REALTIME_WRITE  1	// real time write such as optical burn
+#define IO_REALTIME_READ   2	// real time read such as multimedia playback
+/* human interface device attribute changes need to be done before input
+ * schedule short slice immediately to process input
+ */
+#define IO_HUMAN_WRITE     3	// device attribute changes
+#define IO_HUMAN_READ      4	// device input
+/* network interfaces tend to have higher input than output rates */
+#define IO_NETWORK_READ    5	// network input
+#define IO_NETWORK_WRITE   6	// network output
+/* disk reads are higher priority than writes for multimedia playback etc. */
+#define IO_DISK_SEEK       7	// disk seeks (linear to avoid zig-zag)
+#define IO_DISK_READ       8	// disk read operations
+#define IO_DISK_WRITE      9	// disk write operations
+#define IO_NONSEEK_MISC   10	// tape rewind and retraction
+#define IO_NONSEEK_READ   11	// e.g. tape read
+#define IO_NONSEEK_WRITE  12	// e.g. tape write
+
+I/O schedulers
+--------------
+- disk seeks are slow
+- arrange disk head to move in one direction
+  - avoid zig-zag seeks
+  - favor global throughput at expense of fairness to some requests
+  - reorder requests to reduce seek time
+  - merge requests to reduce their number
+    - interrupted system calls
+- prevent starvation
+  - submit requests before deadline
+  - avoid read starvation by write
+- provide fairness among processes
+- layers
+  - policy; elevator/sorting
+    - pick request to be merged with
+    - add new request to queue
+    - select next request to be processed
+  - mechanism; queue/merging
+    - front or back merge of request and block-based operation
+    - merge two requests
+  - block drivers
+- abstraction
+  - block layer; submit_bio() -> generic_make_request() -> __make_request()
+  - i/o scheduler
+    - elevator
+      - internal queue
+      - enqueue functions
+      	- elv_may_queue()
+	- called from __make_request()
+	  - elv_merge(), elv_add_request(), elv_queue_empty()
+        - sort/merge
+      - called from block_driver
+        - elv_remove_request(), elv_next_request(), elv_completed_request()
+      - queue
+        - ll_merge_requests_fn(), ll_front_merge_fn(), ll_back_merge_fn()
+    - dequeue functions
+      - prioritize
+    - external queue
+    - low-level device driver
+      - XXX_request_fn()
+
+noop
+----
+- truly random devices (with no need to seek)
+- requests in FIFO order
+- only the previous request tested for merge
+
+deadline
+--------
+- goal
+  - reorder requests to improve I/O performance, ensure no starving
+- expire times
+  - read 500 ms, write 5 secs
+- inserts
+  - sort-by-start-sector queue (read & write queues)
+  - FIFO lists sorted by expire time
+- requests
+  - pulled from sorted queues
+  - if the head request expires, start from first request, process in order
+
+anticipatory
+------------
+- reorder requests
+  - optimize seeks
+  - allocate resources proportionally
+- sometimes wait for more requests
+  - short idle intervals
+  - improve throughput
+  - achieve desired proportions
+    - say 1:2, A:B; A-B-B-A-B-B-...
+
+    benefit = best.seektime - next.seektime;
+    cost = next.median_thinktime;
+    waitduration = (benefit > cost) ? next.think95pct : 0;
+
+    wait for process if
+    a) it has received less than its share, AND
+    b) thinktime < threshold (e.g., 3 ms)
+- policy
+  - one-way elevator (limited backward seeks)
+  - FIFO expiration for reads and writes
+    - when expires, interrupt elevator sweep
+  - read and write batching
+    - alternate read and write batches
+    - FIFO timeouts tested only during according batch
+  - read anticipation
+    - at end of read, examine next candidate read from sorted list and decide
+      whether to wait for 'better' request
+  - statistics
+    - per request
+      - last sector of last request
+      - exit probability
+    - per process
+      - last completion time
+      - last position
+      - mean think time (thinktime = jiffies - last completion)
+      - mean seek distance (newstart - lastend [sectors])
+
+cfq
+---
+- goal
+  - provide fair bandwidth allocations
+    - per-process, per-process-group, per-user, per-user-group
+- per-initiator request queues serviced round-robin (1 request at a time)
+  - data writeback usually performed by pdflush kernel threads
+    - all writes share bandwidth of pdflush threads
+
+CPU schedulers
+--------------
+- performance
+  - response
+  - throughput
+- control
+  - urgency
+  - importance
+  - resource allocation
+- mechanism
+  - priority
+    - fixed; urgency, importance (dlio, uio, sys)
+    - dynamic
+      - earliest deadline; urgency
+      - decay usage; importance, throughput, response
+  - proportional share; resource allocation
+- realtime
+  - rate monotonic
+  - earliest deadline first
+- dynamic
+  - automatic adjustments
+  - base priority (nice)
+  - time slice, aka quantum
+- i/o priority higher than cpu
+  - monitor process characteristics
+    - number of i/o requests and/or amount of data
+    - number of quanta and/or percentage of quantum used (recently)
+    - interactivity; give high priority to user input, lower to device output
+- decay usage: adjust priority of waiting processes up, running processes down
+- processor usage: adjust running thread's priority at yield, end of quantum,
+  and potential preemption (wakeups)
+  - possibly scale adjustment by current system load; drop priority more quickly
+    under heavy load
+  - OS X: when done waiting, multiply usage by (5/8)^n, n is the # of eights of
+    a second spent waiting; (5/8)^n ~= 0 for n >= 30, priority = base + (5/8)^n
+  - Windows: linear decay, small boost for disk waiters, large boost for user
+    input waiters
+- proportional-share
+  - weighted round-robin
+    - round-robin equally often, longer slices to larger resource allocations
+  - weighted fair queueing / stride / virtual time round-robin
+    - uniform quanta, larger allocations run more often
+  - lottery
+    - uniform quanta, select by weighted odds rather than rotation
+  - weighted round-robin has fewer switches, fair queueing gives more consistent
+    proportions
+
+CFS
+---
+- rather than per-nice quanta, assign each nice-level a weight and calculate
+  slices based on weights of runnable threads
+  - slice is weight / total weight of runnable threads
+- switch-rate is dependent on system load
+- sacrifice some throughput to retain responsiveness
+  - responsiveness level is controlled by target time that a thread may wait
+    between opportunities to run
+    - administrator-settable, 6 ms default for uniprocessor
+  - at extremely high load, don't sacrifice throughput; lower bound on how
+    little time threads can receive
+    - new threads will increase time to cycle through threads, not reduce per-
+      thread time
+- virtual runtime
+  - keep track of thread total run-time in units scaled in accordance with its
+    weight
+    - niceness 0 credited with 1 nano of running for each nanosecond it's run,
+      niceness 5 with approximately 3 nanos per nano run (1024/335)
+  - keeping threads running in proper proportion -> run the one furthest
+    behind
+    - stick with the current thread until time slice runs out or preempted by
+      a waking thread
+    - pick a thread with minimum virtual runtime
+      - multiply times with nice-dependent scaling factors
+    - for short waits, allow virtual runtime catchup
+    - for waits longer than threshold, set virtual runtime to slightly less
+      than the minimum of previously runnable threads
+    - newly created threads get virtual runtime slightly greater than the
+      minimum of previously runnable threads
+    - sort run queue in order of virtual runtime of runnable threads
+      - red-black tree
+      - pick the leftmost item
+        - switch at expiration of time slice or when a new thread enters the
+	  run queue, provided the current thread hasn't just recently started
+	  running (lower limit on how quickly a thread can be preempted)
+- prevents waking threads from starving those that have remained runnable
+
+- tasks strive to get scheduled once during sched_period:
+  sched_nr_latency = (sysctl_sched_latency / sysctl_sched_min_granularity);
+  sched_period = (nr_running > sched_nr_latency)
+    ? sysctl_sched_latency
+    : ((nr_running * sysctl_sched_latency) / sched_nr_latency)
+- if each runnable task runs its sched_slice(), it has spent sched_period time,
+  and each task will have run an equal amount of time proportional to its weight
+- when a new task becomes runnable
+  - it cannot run before all the other tasks have run
+  - the extra weight on the runqueue will shorten the slices of all other tasks
+- group scheduling
+  - user ID
+  - cgroup pseudo filesystem
+
+ULE
+---
+- 3 tables of run queues
+  - bucketed priorities
+  - 1) interrupt & realtime
+  - 2) time sharing
+  - 3) idle
+- fairness
+  - current & next queues
+    - empty current queue
+    - switch current & next
+    - every thread will get a slice every two queues regardless of priority
+- thread
+  - base priority
+  - slice size
+  - interactivity score
+- low latency
+  - interactive tasks are inserted to current queue
+    - low latency response
+  - interrupt and realtime threads are inserted to the current queue
+  - non-interactive tasks are inserted to next queue
+- running thread not on any queue, but nice and load settings are accounted for
+- interactivity
+  - should the desktop notify the kernel of the currently focused window/task?
+    and/or the kernel detect such tasks by who the events are dispatched to?
+  - voluntary sleep time
+    - passed between sleep() and wakeup()
+    - sleeping on a condition variable
+  - run time
+    - number of ticks the thread is running (or time units?)
+  - interactive threads typically have high sleep times (waiting for user input)
+    followed by short bursts of CPU activity (processing user requests)
+
+    m = maxscore >> 1;
+    if (sleeptime > runtime) {
+        score = m / (sleep / run);
+    } else {
+        score = m / (run / sleep) + m;
+    }
+  - threads with score below threshold are marked interactive
+
+  - sleep and run time are reduced to a fraction when limit reached
+    - preserves relative sizes, forgets past behavior
+    - changes from interactive to non-interactive covered quickly
+      - processes forked from interactive shells
+  - the threshold and amount of history kept are two of the most important
+    factors in keeping the system interactive under load
+- priority calculator
+  - only time sharing threads have calculated priorities, the rest have static
+  - priority derived by interactivity, after that the nice value is added;
+    negative nice lowers priority
+- nice/slice calculator
+  - keep track of threads in the queues with each nice value
+  - store current minimum nice value
+  - nice window
+    - only threads with nice values within 20 of the least nice thread (minimum
+      nice value) obtain slices
+      - slice value is inversely proportional to the difference between nice and
+      	minimum nice
+	- nicer threads get smaller slices
+    - the threads outside the nice window
+      - zero slices
+      - when selected to run, slice is reevaluated and thread place to next queue
+- slices are 10 to 140 milliseconds
+  - least nice thread gets 140, the nicest thread 10
+    - 40 nice values, differences of less than three don't change the slice but
+      have small affect on priority
+  - interactive threads get 10 ms
+  - slice value is meaningless for non-time-sharing threads
+- real time threads run until preempted by higher priority such thread
+- idle threads run as long as no other threads are runnable
+- CPU usage estimator
+  - keep track of clock ticks within a sliding window of thread's execution time
+    - grow window up to one second past threshold, scale back down again
+      - keeps ratio of run time to sleep time the same after scaling
+      - makes the actual preserved count smaller
+      - new ticks or sleeps have a greater impact than old behavior
+  - O(1) implementation requires event-driven CPU usage estimator
+    - hook in the API to use whenever CPU usage is read
+      - adjusts current tick window and tick counts
+      - rate limiter to prevent zero CPU usage when top(1) refreshed constantly
+SMP
+---
+- affinity
+  - prevent unnecessary migration while making good use of CPU resources
+    - balance cost with the cost of an idle CPU
+- load-balancing
+  - pull method
+    - prevent any CPU from idling
+    - idle CPU steals thread from a non-idle one
+      - check queues of other CPUs for runnable threads when idle
+      	- with small numbers of processors it's less expensive to lock the
+	  queues than to idle
+      	- select highest priority thread from the most loaded kseq
+  - push
+    - periodic task evalutes load and evens it out
+    - run timeout twice a second
+      - pick two most unbalanced kseqs
+      - migrate some threads to the kseq with the lowest load
+        - if kseqs imbalanced by only one thread, one thread moved from one
+	  kseq to the next
+	- consider two processor system, three compute-bound processes; one has
+	  affinity for the first processor, two for the other; if one thread
+	  not periodically moved, the first-processor-thread would complete
+	  twice as quickly as the ones on the second processor - UNFAIR!)
+SMT/HT
+------
+- logical CPUs share some resources; not as powerful as another physical CPU
+- take advantage of the lack of penalty for migrating threads to a CPU on the
+  same core
+  - map multiple logical CPUs to the same kseq
+- treat logical CPUs as less capable than true physical cores
+
+UPDATES
+-------
+- circular queue
+  - insertion index
+    - moves down
+    - priorities are relative to the index
+- calculate cpu utilization over last 10 seconds
+  - priority based on this metric
+  - deal better with CPU hogs
+  
+synchronization
+---------------
+- spinlock
+- mutex (binary semaphore)
+- semaphore
+- rwlock
+- monitor
+- condition variable

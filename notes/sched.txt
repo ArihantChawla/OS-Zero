@@ -1,0 +1,26 @@
+Zero Thread Scheduler
+---------------------
+
+Thread Priorities
+-----------------
+- fixed realtime priority for certain system tasks
+  - audio synchronisation
+  - video synchronisation
+  - user input
+- deadline requirements
+- interactive threads
+- batch threads
+- the idle thread
+
+- kernel HZ is 250 [timer interrupts per second]
+- give high priority to short-lived low-latency tasks
+  - audio buffer synchronisation	10 Hz
+  - screen buffer synchronisation	125 Hz
+  - keyboard input			25 Hz
+  - mouse input				50 Hz
+- give high interactive priority to newly created threads
+- adjust priority within class with increment, wrap around to zero at maximum
+- TODO: class transitions
+  - keyboard and mouse input	- interactive class
+  - I/O on non-HID descriptors	- batch class
+

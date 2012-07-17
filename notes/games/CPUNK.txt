@@ -1,0 +1,5 @@
+This directory currently contains ideas for a cyberpunk-themed room exploration
+game. I think we could do a rogue-like with cyberpunk-twists such as program on
+program combat mode. People could develop their programs in a C-like interface.
+The game would not be violent, instead the only physical combat would be martial
+arts.

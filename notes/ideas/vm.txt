@@ -1,0 +1,74 @@
+Virtual Machine Ideas for Software Developers
+---------------------------------------------
+- implement a virtual machine running bytecode developed in its own assembly
+  dialect as well as C
+- design and implement simple assembler + compiler
+
+Register Set
+------------
+- 8 32-bit general purpose registers EAX, EBX, ECX, EDX, EFX, EGX, EHX, EIX
+- stack pointer register ESP
+- frame pointer register EFP
+- instruction pointer    EIP
+
+Instruction Set
+---------------
+
+Memory Addressing	
+-----------------
+$i			immediate		1	VAL
+*%reg			direct			1	*ptr
+%reg1[%reg2]		indirect		2	%reg1[%reg2]
+%reg[$i]		indirect indexed	2	ptr[$i]
+(reg1, reg2, reg3)	scaled indexed indirect	3	reg1[reg2 << reg3]
+
+Opcodes
+-------
+
+struct opcode {
+    uint8_t  op;	// instruction
+    uint8_t  args;	// first and second register arguments
+    uint16_t imm;	// small immediate value such as offset
+    uint32_t val[0];	// additional data
+};
+
+Branches and Function Calls
+---------------------------
+
+OP     	      Mnemonic	Brief
+--------      ----	-----
+0x00	      NOP	no operation
+0x01	      BRA	branch
+	      - bz
+	      - bnz
+	      - beq
+	      - bne
+	      - blt
+	      - ble
+	      - bgt
+	      - bge
+0x02	      ENTER
+0x03	      RET	return from subroutine	RET
+0x04	      IRET	interrupt return with stack switch
+
+Logical Operations
+------------------
+
+0x05	      COMP	2's complement
+0x06	      AND	logical bitwise AND
+0x07	      OR	logical bitwise OR
+0x08	      XOR	logical bitwise XOR (exclusive OR)
+
+Arithmetic Operations
+---------------------
+
+0x09	      INC	increment by one
+0x0a	      DEC	decrement by one
+0x0b	      ADD	addition
+0x0c	      SUB	subtraction
+0x0d	      MUL	multiplication
+0x0e	      DIV	division
+0x0f	      MOD	modulus
+
+Instruction Reference
+---------------------

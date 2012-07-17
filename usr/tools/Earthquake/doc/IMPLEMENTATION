@@ -1,0 +1,54 @@
+Lightning C Tool Library Implementation
+---------------------------------------
+
+Copyright (C) 2004 Tuomo Venäläinen
+
+The first goal of the Lightning C Tool Library is to provide preprocessing and
+compilation facilities for compiling ANSI "C89" code on x86-family CPUs. I'm
+developing the Library on a dual-processor Intel Pentium 3 workstation, so it's
+possible for me to later play with the MMX and SSE instruction sets. :) I think
+I will just be lazy and only support CPUs from the Pentium up.
+
+Lightning C Tool Library became as my idea for a new compiler to build my whole
+project, Lightning. The other parts of the project include ideas for a new
+operating system kernel, a window system and other subprojects I have come up
+with. Tools for programmers as well. Everything, including the documentation,
+is being written mostly for the programmer at the moment. The point is to make
+programming as fabulous experience as possible. Everything needed to build
+*efficient* applications will be present; for example, I'm paying attention to
+detecting hardware details such as CPU page and cache-line sizes easily.
+(PAGE_SIZE and CACHE_LINE_SIZE macros in <sys/param.h>.)
+
+More on Lightning elsewhere. Oh, the compiler framework will not be written for
+an optimizing C compiler. Perhaps optimizations will be included later. The fun
+of this is that the programmer gets to play with optimizing code and can
+perhaps suggest clean and easily (less bugs) doable optimizations for the
+compiler framework.
+
+Support for languages other than the One True Language will be thought about
+later. Ah, I will be working on a new assembler as well; more exactly, on a new
+assembler framework library. Programs developed with the C Tool Library will
+support this assembler library natively.
+
+And a bit more on the compiler framework. It will (first?) only do the
+absolutely necessary optmizations such as proper memory alignments of data and
+instructions (functions, labels, jumps, structures, unions, etc.). Larger
+blocks of data (it's good to pack smaller structures into a larger one to only
+have one or a few global structures) can be page-aligned with the
+__CC_PAGE_ALIGN__ attribute; this can be defined as a macro for other compilers
+to be portable. Another attribute is __CC_CACHE_ALIGN__ for aligning things to
+cache-line boundaries.
+
+I'm trying to make the library also an example of coding good C. It's the
+latest code I'm working on and so should be the best example of my code. I've
+learnt a lot working on several side-projects to my side-projects and have come
+to realizations on good style and such things as I've learnt more. Lightning
+includes a draft of Lightning Style Guide (doc/STYLE). To say one thing about
+it, I'm using abbreviations to keep symbols to around 10 or so alphabets long.
+For an example, I have a function called __cppfreetok() to release memory used
+by a preprocessor token. Lightning C Tool Library will support arbitrary-length
+identifiers with default allocation size of 128 bytes per identifier to keep
+the probability of having to allocate more very unlikely. It allocates more
+dynamically using the next power of two for new allocation size (256, 512, and
+so on).
+

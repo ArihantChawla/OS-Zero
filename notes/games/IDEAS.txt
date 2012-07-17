@@ -1,0 +1,118 @@
+/* Just some quick thoughts, Copyright (C) 2011 Tuomo Venäläinen */
+
+Combat Zone
+-----------
+
+- a war combat game with programmable units such as tanks, airplanes, missiles,
+  and such
+- battleship-style seek and destroy
+
+Transportation
+--------------
+airplane
+parachute
+tank			cannons, machine gun, haupitz
+ship			rifles, pistols, knives
+jeep			machine gun + soldiers
+submarine		torpedoes, missiles
+boat			machine gun
+
+Combat Units
+-------------
+
+bomber airplane		drops a straight line of bombs
+fighter airplane	combats enemy airplanes and ground targets
+rocket launcher		lighter form of bombing than bomber
+missile launcher	hardcore bombing
+grenade troops		wider-range mid-heavy bombing
+warhead base		nuclear blast - generally not accepted
+
+Combat Methods
+--------------
+fight			close range
+pistol			short range
+rifle			long range
+machine gun		different types
+hand-grenade		throw inside buildings
+rocket			ground-to-ground or ground-to-air
+
+Game Controls
+-------------
+
+clicking a unit makes it the actively player-controlled one (cursor keys etc.)
+
+unit menu
+---------
+- prog			program unit
+- move			set path or target
+- attack		attack enemy troops
+- retreat		escape from enemy
+
+arms menu
+---------
+
+DP2 Armed Combat
+----------------
+
+item		action	against	block			damage	luck	range
+----		------	-------	-----			------	----	-----
+martial		fight	men	armor + helmet		1d4	---	1
+pistol		fire	men	armor + helmet		1d8	1d4	2
+rifle		fire	men	armor + helmet		1d16	1d8	6
+machine gun	fire	men	armor + helmet		1d32	1d16	4
+grenade		throw	men	armor + helmet		1d64	1d16	2
+rocket  	launch	tank	panzer			2d64	1d32	8
+bombing		request	any	panzer			1d128	1d64	any
+warhead		launch	target	anti-missile defense	2d128	1d128	any
+
+D20 Armed Combat
+----------------
+
+item		action	against	block			damage	luck
+----		------	-------	-----			------	----
+martial		fight	men	armor + helmet		1d4	---
+pistol		fire	men	armor + helmet		2d4	1d4
+rifle		fire	men	armor + helmet		2d6	1d4
+machine gun	fire	men	armor + helmet		2d8	1d6
+grenade		throw	men	armor + helmet		2d10	1d10
+rocket  	launch	tank	panzer			3d12	1d12
+warhead		launch	target	anti-missile defense	4d20	1d20
+
+close combat
+------------
+- roll attack instinct
+- roll defense instinct
+- if defense faster, roll opponent attack damage
+  - otherwise, roll attack damage
+- roll defense + luck
+- if attack stronger, subtract hitpoints
+
+armed combat
+------------
+
+- roll damage
+- add luck to defense
+- if damage bigger, subtract opponent hitpoints
+- repeat for counter-attack if opponent alive
+
+backup menu
+-----------
+- navy			ask for mariner troops
+- tank			call closest tank for support
+- rockets		request rocket launch
+- bomber		call for bomber airplane
+- warhead		ask for nuclear attack
+
+action			available
+------			---------
+turn anticlockwise	every turn
+turn clockwise		every turn
+attack			every turn
+retreat			every turn
+air support		in 1xd10 + 1xd4 turns
+navy support		in 1xd20 + 1xd10 turns
+rocket support		in 1xd6 turns
+grenade support		in 1xd8 turns
+tank support		in 1xd20 turns
+bomber support		in 2xd20 turns
+

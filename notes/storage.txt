@@ -1,0 +1,37 @@
+Zero Storage Management
+-----------------------
+- the following is a list of storage device types in a sort expected speed order
+  (slowest first)
+
+type	brief			seek
+----	-----			----
+fd	floppy drive		random, slow
+rt	rewindable tape		rewind, very slow
+mo	magneto-optical drive	randow, slow
+od	optical drive		random, slow
+hd	hard drive 		random, relatively slow
+mc	memory card		random, fast
+ssd	solid state drive	random, very fast
+
+techniques
+----------
+- seek-wait
+  - wait a given time before seek
+    - favor sequential operations
+- read-ahead
+  - read the next few blocks predictively
+  - reduce number of read operations
+- buf-nosave
+  - avoid saving buffers unlikely to be processed again
+- synchronous I/O
+
+operation attributes
+--------------------
+- optical burn
+  - sequential writes
+  - buf-nosave
+- multimedia playback
+  - sequential reads
+  - read-ahead
+  - buf-nosave
+

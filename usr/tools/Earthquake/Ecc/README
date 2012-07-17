@@ -1,0 +1,9 @@
+This is the root directory for the Lightning Experimental C Compiler. First,
+I would have called it simply Lightning C Compiler (lcc), but there's already a
+compiler called lcc so I had to think of something else. I wasn't annoying
+enough to call it, say, Vendu's C Compiler. >:)
+
+Lecc was started as a rewrite and librarization of Fabrice Bellard's Tiny C
+Compiler (TCC). Greetings Fabrice, I need to find a way to harness you into
+the Lightning project. ;)
+

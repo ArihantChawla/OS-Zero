@@ -1,0 +1,15 @@
+The 80387 Math Coprocessor
+--------------------------
+
+- stack-based machine for computing mathematical calculation
+- 8 80-bit stack elements + status word
+  - 64-bit decimal part, 15-bit exponent, 1-bit sign
+
+Instruction Categories
+----------------------
+- data transfer
+- arithmetic
+- transcendental
+- constants
+- comparison
+- control
