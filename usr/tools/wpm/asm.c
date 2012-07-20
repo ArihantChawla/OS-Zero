@@ -136,6 +136,7 @@ static struct token  *tokentail;
 static struct asmsym *symqueue;
 static uint32_t       _start;
 static uint32_t       _startset;
+static uint32_t       inputread;
 static uint8_t       *linebuf;
 static uint8_t       *strbuf;
 
@@ -1496,6 +1497,9 @@ asmtranslate(uint32_t base)
     struct token *token = tokenqueue;
     tokfunc_t    *func;
 
+    if (tokenqueue) {
+        inputread = 1;
+    }
     while (token) {
         func = tokfunctab[token->type];
         if (func) {
@@ -1581,7 +1585,7 @@ asmreadfile(char *name, uint32_t adr)
         if (done) {
             if (feof(fp)) {
                 loop = 0;
-                done = 0;
+//                done = 0;
 
                 break;
             }
@@ -1607,7 +1611,7 @@ asmreadfile(char *name, uint32_t adr)
                         fprintf(stderr, "overlong line\n");
                         
                         exit(1);
-                }
+                    }
                     ch = fgetc(fp);
                 }
                 *str = '\0';
@@ -1770,6 +1774,11 @@ main(int argc, char *argv[])
         adr = asmtranslate(adr);
         asmresolve(WPMTEXTBASE);
         asmremovesyms();
+    }
+    if (!inputread) {
+        fprintf(stderr, "empty input\n");
+
+        exit(1);
     }
     wpminitthr(_start);
     pause();
