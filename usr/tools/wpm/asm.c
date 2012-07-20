@@ -1771,9 +1771,13 @@ main(int argc, char *argv[])
     memset(physmem, 0, WPMTEXTBASE);
     for (i = 1 ; i < argc ; i++) {
         asmreadfile(argv[i], adr);
-        adr = asmtranslate(adr);
-        asmresolve(WPMTEXTBASE);
-        asmremovesyms();
+        if (!tokenqueue) {
+            fprintf(stderr, "WARNING: no input in %s\n", argv[i]);
+        } else {
+            adr = asmtranslate(adr);
+            asmresolve(WPMTEXTBASE);
+            asmremovesyms();
+        }
     }
     if (!inputread) {
         fprintf(stderr, "empty input\n");

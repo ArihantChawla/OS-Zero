@@ -1,6 +1,11 @@
 Zero Thor Changelog
 -------------------
 
+0.2.5
+-----
+- fixed a bug dardevelin pointed out: incorrect behavior of wpm assembler with
+  empty input
+
 0.2.4
 -----
 - fixed a bug where the wpm assembler was queueing most tokens twice, but only
