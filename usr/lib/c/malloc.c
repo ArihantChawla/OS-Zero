@@ -132,7 +132,7 @@ typedef pthread_mutex_t LK_T;
 #include <zero/unix.h>
 //#include <mach/param.h>
 
-#define TUNEBUF 1
+#define TUNEBUF 0
 /* experimental */
 #if (PTRBITS > 32)
 #define TUNEBUF 1
@@ -145,7 +145,7 @@ typedef pthread_mutex_t LK_T;
 #define SLABTINYLOG2  16 /* small-size block */
 #define SLABLOG2      19 /* base size for heap allocations */
 #define MAPMIDLOG2    21
-#define MAPBIGLOG2    23
+#define MAPBIGLOG2    22
 #else
 #define BLKMINLOG2    5  /* minimum-size allocation */
 #define SLABTEENYLOG2 12 /* little block */
@@ -197,10 +197,8 @@ typedef pthread_mutex_t LK_T;
 #define nmagslablog2(bid) (ismapbkt(bid) ? nmaplog2(bid) : nslablog2(bid))
 #define nslablog2(bid)    0
 #define nmaplog2(bid)     0
-#if 0
-#define nslablog2(bid)    ((bid) < SLABTINYLOG2 ? 0 : 1)
-#define nmaplog2(bid)     ((bid) < MAPMIDLOG2 ? 1 : 0)
-#endif
+#define nslablog2(bid)    0
+#define nmaplog2(bid)     0
 #endif
 
 #if (TUNEBUF)

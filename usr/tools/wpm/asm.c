@@ -1,3 +1,8 @@
+#define ASMDEBUG    0
+#define ASMBUF      0
+#define ASMPROF     0
+#define READBUFSIZE 65536
+
 #include <stdio.h>
 #include <stdlib.h>
 #include <stdint.h>
@@ -6,10 +11,15 @@
 #include <unistd.h>
 #include <zero/cdecl.h>
 #include <zero/param.h>
+#if (ASMBUF)
+#include <errno.h>
+#include <fcntl.h>
+#endif
+#if (ASMPROF)
+#include <zero/prof.h>
+#endif
 #include <wpm/asm.h>
 #include <wpm/wpm.h>
-
-#define ASMDEBUG 0
 
 typedef struct token * tokfunc_t(struct token *, uint32_t, uint32_t *);
 
@@ -139,6 +149,67 @@ static uint32_t       _startset;
 static uint32_t       inputread;
 static uint8_t       *linebuf;
 static uint8_t       *strbuf;
+#if (ASMBUF)
+struct readbuf {
+    void    *data;
+    uint8_t *cur;
+    uint8_t *lim;
+};
+struct readbuf       *readbuftab;
+static int            nreadbuf = 16;
+static int            readbufcur = 0;
+#endif
+
+#if (ASMBUF)
+static int
+asmgetc(int fd, int bufid)
+{
+    struct readbuf *buf = &readbuftab[bufid];
+    ssize_t         nleft = READBUFSIZE;
+    ssize_t         n;
+    int             ch = EOF;
+    int             i = nreadbuf;
+
+    if (bufid >= nreadbuf) {
+        nreadbuf <<= 1;
+        readbuftab = realloc(readbuftab, nreadbuf * sizeof(struct readbuf));
+        for ( ; i < nreadbuf ; i++) {
+            readbuftab[i].data = malloc(READBUFSIZE);
+        }
+    }
+    if (buf->cur < buf->lim) {
+        ch = *buf->cur++;
+    } else if (buf->cur == buf->lim) {
+        n = 0;
+        while (nleft) {
+            n = read(fd, buf->data, READBUFSIZE);
+            if (n < 0) {
+                if (errno == EINTR) {
+                    
+                    continue;
+                } else {
+                    
+                    return EOF;
+                }
+            } else if (n == 0) {
+
+                break;
+            } else {
+                nleft -= n;
+            }
+        }
+        if (nleft == READBUFSIZE) {
+
+            return EOF;
+        }
+        buf->cur = buf->data;
+        buf->lim = (uint8_t *)buf->data + READBUFSIZE - nleft;
+        ch = *buf->cur++;
+    }
+
+    return ch;
+}
+#endif
 
 void
 printtoken(struct token *token)
@@ -206,8 +277,6 @@ asmfreetoken(struct token *token)
 static void
 asmqueuetoken(struct token *token)
 {
-    fprintf(stderr, "QUEUE: ");
-    printtoken(token);
     token->next = NULL;
     if (!tokenqueue) {
         token->prev = NULL;
@@ -469,8 +538,18 @@ asminitop(void)
 void
 asminitbuf(void)
 {
+#if (ASMBUF)
+    int i;
+#endif
+
     linebuf = malloc(LINELEN);
     strbuf = malloc(LINELEN);
+#if (ASMBUF)
+    readbuftab = malloc(nreadbuf * sizeof(struct readbuf));
+    for (i = 0 ; i < nreadbuf ; i++) {
+        readbuftab[i].data = malloc(READBUFSIZE);
+    }
+#endif
 
     return;
 }
@@ -831,12 +910,10 @@ asmgettoken(uint8_t *str, uint8_t **retptr)
     if ((*str) && (isdigit(*str) || *str == '-')) {
         val = asmgetindex(str, &ndx, &str);
         if (val < NREG) {
-            fprintf(stderr, "#1");
             token1->type = TOKENINDEX;
             token1->data.ndx.reg = REG_INDEX | val;
             token1->data.ndx.val = ndx;
         } else if (asmgetvalue(str, &val, &str)) {
-            fprintf(stderr, "#2");
             token1->type = TOKENVALUE;
             token1->data.value.val = val;
             token1->data.value.size = size;
@@ -1560,11 +1637,21 @@ asmresolve(uint32_t base)
     return;
 }
 
+#if (ASMBUF)
+void
+asmreadfile(char *name, uint32_t adr, int bufid)
+#else
 void
 asmreadfile(char *name, uint32_t adr)
+#endif
 {
     uint32_t      buflen = LINELEN;
+#if (ASMBUF)
+    int           fd = open((const char *)name, O_RDONLY);
+#else
     FILE         *fp = fopen((char *)name, "r");
+#endif
+    int           eof = 0;
     struct token *token = NULL;
     struct val   *def;
     uint8_t      *fname;
@@ -1583,7 +1670,7 @@ asmreadfile(char *name, uint32_t adr)
 
     while (loop) {
         if (done) {
-            if (feof(fp)) {
+            if (eof) {
                 loop = 0;
 //                done = 0;
 
@@ -1592,8 +1679,12 @@ asmreadfile(char *name, uint32_t adr)
             str = linebuf;
             done = 0;
             len = 0;
+#if (ASMBUF)
+            ch = asmgetc(fd, bufid);
+#else
             ch = fgetc(fp);
-            if (feof(fp)) {
+#endif
+            if (ch == EOF) {
                 loop = 0;
 
                 break;
@@ -1601,10 +1692,7 @@ asmreadfile(char *name, uint32_t adr)
 #if (WPMDB)
                 line++;
 #endif
-                while (!feof(fp) && ch != '\n') {
-                    if (feof(fp)) {
-                        loop = 0;
-                    }
+                while (ch != EOF && ch != '\n') {
                     *str++ = (uint8_t)ch;
                     len++;
                     if (len == buflen) {
@@ -1612,7 +1700,12 @@ asmreadfile(char *name, uint32_t adr)
                         
                         exit(1);
                     }
+#if (ASMBUF)
+                    ch = asmgetc(fd, bufid);
+#else
                     ch = fgetc(fp);
+#endif
+                    eof = (ch == EOF);
                 }
                 *str = '\0';
                 str = linebuf;
@@ -1623,7 +1716,7 @@ asmreadfile(char *name, uint32_t adr)
                 if (str > lim) {
                     done = 1;
                 }
-                fprintf(stderr, "BUF: %s\n", str);
+//                fprintf(stderr, "BUF: %s\n", str);
             }
         } else if (!strncmp((char *)str, ".define", 7)) {
             str += 7;
@@ -1665,7 +1758,12 @@ asmreadfile(char *name, uint32_t adr)
                 }
                 if (*str == '>') {
                     *str = '\0';
+#if (ASMBUF)
+                    asmreadfile((char *)fname, adr, ++bufid);
+                    bufid--;
+#else
                     asmreadfile((char *)fname, adr);
+#endif
                     asmresolve(adr);
                     asmremovesyms();
                 } else {
@@ -1689,7 +1787,12 @@ asmreadfile(char *name, uint32_t adr)
                 }
                 if (*str == '>') {
                     *str = '\0';
+#if (ASMBUF)
+                    asmreadfile((char *)fname, adr, ++bufid);
+                    bufid--;
+#else
                     asmreadfile((char *)fname, adr);
+#endif
                     asmresolve(adr);
                     asmremovesyms();
                 } else {
@@ -1707,7 +1810,11 @@ asmreadfile(char *name, uint32_t adr)
             /* comment */
             comm = 1;
             while (comm) {
+#if (ASMBUF)
+                ch = asmgetc(fd, bufid);
+#else
                 ch = fgetc(fp);
+#endif
                 if (ch == EOF) {
                     loop = 0;
 
@@ -1717,13 +1824,18 @@ asmreadfile(char *name, uint32_t adr)
                     line++;
 #endif
                 } else if (ch == '*') {
+#if (ASMBUF)
+                    ch = asmgetc(fd, bufid);
+#else
                     ch = fgetc(fp);
+#endif
                     if (ch == '/') {
                         
                         comm = 0;
                     } else if (ch == EOF) {
                         comm = 0;
                         loop = 0;
+                        eof = 1;
                     }
                 }
             }
@@ -1749,7 +1861,11 @@ asmreadfile(char *name, uint32_t adr)
             }
         }
     }
+#if (ASMBUF)
+    close(fd);
+#else
     fclose(fp);
+#endif
 
     return;
 }
@@ -1759,6 +1875,9 @@ main(int argc, char *argv[])
 {
     int       i;
     uint32_t  adr = WPMTEXTBASE;
+#if (ASMPROF)
+    PROFTICK(tick);
+#endif
 
     if (argc < 2) {
         fprintf(stderr, "usage: asm <file1> ...\n");
@@ -1770,13 +1889,25 @@ main(int argc, char *argv[])
     wpminit();
     memset(physmem, 0, WPMTEXTBASE);
     for (i = 1 ; i < argc ; i++) {
+#if (ASMPROF)
+        profstarttick(tick);
+#endif
+#if (ASMBUF)
+        asmreadfile(argv[i], adr, readbufcur);
+#else
         asmreadfile(argv[i], adr);
+#endif
         if (!tokenqueue) {
             fprintf(stderr, "WARNING: no input in %s\n", argv[i]);
         } else {
             adr = asmtranslate(adr);
             asmresolve(WPMTEXTBASE);
             asmremovesyms();
+#if (ASMPROF)
+            profstoptick(tick);
+            fprintf(stderr, "%lld cycles to process %s\n",
+                    proftickdiff(tick), argv[i]);
+#endif        
         }
     }
     if (!inputread) {

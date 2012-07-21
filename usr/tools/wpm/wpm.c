@@ -323,7 +323,9 @@ wpmloop(void *cpustat)
 {
     ophandler_t      *func;
     struct wpmopcode *op;
+#if (WPMTRACE)
     int               i;
+#endif
 #if (WPMDB)
     struct asmline   *line;
 #endif
