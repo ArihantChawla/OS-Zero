@@ -1013,7 +1013,6 @@ asmeval(uint8_t *str, int32_t *valptr, uint8_t **retptr)
     uint8_t     *ptr = str;
     int32_t      lvl = 0;
     int32_t      maxlvl = 0;
-    int32_t      n = 0;
     int          loop = 1;
     int32_t      retval = 0;
     int32_t      res = 0;
