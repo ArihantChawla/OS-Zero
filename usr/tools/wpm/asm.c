@@ -1037,7 +1037,6 @@ asmeval(uint8_t *str, int32_t *valptr, uint8_t **retptr)
         expr1 = malloc(sizeof(struct expr));
         op = exprisop(ptr);
         if (op) {
-            fprintf(stderr, "#1: %s\n", ptr);
             ptr++;
             if (op == EXPRSHL || op == EXPRSHR) {
                 ptr++;
@@ -1048,14 +1047,12 @@ asmeval(uint8_t *str, int32_t *valptr, uint8_t **retptr)
 //            lvl++;
             maxlvl = max(lvl, maxlvl);
         } else if ((*ptr) && isdigit(*ptr)) {
-            fprintf(stderr, "#2: %s\n", ptr);
             asmgetvalue(ptr, &val, &ptr);
             expr1->type = 0;
             expr1->val = val;
             expr1->next = exprstk[lvl];
             exprstk[lvl] = expr1;
         } else if (isalpha(*ptr) || *ptr == '_') {
-            fprintf(stderr, "#3: %s\n", ptr);
             asmfindval(ptr, &val, &ptr);
             expr1->type = 0;
             expr1->val = val;
@@ -1064,11 +1061,9 @@ asmeval(uint8_t *str, int32_t *valptr, uint8_t **retptr)
         } else if ((*ptr) && *ptr == ',') {
             lvl = 0;
         } else if ((*ptr) && *ptr == ')') {
-            fprintf(stderr, "#4: %s\n", ptr);
             do {
                 lvl--;
             } while (*++ptr == ')');
-            fprintf(stderr, "#LVL: %d, res == %x\n", lvl, res);
         }
         if (lvl < 0) {
             fprintf(stderr, "mismatched closing parentheses: %s\n", str);
@@ -1079,41 +1074,11 @@ asmeval(uint8_t *str, int32_t *valptr, uint8_t **retptr)
             loop = 0;
         }
     }
-    printexprstk();
     op = 0;
     cur = 0;
     while (maxlvl) {
         loop = 1;
         expr1 = exprstk[maxlvl];
-#if 0
-        while ((loop) && (expr)) {
-            if (!expr->type) {
-                if (!cur) {
-                    cur++;
-                    val = expr->val;
-                } else {
-                    val = expr->val;
-                    loop = 0;
-                }
-            } else {
-                op = expr->type;
-            }
-            expr = expr->next;
-        }
-        if (op) {
-            func = exprfunctab[op];
-            fprintf(stderr, "FUNC: %p\n", func);
-            if (func) {
-                if (first) {
-                    res = val;
-                    first = 0;
-                }
-                res = func(res, val);
-                retval = 1;
-            }
-            op = 0;
-        }
-#endif
         while (expr1) {
             if (!expr1->type) {
                 if (!cur) {
@@ -1128,7 +1093,6 @@ asmeval(uint8_t *str, int32_t *valptr, uint8_t **retptr)
             }
             if ((op) && cur == 2) {
                 func = exprfunctab[op];
-                fprintf(stderr, "FUNC: %p\n", func);
                 if (func) {
                     res = func(res, val);
                     retval = 1;
@@ -1143,7 +1107,6 @@ asmeval(uint8_t *str, int32_t *valptr, uint8_t **retptr)
         maxlvl--;
     }
     if (retval) {
-        fprintf(stderr, "RES: %x\n", res);
         if (*ptr == ',') {
             ptr++;
         }
@@ -1187,7 +1150,6 @@ asmgettoken(uint8_t *str, uint8_t **retptr)
             token1->data.value.val = val;
             token1->data.value.size = size;
         } else {
-            fprintf(stderr, "#1");
             fprintf(stderr, "invalid token %s\n", linebuf);
                 
             exit(1);
@@ -1273,7 +1235,6 @@ asmgettoken(uint8_t *str, uint8_t **retptr)
                         token1->data.sym.name = name;
                         token1->data.sym.adr = RESOLVE;
                     } else {
-                        fprintf(stderr, "#2");
                         fprintf(stderr, "invalid token %s\n", linebuf);
                         
                         exit(1);
@@ -1297,7 +1258,6 @@ asmgettoken(uint8_t *str, uint8_t **retptr)
                     token1->data.adr.name = name;
                     token1->data.adr.val = RESOLVE;
                 } else {
-                    fprintf(stderr, "#3");
                     fprintf(stderr, "invalid token %s\n", linebuf);
                     
                     exit(1);
@@ -1374,13 +1334,11 @@ asmgettoken(uint8_t *str, uint8_t **retptr)
                 asmqueuetoken(token1);
                 token1 = token2;
             } else {
-                fprintf(stderr, "#4");
                 fprintf(stderr, "invalid token %s\n", linebuf);
 
                 exit(1);
             }
         } else {
-            fprintf(stderr, "#5");
             fprintf(stderr, "invalid token %s\n", linebuf);
             
             exit(1);
