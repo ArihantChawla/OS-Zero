@@ -4,6 +4,8 @@ _val:
 _start:
 	mov	$_val, %r0
 	mov	$0xb6b6b6b6, 4(%r0)
+	mov	$(1 + 2 + 3), %r1
+	mov	$((1 | 2 | 4) + 7), %r2
 	hlt
 
 

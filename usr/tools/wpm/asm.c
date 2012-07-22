@@ -18,6 +18,9 @@
 #if (ASMPROF)
 #include <zero/prof.h>
 #endif
+#if (ASMPREPROC)
+#include <zero/trix.h>
+#endif
 #include <wpm/asm.h>
 #include <wpm/wpm.h>
 
@@ -30,6 +33,22 @@ static uint8_t      * asmgetsym(uint8_t *str, uint8_t **retptr);
 static uint32_t       asmgetvalue(uint8_t *str, int32_t *retadr, uint8_t **retptr);
 static uint8_t        asmgetchar(uint8_t *str, uint8_t **retptr);
 static struct token * asmgettoken(uint8_t *str, uint8_t **retptr);
+
+#if (ASMPREPROC)
+typedef int32_t exprfunc_t(int32_t, int32_t);
+
+int32_t exprnot(int32_t val1, int32_t val2);
+int32_t exprand(int32_t val1, int32_t val2);
+int32_t expror(int32_t val1, int32_t val2);
+int32_t exprxor(int32_t val1, int32_t val2);
+int32_t exprshl(int32_t val1, int32_t val2);
+int32_t exprshr(int32_t val1, int32_t val2);
+int32_t expradd(int32_t val1, int32_t val2);
+int32_t exprsub(int32_t val1, int32_t val2);
+int32_t exprmul(int32_t val1, int32_t val2);
+int32_t exprdiv(int32_t val1, int32_t val2);
+int32_t exprmod(int32_t val1, int32_t val2);
+#endif
 
 static struct token * asmprocvalue(struct token *, uint32_t, uint32_t *);
 static struct token * asmproclabel(struct token *, uint32_t, uint32_t *);
@@ -119,6 +138,24 @@ static uint8_t        opnargtab[256]
     2,  // OUTL
     1   // HOOK
 };
+#if (ASMPREPROC)
+static uint32_t  exproptab[256];
+exprfunc_t      *exprfunctab[256]
+= {
+    NULL,
+    exprnot,
+    exprand,
+    expror,
+    exprxor,
+    exprshl,
+    exprshr,
+    expradd,
+    exprsub,
+    exprmul,
+    exprdiv,
+    exprmod
+};
+#endif
 
 tokfunc_t *tokfunctab[NTOK]
 = {
@@ -141,6 +178,26 @@ tokfunc_t *tokfunctab[NTOK]
     asmprocasciz
 };
 
+#if (ASMPREPROC)
+#define NEXPRSTK 1024
+#define EXPRNOT   0x01
+#define EXPRAND   0x02
+#define EXPROR    0x03
+#define EXPRXOR   0x04
+#define EXPRSHL   0x05
+#define EXPRSHR   0x06
+#define EXPRADD   0x07
+#define EXPRSUB   0x08
+#define EXPRMUL   0x09
+#define EXPRDIV   0x0a
+#define EXPRMOD   0x0b
+struct expr {
+    struct expr *next;
+    uint32_t     type;
+    int32_t      val;
+};
+static struct expr   *exprstk[NEXPRSTK];
+#endif
 static struct token  *tokenqueue;
 static struct token  *tokentail;
 static struct asmsym *symqueue;
@@ -518,6 +575,39 @@ asmfindglob(uint8_t *name)
     return label;
 }
 
+#if (ASMPREPROC)
+void
+asminitexpr(void)
+{
+    exproptab['~'] = EXPRNOT;
+    exproptab['&'] = EXPRAND;
+    exproptab['|'] = EXPROR;
+    exproptab['^'] = EXPRXOR;
+    exproptab['<'] = EXPRSHL;
+    exproptab['>'] = EXPRSHR;
+    exproptab['+'] = EXPRADD;
+    exproptab['-'] = EXPRSUB;
+    exproptab['*'] = EXPRMUL;
+    exproptab['/'] = EXPRDIV;
+    exproptab['%'] = EXPRMOD;
+}
+
+int
+exprisop(uint8_t *str)
+{
+    int ch = *str;
+    int retval = exproptab[ch];
+
+    if (retval == EXPRSHL && str[1] != '<') {
+        retval = 0;
+    } else if (retval == EXPRSHR && str[1] != '>') {
+        retval = 0;
+    }
+
+    return retval;
+}
+#endif /* ASMPREPROC */
+
 void
 asminitop(void)
 {
@@ -886,6 +976,186 @@ asmgetchar(uint8_t *str, uint8_t **retptr)
     return (uint8_t)val;
 }
 
+#if (ASMPREPROC)
+void
+printexprstk(void)
+{
+    int          i;
+    int          nl;
+    struct expr *expr;
+
+    for (i = 0 ; i < NEXPRSTK ; i++) {
+        expr = exprstk[i];
+        if (expr) {
+            fprintf(stderr, "%d: ", i);
+            nl = 1;
+        }
+        while (expr) {
+            if (!expr->type) {
+                fprintf(stderr, "%d, ", expr->val);
+            } else {
+                fprintf(stderr, "op == %d, ", expr->type);
+            }
+            expr = expr->next;
+        }
+        if (nl) {
+            fprintf(stderr, "\n");
+        }
+        nl = 0;
+    }                                             
+}
+
+static int32_t
+asmeval(uint8_t *str, int32_t *valptr, uint8_t **retptr)
+{
+    struct expr *expr1;
+    struct expr *expr2;
+    uint8_t     *ptr = str;
+    int32_t      lvl = 0;
+    int32_t      maxlvl = 0;
+    int32_t      n = 0;
+    int          loop = 1;
+    int32_t      retval = 0;
+    int32_t      res = 0;
+    int32_t      val;
+    int32_t      cur;
+    int          op;
+    exprfunc_t  *func;
+
+    memset(exprstk, 0, sizeof(exprstk));
+    while (loop) {
+        while ((*ptr) && isspace(*ptr)) {
+            ptr++;
+        }
+        while ((*ptr) && *ptr == '(') {
+            lvl++;
+            ptr++;
+        }
+        maxlvl = max(lvl, maxlvl);
+        while ((*ptr) && isspace(*ptr)) {
+            ptr++;
+        }
+        expr1 = malloc(sizeof(struct expr));
+        op = exprisop(ptr);
+        if (op) {
+            fprintf(stderr, "#1: %s\n", ptr);
+            ptr++;
+            if (op == EXPRSHL || op == EXPRSHR) {
+                ptr++;
+            } 
+            expr1->type = op;
+            expr1->next = exprstk[lvl];
+            exprstk[lvl] = expr1;
+//            lvl++;
+            maxlvl = max(lvl, maxlvl);
+        } else if ((*ptr) && isdigit(*ptr)) {
+            fprintf(stderr, "#2: %s\n", ptr);
+            asmgetvalue(ptr, &val, &ptr);
+            expr1->type = 0;
+            expr1->val = val;
+            expr1->next = exprstk[lvl];
+            exprstk[lvl] = expr1;
+        } else if (isalpha(*ptr) || *ptr == '_') {
+            fprintf(stderr, "#3: %s\n", ptr);
+            asmfindval(ptr, &val, &ptr);
+            expr1->type = 0;
+            expr1->val = val;
+            expr1->next = exprstk[lvl];
+            exprstk[lvl] = expr1;
+        } else if ((*ptr) && *ptr == ',') {
+            lvl = 0;
+        } else if ((*ptr) && *ptr == ')') {
+            fprintf(stderr, "#4: %s\n", ptr);
+            do {
+                lvl--;
+            } while (*++ptr == ')');
+            fprintf(stderr, "#LVL: %d, res == %x\n", lvl, res);
+        }
+        if (lvl < 0) {
+            fprintf(stderr, "mismatched closing parentheses: %s\n", str);
+
+            exit(1);
+        }
+        if (!lvl) {
+            loop = 0;
+        }
+    }
+    printexprstk();
+    op = 0;
+    cur = 0;
+    while (maxlvl) {
+        loop = 1;
+        expr1 = exprstk[maxlvl];
+#if 0
+        while ((loop) && (expr)) {
+            if (!expr->type) {
+                if (!cur) {
+                    cur++;
+                    val = expr->val;
+                } else {
+                    val = expr->val;
+                    loop = 0;
+                }
+            } else {
+                op = expr->type;
+            }
+            expr = expr->next;
+        }
+        if (op) {
+            func = exprfunctab[op];
+            fprintf(stderr, "FUNC: %p\n", func);
+            if (func) {
+                if (first) {
+                    res = val;
+                    first = 0;
+                }
+                res = func(res, val);
+                retval = 1;
+            }
+            op = 0;
+        }
+#endif
+        while (expr1) {
+            if (!expr1->type) {
+                if (!cur) {
+                    cur++;
+                    res = expr1->val;
+                } else {
+                    cur++;
+                    val = expr1->val;
+                }
+            } else {
+                op = expr1->type;
+            }
+            if ((op) && cur == 2) {
+                func = exprfunctab[op];
+                fprintf(stderr, "FUNC: %p\n", func);
+                if (func) {
+                    res = func(res, val);
+                    retval = 1;
+                }
+                op = 0;
+                cur = 1;
+            }
+            expr2 = expr1->next;
+            free(expr1);
+            expr1 = expr2;
+        }
+        maxlvl--;
+    }
+    if (retval) {
+        fprintf(stderr, "RES: %x\n", res);
+        if (*ptr == ',') {
+            ptr++;
+        }
+        *valptr = res;
+        *retptr = ptr;
+    }
+
+    return retval;
+}
+#endif
+
 static struct token *
 asmgettoken(uint8_t *str, uint8_t **retptr)
 {
@@ -918,6 +1188,7 @@ asmgettoken(uint8_t *str, uint8_t **retptr)
             token1->data.value.val = val;
             token1->data.value.size = size;
         } else {
+            fprintf(stderr, "#1");
             fprintf(stderr, "invalid token %s\n", linebuf);
                 
             exit(1);
@@ -1003,6 +1274,7 @@ asmgettoken(uint8_t *str, uint8_t **retptr)
                         token1->data.sym.name = name;
                         token1->data.sym.adr = RESOLVE;
                     } else {
+                        fprintf(stderr, "#2");
                         fprintf(stderr, "invalid token %s\n", linebuf);
                         
                         exit(1);
@@ -1026,6 +1298,7 @@ asmgettoken(uint8_t *str, uint8_t **retptr)
                     token1->data.adr.name = name;
                     token1->data.adr.val = RESOLVE;
                 } else {
+                    fprintf(stderr, "#3");
                     fprintf(stderr, "invalid token %s\n", linebuf);
                     
                     exit(1);
@@ -1040,6 +1313,13 @@ asmgettoken(uint8_t *str, uint8_t **retptr)
 
                 exit(1);
             }
+#if (ASMPREPROC)
+        } else if ((*str) && *str == '(') {
+            if (asmeval(str, &val, &str)) {
+                token1->type = TOKENIMMED;
+                token1->val = val;
+            }
+#endif
         }
     } else if (*str == '\'') {
         val = asmgetchar(str, &str);
@@ -1095,11 +1375,13 @@ asmgettoken(uint8_t *str, uint8_t **retptr)
                 asmqueuetoken(token1);
                 token1 = token2;
             } else {
+                fprintf(stderr, "#4");
                 fprintf(stderr, "invalid token %s\n", linebuf);
 
                 exit(1);
             }
         } else {
+            fprintf(stderr, "#5");
             fprintf(stderr, "invalid token %s\n", linebuf);
             
             exit(1);
@@ -1109,6 +1391,73 @@ asmgettoken(uint8_t *str, uint8_t **retptr)
 
     return token1;
 }
+
+#if (ASMPREPROC)
+int32_t
+exprnot(int32_t val1, int32_t val2)
+{
+    return ~val1;
+}
+
+int32_t
+exprand(int32_t val1, int32_t val2)
+{
+    return val1 & val2;
+}
+
+int32_t expror(int32_t val1, int32_t val2)
+{
+    return val1 | val2;
+}
+
+int32_t
+exprxor(int32_t val1, int32_t val2)
+{
+    return val1 ^ val2;
+}
+
+int32_t
+exprshl(int32_t val1, int32_t val2)
+{
+    return val1 << val2;
+}
+
+int32_t
+exprshr(int32_t val1, int32_t val2)
+{
+    return val1 >> val2;
+}
+
+int32_t
+expradd(int32_t val1, int32_t val2)
+{
+    return val1 + val2;
+}
+
+int32_t
+exprsub(int32_t val1, int32_t val2)
+{
+    return val1 - val2;
+}
+
+int32_t
+exprmul(int32_t val1, int32_t val2)
+{
+    return val1 * val2;
+}
+
+int32_t
+exprdiv(int32_t val1, int32_t val2)
+{
+    return val1 / val2;
+}
+
+int32_t
+exprmod(int32_t val1, int32_t val2)
+{
+    return val1 % val2;
+}
+#endif
 
 static struct token *
 asmprocvalue(struct token *token, uint32_t adr,
@@ -1563,6 +1912,9 @@ asmprocasciz(struct token *token, uint32_t adr,
 void
 asminit(void)
 {
+#if (ASMPREPROC)
+    asminitexpr();
+#endif
     asminitop();
     asminitbuf();
 }

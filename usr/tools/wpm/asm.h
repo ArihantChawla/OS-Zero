@@ -20,7 +20,11 @@
 #define TOKENALIGN  0x0f
 #define TOKENASCIZ  0x10
 #define TOKENSTRING 0x10
-#define NTOK       17
+#if (ASMPREPROC)
+#define TOKENPAREN  0x11
+#define TOKENOP     0x12
+#endif
+#define NTOK        19
 
 #define OPINVAL    0x00
 #define RESOLVE    0xffffffffU
