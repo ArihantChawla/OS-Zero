@@ -376,6 +376,13 @@
 	constants and direct addresses are prefixed with a \'textbf{\$}'. Label
 	addresses are refered to as their names without prefixes.
 
+	The assembler supports simple preprocessing (of constant-value
+	expressions), so it is possible to do things such as
+
+\begin{verbatim}
+	mov	$(0x01 | 0x02), %r1
+\end{verbatim}
+
 	\textbf{Registers}
 
 	Register names are prefixed with '\%'; there are 16 registers r0..r15.

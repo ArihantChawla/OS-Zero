@@ -448,21 +448,26 @@ asmfindval(uint8_t *str, int32_t *valptr, uint8_t **retptr)
     uint32_t    key = 0;
     struct val *val = NULL;
     uint8_t    *ptr;
+    int         len = 0;
 
+    fprintf(stderr, "FIND: %s\n", str);
     if ((*str) && (isalpha(*str) || *str == '_')) {
         ptr = str;
         key += *str;
         str++;
+        len++;
         while ((*str) && (isalpha(*str) || *str == '_')) {
             key += *str;
             str++;
+            len++;
         }
         key &= (NHASHITEM - 1);
         val = valhash[key];
-        while ((val) && strcmp((char *)val->name, (char *)ptr)) {
+        while ((val) && strncmp((char *)val->name, (char *)ptr, len)) {
             val = val->next;
         }
         if (val) {
+            fprintf(stderr, "VAL: %x\n", val->val);
             *valptr = val->val;
             *retptr = str;
         }
@@ -1035,39 +1040,44 @@ asmeval(uint8_t *str, int32_t *valptr, uint8_t **retptr)
             ptr++;
         }
         expr1 = malloc(sizeof(struct expr));
-        op = exprisop(ptr);
-        if (op) {
-            ptr++;
-            if (op == EXPRSHL || op == EXPRSHR) {
+        if (asmfindval(ptr, &val, &ptr)) {
+            expr1->type = 0;
+            expr1->val = val;
+            expr1->next = exprstk[lvl];
+            exprstk[lvl] = expr1;
+        } else {
+            op = exprisop(ptr);
+            if (op) {
                 ptr++;
-            } 
-            expr1->type = op;
-            expr1->next = exprstk[lvl];
-            exprstk[lvl] = expr1;
-//            lvl++;
-            maxlvl = max(lvl, maxlvl);
-        } else if ((*ptr) && isdigit(*ptr)) {
-            asmgetvalue(ptr, &val, &ptr);
-            expr1->type = 0;
-            expr1->val = val;
-            expr1->next = exprstk[lvl];
-            exprstk[lvl] = expr1;
-        } else if (isalpha(*ptr) || *ptr == '_') {
-            asmfindval(ptr, &val, &ptr);
-            expr1->type = 0;
-            expr1->val = val;
-            expr1->next = exprstk[lvl];
-            exprstk[lvl] = expr1;
-        } else if ((*ptr) && *ptr == ',') {
-            lvl = 0;
-        } else if ((*ptr) && *ptr == ')') {
-            do {
-                lvl--;
-            } while (*++ptr == ')');
+                if (op == EXPRSHL || op == EXPRSHR) {
+                    ptr++;
+                } 
+                expr1->type = op;
+                expr1->next = exprstk[lvl];
+                exprstk[lvl] = expr1;
+            } else if ((*ptr) && isdigit(*ptr)) {
+                asmgetvalue(ptr, &val, &ptr);
+                expr1->type = 0;
+                expr1->val = val;
+                expr1->next = exprstk[lvl];
+                exprstk[lvl] = expr1;
+            } else if (isalpha(*ptr) || *ptr == '_') {
+                asmfindval(ptr, &val, &ptr);
+                expr1->type = 0;
+                expr1->val = val;
+                expr1->next = exprstk[lvl];
+                exprstk[lvl] = expr1;
+            } else if ((*ptr) && *ptr == ',') {
+                lvl = 0;
+            } else if ((*ptr) && *ptr == ')') {
+                do {
+                    lvl--;
+                } while (*++ptr == ')');
+            }
         }
         if (lvl < 0) {
             fprintf(stderr, "mismatched closing parentheses: %s\n", str);
-
+            
             exit(1);
         }
         if (!lvl) {
