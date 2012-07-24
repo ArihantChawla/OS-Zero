@@ -1,4 +1,4 @@
-#define ASMDEBUG    1
+#define ASMDEBUG    0
 #define ASMBUF      0
 #define ASMPROF     0
 #define READBUFSIZE 65536
@@ -450,7 +450,6 @@ asmfindval(uint8_t *str, int32_t *valptr, uint8_t **retptr)
     uint8_t    *ptr;
     int         len = 0;
 
-    fprintf(stderr, "FIND: %s\n", str);
     if ((*str) && (isalpha(*str) || *str == '_')) {
         ptr = str;
         key += *str;
@@ -467,7 +466,6 @@ asmfindval(uint8_t *str, int32_t *valptr, uint8_t **retptr)
             val = val->next;
         }
         if (val) {
-            fprintf(stderr, "VAL: %x\n", val->val);
             *valptr = val->val;
             *retptr = str;
         }

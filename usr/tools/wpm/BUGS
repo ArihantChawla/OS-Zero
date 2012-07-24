@@ -1,0 +1,1 @@
+- ia32/asm.h is broken; for example, inc doesn't list its arguments right
