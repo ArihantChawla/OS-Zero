@@ -1,4 +1,7 @@
 //msg:	.byte 'h', 'e', 'l', 'l', 'o', '\n', '\0'
+
+.include <stdio.def>
+
 msg:	.asciz	"hello, world\n"
 
 .align	4
@@ -6,7 +9,7 @@ msg:	.asciz	"hello, world\n"
 _start:	
 	mov	$msg, %r0
 	movb	*%r0, %r1
-	mov	$0x01, %r2
+	mov	$STDOUT, %r2
 	cmp	$0x00, %r1
 	bz	done
 loop:

@@ -21,7 +21,7 @@
 
 #if defined(__i386__) || defined(__i486__) || defined(__i586__)         \
     || defined(__i686__) || defined(__x86_64__) || defined(__amd64__)
-#define USEASM 1
+#define USEASM 0
 #include <wpm/ia32/asm.h>
 #else
 #define USEASM 0
@@ -1240,7 +1240,10 @@ opmovb(struct wpmopcode *op)
                        ? op->args[0]
                        : memfetchb(op->args[0])));
     uint32_t dest;
-    
+
+#if (WPMDEBUG)
+    fprintf(stderr, "MOVB: %x - \n", src);
+#endif    
     if (argt2 == ARG_REG) {
         if (reg2 & REG_INDIR) {
             dest = wpm->cpustat.regs[reg2 & 0x0f];

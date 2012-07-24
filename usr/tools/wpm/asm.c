@@ -1,4 +1,4 @@
-#define ASMDEBUG    0
+#define ASMDEBUG    1
 #define ASMBUF      0
 #define ASMPROF     0
 #define READBUFSIZE 65536
@@ -323,8 +323,8 @@ printtoken(struct token *token)
 void
 asmfreetoken(struct token *token)
 {
-#if (WPMDEBUG)
-    free(token->fname);
+#if (WPMDB)
+    free(token->file);
 #endif
     free(token);
 
@@ -1142,7 +1142,16 @@ asmgettoken(uint8_t *str, uint8_t **retptr)
     static int    size = 0;
     uint32_t      ndx;
     int           ch;
+#if (WPMDB)
+    uint8_t      *ptr;
+#endif
 
+    while (*str && isspace(*str)) {
+        str++;
+    }
+    if (*str == ',') {
+        str++;
+    }
     while (*str && isspace(*str)) {
         str++;
     }
@@ -1255,7 +1264,7 @@ asmgettoken(uint8_t *str, uint8_t **retptr)
     } else if ((*str) && *str == '$') {
         str++;
         if ((*str) && (isalpha(*str) || *str == '_' || *str == '-')) {
-            if(asmfindval(str, &val, &str)) {
+            if (asmfindval(str, &val, &str)) {
                 token1->type = TOKENIMMED;
                 token1->val = val;
             } else if (asmgetvalue(str, &val, &str)) {
