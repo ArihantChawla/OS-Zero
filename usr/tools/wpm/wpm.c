@@ -1583,9 +1583,20 @@ opinb(struct wpmopcode *op)
 static void
 opoutb(struct wpmopcode *op)
 {
-    uint8_t data = (uint8_t)wpm->cpustat.regs[op->reg1];
-    uint8_t port = (uint8_t)wpm->cpustat.regs[op->reg2];
+    uint32_t argt1 = op->arg1t;
+    uint32_t argt2 = op->arg2t;
+    uint8_t  data = (argt1 == ARG_REG
+                    ? (uint8_t)wpm->cpustat.regs[op->reg1]
+                    : (uint8_t)op->args[0]);
+    uint8_t  port = (argt2 == ARG_REG
+                     ? (uint8_t)wpm->cpustat.regs[op->reg2]
+                     : (argt1 == ARG_REG
+                        ? (uint8_t)op->args[0]
+                        : (uint8_t)op->args[1]));
 
+#if (WPMDEBUG)
+    fprintf(stderr, "OUTB: %x -> %x\n", data, port);
+#endif
     switch (port) {
         case CONOUTPORT:
             fprintf(stdout, "%c", data);

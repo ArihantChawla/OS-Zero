@@ -327,11 +327,11 @@
 	N/A         & thr         & r/i dest        & start thread at dest \\
 	N/A         & cmpswap     & r/i src, m dest & atomic compare and swap \\
 	inb()       & inb         & r/i src         & read byte (8-bit) \\
-	outb()      & outb        & r/i dest        & write byte (8-bit) \\
+	outb()      & outb        & r/i src, r/i dest & write byte (8-bit) \\
 	inw()       & inw         & r/i src         & read word (16-bit) \\
-	outw()      & outw        & r/i dest        & write word (16-bit) \\
+	outw()      & outw        & r/i src, r/i dest & write word (16-bit) \\
         inl()       & inl         & r/i src         & read longword (32-bit) \\
-	outl()      & outl        & r/i dest        & write longword (32-bit) \\
+	outl()      & outl        & r/i src, r/i dest & write longword (32-bit) \\
 	\hline
 \end{tabular}
 
@@ -339,7 +339,7 @@
 
 \section{Syntax}
 
-	\textbf{AT\&T}
+	\textbf{AT\&T Syntax}
 
 	We use so-called AT\&T-syntax assembly. Perhaps the most notorious
 	difference from Intel-syntax is the operand order; AT\&T lists the
@@ -380,7 +380,10 @@
 	expressions), so it is possible to do things such as
 
 \begin{verbatim}
-	mov	$(0x01 | 0x02), %r1
+	.define	FLAG1	0x01
+	.define	FLAG2	0x02
+
+	mov	$(FLAG1| FLAG2), %r1
 \end{verbatim}
 
 	\textbf{Registers}
