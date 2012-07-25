@@ -21,7 +21,7 @@
 
 #if defined(__i386__) || defined(__i486__) || defined(__i586__)         \
     || defined(__i686__) || defined(__x86_64__) || defined(__amd64__)
-#define USEASM 1
+#define USEASM 0
 #include <wpm/ia32/asm.h>
 #else
 #define USEASM 0
