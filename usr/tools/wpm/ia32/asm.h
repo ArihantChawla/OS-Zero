@@ -20,9 +20,9 @@
 #define asmrol(cnt, dest)                                               \
     __asm__ __volatile__ ("rol %%cl, %0\n" : : "c" (cnt), "r" (dest))
 #define asminc(dest)                                                    \
-    __asm__ __volatile__ ("inc %0\n" : : "r" (dest))
+    __asm__ __volatile__ ("inc %0\n" : "=r" (dest) : "0" (dest))
 #define asmdec(dest)                                                    \
-    __asm__ __volatile__ ("dec %0\n" : : "r" (dest))
+    __asm__ __volatile__ ("dec %0\n" : "=r" (dest): "0" (dest))
 #define asmadd(src, dest)                                               \
     __asm__ __volatile__ ("add %0, %1\n" : : "r" (src), "r" (dest))
 #define asmsub(src, dest)                                               \
