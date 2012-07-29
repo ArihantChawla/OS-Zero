@@ -1,3 +1,8 @@
+/*
+ * button layout
+ *--------------
+ */
+
 void
 opnot8(void *arg1, void *dummy)
 {
