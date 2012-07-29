@@ -5,7 +5,7 @@
 #include <stdint.h>
 #include <signal.h>
 
-#include <mach/cdecl.h>
+#include <zero/cdecl.h>
 
 #if 0 /* ARMv6-M */
 
