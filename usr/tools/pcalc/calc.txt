@@ -7,13 +7,26 @@ Button Bars
 Top Bar
 -------
 
+-----------------------------------------
+| menu	| func	| stack | calc	| off	|
+-----------------------------------------
+    |	    |	    |	    |
 ---------------------------------
-| base	| eval	| clr	| off	|
+| exec  | log   | swap  | base  |
 ---------------------------------
+| eval  | exp   | drop  | size  |
+---------------------------------
+| load  | trig  |	| type  |
+-----------------	---------
+| save	| vector|
+-----------------
+| expr	| matrix|
+-----------------
+| equ   |
+---------
 
-- base: choose between binary, octal, decimal, and hexadecimal presentation
-- eval: evaluate current input expression
-- clr:  clear register stack
+menu
+----
 
 Display
 --------

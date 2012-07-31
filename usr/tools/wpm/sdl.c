@@ -1,3 +1,6 @@
+#define WPM_WINDOW_WIDTH  1280
+#define WPM_WINDOW_HEIGHT 720
+
 #include <pthread.h>
 #include "SDL.h"
 
