@@ -1,5 +1,5 @@
 void
-opnot8(void *arg1, void *dummy, void *ret)
+copnot8(void *arg1, void *dummy, void *ret)
 {
     int8_t src = *((int8_t *)arg1);
     int8_t dest;
@@ -11,7 +11,7 @@ opnot8(void *arg1, void *dummy, void *ret)
 }
 
 void
-opnot16(void *arg1, void *dummy, void *ret)
+copnot16(void *arg1, void *dummy, void *ret)
 {
     int16_t src = *((int16_t *)arg1);
     int16_t dest;
@@ -23,7 +23,7 @@ opnot16(void *arg1, void *dummy, void *ret)
 }
 
 void
-opnot32(void *arg1, void *dummy, void *ret)
+copnot32(void *arg1, void *dummy, void *ret)
 {
     int32_t src = *((int32_t *)arg1);
     int32_t dest;
@@ -35,7 +35,7 @@ opnot32(void *arg1, void *dummy, void *ret)
 }
 
 void
-opnot64(void *arg1, void *dummy, void *ret)
+copnot64(void *arg1, void *dummy, void *ret)
 {
     int64_t src = *((int64_t *)arg1);
     int64_t dest;
@@ -47,7 +47,7 @@ opnot64(void *arg1, void *dummy, void *ret)
 }
 
 void
-opand8(void *arg1, void *arg2, void *ret)
+copand8(void *arg1, void *arg2, void *ret)
 {
     int8_t src = *((int8_t *)arg1);
     int8_t dest = *((int8_t *)arg2);
@@ -59,7 +59,7 @@ opand8(void *arg1, void *arg2, void *ret)
 }
 
 void
-opand16(void *arg1, void *arg2, void *ret)
+copand16(void *arg1, void *arg2, void *ret)
 {
     int16_t src = *((int16_t *)arg1);
     int16_t dest = *((int16_t *)arg2);
@@ -71,7 +71,7 @@ opand16(void *arg1, void *arg2, void *ret)
 }
 
 void
-opand32(void *arg1, void *arg2, void *ret)
+copand32(void *arg1, void *arg2, void *ret)
 {
     int32_t src = *((int32_t *)arg1);
     int32_t dest = *((int32_t *)arg2);
@@ -83,7 +83,7 @@ opand32(void *arg1, void *arg2, void *ret)
 }
 
 void
-opand64(void *arg1, void *arg2, void *ret)
+copand64(void *arg1, void *arg2, void *ret)
 {
     int64_t src = *((int64_t *)arg1);
     int64_t dest = *((int64_t *)arg2);
@@ -95,7 +95,7 @@ opand64(void *arg1, void *arg2, void *ret)
 }
 
 void
-opor8(void *arg1, void *arg2, void *ret)
+copor8(void *arg1, void *arg2, void *ret)
 {
     int8_t src = *((int8_t *)arg1);
     int8_t dest = *((int8_t *)arg2);
@@ -107,7 +107,7 @@ opor8(void *arg1, void *arg2, void *ret)
 }
 
 void
-opor16(void *arg1, void *arg2, void *ret)
+copor16(void *arg1, void *arg2, void *ret)
 {
     int16_t src = *((int16_t *)arg1);
     int16_t dest = *((int16_t *)arg2);
@@ -119,7 +119,7 @@ opor16(void *arg1, void *arg2, void *ret)
 }
 
 void
-opor32(void *arg1, void *arg2, void *ret)
+copor32(void *arg1, void *arg2, void *ret)
 {
     int32_t src = *((int32_t *)arg1);
     int32_t dest = *((int32_t *)arg2);
@@ -131,7 +131,7 @@ opor32(void *arg1, void *arg2, void *ret)
 }
 
 void
-opor64(void *arg1, void *arg2, void *ret)
+copor64(void *arg1, void *arg2, void *ret)
 {
     int64_t src = *((int64_t *)arg1);
     int64_t dest = *((int64_t *)arg2);
@@ -143,7 +143,7 @@ opor64(void *arg1, void *arg2, void *ret)
 }
 
 void
-opxor8(void *arg1, void *arg2, void *ret)
+copxor8(void *arg1, void *arg2, void *ret)
 {
     int8_t src = *((int8_t *)arg1);
     int8_t dest = *((int8_t *)arg2);
@@ -155,7 +155,7 @@ opxor8(void *arg1, void *arg2, void *ret)
 }
 
 void
-opxor16(void *arg1, void *arg2, void *ret)
+copxor16(void *arg1, void *arg2, void *ret)
 {
     int16_t src = *((int16_t *)arg1);
     int16_t dest = *((int16_t *)arg2);
@@ -167,7 +167,7 @@ opxor16(void *arg1, void *arg2, void *ret)
 }
 
 void
-opxor32(void *arg1, void *arg2, void *ret)
+copxor32(void *arg1, void *arg2, void *ret)
 {
     int32_t src = *((int32_t *)arg1);
     int32_t dest = *((int32_t *)arg2);
@@ -179,7 +179,7 @@ opxor32(void *arg1, void *arg2, void *ret)
 }
 
 void
-opxor64(void *arg1, void *arg2, void *ret)
+copxor64(void *arg1, void *arg2, void *ret)
 {
     int64_t src = *((int64_t *)arg1);
     int64_t dest = *((int64_t *)arg2);
@@ -191,7 +191,7 @@ opxor64(void *arg1, void *arg2, void *ret)
 }
 
 void
-opshl8(void *arg1, void *arg2, void *ret)
+copshl8(void *arg1, void *arg2, void *ret)
 {
     int8_t src = *((int8_t *)arg1);
     int8_t dest = *((int8_t *)arg2);
@@ -203,7 +203,7 @@ opshl8(void *arg1, void *arg2, void *ret)
 }
 
 void
-opshl16(void *arg1, void *arg2, void *ret)
+copshl16(void *arg1, void *arg2, void *ret)
 {
     int16_t src = *((int16_t *)arg1);
     int16_t dest = *((int16_t *)arg2);
@@ -215,7 +215,7 @@ opshl16(void *arg1, void *arg2, void *ret)
 }
 
 void
-opshl32(void *arg1, void *arg2, void *ret)
+copshl32(void *arg1, void *arg2, void *ret)
 {
     int32_t src = *((int32_t *)arg1);
     int32_t dest = *((int32_t *)arg2);
@@ -227,7 +227,7 @@ opshl32(void *arg1, void *arg2, void *ret)
 }
 
 void
-opshl64(void *arg1, void *arg2, void *ret)
+copshl64(void *arg1, void *arg2, void *ret)
 {
     int64_t src = *((int64_t *)arg1);
     int64_t dest = *((int64_t *)arg2);
@@ -239,7 +239,7 @@ opshl64(void *arg1, void *arg2, void *ret)
 }
 
 void
-opshr8(void *arg1, void *arg2, void *ret)
+copshr8(void *arg1, void *arg2, void *ret)
 {
     int8_t src = *((int8_t *)arg1);
     int8_t dest = *((int8_t *)arg2);
@@ -253,7 +253,7 @@ opshr8(void *arg1, void *arg2, void *ret)
     return;
 }
 
-opshr16(void *arg1, void *arg2, void *ret)
+copshr16(void *arg1, void *arg2, void *ret)
 {
     int16_t src = *((int16_t *)arg1);
     int16_t dest = *((int16_t *)arg2);
@@ -268,7 +268,7 @@ opshr16(void *arg1, void *arg2, void *ret)
 }
 
 void
-opshr32(void *arg1, void *arg2, void *ret)
+copshr32(void *arg1, void *arg2, void *ret)
 {
     int32_t src = *((int32_t *)arg1);
     int32_t dest = *((int32_t *)arg2);
@@ -283,7 +283,7 @@ opshr32(void *arg1, void *arg2, void *ret)
 }
 
 void
-opshr64(void *arg1, void *arg2, void *ret)
+copshr64(void *arg1, void *arg2, void *ret)
 {
     int64_t src = *((int64_t *)arg1);
     int64_t dest = *((int64_t *)arg2);
@@ -298,7 +298,7 @@ opshr64(void *arg1, void *arg2, void *ret)
 }
 
 void
-opshrl8(void *arg1, void *arg2, void *ret)
+copshrl8(void *arg1, void *arg2, void *ret)
 {
     int8_t src = *((int8_t *)arg1);
     int8_t dest = *((int8_t *)arg2);
@@ -313,7 +313,7 @@ opshrl8(void *arg1, void *arg2, void *ret)
 }
 
 void
-opshrl16(void *arg1, void *arg2, void *ret)
+copshrl16(void *arg1, void *arg2, void *ret)
 {
     int16_t src = *((int16_t *)arg1);
     int16_t dest = *((int16_t *)arg2);
@@ -328,7 +328,7 @@ opshrl16(void *arg1, void *arg2, void *ret)
 }
 
 void
-opshrl32(void *arg1, void *arg2, void *ret)
+copshrl32(void *arg1, void *arg2, void *ret)
 {
     int32_t src = *((int32_t *)arg1);
     int32_t dest = *((int32_t *)arg2);
@@ -343,7 +343,7 @@ opshrl32(void *arg1, void *arg2, void *ret)
 }
 
 void
-opshrl64(void *arg1, void *arg2, void *ret)
+copshrl64(void *arg1, void *arg2, void *ret)
 {
     int64_t src = *((int64_t *)arg1);
     int64_t dest = *((int64_t *)arg2);
@@ -358,7 +358,7 @@ opshrl64(void *arg1, void *arg2, void *ret)
 }
 
 void
-opror8(void *arg1, void *arg2, void *ret)
+copror8(void *arg1, void *arg2, void *ret)
 {
     int8_t src = *((int8_t *)arg1);
     int8_t dest = *((int8_t *)arg2);
@@ -374,7 +374,7 @@ opror8(void *arg1, void *arg2, void *ret)
 }
 
 void
-opror16(void *arg1, void *arg2, void *ret)
+copror16(void *arg1, void *arg2, void *ret)
 {
     int16_t src = *((int16_t *)arg1);
     int16_t dest = *((int16_t *)arg2);
@@ -390,7 +390,7 @@ opror16(void *arg1, void *arg2, void *ret)
 }
 
 void
-opror32(void *arg1, void *arg2, void *ret)
+copror32(void *arg1, void *arg2, void *ret)
 {
     int32_t src = *((int32_t *)arg1);
     int32_t dest = *((int32_t *)arg2);
@@ -406,7 +406,7 @@ opror32(void *arg1, void *arg2, void *ret)
 }
 
 void
-opror64(void *arg1, void *arg2, void *ret)
+copror64(void *arg1, void *arg2, void *ret)
 {
     int64_t src = *((int64_t *)arg1);
     int64_t dest = *((int64_t *)arg2);
@@ -422,7 +422,7 @@ opror64(void *arg1, void *arg2, void *ret)
 }
 
 void
-oprol8(void *arg1, void *arg2, void *ret)
+coprol8(void *arg1, void *arg2, void *ret)
 {
     int8_t src = *((int8_t *)arg1);
     int8_t dest = *((int8_t *)arg2);
@@ -438,7 +438,7 @@ oprol8(void *arg1, void *arg2, void *ret)
 }
 
 void
-oprol16(void *arg1, void *arg2, void *ret)
+coprol16(void *arg1, void *arg2, void *ret)
 {
     int16_t src = *((int16_t *)arg1);
     int16_t dest = *((int16_t *)arg2);
@@ -454,7 +454,7 @@ oprol16(void *arg1, void *arg2, void *ret)
 }
 
 void
-oprol32(void *arg1, void *arg2, void *ret)
+coprol32(void *arg1, void *arg2, void *ret)
 {
     int32_t src = *((int32_t *)arg1);
     int32_t dest = *((int32_t *)arg2);
@@ -470,7 +470,7 @@ oprol32(void *arg1, void *arg2, void *ret)
 }
 
 void
-oprol64(void *arg1, void *arg2, void *ret)
+coprol64(void *arg1, void *arg2, void *ret)
 {
     int64_t src = *((int64_t *)arg1);
     int64_t dest = *((int64_t *)arg2);
@@ -486,7 +486,7 @@ oprol64(void *arg1, void *arg2, void *ret)
 }
 
 void
-opinc8(void *arg1, void *arg2, void *ret)
+copinc8(void *arg1, void *arg2, void *ret)
 {
     int8_t src = *((int8_t *)arg1);
 
@@ -497,7 +497,7 @@ opinc8(void *arg1, void *arg2, void *ret)
 }
 
 void
-opinc16(void *arg1, void *arg2, void *ret)
+copinc16(void *arg1, void *arg2, void *ret)
 {
     int16_t src = *((int16_t *)arg1);
 
@@ -508,7 +508,7 @@ opinc16(void *arg1, void *arg2, void *ret)
 }
 
 void
-opinc32(void *arg1, void *arg2, void *ret)
+copinc32(void *arg1, void *arg2, void *ret)
 {
     int32_t src = *((int32_t *)arg1);
 
@@ -519,7 +519,7 @@ opinc32(void *arg1, void *arg2, void *ret)
 }
 
 void
-opinc64(void *arg1, void *arg2, void *ret)
+copinc64(void *arg1, void *arg2, void *ret)
 {
     int64_t src = *((int64_t *)arg1);
 
@@ -530,7 +530,7 @@ opinc64(void *arg1, void *arg2, void *ret)
 }
 
 void
-opdec8(void *arg1, void *arg2, void *ret)
+copdec8(void *arg1, void *arg2, void *ret)
 {
     int8_t src = *((int8_t *)arg1);
 
@@ -541,7 +541,7 @@ opdec8(void *arg1, void *arg2, void *ret)
 }
 
 void
-opdec16(void *arg1, void *arg2, void *ret)
+copdec16(void *arg1, void *arg2, void *ret)
 {
     int16_t src = *((int16_t *)arg1);
 
@@ -552,7 +552,7 @@ opdec16(void *arg1, void *arg2, void *ret)
 }
 
 void
-opdec32(void *arg1, void *arg2, void *ret)
+copdec32(void *arg1, void *arg2, void *ret)
 {
     int32_t src = *((int32_t *)arg1);
 
@@ -563,7 +563,7 @@ opdec32(void *arg1, void *arg2, void *ret)
 }
 
 void
-opdec64(void *arg1, void *arg2, void *ret)
+copdec64(void *arg1, void *arg2, void *ret)
 {
     int64_t src = *((int64_t *)arg1);
 
@@ -574,7 +574,7 @@ opdec64(void *arg1, void *arg2, void *ret)
 }
 
 void
-opadd8(void *arg1, void *arg2, void *ret)
+copadd8(void *arg1, void *arg2, void *ret)
 {
     int8_t src = *((int8_t *)arg1);
     int8_t dest = *((int8_t *)arg2);
@@ -586,7 +586,7 @@ opadd8(void *arg1, void *arg2, void *ret)
 }
 
 void
-opadd16(void *arg1, void *arg2, void *ret)
+copadd16(void *arg1, void *arg2, void *ret)
 {
     int16_t src = *((int16_t *)arg1);
     int16_t dest = *((int16_t *)arg2);
@@ -598,7 +598,7 @@ opadd16(void *arg1, void *arg2, void *ret)
 }
 
 void
-opadd32(void *arg1, void *arg2, void *ret)
+copadd32(void *arg1, void *arg2, void *ret)
 {
     int32_t src = *((int32_t *)arg1);
     int32_t dest = *((int32_t *)arg2);
@@ -610,7 +610,7 @@ opadd32(void *arg1, void *arg2, void *ret)
 }
 
 void
-opadd64(void *arg1, void *arg2, void *ret)
+copadd64(void *arg1, void *arg2, void *ret)
 {
     int64_t src = *((int64_t *)arg1);
     int64_t dest = *((int64_t *)arg2);
@@ -622,7 +622,7 @@ opadd64(void *arg1, void *arg2, void *ret)
 }
 
 void
-opsub8(void *arg1, void *arg2, void *ret)
+copsub8(void *arg1, void *arg2, void *ret)
 {
     int8_t src = *((int8_t *)arg1);
     int8_t dest = *((int8_t *)arg2);
@@ -634,7 +634,7 @@ opsub8(void *arg1, void *arg2, void *ret)
 }
 
 void
-opsub16(void *arg1, void *arg2, void *ret)
+copsub16(void *arg1, void *arg2, void *ret)
 {
     int16_t src = *((int16_t *)arg1);
     int16_t dest = *((int16_t *)arg2);
@@ -646,7 +646,7 @@ opsub16(void *arg1, void *arg2, void *ret)
 }
 
 void
-opsub32(void *arg1, void *arg2, void *ret)
+copsub32(void *arg1, void *arg2, void *ret)
 {
     int32_t src = *((int32_t *)arg1);
     int32_t dest = *((int32_t *)arg2);
@@ -658,7 +658,7 @@ opsub32(void *arg1, void *arg2, void *ret)
 }
 
 void
-opsub64(void *arg1, void *arg2, void *ret)
+copsub64(void *arg1, void *arg2, void *ret)
 {
     int64_t src = *((int64_t *)arg1);
     int64_t dest = *((int64_t *)arg2);
@@ -670,7 +670,7 @@ opsub64(void *arg1, void *arg2, void *ret)
 }
 
 void
-opmul8(void *arg1, void *arg2, void *ret)
+copmul8(void *arg1, void *arg2, void *ret)
 {
     int8_t src = *((int8_t *)arg1);
     int8_t dest = *((int8_t *)arg2);
@@ -682,7 +682,7 @@ opmul8(void *arg1, void *arg2, void *ret)
 }
 
 void
-opmul16(void *arg1, void *arg2, void *ret)
+copmul16(void *arg1, void *arg2, void *ret)
 {
     int16_t src = *((int16_t *)arg1);
     int16_t dest = *((int16_t *)arg2);
@@ -694,7 +694,7 @@ opmul16(void *arg1, void *arg2, void *ret)
 }
 
 void
-opmul32(void *arg1, void *arg2, void *ret)
+copmul32(void *arg1, void *arg2, void *ret)
 {
     int32_t src = *((int32_t *)arg1);
     int32_t dest = *((int32_t *)arg2);
@@ -706,7 +706,7 @@ opmul32(void *arg1, void *arg2, void *ret)
 }
 
 void
-opmul64(void *arg1, void *arg2, void *ret)
+copmul64(void *arg1, void *arg2, void *ret)
 {
     int64_t src = *((int64_t *)arg1);
     int64_t dest = *((int64_t *)arg2);
@@ -718,7 +718,7 @@ opmul64(void *arg1, void *arg2, void *ret)
 }
 
 void
-opdiv8(void *arg1, void *arg2, void *ret)
+copdiv8(void *arg1, void *arg2, void *ret)
 {
     int8_t src = *((int8_t *)arg1);
     int8_t dest = *((int8_t *)arg2);
@@ -730,7 +730,7 @@ opdiv8(void *arg1, void *arg2, void *ret)
 }
 
 void
-opdiv16(void *arg1, void *arg2, void *ret)
+copdiv16(void *arg1, void *arg2, void *ret)
 {
     int16_t src = *((int16_t *)arg1);
     int16_t dest = *((int16_t *)arg2);
@@ -742,7 +742,7 @@ opdiv16(void *arg1, void *arg2, void *ret)
 }
 
 void
-opdiv32(void *arg1, void *arg2, void *ret)
+copdiv32(void *arg1, void *arg2, void *ret)
 {
     int32_t src = *((int32_t *)arg1);
     int32_t dest = *((int32_t *)arg2);
@@ -754,7 +754,7 @@ opdiv32(void *arg1, void *arg2, void *ret)
 }
 
 void
-opdiv64(void *arg1, void *arg2, void *ret)
+copdiv64(void *arg1, void *arg2, void *ret)
 {
     int64_t src = *((int64_t *)arg1);
     int64_t dest = *((int64_t *)arg2);
@@ -766,7 +766,7 @@ opdiv64(void *arg1, void *arg2, void *ret)
 }
 
 void
-opmod8(void *arg1, void *arg2, void *ret)
+copmod8(void *arg1, void *arg2, void *ret)
 {
     int8_t src = *((int8_t *)arg1);
     int8_t dest = *((int8_t *)arg2);
@@ -778,7 +778,7 @@ opmod8(void *arg1, void *arg2, void *ret)
 }
 
 void
-opmod16(void *arg1, void *arg2, void *ret)
+copmod16(void *arg1, void *arg2, void *ret)
 {
     int16_t src = *((int16_t *)arg1);
     int16_t dest = *((int16_t *)arg2);
@@ -790,7 +790,7 @@ opmod16(void *arg1, void *arg2, void *ret)
 }
 
 void
-opmod32(void *arg1, void *arg2, void *ret)
+copmod32(void *arg1, void *arg2, void *ret)
 {
     int32_t src = *((int32_t *)arg1);
     int32_t dest = *((int32_t *)arg2);
@@ -802,7 +802,7 @@ opmod32(void *arg1, void *arg2, void *ret)
 }
 
 void
-opmod64(void *arg1, void *arg2, void *ret)
+copmod64(void *arg1, void *arg2, void *ret)
 {
     int64_t src = *((int64_t *)arg1);
     int64_t dest = *((int64_t *)arg2);
