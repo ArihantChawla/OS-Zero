@@ -79,6 +79,7 @@
 
 #define haszero_2(a)    (~(a))
 #define haszero_32(a)   (((a) - 0x01010101) & ~(a) & 0x80808080)
+
 #define onebits_32(u32, r)                                              \
     ((r) = (u32),                                                       \
      (r) -= ((r) >> 1) & 0x55555555,                                    \
@@ -92,6 +93,7 @@
      (r) -= ((r) >> 1) & 0x55555555,                                    \
      (r) = (((r) >> 2) & 0x33333333) + ((r) & 0x33333333),              \
      (r) = (((((r) >> 4) + (r)) & 0x0f0f0f0f) * 0x01010101) >> 24)
+
 #define bytepar(b, r)                                                   \
     do {                                                                \
         unsigned long _tmp1;                                            \
@@ -100,7 +102,6 @@
         _tmp1 ^= (b) >> 4;                                              \
         (r) = (0x6996 >> (_tmp1 & 0x0f)) & 0x01;                        \
     } while (0)
-
 #define bytepar2(b, r)                                                  \
     do {                                                                \
         unsigned long _tmp1;                                            \
@@ -112,13 +113,9 @@
         _tmp2 = 0x6996;                                                 \
         (r) = (_tmp2 >> (_tmp1 & 0x0f)) & 0x01;                         \
     } while (0)
+#define bytepar3(b) ((0x6996 >> (((b) ^ ((b) >> 4)) & 0x0f)) & 0x01)
 
-//#define bytepar2(b) ((0x6996 >> (((b) ^ ((b) >> 4)) & 0x0f)) & 0x01)
-
-/*
- * Here's one that minimizes the use of constants.
- * - count number of trailing zero-bits in u32
- */
+/* count number of trailing zero-bits in u32 */
 #define tzero32(u32, r)                                                 \
     do {                                                                \
         uint32_t __tmp;                                                 \

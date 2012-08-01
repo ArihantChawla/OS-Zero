@@ -5,9 +5,10 @@ Ideas
 -----
 - assembly console (utilise wpm assembler)
 - make the calculator programmable in assembly
-  - assembly console for keyboard input
+  - assembly input with keyboard (line by line)
   - debug console
   - map stack items 0..15 to registers %st0..%st15
+- do character conversions between ASCII, ISO8859, Unicode and UTF-8
 
 Button Bars
 -----------
@@ -15,25 +16,39 @@ Button Bars
 Top Bar
 -------
 
+prog menu
+---------
+- eval is used to evaluate current expression
+- alias is used to give registers symbolic names; e.g., x, y, z
+- load is used to load (import) assembly and object files
+  - .include, .import
+
+cmd menu
+--------
+- rand is used for random numbers
+  - seed, new
 - zero menu item is for techniques such as those in <zero/trix.h>
+  - abs, min, max, parity, bitset, bitclr, bitget, bitmerge, bitcopy, ispow2,
+    rup2, rdown2, lzero, tzero, isleapyr, ceilpow2
+- fract could be used to draw fractals :)
 
 -----------------------------------------
-| menu	| func	| stack | setup	| misc	|
+| prog	| func	| stack | setup	| cmd	|
 -----------------------------------------
     |	    |	    |	    |	    |
 -----------------------------------------
 | eval  | log   | swap  | base  | rand  |
 -----------------------------------------
-| load  | exp   | drop  | size  | zero  |
+| alias	| exp   | drop  | size  | zero  |
 -----------------------------------------
-| exec  | trig  |	| type  | fract |
+| load  | trig  |	| type  | fract |
 -----------------	-----------------
-| save	| vector|
+| exec	| vector|
 -----------------
-| expr	| matrix|
+| save	| matrix|
 -----------------
-| equ   | cmplx |
------------------
+	| cmplx |
+	---------
 
 menu
 ----
@@ -61,18 +76,21 @@ Display
 Operation Pad
 -------------
 
+- s>> stands for arithmetic shift right (fill with sign)
+- ..> is rotate right, <.. is rotate left
+
 -------------------------------------------------
-|   d	|   e	|   f	|   ~	|   ++	|   --	|
+|   d	|   e	|   f	|   ~	|   s>>	|   ++	|
 -------------------------------------------------
-|   a	|   b	|   c	|   %	|   >>	|   E	|
------------------------------------------	|
-|   7	|   8	|   9	|   /	|   <<	|   N	|
------------------------------------------	|
-|   4	|   5	|   6	|   *	|   ^	|   T	|
------------------------------------------	|
-|   1	|   2	|   3	|   -	|   |	|   E	|
------------------------------------------	|
-|   0  	|   .	| SPACE	|   +	|   &	|   R	|
+|   a	|   b	|   c	|   %	|   >>	|   --	|
+------------------------------------------------|
+|   7	|   8	|   9	|   /	|   <<	|  ..> 	|
+------------------------------------------------|
+|   4	|   5	|   6	|   *	|   ^	|  <..	|
+------------------------------------------------|
+|   1	|   2	|   3	|   -	|   |	|   	|
+----------------------------------------- ENTER	|
+|   0  	|   .	| SPACE	|   +	|   &	|   	|
 -------------------------------------------------
 
 Debug Pad
