@@ -482,7 +482,7 @@ static int             _mapfd = -1;
 /* utility functions */
 
 static __inline__ long
-ceil2(size_t size)
+szceil2(size_t size)
 {
     size--;
     size |= size >> 1;
@@ -501,7 +501,7 @@ ceil2(size_t size)
 static __inline__ long
 bktid(size_t size)
 {
-    long tmp = ceil2(size);
+    long tmp = szceil2(size);
     long bid;
 
 #if (LONGSIZE == 4)

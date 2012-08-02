@@ -1,81 +1,79 @@
 #ifndef __PCALC_OP_H__
 #define __PCALC_OP_H__
 
-typedef void pcalcop_t(void *, void *, void *);
+typedef void wpccop_t(void *, void *, void *);
 
 /* cop.c */
-void copnot8(void *arg1, void *dummy, void *ret);
-void copnot16(void *arg1, void *dummy, void *ret);
-void copnot32(void *arg1, void *dummy, void *ret);
-void copnot64(void *arg1, void *dummy, void *ret);
-void copand8(void *arg1, void *arg2, void *ret);
-void copand16(void *arg1, void *arg2, void *ret);
-void copand32(void *arg1, void *arg2, void *ret);
-void copand64(void *arg1, void *arg2, void *ret);
-void copor8(void *arg1, void *arg2, void *ret);
-void copor16(void *arg1, void *arg2, void *ret);
-void copor32(void *arg1, void *arg2, void *ret);
-void copor64(void *arg1, void *arg2, void *ret);
-void copxor8(void *arg1, void *arg2, void *ret);
-void copxor16(void *arg1, void *arg2, void *ret);
-void copxor32(void *arg1, void *arg2, void *ret);
-void copxor64(void *arg1, void *arg2, void *ret);
-void copshl8(void *arg1, void *arg2, void *ret);
-void copshl16(void *arg1, void *arg2, void *ret);
-void copshl32(void *arg1, void *arg2, void *ret);
-void copshl64(void *arg1, void *arg2, void *ret);
-void copshr8(void *arg1, void *arg2, void *ret);
-void copshr16(void *arg1, void *arg2, void *ret);
-void copshr32(void *arg1, void *arg2, void *ret);
-void copshr64(void *arg1, void *arg2, void *ret);
-void copshrl8(void *arg1, void *arg2, void *ret);
-void copshrl16(void *arg1, void *arg2, void *ret);
-void copshrl32(void *arg1, void *arg2, void *ret);
-void copshrl64(void *arg1, void *arg2, void *ret);
-void copror8(void *arg1, void *arg2, void *ret);
-void copror16(void *arg1, void *arg2, void *ret);
-void copror32(void *arg1, void *arg2, void *ret);
-void copror64(void *arg1, void *arg2, void *ret);
-void coprol8(void *arg1, void *arg2, void *ret);
-void coprol16(void *arg1, void *arg2, void *ret);
-void coprol32(void *arg1, void *arg2, void *ret);
-void coprol64(void *arg1, void *arg2, void *ret);
-void copinc8(void *arg1, void *arg2, void *ret);
-void copinc16(void *arg1, void *arg2, void *ret);
-void copinc32(void *arg1, void *arg2, void *ret);
-void copinc64(void *arg1, void *arg2, void *ret);
-void copdec8(void *arg1, void *arg2, void *ret);
-void copdec16(void *arg1, void *arg2, void *ret);
-void copdec32(void *arg1, void *arg2, void *ret);
-void copdec64(void *arg1, void *arg2, void *ret);
-void copadd8(void *arg1, void *arg2, void *ret);
-void copadd16(void *arg1, void *arg2, void *ret);
-void copadd32(void *arg1, void *arg2, void *ret);
-void copadd64(void *arg1, void *arg2, void *ret);
-void copsub8(void *arg1, void *arg2, void *ret);
-void copsub16(void *arg1, void *arg2, void *ret);
-void copsub32(void *arg1, void *arg2, void *ret);
-void copsub64(void *arg1, void *arg2, void *ret);
-void copmul8(void *arg1, void *arg2, void *ret);
-void copmul16(void *arg1, void *arg2, void *ret);
-void copmul32(void *arg1, void *arg2, void *ret);
-void copmul64(void *arg1, void *arg2, void *ret);
-void copdiv8(void *arg1, void *arg2, void *ret);
-void copdiv16(void *arg1, void *arg2, void *ret);
-void copdiv32(void *arg1, void *arg2, void *ret);
-void copdiv64(void *arg1, void *arg2, void *ret);
-void copmod8(void *arg1, void *arg2, void *ret);
-void copmod16(void *arg1, void *arg2, void *ret);
-void copmod32(void *arg1, void *arg2, void *ret);
-void copmod64(void *arg1, void *arg2, void *ret);
+void not32(void *arg1, void *dummy, void *ret);
+void not64(void *arg1, void *dummy, void *ret);
+void and32(void *arg1, void *arg2, void *ret);
+void and64(void *arg1, void *arg2, void *ret);
+void or32(void *arg1, void *arg2, void *ret);
+void or64(void *arg1, void *arg2, void *ret);
+void xor32(void *arg1, void *arg2, void *ret);
+void xor64(void *arg1, void *arg2, void *ret);
+void shl32(void *arg1, void *arg2, void *ret);
+void shl64(void *arg1, void *arg2, void *ret);
+void shr32(void *arg1, void *arg2, void *ret);
+void shr64(void *arg1, void *arg2, void *ret);
+void shrl32(void *arg1, void *arg2, void *ret);
+void shrl64(void *arg1, void *arg2, void *ret);
+void ror32(void *arg1, void *arg2, void *ret);
+void ror64(void *arg1, void *arg2, void *ret);
+void rol32(void *arg1, void *arg2, void *ret);
+void rol64(void *arg1, void *arg2, void *ret);
+void inc32(void *arg1, void *arg2, void *ret);
+void inc64(void *arg1, void *arg2, void *ret);
+void dec32(void *arg1, void *arg2, void *ret);
+void dec64(void *arg1, void *arg2, void *ret);
+void add32(void *arg1, void *arg2, void *ret);
+void add64(void *arg1, void *arg2, void *ret);
+void sub32(void *arg1, void *arg2, void *ret);
+void sub64(void *arg1, void *arg2, void *ret);
+void mul32(void *arg1, void *arg2, void *ret);
+void mul64(void *arg1, void *arg2, void *ret);
+void div32(void *arg1, void *arg2, void *ret);
+void div64(void *arg1, void *arg2, void *ret);
+void mod32(void *arg1, void *arg2, void *ret);
+void mod64(void *arg1, void *arg2, void *ret);
+
+typedef void wpczero_t(void *, void *, void *, void *);
 
 /* zero.c */
-void abs8(void *arg1, void *dummy, void *ret);
-void abs16(void *arg1, void *dummy, void *ret);
-void abs32(void *arg1, void *dummy, void *ret);
-void abs64(void *arg1, void *dummy, void *ret);
+void abs32(void *arg1, void *dummy, void *dummy, void *ret);
+void abs64(void *arg1, void *dummy, void *dummy, void *ret);
+void avg32(void *arg1, void *arg2, void *dummy, void *ret);
+void avg64(void *arg1, void *arg2, void *dummy, void *ret);
+void min32(void *arg1, void *arg2, void *dummy, void *ret);
+void min64(void *arg1, void *arg2, void *dummy, void *ret);
+void max32(void *arg1, void *arg2, void *dummy, void *ret);
+void max64(void *arg1, void *arg2, void *dummy, void *ret);
+void bitset32(void *arg1, void *arg2, void *dummy, void *ret);
+void bitset64(void *arg1, void *arg2, void *dummy, void *ret);
+void setbit32(void *arg1, void *arg2, void *dummy, void *ret);
+void setbit64(void *arg1, void *arg2, void *dummy, void *ret);
+void clrbit32(void *arg1, void *arg2, void *dummy, void *ret);
+void clrbit64(void *arg1, void *arg2, void *dummy, void *ret);
+void setbits32(void *arg1, void *arg2, void *arg3, void *ret);
+void setbits64(void *arg1, void *arg2, void *arg3, void *ret);
+void clrbits32(void *arg1, void *arg2, void *arg3, void *ret);
+void clrbits64(void *arg1, void *arg2, void *arg3, void *ret);
+void mergebits32(void *arg1, void *arg2, void *arg3, void *ret);
+void mergebits64(void *arg1, void *arg2, void *arg3, void *ret);
+void copybits32(void *arg1, void *arg2, void *arg3, void *ret);
+void copybits64(void *arg1, void *arg2, void *arg3, void *ret);
+void is2pow32(void *arg1, void *dummy, void *dummy, void *ret);
+void is2pow64(void *arg1, void *dummy, void *dummy, void *ret);
+void rnd2up32(void *arg1, void *arg2, void *dummy, void *ret);
+void rnd2up64(void *arg1, void *arg2, void *dummy, void *ret);
+void rnd2down32(void *arg1, void *arg2, void *dummy, void *ret);
+void rnd2down64(void *arg1, void *arg2, void *dummy, void *ret);
+void trailz32(void *arg1, void *dummy, void *dummy, void *ret);
+void trailz64(void *arg1, void *dummy, void *dummy, void *ret);
+void leadz32(void *arg1, void *dummy, void *dummy, void *ret);
+void leadz64(void *arg1, void *dummy, void *dummy, void *ret);
 
-/* TODO: hack support for big endian architectures */
+/* TODO: support for big endian architectures */
 #define wpcgetarg8(ptr)                                                 \
     (*(int8_t *)ptr)
 #define wpcgetarg16(ptr)                                                \
@@ -84,12 +82,22 @@ void abs64(void *arg1, void *dummy, void *ret);
     (*(int32_t *)ptr)
 #define wpcgetarg64(ptr)                                                \
     (*(int64_t *)ptr)
+#define wpcgetargu8(ptr)                                                \
+    (*(uint8_t *)ptr)
+#define wpcgetargu16(ptr)                                               \
+    (*(uint16_t *)ptr)
+#define wpcgetargu32(ptr)                                               \
+    (*(uint32_t *)ptr)
+#define wpcgetargu64(ptr)                                               \
+    (*(uint64_t *)ptr)
+#if 0
 #define wpcsetval8(ptr, val)                                            \
     *(int8_t *)(ptr) = (val)
 #define wpcsetval16(ptr, val)                                           \
     *(int16_t *)(ptr) = (val)
 #define wpcsetval32(ptr, val)                                           \
     *(int32_t *)(ptr) = (val)
+#endif
 #define wpcsetval64(ptr, val)                                           \
     *(int64_t *)(ptr) = (val)
 

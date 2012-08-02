@@ -1,43 +1,19 @@
 #include <wpc/op.h>
 
 void
-copnot8(void *arg1, void *dummy, void *ret)
-{
-    int8_t src = wpcgetval8(arg1);
-    int8_t dest;
-
-    dest = ~src;
-    wpcsetval8(ret, dest);
-
-    return;
-}
-
-void
-copnot16(void *arg1, void *dummy, void *ret)
-{
-    int16_t src = wpcgetval16(arg1);
-    int16_t dest;
-
-    dest = ~src;
-    wpcsetval16(ret, dest);
-
-    return;
-}
-
-void
-copnot32(void *arg1, void *dummy, void *ret)
+not32(void *arg1, void *dummy, void *ret)
 {
     int32_t src = wpcgetval32(arg1);
     int32_t dest;
 
     dest = ~src;
-    wpcsetval32(ret, dest);
+    wpcsetval64(ret, dest);
 
     return;
 }
 
 void
-copnot64(void *arg1, void *dummy, void *ret)
+not64(void *arg1, void *dummy, void *ret)
 {
     int64_t src = wpcgetval64(arg1);
     int64_t dest;
@@ -49,43 +25,19 @@ copnot64(void *arg1, void *dummy, void *ret)
 }
 
 void
-copand8(void *arg1, void *arg2, void *ret)
-{
-    int8_t src = wpcgetval8(arg1);
-    int8_t dest = wpcgetval8(arg2);
-
-    dest &= src;
-    wpcsetval8(ret, dest);
-
-    return;
-}
-
-void
-copand16(void *arg1, void *arg2, void *ret)
-{
-    int16_t src = wpcgetval16(arg1);
-    int16_t dest = wpcgetval16(arg2);
-
-    dest &= src;
-    wpcsetval16(ret, dest);
-
-    return;
-}
-
-void
-copand32(void *arg1, void *arg2, void *ret)
+and32(void *arg1, void *arg2, void *ret)
 {
     int32_t src = wpcgetval32(arg1);
     int32_t dest = wpcgetval32(arg2);
 
     dest &= src;
-    wpcsetval32(ret, dest);
+    wpcsetval64(ret, dest);
 
     return;
 }
 
 void
-copand64(void *arg1, void *arg2, void *ret)
+and64(void *arg1, void *arg2, void *ret)
 {
     int64_t src = wpcgetval64(arg1);
     int64_t dest = wpcgetval64(arg2);
@@ -97,43 +49,19 @@ copand64(void *arg1, void *arg2, void *ret)
 }
 
 void
-copor8(void *arg1, void *arg2, void *ret)
-{
-    int8_t src = wpcgetval8(arg1);
-    int8_t dest = wpcgetval8(arg2);
-
-    dest |= src;
-    wpcsetval8(ret, dest);
-
-    return;
-}
-
-void
-copor16(void *arg1, void *arg2, void *ret)
-{
-    int16_t src = wpcgetval16(arg1);
-    int16_t dest = wpcgetval16(arg2);
-
-    dest |= src;
-    wpcsetval16(ret, dest);
-
-    return;
-}
-
-void
-copor32(void *arg1, void *arg2, void *ret)
+or32(void *arg1, void *arg2, void *ret)
 {
     int32_t src = wpcgetval32(arg1);
     int32_t dest = wpcgetval32(arg2);
 
     dest |= src;
-    wpcsetval32(ret, dest);
+    wpcsetval64(ret, dest);
 
     return;
 }
 
 void
-copor64(void *arg1, void *arg2, void *ret)
+or64(void *arg1, void *arg2, void *ret)
 {
     int64_t src = wpcgetval64(arg1);
     int64_t dest = wpcgetval64(arg2);
@@ -145,43 +73,19 @@ copor64(void *arg1, void *arg2, void *ret)
 }
 
 void
-copxor8(void *arg1, void *arg2, void *ret)
-{
-    int8_t src = wpcgetval8(arg1);
-    int8_t dest = wpcgetval8(arg2);
-
-    dest ^= src;
-    wpcsetval8(ret, dest);
-
-    return;
-}
-
-void
-copxor16(void *arg1, void *arg2, void *ret)
-{
-    int16_t src = wpcgetval16(arg1);
-    int16_t dest = wpcgetval16(arg2);
-
-    dest ^= src;
-    wpcsetval16(ret, dest);
-
-    return;
-}
-
-void
-copxor32(void *arg1, void *arg2, void *ret)
+xor32(void *arg1, void *arg2, void *ret)
 {
     int32_t src = wpcgetval32(arg1);
     int32_t dest = wpcgetval32(arg2);
 
     dest ^= src;
-    wpcsetval32(ret, dest);
+    wpcsetval64(ret, dest);
 
     return;
 }
 
 void
-copxor64(void *arg1, void *arg2, void *ret)
+xor64(void *arg1, void *arg2, void *ret)
 {
     int64_t src = wpcgetval64(arg1);
     int64_t dest = wpcgetval64(arg2);
@@ -193,43 +97,19 @@ copxor64(void *arg1, void *arg2, void *ret)
 }
 
 void
-copshl8(void *arg1, void *arg2, void *ret)
-{
-    int8_t src = wpcgetval8(arg1);
-    int8_t dest = wpcgetval8(arg2);
-
-    dest <<= src;
-    wpcsetval8(ret, dest);
-
-    return;
-}
-
-void
-copshl16(void *arg1, void *arg2, void *ret)
-{
-    int16_t src = wpcgetval16(arg1);
-    int16_t dest = wpcgetval16(arg2);
-
-    dest <<= src;
-    wpcsetval16(ret, dest);
-
-    return;
-}
-
-void
-copshl32(void *arg1, void *arg2, void *ret)
+shl32(void *arg1, void *arg2, void *ret)
 {
     int32_t src = wpcgetval32(arg1);
     int32_t dest = wpcgetval32(arg2);
 
     dest <<= src;
-    wpcsetval32(ret, dest);
+    wpcsetval64(ret, dest);
 
     return;
 }
 
 void
-copshl64(void *arg1, void *arg2, void *ret)
+shl64(void *arg1, void *arg2, void *ret)
 {
     int64_t src = wpcgetval64(arg1);
     int64_t dest = wpcgetval64(arg2);
@@ -241,36 +121,7 @@ copshl64(void *arg1, void *arg2, void *ret)
 }
 
 void
-copshr8(void *arg1, void *arg2, void *ret)
-{
-    int8_t src = wpcgetval8(arg1);
-    int8_t dest = wpcgetval8(arg2);
-    int8_t sign = dest & 0x80;
-
-    sign = (sign) & 0xff << (8 - src) : 0;
-    dest >>= cnt;
-    dest |= sign;
-    wpcsetval8(ret, dest);
-
-    return;
-}
-
-copshr16(void *arg1, void *arg2, void *ret)
-{
-    int16_t src = wpcgetval16(arg1);
-    int16_t dest = wpcgetval16(arg2);
-    int16_t sign = dest & 0x8000;
-
-    sign = (sign) & 0xff << (16 - src) : 0;
-    dest >>= cnt;
-    dest |= sign;
-    wpcsetval16(ret, dest);
-
-    return;
-}
-
-void
-copshr32(void *arg1, void *arg2, void *ret)
+shr32(void *arg1, void *arg2, void *ret)
 {
     int32_t src = wpcgetval32(arg1);
     int32_t dest = wpcgetval32(arg2);
@@ -279,13 +130,13 @@ copshr32(void *arg1, void *arg2, void *ret)
     sign = (sign) & 0xff << (32 - src) : 0;
     dest >>= cnt;
     dest |= sign;
-    wpcsetval32(ret, dest);
+    wpcsetval64(ret, dest);
 
     return;
 }
 
 void
-copshr64(void *arg1, void *arg2, void *ret)
+shr64(void *arg1, void *arg2, void *ret)
 {
     int64_t src = wpcgetval64(arg1);
     int64_t dest = wpcgetval64(arg2);
@@ -300,37 +151,7 @@ copshr64(void *arg1, void *arg2, void *ret)
 }
 
 void
-copshrl8(void *arg1, void *arg2, void *ret)
-{
-    int8_t src = wpcgetval8(arg1);
-    int8_t dest = wpcgetval8(arg2);
-    int8_t mask = 0xff >> src;
-
-    sign = (sign) & 0xff << (8 - src) : 0;
-    dest >>= cnt;
-    dest &= mask;
-    wpcsetval8(ret, dest);
-
-    return;
-}
-
-void
-copshrl16(void *arg1, void *arg2, void *ret)
-{
-    int16_t src = wpcgetval16(arg1);
-    int16_t dest = wpcgetval16(arg2);
-    int16_t mask = 0xffff >> src;
-
-    sign = (sign) & 0xff << (16 - src) : 0;
-    dest >>= cnt;
-    dest &= mask;
-    wpcsetval16(ret, dest);
-
-    return;
-}
-
-void
-copshrl32(void *arg1, void *arg2, void *ret)
+shrl32(void *arg1, void *arg2, void *ret)
 {
     int32_t src = wpcgetval32(arg1);
     int32_t dest = wpcgetval32(arg2);
@@ -339,13 +160,13 @@ copshrl32(void *arg1, void *arg2, void *ret)
     sign = (sign) & 0xffffffff << (32 - src) : 0;
     dest >>= cnt;
     dest &= mask;
-    wpcsetval32(ret, dest);
+    wpcsetval64(ret, dest);
 
     return;
 }
 
 void
-copshrl64(void *arg1, void *arg2, void *ret)
+shrl64(void *arg1, void *arg2, void *ret)
 {
     int64_t src = wpcgetval64(arg1);
     int64_t dest = wpcgetval64(arg2);
@@ -360,39 +181,7 @@ copshrl64(void *arg1, void *arg2, void *ret)
 }
 
 void
-copror8(void *arg1, void *arg2, void *ret)
-{
-    int8_t src = wpcgetval8(arg1);
-    int8_t dest = wpcgetval8(arg2);
-    int8_t mask = 0xff >> (8 - src);
-    int8_t bits = dest & mask;
-
-    bits <<= 8 - cnt;
-    dest >>= cnt;
-    dest |= bits;
-    wpcsetval8(ret, dest);
-
-    return;
-}
-
-void
-copror16(void *arg1, void *arg2, void *ret)
-{
-    int16_t src = wpcgetval16(arg1);
-    int16_t dest = wpcgetval16(arg2);
-    int16_t mask = 0xffff >> (16 - src);
-    int16_t bits = dest & mask;
-
-    bits <<= 16 - cnt;
-    dest >>= cnt;
-    dest |= bits;
-    wpcsetval16(ret, dest);
-
-    return;
-}
-
-void
-copror32(void *arg1, void *arg2, void *ret)
+ror32(void *arg1, void *arg2, void *ret)
 {
     int32_t src = wpcgetval32(arg1);
     int32_t dest = wpcgetval32(arg2);
@@ -402,13 +191,13 @@ copror32(void *arg1, void *arg2, void *ret)
     bits <<= 32 - cnt;
     dest >>= cnt;
     dest |= bits;
-    wpcsetval32(ret, dest);
+    wpcsetval64(ret, dest);
 
     return;
 }
 
 void
-copror64(void *arg1, void *arg2, void *ret)
+ror64(void *arg1, void *arg2, void *ret)
 {
     int64_t src = wpcgetval64(arg1);
     int64_t dest = wpcgetval64(arg2);
@@ -424,39 +213,7 @@ copror64(void *arg1, void *arg2, void *ret)
 }
 
 void
-coprol8(void *arg1, void *arg2, void *ret)
-{
-    int8_t src = wpcgetval8(arg1);
-    int8_t dest = wpcgetval8(arg2);
-    int8_t mask = 0xff >> (8 - src);
-    int8_t bits = dest & mask;
-
-    bits >>= 8 - cnt;
-    dest <<= cnt;
-    dest |= bits;
-    wpcsetval8(ret, dest);
-
-    return;
-}
-
-void
-coprol16(void *arg1, void *arg2, void *ret)
-{
-    int16_t src = wpcgetval16(arg1);
-    int16_t dest = wpcgetval16(arg2);
-    int16_t mask = 0xffff >> (16 - src);
-    int16_t bits = dest & mask;
-
-    bits >>= 16 - cnt;
-    dest <<= cnt;
-    dest |= bits;
-    wpcsetval16(ret, dest);
-
-    return;
-}
-
-void
-coprol32(void *arg1, void *arg2, void *ret)
+rol32(void *arg1, void *arg2, void *ret)
 {
     int32_t src = wpcgetval32(arg1);
     int32_t dest = wpcgetval32(arg2);
@@ -466,13 +223,13 @@ coprol32(void *arg1, void *arg2, void *ret)
     bits >>= 32 - cnt;
     dest <<= cnt;
     dest |= bits;
-    wpcsetval32(ret, dest);
+    wpcsetval64(ret, dest);
 
     return;
 }
 
 void
-coprol64(void *arg1, void *arg2, void *ret)
+rol64(void *arg1, void *arg2, void *ret)
 {
     int64_t src = wpcgetval64(arg1);
     int64_t dest = wpcgetval64(arg2);
@@ -488,40 +245,18 @@ coprol64(void *arg1, void *arg2, void *ret)
 }
 
 void
-copinc8(void *arg1, void *arg2, void *ret)
-{
-    int8_t src = wpcgetval8(arg1);
-
-    src++;
-    wpcgetval8(arg1) = dest;
-
-    return;
-}
-
-void
-copinc16(void *arg1, void *arg2, void *ret)
-{
-    int16_t src = wpcgetval16(arg1);
-
-    src++;
-    wpcsetval16(ret, dest);
-
-    return;
-}
-
-void
-copinc32(void *arg1, void *arg2, void *ret)
+inc32(void *arg1, void *arg2, void *ret)
 {
     int32_t src = wpcgetval32(arg1);
 
     src++;
-    wpcsetval32(ret, dest);
+    wpcsetval64(ret, dest);
 
     return;
 }
 
 void
-copinc64(void *arg1, void *arg2, void *ret)
+inc64(void *arg1, void *arg2, void *ret)
 {
     int64_t src = wpcgetval64(arg1);
 
@@ -532,40 +267,18 @@ copinc64(void *arg1, void *arg2, void *ret)
 }
 
 void
-copdec8(void *arg1, void *arg2, void *ret)
-{
-    int8_t src = wpcgetval8(arg1);
-
-    src--;
-    wpcgetval8(arg1) = dest;
-
-    return;
-}
-
-void
-copdec16(void *arg1, void *arg2, void *ret)
-{
-    int16_t src = wpcgetval16(arg1);
-
-    src--;
-    wpcsetval16(ret, dest);
-
-    return;
-}
-
-void
-copdec32(void *arg1, void *arg2, void *ret)
+dec32(void *arg1, void *arg2, void *ret)
 {
     int32_t src = wpcgetval32(arg1);
 
     src--;
-    wpcsetval32(ret, dest);
+    wpcsetval64(ret, dest);
 
     return;
 }
 
 void
-copdec64(void *arg1, void *arg2, void *ret)
+dec64(void *arg1, void *arg2, void *ret)
 {
     int64_t src = wpcgetval64(arg1);
 
@@ -576,43 +289,19 @@ copdec64(void *arg1, void *arg2, void *ret)
 }
 
 void
-copadd8(void *arg1, void *arg2, void *ret)
-{
-    int8_t src = wpcgetval8(arg1);
-    int8_t dest = wpcgetval8(arg2);
-
-    dest += src;
-    wpcsetval8(ret, dest);
-
-    return;
-}
-
-void
-copadd16(void *arg1, void *arg2, void *ret)
-{
-    int16_t src = wpcgetval16(arg1);
-    int16_t dest = wpcgetval16(arg2);
-
-    dest += src;
-    wpcsetval16(ret, dest);
-
-    return;
-}
-
-void
-copadd32(void *arg1, void *arg2, void *ret)
+add32(void *arg1, void *arg2, void *ret)
 {
     int32_t src = wpcgetval32(arg1);
     int32_t dest = wpcgetval32(arg2);
 
     dest += src;
-    wpcsetval32(ret, dest);
+    wpcsetval64(ret, dest);
 
     return;
 }
 
 void
-copadd64(void *arg1, void *arg2, void *ret)
+add64(void *arg1, void *arg2, void *ret)
 {
     int64_t src = wpcgetval64(arg1);
     int64_t dest = wpcgetval64(arg2);
@@ -624,43 +313,19 @@ copadd64(void *arg1, void *arg2, void *ret)
 }
 
 void
-copsub8(void *arg1, void *arg2, void *ret)
-{
-    int8_t src = wpcgetval8(arg1);
-    int8_t dest = wpcgetval8(arg2);
-
-    dest -= src;
-    wpcsetval8(ret, dest);
-
-    return;
-}
-
-void
-copsub16(void *arg1, void *arg2, void *ret)
-{
-    int16_t src = wpcgetval16(arg1);
-    int16_t dest = wpcgetval16(arg2);
-
-    dest -= src;
-    wpcsetval16(ret, dest);
-
-    return;
-}
-
-void
-copsub32(void *arg1, void *arg2, void *ret)
+sub32(void *arg1, void *arg2, void *ret)
 {
     int32_t src = wpcgetval32(arg1);
     int32_t dest = wpcgetval32(arg2);
 
     dest -= src;
-    wpcsetval32(ret, dest);
+    wpcsetval64(ret, dest);
 
     return;
 }
 
 void
-copsub64(void *arg1, void *arg2, void *ret)
+sub64(void *arg1, void *arg2, void *ret)
 {
     int64_t src = wpcgetval64(arg1);
     int64_t dest = wpcgetval64(arg2);
@@ -672,43 +337,19 @@ copsub64(void *arg1, void *arg2, void *ret)
 }
 
 void
-copmul8(void *arg1, void *arg2, void *ret)
-{
-    int8_t src = wpcgetval8(arg1);
-    int8_t dest = wpcgetval8(arg2);
-
-    dest *= src;
-    wpcsetval8(ret, dest);
-
-    return;
-}
-
-void
-copmul16(void *arg1, void *arg2, void *ret)
-{
-    int16_t src = wpcgetval16(arg1);
-    int16_t dest = wpcgetval16(arg2);
-
-    dest *= src;
-    wpcsetval16(ret, dest);
-
-    return;
-}
-
-void
-copmul32(void *arg1, void *arg2, void *ret)
+mul32(void *arg1, void *arg2, void *ret)
 {
     int32_t src = wpcgetval32(arg1);
     int32_t dest = wpcgetval32(arg2);
 
     dest *= src;
-    wpcsetval32(ret, dest);
+    wpcsetval64(ret, dest);
 
     return;
 }
 
 void
-copmul64(void *arg1, void *arg2, void *ret)
+mul64(void *arg1, void *arg2, void *ret)
 {
     int64_t src = wpcgetval64(arg1);
     int64_t dest = wpcgetval64(arg2);
@@ -720,43 +361,19 @@ copmul64(void *arg1, void *arg2, void *ret)
 }
 
 void
-copdiv8(void *arg1, void *arg2, void *ret)
-{
-    int8_t src = wpcgetval8(arg1);
-    int8_t dest = wpcgetval8(arg2);
-
-    dest /= src;
-    wpcsetval8(ret, dest);
-
-    return;
-}
-
-void
-copdiv16(void *arg1, void *arg2, void *ret)
-{
-    int16_t src = wpcgetval16(arg1);
-    int16_t dest = wpcgetval16(arg2);
-
-    dest /= src;
-    wpcsetval16(ret, dest);
-
-    return;
-}
-
-void
-copdiv32(void *arg1, void *arg2, void *ret)
+div32(void *arg1, void *arg2, void *ret)
 {
     int32_t src = wpcgetval32(arg1);
     int32_t dest = wpcgetval32(arg2);
 
     dest /= src;
-    wpcsetval32(ret, dest);
+    wpcsetval64(ret, dest);
 
     return;
 }
 
 void
-copdiv64(void *arg1, void *arg2, void *ret)
+div64(void *arg1, void *arg2, void *ret)
 {
     int64_t src = wpcgetval64(arg1);
     int64_t dest = wpcgetval64(arg2);
@@ -768,43 +385,19 @@ copdiv64(void *arg1, void *arg2, void *ret)
 }
 
 void
-copmod8(void *arg1, void *arg2, void *ret)
-{
-    int8_t src = wpcgetval8(arg1);
-    int8_t dest = wpcgetval8(arg2);
-
-    dest %= src;
-    wpcsetval8(ret, dest);
-
-    return;
-}
-
-void
-copmod16(void *arg1, void *arg2, void *ret)
-{
-    int16_t src = wpcgetval16(arg1);
-    int16_t dest = wpcgetval16(arg2);
-
-    dest %= src;
-    wpcsetval16(ret, dest);
-
-    return;
-}
-
-void
-copmod32(void *arg1, void *arg2, void *ret)
+mod32(void *arg1, void *arg2, void *ret)
 {
     int32_t src = wpcgetval32(arg1);
     int32_t dest = wpcgetval32(arg2);
 
     dest %= src;
-    wpcsetval32(ret, dest);
+    wpcsetval64(ret, dest);
 
     return;
 }
 
 void
-copmod64(void *arg1, void *arg2, void *ret)
+mod64(void *arg1, void *arg2, void *ret)
 {
     int64_t src = wpcgetval64(arg1);
     int64_t dest = wpcgetval64(arg2);

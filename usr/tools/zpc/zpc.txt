@@ -28,7 +28,7 @@ cmd menu
 - rand is used for random numbers
   - seed, new
 - zero menu item is for techniques such as those in <zero/trix.h>
-  - abs, min, max, parity, bitset, bitclr, bitget, bitmerge, bitcopy, ispow2,
+  - abs, min, max, is1bit, bitset, bitclr, bitget, bitmerge, bitcopy, ispow2,
     rup2, rdown2, lzero, tzero, isleapyr, ceilpow2
 - fract could be used to draw fractals :)
 

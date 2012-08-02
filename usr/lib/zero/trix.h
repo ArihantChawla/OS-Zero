@@ -29,12 +29,17 @@
 #define hibits(i, n)        ((i) & ~((1U << (sizeof(i) * CHAR_BIT - (n))) - 0x01))
 /* get n bits starting from index j */
 #define getbits(i, j, n)    (lobits((i) >> (j), (n)))
+/* set n bits starting from index j to value b */
 #define setbits(i, j, n, b) ((i) |= (((b) << (j)) & ~(((1U << (n)) << (j)) - 0x01)))
 #define bitset(p, b)        (((uint8_t *)(p))[(b) >> 3] & (1U << ((b) & 0x07)))
 /* set bit # b in *p */
 #define setbit(p, b)        (((uint8_t *)(p))[(b) >> 3] |= (1U << ((b) & 0x07)))
 /* clear bit # b in *p */
 #define clrbit(p, b)        (((uint8_t *)(p))[(b) >> 3] &= ~(1U << ((b) & 0x07)))
+/* m - mask of bits to be taken from b. */
+#define mergebits(a, b, m)  ((a) ^ (((a) ^ (b)) & (m)))
+/* m - mask of bits to be copied from a. 1 -> copy, 0 -> leave alone. */
+#define copybits(a, b, m) (((a) | (m)) | ((b) & ~(m)))
 
 /* compute minimum and maximum of a and b without branching */
 #define min(a, b)                                                       \
@@ -66,7 +71,7 @@
 #define mod2(a, b2)     ((a) & ((b2) - 1))
 
 /* round a up to the next multiple of (the power of two) b2. */
-#define roundup1(a, b2) (((a) + ((b2) - 0x01)) & ~((b2) + 0x01))
+//#define roundup2a(a, b2) (((a) + ((b2) - 0x01)) & ~((b2) + 0x01))
 #define roundup2(a, b2) (((a) + ((b2) - 0x01)) & -(b2))
 
 /* round down to the previous multiple of (the power of two) b2 */
@@ -250,6 +255,35 @@
         }                                                               \
     } while (0)
 
+static __inline__ uint32_t
+ceil2_32(uint64_t x)
+{
+    x--;
+    x |= x >> 1;
+    x |= x >> 2;
+    x |= x >> 4;
+    x |= x >> 8;
+    x |= x >> 16;
+    x++;
+
+    return x;
+}
+
+static __inline__ uint64_t
+ceil2_64(uint64_t x)
+{
+    x--;
+    x |= x >> 1;
+    x |= x >> 2;
+    x |= x >> 4;
+    x |= x >> 8;
+    x |= x >> 16;
+    x |= x >> 32;
+    x++;
+
+    return x;
+}
+
 /* internal macros. */
 #define _ftoi32(f)     (*((int32_t *)&(f)))
 #define _ftou32(f)     (*((uint32_t *)&(f)))
@@ -334,11 +368,6 @@
     ((x) | (!((x) >> 8) - 1))
 #define sat8b(x)                                                        \
     condset(x, 0xff, x, 0xff)
-
-/* m - mask of bits to be taken from b. */
-#define mergebits(a, b, m)  ((a) ^ (((a) ^ (b)) & (m)))
-/* m - mask of bits to be copied from a. 1 -> copy, 0 -> leave alone. */
-#define copybits(a, b, m) (((a) | (m)) | ((b) & ~(m)))
 
 #define haszero(a) (~(a))
 #if 0
