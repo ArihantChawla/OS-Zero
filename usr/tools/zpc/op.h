@@ -1,7 +1,7 @@
 #ifndef __PCALC_OP_H__
 #define __PCALC_OP_H__
 
-typedef void wpccfunc_t(void *, void *, void *);
+typedef void zpccfunc_t(void *, void *, void *);
 
 /* cop.c */
 void not32(void *arg1, void *dummy, void *ret);
@@ -37,7 +37,7 @@ void div64(void *arg1, void *arg2, void *ret);
 void mod32(void *arg1, void *arg2, void *ret);
 void mod64(void *arg1, void *arg2, void *ret);
 
-typedef void wpczerofunc_t(void *, void *, void *, void *);
+typedef void zpczerofunc_t(void *, void *, void *, void *);
 
 /* zero.c */
 void abs32(void *arg1, void *dummy1, void *dummy2, void *ret);
@@ -78,35 +78,31 @@ void leapyear32(void *arg1, void *dummy1, void *dummy2, void *ret);
 void leapyear64(void *arg1, void *dummy1, void *dummy2, void *ret);
 
 /* TODO: support for big endian architectures */
-#if 0
-#define wpcgetval8(ptr)                                                 \
+#define zpcgetval8(ptr)                                                 \
     (*(int8_t *)ptr)
-#define wpcgetval16(ptr)                                                \
+#define zpcgetval16(ptr)                                                \
     (*(int16_t *)ptr)
-#endif
-#define wpcgetval32(ptr)                                                \
+#define zpcgetval32(ptr)                                                \
     (*(int32_t *)ptr)
-#define wpcgetval64(ptr)                                                \
+#define zpcgetval64(ptr)                                                \
     (*(int64_t *)ptr)
-#if 0
-#define wpcgetvalu8(ptr)                                                \
+#define zpcgetvalu8(ptr)                                                \
     (*(uint8_t *)ptr)
-#define wpcgetvalu16(ptr)                                               \
+#define zpcgetvalu16(ptr)                                               \
     (*(uint16_t *)ptr)
-#endif
-#define wpcgetvalu32(ptr)                                               \
+#define zpcgetvalu32(ptr)                                               \
     (*(uint32_t *)ptr)
-#define wpcgetvalu64(ptr)                                               \
+#define zpcgetvalu64(ptr)                                               \
     (*(uint64_t *)ptr)
 #if 0
-#define wpcsetval8(ptr, val)                                            \
+#define zpcsetval8(ptr, val)                                            \
     *(int8_t *)(ptr) = (val)
-#define wpcsetval16(ptr, val)                                           \
+#define zpcsetval16(ptr, val)                                           \
     *(int16_t *)(ptr) = (val)
-#define wpcsetval32(ptr, val)                                           \
+#define zpcsetval32(ptr, val)                                           \
     *(int32_t *)(ptr) = (val)
 #endif
-#define wpcsetval64(ptr, val)                                           \
+#define zpcsetval64(ptr, val)                                           \
     *(int64_t *)(ptr) = (val)
 
 #endif /* __PCALC_OP_H__ */

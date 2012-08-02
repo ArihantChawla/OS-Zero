@@ -4,11 +4,11 @@
 void
 not32(void *arg1, void *dummy, void *ret)
 {
-    int32_t src = wpcgetval32(arg1);
+    int32_t src = zpcgetval32(arg1);
     int32_t dest;
 
     dest = ~src;
-    wpcsetval64(ret, dest);
+    zpcsetval64(ret, dest);
 
     return;
 }
@@ -16,11 +16,11 @@ not32(void *arg1, void *dummy, void *ret)
 void
 not64(void *arg1, void *dummy, void *ret)
 {
-    int64_t src = wpcgetval64(arg1);
+    int64_t src = zpcgetval64(arg1);
     int64_t dest;
 
     dest = ~src;
-    wpcsetval64(ret, dest);
+    zpcsetval64(ret, dest);
 
     return;
 }
@@ -28,11 +28,11 @@ not64(void *arg1, void *dummy, void *ret)
 void
 and32(void *arg1, void *arg2, void *ret)
 {
-    int32_t src = wpcgetval32(arg1);
-    int32_t dest = wpcgetval32(arg2);
+    int32_t src = zpcgetval32(arg1);
+    int32_t dest = zpcgetval32(arg2);
 
     dest &= src;
-    wpcsetval64(ret, dest);
+    zpcsetval64(ret, dest);
 
     return;
 }
@@ -40,11 +40,11 @@ and32(void *arg1, void *arg2, void *ret)
 void
 and64(void *arg1, void *arg2, void *ret)
 {
-    int64_t src = wpcgetval64(arg1);
-    int64_t dest = wpcgetval64(arg2);
+    int64_t src = zpcgetval64(arg1);
+    int64_t dest = zpcgetval64(arg2);
 
     dest &= src;
-    wpcsetval64(ret, dest);
+    zpcsetval64(ret, dest);
 
     return;
 }
@@ -52,11 +52,11 @@ and64(void *arg1, void *arg2, void *ret)
 void
 or32(void *arg1, void *arg2, void *ret)
 {
-    int32_t src = wpcgetval32(arg1);
-    int32_t dest = wpcgetval32(arg2);
+    int32_t src = zpcgetval32(arg1);
+    int32_t dest = zpcgetval32(arg2);
 
     dest |= src;
-    wpcsetval64(ret, dest);
+    zpcsetval64(ret, dest);
 
     return;
 }
@@ -64,11 +64,11 @@ or32(void *arg1, void *arg2, void *ret)
 void
 or64(void *arg1, void *arg2, void *ret)
 {
-    int64_t src = wpcgetval64(arg1);
-    int64_t dest = wpcgetval64(arg2);
+    int64_t src = zpcgetval64(arg1);
+    int64_t dest = zpcgetval64(arg2);
 
     dest |= src;
-    wpcsetval64(ret, dest);
+    zpcsetval64(ret, dest);
 
     return;
 }
@@ -76,11 +76,11 @@ or64(void *arg1, void *arg2, void *ret)
 void
 xor32(void *arg1, void *arg2, void *ret)
 {
-    int32_t src = wpcgetval32(arg1);
-    int32_t dest = wpcgetval32(arg2);
+    int32_t src = zpcgetval32(arg1);
+    int32_t dest = zpcgetval32(arg2);
 
     dest ^= src;
-    wpcsetval64(ret, dest);
+    zpcsetval64(ret, dest);
 
     return;
 }
@@ -88,11 +88,11 @@ xor32(void *arg1, void *arg2, void *ret)
 void
 xor64(void *arg1, void *arg2, void *ret)
 {
-    int64_t src = wpcgetval64(arg1);
-    int64_t dest = wpcgetval64(arg2);
+    int64_t src = zpcgetval64(arg1);
+    int64_t dest = zpcgetval64(arg2);
 
     dest ^= src;
-    wpcsetval64(ret, dest);
+    zpcsetval64(ret, dest);
 
     return;
 }
@@ -100,11 +100,11 @@ xor64(void *arg1, void *arg2, void *ret)
 void
 shl32(void *arg1, void *arg2, void *ret)
 {
-    int32_t src = wpcgetval32(arg1);
-    int32_t dest = wpcgetval32(arg2);
+    int32_t src = zpcgetval32(arg1);
+    int32_t dest = zpcgetval32(arg2);
 
     dest <<= src;
-    wpcsetval64(ret, dest);
+    zpcsetval64(ret, dest);
 
     return;
 }
@@ -112,11 +112,11 @@ shl32(void *arg1, void *arg2, void *ret)
 void
 shl64(void *arg1, void *arg2, void *ret)
 {
-    int64_t src = wpcgetval64(arg1);
-    int64_t dest = wpcgetval64(arg2);
+    int64_t src = zpcgetval64(arg1);
+    int64_t dest = zpcgetval64(arg2);
 
     dest <<= src;
-    wpcsetval64(ret, dest);
+    zpcsetval64(ret, dest);
 
     return;
 }
@@ -124,8 +124,8 @@ shl64(void *arg1, void *arg2, void *ret)
 void
 shr32(void *arg1, void *arg2, void *ret)
 {
-    int32_t src = wpcgetval32(arg1);
-    int32_t cnt = wpcgetval32(arg2);
+    int32_t src = zpcgetval32(arg1);
+    int32_t cnt = zpcgetval32(arg2);
     int32_t dest;
     int32_t sign = src & 0x80000000;
 
@@ -133,7 +133,7 @@ shr32(void *arg1, void *arg2, void *ret)
     sign = (sign & 0xff) << (32 - src);
     dest >>= cnt;
     dest |= sign;
-    wpcsetval64(ret, dest);
+    zpcsetval64(ret, dest);
 
     return;
 }
@@ -141,8 +141,8 @@ shr32(void *arg1, void *arg2, void *ret)
 void
 shr64(void *arg1, void *arg2, void *ret)
 {
-    int64_t src = wpcgetval64(arg1);
-    int64_t cnt = wpcgetval64(arg2);
+    int64_t src = zpcgetval64(arg1);
+    int64_t cnt = zpcgetval64(arg2);
     int64_t dest;
     int64_t sign = src & INT64_C(0x8000000000000000);
 
@@ -150,7 +150,7 @@ shr64(void *arg1, void *arg2, void *ret)
     sign = (sign & 0xff) << (64 - src);
     dest >>= cnt;
     dest |= sign;
-    wpcsetval64(ret, dest);
+    zpcsetval64(ret, dest);
 
     return;
 }
@@ -158,8 +158,8 @@ shr64(void *arg1, void *arg2, void *ret)
 void
 shrl32(void *arg1, void *arg2, void *ret)
 {
-    int32_t src = wpcgetval32(arg1);
-    int32_t cnt = wpcgetval32(arg2);
+    int32_t src = zpcgetval32(arg1);
+    int32_t cnt = zpcgetval32(arg2);
     int32_t dest;
     int32_t mask = 0xffffffff >> src;
 
@@ -167,7 +167,7 @@ shrl32(void *arg1, void *arg2, void *ret)
     mask = (mask & 0xffffffff) << (32 - src);
     dest >>= cnt;
     dest &= mask;
-    wpcsetval64(ret, dest);
+    zpcsetval64(ret, dest);
 
     return;
 }
@@ -175,8 +175,8 @@ shrl32(void *arg1, void *arg2, void *ret)
 void
 shrl64(void *arg1, void *arg2, void *ret)
 {
-    int64_t src = wpcgetval64(arg1);
-    int64_t cnt = wpcgetval64(arg2);
+    int64_t src = zpcgetval64(arg1);
+    int64_t cnt = zpcgetval64(arg2);
     int64_t dest;
     int64_t mask = INT64_C(0xffffffffffffffff) >> src;
 
@@ -184,7 +184,7 @@ shrl64(void *arg1, void *arg2, void *ret)
     mask = (mask & 0xff) << (64 - src);
     dest >>= cnt;
     dest &= mask;
-    wpcsetval64(ret, dest);
+    zpcsetval64(ret, dest);
 
     return;
 }
@@ -192,8 +192,8 @@ shrl64(void *arg1, void *arg2, void *ret)
 void
 ror32(void *arg1, void *arg2, void *ret)
 {
-    int32_t src = wpcgetval32(arg1);
-    int32_t cnt = wpcgetval32(arg2);
+    int32_t src = zpcgetval32(arg1);
+    int32_t cnt = zpcgetval32(arg2);
     int32_t dest;
     int32_t mask = 0xffffffff >> (32 - src);
     int32_t bits = src & mask;
@@ -202,7 +202,7 @@ ror32(void *arg1, void *arg2, void *ret)
     bits <<= 32 - cnt;
     dest >>= cnt;
     dest |= bits;
-    wpcsetval64(ret, dest);
+    zpcsetval64(ret, dest);
 
     return;
 }
@@ -210,8 +210,8 @@ ror32(void *arg1, void *arg2, void *ret)
 void
 ror64(void *arg1, void *arg2, void *ret)
 {
-    int64_t src = wpcgetval64(arg1);
-    int64_t cnt = wpcgetval64(arg2);
+    int64_t src = zpcgetval64(arg1);
+    int64_t cnt = zpcgetval64(arg2);
     int64_t dest;
     int64_t mask = INT64_C(0xffffffffffffffff) >> (64 - src);
     int64_t bits = src & mask;
@@ -220,7 +220,7 @@ ror64(void *arg1, void *arg2, void *ret)
     bits <<= 64 - cnt;
     dest >>= cnt;
     dest |= bits;
-    wpcsetval64(ret, dest);
+    zpcsetval64(ret, dest);
 
     return;
 }
@@ -228,8 +228,8 @@ ror64(void *arg1, void *arg2, void *ret)
 void
 rol32(void *arg1, void *arg2, void *ret)
 {
-    int32_t src = wpcgetval32(arg1);
-    int32_t cnt = wpcgetval32(arg2);
+    int32_t src = zpcgetval32(arg1);
+    int32_t cnt = zpcgetval32(arg2);
     int32_t dest;
     int32_t mask = 0xffffffff >> (32 - src);
     int32_t bits = src & mask;
@@ -238,7 +238,7 @@ rol32(void *arg1, void *arg2, void *ret)
     bits >>= 32 - cnt;
     dest <<= cnt;
     dest |= bits;
-    wpcsetval64(ret, dest);
+    zpcsetval64(ret, dest);
 
     return;
 }
@@ -246,8 +246,8 @@ rol32(void *arg1, void *arg2, void *ret)
 void
 rol64(void *arg1, void *arg2, void *ret)
 {
-    int64_t src = wpcgetval64(arg1);
-    int64_t cnt = wpcgetval64(arg2);
+    int64_t src = zpcgetval64(arg1);
+    int64_t cnt = zpcgetval64(arg2);
     int64_t dest;
     int64_t mask = INT64_C(0xffffffffffffffff) >> (64 - src);
     int64_t bits = src & mask;
@@ -256,7 +256,7 @@ rol64(void *arg1, void *arg2, void *ret)
     bits >>= 64 - cnt;
     dest <<= cnt;
     dest |= bits;
-    wpcsetval64(ret, dest);
+    zpcsetval64(ret, dest);
 
     return;
 }
@@ -264,10 +264,10 @@ rol64(void *arg1, void *arg2, void *ret)
 void
 inc32(void *arg1, void *arg2, void *ret)
 {
-    int32_t src = wpcgetval32(arg1);
+    int32_t src = zpcgetval32(arg1);
 
     src++;
-    wpcsetval64(ret, src);
+    zpcsetval64(ret, src);
 
     return;
 }
@@ -275,10 +275,10 @@ inc32(void *arg1, void *arg2, void *ret)
 void
 inc64(void *arg1, void *arg2, void *ret)
 {
-    int64_t src = wpcgetval64(arg1);
+    int64_t src = zpcgetval64(arg1);
 
     src++;
-    wpcsetval64(ret, src);
+    zpcsetval64(ret, src);
 
     return;
 }
@@ -286,10 +286,10 @@ inc64(void *arg1, void *arg2, void *ret)
 void
 dec32(void *arg1, void *arg2, void *ret)
 {
-    int32_t src = wpcgetval32(arg1);
+    int32_t src = zpcgetval32(arg1);
 
     src--;
-    wpcsetval64(ret, src);
+    zpcsetval64(ret, src);
 
     return;
 }
@@ -297,10 +297,10 @@ dec32(void *arg1, void *arg2, void *ret)
 void
 dec64(void *arg1, void *arg2, void *ret)
 {
-    int64_t src = wpcgetval64(arg1);
+    int64_t src = zpcgetval64(arg1);
 
     src--;
-    wpcsetval64(ret, src);
+    zpcsetval64(ret, src);
 
     return;
 }
@@ -308,11 +308,11 @@ dec64(void *arg1, void *arg2, void *ret)
 void
 add32(void *arg1, void *arg2, void *ret)
 {
-    int32_t src = wpcgetval32(arg1);
-    int32_t dest = wpcgetval32(arg2);
+    int32_t src = zpcgetval32(arg1);
+    int32_t dest = zpcgetval32(arg2);
 
     dest += src;
-    wpcsetval64(ret, dest);
+    zpcsetval64(ret, dest);
 
     return;
 }
@@ -320,11 +320,11 @@ add32(void *arg1, void *arg2, void *ret)
 void
 add64(void *arg1, void *arg2, void *ret)
 {
-    int64_t src = wpcgetval64(arg1);
-    int64_t dest = wpcgetval64(arg2);
+    int64_t src = zpcgetval64(arg1);
+    int64_t dest = zpcgetval64(arg2);
 
     dest += src;
-    wpcsetval64(ret, dest);
+    zpcsetval64(ret, dest);
 
     return;
 }
@@ -332,11 +332,11 @@ add64(void *arg1, void *arg2, void *ret)
 void
 sub32(void *arg1, void *arg2, void *ret)
 {
-    int32_t src = wpcgetval32(arg1);
-    int32_t dest = wpcgetval32(arg2);
+    int32_t src = zpcgetval32(arg1);
+    int32_t dest = zpcgetval32(arg2);
 
     dest -= src;
-    wpcsetval64(ret, dest);
+    zpcsetval64(ret, dest);
 
     return;
 }
@@ -344,11 +344,11 @@ sub32(void *arg1, void *arg2, void *ret)
 void
 sub64(void *arg1, void *arg2, void *ret)
 {
-    int64_t src = wpcgetval64(arg1);
-    int64_t dest = wpcgetval64(arg2);
+    int64_t src = zpcgetval64(arg1);
+    int64_t dest = zpcgetval64(arg2);
 
     dest -= src;
-    wpcsetval64(ret, dest);
+    zpcsetval64(ret, dest);
 
     return;
 }
@@ -356,11 +356,11 @@ sub64(void *arg1, void *arg2, void *ret)
 void
 mul32(void *arg1, void *arg2, void *ret)
 {
-    int32_t src = wpcgetval32(arg1);
-    int32_t dest = wpcgetval32(arg2);
+    int32_t src = zpcgetval32(arg1);
+    int32_t dest = zpcgetval32(arg2);
 
     dest *= src;
-    wpcsetval64(ret, dest);
+    zpcsetval64(ret, dest);
 
     return;
 }
@@ -368,11 +368,11 @@ mul32(void *arg1, void *arg2, void *ret)
 void
 mul64(void *arg1, void *arg2, void *ret)
 {
-    int64_t src = wpcgetval64(arg1);
-    int64_t dest = wpcgetval64(arg2);
+    int64_t src = zpcgetval64(arg1);
+    int64_t dest = zpcgetval64(arg2);
 
     dest *= src;
-    wpcsetval64(ret, dest);
+    zpcsetval64(ret, dest);
 
     return;
 }
@@ -380,11 +380,11 @@ mul64(void *arg1, void *arg2, void *ret)
 void
 div32(void *arg1, void *arg2, void *ret)
 {
-    int32_t src = wpcgetval32(arg1);
-    int32_t dest = wpcgetval32(arg2);
+    int32_t src = zpcgetval32(arg1);
+    int32_t dest = zpcgetval32(arg2);
 
     dest /= src;
-    wpcsetval64(ret, dest);
+    zpcsetval64(ret, dest);
 
     return;
 }
@@ -392,11 +392,11 @@ div32(void *arg1, void *arg2, void *ret)
 void
 div64(void *arg1, void *arg2, void *ret)
 {
-    int64_t src = wpcgetval64(arg1);
-    int64_t dest = wpcgetval64(arg2);
+    int64_t src = zpcgetval64(arg1);
+    int64_t dest = zpcgetval64(arg2);
 
     dest /= src;
-    wpcsetval64(ret, dest);
+    zpcsetval64(ret, dest);
 
     return;
 }
@@ -404,11 +404,11 @@ div64(void *arg1, void *arg2, void *ret)
 void
 mod32(void *arg1, void *arg2, void *ret)
 {
-    int32_t src = wpcgetval32(arg1);
-    int32_t dest = wpcgetval32(arg2);
+    int32_t src = zpcgetval32(arg1);
+    int32_t dest = zpcgetval32(arg2);
 
     dest %= src;
-    wpcsetval64(ret, dest);
+    zpcsetval64(ret, dest);
 
     return;
 }
@@ -416,11 +416,11 @@ mod32(void *arg1, void *arg2, void *ret)
 void
 mod64(void *arg1, void *arg2, void *ret)
 {
-    int64_t src = wpcgetval64(arg1);
-    int64_t dest = wpcgetval64(arg2);
+    int64_t src = zpcgetval64(arg1);
+    int64_t dest = zpcgetval64(arg2);
 
     dest %= src;
-    wpcsetval64(ret, dest);
+    zpcsetval64(ret, dest);
 
     return;
 }
