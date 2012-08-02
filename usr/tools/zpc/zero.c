@@ -1,3 +1,5 @@
+#include <stdint.h>
+#include <zpc/zpc.h>
 #include <zpc/op.h>
 #include <zero/trix.h>
 

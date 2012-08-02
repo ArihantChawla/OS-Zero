@@ -77,33 +77,5 @@ void ceil2pow64(void *arg1, void *dummy1, void *dummy2, void *ret);
 void leapyear32(void *arg1, void *dummy1, void *dummy2, void *ret);
 void leapyear64(void *arg1, void *dummy1, void *dummy2, void *ret);
 
-/* TODO: support for big endian architectures */
-#define zpcgetval8(ptr)                                                 \
-    (*(int8_t *)ptr)
-#define zpcgetval16(ptr)                                                \
-    (*(int16_t *)ptr)
-#define zpcgetval32(ptr)                                                \
-    (*(int32_t *)ptr)
-#define zpcgetval64(ptr)                                                \
-    (*(int64_t *)ptr)
-#define zpcgetvalu8(ptr)                                                \
-    (*(uint8_t *)ptr)
-#define zpcgetvalu16(ptr)                                               \
-    (*(uint16_t *)ptr)
-#define zpcgetvalu32(ptr)                                               \
-    (*(uint32_t *)ptr)
-#define zpcgetvalu64(ptr)                                               \
-    (*(uint64_t *)ptr)
-#if 0
-#define zpcsetval8(ptr, val)                                            \
-    *(int8_t *)(ptr) = (val)
-#define zpcsetval16(ptr, val)                                           \
-    *(int16_t *)(ptr) = (val)
-#define zpcsetval32(ptr, val)                                           \
-    *(int32_t *)(ptr) = (val)
-#endif
-#define zpcsetval64(ptr, val)                                           \
-    *(int64_t *)(ptr) = (val)
-
 #endif /* __PCALC_OP_H__ */
 
