@@ -6,8 +6,12 @@
 #define WPMTEXTBASE 8192
 #define THRSTKSIZE  (128 * 1024)
 
+#if 0
 #define align(adr, p2)                                                  \
     (!((adr) & ((p2) - 1)) ? (adr) : ((adr) + ((p2) - ((adr) & ((p2 - 1))))))
+#endif
+#define align(adr, p2)                                                  \
+    roundup2(adr, p2)
 
 #define PAGEPRES   0x00000001
 

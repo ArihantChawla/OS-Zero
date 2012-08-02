@@ -1,7 +1,7 @@
 #ifndef __PCALC_OP_H__
 #define __PCALC_OP_H__
 
-typedef void wpccop_t(void *, void *, void *);
+typedef void wpccfunc_t(void *, void *, void *);
 
 /* cop.c */
 void not32(void *arg1, void *dummy, void *ret);
@@ -37,7 +37,7 @@ void div64(void *arg1, void *arg2, void *ret);
 void mod32(void *arg1, void *arg2, void *ret);
 void mod64(void *arg1, void *arg2, void *ret);
 
-typedef void wpczero_t(void *, void *, void *, void *);
+typedef void wpczerofunc_t(void *, void *, void *, void *);
 
 /* zero.c */
 void abs32(void *arg1, void *dummy1, void *dummy2, void *ret);
