@@ -40,8 +40,8 @@ void mod64(void *arg1, void *arg2, void *ret);
 typedef void wpczero_t(void *, void *, void *, void *);
 
 /* zero.c */
-void abs32(void *arg1, void *dummy, void *dummy, void *ret);
-void abs64(void *arg1, void *dummy, void *dummy, void *ret);
+void abs32(void *arg1, void *dummy1, void *dummy2, void *ret);
+void abs64(void *arg1, void *dummy1, void *dummy2, void *ret);
 void avg32(void *arg1, void *arg2, void *dummy, void *ret);
 void avg64(void *arg1, void *arg2, void *dummy, void *ret);
 void min32(void *arg1, void *arg2, void *dummy, void *ret);
@@ -62,33 +62,41 @@ void mergebits32(void *arg1, void *arg2, void *arg3, void *ret);
 void mergebits64(void *arg1, void *arg2, void *arg3, void *ret);
 void copybits32(void *arg1, void *arg2, void *arg3, void *ret);
 void copybits64(void *arg1, void *arg2, void *arg3, void *ret);
-void is2pow32(void *arg1, void *dummy, void *dummy, void *ret);
-void is2pow64(void *arg1, void *dummy, void *dummy, void *ret);
+void is2pow32(void *arg1, void *dummy1, void *dummy2, void *ret);
+void is2pow64(void *arg1, void *dummy1, void *dummy2, void *ret);
 void rnd2up32(void *arg1, void *arg2, void *dummy, void *ret);
 void rnd2up64(void *arg1, void *arg2, void *dummy, void *ret);
 void rnd2down32(void *arg1, void *arg2, void *dummy, void *ret);
 void rnd2down64(void *arg1, void *arg2, void *dummy, void *ret);
-void trailz32(void *arg1, void *dummy, void *dummy, void *ret);
-void trailz64(void *arg1, void *dummy, void *dummy, void *ret);
-void leadz32(void *arg1, void *dummy, void *dummy, void *ret);
-void leadz64(void *arg1, void *dummy, void *dummy, void *ret);
+void trailz32(void *arg1, void *dummy1, void *dummy2, void *ret);
+void trailz64(void *arg1, void *dummy1, void *dummy2, void *ret);
+void leadz32(void *arg1, void *dummy1, void *dummy2, void *ret);
+void leadz64(void *arg1, void *dummy1, void *dummy2, void *ret);
+void ceil2pow32(void *arg1, void *dummy1, void *dummy2, void *ret);
+void ceil2pow64(void *arg1, void *dummy1, void *dummy2, void *ret);
+void leapyear32(void *arg1, void *dummy1, void *dummy2, void *ret);
+void leapyear64(void *arg1, void *dummy1, void *dummy2, void *ret);
 
 /* TODO: support for big endian architectures */
-#define wpcgetarg8(ptr)                                                 \
+#if 0
+#define wpcgetval8(ptr)                                                 \
     (*(int8_t *)ptr)
-#define wpcgetarg16(ptr)                                                \
+#define wpcgetval16(ptr)                                                \
     (*(int16_t *)ptr)
-#define wpcgetarg32(ptr)                                                \
+#endif
+#define wpcgetval32(ptr)                                                \
     (*(int32_t *)ptr)
-#define wpcgetarg64(ptr)                                                \
+#define wpcgetval64(ptr)                                                \
     (*(int64_t *)ptr)
-#define wpcgetargu8(ptr)                                                \
+#if 0
+#define wpcgetvalu8(ptr)                                                \
     (*(uint8_t *)ptr)
-#define wpcgetargu16(ptr)                                               \
+#define wpcgetvalu16(ptr)                                               \
     (*(uint16_t *)ptr)
-#define wpcgetargu32(ptr)                                               \
+#endif
+#define wpcgetvalu32(ptr)                                               \
     (*(uint32_t *)ptr)
-#define wpcgetargu64(ptr)                                               \
+#define wpcgetvalu64(ptr)                                               \
     (*(uint64_t *)ptr)
 #if 0
 #define wpcsetval8(ptr, val)                                            \

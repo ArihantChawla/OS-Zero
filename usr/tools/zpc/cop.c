@@ -1,4 +1,5 @@
-#include <wpc/op.h>
+#include <stdint.h>
+#include <zpc/op.h>
 
 void
 not32(void *arg1, void *dummy, void *ret)
@@ -124,10 +125,12 @@ void
 shr32(void *arg1, void *arg2, void *ret)
 {
     int32_t src = wpcgetval32(arg1);
-    int32_t dest = wpcgetval32(arg2);
+    int32_t cnt = wpcgetval32(arg2);
+    int32_t dest;
     int32_t sign = dest & 0x80000000;
 
-    sign = (sign) & 0xff << (32 - src) : 0;
+    dest = src;
+    sign = (sign & 0xff) << (32 - src);
     dest >>= cnt;
     dest |= sign;
     wpcsetval64(ret, dest);
@@ -139,10 +142,12 @@ void
 shr64(void *arg1, void *arg2, void *ret)
 {
     int64_t src = wpcgetval64(arg1);
-    int64_t dest = wpcgetval64(arg2);
-    int64_t sign = dest & INT64_C(0x8000000000000000)
+    int64_t cnt = wpcgetval64(arg2);
+    int64_t dest;
+    int64_t sign = dest & INT64_C(0x8000000000000000);
 
-    sign = (sign) & 0xff << (64 - src) : 0;
+    dest = src;
+    sign = (sign & 0xff) << (64 - src);
     dest >>= cnt;
     dest |= sign;
     wpcsetval64(ret, dest);
@@ -154,10 +159,12 @@ void
 shrl32(void *arg1, void *arg2, void *ret)
 {
     int32_t src = wpcgetval32(arg1);
-    int32_t dest = wpcgetval32(arg2);
+    int32_t cnt = wpcgetval32(arg2);
+    int32_t dest;
     int32_t mask = 0xffffffff >> src;
 
-    sign = (sign) & 0xffffffff << (32 - src) : 0;
+    dest = src;
+    mask = (mask & 0xffffffff) << (32 - src);
     dest >>= cnt;
     dest &= mask;
     wpcsetval64(ret, dest);
@@ -169,10 +176,12 @@ void
 shrl64(void *arg1, void *arg2, void *ret)
 {
     int64_t src = wpcgetval64(arg1);
-    int64_t dest = wpcgetval64(arg2);
+    int64_t cnt = wpcgetval64(arg2);
+    int64_t dest;
     int64_t mask = INT64_C(0xffffffffffffffff) >> src;
 
-    sign = (sign) & 0xff << (64 - src) : 0;
+    dest = src;
+    mask = (mask & 0xff) << (64 - src);
     dest >>= cnt;
     dest &= mask;
     wpcsetval64(ret, dest);
@@ -184,10 +193,12 @@ void
 ror32(void *arg1, void *arg2, void *ret)
 {
     int32_t src = wpcgetval32(arg1);
-    int32_t dest = wpcgetval32(arg2);
+    int32_t cnt = wpcgetval32(arg2);
+    int32_t dest;
     int32_t mask = 0xffffffff >> (32 - src);
     int32_t bits = dest & mask;
 
+    dest = src;
     bits <<= 32 - cnt;
     dest >>= cnt;
     dest |= bits;
@@ -200,10 +211,12 @@ void
 ror64(void *arg1, void *arg2, void *ret)
 {
     int64_t src = wpcgetval64(arg1);
-    int64_t dest = wpcgetval64(arg2);
+    int64_t cnt = wpcgetval64(arg2);
+    int64_t dest;
     int64_t mask = INT64_C(0xffffffffffffffff) >> (64 - src);
     int64_t bits = dest & mask;
 
+    dest = src;
     bits <<= 64 - cnt;
     dest >>= cnt;
     dest |= bits;
@@ -216,10 +229,12 @@ void
 rol32(void *arg1, void *arg2, void *ret)
 {
     int32_t src = wpcgetval32(arg1);
-    int32_t dest = wpcgetval32(arg2);
+    int32_t cnt = wpcgetval32(arg2);
+    int32_t dest;
     int32_t mask = 0xffffffff >> (32 - src);
     int32_t bits = dest & mask;
 
+    dest = src;
     bits >>= 32 - cnt;
     dest <<= cnt;
     dest |= bits;
@@ -232,10 +247,12 @@ void
 rol64(void *arg1, void *arg2, void *ret)
 {
     int64_t src = wpcgetval64(arg1);
-    int64_t dest = wpcgetval64(arg2);
+    int64_t cnt = wpcgetval64(arg2);
+    int64_t dest;
     int64_t mask = INT64_C(0xffffffffffffffff) >> (64 - src);
     int64_t bits = dest & mask;
 
+    dest = src;
     bits >>= 64 - cnt;
     dest <<= cnt;
     dest |= bits;
@@ -250,7 +267,7 @@ inc32(void *arg1, void *arg2, void *ret)
     int32_t src = wpcgetval32(arg1);
 
     src++;
-    wpcsetval64(ret, dest);
+    wpcsetval64(ret, src);
 
     return;
 }
@@ -261,7 +278,7 @@ inc64(void *arg1, void *arg2, void *ret)
     int64_t src = wpcgetval64(arg1);
 
     src++;
-    wpcsetval64(ret, dest);
+    wpcsetval64(ret, src);
 
     return;
 }
@@ -272,7 +289,7 @@ dec32(void *arg1, void *arg2, void *ret)
     int32_t src = wpcgetval32(arg1);
 
     src--;
-    wpcsetval64(ret, dest);
+    wpcsetval64(ret, src);
 
     return;
 }
@@ -283,7 +300,7 @@ dec64(void *arg1, void *arg2, void *ret)
     int64_t src = wpcgetval64(arg1);
 
     src--;
-    wpcsetval64(ret, dest);
+    wpcsetval64(ret, src);
 
     return;
 }
