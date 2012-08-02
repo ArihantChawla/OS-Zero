@@ -127,7 +127,7 @@ shr32(void *arg1, void *arg2, void *ret)
     int32_t src = wpcgetval32(arg1);
     int32_t cnt = wpcgetval32(arg2);
     int32_t dest;
-    int32_t sign = dest & 0x80000000;
+    int32_t sign = src & 0x80000000;
 
     dest = src;
     sign = (sign & 0xff) << (32 - src);
@@ -144,7 +144,7 @@ shr64(void *arg1, void *arg2, void *ret)
     int64_t src = wpcgetval64(arg1);
     int64_t cnt = wpcgetval64(arg2);
     int64_t dest;
-    int64_t sign = dest & INT64_C(0x8000000000000000);
+    int64_t sign = src & INT64_C(0x8000000000000000);
 
     dest = src;
     sign = (sign & 0xff) << (64 - src);
@@ -196,7 +196,7 @@ ror32(void *arg1, void *arg2, void *ret)
     int32_t cnt = wpcgetval32(arg2);
     int32_t dest;
     int32_t mask = 0xffffffff >> (32 - src);
-    int32_t bits = dest & mask;
+    int32_t bits = src & mask;
 
     dest = src;
     bits <<= 32 - cnt;
@@ -214,7 +214,7 @@ ror64(void *arg1, void *arg2, void *ret)
     int64_t cnt = wpcgetval64(arg2);
     int64_t dest;
     int64_t mask = INT64_C(0xffffffffffffffff) >> (64 - src);
-    int64_t bits = dest & mask;
+    int64_t bits = src & mask;
 
     dest = src;
     bits <<= 64 - cnt;
@@ -232,7 +232,7 @@ rol32(void *arg1, void *arg2, void *ret)
     int32_t cnt = wpcgetval32(arg2);
     int32_t dest;
     int32_t mask = 0xffffffff >> (32 - src);
-    int32_t bits = dest & mask;
+    int32_t bits = src & mask;
 
     dest = src;
     bits >>= 32 - cnt;
@@ -250,7 +250,7 @@ rol64(void *arg1, void *arg2, void *ret)
     int64_t cnt = wpcgetval64(arg2);
     int64_t dest;
     int64_t mask = INT64_C(0xffffffffffffffff) >> (64 - src);
-    int64_t bits = dest & mask;
+    int64_t bits = src & mask;
 
     dest = src;
     bits >>= 64 - cnt;

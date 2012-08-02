@@ -161,6 +161,7 @@
 /*
  * count number of leading zero-bits in u32
  */
+#if 0
 #define lzero32(u32, r)                                                 \
     ((u32) |= ((u32) >> 1),                                             \
      (u32) |= ((u32) >> 2),                                             \
@@ -168,6 +169,44 @@
      (u32) |= ((u32) >> 8),                                             \
      (u32) |= ((u32) >> 16),                                            \
      CHAR_BIT * sizeof(u32) - onebits_32(u32, r))
+#endif
+#define lzero32(u32, r)                                                 \
+    do {                                                                \
+        uint32_t __tmp;                                                 \
+        uint32_t __mask;                                                \
+\
+        (r) = 0;   \
+        __tmp = (u32);                                                  \
+        __mask = 0x01;                                                  \
+        __mask <<= CHAR_BIT * sizeof(uint32_t) - 1;                     \
+        if (!(__tmp & __mask)) {                                        \
+            __mask = 0xffffffff;                                        \
+            __mask <<= 16;                                              \
+            if (!(__tmp & __mask)) {                                    \
+                __tmp <<= 16;                                           \
+                (r) += 16;                                              \
+            }                                                           \
+            __mask <<= 8;                                               \
+            if (!(__tmp & __mask)) {                                    \
+                __tmp <<= 8;                                            \
+                (r) += 8;                                               \
+            }                                                           \
+            __mask <<= 4;                                               \
+            if (!(__tmp & __mask)) {                                    \
+                __tmp <<= 4;                                            \
+                (r) += 4;                                               \
+            }                                                           \
+            __mask <<= 2;                                               \
+            if (!(__tmp & __mask)) {                                    \
+                __tmp <<= 2;                                            \
+                (r) += 2;                                               \
+            }                                                           \
+            __mask <<= 1;                                               \
+            if (!(__tmp & __mask)) {                                    \
+                (r)++;                                                  \
+            }                                                           \
+        }                                                               \
+    } while (0)
 
 /* 64-bit versions */
 
@@ -381,7 +420,7 @@ ceil2_64(uint64_t x)
 
 /* TODO: change modulus calculations to something faster */
 #define leapyear(x)                                                     \
-    (!((x) & 0x03) && (((x) % 100)) || !((x) % 400))
+    (!((x) & 0x03) && ((((x) % 100)) || !((x) % 400)))
 
 #endif /* __ZERO_TRIX_H__ */
 
