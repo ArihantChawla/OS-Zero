@@ -50,11 +50,12 @@
 #define swap(a, b)     ((a) ^= (b), (b) ^= (a), (a) ^= (b))
 /* compute absolute value of integer without branching; PATENTED in USA :( */
 #if (ZEROABS)
-#define abs(a)                                                          \
+#define zeroabs(a)                                                      \
     (((a) ^ (((a) >> (CHAR_BIT * sizeof(a) - 1))))                      \
      - ((a) >> (CHAR_BIT * sizeof(a) - 1)))
-#define labs(a)         abs(a)
-#define llabs(a)        abs(a)
+#define abs(a)         zeroabs(a)
+#define labs(a)        zeroabs(a)
+#define llabs(a)       zeroabs(a)
 #endif
 
 /* true if x is a power of two */

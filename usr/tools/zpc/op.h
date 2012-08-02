@@ -69,5 +69,29 @@ void copmod16(void *arg1, void *arg2, void *ret);
 void copmod32(void *arg1, void *arg2, void *ret);
 void copmod64(void *arg1, void *arg2, void *ret);
 
+/* zero.c */
+void abs8(void *arg1, void *dummy, void *ret);
+void abs16(void *arg1, void *dummy, void *ret);
+void abs32(void *arg1, void *dummy, void *ret);
+void abs64(void *arg1, void *dummy, void *ret);
+
+/* TODO: hack support for big endian architectures */
+#define wpcgetarg8(ptr)                                                 \
+    (*(int8_t *)ptr)
+#define wpcgetarg16(ptr)                                                \
+    (*(int16_t *)ptr)
+#define wpcgetarg32(ptr)                                                \
+    (*(int32_t *)ptr)
+#define wpcgetarg64(ptr)                                                \
+    (*(int64_t *)ptr)
+#define wpcsetval8(ptr, val)                                            \
+    *(int8_t *)(ptr) = (val)
+#define wpcsetval16(ptr, val)                                           \
+    *(int16_t *)(ptr) = (val)
+#define wpcsetval32(ptr, val)                                           \
+    *(int32_t *)(ptr) = (val)
+#define wpcsetval64(ptr, val)                                           \
+    *(int64_t *)(ptr) = (val)
+
 #endif /* __PCALC_OP_H__ */
 
