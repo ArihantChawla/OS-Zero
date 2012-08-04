@@ -179,6 +179,7 @@ zpcinitconvtab(void)
 void
 zpcinitcoptab(void)
 {
+#if 0
     zpccopprectab[ZPCNOT] = OPERRTOL | 6;
     zpccopprectab[ZPCMUL] = 5;
     zpccopprectab[ZPCDIV] = 5;
@@ -190,7 +191,7 @@ zpcinitcoptab(void)
     zpccopprectab[ZPCAND] = 2;
     zpccopprectab[ZPCXOR] = 1;
     zpccopprectab[ZPCOR] = 0;
-#if 0
+#endif
     zpccopprectab[ZPCNOT] = OPERRTOL | 1;
     zpccopprectab[ZPCAND] = 7;
     zpccopprectab[ZPCOR] = 9;
@@ -204,7 +205,6 @@ zpcinitcoptab(void)
     zpccopprectab[ZPCMUL] = 2;
     zpccopprectab[ZPCDIV] = 2;
     zpccopprectab[ZPCMOD] = 2;
-#endif
 }
 
 void zpcinitcop(void)
@@ -794,8 +794,8 @@ zpcparse(struct zpctoken *queue)
             token2 = zpcoperstk;
             while (zpcisoper(token2)) {
                 if ((!zpccopisrtol(token)
-                    && zpccopprec(token) <= zpccopprec(token2))
-                    || zpccopprec(token) < zpccopprec(token2)) {
+                    && zpccopprec(token) >= zpccopprec(token2))
+                    || zpccopprec(token) > zpccopprec(token2)) {
                     token2 = zpcpopoper();
                     zpcqueueexpr(token2);
                     token2 = zpcoperstk;
