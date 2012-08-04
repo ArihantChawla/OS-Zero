@@ -41,9 +41,9 @@ static double           zpcoctdbltab[256];
 static uint8_t          zpccopchartab[256];
 static long             zpccopprectab[ZPCNOPER];
 static struct zpctoken *zpctokenqueue;
-static struct zpctoken *zpcparsequeue;
 static struct zpctoken *zpctokentail;
 static struct zpctoken *zpcoperstk;
+struct zpctoken        *zpcparsequeue;
 
 void
 zpcinitconvtab(void)
@@ -174,7 +174,7 @@ zpcinitconvtab(void)
 }
 
 void
-zpcinitprectab(void)
+zpcinitcoptab(void)
 {
     zpccopprectab[ZPCNOT] = OPERRTOL | 1;
     zpccopprectab[ZPCAND] = 7;
@@ -191,7 +191,7 @@ zpcinitprectab(void)
     zpccopprectab[ZPCMOD] = 2;
 }
 
-void zpcinitoper(void)
+void zpcinitcop(void)
 {
     zpccopchartab['~'] = '~';
     zpccopchartab['&'] = '&';
@@ -204,6 +204,14 @@ void zpcinitoper(void)
     zpccopchartab['*'] = '*';
     zpccopchartab['/'] = '/';
     zpccopchartab['%'] = '%';
+}
+
+void
+exprinit(void)
+{
+    zpcinitconvtab();
+    zpcinitcoptab();
+    zpcinitcop();
 }
 
 void
@@ -654,79 +662,89 @@ zpcprintqueue(struct zpctoken *queue)
     return;
 }
 
+void
+zpctokenize(const char *str)
+{
+    char            *ptr = (char *)str;
+    struct zpctoken *token = zpcgettoken(ptr, &ptr);
+
+    while ((*ptr) && (token)) {
+        zpcqueuetoken(token);
+        token = zpcgettoken(ptr, &ptr);
+    }
+
+    return;
+};
+
 /*
  * Dijkstra's shunting yard algorithm
  * - turns infix-format expressions into RPN queues
  */
 long
-zpcparse(const char *str)
+zpcparse(struct zpctoken *queue)
 {
-    char            *cp = (char *)str;
-    char            *ptr = (char *)str;
-    struct zpctoken *token1;
+    struct zpctoken *token1 = queue;
     struct zpctoken *token2;
 #if 0
     struct zpctoken *queue = NULL;
     struct zpctoken *tail = NULL;
 #endif
 
-    while (*ptr) {
-        token1 = zpcgettoken(ptr, &ptr);
-        if (token1) {
-            if (zpcisvalue(token1)) {
+    while (token1) {
+        if (zpcisvalue(token1)) {
+            zpcqueueexpr(token1);
+        } else if (zpcisfunc(token1)) {
+            zpcpushoper(token1);
+        } else if (zpcissep(token1)) {
+            token1 = zpcpoptoken();
+            do {
                 zpcqueueexpr(token1);
-            } else if (zpcisfunc(token1)) {
-                zpcpushoper(token1);
-            } else if (zpcissep(token1)) {
                 token1 = zpcpoptoken();
-                do {
-                    zpcqueueexpr(token1);
-                    token1 = zpcpoptoken();
-                } while ((token1) && token1->type != ZPCLEFT);
-                if ((token1) && token1->type == ZPCLEFT) {
-
-                    continue;
-                } else {
-                    fprintf(stderr, "mismatched parentheses: %s\n", cp);
-
-                    return 0;
-                }
-            } else if (zpcisoper(token1)) {
-                do {
-                    token2 = zpcoperstk;
-                    if (token2) {
-                        if ((!zpccopisrtol(token1)
-                             && zpccopprec(token1) >= zpccopprec(token2))
-                            || zpccopprec(token1) > zpccopprec(token2)) {
-                            token2 = zpcpoptoken();
-                            zpcqueueexpr(token2);
-                        }
-                    }
-                } while (zpcisoper(zpcoperstk));
-                zpcpushoper(token1);
-            } else if (token1->type == ZPCLEFT) {
-                zpcpushoper(token1);
-            } else if (token1->type == ZPCRIGHT) {
-                do {
-                    token2 = zpcoperstk;
-                    if (token2) {
+            } while ((token1) && token1->type != ZPCLEFT);
+            if ((token1) && token1->type == ZPCLEFT) {
+                
+                continue;
+            } else {
+                fprintf(stderr, "mismatched parentheses: %s\n", token1->str);
+                
+                return 0;
+            }
+        } else if (zpcisoper(token1)) {
+            do {
+                token2 = zpcoperstk;
+                if (token2) {
+                    if ((!zpccopisrtol(token1)
+                         && zpccopprec(token1) >= zpccopprec(token2))
+                        || zpccopprec(token1) > zpccopprec(token2)) {
                         token2 = zpcpoptoken();
                         zpcqueueexpr(token2);
                     }
-                } while ((zpcoperstk) && zpcoperstk->type != ZPCLEFT);
-                if ((zpcoperstk) && zpcoperstk->type == ZPCLEFT) {
-                    token2 = zpcpoptoken();
-                } else {
-                    fprintf(stderr, "mismatched parentheses: %s\n", cp);
-
-                    return 0;
                 }
-                if (zpcisfunc(zpcoperstk)) {
+            } while (zpcisoper(zpcoperstk));
+            zpcpushoper(token1);
+        } else if (token1->type == ZPCLEFT) {
+            zpcpushoper(token1);
+        } else if (token1->type == ZPCRIGHT) {
+            do {
+                token2 = zpcoperstk;
+                if (token2) {
                     token2 = zpcpoptoken();
                     zpcqueueexpr(token2);
                 }
+            } while ((zpcoperstk) && zpcoperstk->type != ZPCLEFT);
+            if ((zpcoperstk) && zpcoperstk->type == ZPCLEFT) {
+                token2 = zpcpoptoken();
+            } else {
+                fprintf(stderr, "mismatched parentheses: %s\n", token2->str);
+                
+                return 0;
+            }
+            if (zpcisfunc(zpcoperstk)) {
+                token2 = zpcpoptoken();
+                zpcqueueexpr(token2);
             }
         }
+        token1 = token1->next;
     }
     do {
         token1 = zpcoperstk;
@@ -735,7 +753,7 @@ zpcparse(const char *str)
             zpcqueueexpr(token1);
         } else if ((token1)
                    && (token1->type == ZPCLEFT || token1->type == ZPCRIGHT)) {
-            fprintf(stderr, "mismatched parentheses: %s\n", cp);
+            fprintf(stderr, "mismatched parentheses: %s\n", token1->str);
 
             return 0;
         }
