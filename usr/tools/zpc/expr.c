@@ -1,5 +1,7 @@
 #include <stdint.h>
 #include <stddef.h>
+#include <stdlib.h>
+#include <stdio.h>
 #include <ctype.h>
 #include <string.h>
 #include <zpc/zpc.h>
@@ -20,19 +22,31 @@
 #define isodigit(c) ((c) >= '0' && (c) <= '7')
 
 #define NHASHITEM 1024
-struct zpctoken *zpcvarhash[NHASHITEM];
-uint8_t          zpcdectab[256];
-uint8_t          zpchextab[256];
-uint8_t          zpcocttab[256];
-float            zpcdecflttab[256];
-float            zpchexflttab[256];
-float            zpcoctflttab[256];
-double           zpcdecdbltab[256];
-double           zpchexdbltab[256];
-double           zpcoctdbltab[256];
+#define OPERRTOL  0x80000000
+#define zpccopprec(tp)                                                 \
+    (zpccopprectab[(tp)->type] & ~OPERRTOL)
+#define zpccopisrtol(tp)                                               \
+    (zpccopprectab[(tp)->type] & OPERRTOL)
+#define zpcisoperstr(c) (zpccopchartab[(int)(c)])
+static struct zpctoken *zpcvarhash[NHASHITEM];
+static uint8_t          zpcdectab[256];
+static uint8_t          zpchextab[256];
+static uint8_t          zpcocttab[256];
+static float            zpcdecflttab[256];
+static float            zpchexflttab[256];
+static float            zpcoctflttab[256];
+static double           zpcdecdbltab[256];
+static double           zpchexdbltab[256];
+static double           zpcoctdbltab[256];
+static uint8_t          zpccopchartab[256];
+static long             zpccopprectab[ZPCNOPER];
+static struct zpctoken *zpctokenqueue;
+static struct zpctoken *zpcparsequeue;
+static struct zpctoken *zpctokentail;
+static struct zpctoken *zpcoperstk;
 
 void
-zpcinittab(void)
+zpcinitconvtab(void)
 {
     /* integral tables */
     zpcdectab['0'] = 0x00;
@@ -160,16 +174,105 @@ zpcinittab(void)
 }
 
 void
-zpcgetfloat(struct zpctoken *token, const char *str)
+zpcinitprectab(void)
 {
-    long  sign = 0;
+    zpccopprectab[ZPCNOT] = OPERRTOL | 1;
+    zpccopprectab[ZPCAND] = 7;
+    zpccopprectab[ZPCOR] = 9;
+    zpccopprectab[ZPCXOR] = 8;
+    zpccopprectab[ZPCSHL] = 4;
+    zpccopprectab[ZPCSHR] = 4;
+    zpccopprectab[ZPCINC] = OPERRTOL | 1;
+    zpccopprectab[ZPCDEC] = OPERRTOL | 1;
+    zpccopprectab[ZPCADD] = OPERRTOL | 1;
+    zpccopprectab[ZPCDEC] = OPERRTOL | 1;
+    zpccopprectab[ZPCMUL] = 2;
+    zpccopprectab[ZPCDIV] = 2;
+    zpccopprectab[ZPCMOD] = 2;
+}
+
+void zpcinitoper(void)
+{
+    zpccopchartab['~'] = '~';
+    zpccopchartab['&'] = '&';
+    zpccopchartab['|'] = '|';
+    zpccopchartab['^'] = '^';
+    zpccopchartab['<'] = '<';
+    zpccopchartab['>'] = '>';
+    zpccopchartab['+'] = '+';
+    zpccopchartab['-'] = '-';
+    zpccopchartab['*'] = '*';
+    zpccopchartab['/'] = '/';
+    zpccopchartab['%'] = '%';
+}
+
+void
+zpcqueueexpr(struct zpctoken *token)
+{
+    token->next = NULL;
+    if (!zpcparsequeue) {
+        token->prev = NULL;
+        zpcparsequeue = token;
+    } else if (zpctokentail) {
+        token->prev = zpctokentail;
+        zpctokentail->next = token;
+        zpctokentail = token;
+    } else {
+        zpcparsequeue->next = token;
+        token->prev = zpcparsequeue;
+        zpctokentail = token;
+    }
+
+    return;
+}
+
+void
+zpcqueuetoken(struct zpctoken *token)
+{
+    token->next = NULL;
+    if (!zpctokenqueue) {
+        token->prev = NULL;
+        zpctokenqueue = token;
+    } else if (zpctokentail) {
+        token->prev = zpctokentail;
+        zpctokentail->next = token;
+        zpctokentail = token;
+    } else {
+        zpctokenqueue->next = token;
+        token->prev = zpctokenqueue;
+        zpctokentail = token;
+    }
+
+    return;
+}
+
+void
+zpcpushoper(struct zpctoken *token)
+{
+    token->next = zpcoperstk;
+    zpcoperstk = token;
+
+    return;
+}
+
+struct zpctoken *
+zpcpoptoken(void)
+{
+    struct zpctoken *token = zpcoperstk;
+
+    if (token) {
+        zpcoperstk = token->next;
+    }
+
+    return token;
+}
+
+void
+zpcgetfloat(struct zpctoken *token, const char *str, char **retstr)
+{
     float flt = 0.0;
     float div;
 
-    if (*str == '-') {
-        sign = 1;
-        str++;
-    }
     if (*str == '0') {
         str++;
         if (*str == 'x' || *str == 'X') {
@@ -187,11 +290,7 @@ zpcgetfloat(struct zpctoken *token, const char *str)
                 div *= 16.0f;
                 str++;
             }
-            if (sign) {
-                zpcsetvalf32(&token->data.f32, -flt);
-            } else {
-                zpcsetvalf32(&token->data.f32, flt);
-            }
+            zpcsetvalf32(&token->data.f32, flt);
         } else if (*str == 'b' || *str == 'B') {
             /* binary value */
             str++;
@@ -207,11 +306,7 @@ zpcgetfloat(struct zpctoken *token, const char *str)
                 div *= 2.0f;
                 str++;
             }
-            if (sign) {
-                zpcsetvalf32(&token->data.f32, -flt);
-            } else {
-                zpcsetvalf32(&token->data.f32, flt);
-            }
+            zpcsetvalf32(&token->data.f32, flt);
         } else {
             /* octal value */
             str++;
@@ -227,11 +322,7 @@ zpcgetfloat(struct zpctoken *token, const char *str)
                 div *= 8.0f;
                 str++;
             }
-            if (sign) {
-                zpcsetvalf32(&token->data.f32, -flt);
-            } else {
-                zpcsetvalf32(&token->data.f32, flt);
-            }
+            zpcsetvalf32(&token->data.f32, flt);
         }
     } else {
         /* decimal value */
@@ -247,27 +338,19 @@ zpcgetfloat(struct zpctoken *token, const char *str)
             div *= 10.0;
             str++;
         }
-        if (sign) {
-            zpcsetvalf32(&token->data.f32, -flt);
-        } else {
-            zpcsetvalf32(&token->data.f32, flt);
-        }
+        zpcsetvalf32(&token->data.f32, flt);
     }
+    *retstr = (char *)str;
 
     return;
 }
 
 void
-zpcgetdouble(struct zpctoken *token, const char *str)
+zpcgetdouble(struct zpctoken *token, const char *str, char **retstr)
 {
-    long  sign = 0;
     float dbl = 0.0;
     float div;
 
-    if (*str == '-') {
-        sign = 1;
-        str++;
-    }
     if (*str == '0') {
         str++;
         if (*str == 'x' || *str == 'X') {
@@ -285,11 +368,7 @@ zpcgetdouble(struct zpctoken *token, const char *str)
                 div *= 16.0;
                 str++;
             }
-            if (sign) {
-                zpcsetvalf64(&token->data.f64, -dbl);
-            } else {
-                zpcsetvalf64(&token->data.f64, dbl);
-            }
+            zpcsetvalf64(&token->data.f64, dbl);
         } else if (*str == 'b' || *str == 'B') {
             /* binary value */
             str++;
@@ -305,11 +384,7 @@ zpcgetdouble(struct zpctoken *token, const char *str)
                 div *= 2.0;
                 str++;
             }
-            if (sign) {
-                zpcsetvalf64(&token->data.f64, -dbl);
-            } else {
-                zpcsetvalf64(&token->data.f64, dbl);
-            }
+            zpcsetvalf64(&token->data.f64, dbl);
         } else {
             /* octal value */
             str++;
@@ -325,11 +400,7 @@ zpcgetdouble(struct zpctoken *token, const char *str)
                 div *= 8.0;
                 str++;
             }
-            if (sign) {
-                zpcsetvalf64(&token->data.f64, -dbl);
-            } else {
-                zpcsetvalf64(&token->data.f64, dbl);
-            }
+            zpcsetvalf64(&token->data.f64, dbl);
         }
     } else {
         /* decimal value */
@@ -345,26 +416,18 @@ zpcgetdouble(struct zpctoken *token, const char *str)
             div *= 10.0;
             str++;
         }
-        if (sign) {
-            zpcsetvalf64(&token->data.f64, -dbl);
-        } else {
-            zpcsetvalf64(&token->data.f64, dbl);
-        }
+        zpcsetvalf64(&token->data.f64, dbl);
     }
+    *retstr = (char *)str;
 
     return;
 }
 
 void
-zpcgetint64(struct zpctoken *token, const char *str)
+zpcgetint64(struct zpctoken *token, const char *str, char **retstr)
 {
-    long    sign = 0;
     int64_t i64 = 0;
 
-    if (*str == '-') {
-        sign = 1;
-        str++;
-    }
     if (*str == '0') {
         str++;
         if (*str == 'x' || *str == 'X') {
@@ -375,11 +438,7 @@ zpcgetint64(struct zpctoken *token, const char *str)
                 i64 += tohex(*str);
                 str++;
             }
-            if (sign) {
-                zpcsetval64(&token->data.i64, -i64);
-            } else {
-                zpcsetvalu64(&token->data.i64, i64);
-            }
+            zpcsetvalu64(&token->data.i64, i64);
         } else if (*str == 'b' || *str == 'B') {
             /* binary value */
             str++;
@@ -388,11 +447,7 @@ zpcgetint64(struct zpctoken *token, const char *str)
                 i64 += tobin(*str);
                 str++;
             }
-            if (sign) {
-                zpcsetval64(&token->data.i64, -i64);
-            } else {
-                zpcsetvalu64(&token->data.i64, i64);
-            }
+            zpcsetvalu64(&token->data.i64, i64);
         } else {
             /* octal value */
             str++;
@@ -401,11 +456,7 @@ zpcgetint64(struct zpctoken *token, const char *str)
                 i64 += tooct(*str);
                 str++;
             }
-            if (sign) {
-                zpcsetval64(&token->data.i64, -i64);
-            } else {
-                zpcsetvalu64(&token->data.i64, i64);
-            }
+            zpcsetvalu64(&token->data.i64, i64);
         }
     } else {
         /* decimal value */
@@ -415,14 +466,61 @@ zpcgetint64(struct zpctoken *token, const char *str)
             i64 += todec(*str);
             str++;
         }
-        if (sign) {
-            zpcsetval64(&token->data.i64, -i64);
-        } else {
-            zpcsetvalu64(&token->data.i64, i64);
-        }
+        zpcsetvalu64(&token->data.i64, i64);
     }
+    *retstr = (char *)str;
 
     return;
+}
+
+void
+zpcgetoper(struct zpctoken *token, const char *str, char **retstr)
+{
+    if (*str == '!') {
+        str++;
+        token->type = ZPCNOT;
+    } else if (*str == '&') {
+        str++;
+        token->type = ZPCAND;
+    } else if (*str == '|') {
+        str++;
+        token->type = ZPCOR;
+    } else if (*str == '^') {
+        str++;
+        token->type = ZPCXOR;
+    } else if (*str == '<' && str[1] == '<') {
+        str += 2;
+        token->type = ZPCSHL;
+    } else if (*str == '>' && str[1] == '>') {
+        str += 2;
+        token->type = ZPCSHR;
+    } else if (*str == '+') {
+        if (str[1] == '+') {
+            token->type = ZPCINC;
+            str += 2;
+        } else {
+            token->type = ZPCADD;
+            str++;
+        }
+    } else if (*str == '-') {
+        if (str[1] == '-') {
+            token->type = ZPCDEC;
+            str += 2;
+        } else {
+            token->type = ZPCSUB;
+            str++;
+        }
+    } else if (*str == '*') {
+        str++;
+        token->type = ZPCMUL;
+    } else if (*str == '/') {
+        str++;
+        token->type = ZPCDIV;
+    } else if (*str == '%') {
+        str++;
+        token->type = ZPCMOD;
+    }
+    *retstr = (char *)str;
 }
 
 void
@@ -494,39 +592,156 @@ zpcdelvar(const char *name)
 }
 
 struct zpctoken *
-zpcgettoken(const char *str)
+zpcgettoken(const char *str, char **retstr)
 {
+    char            *ptr = (char *)str;
     struct zpctoken *token = NULL;
     char            *dec;
     char            *flt;
 
-    while (isspace(*str)) {
-        str++;
+    while (isspace(*ptr)) {
+        ptr++;
     }
-    if (isdigit(*str) || *str == '-') {
-        token = malloc(sizeof(struct zpctoken));
+    token = malloc(sizeof(struct zpctoken));
+    if (isdigit(*ptr)) {
         token->str = NULL;
-        dec = index(str, '.');
+        dec = index(ptr, '.');
         if (dec) {
             flt = strstr(dec, "fF");
             if (flt) {
                 token->type = ZPCFLOAT;
-                zpcgetfloat(token, str);
+                zpcgetfloat(token, ptr, &ptr);
             } else {
                 token->type = ZPCDOUBLE;
-                zpcgetdouble(token, str);
+                zpcgetdouble(token, ptr, &ptr);
             }
         } else {
             token->type = ZPCINT64;
-            zpcgetint64(token, str);
+            zpcgetint64(token, ptr, &ptr);
         }
+    } else if (zpcisoperstr(*ptr)) {
+        zpcgetoper(token, ptr, &ptr);
+    } else if (*ptr == '(') {
+        token->type = ZPCLEFT;
+        ptr++;
+    } else if (*ptr == ')') {
+        token->type = ZPCRIGHT;
+        ptr++;
+    } else {
+        free(token);
+        token = NULL;
+    }
+    if (token) {
+        zpcqueuetoken(token);
+        *retstr = (char *)ptr;
+    } else {
+        *retstr = NULL;
     }
 
     return token;
 }
 
+void
+zpcprintqueue(struct zpctoken *queue)
+{
+    struct zpctoken *token = queue;
+
+    while (token) {
+        fprintf(stderr, "%lx ", token->type);
+        token = token->next;
+    }
+
+    return;
+}
+
 /*
  * Dijkstra's shunting yard algorithm
- * - turns infix-format expressions into RPN and/or parse trees
+ * - turns infix-format expressions into RPN queues
  */
+long
+zpcparse(const char *str)
+{
+    char            *cp = (char *)str;
+    char            *ptr = (char *)str;
+    struct zpctoken *token1;
+    struct zpctoken *token2;
+#if 0
+    struct zpctoken *queue = NULL;
+    struct zpctoken *tail = NULL;
+#endif
+
+    while (*ptr) {
+        token1 = zpcgettoken(ptr, &ptr);
+        if (token1) {
+            if (zpcisvalue(token1)) {
+                zpcqueueexpr(token1);
+            } else if (zpcisfunc(token1)) {
+                zpcpushoper(token1);
+            } else if (zpcissep(token1)) {
+                token1 = zpcpoptoken();
+                do {
+                    zpcqueueexpr(token1);
+                    token1 = zpcpoptoken();
+                } while ((token1) && token1->type != ZPCLEFT);
+                if ((token1) && token1->type == ZPCLEFT) {
+
+                    continue;
+                } else {
+                    fprintf(stderr, "mismatched parentheses: %s\n", cp);
+
+                    return 0;
+                }
+            } else if (zpcisoper(token1)) {
+                do {
+                    token2 = zpcoperstk;
+                    if (token2) {
+                        if ((!zpccopisrtol(token1)
+                             && zpccopprec(token1) >= zpccopprec(token2))
+                            || zpccopprec(token1) > zpccopprec(token2)) {
+                            token2 = zpcpoptoken();
+                            zpcqueueexpr(token2);
+                        }
+                    }
+                } while (zpcisoper(zpcoperstk));
+                zpcpushoper(token1);
+            } else if (token1->type == ZPCLEFT) {
+                zpcpushoper(token1);
+            } else if (token1->type == ZPCRIGHT) {
+                do {
+                    token2 = zpcoperstk;
+                    if (token2) {
+                        token2 = zpcpoptoken();
+                        zpcqueueexpr(token2);
+                    }
+                } while ((zpcoperstk) && zpcoperstk->type != ZPCLEFT);
+                if ((zpcoperstk) && zpcoperstk->type == ZPCLEFT) {
+                    token2 = zpcpoptoken();
+                } else {
+                    fprintf(stderr, "mismatched parentheses: %s\n", cp);
+
+                    return 0;
+                }
+                if (zpcisfunc(zpcoperstk)) {
+                    token2 = zpcpoptoken();
+                    zpcqueueexpr(token2);
+                }
+            }
+        }
+    }
+    do {
+        token1 = zpcoperstk;
+        if (zpcisoper(token1)) {
+            token1 = zpcpoptoken();
+            zpcqueueexpr(token1);
+        } else if ((token1)
+                   && (token1->type == ZPCLEFT || token1->type == ZPCRIGHT)) {
+            fprintf(stderr, "mismatched parentheses: %s\n", cp);
+
+            return 0;
+        }
+    } while (zpcoperstk);
+    zpcprintqueue(zpcparsequeue);
+
+    return 1;
+}
 

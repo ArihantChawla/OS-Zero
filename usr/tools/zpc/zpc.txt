@@ -76,11 +76,11 @@ Display
 Operation Pad
 -------------
 
-- s>> stands for arithmetic shift right (fill with sign)
+- >>> stands for arithmetic shift right (fill with sign)
 - ..> is rotate right, <.. is rotate left
 
 -------------------------------------------------
-|   d	|   e	|   f	|   ~	|   s>>	|   ++	|
+|   d	|   e	|   f	|   ~	|   >>>	|   ++	|
 -------------------------------------------------
 |   a	|   b	|   c	|   %	|   >>	|   --	|
 ------------------------------------------------|
