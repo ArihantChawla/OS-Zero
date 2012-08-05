@@ -43,6 +43,7 @@ static double           zpcoctdbltab[256];
 static uint8_t          zpccopchartab[256];
 static long             zpccopprectab[ZPCNOPER];
 struct zpctoken        *zpcoperstk;
+struct zpctoken        *zpcoperstktop;
 struct zpctoken        *zpctokenqueue;
 struct zpctoken        *zpctokentail;
 struct zpctoken        *zpcparsequeue;
@@ -179,19 +180,23 @@ zpcinitconvtab(void)
 void
 zpcinitcoptab(void)
 {
+    zpccopprectab[ZPCNOT] = OPERRTOL | 4;
+    zpccopprectab[ZPCXOR] = OPERRTOL | 3;
+    zpccopprectab[ZPCMUL] = 2;
+    zpccopprectab[ZPCDIV] = 2;
+    zpccopprectab[ZPCMOD] = 2;
+    zpccopprectab[ZPCADD] = OPERRTOL | 1;
+    zpccopprectab[ZPCSUB] = 1;
 #if 0
-    zpccopprectab[ZPCNOT] = OPERRTOL | 6;
-    zpccopprectab[ZPCMUL] = 5;
-    zpccopprectab[ZPCDIV] = 5;
-    zpccopprectab[ZPCMOD] = 5;
-    zpccopprectab[ZPCADD] = 4;
-    zpccopprectab[ZPCSUB] = 4;
-    zpccopprectab[ZPCSHR] = 3;
-    zpccopprectab[ZPCSHL] = 3;
-    zpccopprectab[ZPCAND] = 2;
-    zpccopprectab[ZPCXOR] = 1;
-    zpccopprectab[ZPCOR] = 0;
+    zpccopprectab[ZPCSHR] = 4;
+    zpccopprectab[ZPCSHL] = 4;
+    zpccopprectab[ZPCAND] = 5;
+    zpccopprectab[ZPCXOR] = 6;
+    zpccopprectab[ZPCOR] = 7;
 #endif
+    
+#if 0
+    zpccopprectab['('] = 0xff;
     zpccopprectab[ZPCNOT] = OPERRTOL | 1;
     zpccopprectab[ZPCAND] = 7;
     zpccopprectab[ZPCOR] = 9;
@@ -205,6 +210,7 @@ zpcinitcoptab(void)
     zpccopprectab[ZPCMUL] = 2;
     zpccopprectab[ZPCDIV] = 2;
     zpccopprectab[ZPCMOD] = 2;
+#endif
 }
 
 void zpcinitcop(void)
@@ -273,6 +279,7 @@ zpcqueuetoken(struct zpctoken *token)
 void
 zpcpushoper(struct zpctoken *token)
 {
+    token->prev = NULL;
     token->next = zpcoperstk;
     zpcoperstk = token;
 
@@ -745,8 +752,10 @@ zpctokenize(const char *str)
         zpcqueuetoken(token);
         token = zpcgettoken(ptr, &ptr);
     }
+#if 0
     fprintf(stderr, "TOKENS: ");
     zpcprintqueue(zpctokenqueue);
+#endif
 
     return;
 };
@@ -779,8 +788,9 @@ zpcparse(struct zpctoken *queue)
         } else if (zpcisfunc(token)) {
             zpcpushoper(token);
         } else if (zpcissep(token)) {
-            token2 = zpcpopoper();
+            token2 = zpcoperstk;
             while ((token2) && token2->type != ZPCLEFT) {
+                token2 = zpcpopoper();
                 zpcqueueexpr(token2);
                 token2 = zpcpopoper();
             }
@@ -796,16 +806,18 @@ zpcparse(struct zpctoken *queue)
             token2 = zpcoperstk;
             while (zpcisoper(token2)) {
                 if ((!zpccopisrtol(token)
-                     && zpccopprec(token) >= zpccopprec(token2))
-                    || zpccopprec(token) > zpccopprec(token2)) {
+                     && zpccopprec(token) <= zpccopprec(token2))
+                    || zpccopprec(token) < zpccopprec(token2)) {
+//                    fprintf(stderr, "POP: %s (%s)\n", token2->str, token->str);
                     token2 = zpcpopoper();
                     zpcqueueexpr(token2);
                     token2 = zpcoperstk;
                 } else {
-                    
+
                     break;
                 }
             }
+//            fprintf(stderr, "PUSH: %s\n", token->str);
             zpcpushoper(token);
         } else if (token->type == ZPCLEFT) {
             zpcpushoper(token);
@@ -828,15 +840,12 @@ zpcparse(struct zpctoken *queue)
                 zpcqueueexpr(token2);
             }
         }
-#if 0
-        fprintf(stderr, "QUEUE: ");
-        zpcprintqueue(zpcparsequeue);
-        fprintf(stderr, "STACK: ");
-        zpcprintqueue(zpcoperstk);
-#endif
         token1 = token3;
     }
-//    zpcprintqueue(zpcparsequeue);
+    fprintf(stderr, "QUEUE: ");
+    zpcprintqueue(zpcparsequeue);
+    fprintf(stderr, "STACK: ");
+    zpcprintqueue(zpcoperstk);
     do {
         token1 = zpcoperstk;
         if (zpcisoper(token1)) {
@@ -852,4 +861,5 @@ zpcparse(struct zpctoken *queue)
 
     return 1;
 }
+
 
