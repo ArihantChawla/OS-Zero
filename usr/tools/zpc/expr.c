@@ -260,20 +260,21 @@ zpcqueueexpr(struct zpctoken *token,
 }
 
 void
-zpcqueuetoken(struct zpctoken *token)
+zpcqueuetoken(struct zpctoken *token,
+              struct zpctoken **queue, struct zpctoken **tail)
 {
     token->next = NULL;
-    if (!zpctokenqueue) {
+    if (!*queue) {
         token->prev = NULL;
-        zpctokenqueue = token;
-    } else if (zpctokentail) {
-        token->prev = zpctokentail;
-        zpctokentail->next = token;
-        zpctokentail = token;
+        *queue = token;
+    } else if (*tail) {
+        token->prev = *tail;
+        (*tail)->next = token;
+        *tail = token;
     } else {
-        token->prev = zpctokenqueue;
-        zpctokenqueue->next = token;
-        zpctokentail = token;
+        token->prev = *queue;
+        (*queue)->next = token;
+        *tail = token;
     }
 
     return;
@@ -734,15 +735,17 @@ zpcprintqueue(struct zpctoken *queue)
     return;
 }
 
-void
+struct zpctoken *
 zpctokenize(const char *str)
 {
     char            *ptr = (char *)str;
+    struct zpctoken *queue = NULL;
+    struct zpctoken *tail = NULL;
     struct zpctoken *token;
 
     token = zpcgettoken(ptr, &ptr);
     while (token) {
-        zpcqueuetoken(token);
+        zpcqueuetoken(token, &queue, &tail);
         token = zpcgettoken(ptr, &ptr);
     }
 #if 0
@@ -750,7 +753,7 @@ zpctokenize(const char *str)
     zpcprintqueue(zpctokenqueue);
 #endif
 
-    return;
+    return queue;
 };
 
 /*

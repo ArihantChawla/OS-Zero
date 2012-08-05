@@ -10,7 +10,8 @@
 #include <zero/param.h>
 #include "x11.h"
 
-extern struct zpcstkitem *zpcregstk;
+extern struct zpctoken   *zpcregstk[];
+extern struct zpcstkitem *zpcinputitem;
 
 #define NHASHITEM 1024
 static struct x11win     *winhash[NHASHITEM] ALIGNED(PAGESIZE);
@@ -278,76 +279,93 @@ buttonleave(void *arg, XEvent *event)
 void
 buttonpress(void *arg, XEvent *event)
 {
-    struct x11win *win = arg;
-    int            evbut = toevbutton(event->xbutton.button);
-    copfunc_t     *func;
-    uint64_t      *usrc = NULL;
-    uint64_t      *udest = NULL;
-    uint64_t       ures64;
-    int64_t       *src = NULL;
-    int64_t       *dest = NULL;
-    int64_t        res64;
-    float         *fsrc = NULL;
-    float         *fdest = NULL;
-    float         *fres;
-    double        *dsrc = NULL;
-    double        *ddest = NULL;
-    double        *dres;
-    int            type = 0;
-    int            size = 0;
+    struct x11win   *win = arg;
+    int              evbut = toevbutton(event->xbutton.button);
+    struct zpctoken *queue;
+    copfunc_t       *func;
+    uint64_t        *usrc = NULL;
+    uint64_t        *udest = NULL;
+    uint64_t         ures64;
+    int64_t         *src = NULL;
+    int64_t         *dest = NULL;
+    int64_t          res64;
+    float           *fsrc = NULL;
+    float           *fdest = NULL;
+    float           *fres;
+    double          *dsrc = NULL;
+    double          *ddest = NULL;
+    double          *dres;
+    int              type = 0;
 
     if (win->narg == ENTER) {
         stkenterinput();
+
+        return;
     } else if (!win->narg) {
         stkqueueinput(buttonstrtab[win->row][win->col]);
-    } else if (win->narg == 1) {
-        if (zpcregstk) {
-            if (zpcregstk->type == ZPCUINT) {
-                type = ZPCUINT;
-                usrc = &zpcregstk->data.u64;
-            } else if (zpcregstk->type == ZPCINT) {
-                type = ZPCINT;
-                src = &zpcregstk->data.i64;
-            } else if (zpcregstk->type == ZPCFLT) {
-                type = ZPCFLT;
-                if (zpcregstk->size == 4) {
-                    size = 4;
-                    fsrc = &zpcregstk->data.f32;
+
+        return;
+    } else if (win->narg >= 1) {
+        if (zpcregstk[0]) {
+            queue = zpcregstk[0];
+            if (queue) {
+                fprintf(stderr, "#2 ");
+                if (queue->type == ZPCUINT64) {
+                    fprintf(stderr, "#3 ");
+                    type = ZPCUINT64;
+                    usrc = &queue->data.u64;
+                } else if (queue->type == ZPCINT64) {
+                    fprintf(stderr, "#4 ");
+                    type = ZPCINT64;
+                    src = &queue->data.i64;
+                } else if (queue->type == ZPCFLOAT) {
+                    fprintf(stderr, "#5 ");
+                    type = ZPCFLOAT;
+                    fsrc = &queue->data.f32;
+                } else if (queue->type == ZPCDOUBLE) {
+                    dsrc = &queue->data.f64;
                 } else {
-                    size = 8;
-                    dsrc = &zpcregstk->data.f64;
+                    fprintf(stderr, "#8 ");
+                    fprintf(stderr, "EEEE\n");
+                    
+                    return;
                 }
+            }
+        } else {
+            fprintf(stderr, "#9 ");
+            fprintf(stderr, "EEEE\n");
+
+            return;
+        }
+    }
+    if (win->narg == 2) {
+        fprintf(stderr, "#10 ");
+        queue = zpcregstk[1];
+        if (queue) {
+            if (type == ZPCUINT64 && queue->type == ZPCUINT64) {
+                fprintf(stderr, "#11 ");
+                udest = &queue->data.u64;
+            } else if (type == ZPCINT64 && queue->type == ZPCINT64) {
+                fprintf(stderr, "#12 ");
+                dest = &queue->data.i64;
+            } else if (type == ZPCFLOAT && queue->type == ZPCFLOAT) {
+                fdest = &queue->data.f32;
+            } else if (type == ZPCDOUBLE && queue->type == ZPCDOUBLE) {
+                fprintf(stderr, "#15 ");
+                ddest = &queue->data.f64;
             } else {
+                fprintf(stderr, "#16 ");
                 fprintf(stderr, "EEEE\n");
                 
                 return;
             }
-        } else {
+        } else if (win->narg == 2) {
             fprintf(stderr, "EEEE\n");
             
             return;
         }
-    } else if ((zpcregstk) && zpcregstk->next) {
-        if (type == ZPCUINT && zpcregstk->next->type == ZPCUINT) {
-            udest = &zpcregstk->next->data.u64;
-        } else if (type == ZPCINT && zpcregstk->next->type == ZPCINT) {
-            dest = &zpcregstk->next->data.i64;
-        } else if (type == ZPCFLT && zpcregstk->next->type == ZPCFLT) {
-            if (size == 4 && zpcregstk->next->size == 4) {
-                fdest = &zpcregstk->next->data.f32;
-            } else if (size == 8) {
-                ddest = &zpcregstk->next->data.f64;
-            }
-        } else {
-            fprintf(stderr, "EEEE\n");
-            
-            return;
-        }
-    } else {
-        fprintf(stderr, "EEEE\n");
-        
-        return;
     }
+    fprintf(stderr, "\n");
 #if 0
     XSetWindowBackgroundPixmap(app->display, win->id,
                                buttonpmaps[BUTTONCLICKED]);
@@ -355,26 +373,28 @@ buttonpress(void *arg, XEvent *event)
     XSync(app->display, False);
 #endif
     if (evbut < NBUTTON) {
-        if (type == ZPCINT || type == ZPCUINT) {
+        if (type == ZPCINT64 || type == ZPCUINT64) {
             func = win->clickfunc[evbut];
             if (func) {
-                if (type == ZPCINT) {
+                if (type == ZPCINT64) {
                     func(src, dest, &res64);
+                    fprintf(stderr, "RES: %llx\n", res64);
                 } else {
                     func(usrc, udest, &ures64);
+                    fprintf(stderr, "RES: %llx\n", ures64);
                 }
             }
-        } else if (type == ZPCFLT) {
-            if (size == 4) {
-                func = win->clickfuncflt[evbut];
-                if (func) {
-                    func(fsrc, fdest, &fres);
-                }
-            } else {
-                func = win->clickfuncdbl[evbut];
-                if (func) {
-                    func(dsrc, ddest, &dres);
-                }
+        } else if (type == ZPCFLOAT) {
+            func = win->clickfuncflt[evbut];
+            if (func) {
+                func(fsrc, fdest, &fres);
+                fprintf(stderr, "RES: %f\n", fres);
+            }
+        } else {
+            func = win->clickfuncdbl[evbut];
+            if (func) {
+                func(dsrc, ddest, &dres);
+                fprintf(stderr, "RES: %e\n", dres);
             }
         }
     }
@@ -465,6 +485,7 @@ x11nextevent(void)
     struct x11win *win;
     x11evfunc_t   *func;
 
+    stkprint();
     XNextEvent(app->display, &event);
     win = x11findwin(event.xany.window);
     if (win) {
