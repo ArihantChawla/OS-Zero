@@ -22,6 +22,24 @@ prog menu
 - alias is used to give registers symbolic names; e.g., x, y, z
   - refer to with symbolic names such as x
 - load is used to load (import) assembly and object files
+- exec starts execution of loaded program from _start
+- save stores current calculator state to be returned later
+- lang is used to select programming language
+  - C, assembly, Lisp? :)
+
+stack menu
+----------
+- push - push current result value into the RPN stack
+- pop  - pop topmost stack item into result value
+- swap - swap two topmost items on the stack
+- drop - drop topmost stack item
+- clr  - clear entire RPN stack
+
+setup menu
+----------
+- radix	- set current base for displayed results
+- size	- set current input variable size
+- type	- toggle between integral / floating-point input mode
 
 cmd menu
 --------
@@ -38,39 +56,43 @@ cmd menu
 -----------------------------------------
     |	    |	    |	    |	    |
 -----------------------------------------
-| eval  | log   | swap  | radix | mode  |
+| eval  | log   | push  | radix | mode  |
 -----------------------------------------
-| alias	| exp   | drop  | size  | rand  |
+| alias	| exp   | pop   | size  | rand  |
 -----------------------------------------
-| load  | trig  | clr	| type  | zero  |
+| load  | trig  | swap	| type  | zero  |
 -----------------------------------------
-| exec	| vector|		| fract |
------------------		---------
-| save	| matrix|
+| exec	| vector| drop	|	| fract |
+-------------------------	---------
+| save	| matrix| clr	|
+-------------------------
+| lang	| cmplx |
 -----------------
-	| cmplx |
-	---------
 
 menu
 ----
 
 Display
 --------
+- buttons to toggle each items display mode between HEX, DEC, OCT, and BIN
+- buttons to choose value type; U64, S64, F32, F64
 
 		toggle ------	    ---	toggle
 			    |       |
 -----------------------------------------
-| 0x00000001		|  HEX	|  U32	|	- unsigned 32-bit value
+| 0x00000001		|  HEX	|  U64	|	- unsigned 32-bit value
 -----------------------------------------
 | 0x00000000.00000000	|  HEX	|  F64	|	- 64-bit floating point value
 -----------------------------------------
 | 0x0000.0000		|  HEX	|  F32	|	- 32-bit floating point value
 -----------------------------------------
-| -0xffff		|  HEX	|  S16	|	- signed 16-bit value
+| -0xffff		|  HEX	|  S64	|	- signed 16-bit value
 -----------------------------------------
-| -123456		|  DEC	|  S32	|	- signed 32-bit value in decimal
+| -123456		|  DEC	|  S64	|	- signed 32-bit value in decimal
 -----------------------------------------
-|			|  HEX  |  S32	|	- input field
+|			|  HEX  |  S64	|	- input field
+-----------------------------------------
+|			|  HEX	|  S64	|	- result value
 -----------------------------------------
 			    |	    |
 			    ----------- current modes
@@ -96,7 +118,16 @@ Operation Pad
 
 Debug Pad
 ---------
-- registers (%r0 through %r15)
+- stack registers (%st0 through %st15)
 - variable assignments / register aliases
 - debug console
 
+C Interface
+-----------
+- variables; symbol lookup
+- types: i64, u64, f32, f64
+
+Assembly Interface
+------------------
+- stack is %st0..%st15
+- result is %res
