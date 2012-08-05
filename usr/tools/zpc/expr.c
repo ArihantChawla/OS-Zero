@@ -175,6 +175,8 @@ zpcinitconvtab(void)
     zpcoctdbltab['5'] = 5.0;
     zpcoctdbltab['6'] = 6.0;
     zpcoctdbltab['7'] = 7.0;
+
+    return;
 }
 
 void
@@ -193,30 +195,8 @@ zpcinitcoptab(void)
     zpccopprectab[ZPCMOD] = 2;
     zpccopprectab[ZPCADD] = OPERRTOL | 1;
     zpccopprectab[ZPCSUB] = 1;
-#if 0
-    zpccopprectab[ZPCSHR] = 4;
-    zpccopprectab[ZPCSHL] = 4;
-    zpccopprectab[ZPCAND] = 5;
-    zpccopprectab[ZPCXOR] = 6;
-    zpccopprectab[ZPCOR] = 7;
-#endif
-    
-#if 0
-    zpccopprectab['('] = 0xff;
-    zpccopprectab[ZPCNOT] = OPERRTOL | 1;
-    zpccopprectab[ZPCAND] = 7;
-    zpccopprectab[ZPCOR] = 9;
-    zpccopprectab[ZPCXOR] = 8;
-    zpccopprectab[ZPCSHL] = 4;
-    zpccopprectab[ZPCSHR] = 4;
-    zpccopprectab[ZPCINC] = OPERRTOL | 1;
-    zpccopprectab[ZPCDEC] = OPERRTOL | 1;
-    zpccopprectab[ZPCADD] = OPERRTOL | 3;
-    zpccopprectab[ZPCSUB] = OPERRTOL | 3;
-    zpccopprectab[ZPCMUL] = 2;
-    zpccopprectab[ZPCDIV] = 2;
-    zpccopprectab[ZPCMOD] = 2;
-#endif
+
+    return;
 }
 
 void zpcinitcop(void)
@@ -240,6 +220,8 @@ exprinit(void)
     zpcinitconvtab();
     zpcinitcoptab();
     zpcinitcop();
+
+    return;
 }
 
 void
