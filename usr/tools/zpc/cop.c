@@ -331,6 +331,30 @@ add64(void *arg1, void *arg2, void *ret)
 }
 
 void
+fadd32(void *arg1, void *arg2, void *ret)
+{
+    float src = zpcgetvalf32(arg1);
+    float dest = zpcgetvalf32(arg2);
+
+    dest += src;
+    zpcsetval64(ret, dest);
+
+    return;
+}
+
+void
+fadd64(void *arg1, void *arg2, void *ret)
+{
+    double src = zpcgetvalf64(arg1);
+    double dest = zpcgetvalf64(arg2);
+
+    dest += src;
+    zpcsetval64(ret, dest);
+
+    return;
+}
+
+void
 sub32(void *arg1, void *arg2, void *ret)
 {
     int32_t src = zpcgetval32(arg1);
@@ -347,6 +371,30 @@ sub64(void *arg1, void *arg2, void *ret)
 {
     int64_t src = zpcgetval64(arg1);
     int64_t dest = zpcgetval64(arg2);
+
+    dest -= src;
+    zpcsetval64(ret, dest);
+
+    return;
+}
+
+void
+fsub32(void *arg1, void *arg2, void *ret)
+{
+    float src = zpcgetvalf32(arg1);
+    float dest = zpcgetvalf32(arg2);
+
+    dest -= src;
+    zpcsetval64(ret, dest);
+
+    return;
+}
+
+void
+fsub64(void *arg1, void *arg2, void *ret)
+{
+    double src = zpcgetvalf64(arg1);
+    double dest = zpcgetvalf64(arg2);
 
     dest -= src;
     zpcsetval64(ret, dest);
@@ -379,6 +427,30 @@ mul64(void *arg1, void *arg2, void *ret)
 }
 
 void
+fmul32(void *arg1, void *arg2, void *ret)
+{
+    float src = zpcgetvalf32(arg1);
+    float dest = zpcgetvalf32(arg2);
+
+    dest *= src;
+    zpcsetval64(ret, dest);
+
+    return;
+}
+
+void
+fmul64(void *arg1, void *arg2, void *ret)
+{
+    double src = zpcgetvalf64(arg1);
+    double dest = zpcgetvalf64(arg2);
+
+    dest *= src;
+    zpcsetval64(ret, dest);
+
+    return;
+}
+
+void
 div32(void *arg1, void *arg2, void *ret)
 {
     int32_t src = zpcgetval32(arg1);
@@ -395,6 +467,30 @@ div64(void *arg1, void *arg2, void *ret)
 {
     int64_t src = zpcgetval64(arg1);
     int64_t dest = zpcgetval64(arg2);
+
+    dest /= src;
+    zpcsetval64(ret, dest);
+
+    return;
+}
+
+void
+fdiv32(void *arg1, void *arg2, void *ret)
+{
+    float src = zpcgetvalf32(arg1);
+    float dest = zpcgetvalf32(arg2);
+
+    dest /= src;
+    zpcsetval64(ret, dest);
+
+    return;
+}
+
+void
+fdiv64(void *arg1, void *arg2, void *ret)
+{
+    double src = zpcgetvalf64(arg1);
+    double dest = zpcgetvalf64(arg2);
 
     dest /= src;
     zpcsetval64(ret, dest);

@@ -5,13 +5,42 @@
 #include <X11/X.h>
 #include <X11/Xlib.h>
 #include <zpc/zpc.h>
+#include <zpc/op.h>
 #include <zero/cdecl.h>
 #include <zero/param.h>
 #include "x11.h"
 
-extern struct zpcstkitem *zpcstktab[NSTKREG];
+extern struct zpcstkitem *zpcregstk;
+
 #define NHASHITEM 1024
 static struct x11win     *winhash[NHASHITEM] ALIGNED(PAGESIZE);
+static zpccfunc_t        *buttonopertab[ZPC_NROW][ZPC_NCOLUMN]
+= {
+    { NULL, NULL, NULL, not64, shr64, inc64 },
+    { NULL, NULL, NULL, mod64, shrl64, dec64 },
+    { NULL, NULL, NULL, div64, shl64, ror64 },
+    { NULL, NULL, NULL, mul64, xor64, rol64 },
+    { NULL, NULL, NULL, dec64, or64, NULL },
+    { NULL, NULL, NULL, add64, and64, NULL }
+};
+static zpccfunc_t        *buttonopertabflt[ZPC_NROW][ZPC_NCOLUMN]
+= {
+    { NULL, NULL, NULL, NULL, NULL, NULL },
+    { NULL, NULL, NULL, NULL, NULL, NULL },
+    { NULL, NULL, NULL, fdiv32, NULL, NULL },
+    { NULL, NULL, NULL, mul32, NULL, NULL },
+    { NULL, NULL, NULL, fsub32, NULL, NULL },
+    { NULL, NULL, NULL, fadd32, NULL, NULL}
+};
+static zpccfunc_t        *buttonopertabdbl[ZPC_NROW][ZPC_NCOLUMN]
+= {
+    { NULL, NULL, NULL, NULL, NULL, NULL },
+    { NULL, NULL, NULL, NULL, NULL, NULL },
+    { NULL, NULL, NULL, fdiv64, NULL, NULL },
+    { NULL, NULL, NULL, mul64, NULL, NULL },
+    { NULL, NULL, NULL, fsub64, NULL, NULL },
+    { NULL, NULL, NULL, fadd64, NULL, NULL}
+};
 static Window             buttonwintab[ZPC_NROW][ZPC_NCOLUMN];
 static const char        *buttonstrtab[ZPC_NROW][ZPC_NCOLUMN]
 = {
@@ -21,6 +50,25 @@ static const char        *buttonstrtab[ZPC_NROW][ZPC_NCOLUMN]
     { "4", "5", "6", "*", "^", "<.." },
     { "1", "2", "3", "-", "|", NULL },
     { "0", ".", "SPC", "+", "&", "ENTER" }
+};
+#define ENTER 0xff
+static const uint8_t      nargtab[ZPC_NROW][ZPC_NCOLUMN]
+= {
+    { 0, 0, 0, 1, 2, 1 },
+    { 0, 0, 0, 2, 2, 1 },
+    { 0, 0, 0, 2, 2, 2 },
+    { 0, 0, 0, 2, 2, 2 },
+    { 0, 0, 0, 2, 2, 0 },
+    { 0, 0, 0, 2, 2, ENTER }
+};
+static const uint8_t      isflttab[ZPC_NROW][ZPC_NCOLUMN]
+= {
+    { 0, 0, 0, 0, 0, 0 },
+    { 0, 0, 0, 0, 0, 0 },
+    { 0, 0, 0, 1, 0, 0 },
+    { 0, 0, 0, 1, 0, 0 },
+    { 0, 0, 0, 1, 0, 0 },
+    { 0, 0, 0, 1, 0, 0 }
 };
 #define BUTTONNORMAL  0
 #define BUTTONHOVER   1
@@ -233,9 +281,71 @@ buttonpress(void *arg, XEvent *event)
     struct x11win *win = arg;
     int            evbut = toevbutton(event->xbutton.button);
     copfunc_t     *func;
-    int64_t       *src = &zpcstktab[1]->data.i64;
-    int64_t       *dest = &zpcstktab[0]->data.i64;
+    uint64_t      *usrc = NULL;
+    uint64_t      *udest = NULL;
+    uint64_t       ures64;
+    int64_t       *src = NULL;
+    int64_t       *dest = NULL;
+    int64_t        res64;
+    float         *fsrc = NULL;
+    float         *fdest = NULL;
+    float         *fres;
+    double        *dsrc = NULL;
+    double        *ddest = NULL;
+    double        *dres;
+    int            type = 0;
+    int            size = 0;
 
+    if (!win->narg) {
+        /* queue and display digit here */
+    } else if (win->narg == 1) {
+        if (zpcregstk) {
+            if (zpcregstk->type == ZPCUINT) {
+                type = ZPCUINT;
+                usrc = &zpcregstk->data.u64;
+            } else if (zpcregstk->type == ZPCINT) {
+                type = ZPCINT;
+                src = &zpcregstk->data.i64;
+            } else if (zpcregstk->type == ZPCFLT) {
+                type = ZPCFLT;
+                if (zpcregstk->size == 4) {
+                    size = 4;
+                    fsrc = &zpcregstk->data.f32;
+                } else {
+                    size = 8;
+                    dsrc = &zpcregstk->data.f64;
+                }
+            } else {
+                fprintf(stderr, "EEEE\n");
+                
+                return;
+            }
+        } else {
+            fprintf(stderr, "EEEE\n");
+            
+            return;
+        }
+    } else if ((zpcregstk) && zpcregstk->next) {
+        if (type == ZPCUINT && zpcregstk->next->type == ZPCUINT) {
+            udest = &zpcregstk->next->data.u64;
+        } else if (type == ZPCINT && zpcregstk->next->type == ZPCINT) {
+            dest = &zpcregstk->next->data.i64;
+        } else if (type == ZPCFLT && zpcregstk->next->type == ZPCFLT) {
+            if (size == 4 && zpcregstk->next->size == 4) {
+                fdest = &zpcregstk->next->data.f32;
+            } else if (size == 8) {
+                ddest = &zpcregstk->next->data.f64;
+            }
+        } else {
+            fprintf(stderr, "EEEE\n");
+            
+            return;
+        }
+    } else {
+        fprintf(stderr, "EEEE\n");
+        
+        return;
+    }
 #if 0
     XSetWindowBackgroundPixmap(app->display, win->id,
                                buttonpmaps[BUTTONCLICKED]);
@@ -243,9 +353,27 @@ buttonpress(void *arg, XEvent *event)
     XSync(app->display, False);
 #endif
     if (evbut < NBUTTON) {
-        func = win->clickfunc[evbut];
-        if (func) {
-            func(src, dest, &zpcstktab[0]->data.i64);
+        if (type == ZPCINT || type == ZPCUINT) {
+            func = win->clickfunc[evbut];
+            if (func) {
+                if (type == ZPCINT) {
+                    func(src, dest, &res64);
+                } else {
+                    func(usrc, udest, &ures64);
+                }
+            }
+        } else if (type == ZPCFLT) {
+            if (size == 4) {
+                func = win->clickfuncflt[evbut];
+                if (func) {
+                    func(fsrc, fdest, &fres);
+                }
+            } else {
+                func = win->clickfuncdbl[evbut];
+                if (func) {
+                    func(dsrc, ddest, &dres);
+                }
+            }
         }
     }
 }
@@ -257,8 +385,8 @@ buttonrelease(void *arg, XEvent *event)
     struct x11win *win = arg;
     int            evbut = toevbutton(event->xbutton.button);
     copfunc_t     *func;
-    int64_t       *src = &zpcstktab[1]->data.i64;
-    int64_t       *dest = &zpcstktab[0]->data.i64;
+    int64_t       *src = &zpcregstktab[1]->data.i64;
+    int64_t       *dest = &zpcregstktab[0]->data.i64;
 
     XSetWindowBackgroundPixmap(app->display, win->id,
                                buttonpmaps[BUTTONNORMAL]);
@@ -302,11 +430,17 @@ x11init(void)
                 wininfo = calloc(1, sizeof(struct x11win));
                 wininfo->id = win;
                 wininfo->str = buttonstrtab[row][col];
+                wininfo->narg = nargtab[row][col];
+                wininfo->row = row;
+                wininfo->col = col;
 //                wininfo->evfunc[EnterNotify] = buttonenter;
 //                wininfo->evfunc[LeaveNotify] = buttonleave;
                 wininfo->evfunc[ButtonPress] = buttonpress;
                 wininfo->evfunc[Expose] = buttonexpose;
                 buttonwintab[row][col] = win;
+                wininfo->clickfunc[0] = buttonopertab[row][col];
+                wininfo->clickfuncflt[0] = buttonopertabflt[row][col];
+                wininfo->clickfuncdbl[0] = buttonopertabdbl[row][col];
                 x11addwin(wininfo);
                 XSelectInput(app->display, win,
                              ExposureMask | ButtonPressMask);
