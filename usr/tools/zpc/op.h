@@ -42,8 +42,8 @@ typedef void zpczerofunc_t(void *, void *, void *, void *);
 /* zero.c */
 void abs32(void *arg1, void *dummy1, void *dummy2, void *ret);
 void abs64(void *arg1, void *dummy1, void *dummy2, void *ret);
-void avg32(void *arg1, void *arg2, void *dummy, void *ret);
-void avg64(void *arg1, void *arg2, void *dummy, void *ret);
+void avgu32(void *arg1, void *arg2, void *dummy, void *ret);
+void avgu64(void *arg1, void *arg2, void *dummy, void *ret);
 void min32(void *arg1, void *arg2, void *dummy, void *ret);
 void min64(void *arg1, void *arg2, void *dummy, void *ret);
 void max32(void *arg1, void *arg2, void *dummy, void *ret);

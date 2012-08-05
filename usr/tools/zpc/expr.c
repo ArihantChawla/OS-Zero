@@ -238,7 +238,7 @@ exprinit(void)
     return;
 }
 
-void
+static __inline__ void
 zpcqueueexpr(struct zpctoken *token,
              struct zpctoken **queue, struct zpctoken **tail)
 {
@@ -279,7 +279,7 @@ zpcqueuetoken(struct zpctoken *token)
     return;
 }
 
-void
+static __inline__ void
 zpcpushoper(struct zpctoken *token, struct zpctoken **stack)
 {
     token->prev = NULL;
@@ -289,7 +289,7 @@ zpcpushoper(struct zpctoken *token, struct zpctoken **stack)
     return;
 }
 
-struct zpctoken *
+static __inline__ struct zpctoken *
 zpcpopoper(struct zpctoken **stack)
 {
     struct zpctoken *token = *stack;
@@ -771,7 +771,7 @@ zpcparse(struct zpctoken *srcqueue)
     struct zpctoken *stack = NULL;
 
     while (token1) {
-        printtoken(token1);
+//        printtoken(token1);
         token = malloc(sizeof(struct zpctoken));
         token3 = token1->next;
         memcpy(token, token1, sizeof(struct zpctoken));

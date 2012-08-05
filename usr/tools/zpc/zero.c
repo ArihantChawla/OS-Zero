@@ -22,7 +22,7 @@ abs64(void *arg1, void *dummy1, void *dummy2, void *ret)
 }
 
 void
-avg32(void *arg1, void *arg2, void *dummy, void *ret)
+avgu32(void *arg1, void *arg2, void *dummy, void *ret)
 {
     uint32_t val1 = zpcgetvalu32(arg1);
     uint32_t val2 = zpcgetvalu32(arg2);
@@ -31,7 +31,7 @@ avg32(void *arg1, void *arg2, void *dummy, void *ret)
 }
 
 void
-avg64(void *arg1, void *arg2, void *dummy, void *ret)
+avgu64(void *arg1, void *arg2, void *dummy, void *ret)
 {
     uint64_t val1 = zpcgetvalu64(arg1);
     uint64_t val2 = zpcgetvalu64(arg2);
