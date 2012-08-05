@@ -20,7 +20,7 @@ prog menu
 ---------
 - eval is used to evaluate current expression
 - alias is used to give registers symbolic names; e.g., x, y, z
-  refer to with $x
+  - refer to with symbolic names such as x
 - load is used to load (import) assembly and object files
 
 cmd menu
