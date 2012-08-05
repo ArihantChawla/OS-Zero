@@ -25,6 +25,7 @@ prog menu
 
 cmd menu
 --------
+- mode changes between C, Arithmetic, Floating Point, Vector, Matrix, Complex
 - rand is used for random numbers
   - seed, new
 - zero menu item is for techniques such as those in <zero/trix.h>
@@ -37,14 +38,14 @@ cmd menu
 -----------------------------------------
     |	    |	    |	    |	    |
 -----------------------------------------
-| eval  | log   | swap  | radix | rand  |
+| eval  | log   | swap  | radix | mode  |
 -----------------------------------------
-| alias	| exp   | drop  | size  | zero  |
+| alias	| exp   | drop  | size  | rand  |
 -----------------------------------------
-| load  | trig  | clr	| type  | fract |
+| load  | trig  | clr	| type  | zero  |
 -----------------------------------------
-| exec	| vector|
------------------
+| exec	| vector|		| fract |
+-----------------		---------
 | save	| matrix|
 -----------------
 	| cmplx |
