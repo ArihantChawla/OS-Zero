@@ -74,8 +74,8 @@ void leadz32(void *arg1, void *dummy1, void *dummy2, void *ret);
 void leadz64(void *arg1, void *dummy1, void *dummy2, void *ret);
 void ceil2pow32(void *arg1, void *dummy1, void *dummy2, void *ret);
 void ceil2pow64(void *arg1, void *dummy1, void *dummy2, void *ret);
-void leapyear32(void *arg1, void *dummy1, void *dummy2, void *ret);
-void leapyear64(void *arg1, void *dummy1, void *dummy2, void *ret);
+void isleapyear32(void *arg1, void *dummy1, void *dummy2, void *ret);
+void isleapyear64(void *arg1, void *dummy1, void *dummy2, void *ret);
 
 #endif /* __PCALC_OP_H__ */
 

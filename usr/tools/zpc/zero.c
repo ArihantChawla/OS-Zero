@@ -318,7 +318,7 @@ ceil2pow64(void *arg1, void *dummy1, void *dummy2, void *ret)
 }
 
 void
-leapyear32(void *arg1, void *dummy1, void *dummy2, void *ret)
+isleapyear32(void *arg1, void *dummy1, void *dummy2, void *ret)
 {
     uint32_t src = zpcgetvalu32(arg1);
 
@@ -326,7 +326,7 @@ leapyear32(void *arg1, void *dummy1, void *dummy2, void *ret)
 }
 
 void
-leapyear64(void *arg1, void *dummy1, void *dummy2, void *ret)
+isleapyear64(void *arg1, void *dummy1, void *dummy2, void *ret)
 {
     uint64_t src = zpcgetvalu64(arg1);
 
