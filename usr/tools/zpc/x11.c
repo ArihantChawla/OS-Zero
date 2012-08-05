@@ -27,8 +27,47 @@ static const char        *buttonstrtab[ZPC_NROW][ZPC_NCOLUMN]
 #define BUTTONCLICKED 2
 #define NBUTTONSTATE  3
 static Pixmap         buttonpmaps[NBUTTONSTATE];
+XFontStruct          *font;
+int                   fontw;
+int                   fonth;
 static struct x11app *app;
 static Window         mainwin;
+GC                    textgc;
+
+void
+x11initgcs(void)
+{
+    XGCValues gcval;
+
+    gcval.foreground = WhitePixel(app->display, DefaultScreen(app->display));
+    gcval.font = font->fid;
+    gcval.graphics_exposures = False;
+
+    textgc = XCreateGC(app->display, app->win,
+                       GCForeground | GCFont | GCGraphicsExposures,
+                       &gcval);
+    if (!textgc) {
+        fprintf(stderr, "failed to create GC\n");
+
+        exit(1);
+    }
+
+    return;
+}
+
+XFontStruct *
+x11loadfont(const char *fontname)
+{
+    XFontStruct *newfont;
+
+    newfont = XLoadQueryFont(app->display, fontname);
+    if (newfont) {
+        fontw = newfont->max_bounds.width;
+        fonth = newfont->ascent + newfont->descent;
+    }
+
+    return newfont;
+}
 
 void
 x11addwin(struct x11win *win)
@@ -108,7 +147,7 @@ x11initwin(struct x11app *app, Window parent, int x, int y, int w, int h)
         parent = RootWindow(app->display, app->screen);
     }
     memset(&atr, 0, sizeof(atr));
-    atr.background_pixel = WhitePixel(app->display, app->screen);
+    atr.background_pixel = BlackPixel(app->display, app->screen);
     win = XCreateWindow(app->display,
                         parent,
                         x,
@@ -121,7 +160,6 @@ x11initwin(struct x11app *app, Window parent, int x, int y, int w, int h)
                         app->visual,
                         CWBackPixel,
                         &atr);
-    XMapRaised(app->display, win);
 
     return win;
 }
@@ -130,16 +168,26 @@ void
 buttonexpose(void *arg, XEvent *event)
 {
     struct x11win *win = arg;
+    size_t         len;
 
-#if 0
     if (!event->xexpose.count) {
-        XSetWindowBackgroundPixmap(app->display, win->id,
-                                   buttonpmaps[BUTTONNORMAL]);
+        if (buttonpmaps[BUTTONNORMAL]) {
+            XSetWindowBackgroundPixmap(app->display, win->id,
+                                       buttonpmaps[BUTTONNORMAL]);
+        }
         XClearWindow(app->display, win->id);
         XSync(app->display, False);
     }
-#endif
     XClearWindow(app->display, win->id);
+    if (win->str) {
+        len = strlen(win->str);
+        if (len) {
+            XDrawString(app->display, win->id, textgc,
+                        (ZPC_BUTTON_WIDTH - len * fontw) >> 1,
+                        (ZPC_BUTTON_HEIGHT + fonth) >> 1,
+                        win->str, len);
+        }
+    }
     XSync(app->display, False);
 
     return;
@@ -152,8 +200,10 @@ buttonenter(void *arg, XEvent *event)
     struct x11win *win = arg;
 
     if (!event->xexpose.count) {
-        XSetWindowBackgroundPixmap(app->display, win->id,
-                                   buttonpmaps[BUTTONHOVER]);
+        if (buttonpmaps[BUTTONHOVER]) {
+            XSetWindowBackgroundPixmap(app->display, win->id,
+                                       buttonpmaps[BUTTONHOVER]);
+        }
         XClearWindow(app->display, win->id);
         XSync(app->display, False);
     }
@@ -223,13 +273,23 @@ x11init(void)
     Window         win;
     int            row;
     int            col;
+    int            i;
     struct x11win *wininfo;
 
     app = x11initapp(NULL);
     mainwin = x11initwin(app, 0, 0, 0, ZPC_WINDOW_WIDTH, ZPC_WINDOW_HEIGHT);
     app->win = mainwin;
     imlib2init(app);
-    x11initpmaps();
+//    x11initpmaps();
+    font = x11loadfont("fixed");
+    x11initgcs();
+    if (!font) {
+        fprintf(stderr, "failed to load font fixed\n");
+
+        exit(1);
+    } else {
+        fprintf(stderr, "FONT: fixed (%dx%d)\n", fontw, fonth);
+    }
     for (row = 0 ; row < ZPC_NROW ; row++) {
         for (col = 0 ; col < ZPC_NCOLUMN ; col++) {
             win = x11initwin(app,
@@ -248,10 +308,6 @@ x11init(void)
                 wininfo->evfunc[Expose] = buttonexpose;
                 buttonwintab[row][col] = win;
                 x11addwin(wininfo);
-                XSetWindowBackgroundPixmap(app->display, win,
-                                           buttonpmaps[BUTTONNORMAL]);
-                XClearWindow(app->display, win);
-                XSync(app->display, False);
                 XSelectInput(app->display, win,
                              ExposureMask | ButtonPressMask);
                 XMapRaised(app->display, win);
@@ -262,6 +318,8 @@ x11init(void)
             }
         }
     }
+    XMapSubwindows(app->display, mainwin);
+    XMapRaised(app->display, mainwin);
 }
 
 void
@@ -273,14 +331,10 @@ x11nextevent(void)
 
     XNextEvent(app->display, &event);
     win = x11findwin(event.xany.window);
-    fprintf(stderr, "EVENT: %d - ", event.type);
     if (win) {
         func = win->evfunc[event.type];
         if (func) {
-            fprintf(stderr, "HANDLED\n");
             func(win, &event);
-        } else {
-            fprintf(stderr, "NOT HANDLED\n");
         }
     }
 }
