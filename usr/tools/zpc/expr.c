@@ -180,8 +180,7 @@ zpcinitconvtab(void)
 void
 zpcinitcoptab(void)
 {
-    zpccopprectab[ZPCNOT] = OPERRTOL | 8;
-    
+    zpccopprectab[ZPCNOT] = OPERRTOL | 7;
     zpccopprectab[ZPCINC] = 7;
     zpccopprectab[ZPCDEC] = 7;
     zpccopprectab[ZPCSHR] = 6;
