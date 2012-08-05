@@ -1,4 +1,5 @@
 #include <stdint.h>
+#include <stdio.h>
 #include <zpc/zpc.h>
 #include <zpc/op.h>
 
@@ -101,10 +102,10 @@ xor64(void *arg1, void *arg2, void *ret)
 void
 shl32(void *arg1, void *arg2, void *ret)
 {
-    int32_t src = zpcgetval32(arg1);
+    int32_t cnt = zpcgetval32(arg1);
     int32_t dest = zpcgetval32(arg2);
 
-    dest <<= src;
+    dest <<= cnt;
     zpcsetval64(ret, dest);
 
     return;
@@ -113,10 +114,10 @@ shl32(void *arg1, void *arg2, void *ret)
 void
 shl64(void *arg1, void *arg2, void *ret)
 {
-    int64_t src = zpcgetval64(arg1);
+    int64_t cnt = zpcgetval64(arg1);
     int64_t dest = zpcgetval64(arg2);
 
-    dest <<= src;
+    dest <<= cnt;
     zpcsetval64(ret, dest);
 
     return;
@@ -125,13 +126,11 @@ shl64(void *arg1, void *arg2, void *ret)
 void
 shr32(void *arg1, void *arg2, void *ret)
 {
-    int32_t src = zpcgetval32(arg1);
-    int32_t cnt = zpcgetval32(arg2);
-    int32_t dest;
-    int32_t sign = src & 0x80000000;
+    int32_t cnt = zpcgetval32(arg1);
+    int32_t dest = zpcgetval32(arg2);
+    int32_t sign = dest & 0x80000000;
 
-    dest = src;
-    sign = (sign & 0xff) << (32 - src);
+    sign = (sign & 0xffffffff) << (32 - cnt);
     dest >>= cnt;
     dest |= sign;
     zpcsetval64(ret, dest);
@@ -142,13 +141,11 @@ shr32(void *arg1, void *arg2, void *ret)
 void
 shr64(void *arg1, void *arg2, void *ret)
 {
-    int64_t src = zpcgetval64(arg1);
-    int64_t cnt = zpcgetval64(arg2);
-    int64_t dest;
-    int64_t sign = src & INT64_C(0x8000000000000000);
+    int64_t cnt = zpcgetval64(arg1);
+    int64_t dest = zpcgetval64(arg2);
+    int64_t sign = dest & INT64_C(0x8000000000000000);
 
-    dest = src;
-    sign = (sign & 0xff) << (64 - src);
+    sign = (sign & INT64_C(0xffffffffffffffff)) << (64 - cnt);
     dest >>= cnt;
     dest |= sign;
     zpcsetval64(ret, dest);
@@ -159,13 +156,10 @@ shr64(void *arg1, void *arg2, void *ret)
 void
 shrl32(void *arg1, void *arg2, void *ret)
 {
-    int32_t src = zpcgetval32(arg1);
-    int32_t cnt = zpcgetval32(arg2);
-    int32_t dest;
-    int32_t mask = 0xffffffff >> src;
+    int32_t cnt = zpcgetval32(arg1);
+    int32_t dest = zpcgetval32(arg2);
+    int32_t mask = 0xffffffff >> cnt;
 
-    dest = src;
-    mask = (mask & 0xffffffff) << (32 - src);
     dest >>= cnt;
     dest &= mask;
     zpcsetval64(ret, dest);
@@ -176,15 +170,13 @@ shrl32(void *arg1, void *arg2, void *ret)
 void
 shrl64(void *arg1, void *arg2, void *ret)
 {
-    int64_t src = zpcgetval64(arg1);
-    int64_t cnt = zpcgetval64(arg2);
-    int64_t dest;
-    int64_t mask = INT64_C(0xffffffffffffffff) >> src;
+    int64_t cnt = zpcgetval64(arg1);
+    int64_t dest = zpcgetval64(arg2);
+    int64_t mask = INT64_C(0xffffffffffffffff) >> cnt;
 
-    dest = src;
-    mask = (mask & 0xff) << (64 - src);
     dest >>= cnt;
     dest &= mask;
+    fprintf(stderr, "SHRL: %lld", dest);
     zpcsetval64(ret, dest);
 
     return;
@@ -193,13 +185,11 @@ shrl64(void *arg1, void *arg2, void *ret)
 void
 ror32(void *arg1, void *arg2, void *ret)
 {
-    int32_t src = zpcgetval32(arg1);
-    int32_t cnt = zpcgetval32(arg2);
-    int32_t dest;
-    int32_t mask = 0xffffffff >> (32 - src);
-    int32_t bits = src & mask;
+    int32_t cnt = zpcgetval32(arg1);
+    int32_t dest = zpcgetval32(arg2);
+    int32_t mask = 0xffffffff >> (32 - cnt);
+    int32_t bits = dest & mask;
 
-    dest = src;
     bits <<= 32 - cnt;
     dest >>= cnt;
     dest |= bits;
@@ -211,13 +201,11 @@ ror32(void *arg1, void *arg2, void *ret)
 void
 ror64(void *arg1, void *arg2, void *ret)
 {
-    int64_t src = zpcgetval64(arg1);
-    int64_t cnt = zpcgetval64(arg2);
-    int64_t dest;
-    int64_t mask = INT64_C(0xffffffffffffffff) >> (64 - src);
-    int64_t bits = src & mask;
+    int64_t cnt = zpcgetval64(arg1);
+    int64_t dest = zpcgetval64(arg2);
+    int64_t mask = INT64_C(0xffffffffffffffff) >> (64 - cnt);
+    int64_t bits = dest & mask;
 
-    dest = src;
     bits <<= 64 - cnt;
     dest >>= cnt;
     dest |= bits;
@@ -229,13 +217,11 @@ ror64(void *arg1, void *arg2, void *ret)
 void
 rol32(void *arg1, void *arg2, void *ret)
 {
-    int32_t src = zpcgetval32(arg1);
-    int32_t cnt = zpcgetval32(arg2);
-    int32_t dest;
-    int32_t mask = 0xffffffff >> (32 - src);
-    int32_t bits = src & mask;
+    int32_t cnt = zpcgetval32(arg1);
+    int32_t dest = zpcgetval32(arg2);
+    int32_t mask = 0xffffffff >> (32 - cnt);
+    int32_t bits = dest & mask;
 
-    dest = src;
     bits >>= 32 - cnt;
     dest <<= cnt;
     dest |= bits;
@@ -247,13 +233,11 @@ rol32(void *arg1, void *arg2, void *ret)
 void
 rol64(void *arg1, void *arg2, void *ret)
 {
-    int64_t src = zpcgetval64(arg1);
-    int64_t cnt = zpcgetval64(arg2);
-    int64_t dest;
-    int64_t mask = INT64_C(0xffffffffffffffff) >> (64 - src);
-    int64_t bits = src & mask;
+    int64_t cnt = zpcgetval64(arg1);
+    int64_t dest = zpcgetval64(arg2);
+    int64_t mask = INT64_C(0xffffffffffffffff) >> (64 - cnt);
+    int64_t bits = dest & mask;
 
-    dest = src;
     bits >>= 64 - cnt;
     dest <<= cnt;
     dest |= bits;

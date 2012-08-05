@@ -88,7 +88,7 @@ x11initgcs(void)
 {
     XGCValues gcval;
 
-    gcval.foreground = WhitePixel(app->display, DefaultScreen(app->display));
+    gcval.foreground = BlackPixel(app->display, DefaultScreen(app->display));
     gcval.font = font->fid;
     gcval.graphics_exposures = False;
 
@@ -192,7 +192,7 @@ x11initwin(struct x11app *app, Window parent, int x, int y, int w, int h)
         parent = RootWindow(app->display, app->screen);
     }
     memset(&atr, 0, sizeof(atr));
-    atr.background_pixel = BlackPixel(app->display, app->screen);
+    atr.background_pixel = WhitePixel(app->display, app->screen);
     win = XCreateWindow(app->display,
                         parent,
                         x,
@@ -366,10 +366,12 @@ buttonpress(void *arg, XEvent *event)
                     func(src, dest, &res64);
                     token->type = ZPCINT64;
                     token->data.i64 = res64;
+                    fprintf(stderr, "RES: %lld\n", res64);
                 } else {
                     func(usrc, udest, &ures64);
                     token->type = ZPCUINT64;
-                    token->data.i64 = ures64;
+                    token->data.u64 = ures64;
+                    fprintf(stderr, "RES: %llu\n", ures64);
                 }
             }
         } else if (type == ZPCFLOAT) {
