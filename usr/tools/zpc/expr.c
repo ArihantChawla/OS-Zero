@@ -478,7 +478,7 @@ zpcgetint64(struct zpctoken *token, const char *str, char **retstr)
                 i64 += tohex(*ptr);
                 ptr++;
             }
-            zpcsetvalu64(&token->data.i64, i64);
+            zpcsetval64(&token->data.i64, i64);
         } else if (*ptr == 'b' || *ptr == 'B') {
             /* binary value */
             ptr++;
@@ -487,7 +487,7 @@ zpcgetint64(struct zpctoken *token, const char *str, char **retstr)
                 i64 += tobin(*ptr);
                 ptr++;
             }
-            zpcsetvalu64(&token->data.i64, i64);
+            zpcsetval64(&token->data.i64, i64);
         } else {
             /* octal value */
             ptr++;
@@ -496,16 +496,23 @@ zpcgetint64(struct zpctoken *token, const char *str, char **retstr)
                 i64 += tooct(*ptr);
                 ptr++;
             }
-            zpcsetvalu64(&token->data.i64, i64);
+            zpcsetval64(&token->data.i64, i64);
         }
+    } else if (isxdigit(*ptr)) {
+        while (isxdigit(*ptr)) {
+            i64 <<= 4;
+            i64 += tohex(*ptr);
+            ptr++;
+        }
+        zpcsetval64(&token->data.i64, i64);
     } else {
         /* decimal value */
-        while (isxdigit(*ptr)) {
+        while (isdigit(*ptr)) {
             i64 *= 10;
             i64 += todec(*ptr);
             ptr++;
         }
-        zpcsetvalu64(&token->data.i64, i64);
+        zpcsetval64(&token->data.i64, i64);
     }
     *retstr = (char *)ptr;
 
@@ -548,6 +555,13 @@ zpcgetuint64(struct zpctoken *token, const char *str, char **retstr)
             }
             zpcsetvalu64(&token->data.u64, u64);
         }
+    } else if (isxdigit(*ptr)) {
+        while (isxdigit(*ptr)) {
+            u64 <<= 4;
+            u64 += tohex(*ptr);
+            ptr++;
+        }
+        zpcsetvalu64(&token->data.u64, u64);
     } else {
         /* decimal value */
         while (isxdigit(*ptr)) {
@@ -659,7 +673,7 @@ zpcgettoken(const char *str, char **retstr)
         ptr++;
     }
     token = malloc(sizeof(struct zpctoken));
-    if (isdigit(*ptr)) {
+    if (isxdigit(*ptr)) {
         token->str = NULL;
         dec = index(ptr, '.');
         unsign = strstr(ptr, "uU");
