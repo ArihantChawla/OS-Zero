@@ -219,7 +219,7 @@ rol32(void *arg1, void *arg2, void *ret)
 {
     int32_t cnt = zpcgetval32(arg1);
     int32_t dest = zpcgetval32(arg2);
-    int32_t mask = 0xffffffff >> (32 - cnt);
+    int32_t mask = 0xffffffff << (32 - cnt);
     int32_t bits = dest & mask;
 
     bits >>= 32 - cnt;
@@ -235,7 +235,7 @@ rol64(void *arg1, void *arg2, void *ret)
 {
     int64_t cnt = zpcgetval64(arg1);
     int64_t dest = zpcgetval64(arg2);
-    int64_t mask = INT64_C(0xffffffffffffffff) >> (64 - cnt);
+    int64_t mask = INT64_C(0xffffffffffffffff) << (64 - cnt);
     int64_t bits = dest & mask;
 
     bits >>= 64 - cnt;
