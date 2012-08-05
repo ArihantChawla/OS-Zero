@@ -23,14 +23,12 @@
 #define isbdigit(c) ((c) == '0' || (c) == '1')
 #define isodigit(c) ((c) >= '0' && (c) <= '7')
 
-#define NHASHITEM 1024
 #define OPERRTOL  0x80000000
 #define zpccopprec(tp)                                                 \
     (zpccopprectab[(tp)->type] & ~OPERRTOL)
 #define zpccopisrtol(tp)                                               \
     (zpccopprectab[(tp)->type] & OPERRTOL)
 #define zpciscopchar(c) (zpccopchartab[(int)(c)])
-static struct zpctoken *zpcvarhash[NHASHITEM];
 static uint8_t          zpcdectab[256];
 static uint8_t          zpchextab[256];
 static uint8_t          zpcocttab[256];
@@ -241,20 +239,21 @@ exprinit(void)
 }
 
 void
-zpcqueueexpr(struct zpctoken *token)
+zpcqueueexpr(struct zpctoken *token,
+             struct zpctoken **queue, struct zpctoken **tail)
 {
     token->next = NULL;
-    if (!zpcparsequeue) {
+    if (!*queue) {
         token->prev = NULL;
-        zpcparsequeue = token;
-    } else if (zpcparsetail) {
-        token->prev = zpcparsetail;
-        zpcparsetail->next = token;
-        zpcparsetail = token;
+        *queue = token;
+    } else if (*tail) {
+        token->prev = *tail;
+        (*tail)->next = token;
+        *tail = token;
     } else {
-        zpcparsequeue->next = token;
-        token->prev = zpcparsequeue;
-        zpcparsetail = token;
+        (*queue)->next = token;
+        token->prev = *queue;
+        *tail = token;
     }
 
     return;
@@ -281,22 +280,22 @@ zpcqueuetoken(struct zpctoken *token)
 }
 
 void
-zpcpushoper(struct zpctoken *token)
+zpcpushoper(struct zpctoken *token, struct zpctoken **stack)
 {
     token->prev = NULL;
-    token->next = zpcoperstk;
-    zpcoperstk = token;
+    token->next = *stack;
+    *stack = token;
 
     return;
 }
 
 struct zpctoken *
-zpcpopoper(void)
+zpcpopoper(struct zpctoken **stack)
 {
-    struct zpctoken *token = zpcoperstk;
+    struct zpctoken *token = *stack;
 
     if (token) {
-        zpcoperstk = token->next;
+        *stack = token->next;
     }
 
     return token;
@@ -642,74 +641,6 @@ zpcgetoper(struct zpctoken *token, const char *str, char **retstr)
     *retstr = (char *)ptr;
 }
 
-void
-zpcaddvar(struct zpctoken *token)
-{
-    long  key = 0;
-    char *cp;
-
-    cp = token->str;
-    while (*cp) {
-        key += *cp++;
-    }
-    key &= NHASHITEM - 1;
-    token->next = zpcvarhash[key];
-    if (token->next) {
-        token->next->prev = token;
-    }
-    zpcvarhash[key] = token;
-
-    return;
-}
-
-struct zpctoken *
-zpcfindvar(const char *name)
-{
-    long             key = 0;
-    struct zpctoken *token = NULL;
-
-    while (*name) {
-        key += *name++;
-    }
-    key &= NHASHITEM - 1;
-    token = zpcvarhash[key];
-    while ((token) && strcmp(name, token->str)) {
-        token = token->next;
-    }
-
-    return token;
-}
-
-void
-zpcdelvar(const char *name)
-{
-    char            *cp;
-    long             key = 0;
-    struct zpctoken *token = NULL;
-
-    cp = token->str;
-    while (*cp) {
-        key += *cp++;
-    }
-    key &= NHASHITEM - 1;
-    token = zpcvarhash[key];
-    while ((token) && strcmp(name, token->str)) {
-        token = token->next;
-    }
-    if (token) {
-        if (token->prev) {
-            token->prev->next = token->next;
-        } else {
-            zpcvarhash[key] = token->next;
-        }
-        if (token->next) {
-            token->next->prev = token->prev;
-        }
-    }
-
-    return;
-}
-
 struct zpctoken *
 zpcgettoken(const char *str, char **retstr)
 {
@@ -828,33 +759,33 @@ zpctokenize(const char *str)
  * - TODO: fix to work a'la
  *    https://en.wikipedia.org/wiki/Shunting-yard_algorithm
  */
-long
-zpcparse(struct zpctoken *queue)
+struct zpctoken *
+zpcparse(struct zpctoken *srcqueue)
 {
     struct zpctoken *token;
-    struct zpctoken *token1 = queue;
+    struct zpctoken *token1 = srcqueue;
     struct zpctoken *token2 = NULL;
     struct zpctoken *token3 = NULL;
-#if 0
     struct zpctoken *queue = NULL;
     struct zpctoken *tail = NULL;
-#endif
+    struct zpctoken *stack = NULL;
 
     while (token1) {
-//        token = malloc(sizeof(struct zpctoken));
+        printtoken(token1);
+        token = malloc(sizeof(struct zpctoken));
         token3 = token1->next;
-//        memcpy(token, token1, sizeof(struct zpctoken));
+        memcpy(token, token1, sizeof(struct zpctoken));
         token = token1;
         if (zpcisvalue(token)) {
-            zpcqueueexpr(token);
+            zpcqueueexpr(token, &queue, &tail);
         } else if (zpcisfunc(token)) {
-            zpcpushoper(token);
+            zpcpushoper(token, &stack);
         } else if (zpcissep(token)) {
-            token2 = zpcoperstk;
+            token2 = stack;
             while ((token2) && token2->type != ZPCLEFT) {
-                token2 = zpcpopoper();
-                zpcqueueexpr(token2);
-                token2 = zpcpopoper();
+                token2 = zpcpopoper(&stack);
+                zpcqueueexpr(token2, &queue, &tail);
+                token2 = zpcpopoper(&stack);
             }
             if ((token2) && token2->type == ZPCLEFT) {
                 
@@ -865,63 +796,66 @@ zpcparse(struct zpctoken *queue)
                 return 0;
             }
         } else if (zpcisoper(token)) {
-            token2 = zpcoperstk;
+            token2 = stack;
             while (zpcisoper(token2)) {
                 if ((!zpccopisrtol(token)
                      && zpccopprec(token) <= zpccopprec(token2))
                     || zpccopprec(token) < zpccopprec(token2)) {
 //                    fprintf(stderr, "POP: %s (%s)\n", token2->str, token->str);
-                    token2 = zpcpopoper();
-                    zpcqueueexpr(token2);
-                    token2 = zpcoperstk;
+                    token2 = zpcpopoper(&stack);
+                    zpcqueueexpr(token2, &queue, &tail);
+                    token2 = stack;
                 } else {
 
                     break;
                 }
             }
 //            fprintf(stderr, "PUSH: %s\n", token->str);
-            zpcpushoper(token);
+            zpcpushoper(token, &stack);
         } else if (token->type == ZPCLEFT) {
-            zpcpushoper(token);
+            zpcpushoper(token, &stack);
         } else if (token->type == ZPCRIGHT) {
-            token2 = zpcoperstk;
+            token2 = stack;
             while ((token2) && token2->type != ZPCLEFT) {
-                token2 = zpcpopoper();
-                zpcqueueexpr(token2);
-                token2 = zpcoperstk;
+                token2 = zpcpopoper(&stack);
+                zpcqueueexpr(token2, &queue, &tail);
+                token2 = stack;
             }
             if ((token2) && token2->type == ZPCLEFT) {
-                token2 = zpcpopoper();
+                token2 = zpcpopoper(&stack);
             } else {
-                fprintf(stderr, "mismatched parentheses: %s\n", token2->str);
+                if (token2) {
+                    fprintf(stderr, "mismatched parentheses: %s\n",
+                            token2->str);
+                }
                 
                 return 0;
             }
-            if (zpcisfunc(zpcoperstk)) {
-                token2 = zpcpopoper();
-                zpcqueueexpr(token2);
+            if (zpcisfunc(stack)) {
+                token2 = zpcpopoper(&stack);
+                zpcqueueexpr(token2, &queue, &tail);
             }
         }
         token1 = token3;
     }
     fprintf(stderr, "QUEUE: ");
-    zpcprintqueue(zpcparsequeue);
+    zpcprintqueue(queue);
     fprintf(stderr, "STACK: ");
-    zpcprintqueue(zpcoperstk);
+    zpcprintqueue(stack);
     do {
-        token1 = zpcoperstk;
+        token1 = stack;
         if (zpcisoper(token1)) {
-            token1 = zpcpopoper();
-            zpcqueueexpr(token1);
+            token1 = zpcpopoper(&stack);
+            zpcqueueexpr(token1, &queue, &tail);
         } else if ((token1)
                    && (token1->type == ZPCLEFT || token1->type == ZPCRIGHT)) {
             fprintf(stderr, "mismatched parentheses: %s\n", token1->str);
 
             return 0;
         }
-    } while (zpcoperstk);
+    } while (stack);
 
-    return 1;
+    return queue;
 }
 
 

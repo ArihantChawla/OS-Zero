@@ -21,6 +21,8 @@ prog menu
 - eval is used to evaluate current expression
 - alias is used to give registers symbolic names; e.g., x, y, z
   - refer to with symbolic names such as x
+- assign gives a value to a named in-memory variable
+  - refered to with symbolic names
 - load is used to load (import) assembly and object files
 - exec starts execution of loaded program from _start
 - save stores current calculator state to be returned later
@@ -60,14 +62,16 @@ cmd menu
 -----------------------------------------
 | alias	| exp   | pop   | size  | rand  |
 -----------------------------------------
-| load  | trig  | swap	| type  | zero  |
+| assign| trig  | swap	| type  | zero  |
 -----------------------------------------
-| exec	| vector| drop	|	| fract |
+| load	| vector| drop	|	| fract |
 -------------------------	---------
-| save	| matrix| clr	|
+| exec	| matrix| clr	|
 -------------------------
-| lang	| cmplx |
+| save	| cmplx |
 -----------------
+| lang	|
+---------
 
 menu
 ----
@@ -111,9 +115,9 @@ Operation Pad
 ------------------------------------------------|
 |   4	|   5	|   6	|   *	|   ^	|  <..	|
 ------------------------------------------------|
-|   1	|   2	|   3	|   -	|   |	|   	|
+|   1	|   2	|   3	|   -	|   |	|     	|
 ----------------------------------------- ENTER	|
-|   0  	|   .	| SPACE	|   +	|   &	|   	|
+|   0  	|   .	| SPACE	|   +	|   &	| 	|
 -------------------------------------------------
 
 Debug Pad
