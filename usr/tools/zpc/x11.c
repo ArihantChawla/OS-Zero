@@ -296,8 +296,10 @@ buttonpress(void *arg, XEvent *event)
     int            type = 0;
     int            size = 0;
 
-    if (!win->narg) {
-        /* queue and display digit here */
+    if (win->narg == ENTER) {
+        stkenterinput();
+    } else if (!win->narg) {
+        stkqueueinput(buttonstrtab[win->row][win->col]);
     } else if (win->narg == 1) {
         if (zpcregstk) {
             if (zpcregstk->type == ZPCUINT) {
