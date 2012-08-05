@@ -155,10 +155,6 @@ x11initpmaps(void)
                                                  ZPC_BUTTON_WIDTH,
                                                  ZPC_BUTTON_HEIGHT);
 #endif
-    fprintf(stderr, "PIXMAPS: %x, %x, %x\n",
-            (int)buttonpmaps[BUTTONNORMAL],
-            (int)buttonpmaps[BUTTONHOVER],
-            (int)buttonpmaps[BUTTONCLICKED]);
 
     return;
 }
@@ -281,6 +277,7 @@ buttonpress(void *arg, XEvent *event)
 {
     struct x11win   *win = arg;
     int              evbut = toevbutton(event->xbutton.button);
+    struct zpctoken *token;
     struct zpctoken *queue;
     copfunc_t       *func;
     uint64_t        *usrc = NULL;
@@ -291,10 +288,10 @@ buttonpress(void *arg, XEvent *event)
     int64_t          res64;
     float           *fsrc = NULL;
     float           *fdest = NULL;
-    float           *fres;
+    float            fres;
     double          *dsrc = NULL;
     double          *ddest = NULL;
-    double          *dres;
+    double           dres;
     int              type = 0;
 
     if (win->narg == ENTER) {
@@ -309,52 +306,41 @@ buttonpress(void *arg, XEvent *event)
         if (zpcregstk[0]) {
             queue = zpcregstk[0];
             if (queue) {
-                fprintf(stderr, "#2 ");
                 if (queue->type == ZPCUINT64) {
-                    fprintf(stderr, "#3 ");
                     type = ZPCUINT64;
                     usrc = &queue->data.u64;
                 } else if (queue->type == ZPCINT64) {
-                    fprintf(stderr, "#4 ");
                     type = ZPCINT64;
                     src = &queue->data.i64;
                 } else if (queue->type == ZPCFLOAT) {
-                    fprintf(stderr, "#5 ");
                     type = ZPCFLOAT;
                     fsrc = &queue->data.f32;
                 } else if (queue->type == ZPCDOUBLE) {
                     dsrc = &queue->data.f64;
                 } else {
-                    fprintf(stderr, "#8 ");
                     fprintf(stderr, "EEEE\n");
                     
                     return;
                 }
             }
         } else {
-            fprintf(stderr, "#9 ");
             fprintf(stderr, "EEEE\n");
 
             return;
         }
     }
     if (win->narg == 2) {
-        fprintf(stderr, "#10 ");
         queue = zpcregstk[1];
         if (queue) {
             if (type == ZPCUINT64 && queue->type == ZPCUINT64) {
-                fprintf(stderr, "#11 ");
                 udest = &queue->data.u64;
             } else if (type == ZPCINT64 && queue->type == ZPCINT64) {
-                fprintf(stderr, "#12 ");
                 dest = &queue->data.i64;
             } else if (type == ZPCFLOAT && queue->type == ZPCFLOAT) {
                 fdest = &queue->data.f32;
             } else if (type == ZPCDOUBLE && queue->type == ZPCDOUBLE) {
-                fprintf(stderr, "#15 ");
                 ddest = &queue->data.f64;
             } else {
-                fprintf(stderr, "#16 ");
                 fprintf(stderr, "EEEE\n");
                 
                 return;
@@ -365,7 +351,6 @@ buttonpress(void *arg, XEvent *event)
             return;
         }
     }
-    fprintf(stderr, "\n");
 #if 0
     XSetWindowBackgroundPixmap(app->display, win->id,
                                buttonpmaps[BUTTONCLICKED]);
@@ -373,28 +358,62 @@ buttonpress(void *arg, XEvent *event)
     XSync(app->display, False);
 #endif
     if (evbut < NBUTTON) {
+        token = calloc(1, sizeof(struct zpctoken));
         if (type == ZPCINT64 || type == ZPCUINT64) {
             func = win->clickfunc[evbut];
             if (func) {
                 if (type == ZPCINT64) {
                     func(src, dest, &res64);
-                    fprintf(stderr, "RES: %llx\n", res64);
+                    token->type = ZPCINT64;
+                    token->data.i64 = res64;
                 } else {
                     func(usrc, udest, &ures64);
-                    fprintf(stderr, "RES: %llx\n", ures64);
+                    token->type = ZPCUINT64;
+                    token->data.i64 = ures64;
                 }
             }
         } else if (type == ZPCFLOAT) {
             func = win->clickfuncflt[evbut];
             if (func) {
                 func(fsrc, fdest, &fres);
-                fprintf(stderr, "RES: %f\n", fres);
+                token->type = ZPCFLOAT;
+                token->data.f32 = fres;
             }
         } else {
             func = win->clickfuncdbl[evbut];
             if (func) {
                 func(dsrc, ddest, &dres);
-                fprintf(stderr, "RES: %e\n", dres);
+                token->type = ZPCDOUBLE;
+                token->data.f64 = dres;
+            }
+        }
+        if (func) {
+            if (win->narg >= 1) {
+                struct zpctoken *token1 = zpcregstk[0];
+                struct zpctoken *token2;
+                
+                while (token1) {
+                    token2 = token1->next;
+                    free(token1);
+                    token1 = token2;
+                }
+                zpcregstk[0] = NULL;
+                if (win->narg == 2) {
+                    token1 = zpcregstk[1];
+                    while (token1) {
+                        token2 = token1->next;
+                        free(token1);
+                        token1 = token2;
+                    }
+                    zpcregstk[1] = NULL;
+                }
+            }
+            if (win->narg == 2) {
+                zpcregstk[1] = token;
+                memmove(&zpcregstk[0], &zpcregstk[1], (NREGSTK - 1) * sizeof(struct zpctoken *));
+                zpcregstk[NREGSTK - 1] = NULL;
+            } else {
+                zpcregstk[0] = token;
             }
         }
     }

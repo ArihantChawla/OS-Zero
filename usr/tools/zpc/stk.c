@@ -2,11 +2,8 @@
 #include <stdlib.h>
 #include <zpc/zpc.h>
 
-#define NREGSTK 1024
 struct zpcstkitem *zpcinputitem;
 struct zpctoken   *zpcregstk[NREGSTK];
-
-#define STKSTRLEN 128
 
 void
 stkaddinput(void)
@@ -89,12 +86,16 @@ stkinit(void)
 void
 stkprint(void)
 {
-    struct zpcstkitem *item = zpcinputitem;
+    struct zpctoken *token;
+    int              i;
 
-    while (item) {
-        fprintf(stderr, "ITEM: %s\n", item->str);
-        zpcprintqueue(item->tokq);
-        item = item->next;
+    i = NSTKREG;
+    while (i--) {
+        fprintf(stderr, "%x: ", i);
+        zpcprintqueue(zpcregstk[i]);
+        if (!zpcregstk[i]) {
+            fprintf(stderr, "\n");
+        }
     }
 
     return;

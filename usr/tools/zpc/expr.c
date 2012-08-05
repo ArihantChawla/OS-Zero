@@ -726,7 +726,6 @@ zpcprintqueue(struct zpctoken *queue)
 {
     struct zpctoken *token = queue;
 
-    fprintf(stderr, "QUEUE:\n");
     while (token) {
         printtoken(token);
         token = token->next;
