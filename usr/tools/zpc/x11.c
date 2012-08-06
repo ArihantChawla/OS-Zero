@@ -21,7 +21,7 @@ static zpccfunc_t        *buttonopertab[ZPC_NROW][ZPC_NCOLUMN]
     { NULL, NULL, NULL, mod64, shrl64, dec64 },
     { NULL, NULL, NULL, div64, shl64, ror64 },
     { NULL, NULL, NULL, mul64, xor64, rol64 },
-    { NULL, NULL, NULL, dec64, or64, NULL },
+    { NULL, NULL, NULL, sub64, or64, NULL },
     { NULL, NULL, NULL, add64, and64, NULL }
 };
 static zpccfunc_t        *buttonopertabflt[ZPC_NROW][ZPC_NCOLUMN]

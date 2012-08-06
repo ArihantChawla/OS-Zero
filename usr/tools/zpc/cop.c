@@ -356,6 +356,7 @@ sub64(void *arg1, void *arg2, void *ret)
     int64_t src = zpcgetval64(arg1);
     int64_t dest = zpcgetval64(arg2);
 
+    fprintf(stderr, "SUB: %lld - %lld\n", dest, src);
     dest -= src;
     zpcsetval64(ret, dest);
 
