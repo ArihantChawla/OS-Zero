@@ -97,7 +97,7 @@ x11drawstk(void)
     while (i--) {
         token = zpcregstk[i];
         win = stkwintab[i];
-        x = 4;
+        x = 8;
         XClearWindow(app->display, win);
         while ((token) && (token->str)) {
             len = strlen(token->str);
@@ -213,16 +213,21 @@ x11initapp(char *displayname)
 }
 
 Window
-x11initwin(struct x11app *app, Window parent, int x, int y, int w, int h)
+x11initwin(struct x11app *app, Window parent, int x, int y, int w, int h,
+           int rvid)
 {
     XSetWindowAttributes atr;
     Window               win;
 
+    memset(&atr, 0, sizeof(atr));
     if (!parent) {
         parent = RootWindow(app->display, app->screen);
     }
-    memset(&atr, 0, sizeof(atr));
-    atr.background_pixel = WhitePixel(app->display, app->screen);
+    if (rvid) {
+        atr.background_pixel = BlackPixel(app->display, app->screen);
+    } else {
+        atr.background_pixel = WhitePixel(app->display, app->screen);
+    }
     win = XCreateWindow(app->display,
                         parent,
                         x,
@@ -248,7 +253,7 @@ displayexpose(void *arg, XEvent *event)
     int              len;
 
     if (!event->xexpose.count) {
-        x = 4;
+        x = 8;
         XClearWindow(app->display, win->id);
         while ((token) && (token->str)) {
             len = strlen(token->str);
@@ -505,6 +510,7 @@ void
 x11init(void)
 {
     Window         win;
+    Window         outwin;
     int            row;
     int            col;
     int            i;
@@ -524,17 +530,19 @@ x11init(void)
     mainwin = x11initwin(app, 0,
                          0, 0,
                          ZPC_WINDOW_WIDTH,
-                         ZPC_WINDOW_HEIGHT + (fonth + 8) * NSTKREG);
+                         ZPC_WINDOW_HEIGHT + (fonth + 8) * NSTKREG + NSTKREG,
+                         1);
     app->win = mainwin;
     x11initgcs();
     for (row = 0 ; row < ZPC_NROW ; row++) {
         for (col = 0 ; col < ZPC_NCOLUMN ; col++) {
             win = x11initwin(app,
                              mainwin,
-                             col * ZPC_BUTTON_WIDTH,
-                             row * ZPC_BUTTON_HEIGHT,
+                             col * ZPC_BUTTON_WIDTH + col,
+                             row * ZPC_BUTTON_HEIGHT + row,
                              ZPC_BUTTON_WIDTH,
-                             ZPC_BUTTON_HEIGHT);
+                             ZPC_BUTTON_HEIGHT,
+                             0);
             if (win) {
                 wininfo = calloc(1, sizeof(struct x11win));
                 wininfo->id = win;
@@ -561,25 +569,38 @@ x11init(void)
             }
         }
     }
+    outwin = x11initwin(app,
+                        mainwin,
+                        0,
+                        ZPC_WINDOW_HEIGHT,
+                        ZPC_WINDOW_WIDTH,
+                        (fonth + 8) * NSTKREG + NSTKREG,
+                        1);
+    XMapRaised(app->display, outwin);
+    fprintf(stderr, "OUT: %d, %d\n", 0, ZPC_WINDOW_HEIGHT);
     for (row = 0 ; row < NSTKREG ; row++) {
+        fprintf(stderr, "IN: %d, %d\n", 0, row * (fonth + 8) + row);
         win = x11initwin(app,
-                         mainwin,
+                         outwin,
                          0,
-                         ZPC_WINDOW_HEIGHT + row * (fonth + 8),
+                         row * (fonth + 8) + row + 1,
                          ZPC_WINDOW_WIDTH,
-                         fonth + 8);
+                         fonth + 8,
+                         0);
         if (win) {
             wininfo = calloc(1, sizeof(struct x11win));
             wininfo->id = win;
             wininfo->num = NSTKREG - row - 1;
             wininfo->evfunc[Expose] = displayexpose;
+            stkwintab[NSTKREG - row - 1] = win;
             x11addwin(wininfo);
             XSelectInput(app->display, win,
                          ExposureMask);
-            stkwintab[NSTKREG - row - 1] = win;
+            XMapRaised(app->display, win);
         }
     }
     XMapSubwindows(app->display, mainwin);
+    XMapSubwindows(app->display, outwin);
     XMapRaised(app->display, mainwin);
 }
 
