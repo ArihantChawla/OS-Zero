@@ -674,7 +674,7 @@ zpcgettoken(const char *str, char **retstr)
     }
     token = malloc(sizeof(struct zpctoken));
     if (isxdigit(*ptr)) {
-        token->str = NULL;
+        token->str = calloc(1, TOKENSTRLEN);
         dec = index(ptr, '.');
         unsign = strstr(ptr, "uU");
         if (dec) {
@@ -682,24 +682,30 @@ zpcgettoken(const char *str, char **retstr)
             if (flt) {
                 token->type = ZPCFLOAT;
                 zpcgetfloat(token, ptr, &ptr);
+                sprintf(token->str, "%f", token->data.f32);
             } else {
                 token->type = ZPCDOUBLE;
                 zpcgetdouble(token, ptr, &ptr);
+                sprintf(token->str, "%e", token->data.f64);
             }
         } else if (unsign) {
             token->type = ZPCUINT64;
             zpcgetuint64(token, ptr, &ptr);
+            sprintf(token->str, "%llu", token->data.u64);
         } else {
             token->type = ZPCINT64;
             zpcgetint64(token, ptr, &ptr);
+            sprintf(token->str, "%lld", token->data.i64);
         }
     } else if (zpciscopchar(*ptr)) {
         zpcgetoper(token, ptr, &ptr);
     } else if (*ptr == '(') {
         token->type = ZPCLEFT;
+        token->str = "(";
         ptr++;
     } else if (*ptr == ')') {
         token->type = ZPCRIGHT;
+        token->str = ")";
         ptr++;
     } else {
         free(token);
@@ -719,9 +725,9 @@ printtoken(struct zpctoken *token)
     if (zpcisoper(token)) {
         fprintf(stderr, "%s\n", token->str);
     } else if (token->type == ZPCINT64) {
-        fprintf(stderr, "%llx\n", token->data.i64);
+        fprintf(stderr, "%lld\n", token->data.i64);
     } else if (token->type == ZPCUINT64) {
-        fprintf(stderr, "%llx\n", token->data.u64);
+        fprintf(stderr, "%llu\n", token->data.u64);
     } else if (token->type == ZPCFLOAT) {
         fprintf(stderr, "%f\n", token->data.f32);
     } else if (token->type == ZPCDOUBLE) {

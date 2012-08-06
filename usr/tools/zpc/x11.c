@@ -75,6 +75,7 @@ static const uint8_t      isflttab[ZPC_NROW][ZPC_NCOLUMN]
 #define BUTTONHOVER   1
 #define BUTTONCLICKED 2
 #define NBUTTONSTATE  3
+static Window         stkwintab[NREGSTK];
 static Pixmap         buttonpmaps[NBUTTONSTATE];
 XFontStruct          *font;
 int                   fontw;
@@ -82,6 +83,39 @@ int                   fonth;
 static struct x11app *app;
 static Window         mainwin;
 GC                    textgc;
+
+void
+x11drawstk(void)
+{
+    struct zpctoken *token;
+    int              i;
+    int              len;
+    Window           win;
+    int              x;
+
+    i = NSTKREG;
+    while (i--) {
+        fprintf(stderr, "%d: ", i);
+        token = zpcregstk[i];
+        win = stkwintab[i];
+        x = 4;
+        XClearWindow(app->display, win);
+        while ((token) && (token->str)) {
+            fprintf(stderr, "%s ", token->str);
+            len = strlen(token->str);
+            XDrawString(app->display, win, textgc,
+                        x,
+                        (fonth + 8) >> 1,
+                        token->str, len);
+            x += len;
+            token = token->next;
+        }
+        if (token) {
+            fprintf(stderr, "token->str: %p\n", token->str);
+        }
+        fprintf(stderr, "\n");
+    }
+}
 
 void
 x11initgcs(void)
@@ -141,6 +175,7 @@ x11findwin(Window id)
     return hashwin;
 }
 
+#if (ZPCIMLIB2)
 void
 x11initpmaps(void)
 {
@@ -158,6 +193,7 @@ x11initpmaps(void)
 
     return;
 }
+#endif
 
 struct x11app *
 x11initapp(char *displayname)
@@ -207,6 +243,32 @@ x11initwin(struct x11app *app, Window parent, int x, int y, int w, int h)
                         &atr);
 
     return win;
+}
+
+void
+displayexpose(void *arg, XEvent *event)
+{
+    struct x11win   *win = arg;
+    struct zpctoken *token = zpcregstk[win->num];
+    int              x;
+    int              len;
+
+    fprintf(stderr, "EXPOSE: %ld\n", win->num);
+    if (!event->xexpose.count) {
+        x = 4;
+        XClearWindow(app->display, win->id);
+        while ((token) && (token->str)) {
+            len = strlen(token->str);
+            XDrawString(app->display, win->id, textgc,
+                        x,
+                        (fonth + 8) >> 1,
+                        token->str, len);
+            x += len;
+            token = token->next;
+        }
+    }
+
+    return;
 }
 
 void
@@ -296,10 +358,12 @@ buttonpress(void *arg, XEvent *event)
 
     if (win->narg == ENTER) {
         stkenterinput();
+        x11drawstk();
 
         return;
     } else if (!win->narg) {
         stkqueueinput(buttonstrtab[win->row][win->col]);
+        x11drawstk();
 
         return;
     } else if (win->narg >= 1) {
@@ -359,6 +423,7 @@ buttonpress(void *arg, XEvent *event)
 #endif
     if (evbut < NBUTTON) {
         token = calloc(1, sizeof(struct zpctoken));
+        token->str = calloc(1, TOKENSTRLEN);
         if (type == ZPCINT64 || type == ZPCUINT64) {
             func = win->clickfunc[evbut];
             if (func) {
@@ -366,12 +431,12 @@ buttonpress(void *arg, XEvent *event)
                     func(src, dest, &res64);
                     token->type = ZPCINT64;
                     token->data.i64 = res64;
-                    fprintf(stderr, "RES: %lld\n", res64);
+                    sprintf(token->str, "%lld", token->data.i64);
                 } else {
                     func(usrc, udest, &ures64);
                     token->type = ZPCUINT64;
                     token->data.u64 = ures64;
-                    fprintf(stderr, "RES: %llu\n", ures64);
+                    sprintf(token->str, "%llu", token->data.u64);
                 }
             }
         } else if (type == ZPCFLOAT) {
@@ -380,6 +445,7 @@ buttonpress(void *arg, XEvent *event)
                 func(fsrc, fdest, &fres);
                 token->type = ZPCFLOAT;
                 token->data.f32 = fres;
+                sprintf(token->str, "%f", token->data.f32);
             }
         } else {
             func = win->clickfuncdbl[evbut];
@@ -387,6 +453,7 @@ buttonpress(void *arg, XEvent *event)
                 func(dsrc, ddest, &dres);
                 token->type = ZPCDOUBLE;
                 token->data.f64 = dres;
+                sprintf(token->str, "%e", token->data.f64);
             }
         }
         if (func) {
@@ -419,6 +486,9 @@ buttonpress(void *arg, XEvent *event)
             }
         }
     }
+    x11drawstk();
+
+    return;
 }
 
 #if 0
@@ -448,12 +518,11 @@ x11init(void)
     struct x11win *wininfo;
 
     app = x11initapp(NULL);
-    mainwin = x11initwin(app, 0, 0, 0, ZPC_WINDOW_WIDTH, ZPC_WINDOW_HEIGHT);
-    app->win = mainwin;
+#if (ZPCIMLIB2)
     imlib2init(app);
+#endif
 //    x11initpmaps();
     font = x11loadfont("fixed");
-    x11initgcs();
     if (!font) {
         fprintf(stderr, "failed to load font fixed\n");
 
@@ -461,6 +530,12 @@ x11init(void)
     } else {
         fprintf(stderr, "FONT: fixed (%dx%d)\n", fontw, fonth);
     }
+    mainwin = x11initwin(app, 0,
+                         0, 0,
+                         ZPC_WINDOW_WIDTH,
+                         ZPC_WINDOW_HEIGHT + (fonth + 8) * NSTKREG);
+    app->win = mainwin;
+    x11initgcs();
     for (row = 0 ; row < ZPC_NROW ; row++) {
         for (col = 0 ; col < ZPC_NCOLUMN ; col++) {
             win = x11initwin(app,
@@ -493,6 +568,24 @@ x11init(void)
 
                 exit(1);
             }
+        }
+    }
+    for (row = 0 ; row < NSTKREG ; row++) {
+        win = x11initwin(app,
+                         mainwin,
+                         0,
+                         ZPC_WINDOW_HEIGHT + row * (fonth + 8),
+                         ZPC_WINDOW_WIDTH,
+                         fonth + 8);
+        if (win) {
+            wininfo = calloc(1, sizeof(struct x11win));
+            wininfo->id = win;
+            wininfo->num = NSTKREG - row - 1;
+            wininfo->evfunc[Expose] = displayexpose;
+            x11addwin(wininfo);
+            XSelectInput(app->display, win,
+                         ExposureMask);
+            stkwintab[NSTKREG - row - 1] = win;
         }
     }
     XMapSubwindows(app->display, mainwin);

@@ -41,6 +41,7 @@ stkqueueinput(char *str)
         while (*str) {
             if (cp == top->str + top->slen) {
                 top->str = realloc(top->str, top->slen << 1);
+                cp = top->str + top->slen;
                 if (top->str) {
                     top->slen <<= 1;
                 } else {
@@ -91,7 +92,7 @@ stkprint(void)
 
     i = NSTKREG;
     while (i--) {
-        fprintf(stderr, "%x: ", i);
+        fprintf(stderr, "%d: ", i);
         zpcprintqueue(zpcregstk[i]);
         if (!zpcregstk[i]) {
             fprintf(stderr, "\n");

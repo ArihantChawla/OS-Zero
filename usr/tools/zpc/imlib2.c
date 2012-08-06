@@ -1,3 +1,5 @@
+#if (ZPCIMLIB2)
+
 #include <X11/X.h>
 #include <X11/Xlib.h>
 #include <Imlib2.h>
@@ -31,3 +33,6 @@ imlib2loadimage(const char *filename, int w, int h)
 
     return pmap;
 }
+
+#endif /* ZPCIMLIB2 */
+
