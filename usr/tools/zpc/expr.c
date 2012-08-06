@@ -860,10 +860,12 @@ zpcparse(struct zpctoken *srcqueue)
         }
         token1 = token3;
     }
+#if 0
     fprintf(stderr, "QUEUE: ");
     zpcprintqueue(queue);
     fprintf(stderr, "STACK: ");
     zpcprintqueue(stack);
+#endif
     do {
         token1 = stack;
         if (zpcisoper(token1)) {

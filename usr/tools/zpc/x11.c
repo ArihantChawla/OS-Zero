@@ -95,13 +95,11 @@ x11drawstk(void)
 
     i = NSTKREG;
     while (i--) {
-        fprintf(stderr, "%d: ", i);
         token = zpcregstk[i];
         win = stkwintab[i];
         x = 4;
         XClearWindow(app->display, win);
         while ((token) && (token->str)) {
-            fprintf(stderr, "%s ", token->str);
             len = strlen(token->str);
             XDrawString(app->display, win, textgc,
                         x,
@@ -110,10 +108,6 @@ x11drawstk(void)
             x += len;
             token = token->next;
         }
-        if (token) {
-            fprintf(stderr, "token->str: %p\n", token->str);
-        }
-        fprintf(stderr, "\n");
     }
 }
 
@@ -253,7 +247,6 @@ displayexpose(void *arg, XEvent *event)
     int              x;
     int              len;
 
-    fprintf(stderr, "EXPOSE: %ld\n", win->num);
     if (!event->xexpose.count) {
         x = 4;
         XClearWindow(app->display, win->id);
@@ -527,8 +520,6 @@ x11init(void)
         fprintf(stderr, "failed to load font fixed\n");
 
         exit(1);
-    } else {
-        fprintf(stderr, "FONT: fixed (%dx%d)\n", fontw, fonth);
     }
     mainwin = x11initwin(app, 0,
                          0, 0,
@@ -599,7 +590,6 @@ x11nextevent(void)
     struct x11win *win;
     x11evfunc_t   *func;
 
-    stkprint();
     XNextEvent(app->display, &event);
     win = x11findwin(event.xany.window);
     if (win) {
