@@ -1,3 +1,5 @@
+#if (ZPCX11)
+
 #include <stddef.h>
 #include <stdlib.h>
 #include <stdio.h>
@@ -9,6 +11,9 @@
 #include <zero/cdecl.h>
 #include <zero/param.h>
 #include "x11.h"
+
+void stkenterinput(void);
+void stkqueueinput(const char *str);
 
 extern struct zpctoken   *zpcregstk[];
 extern struct zpcstkitem *zpcinputitem;
@@ -541,7 +546,6 @@ x11init(void)
     Window         dispwin;
     int            row;
     int            col;
-    int            i;
     struct x11win *wininfo;
 
     app = x11initapp(NULL);
@@ -664,3 +668,6 @@ x11nextevent(void)
         }
     }
 }
+
+#endif /* ZPCX11 */
+

@@ -1,6 +1,9 @@
 #include <stdio.h>
 #include <stdlib.h>
+#include <string.h>
 #include <zpc/zpc.h>
+
+void zpcprintqueue(struct zpctoken *queue);
 
 struct zpcstkitem *zpcinputitem;
 struct zpctoken   *zpcregstk[NREGSTK];
@@ -32,7 +35,7 @@ stkaddinput(void)
 }
 
 void
-stkqueueinput(char *str)
+stkqueueinput(const char *str)
 {
     struct zpcstkitem *top = zpcinputitem;
     char              *cp = (top) ? top->scur : NULL;
@@ -87,7 +90,6 @@ stkinit(void)
 void
 stkprint(void)
 {
-    struct zpctoken *token;
     int              i;
 
     i = NSTKREG;
