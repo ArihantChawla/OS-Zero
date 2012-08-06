@@ -1,5 +1,6 @@
 #if (ZPCIMLIB2)
 
+#include <stdio.h>
 #include <X11/X.h>
 #include <X11/Xlib.h>
 #include <Imlib2.h>
@@ -19,7 +20,7 @@ imlib2init(struct x11app *app)
 }
 
 Pixmap
-imlib2loadimage(const char *filename, int w, int h)
+imlib2loadimage(struct x11app *app, const char *filename, int w, int h)
 {
     Pixmap       pmap;
     Pixmap       mask;
@@ -27,6 +28,8 @@ imlib2loadimage(const char *filename, int w, int h)
 
     img = imlib_load_image(filename);
     if (img) {
+        imlib_context_set_drawable(app->win);
+        fprintf(stderr, "LOAD(%s): %p @ %dx%d\n", filename, img, w, h);
         imlib_context_set_image(img);
         imlib_render_pixmaps_for_whole_image_at_size(&pmap, &mask, w, h);
     }

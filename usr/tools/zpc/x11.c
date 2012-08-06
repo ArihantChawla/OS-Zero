@@ -49,7 +49,7 @@ static const char        *buttonstrtab[ZPC_NROW][ZPC_NCOLUMN]
     { "a", "b", "c", "%", ">>", "--" },
     { "7", "8", "9", "/", "<<", "..>" },
     { "4", "5", "6", "*", "^", "<.." },
-    { "1", "2", "3", "-", "|", NULL },
+    { "1", "2", "3", "-", "|", "=" },
     { "0", ".", "SPC", "+", "&", "ENTER" }
 };
 #define ENTER 0xff
@@ -82,16 +82,18 @@ int                   fontw;
 int                   fonth;
 static struct x11app *app;
 static Window         mainwin;
+static Window         inputwin;
 GC                    textgc;
 
 void
-x11drawstk(void)
+x11drawdisp(void)
 {
-    struct zpctoken *token;
-    int              i;
-    int              len;
-    Window           win;
-    int              x;
+    struct zpctoken   *token;
+    struct zpcstkitem *item;
+    int                i;
+    int                len;
+    Window             win;
+    int                x;
 
     i = NSTKREG;
     while (i--) {
@@ -109,6 +111,17 @@ x11drawstk(void)
             token = token->next;
         }
     }
+    x = 8;
+    item = zpcinputitem;
+    len = strlen(item->str);
+    win = inputwin;
+    XClearWindow(app->display, win);
+    XDrawString(app->display, win, textgc,
+                x,
+                (fonth + 8) >> 1,
+                item->str, len);
+
+    return;
 }
 
 void
@@ -173,6 +186,20 @@ x11findwin(Window id)
 void
 x11initpmaps(void)
 {
+    buttonpmaps[BUTTONNORMAL] = imlib2loadimage(app, "button.png",
+                                                ZPC_BUTTON_WIDTH,
+                                                ZPC_BUTTON_HEIGHT);
+    buttonpmaps[BUTTONHOVER] = buttonpmaps[BUTTONNORMAL];
+    buttonpmaps[BUTTONCLICKED] = buttonpmaps[BUTTONNORMAL];
+#if 0
+    buttonpmaps[BUTTONHOVER] = imlib2loadimage(app, "button.png",
+                                               ZPC_BUTTON_WIDTH,
+                                               ZPC_BUTTON_HEIGHT);
+    buttonpmaps[BUTTONCLICKED] = imlib2loadimage(app, "button.png",
+                                                 ZPC_BUTTON_WIDTH,
+                                                 ZPC_BUTTON_HEIGHT);
+#endif
+#if 0
     buttonpmaps[BUTTONNORMAL] = imlib2loadimage("mosaic.png",
                                                 ZPC_BUTTON_WIDTH,
                                                 ZPC_BUTTON_HEIGHT);
@@ -183,6 +210,7 @@ x11initpmaps(void)
     buttonpmaps[BUTTONCLICKED] = imlib2loadimage("button_clicked.png",
                                                  ZPC_BUTTON_WIDTH,
                                                  ZPC_BUTTON_HEIGHT);
+#endif
 #endif
 
     return;
@@ -281,9 +309,9 @@ buttonexpose(void *arg, XEvent *event)
                                        buttonpmaps[BUTTONNORMAL]);
         }
         XClearWindow(app->display, win->id);
-        XSync(app->display, False);
+    } else {
+        XClearWindow(app->display, win->id);
     }
-    XClearWindow(app->display, win->id);
     if (win->str) {
         len = strlen(win->str);
         if (len) {
@@ -356,12 +384,12 @@ buttonpress(void *arg, XEvent *event)
 
     if (win->narg == ENTER) {
         stkenterinput();
-        x11drawstk();
+        x11drawdisp();
 
         return;
     } else if (!win->narg) {
         stkqueueinput(buttonstrtab[win->row][win->col]);
-        x11drawstk();
+        x11drawdisp();
 
         return;
     } else if (win->narg >= 1) {
@@ -484,7 +512,7 @@ buttonpress(void *arg, XEvent *event)
             }
         }
     }
-    x11drawstk();
+    x11drawdisp();
 
     return;
 }
@@ -510,7 +538,7 @@ void
 x11init(void)
 {
     Window         win;
-    Window         outwin;
+    Window         dispwin;
     int            row;
     int            col;
     int            i;
@@ -519,8 +547,8 @@ x11init(void)
     app = x11initapp(NULL);
 #if (ZPCIMLIB2)
     imlib2init(app);
+    x11initpmaps();
 #endif
-//    x11initpmaps();
     font = x11loadfont("fixed");
     if (!font) {
         fprintf(stderr, "failed to load font fixed\n");
@@ -530,7 +558,7 @@ x11init(void)
     mainwin = x11initwin(app, 0,
                          0, 0,
                          ZPC_WINDOW_WIDTH,
-                         ZPC_WINDOW_HEIGHT + (fonth + 8) * NSTKREG + NSTKREG,
+                         ZPC_WINDOW_HEIGHT + NSTKREG * (fonth + 8) + NSTKREG + ((fonth + 8) << 1) + 1,
                          1);
     app->win = mainwin;
     x11initgcs();
@@ -569,19 +597,19 @@ x11init(void)
             }
         }
     }
-    outwin = x11initwin(app,
+    dispwin = x11initwin(app,
                         mainwin,
                         0,
                         ZPC_WINDOW_HEIGHT,
                         ZPC_WINDOW_WIDTH,
-                        (fonth + 8) * NSTKREG + NSTKREG,
+                        NSTKREG * (fonth + 8) + NSTKREG + ((fonth + 8) << 2) + 1,
                         1);
-    XMapRaised(app->display, outwin);
+    XMapRaised(app->display, dispwin);
     fprintf(stderr, "OUT: %d, %d\n", 0, ZPC_WINDOW_HEIGHT);
     for (row = 0 ; row < NSTKREG ; row++) {
         fprintf(stderr, "IN: %d, %d\n", 0, row * (fonth + 8) + row);
         win = x11initwin(app,
-                         outwin,
+                         dispwin,
                          0,
                          row * (fonth + 8) + row + 1,
                          ZPC_WINDOW_WIDTH,
@@ -599,8 +627,24 @@ x11init(void)
             XMapRaised(app->display, win);
         }
     }
+    inputwin = x11initwin(app,
+                          dispwin,
+                          0,
+                          NSTKREG * (fonth + 8) + NSTKREG + 1,
+                          ZPC_WINDOW_WIDTH,
+                          (fonth + 8) << 2,
+                          0);
+    if (inputwin) {
+        wininfo = calloc(1, sizeof(struct x11win));
+        wininfo->id = win;
+        wininfo->evfunc[Expose] = displayexpose;
+        x11addwin(wininfo);
+        XSelectInput(app->display, inputwin,
+                     ExposureMask);
+        XMapRaised(app->display, inputwin);
+    }
     XMapSubwindows(app->display, mainwin);
-    XMapSubwindows(app->display, outwin);
+    XMapSubwindows(app->display, dispwin);
     XMapRaised(app->display, mainwin);
 }
 

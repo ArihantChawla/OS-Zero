@@ -182,19 +182,20 @@ void
 zpcinitcoptab(void)
 {
     /* precedences */
-    zpccopprectab[ZPCNOT] = OPERRTOL | 7;
-    zpccopprectab[ZPCINC] = 7;
-    zpccopprectab[ZPCDEC] = 7;
-    zpccopprectab[ZPCSHR] = 6;
-    zpccopprectab[ZPCSHL] = 6;
-    zpccopprectab[ZPCAND] = 5;
-    zpccopprectab[ZPCXOR] = OPERRTOL | 4;
-    zpccopprectab[ZPCOR] = 3;
-    zpccopprectab[ZPCMUL] = 2;
-    zpccopprectab[ZPCDIV] = 2;
-    zpccopprectab[ZPCMOD] = 2;
-    zpccopprectab[ZPCADD] = OPERRTOL | 1;
-    zpccopprectab[ZPCSUB] = 1;
+    zpccopprectab[ZPCNOT] = OPERRTOL | 8;
+    zpccopprectab[ZPCINC] = 8;
+    zpccopprectab[ZPCDEC] = 8;
+    zpccopprectab[ZPCSHR] = 7;
+    zpccopprectab[ZPCSHL] = 7;
+    zpccopprectab[ZPCAND] = 6;
+    zpccopprectab[ZPCXOR] = OPERRTOL | 5;
+    zpccopprectab[ZPCOR] = 4;
+    zpccopprectab[ZPCMUL] = 3;
+    zpccopprectab[ZPCDIV] = 3;
+    zpccopprectab[ZPCMOD] = 3;
+    zpccopprectab[ZPCADD] = OPERRTOL | 2;
+    zpccopprectab[ZPCSUB] = 2;
+    zpccopprectab[ZPCASSIGN] = 1;
     /* # of arguments */
     zpccopnargtab[ZPCNOT] = 1;
     zpccopnargtab[ZPCINC] = 1;
@@ -498,18 +499,18 @@ zpcgetint64(struct zpctoken *token, const char *str, char **retstr)
             }
             zpcsetval64(&token->data.i64, i64);
         }
-    } else if (isxdigit(*ptr)) {
-        while (isxdigit(*ptr)) {
-            i64 <<= 4;
-            i64 += tohex(*ptr);
-            ptr++;
-        }
-        zpcsetval64(&token->data.i64, i64);
-    } else {
+    } else if (isdigit(*ptr)) {
         /* decimal value */
         while (isdigit(*ptr)) {
             i64 *= 10;
             i64 += todec(*ptr);
+            ptr++;
+        }
+        zpcsetval64(&token->data.i64, i64);
+    } else if (isxdigit(*ptr)) {
+        while (isxdigit(*ptr)) {
+            i64 <<= 4;
+            i64 += tohex(*ptr);
             ptr++;
         }
         zpcsetval64(&token->data.i64, i64);
@@ -555,18 +556,18 @@ zpcgetuint64(struct zpctoken *token, const char *str, char **retstr)
             }
             zpcsetvalu64(&token->data.u64, u64);
         }
+    } else if (isdigit(*ptr)) {
+        /* decimal value */
+        while (isdigit(*ptr)) {
+            u64 *= 10;
+            u64 += todec(*ptr);
+            ptr++;
+        }
+        zpcsetvalu64(&token->data.u64, u64);
     } else if (isxdigit(*ptr)) {
         while (isxdigit(*ptr)) {
             u64 <<= 4;
             u64 += tohex(*ptr);
-            ptr++;
-        }
-        zpcsetvalu64(&token->data.u64, u64);
-    } else {
-        /* decimal value */
-        while (isxdigit(*ptr)) {
-            u64 *= 10;
-            u64 += todec(*ptr);
             ptr++;
         }
         zpcsetvalu64(&token->data.u64, u64);
@@ -645,6 +646,11 @@ zpcgetoper(struct zpctoken *token, const char *str, char **retstr)
         ptr++;
         token->type = ZPCDIV;
         token->str[0] = '/';
+        token->str[1] = '\0';
+    } else if (*ptr == '=') {
+        ptr++;
+        token->type = ZPCASSIGN;
+        token->str[0] = '=';
         token->str[1] = '\0';
     } else if (*ptr == '%') {
         ptr++;
@@ -860,12 +866,10 @@ zpcparse(struct zpctoken *srcqueue)
         }
         token1 = token3;
     }
-#if 0
     fprintf(stderr, "QUEUE: ");
     zpcprintqueue(queue);
     fprintf(stderr, "STACK: ");
     zpcprintqueue(stack);
-#endif
     do {
         token1 = stack;
         if (zpcisoper(token1)) {
