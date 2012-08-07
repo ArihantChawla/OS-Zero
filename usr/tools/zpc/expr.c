@@ -28,7 +28,6 @@
     (zpccopprectab[(tp)->type] & ~OPERRTOL)
 #define zpccopisrtol(tp)                                               \
     (zpccopprectab[(tp)->type] & OPERRTOL)
-#define zpciscopchar(c) (zpccopchartab[(int)(c)])
 static uint8_t          zpcdectab[256];
 static uint8_t          zpchextab[256];
 static uint8_t          zpcocttab[256];
@@ -38,7 +37,7 @@ static float            zpcoctflttab[256];
 static double           zpcdecdbltab[256];
 static double           zpchexdbltab[256];
 static double           zpcoctdbltab[256];
-static uint8_t          zpccopchartab[256];
+uint8_t                 zpcoperchartab[256];
 static long             zpccopprectab[ZPCNOPER];
 static long             zpccopnargtab[ZPCNOPER];
 struct zpctoken        *zpcoperstk;
@@ -200,8 +199,9 @@ zpcinitcoptab(void)
     zpccopnargtab[ZPCNOT] = 1;
     zpccopnargtab[ZPCINC] = 1;
     zpccopnargtab[ZPCDEC] = 1;
-    zpccopnargtab[ZPCSHR] = 2;
     zpccopnargtab[ZPCSHL] = 2;
+    zpccopnargtab[ZPCSHR] = 2;
+    zpccopnargtab[ZPCSHRA] = 2;
     zpccopnargtab[ZPCAND] = 2;
     zpccopnargtab[ZPCXOR] = 2;
     zpccopnargtab[ZPCOR] = 2;
@@ -216,17 +216,17 @@ zpcinitcoptab(void)
 
 void zpcinitcop(void)
 {
-    zpccopchartab['~'] = '~';
-    zpccopchartab['&'] = '&';
-    zpccopchartab['|'] = '|';
-    zpccopchartab['^'] = '^';
-    zpccopchartab['<'] = '<';
-    zpccopchartab['>'] = '>';
-    zpccopchartab['+'] = '+';
-    zpccopchartab['-'] = '-';
-    zpccopchartab['*'] = '*';
-    zpccopchartab['/'] = '/';
-    zpccopchartab['%'] = '%';
+    zpcoperchartab['~'] = '~';
+    zpcoperchartab['&'] = '&';
+    zpcoperchartab['|'] = '|';
+    zpcoperchartab['^'] = '^';
+    zpcoperchartab['<'] = '<';
+    zpcoperchartab['>'] = '>';
+    zpcoperchartab['+'] = '+';
+    zpcoperchartab['-'] = '-';
+    zpcoperchartab['*'] = '*';
+    zpcoperchartab['/'] = '/';
+    zpcoperchartab['%'] = '%';
 }
 
 void
@@ -629,10 +629,17 @@ zpcgetoper(struct zpctoken *token, const char *str, char **retstr)
         token->str[0] = token->str[1] = '<';
         token->str[2] = '\0';
     } else if (*ptr == '>' && ptr[1] == '>') {
-        ptr += 2;
-        token->type = ZPCSHR;
-        token->str[0] = token->str[1] = '>';
-        token->str[2] = '\0';
+        if (ptr[2] == '>') {
+            ptr += 3;
+            token->type = ZPCSHRA;
+            token->str[0] = token->str[1] = token->str[2] = '>';
+            token->str[3] = '\0';
+        } else {
+            ptr += 2;
+            token->type = ZPCSHR;
+            token->str[0] = token->str[1] = '>';
+            token->str[2] = '\0';
+        }
     } else if (*ptr == '+') {
         if (ptr[1] == '+') {
             token->type = ZPCINC;
@@ -749,7 +756,7 @@ zpcgettoken(const char *str, char **retstr)
                     break;
             }
         }
-    } else if (zpciscopchar(*ptr)) {
+    } else if (zpcisoperchar(*ptr)) {
         zpcgetoper(token, ptr, &ptr);
     } else if (*ptr == '(') {
         token->type = ZPCLEFT;

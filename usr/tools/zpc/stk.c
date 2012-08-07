@@ -11,6 +11,8 @@
 
 void zpcprintqueue(struct zpctoken *queue);
 
+extern uint8_t     zpcoperchartab[256];
+
 struct zpcstkitem *zpcinputitem;
 struct zpctoken   *zpcregstk[NREGSTK];
 
@@ -47,7 +49,7 @@ stkqueueinput(const char *str)
     char              *cp = (item) ? item->scur : NULL;
 
     if ((item) && (*str)) {
-        if (cp != item->str && (cp[-1] != ' ')) {
+        if (cp != item->str && (!isxdigit(*str) || !isxdigit(cp[-1]))) {
             *cp++ = ' ';
         }
         while (*str) {

@@ -34,19 +34,20 @@
 #define ZPCXOR        0x04
 #define ZPCSHL        0x05
 #define ZPCSHR        0x06
-#define ZPCINC        0x07
-#define ZPCDEC        0x08
-#define ZPCADD        0x09
-#define ZPCSUB        0x0a
-#define ZPCMUL        0x0b
-#define ZPCDIV        0x0c
-#define ZPCMOD        0x0d
-#define ZPCASSIGN     0x0e
-#define ZPCNOPER      0x0f
-#define ZPCLEFT       0x0e
-#define ZPCRIGHT      0x0f
-#define ZPCFUNC       0x10
-#define ZPCSEP        0x11
+#define ZPCSHRA       0x07
+#define ZPCINC        0x08
+#define ZPCDEC        0x09
+#define ZPCADD        0x0a
+#define ZPCSUB        0x0b
+#define ZPCMUL        0x0c
+#define ZPCDIV        0x0d
+#define ZPCMOD        0x0e
+#define ZPCASSIGN     0x0f
+#define ZPCNOPER      0x10
+#define ZPCLEFT       0x10
+#define ZPCRIGHT      0x11
+#define ZPCFUNC       0x12
+#define ZPCSEP        0x13
 #define ZPCINT64      0x20
 #define ZPCUINT64     0x21
 #define ZPCFLOAT      0x22
@@ -57,6 +58,8 @@
 #define PARAMSIGNBIT  0x80000000
 #define zpcisoper(tp)                                                   \
     ((tp) && ((tp)->type >= ZPCNOT && (tp)->type <= ZPCMOD))
+#define zpcisoperchar(c)                                                \
+    (zpcoperchartab[(int)(c)])
 #define zpcisvalue(tp)                                                  \
     ((tp) && (tp)->type >= ZPCINT64 && (tp)->type <= ZPCDOUBLE)
 #define zpcisfunc(tp)                                                   \
