@@ -15,7 +15,7 @@
  * PAGESIZE     - virtual memory page size
  */
 #if defined(__x86_64__)
-#include <zero/x86_64/param.h>
+#include <zero/x86-64/param.h>
 #elif defined(__i386__)
 #include <zero/ia32/param.h>
 #elif defined(__arm__)
