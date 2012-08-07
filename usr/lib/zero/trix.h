@@ -1,8 +1,6 @@
 #ifndef __ZERO_TRIX_H__
 #define __ZERO_TRIX_H__
 
-#include <features.h>
-
 /*
  * this file contains tricks I've gathered together from sources such as MIT
  * HAKMEM and the book Hacker's Delight
