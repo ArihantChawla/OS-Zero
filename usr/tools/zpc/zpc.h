@@ -23,7 +23,7 @@
 #define ZPC_BUTTON_WIDTH  32
 #define ZPC_BUTTON_HEIGHT 24
 #endif
-#define ZPC_NROW          6
+#define ZPC_NROW          7
 #define ZPC_NCOLUMN       6
 #define ZPC_WINDOW_WIDTH  (ZPC_NCOLUMN * ZPC_BUTTON_WIDTH)
 #define ZPC_WINDOW_HEIGHT (ZPC_NROW * ZPC_BUTTON_HEIGHT)
@@ -70,6 +70,7 @@ struct zpctoken {
     char            *str;
     long             param;     // # of args for function
                                 // sign-bit, size in bytes
+    long             radix;
     union {
         int64_t      i64;
         uint64_t     u64;

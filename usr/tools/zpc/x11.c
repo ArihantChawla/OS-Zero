@@ -27,7 +27,8 @@ static zpccfunc_t        *buttonopertab[ZPC_NROW][ZPC_NCOLUMN]
     { NULL, NULL, NULL, div64, shl64, ror64 },
     { NULL, NULL, NULL, mul64, xor64, rol64 },
     { NULL, NULL, NULL, sub64, or64, NULL },
-    { NULL, NULL, NULL, add64, and64, NULL }
+    { NULL, NULL, NULL, add64, and64, NULL },
+    { NULL, NULL, NULL, NULL, NULL, NULL }
 };
 static zpccfunc_t        *buttonopertabflt[ZPC_NROW][ZPC_NCOLUMN]
 = {
@@ -36,7 +37,8 @@ static zpccfunc_t        *buttonopertabflt[ZPC_NROW][ZPC_NCOLUMN]
     { NULL, NULL, NULL, fdiv32, NULL, NULL },
     { NULL, NULL, NULL, mul32, NULL, NULL },
     { NULL, NULL, NULL, fsub32, NULL, NULL },
-    { NULL, NULL, NULL, fadd32, NULL, NULL}
+    { NULL, NULL, NULL, fadd32, NULL, NULL},
+    { NULL, NULL, NULL, NULL, NULL, NULL }
 };
 static zpccfunc_t        *buttonopertabdbl[ZPC_NROW][ZPC_NCOLUMN]
 = {
@@ -45,7 +47,8 @@ static zpccfunc_t        *buttonopertabdbl[ZPC_NROW][ZPC_NCOLUMN]
     { NULL, NULL, NULL, fdiv64, NULL, NULL },
     { NULL, NULL, NULL, mul64, NULL, NULL },
     { NULL, NULL, NULL, fsub64, NULL, NULL },
-    { NULL, NULL, NULL, fadd64, NULL, NULL}
+    { NULL, NULL, NULL, fadd64, NULL, NULL},
+    { NULL, NULL, NULL, NULL, NULL, NULL }
 };
 static Window             buttonwintab[ZPC_NROW][ZPC_NCOLUMN];
 static const char        *buttonstrtab[ZPC_NROW][ZPC_NCOLUMN]
@@ -55,7 +58,8 @@ static const char        *buttonstrtab[ZPC_NROW][ZPC_NCOLUMN]
     { "7", "8", "9", "/", "<<", "..>" },
     { "4", "5", "6", "*", "^", "<.." },
     { "1", "2", "3", "-", "|", "=" },
-    { "0", ".", "SPC", "+", "&", "ENTER" }
+    { "0", ".", "SPC", "+", "&", "ENTER" },
+    { "(", ")", "0x", "0b", "F32", "F64" }
 };
 static const char        *buttonasmtab[ZPC_NROW][ZPC_NCOLUMN]
 = {
@@ -64,7 +68,8 @@ static const char        *buttonasmtab[ZPC_NROW][ZPC_NCOLUMN]
     { NULL, NULL, NULL, "div", "shl", "ror" },
     { NULL, NULL, NULL, "mul", "xor", "rol" },
     { NULL, NULL, NULL, "sub", "or", NULL },
-    { NULL, NULL, NULL, "add", "and", NULL }
+    { NULL, NULL, NULL, "add", "and", NULL },
+    { NULL, NULL, NULL, NULL, NULL, NULL }
 };
 #define ENTER 0xff
 static const uint8_t      nargtab[ZPC_NROW][ZPC_NCOLUMN]
