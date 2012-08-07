@@ -441,7 +441,7 @@ buttonpress(void *arg, XEvent *event)
         x11drawdisp();
 
         return;
-    } else if (!win->narg || item->scur != item->str) {
+    } else if (!win->narg || item->scur != item->str || *win->str == '-') {
         stkqueueinput(buttonstrtab[win->row][win->col]);
         x11drawdisp();
 

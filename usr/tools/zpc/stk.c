@@ -49,9 +49,11 @@ stkqueueinput(const char *str)
     char              *cp = (item) ? item->scur : NULL;
 
     if ((item) && (*str)) {
+#if 0
         if (cp != item->str && (!isxdigit(*str) || !isxdigit(cp[-1]))) {
             *cp++ = ' ';
         }
+#endif
         while (*str) {
             if (cp == item->str + item->slen) {
                 item->str = realloc(item->str, item->slen << 1);

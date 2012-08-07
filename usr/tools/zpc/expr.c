@@ -696,7 +696,7 @@ zpcgettoken(const char *str, char **retstr)
     struct zpctoken *token = NULL;
     char            *dec;
     char            *flt;
-    char            *unsign;
+    int              unsign = 1;
 
     if (!*str) {
 
@@ -706,10 +706,20 @@ zpcgettoken(const char *str, char **retstr)
         ptr++;
     }
     token = malloc(sizeof(struct zpctoken));
+    if (*ptr == '-' && !isspace(ptr[1])) {
+        unsign = 0;
+        ptr++;
+    }
     if (isxdigit(*ptr)) {
         token->str = calloc(1, TOKENSTRLEN);
         dec = index(ptr, '.');
-        unsign = strstr(ptr, "uU");
+        if(strstr(ptr, "uU")) {
+            if (!unsign) {
+                fprintf(stderr, "sign on unsigned number\n");
+
+                exit(1);
+            }
+        }
         if (dec) {
             flt = strstr(dec, "fF");
             if (flt) {
@@ -741,6 +751,7 @@ zpcgettoken(const char *str, char **retstr)
         } else {
             token->type = ZPCINT64;
             zpcgetint64(token, ptr, &ptr);
+            token->data.i64 = -token->data.i64;
             switch (token->radix) {
                 case 8:
                     sprintf(token->str, "%llo", token->data.i64);
