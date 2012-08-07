@@ -59,7 +59,7 @@ static const char        *buttonstrtab[ZPC_NROW][ZPC_NCOLUMN]
     { "4", "5", "6", "*", "^", "<.." },
     { "1", "2", "3", "-", "|", "=" },
     { "0", ".", "SPC", "+", "&", "ENTER" },
-    { "(", ")", "0x", "0b", "F32", "F64" }
+    { "(", ")", "0x", "0b", "f", "EVAL" }
 };
 static const char        *buttonasmtab[ZPC_NROW][ZPC_NCOLUMN]
 = {
