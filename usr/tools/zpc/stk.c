@@ -1,7 +1,13 @@
 #include <stdio.h>
 #include <stdlib.h>
 #include <string.h>
+#include <ctype.h>
 #include <zpc/zpc.h>
+#include <X11/X.h>
+#include <X11/Xlib.h>
+#if (ZPCX11)
+#include "x11.h"
+#endif
 
 void zpcprintqueue(struct zpctoken *queue);
 
@@ -37,16 +43,19 @@ stkaddinput(void)
 void
 stkqueueinput(const char *str)
 {
-    struct zpcstkitem *top = zpcinputitem;
-    char              *cp = (top) ? top->scur : NULL;
+    struct zpcstkitem *item = zpcinputitem;
+    char              *cp = (item) ? item->scur : NULL;
 
-    if ((top) && (*str)) {
+    if ((item) && (*str)) {
+        if (cp != item->str && (cp[-1] != ' ')) {
+            *cp++ = ' ';
+        }
         while (*str) {
-            if (cp == top->str + top->slen) {
-                top->str = realloc(top->str, top->slen << 1);
-                cp = top->str + top->slen;
-                if (top->str) {
-                    top->slen <<= 1;
+            if (cp == item->str + item->slen) {
+                item->str = realloc(item->str, item->slen << 1);
+                cp = item->str + item->slen;
+                if (item->str) {
+                    item->slen <<= 1;
                 } else {
                     fprintf(stderr, "failed to expand stack item string\n");
                     
@@ -56,7 +65,7 @@ stkqueueinput(const char *str)
             *cp++ = *str++;
         }
         *cp = '\0';
-        top->scur = cp;
+        item->scur = cp;
     }
 
     return;
@@ -65,18 +74,26 @@ stkqueueinput(const char *str)
 void
 stkenterinput(void)
 {
-    if (zpcinputitem->scur != zpcinputitem->str) {
-        zpcinputitem->tokq = zpctokenize(zpcinputitem->str);
-        zpcinputitem->parseq = zpcparse(zpcinputitem->tokq);
+    struct zpcstkitem *item = zpcinputitem;
+
+    if (item->scur != item->str) {
+        item->tokq = zpctokenize(item->str);
+        item->parseq = zpcparse(item->tokq);
         memmove(&zpcregstk[1], &zpcregstk[0],
                 (NREGSTK - 1) * sizeof(struct zpctoken *));
-        if (zpcinputitem->parseq) {
-            zpcregstk[0] = zpcinputitem->parseq;
+        zpcregstk[0] = item->tokq;
+#if 0
+        if (item->parseq) {
+            zpcregstk[0] = item->parseq;
         } else {
-            zpcregstk[0] = zpcinputitem->tokq;
+            zpcregstk[0] = item->tokq;
         }
-        stkaddinput();
+#endif
+//        stkaddinput();
     }
+    item->scur = item->str;
+
+    return;
 }
 
 void

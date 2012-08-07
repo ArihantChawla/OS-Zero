@@ -58,6 +58,16 @@ static const char        *buttonstrtab[ZPC_NROW][ZPC_NCOLUMN]
     { "7", "8", "9", "/", "<<", "..>" },
     { "4", "5", "6", "*", "^", "<.." },
     { "1", "2", "3", "-", "|", "=" },
+    { "0", ".", " ", "+", "&", NULL },
+    { "(", ")", "0x", "0b", "f", NULL }
+};
+static const char        *buttonlabeltab[ZPC_NROW][ZPC_NCOLUMN]
+= {
+    { "d", "e", "f", "~", ">>>", "++" },
+    { "a", "b", "c", "%", ">>", "--" },
+    { "7", "8", "9", "/", "<<", "..>" },
+    { "4", "5", "6", "*", "^", "<.." },
+    { "1", "2", "3", "-", "|", "=" },
     { "0", ".", "SPC", "+", "&", "ENTER" },
     { "(", ")", "0x", "0b", "f", "EVAL" }
 };
@@ -79,7 +89,8 @@ static const uint8_t      nargtab[ZPC_NROW][ZPC_NCOLUMN]
     { 0, 0, 0, 2, 2, 2 },
     { 0, 0, 0, 2, 2, 2 },
     { 0, 0, 0, 2, 2, 0 },
-    { 0, 0, 0, 2, 2, ENTER }
+    { 0, 0, 0, 2, 2, ENTER },
+    { 0, 0, 0, 0, 0, ENTER }
 };
 static const uint8_t      isflttab[ZPC_NROW][ZPC_NCOLUMN]
 = {
@@ -88,7 +99,8 @@ static const uint8_t      isflttab[ZPC_NROW][ZPC_NCOLUMN]
     { 0, 0, 0, 1, 0, 0 },
     { 0, 0, 0, 1, 0, 0 },
     { 0, 0, 0, 1, 0, 0 },
-    { 0, 0, 0, 1, 0, 0 }
+    { 0, 0, 0, 1, 0, 0 },
+    { 0, 0, 0, 0, 0, 0 }
 };
 #define BUTTONNORMAL  0
 #define BUTTONHOVER   1
@@ -126,7 +138,7 @@ x11drawdisp(void)
                         x,
                         (fonth + 8) >> 1,
                         token->str, len);
-            x += len;
+            x += len * fonth;
             token = token->next;
         }
     }
@@ -135,10 +147,12 @@ x11drawdisp(void)
     len = strlen(item->str);
     win = inputwin;
     XClearWindow(app->display, win);
-    XDrawString(app->display, win, textgc,
-                x,
-                (fonth + 8) >> 1,
-                item->str, len);
+    if (item->scur != item->str) {
+        XDrawString(app->display, win, textgc,
+                    x,
+                    (fonth + 8) >> 1,
+                    item->str, len);
+    }
 
     return;
 }
@@ -312,7 +326,7 @@ displayexpose(void *arg, XEvent *event)
                         x,
                         (fonth + 8) >> 1,
                         token->str, len);
-            x += len;
+            x += len * fonth;
             token = token->next;
         }
     }
@@ -402,31 +416,32 @@ buttonleave(void *arg, XEvent *event)
 void
 buttonpress(void *arg, XEvent *event)
 {
-    struct x11win   *win = arg;
-    int              evbut = toevbutton(event->xbutton.button);
-    struct zpctoken *token;
-    struct zpctoken *queue;
-    copfunc_t       *func;
-    uint64_t        *usrc = NULL;
-    uint64_t        *udest = NULL;
-    uint64_t         ures64;
-    int64_t         *src = NULL;
-    int64_t         *dest = NULL;
-    int64_t          res64;
-    float           *fsrc = NULL;
-    float           *fdest = NULL;
-    float            fres;
-    double          *dsrc = NULL;
-    double          *ddest = NULL;
-    double           dres;
-    int              type = 0;
+    struct x11win     *win = arg;
+    int                evbut = toevbutton(event->xbutton.button);
+    struct zpctoken   *token;
+    struct zpctoken   *queue;
+    struct zpcstkitem *item = zpcinputitem;
+    copfunc_t         *func;
+    uint64_t          *usrc = NULL;
+    uint64_t          *udest = NULL;
+    uint64_t           ures64;
+    int64_t           *src = NULL;
+    int64_t           *dest = NULL;
+    int64_t            res64;
+    float             *fsrc = NULL;
+    float             *fdest = NULL;
+    float              fres;
+    double            *dsrc = NULL;
+    double            *ddest = NULL;
+    double             dres;
+    int                type = 0;
 
     if (win->narg == ENTER) {
         stkenterinput();
         x11drawdisp();
 
         return;
-    } else if (!win->narg) {
+    } else if (!win->narg || item->scur != item->str) {
         stkqueueinput(buttonstrtab[win->row][win->col]);
         x11drawdisp();
 
@@ -612,7 +627,7 @@ x11init(void)
             if (win) {
                 wininfo = calloc(1, sizeof(struct x11win));
                 wininfo->id = win;
-                wininfo->str = buttonstrtab[row][col];
+                wininfo->str = buttonlabeltab[row][col];
                 wininfo->asmstr = buttonasmtab[row][col];
                 wininfo->narg = nargtab[row][col];
                 wininfo->row = row;

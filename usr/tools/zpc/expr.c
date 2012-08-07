@@ -327,7 +327,7 @@ zpcgetfloat(struct zpctoken *token, const char *str, char **retstr)
                 div *= 16.0f;
                 ptr++;
             }
-            token->radix = 10;
+            token->radix = 16;
             zpcsetvalf32(&token->data.f32, flt);
         } else if (*ptr == 'b' || *ptr == 'B') {
             /* binary value */
@@ -378,7 +378,7 @@ zpcgetfloat(struct zpctoken *token, const char *str, char **retstr)
             div *= 10.0;
             ptr++;
         }
-            token->radix = 10;
+        token->radix = 10;
         zpcsetvalf32(&token->data.f32, flt);
     }
     if (*ptr == 'f' || *ptr == 'F') {
@@ -720,10 +720,16 @@ zpcgettoken(const char *str, char **retstr)
             switch (token->radix) {
                 case 8:
                     sprintf(token->str, "%llo", token->data.u64);
+
+                    break;
                 case 10:
                     sprintf(token->str, "%llu", token->data.u64);
+
+                    break;
                 case 16:
                     sprintf(token->str, "0x%llx", token->data.u64);
+
+                    break;
             }
         } else {
             token->type = ZPCINT64;
@@ -731,10 +737,16 @@ zpcgettoken(const char *str, char **retstr)
             switch (token->radix) {
                 case 8:
                     sprintf(token->str, "%llo", token->data.i64);
+
+                    break;
                 case 10:
                     sprintf(token->str, "%lld", token->data.i64);
+
+                    break;
                 case 16:
                     sprintf(token->str, "0x%llx", token->data.i64);
+
+                    break;
             }
         }
     } else if (zpciscopchar(*ptr)) {
@@ -855,7 +867,7 @@ zpcparse(struct zpctoken *srcqueue)
             } else {
                 fprintf(stderr, "mismatched parentheses: %s\n", token2->str);
                 
-                return 0;
+                return NULL;
             }
         } else if (zpcisoper(token)) {
             token2 = stack;
@@ -891,7 +903,7 @@ zpcparse(struct zpctoken *srcqueue)
                             token2->str);
                 }
                 
-                return 0;
+                return NULL;
             }
             if (zpcisfunc(stack)) {
                 token2 = zpcpopoper(&stack);
@@ -913,7 +925,7 @@ zpcparse(struct zpctoken *srcqueue)
                    && (token1->type == ZPCLEFT || token1->type == ZPCRIGHT)) {
             fprintf(stderr, "mismatched parentheses: %s\n", token1->str);
 
-            return 0;
+            return NULL;
         }
     } while (stack);
 
