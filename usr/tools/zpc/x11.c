@@ -57,6 +57,15 @@ static const char        *buttonstrtab[ZPC_NROW][ZPC_NCOLUMN]
     { "1", "2", "3", "-", "|", "=" },
     { "0", ".", "SPC", "+", "&", "ENTER" }
 };
+static const char        *buttonasmtab[ZPC_NROW][ZPC_NCOLUMN]
+= {
+    { NULL, NULL, NULL, "not", "shra", "inc" },
+    { NULL, NULL, NULL, "mod", "shr", "dec" },
+    { NULL, NULL, NULL, "div", "shl", "ror" },
+    { NULL, NULL, NULL, "mul", "xor", "rol" },
+    { NULL, NULL, NULL, "sub", "or", NULL },
+    { NULL, NULL, NULL, "add", "and", NULL }
+};
 #define ENTER 0xff
 static const uint8_t      nargtab[ZPC_NROW][ZPC_NCOLUMN]
 = {
@@ -134,7 +143,11 @@ x11initgcs(void)
 {
     XGCValues gcval;
 
+#if (ZPCREVERSE)
+    gcval.foreground = WhitePixel(app->display, DefaultScreen(app->display));
+#else
     gcval.foreground = BlackPixel(app->display, DefaultScreen(app->display));
+#endif
     gcval.font = font->fid;
     gcval.graphics_exposures = False;
 
@@ -320,10 +333,26 @@ buttonexpose(void *arg, XEvent *event)
     if (win->str) {
         len = strlen(win->str);
         if (len) {
+            if (win->asmstr) {
+                XDrawString(app->display, win->id, textgc,
+                            (ZPC_BUTTON_WIDTH - len * fontw) >> 1,
+                            fonth + 2,
+                            win->str, len);
+            } else {
+                XDrawString(app->display, win->id, textgc,
+                            (ZPC_BUTTON_WIDTH - len * fontw) >> 1,
+                            (ZPC_BUTTON_HEIGHT + fonth) >> 1,
+                            win->str, len);
+            }
+        }
+    }
+    if (win->asmstr) {
+        len = strlen(win->asmstr);
+        if (len) {
             XDrawString(app->display, win->id, textgc,
                         (ZPC_BUTTON_WIDTH - len * fontw) >> 1,
-                        (ZPC_BUTTON_HEIGHT + fonth) >> 1,
-                        win->str, len);
+                        ZPC_BUTTON_HEIGHT - fonth + 4,
+                        win->asmstr, len);
         }
     }
     XSync(app->display, False);
@@ -549,10 +578,6 @@ x11init(void)
     struct x11win *wininfo;
 
     app = x11initapp(NULL);
-#if (ZPCIMLIB2)
-    imlib2init(app);
-    x11initpmaps();
-#endif
     font = x11loadfont("fixed");
     if (!font) {
         fprintf(stderr, "failed to load font fixed\n");
@@ -563,9 +588,13 @@ x11init(void)
                          0, 0,
                          ZPC_WINDOW_WIDTH,
                          ZPC_WINDOW_HEIGHT + NSTKREG * (fonth + 8) + NSTKREG + ((fonth + 8) << 1) + 1,
-                         1);
+                         !ZPCREVERSE);
     app->win = mainwin;
     x11initgcs();
+#if (ZPCIMLIB2)
+    imlib2init(app);
+    x11initpmaps();
+#endif
     for (row = 0 ; row < ZPC_NROW ; row++) {
         for (col = 0 ; col < ZPC_NCOLUMN ; col++) {
             win = x11initwin(app,
@@ -574,11 +603,12 @@ x11init(void)
                              row * ZPC_BUTTON_HEIGHT + row,
                              ZPC_BUTTON_WIDTH,
                              ZPC_BUTTON_HEIGHT,
-                             0);
+                             ZPCREVERSE);
             if (win) {
                 wininfo = calloc(1, sizeof(struct x11win));
                 wininfo->id = win;
                 wininfo->str = buttonstrtab[row][col];
+                wininfo->asmstr = buttonasmtab[row][col];
                 wininfo->narg = nargtab[row][col];
                 wininfo->row = row;
                 wininfo->col = col;
@@ -607,7 +637,7 @@ x11init(void)
                         ZPC_WINDOW_HEIGHT,
                         ZPC_WINDOW_WIDTH,
                         NSTKREG * (fonth + 8) + NSTKREG + ((fonth + 8) << 2) + 1,
-                        1);
+                        !ZPCREVERSE);
     XMapRaised(app->display, dispwin);
     fprintf(stderr, "OUT: %d, %d\n", 0, ZPC_WINDOW_HEIGHT);
     for (row = 0 ; row < NSTKREG ; row++) {
@@ -618,7 +648,7 @@ x11init(void)
                          row * (fonth + 8) + row + 1,
                          ZPC_WINDOW_WIDTH,
                          fonth + 8,
-                         0);
+                         ZPCREVERSE);
         if (win) {
             wininfo = calloc(1, sizeof(struct x11win));
             wininfo->id = win;
@@ -637,7 +667,7 @@ x11init(void)
                           NSTKREG * (fonth + 8) + NSTKREG + 1,
                           ZPC_WINDOW_WIDTH,
                           (fonth + 8) << 2,
-                          0);
+                          ZPCREVERSE);
     if (inputwin) {
         wininfo = calloc(1, sizeof(struct x11win));
         wininfo->id = win;

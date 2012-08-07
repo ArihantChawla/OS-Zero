@@ -14,7 +14,7 @@ imlib2init(struct x11app *app)
     imlib_context_set_visual(app->visual);
     imlib_context_set_colormap(app->colormap);
     imlib_context_set_blend(0);
-    imlib_context_set_mask(0);
+    imlib_context_set_mask(1);
 
     return;
 }
@@ -29,7 +29,7 @@ imlib2loadimage(struct x11app *app, const char *filename, int w, int h)
     img = imlib_load_image(filename);
     if (img) {
         imlib_context_set_drawable(app->win);
-        fprintf(stderr, "LOAD(%s): %p @ %dx%d\n", filename, img, w, h);
+        fprintf(stderr, "LOAD(%s): %p @ %dx%d (window == %ld)\n", filename, img, w, h, (long)app->win);
         imlib_context_set_image(img);
         imlib_render_pixmaps_for_whole_image_at_size(&pmap, &mask, w, h);
     }
