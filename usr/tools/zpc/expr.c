@@ -830,8 +830,7 @@ zpctokenize(const char *str)
 /*
  * Dijkstra's shunting yard algorithm
  * - turns infix-format expressions into RPN queues
- * - TODO: fix to work a'la
- *    https://en.wikipedia.org/wiki/Shunting-yard_algorithm
+ * - https://en.wikipedia.org/wiki/Shunting-yard_algorithm
  */
 struct zpctoken *
 zpcparse(struct zpctoken *srcqueue)
