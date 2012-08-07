@@ -223,7 +223,7 @@ x11findwin(Window id)
 void
 x11initpmaps(void)
 {
-    buttonpmaps[BUTTONNORMAL] = imlib2loadimage(app, "button.png",
+    buttonpmaps[BUTTONNORMAL] = imlib2loadimage(app, "buttonbg.png",
                                                 ZPC_BUTTON_WIDTH,
                                                 ZPC_BUTTON_HEIGHT);
     buttonpmaps[BUTTONHOVER] = buttonpmaps[BUTTONNORMAL];
@@ -608,7 +608,7 @@ x11init(void)
                          0, 0,
                          ZPC_WINDOW_WIDTH,
                          ZPC_WINDOW_HEIGHT + NSTKREG * (fonth + 8) + NSTKREG + ((fonth + 8) << 1) + 1,
-                         !ZPCREVERSE);
+                         ZPCREVERSE);
     app->win = mainwin;
     x11initgcs();
 #if (ZPCIMLIB2)
@@ -654,7 +654,7 @@ x11init(void)
     dispwin = x11initwin(app,
                         mainwin,
                         0,
-                        ZPC_WINDOW_HEIGHT,
+                        ZPC_WINDOW_HEIGHT + ZPC_NROW,
                         ZPC_WINDOW_WIDTH,
                         NSTKREG * (fonth + 8) + NSTKREG + ((fonth + 8) << 2) + 1,
                         !ZPCREVERSE);

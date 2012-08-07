@@ -13,7 +13,11 @@
 #else
 #define BIGENDIAN 0
 #endif
+#if (ZPCIMLIB2)
+#define ZPCREVERSE 1
+#else
 #define ZPCREVERSE 0
+#endif
 
 #define BIGBUTTONS 1
 #if (BIGBUTTONS)
