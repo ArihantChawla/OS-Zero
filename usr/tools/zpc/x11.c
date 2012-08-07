@@ -12,6 +12,9 @@
 #include <zero/param.h>
 #include "x11.h"
 
+void imlib2init(struct x11app *app);
+Pixmap imlib2loadimage(struct x11app *app, const char *filename, int w, int h);
+
 void stkenterinput(void);
 void stkqueueinput(const char *str);
 
@@ -22,85 +25,83 @@ extern struct zpcstkitem *zpcinputitem;
 static struct x11win     *winhash[NHASHITEM] ALIGNED(PAGESIZE);
 static zpccfunc_t        *buttonopertab[ZPC_NROW][ZPC_NCOLUMN]
 = {
-    { NULL, NULL, NULL, not64, shr64, inc64 },
-    { NULL, NULL, NULL, mod64, shrl64, dec64 },
-    { NULL, NULL, NULL, div64, shl64, ror64 },
-    { NULL, NULL, NULL, mul64, xor64, rol64 },
-    { NULL, NULL, NULL, sub64, or64, NULL },
-    { NULL, NULL, NULL, add64, and64, NULL },
-    { NULL, NULL, NULL, NULL, NULL, NULL }
+    { NULL, NULL, NULL, not64, shr64, inc64, NULL, NULL },
+    { NULL, NULL, NULL, mod64, shrl64, dec64, NULL, NULL },
+    { NULL, NULL, NULL, div64, shl64, ror64, NULL, NULL },
+    { NULL, NULL, NULL, mul64, xor64, rol64, NULL, NULL },
+    { NULL, NULL, NULL, sub64, or64, NULL, NULL, NULL },
+    { NULL, NULL, NULL, add64, and64, NULL, NULL, NULL }
 };
 static zpccfunc_t        *buttonopertabflt[ZPC_NROW][ZPC_NCOLUMN]
 = {
-    { NULL, NULL, NULL, NULL, NULL, NULL },
-    { NULL, NULL, NULL, NULL, NULL, NULL },
-    { NULL, NULL, NULL, fdiv32, NULL, NULL },
-    { NULL, NULL, NULL, mul32, NULL, NULL },
-    { NULL, NULL, NULL, fsub32, NULL, NULL },
-    { NULL, NULL, NULL, fadd32, NULL, NULL},
-    { NULL, NULL, NULL, NULL, NULL, NULL }
+    { NULL, NULL, NULL, NULL, NULL, NULL, NULL },
+    { NULL, NULL, NULL, NULL, NULL, NULL, NULL },
+    { NULL, NULL, NULL, fdiv32, NULL, NULL, NULL },
+    { NULL, NULL, NULL, mul32, NULL, NULL, NULL },
+    { NULL, NULL, NULL, fsub32, NULL, NULL, NULL },
+    { NULL, NULL, NULL, fadd32, NULL, NULL, NULL}
 };
 static zpccfunc_t        *buttonopertabdbl[ZPC_NROW][ZPC_NCOLUMN]
 = {
-    { NULL, NULL, NULL, NULL, NULL, NULL },
-    { NULL, NULL, NULL, NULL, NULL, NULL },
-    { NULL, NULL, NULL, fdiv64, NULL, NULL },
-    { NULL, NULL, NULL, mul64, NULL, NULL },
-    { NULL, NULL, NULL, fsub64, NULL, NULL },
-    { NULL, NULL, NULL, fadd64, NULL, NULL},
-    { NULL, NULL, NULL, NULL, NULL, NULL }
+    { NULL, NULL, NULL, NULL, NULL, NULL, NULL },
+    { NULL, NULL, NULL, NULL, NULL, NULL, NULL },
+    { NULL, NULL, NULL, fdiv64, NULL, NULL, NULL },
+    { NULL, NULL, NULL, mul64, NULL, NULL, NULL },
+    { NULL, NULL, NULL, fsub64, NULL, NULL, NULL },
+    { NULL, NULL, NULL, fadd64, NULL, NULL, NULL}
 };
 static Window             buttonwintab[ZPC_NROW][ZPC_NCOLUMN];
 static const char        *buttonstrtab[ZPC_NROW][ZPC_NCOLUMN]
 = {
-    { "d", "e", "f", "~", ">>>", "++" },
-    { "a", "b", "c", "%", ">>", "--" },
-    { "7", "8", "9", "/", "<<", "..>" },
-    { "4", "5", "6", "*", "^", "<.." },
-    { "1", "2", "3", "-", "|", "=" },
-    { "0", ".", " ", "+", "&", NULL },
-    { "(", ")", "0x", "0b", "f", NULL }
+    { "d", "e", "f", "~", ">>>", "++", "(", "CLR" },
+    { "a", "b", "c", "%", ">>", "--", ")", "COPY" },
+    { "7", "8", "9", "/", "<<", "..>", "0x", "POP" },
+    { "4", "5", "6", "*", "^", "<..", "0b", "DUP" },
+    { "1", "2", "3", "-", "|", "=", "f", "DEL" },
+    { "0", ".", ",", "+", "&", NULL, NULL, " " }
 };
 static const char        *buttonlabeltab[ZPC_NROW][ZPC_NCOLUMN]
 = {
-    { "d", "e", "f", "~", ">>>", "++" },
-    { "a", "b", "c", "%", ">>", "--" },
-    { "7", "8", "9", "/", "<<", "..>" },
-    { "4", "5", "6", "*", "^", "<.." },
-    { "1", "2", "3", "-", "|", "=" },
-    { "0", ".", "SPC", "+", "&", "ENTER" },
-    { "(", ")", "0x", "0b", "f", "EVAL" }
+    { "d", "e", "f", "~", ">>>", "++", "(", "CLR" },
+    { "a", "b", "c", "%", ">>", "--", ")", "COPY" },
+    { "7", "8", "9", "/", "<<", "..>", "0x", "POP" },
+    { "4", "5", "6", "*", "^", "<..", "0b", "DUP" },
+    { "1", "2", "3", "-", "|", "=", "f", "DEL" },
+    { "0", ".", ",", "+", "&", "ENTER", "EVAL", "SPC" }
 };
 static const char        *buttonasmtab[ZPC_NROW][ZPC_NCOLUMN]
 = {
-    { NULL, NULL, NULL, "not", "shra", "inc" },
-    { NULL, NULL, NULL, "mod", "shr", "dec" },
-    { NULL, NULL, NULL, "div", "shl", "ror" },
-    { NULL, NULL, NULL, "mul", "xor", "rol" },
-    { NULL, NULL, NULL, "sub", "or", NULL },
-    { NULL, NULL, NULL, "add", "and", NULL },
-    { NULL, NULL, NULL, NULL, NULL, NULL }
+    { NULL, NULL, NULL, "not", "shra", "inc", NULL, NULL },
+    { NULL, NULL, NULL, "mod", "shr", "dec", NULL, NULL },
+    { NULL, NULL, NULL, "div", "shl", "ror", NULL, NULL },
+    { NULL, NULL, NULL, "mul", "xor", "rol", NULL, NULL },
+    { NULL, NULL, NULL, "sub", "or", NULL, NULL, NULL },
+    { NULL, NULL, NULL, "add", "and", NULL, NULL, NULL }
 };
 #define ENTER 0xff
-static const uint8_t      nargtab[ZPC_NROW][ZPC_NCOLUMN]
+#define EVAL  0xfe
+#define CLR   0xfd
+#define COPY  0xfc
+#define POP   0xfb
+#define DUP   0xfa
+#define DEL   0xef
+static const uint8_t      parmtab[ZPC_NROW][ZPC_NCOLUMN]
 = {
-    { 0, 0, 0, 1, 2, 1 },
-    { 0, 0, 0, 2, 2, 1 },
-    { 0, 0, 0, 2, 2, 2 },
-    { 0, 0, 0, 2, 2, 2 },
-    { 0, 0, 0, 2, 2, 0 },
-    { 0, 0, 0, 2, 2, ENTER },
-    { 0, 0, 0, 0, 0, ENTER }
+    { 0, 0, 0, 1, 2, 1, 0, CLR },
+    { 0, 0, 0, 2, 2, 1, 0, COPY },
+    { 0, 0, 0, 2, 2, 2, 0, POP },
+    { 0, 0, 0, 2, 2, 2, 0, DUP },
+    { 0, 0, 0, 2, 2, 0, 0, DEL },
+    { 0, 0, 0, 2, 2, ENTER, EVAL, 0 }
 };
 static const uint8_t      isflttab[ZPC_NROW][ZPC_NCOLUMN]
 = {
-    { 0, 0, 0, 0, 0, 0 },
-    { 0, 0, 0, 0, 0, 0 },
-    { 0, 0, 0, 1, 0, 0 },
-    { 0, 0, 0, 1, 0, 0 },
-    { 0, 0, 0, 1, 0, 0 },
-    { 0, 0, 0, 1, 0, 0 },
-    { 0, 0, 0, 0, 0, 0 }
+    { 0, 0, 0, 0, 0, 0, 0, 0 },
+    { 0, 0, 0, 0, 0, 0, 0, 0 },
+    { 0, 0, 0, 1, 0, 0, 0, 0 },
+    { 0, 0, 0, 1, 0, 0, 0, 0 },
+    { 0, 0, 0, 1, 0, 0, 0, 0 },
+    { 0, 0, 0, 1, 0, 0, 0, 0 }
 };
 #define BUTTONNORMAL  0
 #define BUTTONHOVER   1
@@ -223,7 +224,7 @@ x11findwin(Window id)
 void
 x11initpmaps(void)
 {
-    buttonpmaps[BUTTONNORMAL] = imlib2loadimage(app, "buttonbg.png",
+    buttonpmaps[BUTTONNORMAL] = imlib2loadimage(app, "button.png",
                                                 ZPC_BUTTON_WIDTH,
                                                 ZPC_BUTTON_HEIGHT);
     buttonpmaps[BUTTONHOVER] = buttonpmaps[BUTTONNORMAL];
@@ -436,17 +437,33 @@ buttonpress(void *arg, XEvent *event)
     double             dres;
     int                type = 0;
 
-    if (win->narg == ENTER) {
+    if (win->parm == ENTER) {
         stkenterinput();
         x11drawdisp();
 
         return;
-    } else if (!win->narg || item->scur != item->str || *win->str == '-') {
+    } else if (win->parm == EVAL) {
+        if (zpcinputitem->scur == zpcinputitem->str) {
+//            zpcregstk[0] = zpctokenize(zpcregstk[0]->str);
+            zpcregstk[0] = zpcparse(zpcregstk[0]);
+//            zpcprintqueue(zpcregstk[0]);
+            zpcregstk[0] = zpceval(zpcregstk[0]);
+        }
+    } else if (win->parm == CLR) {
+    } else if (win->parm == COPY) {
+    } else if (win->parm == POP) {
+    } else if (win->parm == DUP) {
+    } else if (win->parm == DEL) {
+        if (item->str != item->scur) {
+            *--item->scur = '\0';
+            x11drawdisp();
+        }
+    } else if (!win->parm || item->scur != item->str || *win->str == '-') {
         stkqueueinput(buttonstrtab[win->row][win->col]);
         x11drawdisp();
 
         return;
-    } else if (win->narg >= 1) {
+    } else if (win->parm >= 1) {
         if (zpcregstk[0]) {
             queue = zpcregstk[0];
             if (queue) {
@@ -473,7 +490,7 @@ buttonpress(void *arg, XEvent *event)
             return;
         }
     }
-    if (win->narg == 2) {
+    if (win->parm == 2) {
         queue = zpcregstk[1];
         if (queue) {
             if (type == ZPCUINT64 && queue->type == ZPCUINT64) {
@@ -489,7 +506,7 @@ buttonpress(void *arg, XEvent *event)
                 
                 return;
             }
-        } else if (win->narg == 2) {
+        } else if (win->parm == 2) {
             fprintf(stderr, "EEEE\n");
             
             return;
@@ -537,7 +554,7 @@ buttonpress(void *arg, XEvent *event)
             }
         }
         if (func) {
-            if (win->narg >= 1) {
+            if (win->parm >= 1) {
                 struct zpctoken *token1 = zpcregstk[0];
                 struct zpctoken *token2;
                 
@@ -547,7 +564,7 @@ buttonpress(void *arg, XEvent *event)
                     token1 = token2;
                 }
                 zpcregstk[0] = NULL;
-                if (win->narg == 2) {
+                if (win->parm == 2) {
                     token1 = zpcregstk[1];
                     while (token1) {
                         token2 = token1->next;
@@ -557,7 +574,7 @@ buttonpress(void *arg, XEvent *event)
                     zpcregstk[1] = NULL;
                 }
             }
-            if (win->narg == 2) {
+            if (win->parm == 2) {
                 zpcregstk[1] = token;
                 memmove(&zpcregstk[0], &zpcregstk[1], (NREGSTK - 1) * sizeof(struct zpctoken *));
                 zpcregstk[NREGSTK - 1] = NULL;
@@ -629,11 +646,13 @@ x11init(void)
                 wininfo->id = win;
                 wininfo->str = buttonlabeltab[row][col];
                 wininfo->asmstr = buttonasmtab[row][col];
-                wininfo->narg = nargtab[row][col];
+                wininfo->parm = parmtab[row][col];
                 wininfo->row = row;
                 wininfo->col = col;
-//                wininfo->evfunc[EnterNotify] = buttonenter;
-//                wininfo->evfunc[LeaveNotify] = buttonleave;
+#if 0
+                wininfo->evfunc[EnterNotify] = buttonenter;
+                wininfo->evfunc[LeaveNotify] = buttonleave;
+#endif
                 wininfo->evfunc[ButtonPress] = buttonpress;
                 wininfo->evfunc[Expose] = buttonexpose;
                 buttonwintab[row][col] = win;
@@ -642,6 +661,9 @@ x11init(void)
                 wininfo->clickfuncdbl[0] = buttonopertabdbl[row][col];
                 x11addwin(wininfo);
                 XSelectInput(app->display, win,
+#if 0
+                             EnterWindowMask | LeaveWindowMask
+#endif
                              ExposureMask | ButtonPressMask);
                 XMapRaised(app->display, win);
             } else {
@@ -659,9 +681,7 @@ x11init(void)
                         NSTKREG * (fonth + 8) + NSTKREG + ((fonth + 8) << 2) + 1,
                         !ZPCREVERSE);
     XMapRaised(app->display, dispwin);
-    fprintf(stderr, "OUT: %d, %d\n", 0, ZPC_WINDOW_HEIGHT);
     for (row = 0 ; row < NSTKREG ; row++) {
-        fprintf(stderr, "IN: %d, %d\n", 0, row * (fonth + 8) + row);
         win = x11initwin(app,
                          dispwin,
                          0,

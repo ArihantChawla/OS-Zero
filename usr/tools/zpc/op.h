@@ -85,5 +85,7 @@ void ceil2pow64(void *arg1, void *dummy1, void *dummy2, void *ret);
 void isleapyear32(void *arg1, void *dummy1, void *dummy2, void *ret);
 void isleapyear64(void *arg1, void *dummy1, void *dummy2, void *ret);
 
+typedef void zpcstkfunc_t(void);
+
 #endif /* __PCALC_OP_H__ */
 

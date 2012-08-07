@@ -12,7 +12,7 @@ struct x11win {
     const char    *str;
     const char    *asmstr;
     long           num;
-    long           narg;
+    long           parm;
     long           row;
     long           col;
     struct x11win *next;

@@ -5,6 +5,7 @@
 #include <ctype.h>
 #include <string.h>
 #include <zpc/zpc.h>
+#include <zpc/op.h>
 
 #define TOKENSTRLEN 128
 
@@ -40,6 +41,7 @@ static double           zpcoctdbltab[256];
 uint8_t                 zpcoperchartab[256];
 static long             zpccopprectab[ZPCNOPER];
 static long             zpccopnargtab[ZPCNOPER];
+static zpccfunc_t      *zpcevaltab[ZPCNOPER];
 struct zpctoken        *zpcoperstk;
 struct zpctoken        *zpcoperstktop;
 struct zpctoken        *zpctokenqueue;
@@ -210,12 +212,28 @@ zpcinitcoptab(void)
     zpccopnargtab[ZPCMOD] = 2;
     zpccopnargtab[ZPCADD] = 2;
     zpccopnargtab[ZPCSUB] = 2;
+    /* evaluation functions */
+    zpcevaltab[ZPCNOT] = not64;
+    zpcevaltab[ZPCINC] = inc64;
+    zpcevaltab[ZPCDEC] = dec64;
+    zpcevaltab[ZPCSHL] = shl64;
+    zpcevaltab[ZPCSHR] = shrl64;
+    zpcevaltab[ZPCSHRA] = shr64;
+    zpcevaltab[ZPCAND] = and64;
+    zpcevaltab[ZPCXOR] = xor64;
+    zpcevaltab[ZPCOR] = or64;
+    zpcevaltab[ZPCMUL] = mul64;
+    zpcevaltab[ZPCDIV] = div64;
+    zpcevaltab[ZPCMOD] = mod64;
+    zpcevaltab[ZPCADD] = add64;
+    zpcevaltab[ZPCSUB] = sub64;
 
     return;
 }
 
 void zpcinitcop(void)
 {
+    /* lookup table */
     zpcoperchartab['~'] = '~';
     zpcoperchartab['&'] = '&';
     zpcoperchartab['|'] = '|';
@@ -744,6 +762,7 @@ zpcgettoken(const char *str, char **retstr)
 
                     break;
                 case 16:
+                default:
                     sprintf(token->str, "0x%llx", token->data.u64);
 
                     break;
@@ -762,6 +781,7 @@ zpcgettoken(const char *str, char **retstr)
 
                     break;
                 case 16:
+                default:
                     sprintf(token->str, "0x%llx", token->data.i64);
 
                     break;
@@ -792,7 +812,7 @@ void
 printtoken(struct zpctoken *token)
 {
     fprintf(stderr, "TOKEN of type %lx: ", token->type);
-    if (zpcisoper(token)) {
+    if (token->str) {
         fprintf(stderr, "%s\n", token->str);
     } else if (token->type == ZPCINT64) {
         fprintf(stderr, "%lld\n", token->data.i64);
@@ -929,10 +949,12 @@ zpcparse(struct zpctoken *srcqueue)
         }
         token1 = token3;
     }
+#if 0
     fprintf(stderr, "QUEUE: ");
     zpcprintqueue(queue);
     fprintf(stderr, "STACK: ");
     zpcprintqueue(stack);
+#endif
     do {
         token1 = stack;
         if (zpcisoper(token1)) {
@@ -949,4 +971,126 @@ zpcparse(struct zpctoken *srcqueue)
     return queue;
 }
 
+struct zpctoken *
+zpceval(struct zpctoken *srcqueue)
+{
+    struct zpctoken *token = srcqueue;
+    struct zpctoken *queue = NULL;
+    struct zpctoken *tail = NULL;
+    struct zpctoken *stack = NULL;
+    struct zpctoken *token1;
+    struct zpctoken *token2;
+    struct zpctoken *token3;
+    long             type;
+    void            *arg1;
+    void            *arg2;
+    void            *dest;
+    zpccfunc_t      *func;
+
+    while (token) {
+        token3 = token->next;
+        if (zpcisvalue(token)) {
+            zpcpushoper(token, &stack);
+        } else if (zpcisoper(token)) {
+            if (zpccopnargtab[token->type] >= 1) {
+                token1 = zpcpopoper(&stack);
+                if (!token1) {
+                    fprintf(stderr, "missing argument 1\n");
+
+                    return NULL;
+                }
+            }
+            if (zpccopnargtab[token->type] == 2) {
+                token2 = zpcpopoper(&stack);
+                if (!token2) {
+                    fprintf(stderr, "missing argument 2\n");
+
+                    return NULL;
+                }
+            } else {
+                token2 = NULL;
+            }
+            if (token1) {
+                if (token1->type == ZPCUINT64) {
+                    type = ZPCUINT64;
+                    arg1 = &token1->data.u64;
+                    dest = &token1->data.u64;
+                } else if (token1->type == ZPCINT64) {
+                    type = ZPCINT64;
+                    arg1 = &token1->data.i64;
+                    dest = &token1->data.i64;
+                }
+            }
+            if (token2) {
+                if (type == ZPCUINT64 && token2->type == ZPCUINT64) {
+                    arg2 = &token2->data.u64;
+                } else if (type == ZPCINT64 && token2->type == ZPCINT64) {
+                    arg2 = &token2->data.i64;
+                } else {
+                    fprintf(stderr, "invalid argument type\n");
+
+                    return NULL;
+                }
+            }
+            switch (zpccopnargtab[token->type]) {
+                case 2:
+                    if (!token2) {
+                        fprintf(stderr, "invalid argument 2\n");
+
+                        return NULL;
+                    }
+                case 1:
+                    if (!token1) {
+                        fprintf(stderr, "invalid argument 1\n");
+
+                        return NULL;
+                    }
+
+                    break;
+            }
+            func = zpcevaltab[token->type];
+            if (func) {
+                func(arg1, arg2, dest);
+                if (token1->type == ZPCUINT64) {
+                    switch (token1->radix) {
+                        case 8:
+                            sprintf(token1->str, "%llo", token1->data.u64);
+
+                            break;
+                        case 10:
+                            sprintf(token1->str, "%llu", token1->data.u64);
+
+                            break;
+                        case 16:
+                        default:
+                            sprintf(token1->str, "%llx", token1->data.u64);
+
+                            break;
+                    }
+                } else if (token1->type == ZPCINT64) {
+                    switch (token1->radix) {
+                        case 8:
+                            sprintf(token1->str, "%llo", token1->data.i64);
+
+                            break;
+                        case 10:
+                            sprintf(token1->str, "%lld", token1->data.i64);
+
+                            break;
+                        case 16:
+                        default:
+                            sprintf(token1->str, "%llx", token1->data.i64);
+
+                            break;
+                    }
+                }
+                zpcqueueexpr(token1, &queue, &tail);
+            }
+            zpcprintqueue(queue);
+        }
+        token = token3;
+    }
+
+    return queue;
+}
 
