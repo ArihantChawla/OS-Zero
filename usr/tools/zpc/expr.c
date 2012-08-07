@@ -981,6 +981,7 @@ zpceval(struct zpctoken *srcqueue)
     struct zpctoken *token1;
     struct zpctoken *token2;
     struct zpctoken *token3;
+    struct zpctoken *token4;
     long             type;
     void            *arg1;
     void            *arg2;
@@ -993,7 +994,7 @@ zpceval(struct zpctoken *srcqueue)
             zpcpushoper(token, &stack);
         } else if (zpcisoper(token)) {
             if (zpccopnargtab[token->type] >= 1) {
-                token1 = zpcpopoper(&stack);
+                token1 = token4;
                 if (!token1) {
                     fprintf(stderr, "missing argument 1\n");
 
@@ -1002,6 +1003,7 @@ zpceval(struct zpctoken *srcqueue)
             }
             if (zpccopnargtab[token->type] == 2) {
                 token2 = zpcpopoper(&stack);
+                printtoken(token2);
                 if (!token2) {
                     fprintf(stderr, "missing argument 2\n");
 
@@ -1084,12 +1086,12 @@ zpceval(struct zpctoken *srcqueue)
                             break;
                     }
                 }
-                zpcqueueexpr(token1, &queue, &tail);
+                token4 = token1;
             }
-            zpcprintqueue(queue);
         }
         token = token3;
     }
+    zpcqueueexpr(token4, &queue, &tail);
 
     return queue;
 }
