@@ -143,6 +143,7 @@ struct zpcstkitem {
 };
 
 void              exprinit(void);
+void              zpcfreequeue(struct zpctoken *queue);
 struct zpctoken * zpctokenize(const char *str);
 struct zpctoken * zpcparse(struct zpctoken *queue);
 struct zpctoken * zpceval(struct zpctoken *srcqueue);

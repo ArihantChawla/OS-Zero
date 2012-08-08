@@ -596,9 +596,7 @@ buttonpress(void *arg, XEvent *event)
         return;
     } else if (win->parm == EVAL) {
         if (item->scur == item->str) {
-//            zpcregstk[0] = zpctokenize(zpcregstk[0]->str);
             zpcregstk[0] = zpcparse(zpcregstk[0]);
-//            zpcprintqueue(zpcregstk[0]);
             zpcregstk[0] = zpceval(zpcregstk[0]);
         }
     } else if (win->parm == CLR) {
@@ -662,6 +660,10 @@ buttonpress(void *arg, XEvent *event)
                         
                         return;
                     }
+                } else {
+                    fprintf(stderr, "EEEE\n");
+                    
+                    return;
                 }
             }
         }
@@ -682,12 +684,40 @@ buttonpress(void *arg, XEvent *event)
                     func(src, dest, &res64);
                     token->type = ZPCINT64;
                     token->data.i64 = res64;
-                    sprintf(token->str, "%lld", token->data.i64);
+                    switch (token->radix) {
+                        case 8:
+                            sprintf(token->str, "%llo", token->data.i64);
+
+                            break;
+                        case 10:
+                            sprintf(token->str, "%lld", token->data.i64);
+
+                            break;
+                        case 16:
+                        default:
+                            sprintf(token->str, "0x%llx", token->data.i64);
+
+                            break;
+                    }
                 } else {
                     func(usrc, udest, &ures64);
                     token->type = ZPCUINT64;
                     token->data.u64 = ures64;
-                    sprintf(token->str, "%llu", token->data.u64);
+                    switch (token->radix) {
+                        case 8:
+                            sprintf(token->str, "%llo", token->data.u64);
+
+                            break;
+                        case 10:
+                            sprintf(token->str, "%llu", token->data.u64);
+
+                            break;
+                        case 16:
+                        default:
+                            sprintf(token->str, "0x%llx", token->data.u64);
+
+                            break;
+                    }
                 }
             }
         } else if (type == ZPCFLOAT) {
