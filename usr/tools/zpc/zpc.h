@@ -7,6 +7,7 @@
 #define NREGSTK     1024
 #define TOKENSTRLEN 128
 #define STKSTRLEN   128
+#define DEFAULTDIM  16
 
 #if defined(__alpha__)
 #define BIGENDIAN 1
@@ -52,14 +53,38 @@
 #define ZPCRIGHT      0x11
 #define ZPCFUNC       0x12
 #define ZPCSEP        0x13
-#define ZPCINT64      0x20
-#define ZPCUINT64     0x21
-#define ZPCFLOAT      0x22
-#define ZPCDOUBLE     0x23
-#define ZPCVAR        0x24
+#define ZPCVAR        0x20
+#define ZPCINT64      0x21
+#define ZPCUINT64     0x22
+#define ZPCFLOAT      0x23
+#define ZPCDOUBLE     0x24
+#define ZPCVECTOR     0x25
 #define PARAMSIZEMASK 0xff
 #define PARAMFLOATBIT 0x40000000
 #define PARAMSIGNBIT  0x80000000
+
+struct zpcvector {
+    long              type;
+    long              ndim;
+    struct zpctoken **toktab;
+};
+
+struct zpccomplex {
+    long         type;
+    union {
+        int64_t  i64;
+        uint64_t u64;
+        float    f32;
+        double   f64;
+    } real;
+    union {
+        int64_t  i64;
+        uint64_t u64;
+        float    f32;
+        double   f64;
+    } img;
+};
+
 #define zpcisoper(tp)                                                   \
     ((tp) && ((tp)->type >= ZPCNOT && (tp)->type <= ZPCMOD))
 #define zpcisoperchar(c)                                                \
@@ -73,19 +98,20 @@
 #define zpcwordsize(tp)                                                 \
     ((tp)->param & PARAMSIZEMASK)
 struct zpctoken {
-    long             type;
-    char            *str;
-    long             param;     // # of args for function
-                                // sign-bit, size in bytes
-    long             radix;
+    long                   type;
+    char                  *str;
+    long                   param;
+    long                   radix;
     union {
-        int64_t      i64;
-        uint64_t     u64;
-        float        f32;
-        double       f64;
+        int64_t            i64;
+        uint64_t           u64;
+        float              f32;
+        double             f64;
+        struct zpcvector   vector;
+        struct zpccomplex  complex;
     } data;
-    struct zpctoken *prev;
-    struct zpctoken *next;
+    struct zpctoken       *prev;
+    struct zpctoken       *next;
 };
 
 /* item data types */
