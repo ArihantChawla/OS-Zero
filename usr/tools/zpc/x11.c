@@ -6,11 +6,14 @@
 #include <string.h>
 #include <X11/X.h>
 #include <X11/Xlib.h>
+#include <X11/Xutil.h>
 #include <zpc/zpc.h>
 #include <zpc/op.h>
 #include <zero/cdecl.h>
 #include <zero/param.h>
 #include "x11.h"
+
+#define ZPC_TITLE "Zero Programmer's Calculator"
 
 void imlib2init(struct x11app *app);
 Pixmap imlib2loadimage(struct x11app *app, const char *filename, int w, int h);
@@ -181,6 +184,18 @@ x11drawdisp(void)
                     (fonth + 8) >> 1,
                     item->str, len);
     }
+
+    return;
+}
+
+void x11inittitle(void)
+{
+    XTextProperty titleprop;
+    char          *str = ZPC_TITLE;
+
+    XStringListToTextProperty(&str, 1, &titleprop);
+    XSetWMName(app->display, mainwin, &titleprop);
+    XFree(titleprop.value);
 
     return;
 }
@@ -667,6 +682,7 @@ x11init(void)
                          ZPC_WINDOW_HEIGHT + NSTKREG * (fonth + 8) + NSTKREG + ((fonth + 8) << 1) + 1,
                          ZPCREVERSE);
     app->win = mainwin;
+    x11inittitle();
     x11initgcs();
 #if (ZPCIMLIB2)
     imlib2init(app);
