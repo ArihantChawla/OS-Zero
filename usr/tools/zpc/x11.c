@@ -30,7 +30,9 @@ static zpccfunc_t        *buttonopertab[ZPC_NROW][ZPC_NCOLUMN]
     { NULL, NULL, NULL, div64, shl64, ror64, NULL, NULL },
     { NULL, NULL, NULL, mul64, xor64, rol64, NULL, NULL },
     { NULL, NULL, NULL, sub64, or64, NULL, NULL, NULL },
-    { NULL, NULL, NULL, add64, and64, NULL, NULL, NULL }
+    { NULL, NULL, NULL, add64, and64, NULL, NULL, NULL },
+    { NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL },
+    { NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL }
 };
 static zpccfunc_t        *buttonopertabflt[ZPC_NROW][ZPC_NCOLUMN]
 = {
@@ -39,7 +41,9 @@ static zpccfunc_t        *buttonopertabflt[ZPC_NROW][ZPC_NCOLUMN]
     { NULL, NULL, NULL, fdiv32, NULL, NULL, NULL },
     { NULL, NULL, NULL, mul32, NULL, NULL, NULL },
     { NULL, NULL, NULL, fsub32, NULL, NULL, NULL },
-    { NULL, NULL, NULL, fadd32, NULL, NULL, NULL}
+    { NULL, NULL, NULL, fadd32, NULL, NULL, NULL},
+    { NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL },
+    { NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL }
 };
 static zpccfunc_t        *buttonopertabdbl[ZPC_NROW][ZPC_NCOLUMN]
 = {
@@ -48,7 +52,9 @@ static zpccfunc_t        *buttonopertabdbl[ZPC_NROW][ZPC_NCOLUMN]
     { NULL, NULL, NULL, fdiv64, NULL, NULL, NULL },
     { NULL, NULL, NULL, mul64, NULL, NULL, NULL },
     { NULL, NULL, NULL, fsub64, NULL, NULL, NULL },
-    { NULL, NULL, NULL, fadd64, NULL, NULL, NULL}
+    { NULL, NULL, NULL, fadd64, NULL, NULL, NULL},
+    { NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL },
+    { NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL }
 };
 static Window             buttonwintab[ZPC_NROW][ZPC_NCOLUMN];
 static const char        *buttonstrtab[ZPC_NROW][ZPC_NCOLUMN]
@@ -58,7 +64,9 @@ static const char        *buttonstrtab[ZPC_NROW][ZPC_NCOLUMN]
     { "7", "8", "9", "/", "<<", "..>", "0x", "POP" },
     { "4", "5", "6", "*", "^", "<..", "0b", "DUP" },
     { "1", "2", "3", "-", "|", "=", "f", "DEL" },
-    { "0", ".", ",", "+", "&", NULL, NULL, " " }
+    { "0", ".", ",", "+", "&", " ", NULL, NULL },
+    { "%r0", "%r1", "%r2", "%r3", "%r4", "%r5", "%r6", "%r7" },
+    { "%r8", "%r9", "%r10", "%r11", "%r12", "%r13", "%r14", "%r15" }
 };
 static const char        *buttonlabeltab[ZPC_NROW][ZPC_NCOLUMN]
 = {
@@ -67,7 +75,9 @@ static const char        *buttonlabeltab[ZPC_NROW][ZPC_NCOLUMN]
     { "7", "8", "9", "/", "<<", "..>", "0x", "POP" },
     { "4", "5", "6", "*", "^", "<..", "0b", "DUP" },
     { "1", "2", "3", "-", "|", "=", "f", "DEL" },
-    { "0", ".", ",", "+", "&", "ENTER", "EVAL", "SPC" }
+    { "0", ".", ",", "+", "&", "SPACE", "EVAL", "ENTER" },
+    { " %r0", " %r1", " %r2", " %r3", " %r4", " %r5", " %r6", " %r7" },
+    { " %r8", " %r9", "%r10", "%r11", "%r12", "%r13", "%r14", "%r15" }
 };
 static const char        *buttonasmtab[ZPC_NROW][ZPC_NCOLUMN]
 = {
@@ -76,7 +86,9 @@ static const char        *buttonasmtab[ZPC_NROW][ZPC_NCOLUMN]
     { NULL, NULL, NULL, "div", "shl", "ror", NULL, NULL },
     { NULL, NULL, NULL, "mul", "xor", "rol", NULL, NULL },
     { NULL, NULL, NULL, "sub", "or", NULL, NULL, NULL },
-    { NULL, NULL, NULL, "add", "and", NULL, NULL, NULL }
+    { NULL, NULL, NULL, "add", "and", NULL, NULL, NULL },
+    { NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL },
+    { NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL }
 };
 #define ENTER 0xff
 #define EVAL  0xfe
@@ -92,7 +104,9 @@ static const uint8_t      parmtab[ZPC_NROW][ZPC_NCOLUMN]
     { 0, 0, 0, 2, 2, 2, 0, POP },
     { 0, 0, 0, 2, 2, 2, 0, DUP },
     { 0, 0, 0, 2, 2, 0, 0, DEL },
-    { 0, 0, 0, 2, 2, ENTER, EVAL, 0 }
+    { 0, 0, 0, 2, 2, 0, EVAL, ENTER },
+    { 0, 0, 0, 0, 0, 0, 0, 0 },
+    { 0, 0, 0, 0, 0, 0, 0, 0 }
 };
 static const uint8_t      isflttab[ZPC_NROW][ZPC_NCOLUMN]
 = {
@@ -101,7 +115,9 @@ static const uint8_t      isflttab[ZPC_NROW][ZPC_NCOLUMN]
     { 0, 0, 0, 1, 0, 0, 0, 0 },
     { 0, 0, 0, 1, 0, 0, 0, 0 },
     { 0, 0, 0, 1, 0, 0, 0, 0 },
-    { 0, 0, 0, 1, 0, 0, 0, 0 }
+    { 0, 0, 0, 1, 0, 0, 0, 0 },
+    { 0, 0, 0, 0, 0, 0, 0, 0 },
+    { 0, 0, 0, 0, 0, 0, 0, 0 }
 };
 #define BUTTONNORMAL  0
 #define BUTTONHOVER   1

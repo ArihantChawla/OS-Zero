@@ -981,7 +981,7 @@ zpceval(struct zpctoken *srcqueue)
     struct zpctoken *token1;
     struct zpctoken *token2;
     struct zpctoken *token3;
-    struct zpctoken *token4;
+    struct zpctoken *token4 = token;
     long             type;
     void            *arg1;
     void            *arg2;
@@ -1052,7 +1052,11 @@ zpceval(struct zpctoken *srcqueue)
             }
             func = zpcevaltab[token->type];
             if (func) {
-                func(arg1, arg2, dest);
+                if (token2) {
+                    func(arg2, arg1, dest);
+                } else {
+                    func(arg1, arg2, dest);
+                }
                 if (token1->type == ZPCUINT64) {
                     switch (token1->radix) {
                         case 8:

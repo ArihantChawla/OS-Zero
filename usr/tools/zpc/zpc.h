@@ -27,7 +27,7 @@
 #define ZPC_BUTTON_WIDTH  32
 #define ZPC_BUTTON_HEIGHT 24
 #endif
-#define ZPC_NROW          6
+#define ZPC_NROW          8
 #define ZPC_NCOLUMN       8
 #define ZPC_WINDOW_WIDTH  (ZPC_NCOLUMN * ZPC_BUTTON_WIDTH)
 #define ZPC_WINDOW_HEIGHT (ZPC_NROW * ZPC_BUTTON_HEIGHT)
