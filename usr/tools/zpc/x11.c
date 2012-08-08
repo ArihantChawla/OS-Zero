@@ -1,5 +1,7 @@
 #if (ZPCX11)
 
+/* TODO: add buttons '<', '>', and 'u' */
+
 #include <stddef.h>
 #include <stdlib.h>
 #include <stdio.h>
@@ -676,11 +678,19 @@ x11init(void)
 
         exit(1);
     }
+#if (ZPCIMLIB2)
     mainwin = x11initwin(app, 0,
                          0, 0,
                          ZPC_WINDOW_WIDTH,
                          ZPC_WINDOW_HEIGHT + NSTKREG * (fonth + 8) + NSTKREG + ((fonth + 8) << 1) + 1,
                          ZPCREVERSE);
+#else
+    mainwin = x11initwin(app, 0,
+                         0, 0,
+                         ZPC_WINDOW_WIDTH + ZPC_NCOLUMN - 1,
+                         ZPC_WINDOW_HEIGHT + NSTKREG * (fonth + 8) + NSTKREG + ((fonth + 8) << 1) + 1,
+                         ZPCREVERSE);
+#endif
     app->win = mainwin;
     x11inittitle();
     x11initgcs();
@@ -690,6 +700,15 @@ x11init(void)
 #endif
     for (row = 0 ; row < ZPC_NROW ; row++) {
         for (col = 0 ; col < ZPC_NCOLUMN ; col++) {
+#if (ZPCIMLIB2)
+            win = x11initwin(app,
+                             mainwin,
+                             col * ZPC_BUTTON_WIDTH,
+                             row * ZPC_BUTTON_HEIGHT,
+                             ZPC_BUTTON_WIDTH,
+                             ZPC_BUTTON_HEIGHT,
+                             ZPCREVERSE);
+#else
             win = x11initwin(app,
                              mainwin,
                              col * ZPC_BUTTON_WIDTH + col,
@@ -697,6 +716,7 @@ x11init(void)
                              ZPC_BUTTON_WIDTH,
                              ZPC_BUTTON_HEIGHT,
                              ZPCREVERSE);
+#endif
             if (win) {
                 wininfo = calloc(1, sizeof(struct x11win));
                 wininfo->id = win;
