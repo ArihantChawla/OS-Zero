@@ -82,8 +82,8 @@ static const char        *buttonstrtab[ZPC_NROW][ZPC_NCOLUMN]
     { "4", "5", "6", "*", "^", "<..", "0b", "DUP" },
     { "1", "2", "3", "-", "|", "=", "f", "DEL" },
     { "0", ".", ",", "+", "&", NULL, " ", NULL },
-    { "%r0", "%r1", "%r2", "%r3", "%r4", "%r5", "%r6", "%r7" },
-    { "%r8", "%r9", "%r10", "%r11", "%r12", "%r13", "%r14", "%r15" }
+    { "%st0", "%st1", "%st2", "%st3", "%st4", "%st5", "%st6", "%st7" },
+    { "%st8", "%st9", "%st10", "%st11", "%st12", "%st13", "%st14", "%st15" }
 };
 static const char        *buttonlabeltab[ZPC_NROW][ZPC_NCOLUMN]
 = {
@@ -93,8 +93,8 @@ static const char        *buttonlabeltab[ZPC_NROW][ZPC_NCOLUMN]
     { "4", "5", "6", "*", "^", "<..", "0b", "DUP" },
     { "1", "2", "3", "-", "|", "=", "f", "DEL" },
     { "0", ".", ",", "+", "&", "EVAL", "SPACE", "ENTER" },
-    { " %r0", " %r1", " %r2", " %r3", " %r4", " %r5", " %r6", " %r7" },
-    { " %r8", " %r9", "%r10", "%r11", "%r12", "%r13", "%r14", "%r15" }
+    { " %st0", " %st1", " %st2", " %st3", " %st4", " %st5", " %st6", " %st7" },
+    { " %st8", " %st9", "%st10", "%st11", "%st12", "%st13", "%st14", "%st15" }
 };
 static const char        *buttonasmtab[ZPC_NROW][ZPC_NCOLUMN]
 = {
@@ -573,7 +573,6 @@ buttonpress(void *arg, XEvent *event)
     struct x11win     *win = arg;
     int                evbut = toevbutton(event->xbutton.button);
     struct zpctoken   *token;
-    struct zpctoken   *queue;
     struct zpcstkitem *item = zpcinputitem;
     copfunc_t         *func;
     uint64_t          *usrc = NULL;
@@ -596,7 +595,7 @@ buttonpress(void *arg, XEvent *event)
 
         return;
     } else if (win->parm == EVAL) {
-        if (zpcinputitem->scur == zpcinputitem->str) {
+        if (item->scur == item->str) {
 //            zpcregstk[0] = zpctokenize(zpcregstk[0]->str);
             zpcregstk[0] = zpcparse(zpcregstk[0]);
 //            zpcprintqueue(zpcregstk[0]);
@@ -611,58 +610,60 @@ buttonpress(void *arg, XEvent *event)
             *--item->scur = '\0';
             x11drawdisp();
         }
-    } else if (!win->parm || item->scur != item->str || *win->str == '-') {
+    } else if (!win->parm || item->scur != item->str) {
         stkqueueinput(buttonstrtab[win->row][win->col]);
         x11drawdisp();
 
         return;
-    } else if (win->parm >= 1) {
-        if (zpcregstk[0]) {
-            queue = zpcregstk[0];
-            if (queue) {
-                if (queue->type == ZPCUINT64) {
-                    type = ZPCUINT64;
-                    usrc = &queue->data.u64;
-                } else if (queue->type == ZPCINT64) {
-                    type = ZPCINT64;
-                    src = &queue->data.i64;
-                } else if (queue->type == ZPCFLOAT) {
-                    type = ZPCFLOAT;
-                    fsrc = &queue->data.f32;
-                } else if (queue->type == ZPCDOUBLE) {
-                    dsrc = &queue->data.f64;
-                } else {
-                    fprintf(stderr, "EEEE\n");
-                    
-                    return;
+    } else {
+        if (item->scur == item->str) {
+            if (zpcregstk[0]) {
+                token = zpcregstk[0];
+                if (token) {
+                    zpcfreequeue(token->next);
+                    token->next = NULL;
+                    if (token->type == ZPCUINT64) {
+                        type = ZPCUINT64;
+                        usrc = &token->data.u64;
+                    } else if (token->type == ZPCINT64) {
+                        type = ZPCINT64;
+                        src = &token->data.i64;
+                    } else if (token->type == ZPCFLOAT) {
+                        type = ZPCFLOAT;
+                        fsrc = &token->data.f32;
+                    } else if (token->type == ZPCDOUBLE) {
+                        dsrc = &token->data.f64;
+                    } else {
+                        fprintf(stderr, "EEEE\n");
+                        
+                        return;
+                    }
                 }
-            }
-        } else {
-            fprintf(stderr, "EEEE\n");
-
-            return;
-        }
-    }
-    if (win->parm == 2) {
-        queue = zpcregstk[1];
-        if (queue) {
-            if (type == ZPCUINT64 && queue->type == ZPCUINT64) {
-                udest = &queue->data.u64;
-            } else if (type == ZPCINT64 && queue->type == ZPCINT64) {
-                dest = &queue->data.i64;
-            } else if (type == ZPCFLOAT && queue->type == ZPCFLOAT) {
-                fdest = &queue->data.f32;
-            } else if (type == ZPCDOUBLE && queue->type == ZPCDOUBLE) {
-                ddest = &queue->data.f64;
             } else {
                 fprintf(stderr, "EEEE\n");
                 
                 return;
             }
-        } else if (win->parm == 2) {
-            fprintf(stderr, "EEEE\n");
-            
-            return;
+            if (win->parm == 2) {
+                token = zpcregstk[1];
+                if (token) {
+                    zpcfreequeue(token->next);
+                    token->next = NULL;
+                    if (type == ZPCUINT64 && token->type == ZPCUINT64) {
+                        udest = &token->data.u64;
+                    } else if (type == ZPCINT64 && token->type == ZPCINT64) {
+                        dest = &token->data.i64;
+                    } else if (type == ZPCFLOAT && token->type == ZPCFLOAT) {
+                        fdest = &token->data.f32;
+                    } else if (type == ZPCDOUBLE && token->type == ZPCDOUBLE) {
+                        ddest = &token->data.f64;
+                    } else {
+                        fprintf(stderr, "EEEE\n");
+                        
+                        return;
+                    }
+                }
+            }
         }
     }
 #if 0

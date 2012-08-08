@@ -43,6 +43,21 @@ extern struct zpctoken   *zpcoperstk;
 extern struct zpctoken   *zpcoperstktop;
 
 void
+zpcfreequeue(struct zpctoken *queue)
+{
+    struct zpctoken *token1 = queue;
+    struct zpctoken *token2;
+
+    while (token1) {
+        token2 = token1->next;
+        free(token1);
+        token1 = token2;
+    }
+
+    return;
+}
+
+void
 zpcaddvar(struct zpctoken *token)
 {
     long  key = 0;
