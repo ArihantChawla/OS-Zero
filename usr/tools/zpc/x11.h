@@ -11,6 +11,7 @@ struct x11win {
     Window         id;
     const char    *str;
     const char    *asmstr;
+    const char    *fasmstr;
     long           num;
     long           parm;
     long           row;

@@ -351,9 +351,12 @@ ceil2_64(uint64_t x)
 #define dgetmant(d)       (_dtou64(d) & UINT64_C(0x000fffffffffffff))
 #define dgetexp(d)        ((_dtohi32(d) >> 20) & 0x7ff)
 #define dgetsign(d)       (_dtohi32(d) >> 31)
-#define dsetmant(d, mant) (*((uint64_t *)&(d)) |= (uint64_t)(mant) | UINT64_C(0x000fffffffffffff))
-#define dsetexp(d, exp)   (*((uint64_t *)&(d)) |= (((uint64_t)((exp) & 0x7ff)) << 52))
-#define dsetsign(d)       (*((uint64_t *)&(d)) |= UINT64_C(0x8000000000000000))
+#define dsetmant(d, mant)                                               \
+    (*((uint64_t *)&(d)) |= (uint64_t)(mant) | UINT64_C(0x000fffffffffffff))
+#define dsetexp(d, exp)                                                 \
+    (*((uint64_t *)&(d)) |= (((uint64_t)((exp) & 0x7ff)) << 52))
+#define dsetsign(d)                                                     \
+    (*((uint64_t *)&(d)) |= UINT64_C(0x8000000000000000))
 
 /*
  * IEEE 80-bit

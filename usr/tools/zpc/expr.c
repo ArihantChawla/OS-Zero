@@ -1069,7 +1069,7 @@ zpceval(struct zpctoken *srcqueue)
                             break;
                         case 16:
                         default:
-                            sprintf(token1->str, "%llx", token1->data.u64);
+                            sprintf(token1->str, "0x%llx", token1->data.u64);
 
                             break;
                     }
@@ -1085,7 +1085,7 @@ zpceval(struct zpctoken *srcqueue)
                             break;
                         case 16:
                         default:
-                            sprintf(token1->str, "%llx", token1->data.i64);
+                            sprintf(token1->str, "0x%llx", token1->data.i64);
 
                             break;
                     }

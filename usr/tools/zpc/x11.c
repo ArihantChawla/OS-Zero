@@ -90,6 +90,17 @@ static const char        *buttonasmtab[ZPC_NROW][ZPC_NCOLUMN]
     { NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL },
     { NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL }
 };
+static const char        *buttonfltasmtab[ZPC_NROW][ZPC_NCOLUMN]
+= {
+    { NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL },
+    { NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL },
+    { NULL, NULL, NULL, "fdiv", NULL, NULL, NULL, NULL },
+    { NULL, NULL, NULL, "fmul", NULL, NULL, NULL, NULL },
+    { NULL, NULL, NULL, "fsub", NULL, NULL, NULL, NULL },
+    { NULL, NULL, NULL, "fadd", NULL, NULL, NULL, NULL },
+    { NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL },
+    { NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL }
+};
 #define ENTER 0xff
 #define EVAL  0xfe
 #define CLR   0xfd
@@ -367,12 +378,34 @@ buttonexpose(void *arg, XEvent *event)
         XClearWindow(app->display, win->id);
     }
     if (win->str) {
+        if (win->fasmstr) {
+            len = strlen(win->fasmstr);
+            XDrawString(app->display, win->id, textgc,
+                        ZPC_BUTTON_WIDTH - len * fontw - 4,
+                        ZPC_BUTTON_HEIGHT - fonth + 8,
+                        win->fasmstr, len);
+            if (win->asmstr) {
+                len = strlen(win->asmstr);
+                XDrawString(app->display, win->id, textgc,
+                            4,
+                            ZPC_BUTTON_HEIGHT - fonth + 8,
+                            win->asmstr, len);
+            }
+        } else if (win->asmstr) {
+            len = strlen(win->asmstr);
+            if (len) {
+                XDrawString(app->display, win->id, textgc,
+                            (ZPC_BUTTON_WIDTH - len * fontw) >> 1,
+                            ZPC_BUTTON_HEIGHT - fonth + 8,
+                            win->asmstr, len);
+            }
+        }
         len = strlen(win->str);
         if (len) {
             if (win->asmstr) {
                 XDrawString(app->display, win->id, textgc,
                             (ZPC_BUTTON_WIDTH - len * fontw) >> 1,
-                            fonth + 2,
+                            (ZPC_BUTTON_HEIGHT + fonth) >> 1,
                             win->str, len);
             } else {
                 XDrawString(app->display, win->id, textgc,
@@ -382,6 +415,7 @@ buttonexpose(void *arg, XEvent *event)
             }
         }
     }
+#if 0
     if (win->asmstr) {
         len = strlen(win->asmstr);
         if (len) {
@@ -391,6 +425,7 @@ buttonexpose(void *arg, XEvent *event)
                         win->asmstr, len);
         }
     }
+#endif
     XSync(app->display, False);
 
     return;
@@ -662,6 +697,7 @@ x11init(void)
                 wininfo->id = win;
                 wininfo->str = buttonlabeltab[row][col];
                 wininfo->asmstr = buttonasmtab[row][col];
+                wininfo->fasmstr = buttonfltasmtab[row][col];
                 wininfo->parm = parmtab[row][col];
                 wininfo->row = row;
                 wininfo->col = col;
