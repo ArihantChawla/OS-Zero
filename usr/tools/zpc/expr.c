@@ -245,6 +245,7 @@ void zpcinitcop(void)
     zpcoperchartab['*'] = '*';
     zpcoperchartab['/'] = '/';
     zpcoperchartab['%'] = '%';
+    zpcoperchartab['='] = '%';
 }
 
 void

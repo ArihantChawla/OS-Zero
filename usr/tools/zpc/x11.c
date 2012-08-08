@@ -6,6 +6,7 @@
 #include <stdlib.h>
 #include <stdio.h>
 #include <string.h>
+#include <ctype.h>
 #include <X11/X.h>
 #include <X11/Xlib.h>
 #include <X11/Xutil.h>
@@ -62,6 +63,17 @@ static zpccfunc_t        *buttonopertabdbl[ZPC_NROW][ZPC_NCOLUMN]
     { NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL }
 };
 static Window             buttonwintab[ZPC_NROW][ZPC_NCOLUMN];
+static uint8_t            buttontypetab[ZPC_NROW][ZPC_NCOLUMN] =
+{
+    { ZPCBUTTONDIGIT, ZPCBUTTONDIGIT, ZPCBUTTONDIGIT, ZPCBUTTONOPER, ZPCBUTTONOPER, ZPCBUTTONOPER, ZPCBUTTONUTIL, ZPCBUTTONUTIL },
+    { ZPCBUTTONDIGIT, ZPCBUTTONDIGIT, ZPCBUTTONDIGIT, ZPCBUTTONOPER, ZPCBUTTONOPER, ZPCBUTTONOPER, ZPCBUTTONUTIL, ZPCBUTTONUTIL },
+    { ZPCBUTTONDIGIT, ZPCBUTTONDIGIT, ZPCBUTTONDIGIT, ZPCBUTTONOPER, ZPCBUTTONOPER, ZPCBUTTONOPER, ZPCBUTTONUTIL, ZPCBUTTONUTIL },
+    { ZPCBUTTONDIGIT, ZPCBUTTONDIGIT, ZPCBUTTONDIGIT, ZPCBUTTONOPER, ZPCBUTTONOPER, ZPCBUTTONOPER, ZPCBUTTONUTIL, ZPCBUTTONUTIL },
+    { ZPCBUTTONDIGIT, ZPCBUTTONDIGIT, ZPCBUTTONDIGIT, ZPCBUTTONOPER, ZPCBUTTONOPER, ZPCBUTTONOPER, ZPCBUTTONUTIL, ZPCBUTTONUTIL },
+    { ZPCBUTTONDIGIT, ZPCBUTTONDIGIT, ZPCBUTTONDIGIT, ZPCBUTTONOPER, ZPCBUTTONOPER, ZPCBUTTONOPER, ZPCBUTTONUTIL, ZPCBUTTONUTIL },
+    { ZPCBUTTONREG, ZPCBUTTONREG, ZPCBUTTONREG, ZPCBUTTONREG, ZPCBUTTONREG, ZPCBUTTONREG, ZPCBUTTONREG, ZPCBUTTONREG },
+    { ZPCBUTTONREG, ZPCBUTTONREG, ZPCBUTTONREG, ZPCBUTTONREG, ZPCBUTTONREG, ZPCBUTTONREG, ZPCBUTTONREG, ZPCBUTTONREG }
+};
 static const char        *buttonstrtab[ZPC_NROW][ZPC_NCOLUMN]
 = {
     { "d", "e", "f", "~", ">>>", "++", "(", "CLR" },
@@ -69,7 +81,7 @@ static const char        *buttonstrtab[ZPC_NROW][ZPC_NCOLUMN]
     { "7", "8", "9", "/", "<<", "..>", "0x", "POP" },
     { "4", "5", "6", "*", "^", "<..", "0b", "DUP" },
     { "1", "2", "3", "-", "|", "=", "f", "DEL" },
-    { "0", ".", ",", "+", "&", " ", NULL, NULL },
+    { "0", ".", ",", "+", "&", NULL, " ", NULL },
     { "%r0", "%r1", "%r2", "%r3", "%r4", "%r5", "%r6", "%r7" },
     { "%r8", "%r9", "%r10", "%r11", "%r12", "%r13", "%r14", "%r15" }
 };
@@ -80,7 +92,7 @@ static const char        *buttonlabeltab[ZPC_NROW][ZPC_NCOLUMN]
     { "7", "8", "9", "/", "<<", "..>", "0x", "POP" },
     { "4", "5", "6", "*", "^", "<..", "0b", "DUP" },
     { "1", "2", "3", "-", "|", "=", "f", "DEL" },
-    { "0", ".", ",", "+", "&", "SPACE", "EVAL", "ENTER" },
+    { "0", ".", ",", "+", "&", "EVAL", "SPACE", "ENTER" },
     { " %r0", " %r1", " %r2", " %r3", " %r4", " %r5", " %r6", " %r7" },
     { " %r8", " %r9", "%r10", "%r11", "%r12", "%r13", "%r14", "%r15" }
 };
@@ -120,7 +132,7 @@ static const uint8_t      parmtab[ZPC_NROW][ZPC_NCOLUMN]
     { 0, 0, 0, 2, 2, 2, 0, POP },
     { 0, 0, 0, 2, 2, 2, 0, DUP },
     { 0, 0, 0, 2, 2, 0, 0, DEL },
-    { 0, 0, 0, 2, 2, 0, EVAL, ENTER },
+    { 0, 0, 0, 2, 2, EVAL, 0, ENTER },
     { 0, 0, 0, 0, 0, 0, 0, 0 },
     { 0, 0, 0, 0, 0, 0, 0, 0 }
 };
@@ -148,6 +160,10 @@ static struct x11app *app;
 static Window         mainwin;
 static Window         inputwin;
 GC                    textgc;
+GC                    asmtextgc;
+GC                    numtextgc;
+GC                    optextgc;
+GC                    utiltextgc;
 
 void
 x11drawdisp(void)
@@ -206,6 +222,7 @@ void
 x11initgcs(void)
 {
     XGCValues gcval;
+    XColor    color;
 
 #if (ZPCREVERSE)
     gcval.foreground = WhitePixel(app->display, DefaultScreen(app->display));
@@ -214,11 +231,90 @@ x11initgcs(void)
 #endif
     gcval.font = font->fid;
     gcval.graphics_exposures = False;
-
     textgc = XCreateGC(app->display, app->win,
                        GCForeground | GCFont | GCGraphicsExposures,
                        &gcval);
     if (!textgc) {
+        fprintf(stderr, "failed to create GC\n");
+
+        exit(1);
+    }
+    numtextgc = XCreateGC(app->display, app->win,
+                          GCForeground | GCFont | GCGraphicsExposures,
+                          &gcval);
+    if (!numtextgc) {
+        fprintf(stderr, "failed to create GC\n");
+        
+        exit(1);
+    }
+    if (!XParseColor(app->display,
+                     app->colormap,
+                     "orange",
+                     &color)) {
+        fprintf(stderr, "failed to parse color 'orange'\n");
+
+        exit(1);
+    }
+    if (!XAllocColor(app->display,
+                     app->colormap,
+                     &color)) {
+        fprintf(stderr, "failed to parse color 'orange'\n");
+
+        exit(1);
+    }
+    gcval.foreground = color.pixel;
+    asmtextgc = XCreateGC(app->display, app->win,
+                       GCForeground | GCFont | GCGraphicsExposures,
+                       &gcval);
+    if (!asmtextgc) {
+        fprintf(stderr, "failed to create GC\n");
+
+        exit(1);
+    }
+    if (!XParseColor(app->display,
+                     app->colormap,
+                     "green",
+                     &color)) {
+        fprintf(stderr, "failed to parse color 'green'\n");
+
+        exit(1);
+    }
+    if (!XAllocColor(app->display,
+                     app->colormap,
+                     &color)) {
+        fprintf(stderr, "failed to parse color 'green'\n");
+
+        exit(1);
+    }
+    gcval.foreground = color.pixel;
+    optextgc = XCreateGC(app->display, app->win,
+                         GCForeground | GCFont | GCGraphicsExposures,
+                         &gcval);
+    if (!optextgc) {
+        fprintf(stderr, "failed to create GC\n");
+
+        exit(1);
+    }
+    if (!XParseColor(app->display,
+                     app->colormap,
+                     "light blue",
+                     &color)) {
+        fprintf(stderr, "failed to parse color 'light blue'\n");
+
+        exit(1);
+    }
+    if (!XAllocColor(app->display,
+                     app->colormap,
+                     &color)) {
+        fprintf(stderr, "failed to parse color 'light blue'\n");
+
+        exit(1);
+    }
+    gcval.foreground = color.pixel;
+    utiltextgc = XCreateGC(app->display, app->win,
+                          GCForeground | GCFont | GCGraphicsExposures,
+                          &gcval);
+    if (!utiltextgc) {
         fprintf(stderr, "failed to create GC\n");
 
         exit(1);
@@ -397,13 +493,13 @@ buttonexpose(void *arg, XEvent *event)
     if (win->str) {
         if (win->fasmstr) {
             len = strlen(win->fasmstr);
-            XDrawString(app->display, win->id, textgc,
+            XDrawString(app->display, win->id, asmtextgc,
                         ZPC_BUTTON_WIDTH - len * fontw - 4,
                         ZPC_BUTTON_HEIGHT - fonth + 8,
                         win->fasmstr, len);
             if (win->asmstr) {
                 len = strlen(win->asmstr);
-                XDrawString(app->display, win->id, textgc,
+                XDrawString(app->display, win->id, asmtextgc,
                             4,
                             ZPC_BUTTON_HEIGHT - fonth + 8,
                             win->asmstr, len);
@@ -411,7 +507,7 @@ buttonexpose(void *arg, XEvent *event)
         } else if (win->asmstr) {
             len = strlen(win->asmstr);
             if (len) {
-                XDrawString(app->display, win->id, textgc,
+                XDrawString(app->display, win->id, asmtextgc,
                             (ZPC_BUTTON_WIDTH - len * fontw) >> 1,
                             ZPC_BUTTON_HEIGHT - fonth + 8,
                             win->asmstr, len);
@@ -420,12 +516,12 @@ buttonexpose(void *arg, XEvent *event)
         len = strlen(win->str);
         if (len) {
             if (win->asmstr) {
-                XDrawString(app->display, win->id, textgc,
+                XDrawString(app->display, win->id, win->textgc,
                             (ZPC_BUTTON_WIDTH - len * fontw) >> 1,
                             (ZPC_BUTTON_HEIGHT + fonth) >> 1,
                             win->str, len);
             } else {
-                XDrawString(app->display, win->id, textgc,
+                XDrawString(app->display, win->id, win->textgc,
                             (ZPC_BUTTON_WIDTH - len * fontw) >> 1,
                             (ZPC_BUTTON_HEIGHT + fonth) >> 1,
                             win->str, len);
@@ -723,6 +819,20 @@ x11init(void)
                 wininfo->str = buttonlabeltab[row][col];
                 wininfo->asmstr = buttonasmtab[row][col];
                 wininfo->fasmstr = buttonfltasmtab[row][col];
+                wininfo->type = buttontypetab[row][col];
+                if (wininfo->str) {
+                    if (wininfo->type == ZPCBUTTONREG) {
+                        wininfo->textgc = asmtextgc;
+                    } else if (wininfo->type == ZPCBUTTONOPER) {
+                        wininfo->textgc = optextgc;
+                    } else if (wininfo->type == ZPCBUTTONDIGIT) {
+                        wininfo->textgc = numtextgc;
+                    } else if (wininfo->type == ZPCBUTTONUTIL) {
+                        wininfo->textgc = utiltextgc;
+                    } else {
+                        wininfo->textgc = textgc;
+                    }
+                }
                 wininfo->parm = parmtab[row][col];
                 wininfo->row = row;
                 wininfo->col = col;

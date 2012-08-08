@@ -12,6 +12,8 @@ struct x11win {
     const char    *str;
     const char    *asmstr;
     const char    *fasmstr;
+    GC             textgc;
+    long           type;
     long           num;
     long           parm;
     long           row;

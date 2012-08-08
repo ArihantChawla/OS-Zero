@@ -63,6 +63,11 @@
 #define PARAMFLOATBIT 0x40000000
 #define PARAMSIGNBIT  0x80000000
 
+#define ZPCBUTTONDIGIT 0x00
+#define ZPCBUTTONOPER  0x01
+#define ZPCBUTTONREG   0x02
+#define ZPCBUTTONUTIL  0x03
+
 struct zpcvector {
     long              type;
     long              ndim;
