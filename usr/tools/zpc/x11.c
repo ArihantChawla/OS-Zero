@@ -415,17 +415,6 @@ buttonexpose(void *arg, XEvent *event)
             }
         }
     }
-#if 0
-    if (win->asmstr) {
-        len = strlen(win->asmstr);
-        if (len) {
-            XDrawString(app->display, win->id, textgc,
-                        (ZPC_BUTTON_WIDTH - len * fontw) >> 1,
-                        ZPC_BUTTON_HEIGHT - fonth + 4,
-                        win->asmstr, len);
-        }
-    }
-#endif
     XSync(app->display, False);
 
     return;
