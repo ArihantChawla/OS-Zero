@@ -21,6 +21,8 @@
 #define ZPCREVERSE 0
 #endif
 
+typedef void zpcaction_t(void);
+
 #define BIGBUTTONS 1
 #if (BIGBUTTONS)
 #define ZPC_BUTTON_WIDTH  64
@@ -29,8 +31,8 @@
 #define ZPC_BUTTON_WIDTH  32
 #define ZPC_BUTTON_HEIGHT 24
 #endif
-#define ZPC_NROW          8
-#define ZPC_NCOLUMN       8
+#define ZPC_NROW          9
+#define ZPC_NCOLUMN       9
 #define ZPC_WINDOW_WIDTH  (ZPC_NCOLUMN * ZPC_BUTTON_WIDTH)
 #define ZPC_WINDOW_HEIGHT (ZPC_NROW * ZPC_BUTTON_HEIGHT)
 
@@ -64,10 +66,10 @@
 #define PARAMFLOATBIT 0x40000000
 #define PARAMSIGNBIT  0x80000000
 
-#define ZPCBUTTONDIGIT 0x00
-#define ZPCBUTTONOPER  0x01
-#define ZPCBUTTONREG   0x02
-#define ZPCBUTTONUTIL  0x03
+#define ZPCBUTTONDIGIT 0x01
+#define ZPCBUTTONOPER  0x02
+#define ZPCBUTTONASM   0x03
+#define ZPCBUTTONUTIL  0x04
 
 struct zpcvector {
     long              type;

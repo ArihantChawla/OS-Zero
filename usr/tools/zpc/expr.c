@@ -1097,7 +1097,6 @@ zpceval(struct zpctoken *srcqueue)
             }
             if (zpccopnargtab[token->type] == 2) {
                 token2 = zpcpoptoken(&stack);
-                printtoken(token2);
                 if (!token2) {
                     fprintf(stderr, "missing argument 2\n");
 

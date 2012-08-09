@@ -24,6 +24,13 @@ Pixmap imlib2loadimage(struct x11app *app, const char *filename, int w, int h);
 void stkenterinput(void);
 void stkqueueinput(const char *str);
 
+void zpcdel(void);
+void zpccls(void);
+void zpcclrstk(void);
+void zpcevaltop(void);
+void zpcenter(void);
+void zpcquit(void);
+
 extern struct zpctoken   *zpcregstk[];
 extern struct zpcstkitem *zpcinputitem;
 
@@ -31,108 +38,131 @@ extern struct zpcstkitem *zpcinputitem;
 static struct x11win     *winhash[NHASHITEM] ALIGNED(PAGESIZE);
 static zpccfunc_t        *buttonopertab[ZPC_NROW][ZPC_NCOLUMN]
 = {
-    { NULL, NULL, NULL, not64, shr64, inc64, NULL, NULL },
-    { NULL, NULL, NULL, mod64, shrl64, dec64, NULL, NULL },
-    { NULL, NULL, NULL, div64, shl64, ror64, NULL, NULL },
-    { NULL, NULL, NULL, mul64, xor64, rol64, NULL, NULL },
-    { NULL, NULL, NULL, sub64, or64, NULL, NULL, NULL },
-    { NULL, NULL, NULL, add64, and64, NULL, NULL, NULL },
-    { NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL },
-    { NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL }
+    { NULL, NULL, NULL, not64, shr64, inc64, NULL, NULL, NULL },
+    { NULL, NULL, NULL, mod64, shrl64, dec64, NULL, NULL, NULL },
+    { NULL, NULL, NULL, div64, shl64, ror64, NULL, NULL, NULL },
+    { NULL, NULL, NULL, mul64, xor64, rol64, NULL, NULL, NULL },
+    { NULL, NULL, NULL, sub64, or64, NULL, NULL, NULL, NULL },
+    { NULL, NULL, NULL, add64, and64, NULL, NULL, NULL, NULL },
+    { NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL },
+    { NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL },
+    { NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL }
 };
 static zpccfunc_t        *buttonopertabflt[ZPC_NROW][ZPC_NCOLUMN]
 = {
-    { NULL, NULL, NULL, NULL, NULL, NULL, NULL },
-    { NULL, NULL, NULL, NULL, NULL, NULL, NULL },
-    { NULL, NULL, NULL, fdiv32, NULL, NULL, NULL },
-    { NULL, NULL, NULL, mul32, NULL, NULL, NULL },
-    { NULL, NULL, NULL, fsub32, NULL, NULL, NULL },
-    { NULL, NULL, NULL, fadd32, NULL, NULL, NULL},
     { NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL },
-    { NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL }
+    { NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL },
+    { NULL, NULL, NULL, fdiv32, NULL, NULL, NULL, NULL },
+    { NULL, NULL, NULL, mul32, NULL, NULL, NULL, NULL },
+    { NULL, NULL, NULL, fsub32, NULL, NULL, NULL, NULL },
+    { NULL, NULL, NULL, fadd32, NULL, NULL, NULL},
+    { NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL },
+    { NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL },
+    { NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL }
 };
 static zpccfunc_t        *buttonopertabdbl[ZPC_NROW][ZPC_NCOLUMN]
 = {
-    { NULL, NULL, NULL, NULL, NULL, NULL, NULL },
-    { NULL, NULL, NULL, NULL, NULL, NULL, NULL },
-    { NULL, NULL, NULL, fdiv64, NULL, NULL, NULL },
-    { NULL, NULL, NULL, mul64, NULL, NULL, NULL },
-    { NULL, NULL, NULL, fsub64, NULL, NULL, NULL },
-    { NULL, NULL, NULL, fadd64, NULL, NULL, NULL},
     { NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL },
-    { NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL }
+    { NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL },
+    { NULL, NULL, NULL, fdiv64, NULL, NULL, NULL, NULL },
+    { NULL, NULL, NULL, mul64, NULL, NULL, NULL, NULL },
+    { NULL, NULL, NULL, fsub64, NULL, NULL, NULL, NULL },
+    { NULL, NULL, NULL, fadd64, NULL, NULL, NULL},
+    { NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL },
+    { NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL },
+    { NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL }
 };
 static Window             buttonwintab[ZPC_NROW][ZPC_NCOLUMN];
 static uint8_t            buttontypetab[ZPC_NROW][ZPC_NCOLUMN] =
 {
-    { ZPCBUTTONDIGIT, ZPCBUTTONDIGIT, ZPCBUTTONDIGIT, ZPCBUTTONOPER, ZPCBUTTONOPER, ZPCBUTTONOPER, ZPCBUTTONUTIL, ZPCBUTTONUTIL },
-    { ZPCBUTTONDIGIT, ZPCBUTTONDIGIT, ZPCBUTTONDIGIT, ZPCBUTTONOPER, ZPCBUTTONOPER, ZPCBUTTONOPER, ZPCBUTTONUTIL, ZPCBUTTONUTIL },
-    { ZPCBUTTONDIGIT, ZPCBUTTONDIGIT, ZPCBUTTONDIGIT, ZPCBUTTONOPER, ZPCBUTTONOPER, ZPCBUTTONOPER, ZPCBUTTONUTIL, ZPCBUTTONUTIL },
-    { ZPCBUTTONDIGIT, ZPCBUTTONDIGIT, ZPCBUTTONDIGIT, ZPCBUTTONOPER, ZPCBUTTONOPER, ZPCBUTTONOPER, ZPCBUTTONUTIL, ZPCBUTTONUTIL },
-    { ZPCBUTTONDIGIT, ZPCBUTTONDIGIT, ZPCBUTTONDIGIT, ZPCBUTTONOPER, ZPCBUTTONOPER, ZPCBUTTONOPER, ZPCBUTTONUTIL, ZPCBUTTONUTIL },
-    { ZPCBUTTONDIGIT, ZPCBUTTONDIGIT, ZPCBUTTONDIGIT, ZPCBUTTONOPER, ZPCBUTTONOPER, ZPCBUTTONOPER, ZPCBUTTONUTIL, ZPCBUTTONUTIL },
-    { ZPCBUTTONREG, ZPCBUTTONREG, ZPCBUTTONREG, ZPCBUTTONREG, ZPCBUTTONREG, ZPCBUTTONREG, ZPCBUTTONREG, ZPCBUTTONREG },
-    { ZPCBUTTONREG, ZPCBUTTONREG, ZPCBUTTONREG, ZPCBUTTONREG, ZPCBUTTONREG, ZPCBUTTONREG, ZPCBUTTONREG, ZPCBUTTONREG }
+    { ZPCBUTTONDIGIT, ZPCBUTTONDIGIT, ZPCBUTTONDIGIT, ZPCBUTTONOPER, ZPCBUTTONOPER, ZPCBUTTONOPER, ZPCBUTTONUTIL, ZPCBUTTONUTIL, ZPCBUTTONUTIL },
+    { ZPCBUTTONDIGIT, ZPCBUTTONDIGIT, ZPCBUTTONDIGIT, ZPCBUTTONOPER, ZPCBUTTONOPER, ZPCBUTTONOPER, ZPCBUTTONUTIL, ZPCBUTTONUTIL, ZPCBUTTONUTIL },
+    { ZPCBUTTONDIGIT, ZPCBUTTONDIGIT, ZPCBUTTONDIGIT, ZPCBUTTONOPER, ZPCBUTTONOPER, ZPCBUTTONOPER, ZPCBUTTONUTIL, ZPCBUTTONUTIL, ZPCBUTTONUTIL },
+    { ZPCBUTTONDIGIT, ZPCBUTTONDIGIT, ZPCBUTTONDIGIT, ZPCBUTTONOPER, ZPCBUTTONOPER, ZPCBUTTONOPER, ZPCBUTTONUTIL, ZPCBUTTONUTIL, ZPCBUTTONUTIL },
+    { ZPCBUTTONDIGIT, ZPCBUTTONDIGIT, ZPCBUTTONDIGIT, ZPCBUTTONOPER, ZPCBUTTONOPER, ZPCBUTTONOPER, ZPCBUTTONUTIL, ZPCBUTTONUTIL, ZPCBUTTONUTIL },
+    { ZPCBUTTONDIGIT, ZPCBUTTONDIGIT, ZPCBUTTONDIGIT, ZPCBUTTONOPER, ZPCBUTTONOPER, ZPCBUTTONOPER, ZPCBUTTONUTIL, ZPCBUTTONUTIL, ZPCBUTTONUTIL },
+    { ZPCBUTTONUTIL, ZPCBUTTONUTIL, ZPCBUTTONUTIL, ZPCBUTTONUTIL, ZPCBUTTONUTIL, ZPCBUTTONUTIL, ZPCBUTTONUTIL, ZPCBUTTONUTIL, ZPCBUTTONUTIL },
+    { ZPCBUTTONASM, ZPCBUTTONASM, ZPCBUTTONASM, ZPCBUTTONASM, ZPCBUTTONASM, ZPCBUTTONASM, ZPCBUTTONASM, ZPCBUTTONASM, ZPCBUTTONASM },
+    { ZPCBUTTONASM, ZPCBUTTONASM, ZPCBUTTONASM, ZPCBUTTONASM, ZPCBUTTONASM, ZPCBUTTONASM, ZPCBUTTONASM, ZPCBUTTONASM, ZPCBUTTONASM }
 };
 static const char        *buttonstrtab[ZPC_NROW][ZPC_NCOLUMN]
 = {
-    { "d", "e", "f", "~", ">>>", "++", "(", "CLR" },
-    { "a", "b", "c", "%", ">>", "--", ")", "COPY" },
-    { "7", "8", "9", "/", "<<", "..>", "0x", "POP" },
-    { "4", "5", "6", "*", "^", "<..", "0b", "DUP" },
-    { "1", "2", "3", "-", "|", "=", "f", "DEL" },
-    { "0", ".", ",", "+", "&", NULL, " ", NULL },
-    { "%st0", "%st1", "%st2", "%st3", "%st4", "%st5", "%st6", "%st7" },
-    { "%st8", "%st9", "%st10", "%st11", "%st12", "%st13", "%st14", "%st15" }
+    { "d", "e", "f", "~", ">>>", "++", "(", "QUIT", NULL },
+    { "a", "b", "c", "%", ">>", "--", ")", "CLR", NULL },
+    { "7", "8", "9", "/", "<<", "..>", "0x", "COPY", NULL },
+    { "4", "5", "6", "*", "^", "<..", "0b", "POP", NULL },
+    { "1", "2", "3", "-", "|", "=", "f", "DUP", NULL },
+    { "0", ".", ",", "+", "&", NULL, "u", "DROP", NULL },
+    { " ", NULL, NULL, "<", ">", "[", "]", "ENTER", NULL },
+    { "%st0", "%st1", "%st2", "%st3", "%st4", "%st5", "%st6", "%st7", NULL },
+    { "%st8", "%st9", "%st10", "%st11", "%st12", "%st13", "%st14", "%st15", NULL }
 };
 static const char        *buttonlabeltab[ZPC_NROW][ZPC_NCOLUMN]
 = {
-    { "d", "e", "f", "~", ">>>", "++", "(", "CLR" },
-    { "a", "b", "c", "%", ">>", "--", ")", "COPY" },
-    { "7", "8", "9", "/", "<<", "..>", "0x", "POP" },
-    { "4", "5", "6", "*", "^", "<..", "0b", "DUP" },
-    { "1", "2", "3", "-", "|", "=", "f", "DEL" },
-    { "0", ".", ",", "+", "&", "EVAL", "SPACE", "ENTER" },
-    { " %st0", " %st1", " %st2", " %st3", " %st4", " %st5", " %st6", " %st7" },
-    { " %st8", " %st9", "%st10", "%st11", "%st12", "%st13", "%st14", "%st15" }
+    { "d", "e", "f", "~", ">>>", "++", "(", "QUIT", "EQU" },
+    { "a", "b", "c", "%", ">>", "--", ")", "CLR", "VEC" },
+    { "7", "8", "9", "/", "<<", "..>", "0x", "COPY", "MAT" },
+    { "4", "5", "6", "*", "^", "<..", "0b", "POP", "PLOT" },
+    { "1", "2", "3", "-", "|", "=", "f", "DUP", "RAD" },
+    { "0", ".", ",", "+", "&", "EVAL", "u", "DROP", "UNIT" },
+    { "SPACE", "DEL", "CLS", "<", ">", "[", "]", "ENTER", NULL },
+    { " %st0", " %st1", " %st2", " %st3", " %st4", " %st5", " %st6", " %st7", "LOAD" },
+    { " %st8", " %st9", "%st10", "%st11", "%st12", "%st13", "%st14", "%st15", "EXEC" }
 };
 static const char        *buttonasmtab[ZPC_NROW][ZPC_NCOLUMN]
 = {
-    { NULL, NULL, NULL, "not", "shra", "inc", NULL, NULL },
-    { NULL, NULL, NULL, "mod", "shr", "dec", NULL, NULL },
-    { NULL, NULL, NULL, "div", "shl", "ror", NULL, NULL },
-    { NULL, NULL, NULL, "mul", "xor", "rol", NULL, NULL },
-    { NULL, NULL, NULL, "sub", "or", NULL, NULL, NULL },
-    { NULL, NULL, NULL, "add", "and", NULL, NULL, NULL },
-    { NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL },
-    { NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL }
+    { NULL, NULL, NULL, "not", "shra", "inc", NULL, NULL, NULL },
+    { NULL, NULL, NULL, "mod", "shr", "dec", NULL, NULL, NULL },
+    { NULL, NULL, NULL, "div", "shl", "ror", NULL, NULL, NULL },
+    { NULL, NULL, NULL, "mul", "xor", "rol", NULL, NULL, NULL },
+    { NULL, NULL, NULL, "sub", "or", NULL, NULL, NULL, NULL },
+    { NULL, NULL, NULL, "add", "and", NULL, NULL, NULL, NULL },
+    { NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL },
+    { NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL },
+    { NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL }
 };
 static const char        *buttonfltasmtab[ZPC_NROW][ZPC_NCOLUMN]
 = {
-    { NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL },
-    { NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL },
-    { NULL, NULL, NULL, "fdiv", NULL, NULL, NULL, NULL },
-    { NULL, NULL, NULL, "fmul", NULL, NULL, NULL, NULL },
-    { NULL, NULL, NULL, "fsub", NULL, NULL, NULL, NULL },
-    { NULL, NULL, NULL, "fadd", NULL, NULL, NULL, NULL },
-    { NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL },
-    { NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL }
+    { NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL },
+    { NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL },
+    { NULL, NULL, NULL, "fdiv", NULL, NULL, NULL, NULL, NULL },
+    { NULL, NULL, NULL, "fmul", NULL, NULL, NULL, NULL, NULL },
+    { NULL, NULL, NULL, "fsub", NULL, NULL, NULL, NULL, NULL },
+    { NULL, NULL, NULL, "fadd", NULL, NULL, NULL, NULL, NULL },
+    { NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL },
+    { NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL },
+    { NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL }
 };
-#define ENTER 0xff
-#define EVAL  0xfe
-#define CLR   0xfd
-#define COPY  0xfc
-#define POP   0xfb
-#define DUP   0xfa
-#define DEL   0xef
+#define QUIT  0xff
+#define ENTER 0xfe
+#define EVAL  0xfd
+#define CLR   0xfc
+#define COPY  0xfb
+#define POP   0xfa
+#define DUP   0xf9
+#define DROP  0xf8
+#define DEL   0xf7
+#define CLS   0xf6
+#define EQU   0xf5
+#define VEC   0xf4
+#define MAT   0xf3
+#define PLOT  0xf2
+#define RAD   0xf1
+#define UNIT  0xf0
+#define LAST  0xf0
+#define isaction(i)                                                     \
+    ((i) >= UNIT && (i) <= QUIT)
+#define toaction(i)                                                     \
+    ((i) - LAST)
 static const uint8_t      parmtab[ZPC_NROW][ZPC_NCOLUMN]
 = {
-    { 0, 0, 0, 1, 2, 1, 0, CLR },
-    { 0, 0, 0, 2, 2, 1, 0, COPY },
+    { 0, 0, 0, 1, 2, 1, 0, QUIT },
+    { 0, 0, 0, 2, 2, 1, 0, CLR },
+    { 0, 0, 0, 2, 2, 2, 0, COPY },
     { 0, 0, 0, 2, 2, 2, 0, POP },
-    { 0, 0, 0, 2, 2, 2, 0, DUP },
-    { 0, 0, 0, 2, 2, 0, 0, DEL },
-    { 0, 0, 0, 2, 2, EVAL, 0, ENTER },
+    { 0, 0, 0, 2, 2, 0, 0, DUP },
+    { 0, 0, 0, 2, 2, EVAL, 0, DROP },
+    { 0, DEL, CLS, 0, 0, 0, 0, ENTER },
     { 0, 0, 0, 0, 0, 0, 0, 0 },
     { 0, 0, 0, 0, 0, 0, 0, 0 }
 };
@@ -145,7 +175,27 @@ static const uint8_t      isflttab[ZPC_NROW][ZPC_NCOLUMN]
     { 0, 0, 0, 1, 0, 0, 0, 0 },
     { 0, 0, 0, 1, 0, 0, 0, 0 },
     { 0, 0, 0, 0, 0, 0, 0, 0 },
+    { 0, 0, 0, 0, 0, 0, 0, 0 },
     { 0, 0, 0, 0, 0, 0, 0, 0 }
+};
+static zpcaction_t *actiontab[0xff - LAST + 1] =
+{
+    NULL,
+    NULL,
+    NULL,
+    NULL,
+    NULL,
+    NULL,
+    zpccls,
+    zpcdel,
+    NULL,
+    NULL,
+    NULL,
+    NULL,
+    zpcclrstk,
+    zpcevaltop,
+    zpcenter,
+    zpcquit
 };
 #define BUTTONNORMAL  0
 #define BUTTONHOVER   1
@@ -185,7 +235,7 @@ x11drawdisp(void)
             len = strlen(token->str);
             XDrawString(app->display, win, textgc,
                         x,
-                        (fonth + 8) >> 1,
+                        (fonth >> 1) + 8,
                         token->str, len);
             x += len * fonth;
             token = token->next;
@@ -568,6 +618,64 @@ buttonleave(void *arg, XEvent *event)
 #endif
 
 void
+zpcdel(void)
+{
+    struct zpcstkitem *item = zpcinputitem;
+
+    if (item->str != item->scur) {
+        *--item->scur = '\0';
+        x11drawdisp();
+    }
+
+    return;
+}
+
+void
+zpccls(void)
+{
+    struct zpcstkitem *item = zpcinputitem;
+
+    item->scur = item->str;
+    *item->str = '\0';
+
+    return;
+}
+
+void
+zpcclrstk(void)
+{
+    ;
+}
+
+void
+zpcevaltop(void)
+{
+    struct zpcstkitem *item = zpcinputitem;
+
+    if (item->scur == item->str) {
+        zpcregstk[0] = zpcparse(zpcregstk[0]);
+        zpcregstk[0] = zpceval(zpcregstk[0]);
+    }
+
+    return;
+}
+
+void
+zpcenter(void)
+{
+    stkenterinput();
+    x11drawdisp();
+
+    return;
+}
+
+void
+zpcquit(void)
+{
+    exit(0);
+}
+
+void
 buttonpress(void *arg, XEvent *event)
 {
     struct x11win     *win = arg;
@@ -575,6 +683,7 @@ buttonpress(void *arg, XEvent *event)
     struct zpctoken   *token;
     struct zpcstkitem *item = zpcinputitem;
     copfunc_t         *func;
+    zpcaction_t       *action;
     uint64_t          *usrc = NULL;
     uint64_t          *udest = NULL;
     uint64_t           ures64;
@@ -589,24 +698,10 @@ buttonpress(void *arg, XEvent *event)
     double             dres;
     int                type = 0;
 
-    if (win->parm == ENTER) {
-        stkenterinput();
-        x11drawdisp();
-
-        return;
-    } else if (win->parm == EVAL) {
-        if (item->scur == item->str) {
-            zpcregstk[0] = zpcparse(zpcregstk[0]);
-            zpcregstk[0] = zpceval(zpcregstk[0]);
-        }
-    } else if (win->parm == CLR) {
-    } else if (win->parm == COPY) {
-    } else if (win->parm == POP) {
-    } else if (win->parm == DUP) {
-    } else if (win->parm == DEL) {
-        if (item->str != item->scur) {
-            *--item->scur = '\0';
-            x11drawdisp();
+    if (isaction(win->parm)) {
+        action = actiontab[toaction(win->parm)];
+        if (action) {
+            action();
         }
     } else if (!win->parm || item->scur != item->str) {
         stkqueueinput(buttonstrtab[win->row][win->col]);
@@ -860,7 +955,7 @@ x11init(void)
                 wininfo->fasmstr = buttonfltasmtab[row][col];
                 wininfo->type = buttontypetab[row][col];
                 if (wininfo->str) {
-                    if (wininfo->type == ZPCBUTTONREG) {
+                    if (wininfo->type == ZPCBUTTONASM) {
                         wininfo->textgc = asmtextgc;
                     } else if (wininfo->type == ZPCBUTTONOPER) {
                         wininfo->textgc = optextgc;
