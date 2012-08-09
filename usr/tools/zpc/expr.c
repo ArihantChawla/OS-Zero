@@ -835,6 +835,10 @@ zpcgettoken(const char *str, char **retstr)
             token->type = ZPCUINT64;
             zpcgetuint64(token, ptr, &ptr);
             switch (token->radix) {
+                case 2:
+                    zpcconvbinuint64(token->data.u64, token->str, TOKENSTRLEN);
+
+                    break;
                 case 8:
                     sprintf(token->str, "%llo", token->data.u64);
 
@@ -854,6 +858,10 @@ zpcgettoken(const char *str, char **retstr)
             zpcgetint64(token, ptr, &ptr);
             token->data.i64 = -token->data.i64;
             switch (token->radix) {
+                case 2:
+                    zpcconvbinint64(token->data.i64, token->str, TOKENSTRLEN);
+
+                    break;
                 case 8:
                     sprintf(token->str, "%llo", token->data.i64);
 

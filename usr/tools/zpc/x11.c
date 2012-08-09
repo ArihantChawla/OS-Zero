@@ -685,17 +685,21 @@ buttonpress(void *arg, XEvent *event)
                     token->type = ZPCINT64;
                     token->data.i64 = res64;
                     switch (token->radix) {
+                        case 2:
+                            zpcconvbinint64(res64, token->str, TOKENSTRLEN);
+
+                            break;
                         case 8:
-                            sprintf(token->str, "%llo", token->data.i64);
+                            sprintf(token->str, "%llo", res64);
 
                             break;
                         case 10:
-                            sprintf(token->str, "%lld", token->data.i64);
+                            sprintf(token->str, "%lld", res64);
 
                             break;
                         case 16:
                         default:
-                            sprintf(token->str, "0x%llx", token->data.i64);
+                            sprintf(token->str, "0x%llx", res64);
 
                             break;
                     }
@@ -704,17 +708,21 @@ buttonpress(void *arg, XEvent *event)
                     token->type = ZPCUINT64;
                     token->data.u64 = ures64;
                     switch (token->radix) {
+                        case 2:
+                            zpcconvbinuint64(ures64, token->str, TOKENSTRLEN);
+
+                            break;
                         case 8:
-                            sprintf(token->str, "%llo", token->data.u64);
+                            sprintf(token->str, "%llo", ures64);
 
                             break;
                         case 10:
-                            sprintf(token->str, "%llu", token->data.u64);
+                            sprintf(token->str, "%llu", ures64);
 
                             break;
                         case 16:
                         default:
-                            sprintf(token->str, "0x%llx", token->data.u64);
+                            sprintf(token->str, "0x%llx", ures64);
 
                             break;
                     }
@@ -891,6 +899,15 @@ x11init(void)
             }
         }
     }
+#if (ZPCIMLIB2)
+    dispwin = x11initwin(app,
+                        mainwin,
+                        0,
+                        ZPC_WINDOW_HEIGHT,
+                        ZPC_WINDOW_WIDTH,
+                        NSTKREG * (fonth + 8) + NSTKREG + ((fonth + 8) << 2) + 1,
+                        !ZPCREVERSE);
+#else
     dispwin = x11initwin(app,
                         mainwin,
                         0,
@@ -898,6 +915,7 @@ x11init(void)
                         ZPC_WINDOW_WIDTH,
                         NSTKREG * (fonth + 8) + NSTKREG + ((fonth + 8) << 2) + 1,
                         !ZPCREVERSE);
+#endif
     XMapRaised(app->display, dispwin);
     for (row = 0 ; row < NSTKREG ; row++) {
         win = x11initwin(app,

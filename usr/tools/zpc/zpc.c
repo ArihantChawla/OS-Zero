@@ -18,19 +18,8 @@ void x11nextevent(void);
 void zpcprintqueue(struct zpctoken *queue);
 #endif
 
-#if 0
-struct zpcbutton {
-    char              *str;
-    union {
-        zpccfunc_t    *cop;
-        zpczerofunc_t *zop;
-    } func;
-};
-#endif
-
 #define NHASHITEM 1024
 static struct zpctoken   *zpcvarhash[NHASHITEM] ALIGNED(PAGESIZE);
-static char               zpclinebuf[128];
 //struct zpcstkitem        *zpcstktab[NSTKREG];
 #define zpcpush(ip)                                                     \
     ((ip)->next = zpcstk, zpcstk = (ip))
@@ -126,191 +115,45 @@ zpcdelvar(const char *name)
 }
 
 void
-zpcconvbin(uint64_t val)
+zpcconvbinuint64(uint64_t val, char *str, size_t len)
 {
     long     l;
     uint64_t mask = UINT64_C(1) << 63;
 
-    for (l = 0 ; l < 64 ; l++) {
-        sprintf(&zpclinebuf[l], "%c", (val & mask) ? '1' : '0');
+    if (len < 67) {
+        fprintf(stderr, "not enough size for 64 bits\n");
+
+        return;
+    }
+    sprintf(str, "0b");
+    for (l = 2 ; l < 66 ; l++) {
+        snprintf(&str[l], len, "%c", (val & mask) ? '1' : '0');
         mask >>= 1;
     }
+    str[l] = '\0';
 
     return;
 }
 
 void
-zpcprintitem(struct zpcstkitem *item)
+zpcconvbinint64(int64_t val, char *str, size_t len)
 {
-    if (item->type == ZPCUINT) {
-        if (item->size == 1) {
-            switch(item->radix) {
-                case 2:
-                    zpcconvbin(zpcgetvalu8(&item->data.u64));
-                    printf("%s\n", zpclinebuf);
+    long    l;
+    int64_t mask = INT64_C(1) << 63;
 
-                    break;
-                case 8:
-                    printf("%#o\n", zpcgetvalu8(&item->data.u64));
+    if (len < 67) {
+        fprintf(stderr, "not enough size for 64 bits\n");
 
-                    break;
-                case 10:
-                    printf("%d\n", zpcgetvalu8(&item->data.u64));
-
-                    break;
-                case 16:
-                    printf("%x\n", zpcgetvalu8(&item->data.u64));
-
-                    break;
-            }
-        } else if (item->size == 2) {
-            switch(item->radix) {
-                case 2:
-                    zpcconvbin(zpcgetvalu16(&item->data.u64));
-                    printf("%s\n", zpclinebuf);
-
-                    break;
-                case 8:
-                    printf("%#o\n", zpcgetvalu16(&item->data.u64));
-
-                    break;
-                case 10:
-                    printf("%d\n", zpcgetvalu16(&item->data.u64));
-
-                    break;
-                case 16:
-                    printf("%x\n", zpcgetvalu16(&item->data.u64));
-
-                    break;
-            }
-        } else if (item->size == 4) {
-            switch(item->radix) {
-                case 2:
-                    zpcconvbin(zpcgetvalu32(&item->data.u64));
-                    printf("%s\n", zpclinebuf);
-
-                    break;
-                case 8:
-                    printf("%#o\n", zpcgetvalu32(&item->data.u64));
-
-                    break;
-                case 10:
-                    printf("%u\n", zpcgetvalu32(&item->data.u64));
-
-                    break;
-                case 16:
-                    printf("%x\n", zpcgetvalu32(&item->data.u64));
-
-                    break;
-            }
-        } else {
-            switch(item->radix) {
-                case 2:
-                    zpcconvbin(zpcgetvalu64(&item->data.u64));
-                    printf("%s\n", zpclinebuf);
-
-                    break;
-                case 8:
-                    printf("%#llo\n", zpcgetvalu64(&item->data.u64));
-
-                    break;
-                case 10:
-                    printf("%llu\n", zpcgetvalu64(&item->data.u64));
-
-                    break;
-                case 16:
-                    printf("%llx\n", zpcgetvalu64(&item->data.u64));
-
-                    break;
-            }
-        }
-    } else if (item->type == ZPCINT) {
-        if (item->size == 1) {
-            switch(item->radix) {
-                case 2:
-                    zpcconvbin(zpcgetvalu8(&item->data.i64));
-                    printf("%s\n", zpclinebuf);
-
-                    break;
-                case 8:
-                    printf("%#o\n", zpcgetvalu8(&item->data.i64));
-
-                    break;
-                case 10:
-                    printf("%d\n", zpcgetvalu8(&item->data.i64));
-
-                    break;
-                case 16:
-                    printf("%x\n", zpcgetvalu8(&item->data.i64));
-
-                    break;
-            }
-        } else if (item->size == 2) {
-            switch(item->radix) {
-                case 2:
-                    zpcconvbin(zpcgetvalu16(&item->data.i64));
-                    printf("%s\n", zpclinebuf);
-
-                    break;
-                case 8:
-                    printf("%#o\n", zpcgetvalu16(&item->data.i64));
-
-                    break;
-                case 10:
-                    printf("%d\n", zpcgetvalu16(&item->data.i64));
-
-                    break;
-                case 16:
-                    printf("%x\n", zpcgetvalu16(&item->data.i64));
-
-                    break;
-            }
-        } else if (item->size == 4) {
-            switch(item->radix) {
-                case 2:
-                    zpcconvbin(zpcgetvalu32(&item->data.i64));
-                    printf("%s\n", zpclinebuf);
-
-                    break;
-                case 8:
-                    printf("%#o\n", zpcgetvalu32(&item->data.i64));
-
-                    break;
-                case 10:
-                    printf("%d\n", zpcgetvalu32(&item->data.i64));
-
-                    break;
-                case 16:
-                    printf("%x\n", zpcgetvalu32(&item->data.i64));
-
-                    break;
-            }
-        } else {
-            switch(item->radix) {
-                case 2:
-                    zpcconvbin(zpcgetvalu64(&item->data.i64));
-                    printf("%s\n", zpclinebuf);
-
-                    break;
-                case 8:
-                    printf("%#llo\n", zpcgetvalu64(&item->data.i64));
-
-                    break;
-                case 10:
-                    printf("%lld\n", zpcgetvalu64(&item->data.i64));
-
-                    break;
-                case 16:
-                    printf("%llx\n", zpcgetvalu64(&item->data.i64));
-
-                    break;
-            }
-        }
-    } else if (item->size == 4) {
-        printf("%f\n", item->data.f32);
-    } else {
-        printf("%e\n", item->data.f64);
+        return;
     }
+    sprintf(str, "0b");
+    for (l = 2 ; l < 66 ; l++) {
+        snprintf(&str[l], len, "%c", (val & mask) ? '1' : '0');
+        mask >>= 1;
+    }
+    str[l] = '\0';
+
+    return;
 }
 
 /* clear entire stack */
@@ -322,6 +165,9 @@ zpcclr(void)
 
     while (item) {
         tmp = item->next;
+        free(item->str);
+        zpcfreequeue(item->tokq);
+        zpcfreequeue(item->parseq);
         free(item);
         item = tmp;
     }
@@ -364,12 +210,6 @@ zpcswap(void)
 int
 main(int argc, char *argv[])
 {
-#if (TEST)
-    struct zpctoken *queue;
-    const char *exprstr = "3 + 4 * 2 / ( 1 - 5 ) ^ 2 ^ 3";
-#endif
-//    const char *exprstr = "1^2+3";
-
     stkinit();
     exprinit();
 #if (ZPCX11)
@@ -391,36 +231,8 @@ main(int argc, char *argv[])
     while (1) {
         x11nextevent();
     }
-#if 0
-    for (i = 0 ; i < 64 ; i++) {
-        tzero64(u64, tmp);
-        zpcconvbin(u64);
-        printf("%s\n", zpclinebuf);
-        u64 <<= 1;
-    }
-    item = malloc(sizeof(struct zpcstkitem));
-    item->type = ZPCUINT;
-    item->radix = 8;
-    item->size = 4;
-    item->data.i64 = 0xffffffff;
-    zpcprintitem(item);
-    item->type = ZPCUINT;
-    item->radix = 16;
-    item->size = 4;
-    item->data.i64 = 0xffffffff;
-    zpcprintitem(item);
-    item->type = ZPCINT;
-    item->radix = 8;
-    item->size = 1;
-    item->data.i64 = 0xffffffff;
-    zpcprintitem(item);
-    item->type = ZPCFLOAT;
-    item->radix = 8;
-    item->size = 8;
-    item->data.f64 = 3.1415926536;
-    zpcprintitem(item);
-#endif
 
+    /* NOTREACHED */
     exit(0);
 }
 

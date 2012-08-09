@@ -2,6 +2,7 @@
 #define __ZPC_ZPC_H__
 
 #include <stdint.h>
+#include <stddef.h>
 
 #define NSTKREG     16
 #define NREGSTK     1024
@@ -143,6 +144,8 @@ struct zpcstkitem {
 };
 
 void              exprinit(void);
+void              zpcconvbinuint64(uint64_t val, char *str, size_t len);
+void              zpcconvbinint64(int64_t val, char *str, size_t len);
 void              zpcfreequeue(struct zpctoken *queue);
 struct zpctoken * zpctokenize(const char *str);
 struct zpctoken * zpcparse(struct zpctoken *queue);
