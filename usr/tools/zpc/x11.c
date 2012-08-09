@@ -214,6 +214,7 @@ GC                    asmtextgc;
 GC                    numtextgc;
 GC                    optextgc;
 GC                    utiltextgc;
+Atom                  wmdelete;
 
 void
 x11drawdisp(void)
@@ -256,7 +257,22 @@ x11drawdisp(void)
     return;
 }
 
-void x11inittitle(void)
+void
+x11initwm(void)
+{
+    wmdelete = XInternAtom(app->display,
+                           "WM_DELETE_WINDOW",
+                           False);
+    XSetWMProtocols(app->display,
+                    mainwin,
+                    &wmdelete,
+                    1);
+
+    return;
+}
+
+void
+x11inittitle(void)
 {
     XTextProperty titleprop;
     char          *str = ZPC_TITLE;
@@ -676,6 +692,15 @@ zpcquit(void)
 }
 
 void
+clientmessage(void *arg, XEvent *event)
+{
+    if (event->xany.window == mainwin && event->xclient.data.l[0] == wmdelete) {
+
+        exit(0);
+    }
+}
+
+void
 buttonpress(void *arg, XEvent *event)
 {
     struct x11win     *win = arg;
@@ -921,7 +946,18 @@ x11init(void)
                          ZPC_WINDOW_HEIGHT + NSTKREG * (fonth + 8) + NSTKREG + ((fonth + 8) << 1) + 1,
                          ZPCREVERSE);
 #endif
-    app->win = mainwin;
+    if (mainwin) {
+        app->win = mainwin;
+        wininfo = calloc(1, sizeof(struct x11win));
+        wininfo->id = mainwin;
+        wininfo->evfunc[ClientMessage] = clientmessage;
+        x11addwin(wininfo);
+    } else {
+        fprintf(stderr, "failed to create application window\n");
+
+        exit(1);
+    }
+    x11initwm();
     x11inittitle();
     x11initgcs();
 #if (ZPCIMLIB2)
@@ -970,6 +1006,7 @@ x11init(void)
                 wininfo->parm = parmtab[row][col];
                 wininfo->row = row;
                 wininfo->col = col;
+                wininfo->evfunc[ClientMessage] = clientmessage;
 #if 0
                 wininfo->evfunc[EnterNotify] = buttonenter;
                 wininfo->evfunc[LeaveNotify] = buttonleave;
@@ -1063,6 +1100,8 @@ x11nextevent(void)
     XNextEvent(app->display, &event);
     win = x11findwin(event.xany.window);
     if (win) {
+//        fprintf(stderr, "WIN: %ld (%ld), EVENT: %d\n",
+//                event.xany.window, mainwin, event.type);
         func = win->evfunc[event.type];
         if (func) {
             func(win, &event);
