@@ -10,8 +10,8 @@ typedef void copfunc_t(void *, void *, void *);
 struct x11win {
     Window         id;
     const char    *str;
-    const char    *asmstr;
-    const char    *fasmstr;
+    const char    *topstr1;
+    const char    *topstr2;
     GC             textgc;
     long           type;
     long           num;
