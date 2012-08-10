@@ -16,6 +16,8 @@
 #include <zero/param.h>
 #include "x11.h"
 
+#define HOVERBUTTONS 0
+
 #define ZPC_TITLE "Zero Programmer's Calculator"
 
 void imlib2init(struct x11app *app);
@@ -433,7 +435,13 @@ x11initpmaps(void)
     buttonpmaps[BUTTONNORMAL] = imlib2loadimage(app, "button.png",
                                                 ZPC_BUTTON_WIDTH,
                                                 ZPC_BUTTON_HEIGHT);
+#if (HOVERBUTTONS)
+    buttonpmaps[BUTTONHOVER] = imlib2loadimage(app, "buttonhilited.png",
+                                               ZPC_BUTTON_WIDTH,
+                                               ZPC_BUTTON_HEIGHT);
+#else
     buttonpmaps[BUTTONHOVER] = buttonpmaps[BUTTONNORMAL];
+#endif
     buttonpmaps[BUTTONCLICKED] = buttonpmaps[BUTTONNORMAL];
 #if 0
     buttonpmaps[BUTTONHOVER] = imlib2loadimage(app, "button.png",
@@ -602,7 +610,7 @@ buttonexpose(void *arg, XEvent *event)
     return;
 }
 
-#if 0
+#if (HOVERBUTTONS)
 void
 buttonenter(void *arg, XEvent *event)
 {
@@ -1010,7 +1018,7 @@ x11init(void)
                 wininfo->row = row;
                 wininfo->col = col;
                 wininfo->evfunc[ClientMessage] = clientmessage;
-#if 0
+#if (HOVERBUTTONS)
                 wininfo->evfunc[EnterNotify] = buttonenter;
                 wininfo->evfunc[LeaveNotify] = buttonleave;
 #endif
@@ -1022,8 +1030,8 @@ x11init(void)
                 wininfo->clickfuncdbl[0] = buttonopertabdbl[row][col];
                 x11addwin(wininfo);
                 XSelectInput(app->display, win,
-#if 0
-                             EnterWindowMask | LeaveWindowMask
+#if (HOVERBUTTONS)
+                             EnterWindowMask | LeaveWindowMask |
 #endif
                              ExposureMask | ButtonPressMask);
                 XMapRaised(app->display, win);
