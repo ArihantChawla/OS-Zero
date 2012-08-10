@@ -21,7 +21,6 @@ struct x11wininfo {
     struct x11wininfo *next;
     x11evfunc_t       *evfunc[LASTEvent];
     copfunc_t         *clickfunc[NBUTTON];
-    copfunc_t         *clickfuncflt[NBUTTON];
     copfunc_t         *clickfuncdbl[NBUTTON];
 };
 

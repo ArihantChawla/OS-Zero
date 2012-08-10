@@ -653,18 +653,8 @@ zpcgetvector(struct zpctoken *token, const char *str, char **retstr)
             };
             cp = index(ptr, '.');
             if (cp) {
-                if (!type) {
-                    if (!strstr(ptr, "fF")) {
-                        type = ZPCFLOAT;
-                    } else {
-                        type = ZPCDOUBLE;
-                    }
-                }
-                if (type == ZPCFLOAT) {
-                    zpcgetfloat(token1, ptr, &ptr);
-                } else {
-                    zpcgetdouble(token1, ptr, &ptr);
-                }
+                type = ZPCDOUBLE;
+                zpcgetdouble(token1, ptr, &ptr);
             } else {
                 if (strstr(ptr, "uU")) {
                     if (!unsign) {
@@ -821,16 +811,9 @@ zpcgettoken(const char *str, char **retstr)
             }
         }
         if (dec) {
-            flt = strstr(dec, "fF");
-            if (flt) {
-                token->type = ZPCFLOAT;
-                zpcgetfloat(token, ptr, &ptr);
-                sprintf(token->str, "%f", token->data.f32);
-            } else {
-                token->type = ZPCDOUBLE;
-                zpcgetdouble(token, ptr, &ptr);
-                sprintf(token->str, "%e", token->data.f64);
-            }
+            token->type = ZPCDOUBLE;
+            zpcgetdouble(token, ptr, &ptr);
+            sprintf(token->str, "%e", token->data.f64);
         } else if (unsign) {
             token->type = ZPCUINT64;
             zpcgetuint64(token, ptr, &ptr);
@@ -912,8 +895,6 @@ printtoken(struct zpctoken *token)
         fprintf(stderr, "%lld\n", token->data.i64);
     } else if (token->type == ZPCUINT64) {
         fprintf(stderr, "%llu\n", token->data.u64);
-    } else if (token->type == ZPCFLOAT) {
-        fprintf(stderr, "%f\n", token->data.f32);
     } else if (token->type == ZPCDOUBLE) {
         fprintf(stderr, "%e\n", token->data.f64);
     } else if (token->type == ZPCLEFT) {

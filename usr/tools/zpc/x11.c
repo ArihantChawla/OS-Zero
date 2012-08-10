@@ -50,18 +50,6 @@ static zpccfunc_t        *buttonopertab[ZPC_NROW][ZPC_NCOLUMN]
     { NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL },
     { NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL }
 };
-static zpccfunc_t         *buttonopertabflt[ZPC_NROW][ZPC_NCOLUMN]
-= {
-    { NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL },
-    { NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL },
-    { NULL, NULL, NULL, fdiv32, NULL, NULL, NULL, NULL },
-    { NULL, NULL, NULL, mul32, NULL, NULL, NULL, NULL },
-    { NULL, NULL, NULL, fsub32, NULL, NULL, NULL, NULL },
-    { NULL, NULL, NULL, fadd32, NULL, NULL, NULL},
-    { NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL },
-    { NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL },
-    { NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL }
-};
 static zpccfunc_t        *buttonopertabdbl[ZPC_NROW][ZPC_NCOLUMN]
 = {
     { NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL },
@@ -761,9 +749,6 @@ buttonpress(void *arg, XEvent *event)
                     } else if (token->type == ZPCINT64) {
                         type = ZPCINT64;
                         src = &token->data.i64;
-                    } else if (token->type == ZPCFLOAT) {
-                        type = ZPCFLOAT;
-                        fsrc = &token->data.f32;
                     } else if (token->type == ZPCDOUBLE) {
                         dsrc = &token->data.f64;
                     } else {
@@ -786,8 +771,6 @@ buttonpress(void *arg, XEvent *event)
                         udest = &token->data.u64;
                     } else if (type == ZPCINT64 && token->type == ZPCINT64) {
                         dest = &token->data.i64;
-                    } else if (type == ZPCFLOAT && token->type == ZPCFLOAT) {
-                        fdest = &token->data.f32;
                     } else if (type == ZPCDOUBLE && token->type == ZPCDOUBLE) {
                         ddest = &token->data.f64;
                     } else {
@@ -862,14 +845,6 @@ buttonpress(void *arg, XEvent *event)
                             break;
                     }
                 }
-            }
-        } else if (type == ZPCFLOAT) {
-            func = wininfo->clickfuncflt[evbut];
-            if (func) {
-                func(fsrc, fdest, &fres);
-                token->type = ZPCFLOAT;
-                token->data.f32 = fres;
-                sprintf(token->str, "%f", token->data.f32);
             }
         } else {
             func = wininfo->clickfuncdbl[evbut];
@@ -1030,7 +1005,6 @@ x11init(void)
                 wininfo->evfunc[Expose] = buttonexpose;
                 buttonwintab[row][col] = win;
                 wininfo->clickfunc[0] = buttonopertab[row][col];
-                wininfo->clickfuncflt[0] = buttonopertabflt[row][col];
                 wininfo->clickfuncdbl[0] = buttonopertabdbl[row][col];
                 x11addwininfo(wininfo);
                 XSelectInput(app->display, win,
