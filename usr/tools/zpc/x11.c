@@ -37,7 +37,7 @@ extern struct zpctoken   *zpcregstk[];
 extern struct zpcstkitem *zpcinputitem;
 
 #define NHASHITEM 1024
-static struct x11win     *winhash[NHASHITEM] ALIGNED(PAGESIZE);
+static struct x11wininfo *winhash[NHASHITEM] ALIGNED(PAGESIZE);
 static zpccfunc_t        *buttonopertab[ZPC_NROW][ZPC_NCOLUMN]
 = {
     { NULL, NULL, NULL, not64, shr64, inc64, NULL, NULL, NULL },
@@ -50,7 +50,7 @@ static zpccfunc_t        *buttonopertab[ZPC_NROW][ZPC_NCOLUMN]
     { NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL },
     { NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL }
 };
-static zpccfunc_t        *buttonopertabflt[ZPC_NROW][ZPC_NCOLUMN]
+static zpccfunc_t         *buttonopertabflt[ZPC_NROW][ZPC_NCOLUMN]
 = {
     { NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL },
     { NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL },
@@ -406,19 +406,21 @@ x11loadfont(const char *fontname)
 }
 
 void
-x11addwin(struct x11win *win)
+x11addwininfo(struct x11wininfo *wininfo)
 {
-    long           key = win->id & (NHASHITEM - 1);
+    long key = wininfo->id & (NHASHITEM - 1);
 
-    win->next = winhash[key];
-    winhash[key] = win;
+    wininfo->next = winhash[key];
+    winhash[key] = wininfo;
+
+    return;
 }
 
-struct x11win *
-x11findwin(Window id)
+struct x11wininfo *
+x11findwininfo(Window id)
 {
-    struct x11win *hashwin = NULL;
-    long           key = id & (NHASHITEM - 1);
+    struct x11wininfo *hashwin = NULL;
+    long               key = id & (NHASHITEM - 1);
 
     hashwin = winhash[key];
     while ((hashwin) && hashwin->id != id) {
@@ -527,17 +529,17 @@ x11initwin(struct x11app *app, Window parent, int x, int y, int w, int h,
 void
 displayexpose(void *arg, XEvent *event)
 {
-    struct x11win   *win = arg;
-    struct zpctoken *token = zpcregstk[win->num];
-    int              x;
-    int              len;
+    struct x11wininfo *wininfo = arg;
+    struct zpctoken   *token = zpcregstk[wininfo->num];
+    int                x;
+    int                len;
 
     if (!event->xexpose.count) {
         x = 8;
-        XClearWindow(app->display, win->id);
+        XClearWindow(app->display, wininfo->id);
         while ((token) && (token->str)) {
             len = strlen(token->str);
-            XDrawString(app->display, win->id, textgc,
+            XDrawString(app->display, wininfo->id, textgc,
                         x,
                         (fonth + 8) >> 1,
                         token->str, len);
@@ -552,56 +554,56 @@ displayexpose(void *arg, XEvent *event)
 void
 buttonexpose(void *arg, XEvent *event)
 {
-    struct x11win *win = arg;
-    size_t         len;
+    struct x11wininfo *wininfo = arg;
+    size_t             len;
 
     if (!event->xexpose.count) {
         if (buttonpmaps[BUTTONNORMAL]) {
-            XSetWindowBackgroundPixmap(app->display, win->id,
+            XSetWindowBackgroundPixmap(app->display, wininfo->id,
                                        buttonpmaps[BUTTONNORMAL]);
         }
-        XClearWindow(app->display, win->id);
+        XClearWindow(app->display, wininfo->id);
     } else {
-        XClearWindow(app->display, win->id);
+        XClearWindow(app->display, wininfo->id);
     }
-    if (win->str) {
-        if (win->topstr2) {
-            len = strlen(win->topstr2);
-            XDrawString(app->display, win->id, asmtextgc,
+    if (wininfo->str) {
+        if (wininfo->topstr2) {
+            len = strlen(wininfo->topstr2);
+            XDrawString(app->display, wininfo->id, asmtextgc,
                         ZPC_BUTTON_WIDTH - len * fontw - 4,
 //                        ZPC_BUTTON_HEIGHT - fonth + 8,
                         fonth + 4,
-                        win->topstr2, len);
-            if (win->topstr1) {
-                len = strlen(win->topstr1);
-                XDrawString(app->display, win->id, asmtextgc,
+                        wininfo->topstr2, len);
+            if (wininfo->topstr1) {
+                len = strlen(wininfo->topstr1);
+                XDrawString(app->display, wininfo->id, asmtextgc,
                             4,
 //                            ZPC_BUTTON_HEIGHT - fonth + 8,
                             fonth + 4,
-                            win->topstr1, len);
+                            wininfo->topstr1, len);
             }
-        } else if (win->topstr1) {
-            len = strlen(win->topstr1);
+        } else if (wininfo->topstr1) {
+            len = strlen(wininfo->topstr1);
             if (len) {
-                XDrawString(app->display, win->id, asmtextgc,
+                XDrawString(app->display, wininfo->id, asmtextgc,
                             (ZPC_BUTTON_WIDTH - len * fontw) >> 1,
 //                            ZPC_BUTTON_HEIGHT - fonth + 8,
                             fonth + 4,
-                            win->topstr1, len);
+                            wininfo->topstr1, len);
             }
         }
-        len = strlen(win->str);
+        len = strlen(wininfo->str);
         if (len) {
-            if (win->topstr1) {
-                XDrawString(app->display, win->id, win->textgc,
+            if (wininfo->topstr1) {
+                XDrawString(app->display, wininfo->id, wininfo->textgc,
                             (ZPC_BUTTON_WIDTH - len * fontw) >> 1,
                             (ZPC_BUTTON_HEIGHT + fonth) >> 1,
-                            win->str, len);
+                            wininfo->str, len);
             } else {
-                XDrawString(app->display, win->id, win->textgc,
+                XDrawString(app->display, wininfo->id, wininfo->textgc,
                             (ZPC_BUTTON_WIDTH - len * fontw) >> 1,
                             (ZPC_BUTTON_HEIGHT + fonth) >> 1,
-                            win->str, len);
+                            wininfo->str, len);
             }
         }
     }
@@ -614,14 +616,14 @@ buttonexpose(void *arg, XEvent *event)
 void
 buttonenter(void *arg, XEvent *event)
 {
-    struct x11win *win = arg;
+    struct x11wininfo *wininfo = arg;
 
     if (!event->xexpose.count) {
         if (buttonpmaps[BUTTONHOVER]) {
-            XSetWindowBackgroundPixmap(app->display, win->id,
+            XSetWindowBackgroundPixmap(app->display, wininfo->id,
                                        buttonpmaps[BUTTONHOVER]);
         }
-        XClearWindow(app->display, win->id);
+        XClearWindow(app->display, wininfo->id);
         XSync(app->display, False);
     }
 
@@ -631,12 +633,12 @@ buttonenter(void *arg, XEvent *event)
 void
 buttonleave(void *arg, XEvent *event)
 {
-    struct x11win *win = arg;
+    struct x11wininfo *wininfo = arg;
 
     if (!event->xexpose.count) {
-        XSetWindowBackgroundPixmap(app->display, win->id,
+        XSetWindowBackgroundPixmap(app->display, wininfo->id,
                                    buttonpmaps[BUTTONNORMAL]);
-        XClearWindow(app->display, win->id);
+        XClearWindow(app->display, wininfo->id);
         XSync(app->display, False);
     }
 
@@ -714,34 +716,34 @@ clientmessage(void *arg, XEvent *event)
 void
 buttonpress(void *arg, XEvent *event)
 {
-    struct x11win     *win = arg;
-    int                evbut = toevbutton(event->xbutton.button);
-    struct zpctoken   *token;
-    struct zpcstkitem *item = zpcinputitem;
-    copfunc_t         *func;
-    zpcaction_t       *action;
-    uint64_t          *usrc = NULL;
-    uint64_t          *udest = NULL;
-    uint64_t           ures64;
-    int64_t           *src = NULL;
-    int64_t           *dest = NULL;
-    int64_t            res64;
-    float             *fsrc = NULL;
-    float             *fdest = NULL;
-    float              fres;
-    double            *dsrc = NULL;
-    double            *ddest = NULL;
-    double             dres;
-    int                type = 0;
+    struct x11wininfo *wininfo = arg;
+    int                 evbut = toevbutton(event->xbutton.button);
+    struct zpctoken    *token;
+    struct zpcstkitem  *item = zpcinputitem;
+    copfunc_t          *func;
+    zpcaction_t        *action;
+    uint64_t           *usrc = NULL;
+    uint64_t           *udest = NULL;
+    uint64_t            ures64;
+    int64_t            *src = NULL;
+    int64_t            *dest = NULL;
+    int64_t             res64;
+    float              *fsrc = NULL;
+    float              *fdest = NULL;
+    float               fres;
+    double             *dsrc = NULL;
+    double             *ddest = NULL;
+    double              dres;
+    int                 type = 0;
 
-    if (isaction(win->parm)) {
-        action = actiontab[toaction(win->parm)];
+    if (isaction(wininfo->parm)) {
+        action = actiontab[toaction(wininfo->parm)];
         if (action) {
             action();
         }
-    } else if (!win->parm || item->scur != item->str) {
-        if (buttonstrtab[win->row][win->col]) {
-            stkqueueinput(buttonstrtab[win->row][win->col]);
+    } else if (!wininfo->parm || item->scur != item->str) {
+        if (buttonstrtab[wininfo->row][wininfo->col]) {
+            stkqueueinput(buttonstrtab[wininfo->row][wininfo->col]);
             x11drawdisp();
         }
 
@@ -775,7 +777,7 @@ buttonpress(void *arg, XEvent *event)
                 
                 return;
             }
-            if (win->parm == 2) {
+            if (wininfo->parm == 2) {
                 token = zpcregstk[1];
                 if (token) {
                     zpcfreequeue(token->next);
@@ -802,16 +804,16 @@ buttonpress(void *arg, XEvent *event)
         }
     }
 #if 0
-    XSetWindowBackgroundPixmap(app->display, win->id,
+    XSetWindowBackgroundPixmap(app->display, wininfo->id,
                                buttonpmaps[BUTTONCLICKED]);
-    XClearWindow(app->display, win->id);
+    XClearWindow(app->display, wininfo->id);
     XSync(app->display, False);
 #endif
     if (evbut < NBUTTON) {
         token = calloc(1, sizeof(struct zpctoken));
         token->str = calloc(1, TOKENSTRLEN);
         if (type == ZPCINT64 || type == ZPCUINT64) {
-            func = win->clickfunc[evbut];
+            func = wininfo->clickfunc[evbut];
             if (func) {
                 if (type == ZPCINT64) {
                     func(src, dest, &res64);
@@ -862,7 +864,7 @@ buttonpress(void *arg, XEvent *event)
                 }
             }
         } else if (type == ZPCFLOAT) {
-            func = win->clickfuncflt[evbut];
+            func = wininfo->clickfuncflt[evbut];
             if (func) {
                 func(fsrc, fdest, &fres);
                 token->type = ZPCFLOAT;
@@ -870,7 +872,7 @@ buttonpress(void *arg, XEvent *event)
                 sprintf(token->str, "%f", token->data.f32);
             }
         } else {
-            func = win->clickfuncdbl[evbut];
+            func = wininfo->clickfuncdbl[evbut];
             if (func) {
                 func(dsrc, ddest, &dres);
                 token->type = ZPCDOUBLE;
@@ -879,7 +881,7 @@ buttonpress(void *arg, XEvent *event)
             }
         }
         if (func) {
-            if (win->parm >= 1) {
+            if (wininfo->parm >= 1) {
                 struct zpctoken *token1 = zpcregstk[0];
                 struct zpctoken *token2;
                 
@@ -889,7 +891,7 @@ buttonpress(void *arg, XEvent *event)
                     token1 = token2;
                 }
                 zpcregstk[0] = NULL;
-                if (win->parm == 2) {
+                if (wininfo->parm == 2) {
                     token1 = zpcregstk[1];
                     while (token1) {
                         token2 = token1->next;
@@ -899,7 +901,7 @@ buttonpress(void *arg, XEvent *event)
                     zpcregstk[1] = NULL;
                 }
             }
-            if (win->parm == 2) {
+            if (wininfo->parm == 2) {
                 zpcregstk[1] = token;
                 memmove(&zpcregstk[0], &zpcregstk[1], (NREGSTK - 1) * sizeof(struct zpctoken *));
                 zpcregstk[NREGSTK - 1] = NULL;
@@ -917,15 +919,15 @@ buttonpress(void *arg, XEvent *event)
 void
 buttonrelease(void *arg, XEvent *event)
 {
-    struct x11win *win = arg;
+    struct x11wininfo *wininfo = arg;
     int            evbut = toevbutton(event->xbutton.button);
     copfunc_t     *func;
     int64_t       *src = &zpcregstktab[1]->data.i64;
     int64_t       *dest = &zpcregstktab[0]->data.i64;
 
-    XSetWindowBackgroundPixmap(app->display, win->id,
+    XSetWindowBackgroundPixmap(app->display, wininfo->id,
                                buttonpmaps[BUTTONNORMAL]);
-    XClearWindow(app->display, win->id);
+    XClearWindow(app->display, wininfo->id);
     XSync(app->display, False);
 }
 #endif
@@ -933,11 +935,11 @@ buttonrelease(void *arg, XEvent *event)
 void
 x11init(void)
 {
-    Window         win;
-    Window         dispwin;
-    int            row;
-    int            col;
-    struct x11win *wininfo;
+    Window             win;
+    Window             dispwin;
+    int                row;
+    int                col;
+    struct x11wininfo *wininfo;
 
     app = x11initapp(NULL);
     font = x11loadfont("fixed");
@@ -961,10 +963,10 @@ x11init(void)
 #endif
     if (mainwin) {
         app->win = mainwin;
-        wininfo = calloc(1, sizeof(struct x11win));
+        wininfo = calloc(1, sizeof(struct x11wininfo));
         wininfo->id = mainwin;
         wininfo->evfunc[ClientMessage] = clientmessage;
-        x11addwin(wininfo);
+        x11addwininfo(wininfo);
     } else {
         fprintf(stderr, "failed to create application window\n");
 
@@ -997,7 +999,7 @@ x11init(void)
                              ZPCREVERSE);
 #endif
             if (win) {
-                wininfo = calloc(1, sizeof(struct x11win));
+                wininfo = calloc(1, sizeof(struct x11wininfo));
                 wininfo->id = win;
                 wininfo->str = buttonlabeltab[row][col];
                 wininfo->topstr1 = buttontop1tab[row][col];
@@ -1030,7 +1032,7 @@ x11init(void)
                 wininfo->clickfunc[0] = buttonopertab[row][col];
                 wininfo->clickfuncflt[0] = buttonopertabflt[row][col];
                 wininfo->clickfuncdbl[0] = buttonopertabdbl[row][col];
-                x11addwin(wininfo);
+                x11addwininfo(wininfo);
                 XSelectInput(app->display, win,
 #if (HOVERBUTTONS)
                              EnterWindowMask | LeaveWindowMask |
@@ -1071,12 +1073,12 @@ x11init(void)
                          fonth + 8,
                          ZPCREVERSE);
         if (win) {
-            wininfo = calloc(1, sizeof(struct x11win));
+            wininfo = calloc(1, sizeof(struct x11wininfo));
             wininfo->id = win;
             wininfo->num = NSTKREG - row - 1;
             wininfo->evfunc[Expose] = displayexpose;
             stkwintab[NSTKREG - row - 1] = win;
-            x11addwin(wininfo);
+            x11addwininfo(wininfo);
             XSelectInput(app->display, win,
                          ExposureMask);
             XMapRaised(app->display, win);
@@ -1090,10 +1092,10 @@ x11init(void)
                           (fonth + 8) << 2,
                           ZPCREVERSE);
     if (inputwin) {
-        wininfo = calloc(1, sizeof(struct x11win));
+        wininfo = calloc(1, sizeof(struct x11wininfo));
         wininfo->id = win;
         wininfo->evfunc[Expose] = displayexpose;
-        x11addwin(wininfo);
+        x11addwininfo(wininfo);
         XSelectInput(app->display, inputwin,
                      ExposureMask);
         XMapRaised(app->display, inputwin);
@@ -1106,20 +1108,22 @@ x11init(void)
 void
 x11nextevent(void)
 {
-    XEvent         event;
-    struct x11win *win;
-    x11evfunc_t   *func;
+    XEvent             event;
+    struct x11wininfo *wininfo;
+    x11evfunc_t       *func;
 
     XNextEvent(app->display, &event);
-    win = x11findwin(event.xany.window);
-    if (win) {
+    wininfo = x11findwininfo(event.xany.window);
+    if (wininfo) {
 //        fprintf(stderr, "WIN: %ld (%ld), EVENT: %d\n",
 //                event.xany.window, mainwin, event.type);
-        func = win->evfunc[event.type];
+        func = wininfo->evfunc[event.type];
         if (func) {
-            func(win, &event);
+            func(wininfo, &event);
         }
     }
+
+    return;
 }
 
 #endif /* ZPCX11 */
