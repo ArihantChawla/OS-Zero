@@ -94,7 +94,7 @@ static const char        *buttonstrtab[ZPC_NROW][ZPC_NCOLUMN]
     { "7", "8", "9", "/", "<<", "..>", "0x", "COPY", NULL },
     { "4", "5", "6", "*", "^", "<..", "0b", "POP", NULL },
     { "1", "2", "3", "-", "|", "=", "f", "DUP", NULL },
-    { "0", ".", ",", "+", "&", NULL, "u", "DROP", NULL },
+    { "0", NULL, ",", "+", "&", NULL, "u", "DROP", NULL }, // TODO: 2nd is "."
     { " ", NULL, NULL, "<", ">", "[", "]", "ENTER", NULL },
     { "%st0", "%st1", "%st2", "%st3", "%st4", "%st5", "%st6", "%st7", NULL },
     { "%st8", "%st9", "%st10", "%st11", "%st12", "%st13", "%st14", "%st15", NULL }
@@ -740,8 +740,10 @@ buttonpress(void *arg, XEvent *event)
             action();
         }
     } else if (!win->parm || item->scur != item->str) {
-        stkqueueinput(buttonstrtab[win->row][win->col]);
-        x11drawdisp();
+        if (buttonstrtab[win->row][win->col]) {
+            stkqueueinput(buttonstrtab[win->row][win->col]);
+            x11drawdisp();
+        }
 
         return;
     } else {
