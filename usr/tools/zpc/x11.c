@@ -561,13 +561,15 @@ buttonexpose(void *arg, XEvent *event)
             len = strlen(win->fasmstr);
             XDrawString(app->display, win->id, asmtextgc,
                         ZPC_BUTTON_WIDTH - len * fontw - 4,
-                        ZPC_BUTTON_HEIGHT - fonth + 8,
+//                        ZPC_BUTTON_HEIGHT - fonth + 8,
+                        fonth + 4,
                         win->fasmstr, len);
             if (win->asmstr) {
                 len = strlen(win->asmstr);
                 XDrawString(app->display, win->id, asmtextgc,
                             4,
-                            ZPC_BUTTON_HEIGHT - fonth + 8,
+//                            ZPC_BUTTON_HEIGHT - fonth + 8,
+                            fonth + 4,
                             win->asmstr, len);
             }
         } else if (win->asmstr) {
@@ -575,7 +577,8 @@ buttonexpose(void *arg, XEvent *event)
             if (len) {
                 XDrawString(app->display, win->id, asmtextgc,
                             (ZPC_BUTTON_WIDTH - len * fontw) >> 1,
-                            ZPC_BUTTON_HEIGHT - fonth + 8,
+//                            ZPC_BUTTON_HEIGHT - fonth + 8,
+                            fonth + 4,
                             win->asmstr, len);
             }
         }
