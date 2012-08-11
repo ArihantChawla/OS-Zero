@@ -81,7 +81,6 @@ shrl64(int64_t arg1, int64_t arg2)
 
     dest >>= cnt;
     dest &= mask;
-    fprintf(stderr, "SHRL: %lld", dest);
 
     return dest;
 }
@@ -153,19 +152,7 @@ sub64(int64_t arg1, int64_t arg2)
     int64_t src = arg1;
     int64_t dest = arg2;
 
-    fprintf(stderr, "SUB: %lld - %lld\n", dest, src);
     dest -= src;
-
-    return dest;
-}
-
-int64_t
-mul32(int64_t arg1, int64_t arg2)
-{
-    int32_t src = zpcgetval32(arg1);
-    int32_t dest = zpcgetval32(arg2);
-
-    dest *= src;
 
     return dest;
 }

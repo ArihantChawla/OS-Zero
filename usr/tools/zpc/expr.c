@@ -785,7 +785,6 @@ zpcgettoken(const char *str, char **retstr)
     char            *ptr = (char *)str;
     struct zpctoken *token = NULL;
     char            *dec;
-    char            *flt;
     int              unsign = 1;
 
     if (!*str) {

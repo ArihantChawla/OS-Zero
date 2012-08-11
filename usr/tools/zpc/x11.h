@@ -1,11 +1,12 @@
 #ifndef __ZPC_X11_H__
 #define __ZPC_X11_H__
 
+#include <zpc/op.h>
+
 #define NBUTTON 3
 #define toevbutton(b) ((b) - 1)
 
 typedef void x11evfunc_t(void *, XEvent *);
-typedef void copfunc_t(void *, void *, void *);
 
 struct x11wininfo {
     Window             id;
@@ -20,8 +21,8 @@ struct x11wininfo {
     long               col;
     struct x11wininfo *next;
     x11evfunc_t       *evfunc[LASTEvent];
-    copfunc_t         *clickfunc[NBUTTON];
-    copfunc_t         *clickfuncdbl[NBUTTON];
+    zpccop_t          *clickfunc[NBUTTON];
+    zpcfop_t          *clickfuncdbl[NBUTTON];
 };
 
 struct x11app {
