@@ -1,49 +1,31 @@
 #ifndef __PCALC_OP_H__
 #define __PCALC_OP_H__
 
-typedef void zpccfunc_t(void *, void *, void *);
+typedef int64_t zpccop_t(int64_t, int64_t);
+typedef double  zpcfop_t(double, double);
 
 /* cop.c */
-void not32(void *arg1, void *dummy, void *ret);
-void not64(void *arg1, void *dummy, void *ret);
-void and32(void *arg1, void *arg2, void *ret);
-void and64(void *arg1, void *arg2, void *ret);
-void or32(void *arg1, void *arg2, void *ret);
-void or64(void *arg1, void *arg2, void *ret);
-void xor32(void *arg1, void *arg2, void *ret);
-void xor64(void *arg1, void *arg2, void *ret);
-void shl32(void *arg1, void *arg2, void *ret);
-void shl64(void *arg1, void *arg2, void *ret);
-void shr32(void *arg1, void *arg2, void *ret);
-void shr64(void *arg1, void *arg2, void *ret);
-void shrl32(void *arg1, void *arg2, void *ret);
-void shrl64(void *arg1, void *arg2, void *ret);
-void ror32(void *arg1, void *arg2, void *ret);
-void ror64(void *arg1, void *arg2, void *ret);
-void rol32(void *arg1, void *arg2, void *ret);
-void rol64(void *arg1, void *arg2, void *ret);
-void inc32(void *arg1, void *arg2, void *ret);
-void inc64(void *arg1, void *arg2, void *ret);
-void dec32(void *arg1, void *arg2, void *ret);
-void dec64(void *arg1, void *arg2, void *ret);
-void add32(void *arg1, void *arg2, void *ret);
-void add64(void *arg1, void *arg2, void *ret);
-void fadd32(void *arg1, void *arg2, void *ret);
-void fadd64(void *arg1, void *arg2, void *ret);
-void sub32(void *arg1, void *arg2, void *ret);
-void sub64(void *arg1, void *arg2, void *ret);
-void fsub32(void *arg1, void *arg2, void *ret);
-void fsub64(void *arg1, void *arg2, void *ret);
-void mul32(void *arg1, void *arg2, void *ret);
-void mul64(void *arg1, void *arg2, void *ret);
-void fmul32(void *arg1, void *arg2, void *ret);
-void fmul64(void *arg1, void *arg2, void *ret);
-void div32(void *arg1, void *arg2, void *ret);
-void div64(void *arg1, void *arg2, void *ret);
-void fdiv32(void *arg1, void *arg2, void *ret);
-void fdiv64(void *arg1, void *arg2, void *ret);
-void mod32(void *arg1, void *arg2, void *ret);
-void mod64(void *arg1, void *arg2, void *ret);
+int64_t not64(int64_t arg1, int64_t dummy);
+int64_t and64(int64_t arg1, int64_t arg2);
+int64_t or64(int64_t arg1, int64_t arg2);
+int64_t xor64(int64_t arg1, int64_t arg2);
+int64_t shl64(int64_t arg1, int64_t arg2);
+int64_t shr64(int64_t arg1, int64_t arg2);
+int64_t shrl64(int64_t arg1, int64_t arg2);
+int64_t ror64(int64_t arg1, int64_t arg2);
+int64_t rol64(int64_t arg1, int64_t arg2);
+int64_t inc64(int64_t arg1, int64_t arg2);
+int64_t dec64(int64_t arg1, int64_t arg2);
+int64_t add64(int64_t arg1, int64_t arg2);
+int64_t sub64(int64_t arg1, int64_t arg2);
+int64_t mul64(int64_t arg1, int64_t arg2);
+int64_t div64(int64_t arg1, int64_t arg2);
+int64_t mod64(int64_t arg1, int64_t arg2);
+
+double fadd64(double arg1, double arg2);
+double fsub64(double arg1, double arg2);
+double fmul64(double arg1, double arg2);
+double fdiv64(double arg1, double arg2);
 
 typedef void zpczerofunc_t(void *, void *, void *, void *);
 

@@ -41,7 +41,7 @@ static double           zpcoctdbltab[256];
 uint8_t                 zpcoperchartab[256];
 static long             zpccopprectab[ZPCNOPER];
 static long             zpccopnargtab[ZPCNOPER];
-static zpccfunc_t      *zpcevaltab[ZPCNOPER];
+static zpccop_t        *zpcevaltab[ZPCNOPER];
 struct zpctoken        *zpcoperstk;
 struct zpctoken        *zpcoperstktop;
 struct zpctoken        *zpctokenqueue;
@@ -1058,10 +1058,10 @@ zpceval(struct zpctoken *srcqueue)
     struct zpctoken *token3;
     struct zpctoken *token4 = token;
     long             type;
-    void            *arg1;
-    void            *arg2;
-    void            *dest;
-    zpccfunc_t      *func;
+    int64_t          arg1;
+    int64_t          arg2;
+    int64_t          dest;
+    zpccop_t        *func;
 
     while (token) {
         token3 = token->next;
@@ -1089,19 +1089,17 @@ zpceval(struct zpctoken *srcqueue)
             if (token1) {
                 if (token1->type == ZPCUINT64) {
                     type = ZPCUINT64;
-                    arg1 = &token1->data.u64;
-                    dest = &token1->data.u64;
+                    arg1 = token1->data.u64;
                 } else if (token1->type == ZPCINT64) {
                     type = ZPCINT64;
-                    arg1 = &token1->data.i64;
-                    dest = &token1->data.i64;
+                    arg1 = token1->data.i64;
                 }
             }
             if (token2) {
                 if (type == ZPCUINT64 && token2->type == ZPCUINT64) {
-                    arg2 = &token2->data.u64;
+                    arg2 = token2->data.u64;
                 } else if (type == ZPCINT64 && token2->type == ZPCINT64) {
-                    arg2 = &token2->data.i64;
+                    arg2 = token2->data.i64;
                 } else {
                     fprintf(stderr, "invalid argument type\n");
 
@@ -1127,11 +1125,12 @@ zpceval(struct zpctoken *srcqueue)
             func = zpcevaltab[token->type];
             if (func) {
                 if (token2) {
-                    func(arg2, arg1, dest);
+                    dest = func(arg2, arg1);
                 } else {
-                    func(arg1, arg2, dest);
+                    dest = func(arg1, arg2);
                 }
                 if (token1->type == ZPCUINT64) {
+                    token1->data.u64 = dest;
                     switch (token1->radix) {
                         case 8:
                             sprintf(token1->str, "%llo", token1->data.u64);
@@ -1148,6 +1147,7 @@ zpceval(struct zpctoken *srcqueue)
                             break;
                     }
                 } else if (token1->type == ZPCINT64) {
+                    token1->data.i64 = dest;
                     switch (token1->radix) {
                         case 8:
                             sprintf(token1->str, "%llo", token1->data.i64);

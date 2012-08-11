@@ -38,7 +38,7 @@ extern struct zpcstkitem *zpcinputitem;
 
 #define NHASHITEM 1024
 static struct x11wininfo *winhash[NHASHITEM] ALIGNED(PAGESIZE);
-static zpccfunc_t        *buttonopertab[ZPC_NROW][ZPC_NCOLUMN]
+static zpccop_t          *buttonopertab[ZPC_NROW][ZPC_NCOLUMN]
 = {
     { NULL, NULL, NULL, not64, shr64, inc64, NULL, NULL, NULL },
     { NULL, NULL, NULL, mod64, shrl64, dec64, NULL, NULL, NULL },
@@ -50,7 +50,8 @@ static zpccfunc_t        *buttonopertab[ZPC_NROW][ZPC_NCOLUMN]
     { NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL },
     { NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL }
 };
-static zpccfunc_t        *buttonopertabdbl[ZPC_NROW][ZPC_NCOLUMN]
+#if 0
+static zpcfop_t        *buttonopertabdbl[ZPC_NROW][ZPC_NCOLUMN]
 = {
     { NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL },
     { NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL },
@@ -62,6 +63,7 @@ static zpccfunc_t        *buttonopertabdbl[ZPC_NROW][ZPC_NCOLUMN]
     { NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL },
     { NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL }
 };
+#endif
 static Window             buttonwintab[ZPC_NROW][ZPC_NCOLUMN];
 static uint8_t            buttontypetab[ZPC_NROW][ZPC_NCOLUMN] =
 {
@@ -708,19 +710,21 @@ buttonpress(void *arg, XEvent *event)
     int                 evbut = toevbutton(event->xbutton.button);
     struct zpctoken    *token;
     struct zpcstkitem  *item = zpcinputitem;
-    copfunc_t          *func;
+    zpccop_t           *func;
     zpcaction_t        *action;
-    uint64_t           *usrc = NULL;
-    uint64_t           *udest = NULL;
+    uint64_t            usrc;
+    uint64_t            udest;
     uint64_t            ures64;
-    int64_t            *src = NULL;
-    int64_t            *dest = NULL;
+    int64_t             src;
+    int64_t             dest;
     int64_t             res64;
-    float              *fsrc = NULL;
-    float              *fdest = NULL;
+#if 0
+    float               fsrc = NULL;
+    float               fdest = NULL;
     float               fres;
-    double             *dsrc = NULL;
-    double             *ddest = NULL;
+#endif
+    double              dsrc;
+    double              ddest;
     double              dres;
     int                 type = 0;
 
@@ -745,12 +749,12 @@ buttonpress(void *arg, XEvent *event)
                     token->next = NULL;
                     if (token->type == ZPCUINT64) {
                         type = ZPCUINT64;
-                        usrc = &token->data.u64;
+                        usrc = token->data.u64;
                     } else if (token->type == ZPCINT64) {
                         type = ZPCINT64;
-                        src = &token->data.i64;
+                        src = token->data.i64;
                     } else if (token->type == ZPCDOUBLE) {
-                        dsrc = &token->data.f64;
+                        dsrc = token->data.f64;
                     } else {
                         fprintf(stderr, "EEEE\n");
                         
@@ -768,11 +772,11 @@ buttonpress(void *arg, XEvent *event)
                     zpcfreequeue(token->next);
                     token->next = NULL;
                     if (type == ZPCUINT64 && token->type == ZPCUINT64) {
-                        udest = &token->data.u64;
+                        udest = token->data.u64;
                     } else if (type == ZPCINT64 && token->type == ZPCINT64) {
-                        dest = &token->data.i64;
+                        dest = token->data.i64;
                     } else if (type == ZPCDOUBLE && token->type == ZPCDOUBLE) {
-                        ddest = &token->data.f64;
+                        ddest = token->data.f64;
                     } else {
                         fprintf(stderr, "EEEE\n");
                         
@@ -799,7 +803,7 @@ buttonpress(void *arg, XEvent *event)
             func = wininfo->clickfunc[evbut];
             if (func) {
                 if (type == ZPCINT64) {
-                    func(src, dest, &res64);
+                    res64 = func(src, dest);
                     token->type = ZPCINT64;
                     token->data.i64 = res64;
                     switch (token->radix) {
@@ -822,7 +826,7 @@ buttonpress(void *arg, XEvent *event)
                             break;
                     }
                 } else {
-                    func(usrc, udest, &ures64);
+                    ures64 = func(usrc, udest);
                     token->type = ZPCUINT64;
                     token->data.u64 = ures64;
                     switch (token->radix) {
@@ -849,7 +853,7 @@ buttonpress(void *arg, XEvent *event)
         } else {
             func = wininfo->clickfuncdbl[evbut];
             if (func) {
-                func(dsrc, ddest, &dres);
+                dres = func(dsrc, ddest);
                 token->type = ZPCDOUBLE;
                 token->data.f64 = dres;
                 sprintf(token->str, "%e", token->data.f64);
@@ -1005,7 +1009,7 @@ x11init(void)
                 wininfo->evfunc[Expose] = buttonexpose;
                 buttonwintab[row][col] = win;
                 wininfo->clickfunc[0] = buttonopertab[row][col];
-                wininfo->clickfuncdbl[0] = buttonopertabdbl[row][col];
+//                wininfo->clickfuncdbl[0] = buttonopertabdbl[row][col];
                 x11addwininfo(wininfo);
                 XSelectInput(app->display, win,
 #if (HOVERBUTTONS)
