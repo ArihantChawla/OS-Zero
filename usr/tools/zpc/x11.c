@@ -737,10 +737,10 @@ buttonpress(void *arg, XEvent *event)
                     token->next = NULL;
                     if (token->type == ZPCUINT64) {
                         type = ZPCUINT64;
-                        usrc = token->data.u64;
+                        usrc = token->data.ui64.u64;
                     } else if (token->type == ZPCINT64) {
                         type = ZPCINT64;
-                        src = token->data.i64;
+                        src = token->data.ui64.i64;
                     } else if (token->type == ZPCDOUBLE) {
                         dsrc = token->data.f64;
                     } else {
@@ -760,9 +760,9 @@ buttonpress(void *arg, XEvent *event)
                     zpcfreequeue(token->next);
                     token->next = NULL;
                     if (type == ZPCUINT64 && token->type == ZPCUINT64) {
-                        udest = token->data.u64;
+                        udest = token->data.ui64.u64;
                     } else if (type == ZPCINT64 && token->type == ZPCINT64) {
-                        dest = token->data.i64;
+                        dest = token->data.ui64.i64;
                     } else if (type == ZPCDOUBLE && token->type == ZPCDOUBLE) {
                         ddest = token->data.f64;
                     } else {
@@ -787,13 +787,16 @@ buttonpress(void *arg, XEvent *event)
     if (evbut < NBUTTON) {
         token = calloc(1, sizeof(struct zpctoken));
         token->str = calloc(1, TOKENSTRLEN);
+        if  (!type) {
+            type = ZPCINT64;
+        }
         if (type == ZPCINT64 || type == ZPCUINT64) {
             func = wininfo->clickfunc[evbut];
             if (func) {
                 if (type == ZPCINT64) {
                     res64 = func(src, dest);
                     token->type = ZPCINT64;
-                    token->data.i64 = res64;
+                    token->data.ui64.i64 = res64;
                     switch (token->radix) {
                         case 2:
                             zpcconvbinint64(res64, token->str, TOKENSTRLEN);
@@ -816,7 +819,7 @@ buttonpress(void *arg, XEvent *event)
                 } else {
                     ures64 = func(usrc, udest);
                     token->type = ZPCUINT64;
-                    token->data.u64 = ures64;
+                    token->data.ui64.u64 = ures64;
                     switch (token->radix) {
                         case 2:
                             zpcconvbinuint64(ures64, token->str, TOKENSTRLEN);
@@ -851,7 +854,7 @@ buttonpress(void *arg, XEvent *event)
             if (wininfo->parm >= 1) {
                 struct zpctoken *token1 = zpcregstk[0];
                 struct zpctoken *token2;
-                
+
                 while (token1) {
                     token2 = token1->next;
                     free(token1);
@@ -889,8 +892,8 @@ buttonrelease(void *arg, XEvent *event)
     struct x11wininfo *wininfo = arg;
     int            evbut = toevbutton(event->xbutton.button);
     copfunc_t     *func;
-    int64_t       *src = &zpcregstktab[1]->data.i64;
-    int64_t       *dest = &zpcregstktab[0]->data.i64;
+    int64_t       *src = &zpcregstktab[1]->data.ui64.i64;
+    int64_t       *dest = &zpcregstktab[0]->data.ui64.i64;
 
     XSetWindowBackgroundPixmap(app->display, wininfo->id,
                                buttonpmaps[BUTTONNORMAL]);

@@ -3,333 +3,173 @@
 #include <zpc/op.h>
 #include <zero/trix.h>
 
-void
-abs32(void *arg1, void *dummy1, void *dummy2, void *ret)
+int64_t
+abs64(int64_t arg1, int64_t dummy1, int64_t dummy2)
 {
-    int32_t src = zpcgetval32(arg1);
-    int32_t dest = zeroabs(src);
+    int64_t src = arg1;
+    int64_t res = zeroabs(src);
 
-    zpcsetval64(ret, dest);
+    return res;
 }
 
-void
-abs64(void *arg1, void *dummy1, void *dummy2, void *ret)
+int64_t
+min64(int64_t arg1, int64_t arg2, int64_t dummy)
 {
-    int64_t src = zpcgetval64(arg1);
-    int64_t dest = zeroabs(src);
+    int64_t src = arg1;
+    int64_t res = min(src, arg2);
 
-    zpcsetval64(ret, dest);
+    return res;
 }
 
-void
-avgu32(void *arg1, void *arg2, void *dummy, void *ret)
+int64_t
+max64(int64_t arg1, int64_t arg2, int64_t dummy)
 {
-    uint32_t val1 = zpcgetvalu32(arg1);
-    uint32_t val2 = zpcgetvalu32(arg2);
+    int64_t src = arg1;
+    int64_t res = max(src, arg2);
 
-    zpcsetval64(ret, uavg(val1, val2));
+    return res;
 }
 
-void
-avgu64(void *arg1, void *arg2, void *dummy, void *ret)
+int64_t
+bitset64(int64_t arg1, int64_t arg2, int64_t dummy)
 {
-    uint64_t val1 = zpcgetvalu64(arg1);
-    uint64_t val2 = zpcgetvalu64(arg2);
+    int64_t src = arg1;
+    int64_t mask = INT64_C(1) << arg2;
+    int64_t res = src & mask;
 
-    zpcsetval64(ret, uavg(val1, val2));
+    return res;
 }
 
-void
-min32(void *arg1, void *arg2, void *dummy, void *ret)
+int64_t
+setbit64(int64_t arg1, int64_t arg2, int64_t dummy)
 {
-    int32_t src = zpcgetval32(arg1);
-    int32_t dest = min(src, zpcgetval32(arg2));
+    int64_t src = arg1;
+    int64_t mask = 1U << arg2;
+    int64_t res = src | mask;
 
-    zpcsetval64(ret, dest);
+    return res;
 }
 
-void
-min64(void *arg1, void *arg2, void *dummy, void *ret)
+int64_t
+clrbit64(int64_t arg1, int64_t arg2, int64_t dummy)
 {
-    int64_t src = zpcgetval64(arg1);
-    int64_t dest = min(src, zpcgetval64(arg2));
+    int64_t src = arg1;
+    int64_t mask = 1U << arg2;
+    int64_t res = src & ~mask;
 
-    zpcsetval64(ret, dest);
+    return res;
 }
 
-void
-max32(void *arg1, void *arg2, void *dummy, void *ret)
+int64_t
+setbits64(int64_t arg1, int64_t arg2, int64_t arg3)
 {
-    int32_t src = zpcgetval32(arg1);
-    int32_t dest = max(src, zpcgetval32(arg2));
+    int64_t src = arg1;
+    int64_t ofs = arg2;
+    int64_t n = arg3;
+    int64_t res = setbits(src, ofs, n, 1);
 
-    zpcsetval64(ret, dest);
+    return res;
 }
 
-void
-max64(void *arg1, void *arg2, void *dummy, void *ret)
+int64_t
+clrbits64(int64_t arg1, int64_t arg2, int64_t arg3)
 {
-    int64_t src = zpcgetval64(arg1);
-    int64_t dest = max(src, zpcgetval64(arg2));
+    int64_t src = arg1;
+    int64_t ofs = arg2;
+    int64_t n = arg3;
+    int64_t res = setbits(src, ofs, n, 0);
 
-    zpcsetval64(ret, dest);
+    return res;
 }
 
-void
-bitset32(void *arg1, void *arg2, void *dummy, void *ret)
+int64_t
+mergebits64(int64_t arg1, int64_t arg2, int64_t arg3)
 {
-    int32_t src = zpcgetval32(arg1);
-    int32_t mask = 1U << zpcgetval32(arg2);
+    int64_t src = arg1;
+    int64_t dest = arg2;
+    int64_t mask = arg3;
+    int64_t res = mergebits(dest, src, mask);
 
-    zpcsetval64(ret, src & mask);
+    return res;
 }
 
-void
-bitset64(void *arg1, void *arg2, void *dummy, void *ret)
+int64_t
+copybits64(int64_t arg1, int64_t arg2, int64_t arg3)
 {
-    int64_t src = zpcgetval64(arg1);
-    int64_t mask = INT64_C(1) << zpcgetval64(arg2);
+    int64_t src = arg1;
+    int64_t dest = arg2;
+    int64_t mask = arg3;
+    int64_t res = copybits(dest, src, mask);
 
-    zpcsetval64(ret, src & mask);
+    return res;
 }
 
-void
-setbit32(void *arg1, void *arg2, void *dummy, void *ret)
+int64_t
+is2pow64(int64_t arg1, int64_t dummy1, int64_t dummy2)
 {
-    int32_t src = zpcgetval32(arg1);
-    int32_t mask = 1U << zpcgetval32(arg2);
+    int64_t src = arg1;
+    int64_t res = powerof2(src);
 
-    zpcsetval64(ret, src | mask);
+    return res;
 }
 
-void
-setbit64(void *arg1, void *arg2, void *dummy, void *ret)
+int64_t
+rnd2up64(int64_t arg1, int64_t arg2, int64_t dummy)
 {
-    int64_t src = zpcgetval64(arg1);
-    int64_t mask = 1U << zpcgetval64(arg2);
+    int64_t src = arg1;
+    int64_t pow2 = arg2;
+    int64_t res = roundup2(src, pow2);
 
-    zpcsetval64(ret, src | mask);
+    return res;
 }
 
-void
-clrbit32(void *arg1, void *arg2, void *dummy, void *ret)
+int64_t
+rnd2down64(int64_t arg1, int64_t arg2, int64_t dummy)
 {
-    int32_t src = zpcgetval32(arg1);
-    int32_t mask = 1U << zpcgetval32(arg2);
+    int64_t src = arg1;
+    int64_t pow2 = arg2;
+    int64_t res = rounddown2(src, pow2);
 
-    zpcsetval64(ret, src & ~mask);
+    return res;
 }
 
-void
-clrbit64(void *arg1, void *arg2, void *dummy, void *ret)
+int64_t
+trailz64(int64_t arg1, int64_t dummy1, int64_t dummy2)
 {
-    int64_t src = zpcgetval64(arg1);
-    int64_t mask = 1U << zpcgetval64(arg2);
-
-    zpcsetval64(ret, src & ~mask);
-}
-
-void
-setbits32(void *arg1, void *arg2, void *arg3, void *ret)
-{
-    int32_t src = zpcgetval32(arg1);
-    int32_t ofs = zpcgetval32(arg2);
-    int32_t n = zpcgetval32(arg3);
-
-    zpcsetval64(ret, setbits(src, ofs, n, 1));
-}
-
-void
-setbits64(void *arg1, void *arg2, void *arg3, void *ret)
-{
-    int64_t src = zpcgetval64(arg1);
-    int64_t ofs = zpcgetval64(arg2);
-    int64_t n = zpcgetval64(arg3);
-
-    zpcsetval64(ret, setbits(src, ofs, n, 1));
-}
-
-void
-clrbits32(void *arg1, void *arg2, void *arg3, void *ret)
-{
-    int32_t src = zpcgetval32(arg1);
-    int32_t ofs = zpcgetval32(arg2);
-    int32_t n = zpcgetval32(arg3);
-
-    zpcsetval64(ret, setbits(src, ofs, n, 0));
-}
-
-void
-clrbits64(void *arg1, void *arg2, void *arg3, void *ret)
-{
-    int64_t src = zpcgetval64(arg1);
-    int64_t ofs = zpcgetval64(arg2);
-    int64_t n = zpcgetval64(arg3);
-
-    zpcsetval64(ret, setbits(src, ofs, n, 0));
-}
-
-void
-mergebits32(void *arg1, void *arg2, void *arg3, void *ret)
-{
-    int32_t src = zpcgetval32(arg1);
-    int32_t dest = zpcgetval32(arg2);
-    int32_t mask = zpcgetval32(arg3);
-
-    zpcsetval64(ret, mergebits(dest, src, mask));
-}
-
-void
-mergebits64(void *arg1, void *arg2, void *arg3, void *ret)
-{
-    int64_t src = zpcgetval64(arg1);
-    int64_t dest = zpcgetval64(arg2);
-    int64_t mask = zpcgetval64(arg3);
-
-    zpcsetval64(ret, mergebits(dest, src, mask));
-}
-
-void
-copybits32(void *arg1, void *arg2, void *arg3, void *ret)
-{
-    int32_t src = zpcgetval32(arg1);
-    int32_t dest = zpcgetval32(arg2);
-    int32_t mask = zpcgetval32(arg3);
-
-    zpcsetval64(ret, copybits(dest, src, mask));
-}
-
-void
-copybits64(void *arg1, void *arg2, void *arg3, void *ret)
-{
-    int64_t src = zpcgetval64(arg1);
-    int64_t dest = zpcgetval64(arg2);
-    int64_t mask = zpcgetval64(arg3);
-
-    zpcsetval64(ret, copybits(dest, src, mask));
-}
-
-void
-is2pow32(void *arg1, void *dummy1, void *dummy2, void *ret)
-{
-    int32_t src = zpcgetval32(arg1);
-
-    zpcsetval64(ret, powerof2(src));
-}
-
-void
-is2pow64(void *arg1, void *dummy1, void *dummy2, void *ret)
-{
-    int64_t src = zpcgetval64(arg1);
-
-    zpcsetval64(ret, powerof2(src));
-}
-
-void
-rnd2up32(void *arg1, void *arg2, void *dummy, void *ret)
-{
-    int32_t src = zpcgetval32(arg1);
-    int32_t pow2 = zpcgetval32(arg2);
-
-    zpcsetval64(ret, roundup2(src, pow2));
-}
-
-void
-rnd2up64(void *arg1, void *arg2, void *dummy, void *ret)
-{
-    int64_t src = zpcgetval64(arg1);
-    int64_t pow2 = zpcgetval64(arg2);
-
-    zpcsetval64(ret, roundup2(src, pow2));
-}
-
-void
-rnd2down32(void *arg1, void *arg2, void *dummy, void *ret)
-{
-    int32_t src = zpcgetval32(arg1);
-    int32_t pow2 = zpcgetval32(arg2);
-
-    zpcsetval64(ret, rounddown2(src, pow2));
-}
-
-void
-rnd2down64(void *arg1, void *arg2, void *dummy, void *ret)
-{
-    int64_t src = zpcgetval64(arg1);
-    int64_t pow2 = zpcgetval64(arg2);
-
-    zpcsetval64(ret, rounddown2(src, pow2));
-}
-
-void
-trailz32(void *arg1, void *dummy1, void *dummy2, void *ret)
-{
-    uint32_t src = zpcgetvalu32(arg1);
-    uint32_t res;
-
-    tzero32(src, res);
-    zpcsetval64(ret, res);
-}
-
-void
-trailz64(void *arg1, void *dummy1, void *dummy2, void *ret)
-{
-    uint64_t src = zpcgetvalu64(arg1);
+    uint64_t src = arg1;
     uint64_t res;
 
     tzero64(src, res);
-    zpcsetval64(ret, res);
+
+    return res;
 }
 
-void
-leadz32(void *arg1, void *dummy1, void *dummy2, void *ret)
+int64_t
+leadz64(int64_t arg1, int64_t dummy1, int64_t dummy2)
 {
-    uint32_t src = zpcgetvalu32(arg1);
-    uint32_t res;
-
-    lzero32(src, res);
-    zpcsetval64(ret, res);
-}
-
-void
-leadz64(void *arg1, void *dummy1, void *dummy2, void *ret)
-{
-    uint64_t src = zpcgetvalu64(arg1);
+    uint64_t src = arg1;
     uint64_t res;
 
     lzero64(src, res);
-    zpcsetval64(ret, res);
+
+    return res;
 }
 
-void
-ceil2pow32(void *arg1, void *dummy1, void *dummy2, void *ret)
+int64_t
+ceil2pow64(int64_t arg1, int64_t dummy1, int64_t dummy2)
 {
-    uint32_t src = zpcgetvalu32(arg1);
+    uint64_t src = arg1;
+    uint64_t res = ceil2_64(src);
 
-    zpcsetval64(ret, ceil2_32(src));
+    return res;
 }
 
-void
-ceil2pow64(void *arg1, void *dummy1, void *dummy2, void *ret)
+int64_t
+isleapyear64(int64_t arg1, int64_t dummy1, int64_t ydummy2)
 {
-    uint64_t src = zpcgetvalu64(arg1);
+    uint64_t src = arg1;
+    uint64_t res = leapyear(src);
 
-    zpcsetval64(ret, ceil2_64(src));
-}
-
-void
-isleapyear32(void *arg1, void *dummy1, void *dummy2, void *ret)
-{
-    uint32_t src = zpcgetvalu32(arg1);
-
-    zpcsetval64(ret, leapyear(src));
-}
-
-void
-isleapyear64(void *arg1, void *dummy1, void *dummy2, void *ret)
-{
-    uint64_t src = zpcgetvalu64(arg1);
-
-    zpcsetval64(ret, leapyear(src));
+    return res;
 }
 

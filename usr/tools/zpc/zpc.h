@@ -76,19 +76,21 @@ struct zpcvector {
     struct zpctoken **toktab;
 };
 
+union zpcui64 {
+    int64_t  i64;
+    uint64_t u64;
+};
+
 struct zpccomplex {
-    long         type;
+    long              type;
     union {
-        int64_t  i64;
-        uint64_t u64;
-        float    f32;
-        double   f64;
+        union zpcui64 ui64;
+        float         f32;
+        double        f64;
     } real;
     union {
-        int64_t  i64;
-        uint64_t u64;
-        float    f32;
-        double   f64;
+        union zpcui64 ui64;
+        double        f64;
     } img;
 };
 
@@ -109,9 +111,9 @@ struct zpctoken {
     char                  *str;
     long                   param;
     long                   radix;
+    long                   sign;
     union {
-        int64_t            i64;
-        uint64_t           u64;
+        union zpcui64      ui64;
         float              f32;
         double             f64;
         struct zpcvector   vector;
@@ -136,8 +138,7 @@ struct zpcstkitem {
     long               slen;
     char              *scur;
     union {
-        int64_t        i64;
-        uint64_t       u64;
+        union zpcui64  ui64;
         float          f32;
         double         f64;
     } data;
@@ -152,6 +153,7 @@ struct zpctoken * zpctokenize(const char *str);
 struct zpctoken * zpcparse(struct zpctoken *queue);
 struct zpctoken * zpceval(struct zpctoken *srcqueue);
 
+#if 0
 #if (BIGENDIAN)
 #define zpcgetval8(ptr)                                                 \
     (*(int8_t *)&ptr[7])
@@ -200,6 +202,7 @@ struct zpctoken * zpceval(struct zpctoken *srcqueue);
     *(float *)(ptr) = (val)
 #define zpcsetvalf64(ptr, val)                                          \
     *(double *)(ptr) = (val)
+#endif
 
 #endif /* __ZPC_ZPC_H__ */
 

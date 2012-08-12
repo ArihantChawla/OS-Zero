@@ -349,7 +349,7 @@ zpcgetfloat(struct zpctoken *token, const char *str, char **retstr)
                 ptr++;
             }
             token->radix = 16;
-            zpcsetvalf32(&token->data.f32, flt);
+            token->data.f32 = flt;
         } else if (*ptr == 'b' || *ptr == 'B') {
             /* binary value */
             ptr++;
@@ -366,7 +366,7 @@ zpcgetfloat(struct zpctoken *token, const char *str, char **retstr)
                 ptr++;
             }
             token->radix = 2;
-            zpcsetvalf32(&token->data.f32, flt);
+            token->data.f32 = flt;
         } else {
             /* octal value */
             ptr++;
@@ -383,7 +383,7 @@ zpcgetfloat(struct zpctoken *token, const char *str, char **retstr)
                 ptr++;
             }
             token->radix = 8;
-            zpcsetvalf32(&token->data.f32, flt);
+            token->data.f32 = flt;
         }
     } else {
         /* decimal value */
@@ -400,7 +400,7 @@ zpcgetfloat(struct zpctoken *token, const char *str, char **retstr)
             ptr++;
         }
         token->radix = 10;
-        zpcsetvalf32(&token->data.f32, flt);
+        token->data.f32 = flt;
     }
     if (*ptr == 'f' || *ptr == 'F' || *ptr == ',') {
         ptr++;
@@ -435,7 +435,7 @@ zpcgetdouble(struct zpctoken *token, const char *str, char **retstr)
                 ptr++;
             }
             token->radix = 16;
-            zpcsetvalf64(&token->data.f64, dbl);
+            token->data.f64 = dbl;
         } else if (*ptr == 'b' || *ptr == 'B') {
             /* binary value */
             ptr++;
@@ -452,7 +452,7 @@ zpcgetdouble(struct zpctoken *token, const char *str, char **retstr)
                 ptr++;
             }
             token->radix = 2;
-            zpcsetvalf64(&token->data.f64, dbl);
+            token->data.f64 = dbl;
         } else {
             /* octal value */
             ptr++;
@@ -469,7 +469,7 @@ zpcgetdouble(struct zpctoken *token, const char *str, char **retstr)
                 ptr++;
             }
             token->radix = 8;
-            zpcsetvalf64(&token->data.f64, dbl);
+            token->data.f64 = dbl;
         }
     } else {
         /* decimal value */
@@ -486,7 +486,7 @@ zpcgetdouble(struct zpctoken *token, const char *str, char **retstr)
             ptr++;
         }
         token->radix = 10;
-        zpcsetvalf64(&token->data.f64, dbl);
+        token->data.f64 = dbl;
     }
     if (*ptr == ',') {
         ptr++;
@@ -513,7 +513,7 @@ zpcgetint64(struct zpctoken *token, const char *str, char **retstr)
                 ptr++;
             }
             token->radix = 16;
-            zpcsetval64(&token->data.i64, i64);
+            token->data.ui64.i64 = i64;
         } else if (*ptr == 'b' || *ptr == 'B') {
             /* binary value */
             ptr++;
@@ -523,7 +523,7 @@ zpcgetint64(struct zpctoken *token, const char *str, char **retstr)
                 ptr++;
             }
             token->radix = 2;
-            zpcsetval64(&token->data.i64, i64);
+            token->data.ui64.i64 = i64;
         } else {
             /* octal value */
             ptr++;
@@ -533,7 +533,7 @@ zpcgetint64(struct zpctoken *token, const char *str, char **retstr)
                 ptr++;
             }
             token->radix = 8;
-            zpcsetval64(&token->data.i64, i64);
+            token->data.ui64.i64 = i64;
         }
     } else if (isdigit(*ptr)) {
         /* decimal value */
@@ -543,7 +543,7 @@ zpcgetint64(struct zpctoken *token, const char *str, char **retstr)
             ptr++;
         }
         token->radix = 10;
-        zpcsetval64(&token->data.i64, i64);
+        token->data.ui64.i64 = i64;
 #if 0
     } else if (isxdigit(*ptr)) {
         while (isxdigit(*ptr)) {
@@ -551,7 +551,7 @@ zpcgetint64(struct zpctoken *token, const char *str, char **retstr)
             i64 += tohex(*ptr);
             ptr++;
         }
-        zpcsetval64(&token->data.i64, i64);
+        token->data.ui64.i64 = i64;
 #endif
     }
     if (*ptr == ',') {
@@ -579,7 +579,7 @@ zpcgetuint64(struct zpctoken *token, const char *str, char **retstr)
                 ptr++;
             }
             token->radix = 16;
-            zpcsetvalu64(&token->data.u64, u64);
+            token->data.ui64.u64 = u64;
         } else if (*ptr == 'b' || *ptr == 'B') {
             /* binary value */
             ptr++;
@@ -589,7 +589,7 @@ zpcgetuint64(struct zpctoken *token, const char *str, char **retstr)
                 ptr++;
             }
             token->radix = 2;
-            zpcsetvalu64(&token->data.u64, u64);
+            token->data.ui64.u64 = u64;
         } else {
             /* octal value */
             ptr++;
@@ -599,7 +599,7 @@ zpcgetuint64(struct zpctoken *token, const char *str, char **retstr)
                 ptr++;
             }
             token->radix = 8;
-            zpcsetvalu64(&token->data.u64, u64);
+            token->data.ui64.u64 = u64;
         }
     } else if (isdigit(*ptr)) {
         /* decimal value */
@@ -609,7 +609,7 @@ zpcgetuint64(struct zpctoken *token, const char *str, char **retstr)
             ptr++;
         }
         token->radix = 10;
-        zpcsetvalu64(&token->data.u64, u64);
+        token->data.ui64.u64 = u64;
 #if 0
     } else if (isxdigit(*ptr)) {
         while (isxdigit(*ptr)) {
@@ -617,7 +617,7 @@ zpcgetuint64(struct zpctoken *token, const char *str, char **retstr)
             u64 += tohex(*ptr);
             ptr++;
         }
-        zpcsetvalu64(&token->data.u64, u64);
+        token->data.ui64.u64 = u64;
 #endif
     }
     if (*ptr == 'u' || *ptr == 'U' || *ptr == ',') {
@@ -815,46 +815,50 @@ zpcgettoken(const char *str, char **retstr)
             sprintf(token->str, "%e", token->data.f64);
         } else if (unsign) {
             token->type = ZPCUINT64;
+            token->sign = 0;
             zpcgetuint64(token, ptr, &ptr);
             switch (token->radix) {
                 case 2:
-                    zpcconvbinuint64(token->data.u64, token->str, TOKENSTRLEN);
+                    zpcconvbinuint64(token->data.ui64.u64, token->str,
+                                     TOKENSTRLEN);
 
                     break;
                 case 8:
-                    sprintf(token->str, "%llo", token->data.u64);
+                    sprintf(token->str, "%llo", token->data.ui64.u64);
 
                     break;
                 case 10:
-                    sprintf(token->str, "%llu", token->data.u64);
+                    sprintf(token->str, "%llu", token->data.ui64.u64);
 
                     break;
                 case 16:
                 default:
-                    sprintf(token->str, "0x%llx", token->data.u64);
+                    sprintf(token->str, "0x%llx", token->data.ui64.u64);
 
                     break;
             }
         } else {
             token->type = ZPCINT64;
+            token->sign = 1;
             zpcgetint64(token, ptr, &ptr);
-            token->data.i64 = -token->data.i64;
+            token->data.ui64.i64 = -token->data.ui64.i64;
             switch (token->radix) {
                 case 2:
-                    zpcconvbinint64(token->data.i64, token->str, TOKENSTRLEN);
+                    zpcconvbinint64(token->data.ui64.i64, token->str,
+                                    TOKENSTRLEN);
 
                     break;
                 case 8:
-                    sprintf(token->str, "%llo", token->data.i64);
+                    sprintf(token->str, "%llo", token->data.ui64.i64);
 
                     break;
                 case 10:
-                    sprintf(token->str, "%lld", token->data.i64);
+                    sprintf(token->str, "%lld", token->data.ui64.i64);
 
                     break;
                 case 16:
                 default:
-                    sprintf(token->str, "0x%llx", token->data.i64);
+                    sprintf(token->str, "0x%llx", token->data.ui64.i64);
 
                     break;
             }
@@ -891,9 +895,9 @@ printtoken(struct zpctoken *token)
     if (token->str) {
         fprintf(stderr, "%s\n", token->str);
     } else if (token->type == ZPCINT64) {
-        fprintf(stderr, "%lld\n", token->data.i64);
+        fprintf(stderr, "%lld\n", token->data.ui64.i64);
     } else if (token->type == ZPCUINT64) {
-        fprintf(stderr, "%llu\n", token->data.u64);
+        fprintf(stderr, "%llu\n", token->data.ui64.u64);
     } else if (token->type == ZPCDOUBLE) {
         fprintf(stderr, "%e\n", token->data.f64);
     } else if (token->type == ZPCLEFT) {
@@ -1088,17 +1092,17 @@ zpceval(struct zpctoken *srcqueue)
             if (token1) {
                 if (token1->type == ZPCUINT64) {
                     type = ZPCUINT64;
-                    arg1 = token1->data.u64;
+                    arg1 = token1->data.ui64.u64;
                 } else if (token1->type == ZPCINT64) {
                     type = ZPCINT64;
-                    arg1 = token1->data.i64;
+                    arg1 = token1->data.ui64.i64;
                 }
             }
             if (token2) {
                 if (type == ZPCUINT64 && token2->type == ZPCUINT64) {
-                    arg2 = token2->data.u64;
+                    arg2 = token2->data.ui64.u64;
                 } else if (type == ZPCINT64 && token2->type == ZPCINT64) {
-                    arg2 = token2->data.i64;
+                    arg2 = token2->data.ui64.i64;
                 } else {
                     fprintf(stderr, "invalid argument type\n");
 
@@ -1129,36 +1133,38 @@ zpceval(struct zpctoken *srcqueue)
                     dest = func(arg1, arg2);
                 }
                 if (token1->type == ZPCUINT64) {
-                    token1->data.u64 = dest;
+                    token1->data.ui64.u64 = dest;
                     switch (token1->radix) {
                         case 8:
-                            sprintf(token1->str, "%llo", token1->data.u64);
+                            sprintf(token1->str, "%llo", token1->data.ui64.u64);
 
                             break;
                         case 10:
-                            sprintf(token1->str, "%llu", token1->data.u64);
+                            sprintf(token1->str, "%llu", token1->data.ui64.u64);
 
                             break;
                         case 16:
                         default:
-                            sprintf(token1->str, "0x%llx", token1->data.u64);
+                            sprintf(token1->str, "0x%llx",
+                                    token1->data.ui64.u64);
 
                             break;
                     }
                 } else if (token1->type == ZPCINT64) {
-                    token1->data.i64 = dest;
+                    token1->data.ui64.i64 = dest;
                     switch (token1->radix) {
                         case 8:
-                            sprintf(token1->str, "%llo", token1->data.i64);
+                            sprintf(token1->str, "%llo", token1->data.ui64.i64);
 
                             break;
                         case 10:
-                            sprintf(token1->str, "%lld", token1->data.i64);
+                            sprintf(token1->str, "%lld", token1->data.ui64.i64);
 
                             break;
                         case 16:
                         default:
-                            sprintf(token1->str, "0x%llx", token1->data.i64);
+                            sprintf(token1->str, "0x%llx",
+                                    token1->data.ui64.i64);
 
                             break;
                     }
