@@ -70,7 +70,6 @@ static uint8_t            buttontypetab[ZPC_NROW][ZPC_NCOLUMN] =
     { ZPCBUTTONDIGIT, ZPCBUTTONDIGIT, ZPCBUTTONDIGIT, ZPCBUTTONOPER, ZPCBUTTONOPER, ZPCBUTTONOPER, ZPCBUTTONUTIL, ZPCBUTTONUTIL, ZPCBUTTONUTIL },
     { ZPCBUTTONDIGIT, ZPCBUTTONDIGIT, ZPCBUTTONDIGIT, ZPCBUTTONOPER, ZPCBUTTONOPER, ZPCBUTTONOPER, ZPCBUTTONUTIL, ZPCBUTTONUTIL, ZPCBUTTONUTIL },
     { ZPCBUTTONUTIL, ZPCBUTTONUTIL, ZPCBUTTONUTIL, ZPCBUTTONUTIL, ZPCBUTTONUTIL, ZPCBUTTONUTIL, ZPCBUTTONUTIL, ZPCBUTTONUTIL, ZPCBUTTONUTIL }
-
 };
 static const char        *buttonstrtab[ZPC_NROW][ZPC_NCOLUMN]
 = {
@@ -78,8 +77,8 @@ static const char        *buttonstrtab[ZPC_NROW][ZPC_NCOLUMN]
     { "a", "b", "c", "%", ">>", "--", ")", "CLR", NULL },
     { "7", "8", "9", "/", "<<", "..>", "0x", "COPY", NULL },
     { "4", "5", "6", "*", "^", "<..", "0b", "POP", NULL },
-    { "1", "2", "3", "-", "|", "=", "f", "DUP", NULL },
-    { "0", NULL, ",", "+", "&", NULL, "u", "DROP", NULL }, // TODO: 2nd is "."
+    { "1", "2", "3", "-", "|", "=", "F", "DUP", NULL },
+    { "0", NULL, ",", "+", "&", NULL, "U", "DROP", NULL }, // TODO: 2nd is "."
     { " ", NULL, NULL, "<", ">", "[", "]", "ENTER", NULL }
 };
 static const char        *buttonlabeltab[ZPC_NROW][ZPC_NCOLUMN]
@@ -88,9 +87,9 @@ static const char        *buttonlabeltab[ZPC_NROW][ZPC_NCOLUMN]
     { "a", "b", "c", "%", ">>", "--", ")", "CLR", "VEC" },
     { "7", "8", "9", "/", "<<", "..>", "0x", "COPY", "MAT" },
     { "4", "5", "6", "*", "^", "<..", "0b", "POP", "PLOT" },
-    { "1", "2", "3", "-", "|", "=", "f", "DUP", "RAD" },
-    { "0", ".", ",", "+", "&", "EVAL", "u", "DROP", "UNIT" },
-    { "SPACE", "DEL", "CLS", "<", ">", "[", "]", "ENTER", NULL }
+    { "1", "2", "3", "-", "|", "=", "F", "DUP", "RAD" },
+    { "0", ".", ",", "+", "&", "EVAL", "U", "DROP", "UNIT" },
+    { "SPACE", "DEL", "<", ">", "[", "]", "I", "CLS", "ENTER" }
 };
 static const char        *buttontop1tab[ZPC_NROW][ZPC_NCOLUMN]
 = {
@@ -141,9 +140,7 @@ static const uint8_t      parmtab[ZPC_NROW][ZPC_NCOLUMN]
     { 0, 0, 0, 2, 2, 2, 0, POP },
     { 0, 0, 0, 2, 2, 0, 0, DUP },
     { 0, 0, 0, 2, 2, EVAL, 0, DROP },
-    { 0, DEL, CLS, 0, 0, 0, 0, ENTER },
-    { 0, 0, 0, 0, 0, 0, 0, 0 },
-    { 0, 0, 0, 0, 0, 0, 0, 0 }
+    { 0, DEL, 0, 0, 0, 0, 0, CLS, ENTER }
 };
 static const uint8_t      isflttab[ZPC_NROW][ZPC_NCOLUMN]
 = {
@@ -153,8 +150,6 @@ static const uint8_t      isflttab[ZPC_NROW][ZPC_NCOLUMN]
     { 0, 0, 0, 1, 0, 0, 0, 0 },
     { 0, 0, 0, 1, 0, 0, 0, 0 },
     { 0, 0, 0, 1, 0, 0, 0, 0 },
-    { 0, 0, 0, 0, 0, 0, 0, 0 },
-    { 0, 0, 0, 0, 0, 0, 0, 0 },
     { 0, 0, 0, 0, 0, 0, 0, 0 }
 };
 static zpcaction_t *actiontab[0xff - LAST + 1] =
@@ -176,11 +171,31 @@ static zpcaction_t *actiontab[0xff - LAST + 1] =
     zpcenter,
     zpcquit
 };
+static char *zpcregstrtab[NREGSTK]
+= {
+    "ST0",
+    "ST1",
+    "ST2",
+    "ST3",
+    "ST4",
+    "ST5",
+    "ST6",
+    "ST7",
+    "ST8",
+    "ST9",
+    "ST10",
+    "ST11",
+    "ST12",
+    "ST13",
+    "ST14",
+    "ST15"
+};
 #define BUTTONNORMAL  0
 #define BUTTONHOVER   1
 #define BUTTONCLICKED 2
 #define NBUTTONSTATE  3
 static Window         stkwintab[NREGSTK];
+static Window         zpcregwintab[NREGSTK];
 static Pixmap         buttonpmaps[NBUTTONSTATE];
 XFontStruct          *font;
 int                   fontw;
@@ -198,6 +213,7 @@ Atom                  wmdelete;
 void
 x11drawdisp(void)
 {
+    const char        *str;
     struct zpctoken   *token;
     struct zpcstkitem *item;
     int                i;
@@ -220,6 +236,14 @@ x11drawdisp(void)
             x += len * fonth;
             token = token->next;
         }
+        str = zpcregstrtab[i];
+        win = zpcregwintab[i];
+        x = 8;
+        len = strlen(str);
+        XDrawString(app->display, win, textgc,
+                    x,
+                    (fonth >> 1) + 8,
+                    str, len);
     }
     x = 8;
     item = zpcinputitem;
@@ -529,6 +553,29 @@ displayexpose(void *arg, XEvent *event)
 }
 
 void
+labelexpose(void *arg, XEvent *event)
+{
+    struct x11wininfo *wininfo = arg;
+//    struct zpctoken   *token = zpcreglabel[wininfo->num];
+    char              *str = zpcregstrtab[wininfo->num];
+    int                x;
+    int                len;
+
+    if (!event->xexpose.count) {
+        x = 8;
+        XClearWindow(app->display, wininfo->id);
+        len = strlen(str);
+        XDrawString(app->display, wininfo->id, textgc,
+                    x,
+                    (fonth >> 1) + 8,
+                    str, len);
+        XSync(app->display, False);
+    }
+
+    return;
+}
+
+void
 buttonexpose(void *arg, XEvent *event)
 {
     struct x11wininfo *wininfo = arg;
@@ -701,8 +748,8 @@ buttonpress(void *arg, XEvent *event)
     zpccop_t           *func;
     zpcfop_t           *fltfunc;
     zpcaction_t        *action;
-    int64_t             src;
-    int64_t             dest;
+    struct zpctoken    *src;
+    struct zpctoken    *dest;
     int64_t             res;
 //    int64_t             src;
 //    int64_t             dest;
@@ -740,9 +787,7 @@ buttonpress(void *arg, XEvent *event)
                     token->next = NULL;
                     if (token->type == ZPCINT64 || token->type == ZPCUINT64) {
                         type = token->type;
-                        src = token->data.ui64.u64;
-                    } else if (token->type == ZPCDOUBLE) {
-                        dsrc = token->data.f64;
+                        src = token;
                     } else {
                         fprintf(stderr, "EEEE\n");
                         
@@ -762,9 +807,7 @@ buttonpress(void *arg, XEvent *event)
                     if (type == ZPCUINT64
                         && (token->type == ZPCINT64
                             || token->type == ZPCUINT64)) {
-                        dest = token->data.ui64.u64;
-                    } else if (type == ZPCDOUBLE && token->type == ZPCDOUBLE) {
-                        ddest = token->data.f64;
+                        dest = token;
                     } else {
                         fprintf(stderr, "EEEE\n");
                         
@@ -794,7 +837,7 @@ buttonpress(void *arg, XEvent *event)
             func = wininfo->clickfunc[evbut];
             if (func) {
                 if (type == ZPCINT64 || type == ZPCUINT64) {
-                    res = func(src, dest, token);
+                    res = func(src, dest);
                     token->type = type;
                     token->data.ui64.i64 = res;
                     switch (token->radix) {
@@ -822,6 +865,7 @@ buttonpress(void *arg, XEvent *event)
                     }
                 }
             }
+#if 0
         } else {
             fltfunc = wininfo->clickfuncdbl[evbut];
             if (fltfunc) {
@@ -830,6 +874,7 @@ buttonpress(void *arg, XEvent *event)
                 token->data.f64 = dres;
                 sprintf(token->str, "%e", token->data.f64);
             }
+#endif
         }
         if (func) {
             if (wininfo->parm >= 1) {
@@ -888,6 +933,8 @@ x11init(void)
 {
     Window             win;
     Window             dispwin;
+    Window             regwin;
+    Window             stkwin;
     int                row;
     int                col;
     struct x11wininfo *wininfo;
@@ -1023,15 +1070,43 @@ x11init(void)
                          fonth + 8,
                          ZPCREVERSE);
         if (win) {
+            XMapRaised(app->display, win);
+        }
+        regwin = x11initwin(app,
+                            win,
+                            0,
+                            0,
+                            32,
+                            fonth + 8,
+                            ZPCREVERSE);
+        if (regwin) {
             wininfo = calloc(1, sizeof(struct x11wininfo));
-            wininfo->id = win;
+            wininfo->id = regwin;
+            wininfo->num = NSTKREG - row - 1;
+            wininfo->evfunc[Expose] = labelexpose;
+            zpcregwintab[NSTKREG - row - 1] = regwin;
+            x11addwininfo(wininfo);
+            XSelectInput(app->display, regwin,
+                         ExposureMask);
+            XMapRaised(app->display, regwin);
+        }
+        stkwin = x11initwin(app,
+                            win,
+                            32,
+                            0,
+                            ZPC_WINDOW_WIDTH - 32,
+                            fonth + 8,
+                            ZPCREVERSE);
+        if (stkwin) {
+            wininfo = calloc(1, sizeof(struct x11wininfo));
+            wininfo->id = stkwin;
             wininfo->num = NSTKREG - row - 1;
             wininfo->evfunc[Expose] = displayexpose;
-            stkwintab[NSTKREG - row - 1] = win;
+            stkwintab[NSTKREG - row - 1] = stkwin;
             x11addwininfo(wininfo);
-            XSelectInput(app->display, win,
+            XSelectInput(app->display, stkwin,
                          ExposureMask);
-            XMapRaised(app->display, win);
+            XMapRaised(app->display, stkwin);
         }
     }
     inputwin = x11initwin(app,

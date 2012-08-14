@@ -31,7 +31,7 @@ typedef void zpcaction_t(void);
 #define ZPC_BUTTON_WIDTH  32
 #define ZPC_BUTTON_HEIGHT 24
 #endif
-#define ZPC_NROW          9
+#define ZPC_NROW          7
 #define ZPC_NCOLUMN       9
 #define ZPC_WINDOW_WIDTH  (ZPC_NCOLUMN * ZPC_BUTTON_WIDTH)
 #define ZPC_WINDOW_HEIGHT (ZPC_NROW * ZPC_BUTTON_HEIGHT)

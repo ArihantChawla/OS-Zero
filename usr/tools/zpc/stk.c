@@ -94,6 +94,7 @@ stkenterinput(void)
         }
 #endif
 //        stkaddinput();
+        x11drawdisp();
     }
     item->scur = item->str;
 

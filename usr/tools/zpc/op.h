@@ -4,26 +4,26 @@
 #include <stdint.h>
 #include <zpc/zpc.h>
 
-typedef int64_t zpccop_t(int64_t, int64_t, struct zpctoken *);
+typedef int64_t zpccop_t(struct zpctoken *, struct zpctoken *);
 typedef double  zpcfop_t(double, double);
 
 /* cop.c */
-int64_t not64(int64_t arg1, int64_t dummy, struct zpctoken *);
-int64_t and64(int64_t arg1, int64_t arg2, struct zpctoken *);
-int64_t or64(int64_t arg1, int64_t arg2, struct zpctoken *);
-int64_t xor64(int64_t arg1, int64_t arg2, struct zpctoken *);
-int64_t shl64(int64_t arg1, int64_t arg2, struct zpctoken *);
-int64_t shr64(int64_t arg1, int64_t arg2, struct zpctoken *);
-int64_t shrl64(int64_t arg1, int64_t arg2, struct zpctoken *);
-int64_t ror64(int64_t arg1, int64_t arg2, struct zpctoken *);
-int64_t rol64(int64_t arg1, int64_t arg2, struct zpctoken *);
-int64_t inc64(int64_t arg1, int64_t arg2, struct zpctoken *);
-int64_t dec64(int64_t arg1, int64_t arg2, struct zpctoken *);
-int64_t add64(int64_t arg1, int64_t arg2, struct zpctoken *);
-int64_t sub64(int64_t arg1, int64_t arg2, struct zpctoken *);
-int64_t mul64(int64_t arg1, int64_t arg2, struct zpctoken *);
-int64_t div64(int64_t arg1, int64_t arg2, struct zpctoken *);
-int64_t mod64(int64_t arg1, int64_t arg2, struct zpctoken *);
+int64_t not64(struct zpctoken *arg1, struct zpctoken *dummy);
+int64_t and64(struct zpctoken *arg1, struct zpctoken *arg2);
+int64_t or64(struct zpctoken *arg1, struct zpctoken *arg2);
+int64_t xor64(struct zpctoken *arg1, struct zpctoken *arg2);
+int64_t shl64(struct zpctoken *arg1, struct zpctoken *arg2);
+int64_t shr64(struct zpctoken *arg1, struct zpctoken *arg2);
+int64_t shrl64(struct zpctoken *arg1, struct zpctoken *arg2);
+int64_t ror64(struct zpctoken *arg1, struct zpctoken *arg2);
+int64_t rol64(struct zpctoken *arg1, struct zpctoken *arg2);
+int64_t inc64(struct zpctoken *arg1, struct zpctoken *arg2);
+int64_t dec64(struct zpctoken *arg1, struct zpctoken *arg2);
+int64_t add64(struct zpctoken *arg1, struct zpctoken *arg2);
+int64_t sub64(struct zpctoken *arg1, struct zpctoken *arg2);
+int64_t mul64(struct zpctoken *arg1, struct zpctoken *arg2);
+int64_t div64(struct zpctoken *arg1, struct zpctoken *arg2);
+int64_t mod64(struct zpctoken *arg1, struct zpctoken *arg2);
 
 double fadd64(double arg1, double arg2);
 double fsub64(double arg1, double arg2);

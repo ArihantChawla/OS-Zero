@@ -1060,9 +1060,8 @@ zpceval(struct zpctoken *srcqueue)
     struct zpctoken *token2 = NULL;
     struct zpctoken *token3;
     struct zpctoken *token4 = token;
-    long             type;
-    int64_t          arg1;
-    int64_t          arg2;
+    struct zpctoken *arg1;
+    struct zpctoken *arg2;
     int64_t          dest;
     zpccop_t        *func;
 
@@ -1090,8 +1089,7 @@ zpceval(struct zpctoken *srcqueue)
             }
             if (token2) {
                 if (token2->type == ZPCINT64 || token2->type == ZPCUINT64) {
-                    arg2 = token2->data.ui64.u64;
-                    type = token2->type;
+                    arg2 = token2;
                 } else {
                     fprintf(stderr, "invalid argument type (%lx)\n",
                             token2->type);
@@ -1100,11 +1098,13 @@ zpceval(struct zpctoken *srcqueue)
                 }
             }
             if (token1) {
-                if (!type) {
-                    type = token1->type;
-                }
                 if (token1->type == ZPCINT64 || token1->type == ZPCUINT64) {
-                    arg1 = token1->data.ui64.u64;
+                    arg1 = token1;
+                } else {
+                    fprintf(stderr, "invalid argument type (%lx)\n",
+                            token2->type);
+
+                    return NULL;
                 }
             }
             switch (zpccopnargtab[token->type]) {
@@ -1126,9 +1126,9 @@ zpceval(struct zpctoken *srcqueue)
             func = zpcevaltab[token->type];
             if (func) {
                 if (token2) {
-                    dest = func(arg2, arg1, token1);
+                    dest = func(arg2, arg1);
                 } else {
-                    dest = func(arg1, arg2, token1);
+                    dest = func(arg1, arg2);
                 }
                 token1->data.ui64.i64 = dest;
                 if (token1->type == ZPCINT64 || token1->type == ZPCUINT64) {

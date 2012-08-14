@@ -190,7 +190,8 @@ typedef pthread_mutex_t LK_T;
 /* macros */
 
 #if (TUNEBUF)
-#define isbufbkt(bid)     ((bid) <= 24)
+//#define isbufbkt(bid)     ((bid) <= 24)
+#define isbufbkt(bid)     0
 #define nmagslablog2(bid) (_nslabtab[(bid)])
 #else
 #define isbufbkt(bid)     0

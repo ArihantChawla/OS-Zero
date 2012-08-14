@@ -1,34 +1,37 @@
+#include <stdint.h>
 #include <zero/param.h>
 #include <zero/cdecl.h>
 
-#define ZPCNREG    16
+#define ZPCNREG     16
 
-#define ZPCASMILL  0x00
-#define ZPCASMNOT  0x01
-#define ZPCASMSHR  0x02
-#define ZPCASMSHRA 0x03
-#define ZPCASMSHL  0x04
-#define ZPCASMXOR  0x05
-#define ZPCASMOR   0x06
-#define ZPCASMAND  0x07
-#define ZPCASMROR  0x08
-#define ZPCASMROL  0x09
-#define ZPCASMINC  0x0a
-#define ZPCASMDEC  0x0b
-#define ZPCASMADD  0x0c
-#define ZPCASMSUB  0x0d
-#define ZPCASMMUL  0x0e
-#define ZPCASMDIV  0x0f
-#define ZPCNASMOP  16
+#define ZPCASMILL   0x00
+#define ZPCASMNOT   0x01
+#define ZPCASMSHR   0x02
+#define ZPCASMSHRA  0x03
+#define ZPCASMSHL   0x04
+#define ZPCASMXOR   0x05
+#define ZPCASMOR    0x06
+#define ZPCASMAND   0x07
+#define ZPCASMROR   0x08
+#define ZPCASMROL   0x09
+#define ZPCASMINC   0x0a
+#define ZPCASMDEC   0x0b
+#define ZPCASMADD   0x0c
+#define ZPCASMSUB   0x0d
+#define ZPCASMMUL   0x0e
+#define ZPCASMDIV   0x0f
+#define ZPCNASMOP   16
 
-#define ZPCARGREG  0x00
+#define ZPCARGREG   0x00
+#define ZPCARGIMMED 0x01
 struct zpcasminst {
     unsigned op    : 4;
     unsigned arg1t : 4;
     unsigned arg2t : 4;
     unsigned reg1  : 4;
     unsigned reg2  : 4;
-    unsigned pad   : 44;
+    unsigned pad1  : 32;
+    unsigned pad2  : 12;
     uint64_t args[0];
 } PACK();
 
@@ -40,7 +43,7 @@ struct zpcasminst {
     (((op)->arg1t == ZPCARGREG                                          \
       ? zpcgetstkreg((op)->reg1])                                       \
       : (op)->args[0])))
-#define getintarg2(op)                                                  \
+#define getstkarg2(op)                                                  \
     (((op)->arg2t == ZPCARGREG                                          \
       ? zpcgetstkreg((op)->arg2)                                        \
       : (arg1t == ZPCARGREG                                             \
@@ -58,4 +61,4 @@ struct zpcasminst {
          : (op)->args[0])))
 
 uint64_t zpcintregs[ZPCNREG];
-double   zpcfltregs[ZPCNREG];
+
