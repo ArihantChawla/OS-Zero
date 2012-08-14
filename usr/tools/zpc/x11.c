@@ -661,6 +661,7 @@ zpcevaltop(void)
     if (item->scur == item->str) {
         zpcregstk[0] = zpcparse(zpcregstk[0]);
         zpcregstk[0] = zpceval(zpcregstk[0]);
+        x11drawdisp();
     }
 
     return;
@@ -700,12 +701,12 @@ buttonpress(void *arg, XEvent *event)
     zpccop_t           *func;
     zpcfop_t           *fltfunc;
     zpcaction_t        *action;
-    uint64_t            usrc;
-    uint64_t            udest;
-    uint64_t            ures64;
     int64_t             src;
     int64_t             dest;
-    int64_t             res64;
+    int64_t             res;
+//    int64_t             src;
+//    int64_t             dest;
+//    int64_t             res64;
 #if 0
     float               fsrc = NULL;
     float               fdest = NULL;
@@ -714,13 +715,15 @@ buttonpress(void *arg, XEvent *event)
     double              dsrc;
     double              ddest;
     double              dres;
-    int                 type = 0;
+    long                type = 0;
 
     if (isaction(wininfo->parm)) {
         action = actiontab[toaction(wininfo->parm)];
         if (action) {
             action();
         }
+
+        return;
     } else if (!wininfo->parm || item->scur != item->str) {
         if (buttonstrtab[wininfo->row][wininfo->col]) {
             stkqueueinput(buttonstrtab[wininfo->row][wininfo->col]);
@@ -735,12 +738,9 @@ buttonpress(void *arg, XEvent *event)
                 if (token) {
                     zpcfreequeue(token->next);
                     token->next = NULL;
-                    if (token->type == ZPCUINT64) {
-                        type = ZPCUINT64;
-                        usrc = token->data.ui64.u64;
-                    } else if (token->type == ZPCINT64) {
-                        type = ZPCINT64;
-                        src = token->data.ui64.i64;
+                    if (token->type == ZPCINT64 || token->type == ZPCUINT64) {
+                        type = token->type;
+                        src = token->data.ui64.u64;
                     } else if (token->type == ZPCDOUBLE) {
                         dsrc = token->data.f64;
                     } else {
@@ -759,10 +759,10 @@ buttonpress(void *arg, XEvent *event)
                 if (token) {
                     zpcfreequeue(token->next);
                     token->next = NULL;
-                    if (type == ZPCUINT64 && token->type == ZPCUINT64) {
-                        udest = token->data.ui64.u64;
-                    } else if (type == ZPCINT64 && token->type == ZPCINT64) {
-                        dest = token->data.ui64.i64;
+                    if (type == ZPCUINT64
+                        && (token->type == ZPCINT64
+                            || token->type == ZPCUINT64)) {
+                        dest = token->data.ui64.u64;
                     } else if (type == ZPCDOUBLE && token->type == ZPCDOUBLE) {
                         ddest = token->data.f64;
                     } else {
@@ -793,49 +793,30 @@ buttonpress(void *arg, XEvent *event)
         if (type == ZPCINT64 || type == ZPCUINT64) {
             func = wininfo->clickfunc[evbut];
             if (func) {
-                if (type == ZPCINT64) {
-                    res64 = func(src, dest);
-                    token->type = ZPCINT64;
-                    token->data.ui64.i64 = res64;
+                if (type == ZPCINT64 || type == ZPCUINT64) {
+                    res = func(src, dest, token);
+                    token->type = type;
+                    token->data.ui64.i64 = res;
                     switch (token->radix) {
                         case 2:
-                            zpcconvbinint64(res64, token->str, TOKENSTRLEN);
+                            zpcconvbinuint64(res, token->str, TOKENSTRLEN);
 
                             break;
                         case 8:
-                            sprintf(token->str, "%llo", res64);
+                            sprintf(token->str, "%llo", res);
 
                             break;
                         case 10:
-                            sprintf(token->str, "%lld", res64);
+                            if (type == ZPCINT64) {
+                                sprintf(token->str, "%lld", (int64_t)res);
+                            } else {
+                                sprintf(token->str, "%llu", res);
+                            }
 
                             break;
                         case 16:
                         default:
-                            sprintf(token->str, "0x%llx", res64);
-
-                            break;
-                    }
-                } else {
-                    ures64 = func(usrc, udest);
-                    token->type = ZPCUINT64;
-                    token->data.ui64.u64 = ures64;
-                    switch (token->radix) {
-                        case 2:
-                            zpcconvbinuint64(ures64, token->str, TOKENSTRLEN);
-
-                            break;
-                        case 8:
-                            sprintf(token->str, "%llo", ures64);
-
-                            break;
-                        case 10:
-                            sprintf(token->str, "%llu", ures64);
-
-                            break;
-                        case 16:
-                        default:
-                            sprintf(token->str, "0x%llx", ures64);
+                            sprintf(token->str, "0x%llx", res);
 
                             break;
                     }

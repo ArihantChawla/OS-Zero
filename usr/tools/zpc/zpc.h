@@ -94,6 +94,16 @@ struct zpccomplex {
     } img;
 };
 
+/* sign values */
+#define ZPCUNSIGNED     0x00
+#define ZPCUSERUNSIGNED 0x01
+#define ZPCSIGNED       0x02
+#define ZPCUSERSIGNED   0x03
+/* flags values */
+#define ZPCZERO         0x01
+#define ZPCOVERFLOW     0x02
+#define ZPCUNDERFLOW    0x04
+#define ZPCSIGN         0x08
 #define zpcisoper(tp)                                                   \
     ((tp) && ((tp)->type >= ZPCNOT && (tp)->type <= ZPCMOD))
 #define zpcisoperchar(c)                                                \
@@ -112,6 +122,7 @@ struct zpctoken {
     long                   param;
     long                   radix;
     long                   sign;
+    long                   flags;
     union {
         union zpcui64      ui64;
         float              f32;

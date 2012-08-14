@@ -1057,7 +1057,7 @@ zpceval(struct zpctoken *srcqueue)
     struct zpctoken *tail = NULL;
     struct zpctoken *stack = NULL;
     struct zpctoken *token1;
-    struct zpctoken *token2;
+    struct zpctoken *token2 = NULL;
     struct zpctoken *token3;
     struct zpctoken *token4 = token;
     long             type;
@@ -1079,6 +1079,7 @@ zpceval(struct zpctoken *srcqueue)
                     return NULL;
                 }
             }
+            token2 = NULL;
             if (zpccopnargtab[token->type] == 2) {
                 token2 = zpcpoptoken(&stack);
                 if (!token2) {
@@ -1086,27 +1087,24 @@ zpceval(struct zpctoken *srcqueue)
 
                     return NULL;
                 }
-            } else {
-                token2 = NULL;
-            }
-            if (token1) {
-                if (token1->type == ZPCUINT64) {
-                    type = ZPCUINT64;
-                    arg1 = token1->data.ui64.u64;
-                } else if (token1->type == ZPCINT64) {
-                    type = ZPCINT64;
-                    arg1 = token1->data.ui64.i64;
-                }
             }
             if (token2) {
-                if (type == ZPCUINT64 && token2->type == ZPCUINT64) {
+                if (token2->type == ZPCINT64 || token2->type == ZPCUINT64) {
                     arg2 = token2->data.ui64.u64;
-                } else if (type == ZPCINT64 && token2->type == ZPCINT64) {
-                    arg2 = token2->data.ui64.i64;
+                    type = token2->type;
                 } else {
-                    fprintf(stderr, "invalid argument type\n");
+                    fprintf(stderr, "invalid argument type (%lx)\n",
+                            token2->type);
 
                     return NULL;
+                }
+            }
+            if (token1) {
+                if (!type) {
+                    type = token1->type;
+                }
+                if (token1->type == ZPCINT64 || token1->type == ZPCUINT64) {
+                    arg1 = token1->data.ui64.u64;
                 }
             }
             switch (zpccopnargtab[token->type]) {
@@ -1128,43 +1126,32 @@ zpceval(struct zpctoken *srcqueue)
             func = zpcevaltab[token->type];
             if (func) {
                 if (token2) {
-                    dest = func(arg2, arg1);
+                    dest = func(arg2, arg1, token1);
                 } else {
-                    dest = func(arg1, arg2);
+                    dest = func(arg1, arg2, token1);
                 }
-                if (token1->type == ZPCUINT64) {
-                    token1->data.ui64.u64 = dest;
+                token1->data.ui64.i64 = dest;
+                if (token1->type == ZPCINT64 || token1->type == ZPCUINT64) {
+//                    token1->data.ui64.u64 = dest;
                     switch (token1->radix) {
                         case 8:
                             sprintf(token1->str, "%llo", token1->data.ui64.u64);
 
                             break;
                         case 10:
-                            sprintf(token1->str, "%llu", token1->data.ui64.u64);
+                            if (token1->type == ZPCINT64) {
+                                sprintf(token1->str, "%lld",
+                                        token1->data.ui64.i64);
+                            } else {
+                                sprintf(token1->str, "%llu",
+                                        token1->data.ui64.u64);
+                            }
 
                             break;
                         case 16:
                         default:
                             sprintf(token1->str, "0x%llx",
                                     token1->data.ui64.u64);
-
-                            break;
-                    }
-                } else if (token1->type == ZPCINT64) {
-                    token1->data.ui64.i64 = dest;
-                    switch (token1->radix) {
-                        case 8:
-                            sprintf(token1->str, "%llo", token1->data.ui64.i64);
-
-                            break;
-                        case 10:
-                            sprintf(token1->str, "%lld", token1->data.ui64.i64);
-
-                            break;
-                        case 16:
-                        default:
-                            sprintf(token1->str, "0x%llx",
-                                    token1->data.ui64.i64);
 
                             break;
                     }
