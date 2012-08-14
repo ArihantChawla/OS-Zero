@@ -197,6 +197,7 @@ static char *zpcregstrtab[NREGSTK]
 static Window         stkwintab[NREGSTK];
 static Window         zpcregwintab[NREGSTK];
 static Pixmap         buttonpmaps[NBUTTONSTATE];
+static Pixmap         smallbuttonpmaps[NBUTTONSTATE];
 XFontStruct          *font;
 int                   fontw;
 int                   fonth;
@@ -240,7 +241,7 @@ x11drawdisp(void)
         win = zpcregwintab[i];
         x = 8;
         len = strlen(str);
-        XDrawString(app->display, win, textgc,
+        XDrawString(app->display, win, asmtextgc,
                     x,
                     (fonth >> 1) + 8,
                     str, len);
@@ -438,6 +439,9 @@ x11initpmaps(void)
     buttonpmaps[BUTTONNORMAL] = imlib2loadimage(app, "button.png",
                                                 ZPC_BUTTON_WIDTH,
                                                 ZPC_BUTTON_HEIGHT);
+    smallbuttonpmaps[BUTTONNORMAL] = imlib2loadimage(app, "buttonsmall.png",
+                                                     ZPC_SMALL_BUTTON_WIDTH,
+                                                     ZPC_SMALL_BUTTON_HEIGHT);
 #if (HOVERBUTTONS)
     buttonpmaps[BUTTONHOVER] = imlib2loadimage(app, "buttonhilited.png",
                                                ZPC_BUTTON_WIDTH,
@@ -467,6 +471,8 @@ x11initpmaps(void)
                                                  ZPC_BUTTON_HEIGHT);
 #endif
 #endif
+    smallbuttonpmaps[BUTTONHOVER] = smallbuttonpmaps[BUTTONNORMAL];
+    smallbuttonpmaps[BUTTONCLICKED] = smallbuttonpmaps[BUTTONNORMAL];
 
     return;
 }
@@ -563,9 +569,11 @@ labelexpose(void *arg, XEvent *event)
 
     if (!event->xexpose.count) {
         x = 8;
+        XSetWindowBackgroundPixmap(app->display, wininfo->id,
+                                   smallbuttonpmaps[BUTTONNORMAL]);
         XClearWindow(app->display, wininfo->id);
         len = strlen(str);
-        XDrawString(app->display, wininfo->id, textgc,
+        XDrawString(app->display, wininfo->id, asmtextgc,
                     x,
                     (fonth >> 1) + 8,
                     str, len);
@@ -1076,8 +1084,8 @@ x11init(void)
                             win,
                             0,
                             0,
-                            32,
-                            fonth + 8,
+                            ZPC_SMALL_BUTTON_WIDTH,
+                            ZPC_SMALL_BUTTON_HEIGHT,
                             ZPCREVERSE);
         if (regwin) {
             wininfo = calloc(1, sizeof(struct x11wininfo));
@@ -1092,10 +1100,10 @@ x11init(void)
         }
         stkwin = x11initwin(app,
                             win,
-                            32,
+                            ZPC_SMALL_BUTTON_WIDTH,
                             0,
-                            ZPC_WINDOW_WIDTH - 32,
-                            fonth + 8,
+                            ZPC_WINDOW_WIDTH - ZPC_SMALL_BUTTON_WIDTH,
+                            ZPC_SMALL_BUTTON_HEIGHT,
                             ZPCREVERSE);
         if (stkwin) {
             wininfo = calloc(1, sizeof(struct x11wininfo));
