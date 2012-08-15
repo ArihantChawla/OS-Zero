@@ -27,7 +27,7 @@ typedef void zpcaction_t(void);
 #define ZPC_BUTTON_HEIGHT       48
 #define ZPC_SMALL_BUTTON_WIDTH  48
 #define ZPC_SMALL_BUTTON_HEIGHT 36
-#define ZPC_NROW                7
+#define ZPC_NROW                8
 #define ZPC_NCOLUMN             9
 #define ZPC_WINDOW_WIDTH        (ZPC_NCOLUMN * ZPC_BUTTON_WIDTH)
 #define ZPC_WINDOW_HEIGHT       (ZPC_NROW * ZPC_BUTTON_HEIGHT)
@@ -56,7 +56,10 @@ typedef void zpcaction_t(void);
 #define ZPCINT64      0x21
 #define ZPCUINT64     0x22
 #define ZPCDOUBLE     0x23
-#define ZPCVECTOR     0x24
+#define ZPCSTRING     0x24
+#define ZPCVECTOR     0x25
+#define ZPCMATRIX     0x26
+#define ZPCCOMPLEX    0x27
 #define PARAMSIZEMASK 0xff
 #define PARAMFLOATBIT 0x40000000
 #define PARAMSIGNBIT  0x80000000
@@ -115,6 +118,7 @@ struct zpccomplex {
 struct zpctoken {
     long                   type;
     char                  *str;
+    long                   slen;
     long                   param;
     long                   radix;
     long                   sign;

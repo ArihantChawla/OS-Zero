@@ -633,6 +633,39 @@ zpcgetuint64(struct zpctoken *token, const char *str, char **retstr)
 }
 
 void
+zpcgetstr(struct zpctoken *token, const char *str, char **retstr)
+{
+    size_t      slen = token->slen;
+    size_t      len = 0;
+    const char *ptr = str;
+    char       *dest = token->str;
+
+    if (!slen) {
+        slen = TOKENSTRLEN;
+        dest = token->str = malloc(slen);
+        token->slen = slen;
+    }
+    if (*ptr == '"') {
+        while ((slen--) && (*str == '_' || isalnum(*str))) {
+            fprintf(stderr, "CHAR: %x\n", *str);
+            *dest++ = *ptr++;
+            len++;
+            if (!slen) {
+                token->str = realloc(token->str, len << 1);
+                dest = &token->str[len];
+                slen = len;
+            }
+        }
+        if (*str == '"') {
+            *dest++ = '\"';
+            *dest = '\0';
+            ptr++;
+        }
+    }
+    *retstr = (char *)ptr;
+};
+
+void
 zpcgetvector(struct zpctoken *token, const char *str, char **retstr)
 {
     char             *ptr = (char *)str;
@@ -644,7 +677,7 @@ zpcgetvector(struct zpctoken *token, const char *str, char **retstr)
     long              sign = 0;
 
     toktab = malloc(DEFAULTDIM * sizeof(struct zpctoken *));
-    ptr++; /* skip the '(' */
+    ptr++; /* skip the '<' */
     while ((*ptr) && *ptr != '>') {
         while (isspace(*ptr)) {
             ptr++;
@@ -694,6 +727,9 @@ zpcgetvector(struct zpctoken *token, const char *str, char **retstr)
             }
             toktab[ndx++] = token1;
         }
+        if (*ptr == ',') {
+            ptr++;
+        }
     }
     token->type = ZPCVECTOR;
     token->data.vector.ndim = ndx;
@@ -709,6 +745,7 @@ zpcgetoper(struct zpctoken *token, const char *str, char **retstr)
     char *ptr = (char *)str;
 
     token->str = malloc(TOKENSTRLEN);
+    token->slen = TOKENSTRLEN;
     if (*ptr == '!') {
         ptr++;
         token->type = ZPCNOT;
@@ -802,9 +839,9 @@ zpcgettoken(const char *str, char **retstr)
     struct zpctoken *token = NULL;
     char            *dec;
 #if (TYPES)
-    int              sign = ZPCUNSIGNED;
+    long             sign = ZPCUNSIGNED;
 #else
-    int              sign = 0;
+    long             sign = 0;
 #endif
 
     if (!*str) {
@@ -823,7 +860,7 @@ zpcgettoken(const char *str, char **retstr)
 #endif
         ptr++;
     }
-    if (isxdigit(*ptr)) {
+    if (*ptr == '-' || isxdigit(*ptr)) {
         token->str = calloc(1, TOKENSTRLEN);
         dec = index(ptr, '.');
         if(strstr(ptr, "uU")) {
@@ -845,6 +882,9 @@ zpcgettoken(const char *str, char **retstr)
         if (dec) {
             token->type = ZPCDOUBLE;
             zpcgetdouble(token, ptr, &ptr);
+            if (sign) {
+                token->data.f64 = -token->data.f64;
+            }
             sprintf(token->str, "%e", token->data.f64);
         } else if (!sign) {
             token->sign = 0;
@@ -881,7 +921,11 @@ zpcgettoken(const char *str, char **retstr)
             }
         } else {
             token->type = ZPCINT64;
+#if (TYPES)
+            token->sign = ZPCUSERSIGNED;
+#else
             token->sign = 1;
+#endif
             zpcgetint64(token, ptr, &ptr);
             token->data.ui64.i64 = -token->data.ui64.i64;
             switch (token->radix) {
@@ -905,6 +949,9 @@ zpcgettoken(const char *str, char **retstr)
                     break;
             }
         }
+    } else if (*ptr == '"') {
+        zpcgetstr(token, ptr, &ptr);
+        token->type = ZPCSTRING;
     } else if (*ptr == '<' && isxdigit(ptr[1])) {
         zpcgetvector(token, ptr, &ptr);
     } else if (*ptr == '(' && isxdigit(ptr[1])) {

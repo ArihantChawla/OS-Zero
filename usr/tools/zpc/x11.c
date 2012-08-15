@@ -69,27 +69,30 @@ static uint8_t            buttontypetab[ZPC_NROW][ZPC_NCOLUMN] =
     { ZPCBUTTONDIGIT, ZPCBUTTONDIGIT, ZPCBUTTONDIGIT, ZPCBUTTONOPER, ZPCBUTTONOPER, ZPCBUTTONOPER, ZPCBUTTONUTIL, ZPCBUTTONUTIL, ZPCBUTTONUTIL },
     { ZPCBUTTONDIGIT, ZPCBUTTONDIGIT, ZPCBUTTONDIGIT, ZPCBUTTONOPER, ZPCBUTTONOPER, ZPCBUTTONOPER, ZPCBUTTONUTIL, ZPCBUTTONUTIL, ZPCBUTTONUTIL },
     { ZPCBUTTONDIGIT, ZPCBUTTONDIGIT, ZPCBUTTONDIGIT, ZPCBUTTONOPER, ZPCBUTTONOPER, ZPCBUTTONOPER, ZPCBUTTONUTIL, ZPCBUTTONUTIL, ZPCBUTTONUTIL },
+    { ZPCBUTTONUTIL, ZPCBUTTONUTIL, ZPCBUTTONUTIL, ZPCBUTTONUTIL, ZPCBUTTONUTIL, ZPCBUTTONUTIL, ZPCBUTTONUTIL, ZPCBUTTONUTIL, ZPCBUTTONUTIL },
     { ZPCBUTTONUTIL, ZPCBUTTONUTIL, ZPCBUTTONUTIL, ZPCBUTTONUTIL, ZPCBUTTONUTIL, ZPCBUTTONUTIL, ZPCBUTTONUTIL, ZPCBUTTONUTIL, ZPCBUTTONUTIL }
 };
 static const char        *buttonstrtab[ZPC_NROW][ZPC_NCOLUMN]
 = {
     { "d", "e", "f", "~", ">>>", "++", "(", "QUIT", NULL },
     { "a", "b", "c", "%", ">>", "--", ")", "CLR", NULL },
-    { "7", "8", "9", "/", "<<", "..>", "0x", "COPY", NULL },
-    { "4", "5", "6", "*", "^", "<..", "0b", "POP", NULL },
+    { "7", "8", "9", "/", "<<", "..>", "-", "COPY", NULL },
+    { "4", "5", "6", "*", "^", "<..", "I", "POP", NULL },
     { "1", "2", "3", "-", "|", "=", "F", "DUP", NULL },
     { "0", NULL, ",", "+", "&", NULL, "U", "DROP", NULL }, // TODO: 2nd is "."
-    { " ", NULL, NULL, "<", ">", "[", "]", "ENTER", NULL }
+    { " ", NULL, "\"", "<", ">", "[", "]", NULL, NULL },
+    { "0x", "0b", "'", "HEX", "DEC", "OCT", "BIN", NULL, NULL }
 };
 static const char        *buttonlabeltab[ZPC_NROW][ZPC_NCOLUMN]
 = {
     { "d", "e", "f", "~", ">>>", "++", "(", "QUIT", "EQU" },
     { "a", "b", "c", "%", ">>", "--", ")", "CLR", "VEC" },
-    { "7", "8", "9", "/", "<<", "..>", "0x", "COPY", "MAT" },
-    { "4", "5", "6", "*", "^", "<..", "0b", "POP", "PLOT" },
+    { "7", "8", "9", "/", "<<", "..>", "-", "COPY", "MAT" },
+    { "4", "5", "6", "*", "^", "<..", "I", "POP", "PLOT" },
     { "1", "2", "3", "-", "|", "=", "F", "DUP", "RAD" },
     { "0", ".", ",", "+", "&", "EVAL", "U", "DROP", "UNIT" },
-    { "SPACE", "DEL", "<", ">", "[", "]", "I", "CLS", "ENTER" }
+    { "SPACE", "DEL", "\"", "<", ">", "[", "]", NULL, "ENTER" },
+    { "0x", "0b", "'", "HEX", "DEC", "OCT", "BIN", NULL, NULL }
 };
 static const char        *buttontop1tab[ZPC_NROW][ZPC_NCOLUMN]
 = {
@@ -99,6 +102,7 @@ static const char        *buttontop1tab[ZPC_NROW][ZPC_NCOLUMN]
     { NULL, NULL, NULL, "mul", "xor", "rol", NULL, NULL, NULL },
     { NULL, NULL, NULL, "sub", "or", NULL, NULL, NULL, NULL },
     { NULL, NULL, NULL, "add", "and", NULL, NULL, NULL, NULL },
+    { NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL },
     { NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL }
 };
 static const char        *buttontop2tab[ZPC_NROW][ZPC_NCOLUMN]
@@ -109,6 +113,7 @@ static const char        *buttontop2tab[ZPC_NROW][ZPC_NCOLUMN]
     { NULL, NULL, NULL, "fmul", NULL, NULL, NULL, NULL, NULL },
     { NULL, NULL, NULL, "fsub", NULL, NULL, NULL, NULL, NULL },
     { NULL, NULL, NULL, "fadd", NULL, NULL, NULL, NULL, NULL },
+    { NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL },
     { NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL }
 };
 #define QUIT  0xff
@@ -127,11 +132,12 @@ static const char        *buttontop2tab[ZPC_NROW][ZPC_NCOLUMN]
 #define PLOT  0xf2
 #define RAD   0xf1
 #define UNIT  0xf0
-#define LAST  0xf0
+#define NEG   0xef
+#define FIRST  0xef
 #define isaction(i)                                                     \
-    ((i) >= UNIT && (i) <= QUIT)
+    ((i) >= FIRST && (i) <= 0xff)
 #define toaction(i)                                                     \
-    ((i) - LAST)
+    ((i) - FIRST)
 static const uint8_t      parmtab[ZPC_NROW][ZPC_NCOLUMN]
 = {
     { 0, 0, 0, 1, 2, 1, 0, QUIT },
@@ -140,7 +146,8 @@ static const uint8_t      parmtab[ZPC_NROW][ZPC_NCOLUMN]
     { 0, 0, 0, 2, 2, 2, 0, POP },
     { 0, 0, 0, 2, 2, 0, 0, DUP },
     { 0, 0, 0, 2, 2, EVAL, 0, DROP },
-    { 0, DEL, 0, 0, 0, 0, 0, CLS, ENTER }
+    { 0, DEL, 0, 0, 0, 0, 0, 0, ENTER },
+    { 0, 0, 0, 0, 0, 0, 0, 0 }
 };
 static const uint8_t      isflttab[ZPC_NROW][ZPC_NCOLUMN]
 = {
@@ -150,10 +157,12 @@ static const uint8_t      isflttab[ZPC_NROW][ZPC_NCOLUMN]
     { 0, 0, 0, 1, 0, 0, 0, 0 },
     { 0, 0, 0, 1, 0, 0, 0, 0 },
     { 0, 0, 0, 1, 0, 0, 0, 0 },
+    { 0, 0, 0, 0, 0, 0, 0, 0 },
     { 0, 0, 0, 0, 0, 0, 0, 0 }
 };
-static zpcaction_t *actiontab[0xff - LAST + 1] =
+static zpcaction_t *actiontab[0xff - FIRST + 1] =
 {
+    NULL,
     NULL,
     NULL,
     NULL,
@@ -793,8 +802,6 @@ buttonpress(void *arg, XEvent *event)
             if (zpcregstk[0]) {
                 token = zpcregstk[0];
                 if (token) {
-                    zpcfreequeue(token->next);
-                    token->next = NULL;
                     if (token->type == ZPCINT64 || token->type == ZPCUINT64) {
                         type = token->type;
                         src = token;
@@ -803,6 +810,8 @@ buttonpress(void *arg, XEvent *event)
                         
                         return;
                     }
+                    zpcfreequeue(token->next);
+                    token->next = NULL;
                 }
             } else {
                 fprintf(stderr, "EEEE\n");
