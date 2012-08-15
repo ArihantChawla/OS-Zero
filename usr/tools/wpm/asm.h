@@ -78,14 +78,14 @@ struct val {
     int32_t     val;
 };
 
-struct token {
-    struct token *prev;
-    struct token *next;
-    uint32_t      type;
-    int32_t       val;
+struct asmtoken {
+    struct asmtoken  *prev;
+    struct asmtoken  *next;
+    uint32_t          type;
+    int32_t           val;
 #if (WPMDB)
-    uint8_t      *file;
-    uint32_t      line;
+    uint8_t          *file;
+    uint32_t          line;
 #endif
     union {
         struct label  label;
