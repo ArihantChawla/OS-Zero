@@ -35,6 +35,7 @@ void zpcquit(void);
 
 extern struct zpctoken   *zpcregstk[];
 extern struct zpcstkitem *zpcinputitem;
+extern long               zpcradix;
 
 #define NHASHITEM 1024
 static struct x11wininfo *winhash[NHASHITEM] ALIGNED(PAGESIZE);
@@ -782,6 +783,7 @@ buttonpress(void *arg, XEvent *event)
     double              dres;
 #endif
     long                type = 0;
+    long                radix;
 
     if (isaction(wininfo->parm)) {
         action = actiontab[toaction(wininfo->parm)];
@@ -849,8 +851,17 @@ buttonpress(void *arg, XEvent *event)
                 if (type == ZPCINT64 || type == ZPCUINT64) {
                     token->type = type;
                     res = func(src, dest);
+#if (TYPES)
+                    token->type = dest->type;
+                    token->flags = dest->flags;
+#endif
                     token->data.ui64.i64 = res;
-                    switch (token->radix) {
+                    token->sign = dest->sign;
+                    radix = token->radix;
+                    if (!radix) {
+                        radix = zpcradix;
+                    }
+                    switch (radix) {
                         case 2:
                             zpcconvbinuint64(res, token->str, TOKENSTRLEN);
 

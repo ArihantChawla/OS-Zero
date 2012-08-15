@@ -24,6 +24,8 @@
 #define isbdigit(c) ((c) == '0' || (c) == '1')
 #define isodigit(c) ((c) >= '0' && (c) <= '7')
 
+extern long             zpcradix;
+
 #define OPERRTOL  0x80000000
 #define zpccopprec(tp)                                                 \
     (zpccopprectab[(tp)->type] & ~OPERRTOL)
@@ -843,6 +845,7 @@ zpcgettoken(const char *str, char **retstr)
 #else
     long             sign = 0;
 #endif
+    long             radix;
 
     if (!*str) {
 
@@ -880,10 +883,11 @@ zpcgettoken(const char *str, char **retstr)
 #endif
         }
         if (dec) {
-            token->type = ZPCDOUBLE;
+//            token->type = ZPCDOUBLE;
             zpcgetdouble(token, ptr, &ptr);
             if (sign) {
                 token->data.f64 = -token->data.f64;
+                token->sign = sign;
             }
             sprintf(token->str, "%e", token->data.f64);
         } else if (!sign) {
@@ -892,14 +896,19 @@ zpcgettoken(const char *str, char **retstr)
 #if (TYPES)
             if (sign == ZPCUSERSIGNED || token->data.ui64.u64 <= INT64_MAX) {
                 token->type = ZPCINT64;
+                token->sign = sign;
             } else {
                 token->sign = ZPCUNSIGNED;
                 token->type = ZPCUINT64;
             }
 #else
-            token->type = ZPCUINT64;
+//            token->type = ZPCUINT64;
 #endif
-            switch (token->radix) {
+            radix = token->radix;
+            if (!radix) {
+                radix = zpcradix;
+            }
+            switch (radix) {
                 case 2:
                     zpcconvbinuint64(token->data.ui64.u64, token->str,
                                      TOKENSTRLEN);
@@ -920,15 +929,19 @@ zpcgettoken(const char *str, char **retstr)
                     break;
             }
         } else {
-            token->type = ZPCINT64;
+//            token->type = ZPCINT64;
+            zpcgetint64(token, ptr, &ptr);
+            token->data.ui64.i64 = -token->data.ui64.i64;
 #if (TYPES)
             token->sign = ZPCUSERSIGNED;
 #else
             token->sign = 1;
 #endif
-            zpcgetint64(token, ptr, &ptr);
-            token->data.ui64.i64 = -token->data.ui64.i64;
-            switch (token->radix) {
+            radix = token->radix;
+            if (!radix) {
+                radix = zpcradix;
+            }
+            switch (radix) {
                 case 2:
                     zpcconvbinint64(token->data.ui64.i64, token->str,
                                     TOKENSTRLEN);
@@ -1153,6 +1166,7 @@ zpceval(struct zpctoken *srcqueue)
     struct zpctoken *arg2;
     int64_t          dest;
     zpccop_t        *func;
+    long             radix;
 
     while (token) {
         token3 = token->next;
@@ -1216,18 +1230,32 @@ zpceval(struct zpctoken *srcqueue)
             if (func) {
                 if (token2) {
                     dest = func(arg2, arg1);
+#if (TYPES)
+                    token1->type = arg1->type;
+                    token1->flags = arg1->flags;
+                    token1->sign = arg1->sign;
+#endif
                 } else {
                     dest = func(arg1, arg2);
+#if (TYPES)
+                    token1->type = arg2->type;
+                    token1->flags = arg2->flags;
+                    token1->sign = arg2->sign;
+#endif
                 }
                 token1->data.ui64.i64 = dest;
                 if (token1->type == ZPCINT64 || token1->type == ZPCUINT64) {
-//                    token1->data.ui64.u64 = dest;
-                    switch (token1->radix) {
+                    radix = token1->radix;
+                    if (!radix) {
+                        radix = zpcradix;
+                    }
+                    switch (radix) {
                         case 8:
                             sprintf(token1->str, "%llo", token1->data.ui64.u64);
 
                             break;
                         case 10:
+                        default:
                             if (token1->type == ZPCINT64) {
                                 sprintf(token1->str, "%lld",
                                         token1->data.ui64.i64);
@@ -1238,7 +1266,6 @@ zpceval(struct zpctoken *srcqueue)
 
                             break;
                         case 16:
-                        default:
                             sprintf(token1->str, "0x%llx",
                                     token1->data.ui64.u64);
 

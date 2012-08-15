@@ -26,6 +26,7 @@ static struct zpctoken   *zpcvarhash[NHASHITEM] ALIGNED(PAGESIZE);
 #define zpcpop(tmp)                                                     \
     (((tmp) = zpcstk, zpcstk = ((zpcstk->next) ? zpcstk->next : NULL)), (tmp))
 static struct zpcstkitem *zpcstk;
+long                      zpcradix;
 extern struct zpctoken   *zpctokenqueue;
 extern struct zpctoken   *zpcparsequeue;
 extern struct zpctoken   *zpcoperstk;
@@ -210,6 +211,7 @@ zpcswap(void)
 int
 main(int argc, char *argv[])
 {
+    zpcradix = 10;
     stkinit();
     exprinit();
 #if (ZPCX11)
