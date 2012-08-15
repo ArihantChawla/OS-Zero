@@ -838,8 +838,8 @@ buttonpress(void *arg, XEvent *event)
             func = wininfo->clickfunc[evbut];
             if (func) {
                 if (type == ZPCINT64 || type == ZPCUINT64) {
-                    res = func(src, dest);
                     token->type = type;
+                    res = func(src, dest);
                     token->data.ui64.i64 = res;
                     switch (token->radix) {
                         case 2:
@@ -851,6 +851,7 @@ buttonpress(void *arg, XEvent *event)
 
                             break;
                         case 10:
+                        default:
                             if (type == ZPCINT64) {
                                 sprintf(token->str, "%lld", (int64_t)res);
                             } else {
@@ -859,7 +860,6 @@ buttonpress(void *arg, XEvent *event)
 
                             break;
                         case 16:
-                        default:
                             sprintf(token->str, "0x%llx", res);
 
                             break;
@@ -870,7 +870,7 @@ buttonpress(void *arg, XEvent *event)
         } else {
             fltfunc = wininfo->clickfuncdbl[evbut];
             if (fltfunc) {
-                dres = fltfunc(dsrc, ddest);
+                dres = fltfunc(dsrc, dtoken);
                 token->type = ZPCDOUBLE;
                 token->data.f64 = dres;
                 sprintf(token->str, "%e", token->data.f64);
