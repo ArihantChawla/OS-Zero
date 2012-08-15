@@ -324,6 +324,7 @@ zpcpoptoken(struct zpctoken **stack)
     return token;
 }
 
+#if 0
 void
 zpcgetfloat(struct zpctoken *token, const char *str, char **retstr)
 {
@@ -409,6 +410,7 @@ zpcgetfloat(struct zpctoken *token, const char *str, char **retstr)
 
     return;
 }
+#endif
 
 void
 zpcgetdouble(struct zpctoken *token, const char *str, char **retstr)
@@ -557,6 +559,7 @@ zpcgetint64(struct zpctoken *token, const char *str, char **retstr)
     if (*ptr == ',') {
         ptr++;
     }
+    token->type = ZPCINT64;
     *retstr = (char *)ptr;
 
     return;
@@ -623,6 +626,7 @@ zpcgetuint64(struct zpctoken *token, const char *str, char **retstr)
     if (*ptr == 'u' || *ptr == 'U' || *ptr == ',') {
         ptr++;
     }
+    token->type = ZPCUINT64;
     *retstr = (char *)ptr;
 
     return;
@@ -637,7 +641,7 @@ zpcgetvector(struct zpctoken *token, const char *str, char **retstr)
     long              ndx = 0;
     long              type = 0;
     char             *cp;
-    long              unsign = 1;
+    long              sign = 0;
 
     toktab = malloc(DEFAULTDIM * sizeof(struct zpctoken *));
     ptr++; /* skip the '(' */
@@ -648,7 +652,7 @@ zpcgetvector(struct zpctoken *token, const char *str, char **retstr)
         if (*ptr) {
             token1 = calloc(1, sizeof(struct zpctoken));
             if (*ptr == '-') {
-                unsign = 0;
+                sign = 1;
                 ptr++;
             };
             cp = index(ptr, '.');
@@ -657,24 +661,36 @@ zpcgetvector(struct zpctoken *token, const char *str, char **retstr)
                 zpcgetdouble(token1, ptr, &ptr);
             } else {
                 if (strstr(ptr, "uU")) {
-                    if (!unsign) {
+                    if (sign) {
                         fprintf(stderr, "sign on unsigned number\n");
                         
                         return;
                     }
                 }
                 if (!type) {
-                    if (unsign) {
-                        type = ZPCUINT64;
-                    } else {
+                    if (sign) {
+#if (TYPES)
+                        token1->sign = ZPCUSERSIGNED;
+#endif
                         type = ZPCINT64;
+                    } else {
+                        type = ZPCUINT64;
                     }
                 }
+#if (TYPES)
                 if (type == ZPCUINT64) {
                     zpcgetuint64(token1, ptr, &ptr);
                 } else {
                     zpcgetint64(token1, ptr, &ptr);
                 }
+                if (ZPCUSERSIGNED || token1->data.ui64.u64 <= INT64_MAX) {
+                    token1->type = ZPCINT64;
+                } else if (!sign) {
+                    token1->type = ZPCUINT64;
+                }
+#else
+                token1->type = type;
+#endif
             }
             toktab[ndx++] = token1;
         }
@@ -785,7 +801,11 @@ zpcgettoken(const char *str, char **retstr)
     char            *ptr = (char *)str;
     struct zpctoken *token = NULL;
     char            *dec;
-    int              unsign = 1;
+#if (TYPES)
+    int              sign = ZPCUNSIGNED;
+#else
+    int              sign = 0;
+#endif
 
     if (!*str) {
 
@@ -794,29 +814,51 @@ zpcgettoken(const char *str, char **retstr)
     while (isspace(*ptr)) {
         ptr++;
     }
-    token = malloc(sizeof(struct zpctoken));
+    token = calloc(1, sizeof(struct zpctoken));
     if (*ptr == '-' && !isspace(ptr[1])) {
-        unsign = 0;
+#if (TYPES)
+        sign = ZPCUSERSIGNED;
+#else
+        sign = 1;
+#endif
         ptr++;
     }
     if (isxdigit(*ptr)) {
         token->str = calloc(1, TOKENSTRLEN);
         dec = index(ptr, '.');
         if(strstr(ptr, "uU")) {
-            if (!unsign) {
+#if (TYPES)
+            if (sign == ZPCUSERSIGNED) {
                 fprintf(stderr, "sign on unsigned number\n");
 
                 return NULL;
             }
+            sign = ZPCUSERUNSIGNED;
+#else
+            if (sign) {
+                fprintf(stderr, "sign on unsigned number\n");
+
+                return NULL;
+            }
+#endif
         }
         if (dec) {
             token->type = ZPCDOUBLE;
             zpcgetdouble(token, ptr, &ptr);
             sprintf(token->str, "%e", token->data.f64);
-        } else if (unsign) {
-            token->type = ZPCUINT64;
+        } else if (!sign) {
             token->sign = 0;
             zpcgetuint64(token, ptr, &ptr);
+#if (TYPES)
+            if (sign == ZPCUSERSIGNED || token->data.ui64.u64 <= INT64_MAX) {
+                token->type = ZPCINT64;
+            } else {
+                token->sign = ZPCUNSIGNED;
+                token->type = ZPCUINT64;
+            }
+#else
+            token->type = ZPCUINT64;
+#endif
             switch (token->radix) {
                 case 2:
                     zpcconvbinuint64(token->data.ui64.u64, token->str,

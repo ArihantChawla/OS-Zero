@@ -4,8 +4,6 @@
 #include <zpc/zpc.h>
 #include <zpc/op.h>
 
-#define TYPES 0
-
 int64_t
 not64(struct zpctoken *arg1, struct zpctoken *dummy)
 {
@@ -126,16 +124,28 @@ inc64(struct zpctoken *arg1, struct zpctoken *arg2)
     arg1->flags = 0;
 #if (TYPES)
     if (arg1->type == ZPCINT64) {
-        if (src == INT64_MAX) {
+        if (arg1->type == ZPCUSERSIGNED && src == INT64_MAX) {
             arg1->flags |= ZPCOVERFLOW;
+        } else {
+            src++;
+            if (!src) {
+                if (!src) {
+                    arg1->flags |= ZPCZERO;
+                }
+            } else if (src > INT64_MAX) {
+                arg1->type = ZPCUINT64;
+                arg1->sign = ZPCUNSIGNED;
+            }
         }
     } else if (arg1->type == ZPCUINT64) {
         if (src == UINT64_MAX) {
             arg1->flags |= ZPCOVERFLOW;
         }
+        src++;
     }
-#endif
+#else
     src++;
+#endif
 
     return src;
 }

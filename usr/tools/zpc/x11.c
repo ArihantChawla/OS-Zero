@@ -767,9 +767,11 @@ buttonpress(void *arg, XEvent *event)
     float               fdest = NULL;
     float               fres;
 #endif
+#if 0
     double              dsrc;
     double              ddest;
     double              dres;
+#endif
     long                type = 0;
 
     if (isaction(wininfo->parm)) {
@@ -812,19 +814,8 @@ buttonpress(void *arg, XEvent *event)
                 if (token) {
                     zpcfreequeue(token->next);
                     token->next = NULL;
-                    if (type == ZPCUINT64
-                        && (token->type == ZPCINT64
-                            || token->type == ZPCUINT64)) {
-                        dest = token;
-                    } else {
-                        fprintf(stderr, "EEEE\n");
-                        
-                        return;
-                    }
-                } else {
-                    fprintf(stderr, "EEEE\n");
-                    
-                    return;
+                    type = token->type;
+                    dest = token;
                 }
             }
         }
@@ -838,9 +829,11 @@ buttonpress(void *arg, XEvent *event)
     if (evbut < NBUTTON) {
         token = calloc(1, sizeof(struct zpctoken));
         token->str = calloc(1, TOKENSTRLEN);
+#if 0
         if  (!type) {
             type = ZPCINT64;
         }
+#endif
         if (type == ZPCINT64 || type == ZPCUINT64) {
             func = wininfo->clickfunc[evbut];
             if (func) {
@@ -906,12 +899,10 @@ buttonpress(void *arg, XEvent *event)
                 }
             }
             if (wininfo->parm == 2) {
-                zpcregstk[1] = token;
                 memmove(&zpcregstk[0], &zpcregstk[1], (NREGSTK - 1) * sizeof(struct zpctoken *));
                 zpcregstk[NREGSTK - 1] = NULL;
-            } else {
-                zpcregstk[0] = token;
             }
+            zpcregstk[0] = token;
         }
     }
     x11drawdisp();
