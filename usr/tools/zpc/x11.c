@@ -766,8 +766,8 @@ buttonpress(void *arg, XEvent *event)
     zpccop_t           *func = NULL;
     zpcfop_t           *fltfunc;
     zpcaction_t        *action;
-    struct zpctoken    *src;
-    struct zpctoken    *dest;
+    struct zpctoken    *src = NULL;
+    struct zpctoken    *dest = NULL;
     int64_t             res;
 //    int64_t             src;
 //    int64_t             dest;
@@ -852,11 +852,17 @@ buttonpress(void *arg, XEvent *event)
                     token->type = type;
                     res = func(src, dest);
 #if (TYPES)
-                    token->type = dest->type;
-                    token->flags = dest->flags;
+                    if (dest) {
+                        token->type = dest->type;
+                        token->flags = dest->flags;
+                    }
 #endif
                     token->data.ui64.i64 = res;
-                    token->sign = dest->sign;
+                    if (dest) {
+                        token->sign = dest->sign;
+                    } else {
+                        token->sign = src->sign;
+                    }
                     radix = token->radix;
                     if (!radix) {
                         radix = zpcradix;
