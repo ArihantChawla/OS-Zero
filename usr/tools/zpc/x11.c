@@ -81,7 +81,7 @@ static const char        *buttonstrtab[ZPC_NROW][ZPC_NCOLUMN]
     { "1", "2", "3", "-", "|", "=", "F", "DUP", NULL },
     { "0", NULL, ",", "+", "&", NULL, "U", "DROP", NULL }, // TODO: 2nd is "."
     { " ", NULL, "\"", "<", ">", "[", "]", NULL, NULL },
-    { "0x", "0b", "'", "HEX", "DEC", "OCT", "BIN", NULL, NULL }
+    { "0x", "0b", "'", NULL, NULL, NULL, NULL, NULL, NULL }
 };
 static const char        *buttonlabeltab[ZPC_NROW][ZPC_NCOLUMN]
 = {
@@ -452,13 +452,13 @@ x11initpmaps(void)
                                                      ZPC_SMALL_BUTTON_WIDTH,
                                                      ZPC_SMALL_BUTTON_HEIGHT);
 #if (HOVERBUTTONS)
-    buttonpmaps[BUTTONHOVER] = imlib2loadimage(app, "buttonhilited.png",
+    buttonpmaps[BUTTONHOVER] = imlib2loadimage(app, "buttonhilite.png",
                                                ZPC_BUTTON_WIDTH,
                                                ZPC_BUTTON_HEIGHT);
 #else
     buttonpmaps[BUTTONHOVER] = buttonpmaps[BUTTONNORMAL];
 #endif
-    buttonpmaps[BUTTONCLICKED] = buttonpmaps[BUTTONNORMAL];
+    buttonpmaps[BUTTONCLICKED] = "buttonpress.png";
 #if 0
     buttonpmaps[BUTTONHOVER] = imlib2loadimage(app, "button.png",
                                                ZPC_BUTTON_WIDTH,
@@ -762,7 +762,7 @@ buttonpress(void *arg, XEvent *event)
     int                 evbut = toevbutton(event->xbutton.button);
     struct zpctoken    *token;
     struct zpcstkitem  *item = zpcinputitem;
-    zpccop_t           *func;
+    zpccop_t           *func = NULL;
     zpcfop_t           *fltfunc;
     zpcaction_t        *action;
     struct zpctoken    *src;
