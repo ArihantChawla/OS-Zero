@@ -704,7 +704,7 @@ zpcgetvector(struct zpctoken *token, const char *str, char **retstr)
                 }
                 if (!type) {
                     if (sign) {
-#if (TYPES)
+#if (SMARTTYPES)
                         token1->sign = ZPCUSERSIGNED;
 #endif
                         type = ZPCINT64;
@@ -712,7 +712,7 @@ zpcgetvector(struct zpctoken *token, const char *str, char **retstr)
                         type = ZPCUINT64;
                     }
                 }
-#if (TYPES)
+#if (SMARTTYPES)
                 if (type == ZPCUINT64) {
                     zpcgetuint64(token1, ptr, &ptr);
                 } else {
@@ -840,11 +840,7 @@ zpcgettoken(const char *str, char **retstr)
     char            *ptr = (char *)str;
     struct zpctoken *token = NULL;
     char            *dec;
-#if (TYPES)
-    long             sign = ZPCUNSIGNED;
-#else
     long             sign = 0;
-#endif
     long             radix;
 
     if (!*str) {
@@ -856,7 +852,7 @@ zpcgettoken(const char *str, char **retstr)
     }
     token = calloc(1, sizeof(struct zpctoken));
     if (*ptr == '-' && !isspace(ptr[1])) {
-#if (TYPES)
+#if (SMARTTYPES)
         sign = ZPCUSERSIGNED;
 #else
         sign = 1;
@@ -867,7 +863,7 @@ zpcgettoken(const char *str, char **retstr)
         token->str = calloc(1, TOKENSTRLEN);
         dec = index(ptr, '.');
         if(strstr(ptr, "uU")) {
-#if (TYPES)
+#if (SMARTTYPES)
             if (sign == ZPCUSERSIGNED) {
                 fprintf(stderr, "sign on unsigned number\n");
 
@@ -893,7 +889,7 @@ zpcgettoken(const char *str, char **retstr)
         } else if (!sign) {
             token->sign = 0;
             zpcgetuint64(token, ptr, &ptr);
-#if (TYPES)
+#if (SMARTTYPES)
             if (sign == ZPCUSERSIGNED || token->data.ui64.u64 <= INT64_MAX) {
                 token->type = ZPCINT64;
                 token->sign = sign;
@@ -932,7 +928,7 @@ zpcgettoken(const char *str, char **retstr)
 //            token->type = ZPCINT64;
             zpcgetint64(token, ptr, &ptr);
             token->data.ui64.i64 = -token->data.ui64.i64;
-#if (TYPES)
+#if (SMARTTYPES)
             token->sign = ZPCUSERSIGNED;
 #else
             token->sign = 1;
@@ -1151,6 +1147,7 @@ zpcparse(struct zpctoken *srcqueue)
     return queue;
 }
 
+#if 0
 struct zpctoken *
 zpceval(struct zpctoken *srcqueue)
 {
@@ -1158,10 +1155,9 @@ zpceval(struct zpctoken *srcqueue)
     struct zpctoken *queue = NULL;
     struct zpctoken *tail = NULL;
     struct zpctoken *stack = NULL;
-    struct zpctoken *token1;
+    struct zpctoken *token1 = token;
     struct zpctoken *token2 = NULL;
     struct zpctoken *token3;
-    struct zpctoken *token4 = token;
     struct zpctoken *arg1;
     struct zpctoken *arg2;
     int64_t          dest;
@@ -1174,7 +1170,6 @@ zpceval(struct zpctoken *srcqueue)
             zpcpushtoken(token, &stack);
         } else if (zpcisoper(token)) {
             if (zpccopnargtab[token->type] >= 1) {
-                token1 = token4;
                 if (!token1) {
                     fprintf(stderr, "missing argument 1\n");
 
@@ -1230,25 +1225,28 @@ zpceval(struct zpctoken *srcqueue)
             if (func) {
                 if (token2) {
                     dest = func(arg2, arg1);
-#if (TYPES)
+#if (SMARTTYPES)
                     token1->type = arg1->type;
                     token1->flags = arg1->flags;
                     token1->sign = arg1->sign;
 #endif
                 } else {
                     dest = func(arg1, arg2);
-#if (TYPES)
+#if (SMARTTYPES)
                     token1->type = arg2->type;
                     token1->flags = arg2->flags;
                     token1->sign = arg2->sign;
 #endif
                 }
                 token1->data.ui64.i64 = dest;
-                if (token1->type == ZPCINT64 || token1->type == ZPCUINT64) {
-                    radix = token1->radix;
+                fprintf(stderr, "type: %x\n", arg1->type);
+                if (arg1->type == ZPCINT64 || arg1->type == ZPCUINT64) {
+                    radix = arg1->radix;
+                    fprintf(stderr, "RADIX: %x\n", radix);
                     if (!radix) {
                         radix = zpcradix;
                     }
+                    token1->radix = radix;
                     switch (radix) {
                         case 8:
                             sprintf(token1->str, "%llo", token1->data.ui64.u64);
@@ -1272,12 +1270,125 @@ zpceval(struct zpctoken *srcqueue)
                             break;
                     }
                 }
-                token4 = token1;
             }
         }
         token = token3;
     }
-    zpcqueuetoken(token4, &queue, &tail);
+    zpcqueuetoken(token1, &queue, &tail);
+
+    return queue;
+}
+#endif
+
+struct zpctoken *
+zpceval(struct zpctoken *srcqueue)
+{
+    struct zpctoken *token = srcqueue;
+    struct zpctoken *queue = NULL;
+    struct zpctoken *tail = NULL;
+    struct zpctoken *stack = NULL;
+    struct zpctoken *token1 = token;
+    struct zpctoken *token2;
+    struct zpctoken *arg1;
+    struct zpctoken *arg2;
+    int64_t          dest;
+    zpccop_t        *func;
+    long             radix;
+
+    while (token) {
+        token2 = token->next;
+        if (zpcisvalue(token)) {
+            zpcpushtoken(token, &stack);
+        } else if (zpcisoper(token)) {
+            if (zpccopnargtab[token->type] >= 1) {
+                if (!token1) {
+                    fprintf(stderr, "missing argument 1\n");
+
+                    return NULL;
+                }
+            }
+            arg2 = NULL;
+            if (zpccopnargtab[token->type] == 2) {
+                arg2 = zpcpoptoken(&stack);
+                if (!arg2) {
+                    fprintf(stderr, "missing argument 2\n");
+
+                    return NULL;
+                }
+            }
+            if (token1) {
+                arg1 = token1;
+            }
+            switch (zpccopnargtab[token->type]) {
+                case 2:
+                    if (!arg2) {
+                        fprintf(stderr, "invalid argument 2\n");
+
+                        return NULL;
+                    }
+                case 1:
+                    if (!arg1) {
+                        fprintf(stderr, "invalid argument 1\n");
+
+                        return NULL;
+                    }
+
+                    break;
+            }
+            func = zpcevaltab[token->type];
+            if (func) {
+                if (arg2) {
+                    dest = func(arg2, arg1);
+#if (SMARTTYPES)
+                    token1->type = arg1->type;
+                    token1->flags = arg1->flags;
+                    token1->sign = arg1->sign;
+#endif
+                } else {
+                    dest = func(arg1, arg2);
+#if (SMARTTYPES)
+                    token1->type = arg2->type;
+                    token1->flags = arg2->flags;
+                    token1->sign = arg2->sign;
+#endif
+                }
+                token1->data.ui64.i64 = dest;
+                fprintf(stderr, "type: %x\n", arg1->type);
+                if (arg1->type == ZPCINT64 || arg1->type == ZPCUINT64) {
+                    radix = arg1->radix;
+                    fprintf(stderr, "RADIX: %x\n", radix);
+                    if (!radix) {
+                        radix = zpcradix;
+                    }
+                    token1->radix = radix;
+                    switch (radix) {
+                        case 8:
+                            sprintf(token1->str, "%llo", token1->data.ui64.u64);
+
+                            break;
+                        case 10:
+                        default:
+                            if (token1->type == ZPCINT64) {
+                                sprintf(token1->str, "%lld",
+                                        token1->data.ui64.i64);
+                            } else {
+                                sprintf(token1->str, "%llu",
+                                        token1->data.ui64.u64);
+                            }
+
+                            break;
+                        case 16:
+                            sprintf(token1->str, "0x%llx",
+                                    token1->data.ui64.u64);
+
+                            break;
+                    }
+                }
+            }
+        }
+        token = token2;
+    }
+    zpcqueuetoken(token1, &queue, &tail);
 
     return queue;
 }

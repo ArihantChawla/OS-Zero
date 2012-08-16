@@ -851,7 +851,7 @@ buttonpress(void *arg, XEvent *event)
                 if (type == ZPCINT64 || type == ZPCUINT64) {
                     token->type = type;
                     res = func(src, dest);
-#if (TYPES)
+#if (SMARTTYPES)
                     if (dest) {
                         token->type = dest->type;
                         token->flags = dest->flags;

@@ -94,10 +94,10 @@ struct zpccomplex {
 };
 
 /* sign values */
-#define ZPCUNSIGNED     0x00
-#define ZPCUSERUNSIGNED 0x01
-#define ZPCSIGNED       0x02
-#define ZPCUSERSIGNED   0x03
+#define ZPCUNSIGNED     0x01
+#define ZPCUSERUNSIGNED 0x02
+#define ZPCSIGNED       0x03
+#define ZPCUSERSIGNED   0x04
 /* flags values */
 #define ZPCZERO         0x01
 #define ZPCOVERFLOW     0x02
