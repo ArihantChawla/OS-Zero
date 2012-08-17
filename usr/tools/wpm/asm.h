@@ -1,6 +1,18 @@
 #ifndef __WPM_ASM_H__
 #define __WPM_ASM_H__
 
+#include <stdint.h>
+
+#if (ZPC)
+typedef uint64_t asmadr_t;
+typedef int64_t  asmword_t;
+typedef uint64_t asmuword_t;
+#elif (WPM)
+typedef uint32_t asmadr_t;
+typedef int32_t  asmword_t;
+typedef uint32_t asmuword_t;
+#endif
+
 #define LINELEN    1024
 
 #define TOKENVALUE  0x01
@@ -39,13 +51,13 @@ struct op {
 
 struct label {
     uint8_t      *name;
-    uint32_t      adr;
+    asmadr_t      adr;
     struct label *next;
 };
 
 struct value {
-    int32_t  val;
-    uint8_t  size;
+    asmword_t val;
+    uint8_t   size;
 };
 
 struct inst {
@@ -59,33 +71,33 @@ struct inst {
 
 struct sym {
     uint8_t  *name;
-    uint32_t  adr;
+    asmadr_t  adr;
 };
 
 struct adr {
     uint8_t  *name;
-    uint32_t  val;
+    asmadr_t  val;
 };
 
 struct ndx {
-    int32_t reg;
-    int32_t val;
+    asmword_t reg;
+    asmword_t val;
 };
 
 struct val {
     uint8_t    *name;
     struct val *next;
-    int32_t     val;
+    asmword_t   val;
 };
 
 struct asmtoken {
     struct asmtoken  *prev;
     struct asmtoken  *next;
-    uint32_t          type;
-    int32_t           val;
+    unsigned long     type;
+    asmword_t         val;
 #if (WPMDB)
     uint8_t          *file;
-    uint32_t          line;
+    unsigned long     line;
 #endif
     union {
         struct label  label;
@@ -97,20 +109,20 @@ struct asmtoken {
         uint8_t      *str;
         uint8_t       ch;
         uint8_t       size;
-        uint32_t      reg;
+        asmuword_t    reg;
     } data;
 };
 
 #if (WPMDB)
 struct asmline {
     struct asmline *next;
-    uint32_t        adr;
+    asmadr_t        adr;
     uint8_t        *file;
-    uint32_t        num;
+    unsigned long   num;
     uint8_t        *data;
 };
 
-struct asmline * asmfindline(uint32_t adr);
+struct asmline * asmfindline(asmadr_t adr);
 #endif
 
 #endif /* __WPM_ASM_H__ */

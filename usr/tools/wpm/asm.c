@@ -11,6 +11,7 @@
 #include <unistd.h>
 #include <zero/cdecl.h>
 #include <zero/param.h>
+#include <zero/trix.h>
 #if (ASMBUF)
 #include <errno.h>
 #include <fcntl.h>
@@ -18,58 +19,55 @@
 #if (ASMPROF)
 #include <zero/prof.h>
 #endif
-#if (ASMPREPROC)
-#include <zero/trix.h>
-#endif
 #include <wpm/asm.h>
 #if (WPM)
 #include <wpm/wpm.h>
 #endif
 
-typedef struct asmtoken * tokfunc_t(struct asmtoken *, uint32_t, uint32_t *);
+typedef struct asmtoken * tokfunc_t(struct asmtoken *, asmuword_t, asmuword_t *);
 
-static uint32_t          asmgetreg(uint8_t *str, uint8_t **retptr);
+static asmuword_t        asmgetreg(uint8_t *str, uint8_t **retptr);
 static uint8_t         * asmgetlabel(uint8_t *str, uint8_t **retptr);
 static struct op       * asmgetinst(uint8_t *str, uint8_t **retptr);
 static uint8_t         * asmgetsym(uint8_t *str, uint8_t **retptr);
-static uint32_t          asmgetvalue(uint8_t *str, int32_t *retadr,
+static asmuword_t        asmgetvalue(uint8_t *str, asmword_t *retval,
                                      uint8_t **retptr);
 static uint8_t           asmgetchar(uint8_t *str, uint8_t **retptr);
 static struct asmtoken * asmgettoken(uint8_t *str, uint8_t **retptr);
 
 #if (ASMPREPROC)
-typedef int32_t exprfunc_t(int32_t, int32_t);
+typedef asmword_t exprfunc_t(asmword_t, asmword_t);
 
-int32_t exprnot(int32_t val1, int32_t val2);
-int32_t exprand(int32_t val1, int32_t val2);
-int32_t expror(int32_t val1, int32_t val2);
-int32_t exprxor(int32_t val1, int32_t val2);
-int32_t exprshl(int32_t val1, int32_t val2);
-int32_t exprshr(int32_t val1, int32_t val2);
-int32_t expradd(int32_t val1, int32_t val2);
-int32_t exprsub(int32_t val1, int32_t val2);
-int32_t exprmul(int32_t val1, int32_t val2);
-int32_t exprdiv(int32_t val1, int32_t val2);
-int32_t exprmod(int32_t val1, int32_t val2);
+asmword_t exprnot(asmword_t val1, asmword_t val2);
+asmword_t exprand(asmword_t val1, asmword_t val2);
+asmword_t expror(asmword_t val1, asmword_t val2);
+asmword_t exprxor(asmword_t val1, asmword_t val2);
+asmword_t exprshl(asmword_t val1, asmword_t val2);
+asmword_t exprshr(asmword_t val1, asmword_t val2);
+asmword_t expradd(asmword_t val1, asmword_t val2);
+asmword_t exprsub(asmword_t val1, asmword_t val2);
+asmword_t exprmul(asmword_t val1, asmword_t val2);
+asmword_t exprdiv(asmword_t val1, asmword_t val2);
+asmword_t exprmod(asmword_t val1, asmword_t val2);
 #endif
 
-static struct asmtoken * asmprocvalue(struct asmtoken *, uint32_t, uint32_t *);
-static struct asmtoken * asmproclabel(struct asmtoken *, uint32_t, uint32_t *);
-static struct asmtoken * asmprocinst(struct asmtoken *, uint32_t, uint32_t *);
-static struct asmtoken * asmprocchar(struct asmtoken *, uint32_t, uint32_t *);
-static struct asmtoken * asmprocdata(struct asmtoken *, uint32_t, uint32_t *);
-static struct asmtoken * asmprocglobl(struct asmtoken *, uint32_t, uint32_t *);
-static struct asmtoken * asmprocspace(struct asmtoken *, uint32_t, uint32_t *);
-static struct asmtoken * asmprocorg(struct asmtoken *, uint32_t, uint32_t *);
-static struct asmtoken * asmprocalign(struct asmtoken *, uint32_t, uint32_t *);
-static struct asmtoken * asmprocasciz(struct asmtoken *, uint32_t, uint32_t *);
+static struct asmtoken * asmprocvalue(struct asmtoken *, asmuword_t, asmuword_t *);
+static struct asmtoken * asmproclabel(struct asmtoken *, asmuword_t, asmuword_t *);
+static struct asmtoken * asmprocinst(struct asmtoken *, asmuword_t, asmuword_t *);
+static struct asmtoken * asmprocchar(struct asmtoken *, asmuword_t, asmuword_t *);
+static struct asmtoken * asmprocdata(struct asmtoken *, asmuword_t, asmuword_t *);
+static struct asmtoken * asmprocglobl(struct asmtoken *, asmuword_t, asmuword_t *);
+static struct asmtoken * asmprocspace(struct asmtoken *, asmuword_t, asmuword_t *);
+static struct asmtoken * asmprocorg(struct asmtoken *, asmuword_t, asmuword_t *);
+static struct asmtoken * asmprocalign(struct asmtoken *, asmuword_t, asmuword_t *);
+static struct asmtoken * asmprocasciz(struct asmtoken *, asmuword_t, asmuword_t *);
 
 extern char      *opnametab[256];
 
 struct asmsym {
     struct asmsym *next;
     uint8_t       *name;
-    uint32_t       adr;
+    asmadr_t       adr;
 };
 
 #define NHASHITEM 1024
@@ -142,7 +140,7 @@ static uint8_t        opnargtab[256]
     1   // HOOK
 };
 #if (ASMPREPROC)
-static uint32_t  exproptab[256];
+static asmuword_t  exproptab[256];
 exprfunc_t      *exprfunctab[256]
 = {
     NULL,
@@ -195,18 +193,18 @@ tokfunc_t *tokfunctab[NTOK]
 #define EXPRDIV   0x0a
 #define EXPRMOD   0x0b
 struct expr {
-    struct expr *next;
-    uint32_t     type;
-    int32_t      val;
+    struct expr   *next;
+    unsigned long  type;
+    asmword_t      val;
 };
 static struct expr     *exprstk[NEXPRSTK];
 #endif
 static struct asmtoken *tokenqueue;
 static struct asmtoken *tokentail;
 static struct asmsym   *symqueue;
-static uint32_t         _start;
-static uint32_t         _startset;
-static uint32_t         inputread;
+static asmadr_t         _start;
+static asmadr_t         _startset;
+static unsigned long    inputread;
 static uint8_t         *linebuf;
 static uint8_t         *strbuf;
 #if (ASMBUF)
@@ -216,8 +214,8 @@ struct readbuf {
     uint8_t *lim;
 };
 struct readbuf       *readbuftab;
-static int            nreadbuf = 16;
-static int            readbufcur = 0;
+static long           nreadbuf = 16;
+static long           readbufcur = 0;
 #endif
 
 #if (ASMBUF)
@@ -228,13 +226,13 @@ asmgetc(int fd, int bufid)
     ssize_t         nleft = READBUFSIZE;
     ssize_t         n;
     int             ch = EOF;
-    int             i = nreadbuf;
+    long            l = nreadbuf;
 
     if (bufid >= nreadbuf) {
         nreadbuf <<= 1;
         readbuftab = realloc(readbuftab, nreadbuf * sizeof(struct readbuf));
-        for ( ; i < nreadbuf ; i++) {
-            readbuftab[i].data = malloc(READBUFSIZE);
+        for ( ; l < nreadbuf ; l++) {
+            readbuftab[l].data = malloc(READBUFSIZE);
         }
     }
     if (buf->cur < buf->lim) {
@@ -357,9 +355,9 @@ asmqueuetoken(struct asmtoken *token)
 static void
 asmaddop(struct op *op)
 {
-    uint8_t  *str = op->name;
-    uint32_t  key = 0;
-    uint32_t  len = 0;
+    uint8_t       *str = op->name;
+    unsigned long  key = 0;
+    unsigned long  len = 0;
 
     while (*str) {
         key += *str++;
@@ -376,9 +374,9 @@ asmaddop(struct op *op)
 struct op *
 asmfindop(uint8_t *name)
 {
-    struct op *op = NULL;
-    uint8_t   *str = name;
-    uint32_t   key = 0;
+    struct op     *op = NULL;
+    uint8_t       *str = name;
+    unsigned long  key = 0;
 
     while ((*str) && isalpha(*str)) {
         key += *str++;
@@ -394,10 +392,10 @@ asmfindop(uint8_t *name)
 
 #if (WPMDB)
 void
-asmaddline(uint32_t adr, uint8_t *data, uint8_t *filename, uint32_t line)
+asmaddline(asmadr_t adr, uint8_t *data, uint8_t *filename, unsigned long line)
 {
     struct asmline *newline = malloc(sizeof(struct asmline));
-    uint32_t        key;
+    unsigned long   key;
 
     key = (adr & 0xff) + ((adr >> 8) & 0xff) + ((adr >> 16) & 0xff) + ((adr >> 24) & 0xff);
     newline->adr = adr;
@@ -412,10 +410,10 @@ asmaddline(uint32_t adr, uint8_t *data, uint8_t *filename, uint32_t line)
 }
 
 struct asmline *
-asmfindline(uint32_t adr)
+asmfindline(asmadr_t adr)
 {
     struct asmline *line;
-    uint32_t        key;
+    unsigned long   key;
 
     key = (adr & 0xff) + ((adr >> 8) & 0xff) + ((adr >> 16) & 0xff) + ((adr >> 24) & 0xff);
     key &= (NHASHITEM - 1);
@@ -431,8 +429,8 @@ asmfindline(uint32_t adr)
 void
 asmaddval(struct val *val)
 {
-    uint32_t  key = 0;
-    uint8_t  *ptr;
+    unsigned long   key = 0;
+    uint8_t        *ptr;
 
     ptr = val->name;
     while (*ptr) {
@@ -446,12 +444,12 @@ asmaddval(struct val *val)
 }
 
 struct val *
-asmfindval(uint8_t *str, int32_t *valptr, uint8_t **retptr)
+asmfindval(uint8_t *str, asmword_t *valptr, uint8_t **retptr)
 {
-    uint32_t    key = 0;
-    struct val *val = NULL;
-    uint8_t    *ptr;
-    int         len = 0;
+    unsigned long  key = 0;
+    struct val    *val = NULL;
+    uint8_t       *ptr;
+    long           len = 0;
 
     if ((*str) && (isalpha(*str) || *str == '_')) {
         ptr = str;
@@ -494,8 +492,8 @@ asmqueuesym(struct asmsym *sym)
 static void
 asmaddsym(struct asmsym *sym)
 {
-    uint8_t  *str = sym->name;
-    uint32_t  key = 0;
+    uint8_t       *str = sym->name;
+    unsigned long  key = 0;
 
     while (*str) {
         key += *str++;
@@ -512,7 +510,7 @@ asmfindsym(uint8_t *name)
 {
     struct asmsym *sym = NULL;
     uint8_t       *str = name;
-    uint32_t       key = 0;
+    unsigned long  key = 0;
 
     while (*str) {
         key += *str++;
@@ -531,16 +529,16 @@ asmremovesyms(void)
 {
     struct asmsym *sym1;
     struct asmsym *sym2;
-    int            i;
+    long           l;
 
-    for (i = 0 ; i < NHASHITEM ; i++) {
-        sym1 = symhash[i];
+    for (l = 0 ; l < NHASHITEM ; l++) {
+        sym1 = symhash[l];
         while (sym1) {
             sym2 = sym1;
             sym1 = sym1->next;
             free(sym2);
         }
-        symhash[i] = NULL;
+        symhash[l] = NULL;
     }
 
     return;
@@ -549,8 +547,8 @@ asmremovesyms(void)
 static void
 asmaddglob(struct label *label)
 {
-    uint8_t  *str = label->name;
-    uint32_t  key = 0;
+    uint8_t       *str = label->name;
+    unsigned long  key = 0;
 
     while (*str) {
         key += *str++;
@@ -565,9 +563,9 @@ asmaddglob(struct label *label)
 struct label *
 asmfindglob(uint8_t *name)
 {
-    struct label *label = NULL;
-    uint8_t      *str = name;
-    uint32_t      key = 0;
+    struct label  *label = NULL;
+    uint8_t       *str = name;
+    unsigned long  key = 0;
 
     while (*str) {
         key += *str++;
@@ -598,11 +596,11 @@ asminitexpr(void)
     exproptab['%'] = EXPRMOD;
 }
 
-int
+long
 exprisop(uint8_t *str)
 {
-    int ch = *str;
-    int retval = exproptab[ch];
+    int  ch = *str;
+    long retval = exproptab[ch];
 
     if (retval == EXPRSHL && str[1] != '<') {
         retval = 0;
@@ -618,13 +616,13 @@ void
 asminitop(void)
 {
     struct op *op;
-    int       i;
+    long       l;
 
-    for (i = 1 ; (opnametab[i]) ; i++) {
+    for (l = 1 ; (opnametab[l]) ; l++) {
         op = malloc(sizeof(struct op));
-        op->name = (uint8_t *)opnametab[i];
-        op->code = (uint8_t)i;
-        op->narg = opnargtab[i];
+        op->name = (uint8_t *)opnametab[l];
+        op->code = (uint8_t)l;
+        op->narg = opnargtab[l];
         asmaddop(op);
     }
 
@@ -635,25 +633,25 @@ void
 asminitbuf(void)
 {
 #if (ASMBUF)
-    int i;
+    long l;
 #endif
 
     linebuf = malloc(LINELEN);
     strbuf = malloc(LINELEN);
 #if (ASMBUF)
     readbuftab = malloc(nreadbuf * sizeof(struct readbuf));
-    for (i = 0 ; i < nreadbuf ; i++) {
-        readbuftab[i].data = malloc(READBUFSIZE);
+    for (l = 0 ; l < nreadbuf ; l++) {
+        readbuftab[l].data = malloc(READBUFSIZE);
     }
 #endif
 
     return;
 }
 
-static uint32_t
+static asmuword_t
 asmgetreg(uint8_t *str, uint8_t **retptr)
 {
-    uint32_t reg = 0;
+    asmuword_t reg = 0;
 
 #if (ASMDEBUG)
     fprintf(stderr, "getreg: %s\n", str);
@@ -674,6 +672,7 @@ asmgetreg(uint8_t *str, uint8_t **retptr)
         
         exit(1);
     }
+
     return reg;
 }
 
@@ -763,12 +762,12 @@ asmgetadr(uint8_t *str, uint8_t **retptr)
     return name;
 }
 
-static uint32_t
-asmgetvalue(uint8_t *str, int32_t *retval, uint8_t **retptr)
+static asmuword_t
+asmgetvalue(uint8_t *str, asmword_t *retval, uint8_t **retptr)
 {
-    uint32_t found = 0;
-    int32_t  val = 0;
-    uint32_t neg = 0;
+    long      found = 0;
+    asmword_t val = 0;
+    long      neg = 0;
 
 #if (ASMDEBUG)
     fprintf(stderr, "getvalue: %s\n", str);
@@ -832,13 +831,13 @@ asmgetvalue(uint8_t *str, int32_t *retval, uint8_t **retptr)
     return found;
 }
 
-static uint32_t
-asmgetindex(uint8_t *str, uint32_t *retndx, uint8_t **retptr)
+static asmuword_t
+asmgetindex(uint8_t *str, asmword_t *retndx, uint8_t **retptr)
 {
-    uint32_t reg = 0xff;
-    int32_t val = 0;
-    int32_t ndx = 0;
-    uint32_t neg = 0;
+    asmuword_t reg = 0xff;
+    asmword_t  val = 0;
+    asmword_t  ndx = 0;
+    long       neg = 0;
 
 #if (ASMDEBUG)
     fprintf(stderr, "getindex: %s\n", str);
@@ -911,8 +910,8 @@ asmgetindex(uint8_t *str, uint32_t *retndx, uint8_t **retptr)
 static uint8_t
 asmgetchar(uint8_t *str, uint8_t **retptr)
 {
-    uint8_t  *name = str;
-    int32_t  val = 0;
+    uint8_t   *name = str;
+    asmword_t  val = 0;
 
 #if (ASMDEBUG)
     fprintf(stderr,"getchar: %s\n", str);
@@ -986,21 +985,21 @@ asmgetchar(uint8_t *str, uint8_t **retptr)
 void
 printexprstk(void)
 {
-    int          i;
-    int          nl;
+    long         l;
+    long         nl;
     struct expr *expr;
 
-    for (i = 0 ; i < NEXPRSTK ; i++) {
-        expr = exprstk[i];
+    for (l = 0 ; l < NEXPRSTK ; l++) {
+        expr = exprstk[l];
         if (expr) {
-            fprintf(stderr, "%d: ", i);
+            fprintf(stderr, "%ld: ", l);
             nl = 1;
         }
         while (expr) {
             if (!expr->type) {
                 fprintf(stderr, "%d, ", expr->val);
             } else {
-                fprintf(stderr, "op == %d, ", expr->type);
+                fprintf(stderr, "op == %lu, ", expr->type);
             }
             expr = expr->next;
         }
@@ -1011,20 +1010,20 @@ printexprstk(void)
     }                                             
 }
 
-static int32_t
-asmeval(uint8_t *str, int32_t *valptr, uint8_t **retptr)
+static asmword_t
+asmeval(uint8_t *str, asmword_t *valptr, uint8_t **retptr)
 {
     struct expr *expr1;
     struct expr *expr2;
     uint8_t     *ptr = str;
-    int32_t      lvl = 0;
-    int32_t      maxlvl = 0;
-    int          loop = 1;
-    int32_t      retval = 0;
-    int32_t      res = 0;
-    int32_t      val;
-    int32_t      cur;
-    int          op;
+    long         lvl = 0;
+    long         maxlvl = 0;
+    long         loop = 1;
+    asmword_t    retval = 0;
+    asmword_t    res = 0;
+    asmword_t    val;
+    long         cur;
+    long         op;
     exprfunc_t  *func;
 
     memset(exprstk, 0, sizeof(exprstk));
@@ -1132,19 +1131,19 @@ asmeval(uint8_t *str, int32_t *valptr, uint8_t **retptr)
 static struct asmtoken *
 asmgettoken(uint8_t *str, uint8_t **retptr)
 {
-    uint32_t        buflen = LINELEN;
-    uint32_t        len;
+    long             buflen = LINELEN;
+    long             len;
     uint8_t         *buf = strbuf;
     struct asmtoken *token1 = malloc(sizeof(struct asmtoken));
     struct asmtoken *token2;
     struct op       *op = NULL;
     uint8_t         *name = str;
-    int32_t          val = RESOLVE;
+    asmword_t        val = RESOLVE;
     static long      size = 0;
-    uint32_t         ndx;
+    asmword_t        ndx;
     int              ch;
 #if (WPMDB)
-    uint8_t      *ptr;
+    uint8_t         *ptr;
 #endif
 
     while (*str && isspace(*str)) {
@@ -1370,8 +1369,8 @@ asmgettoken(uint8_t *str, uint8_t **retptr)
 }
 
 static struct asmtoken *
-asmprocvalue(struct asmtoken *token, uint32_t adr,
-             uint32_t *retadr)
+asmprocvalue(struct asmtoken *token, asmadr_t adr,
+             asmadr_t *retadr)
 {
     uint8_t         *valptr = &physmem[adr];
     struct asmtoken *retval;
@@ -1387,6 +1386,12 @@ asmprocvalue(struct asmtoken *token, uint32_t adr,
             break;
         case 4:
             *((uint32_t *)valptr) = token->data.value.val;
+
+            break;
+        case 8:
+            *((uint64_t *)valptr) = token->data.value.val;
+
+            break;
     }
     *retadr = adr + token->data.value.size;
     retval = token->next;
@@ -1396,8 +1401,8 @@ asmprocvalue(struct asmtoken *token, uint32_t adr,
 }
 
 static struct asmtoken *
-asmproclabel(struct asmtoken *token, uint32_t adr,
-             uint32_t *retadr)
+asmproclabel(struct asmtoken *token, asmadr_t adr,
+             asmadr_t *retadr)
 {
     struct asmsym    *sym;
     struct asmtoken  *retval;
@@ -1426,11 +1431,11 @@ asmproclabel(struct asmtoken *token, uint32_t adr,
 }
 
 static struct asmtoken *
-asmprocinst(struct asmtoken *token, uint32_t adr,
-            uint32_t *retadr)
+asmprocinst(struct asmtoken *token, asmadr_t adr,
+            asmadr_t *retadr)
 {
     struct wpmopcode *op;
-    uint32_t          opadr = align(adr, 4);
+    asmadr_t          opadr = align(adr, 4);
     struct asmtoken  *token1 = NULL;
     struct asmtoken  *token2 = NULL;
     struct asmtoken  *retval = NULL;
@@ -1479,7 +1484,7 @@ asmprocinst(struct asmtoken *token, uint32_t adr,
                     op->arg1t = ARG_ADR;
                     sym = malloc(sizeof(struct sym));
                     sym->name = (uint8_t *)strdup((char *)token1->data.sym.name);
-                    sym->adr = (uint32_t)&op->args[0];
+                    sym->adr = (asmadr_t)&op->args[0];
                     asmqueuesym(sym);
                     len += 4;
                     
@@ -1506,7 +1511,7 @@ asmprocinst(struct asmtoken *token, uint32_t adr,
                     op->arg1t = ARG_IMMED;
                     sym = malloc(sizeof(struct sym));
                     sym->name = (uint8_t *)strdup((char *)token1->data.sym.name);
-                    sym->adr = (uint32_t)&op->args[0];
+                    sym->adr = (asmadr_t)&op->args[0];
                     asmqueuesym(sym);
                     len += 4;
 
@@ -1519,7 +1524,7 @@ asmprocinst(struct asmtoken *token, uint32_t adr,
 
                     break;
                 default:
-                    fprintf(stderr, "invalid argument 1 of type %x\n", token1->type);
+                    fprintf(stderr, "invalid argument 1 of type %lx\n", token1->type);
                     printtoken(token1);
 
                     exit(1);
@@ -1557,9 +1562,9 @@ asmprocinst(struct asmtoken *token, uint32_t adr,
                     sym = malloc(sizeof(struct sym));
                     sym->name = (uint8_t *)strdup((char *)token2->data.sym.name);
                     if (op->arg1t == ARG_REG) {
-                        sym->adr = (uint32_t)&op->args[0];
+                        sym->adr = (asmadr_t)&op->args[0];
                     } else {
-                        sym->adr = (uint32_t)&op->args[1];
+                        sym->adr = (asmadr_t)&op->args[1];
                     }
                     asmqueuesym(sym);
                     len += 4;
@@ -1592,9 +1597,9 @@ asmprocinst(struct asmtoken *token, uint32_t adr,
                     sym = malloc(sizeof(struct sym));
                     sym->name = (uint8_t *)strdup((char *)token2->data.sym.name);
                     if (op->arg1t == ARG_REG) {
-                        sym->adr = (uint32_t)&op->args[0];
+                        sym->adr = (asmadr_t)&op->args[0];
                     } else {
-                        sym->adr = (uint32_t)&op->args[1];
+                        sym->adr = (asmadr_t)&op->args[1];
                     }
                     asmqueuesym(sym);
                     len += 4;
@@ -1612,7 +1617,7 @@ asmprocinst(struct asmtoken *token, uint32_t adr,
 
                     break;
                 default:
-                    fprintf(stderr, "invalid argument 2 of type %x\n", token2->type);
+                    fprintf(stderr, "invalid argument 2 of type %lx\n", token2->type);
                     printtoken(token2);
 
                     exit(1);
@@ -1630,8 +1635,8 @@ asmprocinst(struct asmtoken *token, uint32_t adr,
 }
 
 static struct asmtoken *
-asmprocchar(struct asmtoken *token, uint32_t adr,
-            uint32_t *retadr)
+asmprocchar(struct asmtoken *token, asmadr_t adr,
+            asmadr_t *retadr)
 {
     uint8_t         *valptr = &physmem[adr];
     struct asmtoken *retval;
@@ -1646,11 +1651,11 @@ asmprocchar(struct asmtoken *token, uint32_t adr,
 }
 
 static struct asmtoken *
-asmprocdata(struct asmtoken *token, uint32_t adr,
-            uint32_t *retadr)
+asmprocdata(struct asmtoken *token, asmadr_t adr,
+            asmadr_t *retadr)
 {
     struct asmtoken *token1 = token->next;
-    uint32_t         valadr = adr;
+    asmadr_t         valadr = adr;
 
     while ((token1) && token1->type == TOKENVALUE) {
         token1 = asmprocvalue(token1, valadr, &valadr);
@@ -1661,8 +1666,8 @@ asmprocdata(struct asmtoken *token, uint32_t adr,
 }
 
 static struct asmtoken *
-asmprocglobl(struct asmtoken *token, uint32_t adr,
-             uint32_t *retadr)
+asmprocglobl(struct asmtoken *token, asmadr_t adr,
+             asmadr_t *retadr)
 {
     struct asmtoken *token1;
     struct label    *label;
@@ -1681,12 +1686,12 @@ asmprocglobl(struct asmtoken *token, uint32_t adr,
 }
 
 static struct asmtoken *
-asmprocspace(struct asmtoken *token, uint32_t adr,
-             uint32_t *retadr)
+asmprocspace(struct asmtoken *token, asmadr_t adr,
+             asmadr_t *retadr)
 {
     struct asmtoken *token1;
     struct asmtoken *token2;
-    uint32_t         spcadr;
+    asmadr_t         spcadr;
     uint8_t         *ptr;
     uint8_t          val;
 
@@ -1707,7 +1712,7 @@ asmprocspace(struct asmtoken *token, uint32_t adr,
             adr = spcadr;
         }
     } else {
-        fprintf(stderr, "invalid .space attribute token type %x\n",
+        fprintf(stderr, "invalid .space attribute token type %lx\n",
                 token1->type);
         
         exit(1);
@@ -1718,11 +1723,11 @@ asmprocspace(struct asmtoken *token, uint32_t adr,
 }
 
 static struct asmtoken *
-asmprocorg(struct asmtoken *token, uint32_t adr,
-           uint32_t *retadr)
+asmprocorg(struct asmtoken *token, asmadr_t adr,
+           asmadr_t *retadr)
 {
     struct asmtoken *token1;
-    uint32_t         orgadr;
+    asmadr_t         orgadr;
     uint8_t         *ptr;
     uint8_t          val;
     
@@ -1742,8 +1747,8 @@ asmprocorg(struct asmtoken *token, uint32_t adr,
 }
 
 static struct asmtoken *
-asmprocalign(struct asmtoken *token, uint32_t adr,
-             uint32_t *retadr)
+asmprocalign(struct asmtoken *token, asmadr_t adr,
+             asmadr_t *retadr)
 {
     struct asmtoken *token1;
 
@@ -1751,7 +1756,7 @@ asmprocalign(struct asmtoken *token, uint32_t adr,
     if ((token1) && token1->type == TOKENVALUE) {
         adr = align(adr, token1->data.value.val);
     } else {
-        fprintf(stderr, "invalid .align attribute token type %x\n",
+        fprintf(stderr, "invalid .align attribute token type %lx\n",
                 token1->type);
 
         exit(1);
@@ -1762,12 +1767,12 @@ asmprocalign(struct asmtoken *token, uint32_t adr,
 }
 
 static struct asmtoken *
-asmprocasciz(struct asmtoken *token, uint32_t adr,
-             uint32_t *retadr)
+asmprocasciz(struct asmtoken *token, asmadr_t adr,
+             asmadr_t *retadr)
 {
     struct asmtoken *token1;
     struct asmtoken *token2;
-    uint32_t         len = 0;
+    long             len = 0;
     uint8_t         *ptr;
     uint8_t         *str;
 
@@ -1828,10 +1833,10 @@ asminit(void)
     asminitbuf();
 }
 
-uint32_t
-asmtranslate(uint32_t base)
+asmadr_t
+asmtranslate(asmadr_t base)
 {
-    uint32_t         adr = base;
+    asmadr_t         adr = base;
     struct asmtoken *token = tokenqueue;
     tokfunc_t       *func;
 
@@ -1847,7 +1852,7 @@ asmtranslate(uint32_t base)
                 break;
             }
         } else {
-            fprintf(stderr, "stray token of type %x\n", token->type);
+            fprintf(stderr, "stray token of type %lx\n", token->type);
 
             exit(1);
         }
@@ -1858,7 +1863,7 @@ asmtranslate(uint32_t base)
 }
 
 void
-asmresolve(uint32_t base)
+asmresolve(asmadr_t base)
 {
     struct asmsym *sym = symqueue;
     struct asmsym *sym1;
@@ -1878,11 +1883,11 @@ asmresolve(uint32_t base)
 
                 exit(1);
             }
-            *((uint32_t *)sym->adr) = item->adr;
+            *((asmadr_t *)sym->adr) = item->adr;
         } else {
             label = asmfindglob(sym->name);
             if (label) {
-                *((uint32_t *)sym->adr) = label->adr;
+                *((asmadr_t *)sym->adr) = label->adr;
             } else {
                 fprintf(stderr, "unresolved symbol %s\n", sym->name);
                 
@@ -1900,34 +1905,34 @@ asmresolve(uint32_t base)
 
 #if (ASMBUF)
 void
-asmreadfile(char *name, uint32_t adr, int bufid)
+asmreadfile(char *name, asmadr_t adr, int bufid)
 #else
 void
-asmreadfile(char *name, uint32_t adr)
+asmreadfile(char *name, asmadr_t adr)
 #endif
 {
-    uint32_t         buflen = LINELEN;
+    long             buflen = LINELEN;
 #if (ASMBUF)
     int              fd = open((const char *)name, O_RDONLY);
 #else
     FILE            *fp = fopen((char *)name, "r");
 #endif
-    int              eof = 0;
+    long             eof = 0;
     struct asmtoken *token = NULL;
     struct val      *def;
     uint8_t         *fname;
     uint8_t         *ptr;
     uint8_t         *str = linebuf;
     uint8_t         *lim = NULL;
-    int              loop = 1;
+    long             loop = 1;
     int              ch;
-    int              comm = 0;
-    int              done = 1;
-    int              len = 0;
+    long             comm = 0;
+    long             done = 1;
+    long             len = 0;
 #if (WPMDB)
-    uint32_t         line = 0;
+    unsigned long    line = 0;
 #endif
-    int32_t          val = 0;
+    asmword_t        val = 0;
 
     while (loop) {
         if (done) {
@@ -2134,8 +2139,8 @@ asmreadfile(char *name, uint32_t adr)
 int
 main(int argc, char *argv[])
 {
-    int       i;
-    uint32_t  adr = WPMTEXTBASE;
+    long      l;
+    asmadr_t  adr = WPMTEXTBASE;
 #if (ASMPROF)
     PROFTICK(tick);
 #endif
@@ -2152,17 +2157,17 @@ main(int argc, char *argv[])
     memset(physmem, 0, WPMTEXTBASE);
 #elif (ZPC)
 #endif
-    for (i = 1 ; i < argc ; i++) {
+    for (l = 1 ; l < argc ; l++) {
 #if (ASMPROF)
         profstarttick(tick);
 #endif
 #if (ASMBUF)
-        asmreadfile(argv[i], adr, readbufcur);
+        asmreadfile(argv[l], adr, readbufcur);
 #else
-        asmreadfile(argv[i], adr);
+        asmreadfile(argv[l], adr);
 #endif
         if (!tokenqueue) {
-            fprintf(stderr, "WARNING: no input in %s\n", argv[i]);
+            fprintf(stderr, "WARNING: no input in %s\n", argv[l]);
         } else {
             adr = asmtranslate(adr);
 #if (WPM)
@@ -2174,7 +2179,7 @@ main(int argc, char *argv[])
 #if (ASMPROF)
             profstoptick(tick);
             fprintf(stderr, "%lld cycles to process %s\n",
-                    proftickdiff(tick), argv[i]);
+                    proftickdiff(tick), argv[l]);
 #endif        
         }
     }
