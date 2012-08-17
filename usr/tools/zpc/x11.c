@@ -882,29 +882,7 @@ buttonpress(void *arg, XEvent *event)
                     if (!radix) {
                         radix = zpcradix;
                     }
-                    switch (radix) {
-                        case 2:
-                            zpcconvbinuint64(res, token->str, TOKENSTRLEN);
-
-                            break;
-                        case 8:
-                            sprintf(token->str, "%llo", res);
-
-                            break;
-                        case 10:
-                        default:
-                            if (type == ZPCINT64) {
-                                sprintf(token->str, "%lld", (int64_t)res);
-                            } else {
-                                sprintf(token->str, "%llu", res);
-                            }
-
-                            break;
-                        case 16:
-                            sprintf(token->str, "0x%llx", res);
-
-                            break;
-                    }
+                    zpcprintstr64(token, res, radix);
                 }
             }
 #if 0

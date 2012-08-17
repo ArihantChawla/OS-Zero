@@ -1236,28 +1236,7 @@ zpceval(struct zpctoken *srcqueue)
                         radix = zpcradix;
                     }
                     token1->radix = radix;
-                    switch (radix) {
-                        case 8:
-                            sprintf(token1->str, "%llo", token1->data.ui64.u64);
-
-                            break;
-                        case 10:
-                        default:
-                            if (token1->type == ZPCINT64) {
-                                sprintf(token1->str, "%lld",
-                                        token1->data.ui64.i64);
-                            } else {
-                                sprintf(token1->str, "%llu",
-                                        token1->data.ui64.u64);
-                            }
-
-                            break;
-                        case 16:
-                            sprintf(token1->str, "0x%llx",
-                                    token1->data.ui64.u64);
-
-                            break;
-                    }
+                    zpcprintstr64(token1, token1->data.ui64.u64, radix);
                 }
             }
         }

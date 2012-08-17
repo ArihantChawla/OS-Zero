@@ -215,5 +215,32 @@ struct zpctoken * zpceval(struct zpctoken *srcqueue);
     *(double *)(ptr) = (val)
 #endif
 
+#define zpcprintstr64(tok, val, rad)                                    \
+    do {                                                                \
+        switch (rad) {                                                  \
+            case 2:                                                     \
+                zpcconvbinuint64((val), (tok)->str, TOKENSTRLEN);       \
+                                                                        \
+                break;                                                  \
+            case 8:                                                     \
+                snprintf((tok)->str, (tok)->slen, "%llo", (val));       \
+                                                                        \
+                break;                                                  \
+            case 10:                                                    \
+            default:                                                    \
+                if ((tok)->type == ZPCINT64) {                          \
+                    snprintf((tok)->str, (tok)->slen, "%lld", (val));   \
+                } else {                                                \
+                    snprintf((tok)->str, (tok)->slen, "%llu", (val));   \
+                }                                                       \
+                                                                        \
+                break;                                                  \
+            case 16:                                                    \
+                sprintf((tok)->str, "0x%llx", (val));                   \
+                                                                        \
+                break;                                                  \
+        }                                                               \
+    } while (0)
+
 #endif /* __ZPC_ZPC_H__ */
 
