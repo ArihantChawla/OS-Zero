@@ -177,7 +177,6 @@ add64(struct zpctoken *arg1, struct zpctoken *arg2)
 {
     int64_t  src = arg1->data.ui64.i64;;
     int64_t  res = arg2->data.ui64.i64;
-    uint64_t ures;
 
     res += src;
 

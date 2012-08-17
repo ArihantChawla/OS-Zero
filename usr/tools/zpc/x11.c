@@ -459,7 +459,9 @@ x11initpmaps(void)
 #else
     buttonpmaps[BUTTONHOVER] = buttonpmaps[BUTTONNORMAL];
 #endif
-    buttonpmaps[BUTTONCLICKED] = "buttonpress.png";
+    buttonpmaps[BUTTONCLICKED] = imlib2loadimage(app, "buttonpress.png",
+                                                 ZPC_BUTTON_WIDTH,
+                                                 ZPC_BUTTON_HEIGHT);
 #if 0
     buttonpmaps[BUTTONHOVER] = imlib2loadimage(app, "button.png",
                                                ZPC_BUTTON_WIDTH,
@@ -764,10 +766,11 @@ buttonpress(void *arg, XEvent *event)
     struct zpctoken    *token;
     struct zpcstkitem  *item = zpcinputitem;
     zpccop_t           *func = NULL;
-    zpcfop_t           *fltfunc;
+//    zpcfop_t           *fltfunc;
     zpcaction_t        *action;
     struct zpctoken    *src = NULL;
     struct zpctoken    *dest = NULL;
+    struct zpctoken    *dtok;
     int64_t             res;
 //    int64_t             src;
 //    int64_t             dest;
@@ -851,11 +854,23 @@ buttonpress(void *arg, XEvent *event)
                 if (type == ZPCINT64 || type == ZPCUINT64) {
                     token->type = type;
                     res = func(src, dest);
-#if (SMARTTYPES)
                     if (dest) {
-                        token->type = dest->type;
-                        token->flags = dest->flags;
+                        dtok = dest;
+                    } else {
+                        dtok = src;
                     }
+                    if (token->radix == 16 || dtok->radix == 16) {
+                        token->radix = 16;
+                    } else if (token->radix == 8 || dtok->radix == 8) {
+                        token->radix = 8;
+                    } else if (token->radix == 2 || dtok->radix == 2) {
+                        token->radix = 2;
+                    } else {
+                        token->radix = 10;
+                    }
+#if (SMARTTYPES)
+                    token->type = dtok->type;
+                    token->flags = dtok->flags;
 #endif
                     token->data.ui64.i64 = res;
                     if (dest) {

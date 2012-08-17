@@ -8,6 +8,8 @@
 
 typedef void x11evfunc_t(void *, XEvent *);
 
+void x11drawdisp(void);
+
 struct x11wininfo {
     Window             id;
     const char        *str;

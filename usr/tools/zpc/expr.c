@@ -1147,139 +1147,6 @@ zpcparse(struct zpctoken *srcqueue)
     return queue;
 }
 
-#if 0
-struct zpctoken *
-zpceval(struct zpctoken *srcqueue)
-{
-    struct zpctoken *token = srcqueue;
-    struct zpctoken *queue = NULL;
-    struct zpctoken *tail = NULL;
-    struct zpctoken *stack = NULL;
-    struct zpctoken *token1 = token;
-    struct zpctoken *token2 = NULL;
-    struct zpctoken *token3;
-    struct zpctoken *arg1;
-    struct zpctoken *arg2;
-    int64_t          dest;
-    zpccop_t        *func;
-    long             radix;
-
-    while (token) {
-        token3 = token->next;
-        if (zpcisvalue(token)) {
-            zpcpushtoken(token, &stack);
-        } else if (zpcisoper(token)) {
-            if (zpccopnargtab[token->type] >= 1) {
-                if (!token1) {
-                    fprintf(stderr, "missing argument 1\n");
-
-                    return NULL;
-                }
-            }
-            token2 = NULL;
-            if (zpccopnargtab[token->type] == 2) {
-                token2 = zpcpoptoken(&stack);
-                if (!token2) {
-                    fprintf(stderr, "missing argument 2\n");
-
-                    return NULL;
-                }
-            }
-            if (token2) {
-                if (token2->type == ZPCINT64 || token2->type == ZPCUINT64) {
-                    arg2 = token2;
-                } else {
-                    fprintf(stderr, "invalid argument type (%lx)\n",
-                            token2->type);
-
-                    return NULL;
-                }
-            }
-            if (token1) {
-                if (token1->type == ZPCINT64 || token1->type == ZPCUINT64) {
-                    arg1 = token1;
-                } else {
-                    fprintf(stderr, "invalid argument type (%lx)\n",
-                            token2->type);
-
-                    return NULL;
-                }
-            }
-            switch (zpccopnargtab[token->type]) {
-                case 2:
-                    if (!token2) {
-                        fprintf(stderr, "invalid argument 2\n");
-
-                        return NULL;
-                    }
-                case 1:
-                    if (!token1) {
-                        fprintf(stderr, "invalid argument 1\n");
-
-                        return NULL;
-                    }
-
-                    break;
-            }
-            func = zpcevaltab[token->type];
-            if (func) {
-                if (token2) {
-                    dest = func(arg2, arg1);
-#if (SMARTTYPES)
-                    token1->type = arg1->type;
-                    token1->flags = arg1->flags;
-                    token1->sign = arg1->sign;
-#endif
-                } else {
-                    dest = func(arg1, arg2);
-#if (SMARTTYPES)
-                    token1->type = arg2->type;
-                    token1->flags = arg2->flags;
-                    token1->sign = arg2->sign;
-#endif
-                }
-                token1->data.ui64.i64 = dest;
-                fprintf(stderr, "type: %x\n", arg1->type);
-                if (arg1->type == ZPCINT64 || arg1->type == ZPCUINT64) {
-                    radix = arg1->radix;
-                    fprintf(stderr, "RADIX: %x\n", radix);
-                    if (!radix) {
-                        radix = zpcradix;
-                    }
-                    token1->radix = radix;
-                    switch (radix) {
-                        case 8:
-                            sprintf(token1->str, "%llo", token1->data.ui64.u64);
-
-                            break;
-                        case 10:
-                        default:
-                            if (token1->type == ZPCINT64) {
-                                sprintf(token1->str, "%lld",
-                                        token1->data.ui64.i64);
-                            } else {
-                                sprintf(token1->str, "%llu",
-                                        token1->data.ui64.u64);
-                            }
-
-                            break;
-                        case 16:
-                            sprintf(token1->str, "0x%llx",
-                                    token1->data.ui64.u64);
-
-                            break;
-                    }
-                }
-            }
-        }
-        token = token3;
-    }
-    zpcqueuetoken(token1, &queue, &tail);
-
-    return queue;
-}
-#endif
-
 struct zpctoken *
 zpceval(struct zpctoken *srcqueue)
 {
@@ -1339,6 +1206,15 @@ zpceval(struct zpctoken *srcqueue)
             if (func) {
                 if (arg2) {
                     dest = func(arg2, arg1);
+                    if (arg1->radix == 16 || arg2->radix == 16) {
+                        token1->radix = 16;
+                    } else if (arg1->radix == 8 || arg2->radix == 8) {
+                        token1->radix = 8;
+                    } else if (arg1->radix == 2 || arg2->radix == 2) {
+                        token1->radix = 2;
+                    } else {
+                        token1->radix = 10;
+                    }
 #if (SMARTTYPES)
                     token1->type = arg1->type;
                     token1->flags = arg1->flags;
@@ -1346,6 +1222,7 @@ zpceval(struct zpctoken *srcqueue)
 #endif
                 } else {
                     dest = func(arg1, arg2);
+                    token1->radix = arg1->radix;
 #if (SMARTTYPES)
                     token1->type = arg2->type;
                     token1->flags = arg2->flags;
@@ -1353,10 +1230,8 @@ zpceval(struct zpctoken *srcqueue)
 #endif
                 }
                 token1->data.ui64.i64 = dest;
-                fprintf(stderr, "type: %x\n", arg1->type);
                 if (arg1->type == ZPCINT64 || arg1->type == ZPCUINT64) {
-                    radix = arg1->radix;
-                    fprintf(stderr, "RADIX: %x\n", radix);
+                    radix = token1->radix;
                     if (!radix) {
                         radix = zpcradix;
                     }
