@@ -16,7 +16,7 @@
 #include <zero/param.h>
 #include "x11.h"
 
-#define HOVERBUTTONS 0
+#define HOVERBUTTONS 1
 
 #define ZPC_TITLE "Zero Programmer's Calculator"
 
