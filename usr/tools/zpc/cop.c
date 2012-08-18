@@ -121,11 +121,14 @@ inc64(struct zpctoken *arg1, struct zpctoken *arg2)
 {
     int64_t src = arg1->data.ui64.i64;;
 
-    arg1->flags = 0;
 #if (SMARTTYPES)
-    if (arg1->type == ZPCINT64) {
-        if (arg1->type == ZPCUSERSIGNED && src == INT64_MAX) {
+    arg1->flags = 0;
+    if (src < INT64_MAX) {
+        src++;
+    } else if (arg1->type == ZPCINT64) {
+        if (arg1->type == ZPCUSERSIGNED) {
             arg1->flags |= ZPCOVERFLOW;
+            src++;
         } else {
             src++;
             if (!src) {
@@ -155,10 +158,10 @@ dec64(struct zpctoken *arg1, struct zpctoken *arg2)
 {
     int64_t src = arg1->data.ui64.i64;;
 
-    arg1->flags = 0;
 #if (SMARTTYPES)
-    if (arg1->type == ZPCINT64) {
-        if (src == INT64_MIN) {
+    arg1->flags = 0;
+    if (src == INT64_MIN) {
+        if (arg1->type == ZPCINT64) {
             arg1->flags |= ZPCUNDERFLOW;
         }
     } else if (arg1->type == ZPCUINT64) {
@@ -166,8 +169,10 @@ dec64(struct zpctoken *arg1, struct zpctoken *arg2)
             arg1->flags |= ZPCUNDERFLOW;
         }
     }
-#endif
     src--;
+#else
+    src--;
+#endif
 
     return src;
 }
@@ -175,8 +180,8 @@ dec64(struct zpctoken *arg1, struct zpctoken *arg2)
 int64_t
 add64(struct zpctoken *arg1, struct zpctoken *arg2)
 {
-    int64_t  src = arg1->data.ui64.i64;;
-    int64_t  res = arg2->data.ui64.i64;
+    int64_t src = arg1->data.ui64.i64;;
+    int64_t res = arg2->data.ui64.i64;
 
     res += src;
 
