@@ -861,6 +861,7 @@ zpcgettoken(const char *str, char **retstr)
     }
     if (*ptr == '-' || isxdigit(*ptr)) {
         token->str = calloc(1, TOKENSTRLEN);
+        token->slen = TOKENSTRLEN;
         dec = index(ptr, '.');
         if(strstr(ptr, "uU")) {
 #if (SMARTTYPES)
