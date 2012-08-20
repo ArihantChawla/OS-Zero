@@ -827,41 +827,42 @@ buttonpress(void *arg, XEvent *event)
         }
 
         return;
-    } else {
-        if (item->scur == item->str) {
-            if (zpcregstk[0]) {
-                token = zpcregstk[0];
-                if (token) {
-                    if (token->type == ZPCINT64 || token->type == ZPCUINT64) {
-                        type = token->type;
-                        src = token;
-                    } else {
-                        fprintf(stderr, "EEEE\n");
-                        
-                        return;
-                    }
-                    zpcfreequeue(token->next);
-                    token->next = NULL;
-                }
-            } else {
-                fprintf(stderr, "empty stack\n");
-                
-                return;
-            }
-            if (wininfo->parm == 2) {
-                token = zpcregstk[1];
-                if (token) {
-                    zpcfreequeue(token->next);
-                    token->next = NULL;
+    } else if (item->scur == item->str) {
+        if (zpcregstk[0]) {
+            token = zpcregstk[0];
+            if (token) {
+                if (token->type == ZPCINT64 || token->type == ZPCUINT64) {
                     type = token->type;
-                    dest = token;
+                    src = token;
                 } else {
-                    fprintf(stderr, "missing argument #2\n");
+                    fprintf(stderr, "EEEE\n");
                     
                     return;
                 }
+                zpcfreequeue(token->next);
+                token->next = NULL;
+            }
+        } else {
+            fprintf(stderr, "empty stack\n");
+            
+            return;
+        }
+        if (wininfo->parm == 2) {
+            token = zpcregstk[1];
+            if (token) {
+                zpcfreequeue(token->next);
+                token->next = NULL;
+                type = token->type;
+                dest = token;
+            } else {
+                fprintf(stderr, "missing argument #2\n");
+                
+                return;
             }
         }
+    } else {
+        
+        return;
     }
 #if 0
     XSetWindowBackgroundPixmap(app->display, wininfo->id,

@@ -42,9 +42,9 @@
  */
 
 #define FIXES   1
+#define HACKS   1
 
 #define INTSTAT 0
-#define HACKS   0
 #define ZEROMTX 1
 #define STAT    0
 
@@ -142,20 +142,11 @@ typedef pthread_mutex_t LK_T;
 #endif
 
 /* basic allocator parameters */
-#if (HACKS)
 #define BLKMINLOG2    5  /* minimum-size allocation */
 #define SLABTEENYLOG2 12 /* little block */
 #define SLABTINYLOG2  16 /* small-size block */
-#define SLABLOG2      19 /* base size for heap allocations */
-#define MAPMIDLOG2    21
-#define MAPBIGLOG2    22
-#else
-#define BLKMINLOG2    5  /* minimum-size allocation */
-#define SLABTEENYLOG2 12 /* little block */
-#define SLABTINYLOG2  16 /* small-size block */
-#define SLABLOG2      21 /* base size for heap allocations */
+#define SLABLOG2      20 /* base size for heap allocations */
 #define MAPMIDLOG2    24
-#endif
 #define MINSZ         (1UL << BLKMINLOG2)
 #define HQMAX         SLABLOG2
 #define NBKT          (8 * PTRSIZE)
@@ -215,47 +206,6 @@ typedef pthread_mutex_t LK_T;
             }                                                           \
         }                                                               \
     } while (0)
-#if (HACKS)
-#define nmagslablog2init(bid) 0
-#define nmagslablog2m64(bid)                                            \
-    ((ismapbkt(bid))                                                    \
-     ? (((bid) <= MAPBIGLOG2)                                           \
-        ? 2                                                             \
-        : 1)                                                            \
-     : (((bid) <= SLABTEENYLOG2)                                        \
-        ? 0                                                             \
-        : (((bid) <= SLABTINYLOG2)                                      \
-           ? 1                                                          \
-           : 2)))
-#define nmagslablog2m128(bid)                                           \
-    ((ismapbkt(bid))                                                    \
-     ? (((bid) <= MAPBIGLOG2)                                           \
-        ? 2                                                             \
-        : 1)                                                            \
-     : (((bid) <= SLABTEENYLOG2)                                        \
-        ? 0                                                             \
-        : (((bid) <= SLABTINYLOG2)                                      \
-           ? 0                                                          \
-           : 1)))
-#define nmagslablog2m256(bid)                                           \
-    ((ismapbkt(bid))                                                    \
-     ? (((bid) <= MAPBIGLOG2)                                           \
-        ? 2                                                             \
-        : 1)                                                            \
-     : (((bid) <= SLABTEENYLOG2)                                        \
-        ? 0                                                             \
-        : (((bid) <= SLABTINYLOG2)                                      \
-           ? 0                                                          \
-           : 0)))
-#define nmagslablog2m512(bid)                                           \
-    ((ismapbkt(bid))                                                    \
-     ? (((bid) <= MAPBIGLOG2)                                           \
-        ? 1                                                             \
-        : 0)                                                            \
-     : (((bid) <= SLABTEENYLOG2)                                        \
-        ? 0                                                             \
-        : 0))
-#else
 #define nmagslablog2init(bid)                                           \
     ((ismapbkt(bid))                                                    \
      ? (((bid) <= 23)                                                   \
@@ -304,7 +254,6 @@ typedef pthread_mutex_t LK_T;
         : (((bid) <= SLABTINYLOG2)                                      \
            ? 1                                                          \
            : 2)))
-#endif
 #endif
 #define nblklog2(bid)                                                   \
     ((!(ismapbkt(bid))                                                  \
@@ -371,7 +320,7 @@ typedef pthread_mutex_t LK_T;
 #if (ZEROMTX)
 #define mlk(mp)           mtxlk(mp, _aid + 1)
 #define munlk(mp)         mtxunlk(mp, _aid + 1)
-#define mtylk(mp)         mtxtrylk(mp, _aid + 1)
+#define mtrylk(mp)        mtxtrylk(mp, _aid + 1)
 #elif (SPINLK)
 #define mlk(sp)           spinlk(sp)
 #define munlk(sp)         spinunlk(sp)
