@@ -69,19 +69,52 @@ typedef void zpcaction_t(void);
 #define ZPCBUTTONASM   0x03
 #define ZPCBUTTONUTIL  0x04
 
-struct zpcvector {
-    long              type;
-    long              ndim;
-    struct zpctoken **toktab;
-};
+struct zpcv64b8 {
+    unsigned b0 : 8;
+    unsigned b1 : 8;
+    unsigned b2 : 8;
+    unsigned b3 : 8;
+    unsigned b4 : 4;
+    unsigned b5 : 8;
+    unsigned b6 : 8;
+    unsigned b7 : 8;
+} PACK();
+
+struct zpcv64s16 {
+    unsigned s0 : 16;
+    unsigned s1 : 16;
+    unsigned s2 : 16;
+    unsigned s3 : 16;
+} PACK();
+
+struct zpcv64w32 {
+    unsigned w0 : 32;
+    unsigned w1 : 32;
+} PACK();
+
+struct zpcv64 {
+    union {
+        struct zpcv64b8  b8;
+        struct zpcv64s16 s16;
+        struct zpcv64w32 w32;
+    };
+} PACK();
 
 union zpcui64 {
     int64_t  i64;
     uint64_t u64;
 };
 
+struct zpcvector {
+    long              type;
+    long              ndim;
+    struct zpctoken **toktab;
+};
+
 struct zpccomplex {
     long              type;
+    long              rsign;
+    long              isign;
     union {
         union zpcui64 ui64;
         float         f32;

@@ -41,6 +41,8 @@
  *          - mmap() interface; thread-safe
  */
 
+#define FIXES   1
+
 #define INTSTAT 0
 #define HACKS   0
 #define ZEROMTX 1
@@ -115,10 +117,10 @@ static void * _realloc(void *ptr, size_t size, long rel);
 #endif
 #if (ZEROMTX)
 #include <zero/mtx.h>
-typedef long            LK_T;
+typedef volatile long   LK_T;
 #elif (SPINLK)
 #include <zero/spin.h>
-typedef long            LK_T;
+typedef volatile long   LK_T;
 #elif (PTHREAD)
 typedef pthread_mutex_t LK_T;
 #endif
@@ -132,10 +134,11 @@ typedef pthread_mutex_t LK_T;
 #include <zero/unix.h>
 //#include <mach/param.h>
 
-#define TUNEBUF 0
 /* experimental */
 #if (PTRBITS > 32)
 #define TUNEBUF 1
+#else
+#define TUNEBUF 0
 #endif
 
 /* basic allocator parameters */
@@ -150,8 +153,8 @@ typedef pthread_mutex_t LK_T;
 #define BLKMINLOG2    5  /* minimum-size allocation */
 #define SLABTEENYLOG2 12 /* little block */
 #define SLABTINYLOG2  16 /* small-size block */
-#define SLABLOG2      20 /* base size for heap allocations */
-#define MAPMIDLOG2    22
+#define SLABLOG2      21 /* base size for heap allocations */
+#define MAPMIDLOG2    24
 #endif
 #define MINSZ         (1UL << BLKMINLOG2)
 #define HQMAX         SLABLOG2
@@ -1535,6 +1538,9 @@ putmem(void *ptr)
                 if (!isbufbkt(bid) && ismapbkt(bid)) {
                     freed = 1;
                 } else {
+#if (FIXES)
+                    _mdir[slabid(ptr)] = NULL;
+#endif
                     mag->prev = mag->next = NULL;
                     mlk(&_flktab[bid]);
                     mag->next = _ftab[bid];
