@@ -255,7 +255,7 @@ struct zpctoken * zpceval(struct zpctoken *srcqueue);
     do {                                                                \
         switch (rad) {                                                  \
             case 2:                                                     \
-                zpcconvbinuint64((val), (tok)->str, TOKENSTRLEN);       \
+                zpcconvbinuint64((val), (tok)->str, (tok)->slen);       \
                                                                         \
                 break;                                                  \
             case 8:                                                     \
@@ -272,10 +272,19 @@ struct zpctoken * zpceval(struct zpctoken *srcqueue);
                                                                         \
                 break;                                                  \
             case 16:                                                    \
-                sprintf((tok)->str, "0x%llx", (val));                   \
+                if (val <= 0xff) {                                      \
+                    sprintf((tok)->str, "0x%02llx", (val));             \
+                } else if (val <= 0xffff) {                             \
+                    sprintf((tok)->str, "0x%04llx", (val));             \
+                } else if (val <= 0xffffffff) {                         \
+                    sprintf((tok)->str, "0x%08llx", (val));             \
+                } else {                                                \
+                    sprintf((tok)->str, "0x%016llx", (val));            \
+                }                                                       \
                                                                         \
                 break;                                                  \
         }                                                               \
+        (tok)->len = strlen((tok)->str);                                \
     } while (0)
 
 #endif /* __ZPC_ZPC_H__ */

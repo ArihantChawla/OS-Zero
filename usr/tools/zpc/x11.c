@@ -266,7 +266,7 @@ x11drawdisp(void)
                         x,
                         (fonth >> 1) + 8,
                         token->str, len);
-            x += len * fonth;
+            x += len * fontw;
             token = token->next;
         }
         str = zpcregstrtab[i];
@@ -579,12 +579,15 @@ displayexpose(void *arg, XEvent *event)
         x = 8;
         XClearWindow(app->display, wininfo->id);
         while ((token) && (token->str)) {
-            len = strlen(token->str);
+            len = token->len;
+            if (!len) {
+                token->len = len = strlen(token->str);
+            }
             XDrawString(app->display, wininfo->id, textgc,
                         x,
-                        (fonth + 8) >> 1,
+                        (fonth >> 1) + 8,
                         token->str, len);
-            x += len * fonth;
+            x += len * fontw;
             token = token->next;
         }
     }
@@ -865,6 +868,7 @@ buttonpress(void *arg, XEvent *event)
     if (evbut < NBUTTON) {
         token = calloc(1, sizeof(struct zpctoken));
         token->str = calloc(1, TOKENSTRLEN);
+        token->slen = TOKENSTRLEN;
 #if 0
         if  (!type) {
             type = ZPCINT64;
@@ -873,39 +877,34 @@ buttonpress(void *arg, XEvent *event)
         if (type == ZPCINT64 || type == ZPCUINT64) {
             func = wininfo->clickfunc[evbut];
             if (func) {
-                if (type == ZPCINT64 || type == ZPCUINT64) {
-                    token->type = type;
-                    res = func(src, dest);
-                    if (dest) {
-                        dtok = dest;
-                    } else {
-                        dtok = src;
-                    }
-                    if (token->radix == 16 || dtok->radix == 16) {
-                        token->radix = 16;
-                    } else if (token->radix == 8 || dtok->radix == 8) {
-                        token->radix = 8;
-                    } else if (token->radix == 2 || dtok->radix == 2) {
-                        token->radix = 2;
-                    } else {
-                        token->radix = 10;
-                    }
-#if (SMARTTYPES)
-                    token->type = dtok->type;
-                    token->flags = dtok->flags;
-#endif
-                    token->data.ui64.i64 = res;
-                    if (dest) {
-                        token->sign = dest->sign;
-                    } else {
-                        token->sign = src->sign;
-                    }
-                    radix = token->radix;
-                    if (!radix) {
-                        radix = zpcradix;
-                    }
-                    zpcprintstr64(token, res, radix);
+                token->type = type;
+                res = func(src, dest);
+                if (dest) {
+                    dtok = dest;
+                } else {
+                    dtok = src;
                 }
+                if (dtok->radix == 16) {
+                    token->radix = 16;
+                } else if (dtok->radix == 8) {
+                    token->radix = 8;
+                } else if (dtok->radix == 2) {
+                    token->radix = 2;
+                } else {
+                    token->radix = 10;
+                }
+#if (SMARTTYPES)
+                token->type = dtok->type;
+                token->flags = dtok->flags;
+#endif
+                token->data.ui64.i64 = res;
+//                token->sign = dtok->sign;
+                radix = token->radix;
+                if (!radix) {
+                    token->radix = radix = zpcradix;
+                }
+                fprintf(stderr, "PRINT: %p (%lld, %ld)\n", token, res, radix);
+                zpcprintstr64(token, res, radix);
             }
 #if 0
         } else {
@@ -940,7 +939,7 @@ buttonpress(void *arg, XEvent *event)
                 }
             }
             if (wininfo->parm == 2) {
-                memmove(&zpcregstk[0], &zpcregstk[1], (NREGSTK - 1) * sizeof(struct zpctoken *));
+                memmove(&zpcregstk[1], &zpcregstk[2], (NREGSTK - 2) * sizeof(struct zpctoken *));
                 zpcregstk[NREGSTK - 1] = NULL;
             }
             zpcregstk[0] = token;
