@@ -3,6 +3,8 @@
 
 #include <stdint.h>
 #include <stddef.h>
+#include <zero/param.h>
+#include <zero/cdecl.h>
 
 #define NSTKREG     16
 #define NREGSTK     1024
@@ -152,6 +154,7 @@ struct zpctoken {
     long                   type;
     char                  *str;
     long                   slen;
+    long                   len;
     long                   param;
     long                   radix;
     long                   sign;

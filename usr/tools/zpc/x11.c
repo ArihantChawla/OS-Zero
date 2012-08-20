@@ -16,7 +16,7 @@
 #include <zero/param.h>
 #include "x11.h"
 
-#define HOVERBUTTONS 1
+#define HOVERBUTTONS 0
 
 #define ZPC_TITLE "Zero Programmer's Calculator"
 
@@ -200,6 +200,25 @@ static char *zpcregstrtab[NREGSTK]
     "ST14",
     "ST15"
 };
+static uint8_t zpcregstrlentab[NREGSTK]
+= {
+    3,
+    3,
+    3,
+    3,
+    3,
+    3,
+    3,
+    3,
+    3,
+    3,
+    4,
+    4,
+    4,
+    4,
+    4,
+    4
+};
 #define BUTTONNORMAL  0
 #define BUTTONHOVER   1
 #define BUTTONCLICKED 2
@@ -239,7 +258,10 @@ x11drawdisp(void)
         x = 8;
         XClearWindow(app->display, win);
         while ((token) && (token->str)) {
-            len = strlen(token->str);
+            len = token->len;
+            if (!len) {
+                token->len = len = strlen(token->str);
+            }
             XDrawString(app->display, win, textgc,
                         x,
                         (fonth >> 1) + 8,
@@ -248,9 +270,9 @@ x11drawdisp(void)
             token = token->next;
         }
         str = zpcregstrtab[i];
+        len = zpcregstrlentab[i];
         win = zpcregwintab[i];
         x = 8;
-        len = strlen(str);
         XDrawString(app->display, win, asmtextgc,
                     x,
                     (fonth >> 1) + 8,
