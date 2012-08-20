@@ -844,7 +844,7 @@ buttonpress(void *arg, XEvent *event)
                     token->next = NULL;
                 }
             } else {
-                fprintf(stderr, "EEEE\n");
+                fprintf(stderr, "empty stack\n");
                 
                 return;
             }
@@ -855,6 +855,10 @@ buttonpress(void *arg, XEvent *event)
                     token->next = NULL;
                     type = token->type;
                     dest = token;
+                } else {
+                    fprintf(stderr, "missing argument #2\n");
+                    
+                    return;
                 }
             }
         }
@@ -938,7 +942,8 @@ buttonpress(void *arg, XEvent *event)
                 }
             }
             if (wininfo->parm == 2) {
-                memmove(&zpcregstk[1], &zpcregstk[2], (NREGSTK - 2) * sizeof(struct zpctoken *));
+                memmove(&zpcregstk[1], &zpcregstk[2],
+                        (NREGSTK - 2) * sizeof(struct zpctoken *));
                 zpcregstk[NREGSTK - 1] = NULL;
             }
             zpcregstk[0] = token;

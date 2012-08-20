@@ -50,8 +50,8 @@ typedef void zpcaction_t(void);
 #define ZPCMOD        0x0e
 #define ZPCASSIGN     0x0f
 #define ZPCNOPER      0x10
-#define ZPCLEFT       0x10
-#define ZPCRIGHT      0x11
+#define ZPCLEFTPAREN  0x10
+#define ZPCRIGHTPAREN 0x11
 #define ZPCFUNC       0x12
 #define ZPCSEP        0x13
 #define ZPCVAR        0x20

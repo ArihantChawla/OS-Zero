@@ -654,6 +654,7 @@ zpcgetstr(struct zpctoken *token, const char *str, char **retstr)
             len++;
             if (!slen) {
                 token->str = realloc(token->str, len << 1);
+                token->slen = len << 1;
                 dest = &token->str[len];
                 slen = len;
             }
@@ -969,12 +970,16 @@ zpcgettoken(const char *str, char **retstr)
     } else if (zpcisoperchar(*ptr)) {
         zpcgetoper(token, ptr, &ptr);
     } else if (*ptr == '(') {
-        token->type = ZPCLEFT;
-        token->str = "(";
+        token->type = ZPCLEFTPAREN;
+        *token->str = '(';
+        token->str[1] = '\0';
+        token->len = 1;
         ptr++;
     } else if (*ptr == ')') {
-        token->type = ZPCRIGHT;
-        token->str = ")";
+        token->type = ZPCRIGHTPAREN;
+        *token->str = ')';
+        token->str[1] = '\0';
+        token->len = 1;
         ptr++;
     } else {
         free(token);
@@ -999,9 +1004,9 @@ printtoken(struct zpctoken *token)
         fprintf(stderr, "%llu\n", token->data.ui64.u64);
     } else if (token->type == ZPCDOUBLE) {
         fprintf(stderr, "%e\n", token->data.f64);
-    } else if (token->type == ZPCLEFT) {
+    } else if (token->type == ZPCLEFTPAREN) {
         fprintf(stderr, "(\n");
-    } else if (token->type == ZPCRIGHT) {
+    } else if (token->type == ZPCRIGHTPAREN) {
         fprintf(stderr, ")\n");
     } else {
         fprintf(stderr, "\n");
@@ -1070,12 +1075,12 @@ zpcparse(struct zpctoken *srcqueue)
             zpcpushtoken(token, &stack);
         } else if (zpcissep(token)) {
             token2 = stack;
-            while ((token2) && token2->type != ZPCLEFT) {
+            while ((token2) && token2->type != ZPCLEFTPAREN) {
                 token2 = zpcpoptoken(&stack);
                 zpcqueuetoken(token2, &queue, &tail);
                 token2 = zpcpoptoken(&stack);
             }
-            if ((token2) && token2->type == ZPCLEFT) {
+            if ((token2) && token2->type == ZPCLEFTPAREN) {
                 
                 continue;
             } else {
@@ -1100,16 +1105,16 @@ zpcparse(struct zpctoken *srcqueue)
             }
 //            fprintf(stderr, "PUSH: %s\n", token->str);
             zpcpushtoken(token, &stack);
-        } else if (token->type == ZPCLEFT) {
+        } else if (token->type == ZPCLEFTPAREN) {
             zpcpushtoken(token, &stack);
-        } else if (token->type == ZPCRIGHT) {
+        } else if (token->type == ZPCRIGHTPAREN) {
             token2 = stack;
-            while ((token2) && token2->type != ZPCLEFT) {
+            while ((token2) && token2->type != ZPCLEFTPAREN) {
                 token2 = zpcpoptoken(&stack);
                 zpcqueuetoken(token2, &queue, &tail);
                 token2 = stack;
             }
-            if ((token2) && token2->type == ZPCLEFT) {
+            if ((token2) && token2->type == ZPCLEFTPAREN) {
                 token2 = zpcpoptoken(&stack);
             } else {
                 if (token2) {
@@ -1138,7 +1143,8 @@ zpcparse(struct zpctoken *srcqueue)
             token1 = zpcpoptoken(&stack);
             zpcqueuetoken(token1, &queue, &tail);
         } else if ((token1)
-                   && (token1->type == ZPCLEFT || token1->type == ZPCRIGHT)) {
+                   && (token1->type == ZPCLEFTPAREN
+                       || token1->type == ZPCRIGHTPAREN)) {
             fprintf(stderr, "mismatched parentheses: %s\n", token1->str);
 
             return NULL;
