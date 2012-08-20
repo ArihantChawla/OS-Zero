@@ -903,7 +903,6 @@ buttonpress(void *arg, XEvent *event)
                 if (!radix) {
                     token->radix = radix = zpcradix;
                 }
-                fprintf(stderr, "PRINT: %p (%lld, %ld)\n", token, res, radix);
                 zpcprintstr64(token, res, radix);
             }
 #if 0
