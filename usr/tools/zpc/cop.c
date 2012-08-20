@@ -64,7 +64,7 @@ shr64(struct zpctoken *arg1, struct zpctoken *arg2)
 {
     int64_t  cnt = arg1->data.ui64.i64;;
     uint64_t res = arg2->data.ui64.u64;
-    uint64_t sign = res & INT64_C(0x8000000000000000);
+    uint64_t sign = res & UINT64_C(0x8000000000000000);
 
     sign = (sign & UINT64_C(0xffffffffffffffff)) << (64 - cnt);
     res >>= cnt;
@@ -78,7 +78,7 @@ shrl64(struct zpctoken *arg1, struct zpctoken *arg2)
 {
     int64_t  cnt = arg1->data.ui64.i64;;
     uint64_t res = arg2->data.ui64.u64;
-    uint64_t mask = INT64_C(0xffffffffffffffff) >> cnt;
+    uint64_t mask = UINT64_C(0xffffffffffffffff) >> cnt;
 
     res >>= cnt;
     res &= mask;
@@ -91,7 +91,7 @@ ror64(struct zpctoken *arg1, struct zpctoken *arg2)
 {
     int64_t  cnt = arg1->data.ui64.i64;;
     uint64_t res = arg2->data.ui64.u64;
-    uint64_t mask = INT64_C(0xffffffffffffffff) >> (64 - cnt);
+    uint64_t mask = UINT64_C(0xffffffffffffffff) >> (64 - cnt);
     int64_t  bits = res & mask;
 
     bits <<= 64 - cnt;
