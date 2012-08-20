@@ -51,8 +51,8 @@ xor64(struct zpctoken *arg1, struct zpctoken *arg2)
 int64_t
 shl64(struct zpctoken *arg1, struct zpctoken *arg2)
 {
-    int64_t cnt = arg1->data.ui64.i64;;
-    int64_t res = arg2->data.ui64.i64;
+    int64_t  cnt = arg1->data.ui64.i64;;
+    uint64_t res = arg2->data.ui64.u64;
 
     res <<= cnt;
 
@@ -62,11 +62,11 @@ shl64(struct zpctoken *arg1, struct zpctoken *arg2)
 int64_t
 shr64(struct zpctoken *arg1, struct zpctoken *arg2)
 {
-    int64_t cnt = arg1->data.ui64.i64;;
-    int64_t res = arg2->data.ui64.i64;
-    int64_t sign = res & INT64_C(0x8000000000000000);
+    int64_t  cnt = arg1->data.ui64.i64;;
+    uint64_t res = arg2->data.ui64.u64;
+    uint64_t sign = res & INT64_C(0x8000000000000000);
 
-    sign = (sign & INT64_C(0xffffffffffffffff)) << (64 - cnt);
+    sign = (sign & UINT64_C(0xffffffffffffffff)) << (64 - cnt);
     res >>= cnt;
     res |= sign;
 
@@ -76,9 +76,9 @@ shr64(struct zpctoken *arg1, struct zpctoken *arg2)
 int64_t
 shrl64(struct zpctoken *arg1, struct zpctoken *arg2)
 {
-    int64_t cnt = arg1->data.ui64.i64;;
-    int64_t res = arg2->data.ui64.i64;
-    int64_t mask = INT64_C(0xffffffffffffffff) >> cnt;
+    int64_t  cnt = arg1->data.ui64.i64;;
+    uint64_t res = arg2->data.ui64.u64;
+    uint64_t mask = INT64_C(0xffffffffffffffff) >> cnt;
 
     res >>= cnt;
     res &= mask;
@@ -89,10 +89,10 @@ shrl64(struct zpctoken *arg1, struct zpctoken *arg2)
 int64_t
 ror64(struct zpctoken *arg1, struct zpctoken *arg2)
 {
-    int64_t cnt = arg1->data.ui64.i64;;
-    int64_t res = arg2->data.ui64.i64;
-    int64_t mask = INT64_C(0xffffffffffffffff) >> (64 - cnt);
-    int64_t bits = res & mask;
+    int64_t  cnt = arg1->data.ui64.i64;;
+    uint64_t res = arg2->data.ui64.u64;
+    uint64_t mask = INT64_C(0xffffffffffffffff) >> (64 - cnt);
+    int64_t  bits = res & mask;
 
     bits <<= 64 - cnt;
     res >>= cnt;
@@ -104,10 +104,10 @@ ror64(struct zpctoken *arg1, struct zpctoken *arg2)
 int64_t
 rol64(struct zpctoken *arg1, struct zpctoken *arg2)
 {
-    int64_t cnt = arg1->data.ui64.i64;;
-    int64_t res = arg2->data.ui64.i64;
-    int64_t mask = INT64_C(0xffffffffffffffff) << (64 - cnt);
-    int64_t bits = res & mask;
+    int64_t  cnt = arg1->data.ui64.i64;;
+    uint64_t res = arg2->data.ui64.u64;
+    uint64_t mask = UINT64_C(0xffffffffffffffff) << (64 - cnt);
+    uint64_t bits = res & mask;
 
     bits >>= 64 - cnt;
     res <<= cnt;

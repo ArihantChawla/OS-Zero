@@ -26,7 +26,7 @@
 #define ZPCNASMOP   16
 
 #define ZPCVPUILL   0x00        // illegal instruction
-#define ZPCVPUNOT   0x01
+#define ZPCVPUNOT   0x01        // logical NOT
 #define ZPCVPUSHR   0x02        // logical right shift
 #define ZPCVPUSHL   0x03        // logical left shift
 #define ZPCVPUXOR   0x04        // logical OR
@@ -55,7 +55,7 @@ struct zpcasminst {
     unsigned unit   : 4;        // unit ID
     unsigned arg1sz : 4;        // argument sizes in octets/bytes
     unsigned arg2sz : 4;        // argument sizes in octets/bytes
-    unsigned pad2   : 32;       // 
+    unsigned pad2   : 32;       // pad to 64-bit boundary
     uint64_t args[EMPTY];
 } PACK();
 
