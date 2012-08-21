@@ -1,4 +1,5 @@
 #include <stdint.h>
+#include <zero/trix.h>
 #include <zpc/zpc.h>
 
 int64_t vpu64not8(struct zpctoken *arg1, struct zpctoken *dummy);
@@ -602,8 +603,8 @@ vpu64addus32(struct zpctoken *arg1, struct zpctoken *arg2)
 
     dest1 += src1;
     dest2 += src2;
-    arg2->data.v64.v32.vec[0] = dest1;
-    arg2->data.v64.v32.vec[1] = dest2;
+    arg2->data.v64.v32.vec[0] = satu32(dest1);
+    arg2->data.v64.v32.vec[1] = satu32(dest2);
 
     return arg2->data.ui64.u64;
 }
