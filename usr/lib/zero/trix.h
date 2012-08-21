@@ -438,7 +438,7 @@ divu100(unsigned long x)
     unsigned long r;
 
     q = (x >> 1) + (x >> 3) + (x >> 6)
-        - (x >> 10) + (x >> 12) + (x >> 13) + (x >> 16);
+        - (x >> 10) + (x >> 12) + (x >> 13) - (x >> 16);
     q = q + (q >> 20);
     q = q >> 6;
     r = x - q * 100;
@@ -447,12 +447,12 @@ divu100(unsigned long x)
 }
 
 #define modu100(u) ((u) - divu100(u) * 100)
-#define modu400(u) ((u) - ((divu100(u) >> 2) * 400))
+#define modu400(u) ((u) - (divu100(u) >> 2) * 400)
 
 /* TODO: change modulus calculations to something faster */
 #define leapyear(u)                                                     \
     (!((u) & 0x03) && ((((u) % 100)) || !((u) % 400)))
-#define leapyear2(u)                                                     \
+#define leapyear2(u)                                                    \
     (!((u) & 0x03) && ((modu100(u)) || !modu400(u)))
 
 #endif /* __ZERO_TRIX_H__ */

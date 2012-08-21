@@ -2,6 +2,7 @@
 #include <zero/trix.h>
 #include <zpc/zpc.h>
 
+#if 0
 int64_t vpu64not8(struct zpctoken *arg1, struct zpctoken *dummy);
 int64_t vpu64not16(struct zpctoken *arg1, struct zpctoken *dummy);
 int64_t vpu64not32(struct zpctoken *arg1, struct zpctoken *dummy);
@@ -67,6 +68,7 @@ vpu64not32(struct zpctoken *arg1, struct zpctoken *dummy)
 
     return arg1->data.ui64.u64;
 }
+#endif /* 0 */
 
 int64_t
 vpu64shr8(struct zpctoken *arg1, struct zpctoken *arg2)

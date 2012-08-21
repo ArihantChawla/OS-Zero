@@ -26,19 +26,19 @@
 #define ZPCNASMOP   16
 
 #define ZPCVPUILL   0x00        // illegal instruction
-#define ZPCVPUNOT   0x01        // logical NOT
-#define ZPCVPUSHR   0x02        // logical right shift
-#define ZPCVPUSHL   0x03        // logical left shift
-#define ZPCVPUXOR   0x04        // logical OR
-#define ZPCVPUOR    0x05        // logical OR
-#define ZPCVPUAND   0x06        // logical AND
-#define ZPCVPUADD   0x07        // arithmetic addition of subwords
-#define ZPCVPUADDUS 0x08        // addition with unsigned saturation
-#define ZPCVPUADDS  0x09        // addition with signed saturation
-#define ZPCVPUSUB   0x0a        // subtraction
-#define ZPCVPUMUL   0x0b        // multiplication
-#define ZPCVPUUNPCK 0x0c        // unpack subwords
-#define ZPCVPUPCK   0x0d        // pack subwords
+//#define ZPCVPUNOT   0x01        // logical NOT
+#define ZPCVPUSHR   0x01        // logical right shift
+#define ZPCVPUSHL   0x02        // logical left shift
+#define ZPCVPUXOR   0x03        // logical OR
+#define ZPCVPUOR    0x04        // logical OR
+#define ZPCVPUAND   0x05        // logical AND
+#define ZPCVPUADD   0x06        // arithmetic addition of subwords
+#define ZPCVPUADDUS 0x07        // addition with unsigned saturation
+#define ZPCVPUADDS  0x08        // addition with signed saturation
+#define ZPCVPUSUB   0x09        // subtraction
+#define ZPCVPUMUL   0x0a        // multiplication
+#define ZPCVPUUNPCK 0x0b        // unpack subwords
+#define ZPCVPUPCK   0x0c        // pack subwords
 #define ZPCNVPUOP   16
 
 #define ZPCARGREG   0x00
