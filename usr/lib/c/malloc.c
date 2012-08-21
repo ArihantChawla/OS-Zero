@@ -145,7 +145,7 @@ typedef pthread_mutex_t LK_T;
 #define BLKMINLOG2    5  /* minimum-size allocation */
 #define SLABTEENYLOG2 12 /* little block */
 #define SLABTINYLOG2  16 /* small-size block */
-#define SLABLOG2      20 /* base size for heap allocations */
+#define SLABLOG2      21 /* base size for heap allocations */
 #define MAPMIDLOG2    24
 #define MINSZ         (1UL << BLKMINLOG2)
 #define HQMAX         SLABLOG2

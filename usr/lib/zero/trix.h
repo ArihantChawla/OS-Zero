@@ -404,10 +404,16 @@ ceil2_64(uint64_t x)
 /* c - conditional, f - flag, u - word */
 #define condsetf(c, f, u) ((u) ^ ((-(u) ^ (u)) & (f)))
 
-#define sat8(x)                                                         \
-    ((x) | (!((x) >> 8) - 1))
+#define satu8(x16)                                                      \
+    ((x16) | (!((x16) >> 8) - 1))
+#define satu16(x32)                                                     \
+    ((x32) | (!((x32) >> 16) - 1))
+#define satu32(x64)                                                     \
+    ((x64) | (!((x64) >> 32) - 1))
+#if 0
 #define sat8b(x)                                                        \
     condset(x, 0xff, x, 0xff)
+#endif
 
 #define haszero(a) (~(a))
 #if 0
@@ -419,9 +425,31 @@ ceil2_64(uint64_t x)
 #define modu10(u)                                                       \
     ((u) - ((((u) * 6554U) >> 16) * 10))
 
+static __inline__ unsigned long
+divu100(unsigned long x)
+{
+    unsigned long q;
+    unsigned long r;
+
+    q = (x >> 1) + (x >> 3) + (x >> 6)
+        - (x >> 10) + (x >> 12) + (x >> 13) + (x >> 16);
+    q = q + (q >> 20);
+    q = q >> 6;
+    r = x - q * 100;
+
+    return q + ((r + 28) >> 7);
+}
+
+#define modu100(u) ((u) - divu100(u) * 100)
+#define modu400(u) ((u) - ((divu100(u) >> 2) * 400))
+
 /* TODO: change modulus calculations to something faster */
-#define leapyear(x)                                                     \
-    (!((x) & 0x03) && ((((x) % 100)) || !((x) % 400)))
+#if 0
+#define leapyear(u)                                                     \
+    (!((u) & 0x03) && ((((u) % 100)) || !((u) % 400)))
+#endif
+#define leapyear(u)                                                     \
+    (!((u) & 0x03) && ((modu100(u)) || !modu400(u)))
 
 #endif /* __ZERO_TRIX_H__ */
 
