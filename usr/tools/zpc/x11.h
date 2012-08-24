@@ -10,6 +10,9 @@ typedef void x11evfunc_t(void *, XEvent *);
 
 void x11drawdisp(void);
 
+typedef void x11eventhandler_t(void *, XEvent *);
+typedef void x11keyhandler_t(char ch);
+
 struct x11wininfo {
     Window             id;
     const char        *str;

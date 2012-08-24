@@ -9,6 +9,7 @@
 #include <ctype.h>
 #include <X11/X.h>
 #include <X11/Xlib.h>
+#include <X11/keysymdef.h>
 #include <X11/Xutil.h>
 #include <zpc/zpc.h>
 #include <zpc/op.h>
@@ -20,7 +21,7 @@
 
 #define ZPC_TITLE "Zero Programmer's Calculator"
 
-void imlib2init(struct x11app *app);
+void   imlib2init(struct x11app *app);
 Pixmap imlib2loadimage(struct x11app *app, const char *filename, int w, int h);
 
 void stkenterinput(void);
@@ -33,12 +34,13 @@ void zpcevaltop(void);
 void zpcenter(void);
 void zpcquit(void);
 
+extern uint8_t            zpcoperchartab[256];
 extern struct zpctoken   *zpcregstk[];
 extern struct zpcstkitem *zpcinputitem;
 extern long               zpcradix;
-
 #define NHASHITEM 1024
 static struct x11wininfo *winhash[NHASHITEM] ALIGNED(PAGESIZE);
+static x11keyhandler_t   *keypressfunctab[256];
 static zpccop_t          *buttonopertab[ZPC_NROW][ZPC_NCOLUMN]
 = {
     { NULL, NULL, NULL, not64, shr64, inc64, NULL, NULL, NULL },
@@ -568,6 +570,16 @@ x11initwin(struct x11app *app, Window parent, int x, int y, int w, int h,
 }
 
 void
+calcenter(void *arg, XEvent *event)
+{
+    fprintf(stderr, "ENTER\n");
+
+    XSetInputFocus(app->display, mainwin, RevertToPointerRoot, CurrentTime);
+
+    return;
+}
+
+void
 displayexpose(void *arg, XEvent *event)
 {
     struct x11wininfo *wininfo = arg;
@@ -609,7 +621,7 @@ labelexpose(void *arg, XEvent *event)
         XSetWindowBackgroundPixmap(app->display, wininfo->id,
                                    smallbuttonpmaps[BUTTONNORMAL]);
         XClearWindow(app->display, wininfo->id);
-        len = strlen(str);
+        len = zpcregstrlentab[wininfo->num];
         XDrawString(app->display, wininfo->id, asmtextgc,
                     x,
                     (fonth >> 1) + 8,
@@ -714,6 +726,37 @@ buttonleave(void *arg, XEvent *event)
     return;
 }
 #endif
+
+void
+keypress(void *arg, XEvent *event)
+{
+    struct zpcstkitem *item = zpcinputitem;
+    unsigned long      keysym = event->xkey.keycode;
+    char               ch;
+    x11keyhandler_t   *func;
+    XComposeStatus     comp;
+    char               str[16];
+
+    XLookupString(&(event->xkey), str, 16, &keysym, &comp);
+    if (keysym == XK_Return || keysym == XK_KP_Enter) {
+        stkenterinput();
+    } else if (keysym >= 0 && keysym <= 0xff) {
+        ch = keysym;
+        if (item->str == item->scur && zpcisoperchar(ch)) {
+            func = keypressfunctab[(int)ch];
+            if (func) {
+                ;
+            }
+        } else {
+                str[0] = ch;
+                str[1] = '\0';
+                stkqueueinput(str);
+        }
+    }
+    x11drawdisp();
+
+    return;
+}
 
 void
 zpcdel(void)
@@ -1008,6 +1051,9 @@ x11init(void)
         wininfo = calloc(1, sizeof(struct x11wininfo));
         wininfo->id = mainwin;
         wininfo->evfunc[ClientMessage] = clientmessage;
+        wininfo->evfunc[EnterNotify] = calcenter;
+        wininfo->evfunc[KeyPress] = keypress;
+        XSelectInput(app->display, mainwin, EnterWindowMask | KeyPressMask);
         x11addwininfo(wininfo);
     } else {
         fprintf(stderr, "failed to create application window\n");
@@ -1165,8 +1211,6 @@ x11init(void)
         wininfo->id = win;
         wininfo->evfunc[Expose] = displayexpose;
         x11addwininfo(wininfo);
-        XSelectInput(app->display, inputwin,
-                     ExposureMask);
         XMapRaised(app->display, inputwin);
     }
     XMapSubwindows(app->display, mainwin);
