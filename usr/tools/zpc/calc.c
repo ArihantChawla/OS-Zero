@@ -31,6 +31,7 @@ extern struct zpctoken   *zpctokenqueue;
 extern struct zpctoken   *zpcparsequeue;
 extern struct zpctoken   *zpcoperstk;
 extern struct zpctoken   *zpcoperstktop;
+uint8_t                  *physmem;
 
 void
 zpcfreequeue(struct zpctoken *queue)

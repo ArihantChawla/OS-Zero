@@ -10,8 +10,6 @@
 #define align(adr, p2)                                                  \
     (!((adr) & ((p2) - 1)) ? (adr) : ((adr) + ((p2) - ((adr) & ((p2 - 1))))))
 #endif
-#define align(adr, p2)                                                  \
-    roundup2(adr, p2)
 
 #define PAGEPRES   0x00000001
 
@@ -112,15 +110,7 @@
 #define UNIT_ALU   0x00	// arithmetic logical unit
 #define UNIT_SIMD  0x01	// vector unit
 #define UNIT_FPU   0x02	// floating point unit
-/* argument types */
-#define ARG_NONE   0x00	// no argument
-#define ARG_IMMED  0x01	// immediate argument
-#define ARG_ADR    0x02	// symbol / memory address
-#define ARG_REG    0x03	// register
-#define ARG_SYM    0x03	// symbol address
 /* register flags */
-#define REG_INDEX  0x10
-#define REG_INDIR  0x20
 #define NREG       16
 #define NFREG      16
 #define NVREG      16

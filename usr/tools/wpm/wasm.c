@@ -20,11 +20,15 @@
 #include <zero/prof.h>
 #endif
 #include <wpm/asm.h>
-#if (WPM)
+#if (ZPC)
+#include <zpc/zpc.h>
+#include <zpc/asm.h>
+#include <wpm/mem.h>
+#elif (WPM)
 #include <wpm/wpm.h>
 #endif
 
-typedef struct asmtoken * tokfunc_t(struct asmtoken *, asmuword_t, asmuword_t *);
+typedef struct asmtoken * tokfunc_t(struct asmtoken *, asmadr_t, asmadr_t *);
 
 static asmuword_t        asmgetreg(uint8_t *str, uint8_t **retptr);
 static uint8_t         * asmgetlabel(uint8_t *str, uint8_t **retptr);
@@ -51,18 +55,22 @@ asmword_t exprdiv(asmword_t val1, asmword_t val2);
 asmword_t exprmod(asmword_t val1, asmword_t val2);
 #endif
 
-static struct asmtoken * asmprocvalue(struct asmtoken *, asmuword_t, asmuword_t *);
-static struct asmtoken * asmproclabel(struct asmtoken *, asmuword_t, asmuword_t *);
-static struct asmtoken * asmprocinst(struct asmtoken *, asmuword_t, asmuword_t *);
-static struct asmtoken * asmprocchar(struct asmtoken *, asmuword_t, asmuword_t *);
-static struct asmtoken * asmprocdata(struct asmtoken *, asmuword_t, asmuword_t *);
-static struct asmtoken * asmprocglobl(struct asmtoken *, asmuword_t, asmuword_t *);
-static struct asmtoken * asmprocspace(struct asmtoken *, asmuword_t, asmuword_t *);
-static struct asmtoken * asmprocorg(struct asmtoken *, asmuword_t, asmuword_t *);
-static struct asmtoken * asmprocalign(struct asmtoken *, asmuword_t, asmuword_t *);
-static struct asmtoken * asmprocasciz(struct asmtoken *, asmuword_t, asmuword_t *);
+static struct asmtoken * asmprocvalue(struct asmtoken *, asmadr_t, asmadr_t *);
+static struct asmtoken * asmproclabel(struct asmtoken *, asmadr_t, asmadr_t *);
+static struct asmtoken * asmprocinst(struct asmtoken *, asmadr_t, asmadr_t *);
+static struct asmtoken * asmprocchar(struct asmtoken *, asmadr_t, asmadr_t *);
+static struct asmtoken * asmprocdata(struct asmtoken *, asmadr_t, asmadr_t *);
+static struct asmtoken * asmprocglobl(struct asmtoken *, asmadr_t, asmadr_t *);
+static struct asmtoken * asmprocspace(struct asmtoken *, asmadr_t, asmadr_t *);
+static struct asmtoken * asmprocorg(struct asmtoken *, asmadr_t, asmadr_t *);
+static struct asmtoken * asmprocalign(struct asmtoken *, asmadr_t, asmadr_t *);
+static struct asmtoken * asmprocasciz(struct asmtoken *, asmadr_t, asmadr_t *);
 
+#if (ZPC)
+extern char      *opnametab[ZPCNASMOP];
+#elif (WPM)
 extern char      *opnametab[256];
+#endif
 
 struct asmsym {
     struct asmsym *next;
@@ -75,10 +83,42 @@ static struct op     *ophash[NHASHITEM] ALIGNED(PAGESIZE);
 static struct asmsym *symhash[NHASHITEM];
 static struct val    *valhash[NHASHITEM];
 static struct label  *globhash[NHASHITEM];
-#if (WPMDB)
+#if (ASMDB)
 struct asmline       *linehash[NHASHITEM];
 #endif
 
+#if (ZPC)
+static uint8_t        opnargtab[ZPCNASMOP]
+= {
+    0,  // ILL
+    1,  // NOT
+    2,  // SHR
+    2,  // SHRA
+    2,  // SHL
+    2,  // XOR
+    2,  // OR
+    2,  // AND
+    2,  // ROR
+    2,  // ROL
+    1,  // INC
+    1,  // DEC
+    2,  // ADD
+    2,  // SUB
+    2,  // MUL
+    2,  // DIV
+    2,  // MOD
+    1,  // BZ
+    1,  // BNZ
+    1,  // BLT
+    1,  // BLE
+    1,  // BGT
+    1,  // BGE
+    2,  // MOV
+    1,  // CALL
+    1,  // RET
+    1   // TRAP
+};
+#elif (WPM)
 static uint8_t        opnargtab[256]
 = {
     0,
@@ -139,6 +179,8 @@ static uint8_t        opnargtab[256]
     2,  // OUTL
     1   // HOOK
 };
+#endif
+
 #if (ASMPREPROC)
 static asmuword_t  exproptab[256];
 exprfunc_t      *exprfunctab[256]
@@ -274,13 +316,18 @@ printtoken(struct asmtoken *token)
 {
     switch (token->type) {
         case TOKENVALUE:
+#if (ZPC)
+            zpcprinttoken(token->data.token);
+#elif (WPM)
             fprintf(stderr, "value 0x%08x (size == %d)\n",
                     token->data.value.val, token->data.value.size);
+#endif
 
             break;
         case TOKENLABEL:
             fprintf(stderr, "label %s (adr == 0x%08x)\n",
-                    token->data.label.name, token->data.label.adr);
+                    token->data.label.name,
+                    (unsigned long)token->data.label.adr);
 
             break;
         case TOKENINST:
@@ -324,7 +371,7 @@ printtoken(struct asmtoken *token)
 void
 asmfreetoken(struct asmtoken *token)
 {
-#if (WPMDB)
+#if (ASMDB)
     free(token->file);
 #endif
     free(token);
@@ -390,7 +437,7 @@ asmfindop(uint8_t *name)
     return op;
 }
 
-#if (WPMDB)
+#if (ASMDB)
 void
 asmaddline(asmadr_t adr, uint8_t *data, uint8_t *filename, unsigned long line)
 {
@@ -891,12 +938,21 @@ asmgetindex(uint8_t *str, asmword_t *retndx, uint8_t **retptr)
         if (*str == '%') {
             str++;
         }
+#if (ZPC)
+        reg = zpcgetreg(str, &str);
+        if (reg >= ZPCNREG) {
+            fprintf(stderr, "invalid register name %s\n", str);
+
+            exit(1);
+        }
+#elif (WPM)
         reg = asmgetreg(str, &str);
         if (reg >= NREG) {
             fprintf(stderr, "invalid register name %s\n", str);
 
             exit(1);
         }
+#endif
         *retptr = str;
     }
     if (neg) {
@@ -1056,7 +1112,11 @@ asmeval(uint8_t *str, asmword_t *valptr, uint8_t **retptr)
                 expr1->next = exprstk[lvl];
                 exprstk[lvl] = expr1;
             } else if ((*ptr) && isdigit(*ptr)) {
+#if (ZPC)
+                zpctoken = zpcgettoken(ptr, &ptr);
+#elif (WPM)
                 asmgetvalue(ptr, &val, &ptr);
+#endif
                 expr1->type = 0;
                 expr1->val = val;
                 expr1->next = exprstk[lvl];
@@ -1136,13 +1196,16 @@ asmgettoken(uint8_t *str, uint8_t **retptr)
     uint8_t         *buf = strbuf;
     struct asmtoken *token1 = malloc(sizeof(struct asmtoken));
     struct asmtoken *token2;
+#if (ZPC)
+    struct zpctoken *zpctoken;
+#endif
     struct op       *op = NULL;
     uint8_t         *name = str;
     asmword_t        val = RESOLVE;
     static long      size = 0;
     asmword_t        ndx;
     int              ch;
-#if (WPMDB)
+#if (ASMDB)
     uint8_t         *ptr;
 #endif
 
@@ -1160,9 +1223,30 @@ asmgettoken(uint8_t *str, uint8_t **retptr)
 #endif
     if ((*str) && (isdigit(*str) || *str == '-')) {
         val = asmgetindex(str, &ndx, &str);
+#if (ZPC)
+        if (val < ZPCNREG) {
+            token1->type = TOKENINDEX;
+            token1->data.ndx.reg = REGINDEX | val;
+            token1->data.ndx.val = ndx;
+        } else {
+            zpctoken = zpcgettoken(str, &str);
+            if (zpctoken) {
+                token1->type = TOKENVALUE;
+                token1->data.token = zpctoken;
+#if 0
+                token1->data.value.val = val;
+                token1->data.value.size = size;
+#endif
+            } else {
+                fprintf(stderr, "invalid token %s\n", linebuf);
+                
+                exit(1);
+            }
+        }
+#elif (WPM)
         if (val < NREG) {
             token1->type = TOKENINDEX;
-            token1->data.ndx.reg = REG_INDEX | val;
+            token1->data.ndx.reg = REGINDEX | val;
             token1->data.ndx.val = ndx;
         } else if (asmgetvalue(str, &val, &str)) {
             token1->type = TOKENVALUE;
@@ -1173,6 +1257,7 @@ asmgettoken(uint8_t *str, uint8_t **retptr)
                 
             exit(1);
         }
+#endif
     } else if ((*str) && *str == '"') {
         str++;
         len = 0;
@@ -1218,7 +1303,15 @@ asmgettoken(uint8_t *str, uint8_t **retptr)
         }
     } else if ((*str) && *str == '%') {
         str++;
+#if (ZPC)
+        val = zpcgetreg(str, &str);
+        if (val & ZPCREGSTKBIT) {
+            token1->data.token->param = ZPCCALC;
+            val &= ~ZPCREGSTKBIT;
+        }
+#elif (WPM)
         val = asmgetreg(str, &str);
+#endif
         token1->type = TOKENREG;
         token1->data.reg = val;
     } else if ((*str) && (isalpha(*str) || *str == '_')) {
@@ -1228,7 +1321,7 @@ asmgettoken(uint8_t *str, uint8_t **retptr)
             token1->data.label.name = name;
             token1->data.label.adr = RESOLVE;
         } else {
-#if (WPMDB)
+#if (ASMDB)
             ptr = str;
 #endif
             op = asmgetinst(str, &str);
@@ -1237,7 +1330,7 @@ asmgettoken(uint8_t *str, uint8_t **retptr)
                 token1->data.inst.name = op->name;
                 token1->data.inst.op = op->code;
                 token1->data.inst.narg = op->narg;
-#if (WPMDB)
+#if (ASMDB)
                 token1->data.inst.data = (uint8_t *)strdup((char *)ptr);
 #endif
             } else {
@@ -1342,7 +1435,7 @@ asmgettoken(uint8_t *str, uint8_t **retptr)
             str++;
             val = asmgetreg(str, &str);
             token2->type = TOKENREG;
-            token2->data.reg = REG_INDIR | val;
+            token2->data.reg = REGINDIR | val;
             asmqueuetoken(token1);
             token1 = token2;
         } else if (isalpha(*str) || *str == '_') {
@@ -1375,7 +1468,31 @@ asmprocvalue(struct asmtoken *token, asmadr_t adr,
     uint8_t         *valptr = &physmem[adr];
     struct asmtoken *retval;
 
-    switch(token->data.value.size) {
+#if (ZPC)
+    switch (token->data.token->type) {
+        case ZPCINT64:
+            *((int64_t *)valptr) = token->data.token->data.ui64.i64;
+            *retadr = adr + sizeof(int64_t);
+
+            break;
+        case ZPCUINT64:
+            *((uint64_t *)valptr) = token->data.token->data.ui64.u64;
+            *retadr = adr + sizeof(uint64_t);
+
+            break;
+        case ZPCFLOAT:
+            *((float *)valptr) = token->data.token->data.f32;
+            *retadr = adr + sizeof(float);
+
+            break;
+        case ZPCDOUBLE:
+            *((double *)valptr) = token->data.token->data.f64;
+            *retadr = adr + sizeof(double);
+
+            break;
+    }
+#elif (WPM)
+    switch (token->data.value.size) {
         case 1:
             *valptr = token->data.value.val;
 
@@ -1394,6 +1511,7 @@ asmprocvalue(struct asmtoken *token, asmadr_t adr,
             break;
     }
     *retadr = adr + token->data.value.size;
+#endif
     retval = token->next;
     asmfreetoken(token);
 
@@ -1434,31 +1552,49 @@ static struct asmtoken *
 asmprocinst(struct asmtoken *token, asmadr_t adr,
             asmadr_t *retadr)
 {
+#if (ZPC)
+    struct zpcinst   *op;
+#elif (WPM)
     struct wpmopcode *op;
-    asmadr_t          opadr = align(adr, 4);
+#endif
+    asmadr_t          opadr = roundup2(adr, 4);
     struct asmtoken  *token1 = NULL;
     struct asmtoken  *token2 = NULL;
     struct asmtoken  *retval = NULL;
     struct asmsym    *sym;
     uint8_t           narg = token->data.inst.narg;
+#if (ZPC)
+    uint8_t           len = 8;
+#elif (WPM)
     uint8_t           len = token->data.inst.op == OPNOP ? 1 : 4;
+#endif
 
+#if (ZPC)
+    adr = opadr;
+#elif (WPM)
     while (adr < opadr) {
         physmem[adr] = OPNOP;
         adr++;
     }
-    adr = opadr;
-#if (WPMDB)
+#endif
+//    adr = opadr;
+#if (ASMDB)
     asmaddline(adr, token->data.inst.data, token->file, token->line);
 #endif
+#if (ZPC)
+    op = (struct zpcinst *)&physmem[adr];
+    op->op = token->data.inst.op;
+#elif (WPM)
     op = (struct wpmopcode *)&physmem[adr];
     op->inst = token->data.inst.op;
     if (op->inst == OPNOP) {
         retval = token->next;
         adr++;
-    } else if (!narg) {
-        op->arg1t = ARG_NONE;
-        op->arg2t = ARG_NONE;
+    } else
+#endif
+    if (!narg) {
+        op->arg1t = ARGNONE;
+        op->arg2t = ARGNONE;
         op->reg1 = 0;
         op->reg2 = 0;
         retval = token->next;
@@ -1467,21 +1603,23 @@ asmprocinst(struct asmtoken *token, asmadr_t adr,
         asmfreetoken(token);
         if (token1) {
             switch(token1->type) {
-#if 0
                 case TOKENVALUE:
-                    op->arg1t = ARG_IMMED;
+                    op->arg1t = ARGIMMED;
+#if (ZPC)
+                    op->args[0] = token1->data.token->data.ui64.u64;
+#elif (WPM)
                     op->args[0] = token1->data.value.val;
-                    len += 4;
+#endif
+                    len += sizeof(asmword_t);
                     
                     break;
-#endif
                 case TOKENREG:
-                    op->arg1t = ARG_REG;
+                    op->arg1t = ARGREG;
                     op->reg1 = token1->data.reg;
                     
                     break;
                 case TOKENSYM:
-                    op->arg1t = ARG_ADR;
+                    op->arg1t = ARGADR;
                     sym = malloc(sizeof(struct sym));
                     sym->name = (uint8_t *)strdup((char *)token1->data.sym.name);
                     sym->adr = (asmadr_t)&op->args[0];
@@ -1492,7 +1630,7 @@ asmprocinst(struct asmtoken *token, asmadr_t adr,
                 case TOKENINDIR:
                     token1 = token1->next;
                     if (token1->type == TOKENREG) {
-                        op->arg1t = ARG_REG;
+                        op->arg1t = ARGREG;
                         op->reg1 = token1->data.reg;
                     } else {
                         fprintf(stderr, "indirect addressing requires a register\n");
@@ -1502,13 +1640,13 @@ asmprocinst(struct asmtoken *token, asmadr_t adr,
                     
                     break;
                 case TOKENIMMED:
-                    op->arg1t = ARG_IMMED;
+                    op->arg1t = ARGIMMED;
                     op->args[0] = token1->val;
                     len += 4;
                     
                     break;
                 case TOKENADR:
-                    op->arg1t = ARG_IMMED;
+                    op->arg1t = ARGIMMED;
                     sym = malloc(sizeof(struct sym));
                     sym->name = (uint8_t *)strdup((char *)token1->data.sym.name);
                     sym->adr = (asmadr_t)&op->args[0];
@@ -1517,7 +1655,7 @@ asmprocinst(struct asmtoken *token, asmadr_t adr,
 
                     break;
                 case TOKENINDEX:
-                    op->arg1t = ARG_REG;
+                    op->arg1t = ARGREG;
                     op->reg1 = token1->data.ndx.reg;
                     op->args[0] = token1->data.ndx.val;
                     len += 4;
@@ -1536,32 +1674,44 @@ asmprocinst(struct asmtoken *token, asmadr_t adr,
             retval = token2;
         }
         if (narg == 1) {
-            op->arg2t = ARG_NONE;
+            op->arg2t = ARGNONE;
+#if 0
+#if (ZPC)
+            op->reg2 = ZPCNREG;
+#elif (WPM)
             op->reg2 = NREG;
+#endif
+#endif
         } else if (narg == 2 && (token2)) {
             switch(token2->type) {
-#if 0
                 case TOKENVALUE:
-                    op->arg2t = ARG_IMMED;
-                    if (op->arg1t == ARG_REG) {
+                    op->arg2t = ARGIMMED;
+#if (ZPC)
+                    if (op->arg1t == ARGREG) {
+                        op->args[0] = token2->data.token->data.ui64.i64;
+                    } else {
+                        op->args[1] = token2->data.token->data.ui64.i64;
+                    }
+#elif (WPM)
+                    if (op->arg1t == ARGREG) {
                         op->args[0] = token2->data.value.val;
                     } else {
                         op->args[1] = token2->data.value.val;
                     }
-                    len += 4;
-                    
-                    break;
 #endif
+                    len += sizeof(asmword_t);
+
+                    break;
                 case TOKENREG:
-                    op->arg2t = ARG_REG;
+                    op->arg2t = ARGREG;
                     op->reg2 = token2->data.reg;
                     
                     break;
                 case TOKENSYM:
-                    op->arg2t = ARG_ADR;
+                    op->arg2t = ARGADR;
                     sym = malloc(sizeof(struct sym));
                     sym->name = (uint8_t *)strdup((char *)token2->data.sym.name);
-                    if (op->arg1t == ARG_REG) {
+                    if (op->arg1t == ARGREG) {
                         sym->adr = (asmadr_t)&op->args[0];
                     } else {
                         sym->adr = (asmadr_t)&op->args[1];
@@ -1573,7 +1723,7 @@ asmprocinst(struct asmtoken *token, asmadr_t adr,
                 case TOKENINDIR:
                     token2 = token2->next;
                     if (token2->type == TOKENREG) {
-                        op->arg2t = ARG_REG;
+                        op->arg2t = ARGREG;
                         op->reg2 = token2->data.reg;
                     } else {
                         fprintf(stderr, "indirect addressing requires a register\n");
@@ -1583,8 +1733,8 @@ asmprocinst(struct asmtoken *token, asmadr_t adr,
                     
                     break;
                 case TOKENIMMED:
-                    op->arg2t = ARG_IMMED;
-                    if (op->arg1t == ARG_REG) {
+                    op->arg2t = ARGIMMED;
+                    if (op->arg1t == ARGREG) {
                         op->args[0] = token2->val;
                     } else {
                         op->args[1] = token2->val;
@@ -1593,10 +1743,10 @@ asmprocinst(struct asmtoken *token, asmadr_t adr,
                     
                         break;
                 case TOKENADR:
-                    op->arg2t = ARG_IMMED;
+                    op->arg2t = ARGIMMED;
                     sym = malloc(sizeof(struct sym));
                     sym->name = (uint8_t *)strdup((char *)token2->data.sym.name);
-                    if (op->arg1t == ARG_REG) {
+                    if (op->arg1t == ARGREG) {
                         sym->adr = (asmadr_t)&op->args[0];
                     } else {
                         sym->adr = (asmadr_t)&op->args[1];
@@ -1606,9 +1756,9 @@ asmprocinst(struct asmtoken *token, asmadr_t adr,
 
                     break;
                 case TOKENINDEX:
-                    op->arg2t = ARG_REG;
+                    op->arg2t = ARGREG;
                     op->reg2 = token2->data.ndx.reg;
-                    if (op->arg1t == ARG_REG) {
+                    if (op->arg1t == ARGREG) {
                         op->args[0] = token2->data.ndx.val;
                     } else {
                         op->args[1] = token2->data.ndx.val;
@@ -1697,11 +1847,19 @@ asmprocspace(struct asmtoken *token, asmadr_t adr,
 
     token1 = token->next;
     if ((token1) && token1->type == TOKENVALUE) {
+#if (ZPC)
+        spcadr = token1->data.token->data.ui64.u64;
+#elif (WPM)
         spcadr = token1->data.value.val;
+#endif
         token2 = token1->next;
         if ((token2) && token2->type == TOKENVALUE) {
             ptr = &physmem[spcadr];
+#if (ZPC)
+            val = token2->data.token->data.ui64.u64;
+#elif (WPM)
             val = token2->data.value.val;
+#endif
             while (adr < spcadr) {
                 ptr[0] = val;
                 adr++;
@@ -1733,9 +1891,14 @@ asmprocorg(struct asmtoken *token, asmadr_t adr,
     
     token1 = token->next;
     if ((token1) && token1->type == TOKENVALUE) {
-        orgadr = token1->data.value.val;
         ptr = &physmem[adr];
+#if (ZPC)
+        orgadr = token1->data.token->data.ui64.u64;
+        val = orgadr;
+#elif (WPM)
+        orgadr = token1->data.value.val;
         val = token1->data.value.val;
+#endif
         while (adr < orgadr) {
             *ptr++ = val;
             adr++;
@@ -1754,7 +1917,11 @@ asmprocalign(struct asmtoken *token, asmadr_t adr,
 
     token1 = token->next;
     if ((token1) && token1->type == TOKENVALUE) {
-        adr = align(adr, token1->data.value.val);
+#if (ZPC)
+        adr = roundup2(adr, token1->data.token->data.ui64.u64);
+#elif (WPM)
+        adr = roundup2(adr, token1->data.value.val);
+#endif
     } else {
         fprintf(stderr, "invalid .align attribute token type %lx\n",
                 token1->type);
@@ -1929,7 +2096,7 @@ asmreadfile(char *name, asmadr_t adr)
     long             comm = 0;
     long             done = 1;
     long             len = 0;
-#if (WPMDB)
+#if (ASMDB)
     unsigned long    line = 0;
 #endif
     asmword_t        val = 0;
@@ -1955,7 +2122,7 @@ asmreadfile(char *name, asmadr_t adr)
 
                 break;
             } else {
-#if (WPMDB)
+#if (ASMDB)
                 line++;
 #endif
                 while (ch != EOF && ch != '\n') {
@@ -2085,7 +2252,7 @@ asmreadfile(char *name, asmadr_t adr)
                     loop = 0;
 
                     break;
-#if (WPMDB)
+#if (ASMDB)
                 } else if (ch == '\n') {
                     line++;
 #endif
@@ -2110,7 +2277,7 @@ asmreadfile(char *name, asmadr_t adr)
             if (*str) {
                 token = asmgettoken(str, &str);
                 if (token) {
-#if (WPMDB)
+#if (ASMDB)
                     token->file = (uint8_t *)strdup((char *)name);
                     token->line = line;
 #endif
@@ -2136,6 +2303,7 @@ asmreadfile(char *name, asmadr_t adr)
     return;
 }
 
+#if (WPM)
 int
 main(int argc, char *argv[])
 {
@@ -2194,4 +2362,5 @@ main(int argc, char *argv[])
     /* NOTREACHED */
     exit(0);
 }
+#endif /* WPM */
 

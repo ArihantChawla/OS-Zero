@@ -49,7 +49,27 @@ ceil2(size_t size)
 }
 
 static __inline__ void
-memstore(int32_t src, uint32_t virt)
+memstoreq(int64_t src, uint32_t virt)
+{
+    int64_t *ptr = NULL;
+
+    if (virt < MEMSIZE) {
+        ptr = (int64_t *)(&physmem[virt]);
+    } else if (virt < MEMHWBASE) {
+        ptr = (int64_t *)((int8_t *)mempagetab[pagenum(virt)] + pageofs(virt));
+    }
+    if (!ptr) {
+        fprintf(stderr, "illegal write at address 0x%x\n", virt);
+
+        exit(1);
+    }
+    *ptr = src;
+
+    return;
+}
+
+static __inline__ void
+memstorel(int32_t src, uint32_t virt)
 {
     int32_t *ptr = NULL;
 
@@ -108,8 +128,29 @@ memstorew(int16_t src, uint32_t virt)
     return;
 }
 
+static __inline__ int64_t
+memfetchq(uint32_t virt)
+{
+    int64_t *ptr = NULL;
+    int64_t  retval;
+
+    if (virt < MEMSIZE) {
+        ptr = (int64_t *)(&physmem[virt]);
+    } else if (virt < MEMHWBASE) {
+        ptr = (int64_t *)((int8_t *)mempagetab[pagenum(virt)] + pageofs(virt));
+    }
+    if (!ptr) {
+        fprintf(stderr, "illegal read at address %x (%x)\n", virt, MEMSIZE);
+
+        exit(1);
+    }
+    retval = *ptr;
+
+    return retval;
+}
+
 static __inline__ int32_t
-memfetch(uint32_t virt)
+memfetchl(uint32_t virt)
 {
     int32_t *ptr = NULL;
     int32_t  retval;

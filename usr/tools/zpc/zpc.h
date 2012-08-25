@@ -57,11 +57,12 @@ typedef void zpcaction_t(void);
 #define ZPCVAR        0x20
 #define ZPCINT64      0x21
 #define ZPCUINT64     0x22
-#define ZPCDOUBLE     0x23
-#define ZPCSTRING     0x24
-#define ZPCVECTOR     0x25
-#define ZPCMATRIX     0x26
-#define ZPCCOMPLEX    0x27
+#define ZPCFLOAT      0x23
+#define ZPCDOUBLE     0x24
+#define ZPCSTRING     0x25
+#define ZPCVECTOR     0x26
+#define ZPCMATRIX     0x27
+#define ZPCCOMPLEX    0x28
 #define PARAMSIZEMASK 0xff
 #define PARAMFLOATBIT 0x40000000
 #define PARAMSIGNBIT  0x80000000

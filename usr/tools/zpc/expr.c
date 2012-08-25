@@ -1000,7 +1000,7 @@ zpcgettoken(const char *str, char **retstr)
 }
 
 void
-printtoken(struct zpctoken *token)
+zpcprinttoken(struct zpctoken *token)
 {
     fprintf(stderr, "TOKEN of type %lx: ", token->type);
     if (token->str) {
@@ -1026,7 +1026,7 @@ zpcprintqueue(struct zpctoken *queue)
     struct zpctoken *token = queue;
 
     while (token) {
-        printtoken(token);
+        zpcprinttoken(token);
         token = token->next;
     }
 

@@ -4,7 +4,7 @@
 #include <stdint.h>
 
 #if (ZPC)
-typedef uint64_t asmadr_t;
+typedef uint32_t asmadr_t;
 typedef int64_t  asmword_t;
 typedef uint64_t asmuword_t;
 #elif (WPM)
@@ -39,7 +39,20 @@ typedef uint32_t asmuword_t;
 #define NTOK        19
 
 #define OPINVAL    0x00
-#define RESOLVE    0xffffffffU
+//#if (ZPC)
+//#define RESOLVE    INT64_C(0xffffffffffffffff)
+//#elif (WPM)
+#define RESOLVE    0xffffffff
+//#endif
+
+#define REGINDEX   0x10
+#define REGINDIR   0x20
+/* argument types */
+#define ARGNONE    0x00	// no argument
+#define ARGIMMED   0x01	// immediate argument
+#define ARGADR     0x02	// symbol / memory address
+#define ARGREG     0x03	// register
+#define ARGSYM     0x04	// symbol address
 
 struct op {
     uint8_t   *name;
@@ -62,7 +75,7 @@ struct value {
 
 struct inst {
     uint8_t *name;
-#if (WPMDB)
+#if (ASMDB)
     uint8_t *data;
 #endif
     uint8_t  op;
@@ -91,29 +104,33 @@ struct val {
 };
 
 struct asmtoken {
-    struct asmtoken  *prev;
-    struct asmtoken  *next;
-    unsigned long     type;
-    asmword_t         val;
-#if (WPMDB)
-    uint8_t          *file;
-    unsigned long     line;
+    struct asmtoken     *prev;
+    struct asmtoken     *next;
+    unsigned long        type;
+    asmword_t            val;
+#if (ASMDB)
+    uint8_t             *file;
+    unsigned long        line;
 #endif
     union {
-        struct label  label;
-        struct value  value;
-        struct inst   inst;
-        struct sym    sym;
-        struct adr    adr;
-        struct ndx    ndx;
-        uint8_t      *str;
-        uint8_t       ch;
-        uint8_t       size;
-        asmuword_t    reg;
+        struct label     label;
+#if (ZPC)
+        struct zpctoken *token;
+#elif (WPM)
+        struct value     value;
+#endif
+        struct inst      inst;
+        struct sym       sym;
+        struct adr       adr;
+        struct ndx       ndx;
+        uint8_t         *str;
+        uint8_t          ch;
+        uint8_t          size;
+        asmuword_t       reg;
     } data;
 };
 
-#if (WPMDB)
+#if (ASMDB)
 struct asmline {
     struct asmline *next;
     asmadr_t        adr;

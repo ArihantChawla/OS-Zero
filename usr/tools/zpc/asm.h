@@ -4,9 +4,13 @@
 #include <stdint.h>
 #include <zero/param.h>
 #include <zero/cdecl.h>
+#include <wpm/asm.h>
+
+asmuword_t zpcgetreg(uint8_t *str, uint8_t **retptr);
 
 /* number of registers per unit */
 #define ZPCNREG      16
+#define ZPCREGSTKBIT 0x80000000U
 
 /* instruction set */
 #define ZPCASMILL    0x00
@@ -40,8 +44,9 @@
 /* function calls */
 #define ZPCASMCALL   0x17       // trigger function call
 #define ZPCASMRET    0x18       // return from a function
-/* software interrupt */
+/* software interrupts */
 #define ZPCASMTRAP   0x19       // trigger a software interrupt
+#define ZPCASMIRET   0x1a       // return from interrupt handler
 #define ZPCNASMOP    32         // maximum number of operations
 
 /* interrupt interface */
@@ -70,34 +75,37 @@
 #define ZPCNVPUOP    16
 
 /* argument types */
-#define ZPCARGREG    0x00       // register
-#define ZPCARGSTK    0x01       // stack register
-#define ZPCARGI64    0x02       // signed 64-bit integral value
-#define ZPCARGU64    0x03       // unsigned 64-bit integral value
-#define ZPCARGFLOAT  0x04       // 32-bit IEEE floating point value
-#define ZPCARGDOUBLE 0x05       // 64-bit IEEE floating point value
-#define ZPCARGLD80   0x06       // 80-bit Intel/IEEE floating point value
-#define ZPCARGLD128  0x07       // 128-bit floating point value
-#define ZPCARGIMMED  0x08       // immediate 64-bit argument
-#define ZPCARGINDIR  0x09       // indirect address (in a register)
-#define ZPCARGINDEX  0x0a       // indexed indirect address (index + register)
+#define ZPCARGNONE   0x00
+#define ZPCARGREG    0x01       // register
+#define ZPCARGSTK    0x02       // stack register
+#define ZPCARGI64    0x03       // signed 64-bit integral value
+#define ZPCARGU64    0x04       // unsigned 64-bit integral value
+#define ZPCARGFLOAT  0x05       // 32-bit IEEE floating point value
+#define ZPCARGDOUBLE 0x06       // 64-bit IEEE floating point value
+#define ZPCARGLD80   0x07       // 80-bit Intel/IEEE floating point value
+#define ZPCARGLD128  0x08       // 128-bit floating point value
+#define ZPCARGIMMED  0x09       // immediate 64-bit argument
+#define ZPCARGINDIR  0x0a       // indirect address (in a register)
+#define ZPCARGINDEX  0x0b       // indexed indirect address (index + register)
 /* unit IDs */
-#define ZPCALU       0x00       // arithmetic-logical unit
-#define ZPCVPU64     0x01       // 64-bit vector unit
-#define ZPCVPU128    0x02       // 128-bit vector unit
+#define ZPCCALC      0x00
+#define ZPCALU       0x01       // arithmetic-logical unit
+#define ZPCVPU64     0x02       // 64-bit vector unit
+#define ZPCVPU128    0x03       // 128-bit vector unit
 
 /* opcode bitfield */
-struct zpcasminst {
-    unsigned op     : 4;        // operation ID
-    unsigned arg1t  : 4;        // argument #1 type
-    unsigned arg2t  : 4;        // argument #2 type
-    unsigned reg1   : 4;        // register ID #1
-    unsigned reg2   : 4;        // register ID #2
-    unsigned unit   : 4;        // unit ID
-    unsigned arg1sz : 4;        // argument sizes in octets/bytes
-    unsigned arg2sz : 4;        // argument sizes in octets/bytes
-    unsigned pad    : 32;       // pad to 64-bit boundary
-    uint64_t args[EMPTY];
+struct zpcinst {
+    unsigned  op     : 4;       // operation ID
+    unsigned  arg1t  : 4;       // argument #1 type
+    unsigned  arg2t  : 4;       // argument #2 type
+    unsigned  reg1   : 4;       // register ID #1
+    unsigned  reg2   : 4;       // register ID #2
+    unsigned  unit   : 4;       // unit ID
+    unsigned  arg1sz : 4;       // argument sizes in octets/bytes
+    unsigned  arg2sz : 4;       // argument sizes in octets/bytes
+    unsigned  size   : 2;       // size 1..3, shift count
+    unsigned  pad    : 32;      // pad to 64-bit boundary
+    asmword_t args[EMPTY];
 } PACK();
 
 /* convenience macros */
