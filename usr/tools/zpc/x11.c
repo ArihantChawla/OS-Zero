@@ -567,6 +567,53 @@ x11initwin(struct x11app *app, Window parent, int x, int y, int w, int h,
 }
 
 void
+zpcdrawlabel(struct x11wininfo *wininfo)
+{
+    size_t len;
+
+    if (wininfo->str) {
+        if (wininfo->topstr2) {
+            len = strlen(wininfo->topstr2);
+            XDrawString(app->display, wininfo->id, asmtextgc,
+                        ZPC_BUTTON_WIDTH - len * fontw - 4,
+                        fonth + 4,
+                        wininfo->topstr2, len);
+            if (wininfo->topstr1) {
+                len = strlen(wininfo->topstr1);
+                XDrawString(app->display, wininfo->id, asmtextgc,
+                            4,
+                            fonth + 4,
+                            wininfo->topstr1, len);
+                }
+        } else if (wininfo->topstr1) {
+            len = strlen(wininfo->topstr1);
+            if (len) {
+                XDrawString(app->display, wininfo->id, asmtextgc,
+                            (ZPC_BUTTON_WIDTH - len * fontw) >> 1,
+                                fonth + 4,
+                            wininfo->topstr1, len);
+            }
+        }
+        len = strlen(wininfo->str);
+        if (len) {
+            if (wininfo->topstr1) {
+                XDrawString(app->display, wininfo->id, wininfo->textgc,
+                            (ZPC_BUTTON_WIDTH - len * fontw) >> 1,
+                            (ZPC_BUTTON_HEIGHT + fonth) >> 1,
+                            wininfo->str, len);
+            } else {
+                XDrawString(app->display, wininfo->id, wininfo->textgc,
+                            (ZPC_BUTTON_WIDTH - len * fontw) >> 1,
+                            (ZPC_BUTTON_HEIGHT + fonth) >> 1,
+                            wininfo->str, len);
+            }
+        }
+    }
+
+    return;
+}
+
+void
 calcenter(void *arg, XEvent *event)
 {
     XSetInputFocus(app->display, mainwin, RevertToPointerRoot, CurrentTime);
@@ -606,7 +653,6 @@ void
 labelexpose(void *arg, XEvent *event)
 {
     struct x11wininfo *wininfo = arg;
-//    struct zpctoken   *token = zpcreglabel[wininfo->num];
     char              *str = zpcregstrtab[wininfo->num];
     int                x;
     int                len;
@@ -631,7 +677,6 @@ void
 buttonexpose(void *arg, XEvent *event)
 {
     struct x11wininfo *wininfo = arg;
-    size_t             len;
 
     if (!event->xexpose.count) {
         if (buttonpmaps[wininfo->state]) {
@@ -639,47 +684,7 @@ buttonexpose(void *arg, XEvent *event)
                                        buttonpmaps[wininfo->state]);
         }
         XClearWindow(app->display, wininfo->id);
-        if (wininfo->str) {
-            if (wininfo->topstr2) {
-                len = strlen(wininfo->topstr2);
-                XDrawString(app->display, wininfo->id, asmtextgc,
-                            ZPC_BUTTON_WIDTH - len * fontw - 4,
-//                        ZPC_BUTTON_HEIGHT - fonth + 8,
-                            fonth + 4,
-                            wininfo->topstr2, len);
-                if (wininfo->topstr1) {
-                    len = strlen(wininfo->topstr1);
-                    XDrawString(app->display, wininfo->id, asmtextgc,
-                                4,
-//                            ZPC_BUTTON_HEIGHT - fonth + 8,
-                                fonth + 4,
-                                wininfo->topstr1, len);
-                }
-            } else if (wininfo->topstr1) {
-                len = strlen(wininfo->topstr1);
-                if (len) {
-                    XDrawString(app->display, wininfo->id, asmtextgc,
-                                (ZPC_BUTTON_WIDTH - len * fontw) >> 1,
-//                            ZPC_BUTTON_HEIGHT - fonth + 8,
-                                fonth + 4,
-                                wininfo->topstr1, len);
-                }
-            }
-            len = strlen(wininfo->str);
-            if (len) {
-                if (wininfo->topstr1) {
-                    XDrawString(app->display, wininfo->id, wininfo->textgc,
-                                (ZPC_BUTTON_WIDTH - len * fontw) >> 1,
-                                (ZPC_BUTTON_HEIGHT + fonth) >> 1,
-                                wininfo->str, len);
-                } else {
-                    XDrawString(app->display, wininfo->id, wininfo->textgc,
-                                (ZPC_BUTTON_WIDTH - len * fontw) >> 1,
-                                (ZPC_BUTTON_HEIGHT + fonth) >> 1,
-                                wininfo->str, len);
-                }
-            }
-        }
+        zpcdrawlabel(wininfo);
     } else {
         XClearWindow(app->display, wininfo->id);
     }
@@ -693,7 +698,6 @@ void
 buttonenter(void *arg, XEvent *event)
 {
     struct x11wininfo *wininfo = arg;
-    size_t             len;
 
     if (buttonpmaps[BUTTONHOVER]) {
         wininfo->state = BUTTONHOVER;
@@ -701,47 +705,7 @@ buttonenter(void *arg, XEvent *event)
                                    buttonpmaps[BUTTONHOVER]);
     }
     XClearWindow(app->display, wininfo->id);
-    if (wininfo->str) {
-        if (wininfo->topstr2) {
-            len = strlen(wininfo->topstr2);
-            XDrawString(app->display, wininfo->id, asmtextgc,
-                        ZPC_BUTTON_WIDTH - len * fontw - 4,
-//                        ZPC_BUTTON_HEIGHT - fonth + 8,
-                        fonth + 4,
-                        wininfo->topstr2, len);
-            if (wininfo->topstr1) {
-                len = strlen(wininfo->topstr1);
-                XDrawString(app->display, wininfo->id, asmtextgc,
-                            4,
-//                            ZPC_BUTTON_HEIGHT - fonth + 8,
-                            fonth + 4,
-                                wininfo->topstr1, len);
-            }
-        } else if (wininfo->topstr1) {
-            len = strlen(wininfo->topstr1);
-            if (len) {
-                XDrawString(app->display, wininfo->id, asmtextgc,
-                            (ZPC_BUTTON_WIDTH - len * fontw) >> 1,
-//                            ZPC_BUTTON_HEIGHT - fonth + 8,
-                            fonth + 4,
-                            wininfo->topstr1, len);
-                }
-        }
-        len = strlen(wininfo->str);
-        if (len) {
-            if (wininfo->topstr1) {
-                XDrawString(app->display, wininfo->id, wininfo->textgc,
-                            (ZPC_BUTTON_WIDTH - len * fontw) >> 1,
-                            (ZPC_BUTTON_HEIGHT + fonth) >> 1,
-                            wininfo->str, len);
-            } else {
-                XDrawString(app->display, wininfo->id, wininfo->textgc,
-                            (ZPC_BUTTON_WIDTH - len * fontw) >> 1,
-                            (ZPC_BUTTON_HEIGHT + fonth) >> 1,
-                            wininfo->str, len);
-            }
-        }
-    }
+    zpcdrawlabel(wininfo);
     XSync(app->display, False);
 
     return;
@@ -751,7 +715,6 @@ void
 buttonleave(void *arg, XEvent *event)
 {
     struct x11wininfo *wininfo = arg;
-    size_t             len;
 
     if (buttonpmaps[BUTTONNORMAL]) {
         wininfo->state = BUTTONNORMAL;
@@ -759,47 +722,7 @@ buttonleave(void *arg, XEvent *event)
                                    buttonpmaps[BUTTONNORMAL]);
     }
     XClearWindow(app->display, wininfo->id);
-    if (wininfo->str) {
-        if (wininfo->topstr2) {
-            len = strlen(wininfo->topstr2);
-            XDrawString(app->display, wininfo->id, asmtextgc,
-                            ZPC_BUTTON_WIDTH - len * fontw - 4,
-//                        ZPC_BUTTON_HEIGHT - fonth + 8,
-                        fonth + 4,
-                        wininfo->topstr2, len);
-            if (wininfo->topstr1) {
-                len = strlen(wininfo->topstr1);
-                XDrawString(app->display, wininfo->id, asmtextgc,
-                                4,
-//                            ZPC_BUTTON_HEIGHT - fonth + 8,
-                            fonth + 4,
-                            wininfo->topstr1, len);
-            }
-        } else if (wininfo->topstr1) {
-            len = strlen(wininfo->topstr1);
-            if (len) {
-                XDrawString(app->display, wininfo->id, asmtextgc,
-                            (ZPC_BUTTON_WIDTH - len * fontw) >> 1,
-//                            ZPC_BUTTON_HEIGHT - fonth + 8,
-                            fonth + 4,
-                            wininfo->topstr1, len);
-            }
-        }
-        len = strlen(wininfo->str);
-        if (len) {
-            if (wininfo->topstr1) {
-                XDrawString(app->display, wininfo->id, wininfo->textgc,
-                            (ZPC_BUTTON_WIDTH - len * fontw) >> 1,
-                            (ZPC_BUTTON_HEIGHT + fonth) >> 1,
-                            wininfo->str, len);
-            } else {
-                XDrawString(app->display, wininfo->id, wininfo->textgc,
-                            (ZPC_BUTTON_WIDTH - len * fontw) >> 1,
-                            (ZPC_BUTTON_HEIGHT + fonth) >> 1,
-                            wininfo->str, len);
-            }
-        }
-    }
+    zpcdrawlabel(wininfo);
     XSync(app->display, False);
 
     return;
@@ -935,6 +858,11 @@ buttonpress(void *arg, XEvent *event)
     long                type = 0;
     long                radix;
 
+    XSetWindowBackgroundPixmap(app->display, wininfo->id,
+                               buttonpmaps[BUTTONCLICKED]);
+    XClearWindow(app->display, wininfo->id);
+    zpcdrawlabel(wininfo);
+    XSync(app->display, False);
     if (isaction(wininfo->parm)) {
         action = actiontab[toaction(wininfo->parm)];
         if (action) {
@@ -986,12 +914,6 @@ buttonpress(void *arg, XEvent *event)
         
         return;
     }
-#if 0
-    XSetWindowBackgroundPixmap(app->display, wininfo->id,
-                               buttonpmaps[BUTTONCLICKED]);
-    XClearWindow(app->display, wininfo->id);
-    XSync(app->display, False);
-#endif
     if (evbut < NBUTTON) {
         token = calloc(1, sizeof(struct zpctoken));
         token->str = calloc(1, TOKENSTRLEN);
@@ -1077,22 +999,17 @@ buttonpress(void *arg, XEvent *event)
     return;
 }
 
-#if 0
 void
 buttonrelease(void *arg, XEvent *event)
 {
     struct x11wininfo *wininfo = arg;
-    int            evbut = toevbutton(event->xbutton.button);
-    copfunc_t     *func;
-    int64_t       *src = &zpcregstktab[1]->data.ui64.i64;
-    int64_t       *dest = &zpcregstktab[0]->data.ui64.i64;
 
     XSetWindowBackgroundPixmap(app->display, wininfo->id,
-                               buttonpmaps[BUTTONNORMAL]);
+                               buttonpmaps[wininfo->state]);
     XClearWindow(app->display, wininfo->id);
+    zpcdrawlabel(wininfo);
     XSync(app->display, False);
 }
-#endif
 
 void
 x11init(void)
@@ -1194,6 +1111,7 @@ x11init(void)
                 wininfo->evfunc[LeaveNotify] = buttonleave;
 #endif
                 wininfo->evfunc[ButtonPress] = buttonpress;
+                wininfo->evfunc[ButtonRelease] = buttonrelease;
                 wininfo->evfunc[Expose] = buttonexpose;
                 buttonwintab[row][col] = win;
                 wininfo->clickfunc[0] = buttonopertab[row][col];
@@ -1203,7 +1121,8 @@ x11init(void)
 #if (HOVERBUTTONS)
                              EnterWindowMask | LeaveWindowMask |
 #endif
-                             ExposureMask | ButtonPressMask);
+                             ExposureMask | ButtonPressMask
+                             | ButtonReleaseMask);
                 XMapRaised(app->display, win);
             } else {
                 fprintf(stderr, "failed to create window\n");

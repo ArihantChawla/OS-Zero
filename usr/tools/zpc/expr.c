@@ -287,18 +287,20 @@ void
 zpcqueuetoken(struct zpctoken *token,
               struct zpctoken **queue, struct zpctoken **tail)
 {
-    token->next = NULL;
-    if (!*queue) {
-        token->prev = NULL;
-        *queue = token;
-    } else if (*tail) {
-        token->prev = *tail;
-        (*tail)->next = token;
-        *tail = token;
-    } else {
-        token->prev = *queue;
-        (*queue)->next = token;
-        *tail = token;
+    if (token) {
+        token->next = NULL;
+        if (!*queue) {
+            token->prev = NULL;
+            *queue = token;
+        } else if (*tail) {
+            token->prev = *tail;
+            (*tail)->next = token;
+            *tail = token;
+        } else {
+            token->prev = *queue;
+            (*queue)->next = token;
+            *tail = token;
+        }
     }
 
     return;
