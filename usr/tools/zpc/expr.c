@@ -309,9 +309,11 @@ zpcqueuetoken(struct zpctoken *token,
 static __inline__ void
 zpcpushtoken(struct zpctoken *token, struct zpctoken **stack)
 {
-    token->prev = NULL;
-    token->next = *stack;
-    *stack = token;
+    if ((token) && (stack)) {
+        token->prev = NULL;
+        token->next = *stack;
+        *stack = token;
+    }
 
     return;
 }
@@ -319,10 +321,13 @@ zpcpushtoken(struct zpctoken *token, struct zpctoken **stack)
 static __inline__ struct zpctoken *
 zpcpoptoken(struct zpctoken **stack)
 {
-    struct zpctoken *token = *stack;
+    struct zpctoken *token;
 
-    if (token) {
-        *stack = token->next;
+    if (stack) {
+        token = *stack;
+        if (token) {
+            *stack = token->next;
+        }
     }
 
     return token;

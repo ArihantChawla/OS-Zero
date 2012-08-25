@@ -34,3 +34,4 @@
 - data structure and algorithm analysis including visualisation?
 - graphical debugger interfaces
   - for gdb and qemu first
+- 80-bit FPU math
