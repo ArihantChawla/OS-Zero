@@ -21,9 +21,6 @@
 
 #define ZPC_TITLE "Zero Programmer's Calculator"
 
-void   imlib2init(struct x11app *app);
-Pixmap imlib2loadimage(struct x11app *app, const char *filename, int w, int h);
-
 void stkenterinput(void);
 void stkqueueinput(const char *str);
 
@@ -748,9 +745,9 @@ keypress(void *arg, XEvent *event)
                 ;
             }
         } else {
-                str[0] = ch;
-                str[1] = '\0';
-                stkqueueinput(str);
+            str[0] = ch;
+            str[1] = '\0';
+            stkqueueinput(str);
         }
     }
     x11drawdisp();

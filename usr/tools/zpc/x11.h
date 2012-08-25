@@ -13,6 +13,11 @@ void x11drawdisp(void);
 typedef void x11eventhandler_t(void *, XEvent *);
 typedef void x11keyhandler_t(char ch);
 
+#if (ZPCIMLIB2)
+void   imlib2init(struct x11app *app);
+Pixmap imlib2loadimage(struct x11app *app, const char *filename, int w, int h);
+#endif
+
 struct x11wininfo {
     Window             id;
     const char        *str;
