@@ -1,0 +1,36 @@
+- simple c preprocessor and interpreter (or interface to existing ones)
+  - macros, constants, variables, expressions
+- assembly console
+- trigonometry
+- vectors
+  - scalar and dot products
+- matrices
+- predefined constants PI, E, G, C
+- polynomials
+- 2D and 3D math
+- probability and statistics
+- complex numbers
+- strings
+  - regular expressions
+- I/O facilities
+- character constants
+  - C-style with single quotes
+- character conversions
+  - ISO 8859, UCS-2, UCS-4, UTF-8
+- internal character set ISO 8859-1
+  - display other character sets in hexadecimal by default
+- 64-bit addressable, dynamic size memory
+- indirect, indirect indexed, and immediate memory addressing
+- reuse WPM assembler (write code generator for ZPC instruction set)
+  - the stack registers are %st0..%st15
+- 3D plotting using OpenGL and OpenCL
+- fractal generator
+- game of life
+- perhaps a worm game
+- battleship
+- audio test signal output
+- oscilloscope
+  - green/amber/white on black
+- data structure and algorithm analysis including visualisation?
+- graphical debugger interfaces
+  - for gdb and qemu first
