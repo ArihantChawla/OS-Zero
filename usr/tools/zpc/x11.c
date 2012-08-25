@@ -17,7 +17,7 @@
 #include <zero/param.h>
 #include "x11.h"
 
-#define HOVERBUTTONS 0
+#define HOVERBUTTONS 1
 
 #define ZPC_TITLE "Zero Programmer's Calculator"
 
@@ -569,8 +569,6 @@ x11initwin(struct x11app *app, Window parent, int x, int y, int w, int h,
 void
 calcenter(void *arg, XEvent *event)
 {
-    fprintf(stderr, "ENTER\n");
-
     XSetInputFocus(app->display, mainwin, RevertToPointerRoot, CurrentTime);
 
     return;
@@ -636,14 +634,73 @@ buttonexpose(void *arg, XEvent *event)
     size_t             len;
 
     if (!event->xexpose.count) {
-        if (buttonpmaps[BUTTONNORMAL]) {
+        if (buttonpmaps[wininfo->state]) {
             XSetWindowBackgroundPixmap(app->display, wininfo->id,
-                                       buttonpmaps[BUTTONNORMAL]);
+                                       buttonpmaps[wininfo->state]);
         }
         XClearWindow(app->display, wininfo->id);
+        if (wininfo->str) {
+            if (wininfo->topstr2) {
+                len = strlen(wininfo->topstr2);
+                XDrawString(app->display, wininfo->id, asmtextgc,
+                            ZPC_BUTTON_WIDTH - len * fontw - 4,
+//                        ZPC_BUTTON_HEIGHT - fonth + 8,
+                            fonth + 4,
+                            wininfo->topstr2, len);
+                if (wininfo->topstr1) {
+                    len = strlen(wininfo->topstr1);
+                    XDrawString(app->display, wininfo->id, asmtextgc,
+                                4,
+//                            ZPC_BUTTON_HEIGHT - fonth + 8,
+                                fonth + 4,
+                                wininfo->topstr1, len);
+                }
+            } else if (wininfo->topstr1) {
+                len = strlen(wininfo->topstr1);
+                if (len) {
+                    XDrawString(app->display, wininfo->id, asmtextgc,
+                                (ZPC_BUTTON_WIDTH - len * fontw) >> 1,
+//                            ZPC_BUTTON_HEIGHT - fonth + 8,
+                                fonth + 4,
+                                wininfo->topstr1, len);
+                }
+            }
+            len = strlen(wininfo->str);
+            if (len) {
+                if (wininfo->topstr1) {
+                    XDrawString(app->display, wininfo->id, wininfo->textgc,
+                                (ZPC_BUTTON_WIDTH - len * fontw) >> 1,
+                                (ZPC_BUTTON_HEIGHT + fonth) >> 1,
+                                wininfo->str, len);
+                } else {
+                    XDrawString(app->display, wininfo->id, wininfo->textgc,
+                                (ZPC_BUTTON_WIDTH - len * fontw) >> 1,
+                                (ZPC_BUTTON_HEIGHT + fonth) >> 1,
+                                wininfo->str, len);
+                }
+            }
+        }
     } else {
         XClearWindow(app->display, wininfo->id);
     }
+    XSync(app->display, False);
+
+    return;
+}
+
+#if (HOVERBUTTONS)
+void
+buttonenter(void *arg, XEvent *event)
+{
+    struct x11wininfo *wininfo = arg;
+    size_t             len;
+
+    if (buttonpmaps[BUTTONHOVER]) {
+        wininfo->state = BUTTONHOVER;
+        XSetWindowBackgroundPixmap(app->display, wininfo->id,
+                                   buttonpmaps[BUTTONHOVER]);
+    }
+    XClearWindow(app->display, wininfo->id);
     if (wininfo->str) {
         if (wininfo->topstr2) {
             len = strlen(wininfo->topstr2);
@@ -656,6 +713,64 @@ buttonexpose(void *arg, XEvent *event)
                 len = strlen(wininfo->topstr1);
                 XDrawString(app->display, wininfo->id, asmtextgc,
                             4,
+//                            ZPC_BUTTON_HEIGHT - fonth + 8,
+                            fonth + 4,
+                                wininfo->topstr1, len);
+            }
+        } else if (wininfo->topstr1) {
+            len = strlen(wininfo->topstr1);
+            if (len) {
+                XDrawString(app->display, wininfo->id, asmtextgc,
+                            (ZPC_BUTTON_WIDTH - len * fontw) >> 1,
+//                            ZPC_BUTTON_HEIGHT - fonth + 8,
+                            fonth + 4,
+                            wininfo->topstr1, len);
+                }
+        }
+        len = strlen(wininfo->str);
+        if (len) {
+            if (wininfo->topstr1) {
+                XDrawString(app->display, wininfo->id, wininfo->textgc,
+                            (ZPC_BUTTON_WIDTH - len * fontw) >> 1,
+                            (ZPC_BUTTON_HEIGHT + fonth) >> 1,
+                            wininfo->str, len);
+            } else {
+                XDrawString(app->display, wininfo->id, wininfo->textgc,
+                            (ZPC_BUTTON_WIDTH - len * fontw) >> 1,
+                            (ZPC_BUTTON_HEIGHT + fonth) >> 1,
+                            wininfo->str, len);
+            }
+        }
+    }
+    XSync(app->display, False);
+
+    return;
+}
+
+void
+buttonleave(void *arg, XEvent *event)
+{
+    struct x11wininfo *wininfo = arg;
+    size_t             len;
+
+    if (buttonpmaps[BUTTONNORMAL]) {
+        wininfo->state = BUTTONNORMAL;
+        XSetWindowBackgroundPixmap(app->display, wininfo->id,
+                                   buttonpmaps[BUTTONNORMAL]);
+    }
+    XClearWindow(app->display, wininfo->id);
+    if (wininfo->str) {
+        if (wininfo->topstr2) {
+            len = strlen(wininfo->topstr2);
+            XDrawString(app->display, wininfo->id, asmtextgc,
+                            ZPC_BUTTON_WIDTH - len * fontw - 4,
+//                        ZPC_BUTTON_HEIGHT - fonth + 8,
+                        fonth + 4,
+                        wininfo->topstr2, len);
+            if (wininfo->topstr1) {
+                len = strlen(wininfo->topstr1);
+                XDrawString(app->display, wininfo->id, asmtextgc,
+                                4,
 //                            ZPC_BUTTON_HEIGHT - fonth + 8,
                             fonth + 4,
                             wininfo->topstr1, len);
@@ -686,39 +801,6 @@ buttonexpose(void *arg, XEvent *event)
         }
     }
     XSync(app->display, False);
-
-    return;
-}
-
-#if (HOVERBUTTONS)
-void
-buttonenter(void *arg, XEvent *event)
-{
-    struct x11wininfo *wininfo = arg;
-
-    if (!event->xexpose.count) {
-        if (buttonpmaps[BUTTONHOVER]) {
-            XSetWindowBackgroundPixmap(app->display, wininfo->id,
-                                       buttonpmaps[BUTTONHOVER]);
-        }
-        XClearWindow(app->display, wininfo->id);
-        XSync(app->display, False);
-    }
-
-    return;
-}
-
-void
-buttonleave(void *arg, XEvent *event)
-{
-    struct x11wininfo *wininfo = arg;
-
-    if (!event->xexpose.count) {
-        XSetWindowBackgroundPixmap(app->display, wininfo->id,
-                                   buttonpmaps[BUTTONNORMAL]);
-        XClearWindow(app->display, wininfo->id);
-        XSync(app->display, False);
-    }
 
     return;
 }

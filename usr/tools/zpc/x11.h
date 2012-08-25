@@ -20,6 +20,7 @@ struct x11wininfo {
     const char        *topstr2;
     GC                 textgc;
     long               type;
+    long               state;
     long               num;
     long               parm;
     long               row;
