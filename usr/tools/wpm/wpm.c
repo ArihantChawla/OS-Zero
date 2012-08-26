@@ -108,11 +108,13 @@ void opinl(opcode_t *op);
 void opoutl(opcode_t *op);
 void ophook(opcode_t *op);
 
+#if (WPM)
 static void hookpzero(opcode_t *op);
 static void hookpalloc(opcode_t *op);
 static void hookpfree(opcode_t *op);
+#endif
 
-static void memstorel(int32_t src, asmadr_t virt);
+static void    memstorel(int32_t src, asmadr_t virt);
 static int32_t memfetchl(asmadr_t virt);
 
 #if (ZPC)
@@ -414,7 +416,8 @@ wpmloop(void *cpustat)
 #endif
                 func(op);
             } else {
-                fprintf(stderr, "illegal instruction, PC == %x\n", wpm->cpustat.pc);
+                fprintf(stderr, "illegal instruction, PC == %lx\n",
+                        (long)wpm->cpustat.pc);
 #if (WPM)
                 wpmprintop(op);
 #endif
@@ -1750,8 +1753,9 @@ wpmpzero(asmadr_t adr, asmuword_t size)
     }
 }
 
+#if (WPM)
 /* TODO: this and other hooks need to use page tables */
-void
+static void
 hookpzero(opcode_t *op)
 {
     asmadr_t adr = wpm->cpustat.regs[0];
@@ -1762,7 +1766,7 @@ hookpzero(opcode_t *op)
     return;
 }
 
-void
+static void
 hookpalloc(opcode_t *op)
 {
     asmuword_t size = wpm->cpustat.regs[0];
@@ -1772,7 +1776,7 @@ hookpalloc(opcode_t *op)
     return;
 }
 
-void
+static void
 hookpfree(opcode_t *op)
 {
     asmadr_t adr = wpm->cpustat.regs[0];
@@ -1781,3 +1785,5 @@ hookpfree(opcode_t *op)
 
     return;
 }
+#endif /* WPM */
+

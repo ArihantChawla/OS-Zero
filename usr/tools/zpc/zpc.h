@@ -187,6 +187,8 @@ void              exprinit(void);
 void              zpcconvbinuint64(uint64_t val, char *str, size_t len);
 void              zpcconvbinint64(int64_t val, char *str, size_t len);
 void              zpcfreequeue(struct zpctoken *queue);
+void              zpcprinttoken(struct zpctoken *token);
+struct zpctoken * zpcgettoken(const char *str, char **retstr);
 struct zpctoken * zpctokenize(const char *str);
 struct zpctoken * zpcparse(struct zpctoken *queue);
 struct zpctoken * zpceval(struct zpctoken *srcqueue);

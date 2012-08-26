@@ -183,7 +183,11 @@ struct wpm {
 
 struct wpm * wpminit(void);
 void *       wpmloop(void *start);
+#if (ZPC)
+void         wpmprintop(struct zpcopcode *op);
+#elif (WPM)
 void         wpmprintop(struct wpmopcode *op);
+#endif
 void         wpminitthr(asmadr_t pc);
 
 extern __thread struct wpm *wpm;

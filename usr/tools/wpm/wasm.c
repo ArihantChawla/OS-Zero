@@ -325,7 +325,7 @@ printtoken(struct asmtoken *token)
 
             break;
         case TOKENLABEL:
-            fprintf(stderr, "label %s (adr == 0x%08x)\n",
+            fprintf(stderr, "label %s (adr == 0x%08lx)\n",
                     token->data.label.name,
                     (unsigned long)token->data.label.adr);
 
@@ -336,12 +336,12 @@ printtoken(struct asmtoken *token)
 
             break;
         case TOKENREG:
-            fprintf(stderr, "register r%1x\n", token->data.ndx.reg);
+            fprintf(stderr, "register r%1lx\n", (long)token->data.ndx.reg);
 
             break;
         case TOKENSYM:
-            fprintf(stderr, "symbol %s (adr == 0x%08x)\n",
-                    token->data.sym.name, token->data.sym.adr);
+            fprintf(stderr, "symbol %s (adr == 0x%08lx)\n",
+                    token->data.sym.name, (long)token->data.sym.adr);
 
             break;
         case TOKENCHAR:
@@ -349,7 +349,7 @@ printtoken(struct asmtoken *token)
 
             break;
         case TOKENIMMED:
-            fprintf(stderr, "immediate (val == 0x%08x)\n", token->val);
+            fprintf(stderr, "immediate (val == 0x%08lx)\n", (long)token->val);
 
             break;
         case TOKENINDIR:
@@ -357,12 +357,13 @@ printtoken(struct asmtoken *token)
 
             break;
         case TOKENADR:
-            fprintf(stderr, "address (sym == %s, adr == 0x%08x)\n",
-                    token->data.adr.name, token->data.adr.val);
+            fprintf(stderr, "address (sym == %s, adr == 0x%08lx)\n",
+                    token->data.adr.name, (long)token->data.adr.val);
 
             break;
         case TOKENINDEX:
-            fprintf(stderr, "index %d(%%r%d)\n", token->data.ndx.val, token->data.ndx.reg);
+            fprintf(stderr, "index %ld(%%r%ld)\n", (long)token->data.ndx.val,
+                    (long)token->data.ndx.reg);
 
             break;
     }
@@ -1022,7 +1023,8 @@ asmgetchar(uint8_t *str, uint8_t **retptr)
         }
     }
     if (val > 0xff) {
-        fprintf(stderr, "oversize character literal %s (%x)\n", name, val);
+        fprintf(stderr, "oversize character literal %s (%lx)\n",
+                name, (long)val);
 
         exit(1);
     }
@@ -1202,7 +1204,7 @@ asmgettoken(uint8_t *str, uint8_t **retptr)
     struct op       *op = NULL;
     uint8_t         *name = str;
     asmword_t        val = RESOLVE;
-    static long      size = 0;
+    long             size = 0;
     asmword_t        ndx;
     int              ch;
 #if (ASMDB)
@@ -1229,7 +1231,7 @@ asmgettoken(uint8_t *str, uint8_t **retptr)
             token1->data.ndx.reg = REGINDEX | val;
             token1->data.ndx.val = ndx;
         } else {
-            zpctoken = zpcgettoken(str, &str);
+            zpctoken = zpcgettoken((const char *)str, (char **)&str);
             if (zpctoken) {
                 token1->type = TOKENVALUE;
                 token1->data.token = zpctoken;
@@ -1399,7 +1401,11 @@ asmgettoken(uint8_t *str, uint8_t **retptr)
     } else if (*str == '.') {
         str++;
         size = 0;
-        if (!strncmp((char *)str, "long", 4)) {
+        if (!strncmp((char *)str, "quad", 4)) {
+            str += 4;
+            token1->type = TOKENDATA;
+            size = token1->data.size = 8;
+        } else if (!strncmp((char *)str, "long", 4)) {
             str += 4;
             token1->type = TOKENDATA;
             size = token1->data.size = 4;
