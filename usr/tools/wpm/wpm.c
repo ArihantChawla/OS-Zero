@@ -395,9 +395,12 @@ wpmloop(void *cpustat)
     free(cpustat);
     while (!wpm->shutdown) {
         op = (opcode_t *)&physmem[wpm->cpustat.pc];
+#if (WPM)
         if (op->inst == OPNOP) {
             wpm->cpustat.pc++;
-        } else {
+        } else
+#endif
+        {
             wpm->cpustat.pc = roundup2(wpm->cpustat.pc, 4);
             op = (opcode_t *)&physmem[wpm->cpustat.pc];
             func = opfunctab[op->inst];

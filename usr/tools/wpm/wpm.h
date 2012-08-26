@@ -1,10 +1,17 @@
 #include <stdint.h>
 #include <zero/cdecl.h>
 #include <zero/param.h>
+#include <wpm/asm.h>
 #include <wpm/mem.h>
+#if (ZPC)
+#include <zpc/asm.h>
+#endif
 
-#define WPMTEXTBASE 8192
 #define THRSTKSIZE  (128 * 1024)
+
+#if (WPM)
+#define WPMTEXTBASE 8192
+#endif
 
 #if 0
 #define align(adr, p2)                                                  \
@@ -31,6 +38,8 @@
 #define INTMOUSE   0x11         // mouse
 #define INTMSG     0x12         // incoming message
 #define NINT       16
+
+#if (WPM)
 
 /* hooks */
 #define HOOKPZERO  0            // r0 is number of pages
@@ -115,65 +124,73 @@
 #define NFREG      16
 #define NVREG      16
 struct _wpmopcode {
-    uint32_t code;
-    int32_t  args[2];
+    asmuword_t code;
+    asmword_t  args[2];
 };
 
 struct wpmopcode {
-    unsigned inst     : 8;	// instruction ID
-    unsigned unit     : 2;	// unit ID
-    unsigned arg1t    : 3;	// argument #1 type
-    unsigned arg2t    : 3;      // argument #2 type
-    unsigned reg1     : 6;	// register #1 ID + addressing flags
-    unsigned reg2     : 6;	// register #2 ID + addressing flags
-    unsigned size     : 2;      // 1..3, shift count
-    unsigned res      : 2;
-    int32_t  args[2];
+    unsigned  inst     : 8;	// instruction ID
+    unsigned  unit     : 2;	// unit ID
+    unsigned  arg1t    : 3;	// argument #1 type
+    unsigned  arg2t    : 3;     // argument #2 type
+    unsigned  reg1     : 6;	// register #1 ID + addressing flags
+    unsigned  reg2     : 6;	// register #2 ID + addressing flags
+    unsigned  size     : 2;     // 1..3, shift count
+    unsigned  res      : 2;
+    asmword_t args[2];
 } __attribute__ ((__packed__));
 
 struct wpmobjhdr {
-    uint32_t nsym;      // number of [global] symbols
-    uint32_t fsize;     // size of file
-    uint32_t tofs;      // text segment offset
-    uint32_t tsize;     // text segment size
-    uint32_t dofs;      // data segment offset
-    uint32_t dsize;     // data segment size
-    uint32_t bofs;      // bss segment offset
-    uint32_t bsize;     // bss segment size
+    asmuword_t nsym;      // number of [global] symbols
+    asmuword_t fsize;     // size of file
+    asmuword_t tofs;      // text segment offset
+    asmuword_t tsize;     // text segment size
+    asmuword_t dofs;      // data segment offset
+    asmuword_t dsize;     // data segment size
+    asmuword_t bofs;      // bss segment offset
+    asmuword_t bsize;     // bss segment size
 };
+
+#endif /* WPM */
 
 /* initial state: all bytes zero */
 struct wpmcpustate {
-    uint32_t msw;               // machine status word
-    uint32_t fp;                // frame pointer
-    uint32_t sp;                // stack pointer
-    uint32_t pc;                // program counter (instruction pointer)
+    asmuword_t msw;               // machine status word
+    asmuword_t fp;                // frame pointer
+    asmuword_t sp;                // stack pointer
+    asmuword_t pc;                // program counter (instruction pointer)
 #if 0
-    uint32_t pd;                // page directory address
-    uint32_t iv;                // interrupt vector address
+    asmuword_t pd;                // page directory address
+    asmuword_t iv;                // interrupt vector address
 #endif
-    uint32_t isp;               // interrupt stack pointer
-    int32_t  regs[NREG] ALIGNED(CLSIZE);
-    double   fregs[NFREG] ALIGNED(CLSIZE);
+    asmuword_t isp;               // interrupt stack pointer
+#if (ZPC)
+    asmword_t  regs[ZPCNREG] ALIGNED(CLSIZE);
+    float      fregs[ZPCNREG];
+    double     dregs[ZPCNREG];
+#else
+    asmword_t  regs[NREG] ALIGNED(CLSIZE);
+    double     fregs[NFREG] ALIGNED(CLSIZE);
+#endif
 };
 
 struct wpm {
     struct wpmcpustate  cpustat;
     volatile long       shutdown;
     volatile long       thrid;
-    uint32_t            brk;
+    asmuword_t          brk;
 };
 
 struct wpm * wpminit(void);
 void *       wpmloop(void *start);
 void         wpmprintop(struct wpmopcode *op);
-void         wpminitthr(uint32_t pc);
+void         wpminitthr(asmadr_t pc);
 
 extern __thread struct wpm *wpm;
 
 struct wpmstackframe {
-    uint32_t oldfp;
-    uint32_t retadr;
-    uint32_t args[EMPTY];
+    asmuword_t oldfp;
+    asmuword_t retadr;
+    asmuword_t args[EMPTY];
 };
 
