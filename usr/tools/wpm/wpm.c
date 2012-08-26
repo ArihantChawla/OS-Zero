@@ -14,6 +14,9 @@
 #include <wpm/wpm.h>
 #include <wpm/mem.h>
 #include <wpm/asm.h>
+#if (ZPC)
+#include <zpc/asm.h>
+#endif
 
 #define WPMDEBUG 0
 
@@ -25,88 +28,126 @@
 #define USEASM 0
 #endif
 
-typedef void ophandler_t(struct wpmopcode *);
-typedef void hookfunc_t(struct wpmopcode *);
+#if (ZPC)
+typedef struct zpcopcode opcode_t;
+#elif (WPM)
+typedef struct wpmopcode opcode_t;
+#endif
+typedef void ophandler_t(opcode_t *);
+typedef void hookfunc_t(opcode_t *);
 
 #if (WPMDB)
 extern struct asmline *linehash[];
 #endif
-extern uint32_t       *mempagetab;
+extern asmadr_t       *mempagetab;
 
 /* logical operations */
-static void opnot(struct wpmopcode *op);
-static void opand(struct wpmopcode *op);
-static void opor(struct wpmopcode *op);
-static void opxor(struct wpmopcode *op);
+void opnot(opcode_t *op);
+void opand(opcode_t *op);
+void opor(opcode_t *op);
+void opxor(opcode_t *op);
 /* shift and rotate */
-static void opshl(struct wpmopcode *op);
-static void opshr(struct wpmopcode *op);
-static void opshrl(struct wpmopcode *op);
-static void opror(struct wpmopcode *op);
-static void oprol(struct wpmopcode *op);
+void opshr(opcode_t *op);
+void opshra(opcode_t *op);
+void opshl(opcode_t *op);
+void opror(opcode_t *op);
+void oprol(opcode_t *op);
 /* arithmetic operations */
-static void opinc(struct wpmopcode *op);
-static void opdec(struct wpmopcode *op);
-static void opadd(struct wpmopcode *op);
-static void opsub(struct wpmopcode *op);
-static void opcmp(struct wpmopcode *op);
-static void opmul(struct wpmopcode *op);
-static void opdiv(struct wpmopcode *op);
-static void opmod(struct wpmopcode *op);
+void opinc(opcode_t *op);
+void opdec(opcode_t *op);
+void opadd(opcode_t *op);
+void opsub(opcode_t *op);
+void opcmp(opcode_t *op);
+void opmul(opcode_t *op);
+void opdiv(opcode_t *op);
+void opmod(opcode_t *op);
 /* branch operations */
-static void opbz(struct wpmopcode *op);
-static void opbnz(struct wpmopcode *op);
-static void opblt(struct wpmopcode *op);
-static void opble(struct wpmopcode *op);
-static void opbgt(struct wpmopcode *op);
-static void opbge(struct wpmopcode *op);
-static void opbo(struct wpmopcode *op);
-static void opbno(struct wpmopcode *op);
-static void opbc(struct wpmopcode *op);
-static void opbnc(struct wpmopcode *op);
+void opbz(opcode_t *op);
+void opbnz(opcode_t *op);
+void opblt(opcode_t *op);
+void opble(opcode_t *op);
+void opbgt(opcode_t *op);
+void opbge(opcode_t *op);
+void opbo(opcode_t *op);
+void opbno(opcode_t *op);
+void opbc(opcode_t *op);
+void opbnc(opcode_t *op);
 /* stack operations */
-static void oppop(struct wpmopcode *op);
-static void oppush(struct wpmopcode *op);
+void oppop(opcode_t *op);
+void oppush(opcode_t *op);
 /* load/store */
-static void opmov(struct wpmopcode *op);
-static void opmovb(struct wpmopcode *op);
-static void opmovw(struct wpmopcode *op);
+void opmov(opcode_t *op);
+void opmovb(opcode_t *op);
+void opmovw(opcode_t *op);
 /* jump */
-static void opjmp(struct wpmopcode *op);
+void opjmp(opcode_t *op);
 /* function call interface */
-static void opcall(struct wpmopcode *op);
-static void openter(struct wpmopcode *op);
-static void opleave(struct wpmopcode *op);
-static void opret(struct wpmopcode *op);
+void opcall(opcode_t *op);
+void openter(opcode_t *op);
+void opleave(opcode_t *op);
+void opret(opcode_t *op);
 /* machine status word */
-static void oplmsw(struct wpmopcode *op);
-static void opsmsw(struct wpmopcode *op);
+void oplmsw(opcode_t *op);
+void opsmsw(opcode_t *op);
 /* reset and shutdown */
-static void opreset(struct wpmopcode *op);
-static void opnop(struct wpmopcode *op);
-static void ophlt(struct wpmopcode *op);
-static void opbrk(struct wpmopcode *op);
-static void optrap(struct wpmopcode *op);
-static void opcli(struct wpmopcode *op);
-static void opsti(struct wpmopcode *op);
-static void opiret(struct wpmopcode *op);
-static void opthr(struct wpmopcode *op);
-static void opcmpswap(struct wpmopcode *op);
-static void opinb(struct wpmopcode *op);
-static void opoutb(struct wpmopcode *op);
-static void opinw(struct wpmopcode *op);
-static void opoutw(struct wpmopcode *op);
-static void opinl(struct wpmopcode *op);
-static void opoutl(struct wpmopcode *op);
-static void ophook(struct wpmopcode *op);
+void opreset(opcode_t *op);
+void opnop(opcode_t *op);
+void ophlt(opcode_t *op);
+void opbrk(opcode_t *op);
+void optrap(opcode_t *op);
+void opcli(opcode_t *op);
+void opsti(opcode_t *op);
+void opiret(opcode_t *op);
+void opthr(opcode_t *op);
+void opcmpswap(opcode_t *op);
+void opinb(opcode_t *op);
+void opoutb(opcode_t *op);
+void opinw(opcode_t *op);
+void opoutw(opcode_t *op);
+void opinl(opcode_t *op);
+void opoutl(opcode_t *op);
+void ophook(opcode_t *op);
 
-static void hookpzero(struct wpmopcode *op);
-static void hookpalloc(struct wpmopcode *op);
-static void hookpfree(struct wpmopcode *op);
+static void hookpzero(opcode_t *op);
+static void hookpalloc(opcode_t *op);
+static void hookpfree(opcode_t *op);
 
-static void memstorel(int32_t src, uint32_t virt);
-static int32_t memfetchl(uint32_t virt);
+static void memstorel(int32_t src, asmadr_t virt);
+static int32_t memfetchl(asmadr_t virt);
 
+#if (ZPC)
+ophandler_t *opfunctab[ZPCNASMOP] ALIGNED(PAGESIZE)
+    = {
+    NULL,       // illegal instruction
+    opnot,
+    opand,
+    opor,
+    opxor,
+    opshr,
+    opshra,
+    opshl,
+    opror,
+    oprol,
+    opinc,
+    opdec,
+    opadd,
+    opsub,
+    opmul,
+    opdiv,
+    opmod,
+    opbz,
+    opbnz,
+    opblt,
+    opble,
+    opbgt,
+    opbge,
+    opmov,
+    opcall,
+    opret,
+    optrap,
+    opiret
+};
+#elif (WPM)
 ophandler_t *opfunctab[256] ALIGNED(PAGESIZE)
     = {
     NULL,
@@ -167,7 +208,10 @@ ophandler_t *opfunctab[256] ALIGNED(PAGESIZE)
     opoutl,
     ophook
 };
-
+#endif
+#if (ZPC)
+extern char *opnametab[ZPCNASMOP];
+#elif (WPM)
 char *opnametab[256]
 = {
     NULL,
@@ -235,6 +279,7 @@ hookfunc_t *hookfunctab[256]
     hookpalloc,
     hookpfree
 };
+#endif /* WPM */
 
 char *argnametab[]
 = {
@@ -289,7 +334,7 @@ wpminit(void)
 
 #if (PTHREAD)
 void
-wpminitthr(uint32_t pc)
+wpminitthr(asmadr_t pc)
 {
     pthread_t           tid;
     struct wpmcpustate *cpustat = malloc(sizeof(struct wpmcpustate));
@@ -306,8 +351,9 @@ wpminitthr(uint32_t pc)
 }
 #endif /* PTHREAD */
 
+#if (WPM)
 void
-wpmprintop(struct wpmopcode *op)
+wpmprintop(opcode_t *op)
 {
     fprintf(stderr, "INST: %s, size %d, arg1t == %s, arg2t == %s, reg1 == %x, reg2 == %x, args[0] == %x", opnametab[op->inst], op->size << 2, argnametab[op->arg1t], argnametab[op->arg2t], op->reg1, op->reg2, op->args[0]);
     if (op->arg2t) {
@@ -315,17 +361,18 @@ wpmprintop(struct wpmopcode *op)
     }
     fprintf(stderr, "\n");
 }
+#endif /* WPM */
 
 void *
 wpmloop(void *cpustat)
 {
-    ophandler_t      *func;
-    struct wpmopcode *op;
+    ophandler_t    *func;
+    opcode_t       *op;
 #if (WPMTRACE)
-    int               i;
+    int             i;
 #endif
 #if (WPMDB)
-    struct asmline   *line;
+    struct asmline *line;
 #endif
 
     wpminit();
@@ -347,12 +394,12 @@ wpmloop(void *cpustat)
     memcpy(&wpm->cpustat, cpustat, sizeof(struct wpmcpustate));
     free(cpustat);
     while (!wpm->shutdown) {
-        op = (struct wpmopcode *)&physmem[wpm->cpustat.pc];
+        op = (opcode_t *)&physmem[wpm->cpustat.pc];
         if (op->inst == OPNOP) {
             wpm->cpustat.pc++;
         } else {
             wpm->cpustat.pc = roundup2(wpm->cpustat.pc, 4);
-            op = (struct wpmopcode *)&physmem[wpm->cpustat.pc];
+            op = (opcode_t *)&physmem[wpm->cpustat.pc];
             func = opfunctab[op->inst];
             if (func) {
 //                wpmprintop(op);
@@ -365,7 +412,9 @@ wpmloop(void *cpustat)
                 func(op);
             } else {
                 fprintf(stderr, "illegal instruction, PC == %x\n", wpm->cpustat.pc);
+#if (WPM)
                 wpmprintop(op);
+#endif
                 
                 exit(1);
             }
@@ -394,13 +443,13 @@ wpmloop(void *cpustat)
     return NULL;
 }
 
-static void
-opnot(struct wpmopcode *op)
+void
+opnot(opcode_t *op)
 {
-    uint32_t argt = op->arg1t;
-    int32_t  dest = (argt == ARGREG
-                     ? wpm->cpustat.regs[op->reg1]
-                     : op->args[0]);
+    uint_fast8_t argt = op->arg1t;
+    asmword_t    dest = (argt == ARGREG
+                         ? wpm->cpustat.regs[op->reg1]
+                         : op->args[0]);
 #if (WPMDEBUG)
     fprintf(stderr, "NOT: %x - ", dest);
 #endif
@@ -422,19 +471,19 @@ opnot(struct wpmopcode *op)
     return;
 }
 
-static void
-opand(struct wpmopcode *op)
+void
+opand(opcode_t *op)
 {
-    uint32_t argt1 = op->arg1t;
-    uint32_t argt2 = op->arg2t;
-    int32_t  src = (argt1 == ARGREG
-                    ? wpm->cpustat.regs[op->reg1]
-                    : op->args[0]);
-    int32_t  dest = (argt2 == ARGREG
-                     ? wpm->cpustat.regs[op->reg2]
-                     : (argt1 == ARGREG
-                        ? op->args[0]
-                        : op->args[1]));
+    uint_fast8_t argt1 = op->arg1t;
+    uint_fast8_t argt2 = op->arg2t;
+    asmword_t    src = (argt1 == ARGREG
+                        ? wpm->cpustat.regs[op->reg1]
+                        : op->args[0]);
+    asmword_t    dest = (argt2 == ARGREG
+                         ? wpm->cpustat.regs[op->reg2]
+                         : (argt1 == ARGREG
+                            ? op->args[0]
+                            : op->args[1]));
 
 #if (WPMDEBUG)
     fprintf(stderr, "AND: %x, %x - ", src, dest);
@@ -459,19 +508,19 @@ opand(struct wpmopcode *op)
     return;
 }
 
-static void
-opor(struct wpmopcode *op)
+void
+opor(opcode_t *op)
 {
-    uint32_t argt1 = op->arg1t;
-    uint32_t argt2 = op->arg2t;
-    int32_t  src = (argt1 == ARGREG
-                    ? wpm->cpustat.regs[op->reg1]
-                    : op->args[0]);
-    int32_t  dest = (argt2 == ARGREG
-                     ? wpm->cpustat.regs[op->reg2]
-                     : (argt1 == ARGREG
-                        ? op->args[0]
-                        : op->args[1]));
+    uint_fast8_t argt1 = op->arg1t;
+    uint_fast8_t argt2 = op->arg2t;
+    asmword_t    src = (argt1 == ARGREG
+                        ? wpm->cpustat.regs[op->reg1]
+                        : op->args[0]);
+    asmword_t    dest = (argt2 == ARGREG
+                         ? wpm->cpustat.regs[op->reg2]
+                         : (argt1 == ARGREG
+                            ? op->args[0]
+                            : op->args[1]));
 
 #if (USEASM)
     asmor(src, dest);
@@ -490,19 +539,19 @@ opor(struct wpmopcode *op)
     return;
 }
 
-static void
-opxor(struct wpmopcode *op)
+void
+opxor(opcode_t *op)
 {
-    uint32_t argt1 = op->arg1t;
-    uint32_t argt2 = op->arg2t;
-    int32_t  src = (argt1 == ARGREG
-                    ? wpm->cpustat.regs[op->reg1]
-                    : op->args[0]);
-    int32_t  dest = (argt2 == ARGREG
-                     ? wpm->cpustat.regs[op->reg2]
-                     : (argt1 == ARGREG
-                        ? op->args[0]
-                        : op->args[1]));
+    uint_fast8_t argt1 = op->arg1t;
+    uint_fast8_t argt2 = op->arg2t;
+    asmword_t    src = (argt1 == ARGREG
+                        ? wpm->cpustat.regs[op->reg1]
+                        : op->args[0]);
+    asmword_t    dest = (argt2 == ARGREG
+                         ? wpm->cpustat.regs[op->reg2]
+                         : (argt1 == ARGREG
+                            ? op->args[0]
+                            : op->args[1]));
 
 #if (WPMDEBUG)
     fprintf(stderr, "XOR: %x, %x - ", src, dest);
@@ -527,17 +576,105 @@ opxor(struct wpmopcode *op)
     return;
 }
 
-static void
-opshl(struct wpmopcode *op)
+void
+opshr(opcode_t *op)
 {
-    uint32_t argt1 = op->arg1t;
-    uint32_t argt2 = op->arg2t;
-    int32_t  cnt = (argt1 == ARGREG
+    uint_fast8_t argt1 = op->arg1t;
+    uint_fast8_t argt2 = op->arg2t;
+    asmword_t  cnt = (argt1 == ARGREG
                     ? wpm->cpustat.regs[op->reg1]
                     : (argt1 == ARGIMMED
                        ? op->args[0]
                        : memfetchl(op->args[0])));
-    int32_t  dest = (argt2 == ARGREG
+    asmword_t  dest = (argt2 == ARGREG
+                     ? wpm->cpustat.regs[op->reg2]
+                     : (argt1 == ARGREG
+                        ? op->args[0]
+                        : op->args[1]));
+#if (!USEASM)
+    asmuword_t sign = 0xffffffff >> cnt;
+#endif
+    
+#if (WPMDEBUG)
+    fprintf(stderr, "SHRL: %x by %d\n", dest, cnt);
+#endif
+#if (USEASM)
+    asmshrl(cnt, dest);
+#else
+    dest >>= cnt;
+    dest &= sign;
+#endif
+#if (WPMDEBUG)
+    fprintf(stderr, "%x\n", dest);
+#endif
+    if (argt2 == ARGREG) {
+        wpm->cpustat.regs[op->reg2] = dest;
+    } else if (argt1 == ARGREG) {
+        memstorel(dest, op->args[0]);
+    } else {
+        memstorel(dest, op->args[1]);
+    }
+    wpm->cpustat.pc += op->size << 2;
+
+    return;
+}
+
+void
+opshra(opcode_t *op)
+{
+    uint_fast8_t argt1 = op->arg1t;
+    uint_fast8_t argt2 = op->arg2t;
+    asmword_t  cnt = (argt1 == ARGREG
+                    ? wpm->cpustat.regs[op->reg1]
+                    : (argt1 == ARGIMMED
+                       ? op->args[0]
+                       : memfetchl(op->args[0])));
+    asmword_t  dest = (argt2 == ARGREG
+                     ? wpm->cpustat.regs[op->reg2]
+                     : (argt1 == ARGREG
+                        ? op->args[0]
+                        : op->args[1]));
+
+#if (WPMDEBUG)
+    fprintf(stderr, "SHR: %x by %d\n", dest, cnt);
+#endif
+#if (!USEASM)
+    asmuword_t sign = dest & 0x80000000;
+#endif
+
+#if (USEASM)
+    asmshr(cnt, dest);
+#else
+    sign = (sign) ? 0xffffffff << (32 - cnt) : 0;
+    dest >>= cnt;
+    dest |= sign;
+#endif
+#if (WPMDEBUG)
+    fprintf(stderr, "%x\n", dest);
+#endif
+    if (argt2 == ARGREG) {
+        wpm->cpustat.regs[op->reg2] = dest;
+    } else if (argt1 == ARGREG) {
+        memstorel(dest, op->args[0]);
+    } else {
+        memstorel(dest, op->args[1]);
+    }
+    wpm->cpustat.pc += op->size << 2;
+
+    return;
+}
+
+void
+opshl(opcode_t *op)
+{
+    uint_fast8_t argt1 = op->arg1t;
+    uint_fast8_t argt2 = op->arg2t;
+    asmword_t  cnt = (argt1 == ARGREG
+                    ? wpm->cpustat.regs[op->reg1]
+                    : (argt1 == ARGIMMED
+                       ? op->args[0]
+                       : memfetchl(op->args[0])));
+    asmword_t  dest = (argt2 == ARGREG
                      ? wpm->cpustat.regs[op->reg2]
                      : (argt1 == ARGREG
                         ? op->args[0]
@@ -566,112 +703,24 @@ opshl(struct wpmopcode *op)
     return;
 }
 
-static void
-opshr(struct wpmopcode *op)
+void
+opror(opcode_t *op)
 {
-    uint32_t argt1 = op->arg1t;
-    uint32_t argt2 = op->arg2t;
-    int32_t  cnt = (argt1 == ARGREG
+    uint_fast8_t argt1 = op->arg1t;
+    uint_fast8_t argt2 = op->arg2t;
+    asmword_t  cnt = (argt1 == ARGREG
                     ? wpm->cpustat.regs[op->reg1]
                     : (argt1 == ARGIMMED
                        ? op->args[0]
                        : memfetchl(op->args[0])));
-    int32_t  dest = (argt2 == ARGREG
-                     ? wpm->cpustat.regs[op->reg2]
-                     : (argt1 == ARGREG
-                        ? op->args[0]
-                        : op->args[1]));
-
-#if (WPMDEBUG)
-    fprintf(stderr, "SHR: %x by %d\n", dest, cnt);
-#endif
-#if (!USEASM)
-    uint32_t sign = dest & 0x80000000;
-#endif
-
-#if (USEASM)
-    asmshr(cnt, dest);
-#else
-    sign = (sign) ? 0xffffffff << (32 - cnt) : 0;
-    dest >>= cnt;
-    dest |= sign;
-#endif
-#if (WPMDEBUG)
-    fprintf(stderr, "%x\n", dest);
-#endif
-    if (argt2 == ARGREG) {
-        wpm->cpustat.regs[op->reg2] = dest;
-    } else if (argt1 == ARGREG) {
-        memstorel(dest, op->args[0]);
-    } else {
-        memstorel(dest, op->args[1]);
-    }
-    wpm->cpustat.pc += op->size << 2;
-
-    return;
-}
-
-static void
-opshrl(struct wpmopcode *op)
-{
-    uint32_t argt1 = op->arg1t;
-    uint32_t argt2 = op->arg2t;
-    int32_t  cnt = (argt1 == ARGREG
-                    ? wpm->cpustat.regs[op->reg1]
-                    : (argt1 == ARGIMMED
-                       ? op->args[0]
-                       : memfetchl(op->args[0])));
-    int32_t  dest = (argt2 == ARGREG
+    asmword_t  dest = (argt2 == ARGREG
                      ? wpm->cpustat.regs[op->reg2]
                      : (argt1 == ARGREG
                         ? op->args[0]
                         : op->args[1]));
 #if (!USEASM)
-    uint32_t sign = 0xffffffff >> cnt;
-#endif
-    
-#if (WPMDEBUG)
-    fprintf(stderr, "SHRL: %x by %d\n", dest, cnt);
-#endif
-#if (USEASM)
-    asmshrl(cnt, dest);
-#else
-    dest >>= cnt;
-    dest &= sign;
-#endif
-#if (WPMDEBUG)
-    fprintf(stderr, "%x\n", dest);
-#endif
-    if (argt2 == ARGREG) {
-        wpm->cpustat.regs[op->reg2] = dest;
-    } else if (argt1 == ARGREG) {
-        memstorel(dest, op->args[0]);
-    } else {
-        memstorel(dest, op->args[1]);
-    }
-    wpm->cpustat.pc += op->size << 2;
-
-    return;
-}
-
-static void
-opror(struct wpmopcode *op)
-{
-    uint32_t argt1 = op->arg1t;
-    uint32_t argt2 = op->arg2t;
-    int32_t  cnt = (argt1 == ARGREG
-                    ? wpm->cpustat.regs[op->reg1]
-                    : (argt1 == ARGIMMED
-                       ? op->args[0]
-                       : memfetchl(op->args[0])));
-    int32_t  dest = (argt2 == ARGREG
-                     ? wpm->cpustat.regs[op->reg2]
-                     : (argt1 == ARGREG
-                        ? op->args[0]
-                        : op->args[1]));
-#if (!USEASM)
-    uint32_t mask = 0xffffffff >> (32 - cnt);
-    uint32_t bits = dest & mask;
+    asmuword_t mask = 0xffffffff >> (32 - cnt);
+    asmuword_t bits = dest & mask;
 #endif
 
 #if (WPMDEBUG)
@@ -699,24 +748,24 @@ opror(struct wpmopcode *op)
     return;
 }
 
-static void
-oprol(struct wpmopcode *op)
+void
+oprol(opcode_t *op)
 {
-    uint32_t argt1 = op->arg1t;
-    uint32_t argt2 = op->arg2t;
-    int32_t  cnt = (argt1 == ARGREG
+    uint_fast8_t argt1 = op->arg1t;
+    uint_fast8_t argt2 = op->arg2t;
+    asmword_t  cnt = (argt1 == ARGREG
                     ? wpm->cpustat.regs[op->reg1]
                     : (argt1 == ARGIMMED
                        ? op->args[0]
                        : memfetchl(op->args[0])));
-    int32_t  dest = (argt2 == ARGREG
+    asmword_t  dest = (argt2 == ARGREG
                      ? wpm->cpustat.regs[op->reg2]
                      : (argt1 == ARGREG
                         ? op->args[0]
                         : op->args[1]));
 #if (!USEASM)
-    uint32_t mask = 0xffffffff << (32 - cnt);
-    uint32_t bits = dest & mask;
+    asmuword_t mask = 0xffffffff << (32 - cnt);
+    asmuword_t bits = dest & mask;
 #endif
 
 #if (WPMDEBUG)
@@ -744,11 +793,11 @@ oprol(struct wpmopcode *op)
     return;
 }
 
-static void
-opinc(struct wpmopcode *op)
+void
+opinc(opcode_t *op)
 {
-    uint32_t argt = op->arg1t;
-    int32_t  dest = (argt == ARGREG
+    uint_fast8_t argt = op->arg1t;
+    asmword_t  dest = (argt == ARGREG
                      ? wpm->cpustat.regs[op->reg1]
                      : op->args[0]);
     
@@ -770,11 +819,11 @@ opinc(struct wpmopcode *op)
     return;
 }
 
-static void
-opdec(struct wpmopcode *op)
+void
+opdec(opcode_t *op)
 {
-    uint32_t argt = op->arg1t;
-    int32_t  dest = (argt == ARGREG
+    uint_fast8_t argt = op->arg1t;
+    asmword_t  dest = (argt == ARGREG
                      ? wpm->cpustat.regs[op->reg1]
                      : op->args[0]);
 
@@ -796,19 +845,19 @@ opdec(struct wpmopcode *op)
     return;
 }
 
-static void
-opadd(struct wpmopcode *op)
+void
+opadd(opcode_t *op)
 {
-    uint32_t argt1 = op->arg1t;
-    uint32_t argt2 = op->arg2t;
-    int32_t  src = (argt1 == ARGREG
-                    ? wpm->cpustat.regs[op->reg1]
-                    : op->args[0]);
-    int32_t  dest = (argt2 == ARGREG
-                     ? wpm->cpustat.regs[op->reg2]
-                     : (argt1 == ARGREG
-                        ? op->args[0]
-                        : op->args[1]));
+    uint_fast8_t argt1 = op->arg1t;
+    uint_fast8_t argt2 = op->arg2t;
+    asmword_t    src = (argt1 == ARGREG
+                        ? wpm->cpustat.regs[op->reg1]
+                        : op->args[0]);
+    asmword_t    dest = (argt2 == ARGREG
+                         ? wpm->cpustat.regs[op->reg2]
+                         : (argt1 == ARGREG
+                            ? op->args[0]
+                            : op->args[1]));
 
 #if (USEASM)
     asmadd(src, dest);
@@ -825,19 +874,19 @@ opadd(struct wpmopcode *op)
     return;
 }
 
-static void
-opsub(struct wpmopcode *op)
+void
+opsub(opcode_t *op)
 {
-    uint32_t argt1 = op->arg1t;
-    uint32_t argt2 = op->arg2t;
-    int32_t  src = (argt1 == ARGREG
-                    ? wpm->cpustat.regs[op->reg1]
-                    : op->args[0]);
-    int32_t  dest = (argt2 == ARGREG
-                     ? wpm->cpustat.regs[op->reg2]
-                     : (argt1 == ARGREG
-                        ? op->args[0]
-                        : op->args[1]));
+    uint_fast8_t argt1 = op->arg1t;
+    uint_fast8_t argt2 = op->arg2t;
+    asmword_t    src = (argt1 == ARGREG
+                        ? wpm->cpustat.regs[op->reg1]
+                        : op->args[0]);
+    asmword_t    dest = (argt2 == ARGREG
+                         ? wpm->cpustat.regs[op->reg2]
+                         : (argt1 == ARGREG
+                            ? op->args[0]
+                            : op->args[1]));
 
 #if (USEASM)
     asmsub(src, dest);
@@ -854,20 +903,20 @@ opsub(struct wpmopcode *op)
     return;
 }
 
-static void
-opcmp(struct wpmopcode *op)
+void
+opcmp(opcode_t *op)
 {
-    uint32_t msw = wpm->cpustat.msw;
-    uint32_t argt1 = op->arg1t;
-    uint32_t argt2 = op->arg2t;
-    int32_t  src = (argt1 == ARGREG
-                    ? wpm->cpustat.regs[op->reg1]
-                    : op->args[0]);
-    int32_t  dest = (argt2 == ARGREG
-                     ? wpm->cpustat.regs[op->reg2]
-                     : (argt1 == ARGREG
-                        ? op->args[0]
-                        : op->args[1]));
+    asmword_t    msw = wpm->cpustat.msw;
+    uint_fast8_t argt1 = op->arg1t;
+    uint_fast8_t argt2 = op->arg2t;
+    asmword_t    src = (argt1 == ARGREG
+                        ? wpm->cpustat.regs[op->reg1]
+                        : op->args[0]);
+    asmword_t    dest = (argt2 == ARGREG
+                         ? wpm->cpustat.regs[op->reg2]
+                         : (argt1 == ARGREG
+                            ? op->args[0]
+                            : op->args[1]));
 
 #if (WPMDEBUG)
     fprintf(stderr, "CMP: %x, %x\n", src, dest);
@@ -884,19 +933,19 @@ opcmp(struct wpmopcode *op)
     return;
 }
 
-static void
-opmul(struct wpmopcode *op)
+void
+opmul(opcode_t *op)
 {
-    uint32_t argt1 = op->arg1t;
-    uint32_t argt2 = op->arg2t;
-    int32_t  src = (argt1 == ARGREG
-                    ? wpm->cpustat.regs[op->reg1]
-                    : op->args[0]);
-    int32_t  dest = (argt2 == ARGREG
-                     ? wpm->cpustat.regs[op->reg2]
-                     : (argt1 == ARGREG
-                        ? op->args[0]
-                        : op->args[1]));
+    uint_fast8_t argt1 = op->arg1t;
+    uint_fast8_t argt2 = op->arg2t;
+    asmword_t    src = (argt1 == ARGREG
+                        ? wpm->cpustat.regs[op->reg1]
+                        : op->args[0]);
+    asmword_t    dest = (argt2 == ARGREG
+                         ? wpm->cpustat.regs[op->reg2]
+                         : (argt1 == ARGREG
+                            ? op->args[0]
+                            : op->args[1]));
 
 #if (USEASM)
     asmmul(src, dest);
@@ -913,21 +962,21 @@ opmul(struct wpmopcode *op)
     return;
 }
 
-static void
-opdiv(struct wpmopcode *op)
+void
+opdiv(opcode_t *op)
 {
-    uint32_t argt1 = op->arg1t;
-    uint32_t argt2 = op->arg2t;
-    int32_t  src = (argt1 == ARGREG
-                    ? wpm->cpustat.regs[op->reg1]
-                    : op->args[0]);
-    int32_t  dest = (argt2 == ARGREG
-                     ? wpm->cpustat.regs[op->reg2]
-                     : (argt1 == ARGREG
-                        ? op->args[0]
-                        : op->args[1]));
-    uint32_t sp = wpm->cpustat.sp;
-    uint32_t pc;
+    uint_fast8_t argt1 = op->arg1t;
+    uint_fast8_t argt2 = op->arg2t;
+    asmword_t    src = (argt1 == ARGREG
+                        ? wpm->cpustat.regs[op->reg1]
+                        : op->args[0]);
+    asmword_t    dest = (argt2 == ARGREG
+                         ? wpm->cpustat.regs[op->reg2]
+                         : (argt1 == ARGREG
+                            ? op->args[0]
+                            : op->args[1]));
+    long         sp = wpm->cpustat.sp;
+    long         pc;
 
     if (!src) {
         sp -= 4;
@@ -959,20 +1008,20 @@ opdiv(struct wpmopcode *op)
 }
 
 
-static void
-opmod(struct wpmopcode *op)
+void
+opmod(opcode_t *op)
 {
-    uint32_t argt1 = op->arg1t;
-    uint32_t argt2 = op->arg2t;
-    int32_t  src = (argt1 == ARGREG
-                    ? wpm->cpustat.regs[op->reg1]
-                    : op->args[0]);
-    int32_t  dest = (argt2 == ARGREG
-                     ? wpm->cpustat.regs[op->reg2]
-                     : (argt1 == ARGREG
-                        ? op->args[0]
-                        : op->args[1]));
-
+    uint_fast8_t argt1 = op->arg1t;
+    uint_fast8_t argt2 = op->arg2t;
+    asmword_t    src = (argt1 == ARGREG
+                        ? wpm->cpustat.regs[op->reg1]
+                        : op->args[0]);
+    asmword_t    dest = (argt2 == ARGREG
+                         ? wpm->cpustat.regs[op->reg2]
+                         : (argt1 == ARGREG
+                            ? op->args[0]
+                            : op->args[1]));
+    
 #if (USEASM)
     asmmod(src, dest);
 #else
@@ -988,14 +1037,14 @@ opmod(struct wpmopcode *op)
     return;
 }
 
-static void
-opbz(struct wpmopcode *op)
+void
+opbz(opcode_t *op)
 {
     if (wpm->cpustat.msw & MSW_ZF) {
-        uint32_t argt = op->arg1t;
-        int32_t  dest = (argt == ARGREG
-                         ? wpm->cpustat.regs[op->reg1]
-                         : op->args[0]);
+        uint_fast8_t argt = op->arg1t;
+        asmword_t    dest = (argt == ARGREG
+                             ? wpm->cpustat.regs[op->reg1]
+                             : op->args[0]);
         wpm->cpustat.pc = dest;
     } else {
         wpm->cpustat.pc += op->size << 2;
@@ -1004,14 +1053,14 @@ opbz(struct wpmopcode *op)
     return;
 }
 
-static void
-opbnz(struct wpmopcode *op)
+void
+opbnz(opcode_t *op)
 {
     if (!(wpm->cpustat.msw & MSW_ZF)) {
-        uint32_t argt = op->arg1t;
-        int32_t  dest = (argt == ARGREG
-                         ? wpm->cpustat.regs[op->reg1]
-                         : op->args[0]);
+        uint_fast8_t argt = op->arg1t;
+        asmword_t    dest = (argt == ARGREG
+                             ? wpm->cpustat.regs[op->reg1]
+                             : op->args[0]);
         wpm->cpustat.pc = dest;
     } else {
         wpm->cpustat.pc += op->size << 2;
@@ -1020,14 +1069,14 @@ opbnz(struct wpmopcode *op)
     return;
 }
 
-static void
-opblt(struct wpmopcode *op)
+void
+opblt(opcode_t *op)
 {
     if (wpm->cpustat.msw & MSW_SF) {
-        uint32_t argt = op->arg1t;
-        int32_t  dest = (argt == ARGREG
-                         ? wpm->cpustat.regs[op->reg1]
-                         : op->args[0]);
+        uint_fast8_t argt = op->arg1t;
+        asmword_t    dest = (argt == ARGREG
+                             ? wpm->cpustat.regs[op->reg1]
+                             : op->args[0]);
         wpm->cpustat.pc = dest;
     } else {
         wpm->cpustat.pc += op->size << 2;
@@ -1036,14 +1085,14 @@ opblt(struct wpmopcode *op)
     return;
 }
 
-static void
-opble(struct wpmopcode *op)
+void
+opble(opcode_t *op)
 {
     if (wpm->cpustat.msw & MSW_SF || wpm->cpustat.msw & MSW_ZF) {
-        uint32_t argt = op->arg1t;
-        int32_t  dest = (argt == ARGREG
-                         ? wpm->cpustat.regs[op->reg1]
-                         : op->args[0]);
+        uint_fast8_t argt = op->arg1t;
+        asmword_t    dest = (argt == ARGREG
+                             ? wpm->cpustat.regs[op->reg1]
+                             : op->args[0]);
         wpm->cpustat.pc = dest;
     } else {
         wpm->cpustat.pc += op->size << 2;
@@ -1052,14 +1101,14 @@ opble(struct wpmopcode *op)
     return;
 }
 
-static void
-opbgt(struct wpmopcode *op)
+void
+opbgt(opcode_t *op)
 {
     if (!(wpm->cpustat.msw & MSW_SF) && !(wpm->cpustat.msw & MSW_ZF)) {
-        uint32_t argt = op->arg1t;
-        int32_t  dest = (argt == ARGREG
-                         ? wpm->cpustat.regs[op->reg1]
-                         : op->args[0]);
+        uint_fast8_t argt = op->arg1t;
+        asmword_t    dest = (argt == ARGREG
+                             ? wpm->cpustat.regs[op->reg1]
+                             : op->args[0]);
         wpm->cpustat.pc = dest;
     } else {
         wpm->cpustat.pc += op->size << 2;
@@ -1068,14 +1117,14 @@ opbgt(struct wpmopcode *op)
     return;
 }
 
-static void
-opbge(struct wpmopcode *op)
+void
+opbge(opcode_t *op)
 {
     if (!(wpm->cpustat.msw & MSW_SF)) {
-        uint32_t argt = op->arg1t;
-        int32_t  dest = (argt == ARGREG
-                         ? wpm->cpustat.regs[op->reg1]
-                         : op->args[0]);
+        uint_fast8_t argt = op->arg1t;
+        asmword_t    dest = (argt == ARGREG
+                             ? wpm->cpustat.regs[op->reg1]
+                             : op->args[0]);
         wpm->cpustat.pc = dest;
     } else {
         wpm->cpustat.pc += op->size << 2;
@@ -1084,14 +1133,16 @@ opbge(struct wpmopcode *op)
     return;
 }
 
-static void
-opbo(struct wpmopcode *op)
+#if (WPM)
+
+void
+opbo(opcode_t *op)
 {
     if (wpm->cpustat.msw & MSW_OF) {
-        uint32_t argt = op->arg1t;
-        int32_t  dest = (argt == ARGREG
-                         ? wpm->cpustat.regs[op->reg1]
-                         : op->args[0]);
+        uint_fast8_t argt = op->arg1t;
+        asmword_t    dest = (argt == ARGREG
+                             ? wpm->cpustat.regs[op->reg1]
+                             : op->args[0]);
         wpm->cpustat.pc = dest;
     } else {
         wpm->cpustat.pc += op->size << 2;
@@ -1100,14 +1151,14 @@ opbo(struct wpmopcode *op)
     return;
 }
 
-static void
-opbno(struct wpmopcode *op)
+void
+opbno(opcode_t *op)
 {
     if (!(wpm->cpustat.msw & MSW_OF)) {
-        uint32_t argt = op->arg1t;
-        int32_t  dest = (argt == ARGREG
-                         ? wpm->cpustat.regs[op->reg1]
-                         : op->args[0]);
+        uint_fast8_t argt = op->arg1t;
+        asmword_t    dest = (argt == ARGREG
+                             ? wpm->cpustat.regs[op->reg1]
+                             : op->args[0]);
         wpm->cpustat.pc = dest;
     } else {
         wpm->cpustat.pc += op->size << 2;
@@ -1116,14 +1167,14 @@ opbno(struct wpmopcode *op)
     return;
 }
 
-static void
-opbc(struct wpmopcode *op)
+void
+opbc(opcode_t *op)
 {
     if (wpm->cpustat.msw & MSW_CF) {
-        uint32_t argt = op->arg1t;
-        int32_t  dest = (argt == ARGREG
-                         ? wpm->cpustat.regs[op->reg1]
-                         : op->args[0]);
+        uint_fast8_t argt = op->arg1t;
+        asmword_t    dest = (argt == ARGREG
+                             ? wpm->cpustat.regs[op->reg1]
+                             : op->args[0]);
         wpm->cpustat.pc = dest;
     } else {
         wpm->cpustat.pc += op->size << 2;
@@ -1132,14 +1183,14 @@ opbc(struct wpmopcode *op)
     return;
 }
 
-static void
-opbnc(struct wpmopcode *op)
+void
+opbnc(opcode_t *op)
 {
     if (!(wpm->cpustat.msw & MSW_CF)) {
-        uint32_t argt = op->arg1t;
-        int32_t  dest = (argt == ARGREG
-                         ? wpm->cpustat.regs[op->reg1]
-                         : op->args[0]);
+        uint_fast8_t argt = op->arg1t;
+        asmword_t    dest = (argt == ARGREG
+                             ? wpm->cpustat.regs[op->reg1]
+                             : op->args[0]);
         wpm->cpustat.pc = dest;
     } else {
         wpm->cpustat.pc += op->size << 2;
@@ -1148,11 +1199,11 @@ opbnc(struct wpmopcode *op)
     return;
 }
 
-static void
-oppop(struct wpmopcode *op)
+void
+oppop(opcode_t *op)
 {
-    uint32_t argt = op->arg1t;
-    int32_t  val;
+    uint_fast8_t argt = op->arg1t;
+    asmword_t    val;
 
     if (argt == ARGREG) {
         val = memfetchl(wpm->cpustat.sp);
@@ -1164,13 +1215,13 @@ oppop(struct wpmopcode *op)
     return;
 }
 
-static void
-oppush(struct wpmopcode *op)
+void
+oppush(opcode_t *op)
 {
-    uint32_t argt = op->arg1t;
-    int32_t  src = (argt == ARGREG
-                    ? wpm->cpustat.regs[op->reg1]
-                    : op->args[0]);
+    uint_fast8_t argt = op->arg1t;
+    asmword_t    src = (argt == ARGREG
+                        ? wpm->cpustat.regs[op->reg1]
+                        : op->args[0]);
     
     wpm->cpustat.sp -= 4;
     memstorel(src, wpm->cpustat.sp);
@@ -1179,23 +1230,26 @@ oppush(struct wpmopcode *op)
     return;
 }
 
-static void
-opmov(struct wpmopcode *op)
+#endif /* WPM */
+
+void
+opmov(opcode_t *op)
 {
-    uint32_t argt1 = op->arg1t;
-    uint32_t argt2 = op->arg2t;
-    uint32_t reg1  = op->reg1;
-    uint32_t reg2  = op->reg2;
-    int32_t  src = (argt1 == ARGREG
-                    ? ((reg1 & REGINDEX)
-                       ? memfetchl(wpm->cpustat.regs[reg1 & 0x0f] + op->args[0])
-                       : (reg1 & REGINDIR
-                          ? memfetchl(wpm->cpustat.regs[reg1 & 0x0f])
-                          : wpm->cpustat.regs[reg1 & 0x0f]))
-                    : (argt1 == ARGIMMED
-                       ? op->args[0]
-                       : memfetchl(op->args[0])));
-    uint32_t dest;
+    uint_fast8_t argt1 = op->arg1t;
+    uint_fast8_t argt2 = op->arg2t;
+    asmuword_t   reg1  = op->reg1;
+    asmuword_t   reg2  = op->reg2;
+    asmword_t    src = (argt1 == ARGREG
+                        ? ((reg1 & REGINDEX)
+                           ? memfetchl(wpm->cpustat.regs[reg1 & 0x0f]
+                                       + op->args[0])
+                           : (reg1 & REGINDIR
+                              ? memfetchl(wpm->cpustat.regs[reg1 & 0x0f])
+                              : wpm->cpustat.regs[reg1 & 0x0f]))
+                        : (argt1 == ARGIMMED
+                           ? op->args[0]
+                           : memfetchl(op->args[0])));
+    asmuword_t   dest;
 
     if (argt2 == ARGREG) {
         if (reg2 & REGINDIR) {
@@ -1221,23 +1275,26 @@ opmov(struct wpmopcode *op)
     return;
 }
 
-static void
-opmovb(struct wpmopcode *op)
+#if (WPM)
+
+void
+opmovb(opcode_t *op)
 {
-    uint32_t argt1 = op->arg1t;
-    uint32_t argt2 = op->arg2t;
-    uint32_t reg1  = op->reg1;
-    uint32_t reg2  = op->reg2;
-    int8_t   src = (argt1 == ARGREG
-                    ? ((reg1 & REGINDEX)
-                       ? memfetchb(wpm->cpustat.regs[reg1 & 0x0f] + op->args[0])
-                       : (reg1 & REGINDIR
-                          ? memfetchb(wpm->cpustat.regs[reg1 & 0x0f])
-                          : wpm->cpustat.regs[reg1 & 0x0f]))
-                    : (argt1 == ARGIMMED
-                       ? op->args[0]
-                       : memfetchb(op->args[0])));
-    uint32_t dest;
+    uint_fast8_t argt1 = op->arg1t;
+    uint_fast8_t argt2 = op->arg2t;
+    asmuword_t   reg1  = op->reg1;
+    asmuword_t   reg2  = op->reg2;
+    int8_t       src = (argt1 == ARGREG
+                        ? ((reg1 & REGINDEX)
+                           ? memfetchb(wpm->cpustat.regs[reg1 & 0x0f]
+                                       + op->args[0])
+                           : (reg1 & REGINDIR
+                              ? memfetchb(wpm->cpustat.regs[reg1 & 0x0f])
+                              : wpm->cpustat.regs[reg1 & 0x0f]))
+                        : (argt1 == ARGIMMED
+                           ? op->args[0]
+                           : memfetchb(op->args[0])));
+    asmuword_t   dest;
 
 #if (WPMDEBUG)
     fprintf(stderr, "MOVB: %x - \n", src);
@@ -1266,23 +1323,24 @@ opmovb(struct wpmopcode *op)
     return;
 }
 
-static void
-opmovw(struct wpmopcode *op)
+void
+opmovw(opcode_t *op)
 {
-    uint32_t argt1 = op->arg1t;
-    uint32_t argt2 = op->arg2t;
-    uint32_t reg1  = op->reg1;
-    uint32_t reg2  = op->reg2;
-    int16_t  src = (argt1 == ARGREG
-                    ? ((reg1 & REGINDEX)
-                       ? memfetchw(wpm->cpustat.regs[reg1 & 0x0f] + op->args[0])
-                       : (reg1 & REGINDIR
-                          ? memfetchw(wpm->cpustat.regs[reg1 & 0x0f])
+    uint_fast8_t argt1 = op->arg1t;
+    uint_fast8_t argt2 = op->arg2t;
+    asmuword_t   reg1  = op->reg1;
+    asmuword_t   reg2  = op->reg2;
+    int16_t      src = (argt1 == ARGREG
+                        ? ((reg1 & REGINDEX)
+                           ? memfetchw(wpm->cpustat.regs[reg1 & 0x0f]
+                                       + op->args[0])
+                           : (reg1 & REGINDIR
+                              ? memfetchw(wpm->cpustat.regs[reg1 & 0x0f])
                           : wpm->cpustat.regs[reg1 & 0x0f]))
-                    : (argt1 == ARGIMMED
-                       ? op->args[0]
+                        : (argt1 == ARGIMMED
+                           ? op->args[0]
                        : memfetchw(op->args[0])));
-    uint32_t dest;
+    asmuword_t   dest;
     
     if (argt2 == ARGREG) {
         if (reg2 & REGINDIR) {
@@ -1308,11 +1366,13 @@ opmovw(struct wpmopcode *op)
     return;
 }
 
-static void
-opjmp(struct wpmopcode *op)
+#endif /* WPM */
+
+void
+opjmp(opcode_t *op)
 {
-    uint32_t argt = op->arg1t;
-    int32_t  dest = (argt == ARGREG
+    uint_fast8_t argt = op->arg1t;
+    asmword_t  dest = (argt == ARGREG
                      ? wpm->cpustat.regs[op->reg1]
                      : op->args[0]);
 
@@ -1334,15 +1394,15 @@ opjmp(struct wpmopcode *op)
  * retadr
  * oldfp
  */
-static void
-opcall(struct wpmopcode *op)
+void
+opcall(opcode_t *op)
 {
-    uint32_t argt = op->arg1t;
-    int32_t  dest = (argt == ARGREG
+    uint_fast8_t argt = op->arg1t;
+    asmword_t  dest = (argt == ARGREG
                      ? wpm->cpustat.regs[op->reg1]
                      : op->args[0]);
-    int32_t *stk = (int32_t *)(&physmem[wpm->cpustat.sp]);
-    int32_t  fp = wpm->cpustat.sp - 36;
+    asmword_t *stk = (asmword_t *)(&physmem[wpm->cpustat.sp]);
+    asmword_t  fp = wpm->cpustat.sp - 36;
 
     stk[-1] = wpm->cpustat.regs[7];
     stk[-2] = wpm->cpustat.regs[6];
@@ -1360,14 +1420,16 @@ opcall(struct wpmopcode *op)
     return;
 }
 
-static void
-openter(struct wpmopcode *op)
+#if (WPM)
+
+void
+openter(opcode_t *op)
 {
-    uint32_t  argt = op->arg1t;
-    int32_t   ofs = (argt == ARGREG
+    long  argt = op->arg1t;
+    asmword_t   ofs = (argt == ARGREG
                      ? wpm->cpustat.regs[op->reg1]
                      : op->args[0]);
-    int32_t *stk = (int32_t *)wpm->cpustat.sp;
+    asmword_t *stk = (asmword_t *)wpm->cpustat.sp;
 
     *--stk = wpm->cpustat.fp;
     wpm->cpustat.sp -= ofs + 4;
@@ -1375,10 +1437,10 @@ openter(struct wpmopcode *op)
     return;
 }
 
-static void
-opleave(struct wpmopcode *op)
+void
+opleave(opcode_t *op)
 {
-    int32_t fp = memfetchl(wpm->cpustat.fp);
+    asmword_t fp = memfetchl(wpm->cpustat.fp);
     
     wpm->cpustat.fp = memfetchl(fp);
     wpm->cpustat.sp = fp - 4;
@@ -1386,16 +1448,18 @@ opleave(struct wpmopcode *op)
     return;
 }
 
+#endif
+
 /*
  * ret stack
  * ---------
  */
-static void
-opret(struct wpmopcode *op)
+void
+opret(opcode_t *op)
 {
-    int32_t   fp = memfetchl(wpm->cpustat.fp);
-    int32_t   dest = memfetchl(wpm->cpustat.fp + 4);
-    int32_t  *stk = (int32_t *)(&physmem[wpm->cpustat.fp + 8]);
+    asmword_t   fp = memfetchl(wpm->cpustat.fp);
+    asmword_t   dest = memfetchl(wpm->cpustat.fp + 4);
+    asmword_t  *stk = (asmword_t *)(&physmem[wpm->cpustat.fp + 8]);
 
     wpm->cpustat.regs[1] = stk[0];
     wpm->cpustat.regs[2] = stk[1];
@@ -1411,11 +1475,13 @@ opret(struct wpmopcode *op)
     return;
 }
 
-static void
-oplmsw(struct wpmopcode *op)
+#if (WPM)
+
+void
+oplmsw(opcode_t *op)
 {
-    uint32_t argt = op->arg1t;
-    int32_t  msw = (argt == ARGREG
+    uint_fast8_t argt = op->arg1t;
+    asmword_t  msw = (argt == ARGREG
                     ? wpm->cpustat.regs[op->reg1]
                     : op->args[0]);
 
@@ -1425,43 +1491,43 @@ oplmsw(struct wpmopcode *op)
     return;
 }
 
-static void
-opsmsw(struct wpmopcode *op)
+void
+opsmsw(opcode_t *op)
 {
-    int32_t msw = wpm->cpustat.msw;
-    int32_t dest = op->args[0];
+    asmword_t msw = wpm->cpustat.msw;
+    asmword_t dest = op->args[0];
     
     memstorel(msw, dest);
     
     return;
 }
 
-static void
-opreset(struct wpmopcode *op)
+void
+opreset(opcode_t *op)
 {
     exit(1);
 
     return;
 }
 
-static void
-ophlt(struct wpmopcode *op)
+void
+ophlt(opcode_t *op)
 {
     wpm->shutdown = 1;
 
     return;
 }
 
-static void
-opnop(struct wpmopcode *op)
+void
+opnop(opcode_t *op)
 {
     wpm->cpustat.pc += op->size << 2;
 }
 
-static void
-opbrk(struct wpmopcode *op)
+void
+opbrk(opcode_t *op)
 {
-    uint32_t pc = memfetchl(TRAPBRK << 2);
+    asmuword_t pc = memfetchl(TRAPBRK << 2);
 
     if (pc) {
         wpm->cpustat.pc = pc;
@@ -1472,18 +1538,20 @@ opbrk(struct wpmopcode *op)
     return;
 }
 
-static void
-optrap(struct wpmopcode *op)
+#endif /* WPM */
+
+void
+optrap(opcode_t *op)
 {
-    uint32_t argt1 = op->arg1t;
-    int32_t  trap = (argt1 == ARGREG
+    uint_fast8_t argt1 = op->arg1t;
+    asmword_t  trap = (argt1 == ARGREG
                      ? wpm->cpustat.regs[op->reg1]
                      : memfetchl(op->args[0]));
-    int32_t  pc = memfetchl(trap << 2);
+    asmword_t  pc = memfetchl(trap << 2);
 
     if (pc) {
-        int32_t *stk = (int32_t *)(&physmem[wpm->cpustat.sp]);
-        int32_t  fp = wpm->cpustat.sp - 8;
+        asmword_t *stk = (asmword_t *)(&physmem[wpm->cpustat.sp]);
+        asmword_t  fp = wpm->cpustat.sp - 8;
         stk[-1] = wpm->cpustat.pc + (op->size << 2);
         stk[-2] = wpm->cpustat.fp;
         wpm->cpustat.fp = fp;
@@ -1496,8 +1564,10 @@ optrap(struct wpmopcode *op)
     return;
 }
 
-static void
-opcli(struct wpmopcode *op)
+#if (WPM)
+
+void
+opcli(opcode_t *op)
 {
     mtxtrylk(&intlk, 1);
     wpm->cpustat.pc += op->size << 2;
@@ -1505,8 +1575,8 @@ opcli(struct wpmopcode *op)
     return;
 }
 
-static void
-opsti(struct wpmopcode *op)
+void
+opsti(opcode_t *op)
 {
     mtxunlk(&intlk, 1);
     wpm->cpustat.pc += op->size << 2;
@@ -1514,11 +1584,13 @@ opsti(struct wpmopcode *op)
     return;
 }
 
-static void
-opiret(struct wpmopcode *op)
+#endif /* WPM */
+
+void
+opiret(opcode_t *op)
 {
-    int32_t fp = memfetchl(wpm->cpustat.fp);
-    int32_t dest = memfetchl(wpm->cpustat.fp + 4);
+    asmword_t fp = memfetchl(wpm->cpustat.fp);
+    asmword_t dest = memfetchl(wpm->cpustat.fp + 4);
 
     wpm->cpustat.fp = fp;
     wpm->cpustat.sp = fp;
@@ -1527,11 +1599,11 @@ opiret(struct wpmopcode *op)
     return;
 }
 
-static void
-opthr(struct wpmopcode *op)
+void
+opthr(opcode_t *op)
 {
-    uint32_t argt1 = op->arg1t;
-    uint32_t pc  = (argt1 == ARGREG
+    uint_fast8_t argt1 = op->arg1t;
+    asmuword_t pc  = (argt1 == ARGREG
                     ? wpm->cpustat.regs[op->reg1]
                     : op->args[0]);
 
@@ -1544,19 +1616,21 @@ opthr(struct wpmopcode *op)
     return;
 }
 
+#if (WPM)
+
 #if (PTHREAD)
 /*
  * - opcmpswap can be used to create mutexes
  */
-static void
-opcmpswap(struct wpmopcode *op)
+void
+opcmpswap(opcode_t *op)
 {
-    uint32_t argt1 = op->arg1t;
-    uint32_t argt2 = op->arg2t;
-    int32_t adr = (argt1 == ARGREG
+    uint_fast8_t argt1 = op->arg1t;
+    uint_fast8_t argt2 = op->arg2t;
+    asmword_t adr = (argt1 == ARGREG
                    ? wpm->cpustat.regs[op->reg1]
                    : memfetchl(op->args[0]));
-    int32_t val = (argt2 == ARGREG
+    asmword_t val = (argt2 == ARGREG
                    ? wpm->cpustat.regs[op->reg2]
                    : (argt1 == ARGREG
                       ? memfetchl(op->args[0])
@@ -1573,16 +1647,16 @@ opcmpswap(struct wpmopcode *op)
 }
 #endif /* PTHREAD */
 
-static void
-opinb(struct wpmopcode *op)
+void
+opinb(opcode_t *op)
 {
 }
 
-static void
-opoutb(struct wpmopcode *op)
+void
+opoutb(opcode_t *op)
 {
-    uint32_t argt1 = op->arg1t;
-    uint32_t argt2 = op->arg2t;
+    uint_fast8_t argt1 = op->arg1t;
+    uint_fast8_t argt2 = op->arg2t;
     uint8_t  data = (argt1 == ARGREG
                     ? (uint8_t)wpm->cpustat.regs[op->reg1]
                     : (uint8_t)op->args[0]);
@@ -1611,26 +1685,26 @@ opoutb(struct wpmopcode *op)
     wpm->cpustat.pc += op->size << 2;
 }
 
-static void
-opinw(struct wpmopcode *op)
+void
+opinw(opcode_t *op)
 {
 }
 
-static void
-opoutw(struct wpmopcode *op)
+void
+opoutw(opcode_t *op)
 {
 }
 
-static void
-opinl(struct wpmopcode *op)
+void
+opinl(opcode_t *op)
 {
 }
 
-static void
-ophook(struct wpmopcode *op)
+void
+ophook(opcode_t *op)
 {
-    uint32_t argt = op->arg1t;
-    int32_t id = (argt == ARGREG
+    uint_fast8_t argt = op->arg1t;
+    asmword_t id = (argt == ARGREG
                   ? op->reg1
                   : op->args[0]);
     hookfunc_t *hook = hookfunctab[id];
@@ -1643,15 +1717,17 @@ ophook(struct wpmopcode *op)
     return;
 }
 
-static void
-opoutl(struct wpmopcode *op)
+void
+opoutl(opcode_t *op)
 {
 }
 
+#endif
+
 void
-wpmpzero(uint32_t adr, uint32_t size)
+wpmpzero(asmadr_t adr, asmuword_t size)
 {
-    uint32_t  npg = roundup2(size, 1U << MINBKT) >> MINBKT;
+    asmuword_t  npg = roundup2(size, 1U << MINBKT) >> MINBKT;
     void     *ptr = NULL;
 
     while (npg--) {
@@ -1673,10 +1749,10 @@ wpmpzero(uint32_t adr, uint32_t size)
 
 /* TODO: this and other hooks need to use page tables */
 void
-hookpzero(struct wpmopcode *op)
+hookpzero(opcode_t *op)
 {
-    uint32_t adr = wpm->cpustat.regs[0];
-    uint32_t sz = wpm->cpustat.regs[1];
+    asmadr_t adr = wpm->cpustat.regs[0];
+    asmuword_t sz = wpm->cpustat.regs[1];
 
     wpmpzero(adr, sz);
 
@@ -1684,9 +1760,9 @@ hookpzero(struct wpmopcode *op)
 }
 
 void
-hookpalloc(struct wpmopcode *op)
+hookpalloc(opcode_t *op)
 {
-    uint32_t size = wpm->cpustat.regs[0];
+    asmuword_t size = wpm->cpustat.regs[0];
 
     wpm->cpustat.regs[0] = mempalloc(size);
 
@@ -1694,9 +1770,9 @@ hookpalloc(struct wpmopcode *op)
 }
 
 void
-hookpfree(struct wpmopcode *op)
+hookpfree(opcode_t *op)
 {
-    uint32_t adr = wpm->cpustat.regs[0];
+    asmadr_t adr = wpm->cpustat.regs[0];
 
     mempfree(adr);
 

@@ -10,18 +10,18 @@ asmuword_t zpcgetreg(uint8_t *str, uint8_t **retptr);
 
 /* number of registers per unit */
 #define ZPCNREG      16
-#define ZPCREGSTKBIT 0x80000000U
+#define ZPCREGSTKBIT 0x40U
 
 /* instruction set */
 #define ZPCASMILL    0x00
 /* logical and bit operations */
 #define ZPCASMNOT    0x01       // logical NOT
-#define ZPCASMSHR    0x02       // logical right shift (fill with zero)
-#define ZPCASMSHRA   0x03       // arithmetic right shift (fill with sign)
-#define ZPCASMSHL    0x04       // logical shift left (fill with zero)
-#define ZPCASMXOR    0x05       // logical exclusive OR
-#define ZPCASMOR     0x06       // logical OR
-#define ZPCASMAND    0x07       // logical AND
+#define ZPCASMAND    0x02       // logical AND
+#define ZPCASMOR     0x03       // logical OR
+#define ZPCASMXOR    0x04       // logical exclusive OR
+#define ZPCASMSHR    0x05       // logical right shift (fill with zero)
+#define ZPCASMSHRA   0x06       // arithmetic right shift (fill with sign)
+#define ZPCASMSHL    0x07       // logical shift left (fill with zero)
 #define ZPCASMROR    0x08       // rotate right
 #define ZPCASMROL    0x09       // rotate left
 /* arithmetic operations */
@@ -41,12 +41,15 @@ asmuword_t zpcgetreg(uint8_t *str, uint8_t **retptr);
 #define ZPCASMBGE    0x15       // branch if greater than or equal
 /* load-store instruction */
 #define ZPCASMMOV    0x16       // load/store
+/* unconditional branch */
+#define ZPCASMJMP    0x17
 /* function calls */
-#define ZPCASMCALL   0x17       // trigger function call
-#define ZPCASMRET    0x18       // return from a function
+#define ZPCASMCALL   0x18       // trigger function call
+#define ZPCASMRET    0x19       // return from a function
 /* software interrupts */
-#define ZPCASMTRAP   0x19       // trigger a software interrupt
-#define ZPCASMIRET   0x1a       // return from interrupt handler
+#define ZPCASMTRAP   0x1a       // trigger a software interrupt
+#define ZPCASMIRET   0x1b       // return from interrupt handler
+#define ZPCASMTHR    0x1c       // launch new thread of execution
 #define ZPCNASMOP    32         // maximum number of operations
 
 /* interrupt interface */
@@ -60,11 +63,11 @@ asmuword_t zpcgetreg(uint8_t *str, uint8_t **retptr);
 
 #define ZPCVPUILL    0x00       // illegal instruction
 //#define ZPCVPUNOT    0x01     // logical NOT
-#define ZPCVPUSHR    0x01       // logical right shift
-#define ZPCVPUSHL    0x02       // logical left shift
-#define ZPCVPUXOR    0x03       // logical OR
-#define ZPCVPUOR     0x04       // logical OR
-#define ZPCVPUAND    0x05       // logical AND
+#define ZPCVPUXOR    0x01       // logical OR
+#define ZPCVPUOR     0x02       // logical OR
+#define ZPCVPUAND    0x03       // logical AND
+#define ZPCVPUSHR    0x04       // logical right shift
+#define ZPCVPUSHL    0x05       // logical left shift
 #define ZPCVPUADD    0x06       // arithmetic addition of subwords
 #define ZPCVPUADDUS  0x07       // addition with unsigned saturation
 #define ZPCVPUADDS   0x08       // addition with signed saturation
@@ -94,17 +97,17 @@ asmuword_t zpcgetreg(uint8_t *str, uint8_t **retptr);
 #define ZPCVPU128    0x03       // 128-bit vector unit
 
 /* opcode bitfield */
-struct zpcinst {
-    unsigned  op     : 4;       // operation ID
+struct zpcopcode {
+    unsigned  inst   : 4;       // operation ID
     unsigned  arg1t  : 4;       // argument #1 type
     unsigned  arg2t  : 4;       // argument #2 type
-    unsigned  reg1   : 4;       // register ID #1
-    unsigned  reg2   : 4;       // register ID #2
     unsigned  unit   : 4;       // unit ID
+    unsigned  reg1   : 8;       // register ID #1
+    unsigned  reg2   : 8;       // register ID #2
     unsigned  arg1sz : 4;       // argument sizes in octets/bytes
     unsigned  arg2sz : 4;       // argument sizes in octets/bytes
     unsigned  size   : 2;       // size 1..3, shift count
-    unsigned  pad    : 32;      // pad to 64-bit boundary
+    unsigned  pad    : 22;      // pad to 64-bit boundary
     asmword_t args[EMPTY];
 } PACK();
 

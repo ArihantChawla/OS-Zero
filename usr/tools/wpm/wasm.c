@@ -92,12 +92,12 @@ static uint8_t        opnargtab[ZPCNASMOP]
 = {
     0,  // ILL
     1,  // NOT
-    2,  // SHR
-    2,  // SHRA
-    2,  // SHL
     2,  // XOR
     2,  // OR
     2,  // AND
+    2,  // SHR
+    2,  // SHRA
+    2,  // SHL
     2,  // ROR
     2,  // ROL
     1,  // INC
@@ -940,7 +940,7 @@ asmgetindex(uint8_t *str, asmword_t *retndx, uint8_t **retptr)
         }
 #if (ZPC)
         reg = zpcgetreg(str, &str);
-        if (reg >= ZPCNREG) {
+        if ((reg & 0x0f) >= ZPCNREG) {
             fprintf(stderr, "invalid register name %s\n", str);
 
             exit(1);
@@ -1553,7 +1553,7 @@ asmprocinst(struct asmtoken *token, asmadr_t adr,
             asmadr_t *retadr)
 {
 #if (ZPC)
-    struct zpcinst   *op;
+    struct zpcopcode *op;
 #elif (WPM)
     struct wpmopcode *op;
 #endif
@@ -1582,8 +1582,8 @@ asmprocinst(struct asmtoken *token, asmadr_t adr,
     asmaddline(adr, token->data.inst.data, token->file, token->line);
 #endif
 #if (ZPC)
-    op = (struct zpcinst *)&physmem[adr];
-    op->op = token->data.inst.op;
+    op = (struct zpcopcode *)&physmem[adr];
+    op->inst = token->data.inst.op;
 #elif (WPM)
     op = (struct wpmopcode *)&physmem[adr];
     op->inst = token->data.inst.op;
