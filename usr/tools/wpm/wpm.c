@@ -114,6 +114,8 @@ static void hookpalloc(opcode_t *op);
 static void hookpfree(opcode_t *op);
 #endif
 
+static void    memstoreq(int64_t src, asmadr_t virt);
+static int64_t memfetchq(asmadr_t virt);
 static void    memstorel(int32_t src, asmadr_t virt);
 static int32_t memfetchl(asmadr_t virt);
 
@@ -403,7 +405,7 @@ wpmloop(void *cpustat)
         } else
 #endif
         {
-            wpm->cpustat.pc = roundup2(wpm->cpustat.pc, 4);
+            wpm->cpustat.pc = roundup2(wpm->cpustat.pc, sizeof(asmword_t));
             op = (opcode_t *)&physmem[wpm->cpustat.pc];
             func = opfunctab[op->inst];
             if (func) {
