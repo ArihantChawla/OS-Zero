@@ -160,8 +160,8 @@ ophandler_t *opfunctab[256] ALIGNED(PAGESIZE)
     opor,
     opxor,
     opshl,
+    opshra,
     opshr,
-    opshrl,
     opror,
     oprol,
     opinc,
@@ -224,8 +224,8 @@ char *opnametab[256]
     "or",
     "xor",
     "shl",
+    "shra",
     "shr",
-    "shrl",
     "ror",
     "rol",
     "inc",
@@ -604,7 +604,7 @@ opshr(opcode_t *op)
 #endif
     
 #if (WPMDEBUG)
-    fprintf(stderr, "SHRL: %x by %d\n", dest, cnt);
+    fprintf(stderr, "SHR: %x by %d\n", dest, cnt);
 #endif
 #if (USEASM)
     asmshrl(cnt, dest);
@@ -644,7 +644,7 @@ opshra(opcode_t *op)
                         : op->args[1]));
 
 #if (WPMDEBUG)
-    fprintf(stderr, "SHR: %x by %d\n", dest, cnt);
+    fprintf(stderr, "SHRA: %x by %d\n", dest, cnt);
 #endif
 #if (!USEASM)
     asmuword_t sign = dest & 0x80000000;
