@@ -63,9 +63,9 @@
 #define OPAND      0x02	// logical AND
 #define OPOR       0x03	// logical OR
 #define OPXOR      0x04	// logical exclusive OR
-#define OPSHL      0x05	// shift left (fill with zero)
+#define OPSHR      0x05	// logical shift right (fill with zero)
 #define OPSHRA     0x06	// arithmetic shift right (fill with sign)
-#define OPSHR      0x07	// logical shift right (fill with zero)
+#define OPSHL      0x07	// shift left (fill with zero)
 #define OPROR      0x08	// rotate right
 #define OPROL      0x09	// rotate left
 #define OPINC      0x0a	// increment by one

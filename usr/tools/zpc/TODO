@@ -1,6 +1,15 @@
 - simple c preprocessor and interpreter (or interface to existing ones)
   - macros, constants, variables, expressions
 - assembly console
+  - show stack registers and other registers
+  - SIGINT to pause execution (usually Ctrl-c)
+  - step, stepi
+  - break, cont, run
+  - print
+  - disassemble
+  - trace
+    - system calls
+    - resource usage
 - trigonometry
 - vectors
   - scalar and dot products
@@ -57,3 +66,16 @@
   - machine level
     - show register contents during execution
     - show disassembled instructions if in trace mode
+- 6502 emulator? :)
+  - SID audio chip interface
+  - C64 video interface
+- VPU64; 64-bit vector processor
+  - MMX compatibility/support
+- VPU128; 128-bit vector processor
+  - SSE compatibility/support
+- terminal mode
+  - POSIX pseudo-teletype interface
+  - Rterm X widget from libRterm
+    - all 256 xterm colors supported
+    - important/relevant parts of vt100+ supported
+    - bugs: cursor, command line editing
