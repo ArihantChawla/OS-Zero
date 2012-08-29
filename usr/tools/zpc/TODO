@@ -1,15 +1,18 @@
 - simple c preprocessor and interpreter (or interface to existing ones)
   - macros, constants, variables, expressions
 - assembly console
+  - commands for managing code [and later object] files
+    - load, unload, include, link, trace, run
   - show stack registers and other registers
   - SIGINT to pause execution (usually Ctrl-c)
   - step, stepi
   - break, cont, run
   - print
-  - disassemble
+  - disassemble; current, backtrace
   - trace
     - system calls
     - resource usage
+    - code lines and/or disassembly output
 - trigonometry
 - vectors
   - scalar and dot products
