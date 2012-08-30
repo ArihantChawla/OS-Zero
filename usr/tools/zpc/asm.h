@@ -41,16 +41,19 @@ asmuword_t zpcgetreg(uint8_t *str, uint8_t **retptr);
 #define ZPCASMBGE    0x15       // branch if greater than or equal
 /* load-store instruction */
 #define ZPCASMMOV    0x16       // load/store
+#define ZPCMASMMOVD  0x17
+#define ZPCASMMOVB   0x18
+#define ZPCASMMOVW   0x19
 /* unconditional branch */
-#define ZPCASMJMP    0x17
+#define ZPCASMJMP    0x20
 /* function calls */
-#define ZPCASMCALL   0x18       // trigger function call
-#define ZPCASMRET    0x19       // return from a function
+#define ZPCASMCALL   0x21       // trigger function call
+#define ZPCASMRET    0x22       // return from a function
 /* software interrupts */
-#define ZPCASMTRAP   0x1a       // trigger a software interrupt
-#define ZPCASMIRET   0x1b       // return from interrupt handler
-#define ZPCASMTHR    0x1c       // launch new thread of execution
-#define ZPCNASMOP    32         // maximum number of operations
+#define ZPCASMTRAP   0x23       // trigger a software interrupt
+#define ZPCASMIRET   0x24       // return from interrupt handler
+#define ZPCASMTHR    0x25       // launch new thread of execution
+#define ZPCNASMOP    38         // maximum number of operations
 
 /* interrupt interface */
 #define ZPCTRAPTMR   0x00       // timer interrupt

@@ -77,6 +77,7 @@ void oppop(opcode_t *op);
 void oppush(opcode_t *op);
 /* load/store */
 void opmov(opcode_t *op);
+void opmovd(opcode_t *op);
 void opmovb(opcode_t *op);
 void opmovw(opcode_t *op);
 /* jump */
@@ -146,10 +147,15 @@ ophandler_t *opfunctab[ZPCNASMOP] ALIGNED(PAGESIZE)
     opbgt,
     opbge,
     opmov,
+    opmovd,
+    opmovb,
+    opmovw,
+    opjmp,
     opcall,
     opret,
     optrap,
-    opiret
+    opiret,
+    opthr
 };
 #elif (WPM)
 ophandler_t *opfunctab[256] ALIGNED(PAGESIZE)
@@ -1245,8 +1251,8 @@ opmov(opcode_t *op)
 {
     uint_fast8_t argt1 = op->arg1t;
     uint_fast8_t argt2 = op->arg2t;
-    asmuword_t   reg1  = op->reg1;
-    asmuword_t   reg2  = op->reg2;
+    uint64_t   reg1  = op->reg1;
+    uint64_t   reg2  = op->reg2;
     asmword_t    src = (argt1 == ARGREG
                         ? ((reg1 & REGINDEX)
                            ? memfetchl(wpm->cpustat.regs[reg1 & 0x0f]
@@ -1257,7 +1263,7 @@ opmov(opcode_t *op)
                         : (argt1 == ARGIMMED
                            ? op->args[0]
                            : memfetchl(op->args[0])));
-    asmuword_t   dest;
+    uint64_t   dest;
 
     if (argt2 == ARGREG) {
         if (reg2 & REGINDIR) {
@@ -1283,7 +1289,48 @@ opmov(opcode_t *op)
     return;
 }
 
-#if (WPM)
+void
+opmovd(opcode_t *op)
+{
+    uint_fast8_t argt1 = op->arg1t;
+    uint_fast8_t argt2 = op->arg2t;
+    uint32_t     reg1  = op->reg1;
+    uint32_t     reg2  = op->reg2;
+    int32_t      src = (argt1 == ARGREG
+                        ? ((reg1 & REGINDEX)
+                           ? memfetchl(wpm->cpustat.regs[reg1 & 0x0f]
+                                       + op->args[0])
+                           : (reg1 & REGINDIR
+                              ? memfetchl(wpm->cpustat.regs[reg1 & 0x0f])
+                              : wpm->cpustat.regs[reg1 & 0x0f]))
+                        : (argt1 == ARGIMMED
+                           ? op->args[0]
+                           : memfetchl(op->args[0])));
+    uint32_t   dest;
+    
+    if (argt2 == ARGREG) {
+        if (reg2 & REGINDIR) {
+            dest = wpm->cpustat.regs[reg2 & 0x0f];
+            memstorel(src, dest);
+        } else if (reg2 & REGINDEX) {
+            if (argt1 == ARGREG) {
+                dest = wpm->cpustat.regs[reg2 &0x0f] + op->args[0];
+            } else {
+                dest = wpm->cpustat.regs[reg2 &0x0f] + op->args[1];
+            }
+            memstorel(src, dest);
+        } else {
+            wpm->cpustat.regs[reg2 & 0x0f] = src;
+        }
+    } else if (argt1 == ARGREG) {
+        memstorel(src, op->args[0]);
+    } else {
+        memstorel(src, op->args[1]);
+    }
+    wpm->cpustat.pc += op->size << 2;
+
+    return;
+}
 
 void
 opmovb(opcode_t *op)
@@ -1373,8 +1420,6 @@ opmovw(opcode_t *op)
 
     return;
 }
-
-#endif /* WPM */
 
 void
 opjmp(opcode_t *op)

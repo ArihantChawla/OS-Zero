@@ -9,9 +9,9 @@ char *opnametab[ZPCNASMOP]
 = {
     "ILL",
     "not",
-    "xor",
-    "or",
     "and",
+    "or",
+    "xor",
     "shr",
     "shra",
     "shl",
@@ -31,10 +31,15 @@ char *opnametab[ZPCNASMOP]
     "bgt",
     "bge",
     "mov",
+    "movd",
+    "movb",
+    "movw",
+    "jmp",
     "call",
     "ret",
     "trap",
-    "iret"
+    "iret",
+    "thr"
 };
 uint64_t zpcintregs[ZPCNREG];
 

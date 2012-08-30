@@ -38,9 +38,11 @@ typedef void zpcaction_t(void);
 #define ZPCAND        0x02
 #define ZPCOR         0x03
 #define ZPCXOR        0x04
-#define ZPCSHL        0x05
-#define ZPCSHR        0x06
-#define ZPCSHRA       0x07
+#define ZPCSHR        0x05
+#define ZPCSHRA       0x06
+#define ZPCSHL        0x07
+#define ZPCROR        0x08
+#define ZPCROL        0x09
 #define ZPCINC        0x08
 #define ZPCDEC        0x09
 #define ZPCADD        0x0a
@@ -48,21 +50,37 @@ typedef void zpcaction_t(void);
 #define ZPCMUL        0x0c
 #define ZPCDIV        0x0d
 #define ZPCMOD        0x0e
-#define ZPCASSIGN     0x0f
-#define ZPCNOPER      0x10
-#define ZPCLEFTPAREN  0x10
-#define ZPCRIGHTPAREN 0x11
-#define ZPCFUNC       0x12
-#define ZPCSEP        0x13
-#define ZPCVAR        0x20
-#define ZPCINT64      0x21
-#define ZPCUINT64     0x22
-#define ZPCFLOAT      0x23
-#define ZPCDOUBLE     0x24
-#define ZPCSTRING     0x25
-#define ZPCVECTOR     0x26
-#define ZPCMATRIX     0x27
-#define ZPCCOMPLEX    0x28
+#define ZPCBZ         0x0f
+#define ZPCBNZ        0x10
+#define ZPCBLT        0x11
+#define ZPCBLE        0x12
+#define ZPCBGT        0x13
+#define ZPCBGE        0x14
+#define ZPCMOV        0x15
+#define ZPCMOVD       0x16
+#define ZPCMOVB       0x17
+#define ZPCMOVW       0x18
+#define ZPCJMP        0x19
+#define ZPCCALL       0x20
+#define ZPCRET        0x22
+#define ZPCTRAP       0x23
+#define ZPCIRET       0x24
+#define ZPCTHR        0x25
+#define ZPCASSIGN     0x26
+#define ZPCNOPER      39
+#define ZPCLEFTPAREN  0x40
+#define ZPCRIGHTPAREN 0x41
+#define ZPCFUNC       0x42
+#define ZPCSEP        0x43
+#define ZPCVAR        0x80
+#define ZPCINT64      0x81
+#define ZPCUINT64     0x82
+#define ZPCFLOAT      0x83
+#define ZPCDOUBLE     0x84
+#define ZPCSTRING     0x85
+#define ZPCVECTOR     0x86
+#define ZPCMATRIX     0x87
+#define ZPCCOMPLEX    0x88
 #define PARAMSIZEMASK 0xff
 #define PARAMFLOATBIT 0x40000000
 #define PARAMSIGNBIT  0x80000000
@@ -128,11 +146,11 @@ struct zpccomplex {
 #define ZPCUNDERFLOW    0x04
 #define ZPCSIGN         0x08
 #define zpcisoper(tp)                                                   \
-    ((tp) && ((tp)->type >= ZPCNOT && (tp)->type <= ZPCMOD))
+    ((tp) && ((tp)->type >= ZPCNOT && (tp)->type <= ZPCASSIGN))
 #define zpcisoperchar(c)                                                \
     (zpcoperchartab[(int)(c)])
 #define zpcisvalue(tp)                                                  \
-    ((tp) && (tp)->type >= ZPCINT64 && (tp)->type <= ZPCDOUBLE)
+    ((tp) && (tp)->type >= ZPCINT64 && (tp)->type <= ZPCCOMPLEX)
 #define zpcisfunc(tp)                                                   \
     ((tp) && (tp)->type == ZPCFUNC)
 #define zpcissep(tp)                                                    \
