@@ -24,9 +24,8 @@
 #include <zpc/zpc.h>
 #include <zpc/asm.h>
 #include <wpm/mem.h>
-#elif (WPM)
-#include <wpm/wpm.h>
 #endif
+#include <wpm/wpm.h>
 
 typedef struct asmtoken * tokfunc_t(struct asmtoken *, asmadr_t, asmadr_t *);
 
@@ -2312,9 +2311,17 @@ asmreadfile(char *name, asmadr_t adr)
 #if (WPM)
 int
 main(int argc, char *argv[])
+#elif (ZPC)
+int
+wpmmain(int argc, char *argv[])
+#endif
 {
     long      l;
+#if (WPM)
     asmadr_t  adr = WPMTEXTBASE;
+#elif (ZPC)
+    asmadr_t  adr = ZPCTEXTBASE;
+#endif
 #if (ASMPROF)
     PROFTICK(tick);
 #endif
@@ -2368,5 +2375,4 @@ main(int argc, char *argv[])
     /* NOTREACHED */
     exit(0);
 }
-#endif /* WPM */
 

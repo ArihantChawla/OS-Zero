@@ -3,9 +3,15 @@
 
 #include <features.h>
 #include <stddef.h>
+#include <stdint.h>
 
 #define EXIT_SUCCESS 0
 #define EXIT_FAILURE 1
+
+#define srand(useed) srand32(useed)
+
+void   srand32(uint32_t seed);
+int    rand(void);
 
 void * malloc(size_t size);
 void * calloc(size_t n, size_t size);
@@ -16,7 +22,7 @@ void * aligned_alloc(size_t align, size_t size);
 #endif
 
 #if (_POSIX_C_SOURCE >= 200112L || _XOPEN_SOURCE >= 600)
-int posix_memalign(void **ret, size_t align, size_t size);
+int    posix_memalign(void **ret, size_t align, size_t size);
 #endif
 
 #if ((_BSD_SOURCE)                                                      \

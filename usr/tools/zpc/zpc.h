@@ -6,6 +6,10 @@
 #include <zero/param.h>
 #include <zero/cdecl.h>
 
+#define ZPCTEXTBASE 8192
+
+#define SMALLBUTTONS 1
+
 #define NSTKREG     16
 #define NREGSTK     1024
 #define TOKENSTRLEN 128
@@ -25,12 +29,17 @@
 
 typedef void zpcaction_t(void);
 
+#if (SMALLBUTTONS)
+#define ZPC_BUTTON_WIDTH        48
+#define ZPC_BUTTON_HEIGHT       39
+#else
 #define ZPC_BUTTON_WIDTH        64
 #define ZPC_BUTTON_HEIGHT       48
+#endif
 #define ZPC_SMALL_BUTTON_WIDTH  48
 #define ZPC_SMALL_BUTTON_HEIGHT 36
-#define ZPC_NROW                8
-#define ZPC_NCOLUMN             9
+#define ZPC_NROW                6
+#define ZPC_NCOLUMN             6
 #define ZPC_WINDOW_WIDTH        (ZPC_NCOLUMN * ZPC_BUTTON_WIDTH)
 #define ZPC_WINDOW_HEIGHT       (ZPC_NROW * ZPC_BUTTON_HEIGHT)
 
