@@ -138,7 +138,7 @@ typedef pthread_mutex_t LK_T;
 #if (PTRBITS > 32)
 #define TUNEBUF 1
 #else
-#define TUNEBUF 0
+#define TUNEBUF 1
 #endif
 
 /* basic allocator parameters */
@@ -146,7 +146,7 @@ typedef pthread_mutex_t LK_T;
 #define SLABTEENYLOG2 12 /* little block */
 #define SLABTINYLOG2  16 /* small-size block */
 #define SLABLOG2      21 /* base size for heap allocations */
-#define MAPMIDLOG2    24
+#define MAPMIDLOG2    23
 #define MINSZ         (1UL << BLKMINLOG2)
 #define HQMAX         SLABLOG2
 #define NBKT          (8 * PTRSIZE)
@@ -185,7 +185,7 @@ typedef pthread_mutex_t LK_T;
 
 #if (TUNEBUF)
 //#define isbufbkt(bid)     ((bid) <= 24)
-#define isbufbkt(bid)     0
+#define isbufbkt(bid)     ismapbkt(bid)
 #define nmagslablog2(bid) (_nslabtab[(bid)])
 #else
 #define isbufbkt(bid)     0
@@ -196,7 +196,8 @@ typedef pthread_mutex_t LK_T;
 #define nmaplog2(bid)     0
 #endif
 
-#if (TUNEBUF)
+#define nmagslablog2init(bid) 0
+#if 0 && (TUNEBUF)
 /* adjust how much is buffered based on current use */
 #define nmagslablog2up(m, v, t)                                         \
     do {                                                                \
@@ -1064,7 +1065,7 @@ gethdr(long aid)
     return mag;
 }
 
-#if (TUNEBUF)
+#if 0 && (TUNEBUF)
 static void
 tunebuf(long val)
 {
@@ -1127,7 +1128,7 @@ getslab(long aid,
 #endif
         }
     }
-#if (TUNEBUF)
+#if 0 && (TUNEBUF)
     if (ptr != MAP_FAILED && ptr != SBRK_FAILED) {
         tmp = _nbmap + _nbheap;
         if (!tunesz) {

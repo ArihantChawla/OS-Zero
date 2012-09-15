@@ -6,11 +6,20 @@
 #include <zero/cdecl.h>
 #include <wpm/asm.h>
 
+/*
+ * registers
+ * ---------
+ * - %st0..%st15 - stack
+ * - %r0..%r15   - integral
+ * - %v0..%v15   - vector
+ */
+
 asmuword_t zpcgetreg(uint8_t *str, uint8_t **retptr);
 
 /* number of registers per unit */
 #define ZPCNREG      16
-#define ZPCREGSTKBIT 0x40U
+#define ZPCREGSTKBIT 0x10U
+#define ZPCREGVECBIT 0x20U
 
 /* instruction set */
 #define ZPCASMILL    0x00
@@ -64,6 +73,10 @@ asmuword_t zpcgetreg(uint8_t *str, uint8_t **retptr);
 #define ZPCTRAPIO    0x05       // I/O interrupt
 #define ZPCNTRAP     16         // maximum number of traps
 
+/*
+ * for SIMD operations, argsz and sz in opcodes are the register and subword
+ * sizes
+ */
 #define ZPCVPUILL    0x00       // illegal instruction
 //#define ZPCVPUNOT    0x01     // logical NOT
 #define ZPCVPUXOR    0x01       // logical OR
@@ -99,6 +112,10 @@ asmuword_t zpcgetreg(uint8_t *str, uint8_t **retptr);
 #define ZPCVPU64     0x02       // 64-bit vector unit
 #define ZPCVPU128    0x03       // 128-bit vector unit
 
+/* flg */
+#define ZPCZEROBIT   0x01       // unpack with zero, etc.
+#define ZPCSIGNBIT   0x02       // otherwise unsigned
+
 /* opcode bitfield */
 struct zpcopcode {
     unsigned  inst   : 4;       // operation ID
@@ -110,7 +127,8 @@ struct zpcopcode {
     unsigned  arg1sz : 4;       // argument sizes in octets/bytes
     unsigned  arg2sz : 4;       // argument sizes in octets/bytes
     unsigned  size   : 2;       // size 1..3, shift count
-    unsigned  pad    : 22;      // pad to 64-bit boundary
+    unsigned  flg    : 4;       // instruction flags
+    unsigned  pad    : 18;      // pad to 64-bit boundary
     asmword_t args[EMPTY];
 } PACK();
 
@@ -119,21 +137,21 @@ struct zpcopcode {
     (zpcstkregs[(num)]->type == ZPCUINT                                 \
      ? zpcstkregs[(num)]->data.ui64.u64                                 \
      : zpcstkregs[(num)]->data.ui64.i64)
-#define getstkarg1(op)                                                  \
+#define zpcgetstkarg1(op)                                               \
     (((op)->arg1t == ZPCARGREG                                          \
       ? zpcgetstkreg((op)->reg1])                                       \
-      : (op)->args[0])))
-#define getstkarg2(op)                                                  \
+     : (op)->args[0])))
+#define zpcgetstkarg2(op)                                               \
     (((op)->arg2t == ZPCARGREG                                          \
       ? zpcgetstkreg((op)->arg2)                                        \
       : (arg1t == ZPCARGREG                                             \
          ? (op)->args[1]                                                \
          : (op)->args[0])))
-#define getintarg1(op)                                                  \
+#define zpcgetintarg1(op)                                               \
     (((op)->arg1t == ZPCARGREG                                          \
       ? zpcintregs[(op)->reg1]                                          \
       : (op)->args[0]))
-#define getintarg2(op)                                                  \
+#define zpcgetintarg2(op)                                               \
     (((op)->arg2t == ZPCARGREG                                          \
       ? zpcintregs[(op)->arg2]                                          \
       : (arg1t == ZPCARGREG                                             \

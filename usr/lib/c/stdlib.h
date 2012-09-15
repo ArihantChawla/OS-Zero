@@ -8,6 +8,8 @@
 #define EXIT_SUCCESS 0
 #define EXIT_FAILURE 1
 
+#define RAND_MAX     0xffffffff
+
 #define srand(useed) srand32(useed)
 
 void   srand32(uint32_t seed);

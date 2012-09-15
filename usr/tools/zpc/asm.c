@@ -62,6 +62,18 @@ zpcgetreg(uint8_t *str, uint8_t **retptr)
             str++;
         }
         *retptr = str;
+    } else if (*str == 'v') {
+        str++;
+        while ((*str) && isdigit(*str)) {
+            reg *= 10;
+            reg += *str - '0';
+            str++;
+        }
+        while (*str == ')' || *str == ',') {
+            str++;
+        }
+        reg |= REGVECBIT;
+        *retptr = str;
     } else if (*str == 's' && str[1] == 't') {
         str += 2;
         while ((*str) && isdigit(*str)) {
