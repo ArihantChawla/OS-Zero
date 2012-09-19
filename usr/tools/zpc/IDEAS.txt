@@ -1,0 +1,23 @@
+debugger interface
+------------------
+
+registers
+---------
+- ALU: %r0..%r15
+- STK: %st0..%st15
+- FLT: %f0..%f15
+- VEC: %v0..%v15
+
+symbols
+-------
+- GLOBAL: list of symbols with global scope
+- AUTO: list of automatic variables for current function
+- DYNAMIC: list of linked dynamic symbols
+
+execution
+---------
+- CALLS: currently nested function calls
+- DISASM: disassembly listing (current function by default)
+- CODE: source code being executed
+- SYSTEM: trace of system calls made
+
