@@ -56,10 +56,10 @@ typedef uint32_t asmuword_t;
 
 struct op {
     uint8_t   *name;
-    struct op *next;
     uint8_t    code;
     uint8_t    narg;
     uint8_t    len;
+    struct op *next;
 };
 
 struct label {
@@ -99,8 +99,8 @@ struct ndx {
 
 struct val {
     uint8_t    *name;
-    struct val *next;
     asmword_t   val;
+    struct val *next;
 };
 
 struct asmtoken {
