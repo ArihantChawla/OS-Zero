@@ -11,8 +11,6 @@
 #define RAND_MAX     0xffffffff
 
 #define srand(useed) srand32(useed)
-
-void   srand32(uint32_t seed);
 int    rand(void);
 
 void * malloc(size_t size);
@@ -25,16 +23,17 @@ void * aligned_alloc(size_t align, size_t size);
 
 #if (_POSIX_C_SOURCE >= 200112L || _XOPEN_SOURCE >= 600)
 int    posix_memalign(void **ret, size_t align, size_t size);
-#endif
+#endif /* POSIX || XOPEN */
 
 #if ((_BSD_SOURCE)                                                      \
     || (_XOPEN_SOURCE >= 500 || ((_XOPEN_SOURCE) && (_XOPEN_SOURCE_EXTENDED))) \
     && !(_POSIX_C_SOURCE >= 200112L || _XOPEN_SOURCE >= 600))
 void * valloc(size_t size);
-#endif
+#endif /* BSD || XOPEN || POSIX */
+
 #if (_BSD_SOURCE)
 void * reallocf(void *ptr, size_t size);
-#endif
+#endif /* BSD */
 
 void * bsearch(const void *key, const void *base,
                size_t nitems, size_t itemsize,

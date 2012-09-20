@@ -1,23 +1,27 @@
 debugger interface
 ------------------
 
-registers
----------
-- ALU: %r0..%r15
-- STK: %st0..%st15
-- FLT: %f0..%f15
-- VEC: %v0..%v15
+	-----------------------------------------
+	|	|	|		|	|
+	| WIN1	| WIN2	| WIN3		| WIN4	|
+	| 	| 	| 		| 	|
+	-----------------------------------------
 
-symbols
--------
-- GLOBAL: list of symbols with global scope
-- AUTO: list of automatic variables for current function
-- DYNAMIC: list of linked dynamic symbols
+WIN1
+----
+- REG; ALU, STK, FPU, VEC
+  - registers for ALU, expression stack, FPU, and SIMD
 
-execution
----------
-- CALLS: currently nested function calls
-- DISASM: disassembly listing (current function by default)
-- CODE: source code being executed
-- SYSTEM: trace of system calls made
+WIN2
+----
+- SYM; auto, global, dynamic
+  - automatic, global, and dynamic symbols (with values)
+
+WIN3
+----
+- EXEC; disassembly, source
+
+WIN4
+----
+- CALL; call stack, system calls
 

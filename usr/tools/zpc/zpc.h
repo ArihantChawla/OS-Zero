@@ -39,7 +39,7 @@ typedef void zpcaction_t(void);
 #define ZPC_SMALL_BUTTON_WIDTH  48
 #define ZPC_SMALL_BUTTON_HEIGHT 36
 #define ZPC_NROW                6
-#define ZPC_NCOLUMN             6
+#define ZPC_NCOLUMN             7
 #define ZPC_WINDOW_WIDTH        (ZPC_NCOLUMN * ZPC_BUTTON_WIDTH)
 #define ZPC_WINDOW_HEIGHT       (ZPC_NROW * ZPC_BUTTON_HEIGHT)
 
@@ -98,6 +98,7 @@ typedef void zpcaction_t(void);
 #define ZPCBUTTONOPER  0x02
 #define ZPCBUTTONASM   0x03
 #define ZPCBUTTONUTIL  0x04
+#define ZPCBUTTONDEBUG 0x05
 
 struct zpcv64v8 {
     uint8_t vec[8];

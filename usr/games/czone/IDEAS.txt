@@ -1,4 +1,4 @@
-/* Just some quick thoughts, Copyright (C) 2011 Tuomo Ven√§l√§inen */
+/* Just some quick thoughts, Copyright (C) 2011 Tuomo Ven‰l‰inen */
 
 Combat Zone
 -----------
@@ -9,10 +9,11 @@ Combat Zone
 
 Transportation
 --------------
-airplane
-parachute
+airplane		rockets, missiles
+helicopter		rockets, missiles
+parachute		rifle, pistol, knife
 tank			cannons, machine gun, haupitz
-ship			rifles, pistols, knives
+ship			rifles, pistols, knives, haupitz, nukes
 jeep			machine gun + soldiers
 submarine		torpedoes, missiles
 boat			machine gun

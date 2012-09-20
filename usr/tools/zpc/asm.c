@@ -72,7 +72,7 @@ zpcgetreg(uint8_t *str, uint8_t **retptr)
         while (*str == ')' || *str == ',') {
             str++;
         }
-        reg |= REGVECBIT;
+        reg |= ZPCREGVECBIT;
         *retptr = str;
     } else if (*str == 's' && str[1] == 't') {
         str += 2;

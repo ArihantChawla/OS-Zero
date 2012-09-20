@@ -11,6 +11,7 @@
 #include <X11/Xlib.h>
 #include <X11/keysymdef.h>
 #include <X11/Xutil.h>
+#include <zpc/conf.h>
 #include <zpc/zpc.h>
 #include <zpc/op.h>
 #include <zero/cdecl.h>
@@ -40,12 +41,12 @@ static struct x11wininfo *winhash[NHASHITEM] ALIGNED(PAGESIZE);
 static x11keyhandler_t   *keypressfunctab[256];
 static zpccop_t          *buttonopertab[ZPC_NROW][ZPC_NCOLUMN]
 = {
-    { NULL, NULL, NULL, not64, shr64, inc64 },
-    { NULL, NULL, NULL, mod64, shrl64, dec64 },
-    { NULL, NULL, NULL, div64, shl64, ror64 },
-    { NULL, NULL, NULL, mul64, xor64, rol64 },
-    { NULL, NULL, NULL, sub64, or64, NULL },
-    { NULL, NULL, NULL, add64, and64, NULL }
+    { NULL, NULL, NULL, not64, shr64, inc64, NULL },
+    { NULL, NULL, NULL, mod64, shrl64, dec64, NULL },
+    { NULL, NULL, NULL, div64, shl64, ror64, NULL },
+    { NULL, NULL, NULL, mul64, xor64, rol64, NULL },
+    { NULL, NULL, NULL, sub64, or64, NULL, NULL },
+    { NULL, NULL, NULL, add64, and64, NULL, NULL }
 };
 #if 0
 static zpcfop_t        *buttonopertabdbl[ZPC_NROW][ZPC_NCOLUMN]
@@ -61,48 +62,48 @@ static zpcfop_t        *buttonopertabdbl[ZPC_NROW][ZPC_NCOLUMN]
 static Window             buttonwintab[ZPC_NROW][ZPC_NCOLUMN];
 static uint8_t            buttontypetab[ZPC_NROW][ZPC_NCOLUMN] =
 {
-    { ZPCBUTTONDIGIT, ZPCBUTTONDIGIT, ZPCBUTTONDIGIT, ZPCBUTTONOPER, ZPCBUTTONOPER, ZPCBUTTONOPER },
-    { ZPCBUTTONDIGIT, ZPCBUTTONDIGIT, ZPCBUTTONDIGIT, ZPCBUTTONOPER, ZPCBUTTONOPER, ZPCBUTTONOPER }, 
-    { ZPCBUTTONDIGIT, ZPCBUTTONDIGIT, ZPCBUTTONDIGIT, ZPCBUTTONOPER, ZPCBUTTONOPER, ZPCBUTTONOPER },
-    { ZPCBUTTONDIGIT, ZPCBUTTONDIGIT, ZPCBUTTONDIGIT, ZPCBUTTONOPER, ZPCBUTTONOPER, ZPCBUTTONOPER },
-    { ZPCBUTTONDIGIT, ZPCBUTTONDIGIT, ZPCBUTTONDIGIT, ZPCBUTTONOPER, ZPCBUTTONOPER, ZPCBUTTONOPER },
-    { ZPCBUTTONDIGIT, ZPCBUTTONDIGIT, ZPCBUTTONDIGIT, ZPCBUTTONOPER, ZPCBUTTONOPER, ZPCBUTTONOPER }
+    { ZPCBUTTONDIGIT, ZPCBUTTONDIGIT, ZPCBUTTONDIGIT, ZPCBUTTONOPER, ZPCBUTTONOPER, ZPCBUTTONOPER, ZPCBUTTONDEBUG },
+    { ZPCBUTTONDIGIT, ZPCBUTTONDIGIT, ZPCBUTTONDIGIT, ZPCBUTTONOPER, ZPCBUTTONOPER, ZPCBUTTONOPER, ZPCBUTTONDEBUG }, 
+    { ZPCBUTTONDIGIT, ZPCBUTTONDIGIT, ZPCBUTTONDIGIT, ZPCBUTTONOPER, ZPCBUTTONOPER, ZPCBUTTONOPER, ZPCBUTTONDEBUG },
+    { ZPCBUTTONDIGIT, ZPCBUTTONDIGIT, ZPCBUTTONDIGIT, ZPCBUTTONOPER, ZPCBUTTONOPER, ZPCBUTTONOPER, ZPCBUTTONDEBUG },
+    { ZPCBUTTONDIGIT, ZPCBUTTONDIGIT, ZPCBUTTONDIGIT, ZPCBUTTONOPER, ZPCBUTTONOPER, ZPCBUTTONOPER, ZPCBUTTONDEBUG },
+    { ZPCBUTTONDIGIT, ZPCBUTTONDIGIT, ZPCBUTTONDIGIT, ZPCBUTTONOPER, ZPCBUTTONOPER, ZPCBUTTONOPER, ZPCBUTTONOPER }
 };
 static const char        *buttonstrtab[ZPC_NROW][ZPC_NCOLUMN]
 = {
-    { "d", "e", "f", "~", ">>>", "++" },
-    { "a", "b", "c", "%", ">>", "--" },
-    { "7", "8", "9", "/", "<<", "..>" },
-    { "4", "5", "6", "*", "^", "<.." },
-    { "1", "2", "3", "-", "|", "=" },
-    { "0", NULL, ",", "+", "&", NULL }
+    { "d", "e", "f", "~", ">>>", "++", "run" },
+    { "a", "b", "c", "%", ">>", "--", "step" },
+    { "7", "8", "9", "/", "<<", "..>", "break" },
+    { "4", "5", "6", "*", "^", "<..", "load" },
+    { "1", "2", "3", "-", "|", "=", "save" },
+    { "0", NULL, ",", "+", "&", NULL, "ENTER" }
 };
 static const char        *buttonlabeltab[ZPC_NROW][ZPC_NCOLUMN]
 = {
-    { "d", "e", "f", "~", ">>>", "++" },
-    { "a", "b", "c", "%", ">>", "--" },
-    { "7", "8", "9", "/", "<<", "..>" },
-    { "4", "5", "6", "*", "^", "<.." },
-    { "1", "2", "3", "-", "|", "=" },
-    { "0", ".", ",", "+", "&", "EVAL" }
+    { "d", "e", "f", "~", ">>>", "++", "RUN" },
+    { "a", "b", "c", "%", ">>", "--", "STEP" },
+    { "7", "8", "9", "/", "<<", "..>", "BREAK" },
+    { "4", "5", "6", "*", "^", "<..", "LOAD" },
+    { "1", "2", "3", "-", "|", "=", "SAVE" },
+    { "0", ".", ",", "+", "&", "EVAL", "ENTER" }
 };
 static const char        *buttontop1tab[ZPC_NROW][ZPC_NCOLUMN]
 = {
-    { NULL, NULL, NULL, "not", "shra", "inc" },
-    { NULL, NULL, NULL, "mod", "shr", "dec" },
-    { NULL, NULL, NULL, "div", "shl", "ror" },
-    { NULL, NULL, NULL, "mul", "xor", "rol" },
-    { NULL, NULL, NULL, "sub", "or", NULL },
-    { NULL, NULL, NULL, "add", "and", NULL }
+    { NULL, NULL, NULL, "not", "shra", "inc", NULL },
+    { NULL, NULL, NULL, "mod", "shr", "dec", NULL },
+    { NULL, NULL, NULL, "div", "shl", "ror", NULL },
+    { NULL, NULL, NULL, "mul", "xor", "rol", NULL },
+    { NULL, NULL, NULL, "sub", "or", NULL, NULL },
+    { NULL, NULL, NULL, "add", "and", NULL, NULL }
 };
 static const char        *buttontop2tab[ZPC_NROW][ZPC_NCOLUMN]
 = {
-    { NULL, NULL, NULL, NULL, NULL, NULL },
-    { NULL, NULL, NULL, NULL, NULL, NULL },
-    { NULL, NULL, NULL, "fdiv", NULL, NULL },
-    { NULL, NULL, NULL, "fmul", NULL, NULL },
-    { NULL, NULL, NULL, "fsub", NULL, NULL },
-    { NULL, NULL, NULL, "fadd", NULL, NULL }
+    { NULL, NULL, NULL, NULL, NULL, NULL, NULL },
+    { NULL, NULL, NULL, NULL, NULL, NULL, NULL },
+    { NULL, NULL, NULL, "fdiv", NULL, NULL, NULL },
+    { NULL, NULL, NULL, "fmul", NULL, NULL, NULL },
+    { NULL, NULL, NULL, "fsub", NULL, NULL, NULL },
+    { NULL, NULL, NULL, "fadd", NULL, NULL, NULL }
 };
 #define QUIT  0xff
 #define ENTER 0xfe
@@ -114,26 +115,33 @@ static const char        *buttontop2tab[ZPC_NROW][ZPC_NCOLUMN]
 #define DROP  0xf8
 #define DEL   0xf7
 #define CLS   0xf6
-#define EQU   0xf5
-#define VEC   0xf4
-#define MAT   0xf3
-#define PLOT  0xf2
-#define RAD   0xf1
-#define UNIT  0xf0
-#define NEG   0xef
-#define FIRST  0xef
+#define RUN   0xf5
+#define STEP  0xf4
+#define BREAK 0xf3
+#define LOAD  0xf2
+#define SAVE  0xf1
+#define FIRST 0xf1
+#if 0
+#define EQU   0xf0
+#define VEC   0xef
+#define MAT   0xee
+#define PLOT  0xed
+#define RAD   0xec
+#define UNIT  0xeb
+#define NEG   0xea
+#endif
 #define isaction(i)                                                     \
     ((i) >= FIRST && (i) <= 0xff)
 #define toaction(i)                                                     \
     ((i) - FIRST)
 static const uint8_t      parmtab[ZPC_NROW][ZPC_NCOLUMN]
 = {
-    { 0, 0, 0, 1, 2, 1 },
-    { 0, 0, 0, 2, 2, 1 },
-    { 0, 0, 0, 2, 2, 2 },
-    { 0, 0, 0, 2, 2, 2 },
-    { 0, 0, 0, 2, 2, 0 },
-    { 0, 0, 0, 2, 2, EVAL }
+    { 0, 0, 0, 1, 2, 1, RUN },
+    { 0, 0, 0, 2, 2, 1, STEP },
+    { 0, 0, 0, 2, 2, 2, BREAK },
+    { 0, 0, 0, 2, 2, 2, LOAD },
+    { 0, 0, 0, 2, 2, 0, SAVE },
+    { 0, 0, 0, 2, 2, EVAL, ENTER }
 };
 #if 0
 static const uint8_t      isflttab[ZPC_NROW][ZPC_NCOLUMN]
@@ -150,8 +158,6 @@ static const uint8_t      isflttab[ZPC_NROW][ZPC_NCOLUMN]
 #endif
 static zpcaction_t *actiontab[0xff - FIRST + 1] =
 {
-    NULL,
-    NULL,
     NULL,
     NULL,
     NULL,
@@ -225,6 +231,7 @@ GC                    asmtextgc;
 GC                    numtextgc;
 GC                    optextgc;
 GC                    utiltextgc;
+GC                    debugtextgc;
 Atom                  wmdelete;
 
 void
@@ -347,7 +354,7 @@ x11initgcs(void)
     if (!XAllocColor(app->display,
                      app->colormap,
                      &color)) {
-        fprintf(stderr, "failed to parse color 'orange'\n");
+        fprintf(stderr, "failed to allocate color 'orange'\n");
 
         exit(1);
     }
@@ -371,7 +378,7 @@ x11initgcs(void)
     if (!XAllocColor(app->display,
                      app->colormap,
                      &color)) {
-        fprintf(stderr, "failed to parse color 'green'\n");
+        fprintf(stderr, "failed to allocate color 'green'\n");
 
         exit(1);
     }
@@ -395,7 +402,7 @@ x11initgcs(void)
     if (!XAllocColor(app->display,
                      app->colormap,
                      &color)) {
-        fprintf(stderr, "failed to parse color 'light blue'\n");
+        fprintf(stderr, "failed to allocate color 'light blue'\n");
 
         exit(1);
     }
@@ -404,6 +411,30 @@ x11initgcs(void)
                           GCForeground | GCFont | GCGraphicsExposures,
                           &gcval);
     if (!utiltextgc) {
+        fprintf(stderr, "failed to create GC\n");
+
+        exit(1);
+    }
+    if (!XParseColor(app->display,
+                     app->colormap,
+                     "yellow",
+                     &color)) {
+        fprintf(stderr, "failed to parse color 'yellow'\n");
+
+        exit(1);
+    }
+    if (!XAllocColor(app->display,
+                     app->colormap,
+                     &color)) {
+        fprintf(stderr, "failed to allocate color 'yellow'\n");
+
+        exit(1);
+    }
+    gcval.foreground = color.pixel;
+    debugtextgc = XCreateGC(app->display, app->win,
+                            GCForeground | GCFont | GCGraphicsExposures,
+                            &gcval);
+    if (!debugtextgc) {
         fprintf(stderr, "failed to create GC\n");
 
         exit(1);
@@ -1036,7 +1067,10 @@ x11init(void)
     struct x11wininfo *wininfo;
 
     app = x11initapp(NULL);
-    font = x11loadfont("fixed");
+    font = x11loadfont(ZPC_FONT_NAME);
+    if (!font) {
+        font = x11loadfont("fixed");
+    }
     if (!font) {
         fprintf(stderr, "failed to load font fixed\n");
 
@@ -1111,6 +1145,8 @@ x11init(void)
                         wininfo->textgc = numtextgc;
                     } else if (wininfo->type == ZPCBUTTONUTIL) {
                         wininfo->textgc = utiltextgc;
+                    } else if (wininfo->type == ZPCBUTTONDEBUG) {
+                        wininfo->textgc = debugtextgc;
                     } else {
                         wininfo->textgc = textgc;
                     }

@@ -6,6 +6,8 @@
 #include <zero/param.h>
 #include <zero/cdecl.h>
 
+void srand32(uint32_t seed);
+
 #define RAND32NBUFITEM   624
 #define RAND32MULTIPLIER 0x6c078965
 #define RAND32XORVALUE   0x9908b0df
