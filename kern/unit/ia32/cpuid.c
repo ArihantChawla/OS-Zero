@@ -17,10 +17,10 @@
 
 #include <stdint.h>
 #include <kern/util.h>
-#include <kern/ia32/cpu.h>
+#include <kern/unit/ia32/cpu.h>
 
 #if defined(__ZEROKERNEL__) /* kernel-level stuff only */
-//#include <mach/ia32/cpu.h>
+//#include <mach/unit/ia32/cpu.h>
 #endif
 
 /* cpuid instruction. */

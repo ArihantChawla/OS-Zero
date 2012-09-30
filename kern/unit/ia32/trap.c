@@ -4,9 +4,9 @@
 #include <kern/conf.h>
 #include <zero/param.h>
 #include <zero/types.h>
-#include <kern/ia32/boot.h>
-#include <kern/ia32/trap.h>
-#include <kern/ia32/io.h>
+#include <kern/unit/ia32/boot.h>
+#include <kern/unit/ia32/trap.h>
+#include <kern/unit/ia32/io.h>
 
 extern void picinit(void);
 extern void idtset(void);

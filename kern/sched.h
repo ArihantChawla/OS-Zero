@@ -22,7 +22,7 @@
 #define THRNPRIO   32
 
 #if defined(__i386__)
-#include <kern/ia32/thr.h>
+#include <kern/unit/ia32/thr.h>
 #endif
 
 struct thrprioq {

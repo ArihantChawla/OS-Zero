@@ -3,7 +3,7 @@
 #include <kern/util.h>
 #include <kern/mem.h>
 #include <kern/mem/page.h>
-#include <kern/ia32/vm.h>
+#include <kern/unit/ia32/vm.h>
 
 extern unsigned long vmnphyspages;
 

@@ -1,5 +1,5 @@
-#ifndef __KERN_IA32_MP_H__
-#define __KERN_IA32_MP_H__
+#ifndef __KERN_UNIT_IA32_MP_H__
+#define __KERN_UNIT_IA32_MP_H__
 
 #include <kern/conf.h>
 
@@ -16,9 +16,9 @@
 #include <stdint.h>
 #include <zero/cdecl.h>
 #include <zero/param.h>
-#include <kern/ia32/apic.h>
-#include <kern/ia32/cpu.h>
-#include <kern/ia32/mp.h>
+#include <kern/unit/ia32/apic.h>
+#include <kern/unit/ia32/cpu.h>
+#include <kern/unit/ia32/mp.h>
 
 void mpinit(void);
 
@@ -97,5 +97,5 @@ mpcpunum(void)
 
 #endif /* SMP */
 
-#endif /* __KERN_IA32_MP_H__ */
+#endif /* __KERN_UNIT_IA32_MP_H__ */
 

@@ -14,7 +14,7 @@
 #include <kern/buf.h>
 #include <kern/mem/mag.h>
 #if defined(__i386__)
-#include <kern/ia32/vm.h>
+#include <kern/unit/ia32/vm.h>
 #include <kern/mem/slab32.h>
 #endif
 

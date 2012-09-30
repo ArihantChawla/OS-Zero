@@ -4,7 +4,7 @@
 #include <zero/trix.h>
 #include <kern/util.h>
 #include <kern/mem/slab32.h>
-#include <kern/ia32/vm.h>
+#include <kern/unit/ia32/vm.h>
 
 /* physical memory slabs */
 struct slabhdr *_physslabtab[PTRBITS] ALIGNED(PAGESIZE);

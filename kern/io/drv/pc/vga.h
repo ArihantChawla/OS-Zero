@@ -1,8 +1,8 @@
-#ifndef __IO_DRV_PC_VGA_H__
-#define __IO_DRV_PC_VGA_H__
+#ifndef __KERN_IO_DRV_PC_VGA_H__
+#define __KERN_IO_DRV_PC_VGA_H__
 
 #include <stdint.h>
-#include <kern/ia32/io.h>
+#include <kern/unit/ia32/io.h>
 
 void vgasyncscr(void);
 void vgaputs(char *str);
@@ -110,5 +110,5 @@ struct vgainfo {
     long  fmt;
 };
 
-#endif /* __IO_DRV_PC_VGA_H__ */
+#endif /* __KERN_IO_DRV_PC_VGA_H__ */
 

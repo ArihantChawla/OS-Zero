@@ -21,8 +21,8 @@
 #if (SMP)
 
 #define __ASSEMBLY__ 1
-#include <kern/ia32/boot.h>
-#include <kern/ia32/mp.h>
+#include <kern/unit/ia32/boot.h>
+#include <kern/unit/ia32/mp.h>
 
 .text	16
 

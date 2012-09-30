@@ -4,9 +4,9 @@
 #include <kern/mem.h>
 #include <kern/proc.h>
 #include <zero/param.h>
-#include <kern/ia32/boot.h>
-#include <kern/ia32/cpu.h>
-#include <kern/ia32/vm.h>
+#include <kern/unit/ia32/boot.h>
+#include <kern/unit/ia32/cpu.h>
+#include <kern/unit/ia32/vm.h>
 
 struct proc proctab[NPROC];
 struct thr  thrtab[NTHR];

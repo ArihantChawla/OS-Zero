@@ -9,13 +9,13 @@
 #include <zero/types.h>
 #include <kern/util.h>
 #include <kern/mem.h>
-#include <kern/ia32/link.h>
-#include <kern/ia32/boot.h>
-#include <kern/ia32/seg.h>
-#include <kern/ia32/cpu.h>
-#include <kern/ia32/mp.h>
-#include <kern/ia32/vm.h>
-#include <kern/ia32/io.h>
+#include <kern/unit/ia32/link.h>
+#include <kern/unit/ia32/boot.h>
+#include <kern/unit/ia32/seg.h>
+#include <kern/unit/ia32/cpu.h>
+#include <kern/unit/ia32/mp.h>
+#include <kern/unit/ia32/vm.h>
+#include <kern/unit/ia32/io.h>
 
 /* used to scan for MP table */
 #define EBDAADR   0x040e

@@ -1,5 +1,5 @@
-#ifndef __MACH_LINK_H__
-#define __MACH_LINK_H__
+#ifndef __KERN_UTIL_IA32_LINK_H__
+#define __KERN_UTIL_IA32_LINK_H__
 
 #include <stdint.h>
 #include <kern/conf.h>
@@ -35,5 +35,5 @@ extern long _kernsize;
 #define KSTKADR   0x01400000U
 #endif
 
-#endif /* __MACH_LINK_H__ */
+#endif /* __KERN_UTIL_IA32_LINK_H__ */
 

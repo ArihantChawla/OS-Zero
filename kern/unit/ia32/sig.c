@@ -4,7 +4,7 @@
 #include <zero/types.h>
 #include <kern/util.h>
 #include <kern/proc.h>
-#include <kern/ia32/cpu.h>
+#include <kern/unit/ia32/cpu.h>
 
 /* cpu traps */
 long signumtab[]

@@ -1,5 +1,5 @@
-#ifndef __IO_DRV_PC_AC97_H__
-#define __IO_DRV_PC_AC97_H__
+#ifndef __KERN_IO_DRV_PC_AC97_H__
+#define __KERN_IO_DRV_PC_AC97_H__
 
 #include <kern/conf.h>
 
@@ -7,5 +7,5 @@
 
 #endif /* AC97 */
 
-#endif /* __IO_DRV_PC_AC97_H__ */
+#endif /* __KERN_IO_DRV_PC_AC97_H__ */
 

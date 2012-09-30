@@ -1,5 +1,5 @@
-#ifndef __IA32_KERN_H__
-#define __IA32_KERN_H__
+#ifndef __KERN_UNIT_IA32_KERN_H__
+#define __KERN_UNIT_IA32_KERN_H__
 
 #include <stdint.h>
 
@@ -14,5 +14,5 @@ void logoprint(void);
 void taskinit(void);
 void tssinit(long id);
 
-#endif /* __IA32_KERN_H__ */
+#endif /* __KERN_UNIT_IA32_KERN_H__ */
 

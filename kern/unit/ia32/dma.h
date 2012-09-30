@@ -1,8 +1,8 @@
-#ifndef __IA32_DMA_H__
-#define __IA32_DMA_H__
+#ifndef __KERN_UNIT_IA32_DMA_H__
+#define __KERN_UNIT_IA32_DMA_H__
 
 #include <stdint.h>
-#include <kern/ia32/io.h>
+#include <kern/unit/ia32/io.h>
 
 #define dmagetbuf(chan) ((void *)(DMABUFBASE + (chan) * DMACHANBUFSIZE))
 
@@ -258,5 +258,5 @@ dmainvlbuf(uint8_t chan)
     return;
 }
 
-#endif /* __IA32_DMA_H__ */
+#endif /* __KERN_UNIT_IA32_DMA_H__ */
 

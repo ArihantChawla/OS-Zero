@@ -3,11 +3,11 @@
 #if (SMP)
 
 #include <stdint.h>
-#include <kern/ia32/link.h>
-#include <kern/ia32/trap.h>
-#include <kern/ia32/mp.h>
-#include <kern/ia32/vm.h>
-#include <kern/ia32/ioapic.h>
+#include <kern/unit/ia32/link.h>
+#include <kern/unit/ia32/trap.h>
+#include <kern/unit/ia32/mp.h>
+#include <kern/unit/ia32/vm.h>
+#include <kern/unit/ia32/ioapic.h>
 
 extern void segmap(uint32_t *pagetab, uint32_t virt, uint32_t phys,
                    uint32_t lim,

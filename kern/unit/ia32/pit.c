@@ -1,10 +1,10 @@
 #include <stdint.h>
 #include <zero/asm.h>
 #include <kern/conf.h>
-#include <kern/ia32/io.h>
-#include <kern/ia32/trap.h>
-#include <kern/ia32/pit.h>
-#include <kern/ia32/pic.h>
+#include <kern/unit/ia32/io.h>
+#include <kern/unit/ia32/trap.h>
+#include <kern/unit/ia32/pit.h>
+#include <kern/unit/ia32/pic.h>
 
 extern uint64_t  kernidt[];
 extern void     *irqvec[];

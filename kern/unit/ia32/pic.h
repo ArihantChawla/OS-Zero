@@ -1,5 +1,5 @@
-#ifndef __IA32_PIC_H__
-#define __IA32_PIC_H__
+#ifndef __KERN_UNIT_IA32_PIC_H__
+#define __KERN_UNIT_IA32_PIC_H__
 
 #define PICINIT  0x11
 #define PIC1     0x20
@@ -7,5 +7,5 @@
 #define PIC2     0xa0
 #define PICMASK2 0xa1
 
-#endif /* __IA32_PIC_H__ */
+#endif /* __KERN_UNIT_IA32_PIC_H__ */
 

@@ -3,8 +3,8 @@
 #include <zero/cdecl.h>
 #include <zero/param.h>
 #if defined(__i386__)
-#include <kern/ia32/link.h>
-#include <kern/ia32/vm.h>
+#include <kern/unit/ia32/link.h>
+#include <kern/unit/ia32/vm.h>
 #endif
 #include <kern/mem/mag.h>
 

@@ -1,11 +1,11 @@
 #include <kern/conf.h>
 #include <zero/param.h>
-#include <kern/ia32/cpu.h>
+#include <kern/unit/ia32/cpu.h>
 #if (SMP)
 #include <stdint.h>
-#include <kern/ia32/mp.h>
+#include <kern/unit/ia32/mp.h>
 #else
-#include <kern/ia32/boot.h>
+#include <kern/unit/ia32/boot.h>
 #endif
 
 struct m_cpu     cputab[NCPU] ALIGNED(PAGESIZE);

@@ -9,7 +9,7 @@
 #include <kern/task.h>
 #include <kern/mem.h>
 #if defined(__i386__)
-#include <kern/ia32/cpu.h>
+#include <kern/unit/ia32/cpu.h>
 #endif
 
 /* see <kern/proc.h> for definitions of scheduler classes */

@@ -4,10 +4,10 @@
 #include <zero/types.h>
 #include <kern/conf.h>
 #include <kern/proc.h>
-#include <kern/ia32/cpu.h>
-#include <kern/ia32/boot.h>
-#include <kern/ia32/seg.h>
-#include <kern/ia32/vm.h>
+#include <kern/unit/ia32/cpu.h>
+#include <kern/unit/ia32/boot.h>
+#include <kern/unit/ia32/seg.h>
+#include <kern/unit/ia32/vm.h>
 
 extern void gdtinit(void);
 
