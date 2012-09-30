@@ -1,0 +1,891 @@
+
+Allocating common symbols
+Common symbol       size              file
+
+_freelktab          0x80              mag32.o
+cpuinfo             0x34              cpuid.o
+virtslabtab         0x80              mem32.o
+vmpagelruq          0xc               vm.o
+irqtimerfired       0x4               pit.o
+proctab             0x100000          proc.o
+_freehdrtab         0x80              mag32.o
+_physslabtab        0x80              slab32.o
+PACK                0x14              main.o
+physptab            0x400000          page.o
+vmnwiredpages       0x4               vm.o
+cputab              0xf4              cpu.o
+_maghdrtab          0x4c0000          mag32.o
+thrtab              0x1020000         proc.o
+physfreeq           0xc               page.o
+sigfunctab          0x100             sig.o
+npagefree           0x4               page.o
+vmnphyspages        0x4               vm.o
+runqueuetab         0x400             thr.o
+vmnmappedpages      0x4               vm.o
+tsstab              0x68000           tss.o
+runqueuelktab       0x400             thr.o
+vmnbufpages         0x4               vm.o
+_physlktab          0x80              slab32.o
+corethrtab          0x4               thr.o
+vmbufq              0xc               vm.o
+_vgacontab          0xa0              vga.o
+virthdrtab          0x80000           mem32.o
+
+Memory Configuration
+
+Name             Origin             Length             Attributes
+*default*        0x00000000         0xffffffff
+
+Linker script and memory map
+
+                0x0009f000                MPENTRY = 0x9f000
+                0x00100000                HICORE = 0x100000
+                0x00400000                DMABUF = 0x400000
+                0x00400000                DMABUFSIZE = 0x400000
+                0x00800000                PAGETAB = 0x800000
+                0x00001000                PAGESIZE = 0x1000
+                0x00400000                PAGETABSIZE = 0x400000
+                0xc0000000                VIRTBASE = 0xc0000000
+                0x00100000                . = HICORE
+
+.boot           0x00100000     0x8000
+ boot.o(.text)
+ .text          0x00100000     0x6000 boot.o
+                0x00100000                _start
+                0x00100000                start
+                0x00101000                kernidt
+                0x00102000                kerngdt
+                0x00103000                kernpagedir
+                0x00104000                kerniomap
+ boot.o(.data)
+ .data          0x00106000        0x0 boot.o
+ boot.o(.bss)
+ .bss           0x00106000        0x0 boot.o
+ setup.o(.text)
+ .text          0x00106000       0x4b setup.o
+                0x00106000                gdtinit
+                0x00106021                pginit
+                0x00106037                idtset
+                0x0010603f                gdtptr
+                0x00106045                idtptr
+ setup.o(.data)
+ *fill*         0x0010604b        0x1 00
+ .data          0x0010604c        0x0 setup.o
+ main.o(.text)
+ .text          0x0010604c      0x1e3 main.o
+                0x0010604c                kmain
+ trap.o(.text)
+ *fill*         0x0010622f        0x1 00
+ .text          0x00106230      0x2c3 trap.o
+                0x00106230                idtinit
+                0x001064cf                trapinit
+ trap.o(.bss)
+ *fill*         0x001064f3        0x1 00
+ .bss           0x001064f4        0x0 trap.o
+ isr.o(.text)
+ .text          0x001064f4      0x2ff isr.o
+                0x001064f4                trapde
+                0x0010650f                trapdb
+                0x00106511                trapnmi
+                0x0010652c                trapbp
+                0x00106547                trapof
+                0x00106562                trapbr
+                0x0010657d                trapud
+                0x00106598                trapnm
+                0x001065b3                trapdf
+                0x001065d5                trapts
+                0x001065f7                trapnp
+                0x00106619                trapss
+                0x0010663b                trapgp
+                0x0010665d                trappf
+                0x00106682                trapmf
+                0x001066a4                trapac
+                0x001066c6                trapmc
+                0x001066e1                trapxf
+                0x001066fc                irqtimer0
+                0x00106734                irqtimer
+                0x00106751                irqkbd
+                0x001067cd                irqmouse
+ isr.o(.data)
+ *fill*         0x001067f3        0xd 00
+ .data          0x00106800       0x40 isr.o
+                0x00106800                irqvec
+ pic.o(.text)
+ .text          0x00106840       0x38 pic.o
+                0x00106840                picmapirq
+                0x00106864                picinit
+ seg.o(.text)
+ .text          0x00106878       0xc7 seg.o
+                0x00106878                seginit
+ vm.o(.text)
+ *fill*         0x0010693f        0x1 00
+ .text          0x00106940      0x491 vm.o
+                0x00106940                vmmapseg
+                0x00106986                vminit
+                0x00106afa                vmmapvirt
+                0x00106b3b                vmfreephys
+                0x00106d2b                vmpagefault
+ util.o(.text)
+ *fill*         0x00106dd1        0xf 00
+ .text          0x00106de0      0x668 util.o
+                0x00106de0                bzero
+                0x00106e68                bcopy
+                0x00106f06                bfill
+                0x00106f7e                memcmp
+                0x00106ff2                strcmp
+                0x00107033                strncpy
+                0x0010707e                kprintf
+ mp.o(.text)
+ .text          0x00107448        0x0 mp.o
+ mp.o(.data)
+ .data          0x00107448        0x0 mp.o
+ mp.o(.bss)
+ .bss           0x00107448        0x0 mp.o
+                0x00107448                _eboot = .
+                0x00108000                . = ALIGN (PAGESIZE)
+ *fill*         0x00107448      0xbb8 00
+
+.mp             0x00108000        0x0
+                0x00108000                _mpentry = .
+ mpentry.o(.text)
+ .text          0x00108000        0x0 mpentry.o
+                0x00108000                _emp = .
+                0x00400000                . = DMABUF
+
+.dma            0x00400000   0x400000
+                0x00400000                _dmabuf = .
+                0x00800000                . = (. + DMABUFSIZE)
+ *fill*         0x00400000   0x400000 00
+                0x00800000                _edmabuf = .
+                0x00800000                . = PAGETAB
+
+.ptab           0x00800000   0x400000
+                0x00800000                _pagetab = .
+                0x00c00000                . = (. + PAGETABSIZE)
+ *fill*         0x00800000   0x400000 00
+                0x00c00000                _epagetab = .
+                0xc0000000                . = VIRTBASE
+
+.text           0xc0000000     0x4000 load address 0x00c00000
+                0xc0000000                _text = .
+                0x00c00000                _textvirt = (PAGETAB + SIZEOF (.ptab))
+ *(.text*)
+ .text          0xc0000000        0x0 apic.o
+ .text          0xc0000000       0xcd bitmap.o
+                0xc0000000                bfindzerol
+ *fill*         0xc00000cd        0x3 00
+ .text          0xc00000d0      0x51c buf.o
+                0xc00000d0                bufevict
+                0xc00000da                bufalloc
+                0xc00001d1                buffree
+                0xc000021e                devbufblk
+                0xc0000426                devfindblk
+                0xc00004c8                devfreeblk
+ .text          0xc00005ec      0x332 cpuid.o
+                0xc00005ec                cpuprobe
+ *fill*         0xc000091e        0x2 00
+ .text          0xc0000920       0x11 cpu.o
+                0xc0000920                cpuinit
+ *fill*         0xc0000931        0x3 00
+ .text          0xc0000934       0xae entry.o
+                0xc0000934                syscall
+ *fill*         0xc00009e2        0x2 00
+ .text          0xc00009e4       0x46 init.o
+                0xc00009e4                newproc
+ *fill*         0xc0000a2a        0x2 00
+ .text          0xc0000a2c        0x0 ioapic.o
+ .text          0xc0000a2c      0x8a4 kbd.o
+                0xc0000a2c                kbdint
+                0xc0000aeb                kbdinit_us
+                0xc000127a                kbdinit
+ .text          0xc00012d0       0x5c logo.o
+                0xc00012d0                logoprint
+ .text          0xc000132c      0x297 mag32.o
+                0xc000132c                memalloc
+                0xc0001505                kfree
+ *fill*         0xc00015c3        0x1 00
+ .text          0xc00015c4       0x44 mem32.o
+                0xc00015c4                meminit
+ .text          0xc0001608      0x186 mouse.o
+                0xc0001608                mouseint
+                0xc0001770                mouseinit
+ *fill*         0xc000178e        0x2 00
+ .text          0xc0001790      0x127 page.o
+                0xc0001790                pageinit
+                0xc0001808                pagealloc
+                0xc0001868                pagefree
+ *fill*         0xc00018b7        0x1 00
+ .text          0xc00018b8       0xac pit.o
+                0xc00018b8                pitinit
+                0xc00018f2                pitsleep
+ .text          0xc0001964      0x175 proc.o
+                0xc0001964                procinit
+                0xc0001a95                procgetdesc
+ *fill*         0xc0001ad9        0x3 00
+ .text          0xc0001adc      0x118 sched.o
+                0xc0001adc                thrqueue
+                0xc0001b23                thradjprio
+                0xc0001b54                thryield
+ *fill*         0xc0001bf4        0xc 00
+ .text          0xc0001c00       0x71 sig.o
+                0xc0001c00                kill
+                0xc0001c05                sigfunc
+ *fill*         0xc0001c71        0xf 00
+ .text          0xc0001c80      0x84e slab32.o
+                0xc0001c80                slabinit
+                0xc0001cff                slabcomb
+                0xc000201c                slabsplit
+                0xc00021d4                slaballoc
+                0xc0002410                slabfree
+ *fill*         0xc00024ce        0x2 00
+ .text          0xc00024d0      0x105 task.o
+                0xc00024d0                taskgetpid
+                0xc0002521                taskfreepid
+                0xc000256f                taskinit
+ *fill*         0xc00025d5        0x3 00
+ .text          0xc00025d8       0xc7 thr.o
+                0xc00025d8                thrinit
+                0xc000260a                thrsave
+                0xc0002652                thrjmp
+ *fill*         0xc000269f        0x1 00
+ .text          0xc00026a0       0x25 tmr.o
+                0xc00026a0                keyprocqueue
+                0xc00026a5                ptrprocqueue
+                0xc00026aa                scrsync
+                0xc00026af                audsync
+                0xc00026b4                vidsync
+                0xc00026b9                tmrfunc
+ *fill*         0xc00026c5        0x3 00
+ .text          0xc00026c8       0xc5 tss.o
+                0xc00026c8                dummy
+                0xc00026cd                tssinit
+ *fill*         0xc000278d        0x3 00
+ .text          0xc0002790      0x283 vga.o
+                0xc0002790                vgainitcon
+                0xc000281d                vgaputs
+                0xc00028f3                vgaputs2
+                0xc00029c7                vgaputchar
+                0xc0002a0e                vgasyncscr
+ *(.rodata*)
+ .rodata.str1.1
+                0xc0002a13       0x6e main.o
+ *fill*         0xc0002a81        0x3 00
+ .rodata.str1.4
+                0xc0002a84       0x8c main.o
+ .rodata.str1.1
+                0xc0002b10       0x19 vm.o
+ *fill*         0xc0002b29        0x3 00
+ .rodata        0xc0002b2c       0x68 util.o
+                0xc0002b84                _ltoxtab
+ .rodata.str1.1
+                0xc0002b94       0x1a cpuid.o
+ *fill*         0xc0002bae        0x2 00
+ .rodata.str1.4
+                0xc0002bb0       0x50 kbd.o
+                                 0x4d (size before relaxing)
+ .rodata.str1.1
+                0xc0002c00       0xc9 logo.o
+ .rodata.str1.1
+                0xc0002cc9       0x1e mouse.o
+ *(.rodata.*)
+ *(.eh*)
+ *fill*         0xc0002ce7        0x1 00
+ .eh_frame      0xc0002ce8       0x38 main.o
+ .eh_frame      0xc0002d20       0x40 trap.o
+                                 0x58 (size before relaxing)
+ .eh_frame      0xc0002d60       0x40 pic.o
+                                 0x58 (size before relaxing)
+ .eh_frame      0xc0002da0       0x28 seg.o
+                                 0x40 (size before relaxing)
+ .eh_frame      0xc0002dc8       0xd8 vm.o
+                                 0xf0 (size before relaxing)
+ .eh_frame      0xc0002ea0      0x124 util.o
+                                0x13c (size before relaxing)
+ .eh_frame      0xc0002fc4       0x2c bitmap.o
+                                 0x44 (size before relaxing)
+ .eh_frame      0xc0002ff0       0xf0 buf.o
+                                0x108 (size before relaxing)
+ .eh_frame      0xc00030e0       0x30 cpuid.o
+                                 0x48 (size before relaxing)
+ .eh_frame      0xc0003110       0x20 cpu.o
+                                 0x38 (size before relaxing)
+ .eh_frame      0xc0003130       0x24 init.o
+                                 0x3c (size before relaxing)
+ .eh_frame      0xc0003154       0x60 kbd.o
+                                 0x78 (size before relaxing)
+ .eh_frame      0xc00031b4       0x20 logo.o
+                                 0x38 (size before relaxing)
+ .eh_frame      0xc00031d4       0x5c mag32.o
+                                 0x74 (size before relaxing)
+ .eh_frame      0xc0003230       0x20 mem32.o
+                                 0x38 (size before relaxing)
+ .eh_frame      0xc0003250       0x50 mouse.o
+                                 0x68 (size before relaxing)
+ .eh_frame      0xc00032a0       0x64 page.o
+                                 0x7c (size before relaxing)
+ .eh_frame      0xc0003304       0x44 pit.o
+                                 0x5c (size before relaxing)
+ .eh_frame      0xc0003348       0x4c proc.o
+                                 0x64 (size before relaxing)
+ .eh_frame      0xc0003394       0x6c sched.o
+                                 0x84 (size before relaxing)
+ .eh_frame      0xc0003400       0x44 sig.o
+                                 0x5c (size before relaxing)
+ .eh_frame      0xc0003444       0xe8 slab32.o
+                                0x100 (size before relaxing)
+ .eh_frame      0xc000352c       0x60 task.o
+                                 0x78 (size before relaxing)
+ .eh_frame      0xc000358c       0x60 thr.o
+                                 0x78 (size before relaxing)
+ .eh_frame      0xc00035ec       0xc0 tmr.o
+                                 0xd8 (size before relaxing)
+ .eh_frame      0xc00036ac       0x4c tss.o
+                                 0x64 (size before relaxing)
+ .eh_frame      0xc00036f8       0xc8 vga.o
+                                 0xe0 (size before relaxing)
+                0xc0004000                _etext = (_text + SIZEOF (.text))
+                0xc0c04000                _etextvirt = (_textvirt + SIZEOF (.text))
+                0xc0004000                . = ALIGN (PAGESIZE)
+ *fill*         0xc00037c0      0x840 00
+
+.iplt           0xc0004000        0x0 load address 0x00c04000
+ .iplt          0x00000000        0x0 boot.o
+
+.rel.dyn        0xc0004000        0x0 load address 0x00c04000
+ .rel.iplt      0x00000000        0x0 boot.o
+ .rel.text      0x00000000        0x0 boot.o
+
+.data           0xc0004000     0x2000 load address 0x00c04000
+                0xc0004000                _data = _etext
+                0xc0c04000                _datavirt = _etextvirt
+ *(.data)
+ .data          0xc0004000        0x0 main.o
+ .data          0xc0004000        0x0 trap.o
+ .data          0xc0004000        0x0 pic.o
+ .data          0xc0004000        0x0 seg.o
+ .data          0xc0004000        0x0 vm.o
+ .data          0xc0004000        0x0 util.o
+ .data          0xc0004000        0x0 mpentry.o
+ .data          0xc0004000        0x0 apic.o
+ .data          0xc0004000        0x0 bitmap.o
+ .data          0xc0004000        0x0 buf.o
+ .data          0xc0004000        0x0 cpuid.o
+ .data          0xc0004000        0x0 cpu.o
+ .data          0xc0004000     0x112c entry.o
+                0xc0004000                errno
+                0xc0005098                sysvec
+ .data          0xc000512c        0x0 init.o
+ .data          0xc000512c        0x0 ioapic.o
+ .data          0xc000512c        0x0 kbd.o
+ .data          0xc000512c        0x0 logo.o
+ .data          0xc000512c        0x0 mag32.o
+ .data          0xc000512c        0x0 mem32.o
+ .data          0xc000512c        0x0 mouse.o
+ .data          0xc000512c        0x0 page.o
+ .data          0xc000512c        0x0 pit.o
+ .data          0xc000512c        0x0 proc.o
+ .data          0xc000512c        0x0 sched.o
+ *fill*         0xc000512c       0x14 00
+ .data          0xc0005140       0x50 sig.o
+                0xc0005140                signumtab
+ .data          0xc0005190        0x0 slab32.o
+ .data          0xc0005190        0x0 task.o
+ .data          0xc0005190        0x0 thr.o
+ .data          0xc0005190        0x0 tmr.o
+ .data          0xc0005190        0x0 tss.o
+ .data          0xc0005190        0x0 vga.o
+                0xc0006000                . = ALIGN (PAGESIZE)
+ *fill*         0xc0005190      0xe70 00
+
+.igot.plt       0xc0006000        0x0 load address 0x00c06000
+ .igot.plt      0x00000000        0x0 boot.o
+
+.bss            0xc0006000  0x2364000 load address 0x00c06000
+                0xc0006000                _bss = (_data + SIZEOF (.data))
+                0xc0c08000                _bssvirt = (_etextvirt + SIZEOF (.text))
+ *(.bss)
+ .bss           0xc0006000        0x0 setup.o
+ .bss           0xc0006000        0x0 main.o
+ .bss           0xc0006000        0x0 isr.o
+ .bss           0xc0006000        0x0 pic.o
+ .bss           0xc0006000        0x0 seg.o
+ .bss           0xc0006000   0x880000 vm.o
+ .bss           0xc0886000        0x0 util.o
+ .bss           0xc0886000        0x0 mpentry.o
+ .bss           0xc0886000        0x0 apic.o
+ .bss           0xc0886000        0x0 bitmap.o
+ .bss           0xc0886000     0x1808 buf.o
+ *fill*         0xc0887808       0x18 00
+ .bss           0xc0887820     0x1000 cpuid.o
+ .bss           0xc0888820        0x0 cpu.o
+ .bss           0xc0888820        0x0 entry.o
+ .bss           0xc0888820        0x0 init.o
+ .bss           0xc0888820        0x0 ioapic.o
+ .bss           0xc0888820      0x604 kbd.o
+ .bss           0xc0888e24        0x0 logo.o
+ .bss           0xc0888e24        0x0 mag32.o
+ .bss           0xc0888e24        0x0 mem32.o
+ *fill*         0xc0888e24       0x1c 00
+ .bss           0xc0888e40       0x20 mouse.o
+ .bss           0xc0888e60        0x0 page.o
+ .bss           0xc0888e60        0x0 pit.o
+ .bss           0xc0888e60        0x0 proc.o
+ .bss           0xc0888e60        0x0 sched.o
+ .bss           0xc0888e60        0x0 sig.o
+ .bss           0xc0888e60        0x0 slab32.o
+ *fill*         0xc0888e60      0x1a0 00
+ .bss           0xc0889000    0x11000 task.o
+ .bss           0xc089a000        0x0 thr.o
+ .bss           0xc089a000        0x4 tmr.o
+ .bss           0xc089a004        0x0 tss.o
+ .bss           0xc089a004        0x4 vga.o
+ *(COMMON)
+ COMMON         0xc089a008       0x14 main.o
+                0xc089a008                PACK
+ COMMON         0xc089a01c       0x28 vm.o
+                0xc089a01c                vmpagelruq
+                0xc089a028                vmnwiredpages
+                0xc089a02c                vmnphyspages
+                0xc089a030                vmnmappedpages
+                0xc089a034                vmnbufpages
+                0xc089a038                vmbufq
+ *fill*         0xc089a044       0x1c 00
+ COMMON         0xc089a060       0x34 cpuid.o
+                0xc089a060                cpuinfo
+ *fill*         0xc089a094      0xf6c 00
+ COMMON         0xc089b000       0xf4 cpu.o
+                0xc089b000                cputab
+ *fill*         0xc089b0f4      0xf0c 00
+ COMMON         0xc089c000   0x4c1000 mag32.o
+                0xc089c000                _freelktab
+                0xc089c080                _freehdrtab
+                0xc089d000                _maghdrtab
+ COMMON         0xc0d5d000    0x81000 mem32.o
+                0xc0d5d000                virtslabtab
+                0xc0d5e000                virthdrtab
+ COMMON         0xc0dde000   0x400010 page.o
+                0xc0dde000                physptab
+                0xc11de000                physfreeq
+                0xc11de00c                npagefree
+ COMMON         0xc11de010        0x4 pit.o
+                0xc11de010                irqtimerfired
+ *fill*         0xc11de014      0xfec 00
+ COMMON         0xc11df000  0x1120000 proc.o
+                0xc11df000                proctab
+                0xc12df000                thrtab
+ COMMON         0xc22ff000      0x100 sig.o
+                0xc22ff000                sigfunctab
+ *fill*         0xc22ff100      0xf00 00
+ COMMON         0xc2300000      0x100 slab32.o
+                0xc2300000                _physslabtab
+                0xc2300080                _physlktab
+ COMMON         0xc2300100      0x804 thr.o
+                0xc2300100                runqueuetab
+                0xc2300500                runqueuelktab
+                0xc2300900                corethrtab
+ *fill*         0xc2300904       0x1c 00
+ COMMON         0xc2300920    0x68000 tss.o
+                0xc2300920                tsstab
+ *fill*         0xc2368920      0x6e0 00
+ COMMON         0xc2369000       0xa0 vga.o
+                0xc2369000                _vgacontab
+                0xc236a000                _ebss = (_bss + SIZEOF (.bss))
+                0xc2f6c000                _ebssvirt = (_bssvirt + SIZEOF (.bss))
+                0xc236a000                . = ALIGN (PAGESIZE)
+ *fill*         0xc23690a0      0xf60 00
+                0x02f6a000                _kernsize = ((((PAGETAB + PAGETABSIZE) + SIZEOF (.text)) + SIZEOF (.data)) + SIZEOF (.bss))
+LOAD apic.o
+LOAD bitmap.o
+LOAD boot.o
+LOAD buf.o
+LOAD cpuid.o
+LOAD cpu.o
+LOAD entry.o
+LOAD init.o
+LOAD ioapic.o
+LOAD isr.o
+LOAD kbd.o
+LOAD logo.o
+LOAD mag32.o
+LOAD main.o
+LOAD mem32.o
+LOAD mouse.o
+LOAD mpentry.o
+LOAD mp.o
+LOAD page.o
+LOAD pic.o
+LOAD pit.o
+LOAD proc.o
+LOAD sched.o
+LOAD seg.o
+LOAD setup.o
+LOAD sig.o
+LOAD slab32.o
+LOAD task.o
+LOAD thr.o
+LOAD tmr.o
+LOAD trap.o
+LOAD tss.o
+LOAD util.o
+LOAD vga.o
+LOAD vm.o
+OUTPUT(zero elf32-i386)
+
+.debug_line     0x00000000     0x212d
+ .debug_line    0x00000000       0x3e boot.o
+ .debug_line    0x0000003e       0x4b setup.o
+ .debug_line    0x00000089      0x15d main.o
+ .debug_line    0x000001e6       0xae trap.o
+ .debug_line    0x00000294      0x1e1 isr.o
+ .debug_line    0x00000475       0x44 pic.o
+ .debug_line    0x000004b9       0xe6 seg.o
+ .debug_line    0x0000059f      0x256 vm.o
+ .debug_line    0x000007f5      0x237 util.o
+ .debug_line    0x00000a2c        0x0 mp.o
+ .debug_line    0x00000a2c       0x1d apic.o
+ .debug_line    0x00000a49       0x6c bitmap.o
+ .debug_line    0x00000ab5      0x24a buf.o
+ .debug_line    0x00000cff       0xcf cpuid.o
+ .debug_line    0x00000dce       0xa6 cpu.o
+ .debug_line    0x00000e74       0x7b entry.o
+ .debug_line    0x00000eef       0xc1 init.o
+ .debug_line    0x00000fb0        0x0 ioapic.o
+ .debug_line    0x00000fb0      0x194 kbd.o
+ .debug_line    0x00001144       0x54 logo.o
+ .debug_line    0x00001198      0x17b mag32.o
+ .debug_line    0x00001313       0xa3 mem32.o
+ .debug_line    0x000013b6       0xbd mouse.o
+ .debug_line    0x00001473      0x189 page.o
+ .debug_line    0x000015fc       0x69 pit.o
+ .debug_line    0x00001665      0x11e proc.o
+ .debug_line    0x00001783      0x11c sched.o
+ .debug_line    0x0000189f       0xc5 sig.o
+ .debug_line    0x00001964      0x317 slab32.o
+ .debug_line    0x00001c7b      0x152 task.o
+ .debug_line    0x00001dcd      0x118 thr.o
+ .debug_line    0x00001ee5       0x41 tmr.o
+ .debug_line    0x00001f26       0xc6 tss.o
+ .debug_line    0x00001fec      0x141 vga.o
+
+.debug_info     0x00000000     0x8d02
+ .debug_info    0x00000000       0x5f boot.o
+ .debug_info    0x0000005f       0x60 setup.o
+ .debug_info    0x000000bf      0xbed main.o
+ .debug_info    0x00000cac      0x37a trap.o
+ .debug_info    0x00001026       0x5e isr.o
+ .debug_info    0x00001084       0xa2 pic.o
+ .debug_info    0x00001126      0xa3d seg.o
+ .debug_info    0x00001b63      0xa28 vm.o
+ .debug_info    0x0000258b      0x7c0 util.o
+ .debug_info    0x00002d4b       0x56 apic.o
+ .debug_info    0x00002da1       0xb2 bitmap.o
+ .debug_info    0x00002e53      0xa81 buf.o
+ .debug_info    0x000038d4      0x306 cpuid.o
+ .debug_info    0x00003bda      0x64c cpu.o
+ .debug_info    0x00004226       0x60 entry.o
+ .debug_info    0x00004286      0x3b0 init.o
+ .debug_info    0x00004636      0x1c2 kbd.o
+ .debug_info    0x000047f8      0x138 logo.o
+ .debug_info    0x00004930      0x677 mag32.o
+ .debug_info    0x00004fa7      0x255 mem32.o
+ .debug_info    0x000051fc      0x242 mouse.o
+ .debug_info    0x0000543e      0x516 page.o
+ .debug_info    0x00005954      0x192 pit.o
+ .debug_info    0x00005ae6      0x83c proc.o
+ .debug_info    0x00006322      0x66f sched.o
+ .debug_info    0x00006991      0x3a1 sig.o
+ .debug_info    0x00006d32      0xaad slab32.o
+ .debug_info    0x000077df      0x489 task.o
+ .debug_info    0x00007c68      0x764 thr.o
+ .debug_info    0x000083cc       0xc7 tmr.o
+ .debug_info    0x00008493      0x4d0 tss.o
+ .debug_info    0x00008963      0x39f vga.o
+
+.debug_abbrev   0x00000000     0x2813
+ .debug_abbrev  0x00000000       0x14 boot.o
+ .debug_abbrev  0x00000014       0x14 setup.o
+ .debug_abbrev  0x00000028      0x193 main.o
+ .debug_abbrev  0x000001bb       0xda trap.o
+ .debug_abbrev  0x00000295       0x14 isr.o
+ .debug_abbrev  0x000002a9       0x65 pic.o
+ .debug_abbrev  0x0000030e      0x17e seg.o
+ .debug_abbrev  0x0000048c      0x289 vm.o
+ .debug_abbrev  0x00000715      0x2ce util.o
+ .debug_abbrev  0x000009e3       0x26 apic.o
+ .debug_abbrev  0x00000a09       0x80 bitmap.o
+ .debug_abbrev  0x00000a89      0x265 buf.o
+ .debug_abbrev  0x00000cee      0x190 cpuid.o
+ .debug_abbrev  0x00000e7e      0x100 cpu.o
+ .debug_abbrev  0x00000f7e       0x14 entry.o
+ .debug_abbrev  0x00000f92      0x151 init.o
+ .debug_abbrev  0x000010e3      0x129 kbd.o
+ .debug_abbrev  0x0000120c       0x90 logo.o
+ .debug_abbrev  0x0000129c      0x223 mag32.o
+ .debug_abbrev  0x000014bf      0x111 mem32.o
+ .debug_abbrev  0x000015d0      0x110 mouse.o
+ .debug_abbrev  0x000016e0      0x1ca page.o
+ .debug_abbrev  0x000018aa      0x109 pit.o
+ .debug_abbrev  0x000019b3      0x1cf proc.o
+ .debug_abbrev  0x00001b82      0x23e sched.o
+ .debug_abbrev  0x00001dc0      0x12e sig.o
+ .debug_abbrev  0x00001eee      0x2a8 slab32.o
+ .debug_abbrev  0x00002196      0x1b6 task.o
+ .debug_abbrev  0x0000234c      0x180 thr.o
+ .debug_abbrev  0x000024cc       0x60 tmr.o
+ .debug_abbrev  0x0000252c      0x18a tss.o
+ .debug_abbrev  0x000026b6      0x15d vga.o
+
+.debug_aranges  0x00000000      0x3f8
+ .debug_aranges
+                0x00000000       0x20 boot.o
+ .debug_aranges
+                0x00000020       0x20 setup.o
+ .debug_aranges
+                0x00000040       0x20 main.o
+ .debug_aranges
+                0x00000060       0x20 trap.o
+ .debug_aranges
+                0x00000080       0x20 isr.o
+ .debug_aranges
+                0x000000a0       0x20 pic.o
+ .debug_aranges
+                0x000000c0       0x20 seg.o
+ .debug_aranges
+                0x000000e0       0x20 vm.o
+ .debug_aranges
+                0x00000100       0x20 util.o
+ .debug_aranges
+                0x00000120       0x18 apic.o
+ .debug_aranges
+                0x00000138       0x20 bitmap.o
+ .debug_aranges
+                0x00000158       0x20 buf.o
+ .debug_aranges
+                0x00000178       0x20 cpuid.o
+ .debug_aranges
+                0x00000198       0x20 cpu.o
+ .debug_aranges
+                0x000001b8       0x20 entry.o
+ .debug_aranges
+                0x000001d8       0x20 init.o
+ .debug_aranges
+                0x000001f8       0x20 kbd.o
+ .debug_aranges
+                0x00000218       0x20 logo.o
+ .debug_aranges
+                0x00000238       0x20 mag32.o
+ .debug_aranges
+                0x00000258       0x20 mem32.o
+ .debug_aranges
+                0x00000278       0x20 mouse.o
+ .debug_aranges
+                0x00000298       0x20 page.o
+ .debug_aranges
+                0x000002b8       0x20 pit.o
+ .debug_aranges
+                0x000002d8       0x20 proc.o
+ .debug_aranges
+                0x000002f8       0x20 sched.o
+ .debug_aranges
+                0x00000318       0x20 sig.o
+ .debug_aranges
+                0x00000338       0x20 slab32.o
+ .debug_aranges
+                0x00000358       0x20 task.o
+ .debug_aranges
+                0x00000378       0x20 thr.o
+ .debug_aranges
+                0x00000398       0x20 tmr.o
+ .debug_aranges
+                0x000003b8       0x20 tss.o
+ .debug_aranges
+                0x000003d8       0x20 vga.o
+
+.debug_loc      0x00000000     0x51fc
+ .debug_loc     0x00000000       0x52 main.o
+ .debug_loc     0x00000052       0x70 trap.o
+ .debug_loc     0x000000c2       0x70 pic.o
+ .debug_loc     0x00000132       0x95 seg.o
+ .debug_loc     0x000001c7      0x5c0 vm.o
+ .debug_loc     0x00000787     0x1003 util.o
+ .debug_loc     0x0000178a      0x205 bitmap.o
+ .debug_loc     0x0000198f      0x936 buf.o
+ .debug_loc     0x000022c5       0x80 cpuid.o
+ .debug_loc     0x00002345       0x38 cpu.o
+ .debug_loc     0x0000237d       0x61 init.o
+ .debug_loc     0x000023de      0x23b kbd.o
+ .debug_loc     0x00002619       0x38 logo.o
+ .debug_loc     0x00002651      0x4cf mag32.o
+ .debug_loc     0x00002b20       0x38 mem32.o
+ .debug_loc     0x00002b58      0x328 mouse.o
+ .debug_loc     0x00002e80      0x1d8 page.o
+ .debug_loc     0x00003058       0x8e pit.o
+ .debug_loc     0x000030e6      0x284 proc.o
+ .debug_loc     0x0000336a      0x2c8 sched.o
+ .debug_loc     0x00003632       0xbf sig.o
+ .debug_loc     0x000036f1     0x1024 slab32.o
+ .debug_loc     0x00004715      0x190 task.o
+ .debug_loc     0x000048a5       0xa8 thr.o
+ .debug_loc     0x0000494d      0x150 tmr.o
+ .debug_loc     0x00004a9d      0x12c tss.o
+ .debug_loc     0x00004bc9      0x633 vga.o
+
+.debug_str      0x00000000      0xc48
+ .debug_str     0x00000000      0x3f7 main.o
+                                0x478 (size before relaxing)
+ .debug_str     0x000003f7       0x45 trap.o
+                                0x126 (size before relaxing)
+ .debug_str     0x0000043c        0xa pic.o
+                                 0xde (size before relaxing)
+ .debug_str     0x00000446       0xcd seg.o
+                                0x36a (size before relaxing)
+ .debug_str     0x00000513      0x108 vm.o
+                                0x2d1 (size before relaxing)
+ .debug_str     0x0000061b       0xd5 util.o
+                                0x20c (size before relaxing)
+ .debug_str     0x000006f0        0x7 apic.o
+                                 0xbb (size before relaxing)
+ .debug_str     0x000006f7       0x21 bitmap.o
+                                 0x8e (size before relaxing)
+ .debug_str     0x00000718       0xcf buf.o
+                                0x234 (size before relaxing)
+ .debug_str     0x000007e7       0x6f cpuid.o
+                                0x186 (size before relaxing)
+ .debug_str     0x00000856        0xe cpu.o
+                                0x245 (size before relaxing)
+ .debug_str     0x00000864       0x2c init.o
+                                0x205 (size before relaxing)
+ .debug_str     0x00000890       0x5f kbd.o
+                                0x145 (size before relaxing)
+ .debug_str     0x000008ef        0xa logo.o
+                                 0xd0 (size before relaxing)
+ .debug_str     0x000008f9       0x80 mag32.o
+                                0x207 (size before relaxing)
+ .debug_str     0x00000979       0x33 mem32.o
+                                0x181 (size before relaxing)
+ .debug_str     0x000009ac       0x56 mouse.o
+                                0x172 (size before relaxing)
+ .debug_str     0x00000a02       0x33 page.o
+                                0x1c2 (size before relaxing)
+ .debug_str     0x00000a35       0x22 pit.o
+                                0x11c (size before relaxing)
+ .debug_str     0x00000a57       0x22 proc.o
+                                0x2dc (size before relaxing)
+ .debug_str     0x00000a79       0x51 sched.o
+                                0x237 (size before relaxing)
+ .debug_str     0x00000aca       0x34 sig.o
+                                0x204 (size before relaxing)
+ .debug_str     0x00000afe       0x59 slab32.o
+                                0x214 (size before relaxing)
+ .debug_str     0x00000b57       0x28 task.o
+                                0x18d (size before relaxing)
+ .debug_str     0x00000b7f       0x29 thr.o
+                                0x2fd (size before relaxing)
+ .debug_str     0x00000ba8       0x45 tmr.o
+                                 0xa9 (size before relaxing)
+ .debug_str     0x00000bed       0x13 tss.o
+                                0x1ff (size before relaxing)
+ .debug_str     0x00000c00       0x48 vga.o
+                                0x173 (size before relaxing)
+
+.comment        0x00000000       0x27
+ .comment       0x00000000       0x27 main.o
+                                 0x28 (size before relaxing)
+ .comment       0x00000000       0x28 trap.o
+ .comment       0x00000000       0x28 pic.o
+ .comment       0x00000000       0x28 seg.o
+ .comment       0x00000000       0x28 vm.o
+ .comment       0x00000000       0x28 util.o
+ .comment       0x00000000       0x28 mp.o
+ .comment       0x00000000       0x28 apic.o
+ .comment       0x00000000       0x28 bitmap.o
+ .comment       0x00000000       0x28 buf.o
+ .comment       0x00000000       0x28 cpuid.o
+ .comment       0x00000000       0x28 cpu.o
+ .comment       0x00000000       0x28 init.o
+ .comment       0x00000000       0x28 ioapic.o
+ .comment       0x00000000       0x28 kbd.o
+ .comment       0x00000000       0x28 logo.o
+ .comment       0x00000000       0x28 mag32.o
+ .comment       0x00000000       0x28 mem32.o
+ .comment       0x00000000       0x28 mouse.o
+ .comment       0x00000000       0x28 page.o
+ .comment       0x00000000       0x28 pit.o
+ .comment       0x00000000       0x28 proc.o
+ .comment       0x00000000       0x28 sched.o
+ .comment       0x00000000       0x28 sig.o
+ .comment       0x00000000       0x28 slab32.o
+ .comment       0x00000000       0x28 task.o
+ .comment       0x00000000       0x28 thr.o
+ .comment       0x00000000       0x28 tmr.o
+ .comment       0x00000000       0x28 tss.o
+ .comment       0x00000000       0x28 vga.o
+
+.note.GNU-stack
+                0x00000000        0x0
+ .note.GNU-stack
+                0x00000000        0x0 main.o
+ .note.GNU-stack
+                0x00000000        0x0 trap.o
+ .note.GNU-stack
+                0x00000000        0x0 pic.o
+ .note.GNU-stack
+                0x00000000        0x0 seg.o
+ .note.GNU-stack
+                0x00000000        0x0 vm.o
+ .note.GNU-stack
+                0x00000000        0x0 util.o
+ .note.GNU-stack
+                0x00000000        0x0 mp.o
+ .note.GNU-stack
+                0x00000000        0x0 apic.o
+ .note.GNU-stack
+                0x00000000        0x0 bitmap.o
+ .note.GNU-stack
+                0x00000000        0x0 buf.o
+ .note.GNU-stack
+                0x00000000        0x0 cpuid.o
+ .note.GNU-stack
+                0x00000000        0x0 cpu.o
+ .note.GNU-stack
+                0x00000000        0x0 init.o
+ .note.GNU-stack
+                0x00000000        0x0 ioapic.o
+ .note.GNU-stack
+                0x00000000        0x0 kbd.o
+ .note.GNU-stack
+                0x00000000        0x0 logo.o
+ .note.GNU-stack
+                0x00000000        0x0 mag32.o
+ .note.GNU-stack
+                0x00000000        0x0 mem32.o
+ .note.GNU-stack
+                0x00000000        0x0 mouse.o
+ .note.GNU-stack
+                0x00000000        0x0 page.o
+ .note.GNU-stack
+                0x00000000        0x0 pit.o
+ .note.GNU-stack
+                0x00000000        0x0 proc.o
+ .note.GNU-stack
+                0x00000000        0x0 sched.o
+ .note.GNU-stack
+                0x00000000        0x0 sig.o
+ .note.GNU-stack
+                0x00000000        0x0 slab32.o
+ .note.GNU-stack
+                0x00000000        0x0 task.o
+ .note.GNU-stack
+                0x00000000        0x0 thr.o
+ .note.GNU-stack
+                0x00000000        0x0 tmr.o
+ .note.GNU-stack
+                0x00000000        0x0 tss.o
+ .note.GNU-stack
+                0x00000000        0x0 vga.o
+
+.debug_ranges   0x00000000      0x148
+ .debug_ranges  0x00000000       0xa0 util.o
+ .debug_ranges  0x000000a0       0x18 buf.o
+ .debug_ranges  0x000000b8       0x48 sched.o
+ .debug_ranges  0x00000100       0x48 slab32.o
