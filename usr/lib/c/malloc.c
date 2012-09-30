@@ -139,7 +139,7 @@ typedef pthread_mutex_t LK_T;
 #if (PTRBITS > 32)
 #define TUNEBUF 1
 #else
-#define TUNEBUF 1
+#define TUNEBUF 0
 #endif
 
 /* basic allocator parameters */
@@ -160,7 +160,7 @@ typedef pthread_mutex_t LK_T;
 #define HQMAX         SLABLOG2
 #define NBKT          (8 * PTRSIZE)
 #if (MTSAFE)
-#define NARN          8
+#define NARN          4
 #else
 #define NARN          1
 #endif
@@ -192,12 +192,10 @@ typedef pthread_mutex_t LK_T;
 
 /* macros */
 
+#define isbufbkt(bid)     ((bid) <= MAPMIDLOG2)
 #if (TUNEBUF)
-//#define isbufbkt(bid)     ((bid) <= 24)
-#define isbufbkt(bid)     ismapbkt(bid)
 #define nmagslablog2(bid) (_nslabtab[(bid)])
 #else
-#define isbufbkt(bid)     0
 #define nmagslablog2(bid) (ismapbkt(bid) ? nmaplog2(bid) : nslablog2(bid))
 #define nslablog2(bid)    0
 #define nmaplog2(bid)     0

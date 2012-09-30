@@ -70,3 +70,14 @@ usr/
 	----------
 	- a few game ideas (so far)
 
+	usr/tools/
+	----------
+
+	wpm/
+	----
+	- wizard pseudo machine, i.e. a virtual architecture project
+
+	zpc/
+	----
+	- zero programmer's calculator
+
