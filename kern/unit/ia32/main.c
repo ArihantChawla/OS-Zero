@@ -10,9 +10,9 @@
 #include <kern/unit/ia32/link.h>
 #include <kern/unit/ia32/boot.h>
 #include <kern/unit/ia32/cpu.h>
+#include <kern/unit/ia32/pit.h>
 #include <kern/unit/ia32/thr.h>
 #include <kern/unit/ia32/vm.h>
-#include <kern/unit/ia32/pit.h>
 #include <kern/unit/ia32/dma.h>
 
 extern uint8_t            kerniomap[8192] ALIGNED(PAGESIZE);

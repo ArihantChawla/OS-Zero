@@ -1,6 +1,6 @@
-#include <kern/unit/ia32/io.h>
 #include <kern/unit/ia32/trap.h>
 #include <kern/unit/ia32/pic.h>
+#include <kern/unit/ia32/io.h>
 
 /*
  * map IRQs 0-15 to 0x20-0x2f

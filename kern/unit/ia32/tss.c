@@ -17,11 +17,6 @@ extern uint64_t     kerngdt[NTHR][NGDT];
 
 struct m_tss tsstab[NTHR];
 
-void dummy(void)
-{
-    ;
-}
-
 void
 tssinit(long id)
 {

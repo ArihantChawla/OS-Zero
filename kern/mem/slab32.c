@@ -1,5 +1,3 @@
-/* TODO: 64-bit allocator */
-
 #include <stddef.h>
 #include <zero/trix.h>
 #include <kern/util.h>
