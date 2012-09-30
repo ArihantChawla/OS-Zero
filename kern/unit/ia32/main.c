@@ -47,7 +47,6 @@ kmain(void)
     if (mpmultiproc) {
 //        mpstart();
     }
-#if 0
     if (mpncpu == 1) {
         kprintf("found %ld processor\n", mpncpu);
     } else {
@@ -56,9 +55,7 @@ kmain(void)
     if (mpapic) {
         kprintf("local APIC @ 0x%p\n", mpapic);
     }
-#else
     curcpu = &cputab[0];
-#endif
 #endif
     trapinit();                         // interrupt management
     seginit(0);                         // memory segments

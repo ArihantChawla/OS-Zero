@@ -237,7 +237,7 @@ vmpagefault(uint32_t adr, uint32_t flags)
     uint32_t       flg = *pte & (PFFLGMASK | PAGESYSFLAGS);
     uint32_t       page = *pte;
 
-    if (!page) {
+    if (!(page & ~(PFFLGMASK | PAGESYSFLAGS))) {
         page = (uint32_t)pagealloc(adr);
         if (!page) {
             page = (uint32_t)pagealloc(adr);
