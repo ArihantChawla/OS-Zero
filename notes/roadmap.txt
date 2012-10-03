@@ -1,0 +1,101 @@
+unit
+----
+- <zero/param.h>
+- <ucontext.h>
+
+ia32
+----
+- <apic.h>
+- <trap.h>
+- <cpuid.h>
+- <ctx.h>
+- <boot.h>
+- <mp.h>
+
+bsp
+---
+- <pic.h>
+- <pit.h>
+
+mem
+---
+- <page.h>
+- <vm.h>
+- <buf.h>
+- <slab.h>
+- <mag.h>
+- <shm.h>
+
+io
+--
+- <sys/io.h>
+
+ld
+--
+- kern.lds
+
+cc
+--
+- <zero/cdecl.h>
+  - C declarations
+  - ALIGNED(a), PACK(), REGARGS(n), FASTCALL, NORET, likely(), unlikely(),
+    isconst()
+
+feature macros
+--------------
+<features.h>
+
+ld
+--
+- kern.lds
+
+snd
+---
+- <syn.h>
+- <seq.h>
+- <mix.h>
+- <alsa.h>
+- <ac97.h>
+- <sb16.h>
+- <mt32.h>
+- <midi.h>
+
+io
+--
+- <dma.h>
+- <ps2.h>
+- <pci.h>
+- <agp.h>
+- <ata.h>
+- <vfs.h>
+- <ffs.h>
+- <disk.h>
+- <tape.h>
+- <uart.h>
+
+kern
+----
+- <sched.h>
+- <proc.h>
+- <thr.h>
+- <iosched.h>
+- <wait.h>
+- <syscall.h>
+- <tmr.h>
+
+zero
+----
+- <ieee854.h>
+- <fpu.h>
+  - <ia32/i387.h>
+- <hash.h>
+- <vtree.h>
+- <list.h>
+- <rbtree.h>
+- <bloom.h>
+- <rope.h>
+- <mtx.h>
+- <sem.h>
+- <mq.h>
+- <acl.h>
+
