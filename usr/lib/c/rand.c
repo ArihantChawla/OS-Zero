@@ -1,5 +1,15 @@
 /*
+ * 32-bit implementation of the Mersenne Twister MT19937 algorithm
+ */
+
+/*
  * REFERENCE: https://en.wikipedia.org/wiki/Mersenne_twister
+ */
+
+/*
+ * optimisations
+ * -------------
+ * - elimination of modulus calculations and in-loop branches by unrolling loops
  */
 
 #include <stdint.h>
@@ -8,14 +18,17 @@
 
 void srand32(uint32_t seed);
 
-#define RAND32NBUFITEM   624
+#define RAND32NBUFITEM   624            // # of buffer values
+/* magic numbers */
 #define RAND32MULTIPLIER 0x6c078965
 #define RAND32XORVALUE   0x9908b0df
+/* shift counts */
 #define RAND32SHIFT      30
 #define RAND32SHIFT1     11
 #define RAND32SHIFT2     7
 #define RAND32SHIFT3     15
 #define RAND32SHIFT4     18
+/* bitmasks */
 #define RAND32MASK2      0x9d2c5680
 #define RAND32MASK3      0xefc60000
 
@@ -60,7 +73,8 @@ _randbuf32(void)
         randbuf32[i] = (randbuf32[(623 - 397 + i)]) ^ (x >> 1);
         i++;
         x = (randbuf32[i] & 0x80000000) + (randbuf32[(i + 1) % RAND32NBUFITEM]);
-        randbuf32[i] = ((randbuf32[(623 - 397 + i)]) ^ (x >> 1)) ^ RAND32XORVALUE;
+        randbuf32[i] = ((randbuf32[(623 - 397 + i)])
+                        ^ (x >> 1)) ^ RAND32XORVALUE;
     }
 }
 

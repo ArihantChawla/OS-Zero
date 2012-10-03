@@ -21,7 +21,7 @@ setjmp(jmp_buf env)
 }
 
 #if defined(ASMLINK)
-ASMLINK
+ASMLINK NORET
 #endif
 void
 longjmp(jmp_buf env,
@@ -45,7 +45,7 @@ _setjmp(jmp_buf env)
 }
 
 #if defined(ASMLINK)
-ASMLINK
+ASMLINK NORET
 #endif
 void
 _longjmp(jmp_buf env,

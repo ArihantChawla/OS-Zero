@@ -12,15 +12,25 @@ kern/
 	kern/
 	-----
 	- higher half kernel implementation
+	  - sched		- thread scheduler
 	  - proc		- process abstraction
 	  - thr			- thread scheduler
 	  - buf			- buffer cache
 	  - signal		- signal messaging (realtime included)
 	  - syscall		- system call interface
+	  - util		- miscellaneous utilities
 
-	kern/ia32
-	---------
+	kern/mem
+	--------
+	- kernel memory management
+	  - page		- page daemon
+	  - slab32		- 32-bit slab allocator
+	  - mag32		- 32-bit mag allocator
+
+	kern/unit/ia32
+	--------------
 	- IA-32 platform version of [32-bit] kernel
+	  - apic	 	 - advanced programmable interrupt controller
 
 	kern/io/drv
 	-----------
