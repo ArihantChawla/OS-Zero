@@ -30,10 +30,6 @@ io
 --
 - <sys/io.h>
 
-ld
---
-- kern.lds
-
 cc
 --
 - <zero/cdecl.h>

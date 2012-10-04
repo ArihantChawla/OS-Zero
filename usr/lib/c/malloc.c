@@ -147,8 +147,8 @@ typedef pthread_mutex_t LK_T;
 #define BLKMINLOG2    5  /* minimum-size allocation */
 #define SLABTEENYLOG2 14 /* little block */
 #define SLABTINYLOG2  17 /* small-size block */
-#define SLABLOG2      22 /* base size for heap allocations */
-#define MAPMIDLOG2    24
+#define SLABLOG2      21 /* base size for heap allocations */
+#define MAPMIDLOG2    23
 #else
 #define BLKMINLOG2    5  /* minimum-size allocation */
 #define SLABTEENYLOG2 12 /* little block */
@@ -305,8 +305,14 @@ typedef pthread_mutex_t LK_T;
 #endif /* TUNEBUF */
 #define nblklog2(bid)                                                   \
     ((!(ismapbkt(bid))                                                  \
+      ? (nmagslablog2(bid) + SLABLOG2 - (bid))                          \
+      : nmagslablog2(bid)))
+#if 0
+#define nblklog2(bid)                                                   \
+    ((!(ismapbkt(bid))                                                  \
       ? (SLABLOG2 - (bid))                                              \
       : nmagslablog2(bid)))
+#endif
 #define nblk(bid)         (1UL << nblklog2(bid))
 #define NBSLAB            (1UL << SLABLOG2)
 #define nbmap(bid)        (1UL << (nmagslablog2(bid) + (bid)))
