@@ -4,6 +4,11 @@
  * See the file LICENSE for more information about using this software.
  */
 
+#define DEBUGMALLOC 1
+#if (DEBUGMALLOC)
+#include <assert.h>
+#endif
+
 /*
  *        malloc buffer layers
  *        --------------------
@@ -136,19 +141,22 @@ typedef pthread_mutex_t LK_T;
 //#include <mach/param.h>
 
 /* experimental */
+#if 0
 #if (PTRBITS > 32)
 #define TUNEBUF 1
 #else
 #define TUNEBUF 0
 #endif
+#endif
+#define TUNEBUF 1
 
 /* basic allocator parameters */
 #if (NEWHACK)
 #define BLKMINLOG2    5  /* minimum-size allocation */
-#define SLABTEENYLOG2 14 /* little block */
-#define SLABTINYLOG2  17 /* small-size block */
+#define SLABTEENYLOG2 13 /* little block */
+#define SLABTINYLOG2  16 /* small-size block */
 #define SLABLOG2      21 /* base size for heap allocations */
-#define MAPMIDLOG2    23
+//#define MAPMIDLOG2    23
 #else
 #define BLKMINLOG2    5  /* minimum-size allocation */
 #define SLABTEENYLOG2 12 /* little block */
@@ -160,7 +168,7 @@ typedef pthread_mutex_t LK_T;
 #define HQMAX         SLABLOG2
 #define NBKT          (8 * PTRSIZE)
 #if (MTSAFE)
-#define NARN          4
+#define NARN          16
 #else
 #define NARN          1
 #endif
@@ -192,7 +200,6 @@ typedef pthread_mutex_t LK_T;
 
 /* macros */
 
-#define isbufbkt(bid)     ((bid) <= MAPMIDLOG2)
 #if (TUNEBUF)
 #define nmagslablog2(bid) (_nslabtab[(bid)])
 #else
@@ -214,6 +221,26 @@ typedef pthread_mutex_t LK_T;
         }                                                               \
     } while (0)
 #if (NEWHACK)
+#define nmagslablog2init(bid) 0
+#define nmagslablog2m64(bid)                                            \
+    ((ismapbkt(bid))                                                    \
+     ? 0                                                                \
+     : (((bid) <= SLABTEENYLOG2)                                        \
+        ? 1                                                             \
+        : 0))
+#define nmagslablog2m128(bid)                                           \
+    ((ismapbkt(bid))                                                    \
+     ? 0                                                                \
+     : (((bid) <= SLABTEENYLOG2)                                        \
+        ? 1                                                             \
+        : 0))
+#define nmagslablog2m512(bid)                                           \
+        ((ismapbkt(bid))                                                \
+         ? 0                                                            \
+         : (((bid) <= SLABTEENYLOG2)                                    \
+            ? 1                                                         \
+            : 0))
+#if 0
 #define nmagslablog2init(bid)                                           \
     ((ismapbkt(bid))                                                    \
      ? 0                                                                \
@@ -252,6 +279,7 @@ typedef pthread_mutex_t LK_T;
         : (((bid) <= SLABTINYLOG2)                                      \
            ? 1                                                          \
            : 2)))
+#endif
 #else
 #define nmagslablog2init(bid)                                           \
     ((ismapbkt(bid))                                                    \
@@ -323,7 +351,7 @@ typedef pthread_mutex_t LK_T;
 #define slabid(ptr)       ((uintptr_t)(ptr) >> SLABLOG2)
 #endif
 #define nbhdr()           PAGESIZE
-#define NBUFHDR           16
+#define NBUFHDR           64
 
 #define thrid()           ((_aid >= 0) ? _aid : (_aid = getaid()))
 #define blksz(bid)        (1UL << (bid))
@@ -432,12 +460,12 @@ struct mag {
 struct arn {
     struct mag  *btab[NBKT];
     struct mag  *ftab[NBKT];
+    LK_T         lktab[NBKT];
     long         nref;
     long         hcur;
     long         nhdr;
     struct mag **htab;
     long         scur;
-    LK_T         lktab[NBKT];
 };
 
 struct mtree {
@@ -682,26 +710,34 @@ printintstat(void)
 {
     long aid;
     long bkt;
+    FILE *fp;
     long nbhdr = 0;
     long nbstk = 0;
     long nbheap = 0;
     long nbmap = 0;
+    char path[PATH_MAX + 1];
 
-    for (aid = 0 ; aid < NARN ; aid++) {
-        nbhdr += nhdrbytes[aid];
-        nbstk += nstkbytes[aid];
-        nbheap += nheapbytes[aid];
-        nbmap += nmapbytes[aid];
-        fprintf(stderr, "%lx: hdr: %ld\n", aid, nhdrbytes[aid] >> 10);
-        fprintf(stderr, "%lx: stk: %ld\n", aid, nstkbytes[aid] >> 10);
-        fprintf(stderr, "%lx: heap: %ld\n", aid, nheapbytes[aid] >> 10);
-        fprintf(stderr, "%lx: map: %ld\n", aid, nmapbytes[aid] >> 10);
-        for (bkt = 0 ; bkt < NBKT ; bkt++) {
-            fprintf(stderr, "NALLOC[%lx][%lx]: %lld\n",
-                    aid, bkt, nalloc[aid][bkt]);
+    memset(path, 0, PATH_MAX + 1);
+    strncat(path, "/tmp/malloc_", strlen("/tmp/malloc_"));
+    sprintf(path + strlen("/tmp/malloc_"), "%x", getpid());
+    fp = fopen(path, "a");
+    if (fp) {
+        for (aid = 0 ; aid < NARN ; aid++) {
+            nbhdr += nhdrbytes[aid];
+            nbstk += nstkbytes[aid];
+            nbheap += nheapbytes[aid];
+            nbmap += nmapbytes[aid];
+            fprintf(fp, "%lx: hdr: %ld\n", aid, nhdrbytes[aid] >> 10);
+            fprintf(fp, "%lx: stk: %ld\n", aid, nstkbytes[aid] >> 10);
+            fprintf(fp, "%lx: heap: %ld\n", aid, nheapbytes[aid] >> 10);
+            fprintf(fp, "%lx: map: %ld\n", aid, nmapbytes[aid] >> 10);
+            for (bkt = 0 ; bkt < NBKT ; bkt++) {
+                fprintf(fp, "NALLOC[%lx][%lx]: %lld\n",
+                        aid, bkt, nalloc[aid][bkt]);
+            }
         }
     }
-    fprintf(stderr, "TOTAL: hdr: %ld, stk: %ld, heap: %ld, map: %ld\n",
+    fprintf(fp, "TOTAL: hdr: %ld, stk: %ld, heap: %ld, map: %ld\n",
             nbhdr, nbstk, nbheap, nbmap);
 }
 #endif
@@ -1460,6 +1496,9 @@ getmem(size_t size,
     }
 //    munlk(&x11vislk);
 #endif
+#if (DEBUGMALLOC)
+    assert(retptr != NULL);
+#else
 #ifdef ENOMEM
     if (!retptr) {
         errno = ENOMEM;
@@ -1472,6 +1511,7 @@ getmem(size_t size,
     else {
         nalloc[aid][bid]++;
     }
+#endif
 #endif
 #endif
 
@@ -1541,21 +1581,17 @@ putmem(void *ptr)
                         mag->next->prev = mag->prev;
                     }
                 }
-                if (!isbufbkt(bid) && ismapbkt(bid)) {
-                    freed = 1;
-                } else {
 #if (FIXES)
-                    _mdir[slabid(ptr)] = NULL;
+                _mdir[slabid(ptr)] = NULL;
 #endif
-                    mag->prev = mag->next = NULL;
-                    mlk(&_flktab[bid]);
-                    mag->next = _ftab[bid];
-                    _ftab[bid] = mag;
+                mag->prev = mag->next = NULL;
+                mlk(&_flktab[bid]);
+                mag->next = _ftab[bid];
+                _ftab[bid] = mag;
 #if (HACKS)
-                    _fcnt[bid]++;
+                _fcnt[bid]++;
 #endif
-                    munlk(&_flktab[bid]);
-                }
+                munlk(&_flktab[bid]);
             }
         }
         munlk(&arn->lktab[bid]);
