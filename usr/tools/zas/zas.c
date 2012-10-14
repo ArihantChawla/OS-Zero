@@ -164,25 +164,6 @@ static uint8_t        opnargtab[256]
 };
 #endif
 
-#if (ZASPREPROC)
-static zasuword_t  exproptab[256];
-exprfunc_t      *exprfunctab[256]
-= {
-    NULL,
-    exprnot,
-    exprand,
-    expror,
-    exprxor,
-    exprshl,
-    exprshr,
-    expradd,
-    exprsub,
-    exprmul,
-    exprdiv,
-    exprmod
-};
-#endif
-
 tokfunc_t *tokfunctab[NTOK]
 = {
     NULL,
@@ -204,26 +185,6 @@ tokfunc_t *tokfunctab[NTOK]
     zasprocasciz
 };
 
-#if (ZASPREPROC)
-#define NEXPRSTK 1024
-#define EXPRNOT   0x01
-#define EXPRAND   0x02
-#define EXPROR    0x03
-#define EXPRXOR   0x04
-#define EXPRSHL   0x05
-#define EXPRSHR   0x06
-#define EXPRADD   0x07
-#define EXPRSUB   0x08
-#define EXPRMUL   0x09
-#define EXPRDIV   0x0a
-#define EXPRMOD   0x0b
-struct expr {
-    struct expr   *next;
-    unsigned long  type;
-    zasword_t      val;
-};
-static struct expr     *exprstk[NEXPRSTK];
-#endif
 static struct zastoken *tokenqueue;
 static struct zastoken *tokentail;
 static struct zassym   *symqueue;
@@ -610,39 +571,6 @@ zasfindglob(uint8_t *name)
     return label;
 }
 
-#if (ZASPREPROC)
-void
-zasinitexpr(void)
-{
-    exproptab['~'] = EXPRNOT;
-    exproptab['&'] = EXPRAND;
-    exproptab['|'] = EXPROR;
-    exproptab['^'] = EXPRXOR;
-    exproptab['<'] = EXPRSHL;
-    exproptab['>'] = EXPRSHR;
-    exproptab['+'] = EXPRADD;
-    exproptab['-'] = EXPRSUB;
-    exproptab['*'] = EXPRMUL;
-    exproptab['/'] = EXPRDIV;
-    exproptab['%'] = EXPRMOD;
-}
-
-long
-exprisop(uint8_t *str)
-{
-    int  ch = *str;
-    long retval = exproptab[ch];
-
-    if (retval == EXPRSHL && str[1] != '<') {
-        retval = 0;
-    } else if (retval == EXPRSHR && str[1] != '>') {
-        retval = 0;
-    }
-
-    return retval;
-}
-#endif /* ZASPREPROC */
-
 void
 zasinitop(void)
 {
@@ -1022,157 +950,6 @@ zasgetchar(uint8_t *str, uint8_t **retptr)
     return (uint8_t)val;
 }
 
-#if (ZASPREPROC)
-void
-printexprstk(void)
-{
-    long         l;
-    long         nl;
-    struct expr *expr;
-
-    for (l = 0 ; l < NEXPRSTK ; l++) {
-        expr = exprstk[l];
-        if (expr) {
-            fprintf(stderr, "%ld: ", l);
-            nl = 1;
-        }
-        while (expr) {
-            if (!expr->type) {
-                fprintf(stderr, "%d, ", expr->val);
-            } else {
-                fprintf(stderr, "op == %lu, ", expr->type);
-            }
-            expr = expr->next;
-        }
-        if (nl) {
-            fprintf(stderr, "\n");
-        }
-        nl = 0;
-    }                                             
-}
-
-static zasword_t
-zaseval(uint8_t *str, zasword_t *valptr, uint8_t **retptr)
-{
-    struct expr *expr1;
-    struct expr *expr2;
-    uint8_t     *ptr = str;
-    long         lvl = 0;
-    long         maxlvl = 0;
-    long         loop = 1;
-    zasword_t    retval = 0;
-    zasword_t    res = 0;
-    zasword_t    val;
-    long         cur;
-    long         op;
-    exprfunc_t  *func;
-
-    memset(exprstk, 0, sizeof(exprstk));
-    while (loop) {
-        while ((*ptr) && isspace(*ptr)) {
-            ptr++;
-        }
-        while ((*ptr) && *ptr == '(') {
-            lvl++;
-            ptr++;
-        }
-        maxlvl = max(lvl, maxlvl);
-        while ((*ptr) && isspace(*ptr)) {
-            ptr++;
-        }
-        expr1 = malloc(sizeof(struct expr));
-        if (zasfindval(ptr, &val, &ptr)) {
-            expr1->type = 0;
-            expr1->val = val;
-            expr1->next = exprstk[lvl];
-            exprstk[lvl] = expr1;
-        } else {
-            op = exprisop(ptr);
-            if (op) {
-                ptr++;
-                if (op == EXPRSHL || op == EXPRSHR) {
-                    ptr++;
-                } 
-                expr1->type = op;
-                expr1->next = exprstk[lvl];
-                exprstk[lvl] = expr1;
-            } else if ((*ptr) && isdigit(*ptr)) {
-#if (ZPC)
-                zpctoken = zpcgettoken(ptr, &ptr);
-#elif (WPM)
-                zasgetvalue(ptr, &val, &ptr);
-#endif
-                expr1->type = 0;
-                expr1->val = val;
-                expr1->next = exprstk[lvl];
-                exprstk[lvl] = expr1;
-            } else if (isalpha(*ptr) || *ptr == '_') {
-                zasfindval(ptr, &val, &ptr);
-                expr1->type = 0;
-                expr1->val = val;
-                expr1->next = exprstk[lvl];
-                exprstk[lvl] = expr1;
-            } else if ((*ptr) && *ptr == ',') {
-                lvl = 0;
-            } else if ((*ptr) && *ptr == ')') {
-                do {
-                    lvl--;
-                } while (*++ptr == ')');
-            }
-        }
-        if (lvl < 0) {
-            fprintf(stderr, "mismatched closing parentheses: %s\n", str);
-            
-            exit(1);
-        }
-        if (!lvl) {
-            loop = 0;
-        }
-    }
-    op = 0;
-    cur = 0;
-    while (maxlvl) {
-        loop = 1;
-        expr1 = exprstk[maxlvl];
-        while (expr1) {
-            if (!expr1->type) {
-                if (!cur) {
-                    cur++;
-                    res = expr1->val;
-                } else {
-                    cur++;
-                    val = expr1->val;
-                }
-            } else {
-                op = expr1->type;
-            }
-            if ((op) && cur == 2) {
-                func = exprfunctab[op];
-                if (func) {
-                    res = func(res, val);
-                    retval = 1;
-                }
-                op = 0;
-                cur = 1;
-            }
-            expr2 = expr1->next;
-            free(expr1);
-            expr1 = expr2;
-        }
-        maxlvl--;
-    }
-    if (retval) {
-        if (*ptr == ',') {
-            ptr++;
-        }
-        *valptr = res;
-        *retptr = ptr;
-    }
-
-    return retval;
-}
-#endif
-
 static struct zastoken *
 zasgettoken(uint8_t *str, uint8_t **retptr)
 {
@@ -1369,13 +1146,6 @@ zasgettoken(uint8_t *str, uint8_t **retptr)
 
                 exit(1);
             }
-#if (ZASPREPROC)
-        } else if ((*str) && *str == '(') {
-            if (zaseval(str, &val, &str)) {
-                token1->type = TOKENIMMED;
-                token1->val = val;
-            }
-#endif
         }
     } else if (*str == '\'') {
         val = zasgetchar(str, &str);
@@ -1982,9 +1752,6 @@ zasprocasciz(struct zastoken *token, zasmemadr_t adr,
 void
 zasinit(void)
 {
-#if (ZASPREPROC)
-    zasinitexpr();
-#endif
     zasinitop();
     zasinitbuf();
 }
