@@ -5,7 +5,7 @@
 #include <zas/zas.h>
 #include <zpc/asm.h>
 
-char *zpcopnametab[ZPCNASMOP]
+char *zpcopnametab[ZPCNASMOP + 1]
 = {
     "ILL",
     "not",
@@ -39,7 +39,8 @@ char *zpcopnametab[ZPCNASMOP]
     "ret",
     "trap",
     "iret",
-    "thr"
+    "thr",
+    NULL
 };
 uint64_t zpcintregs[ZPCNREG];
 

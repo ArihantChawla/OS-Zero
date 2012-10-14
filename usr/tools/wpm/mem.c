@@ -13,7 +13,7 @@ static struct slab   *freetab[32];
 static uint32_t       memvmbase;
 static uint32_t       membrk;
 static volatile long  memlk;
-pagedesc_t           *mempagetab;
+wpmpage_t            *mempagetab;
 
 void
 scanmem(void)
@@ -53,7 +53,7 @@ wpminitmem(uint32_t nbphys)
     memvmbase = nbphys;
     membrk = nbphys;
     if (!mempagetab) {
-        mempagetab = calloc(1, 1024 * 1024 * sizeof(uint8_t *));
+        mempagetab = calloc(1, 1024 * 1024 * sizeof(wpmpage_t *));
     }
     slab = &memslabtab[pagenum(nbphys)];
     while (nbvirt) {

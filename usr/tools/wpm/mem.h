@@ -6,7 +6,7 @@
 #include <stdint.h>
 
 #if defined(__i386__) || defined(__i486__) || defined(__i586__) || defined(__i686__)
-typedef uint32_t pagedesc_t;
+typedef uint32_t wpmpage_t;
 typedef uint32_t wpmsize_t;
 typedef uint32_t wpmmemadr_t;
 #endif
@@ -15,8 +15,8 @@ void        wpminitmem(wpmsize_t nbphys);
 wpmmemadr_t mempalloc(wpmsize_t size);
 void        mempfree(wpmmemadr_t adr);
 
-extern pagedesc_t *mempagetab;
-extern uint8_t    *physmem;
+extern wpmpage_t *mempagetab;
+extern uint8_t   *physmem;
 
 #define MINBKT      12
 #define MEMSIZE     (128 * 1024 * 1024)

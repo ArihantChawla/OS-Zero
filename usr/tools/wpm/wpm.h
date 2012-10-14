@@ -4,7 +4,6 @@
 #include <stdint.h>
 #include <zero/cdecl.h>
 #include <zero/param.h>
-#include <zas/zas.h>
 #include <wpm/mem.h>
 #if (ZPC)
 #include <zpc/asm.h>
@@ -14,10 +13,27 @@
 
 #define WPMTEXTBASE 8192
 
+#if defined(__i386__) || defined(__i486__) || defined(__i586__) || defined(__i686__)
+typedef int32_t  wpmword_t;
+typedef uint32_t wpmuword_t;
+#endif
+
 #if 0
 #define align(adr, p2)                                                  \
     (!((adr) & ((p2) - 1)) ? (adr) : ((adr) + ((p2) - ((adr) & ((p2 - 1))))))
 #endif
+
+#define OPINVAL    0x00
+#define RESOLVE    (~((wpmmemadr_t)0))
+
+#define REGINDEX   0x10
+#define REGINDIR   0x20
+/* argument types */
+#define ARGNONE    0x00	// no argument
+#define ARGIMMED   0x01	// immediate argument
+#define ARGADR     0x02	// symbol / memory address
+#define ARGREG     0x03	// register
+#define ARGSYM     0x04	// symbol address
 
 #define PAGEPRES   0x00000001
 
@@ -124,8 +140,8 @@
 #define NFREG      16
 #define NVREG      16
 struct _wpmopcode {
-    zasuword_t code;
-    zasword_t  args[2];
+    wpmuword_t code;
+    wpmword_t  args[2];
 };
 
 struct wpmopcode {
@@ -137,37 +153,37 @@ struct wpmopcode {
     unsigned  reg2     : 6;	// register #2 ID + addressing flags
     unsigned  size     : 2;     // 1..3, shift count
     unsigned  res      : 2;
-    zasword_t args[2];
+    wpmword_t args[2];
 } __attribute__ ((__packed__));
 
 struct wpmobjhdr {
-    zasuword_t nsym;      // number of [global] symbols
-    zasuword_t fsize;     // size of file
-    zasuword_t tofs;      // text segment offset
-    zasuword_t tsize;     // text segment size
-    zasuword_t dofs;      // data segment offset
-    zasuword_t dsize;     // data segment size
-    zasuword_t bofs;      // bss segment offset
-    zasuword_t bsize;     // bss segment size
+    wpmuword_t nsym;      // number of [global] symbols
+    wpmuword_t fsize;     // size of file
+    wpmuword_t tofs;      // text segment offset
+    wpmuword_t tsize;     // text segment size
+    wpmuword_t dofs;      // data segment offset
+    wpmuword_t dsize;     // data segment size
+    wpmuword_t bofs;      // bss segment offset
+    wpmuword_t bsize;     // bss segment size
 };
 
 /* initial state: all bytes zero */
 struct wpmcpustate {
-    zasuword_t msw;               // machine status word
-    zasuword_t fp;                // frame pointer
-    zasuword_t sp;                // stack pointer
-    zasuword_t pc;                // program counter (instruction pointer)
+    wpmuword_t msw;               // machine status word
+    wpmuword_t fp;                // frame pointer
+    wpmuword_t sp;                // stack pointer
+    wpmuword_t pc;                // program counter (instruction pointer)
 #if 0
-    zasuword_t pd;                // page directory address
-    zasuword_t iv;                // interrupt vector address
+    wpmuword_t pd;                // page directory address
+    wpmuword_t iv;                // interrupt vector address
 #endif
-    zasuword_t isp;               // interrupt stack pointer
+    wpmuword_t isp;               // interrupt stack pointer
 #if (ZPC)
-    zasword_t  regs[ZPCNREG] ALIGNED(CLSIZE);
+    wpmword_t  regs[ZPCNREG] ALIGNED(CLSIZE);
     float      fregs[ZPCNREG];
     double     dregs[ZPCNREG];
 #else
-    zasword_t  regs[NREG] ALIGNED(CLSIZE);
+    wpmword_t  regs[NREG] ALIGNED(CLSIZE);
     double     fregs[NFREG] ALIGNED(CLSIZE);
 #endif
 };
@@ -176,7 +192,7 @@ struct wpm {
     struct wpmcpustate  cpustat;
     volatile long       shutdown;
     volatile long       thrid;
-    zasuword_t          brk;
+    wpmuword_t          brk;
 };
 
 struct wpm * wpminit(void);
@@ -186,14 +202,14 @@ void         wpmprintop(struct zpcopcode *op);
 #else
 void         wpmprintop(struct wpmopcode *op);
 #endif
-void         wpminitthr(zasmemadr_t pc);
+void         wpminitthr(wpmmemadr_t pc);
 
 extern __thread struct wpm *wpm;
 
 struct wpmstackframe {
-    zasuword_t oldfp;
-    zasuword_t retadr;
-    zasuword_t args[EMPTY];
+    wpmuword_t oldfp;
+    wpmuword_t retadr;
+    wpmuword_t args[EMPTY];
 };
 
 #endif /* __WPM_WPM_H__ */

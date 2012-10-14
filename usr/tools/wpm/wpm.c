@@ -7,11 +7,11 @@
 #include <zero/cdecl.h>
 #include <zero/param.h>
 #include <zero/trix.h>
-#include <zas/zas.h>
 #if (PTHREAD)
 #include <pthread.h>
 #include <zero/mtx.h>
 #endif
+#include <zas/zas.h>
 #if (ZPC)
 #include <zpc/asm.h>
 #endif
@@ -36,9 +36,13 @@ typedef void ophandler_t(opcode_t *);
 typedef void hookfunc_t(opcode_t *);
 
 #if (WPMDB)
-extern struct zasline *linehash[];
+extern struct zasline  *linehash[];
 #endif
-extern pagedesc_t     *mempagetab;
+extern struct zastoken *zastokenqueue;
+extern struct zastoken *zastokentail;
+extern unsigned long    zasinputread;
+extern zasmemadr_t      _startadr;
+extern wpmpage_t       *mempagetab;
 
 /* logical operations */
 void opnot(opcode_t *op);
@@ -124,9 +128,9 @@ uint8_t wpmopnargtab[WPMNASMOP]
     2,  // AND
     2,  // OR
     2,  // XOR
-    2,  // SHL
     2,  // SHR
-    2,  // SRHL
+    2,  // SHRA
+    2,  // SHL
     2,  // ROR
     2,  // ROL
     1,  // INC
@@ -178,45 +182,7 @@ uint8_t wpmopnargtab[WPMNASMOP]
     1   // HOOK
 };
 
-#if (ZPC)
-ophandler_t *opfunctab[ZPCNASMOP] ALIGNED(PAGESIZE)
-    = {
-    NULL,       // illegal instruction
-    opnot,
-    opand,
-    opor,
-    opxor,
-    opshr,
-    opshra,
-    opshl,
-    opror,
-    oprol,
-    opinc,
-    opdec,
-    opadd,
-    opsub,
-    opmul,
-    opdiv,
-    opmod,
-    opbz,
-    opbnz,
-    opblt,
-    opble,
-    opbgt,
-    opbge,
-    opmov,
-    opmovd,
-    opmovb,
-    opmovw,
-    opjmp,
-    opcall,
-    opret,
-    optrap,
-    opiret,
-    opthr
-};
-#else
-ophandler_t *opfunctab[256] ALIGNED(PAGESIZE)
+ophandler_t *wpmopfunctab[256] ALIGNED(PAGESIZE)
     = {
     NULL,
     opnot,
@@ -276,8 +242,8 @@ ophandler_t *opfunctab[256] ALIGNED(PAGESIZE)
     opoutl,
     ophook
 };
-#endif
-char *wpmopnametab[256]
+
+char *wpmopnametab[WPMNASMOP + 1]
 = {
     NULL,
     "not",
@@ -335,7 +301,8 @@ char *wpmopnametab[256]
     "outw",
     "inl",
     "outl",
-    "hook"
+    "hook",
+    NULL
 };
 
 hookfunc_t *hookfunctab[256]
@@ -460,11 +427,10 @@ wpmloop(void *cpustat)
         if (op->inst == OPNOP) {
             wpm->cpustat.pc++;
         } else {
-            wpm->cpustat.pc = roundup2(wpm->cpustat.pc, sizeof(zasword_t));
+            wpm->cpustat.pc = roundup2(wpm->cpustat.pc, sizeof(wpmword_t));
             op = (opcode_t *)&physmem[wpm->cpustat.pc];
-            func = opfunctab[op->inst];
+            func = wpmopfunctab[op->inst];
             if (func) {
-//                wpmprintop(op);
 #if (WPMDB)
                 line = zasfindline(wpm->cpustat.pc);
                 if (line) {
@@ -508,7 +474,7 @@ void
 opnot(opcode_t *op)
 {
     uint_fast8_t argt = op->arg1t;
-    zasword_t    dest = (argt == ARGREG
+    wpmword_t    dest = (argt == ARGREG
                          ? wpm->cpustat.regs[op->reg1]
                          : op->args[0]);
 #if (WPMDEBUG)
@@ -537,10 +503,10 @@ opand(opcode_t *op)
 {
     uint_fast8_t argt1 = op->arg1t;
     uint_fast8_t argt2 = op->arg2t;
-    zasword_t    src = (argt1 == ARGREG
+    wpmword_t    src = (argt1 == ARGREG
                         ? wpm->cpustat.regs[op->reg1]
                         : op->args[0]);
-    zasword_t    dest = (argt2 == ARGREG
+    wpmword_t    dest = (argt2 == ARGREG
                          ? wpm->cpustat.regs[op->reg2]
                          : (argt1 == ARGREG
                             ? op->args[0]
@@ -574,10 +540,10 @@ opor(opcode_t *op)
 {
     uint_fast8_t argt1 = op->arg1t;
     uint_fast8_t argt2 = op->arg2t;
-    zasword_t    src = (argt1 == ARGREG
+    wpmword_t    src = (argt1 == ARGREG
                         ? wpm->cpustat.regs[op->reg1]
                         : op->args[0]);
-    zasword_t    dest = (argt2 == ARGREG
+    wpmword_t    dest = (argt2 == ARGREG
                          ? wpm->cpustat.regs[op->reg2]
                          : (argt1 == ARGREG
                             ? op->args[0]
@@ -605,10 +571,10 @@ opxor(opcode_t *op)
 {
     uint_fast8_t argt1 = op->arg1t;
     uint_fast8_t argt2 = op->arg2t;
-    zasword_t    src = (argt1 == ARGREG
+    wpmword_t    src = (argt1 == ARGREG
                         ? wpm->cpustat.regs[op->reg1]
                         : op->args[0]);
-    zasword_t    dest = (argt2 == ARGREG
+    wpmword_t    dest = (argt2 == ARGREG
                          ? wpm->cpustat.regs[op->reg2]
                          : (argt1 == ARGREG
                             ? op->args[0]
@@ -642,18 +608,18 @@ opshr(opcode_t *op)
 {
     uint_fast8_t argt1 = op->arg1t;
     uint_fast8_t argt2 = op->arg2t;
-    zasword_t  cnt = (argt1 == ARGREG
+    wpmword_t  cnt = (argt1 == ARGREG
                     ? wpm->cpustat.regs[op->reg1]
                     : (argt1 == ARGIMMED
                        ? op->args[0]
                        : memfetchl(op->args[0])));
-    zasword_t  dest = (argt2 == ARGREG
+    wpmword_t  dest = (argt2 == ARGREG
                      ? wpm->cpustat.regs[op->reg2]
                      : (argt1 == ARGREG
                         ? op->args[0]
                         : op->args[1]));
 #if (!USEASM)
-    zasuword_t sign = 0xffffffff >> cnt;
+    wpmuword_t sign = 0xffffffff >> cnt;
 #endif
     
 #if (WPMDEBUG)
@@ -685,12 +651,12 @@ opshra(opcode_t *op)
 {
     uint_fast8_t argt1 = op->arg1t;
     uint_fast8_t argt2 = op->arg2t;
-    zasword_t  cnt = (argt1 == ARGREG
+    wpmword_t  cnt = (argt1 == ARGREG
                     ? wpm->cpustat.regs[op->reg1]
                     : (argt1 == ARGIMMED
                        ? op->args[0]
                        : memfetchl(op->args[0])));
-    zasword_t  dest = (argt2 == ARGREG
+    wpmword_t  dest = (argt2 == ARGREG
                      ? wpm->cpustat.regs[op->reg2]
                      : (argt1 == ARGREG
                         ? op->args[0]
@@ -700,7 +666,7 @@ opshra(opcode_t *op)
     fprintf(stderr, "SHRA: %x by %d\n", dest, cnt);
 #endif
 #if (!USEASM)
-    zasuword_t sign = dest & 0x80000000;
+    wpmuword_t sign = dest & 0x80000000;
 #endif
 
 #if (USEASM)
@@ -730,12 +696,12 @@ opshl(opcode_t *op)
 {
     uint_fast8_t argt1 = op->arg1t;
     uint_fast8_t argt2 = op->arg2t;
-    zasword_t  cnt = (argt1 == ARGREG
+    wpmword_t  cnt = (argt1 == ARGREG
                     ? wpm->cpustat.regs[op->reg1]
                     : (argt1 == ARGIMMED
                        ? op->args[0]
                        : memfetchl(op->args[0])));
-    zasword_t  dest = (argt2 == ARGREG
+    wpmword_t  dest = (argt2 == ARGREG
                      ? wpm->cpustat.regs[op->reg2]
                      : (argt1 == ARGREG
                         ? op->args[0]
@@ -769,19 +735,19 @@ opror(opcode_t *op)
 {
     uint_fast8_t argt1 = op->arg1t;
     uint_fast8_t argt2 = op->arg2t;
-    zasword_t  cnt = (argt1 == ARGREG
+    wpmword_t  cnt = (argt1 == ARGREG
                     ? wpm->cpustat.regs[op->reg1]
                     : (argt1 == ARGIMMED
                        ? op->args[0]
                        : memfetchl(op->args[0])));
-    zasword_t  dest = (argt2 == ARGREG
+    wpmword_t  dest = (argt2 == ARGREG
                      ? wpm->cpustat.regs[op->reg2]
                      : (argt1 == ARGREG
                         ? op->args[0]
                         : op->args[1]));
 #if (!USEASM)
-    zasuword_t mask = 0xffffffff >> (32 - cnt);
-    zasuword_t bits = dest & mask;
+    wpmuword_t mask = 0xffffffff >> (32 - cnt);
+    wpmuword_t bits = dest & mask;
 #endif
 
 #if (WPMDEBUG)
@@ -814,19 +780,19 @@ oprol(opcode_t *op)
 {
     uint_fast8_t argt1 = op->arg1t;
     uint_fast8_t argt2 = op->arg2t;
-    zasword_t  cnt = (argt1 == ARGREG
+    wpmword_t  cnt = (argt1 == ARGREG
                     ? wpm->cpustat.regs[op->reg1]
                     : (argt1 == ARGIMMED
                        ? op->args[0]
                        : memfetchl(op->args[0])));
-    zasword_t  dest = (argt2 == ARGREG
+    wpmword_t  dest = (argt2 == ARGREG
                      ? wpm->cpustat.regs[op->reg2]
                      : (argt1 == ARGREG
                         ? op->args[0]
                         : op->args[1]));
 #if (!USEASM)
-    zasuword_t mask = 0xffffffff << (32 - cnt);
-    zasuword_t bits = dest & mask;
+    wpmuword_t mask = 0xffffffff << (32 - cnt);
+    wpmuword_t bits = dest & mask;
 #endif
 
 #if (WPMDEBUG)
@@ -858,7 +824,7 @@ void
 opinc(opcode_t *op)
 {
     uint_fast8_t argt = op->arg1t;
-    zasword_t  dest = (argt == ARGREG
+    wpmword_t  dest = (argt == ARGREG
                      ? wpm->cpustat.regs[op->reg1]
                      : op->args[0]);
     
@@ -884,7 +850,7 @@ void
 opdec(opcode_t *op)
 {
     uint_fast8_t argt = op->arg1t;
-    zasword_t  dest = (argt == ARGREG
+    wpmword_t  dest = (argt == ARGREG
                      ? wpm->cpustat.regs[op->reg1]
                      : op->args[0]);
 
@@ -911,10 +877,10 @@ opadd(opcode_t *op)
 {
     uint_fast8_t argt1 = op->arg1t;
     uint_fast8_t argt2 = op->arg2t;
-    zasword_t    src = (argt1 == ARGREG
+    wpmword_t    src = (argt1 == ARGREG
                         ? wpm->cpustat.regs[op->reg1]
                         : op->args[0]);
-    zasword_t    dest = (argt2 == ARGREG
+    wpmword_t    dest = (argt2 == ARGREG
                          ? wpm->cpustat.regs[op->reg2]
                          : (argt1 == ARGREG
                             ? op->args[0]
@@ -940,10 +906,10 @@ opsub(opcode_t *op)
 {
     uint_fast8_t argt1 = op->arg1t;
     uint_fast8_t argt2 = op->arg2t;
-    zasword_t    src = (argt1 == ARGREG
+    wpmword_t    src = (argt1 == ARGREG
                         ? wpm->cpustat.regs[op->reg1]
                         : op->args[0]);
-    zasword_t    dest = (argt2 == ARGREG
+    wpmword_t    dest = (argt2 == ARGREG
                          ? wpm->cpustat.regs[op->reg2]
                          : (argt1 == ARGREG
                             ? op->args[0]
@@ -967,13 +933,13 @@ opsub(opcode_t *op)
 void
 opcmp(opcode_t *op)
 {
-    zasword_t    msw = wpm->cpustat.msw;
+    wpmword_t    msw = wpm->cpustat.msw;
     uint_fast8_t argt1 = op->arg1t;
     uint_fast8_t argt2 = op->arg2t;
-    zasword_t    src = (argt1 == ARGREG
+    wpmword_t    src = (argt1 == ARGREG
                         ? wpm->cpustat.regs[op->reg1]
                         : op->args[0]);
-    zasword_t    dest = (argt2 == ARGREG
+    wpmword_t    dest = (argt2 == ARGREG
                          ? wpm->cpustat.regs[op->reg2]
                          : (argt1 == ARGREG
                             ? op->args[0]
@@ -999,10 +965,10 @@ opmul(opcode_t *op)
 {
     uint_fast8_t argt1 = op->arg1t;
     uint_fast8_t argt2 = op->arg2t;
-    zasword_t    src = (argt1 == ARGREG
+    wpmword_t    src = (argt1 == ARGREG
                         ? wpm->cpustat.regs[op->reg1]
                         : op->args[0]);
-    zasword_t    dest = (argt2 == ARGREG
+    wpmword_t    dest = (argt2 == ARGREG
                          ? wpm->cpustat.regs[op->reg2]
                          : (argt1 == ARGREG
                             ? op->args[0]
@@ -1028,10 +994,10 @@ opdiv(opcode_t *op)
 {
     uint_fast8_t argt1 = op->arg1t;
     uint_fast8_t argt2 = op->arg2t;
-    zasword_t    src = (argt1 == ARGREG
+    wpmword_t    src = (argt1 == ARGREG
                         ? wpm->cpustat.regs[op->reg1]
                         : op->args[0]);
-    zasword_t    dest = (argt2 == ARGREG
+    wpmword_t    dest = (argt2 == ARGREG
                          ? wpm->cpustat.regs[op->reg2]
                          : (argt1 == ARGREG
                             ? op->args[0]
@@ -1074,10 +1040,10 @@ opmod(opcode_t *op)
 {
     uint_fast8_t argt1 = op->arg1t;
     uint_fast8_t argt2 = op->arg2t;
-    zasword_t    src = (argt1 == ARGREG
+    wpmword_t    src = (argt1 == ARGREG
                         ? wpm->cpustat.regs[op->reg1]
                         : op->args[0]);
-    zasword_t    dest = (argt2 == ARGREG
+    wpmword_t    dest = (argt2 == ARGREG
                          ? wpm->cpustat.regs[op->reg2]
                          : (argt1 == ARGREG
                             ? op->args[0]
@@ -1103,7 +1069,7 @@ opbz(opcode_t *op)
 {
     if (wpm->cpustat.msw & MSW_ZF) {
         uint_fast8_t argt = op->arg1t;
-        zasword_t    dest = (argt == ARGREG
+        wpmword_t    dest = (argt == ARGREG
                              ? wpm->cpustat.regs[op->reg1]
                              : op->args[0]);
         wpm->cpustat.pc = dest;
@@ -1119,7 +1085,7 @@ opbnz(opcode_t *op)
 {
     if (!(wpm->cpustat.msw & MSW_ZF)) {
         uint_fast8_t argt = op->arg1t;
-        zasword_t    dest = (argt == ARGREG
+        wpmword_t    dest = (argt == ARGREG
                              ? wpm->cpustat.regs[op->reg1]
                              : op->args[0]);
         wpm->cpustat.pc = dest;
@@ -1135,7 +1101,7 @@ opblt(opcode_t *op)
 {
     if (wpm->cpustat.msw & MSW_SF) {
         uint_fast8_t argt = op->arg1t;
-        zasword_t    dest = (argt == ARGREG
+        wpmword_t    dest = (argt == ARGREG
                              ? wpm->cpustat.regs[op->reg1]
                              : op->args[0]);
         wpm->cpustat.pc = dest;
@@ -1151,7 +1117,7 @@ opble(opcode_t *op)
 {
     if (wpm->cpustat.msw & MSW_SF || wpm->cpustat.msw & MSW_ZF) {
         uint_fast8_t argt = op->arg1t;
-        zasword_t    dest = (argt == ARGREG
+        wpmword_t    dest = (argt == ARGREG
                              ? wpm->cpustat.regs[op->reg1]
                              : op->args[0]);
         wpm->cpustat.pc = dest;
@@ -1167,7 +1133,7 @@ opbgt(opcode_t *op)
 {
     if (!(wpm->cpustat.msw & MSW_SF) && !(wpm->cpustat.msw & MSW_ZF)) {
         uint_fast8_t argt = op->arg1t;
-        zasword_t    dest = (argt == ARGREG
+        wpmword_t    dest = (argt == ARGREG
                              ? wpm->cpustat.regs[op->reg1]
                              : op->args[0]);
         wpm->cpustat.pc = dest;
@@ -1183,7 +1149,7 @@ opbge(opcode_t *op)
 {
     if (!(wpm->cpustat.msw & MSW_SF)) {
         uint_fast8_t argt = op->arg1t;
-        zasword_t    dest = (argt == ARGREG
+        wpmword_t    dest = (argt == ARGREG
                              ? wpm->cpustat.regs[op->reg1]
                              : op->args[0]);
         wpm->cpustat.pc = dest;
@@ -1199,7 +1165,7 @@ opbo(opcode_t *op)
 {
     if (wpm->cpustat.msw & MSW_OF) {
         uint_fast8_t argt = op->arg1t;
-        zasword_t    dest = (argt == ARGREG
+        wpmword_t    dest = (argt == ARGREG
                              ? wpm->cpustat.regs[op->reg1]
                              : op->args[0]);
         wpm->cpustat.pc = dest;
@@ -1215,7 +1181,7 @@ opbno(opcode_t *op)
 {
     if (!(wpm->cpustat.msw & MSW_OF)) {
         uint_fast8_t argt = op->arg1t;
-        zasword_t    dest = (argt == ARGREG
+        wpmword_t    dest = (argt == ARGREG
                              ? wpm->cpustat.regs[op->reg1]
                              : op->args[0]);
         wpm->cpustat.pc = dest;
@@ -1231,7 +1197,7 @@ opbc(opcode_t *op)
 {
     if (wpm->cpustat.msw & MSW_CF) {
         uint_fast8_t argt = op->arg1t;
-        zasword_t    dest = (argt == ARGREG
+        wpmword_t    dest = (argt == ARGREG
                              ? wpm->cpustat.regs[op->reg1]
                              : op->args[0]);
         wpm->cpustat.pc = dest;
@@ -1247,7 +1213,7 @@ opbnc(opcode_t *op)
 {
     if (!(wpm->cpustat.msw & MSW_CF)) {
         uint_fast8_t argt = op->arg1t;
-        zasword_t    dest = (argt == ARGREG
+        wpmword_t    dest = (argt == ARGREG
                              ? wpm->cpustat.regs[op->reg1]
                              : op->args[0]);
         wpm->cpustat.pc = dest;
@@ -1262,7 +1228,7 @@ void
 oppop(opcode_t *op)
 {
     uint_fast8_t argt = op->arg1t;
-    zasword_t    val;
+    wpmword_t    val;
 
     if (argt == ARGREG) {
         val = memfetchl(wpm->cpustat.sp);
@@ -1278,7 +1244,7 @@ void
 oppush(opcode_t *op)
 {
     uint_fast8_t argt = op->arg1t;
-    zasword_t    src = (argt == ARGREG
+    wpmword_t    src = (argt == ARGREG
                         ? wpm->cpustat.regs[op->reg1]
                         : op->args[0]);
     
@@ -1296,7 +1262,7 @@ opmov(opcode_t *op)
     uint_fast8_t argt2 = op->arg2t;
     uint64_t   reg1  = op->reg1;
     uint64_t   reg2  = op->reg2;
-    zasword_t    src = (argt1 == ARGREG
+    wpmword_t    src = (argt1 == ARGREG
                         ? ((reg1 & REGINDEX)
                            ? memfetchl(wpm->cpustat.regs[reg1 & 0x0f]
                                        + op->args[0])
@@ -1380,8 +1346,8 @@ opmovb(opcode_t *op)
 {
     uint_fast8_t argt1 = op->arg1t;
     uint_fast8_t argt2 = op->arg2t;
-    zasuword_t   reg1  = op->reg1;
-    zasuword_t   reg2  = op->reg2;
+    wpmuword_t   reg1  = op->reg1;
+    wpmuword_t   reg2  = op->reg2;
     int8_t       src = (argt1 == ARGREG
                         ? ((reg1 & REGINDEX)
                            ? memfetchb(wpm->cpustat.regs[reg1 & 0x0f]
@@ -1392,7 +1358,7 @@ opmovb(opcode_t *op)
                         : (argt1 == ARGIMMED
                            ? op->args[0]
                            : memfetchb(op->args[0])));
-    zasuword_t   dest;
+    wpmuword_t   dest;
 
 #if (WPMDEBUG)
     fprintf(stderr, "MOVB: %x - \n", src);
@@ -1426,8 +1392,8 @@ opmovw(opcode_t *op)
 {
     uint_fast8_t argt1 = op->arg1t;
     uint_fast8_t argt2 = op->arg2t;
-    zasuword_t   reg1  = op->reg1;
-    zasuword_t   reg2  = op->reg2;
+    wpmuword_t   reg1  = op->reg1;
+    wpmuword_t   reg2  = op->reg2;
     int16_t      src = (argt1 == ARGREG
                         ? ((reg1 & REGINDEX)
                            ? memfetchw(wpm->cpustat.regs[reg1 & 0x0f]
@@ -1438,7 +1404,7 @@ opmovw(opcode_t *op)
                         : (argt1 == ARGIMMED
                            ? op->args[0]
                        : memfetchw(op->args[0])));
-    zasuword_t   dest;
+    wpmuword_t   dest;
     
     if (argt2 == ARGREG) {
         if (reg2 & REGINDIR) {
@@ -1468,7 +1434,7 @@ void
 opjmp(opcode_t *op)
 {
     uint_fast8_t argt = op->arg1t;
-    zasword_t  dest = (argt == ARGREG
+    wpmword_t  dest = (argt == ARGREG
                      ? wpm->cpustat.regs[op->reg1]
                      : op->args[0]);
 
@@ -1494,11 +1460,11 @@ void
 opcall(opcode_t *op)
 {
     uint_fast8_t argt = op->arg1t;
-    zasword_t  dest = (argt == ARGREG
+    wpmword_t  dest = (argt == ARGREG
                      ? wpm->cpustat.regs[op->reg1]
                      : op->args[0]);
-    zasword_t *stk = (zasword_t *)(&physmem[wpm->cpustat.sp]);
-    zasword_t  fp = wpm->cpustat.sp - 36;
+    wpmword_t *stk = (wpmword_t *)(&physmem[wpm->cpustat.sp]);
+    wpmword_t  fp = wpm->cpustat.sp - 36;
 
     stk[-1] = wpm->cpustat.regs[7];
     stk[-2] = wpm->cpustat.regs[6];
@@ -1520,10 +1486,10 @@ void
 openter(opcode_t *op)
 {
     long  argt = op->arg1t;
-    zasword_t   ofs = (argt == ARGREG
+    wpmword_t   ofs = (argt == ARGREG
                      ? wpm->cpustat.regs[op->reg1]
                      : op->args[0]);
-    zasword_t *stk = (zasword_t *)wpm->cpustat.sp;
+    wpmword_t *stk = (wpmword_t *)wpm->cpustat.sp;
 
     *--stk = wpm->cpustat.fp;
     wpm->cpustat.sp -= ofs + 4;
@@ -1534,7 +1500,7 @@ openter(opcode_t *op)
 void
 opleave(opcode_t *op)
 {
-    zasword_t fp = memfetchl(wpm->cpustat.fp);
+    wpmword_t fp = memfetchl(wpm->cpustat.fp);
     
     wpm->cpustat.fp = memfetchl(fp);
     wpm->cpustat.sp = fp - 4;
@@ -1549,9 +1515,9 @@ opleave(opcode_t *op)
 void
 opret(opcode_t *op)
 {
-    zasword_t   fp = memfetchl(wpm->cpustat.fp);
-    zasword_t   dest = memfetchl(wpm->cpustat.fp + 4);
-    zasword_t  *stk = (zasword_t *)(&physmem[wpm->cpustat.fp + 8]);
+    wpmword_t   fp = memfetchl(wpm->cpustat.fp);
+    wpmword_t   dest = memfetchl(wpm->cpustat.fp + 4);
+    wpmword_t  *stk = (wpmword_t *)(&physmem[wpm->cpustat.fp + 8]);
 
     wpm->cpustat.regs[1] = stk[0];
     wpm->cpustat.regs[2] = stk[1];
@@ -1571,7 +1537,7 @@ void
 oplmsw(opcode_t *op)
 {
     uint_fast8_t argt = op->arg1t;
-    zasword_t  msw = (argt == ARGREG
+    wpmword_t  msw = (argt == ARGREG
                     ? wpm->cpustat.regs[op->reg1]
                     : op->args[0]);
 
@@ -1584,8 +1550,8 @@ oplmsw(opcode_t *op)
 void
 opsmsw(opcode_t *op)
 {
-    zasword_t msw = wpm->cpustat.msw;
-    zasword_t dest = op->args[0];
+    wpmword_t msw = wpm->cpustat.msw;
+    wpmword_t dest = op->args[0];
     
     memstorel(msw, dest);
     
@@ -1617,7 +1583,7 @@ opnop(opcode_t *op)
 void
 opbrk(opcode_t *op)
 {
-    zasuword_t pc = memfetchl(TRAPBRK << 2);
+    wpmuword_t pc = memfetchl(TRAPBRK << 2);
 
     if (pc) {
         wpm->cpustat.pc = pc;
@@ -1632,14 +1598,14 @@ void
 optrap(opcode_t *op)
 {
     uint_fast8_t argt1 = op->arg1t;
-    zasword_t  trap = (argt1 == ARGREG
+    wpmword_t  trap = (argt1 == ARGREG
                      ? wpm->cpustat.regs[op->reg1]
                      : memfetchl(op->args[0]));
-    zasword_t  pc = memfetchl(trap << 2);
+    wpmword_t  pc = memfetchl(trap << 2);
 
     if (pc) {
-        zasword_t *stk = (zasword_t *)(&physmem[wpm->cpustat.sp]);
-        zasword_t  fp = wpm->cpustat.sp - 8;
+        wpmword_t *stk = (wpmword_t *)(&physmem[wpm->cpustat.sp]);
+        wpmword_t  fp = wpm->cpustat.sp - 8;
         stk[-1] = wpm->cpustat.pc + (op->size << 2);
         stk[-2] = wpm->cpustat.fp;
         wpm->cpustat.fp = fp;
@@ -1673,8 +1639,8 @@ opsti(opcode_t *op)
 void
 opiret(opcode_t *op)
 {
-    zasword_t fp = memfetchl(wpm->cpustat.fp);
-    zasword_t dest = memfetchl(wpm->cpustat.fp + 4);
+    wpmword_t fp = memfetchl(wpm->cpustat.fp);
+    wpmword_t dest = memfetchl(wpm->cpustat.fp + 4);
 
     wpm->cpustat.fp = fp;
     wpm->cpustat.sp = fp;
@@ -1687,7 +1653,7 @@ void
 opthr(opcode_t *op)
 {
     uint_fast8_t argt1 = op->arg1t;
-    zasuword_t pc  = (argt1 == ARGREG
+    wpmuword_t pc  = (argt1 == ARGREG
                     ? wpm->cpustat.regs[op->reg1]
                     : op->args[0]);
 
@@ -1709,10 +1675,10 @@ opcmpswap(opcode_t *op)
 {
     uint_fast8_t argt1 = op->arg1t;
     uint_fast8_t argt2 = op->arg2t;
-    zasword_t adr = (argt1 == ARGREG
+    wpmword_t adr = (argt1 == ARGREG
                    ? wpm->cpustat.regs[op->reg1]
                    : memfetchl(op->args[0]));
-    zasword_t val = (argt2 == ARGREG
+    wpmword_t val = (argt2 == ARGREG
                    ? wpm->cpustat.regs[op->reg2]
                    : (argt1 == ARGREG
                       ? memfetchl(op->args[0])
@@ -1786,7 +1752,7 @@ void
 ophook(opcode_t *op)
 {
     uint_fast8_t argt = op->arg1t;
-    zasword_t id = (argt == ARGREG
+    wpmword_t id = (argt == ARGREG
                   ? op->reg1
                   : op->args[0]);
     hookfunc_t *hook = hookfunctab[id];
@@ -1805,9 +1771,9 @@ opoutl(opcode_t *op)
 }
 
 void
-wpmpzero(wpmmemadr_t adr, zasuword_t size)
+wpmpzero(wpmmemadr_t adr, wpmuword_t size)
 {
-    zasuword_t  npg = roundup2(size, 1U << MINBKT) >> MINBKT;
+    wpmuword_t  npg = roundup2(size, 1U << MINBKT) >> MINBKT;
     void     *ptr = NULL;
 
     while (npg--) {
@@ -1832,7 +1798,7 @@ static void
 hookpzero(opcode_t *op)
 {
     wpmmemadr_t adr = wpm->cpustat.regs[0];
-    zasuword_t sz = wpm->cpustat.regs[1];
+    wpmuword_t sz = wpm->cpustat.regs[1];
 
     wpmpzero(adr, sz);
 
@@ -1842,7 +1808,7 @@ hookpzero(opcode_t *op)
 static void
 hookpalloc(opcode_t *op)
 {
-    zasuword_t size = wpm->cpustat.regs[0];
+    wpmuword_t size = wpm->cpustat.regs[0];
 
     wpm->cpustat.regs[0] = mempalloc(size);
 
@@ -1857,5 +1823,71 @@ hookpfree(opcode_t *op)
     mempfree(adr);
 
     return;
+}
+
+int
+wpmmain(int argc, char *argv[])
+{
+    long        l;
+#if (ZPC)
+    zasmemadr_t adr = ZPCTEXTBASE;
+#else
+    zasmemadr_t adr = WPMTEXTBASE;
+#endif
+#if (ZASPROF)
+    PROFTICK(tick);
+#endif
+
+    if (argc < 2) {
+        fprintf(stderr, "usage: zas <file1> ...\n");
+
+        exit(1);
+    }
+    zasinit();
+    wpminitmem(MEMSIZE);
+    wpminit();
+    memset(physmem, 0, WPMTEXTBASE);
+#if (ZASPROF)
+    profstarttick(tick);
+#endif
+    for (l = 1 ; l < argc ; l++) {
+#if (ZASBUF)
+        zasreadfile(argv[l], adr, readbufcur);
+#else
+        zasreadfile(argv[l], adr);
+#endif
+        if (!zastokenqueue) {
+            fprintf(stderr, "WARNING: no input in %s\n", argv[l]);
+        } else {
+            adr = zastranslate(adr);
+#if (ZPC)
+            zasresolve(ZPCTEXTBASE);
+#else
+            zasresolve(WPMTEXTBASE);
+#endif
+            zasremovesyms();
+#if (ZASPROF)
+            profstoptick(tick);
+            fprintf(stderr, "%lld cycles to process %s\n",
+                    proftickdiff(tick), argv[l]);
+#endif        
+        }
+    }
+    if (!zasinputread) {
+        fprintf(stderr, "empty input\n");
+
+        exit(1);
+    }
+    wpminitthr(_startadr);
+    pause();
+
+    /* NOTREACHED */
+    exit(0);
+}
+
+int
+main(int argc, char *argv[])
+{
+    exit(wpmmain(argc, argv));
 }
 

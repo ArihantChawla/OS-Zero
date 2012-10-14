@@ -5,6 +5,7 @@
 typedef uint32_t zasmemadr_t;
 typedef int32_t  zasword_t;
 typedef uint32_t zasuword_t;
+typedef uint32_t zassize_t;
 #endif
 
 #include <stdint.h>
@@ -33,18 +34,6 @@ typedef uint32_t zasuword_t;
 #define TOKENOP     0x12
 #endif
 #define NTOKTYPE    19
-
-#define OPINVAL    0x00
-#define RESOLVE    (~((zasmemadr_t)0))
-
-#define REGINDEX   0x10
-#define REGINDIR   0x20
-/* argument types */
-#define ARGNONE    0x00	// no argument
-#define ARGIMMED   0x01	// immediate argument
-#define ARGADR     0x02	// symbol / memory address
-#define ARGREG     0x03	// register
-#define ARGSYM     0x04	// symbol address
 
 struct zasop {
     uint8_t   *name;
@@ -75,7 +64,6 @@ struct zasinst {
 };
 
 struct zassym {
-    struct zassym *next;
     uint8_t       *name;
     zasmemadr_t    adr;
 };
@@ -109,7 +97,7 @@ struct zastoken {
         struct zaslabel  label;
 #if (ZPC)
         struct zpctoken *token;
-#elif (WPM)
+#else
         struct zasvalue  value;
 #endif
         struct zasinst   inst;
@@ -137,6 +125,13 @@ struct zasline * zasfindline(zasmemadr_t adr);
 
 void        zasinit(void);
 zasmemadr_t zastranslate(zasmemadr_t base);
+void        zasresolve(zasmemadr_t base);
+void        zasremovesyms(void);
+#if (ZASBUF)
+void        zasreadfile(char *name, zasmemadr_t adr, int bufid);
+#else
+void        zasreadfile(char *name, zasmemadr_t adr);
+#endif
 
 #endif /* __ZAS_ZAS_H__ */
 

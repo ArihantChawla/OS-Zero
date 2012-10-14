@@ -1,4 +1,4 @@
 #! /bin/sh
 
-rm -f wpm zas *~ *.toc *.aux *.log
+rm -f wpm core *~ *.toc *.aux *.log
 

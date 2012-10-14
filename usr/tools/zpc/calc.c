@@ -50,6 +50,43 @@ uint8_t zpcopnargtab[ZPCNASMOP]
     1   // TRAP
 };
 
+ophandler_t *opfunctab[ZPCNASMOP] ALIGNED(PAGESIZE)
+    = {
+    NULL,       // illegal instruction
+    opnot,
+    opand,
+    opor,
+    opxor,
+    opshr,
+    opshra,
+    opshl,
+    opror,
+    oprol,
+    opinc,
+    opdec,
+    opadd,
+    opsub,
+    opmul,
+    opdiv,
+    opmod,
+    opbz,
+    opbnz,
+    opblt,
+    opble,
+    opbgt,
+    opbge,
+    opmov,
+    opmovd,
+    opmovb,
+    opmovw,
+    opjmp,
+    opcall,
+    opret,
+    optrap,
+    opiret,
+    opthr
+};
+
 #define NHASHITEM 1024
 static struct zpctoken   *zpcvarhash[NHASHITEM] ALIGNED(PAGESIZE);
 //struct zpcstkitem        *zpcstktab[NSTKREG];
