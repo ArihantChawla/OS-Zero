@@ -6,6 +6,7 @@
 #include <zero/cdecl.h>
 #include <zero/trix.h>
 #include <zpc/zpc.h>
+#include <zpc/asm.h>
 #include <zpc/op.h>
 
 void stkinit(void);
@@ -17,6 +18,37 @@ void x11nextevent(void);
 #if (TEST)
 void zpcprintqueue(struct zpctoken *queue);
 #endif
+
+uint8_t zpcopnargtab[ZPCNASMOP]
+= {
+    0,  // ILL
+    1,  // NOT
+    2,  // XOR
+    2,  // OR
+    2,  // AND
+    2,  // SHR
+    2,  // SHRA
+    2,  // SHL
+    2,  // ROR
+    2,  // ROL
+    1,  // INC
+    1,  // DEC
+    2,  // ADD
+    2,  // SUB
+    2,  // MUL
+    2,  // DIV
+    2,  // MOD
+    1,  // BZ
+    1,  // BNZ
+    1,  // BLT
+    1,  // BLE
+    1,  // BGT
+    1,  // BGE
+    2,  // MOV
+    1,  // CALL
+    1,  // RET
+    1   // TRAP
+};
 
 #define NHASHITEM 1024
 static struct zpctoken   *zpcvarhash[NHASHITEM] ALIGNED(PAGESIZE);

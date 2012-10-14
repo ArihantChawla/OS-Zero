@@ -4,7 +4,7 @@
 #include <stdint.h>
 #include <zero/param.h>
 #include <zero/cdecl.h>
-#include <zas/asm.h>
+#include <zas/zas.h>
 
 /*
  * registers

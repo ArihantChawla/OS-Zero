@@ -2,10 +2,10 @@
 #include <stdio.h>
 #include <stdlib.h>
 #include <stdint.h>
-#include <zas/asm.h>
+#include <zas/zas.h>
 #include <zpc/asm.h>
 
-char *opnametab[ZPCNASMOP]
+char *zpcopnametab[ZPCNASMOP]
 = {
     "ILL",
     "not",

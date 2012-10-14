@@ -32,14 +32,10 @@ typedef uint32_t zasuword_t;
 #define TOKENPAREN  0x11
 #define TOKENOP     0x12
 #endif
-#define NTOK        19
+#define NTOKTYPE    19
 
 #define OPINVAL    0x00
-//#if (ZPC)
-//#define RESOLVE    INT64_C(0xffffffffffffffff)
-//#elif (WPM)
-#define RESOLVE    0xffffffff
-//#endif
+#define RESOLVE    (~((zasmemadr_t)0))
 
 #define REGINDEX   0x10
 #define REGINDIR   0x20
@@ -50,26 +46,26 @@ typedef uint32_t zasuword_t;
 #define ARGREG     0x03	// register
 #define ARGSYM     0x04	// symbol address
 
-struct op {
+struct zasop {
     uint8_t   *name;
     uint8_t    code;
     uint8_t    narg;
     uint8_t    len;
-    struct op *next;
+    struct zasop *next;
 };
 
-struct label {
+struct zaslabel {
     uint8_t      *name;
     zasmemadr_t   adr;
-    struct label *next;
+    struct zaslabel *next;
 };
 
-struct value {
+struct zasvalue {
     zasword_t val;
     uint8_t   size;
 };
 
-struct inst {
+struct zasinst {
     uint8_t *name;
 #if (ZASDB)
     uint8_t *data;
@@ -78,25 +74,26 @@ struct inst {
     uint8_t  narg;
 };
 
-struct sym {
-    uint8_t     *name;
-    zasmemadr_t  adr;
+struct zassym {
+    struct zassym *next;
+    uint8_t       *name;
+    zasmemadr_t    adr;
 };
 
-struct adr {
+struct zasadr {
     uint8_t     *name;
     zasmemadr_t  val;
 };
 
-struct ndx {
+struct zasndx {
     zasword_t reg;
     zasword_t val;
 };
 
-struct val {
+struct zasval {
     uint8_t    *name;
     zasword_t   val;
-    struct val *next;
+    struct zasval *next;
 };
 
 struct zastoken {
@@ -109,16 +106,16 @@ struct zastoken {
     unsigned long        line;
 #endif
     union {
-        struct label     label;
+        struct zaslabel  label;
 #if (ZPC)
         struct zpctoken *token;
 #elif (WPM)
-        struct value     value;
+        struct zasvalue  value;
 #endif
-        struct inst      inst;
-        struct sym       sym;
-        struct adr       adr;
-        struct ndx       ndx;
+        struct zasinst   inst;
+        struct zassym    sym;
+        struct zasadr    adr;
+        struct zasndx    ndx;
         uint8_t         *str;
         uint8_t          ch;
         uint8_t          size;
@@ -137,6 +134,9 @@ struct zasline {
 
 struct zasline * zasfindline(zasmemadr_t adr);
 #endif
+
+void        zasinit(void);
+zasmemadr_t zastranslate(zasmemadr_t base);
 
 #endif /* __ZAS_ZAS_H__ */
 

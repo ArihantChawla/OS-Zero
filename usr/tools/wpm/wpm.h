@@ -1,7 +1,10 @@
+#ifndef __WPM_WPM_H__
+#define __WPM_WPM_H__
+
 #include <stdint.h>
 #include <zero/cdecl.h>
 #include <zero/param.h>
-#include <zas/asm.h>
+#include <zas/zas.h>
 #include <wpm/mem.h>
 #if (ZPC)
 #include <zpc/asm.h>
@@ -9,9 +12,7 @@
 
 #define THRSTKSIZE  (128 * 1024)
 
-#if (WPM)
 #define WPMTEXTBASE 8192
-#endif
 
 #if 0
 #define align(adr, p2)                                                  \
@@ -38,8 +39,6 @@
 #define INTMOUSE   0x11         // mouse
 #define INTMSG     0x12         // incoming message
 #define NINT       16
-
-#if (WPM)
 
 /* hooks */
 #define HOOKPZERO  0            // r0 is number of pages
@@ -115,6 +114,7 @@
 #define OPINL      0x36 // read 32-bit long
 #define OPOUTL     0x37 // write 32-bit long
 #define OPHOOK     0x38 // hook into [virtual] operating system services
+#define WPMNASMOP  0x39
 /* unit IDS */
 #define UNIT_ALU   0x00	// arithmetic logical unit
 #define UNIT_SIMD  0x01	// vector unit
@@ -151,8 +151,6 @@ struct wpmobjhdr {
     zasuword_t bsize;     // bss segment size
 };
 
-#endif /* WPM */
-
 /* initial state: all bytes zero */
 struct wpmcpustate {
     zasuword_t msw;               // machine status word
@@ -185,7 +183,7 @@ struct wpm * wpminit(void);
 void *       wpmloop(void *start);
 #if (ZPC)
 void         wpmprintop(struct zpcopcode *op);
-#elif (WPM)
+#else
 void         wpmprintop(struct wpmopcode *op);
 #endif
 void         wpminitthr(zasmemadr_t pc);
@@ -197,4 +195,6 @@ struct wpmstackframe {
     zasuword_t retadr;
     zasuword_t args[EMPTY];
 };
+
+#endif /* __WPM_WPM_H__ */
 

@@ -260,29 +260,6 @@ exprinit(void)
     return;
 }
 
-#if 0
-static __inline__ void
-zpcqueueexpr(struct zpctoken *token,
-             struct zpctoken **queue, struct zpctoken **tail)
-{
-    token->next = NULL;
-    if (!*queue) {
-        token->prev = NULL;
-        *queue = token;
-    } else if (*tail) {
-        token->prev = *tail;
-        (*tail)->next = token;
-        *tail = token;
-    } else {
-        (*queue)->next = token;
-        token->prev = *queue;
-        *tail = token;
-    }
-
-    return;
-}
-#endif
-
 void
 zpcqueuetoken(struct zpctoken *token,
               struct zpctoken **queue, struct zpctoken **tail)

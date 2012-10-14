@@ -7,17 +7,16 @@
 #include <zero/cdecl.h>
 #include <zero/param.h>
 #include <zero/trix.h>
-#include <zas/asm.h>
+#include <zas/zas.h>
 #if (PTHREAD)
 #include <pthread.h>
 #include <zero/mtx.h>
 #endif
-#include <wpm/wpm.h>
-#include <wpm/mem.h>
 #if (ZPC)
 #include <zpc/asm.h>
 #endif
-
+#include <wpm/wpm.h>
+#include <wpm/mem.h>
 #define WPMDEBUG 0
 
 #if defined(__i386__) || defined(__i486__) || defined(__i586__)         \
@@ -30,7 +29,7 @@
 
 #if (ZPC)
 typedef struct zpcopcode opcode_t;
-#elif (WPM)
+#else
 typedef struct wpmopcode opcode_t;
 #endif
 typedef void ophandler_t(opcode_t *);
@@ -109,16 +108,75 @@ void opinl(opcode_t *op);
 void opoutl(opcode_t *op);
 void ophook(opcode_t *op);
 
-#if (WPM)
 static void hookpzero(opcode_t *op);
 static void hookpalloc(opcode_t *op);
 static void hookpfree(opcode_t *op);
-#endif
 
 static void    memstoreq(int64_t src, wpmmemadr_t virt);
 static int64_t memfetchq(wpmmemadr_t virt);
 static void    memstorel(int32_t src, wpmmemadr_t virt);
 static int32_t memfetchl(wpmmemadr_t virt);
+
+uint8_t wpmopnargtab[WPMNASMOP]
+= {
+    0,
+    1,  // NOT
+    2,  // AND
+    2,  // OR
+    2,  // XOR
+    2,  // SHL
+    2,  // SHR
+    2,  // SRHL
+    2,  // ROR
+    2,  // ROL
+    1,  // INC
+    1,  // DEC
+    2,  // ADD
+    2,  // SUB
+    2,  // CMP
+    2,  // MUL
+    2,  // DIV
+    2,  // MOD
+    1,  // BZ
+    1,  // BNZ
+    1,  // BLT
+    1,  // BLE
+    1,  // BGT
+    1,  // BGE
+    1,  // BO
+    1,  // BNO
+    1,  // BC
+    1,  // BNC
+    1,  // POP
+    1,  // PUSH
+    2,  // MOV
+    2,  // MOVB
+    2,  // MOVW
+    1,  // JMP
+    1,  // CALL
+    0,  // ENTER
+    0,  // LEAVE
+    0,  // RET
+    1,  // LMSW
+    1,  // SMSW
+    0,  // RESET
+    0,  // NOP
+    0,  // HLT
+    0,  // BRK
+    1,  // TRAP
+    0,  // CLI
+    0,  // STI
+    0,  // IRET
+    1,  // THR
+    2,  // CMPSWAP
+    1,  // INB
+    2,  // OUTB
+    1,  // INW
+    2,  // OUTW
+    1,  // INL
+    2,  // OUTL
+    1   // HOOK
+};
 
 #if (ZPC)
 ophandler_t *opfunctab[ZPCNASMOP] ALIGNED(PAGESIZE)
@@ -157,7 +215,7 @@ ophandler_t *opfunctab[ZPCNASMOP] ALIGNED(PAGESIZE)
     opiret,
     opthr
 };
-#elif (WPM)
+#else
 ophandler_t *opfunctab[256] ALIGNED(PAGESIZE)
     = {
     NULL,
@@ -219,10 +277,7 @@ ophandler_t *opfunctab[256] ALIGNED(PAGESIZE)
     ophook
 };
 #endif
-#if (ZPC)
-extern char *opnametab[ZPCNASMOP];
-#elif (WPM)
-char *opnametab[256]
+char *wpmopnametab[256]
 = {
     NULL,
     "not",
@@ -289,7 +344,6 @@ hookfunc_t *hookfunctab[256]
     hookpalloc,
     hookpfree
 };
-#endif /* WPM */
 
 char *argnametab[]
 = {
@@ -361,17 +415,15 @@ wpminitthr(wpmmemadr_t pc)
 }
 #endif /* PTHREAD */
 
-#if (WPM)
 void
 wpmprintop(opcode_t *op)
 {
-    fprintf(stderr, "INST: %s, size %d, arg1t == %s, arg2t == %s, reg1 == %x, reg2 == %x, args[0] == %x", opnametab[op->inst], op->size << 2, argnametab[op->arg1t], argnametab[op->arg2t], op->reg1, op->reg2, op->args[0]);
+    fprintf(stderr, "INST: %s, size %d, arg1t == %s, arg2t == %s, reg1 == %x, reg2 == %x, args[0] == %x", wpmopnametab[op->inst], op->size << 2, argnametab[op->arg1t], argnametab[op->arg2t], op->reg1, op->reg2, op->args[0]);
     if (op->arg2t) {
         fprintf(stderr, ", args[1] == %x", op->args[1]);
     }
     fprintf(stderr, "\n");
 }
-#endif /* WPM */
 
 void *
 wpmloop(void *cpustat)
@@ -405,12 +457,9 @@ wpmloop(void *cpustat)
     free(cpustat);
     while (!wpm->shutdown) {
         op = (opcode_t *)&physmem[wpm->cpustat.pc];
-#if (WPM)
         if (op->inst == OPNOP) {
             wpm->cpustat.pc++;
-        } else
-#endif
-        {
+        } else {
             wpm->cpustat.pc = roundup2(wpm->cpustat.pc, sizeof(zasword_t));
             op = (opcode_t *)&physmem[wpm->cpustat.pc];
             func = opfunctab[op->inst];
@@ -426,9 +475,7 @@ wpmloop(void *cpustat)
             } else {
                 fprintf(stderr, "illegal instruction, PC == %lx\n",
                         (long)wpm->cpustat.pc);
-#if (WPM)
                 wpmprintop(op);
-#endif
                 
                 exit(1);
             }
@@ -1147,8 +1194,6 @@ opbge(opcode_t *op)
     return;
 }
 
-#if (WPM)
-
 void
 opbo(opcode_t *op)
 {
@@ -1243,8 +1288,6 @@ oppush(opcode_t *op)
 
     return;
 }
-
-#endif /* WPM */
 
 void
 opmov(opcode_t *op)
@@ -1473,8 +1516,6 @@ opcall(opcode_t *op)
     return;
 }
 
-#if (WPM)
-
 void
 openter(opcode_t *op)
 {
@@ -1501,8 +1542,6 @@ opleave(opcode_t *op)
     return;
 }
 
-#endif
-
 /*
  * ret stack
  * ---------
@@ -1527,8 +1566,6 @@ opret(opcode_t *op)
 
     return;
 }
-
-#if (WPM)
 
 void
 oplmsw(opcode_t *op)
@@ -1591,8 +1628,6 @@ opbrk(opcode_t *op)
     return;
 }
 
-#endif /* WPM */
-
 void
 optrap(opcode_t *op)
 {
@@ -1617,8 +1652,6 @@ optrap(opcode_t *op)
     return;
 }
 
-#if (WPM)
-
 void
 opcli(opcode_t *op)
 {
@@ -1636,8 +1669,6 @@ opsti(opcode_t *op)
 
     return;
 }
-
-#endif /* WPM */
 
 void
 opiret(opcode_t *op)
@@ -1668,8 +1699,6 @@ opthr(opcode_t *op)
 
     return;
 }
-
-#if (WPM)
 
 #if (PTHREAD)
 /*
@@ -1775,8 +1804,6 @@ opoutl(opcode_t *op)
 {
 }
 
-#endif
-
 void
 wpmpzero(wpmmemadr_t adr, zasuword_t size)
 {
@@ -1800,7 +1827,6 @@ wpmpzero(wpmmemadr_t adr, zasuword_t size)
     }
 }
 
-#if (WPM)
 /* TODO: this and other hooks need to use page tables */
 static void
 hookpzero(opcode_t *op)
@@ -1832,5 +1858,4 @@ hookpfree(opcode_t *op)
 
     return;
 }
-#endif /* WPM */
 
