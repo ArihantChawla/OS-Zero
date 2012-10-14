@@ -2,7 +2,7 @@
 #include <stdio.h>
 #include <stdlib.h>
 #include <stdint.h>
-#include <wpm/asm.h>
+#include <zas/asm.h>
 #include <zpc/asm.h>
 
 char *opnametab[ZPCNASMOP]
@@ -43,10 +43,10 @@ char *opnametab[ZPCNASMOP]
 };
 uint64_t zpcintregs[ZPCNREG];
 
-asmuword_t
+zasuword_t
 zpcgetreg(uint8_t *str, uint8_t **retptr)
 {
-    asmuword_t reg = 0;
+    zasuword_t reg = 0;
     
 #if (ASMDEBUG)
     fprintf(stderr, "getreg: %s\n", str);

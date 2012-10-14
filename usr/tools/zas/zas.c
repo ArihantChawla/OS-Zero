@@ -50,7 +50,7 @@ static struct zastoken * zasprocalign(struct zastoken *, zasmemadr_t, zasmemadr_
 static struct zastoken * zasprocasciz(struct zastoken *, zasmemadr_t, zasmemadr_t *);
 
 #if (ZPC)
-extern char      *opnametab[ZPCNZASOP];
+extern char      *opnametab[ZPCNASMOP];
 #elif (WPM)
 extern char      *opnametab[256];
 #endif
@@ -71,7 +71,7 @@ struct zasline       *linehash[NHASHITEM];
 #endif
 
 #if (ZPC)
-static uint8_t        opnargtab[ZPCNZASOP]
+static uint8_t        opnargtab[ZPCNASMOP]
 = {
     0,  // ILL
     1,  // NOT

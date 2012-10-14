@@ -4,7 +4,7 @@
 #include <stdint.h>
 #include <zero/param.h>
 #include <zero/cdecl.h>
-#include <wpm/asm.h>
+#include <zas/asm.h>
 
 /*
  * registers
@@ -14,7 +14,7 @@
  * - %v0..%v15   - vector
  */
 
-asmuword_t zpcgetreg(uint8_t *str, uint8_t **retptr);
+zasuword_t zpcgetreg(uint8_t *str, uint8_t **retptr);
 
 /* number of registers per unit */
 #define ZPCNREG      16
@@ -129,7 +129,7 @@ struct zpcopcode {
     unsigned  size   : 2;       // size 1..3, shift count
     unsigned  flg    : 4;       // instruction flags
     unsigned  pad    : 18;      // pad to 64-bit boundary
-    asmword_t args[EMPTY];
+    zasword_t args[EMPTY];
 } PACK();
 
 /* convenience macros */
