@@ -2062,9 +2062,9 @@ zasreadfile(char *name, zasmemadr_t adr, int bufid)
 #if (WPM)
 int
 main(int argc, char *argv[])
-#elif (ZPC)
-    int
-    wpmmain(int argc, char *argv[])
+#else
+int
+wpmmain(int argc, char *argv[])
 #endif
 {
     long        l;

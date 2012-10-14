@@ -1,17 +1,142 @@
-/* initialise assembly environment */
-struct zvm    *zasinit(int argc, char *argv[]);
-/* read code line */
-struct token  *zasreadline(int fd, void *buf, long bufsz);
-/* parse code line into list of tokens */
-struct token  *zasparseline(void *buf, long bufsz);
-/* translate token list to byte/machine code */
-struct zvmobj *zasxlate(struct token *tokptr);
-/* evaluate C-like expression */
-struct token  *zaseval(struct token *tokptr);
-/* run virtual machine; if nstep == 0, run continuously */
-sig_t          zasrun(struct zvm *vmptr, long nstep);
+#ifndef __ZAS_ZAS_H__
+#define __ZAS_ZAS_H__
 
 #if defined(__i386__) || defined(__i486__) || defined(__i586__) || defined(__i686__)
 typedef uint32_t zasmemadr_t;
-typedef uint32_t zasmachword_t;
+typedef int32_t  zasword_t;
+typedef uint32_t zasuword_t;
 #endif
+
+#include <stdint.h>
+
+#define LINELEN    1024
+
+#define TOKENVALUE  0x01
+#define TOKENLABEL  0x02
+#define TOKENINST   0x03
+#define TOKENREG    0x04
+#define TOKENSYM    0x05
+#define TOKENCHAR   0x06
+#define TOKENIMMED  0x07
+#define TOKENINDIR  0x08
+#define TOKENADR    0x09
+#define TOKENINDEX  0x0a
+#define TOKENDATA   0x0b
+#define TOKENGLOBL  0x0c
+#define TOKENSPACE  0x0d
+#define TOKENORG    0x0e
+#define TOKENALIGN  0x0f
+#define TOKENASCIZ  0x10
+#define TOKENSTRING 0x10
+#if (ZASPREPROC)
+#define TOKENPAREN  0x11
+#define TOKENOP     0x12
+#endif
+#define NTOK        19
+
+#define OPINVAL    0x00
+//#if (ZPC)
+//#define RESOLVE    INT64_C(0xffffffffffffffff)
+//#elif (WPM)
+#define RESOLVE    0xffffffff
+//#endif
+
+#define REGINDEX   0x10
+#define REGINDIR   0x20
+/* argument types */
+#define ARGNONE    0x00	// no argument
+#define ARGIMMED   0x01	// immediate argument
+#define ARGADR     0x02	// symbol / memory address
+#define ARGREG     0x03	// register
+#define ARGSYM     0x04	// symbol address
+
+struct op {
+    uint8_t   *name;
+    uint8_t    code;
+    uint8_t    narg;
+    uint8_t    len;
+    struct op *next;
+};
+
+struct label {
+    uint8_t      *name;
+    zasmemadr_t   adr;
+    struct label *next;
+};
+
+struct value {
+    zasword_t val;
+    uint8_t   size;
+};
+
+struct inst {
+    uint8_t *name;
+#if (ZASDB)
+    uint8_t *data;
+#endif
+    uint8_t  op;
+    uint8_t  narg;
+};
+
+struct sym {
+    uint8_t     *name;
+    zasmemadr_t  adr;
+};
+
+struct adr {
+    uint8_t     *name;
+    zasmemadr_t  val;
+};
+
+struct ndx {
+    zasword_t reg;
+    zasword_t val;
+};
+
+struct val {
+    uint8_t    *name;
+    zasword_t   val;
+    struct val *next;
+};
+
+struct zastoken {
+    struct zastoken     *prev;
+    struct zastoken     *next;
+    unsigned long        type;
+    zasword_t            val;
+#if (ZASDB)
+    uint8_t             *file;
+    unsigned long        line;
+#endif
+    union {
+        struct label     label;
+#if (ZPC)
+        struct zpctoken *token;
+#elif (WPM)
+        struct value     value;
+#endif
+        struct inst      inst;
+        struct sym       sym;
+        struct adr       adr;
+        struct ndx       ndx;
+        uint8_t         *str;
+        uint8_t          ch;
+        uint8_t          size;
+        zasuword_t       reg;
+    } data;
+};
+
+#if (ZASDB)
+struct zasline {
+    struct zasline *next;
+    zasmemadr_t     adr;
+    uint8_t        *file;
+    unsigned long   num;
+    uint8_t        *data;
+};
+
+struct zasline * zasfindline(zasmemadr_t adr);
+#endif
+
+#endif /* __ZAS_ZAS_H__ */
+

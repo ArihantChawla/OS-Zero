@@ -10,3 +10,4 @@ loop:
 done:
 	mov	%r0, val
 	hlt
+
