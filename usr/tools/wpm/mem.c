@@ -13,7 +13,7 @@ static struct slab   *freetab[32];
 static uint32_t       memvmbase;
 static uint32_t       membrk;
 static volatile long  memlk;
-uint32_t             *mempagetab;
+pagedesc_t           *mempagetab;
 
 void
 scanmem(void)
@@ -45,7 +45,7 @@ void
 wpminitmem(uint32_t nbphys)
 {
     uint32_t     nbvirt = MEMHWBASE - nbphys;
-    uint32_t     adr = nbphys;
+    wpmmemadr_t  adr = nbphys;
     uint32_t     bkt;
     struct slab *slab;
 
@@ -78,7 +78,7 @@ struct slab *
 memsplitslab(uint32_t dest)
 {
     uint32_t     bkt = dest;
-    uint32_t     adr = 0;
+    wpmmemadr_t  adr = 0;
     struct slab *slab1 = NULL;
     struct slab *slab2 = NULL;
 
@@ -186,7 +186,7 @@ mempalloc(uint32_t size)
 {
     uint32_t     sz = powerof2(size) ? size : ceil2(max(size, 1U << MINBKT));
     uint32_t     n;
-    uint32_t     adr = 0;
+    wpmmemadr_t  adr = 0;
     uint8_t     *ptr = NULL;
     uint32_t     bkt = 0;
     uint32_t     num;
@@ -231,7 +231,7 @@ mempalloc(uint32_t size)
 }
 
 void
-mempfree(uint32_t adr)
+mempfree(wpmmemadr_t adr)
 {
     uint32_t     num = pagenum(adr);
     void        *ptr;

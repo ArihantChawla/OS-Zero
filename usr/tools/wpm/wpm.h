@@ -1,7 +1,7 @@
 #include <stdint.h>
 #include <zero/cdecl.h>
 #include <zero/param.h>
-#include <wpm/asm.h>
+#include <zas/asm.h>
 #include <wpm/mem.h>
 #if (ZPC)
 #include <zpc/asm.h>
@@ -124,8 +124,8 @@
 #define NFREG      16
 #define NVREG      16
 struct _wpmopcode {
-    asmuword_t code;
-    asmword_t  args[2];
+    zasuword_t code;
+    zasword_t  args[2];
 };
 
 struct wpmopcode {
@@ -137,39 +137,39 @@ struct wpmopcode {
     unsigned  reg2     : 6;	// register #2 ID + addressing flags
     unsigned  size     : 2;     // 1..3, shift count
     unsigned  res      : 2;
-    asmword_t args[2];
+    zasword_t args[2];
 } __attribute__ ((__packed__));
 
 struct wpmobjhdr {
-    asmuword_t nsym;      // number of [global] symbols
-    asmuword_t fsize;     // size of file
-    asmuword_t tofs;      // text segment offset
-    asmuword_t tsize;     // text segment size
-    asmuword_t dofs;      // data segment offset
-    asmuword_t dsize;     // data segment size
-    asmuword_t bofs;      // bss segment offset
-    asmuword_t bsize;     // bss segment size
+    zasuword_t nsym;      // number of [global] symbols
+    zasuword_t fsize;     // size of file
+    zasuword_t tofs;      // text segment offset
+    zasuword_t tsize;     // text segment size
+    zasuword_t dofs;      // data segment offset
+    zasuword_t dsize;     // data segment size
+    zasuword_t bofs;      // bss segment offset
+    zasuword_t bsize;     // bss segment size
 };
 
 #endif /* WPM */
 
 /* initial state: all bytes zero */
 struct wpmcpustate {
-    asmuword_t msw;               // machine status word
-    asmuword_t fp;                // frame pointer
-    asmuword_t sp;                // stack pointer
-    asmuword_t pc;                // program counter (instruction pointer)
+    zasuword_t msw;               // machine status word
+    zasuword_t fp;                // frame pointer
+    zasuword_t sp;                // stack pointer
+    zasuword_t pc;                // program counter (instruction pointer)
 #if 0
-    asmuword_t pd;                // page directory address
-    asmuword_t iv;                // interrupt vector address
+    zasuword_t pd;                // page directory address
+    zasuword_t iv;                // interrupt vector address
 #endif
-    asmuword_t isp;               // interrupt stack pointer
+    zasuword_t isp;               // interrupt stack pointer
 #if (ZPC)
-    asmword_t  regs[ZPCNREG] ALIGNED(CLSIZE);
+    zasword_t  regs[ZPCNREG] ALIGNED(CLSIZE);
     float      fregs[ZPCNREG];
     double     dregs[ZPCNREG];
 #else
-    asmword_t  regs[NREG] ALIGNED(CLSIZE);
+    zasword_t  regs[NREG] ALIGNED(CLSIZE);
     double     fregs[NFREG] ALIGNED(CLSIZE);
 #endif
 };
@@ -178,7 +178,7 @@ struct wpm {
     struct wpmcpustate  cpustat;
     volatile long       shutdown;
     volatile long       thrid;
-    asmuword_t          brk;
+    zasuword_t          brk;
 };
 
 struct wpm * wpminit(void);
@@ -188,13 +188,13 @@ void         wpmprintop(struct zpcopcode *op);
 #elif (WPM)
 void         wpmprintop(struct wpmopcode *op);
 #endif
-void         wpminitthr(asmadr_t pc);
+void         wpminitthr(zasmemadr_t pc);
 
 extern __thread struct wpm *wpm;
 
 struct wpmstackframe {
-    asmuword_t oldfp;
-    asmuword_t retadr;
-    asmuword_t args[EMPTY];
+    zasuword_t oldfp;
+    zasuword_t retadr;
+    zasuword_t args[EMPTY];
 };
 

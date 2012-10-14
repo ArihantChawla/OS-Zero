@@ -4,7 +4,7 @@
  * See the file LICENSE for more information about using this software.
  */
 
-#define DEBUGMALLOC 1
+#define DEBUGMALLOC 0
 #if (DEBUGMALLOC)
 #include <assert.h>
 #endif
@@ -50,7 +50,7 @@
 #define FIXES   1
 #define HACKS   0
 
-#define INTSTAT 0
+#define INTSTAT 1
 #define ZEROMTX 1
 #define STAT    0
 
@@ -153,9 +153,9 @@ typedef pthread_mutex_t LK_T;
 /* basic allocator parameters */
 #if (NEWHACK)
 #define BLKMINLOG2    5  /* minimum-size allocation */
-#define SLABTEENYLOG2 13 /* little block */
-#define SLABTINYLOG2  16 /* small-size block */
-#define SLABLOG2      21 /* base size for heap allocations */
+#define SLABTEENYLOG2 14 /* little block */
+#define SLABTINYLOG2  18 /* small-size block */
+#define SLABLOG2      22 /* base size for heap allocations */
 //#define MAPMIDLOG2    23
 #else
 #define BLKMINLOG2    5  /* minimum-size allocation */
@@ -225,21 +225,21 @@ typedef pthread_mutex_t LK_T;
 #define nmagslablog2m64(bid)                                            \
     ((ismapbkt(bid))                                                    \
      ? 0                                                                \
-     : (((bid) <= SLABTEENYLOG2)                                        \
-        ? 1                                                             \
+     : (((bid) <= SLABTINYLOG2)                                         \
+        ? 2                                                             \
         : 0))
 #define nmagslablog2m128(bid)                                           \
     ((ismapbkt(bid))                                                    \
      ? 0                                                                \
-     : (((bid) <= SLABTEENYLOG2)                                        \
-        ? 1                                                             \
-        : 0))
+     : (((bid) <= SLABTINYLOG2)                                         \
+        ? 2                                                             \
+        : 1))
 #define nmagslablog2m512(bid)                                           \
-        ((ismapbkt(bid))                                                \
-         ? 0                                                            \
-         : (((bid) <= SLABTEENYLOG2)                                    \
-            ? 1                                                         \
-            : 0))
+    ((ismapbkt(bid))                                                    \
+     ? 0                                                                \
+     : (((bid) <= SLABTINYLOG2)                                         \
+        ? 3                                                             \
+        : 1))
 #if 0
 #define nmagslablog2init(bid)                                           \
     ((ismapbkt(bid))                                                    \
@@ -359,14 +359,9 @@ typedef pthread_mutex_t LK_T;
 #define ismapbkt(bid)     (bid > HQMAX)
 #define magfull(mag)      (!(mag)->cur)
 #define magempty(mag)     ((mag)->cur == (mag)->max)
-#if (ALNSTK)
-#define nbstk(bid)        max(nblk(bid) * sizeof(void *), PAGESIZE)
-#define nbalnstk(bid)     nbstk(bid)
-#else
 #define nbstk(bid)        max((nblk(bid) << 1) * sizeof(void *), PAGESIZE)
-#endif
 #define mapstk(n)         mapanon(_mapfd, ((n) << 1) * sizeof(void *))
-#define unmapstk(mag)     unmapanon((mag)->bptr, mag->max * sizeof(void *))
+#define unmapstk(mag)     unmapanon((mag)->bptr, nbstk((mag)->bid))
 #define putblk(mag, ptr)                                                \
     ((gt2(mag->max, 1)                                                  \
       ? (((void **)(mag)->bptr)[--(mag)->cur] = (ptr))                  \
@@ -479,14 +474,14 @@ struct mtree {
 /* globals */
 
 #if (INTSTAT)
-static uint64_t        nalloc[NARN][NBKT];
+static uint64_t        nalloc[NARN][NBKT] ALIGNED(PAGESIZE);
 static long            nhdrbytes[NARN];
 static long            nstkbytes[NARN];
 static long            nmapbytes[NARN];
 static long            nheapbytes[NARN];
 #endif
 #if (STAT)
-static unsigned long   _nheapreq[NBKT] ALIGNED(PAGESIZE);
+static unsigned long   _nheapreq[NBKT];
 static unsigned long   _nmapreq[NBKT];
 #endif
 #if (TUNEBUF)
@@ -723,6 +718,7 @@ printintstat(void)
     fp = fopen(path, "a");
     if (fp) {
         for (aid = 0 ; aid < NARN ; aid++) {
+#if 0
             nbhdr += nhdrbytes[aid];
             nbstk += nstkbytes[aid];
             nbheap += nheapbytes[aid];
@@ -735,10 +731,17 @@ printintstat(void)
                 fprintf(fp, "NALLOC[%lx][%lx]: %lld\n",
                         aid, bkt, nalloc[aid][bkt]);
             }
+#endif
+            for (bkt = 0 ; bkt < NBKT ; bkt++) {
+                fprintf(fp, "%lx:%lx:%lld\n",
+                        aid, bkt, nalloc[aid][bkt]);
+            }
         }
     }
+#if 0
     fprintf(fp, "TOTAL: hdr: %ld, stk: %ld, heap: %ld, map: %ld\n",
             nbhdr, nbstk, nbheap, nbmap);
+#endif
 }
 #endif
 
@@ -1507,12 +1510,10 @@ getmem(size_t size,
 
         abort();
     }
+#endif
+#endif
 #if (INTSTAT)
-    else {
-        nalloc[aid][bid]++;
-    }
-#endif
-#endif
+    nalloc[aid][bid]++;
 #endif
 
     return retptr;
