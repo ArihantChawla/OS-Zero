@@ -19,7 +19,7 @@ void x11nextevent(void);
 void zpcprintqueue(struct zpctoken *queue);
 #endif
 
-uint8_t zpcopnargtab[ZPCNASMOP]
+static uint8_t zpcopnargtab[ZPCNASMOP]
 = {
     0,  // ILL
     1,  // NOT

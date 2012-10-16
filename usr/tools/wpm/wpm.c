@@ -128,9 +128,9 @@ uint8_t wpmopnargtab[WPMNASMOP]
     2,  // AND
     2,  // OR
     2,  // XOR
-    2,  // SHR
-    2,  // SHRA
     2,  // SHL
+    2,  // SHR
+    2,  // SRHL
     2,  // ROR
     2,  // ROL
     1,  // INC
@@ -626,7 +626,7 @@ opshr(opcode_t *op)
     fprintf(stderr, "SHR: %x by %d\n", dest, cnt);
 #endif
 #if (USEASM)
-    asmshrl(cnt, dest);
+    asmshr(cnt, dest);
 #else
     dest >>= cnt;
     dest &= sign;
@@ -670,7 +670,7 @@ opshra(opcode_t *op)
 #endif
 
 #if (USEASM)
-    asmshr(cnt, dest);
+    asmshra(cnt, dest);
 #else
     sign = (sign) ? 0xffffffff << (32 - cnt) : 0;
     dest >>= cnt;

@@ -49,11 +49,15 @@ static struct zastoken * zasprocorg(struct zastoken *, zasmemadr_t, zasmemadr_t 
 static struct zastoken * zasprocalign(struct zastoken *, zasmemadr_t, zasmemadr_t *);
 static struct zastoken * zasprocasciz(struct zastoken *, zasmemadr_t, zasmemadr_t *);
 
-static char **opnametab;
+/* TODO: combine these into a structure table for better cache locality */
+static char    **opnametab;
+static uint8_t  *opnargtab;
 #if (ZPC)
-extern char  *zpcopnametab[ZPCNASMOP];
+extern char     *zpcopnametab[ZPCNASMOP];
+extern uint8_t   zpcopnargtab[ZPCNASMOP];
 #elif (WPM)
-extern char  *wpmopnametab[256];
+extern char     *wpmopnametab[WPMNASMOP];
+extern uint8_t   wpmopnargtab[WPMNASMOP];
 #endif
 
 struct zassymrec {
@@ -69,100 +73,6 @@ static struct zasval    *valhash[NHASHITEM];
 static struct zaslabel  *globhash[NHASHITEM];
 #if (ZASDB)
 struct zasline          *linehash[NHASHITEM];
-#endif
-
-#if (ZPC)
-static uint8_t           opnargtab[ZPCNASMOP]
-= {
-    0,  // ILL
-    1,  // NOT
-    2,  // XOR
-    2,  // OR
-    2,  // AND
-    2,  // SHR
-    2,  // SHRA
-    2,  // SHL
-    2,  // ROR
-    2,  // ROL
-    1,  // INC
-    1,  // DEC
-    2,  // ADD
-    2,  // SUB
-    2,  // MUL
-    2,  // DIV
-    2,  // MOD
-    1,  // BZ
-    1,  // BNZ
-    1,  // BLT
-    1,  // BLE
-    1,  // BGT
-    1,  // BGE
-    2,  // MOV
-    1,  // CALL
-    1,  // RET
-    1   // TRAP
-};
-#elif (WPM)
-static uint8_t        opnargtab[256]
-= {
-    0,
-    1,  // NOT
-    2,  // AND
-    2,  // OR
-    2,  // XOR
-    2,  // SHL
-    2,  // SHR
-    2,  // SRHL
-    2,  // ROR
-    2,  // ROL
-    1,  // INC
-    1,  // DEC
-    2,  // ADD
-    2,  // SUB
-    2,  // CMP
-    2,  // MUL
-    2,  // DIV
-    2,  // MOD
-    1,  // BZ
-    1,  // BNZ
-    1,  // BLT
-    1,  // BLE
-    1,  // BGT
-    1,  // BGE
-    1,  // BO
-    1,  // BNO
-    1,  // BC
-    1,  // BNC
-    1,  // POP
-    1,  // PUSH
-    2,  // MOV
-    2,  // MOVB
-    2,  // MOVW
-    1,  // JMP
-    1,  // CALL
-    0,  // ENTER
-    0,  // LEAVE
-    0,  // RET
-    1,  // LMSW
-    1,  // SMSW
-    0,  // RESET
-    0,  // NOP
-    0,  // HLT
-    0,  // BRK
-    1,  // TRAP
-    0,  // CLI
-    0,  // STI
-    0,  // IRET
-    1,  // THR
-    2,  // CMPSWAP
-    1,  // INB
-    2,  // OUTB
-    1,  // INW
-    2,  // OUTW
-    1,  // INL
-    2,  // OUTL
-    1   // HOOK
-};
 #endif
 
 tokfunc_t *tokfunctab[NTOKTYPE]
@@ -1380,7 +1290,7 @@ zasprocinst(struct zastoken *token, zasmemadr_t adr,
                     break;
                 case TOKENSYM:
                     op->arg1t = ARGADR;
-                    sym = malloc(sizeof(struct zassym));
+                    sym = malloc(sizeof(struct zassymrec));
                     sym->name = (uint8_t *)strdup((char *)token1->data.sym.name);
                     sym->adr = (zasmemadr_t)&op->args[0];
                     zasqueuesym(sym);
@@ -1407,7 +1317,7 @@ zasprocinst(struct zastoken *token, zasmemadr_t adr,
                     break;
                 case TOKENADR:
                     op->arg1t = ARGIMMED;
-                    sym = malloc(sizeof(struct zassym));
+                    sym = malloc(sizeof(struct zassymrec));
                     sym->name = (uint8_t *)strdup((char *)token1->data.sym.name);
                     sym->adr = (zasmemadr_t)&op->args[0];
                     zasqueuesym(sym);
@@ -1469,7 +1379,7 @@ zasprocinst(struct zastoken *token, zasmemadr_t adr,
                     break;
                 case TOKENSYM:
                     op->arg2t = ARGADR;
-                    sym = malloc(sizeof(struct zassym));
+                    sym = malloc(sizeof(struct zassymrec));
                     sym->name = (uint8_t *)strdup((char *)token2->data.sym.name);
                     if (op->arg1t == ARGREG) {
                         sym->adr = (zasmemadr_t)&op->args[0];
@@ -1504,7 +1414,7 @@ zasprocinst(struct zastoken *token, zasmemadr_t adr,
                         break;
                 case TOKENADR:
                     op->arg2t = ARGIMMED;
-                    sym = malloc(sizeof(struct zassym));
+                    sym = malloc(sizeof(struct zassymrec));
                     sym->name = (uint8_t *)strdup((char *)token2->data.sym.name);
                     if (op->arg1t == ARGREG) {
                         sym->adr = (zasmemadr_t)&op->args[0];
@@ -1755,8 +1665,10 @@ zasinit(void)
 {
 #if (ZPC)
     opnametab = zpcopnametab;
+    opnargtab = zpcopnargtab;
 #elif (WPM)
     opnametab = wpmopnametab;
+    opnargtab = wpmopnargtab;
 #endif
     zasinitop();
     zasinitbuf();
@@ -1782,6 +1694,7 @@ zastranslate(zasmemadr_t base)
             }
         } else {
             fprintf(stderr, "stray token of type %lx\n", token->type);
+            printtoken(token);
 
             exit(1);
         }

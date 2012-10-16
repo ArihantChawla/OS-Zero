@@ -3,7 +3,7 @@ _start:
 	mov	val, %r0
 	mov	$0x04, %r1
 loop:	
-	shrl	$4, %r0
+	shr	$4, %r0
 	dec	%r1
 	cmp	$0x00, %r1
 	bnz	loop
