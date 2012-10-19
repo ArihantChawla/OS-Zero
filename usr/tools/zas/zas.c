@@ -1,7 +1,7 @@
-#define ZASDEBUG    0
-#define ZASBUF      0
-#define ZASPROF     0
-#define READBUFSIZE 65536
+#define ZASDEBUG   0
+#define ZASBUF     1
+#define ZASPROF    0
+#define ZASBUFSIZE 131072
 
 #include <stdio.h>
 #include <stdlib.h>
@@ -27,7 +27,7 @@
 #endif
 #include <wpm/wpm.h>
 
-typedef struct zastoken * tokfunc_t(struct zastoken *, zasmemadr_t, zasmemadr_t *);
+typedef struct zastoken * zastokfunc_t(struct zastoken *, zasmemadr_t, zasmemadr_t *);
 
 static zasuword_t        zasgetreg(uint8_t *str, uint8_t **retptr);
 static uint8_t         * zasgetlabel(uint8_t *str, uint8_t **retptr);
@@ -50,8 +50,8 @@ static struct zastoken * zasprocalign(struct zastoken *, zasmemadr_t, zasmemadr_
 static struct zastoken * zasprocasciz(struct zastoken *, zasmemadr_t, zasmemadr_t *);
 
 /* TODO: combine these into a structure table for better cache locality */
-static char    **opnametab;
-static uint8_t  *opnargtab;
+static char    **zasopnametab;
+static uint8_t  *zasopnargtab;
 #if (ZPC)
 extern char     *zpcopnametab[ZPCNASMOP];
 extern uint8_t   zpcopnargtab[ZPCNASMOP];
@@ -75,7 +75,7 @@ static struct zaslabel  *globhash[NHASHITEM];
 struct zasline          *linehash[NHASHITEM];
 #endif
 
-tokfunc_t *tokfunctab[NTOKTYPE]
+zastokfunc_t *zasktokfunctab[NTOKTYPE]
 = {
     NULL,
     zasprocvalue,
@@ -120,7 +120,7 @@ static int
 zasgetc(int fd, int bufid)
 {
     struct readbuf *buf = &readbuftab[bufid];
-    ssize_t         nleft = READBUFSIZE;
+    ssize_t         nleft = ZASBUFSIZE;
     ssize_t         n;
     int             ch = EOF;
     long            l = nreadbuf;
@@ -129,7 +129,7 @@ zasgetc(int fd, int bufid)
         nreadbuf <<= 1;
         readbuftab = realloc(readbuftab, nreadbuf * sizeof(struct readbuf));
         for ( ; l < nreadbuf ; l++) {
-            readbuftab[l].data = malloc(READBUFSIZE);
+            readbuftab[l].data = malloc(ZASBUFSIZE);
         }
     }
     if (buf->cur < buf->lim) {
@@ -137,7 +137,7 @@ zasgetc(int fd, int bufid)
     } else if (buf->cur == buf->lim) {
         n = 0;
         while (nleft) {
-            n = read(fd, buf->data, READBUFSIZE);
+            n = read(fd, buf->data, ZASBUFSIZE);
             if (n < 0) {
                 if (errno == EINTR) {
                     
@@ -153,12 +153,12 @@ zasgetc(int fd, int bufid)
                 nleft -= n;
             }
         }
-        if (nleft == READBUFSIZE) {
+        if (nleft == ZASBUFSIZE) {
 
             return EOF;
         }
         buf->cur = buf->data;
-        buf->lim = (uint8_t *)buf->data + READBUFSIZE - nleft;
+        buf->lim = (uint8_t *)buf->data + ZASBUFSIZE - nleft;
         ch = *buf->cur++;
     }
 
@@ -488,11 +488,11 @@ zasinitop(void)
     struct zasop *op;
     long       l;
 
-    for (l = 1 ; (opnametab[l]) ; l++) {
+    for (l = 1 ; (zasopnametab[l]) ; l++) {
         op = malloc(sizeof(struct zasop));
-        op->name = (uint8_t *)opnametab[l];
+        op->name = (uint8_t *)zasopnametab[l];
         op->code = (uint8_t)l;
-        op->narg = opnargtab[l];
+        op->narg = zasopnargtab[l];
         zasaddop(op);
     }
 
@@ -511,7 +511,7 @@ zasinitbuf(void)
 #if (ZASBUF)
     readbuftab = malloc(nreadbuf * sizeof(struct readbuf));
     for (l = 0 ; l < nreadbuf ; l++) {
-        readbuftab[l].data = malloc(READBUFSIZE);
+        readbuftab[l].data = malloc(ZASBUFSIZE);
     }
 #endif
 
@@ -1664,11 +1664,11 @@ void
 zasinit(void)
 {
 #if (ZPC)
-    opnametab = zpcopnametab;
-    opnargtab = zpcopnargtab;
+    zasopnametab = zpcopnametab;
+    zasopnargtab = zpcopnargtab;
 #elif (WPM)
-    opnametab = wpmopnametab;
-    opnargtab = wpmopnargtab;
+    zasopnametab = wpmopnametab;
+    zasopnargtab = wpmopnargtab;
 #endif
     zasinitop();
     zasinitbuf();
@@ -1679,13 +1679,13 @@ zastranslate(zasmemadr_t base)
 {
     zasmemadr_t      adr = base;
     struct zastoken *token = zastokenqueue;
-    tokfunc_t       *func;
+    zastokfunc_t    *func;
 
     if (zastokenqueue) {
         zasinputread = 1;
     }
     while (token) {
-        func = tokfunctab[token->type];
+        func = zasktokfunctab[token->type];
         if (func) {
             token = func(token, adr, &adr);
             if (!token) {
