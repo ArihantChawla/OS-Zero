@@ -27,14 +27,6 @@
 #define USEASM 0
 #endif
 
-#if (ZPC)
-typedef struct zpcopcode opcode_t;
-#else
-typedef struct wpmopcode opcode_t;
-#endif
-typedef void ophandler_t(opcode_t *);
-typedef void hookfunc_t(opcode_t *);
-
 #if (ZASBUF)
 extern long             readbufcur;
 #endif
@@ -47,78 +39,6 @@ extern unsigned long    zasinputread;
 extern zasmemadr_t      _startadr;
 extern wpmpage_t       *mempagetab;
 
-#if (WPM)
-
-/* logical operations */
-void opnot(opcode_t *op);
-void opand(opcode_t *op);
-void opor(opcode_t *op);
-void opxor(opcode_t *op);
-/* shift and rotate */
-void opshr(opcode_t *op);
-void opshra(opcode_t *op);
-void opshl(opcode_t *op);
-void opror(opcode_t *op);
-void oprol(opcode_t *op);
-/* arithmetic operations */
-void opinc(opcode_t *op);
-void opdec(opcode_t *op);
-void opadd(opcode_t *op);
-void opsub(opcode_t *op);
-void opcmp(opcode_t *op);
-void opmul(opcode_t *op);
-void opdiv(opcode_t *op);
-void opmod(opcode_t *op);
-/* branch operations */
-void opbz(opcode_t *op);
-void opbnz(opcode_t *op);
-void opblt(opcode_t *op);
-void opble(opcode_t *op);
-void opbgt(opcode_t *op);
-void opbge(opcode_t *op);
-void opbo(opcode_t *op);
-void opbno(opcode_t *op);
-void opbc(opcode_t *op);
-void opbnc(opcode_t *op);
-/* stack operations */
-void oppop(opcode_t *op);
-void oppush(opcode_t *op);
-/* load/store */
-void opmov(opcode_t *op);
-void opmovd(opcode_t *op);
-void opmovb(opcode_t *op);
-void opmovw(opcode_t *op);
-/* jump */
-void opjmp(opcode_t *op);
-/* function call interface */
-void opcall(opcode_t *op);
-void openter(opcode_t *op);
-void opleave(opcode_t *op);
-void opret(opcode_t *op);
-/* machine status word */
-void oplmsw(opcode_t *op);
-void opsmsw(opcode_t *op);
-/* reset and shutdown */
-void opreset(opcode_t *op);
-void opnop(opcode_t *op);
-void ophlt(opcode_t *op);
-void opbrk(opcode_t *op);
-void optrap(opcode_t *op);
-void opcli(opcode_t *op);
-void opsti(opcode_t *op);
-void opiret(opcode_t *op);
-void opthr(opcode_t *op);
-void opcmpswap(opcode_t *op);
-void opinb(opcode_t *op);
-void opoutb(opcode_t *op);
-void opinw(opcode_t *op);
-void opoutw(opcode_t *op);
-void opinl(opcode_t *op);
-void opoutl(opcode_t *op);
-void ophook(opcode_t *op);
-
-#endif
-
 static void hookpzero(opcode_t *op);
 static void hookpalloc(opcode_t *op);
 static void hookpfree(opcode_t *op);
@@ -130,8 +50,8 @@ static int32_t memfetchl(wpmmemadr_t virt);
 
 #if (ZPC)
 
-extern uint8_t        zpcopnargtab[ZPCNASMOP];
-extern zpcophandler_t zpcopfunctab[ZPCNASMOP];
+extern uint8_t      zpcopnargtab[ZPCNASMOP];
+extern ophandler_t *zpcopfunctab[ZPCNASMOP];
 
 #else
 
@@ -319,6 +239,8 @@ char *wpmopnametab[WPMNASMOP + 1]
     NULL
 };
 
+#endif /* !ZPC */
+
 hookfunc_t *hookfunctab[256]
 = {
     hookpzero,
@@ -334,8 +256,6 @@ char *argnametab[]
     "ARGREG",
     "ARGSYM"
 };
-
-#endif /* !ZPC */
 
 #if (PTHREAD)
 __thread struct wpm  *wpm;
@@ -398,6 +318,8 @@ wpminitthr(wpmmemadr_t pc)
 }
 #endif /* PTHREAD */
 
+#if (WPM)
+
 void
 wpmprintop(opcode_t *op)
 {
@@ -407,6 +329,8 @@ wpmprintop(opcode_t *op)
     }
     fprintf(stderr, "\n");
 }
+
+#endif
 
 void *
 wpmloop(void *cpustat)
@@ -461,7 +385,9 @@ wpmloop(void *cpustat)
             } else {
                 fprintf(stderr, "illegal instruction, PC == %lx\n",
                         (long)wpm->cpustat.pc);
+#if (WPM)
                 wpmprintop(op);
+#endif
                 
                 exit(1);
             }
@@ -489,8 +415,6 @@ wpmloop(void *cpustat)
 
     return NULL;
 }
-
-#if (WPM)
 
 void
 opnot(opcode_t *op)
@@ -1792,8 +1716,6 @@ opoutl(opcode_t *op)
 {
 }
 
-#endif /* WPM */
-
 void
 wpmpzero(wpmmemadr_t adr, wpmuword_t size)
 {
@@ -1910,9 +1832,13 @@ wpmmain(int argc, char *argv[])
     exit(0);
 }
 
+#if (!ZPC)
+
 int
 main(int argc, char *argv[])
 {
     exit(wpmmain(argc, argv));
 }
+
+#endif
 

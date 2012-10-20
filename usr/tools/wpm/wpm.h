@@ -6,12 +6,89 @@
 #include <zero/param.h>
 #include <wpm/mem.h>
 #if (ZPC)
+#include <zpc/zpc.h>
 #include <zpc/asm.h>
 #endif
 
 #define THRSTKSIZE  (128 * 1024)
 
 #define WPMTEXTBASE 8192
+
+#if (ZPC)
+typedef struct zpcopcode opcode_t;
+#else
+typedef struct wpmopcode opcode_t;
+#endif
+typedef void ophandler_t(opcode_t *);
+typedef void hookfunc_t(opcode_t *);
+
+/* logical operations */
+void opnot(opcode_t *op);
+void opand(opcode_t *op);
+void opor(opcode_t *op);
+void opxor(opcode_t *op);
+/* shift and rotate */
+void opshr(opcode_t *op);
+void opshra(opcode_t *op);
+void opshl(opcode_t *op);
+void opror(opcode_t *op);
+void oprol(opcode_t *op);
+/* arithmetic operations */
+void opinc(opcode_t *op);
+void opdec(opcode_t *op);
+void opadd(opcode_t *op);
+void opsub(opcode_t *op);
+void opcmp(opcode_t *op);
+void opmul(opcode_t *op);
+void opdiv(opcode_t *op);
+void opmod(opcode_t *op);
+/* branch operations */
+void opbz(opcode_t *op);
+void opbnz(opcode_t *op);
+void opblt(opcode_t *op);
+void opble(opcode_t *op);
+void opbgt(opcode_t *op);
+void opbge(opcode_t *op);
+void opbo(opcode_t *op);
+void opbno(opcode_t *op);
+void opbc(opcode_t *op);
+void opbnc(opcode_t *op);
+/* stack operations */
+void oppop(opcode_t *op);
+void oppush(opcode_t *op);
+/* load/store */
+void opmov(opcode_t *op);
+void opmovd(opcode_t *op);
+void opmovb(opcode_t *op);
+void opmovw(opcode_t *op);
+/* jump */
+void opjmp(opcode_t *op);
+/* function call interface */
+void opcall(opcode_t *op);
+void openter(opcode_t *op);
+void opleave(opcode_t *op);
+void opret(opcode_t *op);
+/* machine status word */
+void oplmsw(opcode_t *op);
+void opsmsw(opcode_t *op);
+/* reset and shutdown */
+void opreset(opcode_t *op);
+void opnop(opcode_t *op);
+void ophlt(opcode_t *op);
+void opbrk(opcode_t *op);
+void optrap(opcode_t *op);
+void opcli(opcode_t *op);
+void opsti(opcode_t *op);
+void opiret(opcode_t *op);
+void opthr(opcode_t *op);
+void opcmpswap(opcode_t *op);
+void opinb(opcode_t *op);
+void opoutb(opcode_t *op);
+void opinw(opcode_t *op);
+void opoutw(opcode_t *op);
+void opinl(opcode_t *op);
+void opoutl(opcode_t *op);
+void ophook(opcode_t *op);
 
 #if defined(__i386__) || defined(__i486__) || defined(__i586__) || defined(__i686__)
 typedef int32_t  wpmword_t;

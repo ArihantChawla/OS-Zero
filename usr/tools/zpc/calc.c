@@ -8,6 +8,7 @@
 #include <zpc/zpc.h>
 #include <zpc/asm.h>
 #include <zpc/op.h>
+#include <wpm/wpm.h>
 
 void stkinit(void);
 #if (ZPCX11)
@@ -19,7 +20,7 @@ void x11nextevent(void);
 void zpcprintqueue(struct zpctoken *queue);
 #endif
 
-static uint8_t zpcopnargtab[ZPCNASMOP]
+uint8_t zpcopnargtab[ZPCNASMOP]
 = {
     0,  // ILL
     1,  // NOT
