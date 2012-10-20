@@ -100,6 +100,25 @@ typedef void zpcaction_t(void);
 #define ZPCBUTTONUTIL  0x04
 #define ZPCBUTTONDEBUG 0x05
 
+typedef union {
+    int32_t i32;
+    int64_t i64;
+    float   fval;
+    double  dval;
+} zpcword_t;
+
+struct zpcopcode {
+    unsigned  inst     : 8;	// instruction ID
+    unsigned  unit     : 2;	// unit ID
+    unsigned  arg1t    : 3;	// argument #1 type
+    unsigned  arg2t    : 3;     // argument #2 type
+    unsigned  reg1     : 6;	// register #1 ID + addressing flags
+    unsigned  reg2     : 6;	// register #2 ID + addressing flags
+    unsigned  size     : 2;     // 1..3, shift count
+    unsigned  res      : 2;
+    zpcword_t args[2];
+} __attribute__ ((__packed__));
+
 struct zpcv64v8 {
     uint8_t vec[8];
 } PACK();

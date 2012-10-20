@@ -35,6 +35,9 @@ typedef struct wpmopcode opcode_t;
 typedef void ophandler_t(opcode_t *);
 typedef void hookfunc_t(opcode_t *);
 
+#if (ZASBUF)
+extern long             readbufcur;
+#endif
 #if (WPMDB)
 extern struct zasline  *linehash[];
 #endif
@@ -43,6 +46,8 @@ extern struct zastoken *zastokentail;
 extern unsigned long    zasinputread;
 extern zasmemadr_t      _startadr;
 extern wpmpage_t       *mempagetab;
+
+#if (WPM)
 
 /* logical operations */
 void opnot(opcode_t *op);
@@ -112,6 +117,8 @@ void opinl(opcode_t *op);
 void opoutl(opcode_t *op);
 void ophook(opcode_t *op);
 
+#endif
+
 static void hookpzero(opcode_t *op);
 static void hookpalloc(opcode_t *op);
 static void hookpfree(opcode_t *op);
@@ -120,6 +127,13 @@ static void    memstoreq(int64_t src, wpmmemadr_t virt);
 static int64_t memfetchq(wpmmemadr_t virt);
 static void    memstorel(int32_t src, wpmmemadr_t virt);
 static int32_t memfetchl(wpmmemadr_t virt);
+
+#if (ZPC)
+
+extern uint8_t        zpcopnargtab[ZPCNASMOP];
+extern zpcophandler_t zpcopfunctab[ZPCNASMOP];
+
+#else
 
 uint8_t wpmopnargtab[WPMNASMOP]
 = {
@@ -321,6 +335,8 @@ char *argnametab[]
     "ARGSYM"
 };
 
+#endif /* !ZPC */
+
 #if (PTHREAD)
 __thread struct wpm  *wpm;
 #else
@@ -429,7 +445,11 @@ wpmloop(void *cpustat)
         } else {
             wpm->cpustat.pc = roundup2(wpm->cpustat.pc, sizeof(wpmword_t));
             op = (opcode_t *)&physmem[wpm->cpustat.pc];
+#if (ZPC)
+            func = zpcopfunctab[op->inst];
+#else
             func = wpmopfunctab[op->inst];
+#endif
             if (func) {
 #if (WPMDB)
                 line = zasfindline(wpm->cpustat.pc);
@@ -469,6 +489,8 @@ wpmloop(void *cpustat)
 
     return NULL;
 }
+
+#if (WPM)
 
 void
 opnot(opcode_t *op)
@@ -1770,6 +1792,8 @@ opoutl(opcode_t *op)
 {
 }
 
+#endif /* WPM */
+
 void
 wpmpzero(wpmmemadr_t adr, wpmuword_t size)
 {
@@ -1859,6 +1883,7 @@ wpmmain(int argc, char *argv[])
         if (!zastokenqueue) {
             fprintf(stderr, "WARNING: no input in %s\n", argv[l]);
         } else {
+            zasinputread = 1;
             adr = zastranslate(adr);
 #if (ZPC)
             zasresolve(ZPCTEXTBASE);

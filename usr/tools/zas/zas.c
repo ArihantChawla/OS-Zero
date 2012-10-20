@@ -1,5 +1,4 @@
 #define ZASDEBUG   0
-#define ZASBUF     1
 #define ZASPROF    0
 #define ZASBUFSIZE 131072
 
@@ -110,9 +109,9 @@ struct readbuf {
     uint8_t *cur;
     uint8_t *lim;
 };
-struct readbuf       *readbuftab;
-static long           nreadbuf = 16;
-static long           readbufcur = 0;
+struct readbuf *readbuftab;
+static long     nreadbuf = 16;
+long            readbufcur = 0;
 #endif
 
 #if (ZASBUF)
@@ -1681,9 +1680,6 @@ zastranslate(zasmemadr_t base)
     struct zastoken *token = zastokenqueue;
     zastokfunc_t    *func;
 
-    if (zastokenqueue) {
-        zasinputread = 1;
-    }
     while (token) {
         func = zasktokfunctab[token->type];
         if (func) {

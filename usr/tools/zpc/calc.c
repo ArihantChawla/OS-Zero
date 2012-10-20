@@ -50,7 +50,7 @@ static uint8_t zpcopnargtab[ZPCNASMOP]
     1   // TRAP
 };
 
-ophandler_t *opfunctab[ZPCNASMOP] ALIGNED(PAGESIZE)
+ophandler_t *zpcopfunctab[ZPCNASMOP] ALIGNED(PAGESIZE)
     = {
     NULL,       // illegal instruction
     opnot,
