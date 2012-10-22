@@ -50,71 +50,9 @@ static int32_t memfetchl(wpmmemadr_t virt);
 
 #if (ZPC)
 
-extern uint8_t      zpcopnargtab[ZPCNASMOP];
-extern ophandler_t *zpcopfunctab[ZPCNASMOP];
+extern ophandler_t *zpcopfunctab[ZPCNASMOP + 1];
 
 #else
-
-uint8_t wpmopnargtab[WPMNASMOP]
-= {
-    0,
-    1,  // NOT
-    2,  // AND
-    2,  // OR
-    2,  // XOR
-    2,  // SHL
-    2,  // SHR
-    2,  // SRHL
-    2,  // ROR
-    2,  // ROL
-    1,  // INC
-    1,  // DEC
-    2,  // ADD
-    2,  // SUB
-    2,  // CMP
-    2,  // MUL
-    2,  // DIV
-    2,  // MOD
-    1,  // BZ
-    1,  // BNZ
-    1,  // BLT
-    1,  // BLE
-    1,  // BGT
-    1,  // BGE
-    1,  // BO
-    1,  // BNO
-    1,  // BC
-    1,  // BNC
-    1,  // POP
-    1,  // PUSH
-    2,  // MOV
-    2,  // MOVB
-    2,  // MOVW
-    1,  // JMP
-    1,  // CALL
-    0,  // ENTER
-    0,  // LEAVE
-    0,  // RET
-    1,  // LMSW
-    1,  // SMSW
-    0,  // RESET
-    0,  // NOP
-    0,  // HLT
-    0,  // BRK
-    1,  // TRAP
-    0,  // CLI
-    0,  // STI
-    0,  // IRET
-    1,  // THR
-    2,  // CMPSWAP
-    1,  // INB
-    2,  // OUTB
-    1,  // INW
-    2,  // OUTW
-    1,  // INL
-    2,  // OUTL
-    1   // HOOK
-};
 
 ophandler_t *wpmopfunctab[256] ALIGNED(PAGESIZE)
     = {
@@ -177,66 +115,66 @@ ophandler_t *wpmopfunctab[256] ALIGNED(PAGESIZE)
     ophook
 };
 
-char *wpmopnametab[WPMNASMOP + 1]
+struct zasopinfo wpmopinfotab[WPMNASMOP + 1]
 = {
-    NULL,
-    "not",
-    "and",
-    "or",
-    "xor",
-    "shr",
-    "shra",
-    "shl",
-    "ror",
-    "rol",
-    "inc",
-    "dec",
-    "add",
-    "sub",
-    "cmp",
-    "mul",
-    "div",
-    "mod",
-    "bz",
-    "bnz",
-    "blt",
-    "ble",
-    "bgt",
-    "bge",
-    "bo",
-    "bno",
-    "bc",
-    "bnc",
-    "pop",
-    "push",
-    "mov",
-    "movb",
-    "movw",
-    "jmp",
-    "call",
-    "enter",
-    "leave",
-    "ret",
-    "lmsw",
-    "smsw",
-    "reset",
-    "nop",
-    "hlt",
-    "brk",
-    "trap",
-    "cli",
-    "sti",
-    "iret",
-    "thr",
-    "cmpswap",
-    "inb",
-    "outb",
-    "inw",
-    "outw",
-    "inl",
-    "outl",
-    "hook",
-    NULL
+    { NULL, 0 },
+    { "not", 1 },
+    { "and", 2 },
+    { "or", 2 },
+    { "xor", 2 },
+    { "shr", 2 },
+    { "shra", 2 },
+    { "shl", 2 },
+    { "ror", 2 },
+    { "rol", 2},
+    { "inc", 1 },
+    { "dec", 1 },
+    { "add", 2},
+    { "sub", 2 },
+    { "cmp", 2 },
+    { "mul", 2 },
+    { "div", 2 },
+    { "mod", 2 },
+    { "bz", 1 },
+    { "bnz", 1 },
+    { "blt", 1 },
+    { "ble", 1 },
+    { "bgt", 1 },
+    { "bge", 1 },
+    { "bo", 1 },
+    { "bno", 1 },
+    { "bc", 1 },
+    { "bnc", 1 },
+    { "pop", 1 },
+    { "push", 1 },
+    { "mov", 2 },
+    { "movb", 2 },
+    { "movw", 2 },
+    { "jmp", 1 },
+    { "call", 1 },
+    { "enter", 0 },
+    { "leave", 0 },
+    { "ret", 0 },
+    { "lmsw", 1 },
+    { "smsw", 1 },
+    { "reset", 0 },
+    { "nop", 0 },
+    { "hlt", 0 },
+    { "brk", 1 },
+    { "trap", 1 },
+    { "cli", 0 },
+    { "sti", 0 },
+    { "iret", 0 },
+    { "thr", 1 },
+    { "cmpswap", 2 },
+    { "inb", 1 },
+    { "outb", 2 },
+    { "inw", 1 },
+    { "outw", 2 },
+    { "inl", 1 },
+    { "outl", 2 },
+    { "hook", 1 },
+    { NULL, 0 }
 };
 
 #endif /* !ZPC */
@@ -323,7 +261,7 @@ wpminitthr(wpmmemadr_t pc)
 void
 wpmprintop(opcode_t *op)
 {
-    fprintf(stderr, "INST: %s, size %d, arg1t == %s, arg2t == %s, reg1 == %x, reg2 == %x, args[0] == %x", wpmopnametab[op->inst], op->size << 2, argnametab[op->arg1t], argnametab[op->arg2t], op->reg1, op->reg2, op->args[0]);
+    fprintf(stderr, "INST: %s, size %d, arg1t == %s, arg2t == %s, reg1 == %x, reg2 == %x, args[0] == %x", opinfotab[op->inst].name, op->size << 2, argnametab[op->arg1t], argnametab[op->arg2t], op->reg1, op->reg2, op->args[0]);
     if (op->arg2t) {
         fprintf(stderr, ", args[1] == %x", op->args[1]);
     }
@@ -1771,6 +1709,7 @@ hookpfree(opcode_t *op)
     return;
 }
 
+#if (WPM)
 int
 wpmmain(int argc, char *argv[])
 {
@@ -1789,7 +1728,7 @@ wpmmain(int argc, char *argv[])
 
         exit(1);
     }
-    zasinit();
+    zasinit(wpmopinfotab);
     wpminitmem(MEMSIZE);
     wpminit();
     memset(physmem, 0, WPMTEXTBASE);
@@ -1831,8 +1770,6 @@ wpmmain(int argc, char *argv[])
     /* NOTREACHED */
     exit(0);
 }
-
-#if (!ZPC)
 
 int
 main(int argc, char *argv[])

@@ -49,14 +49,14 @@ static struct zastoken * zasprocalign(struct zastoken *, zasmemadr_t, zasmemadr_
 static struct zastoken * zasprocasciz(struct zastoken *, zasmemadr_t, zasmemadr_t *);
 
 /* TODO: combine these into a structure table for better cache locality */
-static char    **zasopnametab;
-static uint8_t  *zasopnargtab;
+//static char    **zasopnametab;
+//static uint8_t  *zasopnargtab;
+static struct zasopinfo *zasopinfotab;
 #if (ZPC)
 extern char     *zpcopnametab[ZPCNASMOP];
 extern uint8_t   zpcopnargtab[ZPCNASMOP];
 #elif (WPM)
-extern char     *wpmopnametab[WPMNASMOP];
-extern uint8_t   wpmopnargtab[WPMNASMOP];
+extern struct zasopinfo wpmopinfotab[WPMNASMOP + 1];
 #endif
 
 struct zassymrec {
@@ -487,11 +487,11 @@ zasinitop(void)
     struct zasop *op;
     long       l;
 
-    for (l = 1 ; (zasopnametab[l]) ; l++) {
+    for (l = 1 ; (zasopinfotab[l].name) ; l++) {
         op = malloc(sizeof(struct zasop));
-        op->name = (uint8_t *)zasopnametab[l];
+        op->name = (uint8_t *)zasopinfotab[l].name;
         op->code = (uint8_t)l;
-        op->narg = zasopnargtab[l];
+        op->narg = zasopinfotab[l].narg;
         zasaddop(op);
     }
 
@@ -1660,17 +1660,13 @@ zasprocasciz(struct zastoken *token, zasmemadr_t adr,
 }
 
 void
-zasinit(void)
+zasinit(struct zasopinfo *opinfotab)
 {
-#if (ZPC)
-    zasopnametab = zpcopnametab;
-    zasopnargtab = zpcopnargtab;
-#elif (WPM)
-    zasopnametab = wpmopnametab;
-    zasopnargtab = wpmopnargtab;
-#endif
+    zasopinfotab = opinfotab;
     zasinitop();
+#if (ZASBUF)
     zasinitbuf();
+#endif
 }
 
 zasmemadr_t

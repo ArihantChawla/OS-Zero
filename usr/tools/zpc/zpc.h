@@ -75,12 +75,13 @@ typedef void zpcaction_t(void);
 #define ZPCTRAP       0x23
 #define ZPCIRET       0x24
 #define ZPCTHR        0x25
-#define ZPCASSIGN     0x26
-#define ZPCNOPER      39
+//#define ZPCASSIGN     0x26
+#define ZPCNOPER      38
 #define ZPCLEFTPAREN  0x40
 #define ZPCRIGHTPAREN 0x41
 #define ZPCFUNC       0x42
-#define ZPCSEP        0x43
+#define ZPCASSIGN     0x43
+#define ZPCSEP        0x44
 #define ZPCVAR        0x80
 #define ZPCINT64      0x81
 #define ZPCUINT64     0x82

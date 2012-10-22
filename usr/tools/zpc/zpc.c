@@ -20,72 +20,74 @@ void x11nextevent(void);
 void zpcprintqueue(struct zpctoken *queue);
 #endif
 
-uint8_t zpcopnargtab[ZPCNASMOP]
+struct zasopinfo zpcopinfotab[ZPCNASMOP]
 = {
-    0,  // ILL
-    1,  // NOT
-    2,  // XOR
-    2,  // OR
-    2,  // AND
-    2,  // SHR
-    2,  // SHRA
-    2,  // SHL
-    2,  // ROR
-    2,  // ROL
-    1,  // INC
-    1,  // DEC
-    2,  // ADD
-    2,  // SUB
-    2,  // MUL
-    2,  // DIV
-    2,  // MOD
-    1,  // BZ
-    1,  // BNZ
-    1,  // BLT
-    1,  // BLE
-    1,  // BGT
-    1,  // BGE
-    2,  // MOV
-    1,  // CALL
-    1,  // RET
-    1   // TRAP
+    { NULL, 0 },
+    { "not", 1 },
+    { "xor", 2 },
+    { "or", 2 },
+    { "and", 2 },
+    { "shr", 2 }, 
+    { "shra", 2 },
+    { "shl", 2 },
+    { "ror", 2 },
+    { "rol", 2 },
+    { "inc", 1 },
+    { "dec", 1 },
+    { "add", 2 },
+    { "sub", 2 },
+    { "mul", 2 },
+    { "div", 2 },
+    { "mod", 2 },
+    { "bz", 1 },
+    { "bnz", 1 },
+    { "blt", 1 },
+    { "ble", 1 },
+    { "bgt", 1 },
+    { "bge", 1 },
+    { "mov", 2 },
+    { "call", 1 },
+    { "ret", 1 },
+    { "trap", 1 },
+    { "iret", 1 },
+    { "thr", 1 }
 };
 
 ophandler_t *zpcopfunctab[ZPCNASMOP] ALIGNED(PAGESIZE)
-    = {
+= {
     NULL,       // illegal instruction
-    opnot,
-    opand,
-    opor,
-    opxor,
-    opshr,
-    opshra,
-    opshl,
-    opror,
-    oprol,
-    opinc,
-    opdec,
-    opadd,
-    opsub,
-    opmul,
-    opdiv,
-    opmod,
-    opbz,
-    opbnz,
-    opblt,
-    opble,
-    opbgt,
-    opbge,
-    opmov,
-    opmovd,
-    opmovb,
-    opmovw,
-    opjmp,
-    opcall,
-    opret,
-    optrap,
-    opiret,
-    opthr
+    not64,
+    and64,
+    or64,
+    xor64,
+    shr64,
+    shra64,
+    shl64,
+    ror64,
+    rol64,
+    inc64,
+    dec64,
+    add64,
+    sub64,
+    mul64,
+    div64,
+    mod64,
+    bz64,
+    bnz64,
+    blt64,
+    ble64,
+    bgt64,
+    bge64,
+    mov64,
+    movd64,
+    movb64,
+    movw64,
+    jmp64,
+    call64,
+    ret64,
+    trap64,
+    iret64,
+    thr64
 };
 
 #define NHASHITEM 1024
@@ -282,6 +284,7 @@ zpcswap(void)
 int
 main(int argc, char *argv[])
 {
+    zasinit(zpcopinfotab);
     zpcradix = 10;
     stkinit();
     exprinit();

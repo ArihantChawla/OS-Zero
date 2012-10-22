@@ -35,6 +35,11 @@ typedef uint32_t zassize_t;
 #endif
 #define NTOKTYPE    19
 
+struct zasopinfo {
+    const char *name;
+    uint8_t     narg;
+};
+
 struct zasop {
     uint8_t   *name;
     uint8_t    code;
@@ -44,8 +49,8 @@ struct zasop {
 };
 
 struct zaslabel {
-    uint8_t      *name;
-    zasmemadr_t   adr;
+    uint8_t         *name;
+    zasmemadr_t      adr;
     struct zaslabel *next;
 };
 
@@ -64,8 +69,8 @@ struct zasinst {
 };
 
 struct zassym {
-    uint8_t       *name;
-    zasmemadr_t    adr;
+    uint8_t     *name;
+    zasmemadr_t  adr;
 };
 
 struct zasadr {
@@ -79,8 +84,8 @@ struct zasndx {
 };
 
 struct zasval {
-    uint8_t    *name;
-    zasword_t   val;
+    uint8_t       *name;
+    zasword_t      val;
     struct zasval *next;
 };
 
@@ -123,7 +128,7 @@ struct zasline {
 struct zasline * zasfindline(zasmemadr_t adr);
 #endif
 
-void        zasinit(void);
+void        zasinit(struct zasopinfo *opinfo);
 zasmemadr_t zastranslate(zasmemadr_t base);
 void        zasresolve(zasmemadr_t base);
 void        zasremovesyms(void);
