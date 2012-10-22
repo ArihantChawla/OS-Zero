@@ -11,84 +11,7 @@
 #endif
 
 #define THRSTKSIZE  (128 * 1024)
-
 #define WPMTEXTBASE 8192
-
-#if (ZPC)
-typedef struct zpcopcode opcode_t;
-#else
-typedef struct wpmopcode opcode_t;
-#endif
-typedef void ophandler_t(opcode_t *);
-typedef void hookfunc_t(opcode_t *);
-
-/* logical operations */
-void opnot(opcode_t *op);
-void opand(opcode_t *op);
-void opor(opcode_t *op);
-void opxor(opcode_t *op);
-/* shift and rotate */
-void opshr(opcode_t *op);
-void opshra(opcode_t *op);
-void opshl(opcode_t *op);
-void opror(opcode_t *op);
-void oprol(opcode_t *op);
-/* arithmetic operations */
-void opinc(opcode_t *op);
-void opdec(opcode_t *op);
-void opadd(opcode_t *op);
-void opsub(opcode_t *op);
-void opcmp(opcode_t *op);
-void opmul(opcode_t *op);
-void opdiv(opcode_t *op);
-void opmod(opcode_t *op);
-/* branch operations */
-void opbz(opcode_t *op);
-void opbnz(opcode_t *op);
-void opblt(opcode_t *op);
-void opble(opcode_t *op);
-void opbgt(opcode_t *op);
-void opbge(opcode_t *op);
-void opbo(opcode_t *op);
-void opbno(opcode_t *op);
-void opbc(opcode_t *op);
-void opbnc(opcode_t *op);
-/* stack operations */
-void oppop(opcode_t *op);
-void oppush(opcode_t *op);
-/* load/store */
-void opmov(opcode_t *op);
-void opmovd(opcode_t *op);
-void opmovb(opcode_t *op);
-void opmovw(opcode_t *op);
-/* jump */
-void opjmp(opcode_t *op);
-/* function call interface */
-void opcall(opcode_t *op);
-void openter(opcode_t *op);
-void opleave(opcode_t *op);
-void opret(opcode_t *op);
-/* machine status word */
-void oplmsw(opcode_t *op);
-void opsmsw(opcode_t *op);
-/* reset and shutdown */
-void opreset(opcode_t *op);
-void opnop(opcode_t *op);
-void ophlt(opcode_t *op);
-void opbrk(opcode_t *op);
-void optrap(opcode_t *op);
-void opcli(opcode_t *op);
-void opsti(opcode_t *op);
-void opiret(opcode_t *op);
-void opthr(opcode_t *op);
-void opcmpswap(opcode_t *op);
-void opinb(opcode_t *op);
-void opoutb(opcode_t *op);
-void opinw(opcode_t *op);
-void opoutw(opcode_t *op);
-void opinl(opcode_t *op);
-void opoutl(opcode_t *op);
-void ophook(opcode_t *op);
 
 #if defined(__i386__) || defined(__i486__) || defined(__i586__) || defined(__i686__)
 typedef int32_t  wpmword_t;
@@ -288,6 +211,78 @@ struct wpmstackframe {
     wpmuword_t retadr;
     wpmuword_t args[EMPTY];
 };
+
+
+typedef void wpmophandler_t(struct wpmopcode *);
+typedef void wpmhookfunc_t(struct wpmopcode *);
+
+/* logical operations */
+void opnot(struct wpmopcode *op);
+void opand(struct wpmopcode *op);
+void opor(struct wpmopcode *op);
+void opxor(struct wpmopcode *op);
+/* shift and rotate */
+void opshr(struct wpmopcode *op);
+void opshra(struct wpmopcode *op);
+void opshl(struct wpmopcode *op);
+void opror(struct wpmopcode *op);
+void oprol(struct wpmopcode *op);
+/* arithmetic operations */
+void opinc(struct wpmopcode *op);
+void opdec(struct wpmopcode *op);
+void opadd(struct wpmopcode *op);
+void opsub(struct wpmopcode *op);
+void opcmp(struct wpmopcode *op);
+void opmul(struct wpmopcode *op);
+void opdiv(struct wpmopcode *op);
+void opmod(struct wpmopcode *op);
+/* branch operations */
+void opbz(struct wpmopcode *op);
+void opbnz(struct wpmopcode *op);
+void opblt(struct wpmopcode *op);
+void opble(struct wpmopcode *op);
+void opbgt(struct wpmopcode *op);
+void opbge(struct wpmopcode *op);
+void opbo(struct wpmopcode *op);
+void opbno(struct wpmopcode *op);
+void opbc(struct wpmopcode *op);
+void opbnc(struct wpmopcode *op);
+/* stack operations */
+void oppop(struct wpmopcode *op);
+void oppush(struct wpmopcode *op);
+/* load/store */
+void opmov(struct wpmopcode *op);
+void opmovd(struct wpmopcode *op);
+void opmovb(struct wpmopcode *op);
+void opmovw(struct wpmopcode *op);
+/* jump */
+void opjmp(struct wpmopcode *op);
+/* function call interface */
+void opcall(struct wpmopcode *op);
+void openter(struct wpmopcode *op);
+void opleave(struct wpmopcode *op);
+void opret(struct wpmopcode *op);
+/* machine status word */
+void oplmsw(struct wpmopcode *op);
+void opsmsw(struct wpmopcode *op);
+/* reset and shutdown */
+void opreset(struct wpmopcode *op);
+void opnop(struct wpmopcode *op);
+void ophlt(struct wpmopcode *op);
+void opbrk(struct wpmopcode *op);
+void optrap(struct wpmopcode *op);
+void opcli(struct wpmopcode *op);
+void opsti(struct wpmopcode *op);
+void opiret(struct wpmopcode *op);
+void opthr(struct wpmopcode *op);
+void opcmpswap(struct wpmopcode *op);
+void opinb(struct wpmopcode *op);
+void opoutb(struct wpmopcode *op);
+void opinw(struct wpmopcode *op);
+void opoutw(struct wpmopcode *op);
+void opinl(struct wpmopcode *op);
+void opoutl(struct wpmopcode *op);
+void ophook(struct wpmopcode *op);
 
 #endif /* __WPM_WPM_H__ */
 

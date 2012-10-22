@@ -39,10 +39,10 @@ extern long               zpcradix;
 #define NHASHITEM 1024
 static struct x11wininfo *winhash[NHASHITEM] ALIGNED(PAGESIZE);
 static x11keyhandler_t   *keypressfunctab[256];
-static zpccop_t          *buttonopertab[ZPC_NROW][ZPC_NCOLUMN]
+static zpcop_t           *buttonopertab[ZPC_NROW][ZPC_NCOLUMN]
 = {
-    { NULL, NULL, NULL, not64, shr64, inc64, NULL },
-    { NULL, NULL, NULL, mod64, shrl64, dec64, NULL },
+    { NULL, NULL, NULL, not64, shra64, inc64, NULL },
+    { NULL, NULL, NULL, mod64, shr64, dec64, NULL },
     { NULL, NULL, NULL, div64, shl64, ror64, NULL },
     { NULL, NULL, NULL, mul64, xor64, rol64, NULL },
     { NULL, NULL, NULL, sub64, or64, NULL, NULL },
@@ -786,7 +786,7 @@ keypress(void *arg, XEvent *event)
     XLookupString(&(event->xkey), str, 16, &keysym, &comp);
     if (keysym == XK_Return || keysym == XK_KP_Enter) {
         stkenterinput();
-    } else if (keysym >= 0 && keysym <= 0xff) {
+    } else if (keysym <= 0xff) {
         ch = keysym;
         if (item->str == item->scur && zpcisoperchar(ch)) {
             func = keypressfunctab[(int)ch];
@@ -879,7 +879,7 @@ buttonpress(void *arg, XEvent *event)
     int                 evbut = toevbutton(event->xbutton.button);
     struct zpctoken    *token;
     struct zpcstkitem  *item = zpcinputitem;
-    zpccop_t           *func = NULL;
+    zpcop_t            *func = NULL;
 //    zpcfop_t           *fltfunc;
     zpcaction_t        *action;
     struct zpctoken    *src = NULL;

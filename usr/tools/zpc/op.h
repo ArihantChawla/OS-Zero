@@ -4,10 +4,10 @@
 #include <stdint.h>
 #include <zpc/zpc.h>
 
-typedef int64_t zpccop_t(struct zpctoken *, struct zpctoken *);
-typedef double  zpcfop_t(double, double);
+typedef int64_t zpcop_t(struct zpctoken *, struct zpctoken *);
+typedef double  zpcfophandler_t(double, double);
 
-/* cop.c */
+/* alu.c */
 int64_t not64(struct zpctoken *arg1, struct zpctoken *dummy);
 int64_t and64(struct zpctoken *arg1, struct zpctoken *arg2);
 int64_t or64(struct zpctoken *arg1, struct zpctoken *arg2);

@@ -5,6 +5,7 @@
 #include <stddef.h>
 #include <zero/param.h>
 #include <zero/cdecl.h>
+#include <zpc/asm.h>
 
 #define ZPCTEXTBASE 8192
 
@@ -26,8 +27,6 @@
 #else
 #define ZPCREVERSE 0
 #endif
-
-typedef void zpcaction_t(void);
 
 #if (SMALLBUTTONS)
 #define ZPC_BUTTON_WIDTH        48
@@ -75,12 +74,12 @@ typedef void zpcaction_t(void);
 #define ZPCTRAP       0x23
 #define ZPCIRET       0x24
 #define ZPCTHR        0x25
-//#define ZPCASSIGN     0x26
-#define ZPCNOPER      38
+#define ZPCNASMOP     38
+#define ZPCASSIGN     0x26
+#define ZPCNOPER      39
 #define ZPCLEFTPAREN  0x40
 #define ZPCRIGHTPAREN 0x41
 #define ZPCFUNC       0x42
-#define ZPCASSIGN     0x43
 #define ZPCSEP        0x44
 #define ZPCVAR        0x80
 #define ZPCINT64      0x81
@@ -100,6 +99,10 @@ typedef void zpcaction_t(void);
 #define ZPCBUTTONASM   0x03
 #define ZPCBUTTONUTIL  0x04
 #define ZPCBUTTONDEBUG 0x05
+
+typedef void zpcophandler_t(struct zpcopcode *);
+typedef void zpchookfunc_t(struct zpcopcode *);
+typedef void zpcaction_t(void);
 
 typedef union {
     int32_t i32;

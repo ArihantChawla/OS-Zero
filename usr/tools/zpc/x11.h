@@ -27,8 +27,8 @@ struct x11wininfo {
     long               col;
     struct x11wininfo *next;
     x11evfunc_t       *evfunc[LASTEvent];
-    zpccop_t          *clickfunc[NBUTTON];
-    zpcfop_t          *clickfuncdbl[NBUTTON];
+    zpcop_t           *clickfunc[NBUTTON];
+//    zpcfophandler_t   *clickfuncdbl[NBUTTON];
 };
 
 struct x11app {

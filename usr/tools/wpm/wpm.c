@@ -14,6 +14,7 @@
 #include <zas/zas.h>
 #if (ZPC)
 #include <zpc/asm.h>
+#include <zpc/op.h>
 #endif
 #include <wpm/wpm.h>
 #include <wpm/mem.h>
@@ -39,9 +40,9 @@ extern unsigned long    zasinputread;
 extern zasmemadr_t      _startadr;
 extern wpmpage_t       *mempagetab;
 
-static void hookpzero(opcode_t *op);
-static void hookpalloc(opcode_t *op);
-static void hookpfree(opcode_t *op);
+static void hookpzero(struct wpmopcode *op);
+static void hookpalloc(struct wpmopcode *op);
+static void hookpfree(struct wpmopcode *op);
 
 static void    memstoreq(int64_t src, wpmmemadr_t virt);
 static int64_t memfetchq(wpmmemadr_t virt);
@@ -50,11 +51,12 @@ static int32_t memfetchl(wpmmemadr_t virt);
 
 #if (ZPC)
 
-extern ophandler_t *zpcopfunctab[ZPCNASMOP + 1];
+extern zpcophandler_t *zpcopfunctab[ZPCNASMOP + 1];
+extern struct zasopinfo zpcopinfotab[ZPCNASMOP + 1];
 
 #else
 
-ophandler_t *wpmopfunctab[256] ALIGNED(PAGESIZE)
+wpmophandler_t *wpmopfunctab[256] ALIGNED(PAGESIZE)
     = {
     NULL,
     opnot,
@@ -179,7 +181,7 @@ struct zasopinfo wpmopinfotab[WPMNASMOP + 1]
 
 #endif /* !ZPC */
 
-hookfunc_t *hookfunctab[256]
+wpmhookfunc_t *hookfunctab[256]
 = {
     hookpzero,
     hookpalloc,
@@ -259,9 +261,9 @@ wpminitthr(wpmmemadr_t pc)
 #if (WPM)
 
 void
-wpmprintop(opcode_t *op)
+wpmprintop(struct wpmopcode *op)
 {
-    fprintf(stderr, "INST: %s, size %d, arg1t == %s, arg2t == %s, reg1 == %x, reg2 == %x, args[0] == %x", opinfotab[op->inst].name, op->size << 2, argnametab[op->arg1t], argnametab[op->arg2t], op->reg1, op->reg2, op->args[0]);
+    fprintf(stderr, "INST: %s, size %d, arg1t == %s, arg2t == %s, reg1 == %x, reg2 == %x, args[0] == %x", wpmopinfotab[op->inst].name, op->size << 2, argnametab[op->arg1t], argnametab[op->arg2t], op->reg1, op->reg2, op->args[0]);
     if (op->arg2t) {
         fprintf(stderr, ", args[1] == %x", op->args[1]);
     }
@@ -273,10 +275,15 @@ wpmprintop(opcode_t *op)
 void *
 wpmloop(void *cpustat)
 {
-    ophandler_t    *func;
-    opcode_t       *op;
+#if (ZPC)
+    zpcophandler_t   *func;
+    struct zpcopcode *op;
+#else
+    wpmophandler_t   *func;
+    struct wpmopcode *op;
+#endif
 #if (WPMTRACE)
-    int             i;
+    int               i;
 #endif
 #if (WPMDB)
     struct zasline *line;
@@ -301,12 +308,20 @@ wpmloop(void *cpustat)
     memcpy(&wpm->cpustat, cpustat, sizeof(struct wpmcpustate));
     free(cpustat);
     while (!wpm->shutdown) {
-        op = (opcode_t *)&physmem[wpm->cpustat.pc];
+#if (ZPC)
+        op = (struct zpcopcode *)&physmem[wpm->cpustat.pc];
+#else
+        op = (struct wpmopcode *)&physmem[wpm->cpustat.pc];
+#endif
         if (op->inst == OPNOP) {
             wpm->cpustat.pc++;
         } else {
             wpm->cpustat.pc = roundup2(wpm->cpustat.pc, sizeof(wpmword_t));
-            op = (opcode_t *)&physmem[wpm->cpustat.pc];
+#if (ZPC)
+            op = (struct zpcopcode *)&physmem[wpm->cpustat.pc];
+#else
+            op = (struct wpmopcode *)&physmem[wpm->cpustat.pc];
+#endif
 #if (ZPC)
             func = zpcopfunctab[op->inst];
 #else
@@ -355,7 +370,7 @@ wpmloop(void *cpustat)
 }
 
 void
-opnot(opcode_t *op)
+opnot(struct wpmopcode *op)
 {
     uint_fast8_t argt = op->arg1t;
     wpmword_t    dest = (argt == ARGREG
@@ -383,7 +398,7 @@ opnot(opcode_t *op)
 }
 
 void
-opand(opcode_t *op)
+opand(struct wpmopcode *op)
 {
     uint_fast8_t argt1 = op->arg1t;
     uint_fast8_t argt2 = op->arg2t;
@@ -420,7 +435,7 @@ opand(opcode_t *op)
 }
 
 void
-opor(opcode_t *op)
+opor(struct wpmopcode *op)
 {
     uint_fast8_t argt1 = op->arg1t;
     uint_fast8_t argt2 = op->arg2t;
@@ -451,7 +466,7 @@ opor(opcode_t *op)
 }
 
 void
-opxor(opcode_t *op)
+opxor(struct wpmopcode *op)
 {
     uint_fast8_t argt1 = op->arg1t;
     uint_fast8_t argt2 = op->arg2t;
@@ -488,7 +503,7 @@ opxor(opcode_t *op)
 }
 
 void
-opshr(opcode_t *op)
+opshr(struct wpmopcode *op)
 {
     uint_fast8_t argt1 = op->arg1t;
     uint_fast8_t argt2 = op->arg2t;
@@ -531,7 +546,7 @@ opshr(opcode_t *op)
 }
 
 void
-opshra(opcode_t *op)
+opshra(struct wpmopcode *op)
 {
     uint_fast8_t argt1 = op->arg1t;
     uint_fast8_t argt2 = op->arg2t;
@@ -576,7 +591,7 @@ opshra(opcode_t *op)
 }
 
 void
-opshl(opcode_t *op)
+opshl(struct wpmopcode *op)
 {
     uint_fast8_t argt1 = op->arg1t;
     uint_fast8_t argt2 = op->arg2t;
@@ -615,7 +630,7 @@ opshl(opcode_t *op)
 }
 
 void
-opror(opcode_t *op)
+opror(struct wpmopcode *op)
 {
     uint_fast8_t argt1 = op->arg1t;
     uint_fast8_t argt2 = op->arg2t;
@@ -660,7 +675,7 @@ opror(opcode_t *op)
 }
 
 void
-oprol(opcode_t *op)
+oprol(struct wpmopcode *op)
 {
     uint_fast8_t argt1 = op->arg1t;
     uint_fast8_t argt2 = op->arg2t;
@@ -705,7 +720,7 @@ oprol(opcode_t *op)
 }
 
 void
-opinc(opcode_t *op)
+opinc(struct wpmopcode *op)
 {
     uint_fast8_t argt = op->arg1t;
     wpmword_t  dest = (argt == ARGREG
@@ -731,7 +746,7 @@ opinc(opcode_t *op)
 }
 
 void
-opdec(opcode_t *op)
+opdec(struct wpmopcode *op)
 {
     uint_fast8_t argt = op->arg1t;
     wpmword_t  dest = (argt == ARGREG
@@ -757,7 +772,7 @@ opdec(opcode_t *op)
 }
 
 void
-opadd(opcode_t *op)
+opadd(struct wpmopcode *op)
 {
     uint_fast8_t argt1 = op->arg1t;
     uint_fast8_t argt2 = op->arg2t;
@@ -786,7 +801,7 @@ opadd(opcode_t *op)
 }
 
 void
-opsub(opcode_t *op)
+opsub(struct wpmopcode *op)
 {
     uint_fast8_t argt1 = op->arg1t;
     uint_fast8_t argt2 = op->arg2t;
@@ -815,7 +830,7 @@ opsub(opcode_t *op)
 }
 
 void
-opcmp(opcode_t *op)
+opcmp(struct wpmopcode *op)
 {
     wpmword_t    msw = wpm->cpustat.msw;
     uint_fast8_t argt1 = op->arg1t;
@@ -845,7 +860,7 @@ opcmp(opcode_t *op)
 }
 
 void
-opmul(opcode_t *op)
+opmul(struct wpmopcode *op)
 {
     uint_fast8_t argt1 = op->arg1t;
     uint_fast8_t argt2 = op->arg2t;
@@ -874,7 +889,7 @@ opmul(opcode_t *op)
 }
 
 void
-opdiv(opcode_t *op)
+opdiv(struct wpmopcode *op)
 {
     uint_fast8_t argt1 = op->arg1t;
     uint_fast8_t argt2 = op->arg2t;
@@ -920,7 +935,7 @@ opdiv(opcode_t *op)
 
 
 void
-opmod(opcode_t *op)
+opmod(struct wpmopcode *op)
 {
     uint_fast8_t argt1 = op->arg1t;
     uint_fast8_t argt2 = op->arg2t;
@@ -949,7 +964,7 @@ opmod(opcode_t *op)
 }
 
 void
-opbz(opcode_t *op)
+opbz(struct wpmopcode *op)
 {
     if (wpm->cpustat.msw & MSW_ZF) {
         uint_fast8_t argt = op->arg1t;
@@ -965,7 +980,7 @@ opbz(opcode_t *op)
 }
 
 void
-opbnz(opcode_t *op)
+opbnz(struct wpmopcode *op)
 {
     if (!(wpm->cpustat.msw & MSW_ZF)) {
         uint_fast8_t argt = op->arg1t;
@@ -981,7 +996,7 @@ opbnz(opcode_t *op)
 }
 
 void
-opblt(opcode_t *op)
+opblt(struct wpmopcode *op)
 {
     if (wpm->cpustat.msw & MSW_SF) {
         uint_fast8_t argt = op->arg1t;
@@ -997,7 +1012,7 @@ opblt(opcode_t *op)
 }
 
 void
-opble(opcode_t *op)
+opble(struct wpmopcode *op)
 {
     if (wpm->cpustat.msw & MSW_SF || wpm->cpustat.msw & MSW_ZF) {
         uint_fast8_t argt = op->arg1t;
@@ -1013,7 +1028,7 @@ opble(opcode_t *op)
 }
 
 void
-opbgt(opcode_t *op)
+opbgt(struct wpmopcode *op)
 {
     if (!(wpm->cpustat.msw & MSW_SF) && !(wpm->cpustat.msw & MSW_ZF)) {
         uint_fast8_t argt = op->arg1t;
@@ -1029,7 +1044,7 @@ opbgt(opcode_t *op)
 }
 
 void
-opbge(opcode_t *op)
+opbge(struct wpmopcode *op)
 {
     if (!(wpm->cpustat.msw & MSW_SF)) {
         uint_fast8_t argt = op->arg1t;
@@ -1045,7 +1060,7 @@ opbge(opcode_t *op)
 }
 
 void
-opbo(opcode_t *op)
+opbo(struct wpmopcode *op)
 {
     if (wpm->cpustat.msw & MSW_OF) {
         uint_fast8_t argt = op->arg1t;
@@ -1061,7 +1076,7 @@ opbo(opcode_t *op)
 }
 
 void
-opbno(opcode_t *op)
+opbno(struct wpmopcode *op)
 {
     if (!(wpm->cpustat.msw & MSW_OF)) {
         uint_fast8_t argt = op->arg1t;
@@ -1077,7 +1092,7 @@ opbno(opcode_t *op)
 }
 
 void
-opbc(opcode_t *op)
+opbc(struct wpmopcode *op)
 {
     if (wpm->cpustat.msw & MSW_CF) {
         uint_fast8_t argt = op->arg1t;
@@ -1093,7 +1108,7 @@ opbc(opcode_t *op)
 }
 
 void
-opbnc(opcode_t *op)
+opbnc(struct wpmopcode *op)
 {
     if (!(wpm->cpustat.msw & MSW_CF)) {
         uint_fast8_t argt = op->arg1t;
@@ -1109,7 +1124,7 @@ opbnc(opcode_t *op)
 }
 
 void
-oppop(opcode_t *op)
+oppop(struct wpmopcode *op)
 {
     uint_fast8_t argt = op->arg1t;
     wpmword_t    val;
@@ -1125,7 +1140,7 @@ oppop(opcode_t *op)
 }
 
 void
-oppush(opcode_t *op)
+oppush(struct wpmopcode *op)
 {
     uint_fast8_t argt = op->arg1t;
     wpmword_t    src = (argt == ARGREG
@@ -1140,7 +1155,7 @@ oppush(opcode_t *op)
 }
 
 void
-opmov(opcode_t *op)
+opmov(struct wpmopcode *op)
 {
     uint_fast8_t argt1 = op->arg1t;
     uint_fast8_t argt2 = op->arg2t;
@@ -1183,7 +1198,7 @@ opmov(opcode_t *op)
 }
 
 void
-opmovd(opcode_t *op)
+opmovd(struct wpmopcode *op)
 {
     uint_fast8_t argt1 = op->arg1t;
     uint_fast8_t argt2 = op->arg2t;
@@ -1226,7 +1241,7 @@ opmovd(opcode_t *op)
 }
 
 void
-opmovb(opcode_t *op)
+opmovb(struct wpmopcode *op)
 {
     uint_fast8_t argt1 = op->arg1t;
     uint_fast8_t argt2 = op->arg2t;
@@ -1272,7 +1287,7 @@ opmovb(opcode_t *op)
 }
 
 void
-opmovw(opcode_t *op)
+opmovw(struct wpmopcode *op)
 {
     uint_fast8_t argt1 = op->arg1t;
     uint_fast8_t argt2 = op->arg2t;
@@ -1315,7 +1330,7 @@ opmovw(opcode_t *op)
 }
 
 void
-opjmp(opcode_t *op)
+opjmp(struct wpmopcode *op)
 {
     uint_fast8_t argt = op->arg1t;
     wpmword_t  dest = (argt == ARGREG
@@ -1341,7 +1356,7 @@ opjmp(opcode_t *op)
  * oldfp
  */
 void
-opcall(opcode_t *op)
+opcall(struct wpmopcode *op)
 {
     uint_fast8_t argt = op->arg1t;
     wpmword_t  dest = (argt == ARGREG
@@ -1367,7 +1382,7 @@ opcall(opcode_t *op)
 }
 
 void
-openter(opcode_t *op)
+openter(struct wpmopcode *op)
 {
     long  argt = op->arg1t;
     wpmword_t   ofs = (argt == ARGREG
@@ -1382,7 +1397,7 @@ openter(opcode_t *op)
 }
 
 void
-opleave(opcode_t *op)
+opleave(struct wpmopcode *op)
 {
     wpmword_t fp = memfetchl(wpm->cpustat.fp);
     
@@ -1397,7 +1412,7 @@ opleave(opcode_t *op)
  * ---------
  */
 void
-opret(opcode_t *op)
+opret(struct wpmopcode *op)
 {
     wpmword_t   fp = memfetchl(wpm->cpustat.fp);
     wpmword_t   dest = memfetchl(wpm->cpustat.fp + 4);
@@ -1418,7 +1433,7 @@ opret(opcode_t *op)
 }
 
 void
-oplmsw(opcode_t *op)
+oplmsw(struct wpmopcode *op)
 {
     uint_fast8_t argt = op->arg1t;
     wpmword_t  msw = (argt == ARGREG
@@ -1432,7 +1447,7 @@ oplmsw(opcode_t *op)
 }
 
 void
-opsmsw(opcode_t *op)
+opsmsw(struct wpmopcode *op)
 {
     wpmword_t msw = wpm->cpustat.msw;
     wpmword_t dest = op->args[0];
@@ -1443,7 +1458,7 @@ opsmsw(opcode_t *op)
 }
 
 void
-opreset(opcode_t *op)
+opreset(struct wpmopcode *op)
 {
     exit(1);
 
@@ -1451,7 +1466,7 @@ opreset(opcode_t *op)
 }
 
 void
-ophlt(opcode_t *op)
+ophlt(struct wpmopcode *op)
 {
     wpm->shutdown = 1;
 
@@ -1459,13 +1474,13 @@ ophlt(opcode_t *op)
 }
 
 void
-opnop(opcode_t *op)
+opnop(struct wpmopcode *op)
 {
     wpm->cpustat.pc += op->size << 2;
 }
 
 void
-opbrk(opcode_t *op)
+opbrk(struct wpmopcode *op)
 {
     wpmuword_t pc = memfetchl(TRAPBRK << 2);
 
@@ -1479,7 +1494,7 @@ opbrk(opcode_t *op)
 }
 
 void
-optrap(opcode_t *op)
+optrap(struct wpmopcode *op)
 {
     uint_fast8_t argt1 = op->arg1t;
     wpmword_t  trap = (argt1 == ARGREG
@@ -1503,7 +1518,7 @@ optrap(opcode_t *op)
 }
 
 void
-opcli(opcode_t *op)
+opcli(struct wpmopcode *op)
 {
     mtxtrylk(&intlk, 1);
     wpm->cpustat.pc += op->size << 2;
@@ -1512,7 +1527,7 @@ opcli(opcode_t *op)
 }
 
 void
-opsti(opcode_t *op)
+opsti(struct wpmopcode *op)
 {
     mtxunlk(&intlk, 1);
     wpm->cpustat.pc += op->size << 2;
@@ -1521,7 +1536,7 @@ opsti(opcode_t *op)
 }
 
 void
-opiret(opcode_t *op)
+opiret(struct wpmopcode *op)
 {
     wpmword_t fp = memfetchl(wpm->cpustat.fp);
     wpmword_t dest = memfetchl(wpm->cpustat.fp + 4);
@@ -1534,7 +1549,7 @@ opiret(opcode_t *op)
 }
 
 void
-opthr(opcode_t *op)
+opthr(struct wpmopcode *op)
 {
     uint_fast8_t argt1 = op->arg1t;
     wpmuword_t pc  = (argt1 == ARGREG
@@ -1555,7 +1570,7 @@ opthr(opcode_t *op)
  * - opcmpswap can be used to create mutexes
  */
 void
-opcmpswap(opcode_t *op)
+opcmpswap(struct wpmopcode *op)
 {
     uint_fast8_t argt1 = op->arg1t;
     uint_fast8_t argt2 = op->arg2t;
@@ -1580,12 +1595,12 @@ opcmpswap(opcode_t *op)
 #endif /* PTHREAD */
 
 void
-opinb(opcode_t *op)
+opinb(struct wpmopcode *op)
 {
 }
 
 void
-opoutb(opcode_t *op)
+opoutb(struct wpmopcode *op)
 {
     uint_fast8_t argt1 = op->arg1t;
     uint_fast8_t argt2 = op->arg2t;
@@ -1618,28 +1633,28 @@ opoutb(opcode_t *op)
 }
 
 void
-opinw(opcode_t *op)
+opinw(struct wpmopcode *op)
 {
 }
 
 void
-opoutw(opcode_t *op)
+opoutw(struct wpmopcode *op)
 {
 }
 
 void
-opinl(opcode_t *op)
+opinl(struct wpmopcode *op)
 {
 }
 
 void
-ophook(opcode_t *op)
+ophook(struct wpmopcode *op)
 {
-    uint_fast8_t argt = op->arg1t;
-    wpmword_t id = (argt == ARGREG
-                  ? op->reg1
-                  : op->args[0]);
-    hookfunc_t *hook = hookfunctab[id];
+    uint_fast8_t   argt = op->arg1t;
+    wpmword_t      id = (argt == ARGREG
+                         ? op->reg1
+                         : op->args[0]);
+    wpmhookfunc_t *hook = hookfunctab[id];
 
     if (hook) {
         hook(op);
@@ -1650,7 +1665,7 @@ ophook(opcode_t *op)
 }
 
 void
-opoutl(opcode_t *op)
+opoutl(struct wpmopcode *op)
 {
 }
 
@@ -1679,7 +1694,7 @@ wpmpzero(wpmmemadr_t adr, wpmuword_t size)
 
 /* TODO: this and other hooks need to use page tables */
 static void
-hookpzero(opcode_t *op)
+hookpzero(struct wpmopcode *op)
 {
     wpmmemadr_t adr = wpm->cpustat.regs[0];
     wpmuword_t sz = wpm->cpustat.regs[1];
@@ -1690,7 +1705,7 @@ hookpzero(opcode_t *op)
 }
 
 static void
-hookpalloc(opcode_t *op)
+hookpalloc(struct wpmopcode *op)
 {
     wpmuword_t size = wpm->cpustat.regs[0];
 
@@ -1700,7 +1715,7 @@ hookpalloc(opcode_t *op)
 }
 
 static void
-hookpfree(opcode_t *op)
+hookpfree(struct wpmopcode *op)
 {
     wpmmemadr_t adr = wpm->cpustat.regs[0];
 

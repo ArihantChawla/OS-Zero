@@ -104,8 +104,9 @@ zasuword_t zpcgetreg(uint8_t *str, uint8_t **retptr);
 #define ZPCARGLD80   0x07       // 80-bit Intel/IEEE floating point value
 #define ZPCARGLD128  0x08       // 128-bit floating point value
 #define ZPCARGIMMED  0x09       // immediate 64-bit argument
-#define ZPCARGINDIR  0x0a       // indirect address (in a register)
-#define ZPCARGINDEX  0x0b       // indexed indirect address (index + register)
+/* register flags */
+#define ZPCREGINDIR  0x10       // indirect address (in a register)
+#define ZPCREGINDEX  0x20       // indexed indirect address (index + register)
 /* unit IDs */
 #define ZPCCALC      0x00
 #define ZPCALU       0x01       // arithmetic-logical unit
@@ -118,17 +119,17 @@ zasuword_t zpcgetreg(uint8_t *str, uint8_t **retptr);
 
 /* opcode bitfield */
 struct zpcopcode {
-    unsigned  inst   : 4;       // operation ID
+    unsigned  inst   : 6;       // operation ID
     unsigned  arg1t  : 4;       // argument #1 type
     unsigned  arg2t  : 4;       // argument #2 type
-    unsigned  unit   : 4;       // unit ID
-    unsigned  reg1   : 8;       // register ID #1
-    unsigned  reg2   : 8;       // register ID #2
     unsigned  arg1sz : 4;       // argument sizes in octets/bytes
     unsigned  arg2sz : 4;       // argument sizes in octets/bytes
+    unsigned  unit   : 4;       // unit ID
     unsigned  size   : 2;       // size 1..3, shift count
     unsigned  flg    : 4;       // instruction flags
-    unsigned  pad    : 18;      // pad to 64-bit boundary
+    unsigned  reg1   : 8;       // register ID #1
+    unsigned  reg2   : 8;       // register ID #2
+    unsigned  pad    : 16;      // pad to 64-bit boundary
     zasword_t args[EMPTY];
 } PACK();
 

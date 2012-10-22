@@ -6,6 +6,7 @@
 #include <string.h>
 #include <zpc/zpc.h>
 #include <zpc/op.h>
+#include <zas/zas.h>
 
 #define TOKENSTRLEN 128
 
@@ -24,32 +25,32 @@
 #define isbdigit(c) ((c) == '0' || (c) == '1')
 #define isodigit(c) ((c) >= '0' && (c) <= '7')
 
+extern struct zasopinfo zpcopinfotab[ZPCNASMOP + 1];
 extern long             zpcradix;
 
 #define OPERRTOL  0x80000000
 #define zpccopprec(tp)                                                 \
-    (zpccopprectab[(tp)->type] & ~OPERRTOL)
+    (zpcopprectab[(tp)->type] & ~OPERRTOL)
 #define zpccopisrtol(tp)                                               \
-    (zpccopprectab[(tp)->type] & OPERRTOL)
-static uint8_t          zpcdectab[256];
-static uint8_t          zpchextab[256];
-static uint8_t          zpcocttab[256];
-static float            zpcdecflttab[256];
-static float            zpchexflttab[256];
-static float            zpcoctflttab[256];
-static double           zpcdecdbltab[256];
-static double           zpchexdbltab[256];
-static double           zpcoctdbltab[256];
-uint8_t                 zpcoperchartab[256];
-static long             zpccopprectab[ZPCNOPER];
-static long             zpccopnargtab[ZPCNOPER];
-static zpccop_t        *zpcevaltab[ZPCNOPER];
-struct zpctoken        *zpcoperstk;
-struct zpctoken        *zpcoperstktop;
-struct zpctoken        *zpctokenqueue;
-struct zpctoken        *zpctokentail;
-struct zpctoken        *zpcparsequeue;
-struct zpctoken        *zpcparsetail;
+    (zpcopprectab[(tp)->type] & OPERRTOL)
+static uint8_t   zpcdectab[256];
+static uint8_t   zpchextab[256];
+static uint8_t   zpcocttab[256];
+static float     zpcdecflttab[256];
+static float     zpchexflttab[256];
+static float     zpcoctflttab[256];
+static double    zpcdecdbltab[256];
+static double    zpchexdbltab[256];
+static double    zpcoctdbltab[256];
+uint8_t          zpcoperchartab[256];
+static long      zpcopprectab[ZPCNOPER];
+static zpcop_t  *zpcevaltab[ZPCNOPER];
+struct zpctoken *zpcoperstk;
+struct zpctoken *zpcoperstktop;
+struct zpctoken *zpctokenqueue;
+struct zpctoken *zpctokentail;
+struct zpctoken *zpcparsequeue;
+struct zpctoken *zpcparsetail;
 
 void
 zpcinitconvtab(void)
@@ -182,23 +183,24 @@ zpcinitconvtab(void)
 }
 
 void
-zpcinitcoptab(void)
+zpcinitoptab(void)
 {
     /* precedences */
-    zpccopprectab[ZPCNOT] = OPERRTOL | 8;
-    zpccopprectab[ZPCINC] = 8;
-    zpccopprectab[ZPCDEC] = 8;
-    zpccopprectab[ZPCSHR] = 7;
-    zpccopprectab[ZPCSHL] = 7;
-    zpccopprectab[ZPCAND] = 6;
-    zpccopprectab[ZPCXOR] = OPERRTOL | 5;
-    zpccopprectab[ZPCOR] = 4;
-    zpccopprectab[ZPCMUL] = 3;
-    zpccopprectab[ZPCDIV] = 3;
-    zpccopprectab[ZPCMOD] = 3;
-    zpccopprectab[ZPCADD] = OPERRTOL | 2;
-    zpccopprectab[ZPCSUB] = 2;
-    zpccopprectab[ZPCASSIGN] = 1;
+    zpcopprectab[ZPCNOT] = OPERRTOL | 8;
+    zpcopprectab[ZPCINC] = 8;
+    zpcopprectab[ZPCDEC] = 8;
+    zpcopprectab[ZPCSHR] = 7;
+    zpcopprectab[ZPCSHL] = 7;
+    zpcopprectab[ZPCAND] = 6;
+    zpcopprectab[ZPCXOR] = OPERRTOL | 5;
+    zpcopprectab[ZPCOR] = 4;
+    zpcopprectab[ZPCMUL] = 3;
+    zpcopprectab[ZPCDIV] = 3;
+    zpcopprectab[ZPCMOD] = 3;
+    zpcopprectab[ZPCADD] = OPERRTOL | 2;
+    zpcopprectab[ZPCSUB] = 2;
+    zpcopprectab[ZPCASSIGN] = 1;
+#if 0
     /* # of arguments */
     zpccopnargtab[ZPCNOT] = 1;
     zpccopnargtab[ZPCINC] = 1;
@@ -214,13 +216,14 @@ zpcinitcoptab(void)
     zpccopnargtab[ZPCMOD] = 2;
     zpccopnargtab[ZPCADD] = 2;
     zpccopnargtab[ZPCSUB] = 2;
+#endif
     /* evaluation functions */
     zpcevaltab[ZPCNOT] = not64;
     zpcevaltab[ZPCINC] = inc64;
     zpcevaltab[ZPCDEC] = dec64;
     zpcevaltab[ZPCSHL] = shl64;
-    zpcevaltab[ZPCSHR] = shrl64;
-    zpcevaltab[ZPCSHRA] = shr64;
+    zpcevaltab[ZPCSHR] = shr64;
+    zpcevaltab[ZPCSHRA] = shra64;
     zpcevaltab[ZPCAND] = and64;
     zpcevaltab[ZPCXOR] = xor64;
     zpcevaltab[ZPCOR] = or64;
@@ -233,7 +236,7 @@ zpcinitcoptab(void)
     return;
 }
 
-void zpcinitcop(void)
+void zpcinitop(void)
 {
     /* lookup table */
     zpcoperchartab['~'] = '~';
@@ -254,8 +257,8 @@ void
 exprinit(void)
 {
     zpcinitconvtab();
-    zpcinitcoptab();
-    zpcinitcop();
+    zpcinitoptab();
+    zpcinitop();
 
     return;
 }
@@ -815,7 +818,7 @@ zpcgetoper(struct zpctoken *token, const char *str, char **retstr)
         token->str[0] = '%';
         token->str[1] = '\0';
     }
-    token->param = zpccopnargtab[token->type];
+    token->param = zpcopinfotab[token->type].narg;
     *retstr = (char *)ptr;
 }
 
@@ -1150,7 +1153,7 @@ zpceval(struct zpctoken *srcqueue)
     struct zpctoken *arg1;
     struct zpctoken *arg2;
     int64_t          dest;
-    zpccop_t        *func;
+    zpcop_t         *func;
     long             radix;
 
     while (token) {
@@ -1158,7 +1161,7 @@ zpceval(struct zpctoken *srcqueue)
         if (zpcisvalue(token)) {
             zpcpushtoken(token, &stack);
         } else if (zpcisoper(token)) {
-            if (zpccopnargtab[token->type] >= 1) {
+            if (zpcopinfotab[token->type].narg >= 1) {
                 if (!token1) {
                     fprintf(stderr, "missing argument 1\n");
 
@@ -1166,7 +1169,7 @@ zpceval(struct zpctoken *srcqueue)
                 }
             }
             arg2 = NULL;
-            if (zpccopnargtab[token->type] == 2) {
+            if (zpcopinfotab[token->type].narg == 2) {
                 arg2 = zpcpoptoken(&stack);
                 if (!arg2) {
                     fprintf(stderr, "missing argument 2\n");
@@ -1177,7 +1180,7 @@ zpceval(struct zpctoken *srcqueue)
             if (token1) {
                 arg1 = token1;
             }
-            switch (zpccopnargtab[token->type]) {
+            switch (zpcopinfotab[token->type].narg) {
                 case 2:
                     if (!arg2) {
                         fprintf(stderr, "invalid argument 2\n");

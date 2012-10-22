@@ -50,10 +50,11 @@ struct zasopinfo zpcopinfotab[ZPCNASMOP]
     { "ret", 1 },
     { "trap", 1 },
     { "iret", 1 },
-    { "thr", 1 }
+    { "thr", 1 },
+    { NULL, 0 }
 };
 
-ophandler_t *zpcopfunctab[ZPCNASMOP] ALIGNED(PAGESIZE)
+zpcop_t *zpcopfunctab[ZPCNASMOP] ALIGNED(PAGESIZE)
 = {
     NULL,       // illegal instruction
     not64,
@@ -71,7 +72,8 @@ ophandler_t *zpcopfunctab[ZPCNASMOP] ALIGNED(PAGESIZE)
     sub64,
     mul64,
     div64,
-    mod64,
+    mod64
+#if 0
     bz64,
     bnz64,
     blt64,
@@ -88,6 +90,7 @@ ophandler_t *zpcopfunctab[ZPCNASMOP] ALIGNED(PAGESIZE)
     trap64,
     iret64,
     thr64
+#endif
 };
 
 #define NHASHITEM 1024
