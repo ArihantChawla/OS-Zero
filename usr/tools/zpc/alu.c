@@ -60,7 +60,7 @@ shl64(struct zpctoken *arg1, struct zpctoken *arg2)
 }
 
 int64_t
-shr64(struct zpctoken *arg1, struct zpctoken *arg2)
+shra64(struct zpctoken *arg1, struct zpctoken *arg2)
 {
     int64_t  cnt = arg1->data.ui64.i64;;
     uint64_t res = arg2->data.ui64.u64;
@@ -74,7 +74,7 @@ shr64(struct zpctoken *arg1, struct zpctoken *arg2)
 }
 
 int64_t
-shrl64(struct zpctoken *arg1, struct zpctoken *arg2)
+shr64(struct zpctoken *arg1, struct zpctoken *arg2)
 {
     int64_t  cnt = arg1->data.ui64.i64;;
     uint64_t res = arg2->data.ui64.u64;
