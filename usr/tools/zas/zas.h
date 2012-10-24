@@ -94,15 +94,16 @@ struct zastoken {
     struct zastoken     *next;
     unsigned long        type;
     zasword_t            val;
+#if (ZPC)
+    struct zpctoken     *token;
+#endif
 #if (ZASDB)
     uint8_t             *file;
     unsigned long        line;
 #endif
     union {
         struct zaslabel  label;
-#if (ZPC)
-        struct zpctoken *token;
-#else
+#if (!ZPC)
         struct zasvalue  value;
 #endif
         struct zasinst   inst;

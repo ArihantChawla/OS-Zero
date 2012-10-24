@@ -171,7 +171,7 @@ printtoken(struct zastoken *token)
     switch (token->type) {
         case TOKENVALUE:
 #if (ZPC)
-            zpcprinttoken(token->data.token);
+            zpcprinttoken(token->token);
 #elif (WPM)
             fprintf(stderr, "value 0x%08x (size == %d)\n",
                     token->data.value.val, token->data.value.size);
@@ -230,7 +230,7 @@ zasfreetoken(struct zastoken *token)
     free(token->file);
 #endif
 #if (ZPC)
-    free(token->data.token);
+    free(token->token);
 #endif
     free(token);
 
@@ -1145,24 +1145,24 @@ zasprocvalue(struct zastoken *token, zasmemadr_t adr,
     struct zastoken *retval;
 
 #if (ZPC)
-    switch (token->data.token->type) {
+    switch (token->token->type) {
         case ZPCINT64:
-            *((int64_t *)valptr) = token->data.token->data.ui64.i64;
+            *((int64_t *)valptr) = token->token->data.ui64.i64;
             *retadr = adr + sizeof(int64_t);
 
             break;
         case ZPCUINT64:
-            *((uint64_t *)valptr) = token->data.token->data.ui64.u64;
+            *((uint64_t *)valptr) = token->token->data.ui64.u64;
             *retadr = adr + sizeof(uint64_t);
 
             break;
         case ZPCFLOAT:
-            *((float *)valptr) = token->data.token->data.f32;
+            *((float *)valptr) = token->token->data.f32;
             *retadr = adr + sizeof(float);
 
             break;
         case ZPCDOUBLE:
-            *((double *)valptr) = token->data.token->data.f64;
+            *((double *)valptr) = token->token->data.f64;
             *retadr = adr + sizeof(double);
 
             break;
