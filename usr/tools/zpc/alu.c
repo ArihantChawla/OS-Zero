@@ -7,7 +7,7 @@
 int64_t
 not64(struct zpctoken *arg1, struct zpctoken *dummy)
 {
-    int64_t src = arg1->data.ui64.i64;;
+    int64_t src = arg1->data.ui64.i64;
     int64_t res;
 
     res = ~src;
@@ -18,7 +18,7 @@ not64(struct zpctoken *arg1, struct zpctoken *dummy)
 int64_t
 and64(struct zpctoken *arg1, struct zpctoken *arg2)
 {
-    int64_t src = arg1->data.ui64.i64;;
+    int64_t src = arg1->data.ui64.i64;
     int64_t res = arg2->data.ui64.i64;
 
     res &= src;
@@ -29,7 +29,7 @@ and64(struct zpctoken *arg1, struct zpctoken *arg2)
 int64_t
 or64(struct zpctoken *arg1, struct zpctoken *arg2)
 {
-    int64_t src = arg1->data.ui64.i64;;
+    int64_t src = arg1->data.ui64.i64;
     int64_t res = arg2->data.ui64.i64;
 
     res |= src;
@@ -40,7 +40,7 @@ or64(struct zpctoken *arg1, struct zpctoken *arg2)
 int64_t
 xor64(struct zpctoken *arg1, struct zpctoken *arg2)
 {
-    int64_t src = arg1->data.ui64.i64;;
+    int64_t src = arg1->data.ui64.i64;
     int64_t res = arg2->data.ui64.i64;
 
     res ^= src;
@@ -51,7 +51,7 @@ xor64(struct zpctoken *arg1, struct zpctoken *arg2)
 int64_t
 shl64(struct zpctoken *arg1, struct zpctoken *arg2)
 {
-    int64_t  cnt = arg1->data.ui64.i64;;
+    int64_t  cnt = arg1->data.ui64.i64;
     uint64_t res = arg2->data.ui64.u64;
 
     res <<= cnt;
@@ -62,7 +62,7 @@ shl64(struct zpctoken *arg1, struct zpctoken *arg2)
 int64_t
 shra64(struct zpctoken *arg1, struct zpctoken *arg2)
 {
-    int64_t  cnt = arg1->data.ui64.i64;;
+    int64_t  cnt = arg1->data.ui64.i64;
     uint64_t res = arg2->data.ui64.u64;
     uint64_t sign = res & UINT64_C(0x8000000000000000);
 
@@ -76,7 +76,7 @@ shra64(struct zpctoken *arg1, struct zpctoken *arg2)
 int64_t
 shr64(struct zpctoken *arg1, struct zpctoken *arg2)
 {
-    int64_t  cnt = arg1->data.ui64.i64;;
+    int64_t  cnt = arg1->data.ui64.i64;
     uint64_t res = arg2->data.ui64.u64;
     uint64_t mask = UINT64_C(0xffffffffffffffff) >> cnt;
 
@@ -89,7 +89,7 @@ shr64(struct zpctoken *arg1, struct zpctoken *arg2)
 int64_t
 ror64(struct zpctoken *arg1, struct zpctoken *arg2)
 {
-    int64_t  cnt = arg1->data.ui64.i64;;
+    int64_t  cnt = arg1->data.ui64.i64;
     uint64_t res = arg2->data.ui64.u64;
     uint64_t mask = UINT64_C(0xffffffffffffffff) >> (64 - cnt);
     int64_t  bits = res & mask;
@@ -104,7 +104,7 @@ ror64(struct zpctoken *arg1, struct zpctoken *arg2)
 int64_t
 rol64(struct zpctoken *arg1, struct zpctoken *arg2)
 {
-    int64_t  cnt = arg1->data.ui64.i64;;
+    int64_t  cnt = arg1->data.ui64.i64;
     uint64_t res = arg2->data.ui64.u64;
     uint64_t mask = UINT64_C(0xffffffffffffffff) << (64 - cnt);
     uint64_t bits = res & mask;
@@ -119,7 +119,7 @@ rol64(struct zpctoken *arg1, struct zpctoken *arg2)
 int64_t
 inc64(struct zpctoken *arg1, struct zpctoken *arg2)
 {
-    int64_t src = arg1->data.ui64.i64;;
+    int64_t src = arg1->data.ui64.i64;
 
 #if (SMARTTYPES)
     arg1->flags = 0;
@@ -156,7 +156,7 @@ inc64(struct zpctoken *arg1, struct zpctoken *arg2)
 int64_t
 dec64(struct zpctoken *arg1, struct zpctoken *arg2)
 {
-    int64_t src = arg1->data.ui64.i64;;
+    int64_t src = arg1->data.ui64.i64;
 
 #if (SMARTTYPES)
     arg1->flags = 0;
@@ -180,7 +180,7 @@ dec64(struct zpctoken *arg1, struct zpctoken *arg2)
 int64_t
 add64(struct zpctoken *arg1, struct zpctoken *arg2)
 {
-    int64_t src = arg1->data.ui64.i64;;
+    int64_t src = arg1->data.ui64.i64;
     int64_t res = arg2->data.ui64.i64;
 
     res += src;
@@ -191,7 +191,7 @@ add64(struct zpctoken *arg1, struct zpctoken *arg2)
 int64_t
 sub64(struct zpctoken *arg1, struct zpctoken *arg2)
 {
-    int64_t src = arg1->data.ui64.i64;;
+    int64_t src = arg1->data.ui64.i64;
     int64_t res = arg2->data.ui64.i64;
 
     res -= src;
@@ -202,7 +202,7 @@ sub64(struct zpctoken *arg1, struct zpctoken *arg2)
 int64_t
 mul64(struct zpctoken *arg1, struct zpctoken *arg2)
 {
-    int64_t src = arg1->data.ui64.i64;;
+    int64_t src = arg1->data.ui64.i64;
     int64_t res = arg2->data.ui64.i64;
 
     res *= src;
@@ -213,7 +213,7 @@ mul64(struct zpctoken *arg1, struct zpctoken *arg2)
 int64_t
 div64(struct zpctoken *arg1, struct zpctoken *arg2)
 {
-    int64_t src = arg1->data.ui64.i64;;
+    int64_t src = arg1->data.ui64.i64;
     int64_t res = arg2->data.ui64.i64;
 
     res /= src;
@@ -224,7 +224,7 @@ div64(struct zpctoken *arg1, struct zpctoken *arg2)
 int64_t
 mod64(struct zpctoken *arg1, struct zpctoken *arg2)
 {
-    int64_t src = arg1->data.ui64.i64;;
+    int64_t src = arg1->data.ui64.i64;
     int64_t res = arg2->data.ui64.i64;
 
     res %= src;
@@ -232,3 +232,9 @@ mod64(struct zpctoken *arg1, struct zpctoken *arg2)
     return res;
 }
 
+void
+opnot(struct zpcopcode *op)
+{
+    uint_fast8_t arg1 = op->arg1t;
+    
+}

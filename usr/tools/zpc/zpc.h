@@ -101,7 +101,7 @@
 #define ZPCBUTTONDEBUG 0x05
 
 typedef void zpcophandler_t(struct zpcopcode *);
-typedef void zpchookfunc_t(struct zpcopcode *);
+//typedef void zpchookfunc_t(struct zpcopcode *);
 typedef void zpcaction_t(void);
 
 typedef union {

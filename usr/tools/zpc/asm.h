@@ -110,8 +110,9 @@ zasuword_t zpcgetreg(uint8_t *str, uint8_t **retptr);
 /* unit IDs */
 #define ZPCCALC      0x00
 #define ZPCALU       0x01       // arithmetic-logical unit
-#define ZPCVPU64     0x02       // 64-bit vector unit
-#define ZPCVPU128    0x03       // 128-bit vector unit
+#define ZPCFPU       0x02       // floating point unit
+#define ZPCVPU64     0x03       // 64-bit vector unit
+#define ZPCVPU128    0x04       // 128-bit vector unit
 
 /* flg */
 #define ZPCZEROBIT   0x01       // unpack with zero, etc.
@@ -122,10 +123,10 @@ struct zpcopcode {
     unsigned  inst   : 6;       // operation ID
     unsigned  arg1t  : 4;       // argument #1 type
     unsigned  arg2t  : 4;       // argument #2 type
-    unsigned  arg1sz : 4;       // argument sizes in octets/bytes
-    unsigned  arg2sz : 4;       // argument sizes in octets/bytes
+    unsigned  arg1sz : 4;       // argument #1 size in octets/bytes
+    unsigned  arg2sz : 4;       // argument #2 size in octets/bytes
     unsigned  unit   : 4;       // unit ID
-    unsigned  size   : 2;       // size 1..3, shift count
+    unsigned  size   : 2;       // instruction size 1..3
     unsigned  flg    : 4;       // instruction flags
     unsigned  reg1   : 8;       // register ID #1
     unsigned  reg2   : 8;       // register ID #2

@@ -229,6 +229,9 @@ zasfreetoken(struct zastoken *token)
 #if (ZASDB)
     free(token->file);
 #endif
+#if (ZPC)
+    free(token->data.token);
+#endif
     free(token);
 
     return;
@@ -898,7 +901,7 @@ zasgettoken(uint8_t *str, uint8_t **retptr)
 #if (ZPC)
         if (val < ZPCNREG) {
             token1->type = TOKENINDEX;
-            token1->data.ndx.reg = REGINDEX | val;
+            token1->data.ndx.reg = ZPCREGINDEX | val;
             token1->data.ndx.val = ndx;
         } else {
             zpctoken = zpcgettoken((const char *)str, (char **)&str);
@@ -1104,7 +1107,11 @@ zasgettoken(uint8_t *str, uint8_t **retptr)
             str++;
             val = zasgetreg(str, &str);
             token2->type = TOKENREG;
+#if (ZPC)
+            token2->data.reg = ZPCREGINDIR | val;
+#else
             token2->data.reg = REGINDIR | val;
+#endif
             zasqueuetoken(token1);
             token1 = token2;
         } else if (isalpha(*str) || *str == '_') {
@@ -1674,12 +1681,13 @@ zastranslate(zasmemadr_t base)
 {
     zasmemadr_t      adr = base;
     struct zastoken *token = zastokenqueue;
+    struct zastoken *token1;
     zastokfunc_t    *func;
 
     while (token) {
         func = zasktokfunctab[token->type];
         if (func) {
-            token = func(token, adr, &adr);
+            token1 = func(token, adr, &adr);
             if (!token) {
 
                 break;
@@ -1690,8 +1698,8 @@ zastranslate(zasmemadr_t base)
 
             exit(1);
         }
+        token = token1;
     }
-    zastokenqueue = NULL;
 
     return adr;
 }
