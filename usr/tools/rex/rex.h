@@ -12,8 +12,10 @@ static int matchhere(char **regexp, char *data);
 
 #define NSPECBYTE 32
 
-#define setspecbit(ch) setbit(specbitmap, (uint8_t)ch)
-#define chisspec(ch)   bitset(specbitmap, (uint8_t)ch)
+#define setspecbit(ch)   setbit(specbitmap, (uint8_t)(ch))
+#define chisspec(ch)     bitset(specbitmap, (uint8_t)(ch))
+#define setcbit(rex, ch) setbit(rex->cbits, (uint8_t)(ch))
+#define hascbit(rex, ch) bitset(rex->cbits, (uint8_t)(ch))
 
 #define BEGIN 0x01
 #define END   0x02

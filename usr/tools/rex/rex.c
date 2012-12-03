@@ -127,11 +127,11 @@ translate(char *regexp)
             rex1->type = SET;
             if (rp[2] == '-') {
                 for (ch = rp[1] ; ch < rp[3] ; ch++) {
-                    setbit(rex1->cbits, (uint8_t)ch);
+                    setcbit(rex1, ch);
                 }
             } else {
                 while (*rp != ']') {
-                    setbit(rex1->cbits, (uint8_t)*rp);
+                    setcbit(rex1, *rp);
                     rp++;
                 }
                 if (*rp != ']') {
@@ -144,7 +144,7 @@ translate(char *regexp)
         } else {
             rex1->type = CHAR;
             ch = *rp;
-            setbit(rex1->cbits, (uint8_t)ch);
+            setcbit(rex1, ch);
             rp++;
         }
         if (*rp) {
