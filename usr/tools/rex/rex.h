@@ -25,7 +25,7 @@ static int matchhere(char **regexp, char *data);
 struct rex {
     uint8_t     cbits[32];
     struct rex *next;
-    uint8_t     type;           // BEGIN, END, DOT, STAR, ANY, PLUS, SET
+    uint8_t     type;           // BEGIN, END, DOT, SET, STAR, CHAR
     uint8_t     n;              // 0 for any number of matches
     uint8_t     pad[6];
 } PACK();
