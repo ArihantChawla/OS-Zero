@@ -1026,10 +1026,8 @@ zpctokenize(const char *str)
         zpcqueuetoken(token, &queue, &tail);
         token = zpcgettoken(ptr, &ptr);
     }
-#if 0
     fprintf(stderr, "TOKENS: ");
-    zpcprintqueue(zpctokenqueue);
-#endif
+    zpcprintqueue(queue);
 
     return queue;
 };
@@ -1161,12 +1159,10 @@ zpceval(struct zpctoken *srcqueue)
         if (zpcisvalue(token)) {
             zpcpushtoken(token, &stack);
         } else if (zpcisoper(token)) {
-            if (zpcopinfotab[token->type].narg >= 1) {
-                if (!token1) {
-                    fprintf(stderr, "missing argument 1\n");
-
-                    return NULL;
-                }
+            if (!token1) {
+                fprintf(stderr, "missing argument 1\n");
+                
+                return NULL;
             }
             arg2 = NULL;
             if (zpcopinfotab[token->type].narg == 2) {
@@ -1177,8 +1173,13 @@ zpceval(struct zpctoken *srcqueue)
                     return NULL;
                 }
             }
-            if (token1) {
-                arg1 = token1;
+            arg1 = token1;
+            fprintf(stderr, "ARGS:\n");
+            if (arg1) {
+                printtoken(arg1);
+            }
+            if (arg2) {
+                printtoken(arg2);
             }
             switch (zpcopinfotab[token->type].narg) {
                 case 2:
@@ -1214,7 +1215,7 @@ zpceval(struct zpctoken *srcqueue)
                     token1->flags = arg1->flags;
                     token1->sign = arg1->sign;
 #endif
-                } else {
+                } else if (arg1) {
                     dest = func(arg1, arg2);
                     token1->radix = arg1->radix;
 #if (SMARTTYPES)

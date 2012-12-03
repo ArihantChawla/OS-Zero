@@ -181,12 +181,14 @@ struct zasopinfo wpmopinfotab[WPMNASMOP + 1]
 
 #endif /* !ZPC */
 
+#if (WPM)
 wpmhookfunc_t *hookfunctab[256]
 = {
     hookpzero,
     hookpalloc,
     hookpfree
 };
+#endif
 
 char *argnametab[]
 = {
@@ -368,6 +370,8 @@ wpmloop(void *cpustat)
 
     return NULL;
 }
+
+#if (WPM)
 
 void
 opnot(struct wpmopcode *op)
@@ -1723,6 +1727,8 @@ hookpfree(struct wpmopcode *op)
 
     return;
 }
+
+#endif /* WPM */
 
 #if (WPM)
 int

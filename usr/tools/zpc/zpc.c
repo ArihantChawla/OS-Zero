@@ -15,10 +15,6 @@ void stkinit(void);
 void x11init(void);
 void x11nextevent(void);
 #endif
-#define TEST 0
-#if (TEST)
-void zpcprintqueue(struct zpctoken *queue);
-#endif
 
 struct zasopinfo zpcopinfotab[ZPCNASMOP]
 = {
@@ -54,6 +50,7 @@ struct zasopinfo zpcopinfotab[ZPCNASMOP]
     { NULL, 0 }
 };
 
+#if 0
 zpcop_t *zpcopfunctab[ZPCNASMOP] ALIGNED(PAGESIZE)
 = {
     NULL,       // illegal instruction
@@ -92,6 +89,7 @@ zpcop_t *zpcopfunctab[ZPCNASMOP] ALIGNED(PAGESIZE)
     thr
 #endif
 };
+#endif /* 0 */
 
 #define NHASHITEM 1024
 static struct zpctoken   *zpcvarhash[NHASHITEM] ALIGNED(PAGESIZE);
@@ -287,25 +285,12 @@ zpcswap(void)
 int
 main(int argc, char *argv[])
 {
-    zasinit(zpcopinfotab);
+//    zasinit(zpcopinfotab);
     zpcradix = 10;
     stkinit();
     exprinit();
 #if (ZPCX11)
     x11init();
-#endif
-#if (TEST)
-    queue = zpctokenize(exprstr);
-    zpcprintqueue(queue);
-    zpcparsequeue = zpcparse(queue);
-    fprintf(stderr, "PARSE\n");
-    fprintf(stderr, "-----\n");
-    zpcprintqueue(zpcparsequeue);
-#if 0
-    fprintf(stderr, "STACK\n");
-    fprintf(stderr, "-----\n");
-    zpcprintqueue(zpcoperstk);
-#endif
 #endif
     while (1) {
         x11nextevent();

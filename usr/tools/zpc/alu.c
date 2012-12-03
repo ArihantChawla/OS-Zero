@@ -232,9 +232,3 @@ mod64(struct zpctoken *arg1, struct zpctoken *arg2)
     return res;
 }
 
-void
-opnot(struct zpcopcode *op)
-{
-    uint_fast8_t arg1 = op->arg1t;
-    
-}
