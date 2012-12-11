@@ -33,10 +33,10 @@
 #define TRAPPSREXT   0x0000ff00
 #define TRAPPSRCTL   0x000000ff
 
-#define IRQMASK   mrs r1, cpsr; orr r1, r1, #TRAPPSRIBIT; msr cpsr_c, r1;
-#define IRQUNMASK mrs r1, cpsr; bic r1, r1, #TRAPPSRIBIT; msr cpsr_c, r1;
-#define FIQMASK   mrs r1, cpsr; orr r1, r1, #TRAPPSRFBIT; msr cpsr_c, r1;
-#define FIQUNMASK mrs r1, cpsr; bic r1, r1, #TRAPPSRFBIT; msr cpsr_c, r1;
+#define irqmask()   mrs r1, cpsr; orr r1, r1, #TRAPPSRIBIT; msr cpsr_c, r1;
+#define irqunmask() mrs r1, cpsr; bic r1, r1, #TRAPPSRIBIT; msr cpsr_c, r1;
+#define fiqmask()   mrs r1, cpsr; orr r1, r1, #TRAPPSRFBIT; msr cpsr_c, r1;
+#define fiqunmask() mrs r1, cpsr; bic r1, r1, #TRAPPSRFBIT; msr cpsr_c, r1;
 
 #endif /* __KERN_UNIT_ARM_SETUP_H__ */
 
