@@ -11,9 +11,8 @@
 
 	/*
 	 * initialize segmentation.
-	 * - load segment registers DS, ES, and FS with the DATA selector
+	 * - load segment registers DS, ES, FS, and SS with the DATA selector
 	 * - GS is per-CPU segment
-	 * - load stack segment register SS with STK selector
 	 * - set code segment register CS up with a far jump
 	 */
 gdtinit:
