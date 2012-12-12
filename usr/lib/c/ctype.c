@@ -30,11 +30,11 @@ volatile uint8_t *ctypeparamptr = ctypeparamtab_c;
 int
 setctype(int ctype)
 {
-    if (ctype < 0 || ctype >= NCBYTE) {
+    if (ctype < 0 || ctype >= NCTYPE) {
 
         return -1;
     }
-    ctypeparptr = ctypeparamtab[ctype];
+    ctypeparamptr = ctypeparamtab[ctype];
 
     return 0;
 }
