@@ -1,8 +1,6 @@
 #if defined(__arm__)
 
-#include <mach/asm.h>
-
-extern void trapinit(void);
+#include <zero/arm/asm.h>
 
 void
 kmain(void) {

@@ -1,7 +1,7 @@
 #include <mach/arm/setup.h>
 #include <mach/arm/int.h>
 
-.globl _start, _intinit
+.globl _start
 
 .extern kloop
 
@@ -9,11 +9,13 @@
 
 .org 0x00000000
 
+/* entry point */
+_start:
 /*
  * interrupt vector table with branch instructions to handler stubs
  * - also entry point at 0x00000000
+ * - consists of branch instructions + in-place handler for fast interrupts
  */
-_start:
 _intvec:
 	b	_intreset
 	b	_intundef
@@ -54,6 +56,8 @@ _intdata:
 
 _intadr:
 	/* code here */
+	irqunmask()
+	bx	lr
 
 _intirq:
 	subs	lr, #4
