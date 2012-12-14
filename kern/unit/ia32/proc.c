@@ -8,8 +8,8 @@
 #include <kern/unit/ia32/cpu.h>
 #include <kern/unit/ia32/vm.h>
 
-struct proc proctab[NPROC];
-struct thr  thrtab[NTHR];
+struct proc proctab[NPROC] ALIGNED(PAGESIZE);
+struct thr  thrtab[NTHR] ALIGNED(PAGESIZE);
 
 long
 procinit(long id)

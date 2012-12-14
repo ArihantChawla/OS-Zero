@@ -13,18 +13,12 @@ Bootstrap Routines
 API
 ---
 - bufalloc()	- allocate buffer from fixed size cache
-- buffree()	- free buffer; flush possible cached contents
+- buffree()	- free buffer; optionally flush possible cached contents
 - pagealloc()	- allocate page from kernel virtual memory
 - pagefree()	- free page of kernel memory
 - pagemap()	- map virtual pages to physical ones
 - bzero()	- zero memory region
 - bfill()	- fill memory region with given byte
-
-Conventions
------------
-- name constant macros in all upper case, a'la EILSEQ, TRAPPF
-- name function-like macros like functions; bufpush(), bufpop(), jne.
-  - module + verb (+ object)
 
 Function Names
 --------------
@@ -38,6 +32,9 @@ Variable Names
 
 Macro Names
 -----------
+- name constant-value macros in all upper case, a'la EILSEQ, TRAPPF
+- name function-like macros like functions; bufpush(), bufpop(), jne.
+  - module + verb (+ object)
 
 Module Names
 ------------
@@ -46,8 +43,8 @@ Module Names
 Module Name Examples
 --------------------
 
-name	brief					architecture
-----	-----					------------
+name	brief					implementations
+----	-----					---------------
 buf	buffer cache				portable
 com	communications [serial] port		PC
 con	console (text-based interface)		VGA
@@ -57,3 +54,5 @@ mag	magasine allocator cache layer	portable
 page	page replacement and other algorithms	32-bit, 64-bit later on
 slab	slab memory allocator	     		32-bit, 64-bit to follow
 trap	interrupt and exception management	PC
+vm	virtual memory				x86
+
