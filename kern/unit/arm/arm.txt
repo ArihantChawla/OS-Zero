@@ -1,0 +1,6 @@
+ARM Architecture Notes
+----------------------
+
+- interrupt vector is linked at 0x00000000
+- interrupt vector has branch instructions and in-place fast interrupt handler
+
