@@ -348,8 +348,8 @@ typedef pthread_mutex_t LK_T;
 
 #if (PTRBITS <= 32)
 #define NSLAB             (1UL << (PTRBITS - SLABLOG2))
-#define slabid(ptr)       ((uintptr_t)(ptr) >> SLABLOG2)
 #endif
+#define slabid(ptr)       ((uintptr_t)(ptr) >> SLABLOG2)
 #define nbhdr()           PAGESIZE
 #define NBUFHDR           64
 
@@ -474,7 +474,7 @@ struct mtree {
 /* globals */
 
 #if (INTSTAT)
-static uint64_t        nalloc[NARN][NBKT] ALIGNED(PAGESIZE);
+static long long       nalloc[NARN][NBKT] ALIGNED(PAGESIZE);
 static long            nhdrbytes[NARN];
 static long            nstkbytes[NARN];
 static long            nmapbytes[NARN];
@@ -706,10 +706,12 @@ printintstat(void)
     long aid;
     long bkt;
     FILE *fp;
+#if 0
     long nbhdr = 0;
     long nbstk = 0;
     long nbheap = 0;
     long nbmap = 0;
+#endif
     char path[PATH_MAX + 1];
 
     memset(path, 0, PATH_MAX + 1);
@@ -733,7 +735,7 @@ printintstat(void)
             }
 #endif
             for (bkt = 0 ; bkt < NBKT ; bkt++) {
-                fprintf(fp, "%lx:%lx:%lld\n",
+                fprintf(fp, "%lx:%lx:%llu\n",
                         aid, bkt, nalloc[aid][bkt]);
             }
         }

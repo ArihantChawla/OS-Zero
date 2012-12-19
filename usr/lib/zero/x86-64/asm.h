@@ -16,7 +16,7 @@
  * - return original *p
  */
 static __inline__ long
-m_xaddq(long *p,
+m_xaddq(volatile long *p,
         long val)
 {
     __asm__ __volatile__ ("lock xaddq %%rax, %b2\n"
@@ -33,16 +33,16 @@ m_xaddq(long *p,
  * - return original *p
  */
 static __inline__ uint8_t
-m_cmpxchgb(long *p,
+m_cmpxchgb(volatile long *p,
            long want,
            long val)
 {
     long res;
 
-    __asm__ __volatile__("lock cmpxchgb %b1, %2\n"
-                         : "=a" (res)
-                         : "q" (val), "m" (*(p)), "0" (want)
-                         : "memory");
+    __asm__ __volatile__ ("lock cmpxchgb %b1, %2\n"
+                          : "=a" (res)
+                          : "q" (val), "m" (*(p)), "0" (want)
+                          : "memory");
 
     return res;
 }
@@ -53,16 +53,16 @@ m_cmpxchgb(long *p,
  * - return original *p
  */
 static __inline__ uint8_t
-m_cmpxchgq(long *p,
+m_cmpxchgq(volatile long *p,
            long want,
            long val)
 {
     long res;
     
-    __asm__ __volatile__("lock cmpxchgq %1, %2\n"
-                         : "=a" (res)
-                         : "q" (val), "m" (*(p)), "0" (want)
-                         : "memory");
+    __asm__ __volatile__ ("lock cmpxchgq %1, %2\n"
+                          : "=a" (res)
+                          : "q" (val), "m" (*(p)), "0" (want)
+                          : "memory");
     
     return res;
 }

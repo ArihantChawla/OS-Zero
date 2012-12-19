@@ -5,7 +5,7 @@
 #include <sys/time.h>
 
 #if defined(__x86_64__) || defined(__amd64__)
-#include <zero/amd64/prof.h>
+#include <zero/x86-64/prof.h>
 #elif defined(__i386__)
 #include <zero/ia32/prof.h>
 #elif defined(__arm__)

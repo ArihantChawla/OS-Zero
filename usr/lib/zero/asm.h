@@ -10,7 +10,7 @@
  * m_getretadr()        - get return address from stack frame
  */
 #if defined(__x86_64__)
-#include <zero/x86_64/asm.h>
+#include <zero/x86-64/asm.h>
 #elif defined(__i386__)
 #include <zero/ia32/asm.h>
 #elif defined(__arm__)

@@ -7,7 +7,7 @@
  * - other machine-specific declarations
  */
 #if defined(__x86_64__)
-#include <zero/x86_64/types.h>
+#include <zero/x86-64/types.h>
 #elif defined(__i386__)
 #include <zero/ia32/types.h>
 #elif defined(__arm__)
