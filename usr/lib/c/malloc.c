@@ -4,7 +4,7 @@
  * See the file LICENSE for more information about using this software.
  */
 
-#define DEBUGMALLOC 0
+#define DEBUGMALLOC 1
 #if (DEBUGMALLOC)
 #include <assert.h>
 #endif
@@ -189,6 +189,7 @@ typedef pthread_mutex_t LK_T;
 
 #define NL2BIT     16
 #define NL3BIT     (PTRBITS - SLABLOG2 - NL1BIT - NL2BIT)
+
 #else
 
 #define NL2BIT     (PTRBITS - SLABLOG2 - NL1BIT)
@@ -1584,7 +1585,7 @@ putmem(void *ptr)
                         mag->next->prev = mag->prev;
                     }
                 }
-#if (FIXES)
+#if (FIXES) && (PTRBITS <= 32)
                 _mdir[slabid(ptr)] = NULL;
 #endif
                 mag->prev = mag->next = NULL;
