@@ -8,3 +8,8 @@ ARM Architecture Notes
 - interrupt vector is linked at 0x00000000
 - interrupt vector has branch instructions and in-place fast interrupt handler
 
+System Call Interface
+---------------------
+
+- pass system call number in r7; arguments in r0, r1, r2, r3
+

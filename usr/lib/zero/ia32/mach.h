@@ -1,5 +1,5 @@
-#ifndef __MACH_IA32_MACH_H__
-#define __MACH_IA32_MACH_H__
+#ifndef __ZERO_IA32_MACH_H__
+#define __ZERO_IA32_MACH_H__
 
 #define getretadr(r)                                                    \
     __asm__ __volatile__ ("movl 4(%%ebp), %0\n" : "=r" (r))
@@ -71,5 +71,5 @@ struct m_tss {
 //    uint8_t  iomap[8192] ALIGNED(CLSIZE);
 } PACK();
 
-#endif /* __MACH_IA32_MACH_H__ */
+#endif /* __ZERO_IA32_MACH_H__ */
 

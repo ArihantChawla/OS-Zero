@@ -32,6 +32,24 @@ _intfiq:
 	irqunmask()		// unmask IRQs
 	bx	lr
 	
+_intreset:
+	/* initialise interrupt stack */
+	mov	r1, #INTDISAB|INTIRQ32
+	msr	cpsr_c, r1
+	mov	sp, #_intstk
+	/* svc stack */
+	mov	r1, #INTDISAB|INTSVC32
+	msr	cpsr_c, r1
+	mov	sp, #_svcstk
+	/* user stack */
+	mov	r1, #INTUSR32
+	msr	cpsr_c, r1
+	mov	sp, #_usrstk
+	/* enable interrupts */
+	fiqunmask()
+	irqunmask()
+	b	kmain
+
 _intundef:
 	/* code here */
 	irqunmask()
@@ -64,24 +82,6 @@ _intirq:
 	/* handler call here */
 	irqunmask()
 	bx	lr
-
-_intreset:
-	/* initialise interrupt stack */
-	mov	r1, #INTDISAB|INTIRQ32
-	msr	cpsr_c, r1
-	mov	sp, #_intstk
-	/* svc stack */
-	mov	r1, #INTDISAB|INTSVC32
-	msr	cpsr_c, r1
-	mov	sp, #_svcstk
-	/* user stack */
-	mov	r1, #INTUSR32
-	msr	cpsr_c, r1
-	mov	sp, #_usrstk
-	/* enable interrupts */
-	fiqunmask()
-	irqunmask()
-	b	kmain
 
 _intstk:	
 	.long	M_INTSTK

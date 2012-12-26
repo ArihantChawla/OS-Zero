@@ -1,5 +1,5 @@
-#ifndef __MACH_ARM_PROF_H__
-#define __MACH_ARM_PROF_H__
+#ifndef __ZERO_ARM_PROF_H__
+#define __ZERO_ARM_PROF_H__
 
 /* TODO: fix this to work and find out which versions of ARM it may work with */
 
@@ -33,5 +33,5 @@ _getccnt(void)
 
     return val;
 }
-#endif /* __MACH_ARM_PROF_H__ */
+#endif /* __ZERO_ARM_PROF_H__ */
 

@@ -1,5 +1,5 @@
-#ifndef __MACH_ARM_SETJMP_H__
-#define __MACH_ARM_SETJMP_H__
+#ifndef __ARM_SETJMP_H__
+#define __ARM_SETJMP_H__
 
 #include <stddef.h>
 #include <stdint.h>
@@ -86,5 +86,5 @@ struct _jmpbuf {
     __asm__ ("moveq r0, #1\n");						\
     __asm__ ("bx lr\n")
 
-#endif /* __MACH_ARM_SETJMP_H__ */
+#endif /* __ARM_SETJMP_H__ */
 

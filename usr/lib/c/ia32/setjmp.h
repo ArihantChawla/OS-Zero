@@ -1,5 +1,5 @@
-#ifndef __IA32__SETJMP_H__
-#define __IA32__SETJMP_H__
+#ifndef __IA32_SETJMP_H__
+#define __IA32_SETJMP_H__
 
 #include <stddef.h>
 #include <stdint.h>
@@ -93,5 +93,5 @@ struct _jmpframe {
                           : "i" (offsetof(struct _jmpbuf, eip)));       \
     __asm__ __volatile__ ("jmpl *%edx\n")
 
-#endif /* __IA32__SETJMP_H__ */
+#endif /* __IA32_SETJMP_H__ */
 

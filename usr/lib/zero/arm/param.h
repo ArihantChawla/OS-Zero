@@ -1,5 +1,5 @@
-#ifndef __MACH_ARM_PARAM_H__
-#define __MACH_ARM_PARAM_H__
+#ifndef __ZERO_ARM_PARAM_H__
+#define __ZERO_ARM_PARAM_H__
 
 #define ZEROARM      1
 
@@ -14,5 +14,5 @@
 
 #define CLSIZE       32
 
-#endif /* __MACH_ARM_PARAM_H__ */
+#endif /* __ZERO_ARM_PARAM_H__ */
 
