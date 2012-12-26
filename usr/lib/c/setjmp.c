@@ -1,12 +1,13 @@
-/*
- * THANKS
- * ------
- * - Henry 'froggey' Harrington for amd64-fixes
- */
-
+#include <features.h>
 #include <signal.h>
 #include <setjmp.h>
 #include <zero/cdecl.h>
+
+/* TODO: what version of POSIX? */
+#if (_POSIX_C_SOURCE)
+#define _savesigmask(sp) (*(sp) = sigblock(0))
+#define _loadsigmask(sp) (sigsetmask(*(sp)))
+#endif
 
 #if defined(ASMLINK)
 ASMLINK
