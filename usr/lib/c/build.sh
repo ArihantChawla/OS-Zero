@@ -2,5 +2,5 @@
 
 CC=gcc
 
-$CC -D_ZERO_SOURCE=1 -D_REENTRANT -g -Wall -O -I.. -I../../../usr/lib -fPIC -shared -o zmalloc.so malloc.c -pthread
+$CC -nostdinc -D_REENTRANT -g -Wall -O -I. -I.. -I../../../usr/lib -fPIC -shared -o zlibc.so *.c -pthread
 
