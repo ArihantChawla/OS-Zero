@@ -110,9 +110,11 @@
 #define THR_SETATTR     0x0c    // set other attributes
 
 /* pctl() commands */
-#define PROC_WAIT       0x01    // wait()
-#define PROC_USLEEP     0x02    // usleep()
-#define PROC_NANOSLEEP  0x03    // nanosleep()
+#define PROC_GETPID     0x01    // getpid()
+#define PROC_GETPGRP    0x02    // getpgrp()
+#define PROC_WAIT       0x03    // wait()
+#define PROC_USLEEP     0x04    // usleep()
+#define PROC_NANOSLEEP  0x05    // nanosleep()
 /* pctl() parameters */
 /* PROC_WAIT flags */
 #define PROC_WAITPID    0x01    // wait for pid
@@ -123,7 +125,7 @@
 struct _procwait {
     long  pid;  // who to wait for
     long *stat; // storage for exit status
-    void *data;  // rusage etc.
+    void *data; // rusage etc.
 };
 
 /* signal interface */
@@ -138,8 +140,8 @@ struct _procwait {
 /* sigop() arguments */
 /* ----------------- */
 /* SIG_SETFUNC */
-#define SIG_DEFAULT     (void *)0x01    // SIG_DFL
-#define SIG_IGNORE      (void *)0x02    // SIG_IGN
+//#define SIG_DEFAULT     (void *)0x01    // SIG_DFL
+//#define SIG_IGNORE      (void *)0x02    // SIG_IGN
 /* SIG_SEND */
 #define SIG_SELF       -0x01    // raise()
 #define SIG_CLD        -0x02    // send to children

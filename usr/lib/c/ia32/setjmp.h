@@ -14,7 +14,11 @@ struct _jmpbuf {
     int32_t  ebp;
     int32_t  esp;
     int32_t  eip;
+#if (_POSIX_SOURCE)
     sigset_t sigmask;
+#elif (_BSD_SOURCE)
+    int      sigmask;
+#endif
 } PACK();
 
 struct _jmpframe {
@@ -26,72 +30,56 @@ struct _jmpframe {
 /*
  * callee-save registers: ebx, edi, esi, ebp, ds, es, ss.
  */
+
 #define __setjmp(env)                                                   \
-    /* load jmp_buf pointer into EAX */                                 \
-    __asm__ __volatile__ ("movl %0, %%eax\n" : : "m" (env));                         \
-    /* save EBX, ESI, and EDI */                                        \
-    __asm__ __volatile__ ("movl %%ebx, %c0(%%eax)\n"                    \
+    __asm__ __volatile__ ("movl %0, %%eax\n"                            \
+                          "movl %%ebx, %c1(%%eax)\n"                    \
+                          "movl %%esi, %c2(%%eax)\n"                    \
+                          "movl %%edi, %c3(%%eax)\n"                    \
+                          "movl %c4(%%ebp), %%edx\n"                    \
+                          "movl %%edx, %c5(%%eax)\n"                    \
+                          "movl %c6(%%ebp), %%ecx\n"                    \
+                          "movl %%ecx, %c7(%%eax)\n"                    \
+                          "leal %c8(%%ebp), %%edx\n"                    \
+                          "movl %%edx, %c9(%%eax)\n"                    \
                           :                                             \
-                          : "i" (offsetof(struct _jmpbuf, ebx)));       \
-    __asm__ __volatile__ ("movl %%esi, %c0(%%eax)\n"                    \
-                          :                                             \
-                          : "i" (offsetof(struct _jmpbuf, esi)));       \
-    __asm__ __volatile__ ("movl %%edi, %c0(%%eax)\n"                    \
-                          :                                             \
-                          : "i" (offsetof(struct _jmpbuf, edi)));       \
-    /* save caller frame pointer */                                     \
-    __asm__ __volatile__ ("movl %c0(%%ebp), %%edx\n"                    \
-                          :                                             \
-                          : "i" (offsetof(struct _jmpframe, ebp)));     \
-    __asm__ __volatile__ ("movl %%edx, %c0(%%eax)\n"                    \
-                          :                                             \
-                          : "i" (offsetof(struct _jmpbuf, ebp)));       \
-    /* save caller instruction pointer */                               \
-    __asm__ __volatile__ ("movl %c0(%%ebp), %%ecx\n"                    \
-                          :                                             \
-                          : "i" (offsetof(struct _jmpframe, eip)));     \
-    __asm__ __volatile__ ("movl %%ecx, %c0(%%eax)\n"                    \
-                          :                                             \
-                          : "i" (offsetof(struct _jmpbuf, eip)));       \
-    /* save caller stack pointer */                                     \
-    __asm__ __volatile__ ("leal %c0(%%ebp), %%edx\n"                    \
-                          :                                             \
-                          : "i" (offsetof(struct _jmpframe, args)));    \
-    __asm__ __volatile__ ("movl %%edx, %c0(%%eax)\n"                    \
-                          :                                             \
-                          : "i" (offsetof(struct _jmpbuf, esp)))
+                          : "m" (env),                                  \
+                          "i" (offsetof(struct _jmpbuf, ebx)),          \
+                            "i" (offsetof(struct _jmpbuf, esi)),        \
+                            "i" (offsetof(struct _jmpbuf, edi)),        \
+                            "i" (offsetof(struct _jmpframe, ebp)),      \
+                            "i" (offsetof(struct _jmpbuf, ebp)),        \
+                            "i" (offsetof(struct _jmpframe, eip)),      \
+                            "i" (offsetof(struct _jmpbuf, eip)),        \
+                            "i" (offsetof(struct _jmpframe, args)),     \
+                            "i" (offsetof(struct _jmpbuf, esp))         \
+                          : "eax", "ecx", "edx")
 
 #define __longjmp(env, val)                                             \
-    /* load jmp_buf pointer into ECX */                                 \
-    __asm__ __volatile__ ("movl %0, %%ecx\n" : : "m" (env));            \
-    /* load return value into EAX */                                    \
-    __asm__ __volatile__ ("movl %0, %%eax\n" : : "m" (val));            \
-    /* if val == 0, set return value in EAX to 1 */                     \
-    __asm__ __volatile__ ("cmp $0, %eax\n"                              \
+    __asm__ __volatile__ ("movl %0, %%ecx\n"                            \
+                          "movl %1, %%eax\n"                            \
+                          "cmp $0, %eax\n"                              \
                           "jne 0f\n"                                    \
                           "movl $1, %eax\n"                             \
-                          "0:\n");                                      \
-    /* restore EBX, ESI, EDI, EBP, and ESP to caller values */          \
-    __asm__ __volatile__ ("movl %c0(%%ecx), %%ebx"                      \
+                          "0:\n"                                        \
+                          "movl %c2(%%ecx), %%ebx"                      \
+                          "movl %c3(%%ecx), %%esi"                      \
+                          "movl %c4(%%ecx), %%edi"                      \
+                          "movl %c5(%%ecx), %%ebp"                      \
+                          "movl %c6(%%ecx), %%esp"                      \
+                          "movl %c7(%%ecx), %%edx"                      \
+                          "jmpl *%edx\n"                                \
                           :                                             \
-                          : "i" (offsetof(struct _jmpbuf, ebx)));       \
-    __asm__ __volatile__ ("movl %c0(%%ecx), %%esi"                      \
-                          :                                             \
-                          : "i" (offsetof(struct _jmpbuf, esi)));       \
-    __asm__ __volatile__ ("movl %c0(%%ecx), %%edi"                      \
-                          :                                             \
-                          : "i" (offsetof(struct _jmpbuf, edi)));       \
-    __asm__ __volatile__ ("movl %c0(%%ecx), %%ebp"                      \
-                          :                                             \
-                          : "i" (offsetof(struct _jmpbuf ebp)));        \
-    __asm__ __volatile__ ("movl %c0(%%ecx), %%esp"                      \
-                          :                                             \
-                          : "i" (offsetof(struct _jmpbuf, esp)));       \
-    /* jump back to caller with saved instruction pointer */            \
-    __asm__ __volatile__ ("movl %c0(%%ecx), %%edx"                      \
-                          :                                             \
-                          : "i" (offsetof(struct _jmpbuf, eip)));       \
-    __asm__ __volatile__ ("jmpl *%edx\n")
+                          : "m" (env),                                  \
+                            "m" (val),                                  \
+                            "i" (offsetof(struct _jmpbuf, ebx)),        \
+                            "i" (offsetof(struct _jmpbuf, esi)),        \
+                            "i" (offsetof(struct _jmpbuf, edi)),        \
+                            "i" (offsetof(struct _jmpbuf, ebp)),        \
+                            "i" (offsetof(struct _jmpbuf, esp)),        \
+                            "i" (offsetof(struct _jmpbuf, eip))         \
+                          : "eax", "ebx", "ecx", "edx",                 \
+                            "esi", "edi", "ebp", "esp")
 
 #endif /* __IA32_SETJMP_H__ */
 

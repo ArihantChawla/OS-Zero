@@ -1,45 +1,26 @@
-/*
- * signal.h - OS Zero C library.
- */
-
-/*
- * Copyright (C) 2006-2012 Tuomo Petteri Venäläinen. All rights reserved.
- *
- * Redistribution and use in source and binary forms, with or without
- * modification, are permitted provided that the following conditions
- * are met:
- * 1. Redistributions of source code must retain the above copyright
- *    notice, this list of conditions and the following disclaimer.
- * 2. Redistributions in binary form must reproduce the above copyright
- *    notice, this list of conditions and the following disclaimer in the
- *    documentation and/or other materials provided with the distribution.
- *
- * THIS SOFTWARE IS PROVIDED BY AUTHOR AND CONTRIBUTORS ``AS IS'' AND
- * ANY EXPRESS OR IMPLIED WARRANTIES, INCLUDING, BUT NOT LIMITED TO, THE
- * IMPLIED WARRANTIES OF MERCHANTABILITY AND FITNESS FOR A PARTICULAR PURPOSE
- * ARE DISCLAIMED.  IN NO EVENT SHALL AUTHOR OR CONTRIBUTORS BE LIABLE
- * FOR ANY DIRECT, INDIRECT, INCIDENTAL, SPECIAL, EXEMPLARY, OR CONSEQUENTIAL
- * DAMAGES (INCLUDING, BUT NOT LIMITED TO, PROCUREMENT OF SUBSTITUTE GOODS
- * OR SERVICES; LOSS OF USE, DATA, OR PROFITS; OR BUSINESS INTERRUPTION)
- * HOWEVER CAUSED AND ON ANY THEORY OF LIABILITY, WHETHER IN CONTRACT, STRICT
- * LIABILITY, OR TORT (INCLUDING NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY
- * OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF
- * SUCH DAMAGE.
- */
-
 #ifndef __SIGNAL_H__
 #define __SIGNAL_H__
 
 #include <features.h>
 
+#if 0
 #if (_ZERO_SOURCE)
 /* Zero kernel-user and user-user signaling */
 #define SIGHID SIGRTMIN
 #define SIGAUD (SIGRTMIN + 1)
 #define SIGVID (SIGRTMIN + 2)
+#define sigishid(sp)    sigismember(sp, SIGHID)
+#define sigisaud(sp)    sigismember(sp, SIGAUD)
+#define sigisvid(sp)    sigismember(sp, SIGVID)
+#endif
 #endif
 
 typedef void signalhandler_t(int);
+/* internal. */
+#define _sigvalid(sig)  ((sig) && !((sig) & ~SIGMASK))
+#define _sigisnorm(sig) ((sig) >= 0 && (sig) < SIGRTMIN)
+
+#if (_POSIX_SOURCE)
 
 #if defined(__i386__) || defined(__arm__)
 #define SIG32BIT 1
@@ -61,72 +42,66 @@ typedef void     sighandler_t(int);
 
 /* macros. */
 
-/* internal. */
-#define _sigvalid(sig)  ((sig) && !((sig) & ~SIGMASK))
-#define _sigisnorm(sig) ((sig) >= 0 && (sig) < SIGRTMIN)
-
-#define sigishid(sp)    sigismember(sp, SIGHID)
-#define sigisaud(sp)    sigismember(sp, SIGAUD)
-#define sigisvid(sp)    sigismember(sp, SIGVID)
-
 #if (SIG32BIT)
 
-#define sigptr(sp)      ((struct sigset *)(sp))
+#define _sigptr(sp)     ((struct sigset *)(sp))
 
 /* POSIX. */
 
 #if (LONGSIZE == 4)
 
-#define sigemptyset(sp) (!sigptr(sp)->norm && !sigptr(sp)->rt)
-#define sigfillset(sp)  ((sigptr(sp)->norm = sigptr(sp)->rt = ~UINT32_C(0)), 0)
+#define sigemptyset(sp)                                                 \
+    (!_sigptr(sp)->norm && !_sigptr(sp)->rt)
+#define sigfillset(sp)                                                  \
+    ((_sigptr(sp)->norm = _sigptr(sp)->rt = ~UINT32_C(0)), 0)
 
 #define sigaddset(sp, sig)                                              \
     ((!_sigvalid(sig)                                                   \
       ? (-1)                                                            \
       : (_sigisnorm(sig)                                                \
-         ? (sigptr(sp)->norm |= (1UL << (sig)))                         \
-         : (sigptr(sp)->rt |= (1UL << ((sig) - SIGRTMIN))))),           \
+         ? (_sigptr(sp)->norm |= (1UL << (sig)))                        \
+         : (_sigptr(sp)->rt |= (1UL << ((sig) - SIGRTMIN))))),          \
      0)
 #define sigdelset(sp, sig)                                              \
     ((!_sigvalid(sig)                                                   \
       ? (-1)                                                            \
       : (_sigisnorm(sig)                                                \
-         ? (sigptr(sp)->norm &= ~(1UL << (sig)))                        \
-         : (sigptr(sp)->rt &= ~(1UL << ((sig) - SIGRTMIN))))),          \
+         ? (_sigptr(sp)->norm &= ~(1UL << (sig)))                       \
+         : (_sigptr(sp)->rt &= ~(1UL << ((sig) - SIGRTMIN))))),         \
      0)
 #define sigismember(sp, sig)                                            \
     ((!_sigvalid(sig)                                                   \
       ? (-1)                                                            \
       : (_sigisnorm(sig)                                                \
-         ? ((sigptr(sp)->norm >> (sig)) & 0x01)                         \
-         : ((sigptr(sp)->rt >> (sig - SIGRTMIN)) & 0x01))))
+         ? ((_sigptr(sp)->norm >> (sig)) & 0x01)                        \
+         : ((_sigptr(sp)->rt >> (sig - SIGRTMIN)) & 0x01))))
 
 #elif (LONGSIZE == 8)
 
-#define sigemptyset(sp) (!sigptr(sp)->mask)
-#define sigfillset(sp)  ((sigptr(sp)->mask = ~UINT64_C(0)), 0)
+#define sigemptyset(sp) (!_sigptr(sp)->mask)
+#define sigfillset(sp)  ((_sigptr(sp)->mask = ~UINT64_C(0)), 0)
 
 #define sigaddset(sp, sig)                                              \
     ((!_sigvalid(sig)                                                   \
       ? (-1)                                                            \
-      : (sigptr(sp)->mask |= (1UL << ((sig))))),                        \
+      : (_sigptr(sp)->mask |= (1UL << ((sig))))),                       \
      0)
 #define sigdelset(sp, sig)                                              \
     ((!_sigvalid(sig)                                                   \
       ? (-1)                                                            \
-      : (sigptr(sp)->mask &= ~(1UL << ((sig))))),                       \
+      : (_sigptr(sp)->mask &= ~(1UL << ((sig))))),                      \
      0)
 #define sigismember(sp, sig)                                            \
     (!_sigvalid(sig)                                                    \
      ? (-1)                                                             \
-     : (sigptr(sp)->mask & (1UL << ((sig)))))
+     : (_sigptr(sp)->mask & (1UL << ((sig)))))
 
 #endif /* LONGSIZE == 8 */
 
 #else /* !SIG32BIT */
 
-#define _sigvalid(sig)   ((sig) && (!((sig) & ~SIGMASK)))
-#define sigrt(sig)      ((sig) && (!((sig) & ~SIGRTMASK)))
+#define _sigvalid(sig)  ((sig) && (!((sig) & ~SIGMASK)))
+#define _sigrt(sig)     ((sig) && (!((sig) & ~SIGRTMASK)))
 /* POSIX. */
 #define sigemptyset(sp) (*(s) = 0)
 #define sigfillset(sp)  (*(sp) = ~UINT64_C(0), 0)
@@ -144,7 +119,22 @@ typedef void     sighandler_t(int);
      ? (-1)                                                             \
      : ((*(sp) >> (sig)) & UINT64_C(0x01)))
 
-#endif
+#endif /* LONGSIZE */
+
+#define SA_NOCLDSTOP SIG_NOCLDSTOP
+#define SA_NOCLDWAIT SIG_NOCLDWAIT
+#define SA_NODEFER   SIG_NODEFER
+#define SA_RESETHAND SIG_RESETHAND
+#define SA_SIGINFO   SIG_SIGINFO
+/* non-posix */
+#define SA_ONSTACK   SIG_ONSTACK
+#define SA_RESTART   SIG_RESTART
+
+#define SIGSTKSZ     NBPG
+#define SS_DISABLE   (1 << 0)
+#define SS_ONSTACK   (1 << 1)
+
+#endif /* _POSIX_SOURCE */
 
 /* constants. */
 
@@ -193,25 +183,30 @@ typedef void     sighandler_t(int);
 #define SIGMASK      0x3f
 #define _NSIG        NSIG   /* alternative name */
 /* special values. */
-#define SIG_ERR      ((sighandler_t)-1)
-#define SIG_IGN      ((sighandler_t)0)
-#define SIG_DFL      ((sighandler_t)1)
-#define SIG_HOLD     ((sighandler_t)2)
+#define SIG_ERR      ((sighandler_t)-1L)
+#define SIG_IGN      ((sighandler_t)0L)
+#define SIG_DFL      ((sighandler_t)1L)
+#define SIG_HOLD     ((sighandler_t)2L)
 
-#define SA_NOCLDSTOP SIG_NOCLDSTOP
-#define SA_NOCLDWAIT SIG_NOCLDWAIT
-#define SA_NODEFER   SIG_NODEFER
-#define SA_RESETHAND SIG_RESETHAND
-#define SA_SIGINFO   SIG_SIGINFO
-/* non-posix */
-#define SA_ONSTACK   SIG_ONSTACK
-#define SA_RESTART   SIG_RESTART
+#if (_BSD_SOURCE)
 
-#define SIGSTKSZ     NBPG
-#define SS_DISABLE   (1 << 0)
-#define SS_ONSTACK   (1 << 1)
+int sigvec(int sig, struct sigvec *vec, struct sigvec *oldvec);
+int sigmask(int sig);
+int sigblock(int mask);
+int sigsetmask(int mask);
+int siggetmask(int void);
 
-#define __sigset_t_defined
+#define SV_INTERRUPT 0x00000001
+#define SV_RESETHAND 0x00000002
+#define SV_ONSTACK   0x00000004
+
+struct sigvec {
+    void (*sv_handler)(int);
+    int    sv_mask;
+    int    sv_flags;
+};
+
+#endif /* _BSD_SOURCE */
 
 #endif /* __SIGNAL_H__ */
 

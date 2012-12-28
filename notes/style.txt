@@ -53,6 +53,6 @@ lpt	parallel [printer] port			PC
 mag	magasine allocator cache layer	portable
 page	page replacement and other algorithms	32-bit, 64-bit later on
 slab	slab memory allocator	     		32-bit, 64-bit to follow
-trap	interrupt and exception management	PC
+trap	interrupt and exception management	PC, stubs for ARM
 vm	virtual memory				x86
 

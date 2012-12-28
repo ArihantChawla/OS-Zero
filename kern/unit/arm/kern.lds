@@ -14,7 +14,7 @@ SECTIONS {
     /* identity-mapped low kernel segment */
     .boot : AT(BOOTBASE) {
         setup.o(.text)
-        int.o(.text)
+        trap.o(.text)
         main.o(.text)
 	vm.o(.text)
 	vm.o(.bss)

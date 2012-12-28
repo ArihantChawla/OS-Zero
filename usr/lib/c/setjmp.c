@@ -7,6 +7,9 @@
 #if (_POSIX_C_SOURCE)
 #define _savesigmask(sp) (*(sp) = sigblock(0))
 #define _loadsigmask(sp) (sigsetmask(*(sp)))
+#elif (_BSD_SOURCE)
+#define _savesigmask(sp) (*(sp) = siggetmask())
+#define _loadsigmask(sp) (sigsetmask(*(sp)))
 #endif
 
 #if defined(ASMLINK)

@@ -6,6 +6,7 @@
 #include <stdint.h>
 
 /* system types - TODO: figure out which headers to drop some of these into */
+typedef int32_t pid_t;
 typedef int32_t dev_t;
 typedef int32_t ino_t;
 typedef int32_t mode_t;

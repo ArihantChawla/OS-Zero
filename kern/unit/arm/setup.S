@@ -1,5 +1,5 @@
-#include <mach/arm/setup.h>
-#include <mach/arm/int.h>
+#include <unit/arm/setup.h>
+#include <unit/arm/trap.h>
 
 .globl _start
 
@@ -26,7 +26,8 @@ _intvec:
 	b	_intirq
 /* as last entry, fast interrupt requests get serviced in-place */
 _intfiq:
-	subs	lr, #4			// adjust link register (return address)
+	/* in ARM-mode, saved PC/LR points to last instruction + 8 */
+	subs	lr, #4		// adjust link register (return address)
 	/* handler code/call here */
 	fiqunmask()		// unmask FIQs
 	irqunmask()		// unmask IRQs
