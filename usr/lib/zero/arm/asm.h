@@ -14,6 +14,30 @@
 #endif
 
 static __inline__ long
+m_cmpswap_armv6(long *p, long want, long val)
+{
+    long res = MTXINITVAL;
+
+    __asm__ __volatile__ ("ldr r1, %1\n"                // r1 = want;
+                          "mov %0, #0\n"                // res = 0;
+                          "0: ldrex r2, [%2]\n"         // r2 = *p;
+                          "cmp r2, r1\n"                // is *p == want?
+                          "bne 1f\n"                    // if not, wait
+                          "strexne r2, r1, [%3]\n"      // r2 
+                          "cmpne r2, %3\n"
+                          "beq 0b\n"
+                          "dmb\n"
+                          "mov %0, %3\n"
+                          "bx lr\n"
+                          "1: wfi\n"
+                          "b 0b\n"
+                          : "=r" (res)
+                          : "r" (want), "r" (p), "r" (val));
+
+    return res;
+}
+
+static __inline__ long
 m_cmpswap(long *p, long want, long val)
 {
     long res;
@@ -28,7 +52,7 @@ m_cmpswap(long *p, long want, long val)
                           "cmp %1, %0\n"
                           "swpne %1, %0, [%2]\n"
                           "bne 0b\n"
-                          "mov %0, #1\n"
+                          "mov %0, %3\n"
                           "1:\n"
                           : "=&r" (res), "=&r" (tmp)
                           : "r" (p), "r" (val), "r" (want)

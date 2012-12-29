@@ -79,7 +79,7 @@ struct _jmpbuf {
 
 #define __setjmp(env)                                                   \
     __asm__ __volatile__ ("movs r0, %0\n"                               \
-                          "stmia r0!, { r4-r10, fp, sp, lr }\n"         \
+                          "stmfa r0, { r4-r10, fp, sp, lr }\n"          \
                           "movs r0, #0\n"                               \
                           :                                             \
                           : "r" (env))
@@ -87,7 +87,7 @@ struct _jmpbuf {
 #define __longjmp(env, val)                                             \
     __asm__ __volatile__ ("movs r0, %0\n"                               \
                           "movs r1, %1\n"                               \
-                          "ldmia r0!, { r4-r10, fp, sp, lr }\n"         \
+                          "ldmfa r0, { r4-r10, fp, sp, lr }\n"          \
                           "movs r0, r1\n"                               \
                           "moveq r0, #1\n"                              \
                           "bx lr\n"                                     \
