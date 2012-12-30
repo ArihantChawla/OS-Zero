@@ -1,5 +1,5 @@
 #include <features.h>
-#include <signal.h>
+//#include <signal.h>
 #include <setjmp.h>
 #include <zero/cdecl.h>
 
@@ -19,7 +19,7 @@ int
 setjmp(jmp_buf env)
 {
     __setjmp(env);
-    _savesigmask(&env->sigmask);
+//    _savesigmask(&env->sigmask);
 
     return 0;
 }
@@ -31,7 +31,7 @@ void
 longjmp(jmp_buf env,
         int val)
 {
-    _loadsigmask(&env->sigmask);
+//    _loadsigmask(&env->sigmask);
     __longjmp(env, val);
 
     /* NOTREACHED */

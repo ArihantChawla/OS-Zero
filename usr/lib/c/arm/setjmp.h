@@ -3,7 +3,7 @@
 
 #include <stddef.h>
 #include <stdint.h>
-#include <signal.h>
+//#include <signal.h>
 
 #include <zero/cdecl.h>
 
@@ -74,7 +74,7 @@ struct _jmpbuf {
     int32_t fp;
     int32_t sp;
     int32_t lr;
-    sigset_t sigmask;
+//    sigset_t sigmask;
 } PACK();
 
 #define __setjmp(env)                                                   \

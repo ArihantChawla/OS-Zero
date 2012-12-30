@@ -9,7 +9,7 @@
 
 #include <stddef.h>
 #include <stdint.h>
-#include <signal.h>
+//#include <signal.h>
 #include <zero/cdecl.h>
 
 //#include <mach/abi.h>
@@ -25,10 +25,16 @@ struct _jmpbuf {
     int64_t  rsp;
     int64_t  rip;
 #if (_POSIX_SOURCE)
-    sigset_t sigmask;
+//    sigset_t sigmask;
 #elif (_BSD_SOURCE)
-    int      sigmask;
+//    int      sigmask;
 #endif
+} PACK();
+
+struct _jmpframe {
+    int64_t rbp;
+    int64_t rip;
+    uint8_t args[EMPTY];
 } PACK();
 
 /*
@@ -48,32 +54,34 @@ struct _jmpbuf {
                           "movq %%rcx, %c9(%%rax)\n"                    \
                           "leaq %c10(%%rbp), %%rdx\n"                   \
                           "movq %%rdx, %c11(%%rax)\n"                   \
+                          :                                             \
                           : "m" (env),                                  \
                             "i" (offsetof(struct _jmpbuf, rbx)),        \
                             "i" (offsetof(struct _jmpbuf, r12)),        \
                             "i" (offsetof(struct _jmpbuf, r13)),        \
                             "i" (offsetof(struct _jmpbuf, r14)),        \
                             "i" (offsetof(struct _jmpbuf, r15)),        \
-                            "i" (offsetof(struct m_frame, rbp)),        \
+                            "i" (offsetof(struct _jmpframe, rbp)),      \
                             "i" (offsetof(struct _jmpbuf, rbp)),        \
-                            "i" (offsetof(struct m_frame, rip)),        \
+                            "i" (offsetof(struct _jmpframe, rip)),      \
                             "i" (offsetof(struct _jmpbuf, rip)),        \
-                            "i" (offsetof(struct m_frame, args)),       \
+                            "i" (offsetof(struct _jmpframe, args)),     \
                             "i" (offsetof(struct _jmpbuf, rsp))         \
                           : "rax", "rcx", "rdx")
 
 #define __longjmp(env, val)                                             \
     __asm__ __volatile__ ("movq %0, %%rcx\n"                            \
-                          "movq %0, %%rax\n"                            \
-                          "movq %c0(%%rcx), %%rbx"                      \
-                          "movq %c0(%%rcx), %%r12"                      \
-                          "movq %c0(%%rcx), %%r13"                      \
-                          "movq %c0(%%rcx), %%r14"                      \
-                          "movq %c0(%%rcx), %%r15"                      \
-                          "movq %c0(%%rcx), %%rbp"                      \
-                          "movq %c0(%%rcx), %%rsp"                      \
-                          "movq %c0(%%rcx), %%rdx"                      \
+                          "movq %1, %%rax\n"                            \
+                          "movq %c2(%%rcx), %%rbx"                      \
+                          "movq %c3(%%rcx), %%r12"                      \
+                          "movq %c4(%%rcx), %%r13"                      \
+                          "movq %c5(%%rcx), %%r14"                      \
+                          "movq %c6(%%rcx), %%r15"                      \
+                          "movq %c7(%%rcx), %%rbp"                      \
+                          "movq %c8(%%rcx), %%rsp"                      \
+                          "movq %c9(%%rcx), %%rdx"                      \
                           "jmpq *%rdx\n"                                \
+                          :                                             \
                           : "m" (env),                                  \
                             "m" (val),                                  \
                             "i" (offsetof(struct _jmpbuf, rbx)),        \
@@ -85,9 +93,8 @@ struct _jmpbuf {
                             "i" (offsetof(struct _jmpbuf, rsp)),        \
                             "i" (offsetof(struct _jmpbuf, rip))         \
                           : "rax", "rbx", "rcx", "rdx",                 \
-                            "r12", "r13", "r14", "r15", "r16",          \
+                            "r12", "r13", "r14", "r15",                 \
                             "rbp", "rsp")
-        
 
 #endif /* __X86_64__SETJMP_H__ */
 
