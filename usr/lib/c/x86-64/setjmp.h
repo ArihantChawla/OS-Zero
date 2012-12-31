@@ -2,10 +2,11 @@
  * THANKS
  * ------
  * - Henry 'froggey' Harrington for amd64-fixes
+ * - Jester01 and fizzie from ##c on Freenode
  */
 
-#ifndef __X86_64__SETJMP_H__
-#define __X86_64__SETJMP_H__
+#ifndef __X86_64_SETJMP_H__
+#define __X86_64_SETJMP_H__
 
 #include <stddef.h>
 #include <stdint.h>
@@ -72,15 +73,15 @@ struct _jmpframe {
 #define __longjmp(env, val)                                             \
     __asm__ __volatile__ ("movq %0, %%rcx\n"                            \
                           "movq %1, %%rax\n"                            \
-                          "movq %c2(%%rcx), %%rbx"                      \
-                          "movq %c3(%%rcx), %%r12"                      \
-                          "movq %c4(%%rcx), %%r13"                      \
-                          "movq %c5(%%rcx), %%r14"                      \
-                          "movq %c6(%%rcx), %%r15"                      \
-                          "movq %c7(%%rcx), %%rbp"                      \
-                          "movq %c8(%%rcx), %%rsp"                      \
-                          "movq %c9(%%rcx), %%rdx"                      \
-                          "jmpq *%rdx\n"                                \
+                          "movq %c2(%%rcx), %%rbx\n"                    \
+                          "movq %c3(%%rcx), %%r12\n"                    \
+                          "movq %c4(%%rcx), %%r13\n"                    \
+                          "movq %c5(%%rcx), %%r14\n"                    \
+                          "movq %c6(%%rcx), %%r15\n"                    \
+                          "movq %c7(%%rcx), %%rbp\n"                    \
+                          "movq %c8(%%rcx), %%rsp\n"                    \
+                          "movq %c9(%%rcx), %%rdx\n"                    \
+                          "jmpq *%%rdx\n"                                \
                           :                                             \
                           : "m" (env),                                  \
                             "m" (val),                                  \
@@ -94,7 +95,7 @@ struct _jmpframe {
                             "i" (offsetof(struct _jmpbuf, rip))         \
                           : "rax", "rbx", "rcx", "rdx",                 \
                             "r12", "r13", "r14", "r15",                 \
-                            "rbp", "rsp")
+                            "rsp")
 
-#endif /* __X86_64__SETJMP_H__ */
+#endif /* __X86_64_SETJMP_H__ */
 
