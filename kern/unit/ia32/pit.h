@@ -1,5 +1,5 @@
-#ifndef __IA32_PIT_H__
-#define __IA32_PIT_H__
+#ifndef __UNIT_IA32_PIT_H__
+#define __UNIT_IA32_PIT_H__
 
 void pitinit(void);
 void pitsleep(long msec, void (*func)(void));
@@ -32,5 +32,5 @@ void pitsleep(long msec, void (*func)(void));
         outb(_hz >> 8, PITCHAN0);                                       \
     } while (0)
 
-#endif /* __IA32_PIT_H__ */
+#endif /* __UNIT_IA32_PIT_H__ */
 

@@ -1,5 +1,5 @@
-#ifndef __IA32_IO_H__
-#define __IA32_IO_H__
+#ifndef __UNIT_IA32_IO_H__
+#define __UNIT_IA32_IO_H__
 
 #include <stdint.h>
 
@@ -45,5 +45,5 @@ uint32_t inl(uint16_t port)
 #define outw_p(w, p) outw(w, p); _iodelay()
 #define outl_p(l, p) outl(l, p); _iodelay()
 
-#endif /* __IA32_IO_H__ */
+#endif /* __UNIT_IA32_IO_H__ */
 

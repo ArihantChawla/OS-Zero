@@ -1,5 +1,5 @@
-#ifndef __KERN_IA32_APIC_H__
-#define __KERN_IA32_APIC_H__
+#ifndef __UNIT_IA32_APIC_H__
+#define __UNIT_IA32_APIC_H__
 
 #include <kern/conf.h>
 
@@ -111,5 +111,5 @@ apicsendirq(uint32_t hi, uint32_t lo, long nusec)
 
 #endif /* SMP */
 
-#endif /* __KERN_IA32_APIC_H__ */
+#endif /* __UNIT_IA32_APIC_H__ */
 

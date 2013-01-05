@@ -1,5 +1,5 @@
-#ifndef __KERN_UNIT_IA32_TRAP_H__
-#define __KERN_UNIT_IA32_TRAP_H__
+#ifndef __UNIT_IA32_TRAP_H__
+#define __UNIT_IA32_TRAP_H__
 
 #include <kern/conf.h>
 
@@ -146,5 +146,5 @@ m_lidt(struct m_farptr *fp)
 #define IRQSPURIOUS 31
 #endif
 
-#endif /* __KERN_UNIT_IA32_TRAP_H__ */
+#endif /* __UNIT_IA32_TRAP_H__ */
 

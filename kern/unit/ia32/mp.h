@@ -1,5 +1,5 @@
-#ifndef __KERN_UNIT_IA32_MP_H__
-#define __KERN_UNIT_IA32_MP_H__
+#ifndef __UNIT_IA32_MP_H__
+#define __UNIT_IA32_MP_H__
 
 #include <kern/conf.h>
 
@@ -97,5 +97,5 @@ mpcpunum(void)
 
 #endif /* SMP */
 
-#endif /* __KERN_UNIT_IA32_MP_H__ */
+#endif /* __UNIT_IA32_MP_H__ */
 

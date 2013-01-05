@@ -1,5 +1,5 @@
-#ifndef __IA32_VM_H__
-#define __IA32_VM_H__
+#ifndef __UNIT_IA32_VM_H__
+#define __UNIT_IA32_VM_H__
 
 #include <stdint.h>
 #include <kern/buf.h>
@@ -249,5 +249,5 @@ struct vmbufq {
         vmunlklruq(_pageq);                                             \
     } while (0)
 
-#endif /* __IA32_VM_H__ */
+#endif /* __UNIT_IA32_VM_H__ */
 

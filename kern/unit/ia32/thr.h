@@ -1,5 +1,5 @@
-#ifndef __KERN_UNIT_IA32_THR_H__
-#define __KERN_UNIT_IA32_THR_H__
+#ifndef __UNIT_IA32_THR_H__
+#define __UNIT_IA32_THR_H__
 
 #include <stddef.h>
 #include <zero/types.h>
@@ -107,5 +107,5 @@ m_tcbjmp(struct m_tcb *mtcb)
     /* NOTREACHED */
 }
       
-#endif /* __KERN_UNIT_IA32_THR_H__ */
+#endif /* __UNIT_IA32_THR_H__ */
 

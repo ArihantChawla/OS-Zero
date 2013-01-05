@@ -1,5 +1,5 @@
-#ifndef __KERN_UNIT_IA32_SEG_H__
-#define __KERN_UNIT_IA32_SEG_H__
+#ifndef __UNIT_IA32_SEG_H__
+#define __UNIT_IA32_SEG_H__
 
 #include <stdint.h>
 #include <kern/unit/ia32/boot.h>
@@ -46,5 +46,5 @@
 #define SEG4KGRAN   UINT64_C(0x0080000000000000)
 #define SEGDEFBITS  (SEG32BIT | SEG4KGRAN | SEGPRES)
 
-#endif /* __KERN_UNIT_IA32_SEG_H__ */
+#endif /* __UNIT_IA32_SEG_H__ */
 

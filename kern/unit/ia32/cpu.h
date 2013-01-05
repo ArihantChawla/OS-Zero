@@ -1,5 +1,5 @@
-#ifndef __IA32_CPU_H__
-#define __IA32_CPU_H__
+#ifndef __UNIT_IA32_CPU_H__
+#define __UNIT_IA32_CPU_H__
 
 #include <stdint.h>
 #include <zero/types.h>
@@ -48,5 +48,5 @@ struct m_cpu {
     struct m_tss   utss;
 };
 
-#endif /* __IA32_CPU_H__ */
+#endif /* __UNIT_IA32_CPU_H__ */
 
