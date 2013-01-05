@@ -2,6 +2,7 @@
 #define __UNIT_IA32_TRAP_H__
 
 #include <kern/conf.h>
+#include <kern/unit/x86/trap.h>
 
 #if !defined(__ASSEMBLY__)
 #include <stdint.h>
@@ -14,29 +15,17 @@
 #if !defined(__ASSEMBLY__)
 
 /* func is routine; ring is TRAPUSER or TRAPSYS */
-#define trapsetgate(p, func, ring)                                      \
+#define trapsetintgate(p, func, ring)                                   \
     do {                                                                \
         uint64_t _func = (uint32_t)(func);                              \
-        *(p) = _mkidtdesc(TEXTSEL, _func, ring);                        \
+        *(p) = trapmkdesc(TEXTSEL, _func, ring);                        \
     } while (0)
-#define _mkidtdesc(sel, f64, ring)                                      \
-    (((f64) & 0x0000ffff)                                               \
-     | ((sel) << 16)                                                    \
-     | (ring)                                                           \
-     | (((f64) & 0xffff0000) << 32)                                     \
-     | TRAPDEFBITS)
 
 static __inline__ void
 m_lidt(struct m_farptr *fp)
 {
     __asm__ __volatile__ ("lidt (%0)\n" : : "r" (fp));
 }
-
-#define TRAPGATE    UINT64_C(0x00000e0000000000)
-#define TRAPUSER    UINT64_C(0x0000600000000000)
-#define TRAPSYS     UINT64_C(0x0000000000000000)
-#define TRAPPRES    UINT64_C(0x0000800000000000)
-#define TRAPDEFBITS (TRAPGATE | TRAPPRES)
 
 #define TRAPSYSCALL 0x80        // traditional INT 0x80 for system calls
 

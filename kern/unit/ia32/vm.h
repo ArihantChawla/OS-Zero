@@ -27,8 +27,7 @@ void  vmfreephys(void *virt, uint32_t size);
 #define vmbufid(adr)      ((uint32_t)(adr) >> BUFSIZELOG2)
 #define vmisbufadr(adr)   (!((uint32_t)(adr) & (BUFSIZE - 1)))
 
-#define vmpageadr(pg, pt)                                               \
-    (((pg) - (pt)) << PAGESIZELOG2)
+#define vmpageadr(pg, pt) (((pg) - (pt)) << PAGESIZELOG2)
 
 /* internal macros */
 
