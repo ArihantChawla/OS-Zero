@@ -1,5 +1,5 @@
-#ifndef __KERN_UNIT_ARM_SETUP_H__
-#define __KERN_UNIT_ARM_SETUP_H__
+#ifndef __UNIT_ARM_SETUP_H__
+#define __UNIT_ARM_SETUP_H__
 
 #include <mach/param.h>
 #include <mach/arm/int.h>
@@ -38,5 +38,5 @@
 #define fiqmask()   mrs r1, cpsr; orr r1, r1, #TRAPPSRFBIT; msr cpsr_c, r1;
 #define fiqunmask() mrs r1, cpsr; bic r1, r1, #TRAPPSRFBIT; msr cpsr_c, r1;
 
-#endif /* __KERN_UNIT_ARM_SETUP_H__ */
+#endif /* __UNIT_ARM_SETUP_H__ */
 

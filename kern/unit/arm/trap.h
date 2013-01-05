@@ -1,5 +1,5 @@
-#ifndef __KERN_UNIT_ARM_TRAP_H__
-#define __KERN_UNIT_ARM_TRAP_H__
+#ifndef __UNIT_ARM_TRAP_H__
+#define __UNIT_ARM_TRAP_H__
 
 /* processor modes */
 #define TRAPUSR32 0x10   // user mode
@@ -11,5 +11,5 @@
 #define TRAPSYS32 0x1f   // system mode
 #define TRAPDISAB 0xc0   // interrupts disabled
 
-#endif /* __KERN_UNIT_ARM_TRAP_H__ */
+#endif /* __UNIT_ARM_TRAP_H__ */
 

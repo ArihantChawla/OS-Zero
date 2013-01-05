@@ -1,5 +1,5 @@
-#ifndef __KERN_UNIT_ARM_VM_H__
-#define __KERN_UNIT_ARM_VM_H__
+#ifndef __UNIT_ARM_VM_H__
+#define __UNIT_ARM_VM_H__
 
 #define VIRTBASE        0xc0000000U
 
@@ -17,5 +17,5 @@
 #define NL1PAGETABLOG2 12
 #define NL2PAGETABLOG2 10
 
-#endif /* __KERN_UNIT_ARM_VM_H__ */
+#endif /* __UNIT_ARM_VM_H__ */
 
