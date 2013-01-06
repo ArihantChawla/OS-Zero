@@ -5,11 +5,10 @@
 
 #define trapsetintgate(p, func, ring)                                   \
     do {                                                                \
-        uint64_t lo;                                                    \
-        uint64_t hi;                                                    \
+        uint64_t mask = 0xffffffff;                                     \
                                                                         \
-        p[0] = trapmkdesc(TEXTSEL, (func) & 0xffffffff, ring);          \
-        p[1] = (func) & 0xffffffff00000000;
+        p[0] = trapmkdesc(TEXTSEL, (func) & mask, ring);                \
+        p[1] = ((uint64_t)(func) >> 32) & mask;                         \
     } while (0)
 
 #endif /* __UNIT_X86_64_TRAP_H__ */
