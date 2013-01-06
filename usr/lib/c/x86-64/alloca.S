@@ -19,5 +19,5 @@ alloca:
 	subq	%rdi, %rax	// reserve space; return value is in RAX
 	ret			// return
 
-#endif /* __x86_64__ || __amd64__ */
+#endif
 

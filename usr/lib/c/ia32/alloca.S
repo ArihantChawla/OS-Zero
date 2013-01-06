@@ -25,5 +25,5 @@ alloca:
 	pushl	%ebx			// return address
 	ret
 
-#endif /* __i386__ */
+#endif
 

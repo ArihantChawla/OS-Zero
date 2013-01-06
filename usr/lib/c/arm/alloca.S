@@ -16,5 +16,5 @@ alloca:
 	mov	r0, sp		// set return value
 	bx	lr		// return
 
-#endif /* __arm__ */
+#endif
 
