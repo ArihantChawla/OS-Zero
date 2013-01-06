@@ -1,5 +1,5 @@
-#ifndef __UNIT_X86_64_TRAP_H__
-#define __UNIT_X86_64_TRAP_H__
+#ifndef __UNIT_X86_TRAP_H__
+#define __UNIT_X86_TRAP_H__
 
 #define trapmkdesc(sel, f64, ring)                                      \
     (((f64) & 0x0000ffff)                                               \
