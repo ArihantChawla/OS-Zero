@@ -1,4 +1,4 @@
-#if defined(__x86_64__) || defined(__amd64__)
+#if defined(__x86_64__) || defined(__amd64__) && !defined(__GNUC__)
 
 .globl alloca
 

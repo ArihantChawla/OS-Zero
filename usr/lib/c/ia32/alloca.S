@@ -1,4 +1,4 @@
-#if defined(__i386__)
+#if defined(__i386__) && !defined(__GNUC__)
 
 .globl alloca
 

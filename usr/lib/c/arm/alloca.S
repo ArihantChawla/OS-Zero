@@ -1,4 +1,4 @@
-#if defined(__arm__)
+#if defined(__arm__) && !defined(__GNUC__)
 
 .globl alloca
 
