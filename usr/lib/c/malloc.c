@@ -674,6 +674,11 @@ relarn(void *arg)
                 }
                 mlk(&_flktab[bid]);
                 mag->next = _ftab[bid];
+#if (FIXES)
+                if (mag->next) {
+                    mag->next->prev = mag;
+                }
+#endif
                 _ftab[bid] = head;
 #if (HACKS)
                 _fcnt[bid] += n;
@@ -1267,6 +1272,11 @@ freemap(struct mag *mag)
         mag->prev = NULL;
         mlk(&_flktab[bid]);
         mag->next = _ftab[bid];
+#if (FIXES)
+        if (mag->next) {
+            mag->next->prev = mag;
+        }
+#endif
         _ftab[bid] = mag;
 #if (HACKS)
         _fcnt[bid]++;
@@ -1348,6 +1358,11 @@ getmem(size_t size,
         mag = _ftab[bid];
         if (mag) {
             mag->aid = aid;
+#if (FIXES)
+            if (mag->next) {
+                mag->next->prev = NULL;
+            }
+#endif
             _ftab[bid] = mag->next;
             mag->next = NULL;
 #if (HACKS)
@@ -1422,6 +1437,11 @@ getmem(size_t size,
                         if (ismapbkt(bid)) {
                             mlk(&_flktab[bid]);
                             mag->next = _ftab[bid];
+#if (FIXES)
+                            if (mag->next) {
+                                mag->next->prev = mag;
+                            }
+#endif
                             _ftab[bid] = mag;
 #if (HACKS)
                             _fcnt[bid]++;
@@ -1598,7 +1618,7 @@ putmem(void *ptr)
                     mag->prev = mag->next = NULL;
                     mlk(&_flktab[bid]);
                     mag->next = _ftab[bid];
-#if 0 && (FIXES)
+#if (FIXES)
                     if (mag->next) {
                         mag->next->prev = mag;
                     }
