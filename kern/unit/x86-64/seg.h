@@ -4,8 +4,9 @@
 #include <stdint.h>
 #include <kern/unit/x86/trap.h>
 
-#define SEGDEFBITS  (SEG64BIT | SEG4KGRAN | SEGPRES)
-#define SEGTSS      (SEGAVAILTSS | SEGUSER | SEGPRES | SEGISTMASK)
+#define SEGDEFBITS (SEG64BIT | SEG4KGRAN | SEGPRES)
+#define SEGTSS     (SEGAVAILTSS | SEGUSER | SEGPRES | SEGISTMASK)
+#define SEG64BIT   UINT64_C(0x0020000000000000)
 
 #endif /* __UNIT_X86_64_SEG_H__ */
 

@@ -48,7 +48,7 @@
 
 #define NEWHACK 1
 #define FIXES   1
-#define HACKS   0
+#define HACKS   1
 
 #define INTSTAT 1
 #define ZEROMTX 1
@@ -1589,17 +1589,26 @@ putmem(void *ptr)
                         mag->next->prev = mag->prev;
                     }
                 }
+                if (ismapbkt(bid)) {
+                    freed = 1;
+                } else {
 #if (FIXES) && (PTRBITS <= 32)
-                _mdir[slabid(ptr)] = NULL;
+                    _mdir[slabid(ptr)] = NULL;
 #endif
-                mag->prev = mag->next = NULL;
-                mlk(&_flktab[bid]);
-                mag->next = _ftab[bid];
-                _ftab[bid] = mag;
+                    mag->prev = mag->next = NULL;
+                    mlk(&_flktab[bid]);
+                    mag->next = _ftab[bid];
+#if 0 && (FIXES)
+                    if (mag->next) {
+                        mag->next->prev = mag;
+                    }
+#endif
+                    _ftab[bid] = mag;
 #if (HACKS)
-                _fcnt[bid]++;
+                    _fcnt[bid]++;
 #endif
-                munlk(&_flktab[bid]);
+                    munlk(&_flktab[bid]);
+                }
             }
         }
         munlk(&arn->lktab[bid]);
