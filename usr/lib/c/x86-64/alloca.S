@@ -15,7 +15,7 @@
  */
 alloca:	
 	subq	$8, %rdi	// adjust for popped return address
-	movq 	%rsp, %rax	// copy stack pointer
+	movq	%rsp, %rax	// copy stack pointer
 	subq	%rdi, %rax	// reserve space; return value is in RAX
 	ret			// return
 

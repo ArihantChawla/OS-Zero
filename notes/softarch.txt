@@ -8,12 +8,16 @@ kern
 - <mem.h> - memory abstraction
 - <io.h> - I/O primitives
 - <buf.h> - buffer/block cache interface
+  - support buffers mapped read-only into user processes; avoid system-to-user
+    copies for purposes such as multimedia streaming
+  - cache TCP/IP checksums for [static] buffers sent to network
 - <ipc.h> - inter-process communication primitives
 - <types.h> - kernel types
 - <page.h> - page structures and management
 - <proc.h> - process and thread support
 - <msg.h> - message queue interface
 - <syscall.h> - system call interface
+- <tmr.h> - event timer interface
 
 libunit
 -------
