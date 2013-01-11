@@ -79,6 +79,7 @@ libzero
 - <cdecl.h> - compiler support, e.g. alignment and packing attributes
 - <param.h> - machine configuration
 - <simd.h> - SIMD support, e.g. MMX, SSE, and hopefully Altivec
+  - vector types for SIMD words
 - <trix.h> - clever bitwise and other macros
 
 libgfx
@@ -88,19 +89,24 @@ libgfx
 - <obj.h> - graphics object declarations
   - pixel, dot, circle/ellipse, rectangle, triangle, line, polyline, segment
 - <op.h> - basic graphics operations
-  - mapfb(bus, dev);
-  - plotpix(buf, x, y, pix);
-    - dithpix(buf, x, y, pix)
-    - rendpix(buf, x, y, pix);
-    - blendpix(buf, x, y, pix, alpha);
-  - drawtext(buf, x, y, textptr);
-    - textsetbg(buf, pix);
-    - textsetfg(buf, pix);
-    - textsetaa(buf, bool);
-    - textsetblend(buf, bool);
-    - textsetfont(buf, bool);
-    - textsetul(buf, bool);
-    - textsetblink(buf, bool, nusec);
+  - gfxmapfb(bus, dev);
+  - gfxplotpix(buf, x, y, pix);
+    - gfxdithpix(buf, x, y, pix)
+    - gfxrendpix(buf, x, y, pix);
+    - gfxblendpix(buf, x, y, pix, alpha);
+    - gfxaddpix(buf, x, y, pix);
+    - gfxdithbuf(src, dest, x, y, w, h);
+    - gfxrendbuf(src, dest, x, y, w, h);
+    - gfxblendbuf(src, dest, x, y, w, h);
+    - gfxaddbuf(src, dest, x, y, w, h);
+  - gfxdrawtext(buf, x, y, text, len);
+    - gfxsetbg(text, pix);
+    - gfxsetfg(text, pix);
+    - gfxsetaa(text, bool);
+    - gfxsetblend(text, bool);
+    - gfxsetfont(text, bool);
+    - gfxsetul(text, bool);
+    - gfxsetblink(text, bool, nusec);
 - <hw.h> - hardware accelerated graphics interface
 
 libimg

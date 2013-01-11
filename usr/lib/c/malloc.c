@@ -158,7 +158,7 @@ typedef pthread_mutex_t LK_T;
 #if (PTRBITS <= 32)
 #define SLABLOG2      22 /* base size for heap allocations */
 #else
-#define SLABLOG2      22 /* base size for heap allocations */
+#define SLABLOG2      23 /* base size for heap allocations */
 #endif /* PTRBITS */
 //#define MAPMIDLOG2    23
 #else
