@@ -1,0 +1,135 @@
+Ideas and Notes for Zero Software Architecture
+----------------------------------------------
+
+kern
+----
+
+- Portable base kernel modules
+- <mem.h> - memory abstraction
+- <io.h> - I/O primitives
+- <buf.h> - buffer/block cache interface
+- <ipc.h> - inter-process communication primitives
+- <types.h> - kernel types
+- <page.h> - page structures and management
+- <proc.h> - process and thread support
+- <msg.h> - message queue interface
+- <syscall.h> - system call interface
+
+libunit
+-------
+
+- A library to support different CPUs and other programming units (FPU, GPU,
+  physics accelerators a'la PhysX, and so forth).
+- Thread schedulers for different scenarios; desktop vs. server mode
+- Process and thread abstractions.
+
+libkmem
+-------
+
+- Kernel memory support library.
+- <sem.h> - semaphores including mutexes
+- <mtx.h> - mutex interface; use machine words instead of mutex structures
+- <map.h> - mapping physical memory and files to virtual memory
+- <shm.h> - shared memory support
+- <page.h> - page-directories and page-tables
+- <mbuf.h> - memory buffers
+
+libkio
+------
+
+- Kernel I/O abstraction.
+- <io.h> - machine-dependent I/O such as X86 ports
+- <dma.h> - direct memory access
+- <iobuf.h> - I/O buffer/block cache
+- sock, fifo, pipe, fbuf data objects
+
+libc
+----
+
+- ISO/POSIX compatible C Standard Library implementation.
+- <mem.h> and mem.c; memory management routines
+- <assert.h> - assert()
+- <limits.h> - integral presentation characteristics
+- <setjmp.h> - non-local goto
+- <stddef.h> - standard definitions
+- <stdint.h> - integral types
+- <unistd.h> - POSIX features
+- <stdlib.h> - standard library functionality
+- <malloc.h> - Unix-style dynamic memory operations
+  malloc
+  ------
+  - Dual-layer buffers
+    - Bonwick style magazine layer on top of slab layer
+  - support for both heap and mapped memory
+- <stdio.h> buffered I/O interface
+- <endian.h> - POSIX- and BSD-style endianess feature macros
+- malloc-interface dynamic memory manager
+
+libm
+----
+
+- Support for ISO 754 format floating point values.
+- i387 FPU support.
+- Basic trigonometry.
+
+libzero
+-------
+
+- Zero utility library.
+- <cdecl.h> - compiler support, e.g. alignment and packing attributes
+- <param.h> - machine configuration
+- <simd.h> - SIMD support, e.g. MMX, SSE, and hopefully Altivec
+- <trix.h> - clever bitwise and other macros
+
+libgfx
+------
+
+- Graphics support library with composition, rendering, and optional dithering.
+- <obj.h> - graphics object declarations
+  - pixel, dot, circle/ellipse, rectangle, triangle, line, polyline, segment
+- <op.h> - basic graphics operations
+  - mapfb(bus, dev);
+  - plotpix(buf, x, y, pix);
+    - dithpix(buf, x, y, pix)
+    - rendpix(buf, x, y, pix);
+    - blendpix(buf, x, y, pix, alpha);
+  - drawtext(buf, x, y, textptr);
+    - textsetbg(buf, pix);
+    - textsetfg(buf, pix);
+    - textsetaa(buf, bool);
+    - textsetblend(buf, bool);
+    - textsetfont(buf, bool);
+    - textsetul(buf, bool);
+    - textsetblink(buf, bool, nusec);
+- <hw.h> - hardware accelerated graphics interface
+
+libimg
+------
+
+- <fmt.h>
+  - raw, tga, gif, png, jpg, xcf
+- <op.h>
+  - dithering routines
+  - rendering routines
+  - blend routines
+  - fade routines
+  - [logical/bitwise] raster operations
+
+libphys
+-------
+
+- Support library for physics accelerators such as PhysX.
+
+libsnd
+------
+
+- Audio library.
+- <mix.h> - mixer interface/object
+- <seq.h> - sequencer
+- <pat.h> - patch interface
+
+libav
+-----
+
+- Audio/video interface library.
+

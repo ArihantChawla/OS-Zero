@@ -46,11 +46,11 @@
  *          - mmap() interface; thread-safe
  */
 
-#define NEWHACK 1
+#define NEWHACK 0
 #define FIXES   1
 #define HACKS   1
 
-#define INTSTAT 1
+#define INTSTAT 0
 #define ZEROMTX 1
 #define STAT    0
 
@@ -158,7 +158,7 @@ typedef pthread_mutex_t LK_T;
 #if (PTRBITS <= 32)
 #define SLABLOG2      22 /* base size for heap allocations */
 #else
-#define SLABLOG2      24 /* base size for heap allocations */
+#define SLABLOG2      22 /* base size for heap allocations */
 #endif /* PTRBITS */
 //#define MAPMIDLOG2    23
 #else
@@ -356,7 +356,7 @@ typedef pthread_mutex_t LK_T;
 #endif
 #define slabid(ptr)       ((uintptr_t)(ptr) >> SLABLOG2)
 #define nbhdr()           PAGESIZE
-#define NBUFHDR           64
+#define NBUFHDR           16
 
 #define thrid()           ((_aid >= 0) ? _aid : (_aid = getaid()))
 #define blksz(bid)        (1UL << (bid))
