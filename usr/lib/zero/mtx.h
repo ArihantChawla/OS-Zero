@@ -14,7 +14,7 @@
 extern int pthread_yield(void);
 #endif
 
-#define MTXINITVAL 0
+#define MTXINITVAL 0L
 
 #define mtxinit(lp) (*lp = MTXINITVAL)
 
@@ -56,7 +56,9 @@ mtxunlk(volatile long *lp, long val)
 {
 #if (MTXOWNER)
     while (m_cmpswap(lp, val, MTXINITVAL)) {
-#if !(__KERNEL__)
+#if (__KERNEL__)
+        thryield();
+#else
         pthread_yield();
 #endif
     }

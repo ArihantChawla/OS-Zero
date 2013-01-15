@@ -1,10 +1,10 @@
 #ifndef __UNIT_IA32_CPU_H__
 #define __UNIT_IA32_CPU_H__
 
-#include <stdint.h>
-#include <zero/types.h>
 #include <kern/conf.h>
+#include <stdint.h>
 #include <kern/types.h>
+#include <zero/types.h>
 
 #if (SMP)
 #define NCPU 8

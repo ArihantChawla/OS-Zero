@@ -21,9 +21,7 @@
 #define THRIDLE    3
 #define THRNPRIO   32
 
-#if defined(__i386__)
-#include <kern/unit/ia32/thr.h>
-#endif
+#include <kern/thr.h>
 
 struct thrprioq {
     long        lk;

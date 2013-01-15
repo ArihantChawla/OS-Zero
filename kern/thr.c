@@ -3,8 +3,8 @@
 #include <zero/param.h>
 #include <kern/conf.h>
 #include <kern/proc.h>
+#include <kern/thr.h>
 #include <kern/unit/ia32/cpu.h>
-#include <kern/unit/ia32/thr.h>
 
 struct thr     thrtab[NTHR] ALIGNED(PAGESIZE);
 struct thr    *runqueuetab[NPRIO];
