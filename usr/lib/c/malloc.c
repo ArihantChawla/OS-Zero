@@ -142,7 +142,7 @@ typedef pthread_mutex_t LK_T;
 
 /* experimental */
 #if 0
-#if (PTRBITS > 32)
+#if (ADDRBITS > 32)
 #define TUNEBUF 1
 #else
 #define TUNEBUF 0
@@ -155,11 +155,11 @@ typedef pthread_mutex_t LK_T;
 #define BLKMINLOG2    5  /* minimum-size allocation */
 #define SLABTEENYLOG2 14 /* little block */
 #define SLABTINYLOG2  18 /* small-size block */
-#if (PTRBITS <= 32)
+#if (ADDRBITS <= 32)
 #define SLABLOG2      22 /* base size for heap allocations */
 #else
 #define SLABLOG2      23 /* base size for heap allocations */
-#endif /* PTRBITS */
+#endif /* ADDRBITS */
 //#define MAPMIDLOG2    23
 #else
 #define BLKMINLOG2    5  /* minimum-size allocation */
@@ -179,7 +179,7 @@ typedef pthread_mutex_t LK_T;
 
 /* lookup tree of tables */
 
-#if (PTRBITS > 32)
+#if (ADDRBITS > 32)
 
 #define NL1KEY     (1UL << NL1BIT)
 #define NL2KEY     (1UL << NL2BIT)
@@ -189,19 +189,19 @@ typedef pthread_mutex_t LK_T;
 #define L3NDX      SLABLOG2
 #define NL1BIT     16
 
-#if (PTRBITS > 48)
+#if (ADDRBITS > 48)
 
 #define NL2BIT     16
-#define NL3BIT     (PTRBITS - SLABLOG2 - NL1BIT - NL2BIT)
+#define NL3BIT     (ADDRBITS - SLABLOG2 - NL1BIT - NL2BIT)
 
 #else
 
-#define NL2BIT     (PTRBITS - SLABLOG2 - NL1BIT)
+#define NL2BIT     (ADDRBITS - SLABLOG2 - NL1BIT)
 #define NL3BIT     0
 
-#endif /* PTRBITS > 48 */
+#endif /* ADDRBITS > 48 */
 
-#endif /* PTRBITS <= 32 */
+#endif /* ADDRBITS <= 32 */
 
 /* macros */
 
@@ -351,8 +351,8 @@ typedef pthread_mutex_t LK_T;
 #define nbmap(bid)        (1UL << (nmagslablog2(bid) + (bid)))
 #define nbmag(bid)        (1UL << (nmagslablog2(bid) + SLABLOG2))
 
-#if (PTRBITS <= 32)
-#define NSLAB             (1UL << (PTRBITS - SLABLOG2))
+#if (ADDRBITS <= 32)
+#define NSLAB             (1UL << (ADDRBITS - SLABLOG2))
 #endif
 #define slabid(ptr)       ((uintptr_t)(ptr) >> SLABLOG2)
 #define nbhdr()           PAGESIZE
@@ -977,7 +977,7 @@ initmall(void)
         growheap(ofs);
     }
     munlk(&_conf.heaplk);
-#if (PTRBITS <= 32)
+#if (ADDRBITS <= 32)
     _mdir = mapanon(_mapfd, NSLAB * sizeof(void *));
 #else
     _mdir = mapanon(_mapfd, NL1KEY * sizeof(void *));
@@ -997,11 +997,11 @@ initmall(void)
 }
 
 #if (MTSAFE)
-#if (PTRBITS > 32)
+#if (ADDRBITS > 32)
 #define l1ndx(ptr) getbits((uintptr_t)ptr, L1NDX, NL1BIT)
 #define l2ndx(ptr) getbits((uintptr_t)ptr, L2NDX, NL2BIT)
 #define l3ndx(ptr) getbits((uintptr_t)ptr, L3NDX, NL3BIT)
-#if (PTRBITS > 48)
+#if (ADDRBITS > 48)
 static struct mag *
 findmag(void *ptr)
 {
@@ -1612,7 +1612,7 @@ putmem(void *ptr)
                 if (ismapbkt(bid)) {
                     freed = 1;
                 } else {
-#if (FIXES) && (PTRBITS <= 32)
+#if (FIXES) && (ADDRBITS <= 32)
                     _mdir[slabid(ptr)] = NULL;
 #endif
                     mag->prev = mag->next = NULL;
