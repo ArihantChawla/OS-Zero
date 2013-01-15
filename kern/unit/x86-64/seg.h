@@ -3,6 +3,7 @@
 
 #include <stdint.h>
 #include <kern/unit/x86/trap.h>
+#include <kern/unit/x86/seg.h>
 
 #define SEGDEFBITS (SEG64BIT | SEG4KGRAN | SEGPRES)
 #define SEGTSS     (SEGAVAILTSS | SEGUSER | SEGPRES | SEGISTMASK)
