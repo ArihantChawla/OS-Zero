@@ -1,6 +1,6 @@
 #define __ASSEMBLY__ 1
 #include <kern/conf.h>
-#include <kern/unit/ia32/trap.h>
+#include <kern/unit/x86/trap.h>
 
 /*
  * NOTE: we use interrupt gates, which automatically disable further

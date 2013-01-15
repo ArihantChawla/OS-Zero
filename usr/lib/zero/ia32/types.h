@@ -2,12 +2,8 @@
 #define __ZERO_IA32_TYPES_H__
 
 #include <stdint.h>
-#if defined(__KERNEL__)
-#include <kern/signal.h>
-#else
 #include <stdint.h>
 #include <signal.h>
-#endif
 #include <zero/cdecl.h>
 #include <zero/param.h>
 

@@ -2,7 +2,7 @@
 #define __KERN_IO_DRV_PC_VGA_H__
 
 #include <stdint.h>
-#include <kern/unit/ia32/io.h>
+#include <kern/unit/x86/io.h>
 
 void vgasyncscr(void);
 void vgaputs(char *str);

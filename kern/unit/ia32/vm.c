@@ -16,12 +16,12 @@
 #include <kern/dev.h>
 #include <kern/util.h>
 #include <kern/mem/page.h>
+#include <kern/unit/x86/dma.h>
 #if (SMP)
 #include <kern/unit/ia32/mp.h>
 #endif
 #include <kern/unit/ia32/link.h>
 #include <kern/unit/ia32/vm.h>
-#include <kern/unit/ia32/dma.h>
 
 #define HICORE (1024 * 1024)
 

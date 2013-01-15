@@ -31,7 +31,7 @@ _gdtret:
 	/*
 	 * initialize paging.
 	 * - load page directory physical address into CR3
-	 * - enable the PG-bit in CR0
+	 * - set the PG-bit in CR0
 	 * - finish with a near jump
 	 */
 pginit:

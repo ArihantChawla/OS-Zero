@@ -7,9 +7,11 @@
 #define CR0WP    0x00010000     // write protect
 #define CR0PG    0x80000000     // paging
 
-#define CR4PSE   0x00000020
+#define CR4PSE   0x00000020     // page size extensions
+#define CR4PAE   0x00000040     // physical-address extensions
+#define CR4PGE   0x00000080     // page-global enable
 
-#define EFERADR  0xc0000080
+#define EFERADR  0xc0000080     // EFER MSR address
 #define EFERSCE  0x00000001     // system call exceptions
 #define EFERLME  0x00000100     // long mode enable
 #define EFERNXE  0x00000400     // no-execute enable

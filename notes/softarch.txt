@@ -17,7 +17,7 @@ kern
 - <proc.h> - process and thread support
 - <msg.h> - message queue interface
 - <syscall.h> - system call interface
-- <tmr.h> - event timer interface
+- <tmr.h> - event timer interface; PIT, APIC, HPET
 
 libunit
 -------

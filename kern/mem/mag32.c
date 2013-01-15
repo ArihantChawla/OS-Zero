@@ -8,7 +8,6 @@
 #endif
 #include <kern/mem/mag.h>
 
-#if (PTRBITS == 32)
 #include <kern/mem/slab32.h>
 
 #define maghdrnum(ptr)                                                  \
@@ -90,6 +89,4 @@ kfree(void *ptr)
 
     return;
 }
-
-#endif /* PTRBITS == 32 */
 

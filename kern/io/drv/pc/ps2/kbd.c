@@ -5,8 +5,8 @@
 #include <stdint.h>
 #include <kern/util.h>
 //#include <kern/event.h>
-#include <kern/unit/ia32/io.h>
-#include <kern/unit/ia32/trap.h>
+#include <kern/unit/x86/io.h>
+#include <kern/unit/x86/trap.h>
 
 /*
  * 19:49 <PeanutHorst>

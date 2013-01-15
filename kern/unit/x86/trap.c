@@ -1,12 +1,12 @@
 #include <stdint.h>
 #define __KERNEL__ 1
-#include <kern/signal.h>
+#include <signal.h>
 #include <kern/conf.h>
 #include <zero/param.h>
 #include <zero/types.h>
 #include <kern/unit/ia32/boot.h>
-#include <kern/unit/ia32/trap.h>
-#include <kern/unit/ia32/io.h>
+#include <kern/unit/x86/trap.h>
+#include <kern/unit/x86/io.h>
 
 extern void picinit(void);
 extern void idtset(void);
@@ -46,33 +46,6 @@ extern volatile long   mpmultiproc;
 #endif
 extern uint64_t        kernidt[];
 extern struct m_farptr idtptr;
-
-#if 0
-uint8_t trapsigmap[NIDT] ALIGNED(PAGESIZE) = {
-    SIGFPE,     // DE
-    0,          // DB
-    0,          // NMI
-    SIGTRAP,    // BP
-    0,          // OF
-    SIGBUS,     // BR
-    SIGILL,     // UD
-    SIGILL,     // NM
-    0,          // DF
-    0,          // RES1
-    0,          // TS
-    SIGSEGV,    // NP
-    SIGSTKFLT,  // SS
-    SIGSEGV,    // GP
-    0,          // PF
-    0,          // RES2
-    SIGFPE,     // MF
-    SIGBUS,     // AC
-    SIGABRT,    // MC
-    SIGFPE      // XF
-};
-#endif
-
-//long interrbits = INTERRBITS;
 
 void
 idtinit(uint64_t *idt)

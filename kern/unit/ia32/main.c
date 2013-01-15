@@ -1,19 +1,20 @@
 #include <kern/conf.h>
 #include <stdint.h>
+#include <zero/cdecl.h>
 #include <zero/param.h>
 #include <zero/types.h>
 #include <zero/trix.h>
 #include <kern/util.h>
 #include <kern/proc.h>
 #include <kern/io/drv/pc/vga.h>
+#include <kern/unit/x86/pit.h>
+#include <kern/unit/x86/dma.h>
 #include <kern/unit/ia32/kern.h>
 #include <kern/unit/ia32/link.h>
 #include <kern/unit/ia32/boot.h>
 #include <kern/unit/ia32/cpu.h>
-#include <kern/unit/ia32/pit.h>
 #include <kern/unit/ia32/thr.h>
 #include <kern/unit/ia32/vm.h>
-#include <kern/unit/ia32/dma.h>
 
 extern uint8_t            kerniomap[8192] ALIGNED(PAGESIZE);
 extern struct proc        proctab[NPROC];

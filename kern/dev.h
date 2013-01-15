@@ -7,8 +7,8 @@
 
 #include <unistd.h>
 
-struct dev {
-    long (*seek)(long, off_t, long);
+struct devsysfunc {
+    /* device system interface function pointers */
 };
 
 #endif /* __KERN_DEV_H__ */

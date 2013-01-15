@@ -190,21 +190,21 @@ typedef void     sighandler_t(int);
 
 #if (_BSD_SOURCE)
 
-int sigvec(int sig, struct sigvec *vec, struct sigvec *oldvec);
-int sigmask(int sig);
-int sigblock(int mask);
-int sigsetmask(int mask);
-int siggetmask(int void);
-
-#define SV_INTERRUPT 0x00000001
-#define SV_RESETHAND 0x00000002
-#define SV_ONSTACK   0x00000004
-
 struct sigvec {
     void (*sv_handler)(int);
     int    sv_mask;
     int    sv_flags;
 };
+
+int sigvec(int sig, struct sigvec *vec, struct sigvec *oldvec);
+int sigmask(int sig);
+int sigblock(int mask);
+int sigsetmask(int mask);
+int siggetmask(void);
+
+#define SV_INTERRUPT 0x00000001
+#define SV_RESETHAND 0x00000002
+#define SV_ONSTACK   0x00000004
 
 #endif /* _BSD_SOURCE */
 

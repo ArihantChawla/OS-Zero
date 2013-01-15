@@ -5,7 +5,7 @@
 #include <stdint.h>
 #include <kern/util.h>
 #include <zero/cdecl.h>
-#include <kern/unit/ia32/trap.h>
+#include <kern/unit/x86/trap.h>
 
 extern void *irqvec[];
 

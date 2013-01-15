@@ -1,6 +1,6 @@
 #include <stdint.h>
 #define __KERNEL__ 1
-#include <kern/signal.h>
+#include <signal.h>
 #include <zero/types.h>
 #include <kern/util.h>
 #include <kern/proc.h>
@@ -49,8 +49,7 @@ sigfunc(uint32_t trap)
 //    kprintf("trap %ld -> signal %ld\n", trap, signum);
     if (signum == SIGKILL) {
         kill(proc);
-    }
-    if ((signum) && sigismember(&proc->sigmask, signum)) {
+    } else if ((signum) && sigismember(&proc->sigmask, signum)) {
         sigfunc = proc->sigvec[signum];
         if (sigfunc) {
             sigfunc(signum);
