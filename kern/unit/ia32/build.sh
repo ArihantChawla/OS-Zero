@@ -13,4 +13,5 @@ ld -g -static -T kern.lds -m elf_i386 -Map zero.sym -o zero *.o
 #objdump --line-numbers --source zero.elf > zero.lst
 #nm -n zero.elf > zero.sym
 #objcopy -O elf32-i386 zero.elf zero
+./mkcdimg.sh
 

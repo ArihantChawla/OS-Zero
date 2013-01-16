@@ -116,6 +116,9 @@ newproc(int argc, char *argv[], char *envp[], int class)
     proc->class = class;
     proc->pid = taskgetpid();
     proc->parent = curproc->pid;
+    proc->argc = argc;
+    proc->argv = argv;
+    proc->envp = envp;
 
     return proc;
 }
