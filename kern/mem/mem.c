@@ -1,8 +1,7 @@
 #include <stdint.h>
 #include <zero/param.h>
-#if defined(__x86_64__) || defined(__amd64__)
-#include <kern/mem/slab64.h>
-#elif defined(__i386__)
+#include <kern/mem/slab.h>
+#if defined(__i386__) && !defined(__x86_64__) && !defined(__amd64__)
 #include <kern/mem/slab32.h>
 #include <kern/unit/ia32/link.h>
 #include <kern/unit/ia32/vm.h>

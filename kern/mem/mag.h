@@ -4,9 +4,8 @@
 #include <zero/param.h>
 #include <zero/mtx.h>
 
-#if (PTRBITS == 32)
 #include <kern/task.h>
-#include <kern/mem/slab32.h>
+#include <kern/mem/slab.h>
 
 #define maglk(bkt)  mtxlk(&_freelktab[bkt], MEMPID);
 #define magunlk(pq) mtxunlk(&_freelktab[bkt], MEMPID);
@@ -19,10 +18,10 @@ struct maghdr {
     unsigned long  flg;
     unsigned long  n;
     unsigned long  ndx;
+#if (PTRBITS == 32)
     void          *ptab[1U << (PTRBITS - SLABMINLOG2 - PAGESIZELOG2)];
+#endif
 };
-
-#endif /* PTRBITS == 32 */
 
 #endif /* __MEM_MAG_H__ */
 

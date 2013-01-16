@@ -1,7 +1,7 @@
 #include <stddef.h>
 #include <zero/trix.h>
 #include <kern/util.h>
-#include <kern/mem/slab32.h>
+#include <kern/mem/slab.h>
 #include <kern/unit/ia32/vm.h>
 
 /* physical memory slabs */
