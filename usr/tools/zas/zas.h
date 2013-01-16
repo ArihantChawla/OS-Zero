@@ -6,11 +6,16 @@ typedef uint32_t  zasmemadr_t;
 typedef int32_t   zasword_t;
 typedef uint32_t  zasuword_t;
 typedef uint32_t  zassize_t;
+#else /* 64-bit */
+typedef uint64_t  zasmemadr_t;
+typedef int64_t   zasword_t;
+typedef uint64_t  zasuword_t;
+typedef uint64_t  zassize_t;
 #endif
 
 #include <stdint.h>
 
-#define LINELEN    1024
+#define LINELEN     1024
 
 #define TOKENVALUE  0x01
 #define TOKENLABEL  0x02

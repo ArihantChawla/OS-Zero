@@ -1671,9 +1671,7 @@ zasinit(struct zasopinfo *opinfotab)
 {
     zasopinfotab = opinfotab;
     zasinitop();
-#if (ZASBUF)
     zasinitbuf();
-#endif
 }
 
 zasmemadr_t
