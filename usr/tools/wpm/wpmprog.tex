@@ -8,7 +8,7 @@
 \begin{document}
 
 \title{\LARGE{Wizard Pseudo Machine} \\*
-       \large{Volume One, Programmer's Guide, revision 0.0.8}}
+       \large{Volume One, Programmer's Guide, revision 0.0.9}}
 \author{Tuomo Petteri Venäläinen}
 \date{\today}
 \maketitle
@@ -21,7 +21,21 @@
 
 \part{Preface}
 
-\chapter{Background and Future}
+\chapter{Notes}
+
+	\textbf{Brief}
+
+	Wizard Pseudo Machine is a software-based virtual machine. It can be
+	programmed in its own instruction set / assembly dialect, using AT\&T
+	syntax assembly. The incorporated assembler (\textbf{zas}) does not yet
+	support	pretranslated objects, but translates assembly code into
+	bytecode on-the-fly. This bytecode is then handled to the pseudo machine
+	(\textbf{wpm}) for execution.
+
+	The pseudo machine instruction set is designed to be a close match to
+	basic operations of the C programming language.
+
+	\textbf{Background and Future}
 
 	Wizard Pseudo Machine project started as an attempt to create a tool for
 	educational purposes. The machine is a virtual processor with custom
@@ -40,6 +54,12 @@
 	things to happen in the near future. :)
 
 \chapter{Changes}
+
+	\textbf{0.0.9}
+
+\begin{itemize}
+	\item{grammatical and layout corrections}
+\end{itemize}
 
 	\textbf{0.0.8}
 
@@ -110,20 +130,18 @@
 	threads at the desired locations in memory.
 
 	We follow the \textbf{von Neumann architecture}, so we basically have
-	3 abstraction; CPU, memory, and input/output.
+	3 abstractions; \textbf{CPU}, \textbf{memory}, and
+	\textbf{input/output}.
 
-	The machine is a purposefully \textbf{RISC}-like load-store approach,
-	meaning there is only a single load-store instruction (\textbf{mov})
-	that deals with memory addressed operands.
+	The machine is a purposefully \textbf{RISC}-like \textbf{load-store}
+	approach, meaning there is only a single load-store instruction
+	(\textbf{mov}) that deals with memory-addressed operands.
+
+\newpage
 
 \section{Memory Map}
 
 	\textbf{Notes}
-
-\begin{itemize}
-	\item{the VM's memory size is currently specified as \textbf{MEMSIZE}}
-	\item{thread stacks live at \textbf{MEMSIZE - thrid * THRSTKSIZE}}
-\end{itemize}
 
 \begin{tabular}{ | l | l | l | }
 	\hline
@@ -138,6 +156,11 @@
 	3.5 gigabytes   & graphics         & 32-bit ARGB-format draw buffer \\
 	\hline
 \end{tabular}
+
+\begin{itemize}
+	\item{the VM's memory size is currently specified as \textbf{MEMSIZE}}
+	\item{thread stacks live at \textbf{MEMSIZE - thrid * THRSTKSIZE}}
+\end{itemize}
 
 \chapter{Instruction Set}
 
