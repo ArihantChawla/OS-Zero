@@ -26,7 +26,7 @@ scanmem(void)
         n = 0;
         slab = freetab[bkt];
         while (slab) {
-            fprintf(stderr, "%x - ", slabadr(slab));
+            fprintf(stderr, "%lx - ", slabadr(slab));
             if (slab->bkt != bkt) {
                 fprintf(stderr, "invalid bkt on free list: %d (%d)\n",
                         slab->bkt, bkt);
@@ -42,7 +42,7 @@ scanmem(void)
 }
 
 void
-wpminitmem(uint32_t nbphys)
+wpminitmem(wpmsize_t nbphys)
 {
     uint32_t     nbvirt = MEMHWBASE - nbphys;
     wpmmemadr_t  adr = nbphys;
@@ -181,8 +181,8 @@ memcombslab(struct slab *slab)
     return;
 }
 
-uint32_t
-mempalloc(uint32_t size)
+wpmmemadr_t
+mempalloc(wpmsize_t size)
 {
     uint32_t     sz = powerof2(size) ? size : ceil2(max(size, 1U << MINBKT));
     uint32_t     n;
@@ -220,7 +220,7 @@ mempalloc(uint32_t size)
         num = pagenum(adr);
         n = 1U << (bkt - MINBKT);
         while (n--) {
-            mempagetab[num] = (uint32_t)ptr;
+            mempagetab[num] = (wpmpage_t)ptr;
             num++;
             ptr += 1U << MINBKT;
         }
@@ -245,7 +245,7 @@ mempfree(wpmmemadr_t adr)
         if (ptr) {
             n = 1U << (slab->bkt - MINBKT);
             while (n--) {
-                mempagetab[num] = (uint32_t)NULL;
+                mempagetab[num] = (wpmpage_t)NULL;
                 num++;
                 slab->free = 1;
                 slab++;
@@ -254,7 +254,7 @@ mempfree(wpmmemadr_t adr)
             memcombslab(slab);
             free(ptr);
         } else {
-            fprintf(stderr, "invalid free %x\n", adr);
+            fprintf(stderr, "invalid free %lux\n", (unsigned long)adr);
 
             exit(1);
         }

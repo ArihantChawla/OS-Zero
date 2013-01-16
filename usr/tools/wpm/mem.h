@@ -5,11 +5,10 @@
 #include <string.h>
 #include <stdint.h>
 
-#if defined(__i386__) || defined(__i486__) || defined(__i586__) || defined(__i686__)
-typedef uint32_t wpmpage_t;
-typedef uint32_t wpmsize_t;
-typedef uint32_t wpmmemadr_t;
-#endif
+typedef uintptr_t wpmadr_t;
+typedef uintptr_t wpmpage_t;
+typedef uint32_t  wpmsize_t;
+typedef uintptr_t wpmmemadr_t;
 
 void        wpminitmem(wpmsize_t nbphys);
 wpmmemadr_t mempalloc(wpmsize_t size);
@@ -19,8 +18,10 @@ extern wpmpage_t *mempagetab;
 extern uint8_t   *physmem;
 
 #define MINBKT      12
-#define MEMSIZE     (128 * 1024 * 1024)
-#define MEMHWBASE   0xc0000000
+#define MEMSIZE     (128UL * 1024 * 1024)
+//#define MEMHWBASE   0xc0000000
+/* 3.5 gigs */
+#define MEMHWBASE   (3U * 1024 * 1024 * 1024 + 512U * 1024 * 1024)
 
 #define PAGEPRES    0x00000001
 #define PAGEDIRTY   0x00000002
@@ -56,7 +57,7 @@ ceil2(size_t size)
 }
 
 static __inline__ void
-memstoreq(int64_t src, uint32_t virt)
+memstoreq(int64_t src, wpmmemadr_t virt)
 {
     int64_t *ptr = NULL;
 
@@ -66,7 +67,7 @@ memstoreq(int64_t src, uint32_t virt)
         ptr = (int64_t *)((int8_t *)mempagetab[pagenum(virt)] + pageofs(virt));
     }
     if (!ptr) {
-        fprintf(stderr, "illegal write at address 0x%x\n", virt);
+        fprintf(stderr, "illegal write at address 0x%lx\n", (unsigned long)virt);
 
         exit(1);
     }
@@ -76,7 +77,7 @@ memstoreq(int64_t src, uint32_t virt)
 }
 
 static __inline__ void
-memstorel(int32_t src, uint32_t virt)
+memstorel(int32_t src, wpmmemadr_t virt)
 {
     int32_t *ptr = NULL;
 
@@ -86,7 +87,7 @@ memstorel(int32_t src, uint32_t virt)
         ptr = (int32_t *)((int8_t *)mempagetab[pagenum(virt)] + pageofs(virt));
     }
     if (!ptr) {
-        fprintf(stderr, "illegal write at address 0x%x\n", virt);
+        fprintf(stderr, "illegal write at address 0x%lx\n", (unsigned long)virt);
 
         exit(1);
     }
@@ -96,7 +97,7 @@ memstorel(int32_t src, uint32_t virt)
 }
 
 static __inline__ void
-memstoreb(int8_t src, uint32_t virt)
+memstoreb(int8_t src, wpmmemadr_t virt)
 {
     int8_t *ptr = NULL;
 
@@ -106,7 +107,7 @@ memstoreb(int8_t src, uint32_t virt)
         ptr = (int8_t *)mempagetab[pagenum(virt)] + pageofs(virt);
     }
     if (!ptr) {
-        fprintf(stderr, "illegal write at address 0x%x\n", virt);
+        fprintf(stderr, "illegal write at address 0x%lx\n", (unsigned long)virt);
 
         exit(1);
     }
@@ -116,7 +117,7 @@ memstoreb(int8_t src, uint32_t virt)
 }
 
 static __inline__ void
-memstorew(int16_t src, uint32_t virt)
+memstorew(int16_t src, wpmmemadr_t virt)
 {
     int16_t *ptr = NULL;
 
@@ -126,7 +127,7 @@ memstorew(int16_t src, uint32_t virt)
         ptr = (int16_t *)((int8_t *)mempagetab[pagenum(virt)] + pageofs(virt));
     }
     if (!ptr) {
-        fprintf(stderr, "illegal write at address 0x%x\n", virt);
+        fprintf(stderr, "illegal write at address 0x%lx\n", (unsigned long)virt);
 
         exit(1);
     }
@@ -136,7 +137,7 @@ memstorew(int16_t src, uint32_t virt)
 }
 
 static __inline__ int64_t
-memfetchq(uint32_t virt)
+memfetchq(wpmmemadr_t virt)
 {
     int64_t *ptr = NULL;
     int64_t  retval;
@@ -147,7 +148,7 @@ memfetchq(uint32_t virt)
         ptr = (int64_t *)((int8_t *)mempagetab[pagenum(virt)] + pageofs(virt));
     }
     if (!ptr) {
-        fprintf(stderr, "illegal read at address %x (%x)\n", virt, MEMSIZE);
+        fprintf(stderr, "illegal read at address %lx (%lx)\n", (unsigned long)virt, MEMSIZE);
 
         exit(1);
     }
@@ -157,7 +158,7 @@ memfetchq(uint32_t virt)
 }
 
 static __inline__ int32_t
-memfetchl(uint32_t virt)
+memfetchl(wpmmemadr_t virt)
 {
     int32_t *ptr = NULL;
     int32_t  retval;
@@ -168,7 +169,7 @@ memfetchl(uint32_t virt)
         ptr = (int32_t *)((int8_t *)mempagetab[pagenum(virt)] + pageofs(virt));
     }
     if (!ptr) {
-        fprintf(stderr, "illegal read at address %x (%x)\n", virt, MEMSIZE);
+        fprintf(stderr, "illegal read at address %lx (%lx)\n", (unsigned long)virt, MEMSIZE);
 
         exit(1);
     }
@@ -178,7 +179,7 @@ memfetchl(uint32_t virt)
 }
 
 static __inline__ int8_t
-memfetchb(uint32_t virt)
+memfetchb(wpmmemadr_t virt)
 {
     int8_t *ptr = NULL;
     int8_t  retval;
@@ -189,7 +190,7 @@ memfetchb(uint32_t virt)
         ptr = (int8_t *)((int8_t *)mempagetab[pagenum(virt)] + pageofs(virt));
     }
     if (!ptr) {
-        fprintf(stderr, "illegal read at address %x\n", virt);
+        fprintf(stderr, "illegal read at address %lx\n", (unsigned long)virt);
 
         exit(1);
     }
@@ -199,7 +200,7 @@ memfetchb(uint32_t virt)
 }
 
 static __inline__ int16_t
-memfetchw(uint32_t virt)
+memfetchw(wpmmemadr_t virt)
 {
     int16_t *ptr = NULL;
     int16_t  retval;
@@ -210,7 +211,7 @@ memfetchw(uint32_t virt)
         ptr = (int16_t *)((int8_t *)mempagetab[pagenum(virt)] + pageofs(virt));
     }
     if (!ptr) {
-        fprintf(stderr, "illegal read at address %x\n", virt);
+        fprintf(stderr, "illegal read at address %lx\n", virt);
 
         exit(1);
     }

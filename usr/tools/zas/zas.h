@@ -1,11 +1,11 @@
 #ifndef __ZAS_ZAS_H__
 #define __ZAS_ZAS_H__
 
-#if defined(__i386__) || defined(__i486__) || defined(__i586__) || defined(__i686__)
-typedef uint32_t zasmemadr_t;
-typedef int32_t  zasword_t;
-typedef uint32_t zasuword_t;
-typedef uint32_t zassize_t;
+typedef uintptr_t zasmemadr_t;
+#if defined(ZAS32BIT)
+typedef int32_t   zasword_t;
+typedef uint32_t  zasuword_t;
+typedef uint32_t  zassize_t;
 #endif
 
 #include <stdint.h>

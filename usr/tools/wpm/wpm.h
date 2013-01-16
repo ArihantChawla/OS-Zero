@@ -11,12 +11,10 @@
 #endif
 
 #define THRSTKSIZE  (128 * 1024)
-#define WPMTEXTBASE 8192
+#define WPMTEXTBASE 8192UL
 
-#if defined(__i386__) || defined(__i486__) || defined(__i586__) || defined(__i686__)
 typedef int32_t  wpmword_t;
 typedef uint32_t wpmuword_t;
-#endif
 
 #if 0
 #define align(adr, p2)                                                  \
@@ -24,7 +22,7 @@ typedef uint32_t wpmuword_t;
 #endif
 
 #define OPINVAL    0x00
-#define RESOLVE    (~((wpmmemadr_t)0))
+#define RESOLVE    (~((wpmword_t)0))
 
 #define REGINDEX   0x10
 #define REGINDIR   0x20
@@ -169,15 +167,15 @@ struct wpmobjhdr {
 
 /* initial state: all bytes zero */
 struct wpmcpustate {
-    wpmuword_t msw;               // machine status word
-    wpmuword_t fp;                // frame pointer
-    wpmuword_t sp;                // stack pointer
-    wpmuword_t pc;                // program counter (instruction pointer)
+    wpmadr_t msw;               // machine status word
+    wpmadr_t fp;                // frame pointer
+    wpmadr_t sp;                // stack pointer
+    wpmadr_t pc;                // program counter (instruction pointer)
 #if 0
-    wpmuword_t pd;                // page directory address
-    wpmuword_t iv;                // interrupt vector address
+    wpmadr_t pd;                // page directory address
+    wpmadr_t iv;                // interrupt vector address
 #endif
-    wpmuword_t isp;               // interrupt stack pointer
+    wpmadr_t isp;               // interrupt stack pointer
 #if (ZPC)
     wpmword_t  regs[ZPCNREG] ALIGNED(CLSIZE);
     float      fregs[ZPCNREG];
@@ -189,10 +187,10 @@ struct wpmcpustate {
 };
 
 struct wpm {
-    struct wpmcpustate  cpustat;
-    volatile long       shutdown;
-    volatile long       thrid;
-    wpmuword_t          brk;
+    struct wpmcpustate cpustat;
+    volatile long      shutdown;
+    volatile long      thrid;
+    wpmadr_t           brk;
 };
 
 struct wpm * wpminit(void);
@@ -207,8 +205,8 @@ void         wpminitthr(wpmmemadr_t pc);
 extern __thread struct wpm *wpm;
 
 struct wpmstackframe {
-    wpmuword_t oldfp;
-    wpmuword_t retadr;
+    wpmadr_t oldfp;
+    wpmadr_t retadr;
     wpmuword_t args[EMPTY];
 };
 
