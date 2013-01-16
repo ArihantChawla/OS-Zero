@@ -1795,6 +1795,11 @@ wpmmain(int argc, char *argv[])
 int
 main(int argc, char *argv[])
 {
+    if (argc < 2) {
+        fprintf(stderr, "usage: wpm <asmfile>\n");
+
+        exit(1);
+    }
     exit(wpmmain(argc, argv));
 }
 
