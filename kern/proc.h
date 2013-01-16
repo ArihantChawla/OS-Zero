@@ -1,10 +1,23 @@
 #ifndef __PROC_H__
 #define __PROC_H__
 
+/*
+ * map a keyboard event kernel buffer to new task's virtual address PAGESIZE
+ * allocate descriptor table
+ * initialise <stdio.h> facilities
+ * - stdin, stdout, stderr
+ */
+
 #define __KERNEL__ 1
 #include <zero/types.h>
 #include <kern/types.h>
 #include <kern/syscall.h>
+#include <kern/task.h>
+#include <kern/mem.h>
+#if defined(__i386__)
+#include <kern/unit/ia32/cpu.h>
+#endif
+
 
 long procinit(long id);
 long procgetpid(void);

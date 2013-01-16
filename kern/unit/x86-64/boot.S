@@ -3,6 +3,7 @@
 
 .globl	_start, start
 .globl	kernidt, kernpmaplvl4
+.extern	kinit
 
 .text	32
 
@@ -19,7 +20,7 @@ mboothdr:
 _start2:
 	movl	$KERNSTKTOP, %esp
 	movl	%esp, %ebp
-	call	kmain
+	call	kinit
 
 .align NBPG
 

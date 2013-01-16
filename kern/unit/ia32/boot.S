@@ -9,6 +9,7 @@ _MBCHKSUM    = MBCHKSUM
 /* globals */
 .globl	_start, start
 .globl	kernidt, kerngdt, kernpagedir, kerniomap
+.extern	kinit
 	
 .text	32
 
@@ -31,7 +32,7 @@ _start2:
 	/* set kernel stack up */
 	movl	$KERNSTKTOP, %esp
 	movl	%esp, %ebp
-	call	kmain	// call kmain
+	call	kinit	// call kinit()
 
 .align	NBPG
 

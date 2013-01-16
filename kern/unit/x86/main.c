@@ -31,40 +31,13 @@ extern volatile long      mpmultiproc;
 
 ASMLINK
 void
-kmain(void)
+kmain(struct mboothdr *hdr, unsigned long pmemsz)
 {
-    struct mboothdr *boothdr;
-    unsigned long    pmemsz;
-
-//    __asm__ __volatile__ ("sti\n");
-    __asm__ __volatile__ ("cli\n");
-    /* determine amount of RAM */
-    /* boot.S leaves the multiboot header address in %ebx */
-    __asm__ __volatile__ ("movl %%ebx, %0\n" : "=rm" (boothdr));
-    /* multiprocessor probe */
-    /* bootstrap kernel */
-#if (SMP)
-    mpinit();
-    if (mpmultiproc) {
-//        mpstart();
-    }
-    if (mpncpu == 1) {
-        kprintf("found %ld processor\n", mpncpu);
-    } else {
-        kprintf("found %ld processors\n", mpncpu);
-    }
-    if (mpapic) {
-        kprintf("local APIC @ 0x%p\n", mpapic);
-    }
-    curcpu = &cputab[0];
-#endif
-    trapinit();                         // interrupt management
     seginit(0);                         // memory segments
     vminit((uint32_t *)&_pagetab);      // virtual memory
     __asm__ __volatile__ ("sti\n");
     bzero(&_bssvirt, (uint32_t)&_ebss - (uint32_t)&_bss);
     curproc = &proctab[0];
-    pmemsz = grubmemsz(boothdr);
 //    meminit(vmphysadr(&_ebssvirt), pmemsz);
     meminit(vmphysadr(&_ebssvirt), max(pmemsz, 3584UL * 1024 * 1024));
     bfill(&kerniomap, 0xff, sizeof(kerniomap));

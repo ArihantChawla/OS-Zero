@@ -106,3 +106,17 @@ procgetdesc(struct proc *proc, long id)
     return ret;
 }
 
+/* see <kern/proc.h> for definitions of scheduler classes */
+struct proc *
+newproc(int argc, char *argv[], char *envp[], int class)
+{
+    struct proc *proc = kmalloc(sizeof(struct proc));
+
+    proc->state = PROCINIT;
+    proc->class = class;
+    proc->pid = taskgetpid();
+    proc->parent = curproc->pid;
+
+    return proc;
+}
+

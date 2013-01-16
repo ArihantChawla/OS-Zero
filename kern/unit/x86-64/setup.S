@@ -24,7 +24,7 @@ longmode:
 	movl	EFERADR, %eax
 	orl	$EFERLME, %eax
 	movl	%eax, EFERADR
-	ljmp	$TEXTSEL, $kinit
+	ljmp	$TEXTSEL, $kmain
 
 idtset:
 	lidt (idtptr)
