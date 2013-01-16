@@ -62,7 +62,7 @@ extern struct zasopinfo wpmopinfotab[WPMNASMOP + 1];
 struct zassymrec {
     struct zassymrec *next;
     uint8_t          *name;
-    zasmemadr_t       adr;
+    uintptr_t         adr;
 };
 
 #define NHASHITEM 1024
@@ -1298,7 +1298,7 @@ zasprocinst(struct zastoken *token, zasmemadr_t adr,
                     op->arg1t = ARGADR;
                     sym = malloc(sizeof(struct zassymrec));
                     sym->name = (uint8_t *)strdup((char *)token1->data.sym.name);
-                    sym->adr = (zasmemadr_t)&op->args[0];
+                    sym->adr = (uintptr_t)&op->args[0];
                     zasqueuesym(sym);
                     len += 4;
                     
@@ -1325,7 +1325,7 @@ zasprocinst(struct zastoken *token, zasmemadr_t adr,
                     op->arg1t = ARGIMMED;
                     sym = malloc(sizeof(struct zassymrec));
                     sym->name = (uint8_t *)strdup((char *)token1->data.sym.name);
-                    sym->adr = (zasmemadr_t)&op->args[0];
+                    sym->adr = (uintptr_t)&op->args[0];
                     zasqueuesym(sym);
                     len += 4;
 
@@ -1388,9 +1388,9 @@ zasprocinst(struct zastoken *token, zasmemadr_t adr,
                     sym = malloc(sizeof(struct zassymrec));
                     sym->name = (uint8_t *)strdup((char *)token2->data.sym.name);
                     if (op->arg1t == ARGREG) {
-                        sym->adr = (zasmemadr_t)&op->args[0];
+                        sym->adr = (uintptr_t)&op->args[0];
                     } else {
-                        sym->adr = (zasmemadr_t)&op->args[1];
+                        sym->adr = (uintptr_t)&op->args[1];
                     }
                     zasqueuesym(sym);
                     len += 4;
@@ -1423,9 +1423,9 @@ zasprocinst(struct zastoken *token, zasmemadr_t adr,
                     sym = malloc(sizeof(struct zassymrec));
                     sym->name = (uint8_t *)strdup((char *)token2->data.sym.name);
                     if (op->arg1t == ARGREG) {
-                        sym->adr = (zasmemadr_t)&op->args[0];
+                        sym->adr = (uintptr_t)&op->args[0];
                     } else {
-                        sym->adr = (zasmemadr_t)&op->args[1];
+                        sym->adr = (uintptr_t)&op->args[1];
                     }
                     zasqueuesym(sym);
                     len += 4;

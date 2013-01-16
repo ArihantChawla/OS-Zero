@@ -8,7 +8,7 @@
 typedef uintptr_t wpmadr_t;
 typedef uintptr_t wpmpage_t;
 typedef uint32_t  wpmsize_t;
-typedef uintptr_t wpmmemadr_t;
+typedef uint32_t  wpmmemadr_t;
 
 void        wpminitmem(wpmsize_t nbphys);
 wpmmemadr_t mempalloc(wpmsize_t size);

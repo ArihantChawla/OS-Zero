@@ -1,8 +1,8 @@
 #ifndef __ZAS_ZAS_H__
 #define __ZAS_ZAS_H__
 
-typedef uintptr_t zasmemadr_t;
 #if defined(ZAS32BIT)
+typedef uint32_t  zasmemadr_t;
 typedef int32_t   zasword_t;
 typedef uint32_t  zasuword_t;
 typedef uint32_t  zassize_t;
@@ -50,7 +50,7 @@ struct zasop {
 
 struct zaslabel {
     uint8_t         *name;
-    zasmemadr_t      adr;
+    uintptr_t        adr;
     struct zaslabel *next;
 };
 
@@ -69,8 +69,8 @@ struct zasinst {
 };
 
 struct zassym {
-    uint8_t     *name;
-    zasmemadr_t  adr;
+    uint8_t   *name;
+    uintptr_t  adr;
 };
 
 struct zasadr {
@@ -120,7 +120,7 @@ struct zastoken {
 #if (ZASDB)
 struct zasline {
     struct zasline *next;
-    zasmemadr_t     adr;
+    uintptr_t       adr;
     uint8_t        *file;
     unsigned long   num;
     uint8_t        *data;
