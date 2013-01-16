@@ -211,7 +211,7 @@ memfetchw(wpmmemadr_t virt)
         ptr = (int16_t *)((int8_t *)mempagetab[pagenum(virt)] + pageofs(virt));
     }
     if (!ptr) {
-        fprintf(stderr, "illegal read at address %lx\n", virt);
+        fprintf(stderr, "illegal read at address %lx\n", (long)virt);
 
         exit(1);
     }
