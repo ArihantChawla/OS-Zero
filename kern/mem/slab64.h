@@ -45,7 +45,7 @@
      : NULL)
 #define slabgetnext(hp, tab)                                            \
     (((hp)->link & 0xffffffff00000000L)                                 \
-     ? ((tab) + (((hp)->link & 0xffffffff00000000L) >> 16))             \
+     ? ((tab) + (((hp)->link & 0xffffffff00000000L) >> 32))             \
      : NULL)
 #define slabclrprev(hp)                                                 \
     ((hp)->link &= 0xffffffff00000000L)
@@ -56,7 +56,7 @@
 #define slabsetprev(hp, hdr, tab)                                       \
     (slabclrprev(hp), (hp)->link |= slabhdrnum(hdr, tab))
 #define slabsetnext(hp, hdr, tab)                                       \
-    (slabclrnext(hp), (hp)->link |= slabhdrnum(hdr, tab) << 16)
+    (slabclrnext(hp), (hp)->link |= slabhdrnum(hdr, tab) << 32)
 
 #endif /* __MEM_SLAB64_H__ */
 
