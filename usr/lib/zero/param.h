@@ -9,7 +9,8 @@
  * LONGSIZE     - sizeof(long) in bytes
  * LONGLONGSIZE - sizeof(long long) in bytes
  * PTRSIZE      - sizeof pointer in bytes
- * PTRBITS      - number of [low] significant bits in pointers
+ * PTRBITS      - number of bits in pointers
+ * ADRBITS      - number of [low] significant bits in memory addresses
  * CLSIZE       - cacheline size
  * PAGESIZE     - virtual memory page size
  */

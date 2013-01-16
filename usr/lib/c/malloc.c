@@ -48,7 +48,8 @@
 
 #define NEWHACK 0
 #define FIXES   1
-#define HACKS   1
+#define HACKS   0
+#define FREEBUF 0
 
 #define INTSTAT 0
 #define ZEROMTX 1
@@ -142,7 +143,7 @@ typedef pthread_mutex_t LK_T;
 
 /* experimental */
 #if 0
-#if (ADDRBITS > 32)
+#if (ADRBITS > 32)
 #define TUNEBUF 1
 #else
 #define TUNEBUF 0
@@ -155,11 +156,11 @@ typedef pthread_mutex_t LK_T;
 #define BLKMINLOG2    5  /* minimum-size allocation */
 #define SLABTEENYLOG2 14 /* little block */
 #define SLABTINYLOG2  18 /* small-size block */
-#if (ADDRBITS <= 32)
+#if (ADRBITS <= 32)
 #define SLABLOG2      22 /* base size for heap allocations */
 #else
 #define SLABLOG2      23 /* base size for heap allocations */
-#endif /* ADDRBITS */
+#endif /* ADRBITS */
 //#define MAPMIDLOG2    23
 #else
 #define BLKMINLOG2    5  /* minimum-size allocation */
@@ -179,7 +180,7 @@ typedef pthread_mutex_t LK_T;
 
 /* lookup tree of tables */
 
-#if (ADDRBITS > 32)
+#if (ADRBITS > 32)
 
 #define NL1KEY     (1UL << NL1BIT)
 #define NL2KEY     (1UL << NL2BIT)
@@ -189,19 +190,19 @@ typedef pthread_mutex_t LK_T;
 #define L3NDX      SLABLOG2
 #define NL1BIT     16
 
-#if (ADDRBITS > 48)
+#if (ADRBITS > 48)
 
 #define NL2BIT     16
-#define NL3BIT     (ADDRBITS - SLABLOG2 - NL1BIT - NL2BIT)
+#define NL3BIT     (ADRBITS - SLABLOG2 - NL1BIT - NL2BIT)
 
 #else
 
-#define NL2BIT     (ADDRBITS - SLABLOG2 - NL1BIT)
+#define NL2BIT     (ADRBITS - SLABLOG2 - NL1BIT)
 #define NL3BIT     0
 
-#endif /* ADDRBITS > 48 */
+#endif /* ADRBITS > 48 */
 
-#endif /* ADDRBITS <= 32 */
+#endif /* ADRBITS <= 32 */
 
 /* macros */
 
@@ -351,8 +352,8 @@ typedef pthread_mutex_t LK_T;
 #define nbmap(bid)        (1UL << (nmagslablog2(bid) + (bid)))
 #define nbmag(bid)        (1UL << (nmagslablog2(bid) + SLABLOG2))
 
-#if (ADDRBITS <= 32)
-#define NSLAB             (1UL << (ADDRBITS - SLABLOG2))
+#if (ADRBITS <= 32)
+#define NSLAB             (1UL << (ADRBITS - SLABLOG2))
 #endif
 #define slabid(ptr)       ((uintptr_t)(ptr) >> SLABLOG2)
 #define nbhdr()           PAGESIZE
@@ -464,6 +465,7 @@ struct arn {
     long         nref;
     long         hcur;
     long         nhdr;
+    LK_T         hlk;
     struct mag **htab;
     long         scur;
 };
@@ -496,7 +498,7 @@ static long            _nslabtab[NBKT];
 static LK_T            _flktab[NBKT];
 #endif
 static struct mag     *_ftab[NBKT];
-#if (HACKS)
+#if (HACKS) && (FREEBUF)
 static long            _fcnt[NBKT];
 #endif
 static void          **_mdir;
@@ -680,7 +682,7 @@ relarn(void *arg)
                 }
 #endif
                 _ftab[bid] = head;
-#if (HACKS)
+#if (HACKS) && (FREEBUF)
                 _fcnt[bid] += n;
 #endif
                 munlk(&_flktab[bid]);
@@ -977,7 +979,7 @@ initmall(void)
         growheap(ofs);
     }
     munlk(&_conf.heaplk);
-#if (ADDRBITS <= 32)
+#if (ADRBITS <= 32)
     _mdir = mapanon(_mapfd, NSLAB * sizeof(void *));
 #else
     _mdir = mapanon(_mapfd, NL1KEY * sizeof(void *));
@@ -997,11 +999,11 @@ initmall(void)
 }
 
 #if (MTSAFE)
-#if (ADDRBITS > 32)
+#if (ADRBITS > 32)
 #define l1ndx(ptr) getbits((uintptr_t)ptr, L1NDX, NL1BIT)
 #define l2ndx(ptr) getbits((uintptr_t)ptr, L2NDX, NL2BIT)
 #define l3ndx(ptr) getbits((uintptr_t)ptr, L3NDX, NL3BIT)
-#if (ADDRBITS > 48)
+#if (ADRBITS > 48)
 static struct mag *
 findmag(void *ptr)
 {
@@ -1264,13 +1266,9 @@ freemap(struct mag *mag)
     mlk(&arn->lktab[bid]);
     cur = arn->hcur;
     hbuf = arn->htab;
-#if (HACKS)
-    if (!cur || _fcnt[bid] < 4) {
-#else
     if (!cur) {
-#endif
-        mag->prev = NULL;
         mlk(&_flktab[bid]);
+        mag->prev = NULL;
         mag->next = _ftab[bid];
 #if (FIXES)
         if (mag->next) {
@@ -1278,7 +1276,7 @@ freemap(struct mag *mag)
         }
 #endif
         _ftab[bid] = mag;
-#if (HACKS)
+#if (HACKS) && (FREEBUF)
         _fcnt[bid]++;
 #endif
         munlk(&_flktab[bid]);
@@ -1309,13 +1307,17 @@ freemap(struct mag *mag)
 #endif
                 }
             }
-            mag->adr = NULL;
-            hbuf[--cur] = mag;
-            arn->hcur = cur;
         }
+        mag->adr = NULL;
+//            mag->bptr = NULL;
+        mlk(&arn->hlk);
+        hbuf[--cur] = mag;
+        arn->hcur = cur;
+        munlk(&arn->hlk);
     }
+    
     munlk(&arn->lktab[bid]);
-
+    
     return;
 }
 
@@ -1337,6 +1339,9 @@ getmem(size_t size,
     uint8_t     *ptr = NULL;
     long         max = nblk(bid);
     struct mag  *mag = NULL;
+#if (HACKS)
+    long         ntry = 16;
+#endif
     void       **stk;
     long         l;
     long         n;
@@ -1350,42 +1355,25 @@ getmem(size_t size,
     arn = _atab[aid];
     mlk(&arn->lktab[bid]);
     mag = arn->btab[bid];
+#if (HACKS)
+    mlk(&_flktab[bid]);
+    while (!mag && (ntry--)) {
+        mag = arn->ftab[bid];
+        if (!mag) {
+            munlk(&_flktab[bid]);
+            pthread_yield();
+#if (HACKS) && (FREEBUF)
+        } else {
+            _fcnt[bid]++;
+#endif
+        }
+    }
+    munlk(&_flktab[bid]);
+#else
     if (!mag) {
         mag = arn->ftab[bid];
     }
-    if (!mag) {
-        mlk(&_flktab[bid]);
-        mag = _ftab[bid];
-        if (mag) {
-            mag->aid = aid;
-#if (FIXES)
-            if (mag->next) {
-                mag->next->prev = NULL;
-            }
 #endif
-            _ftab[bid] = mag->next;
-            mag->next = NULL;
-#if (HACKS)
-            _fcnt[bid]--;
-#endif
-        }
-        munlk(&_flktab[bid]);
-        if (mag) {
-            if (gt2(max, 1)) {
-                mag->next = arn->btab[bid];
-                if (mag->next) {
-                    mag->next->prev = mag;
-                }
-                arn->btab[bid] = mag;
-            }
-        }
-    } else if (mag->cur == mag->max - 1) {
-        if (mag->next) {
-            mag->next->prev = NULL;
-        }
-        arn->btab[bid] = mag->next;
-        mag->next = NULL;
-    }
     if (!mag) {
         get = 1;
         if (!ismapbkt(bid)) {
@@ -1443,7 +1431,7 @@ getmem(size_t size,
                             }
 #endif
                             _ftab[bid] = mag;
-#if (HACKS)
+#if (HACKS) && (FREEBUF)
                             _fcnt[bid]++;
 #endif
                         } else {
@@ -1459,6 +1447,20 @@ getmem(size_t size,
         }
     }
     if (mag) {
+        if (gt2(max, 1)) {
+            mag->next = arn->btab[bid];
+            if (mag->next) {
+                mag->next->prev = mag;
+            }
+            arn->btab[bid] = mag;
+            if (mag->cur == mag->max - 1) {
+                if (mag->next) {
+                    mag->next->prev = NULL;
+                }
+                arn->btab[bid] = mag->next;
+                mag->next = NULL;
+            }
+        }
         ptr = getblk(mag);
         retptr = clrptr(ptr);
 #if (VALGRIND)
@@ -1612,7 +1614,7 @@ putmem(void *ptr)
                 if (ismapbkt(bid)) {
                     freed = 1;
                 } else {
-#if (FIXES) && (ADDRBITS <= 32)
+#if (FIXES) && (ADRBITS <= 32)
                     _mdir[slabid(ptr)] = NULL;
 #endif
                     mag->prev = mag->next = NULL;
@@ -1624,7 +1626,7 @@ putmem(void *ptr)
                     }
 #endif
                     _ftab[bid] = mag;
-#if (HACKS)
+#if (HACKS) && (FREEBUF)
                     _fcnt[bid]++;
 #endif
                     munlk(&_flktab[bid]);

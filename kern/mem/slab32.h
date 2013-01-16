@@ -25,5 +25,10 @@
 #define slabsetnext(hp, hdr, tab)                                       \
     (slabclrnext(hp), (hp)->link |= slabhdrnum(hdr, tab) << 16)
 
+struct slabhdr {
+    long nfo;   // size shift count + free-bit
+    long link;  // 16-bit prev (low bits) and next (high bits) header IDs
+} PACK();
+
 #endif /* __MEM_SLAB32_H__ */
 

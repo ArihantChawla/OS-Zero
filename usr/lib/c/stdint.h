@@ -26,16 +26,10 @@ typedef unsigned long long uint64_t;
 typedef long               int64_t;
 typedef unsigned long      uint64_t;
 #endif
-typedef char               int_fast8_t;
-typedef unsigned char      uint_fast8_t;
-typedef short              int_fast16_t;
-typedef unsigned short     uint_fast16_t;
-typedef int                int_fast32_t;
-typedef unsigned int       uint_fast32_t;
-#if (LONGSIZE == 4)
+#if (PTRBITS == 32)
 typedef int32_t            intptr_t;
 typedef uint32_t           uintptr_t;
-#elif (LONGSIZE == 8)
+#elif (PTRBITS == 64)
 typedef int64_t            intptr_t;
 typedef uint64_t           uintptr_t;
 #endif
@@ -46,7 +40,18 @@ typedef unsigned long long uint_fast64_t;
 typedef long               int_fast64_t;
 typedef unsigned long      uint_fast64_t;
 #endif
+#if defined(__x86_64__) || defined(__amd64__) || defined(__i386__)
+typedef char               int_fast8_t;
+typedef unsigned char      uint_fast8_t;
+typedef short              int_fast16_t;
+typedef unsigned short     uint_fast16_t;
+typedef int                int_fast32_t;
+typedef unsigned int       uint_fast32_t;
+#else
+#error declare fast types for the platform in <stdint.h>
+#endif
 
+#if 0
 #define __int8_t_defined
 #define __uint8_t_defined
 #define __int16_t_defined
@@ -57,6 +62,7 @@ typedef unsigned long      uint_fast64_t;
 #define __uint64_t_defined
 #define __intptr_t_defined
 #define __uintptr_t_defined
+#endif
 
 #endif /* __STDINT_H__ */
 

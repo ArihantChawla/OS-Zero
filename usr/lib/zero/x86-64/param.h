@@ -9,7 +9,7 @@
 #define LONGLONGSIZE 8
 #define PTRSIZE      8
 #define PTRBITS      64
-#define ADDRBITS     48 // # of significant bytes in phys and virt addresses
+#define ADRBITS      48 // # of significant bytes in phys and virt addresses
 #define PAGESIZELOG2 12 // 4-kilobyte pages
 
 #define CLSIZE       32

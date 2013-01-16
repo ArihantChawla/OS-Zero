@@ -2,7 +2,11 @@
 #include <zero/trix.h>
 #include <kern/util.h>
 #include <kern/mem/slab.h>
+#if defined(__i386__) && !defined(__x86_64__) && !defined(__amd64__)
 #include <kern/unit/ia32/vm.h>
+#elif defined(__arm__)
+#include <kern/unit/arm/vm.h>
+#endif
 
 /* physical memory slabs */
 struct slabhdr *_physslabtab[PTRBITS] ALIGNED(PAGESIZE);

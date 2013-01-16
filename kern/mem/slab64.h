@@ -38,9 +38,15 @@
 #define slabclrlink(hp)                                                 \
     ((hp)->link = 0L)
 #define slabsetprev(hp, hdr, tab)                                       \
-    (slabclrprev(hp), (hp)->link |= slabhdrnum(hdr, tab))
+    ((hp)->prev = (hdr))
 #define slabsetnext(hp, hdr, tab)                                       \
-    (slabclrnext(hp), (hp)->link |= slabhdrnum(hdr, tab) << 32)
+    ((hp)->next = (hdr))
+
+struct slabhdr {
+    long nfo;                   // size shift count + free-bit
+    struct slabhdr *prev;
+    struct slabhdr *next;
+} PACK();
 
 #endif /* __MEM_SLAB64_H__ */
 

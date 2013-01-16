@@ -11,7 +11,7 @@
 #define LONGLONGSIZE 8
 #define PTRSIZE      4
 #define PTRBITS      32
-#define ADDRBITS     32
+#define ADRBITS      32
 
 #define CLSIZE       32
 
