@@ -23,22 +23,6 @@
 #define SLABFLGBITS 0x07L
 #define NSLABFLGBIT 3
 
-#define slabclrbkt(hp)                                                  \
-    ((hp)->nfo &= ~SLABFLGBITS)
-#define slabsetbkt(hp, bkt)                                             \
-    (slabclrbkt(hp), (hp)->nfo |= ((bkt) << NSLABFLGBIT))
-#define slabgetbkt(hp)                                                  \
-    ((hp)->nfo >> NSLABFLGBIT)
-#define slabisfree(hp)                                                  \
-    (((hp)->nfo) & SLABFREE)
-#define slabsetfree(hp)                                                 \
-    ((hp)->nfo |= SLABFREE)
-#define slabclrfree(hp)                                                 \
-    ((hp)->nfo &= ~SLABFREE)
-#define slabsetflg(hp, flg)                                             \
-    ((hp)->nfo |= (flg))
-#define slabclrflg(hp)                                                  \
-    ((hp)->nfo &= ~SLABFLGBITS)
 #define slabgetprev(hp, tab)                                            \
     (((hp)->link & 0x00000000ffffffffL)                                 \
      ? ((tab) + ((hp)->link & 0xffffffffL))                             \
