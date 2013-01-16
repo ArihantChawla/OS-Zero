@@ -1199,17 +1199,56 @@ freemap(struct mag *mag)
     long         bid = mag->bid;
     long         bsz = blksz(bid);
     long         max = mag->max;
+#if (HACKS)
+    struct mag  *mptr1;
+    struct mag  *mptr2;
+#endif
     struct mag **hbuf;
 
     arn = _atab[aid];
     mlk(&arn->lktab[bid]);
+#if (HACKS)
+    mptr = _ftab[bid];
+    while (mptr1) {
+        mptr2 = mptr1->next;
+        if (ismapbkt(mptr1->bid)) {
+            if (!unmapanon(clrptr(mag->adr), max * bsz)) {
+#if (VALGRIND)
+                if (RUNNING_ON_VALGRIND) {
+                    VALGRIND_FREELIKE_BLOCK(clrptr(mag->adr), 0);
+                }
+#endif
+#if (INTSTAT)
+                nmapbytes[aid] -= max * bsz;
+#endif
+#if (TUNEBUF)
+                _nbmap -= max * bsz;
+#endif
+                if (gt2(max, 1)) {
+                    if (!istk(bid)) {
+#if (INTSTAT)
+                        nstkbytes[aid] -= (mag->max << 1) << sizeof(void *); 
+#endif
+                        unmapstk(mag);
+                        mag->bptr = NULL;
+#if (VALGRIND)
+                        if (RUNNING_ON_VALGRIND) {
+                            VALGRIND_FREELIKE_BLOCK(mag, 0);
+                        }
+#endif
+                    }
+                }
+                if (mptr1->prev) {
+                    mptr1->prev->next = mptr2;
+                }
+            }
+        }
+        mptr1 = mptr2;
+    }
+#endif
     cur = arn->hcur;
     hbuf = arn->htab;
-//#if (HACKS)
-//    if (!cur || _fcnt[bid] < 4) {
-//#else
     if (!cur) {
-//#endif
         mag->prev = NULL;
         mlk(&_flktab[bid]);
         mag->next = _ftab[bid];
