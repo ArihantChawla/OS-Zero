@@ -17,7 +17,7 @@
 
 #include <stdint.h>
 #include <kern/util.h>
-#include <kern/unit/ia32/cpu.h>
+#include <kern/unit/x86/cpu.h>
 
 #if defined(__ZEROKERNEL__) /* kernel-level stuff only */
 //#include <mach/unit/ia32/cpu.h>
@@ -38,13 +38,19 @@
 #define M_CPUIDL2_AMD  0x80000006
 
 #define cpuid(op, ptr) \
-    __asm__("movl %0, %%eax" : : "i" (op)); \
-    __asm__("cpuid" : : : "eax", "ebx", "ecx", "edx"); \
-    __asm__("movl %%eax, %0" : "=m" ((ptr)->eax)); \
-    __asm__("movl %%ebx, %0" : "=m" ((ptr)->ebx)); \
-    __asm__("movl %%ecx, %0" : "=m" ((ptr)->ecx)); \
-    __asm__("movl %%edx, %0" : "=m" ((ptr)->edx));
-
+    __asm__ __volatile__ ("movl %4, %%eax\n"                            \
+    "cpuid\n"                                                           \
+    "movl %%eax, %0\n"                                                  \
+    "movl %%ebx, %1\n"                                                  \
+    "movl %%ecx, %2\n"                                                  \
+    "movl %%edx, %3\n"                                                  \
+    : "=m" ((ptr)->eax),                                                \
+      "=m" ((ptr)->ebx),                                                \
+      "=m" ((ptr)->ecx),                                                \
+      "=m" ((ptr)->edx)                                                 \
+    : "i" (op)                                                          \
+    : "eax", "ebx", "ecx", "edx")
+        
 struct m_cpuid {
     uint32_t eax;
     uint32_t ebx;

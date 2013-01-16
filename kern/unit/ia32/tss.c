@@ -4,7 +4,7 @@
 #include <zero/param.h>
 #include <kern/task.h>
 #include <kern/mem.h>
-#include <kern/unit/ia32/cpu.h>
+#include <kern/unit/x86/cpu.h>
 #include <kern/unit/ia32/seg.h>
 #include <kern/unit/ia32/vm.h>
 #include <kern/unit/ia32/boot.h>

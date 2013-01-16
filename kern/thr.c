@@ -4,7 +4,7 @@
 #include <kern/conf.h>
 #include <kern/proc.h>
 #include <kern/thr.h>
-#include <kern/unit/ia32/cpu.h>
+#include <kern/unit/x86/cpu.h>
 
 struct thr     thrtab[NTHR] ALIGNED(PAGESIZE);
 struct thr    *runqueuetab[NPRIO];

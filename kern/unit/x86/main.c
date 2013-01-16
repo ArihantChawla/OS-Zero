@@ -8,12 +8,12 @@
 #include <kern/proc.h>
 #include <kern/thr.h>
 #include <kern/io/drv/pc/vga.h>
+#include <kern/unit/x86/cpu.h>
 #include <kern/unit/x86/pit.h>
 #include <kern/unit/x86/dma.h>
 #include <kern/unit/ia32/kern.h>
 #include <kern/unit/ia32/link.h>
 #include <kern/unit/ia32/boot.h>
-#include <kern/unit/ia32/cpu.h>
 #include <kern/unit/ia32/vm.h>
 
 extern uint8_t            kerniomap[8192] ALIGNED(PAGESIZE);

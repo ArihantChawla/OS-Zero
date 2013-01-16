@@ -1,9 +1,9 @@
-#ifndef __UNIT_IA32_THR_H__
-#define __UNIT_IA32_THR_H__
+#ifndef __KERN_THR_H__
+#define __KERN_THR_H__
 
 #include <stddef.h>
 #include <zero/types.h>
-#include <kern/unit/ia32/cpu.h>
+#include <kern/unit/x86/cpu.h>
 
 void thrinit(long id, long prio);
 void thrsave(struct thr *thr);
@@ -107,5 +107,5 @@ m_tcbjmp(struct m_tcb *mtcb)
     /* NOTREACHED */
 }
       
-#endif /* __UNIT_IA32_THR_H__ */
+#endif /* __KERN_THR_H__ */
 

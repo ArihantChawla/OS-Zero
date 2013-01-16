@@ -4,7 +4,9 @@
 #include <zero/types.h>
 #include <kern/util.h>
 #include <kern/proc.h>
-#include <kern/unit/ia32/cpu.h>
+#if !defined(__arm__)
+#include <kern/unit/x86/cpu.h>
+#endif
 
 /* cpu traps */
 long signumtab[]

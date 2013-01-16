@@ -1,6 +1,6 @@
 #include <kern/conf.h>
 #include <zero/param.h>
-#include <kern/unit/ia32/cpu.h>
+#include <kern/unit/x86/cpu.h>
 #if (SMP)
 #include <stdint.h>
 #include <kern/unit/ia32/mp.h>

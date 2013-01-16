@@ -1,5 +1,5 @@
-#ifndef __PROC_H__
-#define __PROC_H__
+#ifndef __KERN_PROC_H__
+#define __KERN_PROC_H__
 
 /*
  * map a keyboard event kernel buffer to new task's virtual address PAGESIZE
@@ -14,8 +14,8 @@
 #include <kern/syscall.h>
 #include <kern/task.h>
 #include <kern/mem.h>
-#if defined(__i386__)
-#include <kern/unit/ia32/cpu.h>
+#if !defined(__arm__)
+#include <kern/unit/x86/cpu.h>
 #endif
 
 
@@ -83,5 +83,5 @@ struct proc {
 //    struct ringbuf   evbuf;
 } PACK() ALIGNED(PAGESIZE);
 
-#endif /* __PROC_H__ */
+#endif /* __KERN_PROC_H__ */
 
