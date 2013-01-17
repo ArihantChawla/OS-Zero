@@ -1,5 +1,6 @@
 CC = gcc
 LD = ld
+CFLAGS = -g -Wall -O
 
 !cc = |> ^ CC %f^ $(CC) $(CFLAGS) $(CFLAGS_%B) -c %f -o %o |> %B.o
 !ld = |> ^ LD %f^ $(LD) $(LDFLAGS) $(LDFLAGS_%B) -o %o %f |>

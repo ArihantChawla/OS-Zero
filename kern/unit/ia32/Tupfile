@@ -1,6 +1,6 @@
 include_rules
 
-CFLAGS += -DQEMU=1 -g -DKERN32BIT=1 -D__KERNEL__=1 -D__MTKERNEL__ -m32 -ffreestanding -static -Wall -I../../.. -I../../../usr/lib -I../../../usr/lib/c -g -m32 -O -fno-omit-frame-pointer -fno-stack-protector -fno-builtin
+CFLAGS += -DQEMU=1 -g -DKERN32BIT=1 -D__KERNEL__=1 -D__MTKERNEL__ -m32 -ffreestanding -static -I../../.. -I../../../usr/lib -I../../../usr/lib/c -m32 -fno-omit-frame-pointer -fno-stack-protector -fno-builtin
 
 LDFLAGS += -nostdlib -nodefaultlibs -g -static -T kern.lds -m elf_i386
 

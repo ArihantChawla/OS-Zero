@@ -85,7 +85,7 @@
 #include <stddef.h>
 #include <stdlib.h>
 #include <stdint.h>
-//#include <stdio.h>
+#include <stdio.h>
 
 #define SBRK_FAILED ((void *)-1L)
 
