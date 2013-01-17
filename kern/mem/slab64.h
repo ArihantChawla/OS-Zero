@@ -6,8 +6,8 @@
 #include <zero/trix.h>
 #include <kern/task.h>
 
-#define slablk(bkt)   mtxlk(&_physlktab[bkt], MEMPID);
-#define slabunlk(bkt) mtxunlk(&_physlktab[bkt], MEMPID);
+#define slablk(bkt)   mtxlk(&_physlktab[bkt], MEMPID)
+#define slabunlk(bkt) mtxunlk(&_physlktab[bkt], MEMPID)
 
 #define SLAB_CONST_SIZE_TRICK 1
 #if (SLAB_CONST_SIZE_TRICK)

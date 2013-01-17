@@ -7,8 +7,8 @@
 #include <kern/task.h>
 #include <kern/mem/slab.h>
 
-#define maglk(bkt)  mtxlk(&_freelktab[bkt], MEMPID);
-#define magunlk(pq) mtxunlk(&_freelktab[bkt], MEMPID);
+#define maglk(bkt)  mtxlk(&_freelktab[bkt], MEMPID)
+#define magunlk(pq) mtxunlk(&_freelktab[bkt], MEMPID)
 
 #define magpop(mp)       ((mp)->ptab[((mp)->ndx)++])
 #define magpush(mp, ptr) ((mp)->ptab[--((mp)->ndx)] = (ptr))
