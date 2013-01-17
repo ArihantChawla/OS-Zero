@@ -1,13 +1,14 @@
 #include <stddef.h>
 #include <stdlib.h>
-#include <stdio.h>
+//#include <stdio.h>
 #include <stdint.h>
 #include <zero/param.h>
-#include "bits/string.h"
+#include <zero/trix.h>
+#include <bits/string.h>
 
 static char *_curtok;
 
-volatile uint8_t *colltabptr = colltab[0];
+volatile uint8_t *colltabptr = &stringcolltab_c_en_US[0];
 
 volatile uint8_t *localecolltab;
 
@@ -334,7 +335,7 @@ strxfrm(char *str1,
         char *str2,
         size_t n)
 {
-    fprintf(stderr, "TODO: strxfrm() not implemented\n");
+//    fprintf(stderr, "TODO: strxfrm() not implemented\n");
 
     exit(1);
 }
@@ -603,7 +604,7 @@ memset(void *ptr,
 char
 *strerror(int errnum)
 {
-    fprintf(stderr, "TODO: strerror() not implemented\n");
+//    fprintf(stderr, "TODO: strerror() not implemented\n");
     
     return NULL;
 }

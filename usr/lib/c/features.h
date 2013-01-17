@@ -14,7 +14,7 @@
 #define _BSD_SOURCE         1           // enable BSD features
 #define _REENTRANT          1           // reentrancy (for multithreading)
 #define _THREAD_SAFE        1           // thread safety
-#define _ZERO_SOURCE        0           // enable zero features
+#define _ZERO_SOURCE        1           // enable zero features
 #define _UNIX_SOURCE        1           // enable Unix features
 
 #endif /* __FEATURES_H__ */

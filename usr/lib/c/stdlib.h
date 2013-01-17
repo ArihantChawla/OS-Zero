@@ -10,6 +10,8 @@
 
 #define RAND_MAX     0xffffffff
 
+void exit(int status);
+
 #define srand(useed) srand32(useed)
 int    rand(void);
 

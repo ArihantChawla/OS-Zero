@@ -17,8 +17,9 @@
 
 typedef void signalhandler_t(int);
 /* internal. */
-#define _sigvalid(sig)  ((sig) && !((sig) & ~SIGMASK))
-#define _sigisnorm(sig) ((sig) >= 0 && (sig) < SIGRTMIN)
+#define _sigvalid(sig)  ((sig) && (!((sig) & ~SIGMASK)))
+#define _sigrt(sig)     ((sig) && (!((sig) & ~SIGRTMASK)))
+#define _signorm(sig)   ((sig) && (!((sig) & SIGRTMASK)))
 
 #if (_POSIX_SOURCE)
 
@@ -58,21 +59,21 @@ typedef void     sighandler_t(int);
 #define sigaddset(sp, sig)                                              \
     ((!_sigvalid(sig)                                                   \
       ? (-1)                                                            \
-      : (_sigisnorm(sig)                                                \
+      : (_signorm(sig)                                                  \
          ? (_sigptr(sp)->norm |= (1UL << (sig)))                        \
          : (_sigptr(sp)->rt |= (1UL << ((sig) - SIGRTMIN))))),          \
      0)
 #define sigdelset(sp, sig)                                              \
     ((!_sigvalid(sig)                                                   \
       ? (-1)                                                            \
-      : (_sigisnorm(sig)                                                \
+      : (_signorm(sig)                                                  \
          ? (_sigptr(sp)->norm &= ~(1UL << (sig)))                       \
          : (_sigptr(sp)->rt &= ~(1UL << ((sig) - SIGRTMIN))))),         \
      0)
 #define sigismember(sp, sig)                                            \
     ((!_sigvalid(sig)                                                   \
       ? (-1)                                                            \
-      : (_sigisnorm(sig)                                                \
+      : (_signorm(sig)                                                  \
          ? ((_sigptr(sp)->norm >> (sig)) & 0x01)                        \
          : ((_sigptr(sp)->rt >> (sig - SIGRTMIN)) & 0x01))))
 
@@ -100,8 +101,6 @@ typedef void     sighandler_t(int);
 
 #else /* !SIG32BIT */
 
-#define _sigvalid(sig)  ((sig) && (!((sig) & ~SIGMASK)))
-#define _sigrt(sig)     ((sig) && (!((sig) & ~SIGRTMASK)))
 /* POSIX. */
 #define sigemptyset(sp) (*(s) = 0)
 #define sigfillset(sp)  (*(sp) = ~UINT64_C(0), 0)

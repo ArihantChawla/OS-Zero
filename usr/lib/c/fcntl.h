@@ -8,7 +8,9 @@ int posix_fallocate(int fd, off_t offste, off_t len);
 #endif
 #if (_POSIX_C_SOURCE >= 200112L)
 int posix_fadvise(int fd, off_t offset, size_t len, int advice);
+#endif
 #if (_GNU_SOURCE)
+typedef int64_t off64_t;
 ssize_t readahead(int fd, off64_t ofs, size_t count);
 #endif
 
