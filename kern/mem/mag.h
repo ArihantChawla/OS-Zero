@@ -18,9 +18,7 @@ struct maghdr {
     unsigned long  flg;
     unsigned long  n;
     unsigned long  ndx;
-#if (PTRBITS == 32)
     void          *ptab[1U << (PTRBITS - SLABMINLOG2 - PAGESIZELOG2)];
-#endif
 };
 
 #endif /* __MEM_MAG_H__ */

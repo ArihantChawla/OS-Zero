@@ -12,11 +12,14 @@
 #include <kern/util.h>
 #include <kern/mem.h>
 #include <kern/buf.h>
-#include <kern/mem/mag.h>
-#if defined(__i386__)
+#if defined(__x86_64__) || defined(__amd64__)
+#include <kern/unit/x86-64/vm.h>
+#include <kern/mem/slab64.h>
+#elif defined(__i386__)
 #include <kern/unit/ia32/vm.h>
 #include <kern/mem/slab32.h>
 #endif
+#include <kern/mem/mag.h>
 
 #define bufempty()   (bufstknext == bufnstk)
 #define bufnotfull() (bufstknext)
