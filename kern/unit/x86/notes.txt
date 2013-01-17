@@ -1,0 +1,2 @@
+- this directory contains things shared by the ia-32 and x86-64 kernels
+- per-cpu thread control blocks are accessed with the GS segment register
