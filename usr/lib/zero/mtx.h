@@ -1,6 +1,11 @@
 #ifndef __ZERO_MTX_H__
 #define __ZERO_MTX_H__
 
+/*
+ * Special thanks to Matthew 'kinetik' Gregan for help with the mutex code.
+ * :)
+ */
+
 //#define MTXOWNER 1
 #ifndef MTXOWNER
 #define MTXOWNER 0

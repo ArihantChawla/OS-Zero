@@ -1,3 +1,5 @@
+/* This code was donated by Matthew 'kinetik' Gregan. Thanks, Matthew. :) */
+
 #include <sys/time.h>
 
 #include <assert.h>
