@@ -42,7 +42,7 @@
  */
 
 #define INTSTAT 0
-#define HACKS   0
+#define HACKS   1
 #define ZEROMTX 1
 #define STAT    0
 
@@ -144,9 +144,9 @@ typedef pthread_mutex_t LK_T;
 #define BLKMINLOG2    5  /* minimum-size allocation */
 #define SLABTEENYLOG2 12 /* little block */
 #define SLABTINYLOG2  16 /* small-size block */
-#define SLABLOG2      19 /* base size for heap allocations */
-#define MAPMIDLOG2    21
-#define MAPBIGLOG2    22
+#define SLABLOG2      21 /* base size for heap allocations */
+#define MAPMIDLOG2    23
+#define MAPBIGLOG2    25
 #else
 #define BLKMINLOG2    5  /* minimum-size allocation */
 #define SLABTEENYLOG2 12 /* little block */
@@ -1208,7 +1208,7 @@ freemap(struct mag *mag)
     arn = _atab[aid];
     mlk(&arn->lktab[bid]);
 #if (HACKS)
-    mptr = _ftab[bid];
+    mptr1 = _ftab[bid];
     while (mptr1) {
         mptr2 = mptr1->next;
         if (ismapbkt(mptr1->bid)) {
