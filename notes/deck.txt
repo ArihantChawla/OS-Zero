@@ -11,8 +11,9 @@ Zero Deck API
   - close connection
     - standard descriptors
     - tty devices
-- deckwrite()
-- deckread()
+- deckecho()
+- deckuread()
 - deckprintf()
 - deckrec()
+- decstop()
 

@@ -144,9 +144,9 @@ typedef pthread_mutex_t LK_T;
 #define BLKMINLOG2    5  /* minimum-size allocation */
 #define SLABTEENYLOG2 12 /* little block */
 #define SLABTINYLOG2  16 /* small-size block */
-#define SLABLOG2      21 /* base size for heap allocations */
-#define MAPMIDLOG2    23
-#define MAPBIGLOG2    25
+#define SLABLOG2      22 /* base size for heap allocations */
+#define MAPMIDLOG2    24
+#define MAPBIGLOG2    26
 #else
 #define BLKMINLOG2    5  /* minimum-size allocation */
 #define SLABTEENYLOG2 12 /* little block */
@@ -158,7 +158,7 @@ typedef pthread_mutex_t LK_T;
 #define HQMAX         SLABLOG2
 #define NBKT          (8 * PTRSIZE)
 #if (MTSAFE)
-#define NARN          8
+#define NARN          4
 #else
 #define NARN          1
 #endif

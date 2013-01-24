@@ -1,11 +1,19 @@
 Ideas and Notes for Zero Software Architecture
 ----------------------------------------------
 
+Goals
+-----
+- modern Unix-like kernel with advanced thread scheduler features
+- hardware and software support for multimedia production and games as well as
+  lighter-weight user applications
+
 kern
 ----
 
 - Portable base kernel modules
 - <mem.h> - memory abstraction
+  - <mag.h> - magazine buffer layer
+  - <slab.h> - slab allocator
 - <io.h> - I/O primitives
 - <buf.h> - buffer/block cache interface
   - support buffers mapped read-only into user processes; avoid system-to-user
@@ -15,15 +23,15 @@ kern
 - <types.h> - kernel types
 - <page.h> - page structures and management
 - <proc.h> - process and thread support
-- <msg.h> - message queue interface
+- <msg.h> - message queue interface; high-speed shared memory for localhost
 - <syscall.h> - system call interface
 - <tmr.h> - event timer interface; PIT, APIC, HPET
 
-libunit
--------
+libpu
+-----
 
-- A library to support different CPUs and other programming units (FPU, GPU,
-  physics accelerators a'la PhysX, and so forth).
+- A library to support different processor units (ALU, FPU, GPU,
+  physics units (PPU) a'la PhysX, and so forth).
 - Thread schedulers for different scenarios; desktop vs. server mode
 - Process and thread abstractions.
 
@@ -31,7 +39,7 @@ libkmem
 -------
 
 - Kernel memory support library.
-- <sem.h> - semaphores including mutexes
+- <sem.h> - semaphores
 - <mtx.h> - mutex interface; use machine words instead of mutex structures
 - <map.h> - mapping physical memory and files to virtual memory
 - <shm.h> - shared memory support
@@ -95,7 +103,7 @@ libgfx
 - <op.h> - basic graphics operations
   - gfxmapfb(bus, dev);
   - gfxplotpix(buf, x, y, pix);
-    - gfxdithpix(buf, x, y, pix)
+    - gfxdithpix(buf, x, y, pix);
     - gfxrendpix(buf, x, y, pix);
     - gfxblendpix(buf, x, y, pix, alpha);
     - gfxaddpix(buf, x, y, pix);
@@ -125,8 +133,8 @@ libimg
   - fade routines
   - [logical/bitwise] raster operations
 
-libphys
--------
+libppu
+------
 
 - Support library for physics accelerators such as PhysX.
 
@@ -137,9 +145,25 @@ libsnd
 - <mix.h> - mixer interface/object
 - <seq.h> - sequencer
 - <pat.h> - patch interface
+- <dsp.h> - DSP interface
 
 libav
 -----
 
 - Audio/video interface library.
+
+libgl
+-----
+
+- Implementation of OpenGL (Mesa?)
+
+libcl
+-----
+
+- Implementation of OpenCL (Cuda, AMD, etc.)
+
+libdx
+-----
+
+- Implementation of DirectX?
 
