@@ -45,6 +45,7 @@
 #define HACKS   1
 #define ZEROMTX 1
 #define STAT    0
+#define ARNQBUF 1
 
 #define SPINLK  0
 /* NOT sure if FreeBSD still needs spinlocks */
@@ -144,7 +145,7 @@ typedef pthread_mutex_t LK_T;
 #define BLKMINLOG2    5  /* minimum-size allocation */
 #define SLABTEENYLOG2 12 /* little block */
 #define SLABTINYLOG2  16 /* small-size block */
-#define SLABLOG2      22 /* base size for heap allocations */
+#define SLABLOG2      21 /* base size for heap allocations */
 #define MAPMIDLOG2    24
 #define MAPBIGLOG2    26
 #else
@@ -190,6 +191,17 @@ typedef pthread_mutex_t LK_T;
 
 /* macros */
 
+#if (ARNQBUF)
+#define narnbufmag(bid)   (1L << narnbufmaglog2(bid))
+#define narnbufmaglog2(bid)                                             \
+    (((bid) <= MAPMIDLOG2)                                              \
+     ? 5                                                                \
+     : (((bid) <= MAPBIGLOG2)                                           \
+        ? 2                                                             \
+        : 0))
+#else
+#define narnbufmag(bid)   0
+#endif
 #if (TUNEBUF)
 #define isbufbkt(bid)     ((bid) <= 24)
 #define nmagslablog2(bid) (_nslabtab[(bid)])
@@ -1199,15 +1211,17 @@ freemap(struct mag *mag)
     long         bid = mag->bid;
     long         bsz = blksz(bid);
     long         max = mag->max;
-#if (HACKS)
+    long         nfree;
+#if (HACKS) && (!ARNQBUF)
     struct mag  *mptr1;
     struct mag  *mptr2;
 #endif
     struct mag **hbuf;
-
+    
     arn = _atab[aid];
     mlk(&arn->lktab[bid]);
 #if (HACKS)
+#if (!ARNQBUF)
     mptr1 = _ftab[bid];
     while (mptr1) {
         mptr2 = mptr1->next;
@@ -1245,18 +1259,30 @@ freemap(struct mag *mag)
         }
         mptr1 = mptr2;
     }
+#endif /* !ARNQBUF */
+#endif /* HACKS */
+
+#if (ARNQBUF)
+    mlk(&_flktab[bid]);
+    nfree = _fcnt[bid];
+#else
+    nfree = 0;
 #endif
     cur = arn->hcur;
     hbuf = arn->htab;
-    if (!cur) {
+    if (!cur || nfree < narnbufmag(bid)) {
         mag->prev = NULL;
+#if (!ARNQBUF)
         mlk(&_flktab[bid]);
+#endif
         mag->next = _ftab[bid];
         _ftab[bid] = mag;
 #if (HACKS)
         _fcnt[bid]++;
 #endif
+#if (!ARNQBUF)
         munlk(&_flktab[bid]);
+#endif
     } else {
         if (!unmapanon(clrptr(mag->adr), max * bsz)) {
 #if (VALGRIND)
@@ -1289,6 +1315,9 @@ freemap(struct mag *mag)
             arn->hcur = cur;
         }
     }
+#if (ARNQBUF)
+    munlk(&_flktab[bid]);
+#endif
     munlk(&arn->lktab[bid]);
 
     return;
