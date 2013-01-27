@@ -145,7 +145,7 @@ typedef pthread_mutex_t LK_T;
 #define BLKMINLOG2    5  /* minimum-size allocation */
 #define SLABTEENYLOG2 12 /* little block */
 #define SLABTINYLOG2  16 /* small-size block */
-#define SLABLOG2      21 /* base size for heap allocations */
+#define SLABLOG2      22 /* base size for heap allocations */
 #define MAPMIDLOG2    24
 #define MAPBIGLOG2    26
 #else
@@ -195,9 +195,9 @@ typedef pthread_mutex_t LK_T;
 #define narnbufmag(bid)   (1L << narnbufmaglog2(bid))
 #define narnbufmaglog2(bid)                                             \
     (((bid) <= MAPMIDLOG2)                                              \
-     ? 5                                                                \
+     ? (3 + MAPMIDLOG2 - (bid))                                         \
      : (((bid) <= MAPBIGLOG2)                                           \
-        ? 2                                                             \
+        ? (1 + MAPBIGLOG2 - (bid))                                      \
         : 0))
 #else
 #define narnbufmag(bid)   0

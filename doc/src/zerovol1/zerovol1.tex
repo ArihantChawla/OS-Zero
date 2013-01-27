@@ -152,14 +152,14 @@
 
 	Zero uses the Grand Unified Boot Loader (GRUB) to start the system.
 	Using GRUB requires a multiboot header; the following is the file
-	\textbf{kern/ia32/boot.h} which shows the multiboot header and
+	\textbf{kern/unit/ia32/boot.h} which shows the multiboot header and
 	parameters in C syntax (see \textbf{struct mboothdr}).
 
 \newpage
 
-	\textbf{kern/ia32/boot.h}
+	\textbf{kern/unit/ia32/boot.h}
 
-\VerbatimInput{../../../kern/ia32/boot.h}
+\VerbatimInput{../../../kern/unit/ia32/boot.h}
 
 	\textbf{TODO: use memory map provided by GRUB.}
 
@@ -170,9 +170,9 @@
 	The following is our bootstrap code utilising GRUB with a multiboot
 	header.
 
-	\textbf{kern/ia32/boot.S}
+	\textbf{kern/unit/ia32/boot.S}
 
-\VerbatimInput{../../../kern/ia32/boot.S}
+\VerbatimInput{../../../kern/unit/ia32/boot.S}
 
 \newpage
 
@@ -180,13 +180,13 @@
 
 	\textbf{Assembly Routines}
 
-	The following code is \textbf{kern/ia32/setup.S}, which implements
+	The following code is \textbf{kern/unit/ia32/setup.S}, which implements
 	assembly routines for system initialisation. I will refer to parts of
 	this code later in the related subsections of this chapter.
 
-	\textbf{kern/ia32/setup.S}
+	\textbf{kern/unit/ia32/setup.S}
 
-\VerbatimInput{../../../kern/ia32/setup.S}
+\VerbatimInput{../../../kern/unit/ia32/setup.S}
 
 \newpage
 
@@ -234,16 +234,17 @@
 
 	Interrupt vector, or \textbf{IDT} (interrupt descriptor table), sets up
 	handler functions for interrupts. This table is initialised in
-	\textbf{kern/ia32/trap.c} and activated in \textbf{kern/ia32/setup.S}.
+	\textbf{kern/unit/ia32/trap.c} and activated in
+	\textbf{kern/unit/ia32/setup.S}.
 
-	\textbf{kern/ia32/trap.c}
+	\textbf{kern/unit/ia32/trap.c}
 
-\VerbatimInput{../../../kern/ia32/trap.c}
+\VerbatimInput{../../../kern/unit/x86/trap.c}
 
 	\textbf{idtset()}
 
 	Our interrupt vector is enabled with the \textbf{idtset} function in
-	\textbf{kern/ia32/setup.S} shown earlier in this chapter.
+	\textbf{kern/unit/ia32/setup.S} shown earlier in this chapter.
 
 \newpage
 
@@ -256,9 +257,9 @@
 	IA-32 multiprocessor startup sequence.
 	\textbf{Please help me fix this	code}.
 
-	\textbf{kern/ia32/mpentry.S}
+	\textbf{kern/unit/ia32/mpentry.S}
 
-\VerbatimInput{../../../kern/ia32/mpentry.S}
+\VerbatimInput{../../../kern/unit/ia32/mpentry.S}
 
 \newpage
 
@@ -271,9 +272,9 @@
 	following is the linker script for the IA-32 kernel. The segments are
 	discussed in more detail in the \textbf{Memory Management} chapter.
 
-	\textbf{kern/ia32/kern.lds}
+	\textbf{kern/unit/ia32/kern.lds}
 
-\VerbatimInput{../../../kern/ia32/kern.lds}
+\VerbatimInput{../../../kern/unit/ia32/kern.lds}
 
 \newpage
 
@@ -512,13 +513,13 @@
 	The following header file is a part of our driver for the 8253 timer
 	chip (also known as the PIT, short for programmable interrupt timer).
 
-\VerbatimInput{../../../kern/ia32/pit.h}
+\VerbatimInput{../../../kern/unit/x86/pit.h}
 
 \newpage
 
 	The following code implements our PIT initialisation.
 
-\VerbatimInput{../../../kern/ia32/pit.c}
+\VerbatimInput{../../../kern/unit/x86/pit.c}
 
 \newpage
 
@@ -570,10 +571,11 @@
 
 	\textbf{Recursive Page Directory}
 
-	The page directory is declared in \textbf{kern/ia32/boot.S}. It's just
-	a single page of physical memory identity-mapped at the same virtual as
-	physical address. A single page directory entry points to the page
-	directory itself, creating a recursion when looking for page addresses.
+	The page directory is declared in \textbf{kern/unit/ia32/boot.S}.
+	It's just a single page of physical memory identity-mapped at the same
+	virtual and physical address. A single page directory entry points to
+	the page directory itself, creating a recursion when looking for page
+	addresses.
 
 	\textbf{Table of Page Tables}
 
@@ -666,9 +668,9 @@ MPSTKSIZE           & MPSTK0   & processor 0 kernel-mode stack \\
 
 	This header file declares parts of our virtual memory manager.
 
-	\textbf{kern/ia32/vm.h}
+	\textbf{kern/unit/ia32/vm.h}
 
-\VerbatimInput{../../../kern/ia32/vm.h}
+\VerbatimInput{../../../kern/unit/ia32/vm.h}
 
 \chapter{I/O Operations}
 
@@ -676,9 +678,9 @@ MPSTKSIZE           & MPSTK0   & processor 0 kernel-mode stack \\
 
 	This header file declares our DMA I/O interface.
 
-	\textbf{kern/ia32/dma.h}
+	\textbf{kern/unit/x86/dma.h}
 
-\VerbatimInput{../../../kern/ia32/dma.h}
+\VerbatimInput{../../../kern/unit/x86/dma.h}
 
 \newpage
 
