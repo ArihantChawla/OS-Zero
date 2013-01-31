@@ -4,9 +4,7 @@
 #include <stdint.h>
 #include <kern/unit/x86/io.h>
 
-void vgasyncscr(void);
-void vgaputs(char *str);
-void vgaputchar(int ch);
+extern void *vgacurcon;
 
 #define VGANCON        8
 #define VGABUFSIZE     (1 << VGABUFSIZELOG2)
@@ -15,12 +13,14 @@ void vgaputchar(int ch);
 #define VGABUFADR      0x000b8000U
 #define VGACONBUFSIZE  (VGANCON * VGABUFSIZE)
 #if (VGAGFX)
-#define VGAFONTADR  0x000a0000
-#define VGAFONTSIZE 4096
-#define VGANGLYPH   256
-#define VGAGLYPHH   16
-#define VGAGLYPHW   8
+#define VGAFONTADR     0x000a0000
+#define VGAFONTSIZE    4096
+#define VGANGLYPH      256
+#define VGAGLYPHH      16
+#define VGAGLYPHW      8
 #endif
+
+#define vgaputs(str) vgaputs2(vgacurcon, str)
 
 /* text interface */
 
@@ -204,5 +204,9 @@ struct vgainfo {
         }                                                               \
     } while (0)                                                         \
         
+void vgasyncscr(void);
+void vgaputs2(struct vgacon *con, char *str);
+void vgaputchar(int ch);
+
 #endif /* __KERN_IO_DRV_PC_VGA_H__ */
 

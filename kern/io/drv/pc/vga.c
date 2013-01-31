@@ -2,12 +2,17 @@
 #include <stddef.h>
 #include <zero/cdecl.h>
 #include <kern/conf.h>
+#if (VGAGFX)
+#include <kern/mem.h>
+#endif
 #include <kern/util.h>
 #include <kern/io/drv/pc/vga.h>
 
 struct vgacon  _vgacontab[VGANCON] ALIGNED(PAGESIZE);
-static long    _vgacurcon;
+void          *vgacurcon;
+#if (VGAGFX)
 static void   *_vgafontbuf;
+#endif
 
 #if (VGAGFX)
 
@@ -17,7 +22,7 @@ vgainitgfx(void)
     ;
 }
 
-/* copy VGA font glyph data to VGAFONTADR */
+/* copy font from VGA RAM */
 void
 vgagetfont(void)
 {
@@ -33,7 +38,7 @@ vgagetfont(void)
 }
 
 void
-vgaputpix(int32_t fg, int32_t x, int32_t y)
+vgaputpix(int32_t pix, int32_t x, int32_t y)
 {
     ;
 }
@@ -71,7 +76,7 @@ vgainitcon(int w, int h)
         ptr += VGABUFSIZE;
         con++;
     }
-    _vgacurcon = 0;
+    vgacurcon = &_vgacontab[0];
     vgamoveto(0, 0);
 #if 0
     kprintf("VGA @ 0x%x - width = %d, height = %d, %d consoles\n",
@@ -81,6 +86,8 @@ vgainitcon(int w, int h)
     return;
 }
 
+/* output string on the current console */
+#if 0
 void
 vgaputs(char *str)
 {
@@ -97,7 +104,7 @@ vgaputs(char *str)
     uint8_t        atr;
 #endif
 
-    con = &_vgacontab[_vgacurcon];
+    con = vgacurcon;
     x = con->x;
     y = con->y;
     w = con->w;
@@ -135,11 +142,12 @@ vgaputs(char *str)
 
     return;
 }
+#endif
 
+/* output string on a given console */
 void
-vgaputs2(long conid, char *str)
+vgaputs2(struct vgacon *con, char *str)
 {
-    struct vgacon *con;
 #if (!VGAGFX)
     uint16_t      *ptr;
 #endif
@@ -152,7 +160,6 @@ vgaputs2(long conid, char *str)
     uint8_t        atr;
 #endif
 
-    con = &_vgacontab[conid];
     x = con->x;
     y = con->y;
     w = con->w;
@@ -199,7 +206,7 @@ vgaputchar(int ch)
     uint16_t      *ptr;
 #endif
 
-    con = &_vgacontab[_vgacurcon];
+    con = vgacurcon;
 #if (VGAGFX)
     vgadrawchar(ch, (con->x << 3), (con->y << 3), con->fg, con->bg);
 #else
