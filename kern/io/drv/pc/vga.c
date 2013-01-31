@@ -7,43 +7,27 @@
 
 struct vgacon  _vgacontab[VGANCON] ALIGNED(PAGESIZE);
 static long    _vgacurcon;
+static void   *_vgafontbuf;
 
 #if (VGAGFX)
+
+void
+vgainitgfx(void)
+{
+    ;
+}
 
 /* copy VGA font glyph data to VGAFONTADR */
 void
 vgagetfont(void)
 {
-    __asm__ __volatile__ ("movw $0x05, %%ax\n"          // clear even/odd mode
-                          "movw $0x03ce, %%dx\n"
-                          "outw %%ax, %%dx\n"
-                          "movw $0x0406, %%ax\n"        // map VGA to 0xa0000
-                          "outw %%ax, %%dx\n"
-                          "movw $0x03c4, %%dx\n"        // set bitplane 2
-                          "movw $0x0402, %%ax\n"
-                          "outw %%ax, %%dx\n"           // clear even/odd mode
-                          "movw $0x0704, %%ax\n"
-                          "outw %%ax, %%dx\n"
-                          "movl %c0, %%esi\n"           // glyph address
-                          "movl %c1, %%ecx\n"           // glyph count
-                          "_copy: movsd\n"              // copy glyph map
-                          "movsd\n"
-                          "movsd\n"
-                          "movsd\n"
-                          "addl $16, %%esi\n"
-                          "loop _copy\n"
-                          "movw $0x0302, %%ax\n"        // restore VGA to normal
-                          "outw %%ax, %%dx\n"
-                          "movw $0x0304, %%ax\n"
-                          "outw %%ax, %%dx\n"
-                          "movw $0x03ce, %%dx\n"
-                          "movw $0x1005, %%ax\n"
-                          "outw %%ax, %%dx\n"
-                          "movw $0x0a06, %%ax\n"
-                          "outw %%ax, %%dx\n"
-                          :
-                          : "i" (VGAFONTADR), "i" (VGANGLYPH)
-                          : "eax", "edx", "edi", "esi");
+    _vgafontbuf = kwalloc(VGAFONTSIZE);
+    outw(0x0005, 0x03ce);
+    outw(0x0406, 0x03ce);
+    outw(0x0402, 0x03c4);
+    outw(0x0704, 0x03c4);
+    bcopy(_vgafontbuf, (void *)VGAFONTADR, VGAFONTSIZE);
+    vgareset();
 
     return;
 }

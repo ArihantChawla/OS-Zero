@@ -135,12 +135,19 @@ struct vgainfo {
 
 /* graphics interface */
 
+#define vgareset()                                                      \
+    do {                                                                \
+        outw(0x0302, 0x03c4);                                           \
+        outw(0x1005, 0x03ce);                                           \
+        outw(0x0a06, 0x03ce);                                           \
+    } while (0)
+
 /* draw character with background */
 #define vgadrawchar(c, x, y, fg, bg)                                    \
     do {                                                                \
         int cy;                                                         \
         int yofs;                                                       \
-        uint8_t *gp = (uint8_t *)VGAFONTADR + ((int)c << 4);            \
+        uint8_t *gp = (uint8_t *)_vgafontbuf + ((int)c << 4);           \
         uint8_t  g;                                                     \
                                                                         \
         for (cy = 0 ; cy < VGAGLYPHH ; cy++) {                          \
@@ -163,7 +170,7 @@ struct vgainfo {
     do {                                                                \
         int cy;                                                         \
         int yofs;                                                       \
-        uint8_t *gp = (uint8_t *)VGAFONTADR + ((int)c << 4);            \
+        uint8_t *gp = (uint8_t *)_vgafontbuf + ((int)c << 4);           \
         uint8_t  g;                                                     \
                                                                         \
         for (cy = 0 ; cy < VGAGLYPHH ; cy++) {                          \
