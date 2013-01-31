@@ -14,11 +14,27 @@ void vgaputchar(int ch);
 #define VGACHARSIZE    2
 #define VGABUFADR      0x000b8000U
 #define VGACONBUFSIZE  (VGANCON * VGABUFSIZE)
+#if (VGAGFX)
+#define VGAFONTADR  0x000a0000
+#define VGAFONTSIZE 4096
+#define VGANGLYPH   256
+#define VGAGLYPHH   16
+#define VGAGLYPHW   8
+#endif
+
+/* text interface */
 
 /* interface macros */
-#define vgasetfg(atr, c) ((atr) | (c))
-#define vgasetbg(atr, c) ((atr)| ((c) < 4))
-#define vgasetblink(ch)  ((ch) | VGABLINK)
+#if (VGAGFX)
+#define vgasetfg(con, fg)                                               \
+    ((con)->fg = (fg))
+#define vgasetbg(con, bg)                                               \
+    ((con)->bg = (bg))
+#else
+#define vgasetfg(atr, fg) ((atr) | (fg))
+#define vgasetbg(atr, bg) ((atr)| ((bg) < 4))
+#endif
+#define vgasetblink(ch)   ((ch) | VGABLINK)
 #define vgasetfgcolor(c)                                                \
     do {                                                                \
         struct vgacon *_con;                                            \
@@ -91,12 +107,19 @@ void vgaputchar(int ch);
 
 /* vga [text] console structure */
 struct vgacon {
+#if (VGAGFX)
+    int32_t  fg;
+    int32_t  bg;
+#else
     uint16_t *buf;
+#endif
     uint8_t   x;
     uint8_t   y;
     uint8_t   w;
     uint8_t   h;
+#if (!VGAGFX)
     uint16_t  chatr;
+#endif
     long      nbufln;   // number of buffered lines
     void     *data;     // text buffers
 } PACK;
@@ -110,5 +133,69 @@ struct vgainfo {
     long  fmt;
 };
 
+/* graphics interface */
+
+/* draw character with background */
+#define vgadrawchar(c, x, y, fg, bg)                                    \
+    do {                                                                \
+        int cy;                                                         \
+        int yofs;                                                       \
+        uint8_t *gp = (uint8_t *)VGAFONTADR + ((int)c << 4);            \
+        uint8_t  g;                                                     \
+                                                                        \
+        for (cy = 0 ; cy < VGAGLYPHH ; cy++) {                          \
+            g = *gp;                                                    \
+            yofs = y + cy - 12;                                         \
+            vgaputpix((g & 0x01) ? fg : bg, x, yofs);                   \
+            vgaputpix((g & 0x02) ? fg : bg, x + 1, yofs);               \
+            vgaputpix((g & 0x04) ? fg : bg, x + 2, yofs);               \
+            vgaputpix((g & 0x08) ? fg : bg, x + 3, yofs);               \
+            vgaputpix((g & 0x10) ? fg : bg, x + 4, yofs);               \
+            vgaputpix((g & 0x20) ? fg : bg, x + 5, yofs);               \
+            vgaputpix((g & 0x40) ? fg : bg, x + 6, yofs);               \
+            vgaputpix((g & 0x80) ? fg : bg, x + 7, yofs);               \
+            gp++;                                                       \
+        }                                                               \
+    } while (0)                                                         \
+
+/* draw character without background (transparent) */
+#define vgadrawcharfg(c, x, y, fg, bg)                                  \
+    do {                                                                \
+        int cy;                                                         \
+        int yofs;                                                       \
+        uint8_t *gp = (uint8_t *)VGAFONTADR + ((int)c << 4);            \
+        uint8_t  g;                                                     \
+                                                                        \
+        for (cy = 0 ; cy < VGAGLYPHH ; cy++) {                          \
+            g = *gp;                                                    \
+            yofs = y + cy - 12;                                         \
+            if (g & 0x01) {                                             \
+                vgaputpix(fg, x, yofs);                                 \
+            }                                                           \
+            if (g & 0x02) {                                             \
+                vgaputpix(fg, x + 1, yofs);                             \
+            }                                                           \
+            if (g & 0x04) {                                             \
+                vgaputpix(fg, x + 2, yofs);                             \
+            }                                                           \
+            if (g & 0x08) {                                             \
+                vgaputpix(fg, x + 3, yofs);                             \
+            }                                                           \
+            if (g & 0x10) {                                             \
+                vgaputpix(fg, x + 4, yofs);                             \
+            }                                                           \
+            if (g & 0x20) {                                             \
+                vgaputpix(fg, x + 5, yofs);                             \
+            }                                                           \
+            if (g & 0x40) {                                             \
+                vgaputpix(fg, x + 6, yofs);                             \
+            }                                                           \
+            if (g & 0x80) {                                             \
+                vgaputpix(fg, x + 7, yofs);                             \
+            }                                                           \
+            gp++;                                                       \
+        }                                                               \
+    } while (0)                                                         \
+        
 #endif /* __KERN_IO_DRV_PC_VGA_H__ */
 
