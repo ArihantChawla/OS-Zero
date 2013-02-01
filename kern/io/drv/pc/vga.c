@@ -9,7 +9,7 @@
 #include <kern/io/drv/pc/vga.h>
 
 struct vgacon  _vgacontab[VGANCON] ALIGNED(PAGESIZE);
-void          *vgacurcon;
+long           vgacurcon;
 #if (VGAGFX)
 static void   *_vgafontbuf;
 #endif
@@ -76,7 +76,7 @@ vgainitcon(int w, int h)
         ptr += VGABUFSIZE;
         con++;
     }
-    vgacurcon = &_vgacontab[0];
+    vgacurcon = 0;
     vgamoveto(0, 0);
 #if 0
     kprintf("VGA @ 0x%x - width = %d, height = %d, %d consoles\n",
@@ -87,7 +87,6 @@ vgainitcon(int w, int h)
 }
 
 /* output string on the current console */
-#if 0
 void
 vgaputs(char *str)
 {
@@ -104,7 +103,7 @@ vgaputs(char *str)
     uint8_t        atr;
 #endif
 
-    con = vgacurcon;
+    con = &_vgacontab[vgacurcon];
     x = con->x;
     y = con->y;
     w = con->w;
@@ -142,7 +141,6 @@ vgaputs(char *str)
 
     return;
 }
-#endif
 
 /* output string on a given console */
 void
@@ -206,7 +204,7 @@ vgaputchar(int ch)
     uint16_t      *ptr;
 #endif
 
-    con = vgacurcon;
+    con = &_vgacontab[vgacurcon];
 #if (VGAGFX)
     vgadrawchar(ch, (con->x << 3), (con->y << 3), con->fg, con->bg);
 #else

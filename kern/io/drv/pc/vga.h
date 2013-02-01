@@ -4,8 +4,6 @@
 #include <stdint.h>
 #include <kern/unit/x86/io.h>
 
-extern void *vgacurcon;
-
 #define VGANCON        8
 #define VGABUFSIZE     (1 << VGABUFSIZELOG2)
 #define VGABUFSIZELOG2 12
@@ -19,8 +17,6 @@ extern void *vgacurcon;
 #define VGAGLYPHH      16
 #define VGAGLYPHW      8
 #endif
-
-#define vgaputs(str) vgaputs2(vgacurcon, str)
 
 /* text interface */
 
@@ -205,7 +201,7 @@ struct vgainfo {
     } while (0)                                                         \
         
 void vgasyncscr(void);
-void vgaputs2(struct vgacon *con, char *str);
+void vgaputs(char *str);
 void vgaputchar(int ch);
 
 #endif /* __KERN_IO_DRV_PC_VGA_H__ */
