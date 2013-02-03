@@ -2,7 +2,7 @@
 #include <stddef.h>
 #include <zero/cdecl.h>
 #include <kern/conf.h>
-#if (VGAGFX)
+#if (VGAGFX) || (VBE2)
 #include <kern/mem.h>
 #endif
 #include <kern/util.h>
@@ -10,11 +10,11 @@
 
 struct vgacon  _vgacontab[VGANCON] ALIGNED(PAGESIZE);
 long           vgacurcon;
-#if (VGAGFX)
+#if (VGAGFX) || (VBE2)
 static void   *_vgafontbuf;
 #endif
 
-#if (VGAGFX)
+#if (VGAGFX) || (VBE2)
 
 void
 vgainitgfx(void)
@@ -53,13 +53,16 @@ vgainitcon(int w, int h)
     uint8_t       *ptr = (uint8_t *)VGABUFADR;
     long           l;
 
-#if (VGAGFX)
+#if (VGAGFX) || (VBE2)
     vgagetfont();
+#endif
+#if (VBE2)
 #endif
     for (l = 0 ; l < VGANCON ; l++) {
         bzero(ptr, PAGESIZE);
-#if (VGAGFX)
+#if (VGAGFX) || (VBE2)
         con->fg = 0xffffffff;
+        con->buf = kwalloc(w * h * sizeof(argb32_t));
 #else
         con->buf = (uint16_t *)ptr;
 #endif

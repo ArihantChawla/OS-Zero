@@ -127,6 +127,16 @@ struct vbemode {
 //    uint8_t    res2[206];
 };
 
+/* VBE screen information */
+struct vbescreen {
+    void *fbuf;
+    void *dbuf;
+    long  w;
+    long  h;
+    long  nbpp;
+    long  fmt;
+};
+
 #endif /* !defined(__ASSEMBLY__) */
 
 #endif /* __KERN_IO_DRV_PC_VBE2_H__ */

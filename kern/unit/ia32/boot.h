@@ -3,8 +3,8 @@
 
 #if !defined(__ASSEMBLY__)
 #include <stdint.h>
-#include <kern/conf.h>
 #endif
+#include <kern/conf.h>
 
 #if !defined(__ASSEMBLY__)
 /* RAM-size in bytes */

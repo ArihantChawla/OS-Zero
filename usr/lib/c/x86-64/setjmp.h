@@ -10,11 +10,8 @@
 
 #include <stddef.h>
 #include <stdint.h>
-//#include <signal.h>
+#include <signal.h>
 #include <zero/cdecl.h>
-
-//#include <mach/abi.h>
-
 
 struct _jmpbuf {
     int64_t  rbx;
@@ -26,9 +23,9 @@ struct _jmpbuf {
     int64_t  rsp;
     int64_t  rip;
 #if (_POSIX_SOURCE)
-//    sigset_t sigmask;
+    sigset_t sigmask;
 #elif (_BSD_SOURCE)
-//    int      sigmask;
+    int      sigmask;
 #endif
 } PACK();
 

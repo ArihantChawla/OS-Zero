@@ -103,9 +103,10 @@
 
 /* vga [text] console structure */
 struct vgacon {
-#if (VGAGFX)
+#if (VGAGFX) || (VBE)
     int32_t  fg;
     int32_t  bg;
+    void    *buf;
 #else
     uint16_t *buf;
 #endif
@@ -119,15 +120,6 @@ struct vgacon {
     long      nbufln;   // number of buffered lines
     void     *data;     // text buffers
 } PACK;
-
-/* vga screen information */
-struct vgainfo {
-    void *fbuf;
-    long  w;
-    long  h;
-    long  nbpp;
-    long  fmt;
-};
 
 /* graphics interface */
 

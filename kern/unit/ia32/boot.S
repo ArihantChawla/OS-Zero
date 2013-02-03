@@ -32,10 +32,10 @@ mboothdr:
 .long	0	// load_end_addr
 .long	0	// bss_end_addr
 .long	0	// entry_addr
-.long	1	// video mode type
-.long	640	// video width
-.long	480	// video height
-.long	8	// video depth
+.long	0	// video mode type
+.long	1024	// video width
+.long	768	// video height
+.long	24	// video depth
 #endif
 
 	/* kernel startup */
