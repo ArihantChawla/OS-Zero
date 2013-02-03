@@ -39,6 +39,12 @@ kmain(struct mboothdr *hdr, unsigned long pmemsz)
     bzero(&_bssvirt, (uint32_t)&_ebss - (uint32_t)&_bss);
     curproc = &proctab[0];
     vgainitcon(80, 25);
+#if (VBE2)
+    vbe2printinfo(hdr);
+#endif
+#if (AC97)
+    ac97init();
+#endif
 //    meminit(vmphysadr(&_ebssvirt), pmemsz);
     meminit(vmphysadr(&_ebssvirt), max(pmemsz, 3584UL * 1024 * 1024));
     bfill(&kerniomap, 0xff, sizeof(kerniomap));

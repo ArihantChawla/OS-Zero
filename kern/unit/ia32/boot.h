@@ -14,7 +14,12 @@
 #define MBMAGIC     0x1BADB002
 #define MBPAGEALIGN (1 << 0)
 #define MBMEMINFO   (1 << 1)
+#if (VBE2)
+#define MBVIDEOMODE (1 << 2)
+#define MBFLAGS     (MBPAGEALIGN | MBMEMINFO | MBVIDEOMODE)
+#else
 #define MBFLAGS     (MBPAGEALIGN | MBMEMINFO)
+#endif
 #define MBCHKSUM    (-(MBMAGIC + MBFLAGS))
 
 /* flags to select fields to fill */
@@ -34,14 +39,14 @@
 #if !defined(__ASSEMBLY__)
 /* header structure to use in C code */
 struct mboothdr {
-    int32_t  flags;
-    int32_t  lomem;
-    int32_t  himem;
-    int32_t  bootdev;
-    int32_t  cmdline;
-    int32_t  modcnt;
-    int32_t  modadr;
-    int32_t  syms[3];
+    uint32_t flags;
+    uint32_t lomem;
+    uint32_t himem;
+    uint32_t bootdev;
+    uint32_t cmdline;
+    uint32_t modcnt;
+    uint32_t modadr;
+    uint32_t syms[4];
     uint32_t maplen;
     uint32_t mapadr;
     uint32_t drvlen;

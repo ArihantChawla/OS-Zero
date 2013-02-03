@@ -27,7 +27,7 @@ void
 kinit(void)
 {
     struct mboothdr *boothdr;
-    unsigned long pmemsz;
+    unsigned long    pmemsz;
 
 //    __asm__ __volatile__ ("sti\n");
     __asm__ __volatile__ ("cli\n");

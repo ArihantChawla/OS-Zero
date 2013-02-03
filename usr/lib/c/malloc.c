@@ -197,9 +197,9 @@ typedef pthread_mutex_t LK_T;
 #define narnbufmag(bid)   (1L << narnbufmaglog2(bid))
 #define narnbufmaglog2(bid)                                             \
     (((bid) <= MAPMIDLOG2)                                              \
-     ? (3 + MAPMIDLOG2 - (bid))                                         \
+     ? (2 + MAPMIDLOG2 - (bid))                                         \
      : (((bid) <= MAPBIGLOG2)                                           \
-        ? (1 + MAPBIGLOG2 - (bid))                                      \
+        ? (MAPBIGLOG2 - (bid))                                          \
         : 0))
 #else
 #define narnbufmag(bid)   0
@@ -672,7 +672,7 @@ relarn(void *arg)
 
 /* statistics */
 
-#if (STAT)
+#if (STAT) && (STDIO)
 void
 printstat(void)
 {
@@ -684,7 +684,7 @@ printstat(void)
 
     exit(0);
 }
-#elif (INTSTAT)
+#elif (INTSTAT) && (STDIO)
 void
 printintstat(void)
 {
@@ -1272,7 +1272,7 @@ freemap(struct mag *mag)
 #endif
     cur = arn->hcur;
     hbuf = arn->htab;
-    if (!cur || nfree < narnbufmag(bid)) {
+    if (!cur || nfree < max(narnbufmag(bid), 4)) {
         mag->prev = NULL;
 #if (!ARNQBUF)
         mlk(&_flktab[bid]);
@@ -1525,7 +1525,9 @@ getmem(size_t size,
 #ifdef ENOMEM
     if (!retptr) {
         errno = ENOMEM;
+#if (STDIO)
         fprintf(stderr, "%lx failed to allocate %ld bytes\n", aid, 1UL << bid);
+#endif
 
         abort();
     }
@@ -1582,7 +1584,10 @@ putmem(void *ptr)
         if (!chkflg(mptr, BALIGN)) {
             u8p = mptr - RZSZ;
             if (chkred(u8p) || chkred(u8p + blksz(bid) - RZSZ)) {
+#if (STDIO)
                 fprintf(stderr, "red-zone violation\n");
+#endif
+                abort();
             }
             ptr = clrptr(mptr);
         }

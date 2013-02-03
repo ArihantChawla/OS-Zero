@@ -26,6 +26,17 @@ mboothdr:
 .long	_MBMAGIC
 .long	_MBFLAGS
 .long	_MBCHKSUM
+#if (VBE2)
+.long	0	// header_addr
+.long	0	// load_addr
+.long	0	// load_end_addr
+.long	0	// bss_end_addr
+.long	0	// entry_addr
+.long	1	// video mode type
+.long	640	// video width
+.long	480	// video height
+.long	8	// video depth
+#endif
 
 	/* kernel startup */
 _start2:

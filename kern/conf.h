@@ -14,9 +14,10 @@
 #define NTHR    4096    // maximum number of running threads
 
 /* planned drivers */
+#define VBE2    1
 #define VGAGFX  0       // VGA graphics driver
 #define SB16    0       // Soundblaster 16 audio driver
-#define AC97    0       // AC97 audio drivers
+#define AC97    1       // AC97 audio drivers
 #define ENS1370 0       // Ensoniq 1370 audio driver
 
 #endif /* __KERN_CONF_H__ */

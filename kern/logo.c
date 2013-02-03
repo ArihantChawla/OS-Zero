@@ -9,5 +9,5 @@ logoprint(void)
     kprintf("   Z    EEEEEEE RRRRRR  O     O\n");
     kprintf("  Z     E       R     R O     O\n");
     kprintf(" Z      E       R     R O     O\n");
-    kprintf("ZZZZZZ  EEEEEEE R     R  OOOOO\n");
+    kprintf("ZZZZZZZ EEEEEEE R     R  OOOOO\n");
 }
