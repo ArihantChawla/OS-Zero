@@ -30,7 +30,7 @@
 #define NSLABFLGBIT 3
 
 #define slabclrbkt(hp)                                                  \
-    ((hp)->nfo &= ~SLABFLGBITS)
+    ((hp)->nfo &= SLABFLGBITS)
 #define slabsetbkt(hp, bkt)                                             \
     (slabclrbkt(hp), (hp)->nfo |= ((bkt) << NSLABFLGBIT))
 #define slabgetbkt(hp)                                                  \
