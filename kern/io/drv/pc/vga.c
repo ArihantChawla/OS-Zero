@@ -3,6 +3,7 @@
 #include <zero/cdecl.h>
 #include <kern/conf.h>
 #if (VGAGFX) || (VBE2)
+#include <gfx/rgb.h>
 #include <kern/mem.h>
 #endif
 #include <kern/util.h>

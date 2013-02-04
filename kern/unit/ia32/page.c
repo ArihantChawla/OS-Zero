@@ -19,6 +19,9 @@ pageinit(uintptr_t base, unsigned long nbphys)
 
     pageqlk(&physfreeq);
     vmnphyspages = n;
+#if (MEMTEST)
+    printf("initializing %d (%x) pages\n", n, n);
+#endif
     while (n--) {
         pagepush(pg, &physfreeq);
         pg++;
@@ -116,7 +119,7 @@ swapalloc(void)
 void
 swapwrite(unsigned long blk, unsigned long phys)
 {
-    
+    ; /* TODO */
 }
 
 void

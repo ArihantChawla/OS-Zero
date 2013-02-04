@@ -4,6 +4,11 @@
 #include <stdint.h>
 #include <endian.h>
 
+#define GFXARGB32 0
+#define GFXRGB888 1
+#define GFXRGB555 2
+#define GFXRGB565 3
+
 #define ALPHAOFS 24
 #define REDOFS   16
 #define GREENOFS 8

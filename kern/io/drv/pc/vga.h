@@ -10,13 +10,11 @@
 #define VGACHARSIZE    2
 #define VGABUFADR      0x000b8000U
 #define VGACONBUFSIZE  (VGANCON * VGABUFSIZE)
-#if (VGAGFX)
 #define VGAFONTADR     0x000a0000
 #define VGAFONTSIZE    4096
 #define VGANGLYPH      256
 #define VGAGLYPHH      16
 #define VGAGLYPHW      8
-#endif
 
 /* text interface */
 
@@ -103,7 +101,7 @@
 
 /* vga [text] console structure */
 struct vgacon {
-#if (VGAGFX) || (VBE)
+#if (VGAGFX) || (VBE2)
     int32_t  fg;
     int32_t  bg;
     void    *buf;

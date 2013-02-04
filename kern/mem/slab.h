@@ -7,8 +7,13 @@
 #include <kern/mem/slab32.h>
 #endif
 
-#define slablk(bkt)   mtxlk(&_physlktab[bkt], MEMPID);
-#define slabunlk(bkt) mtxunlk(&_physlktab[bkt], MEMPID);
+#if 0
+#define slablk(bkt)   fprintf(stderr, "LK(%d): %s: %s/%d\n", bkt, __FILE__, __FUNCTION__, __LINE__), mtxlk(&virtlktab[bkt], MEMPID);
+#define slabunlk(bkt) fprintf(stderr, "UNLK(%d): %s: %s/%d\n", bkt, __FILE__, __FUNCTION__, __LINE__), mtxunlk(&virtlktab[bkt], MEMPID);
+#else
+#define slablk(bkt)   mtxlk(&virtlktab[bkt], MEMPID);
+#define slabunlk(bkt) mtxunlk(&virtlktab[bkt], MEMPID);
+#endif
 
 #define SLAB_CONST_SIZE_TRICK 1
 #if (SLAB_CONST_SIZE_TRICK)
@@ -40,10 +45,12 @@
     ((hp)->nfo |= (flg))
 #define slabclrflg(hp)                                                  \
     ((hp)->nfo &= ~SLABFLGBITS)
+#if 0
 #define slabsetprev(hp, hdr, tab)                                       \
     (slabclrprev(hp), (hp)->link |= slabhdrnum(hdr, tab))
 #define slabsetnext(hp, hdr, tab)                                       \
     (slabclrnext(hp), (hp)->link |= slabhdrnum(hdr, tab) << 16)
+#endif
 
 extern struct slabhdr *virtslabtab[];
 extern struct slabhdr  virthdrtab[];

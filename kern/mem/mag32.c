@@ -7,8 +7,11 @@
 #include <kern/unit/ia32/vm.h>
 #endif
 #include <kern/mem/mag.h>
-
 #include <kern/mem/slab32.h>
+
+#if (MEMTEST)
+extern uint32_t pagetab[NPDE][NPTE];
+#endif
 
 #define maghdrnum(ptr)                                                  \
     ((uintptr_t)ptr >> SLABMINLOG2)
@@ -30,9 +33,14 @@ memalloc(unsigned long nb, long flg)
     long           incr;
 
     nb = max(PAGESIZE, nb);
-    if (nb > SLABMIN) {
+    if (nb >= SLABMIN) {
+#if (MEMTEST)
+        ret = vmmapvirt((uint32_t *)&pagetab,
+                        slaballoc(virtslabtab, virthdrtab, nb, 0), nb, flg);
+#else
         ret = vmmapvirt((uint32_t *)&_pagetab,
                         slaballoc(virtslabtab, virthdrtab, nb, 0), nb, flg);
+#endif
         hdr = &_maghdrtab[maghdrnum(ret)];
         hdr->n = hdr->ndx = 0;
     } else {
@@ -41,7 +49,7 @@ memalloc(unsigned long nb, long flg)
         hdr = _freehdrtab[bkt];
         if (hdr) {
             ret = magpop(hdr);
-            if (ret && magfull(hdr)) {
+            if ((ret) && magfull(hdr)) {
                 _freehdrtab[bkt] = NULL;
             }
         } else {

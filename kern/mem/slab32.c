@@ -7,10 +7,13 @@
 #elif defined(__arm__)
 #include <kern/unit/arm/vm.h>
 #endif
+#if (MEMTEST)
+#include <stdio.h>
+#endif
 
 /* physical memory slabs */
-struct slabhdr *_physslabtab[PTRBITS] ALIGNED(PAGESIZE);
-long            _physlktab[PTRBITS];
+struct slabhdr *virtslabtab[PTRBITS] ALIGNED(PAGESIZE);
+long            virtlktab[PTRBITS];
 
 extern unsigned long npagefree;
 
@@ -57,11 +60,11 @@ slabinit(struct slabhdr **zone, struct slabhdr *hdrtab,
 long
 slabcomb(struct slabhdr **zone, struct slabhdr *hdrtab, struct slabhdr *hdr)
 {
-    unsigned long   bkt1  = slabgetbkt(hdr);
-    long            ret   = 0;
-    long            prev  = 1;
-    long            next  = 1;
-    struct slabhdr *hdr1  = NULL;
+    unsigned long   bkt1 = slabgetbkt(hdr);
+    long            ret  = 0;
+    long            prev = 1;
+    long            next = 1;
+    struct slabhdr *hdr1 = NULL;
     struct slabhdr *hdr2;
     struct slabhdr *hdr3;
     struct slabhdr *hdr4;
@@ -133,6 +136,7 @@ slabcomb(struct slabhdr **zone, struct slabhdr *hdrtab, struct slabhdr *hdr)
             } else {
                 next = 0;
             }
+            slabunlk(bkt2);
         } 
         hdr = hdr1;
     }
@@ -147,7 +151,6 @@ slabcomb(struct slabhdr **zone, struct slabhdr *hdrtab, struct slabhdr *hdr)
         }
         zone[bkt1] = hdr1;
     }
-    slabunlk(bkt1);
                 
     return ret;
 }
@@ -161,55 +164,46 @@ void
 slabsplit(struct slabhdr **zone, struct slabhdr *hdrtab,
           struct slabhdr *hdr, unsigned long dest)
 {
-    unsigned long   bkt   = slabgetbkt(hdr);
-    unsigned long   nb    = 1UL << bkt;
-    uint8_t        *ptr   = slabadr(hdr, hdrtab);
+    unsigned long   bkt = slabgetbkt(hdr);
+    uint8_t        *ptr = slabadr(hdr, hdrtab);
     struct slabhdr *hdr1;
-    unsigned long   sz;
-
+    unsigned long   sz = 1UL << bkt;
+    
     hdr1 = slabgetnext(hdr, hdrtab);
     if (hdr1) {
         slabclrprev(hdr1);
     }
     zone[bkt] = hdr1;
-    while (--bkt > dest) {
+    bkt--;
+    while (bkt >= dest) {
+        sz >>= 1;
+        ptr += sz;
         hdr1 = slabhdr(ptr, hdrtab);
-        sz = 1UL << bkt;
         slabsetbkt(hdr1, bkt);
-        slabsetfree(hdr1);
-        slabclrprev(hdr1);
-        slablk(bkt);
+        slabclrlink(hdr1);
+        if (bkt != dest) {
+            slablk(bkt);
+        }
         if (zone[bkt]) {
             slabsetprev(zone[bkt], hdr1, hdrtab);
             slabsetnext(hdr1, zone[bkt], hdrtab);
-        } else {
-            slabclrnext(hdr1);
         }
         zone[bkt] = hdr1;
-        slabunlk(bkt);
-        nb -= sz;
-        ptr += sz;
+        if (bkt != dest) {
+            slabunlk(bkt);
+        }
         bkt--;
     }
-    hdr1 = slabhdr(ptr, hdrtab);
-    sz = 1UL << bkt;
-    slabsetbkt(hdr1, bkt);
-    slabsetfree(hdr1);
-    slabclrprev(hdr1);
+    bkt = dest;
+//    hdr1 = slabhdr(ptr, hdrtab);
+    slabsetbkt(hdr, bkt);
+    slabsetfree(hdr);
+    slabclrlink(hdr);
     if (zone[bkt]) {
-        slabsetprev(zone[bkt], hdr1, hdrtab);
-        slabsetnext(hdr1, zone[bkt], hdrtab);
-    } else {
-        slabclrnext(hdr1);
+        slabsetprev(zone[bkt], hdr, hdrtab);
+        slabsetnext(hdr, zone[bkt], hdrtab);
     }
-    zone[bkt] = hdr1;
-    hdr1 = slabhdr(ptr, hdrtab);
-    slabsetbkt(hdr1, bkt);
-    slabsetfree(hdr1);
-    slabclrprev(hdr1);
-    slabsetprev(zone[bkt], hdr1, hdrtab);
-    slabsetnext(hdr1, zone[bkt], hdrtab);
-    zone[bkt] = hdr1;
+    zone[bkt] = hdr;
         
     return;
 }
@@ -221,28 +215,21 @@ void *
 slaballoc(struct slabhdr **zone, struct slabhdr *hdrtab,
           unsigned long nb, unsigned long flg)
 {
-    unsigned long   bkt1  = max(SLABMINLOG2, slabbkt(nb));
+    unsigned long   bkt1 = max(SLABMINLOG2, slabbkt(nb));
+    unsigned long   bkt2 = bkt1;
     struct slabhdr *hdr1;
-    uint8_t        *ptr   = NULL;
-    unsigned long   bkt2;
+    uint8_t        *ptr = NULL;
     struct slabhdr *hdr2;
 
     slablk(bkt1);
     hdr1 = zone[bkt1];
     if (!hdr1) {
-        bkt2 = bkt1;
         while (!hdr1 && ++bkt2 < PTRBITS) {
-            slablk(bkt2);
             hdr1 = zone[bkt2];
-            if (!hdr1) {
-                slabunlk(bkt2);
+            if (hdr1) {
+                slabsplit(zone, hdrtab, hdr1, bkt1);
+                hdr1 = zone[bkt1];
             }
-        }
-        if (hdr1) {
-            slabsplit(zone, hdrtab, hdr1, bkt1);
-            hdr1 = zone[bkt1];
-            slabunlk(bkt1);
-            slabunlk(bkt2);
         }
     }
     if (hdr1) {
@@ -252,15 +239,14 @@ slaballoc(struct slabhdr **zone, struct slabhdr *hdrtab,
         }
         zone[bkt1] = hdr2;
         slabclrfree(hdr1);
-        slabclrprev(hdr1);
-        slabclrnext(hdr1);
+        slabclrlink(hdr1);
         slabsetflg(hdr1, flg);
         ptr = slabadr(hdr1, hdrtab);
     }
-    slabunlk(bkt1);
     if (flg & SLABZERO) {
         bzero(ptr, 1UL << bkt1);
     }
+    slabunlk(bkt1);
 
     return ptr;
 }
@@ -274,10 +260,11 @@ slabfree(struct slabhdr **zone, struct slabhdr *hdrtab, void *ptr)
     struct slabhdr *hdr  = slabhdr(ptr, hdrtab);
     unsigned long   bkt = slabgetbkt(hdr);
 
+#if (!MEMTEST)
     vmfreephys(ptr, 1UL << bkt);
+#endif
     if (!slabcomb(zone, hdrtab, hdr)) {
         bkt = slabgetbkt(hdr);
-        slablk(bkt);
         if (zone[bkt]) {
             slabsetprev(zone[bkt], hdr, hdrtab);
             slabsetnext(hdr, zone[bkt], hdrtab);
@@ -285,7 +272,6 @@ slabfree(struct slabhdr **zone, struct slabhdr *hdrtab, void *ptr)
             slabclrnext(hdr);
         }
         zone[bkt] = hdr;
-        slabunlk(bkt);
     }
 
     return;
