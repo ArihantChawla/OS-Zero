@@ -11,11 +11,8 @@
 #include <stdio.h>
 #endif
 
-/* physical memory slabs */
-struct slabhdr *virtslabtab[PTRBITS] ALIGNED(PAGESIZE);
-long            virtlktab[PTRBITS];
-
 extern unsigned long npagefree;
+extern long          virtlktab[PTRBITS];
 
 /*
  * zero slab allocator
@@ -61,6 +58,7 @@ long
 slabcomb(struct slabhdr **zone, struct slabhdr *hdrtab, struct slabhdr *hdr)
 {
     unsigned long   bkt1 = slabgetbkt(hdr);
+    unsigned long   bkt2 = bkt1;
     long            ret  = 0;
     long            prev = 1;
     long            next = 1;
@@ -69,82 +67,93 @@ slabcomb(struct slabhdr **zone, struct slabhdr *hdrtab, struct slabhdr *hdr)
     struct slabhdr *hdr3;
     struct slabhdr *hdr4;
     unsigned long   ofs;
-    unsigned long   bkt2;
 
-    slablk(bkt1);
     slabsetfree(hdr);
-    ofs = 1UL << (bkt1 - SLABMINLOG2);
     while ((prev) || (next)) {
+#if 0
         prev = 0;
         next = 0;
+#endif
+        ofs = 1UL << (bkt2 - SLABMINLOG2);
         if (hdr - hdrtab >= ofs) {
             hdr1 = hdr - ofs;
             bkt2 = slabgetbkt(hdr1);
-            slablk(bkt2);
-            if (bkt2 == bkt1 && slabisfree(hdr1)) {
-                ret = 1;
-                hdr3 = slabgetprev(hdr1, hdrtab);
-                hdr4 = slabgetnext(hdr1, hdrtab);
-                if (hdr3) {
-                    if (hdr4) {
-                        slabsetprev(hdr4, hdr3, hdrtab);
-                        slabsetnext(hdr3, hdr4, hdrtab);
+            if (bkt2) {
+                slablk(bkt2);
+                if (bkt2 == bkt1 && slabisfree(hdr1)) {
+                    ret = 1;
+                    hdr3 = slabgetprev(hdr1, hdrtab);
+                    hdr4 = slabgetnext(hdr1, hdrtab);
+                    if (hdr3) {
+                        if (hdr4) {
+                            slabsetprev(hdr4, hdr3, hdrtab);
+                            slabsetnext(hdr3, hdr4, hdrtab);
+                        } else {
+                            slabclrnext(hdr3);
+                        }
                     } else {
-                        slabclrnext(hdr3);
+                        if (hdr4) {
+                            slabclrlink(hdr4);
+                            slabsetnext(hdr4, zone[bkt2], hdrtab);
+                        }
+                        if (zone[bkt2]) {
+                            slabsetprev(zone[bkt2], hdr4, hdrtab);
+                        }
+                        zone[bkt2] = hdr4;
                     }
+                    slabunlk(bkt2);
+                    bkt2++;
+                    slabsetbkt(hdr1, bkt2);
+                    bkt1 = bkt2;
                 } else {
-                    if (hdr4) {
-                        slabclrlink(hdr4);
-                    }
-                    if (zone[bkt2]) {
-                        slabsetprev(zone[bkt2], hdr4, hdrtab);
-                        slabsetnext(hdr4, zone[bkt2], hdrtab);
-                    }
-                    zone[bkt2] = hdr4;
+                    slabunlk(bkt2);
+                    prev = 0;
                 }
-                bkt2++;
-                slabsetbkt(hdr1, bkt2);
-                bkt1 = bkt2;
-            } else {
-                prev = 0;
             }
-            slabunlk(bkt2);
-        }
-        if (!prev) {
-            hdr1 = hdr;
+            if (!prev) {
+                hdr1 = hdr;
+            }
+        } else {
+            prev = 0;
         }
         if (hdr1 + ofs < hdrtab + SLABNHDR) {
             hdr2 = hdr1 + ofs;
-            bkt2 = slabgetbkt(hdr2);
-            slablk(bkt2);
-            if (bkt2 == bkt1 && slabisfree(hdr2)) {
-                ret = 1;
-                hdr3 = slabgetprev(hdr2, hdrtab);
-                hdr4 = slabgetnext(hdr2, hdrtab);
-                if (hdr3) {
-                    if (hdr4) {
-                        slabsetprev(hdr4, hdr3, hdrtab);
-                        slabsetnext(hdr3, hdr4, hdrtab);
+            if (bkt2) {
+                bkt2 = slabgetbkt(hdr2);
+                slablk(bkt2);
+                if (bkt2 == bkt1 && slabisfree(hdr2)) {
+                    ret = 1;
+                    hdr3 = slabgetprev(hdr2, hdrtab);
+                    hdr4 = slabgetnext(hdr2, hdrtab);
+                    if (hdr3) {
+                        if (hdr4) {
+                            slabsetprev(hdr4, hdr3, hdrtab);
+                            slabsetnext(hdr3, hdr4, hdrtab);
+                        } else {
+                            slabclrnext(hdr3);
+                        }
                     } else {
-                        slabclrnext(hdr3);
+                        if (hdr4) {
+                            slabclrlink(hdr4);
+                            slabsetnext(hdr4, zone[bkt2], hdrtab);
+                        }
+                        if (zone[bkt2]) {
+                            slabsetprev(zone[bkt2], hdr4, hdrtab);
+                        }
+                        zone[bkt2] = hdr4;
                     }
+                    slabunlk(bkt2);
+                    bkt2++;
+                    slabsetbkt(hdr1, bkt2);
+                    bkt1 = bkt2;
                 } else {
-                    if (hdr4) {
-                        slabclrlink(hdr4);
-                    }
-                    if (zone[bkt2]) {
-                        slabsetprev(zone[bkt2], hdr4, hdrtab);
-                        slabsetnext(hdr4, zone[bkt2], hdrtab);
-                    }
+                    slabunlk(bkt2);
+                    next = 0;
                 }
-                bkt2++;
-                slabsetbkt(hdr1, bkt2);
-                bkt1 = bkt2;
-            } else {
-                next = 0;
             }
-            slabunlk(bkt2);
-        } 
+        } else {
+            next = 0;
+        }
         hdr = hdr1;
     }
     if (ret) {
@@ -157,7 +166,6 @@ slabcomb(struct slabhdr **zone, struct slabhdr *hdrtab, struct slabhdr *hdr)
         }
         zone[bkt1] = hdr1;
     }
-    slabunlk(bkt1);
                 
     return ret;
 }
@@ -192,26 +200,28 @@ slabsplit(struct slabhdr **zone, struct slabhdr *hdrtab,
         if (bkt != dest) {
             slablk(bkt);
         }
+#if 0
         if (zone[bkt]) {
             slabsetprev(zone[bkt], hdr1, hdrtab);
             slabsetnext(hdr1, zone[bkt], hdrtab);
         }
+#endif
         zone[bkt] = hdr1;
         if (bkt != dest) {
             slabunlk(bkt);
         }
         bkt--;
     }
-    bkt = dest;
-//    hdr1 = slabhdr(ptr, hdrtab);
-    slabsetbkt(hdr, bkt);
-    slabsetfree(hdr);
-    slabclrlink(hdr);
+    ptr += sz;
+    hdr1 = slabhdr(ptr, hdrtab);
+    slabsetbkt(hdr1, dest);
+    slabsetfree(hdr1);
+    slabclrlink(hdr1);
     if (zone[bkt]) {
-        slabsetprev(zone[bkt], hdr, hdrtab);
-        slabsetnext(hdr, zone[bkt], hdrtab);
+        slabsetprev(zone[bkt], hdr1, hdrtab);
+        slabsetnext(hdr1, zone[dest], hdrtab);
     }
-    zone[bkt] = hdr;
+    zone[dest] = hdr1;
         
     return;
 }

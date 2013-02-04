@@ -14,6 +14,7 @@ extern void pageinit(uintptr_t, unsigned long);
 /* TODO: this will _not_ work on 64-bit */
 struct slabhdr  virthdrtab[1U << (PTRBITS - SLABMINLOG2)] ALIGNED(PAGESIZE);
 struct slabhdr *virtslabtab[PTRBITS] ALIGNED(PAGESIZE);
+long            virtlktab[PTRBITS];
 
 #if (!MEMTEST)
 void

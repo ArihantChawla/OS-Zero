@@ -53,7 +53,7 @@ memalloc(unsigned long nb, long flg)
                 _freehdrtab[bkt] = NULL;
             }
         } else {
-            ret = u8ptr = slaballoc(virtslabtab, virthdrtab, nb, 0);
+            ret = u8ptr = slaballoc(virtslabtab, virthdrtab, nb, flg);
             hdr = &_maghdrtab[maghdrnum(ret)];
             n = 1UL << (SLABMINLOG2 - bkt);
             incr = 1L << bkt;
@@ -79,12 +79,16 @@ kfree(void *ptr)
     struct slabhdr *shdr;
     unsigned long   bkt;
 
+    if (!ptr) {
+
+        return;
+    }
     if (!hdr->n) {
         slabfree(virtslabtab, virthdrtab, ptr);
     } else {
         magpush(hdr, ptr);
         if (magempty(hdr)) {
-            shdr = &virthdrtab[maghdrnum(ptr)];
+            shdr = &_maghdrtab[maghdrnum(ptr)];
             slabfree(virtslabtab, virthdrtab, magadr(ptr));
             bkt = slabgetbkt(shdr);
             maglk(bkt);

@@ -10,10 +10,9 @@
 #if 0
 #define slablk(bkt)   fprintf(stderr, "LK(%d): %s: %s/%d\n", bkt, __FILE__, __FUNCTION__, __LINE__), mtxlk(&virtlktab[bkt], MEMPID);
 #define slabunlk(bkt) fprintf(stderr, "UNLK(%d): %s: %s/%d\n", bkt, __FILE__, __FUNCTION__, __LINE__), mtxunlk(&virtlktab[bkt], MEMPID);
-#else
+#endif
 #define slablk(bkt)   mtxlk(&virtlktab[bkt], MEMPID);
 #define slabunlk(bkt) mtxunlk(&virtlktab[bkt], MEMPID);
-#endif
 
 #define SLAB_CONST_SIZE_TRICK 1
 #if (SLAB_CONST_SIZE_TRICK)
