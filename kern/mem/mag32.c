@@ -10,13 +10,10 @@
 #include <kern/mem/slab32.h>
 
 #if (MEMTEST)
+#include <stdio.h>
 extern uint32_t pagetab[NPDE][NPTE];
 #endif
 
-#define maghdrnum(ptr)                                                  \
-    ((uintptr_t)ptr >> SLABMINLOG2)
-#define magadr(ptr)                                                     \
-    ((void *)((uintptr_t)(ptr) & ~(SLABMIN - 1)))
 struct maghdr  _maghdrtab[1U << (PTRBITS - SLABMINLOG2)] ALIGNED(PAGESIZE);
 struct maghdr *_freehdrtab[PTRBITS];
 long           _freelktab[PTRBITS];
@@ -24,16 +21,17 @@ long           _freelktab[PTRBITS];
 void *
 memalloc(unsigned long nb, long flg)
 {
+    void          *ret = NULL;
+    unsigned long  sz = 0;
     unsigned long  bkt;
-    struct maghdr *hdr;
-    void          *ret;
+    struct maghdr *mag;
     uint8_t       *u8ptr;
     long           l;
     long           n;
     long           incr;
 
-    nb = max(PAGESIZE, nb);
-    if (nb >= SLABMIN) {
+    nb = max(MAGMIN, nb);
+    if (nb > (SLABMIN >> 1)) {
 #if (MEMTEST)
         ret = vmmapvirt((uint32_t *)&pagetab,
                         slaballoc(virtslabtab, virthdrtab, nb, 0), nb, flg);
@@ -41,30 +39,54 @@ memalloc(unsigned long nb, long flg)
         ret = vmmapvirt((uint32_t *)&_pagetab,
                         slaballoc(virtslabtab, virthdrtab, nb, 0), nb, flg);
 #endif
-        hdr = &_maghdrtab[maghdrnum(ret)];
-        hdr->n = hdr->ndx = 0;
+        mag = &_maghdrtab[maghdrnum(ret)];
+        mag->n = mag->ndx = 0;
     } else {
         bkt = slabbkt(nb);
+//        sz = 1UL << bkt;
         maglk(bkt);
-        hdr = _freehdrtab[bkt];
-        if (hdr) {
-            ret = magpop(hdr);
-            if ((ret) && magfull(hdr)) {
-                _freehdrtab[bkt] = NULL;
+        mag = _freehdrtab[bkt];
+#if (MEMTEST)
+        magdiag(mag);
+#endif
+        if ((mag) && mag->ndx < mag->n) {
+            ret = magpop(mag);
+#if (MEMTEST)
+            magdiag(mag);
+#endif
+            if (magfull(mag)) {
+                if (mag->next) {
+                    mag->next->prev = NULL;
+                }
+                _freehdrtab[bkt] = mag->next;
             }
         } else {
-            ret = u8ptr = slaballoc(virtslabtab, virthdrtab, nb, flg);
-            hdr = &_maghdrtab[maghdrnum(ret)];
+            sz = 1UL << bkt;
+            ret = u8ptr = slaballoc(virtslabtab, virthdrtab, sz, flg);
             n = 1UL << (SLABMINLOG2 - bkt);
             incr = 1L << bkt;
-            hdr->n = n;
-            hdr->ndx = 0;
+            mag = &_maghdrtab[maghdrnum(ret)];
+            mag->n = n;
+            mag->ndx = 0;
+#if (MEMTEST)
+            fprintf(stderr, "INIT: %d items:", n);
+#endif
             for (l = 0 ; l < n ; l++) {
-                hdr->ptab[l] = u8ptr;
+                mag->ptab[l] = u8ptr;
+#if (MEMTEST)
+                fprintf(stderr, " %p", u8ptr);
+#endif
                 u8ptr += incr;
             }
-            ret = magpop(hdr);
-            _freehdrtab[bkt] = hdr;
+#if (MEMTEST)
+            fprintf(stderr, "\n");
+#endif
+            ret = magpop(mag);
+            if (_freehdrtab[bkt]) {
+                _freehdrtab[bkt]->prev = mag;
+            }
+            mag->next = _freehdrtab[bkt];
+            _freehdrtab[bkt] = mag;
         }
         magunlk(bkt);
     }
@@ -75,29 +97,45 @@ memalloc(unsigned long nb, long flg)
 void
 kfree(void *ptr)
 {
-    struct maghdr  *hdr = &_maghdrtab[maghdrnum(ptr)];
-    struct slabhdr *shdr;
+    struct maghdr  *mag = &_maghdrtab[maghdrnum(ptr)];
+    struct slabhdr *slab;
     unsigned long   bkt;
 
     if (!ptr) {
 
         return;
     }
-    if (!hdr->n) {
+#if (MEMTEST)
+    magdiag(mag);
+#endif
+    if (!mag->n) {
         slabfree(virtslabtab, virthdrtab, ptr);
     } else {
-        magpush(hdr, ptr);
-        if (magempty(hdr)) {
-            shdr = &_maghdrtab[maghdrnum(ptr)];
-            slabfree(virtslabtab, virthdrtab, magadr(ptr));
-            bkt = slabgetbkt(shdr);
+#if (MEMTEST)
+        fprintf(stderr, "PUSH:\n");
+        magprint(mag);
+#endif
+        magpush(mag, ptr);
+        if (magempty(mag)) {
+            slab = &_maghdrtab[maghdrnum(ptr)];
+//            slabfree(virtslabtab, virthdrtab, magslabadr(ptr));
+            slabfree(virtslabtab, virthdrtab, ptr);
+            bkt = slabgetbkt(slab);
             maglk(bkt);
-            if (hdr == _freehdrtab[bkt]) {
-                _freehdrtab[bkt] = NULL;
+            if (mag->prev) {
+                mag->prev->next = mag->next;
+            } else {
+                _freehdrtab[bkt] = mag->next;
+            }
+            if (mag->next) {
+                mag->next->prev = mag->prev;
             }
             magunlk(bkt);
         }
     }
+#if (MEMTEST)
+    magdiag(mag);
+#endif
 
     return;
 }

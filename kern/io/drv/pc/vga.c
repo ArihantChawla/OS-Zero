@@ -33,7 +33,9 @@ vgagetfont(void)
     outw(0x0402, 0x03c4);
     outw(0x0704, 0x03c4);
     bcopy(_vgafontbuf, (void *)VGAFONTADR, VGAFONTSIZE);
+#if (!VBE2)
     vgareset();
+#endif
 
     return;
 }

@@ -119,10 +119,10 @@ struct argb32 {
                GFX_TO_RGB565_BLUE_MASK,                                 \
                GFX_RGB565_BLUE_SHIFT))
 
-#define _gfxtorgb888(u, p)                                              \
-    (((uint8_t *)(p))[GFX_RGB888_RED_OFFSET] = gfxredval(u),            \
-     ((uint8_t *)(p))[GFX_RGB888_GREEN_OFFSET] = gfxgreenval(u),        \
-     ((uint8_t *)(p))[GFX_RGB888_BLUE_OFFSET] = gfxblueval(u))
+#define gfxtorgb888(u, p)                                               \
+    (((uint8_t *)(p))[REDOFS] = gfxredval(u),                           \
+     ((uint8_t *)(p))[GREENOFS] = gfxgreenval(u),                       \
+     ((uint8_t *)(p))[BLUEOFS] = gfxblueval(u))
 #define _gfxtoc(u, m, s)                                                \
     (((u) >> s) & (m))
 

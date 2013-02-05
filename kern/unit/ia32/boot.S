@@ -32,7 +32,7 @@ mboothdr:
 .long	0	// load_end_addr
 .long	0	// bss_end_addr
 .long	0	// entry_addr
-.long	0	// video mode type
+.long	0	// video mode type (linear)
 .long	1024	// video width
 .long	768	// video height
 .long	24	// video depth

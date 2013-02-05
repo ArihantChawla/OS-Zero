@@ -459,7 +459,6 @@ _tmr0fin:
 	movl	$1, irqtimerfired
 	sti
 	iret
-
 	
 irqtimer:
 	pushal

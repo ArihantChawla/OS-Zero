@@ -26,6 +26,7 @@ gdtinit:
 	movw	%ax, %gs
 	ljmp	$TEXTSEL, $_gdtret
 _gdtret:
+	sti
 	ret
 
 	/*

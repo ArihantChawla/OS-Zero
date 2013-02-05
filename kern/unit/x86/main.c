@@ -8,6 +8,9 @@
 #include <kern/proc.h>
 #include <kern/thr.h>
 #include <kern/io/drv/pc/vga.h>
+#if (VBE2)
+#include <kern/io/drv/pc/vbe2.h>
+#endif
 #include <kern/unit/x86/cpu.h>
 #include <kern/unit/x86/pit.h>
 #include <kern/unit/x86/dma.h>
@@ -35,21 +38,24 @@ kmain(struct mboothdr *hdr, unsigned long pmemsz)
 {
     seginit(0);                         // memory segments
     vminit((uint32_t *)&_pagetab);      // virtual memory
-    __asm__ __volatile__ ("sti\n");
+//    __asm__ __volatile__ ("sti\n");
     bzero(&_bssvirt, (uint32_t)&_ebss - (uint32_t)&_bss);
     curproc = &proctab[0];
 //    meminit(vmphysadr(&_ebssvirt), pmemsz);
-    meminit(vmphysadr(&_ebssvirt), max(pmemsz, 3584UL * 1024 * 1024));
+    meminit(vmphysadr(&_ebssvirt), max(pmemsz, 3UL * 1024 * 1024 * 1024));
     bfill(&kerniomap, 0xff, sizeof(kerniomap));
     vgainitcon(80, 25);
 #if (VBE2)
     vbe2init(hdr);
+    vbe2putpix(0xffffffff, 100, 100);
 #endif
 #if (AC97)
     ac97init();
 #endif
 //    vgainitcon(80, 25);
+#if (!VBE2)
     logoprint();
+#endif
     /* multiprocessor probe */
     /* CPU interface */
     taskinit();

@@ -121,75 +121,15 @@ struct vgacon {
 
 /* graphics interface */
 
+#if 0
 #define vgareset()                                                      \
     do {                                                                \
         outw(0x0302, 0x03c4);                                           \
         outw(0x1005, 0x03ce);                                           \
         outw(0x0a06, 0x03ce);                                           \
     } while (0)
+#endif
 
-/* draw character with background */
-#define vgadrawchar(c, x, y, fg, bg)                                    \
-    do {                                                                \
-        int cy;                                                         \
-        int yofs;                                                       \
-        uint8_t *gp = (uint8_t *)_vgafontbuf + ((int)c << 4);           \
-        uint8_t  g;                                                     \
-                                                                        \
-        for (cy = 0 ; cy < VGAGLYPHH ; cy++) {                          \
-            g = *gp;                                                    \
-            yofs = y + cy - 12;                                         \
-            vgaputpix((g & 0x01) ? fg : bg, x, yofs);                   \
-            vgaputpix((g & 0x02) ? fg : bg, x + 1, yofs);               \
-            vgaputpix((g & 0x04) ? fg : bg, x + 2, yofs);               \
-            vgaputpix((g & 0x08) ? fg : bg, x + 3, yofs);               \
-            vgaputpix((g & 0x10) ? fg : bg, x + 4, yofs);               \
-            vgaputpix((g & 0x20) ? fg : bg, x + 5, yofs);               \
-            vgaputpix((g & 0x40) ? fg : bg, x + 6, yofs);               \
-            vgaputpix((g & 0x80) ? fg : bg, x + 7, yofs);               \
-            gp++;                                                       \
-        }                                                               \
-    } while (0)                                                         \
-
-/* draw character without background (transparent) */
-#define vgadrawcharfg(c, x, y, fg, bg)                                  \
-    do {                                                                \
-        int cy;                                                         \
-        int yofs;                                                       \
-        uint8_t *gp = (uint8_t *)_vgafontbuf + ((int)c << 4);           \
-        uint8_t  g;                                                     \
-                                                                        \
-        for (cy = 0 ; cy < VGAGLYPHH ; cy++) {                          \
-            g = *gp;                                                    \
-            yofs = y + cy - 12;                                         \
-            if (g & 0x01) {                                             \
-                vgaputpix(fg, x, yofs);                                 \
-            }                                                           \
-            if (g & 0x02) {                                             \
-                vgaputpix(fg, x + 1, yofs);                             \
-            }                                                           \
-            if (g & 0x04) {                                             \
-                vgaputpix(fg, x + 2, yofs);                             \
-            }                                                           \
-            if (g & 0x08) {                                             \
-                vgaputpix(fg, x + 3, yofs);                             \
-            }                                                           \
-            if (g & 0x10) {                                             \
-                vgaputpix(fg, x + 4, yofs);                             \
-            }                                                           \
-            if (g & 0x20) {                                             \
-                vgaputpix(fg, x + 5, yofs);                             \
-            }                                                           \
-            if (g & 0x40) {                                             \
-                vgaputpix(fg, x + 6, yofs);                             \
-            }                                                           \
-            if (g & 0x80) {                                             \
-                vgaputpix(fg, x + 7, yofs);                             \
-            }                                                           \
-            gp++;                                                       \
-        }                                                               \
-    } while (0)                                                         \
-        
 void vgasyncscr(void);
 void vgaputs(char *str);
 void vgaputchar(int ch);
