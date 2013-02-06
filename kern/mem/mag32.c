@@ -117,7 +117,8 @@ kfree(void *ptr)
 #endif
         magpush(mag, ptr);
         if (magempty(mag)) {
-            slab = &_maghdrtab[maghdrnum(ptr)];
+//            slab = &_maghdrtab[maghdrnum(ptr)];
+            slab = &virthdrtab[slabnum(ptr)];
 //            slabfree(virtslabtab, virthdrtab, magslabadr(ptr));
             slabfree(virtslabtab, virthdrtab, ptr);
             bkt = slabgetbkt(slab);

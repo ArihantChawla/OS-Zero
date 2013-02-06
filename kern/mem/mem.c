@@ -21,13 +21,12 @@ void
 meminit(uintptr_t base, unsigned long nbphys)
 {
     pageinit(base, nbphys);
-#if defined(__x86_64__) || defined(__amd64__)
-    slabinit(virtslabtab, virthdrtab,
-             (unsigned long)&_epagetab, (char *)KERNVIRTBASE - &_epagetab);
-#elif (defined(__i386__) && !defined(__x86_64__) && !defined(__amd64__))  \
+#if (defined(__i386__) && !defined(__x86_64__) && !defined(__amd64__))  \
     || defined(__arm__)
     slabinit(virtslabtab, virthdrtab,
              (unsigned long)&_epagetab, (char *)KERNVIRTBASE - &_epagetab);
+#elif defined(__x86_64__) || defined(__amd64__)
+#error implement x86-64 memory management
 #endif
 
 //    swapinit(0, 0x00000000, 1024);
