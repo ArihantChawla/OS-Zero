@@ -108,17 +108,21 @@ slabcomb(struct slabhdr **zone, struct slabhdr *hdrtab, struct slabhdr *hdr)
                     bkt2++;
                     slabsetbkt(hdr1, bkt2);
                     bkt1 = bkt2;
+                    hdr = hdr1;
                 } else {
                     slabunlk(bkt2);
                     prev = 0;
                 }
             }
+#if 0
             if (!prev) {
                 hdr1 = hdr;
             }
+#endif
         } else {
             prev = 0;
         }
+        hdr1 = hdr;
         if (hdr1 + ofs < hdrtab + SLABNHDR) {
             hdr2 = hdr1 + ofs;
             if (bkt2) {
