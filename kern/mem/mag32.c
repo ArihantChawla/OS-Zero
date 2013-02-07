@@ -69,7 +69,7 @@ memalloc(unsigned long nb, long flg)
             mag->n = n;
             mag->ndx = 0;
 #if (MEMTEST)
-            fprintf(stderr, "INIT: %d items:", n);
+            fprintf(stderr, "INIT: %ld items:", n);
 #endif
             for (l = 0 ; l < n ; l++) {
                 mag->ptab[l] = u8ptr;

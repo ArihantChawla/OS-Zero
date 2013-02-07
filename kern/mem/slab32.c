@@ -6,6 +6,8 @@
 #include <kern/unit/ia32/vm.h>
 #elif defined(__arm__)
 #include <kern/unit/arm/vm.h>
+#else
+#error must hack the slab allocator for x86-64
 #endif
 #if (MEMTEST)
 #include <stdio.h>
@@ -37,13 +39,13 @@ slabinit(struct slabhdr **zone, struct slabhdr *hdrtab,
         nb -= adr - base;
         nb = rounddown2(nb, SLABMINLOG2);
     }
-    kprintf("%ul kilobytes kernel virtual memory free @ %lx\n", nb >> 10, adr);
 #if (MEMTEST)
     printf("VM: %lu bytes @ %lu\n", nb, adr);
+#else
+    kprintf("%ul kilobytes kernel virtual memory free @ %lx\n", nb >> 10, adr);
 #endif
     while ((nb) && bkt >= SLABMINLOG2) {
         if (nb & ul) {
-            kprintf("%lx bytes @ %lx - %lx\n", 1L << bkt, adr, adr + ul - 1);
             hdr = &hdrtab[slabnum(adr)];
             slabsetbkt(hdr, bkt);
             slabsetfree(hdr);
@@ -86,11 +88,12 @@ slabcomb(struct slabhdr **zone, struct slabhdr *hdrtab, struct slabhdr *hdr)
             hdr1 = hdr - ofs;
             bkt2 = slabgetbkt(hdr1);
 #if (MEMTEST)
-            fprintf(stderr, "PREV: %x (%x/%x) - %s - ",
+            fprintf(stderr, "PREV: %p (%x/%lx) - %s (%d, %d)- ",
                     slabadr(hdr1, hdrtab),
                     slabadr(hdr, hdrtab) - slabadr(hdr1, hdrtab),
                     1UL << bkt2,
-                    slabisfree(hdr1) ? "FREE - " : "USED - ");
+                    slabisfree(hdr1) ? "FREE - " : "USED - ",
+                    bkt1, bkt2);
 #endif
             if (bkt2) {
                 slablk(bkt2);
@@ -121,7 +124,7 @@ slabcomb(struct slabhdr **zone, struct slabhdr *hdrtab, struct slabhdr *hdr)
                     slabunlk(bkt2);
                     bkt2++;
                     slabsetbkt(hdr1, bkt2);
-                    bkt1 = bkt2;
+//                    bkt1 = bkt2;
                     hdr = hdr1;
                 } else {
 #if (MEMTEST)
@@ -130,6 +133,8 @@ slabcomb(struct slabhdr **zone, struct slabhdr *hdrtab, struct slabhdr *hdr)
                     slabunlk(bkt2);
                     prev = 0;
                 }
+            } else {
+                prev = 0;
             }
 #if 0
             if (!prev) {
@@ -142,17 +147,18 @@ slabcomb(struct slabhdr **zone, struct slabhdr *hdrtab, struct slabhdr *hdr)
         hdr1 = hdr;
         if (hdr1 + ofs < hdrtab + SLABNHDR) {
             hdr2 = hdr1 + ofs;
+            bkt2 = slabgetbkt(hdr2);
 #if (MEMTEST)
-            fprintf(stderr, "NEXT: %x (%x/%x) - %s - ",
+            fprintf(stderr, "NEXT: %p (%x/%lx) - %s (%d, %d)- ",
                     slabadr(hdr2, hdrtab),
                     slabadr(hdr2, hdrtab) - slabadr(hdr1, hdrtab),
                     1UL << bkt2,
-                    slabisfree(hdr2) ? "FREE - " : "USED - ");
+                    slabisfree(hdr2) ? "FREE - " : "USED - ",
+                    bkt1, bkt2);
 #endif
-            if (bkt2) {
-                bkt2 = slabgetbkt(hdr2);
+            if (bkt2 == bkt1) {
                 slablk(bkt2);
-                if (bkt2 == bkt1 && slabisfree(hdr2)) {
+                if (slabisfree(hdr2)) {
 #if (MEMTEST)
                     fprintf(stderr, "MATCH\n");
 #endif
@@ -179,7 +185,7 @@ slabcomb(struct slabhdr **zone, struct slabhdr *hdrtab, struct slabhdr *hdr)
                     slabunlk(bkt2);
                     bkt2++;
                     slabsetbkt(hdr1, bkt2);
-                    bkt1 = bkt2;
+//                    bkt1 = bkt2;
                 } else {
 #if (MEMTEST)
                     fprintf(stderr, "NO MATCH\n");
@@ -187,12 +193,18 @@ slabcomb(struct slabhdr **zone, struct slabhdr *hdrtab, struct slabhdr *hdr)
                     slabunlk(bkt2);
                     next = 0;
                 }
+            } else {
+                next = 0;
             }
         } else {
             next = 0;
         }
+        if (bkt2) {
+            bkt1 = bkt2;
+        }
         hdr = hdr1;
     }
+    fprintf(stderr, "RET: %lx\n (%ld, %ld", ret, bkt1, bkt2);
     if (ret) {
         slabsetbkt(hdr1, bkt1);
         slabclrfree(hdr1);
