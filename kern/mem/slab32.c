@@ -2,7 +2,7 @@
 #include <zero/trix.h>
 #include <kern/util.h>
 #include <kern/mem/slab.h>
-#if defined(__i386__) && !defined(__x86_64__) && !defined(__amd64__)
+#if defined(__i386__) && !defined(__x86_64__) && !defined(__amd64__) && !defined(__x86_64__)
 #include <kern/unit/ia32/vm.h>
 #elif defined(__arm__)
 #include <kern/unit/arm/vm.h>
@@ -26,19 +26,24 @@ void
 slabinit(struct slabhdr **zone, struct slabhdr *hdrtab,
          unsigned long base, unsigned long nb)
 {
-    unsigned long   adr = roundup2(base, SLABMIN);
+    unsigned long   adr = (base & (SLABMIN - 1))
+        ? roundup2(base, SLABMIN)
+        : base;
     unsigned long   bkt = PTRBITS - 1;
     unsigned long   ul = 1UL << bkt;
     struct slabhdr *hdr;
 
-    nb -= adr - base;
-    nb = rounddown2(nb, SLABMINLOG2);
-//    kprintf("%ul kilobytes kernel virtual memory free\n", nb >> 10);
+    if (base != adr) {
+        nb -= adr - base;
+        nb = rounddown2(nb, SLABMINLOG2);
+    }
+    kprintf("%ul kilobytes kernel virtual memory free @ %lx\n", nb >> 10, adr);
 #if (MEMTEST)
     printf("VM: %lu bytes @ %lu\n", nb, adr);
 #endif
     while ((nb) && bkt >= SLABMINLOG2) {
         if (nb & ul) {
+            kprintf("%lx bytes @ %lx - %lx\n", 1L << bkt, adr, adr + ul - 1);
             hdr = &hdrtab[slabnum(adr)];
             slabsetbkt(hdr, bkt);
             slabsetfree(hdr);
@@ -223,7 +228,6 @@ slabsplit(struct slabhdr **zone, struct slabhdr *hdrtab,
     zone[bkt] = hdr1;
     while (--bkt >= dest) {
         sz >>= 1;
-        ptr += sz;
         hdr1 = slabhdr(ptr, hdrtab);
         slabsetbkt(hdr1, bkt);
         slabsetfree(hdr1);
@@ -239,8 +243,8 @@ slabsplit(struct slabhdr **zone, struct slabhdr *hdrtab,
         if (bkt != dest) {
             slabunlk(bkt);
         }
+        ptr += sz;
     }
-    ptr += sz;
     hdr1 = slabhdr(ptr, hdrtab);
     slabsetbkt(hdr1, dest);
     slabsetfree(hdr1);
