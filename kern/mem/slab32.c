@@ -204,7 +204,9 @@ slabcomb(struct slabhdr **zone, struct slabhdr *hdrtab, struct slabhdr *hdr)
         }
         hdr = hdr1;
     }
+#if (MEMTEST)
     fprintf(stderr, "RET: %lx\n (%ld, %ld", ret, bkt1, bkt2);
+#endif
     if (ret) {
         slabsetbkt(hdr1, bkt1);
         slabclrfree(hdr1);
