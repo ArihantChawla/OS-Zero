@@ -82,11 +82,14 @@ slabcomb(struct slabhdr **zone, struct slabhdr *hdrtab, struct slabhdr *hdr)
     while ((prev) || (next)) {
         prev = 0;
         next = 0;
+        if (bkt2) {
+            bkt1 = bkt2;
+        }
         ofs = 1UL << (bkt2 - SLABMINLOG2);
         if (hdr - hdrtab >= ofs) {
             hdr1 = hdr - ofs;
             bkt2 = slabgetbkt(hdr1);
-#if (MEMTEST)
+#if (MEMTEST) && 0
             fprintf(stderr, "PREV: %p (%x/%lx) - %s (%ld, %ld)- ",
                     slabadr(hdr1, hdrtab),
                     slabadr(hdr, hdrtab) - slabadr(hdr1, hdrtab),
@@ -98,7 +101,7 @@ slabcomb(struct slabhdr **zone, struct slabhdr *hdrtab, struct slabhdr *hdr)
                 slablk(bkt2);
                 if (bkt2 == bkt1 && slabisfree(hdr1)) {
                     prev = 1;
-#if (MEMTEST)
+#if (MEMTEST) && 0
                     fprintf(stderr, "MATCH\n");
 #endif
                     ret++;
@@ -121,11 +124,12 @@ slabcomb(struct slabhdr **zone, struct slabhdr *hdrtab, struct slabhdr *hdr)
                     }
                     slabunlk(bkt2);
                     bkt2++;
+                    slabsetbkt(hdr, 0);
                     slabsetbkt(hdr1, bkt2);
                     hdr = hdr1;
-                    bkt1 = bkt2;
+//                    bkt1 = bkt2;
                 } else {
-#if (MEMTEST)
+#if (MEMTEST) && 0
                     fprintf(stderr, "NO MATCH\n");
 #endif
                     slabunlk(bkt2);
@@ -141,7 +145,7 @@ slabcomb(struct slabhdr **zone, struct slabhdr *hdrtab, struct slabhdr *hdr)
         if (hdr1 + ofs < hdrtab + SLABNHDR) {
             hdr2 = hdr1 + ofs;
             bkt2 = slabgetbkt(hdr2);
-#if (MEMTEST)
+#if (MEMTEST) && 0
             fprintf(stderr, "NEXT: %p (%x/%lx) - %s (%ld, %ld)- ",
                     slabadr(hdr2, hdrtab),
                     slabadr(hdr2, hdrtab) - slabadr(hdr1, hdrtab),
@@ -153,7 +157,7 @@ slabcomb(struct slabhdr **zone, struct slabhdr *hdrtab, struct slabhdr *hdr)
                 slablk(bkt2);
                 if (slabisfree(hdr2)) {
                     next = 1;
-#if (MEMTEST)
+#if (MEMTEST) && 0
                     fprintf(stderr, "MATCH\n");
 #endif
                     ret++;
@@ -176,15 +180,20 @@ slabcomb(struct slabhdr **zone, struct slabhdr *hdrtab, struct slabhdr *hdr)
                     }
                     slabunlk(bkt2);
                     bkt2++;
+                    slabsetbkt(hdr2, 0);
                     slabsetbkt(hdr1, bkt2);
 //                    hdr = hdr1;
-                    bkt1 = bkt2;
+//                    bkt1 = bkt2;
                 } else {
-#if (MEMTEST)
+#if (MEMTEST) && 0
                     fprintf(stderr, "NO MATCH\n");
 #endif
                     slabunlk(bkt2);
                 }
+            } else {
+#if (MEMTEST) && 0
+                fprintf(stderr, "NO MATCH\n");
+#endif
             }
         }
 #if 0
@@ -194,10 +203,9 @@ slabcomb(struct slabhdr **zone, struct slabhdr *hdrtab, struct slabhdr *hdr)
 #endif
         hdr = hdr1;
     }
-#if (MEMTEST)
+#if (MEMTEST) && 0
     fprintf(stderr, "RET: %lx\n (%ld, %ld)\n", ret, bkt1, bkt2);
 #endif
-#if 0
     if (ret) {
         slabsetbkt(hdr1, bkt1);
 //        slabsetfree(hdr1);
@@ -208,7 +216,7 @@ slabcomb(struct slabhdr **zone, struct slabhdr *hdrtab, struct slabhdr *hdr)
         }
         zone[bkt1] = hdr1;
     }
-#endif
+#if 0
     if (ret) {
         slabsetbkt(hdr, bkt1);
 //        slabsetfree(hdr);
@@ -219,6 +227,7 @@ slabcomb(struct slabhdr **zone, struct slabhdr *hdrtab, struct slabhdr *hdr)
         }
         zone[bkt1] = hdr;
     }
+#endif
                 
     return ret;
 }
