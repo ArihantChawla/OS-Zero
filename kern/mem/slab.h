@@ -48,7 +48,7 @@
 #define slabsetprev(hp, hdr, tab)                                       \
     (slabclrprev(hp), (hp)->link |= slabhdrnum(hdr, tab))
 #define slabsetnext(hp, hdr, tab)                                       \
-    (slabclrnext(hp), (hp)->link |= slabhdrnum(hdr, tab) << 16)
+    (slabclrnext(hp), (hp)->link |= (slabhdrnum(hdr, tab) << 16))
 #endif
 
 extern struct slabhdr *virtslabtab[];
@@ -72,15 +72,14 @@ void   slabfree(struct slabhdr **zone, struct slabhdr *hdrtab, void *ptr);
 #define slabnum(ptr)                                                    \
     ((uintptr_t)(ptr) >> SLABMINLOG2)
 #define slabhdrnum(hdr, tab)                                            \
-    ((uintptr_t)((hdr) - (tab)))
+    (!(hdr) ? 0 : (uintptr_t)((hdr) - (tab)))
 #if (PTRBITS == 32)
 #define slabadr(hdr, tab)                                               \
     ((void *)(slabhdrnum(hdr, tab) << SLABMINLOG2))
 #define slabhdr(ptr, tab)                                               \
-    ((tab) + slabnum(ptr))
+    (!(ptr) ? NULL : (tab) + slabnum(ptr))
 #else
-#define slabhdr(ptr, tab)                                               \
-    slabgethdr(ptr, tab)
+#error slab.h does not support x86-64
 #endif
 
 /* use compiler optimizations to evaluate bucket for constant allocation size */

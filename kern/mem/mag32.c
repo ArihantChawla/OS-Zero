@@ -46,14 +46,8 @@ memalloc(unsigned long nb, long flg)
 //        sz = 1UL << bkt;
         maglk(bkt);
         mag = _freehdrtab[bkt];
-#if (MEMTEST)
-        magdiag(mag);
-#endif
         if ((mag) && mag->ndx < mag->n) {
             ret = magpop(mag);
-#if (MEMTEST)
-            magdiag(mag);
-#endif
             if (magfull(mag)) {
                 if (mag->next) {
                     mag->next->prev = NULL;
@@ -105,9 +99,6 @@ kfree(void *ptr)
 
         return;
     }
-#if (MEMTEST)
-    magdiag(mag);
-#endif
     if (!mag->n) {
         slabfree(virtslabtab, virthdrtab, ptr);
     } else {
@@ -117,10 +108,8 @@ kfree(void *ptr)
 #endif
         magpush(mag, ptr);
         if (magempty(mag)) {
-//            slab = &_maghdrtab[maghdrnum(ptr)];
-            slab = &virthdrtab[slabnum(ptr)];
-//            slabfree(virtslabtab, virthdrtab, magslabadr(ptr));
             slabfree(virtslabtab, virthdrtab, ptr);
+            slab = &virthdrtab[slabnum(ptr)];
             bkt = slabgetbkt(slab);
             maglk(bkt);
             if (mag->prev) {
@@ -134,9 +123,6 @@ kfree(void *ptr)
             magunlk(bkt);
         }
     }
-#if (MEMTEST)
-    magdiag(mag);
-#endif
 
     return;
 }
