@@ -18,12 +18,10 @@
 #define magfull(mp)      ((mp)->ndx == (mp)->n)
 #define magempty(mp)     (!(mp)->ndx)
 struct maghdr {
-//    unsigned long  flg;
     long           n;
     long           ndx;
     struct maghdr *prev;
     struct maghdr *next;
-//    void          *ptab[1U << (PTRBITS - SLABMINLOG2 - MAGMINLOG2)];
     void          *ptab[1U << (SLABMINLOG2 - MAGMINLOG2)];
 };
 

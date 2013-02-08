@@ -1,6 +1,7 @@
 #ifndef __MEM_SLAB_H__
 #define __MEM_SLAB_H__
 
+#include <kern/mem/slab.h>
 #if defined(__x86_64__) || defined(__amd64__)
 #include <kern/mem/slab64.h>
 #elif defined(__i386__) || defined(__arm__)
@@ -90,8 +91,8 @@ void   slabfree(struct slabhdr **zone, struct slabhdr *hdrtab, void *ptr);
 #define slabfastbkt(sz)                                                 \
     ((!__builtin_constant_p(sz)                                         \
       ? slabcalcbkt(sz)                                                 \
-      : (((sz) <= SLABMIN)                                              \
-         ? SLABMINLOG2                                                  \
+      : (((sz) <= MAGMIN)                                               \
+         ? MAGMINLOG2                                                   \
          : (((sz) <= (1UL << 4))                                        \
             ? 4                                                         \
             : (((sz) <= (1UL << 5))                                     \
@@ -151,8 +152,8 @@ void   slabfree(struct slabhdr **zone, struct slabhdr *hdrtab, void *ptr);
 #define slabfastbkt(sz)                                                 \
     ((!__builtin_constant_p(sz)                                         \
       ? slabcalcbkt(sz)                                                 \
-      : (((sz) <= SLABMIN)                                              \
-         ? SLABMINLOG2                                                  \
+      : (((sz) <= MAGMIN)                                               \
+         ? MAGMINLOG2                                                   \
          : (((sz) <= (1UL << 4))                                        \
             ? 4                                                         \
             : (((sz) <= (1UL << 5))                                     \

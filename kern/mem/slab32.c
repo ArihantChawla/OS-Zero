@@ -1,6 +1,7 @@
 #include <stddef.h>
 #include <zero/trix.h>
 #include <kern/util.h>
+#include <kern/mem/mag.h>
 #include <kern/mem/slab.h>
 #if defined(__i386__) && !defined(__x86_64__) && !defined(__amd64__) && !defined(__x86_64__)
 #include <kern/unit/ia32/vm.h>
@@ -80,8 +81,8 @@ slabcomb(struct slabhdr **zone, struct slabhdr *hdrtab, struct slabhdr *hdr)
 
 //    fprintf(stderr, "PTR: %p\n", slabadr(hdr, hdrtab));
     while ((prev) || (next)) {
-        prev = 0;
-        next = 0;
+        prev ^= prev;
+        next ^= next;
         if (bkt2) {
             bkt1 = bkt2;
         }
