@@ -28,6 +28,8 @@
 #define SLABFLGBITS 0x07L
 #define NSLABFLGBIT 3
 
+#define slabclrnfo(hp)                                                  \
+    ((hp)->nfo = 0L)
 #define slabclrbkt(hp)                                                  \
     ((hp)->nfo &= SLABFLGBITS)
 #define slabsetbkt(hp, bkt)                                             \
