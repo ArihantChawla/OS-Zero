@@ -40,7 +40,7 @@ slabinit(struct slabhdr **zone, struct slabhdr *hdrtab,
         nb = rounddown2(nb, SLABMINLOG2);
     }
 #if (MEMTEST)
-    printf("VM: %lx bytes @ %lx\n", nb, adr);
+    printf("VM: %lx bytes @ %lx - %lx\n", nb, adr, adr + nb - 1);
 #else
     kprintf("%ul kilobytes kernel virtual memory free @ %lx\n", nb >> 10, adr);
 #endif
@@ -124,10 +124,11 @@ slabcomb(struct slabhdr **zone, struct slabhdr *hdrtab, struct slabhdr *hdr)
                     }
                     slabunlk(bkt2);
                     bkt2++;
-                    slabsetbkt(hdr, 0);
+//                    slabsetbkt(hdr, 0);
                     slabsetbkt(hdr1, bkt2);
+                    slabsetfree(hdr1);
                     hdr = hdr1;
-//                    bkt1 = bkt2;
+                    bkt1 = bkt2;
                 } else {
 #if (MEMTEST) && 0
                     fprintf(stderr, "NO MATCH\n");
@@ -180,10 +181,11 @@ slabcomb(struct slabhdr **zone, struct slabhdr *hdrtab, struct slabhdr *hdr)
                     }
                     slabunlk(bkt2);
                     bkt2++;
-                    slabsetbkt(hdr2, 0);
+//                    slabsetbkt(hdr2, 0);
                     slabsetbkt(hdr1, bkt2);
+                    slabsetfree(hdr1);
 //                    hdr = hdr1;
-//                    bkt1 = bkt2;
+                    bkt1 = bkt2;
                 } else {
 #if (MEMTEST) && 0
                     fprintf(stderr, "NO MATCH\n");
@@ -207,8 +209,8 @@ slabcomb(struct slabhdr **zone, struct slabhdr *hdrtab, struct slabhdr *hdr)
     fprintf(stderr, "RET: %lx\n (%ld, %ld)\n", ret, bkt1, bkt2);
 #endif
     if (ret) {
-        slabsetbkt(hdr1, bkt1);
-//        slabsetfree(hdr1);
+//        slabsetbkt(hdr1, bkt1);
+        slabsetfree(hdr1);
         slabclrlink(hdr1);
         if (zone[bkt1]) {
             slabsetprev(zone[bkt1], hdr1, hdrtab);
