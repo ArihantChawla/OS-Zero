@@ -67,17 +67,17 @@ memalloc(unsigned long nb, long flg)
             mag->ndx = 0;
             mag->bkt = bkt;
 #if (MEMTEST)
-            fprintf(stderr, "INIT: %ld items:", n);
+//            fprintf(stderr, "INIT: %ld items:", n);
 #endif
             for (l = 0 ; l < n ; l++) {
                 mag->ptab[l] = u8ptr;
 #if (MEMTEST)
-                fprintf(stderr, " %p", u8ptr);
+//                fprintf(stderr, " %p", u8ptr);
 #endif
                 u8ptr += sz;
             }
 #if (MEMTEST)
-            fprintf(stderr, "\n");
+//            fprintf(stderr, "\n");
 #endif
             ptr = magpop(mag);
             if (_freehdrtab[bkt]) {
