@@ -9,6 +9,7 @@
 #include <kern/unit/ia32/link.h>
 #include <kern/unit/ia32/vm.h>
 #endif
+#include <kern/mem/mem.h>
 #include <kern/mem/mag.h>
 #include <kern/mem/slab32.h>
 
@@ -46,7 +47,7 @@ memalloc(unsigned long nb, long flg)
         mag->n = 1;
         mag->ndx = 0;
     } else {
-        bkt = slabbkt(nb);
+        bkt = membkt(nb);
         maglk(bkt);
         mag = freemagtab[bkt];
         if (mag) {

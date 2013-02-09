@@ -1,6 +1,7 @@
 #include <stddef.h>
 #include <zero/trix.h>
 #include <kern/util.h>
+#include <kern/mem/mem.h>
 #include <kern/mem/mag.h>
 #include <kern/mem/slab.h>
 #if defined(__i386__) && !defined(__x86_64__) && !defined(__amd64__) && !defined(__x86_64__)
@@ -286,7 +287,7 @@ void *
 slaballoc(struct slabhdr **zone, struct slabhdr *hdrtab,
           unsigned long nb, unsigned long flg)
 {
-    unsigned long   bkt1 = max(SLABMINLOG2, slabbkt(nb));
+    unsigned long   bkt1 = max(SLABMINLOG2, membkt(nb));
     unsigned long   bkt2 = bkt1;
     struct slabhdr *hdr1;
     uint8_t        *ptr = NULL;
