@@ -27,7 +27,7 @@ uint8_t        _membitmap[1UL << (PTRBITS - MAGMINLOG2 - 3)];
 void *
 memalloc(unsigned long nb, long flg)
 {
-    void          *ret = NULL;
+    void          *ptr = NULL;
     unsigned long  sz = 0;
     unsigned long  bkt;
     struct maghdr *mag;
@@ -39,13 +39,13 @@ memalloc(unsigned long nb, long flg)
     nb = max(MAGMIN, nb);
     if (nb > (SLABMIN >> 1)) {
 #if (MEMTEST)
-        ret = vmmapvirt((uint32_t *)&pagetab,
+        ptr = vmmapvirt((uint32_t *)&pagetab,
                         slaballoc(virtslabtab, virthdrtab, nb, flg), nb, flg);
 #else
-        ret = vmmapvirt((uint32_t *)&_pagetab,
+        ptr = vmmapvirt((uint32_t *)&_pagetab,
                         slaballoc(virtslabtab, virthdrtab, nb, flg), nb, flg);
 #endif
-        mag = &_maghdrtab[maghdrnum(ret)];
+        mag = &_maghdrtab[maghdrnum(ptr)];
         mag->n = mag->ndx = 0;
     } else {
         bkt = slabbkt(nb);
@@ -53,7 +53,7 @@ memalloc(unsigned long nb, long flg)
         maglk(bkt);
         mag = _freehdrtab[bkt];
         if ((mag) && mag->ndx < mag->n) {
-            ret = magpop(mag);
+            ptr = magpop(mag);
             if (magfull(mag)) {
                 if (mag->next) {
                     mag->next->prev = NULL;
@@ -62,10 +62,10 @@ memalloc(unsigned long nb, long flg)
             }
         } else {
             sz = 1UL << bkt;
-            ret = u8ptr = slaballoc(virtslabtab, virthdrtab, sz, flg);
+            ptr = u8ptr = slaballoc(virtslabtab, virthdrtab, sz, flg);
             n = 1UL << (SLABMINLOG2 - bkt);
             incr = sz;
-            mag = &_maghdrtab[maghdrnum(ret)];
+            mag = &_maghdrtab[maghdrnum(ptr)];
             mag->n = n;
             mag->ndx = 0;
 #if (MEMTEST)
@@ -81,7 +81,7 @@ memalloc(unsigned long nb, long flg)
 #if (MEMTEST)
             fprintf(stderr, "\n");
 #endif
-            ret = magpop(mag);
+            ptr = magpop(mag);
             if (_freehdrtab[bkt]) {
                 _freehdrtab[bkt]->prev = mag;
             }
@@ -91,12 +91,12 @@ memalloc(unsigned long nb, long flg)
         magunlk(bkt);
     }
 #if (MEMFREECHK)
-    if (ret) {
-        setbit(_membitmap, (uintptr_t)(ret) >> MAGMINLOG2);
+    if (ptr) {
+        setbit(_membitmap, (uintptr_t)(ptr) >> MAGMINLOG2);
     }
 #endif
 
-    return ret;
+    return ptr;
 }
 
 void
@@ -137,7 +137,9 @@ kfree(void *ptr)
             }
             magunlk(bkt);
         }
+#if (MEMTEST)
         magdiag(mag);
+#endif
     }
 
     return;
