@@ -22,7 +22,7 @@ struct maghdr {
     long           ndx;
     struct maghdr *prev;
     struct maghdr *next;
-    void          *ptab[1U << (SLABMINLOG2 - MAGMINLOG2)];
+    void          *ptab[1UL << (SLABMINLOG2 - MAGMINLOG2)];
 };
 
 #define maghdrnum(ptr)                                                  \

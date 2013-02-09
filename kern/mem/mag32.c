@@ -32,21 +32,20 @@ memalloc(unsigned long nb, long flg)
     unsigned long  bkt;
     struct maghdr *mag;
     uint8_t       *u8ptr;
-    long           l;
-    long           n;
-    long           incr;
+    unsigned long  l;
+    unsigned long  n;
 
     nb = max(MAGMIN, nb);
     if (nb > (SLABMIN >> 1)) {
 #if (MEMTEST)
-        ptr = vmmapvirt((uint32_t *)&pagetab,
-                        slaballoc(virtslabtab, virthdrtab, nb, flg), nb, flg);
+        ptr = slaballoc(virtslabtab, virthdrtab, nb, flg);
 #else
         ptr = vmmapvirt((uint32_t *)&_pagetab,
                         slaballoc(virtslabtab, virthdrtab, nb, flg), nb, flg);
 #endif
         mag = &_maghdrtab[maghdrnum(ptr)];
-        mag->n = mag->ndx = 0;
+        mag->n = 1;
+        mag->ndx = 0;
     } else {
         bkt = slabbkt(nb);
 //        sz = 1UL << bkt;
@@ -64,7 +63,6 @@ memalloc(unsigned long nb, long flg)
             sz = 1UL << bkt;
             ptr = u8ptr = slaballoc(virtslabtab, virthdrtab, sz, flg);
             n = 1UL << (SLABMINLOG2 - bkt);
-            incr = sz;
             mag = &_maghdrtab[maghdrnum(ptr)];
             mag->n = n;
             mag->ndx = 0;
@@ -76,7 +74,7 @@ memalloc(unsigned long nb, long flg)
 #if (MEMTEST)
                 fprintf(stderr, " %p", u8ptr);
 #endif
-                u8ptr += incr;
+                u8ptr += sz;
             }
 #if (MEMTEST)
             fprintf(stderr, "\n");
@@ -92,7 +90,14 @@ memalloc(unsigned long nb, long flg)
     }
 #if (MEMFREECHK)
     if (ptr) {
-        setbit(_membitmap, (uintptr_t)(ptr) >> MAGMINLOG2);
+#if 0
+        if (bitset(_membitmap, (uintptr_t)ptr >> MAGMINLOG2)) {
+            fprintf(stderr, "duplicate allocation %p\n", ptr);
+            
+            abort();
+        }
+#endif
+        setbit(_membitmap, (uintptr_t)ptr >> MAGMINLOG2);
     }
 #endif
 
@@ -110,17 +115,17 @@ kfree(void *ptr)
 
         return;
     }
-#if (MEMFREECHK)
-    if (!bitset(_membitmap, (uintptr_t)(ptr) >> MAGMINLOG2)) {
-        fprintf(stderr, "invalid free\n");
+#if (MEMFREECHK) && 0
+    if (!bitset(_membitmap, (uintptr_t)ptr >> MAGMINLOG2)) {
+        fprintf(stderr, "invalid free: %p\n", ptr);
 
         abort();
     }
-    clrbit(_membitmap, (uintptr_t)(ptr) >> MAGMINLOG2);
+    clrbit(_membitmap, (uintptr_t)ptr >> MAGMINLOG2);
 #endif
-    if (!mag->n) {
+    if (mag->n == 1 && !mag->ndx) {
         slabfree(virtslabtab, virthdrtab, ptr);
-    } else {
+    } else if (mag->n) {
         magpush(mag, ptr);
         if (magempty(mag)) {
             slabfree(virtslabtab, virthdrtab, ptr);
@@ -137,9 +142,6 @@ kfree(void *ptr)
             }
             magunlk(bkt);
         }
-#if (MEMTEST)
-        magdiag(mag);
-#endif
     }
 
     return;
