@@ -10,8 +10,8 @@
 #define MAGMIN     (1UL << MAGMINLOG2)
 #define MAGMINLOG2 PAGESIZELOG2
 
-#define maglk(bkt)       mtxlk(&_freelktab[bkt], MEMPID)
-#define magunlk(pq)      mtxunlk(&_freelktab[bkt], MEMPID)
+#define maglk(bkt)       mtxlk(&freelktab[bkt], MEMPID)
+#define magunlk(pq)      mtxunlk(&freelktab[bkt], MEMPID)
 
 #define magpop(mp)       ((mp)->ptab[((mp)->ndx)++])
 #define magpush(mp, ptr) ((mp)->ptab[--((mp)->ndx)] = (ptr))
@@ -27,7 +27,7 @@ struct maghdr {
 };
 
 #define maghdrnum(ptr)                                                  \
-    ((uintptr_t)ptr >> SLABMINLOG2)
+    ((uintptr_t)(ptr) >> SLABMINLOG2)
 #define magslabadr(ptr)                                                 \
     ((void *)((uintptr_t)(ptr) & ~(SLABMIN - 1)))
 

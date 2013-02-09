@@ -14,14 +14,13 @@
 
 #if (MEMTEST)
 #include <stdio.h>
-extern uint32_t pagetab[NPDE][NPTE];
 #endif
 
-struct maghdr  _maghdrtab[1UL << (PTRBITS - SLABMINLOG2)] ALIGNED(PAGESIZE);
-struct maghdr *_freehdrtab[PTRBITS];
-long           _freelktab[PTRBITS];
+struct maghdr  maghdrtab[1UL << (PTRBITS - SLABMINLOG2)] ALIGNED(PAGESIZE);
+struct maghdr *freemagtab[PTRBITS];
+long           freelktab[PTRBITS];
 #if (MEMFREECHK)
-uint8_t        _membitmap[1UL << (PTRBITS - MAGMINLOG2 - 3)];
+uint8_t        membitmap[1UL << (PTRBITS - MAGMINLOG2 - 3)];
 #endif
 
 void *
@@ -43,26 +42,26 @@ memalloc(unsigned long nb, long flg)
         ptr = vmmapvirt((uint32_t *)&_pagetab,
                         slaballoc(virtslabtab, virthdrtab, nb, flg), nb, flg);
 #endif
-        mag = &_maghdrtab[maghdrnum(ptr)];
+        mag = &maghdrtab[maghdrnum(ptr)];
         mag->n = 1;
         mag->ndx = 0;
     } else {
         bkt = slabbkt(nb);
         maglk(bkt);
-        mag = _freehdrtab[bkt];
+        mag = freemagtab[bkt];
         if (mag) {
             ptr = magpop(mag);
             if (magfull(mag)) {
                 if (mag->next) {
                     mag->next->prev = NULL;
                 }
-                _freehdrtab[bkt] = mag->next;
+                freemagtab[bkt] = mag->next;
             }
         } else {
             sz = 1UL << bkt;
             ptr = u8ptr = slaballoc(virtslabtab, virthdrtab, sz, flg);
             n = 1UL << (SLABMINLOG2 - bkt);
-            mag = &_maghdrtab[maghdrnum(ptr)];
+            mag = &maghdrtab[maghdrnum(ptr)];
             mag->n = n;
             mag->ndx = 0;
             mag->bkt = bkt;
@@ -80,22 +79,22 @@ memalloc(unsigned long nb, long flg)
 //            fprintf(stderr, "\n");
 #endif
             ptr = magpop(mag);
-            if (_freehdrtab[bkt]) {
-                _freehdrtab[bkt]->prev = mag;
+            if (freemagtab[bkt]) {
+                freemagtab[bkt]->prev = mag;
             }
-            mag->next = _freehdrtab[bkt];
-            _freehdrtab[bkt] = mag;
+            mag->next = freemagtab[bkt];
+            freemagtab[bkt] = mag;
         }
         magunlk(bkt);
     }
 #if (MEMFREECHK)
     if (ptr) {
-        if (bitset(_membitmap, (uintptr_t)ptr >> MAGMINLOG2)) {
+        if (bitset(membitmap, (uintptr_t)ptr >> MAGMINLOG2)) {
             fprintf(stderr, "duplicate allocation %p\n", ptr);
             
             abort();
         }
-        setbit(_membitmap, (uintptr_t)ptr >> MAGMINLOG2);
+        setbit(membitmap, (uintptr_t)ptr >> MAGMINLOG2);
     }
 #endif
 
@@ -105,7 +104,7 @@ memalloc(unsigned long nb, long flg)
 void
 kfree(void *ptr)
 {
-    struct maghdr  *mag = &_maghdrtab[maghdrnum(ptr)];
+    struct maghdr  *mag = &maghdrtab[maghdrnum(ptr)];
     unsigned long   bkt;
 
     if (!ptr) {
@@ -113,12 +112,12 @@ kfree(void *ptr)
         return;
     }
 #if (MEMFREECHK)
-    if (!bitset(_membitmap, (uintptr_t)ptr >> MAGMINLOG2)) {
+    if (!bitset(membitmap, (uintptr_t)ptr >> MAGMINLOG2)) {
         fprintf(stderr, "invalid free: %p\n", ptr);
 
         abort();
     }
-    clrbit(_membitmap, (uintptr_t)ptr >> MAGMINLOG2);
+    clrbit(membitmap, (uintptr_t)ptr >> MAGMINLOG2);
 #endif
     if (mag->n == 1 && !mag->ndx) {
         slabfree(virtslabtab, virthdrtab, ptr);
@@ -131,7 +130,7 @@ kfree(void *ptr)
             if (mag->prev) {
                 mag->prev->next = mag->next;
             } else {
-                _freehdrtab[bkt] = mag->next;
+                freemagtab[bkt] = mag->next;
             }
             if (mag->next) {
                 mag->next->prev = mag->prev;
@@ -143,11 +142,11 @@ kfree(void *ptr)
             bkt = mag->bkt;
             mag->prev = NULL;
             maglk(bkt);
-            if (_freehdrtab[bkt]) {
-                _freehdrtab[bkt]->prev = mag;
+            if (freemagtab[bkt]) {
+                freemagtab[bkt]->prev = mag;
             }
-            mag->next = _freehdrtab[bkt];
-            _freehdrtab[bkt] = mag;
+            mag->next = freemagtab[bkt];
+            freemagtab[bkt] = mag;
             magunlk(bkt);
         }
     }

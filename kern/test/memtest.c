@@ -11,13 +11,15 @@
 #include <kern/mem/slab32.h>
 #include <kern/unit/ia32/vm.h>
 
+#define NALLOC 1024
+
 unsigned long  vmnphyspages;
 
 //uint32_t       pagetab[NPDE][NPTE] ALIGNED(PAGESIZE);
-uintptr_t      alloctab[256];
-void          *ptrtab[256];
+uintptr_t      alloctab[NALLOC];
+void          *ptrtab[NALLOC];
 
-extern struct maghdr *_freehdrtab[PTRBITS];
+extern struct maghdr *freemagtab[PTRBITS];
 
 void
 magprint(struct maghdr *mag)
@@ -46,7 +48,7 @@ magdiag(void)
     unsigned long  l;
 
     for (l = MAGMINLOG2 ; l < SLABMINLOG2 ; l++) {
-        mag1 = _freehdrtab[l];
+        mag1 = freemagtab[l];
         while (mag1) {
             if (!mag1->ndx) {
                 fprintf(stderr, "empty magazine on free list %lu\n", l);
@@ -168,16 +170,16 @@ main(int argc, char *argv[])
     sleep(1);
     srand(1);
     for ( ; ; ) {
-        for (l = 0 ; l < 256 ; l++) {
-//            alloctab[l] = SLABMIN;
-            alloctab[l] = MAGMIN + (rand() & (4 * MAGMIN - 1));
+        for (l = 0 ; l < NALLOC ; l++) {
+//            alloctab[l] = MAGMIN + (rand() & (4 * MAGMIN - 1));
+            alloctab[l] = rand() & (8 * SLABMIN - 1);
         }
-        for (l = 0 ; l < 256 ; l++) {
+        for (l = 0 ; l < NALLOC ; l++) {
 //            fprintf(stderr, "ALLOC: %lu - ", (unsigned long)alloctab[l]);
             ptrtab[l] = memalloc(alloctab[l], SLABZERO);
 //            fprintf(stderr, "%p\n", ptrtab[l]);
         }
-        l = 256;
+        l = NALLOC;
         while (l--) {
 //            fprintf(stderr, "FREE: %lx\n", (unsigned long)ptrtab[l]);
             kfree((void *)ptrtab[l]);
