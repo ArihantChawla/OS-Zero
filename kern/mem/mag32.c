@@ -48,10 +48,9 @@ memalloc(unsigned long nb, long flg)
         mag->ndx = 0;
     } else {
         bkt = slabbkt(nb);
-//        sz = 1UL << bkt;
         maglk(bkt);
         mag = _freehdrtab[bkt];
-        if ((mag) && mag->ndx < mag->n) {
+        if (mag) {
             ptr = magpop(mag);
             if (magfull(mag)) {
                 if (mag->next) {
@@ -66,6 +65,7 @@ memalloc(unsigned long nb, long flg)
             mag = &_maghdrtab[maghdrnum(ptr)];
             mag->n = n;
             mag->ndx = 0;
+            mag->bkt = bkt;
 #if (MEMTEST)
             fprintf(stderr, "INIT: %ld items:", n);
 #endif
@@ -90,13 +90,11 @@ memalloc(unsigned long nb, long flg)
     }
 #if (MEMFREECHK)
     if (ptr) {
-#if 0
         if (bitset(_membitmap, (uintptr_t)ptr >> MAGMINLOG2)) {
             fprintf(stderr, "duplicate allocation %p\n", ptr);
             
             abort();
         }
-#endif
         setbit(_membitmap, (uintptr_t)ptr >> MAGMINLOG2);
     }
 #endif
@@ -115,7 +113,7 @@ kfree(void *ptr)
 
         return;
     }
-#if (MEMFREECHK) && 0
+#if (MEMFREECHK)
     if (!bitset(_membitmap, (uintptr_t)ptr >> MAGMINLOG2)) {
         fprintf(stderr, "invalid free: %p\n", ptr);
 
@@ -129,8 +127,9 @@ kfree(void *ptr)
         magpush(mag, ptr);
         if (magempty(mag)) {
             slabfree(virtslabtab, virthdrtab, ptr);
-            slab = &virthdrtab[slabnum(ptr)];
-            bkt = slabgetbkt(slab);
+//            slab = &virthdrtab[slabnum(ptr)];
+//            bkt = slabgetbkt(slab);
+            bkt = mag->bkt;
             maglk(bkt);
             if (mag->prev) {
                 mag->prev->next = mag->next;
@@ -141,8 +140,21 @@ kfree(void *ptr)
                 mag->next->prev = mag->prev;
             }
             magunlk(bkt);
+        } else if (mag->ndx == mag->n - 1) {
+//            slab = &virthdrtab[slabnum(ptr)];
+//            bkt = slabgetbkt(slab);
+            bkt = mag->bkt;
+            mag->prev = NULL;
+            maglk(bkt);
+            if (_freehdrtab[bkt]) {
+                _freehdrtab[bkt]->prev = mag;
+            }
+            mag->next = _freehdrtab[bkt];
+            _freehdrtab[bkt] = mag;
+            magunlk(bkt);
         }
     }
+    magdiag();
 
     return;
 }

@@ -20,6 +20,7 @@
 struct maghdr {
     long           n;
     long           ndx;
+    long           bkt;
     struct maghdr *prev;
     struct maghdr *next;
     void          *ptab[1UL << (SLABMINLOG2 - MAGMINLOG2)];
