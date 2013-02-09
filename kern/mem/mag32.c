@@ -106,7 +106,6 @@ void
 kfree(void *ptr)
 {
     struct maghdr  *mag = &_maghdrtab[maghdrnum(ptr)];
-    struct slabhdr *slab;
     unsigned long   bkt;
 
     if (!ptr) {
@@ -127,8 +126,6 @@ kfree(void *ptr)
         magpush(mag, ptr);
         if (magempty(mag)) {
             slabfree(virtslabtab, virthdrtab, ptr);
-//            slab = &virthdrtab[slabnum(ptr)];
-//            bkt = slabgetbkt(slab);
             bkt = mag->bkt;
             maglk(bkt);
             if (mag->prev) {
@@ -154,7 +151,9 @@ kfree(void *ptr)
             magunlk(bkt);
         }
     }
+#if (MEMTEST)
     magdiag();
+#endif
 
     return;
 }
