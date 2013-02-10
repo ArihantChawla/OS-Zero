@@ -6,9 +6,6 @@
 #include <zero/param.h>
 
 struct slabhdr {
-#if (PTRBITS > 32)
-    void           *base;
-#endif
     unsigned long   nfo;
 #if (PTRBITS <= 32)
     uint32_t        link;
@@ -21,12 +18,19 @@ struct slabhdr {
 #define slablk(bkt)   mtxlk(&virtlktab[bkt], MEMPID);
 #define slabunlk(bkt) mtxunlk(&virtlktab[bkt], MEMPID);
 
+#if (PTRBITS > 32)
+#define slabnum(ptr)                                                    \
+    ((uintptr_t)((uint8_t *)(ptr) - slabvirtbase) >> SLABMINLOG2)
+#define slabgetadr(hdr, tab)                                            \
+    ((void *)(slabvirtbase + ((unsigned long)slabhdrnum(hdr, tab) << SLABMINLOG2)))
+#else
 #define slabnum(ptr)                                                    \
     ((uintptr_t)(ptr) >> SLABMINLOG2)
-#define slabhdrnum(hdr, tab)                                            \
-    (!(hdr) ? 0 : (uintptr_t)((hdr) - (struct slabhdr *)(tab)))
 #define slabgetadr(hdr, tab)                                            \
     ((void *)(slabhdrnum(hdr, tab) << SLABMINLOG2))
+#endif
+#define slabhdrnum(hdr, tab)                                            \
+    (!(hdr) ? 0 : (uintptr_t)((hdr) - (struct slabhdr *)(tab)))
 #define slabgethdr(ptr, tab)                                           \
     (!(ptr) ? NULL : (struct slabhdr *)(tab) + slabnum(ptr))
 

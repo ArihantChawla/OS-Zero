@@ -18,6 +18,9 @@ extern struct maghdr *maghdrtab;
 extern long           virtlktab[PTRBITS];
 
 static unsigned long  slabnhdr;
+#if (PTRBITS > 32)
+unsigned long         slabvirtbase;
+#endif
 
 /*
  * zero slab allocator
@@ -47,6 +50,8 @@ meminitvirt(unsigned long base, unsigned long nb)
     if (adr & (SLABMIN - 1)) {
         adr = roundup2(adr, SLABMIN);
     }
+    fprintf(stderr, "MEM: MAGBITS == %lx, MAGHDRS == %lx, VIRTHDRS == %lx\n",
+            magbitmap, maghdrtab, virthdrtab);
 
     return adr;
 }
@@ -64,7 +69,7 @@ slabinit(struct slabhdr **zone, struct slabhdr *hdrtab,
     struct slabhdr *hdr;
 
 #if (PTRBITS > 32)
-    adr = meminitvirt(adr, nb);
+    slabvirtbase = adr = meminitvirt(adr, nb);
     hdrtab = virthdrtab;
 #else
     slabnhdr = SLABNHDR;
@@ -74,14 +79,19 @@ slabinit(struct slabhdr **zone, struct slabhdr *hdrtab,
         nb = rounddown2(nb, SLABMINLOG2);
     }
 #if (MEMTEST)
-    printf("VM: %lx bytes @ %lx - %lx\n", nb, adr, adr + nb - 1);
+    printf("VM: %lx bytes @ %lx - %lx, %lx-byte pointers\n", nb, adr, adr + nb - 1, sizeof(void *));
 #else
     kprintf("%ul kilobytes kernel virtual memory free @ %lx\n", nb >> 10, adr);
 #endif
     while ((nb) && bkt >= SLABMINLOG2) {
         if (nb & ul) {
+#if (MEMTEST)
+            printf("%lx bytes @ %lx\n", nb, adr);
+#endif
 //            hdr = &hdrtab[slabnum(adr)];
             hdr = slabgethdr(adr, hdrtab);
+            fprintf(stderr, "ADR == %lx, SLAB == %lx\n",
+                    adr, slabnum(adr));
             slabsetbkt(hdr, bkt);
             slabsetfree(hdr);
             slabclrlink(hdr);
@@ -298,6 +308,9 @@ slabsplit(struct slabhdr **zone, struct slabhdr *hdrtab,
         if (bkt != dest) {
             slabunlk(bkt);
         }
+#if (MEMTEST)
+        fprintf(stderr, "PTR == %p, BKT == %ld\n", ptr, bkt);
+#endif
         ptr += sz;
     }
     hdr1 = slabgethdr(ptr, hdrtab);
@@ -348,6 +361,9 @@ slaballoc(struct slabhdr **zone, struct slabhdr *hdrtab,
         slabsetflg(hdr1, flg);
         ptr = slabgetadr(hdr1, hdrtab);
     }
+#if (MEMTEST)
+    printf("SLABALLOC: %p\n", ptr);
+#endif
     slabunlk(bkt1);
 
     return ptr;

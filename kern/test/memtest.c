@@ -19,6 +19,7 @@ unsigned long  vmnphyspages;
 uintptr_t      alloctab[NALLOC];
 void          *ptrtab[NALLOC];
 
+extern unsigned long  slabvirtbase;
 extern struct maghdr *freemagtab[PTRBITS];
 
 void
@@ -176,13 +177,13 @@ main(int argc, char *argv[])
             alloctab[l] = rand() & (8 * SLABMIN - 1);
         }
         for (l = 0 ; l < NALLOC ; l++) {
-//            fprintf(stderr, "ALLOC: %lu - ", (unsigned long)alloctab[l]);
+            fprintf(stderr, "ALLOC: %lu - ", (unsigned long)alloctab[l]);
             ptrtab[l] = memalloc(alloctab[l], MEMZERO);
-//            fprintf(stderr, "%p\n", ptrtab[l]);
+            fprintf(stderr, "%p\n", ptrtab[l]);
         }
         l = NALLOC;
         while (l--) {
-//            fprintf(stderr, "FREE: %lx\n", (unsigned long)ptrtab[l]);
+            fprintf(stderr, "FREE: %lx\n", (unsigned long)ptrtab[l]);
             kfree((void *)ptrtab[l]);
         }
         diag();

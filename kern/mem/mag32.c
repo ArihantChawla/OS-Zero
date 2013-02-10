@@ -22,6 +22,10 @@
 #endif
 
 #if (PTRBITS > 32)
+extern unsigned long slabvirtbase;
+#endif
+
+#if (PTRBITS > 32)
 struct maghdr *maghdrtab;
 #else
 struct maghdr  maghdrtab[1UL << (PTRBITS - SLABMINLOG2)] ALIGNED(PAGESIZE);
@@ -54,7 +58,10 @@ memalloc(unsigned long nb, long flg)
         ptr = vmmapvirt((uint32_t *)&_pagetab,
                         slaballoc(virtslabtab, virthdrtab, nb, flg), nb, flg);
 #endif
-        mag = &maghdrtab[maghdrnum(ptr)];
+        mag = maggethdr(ptr, maghdrtab);
+#if (MEMTEST)
+        printf("PTR == %lx, MAG == %lx\n", (unsigned long)ptr, magnum(ptr));
+#endif
         mag->n = 1;
         mag->ndx = 0;
     } else {
@@ -72,7 +79,7 @@ memalloc(unsigned long nb, long flg)
             sz = 1UL << bkt;
             ptr = u8ptr = slaballoc(virtslabtab, virthdrtab, sz, flg);
             n = 1UL << (SLABMINLOG2 - bkt);
-            mag = &maghdrtab[maghdrnum(ptr)];
+            mag = maggethdr(ptr, maghdrtab);
             mag->n = n;
             mag->ndx = 0;
             mag->bkt = bkt;
@@ -116,7 +123,7 @@ memalloc(unsigned long nb, long flg)
 void
 kfree(void *ptr)
 {
-    struct maghdr  *mag = &maghdrtab[maghdrnum(ptr)];
+    struct maghdr  *mag = maggethdr(ptr, maghdrtab);
     unsigned long   bkt;
 
     if (!ptr) {
