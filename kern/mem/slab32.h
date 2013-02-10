@@ -5,6 +5,7 @@
 #include <zero/mtx.h>
 #include <zero/trix.h>
 #include <kern/task.h>
+#include <kern/mem/slab.h>
 
 #define slabgetprev(hp, tab)                                            \
     (!(hp)                                                              \
@@ -29,18 +30,13 @@
 #define slabsetnext(hp, hdr, tab)                                       \
     (slabclrnext(hp), (hp)->link |= (slabhdrnum(hdr, tab) << 16))
 
-struct slabhdr {
-    unsigned long nfo;   // size shift count + free-bit
-    unsigned long link;  // 16-bit prev and next header IDs
-} PACK();
-
 #define slabnum(ptr)                                                    \
     ((uintptr_t)(ptr) >> SLABMINLOG2)
 #define slabhdrnum(hdr, tab)                                            \
     (!(hdr) ? 0 : (uintptr_t)((hdr) - (struct slabhdr *)(tab)))
-#define slabadr(hdr, tab)                                               \
+#define slabgetadr(hdr, tab)                                            \
     ((void *)(slabhdrnum(hdr, tab) << SLABMINLOG2))
-#define slabgethdr(ptr, tab)                                               \
+#define slabgethdr(ptr, tab)                                            \
     (!(ptr) ? NULL : (struct slabhdr *)(tab) + slabnum(ptr))
 
 void  slabinit(struct slabhdr **zone, struct slabhdr *hdrtab,

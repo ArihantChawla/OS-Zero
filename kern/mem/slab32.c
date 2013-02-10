@@ -80,7 +80,7 @@ slabcomb(struct slabhdr **zone, struct slabhdr *hdrtab, struct slabhdr *hdr)
     struct slabhdr *hdr3;
     struct slabhdr *hdr4;
 
-//    fprintf(stderr, "PTR: %p\n", slabadr(hdr, hdrtab));
+//    fprintf(stderr, "PTR: %p\n", slabgetadr(hdr, hdrtab));
     while ((prev) || (next)) {
         prev ^= prev;
         next ^= next;
@@ -89,8 +89,8 @@ slabcomb(struct slabhdr **zone, struct slabhdr *hdrtab, struct slabhdr *hdr)
             bkt2 = slabgetbkt(hdr1);
 #if (MEMTEST) && 0
             fprintf(stderr, "PREV: %p (%x/%lx) - %s (%ld, %ld)- ",
-                    slabadr(hdr1, hdrtab),
-                    slabadr(hdr, hdrtab) - slabadr(hdr1, hdrtab),
+                    slabgetadr(hdr1, hdrtab),
+                    slabgetadr(hdr, hdrtab) - slabgetadr(hdr1, hdrtab),
                     1UL << bkt2,
                     slabisfree(hdr1) ? "FREE - " : "USED - ",
                     bkt1, bkt2);
@@ -145,8 +145,8 @@ slabcomb(struct slabhdr **zone, struct slabhdr *hdrtab, struct slabhdr *hdr)
             bkt2 = slabgetbkt(hdr2);
 #if (MEMTEST) && 0
             fprintf(stderr, "NEXT: %p (%x/%lx) - %s (%ld, %ld)- ",
-                    slabadr(hdr2, hdrtab),
-                    slabadr(hdr2, hdrtab) - slabadr(hdr1, hdrtab),
+                    slabgetadr(hdr2, hdrtab),
+                    slabgetadr(hdr2, hdrtab) - slabgetadr(hdr1, hdrtab),
                     1UL << bkt2,
                     slabisfree(hdr2) ? "FREE - " : "USED - ",
                     bkt1, bkt2);
@@ -239,7 +239,7 @@ slabsplit(struct slabhdr **zone, struct slabhdr *hdrtab,
           struct slabhdr *hdr, unsigned long dest)
 {
     unsigned long   bkt = slabgetbkt(hdr);
-    uint8_t        *ptr = slabadr(hdr, hdrtab);
+    uint8_t        *ptr = slabgetadr(hdr, hdrtab);
     struct slabhdr *hdr1;
     unsigned long   sz = 1UL << bkt;
     
@@ -287,7 +287,7 @@ void *
 slaballoc(struct slabhdr **zone, struct slabhdr *hdrtab,
           unsigned long nb, unsigned long flg)
 {
-    unsigned long   bkt1 = max(SLABMINLOG2, membkt(nb));
+    unsigned long   bkt1 = max(SLABMINLOG2, memgetbkt(nb));
     unsigned long   bkt2 = bkt1;
     struct slabhdr *hdr1;
     uint8_t        *ptr = NULL;
@@ -313,7 +313,7 @@ slaballoc(struct slabhdr **zone, struct slabhdr *hdrtab,
         slabclrfree(hdr1);
         slabclrlink(hdr1);
         slabsetflg(hdr1, flg);
-        ptr = slabadr(hdr1, hdrtab);
+        ptr = slabgetadr(hdr1, hdrtab);
     }
     slabunlk(bkt1);
 

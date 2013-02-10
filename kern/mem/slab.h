@@ -1,12 +1,22 @@
 #ifndef __MEM_SLAB_H__
 #define __MEM_SLAB_H__
 
-#include <kern/mem/slab.h>
-#if defined(__x86_64__) || defined(__amd64__)
-#include <kern/mem/slab64.h>
-#elif defined(__i386__) || defined(__arm__)
-#include <kern/mem/slab32.h>
+#include <stdint.h>
+#include <zero/cdecl.h>
+#include <zero/param.h>
+
+struct slabhdr {
+#if (PTRBITS > 32)
+    void           *base;
 #endif
+    unsigned long   nfo;
+#if (PTRBITS <= 32)
+    uint32_t        link;
+#else
+    struct slabhdr *prev;
+    struct slabhdr *next;
+#endif
+} PACK();
 
 #define slablk(bkt)   mtxlk(&virtlktab[bkt], MEMPID);
 #define slabunlk(bkt) mtxunlk(&virtlktab[bkt], MEMPID);
@@ -43,6 +53,12 @@ extern struct slabhdr  virthdrtab[];
 #endif
 #if (PTRBITS != 32)
 #error slab.h does not support x86-64
+#endif
+
+#if defined(__i386__) || defined(__arm__) && !defined(__x86_64__) && !defined(__amd64__)
+#include <kern/mem/slab32.h>
+#elif defined(__x86_64__) || defined(__amd64__)
+#include <kern/mem/slab64.h>
 #endif
 
 #endif /* __MEM_SLAB_H__ */

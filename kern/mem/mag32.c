@@ -34,7 +34,7 @@ memalloc(unsigned long nb, long flg)
     unsigned long  n;
 
     nb = max(MAGMIN, nb);
-    bkt = membkt(nb);
+    bkt = memgetbkt(nb);
     if (nb > (SLABMIN >> 1)) {
 #if (MEMTEST)
         ptr = slaballoc(virtslabtab, virthdrtab, nb, flg);
@@ -136,7 +136,7 @@ kfree(void *ptr)
             magunlk(bkt);
         } else if (mag->ndx == mag->n - 1) {
 //            slab = &virthdrtab[slabnum(ptr)];
-//            bkt = slabgetbkt(slab);
+//            bkt = memgetbkt(slab);
             bkt = mag->bkt;
             mag->prev = NULL;
             maglk(bkt);

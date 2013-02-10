@@ -5,23 +5,7 @@
 #include <zero/mtx.h>
 #include <zero/trix.h>
 #include <kern/task.h>
-
-#define slablk(bkt)   mtxlk(&_physlktab[bkt], MEMPID)
-#define slabunlk(bkt) mtxunlk(&_physlktab[bkt], MEMPID)
-
-#define SLAB_CONST_SIZE_TRICK 1
-#if (SLAB_CONST_SIZE_TRICK)
-#define slabbkt(sz) slabfastbkt(sz)
-#else
-#define slabbkt(sz) slabcalcbkt(sz)
-#endif
-
-/* slab header and macros for manipulation */
-#define SLABFREE    0x01L
-#define SLABWIRE    0x02L
-#define SLABZERO    0x04L
-#define SLABFLGBITS 0x07L
-#define NSLABFLGBIT 3
+#include <kern/mem/mem.h>
 
 #define slabgetprev(hp, tab)                                            \
     (((hp)->link & 0x00000000ffffffffL)                                 \
@@ -42,11 +26,16 @@
 #define slabsetnext(hp, hdr, tab)                                       \
     ((hp)->next = (hdr))
 
-struct slabhdr {
-    long nfo;                   // size shift count + free-bit
-    struct slabhdr *prev;
-    struct slabhdr *next;
-} PACK();
+#define slabgetadr(hdr, tab)                                            \
+    (slab->base)
+#define slabgethdr(ptr, tab)                                            \
+    (!(ptr) ? NULL : (struct slabhdr *)(tab) + slabnum(ptr))
+#define slabnum(ptr)                                                    \
+    ((uintptr_t)(ptr) >> SLABMINLOG2)
+#if 0
+#define slabhdrnum(hdr, tab)                                            \
+    (!(hdr) ? 0 : (uintptr_t)((hdr) - (struct slabhdr *)(tab)))
+#endif
 
 #endif /* __MEM_SLAB64_H__ */
 
