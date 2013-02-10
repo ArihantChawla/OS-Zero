@@ -10,13 +10,13 @@
 #define MAGMIN     (1UL << MAGMINLOG2)
 #define MAGMINLOG2 PAGESIZELOG2
 
-#define maglk(bkt)       mtxlk(&freelktab[bkt], MEMPID)
-#define magunlk(pq)      mtxunlk(&freelktab[bkt], MEMPID)
+#define maglk(tab, bkt)   mtxlk(&(tab)[bkt], MEMPID)
+#define magunlk(tab, bkt) mtxunlk(&(tab)[bkt], MEMPID)
 
-#define magpop(mp)       ((mp)->ptab[((mp)->ndx)++])
-#define magpush(mp, ptr) ((mp)->ptab[--((mp)->ndx)] = (ptr))
-#define magfull(mp)      ((mp)->ndx == (mp)->n)
-#define magempty(mp)     (!(mp)->ndx)
+#define magpop(mp)        ((mp)->ptab[((mp)->ndx)++])
+#define magpush(mp, ptr)  ((mp)->ptab[--((mp)->ndx)] = (ptr))
+#define magfull(mp)       ((mp)->ndx == (mp)->n)
+#define magempty(mp)      (!(mp)->ndx)
 struct maghdr {
     long           n;
     long           ndx;

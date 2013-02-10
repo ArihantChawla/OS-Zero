@@ -11,14 +11,6 @@
 
 extern void pageinit(uintptr_t, unsigned long);
 
-#if (PTRBITS > 32)
-struct slabhdr *virthdrtab;
-#else
-struct slabhdr  virthdrtab[1U << (PTRBITS - SLABMINLOG2)] ALIGNED(PAGESIZE);
-#endif
-struct slabhdr *virtslabtab[PTRBITS] ALIGNED(PAGESIZE);
-long            virtlktab[PTRBITS];
-
 #if (!MEMTEST)
 void
 meminit(uintptr_t base, unsigned long nbphys)

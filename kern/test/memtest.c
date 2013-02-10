@@ -19,8 +19,10 @@ unsigned long  vmnphyspages;
 uintptr_t      alloctab[NALLOC];
 void          *ptrtab[NALLOC];
 
-extern unsigned long  slabvirtbase;
-extern struct maghdr *freemagtab[PTRBITS];
+extern struct maghdr  *magvirttab[PTRBITS];
+extern struct slabhdr *slabvirttab[PTRBITS];
+extern unsigned long   slabvirtbase;
+extern struct slabhdr *slabvirthdrtab;
 
 void
 magprint(struct maghdr *mag)
@@ -49,7 +51,7 @@ magdiag(void)
     unsigned long  l;
 
     for (l = MAGMINLOG2 ; l < SLABMINLOG2 ; l++) {
-        mag1 = freemagtab[l];
+        mag1 = magvirttab[l];
         while (mag1) {
             if (!mag1->ndx) {
                 fprintf(stderr, "empty magazine on free list %lu\n", l);
@@ -71,11 +73,11 @@ slabprint(void)
     struct slabhdr *hdr1;
 
     for (ul = 0 ; ul < PTRBITS ; ul++) {
-        hdr1 = virtslabtab[ul];
+        hdr1 = slabvirttab[ul];
         fprintf(stderr, "BKT %lu -", ul);
         while (hdr1) {
-            fprintf(stderr, " %p ", slabgetadr(hdr1, virthdrtab));
-            hdr1 = slabgetnext(hdr1, virthdrtab);
+            fprintf(stderr, " %p ", slabgetadr(hdr1, slabvirthdrtab));
+            hdr1 = slabgetnext(hdr1, slabvirthdrtab);
         }
         fprintf(stderr, "\n");
     }
@@ -95,54 +97,54 @@ diag(void)
 
     for (l = SLABMINLOG2 ; l < PTRBITS ; l++) {
         n = 0;
-        hdr1 = virtslabtab[l];
+        hdr1 = slabvirttab[l];
         fprintf(stderr, "BKT %lu: ", l);
-        if (slabgetprev(hdr1, virthdrtab)) {
-            hdr2 = slabgetprev(hdr1, virthdrtab);
+        if (slabgetprev(hdr1, slabvirthdrtab)) {
+            hdr2 = slabgetprev(hdr1, slabvirthdrtab);
             fprintf(stderr, "%p: prev set on head: %p (%p)\n",
-                    slabgetadr(hdr1, virthdrtab),
-                    slabgetprev(hdr1, virthdrtab),
-                    slabgetadr(hdr2, virthdrtab));
+                    slabgetadr(hdr1, slabvirthdrtab),
+                    slabgetprev(hdr1, slabvirthdrtab),
+                    slabgetadr(hdr2, slabvirthdrtab));
             
             abort();
         }
         while (hdr1) {
-            fprintf(stderr, " %lu: %p (%p)", n, slabgetadr(hdr1, virthdrtab), hdr1);
-            if (slabgetadr(hdr1, virthdrtab) == NULL) {
+            fprintf(stderr, " %lu: %p (%p)", n, slabgetadr(hdr1, slabvirthdrtab), hdr1);
+            if (slabgetadr(hdr1, slabvirthdrtab) == NULL) {
                 fprintf(stderr, "NULL item on list\n");
 
                 abort();
             }
             if (slabgetbkt(hdr1) != l) {
                 fprintf(stderr, "%p: invalid bkt %lu (%lu)\n",
-                        slabgetadr(hdr1, virthdrtab),
+                        slabgetadr(hdr1, slabvirthdrtab),
                         slabgetbkt(hdr1),
                         l);
 
                 abort();
             }
-            hdr2 = slabgetnext(hdr1, virthdrtab);
-            fprintf(stderr, " %lu: %p (%p)", n + 1, slabgetadr(hdr2, virthdrtab), hdr2);
+            hdr2 = slabgetnext(hdr1, slabvirthdrtab);
+            fprintf(stderr, " %lu: %p (%p)", n + 1, slabgetadr(hdr2, slabvirthdrtab), hdr2);
             if (hdr2) {
                 if (hdr1 == hdr2) {
                     fprintf(stderr, "%p: next is self\n",
-                            slabgetadr(hdr1, virthdrtab));
+                            slabgetadr(hdr1, slabvirthdrtab));
                 }
-                if (slabgetprev(hdr2, virthdrtab) != hdr1) {
-                    hdr3 = slabgetprev(hdr2, virthdrtab);
+                if (slabgetprev(hdr2, slabvirthdrtab) != hdr1) {
+                    hdr3 = slabgetprev(hdr2, slabvirthdrtab);
                     fprintf(stderr, " %p: invalid prev %p (%p)\n",
-                            slabgetadr(hdr2, virthdrtab),
-                            slabgetadr(hdr3, virthdrtab),
-                            slabgetadr(hdr1, virthdrtab));
+                            slabgetadr(hdr2, slabvirthdrtab),
+                            slabgetadr(hdr3, slabvirthdrtab),
+                            slabgetadr(hdr1, slabvirthdrtab));
                     
                     abort();
                 }
-                if (slabgetnext(hdr1, virthdrtab) != hdr2) {
-                    hdr3 = slabgetnext(hdr1, virthdrtab);
+                if (slabgetnext(hdr1, slabvirthdrtab) != hdr2) {
+                    hdr3 = slabgetnext(hdr1, slabvirthdrtab);
                     fprintf(stderr, " %p: invalid next %p (%p)\n",
-                            slabgetadr(hdr1, virthdrtab),
-                            slabgetadr(hdr3, virthdrtab),
-                            slabgetadr(hdr2, virthdrtab));
+                            slabgetadr(hdr1, slabvirthdrtab),
+                            slabgetadr(hdr3, slabvirthdrtab),
+                            slabgetadr(hdr2, slabvirthdrtab));
                     
                     abort();
                 }
@@ -165,8 +167,8 @@ main(int argc, char *argv[])
     fprintf(stderr, "PTRBITS == %d\n", PTRBITS);
     fprintf(stderr, "MALLOC: %p\n", base);
     bzero(base, 1024 * 1024 * 1024);
-//    slabinit(virtslabtab, virthdrtab, PAGESIZE, 1024 * 1024);
-    slabinit(virtslabtab, virthdrtab, (unsigned long)base, 1024 * 1024 * 1024);
+//    slabinit(slabvirttab, slabvirthdrtab, PAGESIZE, 1024 * 1024);
+    slabinit((unsigned long)base, 1024 * 1024 * 1024);
 //    diag();
     slabprint();
     sleep(1);
@@ -177,13 +179,13 @@ main(int argc, char *argv[])
             alloctab[l] = rand() & (8 * SLABMIN - 1);
         }
         for (l = 0 ; l < NALLOC ; l++) {
-            fprintf(stderr, "ALLOC: %lu - ", (unsigned long)alloctab[l]);
+//            fprintf(stderr, "ALLOC: %lu - ", (unsigned long)alloctab[l]);
             ptrtab[l] = memalloc(alloctab[l], MEMZERO);
-            fprintf(stderr, "%p\n", ptrtab[l]);
+//            fprintf(stderr, "%p\n", ptrtab[l]);
         }
         l = NALLOC;
         while (l--) {
-            fprintf(stderr, "FREE: %lx\n", (unsigned long)ptrtab[l]);
+//            fprintf(stderr, "FREE: %lx\n", (unsigned long)ptrtab[l]);
             kfree((void *)ptrtab[l]);
         }
         diag();

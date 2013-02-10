@@ -15,24 +15,17 @@ struct slabhdr {
 #endif
 } PACK();
 
-#define slablk(bkt)   mtxlk(&virtlktab[bkt], MEMPID);
-#define slabunlk(bkt) mtxunlk(&virtlktab[bkt], MEMPID);
+#define slablk(tab, bkt)   mtxlk(&(tab)[bkt], MEMPID);
+#define slabunlk(tab, bkt) mtxunlk(&(tab)[bkt], MEMPID);
 
-#if (PTRBITS > 32)
-#define slabnum(ptr)                                                    \
-    ((uintptr_t)((uint8_t *)(ptr) - slabvirtbase) >> SLABMINLOG2)
+#define slabnum(ptr, base)                                              \
+    (((uintptr_t)(ptr) - (base)) >> SLABMINLOG2)
 #define slabgetadr(hdr, tab)                                            \
     ((void *)(slabvirtbase + ((unsigned long)slabhdrnum(hdr, tab) << SLABMINLOG2)))
-#else
-#define slabnum(ptr)                                                    \
-    ((uintptr_t)(ptr) >> SLABMINLOG2)
-#define slabgetadr(hdr, tab)                                            \
-    ((void *)(slabhdrnum(hdr, tab) << SLABMINLOG2))
-#endif
 #define slabhdrnum(hdr, tab)                                            \
     (!(hdr) ? 0 : (uintptr_t)((hdr) - (struct slabhdr *)(tab)))
-#define slabgethdr(ptr, tab)                                           \
-    (!(ptr) ? NULL : (struct slabhdr *)(tab) + slabnum(ptr))
+#define slabgethdr(ptr, tab, base)                                      \
+    (!(ptr) ? NULL : (struct slabhdr *)(tab) + slabnum(ptr, base))
 
 #define slabclrnfo(hp)                                                  \
     ((hp)->nfo = 0L)
@@ -52,13 +45,6 @@ struct slabhdr {
     ((hp)->nfo |= (flg))
 #define slabclrflg(hp)                                                  \
     ((hp)->nfo &= ~MEMFLGBITS)
-
-extern struct slabhdr *virtslabtab[];
-#if (PTRBITS > 32)
-extern struct slabhdr *virthdrtab;
-#else
-extern struct slabhdr  virthdrtab[];
-#endif
 
 #define SLABMIN      (1UL << SLABMINLOG2)
 #define SLABMINLOG2  16 // don't make this less than 16
