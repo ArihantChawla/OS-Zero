@@ -21,6 +21,15 @@ struct slabhdr {
 #define slablk(bkt)   mtxlk(&virtlktab[bkt], MEMPID);
 #define slabunlk(bkt) mtxunlk(&virtlktab[bkt], MEMPID);
 
+#define slabnum(ptr)                                                    \
+    ((uintptr_t)(ptr) >> SLABMINLOG2)
+#define slabhdrnum(hdr, tab)                                            \
+    (!(hdr) ? 0 : (uintptr_t)((hdr) - (struct slabhdr *)(tab)))
+#define slabgetadr(hdr, tab)                                            \
+    ((void *)(slabhdrnum(hdr, tab) << SLABMINLOG2))
+#define slabgethdr(ptr, tab)                                           \
+    (!(ptr) ? NULL : (struct slabhdr *)(tab) + slabnum(ptr))
+
 #define slabclrnfo(hp)                                                  \
     ((hp)->nfo = 0L)
 #define slabclrbkt(hp)                                                  \
@@ -41,19 +50,14 @@ struct slabhdr {
     ((hp)->nfo &= ~MEMFLGBITS)
 
 extern struct slabhdr *virtslabtab[];
+#if (PTRBITS > 32)
+extern struct slabhdr *virthdrtab;
+#else
 extern struct slabhdr  virthdrtab[];
+#endif
 
 #define SLABMIN      (1UL << SLABMINLOG2)
 #define SLABMINLOG2  16 // don't make this less than 16
-
-#if (PTRBITS == 32)
-#define SLABNHDR     (1UL << (PTRBITS - SLABMINLOG2))
-#define SLABHDRTABSZ (SLABNHDR * sizeof(struct slabhdr))
-#define SLABHDRBASE  (VIRTBASE - SLABHDRTABSZ)
-#endif
-#if (PTRBITS != 32)
-#error slab.h does not support x86-64
-#endif
 
 #if defined(__i386__) || defined(__arm__) && !defined(__x86_64__) && !defined(__amd64__)
 #include <kern/mem/slab32.h>

@@ -8,33 +8,58 @@
 #include <kern/mem/mem.h>
 
 #define slabgetprev(hp, tab)                                            \
-    (((hp)->link & 0x00000000ffffffffL)                                 \
-     ? ((tab) + ((hp)->link & 0xffffffffL))                             \
-     : NULL)
+    ((hp)->prev)
 #define slabgetnext(hp, tab)                                            \
-    (((hp)->link & 0xffffffff00000000L)                                 \
-     ? ((tab) + (((hp)->link & 0xffffffff00000000L) >> 32))             \
-     : NULL)
+    ((hp)->next)
 #define slabclrprev(hp)                                                 \
-    ((hp)->link &= 0xffffffff00000000L)
+    ((hp)->prev = NULL)
 #define slabclrnext(hp)                                                 \
-    ((hp)->link &= 0x00000000ffffffffL)
+    ((hp)->next = NULL)
 #define slabclrlink(hp)                                                 \
-    ((hp)->link = 0L)
+    ((hp)->prev = (hp)->next = NULL)
 #define slabsetprev(hp, hdr, tab)                                       \
     ((hp)->prev = (hdr))
 #define slabsetnext(hp, hdr, tab)                                       \
     ((hp)->next = (hdr))
 
-#define slabgetadr(hdr, tab)                                            \
-    (slab->base)
-#define slabgethdr(ptr, tab)                                            \
-    (!(ptr) ? NULL : (struct slabhdr *)(tab) + slabnum(ptr))
-#define slabnum(ptr)                                                    \
-    ((uintptr_t)(ptr) >> SLABMINLOG2)
 #if 0
-#define slabhdrnum(hdr, tab)                                            \
-    (!(hdr) ? 0 : (uintptr_t)((hdr) - (struct slabhdr *)(tab)))
+#define SLABNLVLBIT  16
+#define SLABNLVL0BIT (PTRBITS - 3 * SLABNLVLBIT)
+
+static __inline__ void *
+slabgethdr(void *adr, void *tab)
+{
+    void *ptr = tab;
+    unsigned long mask = (1UL << NLVLBIT) - 1;
+#if (SLABNLVL0BIT)
+    unsigned long k0 = ((uintptr_t)adr >> (3 * SLABNLVLBIT))
+        & (1UL << (SLABNLVL0BIT - 1));
+#endif
+    unsigned long k1 = ((uintptr_t)adr >> (2 * SLABNLVLBIT)) & mask;
+    unsigned long k2 = ((uintptr_t)adr >> SLABLVLBIT) & mask;
+    unsigned long k3 = (uintptr_t)adr & mask;
+    
+#if (SLABNLVL0BIT)
+    ptr = (void **)ptr[k0];
+    if (!ptr) {
+        
+        return ptr;
+    }
+#endif
+    ptr = (void **)ptr[k1];
+    if (!ptr) {
+
+        return ptr;
+    }
+    ptr = (void **)ptr[k2];
+    if (!ptr) {
+
+        return ptr;
+    }
+    ptr = (void **)ptr[k3];
+
+    return ptr;
+}
 #endif
 
 #endif /* __MEM_SLAB64_H__ */

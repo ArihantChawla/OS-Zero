@@ -9,7 +9,11 @@
 #endif
 #include <kern/mem/mem.h>
 #include <kern/mem/mag.h>
+#if defined(__x86_64__) || defined(__amd64__)
+#include <kern/mem/slab64.h>
+#else
 #include <kern/mem/slab32.h>
+#endif
 
 #if (MEMTEST)
 #include <stdio.h>
@@ -17,10 +21,18 @@
 #define panic() abort()
 #endif
 
+#if (PTRBITS > 32)
+struct maghdr *maghdrtab;
+#else
 struct maghdr  maghdrtab[1UL << (PTRBITS - SLABMINLOG2)] ALIGNED(PAGESIZE);
+#endif
 struct maghdr *freemagtab[PTRBITS];
 long           freelktab[PTRBITS];
-uint8_t        membitmap[1UL << (PTRBITS - MAGMINLOG2 - 3)];
+#if (PTRBITS > 32)
+uint8_t       *magbitmap;
+#else
+uint8_t        magbitmap[1UL << (PTRBITS - MAGMINLOG2 - 3)];
+#endif
 
 void *
 memalloc(unsigned long nb, long flg)
@@ -87,12 +99,12 @@ memalloc(unsigned long nb, long flg)
         magunlk(bkt);
     }
     if (ptr) {
-        if (bitset(membitmap, (uintptr_t)ptr >> MAGMINLOG2)) {
+        if (bitset(magbitmap, (uintptr_t)ptr >> MAGMINLOG2)) {
             kprintf("duplicate allocation %p\n", ptr);
             
             panic();
         }
-        setbit(membitmap, (uintptr_t)ptr >> MAGMINLOG2);
+        setbit(magbitmap, (uintptr_t)ptr >> MAGMINLOG2);
         if (flg & MEMZERO) {
             bzero(ptr, 1UL << bkt);
         }
@@ -111,12 +123,12 @@ kfree(void *ptr)
 
         return;
     }
-    if (!bitset(membitmap, (uintptr_t)ptr >> MAGMINLOG2)) {
+    if (!bitset(magbitmap, (uintptr_t)ptr >> MAGMINLOG2)) {
         kprintf("invalid free: %p\n", ptr);
 
         panic();
     }
-    clrbit(membitmap, (uintptr_t)ptr >> MAGMINLOG2);
+    clrbit(magbitmap, (uintptr_t)ptr >> MAGMINLOG2);
     if (mag->n == 1 && !mag->ndx) {
         slabfree(virtslabtab, virthdrtab, ptr);
     } else if (mag->n) {

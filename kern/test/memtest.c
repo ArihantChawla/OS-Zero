@@ -7,9 +7,8 @@
 #include <zero/param.h>
 #include <kern/mem.h>
 #include <kern/mem/mem.h>
-#include <kern/mem/slab.h>
 #include <kern/mem/mag.h>
-#include <kern/mem/slab32.h>
+#include <kern/mem/slab.h>
 #include <kern/unit/ia32/vm.h>
 
 #define NALLOC 1024

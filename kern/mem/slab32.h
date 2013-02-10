@@ -7,6 +7,10 @@
 #include <kern/task.h>
 #include <kern/mem/slab.h>
 
+#define SLABNHDR     (1UL << (PTRBITS - SLABMINLOG2))
+#define SLABHDRTABSZ (SLABNHDR * sizeof(struct slabhdr))
+#define SLABHDRBASE  (VIRTBASE - SLABHDRTABSZ)
+
 #define slabgetprev(hp, tab)                                            \
     (!(hp)                                                              \
      ? NULL                                                             \
@@ -29,15 +33,6 @@
     (slabclrprev(hp), (hp)->link |= slabhdrnum(hdr, tab))
 #define slabsetnext(hp, hdr, tab)                                       \
     (slabclrnext(hp), (hp)->link |= (slabhdrnum(hdr, tab) << 16))
-
-#define slabnum(ptr)                                                    \
-    ((uintptr_t)(ptr) >> SLABMINLOG2)
-#define slabhdrnum(hdr, tab)                                            \
-    (!(hdr) ? 0 : (uintptr_t)((hdr) - (struct slabhdr *)(tab)))
-#define slabgetadr(hdr, tab)                                            \
-    ((void *)(slabhdrnum(hdr, tab) << SLABMINLOG2))
-#define slabgethdr(ptr, tab)                                            \
-    (!(ptr) ? NULL : (struct slabhdr *)(tab) + slabnum(ptr))
 
 void  slabinit(struct slabhdr **zone, struct slabhdr *hdrtab,
                unsigned long base, unsigned long size);

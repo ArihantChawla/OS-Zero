@@ -4,19 +4,20 @@
 #include <kern/mem/mem.h>
 #include <kern/mem/mag.h>
 #include <kern/mem/slab.h>
-#if defined(__i386__) && !defined(__x86_64__) && !defined(__amd64__) && !defined(__x86_64__)
 #include <kern/unit/ia32/vm.h>
-#elif defined(__arm__)
-#include <kern/unit/arm/vm.h>
-#else
-#error must hack the slab allocator for x86-64
-#endif
 #if (MEMTEST)
 #include <stdio.h>
+#define kprintf printf
 #endif
 
-extern unsigned long npagefree;
-extern long          virtlktab[PTRBITS];
+extern unsigned long  npagefree;
+#if (PTRBITS > 32)
+extern uint8_t       *magbitmap;
+extern struct maghdr *maghdrtab;
+#endif
+extern long           virtlktab[PTRBITS];
+
+static unsigned long  slabnhdr;
 
 /*
  * zero slab allocator
@@ -25,6 +26,31 @@ extern long          virtlktab[PTRBITS];
  * slabs are combined to and split from bigger ones on demand; free regions are
  * kept as big as possible.
  */
+
+#if (PTRBITS > 32)
+unsigned long
+meminitvirt(unsigned long base, unsigned long nb)
+{
+    unsigned long adr = base;
+    unsigned long sz = (nb & (SLABMIN - 1)) ? roundup2(nb, SLABMIN) : nb;
+//    unsigned long bsz = 1UL << (PTRBITS - MAGMINLOG2 - 3);
+    unsigned long nmag = sz >> MAGMINLOG2;
+    unsigned long bsz = nmag >> 3;
+    unsigned long nslab = sz >> SLABMINLOG2;
+
+    slabnhdr = nslab;
+    bzero((void *)adr, bsz + nmag * sizeof(struct maghdr) + nslab * sizeof(struct slabhdr));
+    magbitmap = (uint8_t *)adr;
+    maghdrtab = (struct maghdr *)(adr + bsz);
+    virthdrtab = (struct slabhdr *)(adr + bsz + nmag * sizeof(struct maghdr));
+    adr += bsz + nmag * sizeof(struct maghdr) + nslab * sizeof(struct slabhdr);
+    if (adr & (SLABMIN - 1)) {
+        adr = roundup2(adr, SLABMIN);
+    }
+
+    return adr;
+}
+#endif
 
 void
 slabinit(struct slabhdr **zone, struct slabhdr *hdrtab,
@@ -37,6 +63,12 @@ slabinit(struct slabhdr **zone, struct slabhdr *hdrtab,
     unsigned long   ul = 1UL << bkt;
     struct slabhdr *hdr;
 
+#if (PTRBITS > 32)
+    adr = meminitvirt(adr, nb);
+    hdrtab = virthdrtab;
+#else
+    slabnhdr = SLABNHDR;
+#endif
     if (base != adr) {
         nb -= adr - base;
         nb = rounddown2(nb, SLABMINLOG2);
@@ -141,7 +173,7 @@ slabcomb(struct slabhdr **zone, struct slabhdr *hdrtab, struct slabhdr *hdr)
             }
         }
         hdr1 = hdr;
-        if (hdr1 + ofs < (struct slabhdr *)hdrtab + SLABNHDR) {
+        if (hdr1 + ofs < (struct slabhdr *)hdrtab + slabnhdr) {
             hdr2 = hdr1 + ofs;
             bkt2 = slabgetbkt(hdr2);
 #if (MEMTEST) && 0
@@ -330,6 +362,13 @@ slabfree(struct slabhdr **zone, struct slabhdr *hdrtab, void *ptr)
     struct slabhdr *hdr = slabgethdr(ptr, hdrtab);
     unsigned long   bkt = slabgetbkt(hdr);
 
+#if (PTRBITS > 32)
+    if (!hdr) {
+        kprintf("invalid free: %p\n", ptr);
+
+        return;
+    }
+#endif
 #if (!MEMTEST)
     vmfreephys(ptr, 1UL << bkt);
 #endif
