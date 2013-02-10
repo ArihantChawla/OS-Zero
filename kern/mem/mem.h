@@ -47,6 +47,70 @@ memcalcbkt(unsigned long size)
 
 /* use compiler optimizations to evaluate bucket for constant allocation size */
 #if (MEM_CONST_SIZE_TRICK)
+#if (PTRBITS <= 32)
+#define memfastbkt(sz)                                                  \
+    ((!__builtin_constant_p(sz)                                         \
+      ? memcalcbkt(sz)                                                  \
+      : (((sz) <= MAGMIN)                                               \
+         ? MAGMINLOG2                                                   \
+         : (((sz) <= (1UL << 4))                                        \
+            ? 4                                                         \
+            : (((sz) <= (1UL << 5))                                     \
+               ? 5                                                      \
+               : (((sz) <= (1UL << 6))                                  \
+                  ? 6                                                   \
+                  : (((sz) <= (1UL << 7))                               \
+                     ? 7                                                \
+                     : (((sz) <= (1UL << 8))                            \
+                        ? 8                                             \
+                        : (((sz) <= (1UL << 9))                         \
+                           ? 9                                          \
+                           : (((sz) <= (1UL << 10))                     \
+                              ? 10                                      \
+                              : (((sz) <= (1UL << 11))                  \
+                                 ? 11                                   \
+                                 : (((sz) <= (1UL << 12))               \
+                                    ? 12                                \
+                                    : (((sz) <= (1UL << 13))            \
+                                       ? 13                             \
+                                       : (((sz) <= (1UL << 14))         \
+                                          ? 14                          \
+                                          : (((sz) <= (1UL << 15))      \
+                                             ? 15                       \
+                                             : (((sz) <= (1UL << 16))   \
+                                                ? 16                    \
+                                                : (((sz) <= (1UL << 17)) \
+                                                   ? 17                 \
+                                                   : (((sz) <= (1UL << 18)) \
+                                                      ? 18              \
+                                                      : (((sz) <= (1UL << 19) \
+                                                          ? 19          \
+                                                          : (((sz) <= (1UL << 20)) \
+                                                             ? 20       \
+                                                             : (((sz) <= (1UL << 21)) \
+                                                                ? 21    \
+                                                                : (((sz) <= (1UL << 22)) \
+                                                                   ? 22 \
+                                                                   : (((sz) <= (1UL << 23)) \
+                                                                      ? 23 \
+                                                                      : (((sz) <= (1UL << 24)) \
+                                                                         ? 24 \
+                                                                         : (((sz) <= (1UL << 25)) \
+                                                                            ? 25 \
+                                                                            : (((sz) <= (1UL << 26)) \
+                                                                               ? 26 \
+                                                                               : (((sz) <= (1UL << 27)) \
+                                                                                  ? 27 \
+                                                                                  : (((sz) <= (1UL << 28)) \
+                                                                                     ? 28 \
+                                                                                     : (((sz) <= (1UL << 29)) \
+                                                                                        ? 29 \
+                                                                                        : (((sz) <= (1UL << 30)) \
+                                                                                           ? 30 \
+                                                                                           : (((sz) <= (1UL << 31)) \
+                                                                                              ? 31 \
+                                                                                              : 0))))))))))))))))))))))))))))))))
+#else
 #define memfastbkt(sz)                                                  \
     ((!__builtin_constant_p(sz)                                         \
       ? memcalcbkt(sz)                                                  \
@@ -173,7 +237,7 @@ memcalcbkt(unsigned long size)
                                                                                                                                                                                           : (((sz) <= (UINT64_C(1) << 63)) \
                                                                                                                                                                                              ? 63 \
                                                                                                                                                                                              : 0xff))))))))))))))))))))))))))))))))))))))))))))))))))))))))))))))))
-                                                                                                                                                                
+#endif
 #endif
 
 #endif /* __MEM_MEM_H__ */

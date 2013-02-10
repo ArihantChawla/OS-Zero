@@ -11,13 +11,13 @@
     (!(hp)                                                              \
      ? NULL                                                             \
      : (((hp)->link & 0x0000ffffL)                                      \
-        ? ((tab) + ((hp)->link & 0x0000ffffL))                          \
+        ? ((struct slabhdr *)(tab) + ((hp)->link & 0x0000ffffL))        \
         : NULL))
 #define slabgetnext(hp, tab)                                            \
     (!(hp)                                                              \
      ? NULL                                                             \
      : (((hp)->link & 0xffff0000L)                                      \
-        ? ((tab) + (((hp)->link & 0xffff0000L) >> 16))                  \
+        ? ((struct slabhdr *)(tab) + (((hp)->link & 0xffff0000L) >> 16)) \
         : NULL))
 #define slabclrprev(hp)                                                 \
     ((hp)->link &= 0xffff0000L)

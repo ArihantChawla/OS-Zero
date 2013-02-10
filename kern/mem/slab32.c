@@ -48,7 +48,8 @@ slabinit(struct slabhdr **zone, struct slabhdr *hdrtab,
 #endif
     while ((nb) && bkt >= SLABMINLOG2) {
         if (nb & ul) {
-            hdr = &hdrtab[slabnum(adr)];
+//            hdr = &hdrtab[slabnum(adr)];
+            hdr = slabgethdr(adr, hdrtab);
             slabsetbkt(hdr, bkt);
             slabsetfree(hdr);
             slabclrlink(hdr);
@@ -84,7 +85,7 @@ slabcomb(struct slabhdr **zone, struct slabhdr *hdrtab, struct slabhdr *hdr)
     while ((prev) || (next)) {
         prev ^= prev;
         next ^= next;
-        if (hdr - hdrtab >= ofs) {
+        if (hdr - (struct slabhdr *)hdrtab >= ofs) {
             hdr1 = hdr - ofs;
             bkt2 = slabgetbkt(hdr1);
 #if (MEMTEST) && 0
@@ -140,7 +141,7 @@ slabcomb(struct slabhdr **zone, struct slabhdr *hdrtab, struct slabhdr *hdr)
             }
         }
         hdr1 = hdr;
-        if (hdr1 + ofs < hdrtab + SLABNHDR) {
+        if (hdr1 + ofs < (struct slabhdr *)hdrtab + SLABNHDR) {
             hdr2 = hdr1 + ofs;
             bkt2 = slabgetbkt(hdr2);
 #if (MEMTEST) && 0
