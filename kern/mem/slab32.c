@@ -250,7 +250,7 @@ slabsplit(struct slabhdr **zone, struct slabhdr *hdrtab,
     zone[bkt] = hdr1;
     while (--bkt >= dest) {
         sz >>= 1;
-        hdr1 = slabhdr(ptr, hdrtab);
+        hdr1 = slabgethdr(ptr, hdrtab);
         slabsetbkt(hdr1, bkt);
         slabsetfree(hdr1);
         slabclrlink(hdr1);
@@ -267,7 +267,7 @@ slabsplit(struct slabhdr **zone, struct slabhdr *hdrtab,
         }
         ptr += sz;
     }
-    hdr1 = slabhdr(ptr, hdrtab);
+    hdr1 = slabgethdr(ptr, hdrtab);
     slabsetbkt(hdr1, dest);
     slabsetfree(hdr1);
     slabclrlink(hdr1);
@@ -316,9 +316,6 @@ slaballoc(struct slabhdr **zone, struct slabhdr *hdrtab,
         ptr = slabadr(hdr1, hdrtab);
     }
     slabunlk(bkt1);
-    if (flg & SLABZERO) {
-        bzero(ptr, 1UL << bkt1);
-    }
 
     return ptr;
 }
@@ -329,7 +326,7 @@ slaballoc(struct slabhdr **zone, struct slabhdr *hdrtab,
 void
 slabfree(struct slabhdr **zone, struct slabhdr *hdrtab, void *ptr)
 {
-    struct slabhdr *hdr = slabhdr(ptr, hdrtab);
+    struct slabhdr *hdr = slabgethdr(ptr, hdrtab);
     unsigned long   bkt = slabgetbkt(hdr);
 
 #if (!MEMTEST)

@@ -3,6 +3,13 @@
 
 #include <zero/trix.h>
 
+/* allocation flags */
+#define MEMFREE    0x01L
+#define MEMWIRE    0x02L
+#define MEMZERO    0x04L
+#define MEMFLGBITS 0x07L
+#define MEMNFLGBIT 3
+
 #define MEM_CONST_SIZE_TRICK 1
 #if (MEM_CONST_SIZE_TRICK)
 #define membkt(sz) memfastbkt(sz)

@@ -1,6 +1,7 @@
 #include <stdint.h>
 #include <stddef.h>
 #include <stdarg.h>
+#include <zero/cdecl.h>
 #include <zero/param.h>
 #include <zero/trix.h>
 #include <kern/io/drv/pc/vga.h>
@@ -459,6 +460,7 @@ kprintf(char *fmt, ...)
     return;
 }
 
+#if 0
 /*
  * scan bitmap for first zero-bit past ofs
  * return -1 if not found, offset otherwise
@@ -513,5 +515,12 @@ bfindzerol(unsigned long *bmap, long ofs, long nbit)
     }
     
     return ofs;
+}
+#endif
+
+NORET void
+panic(void)
+{
+    ;
 }
 

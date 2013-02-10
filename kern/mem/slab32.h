@@ -34,5 +34,20 @@ struct slabhdr {
     unsigned long link;  // 16-bit prev and next header IDs
 } PACK();
 
+#define slabnum(ptr)                                                    \
+    ((uintptr_t)(ptr) >> SLABMINLOG2)
+#define slabhdrnum(hdr, tab)                                            \
+    (!(hdr) ? 0 : (uintptr_t)((hdr) - (struct slabhdr *)(tab)))
+#define slabadr(hdr, tab)                                               \
+    ((void *)(slabhdrnum(hdr, tab) << SLABMINLOG2))
+#define slabgethdr(ptr, tab)                                               \
+    (!(ptr) ? NULL : (struct slabhdr *)(tab) + slabnum(ptr))
+
+void  slabinit(struct slabhdr **zone, struct slabhdr *hdrtab,
+               unsigned long base, unsigned long size);
+void *slaballoc(struct slabhdr **zone, struct slabhdr *hdrtab,
+                unsigned long nb, unsigned long flg);
+void  slabfree(struct slabhdr **zone, struct slabhdr *hdrtab, void *ptr);
+
 #endif /* __MEM_SLAB32_H__ */
 

@@ -6,6 +6,7 @@
 #include <zero/cdecl.h>
 #include <zero/param.h>
 #include <kern/mem.h>
+#include <kern/mem/mem.h>
 #include <kern/mem/slab.h>
 #include <kern/mem/mag.h>
 #include <kern/mem/slab32.h>
@@ -176,7 +177,7 @@ main(int argc, char *argv[])
         }
         for (l = 0 ; l < NALLOC ; l++) {
 //            fprintf(stderr, "ALLOC: %lu - ", (unsigned long)alloctab[l]);
-            ptrtab[l] = memalloc(alloctab[l], SLABZERO);
+            ptrtab[l] = memalloc(alloctab[l], MEMZERO);
 //            fprintf(stderr, "%p\n", ptrtab[l]);
         }
         l = NALLOC;
