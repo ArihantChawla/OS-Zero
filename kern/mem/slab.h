@@ -15,12 +15,8 @@ struct slabhdr {
 #endif
 } PACK();
 
-#define slablk(tab, bkt)   printf("%d: LK: %ld\n", __LINE__, bkt); mtxlk(&(tab)[bkt], MEMPID)
-#define slabunlk(tab, bkt) printf("%d: UNLK: %ld\n", __LINE__, bkt); mtxunlk(&(tab)[bkt], MEMPID)
-#if 0
 #define slablk(tab, bkt)   mtxlk(&(tab)[bkt], MEMPID)
 #define slabunlk(tab, bkt) mtxunlk(&(tab)[bkt], MEMPID)
-#endif
 
 #define slabnum(ptr, base)                                              \
     (((uintptr_t)(ptr) - (base)) >> SLABMINLOG2)
