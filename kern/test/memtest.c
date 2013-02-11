@@ -98,60 +98,62 @@ diag(void)
     for (l = SLABMINLOG2 ; l < PTRBITS ; l++) {
         n = 0;
         hdr1 = slabvirttab[l];
-        fprintf(stderr, "BKT %lu: ", l);
-        if (slabgetprev(hdr1, slabvirthdrtab)) {
-            hdr2 = slabgetprev(hdr1, slabvirthdrtab);
-            fprintf(stderr, "%p: prev set on head: %p (%p)\n",
-                    slabgetadr(hdr1, slabvirthdrtab),
-                    slabgetprev(hdr1, slabvirthdrtab),
-                    slabgetadr(hdr2, slabvirthdrtab));
-            
-            abort();
-        }
-        while (hdr1) {
-            fprintf(stderr, " %lu: %p (%p)", n, slabgetadr(hdr1, slabvirthdrtab), hdr1);
-            if (slabgetadr(hdr1, slabvirthdrtab) == NULL) {
-                fprintf(stderr, "NULL item on list\n");
-
-                abort();
-            }
-            if (slabgetbkt(hdr1) != l) {
-                fprintf(stderr, "%p: invalid bkt %lu (%lu)\n",
+        if (hdr1) {
+            fprintf(stderr, "BKT %lu: ", l);
+            if (slabgetprev(hdr1, slabvirthdrtab)) {
+                hdr2 = slabgetprev(hdr1, slabvirthdrtab);
+                fprintf(stderr, "%p: prev set on head: %p (%p)\n",
                         slabgetadr(hdr1, slabvirthdrtab),
-                        slabgetbkt(hdr1),
-                        l);
-
+                        slabgetprev(hdr1, slabvirthdrtab),
+                        slabgetadr(hdr2, slabvirthdrtab));
+                
                 abort();
             }
-            hdr2 = slabgetnext(hdr1, slabvirthdrtab);
-            fprintf(stderr, " %lu: %p (%p)", n + 1, slabgetadr(hdr2, slabvirthdrtab), hdr2);
-            if (hdr2) {
-                if (hdr1 == hdr2) {
-                    fprintf(stderr, "%p: next is self\n",
-                            slabgetadr(hdr1, slabvirthdrtab));
-                }
-                if (slabgetprev(hdr2, slabvirthdrtab) != hdr1) {
-                    hdr3 = slabgetprev(hdr2, slabvirthdrtab);
-                    fprintf(stderr, " %p: invalid prev %p (%p)\n",
-                            slabgetadr(hdr2, slabvirthdrtab),
-                            slabgetadr(hdr3, slabvirthdrtab),
-                            slabgetadr(hdr1, slabvirthdrtab));
+            while (hdr1) {
+                fprintf(stderr, " %lu: %p (%p)", n, slabgetadr(hdr1, slabvirthdrtab), hdr1);
+                if (slabgetadr(hdr1, slabvirthdrtab) == NULL) {
+                    fprintf(stderr, "NULL item on list\n");
                     
                     abort();
                 }
-                if (slabgetnext(hdr1, slabvirthdrtab) != hdr2) {
-                    hdr3 = slabgetnext(hdr1, slabvirthdrtab);
-                    fprintf(stderr, " %p: invalid next %p (%p)\n",
+                if (slabgetbkt(hdr1) != l) {
+                    fprintf(stderr, "%p: invalid bkt %lu (%lu)\n",
                             slabgetadr(hdr1, slabvirthdrtab),
-                            slabgetadr(hdr3, slabvirthdrtab),
-                            slabgetadr(hdr2, slabvirthdrtab));
+                            slabgetbkt(hdr1),
+                        l);
                     
                     abort();
                 }
+                hdr2 = slabgetnext(hdr1, slabvirthdrtab);
+                fprintf(stderr, " %lu: %p (%p)", n + 1, slabgetadr(hdr2, slabvirthdrtab), hdr2);
+                if (hdr2) {
+                    if (hdr1 == hdr2) {
+                        fprintf(stderr, "%p: next is self\n",
+                                slabgetadr(hdr1, slabvirthdrtab));
+                    }
+                    if (slabgetprev(hdr2, slabvirthdrtab) != hdr1) {
+                        hdr3 = slabgetprev(hdr2, slabvirthdrtab);
+                        fprintf(stderr, " %p: invalid prev %p (%p)\n",
+                            slabgetadr(hdr2, slabvirthdrtab),
+                                slabgetadr(hdr3, slabvirthdrtab),
+                                slabgetadr(hdr1, slabvirthdrtab));
+                        
+                        abort();
+                    }
+                    if (slabgetnext(hdr1, slabvirthdrtab) != hdr2) {
+                        hdr3 = slabgetnext(hdr1, slabvirthdrtab);
+                        fprintf(stderr, " %p: invalid next %p (%p)\n",
+                                slabgetadr(hdr1, slabvirthdrtab),
+                                slabgetadr(hdr3, slabvirthdrtab),
+                                slabgetadr(hdr2, slabvirthdrtab));
+                        
+                        abort();
+                    }
+                }
+                hdr1 = hdr2;
             }
-            hdr1 = hdr2;
-            n++;
         }
+        n++;
         fprintf(stderr, "%lu \n", n);
     }
 }

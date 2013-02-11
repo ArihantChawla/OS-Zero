@@ -331,8 +331,8 @@ slaballoc(struct slabhdr **zone, struct slabhdr *hdrtab,
 {
     unsigned long   bkt1 = max(SLABMINLOG2, memgetbkt(nb));
     unsigned long   bkt2 = bkt1;
-    struct slabhdr *hdr1;
     uint8_t        *ptr = NULL;
+    struct slabhdr *hdr1;
     struct slabhdr *hdr2;
 
     slablk(slabvirtlktab, bkt1);
@@ -358,6 +358,9 @@ slaballoc(struct slabhdr **zone, struct slabhdr *hdrtab,
         ptr = slabgetadr(hdr1, hdrtab);
     }
     slabunlk(slabvirtlktab, bkt1);
+#if (MEMTEST)
+//    printf("SLABPTR: %p\n", ptr);
+#endif
 
     return ptr;
 }
@@ -371,13 +374,6 @@ slabfree(struct slabhdr **zone, struct slabhdr *hdrtab, void *ptr)
     struct slabhdr *hdr = slabgethdr(ptr, hdrtab, slabvirtbase);
     unsigned long   bkt = slabgetbkt(hdr);
 
-#if (PTRBITS > 32)
-    if (!hdr) {
-        kprintf("invalid free: %p\n", ptr);
-
-        return;
-    }
-#endif
 #if (!MEMTEST)
     vmfreephys(ptr, 1UL << bkt);
 #endif

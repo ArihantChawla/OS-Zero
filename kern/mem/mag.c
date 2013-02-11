@@ -51,7 +51,10 @@ memalloc(unsigned long nb, long flg)
                         slaballoc(slabvirttab, slabvirthdrtab, nb, flg),
                         nb, flg);
 #endif
-        mag = maggethdr(ptr, magvirthdrtab);
+#if (MEMTEST)
+//        printf("PTR: %p, MAG == %lx\n", ptr, magnum(ptr, slabvirtbase));
+#endif
+        mag = maggethdr(ptr, magvirthdrtab, slabvirtbase);
         mag->n = 1;
         mag->ndx = 0;
     } else {
@@ -69,7 +72,7 @@ memalloc(unsigned long nb, long flg)
             sz = 1UL << bkt;
             ptr = u8ptr = slaballoc(slabvirttab, slabvirthdrtab, sz, flg);
             n = 1UL << (SLABMINLOG2 - bkt);
-            mag = maggethdr(ptr, magvirthdrtab);
+            mag = maggethdr(ptr, magvirthdrtab, slabvirtbase);
             mag->n = n;
             mag->ndx = 0;
             mag->bkt = bkt;
@@ -96,16 +99,20 @@ memalloc(unsigned long nb, long flg)
         magunlk(magvirtlktab, bkt);
     }
     if (ptr) {
-        if (bitset(magvirtbitmap, (uintptr_t)ptr >> MAGMINLOG2)) {
+        if (bitset(magvirtbitmap,
+                   ((uintptr_t)ptr - slabvirtbase) >> MAGMINLOG2)) {
             kprintf("duplicate allocation %p\n", ptr);
             
             panic();
         }
-        setbit(magvirtbitmap, (uintptr_t)ptr >> MAGMINLOG2);
+        setbit(magvirtbitmap, ((uintptr_t)ptr - slabvirtbase) >> MAGMINLOG2);
         if (flg & MEMZERO) {
             bzero(ptr, 1UL << bkt);
         }
     }
+#if (MEMTEST)
+//    printf("MAGPTR: %p\n", ptr);
+#endif
 
     return ptr;
 }
@@ -113,19 +120,19 @@ memalloc(unsigned long nb, long flg)
 void
 kfree(void *ptr)
 {
-    struct maghdr  *mag = maggethdr(ptr, magvirthdrtab);
+    struct maghdr  *mag = maggethdr(ptr, magvirthdrtab, slabvirtbase);
     unsigned long   bkt;
 
     if (!ptr) {
 
         return;
     }
-    if (!bitset(magvirtbitmap, (uintptr_t)ptr >> MAGMINLOG2)) {
+    if (!bitset(magvirtbitmap, ((uintptr_t)ptr - slabvirtbase) >> MAGMINLOG2)) {
         kprintf("invalid free: %p\n", ptr);
 
         panic();
     }
-    clrbit(magvirtbitmap, (uintptr_t)ptr >> MAGMINLOG2);
+    clrbit(magvirtbitmap, ((uintptr_t)ptr - slabvirtbase) >> MAGMINLOG2);
     if (mag->n == 1 && !mag->ndx) {
         slabfree(slabvirttab, slabvirthdrtab, ptr);
     } else if (mag->n) {
