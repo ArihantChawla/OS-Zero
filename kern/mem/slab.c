@@ -123,9 +123,9 @@ slabcomb(struct slabhdr **zone, struct slabhdr *hdrtab, struct slabhdr *hdr)
                     slabisfree(hdr1) ? "FREE - " : "USED - ",
                     bkt1, bkt2);
 #endif
-            if (bkt2) {
+            if (bkt2 == bkt1) {
                 slablk(slabvirtlktab, bkt2);
-                if (bkt2 == bkt1 && slabisfree(hdr1)) {
+                if (slabisfree(hdr1)) {
                     prev = 1;
 #if (MEMTEST) && 0
                     fprintf(stderr, "MATCH\n");
@@ -148,10 +148,8 @@ slabcomb(struct slabhdr **zone, struct slabhdr *hdrtab, struct slabhdr *hdr)
                         }
                         zone[bkt2] = hdr4;
                     }
-
                     slabclrfree(hdr);
                     slabsetbkt(hdr, 0);
-
                     slabunlk(slabvirtlktab, bkt2);
                     bkt2++;
                     slabsetbkt(hdr1, bkt2);
@@ -160,10 +158,10 @@ slabcomb(struct slabhdr **zone, struct slabhdr *hdrtab, struct slabhdr *hdr)
                     bkt1 = bkt2;
                     ofs <<= 1;
                 } else {
+                    slabunlk(slabvirtlktab, bkt2);
 #if (MEMTEST) && 0
                     fprintf(stderr, "NO MATCH\n");
 #endif
-                    slabunlk(slabvirtlktab, bkt2);
                 }
             }
         }
@@ -204,10 +202,8 @@ slabcomb(struct slabhdr **zone, struct slabhdr *hdrtab, struct slabhdr *hdr)
                         }
                         zone[bkt2] = hdr4;
                     }
-
                     slabclrfree(hdr2);
                     slabsetbkt(hdr2, 0);
-
                     slabunlk(slabvirtlktab, bkt2);
                     bkt2++;
                     slabsetbkt(hdr1, bkt2);
@@ -215,10 +211,10 @@ slabcomb(struct slabhdr **zone, struct slabhdr *hdrtab, struct slabhdr *hdr)
                     bkt1 = bkt2;
                     ofs <<= 1;
                 } else {
+                    slabunlk(slabvirtlktab, bkt2);
 #if (MEMTEST) && 0
                     fprintf(stderr, "NO MATCH\n");
 #endif
-                    slabunlk(slabvirtlktab, bkt2);
                 }
             } else {
 #if (MEMTEST) && 0
@@ -234,23 +230,14 @@ slabcomb(struct slabhdr **zone, struct slabhdr *hdrtab, struct slabhdr *hdr)
     if (ret) {
         slabsetfree(hdr);
         slabclrlink(hdr);
+        slablk(slabvirtlktab, bkt1);
         if (zone[bkt1]) {
             slabsetprev(zone[bkt1], hdr, hdrtab);
             slabsetnext(hdr, zone[bkt1], hdrtab);
         }
         zone[bkt1] = hdr;
+        slabunlk(slabvirtlktab, bkt1);
     }
-#if 0
-    if (ret) {
-        slabsetfree(hdr1);
-        slabclrlink(hdr1);
-        if (zone[bkt1]) {
-            slabsetprev(zone[bkt1], hdr1, hdrtab);
-            slabsetnext(hdr1, zone[bkt1], hdrtab);
-        }
-        zone[bkt1] = hdr1;
-    }
-#endif
                 
     return ret;
 }
@@ -259,6 +246,7 @@ slabcomb(struct slabhdr **zone, struct slabhdr *hdrtab, struct slabhdr *hdr)
  * split slab into smaller ones to satisfy allocation request.
  * split of N to M gives us one free slab in each of M to N-1 and one to
  * allocate in M.
+ * caller has locked the bucket dest.
  */    
 void
 slabsplit(struct slabhdr **zone, struct slabhdr *hdrtab,
@@ -364,11 +352,13 @@ slabfree(struct slabhdr **zone, struct slabhdr *hdrtab, void *ptr)
     slabsetfree(hdr);
     if (!slabcomb(zone, hdrtab, hdr)) {
         slabclrlink(hdr);
+        slablk(slabvirtlktab, bkt);
         if (zone[bkt]) {
             slabsetprev(zone[bkt], hdr, hdrtab);
         }
         slabsetnext(hdr, zone[bkt], hdrtab);
         zone[bkt] = hdr;
+        slabunlk(slabvirtlktab, bkt);
     }
 
     return;
