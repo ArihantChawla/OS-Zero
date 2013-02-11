@@ -3,6 +3,7 @@
 #include <malloc.h>
 #include <string.h>
 #include <unistd.h>
+#include <pthread.h>
 #include <zero/cdecl.h>
 #include <zero/param.h>
 #include <kern/mem.h>
@@ -11,23 +12,35 @@
 #include <kern/mem/slab.h>
 #include <kern/unit/ia32/vm.h>
 
-#define NALLOC 1024
+#define NTHR   1
+#define NALLOC 128
 
 unsigned long  vmnphyspages;
 
 //uint32_t       pagetab[NPDE][NPTE] ALIGNED(PAGESIZE);
-uintptr_t      alloctab[NALLOC];
-void          *ptrtab[NALLOC];
+uintptr_t      alloctab[NTHR][NALLOC];
+void          *ptrtab[NTHR][NALLOC];
+pthread_t thrtab[NTHR];
 
 extern struct maghdr  *magvirttab[PTRBITS];
 extern struct slabhdr *slabvirttab[PTRBITS];
+extern long            slabvirtlktab[PTRBITS];
 extern unsigned long   slabvirtbase;
 extern struct slabhdr *slabvirthdrtab;
+
+struct thr {
+    long id;
+};
 
 void
 magprint(struct maghdr *mag)
 {
     unsigned long ul;
+
+    if (!mag) {
+
+        return;
+    }
 
 //    fprintf(stderr, "FLAGS: %lx\n", mag->flg);
     fprintf(stderr, "N: %ld\n", mag->n);
@@ -96,6 +109,7 @@ diag(void)
     struct slabhdr *hdr3;
 
     for (l = SLABMINLOG2 ; l < PTRBITS ; l++) {
+        slablk(slabvirtlktab, l);
         n = 0;
         hdr1 = slabvirttab[l];
         if (hdr1) {
@@ -153,56 +167,72 @@ diag(void)
                 hdr1 = hdr2;
             }
         }
+        slabunlk(slabvirtlktab, l);
         n++;
         fprintf(stderr, "%lu \n", n);
     }
 }
 
-int
-main(int argc, char *argv[])
+void *
+thrtest(void *thr)
 {
-//    long  n = (3U * 1024 * 1024 * 1024) >> PAGESIZELOG2;
-    long  l;
-    void *base = memalign(SLABMIN, 1024 * 1024 * 1024);
+    long       l;
+    long       id = ((struct thr *)thr)->id;
 
-//    pageinit(0, 3U * 1024 * 1024 * 1024);
-    fprintf(stderr, "PTRBITS == %d\n", PTRBITS);
-    fprintf(stderr, "MALLOC: %p\n", base);
-    bzero(base, 1024 * 1024 * 1024);
-//    slabinit(slabvirttab, slabvirthdrtab, PAGESIZE, 1024 * 1024);
-    slabinit((unsigned long)base, 1024 * 1024 * 1024);
-//    diag();
-    slabprint();
-    sleep(1);
-    srand(1);
+    fprintf(stderr, "THR: %ld\n", id);
     for ( ; ; ) {
         for (l = 0 ; l < NALLOC ; l++) {
 //            alloctab[l] = MAGMIN + (rand() & (4 * MAGMIN - 1));
-            alloctab[l] = rand() & (8 * SLABMIN - 1);
+            alloctab[id][l] = rand() & (8 * SLABMIN - 1);
         }
         for (l = 0 ; l < NALLOC ; l++) {
 //            fprintf(stderr, "ALLOC: %lu - ", (unsigned long)alloctab[l]);
-            ptrtab[l] = memalloc(alloctab[l], MEMZERO);
+            ptrtab[id][l] = memalloc(alloctab[id][l], MEMZERO);
 //            fprintf(stderr, "%p\n", ptrtab[l]);
         }
         l = NALLOC;
         while (l--) {
 //            fprintf(stderr, "FREE: %lx\n", (unsigned long)ptrtab[l]);
-            kfree((void *)ptrtab[l]);
+            kfree((void *)ptrtab[id][l]);
         }
-        diag();
         slabprint();
     }
-#if 0
-    ptr1 = memalloc(PAGESIZE, 0);
-    fprintf(stderr, "PTR1: %p\n", ptr1);
-    ptr2 = memalloc(PAGESIZE, 0);
-    fprintf(stderr, "PTR2: %p\n", ptr2);
-    kfree(ptr2);
-    kfree(ptr1);
-    slabprint();
-#endif
 
-    exit(0);
+    return NULL;
+}
+
+int
+main(int argc, char *argv[])
+{
+    long  n = NTHR;
+    void *base = memalign(SLABMIN, 1024 * 1024 * 1024);
+    struct thr *thr;
+
+    fprintf(stderr, "PTRBITS == %d\n", PTRBITS);
+    fprintf(stderr, "MEMPID == %d\n", MEMPID);
+    fprintf(stderr, "MALLOC: %p\n", base);
+    bzero(base, 1024 * 1024 * 1024);
+    slabinit((unsigned long)base, 1024 * 1024 * 1024);
+    slabprint();
+    sleep(1);
+    srand(1);
+#if (MTSAFE)
+    while (n--) {
+        thr = malloc(sizeof(struct thr));
+        thr->id = n;
+        pthread_create(&thrtab[n], NULL, thrtest, thr);
+    }
+    while (1) {
+//        diag();
+        ;
+    }
+#else
+    thr = malloc(sizeof(struct thr));
+    thr->id = 0;
+    thrtest(thr);
+    while (1) {
+        ;
+    }
+#endif
 }
 

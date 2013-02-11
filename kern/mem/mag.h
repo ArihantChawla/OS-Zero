@@ -18,6 +18,9 @@
 #define magfull(mp)       ((mp)->ndx == (mp)->n)
 #define magempty(mp)      (!(mp)->ndx)
 struct maghdr {
+#if (MAGLK)
+    volatile long  lk;
+#endif
     long           n;
     long           ndx;
     long           bkt;
@@ -31,7 +34,7 @@ struct maghdr {
 #define magslabadr(ptr)                                                 \
     ((void *)((uintptr_t)(ptr) & ~(SLABMIN - 1)))
 #define maggethdr(ptr, tab, base)                                       \
-    ((tab) + magnum(ptr, base))
+    (!(ptr) ? NULL : (tab) + magnum(ptr, base))
 
 #endif /* __MEM_MAG_H__ */
 
