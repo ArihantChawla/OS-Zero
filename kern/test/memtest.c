@@ -12,8 +12,8 @@
 #include <kern/mem/slab.h>
 #include <kern/unit/ia32/vm.h>
 
-#define NTHR   1
-#define NALLOC 128
+#define NTHR   16
+#define NALLOC 1024
 
 unsigned long  vmnphyspages;
 
@@ -43,11 +43,21 @@ magprint(struct maghdr *mag)
     }
 
 //    fprintf(stderr, "FLAGS: %lx\n", mag->flg);
+#if (MAGBITMAP)
+    fprintf(stderr, "BASE: %lx\n", (unsigned long)mag->base);
+#endif
     fprintf(stderr, "N: %ld\n", mag->n);
     fprintf(stderr, "NDX: %ld\n", mag->ndx);
     fprintf(stderr, "PREV: %p\n", mag->prev);
     fprintf(stderr, "NEXT: %p\n", mag->next);
-
+#if (MAGBITMAP)
+    fprintf(stderr, "BITMAP:");
+    fprintf(stderr, " %lx", mag->bmap[0]);
+    for (ul = 1 ; ul < (mag->n >> 3) ; ul++) {
+        fprintf(stderr, " %lx", mag->bmap[ul]);
+    }
+    fprintf(stderr, "\n");
+#endif    
     fprintf(stderr, "STACK:");
     for (ul = 0 ; ul < mag->n ; ul++) {
         fprintf(stderr, " %p", mag->ptab[ul]);
@@ -204,7 +214,9 @@ thrtest(void *thr)
 int
 main(int argc, char *argv[])
 {
+#if (MTSAFE)
     long  n = NTHR;
+#endif
     void *base = memalign(SLABMIN, 1024 * 1024 * 1024);
     struct thr *thr;
 

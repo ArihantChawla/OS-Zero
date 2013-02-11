@@ -18,12 +18,24 @@
 #define magfull(mp)      ((mp)->ndx == (mp)->n)
 #define magempty(mp)     (!(mp)->ndx)
 struct maghdr {
+#if (MAGBITMAP)
+    uintptr_t      base;
+#endif
+#if (NEWLK)
+    volatile long  n;
+    volatile long  ndx;
+    volatile long  bkt;
+#else
     long           n;
     long           ndx;
     long           bkt;
+#endif
     struct maghdr *prev;
     struct maghdr *next;
     void          *ptab[1UL << (SLABMINLOG2 - MAGMINLOG2)];
+#if (MAGBITMAP)
+    uint8_t        bmap[1UL << (SLABMINLOG2 - MAGMINLOG2 - 3)];
+#endif
 };
 
 #define magnum(ptr, base)                                               \
