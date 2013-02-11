@@ -58,7 +58,7 @@ memalloc(unsigned long nb, long flg)
         mag->n = 1;
         mag->ndx = 0;
     } else {
-        maglk(magvirtlktab, bkt);
+//        maglk(magvirtlktab, bkt);
         mag = magvirttab[bkt];
         if (mag) {
             ptr = magpop(mag);
@@ -96,7 +96,7 @@ memalloc(unsigned long nb, long flg)
             mag->next = magvirttab[bkt];
             magvirttab[bkt] = mag;
         }
-        magunlk(magvirtlktab, bkt);
+//        magunlk(magvirtlktab, bkt);
     }
     if (ptr) {
         if (bitset(magvirtbitmap,
@@ -140,7 +140,7 @@ kfree(void *ptr)
         if (magempty(mag)) {
             slabfree(slabvirttab, slabvirthdrtab, ptr);
             bkt = mag->bkt;
-            maglk(magvirtlktab, bkt);
+//            maglk(magvirtlktab, bkt);
             if (mag->prev) {
                 mag->prev->next = mag->next;
             } else {
@@ -149,19 +149,19 @@ kfree(void *ptr)
             if (mag->next) {
                 mag->next->prev = mag->prev;
             }
-            magunlk(magvirtlktab, bkt);
+//            magunlk(magvirtlktab, bkt);
         } else if (mag->ndx == mag->n - 1) {
 //            slab = &slabvirthdrtab[slabnum(ptr)];
 //            bkt = memgetbkt(slab);
             bkt = mag->bkt;
             mag->prev = NULL;
-            maglk(magvirtlktab, bkt);
+//            maglk(magvirtlktab, bkt);
             if (magvirttab[bkt]) {
                 magvirttab[bkt]->prev = mag;
             }
             mag->next = magvirttab[bkt];
             magvirttab[bkt] = mag;
-            magunlk(magvirtlktab, bkt);
+//            magunlk(magvirtlktab, bkt);
         }
     }
 #if (MEMTEST)
