@@ -22,8 +22,7 @@
 #include <kern/mem/mag.h>
 
 #define bufempty()   (bufstknext == bufnstk)
-#define bufnotfull() (bufstknext)
-#define buffull()    (!bufstknext)
+//#define buffull()    (!bufstknext)
 #define bufpop()     (bufstk[bufstknext++])
 #define bufpush(ptr) (bufstk[--bufstknext] = (ptr))
 
@@ -49,6 +48,7 @@ static volatile uint8_t  buflkmap[NBUFBLK >> 3];
 static volatile long     buflktab[NBUFBLK];
 #endif
 
+/* flush nbuf buffers onto disks */
 void *
 bufevict(long nbuf)
 {
@@ -60,9 +60,9 @@ bufevict(long nbuf)
 void *
 bufalloc(void)
 {
-    uintptr_t  uptr;
-    void      *ptr;
-    long       l;
+    uint8_t *u8ptr = NULL;
+    void    *ptr;
+    long     l;
 
     mtxlk(&bufzonelk, 1);
     if (!bufzone) {
@@ -72,24 +72,28 @@ bufalloc(void)
              * buffers are zeroed on allocation so we don't force them to be
              * mapped to ram with bzero() yet.
              */
-            uptr = bufzone;
+            u8ptr = bufzone;
             mtxlk(&bufstklk, 1);
             for (l = 0 ; l < NBUFBLK ; l++) {
-                bufstk[l] = (void *)uptr;
-                uptr += BUFSIZE;
+                bufstk[l] = u8ptr;
+                u8ptr += BUFSIZE;
             }
             mtxunlk(&bufstklk, 1);
             bufnbyte = NBUFBYTE;
         }
     }
     mtxunlk(&bufzonelk, 1);
-    mtxlk(&bufstklk, 1);
-    ptr = bufpop();
-    bzero(ptr, BUFSIZE);
-    mtxunlk(&bufstklk, 1);
-    if (!ptr) {
-        ptr = bufevict(8);
-    }
+    do {
+        mtxlk(&bufstklk, 1);
+        if (!bufempty()) {
+            ptr = bufpop();
+            mtxunlk(&bufstklk, 1);
+            bzero(ptr, BUFSIZE);
+        } else {
+            bufevict(BUFNEVICT);
+            mtxunlk(&bufstklk, 1);
+        }
+    } while (!ptr);
 
     return ptr;
 }
@@ -98,9 +102,7 @@ void
 buffree(void *ptr)
 {
     mtxlk(&bufstklk, 1);
-    if (bufnotfull()) {
-        bufpush(ptr);
-    }
+    bufpush(ptr);
     mtxunlk(&bufstklk, 1);
 
     return;
