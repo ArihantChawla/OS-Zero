@@ -11,15 +11,13 @@
 
 extern void pageinit(uintptr_t, unsigned long);
 
-#if (!MEMTEST)
 void
 meminit(uintptr_t base, unsigned long nbphys)
 {
     pageinit(base, nbphys);
 #if (defined(__i386__) && !defined(__x86_64__) && !defined(__amd64__))  \
     || defined(__arm__)
-    slabinit(virtslabtab, virthdrtab,
-             (unsigned long)&_epagetab, (char *)KERNVIRTBASE - &_epagetab);
+    slabinit((unsigned long)&_epagetab, (char *)KERNVIRTBASE - &_epagetab);
 #elif defined(__x86_64__) || defined(__amd64__)
 #error implement x86-64 memory management
 #endif
@@ -28,5 +26,4 @@ meminit(uintptr_t base, unsigned long nbphys)
 
     return;
 }
-#endif
 

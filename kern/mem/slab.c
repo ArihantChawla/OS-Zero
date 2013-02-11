@@ -10,24 +10,16 @@
 #define kprintf printf
 #endif
 
-extern unsigned long   npagefree;
-extern uint8_t        *magvirtbitmap;
-extern struct maghdr  *magvirthdrtab;
+extern unsigned long  npagefree;
+extern uint8_t       *magvirtbitmap;
+extern struct maghdr *magvirthdrtab;
 
-#if (MEMTEST)
-struct slabhdr *slabvirttab[PTRBITS] ALIGNED(PAGESIZE);
-#else
-static struct slabhdr *slabvirttab[PTRBITS] ALIGNED(PAGESIZE);
-#endif
-static long            slabvirtlktab[PTRBITS];
-#if (MEMTEST)
-struct slabhdr *slabvirthdrtab;
-#else
-static struct slabhdr *slabvirthdrtab;
-#endif
+struct slabhdr       *slabvirttab[PTRBITS] ALIGNED(PAGESIZE);
+static long           slabvirtlktab[PTRBITS];
+struct slabhdr       *slabvirthdrtab;
 
-static unsigned long   slabnhdr;
-unsigned long          slabvirtbase;
+static unsigned long  slabnhdr;
+unsigned long         slabvirtbase;
 
 /*
  * zero slab allocator
@@ -55,8 +47,6 @@ slabinitvirt(unsigned long base, unsigned long nb)
     if (adr & (SLABMIN - 1)) {
         adr = roundup2(adr, SLABMIN);
     }
-    fprintf(stderr, "MEM: MAGBITS == %lx, MAGHDRS == %lx, VIRTHDRS == %lx\n",
-            magvirtbitmap, magvirthdrtab, slabvirthdrtab);
 
     return adr;
 }
@@ -87,10 +77,7 @@ slabinit(unsigned long base, unsigned long nb)
 #if (MEMTEST)
             printf("%lx bytes @ %lx\n", nb, adr);
 #endif
-//            hdr = &hdrtab[slabnum(adr)];
             hdr = slabgethdr(adr, slabvirthdrtab, slabvirtbase);
-            fprintf(stderr, "ADR == %lx, SLAB == %lx\n",
-                    adr, slabnum(adr, slabvirtbase));
             slabsetbkt(hdr, bkt);
             slabsetfree(hdr);
             slabclrlink(hdr);
@@ -122,7 +109,6 @@ slabcomb(struct slabhdr **zone, struct slabhdr *hdrtab, struct slabhdr *hdr)
     struct slabhdr *hdr3;
     struct slabhdr *hdr4;
 
-//    fprintf(stderr, "PTR: %p\n", slabgetadr(hdr, hdrtab));
     while ((prev) || (next)) {
         prev ^= prev;
         next ^= next;
@@ -226,7 +212,6 @@ slabcomb(struct slabhdr **zone, struct slabhdr *hdrtab, struct slabhdr *hdr)
                     bkt2++;
                     slabsetbkt(hdr1, bkt2);
                     slabsetfree(hdr1);
-//                    hdr = hdr1;
                     bkt1 = bkt2;
                     ofs <<= 1;
                 } else {
@@ -257,7 +242,6 @@ slabcomb(struct slabhdr **zone, struct slabhdr *hdrtab, struct slabhdr *hdr)
     }
 #if 0
     if (ret) {
-//        slabsetbkt(hdr1, bkt1);
         slabsetfree(hdr1);
         slabclrlink(hdr1);
         if (zone[bkt1]) {
