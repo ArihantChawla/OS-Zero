@@ -180,6 +180,9 @@ kfree(void *ptr)
 
         return;
     }
+#if (MAGLK)
+    mtxlk(&mag->lk, MEMPID);
+#endif
 #if (MAGBITMAP)
     if (!bitset(mag->bmap, ((uintptr_t)ptr - mag->base) >> bkt)) {
         kprintf("invalid free: %p (%ld/%ld)\n",
@@ -233,6 +236,9 @@ kfree(void *ptr)
     clrbit(mag->bmap, ((uintptr_t)ptr - mag->base) >> bkt);
 #else
     clrbit(magvirtbitmap, ((uintptr_t)ptr - slabvirtbase) >> MAGMINLOG2);
+#endif
+#if (MAGLK)
+    mtxunlk(&mag->lk, MEMPID);
 #endif
 #if (MEMTEST)
     magdiag();
