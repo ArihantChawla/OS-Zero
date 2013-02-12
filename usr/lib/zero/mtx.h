@@ -21,7 +21,7 @@ extern int pthread_yield(void);
 
 #define MTXINITVAL 0L
 
-#define mtxinit(lp) (*lp = MTXINITVAL)
+#define mtxinit(lp) (*(lp) = MTXINITVAL)
 
 /*
  * try to acquire mutex lock

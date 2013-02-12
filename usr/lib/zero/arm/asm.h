@@ -1,5 +1,4 @@
 #ifndef __ZERO_ARM_ASM_H__
-
 #define __ZERO_ARM_ASM_H__
 
 /* API declarations */
