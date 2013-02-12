@@ -29,7 +29,9 @@ pthread_t      thrtab[NTHR];
 
 extern struct maghdr  *magvirttab[PTRBITS];
 extern struct slabhdr *slabvirttab[PTRBITS];
+#if (!MAGNEWLK)
 extern long            magvirtlktab[PTRBITS];
+#endif
 extern long            slabvirtlktab[PTRBITS];
 extern unsigned long   slabvirtbase;
 extern struct slabhdr *slabvirthdrtab;
@@ -77,7 +79,9 @@ magdiag(void)
     unsigned long  l;
 
     for (l = MAGMINLOG2 ; l < SLABMINLOG2 ; l++) {
+#if (!MAGNEWLK)
         maglkq(magvirtlktab, l);
+#endif
         mag1 = magvirttab[l];
         while (mag1) {
             if (mag1->ndx >= mag1->n) {
@@ -89,7 +93,9 @@ magdiag(void)
             }
             mag1 = mag1->next;
         }
+#if (!MAGNEWLK)
         magunlkq(magvirtlktab, l);
+#endif
     }
 
     return;
@@ -189,6 +195,7 @@ diag(void)
     }
 }
 
+#if 0
 void *
 test(void *dummy)
 {
@@ -216,10 +223,10 @@ test(void *dummy)
 
     return NULL;
 }
+#endif
 
-#if 0
 void *
-thrtest(void *dummy)
+test(void *dummy)
 {
     long   l;
     long   sz;
@@ -229,6 +236,7 @@ thrtest(void *dummy)
         l = rand() & (NALLOC - 1);
         sz = rand() & (8 * SLABMIN - 1);
         ptrtab[l] = memalloc(sz, MEMZERO);
+        printf("PTR: %p\n", ptrtab[l]);
         if (ptrtab[l]) {
             kfree(ptrtab[l]);
         }
@@ -236,7 +244,6 @@ thrtest(void *dummy)
 
     return NULL;
 }
-#endif
 
 int
 main(int argc, char *argv[])

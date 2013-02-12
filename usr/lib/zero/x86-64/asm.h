@@ -6,7 +6,7 @@
 #define m_waitint()              __asm__ __volatile__ ("pause")
 #define m_cmpswap(p, want, val)  m_cmpxchgq(p, want, val)
 #define m_cmpswapb(p, want, val) m_cmpxchgb(p, want, val)
-#define m_fetadd(p, val)         xaddq(p, val)
+#define m_fetadd(p, val)         m_xaddq(p, val)
 #define m_getretadr(r)                                                  \
     __asm__ __volatile__ ("movl 8(%%rbp), %0" : "=r" (r))
 
