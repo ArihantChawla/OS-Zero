@@ -30,7 +30,7 @@ extern int pthread_yield(void);
 static __inline__ long
 mtxtrylk(volatile long *lp, long val)
 {
-    long res;
+    volatile long res;
 
     res = m_cmpswap(lp, MTXINITVAL, val);
 

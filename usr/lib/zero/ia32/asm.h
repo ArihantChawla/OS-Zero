@@ -34,7 +34,7 @@ m_xaddl(volatile long *p,
 static __inline__ long
 m_xchgl(volatile long *adr, long val)
 {
-    long res;
+    volatile long res;
 
     __asm__ __volatile__ ("lock; xchgl %0, %2\n"
                           : "+m" (*adr), "=a" (res)
@@ -44,7 +44,6 @@ m_xchgl(volatile long *adr, long val)
     return res;
 }
 
-#if 0
 /*
  * atomic compare and exchange byte
  * - if *p == want, let *p = val
@@ -55,7 +54,7 @@ m_cmpxchgb(volatile long *p,
            long want,
            long val)
 {
-    long res;
+    volatile long res;
 
     __asm__ __volatile__("lock cmpxchgb %b1, %2\n"
                          : "=a" (res)
@@ -64,7 +63,6 @@ m_cmpxchgb(volatile long *p,
 
     return res;
 }
-#endif
 
 /*
  * atomic compare and exchange longword
@@ -76,7 +74,7 @@ m_cmpxchgl(volatile long *p,
            long want,
            long val)
 {
-    long res;
+    volatile long res;
     
     __asm__ __volatile__("lock cmpxchgl %1, %2\n"
                          : "=a" (res)
