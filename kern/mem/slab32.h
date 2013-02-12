@@ -34,10 +34,5 @@
 #define slabsetnext(hp, hdr, tab)                                       \
     (slabclrnext(hp), (hp)->link |= (hdr) ? (slabhdrnum(hdr, tab) << 16) : 0)
 
-void  slabinit(unsigned long base, unsigned long size);
-void *slaballoc(struct slabhdr **zone, struct slabhdr *hdrtab,
-                unsigned long nb, unsigned long flg);
-void  slabfree(struct slabhdr **zone, struct slabhdr *hdrtab, void *ptr);
-
 #endif /* __MEM_SLAB32_H__ */
 

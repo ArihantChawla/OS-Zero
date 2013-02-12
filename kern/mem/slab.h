@@ -58,7 +58,7 @@ struct slabhdr {
 void   slabinit(unsigned long base, unsigned long nb);
 void * slaballoc(struct slabhdr **zone, struct slabhdr *hdrtab,
                  unsigned long nb, unsigned long flg);
-void slabfree(struct slabhdr **zone, struct slabhdr *hdrtab, void *ptr);
+void   slabfree(struct slabhdr **zone, struct slabhdr *hdrtab, void *ptr);
 
 #endif /* __MEM_SLAB_H__ */
 
