@@ -25,7 +25,7 @@ extern int pthread_yield(void);
 
 /*
  * try to acquire mutex lock
- * - return non-zero on success, zero if locked
+ * - return non-zero on success, zero if already locked
  */
 static __inline__ long
 mtxtrylk(volatile long *lp, long val)
@@ -45,7 +45,9 @@ static __inline__ void
 mtxlk(volatile long *lp, long val)
 {
     while (m_cmpswap(lp, MTXINITVAL, val) != MTXINITVAL) {
-#if !__KERNEL__
+#if (__KERNEL__)
+        thryield();
+#else
         pthread_yield();
 #endif
     }
