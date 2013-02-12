@@ -170,6 +170,7 @@ slabcomb(struct slabhdr **zone, struct slabhdr *hdrtab, struct slabhdr *hdr)
 #endif
                     bkt2++;
                     slabclrnfo(hdr1);
+                    slabclrlink(hdr1);
                     slabsetbkt(hdr1, bkt2);
                     slabsetfree(hdr1);
                     hdr = hdr1;
@@ -224,6 +225,7 @@ slabcomb(struct slabhdr **zone, struct slabhdr *hdrtab, struct slabhdr *hdr)
 #endif
                     bkt2++;
                     slabclrnfo(hdr1);
+                    slabclrlink(hdr1);
                     slabsetbkt(hdr1, bkt2);
                     slabsetfree(hdr1);
                     bkt1 = bkt2;
@@ -293,9 +295,9 @@ slabsplit(struct slabhdr **zone, struct slabhdr *hdrtab,
         sz >>= 1;
         hdr1 = slabgethdr(ptr, hdrtab, slabvirtbase);
         slabclrnfo(hdr1);
+        slabclrlink(hdr1);
         slabsetbkt(hdr1, bkt);
         slabsetfree(hdr1);
-        slabclrlink(hdr1);
         if (bkt != dest) {
             slablkq(slabvirtlktab, bkt);
         }
@@ -311,9 +313,9 @@ slabsplit(struct slabhdr **zone, struct slabhdr *hdrtab,
     }
     hdr1 = slabgethdr(ptr, hdrtab, slabvirtbase);
     slabclrnfo(hdr1);
+    slabclrlink(hdr1);
     slabsetbkt(hdr1, dest);
     slabsetfree(hdr1);
-    slabclrlink(hdr1);
     if (zone[dest]) {
         slabsetprev(zone[dest], hdr1, hdrtab);
         slabsetnext(hdr1, zone[dest], hdrtab);

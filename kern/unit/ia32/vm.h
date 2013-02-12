@@ -4,7 +4,9 @@
 #include <stdint.h>
 #include <kern/buf.h>
 
+#if !defined(__KERNEL__)
 #define __KERNEL__ 1
+#endif
 #include <zero/mtx.h>
 #define vmlklruq(pq)   mtxlk(&pq->lk, 0)
 #define vmunlklruq(pq) mtxunlk(&pq->lk, 0)

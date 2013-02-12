@@ -124,18 +124,18 @@ slabprint(void)
 void
 diag(void)
 {
-    unsigned long   l;
+    unsigned long   bkt;
     unsigned long   n;
     struct slabhdr *hdr1;
     struct slabhdr *hdr2;
     struct slabhdr *hdr3;
 
-    for (l = SLABMINLOG2 ; l < PTRBITS ; l++) {
-//        slablk(slabvirtlktab, l);
+    for (bkt = SLABMINLOG2 ; bkt < PTRBITS ; bkt++) {
+//        slablk(slabvirtlktab, bkt);
         n = 0;
-        hdr1 = slabvirttab[l];
+        hdr1 = slabvirttab[bkt];
         if (hdr1) {
-            fprintf(stderr, "BKT %lu: ", l);
+            fprintf(stderr, "BKT %lu: ", bkt);
             if (slabgetprev(hdr1, slabvirthdrtab)) {
                 hdr2 = slabgetprev(hdr1, slabvirthdrtab);
                 fprintf(stderr, "%p: prev set on head: %p (%p)\n",
@@ -152,11 +152,11 @@ diag(void)
                     
                     abort();
                 }
-                if (slabgetbkt(hdr1) != l) {
+                if (slabgetbkt(hdr1) != bkt) {
                     fprintf(stderr, "%p: invalid bkt %lu (%lu)\n",
                             slabgetadr(hdr1, slabvirthdrtab),
                             slabgetbkt(hdr1),
-                        l);
+                            bkt);
                     
                     abort();
                 }
@@ -169,9 +169,10 @@ diag(void)
                     }
                     if (slabgetprev(hdr2, slabvirthdrtab) != hdr1) {
                         hdr3 = slabgetprev(hdr2, slabvirthdrtab);
-                        fprintf(stderr, " %p: invalid prev %p (%p)\n",
-                            slabgetadr(hdr2, slabvirthdrtab),
+                        fprintf(stderr, " %p: invalid prev %p(%ld) (%p)\n",
+                                slabgetadr(hdr2, slabvirthdrtab),
                                 slabgetadr(hdr3, slabvirthdrtab),
+                                slabgetbkt(hdr2),
                                 slabgetadr(hdr1, slabvirthdrtab));
                         
                         abort();
@@ -189,7 +190,7 @@ diag(void)
                 hdr1 = hdr2;
             }
         }
-//        slabunlk(slabvirtlktab, l);
+//        slabunlk(slabvirtlktab, bkt);
         n++;
         fprintf(stderr, "%lu \n", n);
     }
@@ -211,12 +212,14 @@ test(void *dummy)
         for (l = 0 ; l < NALLOC ; l++) {
 //            fprintf(stderr, "ALLOC: %lu - ", (unsigned long)alloctab[l]);
             ptrtab[l] = memalloc(alloctab[l], MEMZERO);
+            diag();
 //            fprintf(stderr, "%p\n", ptrtab[l]);
         }
         l = NALLOC;
         while (l--) {
 //            fprintf(stderr, "FREE: %lx\n", (unsigned long)ptrtab[l]);
             kfree((void *)ptrtab[l]);
+            diag();
         }
         slabprint();
     }
@@ -236,9 +239,11 @@ test(void *dummy)
         l = rand() & (NALLOC - 1);
         sz = rand() & (8 * SLABMIN - 1);
         ptrtab[l] = memalloc(sz, MEMZERO);
+        diag();
         printf("PTR: %p\n", ptrtab[l]);
         if (ptrtab[l]) {
             kfree(ptrtab[l]);
+            diag();
         }
     }
 
