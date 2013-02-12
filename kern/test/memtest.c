@@ -13,7 +13,7 @@
 #include <kern/unit/ia32/vm.h>
 
 #define NTHR   4
-#define NALLOC 256
+#define NALLOC 1024
 
 unsigned long  vmnphyspages;
 
@@ -21,7 +21,9 @@ unsigned long  vmnphyspages;
 #if 0
 uintptr_t      alloctab[NTHR][NALLOC];
 #endif
+#if 0
 void          *ptrtab[NTHR * NALLOC];
+#endif
 volatile long  lktab[NTHR * NALLOC];
 pthread_t      thrtab[NTHR];
 
@@ -48,6 +50,7 @@ magprint(struct maghdr *mag)
 #endif
     fprintf(stderr, "N: %ld\n", mag->n);
     fprintf(stderr, "NDX: %ld\n", mag->ndx);
+    fprintf(stderr, "BKT: %ld\n", mag->bkt);
     fprintf(stderr, "PREV: %p\n", mag->prev);
     fprintf(stderr, "NEXT: %p\n", mag->next);
 #if (MAGBITMAP)
@@ -77,8 +80,9 @@ magdiag(void)
         maglkq(magvirtlktab, l);
         mag1 = magvirttab[l];
         while (mag1) {
-            if (!mag1->ndx) {
-                fprintf(stderr, "empty magazine on free list %lu\n", l);
+            if (mag1->ndx >= mag1->n) {
+                fprintf(stderr, "too big index(%ld) on free list %lu: %ld\n",
+                        mag1->ndx, l, mag1->n);
                 magprint(mag1);
 
                 abort();
@@ -121,7 +125,7 @@ diag(void)
     struct slabhdr *hdr3;
 
     for (l = SLABMINLOG2 ; l < PTRBITS ; l++) {
-        slablk(slabvirtlktab, l);
+//        slablk(slabvirtlktab, l);
         n = 0;
         hdr1 = slabvirttab[l];
         if (hdr1) {
@@ -179,14 +183,14 @@ diag(void)
                 hdr1 = hdr2;
             }
         }
-        slabunlk(slabvirtlktab, l);
+//        slabunlk(slabvirtlktab, l);
         n++;
         fprintf(stderr, "%lu \n", n);
     }
 }
 
 void *
-test(void)
+test(void *dummy)
 {
     long   l;
     long  *alloctab = malloc(NALLOC * sizeof(long));
@@ -217,18 +221,16 @@ test(void)
 void *
 thrtest(void *dummy)
 {
-    long l;
-    long sz;
+    long   l;
+    long   sz;
+    void **ptrtab = calloc(NALLOC, sizeof(void *));
 
     while (1) {
-        l = rand() & (NTHR * NALLOC - 1);
+        l = rand() & (NALLOC - 1);
         sz = rand() & (8 * SLABMIN - 1);
-        if (mtxtrylk(&lktab[l], MEMPID)) {
-            if (ptrtab[l]) {
-                kfree(ptrtab[l]);
-            }
-            ptrtab[l] = memalloc(sz, MEMZERO);
-            mtxunlk(&lktab[l], MEMPID);
+        ptrtab[l] = memalloc(sz, MEMZERO);
+        if (ptrtab[l]) {
+            kfree(ptrtab[l]);
         }
     }
 
@@ -250,17 +252,16 @@ main(int argc, char *argv[])
     bzero(base, 1024 * 1024 * 1024);
     slabinit((unsigned long)base, 1024 * 1024 * 1024);
     slabprint();
-    sleep(1);
 #if (MTSAFE)
     while (n--) {
-        pthread_create(&thrtab[n], NULL, thrtest, NULL);
+        pthread_create(&thrtab[n], NULL, test, NULL);
     }
     while (1) {
 //        diag();
         ;
     }
 #else
-    test();
+    test(NULL);
     while (1) {
         ;
     }

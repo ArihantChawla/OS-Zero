@@ -18,6 +18,9 @@
 #define magfull(mp)        ((mp)->ndx == (mp)->n)
 #define magempty(mp)       (!(mp)->ndx)
 struct maghdr {
+#if (MAGLK)
+    volatile long  lk;
+#endif
 #if (MAGBITMAP)
     uintptr_t      base;
 #endif
