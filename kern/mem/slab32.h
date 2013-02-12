@@ -30,9 +30,9 @@
 #define slabclrlink(hp)                                                 \
     ((hp)->link = 0L)
 #define slabsetprev(hp, hdr, tab)                                       \
-    (slabclrprev(hp), (hp)->link |= (hp) ? slabhdrnum(hdr, tab) : 0)
+    (slabclrprev(hp), (hp)->link |= (hdr) ? slabhdrnum(hdr, tab) : 0)
 #define slabsetnext(hp, hdr, tab)                                       \
-    (slabclrnext(hp), (hp)->link |= (hp) ? (slabhdrnum(hdr, tab) << 16) : 0)
+    (slabclrnext(hp), (hp)->link |= (hdr) ? (slabhdrnum(hdr, tab) << 16) : 0)
 
 void  slabinit(unsigned long base, unsigned long size);
 void *slaballoc(struct slabhdr **zone, struct slabhdr *hdrtab,
