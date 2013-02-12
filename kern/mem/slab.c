@@ -307,21 +307,17 @@ slabsplit(struct slabhdr **zone, struct slabhdr *hdrtab,
         slabsetbkt(hdr1, bkt);
         slabsetfree(hdr1);
         slabclrlink(hdr1);
-#if (!NEWLK)
         if (bkt != dest) {
             slablk(slabvirtlktab, bkt);
         }
-#endif
         if (zone[bkt]) {
             slabsetprev(zone[bkt], hdr1, hdrtab);
             slabsetnext(hdr1, zone[bkt], hdrtab);
         }
         zone[bkt] = hdr1;
-#if (!NEWLK)
         if (bkt != dest) {
             slabunlk(slabvirtlktab, bkt);
         }
-#endif
         ptr += sz;
     }
     hdr1 = slabgethdr(ptr, hdrtab, slabvirtbase);
