@@ -13,7 +13,7 @@
 #include <kern/unit/ia32/vm.h>
 
 #define NTHR   4
-#define NALLOC 1024
+#define NALLOC 128
 
 unsigned long  vmnphyspages;
 

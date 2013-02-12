@@ -42,6 +42,9 @@ memalloc(unsigned long nb, long flg)
     uint8_t       *u8ptr;
     unsigned long  l;
     unsigned long  n;
+#if (MAGLK)
+    unsigned long  mlk = 0;
+#endif
 
     nb = max(MAGMIN, nb);
     bkt = memgetbkt(nb);
@@ -58,7 +61,13 @@ memalloc(unsigned long nb, long flg)
 #endif
         if (ptr) {
             mag = maggethdr(ptr, magvirthdrtab, slabvirtbase);
+#if (MAGLK)
+            mtxlk(&mag->lk, MEMPID);
+            mlk++;
+#endif
+#if 0
             bzero(mag, sizeof(struct maghdr));
+#endif
 #if (MAGBITMAP)
             mag->base = (uintptr_t)ptr;
 #endif
@@ -69,6 +78,10 @@ memalloc(unsigned long nb, long flg)
         maglkq(magvirtlktab, bkt);
         mag = magvirttab[bkt];
         if (mag) {
+#if (MAGLK)
+            mtxlk(&mag->lk, MEMPID);
+            mlk++;
+#endif
             ptr = magpop(mag);
             if (magfull(mag)) {
                 if (mag->next) {
@@ -82,7 +95,13 @@ memalloc(unsigned long nb, long flg)
             if (ptr) {
                 n = 1UL << (SLABMINLOG2 - bkt);
                 mag = maggethdr(ptr, magvirthdrtab, slabvirtbase);
+#if (MAGLK)
+                mtxlk(&mag->lk, MEMPID);
+                mlk++;
+#endif
+#if 0
                 bzero(mag, sizeof(struct maghdr));
+#endif
 #if (MAGBITMAP)
                 mag->base = (uintptr_t)ptr;
 #endif
@@ -117,6 +136,7 @@ memalloc(unsigned long nb, long flg)
         if (bitset(mag->bmap, ((uintptr_t)ptr - mag->base) >> bkt)) {
             kprintf("duplicate allocation %p\n", ptr);
             magprint(mag);
+            diag();
             
             panic();
         }
@@ -136,6 +156,11 @@ memalloc(unsigned long nb, long flg)
     }
 #if (MEMTEST)
 //    printf("MAGPTR: %p\n", ptr);
+#endif
+#if (MAGLK)
+    if (mlk) {
+        mtxunlk(&mag->lk, MEMPID);
+    }
 #endif
 
     return ptr;
@@ -157,7 +182,8 @@ kfree(void *ptr)
     }
 #if (MAGBITMAP)
     if (!bitset(mag->bmap, ((uintptr_t)ptr - mag->base) >> bkt)) {
-        kprintf("invalid free: %p\n", ptr);
+        kprintf("invalid free: %p (%ld/%ld)\n",
+                ptr, ((uintptr_t)ptr - mag->base) >> bkt, mag->n);
         magprint(mag);
 
         panic();

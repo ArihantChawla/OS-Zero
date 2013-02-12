@@ -19,7 +19,7 @@ struct slabhdr       *slabvirttab[PTRBITS] ALIGNED(PAGESIZE);
 volatile long         slabvirtlktab[PTRBITS];
 struct slabhdr       *slabvirthdrtab;
 
-#if (NEWLK) && 0
+#if (SLABHUGELK)
 static volatile long  slablk;
 #endif
 static unsigned long  slabnhdr;
@@ -75,7 +75,7 @@ slabinit(unsigned long base, unsigned long nb)
     unsigned long   ul = 1UL << bkt;
     struct slabhdr *hdr;
 
-#if (NEWLK) && 0
+#if (SLABHUGELK)
     mtxlk(&slablk, MEMPID);
 #endif
     slabvirtbase = adr = slabinitvirt(adr, nb);
@@ -105,7 +105,7 @@ slabinit(unsigned long base, unsigned long nb)
         bkt--;
         ul >>= 1;
     }
-#if (NEWLK) && 0
+#if (SLABHUGELK)
     mtxunlk(&slablk, MEMPID);
 #endif
 
@@ -163,7 +163,6 @@ slabcomb(struct slabhdr **zone, struct slabhdr *hdrtab, struct slabhdr *hdr)
                     } else {
                         if (hdr4) {
                             slabclrlink(hdr4);
-                            slabsetnext(hdr4, zone[bkt2], hdrtab);
                         }
                         if (zone[bkt2]) {
                             slabsetprev(zone[bkt2], hdr4, hdrtab);
@@ -224,7 +223,6 @@ slabcomb(struct slabhdr **zone, struct slabhdr *hdrtab, struct slabhdr *hdr)
                     } else {
                         if (hdr4) {
                             slabclrlink(hdr4);
-                            slabsetnext(hdr4, zone[bkt2], hdrtab);
                         }
                         if (zone[bkt2]) {
                             slabsetprev(zone[bkt2], hdr4, hdrtab);
@@ -297,7 +295,12 @@ slabsplit(struct slabhdr **zone, struct slabhdr *hdrtab,
 
     hdr1 = slabgetnext(hdr, hdrtab);
     if (hdr1) {
+#if (HACKS)
+        slabclrlink(hdr1);
+        slabsetnext(hdr1, zone[bkt], hdrtab);
+#else
         slabclrprev(hdr1);
+#endif
     }
     zone[bkt] = hdr1;
     while (--bkt >= dest) {
@@ -312,8 +315,8 @@ slabsplit(struct slabhdr **zone, struct slabhdr *hdrtab,
         }
         if (zone[bkt]) {
             slabsetprev(zone[bkt], hdr1, hdrtab);
-            slabsetnext(hdr1, zone[bkt], hdrtab);
         }
+        slabsetnext(hdr1, zone[bkt], hdrtab);
         zone[bkt] = hdr1;
         if (bkt != dest) {
             slabunlk(slabvirtlktab, bkt);
@@ -347,7 +350,7 @@ slaballoc(struct slabhdr **zone, struct slabhdr *hdrtab,
     struct slabhdr *hdr1;
     struct slabhdr *hdr2;
 
-#if (NEWLK) && 0
+#if (SLABHUGELK)
     mtxlk(&slablk, MEMPID);
 #endif
 #if (!NEWLK)
@@ -374,7 +377,7 @@ slaballoc(struct slabhdr **zone, struct slabhdr *hdrtab,
         slabsetflg(hdr1, flg);
         ptr = slabgetadr(hdr1, hdrtab);
     }
-#if (NEWLK) && 0
+#if (SLABHUGELK)
     mtxunlk(&slablk, MEMPID);
 #endif
 #if (!NEWLK)
@@ -396,7 +399,7 @@ slabfree(struct slabhdr **zone, struct slabhdr *hdrtab, void *ptr)
     struct slabhdr *hdr = slabgethdr(ptr, hdrtab, slabvirtbase);
     unsigned long   bkt = slabgetbkt(hdr);
 
-#if (NEWLK) && 0
+#if (SLABHUGELK)
     mtxlk(&slablk, MEMPID);
 #endif
 #if (!MEMTEST)
@@ -417,7 +420,7 @@ slabfree(struct slabhdr **zone, struct slabhdr *hdrtab, void *ptr)
         slabunlk(slabvirtlktab, bkt);
 #endif
     }
-#if (NEWLK) && 0
+#if (SLABHUGELK)
     mtxunlk(&slablk, MEMPID);
 #endif
 
