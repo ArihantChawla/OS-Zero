@@ -13,7 +13,7 @@
 #include <kern/unit/ia32/vm.h>
 
 #define NTHR   4
-#define NALLOC 128
+#define NALLOC 1024
 
 unsigned long  vmnphyspages;
 
@@ -196,38 +196,29 @@ diag(void)
     }
 }
 
-#if 0
 void *
 test(void *dummy)
 {
     long   l;
-    long  *alloctab = malloc(NALLOC * sizeof(long));
     void **ptrtab = malloc(NALLOC * sizeof(void *));
 
     for ( ; ; ) {
         for (l = 0 ; l < NALLOC ; l++) {
-//            alloctab[l] = MAGMIN + (rand() & (4 * MAGMIN - 1));
-            alloctab[l] = rand() & (8 * SLABMIN - 1);
-        }
-        for (l = 0 ; l < NALLOC ; l++) {
-//            fprintf(stderr, "ALLOC: %lu - ", (unsigned long)alloctab[l]);
-            ptrtab[l] = memalloc(alloctab[l], MEMZERO);
-            diag();
-//            fprintf(stderr, "%p\n", ptrtab[l]);
+            ptrtab[l] = memalloc(rand() & (8 * SLABMIN - 1), MEMZERO);
         }
         l = NALLOC;
         while (l--) {
-//            fprintf(stderr, "FREE: %lx\n", (unsigned long)ptrtab[l]);
-            kfree((void *)ptrtab[l]);
-            diag();
+            if (ptrtab[l]) {
+                kfree((void *)ptrtab[l]);
+            }
         }
         slabprint();
     }
 
     return NULL;
 }
-#endif
 
+#if 0
 void *
 test(void *dummy)
 {
@@ -249,6 +240,7 @@ test(void *dummy)
 
     return NULL;
 }
+#endif
 
 int
 main(int argc, char *argv[])

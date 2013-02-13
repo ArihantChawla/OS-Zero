@@ -74,14 +74,19 @@ memalloc(unsigned long nb, long flg)
             mtxlk(&mag->lk, MEMPID);
             mlk++;
 #endif
-#if 0
-            bzero(mag, sizeof(struct maghdr));
-#endif
 #if (MAGBITMAP)
             mag->base = (uintptr_t)ptr;
 #endif
-            mag->n = 1;
-            mag->ndx = 1;
+            mag->n = 0;
+            mag->ndx = 0;
+#if (KLUDGES)
+            mag->bkt = 0;
+            mag->prev = NULL;
+            mag->next = NULL;
+#endif
+#if (MAGBITMAP)
+            clrbit(mag->bmap, 0);
+#endif
         }
     } else {
 #if (!MAGNEWLK)
@@ -94,7 +99,7 @@ memalloc(unsigned long nb, long flg)
             mlk++;
 #endif
             ptr = magpop(mag);
-            if (magfull(mag)) {
+            if (magempty(mag)) {
                 if (mag->next) {
                     mag->next->prev = NULL;
                 }
@@ -102,7 +107,7 @@ memalloc(unsigned long nb, long flg)
             }
         } else {
             sz = 1UL << bkt;
-            ptr = u8ptr = slaballoc(slabvirttab, slabvirthdrtab, sz, flg);
+            ptr = u8ptr = slaballoc(slabvirttab, slabvirthdrtab, SLABMIN, flg);
             if (ptr) {
                 n = 1UL << (SLABMINLOG2 - bkt);
                 mag = maggethdr(ptr, magvirthdrtab, slabvirtbase);
@@ -110,29 +115,38 @@ memalloc(unsigned long nb, long flg)
                 mtxlk(&mag->lk, MEMPID);
                 mlk++;
 #endif
-#if 0
-                bzero(mag, sizeof(struct maghdr));
-#endif
 #if (MAGBITMAP)
                 mag->base = (uintptr_t)ptr;
 #endif
                 mag->n = n;
                 mag->bkt = bkt;
+#if (KLUDGES) && 0
+                mag->prev = NULL;
+                mag->next = NULL;
+#endif
+#if (MAGBITMAP)
+                bzero(mag->bmap, sizeof(mag->bmap));
+#endif
 #if (MEMTEST)
 //            printf("INIT: %ld items:", n);
 #endif
+#if (KLUDGES)
+                for (l = 1 ; l < n ; l++) {
+                    u8ptr += sz;
+                    mag->ptab[l] = u8ptr;
+                }
+#else
                 for (l = 0 ; l < n ; l++) {
                     mag->ptab[l] = u8ptr;
-#if (MEMTEST)
-//                printf(" %p", u8ptr);
-#endif
                     u8ptr += sz;
                 }
+#endif
 #if (MEMTEST)
 //            printf("\n");
 #endif
 //            ptr = magpop(mag);
                 mag->ndx = 1;
+                mag->prev = NULL;
                 if (magvirttab[bkt]) {
                     magvirttab[bkt]->prev = mag;
                 }
@@ -216,16 +230,16 @@ kfree(void *ptr)
     }
 #endif
 //    clrbit(magvirtbitmap, ((uintptr_t)ptr - slabvirtbase) >> MAGMINLOG2);
-    if (mag->n == 1 && mag->ndx == 1) {
+    if (!mag->n && !mag->ndx) {
 #if (MAGBITMAP)
         freed = 0;
 #endif
+        slabfree(slabvirttab, slabvirthdrtab, ptr);
         mag->n = 0;
         mag->ndx = 0;
-        slabfree(slabvirttab, slabvirthdrtab, ptr);
     } else {
         magpush(mag, ptr);
-        if (magempty(mag)) {
+        if (magfull(mag)) {
             slabfree(slabvirttab, slabvirthdrtab, ptr);
 #if (!MAGBITMAP)
             bkt = mag->bkt;

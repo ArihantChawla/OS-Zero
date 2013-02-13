@@ -113,9 +113,6 @@ slabcomb(struct slabhdr **zone, struct slabhdr *hdrtab, struct slabhdr *hdr)
 {
     unsigned long   bkt1 = slabgetbkt(hdr);
     unsigned long   bkt2 = bkt1;
-#if (!NEWLK)
-    unsigned long   lk;
-#endif
     unsigned long   ret  = 0;
     long            prev = 1;
     long            next = 1;
@@ -125,10 +122,6 @@ slabcomb(struct slabhdr **zone, struct slabhdr *hdrtab, struct slabhdr *hdr)
     struct slabhdr *hdr3;
     struct slabhdr *hdr4;
 
-#if (!NEWLK)
-    slablkq(slabvirtlktab, bkt1);
-    lk = bkt1;
-#endif
     while ((prev) || (next)) {
         prev ^= prev;
         next ^= next;
@@ -136,16 +129,24 @@ slabcomb(struct slabhdr **zone, struct slabhdr *hdrtab, struct slabhdr *hdr)
             hdr1 = hdr - ofs;
             bkt2 = slabgetbkt(hdr1);
             if (bkt2 == bkt1) {
-#if (!NEWLK)
-                if (bkt2 != lk) {
-                    slablkq(slabvirtlktab, bkt2);
-                }
-#endif
                 if (slabisfree(hdr1)) {
                     prev = 1;
                     ret++;
                     hdr3 = slabgetprev(hdr1, hdrtab);
                     hdr4 = slabgetnext(hdr1, hdrtab);
+#if (KLUDGES) || 1
+                    if ((hdr3) && (hdr4)) {
+                        slabsetnext(hdr3, hdr4, hdrtab);
+                        slabsetprev(hdr4, hdr3, hdrtab);
+                    } else if (hdr3) {
+                        slabsetnext(hdr3, hdr4, hdrtab); // NULL;
+                    } else if (hdr4) {
+                        slabsetprev(hdr4, hdr3, hdrtab); // NULL
+                        zone[bkt1] = hdr4;
+                    } else {
+                        zone[bkt1] = NULL;
+                    }
+#else
                     if (hdr3) {
                         if (hdr4) {
                             slabsetprev(hdr4, hdr3, hdrtab);
@@ -160,14 +161,9 @@ slabcomb(struct slabhdr **zone, struct slabhdr *hdrtab, struct slabhdr *hdr)
                         }
                         zone[bkt2] = hdr4;
                     }
+#endif
                     slabclrnfo(hdr);
                     slabsetbkt(hdr, 0);
-#if (!NEWLK)
-                    slabunlkq(slabvirtlktab, bkt2);
-                    if (bkt2 == lk) {
-                        lk ^= 0;
-                    }
-#endif
                     bkt2++;
                     slabclrnfo(hdr1);
                     slabclrlink(hdr1);
@@ -176,13 +172,6 @@ slabcomb(struct slabhdr **zone, struct slabhdr *hdrtab, struct slabhdr *hdr)
                     hdr = hdr1;
                     bkt1 = bkt2;
                     ofs <<= 1;
-#if (!NEWLK)
-                } else {
-                    slabunlkq(slabvirtlktab, bkt2);
-                    if (bkt2 == lk) {
-                        lk ^= 0;
-                    }
-#endif
                 }
             }
         }
@@ -191,16 +180,24 @@ slabcomb(struct slabhdr **zone, struct slabhdr *hdrtab, struct slabhdr *hdr)
             hdr2 = hdr1 + ofs;
             bkt2 = slabgetbkt(hdr2);
             if (bkt2 == bkt1) {
-#if (!NEWLK)
-                if (bkt2 != lk) {
-                    slablkq(slabvirtlktab, bkt2);
-                }
-#endif
                 if (slabisfree(hdr2)) {
                     next = 1;
                     ret++;
                     hdr3 = slabgetprev(hdr2, hdrtab);
                     hdr4 = slabgetnext(hdr2, hdrtab);
+#if (KLUDGES) || 1
+                    if ((hdr3) && (hdr4)) {
+                        slabsetnext(hdr3, hdr4, hdrtab);
+                        slabsetprev(hdr4, hdr3, hdrtab);
+                    } else if (hdr3) {
+                        slabsetnext(hdr3, hdr4, hdrtab); // NULL;
+                    } else if (hdr4) {
+                        slabsetprev(hdr4, hdr3, hdrtab); // NULL
+                        zone[bkt1] = hdr4;
+                    } else {
+                        zone[bkt1] = NULL;
+                    }
+#else
                     if (hdr3) {
                         if (hdr4) {
                             slabsetprev(hdr4, hdr3, hdrtab);
@@ -215,14 +212,9 @@ slabcomb(struct slabhdr **zone, struct slabhdr *hdrtab, struct slabhdr *hdr)
                         }
                         zone[bkt2] = hdr4;
                     }
+#endif
                     slabclrnfo(hdr2);
                     slabsetbkt(hdr2, 0);
-#if (!NEWLK)
-                    slabunlkq(slabvirtlktab, bkt2);
-                    if (bkt2 == lk) {
-                        lk ^= 0;
-                    }
-#endif
                     bkt2++;
                     slabclrnfo(hdr1);
                     slabclrlink(hdr1);
@@ -230,37 +222,19 @@ slabcomb(struct slabhdr **zone, struct slabhdr *hdrtab, struct slabhdr *hdr)
                     slabsetfree(hdr1);
                     bkt1 = bkt2;
                     ofs <<= 1;
-#if (!NEWLK)
-                } else {
-                    slabunlkq(slabvirtlktab, bkt2);
-                    if (bkt2 == lk) {
-                        lk ^= 0;
-                    }
-#endif
                 }
             }
         }
         hdr = hdr1;
     }
-#if (!NEWLK)
-    if (lk) {
-        slabunlkq(slabvirtlktab, lk);
-    }
-#endif
     if (ret) {
         slabsetfree(hdr);
         slabclrlink(hdr);
-#if (!NEWLK)
-        slablkq(slabvirtlktab, bkt1);
-#endif
         if (zone[bkt1]) {
             slabsetprev(zone[bkt1], hdr, hdrtab);
             slabsetnext(hdr, zone[bkt1], hdrtab);
         }
         zone[bkt1] = hdr;
-#if (!NEWLK)
-        slabunlkq(slabvirtlktab, bkt1);
-#endif
     }
                 
     return ret;
@@ -341,9 +315,6 @@ slaballoc(struct slabhdr **zone, struct slabhdr *hdrtab,
 #if (SLABHUGELK)
     mtxlk(&slablk, MEMPID);
 #endif
-#if (!NEWLK)
-    slablkq(slabvirtlktab, bkt1);
-#endif
     hdr1 = zone[bkt1];
     if (!hdr1) {
         while (!hdr1 && ++bkt2 < PTRBITS) {
@@ -368,9 +339,6 @@ slaballoc(struct slabhdr **zone, struct slabhdr *hdrtab,
 #if (SLABHUGELK)
     mtxunlk(&slablk, MEMPID);
 #endif
-#if (!NEWLK)
-    slabunlkq(slabvirtlktab, bkt1);
-#endif
 
     return ptr;
 }
@@ -393,17 +361,11 @@ slabfree(struct slabhdr **zone, struct slabhdr *hdrtab, void *ptr)
     slabsetfree(hdr);
     if (!slabcomb(zone, hdrtab, hdr)) {
         slabclrlink(hdr);
-#if (!NEWLK)
-        slablkq(slabvirtlktab, bkt);
-#endif
         if (zone[bkt]) {
             slabsetprev(zone[bkt], hdr, hdrtab);
         }
         slabsetnext(hdr, zone[bkt], hdrtab);
         zone[bkt] = hdr;
-#if (!NEWLK)
-        slabunlkq(slabvirtlktab, bkt);
-#endif
     }
 #if (SLABHUGELK)
     mtxunlk(&slablk, MEMPID);
