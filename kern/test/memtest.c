@@ -13,7 +13,7 @@
 #include <kern/unit/ia32/vm.h>
 
 #define NTHR   4
-#define NALLOC 1024
+#define NALLOC 128
 
 unsigned long  vmnphyspages;
 
@@ -44,28 +44,28 @@ magprint(struct maghdr *mag)
         return;
     }
 
-//    fprintf(stderr, "FLAGS: %lx\n", mag->flg);
+//    printf("FLAGS: %lx\n", mag->flg);
 #if (MAGBITMAP)
-    fprintf(stderr, "BASE: %lx\n", (unsigned long)mag->base);
+    printf("BASE: %lx\n", (unsigned long)mag->base);
 #endif
-    fprintf(stderr, "N: %ld\n", mag->n);
-    fprintf(stderr, "NDX: %ld\n", mag->ndx);
-    fprintf(stderr, "BKT: %ld\n", mag->bkt);
-    fprintf(stderr, "PREV: %p\n", mag->prev);
-    fprintf(stderr, "NEXT: %p\n", mag->next);
+    printf("N: %ld\n", mag->n);
+    printf("NDX: %ld\n", mag->ndx);
+    printf("BKT: %ld\n", mag->bkt);
+    printf("PREV: %p\n", mag->prev);
+    printf("NEXT: %p\n", mag->next);
 #if (MAGBITMAP)
-    fprintf(stderr, "BITMAP:");
-    fprintf(stderr, " %x", mag->bmap[0]);
+    printf("BITMAP:");
+    printf(" %x", mag->bmap[0]);
     for (ul = 1 ; ul < (mag->n >> 3) ; ul++) {
-        fprintf(stderr, " %x", mag->bmap[ul]);
+        printf(" %x", mag->bmap[ul]);
     }
-    fprintf(stderr, "\n");
+    printf("\n");
 #endif    
-    fprintf(stderr, "STACK:");
+    printf("STACK:");
     for (ul = 0 ; ul < mag->n ; ul++) {
-        fprintf(stderr, " %p", mag->ptab[ul]);
+        printf(" %p", mag->ptab[ul]);
     }
-    fprintf(stderr, "\n");
+    printf("\n");
 
     return;
 }
@@ -77,19 +77,26 @@ magdiag(void)
     unsigned long  l;
 
     for (l = MAGMINLOG2 ; l < SLABMINLOG2 ; l++) {
-        maglkq(magvirtlktab, l);
-        mag1 = magvirttab[l];
-        while (mag1) {
-            if (mag1->ndx >= mag1->n) {
-                fprintf(stderr, "too big index(%ld) on free list %lu: %ld\n",
-                        mag1->ndx, l, mag1->n);
-                magprint(mag1);
-
-                abort();
+#if 0
+        (maglkq(magvirtlktab, l);
+#endif
+        if (mtxtrylk(&magvirtlktab[l], MEMPID)) {
+            mag1 = magvirttab[l];
+            while (mag1) {
+                if (mag1->ndx >= mag1->n) {
+                    printf("too big index(%ld) on free list %lu: %ld\n",
+                            mag1->ndx, l, mag1->n);
+                    magprint(mag1);
+                    
+                    abort();
+                }
+                mag1 = mag1->next;
             }
-            mag1 = mag1->next;
+            mtxunlk(&magvirtlktab[l], MEMPID);
         }
+#if 0
         magunlkq(magvirtlktab, l);
+#endif
     }
 
     return;
@@ -103,12 +110,12 @@ slabprint(void)
 
     for (ul = 0 ; ul < PTRBITS ; ul++) {
         hdr1 = slabvirttab[ul];
-        fprintf(stderr, "BKT %lu -", ul);
+        printf("BKT %lu -", ul);
         while (hdr1) {
-            fprintf(stderr, " %p ", slabgetadr(hdr1, slabvirthdrtab));
+            printf(" %p ", slabgetadr(hdr1, slabvirthdrtab));
             hdr1 = slabgetnext(hdr1, slabvirthdrtab);
         }
-        fprintf(stderr, "\n");
+        printf("\n");
     }
 //    diag();
 
@@ -129,10 +136,10 @@ diag(void)
         n = 0;
         hdr1 = slabvirttab[bkt];
         if (hdr1) {
-            fprintf(stderr, "BKT %lu: ", bkt);
+            printf("BKT %lu: ", bkt);
             if (slabgetprev(hdr1, slabvirthdrtab)) {
                 hdr2 = slabgetprev(hdr1, slabvirthdrtab);
-                fprintf(stderr, "%p: prev set on head: %p (%p)\n",
+                printf("%p: prev set on head: %p (%p)\n",
                         slabgetadr(hdr1, slabvirthdrtab),
                         slabgetprev(hdr1, slabvirthdrtab),
                         slabgetadr(hdr2, slabvirthdrtab));
@@ -140,14 +147,14 @@ diag(void)
                 abort();
             }
             while (hdr1) {
-                fprintf(stderr, " %lu: %p (%p)", n, slabgetadr(hdr1, slabvirthdrtab), hdr1);
+                printf(" %lu: %p (%p)", n, slabgetadr(hdr1, slabvirthdrtab), hdr1);
                 if (slabgetadr(hdr1, slabvirthdrtab) == NULL) {
-                    fprintf(stderr, "NULL item on list\n");
+                    printf("NULL item on list\n");
                     
                     abort();
                 }
                 if (slabgetbkt(hdr1) != bkt) {
-                    fprintf(stderr, "%p: invalid bkt %lu (%lu)\n",
+                    printf("%p: invalid bkt %lu (%lu)\n",
                             slabgetadr(hdr1, slabvirthdrtab),
                             slabgetbkt(hdr1),
                             bkt);
@@ -155,15 +162,15 @@ diag(void)
                     abort();
                 }
                 hdr2 = slabgetnext(hdr1, slabvirthdrtab);
-                fprintf(stderr, " %lu: %p (%p)", n + 1, slabgetadr(hdr2, slabvirthdrtab), hdr2);
+                printf(" %lu: %p (%p)", n + 1, slabgetadr(hdr2, slabvirthdrtab), hdr2);
                 if (hdr2) {
                     if (hdr1 == hdr2) {
-                        fprintf(stderr, "%p: next is self\n",
+                        printf("%p: next is self\n",
                                 slabgetadr(hdr1, slabvirthdrtab));
                     }
                     if (slabgetprev(hdr2, slabvirthdrtab) != hdr1) {
                         hdr3 = slabgetprev(hdr2, slabvirthdrtab);
-                        fprintf(stderr, " %p: invalid prev %p(%ld) (%p)\n",
+                        printf(" %p: invalid prev %p(%ld) (%p)\n",
                                 slabgetadr(hdr2, slabvirthdrtab),
                                 slabgetadr(hdr3, slabvirthdrtab),
                                 slabgetbkt(hdr2),
@@ -173,7 +180,7 @@ diag(void)
                     }
                     if (slabgetnext(hdr1, slabvirthdrtab) != hdr2) {
                         hdr3 = slabgetnext(hdr1, slabvirthdrtab);
-                        fprintf(stderr, " %p: invalid next %p (%p)\n",
+                        printf(" %p: invalid next %p (%p)\n",
                                 slabgetadr(hdr1, slabvirthdrtab),
                                 slabgetadr(hdr3, slabvirthdrtab),
                                 slabgetadr(hdr2, slabvirthdrtab));
@@ -186,7 +193,7 @@ diag(void)
         }
 //        slabunlk(slabvirtlktab, bkt);
         n++;
-        fprintf(stderr, "%lu \n", n);
+        printf("%lu \n", n);
     }
 }
 
@@ -244,9 +251,9 @@ main(int argc, char *argv[])
 #endif
     void *base = memalign(SLABMIN, 1024 * 1024 * 1024);
 
-    fprintf(stderr, "PTRBITS == %d\n", PTRBITS);
-    fprintf(stderr, "MEMPID == %d\n", MEMPID);
-    fprintf(stderr, "MALLOC: %p\n", base);
+    printf("PTRBITS == %d\n", PTRBITS);
+    printf("MEMPID == %d\n", MEMPID);
+    printf("MALLOC: %p\n", base);
     bzero(base, 1024 * 1024 * 1024);
     slabinit((unsigned long)base, 1024 * 1024 * 1024);
     slabprint();

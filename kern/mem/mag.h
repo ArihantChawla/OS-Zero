@@ -29,10 +29,10 @@ struct maghdr {
     volatile long  bkt;
     struct maghdr *prev;
     struct maghdr *next;
-    void          *ptab[1UL << (SLABMINLOG2 - MAGMINLOG2)];
 #if (MAGBITMAP)
     uint8_t        bmap[1UL << (SLABMINLOG2 - MAGMINLOG2 - 3)];
 #endif
+    void          *ptab[1UL << (SLABMINLOG2 - MAGMINLOG2)];
 };
 
 #define magnum(ptr, base)                                               \
