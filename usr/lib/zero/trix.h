@@ -13,16 +13,6 @@
 #include <zero/param.h>
 #include <zero/asm.h>
 
-#if defined(__i386__) || defined(__x86_64__) || defined(__amd64__)
-#define tzerol(u, r) ((r) = m_scanlobit(u))
-#elif (LONGSIZE == 4)
-#define tzerol(u, r) tzero32(u, r)
-#define lzerol(u, r) lzero32(u, r)
-#elif (LONGSIZE == 8)
-#define tzerol(u, r) tzero64(u, r)
-#define lzerol(u, r) lzero64(u, r)
-#endif
-
 /* get the lowest 1-bit in a */
 #define lo1bit(a)           ((a) & -(a))
 /* get n lowest and highest bits of i */
@@ -122,6 +112,28 @@
     } while (0)
 #define bytepar3(b) ((0x6996 >> (((b) ^ ((b) >> 4)) & 0x0f)) & 0x01)
 
+/* count number of trailing (low) zero-bits in long-word */
+#if defined(__i386__) || defined(__x86_64__) || defined(__amd64__)
+#define tzerol(u, r) ((r) = m_scanlobit(u))
+#elif (LONGSIZE == 4)
+#define tzerol(u, r) tzero32(u, r)
+#define lzerol(u, r) lzero32(u, r)
+#elif (LONGSIZE == 8)
+#define tzerol(u, r) tzero64(u, r)
+#define lzerol(u, r) lzero64(u, r)
+#endif
+
+/* count number of leading (high) zero-bits in long-word */
+#if defined(__i386__) || defined(__x86_64__) || defined(__amd64__)
+#define lzerol(u, r) ((r) = m_scanhibit(u))
+#elif (LONGSIZE == 4)
+#define lzerol(u, r) lzero32(u, r)
+#define lzerol(u, r) lzero32(u, r)
+#elif (LONGSIZE == 8)
+#define lzerol(u, r) lzero64(u, r)
+#define lzerol(u, r) lzero64(u, r)
+#endif
+
 /* count number of trailing zero-bits in u32 */
 #define tzero32(u32, r)                                                 \
     do {                                                                \
@@ -159,18 +171,6 @@
         }                                                               \
     } while (0)
 
-/*
- * count number of leading zero-bits in u32
- */
-#if 0
-#define lzero32(u32, r)                                                 \
-    ((u32) |= ((u32) >> 1),                                             \
-     (u32) |= ((u32) >> 2),                                             \
-     (u32) |= ((u32) >> 4),                                             \
-     (u32) |= ((u32) >> 8),                                             \
-     (u32) |= ((u32) >> 16),                                            \
-     CHAR_BIT * sizeof(u32) - onebits_32(u32, r))
-#endif
 #define lzero32(u32, r)                                                 \
     do {                                                                \
         uint32_t __tmp;                                                 \
