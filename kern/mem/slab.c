@@ -140,7 +140,7 @@ slabcomb(struct slabhdr **zone, struct slabhdr *hdrtab, struct slabhdr *hdr)
                         slabsetnext(hdr3, hdr4, hdrtab);
                         slabsetprev(hdr4, hdr3, hdrtab);
                     } else if (hdr3) {
-                        slabsetnext(hdr3, hdr4, hdrtab); // NULL;
+                        slabsetnext(hdr3, hdr4, hdrtab); // NULL
                     } else if (hdr4) {
                         slabsetprev(hdr4, hdr3, hdrtab); // NULL
                         zone[bkt1] = hdr4;
@@ -225,8 +225,8 @@ slabsplit(struct slabhdr **zone, struct slabhdr *hdrtab,
 
     hdr1 = slabgetnext(hdr, hdrtab);
     if (hdr1) {
-        slabclrlink(hdr1);
-        slabsetnext(hdr1, zone[bkt], hdrtab);
+        slabclrprev(hdr1);
+//        slabsetnext(hdr1, zone[bkt], hdrtab);
     }
     zone[bkt] = hdr1;
     while (--bkt >= dest) {

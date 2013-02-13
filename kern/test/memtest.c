@@ -139,7 +139,7 @@ diag(void)
     struct slabhdr *hdr3;
 
     for (bkt = SLABMINLOG2 ; bkt < PTRBITS ; bkt++) {
-//        slablk(slabvirtlktab, bkt);
+        slablkq(slabvirtlktab, bkt);
         n = 0;
         hdr1 = slabvirttab[bkt];
         if (hdr1) {
@@ -169,8 +169,8 @@ diag(void)
                     abort();
                 }
                 hdr2 = slabgetnext(hdr1, slabvirthdrtab);
-                printf(" %lu: %p (%p)", n + 1, slabgetadr(hdr2, slabvirthdrtab), hdr2);
                 if (hdr2) {
+                    printf(" %lu: %p (%p)", n + 1, slabgetadr(hdr2, slabvirthdrtab), hdr2);
                     if (hdr1 == hdr2) {
                         printf("%p: next is self\n",
                                 slabgetadr(hdr1, slabvirthdrtab));
@@ -198,7 +198,7 @@ diag(void)
                 hdr1 = hdr2;
             }
         }
-//        slabunlk(slabvirtlktab, bkt);
+        slabunlkq(slabvirtlktab, bkt);
         n++;
         printf("%lu \n", n);
     }
@@ -220,7 +220,6 @@ test(void *dummy)
                 kfree((void *)ptrtab[l]);
             }
         }
-        diag();
     }
 
     return NULL;
