@@ -80,7 +80,7 @@ magdiag(void)
 #if 0
         (maglkq(magvirtlktab, l);
 #endif
-        if (mtxtrylk(&magvirtlktab[l], MEMPID)) {
+        if (mtxtrylk(&magvirtlktab[l])) {
             mag1 = magvirttab[l];
             while (mag1) {
                 if (mag1->bkt != l) {
@@ -99,7 +99,7 @@ magdiag(void)
                 }
                 mag1 = mag1->next;
             }
-            mtxunlk(&magvirtlktab[l], MEMPID);
+            mtxunlk(&magvirtlktab[l]);
         }
 #if 0
         magunlkq(magvirtlktab, l);
@@ -220,6 +220,7 @@ test(void *dummy)
                 kfree((void *)ptrtab[l]);
             }
         }
+        slabprint();
     }
 
     return NULL;
@@ -241,7 +242,6 @@ test(void *dummy)
         printf("PTR: %p\n", ptrtab[l]);
         if (ptrtab[l]) {
             kfree(ptrtab[l]);
-            diag();
         }
     }
 

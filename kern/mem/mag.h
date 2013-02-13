@@ -10,8 +10,8 @@
 #define MAGMIN     (1UL << MAGMINLOG2)
 #define MAGMINLOG2 PAGESIZELOG2
 
-#define maglkq(tab, bkt)   mtxlk(&(tab)[bkt], MEMPID)
-#define magunlkq(tab, bkt) mtxunlk(&(tab)[bkt], MEMPID)
+#define maglkq(tab, bkt)   mtxlk(&(tab)[bkt])
+#define magunlkq(tab, bkt) mtxunlk(&(tab)[bkt])
 
 #define magpop(mp)         ((mp)->ptab[((mp)->ndx)++])
 #define magpush(mp, ptr)   ((mp)->ptab[--((mp)->ndx)] = (ptr))

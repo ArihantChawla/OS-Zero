@@ -78,7 +78,7 @@ slabinit(unsigned long base, unsigned long nb)
     struct slabhdr *hdr;
 
 #if (SLABHUGELK)
-    mtxlk(&slablk, MEMPID);
+    mtxlk(&slablk);
 #endif
     slabvirtbase = adr = slabinitvirt(adr, nb);
     if (base != adr) {
@@ -101,7 +101,7 @@ slabinit(unsigned long base, unsigned long nb)
         ul >>= 1;
     }
 #if (SLABHUGELK)
-    mtxunlk(&slablk, MEMPID);
+    mtxunlk(&slablk);
 #endif
 
     return;
@@ -277,7 +277,7 @@ slaballoc(struct slabhdr **zone, struct slabhdr *hdrtab,
     struct slabhdr *hdr2;
 
 #if (SLABHUGELK)
-    mtxlk(&slablk, MEMPID);
+    mtxlk(&slablk);
 #endif
     hdr1 = zone[bkt1];
     if (!hdr1) {
@@ -301,7 +301,7 @@ slaballoc(struct slabhdr **zone, struct slabhdr *hdrtab,
         ptr = slabgetadr(hdr1, hdrtab);
     }
 #if (SLABHUGELK)
-    mtxunlk(&slablk, MEMPID);
+    mtxunlk(&slablk);
 #endif
 
     return ptr;
@@ -317,7 +317,7 @@ slabfree(struct slabhdr **zone, struct slabhdr *hdrtab, void *ptr)
     unsigned long   bkt = slabgetbkt(hdr);
 
 #if (SLABHUGELK)
-    mtxlk(&slablk, MEMPID);
+    mtxlk(&slablk);
 #endif
 #if (!MEMTEST)
     vmfreephys(ptr, 1UL << bkt);
@@ -332,7 +332,7 @@ slabfree(struct slabhdr **zone, struct slabhdr *hdrtab, void *ptr)
         zone[bkt] = hdr;
     }
 #if (SLABHUGELK)
-    mtxunlk(&slablk, MEMPID);
+    mtxunlk(&slablk);
 #endif
 
     return;

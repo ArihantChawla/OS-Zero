@@ -15,6 +15,7 @@ extern int pthread_yield(void);
 #endif
 
 #define MTXINITVAL 0L
+#define MTXLKVAL   1L
 
 #define mtxinit(lp) (*(lp) = MTXINITVAL)
 
@@ -22,8 +23,9 @@ extern int pthread_yield(void);
  * try to acquire mutex lock
  * - return non-zero on success, zero if already locked
  */
+#define mtxtrylk(lp) mtxtrylk2(lp, MTXLKVAL)
 static __inline__ long
-mtxtrylk(volatile long *lp, long val)
+mtxtrylk2(volatile long *lp, long val)
 {
     volatile long res;
 
@@ -32,8 +34,9 @@ mtxtrylk(volatile long *lp, long val)
     return (res == MTXINITVAL);
 }
 
+#define mtxlk(lp) mtxlk2(lp, MTXLKVAL)
 static __inline__ void
-mtxlk(volatile long *lp, long val)
+mtxlk2(volatile long *lp, long val)
 {
     volatile long res = val;
 
@@ -47,13 +50,18 @@ mtxlk(volatile long *lp, long val)
 #endif
         }
     } while (res != MTXINITVAL);
+
+    return;
 }
 
+#define mtxunlk(lp) mtxunlk2(lp, MTXLKVAL)
 static __inline__ void
-mtxunlk(volatile long *lp, long val)
+mtxunlk2(volatile long *lp, long val)
 {
     m_membar();
     *lp = MTXINITVAL;
+
+    return;
 }
 
 #endif /* __ZERO_MTX_H__ */
