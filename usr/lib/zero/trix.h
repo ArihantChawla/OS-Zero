@@ -11,11 +11,11 @@
 #include <stdint.h>
 #include <limits.h>
 #include <zero/param.h>
-#if (SMP)
 #include <zero/asm.h>
-#endif
 
-#if (LONGSIZE == 4)
+#if defined(__i386__) || defined(__x86_64__) || defined(__amd64__)
+#define tzerol(u, r) ((r) = m_scanhibit(u))
+#elif (LONGSIZE == 4)
 #define tzerol(u, r) tzero32(u, r)
 #define lzerol(u, r) lzero32(u, r)
 #elif (LONGSIZE == 8)

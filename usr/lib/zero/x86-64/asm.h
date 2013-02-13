@@ -8,6 +8,8 @@
 #define m_cmpswap(p, want, val)  m_cmpxchgq(p, want, val)
 #define m_cmpswapb(p, want, val) m_cmpxchgb(p, want, val)
 #define m_fetadd(p, val)         m_xaddq(p, val)
+#define m_scanlobit(l)           m_bsfq(l)
+#define m_scanhibit(l)           m_bsrq(l)
 #define m_getretadr(r)                                                  \
     __asm__ __volatile__ ("movl 8(%%rbp), %0" : "=r" (r))
 
@@ -66,6 +68,26 @@ m_cmpxchgq(volatile long *p,
                           : "memory");
     
     return res;
+}
+
+static __inline__ long
+m_bsfq(long val)
+{
+    long ret;
+
+    __asm__ __volatile__ ("bsfq %1, %0\n" : "=r" (ret) : "rm" (val));
+
+    return ret;
+}
+
+static __inline__ long
+m_bsrq(long val)
+{
+    long ret;
+
+    __asm__ __volatile__ ("bsrq %1, %0\n" : "=r" (ret) : "rm" (val));
+
+    return ret;
 }
 
 #endif /* __ZERO_X86_64_ASM_H__ */

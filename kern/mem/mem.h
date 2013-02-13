@@ -36,11 +36,7 @@ memcalcbkt(unsigned long size)
 #endif
         tmp++;
     }
-#if (LONGSIZE == 4)
-    tzero32(tmp, bkt);
-#elif (LONGSIZE == 8)
-    tzero64(tmp, bkt);
-#endif
+    tzerol(tmp, bkt);
 
     return bkt;
 }
