@@ -220,7 +220,7 @@ test(void *dummy)
                 kfree((void *)ptrtab[l]);
             }
         }
-        slabprint();
+        diag();
     }
 
     return NULL;

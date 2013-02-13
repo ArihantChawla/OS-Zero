@@ -128,7 +128,7 @@
         uint32_t __tmp;                                                 \
         uint32_t __mask;                                                \
                                                                         \
-        (r) = 0;                                                        \
+        (r) ^= (r);                                                     \
         __tmp = (u32);                                                  \
         __mask = 0x01;                                                  \
         if (!(__tmp & __mask)) {                                        \
@@ -175,8 +175,8 @@
     do {                                                                \
         uint32_t __tmp;                                                 \
         uint32_t __mask;                                                \
-\
-        (r) = 0;   \
+                                                                        \
+        (r) ^= (r);                                                     \
         __tmp = (u32);                                                  \
         __mask = 0x01;                                                  \
         __mask <<= CHAR_BIT * sizeof(uint32_t) - 1;                     \

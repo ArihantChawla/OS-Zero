@@ -113,11 +113,9 @@ memalloc(unsigned long nb, long flg)
 #endif
             mag->n = 1;
             mag->ndx = 1;
-#if (KLUDGES)
             mag->bkt = bkt;
             mag->prev = NULL;
             mag->next = NULL;
-#endif
 #if (MAGBITMAP)
 //            kbzero(mag->bmap, sizeof(mag->bmap));
 #endif
@@ -162,17 +160,10 @@ memalloc(unsigned long nb, long flg)
 #endif
 #if (MEMTEST)
 #endif
-#if (KLUDGES)
                 for (l = 1 ; l < n ; l++) {
                     u8ptr += sz;
                     mag->ptab[l] = u8ptr;
                 }
-#else
-                for (l = 0 ; l < n ; l++) {
-                    mag->ptab[l] = u8ptr;
-                    u8ptr += sz;
-                }
-#endif
 #if (MEMTEST)
 #endif
                 mag->ndx = 1;
