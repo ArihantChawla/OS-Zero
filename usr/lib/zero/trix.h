@@ -14,7 +14,7 @@
 #include <zero/asm.h>
 
 #if defined(__i386__) || defined(__x86_64__) || defined(__amd64__)
-#define tzerol(u, r) ((r) = m_scanhibit(u))
+#define tzerol(u, r) ((r) = m_scanlobit(u))
 #elif (LONGSIZE == 4)
 #define tzerol(u, r) tzero32(u, r)
 #define lzerol(u, r) lzero32(u, r)
