@@ -171,15 +171,12 @@ memalloc(unsigned long nb, long flg)
         if (bitset(mag->bmap, ndx)) {
             kprintf("duplicate allocation %p (%ld/%ld)\n",
                     ptr, ndx, mag->n);
-            magdiag();
-            magprint(mag);
-            fflush(stdout);
 
             kpanic();
         }
         setbit(mag->bmap, ndx);
 #else
-        ndx = ((uintptr_t)ptr - mag->virtbase) >> MAGMINLOG2;
+        ndx = ((uintptr_t)ptr - slabvirtbase) >> MAGMINLOG2;
         if (bitset(magvirtbitmap, ndx)) {
             kprintf("duplicate allocation %p\n", ptr);
             
@@ -228,7 +225,6 @@ kfree(void *ptr)
     if (!bitset(mag->bmap, ndx)) {
         kprintf("invalid free: %p (%ld/%ld)\n",
                 ptr, ndx, mag->n);
-        magprint(mag);
 
         kpanic();
     }
@@ -268,7 +264,7 @@ kfree(void *ptr)
 #if (MAGSLABLK)
         mtxunlk(&magslablk, MEMPID);
 #endif
-#if (KLUDGES)
+#if (MAGBITMAP)
         freed = 1;
 #endif
     } else if (mag->ndx == mag->n) {

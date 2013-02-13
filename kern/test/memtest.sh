@@ -1,1 +1,1 @@
-gcc -O -g -Wall -D__KERNEL__=0 -DMTSAFE=0 -DMAGSLABLK=1 -DKLUDGES=1 -DMAGNEWLK=0 -DHACKS=1 -DMAGLK=1 -DNEWLK=1 -DMAGBITMAP=1 -DMEMTEST=1 -I../.. -I../../usr/lib -o memtest memtest.c ../mem/mag.c ../mem/slab.c -pthread
+gcc -O -g -Wall -D__KERNEL__=0 -DSMP=1 -DMTSAFE=0 -DMAGSLABLK=1 -DKLUDGES=1 -DMAGNEWLK=0 -DHACKS=1 -DMAGLK=0 -DMAGBITMAP=0 -DMEMTEST=1 -I../.. -I../../usr/lib -o memtest memtest.c ../mem/mag.c ../mem/slab.c -pthread

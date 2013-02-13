@@ -1,10 +1,6 @@
 #ifndef __ZERO_SPIN_H__
 #define __ZERO_SPIN_H__
 
-#ifndef SPINOWNER
-#define SPINOWNER 0
-#endif
-
 #include <zero/asm.h>
 
 #define SPININITVAL 0L
@@ -31,9 +27,11 @@ spintrylk(volatile long *sp, long val)
 static __inline__ void
 spinlk(volatile long *sp, long val)
 {
-    while (m_cmpswap(sp, SPININITVAL, val) != SPININITVAL) {
-        ;
-    }
+    volatile long res = val;
+
+    do {
+        res = m_cmpswap(sp, SPININITVAL, val);
+    } while (res != SPININITVAL);
 
     return;
 }
@@ -44,14 +42,8 @@ spinlk(volatile long *sp, long val)
 static __inline__ void
 spinunlk(volatile long *sp, long val)
 {
-#if (SPINOWNER)
-    while (m_cmpswap(sp, val, SPININITVAL)) {
-        ;
-    }
-#else /* !SPINOWNER */
     m_membar();
     *sp = SPININITVAL;
-#endif
 }
 
 #endif /* __ZERO_SPIN_H__ */

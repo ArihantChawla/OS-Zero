@@ -83,6 +83,13 @@ magdiag(void)
         if (mtxtrylk(&magvirtlktab[l], MEMPID)) {
             mag1 = magvirttab[l];
             while (mag1) {
+                if (mag1->bkt != l) {
+                    printf("invalid bkt(%ld) on free list %lu\n",
+                           mag1->bkt, l);
+                    magprint(mag1);
+                    
+                    abort();
+                }
                 if (mag1->ndx >= mag1->n) {
                     printf("too big index(%ld) on free list %lu: %ld\n",
                             mag1->ndx, l, mag1->n);

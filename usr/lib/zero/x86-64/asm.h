@@ -2,8 +2,8 @@
 #define __ZERO_X86_64_ASM_H__
 
 /* API declarations */
-#define m_membar()               __asm__ __volatile__ ("" : : : "memory")
-//#define m_membar()               __asm__ __volatile__ ("mfence\n" : : : "memory")
+//#define m_membar()               __asm__ __volatile__ ("" : : : "memory")
+#define m_membar()               __asm__ __volatile__ ("mfence\n" : : : "memory")
 #define m_waitint()              __asm__ __volatile__ ("pause")
 #define m_cmpswap(p, want, val)  m_cmpxchgq(p, want, val)
 #define m_cmpswapb(p, want, val) m_cmpxchgb(p, want, val)

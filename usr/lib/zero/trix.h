@@ -11,6 +11,9 @@
 #include <stdint.h>
 #include <limits.h>
 #include <zero/param.h>
+#if (SMP)
+#include <zero/asm.h>
+#endif
 
 #if (LONGSIZE == 4)
 #define tzerol(u, r) tzero32(u, r)

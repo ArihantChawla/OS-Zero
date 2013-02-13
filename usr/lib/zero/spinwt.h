@@ -52,25 +52,8 @@ spinwtlk(volatile long *sp, long val, long niter)
 static __inline__ void
 spinwtunlk(volatile long *sp, long val, long niter)
 {
-#if (SPINOWNER)
-    volatile long res = val;
-#endif
-
-#if (SPINOWNER)
-    if (niter) {
-        do {
-            res = m_cmpswap(sp, SPININITVAL, val);
-        } while ((--niter) && (res != SPININITVAL));
-    } else {
-        res = m_cmpswap(sp, SPININITVAL, val);
-    }
-    if (res != SPININITVAL) {
-        mtxunlk(sp, val);
-    }
-#else /* !SPINOWNER */
     m_membar();
     *sp = SPININITVAL;
-#endif
 }
 
 #endif /* __ZERO_SPIN_H__ */
