@@ -45,7 +45,7 @@ const char _ltoxtab[]
 };
 
 void
-bzero(void *adr, unsigned long len)
+kbzero(void *adr, unsigned long len)
 {
     unsigned long  nleft = len;
     long          *ptr = NULL;
@@ -87,7 +87,7 @@ bzero(void *adr, unsigned long len)
 }
 
 void
-bcopy(void *dest, void *src, unsigned long len)
+kbcopy(void *dest, void *src, unsigned long len)
 {
     unsigned long  nleft = len;
     long          *dptr = NULL;
@@ -133,7 +133,7 @@ bcopy(void *dest, void *src, unsigned long len)
 }
 
 void
-bfill(void *adr, uint8_t byte, unsigned long len)
+kbfill(void *adr, uint8_t byte, unsigned long len)
 {
     unsigned long  nleft = len;
     long          *ptr = NULL;
@@ -180,9 +180,9 @@ bfill(void *adr, uint8_t byte, unsigned long len)
 }
 
 int
-memcmp(const void *ptr1,
-       const void *ptr2,
-       unsigned long nb)
+kmemcmp(const void *ptr1,
+        const void *ptr2,
+        unsigned long nb)
 {
     unsigned char *ucptr1 = (unsigned char *)ptr1;
     unsigned char *ucptr2 = (unsigned char *)ptr2;
@@ -202,8 +202,8 @@ memcmp(const void *ptr1,
 }
 
 int
-strcmp(const char *str1,
-       const char *str2)
+kstrcmp(const char *str1,
+        const char *str2)
 {
     unsigned char *ucptr1 = (unsigned char *)str1;
     unsigned char *ucptr2 = (unsigned char *)str2;
@@ -221,7 +221,7 @@ strcmp(const char *str1,
 }
 
 long
-strncpy(char *dest, char *src, long len)
+kstrncpy(char *dest, char *src, long len)
 {
     long nb = 0;
 
@@ -466,7 +466,7 @@ kprintf(char *fmt, ...)
  * return -1 if not found, offset otherwise
  */
 long
-bfindzerol(unsigned long *bmap, long ofs, long nbit)
+kbfindzerol(unsigned long *bmap, long ofs, long nbit)
 {
     long cnt = ofs & ((1UL << (LONGSIZELOG2 + 3)) - 1);
     long ndx = ofs >> (LONGSIZELOG2 + 3);
@@ -519,7 +519,7 @@ bfindzerol(unsigned long *bmap, long ofs, long nbit)
 #endif
 
 NORET void
-panic(void)
+kpanic(void)
 {
     ;
 }

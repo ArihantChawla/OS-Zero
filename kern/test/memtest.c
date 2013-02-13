@@ -29,9 +29,7 @@ pthread_t      thrtab[NTHR];
 
 extern struct maghdr  *magvirttab[PTRBITS];
 extern struct slabhdr *slabvirttab[PTRBITS];
-#if (!MAGNEWLK)
 extern long            magvirtlktab[PTRBITS];
-#endif
 extern long            slabvirtlktab[PTRBITS];
 extern unsigned long   slabvirtbase;
 extern struct slabhdr *slabvirthdrtab;
@@ -57,9 +55,9 @@ magprint(struct maghdr *mag)
     fprintf(stderr, "NEXT: %p\n", mag->next);
 #if (MAGBITMAP)
     fprintf(stderr, "BITMAP:");
-    fprintf(stderr, " %lx", mag->bmap[0]);
+    fprintf(stderr, " %x", mag->bmap[0]);
     for (ul = 1 ; ul < (mag->n >> 3) ; ul++) {
-        fprintf(stderr, " %lx", mag->bmap[ul]);
+        fprintf(stderr, " %x", mag->bmap[ul]);
     }
     fprintf(stderr, "\n");
 #endif    
@@ -79,9 +77,7 @@ magdiag(void)
     unsigned long  l;
 
     for (l = MAGMINLOG2 ; l < SLABMINLOG2 ; l++) {
-#if (!MAGNEWLK)
         maglkq(magvirtlktab, l);
-#endif
         mag1 = magvirttab[l];
         while (mag1) {
             if (mag1->ndx >= mag1->n) {
@@ -93,9 +89,7 @@ magdiag(void)
             }
             mag1 = mag1->next;
         }
-#if (!MAGNEWLK)
         magunlkq(magvirtlktab, l);
-#endif
     }
 
     return;

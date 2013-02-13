@@ -8,7 +8,9 @@
 #include <kern/unit/ia32/vm.h>
 #if (MEMTEST)
 #include <stdio.h>
+#include <string.h>
 #define kprintf printf
+#define kbzero bzero
 #endif
 
 extern unsigned long  npagefree;
@@ -50,7 +52,7 @@ slabinitvirt(unsigned long base, unsigned long nb)
     unsigned long nslab = sz >> SLABMINLOG2;
 
     slabnhdr = nslab;
-    bzero((void *)adr, bsz + nmag * sizeof(struct maghdr) + nslab * sizeof(struct slabhdr));
+    kbzero((void *)adr, bsz + nmag * sizeof(struct maghdr) + nslab * sizeof(struct slabhdr));
 #if (!MAGBITMAP)
     magvirtbitmap = (uint8_t *)adr;
 #endif
@@ -83,7 +85,7 @@ slabinit(unsigned long base, unsigned long nb)
         nb -= adr - base;
         nb = rounddown2(nb, SLABMINLOG2);
     }
-    kprintf("%ul kilobytes kernel virtual memory free @ %lx\n", nb >> 10, adr);
+    kprintf("%lu kilobytes kernel virtual memory free @ %lx\n", nb >> 10, adr);
     while ((nb) && bkt >= SLABMINLOG2) {
         if (nb & ul) {
             hdr = slabgethdr(adr, slabvirthdrtab, slabvirtbase);

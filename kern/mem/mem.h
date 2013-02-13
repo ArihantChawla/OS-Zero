@@ -109,7 +109,7 @@ memcalcbkt(unsigned long size)
                                                                                            ? 30 \
                                                                                            : (((sz) <= (1UL << 31)) \
                                                                                               ? 31 \
-                                                                                              : 0))))))))))))))))))))))))))))))))
+                                                                                              : 0xff))))))))))))))))))))))))))))))))
 #else
 #define memfastbkt(sz)                                                  \
     ((!__builtin_constant_p(sz)                                         \

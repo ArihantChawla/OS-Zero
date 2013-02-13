@@ -3,13 +3,13 @@
 
 #include <stdint.h>
 
-void bzero(void *adr, unsigned long len);
-void bcopy(void *dest, void *src, unsigned long len);
-void bfill(void *adr, uint8_t byte, unsigned long len);
-int  memcmp(const void *ptr1, const void *ptr2, unsigned long nb);
-int  strcmp(const char *str1, const char *str2);
-long strncpy(char *dest, char *src, long len);
-void kprintf(char *fmt, ...);
+void kbzero(void *adr, unsigned long len);
+void kbcopy(void *dest, void *src, unsigned long len);
+void kbfill(void *adr, uint8_t byte, unsigned long len);
+int  kmemcmp(const void *ptr1, const void *ptr2, unsigned long nb);
+int  kstrcmp(const char *str1, const char *str2);
+long kstrncpy(char *dest, char *src, long len);
+void kkprintf(char *fmt, ...);
 
 #endif /* __KERN_UTIL_H__ */
 

@@ -1,1 +1,1 @@
-gcc -m32 -O -fno-builtin -g -Wall -D__KERNEL__=0 -DMTSAFE=1 -DKLUDGES=1 -DMAGNEWLK=1 -DHACKS=1 -DSLABHUGELK=1 -DMAGLK=0 -DNEWLK=1 -DMAGBITMAP=1 -DMEMTEST=1 -I../.. -I../../usr/lib -o memtest memtest.c ../mem/mag.c ../mem/slab.c -pthread
+gcc -O -g -Wall -D__KERNEL__=0 -DMTSAFE=1 -DKLUDGES=1 -DMAGNEWLK=1 -DHACKS=1 -DSLABHUGELK=1 -DMAGLK=1 -DNEWLK=1 -DMAGBITMAP=1 -DMEMTEST=1 -I../.. -I../../usr/lib -o memtest memtest.c ../mem/mag.c ../mem/slab.c -pthread
