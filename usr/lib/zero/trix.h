@@ -77,6 +77,7 @@
 #define haszero_2(a)    (~(a))
 #define haszero_32(a)   (((a) - 0x01010101) & ~(a) & 0x80808080)
 
+/* count population of 1 bits in u32; store into r */
 #define onebits_32(u32, r)                                              \
     ((r) = (u32),                                                       \
      (r) -= ((r) >> 1) & 0x55555555,                                    \
@@ -91,28 +92,33 @@
      (r) = (((r) >> 2) & 0x33333333) + ((r) & 0x33333333),              \
      (r) = (((((r) >> 4) + (r)) & 0x0f0f0f0f) * 0x01010101) >> 24)
 
+/* store parity of byte b into r */
 #define bytepar(b, r)                                                   \
     do {                                                                \
-        unsigned long _tmp1;                                            \
+        unsigned long __tmp1;                                           \
                                                                         \
-        _tmp1 = (b);                                                    \
-        _tmp1 ^= (b) >> 4;                                              \
-        (r) = (0x6996 >> (_tmp1 & 0x0f)) & 0x01;                        \
+        __tmp1 = (b);                                                   \
+        __tmp1 ^= (b) >> 4;                                             \
+        (r) = (0x6996 >> (__tmp1 & 0x0f)) & 0x01;                       \
     } while (0)
 #define bytepar2(b, r)                                                  \
     do {                                                                \
-        unsigned long _tmp1;                                            \
-        unsigned long _tmp2;                                            \
+        unsigned long __tmp1;                                           \
+        unsigned long __tmp2;                                           \
                                                                         \
-        _tmp1 = _tmp2 = (b);                                            \
-        _tmp2 >>= 4;                                                    \
-        _tmp1 ^= _tmp2;                                                 \
-        _tmp2 = 0x6996;                                                 \
-        (r) = (_tmp2 >> (_tmp1 & 0x0f)) & 0x01;                         \
+        __tmp1 = __tmp2 = (b);                                          \
+        __tmp2 >>= 4;                                                   \
+        __tmp1 ^= __tmp2;                                               \
+        __tmp2 = 0x6996;                                                \
+        (r) = (__tmp2 >> (__tmp1 & 0x0f)) & 0x01;                       \
     } while (0)
 #define bytepar3(b) ((0x6996 >> (((b) ^ ((b) >> 4)) & 0x0f)) & 0x01)
 
-#if (LONSIZE == 4)
+/*
+ * round longword u to next power of two if not power of two;
+ * store result in r.
+ */
+#if (LONGSIZE == 4)
 #define ceilpow2l(u, r)                                                 \
     do {                                                                \
         (r) = (u);                                                      \
@@ -329,34 +335,6 @@
         }                                                               \
     } while (0)
 
-static __inline__ uint32_t
-ceil2_32(uint64_t x)
-{
-    x--;
-    x |= x >> 1;
-    x |= x >> 2;
-    x |= x >> 4;
-    x |= x >> 8;
-    x |= x >> 16;
-    x++;
-
-    return x;
-}
-
-static __inline__ uint64_t
-ceil2_64(uint64_t x)
-{
-    x--;
-    x |= x >> 1;
-    x |= x >> 2;
-    x |= x >> 4;
-    x |= x >> 8;
-    x |= x >> 16;
-    x |= x >> 32;
-    x++;
-
-    return x;
-}
 
 /* internal macros. */
 #define _ftoi32(f)     (*((int32_t *)&(f)))
@@ -425,14 +403,6 @@ ceil2_64(uint64_t x)
 
 /* c - conditional, f - flag, u - word */
 #define condsetf(c, f, u) ((u) ^ ((-(u) ^ (u)) & (f)))
-
-#define nextp2(a)                                                       \
-    (((a)                                                               \
-      | ((a) >> 1)                                                      \
-      | ((a) >> 2)                                                      \
-      | ((a) >> 4)                                                      \
-      | ((a) >> 8)                                                      \
-      | ((a) >> 16)) + 1)
 
 /* (a < b) ? v1 : v2; */
 #define condset(a, b, v1, v2)                                           \
