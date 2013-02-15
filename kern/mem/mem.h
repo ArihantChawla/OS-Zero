@@ -1,6 +1,7 @@
 #ifndef __MEM_MEM_H__
 #define __MEM_MEM_H__
 
+#include <stdint.h>
 #include <zero/trix.h>
 
 /* allocation flags */
@@ -17,26 +18,20 @@
 #define memgetbkt(sz) memcalcbkt(sz)
 #endif
 
-/* calculate bucket for allocation of size. */
 static __inline__ unsigned long
 memcalcbkt(unsigned long size)
 {
     unsigned long tmp = size;
-    unsigned long bkt = 0;
+    unsigned long bkt = 1UL << (LONGSIZELOG2 + 3);
+    unsigned long nlz;
 
-    if (!powerof2(tmp)) {
-        tmp--;
-        tmp |= tmp >> 1;
-        tmp |= tmp >> 2;
-        tmp |= tmp >> 4;
-        tmp |= tmp >> 8;
-        tmp |= tmp >> 16;
-#if (LONGSIZE == 8)
-        tmp |= tmp >> 32;
-#endif
-        tmp++;
+    if (tmp) {
+        lzerol(tmp, nlz);
+        bkt -= nlz;
+        if (!powerof2(size)) {
+            bkt++;
+        }
     }
-    tzerol(tmp, bkt);
 
     return bkt;
 }

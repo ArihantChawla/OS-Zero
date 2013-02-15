@@ -38,9 +38,9 @@
 #define max(a, b)                                                       \
     ((a) - (((a) - (b)) & -((a) < (b))))
 /* compare with power-of-two p2 */
-#define gt2(u, p2)  /* true if u > p2 */                                \
+#define gtpow2(u, p2)  /* true if u > p2 */                             \
     ((u) & ~(p2))
-#define gte2(u, p2) /* true if u >= p2 */                               \
+#define gtepow2(u, p2) /* true if u >= p2 */                            \
     ((u) & -(p2))
 /* swap a and b without a temporary variable */
 #define swap(a, b)     ((a) ^= (b), (b) ^= (a), (a) ^= (b))
@@ -59,14 +59,14 @@
 /* align a to boundary of (the power of two) b2. */
 //#define align(a, b2)   ((a) & ~((b2) - 1))
 //#define align(a, b2)    ((a) & -(b2))
-#define mod2(a, b2)     ((a) & ((b2) - 1))
+#define modpow2(a, b2)     ((a) & ((b2) - 1))
 
 /* round a up to the next multiple of (the power of two) b2. */
 //#define roundup2a(a, b2) (((a) + ((b2) - 0x01)) & ~((b2) + 0x01))
-#define roundup2(a, b2) (((a) + ((b2) - 0x01)) & -(b2))
+#define rounduppow2(a, b2) (((a) + ((b2) - 0x01)) & -(b2))
 
 /* round down to the previous multiple of (the power of two) b2 */
-#define rounddown2(a, b2) ((a) & ~((b2) - 0x01))
+#define rounddownpow2(a, b2) ((a) & ~((b2) - 0x01))
 
 /* compute the average of a and b without division */
 #define uavg(a, b)      (((a) & (b)) + (((a) ^ (b)) >> 1))
@@ -112,25 +112,59 @@
     } while (0)
 #define bytepar3(b) ((0x6996 >> (((b) ^ ((b) >> 4)) & 0x0f)) & 0x01)
 
+#if (LONSIZE == 4)
+#define ceilpow2l(u, r)                                                 \
+    do {                                                                \
+        (r) = (u);                                                      \
+                                                                        \
+        if (!powerof2(r)) {                                             \
+            (r)--;                                                      \
+            (r) |= (r) >> 1;                                            \
+            (r) |= (r) >> 2;                                            \
+            (r) |= (r) >> 4;                                            \
+            (r) |= (r) >> 8;                                            \
+            (r) |= (r) >> 16;                                           \
+            (r)++;                                                      \
+        }                                                               \
+    } while (0)
+} while (0)
+#elif (LONGSIZE == 8)
+#define ceilpow2l(u, r)                                                 \
+    do {                                                                \
+        (r) = (u);                                                      \
+                                                                        \
+        if (!powerof2(r)) {                                             \
+            (r)--;                                                      \
+            (r) |= (r) >> 1;                                            \
+            (r) |= (r) >> 2;                                            \
+            (r) |= (r) >> 4;                                            \
+            (r) |= (r) >> 8;                                            \
+            (r) |= (r) >> 16;                                           \
+            (r) |= (r) >> 32;                                           \
+            (r)++;                                                      \
+        }                                                               \
+    } while (0)
+#endif
+
 /* count number of trailing (low) zero-bits in long-word */
-#if defined(__i386__) || defined(__x86_64__) || defined(__amd64__)
-#define tzerol(u, r) ((r) = m_scanlobit(u))
+#if defined(__GCC__)
+#define tzerol(u, r) ((r) = __builtin_ctzl(u))
+#elif defined(__i386__) || defined(__x86_64__) || defined(__amd64__)
+#define tzerol(u, r) ((r) = m_scanlo1bit(u))
 #elif (LONGSIZE == 4)
 #define tzerol(u, r) tzero32(u, r)
-#define lzerol(u, r) lzero32(u, r)
 #elif (LONGSIZE == 8)
 #define tzerol(u, r) tzero64(u, r)
-#define lzerol(u, r) lzero64(u, r)
 #endif
 
 /* count number of leading (high) zero-bits in long-word */
-#if defined(__i386__) || defined(__x86_64__) || defined(__amd64__)
-#define lzerol(u, r) ((r) = m_scanhibit(u))
+#if defined(__GCC__)
+#define lzerol(u, r) ((r) = __builtin_clzl(u));
+#elif defined(__i386__) || defined(__x86_64__) || defined(__amd64__)
+#define lzerol(u, r) ((r) = (1UL << (LONGSIZELOG2 + 3)) - m_scanhi1bit(u))
 #elif (LONGSIZE == 4)
 #define lzerol(u, r) lzero32(u, r)
-#define lzerol(u, r) lzero32(u, r)
 #elif (LONGSIZE == 8)
-#define lzerol(u, r) lzero64(u, r)
 #define lzerol(u, r) lzero64(u, r)
 #endif
 
@@ -256,8 +290,8 @@
     do {                                                                \
         uint64_t __tmp;                                                 \
         uint64_t __mask;                                                \
-\
-        (r) = 0;   \
+                                                                        \
+        (r) ^= (r);                                                     \
         __tmp = (u64);                                                  \
         __mask = 0x01;                                                  \
         __mask <<= CHAR_BIT * sizeof(uint64_t) - 1;                     \

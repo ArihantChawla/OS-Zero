@@ -39,7 +39,7 @@ unsigned long
 slabinitvirt(unsigned long base, unsigned long nb)
 {
     unsigned long adr = base;
-    unsigned long sz = (nb & (SLABMIN - 1)) ? roundup2(nb, SLABMIN) : nb;
+    unsigned long sz = (nb & (SLABMIN - 1)) ? rounduppow2(nb, SLABMIN) : nb;
 #if 0
     unsigned long nmag = sz >> MAGMINLOG2;
 #endif
@@ -60,7 +60,7 @@ slabinitvirt(unsigned long base, unsigned long nb)
     slabvirthdrtab = (struct slabhdr *)(adr + bsz + nmag * sizeof(struct maghdr));
     adr += bsz + nmag * sizeof(struct maghdr) + nslab * sizeof(struct slabhdr);
     if (adr & (SLABMIN - 1)) {
-        adr = roundup2(adr, SLABMIN);
+        adr = rounduppow2(adr, SLABMIN);
     }
 
     return adr;
@@ -71,7 +71,7 @@ slabinit(unsigned long base, unsigned long nb)
 {
     struct slabhdr **zone = slabvirttab;
     unsigned long   adr = (base & (SLABMIN - 1))
-        ? roundup2(base, SLABMIN)
+        ? rounduppow2(base, SLABMIN)
         : base;
     unsigned long   bkt = PTRBITS - 1;
     unsigned long   ul = 1UL << bkt;
@@ -83,7 +83,7 @@ slabinit(unsigned long base, unsigned long nb)
     slabvirtbase = adr = slabinitvirt(adr, nb);
     if (base != adr) {
         nb -= adr - base;
-        nb = rounddown2(nb, SLABMINLOG2);
+        nb = rounddownpow2(nb, SLABMINLOG2);
     }
     kprintf("%lu kilobytes kernel virtual memory free @ %lx\n", nb >> 10, adr);
     while ((nb) && bkt >= SLABMINLOG2) {

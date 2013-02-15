@@ -1,5 +1,6 @@
 /*
- * Copyright (C) 2008-2012 Tuomo Petteri Venäläinen. All rights reserved.
+ * Copyright (C) 2008-2012 Tuomo Petteri Venäläinen. All rights
+ * reserved.
  *
  * See the file LICENSE for more information about using this software.
  */
@@ -348,11 +349,11 @@ typedef pthread_mutex_t LK_T;
 #define mapstk(n)         mapanon(_mapfd, ((n) << 1) * sizeof(void *))
 #define unmapstk(mag)     unmapanon((mag)->bptr, mag->max * sizeof(void *))
 #define putblk(mag, ptr)                                                \
-    ((gt2(mag->max, 1)                                                  \
+    ((gtpow2(mag->max, 1)                                               \
       ? (((void **)(mag)->bptr)[--(mag)->cur] = (ptr))                  \
       : ((mag)->cur = 0, (mag)->adr = (ptr))))
 #define getblk(mag)                                                     \
-    ((gt2(mag->max, 1)                                                  \
+    ((gtpow2(mag->max, 1)                                               \
       ? (((void **)(mag)->bptr)[(mag)->cur++])                          \
       : ((mag)->cur = 1, ((mag)->adr))))
 #define NPFBIT BLKMINLOG2
@@ -365,11 +366,11 @@ typedef pthread_mutex_t LK_T;
 #define blkid(mag, ptr)                                                 \
     ((mag)->max + (((uintptr_t)(ptr) - (uintptr_t)(mag)->adr) >> (mag)->bid))
 #define putptr(mag, ptr1, ptr2)                                         \
-    ((gt2((mag)->max, 1))                                               \
+    ((gtpow2((mag)->max, 1))                                            \
      ? (((void **)(mag)->bptr)[blkid(mag, ptr1)] = (ptr2))              \
      : ((mag)->bptr = (ptr2)))
 #define getptr(mag, ptr)                                                \
-    ((gt2((mag)->max, 1))                                               \
+    ((gtpow2((mag)->max, 1))                                            \
      ? (((void **)(mag)->bptr)[blkid(mag, ptr)])                        \
      : ((mag)->bptr))
 
@@ -497,23 +498,6 @@ static int             _mapfd = -1;
 /* utility functions */
 
 static __inline__ long
-ceil2(size_t size)
-{
-    size--;
-    size |= size >> 1;
-    size |= size >> 2;
-    size |= size >> 4;
-    size |= size >> 8;
-    size |= size >> 16;
-#if (LONGSIZE == 8)
-    size |= size >> 32;
-#endif
-    size++;
-
-    return size;
-}
-
-static __inline__ long
 bktid(size_t size)
 {
     long tmp = ceil2(size);
@@ -524,6 +508,22 @@ bktid(size_t size)
 #elif (LONGSIZE == 8)
     tzero64(tmp, bid);
 #endif
+
+    return bid;
+}
+#endif
+
+static __inline__ long
+bktid(size_t size)
+{
+    unsigned long bid = 1UL << (LONGSIZELOG2 + 3);
+    unsigned long nlz;
+
+    lzerol(size, nlz);
+    bid -= nlz;
+    if (!powerof2(size)) {
+        bid++;
+    }
 
     return bid;
 }
@@ -1081,10 +1081,10 @@ gethdr(long aid)
     arn = _atab[aid];
     hbuf = arn->htab;
     if (!arn->nhdr) {
-        hbuf = mapanon(_mapfd, roundup2(NBUFHDR * sizeof(void *), PAGESIZE));
+        hbuf = mapanon(_mapfd, rounduppow2(NBUFHDR * sizeof(void *), PAGESIZE));
         if (hbuf != MAP_FAILED) {
 #if (INTSTAT)
-            nhdrbytes[aid] += roundup2(NBUFHDR * sizeof(void *), PAGESIZE);
+            nhdrbytes[aid] += rounduppow2(NBUFHDR * sizeof(void *), PAGESIZE);
 #endif
             arn->htab = hbuf;
             arn->hcur = NBUFHDR;
@@ -1092,8 +1092,8 @@ gethdr(long aid)
         }
     }
     cur = arn->hcur;
-    if (gte2(cur, NBUFHDR)) {
-        mag = mapanon(_mapfd, roundup2(NBUFHDR * nbhdr(), PAGESIZE));
+    if (gtepow2(cur, NBUFHDR)) {
+        mag = mapanon(_mapfd, rounduppow2(NBUFHDR * nbhdr(), PAGESIZE));
         if (mag == MAP_FAILED) {
 #ifdef ENOMEM
             errno = ENOMEM;
@@ -1240,7 +1240,7 @@ freemap(struct mag *mag)
 #if (TUNEBUF)
                 _nbmap -= max * bsz;
 #endif
-                if (gt2(max, 1)) {
+                if (gtpow2(max, 1)) {
                     if (!istk(bid)) {
 #if (INTSTAT)
                         nstkbytes[aid] -= (mag->max << 1) << sizeof(void *); 
@@ -1298,7 +1298,7 @@ freemap(struct mag *mag)
 #if (TUNEBUF)
             _nbmap -= max * bsz;
 #endif
-            if (gt2(max, 1)) {
+            if (gtpow2(max, 1)) {
                 if (!istk(bid)) {
 #if (INTSTAT)
                     nstkbytes[aid] -= (mag->max << 1) << sizeof(void *); 
@@ -1372,7 +1372,7 @@ getmem(size_t size,
         }
         munlk(&_flktab[bid]);
         if (mag) {
-            if (gt2(max, 1)) {
+            if (gtpow2(max, 1)) {
                 mag->next = arn->btab[bid];
                 if (mag->next) {
                     mag->next->prev = mag;
@@ -1413,7 +1413,7 @@ getmem(size_t size,
             mag->bid = bid;
             mag->adr = ptr;
             if (ptr) {
-                if (gt2(max, 1)) {
+                if (gtpow2(max, 1)) {
                     if (istk(bid)) {
                         stk = (void **)mag->stk;
                     } else {
@@ -1478,7 +1478,7 @@ getmem(size_t size,
 #endif
             if (align) {
                 if ((uintptr_t)(retptr) & (align - 1)) {
-                    retptr = (uint8_t *)roundup2((uintptr_t)ptr, align);
+                    retptr = (uint8_t *)rounduppow2((uintptr_t)ptr, align);
                 }
                 ptr = setflg(retptr, BALIGN);
             }
@@ -1572,7 +1572,7 @@ putmem(void *ptr)
         max = mag->max;
         arn = _atab[aid];
         mlk(&arn->lktab[bid]);
-        if (gt2(max, 1) && magempty(mag)) {
+        if (gtpow2(max, 1) && magempty(mag)) {
             mag->next = arn->btab[bid];
             if (mag->next) {
                 mag->next->prev = mag;
@@ -1597,7 +1597,7 @@ putmem(void *ptr)
             mptr = setflg(mptr, BDIRTY);
             putblk(mag, mptr);
             if (magfull(mag)) {
-                if (gt2(max, 1)) {
+                if (gtpow2(max, 1)) {
                     if (mag->prev) {
                         mag->prev->next = mag->next;
                     } else {
@@ -1813,7 +1813,7 @@ reallocf(void *ptr,
 void *
 pvalloc(size_t size)
 {
-    size_t  sz = roundup2(size, PAGESIZE);
+    size_t  sz = rounduppow2(size, PAGESIZE);
     void   *ptr = getmem(sz, PAGESIZE, 0);
 
     return ptr;

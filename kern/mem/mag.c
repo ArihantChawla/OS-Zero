@@ -245,7 +245,7 @@ kfree(void *ptr)
 #endif
     magpush(mag, ptr);
     if (magfull(mag)) {
-        if (gt2(mag->n, 1)) {
+        if (gtpow2(mag->n, 1)) {
             if ((mag->prev) && (mag->next)) {
                 mag->prev->next = mag->next;
                 mag->next->prev = mag->prev;

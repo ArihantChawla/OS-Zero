@@ -9,8 +9,8 @@
 #define m_cmpswap(p, want, val)  m_cmpxchgl(p, want, val)
 #define m_cmpswapb(p, want, val) m_cmpxchgb(p, want, val)
 #define m_fetadd(p, val)         m_xaddl(p, val)
-#define m_scanlobit(l)           m_bsfl(l)
-#define m_scanhibit(l)           m_bsrl(l)
+#define m_scanlo1bit(l)          m_bsfl(l)
+#define m_scanhi1bit(l)          m_bsrl(l)
 #define m_getretadr(r)                                                  \
     __asm__ __volatile__ ("movl 4(%%ebp), %0\n" : "=r" (r))
 
@@ -84,20 +84,20 @@ m_cmpxchgl(volatile long *p,
     return res;
 }
 
-static __inline__ long
-m_bsfl(long val)
+static __inline__ unsigned long
+m_bsfl(unsigned long val)
 {
-    long ret;
+    unsigned long ret;
 
     __asm__ __volatile__ ("bsfl %1, %0\n" : "=r" (ret) : "rm" (val));
 
     return ret;
 }
 
-static __inline__ long
-m_bsrl(long val)
+static __inline__ unsigned long
+m_bsrl(unsigned long val)
 {
-    long ret;
+    unsigned long ret;
 
     __asm__ __volatile__ ("bsrl %1, %0\n" : "=r" (ret) : "rm" (val));
 
