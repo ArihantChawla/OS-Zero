@@ -21,12 +21,11 @@
 static __inline__ unsigned long
 memcalcbkt(unsigned long size)
 {
-    unsigned long tmp = size;
     unsigned long bkt = 1UL << (LONGSIZELOG2 + 3);
     unsigned long nlz;
 
-    if (tmp) {
-        lzerol(tmp, nlz);
+    if (size) {
+        lzerol(size, nlz);
         bkt -= nlz;
         if (!powerof2(size)) {
             bkt++;
