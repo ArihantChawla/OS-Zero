@@ -1,6 +1,7 @@
 #ifndef __ENDIAN_H__
 #define __ENDIAN_H__
 
+#include <features.h>
 #include <bits/endian.h>
 
 #define __LITTLE_ENDIAN 1234
