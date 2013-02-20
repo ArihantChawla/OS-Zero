@@ -14,12 +14,15 @@
 
 #if !defined(__ASSEMBLY__)
 
+#if !defined(__x86_64__) && !defined(__amd64__)
 /* func is routine; ring is TRAPUSER or TRAPSYS */
-#define trapsetintgate(p, func, ring)                                   \
+#define trapsetintgate(p64, func, ring)                                 \
     do {                                                                \
         uint64_t _func = (uint32_t)(func);                              \
-        *(p) = trapmkdesc(TEXTSEL, _func, ring);                        \
+                                                                        \
+        *(p64) = trapmkdesc(TEXTSEL, _func, ring);                      \
     } while (0)
+#endif
 
 #define trapmkdesc(sel, f64, ring)                                      \
     (((f64) & 0x0000ffff)                                               \

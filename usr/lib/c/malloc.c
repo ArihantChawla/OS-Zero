@@ -497,6 +497,7 @@ static int             _mapfd = -1;
 
 /* utility functions */
 
+#if 0
 static __inline__ long
 bktid(size_t size)
 {
