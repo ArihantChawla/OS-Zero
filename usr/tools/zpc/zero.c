@@ -118,7 +118,7 @@ rnd2up64(int64_t arg1, int64_t arg2, int64_t dummy)
 {
     int64_t src = arg1;
     int64_t pow2 = arg2;
-    int64_t res = roundup2(src, pow2);
+    int64_t res = rounduppow2(src, pow2);
 
     return res;
 }
@@ -128,7 +128,7 @@ rnd2down64(int64_t arg1, int64_t arg2, int64_t dummy)
 {
     int64_t src = arg1;
     int64_t pow2 = arg2;
-    int64_t res = rounddown2(src, pow2);
+    int64_t res = rounddownpow2(src, pow2);
 
     return res;
 }
@@ -139,7 +139,7 @@ trailz64(int64_t arg1, int64_t dummy1, int64_t dummy2)
     uint64_t src = arg1;
     uint64_t res;
 
-    tzero64(src, res);
+    tzero64_2(src, res);
 
     return res;
 }
@@ -150,7 +150,7 @@ leadz64(int64_t arg1, int64_t dummy1, int64_t dummy2)
     uint64_t src = arg1;
     uint64_t res;
 
-    lzero64(src, res);
+    lzero64_2(src, res);
 
     return res;
 }
@@ -159,7 +159,9 @@ int64_t
 ceil2pow64(int64_t arg1, int64_t dummy1, int64_t dummy2)
 {
     uint64_t src = arg1;
-    uint64_t res = ceil2_64(src);
+    uint64_t res;
+
+    ceilpow2_64(src, res);
 
     return res;
 }

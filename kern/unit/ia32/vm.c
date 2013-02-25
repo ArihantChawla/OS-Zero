@@ -66,7 +66,7 @@ vmmapseg(uint32_t *pagetab, uint32_t virt, uint32_t phys, uint32_t lim,
         virt = phys;
     }
 #endif
-    n = roundup2(lim - virt, PAGESIZE) >> PAGESIZELOG2;
+    n = rounduppow2(lim - virt, PAGESIZE) >> PAGESIZELOG2;
     pte = pagetab + vmpagenum(virt);
     while (n--) {
         *pte = phys | flg;
@@ -179,7 +179,7 @@ vmmapvirt(uint32_t *pagetab, void *virt, uint32_t size, uint32_t flg)
     long        n;
 
     adr = (uint32_t)virt & PFPAGEMASK;
-    n = roundup2(size, PAGESIZE) >> PAGESIZELOG2;
+    n = rounduppow2(size, PAGESIZE) >> PAGESIZELOG2;
     pte = pagetab + vmpagenum(virt);
     while (n--) {
         *pte = PAGEWRITE | flg;
@@ -198,7 +198,7 @@ vmfreephys(void *virt, uint32_t size)
     long          n;
     long          nref;
 
-    n = roundup2(size, PAGESIZE) >> PAGESIZELOG2;
+    n = rounduppow2(size, PAGESIZE) >> PAGESIZELOG2;
     pte = (uint32_t *)((uint8_t *)&_pagetab + vmpagenum(virt));
     while (n--) {
         adr = *pte;

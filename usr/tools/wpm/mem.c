@@ -49,7 +49,7 @@ wpminitmem(wpmsize_t nbphys)
     uint32_t     bkt;
     struct slab *slab;
 
-    mtxlk(&memlk, 1);
+    mtxlk(&memlk);
     memvmbase = nbphys;
     membrk = nbphys;
     if (!mempagetab) {
@@ -69,7 +69,7 @@ wpminitmem(wpmsize_t nbphys)
             }
         }
     }
-    mtxunlk(&memlk, 1);
+    mtxunlk(&memlk);
 
     return;
 }
@@ -83,7 +83,7 @@ memsplitslab(uint32_t dest)
     struct slab *slab2 = NULL;
 
     while (!adr && ++bkt < 32) {
-        mtxlk(&bktlktab[bkt], 1);
+        mtxlk(&bktlktab[bkt]);
         slab1 = freetab[bkt];
         if (slab1) {
             if (slab1->prev) {
@@ -98,7 +98,7 @@ memsplitslab(uint32_t dest)
             slab1->next = NULL;
             slab1->bkt = dest;
         }
-        mtxunlk(&bktlktab[bkt], 1);
+        mtxunlk(&bktlktab[bkt]);
     }
     if (adr) {
         for ( ; (dest < bkt) && (adr < MEMHWBASE) ; dest++) {
@@ -131,7 +131,7 @@ memcombslab(struct slab *slab)
     while ((loop) && bkt < 32) {
         prev = slab - delta;
         next = slab + delta;
-        mtxlk(&bktlktab[bkt], 1);
+        mtxlk(&bktlktab[bkt]);
         if (slabadr(prev) >= MEMSIZE && (prev->free) && prev->bkt == bkt) {
             if (prev->prev) {
                 prev->prev->next = prev->next;
@@ -164,18 +164,18 @@ memcombslab(struct slab *slab)
         } else {
             loop = 0;
         }
-        mtxunlk(&bktlktab[bkt], 1);
+        mtxunlk(&bktlktab[bkt]);
         delta <<= 1;
     }
     if (queue) {
         bkt = slab->bkt;
-        mtxlk(&bktlktab[bkt], 1);
+        mtxlk(&bktlktab[bkt]);
         slab->next = freetab[bkt];
         if (freetab[bkt]) {
             freetab[bkt]->prev = slab;
         }
         freetab[bkt] = slab;
-        mtxunlk(&bktlktab[bkt], 1);
+        mtxunlk(&bktlktab[bkt]);
     }
 
     return;
@@ -193,8 +193,8 @@ mempalloc(wpmsize_t size)
     struct slab *slab1;
     struct slab *slab2;
 
-    tzero32(sz, bkt);
-    mtxlk(&bktlktab[bkt], 1);
+    tzero32_2(sz, bkt);
+    mtxlk(&bktlktab[bkt]);
     slab1 = freetab[bkt];
     if (!slab1) {
         slab1 = memsplitslab(bkt);
@@ -225,7 +225,7 @@ mempalloc(wpmsize_t size)
             ptr += 1U << MINBKT;
         }
     }
-    mtxunlk(&bktlktab[bkt], 1);
+    mtxunlk(&bktlktab[bkt]);
 
     return adr;
 }
@@ -239,7 +239,7 @@ mempfree(wpmmemadr_t adr)
     struct slab *slab;
 
     if (adr >= MEMSIZE && adr < MEMHWBASE) {
-        mtxlk(&memlk, 1);
+        mtxlk(&memlk);
         slab = &memslabtab[num];
         ptr = (void *)mempagetab[num];
         if (ptr) {
@@ -250,7 +250,7 @@ mempfree(wpmmemadr_t adr)
                 slab->free = 1;
                 slab++;
             }
-            mtxunlk(&memlk, 1);
+            mtxunlk(&memlk);
             memcombslab(slab);
             free(ptr);
         } else {

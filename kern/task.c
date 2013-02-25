@@ -11,7 +11,7 @@ taskgetpid(void)
     struct pid *pid;
     long        retval;
 
-    mtxlk(&pidlk, INITPID);
+    mtxlk(&pidlk);
     pid = pidq.head;
     if (!pid) {
         retval = -1;
@@ -22,7 +22,7 @@ taskgetpid(void)
         pidq.head = pid->next;
         retval = pid->id;
     }
-    mtxunlk(&pidlk, INITPID);
+    mtxunlk(&pidlk);
 
     return retval;
 }
@@ -31,7 +31,7 @@ void
 taskfreepid(long id)
 {
     struct pid *pid;
-    mtxlk(&pidlk, INITPID);
+    mtxlk(&pidlk);
     pid = &pidtab[id];
     pid->prev = pidq.tail;
     if (pidq.tail) {
@@ -40,7 +40,7 @@ taskfreepid(long id)
         pidq.head = pid;
     }
     pidq.tail = pid;
-    mtxunlk(&pidlk, INITPID);
+    mtxunlk(&pidlk);
 }
 
 void
@@ -49,7 +49,7 @@ taskinit(void)
     int         i;
     struct pid *pid;
 
-    mtxlk(&pidlk, INITPID);
+    mtxlk(&pidlk);
     pid = &pidtab[0];
     pidq.head = pidq.tail = pid;
     for (i = 0 ; i < NTHR ; i++) {
@@ -59,7 +59,7 @@ taskinit(void)
         pidq.tail->next = pid;
         pidq.tail = pid;
     }
-    mtxunlk(&pidlk, INITPID);
+    mtxunlk(&pidlk);
 
     return;
 }

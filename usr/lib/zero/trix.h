@@ -118,8 +118,7 @@
  * round longword u to next power of two if not power of two;
  * store result in r.
  */
-#if (LONGSIZE == 4)
-#define ceilpow2l(u, r)                                                 \
+#define ceilpow2_32(u, r)                                               \
     do {                                                                \
         (r) = (u);                                                      \
                                                                         \
@@ -133,9 +132,7 @@
             (r)++;                                                      \
         }                                                               \
     } while (0)
-} while (0)
-#elif (LONGSIZE == 8)
-#define ceilpow2l(u, r)                                                 \
+#define ceilpow2_64(u, r)                                               \
     do {                                                                \
         (r) = (u);                                                      \
                                                                         \
@@ -150,32 +147,63 @@
             (r)++;                                                      \
         }                                                               \
     } while (0)
-#endif
 
 /* count number of trailing (low) zero-bits in long-word */
 #if defined(__GCC__)
-#define tzerol(u, r) ((r) = __builtin_ctzl(u))
+#define tzerol(u) (__builtin_ctzl(u)
 #elif defined(__i386__) || defined(__x86_64__) || defined(__amd64__)
-#define tzerol(u, r) ((r) = m_scanlo1bit(u))
+#define tzerol(u) (m_scanlo1bit(u))
 #elif (LONGSIZE == 4)
-#define tzerol(u, r) tzero32(u, r)
+static __inline__ unsigned long
+tzerol(unsigned long ul)
+{
+    unsigned long ret;
+
+    tzero32_2(ul, ret);
+
+    return ret;
+}
 #elif (LONGSIZE == 8)
-#define tzerol(u, r) tzero64(u, r)
+static __inline__ unsigned long
+tzerol(unsigned long ul)
+{
+    unsigned long ret;
+
+    tzero64_2(ul, ret);
+
+    return ret;
+}
 #endif
 
 /* count number of leading (high) zero-bits in long-word */
 #if defined(__GCC__)
-#define lzerol(u, r) ((r) = __builtin_clzl(u));
+#define lzerol(u) (__builtin_clzl(u));
 #elif defined(__i386__) || defined(__x86_64__) || defined(__amd64__)
-#define lzerol(u, r) ((r) = (1UL << (LONGSIZELOG2 + 3)) - m_scanhi1bit(u))
+#define lzerol(u) ((1UL << (LONGSIZELOG2 + 3)) - m_scanhi1bit(u))
 #elif (LONGSIZE == 4)
-#define lzerol(u, r) lzero32(u, r)
+static __inline__ unsigned long
+lzerol(unsigned long ul)
+{
+    unsigned long ret;
+
+    lzero32_2(ul, ret);
+
+    return ret;
+}
 #elif (LONGSIZE == 8)
-#define lzerol(u, r) lzero64(u, r)
+static __inline__ unsigned long
+lzerol(unsigned long ul)
+{
+    unsigned long ret;
+
+    lzero64_2(ul, ret);
+
+    return ret;
+}
 #endif
 
 /* count number of trailing zero-bits in u32 */
-#define tzero32(u32, r)                                                 \
+#define tzero32_2(u32, r)                                               \
     do {                                                                \
         uint32_t __tmp;                                                 \
         uint32_t __mask;                                                \
@@ -211,7 +239,7 @@
         }                                                               \
     } while (0)
 
-#define lzero32(u32, r)                                                 \
+#define lzero32_2(u32, r)                                               \
     do {                                                                \
         uint32_t __tmp;                                                 \
         uint32_t __mask;                                                \
@@ -251,7 +279,7 @@
 
 /* 64-bit versions */
 
-#define tzero64(u64, r)                                                 \
+#define tzero64_2(u64, r)                                               \
     do {                                                                \
         uint64_t __tmp;                                                 \
         uint64_t __mask;                                                \
@@ -292,7 +320,7 @@
         }                                                               \
     } while (0)
 
-#define lzero64(u64, r)                                                 \
+#define lzero64_2(u64, r)                                               \
     do {                                                                \
         uint64_t __tmp;                                                 \
         uint64_t __mask;                                                \

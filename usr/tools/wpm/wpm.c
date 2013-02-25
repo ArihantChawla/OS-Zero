@@ -318,7 +318,7 @@ wpmloop(void *cpustat)
         if (op->inst == OPNOP) {
             wpm->cpustat.pc++;
         } else {
-            wpm->cpustat.pc = roundup2(wpm->cpustat.pc, sizeof(wpmword_t));
+            wpm->cpustat.pc = rounduppow2(wpm->cpustat.pc, sizeof(wpmword_t));
 #if (ZPC)
             op = (struct zpcopcode *)&physmem[wpm->cpustat.pc];
 #else
@@ -1676,7 +1676,7 @@ opoutl(struct wpmopcode *op)
 void
 wpmpzero(wpmmemadr_t adr, wpmuword_t size)
 {
-    wpmuword_t  npg = roundup2(size, 1U << MINBKT) >> MINBKT;
+    wpmuword_t  npg = rounduppow2(size, 1U << MINBKT) >> MINBKT;
     void     *ptr = NULL;
 
     while (npg--) {

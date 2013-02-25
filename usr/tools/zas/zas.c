@@ -1233,7 +1233,7 @@ zasprocinst(struct zastoken *token, zasmemadr_t adr,
 #elif (WPM)
     struct wpmopcode *op;
 #endif
-    zasmemadr_t       opadr = roundup2(adr, 4);
+    zasmemadr_t       opadr = rounduppow2(adr, 4);
     struct zastoken  *token1 = NULL;
     struct zastoken  *token2 = NULL;
     struct zastoken  *retval = NULL;
@@ -1594,9 +1594,9 @@ zasprocalign(struct zastoken *token, zasmemadr_t adr,
     token1 = token->next;
     if ((token1) && token1->type == TOKENVALUE) {
 #if (ZPC)
-        adr = roundup2(adr, token1->token->data.ui64.u64);
+        adr = rounduppow2(adr, token1->token->data.ui64.u64);
 #elif (WPM)
-        adr = roundup2(adr, token1->data.value.val);
+        adr = rounduppow2(adr, token1->data.value.val);
 #endif
     } else {
         fprintf(stderr, "invalid .align attribute token type %lx\n",

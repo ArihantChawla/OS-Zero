@@ -8,10 +8,10 @@
 #define __KERNEL__ 1
 #endif
 #include <zero/mtx.h>
-#define vmlklruq(pq)   mtxlk(&pq->lk, 0)
-#define vmunlklruq(pq) mtxunlk(&pq->lk, 0)
-#define vmlkbufq()     mtxlk(&vmbufq.lk, 0)
-#define vmunlkbufq()   mtxunlk(&vmbufq.lk, 0)
+#define vmlklruq(pq)   mtxlk(&pq->lk)
+#define vmunlklruq(pq) mtxunlk(&pq->lk)
+#define vmlkbufq()     mtxlk(&vmbufq.lk)
+#define vmunlkbufq()   mtxunlk(&vmbufq.lk)
 
 extern uint32_t _kernpagedir[];
 

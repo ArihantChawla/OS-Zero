@@ -28,8 +28,8 @@
 
 #if (BUFLKBITMAP)
 #else
-#define buflk(adr)   mtxlk(&buflktab[(uinptr_t)(adr) >> BUFSIZELOG2], MEMPID);
-#define bufunlk(adr) mtxunlk(&buflktab[(uinptr_t)(adr) >> BUFSIZELOG2], MEMPID);
+#define buflk(adr)   mtxlk(&buflktab[(uinptr_t)(adr) >> BUFSIZELOG2])
+#define bufunlk(adr) mtxunlk(&buflktab[(uinptr_t)(adr) >> BUFSIZELOG2])
 #endif
 
 /* TODO: stack for heap-based buffer allocation */
@@ -64,7 +64,7 @@ bufalloc(void)
     void    *ptr;
     long     l;
 
-    mtxlk(&bufzonelk, 1);
+    mtxlk(&bufzonelk);
     if (!bufzone) {
         bufzone = (uintptr_t)memalloc(NBUFBYTE, PAGEBUF | PAGEWIRED);
         if (bufzone) {
@@ -73,16 +73,16 @@ bufalloc(void)
              * mapped to ram with bzero() yet.
              */
             u8ptr = bufzone;
-            mtxlk(&bufstklk, 1);
+            mtxlk(&bufstklk);
             for (l = 0 ; l < NBUFBLK ; l++) {
                 bufstk[l] = u8ptr;
                 u8ptr += BUFSIZE;
             }
-            mtxunlk(&bufstklk, 1);
+            mtxunlk(&bufstklk);
             bufnbyte = NBUFBYTE;
         }
     }
-    mtxunlk(&bufzonelk, 1);
+    mtxunlk(&bufzonelk);
     do {
         mtxlk(&bufstklk, 1);
         if (!bufempty()) {
@@ -101,9 +101,9 @@ bufalloc(void)
 void
 buffree(void *ptr)
 {
-    mtxlk(&bufstklk, 1);
+    mtxlk(&bufstklk);
     bufpush(ptr);
-    mtxunlk(&bufstklk, 1);
+    mtxunlk(&bufstklk);
 
     return;
 }
@@ -125,7 +125,7 @@ devbufblk(struct devbuf *buf, blkid_t blk, void *data)
     key1 = bufkey1(blk);
     key2 = bufkey2(blk);
     key3 = bufkey3(blk);
-    mtxlk(&buf->lk, 1);
+    mtxlk(&buf->lk);
     ptr = buf->tab.ptr;
     if (!ptr) {
         ptr = kmalloc(NLVL0BLK * sizeof(struct buftab));
@@ -196,7 +196,7 @@ devbufblk(struct devbuf *buf, blkid_t blk, void *data)
         tab->ptr = data;
         ret = data;
     }
-    mtxunlk(&buf->lk, 1);
+    mtxunlk(&buf->lk);
     
     return ret;
 }
@@ -215,7 +215,7 @@ devfindblk(struct devbuf *buf, blkid_t blk, long free)
     key1 = bufkey1(blk);
     key2 = bufkey2(blk);
     key3 = bufkey3(blk);
-    mtxlk(&buf->lk, 1);
+    mtxlk(&buf->lk);
     tab = buf->tab.ptr;
     if (tab) {
         tab = tab[key0].ptr;
@@ -230,7 +230,7 @@ devfindblk(struct devbuf *buf, blkid_t blk, long free)
         }
     }
     if (!free) {
-        mtxunlk(&buf->lk, 1);
+        mtxunlk(&buf->lk);
     }
 
     return ret;
@@ -286,7 +286,7 @@ devfreeblk(struct devbuf *buf, blkid_t blk)
             }
         }
     }
-    mtxunlk(&buf->lk, 1);
+    mtxunlk(&buf->lk);
 
     return ret;
 }

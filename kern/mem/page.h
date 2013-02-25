@@ -5,8 +5,8 @@
 
 #define __KERNEL__ 1
 #include <zero/mtx.h>
-#define pageqlk(pq)   mtxlk(&(pq)->lk, 0)
-#define pagequnlk(pq) mtxunlk(&(pq)->lk, 0)
+#define pageqlk(pq)   mtxlk(&(pq)->lk)
+#define pagequnlk(pq) mtxunlk(&(pq)->lk)
 
 void *pagealloc(uintptr_t adr);
 void  pagefree(void *adr);

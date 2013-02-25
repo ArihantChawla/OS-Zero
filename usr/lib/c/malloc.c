@@ -520,7 +520,7 @@ bktid(size_t size)
     unsigned long bid = 1UL << (LONGSIZELOG2 + 3);
     unsigned long nlz;
 
-    lzerol(size, nlz);
+    nlz = lzerol(size);
     bid -= nlz;
     if (!powerof2(size)) {
         bid++;
