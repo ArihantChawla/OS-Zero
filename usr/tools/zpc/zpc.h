@@ -291,27 +291,27 @@ struct zpctoken * zpceval(struct zpctoken *srcqueue);
                                                                         \
                 break;                                                  \
             case 8:                                                     \
-                snprintf((tok)->str, (tok)->slen, "%llo", (val));       \
+                snprintf((tok)->str, (tok)->slen, "%llo", (long long)(val)); \
                                                                         \
                 break;                                                  \
             case 10:                                                    \
             default:                                                    \
                 if ((tok)->type == ZPCINT64) {                          \
-                    snprintf((tok)->str, (tok)->slen, "%lld", (val));   \
+                    snprintf((tok)->str, (tok)->slen, "%lld", (long long)(val)); \
                 } else {                                                \
-                    snprintf((tok)->str, (tok)->slen, "%llu", (val));   \
+                    snprintf((tok)->str, (tok)->slen, "%llu", (long long)(val)); \
                 }                                                       \
                                                                         \
                 break;                                                  \
             case 16:                                                    \
                 if (val <= 0xff) {                                      \
-                    sprintf((tok)->str, "0x%02llx", (val));             \
+                    sprintf((tok)->str, "0x%02llx", (long long)(val));  \
                 } else if (val <= 0xffff) {                             \
-                    sprintf((tok)->str, "0x%04llx", (val));             \
+                    sprintf((tok)->str, "0x%04llx", (long long)(val));  \
                 } else if (val <= 0xffffffff) {                         \
-                    sprintf((tok)->str, "0x%08llx", (val));             \
+                    sprintf((tok)->str, "0x%08llx", (long long)(val));  \
                 } else {                                                \
-                    sprintf((tok)->str, "0x%016llx", (val));            \
+                    sprintf((tok)->str, "0x%016llx", (long long)(val)); \
                 }                                                       \
                                                                         \
                 break;                                                  \

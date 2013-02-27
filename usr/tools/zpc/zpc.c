@@ -285,7 +285,7 @@ zpcswap(void)
 int
 main(int argc, char *argv[])
 {
-//    zasinit(zpcopinfotab);
+//    zpcinit(zpcopinfotab);
     zpcradix = 10;
     stkinit();
     exprinit();

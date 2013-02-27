@@ -64,27 +64,27 @@ static uint8_t            buttontypetab[ZPC_NROW][ZPC_NCOLUMN] =
 {
     { ZPCBUTTONDIGIT, ZPCBUTTONDIGIT, ZPCBUTTONDIGIT, ZPCBUTTONOPER, ZPCBUTTONOPER, ZPCBUTTONOPER, ZPCBUTTONDEBUG },
     { ZPCBUTTONDIGIT, ZPCBUTTONDIGIT, ZPCBUTTONDIGIT, ZPCBUTTONOPER, ZPCBUTTONOPER, ZPCBUTTONOPER, ZPCBUTTONDEBUG }, 
-    { ZPCBUTTONDIGIT, ZPCBUTTONDIGIT, ZPCBUTTONDIGIT, ZPCBUTTONOPER, ZPCBUTTONOPER, ZPCBUTTONOPER, ZPCBUTTONDEBUG },
-    { ZPCBUTTONDIGIT, ZPCBUTTONDIGIT, ZPCBUTTONDIGIT, ZPCBUTTONOPER, ZPCBUTTONOPER, ZPCBUTTONOPER, ZPCBUTTONDEBUG },
-    { ZPCBUTTONDIGIT, ZPCBUTTONDIGIT, ZPCBUTTONDIGIT, ZPCBUTTONOPER, ZPCBUTTONOPER, ZPCBUTTONOPER, ZPCBUTTONDEBUG },
+    { ZPCBUTTONDIGIT, ZPCBUTTONDIGIT, ZPCBUTTONDIGIT, ZPCBUTTONOPER, ZPCBUTTONOPER, ZPCBUTTONOPER, ZPCBUTTONOPER },
+    { ZPCBUTTONDIGIT, ZPCBUTTONDIGIT, ZPCBUTTONDIGIT, ZPCBUTTONOPER, ZPCBUTTONOPER, ZPCBUTTONOPER, ZPCBUTTONOPER },
+    { ZPCBUTTONDIGIT, ZPCBUTTONDIGIT, ZPCBUTTONDIGIT, ZPCBUTTONOPER, ZPCBUTTONOPER, ZPCBUTTONOPER, ZPCBUTTONOPER },
     { ZPCBUTTONDIGIT, ZPCBUTTONDIGIT, ZPCBUTTONDIGIT, ZPCBUTTONOPER, ZPCBUTTONOPER, ZPCBUTTONOPER, ZPCBUTTONOPER }
 };
 static const char        *buttonstrtab[ZPC_NROW][ZPC_NCOLUMN]
 = {
     { "d", "e", "f", "~", ">>>", "++", "run" },
     { "a", "b", "c", "%", ">>", "--", "step" },
-    { "7", "8", "9", "/", "<<", "..>", "break" },
-    { "4", "5", "6", "*", "^", "<..", "load" },
-    { "1", "2", "3", "-", "|", "=", "save" },
+    { "7", "8", "9", "/", "<<", "..>", "(" },
+    { "4", "5", "6", "*", "^", "<..", ")" },
+    { "1", "2", "3", "-", "|", "=", " " },
     { "0", NULL, ",", "+", "&", NULL, "ENTER" }
 };
 static const char        *buttonlabeltab[ZPC_NROW][ZPC_NCOLUMN]
 = {
     { "d", "e", "f", "~", ">>>", "++", "RUN" },
     { "a", "b", "c", "%", ">>", "--", "STEP" },
-    { "7", "8", "9", "/", "<<", "..>", "BREAK" },
-    { "4", "5", "6", "*", "^", "<..", "LOAD" },
-    { "1", "2", "3", "-", "|", "=", "SAVE" },
+    { "7", "8", "9", "/", "<<", "..>", "(" },
+    { "4", "5", "6", "*", "^", "<..", ")" },
+    { "1", "2", "3", "-", "|", "=", "SPACE" },
     { "0", ".", ",", "+", "&", "EVAL", "ENTER" }
 };
 static const char        *buttontop1tab[ZPC_NROW][ZPC_NCOLUMN]
@@ -138,9 +138,9 @@ static const uint8_t      parmtab[ZPC_NROW][ZPC_NCOLUMN]
 = {
     { 0, 0, 0, 1, 2, 1, RUN },
     { 0, 0, 0, 2, 2, 1, STEP },
-    { 0, 0, 0, 2, 2, 2, BREAK },
-    { 0, 0, 0, 2, 2, 2, LOAD },
-    { 0, 0, 0, 2, 2, 0, SAVE },
+    { 0, 0, 0, 2, 2, 2, 0 },
+    { 0, 0, 0, 2, 2, 2, 0 },
+    { 0, 0, 0, 2, 2, 0, 0 },
     { 0, 0, 0, 2, 2, EVAL, ENTER }
 };
 #if 0
