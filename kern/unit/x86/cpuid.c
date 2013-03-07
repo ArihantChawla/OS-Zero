@@ -369,7 +369,7 @@ cpuprobe(struct m_cpuinfo *cpuinfo)
     struct m_cacheinfo  *cbuf;
 
     cpuidgetvendor(&vbuf);
-    if (!strcmp((const char *)vbuf.str, _vendortab[CPUIDINTEL])) {
+    if (!kstrcmp((const char *)vbuf.str, _vendortab[CPUIDINTEL])) {
         cpuidinitci_intel();
         cpuidgetci_intel(&buf);
         cbuf = &cpuidcacheinfo[M_CPUIDINSTRCACHE];
@@ -388,7 +388,7 @@ cpuprobe(struct m_cpuinfo *cpuinfo)
         cpuinfo->l2.size = cbuf->size;
         cpuinfo->l2.clsz = cbuf->xsize;
         cpuinfo->l2.nway = cbuf->nway;
-    } else if (!strcmp((const char *)vbuf.str, _vendortab[CPUIDAMD])) {
+    } else if (!kstrcmp((const char *)vbuf.str, _vendortab[CPUIDAMD])) {
         cpuidgetl1_amd(&buf);
         cpuinfo->l1i.size = buf.edx >> 14;
         cpuinfo->l1i.clsz = buf.edx & 0xff;
@@ -428,14 +428,14 @@ main(int argc,
     cpuidgetvendor(&vbuf);
     fprintf(stderr, "vendor: %s\n", vbuf.str);
 
-    if (!strcmp(vbuf.str, _vendortab[CPUIDINTEL])) {
+    if (!kstrcmp(vbuf.str, _vendortab[CPUIDINTEL])) {
         cpuidinitci_intel();
         cpuidgetci_intel(&buf);
         cpuid_print_cache_info_intel(buf.eax);
         cpuid_print_cache_info_intel(buf.ebx);
         cpuid_print_cache_info_intel(buf.ecx);
         cpuid_print_cache_info_intel(buf.edx);
-    } else if (!strcmp(vbuf.str, _vendortab[CPUIDAMD])) {
+    } else if (!kstrcmp(vbuf.str, _vendortab[CPUIDAMD])) {
         cpuidgetl1_amd(&buf);
         cpuid_print_l1_info_amd(&buf);
         cpuidgetl2_amd(&buf);

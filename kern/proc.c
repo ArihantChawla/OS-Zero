@@ -25,10 +25,10 @@ procinit(long id)
     if (proc) {
         proc->state = PROCINIT;
         /* initialise page directory */
-        bzero(proc, sizeof(struct proc));
+        kbzero(proc, sizeof(struct proc));
         ptr = kmalloc(NPDE * sizeof(pde_t));
         if (ptr) {
-            bzero(ptr, NPDE * sizeof(pde_t));
+            kbzero(ptr, NPDE * sizeof(pde_t));
             proc->pdir = ptr;
         } else {
             kfree(proc);
@@ -38,7 +38,7 @@ procinit(long id)
         /* initialise kernel-mode stack (wired) */
         ptr = kmalloc(KERNSTKSIZE);
         if (ptr) {
-            bzero(ptr, KERNSTKSIZE);
+            kbzero(ptr, KERNSTKSIZE);
             proc->kstk = ptr;
         } else {
             kfree(proc);
@@ -49,7 +49,7 @@ procinit(long id)
         /* initialise descriptor table */
         ptr = kmalloc(NDESCTAB * sizeof(desc_t));
         if (ptr) {
-            bzero(ptr, NDESCTAB * sizeof(desc_t));
+            kbzero(ptr, NDESCTAB * sizeof(desc_t));
             proc->dtab = ptr;
         } else {
             kfree(proc);
@@ -62,7 +62,7 @@ procinit(long id)
         /* initialise VM structures */
         ptr = kmalloc(NVMHDRTAB * sizeof(struct vmpage));
         if (ptr) {
-            bzero(ptr, NVMHDRTAB * sizeof(struct vmpage));
+            kbzero(ptr, NVMHDRTAB * sizeof(struct vmpage));
             proc->vmhdrtab = ptr;
         } else {
             kfree(proc);

@@ -108,7 +108,7 @@ vminit(void *pagetab)
     *pde = adr | PAGEPRES | PAGEWRITE;
 
     /* zero page tables */
-    bzero(pagetab, PAGETABSIZE);
+    kbzero(pagetab, PAGETABSIZE);
 
     /* identity map 3.5G..4G for devices */
     pde = pagetab + vmpagenum(3584UL * 1024 * 1024);

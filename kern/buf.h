@@ -11,8 +11,9 @@ typedef uint64_t blkid_t;
 #define BUFSIZE     (1UL << BUFSIZELOG2)
 #define BUFSIZELOG2 16
 
-#define NBUFBYTE    (32768 * 1024)
-#define NBUFBLK     (NBUFBYTE >> BUFSIZELOG2)
+#define BUFNEVICT   8
+#define BUFNBYTE    (32768 * 1024)
+#define BUFNBLK     (BUFNBYTE >> BUFSIZELOG2)
 
 #define BUFNET  (1U << (PERMNBIT + 1))  // create header, precalculate checksum
 #define BUFNOLK (1U << (PERMNBIT + 2))  // don't lock on access

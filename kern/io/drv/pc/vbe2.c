@@ -32,7 +32,7 @@ vbe2init(struct mboothdr *hdr)
                  (uint32_t)vbe2screen.fbuf
                  + ((bpp * mode->xres * mode->yres >> 3)),
                  PAGEPRES | PAGEWRITE);
-        bfill(vbe2screen.fbuf, 0x7f, bpp * mode->xres * mode->yres);
+        kbfill(vbe2screen.fbuf, 0x7f, bpp * mode->xres * mode->yres);
     }
 
     return retval;

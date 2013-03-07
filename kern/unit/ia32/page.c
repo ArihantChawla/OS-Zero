@@ -17,8 +17,8 @@ unsigned long  npagefree;
 void
 pageinit(uintptr_t base, unsigned long nbphys)
 {
-    struct page   *pg = physptab + (roundup2(base, PAGESIZE) >> PAGESIZELOG2);
-    unsigned long  n  = (nbphys - roundup2(base, PAGESIZE)) >> PAGESIZELOG2;
+    struct page   *pg = physptab + (rounduppow2(base, PAGESIZE) >> PAGESIZELOG2);
+    unsigned long  n  = (nbphys - rounduppow2(base, PAGESIZE)) >> PAGESIZELOG2;
 
     pageqlk(&physfreeq);
     vmnphyspages = n;

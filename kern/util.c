@@ -332,7 +332,7 @@ kprintf(char *fmt, ...)
     
     va_start(al, fmt);
     len = MAXPRINTFSTR - 1;
-    len = strncpy(str, fmt, len);
+    len = kstrncpy(str, fmt, len);
     sptr = str;
     while (*sptr) {
         isch = 0;
@@ -518,7 +518,7 @@ kbfindzerol(unsigned long *bmap, long ofs, long nbit)
 }
 #endif
 
-NORET void
+void
 kpanic(void)
 {
     ;

@@ -34,18 +34,18 @@
 
 /* TODO: stack for heap-based buffer allocation */
 
-static void             *bufstk[NBUFBLK] ALIGNED(PAGESIZE);
+static void             *bufstk[BUFNBLK] ALIGNED(PAGESIZE);
 static volatile long     bufstklk;
-//static long              bufnstk;
+static long              bufnstk;
 static long              bufstknext;
 static volatile long     bufzonelk;
 static uintptr_t         bufzone;
 //static uintptr_t         bufbrk;
 static size_t            bufnbyte;
 #if (BUFLKBITMAP)
-static volatile uint8_t  buflkmap[NBUFBLK >> 3];
+static volatile uint8_t  buflkmap[BUFNBLK >> 3];
 #else
-static volatile long     buflktab[NBUFBLK];
+static volatile long     buflktab[BUFNBLK];
 #endif
 
 /* flush nbuf buffers onto disks */
@@ -66,32 +66,32 @@ bufalloc(void)
 
     mtxlk(&bufzonelk);
     if (!bufzone) {
-        bufzone = (uintptr_t)memalloc(NBUFBYTE, PAGEBUF | PAGEWIRED);
+        bufzone = (uintptr_t)memalloc(BUFNBYTE, PAGEBUF | PAGEWIRED);
         if (bufzone) {
             /*
              * buffers are zeroed on allocation so we don't force them to be
-             * mapped to ram with bzero() yet.
+             * mapped to ram with kbzero() yet.
              */
             u8ptr = bufzone;
             mtxlk(&bufstklk);
-            for (l = 0 ; l < NBUFBLK ; l++) {
+            for (l = 0 ; l < BUFNBLK ; l++) {
                 bufstk[l] = u8ptr;
                 u8ptr += BUFSIZE;
             }
             mtxunlk(&bufstklk);
-            bufnbyte = NBUFBYTE;
+            bufnbyte = BUFNBYTE;
         }
     }
     mtxunlk(&bufzonelk);
     do {
-        mtxlk(&bufstklk, 1);
+        mtxlk(&bufstklk);
         if (!bufempty()) {
             ptr = bufpop();
-            mtxunlk(&bufstklk, 1);
-            bzero(ptr, BUFSIZE);
+            mtxunlk(&bufstklk);
+            kbzero(ptr, BUFSIZE);
         } else {
             bufevict(BUFNEVICT);
-            mtxunlk(&bufstklk, 1);
+            mtxunlk(&bufstklk);
         }
     } while (!ptr);
 
@@ -130,7 +130,7 @@ devbufblk(struct devbuf *buf, blkid_t blk, void *data)
     if (!ptr) {
         ptr = kmalloc(NLVL0BLK * sizeof(struct buftab));
         if (ptr) {
-            bzero(ptr, NLVL0BLK * sizeof(struct buftab));
+            kbzero(ptr, NLVL0BLK * sizeof(struct buftab));
         }
         pstk[0] = ptr;
     }
@@ -139,7 +139,7 @@ devbufblk(struct devbuf *buf, blkid_t blk, void *data)
         if (!ptr) {
             ptr = kmalloc(NLVL1BLK * sizeof(struct buftab));
             if (ptr) {
-                bzero(ptr, NLVL1BLK * sizeof(struct buftab));
+                kbzero(ptr, NLVL1BLK * sizeof(struct buftab));
             }
             pstk[1] = ptr;
         }
@@ -151,7 +151,7 @@ devbufblk(struct devbuf *buf, blkid_t blk, void *data)
         if (!ptr) {
             ptr = kmalloc(NLVL2BLK * sizeof(struct buftab));
             if (ptr) {
-                bzero(ptr, NLVL2BLK * sizeof(struct buftab));
+                kbzero(ptr, NLVL2BLK * sizeof(struct buftab));
             }
             pstk[2] = ptr;
         }
@@ -163,7 +163,7 @@ devbufblk(struct devbuf *buf, blkid_t blk, void *data)
         if (!ptr) {
             ptr = kmalloc(NLVL3BLK * sizeof(struct buftab));
             if (ptr) {
-                bzero(ptr, NLVL3BLK * sizeof(struct buftab));
+                kbzero(ptr, NLVL3BLK * sizeof(struct buftab));
             }
             pstk[3] = ptr;
         }

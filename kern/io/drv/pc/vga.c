@@ -32,7 +32,7 @@ vgagetfont(void)
     outw(0x0406, 0x03ce);
     outw(0x0402, 0x03c4);
     outw(0x0704, 0x03c4);
-    bcopy(_vgafontbuf, (void *)VGAFONTADR, VGAFONTSIZE);
+    kbcopy(_vgafontbuf, (void *)VGAFONTADR, VGAFONTSIZE);
 #if (!VBE2)
     vgareset();
 #endif
@@ -62,7 +62,7 @@ vgainitcon(int w, int h)
 #if (VBE2)
 #endif
     for (l = 0 ; l < VGANCON ; l++) {
-        bzero(ptr, PAGESIZE);
+        kbzero(ptr, PAGESIZE);
 #if (VGAGFX) || (VBE2)
         con->fg = 0xffffffff;
         con->buf = kwalloc(w * h * sizeof(argb32_t));
