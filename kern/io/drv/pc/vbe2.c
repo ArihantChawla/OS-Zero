@@ -30,9 +30,10 @@ vbe2init(struct mboothdr *hdr)
                               : GFXRGB555));
         vmmapseg((uint32_t *)&_pagetab, vbe2screen.fbuf, vbe2screen.fbuf,
                  (uint32_t)vbe2screen.fbuf
-                 + ((bpp * mode->xres * mode->yres >> 3)),
+                 + ((bpp == 24)
+                    ? mode->xres * mode->yres * 3
+                    : mode->xres * mode->yres * 2),
                  PAGEPRES | PAGEWRITE);
-        kbfill(vbe2screen.fbuf, 0x7f, bpp * mode->xres * mode->yres);
     }
 
     return retval;

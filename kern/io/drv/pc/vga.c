@@ -59,8 +59,6 @@ vgainitcon(int w, int h)
 #if (VGAGFX) || (VBE2)
     vgagetfont();
 #endif
-#if (VBE2)
-#endif
     for (l = 0 ; l < VGANCON ; l++) {
         kbzero(ptr, PAGESIZE);
 #if (VGAGFX) || (VBE2)

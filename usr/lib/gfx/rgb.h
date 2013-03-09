@@ -9,10 +9,10 @@
 #define GFXRGB555 2
 #define GFXRGB565 3
 
-#define ALPHAOFS 24
-#define REDOFS   16
-#define GREENOFS 8
-#define BLUEOFS  0
+#define GFXALPHAOFS 24
+#define GFXREDOFS   16
+#define GFXGREENOFS 8
+#define GFXBLUEOFS  0
 
 typedef int32_t argb32_t;
 typedef int16_t rgb555_t;
@@ -26,10 +26,10 @@ struct argb32 {
 };
 
 /* pix is 32-bit word */
-#define gfxalphaval(pix) ((pix) >> ALPHAOFS)		// alpha component
-#define gfxredval(pix)   (((pix) >> REDOFS) & 0xff)	// red component
-#define gfxgreenval(pix) (((pix) >> GREENOFS) & 0xff)	// green component
-#define gfxblueval(pix)  (((pix) >> BLUEOFS) & 0xff)	// blue component
+#define gfxalphaval(pix) ((pix) >> GFXALPHAOFS)		 // alpha component
+#define gfxredval(pix)   (((pix) >> GFXREDOFS) & 0xff)	 // red component
+#define gfxgreenval(pix) (((pix) >> GFXGREENOFS) & 0xff) // green component
+#define gfxblueval(pix)  (((pix) >> GFXBLUEOFS) & 0xff)	 // blue component
 
 /* pointer version; faster byte-fetches from memory */
 #define gfxalphaval_p(p) (((struct argb32 *)(p))->aval)
@@ -52,7 +52,10 @@ struct argb32 {
 
 /* compose pixel value from components */
 #define gfxmkpix(a, r, g, b)                                            \
-    (((a) << ALPHAOFS) | ((r) << REDOFS) | ((g) << GREENOFS) | ((b) << BLUEOFS))
+    (((a) << GFXALPHAOFS)                                               \
+     | ((r) << GFXREDOFS)                                               \
+     | ((g) << GFXGREENOFS)                                             \
+     | ((b) << GFXBLUEOFS))
 #define gfxmkpix_p(dest, a, r, g, b)                                    \
     ((dest) = gfxmkpix(a, r, g, b))
 #define gfxsetpix_p(p, a, r, g, b)                                      \
@@ -120,9 +123,9 @@ struct argb32 {
                GFX_RGB565_BLUE_SHIFT))
 
 #define gfxtorgb888(u, p)                                               \
-    (((uint8_t *)(p))[REDOFS] = gfxredval(u),                           \
-     ((uint8_t *)(p))[GREENOFS] = gfxgreenval(u),                       \
-     ((uint8_t *)(p))[BLUEOFS] = gfxblueval(u))
+    (((uint8_t *)(p))[GFXREDOFS] = gfxredval(u),                        \
+     ((uint8_t *)(p))[GFXGREENOFS] = gfxgreenval(u),                    \
+     ((uint8_t *)(p))[GFXBLUEOFS] = gfxblueval(u))
 #define _gfxtoc(u, m, s)                                                \
     (((u) >> s) & (m))
 
