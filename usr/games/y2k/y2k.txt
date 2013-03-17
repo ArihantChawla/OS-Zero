@@ -1,0 +1,158 @@
+COMMENTS
+--------
+
+Danukeru says the story should be 'bloated' more as it reads like a technical
+manual. I agree. :)
+
+22:00 Jan 20 <jetole> have one character say "why not just do it from the
++bank" where the main character replies "because banks would issue it through
++the processor where it would be held and analyzed and then flagged but if we
++go here then we can program in a circumvention to have the processing done
++real time"
+
+
+22:01 Jan 20 <jetole> yeah if it's done from the bank itself then you're not
++erasing transaction logs. I mean you can but then they just call the payment
++processor when they notice the missing money and ask them
+
+
+22:05 Jan 20 <jetole> yes banks back up all mission critical data and have      
++disaster recovery solutions in place. A bank is required too. If a natural     
++disaster destroys their building they will have trailers brought in with mock  
++offices inside hooked up to generators running in the parking lot or whatever  
++. At least in the US. These trailers already exist and are basically on        
++standby for when they need them. They have contracts with fuel ...
+
+wizard22:05 Jan 20 <jetole> ... companies for the diesel to be on standby for the
++generators, etc etc
+
+22:07 Jan 20 <jetole> the money will be traced. There is no question about
++that and they will find where in switzerland it went and will be in touch
++with the banks who will cooperate to the fullest extent of the law they are
++required to so your main character needs to plan to have it withdrawn
++immediately once the transfer is complete   
+
+PLOT
+----
+- Y2K
+  - computer hackers get to fix bank data systems and drop a trojan in
+  - moves 'random' amounts of currency from high-balance accounts to anonymous
+    accounts in Switzerland, then shuts down; the next boot-strap goes just fine
+    with the log entries for the transactions wiped
+
+------
+- scandinavian master hacker
+- properly paranoid system programmer type
+- lots of technical skills
+- lacks a bit in social skills
+- cyber cowboy who likes living on the edge
+
+sunshine
+--------
+- wizard's love
+- smart, nerdy girl with university background and Unix experience
+- turn-ons: intelligence, clever tricks, tender-heartedness, wittiness
+
+cyberia
+-------
+- high-performance super computer cluster; network of nodes; new Internet
+- program on program combat on taking control of nodes
+- hologram chats and decks
+
+trojan
+------
+- camouflaged as encrypted, in-binary data somewhere
+- the name of the routine file is encrypted in binary; revealed later after the
+  file is gone; backup reveals account numbers in Switzerland in encrypted form
+- routine binary erased after one-shot use
+
+agents
+------
+- government agents and hired guns operating in cyber-space
+- supplied the list of bank account numbers in Switzerland
+
+Intro
+-----
+
+Wizard sat in his chambers, munching on chocolate and other snacks. Damn it,
+what was going wrong in his code this time? It had been a long, silent night of
+kernel debugging for a new project, and it had been somewhat troublesome and
+frustrating.
+
+"Hey Sunshine", Wizard called his partner, "what do you say me and you go out
+to eat before sleep?" - "I've kind of had it with software development for
+tonight. You pick a place that serves reindeer and I'll pay the bill."
+
+Sunshine called a local deli and placed a reservation for a table for two, as
+well as ordered reindeer fillet with mashed potatoes and lingonberry jam for the
+couple.
+
+Wizard loaded the peace-pipe. "Time to relax", he thought. He lit up and took
+a few good tokes before leaving for the deli with Sunshine.
+
+Deli
+----
+
+"You know, darling, I have figured out the perfect crime that is going to make
+us filthy rich at very low risk. The deal is that I got a contract with a bank
+who want me to fix their systems for the Y2K event, the change of the millennia,
+in order to save them from a disaster. I have planned out the perfect trojan to
+drop into their systems to transfer millions and millions of dollars to our
+anonymous bank accounts in Switzerland", Wizard said with an excited expression
+on his face.
+
+"What's the risk", Sunshine asked. "They may find out our anonymous account
+IDs later when some of their clients report in missing money, but only after
+that as I can make sure all logs of the transactions are erased. Depending on
+the country and their banking laws, law enforcement may get on our trail
+eventually. In short, we'd better relocate to somewhere safe and private."
+
+Curious about what he had in mind, Sunshine asked Wizard to elaborate. "Not
+right now, sugar, you won't need to know more in order not to know too much;
+just take my word on this, it's the closest to a perfect crime I can think of.
+Besides, we will not be stealing from the poor either, but from rich individuals
+and organisations. The banks should have insured the money, so who's going to
+lose that we should care about?"
+
+EDIT
+----
+
+"Hey Wiz", Sunshine said, "why don't you just do the transfers from the banks?"
+
+"See, Sunshine", Wizard started, "the banks would issue the transfers through
+the processor where it would be held and analyzed and then flagged, but iw we
+go here then we can program in a circumvention to have the processing done
+real-time."
+
+Next Morning
+------------
+
+Sunshine looks stunning wearing fishnet stockings, a short skirt, and a leather
+jacket. Wearing Ray-Ban Wayfarers adds a twist to the costume. Ready to roll,
+Sunshine jumps onto her Kawasaki Ninja and ignites the engine.
+
+Wizard has a long day of work ahead at the bank. He's studied AS/400 programming
+for the system and is getting ready to do some Cobol. The carefully-tailored
+assembly routines to be compiled in as the trojan are on a memory stick in
+wizard's pocket. The binary shall be encrypted with a 1024-bit algorithm to make
+it take more time to crack in the case it gets captured. Wizard knows to set his
+files have the archive attribute off, but is expecting the bank to back all
+of their mission-critical data up regardless.
+
+The trojan has encrypted account IDs for anonymous accounts in Switzerland. It
+gets activated at shutdown at the Y2K moment; the binary module the trojan is in
+shall be erased during the shutdown, and the next time, the system will seem to
+have restarted normally and go back to business like nothing ever happened. With
+everyone busy celebrating Y2K, Wizard expects it to take a while before people
+start reporting money missing from their bank accounts.
+
+Sunshine arrives at the airport just in time to catch a flight to Geneva,
+Switzerland. Wizard told him about a bank there who allow clients to have
+anonymous accounts with access based on knowing a proper numerical ID. Legend
+has it there's still a lot of gold stolen by the Nazis during World War II
+laying around in the vaults in Switzerland. Wizard thinks this gold should be
+released to do charity for the third world; why not make the world a better
+place if you can.
+
+Geneva, Switzerland
+-------------------
