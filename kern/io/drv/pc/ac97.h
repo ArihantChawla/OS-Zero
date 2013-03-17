@@ -23,12 +23,12 @@
 #define AC97BUFPTR        0x00  // bit 0 is zero, 1..31 are buffer address
 #define AC97BUFINFO       0x04  // see below
 /* interrupt on completion */
-#define AC97IOCBIT        0x80000000
 /*
  * 0 -> if buffer is complete and next is not ready, transmit last valid sample
  * 1 -> if buffer complete and last valid, transmit zeros after processed
  *      - typically only set for the last buffer in current stream
  */
+#define AC97IOCBIT        0x80000000
 #define AC97BUPMASK       0x60000000
 /* reserved bits */
 #define AC97RESMASK       0x3fff0000
@@ -44,7 +44,7 @@
 struct ac97bufdesc {
     uint32_t adr;       // ptr, bit 0 is zero (16-bit aligned)
     uint32_t info;      // flags, length
-};
+} PACK();
 
 #endif /* __KERN_IO_DRV_PC_AC97_H__ */
 

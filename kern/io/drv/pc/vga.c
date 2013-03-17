@@ -56,7 +56,7 @@ vgainitcon(int w, int h)
     uint8_t       *ptr = (uint8_t *)VGABUFADR;
     long           l;
 
-#if (VGAGFX) || (VBE2)
+#if (VGAGFX) && !(VBE2)
     vgagetfont();
 #endif
     for (l = 0 ; l < VGANCON ; l++) {

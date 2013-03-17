@@ -19,15 +19,17 @@
 
 #define tvaddconst(tv, u)                                               \
   do {                                                                  \
-      (tv)->tv_sec += (u) / 1000000;                                    \
-      (tv)->tv_usec += (u) % 1000000;                                   \
+      unsigned long mill = 1000000;                                     \
                                                                         \
-      if ((tv)->tv_usec >= 1000000) {                                   \
+      (tv)->tv_sec += (u) / mill;                                       \
+      (tv)->tv_usec += (u) % mill;                                      \
+                                                                        \
+      if ((tv)->tv_usec >= mill) {                                      \
           (tv)->tv_sec++;                                               \
-          (tv)->tv_usec -= 1000000;                                     \
+          (tv)->tv_usec -= mill;                                        \
       } else if ((tv)->tv_usec < 0) {                                   \
           (tv)->tv_sec--;                                               \
-          (tv)->tv_usec += 1000000;                                     \
+          (tv)->tv_usec += mill;                                        \
       }                                                                 \
   } while (FALSE)
 
