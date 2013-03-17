@@ -224,7 +224,7 @@ wpmgetthrid(void)
 struct wpm *
 wpminit(void)
 {
-    mtxlk(&thrlk, 1);
+    mtxlk(&thrlk);
     if (!physmem) {
         physmem = calloc(1, MEMSIZE);
     }
@@ -236,7 +236,7 @@ wpminit(void)
             wpm->thrid = wpmgetthrid();
         }
     }
-    mtxunlk(&thrlk, 1);
+    mtxunlk(&thrlk);
 
     return wpm;
 }
@@ -248,9 +248,9 @@ wpminitthr(wpmmemadr_t pc)
     pthread_t           tid;
     struct wpmcpustate *cpustat = malloc(sizeof(struct wpmcpustate));
 
-    mtxlk(&thrlk, 1);
+    mtxlk(&thrlk);
     thrcnt++;
-    mtxunlk(&thrlk, 1);
+    mtxunlk(&thrlk);
     memcpy(cpustat, &wpm->cpustat, sizeof(struct wpmcpustate));
     cpustat->pc = pc;
     pthread_create(&tid, NULL, wpmloop, (void *)cpustat);
@@ -361,12 +361,12 @@ wpmloop(void *cpustat)
         fprintf(stderr, "r%d:\t%x\n", i, wpm->cpustat.regs[i]);
     }
 #endif
-    mtxlk(&thrlk, 1);
+    mtxlk(&thrlk);
     thrcnt--;
     if (!thrcnt) {
         exit(0);
     }
-    mtxunlk(&thrlk, 1);
+    mtxunlk(&thrlk);
 
     return NULL;
 }
@@ -1524,7 +1524,7 @@ optrap(struct wpmopcode *op)
 void
 opcli(struct wpmopcode *op)
 {
-    mtxtrylk(&intlk, 1);
+    mtxtrylk(&intlk);
     wpm->cpustat.pc += op->size << 2;
 
     return;
@@ -1533,7 +1533,7 @@ opcli(struct wpmopcode *op)
 void
 opsti(struct wpmopcode *op)
 {
-    mtxunlk(&intlk, 1);
+    mtxunlk(&intlk);
     wpm->cpustat.pc += op->size << 2;
 
     return;
@@ -1587,12 +1587,12 @@ opcmpswap(struct wpmopcode *op)
                       ? memfetchl(op->args[0])
                       : memfetchl(op->args[1])));
 
-    mtxlk(&atomlk, 1);
+    mtxlk(&atomlk);
     while (memfetchl(adr)) {
         pthread_yield();
     }
     memstorel(val, adr);
-    mtxunlk(&atomlk, 1);
+    mtxunlk(&atomlk);
 
     return;
 }

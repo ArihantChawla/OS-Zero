@@ -8,7 +8,7 @@ union _tickval {
     uint32_t u32v[2];
 };
 
-#define PROFTICK(id)                                                    \
+#define PROFDECLTICK(id)                                                \
     union _tickval __tv##id[2]
 #define profclrtick(id)                                                 \
     (__tv##id[0].u64 = __tv##id[1].u64 = UINT64_C(0))

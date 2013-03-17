@@ -33,7 +33,7 @@
       }                                                                 \
   } while (FALSE)
 
-#define PROFCLK(id)                                                     \
+#define PROFDECLCLK(id)                                                 \
     struct timeval _tv##id[2]
 #define profinitclk(id)                                                 \
     memset(&_tv##id, 0, sizeof(_tv##id))
