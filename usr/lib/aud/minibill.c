@@ -78,6 +78,52 @@ int arr(int q){
   return gcd(q,35);
 }
 
+#if (MINIBILLSINE)
+double f(double t){
+  
+  return (255.0 / 2.0) * (1.0 + sin(t / 4.0));
+}
+#elif (MINIBILLSAW)
+double f(double t){
+  
+//  return ((int)(t / 4.0)) % 255;
+  return ((int)(6.0 * t)) % 255;
+}
+#elif (MINIBILLSQUARE)
+double f(double t){
+
+//  return (((int)(t / 4.0) % 255) > 127 ? 255 : 0);
+    return ((int)(6.0 * t)) % 255 > 127 ? 255: 0;
+}
+#elif (MINIBILLFANCY1)
+double f(double t){
+  double semi = pow(2,1.0/12.0);
+  double tone = pow(2,1.0/6.0);
+  double third = pow(2,1.0/3.0);
+  double fifth = pow(2,7.0/12.0);
+  double st = t * M_PI / 32.0;
+  
+  int n = t / 200;
+  while(n < 0)   n += 200;
+  while(n > 200) n -= 200;
+
+  return 255/6.0*(3+sin(st)+((n>100)?sin(third*st):sin(tone*semi*st))+sin(fifth*st));
+}
+#elif (MINIBILLFANCY2)
+double f(double t){
+  double semi = pow(2,1.0/12.0);
+  double tone = pow(2,1.0/6.0);
+  double third = pow(2,1.0/3.0);
+  double fifth = pow(2,7.0/12.0);
+  double st = t * M_PI / 32.0;
+  
+  int n = t / 100;
+  while(n < 0)   n += 100;
+  while(n > 100) n -= 100;
+  
+  return (255/2)*(1+(n<25)*sin(t/2.0)+(n>=25&&n<50)*sin(fifth*t/2.0)+(n>=50&&n<75)*sin(third*t/2.0)+(n>=75)*sin(fifth*t/2.0));
+}
+#else
 double f(double t){
   double semi = pow(2,1.0/12.0);
   double tone = pow(2,1.0/6.0);
@@ -86,7 +132,7 @@ double f(double t){
   double st = t * M_PI / 32.0;
   
   //return (255.0 / 2.0) * (1.0 + sin(t / 4.0));
-  
+
   int q = t / 1000;
   return note(arr(q) % (12*4), st);
     
@@ -100,6 +146,7 @@ double f(double t){
   while(n > 100) n -= 100;
   return (255/2)*(1+(n<25)*sin(t/2.0)+(n>=25&&n<50)*sin(fifth*t/2.0)+(n>=50&&n<75)*sin(third*t/2.0)+(n>=75)*sin(fifth*t/2.0));*/
 }
+#endif
 
 double mint = 0;
 double maxt; // = COLS
@@ -271,3 +318,4 @@ int main(int argc, char ** argv){
   
   return 0;
 }
+
