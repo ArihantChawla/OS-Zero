@@ -137,11 +137,14 @@ typedef pthread_mutex_t LK_T;
 //#include <mach/param.h>
 
 /* experimental */
+#if 0
 #if (PTRBITS > 32)
 #define TUNEBUF 0
 #else
 #define TUNEBUF 1
 #endif
+#endif
+#define TUNEBUF 1
 
 /* basic allocator parameters */
 #if (HACKS)

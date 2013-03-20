@@ -63,6 +63,8 @@ cpunkinitcolors(void)
     textcolortab[CPUNK_WELL] = CPUNK_BLUE_TEXT;
     textcolortab[CPUNK_FOOD] = CPUNK_GREEN_TEXT;
 }
+
+
 int
 main(int argc, char *argv[])
 {
@@ -80,11 +82,13 @@ main(int argc, char *argv[])
         for (y = 0 ; y < CPUNK_LEVEL_HEIGHT ; y++) {
             for (x = 0 ; x < CPUNK_LEVEL_WIDTH ; x++) {
                 uc = level->items[y][x];
+                if (uc) {
 #if 0
-                fprintf(stderr, "%c", uc);
+                    fprintf(stderr, "%c", uc);
 #endif
-                fprintf(stderr, "%s%c%s",
-                        textcolortab[uc], uc, "\033[37;m");
+                    fprintf(stderr, "%s%c%s",
+                            textcolortab[uc], uc, "\033[37;m");
+                }
             }
             fprintf(stderr, "\n");
         }

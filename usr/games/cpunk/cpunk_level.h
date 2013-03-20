@@ -6,7 +6,7 @@ struct cpunklevel * cpunknewlevel(void);
 #define CPUNK_LEVEL_WIDTH  80
 #define CPUNK_LEVEL_HEIGHT 24
 struct cpunklevel {
-    char items[CPUNK_LEVEL_HEIGHT][CPUNK_LEVEL_WIDTH];
+    unsigned char items[CPUNK_LEVEL_HEIGHT][CPUNK_LEVEL_WIDTH];
 };
 
 #endif /* __CPUNK_LEVEL_H__ */

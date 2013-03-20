@@ -1,7 +1,9 @@
 #ifndef __GAMES_DICE_H__
 #define __GAMES_DICE_H__
 
+#if !defined(DICE_SRAND_TIME)
 #define DICE_SRAND_TIME 0 /* timestamp-seed every roll */
+#endif
 
 /* standard D20 dice set */
 #define DICE_1D4  4
@@ -17,22 +19,23 @@
 
 #if (DICE_SRAND_TIME)
 #include <time.h>
-#define rolld(val) (srand(time(NULL)), rand() % (val))
-#define rolldn(n, val)                                                  \
-    (srandk(time(NULL)), randk() % (n * (val)))
+#define diceroll(val) (srand(time(NULL)), (rand() % (val)) + 1)
+#define dicerolln(n, val)                                               \
+    (srand(time(NULL)), (rand() % (n * (val))) + 1)
 #else
-#define rolld(val) (randk() % (val))
-#define rolldn(n, val)                                                  \
-    (randk() % (n * (val)))
+#define diceroll(val) ((rand() % (val)) + 1)
+#define dicerolln(n, val)                                               \
+    ((rand() % (n * (val))) + 1)
 #endif
 
+/* roll buffer for d20 dice set */
 struct diced20 {
-    unsigned long nd4;
-    unsigned long nd6;
-    unsigned long nd8;
-    unsigned long nd10;
-    unsigned long nd12;
-    unsigned long nd20;
+    unsigned long nd4;  /* count of 4-side dice */
+    unsigned long nd6;  /* count of 6-side dice */
+    unsigned long nd8;  /* count of 8-side dice */
+    unsigned long nd10; /* count of 10-side dice */
+    unsigned long nd12; /* count of 12-side dice */
+    unsigned long nd20; /* count of 20-side dice */
 };
 
 #endif /* __GAMES_DICE_H__ */

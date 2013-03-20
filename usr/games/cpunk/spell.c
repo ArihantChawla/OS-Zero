@@ -1,7 +1,8 @@
 #include <stddef.h>
 #include <stdio.h>
+#include <stdlib.h>
 #include <zero/trix.h>
-#include <zero/randk.h>
+//#include <zero/randk.h>
 #include <dice.h>
 #include <cpunk_character.h>
 #include <cpunk_spell.h>
@@ -35,7 +36,7 @@ cpunkheal(struct cpunkcharacter *healer, struct cpunkcharacter *target)
 {
     long power = 0;
 
-    power = rolld(DICE_1D20);
+    power = diceroll(DICE_1D20);
     if (healer->race == CPUNK_RACE_WIZARD) {
         power += (healer->exp >> 8) & 0xff;
     }
@@ -69,7 +70,7 @@ cpunkresurrect(struct cpunkcharacter *healer, struct cpunkcharacter *target)
         return 0;
     }
 
-    power = rolld(DICE_1D12);
+    power = diceroll(DICE_1D12);
     if (healer->race == CPUNK_RACE_WIZARD) {
         power += (healer->exp >> 8) & 0xff;
     }

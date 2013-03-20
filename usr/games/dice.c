@@ -61,37 +61,28 @@ diceinit(unsigned int seed)
     return;
 }
 
-int
-diceroll(int level)
-{
-    int val = (1U << diceshift(level)) - 1;
-    int res = rand() & val;
-
-    return res;
-}
-
 unsigned long
 dicerolld20(struct diced20 *rollbuf)
 {
     long retval = 0;
 
     if (rollbuf->nd4) {
-        retval += rollbuf->nd4 * rolld(DICE_1D4);
+        retval += rollbuf->nd4 * diceroll(DICE_1D4);
     }
     if (rollbuf->nd6) {
-        retval += rollbuf->nd6 * rolld(DICE_1D6);
+        retval += rollbuf->nd6 * diceroll(DICE_1D6);
     }
     if (rollbuf->nd8) {
-        retval += rollbuf->nd8 * rolld(DICE_1D8);
+        retval += rollbuf->nd8 * diceroll(DICE_1D8);
     }
     if (rollbuf->nd10) {
-        retval += rollbuf->nd10 * rolld(DICE_1D10);
+        retval += rollbuf->nd10 * diceroll(DICE_1D10);
     }
     if (rollbuf->nd12) {
-        retval += rollbuf->nd12 * rolld(DICE_1D12);
+        retval += rollbuf->nd12 * diceroll(DICE_1D12);
     }
     if (rollbuf->nd20) {
-        retval += rollbuf->nd20 * rolld(DICE_1D20);
+        retval += rollbuf->nd20 * diceroll(DICE_1D20);
     }
 
     return retval;
@@ -112,18 +103,18 @@ main(int argc, char *argv[])
     fprintf(stderr, "DICE: %lu\n", retval);
 
     fprintf(stderr, "%dd%d : %d\n",
-            8, 6, rolldn(8, 6));
+            8, 6, dicerolln(8, 6));
     fprintf(stderr, "%dd%d : %d\n",
-            4, 32, rolldn(4, 32));
+            4, 32, dicerolln(4, 32));
     fprintf(stderr, "%dd%d : %d\n",
-            8, 64, rolldn(8, 64));
+            8, 64, dicerolln(8, 64));
 
-    fprintf(stderr, "1d4: %d\n", rolld(DICE_1D4));
-    fprintf(stderr, "1d6: %d\n", rolld(DICE_1D6));
-    fprintf(stderr, "1d8: %d\n", rolld(DICE_1D8));
-    fprintf(stderr, "1d10: %d\n", rolld(DICE_1D10));
-    fprintf(stderr, "1d12: %d\n", rolld(DICE_1D12));
-    fprintf(stderr, "1d20: %d\n", rolld(DICE_1D20));
+    fprintf(stderr, "1d4: %d\n", diceroll(DICE_1D4));
+    fprintf(stderr, "1d6: %d\n", diceroll(DICE_1D6));
+    fprintf(stderr, "1d8: %d\n", diceroll(DICE_1D8));
+    fprintf(stderr, "1d10: %d\n", diceroll(DICE_1D10));
+    fprintf(stderr, "1d12: %d\n", diceroll(DICE_1D12));
+    fprintf(stderr, "1d20: %d\n", diceroll(DICE_1D20));
 
     exit(retval);
 }

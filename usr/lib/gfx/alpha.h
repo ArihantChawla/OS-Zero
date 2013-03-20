@@ -1,8 +1,7 @@
 #ifndef __GFX_ALPHA_H__
 #define __GFX_ALPHA_H__
 
-#include <gfx/pix.h>
-#include <gfx/blend.h>
+#include <gfx/rgb.h>
 
 #define __INTEL_MMX__ 1
 #if (__INTEL_MMX__)
@@ -16,7 +15,7 @@
 #define gfxalphablendcfast(src, dest, a)                                 \
     ((dest) + gfxdiv256(((src) - (dest)) * (a)))
 #define gfxalphablendchiq(src, dest, a)                                 \
-    ((dest) + gfxdiv2566(((src) - (dest)) * (a)))
+    ((dest) + gfxdiv255(((src) - (dest)) * (a)))
 
 #define gfxalphablendhiq(src, dest, aval)                               \
     do {                                                                \

@@ -49,21 +49,21 @@ cpunknewchar(char *name, long race)
         strncpy(newchar->name, name, CPUNK_NAME_LEN);
     }
     newchar->race = race;
-    newchar->intel = rolld(DICE_1D20);
-    newchar->maxhit = rolld(DICE_1D20);
-    newchar->hit = max(rolld(DICE_1D20), newchar->maxhit);
-    newchar->maxnrg = rolld(DICE_1D20);
-    newchar->nrg = max(rolld(DICE_1D20), newchar->maxnrg);
+    newchar->intel = diceroll(DICE_1D20);
+    newchar->maxhit = diceroll(DICE_1D20);
+    newchar->hit = max(diceroll(DICE_1D20), newchar->maxhit);
+    newchar->maxnrg = diceroll(DICE_1D20);
+    newchar->nrg = max(diceroll(DICE_1D20), newchar->maxnrg);
     newchar->exp = 0;
-    newchar->charm = rolld(DICE_1D20);
-    newchar->karma = rolld(DICE_1D20);
-    newchar->stam = rolld(DICE_1D20);
-    newchar->magic = rolld(DICE_1D20);
-    newchar->code = rolld(DICE_1D20);
-    newchar->crypt = rolld(DICE_1D20);
-    newchar->reveng = rolld(DICE_1D20);
-    newchar->ice = rolld(DICE_1D20);
-    newchar->mart = rolld(DICE_1D20);
+    newchar->charm = diceroll(DICE_1D20);
+    newchar->karma = diceroll(DICE_1D20);
+    newchar->stam = diceroll(DICE_1D20);
+    newchar->magic = diceroll(DICE_1D20);
+    newchar->code = diceroll(DICE_1D20);
+    newchar->crypt = diceroll(DICE_1D20);
+    newchar->reveng = diceroll(DICE_1D20);
+    newchar->ice = diceroll(DICE_1D20);
+    newchar->mart = diceroll(DICE_1D20);
 
     return newchar;
 };

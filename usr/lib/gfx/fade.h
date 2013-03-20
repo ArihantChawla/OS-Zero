@@ -1,7 +1,7 @@
 #ifndef __GFX_FADE_H__
 #define __GFX_FADE_H__
 
-#include <gfx/pix.h>
+#include <gfx/rgb.h>
 
 /* basic version */
 
