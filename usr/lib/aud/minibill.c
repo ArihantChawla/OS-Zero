@@ -134,17 +134,8 @@ double f(double t){
   //return (255.0 / 2.0) * (1.0 + sin(t / 4.0));
 
   int q = t / 1000;
+
   return note(arr(q) % (12*4), st);
-    
-  /*int n = t / 200;
-  while(n < 0)   n += 200;
-  while(n > 200) n -= 200;
-  return 255/6.0*(3+sin(st)+((n>100)?sin(third*st):sin(tone*semi*st))+sin(fifth*st));*/
-  
-  /*int n = t / 100;
-  while(n < 0)   n += 100;
-  while(n > 100) n -= 100;
-  return (255/2)*(1+(n<25)*sin(t/2.0)+(n>=25&&n<50)*sin(fifth*t/2.0)+(n>=50&&n<75)*sin(third*t/2.0)+(n>=75)*sin(fifth*t/2.0));*/
 }
 #endif
 
