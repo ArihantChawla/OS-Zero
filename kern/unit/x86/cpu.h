@@ -7,12 +7,6 @@
 #include <zero/param.h>
 #include <zero/types.h>
 
-#if (SMP)
-#define NCPU 8
-#else
-#define NCPU 1
-#endif
-
 #define CPUHASFXSR 0x00000001
 
 struct m_cpucache {

@@ -1,6 +1,13 @@
 #ifndef __KERN_CONF_H__
 #define __KERN_CONF_H__
 
+#define SMP       0      // enable multiprocessor support; currently broken
+#if (SMP)
+#define NCPU      8
+#else
+#define NCPU      1
+#endif
+
 #define GFXWIDTH  1024
 #define GFXHEIGHT 768
 #define GFXDEPTH  24
@@ -11,7 +18,6 @@
 
 #define DEVEL    1      // debugging
 
-#define SMP      0      // enable multiprocessor support
 #define PS2DRV   1      // enable PS/2 mouse and keyboard drivers
 
 #define NPROC    256    // maximum number of running processes

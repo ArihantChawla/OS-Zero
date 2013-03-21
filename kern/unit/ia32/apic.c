@@ -3,8 +3,8 @@
 
 #if (SMP)
 
+#include <kern/unit/x86/trap.h>
 #include <kern/unit/ia32/link.h>
-#include <kern/unit/ia32/trap.h>
 #include <kern/unit/ia32/vm.h>
 #include <kern/unit/ia32/io.h>
 #include <kern/unit/ia32/apic.h>
