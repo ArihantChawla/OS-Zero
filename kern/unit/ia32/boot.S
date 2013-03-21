@@ -1,4 +1,5 @@
 #define __ASSEMBLY__ 1
+#include <kern/conf.h>
 #include <kern/unit/ia32/boot.h>
 
 /* GRUB support */
@@ -33,9 +34,9 @@ mboothdr:
 .long	0	// bss_end_addr
 .long	0	// entry_addr
 .long	0	// video mode type (linear)
-.long	1024	// video width
-.long	768	// video height
-.long	24	// video depth
+.long	GFXWIDTH	// video width
+.long	GFXHEIGHT	// video height
+.long	GFXDEPTH	// video depth
 #endif
 
 	/* kernel startup */
@@ -50,9 +51,6 @@ _start2:
 /* IDT; interrupt descriptor table; shared between processors */
 kernidt:
 	.space	NBPG
-/* per-CPU GDTs; kernel segment descriptor tables */
-kerngdt:
-	.space	NBPG
 /* page directory index page */
 kernpagedir:
 	.space	NBPG
@@ -60,3 +58,21 @@ kernpagedir:
 kerniomap:
 	.space	8192
 
+/* per-CPU GDTs; kernel segment descriptor tables */
+.align	4096
+	
+#if (SMP)
+
+kerngdt:
+#if (NGDT < 16)
+	.space	(NCPU * 16)
+#else
+#error fix GDT size in boot.S
+#endif
+
+#else
+kerngdt:
+	.space	(8 * NGDT)
+
+#endif /* SMP */
+	

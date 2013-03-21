@@ -4,7 +4,7 @@ CFLAGS += -O0 -DQEMU=1 -g -DKERN32BIT=1 -D__KERNEL__=1 -D__MTKERNEL__ -m32 -ffre
 
 LDFLAGS += -nostdlib -nodefaultlibs -g -static -T kern.lds -m elf_i386
 
-: foreach *.S *.c ../../*.c ../x86/*.c ../../mem/*.c ../../io/drv/pc/*.c ../../io/drv/pc/ps2/*.c |> !cc |> %B.o
+: foreach ../x86/*.S *.S *.c ../../*.c ../x86/*.c ../../mem/*.c ../../io/drv/pc/*.c ../../io/drv/pc/ps2/*.c |> !cc |> %B.o
 
 : *.o |> !ld |> zero
 

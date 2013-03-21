@@ -11,7 +11,11 @@
 
 extern void gdtinit(void);
 
-extern uint64_t        kerngdt[NTHR][NGDT];
+#if (SMP)
+extern uint64_t        kerngdt[NCPU][NGDT];
+#else
+extern uint64_t        kerngdt[NGDT];
+#endif
 //extern struct m_tss    tsstab[NTHR];
 #if (SMP)
 extern struct m_cpu    mpcputab[NCPU];
@@ -31,7 +35,11 @@ seginit(long id)
     uint64_t        *gdt;
 
     /* set descriptors */
+#if (SMP)
     gdt = &kerngdt[id][0];
+#else
+    gdt = kerngdt;
+#endif
     segsetdesc(&gdt[TEXTSEG], 0, NPAGEMAX - 1,
                SEGCODE);
     segsetdesc(&gdt[DATASEG], 0, NPAGEMAX - 1,
