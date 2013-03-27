@@ -1,0 +1,110 @@
+Zero System Call Interface
+Revision 0.1
+
+Notes
+-----
+- networking/socket support shall be added after the system is implemented
+  for simple desktop use
+
+Process Interface
+-----------------
+
+void halt(long flg);
+--------------------
+- halt or reboot computer; optionally save machine state
+- the flg may be zero or a combination of the bits HALT_REBOOT and
+  HALT_HIBERNATE
+
+
+long exit(long val, long flg);
+------------------------------
+- terminate process and return a value to the parent
+- val is the value returned to the parent process such as a shell
+- flg may be a combination of the bits EXIT_PRINTPRES and EXIT_DUMPRES
+
+void abort(void);
+-----------------
+- abort process and optionally produce a core-dump
+
+long fork(long flg);
+--------------------
+- start a new process
+- returns 0 for child process, child process ID for parent
+- flg may be a combination of the bits FORK_COW and FORK_VFORK
+
+long exec(char *path, char *argv[], char *env[]);
+-------------------------------------------------
+- path is a path for the file to be executed
+- argv is a NULL-terminated array of argument strings
+- env is a NULL-terminated array of environment-variable strings
+
+long throp(long cmd, long parm, void *arg);
+-------------------------------------------
+- long is one of
+  - THR_NEW	- start new thread
+    - pthread_create()
+  - THR_JOIN	- join a thread (wait for termination)
+  - THR_DETACH	- detach current thread
+
+ * process interface
+ * -----------------
+ * long pctl(long cmd, long parm, void *arg);
+ * long sigop(long pid, long cmd, void *arg);
+ *
+ * memory interface
+ * ----------------
+ * long  brk(void *adr);
+ * void *map(long desc, long flg, struct memreg *arg);
+ * - map file or anonymous memory
+ * long  umap(void *adr, size_t size);
+ * - unmap file or anonymous memory
+ * long  mhint(void *adr, long flg, struct memreg *arg);
+ * - NORMAL, RANDOM, SEQUENTIAL, WILLNEED, DONTNEED, REMOVE, DONTFORK, DOFORK
+ * void *bmap(long desc, size_t size, long flg);
+ * - map buffer regions; MAPBUF
+ *
+ * shared memory
+ * -------------
+ * long  shmget(long key, size_t size, long flg);
+ * void *shmat(long id, void *adr, long flg);
+ * long  shmdt(void *adr);
+ * long  shmctl(long id, long cmd, void *arg);
+ *
+ * I/O interface
+ * -------------
+ * long mnt(char *path1, char *path2, void *arg);
+ * long umnt(char *path, long flg);
+ * long readdir(long desc, struct dirent *dirent, long count);
+ * long open(char *path, long flg, long mode);
+ * long trunc(char *path, off_t len);
+ * long close(long desc);
+ * long read(long desc, void *buf, size_t nb);
+ * long readv(long desc, long nargs, void *args);
+ * long write(long desc, void *buf, size_t nb);
+ * long writev(long desc, long nargs, void *args);
+ * long seek(long desc, off_t *ofs, long whence);
+ * long falloc(long desc, off_t *ofs, off_t *len);
+ * long stat(char *path, struct stat *buf, long flg);
+ * long readahead(int fd, off_t ofs, size_t count);
+ * long fhint(long desc, long flg, struct freg *arg);
+ * - NORMAL, SEQUENTIAL, RANDOM, WILLNEED, DONTNEED, NOREUSE
+ * long ioctl(long desc, long cmd, void *arg);
+ * long fctl(long desc, long cmd, void *arg);
+ * long poll(struct pollfd *fds, long nfd, long timeout);
+ * long select(long nfds, struct select *args);
+ */
+
+/*
+ * special files
+ * -------------
+ * /dev/null
+ * /dev/zero
+ * /dev/con
+ * /dev/fifo
+ * /dev/sock
+ * /dev/mtx
+ * /dev/sem
+ * /dev/rwlk
+ * /dev/mq
+ */
+

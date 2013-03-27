@@ -18,7 +18,7 @@
  * long exit(long val, long flg);
  * void abort(void);
  * long fork(long flg);
- * long exec(char *file, char *argv[], char *env[]);
+ * long exec(char *path, char *argv[], char *env[]);
  * long throp(long cmd, long parm, void *arg);
  * long pctl(long cmd, long parm, void *arg);
  * long sigop(long pid, long cmd, void *arg);
@@ -83,31 +83,31 @@
 /* process system calls */
 
 /* halt() flags */
-#define HALT_REBOOT     0x01U   // reboot()
+#define HALT_REBOOT      1   // reboot()
 
 /* exit() flags */
-#define EXIT_SYNC       0x01U   // synchronize standard descriptors
-#define EXIT_PROFRES    0x02U   // print resource usage statistics
+#define EXIT_PRINTRES   0x01U   // print resource usage statistics
+#define EXIT_DUMPRES    0x02U
 
 /* fork() flags */
-#define FORK_COPYONWR   0x01U   // copy on write
-#define FORK_SHARMEM    0x02U   // vfork()
+#define FORK_COW        0x01U   // copy on write
+#define FORK_VFORK      0x02U   // vfork()
 
 /* thread interface */
 
+/* TODO: move MTX, SEM, and COND operations under IPC
+
 /* throp() commands */
-#define THR_NEW         0x01    // pthread_create()
-#define THR_JOIN        0x02    // pthread_join()
-#define THR_DETACH      0x03    // pthread_detach()
-#define THR_EXIT        0x04    // pthread_exit()
-#define THR_MTXOP       0x05    // create, destroy, trylock, lock, unlock
-#define THR_CLEANOP     0x06    // cleanup; pop and execute handlers etc.
-#define THR_KEYOP       0x07    // create, delete
-#define THR_CONDOP      0x08    // condition operations (signal, broadcast, ...)
-#define THR_SYSOP       0x09    // atfork, sigmask, sched, scope
-#define THR_STKOP       0x0a    // stack; addr, size, guardsize
-#define THR_RTOP        0x0b    // realtime thread settings
-#define THR_SETATTR     0x0c    // set other attributes
+#define THR_NEW          1      // pthread_create()
+#define THR_JOIN         2      // pthread_join()
+#define THR_DETACH       3      // pthread_detach()
+#define THR_EXIT         4      // pthread_exit()
+#define THR_CLEANUP      5      // cleanup; pop and execute handlers etc.
+#define THR_KEYOP        6      // create, delete
+#define THR_SYSOP        7      // atfork, sigmask, sched, scope
+#define THR_STKOP        8      // stack; addr, size, guardsize
+#define THR_RTOP         9      // realtime thread settings
+#define THR_SETATTR     10      // set other attributes
 
 /* pctl() commands */
 #define PROC_GETPID     0x01    // getpid()

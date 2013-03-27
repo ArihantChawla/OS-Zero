@@ -1,6 +1,8 @@
 #ifndef __WPM_WPM_H__
 #define __WPM_WPM_H__
 
+#define WPMWORDSIZE 32
+
 #include <stdint.h>
 #include <zero/cdecl.h>
 #include <zero/param.h>
@@ -13,8 +15,12 @@
 #define THRSTKSIZE  (128 * 1024)
 #define WPMTEXTBASE 8192UL
 
+#if (WPMWORDSIZE == 32)
 typedef int32_t  wpmword_t;
 typedef uint32_t wpmuword_t;
+#else
+#error implement WPMWORDSIZE for non-32-bit setups
+#endif
 
 #if 0
 #define align(adr, p2)                                                  \
@@ -36,10 +42,10 @@ typedef uint32_t wpmuword_t;
 #define PAGEPRES   0x00000001
 
 /* machine status word */
-#define MSW_ZF     0x00000001
-#define MSW_CF     0x00000002
-#define MSW_OF     0x00000004
-#define MSW_SF     0x00000008
+#define MSWZF      0x00000001
+#define MSWCF      0x00000002
+#define MSWOF      0x00000004
+#define MSWSF      0x00000008
 
 /* the first 4096-byte page at 0x00000000 has interrupt handler addresses */
 #define TRAPTMR    0x00         // timer interrupt
@@ -116,8 +122,8 @@ typedef uint32_t wpmuword_t;
 #define OPHLT      0x2a // halt execution
 #define OPBRK      0x2b // breakpoint
 #define OPTRAP     0x2c // trigger a trap (software interrupt)
-#define OPCLI      0x2d // trigger a trap (software interrupt)
-#define OPSTI      0x2e // trigger a trap (software interrupt)
+#define OPCLI      0x2d // disable interrupts
+#define OPSTI      0x2e // enable interrupts
 #define OPIRET     0x2f // return from interrupt handler
 #define OPTHR      0x30 // start new thread at given address
 #define OPCMPSWAP  0x31 // atomic compare and swap

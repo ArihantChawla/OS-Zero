@@ -391,6 +391,10 @@ opnot(struct wpmopcode *op)
 #if (WPMDEBUG)
     fprintf(stderr, "%x\n", dest);
 #endif
+    wpm->cpustat.msw &= ~MSWZF;
+    if (!dest) {
+        wpm->cpustat.msw |= MSWZF;
+    }
     if (argt == ARGREG) {
         wpm->cpustat.regs[op->reg1] = dest;
     } else {
@@ -426,6 +430,10 @@ opand(struct wpmopcode *op)
 #if (WPMDEBUG)
     fprintf(stderr, "%x\n", dest);
 #endif
+    wpm->cpustat.msw &= ~MSWZF;
+    if (!dest) {
+        wpm->cpustat.msw |= MSWZF;
+    }
     if (argt2 == ARGREG) {
         wpm->cpustat.regs[op->reg2] = dest;
     } else if (argt1 == ARGREG) {
@@ -494,6 +502,10 @@ opxor(struct wpmopcode *op)
 #if (WPMDEBUG)
     fprintf(stderr, "%x\n", dest);
 #endif
+    wpm->cpustat.msw &= ~MSWZF;
+    if (!dest) {
+        wpm->cpustat.msw |= MSWZF;
+    }
     if (argt2 == ARGREG) {
         wpm->cpustat.regs[op->reg2] = dest;
     } else if (argt1 == ARGREG) {
@@ -522,7 +534,7 @@ opshr(struct wpmopcode *op)
                         ? op->args[0]
                         : op->args[1]));
 #if (!USEASM)
-    wpmuword_t sign = 0xffffffff >> cnt;
+    wpmuword_t sign = ~0L >> cnt;
 #endif
     
 #if (WPMDEBUG)
@@ -537,6 +549,10 @@ opshr(struct wpmopcode *op)
 #if (WPMDEBUG)
     fprintf(stderr, "%x\n", dest);
 #endif
+    wpm->cpustat.msw &= ~MSWZF;
+    if (!dest) {
+        wpm->cpustat.msw |= MSWZF;
+    }
     if (argt2 == ARGREG) {
         wpm->cpustat.regs[op->reg2] = dest;
     } else if (argt1 == ARGREG) {
@@ -564,24 +580,28 @@ opshra(struct wpmopcode *op)
                      : (argt1 == ARGREG
                         ? op->args[0]
                         : op->args[1]));
+#if (!USEASM)
+    wpmword_t  sign = (wpmuword_t)dest >> (CHAR_BIT * sizeof(wpmword_t) - 1);
+#endif
 
 #if (WPMDEBUG)
     fprintf(stderr, "SHRA: %x by %d\n", dest, cnt);
-#endif
-#if (!USEASM)
-    wpmuword_t sign = dest & 0x80000000;
 #endif
 
 #if (USEASM)
     asmshra(cnt, dest);
 #else
-    sign = (sign) ? 0xffffffff << (32 - cnt) : 0;
+    sign = -sign << (CHAR_BIT * sizeof(wpmword_t) - cnt);
     dest >>= cnt;
     dest |= sign;
 #endif
 #if (WPMDEBUG)
     fprintf(stderr, "%x\n", dest);
 #endif
+    wpm->cpustat.msw &= ~MSWZF;
+    if (!dest) {
+        wpm->cpustat.msw |= MSWZF;
+    }
     if (argt2 == ARGREG) {
         wpm->cpustat.regs[op->reg2] = dest;
     } else if (argt1 == ARGREG) {
@@ -599,16 +619,18 @@ opshl(struct wpmopcode *op)
 {
     uint_fast8_t argt1 = op->arg1t;
     uint_fast8_t argt2 = op->arg2t;
-    wpmword_t  cnt = (argt1 == ARGREG
-                    ? wpm->cpustat.regs[op->reg1]
-                    : (argt1 == ARGIMMED
-                       ? op->args[0]
-                       : memfetchl(op->args[0])));
-    wpmword_t  dest = (argt2 == ARGREG
-                     ? wpm->cpustat.regs[op->reg2]
-                     : (argt1 == ARGREG
-                        ? op->args[0]
-                        : op->args[1]));
+    wpmword_t    cnt = (argt1 == ARGREG
+                        ? wpm->cpustat.regs[op->reg1]
+                        : (argt1 == ARGIMMED
+                           ? op->args[0]
+                           : memfetchl(op->args[0])));
+    wpmword_t    dest = (argt2 == ARGREG
+                         ? wpm->cpustat.regs[op->reg2]
+                         : (argt1 == ARGREG
+                            ? op->args[0]
+                            : op->args[1]));
+    wpmword_t    of = dest & (~0L << (CHAR_BIT * sizeof(wpmword_t) - 1));
+    wpmword_t    cf = dest & (1L << (CHAR_BIT * sizeof(wpmword_t) - cnt));
     
 #if (WPMDEBUG)
     fprintf(stderr, "SHL: %x by %d\n", dest, cnt);
@@ -621,6 +643,12 @@ opshl(struct wpmopcode *op)
 #if (WPMDEBUG)
     fprintf(stderr, "%x\n", dest);
 #endif
+    wpm->cpustat.msw &= ~(MSWOF | MSWCF);
+    if (of) {
+        wpm->cpustat.msw |= MSWOF;
+    } else if (cf) {
+        wpm->cpustat.msw |= MSWCF;
+    }
     if (argt2 == ARGREG) {
         wpm->cpustat.regs[op->reg2] = dest;
     } else if (argt1 == ARGREG) {
@@ -649,9 +677,10 @@ opror(struct wpmopcode *op)
                         ? op->args[0]
                         : op->args[1]));
 #if (!USEASM)
-    wpmuword_t mask = 0xffffffff >> (32 - cnt);
+    wpmuword_t mask = ~0L >> (CHAR_BIT * sizeof(wpmuword_t) - cnt);
     wpmuword_t bits = dest & mask;
 #endif
+    wpmword_t  cf = dest & (1L << (cnt - 1));
 
 #if (WPMDEBUG)
     fprintf(stderr, "ROR: 0x%08x, %d - ", dest, cnt);
@@ -659,13 +688,17 @@ opror(struct wpmopcode *op)
 #if (USEASM)
     asmror(cnt, dest);
 #else
-    bits <<= 32 - cnt;
+    bits <<= CHAR_BIT * sizeof(wpmuword_t) - cnt;
     dest >>= cnt;
     dest |= bits;
 #endif
 #if (WPMDEBUG)
     fprintf(stderr, "%x\n", dest);
 #endif
+    wpm->cpustat.msw &= ~MSWCF;
+    if (cf) {
+        wpm->cpustat.msw |= MSWCF;
+    }
     if (argt2 == ARGREG) {
         wpm->cpustat.regs[op->reg2] = dest;
     } else if (argt1 == ARGREG) {
@@ -694,9 +727,10 @@ oprol(struct wpmopcode *op)
                         ? op->args[0]
                         : op->args[1]));
 #if (!USEASM)
-    wpmuword_t mask = 0xffffffff << (32 - cnt);
+    wpmuword_t mask = ~0L << (CHAR_BIT * sizeof(wpmuword_t) - cnt);
     wpmuword_t bits = dest & mask;
 #endif
+    wpmword_t  cf = dest & (1L << (CHAR_BIT * sizeof(wpmword_t) - cnt));
 
 #if (WPMDEBUG)
     fprintf(stderr, "ROL: 0x%08x, %d - ", dest, cnt);
@@ -704,13 +738,17 @@ oprol(struct wpmopcode *op)
 #if (USEASM)
     asmrol(cnt, dest);
 #else
-    bits >>= 32 - cnt;
+    bits >>= CHAR_BIT * sizeof(wpmuword_t) - cnt;
     dest <<= cnt;
     dest |= bits;
 #endif
 #if (WPMDEBUG)
     fprintf(stderr, "%x\n", dest);
 #endif
+    wpm->cpustat.msw &= ~MSWCF;
+    if (cf) {
+        wpm->cpustat.msw |= MSWCF;
+    }
     if (argt2 == ARGREG) {
         wpm->cpustat.regs[op->reg2] = dest;
     } else if (argt1 == ARGREG) {
@@ -727,18 +765,23 @@ void
 opinc(struct wpmopcode *op)
 {
     uint_fast8_t argt = op->arg1t;
-    wpmword_t  dest = (argt == ARGREG
-                     ? wpm->cpustat.regs[op->reg1]
-                     : op->args[0]);
+    wpmword_t    dest = (argt == ARGREG
+                         ? wpm->cpustat.regs[op->reg1]
+                         : op->args[0]);
+    wpmword_t    of = (dest == ~0L);
     
     if (!~dest) {
-        wpm->cpustat.msw |= MSW_OF;
+        wpm->cpustat.msw |= MSWOF;
     }
 #if (USEASM)
     asminc(dest);
 #else
     dest++;
 #endif
+    wpm->cpustat.msw &= ~MSWOF;
+    if (of) {
+        wpm->cpustat.msw |= MSWOF;
+    }
     if (argt == ARGREG) {
         wpm->cpustat.regs[op->reg1] = dest;
     } else {
@@ -753,17 +796,21 @@ void
 opdec(struct wpmopcode *op)
 {
     uint_fast8_t argt = op->arg1t;
-    wpmword_t  dest = (argt == ARGREG
-                     ? wpm->cpustat.regs[op->reg1]
-                     : op->args[0]);
+    wpmword_t    dest = (argt == ARGREG
+                         ? wpm->cpustat.regs[op->reg1]
+                         : op->args[0]);
+    wpmword_t    of = !dest;
 
 #if (USEASM)
     asmdec(dest);
 #else
     dest--;
 #endif
-    if (!dest) {
-        wpm->cpustat.msw |= MSW_ZF;
+    wpm->cpustat.msw &= ~(MSWZF | MSWOF);
+    if (of) {
+        wpm->cpustat.msw |= MSWOF;
+    } else if (!dest) {
+        wpm->cpustat.msw |= MSWZF;
     }
     if (argt == ARGREG) {
         wpm->cpustat.regs[op->reg1] = dest;
@@ -788,12 +835,26 @@ opadd(struct wpmopcode *op)
                          : (argt1 == ARGREG
                             ? op->args[0]
                             : op->args[1]));
+    wpmword_t    tmp = dest;
+    wpmword_t    of;
 
 #if (USEASM)
     asmadd(src, dest);
 #else
     dest += src;
 #endif
+    wpm->cpustat.msw &= ~(MSWZF | MSWSF | MSWOF);
+    of = ((((tmp ^ src)
+            ^ (1L << (CHAR_BIT * sizeof(wpmword_t) - 1)))
+           & (dest ^ src))
+          & (1L << (CHAR_BIT * sizeof(wpmword_t) - 1)));
+    if (of) {
+        wpm->cpustat.msw |= MSWOF;
+    } else if (!dest) {
+        wpm->cpustat.msw |= MSWZF;
+    } else if (dest & (1L << (CHAR_BIT * sizeof(wpmword_t) - 1))) {
+        wpm->cpustat.msw |= MSWSF;
+    }
     if (argt2 == ARGREG) {
         wpm->cpustat.regs[op->reg2] = dest;
     } else if (argt1 == ARGREG) {
@@ -823,6 +884,12 @@ opsub(struct wpmopcode *op)
 #else
     dest -= src;
 #endif
+    wpm->cpustat.msw &= ~(MSWZF | MSWSF);
+    if (dest & (1L << (CHAR_BIT * sizeof(wpmword_t) - 1))) {
+        wpm->cpustat.msw |= MSWSF;
+    } else if (!dest) {
+        wpm->cpustat.msw |= MSWZF;
+    }
     if (argt2 == ARGREG) {
         wpm->cpustat.regs[op->reg2] = dest;
     } else if (argt1 == ARGREG) {
@@ -851,11 +918,11 @@ opcmp(struct wpmopcode *op)
 #if (WPMDEBUG)
     fprintf(stderr, "CMP: %x, %x\n", src, dest);
 #endif
-    msw &= ~(MSW_ZF | MSW_SF);
+    msw &= ~(MSWZF | MSWSF);
     if (src < dest) {
-        msw |= MSW_SF;
+        msw |= MSWSF;
     } else if (src == dest) {
-        msw |= MSW_ZF;
+        msw |= MSWZF;
     }
     wpm->cpustat.msw = msw;
     wpm->cpustat.pc += op->size << 2;
@@ -863,6 +930,10 @@ opcmp(struct wpmopcode *op)
     return;
 }
 
+/*
+ * NOTE: better logic will need to be implemented to detect overflow in beyond
+ * 32-bit.
+ */
 void
 opmul(struct wpmopcode *op)
 {
@@ -876,11 +947,30 @@ opmul(struct wpmopcode *op)
                          : (argt1 == ARGREG
                             ? op->args[0]
                             : op->args[1]));
+#if (WPMWORDSIZE == 32)
+    int64_t      res64;
+    int64_t      tmp;
+#endif
 
 #if (USEASM)
     asmmul(src, dest);
 #else
     dest *= src;
+#endif
+#if (WPMWORDSIZE == 32)
+    wpm->cpustat.msw &= ~(MSWOF | MSWSF | MSWZF);
+    res64 = (int64_t)dest * (int64_t)src;
+    tmp = abs(res64);
+    if (tmp > UINT32_MAX || (res64 < 0 && tmp == UINT32_MAX)) {
+        wpm->cpustat.msw |= MSWOF;
+    }
+    if (!dest) {
+        wpm->cpustat.msw |= MSWZF;
+    } else if (dest < 0) {
+        wpm->cpustat.msw |= MSWSF;
+    }
+#else
+#error WPMWORDSIZE != 32
 #endif
     if (argt2 == ARGREG) {
         wpm->cpustat.regs[op->reg2] = dest;
@@ -927,6 +1017,12 @@ opdiv(struct wpmopcode *op)
         dest /= src;
 #endif
     }
+    wpm->cpustat.msw &= ~(MSWSF | MSWZF);
+    if (dest < 0) {
+        wpm->cpustat.msw |= MSWSF;
+    } else if (!dest) {
+        wpm->cpustat.msw |= MSWZF;
+    }
     if (argt2 == ARGREG) {
         wpm->cpustat.regs[op->reg2] = dest;
     } else if (argt1 == ARGREG) {
@@ -970,7 +1066,7 @@ opmod(struct wpmopcode *op)
 void
 opbz(struct wpmopcode *op)
 {
-    if (wpm->cpustat.msw & MSW_ZF) {
+    if (wpm->cpustat.msw & MSWZF) {
         uint_fast8_t argt = op->arg1t;
         wpmword_t    dest = (argt == ARGREG
                              ? wpm->cpustat.regs[op->reg1]
@@ -986,7 +1082,7 @@ opbz(struct wpmopcode *op)
 void
 opbnz(struct wpmopcode *op)
 {
-    if (!(wpm->cpustat.msw & MSW_ZF)) {
+    if (!(wpm->cpustat.msw & MSWZF)) {
         uint_fast8_t argt = op->arg1t;
         wpmword_t    dest = (argt == ARGREG
                              ? wpm->cpustat.regs[op->reg1]
@@ -1002,7 +1098,7 @@ opbnz(struct wpmopcode *op)
 void
 opblt(struct wpmopcode *op)
 {
-    if (wpm->cpustat.msw & MSW_SF) {
+    if (wpm->cpustat.msw & MSWSF) {
         uint_fast8_t argt = op->arg1t;
         wpmword_t    dest = (argt == ARGREG
                              ? wpm->cpustat.regs[op->reg1]
@@ -1018,7 +1114,7 @@ opblt(struct wpmopcode *op)
 void
 opble(struct wpmopcode *op)
 {
-    if (wpm->cpustat.msw & MSW_SF || wpm->cpustat.msw & MSW_ZF) {
+    if ((wpm->cpustat.msw & MSWSF) || (wpm->cpustat.msw & MSWZF)) {
         uint_fast8_t argt = op->arg1t;
         wpmword_t    dest = (argt == ARGREG
                              ? wpm->cpustat.regs[op->reg1]
@@ -1034,7 +1130,7 @@ opble(struct wpmopcode *op)
 void
 opbgt(struct wpmopcode *op)
 {
-    if (!(wpm->cpustat.msw & MSW_SF) && !(wpm->cpustat.msw & MSW_ZF)) {
+    if (!(wpm->cpustat.msw & MSWSF) && !(wpm->cpustat.msw & MSWZF)) {
         uint_fast8_t argt = op->arg1t;
         wpmword_t    dest = (argt == ARGREG
                              ? wpm->cpustat.regs[op->reg1]
@@ -1050,7 +1146,7 @@ opbgt(struct wpmopcode *op)
 void
 opbge(struct wpmopcode *op)
 {
-    if (!(wpm->cpustat.msw & MSW_SF)) {
+    if (!(wpm->cpustat.msw & MSWSF) || (wpm->cpustat.msw & MSWZF)) {
         uint_fast8_t argt = op->arg1t;
         wpmword_t    dest = (argt == ARGREG
                              ? wpm->cpustat.regs[op->reg1]
@@ -1066,7 +1162,7 @@ opbge(struct wpmopcode *op)
 void
 opbo(struct wpmopcode *op)
 {
-    if (wpm->cpustat.msw & MSW_OF) {
+    if (wpm->cpustat.msw & MSWOF) {
         uint_fast8_t argt = op->arg1t;
         wpmword_t    dest = (argt == ARGREG
                              ? wpm->cpustat.regs[op->reg1]
@@ -1082,7 +1178,7 @@ opbo(struct wpmopcode *op)
 void
 opbno(struct wpmopcode *op)
 {
-    if (!(wpm->cpustat.msw & MSW_OF)) {
+    if (!(wpm->cpustat.msw & MSWOF)) {
         uint_fast8_t argt = op->arg1t;
         wpmword_t    dest = (argt == ARGREG
                              ? wpm->cpustat.regs[op->reg1]
@@ -1098,7 +1194,7 @@ opbno(struct wpmopcode *op)
 void
 opbc(struct wpmopcode *op)
 {
-    if (wpm->cpustat.msw & MSW_CF) {
+    if (wpm->cpustat.msw & MSWCF) {
         uint_fast8_t argt = op->arg1t;
         wpmword_t    dest = (argt == ARGREG
                              ? wpm->cpustat.regs[op->reg1]
@@ -1114,7 +1210,7 @@ opbc(struct wpmopcode *op)
 void
 opbnc(struct wpmopcode *op)
 {
-    if (!(wpm->cpustat.msw & MSW_CF)) {
+    if (!(wpm->cpustat.msw & MSWCF)) {
         uint_fast8_t argt = op->arg1t;
         wpmword_t    dest = (argt == ARGREG
                              ? wpm->cpustat.regs[op->reg1]

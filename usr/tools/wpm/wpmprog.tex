@@ -3,12 +3,14 @@
 \usepackage{parskip}
 %\usepackage{listings}
 \usepackage{fancyvrb}
+\usepackage{hyperref}
 %\lstset{language=C, showspaces=false, breaklines=false}
+\hypersetup{backref, colorlinks=true, linkcolor=blue}
 
 \begin{document}
 
 \title{\LARGE{Wizard Pseudo Machine} \\*
-       \large{Volume One, Programmer's Guide, revision 0.0.9}}
+       \large{Volume One, Programmer's Guide, revision 0.0.10}}
 \author{Tuomo Petteri Venäläinen}
 \date{\today}
 \maketitle
@@ -25,8 +27,8 @@
 
 	\textbf{Brief}
 
-	Wizard Pseudo Machine is a software-based virtual machine. It can be
-	programmed in its own instruction set / assembly dialect, using AT\&T
+	Wizard Pseudo Machine, WPM, is a software-based virtual machine. It can
+	be programmed in its own instruction set / assembly dialect, using AT\&T
 	syntax assembly. The incorporated assembler (\textbf{zas}) does not yet
 	support	pretranslated objects, but translates assembly code into
 	bytecode on-the-fly. This bytecode is then handled to the pseudo machine
@@ -54,6 +56,14 @@
 	things to happen in the near future. :)
 
 \chapter{Changes}
+
+	\textbf{0.0.10}
+
+\begin{itemize}
+	\item{added section \textbf{Instruction Reference} along with CPU-flag
+	management by some instructions}
+	\item{added PDF-index and hyperlink-TOC}
+\end{itemize}
 
 	\textbf{0.0.9}
 
@@ -119,6 +129,9 @@
 
 \chapter{Architecture}
 
+	Wizard Pseudo Machine is an architecture with 32-bit machine words;
+	however, room has been left in the implementation for 64-bit suppport.
+
 	The pseudo machine supports flat 4-gigabyte address space, of which some
 	is mapped for interrupt vector, interrupt handlers, thread and
 	interrupt stacks, graphics, and other purposes.
@@ -147,7 +160,7 @@
 	\hline
 	Address         & Purpose          & Brief \\
 	\hline
-	0               & interrupt vector & interrupt handler function pointers \\
+	0               & interrupt vector & interrupt handler descriptors \\
 	4096            & keyboard buffer  & keyboard input queue \\
 	8192            & text segment     & application program code (read-execute) \\
 	8192 + TEXTSIZE & data segment     & program data (read-write) \\
@@ -159,10 +172,78 @@
 
 \begin{itemize}
 	\item{the VM's memory size is currently specified as \textbf{MEMSIZE}}
-	\item{thread stacks live at \textbf{MEMSIZE - thrid * THRSTKSIZE}}
+	\item{thread stacks live at \textbf{MEMSIZE - thrid * THRSTKSIZE}, i.e.
+	at top of [virtual] address space}
 \end{itemize}
 
 \chapter{Instruction Set}
+
+	The WPM instruction set was designed to resemble the C language closely,
+	as well as support a RISC-oriented set of typical machine operations.
+
+\section{Instruction Reference}
+
+\begin{tabular}{| l | l | l | l | l |}
+	\hline
+	Mnemonic     & Operand \#1 & Operand \#2 & Brief & Flags \\
+	\hline
+	\textbf{not} & r & N/A & op1 = ~op1; & z \\
+	\hline
+	\textbf{and} & r, i & r & op2 = op2 \& op1; & z \\
+	\hline
+        \textbf{or}  & r, i & r & op2 = op2 | op1; & N/A \\
+	\hline
+	\textbf{xor} & r, i & r & op2 = op2 \^ op1; & z \\
+	\hline
+	\textbf{shr} & r, i & r & op2 = op2 >> op1; (zero-fill) & z \\
+	\hline
+	\textbf{shra} & r, i & r & op2 = op2 >> op1; (sign-fill) & z \\
+	\hline
+	\textbf{shl}  & r, i & r & op2 = op2 << op1; & o, c \\
+	\hline
+	\textbf{ror}  & r, i & r & op2 = op2 ROR op1; & c \\
+	\hline
+	\textbf{rol}  & r, i & r & op2 = op2 ROL op1; & c \\
+	\hline
+	\textbf{inc}  & r, i & N/A & op1++; & o \\
+	\hline
+	\textbf{dec}  & r, i & N/A & op1--; & o, z \\
+	\hline
+	\textbf{add}  & r, i & r & op2 = op2 + op1; & o, z \\
+	\hline
+	\textbf{sub}  & r, i & r & op2 = op2 - op1; & s, z \\
+	\hline
+	\textbf{cmp}  & r, i & r & compare two values and set flags & s, z \\
+	\hline
+	\textbf{mul}  & r, i & r & op2 = op2 * op1; & o, s, z \\
+	\hline
+	\textbf{div}  & r, i & r & op2 = op2 / op1; & s, z \\
+	\hline
+	\textbf{mod}  & r, i & r & op2 = op2 \% op1; & N/A \\
+	\hline
+	\textbf{bz}   & r, i & N/A & branch to op1 if (CF == 0) & N/A \\
+	\hline
+	\textbf{bnz}  & r, i & N/A & branch to op1 if (CF != 0) & N/A \\
+	\hline
+	\textbf{blt}  & r, i & N/A & branch to op1 if (SF != 0) & N/A \\
+	\hline
+	\textbf{ble}  & r, i & N/A & branch to op1 if (SF != 0) || (ZF == 0) & N/A \\
+	\hline
+	\textbf{bgt}  & r, i & N/A & branch to op1 if (SF != 0) \&\& (ZF != 0) & N/A \\
+	\hline
+	\textbf{bge}  & r, i & N/A & branch to op1 if (SF != 0) || (ZF == 0) & N/A \\
+	\hline
+	\textbf{bo}   & r, i & N/A & branch to op1 if (OF != 0) & N/A \\
+	\hline
+	\textbf{bno}   & r, i & N/A & branch to op1 if (OF == 0) & N/A \\
+	\hline
+	\textbf{bc}   & r, i & N/A & branch to op1 if (CF != 0) & N/A \\
+	\hline
+	\textbf{bnc}   & r, i & N/A & branch to op1 if (CF == 0) & N/A \\
+	\hline
+\end{tabular}
+
+	\textbf{TODO: finish the table above}
 
 \section{Machine Operations}
 

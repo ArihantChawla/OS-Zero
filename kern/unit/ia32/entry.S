@@ -125,8 +125,7 @@ retval:
 
 _sysfunc:
 	.long	0x00000000
-	.long	_syscall0	// shutdown
-	.long	_syscall0	// reboot
+	.long	_syscall1	// halt
 	.long	_syscall3	// sysctl
 	.long	_syscall2	// exit
 	.long	_syscall0	// abort
