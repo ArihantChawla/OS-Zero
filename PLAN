@@ -1,0 +1,79 @@
+Zero Project Plans and Ideas
+----------------------------
+
+Goals
+-----
+
+- design and implement a model kernel for multicore and multiprocessor systems
+- support POSIX System Interface in library-level; make the kernel support
+  necessary features for POSIX
+- possible compatibility with Linux- and *BSD-binaries later
+  - support 'system personalities'
+- high performance for multimedia playback and production including games
+  - the vast majority of the OS so far is implemented in ISO C
+  - mostly just the required parts in assembly; some SIMD-optimisations
+- support for X86-, X86-64-, and ARM-architectures
+  - alloca(), setjmp(), and longjmp() exist for all of these already
+  - mutexes and some other machine operations implemented for all three
+    architectures
+
+Documentation
+-------------
+- an early book idea for the kernel project (zerovol1.tex + zerovol1.pdf)
+- another early book on assembly programming with WPM (see below)
+- my book draft on low-level programming (wizardcode4.pdf)
+
+Software
+--------
+
+WPM
+---
+- Wizard Pseudo Machine; a simple RISC-like virtual architecture
+  - currently 32-bit
+  - instruction set
+  - bytecode interpreter
+  - assembly translation with ZAS
+  - virtual memory simulated with standard malloc() and friends
+  - THR; an instruction to launch new threads of execution
+  - load-store architecture; only a few instructions operate on memory operands
+    - MOV
+    - stack; PUSH and POP
+  - linker/loader-functionality to be added for pretranslated binaries
+  - an early assembly manual (wpmprog.tex and wpmprog.pdf)
+
+ZAS
+---
+- Zero Assembler; a simple AT&T-syntax assembler for WPM and ZPC
+  - ZPC-support in progress; make ZAS retargetable
+
+ZPC
+---
+- Zero Programmer's Calculator; a programmer's calculator with most C operations
+  as well as some typical machine operations such as bitwise rotates
+  - support for assembly-programmability in progress
+    - custom instruction set
+  - could support other programming languages such as Forth
+
+Software to Be Ported
+---------------------
+
+- Enlightenment Foundation Libraries
+- Mesa
+- Quake
+- ScummVM
+- SDL
+- Wayland
+
+Games
+-----
+- there is currently some ideas and code under usr/games/ in the GIT repository
+  - dice; simple code to 'roll dice'
+  - cwar; a program-on-program combat game
+    - most likely a Core Wars 'machine' for Redcode
+  - cpunk
+    - cyberpunk-themed rogue-like room/world exploring game
+  - czone
+    - real-time strategy game with programmable troops/units
+  - y2k
+    - early ideas for some kind of an adventure game
+
