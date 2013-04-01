@@ -31,11 +31,12 @@
 	be programmed in its own instruction set / assembly dialect, using AT\&T
 	syntax assembly. The incorporated assembler (\textbf{zas}) does not yet
 	support	pretranslated objects, but translates assembly code into
-	bytecode on-the-fly. This bytecode is then handled to the pseudo machine
-	(\textbf{wpm}) for execution.
+	bytecode before execution. This bytecode is then handled to the
+	pseudo machine (\textbf{wpm}) to be executed.
 
 	The pseudo machine instruction set is designed to be a close match to
-	basic operations of the C programming language.
+	basic operations of the C programming language, with some other typical
+	machine operations.
 
 	\textbf{Background and Future}
 

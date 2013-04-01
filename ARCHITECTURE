@@ -7,6 +7,30 @@ Goals
 - hardware and software support for multimedia production and games as well as
   lighter-weight user applications
 
+System Overview
+---------------
+
+		System Layers
+		-------------
+
+		-----------------
+		| User Software |
+		-----------------
+			|
+		-----------------	------------------
+		| System Kernel |-------| Device Drivers |
+		-----------------	------------------
+						|
+					------------------
+					|    Hardware    |
+					------------------
+
+Code Modules
+------------
+
+System Kernel
+-------------
+
 kern
 ----
 
@@ -54,6 +78,9 @@ libkio
 - <dma.h> - direct memory access
 - <iobuf.h> - I/O buffer/block cache
 - sock, fifo, pipe, fbuf data objects
+
+User Software
+-------------
 
 libc
 ----

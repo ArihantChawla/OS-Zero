@@ -51,8 +51,8 @@ static int32_t memfetchl(wpmmemadr_t virt);
 
 #if (ZPC)
 
-extern zpcophandler_t *zpcopfunctab[ZPCNASMOP + 1];
-extern struct zasopinfo zpcopinfotab[ZPCNASMOP + 1];
+extern zpcophandler_t   *zpcopfunctab[ZPCNASMOP + 1];
+extern struct zasopinfo  zpcopinfotab[ZPCNASMOP + 1];
 
 #else
 
