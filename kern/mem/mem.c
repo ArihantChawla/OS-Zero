@@ -11,16 +11,18 @@
 
 extern void pageinit(uintptr_t, unsigned long);
 
+extern struct pageq vmphysq;
+
 void
 meminit(uintptr_t base, unsigned long nbphys)
 {
-    pageinit(base, nbphys);
 #if (defined(__i386__) && !defined(__x86_64__) && !defined(__amd64__))  \
     || defined(__arm__)
-    slabinit((unsigned long)&_epagetab, (char *)KERNVIRTBASE - &_epagetab);
+    slabinit((unsigned long)&_ebss, (char *)KERNVIRTBASE - &_ebss);
 #elif defined(__x86_64__) || defined(__amd64__)
 #error implement x86-64 memory management
 #endif
+    vminitphys(&_ebss, nbphys - (unsigned long)&_ebss);
 
 //    swapinit(0, 0x00000000, 1024);
 

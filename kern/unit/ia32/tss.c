@@ -30,7 +30,7 @@ tssinit(long id)
     __asm__ __volatile__ ("movl %%cr3, %0" : "=r" (pdbr));
     tss->ss0 = tss->ss1 = tss->ss2 = DATASEL;
     tss->esp0 = tss->esp1 = tss->esp2 = (uint32_t)kwalloc(THRSTKSIZE);
-    kbzero((void *)tss->esp0, THRSTKSIZE);
+//    kbzero((void *)tss->esp0, THRSTKSIZE);
     tss->cr3 = pdbr;
     tss->iomapofs = (uint16_t)((uint8_t *)kerniomap - (uint8_t *)tss);
     gdt = &kerngdt[id][0];

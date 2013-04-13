@@ -25,7 +25,7 @@ procinit(long id)
     if (proc) {
         proc->state = PROCINIT;
         /* initialise page directory */
-        kbzero(proc, sizeof(struct proc));
+//        kbzero(proc, sizeof(struct proc));
         ptr = kmalloc(NPDE * sizeof(pde_t));
         if (ptr) {
             kbzero(ptr, NPDE * sizeof(pde_t));

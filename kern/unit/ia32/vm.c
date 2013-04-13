@@ -27,19 +27,19 @@
 
 extern void pginit(void);
 
-extern uint32_t     kernpagedir[NPTE];
-extern uint32_t    *lapic;
-extern struct page  physptab[NPAGEMAX];
+extern uint32_t       kernpagedir[NPTE];
+extern uint32_t      *lapic;
+struct page           vmphystab[NPAGEPHYS] ALIGNED(PAGESIZE);
+struct pageq          vmlrutab[PTRBITS];
 
-static struct vmpage vmpagetab[NPAGEMAX] ALIGNED(PAGESIZE);
+//static struct vmpage  vmpagetab[NPAGEMAX] ALIGNED(PAGESIZE);
 #if (PAGEDEV)
-static struct dev    vmdevtab[NPAGEDEV];
-static volatile long vmdevlktab[NPAGEDEV];
+static struct dev     vmdevtab[NPAGEDEV];
+static volatile long  vmdevlktab[NPAGEDEV];
 #endif
-static struct vmbuf  vmbuftab[1L << (PTRBITS - BUFSIZELOG2)];
-struct vmpageq      vmpagelruq;
-//struct pageq         vmpagelruq;
-struct vmbufq        vmbufq;
+static struct vmbuf   vmbuftab[1L << (PTRBITS - BUFSIZELOG2)];
+struct pageq          vmphysq;
+struct vmbufq         vmbufq;
 
 unsigned long vmnphyspages;
 unsigned long vmnmappedpages;
@@ -171,6 +171,12 @@ vminit(void *pagetab)
     return;
 }
 
+void
+vminitphys(uintptr_t base, unsigned long nb)
+{
+    pageinitzone(&vmphysq, base, nb);
+}
+
 void *
 vmmapvirt(uint32_t *pagetab, void *virt, uint32_t size, uint32_t flg)
 {
@@ -197,6 +203,7 @@ vmfreephys(void *virt, uint32_t size)
     uint32_t     *pte;
     long          n;
     long          nref;
+    struct page  *pg;
 
     n = rounduppow2(size, PAGESIZE) >> PAGESIZELOG2;
     pte = (uint32_t *)((uint8_t *)&_pagetab + vmpagenum(virt));
@@ -215,13 +222,16 @@ vmfreephys(void *virt, uint32_t size)
         } else if (adr) {
 //            kprintf("PHYSFREE: %lx\n", (long)adr);
             if (!(*pte & PAGEWIRED)) {
-                vmrmpage(adr);
+#if 0
+                pg = pagefind(adr);
+                pagerm(pg);
+#endif
                 vmnmappedpages--;
             } else {
 //                kprintf("UNWIRE\n");
                 vmnwiredpages--;
             }
-            pagefree((void *)adr);
+            pagezfree(&vmphysq, (void *)adr);
         }
         *pte = 0;
         pte++;
@@ -231,18 +241,20 @@ vmfreephys(void *virt, uint32_t size)
 }
 
 void
-vmpagefault(uint32_t adr, uint32_t flags)
+vmpagefault(unsigned long pid, uint32_t adr, uint32_t flags)
 {
     uint32_t      *pte = (uint32_t *)&_pagetab + vmpagenum(adr);
     uint32_t       flg = *pte & (PFFLGMASK | PAGESYSFLAGS);
     uint32_t       page = *pte;
+    struct page   *pg;
+    unsigned long  qid;
 
     if (!(page & ~(PFFLGMASK | PAGESYSFLAGS))) {
-        page = (uint32_t)pagealloc(adr);
-        if (!page) {
-            page = (uint32_t)pagealloc(adr);
+        pg = pagezalloc(&vmphysq, &vmlrutab[0]);
+        if (!pg) {
+            pg = pagezalloc(&vmphysq, &vmlrutab[0]);
         }
-        if (page) {
+        if (pg) {
             if (flg & PAGEBUF) {
                 vmnbufpages++;
                 if (vmisbufadr(adr)) {
@@ -252,14 +264,20 @@ vmpagefault(uint32_t adr, uint32_t flags)
                 vmnwiredpages++;
             } else {
                 vmnmappedpages++;
-                vmaddpage(adr);
+                pg->nflt = 1;
+                pagepush(pg, &vmlrutab[0]);
             }
             *pte = page | flg | PAGEPRES;
         }
 #if (PAGEDEV)
     } else if (!(page & PAGEPRES)) {
         // pageout();
-        page = vmpagein(page);
+        pg = vmpagein(page);
+        if (pg) {
+            pg->nflt++;
+            qid = pagegetq(pg);
+            pagepush(pg, &vmlrutab[qid]);
+        }
 #endif
     }
 
@@ -274,16 +292,24 @@ vmseekdev(uint32_t dev, uint64_t ofs)
 }
 
 uint32_t
-vmpagein(uint32_t page)
+vmpagein(uint32_t adr)
 {
-    uint32_t  pgid = pagefind(page);
-    uint32_t  blk = vmblkid(pgid);
-    void     *data;
+    uint32_t     pgid = vmpagenum(adr);
+    uint32_t     blk = vmblkid(pgid);
+    struct page *pg = pagefind(adr);
+    void        *data;
 
     mtxlk(&vmdevlktab[dev], MEMPID);
     vmseekdev(dev, blk * PAGESIZE);
+    pg->nflt++;
 //    data = pageread(dev, PAGESIZE);
     mtxunlk(&vmdevlktab[pagedev], MEMPID);
+}
+
+void
+vmpagefree(uint32_t adr)
+{
+    
 }
 #endif /* 0 */
 

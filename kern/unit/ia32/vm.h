@@ -86,17 +86,6 @@ vmflushtlb(void *mp)
 #define PFADRMASK    0xfffffff8U
 #define PFPAGEMASK   0xfffff000U
 
-struct vmpage {
-    struct vmpage *prev;
-    struct vmpage *next;
-};
-
-struct vmpageq {
-    long           lk;
-    struct vmpage *head;
-    struct vmpage *tail;
-};
-
 #define VMBUFNREFMASK 0x07
 #define vmsetbufnref(bp, npg)                                           \
     ((bp)->prev = (void *)((uint32_t)((bp)->prev)                       \
@@ -120,60 +109,6 @@ struct vmbufq {
     struct vmbuf *head;
     struct vmbuf *tail;
 };
-
-#define vmaddpage(adr)                                                  \
-    do {                                                                \
-        struct vmpageq *_pageq = &vmpagelruq;                           \
-        struct vmpage  *_pg = &vmpagetab[vmpageid(adr)];                \
-        struct vmpage  *_head;                                          \
-                                                                        \
-        _pg->prev = NULL;                                               \
-        vmlklruq(_pageq);                                               \
-        _head = _pageq->head;                                           \
-        _pg->next = _head;                                              \
-        if (_head) {                                                    \
-            _head->prev = _pg;                                          \
-        } else {                                                        \
-            _pageq->tail = _pg;                                         \
-        }                                                               \
-        _pageq->head = _pg;                                             \
-        vmunlklruq(_pageq);                                             \
-    } while (0)
-
-#define vmrmpage(adr)                                                   \
-    do {                                                                \
-        struct vmpageq *_pageq = &vmpagelruq;                           \
-        struct vmpage  *_pg = &vmpagetab[vmpageid(adr)];                \
-        struct vmpage  *_tmp;                                           \
-                                                                        \
-        vmlklruq(_pageq);                                               \
-        _tmp = _pg->prev;                                               \
-        if (_tmp) {                                                     \
-            _tmp->next = _pg->next;                                     \
-        } else {                                                        \
-            _tmp = _pg->next;                                           \
-            _pageq->head = _tmp;                                        \
-            if (_tmp) {                                                 \
-                _tmp->prev = _pg->prev;                                 \
-            } else {                                                    \
-                _pageq->tail = _tmp;                                    \
-            }                                                           \
-            _pageq->head = _tmp;                                        \
-        }                                                               \
-        _tmp = _pg->next;                                               \
-        if (_tmp) {                                                     \
-            _tmp->prev = _pg->prev;                                     \
-        } else {                                                        \
-            _tmp = _pg->prev;                                           \
-            _pageq->tail = _tmp;                                        \
-            if (_tmp) {                                                 \
-                _tmp->next = NULL;                                      \
-            } else {                                                    \
-                _pageq->head = _pageq->tail = _tmp;                     \
-            }                                                           \
-        }                                                               \
-        vmunlklruq(_pageq);                                             \
-    } while (0)
 
 #define vmaddbuf(adr)                                                   \
     do {                                                                \

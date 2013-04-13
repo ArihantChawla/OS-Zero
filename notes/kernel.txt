@@ -280,7 +280,7 @@ cascade mode
 
 autoinitialize mode
 -------------------
-- byte, block, or deaman transfers
+- byte, block, or demand transfers
 - when DMA transfer count reaches zero, counter and address set back to original
   values
   - as long as peripheral requests transfers, they are granted

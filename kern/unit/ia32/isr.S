@@ -335,6 +335,7 @@ trappf:
 	pushl	%eax			// error code
 	movl	%cr2, %eax		// linear address
 	pushl	%eax
+	pushl	$0x00000000
 	call	vmpagefault
 
 	movl	%ebp, %esp

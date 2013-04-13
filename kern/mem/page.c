@@ -8,53 +8,53 @@
 #include <kern/mem/page.h>
 #include <kern/unit/ia32/vm.h>
 
+extern struct page   vmphystab[NPAGEPHYS];
+extern struct pageq  vmphysq;
 extern unsigned long vmnphyspages;
-
-struct page    physptab[NPAGEMAX] ALIGNED(PAGESIZE);
-struct pageq   physfreeq;
-unsigned long  npagefree;
+unsigned long        npagefree;
 
 void
-pageinit(uintptr_t base, unsigned long nbphys)
+pageinitzone(struct pageq *zone, uintptr_t base, unsigned long nbphys)
 {
-    struct page   *pg = physptab + (rounduppow2(base, PAGESIZE) >> PAGESIZELOG2);
+    struct page   *pg = vmphystab + (rounduppow2(base, PAGESIZE) >> PAGESIZELOG2);
     unsigned long  n  = (nbphys - rounduppow2(base, PAGESIZE)) >> PAGESIZELOG2;
 
-    pageqlk(&physfreeq);
+    pageqlk(zone);
     vmnphyspages = n;
 #if (MEMTEST)
     printf("initializing %ld (%lx) pages\n", n, n);
 #endif
     while (n--) {
-        pagepush(pg, &physfreeq);
+        pagepush(pg, zone);
         pg++;
     }
-    pagequnlk(&physfreeq);
+    pagequnlk(zone);
 }
 
-void *
-pagealloc(uintptr_t virt)
+/* TODO: evict pages from LRU if none free / low water */
+struct page *
+pagezalloc(struct pageq *zone, struct pageq *lru)
 {
     struct page *pg;
 
-    pageqlk(&physfreeq);
-    pagepop(&physfreeq, &pg);
-    pagequnlk(&physfreeq);
+    pageqlk(zone);
+    pagepop(zone, &pg);
+    pagequnlk(zone);
 
-    return pageadr(pg, physptab);
+    return pg;
 }
 
 void
-pagefree(void *adr)
+pagezfree(struct pageq *zone, void *adr)
 {
     unsigned long  id;
     struct page   *pg;
 
-    pageqlk(&physfreeq);
+    pageqlk(zone);
     id = (uintptr_t)adr >> PAGESIZELOG2;
-    pg = &physptab[id];
-    pagepush(pg, &physfreeq);
-    pagequnlk(&physfreeq);
+    pg = &vmphystab[id];
+    pagepush(pg, zone);
+    pagequnlk(zone);
 
     return;
 }

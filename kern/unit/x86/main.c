@@ -38,8 +38,8 @@ kmain(struct mboothdr *hdr, unsigned long pmemsz)
 {
     seginit(0);                         // memory segments
     vminit((uint32_t *)&_pagetab);      // virtual memory
-//    __asm__ __volatile__ ("sti\n");
     kbzero(&_bssvirt, (uint32_t)&_ebss - (uint32_t)&_bss);
+//    __asm__ __volatile__ ("sti\n");
     curproc = &proctab[0];
     vgainitcon(80, 25);
     meminit(vmphysadr(&_ebssvirt), pmemsz);

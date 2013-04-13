@@ -7,6 +7,7 @@
 #else
 #define NCPU      1
 #endif
+#define NPAGEPHYS (16 * 1024 * 1024)
 
 #define GFXWIDTH  1024
 #define GFXHEIGHT 768

@@ -184,7 +184,12 @@ system calls
 page daemon
 -----------
 - typically write process pages out before reading more in
-- three LRU (least-recently) queues (per process?)
+- three LRU (least-recently used) queues (per process?)
+  - experiment with bucket based on page-fault counts
+    - 1 page-fault -> bucket 2^0 == 1
+    - 2 page-faults -> bucket 2^1 == 1
+    - N page-faults -> bucket 2^(LONGBITS - 1)
+    - start looking for evicted pages from bucket #0
   - in map/access order
   - used; mapped and accessed pages
   - mapped; mapped but not [yet] accessed pages

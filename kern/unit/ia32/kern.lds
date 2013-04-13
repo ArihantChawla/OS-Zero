@@ -107,7 +107,7 @@ SECTIONS {
     /* bss segment; runtime-allocated, uninitialised data */
     .bss : AT(PAGETAB + SIZEOF(.ptab) + SIZEOF(.text) + SIZEOF(.data)) {
         _bss = _data + SIZEOF(.data);
-	_bssvirt = _etextvirt + SIZEOF(.text);
+	_bssvirt = _etextvirt + SIZEOF(.data) + SIZEOF(.text);
 	*(.bss)
 	*(COMMON)
         _ebss = _bss + SIZEOF(.bss);
