@@ -44,7 +44,7 @@ taskfreepid(long id)
 }
 
 void
-taskinit(void)
+taskinitpids(void)
 {
     int         i;
     struct pid *pid;
@@ -60,6 +60,14 @@ taskinit(void)
         pidq.tail = pid;
     }
     mtxunlk(&pidlk);
+
+    return;
+}
+
+void
+taskinit(void)
+{
+    taskinitpids();
 
     return;
 }

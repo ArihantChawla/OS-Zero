@@ -174,7 +174,10 @@ vminit(void *pagetab)
 void
 vminitphys(uintptr_t base, unsigned long nb)
 {
+    /* initialise physical memory manager */
     pageinitzone(&vmphysq, base, nb);
+
+    return;
 }
 
 void *

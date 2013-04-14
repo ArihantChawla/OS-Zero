@@ -60,7 +60,7 @@ vmflushtlb(void *mp)
 #define PAGEPRES     0x00000001U	// present
 #define PAGEWRITE    0x00000002U	// writeable
 #define PAGEUSER     0x00000004U	// user-accessible
-#define PAGEBUSY     0x00000020U	// has been accessed
+#define PAGEREF      0x00000020U	// has been referenced
 #define PAGEDIRTY    0x00000040U	// has been written to
 #define PAGESUPER    0x00000080U	// 4M page
 #define PAGEGLOBAL   0x00000100U	// global
