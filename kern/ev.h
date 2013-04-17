@@ -5,13 +5,17 @@
 
 /* user input events */
 
+/* event types */
 #define EVKEYDOWN     0x01
 #define EVKEYUP       0x02
 #define EVBUTTONDOWN  0x03
 #define EVBUTTONUP    0x04
 #define EVPNTMOTION   0x05
 
-/* keyboard events */
+/*
+ * keyboard events
+ * - val is either control state or Unicode/ISO character value
+ */
 /* the highest bit indicates a control key mask */
 #define EVKBDCTRLBIT  0x80000000U
 /* mask-bits for control keys */

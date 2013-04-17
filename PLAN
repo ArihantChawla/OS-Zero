@@ -26,6 +26,19 @@ Documentation
 Software
 --------
 
+Software to Be Ported
+---------------------
+
+- Enlightenment Foundation Libraries
+- Mesa/OpenGL
+- SDL
+- Wayland
+- Quake
+- ScummVM
+
+Educational Software
+--------------------
+
 WPM
 ---
 - Wizard Pseudo Machine; a simple RISC-like virtual architecture
@@ -41,6 +54,9 @@ WPM
   - linker/loader-functionality to be added for pretranslated binaries
   - an early assembly manual (wpmprog.tex and wpmprog.pdf)
 
+Zero Programming Tools
+----------------------
+
 ZAS
 ---
 - Zero Assembler; a simple AT&T-syntax assembler for WPM and ZPC
@@ -54,15 +70,83 @@ ZPC
     - custom instruction set
   - could support other programming languages such as Forth
 
-Software to Be Ported
----------------------
+C Compilers
+-----------
+- GCC?
+- PCC?
+- CLang
+- possibly a simple compiler for the WPM and ZPC projects (retargetable)
 
-- Enlightenment Foundation Libraries
-- Mesa
-- Quake
-- ScummVM
-- SDL
-- Wayland
+Zero RPC Suite (ZRS)
+--------------------
+
+- distributed applications
+  - think about some small examples
+- object oriented framework for developing high performance distributed
+  applications and protocols for them
+- implementations for Zero as well as existing Unix/POSIX operating systems
+  - other platforms such as Windows too?
+    - Tommy? :)
+
+ZRS Objects
+-----------
+
+- all I/O objects will have permissions/credentials
+
+user
+----
+- user ID, group ID
+
+group
+-----
+- ID
+
+perm
+----
+- Unix-style user, group, world; read, write, exec; setuid, setgid, sticky
+
+host
+----
+- [networked] computer system
+- bit and byte order attributes
+
+proc
+----
+- process object
+- ID, CWD, threads
+
+thr
+---
+- thread object
+- ID, TCB (thread control block; context)
+
+memreg
+------
+- memory region (on a host)
+- allow remote paging of user memory over network
+
+node
+----
+- I/O object
+- file, directory, pipe, socket, message queue, etc.
+- size
+
+iodev
+-----
+- I/O device
+- driver interfaces
+
+strm
+----
+- I/O stream
+- tape, disk, terminal, screen, framebuf
+
+buf
+---
+- I/O buffer
+- bit and byte formats
+- data format (TIFF, PNG, JPG, WAV, FLAC, MP3, MP4, WMV, WMA, etc.)
+- size
 
 Games
 -----
