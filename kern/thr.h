@@ -14,8 +14,6 @@ extern struct m_cpuinfo cpuinfo;
 #define __KERNEL__ 1
 void thryield(void);
 #include <zero/mtx.h>
-#define thrlkrunq(prio)   mtxlk(&runqueuelktab[prio])
-#define thrunlkrunq(prio) mtxunlk(&runqueuelktab[prio])
 
 struct thr {
     struct m_tcb  m_tcb;
@@ -28,6 +26,12 @@ struct thr {
     long          interact;
     long          runtime;
 } PACK();
+
+struct thrq {
+    volatile long  lk;
+    struct thr    *head;
+    struct thr    *tail;
+};
 
 #if (!QEMU)
 #define FPUCTX 1

@@ -75,7 +75,6 @@ kmain(struct mboothdr *hdr, unsigned long pmemsz)
     kprintf("procinit()\n");
     procinit(0);
     kprintf("thrinit()\n");
-    thrinit(0, SCHEDPRIO);
     curthr = curproc->thr;
 //    sysinit();
     kprintf("DMA buffers (%ul x %ul kilobytes) @ 0x%p\n",
