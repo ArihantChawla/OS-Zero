@@ -3,6 +3,7 @@
 
 #include <stddef.h>
 #include <zero/types.h>
+#include <kern/conf.h>
 #include <kern/unit/x86/cpu.h>
 
 void thrinit(long id, long prio);
@@ -11,13 +12,17 @@ void thrjmp(struct thr *thr);
 
 extern struct m_cpuinfo cpuinfo;
 
-#define __KERNEL__ 1
+#if (ZEROSCHED)
 void thryield(void);
+#endif
+
+#define __KERNEL__ 1
 #include <zero/mtx.h>
 
 struct thr {
     struct m_tcb  m_tcb;
     long          id;
+    long          nice;
     struct proc  *proc;
     struct thr   *prev;
     struct thr   *next;

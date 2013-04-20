@@ -13,14 +13,15 @@
  * - idle
  */
 
-#define HZ         250
-#define NPRIO      256
+#define HZ           250
 
-#define THRRT      0
-#define THRINTACT  1
-#define THRBATCH   2
-#define THRIDLE    3
-#define THRNPRIO   32
+#define THRRT        0
+#define THRINTERACT  1
+#define THRBATCH     2
+#define THRIDLE      3
+#define THRNCLASS    4
+#define THRNPRIO     64
+#define THRNPRIOLOG2 6
 
 #include <kern/thr.h>
 

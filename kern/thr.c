@@ -7,7 +7,7 @@
 #include <kern/unit/x86/cpu.h>
 
 struct thr   thrtab[NTHR] ALIGNED(PAGESIZE);
-struct thrq  thrruntab[NPRIO];
+struct thrq  thrruntab[THRNCLASS * THRNPRIO];
 struct thr  *corethrtab[NCPU];
 
 void
@@ -38,7 +38,6 @@ thrjmp(struct thr *thr)
 void
 thrqueue(struct thr *thr, struct thrq *thrq)
 {
-    long          id = thr->id;
     long          prio = thr->prio;
 
     mtxlk(&thrq->lk);
@@ -65,7 +64,7 @@ thradjprio(struct thr *thr)
     if (class != THRRT) {
         prio = ++thr->prio & (THRNPRIO - 1);   // wrap around
         thr->prio = prio;
-        retval = class * NPRIO + prio;
+        retval = (THRNPRIO >> 1) + (class << THRNPRIOLOG2) + prio + thr->nice;
     } else {
         retval = thr->prio;
     }
@@ -85,7 +84,7 @@ thryield(void)
     prio = thradjprio(curthr);
     thrq = &thrruntab[prio];
     thrqueue(curthr, thrq);
-    for (prio = 0 ; prio < NPRIO ; prio++) {
+    for (prio = 0 ; prio < THRNCLASS * THRNPRIO ; prio++) {
         mtxlk(&thrq->lk);
         thr = thrruntab[prio].head;
         if (thr) {
