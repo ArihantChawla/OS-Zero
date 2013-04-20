@@ -15,11 +15,12 @@
 
 #define HZ           250
 
-#define THRRT        0
-#define THRINTERACT  1
-#define THRBATCH     2
-#define THRIDLE      3
-#define THRNCLASS    4
+#define THRKERN      0
+#define THRRT        1
+#define THRINTERACT  2
+#define THRBATCH     3
+#define THRIDLE      4
+#define THRNCLASS    5
 #define THRNPRIO     64
 #define THRNPRIOLOG2 6
 

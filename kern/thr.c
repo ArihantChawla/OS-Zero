@@ -56,55 +56,58 @@ thrqueue(struct thr *thr, struct thrq *thrq)
 long
 thradjprio(struct thr *thr)
 {
-    long class;
-    long prio;
-    long retval;
+    long class = thr->class;
+    long prio = thr->prio;
 
-    class = thr->class;
     if (class != THRRT) {
-        prio = ++thr->prio & (THRNPRIO - 1);   // wrap around
+        /* wrap around back to 0 at maximum value */
+        prio++;
+        prio &= (THRNPRIO - 1);
         thr->prio = prio;
-        retval = (THRNPRIO >> 1) + (class << THRNPRIOLOG2) + prio + thr->nice;
-    } else {
-        retval = thr->prio;
+        prio = (THRNPRIO >> 1) + (class << THRNPRIOLOG2) + prio + thr->nice;
+        thr->prio = prio;
     }
 
-    return retval;
+    return prio;
 }
 
 void
 thryield(void)
 {
-    struct thr  *thr;
+    struct thr  *thr = NULL;
     struct thrq *thrq;
     long         prio;
 
     thrsave(curthr);
-    thr = NULL;
     prio = thradjprio(curthr);
     thrq = &thrruntab[prio];
     thrqueue(curthr, thrq);
-    for (prio = 0 ; prio < THRNCLASS * THRNPRIO ; prio++) {
-        mtxlk(&thrq->lk);
-        thr = thrruntab[prio].head;
-        if (thr) {
-            if (thr->next) {
-                thr->next->prev = thr;
-            } else {
-                thrruntab[prio].tail = NULL;
+    while (!thr) {
+        for (prio = 0 ; prio < THRNCLASS * THRNPRIO ; prio++) {
+            mtxlk(&thrq->lk);
+            thr = thrruntab[prio].head;
+            if (thr) {
+                if (thr->next) {
+                    thr->next->prev = thr;
+                } else {
+                    thrruntab[prio].tail = NULL;
+                }
+                thrruntab[prio].head = thr->next;
+                mtxunlk(&thrq->lk);
+                if (thr != curthr) {
+                    thrjmp(thr);
+                } else {
+
+                    return;
+                }
             }
-            thrruntab[prio].head = thr->next;
             mtxunlk(&thrq->lk);
-
-            break;
         }
-        mtxunlk(&thrq->lk);
-    }
-    if ((thr) && thr != curthr) {
-        thrjmp(thr);
+        if (!thr) {
+            m_waitint();
+        }
     }
 
-    /* fall back to running the earlier thread */
     return;
 }
 
