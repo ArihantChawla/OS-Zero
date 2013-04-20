@@ -24,6 +24,7 @@ extern int pthread_yield(void);
  * - return non-zero on success, zero if already locked
  */
 #define mtxtrylk(lp) mtxtrylk2(lp, MTXLKVAL)
+
 static __inline__ long
 mtxtrylk2(volatile long *lp, long val)
 {
@@ -44,7 +45,7 @@ mtxlk2(volatile long *lp, long val)
         res = m_cmpswap(lp, MTXINITVAL, val);
         if (res != MTXINITVAL) {
 #if (__KERNEL__)
-            thryield();
+            schedyield();
 #else
             pthread_yield();
 #endif

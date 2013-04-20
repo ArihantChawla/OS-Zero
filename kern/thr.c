@@ -33,6 +33,8 @@ thrjmp(struct thr *thr)
     /* NOTREACHED */
 }
 
+#if (ZEROSCHED)
+
 void
 thrqueue(struct thr *thr, struct thrq *thrq)
 {
@@ -80,8 +82,7 @@ thryield(void)
 
     thrsave(curthr);
     thr = NULL;
-    thradjprio(curthr);
-    prio = curthr->prio;
+    prio = thradjprio(curthr);
     thrq = &thrruntab[prio];
     thrqueue(curthr, thrq);
     for (prio = 0 ; prio < NPRIO ; prio++) {
@@ -107,4 +108,6 @@ thryield(void)
     /* fall back to running the earlier thread */
     return;
 }
+
+#endif /* ZEROSCHED */
 

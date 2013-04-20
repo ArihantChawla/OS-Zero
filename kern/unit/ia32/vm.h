@@ -8,8 +8,10 @@
 #define __KERNEL__ 1
 #endif
 #include <zero/mtx.h>
+#if 0
 #define vmlklruq(pq)   mtxlk(&pq->lk)
 #define vmunlklruq(pq) mtxunlk(&pq->lk)
+#endif
 #define vmlkbufq()     mtxlk(&vmbufq.lk)
 #define vmunlkbufq()   mtxunlk(&vmbufq.lk)
 

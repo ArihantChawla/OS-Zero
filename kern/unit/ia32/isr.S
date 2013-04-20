@@ -43,7 +43,7 @@
 #endif
 .globl	irqvec
 
-.extern	sigfunc, tmrsyncscr, thryield, vmpagefault, kbdtrap, mousetrap
+.extern	sigfunc, tmrsyncscr, schedyield, vmpagefault, kbdtrap, mousetrap
 #if (SMP)
 .extern	mpspurint
 #endif
@@ -471,7 +471,11 @@ irqtimer:
 
 //	call	tmrsyncscr
 //	call	tmrfunc
+	movl	schedyield, %eax
+	call	*%eax
+#if 0
 	call	thryield
+#endif
 
 	movb	$0x20, %al
 	outb	%al, $0x20

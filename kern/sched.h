@@ -1,6 +1,7 @@
 #ifndef __KERN_SCHED_H__
 #define __KERN_SCHED_H__
 
+#include <kern/conf.h>
 /*
  * thread scheduler
  * ----------------
@@ -23,11 +24,15 @@
 
 #include <kern/thr.h>
 
+extern void (*schedyield)(void);
+
+#if (ZEROSCHED)
 struct thrprioq {
     long        lk;
     struct thr *head;
     struct thr *tail;
 };
+#endif
 
 #endif /* __KERN_SCHED_H__ */
 

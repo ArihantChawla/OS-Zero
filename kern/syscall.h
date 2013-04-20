@@ -95,7 +95,7 @@
 
 /* thread interface */
 
-/* TODO: move MTX, SEM, and COND operations under IPC
+/* TODO: move MTX, SEM, and COND operations under IPC */
 
 /* throp() commands */
 #define THR_NEW          1      // pthread_create()

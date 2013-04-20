@@ -86,9 +86,10 @@ kmain(struct mboothdr *hdr, unsigned long pmemsz)
             (vmnwiredpages + vmnmappedpages + vmnbufpages) << (PAGESIZELOG2 - 10),
             vmnwiredpages << (PAGESIZELOG2 - 10),
             vmnphyspages << (PAGESIZELOG2 - 10));
-    /* pseudo-scheduler loop; interrupted by timer [and other] interrupts */
+    schedinit();
     kprintf("pitinit()\n");
     pitinit();
+    /* pseudo-scheduler loop; interrupted by timer [and other] interrupts */
     while (1) {
         m_waitint();
     }
