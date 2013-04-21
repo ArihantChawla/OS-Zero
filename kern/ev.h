@@ -12,7 +12,7 @@
 #define EVBUTTONDOWN  0x03
 #define EVBUTTONUP    0x04
 #define EVPNTMOTION   0x05
-#define EVRPC         0x06
+#define EVCMD         0x06
 #define EVDATA        0x07
 
 /* keyboard events */
