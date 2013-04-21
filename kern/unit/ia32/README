@@ -1,0 +1,18 @@
+build
+-----
+
+1. execute ./build sh or
+2. after successfully running tup init in the toplevel repository directory,
+   execute:
+   tup upd
+3. execute ./mkcdimg.sh to create a cdrom image
+
+test
+----
+- execute qemu.sh (later qemusmp.sh too)
+
+debug
+-----
+1. execute qemudebug.sh
+2. gdb -x gdbscript
+
