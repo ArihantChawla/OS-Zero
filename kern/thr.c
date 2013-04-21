@@ -64,8 +64,8 @@ thradjprio(struct thr *thr)
     if (class != THRRT) {
         /* wrap around back to 0 at maximum value */
         prio++;
-        prio &= (THRNPRIO - 1);
-        prio = (THRNPRIO * class) + max(0, prio - thr->nice);
+        prio &= ((THRNPRIO >> 1) - 1);
+        prio = (THRNPRIO * class) + max(0, prio + thr->nice);
         thr->prio = prio;
     }
 
