@@ -15,12 +15,16 @@ long
 procinit(long id)
 {
     struct proc *proc = &proctab[id];
+    struct thr  *thr;
     void        *ptr;
 
     if (!id) {
         /* bootstrap */
         curproc = proc;
-        proc->thr = &thrtab[0];
+        /* process ID will be zero */
+        thr = &thrtab[0];
+        proc->thr = thr;
+        curthr = thr;
     }
     if (proc) {
         proc->state = PROCINIT;

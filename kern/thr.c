@@ -1,6 +1,7 @@
 #include <stddef.h>
 #include <zero/cdecl.h>
 #include <zero/param.h>
+#include <zero/trix.h>
 #include <kern/conf.h>
 #include <kern/proc.h>
 #include <kern/thr.h>
@@ -58,13 +59,13 @@ thradjprio(struct thr *thr)
 {
     long class = thr->class;
     long prio = thr->prio;
+    long tmp;
 
     if (class != THRRT) {
         /* wrap around back to 0 at maximum value */
         prio++;
         prio &= (THRNPRIO - 1);
-        thr->prio = prio;
-        prio = (THRNPRIO >> 1) + (class << THRNPRIOLOG2) + prio + thr->nice;
+        prio = (THRNPRIO * class) + max(0, prio - thr->nice);
         thr->prio = prio;
     }
 
