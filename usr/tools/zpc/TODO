@@ -1,6 +1,7 @@
 - simple c preprocessor and interpreter (or interface to existing ones)
   - macros, constants, variables, expressions
 - program console
+  - assembler (link-loader to be implemented)
   - commands for managing code [and later object] files
     - load, unload, include, link, trace, run
   - show stack registers and other registers
@@ -27,13 +28,17 @@
 - I/O facilities
 - character constants
   - C-style with single quotes
+- strings
+  - C-style NUL-terminated character data (8-bit)
+  - Unicode character data
 - character conversions
   - ISO 8859, UCS-2, UCS-4, UTF-8
 - internal character set ISO 8859-1
   - display other character sets in hexadecimal by default
-- 64-bit addressable, dynamic size memory
+- 32-bit addressable, fixed size memory (total size run-time option)
+  - 4-kilobyte pages
 - indirect, indirect indexed, and immediate memory addressing
-- reuse WPM assembler (write code generator for ZPC instruction set)
+- reuse WPM assembler and instruction set
   - the stack registers are %st0..%st15
 - 3D plotting using OpenGL and OpenCL
 - fractal generator
