@@ -1,6 +1,6 @@
 - simple c preprocessor and interpreter (or interface to existing ones)
   - macros, constants, variables, expressions
-- assembly console
+- program console
   - commands for managing code [and later object] files
     - load, unload, include, link, trace, run
   - show stack registers and other registers
@@ -44,17 +44,15 @@
 - oscilloscope
   - green/amber/white on black
 - data structure and algorithm analysis including visualisation?
-- graphical debugger interfaces
-  - for gdb and qemu first
 - 80-bit FPU math
-- tabbed multiterminal interface
-  - command macros
-    - autoreconf -i
-    - make clean/all/install
 - autoedit
   - menu interface for GNU auto-tools
-    - configure.ac
-    - Makefile.am
+    - command macros
+      - autoreconf -i
+      - make clean/all/install
+    - templates
+      - configure.ac
+      - Makefile.am
     - m4 test programs
 - zdb
   - graphical debugger interface
@@ -78,6 +76,7 @@
   - SSE compatibility/support
 - terminal mode
   - POSIX pseudo-teletype interface
+  - tabbed multiterminal interface
   - Rterm X widget from libRterm
     - all 256 xterm colors supported
     - important/relevant parts of vt100+ supported
