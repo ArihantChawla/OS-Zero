@@ -1,6 +1,6 @@
-- simple c preprocessor and interpreter (or interface to existing ones)
-  - macros, constants, variables, expressions
 - program console
+  - simple c preprocessor and interpreter (or interface to existing ones)
+    - macros, constants, variables, expressions, functions
   - assembler (link-loader to be implemented)
   - commands for managing code [and later object] files
     - load, unload, include, link, trace, run
