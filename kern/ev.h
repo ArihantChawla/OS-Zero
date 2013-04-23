@@ -35,10 +35,10 @@ struct evkbd {
 
 /* pointer such as mouse device events */
 
-#define evpntisup(ev, button) (ev->state & (1 << (button)))
+#define evpntisdown(ev, button) (ev->state & (1 << (button)))
 /* pointer device, e.g. mouse event */
 struct evpnt {
-    uint32_t state;                     // state bits for buttons; 1 -> up
+    uint32_t state;                     // state bits for buttons; 1 -> down
     uint32_t x;                         // screen X coordinate
     uint32_t y;                         // screen Y coordinate
 } PACK();
@@ -55,8 +55,8 @@ struct uievent {
 
 /* command packet */
 struct evcmd {
-    uint32_t cmd;                       // RPC command
-    uint32_t dest;                      // destination descriptor
+    uint64_t cmd;                       // RPC command
+    uint64_t dest;                      // destination descriptor
 } PACK();
 
 /* data packet */
