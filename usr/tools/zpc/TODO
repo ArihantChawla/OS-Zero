@@ -1,7 +1,7 @@
 - program console
   - simple c preprocessor and interpreter (or interface to existing ones)
     - macros, constants, variables, expressions, functions
-  - assembler (link-loader to be implemented)
+  - assembler (loader to be implemented)
   - commands for managing code [and later object] files
     - load, unload, include, link, trace, run
   - show stack registers and other registers
@@ -23,14 +23,13 @@
 - 2D and 3D math
 - probability and statistics
 - complex numbers
-- strings
-  - regular expressions
 - I/O facilities
 - character constants
   - C-style with single quotes
 - strings
   - C-style NUL-terminated character data (8-bit)
   - Unicode character data
+  - regular expressions
 - character conversions
   - ISO 8859, UCS-2, UCS-4, UTF-8
 - internal character set ISO 8859-1
@@ -50,15 +49,14 @@
   - green/amber/white on black
 - data structure and algorithm analysis including visualisation?
 - 80-bit FPU math
-- autoedit
-  - menu interface for GNU auto-tools
-    - command macros
-      - autoreconf -i
-      - make clean/all/install
-    - templates
-      - configure.ac
-      - Makefile.am
-    - m4 test programs
+- autohelp
+  - commands for GNU auto-tools
+    - autoreconf -i
+    - make clean/all/install
+  - templates
+    - configure.ac
+    - Makefile.am
+  - m4 test programs
 - zdb
   - graphical debugger interface
   - first for gdb, qemu, and bochs
