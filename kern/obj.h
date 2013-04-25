@@ -54,8 +54,8 @@ struct proc {
     uid_t             euid;               // effective user ID
     gid_t             egid;               // effective group ID
     /* descriptors */
-    uintptr_t        *dtab;
-    uintptr_t        *dtab2;
+    desc_t           *dtab;
+    desc_t           *dtab2;
     /* signal state */
     sigset_t          sigmask;
     sigset_t          sigpend;
