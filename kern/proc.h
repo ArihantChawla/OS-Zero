@@ -45,43 +45,6 @@ void procfreepid(long id);
 #define NDESCTAB     (1 << NDESCTABLOG2)
 #define NDESCTABLOG2 10
 #define NVMHDRTAB    (NPAGEMAX >> PAGESIZELOG2)
-struct proc {
-    struct thr       *thr;               // current thread
-    /* wait channel */
-    void             *wchan;             // wait channel
-    /* page directory */
-    pde_t            *pdir;
-    /* kernel stack */
-    uint8_t          *kstk;               // kernel-mode stack (wired)
-    long              state;
-    long              class;
-    /* memory attributes */
-    uint8_t          *brk;
-    /* process credentials */
-    pid_t             pid;                // process ID
-    pid_t             parent;             // parent process
-    long              nthr;               // # of threads
-    uid_t             ruid;               // real user ID
-    gid_t             rgid;               // real group ID
-    uid_t             euid;               // effective user ID
-    gid_t             egid;               // effective group ID
-    /* descriptors */
-    uintptr_t        *dtab;
-    uintptr_t        *dtab2;
-    /* signal state */
-    sigset_t          sigmask;
-    sigset_t          sigpend;
-    signalhandler_t  *sigvec[NSIG];
-    /* shell arguments */
-    int               argc;
-    char            **argv;
-    char            **envp;
-    /* system call context */
-    struct syscall    syscall;
-    struct slabhdr   *vmtab[PTRBITS];
-    /* event queue */
-//    struct ringbuf   evbuf;
-} PACK() ALIGNED(PAGESIZE);
 
 #endif /* __KERN_PROC_H__ */
 

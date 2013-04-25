@@ -5,8 +5,9 @@
 #include <zero/types.h>
 #include <zero/trix.h>
 #include <kern/util.h>
-#include <kern/proc.h>
-#include <kern/thr.h>
+#include <kern/obj.h>
+//#include <kern/proc.h>
+//#include <kern/thr.h>
 #include <kern/io/drv/pc/vga.h>
 #if (VBE2)
 #include <kern/io/drv/pc/vbe2.h>

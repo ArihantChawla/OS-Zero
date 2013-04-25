@@ -1,6 +1,7 @@
 #include <stddef.h>
 #include <kern/conf.h>
 #include <kern/util.h>
+#include <kern/obj.h>
 #include <kern/mem.h>
 #include <kern/proc.h>
 #include <zero/param.h>

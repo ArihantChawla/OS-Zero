@@ -19,19 +19,6 @@ void thryield(void);
 #define __KERNEL__ 1
 #include <zero/mtx.h>
 
-struct thr {
-    struct m_tcb  m_tcb;
-    long          id;
-    long          nice;
-    struct proc  *proc;
-    struct thr   *prev;
-    struct thr   *next;
-    long          class;
-    long          prio;
-    long          interact;
-    long          runtime;
-} PACK();
-
 struct thrq {
     volatile long  lk;
     struct thr    *head;

@@ -3,7 +3,8 @@
 #include <zero/param.h>
 #include <zero/trix.h>
 #include <kern/conf.h>
-#include <kern/proc.h>
+#include <kern/obj.h>
+//#include <kern/proc.h>
 #include <kern/thr.h>
 #include <kern/unit/x86/cpu.h>
 
