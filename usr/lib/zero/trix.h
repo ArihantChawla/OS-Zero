@@ -430,14 +430,7 @@ lzerol(unsigned long ul)
     (((((a) - (b)) >> (CHAR_BIT * sizeof(a) - 1)) & ((v1) ^ (v2))) ^ (v2))
 
 /* c - conditional, f - flag, u - word */
-#define condsetf(c, f, u) ((u) ^ ((-(u) ^ (u)) & (f)))
-
-/* (a < b) ? v1 : v2; */
-#define condset(a, b, v1, v2)                                           \
-    (((((a) - (b)) >> (CHAR_BIT * sizeof(a) - 1)) & ((v1) ^ (v2))) ^ (v2))
-
-/* c - conditional, f - flag, u - word */
-#define condsetf(c, f, u) ((u) ^ ((-(u) ^ (u)) & (f)))
+#define condflgset(c, f, u) ((u) ^ ((-(u) ^ (u)) & (f)))
 
 #define satu8(x)                                                        \
     ((x) <= 0xff ? (x) : 0xff)
@@ -485,9 +478,9 @@ divu100(unsigned long x)
 #define modu400(u) ((u) - (divu100(u) >> 2) * 400)
 
 #define leapyear(u)                                                     \
-    (!((u) & 0x03) && ((((u) % 100)) || !((u) % 400)))
-#define leapyear2(u)                                                    \
     (!((u) & 0x03) && ((modu100(u)) || !modu400(u)))
+#define leapyear2(u)                                                    \
+    (!((u) & 0x03) && ((((u) % 100)) || !((u) % 400)))
 
 #endif /* __ZERO_TRIX_H__ */
 
