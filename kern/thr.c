@@ -12,6 +12,7 @@ struct thr   thrtab[NTHR] ALIGNED(PAGESIZE);
 struct thrq  thrruntab[THRNCLASS * THRNPRIO];
 struct thr  *corethrtab[NCPU];
 
+/* save thread context */
 void
 thrsave(struct thr *thr)
 {
@@ -25,6 +26,8 @@ thrsave(struct thr *thr)
     return;
 }
 
+/* run thread */
+NORET
 void
 thrjmp(struct thr *thr)
 {
@@ -37,6 +40,7 @@ thrjmp(struct thr *thr)
 
 #if (ZEROSCHED)
 
+/* add thread to end of queue */
 void
 thrqueue(struct thr *thr, struct thrq *thrq)
 {
@@ -55,6 +59,7 @@ thrqueue(struct thr *thr, struct thrq *thrq)
     return;
 }
 
+/* adjust thread priority */
 long
 thradjprio(struct thr *thr)
 {
@@ -73,6 +78,7 @@ thradjprio(struct thr *thr)
     return prio;
 }
 
+/* switch threads */
 void
 thryield(void)
 {
@@ -102,8 +108,9 @@ thryield(void)
 
                     return;
                 }
+            } else {
+                mtxunlk(&thrq->lk);
             }
-            mtxunlk(&thrq->lk);
         }
         if (!thr) {
             m_waitint();

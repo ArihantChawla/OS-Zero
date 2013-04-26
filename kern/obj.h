@@ -15,28 +15,39 @@ struct cred {
     long gid;
 };
 
+/* permissions */
 struct perm {
     struct cred owner;  // user + group
     long        flg;    // permission bits
 };
 
+/* thread */
 struct thr {
-    struct m_tcb  m_tcb;
-    long          id;
-    long          nice;
-    struct proc  *proc;
-    struct thr   *prev;
-    struct thr   *next;
-    long          class;
-    long          prio;
-    long          interact;
-    long          runtime;
+    /* thread control block */
+    struct m_tcb   m_tcb;
+    /* wait channel */
+    void          *wchan;               // wait channel
+    /* linkage */
+    struct proc   *proc;                // owner process
+    /* round-robin queue */
+    struct thr    *prev;                // previous in queue
+    struct thr    *next;                // next in queue
+    long           id;
+    /* scheduler parameters */
+    long           nice;
+    long           class;
+    long           prio;
+    long           interact;
+    long           runtime;
+    /* system call context */
+    struct syscall syscall;
 } PACK();
 
+/* process */
 struct proc {
     struct thr       *thr;               // current thread
-    /* wait channel */
-    void             *wchan;             // wait channel
+    /* round-robin queue */
+    struct thrq       thrq;
     /* page directory */
     pde_t            *pdir;
     /* kernel stack */
@@ -60,17 +71,17 @@ struct proc {
     sigset_t          sigmask;
     sigset_t          sigpend;
     signalhandler_t  *sigvec[NSIG];
-    /* shell arguments */
+    /* runtime arguments */
     int               argc;
     char            **argv;
     char            **envp;
-    /* system call context */
-    struct syscall    syscall;
+    /* memory management */
     struct slabhdr   *vmtab[PTRBITS];
     /* event queue */
 //    struct ringbuf   evbuf;
 } PACK() ALIGNED(PAGESIZE);
 
+/* memory region */
 struct memreg {
     struct perm   perm;
     unsigned long flg;
@@ -78,7 +89,9 @@ struct memreg {
     unsigned long size;
 };
 
+/* I/O node */
 struct node {
+    struct perm   perm;
     unsigned long type;
     desc_t        desc;
     unsigned long flg;  // NODESEEKBIT etc.

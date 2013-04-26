@@ -6,7 +6,6 @@
 #include <kern/conf.h>
 #include <kern/unit/x86/cpu.h>
 
-void thrinit(long id, long prio);
 void thrsave(struct thr *thr);
 void thrjmp(struct thr *thr);
 

@@ -3,6 +3,7 @@
 #ifndef __KERN_SYSCALLNUM_H__
 #define __KERN_SYSCALLNUM_H__
 
+#define SYS_NONE       0
 #define SYS_HALT       1
 #define SYS_SYSCTL     2
 #define SYS_EXIT       3
