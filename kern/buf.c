@@ -39,7 +39,7 @@ static volatile long     bufstklk;
 static long              bufnstk;
 static long              bufstknext;
 static volatile long     bufzonelk;
-static uintptr_t         bufzone;
+static void             *bufzone;
 //static uintptr_t         bufbrk;
 static size_t            bufnbyte;
 #if (BUFLKBITMAP)
@@ -66,7 +66,7 @@ bufalloc(void)
 
     mtxlk(&bufzonelk);
     if (!bufzone) {
-        bufzone = (uintptr_t)memalloc(BUFNBYTE, PAGEBUF | PAGEWIRED);
+        bufzone = memalloc(BUFNBYTE, PAGEBUF | PAGEWIRED);
         if (bufzone) {
             /*
              * buffers are zeroed on allocation so we don't force them to be
