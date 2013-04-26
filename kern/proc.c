@@ -41,13 +41,13 @@ procinit(long id)
             return -1;
         }
         /* initialise kernel-mode stack (wired) */
-        ptr = kmalloc(KERNSTKSIZE);
+        ptr = kwalloc(KERNSTKSIZE);
         if (ptr) {
             kbzero(ptr, KERNSTKSIZE);
             proc->kstk = ptr;
         } else {
-            kfree(proc);
             kfree(proc->pdir);
+            kfree(proc);
 
             return -1;
         }
@@ -57,9 +57,9 @@ procinit(long id)
             kbzero(ptr, NDESCTAB * sizeof(desc_t));
             proc->dtab = ptr;
         } else {
-            kfree(proc);
             kfree(proc->pdir);
             kfree(proc->kstk);
+            kfree(proc);
 
             return -1;
         }
@@ -70,10 +70,10 @@ procinit(long id)
             kbzero(ptr, NVMHDRTAB * sizeof(struct vmpage));
             proc->vmhdrtab = ptr;
         } else {
-            kfree(proc);
             kfree(proc->pdir);
             kfree(proc->kstk);
             kfree(proc->dtab);
+            kfree(proc);
 
             return -1;
         }

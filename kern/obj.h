@@ -7,6 +7,7 @@
 #include <zero/cdecl.h>
 #include <zero/types.h>
 #include <kern/types.h>
+#include <kern/thr.h>
 #include <kern/syscall.h>
 
 /* user + group credentials */

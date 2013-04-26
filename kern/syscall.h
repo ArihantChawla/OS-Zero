@@ -26,11 +26,11 @@
  * memory interface
  * ----------------
  * long  brk(void *adr);
- * void *map(long desc, long flg, struct memreg *arg);
+ * void *map(long desc, long flg, struct sysmem *arg);
  * - map file or anonymous memory
  * long  umap(void *adr, size_t size);
  * - unmap file or anonymous memory
- * long  mhint(void *adr, long flg, struct memreg *arg);
+ * long  mhint(void *adr, long flg, struct sysmem *arg);
  * - NORMAL, RANDOM, SEQUENTIAL, WILLNEED, DONTNEED, REMOVE, DONTFORK, DOFORK
  * void *bmap(long desc, size_t size, long flg);
  * - map buffer regions; MAPBUF
@@ -162,7 +162,7 @@ struct _procwait {
 #define MAP_DONTNEED    0x00000040
 #define MAP_DONTFORK    0x00000080
 
-struct memreg {
+struct sysmem {
     void *base;
     long  ofs;
     long  len;

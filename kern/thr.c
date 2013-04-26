@@ -27,7 +27,6 @@ thrsave(struct thr *thr)
 }
 
 /* run thread */
-NORET
 void
 thrjmp(struct thr *thr)
 {
@@ -36,6 +35,7 @@ thrjmp(struct thr *thr)
     m_tcbjmp(&thr->m_tcb);
 
     /* NOTREACHED */
+    return;
 }
 
 #if (ZEROSCHED)
@@ -65,7 +65,6 @@ thradjprio(struct thr *thr)
 {
     long class = thr->class;
     long prio = thr->prio;
-    long tmp;
 
     if (class != THRRT) {
         /* wrap around back to 0 at maximum value */
