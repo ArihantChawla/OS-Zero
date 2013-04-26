@@ -11,9 +11,9 @@
 
 /* user + group credentials */
 struct cred {
-    long uid;
-    long gid;
-};
+    uid_t uid;
+    gid_t gid;
+} PACK();
 
 /* permissions */
 struct perm {
