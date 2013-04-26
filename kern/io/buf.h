@@ -1,7 +1,7 @@
 #ifndef __KERN_IO_BUF_H__
 #define __KERN_IO_BUF_H__
 
-#define NBUFBLKBIT 64
+#define BUFNBLKBIT 64
 
 #include <stdint.h>
 #include <kern/perm.h>
@@ -23,7 +23,7 @@ void *bufalloc(void);
 
 #define devgetblk(buf, blk) devfindblk(buf, blk, 0)
 
-#if (NBUFBLKBIT == 64)
+#if (BUFNBLKBIT == 64)
 #define NLVL0BIT 16
 #define NLVL1BIT 16
 #define NLVL2BIT 16
