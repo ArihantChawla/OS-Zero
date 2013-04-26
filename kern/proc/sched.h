@@ -24,7 +24,7 @@
 #define THRNPRIO     64
 #define THRNPRIOLOG2 6
 
-#include <kern/thr.h>
+#include <kern/proc/thr.h>
 
 extern void (*schedyield)(void);
 

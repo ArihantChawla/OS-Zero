@@ -2,7 +2,7 @@
 #define __UNIT_IA32_VM_H__
 
 #include <stdint.h>
-#include <kern/buf.h>
+//#include <kern/buf.h>
 
 #if !defined(__KERNEL__)
 #define __KERNEL__ 1

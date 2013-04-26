@@ -1,5 +1,5 @@
-#ifndef __KERN_BUF_H__
-#define __KERN_BUF_H__
+#ifndef __KERN_IO_BUF_H__
+#define __KERN_IO_BUF_H__
 
 #define NBUFBLKBIT 64
 
@@ -55,5 +55,5 @@ struct devbuf {
 #define bufkey3(blk)                                                    \
     ((blk) & ((1UL << NLVL3BIT) - 1))
 
-#endif /* __KERN_BUF_H__ */
+#endif /* __KERN_IO_BUF_H__ */
 

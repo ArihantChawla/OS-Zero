@@ -4,7 +4,7 @@
 #include <zero/param.h>
 #include <zero/mtx.h>
 #include <zero/trix.h>
-#include <kern/task.h>
+//#include <kern/proc/task.h>
 #include <kern/mem/slab.h>
 
 #define SLABNHDR     (1UL << (PTRBITS - SLABMINLOG2))

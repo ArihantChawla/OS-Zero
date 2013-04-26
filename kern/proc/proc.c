@@ -3,8 +3,8 @@
 #include <kern/util.h>
 #include <kern/obj.h>
 #include <kern/mem.h>
-#include <kern/proc.h>
 #include <zero/param.h>
+#include <kern/proc/proc.h>
 #include <kern/unit/x86/cpu.h>
 #include <kern/unit/ia32/boot.h>
 #include <kern/unit/ia32/vm.h>

@@ -5,7 +5,7 @@
 #include <kern/conf.h>
 #include <kern/obj.h>
 //#include <kern/proc.h>
-#include <kern/thr.h>
+#include <kern/proc/thr.h>
 #include <kern/unit/x86/cpu.h>
 
 struct thr   thrtab[NTHR] ALIGNED(PAGESIZE);

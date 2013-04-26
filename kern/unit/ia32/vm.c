@@ -11,11 +11,11 @@
 #include <zero/cdecl.h>
 #include <zero/param.h>
 #include <kern/conf.h>
-#include <kern/task.h>
-#include <kern/buf.h>
 #include <kern/dev.h>
 #include <kern/util.h>
+//#include <kern/proc/task.h>
 #include <kern/mem/page.h>
+#include <kern/io/buf.h>
 #include <kern/unit/x86/dma.h>
 #if (SMP)
 #include <kern/unit/ia32/mp.h>

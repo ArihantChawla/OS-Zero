@@ -7,8 +7,8 @@
 #include <zero/cdecl.h>
 #include <zero/types.h>
 #include <kern/types.h>
-#include <kern/thr.h>
 #include <kern/syscall.h>
+#include <kern/proc/thr.h>
 
 /* user + group credentials */
 struct cred {
@@ -47,12 +47,13 @@ struct thr {
 /* process */
 
 /* states */
-#define PROCNEW    0x00                 // being created
-#define PROCRUN    0x01                 // running
-#define PROCREADY  0x02                 // ready to run
-#define PROCWAIT   0x03                 // waiting on system descriptor
-#define PROCSTOP   0x04                 // stopped
-#define PROCZOMBIE 0x05                 // finished but not waited for
+#define PROCNONE   0x00                 // undefined
+#define PROCINIT   0x01                 // being initialised
+#define PROCRUN    0x02                 // running
+#define PROCREADY  0x03                 // ready to run
+#define PROCWAIT   0x04                 // waiting on system descriptor
+#define PROCSTOP   0x05                 // stopped
+#define PROCZOMBIE 0x06                 // finished but not waited for
 struct proc {
     struct thr       *thr;              // current running thread
     /* round-robin queue */

@@ -8,7 +8,7 @@
 
 #include <zero/asm.h>
 #if (__KERNEL__) && (__MTKERNEL__)
-#include <kern/sched.h>
+#include <kern/proc/sched.h>
 #else
 /* on some Linux setups, the pthread library declares no prototype */
 extern int pthread_yield(void);

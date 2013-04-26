@@ -11,7 +11,7 @@
 #include <zero/mtx.h>
 #include <kern/util.h>
 #include <kern/mem.h>
-#include <kern/buf.h>
+#include <kern/io/buf.h>
 #if defined(__x86_64__) || defined(__amd64__)
 #include <kern/unit/x86-64/vm.h>
 #include <kern/mem/slab64.h>

@@ -1,5 +1,5 @@
 #include <zero/mtx.h>
-#include <kern/task.h>
+#include <kern/proc/task.h>
 
 static struct pid    pidtab[NTHR] ALIGNED(PAGESIZE);
 static struct pidq   pidq;

@@ -3,7 +3,7 @@
 #include <zero/param.h>
 #include <zero/types.h>
 #include <kern/conf.h>
-#include <kern/proc.h>
+//#include <kern/proc.h>
 #include <kern/unit/x86/cpu.h>
 #include <kern/unit/ia32/boot.h>
 #include <kern/unit/ia32/seg.h>

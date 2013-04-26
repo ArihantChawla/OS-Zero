@@ -12,8 +12,8 @@
 #include <zero/types.h>
 #include <kern/types.h>
 #include <kern/syscall.h>
-#include <kern/task.h>
 #include <kern/mem.h>
+#include <kern/proc/task.h>
 #if !defined(__arm__)
 #include <kern/unit/x86/cpu.h>
 #endif
@@ -32,15 +32,6 @@ void procfreepid(long id);
 #define IOREAD    2     // buffered or raw read operation
 #define IOSETF    3     // set descriptor flags
 
-/* process states */
-#define PROCUNUSED  0x00L       // unused
-#define PROCINIT    0x01L       // being initialized
-#define PROCSWAPPED 0x02L       // swapped
-#define PROCSLEEP   0x03L       // sleeping
-#define PROCWAIT    0x04L       // waiting
-#define PROCREADY   0x04L       // runnable
-#define PROCRUN     0x05L       // running
-#define PROCZOMBIE  0x06L       // not waited for
 /* descriptor table size */
 #define NDESCTAB     (1 << NDESCTABLOG2)
 #define NDESCTABLOG2 10
