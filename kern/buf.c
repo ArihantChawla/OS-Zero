@@ -60,8 +60,8 @@ bufevict(long nbuf)
 void *
 bufalloc(void)
 {
-    uint8_t *u8ptr = NULL;
-    void    *ptr;
+    void    *ptr = NULL;
+    uint8_t *u8ptr;
     long     l;
 
     mtxlk(&bufzonelk);
