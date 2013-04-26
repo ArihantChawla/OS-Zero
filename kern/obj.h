@@ -45,26 +45,34 @@ struct thr {
 } PACK();
 
 /* process */
+
+/* states */
+#define PROCNEW    0x00                 // being created
+#define PROCRUN    0x01                 // running
+#define PROCREADY  0x02                 // ready to run
+#define PROCWAIT   0x03                 // waiting on system descriptor
+#define PROCSTOP   0x04                 // stopped
+#define PROCZOMBIE 0x05                 // finished but not waited for
 struct proc {
-    struct thr       *thr;               // current thread
+    struct thr       *thr;              // current running thread
     /* round-robin queue */
-    struct thrq       thrq;
+    struct thrq       thrq;             // queue of ready threads
     /* page directory */
     pde_t            *pdir;
     /* kernel stack */
-    uint8_t          *kstk;               // kernel-mode stack (wired)
+    uint8_t          *kstk;             // kernel-mode stack (wired)
     long              state;
     long              class;
     /* memory attributes */
     uint8_t          *brk;
     /* process credentials */
-    pid_t             pid;                // process ID
-    pid_t             parent;             // parent process
-    long              nthr;               // # of threads
-    uid_t             ruid;               // real user ID
-    gid_t             rgid;               // real group ID
-    uid_t             euid;               // effective user ID
-    gid_t             egid;               // effective group ID
+    pid_t             pid;              // process ID
+    pid_t             parent;           // parent process
+    long              nthr;             // # of threads
+    uid_t             ruid;             // real user ID
+    gid_t             rgid;             // real group ID
+    uid_t             euid;             // effective user ID
+    gid_t             egid;             // effective group ID
     /* descriptors */
     desc_t           *dtab;
     desc_t           *dtab2;

@@ -80,6 +80,9 @@ bufalloc(void)
             }
             mtxunlk(&bufstklk);
             bufnbyte = BUFNBYTE;
+        } else {
+
+            return NULL;
         }
     }
     mtxunlk(&bufzonelk);
