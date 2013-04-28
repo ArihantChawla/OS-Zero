@@ -122,7 +122,7 @@ struct zastoken {
     } data;
 };
 
-#if (ZASDB)
+#if (ZASDB) || (WPMDB)
 struct zasline {
     struct zasline *next;
     uintptr_t       adr;

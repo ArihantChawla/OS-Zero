@@ -2,6 +2,9 @@
 #define ZASPROF    0
 #define ZASBUFSIZE 131072
 
+#if (WPM)
+#include <wpm/conf.h>
+#endif
 #include <stdio.h>
 #include <stdlib.h>
 #include <stdint.h>
@@ -70,7 +73,7 @@ static struct zasop     *ophash[NHASHITEM] ALIGNED(PAGESIZE);
 static struct zassymrec *symhash[NHASHITEM];
 static struct zasval    *valhash[NHASHITEM];
 static struct zaslabel  *globhash[NHASHITEM];
-#if (ZASDB)
+#if (ZASDB) || (WPMDB)
 struct zasline          *linehash[NHASHITEM];
 #endif
 
@@ -295,7 +298,7 @@ zasfindop(uint8_t *name)
     return op;
 }
 
-#if (ZASDB)
+#if (ZASDB) || (WPMDB)
 void
 zasaddline(zasmemadr_t adr, uint8_t *data, uint8_t *filename, unsigned long line)
 {

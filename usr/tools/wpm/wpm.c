@@ -1,5 +1,4 @@
-#define PTHREAD 1
-
+#include <wpm/conf.h>
 #include <stdlib.h>
 #include <string.h>
 #include <stdio.h>
@@ -18,7 +17,6 @@
 #endif
 #include <wpm/wpm.h>
 #include <wpm/mem.h>
-#define WPMDEBUG 0
 
 #if defined(__i386__) || defined(__i486__) || defined(__i586__)         \
     || defined(__i686__) || defined(__x86_64__) || defined(__amd64__)
@@ -247,12 +245,14 @@ wpminitthr(wpmmemadr_t pc)
 {
     pthread_t           tid;
     struct wpmcpustate *cpustat = malloc(sizeof(struct wpmcpustate));
+    wpmmemadr_t         sp = mempalloc(THRSTKSIZE);
 
     mtxlk(&thrlk);
     thrcnt++;
     mtxunlk(&thrlk);
     memcpy(cpustat, &wpm->cpustat, sizeof(struct wpmcpustate));
     cpustat->pc = pc;
+    cpustat->sp = sp;
     pthread_create(&tid, NULL, wpmloop, (void *)cpustat);
     pthread_detach(tid);
 
@@ -333,7 +333,7 @@ wpmloop(void *cpustat)
 #if (WPMDB)
                 line = zasfindline(wpm->cpustat.pc);
                 if (line) {
-                    fprintf(stderr, "%s:%d:\t%s\n", line->file, line->num, line->data);
+                    fprintf(stderr, "%s:%ld:\t%s\n", line->file, line->num, line->data);
                 }
 #endif
                 func(op);
@@ -1746,6 +1746,30 @@ wpmpzero(wpmmemadr_t adr, wpmuword_t size)
             exit(1);
         }
         adr += 4096;
+    }
+}
+
+void
+wpmbzero(wpmmemadr_t adr, wpmuword_t size)
+{
+    wpmuword_t  nb = size;
+    uint8_t    *ptr = NULL;
+
+    while (nb--) {
+        if (adr < MEMSIZE) {
+            ptr = &physmem[adr];
+        } else {
+            ptr = (void *)mempagetab[pagenum(adr)];
+        }
+        if (ptr) {
+//            bzero(ptr, 4096);
+            *ptr = 0;
+        } else {
+            fprintf(stderr, "BZERO: page not mapped\n");
+
+            exit(1);
+        }
+        adr++;
     }
 }
 

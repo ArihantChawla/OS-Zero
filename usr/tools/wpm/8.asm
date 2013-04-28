@@ -10,18 +10,18 @@ memalloc:
 memzero:
 	mov	$65536, %r0	// address
 	mov	$4, %r1		// # of pages
-	hook	$0
+	hook	$PZERO
 	hlt
 
 zero:
 	mov	ptr, %r0
 	mov	$4096, %r1
-	hook	$0
+	hook	$BZERO
 	ret
 
 memfree:
 	mov	ptr, %r0
-	hook	$2
+	hook	$PFREE
 	ret
 
 _start:
