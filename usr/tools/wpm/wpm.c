@@ -243,16 +243,19 @@ wpminit(void)
 void
 wpminitthr(wpmmemadr_t pc)
 {
+    uint32_t            id;
     pthread_t           tid;
     struct wpmcpustate *cpustat = malloc(sizeof(struct wpmcpustate));
-    wpmmemadr_t         sp = mempalloc(THRSTKSIZE);
+//    wpmmemadr_t         sp = mempalloc(THRSTKSIZE);
 
     mtxlk(&thrlk);
+    id = wpmgetthrid();
     thrcnt++;
     mtxunlk(&thrlk);
     memcpy(cpustat, &wpm->cpustat, sizeof(struct wpmcpustate));
     cpustat->pc = pc;
-    cpustat->sp = sp;
+//    cpustat->sp = sp;
+    cpustat->sp = MEMSIZE - id * THRSTKSIZE;
     pthread_create(&tid, NULL, wpmloop, (void *)cpustat);
     pthread_detach(tid);
 
@@ -1577,7 +1580,7 @@ optrap(struct wpmopcode *op)
 void
 opcli(struct wpmopcode *op)
 {
-    mtxtrylk(&intlk);
+    mtxlk(&intlk);
     wpm->cpustat.pc += op->size << 2;
 
     return;
@@ -1705,6 +1708,11 @@ opinl(struct wpmopcode *op)
 }
 
 void
+opoutl(struct wpmopcode *op)
+{
+}
+
+void
 ophook(struct wpmopcode *op)
 {
     uint_fast8_t   argt = op->arg1t;
@@ -1719,11 +1727,6 @@ ophook(struct wpmopcode *op)
     wpm->cpustat.pc += op->size << 2;
 
     return;
-}
-
-void
-opoutl(struct wpmopcode *op)
-{
 }
 
 void

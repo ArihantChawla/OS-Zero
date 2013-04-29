@@ -59,6 +59,7 @@ thrqueue(struct thr *thr, struct thrq *thrq)
     return;
 }
 
+/* add thread to wait queue */
 void *
 thraddwait(struct thr *thr)
 {
@@ -152,6 +153,50 @@ thraddwait(struct thr *thr)
     mtxunlk(&tab->lk);
     
     return ret;
+}
+
+/* move threads from wait queue to ready queue */
+void
+thrwakeup(uintptr_t wchan)
+{
+    struct thrwait *tab;
+    struct thrwait *ptr = NULL;
+    struct thr     *thr1;
+    struct thr     *thr2;
+    long            key0 = thrwaitkey0(wchan);
+    long            key1 = thrwaitkey1(wchan);
+    long            key2 = thrwaitkey2(wchan);
+    long            key3 = thrwaitkey3(wchan);
+    long            n;
+    struct thrwait *pstk[4] = { NULL };
+
+    tab = &thrwaittab[key0];
+    mtxlk(&tab->lk);
+    ptr = tab->ptr;
+    if (ptr) {
+        pstk[0] = ptr;
+        ptr = ptr[key0].ptr;
+        if (ptr) {
+            pstk[1] = ptr;
+            ptr = ptr[key1].ptr;
+            if (ptr) {
+                pstk[2] = ptr;
+                ptr = ptr[key2].ptr;
+                if (ptr) {
+                    pstk[3] = ptr;
+                    ptr = ptr[key3].ptr;
+                }
+            }
+        }
+    }
+    thr1 = (struct thr *)ptr;
+    while (thr1) {
+        thr2 = thr1->next;
+        thrqueue(thr1, &thrruntab[thr1->prio]);
+        thr1 = thr2;
+    }
+    /* TODO: free tables if possible */
+    mtxunlk(&tab->lk);
 }
 
 /* adjust thread priority */

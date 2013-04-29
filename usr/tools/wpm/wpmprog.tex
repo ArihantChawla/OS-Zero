@@ -30,7 +30,7 @@
 	Wizard Pseudo Machine, WPM, is a software-based virtual machine. It can
 	be programmed in its own instruction set / assembly dialect, using AT\&T
 	syntax assembly. The incorporated assembler (\textbf{zas}) does not yet
-	support	pretranslated objects, but translates assembly code into
+	support	loading pretranslated objects, but translates assembly code into
 	bytecode before execution. This bytecode is then handled to the
 	pseudo machine (\textbf{wpm}) to be executed.
 
@@ -44,8 +44,8 @@
 	educational purposes. The machine is a virtual processor with custom
 	instruction set that is close to existing ones; goals include making
 	this instruction set simple, relatively complete, and useful for
-	C language operations in case someone wants to create a C compiler or
-	code generator for an existing one.
+	C language operations in case we decide to create a C compiler or code
+	generator for an existing one.
 
 	At the time of this writing, the virtual assembler is in good shape.
 	The assembler provides not only .include to place other files into the
@@ -141,7 +141,7 @@
 	lowest byte first.
 
 	There exists an instruction, \textbf{thr}, to start executing new
-	threads at the desired locations in memory.
+	threads from desired code locations in memory.
 
 	We follow the \textbf{von Neumann architecture}, so we basically have
 	3 abstractions; \textbf{CPU}, \textbf{memory}, and
@@ -174,7 +174,7 @@
 \begin{itemize}
 	\item{the VM's memory size is currently specified as \textbf{MEMSIZE}}
 	\item{thread stacks live at \textbf{MEMSIZE - thrid * THRSTKSIZE}, i.e.
-	at top of [virtual] address space}
+	at top of 'physical'  address space}
 \end{itemize}
 
 \chapter{Instruction Set}
@@ -184,7 +184,29 @@
 
 \section{Instruction Reference}
 
-\subsection{Instruction Operands}
+\subsection{Instruction Format}
+
+	\textbf{Operands}
+
+\begin{itemize}
+	\item{\textbf{i} stands for immediate operand}
+	\item{\textbf{r} stands for register operand}
+	\item{\textbf{m} stands for memory operand}
+\end{itemize}
+
+	\textbf{Flags}
+
+	Certain instructions set bits in the machine status word (MSW). This is
+	documented here on per-instruction basis.
+
+\begin{itemize}
+	\item{\textbf{z} stands for zero flag (ZF)}
+	\item{\textbf{c} stands for carry flag (CF)}
+	\item{\textbf{o} stands for overflow flag (OF)}
+	\item{\textbf{s} stands for sign flag (SF)}
+\end{itemize}
+
+	\textbf{TODO}: stack/call conventions for certain instructions
 
 \subsection{Instruction Table}
 
@@ -240,15 +262,69 @@
 	\hline
 	\textbf{bo}   & r, i & N/A & branch to op1 if (OF != 0) & N/A \\
 	\hline
-	\textbf{bno}   & r, i & N/A & branch to op1 if (OF == 0) & N/A \\
+	\textbf{bno}  & r, i & N/A & branch to op1 if (OF == 0) & N/A \\
 	\hline
 	\textbf{bc}   & r, i & N/A & branch to op1 if (CF != 0) & N/A \\
 	\hline
-	\textbf{bnc}   & r, i & N/A & branch to op1 if (CF == 0) & N/A \\
+	\textbf{bnc}  & r, i & N/A & branch to op1 if (CF == 0) & N/A \\
+	\hline
+	\textbf{pop}  & N/A & N/A & pop top of stack & N/A \\
+	\hline
+	\textbf{push} & r, i & N/A & push value on stack & N/A \\
+	\hline
+	\textbf{mov} & r, i, m & r, i, m & load or store 32-bit longword & N/A \\
+	\hline
+	\textbf{movb} & r, i, m & r, i, m & load or store 8-bit byte & N/A \\
+	\hline
+	\textbf{movw} & r, i, m & r, i, m & load or store 16-bit word & N/A \\
+	\hline
+	\textbf{call} & r, i & N/A & call subroutine; construct stack frame & N/A \\
+	\hline
+	\textbf{enter} & N/A & N/A & enter subroutine & N/A \\
+	\hline
+	\textbf{leave} & N/A & N/A & leave subroutine & N/A \\
+	\hline
+	\textbf{ret} & N/A & N/A & return from subroutine & N/A \\
+	\hline
+	\textbf{lmsw} & r, i & N/A & load machine status word & N/A \\
+	\hline
+	\textbf{smsw} & m & N/A & load machine status word & N/A \\
+	\hline
+	\textbf{reset} & m & N/A & reset machine & N/A \\
+	\hline
+	\textbf{hlt} & m & N/A & halt machine & N/A \\
+	\hline
+	\textbf{nop} & N/A & N/A & no/dummy operation & N/A \\
+	\hline
+	\textbf{brk} & N/A & N/A & breakpoint & N/A \\
+	\hline
+	\textbf{trap} & N/A & N/A & software interrupt & N/A \\
+	\hline
+	\textbf{cli} & N/A & N/A & disable interrupts & N/A \\
+	\hline
+	\textbf{sti} & N/A & N/A & enable interrupts & N/A \\
+	\hline
+	\textbf{iret} & N/A & N/A & return from interrupt handler & N/A \\
+	\hline
+	\textbf{thr} & m & N/A & start new thread at address & N/A \\
+	\hline
+	\textbf{cmpswap} & m & r, i & atomic compare and swap & N/A \\
+	\hline
+	\textbf{inb} & r, i & N/A & read 8-bit byte from input port & N/A \\
+	\hline
+	\textbf{outb} & r, i & N/A & write 8-bit byte to input port & N/A \\
+	\hline
+	\textbf{inw} & r, i & N/A & read 16-bit word from input port & N/A \\
+	\hline
+	\textbf{outw} & r, i & N/A & write 16-bit word to input port & N/A \\
+	\hline
+	\textbf{inl} & r, i & N/A & read 32-bit longword from input port & N/A \\
+	\hline
+	\textbf{outl} & r, i & N/A & write 32-bit longword to input port & N/A \\
+	\hline
+	\textbf{hook} & r, i & N/A & invoke system service & N/A \\
 	\hline
 \end{tabular}
-
-	\textbf{TODO: finish the table above}
 
 \section{Machine Operations}
 
@@ -256,59 +332,65 @@
 	IDs in opcodes.
 
 \begin{verbatim}
-        #define OPNOT      0x01 // 2's complement
-        #define OPAND      0x02 // logical AND
-        #define OPOR       0x03 // logical OR
-        #define OPXOR      0x04 // logical exclusive OR
-        #define OPSHL      0x05 // shift left (fill with zero)
-        #define OPSHR      0x06 // arithmetic shift right (fill with sign)
-        #define OPSHRL     0x07 // logical shift right (fill with zero)
-        #define OPROR      0x08 // rotate right
-        #define OPROL      0x09 // rotate left
-        #define OPINC      0x0a // increment by one
-        #define OPDEC      0x0b // decrement by one
-        #define OPADD      0x0c // addition
-        #define OPSUB      0x0d // subtraction
-        #define OPCMP      0x0e // compare
-        #define OPMUL      0x0f // multiplication
-        #define OPDIV      0x10 // division
-        #define OPMOD      0x11 // modulus
-        #define OPBZ       0x12 // branch if zero
-        #define OPBNZ      0x13 // branch if not zero
-        #define OPBLT      0x14 // branch if less than
-        #define OPBLE      0x15 // branch if less than or equal to
-        #define OPBGT      0x16 // branch if greater than
-        #define OPBGE      0x17 // branch if greater than or equal to
-        #define OPBO       0x18 // branch if overflow
-        #define OPBNO      0x19 // branch if no overflow
-        #define OPBC       0x1a // branch if carry
-        #define OPBNC      0x1b // branch if no carry
-        #define OPPOP      0x1c // pop from stack
-        #define OPPUSH     0x1d // push to stack
-        #define OPMOV      0x1e // load/store 32-bit longword
-        #define OPMOVB     0x1f // load/store 8-bit byte
-        #define OPMOVW     0x20 // load/store 16-bit word
-        #define OPJMP      0x21 // jump to given address
-        #define OPCALL     0x22 // call subroutine
-        #define OPENTER    0x23 // subroutine prologue
-        #define OPLEAVE    0x24 // subroutine epilogue
-        #define OPRET      0x25 // return from subroutine
-        #define OPLMSW     0x26 // load machine status word
-        #define OPSMSW     0x27 // store machine status word
-        #define OPRESET    0x28 // reset into well-known state
-        #define OPNOP      0x29 // dummy operation
-        #define OPHLT      0x2a // halt execution
-        #define OPBRK      0x2b // breakpoint
-        #define OPTRAP     0x2c // trigger a trap (software interrupt)
-        #define OPIRET     0x2d // return from interrupt handler
-        #define OPTHR      0x2e // start new thread at given address
-        #define OPCMPSWAP  0x2f // atomic compare and swap
-        #define OPINB      0x30 // read 8-bit byte from port
-        #define OPOUTB     0x31 // write 8-bit byte to port
-        #define OPINW      0x32 // read 16-bit word
-        #define OPOUTW     0x33 // write 16-bit word
-        #define OPINL      0x34 // read 32-bit long
-        #define OPOUTL     0x35 // write 32-bit long
+	/* instruction set */
+
+	/* ALU instructions */
+	#define OPNOT      0x01	// 2's complement, args
+	#define OPAND      0x02	// logical AND
+	#define OPOR       0x03	// logical OR
+	#define OPXOR      0x04	// logical exclusive OR
+	#define OPSHR      0x05	// logical shift right (fill with zero)
+	#define OPSHRA     0x06	// arithmetic shift right (fill with sign)
+	#define OPSHL      0x07	// shift left (fill with zero)
+	#define OPROR      0x08	// rotate right
+	#define OPROL      0x09	// rotate left
+	#define OPINC      0x0a	// increment by one
+	#define OPDEC      0x0b	// decrement by one
+	#define OPADD	   0x0c	// addition
+	#define OPSUB	   0x0d	// subtraction
+	#define OPCMP      0x0e	// compare
+	#define OPMUL	   0x0f	// multiplication
+	#define OPDIV	   0x10	// division
+	#define OPMOD	   0x11	// modulus
+	#define OPBZ	   0x12	// branch if zero
+	#define OPBNZ	   0x13	// branch if not zero
+	#define OPBLT	   0x14	// branch if less than
+	#define OPBLE	   0x15	// branch if less than or equal to
+	#define OPBGT	   0x16	// branch if greater than
+	#define OPBGE	   0x17	// branch if greater than or equal to
+	#define OPBO	   0x18	// branch if overflow
+	#define OPBNO	   0x19	// branch if no overflow
+	#define OPBC	   0x1a	// branch if carry
+	#define OPBNC	   0x1b	// branch if no carry
+	#define OPPOP	   0x1c	// pop from stack
+	#define OPPUSH	   0x1d	// push to stack
+	#define OPMOV	   0x1e	// load/store 32-bit longword
+	#define OPMOVB     0x1f // load/store 8-bit byte
+	#define OPMOVW     0x20 // load/store 16-bit word
+	#define OPJMP      0x21 // jump to given address
+	#define OPCALL     0x22	// call subroutine
+	#define OPENTER    0x23	// subroutine prologue
+	#define OPLEAVE    0x24	// subroutine epilogue
+	#define OPRET	   0x25	// return from subroutine
+	#define OPLMSW     0x26	// load machine status word
+	#define OPSMSW	   0x27	// store machine status word
+	#define OPRESET    0x28 // reset into well-known state
+	#define OPNOP      0x29 // dummy operation
+	#define OPHLT      0x2a // halt execution
+	#define OPBRK      0x2b // breakpoint
+	#define OPTRAP     0x2c // trigger a trap (software interrupt)
+	#define OPCLI      0x2d // disable interrupts
+	#define OPSTI      0x2e // enable interrupts
+	#define OPIRET     0x2f // return from interrupt handler
+	#define OPTHR      0x30 // start new thread at given address
+	#define OPCMPSWAP  0x31 // atomic compare and swap
+	#define OPINB      0x32 // read 8-bit byte from port
+	#define OPOUTB     0x33 // write 8-bit byte to port
+	#define OPINW      0x34 // read 16-bit word
+	#define OPOUTW     0x35 // write 16-bit word
+	#define OPINL      0x36 // read 32-bit long
+	#define OPOUTL     0x37 // write 32-bit long
+	#define OPHOOK     0x38 // system services
 \end{verbatim}
 
 \section{Reference}
@@ -441,6 +523,7 @@
 	outw()      & outw        & r/i src, r/i dest & write word (16-bit) \\
         inl()       & inl         & r/i src         & read longword (32-bit) \\
 	outl()      & outl        & r/i src, r/i dest & write longword (32-bit) \\
+	hook()      & hook        & r1 cmd, r2 arg  & system service \\
 	\hline
 \end{tabular}
 

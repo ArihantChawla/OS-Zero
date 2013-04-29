@@ -3,6 +3,7 @@
 
 #include <stdint.h>
 #include <signal.h>
+#include <sys/types.h>
 #include <zero/param.h>
 #include <zero/cdecl.h>
 #include <zero/types.h>
@@ -12,14 +13,14 @@
 
 /* user + group credentials */
 struct cred {
-    uid_t uid;
-    gid_t gid;
+    uid_t uid;                          // user ID
+    gid_t gid;                          // group ID
 } PACK();
 
 /* permissions */
 struct perm {
-    struct cred owner;  // user + group
-    long        flg;    // permission bits
+    struct cred owner;                  // user + group
+    long        flg;                    // permission bits
 };
 
 /* thread */
@@ -33,9 +34,9 @@ struct perm {
 #define THRZOMBIE 0x06                 // finished but not waited for
 struct thr {
     /* thread control block */
-    struct m_tcb   m_tcb;
+    struct m_tcb   m_tcb;               // context
     /* state */
-    long           state;
+    long           state;               // thread state
     /* wait channel */
     uintptr_t      wchan;               // wait channel
     /* linkage */
@@ -45,11 +46,11 @@ struct thr {
     struct thr    *next;                // next in queue
     long           id;
     /* scheduler parameters */
-    long           nice;
-    long           class;
-    long           prio;
-    long           interact;
-    long           runtime;
+    long           nice;                // priority adjustment
+    long           class;               // thread class
+    long           prio;                // priority
+//    long           interact;
+    long           runtime;             // run time
     /* system call context */
     struct syscall syscall;
 } PACK();
@@ -58,10 +59,11 @@ struct thr {
 
 struct proc {
     struct thr       *thr;              // current running thread
+    long              nthr;             // # of threads
     /* round-robin queue */
     struct thrq       thrq;             // queue of ready threads
     /* page directory */
-    pde_t            *pdir;
+    pde_t            *pdir;             // page directory address
     /* kernel stack */
     uint8_t          *kstk;             // kernel-mode stack (wired)
     long              class;
@@ -70,22 +72,21 @@ struct proc {
     /* process credentials */
     pid_t             pid;              // process ID
     pid_t             parent;           // parent process
-    long              nthr;             // # of threads
     uid_t             ruid;             // real user ID
     gid_t             rgid;             // real group ID
     uid_t             euid;             // effective user ID
     gid_t             egid;             // effective group ID
-    /* descriptors */
+    /* descriptor tables */
     desc_t           *dtab;
     desc_t           *dtab2;
     /* signal state */
-    sigset_t          sigmask;
-    sigset_t          sigpend;
+    sigset_t          sigmask;          // signal mask
+    sigset_t          sigpend;          // pending signals
     signalhandler_t  *sigvec[NSIG];
     /* runtime arguments */
-    int               argc;
-    char            **argv;
-    char            **envp;
+    long              argc;             // argument count
+    char            **argv;             // argument vector
+    char            **envp;             // environment strings
     /* memory management */
     struct slabhdr   *vmtab[PTRBITS];
     /* event queue */
@@ -94,19 +95,22 @@ struct proc {
 
 /* memory region */
 struct memreg {
-    struct perm   perm;
-    unsigned long flg;
-    uintptr_t     base;
-    unsigned long size;
+    struct perm   perm;                 // memory permissions
+    unsigned long flg;                  // flags
+    uintptr_t     base;                 // base address
+    unsigned long size;                 // size in bytes
+    off_t         ofs;                  // region offset
 };
 
 /* I/O node */
 struct node {
-    struct perm   perm;
-    unsigned long type;
-    desc_t        desc;
-    unsigned long flg;  // NODESEEKBIT etc.
-    /* TODO */
+    struct perm   perm; 		// node permissions
+    unsigned long type; 		// file, dir, pipe, mq, shm, sock
+    desc_t        desc; 		// system descriptor
+    unsigned long flg;  		// NODESEEKBIT, NODEMAPBIT, etc.
+    unsigned long nref; 		// reference count
+    off_t         pos;                  // seek position
+    /* TODO: interface function pointers */
 };
 
 #endif /* __KERN_OBJ_H__ */
