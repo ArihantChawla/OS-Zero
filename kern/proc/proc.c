@@ -28,7 +28,6 @@ procinit(long id)
         curthr = thr;
     }
     if (proc) {
-        proc->state = PROCINIT;
         /* initialise page directory */
 //        kbzero(proc, sizeof(struct proc));
         ptr = kmalloc(NPDE * sizeof(pde_t));
@@ -78,7 +77,7 @@ procinit(long id)
             return -1;
         }
 #endif
-        proc->state = PROCREADY;
+        thr->state = THRREADY;
     }
 
     return 0;
@@ -117,7 +116,6 @@ newproc(int argc, char *argv[], char *envp[], int class)
 {
     struct proc *proc = kmalloc(sizeof(struct proc));
 
-    proc->state = PROCINIT;
     proc->class = class;
     proc->pid = taskgetpid();
     proc->parent = curproc->pid;

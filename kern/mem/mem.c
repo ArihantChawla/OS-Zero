@@ -18,7 +18,8 @@ meminit(uintptr_t base, unsigned long nbphys)
 {
 #if (defined(__i386__) && !defined(__x86_64__) && !defined(__amd64__))  \
     || defined(__arm__)
-    slabinit((unsigned long)&_ebss, (char *)KERNVIRTBASE - &_ebss);
+//    slabinit((unsigned long)&_ebss, (char *)KERNVIRTBASE - &_ebss);
+    slabinit((unsigned long)&_ebss, nbphys - (uintptr_t)&_ebss);
 #elif defined(__x86_64__) || defined(__amd64__)
 #error implement x86-64 memory management
 #endif

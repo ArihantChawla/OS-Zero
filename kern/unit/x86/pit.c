@@ -16,6 +16,7 @@ pitinit(void)
 {
     uint64_t *idt = kernidt;
 
+    kprintf("initialising timer interrupt to %d Hz\n", HZ);
     trapsetintgate(&idt[trapirqid(IRQTIMER)], irqtimer, TRAPUSER);
     /* enable all interrupts */
     outb(0x00, PICMASK1);

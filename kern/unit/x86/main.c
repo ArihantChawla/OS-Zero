@@ -68,14 +68,10 @@ kmain(struct mboothdr *hdr, unsigned long pmemsz)
     machinit();                         // initialise machine
 #endif
     /* HID devices */
-    kprintf("kbdinit()\n");
     kbdinit();
-    kprintf("mouseinit()\n");
     mouseinit();
     /* execution environment */
-    kprintf("procinit()\n");
     procinit(0);
-    kprintf("thrinit()\n");
     curthr = curproc->thr;
 //    sysinit();
     kprintf("DMA buffers (%ul x %ul kilobytes) @ 0x%p\n",
@@ -88,7 +84,6 @@ kmain(struct mboothdr *hdr, unsigned long pmemsz)
             vmnwiredpages << (PAGESIZELOG2 - 10),
             vmnphyspages << (PAGESIZELOG2 - 10));
     schedinit();
-    kprintf("pitinit()\n");
     pitinit();
     /* pseudo-scheduler loop; interrupted by timer [and other] interrupts */
     while (1) {

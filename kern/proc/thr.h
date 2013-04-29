@@ -24,6 +24,28 @@ struct thrq {
     struct thr    *tail;
 };
 
+#if (LONGSIZE == 8)
+#define NLVLTHRLOG2 16
+#elif (LONGSIZE == 4)
+#define NLVLTHRLOG2 8
+#endif
+#define NLVL0THR    (1 << NLVLTHRLOG2)
+#define NLVL1THR    (1 << NLVLTHRLOG2)
+#define NLVL2THR    (1 << NLVLTHRLOG2)
+#define NLVL3THR    (1 << NLVLTHRLOG2)
+#define THRNKEY     4
+
+#define thrwaitkey0(wc) (((wc) >> 3 * NLVLTHRLOG2) & ((1UL << NLVLTHRLOG2) - 1))
+#define thrwaitkey1(wc) (((wc) >> 2 * NLVLTHRLOG2) & ((1UL << NLVLTHRLOG2) - 1))
+#define thrwaitkey2(wc) (((wc) >> 1 * NLVLTHRLOG2) & ((1UL << NLVLTHRLOG2) - 1))
+#define thrwaitkey3(wc) ((wc) & ((1UL << NLVLTHRLOG2) - 1))
+
+struct thrwait {
+    volatile long  lk;
+    long           nref;
+    void          *ptr;
+};
+
 #if (!QEMU)
 #define FPUCTX 1
 #endif

@@ -23,14 +23,24 @@ struct perm {
 };
 
 /* thread */
+/* states */
+#define THRNONE   0x00                 // undefined
+#define THRINIT   0x01                 // being initialised
+#define THRRUN    0x02                 // running
+#define THRREADY  0x03                 // ready to run
+#define THRWAIT   0x04                 // waiting on system descriptor
+#define THRSTOP   0x05                 // stopped
+#define THRZOMBIE 0x06                 // finished but not waited for
 struct thr {
     /* thread control block */
     struct m_tcb   m_tcb;
+    /* state */
+    long           state;
     /* wait channel */
-    void          *wchan;               // wait channel
+    uintptr_t      wchan;               // wait channel
     /* linkage */
     struct proc   *proc;                // owner process
-    /* round-robin queue */
+    /* queue linkage */
     struct thr    *prev;                // previous in queue
     struct thr    *next;                // next in queue
     long           id;
@@ -46,14 +56,6 @@ struct thr {
 
 /* process */
 
-/* states */
-#define PROCNONE   0x00                 // undefined
-#define PROCINIT   0x01                 // being initialised
-#define PROCRUN    0x02                 // running
-#define PROCREADY  0x03                 // ready to run
-#define PROCWAIT   0x04                 // waiting on system descriptor
-#define PROCSTOP   0x05                 // stopped
-#define PROCZOMBIE 0x06                 // finished but not waited for
 struct proc {
     struct thr       *thr;              // current running thread
     /* round-robin queue */
@@ -62,7 +64,6 @@ struct proc {
     pde_t            *pdir;
     /* kernel stack */
     uint8_t          *kstk;             // kernel-mode stack (wired)
-    long              state;
     long              class;
     /* memory attributes */
     uint8_t          *brk;

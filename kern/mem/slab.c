@@ -85,7 +85,7 @@ slabinit(unsigned long base, unsigned long nb)
         nb -= adr - base;
         nb = rounddownpow2(nb, SLABMINLOG2);
     }
-    kprintf("%lu kilobytes kernel virtual memory free @ %lx\n", nb >> 10, adr);
+    kprintf("%ul kilobytes kernel virtual memory free @ %lx\n", nb >> 10, adr);
     while ((nb) && bkt >= SLABMINLOG2) {
         if (nb & ul) {
             hdr = slabgethdr(adr, slabvirthdrtab, slabvirtbase);
