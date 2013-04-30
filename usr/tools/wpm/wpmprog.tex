@@ -353,12 +353,18 @@
 	The table below lists hooks that have been implemented and their
 	argument registers.
 
-\begin{tabular}
-	Hook	& r1   & r2   & Brief \\
+\begin{tabular}{ | l | l | l | l | }
+	\hline
+	Hook	& r0   & r1   & Brief \\
+	\hline
 	BZERO	& adr  & size & set size bytes at adr to zero \\
+	\hline
 	PZERO	& adr  & size & set size bytes' worth of pages to zero at adr \\
-	PALLOC	& size & N/A & allocate size bytes of dynamic memory \\
+	\hline
+	PALLOC	& size & N/A  & allocate size bytes of dynamic memory, return address in r0 \\
+	\hline
 	PFREE   & adr  & N/A  & free dynamic memory at adr \\
+	\hline
 \end{tabular}
 
 \subsection{I/O}
@@ -375,16 +381,16 @@
 	.define STDERR 2	// error output
 \end{verbatim}
 
-	Standard I/O is done as byte streams; for example, you can write a
-	character on the user's terminal with
+	Standard I/O is done as byte streams; for example, you can
+	\textbf{write a	character} on the user's terminal with
 
 \begin{verbatim}
-	.include <stdio.def>	// standard I/O header
+	.include <stdio.def>    // standard I/O header
 
-	mov	$cp, %r0	// pointer
+	mov	$cp, %r0        // pointer
 	movb	*%r0, %r1	// load character in r1
-	mov	$STDOUT, %r2	// descriptor in r2
-	outb	%r1, %r2	// write
+	mov	$STDOUT, %r2    // descriptor in r2
+	outb	%r1, %r2        // write
 \end{verbatim}
 
 \section{Machine Operations}
