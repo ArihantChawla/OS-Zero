@@ -38,6 +38,7 @@ extern unsigned long    zasinputread;
 extern zasmemadr_t      _startadr;
 extern wpmpage_t       *mempagetab;
 
+static void hookbzero(struct wpmopcode *op);
 static void hookpzero(struct wpmopcode *op);
 static void hookpalloc(struct wpmopcode *op);
 static void hookpfree(struct wpmopcode *op);
@@ -182,6 +183,7 @@ struct zasopinfo wpmopinfotab[WPMNASMOP + 1]
 #if (WPM)
 wpmhookfunc_t *hookfunctab[256]
 = {
+    hookbzero,
     hookpzero,
     hookpalloc,
     hookpfree
@@ -1730,29 +1732,6 @@ ophook(struct wpmopcode *op)
 }
 
 void
-wpmpzero(wpmmemadr_t adr, wpmuword_t size)
-{
-    wpmuword_t  npg = rounduppow2(size, 1U << MINBKT) >> MINBKT;
-    void       *ptr = NULL;
-
-    while (npg--) {
-        if (adr < MEMSIZE) {
-            ptr = &physmem[adr];
-        } else {
-            ptr = (void *)mempagetab[pagenum(adr)];
-        }
-        if (ptr) {
-            bzero(ptr, 4096);
-        } else {
-            fprintf(stderr, "PZERO: page not mapped\n");
-
-            exit(1);
-        }
-        adr += 4096;
-    }
-}
-
-void
 wpmbzero(wpmmemadr_t adr, wpmuword_t size)
 {
     wpmuword_t  nb = size;
@@ -1776,7 +1755,40 @@ wpmbzero(wpmmemadr_t adr, wpmuword_t size)
     }
 }
 
-/* TODO: this and other hooks need to use page tables */
+void
+wpmpzero(wpmmemadr_t adr, wpmuword_t size)
+{
+    wpmuword_t  npg = rounduppow2(size, 1U << MINBKT) >> MINBKT;
+    void       *ptr = NULL;
+
+    while (npg--) {
+        if (adr < MEMSIZE) {
+            ptr = &physmem[adr];
+        } else {
+            ptr = (void *)mempagetab[pagenum(adr)];
+        }
+        if (ptr) {
+            bzero(ptr, 4096);
+        } else {
+            fprintf(stderr, "PZERO: page not mapped\n");
+
+            exit(1);
+        }
+        adr += 4096;
+    }
+}
+
+static void
+hookbzero(struct wpmopcode *op)
+{
+    wpmmemadr_t adr = wpm->cpustat.regs[0];
+    wpmuword_t  sz = wpm->cpustat.regs[1];
+
+    wpmbzero(adr, sz);
+
+    return;
+}
+
 static void
 hookpzero(struct wpmopcode *op)
 {

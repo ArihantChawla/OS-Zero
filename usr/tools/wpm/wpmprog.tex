@@ -326,6 +326,67 @@
 	\hline
 \end{tabular}
 
+\subsection{Hooks}
+
+	Hooks are a simple way to request system services such as dynamic
+	memory. At the time of writing this, the following hooks are defined.
+
+	\textbf{Hook List}
+
+	The \textbf{hook} instruction takes an immediate argument of the hook
+	number; symbolic constants are listed below.
+
+\begin{verbatim}
+	.define BZERO 0
+	.define PZERO 1
+	.define PALLOC 2
+	.define PFREE 3
+	.define FOPEN 4
+	.define FCLOSE 5
+	.define FREAD 6
+	.define FWRITE 7
+	.define FSEEK 8
+\end{verbatim}
+
+\subsubsection{Hook Interface}
+
+	The table below lists hooks that have been implemented and their
+	argument registers.
+
+\begin{tabular}
+	Hook	& r1   & r2   & Brief \\
+	BZERO	& adr  & size & set size bytes at adr to zero \\
+	PZERO	& adr  & size & set size bytes' worth of pages to zero at adr \\
+	PALLOC	& size & N/A & allocate size bytes of dynamic memory \\
+	PFREE   & adr  & N/A  & free dynamic memory at adr \\
+\end{tabular}
+
+\subsection{I/O}
+
+	\textbf{Standard Descriptors}
+
+	WPM uses standard descriptors for keyboard input as well as terminal and
+	error output. The numerical values of these standard descriptors are
+	declared in \textbf{<stdio.def>} as follows.
+
+\begin{verbatim}
+	.define STDIN  0	// keyboard input
+	.define STDOUT 1	// terminal output
+	.define STDERR 2	// error output
+\end{verbatim}
+
+	Standard I/O is done as byte streams; for example, you can write a
+	character on the user's terminal with
+
+\begin{verbatim}
+	.include <stdio.def>	// standard I/O header
+
+	mov	$cp, %r0	// pointer
+	movb	*%r0, %r1	// load character in r1
+	mov	$STDOUT, %r2	// descriptor in r2
+	outb	%r1, %r2	// write
+\end{verbatim}
+
 \section{Machine Operations}
 
 	The following is a C-code snippet listing machine instructions and their
