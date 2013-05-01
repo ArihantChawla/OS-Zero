@@ -82,17 +82,19 @@ stkenterinput(void)
 
     if (item->scur != item->str) {
         item->tokq = zpctokenize(item->str);
+        if (item->tokq) {
 //        item->parseq = zpcparse(item->tokq);
-        memmove(&zpcregstk[1], &zpcregstk[0],
-                (NREGSTK - 1) * sizeof(struct zpctoken *));
-        zpcregstk[0] = item->tokq;
-#if 0
-        if (item->parseq) {
-            zpcregstk[0] = item->parseq;
-        } else {
+            memmove(&zpcregstk[1], &zpcregstk[0],
+                    (NREGSTK - 1) * sizeof(struct zpctoken *));
             zpcregstk[0] = item->tokq;
-        }
+#if 0
+            if (item->parseq) {
+                zpcregstk[0] = item->parseq;
+        } else {
+                zpcregstk[0] = item->tokq;
+            }
 #endif
+        }
 //        stkaddinput();
         x11drawdisp();
     }

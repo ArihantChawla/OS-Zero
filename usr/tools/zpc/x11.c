@@ -63,7 +63,7 @@ static Window             buttonwintab[ZPC_NROW][ZPC_NCOLUMN];
 static uint8_t            buttontypetab[ZPC_NROW][ZPC_NCOLUMN] =
 {
     { ZPCBUTTONDIGIT, ZPCBUTTONDIGIT, ZPCBUTTONDIGIT, ZPCBUTTONOPER, ZPCBUTTONOPER, ZPCBUTTONOPER, ZPCBUTTONDEBUG },
-    { ZPCBUTTONDIGIT, ZPCBUTTONDIGIT, ZPCBUTTONDIGIT, ZPCBUTTONOPER, ZPCBUTTONOPER, ZPCBUTTONOPER, ZPCBUTTONDEBUG }, 
+    { ZPCBUTTONDIGIT, ZPCBUTTONDIGIT, ZPCBUTTONDIGIT, ZPCBUTTONOPER, ZPCBUTTONOPER, ZPCBUTTONOPER, ZPCBUTTONDIGIT }, 
     { ZPCBUTTONDIGIT, ZPCBUTTONDIGIT, ZPCBUTTONDIGIT, ZPCBUTTONOPER, ZPCBUTTONOPER, ZPCBUTTONOPER, ZPCBUTTONOPER },
     { ZPCBUTTONDIGIT, ZPCBUTTONDIGIT, ZPCBUTTONDIGIT, ZPCBUTTONOPER, ZPCBUTTONOPER, ZPCBUTTONOPER, ZPCBUTTONOPER },
     { ZPCBUTTONDIGIT, ZPCBUTTONDIGIT, ZPCBUTTONDIGIT, ZPCBUTTONOPER, ZPCBUTTONOPER, ZPCBUTTONOPER, ZPCBUTTONOPER },
@@ -72,7 +72,7 @@ static uint8_t            buttontypetab[ZPC_NROW][ZPC_NCOLUMN] =
 static const char        *buttonstrtab[ZPC_NROW][ZPC_NCOLUMN]
 = {
     { "d", "e", "f", "~", ">>>", "++", "run" },
-    { "a", "b", "c", "%", ">>", "--", "step" },
+    { "a", "b", "c", "%", ">>", "--", "0x" },
     { "7", "8", "9", "/", "<<", "..>", "(" },
     { "4", "5", "6", "*", "^", "<..", ")" },
     { "1", "2", "3", "-", "|", "=", " " },
@@ -81,7 +81,7 @@ static const char        *buttonstrtab[ZPC_NROW][ZPC_NCOLUMN]
 static const char        *buttonlabeltab[ZPC_NROW][ZPC_NCOLUMN]
 = {
     { "d", "e", "f", "~", ">>>", "++", "RUN" },
-    { "a", "b", "c", "%", ">>", "--", "STEP" },
+    { "a", "b", "c", "%", ">>", "--", "0x" },
     { "7", "8", "9", "/", "<<", "..>", "(" },
     { "4", "5", "6", "*", "^", "<..", ")" },
     { "1", "2", "3", "-", "|", "=", "SPACE" },
@@ -137,7 +137,7 @@ static const char        *buttontop2tab[ZPC_NROW][ZPC_NCOLUMN]
 static const uint8_t      parmtab[ZPC_NROW][ZPC_NCOLUMN]
 = {
     { 0, 0, 0, 1, 2, 1, RUN },
-    { 0, 0, 0, 2, 2, 1, STEP },
+    { 0, 0, 0, 2, 2, 1, 0 },
     { 0, 0, 0, 2, 2, 2, 0 },
     { 0, 0, 0, 2, 2, 2, 0 },
     { 0, 0, 0, 2, 2, 0, 0 },

@@ -8,6 +8,8 @@
 #include <zpc/op.h>
 #include <zas/zas.h>
 
+#define ZPCDEBUG 0
+
 #define TOKENSTRLEN 128
 
 #define todec(c)    zpcdectab[(int)(c)]
@@ -847,7 +849,7 @@ zpcgettoken(const char *str, char **retstr)
 #endif
         ptr++;
     }
-    if (*ptr == '-' || isxdigit(*ptr)) {
+    if (*ptr == '-' || isdigit(*ptr)) {
         token->str = calloc(1, TOKENSTRLEN);
         token->slen = TOKENSTRLEN;
         dec = index(ptr, '.');
@@ -1026,11 +1028,17 @@ zpctokenize(const char *str)
     struct zpctoken *token;
 
     token = zpcgettoken(ptr, &ptr);
+    if (!token) {
+
+        return token;
+    }
     while (token) {
         zpcqueuetoken(token, &queue, &tail);
         token = zpcgettoken(ptr, &ptr);
     }
+#if (ZPCDEBUG)
     fprintf(stderr, "TOKENS: ");
+#endif
     zpcprintqueue(queue);
 
     return queue;
