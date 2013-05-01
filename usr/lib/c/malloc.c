@@ -504,14 +504,12 @@ static int             _mapfd = -1;
 static __inline__ long
 bktid(size_t size)
 {
-    long tmp = ceil2(size);
-    long bid;
+    long tmp = tzerol(size);
+    long bid = tmp;
 
-#if (LONGSIZE == 4)
-    tzero32(tmp, bid);
-#elif (LONGSIZE == 8)
-    tzero64(tmp, bid);
-#endif
+    if (!powerof2(size)) {
+        bid++;
+    }
 
     return bid;
 }

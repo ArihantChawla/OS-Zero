@@ -4,6 +4,7 @@
 #include <stddef.h>
 #include <string.h>
 #include <stdint.h>
+#include <zero/trix.h>
 
 typedef uintptr_t wpmadr_t;
 typedef uintptr_t wpmpage_t;
@@ -17,7 +18,7 @@ void        mempfree(wpmmemadr_t adr);
 extern wpmpage_t *mempagetab;
 extern uint8_t   *physmem;
 
-#define MINBKT      12
+#define PAGEBKT     12
 #define MEMSIZE     (128UL * 1024 * 1024)
 //#define MEMHWBASE   0xc0000000
 /* 3.5 gigs */
@@ -30,7 +31,7 @@ extern uint8_t   *physmem;
 #define pagenum(adr)                                                    \
     ((adr) >> 12)
 #define pageofs(adr) ((adr) & ((1U << 12) - 1))
-#define slabadr(slab) ((slab - memslabtab) << MINBKT)
+#define slabadr(slab) ((slab - memslabtab) << PAGEBKT)
 
 struct slab {
     uint32_t     bkt;
@@ -39,6 +40,7 @@ struct slab {
     struct slab *next;
 };
 
+#if 0
 static __inline__ long
 ceil2(size_t size)
 {
@@ -55,6 +57,23 @@ ceil2(size_t size)
 
     return size;
 }
+#endif
+
+#if 0
+static __inline__ unsigned long
+ceil2(size_t size)
+{
+    long          bkt = tzerol(size);
+    unsigned long ret;
+
+    if (!powerof2(size)) {
+        bkt++;
+    }
+    ret = 1UL < bkt;
+
+    return ret;
+}
+#endif
 
 static __inline__ void
 memstoreq(int64_t src, wpmmemadr_t virt)

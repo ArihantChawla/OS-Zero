@@ -1758,7 +1758,7 @@ wpmbzero(wpmmemadr_t adr, wpmuword_t size)
 void
 wpmpzero(wpmmemadr_t adr, wpmuword_t size)
 {
-    wpmuword_t  npg = rounduppow2(size, 1U << MINBKT) >> MINBKT;
+    wpmuword_t  npg = rounduppow2(size, 1U << PAGEBKT) >> PAGEBKT;
     void       *ptr = NULL;
 
     while (npg--) {

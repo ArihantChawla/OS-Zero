@@ -114,43 +114,9 @@
     } while (0)
 #define bytepar3(b) ((0x6996 >> (((b) ^ ((b) >> 4)) & 0x0f)) & 0x01)
 
-/*
- * round longword u to next power of two if not power of two;
- * store result in r.
- */
-#define ceilpow2_32(u, r)                                               \
-    do {                                                                \
-        (r) = (u);                                                      \
-                                                                        \
-        if (!powerof2(r)) {                                             \
-            (r)--;                                                      \
-            (r) |= (r) >> 1;                                            \
-            (r) |= (r) >> 2;                                            \
-            (r) |= (r) >> 4;                                            \
-            (r) |= (r) >> 8;                                            \
-            (r) |= (r) >> 16;                                           \
-            (r)++;                                                      \
-        }                                                               \
-    } while (0)
-#define ceilpow2_64(u, r)                                               \
-    do {                                                                \
-        (r) = (u);                                                      \
-                                                                        \
-        if (!powerof2(r)) {                                             \
-            (r)--;                                                      \
-            (r) |= (r) >> 1;                                            \
-            (r) |= (r) >> 2;                                            \
-            (r) |= (r) >> 4;                                            \
-            (r) |= (r) >> 8;                                            \
-            (r) |= (r) >> 16;                                           \
-            (r) |= (r) >> 32;                                           \
-            (r)++;                                                      \
-        }                                                               \
-    } while (0)
-
 /* count number of trailing (low) zero-bits in long-word */
 #if defined(__GCC__)
-#define tzerol(u) (__builtin_ctzl(u)
+#define tzerol(u) (__builtin_ctzl(u))
 #elif defined(__i386__) || defined(__x86_64__) || defined(__amd64__)
 #define tzerol(u) (m_scanlo1bit(u))
 #elif (LONGSIZE == 4)
@@ -159,7 +125,7 @@ tzerol(unsigned long ul)
 {
     unsigned long ret;
 
-    tzero32_2(ul, ret);
+    tzero32(ul, ret);
 
     return ret;
 }
@@ -169,7 +135,7 @@ tzerol(unsigned long ul)
 {
     unsigned long ret;
 
-    tzero64_2(ul, ret);
+    tzero64(ul, ret);
 
     return ret;
 }
@@ -186,7 +152,7 @@ lzerol(unsigned long ul)
 {
     unsigned long ret;
 
-    lzero32_2(ul, ret);
+    lzero32(ul, ret);
 
     return ret;
 }
@@ -196,14 +162,14 @@ lzerol(unsigned long ul)
 {
     unsigned long ret;
 
-    lzero64_2(ul, ret);
+    lzero64(ul, ret);
 
     return ret;
 }
 #endif
 
 /* count number of trailing zero-bits in u32 */
-#define tzero32_2(u32, r)                                               \
+#define tzero32(u32, r)                                                 \
     do {                                                                \
         uint32_t __tmp;                                                 \
         uint32_t __mask;                                                \
@@ -239,7 +205,7 @@ lzerol(unsigned long ul)
         }                                                               \
     } while (0)
 
-#define lzero32_2(u32, r)                                               \
+#define lzero32(u32, r)                                                 \
     do {                                                                \
         uint32_t __tmp;                                                 \
         uint32_t __mask;                                                \
@@ -279,7 +245,7 @@ lzerol(unsigned long ul)
 
 /* 64-bit versions */
 
-#define tzero64_2(u64, r)                                               \
+#define tzero64(u64, r)                                                 \
     do {                                                                \
         uint64_t __tmp;                                                 \
         uint64_t __mask;                                                \
@@ -320,7 +286,7 @@ lzerol(unsigned long ul)
         }                                                               \
     } while (0)
 
-#define lzero64_2(u64, r)                                               \
+#define lzero64(u64, r)                                                 \
     do {                                                                \
         uint64_t __tmp;                                                 \
         uint64_t __mask;                                                \
@@ -363,6 +329,54 @@ lzerol(unsigned long ul)
         }                                                               \
     } while (0)
 
+/*
+ * round longword u to next power of two if not power of two;
+ * store result in r.
+ */
+static __inline__ unsigned long
+ceilpow2l(unsigned long u)
+{
+    unsigned long tmp = tzerol(u);
+    unsigned long ret;
+
+    if (!powerof2(u)) {
+        tmp++;
+    }
+    ret = 1UL << tmp;
+
+    return ret;
+}
+#if 0
+#define ceilpow2_32(u, r)                                               \
+    do {                                                                \
+        (r) = (u);                                                      \
+                                                                        \
+        if (!powerof2(r)) {                                             \
+            (r)--;                                                      \
+            (r) |= (r) >> 1;                                            \
+            (r) |= (r) >> 2;                                            \
+            (r) |= (r) >> 4;                                            \
+            (r) |= (r) >> 8;                                            \
+            (r) |= (r) >> 16;                                           \
+            (r)++;                                                      \
+        }                                                               \
+    } while (0)
+#define ceilpow2_64(u, r)                                               \
+    do {                                                                \
+        (r) = (u);                                                      \
+                                                                        \
+        if (!powerof2(r)) {                                             \
+            (r)--;                                                      \
+            (r) |= (r) >> 1;                                            \
+            (r) |= (r) >> 2;                                            \
+            (r) |= (r) >> 4;                                            \
+            (r) |= (r) >> 8;                                            \
+            (r) |= (r) >> 16;                                           \
+            (r) |= (r) >> 32;                                           \
+            (r)++;                                                      \
+        }                                                               \
+    } while (0)
+#endif
 
 /* internal macros. */
 #define _ftoi32(f)     (*((int32_t *)&(f)))

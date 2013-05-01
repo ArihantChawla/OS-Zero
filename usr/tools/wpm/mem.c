@@ -16,9 +16,9 @@ static volatile long  memlk;
 wpmpage_t            *mempagetab;
 
 void
-scanmem(void)
+wpmdiagmem(void)
 {
-    uint32_t     bkt = MINBKT;
+    uint32_t     bkt = PAGEBKT;
     struct slab *slab;
     uint32_t     n;
 
@@ -57,7 +57,7 @@ wpminitmem(wpmsize_t nbphys)
     }
     slab = &memslabtab[pagenum(nbphys)];
     while (nbvirt) {
-        for (bkt = MINBKT ; bkt < 32 ; bkt++) {
+        for (bkt = PAGEBKT ; bkt < 32 ; bkt++) {
             if (nbvirt & (1U << bkt)) {
                 slab = &memslabtab[pagenum(adr)];
                 slab->prev = NULL;
@@ -123,7 +123,7 @@ memcombslab(struct slab *slab)
 {
     uint32_t     bkt = slab->bkt;
     uint32_t     loop = 1;
-    uint32_t     delta = 1U << (bkt - MINBKT);
+    uint32_t     delta = 1U << (bkt - PAGEBKT);
     struct slab *prev;
     struct slab *next;
     uint32_t     queue = 0;
@@ -184,16 +184,24 @@ memcombslab(struct slab *slab)
 wpmmemadr_t
 mempalloc(wpmsize_t size)
 {
-    uint32_t     sz = powerof2(size) ? size : ceil2(max(size, 1U << MINBKT));
+#if 0
+    uint32_t     sz = powerof2(size)
+        ? size
+        : ceilpow2l(max(size, 1UL << PAGEBKT));
+#endif
+    uint32_t     sz = max(size, 1UL << PAGEBKT);
+    uint32_t     bkt;
     uint32_t     n;
     wpmmemadr_t  adr = 0;
     uint8_t     *ptr = NULL;
-    uint32_t     bkt = 0;
     uint32_t     num;
     struct slab *slab1;
     struct slab *slab2;
 
-    tzero32_2(sz, bkt);
+    tzero32(sz, bkt);
+    if (!powerof2(sz)) {
+        bkt++;
+    }
     mtxlk(&bktlktab[bkt]);
     slab1 = freetab[bkt];
     if (!slab1) {
@@ -209,7 +217,7 @@ mempalloc(wpmsize_t size)
         adr = slabadr(slab1);
         slab2 = slab1;
         slab1->bkt = bkt;
-        n = 1U << (bkt - MINBKT);
+        n = 1U << (bkt - PAGEBKT);
         while (n--) {
             slab2->free = 0;
             slab2++;
@@ -218,11 +226,11 @@ mempalloc(wpmsize_t size)
     if  (adr) {
         ptr = malloc(1U << bkt);
         num = pagenum(adr);
-        n = 1U << (bkt - MINBKT);
+        n = 1U << (bkt - PAGEBKT);
         while (n--) {
             mempagetab[num] = (wpmpage_t)ptr;
             num++;
-            ptr += 1U << MINBKT;
+            ptr += 1U << PAGEBKT;
         }
     }
     mtxunlk(&bktlktab[bkt]);
@@ -243,7 +251,7 @@ mempfree(wpmmemadr_t adr)
         slab = &memslabtab[num];
         ptr = (void *)mempagetab[num];
         if (ptr) {
-            n = 1U << (slab->bkt - MINBKT);
+            n = 1U << (slab->bkt - PAGEBKT);
             while (n--) {
                 mempagetab[num] = (wpmpage_t)NULL;
                 num++;
