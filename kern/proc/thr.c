@@ -172,30 +172,58 @@ thrwakeup(uintptr_t wchan)
 
     tab = &thrwaittab[key0];
     mtxlk(&tab->lk);
-    ptr = tab->ptr;
+    ptr = tab;
     if (ptr) {
         pstk[0] = ptr;
-        ptr = ptr[key0].ptr;
+        ptr = &(ptr->ptr[key0]);
         if (ptr) {
             pstk[1] = ptr;
-            ptr = ptr[key1].ptr;
+            ptr = &(ptr->ptr[key1]);
             if (ptr) {
                 pstk[2] = ptr;
-                ptr = ptr[key2].ptr;
+                ptr = &(ptr->ptr[key2]);
                 if (ptr) {
                     pstk[3] = ptr;
-                    ptr = ptr[key3].ptr;
+                    ptr = &(ptr->ptr[key3]);
+                }
+            }
+        }
+        thr1 = ptr->ptr;
+        while (thr1) {
+            thr2 = thr1->next;
+            thrqueue(thr1, &thrruntab[thr1->prio]);
+            thr1 = thr2;
+        }
+        /* TODO: free tables if possible */
+        ptr = pstk[0];
+        if (ptr) {
+            if (!--ptr->nref) {
+                kfree(ptr->ptr);
+                ptr->ptr = NULL;
+            }
+            ptr = pstk[1];
+            if (ptr) {
+                if (!--ptr->nref) {
+                    kfree(ptr->ptr);
+                    ptr->ptr = NULL;
+                }
+                ptr = pstk[2];
+                if (ptr) {
+                    if (!--ptr->nref) {
+                        kfree(ptr->ptr);
+                        ptr->ptr = NULL;
+                    }
+                    ptr = pstk[3];
+                    if (ptr) {
+                        if (!--ptr->nref) {
+                            kfree(ptr->ptr);
+                            ptr->ptr = NULL;
+                        }
+                    }
                 }
             }
         }
     }
-    thr1 = (struct thr *)ptr;
-    while (thr1) {
-        thr2 = thr1->next;
-        thrqueue(thr1, &thrruntab[thr1->prio]);
-        thr1 = thr2;
-    }
-    /* TODO: free tables if possible */
     mtxunlk(&tab->lk);
 }
 
