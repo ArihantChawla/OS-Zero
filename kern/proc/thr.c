@@ -60,13 +60,13 @@ thrqueue(struct thr *thr, struct thrq *thrq)
 }
 
 /* add thread to wait queue */
-void *
+long
 thraddwait(struct thr *thr)
 {
     struct thrwait *tab;
     struct thrwait *ptr = NULL;
     long            wchan = thr->wchan;
-    void           *ret = NULL;
+    long            ret = -1;
     long            fail = 0;    
     uint64_t        key0;
     uint64_t        key1;
@@ -147,8 +147,13 @@ thraddwait(struct thr *thr)
         tab = tab[key2].ptr;
         tab = &tab[key3];
         tab->nref++;
+        thr->prev = NULL;
+        thr->next = tab->ptr;
+        if (thr->next) {
+            thr->next->prev = thr;
+        }
         tab->ptr = thr;
-        ret = thr;
+        ret ^= ret;
     }
     mtxunlk(&tab->lk);
     
