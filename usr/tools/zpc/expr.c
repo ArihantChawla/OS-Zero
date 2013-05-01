@@ -952,18 +952,22 @@ zpcgettoken(const char *str, char **retstr)
         token->type = ZPCSTRING;
     } else if (*ptr == '<' && isxdigit(ptr[1])) {
         zpcgetvector(token, ptr, &ptr);
-    } else if (*ptr == '(' && isxdigit(ptr[1])) {
+//    } else if (*ptr == '(' && isxdigit(ptr[1])) {
 //        zpcgetcomplex(token, ptr, &ptr);
     } else if (zpcisoperchar(*ptr)) {
         zpcgetoper(token, ptr, &ptr);
     } else if (*ptr == '(') {
         token->type = ZPCLEFTPAREN;
+        token->str = calloc(1, TOKENSTRLEN);
+        token->slen = TOKENSTRLEN;
         *token->str = '(';
         token->str[1] = '\0';
         token->len = 1;
         ptr++;
     } else if (*ptr == ')') {
         token->type = ZPCRIGHTPAREN;
+        token->str = calloc(1, TOKENSTRLEN);
+        token->slen = TOKENSTRLEN;
         *token->str = ')';
         token->str[1] = '\0';
         token->len = 1;

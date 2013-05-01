@@ -346,6 +346,20 @@ ceilpow2l(unsigned long u)
 
     return ret;
 }
+
+static __inline__ uint64_t
+ceilpow2_64(uint64_t u)
+{
+    uint64_t tmp = tzerol(u);
+    uint64_t ret;
+
+    if (!powerof2(u)) {
+        tmp++;
+    }
+    ret = UINT64_C(1) << tmp;
+
+    return ret;
+}
 #if 0
 #define ceilpow2_32(u, r)                                               \
     do {                                                                \

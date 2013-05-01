@@ -149,9 +149,11 @@ thraddwait(struct thr *thr)
         tab->nref++;
         thr->prev = NULL;
         thr->next = tab->ptr;
+#if 0
         if (thr->next) {
             thr->next->prev = thr;
         }
+#endif
         tab->ptr = thr;
         ret ^= ret;
     }
