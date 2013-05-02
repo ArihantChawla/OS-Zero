@@ -637,7 +637,6 @@ zpcgetstr(struct zpctoken *token, const char *str, char **retstr)
     }
     if (*ptr == '"') {
         while ((slen--) && (*str == '_' || isalnum(*str))) {
-            fprintf(stderr, "CHAR: %x\n", *str);
             *dest++ = *ptr++;
             len++;
             if (!slen) {
@@ -1012,7 +1011,9 @@ zpcprintqueue(struct zpctoken *queue)
     struct zpctoken *token = queue;
 
     while (token) {
+#if (ZPCDEBUG)
         zpcprinttoken(token);
+#endif
         token = token->next;
     }
 
@@ -1028,18 +1029,14 @@ zpctokenize(const char *str)
     struct zpctoken *token;
 
     token = zpcgettoken(ptr, &ptr);
-    if (!token) {
-
-        return token;
-    }
     while (token) {
         zpcqueuetoken(token, &queue, &tail);
         token = zpcgettoken(ptr, &ptr);
     }
 #if (ZPCDEBUG)
     fprintf(stderr, "TOKENS: ");
-#endif
     zpcprintqueue(queue);
+#endif
 
     return queue;
 };
