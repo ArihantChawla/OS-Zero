@@ -11,6 +11,10 @@
 #include <kern/syscall.h>
 #include <kern/proc/thr.h>
 
+/* descriptor table size */
+#define OBJNDESC     (1 << OBJNDESCLOG2)
+#define OBJNDESCLOG2 16
+
 /* user + group credentials */
 struct cred {
     uid_t uid;                          // user ID
@@ -35,6 +39,9 @@ struct perm {
 struct thr {
     /* thread control block */
     struct m_tcb   m_tcb;               // context
+    /* thread stacks */
+    uintptr_t      ustk;                // user-mode stack
+    uintptr_t      kstk;                // kernel-mode stack
     /* state */
     long           state;               // thread state
     /* wait channel */
@@ -64,8 +71,9 @@ struct proc {
     struct thrq       thrq;             // queue of ready threads
     /* page directory */
     pde_t            *pdir;             // page directory address
-    /* kernel stack */
-    uint8_t          *kstk;             // kernel-mode stack (wired)
+    /* stacks */
+    uint8_t          *ustk;             // user-mode stack
+    uint8_t          *kstk;             // kernel-mode stack
     long              class;
     /* memory attributes */
     uint8_t          *brk;

@@ -39,22 +39,15 @@ procinit(long id)
 
             return -1;
         }
-        /* initialise kernel-mode stack (wired) */
-        ptr = kwalloc(KERNSTKSIZE);
+        ptr = kmalloc(KERNSTKSIZE);
         if (ptr) {
             kbzero(ptr, KERNSTKSIZE);
             proc->kstk = ptr;
-        } else {
-            kfree(proc->pdir);
-            kfree(proc);
-
-            return -1;
         }
-        /* initialise descriptor table */
-        ptr = kmalloc(NDESCTAB * sizeof(desc_t));
+        ptr = kmalloc(THRSTKSIZE);
         if (ptr) {
-            kbzero(ptr, NDESCTAB * sizeof(desc_t));
-            proc->dtab = ptr;
+            kbzero(ptr, THRSTKSIZE);
+            proc->ustk = ptr;
         } else {
             kfree(proc->pdir);
             kfree(proc->kstk);
@@ -62,14 +55,28 @@ procinit(long id)
 
             return -1;
         }
+        /* initialise descriptor table */
+        ptr = kmalloc(OBJNDESC * sizeof(desc_t));
+        if (ptr) {
+            kbzero(ptr, OBJNDESC * sizeof(desc_t));
+            proc->dtab = ptr;
+        } else {
+            kfree(proc->pdir);
+            kfree(proc->ustk);
+            kfree(proc->kstk);
+            kfree(proc);
+
+            return -1;
+        }
 #if 0
         /* initialise VM structures */
-        ptr = kmalloc(NVMHDRTAB * sizeof(struct vmpage));
+        ptr = kmalloc(VMNHDR * sizeof(struct vmpage));
         if (ptr) {
-            kbzero(ptr, NVMHDRTAB * sizeof(struct vmpage));
+            kbzero(ptr, VMNHDR * sizeof(struct vmpage));
             proc->vmhdrtab = ptr;
         } else {
             kfree(proc->pdir);
+            kfree(proc->ustk);
             kfree(proc->kstk);
             kfree(proc->dtab);
             kfree(proc);
@@ -87,7 +94,7 @@ void *
 procgetdesc(struct proc *proc, long id)
 {
     void      *ret = NULL;
-    long       lim = NDESCTAB - 1;
+    long       lim = OBJNDESC - 1;
     long       val1;
     long       val2;
     uintptr_t *tab2;
@@ -98,8 +105,8 @@ procgetdesc(struct proc *proc, long id)
     } else {
         tab2 = proc->dtab2;
         if (tab2) {
-            val1 = id >> NDESCTABLOG2;
-            val2 = id & (NDESCTAB - 1);
+            val1 = id >> OBJNDESCLOG2;
+            val2 = id & (OBJNDESC - 1);
             tab3 = (uintptr_t *)(tab2[val1]);
             if (tab3) {
                 ret = (void *)(tab3[val2]);

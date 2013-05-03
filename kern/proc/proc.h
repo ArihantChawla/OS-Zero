@@ -18,24 +18,9 @@
 #include <kern/unit/x86/cpu.h>
 #endif
 
-
 long procinit(long id);
 long procgetpid(void);
 void procfreepid(long id);
-
-#define SCHEDPRIO 0
-#define NTHRPRIO  256
-
-/* I/O scheduler operations */
-#define IOSEEK    0     // physical seek
-#define IOWRITE   1     // buffered or raw write operation
-#define IOREAD    2     // buffered or raw read operation
-#define IOSETF    3     // set descriptor flags
-
-/* descriptor table size */
-#define NDESCTAB     (1 << NDESCTABLOG2)
-#define NDESCTABLOG2 10
-#define NVMHDRTAB    (NPAGEMAX >> PAGESIZELOG2)
 
 #endif /* __KERN_PROC_H__ */
 

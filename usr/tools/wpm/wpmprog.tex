@@ -31,8 +31,8 @@
 	be programmed in its own instruction set / assembly dialect, using AT\&T
 	syntax assembly. The incorporated assembler (\textbf{zas}) does not yet
 	support	loading pretranslated objects, but translates assembly code into
-	bytecode before execution. This bytecode is then handled to the
-	pseudo machine (\textbf{wpm}) to be executed.
+	bytecode before execution. This bytecode is then passed to the pseudo
+	machine (\textbf{wpm}) to be executed.
 
 	The pseudo machine instruction set is designed to be a close match to
 	basic operations of the C programming language, with some other typical
@@ -57,6 +57,12 @@
 	things to happen in the near future. :)
 
 \chapter{Changes}
+
+	\textbf{0.0.11}
+
+\begin{itemize}
+	\item{typo fixes}
+\end{itemize}
 
 	\textbf{0.0.10}
 
@@ -172,7 +178,8 @@
 \end{tabular}
 
 \begin{itemize}
-	\item{the VM's memory size is currently specified as \textbf{MEMSIZE}}
+	\item{the VM's 'physical' memory size is currently specified as
+	\textbf{MEMSIZE}; this memory is mapped 1-to-1 to virtual address space}
 	\item{thread stacks live at \textbf{MEMSIZE - thrid * THRSTKSIZE}, i.e.
 	at top of 'physical'  address space}
 \end{itemize}
@@ -184,7 +191,7 @@
 
 \section{Instruction Reference}
 
-\subsection{Instructions and Flags}
+\subsection{Instruction Set}
 
 	\textbf{Operands}
 
@@ -208,7 +215,7 @@
 
 	\textbf{TODO}: stack/call conventions for certain instructions
 
-\subsubsection{Instruction Table}
+\subsection{Instruction Table}
 
 \begin{tabular}{| l | l | l | l | l |}
 	\hline
