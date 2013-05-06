@@ -1,0 +1,15 @@
+cpp - c99 preprocessor
+----------------------
+- tokenize input
+- keywords
+- typedef
+- macros
+- functions
+- symbols
+  - resolve when encountered
+- expressions
+  - parse; use Dijkstra's shunting yard algorithm to transform to postfix for
+    easy evaluation
+    - partial implementation in ZPC
+  - eval; evaluate expressions
+
