@@ -37,7 +37,6 @@
 /* pointer flags */
 #define ZCC_PTR         0x80
 #define ZCC_UPTR        0x40
-
 struct zccval {
     int type;
     int flg;
@@ -78,15 +77,16 @@ struct zccval {
 } PACK();
 
 struct zccsym {
-    uintptr_t          adr;
-    int                type;
-    int                flg;
-    union {
-        struct zccval  val;
-    } data;
+    size_t           namelen;
+    char            *name;
+    uintptr_t        adr;
+    struct zcctoken *tok;
+    struct zccsym   *prev;
+    struct zccsym   *next;
 } PACK();
 
 /* type values */
+/* for these, data is value */
 #define ZCC_CHAR_TOKEN      0x01
 #define ZCC_SHORT_TOKEN     0x02
 #define ZCC_INT_TOKEN       0x03
@@ -98,6 +98,7 @@ struct zccsym {
 #define ZCC_INT32_TOKEN     0x08
 #define ZCC_INT64_TOKEN     0x09
 #endif
+/* for these, data is pointer */
 #define ZCC_ADR_TOKEN       0x0a
 #define ZCC_LATIN1_TOKEN    0x0b
 #define ZCC_UTF8_TOKEN      0x0c
@@ -106,8 +107,13 @@ struct zccsym {
 #define ZCC_MACRO_TOKEN     0x0f
 #define ZCC_FUNC_TOKEN      0x10
 /* flag bits */
-#define ZCC_UNSIGNED        0x01
-#define ZCC_INLINE          0x02
+#define ZCC_UNSIGNED        0x00000001
+#define ZCC_STATIC          0x00000002
+#define ZCC_CONST           0x00000004
+#define ZCC_VOLATILE        0x00000008
+#define ZCC_EXTERN          0x00000010
+#define ZCC_INLINE          0x00000020  // datasz is threshold size
+#define ZCC_ALIGN           0x00000040  // datasz is alignment
 struct zcctoken {
     int              type;
     int              flg;
