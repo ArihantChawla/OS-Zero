@@ -98,12 +98,13 @@ struct zccsym {
 #define ZCC_INT32_TOKEN     0x08
 #define ZCC_INT64_TOKEN     0x09
 #endif
-#define ZPC_ADR_TOKEN       0x0a
-#define ZPC_LATIN1_TOKEN    0x0b
-#define ZPC_UTF8_TOKEN      0x0c
-#define ZPC_UCS16_TOKEN     0x0d
-#define ZPC_UCS32_TOKEN     0x0e
-#define ZPC_MACRO_TOKEN     0x0f
+#define ZCC_ADR_TOKEN       0x0a
+#define ZCC_LATIN1_TOKEN    0x0b
+#define ZCC_UTF8_TOKEN      0x0c
+#define ZCC_UCS16_TOKEN     0x0d
+#define ZCC_UCS32_TOKEN     0x0e
+#define ZCC_MACRO_TOKEN     0x0f
+#define ZCC_FUNC_TOKEN      0x10
 /* flag bits */
 #define ZCC_UNSIGNED        0x01
 #define ZCC_INLINE          0x02
