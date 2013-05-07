@@ -235,13 +235,13 @@ typedef pthread_mutex_t LK_T;
 #define nmagslablog2m64(bid)                                            \
     ((ismapbkt(bid))                                                    \
      ? (((bid) <= MAPBIGLOG2)                                           \
-        ? 2                                                             \
-        : 1)                                                            \
+        ? 1                                                             \
+        : 0)                                                            \
      : (((bid) <= SLABTEENYLOG2)                                        \
         ? 0                                                             \
         : (((bid) <= SLABTINYLOG2)                                      \
-           ? 1                                                          \
-           : 2)))
+           ? 2                                                          \
+           : 0)))
 #define nmagslablog2m128(bid)                                           \
     ((ismapbkt(bid))                                                    \
      ? (((bid) <= MAPBIGLOG2)                                           \
@@ -250,26 +250,26 @@ typedef pthread_mutex_t LK_T;
      : (((bid) <= SLABTEENYLOG2)                                        \
         ? 0                                                             \
         : (((bid) <= SLABTINYLOG2)                                      \
-           ? 0                                                          \
+           ? 2                                                          \
            : 1)))
 #define nmagslablog2m256(bid)                                           \
     ((ismapbkt(bid))                                                    \
      ? (((bid) <= MAPBIGLOG2)                                           \
-        ? 2                                                             \
+        ? 3                                                             \
         : 1)                                                            \
      : (((bid) <= SLABTEENYLOG2)                                        \
         ? 0                                                             \
         : (((bid) <= SLABTINYLOG2)                                      \
-           ? 0                                                          \
+           ? 1                                                          \
            : 0)))
 #define nmagslablog2m512(bid)                                           \
     ((ismapbkt(bid))                                                    \
      ? (((bid) <= MAPBIGLOG2)                                           \
-        ? 1                                                             \
-        : 0)                                                            \
+        ? 3                                                             \
+        : 2)                                                            \
      : (((bid) <= SLABTEENYLOG2)                                        \
-        ? 0                                                             \
-        : 0))
+        ? 2                                                             \
+        : 1))
 #else
 #define nmagslablog2init(bid)                                           \
     ((ismapbkt(bid))                                                    \
