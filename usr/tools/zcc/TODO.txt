@@ -1,15 +1,34 @@
-cpp - c99 preprocessor
-----------------------
+zcc - c99 compiler
+------------------
 - tokenize input
-- keywords
-- typedef
-- macros
-- functions
-- symbols
-  - resolve when encountered
-- expressions
-  - parse; use Dijkstra's shunting yard algorithm to transform to postfix for
-    easy evaluation
-    - partial implementation in ZPC
-  - eval; evaluate expressions
+  - keywords
+  - typedef
+  - macros
+  - functions
+  - symbols
+    - resolve when encountered
+    - expressions
+      - parse; use Dijkstra's shunting yard algorithm to transform to postfix
+      	for easy evaluation
+    	- partial implementation in ZPC
+      - eval; evaluate expressions
+
+code modules
+------------
+- zpp
+  - preprocessor
+- zcc
+  - execution of cpp and/or cc
+- reg
+  - register allocation
+    - try to avoid register spills
+- stk
+  - stack-based run model
+- sym
+  - symbol management
+    - resolve as encountered
+- def
+  - macros
+- func
+  - function calls
 

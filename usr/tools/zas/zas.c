@@ -1,5 +1,4 @@
 #define ZASDEBUG   0
-#define ZASPROF    0
 #define ZASBUFSIZE 131072
 
 #if (WPM)

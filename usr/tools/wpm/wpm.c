@@ -1,3 +1,4 @@
+#define PTHREAD 1
 #include <wpm/conf.h>
 #include <stdlib.h>
 #include <string.h>
@@ -6,6 +7,9 @@
 #include <zero/cdecl.h>
 #include <zero/param.h>
 #include <zero/trix.h>
+#if (ZASPROF)
+#include <zero/prof.h>
+#endif
 #if (PTHREAD)
 #include <pthread.h>
 #include <zero/mtx.h>
@@ -1833,7 +1837,7 @@ wpmmain(int argc, char *argv[])
     zasmemadr_t adr = WPMTEXTBASE;
 #endif
 #if (ZASPROF)
-    PROFTICK(tick);
+    PROFDECLCLK(clk);
 #endif
 
     if (argc < 2) {
@@ -1846,7 +1850,7 @@ wpmmain(int argc, char *argv[])
     wpminit();
     memset(physmem, 0, WPMTEXTBASE);
 #if (ZASPROF)
-    profstarttick(tick);
+    profstartclk(clk);
 #endif
     for (l = 1 ; l < argc ; l++) {
 #if (ZASBUF)
@@ -1866,9 +1870,9 @@ wpmmain(int argc, char *argv[])
 #endif
             zasremovesyms();
 #if (ZASPROF)
-            profstoptick(tick);
-            fprintf(stderr, "%lld cycles to process %s\n",
-                    proftickdiff(tick), argv[l]);
+            profstopclk(clk);
+            fprintf(stderr, "%ld microseconds to process %s\n",
+                    profclkdiff(clk), argv[l]);
 #endif        
         }
     }
