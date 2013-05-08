@@ -5,41 +5,43 @@
 #endif
 
 /* compiler warning flags */
-#define ZCC_WARN_UNUSED 0x00000001
+#define ZCC_WARN_UNUSED 0x00000001U
+#define ZCC_WARN_UNDEF  0x00000002U
+#define ZCC_WARN_ERROR  0x00000004U
 
 /* compiler optimisation flags */
-#define ZCC_OPT_NONE    0x00000000
-#define ZCC_OPT_ALIGN   0x00000001
-#define ZCC_OPT_UNROLL  0x00000002
-#define ZCC_OPT_INLINE  0x00000004
+#define ZCC_OPT_NONE    0x00000000U
+#define ZCC_OPT_ALIGN   0x00000001U
+#define ZCC_OPT_UNROLL  0x00000002U
+#define ZCC_OPT_INLINE  0x00000004U
 
 /* compiler attribute flags */
-#define ZCC_ATR_PACK    0x00000001
-#define ZCC_ATR_ALIGN   0x00000002
-#define ZCC_ATR_NORET   0x00000004
+#define ZCC_ATR_PACK    0x00000001U
+#define ZCC_ATR_ALIGN   0x00000002U
+#define ZCC_ATR_NORET   0x00000004U
 
 /* integral types */
-#define zcctype(t)      ((t) & ~(ZCC_PTR | ZCC_UPTR))
-#define ZCC_CHAR        0x01
-#define ZCC_UCHAR       0x02
-#define ZCC_SHORT       0x03
-#define ZCC_USHORT      0x04
-#define ZCC_INT         0x05
-#define ZCC_UINT        0x06
-#define ZCC_LONG        0x07
-#define ZCC_ULONG       0x08
-#define ZCC_LONGLONG    0x09
-#define ZCC_ULONGLONG   0x0a
+/* type ID in low 16 bits */
+#define ZCC_CHAR        0x0001
+#define ZCC_UCHAR       0x0002
+#define ZCC_SHORT       0x0003
+#define ZCC_USHORT      0x0004
+#define ZCC_INT         0x0005
+#define ZCC_UINT        0x0006
+#define ZCC_LONG        0x0007
+#define ZCC_ULONG       0x0008
+#define ZCC_LONGLONG    0x0009
+#define ZCC_ULONGLONG   0x000a
 /* floating-point types */
-#define ZCC_FLOAT       0x0b
-#define ZCC_DOUBLE      0x0c
-#define ZCC_LDOUBLE     0x0d
+#define ZCC_FLOAT       0x000b
+#define ZCC_DOUBLE      0x000c
+#define ZCC_LDOUBLE     0x000d
 /* pointer flags */
-#define ZCC_PTR         0x80
-#define ZCC_UPTR        0x40
+/* high 16 bytes */
+#define ZCC_PTR         0x80000000U
+#define ZCC_UPTR        0x40000000U
 struct zccval {
-    int type;
-    int flg;
+    unsigned long          type;
     /* integral value */
     union {
         signed char        c;
@@ -74,53 +76,56 @@ struct zccval {
         double             d;
         long double        ld;
     } fval;
-} PACK();
+};
 
 struct zccsym {
     size_t           namelen;
     char            *name;
+    size_t           fnamelen;
+    char            *fname;
     uintptr_t        adr;
-    struct zcctoken *tok;
     struct zccsym   *prev;
     struct zccsym   *next;
-} PACK();
+};
 
 /* type values */
+/* low 16 bits */
 /* for these, data is value */
-#define ZCC_CHAR_TOKEN      0x01
-#define ZCC_SHORT_TOKEN     0x02
-#define ZCC_INT_TOKEN       0x03
-#define ZCC_LONG_TOKEN      0x04
-#define ZCC_LONG_LONG_TOKEN 0x05
+#define ZCC_CHAR_TOKEN      0x0001
+#define ZCC_SHORT_TOKEN     0x0002
+#define ZCC_INT_TOKEN       0x0003
+#define ZCC_LONG_TOKEN      0x0004
+#define ZCC_LONG_LONG_TOKEN 0x0005
 #if (ZCC_C99_TYPES)
-#define ZCC_INT8_TOKEN      0x06
-#define ZCC_INT16_TOKEN     0x07
-#define ZCC_INT32_TOKEN     0x08
-#define ZCC_INT64_TOKEN     0x09
+#define ZCC_INT8_TOKEN      0x0006
+#define ZCC_INT16_TOKEN     0x0007
+#define ZCC_INT32_TOKEN     0x0008
+#define ZCC_INT64_TOKEN     0x0009
 #endif
 /* for these, data is pointer */
-#define ZCC_ADR_TOKEN       0x0a
-#define ZCC_LATIN1_TOKEN    0x0b
-#define ZCC_UTF8_TOKEN      0x0c
-#define ZCC_UCS16_TOKEN     0x0d
-#define ZCC_UCS32_TOKEN     0x0e
-#define ZCC_MACRO_TOKEN     0x0f
-#define ZCC_FUNC_TOKEN      0x10
+#define ZCC_ADR_TOKEN       0x000a
+#define ZCC_LATIN1_TOKEN    0x000b
+#define ZCC_UTF8_TOKEN      0x000c
+#define ZCC_UCS16_TOKEN     0x000d
+#define ZCC_UCS32_TOKEN     0x000e
+#define ZCC_MACRO_TOKEN     0x000f
+#define ZCC_FUNC_TOKEN      0x0010
 /* flag bits */
-#define ZCC_UNSIGNED        0x00000001
-#define ZCC_STATIC          0x00000002
-#define ZCC_CONST           0x00000004
-#define ZCC_VOLATILE        0x00000008
-#define ZCC_EXTERN          0x00000010
-#define ZCC_INLINE          0x00000020  // datasz is threshold size
-#define ZCC_ALIGN           0x00000040  // datasz is alignment
+/* high 16 bits */
+#define ZCC_UNSIGNED        0x80000000U
+#define ZCC_STATIC          0x40000000U
+#define ZCC_CONST           0x20000000U
+#define ZCC_VOLATILE        0x10000000U
+#define ZCC_EXTERN          0x08000000U
+#define ZCC_INLINE          0x04000000U // datasz is threshold size
+#define ZCC_ALIGN           0x02000000U // datasz is alignment
 struct zcctoken {
-    int              type;
-    int              flg;
+    unsigned long    type;
     char            *str;
     size_t           datasz;
     uintptr_t        data;
+    struct zccsym   *sym;
     struct zcctoken *prev;
     struct zcctoken *next;
-} PACK();
+};
 
