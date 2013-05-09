@@ -13,6 +13,10 @@
 #include <zero/cdecl.h>
 #include <zero/param.h>
 #include <zero/trix.h>
+#if (ZASMMAP)
+#include <sys/stat.h>
+#include <sys/mman.h>
+#endif
 #if (ZASBUF)
 #include <errno.h>
 #include <fcntl.h>
@@ -111,9 +115,9 @@ struct readbuf {
     uint8_t *cur;
     uint8_t *lim;
 };
-struct readbuf *readbuftab;
-static long     nreadbuf = 16;
-long            readbufcur = 0;
+struct readbuf          *readbuftab;
+static long              nreadbuf = 16;
+long                     readbufcur = 0;
 #endif
 
 #if (ZASBUF)
@@ -506,9 +510,7 @@ zasinitop(void)
 void
 zasinitbuf(void)
 {
-#if (ZASBUF)
     long l;
-#endif
 
     linebuf = malloc(LINELEN);
     strbuf = malloc(LINELEN);
@@ -945,7 +947,8 @@ zasgettoken(uint8_t *str, uint8_t **retptr)
             *buf++ = *str++;
             len++;
             if (len == buflen) {
-                fprintf(stderr, "overlong line\n");
+                fprintf(stderr, "overlong line (%ld == %ld): %s\n",
+                        len, buflen, linebuf);
 
                 exit(1);
             }
@@ -1758,7 +1761,7 @@ zasreadfile(char *name, zasmemadr_t adr)
 {
     long             buflen = LINELEN;
 #if (ZASBUF)
-    int              fd = open((const char *)name, O_RDONLY);
+    int              fd = -1;
 #else
     FILE            *fp = fopen((char *)name, "r");
 #endif
@@ -1779,6 +1782,20 @@ zasreadfile(char *name, zasmemadr_t adr)
 #endif
     zasword_t        val = 0;
 
+#if (ZASBUF)
+    do {
+        fd = open((const char *)name, O_RDONLY);
+        if (fd < 0) {
+            if (errno == EINTR) {
+
+                continue;
+            } else {
+
+                break;
+            }
+        }
+    } while (fd < 0);
+#endif
     while (loop) {
         if (done) {
             if (eof) {
@@ -1807,7 +1824,8 @@ zasreadfile(char *name, zasmemadr_t adr)
                     *str++ = (uint8_t)ch;
                     len++;
                     if (len == buflen) {
-                        fprintf(stderr, "overlong line\n");
+                        fprintf(stderr, "overlong line (%ld == %ld): %s\n",
+                                len, buflen, linebuf);
                         
                         exit(1);
                     }
@@ -1827,7 +1845,6 @@ zasreadfile(char *name, zasmemadr_t adr)
                 if (str > lim) {
                     done = 1;
                 }
-//                fprintf(stderr, "BUF: %s\n", str);
             }
         } else if (!strncmp((char *)str, ".define", 7)) {
             str += 7;

@@ -1,4 +1,5 @@
 #define ZCC_C99_TYPES  1
+#define ZCCLINELEN     65536
 
 #include <stddef.h>
 #if (ZCC_C99_TYPES)
@@ -27,6 +28,7 @@
 #define zccvaltype(vp)  zccgettype((vp)->type)
 #define zccvalreg(vp)   zccgetreg((vp)->type)
 /* type ID in low 8 bits */
+#define ZCC_NONE        0x00
 #define ZCC_CHAR        0x01
 #define ZCC_UCHAR       0x02
 #define ZCC_SHORT       0x03
@@ -87,12 +89,18 @@ struct zccval {
     } fval;
 };
 
+struct zccmacro {
+    char            *name;
+    size_t           namelen;
+    struct zccval   *val;
+    struct zcctoken *tokq;
+};
+
 /* adr == ZCC_NO_SYM for unresolved symbols */
 #define ZCC_NO_SYM    0x00      // uninitialised/invalid
 #define ZCC_TYPE_SYM  0x01      // type definition; adr is struct zcctype *
 #define ZCC_VAR_SYM   0x02      // variable; adr is struct zccval *
-#define ZCC_MACRO_SYM 0x03      // macro presentation; adr is struct zccmacro *
-#define ZCC_FUNC_SYM  0x04      // function construct; adr is struct zccfunc *
+#define ZCC_FUNC_SYM  0x03      // function construct; adr is struct zccfunc *
 struct zccsym {
     long             type;
     size_t           namelen;

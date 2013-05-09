@@ -13,6 +13,10 @@ zcc - c99 compiler
     	- partial implementation in ZPC
       - eval; evaluate expressions
 
+lookup structures
+-----------------
+- symbol to address or value
+
 code modules
 ------------
 - zpp

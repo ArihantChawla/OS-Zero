@@ -15,7 +15,7 @@ typedef uint64_t  zassize_t;
 
 #include <stdint.h>
 
-#define LINELEN     1024
+#define LINELEN     4096
 
 #define TOKENVALUE  0x01
 #define TOKENLABEL  0x02
