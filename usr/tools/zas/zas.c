@@ -363,7 +363,7 @@ zasfindval(uint8_t *str, zasword_t *valptr, uint8_t **retptr)
         key += *str;
         str++;
         len++;
-        while ((*str) && (isalpha(*str) || *str == '_')) {
+        while ((*str) && (isalnum(*str) || *str == '_')) {
             key += *str;
             str++;
             len++;
@@ -559,8 +559,11 @@ zasgetlabel(uint8_t *str, uint8_t **retptr)
 #if (ZASDEBUG)
     fprintf(stderr, "getlabel: %s\n", str);
 #endif
-    while ((*str) && (isalpha(*str) || *str == '_')) {
+    if ((*str) && (isalpha(*str) || *str == '_')) {
         str++;
+        while ((*str) && (isalnum(*str) || *str == '_')) {
+            str++;
+        }
     }
     if (*str == ':') {
         *str++ = '\0';
@@ -600,7 +603,7 @@ zasgetsym(uint8_t *str, uint8_t **retptr)
     if (isalpha(*str) || *str == '_') {
         str++;
     }
-    while (isalpha(*str) || *str == '_' || isdigit(*str)) {
+    while (isalnum(*str) || *str == '_') {
         str++;
     }
     while ((*str) && (isspace(*str))) {
@@ -1834,8 +1837,7 @@ zasreadfile(char *name, zasmemadr_t adr)
             if ((*str) && (isalpha(*str) || *str == '_')) {
                 ptr = str;
                 str++;
-                while ((*str)
-                       && (isalpha(*str) || *str == '_' || isdigit(*str))) {
+                while ((*str) && (isalnum(*str) || *str == '_')) {
                     str++;
                 }
                 *str++ = '\0';
