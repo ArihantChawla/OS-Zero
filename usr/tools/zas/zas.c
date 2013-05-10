@@ -36,6 +36,7 @@
 #if (ZASMMAP)
 struct zasmap {
     uint8_t *adr;
+    uint8_t *cur;
     off_t    ofs;
     size_t   sz;
 };
@@ -140,9 +141,8 @@ zasgetc(struct zasmap *map)
 {
     int ch = EOF;
 
-    if (map->ofs != map->sz) {
-        ch = *(map->adr + map->ofs);
-        map->ofs++;
+    if (map->cur < map->adr + map->sz) {
+        ch = *map->cur++;
     }
 
     return ch;
@@ -541,10 +541,8 @@ zasinitbuf(void)
     long l;
 #endif
 
-#if (!ZASMMAP)
     linebuf = malloc(LINELEN);
     strbuf = malloc(LINELEN);
-#endif
 #if (ZASBUF)
     readbuftab = malloc(nreadbuf * sizeof(struct readbuf));
     for (l = 0 ; l < nreadbuf ; l++) {
@@ -909,15 +907,9 @@ static struct zastoken *
 zasgettoken(uint8_t *str, uint8_t **retptr)
 #endif
 {
-#if (!ZASMMAP)
     long             buflen = LINELEN;
-#endif
     long             len;
-#if (ZASMMAP)
-    uint8_t         *buf = map->adr + map->ofs;
-#else
     uint8_t         *buf = strbuf;
-#endif
     struct zastoken *token1 = malloc(sizeof(struct zastoken));
     struct zastoken *token2;
 #if (ZPC)
@@ -988,14 +980,12 @@ zasgettoken(uint8_t *str, uint8_t **retptr)
         while (*str) {
             *buf++ = *str++;
             len++;
-#if (!ZASMMAP)
             if (len == buflen) {
                 fprintf(stderr, "overlong line (%ld == %ld): %s\n",
                         len, buflen, linebuf);
 
                 exit(1);
             }
-#endif
         }
         while (*str != '"') {
             ch = *str++;
@@ -1809,9 +1799,8 @@ zasreadfile(char *name, zasmemadr_t adr)
     int              sysret;
     int              fd;
     uint8_t         *base;
-#else
-    long             buflen = LINELEN;
 #endif
+    long             buflen = LINELEN;
 #if (ZASBUF)
     int              fd = -1;
 #else
@@ -1861,17 +1850,15 @@ zasreadfile(char *name, zasmemadr_t adr)
         fprintf(stderr, "cannot map %s\n", name);
     }
     map.adr = base;
-    map.ofs = 0;
+    map.cur = base;
     map.sz = statbuf.st_size;
-    str = base;
 #endif
     while (loop) {
 #if (ZASMMAP)
-        if (map.ofs >= map.sz) {
+        if (map.cur > map.adr + map.sz) {
 
             break;
         }
-        str = map.adr + map.ofs;
 #endif
         if (done) {
             if (eof) {
@@ -1880,9 +1867,7 @@ zasreadfile(char *name, zasmemadr_t adr)
                 
                 break;
             }
-#if (!ZASMMAP)
             str = linebuf;
-#endif
             done = 0;
 #if (ZASMMAP)
             ch = zasgetc(&map);
@@ -1893,30 +1878,22 @@ zasreadfile(char *name, zasmemadr_t adr)
 #endif
             if (ch == EOF) {
                 loop = 0;
-            
+                
                 break;
             } else {
                 len = 0;
-#if (ZASMMAP)
-                base = str;
-#endif
 #if (ZASDB)
                 line++;
-#endif
-#if (ZASMMAP)
-                fprintf(stderr, "2 ");
 #endif
                 while (ch != EOF && ch != '\n') {
                     *str++ = (uint8_t)ch;
                     len++;
-#if (!ZASMMAP)
                     if (len == buflen) {
                         fprintf(stderr, "overlong line (%ld == %ld): %s\n",
                                 len, buflen, linebuf);
                         
                         exit(1);
                     }
-#endif
 #if (ZASMMAP)
                     ch = zasgetc(&map);
 #elif (ZASBUF)
@@ -1924,16 +1901,10 @@ zasreadfile(char *name, zasmemadr_t adr)
 #else
                     ch = fgetc(fp);
 #endif
-                    eof = (ch == EOF);
                 }
+                eof = (ch == EOF);
                 *str = '\0';
-#if (ZASMMAP)
-                str = map.adr + map.ofs;
-                map.ofs += len;
-                base = str;
-#else
                 str = linebuf;
-#endif
                 lim = str + len;
                 while ((*str) && isspace(*str)) {
                     str++;
@@ -1941,20 +1912,8 @@ zasreadfile(char *name, zasmemadr_t adr)
                 if (str > lim) {
                     done = 1;
                 }
-#if (ZASMMAP)
-                fprintf(stderr, "3 ");
-#endif
-#if (ZASMMAP)
-                len = str - base;
-                map.ofs += len;
-#endif
             }
         } else if (!strncmp((char *)str, ".define", 7)) {
-#if (ZASMMAP)
-            fprintf(stderr, "4 ");
-            map.ofs += 7;
-            base = str;
-#endif
             str += 7;
             while ((*str) && isspace(*str)) {
                 str++;
@@ -1980,16 +1939,7 @@ zasreadfile(char *name, zasmemadr_t adr)
                     exit(1);
                 }
             }
-#if (ZASMMAP)
-            len = str - base;
-            map.ofs += len;
-#endif
         } else if (!strncmp((char *)str, ".include", 8)) {
-#if (ZASMMAP)
-            fprintf(stderr, "5 ");
-            map.ofs += 8;
-            base = str;
-#endif
             str += 8;
             while ((*str) && isspace(*str)) {
                 str++;
@@ -2017,17 +1967,8 @@ zasreadfile(char *name, zasmemadr_t adr)
                     exit(1);
                 }
             }
-#if (ZASMMAP)
-            len = str - base;
-            map.ofs += len;
-#endif
             done = 1;
         } else if (!strncmp((char *)str, ".import", 7)) {
-#if (ZASMMAP)
-            fprintf(stderr, "6 ");
-            map.ofs += 7;
-            base = str;
-#endif
             str += 7;
             while ((*str) && isspace(*str)) {
                 str++;
@@ -2055,10 +1996,6 @@ zasreadfile(char *name, zasmemadr_t adr)
                     exit(1);
                 }
             }
-#if (ZASMMAP)
-            len = str - base;
-            map.ofs += len;
-#endif
             done = 1;
         } else if (str[0] == ';'
                    || (str[0] == '/' && str[1] == '/')) {
@@ -2104,7 +2041,6 @@ zasreadfile(char *name, zasmemadr_t adr)
         } else {
             if (*str) {
 #if (ZASMMAP)
-                base = str;
                 token = zasgettoken(str, &str, &map);
 #else
                 token = zasgettoken(str, &str);
@@ -2122,10 +2058,6 @@ zasreadfile(char *name, zasmemadr_t adr)
                 if (str >= lim) {
                     done = 1;
                 }
-#if (ZASMMAP)
-                len = str - base;
-                map.ofs += len;
-#endif
             } else {
                 done = 1;
             }
