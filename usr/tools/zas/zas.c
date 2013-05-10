@@ -1744,6 +1744,7 @@ zastranslate(zasmemadr_t base)
             }
         } else {
             fprintf(stderr, "stray token of type %lx\n", token->type);
+            printtoken(token);
 
             exit(1);
         }
@@ -1896,6 +1897,9 @@ zasreadfile(char *name, zasmemadr_t adr)
                 break;
             } else {
                 len = 0;
+#if (ZASMMAP)
+                base = str;
+#endif
 #if (ZASDB)
                 line++;
 #endif
@@ -2021,7 +2025,7 @@ zasreadfile(char *name, zasmemadr_t adr)
         } else if (!strncmp((char *)str, ".import", 7)) {
 #if (ZASMMAP)
             fprintf(stderr, "6 ");
-            map.ofs += 8;
+            map.ofs += 7;
             base = str;
 #endif
             str += 7;
