@@ -18,9 +18,9 @@
 #include <fcntl.h>
 #include <sys/stat.h>
 #include <sys/mman.h>
-#endif
-#if (ZASBUF)
+#elif (ZASBUF)
 #include <errno.h>
+#include <fcntl.h>
 #endif
 #if (ZASPROF)
 #include <zero/prof.h>
@@ -123,7 +123,7 @@ static zasmemadr_t       _startset;
 unsigned long            zasinputread;
 static uint8_t          *linebuf;
 static uint8_t          *strbuf;
-#if (ZASBUF)
+#if (ZASBUF) && (!ZASMMAP)
 struct readbuf {
     void    *data;
     uint8_t *cur;
@@ -537,10 +537,14 @@ zasinitop(void)
 void
 zasinitbuf(void)
 {
+#if (ZASBUF)
     long l;
+#endif
 
+#if (!ZASMMAP)
     linebuf = malloc(LINELEN);
     strbuf = malloc(LINELEN);
+#endif
 #if (ZASBUF)
     readbuftab = malloc(nreadbuf * sizeof(struct readbuf));
     for (l = 0 ; l < nreadbuf ; l++) {
@@ -911,8 +915,6 @@ zasgettoken(uint8_t *str, uint8_t **retptr)
     long             len;
 #if (ZASMMAP)
     uint8_t         *buf = map->adr + map->ofs;
-    uint8_t         *lim = map->adr + map->sz;
-    uint8_t         *base;
 #else
     uint8_t         *buf = strbuf;
 #endif
@@ -931,9 +933,6 @@ zasgettoken(uint8_t *str, uint8_t **retptr)
     uint8_t         *ptr;
 #endif
 
-#if (ZASMMAP)
-    base = str;
-#endif
     while (*str && isspace(*str)) {
         str++;
     }
@@ -1185,12 +1184,6 @@ zasgettoken(uint8_t *str, uint8_t **retptr)
             exit(1);
         }
     }
-#if (ZASMMAP)
-    len = str - base;
-    map->ofs += len;
-    fprintf(stderr, "LEN: %ld, BASE: %p\n", len, base);
-    printtoken(token1);
-#endif
     *retptr = str;
 
     return token1;
@@ -1872,6 +1865,13 @@ zasreadfile(char *name, zasmemadr_t adr)
     str = base;
 #endif
     while (loop) {
+#if (ZASMMAP)
+        if (map.ofs >= map.sz) {
+
+            break;
+        }
+        str = map.adr + map.ofs;
+#endif
         if (done) {
             if (eof) {
                 loop = 0;
@@ -1879,10 +1879,7 @@ zasreadfile(char *name, zasmemadr_t adr)
                 
                 break;
             }
-#if (ZASMMAP)
-            fprintf(stderr, "1 ");
-            str = map.adr + map.ofs;
-#else
+#if (!ZASMMAP)
             str = linebuf;
 #endif
             done = 0;
@@ -1927,8 +1924,9 @@ zasreadfile(char *name, zasmemadr_t adr)
                 }
                 *str = '\0';
 #if (ZASMMAP)
-                map.ofs += len;
                 str = map.adr + map.ofs;
+                map.ofs += len;
+                base = str;
 #else
                 str = linebuf;
 #endif
@@ -1942,10 +1940,16 @@ zasreadfile(char *name, zasmemadr_t adr)
 #if (ZASMMAP)
                 fprintf(stderr, "3 ");
 #endif
+#if (ZASMMAP)
+                len = str - base;
+                map.ofs += len;
+#endif
             }
         } else if (!strncmp((char *)str, ".define", 7)) {
 #if (ZASMMAP)
             fprintf(stderr, "4 ");
+            map.ofs += 7;
+            base = str;
 #endif
             str += 7;
             while ((*str) && isspace(*str)) {
@@ -1972,9 +1976,15 @@ zasreadfile(char *name, zasmemadr_t adr)
                     exit(1);
                 }
             }
+#if (ZASMMAP)
+            len = str - base;
+            map.ofs += len;
+#endif
         } else if (!strncmp((char *)str, ".include", 8)) {
 #if (ZASMMAP)
             fprintf(stderr, "5 ");
+            map.ofs += 8;
+            base = str;
 #endif
             str += 8;
             while ((*str) && isspace(*str)) {
@@ -2003,10 +2013,16 @@ zasreadfile(char *name, zasmemadr_t adr)
                     exit(1);
                 }
             }
+#if (ZASMMAP)
+            len = str - base;
+            map.ofs += len;
+#endif
             done = 1;
         } else if (!strncmp((char *)str, ".import", 7)) {
 #if (ZASMMAP)
             fprintf(stderr, "6 ");
+            map.ofs += 8;
+            base = str;
 #endif
             str += 7;
             while ((*str) && isspace(*str)) {
@@ -2035,6 +2051,10 @@ zasreadfile(char *name, zasmemadr_t adr)
                     exit(1);
                 }
             }
+#if (ZASMMAP)
+            len = str - base;
+            map.ofs += len;
+#endif
             done = 1;
         } else if (str[0] == ';'
                    || (str[0] == '/' && str[1] == '/')) {
@@ -2080,6 +2100,7 @@ zasreadfile(char *name, zasmemadr_t adr)
         } else {
             if (*str) {
 #if (ZASMMAP)
+                base = str;
                 token = zasgettoken(str, &str, &map);
 #else
                 token = zasgettoken(str, &str);
@@ -2097,14 +2118,14 @@ zasreadfile(char *name, zasmemadr_t adr)
                 if (str >= lim) {
                     done = 1;
                 }
+#if (ZASMMAP)
+                len = str - base;
+                map.ofs += len;
+#endif
             } else {
                 done = 1;
             }
         }
-#if (ZASMMAP)
-        len = str - base;
-        map.ofs += len;
-#endif
     }
 #if (ZASBUF)
     close(fd);
