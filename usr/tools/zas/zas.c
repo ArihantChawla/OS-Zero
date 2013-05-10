@@ -1844,8 +1844,7 @@ zasreadfile(char *name, zasmemadr_t adr)
     if (sysret < 0) {
         fprintf(stderr, "cannot stat %s\n", name);
     }
-    base = mmap(NULL, statbuf.st_size,
-                PROT_READ | PROT_WRITE, MAP_PRIVATE, fd, 0);
+    base = mmap(NULL, statbuf.st_size, PROT_READ, MAP_PRIVATE, fd, 0);
     if (base == (void *)(-1)) {
         fprintf(stderr, "cannot map %s\n", name);
     }
