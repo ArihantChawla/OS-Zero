@@ -2068,6 +2068,9 @@ zasreadfile(char *name, zasmemadr_t adr)
 #else
     fclose(fp);
 #endif
+#if (ZASMMAP)
+    munmap(map.adr, map.sz);
+#endif
 
     return;
 }
