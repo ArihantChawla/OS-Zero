@@ -115,10 +115,11 @@
 #define bytepar3(b) ((0x6996 >> (((b) ^ ((b) >> 4)) & 0x0f)) & 0x01)
 
 /* count number of trailing (low) zero-bits in long-word */
-#if defined(__GCC__)
-#define tzerol(u) (__builtin_ctzl(u))
+#if defined(__GNUC__)
+#define tzero32(u) (__builtin_ctz(u))
+#define tzerol(u)  (__builtin_ctzl(u))
 #elif defined(__i386__) || defined(__x86_64__) || defined(__amd64__)
-#define tzerol(u) (m_scanlo1bit(u))
+#define tzerol(u)  (m_scanlo1bit(u))
 #elif (LONGSIZE == 4)
 static __inline__ unsigned long
 tzerol(unsigned long ul)
@@ -142,7 +143,7 @@ tzerol(unsigned long ul)
 #endif
 
 /* count number of leading (high) zero-bits in long-word */
-#if defined(__GCC__)
+#if defined(__GNUC__)
 #define lzerol(u) (__builtin_clzl(u));
 #elif defined(__i386__) || defined(__x86_64__) || defined(__amd64__)
 #define lzerol(u) ((1UL << (LONGSIZELOG2 + 3)) - m_scanhi1bit(u))
@@ -167,6 +168,8 @@ lzerol(unsigned long ul)
     return ret;
 }
 #endif
+
+#if !defined(__GNUC__)
 
 /* count number of trailing zero-bits in u32 */
 #define tzero32(u32, r)                                                 \
@@ -328,6 +331,8 @@ lzerol(unsigned long ul)
             }                                                           \
         }                                                               \
     } while (0)
+
+#endif /* !defined(__GNUC__) */
 
 /*
  * round longword u to next power of two if not power of two;

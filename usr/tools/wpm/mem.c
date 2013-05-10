@@ -198,7 +198,7 @@ mempalloc(wpmsize_t size)
     struct slab *slab1;
     struct slab *slab2;
 
-    tzero32(sz, bkt);
+    bkt = tzero32(sz);
     if (!powerof2(sz)) {
         bkt++;
     }
