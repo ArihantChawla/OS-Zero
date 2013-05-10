@@ -37,7 +37,7 @@
 struct zasmap {
     uint8_t *adr;
     uint8_t *cur;
-    off_t    ofs;
+    uint8_t *lim;
     size_t   sz;
 };
 #endif
@@ -136,6 +136,8 @@ long                     readbufcur = 0;
 #endif
 
 #if (ZASMMAP)
+#define zasgetc(map) ((map)->cur < (map)->lim ? *(map)->cur++ : EOF)
+#if 0
 static int
 zasgetc(struct zasmap *map)
 {
@@ -147,6 +149,7 @@ zasgetc(struct zasmap *map)
 
     return ch;
 }
+#endif
 #elif (ZASBUF)
 static int
 zasgetc(int fd, int bufid)
@@ -1851,6 +1854,7 @@ zasreadfile(char *name, zasmemadr_t adr)
     map.adr = base;
     map.cur = base;
     map.sz = statbuf.st_size;
+    map.lim = base + map.sz;
 #endif
     while (loop) {
 #if (ZASMMAP)
