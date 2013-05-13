@@ -6,6 +6,8 @@
 #include <stdint.h>
 #endif
 
+#define ZCC_NONE        0x00
+
 /* compiler warning flags */
 #define ZCC_WARN_UNUSED 0x00000001U
 #define ZCC_WARN_UNDEF  0x00000002U
@@ -28,7 +30,6 @@
 #define zccvaltype(vp)  zccgettype((vp)->type)
 #define zccvalreg(vp)   zccgetreg((vp)->type)
 /* type ID in low 8 bits */
-#define ZCC_NONE        0x00
 #define ZCC_CHAR        0x01
 #define ZCC_UCHAR       0x02
 #define ZCC_SHORT       0x03
@@ -98,15 +99,23 @@ struct zccmacro {
 
 /* adr == ZCC_NO_SYM for unresolved symbols */
 #define ZCC_NO_SYM    0x00      // uninitialised/invalid
-#define ZCC_TYPE_SYM  0x01      // type definition; adr is struct zcctype *
-#define ZCC_VAR_SYM   0x02      // variable; adr is struct zccval *
-#define ZCC_FUNC_SYM  0x03      // function construct; adr is struct zccfunc *
+#define ZCC_VALUE_SYM 0x01
+#define ZCC_TYPE_SYM  0x02      // type definition; adr is struct zcctype *
+#define ZCC_VAR_SYM   0x03      // variable; adr is struct zccval *
+#define ZCC_FUNC_SYM  0x04      // function construct; adr is struct zccfunc *
+#define ZCC_LABEL_SYM 0x05      // label address (jump target)
+/* special value for unresolved symbols */
+#define ZCC_RESOLVE   (~((uintptr_t)0))
 struct zccsym {
     long             type;
-    size_t           namelen;
+//    size_t           namelen;
     char            *name;
+#if (ZCCDB)
     size_t           fnamelen;
     char            *fname;
+    long             row;
+    long             col;
+#endif
     uintptr_t        adr;
     struct zccsym   *prev;
     struct zccsym   *next;
@@ -137,43 +146,69 @@ struct zccfunc {
 
 /* type values */
 /* low 16 bits */
-/* for these, data is value */
-#define ZCC_CHAR_TOKEN      0x0001
-#define ZCC_SHORT_TOKEN     0x0002
-#define ZCC_INT_TOKEN       0x0003
-#define ZCC_LONG_TOKEN      0x0004
-#define ZCC_LONG_LONG_TOKEN 0x0005
+/* for these, data is value except for ZCC_TYPEDEF_TOKEN it's struct zcctype */
+#define ZCC_TYPEDEF_TOKEN     0x0001
+#define ZCC_CHAR_TOKEN        0x0002
+#define ZCC_SHORT_TOKEN       0x0003
+#define ZCC_INT_TOKEN         0x0004
+#define ZCC_LONG_TOKEN        0x0005
+#define ZCC_LONG_LONG_TOKEN   0x0006
 #if (ZCC_C99_TYPES)
-#define ZCC_INT8_TOKEN      0x0006
-#define ZCC_INT16_TOKEN     0x0007
-#define ZCC_INT32_TOKEN     0x0008
-#define ZCC_INT64_TOKEN     0x0009
+#define ZCC_INT8_TOKEN        0x0007
+#define ZCC_INT16_TOKEN       0x0008
+#define ZCC_INT32_TOKEN       0x0009
+#define ZCC_INT64_TOKEN       0x000a
 #endif
-/* for these, data is pointer */
-#define ZCC_FUNC_TOKEN      0x000a
-#define ZCC_MACRO_TOKEN     0x000b
-#define ZCC_ADR_TOKEN       0x000c
-#define ZCC_LATIN1_TOKEN    0x000d
-#define ZCC_UTF8_TOKEN      0x000e
-#define ZCC_UCS16_TOKEN     0x000f
-#define ZCC_UCS32_TOKEN     0x0010
+/* aggregate types */
+#define ZCC_STRUCT_TOKEN      0x000b
+#define ZCC_UNION_TOKEN       0x000c
+/* separators */
+#define ZCC_SEMICOLON_TOKEN   0x000d
+#define ZCC_COLON_TOKEN       0x000e
+#define ZCC_EXCLAMATION_TOKEN 0x000f
+#define ZCC_LEFT_PAREN_TOKEN  0x0010
+#define ZCC_RIGHT_PAREN_TOKEN 0x0011
+#define ZCC_BLOCK_TOKEN       0x0012
+#define ZCC_END_BLOCK_TOKEN   0x0013
+/* compiler attributes */
+#define ZCC_QUAL_TOKEN        0x0014
+#define ZCC_ATR_TOKEN         0x0015
+#define ZCC_FUNC_TOKEN        0x0016
+#define ZCC_MACRO_TOKEN       0x0017
+#define ZCC_LABEL_TOKEN       0x0018
+#define ZCC_ADR_TOKEN         0x0019
+#define ZCC_LATIN1_TOKEN      0x001a
+#define ZCC_UTF8_TOKEN        0x001b
+#define ZCC_UCS16_TOKEN       0x001c
+#define ZCC_UCS32_TOKEN       0x001d
 /* flag bits */
 /* high 16 bits */
-#define ZCC_UNSIGNED        0x80000000U
-#define ZCC_STATIC          0x40000000U
-#define ZCC_CONST           0x20000000U
-#define ZCC_VOLATILE        0x10000000U
-#define ZCC_EXTERN          0x08000000U
-#define ZCC_INLINE          0x04000000U // datasz is threshold size
-#define ZCC_ALIGN           0x02000000U // datasz is alignment
-#define ZCC_PACK            0x01000000U
+#define ZCC_UNSIGNED          0x80000000U
+#define ZCC_STATIC            0x40000000U
+#define ZCC_CONST             0x20000000U
+#define ZCC_VOLATILE          0x10000000U
+#define ZCC_EXTERN            0x08000000U
+#define ZCC_INLINE            0x04000000U // datasz is threshold size
+#define ZCC_ALIGN             0x02000000U // datasz is alignment
+#define ZCC_PACK              0x01000000U
+/* parm values */
+#define ZCC_EXTERN_QUAL       0x01
+#define ZCC_STATIC_QUAL       0x02
+#define ZCC_CONST_QUAL        0x03
+#define ZCC_VOLATILE_QUAL     0x04
+/* adr values */
+#define ZCC_NO_ADR            ((void *)(~0L))
 struct zcctoken {
-    unsigned long    type;
+    long             type;
+    long             parm;
     char            *str;
-    size_t           datasz;
-    uintptr_t        data;
     void            *adr;
     struct zcctoken *prev;
     struct zcctoken *next;
+};
+
+struct zcctokenq {
+    struct zcctoken *head;
+    struct zcctoken *tail;
 };
 

@@ -4,16 +4,42 @@
 #include <zcc/zcc.h>
 
 #define NVALHASH 1024
+#define NTOKENQ  1024
 
-#define zccvalsz(t) (typesztab[(t) & 0x1f])
+#define zccistypedef(cp) (!strncmp(cp, "typedef", 7))
+#define zccisstruct(cp)  (!strncmp(cp, "struct", 6))
+#define zccisunion(cp)   (!strncmp(cp, "union", 5))
+#define zccisatr(cp)     (!strncmp(cp, "__attribute__", 13))
+#define zccqualid(cp)                                                   \
+    ((!strncmp(cp, "extern", 6))                                        \
+     ? ZCC_EXTERN_QUAL                                                  \
+     : (!strncmp(cp, "static", 6)                                       \
+        ? ZCC_STATIC_QUAL                                               \
+        : (!strncmp(cp, "const", 5)                                     \
+           ? ZCC_CONST_QUAL                                             \
+           : (!strncmp(cp, "volatile", 8)                               \
+              ? ZCC_VOLATILE_QUAL                                       \
+              : 0))))
+#define zccisagr(t)      ((t) == ZCC_STRUCT || (t) == ZCC_UNION)
+
+#define zcctypesz(tok)   (tok->datasz)
 #define zccsetival(vp, t, adr)                                          \
     (typesigntab[(t) & 0x1f]                                            \
-    ? ((vp)->ival.ll = *((long long *)adr))                             \
-    : ((vp)->ival.ull = *((unsigned long long *adr))))
+     ? ((vp)->ival.ll = *(long long *)(adr))                            \
+    : ((vp)->ival.ull = *(unsigned long long *)(adr))
+#define zccsetfval(vp, t, adr)                                          \
+    do {                                                                \
+        if ((t) == ZCC_FLOAT) {                                         \
+            (vp)->fval.f = *(float *)(adr);                             \
+        } else if ((t) == ZCC_DOUBLE) {                                 \
+            (vp)->fval.d = *(double *)(adr);                            \
+        } else if ((t) == ZCC_LONG_DOUBLE) {                            \
+            (vp)->fval.d = *(long double *)(adr);                       \
+        }                                                               \
+    } while (0)
 
-static struct sym *valhash[NVALHASH];
 /* for type indices, see struct zccval in zcc.h (ZCC_INT etc.) */
-static long        typesztab[32] = {
+static long             typesztab[32] = {
     0,
     1,
     1,
@@ -26,7 +52,7 @@ static long        typesztab[32] = {
     LONGLONGSIZE,
     LONGLONGSIZE
 };
-static long        typesigntab[32] = {
+static long             typesigntab[32] = {
     0,
     1,
     0,
@@ -39,6 +65,16 @@ static long        typesigntab[32] = {
     1,
     0
 };
+static long              quallentab[8] = {
+    0,  // ZCC_NONE
+    6,  // ZCC_EXTERN_QUAL
+    6,  // ZCC_STATIC_QUAL
+    5,  // ZCC_CONST_QUAL
+    8   // ZCC_VOLATILE_QUAL
+};
+static struct zcctokenq *zccfiletokens;
+static int               zcccurfile;
+static int               zccnfiles;
 
 static void
 zccusage(void)
@@ -49,29 +85,38 @@ zccusage(void)
     return;
 }
 
-static long
-zccprocopt(int argc,
+static int
+zccinit(int argc,
            char *argv[])
 {
-    long  retval = -1;
-    long  l;
-    char *str;
+    int          l;
+    char        *str;
+    struct stat  statbuf;
 
     if (argc == 1) {
         fprintf(stderr, "%s: arguments needed\n", argv[0]);
 
-        exit(1);
+        return 0;
     }
     for (l = 1 ; l < argc ; l++) {
         str = argc[l];
-        if (!strcmp(str, "-h") || !strcmp(str, "--help")) {
-            zccusage();
+        if (*str == '-') {
+            if (!strcmp(str, "-h") || !strcmp(str, "--help")) {
+                zccusage();
+                
+                exit(0);
+            } else if (!strcmp(str, "-O")) {
+                str = argc[l + 1];
+            }
+        } else {
 
-            exit(0);
+            break;
         }
     }
+    zccfiletokens = malloc(NTOKENQ * sizeof(struct zcctokenq));
+    zccntokenq = NTOKENQ;
 
-    return retval;
+    return l;
 }
 
 /* TODO: floating-point values */
@@ -176,69 +221,102 @@ zccgetval(char *str, char **retptr)
     return newval;
 }
 
-static struct zccmacro *
-zccgetmacro(char *str, char **retstr)
+static struct zcctoken *
+zccgettoken(char *str, char **retstr)
 {
-    struct zccmacro *macro;
-    struct zccval   *val;
+    char            *cp = name;
+    long             key = ZCC_NONE;
+    long             done = 0;
+    long             len;
+    char            *ptr;
+    struct zcctoken *token = malloc(sizeof(struct zcctoken));
 
-    if (!strncmp((char *)str, "#define", 7)) {
+    token->parm = ZCC_NONE;
+    token->str = NULL;
+    token->adr = NULL;
+    if (*str == ';') {
+        token->type = ZCC_SEMICOLON_TOKEN;
+        str++;
+    } else if (*str == '{') {
+        token->type = ZCC_BLOCK_TOKEN;
+        str++;
+    } else if (*str == '}') {
+        token->type = ZCC_END_BLOCK_TOKEN;
+        str++;
+    } else if (*str == '?') {
+        token->type = ZCC_EXCLAMATION_TOKEN;
+        str++;
+    } else if (*str == ':') {
+        token->type = ZCC_COLON_TOKEN;
+        str++;
+    } else if (zccisdefine(*str)) {
+        token->type = ZCC_DEFINE_TOKEN;
+    } else if (zccistypedef(*str)) {
+        token->type = ZCC_TYPEDEF_TOKEN;
         str += 7;
-        while ((*str) && isspace(*str)) {
+    } else if (zccisatr(*str)) {
+        token->type = ZCC_ATR_TOKEN;
+        str += 13;
+    } else if (parm = zccqualid(str)) {
+        len = quallentab[parm];
+        token->type = ZCC_QUAL_TOKEN;
+        token->parm = parm;
+        str += len;
+    } else if (zccisstruct(*str)) {
+        token->type = ZCC_STRUCT_TOKEN;
+        str += 6;
+    } else if (zccisunion(*str)) {
+        token->type = ZCC_UNION_TOKEN;
+        str += 5;
+    } else if (isalpha(*str) || *str == '_') {
+        ptr = cp;
+        while (isalnum(*str) || *str == '_') {
             str++;
         }
-        if ((*str) && (isalpha(*str) || *str == '_')) {
-            ptr = str;
+        if (*str == ':') {
+            token->type = ZCC_LABEL_TOKEN;
+            token->str = strndup(ptr, str - ptr);
+            token->adr = ZCC_NO_ADR;
             str++;
-            while ((*str) && (isalnum(*str) || *str == '_')) {
-                str++;
-            }
-            while ((*str) && isspace(*str)) {
-                str++;
-            }
-            if (*str == '(') {
-                fprintf(stderr, "implement macros with arguments\n");
-
-                exit(1);
-            } else {
-                *str++ = '\0';
-                while ((*str) && isspace(*str)) {
-                    str++;
-                }
-                val = zccgetval(str, &str);
-                if (val) {
-                    macro = malloc(sizeof(struct zccmacro));
-                    if (!macro) {
-                        fprintf(stderr, "cannot allocate macro\n");
-                        
-                        exit(1);
-                    }
-//                macro->type = ZCC_CONST_MACRO;
-                    macro->name = strdup((char *)ptr);
-                    macro->namelen = strlen(ptr);
-#if 0
-                    macro->fname = name;
-                    macro->fnamelen = strlen(name);
-#endif
-                    macro->val = val;
-                    zccaddmacro(macro);
-                } else {
-                    fprintf(stderr, "invalid #define directive %s\n", ptr);
-                    
-                    exit(1);
-                }
-            }
+        } else {
+            token->type = ZCC_VAR_TOKEN;
+            token->str = strndup(ptr, str - ptr);
+            token->adr = ZCC_NO_ADR;
         }
+    } else if (isxdigit(*str)) {
+        ptr = str;
+        val = zccgetval(str, &str);
+        if (val) {
+            token->type = ZCC_VALUE_TOKEN;
+            token->str = strndup(name, str - ptr);
+            token->adr = val;
+        }
+    } else {
+        free(token);
+        token = NULL;
+    }
+    if (token) {
+        *retstr = str;
     }
 
-    return retval;
+    return token;
 }
 
-static uintptr_t
-zccgetinclude(char *str, char **retstr, uintptr_t adr)
+static int
+zccgetinclude(char *str, char **retstr, int curfile)
 {    
-    uintptr_t retval = 0;
+    int ret = 0;
 
+    if (curfile == zccnfiles) {
+        zccnfiles <<= 1;
+        zccfiletokens = realloc(zccfiletokens,
+                                zccnfiles * sizeof(struct zcctokenq));
+        if (!zccfiletokens) {
+            fprintf(stderr, "cannot include token table\n");
+
+            return ZCC_FILE_ERROR;
+        }
+    }
     if (!strncmp((char *)str, "#include", 8)) {
         str += 8;
         while ((*str) && isspace(*str)) {
@@ -252,9 +330,7 @@ zccgetinclude(char *str, char **retstr, uintptr_t adr)
             }
             if (*str == '>') {
                 *str = '\0';
-                zccreadfile((char *)fname, adr);
-                retval = zccresolve(adr);
-                zccremovesyms();
+                ret = zccreadfile((char *)fname, curfile);
             } else {
                 fprintf(stderr, "invalid #include directive %s\n",
                         str);
@@ -264,33 +340,37 @@ zccgetinclude(char *str, char **retstr, uintptr_t adr)
         }
     }
 
-    return retval;
+    return ret;
 }
 
-static void
-zccreadfile(char *name, uintptr_t adr)
+static int
+zccreadfile(char *name, int curfile)
 {
-    long             buflen = ZCCLINELEN;
-    FILE            *fp = fopen((char *)name, "r");
-    long             eof = 0;
-    struct zcctoken *token = NULL;
-    struct zccval   *def;
-    long             type;
-    char            *fname;
-    char            *ptr;
-    char            *str = linebuf;
-    char            *lim = NULL;
-    long             loop = 1;
-    int              ch;
-    long             comm = 0;
-    long             done = 1;
-    long             len = 0;
-    long             type;
+    long              buflen = ZCCLINELEN;
+    FILE             *fp = fopen((char *)name, "r");
+    long              eof = 0;
+    struct zccval    *def;
+    long              type;
+    char             *fname;
+    char             *ptr;
+    char             *str = linebuf;
+    char             *lim = NULL;
+    long              loop = 1;
+    int               ch;
+    long              comm = 0;
+    long              done = 1;
+    long              len = 0;
+    long              type;
 #if (ZCCDB)
-    unsigned long    line = 0;
+    unsigned long     line = 0;
 #endif
-    long             val = 0;
+    long              val = 0;
 
+    if (!fp) {
+        fprintf(stderr, "cannot open %s\n", name);
+
+        return 0;
+    }
     while (loop) {
         if (done) {
             if (eof) {
@@ -333,47 +413,48 @@ zccreadfile(char *name, uintptr_t adr)
                 }
 //                fprintf(stderr, "BUF: %s\n", str);
             }
-        } else if (zccgetmacro(str, &str)) {
-            done = 1;
-        } else if ((zccgetinclude(str, &str, adr))
-                   || (str[0] == '/' && str[1] == '/')) {
-            /* file included or comment starts */
-            done = 1;
-        } else if (str[0] == '/' && str[1] == '*') {
-            /* comment */
-            comm = 1;
-            while (comm) {
-                ch = fgetc(fp);
-                if (ch == EOF) {
-                    loop = 0;
-                    
-                    break;
-#if (ZCCDB)
-                } else if (ch == '\n') {
-                    line++;
-#endif
-                } else if (ch == '*') {
+        } else {
+            curfile = zccgetinclude(str, &str, curfile + 1);
+            if (curfile) {
+                done = 1;
+            } else if (str[0] == '/' && str[1] == '/') {
+                /* comment start */
+                done = 1;
+            } else if (str[0] == '/' && str[1] == '*') {
+                /* comment */
+                comm = 1;
+                while (comm) {
                     ch = fgetc(fp);
-                    if (ch == '/') {
-                        
-                        comm = 0;
-                    } else if (ch == EOF) {
-                        comm = 0;
+                    if (ch == EOF) {
                         loop = 0;
-                        eof = 1;
+                        
+                        break;
+#if (ZCCDB)
+                    } else if (ch == '\n') {
+                        line++;
+#endif
+                    } else if (ch == '*') {
+                        ch = fgetc(fp);
+                        if (ch == '/') {
+                            
+                            comm = 0;
+                        } else if (ch == EOF) {
+                            comm = 0;
+                            loop = 0;
+                            eof = 1;
+                        }
                     }
                 }
-            }
-            done = 1;
-        } else {
-            if (*str) {
+                done = 1;
+            } else {
+                if (*str) {
                     token = zccgettoken(str, &str);
                     if (token) {
 #if (ZCCDB)
                         token->fname = strdup((char *)name);
                         token->line = line;
 #endif
-                        zccqueuetoken(token);
+                        zccqueuetoken(token, curfile);
                     }
                     while (isspace(*str)) {
                         str++;
@@ -381,26 +462,35 @@ zccreadfile(char *name, uintptr_t adr)
                     if (str >= lim) {
                         done = 1;
                     }
-            } else {
-                done = 1;
+                } else {
+                    done = 1;
+                }
             }
         }
     }
     fclose(fp);
     
-    return;
+    return curfile;
 }
 
 int
 main(int argc,
      char *argv[])
 {
-    struct zcctoken *tokq;
+    int arg;
 
-    if (zccprocopt(argc, argv)) {
+    
+    arg = zccinit(argc, argv);
+    if (!arg) {
 
         exit(1);
     }
-    tokq = zcctokenize(argc, argv);
+    for ( ; arg < argc ; arg++) {
+        zcccurfile = zccreadfile(argv[l], zcccurfile);
+        if (zcccurfile == ZCC_FILE_ERROR) {
+
+            exit(1);
+        }
+    }
 }
 
