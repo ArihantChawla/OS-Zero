@@ -75,6 +75,7 @@ static long              quallentab[8] = {
 static struct zcctokenq *zccfiletokens;
 static int               zcccurfile;
 static int               zccnfiles;
+static long              zccoptflags;
 
 static void
 zccusage(void)
@@ -99,14 +100,14 @@ zccinit(int argc,
         return 0;
     }
     for (l = 1 ; l < argc ; l++) {
-        str = argc[l];
+        str = argv[l];
         if (*str == '-') {
             if (!strcmp(str, "-h") || !strcmp(str, "--help")) {
                 zccusage();
                 
                 exit(0);
             } else if (!strcmp(str, "-O")) {
-                str = argc[l + 1];
+                zccoptflags |= ZCC_OPT_ALIGN;
             }
         } else {
 
