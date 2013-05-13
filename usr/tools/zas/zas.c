@@ -693,9 +693,7 @@ zasgetvalue(uint8_t *str, zasword_t *retval, uint8_t **retptr)
             val <<= 4;
             val += (isdigit(*str)
                     ? *str - '0'
-                    : (islower(*str)
-                       ? *str - 'a' + 10
-                       : *str - 'A' + 10));
+                    : tolower(*str) - 'a' + 10);
             str++;
         }
         found = 1;
@@ -763,9 +761,7 @@ zasgetindex(uint8_t *str, zasword_t *retndx, uint8_t **retptr)
             val <<= 4;
             val += (isdigit(*str)
                     ? *str - '0'
-                    : (islower(*str)
-                       ? *str - 'a' + 10
-                       : *str - 'A' + 10));
+                    : tolower(*str) - 'a' + 10);
             str++;
         }
     } else if (str[0] == '0' && (str[1] == 'b' || str[1] == 'B')) {
