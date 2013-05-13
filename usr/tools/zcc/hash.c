@@ -1,7 +1,12 @@
+#include <stdint.h>
+#include <stdlib.h>
+#include <string.h>
+#include <zcc/zcc.h>
+
 #define NSYMHASH  65536
 #define NTYPEHASH 65536
 
-static struct zcctoken *symhash[NSYMHASH];
+static struct zccsym   *symhash[NSYMHASH];
 static struct zcctoken *typehash[NTYPEHASH];
 
 /*
@@ -118,7 +123,7 @@ static uint16_t chvaltab[256] =
     0x23,       // Y
     0x24,       // Z
     CHVALINVAL, // [
-    CHVALINVAL, // \
+    CHVALINVAL, // '\'
     CHVALINVAL, // ]
     CHVALINVAL, // ^
     0x25,       // _
@@ -312,28 +317,30 @@ zcchashsym(char *name)
 {
     uint16_t ret;
     long     val;
-    char     ch;
+    int      ch;
+    int      tmp = *name++;
 
-    ch = chvaltab[name++];
+    ch = chvaltab[tmp];
     while (ch) {
         val += ch;
-        ch = chvaltab[name++];
+        tmp = *name++;
+        ch = chvaltab[tmp];
     }
     ret = val & 0xffff;
 
-    return val;
+    return ret;
 }
 
 /* add symbol into lookup hash table */
 static __inline__ void
-zccaddsym(struct zcctoken *token)
+zccaddsym(struct zccsym *sym)
 {
-    uint16_t val = zcchashsym(token->str);
+    uint16_t       val = zcchashsym(sym->name);
 
-    token->prev = NULL;
-    token->next = symhash[val];
-    if (token->next) {
-        token->next->prev = sym;
+    sym->prev = NULL;
+    sym->next = symhash[val];
+    if (sym->next) {
+        sym->next->prev = sym;
     }
     symhash[val] = sym;
 
@@ -344,16 +351,16 @@ zccaddsym(struct zcctoken *token)
 static __inline__ struct zccsym *
 zccfindsym(char *name)
 {
-    char            *ptr = name;
-    long             val = zcchashsym(name);
-    struct zcctoken *token = symhash[val];
+    char          *ptr = name;
+    long           val = zcchashsym(name);
+    struct zccsym *sym = symhash[val];
 
     while (sym) {
-        if (!strcmp(ptr, token->str)) {
+        if (!strcmp(ptr, sym->name)) {
 
             return sym;
         }
-        sym = token->next;
+        sym = sym->next;
     }
 
     return sym;
@@ -361,18 +368,18 @@ zccfindsym(char *name)
 
 /* remove symbol from hash table */
 static __inline__ void
-zccrmsym(struct zcctoken *token)
+zccrmsym(struct zccsym *sym)
 {
     uint16_t val;
 
-    if (!token->prev) {
-        val = zcchashsym(token->str);
-        symhash[val] = token->next;
+    if (!sym->prev) {
+        val = zcchashsym(sym->name);
+        symhash[val] = sym->next;
     } else {
-        token->prev->next = token->next;
+        sym->prev->next = sym->next;
     }
-    if (token->next) {
-        token->next->prev = token->prev;
+    if (sym->next) {
+        sym->next->prev = sym->prev;
     }
 
     return;
@@ -384,19 +391,21 @@ zcchashtype(char *name)
 {
     uint16_t ret;
     long     val;
-    char     ch;
+    int      ch;
+    int      tmp = *name++;
 
-    ch = chvaltab[name++];
+    ch = chvaltab[tmp];
     while (ch) {
         val += ch;
-        ch = chvaltab[name++];
+        tmp = *name++;
+        ch = chvaltab[tmp];
     }
     ret = val & 0xffff;
 
-    return val;
+    return ret;
 }
 
-/* add symbol into lookup hash table */
+/* add type into lookup hash table */
 static __inline__ void
 zccaddtype(struct zcctoken *token)
 {
@@ -412,7 +421,7 @@ zccaddtype(struct zcctoken *token)
     return;
 }
 
-/* search hash table for symbol */
+/* search hash table for type */
 static __inline__ struct zcctoken *
 zccfindtype(char *name)
 {
@@ -431,7 +440,7 @@ zccfindtype(char *name)
     return token;
 }
 
-/* remove symbol from hash table */
+/* remove type from hash table */
 static __inline__ void
 zccrmtype(struct zcctoken *token)
 {

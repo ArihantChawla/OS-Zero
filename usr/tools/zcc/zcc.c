@@ -1,15 +1,25 @@
 #include <ctype.h>
 #include <stdio.h>
+#include <stdlib.h>
+#include <string.h>
 #include <stdint.h>
+#include <sys/stat.h>
+#include <zero/param.h>
 #include <zcc/zcc.h>
+
+#define ZCC_FILE_ERROR (-1)
 
 #define NVALHASH 1024
 #define NTOKENQ  1024
+#define NLINEBUF 4096
+
+static int zccreadfile(char *name, int curfile);
 
 #define zccistypedef(cp) (!strncmp(cp, "typedef", 7))
 #define zccisstruct(cp)  (!strncmp(cp, "struct", 6))
 #define zccisunion(cp)   (!strncmp(cp, "union", 5))
 #define zccisatr(cp)     (!strncmp(cp, "__attribute__", 13))
+#define zccisdefine(cp)  (!strncmp(cp, "#define", 7))
 #define zccqualid(cp)                                                   \
     ((!strncmp(cp, "extern", 6))                                        \
      ? ZCC_EXTERN_QUAL                                                  \
@@ -22,11 +32,12 @@
               : 0))))
 #define zccisagr(t)      ((t) == ZCC_STRUCT || (t) == ZCC_UNION)
 
+#define zccvalsz(t)      (typesztab[(t)])
 #define zcctypesz(tok)   (tok->datasz)
 #define zccsetival(vp, t, adr)                                          \
     (typesigntab[(t) & 0x1f]                                            \
-     ? ((vp)->ival.ll = *(long long *)(adr))                            \
-    : ((vp)->ival.ull = *(unsigned long long *)(adr))
+     ? ((vp)->ival.ll = *((long long *)(adr)))                          \
+     : ((vp)->ival.ull = *((unsigned long long *)(adr))))
 #define zccsetfval(vp, t, adr)                                          \
     do {                                                                \
         if ((t) == ZCC_FLOAT) {                                         \
@@ -72,15 +83,16 @@ static long              quallentab[8] = {
     5,  // ZCC_CONST_QUAL
     8   // ZCC_VOLATILE_QUAL
 };
-static struct zcctokenq *zccfiletokens;
-static int               zcccurfile;
-static int               zccnfiles;
-static long              zccoptflags;
+static struct zcctokenq **zccfiletokens;
+static int                zcccurfile;
+static int                zccnfiles;
+static long               zccoptflags;
+static char               linebuf[NLINEBUF];
 
 static void
 zccusage(void)
 {
-    fprintf(stderr, "usage %s <options> [file1] .. [fileN]\n");
+    fprintf(stderr, "usage <options> [file1] .. [fileN]\n");
     fprintf(stderr, "\t-h OR --help\tprint this help message\n");
 
     return;
@@ -92,7 +104,6 @@ zccinit(int argc,
 {
     int          l;
     char        *str;
-    struct stat  statbuf;
 
     if (argc == 1) {
         fprintf(stderr, "%s: arguments needed\n", argv[0]);
@@ -115,7 +126,7 @@ zccinit(int argc,
         }
     }
     zccfiletokens = malloc(NTOKENQ * sizeof(struct zcctokenq));
-    zccntokenq = NTOKENQ;
+    zccnfiles = NTOKENQ;
 
     return l;
 }
@@ -124,12 +135,12 @@ zccinit(int argc,
 static struct zccval *
 zccgetval(char *str, char **retptr)
 {
-    long               type = ZCC_NONE;
-    unsigned long long uval = 0;
-    long               found = 0;
-    long long          val;
-    long               neg = 0;
-    struct zccval      *newval;
+    long                type = ZCC_NONE;
+    unsigned long long  uval = 0;
+    long                found = 0;
+    long long           val;
+    long                neg = 0;
+    struct zccval      *newval = NULL;
 
 #if (ZCCDEBUG)
     fprintf(stderr, "getval: %s\n", str);
@@ -190,7 +201,7 @@ zccgetval(char *str, char **retptr)
             if (*str == 'L' || *str == 'l') {
                 str++;
                 if (*str == 'L' || *str == 'l') {
-                    type = ZCC_LONG_LONG;
+                    type = ZCC_LONGLONG;
                 } else {
                     type = ZCC_LONG;
                 }
@@ -201,18 +212,22 @@ zccgetval(char *str, char **retptr)
                 if (*str == 'L' || *str == 'l') {
                     str++;
                     if (*str == 'L' || *str == 'l') {
-                        type = ZCC_UNSIGNED_LONG_LONG;
+                        type = ZCC_ULONGLONG;
                     } else {
-                        type = ZCC_UNSIGNED_LONG;
+                        type = ZCC_ULONG;
                     }
                 } else {
-                    type = ZCC_UNSIGNED_INT;
+                    type = ZCC_UINT;
                 }
             }
         }
         newval->type = type;
         newval->sz = zccvalsz(type);
-        zccsetival(newval, type, (neg) ? &val : &uval);
+        if (neg) {
+            zccsetival(newval, type, &val);
+        } else {
+            zccsetival(newval, type, &uval);
+        }
         while (*str == ',' || *str == '\'') {
             str++;
         }
@@ -225,12 +240,12 @@ zccgetval(char *str, char **retptr)
 static struct zcctoken *
 zccgettoken(char *str, char **retstr)
 {
-    char            *cp = name;
-    long             key = ZCC_NONE;
-    long             done = 0;
+    char            *cp = str;
     long             len;
+    long             parm;
     char            *ptr;
     struct zcctoken *token = malloc(sizeof(struct zcctoken));
+    struct zccval   *val;
 
     token->parm = ZCC_NONE;
     token->str = NULL;
@@ -250,23 +265,23 @@ zccgettoken(char *str, char **retstr)
     } else if (*str == ':') {
         token->type = ZCC_COLON_TOKEN;
         str++;
-    } else if (zccisdefine(*str)) {
-        token->type = ZCC_DEFINE_TOKEN;
-    } else if (zccistypedef(*str)) {
+    } else if (zccisdefine(str)) {
+        token->type = ZCC_MACRO_TOKEN;
+    } else if (zccistypedef(str)) {
         token->type = ZCC_TYPEDEF_TOKEN;
         str += 7;
-    } else if (zccisatr(*str)) {
+    } else if (zccisatr(str)) {
         token->type = ZCC_ATR_TOKEN;
         str += 13;
-    } else if (parm = zccqualid(str)) {
+    } else if ((parm = zccqualid(str))) {
         len = quallentab[parm];
         token->type = ZCC_QUAL_TOKEN;
         token->parm = parm;
         str += len;
-    } else if (zccisstruct(*str)) {
+    } else if (zccisstruct(str)) {
         token->type = ZCC_STRUCT_TOKEN;
         str += 6;
-    } else if (zccisunion(*str)) {
+    } else if (zccisunion(str)) {
         token->type = ZCC_UNION_TOKEN;
         str += 5;
     } else if (isalpha(*str) || *str == '_') {
@@ -289,7 +304,7 @@ zccgettoken(char *str, char **retstr)
         val = zccgetval(str, &str);
         if (val) {
             token->type = ZCC_VALUE_TOKEN;
-            token->str = strndup(name, str - ptr);
+            token->str = strndup(ptr, str - ptr);
             token->adr = val;
         }
     } else {
@@ -306,7 +321,8 @@ zccgettoken(char *str, char **retstr)
 static int
 zccgetinclude(char *str, char **retstr, int curfile)
 {    
-    int ret = 0;
+    int   ret = 0;
+    char *fname;
 
     if (curfile == zccnfiles) {
         zccnfiles <<= 1;
@@ -344,16 +360,38 @@ zccgetinclude(char *str, char **retstr, int curfile)
     return ret;
 }
 
+static void
+zccqueuetoken(struct zcctoken *token, int curfile)
+{
+    struct zcctokenq *queue = zccfiletokens[curfile];
+    struct zcctoken  *head = (queue) ? queue->head : NULL;
+    struct zcctoken  *tail = (queue) ? queue->tail : NULL;
+
+    if (!head) {
+        queue = zccfiletokens[curfile] = malloc(sizeof(struct zcctokenq));
+        token->prev = NULL;
+        queue->head = token;
+        queue->tail = NULL;
+    } else if (tail) {
+        token->prev = tail;
+        tail->next = token;
+        queue->tail = token;
+    } else {
+        head->next = token;
+        token->prev = head;
+        queue->tail = token;
+    }
+
+    return;
+}
+
 static int
 zccreadfile(char *name, int curfile)
 {
-    long              buflen = ZCCLINELEN;
+    long              buflen = NLINEBUF;
     FILE             *fp = fopen((char *)name, "r");
     long              eof = 0;
-    struct zccval    *def;
-    long              type;
-    char             *fname;
-    char             *ptr;
+    struct zcctoken  *token;
     char             *str = linebuf;
     char             *lim = NULL;
     long              loop = 1;
@@ -361,11 +399,9 @@ zccreadfile(char *name, int curfile)
     long              comm = 0;
     long              done = 1;
     long              len = 0;
-    long              type;
 #if (ZCCDB)
     unsigned long     line = 0;
 #endif
-    long              val = 0;
 
     if (!fp) {
         fprintf(stderr, "cannot open %s\n", name);
@@ -478,20 +514,22 @@ int
 main(int argc,
      char *argv[])
 {
-    int arg;
-
+    int  arg;
+    long l;
     
     arg = zccinit(argc, argv);
     if (!arg) {
 
         exit(1);
     }
-    for ( ; arg < argc ; arg++) {
+    for (l = arg; l < argc ; l++) {
         zcccurfile = zccreadfile(argv[l], zcccurfile);
         if (zcccurfile == ZCC_FILE_ERROR) {
 
             exit(1);
         }
     }
+
+    exit(0);
 }
 

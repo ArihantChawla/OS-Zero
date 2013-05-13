@@ -90,12 +90,14 @@ struct zccval {
     } fval;
 };
 
+#if 0
 struct zccmacro {
     char            *name;
     size_t           namelen;
     struct zccval   *val;
     struct zcctoken *tokq;
 };
+#endif
 
 /* adr == ZCC_NO_SYM for unresolved symbols */
 #define ZCC_NO_SYM    0x00      // uninitialised/invalid
@@ -148,39 +150,42 @@ struct zccfunc {
 /* low 16 bits */
 /* for these, data is value except for ZCC_TYPEDEF_TOKEN it's struct zcctype */
 #define ZCC_TYPEDEF_TOKEN     0x0001
-#define ZCC_CHAR_TOKEN        0x0002
-#define ZCC_SHORT_TOKEN       0x0003
-#define ZCC_INT_TOKEN         0x0004
-#define ZCC_LONG_TOKEN        0x0005
-#define ZCC_LONG_LONG_TOKEN   0x0006
+#define ZCC_VAR_TOKEN         0x0002
+#define ZCC_CHAR_TOKEN        0x0003
+#define ZCC_SHORT_TOKEN       0x0004
+#define ZCC_INT_TOKEN         0x0005
+#define ZCC_LONG_TOKEN        0x0006
+#define ZCC_LONG_LONG_TOKEN   0x0007
 #if (ZCC_C99_TYPES)
-#define ZCC_INT8_TOKEN        0x0007
-#define ZCC_INT16_TOKEN       0x0008
-#define ZCC_INT32_TOKEN       0x0009
-#define ZCC_INT64_TOKEN       0x000a
+#define ZCC_INT8_TOKEN        0x0008
+#define ZCC_INT16_TOKEN       0x0009
+#define ZCC_INT32_TOKEN       0x000a
+#define ZCC_INT64_TOKEN       0x000b
 #endif
 /* aggregate types */
-#define ZCC_STRUCT_TOKEN      0x000b
-#define ZCC_UNION_TOKEN       0x000c
+#define ZCC_STRUCT_TOKEN      0x000c
+#define ZCC_UNION_TOKEN       0x000d
 /* separators */
-#define ZCC_SEMICOLON_TOKEN   0x000d
-#define ZCC_COLON_TOKEN       0x000e
-#define ZCC_EXCLAMATION_TOKEN 0x000f
-#define ZCC_LEFT_PAREN_TOKEN  0x0010
-#define ZCC_RIGHT_PAREN_TOKEN 0x0011
-#define ZCC_BLOCK_TOKEN       0x0012
-#define ZCC_END_BLOCK_TOKEN   0x0013
+#define ZCC_SEMICOLON_TOKEN   0x000e
+#define ZCC_COLON_TOKEN       0x000f
+#define ZCC_EXCLAMATION_TOKEN 0x0010
+#define ZCC_LEFT_PAREN_TOKEN  0x0011
+#define ZCC_RIGHT_PAREN_TOKEN 0x0012
+#define ZCC_BLOCK_TOKEN       0x0013
+#define ZCC_END_BLOCK_TOKEN   0x0014
+/* [constant] value */
+#define ZCC_VALUE_TOKEN       0x0015
 /* compiler attributes */
-#define ZCC_QUAL_TOKEN        0x0014
-#define ZCC_ATR_TOKEN         0x0015
-#define ZCC_FUNC_TOKEN        0x0016
-#define ZCC_MACRO_TOKEN       0x0017
-#define ZCC_LABEL_TOKEN       0x0018
-#define ZCC_ADR_TOKEN         0x0019
-#define ZCC_LATIN1_TOKEN      0x001a
-#define ZCC_UTF8_TOKEN        0x001b
-#define ZCC_UCS16_TOKEN       0x001c
-#define ZCC_UCS32_TOKEN       0x001d
+#define ZCC_QUAL_TOKEN        0x0016
+#define ZCC_ATR_TOKEN         0x0017
+#define ZCC_FUNC_TOKEN        0x0018
+#define ZCC_MACRO_TOKEN       0x0019
+#define ZCC_LABEL_TOKEN       0x001a
+#define ZCC_ADR_TOKEN         0x001b
+#define ZCC_LATIN1_TOKEN      0x001c
+#define ZCC_UTF8_TOKEN        0x001d
+#define ZCC_UCS16_TOKEN       0x001e
+#define ZCC_UCS32_TOKEN       0x001f
 /* flag bits */
 /* high 16 bits */
 #define ZCC_UNSIGNED          0x80000000U
