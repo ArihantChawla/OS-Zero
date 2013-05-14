@@ -489,7 +489,7 @@ zccgettoken(char *str, char **retstr)
             str++;
         }
         parm = zccpreprocid(str);
-        if (parm) {
+        if (parm != ZCC_NONE) {
             len = parmlentab[parm];
             token->type = ZCC_PREPROC_TOKEN;
             token->parm = parm;
