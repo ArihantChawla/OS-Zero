@@ -48,7 +48,9 @@ static int zccreadfile(char *name, int curfile);
                  ? ZCC_IFDEF_DIR                                        \
                  : (!strncmp(cp, "ifndef", 6)                           \
                     ? ZCC_IFNDEF_DIR                                    \
-                    : ZCC_NONE))))))
+                    : (!strncmp(cp, "define", 6)                        \
+                       ? ZCC_DEFINE_DIR                                 \
+                       : ZCC_NONE)))))))
 #define zccisagr(t)      ((t) == ZCC_STRUCT || (t) == ZCC_UNION)
 
 #define zccvalsz(t)      (typesztab[(t)])
@@ -339,6 +341,7 @@ zccgettoken(char *str, char **retstr)
         while (isspace(*str)) {
             str++;
         }
+        fprintf(stderr, "STR: %s\n", str);
         parm = zccpreprocid(str);
         if (parm) {
             len = parmlentab[parm];

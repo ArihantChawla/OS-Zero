@@ -219,6 +219,7 @@ struct zccfunc {
 #define ZCC_ENDIF_DIR          0x0008
 #define ZCC_IFDEF_DIR          0x0009
 #define ZCC_IFNDEF_DIR         0x000a
+#define ZCC_DEFINE_DIR         0x000b
 /* adr values */
 #define ZCC_NO_ADR            ((void *)(~0L))
 struct zcctoken {
