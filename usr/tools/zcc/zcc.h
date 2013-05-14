@@ -179,9 +179,9 @@ struct zccfunc {
 #define ZCC_QUAL_TOKEN        0x0016
 #define ZCC_ATR_TOKEN         0x0017
 #define ZCC_FUNC_TOKEN        0x0018
-#define ZCC_MACRO_TOKEN       0x0019
-#define ZCC_LABEL_TOKEN       0x001a
-#define ZCC_ADR_TOKEN         0x001b
+#define ZCC_LABEL_TOKEN       0x0019
+#define ZCC_ADR_TOKEN         0x001a
+#define ZCC_PREPROC_TOKEN     0x001b
 #define ZCC_LATIN1_TOKEN      0x001c
 #define ZCC_UTF8_TOKEN        0x001d
 #define ZCC_UCS16_TOKEN       0x001e
@@ -197,10 +197,16 @@ struct zccfunc {
 #define ZCC_ALIGN             0x02000000U // datasz is alignment
 #define ZCC_PACK              0x01000000U
 /* parm values */
-#define ZCC_EXTERN_QUAL       0x01
-#define ZCC_STATIC_QUAL       0x02
-#define ZCC_CONST_QUAL        0x03
-#define ZCC_VOLATILE_QUAL     0x04
+#define ZCC_EXTERN_QUAL       0x0001
+#define ZCC_STATIC_QUAL       0x0002
+#define ZCC_CONST_QUAL        0x0003
+#define ZCC_VOLATILE_QUAL     0x0004
+#define ZCC_IF_DIR            0x0005
+#define ZCC_ELIF_DIR          0x0006
+#define ZCC_ELSE_DIR          0x0007
+#define ZCC_ENDIF_DIR         0x0008
+#define ZCC_IFDEF_DIR         0x0009
+#define ZCC_IFNDEF_DIR        0x000a
 /* adr values */
 #define ZCC_NO_ADR            ((void *)(~0L))
 struct zcctoken {
