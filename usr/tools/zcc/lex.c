@@ -5,6 +5,7 @@
 #include <stdlib.h>
 #include <string.h>
 #include <stdint.h>
+#include <limits.h>
 #include <sys/stat.h>
 #include <zero/param.h>
 #include <zcc/zcc.h>
@@ -12,7 +13,7 @@
 #define ZCC_FILE_ERROR (-1)
 
 #define NVALHASH 4096
-#define NTOKENQ  1024
+#define NFILE  1024
 #define NLINEBUF 4096
 
 static int zccreadfile(char *name, int curfile);
@@ -190,8 +191,8 @@ zccinit(int argc,
             break;
         }
     }
-    zccfiletokens = malloc(NTOKENQ * sizeof(struct zcctokenq));
-    zccnfiles = NTOKENQ;
+    zccfiletokens = malloc(NFILE * sizeof(struct zcctokenq));
+    zccnfiles = NFILE;
 
     return l;
 }
@@ -408,8 +409,11 @@ zccgettoken(char *str, char **retstr)
 static int
 zccgetinclude(char *str, char **retstr, int curfile)
 {    
+    char  path[] = "/include/:/usr/include/";
+    char  name[PATH_MAX + 1] = { '\0' };
     int   ret = ZCC_FILE_ERROR;
-    char *fname;
+    char *ptr = name;
+    char *cp;
 
 #if (ZCCDEBUG)
     fprintf(stderr, "getinclude: %s\n", str);
@@ -429,18 +433,45 @@ zccgetinclude(char *str, char **retstr, int curfile)
         while ((*str) && isspace(*str)) {
             str++;
         }
-        if (*str == '<') {
+        if (*str == '"') {
             str++;
-            fname = str;
+            while ((*str) && *str != '"') {
+                *ptr++ = *str++;
+            }
+            if (*str == '"') {
+                *ptr = '\0';
+                ret = zccreadfile(name, curfile);
+            } else {
+                fprintf(stderr, "invalid #include directive %s\n",
+                        name);
+                
+                exit(1);
+            }
+        } else if (*str == '<') {
+            str++;
+            ptr = str;
             while ((*str) && *str != '>') {
                 str++;
             }
             if (*str == '>') {
                 *str = '\0';
-                ret = zccreadfile((char *)fname, curfile);
+                strcat(name, strtok(path, ":"));
+                strcat(name, ptr);
+                while (ret == ZCC_FILE_ERROR) {
+                    ret = zccreadfile(name, curfile);
+                    name[0] = '\0';
+                    cp = strtok(NULL, ":");
+                    if (cp) {
+                        strcat(name, cp);
+                        strcat(name, ptr);
+                    } else {
+
+                        return ZCC_FILE_ERROR;
+                    }
+                }
             } else {
                 fprintf(stderr, "invalid #include directive %s\n",
-                        str);
+                        name);
                 
                 exit(1);
             }
@@ -482,7 +513,7 @@ static int
 zccreadfile(char *name, int curfile)
 {
     long              buflen = NLINEBUF;
-    FILE             *fp = fopen((char *)name, "r");
+    FILE             *fp = fopen(name, "r");
     long              eof = 0;
     struct zcctoken  *token;
     char             *str = linebuf;
@@ -497,9 +528,8 @@ zccreadfile(char *name, int curfile)
 #endif
 
     if (!fp) {
-        fprintf(stderr, "cannot open %s\n", name);
 
-        return 0;
+        return ZCC_FILE_ERROR;
     }
     while (loop) {
         if (done) {
@@ -582,7 +612,7 @@ zccreadfile(char *name, int curfile)
                         token = zccgettoken(str, &str);
                         if (token) {
 #if (ZCCDB)
-                            token->fname = strdup((char *)name);
+                            token->fname = strdup(name);
                             token->line = line;
 #endif
                             zccqueuetoken(token, curfile);
