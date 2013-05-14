@@ -30,7 +30,7 @@ main(int argc, char *argv[])
     }
 #if (ZCCPROF)
     profstopclk(clk);
-#if (ZCCTOKEN)
+#if (ZCCTOKENCNT)
     fprintf(stderr, "%lu tokens\n", ntoken);
 #endif
     fprintf(stderr, "%ld microseconds\n", profclkdiff(clk));

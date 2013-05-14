@@ -207,7 +207,7 @@ static struct zcctokenq *zccfiletokens;
 static int               zcccurfile;
 static int               zccnfiles;
 static long              zccoptflags;
-#if (ZCCTOKEN)
+#if (ZCCTOKENCNT)
 unsigned long            ntoken;
 #endif
 
@@ -568,7 +568,7 @@ zccgettoken(char *str, char **retstr)
         token = NULL;
     }
     if (token) {
-#if (ZCCTOKEN)
+#if (ZCCTOKENCNT)
         ntoken++;
 #endif
         while (isspace(*str)) {

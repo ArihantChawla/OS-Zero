@@ -1,7 +1,7 @@
-#define ZCCPROF  1
-#define ZCCDEBUG 0
-#define ZCCPRINT 0
-#define ZCCTOKEN 1
+#define ZCCPROF     1
+#define ZCCDEBUG    0
+#define ZCCPRINT    0
+#define ZCCTOKENCNT 1
 
 struct zccinput * zcclex(int argc, char *argv[]);
 
