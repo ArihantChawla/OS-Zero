@@ -32,7 +32,6 @@ void printqueue(struct zcctokenq *queue);
 #define zccisunion(cp)   (!strncmp(cp, "union", 5))
 #define zccisatr(cp)     (!strncmp(cp, "__attribute__", 13))
 #define zccispreproc(cp) (*str == '#')
-#define zccisdefine(cp)  (!strncmp(cp, "#define", 7))
 #define zccqualid(cp)                                                   \
     ((!strncmp(cp, "extern", 6))                                        \
      ? ZCC_EXTERN_QUAL                                                  \
@@ -427,6 +426,7 @@ static struct zcctoken *
 zccgettoken(char *str, char **retstr)
 {
     long             len;
+    long             ndx;
     long             parm;
     long             type;
     char            *ptr;
@@ -448,10 +448,18 @@ zccgettoken(char *str, char **retstr)
         str++;
     } else if (zccisoper(str)) {
         token->type = ZCC_OPER_TOKEN;
-        token->str = malloc(8);
+        len = 8;
+        ndx ^= ndx;
+        token->str = malloc(len);
         ptr = token->str;
         while (zccisoper(str)) {
+            if (ndx == len) {
+                len <<= 1;
+                token->str = realloc(token->str, len);
+                ptr = &token->str[ndx];
+            }
             *ptr++ = *str++;
+            ndx++;
         }
         *ptr = '\0';
     } else if ((type = toktab[(int)(*str)])) {
