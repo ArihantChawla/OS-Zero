@@ -1,4 +1,5 @@
 #define ZCCDEBUG 0
+#define ZCCPRINT 1
 
 #include <ctype.h>
 #include <stdio.h>
@@ -6,6 +7,9 @@
 #include <string.h>
 #include <stdint.h>
 #include <limits.h>
+#if (ZCCPRINT)
+#include <unistd.h>
+#endif
 #include <sys/stat.h>
 #include <zero/param.h>
 #include <zcc/zcc.h>
@@ -17,6 +21,10 @@
 #define NLINEBUF 4096
 
 static int zccreadfile(char *name, int curfile);
+#if (ZCCPRINT)
+void printtoken(struct zcctoken *token);
+void printqueue(struct zcctokenq *queue);
+#endif
 
 #define zccisoper(cp)    (opertab[(int)(*(cp))])
 #define zccistypedef(cp) (!strncmp(cp, "typedef", 7))
@@ -70,8 +78,76 @@ static int zccreadfile(char *name, int curfile);
         }                                                               \
     } while (0)
 
-static uint8_t            opertab[256];
-static uint8_t            toktab[256];
+static uint8_t           opertab[256];
+static uint8_t           toktab[256];
+#if (ZCCPRINT)
+static char             *toktypetab[256] =
+{
+    NULL,
+    "ZCC_TYPE_TOKEN",
+    "ZCC_TYPEDEF_TOKEN",
+    "ZCC_VAR_TOKEN",
+    "ZCC_CHAR_TOKEN",
+    "ZCC_SHORT_TOKEN",
+    "ZCC_INT_TOKEN",
+    "ZCC_LONG_TOKEN",
+    "ZCC_LONG_LONG_TOKEN",
+#if (ZCC_C99_TYPES)
+    "ZCC_INT8_TOKEN",
+    "ZCC_INT16_TOKEN",
+    "ZCC_INT32_TOKEN",
+    "ZCC_INT64_TOKEN",
+#endif
+    "ZCC_STRUCT_TOKEN",
+    "ZCC_UNION_TOKEN",
+    "ZCC_OPER_TOKEN",
+    "ZCC_DOT_TOKEN",
+    "ZCC_INDIR_TOKEN",
+    "ZCC_ASTERISK_TOKEN",
+    "ZCC_COMMA_TOKEN",
+    "ZCC_SEMICOLON_TOKEN",
+    "ZCC_COLON_TOKEN",
+    "ZCC_EXCLAMATION_TOKEN",
+    "ZCC_LEFT_PAREN_TOKEN",
+    "ZCC_RIGHT_PAREN_TOKEN",
+    "ZCC_INDEX_TOKEN",
+    "ZCC_END_INDEX_TOKEN",
+    "ZCC_BLOCK_TOKEN",
+    "ZCC_END_BLOCK_TOKEN",
+    "ZCC_QUOTE_TOKEN",
+    "ZCC_DOUBLE_QUOTE_TOKEN",
+    "ZCC_BACKSLASH_TOKEN",
+    "ZCC_VALUE_TOKEN",
+    "ZCC_QUAL_TOKEN",
+    "ZCC_ATR_TOKEN",
+    "ZCC_FUNC_TOKEN",
+    "ZCC_LABEL_TOKEN",
+    "ZCC_ADR_TOKEN",
+    "ZCC_MACRO_TOKEN",
+    "ZCC_PREPROC_TOKEN",
+    "ZCC_CONCAT_TOKEN",
+    "ZCC_STRINGIFY_TOKEN",
+    "ZCC_LATIN1_TOKEN",
+    "ZCC_UTF8_TOKEN",
+    "ZCC_UCS16_TOKEN",
+    "ZCC_UCS32_TOKEN"
+};
+static char             *tokparmtab[256] =
+{
+    "NONE",
+    "ZCC_EXTERN_QUAL",
+    "ZCC_STATIC_QUAL",
+    "ZCC_CONST_QUAL",
+    "ZCC_VOLATILE_QUAL",
+    "ZCC_IF_DIR",
+    "ZCC_ELIF_DIR",
+    "ZCC_ELSE_DIR",
+    "ZCC_ENDIF_DIR",
+    "ZCC_IFDEF_DIR",
+    "ZCC_IFNDEF_DIR",
+    "ZCC_DEFINE_DIR"
+};
+#endif
 /* for type indices, see struct zccval in zcc.h (ZCC_INT etc.) */
 static long               typesztab[32] = {
     0,                  // ZCC_NONE
@@ -110,13 +186,14 @@ static long               parmlentab[16] = {
     4,                  // ZCC_ELSE_DIR
     5,                  // ZCC_ENDIF_DIR
     5,                  // ZCC_IFDEF_DIR
-    6                   // ZCC_IFNDEF_DIR
+    6,                  // ZCC_IFNDEF_DIR
+    6                   // ZCC_DEFINE_DIR
 };
-static struct zcctokenq **zccfiletokens;
-static int                zcccurfile;
-static int                zccnfiles;
-static long               zccoptflags;
-static char               linebuf[NLINEBUF];
+static struct zcctokenq *zccfiletokens;
+static int               zcccurfile;
+static int               zccnfiles;
+static long              zccoptflags;
+static char              linebuf[NLINEBUF];
 
 static void
 zccusage(void)
@@ -148,6 +225,7 @@ zccinitopertab(void)
 static void
 zccinittoktab(void)
 {
+    toktab[';'] = ZCC_SEMICOLON_TOKEN;
     toktab['.'] = ZCC_DOT_TOKEN;
     toktab[','] = ZCC_COMMA_TOKEN;
     toktab[';'] = ZCC_SEMICOLON_TOKEN;
@@ -197,6 +275,46 @@ zccinit(int argc,
     zccnfiles = NFILE;
 
     return l;
+}
+
+static int
+zccgettype(char *str, char **retstr)
+{
+    long type = ZCC_NONE;
+
+    if (!strncmp(str, "unsigned char", 13)) {
+        type = ZCC_UCHAR;
+        str += 13;
+    } else if (!strncmp(str, "char", 4)) {
+        type = ZCC_CHAR;
+        str += 4;
+    } else if (!strncmp(str, "unsigned short", 14)) {
+        type = ZCC_USHORT;
+        str += 14;
+    } else if (!strncmp(str, "short", 5)) {
+        type = ZCC_SHORT;
+        str += 14;
+    } else if (!strncmp(str, "unsigned int", 12)) {
+        type = ZCC_UINT;
+        str += 12;
+    } else if (!strncmp(str, "int", 3)) {
+        type = ZCC_INT;
+        str += 3;
+    } else if (!strncmp(str, "unsigned long long", 18)) {
+        type = ZCC_ULONGLONG;
+        str += 18;
+    } else if (!strncmp(str, "long long", 9)) {
+        type = ZCC_LONGLONG;
+        str += 9;
+    } else if (!strncmp(str, "unsigned", 8)) {
+        type = ZCC_LONGLONG;
+        str += 8;
+    }
+    if (type != ZCC_NONE) {
+        *retstr = str;
+    }
+
+    return type;
 }
 
 /* TODO: floating-point values */
@@ -308,7 +426,6 @@ zccgetval(char *str, char **retptr)
 static struct zcctoken *
 zccgettoken(char *str, char **retstr)
 {
-    char            *cp = str;
     long             len;
     long             parm;
     long             type;
@@ -319,12 +436,16 @@ zccgettoken(char *str, char **retstr)
 #if (ZCCDEBUG)
     fprintf(stderr, "gettoken: %s\n", str);
 #endif
+    token->type = ZCC_NONE;
     token->parm = ZCC_NONE;
     token->str = NULL;
     token->adr = NULL;
     if (*str == '-' && str[1] == '>') {
         token->type = ZCC_INDIR_TOKEN;
         str += 2;
+    } else if (*str == '*') {
+        token->type = ZCC_ASTERISK_TOKEN;
+        str++;
     } else if (zccisoper(str)) {
         token->type = ZCC_OPER_TOKEN;
         token->str = malloc(8);
@@ -341,7 +462,6 @@ zccgettoken(char *str, char **retstr)
         while (isspace(*str)) {
             str++;
         }
-        fprintf(stderr, "STR: %s\n", str);
         parm = zccpreprocid(str);
         if (parm) {
             len = parmlentab[parm];
@@ -373,19 +493,29 @@ zccgettoken(char *str, char **retstr)
         token->type = ZCC_UNION_TOKEN;
         str += 5;
     } else if (isalpha(*str) || *str == '_') {
-        ptr = cp;
+        ptr = str;
         while (isalnum(*str) || *str == '_') {
             str++;
         }
         if (*str == ':') {
+            *str = '\0';
             token->type = ZCC_LABEL_TOKEN;
             token->str = strndup(ptr, str - ptr);
             token->adr = ZCC_NO_ADR;
             str++;
         } else {
-            token->type = ZCC_VAR_TOKEN;
+            while (isspace(*str)) {
+                str++;
+            }
             token->str = strndup(ptr, str - ptr);
-            token->adr = ZCC_NO_ADR;
+            if (*str == '(') {
+                token->type = ZCC_FUNC_TOKEN;
+            } else if ((type = zccgettype(ptr, &str))) {
+                token->type = ZCC_TYPE_TOKEN;
+            } else {
+                token->type = ZCC_VAR_TOKEN;
+                token->adr = ZCC_NO_ADR;
+            }
         }
     } else if (isxdigit(*str)) {
         ptr = str;
@@ -490,12 +620,16 @@ zccgetinclude(char *str, char **retstr, int curfile)
 static void
 zccqueuetoken(struct zcctoken *token, int curfile)
 {
-    struct zcctokenq *queue = zccfiletokens[curfile];
-    struct zcctoken  *head = (queue) ? queue->head : NULL;
-    struct zcctoken  *tail = (queue) ? queue->tail : NULL;
+    struct zcctokenq *queue = &zccfiletokens[curfile];
+    struct zcctoken  *head = queue->head;
+    struct zcctoken  *tail = queue->tail;
 
+#if (ZCCPRINT) && 0
+    fprintf(stderr, "QUEUE\n");
+    fprintf(stderr, "-----\n");
+    printtoken(token);
+#endif
     if (!head) {
-        queue = zccfiletokens[curfile] = malloc(sizeof(struct zcctokenq));
         token->prev = NULL;
         queue->head = token;
         queue->tail = NULL;
@@ -523,6 +657,7 @@ zccreadfile(char *name, int curfile)
     char             *lim = NULL;
     long              loop = 1;
     int               ch;
+    int               tmp;
     long              comm = 0;
     long              done = 1;
     long              len = 0;
@@ -577,8 +712,9 @@ zccreadfile(char *name, int curfile)
 //                fprintf(stderr, "BUF: %s\n", str);
             }
         } else {
-            curfile = zccgetinclude(str, &str, curfile + 1);
-            if (curfile != ZCC_FILE_ERROR) {
+            tmp = zccgetinclude(str, &str, curfile);
+            if (tmp != ZCC_FILE_ERROR) {
+                curfile = tmp;
                 done = 1;
             } else if (str[0] == '/' && str[1] == '/') {
                 /* comment start */
@@ -611,18 +747,16 @@ zccreadfile(char *name, int curfile)
                 done = 1;
             } else {
                 if (*str) {
-                    while (*str) {
-                        token = zccgettoken(str, &str);
-                        if (token) {
+                    token = zccgettoken(str, &str);
+                    if (token) {
 #if (ZCCDB)
-                            token->fname = strdup(name);
-                            token->line = line;
+                        token->fname = strdup(name);
+                        token->line = line;
 #endif
-                            zccqueuetoken(token, curfile);
-                        }
-                        if (str >= lim) {
-                            done = 1;
-                        }
+                        zccqueuetoken(token, curfile);
+                    }
+                    if (str >= lim) {
+                        done = 1;
                     }
                 } else {
                     done = 1;
@@ -635,26 +769,72 @@ zccreadfile(char *name, int curfile)
     return curfile;
 }
 
-int
-main(int argc,
-     char *argv[])
+void
+printtoken(struct zcctoken *token)
 {
-    int  arg;
-    long l;
+    fprintf(stderr, "TYPE %s\n", toktypetab[token->type]);
+    fprintf(stderr, "PARM: %s\n", tokparmtab[token->parm]);
+    fprintf(stderr, "STR: %s\n", token->str);
+    fprintf(stderr, "ADR: %p\n", token->adr);
+}
+
+void
+printqueue(struct zcctokenq *queue)
+{
+    struct zcctoken *token = queue->head;
+
+    while (token) {
+        printtoken(token);
+        token = token->next;
+    }
+}
+
+struct zccinput *
+zcclex(int argc,
+       char *argv[])
+{
+    struct zccinput *input = NULL;
+    int              arg;
+    long             l;
     
     arg = zccinit(argc, argv);
     if (!arg) {
-
+        
         exit(1);
     }
     for (l = arg; l < argc ; l++) {
         zcccurfile = zccreadfile(argv[l], zcccurfile);
         if (zcccurfile == ZCC_FILE_ERROR) {
-
+            
             exit(1);
         }
     }
+    input = malloc(sizeof(struct zccinput));
+    if (input) {
+        input->nq = zcccurfile + 1;
+        input->qptr = &zccfiletokens;
+    }
+
+    return input;
+}
+
+int
+main(int argc, char *argv[])
+{
+    struct zccinput  *input = zcclex(argc, argv);
+    struct zcctokenq *qp;
+    long   l;
+
+#if (ZCCPRINT)
+    if (input) {
+        l = input->nq;
+        qp = *input->qptr;
+        while (l--) {
+            printqueue(qp);
+            qp++;
+        }
+    }
+#endif
 
     exit(0);
 }
-
