@@ -1,5 +1,7 @@
+#define ZCCPROF  1
 #define ZCCDEBUG 0
-#define ZCCPRINT 1
+#define ZCCPRINT 0
+#define ZCCTOKEN 1
 
 #include <ctype.h>
 #include <stdio.h>
@@ -12,6 +14,10 @@
 #endif
 #include <sys/stat.h>
 #include <zero/param.h>
+#include <zero/cdecl.h>
+#if (ZCCPROF)
+#include <zero/prof.h>
+#endif
 #include <zcc/zcc.h>
 
 #define ZCC_FILE_ERROR (-1)
@@ -77,6 +83,7 @@ void printqueue(struct zcctokenq *queue);
         }                                                               \
     } while (0)
 
+static char              linebuf[NLINEBUF] ALIGNED(CLSIZE);
 static uint8_t           opertab[256];
 static uint8_t           toktab[256];
 #if (ZCCPRINT)
@@ -192,7 +199,9 @@ static struct zcctokenq *zccfiletokens;
 static int               zcccurfile;
 static int               zccnfiles;
 static long              zccoptflags;
-static char              linebuf[NLINEBUF];
+#if (ZCCTOKEN)
+static unsigned long     ntoken;
+#endif
 
 static void
 zccusage(void)
@@ -538,6 +547,9 @@ zccgettoken(char *str, char **retstr)
         token = NULL;
     }
     if (token) {
+#if (ZCCTOKEN)
+        ntoken++;
+#endif
         while (isspace(*str)) {
             str++;
         }
@@ -777,6 +789,8 @@ zccreadfile(char *name, int curfile)
     return curfile;
 }
 
+#if (ZCCPRINT)
+
 void
 printtoken(struct zcctoken *token)
 {
@@ -796,6 +810,8 @@ printqueue(struct zcctokenq *queue)
         token = token->next;
     }
 }
+
+#endif /* ZCCPRINT */
 
 struct zccinput *
 zcclex(int argc,
@@ -829,11 +845,32 @@ zcclex(int argc,
 int
 main(int argc, char *argv[])
 {
-    struct zccinput  *input = zcclex(argc, argv);
-    struct zcctokenq *qp;
-    long   l;
-
+    struct zccinput  *input;
 #if (ZCCPRINT)
+    struct zcctokenq *qp;
+    long              l;
+#endif
+#if (ZCCPROF)
+    PROFDECLCLK(clk);
+#endif
+
+#if (ZCCPROF)
+    profstartclk(clk);
+#endif
+    input = zcclex(argc, argv);
+    if (!input) {
+        fprintf(stderr, "empty input\n");
+
+        exit(1);
+    }
+#if (ZCCPROF)
+    profstopclk(clk);
+#if (ZCCTOKEN)
+    fprintf(stderr, "%lu tokens\n", ntoken);
+#endif
+    fprintf(stderr, "%ld microseconds\n", profclkdiff(clk));
+#endif
+#if (ZCCPRINT) && 0
     if (input) {
         l = input->nq;
         qp = *input->qptr;
