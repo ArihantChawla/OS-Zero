@@ -31,6 +31,7 @@ void zpcclrstk(void);
 void zpcevaltop(void);
 void zpcenter(void);
 void zpcquit(void);
+void zpcprog(void);
 
 extern uint8_t            zpcoperchartab[256];
 extern struct zpctoken   *zpcregstk[];
@@ -71,7 +72,7 @@ static uint8_t            buttontypetab[ZPC_NROW][ZPC_NCOLUMN] =
 };
 static const char        *buttonstrtab[ZPC_NROW][ZPC_NCOLUMN]
 = {
-    { "d", "e", "f", "~", ">>>", "++", "run" },
+    { "d", "e", "f", "~", ">>>", "++", "PC" },
     { "a", "b", "c", "%", ">>", "--", "0x" },
     { "7", "8", "9", "/", "<<", "..>", "(" },
     { "4", "5", "6", "*", "^", "<..", ")" },
@@ -80,7 +81,7 @@ static const char        *buttonstrtab[ZPC_NROW][ZPC_NCOLUMN]
 };
 static const char        *buttonlabeltab[ZPC_NROW][ZPC_NCOLUMN]
 = {
-    { "d", "e", "f", "~", ">>>", "++", "RUN" },
+    { "d", "e", "f", "~", ">>>", "++", "PC" },
     { "a", "b", "c", "%", ">>", "--", "0x" },
     { "7", "8", "9", "/", "<<", "..>", "(" },
     { "4", "5", "6", "*", "^", "<..", ")" },
@@ -120,7 +121,8 @@ static const char        *buttontop2tab[ZPC_NROW][ZPC_NCOLUMN]
 #define BREAK 0xf3
 #define LOAD  0xf2
 #define SAVE  0xf1
-#define FIRST 0xf1
+#define PROG  0xf0
+#define FIRST 0xf0
 #if 0
 #define EQU   0xf0
 #define VEC   0xef
@@ -136,7 +138,7 @@ static const char        *buttontop2tab[ZPC_NROW][ZPC_NCOLUMN]
     ((i) - FIRST)
 static const uint8_t      parmtab[ZPC_NROW][ZPC_NCOLUMN]
 = {
-    { 0, 0, 0, 1, 2, 1, RUN },
+    { 0, 0, 0, 1, 2, 1, PROG },
     { 0, 0, 0, 2, 2, 1, 0 },
     { 0, 0, 0, 2, 2, 2, 0 },
     { 0, 0, 0, 2, 2, 2, 0 },
@@ -158,21 +160,22 @@ static const uint8_t      isflttab[ZPC_NROW][ZPC_NCOLUMN]
 #endif
 static zpcaction_t *actiontab[0xff - FIRST + 1] =
 {
-    NULL,
-    NULL,
-    NULL,
-    NULL,
-    NULL,
-    zpccls,
-    zpcdel,
-    NULL,
-    NULL,
-    NULL,
-    NULL,
-    zpcclrstk,
-    zpcevaltop,
-    zpcenter,
-    zpcquit
+    zpcprog,    // PROG
+    NULL,       // SAVE
+    NULL,       // LOAD
+    NULL,       // BREAK
+    NULL,       // STEP
+    NULL,       // RUN
+    zpccls,     // CLS
+    zpcdel,     // DEL
+    NULL,       // DROP
+    NULL,       // DUP
+    NULL,       // POP
+    NULL,       // COPY
+    zpcclrstk,  // CLR
+    zpcevaltop, // EVAL
+    zpcenter,   // ENTER
+    zpcquit     // QUIT
 };
 static char *zpcregstrtab[NREGSTK]
 = {
@@ -861,6 +864,12 @@ void
 zpcquit(void)
 {
     exit(0);
+}
+
+void
+zpcprog(void)
+{
+    ;
 }
 
 void
