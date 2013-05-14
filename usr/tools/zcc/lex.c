@@ -19,6 +19,7 @@
 #define NLINEBUF 4096
 
 static int zccreadfile(char *name, int curfile);
+static void zccqueuetoken(struct zcctoken *token, int curfile);
 #if (ZCCPRINT)
 void printtoken(struct zcctoken *token);
 void printqueue(struct zcctokenq *queue);
@@ -156,7 +157,6 @@ static char             *tokparmtab[256] =
     "ZCC_DEFINE_DIR"
 };
 #endif
-/* for type indices, see struct zccval in zcc.h (ZCC_INT etc.) */
 static long               typesztab[32] = {
     0,                  // ZCC_NONE
     1,                  // ZCC_CHAR
@@ -183,6 +183,25 @@ static long               typesigntab[32] = {
     1,                  // ZCC_LONGLONG
     0                   // ZCC_ULONGLONG
 };
+#if (ZCCPRINT)
+static char              *typetab[32] =
+{
+    "NONE",
+    "ZCC_CHAR",
+    "ZCC_UCHAR",
+    "ZCC_SHORT",
+    "ZCC_USHORT",
+    "ZCC_INT",
+    "ZCC_UINT",
+    "ZCC_LONG",
+    "ZCC_ULONG",
+    "ZCC_LONGLONG",
+    "ZCC_ULONGLONG",
+    "ZCC_FLOAT",
+    "ZCC_DOUBLE",
+    "ZCC_LDOUBLE"
+};
+#endif
 static long               parmlentab[16] = {
     0,                  // ZCC_NONE
     6,                  // ZCC_EXTERN_QUAL
@@ -335,7 +354,7 @@ zccgettype(char *str, char **retstr)
 
 /* TODO: floating-point values */
 static struct zccval *
-zccgetval(char *str, char **retptr)
+zccgetval(char *str, char **retstr)
 {
     long                type = ZCC_NONE;
     unsigned long long  uval = 0;
@@ -433,14 +452,14 @@ zccgetval(char *str, char **retptr)
         while (*str == ',' || *str == '\'') {
             str++;
         }
-        *retptr = str;
+        *retstr = str;
     }
 
     return newval;
 }
 
 static struct zcctoken *
-zccgettoken(char *str, char **retstr)
+zccgettoken(char *str, char **retstr, int curfile)
 {
     long             len = 0;
     long             ndx;
@@ -541,11 +560,11 @@ zccgettoken(char *str, char **retstr)
     } else if (zccisunion(str)) {
         token->type = ZCC_UNION_TOKEN;
         str += 5;
-        } else if (isalpha(*str) || *str == '_') {
+    } else if (isalpha(*str) || *str == '_') {
         ptr = str;
         while (isalnum(*str) || *str == '_') {
             str++;
-            }
+        }
         if (*str == ':') {
             *str = '\0';
             token->type = ZCC_LABEL_TOKEN;
@@ -561,6 +580,8 @@ zccgettoken(char *str, char **retstr)
                 token->type = ZCC_FUNC_TOKEN;
             } else if ((type = zccgettype(ptr, &str))) {
                 token->type = ZCC_TYPE_TOKEN;
+                token->parm = type;
+                token->str = strndup(ptr, str - ptr);
             } else {
                 token->type = ZCC_VAR_TOKEN;
                 token->adr = ZCC_NO_ADR;
@@ -799,7 +820,7 @@ zccreadfile(char *name, int curfile)
                 done = 1;
             } else {
                 if (*str) {
-                    token = zccgettoken(str, &str);
+                    token = zccgettoken(str, &str, curfile);
                     if (token) {
 #if (ZCCDB)
                         token->fname = strdup(name);
@@ -824,12 +845,76 @@ zccreadfile(char *name, int curfile)
 #if (ZCCPRINT)
 
 void
+printval(struct zccval *val)
+{
+    switch (val->type) {
+        case ZCC_CHAR:
+            fprintf(stderr, "CHAR: %x\n", val->ival.c);
+
+            break;
+        case ZCC_UCHAR:
+            fprintf(stderr, "UCHAR: %x\n", val->ival.uc);
+
+            break;
+        case ZCC_SHORT:
+            fprintf(stderr, "SHORT: %x\n", val->ival.s);
+
+            break;
+        case ZCC_USHORT:
+            fprintf(stderr, "USHORT: %x\n", val->ival.us);
+
+            break;
+        case ZCC_INT:
+            fprintf(stderr, "INT: %x\n", val->ival.i);
+
+            break;
+        case ZCC_UINT:
+            fprintf(stderr, "UINT: %x\n", val->ival.ui);
+
+            break;
+        case ZCC_LONG:
+            fprintf(stderr, "LONG: %lx\n", val->ival.l);
+
+            break;
+        case ZCC_ULONG:
+            fprintf(stderr, "ULONG: %lx\n", val->ival.ul);
+
+            break;
+        case ZCC_LONGLONG:
+            fprintf(stderr, "LONGLONG: %llx\n", val->ival.ll);
+
+
+        case ZCC_ULONGLONG:
+            fprintf(stderr, "ULONGLONG: %llx\n", val->ival.ull);
+
+            break;
+
+        default:
+
+            break;
+    }
+    fprintf(stderr, "SZ: %ld\n", val->sz);
+
+    return;
+}
+
+void
 printtoken(struct zcctoken *token)
 {
     fprintf(stderr, "TYPE %s\n", toktypetab[token->type]);
-    fprintf(stderr, "PARM: %s\n", tokparmtab[token->parm]);
+    if (token->type == ZCC_TYPE_TOKEN) {
+        fprintf(stderr, "PARM: %s\n", typetab[token->parm]);
+    } else {
+        fprintf(stderr, "PARM: %s\n", tokparmtab[token->parm]);
+    }
     fprintf(stderr, "STR: %s\n", token->str);
-    fprintf(stderr, "ADR: %p\n", token->adr);
+    if (token->type == ZCC_VALUE_TOKEN) {
+        fprintf(stderr, "VALUE\n");
+        fprintf(stderr, "-----\n");
+        printval(token->adr);
+    } else {
+        fprintf(stderr, "ADR: %p\n", token->adr);
+    }
 }
 
 void
