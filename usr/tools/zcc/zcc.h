@@ -1,9 +1,9 @@
 #define ZCCPROF     1
 #define ZCCDEBUG    0
 #define ZCCPRINT    0
-#define ZCCTOKENCNT 1
+#define ZPPTOKENCNT 1
 
-struct zccinput * zcclex(int argc, char *argv[]);
+struct zppinput * zcclex(int argc, char *argv[]);
 
 #define ZCC_C99_TYPES  1
 #define ZCCLINELEN     65536
@@ -103,7 +103,7 @@ struct zccmacro {
     char            *name;
     size_t           namelen;
     struct zccval   *val;
-    struct zcctoken *tokq;
+    struct zpptoken *tokq;
 };
 #endif
 
@@ -133,7 +133,7 @@ struct zccsym {
 
 /*
  * id is compile-time type ID.
- * for flg field, see struct zcctoken.
+ * for flg field, see struct zpptoken.
  * sz is width in [8-bit] bytes
  */
 struct zcctype {
@@ -145,13 +145,13 @@ struct zcctype {
 struct zccmacro {
     long              narg;
     char            **argv;
-    struct zcctoken  *tokq;
+    struct zpptoken  *tokq;
 };
 
 struct zccfunc {
     long             narg;
     long            *argt;
-    struct zcctoken *tokq;
+    struct zpptoken *tokq;
 };
 
 /* type values */
@@ -232,22 +232,22 @@ struct zccfunc {
 #define ZCC_DEFINE_DIR         0x000b
 /* adr values */
 #define ZCC_NO_ADR            ((void *)(~0L))
-struct zcctoken {
+struct zpptoken {
     long             type;
     long             parm;
     char            *str;
     void            *adr;
-    struct zcctoken *prev;
-    struct zcctoken *next;
+    struct zpptoken *prev;
+    struct zpptoken *next;
 };
 
-struct zcctokenq {
-    struct zcctoken *head;
-    struct zcctoken *tail;
+struct zpptokenq {
+    struct zpptoken *head;
+    struct zpptoken *tail;
 };
 
-struct zccinput {
+struct zppinput {
     long              nq;
-    struct zcctokenq **qptr;
+    struct zpptokenq **qptr;
 };
 

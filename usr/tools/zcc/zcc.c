@@ -10,9 +10,9 @@ extern unsigned long ntoken;
 int
 main(int argc, char *argv[])
 {
-    struct zccinput  *input;
+    struct zppinput  *input;
 #if (ZCCPRINT)
-    struct zcctokenq *qp;
+    struct zpptokenq *qp;
     long              l;
 #endif
 #if (ZCCPROF)
@@ -30,7 +30,7 @@ main(int argc, char *argv[])
     }
 #if (ZCCPROF)
     profstopclk(clk);
-#if (ZCCTOKENCNT)
+#if (ZPPTOKENCNT)
     fprintf(stderr, "%lu tokens\n", ntoken);
 #endif
     fprintf(stderr, "%ld microseconds\n", profclkdiff(clk));

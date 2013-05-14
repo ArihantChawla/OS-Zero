@@ -19,10 +19,10 @@
 #define NLINEBUF 4096
 
 static int zccreadfile(char *name, int curfile);
-static void zccqueuetoken(struct zcctoken *token, int curfile);
+static void zccqueuetoken(struct zpptoken *token, int curfile);
 #if (ZCCPRINT)
-void printtoken(struct zcctoken *token);
-void printqueue(struct zcctokenq *queue);
+static void printtoken(struct zpptoken *token);
+static void printqueue(struct zpptokenq *queue);
 #endif
 
 #define zccisoper(cp)    (opertab[(int)(*(cp))])
@@ -222,11 +222,11 @@ static long               atrlentab[16] = {
     7,                  // ZCC_ATR_ALIGNED
     8                   // ZCC_ATR_NORETURN
 };
-static struct zcctokenq *zccfiletokens;
+static struct zpptokenq *zccfiletokens;
 static int               zcccurfile;
 static int               zccnfiles;
 static long              zccoptflags;
-#if (ZCCTOKENCNT)
+#if (ZPPTOKENCNT)
 unsigned long            ntoken;
 #endif
 
@@ -306,7 +306,7 @@ zccinit(int argc,
             break;
         }
     }
-    zccfiletokens = malloc(NFILE * sizeof(struct zcctokenq));
+    zccfiletokens = malloc(NFILE * sizeof(struct zpptokenq));
     zccnfiles = NFILE;
 
     return l;
@@ -458,7 +458,7 @@ zccgetval(char *str, char **retstr)
     return newval;
 }
 
-static struct zcctoken *
+static struct zpptoken *
 zccgettoken(char *str, char **retstr, int curfile)
 {
     long             len = 0;
@@ -467,7 +467,7 @@ zccgettoken(char *str, char **retstr, int curfile)
     long             atr;
     long             type;
     char            *ptr;
-    struct zcctoken *token = malloc(sizeof(struct zcctoken));
+    struct zpptoken *token = malloc(sizeof(struct zpptoken));
     struct zccval   *val;
 
 #if (ZCCDEBUG)
@@ -513,11 +513,6 @@ zccgettoken(char *str, char **retstr, int curfile)
             str += len;
         }
         if (parm == ZCC_DEFINE_DIR) {
-            if (*str == '(') {
-                while (*str == '(') {
-                    str++;
-                }
-            }
             token->type = ZCC_MACRO_TOKEN;
             token->parm = parm;
         } else if (parm != ZCC_NONE) {
@@ -600,7 +595,7 @@ zccgettoken(char *str, char **retstr, int curfile)
         token = NULL;
     }
     if (token) {
-#if (ZCCTOKENCNT)
+#if (ZPPTOKENCNT)
         ntoken++;
 #endif
         while (isspace(*str)) {
@@ -627,7 +622,7 @@ zccgetinclude(char *str, char **retstr, int curfile)
     if (curfile == zccnfiles) {
         zccnfiles <<= 1;
         zccfiletokens = realloc(zccfiletokens,
-                                zccnfiles * sizeof(struct zcctokenq));
+                                zccnfiles * sizeof(struct zpptokenq));
         if (!zccfiletokens) {
             fprintf(stderr, "cannot include token table\n");
 
@@ -691,11 +686,11 @@ zccgetinclude(char *str, char **retstr, int curfile)
 }
 
 static void
-zccqueuetoken(struct zcctoken *token, int curfile)
+zccqueuetoken(struct zpptoken *token, int curfile)
 {
-    struct zcctokenq *queue = &zccfiletokens[curfile];
-    struct zcctoken  *head = queue->head;
-    struct zcctoken  *tail = queue->tail;
+    struct zpptokenq *queue = &zccfiletokens[curfile];
+    struct zpptoken  *head = queue->head;
+    struct zpptoken  *tail = queue->tail;
 
 #if (ZCCPRINT) && 0
     fprintf(stderr, "QUEUE\n");
@@ -725,7 +720,7 @@ zccreadfile(char *name, int curfile)
     long              buflen = NLINEBUF;
     FILE             *fp = fopen(name, "r");
     long              eof = 0;
-    struct zcctoken  *token;
+    struct zpptoken  *token;
     char             *str = linebuf;
     char             *lim = NULL;
     long              loop = 1;
@@ -898,8 +893,8 @@ printval(struct zccval *val)
     return;
 }
 
-void
-printtoken(struct zcctoken *token)
+static void
+printtoken(struct zpptoken *token)
 {
     fprintf(stderr, "TYPE %s\n", toktypetab[token->type]);
     if (token->type == ZCC_TYPE_TOKEN) {
@@ -917,10 +912,10 @@ printtoken(struct zcctoken *token)
     }
 }
 
-void
-printqueue(struct zcctokenq *queue)
+static void
+printqueue(struct zpptokenq *queue)
 {
-    struct zcctoken *token = queue->head;
+    struct zpptoken *token = queue->head;
 
     while (token) {
         printtoken(token);
@@ -930,11 +925,11 @@ printqueue(struct zcctokenq *queue)
 
 #endif /* ZCCPRINT */
 
-struct zccinput *
+struct zppinput *
 zcclex(int argc,
        char *argv[])
 {
-    struct zccinput *input = NULL;
+    struct zppinput *input = NULL;
     int              arg;
     long             l;
     
@@ -950,7 +945,7 @@ zcclex(int argc,
             exit(1);
         }
     }
-    input = malloc(sizeof(struct zccinput));
+    input = malloc(sizeof(struct zppinput));
     if (input) {
         input->nq = zcccurfile + 1;
         input->qptr = &zccfiletokens;
