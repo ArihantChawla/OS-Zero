@@ -1,8 +1,3 @@
-#define ZCCPROF  1
-#define ZCCDEBUG 0
-#define ZCCPRINT 0
-#define ZCCTOKEN 1
-
 #include <ctype.h>
 #include <stdio.h>
 #include <stdlib.h>
@@ -15,9 +10,6 @@
 #include <sys/stat.h>
 #include <zero/param.h>
 #include <zero/cdecl.h>
-#if (ZCCPROF)
-#include <zero/prof.h>
-#endif
 #include <zcc/zcc.h>
 
 #define ZCC_FILE_ERROR (-1)
@@ -64,6 +56,16 @@ void printqueue(struct zcctokenq *queue);
                     : (!strncmp(cp, "define", 6)                        \
                        ? ZCC_DEFINE_DIR                                 \
                        : ZCC_NONE)))))))
+#define zccatrid(cp)                                                    \
+    ((!strncmp(cp, "packed", 6))                                        \
+     ? ZCC_ATR_PACKED                                                   \
+     : (!strncmp(cp, "aligned", 7)                                      \
+        ? ZCC_ATR_ALIGNED                                               \
+        : (!strncmp(cp, "__noreturn__", 8)                              \
+           ? ZCC_ATR_NORETURN\
+           : (!strncmp(cp, "__format__", 10)                            \
+              ? ZCC_ATR_FORMAT                                          \
+              : ZCC_NONE))))
 #define zccisagr(t)      ((t) == ZCC_STRUCT || (t) == ZCC_UNION)
 
 #define zccvalsz(t)      (typesztab[(t)])
@@ -195,12 +197,18 @@ static long               parmlentab[16] = {
     6,                  // ZCC_IFNDEF_DIR
     6                   // ZCC_DEFINE_DIR
 };
+static long               atrlentab[16] = {
+    0,                  // ZCC_NONE
+    6,                  // ZCC_ATR_PACKED
+    7,                  // ZCC_ATR_ALIGNED
+    8                   // ZCC_ATR_NORETURN
+};
 static struct zcctokenq *zccfiletokens;
 static int               zcccurfile;
 static int               zccnfiles;
 static long              zccoptflags;
 #if (ZCCTOKEN)
-static unsigned long     ntoken;
+unsigned long            ntoken;
 #endif
 
 static void
@@ -434,9 +442,10 @@ zccgetval(char *str, char **retptr)
 static struct zcctoken *
 zccgettoken(char *str, char **retstr)
 {
-    long             len;
+    long             len = 0;
     long             ndx;
     long             parm;
+    long             atr;
     long             type;
     char            *ptr;
     struct zcctoken *token = malloc(sizeof(struct zcctoken));
@@ -498,6 +507,18 @@ zccgettoken(char *str, char **retstr)
     } else if (zccisatr(str)) {
         token->type = ZCC_ATR_TOKEN;
         str += 13;
+        while (isspace(*str)) {
+            str++;
+        }
+        while (*str == '(') {
+            str++;
+        }
+        if ((atr = zccatrid(str))) {
+            len = atrlentab[atr];
+        } else {
+            fprintf(stderr, "invalid attribute %s\n", str);
+        }
+        str += len;
     } else if ((parm = zccqualid(str))) {
         len = parmlentab[parm];
         token->type = ZCC_QUAL_TOKEN;
@@ -509,11 +530,11 @@ zccgettoken(char *str, char **retstr)
     } else if (zccisunion(str)) {
         token->type = ZCC_UNION_TOKEN;
         str += 5;
-    } else if (isalpha(*str) || *str == '_') {
+        } else if (isalpha(*str) || *str == '_') {
         ptr = str;
         while (isalnum(*str) || *str == '_') {
             str++;
-        }
+            }
         if (*str == ':') {
             *str = '\0';
             token->type = ZCC_LABEL_TOKEN;
@@ -842,44 +863,3 @@ zcclex(int argc,
     return input;
 }
 
-int
-main(int argc, char *argv[])
-{
-    struct zccinput  *input;
-#if (ZCCPRINT)
-    struct zcctokenq *qp;
-    long              l;
-#endif
-#if (ZCCPROF)
-    PROFDECLCLK(clk);
-#endif
-
-#if (ZCCPROF)
-    profstartclk(clk);
-#endif
-    input = zcclex(argc, argv);
-    if (!input) {
-        fprintf(stderr, "empty input\n");
-
-        exit(1);
-    }
-#if (ZCCPROF)
-    profstopclk(clk);
-#if (ZCCTOKEN)
-    fprintf(stderr, "%lu tokens\n", ntoken);
-#endif
-    fprintf(stderr, "%ld microseconds\n", profclkdiff(clk));
-#endif
-#if (ZCCPRINT) && 0
-    if (input) {
-        l = input->nq;
-        qp = *input->qptr;
-        while (l--) {
-            printqueue(qp);
-            qp++;
-        }
-    }
-#endif
-
-    exit(0);
-}

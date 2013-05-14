@@ -1,3 +1,10 @@
+#define ZCCPROF  1
+#define ZCCDEBUG 0
+#define ZCCPRINT 0
+#define ZCCTOKEN 1
+
+struct zccinput * zcclex(int argc, char *argv[]);
+
 #define ZCC_C99_TYPES  1
 #define ZCCLINELEN     65536
 
@@ -9,20 +16,21 @@
 #define ZCC_NONE        0x00
 
 /* compiler warning flags */
-#define ZCC_WARN_UNUSED 0x00000001U
-#define ZCC_WARN_UNDEF  0x00000002U
-#define ZCC_WARN_ERROR  0x00000004U
+#define ZCC_WARN_UNUSED  0x00000001U
+#define ZCC_WARN_UNDEF   0x00000002U
+#define ZCC_WARN_ERROR   0x00000004U
 
 /* compiler optimisation flags */
-#define ZCC_OPT_NONE    0x00000000U
-#define ZCC_OPT_ALIGN   0x00000001U
-#define ZCC_OPT_UNROLL  0x00000002U
-#define ZCC_OPT_INLINE  0x00000004U
+#define ZCC_OPT_NONE     0x00000000U
+#define ZCC_OPT_ALIGN    0x00000001U
+#define ZCC_OPT_UNROLL   0x00000002U
+#define ZCC_OPT_INLINE   0x00000004U
 
 /* compiler attribute flags */
-#define ZCC_ATR_PACK    0x00000001U
-#define ZCC_ATR_ALIGN   0x00000002U
-#define ZCC_ATR_NORET   0x00000004U
+#define ZCC_ATR_PACKED   0x01
+#define ZCC_ATR_ALIGNED  0x02
+#define ZCC_ATR_NORETURN 0x03
+#define ZCC_ATR_FORMAT   0x04
 
 /* integral types */
 //#define zccgettype(t)   ((t) & 0xff)
@@ -30,27 +38,27 @@
 #define zccvaltype(vp)  ((vp)->type & 0xff)
 #define zccvalreg(vp)   zccgetreg((vp)->type)
 /* type ID in low 8 bits */
-#define ZCC_CHAR        0x01
-#define ZCC_UCHAR       0x02
-#define ZCC_SHORT       0x03
-#define ZCC_USHORT      0x04
-#define ZCC_INT         0x05
-#define ZCC_UINT        0x06
-#define ZCC_LONG        0x07
-#define ZCC_ULONG       0x08
-#define ZCC_LONGLONG    0x09
-#define ZCC_ULONGLONG   0x0a
+#define ZCC_CHAR         0x01
+#define ZCC_UCHAR        0x02
+#define ZCC_SHORT        0x03
+#define ZCC_USHORT       0x04
+#define ZCC_INT          0x05
+#define ZCC_UINT         0x06
+#define ZCC_LONG         0x07
+#define ZCC_ULONG        0x08
+#define ZCC_LONGLONG     0x09
+#define ZCC_ULONGLONG    0x0a
 /* floating-point types */
-#define ZCC_FLOAT       0x0b
-#define ZCC_DOUBLE      0x0c
-#define ZCC_LDOUBLE     0x0d
+#define ZCC_FLOAT        0x0b
+#define ZCC_DOUBLE       0x0c
+#define ZCC_LDOUBLE      0x0d
 /* register ID in bits 8..15 */
-#define ZCC_NO_REG      0xff
+#define ZCC_NO_REG       0xff
 /* pointer flags */
 /* high 16 bytes */
-#define ZCC_VAL_FLAGS   0xffff0000U
-#define ZCC_PTR         0x80000000U
-#define ZCC_UPTR        0x40000000U
+#define ZCC_VAL_FLAGS    0xffff0000U
+#define ZCC_PTR          0x80000000U
+#define ZCC_UPTR         0x40000000U
 struct zccval {
     long                   type;
     long                   sz;
