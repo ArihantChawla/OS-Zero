@@ -491,6 +491,17 @@ zccgettoken(char *str, char **retstr)
         parm = zccpreprocid(str);
         if (parm != ZCC_NONE) {
             len = parmlentab[parm];
+            str += len;
+        }
+        if (parm == ZCC_DEFINE_DIR) {
+            if (*str == '(') {
+                while (*str == '(') {
+                    str++;
+                }
+            }
+            token->type = ZCC_MACRO_TOKEN;
+            token->parm = parm;
+        } else if (parm != ZCC_NONE) {
             token->type = ZCC_PREPROC_TOKEN;
             token->parm = parm;
             str += len;

@@ -35,7 +35,7 @@ main(int argc, char *argv[])
 #endif
     fprintf(stderr, "%ld microseconds\n", profclkdiff(clk));
 #endif
-#if (ZCCPRINT) && 0
+#if (ZCCPRINT)
     if (input) {
         l = input->nq;
         qp = *input->qptr;
