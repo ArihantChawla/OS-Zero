@@ -67,7 +67,8 @@ static int zccreadfile(char *name, int curfile);
         }                                                               \
     } while (0)
 
-static long               opertab[256];
+static uint8_t            opertab[256];
+static uint8_t            toktab[256];
 /* for type indices, see struct zccval in zcc.h (ZCC_INT etc.) */
 static long               typesztab[32] = {
     0,                  // ZCC_NONE
@@ -124,8 +125,9 @@ zccusage(void)
 }
 
 static void
-zccinitoper(void)
+zccinitopertab(void)
 {
+    opertab['!'] = '!';
     opertab['~'] = '~';
     opertab['&'] = '&';
     opertab['|'] = '|';
@@ -137,7 +139,26 @@ zccinitoper(void)
     opertab['*'] = '*';
     opertab['/'] = '/';
     opertab['%'] = '%';
-    opertab['='] = '%';
+    opertab['='] = '=';
+}
+
+static void
+zccinittoktab(void)
+{
+    toktab['.'] = ZCC_DOT_TOKEN;
+    toktab[','] = ZCC_COMMA_TOKEN;
+    toktab[';'] = ZCC_SEMICOLON_TOKEN;
+    toktab['{'] = ZCC_BLOCK_TOKEN;
+    toktab['}'] = ZCC_END_BLOCK_TOKEN;
+    toktab['?'] = ZCC_EXCLAMATION_TOKEN;
+    toktab[':'] = ZCC_COLON_TOKEN;
+    toktab['('] = ZCC_LEFT_PAREN_TOKEN;
+    toktab[')'] = ZCC_RIGHT_PAREN_TOKEN;
+    toktab['['] = ZCC_INDEX_TOKEN;
+    toktab[']'] = ZCC_END_INDEX_TOKEN;
+    toktab['\''] = ZCC_QUOTE_TOKEN;
+    toktab['"'] = ZCC_DOUBLE_QUOTE_TOKEN;
+    toktab['\\'] = ZCC_BACKSLASH_TOKEN;
 }
 
 static int
@@ -152,7 +173,8 @@ zccinit(int argc,
 
         return 0;
     }
-    zccinitoper();
+    zccinitopertab();
+    zccinittoktab();
     for (l = 1 ; l < argc ; l++) {
         str = argv[l];
         if (*str == '-') {
@@ -286,6 +308,7 @@ zccgettoken(char *str, char **retstr)
     char            *cp = str;
     long             len;
     long             parm;
+    long             type;
     char            *ptr;
     struct zcctoken *token = malloc(sizeof(struct zcctoken));
     struct zccval   *val;
@@ -296,25 +319,19 @@ zccgettoken(char *str, char **retstr)
     token->parm = ZCC_NONE;
     token->str = NULL;
     token->adr = NULL;
-    if (zccisoper(str)) {
+    if (*str == '-' && str[1] == '>') {
+        token->type = ZCC_INDIR_TOKEN;
+        str += 2;
+    } else if (zccisoper(str)) {
         token->type = ZCC_OPER_TOKEN;
+        token->str = malloc(8);
+        ptr = token->str;
         while (zccisoper(str)) {
-            str++;
+            *ptr++ = *str++;
         }
-    } else if (*str == ';') {
-        token->type = ZCC_SEMICOLON_TOKEN;
-        str++;
-    } else if (*str == '{') {
-        token->type = ZCC_BLOCK_TOKEN;
-        str++;
-    } else if (*str == '}') {
-        token->type = ZCC_END_BLOCK_TOKEN;
-        str++;
-    } else if (*str == '?') {
-        token->type = ZCC_EXCLAMATION_TOKEN;
-        str++;
-    } else if (*str == ':') {
-        token->type = ZCC_COLON_TOKEN;
+        *ptr = '\0';
+    } else if ((type = toktab[(int)(*str)])) {
+        token->type = type;
         str++;
     } else if (*str == '#') {
         str++;
@@ -334,12 +351,6 @@ zccgettoken(char *str, char **retstr)
             str++;
             token->type = ZCC_STRINGIFY_TOKEN;
         }
-    } else if (*str == '(') {
-        str++;
-        token->type = ZCC_LEFT_PAREN_TOKEN;
-    } else if (*str == ')') {
-        str++;
-        token->type = ZCC_RIGHT_PAREN_TOKEN;
     } else if (zccistypedef(str)) {
         token->type = ZCC_TYPEDEF_TOKEN;
         str += 7;
@@ -568,7 +579,6 @@ zccreadfile(char *name, int curfile)
             } else {
                 if (*str) {
                     while (*str) {
-                        fprintf(stderr, "TOKEN: %s\n", str);
                         token = zccgettoken(str, &str);
                         if (token) {
 #if (ZCCDB)
