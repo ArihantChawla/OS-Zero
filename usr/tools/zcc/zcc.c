@@ -17,6 +17,7 @@
 
 static int zccreadfile(char *name, int curfile);
 
+#define zccisoper(cp)    (opertab[(int)(*(cp))])
 #define zccistypedef(cp) (!strncmp(cp, "typedef", 7))
 #define zccisstruct(cp)  (!strncmp(cp, "struct", 6))
 #define zccisunion(cp)   (!strncmp(cp, "union", 5))
@@ -66,6 +67,7 @@ static int zccreadfile(char *name, int curfile);
         }                                                               \
     } while (0)
 
+static long               opertab[256];
 /* for type indices, see struct zccval in zcc.h (ZCC_INT etc.) */
 static long               typesztab[32] = {
     0,                  // ZCC_NONE
@@ -121,6 +123,23 @@ zccusage(void)
     return;
 }
 
+static void
+zccinitoper(void)
+{
+    opertab['~'] = '~';
+    opertab['&'] = '&';
+    opertab['|'] = '|';
+    opertab['^'] = '^';
+    opertab['<'] = '<';
+    opertab['>'] = '>';
+    opertab['+'] = '+';
+    opertab['-'] = '-';
+    opertab['*'] = '*';
+    opertab['/'] = '/';
+    opertab['%'] = '%';
+    opertab['='] = '%';
+}
+
 static int
 zccinit(int argc,
            char *argv[])
@@ -133,6 +152,7 @@ zccinit(int argc,
 
         return 0;
     }
+    zccinitoper();
     for (l = 1 ; l < argc ; l++) {
         str = argv[l];
         if (*str == '-') {
@@ -276,7 +296,12 @@ zccgettoken(char *str, char **retstr)
     token->parm = ZCC_NONE;
     token->str = NULL;
     token->adr = NULL;
-    if (*str == ';') {
+    if (zccisoper(str)) {
+        token->type = ZCC_OPER_TOKEN;
+        while (zccisoper(str)) {
+            str++;
+        }
+    } else if (*str == ';') {
         token->type = ZCC_SEMICOLON_TOKEN;
         str++;
     } else if (*str == '{') {
@@ -293,11 +318,28 @@ zccgettoken(char *str, char **retstr)
         str++;
     } else if (*str == '#') {
         str++;
+        while (isspace(*str)) {
+            str++;
+        }
         parm = zccpreprocid(str);
-        len = parmlentab[parm];
-        token->type = ZCC_PREPROC_TOKEN;
-        token->parm = parm;
-        str += len;
+        if (parm) {
+            len = parmlentab[parm];
+            token->type = ZCC_PREPROC_TOKEN;
+            token->parm = parm;
+            str += len;
+        } else if (*str == '#') {
+            str++;
+            token->type = ZCC_CONCAT_TOKEN;
+        } else {
+            str++;
+            token->type = ZCC_STRINGIFY_TOKEN;
+        }
+    } else if (*str == '(') {
+        str++;
+        token->type = ZCC_LEFT_PAREN_TOKEN;
+    } else if (*str == ')') {
+        str++;
+        token->type = ZCC_RIGHT_PAREN_TOKEN;
     } else if (zccistypedef(str)) {
         token->type = ZCC_TYPEDEF_TOKEN;
         str += 7;

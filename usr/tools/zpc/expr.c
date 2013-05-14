@@ -251,7 +251,7 @@ void zpcinitop(void)
     zpcoperchartab['*'] = '*';
     zpcoperchartab['/'] = '/';
     zpcoperchartab['%'] = '%';
-    zpcoperchartab['='] = '%';
+    zpcoperchartab['='] = '=';
 }
 
 void

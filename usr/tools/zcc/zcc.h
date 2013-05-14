@@ -166,26 +166,30 @@ struct zccfunc {
 #define ZCC_STRUCT_TOKEN      0x000c
 #define ZCC_UNION_TOKEN       0x000d
 /* separators */
-#define ZCC_SEMICOLON_TOKEN   0x000e
-#define ZCC_COLON_TOKEN       0x000f
-#define ZCC_EXCLAMATION_TOKEN 0x0010
-#define ZCC_LEFT_PAREN_TOKEN  0x0011
-#define ZCC_RIGHT_PAREN_TOKEN 0x0012
-#define ZCC_BLOCK_TOKEN       0x0013
-#define ZCC_END_BLOCK_TOKEN   0x0014
+#define ZCC_OPER_TOKEN        0x000e
+#define ZCC_SEMICOLON_TOKEN   0x000f
+#define ZCC_COLON_TOKEN       0x0010
+#define ZCC_EXCLAMATION_TOKEN 0x0011
+#define ZCC_LEFT_PAREN_TOKEN  0x0012
+#define ZCC_RIGHT_PAREN_TOKEN 0x0013
+#define ZCC_BLOCK_TOKEN       0x0014
+#define ZCC_END_BLOCK_TOKEN   0x0015
 /* [constant] value */
-#define ZCC_VALUE_TOKEN       0x0015
+#define ZCC_VALUE_TOKEN       0x0016
 /* compiler attributes */
-#define ZCC_QUAL_TOKEN        0x0016
-#define ZCC_ATR_TOKEN         0x0017
-#define ZCC_FUNC_TOKEN        0x0018
-#define ZCC_LABEL_TOKEN       0x0019
-#define ZCC_ADR_TOKEN         0x001a
-#define ZCC_PREPROC_TOKEN     0x001b
-#define ZCC_LATIN1_TOKEN      0x001c
-#define ZCC_UTF8_TOKEN        0x001d
-#define ZCC_UCS16_TOKEN       0x001e
-#define ZCC_UCS32_TOKEN       0x001f
+#define ZCC_QUAL_TOKEN        0x0017
+#define ZCC_ATR_TOKEN         0x0018
+#define ZCC_FUNC_TOKEN        0x0019
+#define ZCC_LABEL_TOKEN       0x001a
+#define ZCC_ADR_TOKEN         0x001b
+#define ZCC_MACRO_TOKEN       0x001c
+#define ZCC_PREPROC_TOKEN     0x001d
+#define ZCC_CONCAT_TOKEN      0x001e
+#define ZCC_STRINGIFY_TOKEN   0x001f
+#define ZCC_LATIN1_TOKEN      0x0020
+#define ZCC_UTF8_TOKEN        0x0021
+#define ZCC_UCS16_TOKEN       0x0022
+#define ZCC_UCS32_TOKEN       0x0023
 /* flag bits */
 /* high 16 bits */
 #define ZCC_UNSIGNED          0x80000000U
