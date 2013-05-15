@@ -21,7 +21,7 @@
 static int zccreadfile(char *name, int curfile);
 static void zccqueuetoken(struct zpptoken *token, int curfile);
 #if (ZCCPRINT)
-static void printtoken(struct zpptoken *token);
+static void zppprinttoken(struct zpptoken *token);
 static void printqueue(struct zpptokenq *queue);
 #endif
 
@@ -43,19 +43,19 @@ static void printqueue(struct zpptokenq *queue);
               : ZCC_NONE))))
 #define zccpreprocid(cp)                                                \
     ((!strncmp(cp, "if", 2))                                            \
-     ? ZCC_IF_DIR                                                       \
+     ? ZPP_IF_DIR                                                       \
      : (!strncmp(cp, "elif", 4)                                         \
-        ? ZCC_ELIF_DIR                                                  \
+        ? ZPP_ELIF_DIR                                                  \
         : (!strncmp(cp, "else", 4)                                      \
-           ? ZCC_ELSE_DIR                                               \
+           ? ZPP_ELSE_DIR                                               \
            : (!strncmp(cp, "endif", 5)                                  \
-              ? ZCC_ENDIF_DIR                                           \
+              ? ZPP_ENDIF_DIR                                           \
               : (!strncmp(cp, "ifdef", 5)                               \
-                 ? ZCC_IFDEF_DIR                                        \
+                 ? ZPP_IFDEF_DIR                                        \
                  : (!strncmp(cp, "ifndef", 6)                           \
-                    ? ZCC_IFNDEF_DIR                                    \
+                    ? ZPP_IFNDEF_DIR                                    \
                     : (!strncmp(cp, "define", 6)                        \
-                       ? ZCC_DEFINE_DIR                                 \
+                       ? ZPP_DEFINE_DIR                                 \
                        : ZCC_NONE)))))))
 #define zccatrid(cp)                                                    \
     ((!strncmp(cp, "packed", 6))                                        \
@@ -93,53 +93,53 @@ static uint8_t           toktab[256];
 static char             *toktypetab[256] =
 {
     NULL,
-    "ZCC_TYPE_TOKEN",
-    "ZCC_TYPEDEF_TOKEN",
-    "ZCC_VAR_TOKEN",
-    "ZCC_CHAR_TOKEN",
-    "ZCC_SHORT_TOKEN",
-    "ZCC_INT_TOKEN",
-    "ZCC_LONG_TOKEN",
-    "ZCC_LONG_LONG_TOKEN",
+    "ZPP_TYPE_TOKEN",
+    "ZPP_TYPEDEF_TOKEN",
+    "ZPP_VAR_TOKEN",
+    "ZPP_CHAR_TOKEN",
+    "ZPP_SHORT_TOKEN",
+    "ZPP_INT_TOKEN",
+    "ZPP_LONG_TOKEN",
+    "ZPP_LONG_LONG_TOKEN",
 #if (ZCC_C99_TYPES)
-    "ZCC_INT8_TOKEN",
-    "ZCC_INT16_TOKEN",
-    "ZCC_INT32_TOKEN",
-    "ZCC_INT64_TOKEN",
+    "ZPP_INT8_TOKEN",
+    "ZPP_INT16_TOKEN",
+    "ZPP_INT32_TOKEN",
+    "ZPP_INT64_TOKEN",
 #endif
-    "ZCC_STRUCT_TOKEN",
-    "ZCC_UNION_TOKEN",
-    "ZCC_OPER_TOKEN",
-    "ZCC_DOT_TOKEN",
-    "ZCC_INDIR_TOKEN",
-    "ZCC_ASTERISK_TOKEN",
-    "ZCC_COMMA_TOKEN",
-    "ZCC_SEMICOLON_TOKEN",
-    "ZCC_COLON_TOKEN",
-    "ZCC_EXCLAMATION_TOKEN",
-    "ZCC_LEFT_PAREN_TOKEN",
-    "ZCC_RIGHT_PAREN_TOKEN",
-    "ZCC_INDEX_TOKEN",
-    "ZCC_END_INDEX_TOKEN",
-    "ZCC_BLOCK_TOKEN",
-    "ZCC_END_BLOCK_TOKEN",
-    "ZCC_QUOTE_TOKEN",
-    "ZCC_DOUBLE_QUOTE_TOKEN",
-    "ZCC_BACKSLASH_TOKEN",
-    "ZCC_VALUE_TOKEN",
-    "ZCC_QUAL_TOKEN",
-    "ZCC_ATR_TOKEN",
-    "ZCC_FUNC_TOKEN",
-    "ZCC_LABEL_TOKEN",
-    "ZCC_ADR_TOKEN",
-    "ZCC_MACRO_TOKEN",
-    "ZCC_PREPROC_TOKEN",
-    "ZCC_CONCAT_TOKEN",
-    "ZCC_STRINGIFY_TOKEN",
-    "ZCC_LATIN1_TOKEN",
-    "ZCC_UTF8_TOKEN",
-    "ZCC_UCS16_TOKEN",
-    "ZCC_UCS32_TOKEN"
+    "ZPP_STRUCT_TOKEN",
+    "ZPP_UNION_TOKEN",
+    "ZPP_OPER_TOKEN",
+    "ZPP_DOT_TOKEN",
+    "ZPP_INDIR_TOKEN",
+    "ZPP_ASTERISK_TOKEN",
+    "ZPP_COMMA_TOKEN",
+    "ZPP_SEMICOLON_TOKEN",
+    "ZPP_COLON_TOKEN",
+    "ZPP_EXCLAMATION_TOKEN",
+    "ZPP_LEFT_PAREN_TOKEN",
+    "ZPP_RIGHT_PAREN_TOKEN",
+    "ZPP_INDEX_TOKEN",
+    "ZPP_END_INDEX_TOKEN",
+    "ZPP_BLOCK_TOKEN",
+    "ZPP_END_BLOCK_TOKEN",
+    "ZPP_QUOTE_TOKEN",
+    "ZPP_DOUBLE_QUOTE_TOKEN",
+    "ZPP_BACKSLASH_TOKEN",
+    "ZPP_VALUE_TOKEN",
+    "ZPP_QUAL_TOKEN",
+    "ZPP_ATR_TOKEN",
+    "ZPP_FUNC_TOKEN",
+    "ZPP_LABEL_TOKEN",
+    "ZPP_ADR_TOKEN",
+    "ZPP_MACRO_TOKEN",
+    "ZPP_PREPROC_TOKEN",
+    "ZPP_CONCAT_TOKEN",
+    "ZPP_STRINGIFY_TOKEN",
+    "ZPP_LATIN1_TOKEN",
+    "ZPP_UTF8_TOKEN",
+    "ZPP_UCS16_TOKEN",
+    "ZPP_UCS32_TOKEN"
 };
 static char             *tokparmtab[256] =
 {
@@ -220,11 +220,12 @@ static long               atrlentab[16] = {
     0,                  // ZCC_NONE
     6,                  // ZCC_ATR_PACKED
     7,                  // ZCC_ATR_ALIGNED
-    8                   // ZCC_ATR_NORETURN
+    12,                 // ZCC_ATR_NORETURN
+    10                  // ZCC_ATR_FORMAT
 };
 static struct zpptokenq *zccfiletokens;
 static int               zcccurfile;
-static int               zccnfiles;
+unsigned int             zccnfiles;
 static long              zccoptflags;
 #if (ZPPTOKENCNT)
 unsigned long            ntoken;
@@ -260,21 +261,21 @@ zccinitopertab(void)
 static void
 zccinittoktab(void)
 {
-    toktab[';'] = ZCC_SEMICOLON_TOKEN;
-    toktab['.'] = ZCC_DOT_TOKEN;
-    toktab[','] = ZCC_COMMA_TOKEN;
-    toktab[';'] = ZCC_SEMICOLON_TOKEN;
-    toktab['{'] = ZCC_BLOCK_TOKEN;
-    toktab['}'] = ZCC_END_BLOCK_TOKEN;
-    toktab['?'] = ZCC_EXCLAMATION_TOKEN;
-    toktab[':'] = ZCC_COLON_TOKEN;
-    toktab['('] = ZCC_LEFT_PAREN_TOKEN;
-    toktab[')'] = ZCC_RIGHT_PAREN_TOKEN;
-    toktab['['] = ZCC_INDEX_TOKEN;
-    toktab[']'] = ZCC_END_INDEX_TOKEN;
-    toktab['\''] = ZCC_QUOTE_TOKEN;
-    toktab['"'] = ZCC_DOUBLE_QUOTE_TOKEN;
-    toktab['\\'] = ZCC_BACKSLASH_TOKEN;
+    toktab[';'] = ZPP_SEMICOLON_TOKEN;
+    toktab['.'] = ZPP_DOT_TOKEN;
+    toktab[','] = ZPP_COMMA_TOKEN;
+    toktab[';'] = ZPP_SEMICOLON_TOKEN;
+    toktab['{'] = ZPP_BLOCK_TOKEN;
+    toktab['}'] = ZPP_END_BLOCK_TOKEN;
+    toktab['?'] = ZPP_EXCLAMATION_TOKEN;
+    toktab[':'] = ZPP_COLON_TOKEN;
+    toktab['('] = ZPP_LEFT_PAREN_TOKEN;
+    toktab[')'] = ZPP_RIGHT_PAREN_TOKEN;
+    toktab['['] = ZPP_INDEX_TOKEN;
+    toktab[']'] = ZPP_END_INDEX_TOKEN;
+    toktab['\''] = ZPP_QUOTE_TOKEN;
+    toktab['"'] = ZPP_DOUBLE_QUOTE_TOKEN;
+    toktab['\\'] = ZPP_BACKSLASH_TOKEN;
 }
 
 static int
@@ -478,13 +479,15 @@ zccgettoken(char *str, char **retstr, int curfile)
     token->str = NULL;
     token->adr = NULL;
     if (*str == '-' && str[1] == '>') {
-        token->type = ZCC_INDIR_TOKEN;
+        token->type = ZPP_INDIR_TOKEN;
+        token->str = strdup("->");
         str += 2;
     } else if (*str == '*') {
-        token->type = ZCC_ASTERISK_TOKEN;
+        token->type = ZPP_ASTERISK_TOKEN;
+        token->str = strdup("*");
         str++;
     } else if (zccisoper(str)) {
-        token->type = ZCC_OPER_TOKEN;
+        token->type = ZPP_OPER_TOKEN;
         len = 8;
         ndx ^= ndx;
         token->str = malloc(len);
@@ -512,25 +515,25 @@ zccgettoken(char *str, char **retstr, int curfile)
             len = parmlentab[parm];
             str += len;
         }
-        if (parm == ZCC_DEFINE_DIR) {
-            token->type = ZCC_MACRO_TOKEN;
+        if (parm == ZPP_DEFINE_DIR) {
+            token->type = ZPP_MACRO_TOKEN;
             token->parm = parm;
         } else if (parm != ZCC_NONE) {
-            token->type = ZCC_PREPROC_TOKEN;
+            token->type = ZPP_PREPROC_TOKEN;
             token->parm = parm;
             str += len;
         } else if (*str == '#') {
             str++;
-            token->type = ZCC_CONCAT_TOKEN;
+            token->type = ZPP_CONCAT_TOKEN;
         } else {
             str++;
-            token->type = ZCC_STRINGIFY_TOKEN;
+            token->type = ZPP_STRINGIFY_TOKEN;
         }
     } else if (zccistypedef(str)) {
-        token->type = ZCC_TYPEDEF_TOKEN;
+        token->type = ZPP_TYPEDEF_TOKEN;
         str += 7;
     } else if (zccisatr(str)) {
-        token->type = ZCC_ATR_TOKEN;
+        token->type = ZPP_ATR_TOKEN;
         str += 13;
         while (isspace(*str)) {
             str++;
@@ -546,14 +549,14 @@ zccgettoken(char *str, char **retstr, int curfile)
         str += len;
     } else if ((parm = zccqualid(str))) {
         len = parmlentab[parm];
-        token->type = ZCC_QUAL_TOKEN;
+        token->type = ZPP_QUAL_TOKEN;
         token->parm = parm;
         str += len;
     } else if (zccisstruct(str)) {
-        token->type = ZCC_STRUCT_TOKEN;
+        token->type = ZPP_STRUCT_TOKEN;
         str += 6;
     } else if (zccisunion(str)) {
-        token->type = ZCC_UNION_TOKEN;
+        token->type = ZPP_UNION_TOKEN;
         str += 5;
     } else if (isalpha(*str) || *str == '_') {
         ptr = str;
@@ -562,7 +565,7 @@ zccgettoken(char *str, char **retstr, int curfile)
         }
         if (*str == ':') {
             *str = '\0';
-            token->type = ZCC_LABEL_TOKEN;
+            token->type = ZPP_LABEL_TOKEN;
             token->str = strndup(ptr, str - ptr);
             token->adr = ZCC_NO_ADR;
             str++;
@@ -572,13 +575,13 @@ zccgettoken(char *str, char **retstr, int curfile)
             }
             token->str = strndup(ptr, str - ptr);
             if (*str == '(') {
-                token->type = ZCC_FUNC_TOKEN;
+                token->type = ZPP_FUNC_TOKEN;
             } else if ((type = zccgettype(ptr, &str))) {
-                token->type = ZCC_TYPE_TOKEN;
+                token->type = ZPP_TYPE_TOKEN;
                 token->parm = type;
                 token->str = strndup(ptr, str - ptr);
             } else {
-                token->type = ZCC_VAR_TOKEN;
+                token->type = ZPP_VAR_TOKEN;
                 token->adr = ZCC_NO_ADR;
             }
         }
@@ -586,7 +589,7 @@ zccgettoken(char *str, char **retstr, int curfile)
         ptr = str;
         val = zccgetval(str, &str);
         if (val) {
-            token->type = ZCC_VALUE_TOKEN;
+            token->type = ZPP_VALUE_TOKEN;
             token->str = strndup(ptr, str - ptr);
             token->adr = val;
         }
@@ -695,7 +698,7 @@ zccqueuetoken(struct zpptoken *token, int curfile)
 #if (ZCCPRINT) && 0
     fprintf(stderr, "QUEUE\n");
     fprintf(stderr, "-----\n");
-    printtoken(token);
+    zppprinttoken(token);
 #endif
     if (!head) {
         token->prev = NULL;
@@ -894,16 +897,16 @@ printval(struct zccval *val)
 }
 
 static void
-printtoken(struct zpptoken *token)
+zppprinttoken(struct zpptoken *token)
 {
     fprintf(stderr, "TYPE %s\n", toktypetab[token->type]);
-    if (token->type == ZCC_TYPE_TOKEN) {
+    if (token->type == ZPP_TYPE_TOKEN) {
         fprintf(stderr, "PARM: %s\n", typetab[token->parm]);
     } else {
         fprintf(stderr, "PARM: %s\n", tokparmtab[token->parm]);
     }
     fprintf(stderr, "STR: %s\n", token->str);
-    if (token->type == ZCC_VALUE_TOKEN) {
+    if (token->type == ZPP_VALUE_TOKEN) {
         fprintf(stderr, "VALUE\n");
         fprintf(stderr, "-----\n");
         printval(token->adr);
@@ -918,7 +921,7 @@ printqueue(struct zpptokenq *queue)
     struct zpptoken *token = queue->head;
 
     while (token) {
-        printtoken(token);
+        zppprinttoken(token);
         token = token->next;
     }
 }
@@ -926,7 +929,7 @@ printqueue(struct zpptokenq *queue)
 #endif /* ZCCPRINT */
 
 struct zppinput *
-zcclex(int argc,
+zpplex(int argc,
        char *argv[])
 {
     struct zppinput *input = NULL;
