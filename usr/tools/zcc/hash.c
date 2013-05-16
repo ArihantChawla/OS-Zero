@@ -422,22 +422,24 @@ zccaddtype(struct zpptoken *token)
 }
 
 /* search hash table for type */
-static __inline__ struct zpptoken *
+__inline__ long
 zccfindtype(char *name)
 {
     char            *ptr = name;
     long             val = zcchashtype(name);
     struct zpptoken *token = typehash[val];
+    long             type = ZCC_NONE;
 
     while (token) {
         if (!strcmp(ptr, token->str)) {
+            type = token->type;
 
-            return token;
+            break;
         }
         token = token->next;
     }
 
-    return token;
+    return type;
 }
 
 /* remove type from hash table */

@@ -42,7 +42,7 @@ main(int argc, char *argv[])
         l = input->nq;
         qp = *input->qptr;
         while (l--) {
-            printqueue(qp);
+            zppprintqueue(qp);
             qp++;
         }
     }

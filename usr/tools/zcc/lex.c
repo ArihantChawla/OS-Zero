@@ -18,12 +18,8 @@
 #define NFILE  1024
 #define NLINEBUF 4096
 
-static int zccreadfile(char *name, int curfile);
+static int  zccreadfile(char *name, int curfile);
 static void zccqueuetoken(struct zpptoken *token, int curfile);
-#if (ZCCPRINT)
-static void zppprinttoken(struct zpptoken *token);
-static void printqueue(struct zpptokenq *queue);
-#endif
 
 #define zccisoper(cp)    (opertab[(int)(*(cp))])
 #define zccistypedef(cp) (!strncmp(cp, "typedef", 7))
@@ -69,8 +65,6 @@ static void printqueue(struct zpptokenq *queue);
               : ZCC_NONE))))
 #define zccisagr(t)      ((t) == ZCC_STRUCT || (t) == ZCC_UNION)
 
-#define zccvalsz(t)      (typesztab[(t)])
-#define zcctypesz(tok)   (tok->datasz)
 #define zccsetival(vp, t, adr)                                          \
     (typesigntab[(t) & 0x1f]                                            \
      ? ((vp)->ival.ll = *((long long *)(adr)))                          \
@@ -89,75 +83,7 @@ static void printqueue(struct zpptokenq *queue);
 static char    linebuf[NLINEBUF] ALIGNED(PAGESIZE);
 static uint8_t opertab[256];
 static uint8_t toktab[256];
-#if (ZCCPRINT)
-static char *toktypetab[256] =
-{
-    NULL,
-    "ZPP_TYPE_TOKEN",
-    "ZPP_TYPEDEF_TOKEN",
-    "ZPP_VAR_TOKEN",
-    "ZPP_CHAR_TOKEN",
-    "ZPP_SHORT_TOKEN",
-    "ZPP_INT_TOKEN",
-    "ZPP_LONG_TOKEN",
-    "ZPP_LONG_LONG_TOKEN",
-#if (ZCC_C99_TYPES)
-    "ZPP_INT8_TOKEN",
-    "ZPP_INT16_TOKEN",
-    "ZPP_INT32_TOKEN",
-    "ZPP_INT64_TOKEN",
-#endif
-    "ZPP_STRUCT_TOKEN",
-    "ZPP_UNION_TOKEN",
-    "ZPP_OPER_TOKEN",
-    "ZPP_DOT_TOKEN",
-    "ZPP_INDIR_TOKEN",
-    "ZPP_ASTERISK_TOKEN",
-    "ZPP_COMMA_TOKEN",
-    "ZPP_SEMICOLON_TOKEN",
-    "ZPP_COLON_TOKEN",
-    "ZPP_EXCLAMATION_TOKEN",
-    "ZPP_LEFT_PAREN_TOKEN",
-    "ZPP_RIGHT_PAREN_TOKEN",
-    "ZPP_INDEX_TOKEN",
-    "ZPP_END_INDEX_TOKEN",
-    "ZPP_BLOCK_TOKEN",
-    "ZPP_END_BLOCK_TOKEN",
-    "ZPP_QUOTE_TOKEN",
-    "ZPP_DOUBLE_QUOTE_TOKEN",
-    "ZPP_BACKSLASH_TOKEN",
-    "ZPP_VALUE_TOKEN",
-    "ZPP_QUAL_TOKEN",
-    "ZPP_ATR_TOKEN",
-    "ZPP_FUNC_TOKEN",
-    "ZPP_LABEL_TOKEN",
-    "ZPP_ADR_TOKEN",
-    "ZPP_MACRO_TOKEN",
-    "ZPP_PREPROC_TOKEN",
-    "ZPP_CONCAT_TOKEN",
-    "ZPP_STRINGIFY_TOKEN",
-    "ZPP_LATIN1_TOKEN",
-    "ZPP_UTF8_TOKEN",
-    "ZPP_UCS16_TOKEN",
-    "ZPP_UCS32_TOKEN"
-};
-static char *tokparmtab[256] =
-{
-    "NONE",
-    "ZCC_EXTERN_QUAL",
-    "ZCC_STATIC_QUAL",
-    "ZCC_CONST_QUAL",
-    "ZCC_VOLATILE_QUAL",
-    "ZCC_IF_DIR",
-    "ZCC_ELIF_DIR",
-    "ZCC_ELSE_DIR",
-    "ZCC_ENDIF_DIR",
-    "ZCC_IFDEF_DIR",
-    "ZCC_IFNDEF_DIR",
-    "ZCC_DEFINE_DIR"
-};
-#endif
-static long typesztab[32] = {
+long           typesztab[32] = {
     0,                  // ZCC_NONE
     1,                  // ZCC_CHAR
     1,                  // ZCC_UCHAR
@@ -183,25 +109,6 @@ static long typesigntab[32] = {
     1,                  // ZCC_LONGLONG
     0                   // ZCC_ULONGLONG
 };
-#if (ZCCPRINT)
-static char *typetab[32] =
-{
-    "NONE",
-    "ZCC_CHAR",
-    "ZCC_UCHAR",
-    "ZCC_SHORT",
-    "ZCC_USHORT",
-    "ZCC_INT",
-    "ZCC_UINT",
-    "ZCC_LONG",
-    "ZCC_ULONG",
-    "ZCC_LONGLONG",
-    "ZCC_ULONGLONG",
-    "ZCC_FLOAT",
-    "ZCC_DOUBLE",
-    "ZCC_LDOUBLE"
-};
-#endif
 static long parmlentab[16] = {
     0,                  // ZCC_NONE
     6,                  // ZCC_EXTERN_QUAL
@@ -314,7 +221,7 @@ zccinit(int argc,
 }
 
 static int
-zccgettype(char *str, char **retstr)
+zppgettype(char *str, char **retstr)
 {
     long type = ZCC_NONE;
 
@@ -345,6 +252,21 @@ zccgettype(char *str, char **retstr)
     } else if (!strncmp(str, "unsigned", 8)) {
         type = ZCC_LONGLONG;
         str += 8;
+    } else if (!strncmp(str, "signed char", 11)) {
+        type = ZCC_CHAR;
+        str += 11;
+    } else if (!strncmp(str, "signed short", 12)) {
+        type = ZCC_SHORT;
+        str += 12;
+    } else if (!strncmp(str, "signed int", 10)) {
+        type = ZCC_INT;
+        str += 10;
+    } else if (!strncmp(str, "signed long", 11)) {
+        type = ZCC_LONG;
+        str += 11;
+    } else if (!strncmp(str, "signed long long", 16)) {
+        type = ZCC_LONGLONG;
+        str += 16;
     }
     if (type != ZCC_NONE) {
         *retstr = str;
@@ -576,7 +498,7 @@ zccgettoken(char *str, char **retstr, int curfile)
             token->str = strndup(ptr, str - ptr);
             if (*str == '(') {
                 token->type = ZPP_FUNC_TOKEN;
-            } else if ((type = zccgettype(ptr, &str))) {
+            } else if ((type = zppgettype(ptr, &str))) {
                 token->type = ZPP_TYPE_TOKEN;
                 token->parm = type;
                 token->str = strndup(ptr, str - ptr);
@@ -894,36 +816,6 @@ printval(struct zccval *val)
     fprintf(stderr, "SZ: %ld\n", val->sz);
 
     return;
-}
-
-static void
-zppprinttoken(struct zpptoken *token)
-{
-    fprintf(stderr, "TYPE %s\n", toktypetab[token->type]);
-    if (token->type == ZPP_TYPE_TOKEN) {
-        fprintf(stderr, "PARM: %s\n", typetab[token->parm]);
-    } else {
-        fprintf(stderr, "PARM: %s\n", tokparmtab[token->parm]);
-    }
-    fprintf(stderr, "STR: %s\n", token->str);
-    if (token->type == ZPP_VALUE_TOKEN) {
-        fprintf(stderr, "VALUE\n");
-        fprintf(stderr, "-----\n");
-        printval(token->adr);
-    } else {
-        fprintf(stderr, "ADR: %p\n", token->adr);
-    }
-}
-
-static void
-printqueue(struct zpptokenq *queue)
-{
-    struct zpptoken *token = queue->head;
-
-    while (token) {
-        zppprinttoken(token);
-        token = token->next;
-    }
 }
 
 #endif /* ZCCPRINT */

@@ -11,6 +11,8 @@
 #include <stdint.h>
 #endif
 
+#define zccvalsz(t)      (typesztab[(t)])
+
 #define ZCC_NONE        0x00
 
 /* compiler warning flags */
@@ -156,18 +158,15 @@ struct zppinput {
  * for flg field, see struct zpptoken.
  * sz is width in [8-bit] bytes
  */
-struct zcctype {
-    char   *name;
-    long    id;
-    long    flg;
-    size_t  sz;
-};
-
 /* integral types */
-//#define zccgettype(t)   ((t) & 0xff)
+#define zccgettype(tp)  ((tp)->parm < ZCC_NTYPE \
+                         ? (tp)->parm           \
+                         : zccfindtype((tp)->str))
+#if 0
 #define zccgetreg(t)    (((t) >> 8) & 0xff)
 #define zccvaltype(vp)  ((vp)->type & 0xff)
 #define zccvalreg(vp)   zccgetreg((vp)->type)
+#endif
 /* type ID in low 8 bits */
 #define ZCC_CHAR         0x01
 #define ZCC_UCHAR        0x02
@@ -183,6 +182,7 @@ struct zcctype {
 #define ZCC_FLOAT        0x0b
 #define ZCC_DOUBLE       0x0c
 #define ZCC_LDOUBLE      0x0d
+#define ZCC_NTYPE        0x0e
 /* register ID in bits 8..15 */
 #define ZCC_NO_REG       0xff
 /* pointer flags */
@@ -229,32 +229,35 @@ struct zccval {
     } fval;
 };
 
-struct zccmacro {
-    char             *name;
-    long              narg;
-    struct zpptoken  *tokq;
+struct zccstruct {
+    char   *name;
+    size_t  nmemb;
 };
 
-struct zccfunc {
-    char            *name;
-    long             narg;
-    long            *argt;
-    struct zpptoken *tokq;
-};
-
-#define ZCC_TYPE_TOKEN  0x00
-#define ZCC_VALUE_TOKEN 0x01
-#define ZCC_VAR_TOKEN   0x02
-#define ZCC_MACRO_TOKEN 0x03
-#define ZCC_FUNC_TOKEN  0x04
+#define ZCC_TYPE_TOKEN   0x01   // qualifiers in flg, type in parm, itemsz
+#define ZCC_VALUE_TOKEN  0x02
+#define ZCC_VAR_TOKEN    0x03
+#define ZCC_MACRO_TOKEN  0x04
+#define ZCC_FUNC_TOKEN   0x05
+#define ZCC_STRUCT_TOKEN 0x06
+#define ZCC_UNION_TOKEN  0x07
 struct zcctoken {
     long             type;
+    long             flg;
+    long             parm;
     char            *str;
     void            *data;
+    size_t           itemsz;
     struct zcctoken *prev;
     struct zcctoken *next;
 };
 
 struct zppinput * zpplex(int argc, char *argv[]);
 struct zcctoken * zpppreproc(struct zpptoken *token);
+
+__inline__ long   zccfindtype(char *name);
+
+#if (ZCCPRINT)
+void              zppprintqueue(struct zpptokenq *queue);
+#endif
 
