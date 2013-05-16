@@ -224,71 +224,73 @@ zppmktype(struct zpptoken *token, struct zpptoken **nextret)
     return tok;
 }
 
-static struct zcctoken *
-zppprocglob(struct zpptoken *token, struct zpptoken **nextret)
+void                                 
+zppqueuetoken(struct zcctoken *token,
+              struct zcctoken **queue, struct zcctoken **tail)
 {
-    struct zcctoken *tok;
-    struct zpptoken *next;
-    long             parm;
-    zpptokenfunc_t  *func;
-    
-    if (token->type == ZPP_TYPEDEF_TOKEN) {
-        token = token->next;
-        tok = zppmktype(token, &next);
-        if (!tok) {
-            fprintf(stderr, "invalid typedef\n");
-            
-            exit(1);
-        }
-        tok->str = strdup(token->str);
-    } else if (token->type == ZPP_PREPROC_TOKEN) {
-        parm = token->parm;
-        func = dirfunctab[parm];
-        if (func) {
-            tok = func(token, &next);
-        }
-    } else if (token->type == ZPP_TYPE_TOKEN) {
-        parm = token->parm;
-        if (!parm) {
-            tok->type = zccgettype(token);
+    if (token) {
+        token->next = NULL;
+        if (!*queue) {
+            token->prev = NULL;
+            *queue = token;
+        } else if (*tail) {
+            token->prev = *tail;
+            (*tail)->next = token;
+            *tail = token;
         } else {
-            tok->type = token->parm;
+            token->prev = *queue;
+            (*queue)->next = token;
+            *tail = token;
         }
-    } else if (token->type == ZPP_FUNC_TOKEN) {
-        token = token->next;
-        tok = zccgetfunc(token);
-    } else if (token->type == ZPP_STRUCT_TOKEN) {
-    } else if (token->type == ZPP_UNION_TOKEN) {
-    }
-    if (tok) {
-        *nextret = next;
     }
 
-    return tok;
+    return;
 }
 
 struct zcctoken *
 zpppreproc(struct zpptoken *token)
 {
-    struct zcctoken *ret = NULL;
-    struct zpptoken *next;
+    struct zcctoken *head = NULL;
+    struct zcctoken *tail = NULL;
+    struct zcctoken *tok;
+    long             parm;
     zpptokenfunc_t  *func;
 
-#if 0
     while (token) {
-        func =  zppfunctab[next->type];
-        ret = func(token, &next);
-        if (!ret) {
-            fprintf(stderr, "invalid token:\n");
-#if (ZCCPRINT)
-            zppprinttoken(token);
-#endif
-            exit(1);
+        if (token->type == ZPP_TYPEDEF_TOKEN) {
+            token = token->next;
+            tok = zppmktype(token, &token);
+            if (!tok) {
+                fprintf(stderr, "invalid typedef\n");
+                
+                exit(1);
+            }
+            tok->str = strdup(token->str);
+        } else if (token->type == ZPP_PREPROC_TOKEN) {
+            parm = token->parm;
+            func = dirfunctab[parm];
+            if (func) {
+                tok = func(token, &token);
+            }
+        } else if (token->type == ZPP_TYPE_TOKEN) {
+            parm = token->parm;
+            if (!parm) {
+                tok->type = zccgettype(token);
+            } else {
+                tok->type = token->parm;
+            }
+        } else if (token->type == ZPP_FUNC_TOKEN) {
+            token = token->next;
+//            tok = zccgetfunc(token);
+        } else if (token->type == ZPP_STRUCT_TOKEN) {
+        } else if (token->type == ZPP_UNION_TOKEN) {
+        }
+        if (tok) {
+            zppqueuetoken(tok, &head, &tail);
         }
     }
-#endif
 
-    return ret;
+    return head;
 }
 
 #if (ZCCPRINT)
