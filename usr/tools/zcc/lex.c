@@ -62,8 +62,8 @@ static void printqueue(struct zpptokenq *queue);
      ? ZCC_ATR_PACKED                                                   \
      : (!strncmp(cp, "aligned", 7)                                      \
         ? ZCC_ATR_ALIGNED                                               \
-        : (!strncmp(cp, "__noreturn__", 8)                              \
-           ? ZCC_ATR_NORETURN\
+        : (!strncmp(cp, "__noreturn__", 12)                             \
+           ? ZCC_ATR_NORETURN                                           \
            : (!strncmp(cp, "__format__", 10)                            \
               ? ZCC_ATR_FORMAT                                          \
               : ZCC_NONE))))
@@ -86,11 +86,11 @@ static void printqueue(struct zpptokenq *queue);
         }                                                               \
     } while (0)
 
-static char              linebuf[NLINEBUF] ALIGNED(CLSIZE);
-static uint8_t           opertab[256];
-static uint8_t           toktab[256];
+static char    linebuf[NLINEBUF] ALIGNED(PAGESIZE);
+static uint8_t opertab[256];
+static uint8_t toktab[256];
 #if (ZCCPRINT)
-static char             *toktypetab[256] =
+static char *toktypetab[256] =
 {
     NULL,
     "ZPP_TYPE_TOKEN",
@@ -141,7 +141,7 @@ static char             *toktypetab[256] =
     "ZPP_UCS16_TOKEN",
     "ZPP_UCS32_TOKEN"
 };
-static char             *tokparmtab[256] =
+static char *tokparmtab[256] =
 {
     "NONE",
     "ZCC_EXTERN_QUAL",
@@ -157,7 +157,7 @@ static char             *tokparmtab[256] =
     "ZCC_DEFINE_DIR"
 };
 #endif
-static long               typesztab[32] = {
+static long typesztab[32] = {
     0,                  // ZCC_NONE
     1,                  // ZCC_CHAR
     1,                  // ZCC_UCHAR
@@ -170,7 +170,7 @@ static long               typesztab[32] = {
     LONGLONGSIZE,       // ZCC_LONGLONG
     LONGLONGSIZE        // ZCC_ULONGLONG
 };
-static long               typesigntab[32] = {
+static long typesigntab[32] = {
     0,                  // ZCC_NONE
     1,                  // ZCC_CHAR
     0,                  // ZCC_UCHAR
@@ -184,7 +184,7 @@ static long               typesigntab[32] = {
     0                   // ZCC_ULONGLONG
 };
 #if (ZCCPRINT)
-static char              *typetab[32] =
+static char *typetab[32] =
 {
     "NONE",
     "ZCC_CHAR",
@@ -202,7 +202,7 @@ static char              *typetab[32] =
     "ZCC_LDOUBLE"
 };
 #endif
-static long               parmlentab[16] = {
+static long parmlentab[16] = {
     0,                  // ZCC_NONE
     6,                  // ZCC_EXTERN_QUAL
     6,                  // ZCC_STATIC_QUAL
@@ -216,7 +216,7 @@ static long               parmlentab[16] = {
     6,                  // ZCC_IFNDEF_DIR
     6                   // ZCC_DEFINE_DIR
 };
-static long               atrlentab[16] = {
+static long atrlentab[16] = {
     0,                  // ZCC_NONE
     6,                  // ZCC_ATR_PACKED
     7,                  // ZCC_ATR_ALIGNED

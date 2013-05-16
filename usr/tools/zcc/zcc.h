@@ -3,8 +3,6 @@
 #define ZCCPRINT    0
 #define ZPPTOKENCNT 1
 
-struct zppinput * zpplex(int argc, char *argv[]);
-
 #define ZCC_C99_TYPES  1
 #define ZCCLINELEN     65536
 
@@ -256,4 +254,7 @@ struct zcctoken {
     struct zcctoken *prev;
     struct zcctoken *next;
 };
+
+struct zppinput * zpplex(int argc, char *argv[]);
+struct zcctoken * zpppreproc(struct zpptoken *token);
 

@@ -1,5 +1,8 @@
 zcc - c99 compiler
 ------------------
+
+preprocessor
+------------
 - tokenize input
   - keywords
   - typedef
@@ -19,20 +22,16 @@ lookup structures
 
 code modules
 ------------
-- zpp
-  - preprocessor
-- zcc
-  - execution of cpp and/or cc
-- reg
-  - register allocation
-    - try to avoid register spills
-- stk
-  - stack-based run model
-- sym
-  - symbol management
-    - resolve as encountered
-- def
-  - macros
-- func
-  - function calls
+
+zcc
+---
+- preprocessor + compiler functionality
+
+lex
+---
+- lexical analysis + tokenization
+
+hash
+----
+- lookup tables
 
