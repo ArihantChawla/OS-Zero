@@ -666,7 +666,6 @@ zccreadfile(char *name, int curfile)
     }
     while (loop) {
         if (done) {
-#if 0
             if (nl) {
                 tok = malloc(sizeof(struct zpptoken));
                 tok->type = ZPP_NEWLINE_TOKEN;
@@ -676,7 +675,6 @@ zccreadfile(char *name, int curfile)
                 zppqueuetoken(tok, curfile);
                 nl = 0;
             }
-#endif
             if (eof) {
                 loop = 0;
 //                done = 0;
