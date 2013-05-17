@@ -38,18 +38,18 @@ static void zppqueuetoken(struct zpptoken *token, int curfile);
               ? ZCC_VOLATILE_QUAL                                       \
               : ZCC_NONE))))
 #define zccpreprocid(cp)                                                \
-    ((!strncmp(cp, "if", 2))                                            \
-     ? ZPP_IF_DIR                                                       \
+    ((!strncmp(cp, "ifdef", 5))                                         \
+     ? ZPP_IFDEF_DIR                                                    \
      : (!strncmp(cp, "elif", 4)                                         \
         ? ZPP_ELIF_DIR                                                  \
         : (!strncmp(cp, "else", 4)                                      \
            ? ZPP_ELSE_DIR                                               \
            : (!strncmp(cp, "endif", 5)                                  \
               ? ZPP_ENDIF_DIR                                           \
-              : (!strncmp(cp, "ifdef", 5)                               \
-                 ? ZPP_IFDEF_DIR                                        \
-                 : (!strncmp(cp, "ifndef", 6)                           \
-                    ? ZPP_IFNDEF_DIR                                    \
+              : (!strncmp(cp, "ifndef", 6)                              \
+                 ? ZPP_IFNDEF_DIR                                       \
+                 : (!strncmp(cp, "ifdef", 5)                            \
+                    ? ZPP_IFDEF_DIR                                     \
                     : (!strncmp(cp, "define", 6)                        \
                        ? ZPP_DEFINE_DIR                                 \
                        : ZCC_NONE)))))))
@@ -694,15 +694,27 @@ zccreadfile(char *name, int curfile)
                 line++;
 #endif
                 while (ch != EOF && ch != '\n') {
-                    *str++ = ch;
-                    len++;
-                    if (len == buflen) {
-                        fprintf(stderr, "overlong line\n");
-                        
-                        exit(1);
+                    if (ch == '\\') {
+                        ch = fgetc(fp);
+                        eof = (ch == EOF);
+                        if (!eof && isspace(ch)) {
+                            while (!eof && isspace(ch)) {
+                                ch = fgetc(fp);
+                            }
+
+                            continue;
+                        }
+                    } else {
+                        *str++ = ch;
+                        len++;
+                        if (len == buflen) {
+                            fprintf(stderr, "overlong line\n");
+                            
+                            exit(1);
+                        }
+                        ch = fgetc(fp);
+                        eof = (ch == EOF);
                     }
-                    ch = fgetc(fp);
-                    eof = (ch == EOF);
                 }
                 *str = '\0';
                 str = linebuf;
