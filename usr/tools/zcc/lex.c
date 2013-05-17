@@ -545,16 +545,6 @@ zccgetinclude(char *str, char **retstr, int curfile)
 #if (ZCCDEBUG)
     fprintf(stderr, "getinclude: %s\n", str);
 #endif
-    if (curfile == zccnfiles) {
-        zccnfiles <<= 1;
-        zccfiletokens = realloc(zccfiletokens,
-                                zccnfiles * sizeof(struct zpptokenq));
-        if (!zccfiletokens) {
-            fprintf(stderr, "cannot include token table\n");
-
-            return ZCC_FILE_ERROR;
-        }
-    }
     if (!strncmp((char *)str, "#include", 8)) {
         str += 8;
         while ((*str) && isspace(*str)) {
