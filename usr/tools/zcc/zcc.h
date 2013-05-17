@@ -99,19 +99,21 @@ struct zccsym {
 /* [constant] value */
 #define ZPP_VALUE_TOKEN        0x0021
 /* compiler attributes */
-#define ZPP_QUAL_TOKEN         0x0022
-#define ZPP_ATR_TOKEN          0x0023
-#define ZPP_FUNC_TOKEN         0x0024
-#define ZPP_LABEL_TOKEN        0x0025
-#define ZPP_ADR_TOKEN          0x0026
-#define ZPP_MACRO_TOKEN        0x0027
-#define ZPP_PREPROC_TOKEN      0x0028
-#define ZPP_CONCAT_TOKEN       0x0029
-#define ZPP_STRINGIFY_TOKEN    0x002a
-#define ZPP_LATIN1_TOKEN       0x002b
-#define ZPP_UTF8_TOKEN         0x002c
-#define ZPP_UCS16_TOKEN        0x002d
-#define ZPP_UCS32_TOKEN        0x002e
+#define ZPP_STRING_TOKEN       0x0022
+#define ZPP_LITERAL_TOKEN      0x0023
+#define ZPP_QUAL_TOKEN         0x0023
+#define ZPP_ATR_TOKEN          0x0024
+#define ZPP_FUNC_TOKEN         0x0025
+#define ZPP_LABEL_TOKEN        0x0026
+#define ZPP_ADR_TOKEN          0x0027
+#define ZPP_MACRO_TOKEN        0x0028
+#define ZPP_PREPROC_TOKEN      0x0029
+#define ZPP_CONCAT_TOKEN       0x002a
+#define ZPP_STRINGIFY_TOKEN    0x002b
+#define ZPP_LATIN1_TOKEN       0x002c
+#define ZPP_UTF8_TOKEN         0x002d
+#define ZPP_UCS16_TOKEN        0x002e
+#define ZPP_UCS32_TOKEN        0x002f
 /* flag bits */
 /* high 16 bits */
 #define ZCC_UNSIGNED           0x80000000U
@@ -135,12 +137,12 @@ struct zccsym {
 #define ZPP_IFNDEF_DIR         0x000a
 #define ZPP_DEFINE_DIR         0x000b
 /* adr values */
-#define ZCC_NO_ADR            ((void *)(~0L))
+#define ZCC_NO_ADR             (~0L)
 struct zpptoken {
     long             type;
     long             parm;
     char            *str;
-    void            *adr;
+    uintptr_t        data;
     struct zpptoken *prev;
     struct zpptoken *next;
 };
@@ -255,7 +257,7 @@ struct zcctoken {
     long             flg;
     long             parm;
     char            *str;
-    void            *data;
+    uintptr_t        data;
     size_t           datasz;
     struct zcctoken *prev;
     struct zcctoken *next;

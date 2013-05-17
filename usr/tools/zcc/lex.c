@@ -276,6 +276,59 @@ zppgettype(char *str, char **retstr)
     return type;
 }
 
+static unsigned long
+zppgetliter(char *str, char **retstr)
+{
+    unsigned long found = 0;
+    unsigned long val = 0;
+
+#if (ZASDEBUG)
+    fprintf(stderr, "getvalue: %s\n", str);
+#endif
+    if (*str == 'x' || *str == 'X') {
+        str++;
+        while ((*str) && isxdigit(*str)) {
+            val <<= 4;
+            val += (isdigit(*str)
+                    ? *str - '0'
+                    : tolower(*str) - 'a' + 10);
+            str++;
+        }
+        found = 1;
+    } else if (*str == 'b' || *str == 'B') {
+        str++;
+        while (*str == '0' || *str == '1') {
+            val <<= 1;
+            val += *str - '0';
+            str++;
+        }
+        found = 1;
+    } else if (*str == '0') {
+        str++;
+        while ((*str) && isdigit(*str)) {
+            if (*str > '7') {
+                fprintf(stderr, "invalid number in octal constant: %s\n", str);
+
+                exit(1);
+            }
+            val <<= 3;
+            val += *str - '0';
+            str++;
+        }
+        found = 1;
+    } else {
+        val = *((uint8_t *)str);
+    }
+    if (*str == '\'') {
+        str++;
+    }
+    if (found) {
+        *retstr = str;
+    }
+
+    return val;
+}
+
 /* TODO: floating-point values */
 static struct zccval *
 zccgetval(char *str, char **retstr)
@@ -400,10 +453,23 @@ zccgettoken(char *str, char **retstr, int curfile)
     tok->type = ZCC_NONE;
     tok->parm = ZCC_NONE;
     tok->str = NULL;
-    tok->adr = NULL;
-    if (*str == '-' && str[1] == '>') {
+    tok->data = 0;
+    if (*str == '"') {
+        str++;
+        ptr = str;
+        tok->type = ZPP_STRING_TOKEN;
+        while (*str != '"') {
+            str++;
+        }
+        tok->str = strndup(ptr, str - ptr);
+        str++;
+    } else if (*str == '\'') {
+        str++;
+        tok->type = ZPP_LITERAL_TOKEN;
+        tok->data = zppgetliter(str, &str);
+    } else if (*str == '-' && str[1] == '>') {
         tok->type = ZPP_INDIR_TOKEN;
-        tok->str = strdup("->");
+        tok->str = strndup(str, 2);
         str += 2;
     } else if (*str == '*') {
         tok->type = ZPP_ASTERISK_TOKEN;
@@ -490,7 +556,7 @@ zccgettoken(char *str, char **retstr, int curfile)
             *str = '\0';
             tok->type = ZPP_LABEL_TOKEN;
             tok->str = strndup(ptr, str - ptr);
-            tok->adr = ZCC_NO_ADR;
+            tok->data = ZCC_NO_ADR;
             str++;
         } else {
             while (isspace(*str)) {
@@ -499,13 +565,13 @@ zccgettoken(char *str, char **retstr, int curfile)
             tok->str = strndup(ptr, str - ptr);
             if (*str == '(') {
                 tok->type = ZPP_FUNC_TOKEN;
-                tok->adr = ZCC_NO_ADR;
+                tok->data = ZCC_NO_ADR;
             } else if ((parm = zppgettype(ptr, &str))) {
                 tok->type = ZPP_TYPE_TOKEN;
                 tok->parm = parm;
             } else {
                 tok->type = ZPP_VAR_TOKEN;
-                tok->adr = ZCC_NO_ADR;
+                tok->data = ZCC_NO_ADR;
             }
         }
     } else if (isxdigit(*str)) {
@@ -514,7 +580,7 @@ zccgettoken(char *str, char **retstr, int curfile)
         if (val) {
             tok->type = ZPP_VALUE_TOKEN;
             tok->str = strndup(ptr, str - ptr);
-            tok->adr = val;
+            tok->data = (uintptr_t)val;
         }
     } else {
         free(tok);
@@ -661,7 +727,7 @@ zccreadfile(char *name, int curfile)
                 tok->type = ZPP_NEWLINE_TOKEN;
                 tok->parm = ZCC_NONE;
                 tok->str = NULL;
-                tok->adr = NULL;
+                tok->data = 0;
                 zppqueuetoken(tok, curfile);
                 nl = 0;
             }
@@ -764,7 +830,7 @@ zccreadfile(char *name, int curfile)
                     zppqueuetoken(tok, curfile);
                 }
                 if (str >= lim) {
-                    done = 1;
+                        done = 1;
                 }
             } else {
                 done = 1;

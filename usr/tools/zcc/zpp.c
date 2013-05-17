@@ -63,6 +63,8 @@ static char *toktypetab[256] =
     "ZPP_BACKSLASH_TOKEN",
     "ZPP_NEWLINE_TOKEN",
     "ZPP_VALUE_TOKEN",
+    "ZPP_STRING_TOKEN",
+    "ZPP_LITERAL_TOKEN",
     "ZPP_QUAL_TOKEN",
     "ZPP_ATR_TOKEN",
     "ZPP_FUNC_TOKEN",
@@ -202,9 +204,9 @@ zppprinttoken(struct zpptoken *token)
     if (token->type == ZPP_VALUE_TOKEN) {
         fprintf(stderr, "VALUE\n");
         fprintf(stderr, "-----\n");
-        zppprintval(token->adr);
+        zppprintval((void *)token->data);
     } else {
-        fprintf(stderr, "ADR: %p\n", token->adr);
+        fprintf(stderr, "DATA: %lx\n", (unsigned long)token->data);
     }
 }
 
@@ -261,7 +263,7 @@ zppmktype(struct zpptoken *token, struct zpptoken **nextret)
     tok->type = ZCC_NONE;
     tok->parm = ZCC_NONE;
     tok->str = NULL;
-    tok->data = NULL;
+    tok->data = 0;
     tok->datasz = 0;
     if (token->type == ZPP_QUAL_TOKEN) {
         parm = token->parm;
@@ -278,7 +280,7 @@ zppmktype(struct zpptoken *token, struct zpptoken **nextret)
         token = token->next;
         if (token->type == ZCC_VAR_TOKEN) {
             tok->str = strdup(token->str);
-            tok->data = zppgetstruct(token, &token, &tok->datasz);
+            tok->data = (uintptr_t)zppgetstruct(token, &token, &tok->datasz);
         } else {
             fprintf(stderr, "invalid structure %s\n", token->str);
             free(tok);
@@ -289,7 +291,7 @@ zppmktype(struct zpptoken *token, struct zpptoken **nextret)
         token = token->next;
         if (token->type == ZCC_VAR_TOKEN) {
             tok->str = strdup(token->str);
-            tok->data = zppgetunion(token, &token, &tok->datasz);
+            tok->data = (uintptr_t)zppgetunion(token, &token, &tok->datasz);
         } else {
             fprintf(stderr, "invalid union %s\n", token->str);
             free(tok);
