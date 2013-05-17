@@ -285,7 +285,7 @@ zppgetliter(char *str, char **retstr)
 #if (ZASDEBUG)
     fprintf(stderr, "getvalue: %s\n", str);
 #endif
-    if (*str == 'x' || *str == 'X') {
+    if (tolower(*str) == 'x') {
         str++;
         while ((*str) && isxdigit(*str)) {
             val <<= 4;
@@ -295,7 +295,7 @@ zppgetliter(char *str, char **retstr)
             str++;
         }
         found = 1;
-    } else if (*str == 'b' || *str == 'B') {
+    } else if (tolower(*str) == 'b') {
         str++;
         while (*str == '0' || *str == '1') {
             val <<= 1;
@@ -347,7 +347,7 @@ zccgetval(char *str, char **retstr)
         neg = 1;
         str++;
     }
-    if (str[0] == '0' && (str[1] == 'x' || str[1] == 'X')) {
+    if (str[0] == '0' && tolower(str[1]) == 'x') {
         str += 2;
         while ((*str) && isxdigit(*str)) {
             uval <<= 4;
@@ -360,7 +360,7 @@ zccgetval(char *str, char **retstr)
         }
         type = ZCC_INT;
         found = 1;
-    } else if (str[0] == '0' && (str[1] == 'b' || str[1] == 'B')) {
+    } else if (str[0] == '0' && tolower(str[1]) == 'b') {
         str += 2;
         while ((*str) && (*str == '0' || *str == '1')) {
             uval <<= 1;
@@ -396,20 +396,20 @@ zccgetval(char *str, char **retstr)
         newval = malloc(sizeof(struct zccval));
         if (neg) {
             val = -uval;
-            if (*str == 'L' || *str == 'l') {
+            if (tolower(*str) == 'l') {
                 str++;
-                if (*str == 'L' || *str == 'l') {
+                if (tolower(*str) == 'l') {
                     type = ZCC_LONGLONG;
                 } else {
                     type = ZCC_LONG;
                 }
             }
         } else {
-            if (*str == 'U' || *str == 'u') {
+            if (tolower(*str) == 'u') {
                 str++;
-                if (*str == 'L' || *str == 'l') {
+                if (tolower(*str) == 'l') {
                     str++;
-                    if (*str == 'L' || *str == 'l') {
+                    if (tolower(*str) == 'l') {
                         type = ZCC_ULONGLONG;
                     } else {
                         type = ZCC_ULONG;

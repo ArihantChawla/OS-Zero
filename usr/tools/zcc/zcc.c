@@ -48,7 +48,7 @@ main(int argc, char *argv[])
     }
 #endif
 #if 0
-    tokenqtab = calloc(zccnfiles, sizeof(struct zcctoken *));
+    tokenqtab = calloc(input->nq + 1, sizeof(struct zcctoken *));
     for (l = 0 ; l < input->nq ; l++) {
         tokenqtab[l] = zpppreproc(input->qptr[l]->head);
     }
