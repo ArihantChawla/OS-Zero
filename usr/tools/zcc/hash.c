@@ -7,7 +7,7 @@
 #define NTYPEHASH 65536
 
 static struct zccsym   *symhash[NSYMHASH];
-static struct zpptoken *typehash[NTYPEHASH];
+static struct zcctoken *typehash[NTYPEHASH];
 
 /*
  * ISO 8859-1 value compression table
@@ -407,7 +407,7 @@ zcchashtype(char *name)
 
 /* add type into lookup hash table */
 static __inline__ void
-zccaddtype(struct zpptoken *token)
+zccaddtype(struct zcctoken *token)
 {
     uint16_t val = zcchashtype(token->str);
 
@@ -427,7 +427,7 @@ zccfindtype(char *name)
 {
     char            *ptr = name;
     long             val = zcchashtype(name);
-    struct zpptoken *token = typehash[val];
+    struct zcctoken *token = typehash[val];
     long             type = ZCC_NONE;
 
     while (token) {
@@ -444,7 +444,7 @@ zccfindtype(char *name)
 
 /* remove type from hash table */
 static __inline__ void
-zccrmtype(struct zpptoken *token)
+zccrmtype(struct zcctoken *token)
 {
     uint16_t val;
 

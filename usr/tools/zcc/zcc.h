@@ -1,3 +1,4 @@
+#define ZPPDEBUG    1
 #define ZCCPROF     1
 #define ZCCDEBUG    0
 #define ZCCPRINT    0
@@ -11,7 +12,7 @@
 #include <stdint.h>
 #endif
 
-#define zccvalsz(t)      (typesztab[(t)])
+#define zccvarsz(t)      (typesztab[(t)])
 
 #define ZCC_NONE        0x00
 
@@ -118,8 +119,8 @@ struct zccsym {
 #define ZCC_VOLATILE           0x10000000U
 #define ZCC_EXTERN             0x08000000U
 #define ZCC_INLINE             0x04000000U // datasz is threshold size
-#define ZCC_ALIGN              0x02000000U // datasz is alignment
-#define ZCC_PACK               0x01000000U
+#define ZCC_ALIGNED            0x02000000U // datasz is alignment
+#define ZCC_PACKED             0x01000000U
 /* parm values */
 #define ZCC_EXTERN_QUAL        0x0001
 #define ZCC_STATIC_QUAL        0x0002
@@ -192,7 +193,7 @@ struct zppinput {
 #define ZCC_UPTR         0x40000000U
 struct zccval {
     long                   type;
-    long                   sz;
+    size_t                 sz;
     /* integral value */
     union {
         signed char        c;
@@ -230,11 +231,18 @@ struct zccval {
 };
 
 struct zccstruct {
-    char   *name;
-    size_t  nmemb;
+    struct zcctoken **mtab;
+    size_t           *ofstab;
+    size_t            nmemb;
 };
 
-#define ZCC_TYPE_TOKEN   0x01   // qualifiers in flg, type in parm, itemsz
+struct zccunion {
+    struct zcctoken **mtab;
+    size_t           *sztab;
+    size_t            nmemb;
+};
+
+#define ZCC_TYPE_TOKEN   0x01   // qualifiers in flg, type in parm, datasz
 #define ZCC_VALUE_TOKEN  0x02
 #define ZCC_VAR_TOKEN    0x03
 #define ZCC_MACRO_TOKEN  0x04
@@ -247,7 +255,7 @@ struct zcctoken {
     long             parm;
     char            *str;
     void            *data;
-    size_t           itemsz;
+    size_t           datasz;
     struct zcctoken *prev;
     struct zcctoken *next;
 };

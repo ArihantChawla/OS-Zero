@@ -366,7 +366,7 @@ zccgetval(char *str, char **retstr)
             }
         }
         newval->type = type;
-        newval->sz = zccvalsz(type);
+        newval->sz = zccvarsz(type);
         if (neg) {
             zccsetival(newval, type, &val);
         } else {
@@ -386,9 +386,9 @@ zccgettoken(char *str, char **retstr, int curfile)
 {
     long             len = 0;
     long             ndx;
+    long             type;
     long             parm;
     long             atr;
-    long             type;
     char            *ptr;
     struct zpptoken *token = malloc(sizeof(struct zpptoken));
     struct zccval   *val;
@@ -498,10 +498,9 @@ zccgettoken(char *str, char **retstr, int curfile)
             token->str = strndup(ptr, str - ptr);
             if (*str == '(') {
                 token->type = ZPP_FUNC_TOKEN;
-            } else if ((type = zppgettype(ptr, &str))) {
+            } else if ((parm = zppgettype(ptr, &str))) {
                 token->type = ZPP_TYPE_TOKEN;
-                token->parm = type;
-                token->str = strndup(ptr, str - ptr);
+                token->parm = parm;
             } else {
                 token->type = ZPP_VAR_TOKEN;
                 token->adr = ZCC_NO_ADR;
@@ -761,64 +760,6 @@ zccreadfile(char *name, int curfile)
     
     return curfile;
 }
-
-#if (ZCCPRINT)
-
-void
-printval(struct zccval *val)
-{
-    switch (val->type) {
-        case ZCC_CHAR:
-            fprintf(stderr, "CHAR: %x\n", val->ival.c);
-
-            break;
-        case ZCC_UCHAR:
-            fprintf(stderr, "UCHAR: %x\n", val->ival.uc);
-
-            break;
-        case ZCC_SHORT:
-            fprintf(stderr, "SHORT: %x\n", val->ival.s);
-
-            break;
-        case ZCC_USHORT:
-            fprintf(stderr, "USHORT: %x\n", val->ival.us);
-
-            break;
-        case ZCC_INT:
-            fprintf(stderr, "INT: %x\n", val->ival.i);
-
-            break;
-        case ZCC_UINT:
-            fprintf(stderr, "UINT: %x\n", val->ival.ui);
-
-            break;
-        case ZCC_LONG:
-            fprintf(stderr, "LONG: %lx\n", val->ival.l);
-
-            break;
-        case ZCC_ULONG:
-            fprintf(stderr, "ULONG: %lx\n", val->ival.ul);
-
-            break;
-        case ZCC_LONGLONG:
-            fprintf(stderr, "LONGLONG: %llx\n", val->ival.ll);
-
-
-        case ZCC_ULONGLONG:
-            fprintf(stderr, "ULONGLONG: %llx\n", val->ival.ull);
-
-            break;
-
-        default:
-
-            break;
-    }
-    fprintf(stderr, "SZ: %ld\n", val->sz);
-
-    return;
-}
-
-#endif /* ZCCPRINT */
 
 struct zppinput *
 zpplex(int argc,
