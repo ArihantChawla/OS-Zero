@@ -19,7 +19,7 @@
 #define NLINEBUF 4096
 
 static int  zccreadfile(char *name, int curfile);
-static void zccqueuetoken(struct zpptoken *token, int curfile);
+static void zppqueuetoken(struct zpptoken *token, int curfile);
 
 #define zccisoper(cp)    (opertab[(int)(*(cp))])
 #define zccistypedef(cp) (!strncmp(cp, "typedef", 7))
@@ -183,6 +183,7 @@ zccinittoktab(void)
     toktab['\''] = ZPP_QUOTE_TOKEN;
     toktab['"'] = ZPP_DOUBLE_QUOTE_TOKEN;
     toktab['\\'] = ZPP_BACKSLASH_TOKEN;
+    toktab['\n'] = ZPP_NEWLINE_TOKEN;
 }
 
 static int
@@ -390,42 +391,42 @@ zccgettoken(char *str, char **retstr, int curfile)
     long             parm;
     long             atr;
     char            *ptr;
-    struct zpptoken *token = malloc(sizeof(struct zpptoken));
+    struct zpptoken *tok = malloc(sizeof(struct zpptoken));
     struct zccval   *val;
 
 #if (ZCCDEBUG)
     fprintf(stderr, "gettoken: %s\n", str);
 #endif
-    token->type = ZCC_NONE;
-    token->parm = ZCC_NONE;
-    token->str = NULL;
-    token->adr = NULL;
+    tok->type = ZCC_NONE;
+    tok->parm = ZCC_NONE;
+    tok->str = NULL;
+    tok->adr = NULL;
     if (*str == '-' && str[1] == '>') {
-        token->type = ZPP_INDIR_TOKEN;
-        token->str = strdup("->");
+        tok->type = ZPP_INDIR_TOKEN;
+        tok->str = strdup("->");
         str += 2;
     } else if (*str == '*') {
-        token->type = ZPP_ASTERISK_TOKEN;
-        token->str = strdup("*");
+        tok->type = ZPP_ASTERISK_TOKEN;
+        tok->str = strdup("*");
         str++;
     } else if (zccisoper(str)) {
-        token->type = ZPP_OPER_TOKEN;
+        tok->type = ZPP_OPER_TOKEN;
         len = 8;
         ndx ^= ndx;
-        token->str = malloc(len);
-        ptr = token->str;
+        tok->str = malloc(len);
+        ptr = tok->str;
         while (zccisoper(str)) {
             if (ndx == len) {
                 len <<= 1;
-                token->str = realloc(token->str, len);
-                ptr = &token->str[ndx];
+                tok->str = realloc(tok->str, len);
+                ptr = &tok->str[ndx];
             }
             *ptr++ = *str++;
             ndx++;
         }
         *ptr = '\0';
     } else if ((type = toktab[(int)(*str)])) {
-        token->type = type;
+        tok->type = type;
         str++;
     } else if (*str == '#') {
         str++;
@@ -438,24 +439,24 @@ zccgettoken(char *str, char **retstr, int curfile)
             str += len;
         }
         if (parm == ZPP_DEFINE_DIR) {
-            token->type = ZPP_MACRO_TOKEN;
-            token->parm = parm;
+            tok->type = ZPP_MACRO_TOKEN;
+            tok->parm = parm;
         } else if (parm != ZCC_NONE) {
-            token->type = ZPP_PREPROC_TOKEN;
-            token->parm = parm;
+            tok->type = ZPP_PREPROC_TOKEN;
+            tok->parm = parm;
             str += len;
         } else if (*str == '#') {
             str++;
-            token->type = ZPP_CONCAT_TOKEN;
+            tok->type = ZPP_CONCAT_TOKEN;
         } else {
             str++;
-            token->type = ZPP_STRINGIFY_TOKEN;
+            tok->type = ZPP_STRINGIFY_TOKEN;
         }
     } else if (zccistypedef(str)) {
-        token->type = ZPP_TYPEDEF_TOKEN;
+        tok->type = ZPP_TYPEDEF_TOKEN;
         str += 7;
     } else if (zccisatr(str)) {
-        token->type = ZPP_ATR_TOKEN;
+        tok->type = ZPP_ATR_TOKEN;
         str += 13;
         while (isspace(*str)) {
             str++;
@@ -471,14 +472,14 @@ zccgettoken(char *str, char **retstr, int curfile)
         str += len;
     } else if ((parm = zccqualid(str))) {
         len = parmlentab[parm];
-        token->type = ZPP_QUAL_TOKEN;
-        token->parm = parm;
+        tok->type = ZPP_QUAL_TOKEN;
+        tok->parm = parm;
         str += len;
     } else if (zccisstruct(str)) {
-        token->type = ZPP_STRUCT_TOKEN;
+        tok->type = ZPP_STRUCT_TOKEN;
         str += 6;
     } else if (zccisunion(str)) {
-        token->type = ZPP_UNION_TOKEN;
+        tok->type = ZPP_UNION_TOKEN;
         str += 5;
     } else if (isalpha(*str) || *str == '_') {
         ptr = str;
@@ -487,38 +488,39 @@ zccgettoken(char *str, char **retstr, int curfile)
         }
         if (*str == ':') {
             *str = '\0';
-            token->type = ZPP_LABEL_TOKEN;
-            token->str = strndup(ptr, str - ptr);
-            token->adr = ZCC_NO_ADR;
+            tok->type = ZPP_LABEL_TOKEN;
+            tok->str = strndup(ptr, str - ptr);
+            tok->adr = ZCC_NO_ADR;
             str++;
         } else {
             while (isspace(*str)) {
                 str++;
             }
-            token->str = strndup(ptr, str - ptr);
+            tok->str = strndup(ptr, str - ptr);
             if (*str == '(') {
-                token->type = ZPP_FUNC_TOKEN;
+                tok->type = ZPP_FUNC_TOKEN;
+                tok->adr = ZCC_NO_ADR;
             } else if ((parm = zppgettype(ptr, &str))) {
-                token->type = ZPP_TYPE_TOKEN;
-                token->parm = parm;
+                tok->type = ZPP_TYPE_TOKEN;
+                tok->parm = parm;
             } else {
-                token->type = ZPP_VAR_TOKEN;
-                token->adr = ZCC_NO_ADR;
+                tok->type = ZPP_VAR_TOKEN;
+                tok->adr = ZCC_NO_ADR;
             }
         }
     } else if (isxdigit(*str)) {
         ptr = str;
         val = zccgetval(str, &str);
         if (val) {
-            token->type = ZPP_VALUE_TOKEN;
-            token->str = strndup(ptr, str - ptr);
-            token->adr = val;
+            tok->type = ZPP_VALUE_TOKEN;
+            tok->str = strndup(ptr, str - ptr);
+            tok->adr = val;
         }
     } else {
-        free(token);
-        token = NULL;
+        free(tok);
+        tok = NULL;
     }
-    if (token) {
+    if (tok) {
 #if (ZPPTOKENCNT)
         ntoken++;
 #endif
@@ -528,7 +530,7 @@ zccgettoken(char *str, char **retstr, int curfile)
         *retstr = str;
     }
 
-    return token;
+    return tok;
 }
 
 static int
@@ -610,7 +612,7 @@ zccgetinclude(char *str, char **retstr, int curfile)
 }
 
 static void
-zccqueuetoken(struct zpptoken *token, int curfile)
+zppqueuetoken(struct zpptoken *token, int curfile)
 {
     struct zpptokenq *queue = &zccfiletokens[curfile];
     struct zpptoken  *head = queue->head;
@@ -644,7 +646,8 @@ zccreadfile(char *name, int curfile)
     long              buflen = NLINEBUF;
     FILE             *fp = fopen(name, "r");
     long              eof = 0;
-    struct zpptoken  *token;
+    long              nl = 0;
+    struct zpptoken  *tok;
     char             *str = linebuf;
     char             *lim = NULL;
     long              loop = 1;
@@ -663,6 +666,17 @@ zccreadfile(char *name, int curfile)
     }
     while (loop) {
         if (done) {
+#if 0
+            if (nl) {
+                tok = malloc(sizeof(struct zpptoken));
+                tok->type = ZPP_NEWLINE_TOKEN;
+                tok->parm = ZCC_NONE;
+                tok->str = NULL;
+                tok->adr = NULL;
+                zppqueuetoken(tok, curfile);
+                nl = 0;
+            }
+#endif
             if (eof) {
                 loop = 0;
 //                done = 0;
@@ -701,6 +715,9 @@ zccreadfile(char *name, int curfile)
                 if (str > lim) {
                     done = 1;
                 }
+                if (ch == '\n') {
+                    nl = 1;
+                }
 //                fprintf(stderr, "BUF: %s\n", str);
             }
         } else {
@@ -737,22 +754,20 @@ zccreadfile(char *name, int curfile)
                     }
                 }
                 done = 1;
-            } else {
-                if (*str) {
-                    token = zccgettoken(str, &str, curfile);
-                    if (token) {
+            } else if (*str) {
+                tok = zccgettoken(str, &str, curfile);
+                if (tok) {
 #if (ZCCDB)
-                        token->fname = strdup(name);
-                        token->line = line;
+                    tok->fname = strdup(name);
+                    tok->line = line;
 #endif
-                        zccqueuetoken(token, curfile);
-                    }
-                    if (str >= lim) {
-                        done = 1;
-                    }
-                } else {
+                    zppqueuetoken(tok, curfile);
+                }
+                if (str >= lim) {
                     done = 1;
                 }
+            } else {
+                done = 1;
             }
         }
     }

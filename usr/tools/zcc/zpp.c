@@ -61,6 +61,7 @@ static char *toktypetab[256] =
     "ZPP_QUOTE_TOKEN",
     "ZPP_DOUBLE_QUOTE_TOKEN",
     "ZPP_BACKSLASH_TOKEN",
+    "ZPP_NEWLINE_TOKEN",
     "ZPP_VALUE_TOKEN",
     "ZPP_QUAL_TOKEN",
     "ZPP_ATR_TOKEN",

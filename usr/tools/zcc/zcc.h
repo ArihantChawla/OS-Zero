@@ -1,7 +1,7 @@
 #define ZPPDEBUG    1
 #define ZCCPROF     1
 #define ZCCDEBUG    0
-#define ZCCPRINT    0
+#define ZCCPRINT    1
 #define ZPPTOKENCNT 1
 
 #define ZCC_C99_TYPES  1
@@ -95,22 +95,23 @@ struct zccsym {
 #define ZPP_QUOTE_TOKEN        0x001d
 #define ZPP_DOUBLE_QUOTE_TOKEN 0x001e
 #define ZPP_BACKSLASH_TOKEN    0x001f
+#define ZPP_NEWLINE_TOKEN      0x0020
 /* [constant] value */
-#define ZPP_VALUE_TOKEN        0x0020
+#define ZPP_VALUE_TOKEN        0x0021
 /* compiler attributes */
-#define ZPP_QUAL_TOKEN         0x0021
-#define ZPP_ATR_TOKEN          0x0022
-#define ZPP_FUNC_TOKEN         0x0023
-#define ZPP_LABEL_TOKEN        0x0024
-#define ZPP_ADR_TOKEN          0x0025
-#define ZPP_MACRO_TOKEN        0x0026
-#define ZPP_PREPROC_TOKEN      0x0027
-#define ZPP_CONCAT_TOKEN       0x0028
-#define ZPP_STRINGIFY_TOKEN    0x0029
-#define ZPP_LATIN1_TOKEN       0x002a
-#define ZPP_UTF8_TOKEN         0x002b
-#define ZPP_UCS16_TOKEN        0x002c
-#define ZPP_UCS32_TOKEN        0x002d
+#define ZPP_QUAL_TOKEN         0x0022
+#define ZPP_ATR_TOKEN          0x0023
+#define ZPP_FUNC_TOKEN         0x0024
+#define ZPP_LABEL_TOKEN        0x0025
+#define ZPP_ADR_TOKEN          0x0026
+#define ZPP_MACRO_TOKEN        0x0027
+#define ZPP_PREPROC_TOKEN      0x0028
+#define ZPP_CONCAT_TOKEN       0x0029
+#define ZPP_STRINGIFY_TOKEN    0x002a
+#define ZPP_LATIN1_TOKEN       0x002b
+#define ZPP_UTF8_TOKEN         0x002c
+#define ZPP_UCS16_TOKEN        0x002d
+#define ZPP_UCS32_TOKEN        0x002e
 /* flag bits */
 /* high 16 bits */
 #define ZCC_UNSIGNED           0x80000000U
