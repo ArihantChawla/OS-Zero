@@ -31,17 +31,6 @@ static char *toktypetab[256] =
     "ZPP_TYPE_TOKEN",
     "ZPP_TYPEDEF_TOKEN",
     "ZPP_VAR_TOKEN",
-    "ZPP_CHAR_TOKEN",
-    "ZPP_SHORT_TOKEN",
-    "ZPP_INT_TOKEN",
-    "ZPP_LONG_TOKEN",
-    "ZPP_LONG_LONG_TOKEN",
-#if (ZCC_C99_TYPES)
-    "ZPP_INT8_TOKEN",
-    "ZPP_INT16_TOKEN",
-    "ZPP_INT32_TOKEN",
-    "ZPP_INT64_TOKEN",
-#endif
     "ZPP_STRUCT_TOKEN",
     "ZPP_UNION_TOKEN",
     "ZPP_OPER_TOKEN",
@@ -73,11 +62,13 @@ static char *toktypetab[256] =
     "ZPP_MACRO_TOKEN",
     "ZPP_PREPROC_TOKEN",
     "ZPP_CONCAT_TOKEN",
-    "ZPP_STRINGIFY_TOKEN",
+    "ZPP_STRINGIFY_TOKEN"
+#if 0
     "ZPP_LATIN1_TOKEN",
     "ZPP_UTF8_TOKEN",
     "ZPP_UCS16_TOKEN",
     "ZPP_UCS32_TOKEN"
+#endif
 };
 static char *tokparmtab[256] =
 {
@@ -109,7 +100,8 @@ static char *typetab[32] =
     "ZCC_ULONGLONG",
     "ZCC_FLOAT",
     "ZCC_DOUBLE",
-    "ZCC_LDOUBLE"
+    "ZCC_LDOUBLE",
+    "ZCC_VOID"
 };
 #endif /* ZCCPRINT */
 static zpptokenfunc_t *dirfunctab[16] = {

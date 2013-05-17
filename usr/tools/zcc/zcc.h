@@ -1,7 +1,7 @@
 #define ZPPDEBUG    1
 #define ZCCPROF     1
 #define ZCCDEBUG    0
-#define ZCCPRINT    0
+#define ZCCPRINT    1
 #define ZPPTOKENCNT 1
 
 #define ZCC_C99_TYPES  1
@@ -14,7 +14,7 @@
 
 #define zccvarsz(t)      (typesztab[(t)])
 
-#define ZCC_NONE        0x00
+#define ZCC_NONE         0x00
 
 /* compiler warning flags */
 #define ZCC_WARN_UNUSED  0x00000001U
@@ -33,7 +33,7 @@
 #define ZCC_ATR_NORETURN 0x03
 #define ZCC_ATR_FORMAT   0x04
 
-/* adr == ZCC_NO_SYM for unresolved symbols */
+/* adr == ZCC_RESOLVE for unresolved symbols */
 #define ZCC_NO_SYM    0x00      // uninitialised/invalid
 #define ZCC_VALUE_SYM 0x01
 #define ZCC_TYPE_SYM  0x02      // type definition; adr is struct zcctype *
@@ -63,57 +63,42 @@ struct zccsym {
 #define ZPP_TYPE_TOKEN         0x0001
 #define ZPP_TYPEDEF_TOKEN      0x0002
 #define ZPP_VAR_TOKEN          0x0003
-#define ZPP_CHAR_TOKEN         0x0004
-#define ZPP_SHORT_TOKEN        0x0005
-#define ZPP_INT_TOKEN          0x0006
-#define ZPP_LONG_TOKEN         0x0007
-#define ZPP_LONG_LONG_TOKEN    0x0008
-#if (ZCC_C99_TYPES)
-#define ZPP_INT8_TOKEN         0x0009
-#define ZPP_INT16_TOKEN        0x000a
-#define ZPP_INT32_TOKEN        0x000b
-#define ZPP_INT64_TOKEN        0x000c
-#endif
 /* aggregate types */
-#define ZPP_STRUCT_TOKEN       0x000d
-#define ZPP_UNION_TOKEN        0x000e
+#define ZPP_STRUCT_TOKEN       0x0004
+#define ZPP_UNION_TOKEN        0x0005
 /* separators */
-#define ZPP_OPER_TOKEN         0x000f
-#define ZPP_DOT_TOKEN          0x0010
-#define ZPP_INDIR_TOKEN        0x0011
-#define ZPP_ASTERISK_TOKEN     0x0012
-#define ZPP_COMMA_TOKEN        0x0013
-#define ZPP_SEMICOLON_TOKEN    0x0014
-#define ZPP_COLON_TOKEN        0x0015
-#define ZPP_EXCLAMATION_TOKEN  0x0016
-#define ZPP_LEFT_PAREN_TOKEN   0x0017
-#define ZPP_RIGHT_PAREN_TOKEN  0x0018
-#define ZPP_INDEX_TOKEN        0x0019
-#define ZPP_END_INDEX_TOKEN    0x001a
-#define ZPP_BLOCK_TOKEN        0x001b
-#define ZPP_END_BLOCK_TOKEN    0x001c
-#define ZPP_QUOTE_TOKEN        0x001d
-#define ZPP_DOUBLE_QUOTE_TOKEN 0x001e
-#define ZPP_BACKSLASH_TOKEN    0x001f
-#define ZPP_NEWLINE_TOKEN      0x0020
+#define ZPP_OPER_TOKEN         0x0006
+#define ZPP_DOT_TOKEN          0x0007
+#define ZPP_INDIR_TOKEN        0x0008
+#define ZPP_ASTERISK_TOKEN     0x0009
+#define ZPP_COMMA_TOKEN        0x000a
+#define ZPP_SEMICOLON_TOKEN    0x000b
+#define ZPP_COLON_TOKEN        0x000c
+#define ZPP_EXCLAMATION_TOKEN  0x000d
+#define ZPP_LEFT_PAREN_TOKEN   0x000e
+#define ZPP_RIGHT_PAREN_TOKEN  0x000f
+#define ZPP_INDEX_TOKEN        0x0010
+#define ZPP_END_INDEX_TOKEN    0x0011
+#define ZPP_BLOCK_TOKEN        0x0012
+#define ZPP_END_BLOCK_TOKEN    0x0013
+#define ZPP_QUOTE_TOKEN        0x0014
+#define ZPP_DOUBLE_QUOTE_TOKEN 0x0015
+#define ZPP_BACKSLASH_TOKEN    0x0016
+#define ZPP_NEWLINE_TOKEN      0x0017
 /* [constant] value */
-#define ZPP_VALUE_TOKEN        0x0021
+#define ZPP_VALUE_TOKEN        0x0018
 /* compiler attributes */
-#define ZPP_STRING_TOKEN       0x0022
-#define ZPP_LITERAL_TOKEN      0x0023
-#define ZPP_QUAL_TOKEN         0x0023
-#define ZPP_ATR_TOKEN          0x0024
-#define ZPP_FUNC_TOKEN         0x0025
-#define ZPP_LABEL_TOKEN        0x0026
-#define ZPP_ADR_TOKEN          0x0027
-#define ZPP_MACRO_TOKEN        0x0028
-#define ZPP_PREPROC_TOKEN      0x0029
-#define ZPP_CONCAT_TOKEN       0x002a
-#define ZPP_STRINGIFY_TOKEN    0x002b
-#define ZPP_LATIN1_TOKEN       0x002c
-#define ZPP_UTF8_TOKEN         0x002d
-#define ZPP_UCS16_TOKEN        0x002e
-#define ZPP_UCS32_TOKEN        0x002f
+#define ZPP_STRING_TOKEN       0x0019
+#define ZPP_LITERAL_TOKEN      0x001a
+#define ZPP_QUAL_TOKEN         0x001b
+#define ZPP_ATR_TOKEN          0x001c
+#define ZPP_FUNC_TOKEN         0x001d
+#define ZPP_LABEL_TOKEN        0x001e
+#define ZPP_ADR_TOKEN          0x001f
+#define ZPP_MACRO_TOKEN        0x0020
+#define ZPP_PREPROC_TOKEN      0x0021
+#define ZPP_CONCAT_TOKEN       0x0022
+#define ZPP_STRINGIFY_TOKEN    0x0023
 /* flag bits */
 /* high 16 bits */
 #define ZCC_UNSIGNED           0x80000000U
@@ -121,9 +106,10 @@ struct zccsym {
 #define ZCC_CONST              0x20000000U
 #define ZCC_VOLATILE           0x10000000U
 #define ZCC_EXTERN             0x08000000U
-#define ZCC_INLINE             0x04000000U // datasz is threshold size
-#define ZCC_ALIGNED            0x02000000U // datasz is alignment
-#define ZCC_PACKED             0x01000000U
+#define ZCC_WCHAR              0x04000000U
+#define ZCC_INLINE             0x02000000U // datasz is threshold size
+#define ZCC_ALIGNED            0x01000000U // datasz is alignment
+#define ZCC_PACKED             0x00800000U
 /* parm values */
 #define ZCC_EXTERN_QUAL        0x0001
 #define ZCC_STATIC_QUAL        0x0002
@@ -137,7 +123,7 @@ struct zccsym {
 #define ZPP_IFNDEF_DIR         0x000a
 #define ZPP_DEFINE_DIR         0x000b
 /* adr values */
-#define ZCC_NO_ADR             (~0L)
+#define ZCC_NO_ADR             0x00000000U
 struct zpptoken {
     long             type;
     long             parm;
@@ -186,7 +172,8 @@ struct zppinput {
 #define ZCC_FLOAT        0x0b
 #define ZCC_DOUBLE       0x0c
 #define ZCC_LDOUBLE      0x0d
-#define ZCC_NTYPE        0x0e
+#define ZCC_VOID         0x0e
+#define ZCC_NTYPE        0x0f
 /* register ID in bits 8..15 */
 #define ZCC_NO_REG       0xff
 /* pointer flags */

@@ -268,6 +268,9 @@ zppgettype(char *str, char **retstr)
     } else if (!strncmp(str, "signed long long", 16)) {
         type = ZCC_LONGLONG;
         str += 16;
+    } else if (!strncmp(str, "void", 4)) {
+        type = ZCC_VOID;
+        str += 4;
     }
     if (type != ZCC_NONE) {
         *retstr = str;
