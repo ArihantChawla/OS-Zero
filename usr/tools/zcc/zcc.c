@@ -7,7 +7,19 @@
 
 extern unsigned long     ntoken;
 extern unsigned int      zccnfiles;
+struct zccmach           zccmach;
 static struct zcctoken **tokenqtab;
+
+int
+zccinit(void)
+{
+    int ret = 1;
+
+    zccmach.ialn = sizeof(long);
+    zccmach.faln = 16;
+
+    return ret;
+}
 
 int
 main(int argc, char *argv[])
@@ -24,6 +36,11 @@ main(int argc, char *argv[])
 #if (ZCCPROF)
     profstartclk(clk);
 #endif
+    if (!zccinit()) {
+        fprintf(stderr, "cannot initialise %s\n", argv[0]);
+
+        exit(1);
+    }
     input = zpplex(argc, argv);
     if (!input) {
         fprintf(stderr, "empty input\n");

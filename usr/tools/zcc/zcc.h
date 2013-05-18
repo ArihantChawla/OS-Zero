@@ -1,11 +1,11 @@
-#define ZPPDEBUG    1
-#define ZCCPROF     1
-#define ZCCDEBUG    0
-#define ZCCPRINT    1
-#define ZPPTOKENCNT 1
+#define ZPPDEBUG      1
+#define ZCCPROF       1
+#define ZCCDEBUG      0
+#define ZCCPRINT      1
+#define ZPPTOKENCNT   1
 
-#define ZCC_C99_TYPES  1
-#define ZCCLINELEN     65536
+#define ZCC_C99_TYPES 1
+#define ZCCLINELEN    65536
 
 #include <stddef.h>
 #if (ZCC_C99_TYPES)
@@ -59,7 +59,6 @@ struct zccsym {
 
 /* type values */
 /* low 16 bits */
-/* for these, data is value except for ZPP_TYPEDEF_TOKEN it's struct zcctype */
 #define ZPP_TYPE_TOKEN         0x0001
 #define ZPP_TYPEDEF_TOKEN      0x0002
 #define ZPP_VAR_TOKEN          0x0003
@@ -107,7 +106,7 @@ struct zccsym {
 #define ZCC_VOLATILE           0x10000000U
 #define ZCC_EXTERN             0x08000000U
 #define ZCC_WCHAR              0x04000000U
-#define ZCC_INLINE             0x02000000U // datasz is threshold size
+#define ZCC_INLINE             0x02000000U
 #define ZCC_ALIGNED            0x01000000U // datasz is alignment
 #define ZCC_PACKED             0x00800000U
 /* parm values */
@@ -232,13 +231,28 @@ struct zccunion {
     size_t            nmemb;
 };
 
+struct zccfunc {
+    struct zcctoken *argtab;
+    size_t           narg;
+    uintptr_t        adr;
+};
+
+/* type values */
 #define ZCC_TYPE_TOKEN   0x01   // qualifiers in flg, type in parm, datasz
 #define ZCC_VALUE_TOKEN  0x02
-#define ZCC_VAR_TOKEN    0x03
+#define ZCC_VAR_TOKEN    0x03   // data is struct zccval
 #define ZCC_MACRO_TOKEN  0x04
 #define ZCC_FUNC_TOKEN   0x05
 #define ZCC_STRUCT_TOKEN 0x06
 #define ZCC_UNION_TOKEN  0x07
+/* parm values */
+#define ZCC_VAR_DECL     0x01
+#define ZCC_VAR_PTR      0x02
+#define ZCC_MACRO_DECL   0x03
+#define ZCC_MACRO_EXP    0x04
+#define ZCC_FUNC_PROTO   0x05
+#define ZCC_FUNC_DECL    0x06
+#define ZCC_FUNC_CALL    0x07
 struct zcctoken {
     long             type;
     long             flg;
@@ -250,8 +264,16 @@ struct zcctoken {
     struct zcctoken *next;
 };
 
+/* machine description */
+struct zccmach {
+    uint_fast8_t ialn;          // alignment for integral values
+    uint_fast8_t faln;          // alignment for floating-point values
+    uint_fast8_t jmpaln;        // alignment for labels (if set)
+    uint_fast8_t funcaln;       // alignment for functions (if set)
+};
+
 struct zppinput * zpplex(int argc, char *argv[]);
-struct zcctoken * zpppreproc(struct zpptoken *token);
+struct zcctoken * zpppreproc(struct zpptoken *token, struct zcctoken **tailret);
 
 __inline__ long   zccfindtype(char *name);
 

@@ -4,7 +4,8 @@
 #include <zero/trix.h>
 #include <zcc/zcc.h>
 
-extern long typesztab[32];
+extern struct zccmach zccmach;
+extern long           typesztab[32];
 
 #if (ZCCPRINT)
 static void zppprinttoken(struct zpptoken *token);
@@ -15,14 +16,24 @@ struct zccstruct * zppgetstruct(struct zpptoken *token,
 struct zccunion * zppgetunion(struct zpptoken *token,
                               struct zpptoken **nextret,
                               size_t *sizeret);
+static struct zcctoken * zppgetfunc(struct zpptoken *token,
+                                    struct zpptoken **nextret,
+                                    struct zcctoken **lastret);
+void zccqueuetoken(struct zcctoken *token, struct zcctoken *last,
+                   struct zcctoken **queue, struct zcctoken **tail);
 
 typedef struct zcctoken * zpptokenfunc_t(struct zpptoken *,
-                                         struct zpptoken **);
+                                         struct zpptoken **,
+                                         struct zcctoken **);
 
-static struct zcctoken *zppprocif(struct zpptoken *, struct zpptoken **);
-static struct zcctoken *zppprocifdef(struct zpptoken *, struct zpptoken **);
-static struct zcctoken *zppprocifndef(struct zpptoken *, struct zpptoken **);
-static struct zcctoken *zppprocdefine(struct zpptoken *, struct zpptoken **);
+struct zcctoken *zppprocif(struct zpptoken *, struct zpptoken **,
+                           struct zcctoken **);
+struct zcctoken *zppprocifdef(struct zpptoken *, struct zpptoken **,
+                              struct zcctoken **);
+struct zcctoken *zppprocifndef(struct zpptoken *, struct zpptoken **,
+                               struct zcctoken **);
+struct zcctoken *zppprocdefine(struct zpptoken *, struct zpptoken **,
+                               struct zcctoken **);
 
 #if (ZCCPRINT) || (ZPPDEBUG)
 static char *toktypetab[256] =
@@ -215,42 +226,112 @@ zppprintqueue(struct zpptokenq *queue)
 
 #endif /* ZCCPRINT */
 
-static struct zcctoken *
-zppprocif(struct zpptoken *token, struct zpptoken **nextret)
+#if 0
+struct zcctoken *
+zppprocif(struct zpptoken *token, struct zpptoken **nextret,
+          struct zcctoken **tailret)
+{
+    struct zpptoken *head = NULL;
+    struct zpptoken *tail = NULL;
+    long             block = 0;
+    long             skip = 0;
+    long             loop = 1;
+
+    token = token->next;
+    skip = !zppeval(token, &token);
+    while (loop) {
+        while (token) {
+            if (!skip) {
+                zppqueuetoken(token, &head, &tail);
+            }
+            token = token->next;
+            if (token->type == ZPP_ELSE_TOKEN) {
+                if (skip) {
+                    skip = !skip;
+                    token = token->next;
+                } else {
+                    while (token->type != ZPP_ENDIF_TOKEN) {
+                        token = token->next;
+                    }
+                    loop = 0;
+                }
+            } else if (token->type == ZPP_ELIF_TOKEN) {
+                if (skip) {
+                    skip = !zppeval(token, &token);
+                } else {
+                    while (token->type != ZPP_ENDIF_TOKEN) {
+                        token = token->next;
+                    }
+                    loop = 0;
+                }
+            } else if (token->type == ZPP_ENDIF_TOKEN) {
+                loop = 0;
+            }
+        }
+    }
+    if (head) {
+        *nextret = token;
+    }
+
+    return head;
+}
+#endif
+struct zcctoken *
+zppprocif(struct zpptoken *token, struct zpptoken **nextret,
+          struct zcctoken **tailret)
+{
+    return NULL;
+}
+
+struct zcctoken *
+zppprocifdef(struct zpptoken *token, struct zpptoken **nextret,
+             struct zcctoken **tailret)
+{
+    return NULL;
+}
+
+struct zcctoken *
+zppprocifndef(struct zpptoken *token, struct zpptoken **nextret,
+              struct zcctoken **tailret)
+{
+    return NULL;
+}
+
+struct zcctoken *
+zppprocdefine(struct zpptoken *token, struct zpptoken **nextret,
+              struct zcctoken **tailret)
 {
     return NULL;
 }
 
 static struct zcctoken *
-zppprocifdef(struct zpptoken *token, struct zpptoken **nextret)
+zppmktype(struct zpptoken *token, struct zpptoken **nextret,
+          struct zcctoken **lastret)
 {
-    return NULL;
-}
-
-static struct zcctoken *
-zppprocifndef(struct zpptoken *token, struct zpptoken **nextret)
-{
-    return NULL;
-}
-
-static struct zcctoken *
-zppprocdefine(struct zpptoken *token, struct zpptoken **nextret)
-{
-    return NULL;
-}
-
-static struct zcctoken *
-zppmktype(struct zpptoken *token, struct zpptoken **nextret)
-{
+    struct zcctoken *head = NULL;
+    struct zcctoken *tail = NULL;
+    struct zcctoken *last = NULL;
     struct zcctoken *tok = malloc(sizeof(struct zcctoken));;
     long             parm;
+    long             def = 0;
 
+    if (token->type == ZPP_TYPEDEF_TOKEN) {
+        token = token->next;
+        def = 1;
+    }
+    if (!token) {
+        if (def) {
+            fprintf(stderr, "invalid typedef\n");
+
+            exit(1);
+        }
+    }
     if (token->type == ZPP_ATR_TOKEN) {
         token = token->next;
         while (token->type == ZPP_LEFT_PAREN_TOKEN) {
             token = token->next;
         }
-        /* TODO */
+        
     }
     tok->type = ZCC_NONE;
     tok->parm = ZCC_NONE;
@@ -304,7 +385,9 @@ zppmktype(struct zpptoken *token, struct zpptoken **nextret)
         }
     }
     if  (tok) {
+        zccqueuetoken(tok, last, &head, &tail);
         *nextret = token;
+        *lastret = NULL;
     }
 
     return tok;
@@ -315,6 +398,7 @@ zppgetstruct(struct zpptoken *token, struct zpptoken **nextret, size_t *sizeret)
 {
     struct zccstruct *newstruct = NULL;
     struct zcctoken  *tok;
+    struct zcctoken  *last;
     long              parm;
     size_t            msz;
     size_t            sz = 0;
@@ -328,7 +412,7 @@ zppgetstruct(struct zpptoken *token, struct zpptoken **nextret, size_t *sizeret)
         token = token->next;
         while ((token) && token->type != ZPP_END_BLOCK_TOKEN) {
             if (token->type == ZPP_TYPE_TOKEN) {
-                tok = zppmktype(token, &token);
+                tok = zppmktype(token, &token, &last);
                 if (token->type == ZPP_VAR_TOKEN) {
                     if (n == nmemb) {
                         nmemb <<= 1;
@@ -345,7 +429,7 @@ zppgetstruct(struct zpptoken *token, struct zpptoken **nextret, size_t *sizeret)
                         if (tok->flg & ZCC_PACKED) {
                             msz = zccvarsz(parm);
                         } else {
-                            msz = max(zccvarsz(parm), sizeof(long));
+                            msz = max(zccvarsz(parm), zccmach.ialn);
                         }
                         tok->datasz = msz;
                         token = token->next;
@@ -388,19 +472,21 @@ zppgetunion(struct zpptoken *token, struct zpptoken **nextret, size_t *sizeret)
 }
 
 static struct zcctoken *
-zppmkblock(struct zpptoken *token, struct zpptoken **nextret)
+zppgetblock(struct zpptoken *token, struct zpptoken **nextret,
+            struct zcctoken **lastret)
 {
     return NULL;
 }
 
 static struct zcctoken *
-zppmkfunc(struct zpptoken *token, struct zpptoken **nextret)
+zppgetfunc(struct zpptoken *token, struct zpptoken **nextret,
+           struct zcctoken **lastret)
 {
     return NULL;
 }
 
 void                                 
-zppqueuetoken(struct zcctoken *token,
+zccqueuetoken(struct zcctoken *token, struct zcctoken *last,
               struct zcctoken **queue, struct zcctoken **tail)
 {
     if (token) {
@@ -408,14 +494,24 @@ zppqueuetoken(struct zcctoken *token,
         if (!*queue) {
             token->prev = NULL;
             *queue = token;
+            *tail = last;
         } else if (*tail) {
             token->prev = *tail;
             (*tail)->next = token;
-            *tail = token;
+            if (last) {
+                last->next = NULL;
+                *tail = last;
+            } else {
+                *tail = token;
+            }
         } else {
             token->prev = *queue;
             (*queue)->next = token;
-            *tail = token;
+            if (last) {
+                *tail = last;
+            } else {
+                *tail = token;
+            }
         }
     }
 
@@ -423,44 +519,37 @@ zppqueuetoken(struct zcctoken *token,
 }
 
 struct zcctoken *
-zpppreproc(struct zpptoken *token)
+zpppreproc(struct zpptoken *token, struct zcctoken **tailret)
 {
     struct zcctoken *head = NULL;
     struct zcctoken *tail = NULL;
     struct zcctoken *tok = NULL;
+    struct zcctoken *last = NULL;
     long             parm;
     zpptokenfunc_t  *func;
 
     while (token) {
-        if (token->type == ZPP_SEMICOLON_TOKEN) {
-            token = token->next;
-
-            continue;
-        }
-        if (token->type == ZPP_BLOCK_TOKEN) {
-            tok = zppmkblock(token, &token);
-        } else if (token->type == ZPP_TYPEDEF_TOKEN) {
-            token = token->next;
-            tok = zppmktype(token, &token);
-            if (!tok) {
-                fprintf(stderr, "invalid typedef\n");
-                
-                exit(1);
+        if (token->type == ZPP_TYPEDEF_TOKEN
+            || token->type == ZPP_TYPE_TOKEN) {
+            tok = zppmktype(token, &token, &last);
+            if (tok) {
+                zccqueuetoken(tok, last, &head, &tail);
             }
-            tok->str = strdup(token->str);
+            if (token->type == ZCC_FUNC_TOKEN) {
+                tok = zppgetfunc(token, &token, &last);
+            }
         } else if (token->type == ZPP_PREPROC_TOKEN) {
             parm = token->parm;
             func = dirfunctab[parm];
             if (func) {
-                tok = func(token, &token);
+                tok = func(token, &token, &last);
+                if (!tok) {
+                    fprintf(stderr, "invalid token %s\n", token->str);
+                }
             }
-        } else if (token->type == ZPP_FUNC_TOKEN) {
-            tok = zppmkfunc(token, &token);
-        } else {
-            tok = zppmktype(token, &token);
         }
         if (tok) {
-            zppqueuetoken(tok, &head, &tail);
+            zccqueuetoken(tok, last, &head, &tail);
         } else {
             fprintf(stderr, "unexpected token\n");
 #if (ZPPDEBUG)
@@ -469,6 +558,9 @@ zpppreproc(struct zpptoken *token)
 
             exit(1);
         }
+    }
+    if (head) {
+        *tailret = tail;
     }
 
     return head;

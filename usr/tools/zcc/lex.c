@@ -279,6 +279,66 @@ zppgettype(char *str, char **retstr)
     return type;
 }
 
+static char *
+zppgetstr(char *str, char **retstr)
+{
+    char   *buf = malloc(32);
+    char   *ptr = buf;
+    size_t  len = 32;
+    size_t  n = 0;
+
+    while (*str != '"') {
+        if (n == len) {
+            len <<= 1;
+            buf = realloc(buf, len);
+            ptr = &buf[n];
+        }
+#if 0
+        if (*str == '\\') {
+            str++;
+            switch (*str) {
+                case 'b':
+                    *ptr++ = '\b';
+
+                    break;
+                case 'n':
+                    *ptr++ = '\n';
+
+                    break;
+                case 't':
+                    *ptr++ = '\t';
+
+                    break;
+                case 'r':
+                    *ptr++ = '\r';
+
+                    break;
+                default:
+                    fprintf(stderr, "unknown escape sequence in %s\n", buf);
+
+                    exit(1);
+            }
+            str++;
+        } else {
+            *ptr++ = *str++;
+        }
+#endif
+        *ptr++ = *str++;
+        n++;
+    }
+    str++;
+    if (buf) {
+        if (n == len) {
+            len <<= 1;
+            buf = realloc(buf, len);
+        }
+        buf[n] = '\0';
+        *retstr = str;
+    }
+
+    return buf;
+}
+
 static unsigned long
 zppgetliter(char *str, char **retstr)
 {
@@ -459,13 +519,8 @@ zccgettoken(char *str, char **retstr, int curfile)
     tok->data = 0;
     if (*str == '"') {
         str++;
-        ptr = str;
         tok->type = ZPP_STRING_TOKEN;
-        while (*str != '"') {
-            str++;
-        }
-        tok->str = strndup(ptr, str - ptr);
-        str++;
+        tok->str = zppgetstr(str, &str);
     } else if (*str == '\'') {
         str++;
         tok->type = ZPP_LITERAL_TOKEN;
@@ -755,14 +810,45 @@ zccreadfile(char *name, int curfile)
                 while (ch != EOF && ch != '\n') {
                     if (ch == '\\') {
                         ch = fgetc(fp);
-                        eof = (ch == EOF);
-                        if (!eof && isspace(ch)) {
-                            while (!eof && isspace(ch)) {
-                                ch = fgetc(fp);
+                        if (ch != EOF && !isspace(ch)) {
+                            *str++ = '\\';
+                            len++;
+                            if (len == buflen) {
+                                fprintf(stderr, "overlong line\n");
+                                
+                                exit(1);
                             }
-
-                            continue;
+                            switch (ch) {
+                                case 'b':
+                                case 'n':
+                                case 't':
+                                case 'r':
+                                    *str++ = ch;
+                                    len++;
+                                    if (len == buflen) {
+                                        fprintf(stderr, "overlong line\n");
+                                        
+                                        exit(1);
+                                    }
+                                    
+                                    break;
+                                default:
+                                    fprintf(stderr, "unknown escape sequence\n");
+                                    
+                                    exit(1);
+                            }
+                        } else {
+                            eof = (ch == EOF);
+                            if (!eof && isspace(ch)) {
+                                while (!eof && isspace(ch)) {
+                                    ch = fgetc(fp);
+                                    eof = (ch == EOF);
+                                }
+                                
+                                continue;
+                            }
                         }
+                        ch = fgetc(fp);
                     } else {
                         *str++ = ch;
                         len++;
