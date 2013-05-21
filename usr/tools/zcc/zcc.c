@@ -10,8 +10,9 @@ extern unsigned int      zccnfiles;
 struct zccmach           zccmach;
 static struct zcctoken **tokenqtab;
 
+/* initialise machine-dependent parameters */
 int
-zccinit(void)
+zccinitmach(void)
 {
     int ret = 1;
 
@@ -36,7 +37,7 @@ main(int argc, char *argv[])
 #if (ZCCPROF)
     profstartclk(clk);
 #endif
-    if (!zccinit()) {
+    if (!zccinitmach()) {
         fprintf(stderr, "cannot initialise %s\n", argv[0]);
 
         exit(1);

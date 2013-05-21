@@ -489,7 +489,7 @@ zccgetval(char *str, char **retstr)
         } else {
             zccsetival(newval, type, &uval);
         }
-        while (*str == ',' || *str == '\'') {
+        while (*str == '\'') {
             str++;
         }
         *retstr = str;
@@ -640,6 +640,10 @@ zccgettoken(char *str, char **retstr, int curfile)
             tok->str = strndup(ptr, str - ptr);
             tok->data = (uintptr_t)val;
         }
+    } else if (*str == ',') {
+        str++;
+        tok->type = ZPP_COMMA_TOKEN;
+        tok->data = ZCC_NO_ADR;
     } else {
         free(tok);
         tok = NULL;
