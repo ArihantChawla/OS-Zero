@@ -10,14 +10,24 @@
 
 #define NSYMHASH   65536
 #define NTYPEHASH  65536
+#if (NEWHASH)
+#define NSTRHASH   65536
+#else
 #define NSTRTABLVL 64
+#endif
 
 static struct zccsym   *symhash[NSYMHASH];
 static struct zcctoken *typehash[NTYPEHASH];
 
+#if (NEWHASH)
+struct hashstr *qualhash[NSTRHASH];
+struct hashstr *preprochash[NSTRHASH];
+struct hashstr *atrhash[NSTRHASH];
+#else
 struct hashstr qualhash[NSTRTABLVL];
 struct hashstr preprochash[NSTRTABLVL];
 struct hashstr atrhash[NSTRTABLVL];
+#endif
 
 /*
  * ISO 8859-1 value compression table
@@ -471,6 +481,93 @@ zccrmtype(struct zcctoken *token)
     return;
 }
 
+#if (NEWHASH)
+
+void
+zccaddid(struct hashstr **tab, char *str, long val)
+{
+    int             ch;
+    long            key = 0;
+    char           *ptr;
+    long            sz = 8;
+    long            n = 0;
+    struct hashstr *item;
+
+//    fprintf(stderr, "%s - ", str);
+    if ((*str) && (isalpha(*str) || *str == '_')) {
+        item = calloc(1, sizeof(struct hashstr));
+        item->str = malloc(sz);
+        ptr = item->str;
+        ch = chvaltab[(int)(*str)];
+        key <<= 6;
+        *ptr++ = *str++;
+        n++;
+        key += ch;
+        while ((*str) && (isalnum(*str) || *str == '_')) {
+            ch = chvaltab[(int)(*str)];
+            key <<= 6;
+            if (n == sz) {
+                sz <<= 1;
+                item->str = realloc(item->str, sz);
+                ptr = &item->str[n];
+            }
+            *ptr++ = *str++;
+            n++;
+            key += ch;
+        }
+        *ptr = '\0';
+        key &= (NSTRHASH - 1);
+        item->val = val;
+        item->next = tab[key];
+        tab[key] = item;
+    }
+//    fprintf(stderr, "%ld\n", key);
+
+    return;
+}
+
+long
+zccfindid(struct hashstr **tab, char *str)
+{
+    int             ch;
+    long            key = 0;
+    char           *ptr;
+    long            n = 0;
+    struct hashstr *item = NULL;
+    long            ret = ZCC_NONE;
+
+//    fprintf(stderr, "%s - ", str);
+    if ((*str) && (isalpha(*str) || *str == '_')) {
+        ch = chvaltab[(int)(*str)];
+        key <<= 6;
+        str++;
+        n++;
+        key += ch;
+        while ((*str) && (isalnum(*str) || *str == '_')) {
+            ch = chvaltab[(int)(*str)];
+            key <<= 6;
+            n++;
+            str++;
+            key += ch;
+        }
+        key &= (NSTRHASH - 1);
+        item = tab[key];
+        while ((item) && strncmp(item->str, str, n)) {
+            item = item->next;
+        }
+        if (item) {
+            ret = item->val;
+        }
+    }
+    if (item) {
+//        fprintf(stderr, "%ld (%ld, %ld: %s)\n", key, ret, n, item->str);
+    }
+
+    return ret;
+}
+
+#else
+
 void
 zccaddid(struct hashstr *tab, char *str, long val)
 {
@@ -533,4 +630,6 @@ zccfindid(struct hashstr *tab, char *str)
 
     return ret;
 }
+
+#endif
 

@@ -1,4 +1,5 @@
 #include <ctype.h>
+#include <wchar.h>
 #include <stdio.h>
 #include <stdlib.h>
 #include <string.h>
@@ -18,14 +19,25 @@
 #define NFILE  1024
 #define NLINEBUF 4096
 
+#if (NEWHASH)
+extern struct hashstr *qualhash[];
+extern struct hashstr *preprochash[];
+extern struct hashstr *atrhash[];
+#else
 extern struct hashstr qualhash[];
 extern struct hashstr preprochash[];
 extern struct hashstr atrhash[];
+#endif
 
 static int  zccreadfile(char *name, int curfile);
 static void zppqueuetoken(struct zpptoken *token, int curfile);
+#if (NEWHASH)
+extern void zccaddid(struct hashstr **tab, char *str, long val);
+extern long zccfindid(struct hashstr **tab, char *str);
+#else
 extern void zccaddid(struct hashstr *tab, char *str, long val);
 extern long zccfindid(struct hashstr *tab, char *str);
+#endif
 
 #define zccisoper(cp)    (opertab[(int)(*(cp))])
 #define zccistypedef(cp) (!strncmp(cp, "typedef", 7))
@@ -62,7 +74,8 @@ extern long zccfindid(struct hashstr *tab, char *str);
                     ? ZPP_IF_DIR                                        \
                     : (!strncmp(cp, "define", 6)                        \
                        ? ZPP_DEFINE_DIR                                 \
-                       : ZCC_NONE)))))))
+                       : (!strncmp(cp, "undef", 5)                      \
+                          ? ZPP_UNDEF_DIR))))))))                       \
 #define zccatrid(cp)                                                    \
     ((!strncmp(cp, "packed", 6))                                        \
      ? ZCC_ATR_PACKED                                                   \
@@ -132,7 +145,8 @@ static long parmlentab[16] = {
     5,                  // ZCC_ENDIF_DIR
     5,                  // ZCC_IFDEF_DIR
     6,                  // ZCC_IFNDEF_DIR
-    6                   // ZCC_DEFINE_DIR
+    6,                  // ZCC_DEFINE_DIR
+    5                   // ZCC_UNDEF_DIR
 };
 static long atrlentab[16] = {
     0,                  // ZCC_NONE
@@ -213,6 +227,7 @@ zccinithash(void)
     zccaddid(preprochash, "ifndef", ZPP_IFNDEF_DIR);
     zccaddid(preprochash, "if", ZPP_IF_DIR);
     zccaddid(preprochash, "define", ZPP_DEFINE_DIR);
+    zccaddid(preprochash, "undef", ZPP_UNDEF_DIR);
     /* compiler attributes */
     zccaddid(atrhash, "packed", ZCC_ATR_PACKED);
     zccaddid(atrhash, "aligned", ZCC_ATR_ALIGNED);
@@ -375,13 +390,66 @@ zppgetstr(char *str, char **retstr)
 }
 
 static unsigned long
+zppgetwliter(char *str, char **retstr)
+{
+    unsigned long found = 0;
+    unsigned long val = 0;
+
+#if (ZCCDEBUG)
+    fprintf(stderr, "getwliter: %s\n", str);
+#endif
+    if (tolower(*str) == 'x') {
+        str++;
+        while ((*str) && isxdigit(*str)) {
+            val <<= 4;
+            val += (isdigit(*str)
+                    ? *str - '0'
+                    : tolower(*str) - 'a' + 10);
+            str++;
+        }
+        found = 1;
+    } else if (tolower(*str) == 'b') {
+        str++;
+        while (*str == '0' || *str == '1') {
+            val <<= 1;
+            val += *str - '0';
+            str++;
+        }
+        found = 1;
+    } else if (*str == '0') {
+        str++;
+        while ((*str) && isdigit(*str)) {
+            if (*str > '7') {
+                fprintf(stderr, "invalid number in octal constant: %s\n", str);
+
+                exit(1);
+            }
+            val <<= 3;
+            val += *str - '0';
+            str++;
+        }
+        found = 1;
+    } else {
+        val = *((wchar_t *)str);
+    }
+    if (*str == '\'') {
+        str++;
+    }
+    if (found) {
+        *retstr = str;
+    }
+
+    return val;
+}
+
+static unsigned long
 zppgetliter(char *str, char **retstr)
 {
     unsigned long found = 0;
     unsigned long val = 0;
 
-#if (ZASDEBUG)
-    fprintf(stderr, "getvalue: %s\n", str);
+#if (ZCCDEBUG)
+    fprintf(stderr, "getliter: %s\n", str);
 #endif
     if (tolower(*str) == 'x') {
         str++;
@@ -556,6 +624,11 @@ zccgettoken(char *str, char **retstr, int curfile)
         str++;
         tok->type = ZPP_STRING_TOKEN;
         tok->str = zppgetstr(str, &str);
+    } else if (*str == 'L' && str[1] == '\'') {
+        str += 2;
+        tok->type = ZPP_LITERAL_TOKEN;
+        tok->parm = ZCC_WCHAR;
+        tok->data = zppgetwliter(str, &str);
     } else if (*str == '\'') {
         str++;
         tok->type = ZPP_LITERAL_TOKEN;
@@ -620,15 +693,14 @@ zccgettoken(char *str, char **retstr, int curfile)
         while (isspace(*str)) {
             str++;
         }
-        while (*str == '(') {
-            str++;
-        }
+#if 0
         if ((atr = zccatrid(str)) != ZCC_NONE) {
             len = atrlentab[atr];
             str += len;
         } else {
             fprintf(stderr, "invalid attribute %s\n", str);
         }
+#endif
     } else if ((parm = zccqualid(str))) {
         len = parmlentab[parm];
         tok->type = ZPP_QUAL_TOKEN;

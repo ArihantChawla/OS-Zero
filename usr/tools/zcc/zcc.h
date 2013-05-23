@@ -98,7 +98,7 @@ struct zccsym {
 #define ZPP_PREPROC_TOKEN      0x0021
 #define ZPP_CONCAT_TOKEN       0x0022
 #define ZPP_STRINGIFY_TOKEN    0x0023
-/* flag bits */
+/* parm bits */
 /* high 16 bits */
 #define ZCC_UNSIGNED           0x80000000U
 #define ZCC_STATIC             0x40000000U
@@ -121,6 +121,7 @@ struct zccsym {
 #define ZPP_IFDEF_DIR          0x0009
 #define ZPP_IFNDEF_DIR         0x000a
 #define ZPP_DEFINE_DIR         0x000b
+#define ZPP_UNDEF_DIR          0x000c
 /* adr values */
 #define ZCC_NO_ADR             0x00000000U
 struct zpptoken {
@@ -282,7 +283,11 @@ void              zppprintqueue(struct zpptokenq *queue);
 #endif
 
 struct hashstr {
-    long  val;
-    void *ptr;
+    long            val;
+    void           *ptr;
+#if (NEWHASH)
+    char           *str;
+    struct hashstr *next;
+#endif
 };
 
