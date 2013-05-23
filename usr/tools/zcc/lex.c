@@ -50,9 +50,11 @@ static void zppqueuetoken(struct zpptoken *token, int curfile);
                  ? ZPP_IFNDEF_DIR                                       \
                  : (!strncmp(cp, "ifdef", 5)                            \
                     ? ZPP_IFDEF_DIR                                     \
-                    : (!strncmp(cp, "define", 6)                        \
-                       ? ZPP_DEFINE_DIR                                 \
-                       : ZCC_NONE)))))))
+                    : (!strncmp(cp, "if", 2)                            \
+                       ? ZPP_IF_DIR                                     \
+                       : (!strncmp(cp, "define", 6)                     \
+                          ? ZPP_DEFINE_DIR                              \
+                          : ZCC_NONE))))))))
 #define zccatrid(cp)                                                    \
     ((!strncmp(cp, "packed", 6))                                        \
      ? ZCC_ATR_PACKED                                                   \
@@ -63,7 +65,7 @@ static void zppqueuetoken(struct zpptoken *token, int curfile);
            : (!strncmp(cp, "__format__", 10)                            \
               ? ZCC_ATR_FORMAT                                          \
               : ZCC_NONE))))
-#define zccisagr(t)      ((t) == ZCC_STRUCT || (t) == ZCC_UNION)
+//#define zccisagr(t)      ((t) == ZCC_STRUCT || (t) == ZCC_UNION)
 
 #define zccsetival(vp, t, adr)                                          \
     (typesigntab[(t) & 0x1f]                                            \
