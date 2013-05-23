@@ -1,13 +1,23 @@
+#include <ctype.h>
 #include <stdint.h>
 #include <stdlib.h>
 #include <string.h>
 #include <zcc/zcc.h>
+#define HASHDEBUG 1
+#if (HASHDEBUG)
+#include <stdio.h>
+#endif
 
-#define NSYMHASH  65536
-#define NTYPEHASH 65536
+#define NSYMHASH   65536
+#define NTYPEHASH  65536
+#define NSTRTABLVL 64
 
 static struct zccsym   *symhash[NSYMHASH];
 static struct zcctoken *typehash[NTYPEHASH];
+
+struct hashstr qualhash[NSTRTABLVL];
+struct hashstr preprochash[NSTRTABLVL];
+struct hashstr atrhash[NSTRTABLVL];
 
 /*
  * ISO 8859-1 value compression table
@@ -148,7 +158,7 @@ static uint16_t chvaltab[256] =
     /* 0x70..0x77 */
     0x35,       // p
     0x36,       // q
-    0xa7,       // r
+    0x37,       // r
     0x38,       // s
     0x39,       // t
     0x3a,       // u
@@ -459,5 +469,68 @@ zccrmtype(struct zcctoken *token)
     }
 
     return;
+}
+
+void
+zccaddid(struct hashstr *tab, char *str, long val)
+{
+    int             ch;
+    struct hashstr *ptr1;
+    struct hashstr *ptr2 = NULL;
+
+    if ((*str) && (isalpha(*str) || *str == '_')) {
+        ch = chvaltab[(int)(*str)];
+        str++;
+        ptr1 = &tab[ch];
+        while ((*str) && (isalnum(*str) || *str == '_')) {
+            ch = chvaltab[(int)(*str)];
+            ptr2 = ptr1->ptr;
+            str++;
+            if (!ptr2) {
+                ptr2 = calloc(NSTRTABLVL, sizeof(struct hashstr));
+                ptr1->ptr = ptr2;
+            }
+            ptr1 = &ptr2[ch];
+        }
+        if (ptr1) {
+            ptr1->val = val;
+        }
+    }
+
+    return;
+}
+
+long
+zccfindid(struct hashstr *tab, char *str)
+{
+    int             ch;
+    long            ret = ZCC_NONE;
+    struct hashstr *ptr1;
+    struct hashstr *ptr2 = NULL;
+
+    if ((*str) && (isalpha(*str) || *str == '_')) {
+        ch = chvaltab[(int)(*str)];
+        str++;
+        ptr1 = &tab[ch];
+        if (!ptr1->ptr) {
+
+            return ZCC_NONE;
+        }
+        while ((*str) && (isalnum(*str) || *str == '_')) {
+            ch = chvaltab[(int)(*str)];
+            ptr2 = ptr1->ptr;
+            str++;
+            if (!ptr2) {
+
+                return ZCC_NONE;
+            }
+            ptr1 = &ptr2[ch];
+        }
+        if (ptr1) {
+            ret = ptr1->val;
+        }
+    }
+
+    return ret;
 }
 

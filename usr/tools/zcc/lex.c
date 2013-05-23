@@ -18,8 +18,14 @@
 #define NFILE  1024
 #define NLINEBUF 4096
 
+extern struct hashstr qualhash[];
+extern struct hashstr preprochash[];
+extern struct hashstr atrhash[];
+
 static int  zccreadfile(char *name, int curfile);
 static void zppqueuetoken(struct zpptoken *token, int curfile);
+extern void zccaddid(struct hashstr *tab, char *str, long val);
+extern long zccfindid(struct hashstr *tab, char *str);
 
 #define zccisoper(cp)    (opertab[(int)(*(cp))])
 #define zccistypedef(cp) (!strncmp(cp, "typedef", 7))
@@ -27,6 +33,10 @@ static void zppqueuetoken(struct zpptoken *token, int curfile);
 #define zccisunion(cp)   (!strncmp(cp, "union", 5))
 #define zccisatr(cp)     (!strncmp(cp, "__attribute__", 13))
 #define zccispreproc(cp) (*str == '#')
+#define zccqualid(cp)    zccfindid(qualhash, cp)
+#define zccpreprocid(cp) zccfindid(preprochash, cp)
+#define zccatrid(cp)     zccfindid(atrhash, cp)
+#if 0
 #define zccqualid(cp)                                                   \
     ((!strncmp(cp, "extern", 6))                                        \
      ? ZCC_EXTERN_QUAL                                                  \
@@ -48,13 +58,11 @@ static void zppqueuetoken(struct zpptoken *token, int curfile);
               ? ZPP_ENDIF_DIR                                           \
               : (!strncmp(cp, "ifndef", 6)                              \
                  ? ZPP_IFNDEF_DIR                                       \
-                 : (!strncmp(cp, "ifdef", 5)                            \
-                    ? ZPP_IFDEF_DIR                                     \
-                    : (!strncmp(cp, "if", 2)                            \
-                       ? ZPP_IF_DIR                                     \
-                       : (!strncmp(cp, "define", 6)                     \
-                          ? ZPP_DEFINE_DIR                              \
-                          : ZCC_NONE))))))))
+                 : (!strncmp(cp, "if", 2)                               \
+                    ? ZPP_IF_DIR                                        \
+                    : (!strncmp(cp, "define", 6)                        \
+                       ? ZPP_DEFINE_DIR                                 \
+                       : ZCC_NONE)))))))
 #define zccatrid(cp)                                                    \
     ((!strncmp(cp, "packed", 6))                                        \
      ? ZCC_ATR_PACKED                                                   \
@@ -66,6 +74,7 @@ static void zppqueuetoken(struct zpptoken *token, int curfile);
               ? ZCC_ATR_FORMAT                                          \
               : ZCC_NONE))))
 //#define zccisagr(t)      ((t) == ZCC_STRUCT || (t) == ZCC_UNION)
+#endif
 
 #define zccsetival(vp, t, adr)                                          \
     (typesigntab[(t) & 0x1f]                                            \
@@ -188,6 +197,29 @@ zccinittoktab(void)
     toktab['\n'] = ZPP_NEWLINE_TOKEN;
 }
 
+static void
+zccinithash(void)
+{
+    /* qualifiers */
+    zccaddid(qualhash, "extern", ZCC_EXTERN_QUAL);
+    zccaddid(qualhash, "static", ZCC_STATIC_QUAL);
+    zccaddid(qualhash, "const", ZCC_CONST_QUAL);
+    zccaddid(qualhash, "volatile", ZCC_VOLATILE_QUAL);
+    /* preprocessor directives */
+    zccaddid(preprochash, "ifdef", ZPP_IFDEF_DIR);
+    zccaddid(preprochash, "elif", ZPP_ELIF_DIR);
+    zccaddid(preprochash, "else", ZPP_ELSE_DIR);
+    zccaddid(preprochash, "endif", ZPP_ENDIF_DIR);
+    zccaddid(preprochash, "ifndef", ZPP_IFNDEF_DIR);
+    zccaddid(preprochash, "if", ZPP_IF_DIR);
+    zccaddid(preprochash, "define", ZPP_DEFINE_DIR);
+    /* compiler attributes */
+    zccaddid(atrhash, "packed", ZCC_ATR_PACKED);
+    zccaddid(atrhash, "aligned", ZCC_ATR_ALIGNED);
+    zccaddid(atrhash, "__noreturn__", ZCC_ATR_NORETURN);
+    zccaddid(atrhash, "__format__", ZCC_ATR_FORMAT);
+}
+
 static int
 zccinit(int argc,
            char *argv[])
@@ -202,6 +234,7 @@ zccinit(int argc,
     }
     zccinitopertab();
     zccinittoktab();
+    zccinithash();
     for (l = 1 ; l < argc ; l++) {
         str = argv[l];
         if (*str == '-') {
@@ -573,10 +606,10 @@ zccgettoken(char *str, char **retstr, int curfile)
             str += len;
         } else if (*str == '#') {
             str++;
-            tok->type = ZPP_CONCAT_TOKEN;
+            tok->type = ZPP_STRINGIFY_TOKEN;
         } else {
             str++;
-            tok->type = ZPP_STRINGIFY_TOKEN;
+            tok->type = ZPP_CONCAT_TOKEN;
         }
     } else if (zccistypedef(str)) {
         tok->type = ZPP_TYPEDEF_TOKEN;
@@ -590,12 +623,12 @@ zccgettoken(char *str, char **retstr, int curfile)
         while (*str == '(') {
             str++;
         }
-        if ((atr = zccatrid(str))) {
+        if ((atr = zccatrid(str)) != ZCC_NONE) {
             len = atrlentab[atr];
+            str += len;
         } else {
             fprintf(stderr, "invalid attribute %s\n", str);
         }
-        str += len;
     } else if ((parm = zccqualid(str))) {
         len = parmlentab[parm];
         tok->type = ZPP_QUAL_TOKEN;
