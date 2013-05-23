@@ -531,7 +531,7 @@ zccfindid(struct hashstr **tab, char *str)
 {
     int             ch;
     long            key = 0;
-    char           *ptr;
+    char           *ptr = str;
     long            n = 0;
     struct hashstr *item = NULL;
     long            ret = ZCC_NONE;
@@ -552,7 +552,7 @@ zccfindid(struct hashstr **tab, char *str)
         }
         key &= (NSTRHASH - 1);
         item = tab[key];
-        while ((item) && strncmp(item->str, str, n)) {
+        while ((item) && strncmp(item->str, ptr, n)) {
             item = item->next;
         }
         if (item) {
