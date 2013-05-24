@@ -186,7 +186,7 @@ zccinitopertab(void)
     opertab['>'] = '>';
     opertab['+'] = '+';
     opertab['-'] = '-';
-    opertab['*'] = '*';
+//    opertab['*'] = '*';
     opertab['/'] = '/';
     opertab['%'] = '%';
     opertab['='] = '=';
