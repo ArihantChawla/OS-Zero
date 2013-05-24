@@ -666,7 +666,6 @@ zccgettoken(char *str, char **retstr, int curfile)
             str++;
         }
         parm = zccpreprocid(str);
-        fprintf(stderr, "found: %lx\n", parm);
         if (parm != ZCC_NONE) {
             len = parmlentab[parm];
             str += len;

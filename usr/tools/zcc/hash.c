@@ -3,7 +3,7 @@
 #include <stdlib.h>
 #include <string.h>
 #include <zcc/zcc.h>
-#define HASHDEBUG 1
+#define HASHDEBUG 0
 #if (HASHDEBUG)
 #include <stdio.h>
 #endif
@@ -490,29 +490,28 @@ zccaddid(struct hashstr **tab, char *str, long val)
     long            key = 0;
     char           *ptr;
     long            sz = 8;
-    long            n = 0;
+    long            len = 0;
     struct hashstr *item;
 
-//    fprintf(stderr, "%s - ", str);
     if ((*str) && (isalpha(*str) || *str == '_')) {
         item = calloc(1, sizeof(struct hashstr));
         item->str = malloc(sz);
         ptr = item->str;
         ch = chvaltab[(int)(*str)];
-        key <<= 6;
+        key <<= 3;
         *ptr++ = *str++;
-        n++;
+        len++;
         key += ch;
         while ((*str) && (isalnum(*str) || *str == '_')) {
             ch = chvaltab[(int)(*str)];
-            key <<= 6;
-            if (n == sz) {
+            key <<= 3;
+            if (len == sz) {
                 sz <<= 1;
                 item->str = realloc(item->str, sz);
-                ptr = &item->str[n];
+                ptr = &item->str[len];
             }
             *ptr++ = *str++;
-            n++;
+            len++;
             key += ch;
         }
         *ptr = '\0';
@@ -521,7 +520,6 @@ zccaddid(struct hashstr **tab, char *str, long val)
         item->next = tab[key];
         tab[key] = item;
     }
-//    fprintf(stderr, "%ld\n", key);
 
     return;
 }
@@ -536,16 +534,15 @@ zccfindid(struct hashstr **tab, char *str)
     struct hashstr *item = NULL;
     long            ret = ZCC_NONE;
 
-//    fprintf(stderr, "%s - ", str);
     if ((*str) && (isalpha(*str) || *str == '_')) {
         ch = chvaltab[(int)(*str)];
-        key <<= 6;
+        key <<= 3;
         str++;
         n++;
         key += ch;
         while ((*str) && (isalnum(*str) || *str == '_')) {
             ch = chvaltab[(int)(*str)];
-            key <<= 6;
+            key <<= 3;
             n++;
             str++;
             key += ch;
@@ -555,12 +552,9 @@ zccfindid(struct hashstr **tab, char *str)
         while ((item) && strncmp(item->str, ptr, n)) {
             item = item->next;
         }
-        if (item) {
+        if (item && !item->str[n]) {
             ret = item->val;
         }
-    }
-    if (item) {
-//        fprintf(stderr, "%ld (%ld, %ld: %s)\n", key, ret, n, item->str);
     }
 
     return ret;

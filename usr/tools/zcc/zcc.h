@@ -1,7 +1,7 @@
 #define ZPPDEBUG      1
 #define ZCCPROF       1
 #define ZCCDEBUG      0
-#define ZCCPRINT      1
+#define ZCCPRINT      0
 #define ZPPTOKENCNT   1
 
 #define ZCC_C99_TYPES 1
