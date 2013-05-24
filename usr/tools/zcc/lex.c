@@ -652,6 +652,11 @@ zccgettoken(char *str, char **retstr, int curfile)
             *ptr++ = *str++;
             n++;
         }
+        if (n == len) {
+            len <<= 1;
+            tok->str = realloc(tok->str, len);
+            ptr = &tok->str[n];
+        }
         *ptr = '\0';
     } else if (*str == '#') {
         str++;
