@@ -5,6 +5,11 @@
 #include <zero/prof.h>
 #endif
 
+#if (ZCCSTAT)
+extern unsigned long   tokcnttab[256];
+extern char          **toknametab[256];
+#endif
+
 extern unsigned long     ntoken;
 extern unsigned int      zccnfiles;
 struct zccmach           zccmach;
@@ -54,6 +59,11 @@ main(int argc, char *argv[])
     fprintf(stderr, "%lu tokens\n", ntoken);
 #endif
     fprintf(stderr, "%ld microseconds\n", profclkdiff(clk));
+#endif
+#if (ZCCSTAT)
+    for (l = 1 ; l < ZPP_NTOKTYPE ; l++) {
+        fprintf(stderr, "%s: %lu\n", toknametab[l], tokcnttab[l]);
+    }
 #endif
 #if (ZCCPRINT)
     if (input) {

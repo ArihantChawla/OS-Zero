@@ -1,7 +1,7 @@
 #define ZPPDEBUG      1
 #define ZCCPROF       1
 #define ZCCDEBUG      0
-#define ZCCPRINT      0
+#define ZCCPRINT      1
 #define ZPPTOKENCNT   1
 
 #define ZCC_C99_TYPES 1
@@ -98,6 +98,7 @@ struct zccsym {
 #define ZPP_PREPROC_TOKEN      0x0021
 #define ZPP_CONCAT_TOKEN       0x0022
 #define ZPP_STRINGIFY_TOKEN    0x0023
+#define ZPP_NTOKTYPE           0x0024
 /* parm bits */
 /* high 16 bits */
 #define ZCC_UNSIGNED           0x80000000U

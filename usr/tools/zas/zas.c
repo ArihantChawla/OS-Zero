@@ -652,6 +652,75 @@ zasgetsym(uint8_t *str, uint8_t **retptr)
     return name;
 }
 
+static zasuword_t
+zasgetvalue(uint8_t *str, zasword_t *valret, uint8_t **retstr)
+{
+    long                found = 0;
+    zasuword_t          uval = 0;
+    zasword_t           val = 0;
+    long                neg = 0;
+
+#if (ZASDEBUG)
+    fprintf(stderr, "getvalue: %s\n", str);
+#endif
+    if (*str == '-') {
+        neg = 1;
+        str++;
+    }
+    if (str[0] == '0' && tolower(str[1]) == 'x') {
+        str += 2;
+        while ((*str) && isxdigit(*str)) {
+            uval <<= 4;
+            uval += (isdigit(*str)
+                     ? *str - '0'
+                     : (islower(*str)
+                        ? *str - 'a' + 10
+                        : *str - 'A' + 10));
+            str++;
+        }
+        found = 1;
+    } else if (str[0] == '0' && tolower(str[1]) == 'b') {
+        str += 2;
+        while ((*str) && (*str == '0' || *str == '1')) {
+            uval <<= 1;
+            uval += *str - '0';
+            str++;
+        }
+        found = 1;
+    } else if (*str == '0') {
+        str++;
+        while ((*str) && isdigit(*str)) {
+            if (*str > '7') {
+                fprintf(stderr, "invalid number in octal constant: %s\n", str);
+
+                exit(1);
+            }
+            uval <<= 3;
+            uval += *str - '0';
+            str++;
+        }
+        found = 1;
+    } else if (isdigit(*str)) {
+        while ((*str) && isdigit(*str)) {
+            uval *= 10;
+            uval += *str - '0';
+            str++;
+        }
+        found = 1;
+    }
+    if (found) {
+        *retstr = str;
+        if (neg) {
+            val = -((zasword_t)uval);
+            *valret = val;
+        } else {
+            *valret = (zasword_t)uval;
+        }
+    }
+
+    return found;
+}
+
 static uint8_t *
 zasgetadr(uint8_t *str, uint8_t **retptr)
 {
