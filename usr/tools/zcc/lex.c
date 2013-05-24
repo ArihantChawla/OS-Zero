@@ -48,46 +48,6 @@ extern long zccfindid(struct hashstr *tab, char *str);
 #define zccqualid(cp)    zccfindid(qualhash, cp)
 #define zccpreprocid(cp) zccfindid(preprochash, cp)
 #define zccatrid(cp)     zccfindid(atrhash, cp)
-#if 0
-#define zccqualid(cp)                                                   \
-    ((!strncmp(cp, "extern", 6))                                        \
-     ? ZCC_EXTERN_QUAL                                                  \
-     : (!strncmp(cp, "static", 6)                                       \
-        ? ZCC_STATIC_QUAL                                               \
-        : (!strncmp(cp, "const", 5)                                     \
-           ? ZCC_CONST_QUAL                                             \
-           : (!strncmp(cp, "volatile", 8)                               \
-              ? ZCC_VOLATILE_QUAL                                       \
-              : ZCC_NONE))))
-#define zccpreprocid(cp)                                                \
-    ((!strncmp(cp, "ifdef", 5))                                         \
-     ? ZPP_IFDEF_DIR                                                    \
-     : (!strncmp(cp, "elif", 4)                                         \
-        ? ZPP_ELIF_DIR                                                  \
-        : (!strncmp(cp, "else", 4)                                      \
-           ? ZPP_ELSE_DIR                                               \
-           : (!strncmp(cp, "endif", 5)                                  \
-              ? ZPP_ENDIF_DIR                                           \
-              : (!strncmp(cp, "ifndef", 6)                              \
-                 ? ZPP_IFNDEF_DIR                                       \
-                 : (!strncmp(cp, "if", 2)                               \
-                    ? ZPP_IF_DIR                                        \
-                    : (!strncmp(cp, "define", 6)                        \
-                       ? ZPP_DEFINE_DIR                                 \
-                       : (!strncmp(cp, "undef", 5)                      \
-                          ? ZPP_UNDEF_DIR))))))))                       \
-#define zccatrid(cp)                                                    \
-    ((!strncmp(cp, "packed", 6))                                        \
-     ? ZCC_ATR_PACKED                                                   \
-     : (!strncmp(cp, "aligned", 7)                                      \
-        ? ZCC_ATR_ALIGNED                                               \
-        : (!strncmp(cp, "__noreturn__", 12)                             \
-           ? ZCC_ATR_NORETURN                                           \
-           : (!strncmp(cp, "__format__", 10)                            \
-              ? ZCC_ATR_FORMAT                                          \
-              : ZCC_NONE))))
-//#define zccisagr(t)      ((t) == ZCC_STRUCT || (t) == ZCC_UNION)
-#endif
 
 #define zccsetival(vp, t, adr)                                          \
     (typesigntab[(t) & 0x1f]                                            \
