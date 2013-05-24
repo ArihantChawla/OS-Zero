@@ -11,7 +11,7 @@
 #define NSYMHASH   65536
 #define NTYPEHASH  65536
 #if (NEWHASH)
-#define NSTRHASH   65536
+#define NSTRHASH   4096
 #else
 #define NSTRTABLVL 64
 #endif
@@ -530,7 +530,7 @@ zccfindid(struct hashstr **tab, char *str)
     int             ch;
     long            key = 0;
     char           *ptr = str;
-    long            n = 0;
+    long            len = 0;
     struct hashstr *item = NULL;
     long            ret = ZCC_NONE;
 
@@ -538,21 +538,21 @@ zccfindid(struct hashstr **tab, char *str)
         ch = chvaltab[(int)(*str)];
         key <<= 3;
         str++;
-        n++;
+        len++;
         key += ch;
         while ((*str) && (isalnum(*str) || *str == '_')) {
             ch = chvaltab[(int)(*str)];
             key <<= 3;
-            n++;
+            len++;
             str++;
             key += ch;
         }
         key &= (NSTRHASH - 1);
         item = tab[key];
-        while ((item) && strncmp(item->str, ptr, n)) {
+        while ((item) && strncmp(item->str, ptr, len)) {
             item = item->next;
         }
-        if (item && !item->str[n]) {
+        if (item && !item->str[len]) {
             ret = item->val;
         }
     }
