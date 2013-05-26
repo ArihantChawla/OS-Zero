@@ -45,34 +45,35 @@ calgetline(FILE *fp)
         ch = fgetc(fp);
     }
     if (ch != EOF) {
-        if (!feof(fp)) {
-            line = malloc(sz);
-            cp = line;
-            do {
-                /* copy line until EOF or '\n' */
-                /* skip concatenation character ('_') */
-                if (ch != '_') {
-                    *cp++ = (char)ch;
-                    len++;
-                    if (len == sz) {
-                        sz <<= 1;
-                        line = realloc(line, sz);
+        line = malloc(sz);
+        cp = line;
+        do {
+            /* copy line until EOF or '\n' */
+            /* skip concatenation character ('_') */
+            if (ch != '_') {
+                *cp++ = (char)ch;
+                len++;
+                if (len == sz) {
+                    sz <<= 1;
+                    line = realloc(line, sz);
                         cp = &line[len];
-                    }
                 }
-                ch = fgetc(fp);
-            } while (ch != EOF && ch != '\n');
-            if (ch == '\n') {
-                /* NUL-terminate */
-                line[len] = '\0';
             }
+            ch = fgetc(fp);
+        } while (ch != EOF && ch != '\n');
+        if (ch == '\n') {
+            /* NUL-terminate */
+                line[len] = '\0';
         }
     }
 
     return line;
 }
 
-/* add tokens first..last into queue */
+/*
+ * add tokens first..last into queue
+ * if last is NULL, add just first
+ */
 static void
 calqueue(struct caltoken **head, struct caltoken **tail,
          struct caltoken *first, struct caltoken *last)
@@ -103,6 +104,10 @@ calqueue(struct caltoken **head, struct caltoken **tail,
     return;
 }
 
+/*
+ * get micro string
+ * terminate with NUL
+ */
 char *
 calgetmicro(char *str, char **retstr)
 {
@@ -153,7 +158,7 @@ caltokenize(char *line, struct caltoken **tailret)
                     tok->str = str;
                     calqueue(&head, &tail, tok, NULL);
                 } else {
-                    fprintf(stderr, "unterminated micro %s\n", cp);
+                    fprintf(stderr, "unterminated micro %s\n", ptr);
 
                     exit(1);
                 }
