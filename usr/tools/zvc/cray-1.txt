@@ -1,0 +1,93 @@
+Notes on Cray-1 Machine Architecture
+------------------------------------
+
+Based on the book CRAY-1 Computer Systems Hardware Reference Manual.
+
+Computation Section
+-------------------
+
+- registers
+- functional units
+- instruction buffers
+
+- 64-bit words
+- 12.5-nanosecond clock period
+- 2's complement arithmetic
+- scalar and vector processing modes
+- twelve fully segmented functional units
+- 8 24-bit address (A) registers
+- 64 24-bit intermediate address (B) registers
+- 8 64-bit scalar (S) registers
+- 64 64-bit intermediate scalar (T) registers
+- 8 64-element vector (V) registers, 64 bits per element
+- 4 instruction buffers of 64 16-bit parcels each
+- integer and floating point arithmetic
+- 128 instruction codes; executed as 16-bit (one parcel) or 32-bit (two parcels)
+  instructions
+- floating point addition, subtraction, multiplication, and reciprocal
+  approximation used for division
+- integer or fixed point addition, subtraction, multiplication
+  - multiplication produces a 24-bit result
+  - addition and subtracion produce either 24- or 64-bit results
+  - no integer divide; accomplished through software algorithm using floating
+    point hardware
+- boolean operations OR, AND, XOR, and mask-controlled merge
+- shift operations allow the manipulation of 64-bit or 128-bit operands to
+  produce 64-bit results
+- all but 24-bit integer arithmetic operations are implemented in both vector
+  and scalar instructions
+- integer product is a scalar instruction designed for index calculation
+- full indexing capability allows the programmer to index throughout the memory
+  in eithe scalar or vector modes
+  - index may be positive or negative in either mode
+  - allows matrix operations in vector mode to be performed on rows or the
+    diagonal as well as conventional colum-oriented operations
+
+- maximum transfer rate for B, T, and V registers is one word per clock period
+- for A and S registers, transfer rate is one word per two clock periods
+
+Memory Section
+--------------
+
+- 0.25 - 1 M 64-bit bi-polar words
+
+- up to 1 M words of bi-polar memory
+  (64 data bits and eight error correction bits)
+- 8 or 16 banks
+- four-clock-period bank cycle time
+- one word per clock period transfer rate to B, T, and V registers
+- one word per two clock periods transfer rate for A and S registers
+- four words per clock period transfer rate to instruction buffers
+- single error correction; double error detection (SECDED)
+
+- memory cycle time is four clock periods (50 ns)
+- time required to fetch from memory to scalar register is 11 clock periods
+
+I/O Section
+-----------
+
+- 12 input channels
+- 12 output channels
+- MCU; maintenance control unit
+- mass storage
+- front-end computers
+- I/O stations
+- peripheral equipment
+
+- channel groups contation either six input or six output channels
+- channel groups served equally by memory (scanned every four clock periods)
+- channel priority resolved within channel groups
+- 16 data bits, 3 control bits per channel, 4 parity bits, external master clear
+- lost data detection
+
+- 12 full duplex 16-bit channels
+  - control lines; presence of data (ready), data received (resume), transfer
+    complete (disconnect)
+- 4 channel groups
+  - a group is 6 input or output paths
+- groups are scanned sequentially for I/O, one channel per clock period
+- channel group will be reinterrogated four clock periods later whether any
+  I/O request is pending or not
+- if omre than one channel of the channel group is active, requests are resolved
+  on a priority basis; lowest-numbered channel is serviced first
+

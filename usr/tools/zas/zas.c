@@ -2000,6 +2000,7 @@ zasreadfile(char *name, zasmemadr_t adr)
             done = 1;
         } else if (str[0] == ';'
                    || (str[0] == '/' && str[1] == '/')) {
+            /* the rest of the line is comment */
             done = 1;
         } else if (str[0] == '/' && str[1] == '*') {
             /* comment */
