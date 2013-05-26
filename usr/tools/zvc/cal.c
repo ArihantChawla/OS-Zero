@@ -78,7 +78,11 @@ static void
 calqueue(struct caltoken **head, struct caltoken **tail,
          struct caltoken *first, struct caltoken *last)
 {
-    last->next = NULL;
+    if (last) {
+        last->next = NULL;
+    } else {
+        first->next = NULL;
+    }
     if (!*head) {
         first->prev = NULL;
         *head = first;
@@ -185,6 +189,9 @@ caltokenize(char *line, struct caltoken **tailret)
                         calqueue(&head, &tail, tok, NULL);
                     }
                 }
+            } else {
+
+                return NULL;
             }
         }
     }
