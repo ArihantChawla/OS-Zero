@@ -64,7 +64,7 @@ vcgetvec(char *str, char **retstr)
                                 ndx = 1;
                             } else if (ndx) {
                                 fval += (vcfloat)tohex(*str) * mul;
-                                mul /= 16;
+                                mul *= 1 / 16;
                             } else {
                                 ival <<= 4;
                                 ival += tohex(*str);
@@ -80,7 +80,7 @@ vcgetvec(char *str, char **retstr)
                                 ndx = 1;
                             } else if (ndx) {
                                 fval += (vcfloat)tobin(*str) * mul;
-                                mul /= 2;
+                                mul *= 1 / 2;
                             } else {
                                 ival <<= 1;
                                 ival += tobin(*str);
@@ -96,7 +96,7 @@ vcgetvec(char *str, char **retstr)
                             ndx = 1;
                         } else if (ndx) {
                             fval += (vcfloat)todec(*str) * mul;
-                            mul /= 10;
+                            mul *= 1 / 10;
                         } else {
                             ival *= 10;
                             ival += todec(*str);
@@ -205,7 +205,7 @@ int
 main(int argc, char *argv[])
 {
     char            *ptr;
-    char            *str1 = "( 0 5 3.700 0xf )";
+    char            *str1 = "( 0 5 3.700 0xf 0b11 )";
     char            *str2 = "[ 2 4 ]";
     struct vcvec    *vec = vcgetvec(str1, &ptr);
     struct vcsegdes *des = vcgetsegdes(str2, &ptr);
