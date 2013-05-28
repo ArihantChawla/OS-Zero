@@ -38,6 +38,7 @@ vcgetvec(char *str, char **retstr)
     vcfloat       fval = 0.0;
     vcint         ival;
     long          ndx = 0;
+    long          bool;
     vcfloat       mul;
     size_t        n = 4;
     size_t        len = 0;
@@ -53,6 +54,7 @@ vcgetvec(char *str, char **retstr)
             if (*str != ')') {
                 ival = 0;
                 ndx = 0;
+                bool = 0;
                 if (*str == '0') {
                     str++;
                     if (tolower(*str) == 'x') {
@@ -88,6 +90,14 @@ vcgetvec(char *str, char **retstr)
                             str++;
                         }
                     }
+                } else if (*str == 'T') {
+                    str++;
+                    bool = 1;
+                    ival = VC_TRUE;
+                } else if (*str == 'F') {
+                    str++;
+                    bool = 1;
+                    ival = VC_FALSE;
                 } else {
                     mul = 1.0 / 10;
                     while (isdigit(*str) || *str == '.') {
@@ -108,7 +118,10 @@ vcgetvec(char *str, char **retstr)
                     n <<= 1;
                     vec->data = realloc(vec->data, n * sizeof(struct vcval));
                 }
-                if (ndx) {
+                if (bool) {
+                    vec->data[len].type = VC_BOOL;
+                    vec->data[len].data.i = ival;
+                } else if (ndx) {
                     vec->data[len].type = VC_FLOAT;
                     vec->data[len].data.f = fval;
                 } else {
@@ -207,8 +220,10 @@ main(int argc, char *argv[])
     char            *ptr;
     char            *str1 = "( 0 5 3.700 0xf 0b11 )";
     char            *str2 = "[ 2 4 ]";
+    char            *str3 = "( T F T )";
     struct vcvec    *vec = vcgetvec(str1, &ptr);
     struct vcsegdes *des = vcgetsegdes(str2, &ptr);
+    struct vcvec    *bool = vcgetvec(str3, &ptr);
     long             l;
 
     fprintf(stderr, "vector of %ld values:\n", vec->nval);
@@ -225,6 +240,10 @@ main(int argc, char *argv[])
         fprintf(stderr, "SEG: %lx\n", des->data[l]);
     }
 
+    fprintf(stderr, "boolean of %ld values:\n", bool->nval);
+    for (l = 0 ; l < bool->nval ; l++) {
+        fprintf(stderr, "BOOL: %lx\n", bool->data[l].data.i);
+    }
     exit(0);
 }
 
