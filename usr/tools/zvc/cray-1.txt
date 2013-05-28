@@ -91,3 +91,32 @@ I/O Section
 - if omre than one channel of the channel group is active, requests are resolved
   on a priority basis; lowest-numbered channel is serviced first
 
+Assembly Notes
+--------------
+
+Register Designators
+--------------------
+
+- A, B, S, T, and V registers; Cray X-MP adds SB, ST, and SM
+  - support registers
+    - Cray-1
+      - CA	- current address
+      - CL	- channel limit
+      - CI	- channel interrupt flag
+      - CE	- channel error flag
+      - RT	- real-time clock
+      - SB	- sign bit (Sk, with k=0)
+      - VL	- vector length
+      - XA	- exchange address
+    - Cray X-MP only
+      - VM	- vector mask
+      - MC	- master clear
+      - SM	- semaphore
+
+Location Field
+--------------
+
+- optional location symbol
+  - when present, it's got a parcel address as indicated by location counter
+    after forced to parcel boundary
+

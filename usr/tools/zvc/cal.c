@@ -157,10 +157,16 @@ caltokenize(char *line, struct caltoken **tailret)
                 str = calgetmicro(cp, &cp);
                 if (str) {
                     tok = malloc(sizeof(struct caltoken));
-                    tok->type = CAL_MICRO_TOKEN;
-                    tok->parm = CAL_NONE;
-                    tok->str = str;
-                    calqueue(&head, &tail, tok, NULL);
+                    if (tok) {
+                        tok->type = CAL_MICRO_TOKEN;
+                        tok->parm = CAL_NONE;
+                        tok->str = str;
+                        calqueue(&head, &tail, tok, NULL);
+                    } else {
+                        fprintf(stderr, "failed to allocate token\n");
+
+                        exit(1);
+                    }
                 } else {
                     fprintf(stderr, "unterminated micro %s\n", ptr);
 
@@ -184,12 +190,17 @@ caltokenize(char *line, struct caltoken **tailret)
                             }
                         }
                         *ptr = '\0';
+                    } else {
+                        fprintf(stderr, "failed to allocate name\n");
+
+                        exit(1);
                     }
                     if (len) {
                         calqueue(&head, &tail, tok, NULL);
                     }
                 }
             } else {
+                fprintf(stderr, "unrecognized input: %s\n", cp);
 
                 return NULL;
             }
