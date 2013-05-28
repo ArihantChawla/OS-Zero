@@ -7,28 +7,7 @@
 #define tobin(c) ((c) == '0' ? 0 : 1)
 #define todec(c) (tolower(c) - '0')
 
-static struct vcvec *vecstk;
-
-static __inline__ void
-vcpushvec(struct vcvec *vec)
-{
-    vec->next = vecstk;
-    vecstk = vec;
-
-    return;
-}
-
-static __inline__ struct vcvec *
-vcpopvec(void)
-{
-    struct vcvec *vec = vecstk;
-
-    if (vecstk) {
-        vecstk = vecstk->next;
-    }
-
-    return vec;
-}
+struct vcvec *vcvecstk;
 
 static struct vcvec *
 vcgetvec(char *str, char **retstr)
@@ -221,29 +200,55 @@ main(int argc, char *argv[])
     char            *str1 = "( 0 5 3.700 0xf 0b11 )";
     char            *str2 = "[ 2 4 ]";
     char            *str3 = "( T F T )";
-    struct vcvec    *vec = vcgetvec(str1, &ptr);
+    char            *str4 = "( 7 14 6 5 2 )";
+    char            *str5 = "( 7 )";
+    struct vcvec    *vec1 = vcgetvec(str1, &ptr);
+    struct vcvec    *vec2 = vcgetvec(str4, &ptr);
+    struct vcvec    *vec3;
+    struct vcvec    *vec4 = vcgetvec(str5, &ptr);
     struct vcsegdes *des = vcgetsegdes(str2, &ptr);
     struct vcvec    *bool = vcgetvec(str3, &ptr);
     long             l;
 
-    fprintf(stderr, "vector of %ld values:\n", vec->nval);
-    for (l = 0 ; l < vec->nval ; l++) {
-        if (vec->data[l].type == VC_INT) {
-            fprintf(stderr, "INT: %lx\n", vec->data[l].data.i);
+    fprintf(stderr, "vector of %ld values:\n", vec1->nval);
+    for (l = 0 ; l < vec1->nval ; l++) {
+        if (vec1->data[l].type == VC_INT) {
+            fprintf(stderr, "INT: %ld\n", vec1->data[l].data.i);
         } else {
-            fprintf(stderr, "FLOAT: %e\n", vec->data[l].data.f);
+            fprintf(stderr, "FLOAT: %e\n", vec1->data[l].data.f);
         }
     }
 
     fprintf(stderr, "descriptor of %ld segments:\n", des->nseg);
     for (l = 0 ; l < des->nseg ; l++) {
-        fprintf(stderr, "SEG: %lx\n", des->data[l]);
+        fprintf(stderr, "SEG: %ld\n", des->data[l]);
     }
 
     fprintf(stderr, "boolean of %ld values:\n", bool->nval);
     for (l = 0 ; l < bool->nval ; l++) {
-        fprintf(stderr, "BOOL: %lx\n", bool->data[l].data.i);
+        fprintf(stderr, "BOOL: %ld\n", bool->data[l].data.i);
     }
+
+    vec3 = vcaddv(vec2, vec1);
+    fprintf(stderr, "sum of %ld values:\n", vec3->nval);
+    for (l = 0 ; l < vec3->nval ; l++) {
+        if (vec3->data[l].type == VC_INT) {
+            fprintf(stderr, "INT: %ld\n", vec3->data[l].data.i);
+        } else {
+            fprintf(stderr, "FLOAT: %e\n", vec3->data[l].data.f);
+        }
+    }
+
+    vec3 = vcadds(vec4, vec1);
+    fprintf(stderr, "scalar sum of %ld values:\n", vec3->nval);
+    for (l = 0 ; l < vec3->nval ; l++) {
+        if (vec3->data[l].type == VC_INT) {
+            fprintf(stderr, "INT: %ld\n", vec3->data[l].data.i);
+        } else {
+            fprintf(stderr, "FLOAT: %e\n", vec3->data[l].data.f);
+        }
+    }
+
     exit(0);
 }
 
