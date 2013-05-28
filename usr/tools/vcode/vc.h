@@ -15,14 +15,14 @@ typedef int64_t vcsegdes;
 #define VC_FALSE INT64_C(0)
 #define VC_TRUE  INT64_C(~0)
 struct vcval {
-    long type;
     union {
         vcfloat f;
         vcint   i;
-    }    data;
+    } data;
 };
 
 struct vcvec {
+    long          type;
     size_t        nval;
     struct vcval *data;
     struct vcvec *next;
