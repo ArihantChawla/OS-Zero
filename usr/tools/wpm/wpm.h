@@ -11,6 +11,9 @@
 #include <zpc/zpc.h>
 #include <zpc/asm.h>
 #endif
+#if (WPM_VC)
+#include <vcode/vc.h>
+#endif
 
 #define THRSTKSIZE  (128 * 1024)
 #define WPMTEXTBASE 8192UL
@@ -137,12 +140,18 @@ typedef uint32_t wpmuword_t;
 #define WPMNASMOP  0x39
 /* unit IDS */
 #define UNIT_ALU   0x00	// arithmetic logical unit
-#define UNIT_SIMD  0x01	// vector unit
+#define UNIT_SIMD  0x01	// SIMD unit
 #define UNIT_FPU   0x02	// floating point unit
+#if (WPM_VC)
+#define UNIT_VEC   0x03
+#endif
 /* register flags */
 #define NREG       16
 #define NFREG      16
-#define NVREG      16
+#if (WPM_VC)
+#define NVREG      8
+#define NVITEM     8
+#endif
 struct _wpmopcode {
     wpmuword_t code;
     wpmword_t  args[2];
@@ -173,24 +182,30 @@ struct wpmobjhdr {
 
 /* initial state: all bytes zero */
 struct wpmcpustate {
-    wpmadr_t msw;               // machine status word
-    wpmadr_t fp;                // frame pointer
-    wpmadr_t sp;                // stack pointer
-    wpmadr_t pc;                // program counter (instruction pointer)
-#if 0
-    wpmadr_t pd;                // page directory address
-    wpmadr_t iv;                // interrupt vector address
-#endif
-    wpmadr_t isp;               // interrupt stack pointer
 #if (ZPC)
-    wpmword_t  regs[ZPCNREG] ALIGNED(CLSIZE);
-    float      fregs[ZPCNREG];
-    double     dregs[ZPCNREG];
+    wpmword_t regs[ZPCNREG] ALIGNED(CLSIZE);
+    float     fregs[ZPCNREG];
+    double    dregs[ZPCNREG];
 #else
-    wpmword_t  regs[NREG] ALIGNED(CLSIZE);
-    double     fregs[NFREG] ALIGNED(CLSIZE);
+    wpmword_t regs[NREG] ALIGNED(CLSIZE);
+    double    fregs[NFREG] ALIGNED(CLSIZE);
 #endif
-};
+#if (WPM_VC)
+    wpmadr_t  varegs[NVREG] ALIGNED(CLSIZE);
+    int64_t   vregs[NVREG][NVITEM] ALIGNED(CLSIZE);
+    vcint     vl;               // vector length
+    wpmadr_t  vsp;              // vector stack pointer
+#endif
+    wpmadr_t  msw;              // machine status word
+    wpmadr_t  fp;               // frame pointer
+    wpmadr_t  sp;               // stack pointer
+    wpmadr_t  pc;               // program counter (instruction pointer)
+#if 0
+    wpmadr_t  pd;               // page directory address
+    wpmadr_t  iv;               // interrupt vector address
+#endif
+    wpmadr_t  isp;              // interrupt stack pointer
+} ALIGNED(PAGESIZE);
 
 struct wpm {
     struct wpmcpustate cpustat;

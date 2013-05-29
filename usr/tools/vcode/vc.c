@@ -344,7 +344,7 @@ vcgetbvec(char *str, char **retstr)
     return vec;
 }
 
-static struct vcvec *
+struct vcvec *
 vcgetvec(char *str, char **retstr)
 {
     struct vcvec *vec = NULL;
@@ -368,7 +368,7 @@ vcgetvec(char *str, char **retstr)
     return vec;
 }
 
-static struct vcsegdes *
+struct vcsegdes *
 vcgetsegdes(char *str, char **retstr)
 {
     char            *ptr = str;
@@ -435,6 +435,8 @@ vcgetsegdes(char *str, char **retstr)
     return des;
 }
 
+#if (!WPM)
+
 int
 main(int argc, char *argv[])
 {
@@ -495,4 +497,6 @@ main(int argc, char *argv[])
 
     exit(0);
 }
+
+#endif
 

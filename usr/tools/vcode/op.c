@@ -50,7 +50,7 @@ vcaddv(struct vcvec *src, struct vcvec *dest)
     return vec;
 }
 
-/* add two vectors */
+/* subtract vector src from vector dest */
 struct vcvec *
 vcsubv(struct vcvec *src, struct vcvec *dest)
 {
@@ -98,7 +98,7 @@ vcsubv(struct vcvec *src, struct vcvec *dest)
     return vec;
 }
 
-/* add two vectors */
+/* multiply vector src by vector dest */
 struct vcvec *
 vcmulv(struct vcvec *src, struct vcvec *dest)
 {
@@ -146,7 +146,7 @@ vcmulv(struct vcvec *src, struct vcvec *dest)
     return vec;
 }
 
-/* add two vectors */
+/* divide vector src by vector dest */
 struct vcvec *
 vcdivv(struct vcvec *src, struct vcvec *dest)
 {
@@ -194,7 +194,7 @@ vcdivv(struct vcvec *src, struct vcvec *dest)
     return vec;
 }
 
-/* add two vectors */
+/* calculate modulus of vector dest with vector src */
 struct vcvec *
 vcmodv(struct vcvec *src, struct vcvec *dest)
 {
