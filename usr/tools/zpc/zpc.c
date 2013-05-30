@@ -6,7 +6,7 @@
 #include <zero/cdecl.h>
 #include <zero/trix.h>
 #include <zpc/zpc.h>
-#include <zpc/asm.h>
+//#include <zpc/asm.h>
 #include <zpc/op.h>
 #include <wpm/wpm.h>
 
@@ -16,6 +16,7 @@ void x11init(void);
 void x11nextevent(void);
 #endif
 
+#if (ZPCASM)
 struct zasopinfo zpcopinfotab[ZPCNASMOP]
 = {
     { NULL, 0 },
@@ -49,6 +50,7 @@ struct zasopinfo zpcopinfotab[ZPCNASMOP]
     { "thr", 1 },
     { NULL, 0 }
 };
+#endif /* ZPPASM */
 
 #if 0
 zpcop_t *zpcopfunctab[ZPCNASMOP] ALIGNED(PAGESIZE)

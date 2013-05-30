@@ -1,11 +1,13 @@
 #ifndef __ZPC_ZPC_H__
 #define __ZPC_ZPC_H__
 
+#define ZPCASM      0
+
 #include <stdint.h>
 #include <stddef.h>
 #include <zero/param.h>
 #include <zero/cdecl.h>
-#include <zpc/asm.h>
+//#include <zpc/asm.h>
 
 #define ZPCTEXTBASE 8192
 
@@ -100,7 +102,7 @@
 #define ZPCBUTTONUTIL  0x04
 #define ZPCBUTTONDEBUG 0x05
 
-typedef void zpcophandler_t(struct zpcopcode *);
+//typedef void zpcophandler_t(struct zpcopcode *);
 //typedef void zpchookfunc_t(struct zpcopcode *);
 typedef void zpcaction_t(void);
 
