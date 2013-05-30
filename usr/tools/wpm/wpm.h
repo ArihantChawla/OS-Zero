@@ -7,10 +7,6 @@
 #include <zero/cdecl.h>
 #include <zero/param.h>
 #include <wpm/mem.h>
-#if (ZPC)
-#include <zpc/zpc.h>
-#include <zpc/asm.h>
-#endif
 #if (WPM_VC)
 #include <vcode/vc.h>
 #endif
@@ -149,7 +145,7 @@ typedef uint32_t wpmuword_t;
 #define NREG       16
 #define NFREG      16
 #if (WPM_VC)
-#define NVREG      8
+#define NVREG      8    // later, 2 per thread
 #define NVITEM     8
 #endif
 struct _wpmopcode {
@@ -182,19 +178,14 @@ struct wpmobjhdr {
 
 /* initial state: all bytes zero */
 struct wpmcpustate {
-#if (ZPC)
-    wpmword_t regs[ZPCNREG] ALIGNED(CLSIZE);
-    float     fregs[ZPCNREG];
-    double    dregs[ZPCNREG];
-#else
     wpmword_t regs[NREG] ALIGNED(CLSIZE);
     double    fregs[NFREG] ALIGNED(CLSIZE);
-#endif
 #if (WPM_VC)
+    /* address registers */
     wpmadr_t  varegs[NVREG] ALIGNED(CLSIZE);
-    int64_t   vregs[NVREG][NVITEM] ALIGNED(CLSIZE);
-    vcint     vl;               // vector length
-    wpmadr_t  vsp;              // vector stack pointer
+//    int64_t   vregs[NVREG][NVITEM] ALIGNED(CLSIZE);
+    vcint     vlregs[NVREG];    // vector lengths
+//    wpmadr_t  vsp;              // vector stack pointer
 #endif
     wpmadr_t  msw;              // machine status word
     wpmadr_t  fp;               // frame pointer
@@ -216,11 +207,7 @@ struct wpm {
 
 struct wpm * wpminit(void);
 void *       wpmloop(void *start);
-#if (ZPC)
-void         wpmprintop(struct zpcopcode *op);
-#else
 void         wpmprintop(struct wpmopcode *op);
-#endif
 void         wpminitthr(wpmmemadr_t pc);
 
 extern __thread struct wpm *wpm;

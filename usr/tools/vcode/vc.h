@@ -28,12 +28,19 @@ struct vcvec {
     struct vcvec *next;
 };
 
+struct vcvec32 {
+    int32_t i1;
+    int32_t i2;
+} PACKED();
+
 struct vcsegdes {
     size_t  nseg;
     vcint  *data;
 };
 
+#if 0
 extern struct vcvec *vcvecstk;
+#endif
 
 struct vcvec    * vcgetvec(char *str, char **retstr);
 struct vcsegdes * vcgetsegdes(char *str, char **retstr);
@@ -48,6 +55,7 @@ struct vcvec    * vcdivs(struct vcvec *src, struct vcvec *dest);
 struct vcvec    * vcmodv(struct vcvec *src, struct vcvec *dest);
 struct vcvec    * vcmods(struct vcvec *src, struct vcvec *dest);
 
+#if 0
 static __inline__ void
 vcpushvec(struct vcvec *vec)
 {
@@ -68,6 +76,7 @@ vcpopvec(void)
 
     return vec;
 }
+#endif
 
 /* instruction IDs (opcodes) */
 #define OPVADD       0x01
