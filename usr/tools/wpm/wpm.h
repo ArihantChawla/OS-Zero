@@ -136,11 +136,10 @@ typedef uint32_t wpmuword_t;
 #define WPMNASMOP  0x39
 /* unit IDS */
 #define UNIT_ALU   0x00	// arithmetic logical unit
-#define UNIT_SIMD  0x01	// SIMD unit
-#define UNIT_FPU   0x02	// floating point unit
 #if (WPM_VC)
-#define UNIT_VEC   0x03
+#define UNIT_VEC   0x01
 #endif
+#define WPMNUNIT   (1 << 3)
 /* register flags */
 #define NREG       16
 #define NFREG      16
@@ -179,7 +178,7 @@ struct _wpmopcode {
 #define OPVROUND     0x17
 #define OPVITOF      0x18
 #define OPVITOB      0x19
-#define OPBTOI       0x1a
+#define OPVBTOI      0x1a
 #define OPVLOG       0x1b
 #define OPVSQRT      0x1c
 #define OPVEXP       0x1d
@@ -197,7 +196,7 @@ struct _wpmopcode {
 #define OPVMULSCAN   0x28
 #define OPVMAXSCAN   0x29
 #define OPVMINSCAN   0x2a
-#define OPVANDSACN   0x2b
+#define OPVANDSCAN   0x2b
 #define OPVORSCAN    0x2c
 #define OPVXORSCAN   0x2d
 #define OPVPLREDUCE  0x2e
@@ -229,7 +228,10 @@ struct _wpmopcode {
 #define OPVCPOP      0x47
 #define OPVPAIR      0x48
 #define OPVUNPAIR    0x49
-
+/* nfo bits for vector operations */
+#define OPV_INT      0x01
+#define OPV_FLOAT    0x02
+#define OPV_BOOL     0x03
 struct wpmopcode {
     unsigned  inst     : 8;	// instruction ID
     unsigned  unit     : 2;	// unit ID
@@ -237,8 +239,8 @@ struct wpmopcode {
     unsigned  arg2t    : 3;     // argument #2 type
     unsigned  reg1     : 6;	// register #1 ID + addressing flags
     unsigned  reg2     : 6;	// register #2 ID + addressing flags
-    unsigned  size     : 2;     // 1..3, operation size is size << 2
-    unsigned  res      : 2;
+    unsigned  size     : 2;     // 1..3, instruction size is size << 2
+    unsigned  nfo      : 2;     // flag bits */
     wpmword_t args[2];
 } __attribute__ ((__packed__));
 

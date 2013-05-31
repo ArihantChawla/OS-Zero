@@ -26,10 +26,6 @@
 #include <zero/prof.h>
 #endif
 #include <zas/zas.h>
-#if (ZPC)
-#include <zpc/zpc.h>
-#include <zpc/asm.h>
-#endif
 #include <wpm/mem.h>
 #include <wpm/wpm.h>
 
@@ -73,12 +69,7 @@ static struct zastoken * zasprocasciz(struct zastoken *, zasmemadr_t, zasmemadr_
 //static char    **zasopnametab;
 //static uint8_t  *zasopnargtab;
 static struct zasopinfo *zasopinfotab;
-#if (ZPC)
-extern char     *zpcopnametab[ZPCNASMOP];
-extern uint8_t   zpcopnargtab[ZPCNASMOP];
-#else
 extern struct zasopinfo wpmopinfotab[WPMNASMOP + 1];
-#endif
 
 struct zassymrec {
     struct zassymrec *next;
@@ -206,12 +197,8 @@ printtoken(struct zastoken *token)
 {
     switch (token->type) {
         case TOKENVALUE:
-#if (ZPC)
-            zpcprinttoken(token->token);
-#else
             fprintf(stderr, "value 0x%08x (size == %d)\n",
                     token->data.value.val, token->data.value.size);
-#endif
 
             break;
         case TOKENLABEL:
@@ -264,9 +251,6 @@ zasfreetoken(struct zastoken *token)
 {
 #if (ZASDB)
     free(token->file);
-#endif
-#if (ZPC)
-    free(token->token);
 #endif
     free(token);
 
@@ -800,21 +784,12 @@ zasgetindex(uint8_t *str, zasword_t *retndx, uint8_t **retptr)
         if (*str == '%') {
             str++;
         }
-#if (ZPC)
-        reg = zpcgetreg(str, &str);
-        if ((reg & 0x0f) >= ZPCNREG) {
-            fprintf(stderr, "invalid register name %s\n", str);
-
-            exit(1);
-        }
-#else
         reg = zasgetreg(str, &str);
         if (reg >= NREG) {
             fprintf(stderr, "invalid register name %s\n", str);
 
             exit(1);
         }
-#endif
         *retptr = str;
     }
     if (neg) {
@@ -913,9 +888,6 @@ zasgettoken(uint8_t *str, uint8_t **retptr)
     uint8_t         *buf = strbuf;
     struct zastoken *token1 = malloc(sizeof(struct zastoken));
     struct zastoken *token2;
-#if (ZPC)
-    struct zpctoken *zpctoken;
-#endif
     struct zasop    *op = NULL;
     uint8_t         *name = str;
     zasword_t        val = RESOLVE;
@@ -940,27 +912,6 @@ zasgettoken(uint8_t *str, uint8_t **retptr)
 #endif
     if ((*str) && (isdigit(*str) || *str == '-')) {
         val = zasgetindex(str, &ndx, &str);
-#if (ZPC)
-        if (val < ZPCNREG) {
-            token1->type = TOKENINDEX;
-            token1->data.ndx.reg = ZPCREGINDEX | val;
-            token1->data.ndx.val = ndx;
-        } else {
-            zpctoken = zpcgettoken((const char *)str, (char **)&str);
-            if (zpctoken) {
-                token1->type = TOKENVALUE;
-                token1->token = zpctoken;
-#if 0
-                token1->data.value.val = val;
-                token1->data.value.size = size;
-#endif
-            } else {
-                fprintf(stderr, "invalid token %s\n", linebuf);
-                
-                exit(1);
-            }
-        }
-#else
         if (val < NREG) {
             token1->type = TOKENINDEX;
             token1->data.ndx.reg = REGINDEX | val;
@@ -974,7 +925,6 @@ zasgettoken(uint8_t *str, uint8_t **retptr)
                 
             exit(1);
         }
-#endif
     } else if ((*str) && *str == '"') {
         str++;
         len = 0;
@@ -1021,15 +971,7 @@ zasgettoken(uint8_t *str, uint8_t **retptr)
         }
     } else if ((*str) && *str == '%') {
         str++;
-#if (ZPC)
-        val = zpcgetreg(str, &str);
-        if (val & ZPCREGSTKBIT) {
-            token1->token->param = ZPCCALC;
-            val &= ~ZPCREGSTKBIT;
-        }
-#else
         val = zasgetreg(str, &str);
-#endif
         token1->type = TOKENREG;
         token1->data.reg = val;
     } else if ((*str) && (isalpha(*str) || *str == '_')) {
@@ -1150,11 +1092,7 @@ zasgettoken(uint8_t *str, uint8_t **retptr)
             str++;
             val = zasgetreg(str, &str);
             token2->type = TOKENREG;
-#if (ZPC)
-            token2->data.reg = ZPCREGINDIR | val;
-#else
             token2->data.reg = REGINDIR | val;
-#endif
             zasqueuetoken(token1);
             token1 = token2;
         } else if (isalpha(*str) || *str == '_') {
@@ -1187,30 +1125,6 @@ zasprocvalue(struct zastoken *token, zasmemadr_t adr,
     uint8_t         *valptr = &physmem[adr];
     struct zastoken *retval;
 
-#if (ZPC)
-    switch (token->token->type) {
-        case ZPCINT64:
-            *((int64_t *)valptr) = token->token->data.ui64.i64;
-            *retadr = adr + sizeof(int64_t);
-
-            break;
-        case ZPCUINT64:
-            *((uint64_t *)valptr) = token->token->data.ui64.u64;
-            *retadr = adr + sizeof(uint64_t);
-
-            break;
-        case ZPCFLOAT:
-            *((float *)valptr) = token->token->data.f32;
-            *retadr = adr + sizeof(float);
-
-            break;
-        case ZPCDOUBLE:
-            *((double *)valptr) = token->token->data.f64;
-            *retadr = adr + sizeof(double);
-
-            break;
-    }
-#else
     switch (token->data.value.size) {
         case 1:
             *valptr = token->data.value.val;
@@ -1230,7 +1144,6 @@ zasprocvalue(struct zastoken *token, zasmemadr_t adr,
             break;
     }
     *retadr = adr + token->data.value.size;
-#endif
     retval = token->next;
     zasfreetoken(token);
 
@@ -1271,46 +1184,29 @@ static struct zastoken *
 zasprocinst(struct zastoken *token, zasmemadr_t adr,
             zasmemadr_t *retadr)
 {
-#if (ZPC)
-    struct zpcopcode *op;
-#else
     struct wpmopcode *op;
-#endif
     zasmemadr_t       opadr = rounduppow2(adr, 4);
     struct zastoken  *token1 = NULL;
     struct zastoken  *token2 = NULL;
     struct zastoken  *retval = NULL;
     struct zassymrec *sym;
     uint8_t           narg = token->data.inst.narg;
-#if (ZPC)
-    uint8_t           len = 8;
-#else
     uint8_t           len = token->data.inst.op == OPNOP ? 1 : 4;
-#endif
 
-#if (ZPC)
-    adr = opadr;
-#else
     while (adr < opadr) {
         physmem[adr] = OPNOP;
         adr++;
     }
-#endif
 //    adr = opadr;
 #if (ZASDB)
     zasaddline(adr, token->data.inst.data, token->file, token->line);
 #endif
-#if (ZPC)
-    op = (struct zpcopcode *)&physmem[adr];
-    op->inst = token->data.inst.op;
-#else
     op = (struct wpmopcode *)&physmem[adr];
     op->inst = token->data.inst.op;
     if (op->inst == OPNOP) {
         retval = token->next;
         adr++;
     } else
-#endif
     if (!narg) {
         op->arg1t = ARGNONE;
         op->arg2t = ARGNONE;
@@ -1324,11 +1220,7 @@ zasprocinst(struct zastoken *token, zasmemadr_t adr,
             switch(token1->type) {
                 case TOKENVALUE:
                     op->arg1t = ARGIMMED;
-#if (ZPC)
-                    op->args[0] = token1->token->data.ui64.u64;
-#else
                     op->args[0] = token1->data.value.val;
-#endif
                     len += sizeof(zasword_t);
                     
                     break;
@@ -1394,30 +1286,15 @@ zasprocinst(struct zastoken *token, zasmemadr_t adr,
         }
         if (narg == 1) {
             op->arg2t = ARGNONE;
-#if 0
-#if (ZPC)
-            op->reg2 = ZPCNREG;
-#elif (WPM)
-            op->reg2 = NREG;
-#endif
-#endif
         } else if (narg == 2 && (token2)) {
             switch(token2->type) {
                 case TOKENVALUE:
                     op->arg2t = ARGIMMED;
-#if (ZPC)
-                    if (op->arg1t == ARGREG) {
-                        op->args[0] = token2->token->data.ui64.i64;
-                    } else {
-                        op->args[1] = token2->token->data.ui64.i64;
-                    }
-#else
                     if (op->arg1t == ARGREG) {
                         op->args[0] = token2->data.value.val;
                     } else {
                         op->args[1] = token2->data.value.val;
                     }
-#endif
                     len += sizeof(zasword_t);
 
                     break;
@@ -1566,19 +1443,11 @@ zasprocspace(struct zastoken *token, zasmemadr_t adr,
 
     token1 = token->next;
     if ((token1) && token1->type == TOKENVALUE) {
-#if (ZPC)
-        spcadr = token1->token->data.ui64.u64;
-#else
         spcadr = token1->data.value.val;
-#endif
         token2 = token1->next;
         if ((token2) && token2->type == TOKENVALUE) {
             ptr = &physmem[spcadr];
-#if (ZPC)
-            val = token2->token->data.ui64.u64;
-#else
             val = token2->data.value.val;
-#endif
             while (adr < spcadr) {
                 ptr[0] = val;
                 adr++;
@@ -1611,13 +1480,8 @@ zasprocorg(struct zastoken *token, zasmemadr_t adr,
     token1 = token->next;
     if ((token1) && token1->type == TOKENVALUE) {
         ptr = &physmem[adr];
-#if (ZPC)
-        orgadr = token1->token->data.ui64.u64;
-        val = orgadr;
-#else
         orgadr = token1->data.value.val;
         val = token1->data.value.val;
-#endif
         while (adr < orgadr) {
             *ptr++ = val;
             adr++;
@@ -1636,11 +1500,7 @@ zasprocalign(struct zastoken *token, zasmemadr_t adr,
 
     token1 = token->next;
     if ((token1) && token1->type == TOKENVALUE) {
-#if (ZPC)
-        adr = rounduppow2(adr, token1->token->data.ui64.u64);
-#else
         adr = rounduppow2(adr, token1->data.value.val);
-#endif
     } else {
         fprintf(stderr, "invalid .align attribute token type %lx\n",
                 token1->type);

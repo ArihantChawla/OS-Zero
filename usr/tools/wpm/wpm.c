@@ -15,12 +15,11 @@
 #include <zero/mtx.h>
 #endif
 #include <zas/zas.h>
-#if (ZPC)
-#include <zpc/asm.h>
-#include <zpc/op.h>
-#endif
 #include <wpm/wpm.h>
 #include <wpm/mem.h>
+#if (WPM_VC)
+#include <wpm/vc.h>
+#endif
 
 #if defined(__i386__) || defined(__i486__) || defined(__i586__)         \
     || defined(__i686__) || defined(__x86_64__) || defined(__amd64__)
@@ -52,65 +51,147 @@ static int64_t memfetchq(wpmmemadr_t virt);
 static void    memstorel(int32_t src, wpmmemadr_t virt);
 static int32_t memfetchl(wpmmemadr_t virt);
 
-wpmophandler_t *wpmopfunctab[256] ALIGNED(PAGESIZE)
-    = {
-    NULL,
-    opnot,
-    opand,
-    opor,
-    opxor,
-    opshr,
-    opshra,
-    opshl,
-    opror,
-    oprol,
-    opinc,
-    opdec,
-    opadd,
-    opsub,
-    opcmp,
-    opmul,
-    opdiv,
-    opmod,
-    opbz,
-    opbnz,
-    opblt,
-    opble,
-    opbgt,
-    opbge,
-    opbo,
-    opbno,
-    opbc,
-    opbnc,
-    oppop,
-    oppush,
-    opmov,
-    opmovb,
-    opmovw,
-    opjmp,
-    opcall,
-    openter,
-    opleave,
-    opret,
-    oplmsw,
-    opsmsw,
-    opreset,
-    opnop,
-    ophlt,
-    opbrk,
-    optrap,
-    opcli,
-    opsti,
-    opiret,
-    opthr,
-    opcmpswap,
-    opinb,
-    opoutb,
-    opinw,
-    opoutw,
-    opinl,
-    opoutl,
-    ophook
+wpmophandler_t *wpmopfunctab[WPMNUNIT][256] ALIGNED(PAGESIZE)
+= {
+    {
+        NULL,
+        opnot,
+        opand,
+        opor,
+        opxor,
+        opshr,
+        opshra,
+        opshl,
+        opror,
+        oprol,
+        opinc,
+        opdec,
+        opadd,
+        opsub,
+        opcmp,
+        opmul,
+        opdiv,
+        opmod,
+        opbz,
+        opbnz,
+        opblt,
+        opble,
+        opbgt,
+        opbge,
+        opbo,
+        opbno,
+        opbc,
+        opbnc,
+        oppop,
+        oppush,
+        opmov,
+        opmovb,
+        opmovw,
+        opjmp,
+        opcall,
+        openter,
+        opleave,
+        opret,
+        oplmsw,
+        opsmsw,
+        opreset,
+        opnop,
+        ophlt,
+        opbrk,
+        optrap,
+        opcli,
+        opsti,
+        opiret,
+        opthr,
+        opcmpswap,
+        opinb,
+        opoutb,
+        opinw,
+        opoutw,
+        opinl,
+        opoutl,
+        ophook
+    },
+    {
+        NULL,
+        opvadd,
+        opvsub,
+        opvmul,
+        opvdiv,
+        opvmod,
+        opvlt,
+        opvlte,
+        opvgt,
+        opvgte,
+        opveq,
+        opvineq,
+        opvshl,
+        opvshr,
+        opvnot,
+        opvand,
+        opvor,
+        opvxor,
+        opvselect,
+        opvrand,
+        opvfloor,
+        opvceil,
+        opvtrunc,
+        opvround,
+        opvitof,
+        opvitob,
+        opbtoi,
+        opvlog,
+        opvsqrt,
+        opvexp,
+        opvsin,
+        opvcos,
+        opvtan,
+        opvasin,
+        opvacos,
+        opvatan,
+        opvsinh,
+        opvcosh,
+        opvtanh,
+        opvplscan,
+        opvmulscan,
+        opvmaxscan,
+        opvminscan,
+        opvadnscan,
+        opvorscan,
+        opvxorscan,
+        opvplreduce,
+        opvmulreduce,
+        opvmaxreduce,
+        opvminreduce,
+        opvandreduce,
+        opvorreduce,
+        opvxorreduce,
+        opvpermute,
+        opvdpermute,
+        opvfpermute,
+        opvbpermute,
+        opvbfpermute,
+        opvdfpermute,
+        opvpermute,
+        opvextract,
+        opvreplace,
+        opvpack,
+        opvrankup,
+        opvrankdown,
+        opvdist,
+        opvindex,
+        opvlength,
+        opvmkdes,
+        opvlengths,
+        opvcopy,
+        opvpop,
+        opvcpop,
+        opvpair,
+        opvunpair,
+        NULL
+    },
+    { NULL },
+    { NULL }
 };
 
 struct zasopinfo wpmopinfotab[WPMNASMOP + 1]
@@ -277,13 +358,8 @@ wpmprintop(struct wpmopcode *op)
 void *
 wpmloop(void *cpustat)
 {
-#if (ZPC)
-    zpcophandler_t   *func;
-    struct zpcopcode *op;
-#else
     wpmophandler_t   *func;
     struct wpmopcode *op;
-#endif
 #if (WPMTRACE)
     int               i;
 #endif
@@ -310,25 +386,13 @@ wpmloop(void *cpustat)
     memcpy(&wpm->cpustat, cpustat, sizeof(struct wpmcpustate));
     free(cpustat);
     while (!wpm->shutdown) {
-#if (ZPC)
-        op = (struct zpcopcode *)&physmem[wpm->cpustat.pc];
-#else
         op = (struct wpmopcode *)&physmem[wpm->cpustat.pc];
-#endif
         if (op->inst == OPNOP) {
             wpm->cpustat.pc++;
         } else {
             wpm->cpustat.pc = rounduppow2(wpm->cpustat.pc, sizeof(wpmword_t));
-#if (ZPC)
-            op = (struct zpcopcode *)&physmem[wpm->cpustat.pc];
-#else
             op = (struct wpmopcode *)&physmem[wpm->cpustat.pc];
-#endif
-#if (ZPC)
-            func = zpcopfunctab[op->inst];
-#else
-            func = wpmopfunctab[op->inst];
-#endif
+            func = wpmopfunctab[op->unit][op->inst];
             if (func) {
 #if (WPMDB)
                 line = zasfindline(wpm->cpustat.pc);
@@ -1822,11 +1886,7 @@ int
 wpmmain(int argc, char *argv[])
 {
     long        l;
-#if (ZPC)
-    zasmemadr_t adr = ZPCTEXTBASE;
-#else
     zasmemadr_t adr = WPMTEXTBASE;
-#endif
 #if (ZASPROF)
     PROFDECLCLK(clk);
 #endif
@@ -1854,11 +1914,7 @@ wpmmain(int argc, char *argv[])
         } else {
             zasinputread = 1;
             adr = zastranslate(adr);
-#if (ZPC)
-            zasresolve(ZPCTEXTBASE);
-#else
             zasresolve(WPMTEXTBASE);
-#endif
             zasremovesyms();
 #if (ZASPROF)
             profstopclk(clk);
