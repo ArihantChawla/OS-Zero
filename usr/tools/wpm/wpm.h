@@ -133,7 +133,7 @@ typedef uint32_t wpmuword_t;
 #define OPINL      0x36 // read 32-bit long
 #define OPOUTL     0x37 // write 32-bit long
 #define OPHOOK     0x38 // system services
-#define WPMNASMOP  0x39
+#define WPMNASMOP  256
 /* unit IDS */
 #define UNIT_ALU   0x00	// arithmetic logical unit
 #if (WPM_VC)

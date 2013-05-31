@@ -68,8 +68,8 @@ static struct zastoken * zasprocasciz(struct zastoken *, zasmemadr_t, zasmemadr_
 /* TODO: combine these into a structure table for better cache locality */
 //static char    **zasopnametab;
 //static uint8_t  *zasopnargtab;
-static struct zasopinfo *zasopinfotab;
-extern struct zasopinfo wpmopinfotab[WPMNASMOP + 1];
+static struct zasopinfo *zasopinfotab[WPMNUNIT];
+//extern struct zasopinfo   wpmopinfotab[WPMNUNIT][WPMNASMOP];
 
 struct zassymrec {
     struct zassymrec *next;
@@ -79,6 +79,7 @@ struct zassymrec {
 
 #define NHASHITEM 1024
 static struct zasop     *ophash[NHASHITEM] ALIGNED(PAGESIZE);
+static struct zasop     *vecophash[NHASHITEM];
 static struct zassymrec *symhash[NHASHITEM];
 static struct zasval    *valhash[NHASHITEM];
 static struct zaslabel  *globhash[NHASHITEM];
@@ -315,6 +316,44 @@ zasfindop(uint8_t *name)
     return op;
 }
 
+static void
+zasaddvecop(struct zasop *op)
+{
+    uint8_t       *str = op->name;
+    unsigned long  key = 0;
+    unsigned long  len = 0;
+
+    while (*str) {
+        key += *str++;
+        len++;
+    }
+    op->len = len;
+    key &= (NHASHITEM - 1);
+    op->next = vecophash[key];
+    vecophash[key] = op;
+
+    return;
+}
+
+struct zasop *
+zasfindvecop(uint8_t *name)
+{
+    struct zasop  *op = NULL;
+    uint8_t       *str = name;
+    unsigned long  key = 0;
+
+    while ((*str) && isalpha(*str)) {
+        key += *str++;
+    }
+    key &= (NHASHITEM - 1);
+    op = vecophash[key];
+    while ((op) && strncmp((char *)op->name, (char *)name, op->len)) {
+        op = op->next;
+    }
+
+    return op;
+}
+
 #if (ZASDB) || (WPMDB)
 void
 zasaddline(zasmemadr_t adr, uint8_t *data, uint8_t *filename, unsigned long line)
@@ -510,12 +549,20 @@ zasinitop(void)
     struct zasop *op;
     long       l;
 
-    for (l = 1 ; (zasopinfotab[l].name) ; l++) {
+    for (l = 1 ; (zasopinfotab[UNIT_ALU][l].name) ; l++) {
         op = malloc(sizeof(struct zasop));
-        op->name = (uint8_t *)zasopinfotab[l].name;
+        op->name = (uint8_t *)(zasopinfotab[UNIT_ALU][l].name);
         op->code = (uint8_t)l;
-        op->narg = zasopinfotab[l].narg;
+        op->narg = zasopinfotab[UNIT_ALU][l].narg;
         zasaddop(op);
+    }
+
+    for (l = 1 ; (zasopinfotab[UNIT_VEC][l].name) ; l++) {
+        op = malloc(sizeof(struct zasop));
+        op->name = (uint8_t *)(zasopinfotab[UNIT_VEC][l].name);
+        op->code = (uint8_t)l;
+        op->narg = zasopinfotab[UNIT_VEC][l].narg;
+        zasaddvecop(op);
     }
 
     return;
@@ -1570,9 +1617,10 @@ zasprocasciz(struct zastoken *token, zasmemadr_t adr,
 }
 
 void
-zasinit(struct zasopinfo *opinfotab)
+zasinit(struct zasopinfo *opinfotab, struct zasopinfo *vecinfotab)
 {
-    zasopinfotab = opinfotab;
+    zasopinfotab[0] = opinfotab;
+    zasopinfotab[1] = vecinfotab;
     zasinitop();
     zasinitbuf();
 }

@@ -134,7 +134,7 @@ struct zasline {
 struct zasline * zasfindline(zasmemadr_t adr);
 #endif
 
-void        zasinit(struct zasopinfo *opinfo);
+void        zasinit(struct zasopinfo *opinfotab, struct zasopinfo *vecinfotab);
 zasmemadr_t zastranslate(zasmemadr_t base);
 void        zasresolve(zasmemadr_t base);
 void        zasremovesyms(void);

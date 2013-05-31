@@ -190,72 +190,166 @@ wpmophandler_t *wpmopfunctab[WPMNUNIT][256] ALIGNED(PAGESIZE)
         opvunpair,
         NULL
     },
-    { NULL },
-    { NULL }
+    {
+        NULL
+    },
+    {
+        NULL
+    }
 };
 
-struct zasopinfo wpmopinfotab[WPMNASMOP + 1]
+struct zasopinfo wpmopinfotab[WPMNUNIT][WPMNASMOP]
 = {
-    { NULL, 0 },
-    { "not", 1 },
-    { "and", 2 },
-    { "or", 2 },
-    { "xor", 2 },
-    { "shr", 2 },
-    { "shra", 2 },
-    { "shl", 2 },
-    { "ror", 2 },
-    { "rol", 2},
-    { "inc", 1 },
-    { "dec", 1 },
-    { "add", 2},
-    { "sub", 2 },
-    { "cmp", 2 },
-    { "mul", 2 },
-    { "div", 2 },
-    { "mod", 2 },
-    { "bz", 1 },
-    { "bnz", 1 },
-    { "blt", 1 },
-    { "ble", 1 },
-    { "bgt", 1 },
-    { "bge", 1 },
-    { "bo", 1 },
-    { "bno", 1 },
-    { "bc", 1 },
-    { "bnc", 1 },
-    { "pop", 1 },
-    { "push", 1 },
-    { "mov", 2 },
-    { "movb", 2 },
-    { "movw", 2 },
-    { "jmp", 1 },
-    { "call", 1 },
-    { "enter", 0 },
-    { "leave", 0 },
-    { "ret", 0 },
-    { "lmsw", 1 },
-    { "smsw", 1 },
-    { "reset", 0 },
-    { "nop", 0 },
-    { "hlt", 0 },
-    { "brk", 1 },
-    { "trap", 1 },
-    { "cli", 0 },
-    { "sti", 0 },
-    { "iret", 0 },
-    { "thr", 1 },
-    { "cmpswap", 2 },
-    { "inb", 1 },
-    { "outb", 2 },
-    { "inw", 1 },
-    { "outw", 2 },
-    { "inl", 1 },
-    { "outl", 2 },
-    { "hook", 1 },
-    { NULL, 0 }
+    {
+        { NULL, 0 },
+        { "not", 1 },
+        { "and", 2 },
+        { "or", 2 },
+        { "xor", 2 },
+        { "shr", 2 },
+        { "shra", 2 },
+        { "shl", 2 },
+        { "ror", 2 },
+        { "rol", 2},
+        { "inc", 1 },
+        { "dec", 1 },
+        { "add", 2},
+        { "sub", 2 },
+        { "cmp", 2 },
+        { "mul", 2 },
+        { "div", 2 },
+        { "mod", 2 },
+        { "bz", 1 },
+        { "bnz", 1 },
+        { "blt", 1 },
+        { "ble", 1 },
+        { "bgt", 1 },
+        { "bge", 1 },
+        { "bo", 1 },
+        { "bno", 1 },
+        { "bc", 1 },
+        { "bnc", 1 },
+        { "pop", 1 },
+        { "push", 1 },
+        { "mov", 2 },
+        { "movb", 2 },
+        { "movw", 2 },
+        { "jmp", 1 },
+        { "call", 1 },
+        { "enter", 0 },
+        { "leave", 0 },
+        { "ret", 0 },
+        { "lmsw", 1 },
+        { "smsw", 1 },
+        { "reset", 0 },
+        { "nop", 0 },
+        { "hlt", 0 },
+        { "brk", 1 },
+        { "trap", 1 },
+        { "cli", 0 },
+        { "sti", 0 },
+        { "iret", 0 },
+        { "thr", 1 },
+        { "cmpswap", 2 },
+        { "inb", 1 },
+        { "outb", 2 },
+        { "inw", 1 },
+        { "outw", 2 },
+        { "inl", 1 },
+        { "outl", 2 },
+        { "hook", 1 },
+        { NULL, 0 }
+    },
+    {
+        { NULL, 0 },
+        { "vadd", 2 },
+        { "vsub", 2 },
+        { "vmul", 2 },
+        { "vdiv", 2 },
+        { "vmod", 2 },
+        { "vlt", 2 },
+        { "vlte", 2 },
+        { "vgt", 2 },
+        { "vgte", 2 },
+        { "veq", 2 },
+        { "vineq", 2 },
+        { "vshl", 2 },
+        { "vshr", 2 },
+        { "vnot", 2 },
+        { "vand", 2 },
+        { "vor", 2 },
+        { "vxor", 2 },
+        { "vselect", 2 },
+        { "vrand", 2 },
+        { "vfloor", 2 },
+        { "vceil", 2 },
+        { "vtrunc", 2 },
+        { "vround", 2 },
+        { "vitof", 2 },
+        { "vitob", 2 },
+        { "btoi", 2 },
+        { "vlog", 2 },
+        { "vsqrt", 2 },
+        { "vexp", 2 },
+        { "vsin", 2 },
+        { "vcos", 2 },
+        { "vtan", 2 },
+        { "vasin", 2 },
+        { "vacos", 2 },
+        { "vatan", 2 },
+        { "vsinh", 2 },
+        { "vcosh", 2 },
+        { "vtanh", 2 },
+        { "vplscan", 2 },
+        { "vmulscan", 2 },
+        { "vmaxscan", 2 },
+        { "vminscan", 2 },
+        { "vadnscan", 2 },
+        { "vorscan", 2 },
+        { "vxorscan", 2 },
+        { "vplreduce", 2 },
+        { "vmulreduce", 2 },
+        { "vmaxreduce", 2 },
+        { "vminreduce", 2 },
+        { "vandreduce", 2 },
+        { "vorreduce", 2 },
+        { "vxorreduce", 2 },
+        { "vpermute", 2 },
+        { "vdpermute", 2 },
+        { "vfpermute", 2 },
+        { "vbpermute", 2 },
+        { "vbfpermute", 2 },
+        { "vdfpermute", 2 },
+        { "vpermute", 2 },
+        { "vextract", 2 },
+        { "vreplace", 2 },
+        { "vpack", 2 },
+        { "vrankup", 2 },
+        { "vrankdown", 2 },
+        { "vdist", 2 },
+        { "vindex", 2 },
+        { "vlength", 2 },
+        { "vmkdes", 2 },
+        { "vlengths", 2 },
+        { "vcopy", 2 },
+        { "vpop", 2 },
+        { "vcpop", 2 },
+        { "vpair", 2 },
+        { "vunpair", 2 },
+        { NULL, 0 }
+    },
+    {
+        {
+            NULL, 0
+        }
+    },
+    {
+        {
+            NULL, 0
+        }
+    }
 };
-
+    
 #if (WPM)
 wpmhookfunc_t *hookfunctab[256]
 = {
@@ -346,7 +440,7 @@ wpminitthr(wpmmemadr_t pc)
 void
 wpmprintop(struct wpmopcode *op)
 {
-    fprintf(stderr, "INST: %s, size %d, arg1t == %s, arg2t == %s, reg1 == %x, reg2 == %x, args[0] == %x", wpmopinfotab[op->inst].name, op->size << 2, argnametab[op->arg1t], argnametab[op->arg2t], op->reg1, op->reg2, op->args[0]);
+    fprintf(stderr, "INST: %s, size %d, arg1t == %s, arg2t == %s, reg1 == %x, reg2 == %x, args[0] == %x", wpmopinfotab[op->unit][op->inst].name, op->size << 2, argnametab[op->arg1t], argnametab[op->arg2t], op->reg1, op->reg2, op->args[0]);
     if (op->arg2t) {
         fprintf(stderr, ", args[1] == %x", op->args[1]);
     }
@@ -1896,7 +1990,7 @@ wpmmain(int argc, char *argv[])
 
         exit(1);
     }
-    zasinit(wpmopinfotab);
+    zasinit(&wpmopinfotab[0][0], &wpmopinfotab[1][0]);
     wpminitmem(MEMSIZE);
     wpminit();
     memset(physmem, 0, WPMTEXTBASE);
