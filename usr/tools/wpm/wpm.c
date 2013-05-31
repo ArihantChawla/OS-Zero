@@ -52,13 +52,6 @@ static int64_t memfetchq(wpmmemadr_t virt);
 static void    memstorel(int32_t src, wpmmemadr_t virt);
 static int32_t memfetchl(wpmmemadr_t virt);
 
-#if (ZPC)
-
-extern zpcophandler_t   *zpcopfunctab[ZPCNASMOP + 1];
-extern struct zasopinfo  zpcopinfotab[ZPCNASMOP + 1];
-
-#else
-
 wpmophandler_t *wpmopfunctab[256] ALIGNED(PAGESIZE)
     = {
     NULL,
@@ -181,8 +174,6 @@ struct zasopinfo wpmopinfotab[WPMNASMOP + 1]
     { "hook", 1 },
     { NULL, 0 }
 };
-
-#endif /* !ZPC */
 
 #if (WPM)
 wpmhookfunc_t *hookfunctab[256]
