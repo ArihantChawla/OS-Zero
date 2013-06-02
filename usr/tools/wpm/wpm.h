@@ -239,9 +239,24 @@ struct wpmopcode {
     unsigned  arg2t    : 3;     // argument #2 type
     unsigned  reg1     : 6;	// register #1 ID + addressing flags
     unsigned  reg2     : 6;	// register #2 ID + addressing flags
-    unsigned  size     : 2;     // 1..3, instruction size is size << 2
-    unsigned  nfo      : 2;     // flag bits */
+    unsigned  size     : 2;     // operation size == size << 2
+    unsigned  res      : 2;     // reserved
     wpmword_t args[2];
+} __attribute__ ((__packed__));
+
+/* argument types */
+#define VOP_ADR 0
+#define VOP_REG 1
+struct wpmveccode {
+    unsigned inst :  8;
+    unsigned unit :  2;         // UNIT_VEC
+    unsigned arg1t : 1;
+    unsigned arg2t : 1;
+    unsigned reg1  : 4;
+    unsigned reg2  : 4;
+    unsigned elsz  : 3;         // element size == opsz + 1
+    unsigned treg  : 4;         // temporary register ID result
+    unsigned res   : 5;
 } __attribute__ ((__packed__));
 
 struct wpmobjhdr {
@@ -257,13 +272,14 @@ struct wpmobjhdr {
 
 /* initial state: all bytes zero */
 struct wpmcpustate {
-    wpmword_t regs[NREG] ALIGNED(CLSIZE);
-    double    fregs[NFREG] ALIGNED(CLSIZE);
+    wpmword_t  regs[NREG] ALIGNED(CLSIZE);
+    double     fregs[NFREG] ALIGNED(CLSIZE);
 #if (WPM_VC)
     /* address registers */
-    wpmadr_t  varegs[NVREG] ALIGNED(CLSIZE);
+    vcint      varegs[NVREG] ALIGNED(CLSIZE);
 //    int64_t   vregs[NVREG][NVITEM] ALIGNED(CLSIZE);
-    vcint     vlregs[NVREG];    // vector lengths
+    vcint      vlregs[NVREG];    // vector lengths
+    vcint      vtregs[NVREG];    // vector types
 //    wpmadr_t  vsp;              // vector stack pointer
 #endif
     wpmadr_t  msw;              // machine status word
