@@ -222,11 +222,11 @@ printtoken(struct zastoken *token)
 
             break;
         case TOKENVAREG:
-            fprintf(stderr, "address register r%1lx\n", (long)token->data.ndx.reg);
+            fprintf(stderr, "address register va%1lx\n", (long)token->data.ndx.reg);
 
             break;
         case TOKENVLREG:
-            fprintf(stderr, "length register r%1lx\n", (long)token->data.ndx.reg);
+            fprintf(stderr, "length register vl%1lx\n", (long)token->data.ndx.reg);
 
             break;
         case TOKENSYM:
@@ -1318,6 +1318,7 @@ static struct zastoken *
 zasprocvalue(struct zastoken *token, zasmemadr_t adr,
              zasmemadr_t *retadr)
 {
+    zasmemadr_t      ret = adr + token->data.value.size;
     uint8_t         *valptr = &physmem[adr];
     struct zastoken *retval;
 
@@ -1339,7 +1340,7 @@ zasprocvalue(struct zastoken *token, zasmemadr_t adr,
 
             break;
     }
-    *retadr = adr + token->data.value.size;
+    *retadr = ret;
     retval = token->next;
     zasfreetoken(token);
 
@@ -1405,7 +1406,6 @@ zasprocinst(struct zastoken *token, zasmemadr_t adr,
         vop = (struct wpmvecopcode *)&physmem[adr];
         vop->inst = token->data.inst.op;
         vop->unit = UNIT_VEC;
-        vop->size = len;
         token1 = token->next;
         zasfreetoken(token);
         if (token1) {
@@ -1415,41 +1415,53 @@ zasprocinst(struct zastoken *token, zasmemadr_t adr,
                     vop->reg1 = token1->data.reg & 0xff;
                     
                     break;
-#if 0
                 case TOKENVLREG:
                     vop->arg1t = ARGVLREG;
                     vop->reg1 = token1->data.reg & 0xff;
-#endif
+                    
+                    break;
+                case TOKENIMMED:
+                    vop->arg1t = ARGIMMED;
+                    vop->args[0] = token1->val;
+                    len += 4;
+                    
+                    break;
+                case TOKENADR:
+                    vop->arg1t = ARGIMMED;
+                    sym = malloc(sizeof(struct zassymrec));
+                    sym->name = (uint8_t *)strdup((char *)token1->data.sym.name);
+                    sym->adr = (uintptr_t)&op->args[0];
+                    zasqueuesym(sym);
+                    len += 4;
                     
                     break;
                 default:
                     fprintf(stderr, "invalid argument 1 of type %lx\n", token1->type);
                     printtoken(token1);
-
+                    
                     exit(1);
-
+                    
                     break;
             }
             token2 = token1->next;
             zasfreetoken(token1);
             retval = token2;
         }
+        vop->size = len >> 2;
         if (narg == 1) {
             vop->arg2t = ARGNONE;
         } else if (narg == 2 && (token2)) {
             switch(token2->type) {
                 case TOKENVAREG:
-                    vop->arg1t = ARGVAREG;
-                    vop->reg1 = token1->data.reg & 0xff;
+                    vop->arg2t = ARGVAREG;
+                    vop->reg2 = token2->data.reg & 0xff;
                     
                     break;
-#if 0
                 case TOKENVLREG:
-                    vop->arg1t = ARGVLREG;
-                    vop->reg1 = token1->data.reg & 0xff;
+                    vop->arg2t = ARGVLREG;
+                    vop->reg2 = token2->data.reg & 0xff;
                     
                     break;
-#endif
                 default:
                     fprintf(stderr, "invalid argument 2 of type %lx\n", token2->type);
                     printtoken(token2);
@@ -1481,18 +1493,6 @@ zasprocinst(struct zastoken *token, zasmemadr_t adr,
                 zasfreetoken(token);
                 if (token1) {
                     switch(token1->type) {
-#if (WPMVEC)
-                        case TOKENVAREG:
-                            op->arg1t = ARGVAREG;
-                            op->reg1 = token1->data.reg & 0xff;
-                            
-                            break;
-                        case TOKENVLREG:
-                            op->arg1t = ARGVLREG;
-                            op->reg1 = token1->data.reg & 0xff;
-                            
-                            break;
-#endif
                         case TOKENVALUE:
                             op->arg1t = ARGIMMED;
                             op->args[0] = token1->data.value.val;
@@ -1566,12 +1566,12 @@ zasprocinst(struct zastoken *token, zasmemadr_t adr,
 #if (WPMVEC)
                         case TOKENVAREG:
                             op->arg2t = ARGVAREG;
-                            op->reg2 = token1->data.reg & 0xff;
+                            op->reg2 = token2->data.reg & 0xff;
                             
                             break;
                         case TOKENVLREG:
                             op->arg2t = ARGVLREG;
-                            op->reg2 = token1->data.reg & 0xff;
+                            op->reg2 = token2->data.reg & 0xff;
                             
                             break;
 #endif
