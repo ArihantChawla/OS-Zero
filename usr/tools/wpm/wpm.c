@@ -2056,7 +2056,7 @@ wpmmain(int argc, char *argv[])
     }
     fprintf(stderr, "%lx\n", (long)_startadr);
     wpminitthr(_startadr);
-//    pause();
+    pause();
 
     /* NOTREACHED */
     exit(0);

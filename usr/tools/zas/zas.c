@@ -1692,6 +1692,7 @@ zasprocdata(struct zastoken *token, zasmemadr_t adr,
     zasmemadr_t      valadr = adr;
 
     while ((token1) && token1->type == TOKENVALUE) {
+        token1->data.value.size = token->data.size;
         token1 = zasprocvalue(token1, valadr, &valadr);
     }
     *retadr = valadr;
