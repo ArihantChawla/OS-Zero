@@ -1420,22 +1420,34 @@ oppush(struct wpmopcode *op)
 void
 opmov(struct wpmopcode *op)
 {
-    uint_fast8_t argt1 = op->arg1t;
-    uint_fast8_t argt2 = op->arg2t;
-    wpmword_t    reg1  = op->reg1;
-    wpmword_t    reg2  = op->reg2;
-    wpmword_t    src = (argt1 == ARGREG
-                        ? ((reg1 & REGINDEX)
-                           ? memfetchl(wpm->cpustat.regs[reg1 & 0x0f]
-                                       + op->args[0])
-                           : (reg1 & REGINDIR
-                              ? memfetchl(wpm->cpustat.regs[reg1 & 0x0f])
-                              : wpm->cpustat.regs[reg1 & 0x0f]))
-                        : (argt1 == ARGIMMED
-                           ? op->args[0]
-                           : memfetchl(op->args[0])));
-    wpmword_t    dest;
-
+#if (WPMVEC)
+    struct wpmvecopcode *vop = (struct wpmvecopcode *)op;
+#endif
+    uint_fast8_t         argt1 = op->arg1t;
+    uint_fast8_t         argt2 = op->arg2t;
+#if (WPMVEC)
+    wpmword_t            reg1 = (op->unit == UNIT_VEC
+                                 ? vop->reg1
+                                 : op->reg1);
+    wpmword_t            reg2 = (op->unit == UNIT_VEC
+                                 ? vop->reg2
+                                 : op->reg2);
+#else
+    wpmword_t            reg1 = op->reg1;
+    wpmword_t            reg2 = op->reg2;
+#endif
+    wpmword_t            src = (argt1 == ARGREG
+                                ? ((reg1 & REGINDEX)
+                                   ? memfetchl(wpm->cpustat.regs[reg1 & 0x0f]
+                                               + op->args[0])
+                                   : (reg1 & REGINDIR
+                                      ? memfetchl(wpm->cpustat.regs[reg1 & 0x0f])
+                                      : wpm->cpustat.regs[reg1 & 0x0f]))
+                                : (argt1 == ARGIMMED
+                                   ? op->args[0]
+                                   : memfetchl(op->args[0])));
+    wpmword_t            dest;
+    
 #if (WPMVEC)
     if (argt2 == ARGVAREG) {
         wpm->cpustat.varegs[reg2 & 0x07] = src;
@@ -1443,26 +1455,34 @@ opmov(struct wpmopcode *op)
         wpm->cpustat.vlregs[reg2 & 0x07] = src;
     } else
 #endif
-    if (argt2 == ARGREG) {
-        if (reg2 & REGINDIR) {
-            dest = wpm->cpustat.regs[reg2 & 0x0f];
-            memstorel(src, dest);
-        } else if (reg2 & REGINDEX) {
-            if (argt1 == ARGREG) {
-                dest = wpm->cpustat.regs[reg2 &0x0f] + op->args[0];
+        if (argt2 == ARGREG) {
+            if (reg2 & REGINDIR) {
+                dest = wpm->cpustat.regs[reg2 & 0x0f];
+                memstorel(src, dest);
+            } else if (reg2 & REGINDEX) {
+                if (argt1 == ARGREG) {
+                    dest = wpm->cpustat.regs[reg2 &0x0f] + op->args[0];
+                } else {
+                    dest = wpm->cpustat.regs[reg2 &0x0f] + op->args[1];
+                }
+                memstorel(src, dest);
             } else {
-                dest = wpm->cpustat.regs[reg2 &0x0f] + op->args[1];
+                wpm->cpustat.regs[reg2 & 0x0f] = src;
             }
-            memstorel(src, dest);
+        } else if (argt1 == ARGREG) {
+            memstorel(src, op->args[0]);
         } else {
-            wpm->cpustat.regs[reg2 & 0x0f] = src;
+            memstorel(src, op->args[1]);
         }
-    } else if (argt1 == ARGREG) {
-        memstorel(src, op->args[0]);
+#if (WPMVEC)
+    if (op->unit == UNIT_VEC) {
+        wpm->cpustat.pc += vop->size << 2;
     } else {
-        memstorel(src, op->args[1]);
+        wpm->cpustat.pc += op->size << 2;
     }
+#else
     wpm->cpustat.pc += op->size << 2;
+#endif
 
     return;
 }
@@ -2036,7 +2056,7 @@ wpmmain(int argc, char *argv[])
     }
     fprintf(stderr, "%lx\n", (long)_startadr);
     wpminitthr(_startadr);
-    pause();
+//    pause();
 
     /* NOTREACHED */
     exit(0);
