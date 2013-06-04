@@ -7,7 +7,7 @@
 #include <zero/cdecl.h>
 #include <zero/param.h>
 #include <wpm/mem.h>
-#if (WPM_VC)
+#if (WPMVEC)
 #include <vcode/vc.h>
 #endif
 
@@ -29,14 +29,18 @@ typedef uint32_t wpmuword_t;
 #define OPINVAL    0x00
 #define RESOLVE    (~((wpmword_t)0))
 
-#define REGINDEX   0x10
-#define REGINDIR   0x20
+#define REGINDIR   0x10
+#define REGINDEX   0x20
 /* argument types */
 #define ARGNONE    0x00	// no argument
 #define ARGIMMED   0x01	// immediate argument
 #define ARGADR     0x02	// symbol / memory address
 #define ARGREG     0x03	// register
 #define ARGSYM     0x04	// symbol address
+#if (WPMVEC)
+#define ARGVAREG   0x05
+#define ARGVLREG   0x06
+#endif
 
 #define PAGEPRES   0x00000001
 
@@ -136,17 +140,12 @@ typedef uint32_t wpmuword_t;
 #define WPMNASMOP  256
 /* unit IDS */
 #define UNIT_ALU   0x00	// arithmetic logical unit
-#if (WPM_VC)
+#if (WPMVEC)
 #define UNIT_VEC   0x01
 #endif
 #define WPMNUNIT   (1 << 3)
-/* register flags */
 #define NREG       16
-#define NFREG      16
-#if (WPM_VC)
-#define NVREG      8    // later, 2 per thread
-#define NVITEM     8
-#endif
+#define NVREG      16
 struct _wpmopcode {
     wpmuword_t code;
     wpmword_t  args[2];
@@ -228,36 +227,37 @@ struct _wpmopcode {
 #define OPVCPOP      0x47
 #define OPVPAIR      0x48
 #define OPVUNPAIR    0x49
-/* nfo bits for vector operations */
-#define OPV_INT      0x01
-#define OPV_FLOAT    0x02
-#define OPV_BOOL     0x03
 struct wpmopcode {
-    unsigned  inst     : 8;	// instruction ID
+    unsigned  inst     : 7;	// instruction ID
     unsigned  unit     : 2;	// unit ID
-    unsigned  arg1t    : 3;	// argument #1 type
-    unsigned  arg2t    : 3;     // argument #2 type
+    unsigned  arg1t    : 4;	// argument #1 type
+    unsigned  arg2t    : 4;     // argument #2 type
     unsigned  reg1     : 6;	// register #1 ID + addressing flags
     unsigned  reg2     : 6;	// register #2 ID + addressing flags
-    unsigned  size     : 2;     // operation size == size << 2
-    unsigned  res      : 2;     // reserved
+    unsigned  size     : 3;     // operation size == size << 2
     wpmword_t args[2];
-} __attribute__ ((__packed__));
+} PACK();
 
-/* argument types */
-#define VOP_ADR 0
-#define VOP_REG 1
-struct wpmveccode {
-    unsigned inst :  8;
-    unsigned unit :  2;         // UNIT_VEC
-    unsigned arg1t : 1;
-    unsigned arg2t : 1;
-    unsigned reg1  : 4;
-    unsigned reg2  : 4;
-    unsigned elsz  : 3;         // element size == opsz + 1
-    unsigned treg  : 4;         // temporary register ID result
-    unsigned res   : 5;
-} __attribute__ ((__packed__));
+#if (WPMVEC)
+
+/* nfo values */
+#define OP_FLOAT 0x01
+#define OP_SATU  0x02
+#define OP_SATS  0x03
+/* REGINDEX, indexed addressing, is not supported in vector mode */
+struct wpmvecopcode {
+    unsigned  inst     : 7;	// instruction ID
+    unsigned  unit     : 2;	// unit ID
+    unsigned  arg1t    : 4;	// argument #1 type
+    unsigned  arg2t    : 4;     // argument #2 type
+    unsigned  reg1     : 5;	// register #1 ID + addressing flags
+    unsigned  reg2     : 5;	// register #2 ID + addressing flags
+    unsigned  size     : 2;     // operation size == size << 2
+    unsigned  nfo      : 3;
+    wpmword_t args[2];
+} PACK();
+
+#endif
 
 struct wpmobjhdr {
     wpmuword_t nsym;      // number of [global] symbols
@@ -273,8 +273,8 @@ struct wpmobjhdr {
 /* initial state: all bytes zero */
 struct wpmcpustate {
     wpmword_t  regs[NREG] ALIGNED(CLSIZE);
-    double     fregs[NFREG] ALIGNED(CLSIZE);
-#if (WPM_VC)
+//    double     fregs[NFREG] ALIGNED(CLSIZE);
+#if (WPMVEC)
     /* address registers */
     vcint      varegs[NVREG] ALIGNED(CLSIZE);
 //    int64_t   vregs[NVREG][NVITEM] ALIGNED(CLSIZE);

@@ -1,4 +1,4 @@
-#define ZASDEBUG   0
+#define ZASDEBUG   1
 #define ZASBUFSIZE 131072
 
 #if (WPM)
@@ -94,6 +94,8 @@ zastokfunc_t *zasktokfunctab[NTOKTYPE]
     zasproclabel,
     zasprocinst,
     NULL,               // REG
+    NULL,               // VAREG
+    NULL,               // VLREG
     NULL,               // SYM
     zasprocchar,
     NULL,               // IMMED
@@ -217,6 +219,14 @@ printtoken(struct zastoken *token)
             fprintf(stderr, "register r%1lx\n", (long)token->data.ndx.reg);
 
             break;
+        case TOKENVAREG:
+            fprintf(stderr, "address register r%1lx\n", (long)token->data.ndx.reg);
+
+            break;
+        case TOKENVLREG:
+            fprintf(stderr, "length register r%1lx\n", (long)token->data.ndx.reg);
+
+            break;
         case TOKENSYM:
             fprintf(stderr, "symbol %s (adr == 0x%08lx)\n",
                     token->data.sym.name, (long)token->data.sym.adr);
@@ -285,7 +295,7 @@ zasaddop(struct zasop *op)
     unsigned long  key = 0;
     unsigned long  len = 0;
 
-    while (*str) {
+    while (isalpha(*str)) {
         key += *str++;
         len++;
     }
@@ -315,6 +325,8 @@ zasfindop(uint8_t *name)
 
     return op;
 }
+
+#if (WPMVEC)
 
 static void
 zasaddvecop(struct zasop *op)
@@ -353,6 +365,8 @@ zasfindvecop(uint8_t *name)
 
     return op;
 }
+
+#endif
 
 #if (ZASDB) || (WPMDB)
 void
@@ -557,6 +571,7 @@ zasinitop(void)
         zasaddop(op);
     }
 
+#if (WPMVEC)
     for (l = 1 ; (zasopinfotab[UNIT_VEC][l].name) ; l++) {
         op = malloc(sizeof(struct zasop));
         op->name = (uint8_t *)(zasopinfotab[UNIT_VEC][l].name);
@@ -564,6 +579,7 @@ zasinitop(void)
         op->narg = zasopinfotab[UNIT_VEC][l].narg;
         zasaddvecop(op);
     }
+#endif
 
     return;
 }
@@ -591,7 +607,10 @@ static zasuword_t
 zasgetreg(uint8_t *str, uint8_t **retptr)
 {
     zasuword_t reg = 0;
-
+#if (WPMVEC)
+    zasuword_t flg = 0;
+#endif
+    
 #if (ZASDEBUG)
     fprintf(stderr, "getreg: %s\n", str);
 #endif
@@ -606,11 +625,34 @@ zasgetreg(uint8_t *str, uint8_t **retptr)
             str++;
         }
         *retptr = str;
+#if (WPMVEC)
+    } else if (*str == 'v') {
+        str++;
+        if (*str == 'a') {
+            flg = REG_VA;
+            str++;
+        } else if (*str == 'l') {
+            flg = REG_VL;
+            str++;
+        }
+        while ((*str) && isdigit(*str)) {
+            reg *= 10;
+            reg += *str - '0';
+            str++;
+        }
+        while (*str == ')' || *str == ',') {
+            str++;
+        }
+        *retptr = str;
+#endif
     } else {
         fprintf(stderr, "invalid register name %s\n", str);
         
         exit(1);
     }
+#if (WPMVEC)
+    reg |= flg;
+#endif
 
     return reg;
 }
@@ -655,6 +697,68 @@ zasgetinst(uint8_t *str, uint8_t **retptr)
 
     return op;
 }
+
+#if (WPMVEC)
+
+static struct zasop *
+zasgetvecinst(uint8_t *str, uint8_t **retptr)
+{
+    struct zasop *op;
+
+    op = zasfindvecop(str);
+#if (ZASDEBUG)
+    fprintf(stderr, "getvecinst: %s\n", str);
+#endif
+    if (op) {
+        op->flg = OPVEC;
+        opsetelemsz(op, VEC_QUAD);
+        str += op->len;
+        if (*str == '_') {
+            str++;
+            while (isalpha(*str)) {
+                switch (*str) {
+                    case 'f' :
+                        op->flg |= OPFLOAT;
+
+                        break;
+                    case 'b' :
+                        opsetelemsz(op, VEC_BYTE);
+
+                        break;
+                    case 'w' :
+                        opsetelemsz(op, VEC_WORD);
+
+                        break;
+                    case 'l' :
+                        opsetelemsz(op, VEC_LONG);
+
+                        break;
+                    case 'q' :
+                        opsetelemsz(op, VEC_QUAD);
+
+                        break;
+                    case 'u' :
+                        op->flg |= OPSATU;
+
+                        break;
+                    case 's' :
+                        op->flg |= OPSATS;
+
+                        break;
+                    default:
+
+                        break;
+                }
+                str++;
+            }
+        }
+        *retptr = str;
+    }
+
+    return op;
+}
+
+#endif
 
 static uint8_t *
 zasgetsym(uint8_t *str, uint8_t **retptr)
@@ -832,11 +936,13 @@ zasgetindex(uint8_t *str, zasword_t *retndx, uint8_t **retptr)
             str++;
         }
         reg = zasgetreg(str, &str);
+#if 0
         if (reg >= NREG) {
             fprintf(stderr, "invalid register name %s\n", str);
 
             exit(1);
         }
+#endif
         *retptr = str;
     }
     if (neg) {
@@ -1019,7 +1125,18 @@ zasgettoken(uint8_t *str, uint8_t **retptr)
     } else if ((*str) && *str == '%') {
         str++;
         val = zasgetreg(str, &str);
+#if (WPMVEC)
+        if (val & REG_VA) {
+            token1->type = TOKENVAREG;
+        } else if (val & REG_VL) {
+            token1->type = TOKENVLREG;
+        } else {
+            token1->type = TOKENREG;
+        }
+        val &= 0xff;    // FIXME: maximum of 256 registers */
+#else
         token1->type = TOKENREG;
+#endif
         token1->data.reg = val;
     } else if ((*str) && (isalpha(*str) || *str == '_')) {
         name = zasgetlabel(str, &str);
@@ -1031,9 +1148,28 @@ zasgettoken(uint8_t *str, uint8_t **retptr)
 #if (ZASDB)
             ptr = str;
 #endif
+#if (WPMVEC)
+            if (*str == 'v') {
+                op = zasgetvecinst(str, &str);
+                if (op) {
+                    token1->unit = UNIT_VEC;
+                    token1->opflg = op->flg;
+                }
+            }
+            if (!op) {
+                op = zasgetinst(str, &str);
+                if (op) {
+                    token1->unit = UNIT_ALU;
+                }
+            }
+#else
             op = zasgetinst(str, &str);
+#endif
             if (op) {
                 token1->type = TOKENINST;
+#if (!WPMVEC)
+                token1->unit = UNIT_ALU;
+#endif
                 token1->data.inst.name = op->name;
                 token1->data.inst.op = op->code;
                 token1->data.inst.narg = op->narg;
@@ -1138,7 +1274,18 @@ zasgettoken(uint8_t *str, uint8_t **retptr)
         if (*str == '%') {
             str++;
             val = zasgetreg(str, &str);
+#if (WPMVEC)
+            if (val & REG_VA) {
+                token2->type = TOKENVAREG;
+            } else if (val & REG_VL) {
+                token2->type = TOKENVLREG;
+            } else {
+                token2->type = TOKENREG;
+            }
+            val &= 0xff;
+#else
             token2->type = TOKENREG;
+#endif
             token2->data.reg = REGINDIR | val;
             zasqueuetoken(token1);
             token1 = token2;
@@ -1231,14 +1378,17 @@ static struct zastoken *
 zasprocinst(struct zastoken *token, zasmemadr_t adr,
             zasmemadr_t *retadr)
 {
-    struct wpmopcode *op;
-    zasmemadr_t       opadr = rounduppow2(adr, 4);
-    struct zastoken  *token1 = NULL;
-    struct zastoken  *token2 = NULL;
-    struct zastoken  *retval = NULL;
-    struct zassymrec *sym;
-    uint8_t           narg = token->data.inst.narg;
-    uint8_t           len = token->data.inst.op == OPNOP ? 1 : 4;
+    struct wpmopcode    *op = NULL;
+#if (WPMVEC)
+    struct wpmvecopcode *vop = NULL;
+#endif
+    zasmemadr_t          opadr = rounduppow2(adr, 4);
+    struct zastoken     *token1 = NULL;
+    struct zastoken     *token2 = NULL;
+    struct zastoken     *retval = NULL;
+    struct zassymrec    *sym;
+    uint8_t              narg = token->data.inst.narg;
+    uint8_t              len = token->data.inst.op == OPNOP ? 1 : 4;
 
     while (adr < opadr) {
         physmem[adr] = OPNOP;
@@ -1248,6 +1398,64 @@ zasprocinst(struct zastoken *token, zasmemadr_t adr,
 #if (ZASDB)
     zasaddline(adr, token->data.inst.data, token->file, token->line);
 #endif
+#if (WPMVEC)
+    if (token->unit == UNIT_VEC) {
+        vop = (struct wpmvecopcode *)&physmem[adr];
+        len = 4;
+        vop->size = len;
+        token1 = token->next;
+        zasfreetoken(token);
+        if (token1) {
+            switch(token1->type) {
+                case TOKENVAREG:
+                    vop->arg1t = ARGVAREG;
+                    vop->reg1 = token1->data.reg & 0xff;
+                    
+                    break;
+                case TOKENVLREG:
+                    vop->arg1t = ARGVLREG;
+                    vop->reg1 = token1->data.reg & 0xff;
+                    
+                    break;
+                default:
+                    fprintf(stderr, "invalid argument 1 of type %lx\n", token1->type);
+                    printtoken(token1);
+
+                    exit(1);
+
+                    break;
+            }
+            token2 = token1->next;
+            zasfreetoken(token1);
+            retval = token2;
+        }
+        if (narg == 1) {
+            vop->arg2t = ARGNONE;
+        } else if (narg == 2 && (token2)) {
+            switch(token2->type) {
+                case TOKENVAREG:
+                    vop->arg1t = ARGVAREG;
+                    vop->reg1 = token1->data.reg & 0xff;
+                    
+                    break;
+                case TOKENVLREG:
+                    vop->arg1t = ARGVLREG;
+                    vop->reg1 = token1->data.reg & 0xff;
+                    
+                    break;
+                default:
+                    fprintf(stderr, "invalid argument 2 of type %lx\n", token2->type);
+                    printtoken(token2);
+
+                    exit(1);
+
+                    break;
+            }
+            retval = token2->next;
+            zasfreetoken(token2);
+        }
+    }
+#else
     op = (struct wpmopcode *)&physmem[adr];
     op->inst = token->data.inst.op;
     if (op->inst == OPNOP) {
@@ -1422,6 +1630,7 @@ zasprocinst(struct zastoken *token, zasmemadr_t adr,
         }
     }
     op->size = len >> 2;
+#endif
     *retadr = adr + len;
 
     return retval;

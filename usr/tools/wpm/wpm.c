@@ -17,7 +17,7 @@
 #include <zas/zas.h>
 #include <wpm/wpm.h>
 #include <wpm/mem.h>
-#if (WPM_VC)
+#if (WPMVEC)
 #include <wpm/vc.h>
 #endif
 
@@ -51,7 +51,7 @@ static int64_t memfetchq(wpmmemadr_t virt);
 static void    memstorel(int32_t src, wpmmemadr_t virt);
 static int32_t memfetchl(wpmmemadr_t virt);
 
-wpmophandler_t *wpmopfunctab[WPMNUNIT][256] ALIGNED(PAGESIZE)
+wpmophandler_t *wpmopfunctab[WPMNUNIT][WPMNASMOP] ALIGNED(PAGESIZE)
 = {
     {
         NULL,
@@ -113,6 +113,7 @@ wpmophandler_t *wpmopfunctab[WPMNUNIT][256] ALIGNED(PAGESIZE)
         ophook
     },
     {
+#if (WPMVEC)
         NULL,
         opvadd,
         opvsub,
@@ -188,6 +189,7 @@ wpmophandler_t *wpmopfunctab[WPMNUNIT][256] ALIGNED(PAGESIZE)
         opvcpop,
         opvpair,
         opvunpair,
+#endif
         NULL
     },
     {
@@ -275,31 +277,33 @@ struct zasopinfo wpmopinfotab[WPMNUNIT][WPMNASMOP]
         { "vineq", 2 },
         { "vshl", 2 },
         { "vshr", 2 },
-        { "vnot", 2 },
+        { "vnot", 1 },
         { "vand", 2 },
         { "vor", 2 },
         { "vxor", 2 },
-        { "vselect", 2 },
-        { "vrand", 2 },
-        { "vfloor", 2 },
-        { "vceil", 2 },
-        { "vtrunc", 2 },
-        { "vround", 2 },
-        { "vitof", 2 },
-        { "vitob", 2 },
-        { "btoi", 2 },
-        { "vlog", 2 },
-        { "vsqrt", 2 },
-        { "vexp", 2 },
-        { "vsin", 2 },
-        { "vcos", 2 },
-        { "vtan", 2 },
-        { "vasin", 2 },
-        { "vacos", 2 },
-        { "vatan", 2 },
-        { "vsinh", 2 },
-        { "vcosh", 2 },
-        { "vtanh", 2 },
+        { "vselect", 3 },
+        { "vrand", 1 },
+        { "vfloor", 1 },
+        { "vceil", 1 },
+        { "vtrunc", 1 },
+        { "vround", 1 },
+        { "vitof", 1 },
+        { "vitob", 1 },
+        { "btoi", 1 },
+        { "vlog", 1 },
+        { "vsqrt", 1 },
+        { "vexp", 1 },
+        { "vsin", 1 },
+        { "vcos", 1 },
+        { "vtan", 1 },
+        { "vasin", 1 },
+        { "vacos", 1 },
+        { "vatan", 1 },
+        { "vsinh", 1 },
+        { "vcosh", 1 },
+        { "vtanh", 1 },
+#if (WPMVECFULL)
+        /* TODO: fix argument counts below */
         { "vplscan", 2 },
         { "vmulscan", 2 },
         { "vmaxscan", 2 },
@@ -336,6 +340,7 @@ struct zasopinfo wpmopinfotab[WPMNUNIT][WPMNASMOP]
         { "vcpop", 2 },
         { "vpair", 2 },
         { "vunpair", 2 },
+#endif /* WPMVECFULL */
         { NULL, 0 }
     },
     {
@@ -1431,6 +1436,13 @@ opmov(struct wpmopcode *op)
                            : memfetchl(op->args[0])));
     wpmword_t    dest;
 
+#if (WPMVEC)
+    if (argt2 == ARGVAREG) {
+        wpm->cpustat.varegs[reg2 & 0x07] = src;
+    } else if (argt2 == ARGVLREG) {
+        wpm->cpustat.vlregs[reg2 & 0x07] = src;
+    } else
+#endif
     if (argt2 == ARGREG) {
         if (reg2 & REGINDIR) {
             dest = wpm->cpustat.regs[reg2 & 0x0f];
@@ -2022,6 +2034,7 @@ wpmmain(int argc, char *argv[])
 
         exit(1);
     }
+    fprintf(stderr, "%lx\n", (long)_startadr);
     wpminitthr(_startadr);
     pause();
 

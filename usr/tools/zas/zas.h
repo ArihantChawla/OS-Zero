@@ -1,6 +1,8 @@
 #ifndef __ZAS_ZAS_H__
 #define __ZAS_ZAS_H__
 
+#include <wpm/wpm.h>
+
 #if defined(ZAS32BIT)
 typedef uint32_t  zasmemadr_t;
 typedef int32_t   zasword_t;
@@ -21,35 +23,48 @@ typedef uint64_t  zassize_t;
 #define TOKENLABEL  0x02
 #define TOKENINST   0x03
 #define TOKENREG    0x04
-#define TOKENSYM    0x05
-#define TOKENCHAR   0x06
-#define TOKENIMMED  0x07
-#define TOKENINDIR  0x08
-#define TOKENADR    0x09
-#define TOKENINDEX  0x0a
-#define TOKENDATA   0x0b
-#define TOKENGLOBL  0x0c
-#define TOKENSPACE  0x0d
-#define TOKENORG    0x0e
-#define TOKENALIGN  0x0f
-#define TOKENASCIZ  0x10
-#define TOKENSTRING 0x10
+#define TOKENVAREG  0x05
+#define TOKENVLREG  0x06
+#define TOKENSYM    0x07
+#define TOKENCHAR   0x08
+#define TOKENIMMED  0x09
+#define TOKENINDIR  0x0a
+#define TOKENADR    0x0b
+#define TOKENINDEX  0x0c
+#define TOKENDATA   0x0d
+#define TOKENGLOBL  0x0e
+#define TOKENSPACE  0x0f
+#define TOKENORG    0x10
+#define TOKENALIGN  0x11
+#define TOKENASCIZ  0x12
+#define TOKENSTRING 0x13
+#define TOKENPAREN  0x14
 #if (ZASPREPROC)
-#define TOKENPAREN  0x11
-#define TOKENOP     0x12
+#define TOKENOP     0x15
 #endif
-#define NTOKTYPE    19
+#define NTOKTYPE    0x16
 
 struct zasopinfo {
     const char *name;
     uint8_t     narg;
 };
 
+#define OPVEC   0x80000000U
+#define OPFLOAT 0x40000000U
+#define OPSATU  0x20000000U
+#define OPSATS  0x10000000U
+#define opelemsz(op)                                                    \
+    (((op)->flg & 0x07) + 1)
+#define opsetelemsz(op, sz)                                             \
+    ((op)->flg |= ((sz) - 1))
 struct zasop {
-    uint8_t   *name;
-    uint8_t    code;
-    uint8_t    narg;
-    uint8_t    len;
+    uint8_t      *name;
+    uint8_t       code;
+    uint8_t       narg;
+    uint8_t       len;
+#if (WPMVEC)
+    uint32_t      flg;
+#endif
     struct zasop *next;
 };
 
@@ -94,13 +109,26 @@ struct zasval {
     struct zasval *next;
 };
 
+#if (WPMVEC)
+#define VEC_INT   0x01
+#define VEC_FLOAT 0x02
+#define VEC_BYTE  1
+#define VEC_WORD  2
+#define VEC_LONG  4
+#define VEC_QUAD  8
+#define VEC_SATU  0x01
+#define VEC_SATS  0x02
+#define REG_VA    0x80000000
+#define REG_VL    0x40000000
+#endif
 struct zastoken {
     struct zastoken     *prev;
     struct zastoken     *next;
     unsigned long        type;
     zasword_t            val;
-#if (ZPC)
-    struct zpctoken     *token;
+    zasword_t            unit;
+#if (WPMVEC)
+    uint32_t             opflg;
 #endif
 #if (ZASDB)
     uint8_t             *file;
@@ -108,9 +136,7 @@ struct zastoken {
 #endif
     union {
         struct zaslabel  label;
-#if (!ZPC)
         struct zasvalue  value;
-#endif
         struct zasinst   inst;
         struct zassym    sym;
         struct zasadr    adr;
