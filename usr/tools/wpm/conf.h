@@ -1,6 +1,7 @@
 #ifndef __WPM_CONF_H__
 #define __WPM_CONF_H__
 
+#define WPMVECFULL 0
 #define WPMPROF  1
 #define WPMVEC   1
 #define PTHREAD  1

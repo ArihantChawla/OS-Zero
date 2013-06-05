@@ -13,7 +13,7 @@ typedef int64_t vcsegdes;
 #define VC_FLOAT 0x02
 #define VC_BOOL  0x03
 #define VC_FALSE INT64_C(0)
-#define VC_TRUE  INT64_C(~0)
+#define VC_TRUE  INT64_C(1)
 struct vcval {
     union {
         vcfloat f;

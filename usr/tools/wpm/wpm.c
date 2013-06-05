@@ -153,6 +153,7 @@ wpmophandler_t *wpmopfunctab[WPMNUNIT][WPMNASMOP] ALIGNED(PAGESIZE)
         opvsinh,
         opvcosh,
         opvtanh,
+#if (WPMVECFULL)
         opvplscan,
         opvmulscan,
         opvmaxscan,
@@ -189,7 +190,8 @@ wpmophandler_t *wpmopfunctab[WPMNUNIT][WPMNASMOP] ALIGNED(PAGESIZE)
         opvcpop,
         opvpair,
         opvunpair,
-#endif
+#endif /* WPMVECFULL */
+#endif /* WPMVEC */
         NULL
     },
     {

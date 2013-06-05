@@ -125,11 +125,53 @@ typedef void vcophandler_t(void *, void *, size_t);
 #define vccosh(v1)          (cosh(v1))
 #define vctanh(v1)          (tanh(v1))
 
-#define vcintop1(adr1, len1, OP)                                        \
+#define vcintop1b(adr1, len1, OP)                                       \
     do {                                                                \
         wpmmemadr_t ptr1 = adr1;                                        \
-        vcint       val1;                                               \
-        vcint       res;                                                \
+        int8_t      val1;                                               \
+        int8_t      res;                                                \
+                                                                        \
+        while (len1--) {                                                \
+            val1 = memfetchq(ptr1);                                     \
+            res = OP(val1);                                             \
+            memstoreq(res, ptr1);                                       \
+            ptr1++;                                                     \
+        }                                                               \
+    } while (0);
+
+#define vcintop1w(adr1, len1, OP)                                       \
+    do {                                                                \
+        wpmmemadr_t ptr1 = adr1;                                        \
+        int16_t     val1;                                               \
+        int16_t     res;                                                \
+                                                                        \
+        while (len1--) {                                                \
+            val1 = memfetchq(ptr1);                                     \
+            res = OP(val1);                                             \
+            memstoreq(res, ptr1);                                       \
+            ptr1 += 2;                                                  \
+        }                                                               \
+    } while (0);
+
+#define vcintop1l(adr1, len1, OP)                                       \
+    do {                                                                \
+        wpmmemadr_t ptr1 = adr1;                                        \
+        int32_t     val1;                                               \
+        int32_t     res;                                                \
+                                                                        \
+        while (len1--) {                                                \
+            val1 = memfetchq(ptr1);                                     \
+            res = OP(val1);                                             \
+            memstoreq(res, ptr1);                                       \
+            ptr1 += 4;                                                  \
+        }                                                               \
+    } while (0);
+
+#define vcintop1q(adr1, len1, OP)                                       \
+    do {                                                                \
+        wpmmemadr_t ptr1 = adr1;                                        \
+        int64_t     val1;                                               \
+        int64_t     res;                                                \
                                                                         \
         while (len1--) {                                                \
             val1 = memfetchq(ptr1);                                     \
@@ -155,7 +197,7 @@ typedef void vcophandler_t(void *, void *, size_t);
                     res = OP(val1, val2);                               \
                     res = max(res, 0xff);                               \
                     memstoreb(res, ptr2);                               \
-                    ptr2 += 1;                                          \
+                    ptr2++;                                             \
                 }                                                       \
             } else if (flg & OP_SATS) {                                 \
                 while (len2--) {                                        \
@@ -164,14 +206,14 @@ typedef void vcophandler_t(void *, void *, size_t);
                     res = max(res, 0);                                  \
                     res = max(res, 0x7f);                               \
                     memstoreb(res, ptr2);                               \
-                    ptr2 += 1;                                          \
+                    ptr2++;                                             \
                 }                                                       \
             } else {                                                    \
                 while (len2--) {                                        \
                     val2 = memfetchb(ptr2);                             \
                     res = OP(val1, val2);                               \
                     memstoreb(res, ptr2);                               \
-                    ptr2 += 1;                                          \
+                    ptr2++;                                             \
                 }                                                       \
             }                                                           \
         } else {                                                        \
@@ -183,8 +225,8 @@ typedef void vcophandler_t(void *, void *, size_t);
                     res = OP(val1, val2);                               \
                     res = max(res, 0xff);                               \
                     memstoreb(res, ptr2);                               \
-                    ptr1 += 1;                                          \
-                    ptr2 += 1;                                          \
+                    ptr1++;                                             \
+                    ptr2++;                                             \
                 }                                                       \
             } else if (flg & OP_SATS) {                                 \
                 while (len1--) {                                        \
@@ -194,8 +236,8 @@ typedef void vcophandler_t(void *, void *, size_t);
                     res = max(res, 0);                                  \
                     res = max(res, 0x7f);                               \
                     memstoreb(res, ptr2);                               \
-                    ptr1 += 1;                                          \
-                    ptr2 += 1;                                          \
+                    ptr1++;                                             \
+                    ptr2++;                                             \
                 }                                                       \
             } else {                                                    \
                 while (len1--) {                                        \
@@ -203,8 +245,8 @@ typedef void vcophandler_t(void *, void *, size_t);
                     val2 = memfetchb(ptr2);                             \
                     res = OP(val1, val2);                               \
                     memstoreb(res, ptr2);                               \
-                    ptr1 += 1;                                          \
-                    ptr2 += 1;                                          \
+                    ptr1++;                                             \
+                    ptr2++;                                             \
                 }                                                       \
             }                                                           \
         }                                                               \
