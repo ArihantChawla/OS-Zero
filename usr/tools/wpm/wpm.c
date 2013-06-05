@@ -1476,7 +1476,7 @@ opmov(struct wpmopcode *op)
         }
 #if (WPMVEC)
     if (op->unit == UNIT_VEC) {
-        wpm->cpustat.pc += vop->size << 2;
+        wpm->cpustat.pc += 4 + (vop->narg << 2);
     } else {
         wpm->cpustat.pc += op->size << 2;
     }

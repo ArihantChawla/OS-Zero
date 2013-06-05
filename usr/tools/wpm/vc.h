@@ -139,13 +139,142 @@ typedef void vcophandler_t(void *, void *, size_t);
         }                                                               \
     } while (0);
 
-#define vcintop2(adr1, adr2, len1, len2, OP)                            \
+#define vcintop2b(adr1, adr2, len1, len2, OP, flg)                      \
     do {                                                                \
         wpmmemadr_t ptr1 = adr1;                                        \
         wpmmemadr_t ptr2 = adr2;                                        \
-        vcint       val1;                                               \
-        vcint       val2;                                               \
-        vcint       res;                                                \
+        int16_t     val1;                                               \
+        int16_t     val2;                                               \
+        int16_t     res;                                                \
+                                                                        \
+        if (len1 == 1) {                                                \
+            val1 = memfetchb(ptr1);                                     \
+            if (flg & OP_SATU) {                                        \
+                while (len2--) {                                        \
+                    val2 = memfetchb(ptr2);                             \
+                    res = OP(val1, val2);                               \
+                    res = max(res, 0xff);                               \
+                    memstoreb(res, ptr2);                               \
+                    ptr2 += 1;                                          \
+                }                                                       \
+            } else if (flg & OP_SATS) {                                 \
+                while (len2--) {                                        \
+                    val2 = memfetchb(ptr2);                             \
+                    res = OP(val1, val2);                               \
+                    res = max(res, 0);                                  \
+                    res = max(res, 0x7f);                               \
+                    memstoreb(res, ptr2);                               \
+                    ptr2 += 1;                                          \
+                }                                                       \
+            } else {                                                    \
+                while (len2--) {                                        \
+                    val2 = memfetchb(ptr2);                             \
+                    res = OP(val1, val2);                               \
+                    memstoreb(res, ptr2);                               \
+                    ptr2 += 1;                                          \
+                }                                                       \
+            }                                                           \
+        } else {                                                        \
+            len1 = min(len1, len2);                                     \
+            if (flg & OP_SATU) {                                        \
+                while (len1--) {                                        \
+                    val1 = memfetchb(ptr1);                             \
+                    val2 = memfetchb(ptr2);                             \
+                    res = OP(val1, val2);                               \
+                    res = max(res, 0xff);                               \
+                    memstoreb(res, ptr2);                               \
+                    ptr1 += 1;                                          \
+                    ptr2 += 1;                                          \
+                }                                                       \
+            } else if (flg & OP_SATS) {                                 \
+                while (len1--) {                                        \
+                    val1 = memfetchb(ptr1);                             \
+                    val2 = memfetchb(ptr2);                             \
+                    res = OP(val1, val2);                               \
+                    res = max(res, 0);                                  \
+                    res = max(res, 0x7f);                               \
+                    memstoreb(res, ptr2);                               \
+                    ptr1 += 1;                                          \
+                    ptr2 += 1;                                          \
+                }                                                       \
+            } else {                                                    \
+                while (len1--) {                                        \
+                    val1 = memfetchb(ptr1);                             \
+                    val2 = memfetchb(ptr2);                             \
+                    res = OP(val1, val2);                               \
+                    memstoreb(res, ptr2);                               \
+                    ptr1 += 1;                                          \
+                    ptr2 += 1;                                          \
+                }                                                       \
+            }                                                           \
+        }                                                               \
+    } while (0)
+
+#define vcintop2w(adr1, adr2, len1, len2, OP, flg)                      \
+    do {                                                                \
+        wpmmemadr_t ptr1 = adr1;                                        \
+        wpmmemadr_t ptr2 = adr2;                                        \
+        int16_t     val1;                                               \
+        int16_t     val2;                                               \
+        int16_t     res;                                                \
+                                                                        \
+        if (len1 == 1) {                                                \
+            val1 = memfetchw(ptr1);                                     \
+            while (len2--) {                                            \
+                val2 = memfetchw(ptr2);                                 \
+                res = OP(val1, val2);                                   \
+                memstorew(res, ptr2);                                   \
+                ptr2 += 2;                                              \
+            }                                                           \
+        } else {                                                        \
+            len1 = min(len1, len2);                                     \
+            while (len1--) {                                            \
+                val1 = memfetchw(ptr1);                                 \
+                val2 = memfetchw(ptr2);                                 \
+                res = OP(val1, val2);                                   \
+                memstorew(res, ptr2);                                   \
+                ptr1 += 2;                                              \
+                ptr2 += 2;                                              \
+            }                                                           \
+        }                                                               \
+    } while (0)
+
+#define vcintop2l(adr1, adr2, len1, len2, OP, flg)                      \
+    do {                                                                \
+        wpmmemadr_t ptr1 = adr1;                                        \
+        wpmmemadr_t ptr2 = adr2;                                        \
+        int32_t     val1;                                               \
+        int32_t     val2;                                               \
+        int32_t     res;                                                \
+                                                                        \
+        if (len1 == 1) {                                                \
+            val1 = memfetchl(ptr1);                                     \
+            while (len2--) {                                            \
+                val2 = memfetchl(ptr2);                                 \
+                res = OP(val1, val2);                                   \
+                memstorew(res, ptr2);                                   \
+                ptr2 += 4;                                              \
+            }                                                           \
+        } else {                                                        \
+            len1 = min(len1, len2);                                     \
+            while (len1--) {                                            \
+                val1 = memfetchl(ptr1);                                 \
+                val2 = memfetchl(ptr2);                                 \
+                res = OP(val1, val2);                                   \
+                memstorel(res, ptr2);                                   \
+                ptr1 += 4;                                              \
+                ptr2 += 4;                                              \
+            }                                                           \
+        }                                                               \
+    } while (0)
+
+#define vcintop2q(adr1, adr2, len1, len2, OP, flg)                      \
+    do {                                                                \
+        wpmmemadr_t ptr1 = adr1;                                        \
+        wpmmemadr_t ptr2 = adr2;                                        \
+        int64_t     val1;                                               \
+        int64_t     val2;                                               \
+        int64_t     res;                                                \
                                                                         \
         if (len1 == 1) {                                                \
             val1 = memfetchq(ptr1);                                     \
@@ -161,7 +290,6 @@ typedef void vcophandler_t(void *, void *, size_t);
                 val1 = memfetchq(ptr1);                                 \
                 val2 = memfetchq(ptr2);                                 \
                 res = OP(val1, val2);                                   \
-                fprintf(stderr, "%llx -> %llx\n", res, ptr2);           \
                 memstoreq(res, ptr2);                                   \
                 ptr1 += 8;                                              \
                 ptr2 += 8;                                              \

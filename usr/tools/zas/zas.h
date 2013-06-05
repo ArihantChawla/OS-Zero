@@ -49,14 +49,6 @@ struct zasopinfo {
     uint8_t     narg;
 };
 
-#define OPVEC   0x80000000U
-#define OPFLOAT 0x40000000U
-#define OPSATU  0x20000000U
-#define OPSATS  0x10000000U
-#define opelemsz(op)                                                    \
-    (((op)->flg & 0x07) + 1)
-#define opsetelemsz(op, sz)                                             \
-    ((op)->flg |= ((sz) - 1))
 struct zasop {
     uint8_t      *name;
     uint8_t       code;
@@ -86,6 +78,9 @@ struct zasinst {
 #endif
     uint8_t  op;
     uint8_t  narg;
+#if (WPMVEC)
+    uint8_t  flg;
+#endif
 };
 
 struct zassym {
@@ -110,14 +105,14 @@ struct zasval {
 };
 
 #if (WPMVEC)
-#define VEC_INT   0x01
-#define VEC_FLOAT 0x02
+#if 0
 #define VEC_BYTE  1
 #define VEC_WORD  2
 #define VEC_LONG  4
 #define VEC_QUAD  8
 #define VEC_SATU  0x01
 #define VEC_SATS  0x02
+#endif
 #define REG_VA    0x80000000
 #define REG_VL    0x40000000
 #endif

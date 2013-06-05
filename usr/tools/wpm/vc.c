@@ -3,6 +3,9 @@
 #if (WPMVEC)
 
 #include <stddef.h>
+#if (WPMPROF)
+#include <zero/prof.h>
+#endif
 #include <wpm/wpm.h>
 #include <wpm/vc.h>
 
@@ -18,10 +21,41 @@ opvadd(struct wpmopcode *op)
     wpmmemadr_t          adr2 = wpm->cpustat.varegs[reg2];
     uint64_t             len1 = wpm->cpustat.vlregs[reg1];
     uint64_t             len2 = wpm->cpustat.vlregs[reg2];
+#if (WPMPROF)
+    PROFDECLTICK(tick);
+#endif
+    
+#if (WPMPROF)
+    profstarttick(tick);
+#endif
+    switch (wpmvecoptype(vop)) {
+        case OP_FLOAT:
+            vcfloatop2(adr1, adr2, len1, len2, vcadd);
 
-    vcintop2(adr1, adr2, len1, len2, vcadd);
+            break;
+        case OP_BYTE:
+            vcintop2b(adr1, adr2, len1, len2, vcadd, wpmvecopflg(vop));
 
-    wpm->cpustat.pc += vop->size;
+            break;
+        case OP_WORD:
+            vcintop2w(adr1, adr2, len1, len2, vcadd, wpmvecopflg(vop));
+
+            break;
+        case OP_LONG:
+            vcintop2l(adr1, adr2, len1, len2, vcadd, wpmvecopflg(vop));
+
+            break;
+        case OP_QUAD:
+            vcintop2q(adr1, adr2, len1, len2, vcadd, wpmvecopflg(vop));
+
+            break;
+}
+#if (WPMPROF)
+    profstoptick(tick);
+    fprintf(stderr, "VADD: %lld cycles\n", (long long)proftickdiff(tick));
+#endif
+
+    wpm->cpustat.pc += 4 + (vop->narg << 2);
 }
 
 void

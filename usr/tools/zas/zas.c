@@ -712,39 +712,38 @@ zasgetvecinst(uint8_t *str, uint8_t **retptr)
     fprintf(stderr, "getvecinst: %s\n", str);
 #endif
     if (op) {
-        op->flg = OPVEC;
-        opsetelemsz(op, VEC_QUAD);
+        op->flg = OP_QUAD;
         str += op->len;
         if (*str == '_') {
             str++;
             while (isalpha(*str)) {
                 switch (*str) {
                     case 'f' :
-                        op->flg |= OPFLOAT;
+                        op->flg = OP_FLOAT;
 
                         break;
                     case 'b' :
-                        opsetelemsz(op, VEC_BYTE);
+                        op->flg = OP_BYTE;
 
                         break;
                     case 'w' :
-                        opsetelemsz(op, VEC_WORD);
+                        op->flg = OP_WORD;
 
                         break;
                     case 'l' :
-                        opsetelemsz(op, VEC_LONG);
+                        op->flg = OP_LONG;
 
                         break;
                     case 'q' :
-                        opsetelemsz(op, VEC_QUAD);
+                        op->flg = OP_QUAD;
 
                         break;
                     case 'u' :
-                        op->flg |= OPSATU;
+                        op->flg |= OP_SATU;
 
                         break;
                     case 's' :
-                        op->flg |= OPSATS;
+                        op->flg |= OP_SATS;
 
                         break;
                     default:
@@ -1155,7 +1154,6 @@ zasgettoken(uint8_t *str, uint8_t **retptr)
                 op = zasgetvecinst(str, &str);
                 if (op) {
                     token1->unit = UNIT_VEC;
-                    token1->opflg = op->flg;
                 }
             }
             if (!op) {
@@ -1177,6 +1175,9 @@ zasgettoken(uint8_t *str, uint8_t **retptr)
                 token1->data.inst.narg = op->narg;
 #if (ZASDB)
                 token1->data.inst.data = (uint8_t *)strdup((char *)ptr);
+#endif
+#if (WPMVEC)
+                token1->data.inst.flg = op->flg;
 #endif
             } else {
                 name = zasgetsym(str, &str);
@@ -1406,6 +1407,7 @@ zasprocinst(struct zastoken *token, zasmemadr_t adr,
         vop = (struct wpmvecopcode *)&physmem[adr];
         vop->inst = token->data.inst.op;
         vop->unit = UNIT_VEC;
+        vop->flg = token->opflg;
         token1 = token->next;
         zasfreetoken(token);
         if (token1) {
@@ -1447,7 +1449,7 @@ zasprocinst(struct zastoken *token, zasmemadr_t adr,
             zasfreetoken(token1);
             retval = token2;
         }
-        vop->size = len >> 2;
+        vop->narg = len >> 3;
         if (narg == 1) {
             vop->arg2t = ARGNONE;
         } else if (narg == 2 && (token2)) {

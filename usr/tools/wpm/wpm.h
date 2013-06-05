@@ -240,10 +240,16 @@ struct wpmopcode {
 
 #if (WPMVEC)
 
-/* nfo values */
+#define wpmvecoptype(op) ((op)->flg & 0x07)
+#define wpmvecopflg(op)  ((op)->flg & ~0x07)
+/* flg values */
 #define OP_FLOAT 0x01
-#define OP_SATU  0x02
-#define OP_SATS  0x03
+#define OP_BYTE  0x02
+#define OP_WORD  0x03
+#define OP_LONG  0x04
+#define OP_QUAD  0x05
+#define OP_SATS  0x08
+#define OP_SATU  0x10
 /* REGINDEX, indexed addressing, is not supported in vector mode */
 struct wpmvecopcode {
     unsigned  inst     : 7;	// instruction ID
@@ -252,8 +258,8 @@ struct wpmvecopcode {
     unsigned  arg2t    : 4;     // argument #2 type
     unsigned  reg1     : 5;	// register #1 ID + addressing flags
     unsigned  reg2     : 5;	// register #2 ID + addressing flags
-    unsigned  size     : 2;     // operation size == size << 2
-    unsigned  nfo      : 3;
+    unsigned  narg     : 1;     // operation [32-bit] argument count
+    unsigned  flg      : 4;
     wpmword_t args[2];
 } PACK();
 
