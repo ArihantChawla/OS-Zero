@@ -1,31 +1,31 @@
 #include <stdio.h>
 #include <stdlib.h>
 #include <ctype.h>
-#include <vcode/vc.h>
+#include <vec/vec.h>
 
 #define tohex(c) (isdigit(c) ? (c) - '0' : tolower(c) - 'a' + 10)
 #define tobin(c) ((c) == '0' ? 0 : 1)
 #define todec(c) (tolower(c) - '0')
 
-struct vcvec *vcvecstk;
+struct vec *vecstk;
 
 #if 0
-static struct vcvec *
-vcgetvec(char *str, char **retstr)
+static struct vec *
+vecgetvec(char *str, char **retstr)
 {
-    char         *ptr = str;
-    struct vcvec *vec = NULL;
-    vcfloat       fval = 0.0;
-    vcint         ival;
-    long          ndx = 0;
-    long          bool;
-    vcfloat       mul;
-    size_t        n = 4;
-    size_t        len = 0;
+    char       *ptr = str;
+    struct vec *vec = NULL;
+    vecfloat    fval = 0.0;
+    vecint      ival;
+    long        ndx = 0;
+    long        bool;
+    vecfloat    mul;
+    size_t      n = 4;
+    size_t      len = 0;
 
     if (*str == '(') {
-        vec = malloc(sizeof(struct vcvec));
-        vec->data = malloc(n * sizeof(struct vcval));
+        vec = malloc(sizeof(struct vec));
+        vec->data = malloc(n * sizeof(struct vecval));
         str++;
         do {
             while (isspace(*str)) {
@@ -42,10 +42,10 @@ vcgetvec(char *str, char **retstr)
                         mul = 1.0 / 16;
                         while (isxdigit(*str) || *str == '.') {
                             if (*str == '.') {
-                                fval = (vcfloat)ival;
+                                fval = (vecfloat)ival;
                                 ndx = 1;
                             } else if (ndx) {
-                                fval += (vcfloat)tohex(*str) * mul;
+                                fval += (vecfloat)tohex(*str) * mul;
                                 mul *= 1 / 16;
                             } else {
                                 ival <<= 4;
@@ -58,10 +58,10 @@ vcgetvec(char *str, char **retstr)
                         mul = 1.0 / 2;
                         while (*str == '0' || *str == '1' || *str == '.') {
                             if (*str == '.') {
-                                fval = (vcfloat)ival;
+                                fval = (vecfloat)ival;
                                 ndx = 1;
                             } else if (ndx) {
-                                fval += (vcfloat)tobin(*str) * mul;
+                                fval += (vecfloat)tobin(*str) * mul;
                                 mul *= 1 / 2;
                             } else {
                                 ival <<= 1;
@@ -73,19 +73,19 @@ vcgetvec(char *str, char **retstr)
                 } else if (*str == 'T') {
                     str++;
                     bool = 1;
-                    ival = VC_TRUE;
+                    ival = VEC_TRUE;
                 } else if (*str == 'F') {
                     str++;
                     bool = 1;
-                    ival = VC_FALSE;
+                    ival = VEC_FALSE;
                 } else {
                     mul = 1.0 / 10;
                     while (isdigit(*str) || *str == '.') {
                         if (*str == '.') {
-                            fval = (vcfloat)ival;
+                            fval = (vecfloat)ival;
                             ndx = 1;
                         } else if (ndx) {
-                            fval += (vcfloat)todec(*str) * mul;
+                            fval += (vecfloat)todec(*str) * mul;
                             mul *= 1 / 10;
                         } else {
                             ival *= 10;
@@ -96,16 +96,16 @@ vcgetvec(char *str, char **retstr)
                 }
                 if (len == n) {
                     n <<= 1;
-                    vec->data = realloc(vec->data, n * sizeof(struct vcval));
+                    vec->data = realloc(vec->data, n * sizeof(struct vecval));
                 }
                 if (bool) {
-                    vec->data[len].type = VC_BOOL;
+                    vec->data[len].type = VEC_BOOL;
                     vec->data[len].data.i = ival;
                 } else if (ndx) {
-                    vec->data[len].type = VC_FLOAT;
+                    vec->data[len].type = VEC_FLOAT;
                     vec->data[len].data.f = fval;
                 } else {
-                    vec->data[len].type = VC_INT;
+                    vec->data[len].type = VEC_INT;
                     vec->data[len].data.i = ival;
                 }
                 len++;
@@ -128,19 +128,19 @@ vcgetvec(char *str, char **retstr)
 }
 #endif
 
-static struct vcvec *
-vcgetivec(char *str, char **retstr)
+static struct vec *
+vecgetivec(char *str, char **retstr)
 {
-    char         *ptr = str;
-    struct vcvec *vec = NULL;
-    vcint         ival;
-    size_t        n = 4;
-    size_t        len = 0;
+    char       *ptr = str;
+    struct vec *vec = NULL;
+    vecint      ival;
+    size_t      n = 4;
+    size_t      len = 0;
 
     if (*str == '(') {
-        vec = malloc(sizeof(struct vcvec));
-        vec->type = VC_INT;
-        vec->data = malloc(n * sizeof(struct vcval));
+        vec = malloc(sizeof(struct vec));
+        vec->type = VEC_INT;
+        vec->data = malloc(n * sizeof(struct vecval));
         str++;
         do {
             while (isspace(*str)) {
@@ -174,7 +174,7 @@ vcgetivec(char *str, char **retstr)
                 }
                 if (len == n) {
                     n <<= 1;
-                    vec->data = realloc(vec->data, n * sizeof(struct vcval));
+                    vec->data = realloc(vec->data, n * sizeof(struct vecval));
                 }
                 vec->data[len].data.i = ival;
                 len++;
@@ -196,21 +196,21 @@ vcgetivec(char *str, char **retstr)
     return vec;
 }
 
-static struct vcvec *
-vcgetfvec(char *str, char **retstr)
+static struct vec *
+vecgetfvec(char *str, char **retstr)
 {
-    char         *ptr = str;
-    struct vcvec *vec = NULL;
-    vcfloat       fval = 0.0;
-    long          ndx = 0;
-    vcfloat       mul;
-    size_t        n = 4;
-    size_t        len = 0;
+    char       *ptr = str;
+    struct vec *vec = NULL;
+    vecfloat    fval = 0.0;
+    long        ndx = 0;
+    vecfloat    mul;
+    size_t      n = 4;
+    size_t      len = 0;
 
     if (*str == '(') {
-        vec = malloc(sizeof(struct vcvec));
-        vec->type = VC_FLOAT;
-        vec->data = malloc(n * sizeof(struct vcval));
+        vec = malloc(sizeof(struct vec));
+        vec->type = VEC_FLOAT;
+        vec->data = malloc(n * sizeof(struct vecval));
         str++;
         do {
             while (isspace(*str)) {
@@ -228,11 +228,11 @@ vcgetfvec(char *str, char **retstr)
                             if (*str == '.') {
                                 ndx = 1;
                             } else if (ndx) {
-                                fval += (vcfloat)tohex(*str) * mul;
+                                fval += (vecfloat)tohex(*str) * mul;
                                 mul *= 1 / 16;
                             } else {
                                 fval *= 16;
-                                fval += (vcfloat)tohex(*str);
+                                fval += (vecfloat)tohex(*str);
                             }
                             str++;
                         }
@@ -243,11 +243,11 @@ vcgetfvec(char *str, char **retstr)
                             if (*str == '.') {
                                 ndx = 1;
                             } else if (ndx) {
-                                fval += (vcfloat)tobin(*str) * mul;
+                                fval += (vecfloat)tobin(*str) * mul;
                                 mul *= 1 / 2;
                             } else {
                                 fval *= 2;
-                                fval += (vcfloat)tobin(*str);
+                                fval += (vecfloat)tobin(*str);
                             }
                             str++;
                         }
@@ -258,18 +258,18 @@ vcgetfvec(char *str, char **retstr)
                         if (*str == '.') {
                             ndx = 1;
                         } else if (ndx) {
-                            fval += (vcfloat)todec(*str) * mul;
+                            fval += (vecfloat)todec(*str) * mul;
                             mul *= 1 / 10;
                         } else {
                             fval *= 10;
-                            fval += (vcfloat)todec(*str);
+                            fval += (vecfloat)todec(*str);
                         }
                         str++;
                     }                    
                 }
                 if (len == n) {
                     n <<= 1;
-                    vec->data = realloc(vec->data, n * sizeof(struct vcval));
+                    vec->data = realloc(vec->data, n * sizeof(struct vecval));
                 }
                 vec->data[len].data.f = fval;
                 len++;
@@ -291,19 +291,19 @@ vcgetfvec(char *str, char **retstr)
     return vec;
 }
 
-static struct vcvec *
-vcgetbvec(char *str, char **retstr)
+static struct vec *
+vecgetbvec(char *str, char **retstr)
 {
-    char         *ptr = str;
-    struct vcvec *vec = NULL;
-    vcint         ival;
-    size_t        n = 4;
-    size_t        len = 0;
+    char       *ptr = str;
+    struct vec *vec = NULL;
+    vecint      ival;
+    size_t      n = 4;
+    size_t      len = 0;
 
     if (*str == '(') {
-        vec = malloc(sizeof(struct vcvec));
-        vec->type = VC_BOOL;
-        vec->data = malloc(n * sizeof(struct vcval));
+        vec = malloc(sizeof(struct vec));
+        vec->type = VEC_BOOL;
+        vec->data = malloc(n * sizeof(struct vecval));
         str++;
         do {
             while (isspace(*str)) {
@@ -312,17 +312,17 @@ vcgetbvec(char *str, char **retstr)
             ival = 0;
             if (*str != ')') {
                 if (*str == 'T') {
-                    ival = VC_TRUE;
+                    ival = VEC_TRUE;
                     str++;
                 } else if (*str == 'F') {
-                    ival = VC_FALSE;
+                    ival = VEC_FALSE;
                     str++;
                 } else {
                     fprintf(stderr, "unrecognized boolean value %s\n", str);
                 }
                 if (len == n) {
                     n <<= 1;
-                    vec->data = realloc(vec->data, n * sizeof(struct vcval));
+                    vec->data = realloc(vec->data, n * sizeof(struct vecval));
                 }
                 vec->data[len].data.i = ival;
                 len++;
@@ -344,42 +344,42 @@ vcgetbvec(char *str, char **retstr)
     return vec;
 }
 
-struct vcvec *
-vcgetvec(char *str, char **retstr)
+struct vec *
+vecgetvec(char *str, char **retstr)
 {
-    struct vcvec *vec = NULL;
+    struct vec *vec = NULL;
 
     while (isspace(*str)) {
         str++;
     }
     if (*str == 'i') {
         str++;
-        vec = vcgetivec(str, retstr);
+        vec = vecgetivec(str, retstr);
     } else if (*str == 'f') {
         str++;
-        vec = vcgetfvec(str, retstr);
+        vec = vecgetfvec(str, retstr);
     } else if (*str == 'b') {
         str++;
-        vec = vcgetbvec(str, retstr);
+        vec = vecgetbvec(str, retstr);
     } else if (*str) {
-        vec = vcgetivec(str, retstr);
+        vec = vecgetivec(str, retstr);
     }
 
     return vec;
 }
 
-struct vcsegdes *
-vcgetsegdes(char *str, char **retstr)
+struct vecsegdes *
+vecgetsegdes(char *str, char **retstr)
 {
-    char            *ptr = str;
-    struct vcsegdes *des = NULL;
-    vcint            ival;
+    char             *ptr = str;
+    struct vecsegdes *des = NULL;
+    vecint           ival;
     size_t           n = 4;
     size_t           len = 0;
 
     if (*str == '[') {
-        des = malloc(sizeof(struct vcsegdes));
-        des->data = malloc(n * sizeof(vcint));
+        des = malloc(sizeof(struct vecsegdes));
+        des->data = malloc(n * sizeof(vecint));
         str++;
         do {
             ival = 0;
@@ -413,7 +413,7 @@ vcgetsegdes(char *str, char **retstr)
                 }
                 if (len == n) {
                     n <<= 1;
-                    des->data = realloc(des->data, n * sizeof(vcint));
+                    des->data = realloc(des->data, n * sizeof(vecint));
                 }
                 des->data[len] = ival;
                 len++;
@@ -446,17 +446,17 @@ main(int argc, char *argv[])
     char            *str3 = "b( T F T )";
     char            *str4 = "f( 7 14 6 5 2 )";
     char            *str5 = "( 7 )";
-    struct vcvec    *vec1 = vcgetvec(str1, &ptr);
-    struct vcvec    *vec2 = vcgetvec(str4, &ptr);
-    struct vcvec    *vec3;
-    struct vcvec    *vec4 = vcgetvec(str5, &ptr);
-    struct vcsegdes *des = vcgetsegdes(str2, &ptr);
-    struct vcvec    *bool = vcgetvec(str3, &ptr);
+    struct vec      *vec1 = vecgetvec(str1, &ptr);
+    struct vec      *vec2 = vecgetvec(str4, &ptr);
+    struct vec      *vec3;
+    struct vec      *vec4 = vecgetvec(str5, &ptr);
+    struct vecsegdes *des = vecgetsegdes(str2, &ptr);
+    struct vec      *bool = vecgetvec(str3, &ptr);
     long             l;
 
     fprintf(stderr, "vector of %ld values:\n", vec1->nval);
     for (l = 0 ; l < vec1->nval ; l++) {
-        if (vec1->type == VC_INT) {
+        if (vec1->type == VEC_INT) {
             fprintf(stderr, "INT: %ld\n", vec1->data[l].data.i);
         } else {
             fprintf(stderr, "FLOAT: %e\n", vec1->data[l].data.f);
@@ -473,10 +473,10 @@ main(int argc, char *argv[])
         fprintf(stderr, "BOOL: %lx\n", bool->data[l].data.i);
     }
 
-    vec3 = vcaddv(vec2, vec1);
+    vec3 = vecaddv(vec2, vec1);
     fprintf(stderr, "sum of %ld values:\n", vec3->nval);
     for (l = 0 ; l < vec3->nval ; l++) {
-        if (vec3->type == VC_INT) {
+        if (vec3->type == VEC_INT) {
             fprintf(stderr, "INT: %ld\n", vec3->data[l].data.i);
         } else {
             fprintf(stderr, "FLOAT: %e\n", vec3->data[l].data.f);
@@ -484,10 +484,10 @@ main(int argc, char *argv[])
     }
 
 #if 0
-    vec3 = vcadds(vec4, vec1);
+    vec3 = vecadds(vec4, vec1);
     fprintf(stderr, "scalar sum of %ld values:\n", vec3->nval);
     for (l = 0 ; l < vec3->nval ; l++) {
-        if (vec3->type == VC_INT) {
+        if (vec3->type == VEC_INT) {
             fprintf(stderr, "INT: %ld\n", vec3->data[l].data.i);
         } else {
             fprintf(stderr, "FLOAT: %e\n", vec3->data[l].data.f);

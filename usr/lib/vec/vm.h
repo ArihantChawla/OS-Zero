@@ -1,5 +1,5 @@
-#ifndef __WPM_VC_H__
-#define __WPM_VC_H__
+#ifndef __VEC_VM_H__
+#define __VEC_VM_H__
 
 #include <wpm/conf.h>
 
@@ -7,125 +7,124 @@
 
 #include <math.h>
 #include <zero/trix.h>
-#include <vcode/vc.h>
-#include <wpm/vc.h>
+#include <vec/vec.h>
 
-void opvadd(struct wpmopcode *op);
-void opvsub(struct wpmopcode *op);
-void opvmul(struct wpmopcode *op);
-void opvdiv(struct wpmopcode *op);
-void opvmod(struct wpmopcode *op);
-void opvlt(struct wpmopcode *op);
-void opvlte(struct wpmopcode *op);
-void opvgt(struct wpmopcode *op);
-void opvgte(struct wpmopcode *op);
-void opveq(struct wpmopcode *op);
-void opvineq(struct wpmopcode *op);
-void opvshl(struct wpmopcode *op);
-void opvshr(struct wpmopcode *op);
-void opvnot(struct wpmopcode *op);
-void opvand(struct wpmopcode *op);
-void opvor(struct wpmopcode *op);
-void opvxor(struct wpmopcode *op);
-void opvselect(struct wpmopcode *op);
-void opvrand(struct wpmopcode *op);
-void opvfloor(struct wpmopcode *op);
-void opvceil(struct wpmopcode *op);
-void opvtrunc(struct wpmopcode *op);
-void opvround(struct wpmopcode *op);
-void opvitof(struct wpmopcode *op);
-void opvitob(struct wpmopcode *op);
-void opvbtoi(struct wpmopcode *op);
-void opvlog(struct wpmopcode *op);
-void opvsqrt(struct wpmopcode *op);
-void opvexp(struct wpmopcode *op);
-void opvsin(struct wpmopcode *op);
-void opvcos(struct wpmopcode *op);
-void opvtan(struct wpmopcode *op);
-void opvasin(struct wpmopcode *op);
-void opvacos(struct wpmopcode *op);
-void opvatan(struct wpmopcode *op);
-void opvsinh(struct wpmopcode *op);
-void opvcosh(struct wpmopcode *op);
-void opvtanh(struct wpmopcode *op);
-void opvplscan(struct wpmopcode *op);
-void opvmulscan(struct wpmopcode *op);
-void opvmaxscan(struct wpmopcode *op);
-void opvminscan(struct wpmopcode *op);
-void opvandscan(struct wpmopcode *op);
-void opvorscan(struct wpmopcode *op);
-void opvxorscan(struct wpmopcode *op);
-void opvplreduce(struct wpmopcode *op);
-void opvmulreduce(struct wpmopcode *op);
-void opvmaxreduce(struct wpmopcode *op);
-void opvminreduce(struct wpmopcode *op);
-void opvandreduce(struct wpmopcode *op);
-void opvorreduce(struct wpmopcode *op);
-void opvxorreduce(struct wpmopcode *op);
-void opvpermute(struct wpmopcode *op);
-void opvdpermute(struct wpmopcode *op);
-void opvfpermute(struct wpmopcode *op);
-void opvbpermute(struct wpmopcode *op);
-void opvbfpermute(struct wpmopcode *op);
-void opvdfpermute(struct wpmopcode *op);
-void opvextract(struct wpmopcode *op);
-void opvreplace(struct wpmopcode *op);
-void opvpack(struct wpmopcode *op);
-void opvrankup(struct wpmopcode *op);
-void opvrankdown(struct wpmopcode *op);
-void opvdist(struct wpmopcode *op);
-void opvindex(struct wpmopcode *op);
-void opvlength(struct wpmopcode *op);
-void opvmkdes(struct wpmopcode *op);
-void opvlengths(struct wpmopcode *op);
-void opvcopy(struct wpmopcode *op);
-void opvpop(struct wpmopcode *op);
-void opvcpop(struct wpmopcode *op);
-void opvpair(struct wpmopcode *op);
-void opvunpair(struct wpmopcode *op);
+void vecopadd(struct wpmopcode *op);
+void vecopsub(struct wpmopcode *op);
+void vecopmul(struct wpmopcode *op);
+void vecopdiv(struct wpmopcode *op);
+void vecopmod(struct wpmopcode *op);
+void vecoplt(struct wpmopcode *op);
+void vecoplte(struct wpmopcode *op);
+void vecopgt(struct wpmopcode *op);
+void vecopgte(struct wpmopcode *op);
+void vecopeq(struct wpmopcode *op);
+void vecopineq(struct wpmopcode *op);
+void vecopshl(struct wpmopcode *op);
+void vecopshr(struct wpmopcode *op);
+void vecopnot(struct wpmopcode *op);
+void vecopand(struct wpmopcode *op);
+void vecopor(struct wpmopcode *op);
+void vecopxor(struct wpmopcode *op);
+void vecopselect(struct wpmopcode *op);
+void vecoprand(struct wpmopcode *op);
+void vecopfloor(struct wpmopcode *op);
+void vecopceil(struct wpmopcode *op);
+void vecoptrunc(struct wpmopcode *op);
+void vecopround(struct wpmopcode *op);
+void vecopitof(struct wpmopcode *op);
+void vecopitob(struct wpmopcode *op);
+void vecopbtoi(struct wpmopcode *op);
+void vecoplog(struct wpmopcode *op);
+void vecopsqrt(struct wpmopcode *op);
+void vecopexp(struct wpmopcode *op);
+void vecopsin(struct wpmopcode *op);
+void vecopcos(struct wpmopcode *op);
+void vecoptan(struct wpmopcode *op);
+void vecopasin(struct wpmopcode *op);
+void vecopacos(struct wpmopcode *op);
+void vecopatan(struct wpmopcode *op);
+void vecopsinh(struct wpmopcode *op);
+void vecopcosh(struct wpmopcode *op);
+void vecoptanh(struct wpmopcode *op);
+void vecopplscan(struct wpmopcode *op);
+void vecopmulscan(struct wpmopcode *op);
+void vecopmaxscan(struct wpmopcode *op);
+void vecopminscan(struct wpmopcode *op);
+void vecopandscan(struct wpmopcode *op);
+void vecoporscan(struct wpmopcode *op);
+void vecopxorscan(struct wpmopcode *op);
+void vecopplreduce(struct wpmopcode *op);
+void vecopmulreduce(struct wpmopcode *op);
+void vecopmaxreduce(struct wpmopcode *op);
+void vecopminreduce(struct wpmopcode *op);
+void vecopandreduce(struct wpmopcode *op);
+void vecoporreduce(struct wpmopcode *op);
+void vecopxorreduce(struct wpmopcode *op);
+void vecoppermute(struct wpmopcode *op);
+void vecopdpermute(struct wpmopcode *op);
+void vecopfpermute(struct wpmopcode *op);
+void vecopbpermute(struct wpmopcode *op);
+void vecopbfpermute(struct wpmopcode *op);
+void vecopdfpermute(struct wpmopcode *op);
+void vecopextract(struct wpmopcode *op);
+void vecopreplace(struct wpmopcode *op);
+void vecoppack(struct wpmopcode *op);
+void vecoprankup(struct wpmopcode *op);
+void vecoprankdown(struct wpmopcode *op);
+void vecopdist(struct wpmopcode *op);
+void vecopindex(struct wpmopcode *op);
+void vecoplength(struct wpmopcode *op);
+void vecopmkdes(struct wpmopcode *op);
+void vecoplengths(struct wpmopcode *op);
+void vecopcopy(struct wpmopcode *op);
+void vecoppop(struct wpmopcode *op);
+void vecopcpop(struct wpmopcode *op);
+void vecoppair(struct wpmopcode *op);
+void vecopunpair(struct wpmopcode *op);
 
-typedef void vcophandler_t(void *, void *, size_t);
+typedef void vecophandler_t(void *, void *, size_t);
 
-#define vcadd(v1, v2)       ((v1) + (v2))
-#define vcsub(v1, v2)       ((v1) - (v2))
-#define vcmul(v1, v2)       ((v1) * (v2))
-#define vcdiv(v1, v2)       ((v1) / (v2))
-#define vcmod(v1, v2)       ((v1) % (v2))
-#define vclt(v1, v2)        ((v1) < (v2) ? VC_TRUE : VC_FALSE)
-#define vclte(v1, v2)       ((v1) <= (v2) ? VC_TRUE : VC_FALSE)
-#define vcgt(v1, v2)        ((v1) > (v2) ? VC_TRUE : VC_FALSE)
-#define vcgte(v1, v2)       ((v1) >= (v2) ? VC_TRUE : VC_FALSE)
-#define vceq(v1, v2)        ((v1) == (v2) ? VC_TRUE : VC_FALSE)
-#define vcineq(v1, v2)      ((v1) != (v2) ? VC_TRUE : VC_FALSE)
-#define vcshl(v1, v2)       ((v1) << (v2))
-#define vcshr(v1, v2)       ((v1) >> (v2))
-#define vcnot(v1)           (~(v1))
-#define vcand(v1, v2)       ((v1) & (v2))
-#define vcor(v1, v2)        ((v1) | (v2))
-#define vcxor(v1, v2)       ((v1) ^ (v2))
-#define vcselect(b, v1, v2) ((b) ? (v1) : (v2))
-#define vcrand(v1)          (rand() % (v1))
-#define vcfloor(v1)         (floor(v1))
-#define vcceil(v1)          (ceil(v1))
-#define vctrunc(v1)         (trunc(v1))
-#define vcround(v1)         (round(v1))
-#define vcitof(v1)          ((vcfloat)(v1))
-#define vcitob(v1)          ((v1) ? VC_TRUE : VC_FALSE)
-#define vcbtoi(v1)          ((v1) ? 1 : 0)
-#define vclog(v1)           (log(v1))
-#define vcsqrt(v1)          (sqrt(v1))
-#define vcexp(v1)           (exp(v1))
-#define vcsin(v1)           (sin(v1))
-#define vccos(v1)           (cos(v1))
-#define vctan(v1)           (tan(v1))
-#define vcasin(v1)          (asin(v1))
-#define vcacos(v1)          (acos(v1))
-#define vcatan(v1)          (atan(v1))
-#define vcsinh(v1)          (sinh(v1))
-#define vccosh(v1)          (cosh(v1))
-#define vctanh(v1)          (tanh(v1))
+#define vecadd(v1, v2)       ((v1) + (v2))
+#define vecsub(v1, v2)       ((v1) - (v2))
+#define vecmul(v1, v2)       ((v1) * (v2))
+#define vecdiv(v1, v2)       ((v1) / (v2))
+#define vecmod(v1, v2)       ((v1) % (v2))
+#define veclt(v1, v2)        ((v1) < (v2) ? VEC_TRUE : VEC_FALSE)
+#define veclte(v1, v2)       ((v1) <= (v2) ? VEC_TRUE : VEC_FALSE)
+#define vecgt(v1, v2)        ((v1) > (v2) ? VEC_TRUE : VEC_FALSE)
+#define vecgte(v1, v2)       ((v1) >= (v2) ? VEC_TRUE : VEC_FALSE)
+#define veceq(v1, v2)        ((v1) == (v2) ? VEC_TRUE : VEC_FALSE)
+#define vecineq(v1, v2)      ((v1) != (v2) ? VEC_TRUE : VEC_FALSE)
+#define vecshl(v1, v2)       ((v1) << (v2))
+#define vecshr(v1, v2)       ((v1) >> (v2))
+#define vecnot(v1)           (~(v1))
+#define vecand(v1, v2)       ((v1) & (v2))
+#define vecor(v1, v2)        ((v1) | (v2))
+#define vecxor(v1, v2)       ((v1) ^ (v2))
+#define vecselect(b, v1, v2) ((b) ? (v1) : (v2))
+#define vecrand(v1)          (rand() % (v1))
+#define vecfloor(v1)         (floor(v1))
+#define vecceil(v1)          (ceil(v1))
+#define vectrunc(v1)         (trunc(v1))
+#define vecround(v1)         (round(v1))
+#define vecitof(v1)          ((vecfloat)(v1))
+#define vecitob(v1)          ((v1) ? VEC_TRUE : VEC_FALSE)
+#define vecbtoi(v1)          ((v1) ? 1 : 0)
+#define veclog(v1)           (log(v1))
+#define vecsqrt(v1)          (sqrt(v1))
+#define vecexp(v1)           (exp(v1))
+#define vecsin(v1)           (sin(v1))
+#define veccos(v1)           (cos(v1))
+#define vectan(v1)           (tan(v1))
+#define vecasin(v1)          (asin(v1))
+#define vecacos(v1)          (acos(v1))
+#define vecatan(v1)          (atan(v1))
+#define vecsinh(v1)          (sinh(v1))
+#define veccosh(v1)          (cosh(v1))
+#define vectanh(v1)          (tanh(v1))
 
-#define vcintop1b(adr1, len1, OP)                                       \
+#define vecintop1b(adr1, len1, OP)                                      \
     do {                                                                \
         wpmmemadr_t ptr1 = adr1;                                        \
         int8_t      val1;                                               \
@@ -139,7 +138,7 @@ typedef void vcophandler_t(void *, void *, size_t);
         }                                                               \
     } while (0);
 
-#define vcintop1w(adr1, len1, OP)                                       \
+#define vecintop1w(adr1, len1, OP)                                      \
     do {                                                                \
         wpmmemadr_t ptr1 = adr1;                                        \
         int16_t     val1;                                               \
@@ -153,7 +152,7 @@ typedef void vcophandler_t(void *, void *, size_t);
         }                                                               \
     } while (0);
 
-#define vcintop1l(adr1, len1, OP)                                       \
+#define vecintop1l(adr1, len1, OP)                                      \
     do {                                                                \
         wpmmemadr_t ptr1 = adr1;                                        \
         int32_t     val1;                                               \
@@ -167,7 +166,7 @@ typedef void vcophandler_t(void *, void *, size_t);
         }                                                               \
     } while (0);
 
-#define vcintop1q(adr1, len1, OP)                                       \
+#define vecintop1q(adr1, len1, OP)                                      \
     do {                                                                \
         wpmmemadr_t ptr1 = adr1;                                        \
         int64_t     val1;                                               \
@@ -181,7 +180,7 @@ typedef void vcophandler_t(void *, void *, size_t);
         }                                                               \
     } while (0);
 
-#define vcintop2b(adr1, adr2, len1, len2, OP, flg)                      \
+#define vecintop2b(adr1, adr2, len1, len2, OP, flg)                     \
     do {                                                                \
         wpmmemadr_t ptr1 = adr1;                                        \
         wpmmemadr_t ptr2 = adr2;                                        \
@@ -252,7 +251,7 @@ typedef void vcophandler_t(void *, void *, size_t);
         }                                                               \
     } while (0)
 
-#define vcintop2w(adr1, adr2, len1, len2, OP, flg)                      \
+#define vecintop2w(adr1, adr2, len1, len2, OP, flg)                     \
     do {                                                                \
         wpmmemadr_t ptr1 = adr1;                                        \
         wpmmemadr_t ptr2 = adr2;                                        \
@@ -281,7 +280,7 @@ typedef void vcophandler_t(void *, void *, size_t);
         }                                                               \
     } while (0)
 
-#define vcintop2l(adr1, adr2, len1, len2, OP, flg)                      \
+#define vecintop2l(adr1, adr2, len1, len2, OP, flg)                     \
     do {                                                                \
         wpmmemadr_t ptr1 = adr1;                                        \
         wpmmemadr_t ptr2 = adr2;                                        \
@@ -310,7 +309,7 @@ typedef void vcophandler_t(void *, void *, size_t);
         }                                                               \
     } while (0)
 
-#define vcintop2q(adr1, adr2, len1, len2, OP, flg)                      \
+#define vecintop2q(adr1, adr2, len1, len2, OP, flg)                     \
     do {                                                                \
         wpmmemadr_t ptr1 = adr1;                                        \
         wpmmemadr_t ptr2 = adr2;                                        \
@@ -339,11 +338,11 @@ typedef void vcophandler_t(void *, void *, size_t);
         }                                                               \
     } while (0)
 
-#define vcfloatop1(adr1, len1, OP)                                      \
+#define vecfloatop1(adr1, len1, OP)                                     \
     do {                                                                \
         wpmmemadr_t ptr1 = adr1;                                        \
-        vcfloat     val1;                                               \
-        vcfloat     res;                                                \
+        vecfloat    val1;                                               \
+        vecfloat    res;                                                \
                                                                         \
         while (len1--) {                                                \
             val1 = memfetchq(ptr1);                                     \
@@ -353,13 +352,13 @@ typedef void vcophandler_t(void *, void *, size_t);
         }                                                               \
     } while (0);
 
-#define vcfloatop2(adr1, adr2, len1, len2, OP)                          \
+#define vecfloatop2(adr1, adr2, len1, len2, OP)                         \
     do {                                                                \
         wpmmemadr_t ptr1 = adr1;                                        \
         wpmmemadr_t ptr2 = adr2;                                        \
-        vcfloat     val1;                                               \
-        vcfloat     val2;                                               \
-        vcfloat     res;                                                \
+        vecfloat   val1;                                                \
+        vecfloat   val2;                                                \
+        vecfloat   res;                                                 \
                                                                         \
         if (len1 == 1) {                                                \
             val1 = memfetchq(ptr1);                                     \
@@ -382,13 +381,13 @@ typedef void vcophandler_t(void *, void *, size_t);
         }                                                               \
     } while (0)
 
-#define vcintcmp(adr1, adr2, len1, len2, OP)                            \
+#define vecintcmp(adr1, adr2, len1, len2, OP)                           \
     do {                                                                \
         wpmmemadr_t ptr1 = adr1;                                        \
         wpmmemadr_t ptr2 = adr2;                                        \
-        vcint       val1;                                               \
-        vcint       val2;                                               \
-        vcint       res;                                                \
+        vecint      val1;                                               \
+        vecint      val2;                                               \
+        vecint      res;                                                \
                                                                         \
         len1 = min(len1, len2);                                         \
         while (len1--) {                                                \
@@ -401,13 +400,13 @@ typedef void vcophandler_t(void *, void *, size_t);
         }                                                               \
     } while (0)
 
-#define vcfloatcmp(adr1, adr2, len1, len2, OP)                          \
+#define vecfloatcmp(adr1, adr2, len1, len2, OP)                         \
         do {                                                            \
         wpmmemadr_t ptr1 = adr1;                                        \
         wpmmemadr_t ptr2 = adr2;                                        \
-        vcfloat     val1;                                               \
-        vcfloat     val2;                                               \
-        vcfloat     res;                                                \
+        vecfloat    val1;                                               \
+        vecfloat    val2;                                               \
+        vecfloat    res;                                                \
                                                                         \
         len1 = min(len1, len2);                                         \
         while (len1--) {                                                \
@@ -420,7 +419,7 @@ typedef void vcophandler_t(void *, void *, size_t);
         }                                                               \
     } while (0)
 
-#define wpmvecop1(vop, OP)                                              \
+#define vecvmop1(vop, OP)                                               \
     do {                                                                \
         long                 reg1 = vop->reg1;                          \
         long                 reg2 = vop->reg2;                          \
@@ -429,31 +428,66 @@ typedef void vcophandler_t(void *, void *, size_t);
         uint64_t             len1 = wpm->cpustat.vlregs[reg1];          \
         uint64_t             len2 = wpm->cpustat.vlregs[reg2];          \
                                                                         \
-        switch (wpmvecoptype(vop)) {                                    \
+        switch (vecoptype(vop)) {                                       \
             case OP_FLOAT:                                              \
-                vcfloatop1(adr1, adr2, len1, len2, OP);                 \
+                vecfloatop1(adr1, adr2, len1, len2, OP);                \
                                                                         \
                 break;                                                  \
             case OP_BYTE:                                               \
-                vcintop1b(adr1, adr2, len1, len2, OP, wpmvecopflg(vop)); \
+                vecintop1b(adr1, adr2, len1, len2, OP, vecopflg(vop));  \
                                                                         \
                 break;                                                  \
             case OP_WORD:                                               \
-                vcintop1w(adr1, adr2, len1, len2, OP, wpmvecopflg(vop)); \
+                vecintop1w(adr1, adr2, len1, len2, OP, vecopflg(vop));  \
                                                                         \
                 break;                                                  \
             case OP_LONG:                                               \
-                vcintop1l(adr1, adr2, len1, len2, OP, wpmvecopflg(vop)); \
+                vecintop1l(adr1, adr2, len1, len2, OP, vecopflg(vop));  \
                                                                         \
                 break;                                                  \
             case OP_QUAD:                                               \
-                vcintop1q(adr1, adr2, len1, len2, OP, wpmvecopflg(vop)); \
+                vecintop1q(adr1, adr2, len1, len2, OP, vecopflg(vop));  \
                                                                         \
                 break;                                                  \
         }                                                               \
     } while (0)
 
-#define wpmvecfloatop1(vop, OP)                                         \
+#define vecvmfloatop1(vop, OP)                                          \
+    do {                                                                \
+        long                 reg1 = vop->reg1;                          \
+        wpmmemadr_t          adr1 = wpm->cpustat.varegs[reg1];          \
+        uint64_t             len1 = wpm->cpustat.vlregs[reg1];          \
+                                                                        \
+        vecfloatop1(adr1, len1, OP);                                    \
+    } while (0)
+
+#define vecvmintop1(vop, OP)                                            \
+    do {                                                                \
+        long                 reg1 = vop->reg1;                          \
+        wpmmemadr_t          adr1 = wpm->cpustat.varegs[reg1];          \
+        uint64_t             len1 = wpm->cpustat.vlregs[reg1];          \
+                                                                        \
+        switch (vecoptype(vop)) {                                       \
+            case OP_BYTE:                                               \
+                vecintop1b(adr1, len1, OP);                             \
+                                                                        \
+                break;                                                  \
+            case OP_WORD:                                               \
+                vecintop1w(adr1, len1, OP);                             \
+                                                                        \
+                break;                                                  \
+            case OP_LONG:                                               \
+                vecintop1l(adr1, len1, OP);                             \
+                                                                        \
+                break;                                                  \
+            case OP_QUAD:                                               \
+                vecintop1q(adr1, len1, OP);                             \
+                                                                        \
+                break;                                                  \
+        }                                                               \
+    } while (0)
+
+#define vecvmop2(vop, OP)                                               \
     do {                                                                \
         long                 reg1 = vop->reg1;                          \
         long                 reg2 = vop->reg2;                          \
@@ -462,69 +496,31 @@ typedef void vcophandler_t(void *, void *, size_t);
         uint64_t             len1 = wpm->cpustat.vlregs[reg1];          \
         uint64_t             len2 = wpm->cpustat.vlregs[reg2];          \
                                                                         \
-        vcfloatop1(adr1, len1, OP);                                     \
-    } while (0)
-
-#define wpmvecintop1(vop, OP)                                           \
-    do {                                                                \
-        long                 reg1 = vop->reg1;                          \
-        wpmmemadr_t          adr1 = wpm->cpustat.varegs[reg1];          \
-        uint64_t             len1 = wpm->cpustat.vlregs[reg1];          \
-                                                                        \
-        switch (wpmvecoptype(vop)) {                                    \
-            case OP_BYTE:                                               \
-                vcintop1b(adr1, len1, OP);                              \
-                                                                        \
-                break;                                                  \
-            case OP_WORD:                                               \
-                vcintop1w(adr1, len1, OP);                              \
-                                                                        \
-                break;                                                  \
-            case OP_LONG:                                               \
-                vcintop1l(adr1, len1, OP);                              \
-                                                                        \
-                break;                                                  \
-            case OP_QUAD:                                               \
-                vcintop1q(adr1, len1, OP);                              \
-                                                                        \
-                break;                                                  \
-        }                                                               \
-    } while (0)
-
-#define wpmvecop2(vop, OP)                                              \
-    do {                                                                \
-        long                 reg1 = vop->reg1;                          \
-        long                 reg2 = vop->reg2;                          \
-        wpmmemadr_t          adr1 = wpm->cpustat.varegs[reg1];          \
-        wpmmemadr_t          adr2 = wpm->cpustat.varegs[reg2];          \
-        uint64_t             len1 = wpm->cpustat.vlregs[reg1];          \
-        uint64_t             len2 = wpm->cpustat.vlregs[reg2];          \
-                                                                        \
-        switch (wpmvecoptype(vop)) {                                    \
+        switch (vecoptype(vop)) {                                       \
             case OP_FLOAT:                                              \
-                vcfloatop2(adr1, adr2, len1, len2, OP);                 \
+                vecfloatop2(adr1, adr2, len1, len2, OP);                \
                                                                         \
                 break;                                                  \
             case OP_BYTE:                                               \
-                vcintop2b(adr1, adr2, len1, len2, OP, wpmvecopflg(vop)); \
+                vecintop2b(adr1, adr2, len1, len2, OP, vecopflg(vop));  \
                                                                         \
                 break;                                                  \
             case OP_WORD:                                               \
-                vcintop2w(adr1, adr2, len1, len2, OP, wpmvecopflg(vop)); \
+                vecintop2w(adr1, adr2, len1, len2, OP, vecopflg(vop));  \
                                                                         \
                 break;                                                  \
             case OP_LONG:                                               \
-                vcintop2l(adr1, adr2, len1, len2, OP, wpmvecopflg(vop)); \
+                vecintop2l(adr1, adr2, len1, len2, OP, vecopflg(vop));  \
                                                                         \
                 break;                                                  \
             case OP_QUAD:                                               \
-                vcintop2q(adr1, adr2, len1, len2, OP, wpmvecopflg(vop)); \
+                vecintop2q(adr1, adr2, len1, len2, OP, vecopflg(vop));  \
                                                                         \
                 break;                                                  \
         }                                                               \
     } while (0)
 
-#define wpmvecintop2(vop, OP)                                           \
+#define vecvmintop2(vop, OP)                                            \
     do {                                                                \
         long                 reg1 = vop->reg1;                          \
         long                 reg2 = vop->reg2;                          \
@@ -533,21 +529,21 @@ typedef void vcophandler_t(void *, void *, size_t);
         uint64_t             len1 = wpm->cpustat.vlregs[reg1];          \
         uint64_t             len2 = wpm->cpustat.vlregs[reg2];          \
                                                                         \
-        switch (wpmvecoptype(vop)) {                                    \
+        switch (vecoptype(vop)) {                                       \
             case OP_BYTE:                                               \
-                vcintop2b(adr1, adr2, len1, len2, OP, wpmvecopflg(vop)); \
+                vecintop2b(adr1, adr2, len1, len2, OP, vecopflg(vop));  \
                                                                         \
                 break;                                                  \
             case OP_WORD:                                               \
-                vcintop2w(adr1, adr2, len1, len2, OP, wpmvecopflg(vop)); \
+                vecintop2w(adr1, adr2, len1, len2, OP, vecopflg(vop));  \
                                                                         \
                 break;                                                  \
             case OP_LONG:                                               \
-                vcintop2l(adr1, adr2, len1, len2, OP, wpmvecopflg(vop)); \
+                vecintop2l(adr1, adr2, len1, len2, OP, vecopflg(vop));  \
                                                                         \
                 break;                                                  \
             case OP_QUAD:                                               \
-                vcintop2q(adr1, adr2, len1, len2, OP, wpmvecopflg(vop)); \
+                vecintop2q(adr1, adr2, len1, len2, OP, vecopflg(vop));  \
                                                                         \
                 break;                                                  \
         }                                                               \
@@ -555,5 +551,5 @@ typedef void vcophandler_t(void *, void *, size_t);
 
 #endif /* WPMVEC */
 
-#endif /* __VPM_V_H__ */
+#endif /* __VEC_VM_H__ */
 

@@ -1,12 +1,13 @@
+#if 0
 #include <stdio.h>
 #include <stdlib.h>
-#include <vcode/vc.h>
+#include <vec/vec.h>
 
 /* add two vectors */
-struct vcvec *
-vcaddv(struct vcvec *src, struct vcvec *dest)
+struct vec *
+vcaddv(struct vec *src, struct vec *dest)
 {
-    struct vcvec *vec = NULL;
+    struct vec *vec = NULL;
     size_t        n = dest->nval;
     long          t = dest->type;
     vcint         ival1;
@@ -24,7 +25,7 @@ vcaddv(struct vcvec *src, struct vcvec *dest)
 
         return NULL;
     }
-    vec = malloc(sizeof(struct vcvec));
+    vec = malloc(sizeof(struct vec));
     vec->type = t;
     vec->nval = n;
     vec->data = malloc(n * sizeof(struct vcval));
@@ -51,10 +52,10 @@ vcaddv(struct vcvec *src, struct vcvec *dest)
 }
 
 /* subtract vector src from vector dest */
-struct vcvec *
-vcsubv(struct vcvec *src, struct vcvec *dest)
+struct vec *
+vcsubv(struct vec *src, struct vec *dest)
 {
-    struct vcvec *vec = NULL;
+    struct vec *vec = NULL;
     size_t        n = dest->nval;
     long          t = dest->type;
     vcint         ival1;
@@ -72,7 +73,7 @@ vcsubv(struct vcvec *src, struct vcvec *dest)
 
         return NULL;
     }
-    vec = malloc(sizeof(struct vcvec));
+    vec = malloc(sizeof(struct vec));
     vec->type = t;
     vec->nval = n;
     vec->data = malloc(n * sizeof(struct vcval));
@@ -99,10 +100,10 @@ vcsubv(struct vcvec *src, struct vcvec *dest)
 }
 
 /* multiply vector src by vector dest */
-struct vcvec *
-vcmulv(struct vcvec *src, struct vcvec *dest)
+struct vec *
+vcmulv(struct vec *src, struct vec *dest)
 {
-    struct vcvec *vec = NULL;
+    struct vec *vec = NULL;
     size_t        n = dest->nval;
     long          t = dest->type;
     vcint         ival1;
@@ -120,7 +121,7 @@ vcmulv(struct vcvec *src, struct vcvec *dest)
 
         return NULL;
     }
-    vec = malloc(sizeof(struct vcvec));
+    vec = malloc(sizeof(struct vec));
     vec->type = t;
     vec->nval = n;
     vec->data = malloc(n * sizeof(struct vcval));
@@ -147,10 +148,10 @@ vcmulv(struct vcvec *src, struct vcvec *dest)
 }
 
 /* divide vector src by vector dest */
-struct vcvec *
-vcdivv(struct vcvec *src, struct vcvec *dest)
+struct vec *
+vcdivv(struct vec *src, struct vec *dest)
 {
-    struct vcvec *vec = NULL;
+    struct vec *vec = NULL;
     size_t        n = dest->nval;
     long          t = dest->type;
     vcint         ival1;
@@ -168,7 +169,7 @@ vcdivv(struct vcvec *src, struct vcvec *dest)
 
         return NULL;
     }
-    vec = malloc(sizeof(struct vcvec));
+    vec = malloc(sizeof(struct vec));
     vec->type = t;
     vec->nval = n;
     vec->data = malloc(n * sizeof(struct vcval));
@@ -195,10 +196,10 @@ vcdivv(struct vcvec *src, struct vcvec *dest)
 }
 
 /* calculate modulus of vector dest with vector src */
-struct vcvec *
-vcmodv(struct vcvec *src, struct vcvec *dest)
+struct vec *
+vcmodv(struct vec *src, struct vec *dest)
 {
-    struct vcvec *vec = NULL;
+    struct vec *vec = NULL;
     size_t        n = dest->nval;
     long          t = dest->type;
     vcint         ival1;
@@ -214,7 +215,7 @@ vcmodv(struct vcvec *src, struct vcvec *dest)
 
         return NULL;
     }
-    vec = malloc(sizeof(struct vcvec));
+    vec = malloc(sizeof(struct vec));
     vec->type = t;
     vec->nval = n;
     vec->data = malloc(n * sizeof(struct vcval));
@@ -233,4 +234,5 @@ vcmodv(struct vcvec *src, struct vcvec *dest)
 
     return vec;
 }
+#endif
 

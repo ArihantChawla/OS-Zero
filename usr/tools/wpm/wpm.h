@@ -8,7 +8,7 @@
 #include <zero/param.h>
 #include <wpm/mem.h>
 #if (WPMVEC)
-#include <vcode/vc.h>
+#include <vec/vec.h>
 #endif
 
 #define THRSTKSIZE  (128 * 1024)
@@ -152,81 +152,81 @@ struct _wpmopcode {
 };
 
 /* VCODE instruction IDs */
-#define OPVADD       0x01
-#define OPVSUB       0x02
-#define OPVMUL       0x03
-#define OPVDIV       0x04
-#define OPVMOD       0x05
-#define OPVLT        0x06
-#define OPVLTE       0x07
-#define OPVGT        0x08
-#define OPVGTE       0x09
-#define OPVEQ        0x0a
-#define OPVINEQ      0x0b
-#define OPVSHL       0x0c
-#define OPVSHR       0x0d
-#define OPVNOT       0x0e
-#define OPVAND       0x0f
-#define OPVOR        0x10
-#define OPVXOR       0x11
-#define OPVSELECT    0x12
-#define OPVRAND      0x13
-#define OPVFLOOR     0x14
-#define OPVCEIL      0x15
-#define OPVTRUNC     0x16
-#define OPVROUND     0x17
-#define OPVITOF      0x18
-#define OPVITOB      0x19
-#define OPVBTOI      0x1a
-#define OPVLOG       0x1b
-#define OPVSQRT      0x1c
-#define OPVEXP       0x1d
-#define OPVSIN       0x1e
-#define OPVCOS       0x1f
-#define OPVTAN       0x20
-#define OPVASIN      0x21
-#define OPVACOS      0x22
-#define OPVATAN      0x23
-#define OPVSINH      0x24
-#define OPVCOSH      0x25
-#define OPVTANH      0x26
+#define VECOPADD       0x01
+#define VECOPSUB       0x02
+#define VECOPMUL       0x03
+#define VECOPDIV       0x04
+#define VECOPMOD       0x05
+#define VECOPLT        0x06
+#define VECOPLTE       0x07
+#define VECOPGT        0x08
+#define VECOPGTE       0x09
+#define VECOPEQ        0x0a
+#define VECOPINEQ      0x0b
+#define VECOPSHL       0x0c
+#define VECOPSHR       0x0d
+#define VECOPNOT       0x0e
+#define VECOPAND       0x0f
+#define VECOPOR        0x10
+#define VECOPXOR       0x11
+#define VECOPSELECT    0x12
+#define VECOPRAND      0x13
+#define VECOPFLOOR     0x14
+#define VECOPCEIL      0x15
+#define VECOPTRUNC     0x16
+#define VECOPROUND     0x17
+#define VECOPITOF      0x18
+#define VECOPITOB      0x19
+#define VECOPBTOI      0x1a
+#define VECOPLOG       0x1b
+#define VECOPSQRT      0x1c
+#define VECOPEXP       0x1d
+#define VECOPSIN       0x1e
+#define VECOPCOS       0x1f
+#define VECOPTAN       0x20
+#define VECOPASIN      0x21
+#define VECOPACOS      0x22
+#define VECOPATAN      0x23
+#define VECOPSINH      0x24
+#define VECOPCOSH      0x25
+#define VECOPTANH      0x26
 /* vector instructions */
-#define OPVPLSCAN    0x27
-#define OPVMULSCAN   0x28
-#define OPVMAXSCAN   0x29
-#define OPVMINSCAN   0x2a
-#define OPVANDSCAN   0x2b
-#define OPVORSCAN    0x2c
-#define OPVXORSCAN   0x2d
-#define OPVPLREDUCE  0x2e
-#define OPVMULREDUCE 0x2f
-#define OPVMAXREDUCE 0x30
-#define OPVMINREDUCE 0x31
-#define OPVANDREDUCE 0x32
-#define OPVORREDUCE  0x33
-#define OPVXORREDUCE 0x34
-#define OPVPERMUTE   0x35
-#define OPVDPERMUTE  0x36
-#define OPVFPERMUTE  0x37
-#define OPVBPERMUTE  0x38
-#define OPVBFPERMUTE 0x39
-#define OPVDFPERMUTE 0x3a
-#define OPVEXTRACT   0x3b
-#define OPVREPLACE   0x3c
-#define OPVPACK      0x3d
-#define OPVRANKUP    0x3e
-#define OPVRANKDOWN  0x3f
-#define OPVDIST      0x40
-#define OPVINDEX     0x41
-#define OPVLENGTH    0x42
+#define VECOPPLSCAN    0x27
+#define VECOPMULSCAN   0x28
+#define VECOPMAXSCAN   0x29
+#define VECOPMINSCAN   0x2a
+#define VECOPANDSCAN   0x2b
+#define VECOPORSCAN    0x2c
+#define VECOPXORSCAN   0x2d
+#define VECOPPLREDUCE  0x2e
+#define VECOPMULREDUCE 0x2f
+#define VECOPMAXREDUCE 0x30
+#define VECOPMINREDUCE 0x31
+#define VECOPANDREDUCE 0x32
+#define VECOPORREDUCE  0x33
+#define VECOPXORREDUCE 0x34
+#define VECOPPERMUTE   0x35
+#define VECOPDPERMUTE  0x36
+#define VECOPFPERMUTE  0x37
+#define VECOPBPERMUTE  0x38
+#define VECOPBFPERMUTE 0x39
+#define VECOPDFPERMUTE 0x3a
+#define VECOPEXTRACT   0x3b
+#define VECOPREPLACE   0x3c
+#define VECOPPACK      0x3d
+#define VECOPRANKUP    0x3e
+#define VECOPRANKDOWN  0x3f
+#define VECOPDIST      0x40
+#define VECOPINDEX     0x41
+#define VECOPLENGTH    0x42
 /* segment descriptor instructions */
-#define OPVMKDES     0x43
-#define OPVLENGTHS   0x44
-#define OPVCOPY      0x45
-#define OPVPOP       0x46
-#define OPVCPOP      0x47
-#define OPVPAIR      0x48
-#define OPVUNPAIR    0x49
+#define VECOPMKDES     0x43
+#define VECOPLENGTHS   0x44
+#define VECOPCOPY      0x45
+#define VECOPPOP       0x46
+#define VECOPCPOP      0x47
+#define VECOPPAIR      0x48
+#define VECOPUNPAIR    0x49
 struct wpmopcode {
     unsigned  inst     : 7;	// instruction ID
     unsigned  unit     : 2;	// unit ID
@@ -240,8 +240,8 @@ struct wpmopcode {
 
 #if (WPMVEC)
 
-#define wpmvecoptype(op) ((op)->flg & 0x07)
-#define wpmvecopflg(op)  ((op)->flg & ~0x07)
+#define vecoptype(op) ((op)->flg & 0x07)
+#define vecopflg(op)  ((op)->flg & ~0x07)
 /* flg values */
 #define OP_FLOAT 0x01
 #define OP_BYTE  0x02
@@ -251,7 +251,7 @@ struct wpmopcode {
 #define OP_SATS  0x08
 #define OP_SATU  0x10
 /* REGINDEX, indexed addressing, is not supported in vector mode */
-struct wpmvecopcode {
+struct vecopcode {
     unsigned  inst     : 7;	// instruction ID
     unsigned  unit     : 2;	// unit ID
     unsigned  arg1t    : 4;	// argument #1 type
@@ -282,10 +282,10 @@ struct wpmcpustate {
 //    double     fregs[NFREG] ALIGNED(CLSIZE);
 #if (WPMVEC)
     /* address registers */
-    vcint      varegs[NVREG] ALIGNED(CLSIZE);
+    vecint     varegs[NVREG] ALIGNED(CLSIZE);
 //    int64_t   vregs[NVREG][NVITEM] ALIGNED(CLSIZE);
-    vcint      vlregs[NVREG];    // vector lengths
-    vcint      vtregs[NVREG];    // vector types
+    vecint     vlregs[NVREG];    // vector lengths
+    vecint     vtregs[NVREG];    // vector types
 //    wpmadr_t  vsp;              // vector stack pointer
 #endif
     wpmadr_t  msw;              // machine status word

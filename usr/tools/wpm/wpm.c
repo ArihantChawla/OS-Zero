@@ -18,7 +18,8 @@
 #include <wpm/wpm.h>
 #include <wpm/mem.h>
 #if (WPMVEC)
-#include <wpm/vc.h>
+#include <vec/vec.h>
+#include <vec/vm.h>
 #endif
 
 #if defined(__i386__) || defined(__i486__) || defined(__i586__)         \
@@ -115,81 +116,81 @@ wpmophandler_t *wpmopfunctab[WPMNUNIT][WPMNASMOP] ALIGNED(PAGESIZE)
     {
 #if (WPMVEC)
         NULL,
-        opvadd,
-        opvsub,
-        opvmul,
-        opvdiv,
-        opvmod,
-        opvlt,
-        opvlte,
-        opvgt,
-        opvgte,
-        opveq,
-        opvineq,
-        opvshl,
-        opvshr,
-        opvnot,
-        opvand,
-        opvor,
-        opvxor,
-        opvselect,
-        opvrand,
-        opvfloor,
-        opvceil,
-        opvtrunc,
-        opvround,
-        opvitof,
-        opvitob,
-        opvbtoi,
-        opvlog,
-        opvsqrt,
-        opvexp,
-        opvsin,
-        opvcos,
-        opvtan,
-        opvasin,
-        opvacos,
-        opvatan,
-        opvsinh,
-        opvcosh,
-        opvtanh,
+        vecopadd,
+        vecopsub,
+        vecopmul,
+        vecopdiv,
+        vecopmod,
+        vecoplt,
+        vecoplte,
+        vecopgt,
+        vecopgte,
+        vecopeq,
+        vecopineq,
+        vecopshl,
+        vecopshr,
+        vecopnot,
+        vecopand,
+        vecopor,
+        vecopxor,
+        vecopselect,
+        vecoprand,
+        vecopfloor,
+        vecopceil,
+        vecoptrunc,
+        vecopround,
+        vecopitof,
+        vecopitob,
+        vecopbtoi,
+        vecoplog,
+        vecopsqrt,
+        vecopexp,
+        vecopsin,
+        vecopcos,
+        vecoptan,
+        vecopasin,
+        vecopacos,
+        vecopatan,
+        vecopsinh,
+        vecopcosh,
+        vecoptanh,
 #if (WPMVECFULL)
-        opvplscan,
-        opvmulscan,
-        opvmaxscan,
-        opvminscan,
-        opvandscan,
-        opvorscan,
-        opvxorscan,
-        opvplreduce,
-        opvmulreduce,
-        opvmaxreduce,
-        opvminreduce,
-        opvandreduce,
-        opvorreduce,
-        opvxorreduce,
-        opvpermute,
-        opvdpermute,
-        opvfpermute,
-        opvbpermute,
-        opvbfpermute,
-        opvdfpermute,
-        opvpermute,
-        opvextract,
-        opvreplace,
-        opvpack,
-        opvrankup,
-        opvrankdown,
-        opvdist,
-        opvindex,
-        opvlength,
-        opvmkdes,
-        opvlengths,
-        opvcopy,
-        opvpop,
-        opvcpop,
-        opvpair,
-        opvunpair,
+        vecopplscan,
+        vecopmulscan,
+        vecopmaxscan,
+        vecopminscan,
+        vecopandscan,
+        vecoporscan,
+        vecopxorscan,
+        vecopplreduce,
+        vecopmulreduce,
+        vecopmaxreduce,
+        vecopminreduce,
+        vecopandreduce,
+        vecoporreduce,
+        vecopxorreduce,
+        vecoppermute,
+        vecopdpermute,
+        vecopfpermute,
+        vecopbpermute,
+        vecopbfpermute,
+        vecopdfpermute,
+        vecoppermute,
+        vecopextract,
+        vecopreplace,
+        vecoppack,
+        vecoprankup,
+        vecoprankdown,
+        vecopdist,
+        vecopindex,
+        vecoplength,
+        vecopmkdes,
+        vecoplengths,
+        vecopcopy,
+        vecoppop,
+        vecopcpop,
+        vecoppair,
+        vecopunpair,
 #endif /* WPMVECFULL */
 #endif /* WPMVEC */
         NULL
@@ -1423,32 +1424,32 @@ void
 opmov(struct wpmopcode *op)
 {
 #if (WPMVEC)
-    struct wpmvecopcode *vop = (struct wpmvecopcode *)op;
+    struct vecopcode *vop = (struct vecopcode *)op;
 #endif
-    uint_fast8_t         argt1 = op->arg1t;
-    uint_fast8_t         argt2 = op->arg2t;
+    uint_fast8_t      argt1 = op->arg1t;
+    uint_fast8_t      argt2 = op->arg2t;
 #if (WPMVEC)
-    wpmword_t            reg1 = (op->unit == UNIT_VEC
-                                 ? vop->reg1
-                                 : op->reg1);
-    wpmword_t            reg2 = (op->unit == UNIT_VEC
-                                 ? vop->reg2
-                                 : op->reg2);
+    wpmword_t         reg1 = (op->unit == UNIT_VEC
+                              ? vop->reg1
+                              : op->reg1);
+    wpmword_t         reg2 = (op->unit == UNIT_VEC
+                              ? vop->reg2
+                              : op->reg2);
 #else
-    wpmword_t            reg1 = op->reg1;
-    wpmword_t            reg2 = op->reg2;
+    wpmword_t         reg1 = op->reg1;
+    wpmword_t         reg2 = op->reg2;
 #endif
-    wpmword_t            src = (argt1 == ARGREG
-                                ? ((reg1 & REGINDEX)
-                                   ? memfetchl(wpm->cpustat.regs[reg1 & 0x0f]
-                                               + op->args[0])
-                                   : (reg1 & REGINDIR
-                                      ? memfetchl(wpm->cpustat.regs[reg1 & 0x0f])
-                                      : wpm->cpustat.regs[reg1 & 0x0f]))
-                                : (argt1 == ARGIMMED
-                                   ? op->args[0]
-                                   : memfetchl(op->args[0])));
-    wpmword_t            dest;
+    wpmword_t         src = (argt1 == ARGREG
+                             ? ((reg1 & REGINDEX)
+                                ? memfetchl(wpm->cpustat.regs[reg1 & 0x0f]
+                                            + op->args[0])
+                                : (reg1 & REGINDIR
+                                   ? memfetchl(wpm->cpustat.regs[reg1 & 0x0f])
+                                   : wpm->cpustat.regs[reg1 & 0x0f]))
+                             : (argt1 == ARGIMMED
+                                ? op->args[0]
+                                : memfetchl(op->args[0])));
+    wpmword_t         dest;
     
 #if (WPMVEC)
     if (argt2 == ARGVAREG) {

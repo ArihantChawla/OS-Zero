@@ -1,6 +1,8 @@
 #ifndef __WPM_MEM_H__
 #define __WPM_MEM_H__
 
+#include <wpm/conf.h>
+
 #include <stddef.h>
 #include <stdio.h>
 #include <stdlib.h>
@@ -173,6 +175,9 @@ memfetchq(wpmmemadr_t virt)
 
         exit(1);
     }
+#if (WPMPREWARM)
+    __builtin_prefetch(ptr);
+#endif
     retval = *ptr;
 
     return retval;
@@ -194,6 +199,9 @@ memfetchl(wpmmemadr_t virt)
 
         exit(1);
     }
+#if (WPMPREWARM)
+    __builtin_prefetch(ptr);
+#endif
     retval = *ptr;
 
     return retval;
@@ -215,6 +223,9 @@ memfetchb(wpmmemadr_t virt)
 
         exit(1);
     }
+#if (WPMPREWARM)
+    __builtin_prefetch(ptr);
+#endif
     retval = *ptr;
 
     return retval;
@@ -236,6 +247,9 @@ memfetchw(wpmmemadr_t virt)
 
         exit(1);
     }
+#if (WPMPREWARM)
+    __builtin_prefetch(ptr);
+#endif
     retval = *ptr;
 
     return retval;

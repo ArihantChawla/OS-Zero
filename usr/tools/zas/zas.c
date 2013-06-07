@@ -1384,7 +1384,7 @@ zasprocinst(struct zastoken *token, zasmemadr_t adr,
 {
     struct wpmopcode    *op = NULL;
 #if (WPMVEC)
-    struct wpmvecopcode *vop = NULL;
+    struct vecopcode *vop = NULL;
 #endif
     zasmemadr_t          opadr = rounduppow2(adr, 4);
     struct zastoken     *token1 = NULL;
@@ -1404,7 +1404,7 @@ zasprocinst(struct zastoken *token, zasmemadr_t adr,
 #endif
 #if (WPMVEC)
     if (token->unit == UNIT_VEC) {
-        vop = (struct wpmvecopcode *)&physmem[adr];
+        vop = (struct vecopcode *)&physmem[adr];
         vop->inst = token->data.inst.op;
         vop->unit = UNIT_VEC;
         vop->flg = token->opflg;
