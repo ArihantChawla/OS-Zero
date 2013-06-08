@@ -83,47 +83,6 @@ void vecopcpop(struct wpmopcode *op);
 void vecoppair(struct wpmopcode *op);
 void vecopunpair(struct wpmopcode *op);
 
-typedef void vecophandler_t(void *, void *, size_t);
-
-#define vecadd(v1, v2)       ((v1) + (v2))
-#define vecsub(v1, v2)       ((v1) - (v2))
-#define vecmul(v1, v2)       ((v1) * (v2))
-#define vecdiv(v1, v2)       ((v1) / (v2))
-#define vecmod(v1, v2)       ((v1) % (v2))
-#define veclt(v1, v2)        ((v1) < (v2) ? VEC_TRUE : VEC_FALSE)
-#define veclte(v1, v2)       ((v1) <= (v2) ? VEC_TRUE : VEC_FALSE)
-#define vecgt(v1, v2)        ((v1) > (v2) ? VEC_TRUE : VEC_FALSE)
-#define vecgte(v1, v2)       ((v1) >= (v2) ? VEC_TRUE : VEC_FALSE)
-#define veceq(v1, v2)        ((v1) == (v2) ? VEC_TRUE : VEC_FALSE)
-#define vecineq(v1, v2)      ((v1) != (v2) ? VEC_TRUE : VEC_FALSE)
-#define vecshl(v1, v2)       ((v1) << (v2))
-#define vecshr(v1, v2)       ((v1) >> (v2))
-#define vecnot(v1)           (~(v1))
-#define vecand(v1, v2)       ((v1) & (v2))
-#define vecor(v1, v2)        ((v1) | (v2))
-#define vecxor(v1, v2)       ((v1) ^ (v2))
-#define vecselect(b, v1, v2) ((b) ? (v1) : (v2))
-#define vecrand(v1)          (rand() % (v1))
-#define vecfloor(v1)         (floor(v1))
-#define vecceil(v1)          (ceil(v1))
-#define vectrunc(v1)         (trunc(v1))
-#define vecround(v1)         (round(v1))
-#define vecitof(v1)          ((vecfloat)(v1))
-#define vecitob(v1)          ((v1) ? VEC_TRUE : VEC_FALSE)
-#define vecbtoi(v1)          ((v1) ? 1 : 0)
-#define veclog(v1)           (log(v1))
-#define vecsqrt(v1)          (sqrt(v1))
-#define vecexp(v1)           (exp(v1))
-#define vecsin(v1)           (sin(v1))
-#define veccos(v1)           (cos(v1))
-#define vectan(v1)           (tan(v1))
-#define vecasin(v1)          (asin(v1))
-#define vecacos(v1)          (acos(v1))
-#define vecatan(v1)          (atan(v1))
-#define vecsinh(v1)          (sinh(v1))
-#define veccosh(v1)          (cosh(v1))
-#define vectanh(v1)          (tanh(v1))
-
 #define vecintop1b(adr1, len1, OP)                                      \
     do {                                                                \
         wpmmemadr_t ptr1 = adr1;                                        \
@@ -381,45 +340,7 @@ typedef void vecophandler_t(void *, void *, size_t);
         }                                                               \
     } while (0)
 
-#define vecintcmp(adr1, adr2, len1, len2, OP)                           \
-    do {                                                                \
-        wpmmemadr_t ptr1 = adr1;                                        \
-        wpmmemadr_t ptr2 = adr2;                                        \
-        vecint      val1;                                               \
-        vecint      val2;                                               \
-        vecint      res;                                                \
-                                                                        \
-        len1 = min(len1, len2);                                         \
-        while (len1--) {                                                \
-            val1 = memfetchq(ptr1);                                     \
-            val2 = memfetchq(ptr2);                                     \
-            res = OP(val1, val2);                                       \
-            memstoreq(res, ptr2);                                       \
-            ptr1 += 8;                                                  \
-            ptr2 += 8;                                                  \
-        }                                                               \
-    } while (0)
-
-#define vecfloatcmp(adr1, adr2, len1, len2, OP)                         \
-        do {                                                            \
-        wpmmemadr_t ptr1 = adr1;                                        \
-        wpmmemadr_t ptr2 = adr2;                                        \
-        vecfloat    val1;                                               \
-        vecfloat    val2;                                               \
-        vecfloat    res;                                                \
-                                                                        \
-        len1 = min(len1, len2);                                         \
-        while (len1--) {                                                \
-            val1 = memfetchq(ptr1);                                     \
-            val2 = memfetchq(ptr2);                                     \
-            res = OP(val1, val2);                                       \
-            memstoreq(res, ptr2);                                       \
-            ptr1 += 8;                                                  \
-            ptr2 += 8;                                                  \
-        }                                                               \
-    } while (0)
-
-#define vecvmop1(vop, OP)                                               \
+#define vecvmop2(vop, OP)                                               \
     do {                                                                \
         long                 reg1 = vop->reg1;                          \
         long                 reg2 = vop->reg2;                          \
