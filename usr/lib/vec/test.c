@@ -16,14 +16,7 @@
         profstoptick(tick);                                             \
         fprintf(stderr, "%s: %lld ticks\n", #test, (long long)proftickdiff(tick)); \
     } while (0)
-#define runtest5(p1, p2, test, nw, empty)                               \
-    do {                                                                \
-        sleep(5);                                                       \
-        profstarttick(tick);                                            \
-        test(p1, p2, nw, empty);                                        \
-        profstoptick(tick);                                             \
-        fprintf(stderr, "%s: %lld ticks\n", #test, (long long)proftickdiff(tick)); \
-    } while (0)
+
 int
 main(int argc, char *argv[])
 {
@@ -62,8 +55,8 @@ main(int argc, char *argv[])
     }
 
     runtest4(vec[0], vec[1], vecaddbus, 512);
-    runtest5(vec[2], vec[3], vecaddbus_mmx, 512, 1);
-    runtest5(vec[4], vec[5], vecaddbus_sse2, 512, 1);
+    runtest4(vec[2], vec[3], vecaddbus_mmx, 512);
+    runtest4(vec[4], vec[5], vecaddbus_sse2, 512);
     for (i = 0 ; i < 4096 ; i++) {
         int8_t i1 = vec[3][i];
         int8_t i2 = vec[5][i];
@@ -75,7 +68,7 @@ main(int argc, char *argv[])
         }
     }
     runtest4(vec[6], vec[7], vecaddbss, 512);
-    runtest5(vec[8], vec[9], vecaddbss_sse2, 512, 1);
+    runtest4(vec[8], vec[9], vecaddbss_sse2, 512);
     for (i = 0 ; i < 4096 ; i++) {
         int i1 = vec[7][i];
         int i2 = vec[9][i];
@@ -86,7 +79,7 @@ main(int argc, char *argv[])
             exit(1);
         }
     }
-    runtest5(vec[10], vec[11], vecaddbsu_mmx, 512, 1);
+    runtest4(vec[10], vec[11], vecaddbsu_mmx, 512);
 
     exit(0);
 }
