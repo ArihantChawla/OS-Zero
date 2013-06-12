@@ -3,6 +3,61 @@
 
 #include <stdint.h>
 
+/* add unsigned 8-bit values, saturate to 0..0xff */
+#define vecaddbus(adr1, adr2, nw)                                       \
+    do {                                                                \
+        uint8_t *_ptr1 = (uint8_t *)(adr1);                             \
+        uint8_t *_ptr2 = (uint8_t *)(adr2);                             \
+        int32_t  _val1;                                                 \
+        int32_t  _val2;                                                 \
+        int32_t  _val3;                                                 \
+        int32_t  _val4;                                                 \
+        int      _n = (nw) << 2;                                        \
+                                                                        \
+        while (_n--) {                                                  \
+            _val1 = _ptr1[0];                                           \
+            _val2 = _ptr2[0];                                           \
+            _val3 = _ptr1[1];                                           \
+            _val4 = _ptr2[1];                                           \
+            _val1 += _val2;                                             \
+            _val1 = max(_val1, 0xff);                                   \
+            _ptr2[0] = _val1;                                           \
+            _val3 += _val4;                                             \
+            _val3 = max(_val3, 0xff);                                   \
+            _ptr2[1] = _val3;                                           \
+            _ptr1 += 2;                                                 \
+            _ptr2 += 2;                                                 \
+        }                                                               \
+    } while (0)
+
+
+/* add signed 8-bit values, saturate to 0..0x7f */
+#define vecaddbss(adr1, adr2, nw)                                       \
+    do {                                                                \
+        int8_t  *_ptr1 = (int8_t *)(adr1);                              \
+        int8_t  *_ptr2 = (int8_t *)(adr2);                              \
+        int32_t  _val1;                                                 \
+        int32_t  _val2;                                                 \
+        int32_t  _val3;                                                 \
+        int32_t  _val4;                                                 \
+        int      _n = (nw) << 2;                                        \
+                                                                        \
+        while (_n--) {                                                  \
+            _val1 = _ptr1[0];                                           \
+            _val2 = _ptr2[0];                                           \
+            _val3 = _ptr1[1];                                           \
+            _val4 = _ptr2[1];                                           \
+            _val1 += _val2;                                             \
+            _val1 = _val1 < 0 ? max(_val1, -0x7f - 1) : min(_val1, 0x7f); \
+            _ptr2[0] = _val1;                                           \
+            _val3 += _val4;                                             \
+            _val3 = _val3 < 0 ? max(_val3, -0x7f - 1) : min(_val3, 0x7f); \
+            _ptr2[1] = _val3;                                           \
+            _ptr1 += 2;                                                 \
+            _ptr2 += 2;                                                 \
+        }                                                               \
+    } while (0)
+
 typedef int64_t vecint;
 typedef int64_t vecbool;
 typedef double  vecfloat;

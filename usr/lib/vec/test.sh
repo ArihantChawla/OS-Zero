@@ -1,3 +1,3 @@
 #! /bin/sh
 
-gcc -g -Wall -O -I.. -o test test.c
+clang -g -Wall -O0 -mmmx -msse2 -I.. -o test test.c
