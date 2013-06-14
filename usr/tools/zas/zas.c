@@ -79,7 +79,9 @@ struct zassymrec {
 
 #define NHASHITEM 1024
 static struct zasop     *ophash[NHASHITEM] ALIGNED(PAGESIZE);
+#if (WPMVEC)
 static struct zasop     *vecophash[NHASHITEM];
+#endif
 static struct zassymrec *symhash[NHASHITEM];
 static struct zasval    *valhash[NHASHITEM];
 static struct zaslabel  *globhash[NHASHITEM];

@@ -23,7 +23,7 @@ vecprint_mmx(void *vec)
 }
 
 /* add signed 8-bit values, saturate to 0..0x7f */
-#define vecaddbsu_mmx(adr1, adr2, nw)                                   \
+#define vecadd8su_mmx(adr1, adr2, nw)                                   \
     do {                                                                \
         int32_t *_ptr1 = (int32_t *)(adr1);                             \
         int32_t *_ptr2 = (int32_t *)(adr2);                             \
@@ -66,7 +66,7 @@ vecprint_mmx(void *vec)
     } while (0)
 
 /* add unsigned 8-bit values, saturate to 0..0xff */
-#define vecaddbus_mmx(adr1, adr2, nw)                                   \
+#define vecadd8us_mmx(adr1, adr2, nw)                                   \
     do {                                                                \
         int32_t *_ptr1 = (int32_t *)(adr1);                             \
         int32_t *_ptr2 = (int32_t *)(adr2);                             \

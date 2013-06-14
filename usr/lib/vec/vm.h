@@ -340,39 +340,6 @@ void vecopunpair(struct wpmopcode *op);
         }                                                               \
     } while (0)
 
-#define vecvmop2(vop, OP)                                               \
-    do {                                                                \
-        long                 reg1 = vop->reg1;                          \
-        long                 reg2 = vop->reg2;                          \
-        wpmmemadr_t          adr1 = wpm->cpustat.varegs[reg1];          \
-        wpmmemadr_t          adr2 = wpm->cpustat.varegs[reg2];          \
-        uint64_t             len1 = wpm->cpustat.vlregs[reg1];          \
-        uint64_t             len2 = wpm->cpustat.vlregs[reg2];          \
-                                                                        \
-        switch (vecoptype(vop)) {                                       \
-            case OP_FLOAT:                                              \
-                vecfloatop1(adr1, adr2, len1, len2, OP);                \
-                                                                        \
-                break;                                                  \
-            case OP_BYTE:                                               \
-                vecintop1b(adr1, adr2, len1, len2, OP, vecopflg(vop));  \
-                                                                        \
-                break;                                                  \
-            case OP_WORD:                                               \
-                vecintop1w(adr1, adr2, len1, len2, OP, vecopflg(vop));  \
-                                                                        \
-                break;                                                  \
-            case OP_LONG:                                               \
-                vecintop1l(adr1, adr2, len1, len2, OP, vecopflg(vop));  \
-                                                                        \
-                break;                                                  \
-            case OP_QUAD:                                               \
-                vecintop1q(adr1, adr2, len1, len2, OP, vecopflg(vop));  \
-                                                                        \
-                break;                                                  \
-        }                                                               \
-    } while (0)
-
 #define vecvmfloatop1(vop, OP)                                          \
     do {                                                                \
         long                 reg1 = vop->reg1;                          \

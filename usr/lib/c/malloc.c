@@ -5,6 +5,8 @@
  * See the file LICENSE for more information about using this software.
  */
 
+#define STDIO 1
+
 /*
  *        malloc buffer layers
  *        --------------------
@@ -87,7 +89,7 @@
 #include <stddef.h>
 #include <stdlib.h>
 #include <stdint.h>
-#if 0
+#if (STDIO)
 #include <stdio.h>
 #endif
 
@@ -210,9 +212,10 @@ typedef pthread_mutex_t LK_T;
 #define narnbufmag(bid)   0
 #endif
 #if (TUNEBUF)
-#define isbufbkt(bid)     ((bid) <= MAPMIDLOG2)
-//#define isbufbkt(bid)     0
-#define nmagslablog2(bid) (_nslabtab[(bid)])
+//#define isbufbkt(bid)     ((bid) <= MAPMIDLOG2)
+#define isbufbkt(bid)     0
+//#define nmagslablog2(bid) (_nslabtab[(bid)])
+#define nmagslablog2(bid) 0
 #else
 #define isbufbkt(bid)     0
 #define nmagslablog2(bid) (ismapbkt(bid) ? nmaplog2(bid) : nslablog2(bid))
@@ -1580,7 +1583,7 @@ getmem(size_t size,
         errno = ENOMEM;
 #endif
 #if (STDIO)
-        fprintf(stderr, "%lx failed to allocate %ld bytes\n", aid, 1UL << bid);
+        fprintf(stderr, "%lx failed to allocate %ld bytes (heap: %ld, map: %ld\n", aid, 1UL << bid, (long)_nbheap, (long)_nbmap);
 #endif
 
         abort();

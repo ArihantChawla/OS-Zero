@@ -54,32 +54,49 @@ main(int argc, char *argv[])
         }
     }
 
-    runtest4(vec[0], vec[1], vecaddbus, 512);
-    runtest4(vec[2], vec[3], vecaddbus_mmx, 512);
-    runtest4(vec[4], vec[5], vecaddbus_sse2, 512);
+    runtest4(vec[0], vec[1], vecadd8us, 512);
+    runtest4(vec[2], vec[3], vecadd8us_mmx, 512);
+    runtest4(vec[4], vec[5], vecadd8us_sse2, 512);
     for (i = 0 ; i < 4096 ; i++) {
         int8_t i1 = vec[3][i];
         int8_t i2 = vec[5][i];
         if (i1 != i2) {
-            fprintf(stderr, "vecaddbus_sse2 error: i=%x, %x != %x\n (%x + %x)",
+            fprintf(stderr, "vecadd8us_sse2 error: i=%x, %x != %x\n (%x + %x)",
                     i, i2, i1, vec[4][i], vec[7][i]);
 
             exit(1);
         }
     }
-    runtest4(vec[6], vec[7], vecaddbss, 512);
-    runtest4(vec[8], vec[9], vecaddbss_sse2, 512);
+    runtest4(vec[6], vec[7], vecadd8ss, 512);
+    runtest4(vec[8], vec[9], vecadd8ss_sse2, 512);
     for (i = 0 ; i < 4096 ; i++) {
         int i1 = vec[7][i];
         int i2 = vec[9][i];
         if (i1 != i2) {
-            fprintf(stderr, "vecaddbs_sse2 error: i=%d, %d != %d (%d + %d)\n",
+            fprintf(stderr, "vecadd8ss_sse2 error: i=%d, %d != %d (%d + %d)\n",
                     i, i2, i1, vec[0][i], vec[1][i]);
 
             exit(1);
         }
     }
-    runtest4(vec[10], vec[11], vecaddbsu_mmx, 512);
+    runtest4(vec[10], vec[11], vecadd8su_mmx, 512);
+
+    for (i = 0 ; i < 10 ; i += 2) {
+        srand(1);
+        for (j = 0 ; j < 4096 ; j++) {
+            vec[i][j] = rand() & 0xff;
+        }
+    }
+    for (i = 0 ; i < 10 ; i += 2) {
+        srand(2);
+        for (j = 0 ; j < 4096 ; j++) {
+            vec[i][j] = rand() & 0xff;
+        }
+    }
+    runtest4(vec[0], vec[1], vecadd16us, 512);
+    runtest4(vec[2], vec[3], vecadd16ss, 512);
+    runtest4(vec[4], vec[5], vecadd32us, 512);
+    runtest4(vec[6], vec[7], vecadd32ss, 512);
 
     exit(0);
 }

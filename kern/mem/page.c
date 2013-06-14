@@ -2,6 +2,9 @@
 #if (MEMTEST)
 #include <stdio.h>
 #endif
+#include <limits.h>
+#include <zero/param.h>
+#include <zero/cdecl.h>
 #include <zero/trix.h>
 #include <kern/util.h>
 #include <kern/mem.h>
@@ -11,37 +14,78 @@
 extern struct page   vmphystab[NPAGEPHYS];
 extern struct pageq  vmphysq;
 extern unsigned long vmnphyspages;
+static struct pageq  pagephyslrutab[LONGSIZE * CHAR_BIT] ALIGNED(CLSIZE);
 unsigned long        npagefree;
 
 void
-pageinitzone(struct pageq *zone, uintptr_t base, unsigned long nbphys)
+pageinitzone(uintptr_t base,
+             struct pageq *zone,
+             uintptr_t ofs,
+             unsigned long nb)
 {
-    struct page   *pg = vmphystab + (rounduppow2(base, PAGESIZE) >> PAGESIZELOG2);
-    unsigned long  n  = (nbphys - rounduppow2(base, PAGESIZE)) >> PAGESIZELOG2;
+    uintptr_t      adr = rounduppow2(ofs, PAGESIZE);
+    unsigned long  n  = (nb - rounduppow2(ofs, PAGESIZE)) >> PAGESIZELOG2;
+    struct page   *pg = base + (adr >> PAGESIZELOG2);
 
+    adr += n << PAGESIZELOG2;
+    pg += n;
     pageqlk(zone);
     vmnphyspages = n;
 #if (MEMTEST)
     printf("initializing %ld (%lx) pages\n", n, n);
 #endif
     while (n--) {
+        pg--;
+        pg->adr = adr;
+        pg->nflt = 0;
         pagepush(pg, zone);
-        pg++;
+        adr -= PAGESIZE;
     }
     pagequnlk(zone);
+}
+
+void
+pageinitphys(uintptr_t base, unsigned long nb)
+{
+    pageinitzone(vmphystab, &vmphysq, base, nb);
+
+    return;
 }
 
 /* TODO: evict pages from LRU if none free / low water */
 struct page *
 pagezalloc(struct pageq *zone, struct pageq *lru)
 {
-    struct page *pg;
+    struct page  *pg = NULL;
+    struct pageq *qp;
+    long          l;
 
     pageqlk(zone);
     pagepop(zone, &pg);
     pagequnlk(zone);
+    if (!pg) {
+        for (l = 0 ; l < LONG_SIZE * CHAR_BIT ; l++) {
+            qp = &lru[l];
+            pageqlk(qp);
+            pagepop(qp, &pg);
+            pageunlk(qp);
+            if (pg) {
+                pg->nflt++;
+
+                return pg;
+            }
+        }
+    }
 
     return pg;
+}
+
+struct page *
+pageallocphys(void)
+{
+    struct page *retval = pagezalloc(&vmphysq, &pagephyslrutab);
+
+    return retval;
 }
 
 void

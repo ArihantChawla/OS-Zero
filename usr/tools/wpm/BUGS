@@ -1,3 +1,0 @@
-- ia32/asm.h is broken; for example, inc doesn't list its arguments right
-- need to add handling of flags to many wpm instructions; it's currently mostly
-  CMP that sets them

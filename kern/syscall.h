@@ -57,9 +57,9 @@
  * long seek(long desc, off_t *ofs, long whence);
  * long falloc(long desc, off_t *ofs, off_t *len);
  * long stat(char *path, struct stat *buf, long flg);
- * long readahead(int fd, off_t ofs, size_t count);
+ * long readahead(long desc, off_t ofs, size_t count);
  * long fhint(long desc, long flg, struct freg *arg);
- * - NORMAL, SEQUENTIAL, RANDOM, WILLNEED, DONTNEED, NOREUSE
+ * - NORMAL, SEQUENTIAL, RANDOM, WILLNEED, DONTNEED, NOREUSE, NONBLOCK, SYNC
  * long ioctl(long desc, long cmd, void *arg);
  * long fctl(long desc, long cmd, void *arg);
  * long poll(struct pollfd *fds, long nfd, long timeout);

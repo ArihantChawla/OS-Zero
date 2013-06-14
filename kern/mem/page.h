@@ -24,6 +24,7 @@ struct upage {
 #endif
 
 struct page {
+    uintptr_t      adr;
     unsigned long  nflt;
 //    uintptr_t     xptr;
     struct page   *prev;

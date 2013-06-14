@@ -1,0 +1,9 @@
+This directory tree contains a new from-scratch kernel which currently boots to
+a point on 32-bit X86 platforms.
+
+The goals of the system are fast response to user interaction as well as high
+multimedia performance.
+
+Zero is heavily inspired by UNIX, especially early versions of the legendary
+operating system.
+
