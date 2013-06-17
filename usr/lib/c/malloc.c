@@ -6,7 +6,7 @@
  */
 
 #define BIGSLAB    0
-#define INTSTAT    1
+#define INTSTAT    0
 #define STDIO      1
 #define FREEBITMAP 0
 
@@ -158,8 +158,8 @@ typedef pthread_mutex_t LK_T;
 #define SLABSMALLLOG2 16 /* small-size block */
 #if (BIGSLAB)
 #define SLABLOG2      24 /* base size for heap allocations */
-#define MAPMIDLOG2    27
-#define MAPBIGLOG2    30
+#define MAPMIDLOG2    26
+#define MAPBIGLOG2    28
 #else
 #define SLABLOG2      20
 #define MAPMIDLOG2    24
@@ -261,7 +261,7 @@ typedef pthread_mutex_t LK_T;
     (((ismapbkt(bid))                                                   \
       ? 0                                                               \
       : (((bid) <= SLABTEENYLOG2)                                       \
-         ? -4                                                           \
+         ? -3                                                           \
          : (((bid) <= SLABTINYLOG2)                                     \
             ? -2                                                        \
             : 0))))
@@ -269,7 +269,7 @@ typedef pthread_mutex_t LK_T;
     (((ismapbkt(bid))                                                   \
       ? 0                                                               \
       : (((bid) <= SLABTEENYLOG2)                                       \
-         ? -4                                                           \
+         ? -3                                                           \
          : (((bid) <= SLABTINYLOG2)                                     \
             ? -2                                                        \
             : 0))))
@@ -289,7 +289,7 @@ typedef pthread_mutex_t LK_T;
          ? 2                                                            \
          : 0)                                                           \
       : (((bid) <= SLABTEENYLOG2)                                       \
-         ? -3                                                           \
+         ? -2                                                           \
          : (((bid) <= SLABTINYLOG2)                                     \
             ? -2                                                        \
             : 0))))
@@ -299,7 +299,7 @@ typedef pthread_mutex_t LK_T;
          ? 3                                                            \
          : 0)                                                           \
       : (((bid) <= SLABTEENYLOG2)                                       \
-         ? -2                                                           \
+         ? -1                                                           \
          : (((bid) <= SLABTINYLOG2)                                     \
             ? -2                                                        \
             : 0))))
@@ -498,8 +498,11 @@ struct mconf {
     long        narn;
 };
 
+#if 0
 #define istk(bid)                                                       \
     ((nblk(bid) << 1) * sizeof(void *) <= PAGESIZE)
+#endif
+#define istk(bid) 0
 struct mag {
     long        cur;
     long        max;
@@ -507,6 +510,7 @@ struct mag {
     long        bid;
     void       *adr;
     void       *bptr;
+    long        glob;
     struct mag *prev;
     struct mag *next;
 #if (FREEBITMAP)
@@ -518,7 +522,9 @@ struct mag {
 #define nbarn() (blksz(bktid(sizeof(struct arn))))
 struct arn {
     struct mag  *btab[NBKT];
+#if 0
     struct mag  *ftab[NBKT];
+#endif
     long         nref;
     long         hcur;
     long         nhdr;
@@ -554,7 +560,9 @@ static long            _nslablog2tab[NBKT];
 #endif
 #if (MTSAFE)
 static LK_T            _flktab[NBKT];
+static LK_T            _blktab[NBKT];
 #endif
+static struct mag     *_btab[NBKT];
 static struct mag     *_ftab[NBKT];
 #if (HACKS)
 static long            _fcnt[NBKT];
@@ -720,33 +728,6 @@ relarn(void *arg)
         bid = NBKT;
         while (bid--) {
             mlk(&arn->lktab[bid]);
-            head = arn->ftab[bid];
-            if (head) {
-#if (HACKS)
-                n++;
-#endif
-                mag = head;
-                while (mag->next) {
-#if (HACKS)
-                    n++;
-#endif
-                    mag = mag->next;
-                }
-                mlk(&_flktab[bid]);
-                mag->next = _ftab[bid];
-                _ftab[bid] = head;
-#if (HACKS)
-                _fcnt[bid] += n;
-#endif
-                munlk(&_flktab[bid]);
-                arn->ftab[bid] = NULL;
-            }
-            munlk(&arn->lktab[bid]);
-        }
-#if (DEVEL)
-        bid = NBKT;
-        while (bid--) {
-            mlk(&arn->lktab[bid]);
             head = arn->btab[bid];
             if (head) {
 #if (HACKS)
@@ -754,14 +735,15 @@ relarn(void *arg)
 #endif
                 mag = head;
                 while (mag->next) {
+                    mag->glob = 1;
 #if (HACKS)
                     n++;
 #endif
                     mag = mag->next;
                 }
-                mlk(&_flktab[bid]);
-                mag->next = _ftab[bid];
-                _ftab[bid] = head;
+                mlk(&_blktab[bid]);
+                mag->next = _btab[bid];
+                _btab[bid] = head;
 #if (HACKS)
                 _fcnt[bid] += n;
 #endif
@@ -770,7 +752,6 @@ relarn(void *arg)
             }
             munlk(&arn->lktab[bid]);
         }
-#endif
     }
 
     return;
@@ -1476,6 +1457,7 @@ getmem(size_t size,
     long         l;
     long         n;
     long         get = 0;
+    long         glob = 0;
     
     if (!(_conf.flags & CONF_INIT)) {
         initmall();
@@ -1486,7 +1468,9 @@ getmem(size_t size,
     mlk(&arn->lktab[bid]);
     mag = arn->btab[bid];
     if (!mag) {
-        mag = arn->ftab[bid];
+        glob = 1;
+        mlk(&_blktab[bid]);
+        mag = _btab[bid];
     }
     if (!mag) {
         mlk(&_flktab[bid]);
@@ -1502,6 +1486,7 @@ getmem(size_t size,
         munlk(&_flktab[bid]);
         if (mag) {
             if (gtpow2(max, 1)) {
+                mag->glob = 0;
                 mag->next = arn->btab[bid];
                 if (mag->next) {
                     mag->next->prev = mag;
@@ -1515,6 +1500,9 @@ getmem(size_t size,
         }
         arn->btab[bid] = mag->next;
         mag->next = NULL;
+    }
+    if (glob) {
+        munlk(&_blktab[bid]);
     }
     if (!mag) {
         get = 1;
@@ -1572,37 +1560,15 @@ getmem(size_t size,
                             ptr += bsz;
                         }
                         mag->prev = NULL;
-#if (DEVEL)
-                        if (ismapbkt(bid)) {
-//                            mlk(&_flktab[bid]);
-                            mag->next = arn->ftab[bid];
-                            arn->ftab[bid] = mag;
 #if (HACKS)
-                            _fcnt[bid]++;
+                        _fcnt[bid]++;
 #endif
-                        } else {
-                            mag->next = arn->btab[bid];
-                            if (mag->next) {
-                                mag->next->prev = mag;
-                            }
-                            arn->btab[bid] = mag;
+                        mag->glob = 0;
+                        mag->next = arn->btab[bid];
+                        if (mag->next) {
+                            mag->next->prev = mag;
                         }
-#else /* !DEVEL */
-                        if (ismapbkt(bid)) {
-                            mlk(&_flktab[bid]);
-                            mag->next = _ftab[bid];
-                            _ftab[bid] = mag;
-#if (HACKS)
-                            _fcnt[bid]++;
-#endif
-                        } else {
-                            mag->next = arn->btab[bid];
-                            if (mag->next) {
-                                mag->next->prev = mag;
-                            }
-                            arn->btab[bid] = mag;
-                        }
-#endif
+                        arn->btab[bid] = mag;
                     }
                 }
             }
@@ -1731,6 +1697,7 @@ putmem(void *ptr)
         arn = _atab[aid];
         mlk(&arn->lktab[bid]);
         if (gtpow2(max, 1) && magempty(mag)) {
+            mag->glob = 0;
             mag->next = arn->btab[bid];
             if (mag->next) {
                 mag->next->prev = mag;
@@ -1766,6 +1733,8 @@ putmem(void *ptr)
                 if (gtpow2(max, 1)) {
                     if (mag->prev) {
                         mag->prev->next = mag->next;
+                    } else if (mag->glob) {
+                        _btab[bid] = mag->next;
                     } else {
                         arn->btab[bid] = mag->next;
                     }
