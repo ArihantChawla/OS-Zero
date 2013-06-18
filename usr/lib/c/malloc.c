@@ -5,6 +5,8 @@
  * See the file LICENSE for more information about using this software.
  */
 
+#define ISTK       1
+#define NOSTK      1
 #define BIGSLAB    0
 #define INTSTAT    0
 #define STDIO      1
@@ -502,7 +504,8 @@ struct mconf {
 #define istk(bid)                                                       \
     ((nblk(bid) << 1) * sizeof(void *) <= PAGESIZE)
 #endif
-#define istk(bid) 0
+#define istk(bid)                                                       \
+    ((nblk(bid) << 1) * sizeof(void *) <= PAGESIZE - offsetof(struct mag, data))
 struct mag {
     long        cur;
     long        max;
@@ -516,7 +519,11 @@ struct mag {
 #if (FREEBITMAP)
     uint8_t    *fmap;
 #endif
+#if (ISTK)
+    uint8_t     data[EMPTY];
+#elif (!NOSTK)
     struct mag *stk[EMPTY];
+#endif
 };
 
 #define nbarn() (blksz(bktid(sizeof(struct arn))))
@@ -1206,7 +1213,9 @@ gethdr(long aid)
         while (cur) {
             mag = (struct mag *)ptr;
             *hbuf++ = mag;
+#if (!NOSTK)
             mag->bptr = mag->stk;
+#endif
             cur--;
             ptr += nbhdr();
         }
@@ -1532,7 +1541,13 @@ getmem(size_t size,
             if (ptr) {
                 if (gtpow2(max, 1)) {
                     if (istk(bid)) {
+#if (ISTK)
+                        stk = (void **)(&mag->data);
+#elif (NOSTK)
+                        stk = mag->bptr;
+#else
                         stk = (void **)mag->stk;
+#endif
                     } else {
                         stk = mapstk(max);
                     }
@@ -1585,7 +1600,6 @@ getmem(size_t size,
         }
 #endif
         if ((zero) && chkflg(ptr, BDIRTY)) {
-//            zeroblk(retptr, bsz);
             bzero(retptr, bsz);
         }
         ptr = retptr;
