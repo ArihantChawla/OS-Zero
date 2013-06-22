@@ -7,7 +7,7 @@
 
 #define ISTK       1
 #define NOSTK      1
-#define BIGSLAB    0
+#define BIGSLAB    1
 #define INTSTAT    0
 #define STDIO      1
 #define FREEBITMAP 0
@@ -93,6 +93,7 @@
 #include <stddef.h>
 #include <stdlib.h>
 #include <stdint.h>
+#include <limits.h>
 #if (STDIO)
 #include <stdio.h>
 #endif
@@ -1719,6 +1720,9 @@ putmem(void *ptr)
             arn->btab[bid] = mag;
         }
         mptr = getptr(mag, ptr);
+        if (mptr) {
+            putptr(mag, ptr, NULL);
+        }
 #if (RZSZ)
         if (!chkflg(mptr, BALIGN)) {
             u8p = mptr - RZSZ;
@@ -1740,7 +1744,7 @@ putmem(void *ptr)
         clrbit(mag->fmap, blkid(mag, mptr));
 #endif
         if (mptr) {
-            putptr(mag, ptr, NULL);
+//            putptr(mag, ptr, NULL);
             mptr = setflg(mptr, BDIRTY);
             putblk(mag, mptr);
             if (magfull(mag)) {
@@ -1884,7 +1888,7 @@ aligned_alloc(size_t align,
               size_t size)
 {
     void *ptr = NULL;
-    if (!powerof2(align) || (size % align)) {
+    if (!powerof2(align) || (size & (align - 1))) {
         errno = EINVAL;
     } else {
         ptr = getmem(size, align, 0);
@@ -1904,7 +1908,7 @@ posix_memalign(void **ret,
     void *ptr = getmem(size, align, 0);
     int   retval = -1;
 
-    if (!powerof2(align) || (size % sizeof(void *))) {
+    if (!powerof2(align) || (size & (sizeof(void *) * CHAR_BIT - 1))) {
         errno = EINVAL;
     } else {
         ptr = getmem(size, align, 0);
