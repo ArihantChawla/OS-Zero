@@ -64,11 +64,11 @@ pagezalloc(struct pageq *zone, struct pageq *lru)
     pagepop(zone, &pg);
     pagequnlk(zone);
     if (!pg) {
-        for (l = 0 ; l < LONG_SIZE * CHAR_BIT ; l++) {
+        for (l = 0 ; l < LONGSIZE * CHAR_BIT ; l++) {
             qp = &lru[l];
             pageqlk(qp);
             pagepop(qp, &pg);
-            pageunlk(qp);
+            pagequnlk(qp);
             if (pg) {
                 pg->nflt++;
 
@@ -89,11 +89,12 @@ pageallocphys(void)
 }
 
 void
-pagezfree(struct pageq *zone, void *adr)
+pagezfree(struct pageq *zone, struct pageq *lru, void *adr)
 {
     unsigned long  id;
     struct page   *pg;
 
+    /* free physical page */
     pageqlk(zone);
     id = (uintptr_t)adr >> PAGESIZELOG2;
     pg = &vmphystab[id];

@@ -53,7 +53,9 @@ void
 vgainitcon(int w, int h)
 {
     struct vgacon *con = _vgacontab;
+#if !((VGAGFX) || (VBE2))
     uint8_t       *ptr = (uint8_t *)VGABUFADR;
+#endif
     long           l;
 
 #if (VGAGFX) && !(VBE2)
@@ -77,7 +79,9 @@ vgainitcon(int w, int h)
         con->nbufln = 0;
         /* TODO: allocate scrollback buffer */
         con->data = NULL;
+#if !((VGAGFX) || (VBE2))
         ptr += VGABUFSIZE;
+#endif
         con++;
     }
     vgacurcon = 0;
