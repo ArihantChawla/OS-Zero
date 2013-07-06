@@ -1,3 +1,5 @@
+/* memory interface */
+
 void *brk(intptr_t ofs);
 void *balloc(size_t nbytes, long flags);
 void *bmap(size_t nbytes, long flags, void *adr);
@@ -5,13 +7,20 @@ void *umalloc(size_t nbytes);
 
 struct heap {
    uintptr_t  brk;
-   void      *pdir;
 };
 
-#define BUFWIRED  0x01
-#define BUFSINGLE 0x02
-#define BUFDEV    0x04
-#define BUFNET    0x08
-#define BUFFILE   0x10
-#define BUFSEQ    0x20
-#define BUFSYNC   0x40
+#define BUFWIRED     0x01	// map physical memory permanently
+#define BUFSINGLE    0x02	// one user and one kernel thread at a time
+#define BUFDEV       0x04	// device I/O buffer
+#define BUFNET       0x08	// network I/O buffer
+#define BUFFILE      0x10	// file I/O buffer
+#define BUFSEQ       0x20	// sequential buffer
+#define BUFSYNC      0x40	// synchronous I/O
+#define BUFREADAHEAD 0x80	// use read-ahead buffering
+
+struct iobuf {
+    long    flg;
+    off_t   pos;
+    size_t  sz;
+    void   *data;
+};

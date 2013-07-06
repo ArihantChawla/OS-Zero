@@ -1297,6 +1297,11 @@ getslab(long aid,
             _nbheap += nb;
             _nheapreq[bid]++;
 #endif
+        } else {
+#if (STDIO)
+            fprintf(stderr, "failed to grow heap %ld bytes: bkt %ld\n", nb, bid);
+#endif
+            abort();
         }
     } else {
         nb = nbmap(bid);
@@ -1308,6 +1313,11 @@ getslab(long aid,
 #if (STAT)
             _nmapreq[bid]++;
 #endif
+        } else {
+#if (STDIO)
+            fprintf(stderr, "failed to map %ld bytes: bkt %ld\n", nb, bid);
+#endif
+            abort();
         }
     }
 #if (TUNEBUF)
@@ -1600,6 +1610,11 @@ getmem(size_t size,
                             mag->next->prev = mag;
                         }
                         arn->btab[bid] = mag;
+                    } else {
+#if (STDIO)
+                        fprintf(stderr, "failed to map stk: bkt %ld\n", bid);
+#endif
+                        abort();
                     }
                 }
             }
@@ -1661,6 +1676,11 @@ getmem(size_t size,
                             }
                             _ftab[bid] = mag;
                             munlk(&_flktab[bid]);
+                        } else {
+#if (STDIO)
+                            fprintf(stderr, "failed to map stack: bkt %ld\n", bid);
+#endif
+                            abort();
                         }
                     }
                 }
@@ -1721,6 +1741,11 @@ getmem(size_t size,
                         mag->next->prev = mag;
                     }
                     arn->btab[bid] = mag;
+                } else {
+#if (STDIO)
+                    fprintf(stderr, "failed to allocate stack: bkt %ld\n", bid);
+#endif
+                    abort();
                 }
             }
         }

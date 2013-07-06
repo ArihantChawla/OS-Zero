@@ -17,7 +17,7 @@
 
 /* keyboard events */
 
-/* the highest bit indicates a control key mask */
+/* the highest bit in sym indicates presence of a control key mask */
 #define EVKBDCTRLBIT  0x80000000U
 /* mask-bits for control keys */
 #define EVKBDSHIFT    0x00000001U       // Shift
@@ -29,23 +29,24 @@
 #define EVKBDALTGR    0x00000040U       // AltGr
 #define EVKBDSCRLOCK  0x00000080U       // Scroll lock
 struct evkbd {
-    uint32_t val;                       //  control state or Unicode/ISO value
-
+    uint32_t sym;                       // key symbol
+    uint32_t state;                     // control key state mask if present
 };
 
 /* pointer such as mouse device events */
 
-#define evpntisdown(ev, button) (ev->state & (1 << (button)))
+#define evbuttondown(ev, button) (ev->state & (1 << (button)))
 /* pointer device, e.g. mouse event */
 struct evpnt {
     uint32_t state;                     // state bits for buttons; 1 -> down
     uint32_t x;                         // screen X coordinate
     uint32_t y;                         // screen Y coordinate
+    uint32_t z;                         // screen Z coordinate
 } PACK();
 
 struct uievent {
     uint32_t type;                      // event type
-    union {                             // union to store event
+    union {                             // event data
         struct evkbd kbd;
         struct evpnt pnt;
     } ev;
@@ -56,14 +57,14 @@ struct uievent {
 /* command packet */
 struct evcmd {
     uint64_t cmd;                       // RPC command
-    uint64_t dest;                      // destination descriptor
+    uint64_t dest;                      // destination object
 } PACK();
 
 /* data packet */
 struct evdata {
     uint32_t fmt;                       // data format
     uint32_t itemsz;                    // data-word size
-    uint64_t nitem;                     // number of words
+    uint32_t nitem;                     // number of words
     uint8_t  data[EMPTY];               // data
 } PACK();
 

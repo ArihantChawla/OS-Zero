@@ -28,10 +28,6 @@ extern uint8_t   *physmem;
 /* 3.5 gigs */
 #define MEMHWBASE   (3U * 1024 * 1024 * 1024 + 512U * 1024 * 1024)
 
-#define PAGEPRES    0x00000001
-#define PAGEDIRTY   0x00000002
-#define PAGEADRMASK 0xfffff000
-
 #define pagenum(adr)                                                    \
     ((adr) >> 12)
 #define pageofs(adr) ((adr) & ((1U << 12) - 1))

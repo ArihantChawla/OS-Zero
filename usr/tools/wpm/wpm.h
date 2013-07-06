@@ -26,122 +26,132 @@ typedef uint32_t wpmuword_t;
     (!((adr) & ((p2) - 1)) ? (adr) : ((adr) + ((p2) - ((adr) & ((p2 - 1))))))
 #endif
 
-#define OPINVAL    0x00
-#define RESOLVE    (~((wpmword_t)0))
+#define OPINVAL     0x00
+#define RESOLVE     (~((wpmword_t)0))
 
-#define REGINDIR   0x10
-#define REGINDEX   0x20
+#define REGINDIR    0x10
+#define REGINDEX    0x20
 /* argument types */
-#define ARGNONE    0x00	// no argument
-#define ARGIMMED   0x01	// immediate argument
-#define ARGADR     0x02	// symbol / memory address
-#define ARGREG     0x03	// register
-#define ARGSYM     0x04	// symbol address
+#define ARGNONE     0x00	// no argument
+#define ARGIMMED    0x01	// immediate argument
+#define ARGADR      0x02	// symbol / memory address
+#define ARGREG      0x03	// register
+#define ARGSYM      0x04	// symbol address
 #if (WPMVEC)
-#define ARGVAREG   0x05
-#define ARGVLREG   0x06
+#define ARGVAREG    0x05
+#define ARGVLREG    0x06
 #endif
 
-#define PAGEPRES   0x00000001
+#if (WPMMMU)
+#define PAGEPRES    0x00000001U
+#define PAGEDIRTY   0x00000002U
+/* user-flags */
+#define PAGEWIRED   0x00000004U
+#define PAGEBUF     0x00000010U
+#define PAGEADRMASK  0xfffff000
+#endif
 
 /* machine status word */
-#define MSWZF      0x00000001
-#define MSWCF      0x00000002
-#define MSWOF      0x00000004
-#define MSWSF      0x00000008
+#define MSWZF       0x00000001
+#define MSWCF       0x00000002
+#define MSWOF       0x00000004
+#define MSWSF       0x00000008
 
 /* the first 4096-byte page at 0x00000000 has interrupt handler addresses */
-#define TRAPTMR    0x00         // timer interrupt
-#define TRAPDIV    0x01         // division by zero
-#define TRAPBRK    0x01         // breakpoint
-#define TRAPOF     0x02         // overflow
-#define TRAPINV    0x03         // invalid opcode
-#define TRAPPROT   0x04         // protection
+#define TRAPTMR     0x00        // timer interrupt
+#define TRAPDIV     0x01        // division by zero
+#define TRAPBRK     0x02        // breakpoint
+#define TRAPOF      0x03        // overflow
+#define TRAPINV     0x04        // invalid opcode
+#define TRAPPROT    0x05        // protection
+#if (WPMMMU)
+#define TRAPPFLT    0x06	// page-fault
+#endif
 #define NTRAP      16
-#define INTKBD     0x10         // keyboard
-#define INTMOUSE   0x11         // mouse
-#define INTMSG     0x12         // incoming message
+#define INTKBD      0x10        // keyboard
+#define INTMOUSE    0x11        // mouse
+#define INTMSG      0x12        // incoming message
 #define NINT       16
 
 /* hooks */
-#define HOOKPZERO  0            // r0 is number of pages
-#define HOOKMALLOC 1            // r0 is size
-#define HOOKMMAP   2            // r0 is desc, r1 is ofs, r2 is size, r3 is flg
-#define HOOKOPEN   3            // r0 is pointer to NUL-terminated file name
-#define HOOKREAD   4            // r0 is descriptor, r1 is buffer, r2 is length
-#define HOOKWRITE  5            // r0 is descriptor, r1 is buffer, r2 is length
-#define HOOKSEEK   6            // r0 is low offset, r1 is high offset, r2 is origin
-#define HOOKCLOSE  7            // r0 is descriptor
+#define HOOKPZERO   0           // r0 is number of pages
+#define HOOKMALLOC  1           // r0 is size
+#define HOOKMMAP    2           // r0 is desc, r1 is ofs, r2 is size, r3 is flg
+#define HOOKOPEN    3           // r0 is pointer to NUL-terminated file name
+#define HOOKREAD    4           // r0 is descriptor, r1 is buffer, r2 is length
+#define HOOKWRITE   5           // r0 is descriptor, r1 is buffer, r2 is length
+#define HOOKSEEK    6           // r0 is low offset, r1 is high offset, r2 is origin
+#define HOOKCLOSE   7           // r0 is descriptor
 
 /* standard I/O ports */
-#define KBDINPORT  0x0000       // keyboard input
-#define CONOUTPORT 0x0001       // console output
-#define ERROUTPORT 0x0002       // error output
+#define KBDINPORT   0x0000      // keyboard input
+#define CONOUTPORT  0x0001      // console output
+#define ERROUTPORT  0x0002      // error output
 
 /* instruction set */
 
 /* ALU instructions */
-#define OPNOT      0x01	// 2's complement, args
-#define OPAND      0x02	// logical AND
-#define OPOR       0x03	// logical OR
-#define OPXOR      0x04	// logical exclusive OR
-#define OPSHR      0x05	// logical shift right (fill with zero)
-#define OPSHRA     0x06	// arithmetic shift right (fill with sign)
-#define OPSHL      0x07	// shift left (fill with zero)
-#define OPROR      0x08	// rotate right
-#define OPROL      0x09	// rotate left
-#define OPINC      0x0a	// increment by one
-#define OPDEC      0x0b	// decrement by one
-#define OPADD	   0x0c	// addition
-#define OPSUB	   0x0d	// subtraction
-#define OPCMP      0x0e	// compare
-#define OPMUL	   0x0f	// multiplication
-#define OPDIV	   0x10	// division
-#define OPMOD	   0x11	// modulus
-#define OPBZ	   0x12	// branch if zero
-#define OPBNZ	   0x13	// branch if not zero
-#define OPBLT	   0x14	// branch if less than
-#define OPBLE	   0x15	// branch if less than or equal to
-#define OPBGT	   0x16	// branch if greater than
-#define OPBGE	   0x17	// branch if greater than or equal to
-#define OPBO	   0x18	// branch if overflow
-#define OPBNO	   0x19	// branch if no overflow
-#define OPBC	   0x1a	// branch if carry
-#define OPBNC	   0x1b	// branch if no carry
-#define OPPOP	   0x1c	// pop from stack
-#define OPPUSH	   0x1d	// push to stack
-#define OPMOV	   0x1e	// load/store 32-bit longword
-#define OPMOVB     0x1f // load/store 8-bit byte
-#define OPMOVW     0x20 // load/store 16-bit word
-#define OPJMP      0x21 // jump to given address
-#define OPCALL     0x22	// call subroutine
-#define OPENTER    0x23	// subroutine prologue
-#define OPLEAVE    0x24	// subroutine epilogue
-#define OPRET	   0x25	// return from subroutine
-#define OPLMSW     0x26	// load machine status word
-#define OPSMSW	   0x27	// store machine status word
-#define OPRESET    0x28 // reset into well-known state
-#define OPNOP      0x29 // dummy operation
-#define OPHLT      0x2a // halt execution
-#define OPBRK      0x2b // breakpoint
-#define OPTRAP     0x2c // trigger a trap (software interrupt)
-#define OPCLI      0x2d // disable interrupts
-#define OPSTI      0x2e // enable interrupts
-#define OPIRET     0x2f // return from interrupt handler
-#define OPTHR      0x30 // start new thread at given address
-#define OPCMPSWAP  0x31 // atomic compare and swap
-#define OPINB      0x32 // read 8-bit byte from port
-#define OPOUTB     0x33 // write 8-bit byte to port
-#define OPINW      0x34 // read 16-bit word
-#define OPOUTW     0x35 // write 16-bit word
-#define OPINL      0x36 // read 32-bit long
-#define OPOUTL     0x37 // write 32-bit long
-#define OPHOOK     0x38 // system services
-#define WPMNASMOP  256
+#define OPNOT       0x01	// 2's complement, args
+#define OPAND       0x02	// logical AND
+#define OPOR        0x03	// logical OR
+#define OPXOR       0x04	// logical exclusive OR
+#define OPSHR       0x05	// logical shift right (fill with zero)
+#define OPSHRA      0x06	// arithmetic shift right (fill with sign)
+#define OPSHL       0x07	// shift left (fill with zero)
+#define OPROR       0x08	// rotate right
+#define OPROL       0x09	// rotate left
+#define OPINC       0x0a	// increment by one
+#define OPDEC       0x0b	// decrement by one
+#define OPADD	    0x0c	// addition
+#define OPSUB	    0x0d	// subtraction
+#define OPCMP       0x0e	// compare
+#define OPMUL	    0x0f	// multiplication
+#define OPDIV	    0x10	// division
+#define OPMOD	    0x11	// modulus
+#define OPBZ	    0x12	// branch if zero
+#define OPBNZ	    0x13	// branch if not zero
+#define OPBLT	    0x14	// branch if less than
+#define OPBLE	    0x15	// branch if less than or equal to
+#define OPBGT	    0x16	// branch if greater than
+#define OPBGE	    0x17	// branch if greater than or equal to
+#define OPBO	    0x18	// branch if overflow
+#define OPBNO	    0x19	// branch if no overflow
+#define OPBC	    0x1a	// branch if carry
+#define OPBNC	    0x1b	// branch if no carry
+#define OPPOP	    0x1c	// pop from stack
+#define OPPUSH	    0x1d	// push to stack
+#define OPMOV	    0x1e	// load/store 32-bit longword
+#define OPMOVB      0x1f // load/store 8-bit byte
+#define OPMOVW      0x20 // load/store 16-bit word
+#define OPJMP       0x21 // jump to given address
+#define OPCALL      0x22	// call subroutine
+#define OPENTER     0x23	// subroutine prologue
+#define OPLEAVE     0x24	// subroutine epilogue
+#define OPRET	    0x25	// return from subroutine
+#define OPLMSW      0x26	// load machine status word
+#define OPSMSW	    0x27	// store machine status word
+#define OPRESET     0x28 // reset into well-known state
+#define OPNOP       0x29 // dummy operation
+#define OPHLT       0x2a // halt execution
+#define OPBRK       0x2b // breakpoint
+#define OPTRAP      0x2c // trigger a trap (software interrupt)
+#define OPCLI       0x2d // disable interrupts
+#define OPSTI       0x2e // enable interrupts
+#define OPIRET      0x2f // return from interrupt handler
+#define OPTHR       0x30 // start new thread at given address
+#define OPCMPSWAP   0x31 // atomic compare and swap
+#define OPINB       0x32 // read 8-bit byte from port
+#define OPOUTB      0x33 // write 8-bit byte to port
+#define OPINW       0x34 // read 16-bit word
+#define OPOUTW      0x35 // write 16-bit word
+#define OPINL       0x36 // read 32-bit long
+#define OPOUTL      0x37 // write 32-bit long
+#define OPHOOK      0x38 // system services
+#define WPMNASMOP   256
 /* unit IDS */
-#define UNIT_ALU   0x00	// arithmetic logical unit
+#define UNIT_ALU    0x00	// arithmetic logical unit
 #if (WPMVEC)
-#define UNIT_VEC   0x01
+#define UNIT_VEC    0x01
 #endif
 #define WPMNUNIT   (1 << 3)
 #define NREG       16
@@ -150,7 +160,6 @@ struct _wpmopcode {
     wpmuword_t code;
     wpmword_t  args[2];
 };
-
 /* VCODE instruction IDs */
 #define VECOPADD       0x01
 #define VECOPSUB       0x02
@@ -240,8 +249,8 @@ struct wpmopcode {
 
 #if (WPMVEC)
 
-#define vecoptype(op) ((op)->flg & 0x07)
-#define vecopflg(op)  ((op)->flg & ~0x07)
+#define vecoptype(op) ((op)->flg &  0x07)
+#define vecopflg(op)  ((op)->flg & ~ 0x07)
 /* flg values */
 #define OP_FLOAT 0x01
 #define OP_BYTE  0x02

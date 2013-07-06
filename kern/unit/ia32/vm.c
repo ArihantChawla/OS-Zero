@@ -11,7 +11,7 @@
 #include <zero/cdecl.h>
 #include <zero/param.h>
 #include <kern/conf.h>
-#include <kern/io/dev.h>
+//#include <kern/io/dev.h>
 #include <kern/util.h>
 //#include <kern/proc/task.h>
 #include <kern/mem/page.h>

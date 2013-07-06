@@ -2,6 +2,8 @@
  * 32-bit implementation of the Mersenne Twister MT19937 algorithm
  */
 
+#define FASTLOOP 1
+
 /*
  * REFERENCE: https://en.wikipedia.org/wiki/Mersenne_twister
  */
@@ -40,17 +42,20 @@ static volatile int randinit;
 void
 srand32(uint32_t seed)
 {
-    int32_t tmp;
-    int     i;
+    uint32_t val;
+    int32_t  tmp;
+    int      i;
 
     if (!seed) {
         seed++;
     }
     randbuf32[0] = seed;
-    tmp = RAND32MULTIPLIER * (seed ^ (seed >> RAND32SHIFT)) + 1;
+    val = seed >> RAND32SHIFT;
+    tmp = RAND32MULTIPLIER * (seed ^ val) + 1;
     randbuf32[1] = tmp;
     for (i = 2 ; i < RAND32NBUFITEM; i++) {
-        tmp = RAND32MULTIPLIER * (tmp ^ (tmp >> RAND32SHIFT)) + i;
+        val = tmp >> RAND32SHIFT;
+        tmp = RAND32MULTIPLIER * (tmp ^ val) + i;
         randbuf32[i] = tmp;
     }
 }
@@ -58,23 +63,51 @@ srand32(uint32_t seed)
 void
 _randbuf32(void)
 {
-    int      i;
-    uint32_t x;
+    int       i;
+    uint32_t  x;
+    uint32_t *ptr;
+    uint32_t  val1;
+    uint32_t  val2;
+    uint32_t  val;
     
     for (i = 0 ; i < 623 - 397 ; i++) {
-        x = (randbuf32[i] & 0x80000000) + (randbuf32[(i + 1) % RAND32NBUFITEM]);
-        randbuf32[i] = (randbuf32[i + 397]) ^ (x >> 1);
+#if (FASTLOOP)
+        val1 = i + 1;
+#else
+        val1 = (i + 1) % RAND32NBUFITEM;
+#endif
+        x = (randbuf32[i] & 0x80000000) + randbuf32[val1];
+        randbuf32[i] = randbuf32[i + 397] ^ (x >> 1);
         i++;
-        x = (randbuf32[i] & 0x80000000) + (randbuf32[(i + 1) % RAND32NBUFITEM]);
-        randbuf32[i] = ((randbuf32[i + 397]) ^ (x >> 1)) ^ RAND32XORVALUE;
+#if (FASTLOOP)
+        val2 = i + 1;
+#else
+        val1 = (i + 1) % RAND32NBUFITEM;
+#endif
+#if (FASTLOOP)
+        x = (randbuf32[i] & 0x80000000) + randbuf32[val2];
+#else
+        x = (randbuf32[i] & 0x80000000) + randbuf32[val1];
+#endif
+        randbuf32[i] = (randbuf32[i + 397] ^ (x >> 1)) ^ RAND32XORVALUE;
     }
-    for ( ; i < RAND32NBUFITEM ; i++) {
-        x = (randbuf32[i] & 0x80000000) + (randbuf32[(i + 1) % RAND32NBUFITEM]);
-        randbuf32[i] = (randbuf32[(623 - 397 + i)]) ^ (x >> 1);
+    for ( ; i < RAND32NBUFITEM ; i++) { 
+#if (FASTLOOP)
+        val1 = i + 1;
+#else
+        val1 = (i + 1) % RAND32NBUFITEM;
+#endif
+        x = (randbuf32[i] & 0x80000000) + randbuf32[val1];
+        randbuf32[i] = randbuf32[(623 - 397 + i)] ^ (x >> 1);
         i++;
-        x = (randbuf32[i] & 0x80000000) + (randbuf32[(i + 1) % RAND32NBUFITEM]);
-        randbuf32[i] = ((randbuf32[(623 - 397 + i)])
-                        ^ (x >> 1)) ^ RAND32XORVALUE;
+#if (FASTLOOP)
+        val2 = i + 1;
+        x = (randbuf32[i] & 0x80000000) + randbuf32[val2];
+#else
+        val1 = (i + 1) % RAND32NBUFITEM;
+        x = (randbuf32[i] & 0x80000000) + randbuf32[val1];
+#endif
+        randbuf32[i] = (randbuf32[(623 - 397 + i)] ^ (x >> 1)) ^ RAND32XORVALUE;
     }
 }
 
