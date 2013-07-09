@@ -1,0 +1,36 @@
+Code Description Language Notes
+-------------------------------
+
+- embedded into comments to avoid another filter in the compiler toolchain
+- consists of easy-to-grasp English-language keywords ("tags") to denote
+  contents of different fields in documentation such as manual pages
+- provide output of HTML, Unix-style manual pages, GNU Info pages, etc.
+  - perhaps output LaTeX to enable larger set of tools and format conversions
+
+Tags
+----
+
+- lines with just tags are stripped
+- contents of the same tags are concatenated in order of declaration
+
+<AUTHOR>	- document author
+<BRIEF>		- brief description
+<DESC>		- more-thorough description
+<ERROR>		- error behavior
+<NOTE>		- notes such as example use
+<TITLE>		- document title
+<REF>		- reference to other documentation
+		  (hyperlink, author/title/ISBN, ...)
+<RETURN>	- return behavior/value
+
+Document Structure
+------------------
+
+AUTHOR
+TITLE
+BRIEF
+DESC
+RETURN
+ERROR
+NOTE
+
