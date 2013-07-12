@@ -90,5 +90,27 @@ struct fsevent {
     uint64_t node;                      // node (file, directory) ID
 } PACK();
 
+/* window events */
+
+#define EVWINMK         0x01            // new window created
+#define EVWINMAP        0x02            // window mapped
+#define EVWINDESTROY    0x03            // window destroyd
+#define EVWINUNMAP      0x04            // window unmapped
+#define EVWINEXPOSE     0x05            // part of window exposed
+#define EVWINVISIBILITY 0x06            // window visibility changed
+
+/* API */
+/* event-queue is mapped to both kernel and user space to avoid copying data */
+/* register to listen to ev with flg parameters on event queue at qadr */
+void        evreg(long ev, long flg, void *qadr);
+/* check queue for event type ev; parameters in flg */
+#define EVNOFLUSH       // check current queue; don't flush server connection
+#define EVFETCH         // fetch/remove event from queue
+struct ev * evchk(long ev, long flg, void *qadr);
+/* read next event from queue */
+#define EVNOREMOVE      // leave copy of fetched event in the queue
+#define EVNOFLUSH       // do not flush server connection before get
+void        evget(struct ev *evp, long flg, void *qadr);
+
 #endif /* __KERN_EV_H__ */
 
