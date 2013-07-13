@@ -54,8 +54,8 @@
  * long readv(long desc, long nargs, void *args);
  * long write(long desc, void *buf, size_t nb);
  * long writev(long desc, long nargs, void *args);
- * long seek(long desc, off_t *ofs, long whence);
- * long falloc(long desc, off_t *ofs, off_t *len);
+ * long seek(long desc, off_t ofs, long whence);
+ * long falloc(long desc, off_t len);
  * long stat(char *path, struct stat *buf, long flg);
  * long readahead(long desc, off_t ofs, size_t count);
  * long fhint(long desc, long flg, struct freg *arg);

@@ -11,6 +11,7 @@
 #define BIGSLAB    1
 #define BIGHDR     1
 #define INTSTAT    0
+#define STAT       0
 #define STDIO      1
 #define FREEBITMAP 0
 
@@ -53,7 +54,7 @@
 
 #define HACKS   1
 #define ZEROMTX 1
-#define STAT    0
+//#define STAT    0
 #define ARNQBUF 1
 
 #define SPINLK  0
@@ -276,22 +277,22 @@ typedef pthread_mutex_t LK_T;
      : 1)
 #define nmagslablog2init(bid) 0
 #if (BIGSLAB)
-#define nmabslabglog2init(bid) 0
+#define nmagslablog2init(bid) 0
 #define nmagslablog2m64(bid)                                            \
     (((ismapbkt(bid))                                                   \
       ? 0                                                               \
       : (((bid) <= SLABTEENYLOG2)                                       \
-         ? -1                                                           \
+         ? -3                                                           \
          : (((bid) <= SLABTINYLOG2)                                     \
-            ? -2                                                        \
+            ? -3                                                        \
             : 0))))
 #define nmagslablog2m128(bid)                                           \
     (((ismapbkt(bid))                                                   \
       ? (((bid) <= MAPMIDLOG2)                                          \
          ? 1                                                            \
-         : 0)                                                           \
+      : 0)                                                              \
       : (((bid) <= SLABTEENYLOG2)                                       \
-         ? -1                                                           \
+         ? -2                                                           \
          : (((bid) <= SLABTINYLOG2)                                     \
             ? -3                                                        \
             : 0))))
@@ -301,9 +302,9 @@ typedef pthread_mutex_t LK_T;
          ? 2                                                            \
          : 0)                                                           \
       : (((bid) <= SLABTEENYLOG2)                                       \
-         ? -2                                                           \
+         ? -1                                                           \
          : (((bid) <= SLABTINYLOG2)                                     \
-            ? -3                                                        \
+            ? -2                                                        \
             : 0))))
 #define nmagslablog2m512(bid)                                           \
     (((ismapbkt(bid))                                                   \
@@ -311,9 +312,9 @@ typedef pthread_mutex_t LK_T;
          ? 3                                                            \
          : 0)                                                           \
       : (((bid) <= SLABTEENYLOG2)                                       \
-         ? -3                                                           \
+         ? 0                                                            \
          : (((bid) <= SLABTINYLOG2)                                     \
-            ? -3                                                        \
+            ? -1                                                        \
             : 0))))
 #else /* !BIGSLAB */
 #define nmagslablog2m64(bid)                                            \
@@ -567,14 +568,12 @@ struct mtree {
 
 /* globals */
 
-#if (INTSTAT)
+#if (INTSTAT) || (STAT)
 static uint64_t        nalloc[NARN][NBKT];
 static long            nhdrbytes[NARN];
 static long            nstkbytes[NARN];
 static long            nmapbytes[NARN];
 static long            nheapbytes[NARN];
-#endif
-#if (STAT) || (STDIO) || (TUNEBUF)
 static unsigned long   _nheapreq[NBKT] ALIGNED(PAGESIZE);
 static unsigned long   _nmapreq[NBKT];
 #endif
@@ -1202,7 +1201,7 @@ gethdr(long aid)
     if (!arn->nhdr) {
         hbuf = mapanon(_mapfd, rounduppow2(NBUFHDR * NBHDR, PAGESIZE));
         if (hbuf != MAP_FAILED) {
-#if (INTSTAT)
+#if (INTSTAT) || (STAT)
             nhdrbytes[aid] += rounduppow2(NBUFHDR * NBHDR, PAGESIZE);
 #endif
             arn->htab = hbuf;
@@ -1290,7 +1289,7 @@ getslab(long aid,
         ptr = growheap(nb);
         munlk(&_conf.heaplk);
         if (ptr != SBRK_FAILED) {
-#if (INTSTAT)
+#if (INTSTAT) || (STAT)
             nheapbytes[aid] += nb;
 #endif
 #if (STAT) || (STDIO) || (TUNEBUF)
@@ -1307,7 +1306,7 @@ getslab(long aid,
         nb = nbmap(bid);
         ptr = mapanon(_mapfd, nb);
         if (ptr != MAP_FAILED) {
-#if (INTSTAT)
+#if (INTSTAT) || (STAT)
             nmapbytes[aid] += nb;
 #endif
 #if (STAT)
@@ -1366,7 +1365,7 @@ freemap(struct mag *mag)
                     VALGRIND_FREELIKE_BLOCK(clrptr(mag->adr), 0);
                 }
 #endif
-#if (INTSTAT)
+#if (INTSTAT) || (STAT)
                 nmapbytes[aid] -= max * bsz;
 #endif
 #if (TUNEBUF)
@@ -1374,7 +1373,7 @@ freemap(struct mag *mag)
 #endif
                 if (gtpow2(max, 1)) {
                     if (!istk(bid)) {
-#if (INTSTAT)
+#if (INTSTAT) || (STAT)
                         nstkbytes[aid] -= (mag->max << 1) << sizeof(void *); 
 #endif
                         unmapstk(mag);
@@ -1432,7 +1431,7 @@ freemap(struct mag *mag)
                 VALGRIND_FREELIKE_BLOCK(clrptr(mag->adr), 0);
             }
 #endif
-#if (INTSTAT)
+#if (INTSTAT) || (STAT)
             nmapbytes[aid] -= max * bsz;
 #endif
 #if (TUNEBUF)
@@ -1440,7 +1439,7 @@ freemap(struct mag *mag)
 #endif
             if (gtpow2(max, 1)) {
                 if (!istk(bid)) {
-#if (INTSTAT)
+#if (INTSTAT) || (STAT)
                     nstkbytes[aid] -= (mag->max << 1) << sizeof(void *); 
 #endif
                     unmapstk(mag);
@@ -1550,7 +1549,7 @@ getmem(size_t size,
             if (ptr == MAP_FAILED) {
                 ptr = NULL;
             }
-#if (INTSTAT)
+#if (INTSTAT) || (STAT)
             else {
                 nmapbytes[aid] += nbmap(bid);
             }
@@ -1587,7 +1586,7 @@ getmem(size_t size,
                             return NULL;
                         }
 #endif
-#if (INTSTAT)
+#if (INTSTAT) || (STAT)
                         nstkbytes[aid] += (max << 1) * sizeof(void *); 
 #endif
 #if (VALGRIND)
@@ -1651,7 +1650,7 @@ getmem(size_t size,
                                 return NULL;
                             }
 #endif
-#if (INTSTAT)
+#if (INTSTAT) || (STAT)
                             nstkbytes[aid] += (max << 1) * sizeof(void *); 
 #endif
 #if (VALGRIND)
@@ -1718,7 +1717,7 @@ getmem(size_t size,
                         return NULL;
                     }
 #endif
-#if (INTSTAT)
+#if (INTSTAT) || (STAT)
                     nstkbytes[aid] += (max << 1) * sizeof(void *); 
 #endif
 #if (VALGRIND)
@@ -1834,7 +1833,7 @@ getmem(size_t size,
 
         abort();
     }
-#if (INTSTAT)
+#if (INTSTAT) || (STAT)
     nalloc[aid][bid]++;
 #endif
 
