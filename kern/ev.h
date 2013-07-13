@@ -104,12 +104,16 @@ struct fsevent {
 /* register to listen to ev with flg parameters on event queue at qadr */
 void        evreg(long ev, long flg, void *qadr);
 /* check queue for event type ev; parameters in flg */
-#define EVNOFLUSH       // check current queue; don't flush server connection
-#define EVFETCH         // fetch/remove event from queue
+/* check current queue; don't flush server connection */
+#define EVNOFLUSH       0x01
+/* fetch/remove event from queue */
+#define EVFETCH         0x02
 struct ev * evchk(long ev, long flg, void *qadr);
 /* read next event from queue */
-#define EVNOREMOVE      // leave copy of fetched event in the queue
-#define EVNOFLUSH       // do not flush server connection before get
+/* leave copy of fetched event in the queue */
+#define EVNOREMOVE      0x01
+/* do not flush server connection before get */
+#define EVNOFLUSH       0x02
 void        evget(struct ev *evp, long flg, void *qadr);
 
 #endif /* __KERN_EV_H__ */
