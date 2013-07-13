@@ -15,6 +15,7 @@
  */
 
 #include <stdint.h>
+#include <stdlib.h>
 #include <zero/param.h>
 #include <zero/cdecl.h>
 
@@ -64,6 +65,7 @@ void
 _randbuf32(void)
 {
     int       i;
+    int       j;
     uint32_t  x;
     uint32_t *ptr;
     uint32_t  val1;
@@ -71,43 +73,22 @@ _randbuf32(void)
     uint32_t  val;
     
     for (i = 0 ; i < 623 - 397 ; i++) {
-#if (FASTLOOP)
         val1 = i + 1;
-#else
-        val1 = (i + 1) % RAND32NBUFITEM;
-#endif
-        x = (randbuf32[i] & 0x80000000) + randbuf32[val1];
+        x = (randbuf32[i] & 0x80000000) + (randbuf32[val1] & 0x7fffffff);
         randbuf32[i] = randbuf32[i + 397] ^ (x >> 1);
         i++;
-#if (FASTLOOP)
         val2 = i + 1;
-#else
-        val1 = (i + 1) % RAND32NBUFITEM;
-#endif
-#if (FASTLOOP)
-        x = (randbuf32[i] & 0x80000000) + randbuf32[val2];
-#else
-        x = (randbuf32[i] & 0x80000000) + randbuf32[val1];
-#endif
+        x = (randbuf32[i] & 0x80000000) + (randbuf32[val2] & 0x7fffffff);
         randbuf32[i] = (randbuf32[i + 397] ^ (x >> 1)) ^ RAND32XORVALUE;
     }
     for ( ; i < RAND32NBUFITEM ; i++) { 
-#if (FASTLOOP)
         val1 = i + 1;
-#else
-        val1 = (i + 1) % RAND32NBUFITEM;
-#endif
-        x = (randbuf32[i] & 0x80000000) + randbuf32[val1];
-        randbuf32[i] = randbuf32[(623 - 397 + i)] ^ (x >> 1);
+        x = (randbuf32[i] & 0x80000000) + (randbuf32[val1] 0x7fffffff);
+        randbuf32[i] = randbuf32[val1] ^ (x >> 1);
         i++;
-#if (FASTLOOP)
         val2 = i + 1;
-        x = (randbuf32[i] & 0x80000000) + randbuf32[val2];
-#else
-        val1 = (i + 1) % RAND32NBUFITEM;
-        x = (randbuf32[i] & 0x80000000) + randbuf32[val1];
-#endif
-        randbuf32[i] = (randbuf32[(623 - 397 + i)] ^ (x >> 1)) ^ RAND32XORVALUE;
+        x = (randbuf32[i] & 0x80000000) + (randbuf32[val2] & 0x7fffffff);
+        randbuf32[i] = (randbuf32[val2] ^ (x >> 1)) ^ RAND32XORVALUE;
     }
 }
 

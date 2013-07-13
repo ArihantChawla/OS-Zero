@@ -273,8 +273,8 @@ typedef pthread_mutex_t LK_T;
 #if (HACKS)
 #define nbufinit(bid)                                                   \
     (((bid) <= MAPMIDLOG2)                                              \
-     ? 2                                                                \
-     : 1)
+     ? 4                                                                \
+     : 2)
 #define nmagslablog2init(bid) 0
 #if (BIGSLAB)
 #define nmagslablog2init(bid) 0
@@ -1292,7 +1292,7 @@ getslab(long aid,
 #if (INTSTAT) || (STAT)
             nheapbytes[aid] += nb;
 #endif
-#if (STAT) || (STDIO) || (TUNEBUF)
+#if (INTSTAT) || (STAT)
             _nbheap += nb;
             _nheapreq[bid]++;
 #endif
