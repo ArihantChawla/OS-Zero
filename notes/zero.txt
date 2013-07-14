@@ -1,8 +1,16 @@
+/* processor interface */
+
+/* system-assigned process IDs */
+#define PROCKERN  0	// main kernel; context switches, system calls, ...
+#define PROCINIT  1	// init process
+#define PROCPAGED 2	// page daemon; page replacement; aging, LRU-queue
+#define PROCBUFD  3	// buffer daemon; flush dirty buffers to disk
+
 /* memory interface */
 
 void *brk(intptr_t ofs);
-void *balloc(size_t nbytes, long flags);
-void *bmap(size_t nbytes, long flags, void *adr);
+void *balloc(size_t nbytes, long flg);
+void *bmap(size_t nbytes, long flg, void *adr);
 void *umalloc(size_t nbytes);
 
 struct heap {

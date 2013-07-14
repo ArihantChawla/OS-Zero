@@ -163,6 +163,11 @@ typedef pthread_mutex_t LK_T;
 #define SLABTINYLOG2  12 /* little block */
 #define SLABSMALLLOG2 16 /* small-size block */
 #if (BIGSLAB)
+#if 0
+#define SLABLOG2      22 /* base size for heap allocations */
+#define MAPMIDLOG2    24
+#define MAPBIGLOG2    26
+#endif
 #define SLABLOG2      24 /* base size for heap allocations */
 #define MAPMIDLOG2    26
 #define MAPBIGLOG2    28
@@ -274,7 +279,9 @@ typedef pthread_mutex_t LK_T;
 #define nbufinit(bid)                                                   \
     (((bid) <= MAPMIDLOG2)                                              \
      ? 4                                                                \
-     : 2)
+     : (((bid) <= MAPBIGLOG2)                                           \
+        ? 2                                                             \
+        : 0))
 #define nmagslablog2init(bid) 0
 #if (BIGSLAB)
 #define nmagslablog2init(bid) 0
@@ -288,9 +295,7 @@ typedef pthread_mutex_t LK_T;
             : 0))))
 #define nmagslablog2m128(bid)                                           \
     (((ismapbkt(bid))                                                   \
-      ? (((bid) <= MAPMIDLOG2)                                          \
-         ? 1                                                            \
-      : 0)                                                              \
+      ? 0                                                               \
       : (((bid) <= SLABTEENYLOG2)                                       \
          ? -2                                                           \
          : (((bid) <= SLABTINYLOG2)                                     \
@@ -298,9 +303,7 @@ typedef pthread_mutex_t LK_T;
             : 0))))
 #define nmagslablog2m256(bid)                                           \
     (((ismapbkt(bid))                                                   \
-      ? (((bid) <= MAPMIDLOG2)                                          \
-         ? 2                                                            \
-         : 0)                                                           \
+      ? 0                                                               \
       : (((bid) <= SLABTEENYLOG2)                                       \
          ? -1                                                           \
          : (((bid) <= SLABTINYLOG2)                                     \
@@ -308,9 +311,7 @@ typedef pthread_mutex_t LK_T;
             : 0))))
 #define nmagslablog2m512(bid)                                           \
     (((ismapbkt(bid))                                                   \
-      ? (((bid) <= MAPMIDLOG2)                                          \
-         ? 3                                                            \
-         : 0)                                                           \
+      ? 0                                                               \
       : (((bid) <= SLABTEENYLOG2)                                       \
          ? 0                                                            \
          : (((bid) <= SLABTINYLOG2)                                     \
