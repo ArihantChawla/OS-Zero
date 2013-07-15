@@ -281,9 +281,9 @@ typedef pthread_mutex_t LK_T;
 #if (HACKS)
 #define nbufinit(bid)                                                   \
     (((bid) <= MAPMIDLOG2)                                              \
-     ? 16                                                               \
+     ? 8                                                                \
      : (((bid) <= MAPBIGLOG2)                                           \
-        ? 8                                                             \
+        ? 4                                                             \
         : 0))
 #define nmagslablog2init(bid) 0
 #if (NEWSLAB)
@@ -688,41 +688,6 @@ getaid(void)
     munlk(&_conf.arnlk);
 
     return aid;
-}
-#endif
-
-#if 0
-static __inline__ void
-zeroblk(void *ptr,
-        size_t size)
-{
-    unsigned long *ulptr = ptr;
-    unsigned long  zero = 0UL;
-    long           small = (size < (LONGSIZE << 3));
-    long           n = ((small)
-                        ? (size >> LONGSIZELOG2)
-                        : (size >> (LONGSIZELOG2 + 3)));
-    long           nl = 8;
-
-    if (small) {
-        while (n--) {
-            *ulptr++ = zero;
-        }
-    } else {
-        while (n--) {
-            ulptr[0] = zero;
-            ulptr[1] = zero;
-            ulptr[2] = zero;
-            ulptr[3] = zero;
-            ulptr[4] = zero;
-            ulptr[5] = zero;
-            ulptr[6] = zero;
-            ulptr[7] = zero;
-            ulptr += nl;
-        }
-    }
-
-    return;
 }
 #endif
 
@@ -1799,7 +1764,7 @@ getmem(size_t size,
         }
 #endif
         if ((zero) && chkflg(ptr, BDIRTY)) {
-            bzero(retptr, bsz);
+            memset(retptr, 0, bsz);
         }
         ptr = retptr;
 #if (FREEBITMAP)
