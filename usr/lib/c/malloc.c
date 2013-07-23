@@ -112,11 +112,13 @@ static void * _realloc(void *ptr, size_t size, long rel);
 
 /* red-zones haven't been implemented completely yet... some bugs. */
 #define RZSZ     0
+#if (RZSZ == 8)
 #define markred(p) (*(uint64_t *)(p) = UINT64_C(0xb4b4b4b4b4b4b4b4))
 #define chkred(p)                                                       \
     ((*(uint64_t *)(p) == UINT64_C(0xb4b4b4b4b4b4b4b4))                 \
      ? 0                                                                \
      : 1)
+#endif
 
 #define LKDBG    0
 #define SYSDBG   0
@@ -292,9 +294,9 @@ typedef pthread_mutex_t LK_T;
     (((ismapbkt(bid))                                                   \
       ? 0                                                               \
       : (((bid) <= SLABTEENYLOG2)                                       \
-         ? 0                                                            \
+         ? -4                                                           \
          : (((bid) <= SLABTINYLOG2)                                     \
-            ? 1                                                         \
+            ? -2                                                        \
             : 0))))
 #define nmagslablog2m128(bid)                                           \
     (((ismapbkt(bid))                                                   \
@@ -380,6 +382,40 @@ typedef pthread_mutex_t LK_T;
         : 0)                                                            \
     : 0)
 #endif
+#elif (BIGSLAB)
+#define nmagslablog2init(bid)                                           \
+    ((ismapbkt(bid))                                                    \
+     ? 0                                                                \
+     : (((bid) <= SLABTINYLOG2)                                         \
+        ? -4                                                            \
+        : (((bid) <= SLABBIGLOG2)                                       \
+           ? -2                                                         \
+           : 0)))
+#define nmagslablog2m64(bid)                                            \
+    ((ismapbkt(bid))                                                    \
+     ? 0                                                                \
+     : (((bid) <= SLABTINYLOG2)                                         \
+        ? -3                                                            \
+        : (((bid) <= SLABBIGLOG2)                                       \
+           ? -1                                                         \
+           : 0)))
+#define nmagslablog2m128(bid)                                           \
+    ((ismapbkt(bid))                                                    \
+     ? 0                                                                \
+     : (((bid) <= SLABTINYLOG2)                                         \
+        ? -2                                                            \
+        : (((bid) <= SLABBIGLOG2)                                       \
+           ? -1                                                         \
+           : 0)))
+#define nmagslablog2m256(bid)                                           \
+    ((ismapbkt(bid))                                                    \
+     ? 0                                                                \
+     : (((bid) <= SLABTINYLOG2)                                         \
+        ? -1                                                            \
+        : (((bid) <= SLABBIGLOG2)                                       \
+           ? -1                                                         \
+           : 0)))
+#define nmagslablog2m512(bid) 0
 #else
 #define nmagslablog2init(bid)                                           \
     ((ismapbkt(bid))                                                    \
@@ -607,41 +643,41 @@ struct mtree {
 /* globals */
 
 #if (INTSTAT) || (STAT)
-static uint64_t        nalloc[NARN][NBKT];
-static long            nhdrbytes[NARN];
-static long            nstkbytes[NARN];
-static long            nmapbytes[NARN];
-static long            nheapbytes[NARN];
-static unsigned long   _nheapreq[NBKT] ALIGNED(PAGESIZE);
-static unsigned long   _nmapreq[NBKT];
+static uint64_t             nalloc[NARN][NBKT];
+static long                 nhdrbytes[NARN];
+static long                 nstkbytes[NARN];
+static long                 nmapbytes[NARN];
+static long                 nheapbytes[NARN];
+static unsigned long long   nheapreq[NBKT] ALIGNED(PAGESIZE);
+static unsigned long long   nmapreq[NBKT];
 #endif
 #if (TUNEBUF)
-static long            _nbuftab[NBKT];
-static long            _nslablog2tab[NBKT];
+static long                 _nbuftab[NBKT];
+static long                 _nslablog2tab[NBKT];
 #endif
 #if (MTSAFE)
-static LK_T            _flktab[NBKT];
-static LK_T            _blktab[NBKT];
+static LK_T                 _flktab[NBKT];
+static LK_T                 _blktab[NBKT];
 #endif
-static struct mag     *_btab[NBKT];
-static struct mag     *_ftab[NBKT];
+static struct mag          *_btab[NBKT];
+static struct mag          *_ftab[NBKT];
 #if (HACKS)
-static long            _fcnt[NBKT];
+static long                 _fcnt[NBKT];
 #endif
-static void          **_mdir;
-static struct arn    **_atab;
-static struct mconf    _conf;
+static void               **_mdir;
+static struct arn         **_atab;
+static struct mconf         _conf;
 #if (MTSAFE) && (PTHREAD)
-static pthread_key_t   _akey;
-static __thread long   _aid = -1;
+static pthread_key_t        _akey;
+static __thread long        _aid = -1;
 #else
-static long            _aid = -1;
+static long                 _aid = -1;
 #endif
 #if (TUNEBUF)
 #endif
-static int64_t         _nbheap;
-static int64_t         _nbmap;
-static int             _mapfd = -1;
+static int64_t              _nbheap;
+static int64_t              _nbmap;
+static int                  _mapfd = -1;
 
 /* utility functions */
 
@@ -794,7 +830,7 @@ printstat(void)
     long l;
 
     for (l = 0 ; l < NBKT ; l++) {
-        fprintf(stderr, "%ld\t%lu\t%lu\n", l, _nheapreq[l], _nmapreq[l]);
+        fprintf(stderr, "%ld\t%lu\t%lu\n", l, nheapreq[l], nmapreq[l]);
     }
 
     exit(0);
@@ -813,22 +849,27 @@ printintstat(void)
 
     fp = fopen("/tmp/malloc.log", "a");
     if (fp) {
-        for (aid = 0 ; aid < NARN ; aid++) {
-            nbhdr += nhdrbytes[aid];
-            nbstk += nstkbytes[aid];
-            nbheap += nheapbytes[aid];
-            nbmap += nmapbytes[aid];
-            fprintf(fp, "%lx: hdr: %ld\n", aid, nhdrbytes[aid] >> 10);
-            fprintf(fp, "%lx: stk: %ld\n", aid, nstkbytes[aid] >> 10);
-            fprintf(fp, "%lx: heap: %ld\n", aid, nheapbytes[aid] >> 10);
-            fprintf(fp, "%lx: map: %ld\n", aid, nmapbytes[aid] >> 10);
-            for (bkt = 0 ; bkt < NBKT ; bkt++) {
-                fprintf(fp, "NALLOC[%lx][%lx]: %lld\n",
-                        aid, bkt, (long long)nalloc[aid][bkt]);
+        for (bkt = 0 ; bkt < NBKT ; bkt++) {
+            if (nheapreq[bkt]) {
+                fprintf(fp, "NREQ[%lx]: %llu\n", bkt, nheapreq[bkt]);
+            } else if (nmapreq[bkt]) {
+                fprintf(fp, "NREQ[%lx]: %llu\n", bkt, nmapreq[bkt]);
             }
         }
+        for (aid = 0 ; aid < NARN ; aid++) {
+            for (bkt = 0 ; bkt < NBKT ; bkt++) {
+                if (nalloc[aid][bkt]) {
+                    fprintf(fp, "NALLOC[%lx][%lx]: %lld\n",
+                            aid, bkt, (long long)nalloc[aid][bkt]);
+                } else {
+                    fprintf(fp, "\n");
+                }
+            }
+        }
+#if 0
         fprintf(fp, "TOTAL: hdr: %ld, stk: %ld, heap: %ld, map: %ld\n",
                 nbhdr, nbstk, nbheap, nbmap);
+#endif
         fclose(fp);
     }
 }
@@ -1297,7 +1338,7 @@ getslab(long aid,
 #endif
 #if (INTSTAT) || (STAT)
             _nbheap += nb;
-            _nheapreq[bid]++;
+            nheapreq[bid]++;
 #endif
         } else {
 #if (STDIO)
@@ -1313,7 +1354,7 @@ getslab(long aid,
             nmapbytes[aid] += nb;
 #endif
 #if (STAT)
-            _nmapreq[bid]++;
+            nmapreq[bid]++;
 #endif
         } else {
 #if (STDIO)

@@ -1,4 +1,4 @@
-/* Just some quick thoughts, Copyright (C) 2011 Tuomo Venäläinen */
+/* Just some quick thoughts, Copyright (C) 2011-2013 Tuomo Venäläinen */
 
 Combat Zone
 -----------

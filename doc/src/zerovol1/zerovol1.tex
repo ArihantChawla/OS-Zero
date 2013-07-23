@@ -481,12 +481,19 @@
 	\hline
 	Class & Characteristis & Example \\
 	\hline
-	RT     & real-time, fixed priority         & optrec \\
-	INTACT & interactive, short CPU bursts     & terminal session \\
+	RT     & real-time, fixed priority         & multimedia buffering \\
+	USER   & interactive, short CPU bursts     & terminal session \\
 	BATCH  & batch processing, CPU-intensive   & compiler instance \\
 	IDLE   & executed when system is idle      & zeroing pages \\
 	\hline
 \end{tabular}
+
+	\textbf{Interactive Tasks}
+
+	This scheme will be extended; at least some interactive tasks could be
+	run for purposes such as dispatching events, using shorter-than-usual
+	scheduler time slices. This might help making the system more responsive
+	to user interaction.
 
 	\textbf{Interval Tasks}
 
@@ -847,8 +854,8 @@ MPSTKSIZE           & MPSTK0   & processor 0 kernel-mode stack \\
 	\hline
 	\textbf{arg} bit & Operation \\
 	\hline
-	SIG\_EXIT        & exit process on signal \\
-	SIG\_DUMP        & dump core on signal \\
+	SIG\_EXIT & exit process on signal \\
+	SIG\_DUMP & dump core on signal \\
 	\hline
 \end{tabular}
 
@@ -862,7 +869,7 @@ MPSTKSIZE           & MPSTK0   & processor 0 kernel-mode stack \\
 	\textbf{Arguments}
 
 \begin{itemize}
-	\item{\textbf{adr} is the new break}
+	\item{\textbf{adr} is the new break.}
 \end{itemize}
 
 \subsection{void *map(long desc, long flg, struct memreg *reg);}
@@ -892,6 +899,8 @@ MPSTKSIZE           & MPSTK0   & processor 0 kernel-mode stack \\
 	MAP\_WILLNEED   & needed in the near future \\
 	MAP\_DONTNEED   & not needed soon \\
 	MAP\_DONTFORK   & don't share with forked child processes \\
+	MAP\_HASSEM     & map region with semaphore values \\
+	MAP\_BUFCACHE   & cache I/O block using kernel mechanism \\
 	\hline
 \end{tabular}
 
@@ -903,17 +912,6 @@ MPSTKSIZE           & MPSTK0   & processor 0 kernel-mode stack \\
 
 	The \textbf{mhint} system call is used to hint the kernel about the type
 	of use for mapped regions.
-
-	\textbf{Arguments}
-
-	For values for the \textbf{flg} argument, see \textbf{map} earlier in
-	this chapter.
-
-\subsection{void *bmap(long desc, size\_t size, long flg);}
-
-	The \textbf{bmap} system call is used to map memory from kernel buffer
-	cache. This memory will be mapped to virtual address spaces of both the
-	kernel and a user process to avoid copying memory for I/O requests.
 
 	\textbf{Arguments}
 

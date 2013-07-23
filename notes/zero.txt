@@ -1,3 +1,11 @@
+/*
+ * IDEAS
+ * -----
+ * - use event timers to schedule short-lived tasks such as audio and video
+ *   buffer synchronisation (HPET on x86)
+ * - use some timers for scheduling GPU threads (OpenCL)
+ */
+
 /* processor interface */
 
 /* system-assigned process IDs */
