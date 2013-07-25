@@ -701,10 +701,10 @@ MPSTKSIZE           & MPSTK0   & processor 0 kernel-mode stack \\
 
 	\textbf{Arguments}
 
-\begin{itemize}
-	\item{if flg argument is \textbf{HALT\_REBOOT}, the system will be
-	restarted}
-\end{itemize}
+\begin{tabular}{ | l | l | }
+	\textbf{flg} & Operation \\
+	HALT\_REBOOT & restart system \\
+\end{tabular}
 
 \subsection{long exit(long val, long flg);}
 
@@ -743,7 +743,8 @@ MPSTKSIZE           & MPSTK0   & processor 0 kernel-mode stack \\
 \subsection{long exec(char *file, char *argv[], char *env[]);}
 
 	The \textbf{exec} system call executes \textbf{file}, passing it the
-	runtime arguments in \textbf{argv} and environment in \textbf{env}.
+	runtime argument strings in \textbf{argv} and environment in
+	\textbf{env}.
 
 	\textbf{Arguments}
 
@@ -781,11 +782,13 @@ MPSTKSIZE           & MPSTK0   & processor 0 kernel-mode stack \\
 
 	\textbf{Arguments}
 
-\begin{itemize}
-	\item{if cmd is \textbf{PROC\_WAIT}, wait for process termination}
-	\item{if cmd is \textbf{PROC\_USLEEP}, sleep for a given number of microseconds}
-	\item{if cmd is \textbf{PROC\_NANOSLEEP}, sleep for a given number of nanoseconds}
-\end{itemize}
+\begin{tabular}{ | l | l | }
+	\hline
+	\textbf{cmd}    & Operation \\
+	PROC\_WAIT      & wait for process termination \\
+	PROC\_USLEEP    & sleep for a given number of microseconds \\
+	PROC\_NANOSLEEP & sleep for a given number of nanoseconds \\
+\end{tabular}
 
 	\textbf{PROC\_WAIT}
 
@@ -840,7 +843,7 @@ MPSTKSIZE           & MPSTK0   & processor 0 kernel-mode stack \\
 	\hline
 	SIG\_SELF    & send signal to self \\
 	SIG\_CLD     & send signal to child processes \\
-	SIG\_GRP     & send signal to process group \\
+	SIG\_PGRP    & send signal to process group \\
 	SIG\_PROPCLD & propagate signal to child processes \\
 	SIG\_PROPGRP & propagate signal to process group \\
 	\hline
@@ -864,12 +867,12 @@ MPSTKSIZE           & MPSTK0   & processor 0 kernel-mode stack \\
 \subsection{long brk(void *adr);}
 
 	The \textbf{brk} system call adjusts process break, i.e. the current top
-	of heap.
+	of the project's heap.
 
 	\textbf{Arguments}
 
 \begin{itemize}
-	\item{\textbf{adr} is the new break.}
+	\item{\textbf{adr} is the new break}
 \end{itemize}
 
 \subsection{void *map(long desc, long flg, struct memreg *reg);}
