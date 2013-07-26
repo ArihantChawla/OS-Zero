@@ -7,6 +7,9 @@
 
 struct slabhdr {
     unsigned long   nfo;
+#if (NEWLK)
+    unsigned long   bkt;
+#endif
 #if (PTRBITS <= 32)
     uint32_t        link;
 #else
