@@ -9,7 +9,7 @@ void kbfill(void *adr, uint8_t byte, unsigned long len);
 int  kmemcmp(const void *ptr1, const void *ptr2, unsigned long nb);
 int  kstrcmp(const char *str1, const char *str2);
 long kstrncpy(char *dest, char *src, long len);
-void kkprintf(char *fmt, ...);
+void kprintf(char *fmt, ...);
 
 #endif /* __KERN_UTIL_H__ */
 

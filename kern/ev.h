@@ -5,21 +5,30 @@
 #include <wchar.h>
 #include <zero/cdecl.h>
 
+typedef uint32_t evid_t;
+
+/* event header structure */
+
 /* user input events */
 
 /* event types */
-#define EVKEYDOWN     0x01
-#define EVKEYUP       0x02
-#define EVBUTTONDOWN  0x03
-#define EVBUTTONUP    0x04
-#define EVPNTMOTION   0x05
-#define EVCMD         0x06
-#define EVDATA        0x07
+#define EVKEYDOWN       0x01
+#define EVKEYUP         0x02
+#define EVBUTTONDOWN    0x03
+#define EVBUTTONUP      0x04
+#define EVPNTMOTION     0x05
+#define EVCMD           0x06
+#define EVDATA          0x07
+/* filesystem events */
+#define EVFSCREAT       0x08
+#define EVFSUNLINK      0x09
+#define EVFSMKDIR       0x0a
+#define EVFSRMDIR       0x0b
 
 /* keyboard events */
 
 /* Unicode specifies 0x10ffff as maximum value, leaving us with 11 high bits to
- * be used as flags
+ * be used as flags if need be
  */
 
 /* the highest bit in sym indicates keyrelease event */
@@ -34,7 +43,7 @@
 #define EVKBDALTGR       0x00000040             // AltGr
 #define EVKBDSCRLOCK     0x00000080             // Scroll lock
 #define EVKBDNFLGBIT     8
-#define kbducval(ev)     ((ev)-> & WCUCMASK)    // extract Unicode value
+#define kbducval(ev)     ((ev)->sym & WCUCMASK) // extract Unicode value
 #define kbdisup(ev)      ((ev)->state < 0)      // sign-bit indicates keypress
 #define kbdbutton(ev, b) ((ev)->state & (1L << ((b) + EVKBDNFLGBIT)))
 #define kbdmod(ev, mod)  ((ev)->state & (mod))
@@ -92,27 +101,11 @@ struct ipcevent {
 
 /* file system events */
 
-/* event types */
-#define EVFSCREAT  0x01
-#define EVFSUNLINK 0x02
-#define EVFSMKDIR  0x03
-#define EVFSRMDIR  0x04
-
 struct fsevent {
     uint32_t type;                      // event type
     uint32_t dev;                       // device ID
     int64_t  node;                      // node (file, directory) ID
 } PACK();
-
-/* window events */
-
-#define EVWINCREATE     0x01            // new window created
-#define EVWINMAP        0x02            // window mapped
-#define EVWINDESTROY    0x03            // window destroyd
-#define EVWINUNMAP      0x04            // window unmapped
-#define EVWINEXPOSE     0x05            // part of window exposed
-#define EVWINVISIBILITY 0x06            // window visibility changed
-#define EVWINPROPERTY   0x07            // window property actions
 
 /* API */
 /* event-queue is mapped to both kernel and user space to avoid copying data */

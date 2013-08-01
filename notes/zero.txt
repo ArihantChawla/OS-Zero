@@ -6,6 +6,15 @@
  * - use some timers for scheduling GPU threads (OpenCL)
  */
 
+/* window events */
+#define EVWINCREATE     0x0c            // new window created
+#define EVWINMAP        0x0d            // window mapped
+#define EVWINDESTROY    0x0e            // window destroyd
+#define EVWINUNMAP      0x0f            // window unmapped
+#define EVWINEXPOSE     0x10            // part of window exposed
+#define EVWINVISIBILITY 0x11            // window visibility changed
+#define EVWINPROPERTY   0x12            // window property actions
+
 /* processor interface */
 
 /* system-assigned process IDs */

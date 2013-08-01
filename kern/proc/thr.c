@@ -3,6 +3,7 @@
 #include <zero/param.h>
 #include <zero/trix.h>
 #include <kern/conf.h>
+#include <kern/util.h>
 #include <kern/obj.h>
 //#include <kern/proc.h>
 #include <kern/proc/thr.h>
@@ -147,7 +148,7 @@ thraddwait(struct thr *thr)
         tab = tab[key2].ptr;
         tab = &tab[key3];
         tab->nref++;
-        thr->prev = NULL;
+//        thr->prev = NULL;
         thr->next = tab->ptr;
 #if 0
         if (thr->next) {
@@ -162,7 +163,7 @@ thraddwait(struct thr *thr)
     return ret;
 }
 
-/* move threads from wait queue to ready queue */
+/* move a thread from wait queue to ready queue */
 void
 thrwakeup(uintptr_t wchan)
 {
@@ -182,25 +183,32 @@ thrwakeup(uintptr_t wchan)
     ptr = tab;
     if (ptr) {
         pstk[0] = ptr;
-        ptr = &(ptr->ptr[key0]);
+        ptr = ((void **)ptr->ptr)[key0];
         if (ptr) {
             pstk[1] = ptr;
-            ptr = &(ptr->ptr[key1]);
+            ptr = ((void **)ptr->ptr)[key1];
             if (ptr) {
                 pstk[2] = ptr;
-                ptr = &(ptr->ptr[key2]);
+                ptr = ((void **)ptr->ptr)[key2];
                 if (ptr) {
                     pstk[3] = ptr;
-                    ptr = &(ptr->ptr[key3]);
+                    ptr = ((void **)ptr->ptr)[key3];
                 }
             }
         }
         thr1 = ptr->ptr;
+        if (thr1) {
+            thr2 = thr1->next;
+            thrqueue(thr1, &thrruntab[thr1->prio]);
+            ptr->ptr = thr2;
+        }
+#if 0
         while (thr1) {
             thr2 = thr1->next;
             thrqueue(thr1, &thrruntab[thr1->prio]);
             thr1 = thr2;
         }
+#endif
         /* TODO: free tables if possible */
         ptr = pstk[0];
         if (ptr) {
@@ -242,10 +250,10 @@ thradjprio(struct thr *thr)
     long prio = thr->prio;
 
     if (class != THRRT) {
-        /* wrap around back to 0 at maximum value */
+        /* wrap around back to 0 at THRNPRIO / 2 */
         prio++;
-        prio &= (THRNPRIO - 1);
-        prio = (THRNPRIO * class) + max(0, prio + thr->nice);
+        prio &= (THRNPRIO >> 1) - 1;
+        prio = (THRNPRIO * class) + (THRNPRIO >> 1) + prio + thr->nice;
         prio = max(THRNPRIO, prio);
         thr->prio = prio;
     }

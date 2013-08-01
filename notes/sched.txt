@@ -1,5 +1,10 @@
 Zero Thread Scheduler
 ---------------------
+- interval tasks for operations such as screen synchronisation
+  - HPET timer (X86)
+
+OLD NOTES
+---------
 
 Thread Priorities
 -----------------

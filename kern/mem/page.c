@@ -25,7 +25,7 @@ pageinitzone(uintptr_t base,
 {
     uintptr_t      adr = rounduppow2(ofs, PAGESIZE);
     unsigned long  n  = (nb - rounduppow2(ofs, PAGESIZE)) >> PAGESIZELOG2;
-    struct page   *pg = base + (adr >> PAGESIZELOG2);
+    struct page   *pg = (struct page *)(base + (adr >> PAGESIZELOG2));
 
     adr += n << PAGESIZELOG2;
     pg += n;
