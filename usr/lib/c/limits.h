@@ -110,5 +110,10 @@
 #   define SSIZE_MAX WORD256_MAX
 #endif
 
+#if (_POSIX_SOURCE)
+#define _POSIX_OPEN_MAX   65536
+#define _POSIX_FD_SETSIZE _POSIX_OPEN_MAX
+#endif /* _POSIX_SOURCE */
+
 #endif /* __LIMITS_H__ */
 

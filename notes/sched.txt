@@ -1,7 +1,10 @@
 Zero Thread Scheduler
 ---------------------
-- interval tasks for operations such as screen synchronisation
+- interval tasks for operations such as multimedia buffer synchronisation
   - HPET timer (X86)
+    - 1 millisecond time slices for purposes such as handling user input events
+- try to guarantee non-skipping multimedia without frame-dropping
+- use 4 millisecond time slices
 
 OLD NOTES
 ---------

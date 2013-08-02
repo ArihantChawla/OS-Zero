@@ -33,8 +33,6 @@
  * be used as flags if need be
  */
 
-/* the highest bit in sym indicates keyrelease event */
-#define EVKBDUPBIT       0x80000000
 /* mask-bits for modifier keys */
 #define EVKBDSHIFT       0x00000001             // Shift
 #define EVKBDCAPSLK      0x00000002             // Caps Lock
@@ -45,19 +43,16 @@
 #define EVKBDALTGR       0x00000040             // AltGr
 #define EVKBDSCRLOCK     0x00000080             // Scroll lock
 #define EVKBDNFLGBIT     8
-#define kbducval(ev)     ((ev)->sym & WCUCMASK) // extract Unicode value
-#define kbdisup(ev)      ((ev)->state < 0)      // sign-bit indicates keypress
+#define kbducval(ev)     ((ev)->sym)            // extract Unicode value
 #define kbdbutton(ev, b) ((ev)->state & (1L << ((b) + EVKBDNFLGBIT)))
 #define kbdmod(ev, mod)  ((ev)->state & (mod))
 struct evkbd {
-    wchar_t sym;                                // key symbol
+    int32_t sym;                                // Unicode key symbol + flags
     int32_t state;                              // button state mask if present
 } PACK();
 
 /* pointer such as mouse device events */
 
-#define EVPNTUP          0x8000000
-#define pntisup(ev)      ((ev)->button < 0)     // sign-bit means release
 #define pntbutton(ev, b) (ev->state & (1 << (b)))
 #define pnt
 /* pointer device, e.g. mouse event */
