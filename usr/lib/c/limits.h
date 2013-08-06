@@ -88,7 +88,7 @@
 #define OPEN_MAX    256   /* maximum number of open files per process */
 #define STREAM_MAX  FOPEN_MAX
 #define NAME_MAX    255 
-#define PATH_MAX    (PAGE_SIZE - 1)
+#define PATH_MAX    4095
 #define TZNAME_MAX  255
 
 #endif /* POSIX */
