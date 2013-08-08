@@ -9,6 +9,7 @@
 #else
 #define NCPU      1
 #endif
+#define NPROCFD   32768
 #define NPAGEPHYS (16ULL * 1024 * 1024)
 #define NBPHYS    (NPAGEPHYS * PAGESIZE)
 
