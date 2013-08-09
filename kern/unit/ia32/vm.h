@@ -17,6 +17,7 @@
 
 extern uint32_t _kernpagedir[];
 
+void  vminitphys(uintptr_t base, unsigned long nb);
 void *vmmapvirt(uint32_t *pagetab, void *virt, uint32_t size, uint32_t flags);
 void  vmfreephys(void *virt, uint32_t size);
 

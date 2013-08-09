@@ -1,6 +1,7 @@
 #ifndef __KERN_SYSCALL_H__
 #define __KERN_SYSCALL_H__
 
+#include <features.h>
 #include <stdint.h>
 #include <unistd.h>
 #include <sys/select.h>

@@ -2,18 +2,16 @@
 #include <zero/cdecl.h>
 #include <zero/param.h>
 #include <zero/trix.h>
+#include <zero/asm.h>
 #include <kern/conf.h>
 #include <kern/util.h>
 #include <kern/obj.h>
-//#include <kern/proc.h>
 #include <kern/proc/thr.h>
 #include <kern/mem.h>
 #include <kern/unit/x86/cpu.h>
 
-static struct thrwait  thrwaittab[NLVL0THR] ALIGNED(PAGESIZE);
-static struct thr      thrtab[NTHR] ALIGNED(PAGESIZE);
-static struct thrq     thrruntab[THRNCLASS * THRNPRIO];
-static struct thr     *corethrtab[NCPU];
+static struct thrwait thrwaittab[NLVL0THR] ALIGNED(PAGESIZE);
+static struct thrq    thrruntab[THRNCLASS * THRNPRIO];
 
 /* save thread context */
 void
@@ -175,7 +173,7 @@ thrwakeup(uintptr_t wchan)
     long            key1 = thrwaitkey1(wchan);
     long            key2 = thrwaitkey2(wchan);
     long            key3 = thrwaitkey3(wchan);
-    long            n;
+//    long            n;
     struct thrwait *pstk[4] = { NULL };
 
     tab = &thrwaittab[key0];

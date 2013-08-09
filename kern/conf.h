@@ -4,6 +4,7 @@
 #define ZEROSCHED 1     // default scheduler
 
 #define SMP       0     // enable multiprocessor support; currently broken
+#define HPET      0
 #if (SMP)
 #define NCPU      8
 #else

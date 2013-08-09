@@ -1,6 +1,7 @@
 #ifndef __SYS_SELECT_H__
 #define __SYS_SELECT_H__
 
+#include <features.h>
 #include <limits.h>
 #include <zero/param.h>
 #include <kern/conf.h>

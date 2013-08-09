@@ -12,9 +12,9 @@
 #include <kern/unit/ia32/vm.h>
 
 extern struct page   vmphystab[NPAGEPHYS];
+extern struct pageq  vmlrutab[PTRBITS];
 extern struct pageq  vmphysq;
 extern unsigned long vmnphyspages;
-static struct pageq  pagephyslrutab[LONGSIZE * CHAR_BIT] ALIGNED(CLSIZE);
 unsigned long        npagefree;
 
 void
@@ -47,7 +47,7 @@ pageinitzone(uintptr_t base,
 void
 pageinitphys(uintptr_t base, unsigned long nb)
 {
-    pageinitzone(vmphystab, &vmphysq, base, nb);
+    pageinitzone(base, &vmphysq, base, nb);
 
     return;
 }
@@ -83,13 +83,13 @@ pagezalloc(struct pageq *zone, struct pageq *lru)
 struct page *
 pageallocphys(void)
 {
-    struct page *retval = pagezalloc(&vmphysq, &pagephyslrutab);
+    struct page *retval = pagezalloc(&vmphysq, &vmlrutab[0]);
 
     return retval;
 }
 
 void
-pagezfree(struct pageq *zone, struct pageq *lru, void *adr)
+pagezfree(struct pageq *zone, void *adr)
 {
     unsigned long  id;
     struct page   *pg;

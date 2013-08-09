@@ -6,7 +6,8 @@
 #include <zero/trix.h>
 #include <kern/util.h>
 #include <kern/obj.h>
-//#include <kern/proc.h>
+#include <kern/proc/proc.h>
+#include <kern/proc/sched.h>
 //#include <kern/thr.h>
 #include <kern/io/drv/pc/vga.h>
 #if (VBE2)
@@ -44,6 +45,7 @@ kmain(struct mboothdr *hdr, unsigned long pmemsz)
     curproc = &proctab[0];
     vgainitcon(80, 25);
     meminit(vmphysadr(&_ebssvirt), pmemsz);
+    vminitphys((uintptr_t)&_ebss, pmemsz - (unsigned long)&_ebss);
 //    meminit(vmphysadr(&_ebssvirt), max(pmemsz, 3UL * 1024 * 1024 * 1024));
     kbfill(&kerniomap, 0xff, sizeof(kerniomap));
 //    vgainitcon(80, 25);

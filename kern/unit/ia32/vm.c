@@ -175,7 +175,7 @@ void
 vminitphys(uintptr_t base, unsigned long nb)
 {
     /* initialise physical memory manager */
-    pageinitzone(&vmphysq, base, nb);
+    pageinitzone(base, &vmphysq, base, nb);
 
     return;
 }
@@ -206,7 +206,7 @@ vmfreephys(void *virt, uint32_t size)
     uint32_t     *pte;
     long          n;
     long          nref;
-    struct page  *pg;
+//    struct page  *pg;
 
     n = rounduppow2(size, PAGESIZE) >> PAGESIZELOG2;
     pte = (uint32_t *)((uint8_t *)&_pagetab + vmpagenum(virt));
@@ -250,7 +250,7 @@ vmpagefault(unsigned long pid, uint32_t adr, uint32_t flags)
     uint32_t       flg = *pte & (PFFLGMASK | PAGESYSFLAGS);
     uint32_t       page = *pte;
     struct page   *pg;
-    unsigned long  qid;
+//    unsigned long  qid;
 
     if (!(page & ~(PFFLGMASK | PAGESYSFLAGS))) {
         pg = pagezalloc(&vmphysq, &vmlrutab[0]);

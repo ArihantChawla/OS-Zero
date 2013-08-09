@@ -27,6 +27,7 @@
 #include <kern/proc/thr.h>
 
 extern void (*schedyield)(void);
+void          schedinit(void);
 
 #if (ZEROSCHED)
 struct thrprioq {

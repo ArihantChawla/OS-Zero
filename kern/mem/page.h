@@ -138,9 +138,14 @@ struct swapdev {
         vmunlklruq(_pageq);                                             \
     } while (0)
 
+void         pageinitzone(uintptr_t base, struct pageq *zone, uintptr_t ofs,
+                          unsigned long nb);
 struct page *pagezalloc(struct pageq *zone, struct pageq *lru);
+void         pagezfree(struct pageq *zone, void *adr);
+#if 0
 void         pagefree(void *adr);
 void         swapfree(uintptr_t adr);
+#endif
 
 #endif /* __PAGE_H__ */
 
