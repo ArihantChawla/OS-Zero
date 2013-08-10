@@ -34,30 +34,30 @@
  */
 
 /* mask-bits for modifier keys */
-#define EVKBDSHIFT       0x00000001             // Shift
-#define EVKBDCAPSLK      0x00000002             // Caps Lock
-#define EVKBDCTRL        0x00000004             // Ctrl
-#define EVKBDMETA        0x00000008             // Meta
-#define EVKBDCOMPOSE     0x00000010             // Compose
-#define EVKBDALT         0x00000020             // Alt
-#define EVKBDALTGR       0x00000040             // AltGr
-#define EVKBDSCRLOCK     0x00000080             // Scroll lock
-#define EVKBDNFLGBIT     8
-#define kbducval(ev)     ((ev)->sym)            // extract Unicode value
+#define EVKBDSHIFT       0x00000001     // Shift
+#define EVKBDCAPSLK      0x00000002     // Caps Lock
+#define EVKBDCTRL        0x00000004     // Ctrl
+#define EVKBDMETA        0x00000008     // Meta
+#define EVKBDCOMPOSE     0x00000010     // Compose
+#define EVKBDALT         0x00000020     // Alt
+#define EVKBDALTGR       0x00000040     // AltGr
+#define EVKBDSCRLOCK     0x00000080     // Scroll Lock
+#define EVNUMLOCK        0x00000100     // Num Lock
+#define EVKBDNFLGBIT     9
+#define kbducval(ev)     ((ev)->sym)    // extract Unicode value
 #define kbdbutton(ev, b) ((ev)->state & (1L << ((b) + EVKBDNFLGBIT)))
 #define kbdmod(ev, mod)  ((ev)->state & (mod))
 struct evkbd {
-    int32_t sym;                                // Unicode key symbol + flags
+    int32_t sym;                        // Unicode key symbol + flags
     int32_t state;                              // button state mask if present
 } PACK();
 
 /* pointer such as mouse device events */
 
 #define pntbutton(ev, b) (ev->state & (1 << (b)))
-#define pnt
 /* pointer device, e.g. mouse event */
 struct evpnt {
-    int32_t  button;                    // button ID; sign-bit indicates release
+    uint32_t button;                    // button ID
     uint32_t state;                     // state bits for buttons; 1 -> down
     uint32_t x;                         // screen X coordinate
     uint32_t y;                         // screen Y coordinate

@@ -47,12 +47,12 @@ kmain(struct mboothdr *hdr, unsigned long pmemsz)
     meminit(vmphysadr(&_ebssvirt), pmemsz);
     vminitphys((uintptr_t)&_ebss, pmemsz - (unsigned long)&_ebss);
 //    meminit(vmphysadr(&_ebssvirt), max(pmemsz, 3UL * 1024 * 1024 * 1024));
-    kbfill(&kerniomap, 0xff, sizeof(kerniomap));
+    kmemset(&kerniomap, 0xff, sizeof(kerniomap));
 //    vgainitcon(80, 25);
 #if (VBE2)
     vbe2init(hdr);
     {
-        kbfill(vbe2screen.fbuf, 0xff, vbe2screen.w * vbe2screen.h * 3);
+        kmemset(vbe2screen.fbuf, 0xff, vbe2screen.w * vbe2screen.h * 3);
     }
 #endif
 #if (AC97)

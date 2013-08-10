@@ -44,48 +44,113 @@ const char _ltoxtab[]
     'f',
 };
 
+/* assumes longword-aligned blocks with sizes of long-word multiples */
 void
-kbzero(void *adr, unsigned long len)
+kbzero(void *adr, size_t len)
 {
-    unsigned long  nleft = len;
-    long          *ptr = NULL;
-    long          *next;
-    long           val;
-    long           incr;
-#if (CACHEPREWARM)
-    long           tmp;
-#endif
-
-    next = adr;
-    val ^= val;
-    incr = 8;
-    /* set loop count */
-    len >>= LONGSIZELOG2 + 3;
-    nleft -= len << (LONGSIZELOG2 + 3);
-    while (len) {
-#if (CACHEPREWARM)
-        tmp = *next;    // cache prewarm; fetch first byte of cacheline
-#endif
-        ptr = next;     // set pointer
-        len--;          // adjust loop count
-        next += incr;   // set next pointer
-        /* zero memory */
-        ptr[0] = val;
-        ptr[1] = val;
-        ptr[2] = val;
-        ptr[3] = val;
-        ptr[4] = val;
-        ptr[5] = val;
-        ptr[6] = val;
-        ptr[7] = val;
+    long *next;
+    long *ptr;
+    long  val = 0;
+    long  incr = 8;
+    long  nleft = 0;
+    
+    if (len > (1UL << (LONGSIZELOG2 + 3))) {
+        /* zero non-cacheline-aligned head long-word by long-word */
+        nleft = ((uintptr_t)adr) & ((1UL << (LONGSIZELOG2 + 3)) - 1);
+        if (nleft) {
+            nleft = (1UL << (LONGSIZELOG2 + 3)) - nleft;
+            nleft >>= LONGSIZELOG2;
+            len -= nleft;
+            while (nleft--) {
+                *ptr++ = val;
+            }
+        }
+        nleft = len & ~((1UL << (LONGSIZELOG2 + 3)) - 1);
+    }
+    next = ptr;
+    if (len >= (1UL << (LONGSIZELOG2 + 3))) {
+        nleft = len & ((1UL << (LONGSIZELOG2 + 3)) - 1);
+        len >>= LONGSIZELOG2 + 3;
+        /* zero aligned cachelines */
+        while (len) {
+            len--;
+            ptr[0] = val;
+            ptr[1] = val;
+            ptr[2] = val;
+            ptr[3] = val;
+            next += incr;
+            ptr[4] = val;
+            ptr[5] = val;
+            ptr[6] = val;
+            ptr[7] = val;
+            ptr = next;
+        }
     }
     while (nleft--) {
+        /* zero tail long-words */
         *ptr++ = val;
     }
-
+    
     return;
 }
 
+/* assumes longword-aligned blocks with sizes of long-word multiples */
+void
+kmemset(void *adr, int byte, size_t len)
+{
+    long *next;
+    long *ptr;
+    long  val = 0;
+    long  incr = 8;
+    long  nleft = 0;
+    
+    val = byte;
+    val |= (val << 8);
+    val |= (val << 16);
+#if (LONGSIZE == 8)
+    val |= (val << 32);
+#endif
+    if (len > (1UL << (LONGSIZELOG2 + 3))) {
+        /* zero non-cacheline-aligned head long-word by long-word */
+        nleft = ((uintptr_t)adr) & ((1UL << (LONGSIZELOG2 + 3)) - 1);
+        if (nleft) {
+            nleft = (1UL << (LONGSIZELOG2 + 3)) - nleft;
+            nleft >>= LONGSIZELOG2;
+            len -= nleft;
+            while (nleft--) {
+                *ptr++ = val;
+            }
+        }
+        nleft = len & ~((1UL << (LONGSIZELOG2 + 3)) - 1);
+    }
+    next = ptr;
+    if (len >= (1UL << (LONGSIZELOG2 + 3))) {
+        nleft = len & ((1UL << (LONGSIZELOG2 + 3)) - 1);
+        len >>= LONGSIZELOG2 + 3;
+        /* zero aligned cachelines */
+        while (len) {
+            len--;
+            ptr[0] = val;
+            ptr[1] = val;
+            ptr[2] = val;
+            ptr[3] = val;
+            next += incr;
+            ptr[4] = val;
+            ptr[5] = val;
+            ptr[6] = val;
+            ptr[7] = val;
+            ptr = next;
+        }
+    }
+    while (nleft--) {
+        /* zero tail long-words */
+        *ptr++ = val;
+    }
+    
+    return;
+}
+
+#if 0
 void
 kbcopy(void *dest, void *src, unsigned long len)
 {
@@ -95,7 +160,7 @@ kbcopy(void *dest, void *src, unsigned long len)
     long          *dnext;
     long          *snext;
     long           incr;
-#if (CACHEPREWARM)
+#if (CACHEPREWARM) && !defined(__GNUC__)
     long    tmp;
 #endif
 
@@ -106,7 +171,10 @@ kbcopy(void *dest, void *src, unsigned long len)
     len >>= LONGSIZELOG2 + 3;
     nleft -= len << (LONGSIZELOG2 + 3);
     while (len) {
-#if (CACHEPREWARM)
+#if defined(__GNUC__)
+        __builtin_prefetch(dnext);
+        __builtin_prefetch(snext);
+#elif (CACHEPREWARM)
         tmp = *dnext;   // cache prewarm; fetch first byte of cacheline
         tmp = *snext;   // cache prewarm; fetch first byte of cacheline
 #endif
@@ -178,6 +246,7 @@ kbfill(void *adr, uint8_t byte, unsigned long len)
 
     return;
 }
+#endif
 
 int
 kmemcmp(const void *ptr1,

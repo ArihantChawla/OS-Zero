@@ -4,8 +4,8 @@
 #include <stdint.h>
 
 void kbzero(void *adr, unsigned long len);
+void kmemset(void *adr, int byte, unsigned long len);
 void kbcopy(void *dest, void *src, unsigned long len);
-void kbfill(void *adr, uint8_t byte, unsigned long len);
 int  kmemcmp(const void *ptr1, const void *ptr2, unsigned long nb);
 int  kstrcmp(const char *str1, const char *str2);
 long kstrncpy(char *dest, char *src, long len);
