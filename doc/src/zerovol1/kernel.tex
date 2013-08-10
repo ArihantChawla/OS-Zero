@@ -1,0 +1,704 @@
+\documentclass[twoside, a4paper]{book}
+\usepackage[T1]{fontenc}
+\normalsize
+\usepackage{listings}
+\usepackage{parskip}
+\usepackage{verbatim}
+\usepackage{fancyvrb}
+\usepackage{hyperref}
+\lstset{language=C, showspaces=false, breaklines=false}
+\hypersetup{backref, colorlinks=true, linkcolor=blue}
+
+\begin{document}
+
+\title{\LARGE{Zero Kernel} \\
+       \large{Design and Implementation} \\
+       \large{DRAFT 1, Revision 7}}
+\author{Tuomo Petteri Venäläinen}
+\date{\today}
+\maketitle
+
+\setcounter{secnumdepth}{3}
+\setcounter{tocdepth}{4}
+\setlength{\parindent}{0cm}
+
+\part{Overview}
+
+\tableofcontents
+
+\chapter{Preface}
+
+\section{Acknowledgements}
+
+\section{History}
+
+\chapter{System Concepts}
+
+\section{Terminology}
+
+	\textbf{Trap}
+
+	A trap is a hardware- or software generated event. Other names for traps
+	include \textbf{interrupts}, \textbf{exceptions}, \textbf{faults}, and
+	\textbf{aborts}. As an example, keyboard and mouse input may generate
+	interrupts to be handled by interrupt service routines (\textbf{ISR}s).
+
+	\textbf{Process}
+
+	A process is a running instance of a program. A process may consist of
+	several threads. Threads of a process share the same address space, but
+	have individual execution stacks.
+
+	\textbf{Thread}
+
+	Threads are the basic execution unit of programs. To utilise
+	multiprocessor-parallelism, a program may consist of several threads
+	of execution, effectively letting it do several computation and	I/O
+	operations at the same time.
+
+	\textbf{Task}
+
+	In the context of Zero, the term task is synonymous to a process.
+
+	\textbf{Interval Task}
+
+	Short-lived, frequent tasks such as audio and video buffer
+	synchronisation are scheduled with priority higher than normal tasks.
+	It is likely such tasks should be given a slice of time shorter than
+	other threads.
+
+	\textbf{Virtual Memory}
+
+	Virtual memory is a technique to map physical memory to per-process
+	address space. The processes see their address spaces as if they were in
+	total control of the machine. These per-process address spaces are
+	protected from being tampered by other processes. Address translations
+	are hardware-level (the kernel mimics them, though), so virtual memory
+	is transparent to application, and most of the time, even kernel
+	programmers.
+
+	\textbf{Page}
+
+	A page is the base unit of memory management. Hardware protection works
+	on per-page basis. Page attributes include read-, write-, and execute-
+	permissions. For typical programs, the text (code) pages would have read
+	and execute permissions, wherease the program [initialised] data pages
+	as well as [unitialised] BSS-segment pages would have read and write
+	but not execute permissions. This approach facilitates protection
+	against overwriting code and against trying to execute code from the
+	data and BSS-segments.
+
+	\textbf{Segment}
+
+	Processes typically consist of several segments. These include a text
+	segment for [read-only] code, a data segment for initialised global
+	data, a BSS-segment for uninitialised global data, and different
+	debugging-related segments. Note that the BSS-segment is runtime-
+	allocated, whereas the data segment is read from the binary image. Also
+	Note that in a different context, segments are used to refer to hardware
+	memory management.
+
+	\textbf{Buffer}
+
+	Buffers are used to avoid excess I/O system calls when reading and
+	writing to and from I/O devices. This memory is allocated from a
+	separate buffer cache, which can be either static or dynamic size.
+	Buffer pages are 'wired' to memory; they will never get paged out to
+	disk or other external devices, but instead buffer eviction leads to
+	writing the buffer to a location on some device; typically a disk.
+
+	\textbf{Event}
+
+	Events are a means for the kernel and user processes to communicate with
+	each other. As an example, user keyboard input needs to be encoded to
+	a well known format (Unicode or in the case of a terminal, ISO 8859-1
+	characters) and then dispatched to the event queues of the listening
+	processes. Other system events include creation and destroyal of files
+	and directories.
+
+	Zero schedules certain events on timers separate from the timer
+	interrupt used for scheduling threads. At the time of such an event, it
+	is dispatched to the event queues of [registered] listening processes;
+	if an event handler thread has been set, it will be given a short time
+	slice of the event timer. Event time slices should be shorter than
+	scheduler time slices to not interfere with the rest of the system too
+	much.
+
+\chapter{System Interface}
+
+\section{UNIX Features}
+
+	\textbf{Concepts}
+
+	Zero is influenced and inspired by AT\&T and BSD UNIX systems. As I
+	think many of the ideas in these operating systems have stood the test
+	of time	nicely, it feels natural to base Zero on some well-known and
+	thoroughly-tested concepts.
+
+	\textbf{Nodes}
+
+	Nodes are similar with UNIX 'file' descriptors. All I/O objects,
+	lock structures needed for IPC and multithreading, as well as other
+	types of data structures are called nodes, collectively. Their [64-bit]
+	IDs are typically per-host kernel \textbf{memory addresses} (pointer
+	values) for kernel \textbf{descriptor data structures}.
+
+\section{POSIX Features}
+
+	\textbf{Threads}
+
+	Perhaps the most notable POSIX-influenced feature in Zero kernel is
+	threads. POSIX- and C11-threads can be thought of as light-weight
+	'processes' sharing the parent process address space but having unique
+	execution stacks. Threads facilitate doing several operations at the
+	same time, which makes into better utilisation of today's multicore-
+	and multiprocessor-systems.
+
+\section{Zero Features}
+
+	\textbf{Events}
+
+	Possibly the most notable extension to traditional UNIX-like designs in
+	Zero is the event interface. Events are interprocess communication
+	messages between kernel and user processes. Events are used to notify
+	of user device (keyboard, mouse/pointer) input, filesystem actions such
+	as removal and destroyal of files or directories, as well as to
+	communicate remote procedure calls and data between two processes
+	(possibly on different hosts).
+
+	Events are communicated using message passing; the fastest transport
+	available is chosen to deliver messages from a process to another one;
+	in a scenario like a local display connection, messages can be passed
+	by using a shared memory segment mapped to the address spaces of both
+	the kernel and the desktop server.
+
+\part{Basic Kernel}
+
+\chapter{Kernel Layout}
+
+	\textbf{Monolithic Kernel}
+
+	Zero is a traditional, monolithic kernel. It consists of several parts,
+	some of which are highlighted below.
+
+\begin{tabular}{ | l | l | }
+	\hline
+	Module        & Operation \\
+	\textbf{tmr}  & hardware timer interface \\
+	\textbf{thr}  & thread scheduler \\
+	\textbf{vm}   & virtual memory manager \\
+	\textbf{page} & page daemon \\
+	\textbf{mem}  & kernel memory allocator \\
+	\textbf{io}   & I/O primitives \\
+	\textbf{buf}  & block/buffer cache management \\
+	\hline
+\end{tabular}
+
+	The code modules above will be discussed in-depth in the later parts of
+	this book.
+
+\chapter{Kernel Environment}
+
+\section{CPU Support}
+
+\subsection{Thread Scheduler}
+
+\subsubsection{Thread Data Structure}
+
+\subsection{Interrupt Vector}
+
+	The interrupt vector is a table of interrupt descriptors. The
+	descriptors contain interrupt service routine base address for the
+	function to be called to handle the interrupt.
+
+\subsubsection{Interrupt Descriptors}
+
+\section{Memory}
+
+\subsection{Overview}
+
+\subsection{Segment Descriptor Tables}
+
+\subsection{Paging Data Structures}
+
+\subsubsection{Page Directory Entry}
+
+\subsubsection{Page Table Entry}
+
+\subsubsection{Page Directory}
+
+\subsubsection{Page Tables}
+
+\subsection{User Memory Map}
+
+\begin{tabular}{ | l | l | l | }
+	\hline
+	Segment & Brief                 & Parameters \\
+	\hline
+	stack   & process stack         & read-write, grow-down \\
+	\hline
+	map     & memory-mapped regions & read-write \\
+	\hline
+	heap    & process heap (sbrk()) & read-write \\
+	\hline
+	bss     & uninitialised data    & read-write, allocate \\
+	\hline
+	data    & initialised data      & read-write \\
+	\hline
+	text    & process code          & read, execute \\
+	\hline
+\end{tabular}
+
+\begin{itemize}
+	\item{segments are shown in descending address order}
+\end{itemize}
+
+\chapter{IA-32 Implementation}
+
+\end{document}
+
+\appendix
+
+\chapter{Notes on Tuning Code}
+
+\section{Preface}
+
+	This document demonstrates low-level code optimization techniques as
+	well as simple data structures useful for high-performance data
+	processing. The goal is to introduce the reader to some aspects of the
+	magic of tuning code.
+
+	Compilers massage code, people tune code. There is a difference.
+	The best compiler cannot undo a bad design. Tuning code may not be
+	rocket science, but it's definitely art and lots of fun.
+
+\section{KISS Principle}
+
+	Keep it simple, stupid/silly. The philosophy behind tuning code. CPUs
+	are reasonably simple and good at doing simple things. The less you make
+	them do, the faster the code will run.
+
+	The fact that algorithmic optimizations, i.e. picking efficient
+	algorithms as the first part of optimization, won't be given much
+	attention in this document. Instead, I will concentrate on lower-level
+	optimizations such as data organization.
+
+	I'm of the belief that tuning code is mostly about knowing the machine.
+	Therefore, I will discuss CPU internals on a generic level in ways that
+	should be widely applicable. You will see that there's more to efficient
+	code than first meets the eye.
+
+\section{C Language}
+
+	The C language is one of the biggest contributions to software
+	technology. C is basically as low-level as you can get without resorting
+	to assembly. C has been given the nickname of "pseudo-assembly". The
+	basic CPU environment of registers, memory, and I/O has been abstracted,
+	but thinly. If this abstraction gets too much on your way, you can
+	usually use inline assembly, i.e. mix assembly code with C.
+
+	You can, most of the time, think of variables as registers. Most C
+	programs use pointers quite a bit; they can be considered memory
+	addresses. In short, C programmers are dealing with what the CPU is;
+	operations on and between registers and memory.
+
+\subsection{C Integer Operations}
+
+	The following tables contain relative speeds of some C operations; note
+	that the actual timings vary from platform to platform, so perhaps the
+	most important thing concerning integral arithmetics is the slow
+	execution of division and modulus operations.
+
+	\textbf{Arithmetic Operations}
+
+	\textbf{TODO: replace with new data, include shift operations}
+
+\begin{verbatim}
+	op	  ticks/op   microseconds    iterations
+	--	  --------   ------------    ----------
+	++        6          17              1024
+	--        6          18              1024
+	+         6          17              1024
+	-         6          18              1024
+	*         8          21              1024
+	/         12         32              1024
+	\%        36         86              1024
+
+	logical ops
+	op      tick/op usecs   count
+	--      ------- -----   -----
+	&       2       8       1024
+	|       2       8       1024
+	^       2       9       1024
+	~       2       8       1024
+	!       4       12      1024
+\end{verbatim}
+
+	\textbf{Notes}
+
+	The speed measurements above were run on a single P3-450 CPU. Note that
+	whereas most arithmetic operations are about equal in speed, integer
+	division is a bit slower and modulus is very slow. Therefore,
+	it's worth knowing that for integral x and power-of-two value p2,
+
+\begin{verbatim}
+	y= x % p2;
+
+        is equivalent with
+
+        y = x & (p2 - 1);
+\end{verbatim}
+
+	To find out if x is a power of two, you can use
+
+\begin{verbatim}
+	#define powerof2(x) (!((x) & ((x) - 1)))
+\end{verbatim}
+
+	In other words, you can replace the very slow modulus with very fast
+	logical operations. Note how logical operations run quite a bit faster
+	than arithmetic. ;)
+
+\section{C Floating Point Operations}
+
+
+\begin{verbatim}
+	float
+	-----
+	op      tick/op usecs   count
+	--      ------- -----   -----
+	+       9       23      1024
+	-       9       24      1024
+	*       109     250     1024
+	/       124     284     1024
+
+	double
+	------
+	op      tick/op usecs   count
+	--      ------- -----   -----
+	+       9       25      1024
+	-       9       25      1024
+	*       51      118     1024
+	/       125     286     1024
+
+	long double
+	-----------
+	op      tick/op usecs   count
+	--      ------- -----   -----
+	+       11      29      1024
+	-       12      30      1024
+	*       14      35      1024
+	/       40      95      1024
+\end{verbatim}
+
+	\textbf{Notes}
+
+	As is the case with integer math, addition and subtraction are
+	reasonably fast. However, division is very slow.
+
+	An interesting thing to notice is that added precision may even speed
+	things up. :)
+
+\section{Computer Architecture}
+
+\subsection{Von Neumann Machine}
+
+	A Von Neumann machine consists of three parts - CPU, memory, and I/O
+	facilities.
+
+	\textbf{Dies and Cores}
+
+	A core is a CPU execution unit, basically a set of hardware registers
+	and mathematical units that operate on them.
+
+	Multicore systems have several cores on the same die, i.e. the same
+	package. So called SMP (symmetric multiprocessor) systems are more
+	traditional. They consist of several dies with one core on each.
+
+	\textbf{Conclusions}
+
+	Most of the time, the programmer need not be concerned about the
+	hardware details. It may, however, pay back to implement CPU-intensive
+	applications using multiple threads in the hopes the system might be
+	capable of executing several of the threads simultaneously.
+
+\subsection{ALU}
+
+	ALU, arithmetic-logical unit, is a central part of a CPU. Implementation
+	is, naturally, architecture-dependent, but the unit is used for
+	reasonably simple arithmetic and logical operations.
+
+\subsection{FPU}
+
+	FPU, floating point unit, is used for floating-point calculations.
+	There may, for example, be machine instructions for operations such as
+	sine and cosine.
+
+	Even though the days of slow floating-point operations may be history,
+	there's still a point in not using floating-point to minimize the number	of registers that need to be saved on task switches.
+
+	As a special case, I'm trying to keep my kernel all-integer in order to
+	speed up in-kernel context switches.
+
+\subsection{MMU}
+
+	MMU, memory management unit, is a part of a CPU that handles [kernel-
+	level] virtual memory. Virtual addresses can be mapped to arbitrary
+	physical addresses to facilitate paging data in and out transparently
+	to the programmer. MMUs implement schemes to protect memory from
+	unwanted access.
+
+	As a fast form of IPC (interprocess communications), shared memory
+	deserves to be mentioned. Shared memory can be implemented by mapping
+	pieces of physical memory (RAM) to address spaces of several processes.
+
+\subsection{Prefetch Queue}
+
+	Prefetch queues are used to read chunks of instruction data at a time.
+	It's a good idea not to use many branching constructs, i.e. jump around 
+	in code, to keep the CPU from not having to flush its prefetch queue
+	often.
+
+\subsection{Branch Prediction}
+
+	CPUs may implement branch prediction logic to try to prefetch code to
+	be executed into CPU instruction cache. Branches should be avoided where
+	possible to avoid pipeline stalls (slows execution speed down) and when
+	they are necessary, it's good form to put the most likely branches to be
+	taken first. In some cases, excess branches can be avoided either with
+	switch/case, or with function pointer tables.
+
+\subsection{Pipeline}
+
+	CPU pipelines are used to split instruction execution into several
+	phases and try to execute different phases of adjacent instructions in
+	parallel.
+
+	A common technique to schedule instructions is to avoid data
+	dependencies in adjacent operations; targets of an operation shouldn't
+	be sources for the next one. This will reduce pipeline stalls and keep
+	the CPU running code faster.
+
+\section{Basic Techniques}
+
+\subsection{Inlining}
+
+	Inlining is a technique to duplicate pieces of code in order to avoid
+	function calls. Function calls cause overhead because register state
+	needs to be saved and restored; As this overhead shouldn't be long on
+	current computers, inlining should probably only be used for small
+	operations and/or left to the compiler to do.
+
+	To reduce instruction cache misses, it's probably better to avoid code-
+	duplication from excess inlining.
+
+	If you can deal with the so-called debugging possibilities, macros are
+	perhaps the best and definitely the most portable way to inline code.
+
+\subsection{Loop Unrolling}
+
+	Unrolling a loop means executing several loop iterations in one actual
+	loop iteration. This is done to avoid looping overhead, e.g. updating
+	index variables and pipeline stalls.
+
+\subsection{Constants}
+
+	If you see a constant used repetitively in code, it may be a good idea
+	to assign it to a variable to hint the compiler to store it into a
+	register. This way, instructions may become shorter as there is no need
+	to encode [big] constant values into instruction.
+
+	It may be fruitful to make constants as small as possible; the compiler
+	should realize to know this, but I find code more appealing to read when
+	hex constants of 2, 4, 8, or 16 digits are used to represent 8-bit,
+	16-bit, 32-bit, and 64-bit values respectively.
+
+\subsection{Memory Access}
+
+	In short, memory access should be avoided. When you need to do it, try		to avoid cache misses and keep your data aligned.
+
+\subsection{Alignment}
+
+	As a rule of thumb, align words to the boundaries of their size, i.e.
+	where the address is an exact multiple of the size.
+
+	CPUs read memory a fixed number of bytes at a time. This means memory
+	operands are fetched a given number of bytes at a time; you should
+	minimize this number.
+
+\subsection{Cache}
+
+	A bit higher, CPUs read a cacheline's worth of data at a time. To avoid
+	cache misses and so slow access to main physical memory, you should
+	keep your data on as few cachelines as possible; in structures, try to
+	keep related values close to each other.
+
+\section{Simple Data Structures}
+
+\subsection{Bitmaps}
+
+	Bitmaps are useful for storing simple state information. For example,
+	if you really only have to differentiate two states from each other,
+	say free and busy, it would be a big overhead to store boolean values
+	into words.
+
+\subsection{Lookup Tables}
+
+	If, for example, property determination gets complex, especially if it
+	leads to lots of branching, it may be feasible to use lookup tables to
+	store operation values that can be accessed in constant time; note,
+	however, that there's a memory access which may be a slow task.
+
+	As a useful trick, long switch statements can often be replaced byy a
+	short piece of code to index a function pointer tables with the 'case'
+	values. This way, the execution time will be constant.
+
+\subsection{Hash Tables}
+
+	The idea of hash tables is to map given keys to indices into a [fixed-
+	size] table. Key collisions can be dealt with simple linked lists.
+	Picking a proper hash function for calculating keys, e.g. from character
+	strings, should ensure that the lists (chains) don't get long so lookups
+	will run fast. Note, though, that hash tables are practically impossible
+	to sort without using other data structures to help. Hash tables may use
+	lots of memory; pay attention to the table size.
+
+\subsection{Stacks}
+
+	Stacks are a very simple data structure, in some ways limited, but also
+	very fast for some of simple operations.
+
+	A basic stack provides push and pop operations to store and receive the
+	topmost item, respectively. This is easy to implement as a
+	(possibly single-direction) linked list.
+
+	\textbf{Example}
+
+\begin{verbatim}
+	#include <stdio.h>;
+
+	struct page *pagestk;
+
+	struct page {
+	    void        *addr;
+	    struct page *next;
+	};
+
+	#define pushpage(page) ((page)->next = pagestk,
+	                        pagestk = (page))
+	#define poppage(tmp)   ((tmp) = pagestk, \
+	                        pagestk
+			            = ((tmp)
+				       ? (tmp)->next
+				       : NULL),
+			        (tmp))
+
+	int
+	main(int argc,
+	     char *argv)
+	{
+	    struct page *tmp;
+	    struct page  pg1 = { &pg1, NULL };
+	    struct page  pg2 = { &pg2, NULL };
+
+	    fprintf(stderr, "push\t%p\n", &pg1);
+	    pushpage(&pg1);
+    	    fprintf(stderr, "push\t%p\n", &pg2);
+    	    pushpage(&pg2);
+    	    fprintf(stderr, "pop\t%p\n", poppage(tmp));
+    	    fprintf(stderr, "pop\t%p\n", poppage(tmp));
+    	    fprintf(stderr, "pop\t%p\n", poppage(tmp));
+
+    	    exit(0);
+	}
+\end{verbatim}
+
+\section{Tricks}
+
+\begin{verbatim}
+	/* zero page, 32-bit version. */
+
+	void
+	pzero(void *ptr)
+	{
+	    unsigned long  zero = 0;        /* do not embed big constant into loop. */
+    	    unsigned long  cnt = PGSZ >> 4; /* loop count. */
+    	    unsigned long *ulptr = ptr;     /* unsigned long at a time. */
+
+    	    /*
+     	     * - using small constants as pointer offsets is faster than variables
+     	     *   for me.
+     	     *   -vendu
+     	     */
+	    while (cnt--) {
+                ulptr[0] = ulptr[1] = ulptr[2] = ulptr[3] = zero;
+        	 ulptr += 4;
+	    }
+
+	    return;
+	}
+\end{verbatim}
+
+\chapter{Tools of the Trade}
+
+\section{Software}
+
+	\textbf{http://www.valgrind.org/}
+
+	great memory debugger (and cache simulator)
+
+	\textbf{http://icl.cs.utk.edu/papi/software/}
+
+	PAPI performance monitor
+
+\section{Suggested Reading}
+
+	\textbf{http://www.plantation-productions.com/Webster/www.writegreatcode.com/index.html}
+
+	Hyde, Randall; Write Great Code book series
+
+	\textbf{http://www.hackersdelight.org/}
+
+	Warren, Henry S Jr.; Hacker's Delight
+
+	\textbf{http://www.amazon.com/Code-Optimization-Effective-Memory-Usage/dp/1931769249}
+
+	Kaspersky, Kris; Code Optimization: Effective Memory Usage
+
+	\textbf{http://ourworld.compuserve.com/homepages/rbooth/}
+
+	Booth, Rick; Inner Loops
+
+\newpage
+
+\section{Links}
+
+	\textbf{http://aggregate.org/MAGIC/}
+
+	Aggregate Magic Algorithms
+
+	\textbf{http://graphics.stanford.edu/~seander/bithacks.html}
+
+	Stanford Bit Twiddling Hacks
+
+	\textbf{http://www.inwap.com/pdp10/hbaker/hakmem/hakmem.html}
+
+	MIT HAKMEM
+
+\chapter{System Calls}
+
+\chapter{IA-32 and X86-64 Implementations}
+
+\section{Calling Conventions}
+
+\subsection{Stack Frames}
+
+\section{Hardware Interface}
+
+\subsection{Memory Segments}
+
+\subsection{Traps}
+
+\subsection{Trap Frames}
+
+
