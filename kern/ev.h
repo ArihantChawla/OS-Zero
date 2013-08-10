@@ -2,7 +2,6 @@
 #define __KERN_EV_H__
 
 #include <stdint.h>
-#include <wchar.h>
 #include <zero/cdecl.h>
 
 /* event header structure */
@@ -85,7 +84,7 @@ struct evdata {
     uint32_t itemsz;                    // data-word size
     uint32_t nitem;                     // number of items to follow
     uint32_t obj;                       // data object ID
-};
+} PACK();
 
 /* file system events */
 
