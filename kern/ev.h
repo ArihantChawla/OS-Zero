@@ -91,7 +91,7 @@ struct evdata {
 
 struct evfs {
     uint32_t dev;                       // device ID
-    uint64_t node;                      // node (file, directory) ID
+    uint32_t node;                      // node (file, directory) ID
     uint8_t  data[EMPTY];               // optional event data
 } PACK();
 
