@@ -44,6 +44,8 @@ struct heap {
 #define BUFREADAHEAD 0x80	// use read-ahead buffering
 
 struct iobuf {
+    long    fd;
+    long    perm;
     long    flg;
     off_t   pos;
     size_t  sz;

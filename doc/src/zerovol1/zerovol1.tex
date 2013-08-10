@@ -3,7 +3,9 @@
 \usepackage{parskip}
 \usepackage{listings}
 \usepackage{fancyvrb}
+\usepackage{hyperref}
 \lstset{language=C, showspaces=false, breaklines=false}
+\hypersetup{backref, colorlinks=true, linkcolor=blue}
 
 \begin{document}
 
@@ -202,14 +204,21 @@
 	\hline
 	ID & Segment & Protection & Purpose \\
 	\hline
-	0  & NULL    & no access                & NULL/zero segment required by the CPU \\
-	1  & TEXT    & read + execute           & kernel code segment \\
-	2  & DATA    & read + write             & kernel data segment \\
-	3  & STK     & read + write + grow-down & kernel stack \\
-	4  & TSS     & read + write             & kernel task state segment \\
-	5  & UTEXT   & read + execute + user    & user code segment \\
-	6  & UDATA   & read + write             & user data segment \\
 	7  & CPU     & read + write             & per-CPU data \\
+	\hline
+	6  & UDATA   & read + write             & user data segment \\
+	\hline
+	5  & UTEXT   & read + execute + user    & user code segment \\
+	\hline
+	4  & TSS     & read + write             & kernel task state segment \\
+	\hline
+	3  & STK     & read + write + grow-down & kernel stack \\
+	\hline
+	2  & DATA    & read + write             & kernel data segment \\
+	\hline
+	1  & TEXT    & read + execute           & kernel code segment \\
+	\hline
+	0  & NULL    & no access                & NULL/zero segment required by the CPU \\
 	\hline
 \end{tabular}
 
@@ -678,6 +687,28 @@ MPSTKSIZE           & MPSTK0   & processor 0 kernel-mode stack \\
 	\textbf{kern/unit/ia32/vm.h}
 
 \VerbatimInput{../../../kern/unit/ia32/vm.h}
+
+\section{User-Process Memory}
+
+\subsection{Memory Map}
+
+\begin{tabular}{ | l | l | l | }
+	\hline
+	Segment & Brief                 & Parameters \\
+	\hline
+	stack   & process stack         & read-write, grow-down \\
+	\hline
+	map     & memory-mapped regions & read-write \\
+	\hline
+	heap    & process heap (sbrk()) & read-write \\
+	\hline
+	bss     & uninitialised data    & read-write, allocate \\
+	\hline
+	data    & initialised data      & read-write \\
+	\hline
+	text    & process code          & read, execute \\
+	\hline
+\end{tabular}
 
 \chapter{I/O Operations}
 

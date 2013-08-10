@@ -8,22 +8,34 @@
 
 /* user input events */
 
+/* masks for choosing events */
+#define EVKEYDOWNMASK    (1UL << 0)
+#define EVKEYUPMASK      (1UL << 1)
+#define EVBUTTONDOWNMASK (1UL << 2)
+#define EVBUTTONUPMASK   (1UL << 3)
+#define EVPNTMOTIONMASK  (1UL << 4)
+#define EVIPCMASK        (1UL << 5)
+#define EVFSCREATMASK    (1UL << 6)
+#define EVFUNLINKMASK    (1UL << 7)
+#define EVFSMKDIRMASK    (1UL << 8)
+#define EVFSRMDIRMASK    (1UL << 9)
+
 /* keyboard events */
-#define EVKEYDOWN       0x01
-#define EVKEYUP         0x02
+#define EVKEYDOWN        0x01
+#define EVKEYUP          0x02
 /* pointer events */
-#define EVBUTTONDOWN    0x03
-#define EVBUTTONUP      0x04
-#define EVPNTMOTION     0x05
+#define EVBUTTONDOWN     0x03
+#define EVBUTTONUP       0x04
+#define EVPNTMOTION      0x05
 /* IPC events */
-#define EVCMD           0x06
-#define EVMSG           0x07
-#define EVDATA          0x08
+#define EVCMD            0x06
+#define EVMSG            0x07
+#define EVDATA           0x08
 /* filesystem events */
-#define EVFSCREAT       0x09
-#define EVFSUNLINK      0x0a
-#define EVFSMKDIR       0x0b
-#define EVFSRMDIR       0x0c
+#define EVFSCREAT        0x09
+#define EVFSUNLINK       0x0a
+#define EVFSMKDIR        0x0b
+#define EVFSRMDIR        0x0c
 
 /* keyboard events */
 
@@ -33,15 +45,15 @@
  */
 
 /* mask-bits for modifier keys */
-#define EVKBDSHIFT       0x00000001     // Shift
-#define EVKBDCAPSLK      0x00000002     // Caps Lock
-#define EVKBDCTRL        0x00000004     // Ctrl
-#define EVKBDMETA        0x00000008     // Meta
-#define EVKBDCOMPOSE     0x00000010     // Compose
-#define EVKBDALT         0x00000020     // Alt
-#define EVKBDALTGR       0x00000040     // AltGr
-#define EVKBDSCRLOCK     0x00000080     // Scroll Lock
-#define EVNUMLOCK        0x00000100     // Num Lock
+#define EVKBDSHIFT        0x00000001    // Shift
+#define EVKBDCAPSLK       0x00000002    // Caps Lock
+#define EVKBDCTRL         0x00000004    // Ctrl
+#define EVKBDMETA         0x00000008    // Meta
+#define EVKBDCOMPOSE      0x00000010    // Compose
+#define EVKBDALT          0x00000020    // Alt
+#define EVKBDALTGR        0x00000040    // AltGr
+#define EVKBDSCRLOCK      0x00000080    // Scroll Lock
+#define EVNUMLOCK         0x00000100    // Num Lock
 #define EVKBDNFLGBIT     9
 #define kbducval(ev)     ((ev)->sym)    // extract Unicode value
 #define kbdbutton(ev, b) ((ev)->state & (1L << ((b) + EVKBDNFLGBIT)))
@@ -109,20 +121,20 @@ struct zevent {
 /* API */
 /* event-queue is mapped to both kernel and user space to avoid copying data */
 /* register to listen to ev with flg parameters on event queue at qadr */
-void        evreg(long ev, long flg, void *qadr);
+void evreg(long mask, long flg, void *qadr);
 /* check queue for event type ev; parameters in flg */
 /* check current queue; don't flush server connection */
 #define EVNOFLUSH       0x01
 /* remove event from queue */
 #define EVREMOVE        0x02
-long        evchk(struct evp *ev, long mask, void *qadr);
+long evchk(struct zevent *ev, long mask, void *qadr);
 /* read next event from queue */
 /* flg bits */
 /* leave copy of fetched event in the queue */
 #define EVNOREMOVE      0x01
 /* do not flush server connection before get */
 #define EVNOFLUSH       0x02
-void        evget(struct ev *evp, long flg, void *qadr);
+void evget(struct zevent *ev, long flg, void *qadr);
 
 #endif /* __KERN_EV_H__ */
 

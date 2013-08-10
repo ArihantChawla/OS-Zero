@@ -14,5 +14,13 @@
 #define PERMSETGID 0x00000800
 #define PERMSETUID 0x00001000
 
+/* TODO */
+#define permcanread(uid, gid, perm)
+#define permcanwrite(uid, gid, perm)
+#define permcanexec(uid, gid, perm)
+#define permsticky(perm)
+#define permsetgid(perm)
+#define permsetuid(perm)
+
 #endif /* __KERN_PERM_H__ */
 
