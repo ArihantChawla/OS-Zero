@@ -49,7 +49,7 @@
 #define kbdmod(ev, mod)  ((ev)->state & (mod))
 struct evkbd {
     int32_t sym;                        // Unicode key symbol + flags
-    int32_t state;                              // button state mask if present
+    int32_t state;                      // button state mask if present
 } PACK();
 
 /* pointer such as mouse device events */
@@ -68,9 +68,9 @@ struct evpnt {
 
 /* command packet */
 struct evcmd {
-    uint64_t cmd;                       // RPC command
-    uint64_t src;                       // src object
-    uint64_t dest;                      // destination object
+    uint32_t cmd;                       // RPC command
+    uint32_t src;                       // src object
+    uint32_t dest;                      // destination object
 } PACK();
 
 /* message packet */
@@ -83,14 +83,13 @@ struct evmsg {
 struct evdata {
     uint32_t fmt;                       // data format
     uint32_t itemsz;                    // data-word size
-    uint64_t nitem;                     // number of items to follow
-    uint64_t obj;                       // data object ID
+    uint32_t nitem;                     // number of items to follow
+    uint32_t obj;                       // data object ID
 };
 
 /* file system events */
 
 struct evfs {
-    uint32_t type;                      // event type
     uint32_t dev;                       // device ID
     uint64_t node;                      // node (file, directory) ID
     uint8_t  data[EMPTY];               // optional event data
