@@ -58,7 +58,7 @@
 
 	\textbf{Task}
 
-	In the context of Zero, the term task is synonymous to a process.
+	In the context of Zero, the term task is synonymous the term process.
 
 	\textbf{Interval Task}
 
@@ -80,13 +80,13 @@
 	\textbf{Page}
 
 	A page is the base unit of memory management. Hardware protection works
-	on per-page basis. Page attributes include read-, write-, and execute-
-	permissions. For typical programs, the text (code) pages would have read
-	and execute permissions, wherease the program [initialised] data pages
-	as well as [unitialised] BSS-segment pages would have read and write
-	but not execute permissions. This approach facilitates protection
-	against overwriting code and against trying to execute code from the
-	data and BSS-segments.
+	on per-page basis. Page attributes include read-, write-, and
+	execute-permissions. For typical programs, the text (code) pages would
+	have read- and execute-permissions, wherease the program [initialised]
+	data pages as well as [unitialised] BSS-segment pages would have read-
+	and write- but not execute-permissions. This approach facilitates
+	protection against overwriting code and against trying to execute code
+	from the data and BSS-segments.
 
 	\textbf{Segment}
 
@@ -112,9 +112,9 @@
 	Events are a means for the kernel and user processes to communicate with
 	each other. As an example, user keyboard input needs to be encoded to
 	a well known format (Unicode or in the case of a terminal, ISO 8859-1
-	characters) and then dispatched to the event queues of the listening
-	processes. Other system events include creation and destroyal of files
-	and directories.
+	or UTF-8 characters) and then dispatched to the event queues of the
+	listening processes. Other system events include creation and destroyal
+	of files and directories.
 
 	Zero schedules certain events on timers separate from the timer
 	interrupt used for scheduling threads. At the time of such an event, it
@@ -199,7 +199,11 @@
 
 \chapter{Kernel Environment}
 
-\section{CPU Support}
+	This chapter describes the kernel-mode execution environment.
+	Hardware-specific things are described for the IA-32 and X86-64
+	architectures.
+
+\section{Processor Support}
 
 \subsection{Thread Scheduler}
 
@@ -207,17 +211,24 @@
 
 \subsection{Interrupt Vector}
 
-	The interrupt vector is a table of interrupt descriptors. The
+	The interrupt vector is an array of interrupt descriptors. The
 	descriptors contain interrupt service routine base address for the
 	function to be called to handle the interrupt.
 
 \subsubsection{Interrupt Descriptors}
+
+	Entries in the interrupt vector, i.e. interrupt descriptor table
+	(\textbf{IDT}), are called interrupt descriptors. These descriptors,
+	whereas a bit hairy format-wise, consist of interrupt service address,
+	protection ring (system or user), and certain other attribute flags.
 
 \section{Memory}
 
 \subsection{Overview}
 
 \subsection{Segment Descriptor Tables}
+
+\subsubsection{Segment Descriptors}
 
 \subsection{Paging Data Structures}
 
@@ -229,25 +240,39 @@
 
 \subsubsection{Page Tables}
 
-\subsection{User Memory Map}
+\subsection{Page Daemon}
+
+\subsubsection{Page Replacement Algorithm}
+
+\section{User Environment}
+
+\subsection{Memory Map}
 
 \begin{tabular}{ | l | l | l | }
 	\hline
 	Segment & Brief                 & Parameters \\
 	\hline
-	stack   & process stack         & read-write, grow-down \\
+	stack   & process stack         & read, write, grow-down \\
 	\hline
-	map     & memory-mapped regions & read-write \\
+	map     & memory-mapped regions & read, write \\
 	\hline
-	heap    & process heap (sbrk()) & read-write \\
+	heap    & process heap (sbrk()) & read, write \\
 	\hline
-	bss     & uninitialised data    & read-write, allocate \\
+	bss     & uninitialised data    & read, write, allocate \\
 	\hline
-	data    & initialised data      & read-write \\
+	data    & initialised data      & read, write \\
 	\hline
 	text    & process code          & read, execute \\
 	\hline
 \end{tabular}
+
+	\textbf{Notes}
+
+\begin{itemize}
+	\item{memory regions are shown from highest to lowest address}
+	\item{the stack segment grows downwards in memory}
+	\item{the BSS segment is allocated at run-time}
+\end{itemize}
 
 \begin{itemize}
 	\item{segments are shown in descending address order}
