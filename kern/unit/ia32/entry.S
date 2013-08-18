@@ -163,5 +163,6 @@ _sysfunc:
 	.long	_syscall2	// select
 
 sysvec:
+	/* TODO: fill with sys_ function addresses */
 	.space	4 * NSYSCALL
 

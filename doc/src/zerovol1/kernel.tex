@@ -11,9 +11,9 @@
 
 \begin{document}
 
-\title{\LARGE{Zero Kernel} \\
+\title{\LARGE{Zero Volume 0 - The Kernel} \\
        \large{Design and Implementation} \\
-       \large{DRAFT 1, Revision 7}}
+       \large{DRAFT 1, Revision 8}}
 \author{Tuomo Petteri Venäläinen}
 \date{\today}
 \maketitle
@@ -28,9 +28,49 @@
 
 \chapter{Preface}
 
+	\textbf{Goal}
+
+	The goal of the Zero project is a new, portable, high performance,
+	Unix-inspired operating	system. Such systems typically consist of a
+	[relatively] small kernel and supporting user software such as editors,
+	compilers, linkers and loaders, and other software development tools.
+
+	\textbf{Rationale}
+
+	Whereas different Unix-like operating systems are doing strong for many
+	users, the world is a different place from when Unix and some of the
+	related operating systems had their initial designs laid out. We have
+	outstanding graphics (and physics) processors, high quality audio
+	interfaces, lots of memory, plenty of disk space, and so forth. Also,
+	the trend is leaning towards multiprocessor systems with new
+	requirements and possibilities. I think it's worth designing a new
+	operating system for modern computers.
+
 \section{Acknowledgements}
 
-\section{History}
+	\textbf{Contributors}
+
+	At the moment, I have kept Zero a one-man project on purpose. I feel
+	it's too much of a moving target to spend other people's time working on
+	things that may change any moment. I will do my best to bring Zero ready
+	for others to work on - I have been offered help, and I want to thank
+	you guys (who know yourself) here. :)
+
+	\textbf{Open Source Community}
+
+	First and foremost, I want to thank \textbf{the developers} of open and
+	free software for their work and courage to release their work for
+	others to use and modify. Keep the spirit strong!
+
+	\textbf{TODO: thanks and greetings etc.}
+
+\section{Background}
+
+	Zero has its roots in old, still simple and elegant versions of the UNIX
+	operating system. I still see many good, timeless things about the UNIX
+	design worth reusing in a new operating system. One thing of particular
+	attraction is the \"everything is a file\" philosophy; I plan to use and
+	possibly extend that idea in Zero.
 
 \chapter{System Concepts}
 
@@ -124,7 +164,7 @@
 	scheduler time slices to not interfere with the rest of the system too
 	much.
 
-\chapter{System Interface}
+\chapter{System Features}
 
 \section{UNIX Features}
 
@@ -184,12 +224,19 @@
 \begin{tabular}{ | l | l | }
 	\hline
 	Module        & Operation \\
+	\hline
 	\textbf{tmr}  & hardware timer interface \\
+	\hline
 	\textbf{thr}  & thread scheduler \\
+	\hline
 	\textbf{vm}   & virtual memory manager \\
+	\hline
 	\textbf{page} & page daemon \\
+	\hline
 	\textbf{mem}  & kernel memory allocator \\
+	\hline
 	\textbf{io}   & I/O primitives \\
+	\hline
 	\textbf{buf}  & block/buffer cache management \\
 	\hline
 \end{tabular}
@@ -242,11 +289,186 @@
 
 \subsection{Page Daemon}
 
+\subsection{Zone Allocator}
+
 \subsubsection{Page Replacement Algorithm}
 
-\section{User Environment}
+\chapter{System Call Interface}
 
-\subsection{Memory Map}
+\section{Process Control}
+
+\subsection{halt}
+
+	\textbf{void sys\_halt(long flg);}
+
+	The halt system call shuts the system down. If the \textbf{flg} argument
+	has the \textbf{HALT\_REBOOT} bit set, the system will be restarted
+	after performing a shutdown.
+
+\subsection{sysctl}
+
+	\textbf{long sys\_sysctl(long cmd, long parm, void *arg);}
+
+\subsection{exit}
+
+	\textbf{long sys\_exit(long val, long flg);}
+
+	The exit system call terminates the calling process. The process returns
+	\textbf{val} as its exit status. If \textbf{flg} has the
+	\textbf{EXIT\_DUMPACCT} bit set, process accounting information is
+	dumped into the \textbf{/var/log/acct.log} system log file.
+
+\subsection{abort}
+
+	\textbf{void sys\_abort(void);}
+
+	The abort system call terminates the calling process in an abnormal way.
+	If the limit for core dump size is set to be big enough, a memory image
+	of the process is dumped into a \textbf{core} file. The location of this
+	file may be either the local directory or one configured in
+	\textbf{/etc/proc/core.cfg}.
+
+\subsection{fork}
+
+	\textbf{long sys\_fork(long flg);}
+
+	The fork system call creates a new child process. If \textbf{flg} has
+	the \textbf{FORK\_VFORK} bit set, the new process shall share the
+	parent's address space; otherwise, the child's address space will be a
+	clone of the parent's address space. If \textbf{flg} has the
+	\textbf{FORK\_COW} bit set, the new process will only clone pages as
+	they are written on.
+
+\subsection{exec}
+
+	\textbf{long sys\_exec(char *path, char *argv[], ...);}
+
+	The exec system call replaces the calling process by an instance of
+	the program \textbf{path}. The argument vector \textbf{argv} holds
+	argument strings for the program to be executed; the table must be
+	terminated by a final \textbf{NULL} pointer.
+
+	If a third argument is given, it shall be \textbf{char **} used as
+	\textbf{environment} strings for the program; the table must be
+	terminated by a final \textbf{NULL} pointer.
+
+\subsection{throp}
+
+	\textbf{long sys\_throp(long cmd, long parm, void *arg);}
+
+	The throp system call provides thread control. The \textbf{cmd} argument
+	is one of the values in the following table.
+
+\begin{tabular}{ | l | l | l | l | }
+	\hline
+	\textbf{cmd} & \textbf{parm} & \textbf{arg} & notes \\
+	\hline
+	THR\_NEW     & class & struct thrarg *  & pthread\_create() \\
+	\hline
+	THR\_JOIN    & thrid & struct thrjoin * & pthread\_join() \\
+	\hline
+	THR\_DETACH  & N/A   & N/A              & pthread\_detach() \\
+	\hline
+	THR\_EXIT    & N/A   & N/A              & pthread\_exit() \\
+	\hline
+	THR\_CLEANUP & N/A   & N/A              & cleanup; pop and execute handlers etc. \\
+	\hline
+	THR\_KEYOP   & cmd   & struct thrkeyop * & create, delete \\
+	\hline
+	THR\_SYSOP   & cmd   & struct thrsys *  & atfork, sigmask, sched, scope \\
+	\hline
+	THR\_STKOP   & thrid & struct thrstk *  & stack; addr, size, guardsize \\
+	\hline
+	THR\_RTOP    & thrid & struct thrrtop * & realtime thread settings \\
+	\hline
+	THR\_SETATTR & thrid & struc thrattr *  & set other attributes \\
+	\hline
+\end{tabular}
+
+\subsection{pctl}
+
+	\textbf{long sys\_pctl(long cmd, long parm, void *arg);}
+
+	The pctl system call provides process operations. The following table
+	lists possible values for the \textbf{cmd} argument.
+
+\begin{tabular}{ | l | l | l | l | }
+	\hline
+	\textbf{cmd}    & \textbf{parm} & \textbf{arg} & notes \\
+	\hline
+	PROC\_GETPID    & N/A           & N/A & getpid() \\
+	\hline
+	PROC\_GETPGRP   & N/A           & N/A & getpgrp() \\
+	\hline
+	PROC\_WAIT      & procid        & N/A & wait() \\
+	                & PROC\_WAITPID & N/A & wait for pid \\
+                        & PROC\_WAITCLD & N/A & wait for children in the group pid \\
+	                & PROC\_WAITGRP & N/A & wait for children in the group of caller \\
+	                & PROC\_WAITANY & N/A & wait for any child process \\
+	\hline
+	PROC\_USLEEP    & milliseconds  & N/A & usleep() \\
+	\hline
+	PROC\_NANOSLEEP & nanoseconds   & N/A & nanosleep() \\
+	\hline
+\end{tabular}
+
+\subsection{sigop}
+
+	\textbf{long sys\_sigop(long cmd, long parm, void *arg);}
+
+	The sigop system call provides control over signals and related program
+	behavior. The diffent values for \textbf{cmd} as well as related values
+	for \textbf{parm} are shown in the following table.
+
+\begin{tabular}{ | l | l | l | l | }
+	\hline
+	cmd          & parm    & arg             & notes \\
+	\hline
+	SIG\_WAIT    & N/A     & N/A             & pause() \\
+	\hline
+	SIG\_SETFUNC & sig     & struct sigarg * & signal()/sigaction() \\
+	\hline
+	SIG\_SETMASK & N/A     & sigset\_t *     & sigsetmask() \\
+	\hline
+	SIG\_SEND    & N/A     & sigset\_t *     & raise() etc. \\
+	\hline
+	SIG\_SETSTK  & N/A     & struct sigstk * & sigaltstack() \\
+	\hline
+	SIG\_SUSPEND & N/A     & sigset\_t *     & sigsuspend(), sigpause() \\
+	\hline
+\end{tabular}
+
+	\textbf{Structure Declarations}
+
+\begin{verbatim}
+/* flg bits */
+#define SIG_NOCLDSTOP 0x01	// no SIGCHLD on stop or cont
+#define SIG_ONSTACK   0x02	// use sigaltstk() stack
+#define SIG_RESETHAND 0x04	// reset handler to SIG_DFL
+#define SIG_RESTART   0x08	// no EINTR behavior
+#define SIG_SIGINFO   0x10	// func(int, siginfo_t void *)
+struct sigarg {
+    long  sig;	// signal ID
+    long  flg;	// see SIG_-macros above
+    void *func;	// signal disposition
+};
+\end{verbatim}
+
+\section{Inter-Process Communications}
+
+\subsection{Shared Memory}
+
+	\textbf{TODO}: shared memory, message queues, semaphores, events
+
+\subsection{Semaphores}
+
+\subsection{Message Queues}
+
+\subsection{Events}
+
+\part{User Environment}
+
+\section{Memory Map}
 
 \begin{tabular}{ | l | l | l | }
 	\hline
@@ -277,8 +499,6 @@
 \begin{itemize}
 	\item{segments are shown in descending address order}
 \end{itemize}
-
-\chapter{IA-32 Implementation}
 
 \end{document}
 
@@ -693,8 +913,6 @@
 	\textbf{http://ourworld.compuserve.com/homepages/rbooth/}
 
 	Booth, Rick; Inner Loops
-
-\newpage
 
 \section{Links}
 

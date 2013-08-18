@@ -15,56 +15,57 @@
  *
  * process interface
  * -----------------
- * void halt(long flg);
- * long exit(long val, long flg);
- * void abort(void);
- * long fork(long flg);
- * long exec(char *path, char *argv[], char *env[]);
- * long throp(long cmd, long parm, void *arg);
- * long pctl(long cmd, long parm, void *arg);
- * long sigop(long pid, long cmd, void *arg);
+ * void sys_halt(long flg);
+ * long sys_sysctl(long cmd, long parm, void *arg);
+ * long sys_exit(long val, long flg);
+ * void sys_abort(void);
+ * long sys_fork(long flg);
+ * long sys_exec(char *path, char *argv[], ...);
+ * long sys_throp(long cmd, long parm, void *arg);
+ * long sys_pctl(long cmd, long parm, void *arg);
+ * long sys_sigop(long cmd, long parm, void *arg);
  *
  * memory interface
  * ----------------
- * long  brk(void *adr);
- * void *map(long desc, long flg, struct sysmem *arg);
+ * long  sys_brk(void *adr);
+ * void *sys_map(long desc, long flg, struct sysmem *arg);
  * - map file or anonymous memory
- * long  umap(void *adr, size_t size);
+ * long  sys_umap(void *adr, size_t size);
  * - unmap file or anonymous memory
- * long  mhint(void *adr, long flg, struct sysmem *arg);
+ * long  sys_mhint(void *adr, long flg, struct sysmem *arg);
  * - NORMAL, RANDOM, SEQUENTIAL, WILLNEED, DONTNEED, REMOVE, DONTFORK, DOFORK
- * void *bmap(long desc, size_t size, long flg);
+ * void *sys_bmap(long desc, size_t size, long flg);
  * - map buffer regions; MAPBUF
  *
  * shared memory
  * -------------
- * long  shmget(long key, size_t size, long flg);
- * void *shmat(long id, void *adr, long flg);
- * long  shmdt(void *adr);
- * long  shmctl(long id, long cmd, void *arg);
+ * long  sys_shmget(long key, size_t size, long flg);
+ * void *sys_shmat(long id, void *adr, long flg);
+ * long  sys_shmdt(void *adr);
+ * long  sys_shmctl(long id, long cmd, void *arg);
  *
  * I/O interface
  * -------------
- * long mnt(char *path1, char *path2, void *arg);
- * long umnt(char *path, long flg);
- * long readdir(long desc, struct dirent *dirent, long count);
- * long open(char *path, long flg, long mode);
- * long trunc(char *path, off_t len);
- * long close(long desc);
- * long read(long desc, void *buf, size_t nb);
- * long readv(long desc, long nargs, void *args);
- * long write(long desc, void *buf, size_t nb);
- * long writev(long desc, long nargs, void *args);
- * long seek(long desc, off_t ofs, long whence);
- * long falloc(long desc, off_t len);
- * long stat(char *path, struct stat *buf, long flg);
- * long readahead(long desc, off_t ofs, size_t count);
- * long fhint(long desc, long flg, struct freg *arg);
+ * long sys_mnt(char *path1, char *path2, void *arg);
+ * long sys_umnt(char *path, long flg);
+ * long sys_readdir(long desc, struct dirent *dirent, long count);
+ * long sys_open(char *path, long flg, long mode);
+ * long sys_trunc(char *path, off_t len);
+ * long sys_close(long desc);
+ * long sys_read(long desc, void *buf, size_t nb);
+ * long sys_readv(long desc, long nargs, void *args);
+ * long sys_write(long desc, void *buf, size_t nb);
+ * long sys_writev(long desc, long nargs, void *args);
+ * long sys_seek(long desc, off_t ofs, long whence);
+ * long sys_falloc(long desc, off_t len);
+ * long sys_stat(char *path, struct stat *buf, long flg);
+ * long sys_readahead(long desc, off_t ofs, size_t count);
+ * long sys_fhint(long desc, long flg, struct freg *arg);
  * - NORMAL, SEQUENTIAL, RANDOM, WILLNEED, DONTNEED, NOREUSE, NONBLOCK, SYNC
- * long ioctl(long desc, long cmd, void *arg);
- * long fctl(long desc, long cmd, void *arg);
- * long poll(struct pollfd *fds, long nfd, long timeout);
- * long select(long nfds, struct select *args);
+ * long sys_ioctl(long desc, long cmd, void *arg);
+ * long sys_fctl(long desc, long cmd, void *arg);
+ * long sys_poll(struct pollfd *fds, long nfd, long timeout);
+ * long sys_select(long nfds, struct select *args);
  */
 
 /*
@@ -84,15 +85,14 @@
 /* process system calls */
 
 /* halt() flags */
-#define HALT_REBOOT      1   // reboot()
+#define HALT_REBOOT     0x01U   // reboot()
 
 /* exit() flags */
-#define EXIT_PRINTRES   0x01U   // print resource usage statistics
-#define EXIT_DUMPRES    0x02U
+#define EXIT_DUMPACCT   0x01U
 
 /* fork() flags */
-#define FORK_COW        0x01U   // copy on write
-#define FORK_VFORK      0x02U   // vfork()
+#define FORK_VFORK      0x01U   // vfork()
+#define FORK_COW        0x02U   // copy on write
 
 /* thread interface */
 

@@ -1,10 +1,10 @@
-#ifndef __UNIT_X86_IO_H__
-#define __UNIT_X86_IO_H__
+#ifndef __SYS_IO_H__
+#define __SYS_IO_H__
 
-#include <stdint.h>
+#define _iodelay()  __asm__ __volatile__ ("outb %%al, $0x80\n")
 
 static __inline__
-uint8_t inb(uint16_t port)
+unsigned char inb(int port)
 {
     uint32_t ret = 0;
 
@@ -15,7 +15,19 @@ uint8_t inb(uint16_t port)
 }
 
 static __inline__
-uint16_t inw(uint16_t port)
+unsigned char inb_p(int port)
+{
+    uint32_t ret = 0;
+
+    __asm__ ("inb %1, %b0\n" : "=a" (ret) : "Nd" (port));
+    _iodelay();
+
+    return (uint8_t)ret;
+    
+}
+
+static __inline__
+unsigned short inw(int port)
 {
     uint32_t ret = 0;
 
@@ -26,11 +38,35 @@ uint16_t inw(uint16_t port)
 }
 
 static __inline__
-uint32_t inl(uint16_t port)
+unsigned short inw_p(int port)
+{
+    uint32_t ret = 0;
+
+    __asm__ ("inw %1, %w0\n" : "=a" (ret) : "Nd" (port));
+    _iodelay();
+
+    return (uint16_t)ret;
+    
+}
+
+static __inline__
+unsigned int inl(int port)
 {
     uint32_t ret = 0;
 
     __asm__ ("inl %1, %0\n" : "=a" (ret) : "Nd" (port));
+
+    return ret;
+    
+}
+
+static __inline__
+unsigned int inl_p(int port)
+{
+    uint32_t ret = 0;
+
+    __asm__ ("inl %1, %0\n" : "=a" (ret) : "Nd" (port));
+    _iodelay();
 
     return ret;
     
@@ -44,10 +80,9 @@ uint32_t inl(uint16_t port)
     __asm__ __volatile__ ("outl %0, %w1\n" : : "a" (l), "Nd" (p))
 
 /* delayed I/O */
-#define _iodelay()  __asm__ __volatile__ ("outb %%al, $0x80\n")
-#define outb_p(b, p) outb(b, p); _iodelay()
+#define outb_p(b, p) outb(b, p); _iodelay())
 #define outw_p(w, p) outw(w, p); _iodelay()
 #define outl_p(l, p) outl(l, p); _iodelay()
 
-#endif /* __UNIT_X86_IO_H__ */
+#endif /* __SYS_IO_H__ */
 
