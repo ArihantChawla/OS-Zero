@@ -295,6 +295,13 @@
 
 \chapter{System Call Interface}
 
+	Keep in mind, that the interface described here is currently
+	\textbf{incomplete}; therefore, please consult the final interface
+	later.
+
+	The most notable missing things at the moment are support for sockets
+	as well as semaphores.
+
 \section{Process Control}
 
 \subsection{halt}
@@ -363,25 +370,25 @@
 	\hline
 	\textbf{cmd} & \textbf{parm} & \textbf{arg} & notes \\
 	\hline
-	THR\_NEW     & class & struct thrarg *  & pthread\_create() \\
+	\textbf{THR\_NEW}     & class & struct thrarg *  & pthread\_create() \\
 	\hline
-	THR\_JOIN    & thrid & struct thrjoin * & pthread\_join() \\
+	\textbf{THR\_JOIN}    & thrid & struct thrjoin * & pthread\_join() \\
 	\hline
-	THR\_DETACH  & N/A   & N/A              & pthread\_detach() \\
+	\textbf{THR\_DETACH}  & N/A   & N/A              & pthread\_detach() \\
 	\hline
-	THR\_EXIT    & N/A   & N/A              & pthread\_exit() \\
+	\textbf{THR\_EXIT}    & N/A   & N/A              & pthread\_exit() \\
 	\hline
-	THR\_CLEANUP & N/A   & N/A              & cleanup; pop and execute handlers etc. \\
+	\textbf{THR\_CLEANUP} & N/A   & N/A              & cleanup; pop and execute handlers etc. \\
 	\hline
-	THR\_KEYOP   & cmd   & struct thrkeyop * & create, delete \\
+	\textbf{THR\_KEYOP}   & cmd   & struct thrkeyop * & create, delete \\
 	\hline
-	THR\_SYSOP   & cmd   & struct thrsys *  & atfork, sigmask, sched, scope \\
+	\textbf{THR\_SYSOP}   & cmd   & struct thrsys *  & atfork, sigmask, sched, scope \\
 	\hline
-	THR\_STKOP   & thrid & struct thrstk *  & stack; addr, size, guardsize \\
+	\textbf{THR\_STKOP}   & thrid & struct thrstk *  & stack; addr, size, guardsize \\
 	\hline
-	THR\_RTOP    & thrid & struct thrrtop * & realtime thread settings \\
+	\textbf{THR\_RTOP}    & thrid & struct thrrtop * & realtime thread settings \\
 	\hline
-	THR\_SETATTR & thrid & struc thrattr *  & set other attributes \\
+	\textbf{THR\_SETATTR} & thrid & struc thrattr *  & set other attributes \\
 	\hline
 \end{tabular}
 
@@ -396,19 +403,19 @@
 	\hline
 	\textbf{cmd}    & \textbf{parm} & \textbf{arg} & notes \\
 	\hline
-	PROC\_GETPID    & N/A           & N/A & getpid() \\
+	\textbf{PROC\_GETPID}    & N/A           & N/A & getpid() \\
 	\hline
-	PROC\_GETPGRP   & N/A           & N/A & getpgrp() \\
+	\textbf{PROC\_GETPGRP}   & N/A           & N/A & getpgrp() \\
 	\hline
-	PROC\_WAIT      & procid        & N/A & wait() \\
-	                & PROC\_WAITPID & N/A & wait for pid \\
-                        & PROC\_WAITCLD & N/A & wait for children in the group pid \\
-	                & PROC\_WAITGRP & N/A & wait for children in the group of caller \\
-	                & PROC\_WAITANY & N/A & wait for any child process \\
+	\textbf{PROC\_WAIT}      & procid        & N/A & wait() \\
+	                & \textbf{PROC\_WAITPID} & N/A & wait for pid \\
+                        & \textbf{PROC\_WAITCLD} & N/A & wait for children in the group pid \\
+	                & \textbf{PROC\_WAITGRP} & N/A & wait for children in the group of caller \\
+	                & \textbf{PROC\_WAITANY} & N/A & wait for any child process \\
 	\hline
-	PROC\_USLEEP    & milliseconds  & N/A & usleep() \\
+	\textbf{PROC\_USLEEP}    & milliseconds  & N/A & usleep() \\
 	\hline
-	PROC\_NANOSLEEP & nanoseconds   & N/A & nanosleep() \\
+	\textbf{PROC\_NANOSLEEP} & nanoseconds   & N/A & nanosleep() \\
 	\hline
 \end{tabular}
 
@@ -422,19 +429,19 @@
 
 \begin{tabular}{ | l | l | l | l | }
 	\hline
-	cmd          & parm    & arg             & notes \\
+	\textbf{cmd}          & \textbf{parm}    & \textbf{arg} & \textbf{notes} \\
 	\hline
-	SIG\_WAIT    & N/A     & N/A             & pause() \\
+	\textbf{SIG\_WAIT}    & N/A     & N/A             & pause() \\
 	\hline
-	SIG\_SETFUNC & sig     & struct sigarg * & signal()/sigaction() \\
+	\textbf{SIG\_SETFUNC} & sig     & struct sigarg * & signal()/sigaction() \\
 	\hline
-	SIG\_SETMASK & N/A     & sigset\_t *     & sigsetmask() \\
+	\textbf{SIG\_SETMASK} & N/A     & sigset\_t *     & sigsetmask() \\
 	\hline
-	SIG\_SEND    & N/A     & sigset\_t *     & raise() etc. \\
+	\textbf{SIG\_SEND}    & N/A     & sigset\_t *     & raise() etc. \\
 	\hline
-	SIG\_SETSTK  & N/A     & struct sigstk * & sigaltstack() \\
+	\textbf{SIG\_SETSTK}  & N/A     & struct sigstk * & sigaltstack() \\
 	\hline
-	SIG\_SUSPEND & N/A     & sigset\_t *     & sigsuspend(), sigpause() \\
+	\textbf{SIG\_SUSPEND} & N/A     & sigset\_t *     & sigsuspend(), sigpause() \\
 	\hline
 \end{tabular}
 
@@ -446,7 +453,7 @@
 #define SIG_ONSTACK   0x02	// use sigaltstk() stack
 #define SIG_RESETHAND 0x04	// reset handler to SIG_DFL
 #define SIG_RESTART   0x08	// no EINTR behavior
-#define SIG_SIGINFO   0x10	// func(int, siginfo_t void *)
+#define SIG_SIGINFO   0x10	// func(int, siginfo_t, void *)
 struct sigarg {
     long  sig;	// signal ID
     long  flg;	// see SIG_-macros above
@@ -454,9 +461,119 @@ struct sigarg {
 };
 \end{verbatim}
 
-\section{Inter-Process Communications}
+\section{Memory Interface}
 
-\subsection{Shared Memory}
+\subsection{brk}
+
+	\textbf{long sys\_brk(void *adr);}
+
+	The brk system call sets the current break, i.e. top of heap, of the
+	calling process to \textbf{adr}. The return value is 0 on success, -1 on
+	failure.
+
+\subsection{map}
+	\textbf{void *sys\_map(long desc, long flg, struct sysmem *arg);}
+
+	The map system call is used to map [zeroed] anonymous memory or files
+	to the calling process's virtual address space. For compatibility with
+	existing systems, mapping the device special file \textbf{/dev/zero} is
+	similar to using the \textbf{flg} value of \textbf{MAP\_ANON}.
+
+\begin{tabular}{ | l | l | }
+	\hline
+	flg             & notes \\
+	\hline
+	\textbf{MAP\_FILE}       & object is a file (may be /dev/zero) \\
+	\hline
+	\textbf{MAP\_ANON}       & map anonymous memory set to zero \\
+	\hline
+	\textbf{MAP\_SHARED}     & changes are shared \\
+	\hline
+	\textbf{MAP\_PRIVATE}    & changes are private \\
+	\hline
+	\textbf{MAP\_FIXED}      & map to provided address \\
+	\hline
+	\textbf{MAP\_SINGLE}     & map buffer mapped to single user process and kernel \\
+	\hline
+	\textbf{MEM\_NORMAL}     & normal behavior \\
+	\hline
+	\textbf{MEM\_SEQUENTIAL} & sequential I/O buffer \\
+	\hline
+	\textbf{MEM\_RANDOM}     & random-access buffer \\
+	\hline
+	\textbf{MEM\_WILLNEED}   & don't unmap after use; keep in buffer cache \\
+	\hline
+	\textbf{MEM\_DONTNEED}   & unmap after use \\
+	\hline
+	\textbf{MEM\_DONTFORK}   & do not share with child processes \\
+	\hline
+\end{tabular}
+
+	\textbf{Structure Declarations}
+
+\begin{verbatim}
+struct sysmem {
+    void *base;	// base address
+    long  ofs;	// offset in bytes
+    long  len;	// length in bytes
+    long  perm;	// permission bits
+};
+\end{verbatim}
+
+\subsection{umap}
+
+	\textbf{long  sys\_umap(void *adr, size\_t size);}
+
+	The umap system call unmaps memory regions mapped with sys\_map().
+
+\subsection{mhint}
+
+	\textbf{long  sys\_mhint(void *adr, long flg, struct sysmem *arg);}
+
+	The mhint system call is used to hint the kernel of a memory region
+	use patterns. The possible bits for \textbf{flg} are shown in the table
+	below; for \textbf{struct sysmem} declaration, see \textbf{map}.
+
+\begin{tabular}{ | l | l | }
+	\hline
+	\textbf{MEM\_NORMAL}     & default behavior \\
+	\hline
+	\textbf{MEM\_SEQUENTIAL} & sequential I/O buffer \\
+	\hline
+	\textbf{MEM\_RANDOM}     & random-access buffer \\
+	\hline
+	\textbf{MEM\_WILLNEED}   & don't unmap after use; keep in buffer cache \\
+	\hline
+	\textbf{MEM\_DONTNEED}   & unmap after use \\
+	\hline
+	\textbf{MEM\_DONTFORK}   & do not share with forked child processes \\
+	\hline
+\end{tabular}
+
+\section{Shared Memory}
+
+	The shared memory interface of Zero is modeled after the so-called
+	System V interface.
+
+\subsection{shmget}
+
+	\textbf{long sys\_shmget(long key, size\_t size, long flg);}
+
+	The shmget system call maps a shared memory segment; it returns a shared
+	memory identifier (usually a long-cast of a kernel virtual memory
+	address).
+
+\subsection{shmat}
+
+	\textbf{void *sys\_shmat(long id, void *adr, long flg);}
+
+\subsection{shmdt}
+
+	\textbf{long sys\_shmdt(void *adr);}
+
+\subsection{shmctl}
+
+	\textbf{sys\_shmctl(long id, long cmd, void *arg);}
 
 	\textbf{TODO}: shared memory, message queues, semaphores, events
 
@@ -468,30 +585,33 @@ struct sigarg {
 
 \part{User Environment}
 
+\section{Process Environment}
+
 \section{Memory Map}
 
 \begin{tabular}{ | l | l | l | }
 	\hline
 	Segment & Brief                 & Parameters \\
 	\hline
-	stack   & process stack         & read, write, grow-down \\
+	\textbf{stack}   & process stack         & read, write, grow-down \\
 	\hline
-	map     & memory-mapped regions & read, write \\
+	\textbf{map}     & memory-mapped regions & read, write \\
 	\hline
-	heap    & process heap (sbrk()) & read, write \\
+	\textbf{heap}    & process heap (sbrk()) & read, write \\
 	\hline
-	bss     & uninitialised data    & read, write, allocate \\
+	\textbf{bss}     & uninitialised data    & read, write, allocate \\
 	\hline
-	data    & initialised data      & read, write \\
+	\textbf{data}    & initialised data      & read, write \\
 	\hline
-	text    & process code          & read, execute \\
+	\textbf{text}    & process code          & read, execute \\
 	\hline
 \end{tabular}
 
 	\textbf{Notes}
 
 \begin{itemize}
-	\item{memory regions are shown from highest to lowest address}
+	\item{memory regions are shown from highest to lowest address, i.e. the
+	addresses grow upwards}
 	\item{the stack segment grows downwards in memory}
 	\item{the BSS segment is allocated at run-time}
 \end{itemize}

@@ -1,7 +1,7 @@
 #ifndef __SYS_STAT_H__
 #define __SYS_STAT_H__
 
-#include <unistd.h>
+#include <sys/types.h>
 
 int stat(const char *path, struct stat *buf);
 

@@ -81,6 +81,7 @@ _syscall3:
 	call	*%esi
 	/* finish system call */
 	jnc	_success
+	jmp	_failure
 
 _invlsys:
 	movl	$ENOSYS, %eax
@@ -137,7 +138,6 @@ _sysfunc:
 	.long	_syscall1	// brk
 	.long	_syscall3	// map
 	.long	_syscall2	// umap
-	.long	_syscall2	// bmap
 	.long	_syscall3	// shmget
 	.long	_syscall3	// shmat
 	.long	_syscall1	// shmdt

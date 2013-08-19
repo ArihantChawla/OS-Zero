@@ -4,7 +4,9 @@
 #include <features.h>
 #include <stdint.h>
 #include <unistd.h>
+#include <sys/stat.h>
 #include <sys/select.h>
+#include <sys/shm.h>
 #include <zero/param.h>
 
 /*
@@ -34,8 +36,6 @@
  * - unmap file or anonymous memory
  * long  sys_mhint(void *adr, long flg, struct sysmem *arg);
  * - NORMAL, RANDOM, SEQUENTIAL, WILLNEED, DONTNEED, REMOVE, DONTFORK, DOFORK
- * void *sys_bmap(long desc, size_t size, long flg);
- * - map buffer regions; MAPBUF
  *
  * shared memory
  * -------------
@@ -57,7 +57,7 @@
  * long sys_write(long desc, void *buf, size_t nb);
  * long sys_writev(long desc, long nargs, void *args);
  * long sys_seek(long desc, off_t ofs, long whence);
- * long sys_falloc(long desc, off_t len);
+ * long sys_falloc(long desc, long parm, size_t len);
  * long sys_stat(char *path, struct stat *buf, long flg);
  * long sys_readahead(long desc, off_t ofs, size_t count);
  * long sys_fhint(long desc, long flg, struct freg *arg);
@@ -123,7 +123,7 @@
 #define PROC_WAITGRP    0x04    // wait for children in the group of caller
 #define PROC_WAITANY    0x08    // wait for any child process
 
-struct _procwait {
+struct syswait {
     long  pid;  // who to wait for
     long *stat; // storage for exit status
     void *data; // rusage etc.
@@ -156,12 +156,16 @@ struct _procwait {
 /* memory interface */
 #define MAP_FILE        0x00000001
 #define MAP_ANON        0x00000002
-#define MAP_NORMAL      0x00000004
-#define MAP_SEQUENTIAL  0x00000008
-#define MAP_RANDOM      0x00000010
-#define MAP_WILLNEED    0x00000020
-#define MAP_DONTNEED    0x00000040
-#define MAP_DONTFORK    0x00000080
+#define MAP_SHARED      0x00000004
+#define MAP_PRIVATE     0x00000008
+#define MAP_FIXED       0x00000010
+#define MAP_SINGLE      0x00000020
+#define MEM_NORMAL      0x00000040
+#define MEM_SEQUENTIAL  0x00000080
+#define MEM_RANDOM      0x00000100
+#define MEM_WILLNEED    0x00000200
+#define MEM_DONTNEED    0x00000400
+#define MEM_DONTFORK    0x00000800
 
 struct sysmem {
     void *base;
@@ -169,6 +173,11 @@ struct sysmem {
     long  len;
     long  perm;
 };
+
+#define IPC_CREAT       0x00000001
+#define IPC_PRIVATE     0L
+#define IPC_STAT        1
+#define IPC_SET         2
 
 #define SEEK_CUR        0x00
 #define SEEK_BEG        0x01
