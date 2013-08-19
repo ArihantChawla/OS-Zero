@@ -3,7 +3,7 @@
 
 #include <features.h>
 #include <stddef.h>
-#include <sys/time.h>
+#include <unistd.h>
 
 extern int   daylight;
 extern long  timezone;

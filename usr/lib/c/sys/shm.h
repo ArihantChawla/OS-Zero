@@ -4,6 +4,7 @@
 #include <stddef.h>
 #include <sys/time.h>
 
+#define SHM_W 0x00000080
 #define SHM_R 0x00000100
 
 struct ipc_perm {

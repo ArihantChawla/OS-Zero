@@ -3,9 +3,9 @@
 #if (PS2DRV)
 
 #include <stdint.h>
+#include <sys/io.h>
 #include <kern/util.h>
 //#include <kern/event.h>
-#include <kern/unit/x86/io.h>
 #include <kern/unit/x86/trap.h>
 
 /*

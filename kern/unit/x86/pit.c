@@ -1,8 +1,8 @@
 #include <stdint.h>
 #include <zero/asm.h>
+#include <sys/io.h>
 #include <kern/conf.h>
 #include <kern/util.h>
-#include <kern/unit/x86/io.h>
 #include <kern/unit/x86/trap.h>
 #include <kern/unit/x86/pit.h>
 #include <kern/unit/x86/pic.h>

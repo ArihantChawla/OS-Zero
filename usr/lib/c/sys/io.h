@@ -6,53 +6,53 @@
 static __inline__
 unsigned char inb(int port)
 {
-    uint32_t ret = 0;
+    unsigned char ret = 0;
 
     __asm__ ("inb %1, %b0\n" : "=a" (ret) : "Nd" (port));
 
-    return (uint8_t)ret;
+    return ret;
     
 }
 
 static __inline__
 unsigned char inb_p(int port)
 {
-    uint32_t ret = 0;
+    unsigned char ret = 0;
 
     __asm__ ("inb %1, %b0\n" : "=a" (ret) : "Nd" (port));
     _iodelay();
 
-    return (uint8_t)ret;
+    return ret;
     
 }
 
 static __inline__
 unsigned short inw(int port)
 {
-    uint32_t ret = 0;
+    unsigned short ret = 0;
 
     __asm__ ("inw %1, %w0\n" : "=a" (ret) : "Nd" (port));
 
-    return (uint16_t)ret;
+    return ret;
     
 }
 
 static __inline__
 unsigned short inw_p(int port)
 {
-    uint32_t ret = 0;
+    unsigned short ret = 0;
 
     __asm__ ("inw %1, %w0\n" : "=a" (ret) : "Nd" (port));
     _iodelay();
 
-    return (uint16_t)ret;
+    return ret;
     
 }
 
 static __inline__
 unsigned int inl(int port)
 {
-    uint32_t ret = 0;
+    unsigned int ret = 0;
 
     __asm__ ("inl %1, %0\n" : "=a" (ret) : "Nd" (port));
 
@@ -63,7 +63,7 @@ unsigned int inl(int port)
 static __inline__
 unsigned int inl_p(int port)
 {
-    uint32_t ret = 0;
+    unsigned int ret = 0;
 
     __asm__ ("inl %1, %0\n" : "=a" (ret) : "Nd" (port));
     _iodelay();

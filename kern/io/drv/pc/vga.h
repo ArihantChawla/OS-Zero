@@ -2,7 +2,7 @@
 #define __KERN_IO_DRV_PC_VGA_H__
 
 #include <stdint.h>
-#include <kern/unit/x86/io.h>
+#include <sys/io.h>
 
 #define VGANCON        8
 #define VGABUFSIZE     (1 << VGABUFSIZELOG2)

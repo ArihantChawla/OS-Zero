@@ -2,7 +2,7 @@
 #define __UNIT_X86_DMA_H__
 
 #include <stdint.h>
-#include <kern/unit/x86/io.h>
+#include <sys/io.h>
 #include <kern/unit/ia32/vm.h>
 
 #define dmagetbuf(chan) ((void *)(DMABUFBASE + (chan) * DMACHANBUFSIZE))

@@ -1,12 +1,12 @@
 #include <stdint.h>
 #define __KERNEL__ 1
 #include <signal.h>
+#include <sys/io.h>
 #include <kern/conf.h>
 #include <zero/param.h>
 #include <zero/types.h>
 #include <kern/unit/ia32/boot.h>
 #include <kern/unit/x86/trap.h>
-#include <kern/unit/x86/io.h>
 
 extern void picinit(void);
 extern void idtset(void);

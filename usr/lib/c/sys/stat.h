@@ -3,8 +3,6 @@
 
 #include <sys/types.h>
 
-int stat(const char *path, struct stat *buf);
-
 struct stat {
     dev_t     st_dev;           // device ID
     ino_t     st_ino;           // inode number;
@@ -20,6 +18,8 @@ struct stat {
     blksize_t st_blksize;       // block size for filesystem I/O
     blkcnt_t  st_blocks;        // number of allocated blocks
 };
+
+int stat(const char *path, struct stat *buf);
 
 #endif /* __SYS_STAT_H__ */
 
