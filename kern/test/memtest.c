@@ -220,7 +220,6 @@ test(void *dummy)
 
     for ( ; ; ) {
         for (l = 0 ; l < NALLOC ; l++) {
-//            ptrtab[l] = memalloc(rand() & (8 * SLABMIN - 1), MEMZERO);
             ptrtab[l] = memalloc(rand() & (8 * SLABMIN - 1), MEMZERO);
         }
         l = NALLOC;
@@ -230,7 +229,7 @@ test(void *dummy)
                 ptrtab[l] = NULL;
             }
         }
-//        slabprintall();
+        slabprintall();
     }
 
     return NULL;

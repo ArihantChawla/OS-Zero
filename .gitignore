@@ -3,3 +3,8 @@
 *.aux
 *.log
 *.toc
+*.out
+*.BAK
+*.log
+core.*
+vgcore.*
