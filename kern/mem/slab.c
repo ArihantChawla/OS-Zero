@@ -83,7 +83,9 @@ slabinit(struct memzone *virtzone, unsigned long base, unsigned long nbphys)
     unsigned long    ul = 1UL << bkt;
     struct slabhdr  *hdr;
 
-    virtzone->base = adr = slabinitzone(virtzone, adr, nbphys);
+    adr = slabinitzone(virtzone, adr, nbphys);
+    virtzone->base = adr;
+    magvirtzone.base = adr;
     if (base != adr) {
         nbphys -= adr - base;
         nbphys = rounddownpow2(nbphys, PAGESIZELOG2);
