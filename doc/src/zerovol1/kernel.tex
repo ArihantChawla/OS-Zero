@@ -34,20 +34,26 @@
 	\textbf{Goal}
 
 	The goal of the Zero project is a new, portable, high performance,
-	Unix-inspired operating	system. Such systems typically consist of a
+	UNIX-inspired operating	system. Such systems typically consist of a
 	[relatively] small kernel and supporting user software such as editors,
 	compilers, linkers and loaders, and other software development tools.
 
 	\textbf{Rationale}
 
-	Whereas different Unix-like operating systems are doing strong for many
-	users, the world is a different place from when Unix and some of the
+	Whereas different UNIX-like operating systems are doing strong for many
+	users, the world is a different place from when UNIX and some of the
 	related operating systems had their initial designs laid out. We have
 	outstanding graphics (and physics) processors, high quality audio
 	interfaces, lots of memory, plenty of disk space, and so forth. Also,
 	the trend is leaning towards multiprocessor systems with new
-	requirements and possibilities. I think it's worth designing a new
-	operating system for modern computers.
+	requirements and possibilities. I think and feel it's worth designing a
+	new operating system for modern computers.
+
+	\textbf{Design}
+
+	Zero is a multithreaded multiprocess-enabled kernel. Design goals
+	include fast response to user actions as well as high multimedia
+	performance.
 
 \section{Acknowledgements}
 
@@ -215,6 +221,30 @@
 	by using a shared memory segment mapped to the address spaces of both
 	the kernel and the desktop server.
 
+\section{Compile-Time Configuration}
+
+	The table below lists some features of the Zero kernel that you can
+	configure at compile-time. The list is not complete; for more settings,
+	consult \textbf{<kern/conf.h>}.
+
+\begin{tabular}{ | l | l | l | }
+	\hline
+	Macro        & Brief & Notes \\
+	\hline
+	\textbf{SMP} & symmetric multiprocessor support & Not functional yet \\
+	\hline
+	\textbf{HZ}  & scheduler timer frequency        & default value is 250 \\
+	\hline
+	\textbf{ZEROSCHED} & default thread scheduler   & do not change yet \\
+	\hline
+	\textbf{NPROC}     & maximum number of simultaneous processes & default is 256 \\
+	\hline
+	\textbf{NTHR}      & maximum number of simultaneous threads   & default is 4096 \\
+	\hline
+	\textbf{NCPU}      & number of CPU units supported            & default is 8 if \textbf{SMP} is non-zero \\
+	\hline
+\end{tabular}
+
 \part{Basic Kernel}
 
 \chapter{Kernel Layout}
@@ -379,7 +409,7 @@
 
 \begin{tabular}{ | l | l | l | l | }
 	\hline
-	\textbf{cmd} & \textbf{parm} & \textbf{arg} & notes \\
+	\textbf{cmd} & \textbf{parm} & \textbf{arg} & Notes \\
 	\hline
 	\textbf{THR\_NEW}     & class & struct thrarg *  & pthread\_create() \\
 	\hline
@@ -412,7 +442,7 @@
 
 \begin{tabular}{ | l | l | l | l | }
 	\hline
-	\textbf{cmd}    & \textbf{parm} & \textbf{arg} & notes \\
+	\textbf{cmd}    & \textbf{parm} & \textbf{arg} & Notes \\
 	\hline
 	\textbf{PROC\_GETPID}    & N/A           & N/A & getpid() \\
 	\hline
@@ -440,7 +470,7 @@
 
 \begin{tabular}{ | l | l | l | l | }
 	\hline
-	\textbf{cmd}          & \textbf{parm}    & \textbf{arg} & \textbf{notes} \\
+	\textbf{cmd}          & \textbf{parm}    & \textbf{arg} & \textbf{Notes} \\
 	\hline
 	\textbf{SIG\_WAIT}    & N/A     & N/A             & pause() \\
 	\hline
@@ -492,7 +522,7 @@ struct sigarg {
 
 \begin{tabular}{ | l | l | }
 	\hline
-	flg             & notes \\
+	flg             & Notes \\
 	\hline
 	\textbf{MAP\_FILE}       & object is a file (may be /dev/zero) \\
 	\hline

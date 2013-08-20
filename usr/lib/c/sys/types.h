@@ -18,7 +18,7 @@ typedef long     key_t;
 typedef long     mode_t;
 typedef int32_t  nlink_t;
 typedef int64_t  off_t;
-typedef int64_t  pid_t;
+typedef long     pid_t;
 typedef long     ssize_t;
 typedef int64_t  time_t;
 typedef long     timer_t;

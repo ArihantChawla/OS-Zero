@@ -1,3 +1,4 @@
+#include <limits.h>
 #include <zero/mtx.h>
 #include <kern/proc/task.h>
 
