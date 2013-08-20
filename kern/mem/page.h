@@ -6,14 +6,13 @@
 #include <zero/trix.h>
 #define __KERNEL__ 1
 #include <zero/mtx.h>
-#define pageqlk(pq)   mtxlk(&(pq)->lk)
-#define pagequnlk(pq) mtxunlk(&(pq)->lk)
 
-#define swapblknum(sp, pg)  ((pg) - (sp)->pgtab)
+#define pagenum(adr)       ((adr) >> PAGESIZELOG2)
+#define swapblknum(sp, pg) ((pg) - (sp)->pgtab)
+#if 0
 #define pageadr(pg, pt)                                                 \
-    ((!(pg))                                                            \
-     ? NULL                                                             \
-     : ((void *)(((pg) - (pt)) << PAGESIZELOG2)))
+    ((!(pg)) ? NULL : ((void *)(((pg) - (pt)) << PAGESIZELOG2)))
+#endif
 
 #if 0
 struct upage {
@@ -50,7 +49,7 @@ struct swapdev {
     struct pageq  freeq;
 };
 
-#define pagegetq(pq) (tzerol(pq->nflt))
+#define pagegetqid(pg) (tzerol(pg->nflt))
 #define pagepop(pq, rpp)                                                \
     do {                                                                \
         struct page  *_pg1;                                             \
@@ -69,7 +68,7 @@ struct swapdev {
         *(rpp) = _pg1;                                                  \
     } while (0)
       
-#define pagepush(pg, pq)                                                \
+#define pagepush(pq, pg)                                                \
     do {                                                                \
         struct page *_pg;                                               \
                                                                         \
@@ -105,43 +104,44 @@ struct swapdev {
 
 #define pagerm(pg)                                                      \
     do {                                                                \
-        struct pageq *_pageq;                                           \
+        long          _pqid;                                            \
+        struct pageq *_pq;                                              \
         struct page  *_tmp;                                             \
                                                                         \
-        pageq = pagegetq(pg);                                           \
-        vmlklruq(_pageq);                                               \
+        _pqid = pagegetqid(pg);                                         \
+        mtxlk(&_pg->lk);                                                \
         _tmp = (pg)->prev;                                              \
         if (_tmp) {                                                     \
             _tmp->next = (pg)->next;                                    \
         } else {                                                        \
             _tmp = (pg)->next;                                          \
-            _pageq->head = _tmp;                                        \
+            _pq->head = _tmp;                                           \
             if (_tmp) {                                                 \
                 _tmp->prev = (pg)->prev;                                \
             } else {                                                    \
-                _pageq->tail = _tmp;                                    \
+                _pq->tail = _tmp;                                       \
             }                                                           \
-            _pageq->head = _tmp;                                        \
+            _pq->head = _tmp;                                           \
         }                                                               \
         _tmp = (pg)->next;                                              \
         if (_tmp) {                                                     \
             _tmp->prev = (pg)->prev;                                    \
         } else {                                                        \
             _tmp = (pg)->prev;                                          \
-            _pageq->tail = _tmp;                                        \
+            _pq->tail = _tmp;                                           \
             if (_tmp) {                                                 \
                 _tmp->next = NULL;                                      \
             } else {                                                    \
-                _pageq->head = _pageq->tail = _tmp;                     \
+                _pq->head = _pq->tail = _tmp;                           \
             }                                                           \
         }                                                               \
-        vmunlklruq(_pageq);                                             \
+        mtxunlk(&_pq-lk);                                               \
     } while (0)
 
-void         pageinitzone(uintptr_t base, struct pageq *zone, uintptr_t ofs,
-                          unsigned long nb);
-struct page *pagezalloc(struct pageq *zone, struct pageq *lru);
-void         pagezfree(struct pageq *zone, void *adr);
+void         pageinitzone(uintptr_t base, struct pageq *zone, unsigned long nb);
+void         pageinit(uintptr_t base, unsigned long nb);
+struct page *pagealloc(void);
+void         pagefree(void *adr);
 #if 0
 void         pagefree(void *adr);
 void         swapfree(uintptr_t adr);

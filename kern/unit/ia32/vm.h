@@ -8,14 +8,6 @@
 #define __KERNEL__ 1
 #endif
 #include <zero/mtx.h>
-#if 0
-#define vmlklruq(pq)   mtxlk(&pq->lk)
-#define vmunlklruq(pq) mtxunlk(&pq->lk)
-#endif
-#define vmlkbufq()     mtxlk(&vmbufq.lk)
-#define vmunlkbufq()   mtxunlk(&vmbufq.lk)
-
-extern uint32_t _kernpagedir[];
 
 void  vminitphys(uintptr_t base, unsigned long nb);
 void *vmmapvirt(uint32_t *pagetab, void *virt, uint32_t size, uint32_t flags);
@@ -32,14 +24,14 @@ void  vmfreephys(void *virt, uint32_t size);
 #define vmbufid(adr)      ((uint32_t)(adr) >> BUFSIZELOG2)
 #define vmisbufadr(adr)   (!((uint32_t)(adr) & (BUFSIZE - 1)))
 
-#define vmpageadr(pg, pt) (((pg) - (pt)) << PAGESIZELOG2)
+//#define vmpageadr(pg, pt) (((pg) - (pt)) << PAGESIZELOG2)
 
 /* internal macros */
 
 static __inline__ void
-vmflushtlb(void *mp)
+vmflushtlb(void *adr)
 {
-    __asm__ __volatile__ ("invlpg (%0)\n" : : "r" (mp) : "memory");
+    __asm__ __volatile__ ("invlpg (%0)\n" : : "r" (adr) : "memory");
 }
 
 /* virtual memory parameters */
@@ -121,7 +113,7 @@ struct vmbufq {
         struct vmbuf  *_head;                                           \
                                                                         \
         _buf->prev = NULL;                                              \
-        vmlkbufq();                                                     \
+        mtxlk(&vmbufq.lk);                                              \
         _head = _bufq->head;                                            \
         _buf->next = _head;                                             \
         if (_head) {                                                    \
@@ -130,7 +122,7 @@ struct vmbufq {
             _bufq->tail = _buf;                                         \
         }                                                               \
         _bufq->head = _buf;                                             \
-        vmunlkbufq();                                                   \
+        mtxunlk(&vmbufq.lk);                                            \
     } while (0)
 
 #define vmrmbuf(adr)                                                    \
@@ -140,7 +132,7 @@ struct vmbufq {
         struct vmbuf  *_buf = &_hdrtab[vmbufid(adr)];                   \
         struct vmbuf  *_tmp;                                            \
                                                                         \
-        vmlkbufq();                                                     \
+        mtxlk(&vmbufq.lk);                                              \
         _tmp = _buf->prev;                                              \
         if (_tmp) {                                                     \
             _tmp->next = _buf->next;                                    \
@@ -166,7 +158,7 @@ struct vmbufq {
                 _bufq->head = _bufq->tail = _tmp;                       \
             }                                                           \
         }                                                               \
-        vmunlkbufq();                                                   \
+        mtxunlk(&vmbufq.lk);                                            \
     } while (0)
 
 #define vmdeqpage(rpp)                                                  \

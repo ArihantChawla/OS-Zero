@@ -30,7 +30,7 @@ extern void pginit(void);
 extern uint32_t       kernpagedir[NPTE];
 extern uint32_t      *lapic;
 struct page           vmphystab[NPAGEPHYS] ALIGNED(PAGESIZE);
-struct pageq          vmlrutab[PTRBITS];
+struct pageq          vmlrutab[1UL << (LONGSIZELOG2 + 3)];
 
 //static struct vmpage  vmpagetab[NPAGEMAX] ALIGNED(PAGESIZE);
 #if (PAGEDEV)
@@ -175,7 +175,7 @@ void
 vminitphys(uintptr_t base, unsigned long nb)
 {
     /* initialise physical memory manager */
-    pageinitzone(base, &vmphysq, base, nb);
+    pageinit(base, nb);
 
     return;
 }
@@ -234,7 +234,7 @@ vmfreephys(void *virt, uint32_t size)
 //                kprintf("UNWIRE\n");
                 vmnwiredpages--;
             }
-            pagezfree(&vmphysq, (void *)adr);
+            pagefree((void *)adr);
         }
         *pte = 0;
         pte++;
@@ -253,10 +253,7 @@ vmpagefault(unsigned long pid, uint32_t adr, uint32_t flags)
 //    unsigned long  qid;
 
     if (!(page & ~(PFFLGMASK | PAGESYSFLAGS))) {
-        pg = pagezalloc(&vmphysq, &vmlrutab[0]);
-        if (!pg) {
-            pg = pagezalloc(&vmphysq, &vmlrutab[0]);
-        }
+        pg = pagealloc();
         if (pg) {
             if (flg & PAGEBUF) {
                 vmnbufpages++;
@@ -268,7 +265,7 @@ vmpagefault(unsigned long pid, uint32_t adr, uint32_t flags)
             } else {
                 vmnmappedpages++;
                 pg->nflt = 1;
-                pagepush(pg, &vmlrutab[0]);
+                pagepush(&vmlrutab[0], pg);
             }
             *pte = page | flg | PAGEPRES;
         }
@@ -279,7 +276,7 @@ vmpagefault(unsigned long pid, uint32_t adr, uint32_t flags)
         if (pg) {
             pg->nflt++;
             qid = pagegetq(pg);
-            pagepush(pg, &vmlrutab[qid]);
+            pagepush(&vmlrutab[qid], pg);
         }
 #endif
     }
