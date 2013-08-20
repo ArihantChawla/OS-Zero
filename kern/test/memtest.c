@@ -27,15 +27,8 @@ void          *ptrtab[NTHR * NALLOC];
 volatile long  lktab[NTHR * NALLOC];
 pthread_t      thrtab[NTHR];
 
-extern struct maghdr  *magvirttab[PTRBITS];
-extern struct memzone  slabvirtzone;
-//extern struct slabhdr *slabvirttab[PTRBITS];
-extern long            magvirtlktab[PTRBITS];
-#if 0
-extern long            slabvirtlktab[PTRBITS];
-extern unsigned long   slabvirtbase;
-extern struct slabhdr *slabvirthdrtab;
-#endif
+extern struct memzone slabvirtzone;
+extern struct memzone magvirtzone;
 
 void
 magprint(struct maghdr *mag)
@@ -81,10 +74,10 @@ magdiag(void)
 
     for (l = MAGMINLOG2 ; l < SLABMINLOG2 ; l++) {
 #if 0
-        maglkq(magvirtlktab, l);
+        maglkq(magvirtzone.lktab, l);
 #endif
-        if (mtxtrylk(&magvirtlktab[l])) {
-            mag1 = magvirttab[l];
+        if (mtxtrylk(&magvirtzone.lktab[l])) {
+            mag1 = magvirtzone.tab[l];
             while (mag1) {
                 if (mag1->bkt != l) {
                     printf("invalid bkt(%ld) on free list %lu\n",
@@ -102,10 +95,10 @@ magdiag(void)
                 }
                 mag1 = mag1->next;
             }
-            mtxunlk(&magvirtlktab[l]);
+            mtxunlk(&magvirtzone.lktab[l]);
         }
 #if 0
-        magunlkq(magvirtlktab, l);
+        magunlkq(magvirtzone.lktab, l);
 #endif
     }
 
@@ -119,7 +112,7 @@ slabprint(void)
     struct slabhdr *hdr1;
 
     for (ul = 0 ; ul < PTRBITS ; ul++) {
-        hdr1 = slabvirtzone.slabtab[ul];
+        hdr1 = slabvirtzone.tab[ul];
         printf("BKT %lu -", ul);
         while (hdr1) {
             printf(" %p ", slabgetadr(hdr1, &slabvirtzone));
@@ -144,7 +137,7 @@ diag(void)
     for (bkt = SLABMINLOG2 ; bkt < PTRBITS ; bkt++) {
         slablkq(slabvirtzone.lktab, bkt);
         n = 0;
-        hdr1 = slabvirtzone.slabtab[bkt];
+        hdr1 = slabvirtzone.tab[bkt];
         if (hdr1) {
             printf("BKT %lu: ", bkt);
             if (slabgetprev(hdr1, slabvirthdrtab)) {

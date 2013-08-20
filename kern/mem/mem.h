@@ -19,11 +19,11 @@
 #endif
 
 struct memzone {
-    struct slabhdr *slabtab[PTRBITS];
-    volatile long   lktab[PTRBITS];
-    unsigned long   base;
-    unsigned long   nhdr;
-    struct slabhdr *hdrtab;
+    void          *tab[PTRBITS];
+    volatile long  lktab[PTRBITS];
+    unsigned long  base;
+    unsigned long  nhdr;
+    void          *hdrtab;
 };
 
 static __inline__ unsigned long

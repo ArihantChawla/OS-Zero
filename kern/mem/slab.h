@@ -27,7 +27,7 @@ struct slabhdr {
 #define slabgetadr(hdr, zone)                                            \
     ((void *)((zone)->base + ((uintptr_t)slabhdrnum(hdr, zone) << SLABMINLOG2)))
 #define slabhdrnum(hdr, zone)                                           \
-    (!(hdr) ? 0 : (uintptr_t)((hdr) - (zone)->hdrtab))
+    (!(hdr) ? 0 : (uintptr_t)((hdr) - (struct slabhdr *)(zone)->hdrtab))
 #define slabgethdr(ptr, zone)                                      \
     (!(ptr) ? NULL : (struct slabhdr *)((zone)->hdrtab) + slabnum(ptr, zone))
 

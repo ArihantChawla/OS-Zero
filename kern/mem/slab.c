@@ -13,9 +13,12 @@
 #define kbzero bzero
 #endif
 
-extern unsigned long  npagefree;
-extern uint8_t       *magvirtbitmap;
-extern struct maghdr *magvirthdrtab;
+extern unsigned long   npagefree;
+extern uint8_t        *magvirtbitmap;
+#if 0
+extern struct maghdr  *magvirthdrtab;
+#endif
+extern struct memzone  magvirtzone;
 
 struct memzone        slabvirtzone ALIGNED(PAGESIZE);
 #if 0
@@ -58,7 +61,7 @@ slabinitzone(struct memzone *zone, unsigned long base, unsigned long nb)
 #if (!MAGBITMAP)
     magvirtbitmap = (uint8_t *)adr;
 #endif
-    magvirthdrtab = (struct maghdr *)(adr + bsz);
+    magvirtzone.hdrtab = (void *)(adr + bsz);
     zone->hdrtab = (struct slabhdr *)(adr + bsz + nmag * sizeof(struct maghdr));
     adr += bsz + nmag * sizeof(struct maghdr) + nslab * sizeof(struct slabhdr);
     if (adr & (PAGESIZE - 1)) {
@@ -71,7 +74,7 @@ slabinitzone(struct memzone *zone, unsigned long base, unsigned long nb)
 void
 slabinit(struct memzone *virtzone, unsigned long base, unsigned long nbphys)
 {
-    struct slabhdr **slabtab =virtzone->slabtab;
+    struct slabhdr **slabtab = (struct slabhdr **)virtzone->tab;
     unsigned long    adr = ((base & (SLABMIN - 1))
                             ? rounduppow2(base, SLABMIN)
                             : base);
@@ -109,7 +112,7 @@ slabinit(struct memzone *virtzone, unsigned long base, unsigned long nbphys)
 unsigned long
 slabcomb(struct memzone *zone, struct slabhdr *hdr)
 {
-    struct slabhdr **slabtab = zone->slabtab;
+    struct slabhdr **slabtab = (struct slabhdr **)zone->tab;
     struct slabhdr  *hdrtab = zone->hdrtab;
     unsigned long    bkt1 = slabgetbkt(hdr);
     unsigned long    bkt2 = bkt1;
@@ -215,7 +218,7 @@ slabcomb(struct memzone *zone, struct slabhdr *hdr)
 void
 slabsplit(struct memzone *zone, struct slabhdr *hdr, unsigned long dest)
 {
-    struct slabhdr **slabtab = zone->slabtab;
+    struct slabhdr **slabtab = (struct slabhdr **)zone->tab;
     unsigned long    bkt = slabgetbkt(hdr);
     uint8_t         *ptr = slabgetadr(hdr, zone);
     struct slabhdr  *hdr1;
@@ -271,7 +274,7 @@ slabsplit(struct memzone *zone, struct slabhdr *hdr, unsigned long dest)
 void *
 slaballoc(struct memzone *zone, unsigned long nb, unsigned long flg)
 {
-    struct slabhdr **slabtab = zone->slabtab;
+    struct slabhdr **slabtab = (struct slabhdr **)zone->tab;
     unsigned long    bkt1 = max(SLABMINLOG2, memgetbkt(nb));
     unsigned long    bkt2 = bkt1;
     uint8_t         *ptr = NULL;
@@ -315,7 +318,7 @@ slaballoc(struct memzone *zone, unsigned long nb, unsigned long flg)
 void
 slabfree(struct memzone *zone, void *ptr)
 {
-    struct slabhdr **slabtab = zone->slabtab;
+    struct slabhdr **slabtab = (struct slabhdr **)zone->tab;
     struct slabhdr  *hdr = slabgethdr(ptr, zone);
     unsigned long    bkt = slabgetbkt(hdr);
 
