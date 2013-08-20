@@ -27,24 +27,19 @@
 
 extern void pginit(void);
 
-extern uint32_t       kernpagedir[NPTE];
-extern uint32_t      *lapic;
-struct page           vmphystab[NPAGEPHYS] ALIGNED(PAGESIZE);
-struct pageq          vmlrutab[1UL << (LONGSIZELOG2 + 3)];
+extern uint32_t      kernpagedir[NPTE];
+struct page          vmphystab[NPAGEPHYS] ALIGNED(PAGESIZE);
+struct pageq         vmlrutab[1UL << (LONGSIZELOG2 + 3)];
 
 //static struct vmpage  vmpagetab[NPAGEMAX] ALIGNED(PAGESIZE);
 #if (PAGEDEV)
-static struct dev     vmdevtab[NPAGEDEV];
-static volatile long  vmdevlktab[NPAGEDEV];
+static struct dev    vmdevtab[NPAGEDEV];
+static volatile long vmdevlktab[NPAGEDEV];
 #endif
-static struct vmbuf   vmbuftab[1L << (PTRBITS - BUFSIZELOG2)];
-struct pageq          vmphysq;
-struct vmbufq         vmbufq;
-
-unsigned long vmnphyspages;
-unsigned long vmnmappedpages;
-unsigned long vmnbufpages;
-unsigned long vmnwiredpages;
+static struct vmbuf  vmbuftab[1L << (PTRBITS - BUFSIZELOG2)];
+struct pageq         vmphysq;
+struct vmbufq        vmbufq;
+struct vmpagestat    vmpagestat;
 
 /*
  * virt == 0 -> identity-map
@@ -229,10 +224,10 @@ vmfreephys(void *virt, uint32_t size)
                 pg = pagefind(adr);
                 pagerm(pg);
 #endif
-                vmnmappedpages--;
+                vmpagestat.nmapped++;
             } else {
 //                kprintf("UNWIRE\n");
-                vmnwiredpages--;
+                vmpagestat.nwired++;
             }
             pagefree((void *)adr);
         }
@@ -256,16 +251,18 @@ vmpagefault(unsigned long pid, uint32_t adr, uint32_t flags)
         pg = pagealloc();
         if (pg) {
             if (flg & PAGEBUF) {
-                vmnbufpages++;
+                vmpagestat.nbuf++;
                 if (vmisbufadr(adr)) {
                     vmaddbuf(adr);
                 }
             } else if (flg & PAGEWIRED) {
-                vmnwiredpages++;
+                vmpagestat.nwired++;
             } else {
-                vmnmappedpages++;
+                vmpagestat.nmapped++;
                 pg->nflt = 1;
-                pagepush(&vmlrutab[0], pg);
+                if (!(page & PAGEWIRED)) {
+                    pagepush(&vmlrutab[0], pg);
+                }
             }
             *pte = page | flg | PAGEPRES;
         }
@@ -275,7 +272,7 @@ vmpagefault(unsigned long pid, uint32_t adr, uint32_t flags)
         pg = vmpagein(page);
         if (pg) {
             pg->nflt++;
-            qid = pagegetq(pg);
+            qid = pagegetqid(pg);
             pagepush(&vmlrutab[qid], pg);
         }
 #endif

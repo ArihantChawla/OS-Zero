@@ -63,9 +63,9 @@ vmflushtlb(void *adr)
 #define PAGESYS2     0x00000400U	// reserved for system
 #define PAGESYS3     0x00000800U	// reserved for system
 /* custom flags */
-#define PAGESWAPPED  PAGESYS1	// on disk
-#define PAGEBUF      PAGESYS2	// buffer cache
-#define PAGEWIRED    PAGESYS3	// wired
+#define PAGESWAPPED  PAGESYS1           // swapped out
+#define PAGEBUF      PAGESYS2           // buffer cache
+#define PAGEWIRED    PAGESYS3           // wired
 #define PAGESYSFLAGS (PAGESWAPPED | PAGEBUF | PAGEWIRED)
 
 /* page fault management */
@@ -80,6 +80,13 @@ vmflushtlb(void *adr)
 #define PFFLGMASK    0x00000007U
 #define PFADRMASK    0xfffffff8U
 #define PFPAGEMASK   0xfffff000U
+
+struct vmpagestat {
+    unsigned long nphys;
+    unsigned long nmapped;
+    unsigned long nbuf;
+    unsigned long nwired;
+};
 
 #define VMBUFNREFMASK 0x07
 #define vmsetbufnref(bp, npg)                                           \

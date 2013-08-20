@@ -24,10 +24,7 @@
 extern uint8_t            kerniomap[8192] ALIGNED(PAGESIZE);
 extern struct proc        proctab[NPROC];
 extern struct m_cpu       mpcputab[NCPU];
-extern unsigned long      vmnphyspages;
-extern unsigned long      vmnmappedpages;
-extern unsigned long      vmnwiredpages;
-extern unsigned long      vmnbufpages;
+extern struct vmpagestat  vmpagestat;
 #if (SMP)
 extern volatile uint32_t *mpapic;
 extern volatile long      mpncpu;
@@ -82,9 +79,9 @@ kmain(struct mboothdr *hdr, unsigned long pmemsz)
     kprintf("%ld kilobytes physical memory\n", pmemsz >> 10);
     kprintf("%ld kilobytes kernel memory\n", (uint32_t)&_ebss >> 10);
     kprintf("%ld kilobytes allocated physical memory (%ld wired, %ld total)\n",
-            (vmnwiredpages + vmnmappedpages + vmnbufpages) << (PAGESIZELOG2 - 10),
-            vmnwiredpages << (PAGESIZELOG2 - 10),
-            vmnphyspages << (PAGESIZELOG2 - 10));
+            (vmpagestat.nwired + vmpagestat.nmapped + vmpagestat.nbuf) << (PAGESIZELOG2 - 10),
+            vmpagestat.nwired << (PAGESIZELOG2 - 10),
+            vmpagestat.nphys << (PAGESIZELOG2 - 10));
     schedinit();
     pitinit();
     /* pseudo-scheduler loop; interrupted by timer [and other] interrupts */

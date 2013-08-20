@@ -23,15 +23,15 @@ void kbdint(void);
 
 #if 0
 /* modifier keys. */
-static int32_t _mkeytabmod[KBD_NTAB];
+static int32_t keytabmod[KBD_NTAB];
 #endif
-static int32_t _modmask;
+static int32_t modmask;
 /* single-code values. */
-static int32_t _mkeytab1b[KBD_NTAB];
+static int32_t keytab1b[KBD_NTAB];
 /* 0xe0-prefixed values. */
-static int32_t _mkeytabmb[KBD_NTAB];
+static int32_t keytabmb[KBD_NTAB];
 /* release values. */
-static int32_t _mkeytabup[KBD_NTAB];
+static int32_t keytabup[KBD_NTAB];
 
 #define kbdread(u8)                                                     \
     __asm__ ("inb %w1, %b0\n" : "=a" (u8) : "Nd" (KBD_PORT))
@@ -40,22 +40,22 @@ static int32_t _mkeytabup[KBD_NTAB];
 
 #if 0
 #define setkeymod(name)                                                 \
-    (_mkeytabmod[name] = (name##_FLAG))
+    (keytabmod[name] = (name##_FLAG))
 #endif
 #define ismodkey(val)                                                   \
     (((val) & 0x80000000) && ((val) & 0xfffffff0) == 0xfffffff0)
 #if 0
 #define setkeymod(name)                                                 \
-    (_mkeytabmod[name] = (1 << (-(name##_SYM))))
+    (keytabmod[name] = (1 << (-(name##_SYM))))
 #endif
 #define setkeycode(name)                                    \
     (((((name) >> 8) & 0xff) == KBD_UP_BYTE)                \
-     ? (_mkeytabup[name >> 16] = name##_SYM | KBD_UP_BIT)   \
+     ? (keytabup[name >> 16] = name##_SYM | KBD_UP_BIT)     \
      : ((((name) & 0xff) == KBD_PREFIX_BYTE)                \
-        ? (_mkeytabmb[name >> 8] = name##_SYM,              \
-           _mkeytabup[name >> 8] = name##_SYM | KBD_UP_BIT) \
-        : (_mkeytab1b[name] = name##_SYM,                   \
-           _mkeytabup[name] = name##_SYM | KBD_UP_BIT)))
+        ? (keytabmb[name >> 8] = name##_SYM,                \
+           keytabup[name >> 8] = name##_SYM | KBD_UP_BIT)   \
+        : (keytab1b[name] = name##_SYM,                     \
+           keytabup[name] = name##_SYM | KBD_UP_BIT)))
 
 void
 kbdinit(void)
@@ -258,16 +258,16 @@ kbdint(void)
         kbdread(u8); /* 0x9d */
         kbdread(u8); /* 0xc5 */
         u8 &= KBD_VAL_MSK;
-        val = _mkeytab1b[u8];
+        val = keytab1b[u8];
     } else if (u8 != KBD_PREFIX_BYTE) {
         /* single-byte value. */
         if (u8 & KBD_UP_BIT) {
             /* release. */
             isup = 1;
             u8 &= ~KBD_UP_BIT;
-            val = _mkeytabup[u8];
+            val = keytabup[u8];
         } else {
-            val = _mkeytab1b[u8];
+            val = keytab1b[u8];
         }
     } else {
         /* 0xe0-prefixed. */
@@ -277,10 +277,10 @@ kbdint(void)
             kbdread(u8); /* 0xe0 */
             kbdread(u8); /* 0x37 (prtsc) or 0xc6 (ctrl-pause) */
             val &= KBD_VAL_MSK;
-            val = _mkeytabmb[u8];
+            val = keytabmb[u8];
         } else if (u8 == KBD_UP_BYTE) {
             kbdread(u8);
-            val = _mkeytabup[u8];
+            val = keytabup[u8];
 #if (DEVEL)
 
             return;
@@ -289,17 +289,17 @@ kbdint(void)
             if (u8 & KBD_UP_BIT) {
                 isup = 1;
                 u8 &= ~KBD_UP_BIT;
-                val = _mkeytabup[u8];
+                val = keytabup[u8];
             } else {
-                val = _mkeytabmb[u8];
+                val = keytabmb[u8];
             }
         }
     }
     if (ismodkey(val)) {
         if (isup) {
-            _modmask &= ~(1 << (-val));
+            modmask &= ~(1 << (-val));
         } else {
-            _modmask |= 1 << (-val);
+            modmask |= 1 << (-val);
         }
     }
 

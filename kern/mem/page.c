@@ -11,11 +11,10 @@
 #include <kern/mem/page.h>
 #include <kern/unit/ia32/vm.h>
 
-extern struct page   vmphystab[NPAGEPHYS];
-extern struct pageq  vmlrutab[1UL << (LONGSIZELOG2 + 3)];
-extern struct pageq  vmphysq;
-extern unsigned long vmnphyspages;
-unsigned long        npagefree;
+extern struct page       vmphystab[NPAGEPHYS];
+extern struct pageq      vmlrutab[1UL << (LONGSIZELOG2 + 3)];
+extern struct vmpagestat vmpagestat;
+extern struct pageq      vmphysq;
 
 void
 pageinitzone(uintptr_t base,
@@ -29,7 +28,7 @@ pageinitzone(uintptr_t base,
     adr += n << PAGESIZELOG2;
     pg += n;
     mtxlk(&zone->lk);
-    vmnphyspages = n;
+    vmpagestat.nphys = n;
 #if (MEMTEST)
     printf("initializing %ld (%lx) pages\n", n, n);
 #endif
