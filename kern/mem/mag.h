@@ -35,12 +35,14 @@ struct maghdr {
     void          *ptab[1UL << (SLABMINLOG2 - MAGMINLOG2)];
 };
 
-#define magnum(ptr, base)                                               \
-    (((uintptr_t)(ptr) - base) >> SLABMINLOG2)
+#define magblknum(ptr, zone)                                            \
+    (((uintptr_t)(ptr) - (zone)->base) >> SLABMINLOG2)
+#if 0
 #define magslabadr(ptr)                                                 \
     ((void *)((uintptr_t)(ptr) & ~(SLABMIN - 1)))
-#define maggethdr(ptr, tab, base)                                       \
-    (!(ptr) ? NULL : (struct maghdr *)(tab) + magnum(ptr, base))
+#endif
+#define maggethdr(ptr, zone)                                            \
+    (!(ptr) ? NULL : (struct maghdr *)((zone)->hdrtab) + magblknum(ptr, zone))
 
 #endif /* __MEM_MAG_H__ */
 

@@ -44,6 +44,18 @@
  * long  sys_shmdt(void *adr);
  * long  sys_shmctl(long id, long cmd, void *arg);
  *
+ * semaphores
+ * ----------
+ *
+ * read-write locks
+ * ----------------
+ *
+ * message queues
+ * --------------
+ *
+ * events
+ * ------
+ *
  * I/O interface
  * -------------
  * long sys_mnt(char *path1, char *path2, void *arg);
@@ -178,6 +190,7 @@ struct sysmem {
 #define IPC_PRIVATE     0L
 #define IPC_STAT        1
 #define IPC_SET         2
+#define IPC_RMID        3
 
 #define SEEK_CUR        0x00
 #define SEEK_BEG        0x01

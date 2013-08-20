@@ -18,6 +18,14 @@
 #define memgetbkt(sz) memcalcbkt(sz)
 #endif
 
+struct memzone {
+    struct slabhdr *slabtab[PTRBITS];
+    volatile long   lktab[PTRBITS];
+    unsigned long   base;
+    unsigned long   nhdr;
+    struct slabhdr *hdrtab;
+};
+
 static __inline__ unsigned long
 memcalcbkt(unsigned long size)
 {

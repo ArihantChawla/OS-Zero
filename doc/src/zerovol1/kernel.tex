@@ -7,13 +7,16 @@
 \usepackage{fancyvrb}
 \usepackage{hyperref}
 \lstset{language=C, showspaces=false, breaklines=false}
+\usepackage[xcdraw, table, gray]{xcolor}
+\setlength{\arrayrulewidth}{1pt}
+\rowcolors{0}{white}{lightgray}
 \hypersetup{backref, colorlinks=true, linkcolor=blue}
 
 \begin{document}
 
 \title{\LARGE{Zero Volume 0 - The Kernel} \\
        \large{Design and Implementation} \\
-       \large{DRAFT 1, Revision 8}}
+       \large{DRAFT 1, Revision 9}}
 \author{Tuomo Petteri Venäläinen}
 \date{\today}
 \maketitle
@@ -295,12 +298,20 @@
 
 \chapter{System Call Interface}
 
+	\textbf{TODO}
+
 	Keep in mind, that the interface described here is currently
 	\textbf{incomplete}; therefore, please consult the final interface
 	later.
 
 	The most notable missing things at the moment are support for sockets
 	as well as semaphores.
+
+\section{Conventions}
+
+\subsection{IA-32}
+
+	On IA-32 architectures, up to 3 system call parameters are passed in
 
 \section{Process Control}
 
@@ -552,8 +563,8 @@ struct sysmem {
 
 \section{Shared Memory}
 
-	The shared memory interface of Zero is modeled after the so-called
-	System V interface.
+	The shared memory interface of Zero is modeled after the POSIX
+	interface.
 
 \subsection{shmget}
 
@@ -561,27 +572,66 @@ struct sysmem {
 
 	The shmget system call maps a shared memory segment; it returns a shared
 	memory identifier (usually a long-cast of a kernel virtual memory
-	address).
+	address). If \textbf{key} is \textbf{IPC\_PRIVATE}, a new segment and
+	its associated book-keeping data are created. If \textbf{flg} has the
+	\textbf{IPC\_CREAT} bit set and there's no segment associated with
+	\textbf{key}, a new segment is created in concert with the relevant
+	data.
 
 \subsection{shmat}
 
 	\textbf{void *sys\_shmat(long id, void *adr, long flg);}
 
+	The shmat system call atteaches the shared memory segment identified by
+	\textbf{id} to the address space of the calling process. If \textbf{adr}
+	is NULL, the segment is attached to the first address selected by the
+	system. If \textbf{adr} is not NULL and \textbf{flg} has the
+	\textbf{SHM\_RND} bit set, the segment is mapped to \textbf{adr} rounded
+	down to the previous multiple of \textbf{SHMLBA}. If \textbf{adr} is not
+	NULL and \textbf{flg} does \textbf{not} have the \textbf{SHM\_RND} bit
+	set, the segment is mapped to \textbf{adr}. If \textbf{flg} has the
+	\textbf{SHM\_RDONLY} bit set, the segment is attached
+	\textbf{read-only}; otherwise, provided the user process has read and
+	write permissions, the segment is attached \textbf{read-write}.
+
 \subsection{shmdt}
 
 	\textbf{long sys\_shmdt(void *adr);}
+
+	The shmdt system call detaches the shared memory segment at
+	\textbf{adr} from the address space of the calling process.
 
 \subsection{shmctl}
 
 	\textbf{sys\_shmctl(long id, long cmd, void *arg);}
 
+	The shmctl system call provides control operations for shared memory
+	segments. The possible values for \textbf{cmd} are listed in the
+	following table.
+
+\begin{tabular}{ | l | l | l | }
+	\hline
+	\textbf{cmd}       & \textbf{arg}       & brief \\
+	\hline
+	\textbf{IPC\_STAT} & struct shmid\_ds * & read segment attributes \\
+	\hline
+	\textbf{IPC\_SET}  & struct shmid\_ds * & set segment permissions (uid, gid, mode) \\
+	\hline
+	\textbf{IPC\_RMID} & N/A                & destroy shared memory segment \\
+	\hline
+\end{tabular}
+
 	\textbf{TODO}: shared memory, message queues, semaphores, events
 
-\subsection{Semaphores}
+\section{Semaphores}
 
-\subsection{Message Queues}
+\section{Message Queues}
 
-\subsection{Events}
+\section{Events}
+
+\section{I/O}
+
+
 
 \part{User Environment}
 

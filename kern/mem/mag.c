@@ -27,9 +27,12 @@
 #define kpanic() abort()
 #endif
 
+extern struct memzone  slabvirtzone;
+#if 0
 extern unsigned long   slabvirtbase;
 extern struct slabhdr *slabvirthdrtab;
 extern struct slabhdr *slabvirttab[];
+#endif
 
 struct maghdr *magvirttab[PTRBITS] ALIGNED(PAGESIZE);
 volatile long  magvirtlktab[PTRBITS];
@@ -72,17 +75,18 @@ magclrbit(volatile long *map, unsigned long ndx)
 void *
 memalloc(unsigned long nb, long flg)
 {
-    void          *ptr = NULL;
-    unsigned long  sz = max(MAGMIN, nb);
-    unsigned long  slab = 0;
-    unsigned long  bkt;
-    struct maghdr *mag;
-    uint8_t       *u8ptr;
-    unsigned long  l;
-    unsigned long  n;
-    unsigned long  ndx;
+    struct memzone *zone = &slabvirtzone;
+    void           *ptr = NULL;
+    unsigned long   sz = max(MAGMIN, nb);
+    unsigned long   slab = 0;
+    unsigned long   bkt;
+    struct maghdr  *mag;
+    uint8_t        *u8ptr;
+    unsigned long   l;
+    unsigned long   n;
+    unsigned long   ndx;
 #if (MAGLK)
-    unsigned long  mlk = 0;
+    unsigned long   mlk = 0;
 #endif
 
     bkt = memgetbkt(sz);
@@ -92,10 +96,10 @@ memalloc(unsigned long nb, long flg)
         mtxlk(&magslablk);
 #endif
 #if (MEMTEST)
-        ptr = slaballoc(slabvirttab, slabvirthdrtab, sz, flg);
+        ptr = slaballoc(zone, sz, flg);
 #else
         ptr = vmmapvirt((uint32_t *)&_pagetab,
-                        slaballoc(slabvirttab, slabvirthdrtab, sz, flg),
+                        slaballoc(zone, sz, flg),
                         sz, flg);
 #endif
 #if (MAGSLABLK)
@@ -103,7 +107,7 @@ memalloc(unsigned long nb, long flg)
 #endif
         if (ptr) {
             slab++;
-            mag = maggethdr(ptr, magvirthdrtab, slabvirtbase);
+            mag = maggethdr(ptr, zone);
 #if (MAGLK)
             mtxlk(&mag->lk);
             mlk++;
@@ -138,14 +142,14 @@ memalloc(unsigned long nb, long flg)
 #if (MAGSLABLK)
             mtxlk(&magslablk);
 #endif
-            ptr = u8ptr = slaballoc(slabvirttab, slabvirthdrtab, SLABMIN, flg);
+            ptr = u8ptr = slaballoc(zone, SLABMIN, flg);
 #if (MAGSLABLK)
             mtxunlk(&magslablk);
 #endif
             if (ptr) {
                 sz = 1UL << bkt;
                 n = 1UL << (SLABMINLOG2 - bkt);
-                mag = maggethdr(ptr, magvirthdrtab, slabvirtbase);
+                mag = maggethdr(ptr, zone);
 #if (MAGLK)
                 mtxlk(&mag->lk);
                 mlk++;
@@ -187,7 +191,7 @@ memalloc(unsigned long nb, long flg)
         }
         magsetbit(mag->bmap, ndx);
 #else
-        ndx = ((uintptr_t)ptr - slabvirtbase) >> MAGMINLOG2;
+        ndx = ((uintptr_t)ptr - zone->base) >> MAGMINLOG2;
         if (magbitset(magvirtbitmap, ndx)) {
             kprintf("duplicate allocation %p\n", ptr);
             
@@ -209,14 +213,16 @@ memalloc(unsigned long nb, long flg)
     return ptr;
 }
 
+/* TODO: deal with unmapping/freeing physical memory */
 void
 kfree(void *ptr)
 {
-    struct maghdr *mag = maggethdr(ptr, magvirthdrtab, slabvirtbase);
-    unsigned long  bkt = (mag) ? mag->bkt : 0;
-    unsigned long  ndx;
+    struct memzone *zone = &slabvirtzone;
+    struct maghdr  *mag = maggethdr(ptr, zone);
+    unsigned long   bkt = (mag) ? mag->bkt : 0;
+    unsigned long   ndx;
 #if (MAGBITMAP)
-    unsigned long  freed = 0;
+    unsigned long   freed = 0;
 #endif
 
     if (!ptr) {
@@ -236,7 +242,7 @@ kfree(void *ptr)
         kpanic();
     }
 #else
-    ndx = ((uintptr_t)ptr - slabvirtbase) >> MAGMINLOG2;
+    ndx = ((uintptr_t)ptr - zone->base) >> MAGMINLOG2;
     if (!magbitset(magvirtbitmap, ndx)) {
         kprintf("invalid free: %p\n", ptr);
 
@@ -261,7 +267,7 @@ kfree(void *ptr)
 #if (MAGSLABLK)
         mtxlk(&magslablk);
 #endif
-        slabfree(slabvirttab, slabvirthdrtab, ptr);
+        slabfree(zone, ptr);
 #if (MAGSLABLK)
         mtxunlk(&magslablk);
 #endif

@@ -28,11 +28,14 @@ volatile long  lktab[NTHR * NALLOC];
 pthread_t      thrtab[NTHR];
 
 extern struct maghdr  *magvirttab[PTRBITS];
-extern struct slabhdr *slabvirttab[PTRBITS];
+extern struct memzone  slabvirtzone;
+//extern struct slabhdr *slabvirttab[PTRBITS];
 extern long            magvirtlktab[PTRBITS];
+#if 0
 extern long            slabvirtlktab[PTRBITS];
 extern unsigned long   slabvirtbase;
 extern struct slabhdr *slabvirthdrtab;
+#endif
 
 void
 magprint(struct maghdr *mag)
@@ -78,7 +81,7 @@ magdiag(void)
 
     for (l = MAGMINLOG2 ; l < SLABMINLOG2 ; l++) {
 #if 0
-        (maglkq(magvirtlktab, l);
+        maglkq(magvirtlktab, l);
 #endif
         if (mtxtrylk(&magvirtlktab[l])) {
             mag1 = magvirttab[l];
@@ -116,11 +119,11 @@ slabprint(void)
     struct slabhdr *hdr1;
 
     for (ul = 0 ; ul < PTRBITS ; ul++) {
-        hdr1 = slabvirttab[ul];
+        hdr1 = slabvirtzone.slabtab[ul];
         printf("BKT %lu -", ul);
         while (hdr1) {
-            printf(" %p ", slabgetadr(hdr1, slabvirthdrtab));
-            hdr1 = slabgetnext(hdr1, slabvirthdrtab);
+            printf(" %p ", slabgetadr(hdr1, &slabvirtzone));
+            hdr1 = slabgetnext(hdr1, &slabvirtzone);
         }
         printf("\n");
     }
@@ -139,58 +142,58 @@ diag(void)
     struct slabhdr *hdr3;
 
     for (bkt = SLABMINLOG2 ; bkt < PTRBITS ; bkt++) {
-        slablkq(slabvirtlktab, bkt);
+        slablkq(slabvirtzone.lktab, bkt);
         n = 0;
-        hdr1 = slabvirttab[bkt];
+        hdr1 = slabvirtzone.slabtab[bkt];
         if (hdr1) {
             printf("BKT %lu: ", bkt);
             if (slabgetprev(hdr1, slabvirthdrtab)) {
                 hdr2 = slabgetprev(hdr1, slabvirthdrtab);
                 printf("%p: prev set on head: %p (%p)\n",
-                        slabgetadr(hdr1, slabvirthdrtab),
-                        slabgetprev(hdr1, slabvirthdrtab),
-                        slabgetadr(hdr2, slabvirthdrtab));
+                        slabgetadr(hdr1, &slabvirtzone),
+                        slabgetprev(hdr1, &slabvirtzone),
+                        slabgetadr(hdr2, &slabvirtzone));
                 
                 abort();
             }
             while (hdr1) {
-                printf(" %lu: %p (%p)", n, slabgetadr(hdr1, slabvirthdrtab), hdr1);
-                if (slabgetadr(hdr1, slabvirthdrtab) == NULL) {
+                printf(" %lu: %p (%p)", n, slabgetadr(hdr1, &slabvirtzone), hdr1);
+                if (slabgetadr(hdr1, &slabvirtzone) == NULL) {
                     printf("NULL item on list\n");
                     
                     abort();
                 }
                 if (slabgetbkt(hdr1) != bkt) {
                     printf("%p: invalid bkt %lu (%lu)\n",
-                            slabgetadr(hdr1, slabvirthdrtab),
+                            slabgetadr(hdr1, &slabvirtzone),
                             slabgetbkt(hdr1),
                             bkt);
                     
                     abort();
                 }
-                hdr2 = slabgetnext(hdr1, slabvirthdrtab);
+                hdr2 = slabgetnext(hdr1, &slabvirtzone);
                 if (hdr2) {
-                    printf(" %lu: %p (%p)", n + 1, slabgetadr(hdr2, slabvirthdrtab), hdr2);
+                    printf(" %lu: %p (%p)", n + 1, slabgetadr(hdr2, &slabvirtzone), hdr2);
                     if (hdr1 == hdr2) {
                         printf("%p: next is self\n",
-                                slabgetadr(hdr1, slabvirthdrtab));
+                                slabgetadr(hdr1, &slabvirtzone));
                     }
-                    if (slabgetprev(hdr2, slabvirthdrtab) != hdr1) {
-                        hdr3 = slabgetprev(hdr2, slabvirthdrtab);
+                    if (slabgetprev(hdr2, &slabvirtzone) != hdr1) {
+                        hdr3 = slabgetprev(hdr2, &slabvirtzone);
                         printf(" %p: invalid prev %p(%ld) (%p)\n",
-                                slabgetadr(hdr2, slabvirthdrtab),
-                                slabgetadr(hdr3, slabvirthdrtab),
+                                slabgetadr(hdr2, &slabvirtzone),
+                                slabgetadr(hdr3, &slabvirtzone),
                                 slabgetbkt(hdr2),
-                                slabgetadr(hdr1, slabvirthdrtab));
+                                slabgetadr(hdr1, &slabvirtzone));
                         
                         abort();
                     }
-                    if (slabgetnext(hdr1, slabvirthdrtab) != hdr2) {
-                        hdr3 = slabgetnext(hdr1, slabvirthdrtab);
+                    if (slabgetnext(hdr1, &slabvirtzone) != hdr2) {
+                        hdr3 = slabgetnext(hdr1, &slabvirtzone);
                         printf(" %p: invalid next %p (%p)\n",
-                                slabgetadr(hdr1, slabvirthdrtab),
-                                slabgetadr(hdr3, slabvirthdrtab),
-                                slabgetadr(hdr2, slabvirthdrtab));
+                                slabgetadr(hdr1, &slabvirtzone),
+                                slabgetadr(hdr3, &slabvirtzone),
+                                slabgetadr(hdr2, &slabvirtzone));
                         
                         abort();
                     }
@@ -198,12 +201,13 @@ diag(void)
                 hdr1 = hdr2;
             }
         }
-        slabunlkq(slabvirtlktab, bkt);
+        slabunlkq(slabvirtzone.lktab, bkt);
         n++;
         printf("%lu \n", n);
     }
 }
 
+#if (MTSAFE)
 void *
 test(void *dummy)
 {
@@ -228,8 +232,7 @@ test(void *dummy)
 
     return NULL;
 }
-
-#if 0
+#else
 void *
 test(void *dummy)
 {
@@ -264,7 +267,7 @@ main(int argc, char *argv[])
     printf("MEMPID == %d\n", MEMPID);
     printf("MALLOC: %p\n", base);
     bzero(base, 1024 * 1024 * 1024);
-    slabinit((unsigned long)base, 1024 * 1024 * 1024);
+    slabinit(&slabvirtzone, (unsigned long)base, 1024 * 1024 * 1024);
     slabprint();
 #if (MTSAFE)
     while (n--) {

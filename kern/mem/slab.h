@@ -4,6 +4,7 @@
 #include <stdint.h>
 #include <zero/cdecl.h>
 #include <zero/param.h>
+#include <kern/mem/mem.h>
 
 struct slabhdr {
     unsigned long   nfo;
@@ -21,14 +22,14 @@ struct slabhdr {
 #define slablkq(tab, bkt)   mtxlk(&(tab)[bkt])
 #define slabunlkq(tab, bkt) mtxunlk(&(tab)[bkt])
 
-#define slabnum(ptr, base)                                              \
-    (((uintptr_t)(ptr) - (base)) >> SLABMINLOG2)
-#define slabgetadr(hdr, tab)                                            \
-    ((void *)(slabvirtbase + ((unsigned long)slabhdrnum(hdr, tab) << SLABMINLOG2)))
-#define slabhdrnum(hdr, tab)                                            \
-    (!(hdr) ? 0 : (uintptr_t)((hdr) - (struct slabhdr *)(tab)))
-#define slabgethdr(ptr, tab, base)                                      \
-    (!(ptr) ? NULL : (struct slabhdr *)(tab) + slabnum(ptr, base))
+#define slabnum(ptr, zone)                                              \
+    (((uintptr_t)(ptr) - ((zone)->base)) >> SLABMINLOG2)
+#define slabgetadr(hdr, zone)                                            \
+    ((void *)((zone)->base + ((uintptr_t)slabhdrnum(hdr, zone) << SLABMINLOG2)))
+#define slabhdrnum(hdr, zone)                                           \
+    (!(hdr) ? 0 : (uintptr_t)((hdr) - (zone)->hdrtab))
+#define slabgethdr(ptr, zone)                                      \
+    (!(ptr) ? NULL : (struct slabhdr *)((zone)->hdrtab) + slabnum(ptr, zone))
 
 #define slabclrnfo(hp)                                                  \
     ((hp)->nfo = 0L)
@@ -58,10 +59,10 @@ struct slabhdr {
 #include <kern/mem/slab64.h>
 #endif
 
-void   slabinit(unsigned long base, unsigned long nb);
-void * slaballoc(struct slabhdr **zone, struct slabhdr *hdrtab,
-                 unsigned long nb, unsigned long flg);
-void   slabfree(struct slabhdr **zone, struct slabhdr *hdrtab, void *ptr);
+void   slabinit(struct memzone *virtzone,
+                unsigned long base, unsigned long nbphys);
+void * slaballoc(struct memzone *zone, unsigned long nb, unsigned long flg);
+void   slabfree(struct memzone *zone, void *ptr);
 
 #endif /* __MEM_SLAB_H__ */
 

@@ -29,10 +29,10 @@
     ((hp)->link &= 0x0000ffffL)
 #define slabclrlink(hp)                                                 \
     ((hp)->link = 0L)
-#define slabsetprev(hp, hdr, tab)                                       \
-    (slabclrprev(hp), (hp)->link |= (hdr) ? slabhdrnum(hdr, tab) : 0)
-#define slabsetnext(hp, hdr, tab)                                       \
-    (slabclrnext(hp), (hp)->link |= (hdr) ? (slabhdrnum(hdr, tab) << 16) : 0)
+#define slabsetprev(hp, hdr, zone)                                      \
+    (slabclrprev(hp), (hp)->link |= (hdr) ? slabhdrnum(hdr, zone) : 0)
+#define slabsetnext(hp, hdr, zone)                                      \
+    (slabclrnext(hp), (hp)->link |= (hdr) ? (slabhdrnum(hdr, zone) << 16) : 0)
 
 #endif /* __MEM_SLAB32_H__ */
 
