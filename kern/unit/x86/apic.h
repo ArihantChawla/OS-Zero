@@ -1,17 +1,21 @@
-#ifndef __UNIT_IA32_APIC_H__
-#define __UNIT_IA32_APIC_H__
+#ifndef __UNIT_X86_APIC_H__
+#define __UNIT_X86_APIC_H__
 
 #include <kern/conf.h>
 
 #if (SMP)
 
 #include <stdint.h>
-#include <kern/ia32/link.h>
+#include <kern/unit/ia32/link.h>
 
 extern volatile uint32_t *mpapic;
 
 void apicinit(long core);
 void apicstart(uint8_t core, uint32_t adr);
+
+/* initialisation */
+#define RTCBASE        0x70
+#define BIOSWRV        0x467   // warm reset vector
 
 /* registers */
 #define APICID         0x0020
@@ -111,5 +115,5 @@ apicsendirq(uint32_t hi, uint32_t lo, long nusec)
 
 #endif /* SMP */
 
-#endif /* __UNIT_IA32_APIC_H__ */
+#endif /* __UNIT_X86_APIC_H__ */
 

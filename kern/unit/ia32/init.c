@@ -3,9 +3,11 @@
 #include <zero/cdecl.h>
 #include <zero/param.h>
 //#include <kern/proc.h>
+#include <kern/util.h>
 #include <kern/unit/x86/trap.h>
 #include <kern/unit/ia32/boot.h>
 #include <kern/unit/ia32/vm.h>
+#include <kern/unit/ia32/mp.h>
 #if 0
 #include <zero/types.h>
 #include <zero/trix.h>
@@ -21,6 +23,9 @@
 
 extern void trapinit(void);
 extern void kmain(struct mboothdr *hdr, unsigned long pmemsz);
+
+extern struct m_cpu  cputab[NCPU];
+extern volatile long mpncpu;
 
 ASMLINK
 void

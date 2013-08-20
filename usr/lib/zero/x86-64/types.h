@@ -1,6 +1,9 @@
 #ifndef __ZERO_X86_64_TYPES_H__
 #define __ZERO_X86_64_TYPES_H__
 
+#include <zero/cdecl.h>
+#include <zero/param.h>
+
 /* C call frame */
 struct m_cframe {
     /* automatic variables go here */

@@ -1,13 +1,13 @@
-#include <stdint.h>
 #include <kern/conf.h>
 
 #if (SMP)
 
+#include <stdint.h>
+#include <sys/io.h>
 #include <kern/unit/x86/trap.h>
+#include <kern/unit/x86/apic.h>
 #include <kern/unit/ia32/link.h>
 #include <kern/unit/ia32/vm.h>
-#include <kern/unit/ia32/io.h>
-#include <kern/unit/ia32/apic.h>
 #if 0
 #include <kern/unit/ia32/pit.h>
 #endif
@@ -20,6 +20,15 @@ extern volatile struct m_cpu  mpcputab[NCPU];
 extern volatile struct m_cpu *mpbootcpu;
 
 void
+usleep(long nusec)
+{
+    nusec <<= 1;
+    while (nusec--) {
+        nusec--;
+    }
+}
+
+void
 apicinit(long id)
 {
     volatile struct m_cpu *cpu = &mpcputab[id];
@@ -30,9 +39,9 @@ apicinit(long id)
     }
     /* identity-map local APIC */
     if (cpu == mpbootcpu) {
-        segmap((uint32_t *)&_pagetab, (uint32_t)mpapic, (uint32_t)mpapic,
-               (uint32_t)((uint8_t *)mpapic + PAGESIZE),
-               PAGEPRES | PAGEWRITE);
+        vmmapseg((uint32_t *)&_pagetab, (uint32_t)mpapic, (uint32_t)mpapic,
+                 (uint32_t)((uint8_t *)mpapic + PAGESIZE),
+                 PAGEPRES | PAGEWRITE);
     }
     cpu->id = id;
     /* enable local APIC; set spurious interrupt vector */
@@ -69,18 +78,6 @@ apicinit(long id)
     return;
 }
 
-#define RTCBASE 0x70
-#define BIOSWRV 0x467   // warm reset vector
-
-void
-usleep(long nusec)
-{
-    nusec <<= 1;
-    while (nusec--) {
-        nusec--;
-    }
-}
-
 void
 apicstart(uint8_t id, uint32_t adr)
 {
@@ -107,6 +104,15 @@ apicstart(uint8_t id, uint32_t adr)
 //    usleep(200);
 
     return;
+}
+
+/* TODO */
+
+/* set APIC interrupt frequency */
+void
+apicsethz(long hz)
+{
+    ;
 }
 
 #endif /* SMP */

@@ -150,7 +150,6 @@ kmemset(void *adr, int byte, size_t len)
     return;
 }
 
-#if 0
 void
 kbcopy(void *dest, void *src, unsigned long len)
 {
@@ -246,7 +245,6 @@ kbfill(void *adr, uint8_t byte, unsigned long len)
 
     return;
 }
-#endif
 
 int
 kmemcmp(const void *ptr1,

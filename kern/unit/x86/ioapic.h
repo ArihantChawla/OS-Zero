@@ -1,5 +1,5 @@
-#ifndef __UNIT_IA32_IOAPIC_H__
-#define __UNIT_IA32_IOAPIC_H__
+#ifndef __UNIT_X86_IOAPIC_H__
+#define __UNIT_X86_IOAPIC_H__
 
 #include <stdint.h>
 
@@ -35,5 +35,5 @@ ioapicwrite(uint32_t val, uint32_t reg)
     ioapic->data = val;
 }
 
-#endif /* __UNIT_IA32_IOAPIC_H__ */
+#endif /* __UNIT_X86_IOAPIC_H__ */
 

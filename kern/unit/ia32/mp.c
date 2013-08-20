@@ -3,19 +3,20 @@
 #if (SMP)
 
 #include <stddef.h>
+#include <sys/io.h>
 #include <zero/trix.h>
 #include <zero/asm.h>
 #include <zero/param.h>
 #include <zero/types.h>
 #include <kern/util.h>
 #include <kern/mem.h>
+#include <kern/unit/x86/cpu.h>
+#include <kern/unit/x86/apic.h>
 #include <kern/unit/ia32/link.h>
 #include <kern/unit/ia32/boot.h>
 #include <kern/unit/ia32/seg.h>
-#include <kern/unit/ia32/cpu.h>
 #include <kern/unit/ia32/mp.h>
 #include <kern/unit/ia32/vm.h>
-#include <kern/unit/ia32/io.h>
 
 /* used to scan for MP table */
 #define EBDAADR   0x040e
@@ -29,6 +30,9 @@ extern uint32_t *kernpagedir[NPDE];
 extern void pginit(void);
 extern void idtinit(void);
 extern void ioapicinit(long id);
+extern void cpuinit(struct m_cpu *cpu);
+extern void seginit(long id);
+extern void idtset(void);
 
 volatile struct m_cpu  mpcputab[NCPU] ALIGNED(PAGESIZE);
 volatile struct m_cpu *mpbootcpu;
@@ -115,7 +119,7 @@ mpconf(struct mp **mptab)
 
     if ((mp) && (mp->conftab)) {
         conf = mp->conftab;
-        if (!memcmp(conf, "PCMP", 4)) {
+        if (!kmemcmp(conf, "PCMP", 4)) {
             if ((conf->ver == 1 || conf->ver == 4)
                 && !mpsum((uint8_t *)conf, conf->len)) {
                 *mptab = mp;
@@ -150,7 +154,7 @@ mpinit(void)
 
         return;
     }
-    cpuinit(mpbootcpu);
+    cpuinit((struct m_cpu *)mpbootcpu);
     mpmultiproc = 1;
     mpapic = conf->apicadr;
     for (u8ptr = (uint8_t *)(conf + 1), lim = (uint8_t *)conf + conf->len ;
@@ -234,7 +238,7 @@ mpstart(void)
 
 //    __asm__ __volatile__ ("sti\n");
     lim = &mpcputab[0] + mpncpu;
-    bcopy((void *)MPENTRY, &_mpentry, (uint8_t *)&_emp - (uint8_t *)&_mpentry);
+    kbcopy((void *)MPENTRY, &_mpentry, (uint8_t *)&_emp - (uint8_t *)&_mpentry);
     fp = (struct m_fartptr *)MPGDT;
     fp->lim = NMPGDT * sizeof(uint64_t) - 1;
     fp->adr = (uint32_t)(MPENTRY + 8);
@@ -252,7 +256,7 @@ mpstart(void)
             continue;
         }
         kprintf("starting CPU %ld @ 0x%lx\n", cpu->id, MPENTRY);
-        cpuinit(cpu);
+        cpuinit((struct m_cpu *)cpu);
         apicinit(cpu->id);
         ioapicinit(cpu->id);
         *--mpentrystk = cpu->id;
