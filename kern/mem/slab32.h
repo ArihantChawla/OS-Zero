@@ -11,17 +11,17 @@
 #define SLABHDRTABSZ (SLABNHDR * sizeof(struct slabhdr))
 #define SLABHDRBASE  (VIRTBASE - SLABHDRTABSZ)
 
-#define slabgetprev(hp, tab)                                            \
+#define slabgetprev(hp, zone)                                           \
     (!(hp)                                                              \
      ? NULL                                                             \
      : (((hp)->link & 0x0000ffffL)                                      \
-        ? ((struct slabhdr *)(tab) + ((hp)->link & 0x0000ffffL))        \
+        ? ((struct slabhdr *)((zone)->tab) + ((hp)->link & 0x0000ffffL)) \
         : NULL))
-#define slabgetnext(hp, tab)                                            \
+#define slabgetnext(hp, zone)                                           \
     (!(hp)                                                              \
      ? NULL                                                             \
      : (((hp)->link & 0xffff0000L)                                      \
-        ? ((struct slabhdr *)(tab) + (((hp)->link & 0xffff0000L) >> 16)) \
+        ? ((struct slabhdr *)((zone)->tab) + (((hp)->link & 0xffff0000L) >> 16)) \
         : NULL))
 #define slabclrprev(hp)                                                 \
     ((hp)->link &= 0xffff0000L)

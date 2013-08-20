@@ -7,9 +7,9 @@
 #include <kern/proc/task.h>
 #include <kern/mem/mem.h>
 
-#define slabgetprev(hp, tab)                                            \
+#define slabgetprev(hp, zone)                                           \
     ((hp)->prev)
-#define slabgetnext(hp, tab)                                            \
+#define slabgetnext(hp, zone)                                           \
     ((hp)->next)
 #define slabclrprev(hp)                                                 \
     ((hp)->prev = NULL)
@@ -17,9 +17,9 @@
     ((hp)->next = NULL)
 #define slabclrlink(hp)                                                 \
     ((hp)->prev = (hp)->next = NULL)
-#define slabsetprev(hp, hdr, tab)                                       \
+#define slabsetprev(hp, hdr, zone)                                      \
     ((hp)->prev = (hdr))
-#define slabsetnext(hp, hdr, tab)                                       \
+#define slabsetnext(hp, hdr, zone)                                      \
     ((hp)->next = (hdr))
 
 #endif /* __MEM_SLAB64_H__ */
