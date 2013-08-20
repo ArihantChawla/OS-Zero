@@ -12,7 +12,7 @@
 #include <kern/mem/slab.h>
 #include <kern/unit/ia32/vm.h>
 
-#define NTHR   64
+#define NTHR   4
 #define NALLOC 1024
 
 unsigned long  vmnphyspages;
@@ -210,7 +210,7 @@ test(void *dummy)
     for ( ; ; ) {
         for (l = 0 ; l < NALLOC ; l++) {
 //            ptrtab[l] = memalloc(rand() & (8 * SLABMIN - 1), MEMZERO);
-            ptrtab[l] = memalloc(rand() & (16 * SLABMIN - 1), MEMZERO);
+            ptrtab[l] = memalloc(rand() & (4 * SLABMIN - 1), MEMZERO);
             diag();
         }
         l = NALLOC;

@@ -29,12 +29,12 @@
 
 extern struct memzone  slabvirtzone;
 
-struct memzone magvirtzone;
+struct memzone  magvirtzone;
 #if (!MAGBITMAP)
-volatile long *magvirtbitmap;
+volatile long  *magvirtbitmap;
 #endif
 #if (MAGSLABLK)
-volatile long  magslablk;
+volatile long   magslablk;
 #endif
 
 #if (SMP)
