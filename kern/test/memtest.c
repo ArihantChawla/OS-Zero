@@ -12,7 +12,7 @@
 #include <kern/mem/slab.h>
 #include <kern/unit/ia32/vm.h>
 
-#define NTHR   4
+#define NTHR   16
 #define NALLOC 256
 
 unsigned long  vmnphyspages;
@@ -51,10 +51,14 @@ magprint(struct maghdr *mag)
     printf("NEXT: %p\n", mag->next);
 #if (MAGBITMAP)
     printf("BITMAP:");
+#if ((SLABLOG2 - MAGMINLOG2) < (LONGSIZELOG2 + 3))
+    printf(" %lx", mag->bmap);
+#else
     printf(" %x", mag->bmap[0]);
     for (ul = 1 ; ul < (mag->n >> 3) ; ul++) {
         printf(" %x", mag->bmap[ul]);
     }
+#endif
     printf("\n");
 #endif    
     printf("STACK:");
@@ -70,13 +74,14 @@ void
 magdiag(void)
 {
     struct maghdr *mag1;
+    volatile long *lktab = magvirtzone.lktab;
     unsigned long  l;
 
     for (l = MAGMINLOG2 ; l < SLABMINLOG2 ; l++) {
 #if 0
         maglkq(magvirtzone.lktab, l);
 #endif
-        if (mtxtrylk(&magvirtzone.lktab[l])) {
+        if (mtxtrylk(&lktab[l])) {
             mag1 = magvirtzone.tab[l];
             while (mag1) {
                 if (mag1->bkt != l) {
@@ -95,11 +100,8 @@ magdiag(void)
                 }
                 mag1 = mag1->next;
             }
-            mtxunlk(&magvirtzone.lktab[l]);
+            mtxunlk(&lktab[l]);
         }
-#if 0
-        magunlkq(magvirtzone.lktab, l);
-#endif
     }
 
     return;
@@ -144,7 +146,7 @@ diag(void)
     struct slabhdr *hdr3;
 
     for (bkt = SLABMINLOG2 ; bkt < PTRBITS ; bkt++) {
-        slablkq(slabvirtzone.lktab, bkt);
+        mtxlk(&lktab[bkt]);
         n = 0;
         hdr1 = slabvirtzone.tab[bkt];
         if (hdr1) {
@@ -204,7 +206,7 @@ diag(void)
                 hdr1 = hdr2;
             }
         }
-        slabunlkq(slabvirtzone.lktab, bkt);
+        mtxlk(&lktab[bkt]);
         n++;
         printf("%lu \n", n);
     }
@@ -219,7 +221,7 @@ test(void *dummy)
     for ( ; ; ) {
         for (l = 0 ; l < NALLOC ; l++) {
 //            ptrtab[l] = memalloc(rand() & (8 * SLABMIN - 1), MEMZERO);
-            ptrtab[l] = memalloc(rand() & (4 * SLABMIN - 1), MEMZERO);
+            ptrtab[l] = memalloc(rand() & (8 * SLABMIN - 1), MEMZERO);
         }
         l = NALLOC;
         while (l--) {
@@ -228,41 +230,16 @@ test(void *dummy)
                 ptrtab[l] = NULL;
             }
         }
-        slabprintall();
+//        slabprintall();
     }
 
     return NULL;
 }
-
-#if 0
-void *
-test(void *dummy)
-{
-    long   l;
-    long   sz;
-    void **ptrtab = calloc(NALLOC, sizeof(void *));
-
-    while (1) {
-        l = rand() & (NALLOC - 1);
-        sz = rand() & (8 * SLABMIN - 1);
-        ptrtab[l] = memalloc(sz, MEMZERO);
-//        diag();
-        printf("PTR: %p\n", ptrtab[l]);
-        if (ptrtab[l]) {
-            kfree(ptrtab[l]);
-        }
-    }
-
-    return NULL;
-}
-#endif
 
 int
 main(int argc, char *argv[])
 {
-#if (MTSAFE)
     long  n = NTHR;
-#endif
     void *base = memalign(SLABMIN, 1024 * 1024 * 1024);
 
     printf("PTRBITS == %d\n", PTRBITS);
@@ -271,7 +248,6 @@ main(int argc, char *argv[])
     bzero(base, 1024 * 1024 * 1024);
     slabinit(&slabvirtzone, (unsigned long)base, 1024 * 1024 * 1024);
     slabprintall();
-#if (MTSAFE)
     while (n--) {
         pthread_create(&thrtab[n], NULL, test, NULL);
         pthread_detach(thrtab[n]);
@@ -280,11 +256,8 @@ main(int argc, char *argv[])
 //        diag();
         ;
     }
-#else
-    test(NULL);
-    while (1) {
-        ;
-    }
-#endif
+
+    /* NOTREACHED */
+    exit(0);
 }
 

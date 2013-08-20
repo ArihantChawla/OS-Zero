@@ -13,25 +13,10 @@
 #define kbzero bzero
 #endif
 
-extern unsigned long   npagefree;
-extern uint8_t        *magvirtbitmap;
-#if 0
-extern struct maghdr  *magvirthdrtab;
-#endif
-extern struct memzone  magvirtzone;
-
+extern unsigned long  npagefree;
+extern struct memzone magvirtzone;
 struct memzone        slabvirtzone ALIGNED(PAGESIZE);
-#if 0
-struct slabhdr       *slabvirttab[PTRBITS] ALIGNED(PAGESIZE);
-volatile long         slabvirtlktab[PTRBITS];
-struct slabhdr       *slabvirthdrtab;
-#endif
-
-//static unsigned long  slabnhdr;
-//unsigned long         slabvirtbase;
-#if (NEWLK)
-volatile long         slablk;
-#endif
+static volatile long  slablk;
 /*
  * zero slab allocator
  *
@@ -45,26 +30,15 @@ slabinitzone(struct memzone *zone, unsigned long base, unsigned long nb)
 {
     unsigned long adr = base;
     unsigned long sz = (nb & (SLABMIN - 1)) ? rounduppow2(nb, SLABMIN) : nb;
-#if 0
-    unsigned long nmag = sz >> MAGMINLOG2;
-#endif
     unsigned long nmag = sz >> SLABMINLOG2;
-#if (MAGBITMAP)
-    unsigned long bsz = 0;
-#else
-    unsigned long bsz = sz >> (MAGMINLOG2 + 3);
-#endif
     unsigned long nslab = nmag;
 
     zone->nhdr = nslab;
-    kbzero((void *)adr, bsz + nmag * sizeof(struct maghdr) + nslab * sizeof(struct slabhdr));
-#if (!MAGBITMAP)
-    magvirtbitmap = (uint8_t *)adr;
-#endif
+    kbzero((void *)adr, nmag * sizeof(struct maghdr) + nslab * sizeof(struct slabhdr));
     magvirtzone.nhdr = nmag;
-    magvirtzone.hdrtab = (void *)(adr + bsz);
-    zone->hdrtab = (struct slabhdr *)(adr + bsz + nmag * sizeof(struct maghdr));
-    adr += bsz + nmag * sizeof(struct maghdr) + nslab * sizeof(struct slabhdr);
+    magvirtzone.hdrtab = (void *)adr;
+    zone->hdrtab = (struct slabhdr *)(adr + nmag * sizeof(struct maghdr));
+    adr += nmag * sizeof(struct maghdr) + nslab * sizeof(struct slabhdr);
     if (adr & (PAGESIZE - 1)) {
         adr = rounduppow2(adr, PAGESIZE);
     }
@@ -237,21 +211,11 @@ slabsplit(struct memzone *zone, struct slabhdr *hdr, unsigned long dest)
         slabclrlink(hdr1);
         slabsetbkt(hdr1, bkt);
         slabsetfree(hdr1);
-#if 0
-        if (bkt != dest) {
-            slablkq(slabvirtlktab, bkt);
-        }
-#endif
         if (slabtab[bkt]) {
             slabsetprev(slabtab[bkt], hdr1, zone);
         }
         slabsetnext(hdr1, slabtab[bkt], zone);
         slabtab[bkt] = hdr1;
-#if 0
-        if (bkt != dest) {
-            slabunlkq(slabvirtlktab, bkt);
-        }
-#endif
         ptr += sz;
     }
     hdr1 = slabgethdr(ptr, zone);
@@ -281,9 +245,7 @@ slaballoc(struct memzone *zone, unsigned long nb, unsigned long flg)
     struct slabhdr  *hdr1;
     struct slabhdr  *hdr2;
 
-#if (NEWLK)
     mtxlk(&slablk);
-#endif
     hdr1 = slabtab[bkt1];
     if (!hdr1) {
         while (!hdr1 && ++bkt2 < PTRBITS) {
@@ -305,9 +267,7 @@ slaballoc(struct memzone *zone, unsigned long nb, unsigned long flg)
         slabsetflg(hdr1, flg);
         ptr = slabgetadr(hdr1, zone);
     }
-#if (NEWLK)
     mtxunlk(&slablk);
-#endif
 
     return ptr;
 }
@@ -325,9 +285,7 @@ slabfree(struct memzone *zone, void *ptr)
 #if (!MEMTEST)
     vmfreephys(ptr, 1UL << bkt);
 #endif
-#if (NEWLK)
     mtxlk(&slablk);
-#endif
     slabsetfree(hdr);
     if (!slabcomb(zone, hdr)) {
         slabclrlink(hdr);
@@ -337,9 +295,7 @@ slabfree(struct memzone *zone, void *ptr)
         slabsetnext(hdr, slabtab[bkt], zone);
         slabtab[bkt] = hdr;
     }
-#if (NEWLK)
     mtxunlk(&slablk);
-#endif
 
     return;
 }

@@ -19,9 +19,6 @@ struct slabhdr {
 #endif
 } PACK();
 
-#define slablkq(tab, bkt)   mtxlk(&(tab)[bkt])
-#define slabunlkq(tab, bkt) mtxunlk(&(tab)[bkt])
-
 #define slabnum(ptr, zone)                                              \
     (((uintptr_t)(ptr) - ((zone)->base)) >> SLABMINLOG2)
 #define slabgetadr(hdr, zone)                                            \

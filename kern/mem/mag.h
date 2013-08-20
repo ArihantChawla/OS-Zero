@@ -10,26 +10,21 @@
 #define MAGMIN     (1UL << MAGMINLOG2)
 #define MAGMINLOG2 PAGESIZELOG2
 
-#define maglkq(tab, bkt)   mtxlk(&(tab)[bkt])
-#define magunlkq(tab, bkt) mtxunlk(&(tab)[bkt])
-
 #define magpop(mp)         ((mp)->ptab[((mp)->ndx)++])
 #define magpush(mp, ptr)   ((mp)->ptab[--((mp)->ndx)] = (ptr))
 #define magempty(mp)       ((mp)->ndx == (mp)->n)
 #define magfull(mp)        (!(mp)->ndx)
 struct maghdr {
-#if (MAGLK)
     volatile long  lk;
-#endif
-#if (MAGBITMAP)
     uintptr_t      base;
-#endif
     volatile long  n;
     volatile long  ndx;
     volatile long  bkt;
     struct maghdr *prev;
     struct maghdr *next;
-#if (MAGBITMAP)
+#if (SLABLOG2 - MAGMINLOG2 < (LONGSIZELOG2 + 3))
+    unsigned long  bmap;
+#else
     uint8_t        bmap[1UL << (SLABMINLOG2 - MAGMINLOG2 - 3)];
 #endif
     void          *ptab[1UL << (SLABMINLOG2 - MAGMINLOG2)];
