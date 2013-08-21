@@ -12,7 +12,7 @@
 #define ADRBITS      48 // # of significant bytes in phys and virt addresses
 #define PAGESIZELOG2 12 // 4-kilobyte pages
 
-#define CLSIZE       32
+#define CLSIZE       64
 #define PAGESIZE     (1L << PAGESIZELOG2)
 
 #endif /* __ZERO_X86_64_PARAM_H__ */

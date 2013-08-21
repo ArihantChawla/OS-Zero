@@ -8,6 +8,8 @@
 #   define EMPTY   0
 #endif
 
+#if defined(__GNUC__)
+
 /* align variables, aggregates, and tables to boundary of a */
 #define ALIGNED(a)  __attribute__ ((__aligned__(a)))
 /* pack aggregate fields and table items */
@@ -30,6 +32,13 @@
 #define likely(x)   __builtin_expect(!!(x), 1)
 #define unlikely(x) __builtin_expect(!!(x), 0)
 #define isconst(x)  __builtin_constant_p(x)
+
+#else /* !defined(__GNUC__) */
+
+/* Microsoft */
+#define ALIGNED(a)  __declspec(align((a)))
+
+#endif /* __GNUC__ */
 
 #endif /* __ZERO_CDECL_H__ */
 

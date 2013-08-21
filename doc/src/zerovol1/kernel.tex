@@ -7,7 +7,7 @@
 \usepackage{fancyvrb}
 \usepackage{hyperref}
 \lstset{language=C, showspaces=false, breaklines=false}
-\usepackage[xcdraw, table, gray]{xcolor}
+\usepackage[table, gray]{xcolor}
 \setlength{\arrayrulewidth}{1pt}
 \rowcolors{0}{white}{lightgray}
 \hypersetup{backref, colorlinks=true, linkcolor=blue}
@@ -16,7 +16,7 @@
 
 \title{\LARGE{Zero Volume 0 - The Kernel} \\
        \large{Design and Implementation} \\
-       \large{DRAFT 1, Revision 9}}
+       \large{DRAFT 1, Revision 10}}
 \author{Tuomo Petteri Venäläinen}
 \date{\today}
 \maketitle
@@ -51,7 +51,7 @@
 
 	\textbf{Design}
 
-	Zero is a multithreaded multiprocess-enabled kernel. Design goals
+	Zero is a multithreaded multiprocessor-enabled kernel. Design goals
 	include fast response to user actions as well as high multimedia
 	performance.
 
@@ -83,69 +83,9 @@
 
 \chapter{System Concepts}
 
-\section{Terminology}
+	This chapter is a glossary of some terminology used throughout the book.
 
-	\textbf{Trap}
-
-	A trap is a hardware- or software generated event. Other names for traps
-	include \textbf{interrupts}, \textbf{exceptions}, \textbf{faults}, and
-	\textbf{aborts}. As an example, keyboard and mouse input may generate
-	interrupts to be handled by interrupt service routines (\textbf{ISR}s).
-
-	\textbf{Process}
-
-	A process is a running instance of a program. A process may consist of
-	several threads. Threads of a process share the same address space, but
-	have individual execution stacks.
-
-	\textbf{Thread}
-
-	Threads are the basic execution unit of programs. To utilise
-	multiprocessor-parallelism, a program may consist of several threads
-	of execution, effectively letting it do several computation and	I/O
-	operations at the same time.
-
-	\textbf{Task}
-
-	In the context of Zero, the term task is synonymous the term process.
-
-	\textbf{Interval Task}
-
-	Short-lived, frequent tasks such as audio and video buffer
-	synchronisation are scheduled with priority higher than normal tasks.
-	It is likely such tasks should be given a slice of time shorter than
-	other threads.
-
-	\textbf{Virtual Memory}
-
-	Virtual memory is a technique to map physical memory to per-process
-	address space. The processes see their address spaces as if they were in
-	total control of the machine. These per-process address spaces are
-	protected from being tampered by other processes. Address translations
-	are hardware-level (the kernel mimics them, though), so virtual memory
-	is transparent to application, and most of the time, even kernel
-	programmers.
-
-	\textbf{Page}
-
-	A page is the base unit of memory management. Hardware protection works
-	on per-page basis. Page attributes include read-, write-, and
-	execute-permissions. For typical programs, the text (code) pages would
-	have read- and execute-permissions, wherease the program [initialised]
-	data pages as well as [unitialised] BSS-segment pages would have read-
-	and write- but not execute-permissions. This approach facilitates
-	protection against overwriting code and against trying to execute code
-	from the data and BSS-segments.
-
-	\textbf{Segment}
-
-	Processes typically consist of several segments. These include a text
-	segment for [read-only] code, a data segment for initialised global
-	data, a BSS-segment for uninitialised global data, and different
-	debugging-related segments. Note that the BSS-segment is runtime-
-	allocated, whereas the data segment is read from the binary image. Also
-	Note that in a different context, segments are used to refer to hardware
-	memory management.
+\section{General Terminology}
 
 	\textbf{Buffer}
 
@@ -172,6 +112,101 @@
 	slice of the event timer. Event time slices should be shorter than
 	scheduler time slices to not interfere with the rest of the system too
 	much.
+
+	\textbf{Interval Task}
+
+	Short-lived, frequent tasks such as audio and video buffer
+	synchronisation are scheduled with priority higher than normal tasks.
+	It is likely such tasks should be given a slice of time shorter than
+	other threads.
+
+	\textbf{Page}
+
+	A page is the base unit of memory management. Hardware protection works
+	on per-page basis. Page attributes include read-, write-, and
+	execute-permissions. For typical programs, the text (code) pages would
+	have read- and execute-permissions, wherease the program [initialised]
+	data pages as well as [unitialised] BSS-segment pages would have read-
+	and write- but not execute-permissions. This approach facilitates
+	protection against overwriting code and against trying to execute code
+	from the data and BSS-segments.
+
+	\textbf{Process}
+
+	A process is a running instance of a program. A process may consist of
+	several threads. Threads of a process share the same address space, but
+	have individual execution stacks.
+
+	\textbf{Segment}
+
+	Processes typically consist of several segments. These include a text
+	segment for [read-only] code, a data segment for initialised global
+	data, a BSS-segment for uninitialised global data, and different
+	debugging-related segments. Note that the BSS-segment is runtime-
+	allocated, whereas the data segment is read from the binary image. Also
+	Note that in a different context, segments are used to refer to hardware
+	memory management.
+
+	\textbf{Task}
+
+	In the context of Zero, the term task is synonymous the term process.
+
+	\textbf{Thread}
+
+	Threads are the basic execution unit of programs. To utilise
+	multiprocessor-parallelism, a program may consist of several threads
+	of execution, effectively letting it do several computation and	I/O
+	operations at the same time.
+
+	\textbf{Trap}
+
+	A trap is a hardware- or software generated event. Other names for traps
+	include \textbf{interrupts}, \textbf{exceptions}, \textbf{faults}, and
+	\textbf{aborts}. As an example, keyboard and mouse input may generate
+	interrupts to be handled by interrupt service routines (\textbf{ISR}s).
+
+	\textbf{Virtual Memory}
+
+	Virtual memory is a technique to map physical memory to per-process
+	address space. The processes see their address spaces as if they were in
+	total control of the machine. These per-process address spaces are
+	protected from being tampered by other processes. Address translations
+	are hardware-level (the kernel mimics them, though), so virtual memory
+	is transparent to application, and most of the time, even kernel
+	programmers.
+
+\section{X86 Terminology}
+
+	\textbf{APIC}
+
+	APIC stands for [CPU-local] 'advanced programmable interrupt
+	controller.'
+
+	\textbf{GDT}
+
+	A GDT is 'global descriptor table', a set of memory segments with
+	different permissions.
+
+	\textbf{HPET}
+
+	HPET is short for high precision event timer (aka multimedia timer).
+
+	\textbf{IDT}
+
+	IDT means interrupt descriptor table (aka interrupt vector).
+
+	\textbf{ISR}
+
+	ISR stands for interrupt service routine, i.e. interrupt handler.
+
+	\textbf{LDT}
+
+	An LDT is local descriptor table', a set of memory segments with
+	different permissions.
+
+	\textbf{PIT}
+
+	PIT stands for programmable interrupt timer.
 
 \chapter{System Features}
 
@@ -308,9 +343,27 @@
 
 \subsection{Segment Descriptor Tables}
 
+	A process may use either a global descriptor table with its physical
+	address in GDT or a local one with the address in LDT. Processes are
+	required to declare a handful of entries into their descriptor tables.
+
 \subsubsection{Segment Descriptors}
 
+	A segment descriptor is a CPU-specific data structure. On
+	\textbf{IA-32} and \textbf{X86-64} architectures, the descriptors have
+	base address and limit fields, permission bits, and other such values.
+
+	The following code snippet illustrates important values in segment
+	descriptors on \textbf{IA-32}.
+
+\begin{verbatim}
+#define SEGDEFBITS (SEG32BIT | SEG4KGRAN | SEGPRES)
+#define SEGTSS     (SEGAVAILTSS | SEGUSER | SEGPRES)
+\end{verbatim}
+
 \subsection{Paging Data Structures}
+
+	Protection and other control of memory appears on per-page basis.
 
 \subsubsection{Page Directory Entry}
 
@@ -323,6 +376,11 @@
 \subsection{Page Daemon}
 
 \subsection{Zone Allocator}
+
+	The Zero memory manager was crafted to use aggressive buffering of
+	allocations. The higher buffer level is a \textbf{Bonwick}-style
+	\textbf{magazine} layer consisting of allocation stacks for sub-slab
+	blocks.	The lower level is a typical \textbf{slab allocator}.
 
 \subsubsection{Page Replacement Algorithm}
 
@@ -339,9 +397,17 @@
 
 \section{Conventions}
 
-\subsection{IA-32}
+\subsection{System Call Mechanism}
 
-	On IA-32 architectures, up to 3 system call parameters are passed in
+	On IA-32 architectures, all of up to 3 system call parameters are passed
+	in registers; the system call number is in \textbf{EAX}. On
+	\textbf{X86-64}	all system call arguments are passed in registers. On
+	both architectures, system calls return a value for \textbf{errno};
+	\textbf{failures} are indicated by setting the \textbf{CF-bit} (carry)
+	in the \textbf{EFLAGS}-register. System calls are, in the first
+	implementation, triggered by \textbf{interrupt 0x80}.
+
+	\textbf{TODO: sysenter + sysexit}
 
 \section{Process Control}
 
