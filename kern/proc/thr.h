@@ -1,9 +1,9 @@
 #ifndef __KERN_THR_H__
 #define __KERN_THR_H__
 
+#include <kern/conf.h>
 #include <stddef.h>
 #include <zero/types.h>
-#include <kern/conf.h>
 #include <kern/unit/x86/cpu.h>
 
 void thrsave(struct thr *thr);

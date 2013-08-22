@@ -1,0 +1,44 @@
+This text is a set of ideas for some desktop icons. These should be something
+like 128x128 pixels and scale well down to 16x16 (window frame). The format
+should be either TIFF or PNG; SVG would be even better.
+
+APPLICATION ICONS
+-----------------
+
+- all buttons have 3 states; normal, mouse-over, and clicked
+
+terminal emulator
+-----------------
+- picture of an old terminal (screen and keyboard); the screen could glow
+  slightly green and show the prompt: $ (dollar-sign alone)
+
+editor
+------
+- a picture of an old scroll (or ink jar) and an old quill-pen
+
+graphics program
+----------------
+
+- a picture of a canvas and paintbrush
+
+email
+-----
+- picture of a mailbox; indication for new email in different color or with the
+  'pole' upwards
+
+instant messaging
+-----------------
+- a bubble with the text IM
+
+web browser
+-----------
+- a spider-web on a globe
+
+audio player
+------------
+- a picture of a loudspeaker or 'boombox'
+
+video player
+------------
+- a picture of a film frame
+

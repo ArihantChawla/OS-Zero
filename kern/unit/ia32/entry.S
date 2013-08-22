@@ -155,7 +155,6 @@ _sysfunc:
 	.long	_syscall3	// seek
 	.long	_syscall3	// falloc
 	.long	_syscall3	// stat
-	.long	_syscall3	// readahead
 	.long	_syscall3	// fhint
 	.long	_syscall3	// ioctl
 	.long	_syscall3	// fctl

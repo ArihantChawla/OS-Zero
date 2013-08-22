@@ -33,12 +33,11 @@
 #define SYS_SEEK      27
 #define SYS_FALLOC    28
 #define SYS_STAT      29
-#define SYS_READAHEAD 30
-#define SYS_IOCTL     31
-#define SYS_FCTL      32
-#define SYS_POLL      33
-#define SYS_SELECT    34
-#define NSYSCALL      35
+#define SYS_IOCTL     30
+#define SYS_FCTL      31
+#define SYS_POLL      32
+#define SYS_SELECT    33
+#define NSYSCALL      34
 
 #endif /* __KERN_SYSCALLNUM_H__ */
 

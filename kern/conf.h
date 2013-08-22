@@ -4,7 +4,7 @@
 #define SMP       0     // enable multiprocessor support; currently broken
 #define HZ        250
 #define ZEROSCHED 1     // default scheduler
-#define NPROC     256   // maximum number of running processes
+#define NPROC     1024  // maximum number of running processes
 #define NTHR      4096  // maximum number of running threads
 #if (SMP)
 #define NCPU      8

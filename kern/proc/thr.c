@@ -41,6 +41,25 @@ thrjmp(struct thr *thr)
 
 #if (ZEROSCHED)
 
+/* adjust thread priority */
+static __inline__ long
+thradjprio(struct thr *thr)
+{
+    long class = thr->class;
+    long prio = thr->prio;
+
+    if (class != THRRT) {
+        /* wrap around back to 0 at THRNPRIO / 2 */
+        prio++;
+        prio &= (THRNPRIO >> 1) - 1;
+        prio = (THRNPRIO * class) + (THRNPRIO >> 1) + prio + thr->nice;
+        prio = max(THRNPRIO * THRNCLASS - 1, prio);
+        thr->prio = prio;
+    }
+
+    return prio;
+}
+
 /* add thread to end of queue */
 void
 thrqueue(struct thr *thr, struct thrq *thrq)
@@ -238,25 +257,6 @@ thrwakeup(uintptr_t wchan)
         }
     }
     mtxunlk(&tab->lk);
-}
-
-/* adjust thread priority */
-long
-thradjprio(struct thr *thr)
-{
-    long class = thr->class;
-    long prio = thr->prio;
-
-    if (class != THRRT) {
-        /* wrap around back to 0 at THRNPRIO / 2 */
-        prio++;
-        prio &= (THRNPRIO >> 1) - 1;
-        prio = (THRNPRIO * class) + (THRNPRIO >> 1) + prio + thr->nice;
-        prio = max(THRNPRIO, prio);
-        thr->prio = prio;
-    }
-
-    return prio;
 }
 
 /* switch threads */

@@ -53,7 +53,7 @@ taskinitpids(void)
     mtxlk(&pidlk);
     pid = &pidtab[0];
     pidq.head = pidq.tail = pid;
-    for (i = 0 ; i < NTHR ; i++) {
+    for (i = 1 ; i < NTHR ; i++) {
         pid = &pidtab[i];
         pid->id = i;
         pid->prev = pidq.tail;

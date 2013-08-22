@@ -86,7 +86,7 @@ m_lidt(struct m_farptr *fp)
  * fault: %eip points to fault instruction
  * trap:  %eip points to next instruction
  */
-/* cpu traps */
+/* CPU traps */
 #define TRAPDE   0x00	// divide error; fault
 #define TRAPDB   0x01	// reserved; fault/trap
 #define TRAPNMI  0x02	// non-maskable interrupt; interrupt
@@ -94,7 +94,7 @@ m_lidt(struct m_farptr *fp)
 #define TRAPOF   0x04	// overflow; trap
 #define TRAPBR   0x05	// bound range exceeded; fault
 #define TRAPUD   0x06	// invalid opcode; fault
-#define TRAPNM   0x07	// no fpu; fault
+#define TRAPNM   0x07	// no FPU; fault
 #define TRAPDF   0x08	// double-fault; fault, error == 0
 #define TRAPRES1 0x09	// reserved
 #define TRAPTS   0x0a	// invalid tss; fault + error
@@ -103,10 +103,10 @@ m_lidt(struct m_farptr *fp)
 #define TRAPGP   0x0d	// general protection; fault + error
 #define TRAPPF   0x0e	// page-fault; fault + error
 #define TRAPRES2 0x0f	// reserved
-#define TRAPMF   0x10	// fpu error; fault + number
+#define TRAPMF   0x10	// FPU error; fault + number
 #define TRAPAC   0x11	// alignment check; fault, error == 0
 #define TRAPMC   0x12	// machine check; abort
-#define TRAPXF   0x13	// simd exception; fault
+#define TRAPXF   0x13	// SIMD exception; fault
 /* traps 0x14 through 0x1f are reserved */
 #define TRAPNCPU 0x20
 
@@ -132,18 +132,18 @@ m_lidt(struct m_farptr *fp)
 #define TRAPMASK 0xff
 
 /* irq numbers */
-#define IRQTIMER    0
-#define IRQKBD      1
-#define IRQCASCADE  2
-#define IRQCOM2OR4  3
-#define IRQCOM1OR3  4
-#define IRQLPT      5
-#define IRQFD       6
-#define IRQRTC      8
-#define IRQMOUSE    12
-#define IRQFPU      13
-#define IRQIDE0     14
-#define IRQIDE1     15
+#define IRQTIMER    0   // timer
+#define IRQKBD      1   // keyboard
+//#define IRQCASCADE  2
+#define IRQCOM2AND4 3   // serial ports 2 and 4
+#define IRQCOM1AND3 4   // serial ports 1 and 3
+#define IRQLPT      5   // parallel port
+#define IRQFD       6   // floppy disk drive
+#define IRQRTC      8   // real-time clock
+#define IRQMOUSE    12  // moused
+#define IRQFPU      13  // floating point unit
+#define IRQIDE0     14  // IDE controller 1
+#define IRQIDE1     15  // IDE controller 2
 #define NIRQ        16
 #if (SMP)
 #define IRQERROR    19

@@ -1,9 +1,6 @@
 #ifndef __KERN_TASK_H__
 #define __KERN_TASK_H__
 
-#include <zero/cdecl.h>
-#include <zero/param.h>
-
 long taskgetpid(void);
 void taskfreepid(long id);
 

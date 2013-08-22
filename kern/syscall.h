@@ -71,7 +71,6 @@
  * long sys_seek(long desc, off_t ofs, long whence);
  * long sys_falloc(long desc, long parm, size_t len);
  * long sys_stat(char *path, struct stat *buf, long flg);
- * long sys_readahead(long desc, off_t ofs, size_t count);
  * long sys_fhint(long desc, long flg, struct freg *arg);
  * - NORMAL, SEQUENTIAL, RANDOM, WILLNEED, DONTNEED, NOREUSE, NONBLOCK, SYNC
  * long sys_ioctl(long desc, long cmd, void *arg);
@@ -120,7 +119,7 @@
 #define THR_SYSOP        7      // atfork, sigmask, sched, scope
 #define THR_STKOP        8      // stack; addr, size, guardsize
 #define THR_RTOP         9      // realtime thread settings
-#define THR_SETATTR     10      // set other attributes
+#define THR_SETATR      10      // set other attributes
 
 /* pctl() commands */
 #define PROC_GETPID     0x01    // getpid()
@@ -128,12 +127,18 @@
 #define PROC_WAIT       0x03    // wait()
 #define PROC_USLEEP     0x04    // usleep()
 #define PROC_NANOSLEEP  0x05    // nanosleep()
+#define PROC_SETSCHED   0x07    // nice(), ...
+#define PROC_STAT       0x08    // getrusage()
+#define PROC_GETLIM     0x09    // getrlimit()
+#define PROC_SETLIM     0x09    // setrlimit()
 /* pctl() parameters */
+#if 0
 /* PROC_WAIT flags */
 #define PROC_WAITPID    0x01    // wait for pid
 #define PROC_WAITCLD    0x02    // wait for children in the group pid
 #define PROC_WAITGRP    0x04    // wait for children in the group of caller
 #define PROC_WAITANY    0x08    // wait for any child process
+#endif
 
 struct syswait {
     long  pid;  // who to wait for

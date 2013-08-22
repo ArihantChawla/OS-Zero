@@ -16,7 +16,7 @@
 
 \title{\LARGE{Zero Volume 0 - The Kernel} \\
        \large{Design and Implementation} \\
-       \large{DRAFT 1, Revision 10}}
+       \large{DRAFT 1, Revision 11}}
 \author{Tuomo Petteri Venäläinen}
 \date{\today}
 \maketitle
@@ -25,9 +25,9 @@
 \setcounter{tocdepth}{4}
 \setlength{\parindent}{0cm}
 
-\part{Overview}
-
 \tableofcontents
+
+\part{Overview}
 
 \chapter{Preface}
 
@@ -206,7 +206,9 @@
 
 	\textbf{PIT}
 
-	PIT stands for programmable interrupt timer.
+	PIT stands for programmable interrupt timer. This timer may be used to
+	schedule threads on uniprocessor systems; for modern PCs, look into
+	\textbf{APIC}.
 
 \chapter{System Features}
 
@@ -266,17 +268,17 @@
 	\hline
 	Macro        & Brief & Notes \\
 	\hline
-	\textbf{SMP} & symmetric multiprocessor support & Not functional yet \\
+	\textbf{SMP} & multiprocessor support & Not functional yet \\
 	\hline
-	\textbf{HZ}  & scheduler timer frequency        & default value is 250 \\
+	\textbf{HZ}  & timer frequency        & default value is 250 \\
 	\hline
-	\textbf{ZEROSCHED} & default thread scheduler   & do not change yet \\
+	\textbf{ZEROSCHED} & default scheduler & do not change yet \\
 	\hline
-	\textbf{NPROC}     & maximum number of simultaneous processes & default is 256 \\
+	\textbf{NPROC}     & maximum simultaneous processes & default is 256 \\
 	\hline
-	\textbf{NTHR}      & maximum number of simultaneous threads   & default is 4096 \\
+	\textbf{NTHR}      & maximum simultaneous threads   & default is 4096 \\
 	\hline
-	\textbf{NCPU}      & number of CPU units supported            & default is 8 if \textbf{SMP} is non-zero \\
+	\textbf{NCPU}      & number of CPU units supported  & default is 8 if \textbf{SMP} is non-zero \\
 	\hline
 \end{tabular}
 
@@ -286,14 +288,16 @@
 
 	\textbf{Monolithic Kernel}
 
-	Zero is a traditional, monolithic kernel. It consists of several parts,
-	some of which are highlighted below.
+	Zero is a traditional, monolithic kernel. It consists of several code
+	modules, some notable ones of which are listed below.
 
 \begin{tabular}{ | l | l | }
 	\hline
-	Module        & Operation \\
+	Module        & Desription \\
 	\hline
 	\textbf{tmr}  & hardware timer interface \\
+	\hline
+	\textbf{proc} & process interface \\
 	\hline
 	\textbf{thr}  & thread scheduler \\
 	\hline
@@ -320,9 +324,147 @@
 
 \section{Processor Support}
 
+	Initially, Zero shall support 32-bit and 64-bit X86 architectures. The
+	plan is to port Zero at least to ARM in addition.
+
 \subsection{Thread Scheduler}
 
-\subsubsection{Thread Data Structure}
+\subsubsection{Thread Classes}
+
+	The following code snippet lists thread classes in decreasing order of
+	priority.
+
+\begin{verbatim}
+#define THRRT     0  // real-time thread
+#define THRUSER   1  // user thread
+#define THRBATCH  2  // batch thread
+#define THRIDLE   3  // idle thread
+#define THRNCLASS 4
+#define THRNPRIO  64 // # of priorities per class
+\end{verbatim}
+
+\subsubsection{Priorities}
+
+	\textbf{Priority Queue}
+
+	Zero scheduler uses a queue with $THRNCLASS * THRNPRIO$ priorities.
+
+	\textbf{Priority Adjustment}
+
+	Every time a thread stops running, its priority is adjusted with the
+	function below.
+
+\begin{verbatim}
+/* adjust thread priority */
+static __inline__ long
+thradjprio(struct thr *thr)
+{
+    long class = thr->class;
+    long prio = thr->prio;
+
+    if (class != THRRT) {
+        /* wrap around back to 0 at THRNPRIO / 2 */
+        prio++;
+        prio &= (THRNPRIO >> 1) - 1;
+        prio = (THRNPRIO * class) + (THRNPRIO >> 1) + prio + thr->nice;
+        prio = max(THRNPRIO * THRNCLASS - 1, prio);
+        thr->prio = prio;
+    }
+
+    return prio;
+}
+\end{verbatim}
+
+\subsubsection{Data Structures}
+
+	The structures \textbf{struct proc} and \textbf{struct thr} are declared
+	in \textbf{<kern/obj.h>}. The example implementations below are for the
+	\textbf{IA-32} architecture.
+
+\newpage
+
+	\textbf{struct proc}
+
+	The process data structure, of the type \textbf{struct proc}
+	consists of per-process book-keeping data shared between all threads of
+	the process.
+
+	\textbf{IA-32 Implementation}
+
+\begin{verbatim}
+/* process */
+struct proc {
+    struct thr       *thr;              // current running thread
+    long              nthr;             // # of threads
+    /* round-robin queue */
+    struct thrq       thrq;             // queue of ready threads
+    /* page directory */
+    pde_t            *pdir;             // page directory address
+    /* stacks */
+    uint8_t          *ustk;             // user-mode stack
+    uint8_t          *kstk;             // kernel-mode stack
+    long              class;
+    /* memory attributes */
+    uint8_t          *brk;
+    /* process credentials */
+    pid_t             pid;              // process ID
+    pid_t             parent;           // parent process
+    uid_t             ruid;             // real user ID
+    gid_t             rgid;             // real group ID
+    uid_t             euid;             // effective user ID
+    gid_t             egid;             // effective group ID
+    /* descriptor tables */
+    desc_t           *dtab;
+    /* signal state */
+    sigset_t          sigmask;          // signal mask
+    sigset_t          sigpend;          // pending signals
+    signalhandler_t  *sigvec[NSIG];
+    /* runtime arguments */
+    long              argc;             // argument count
+    char            **argv;             // argument vector
+    char            **envp;             // environment strings
+    /* memory management */
+    struct slabhdr   *vmtab[PTRBITS];
+    /* event queue */
+    struct ev        *evq;
+} PACK() ALIGNED(PAGESIZE);
+\end{verbatim}
+
+\newpage
+
+	\textbf{struct thr}
+
+	The thread data structure, of the type \textbf{struct thr}, consists of
+	machine-specific and portable members.
+
+	\textbf{IA-32 Implementation}
+
+\begin{verbatim}
+struct thr {
+    /* thread control block */
+    struct m_tcb   m_tcb;               // context
+    /* thread stacks */
+    uintptr_t      ustk;                // user-mode stack
+    uintptr_t      kstk;                // kernel-mode stack
+    /* state */
+    long           state;               // thread state
+    /* wait channel */
+    uintptr_t      wchan;               // wait channel
+    /* linkage */
+    struct proc   *proc;                // owner process
+    /* queue linkage */
+    struct thr    *prev;                // previous in queue
+    struct thr    *next;                // next in queue
+    long           id;
+    /* scheduler parameters */
+    long           nice;                // priority adjustment
+    long           class;               // thread class
+    long           prio;                // priority
+    long           runtime;             // run time
+    /* system call context */
+    struct syscall syscall;             // current system call
+} PACK();
+\end{verbatim}
 
 \subsection{Interrupt Vector}
 
@@ -330,11 +472,100 @@
 	descriptors contain interrupt service routine base address for the
 	function to be called to handle the interrupt.
 
+	The symbolic [macro] names for interrupts and IRQs (interrupt requests)
+	are declared in \textbf{<kern/unix/x86/trap.h}.
+
+\newpage
+
+	\textbf{Interrupts}
+
+	The following table lists X86 interrupts along with their associated
+	signals.
+
+\begin{tabular}{ | l | l | l | l | }
+	\hline
+	Macro    & Number & Description                        & Signal \\
+	\hline
+	TRAPDE   & 0x00	  & divide error; fault                & SIGFPE \\
+	\hline
+	TRAPDB   & 0x01	  & reserved; fault/trap               & N/A \\
+	\hline
+	TRAPNMI  & 0x02	  & non-maskable interrupt; interrupt  & N/A \\
+	\hline
+	TRAPBP   & 0x03	  & breakpoint; trap                   & SIGTRAP \\
+	\hline
+	TRAPOF   & 0x04	  & overflow; trap                     & N/A \\
+	\hline
+	TRAPBR   & 0x05	  & bound range exceeded; fault        & SIGBUS \\
+	\hline
+	TRAPUD   & 0x06	  & invalid opcode; fault              & SIGILL \\
+	\hline
+	TRAPNM   & 0x07	  & no FPU; fault                      & SIGILL \\
+	\hline
+	TRAPDF   & 0x08	  & double-fault; fault, error == 0    & N/A \\
+	\hline
+	TRAPRES1 & 0x09	  & reserved                           & N/A \\
+	\hline
+	TRAPTS   & 0x0a	  & invalid tss; fault + error         & N/A \\
+	\hline
+	TRAPNP   & 0x0b	  & segment not present; fault + error & SIGSEGV \\
+	\hline
+	TRAPSS   & 0x0c	  & stack-segment fault; fault + error & SIGSTKFLT \\
+	\hline
+	TRAPGP   & 0x0d	  & general protection; fault + error  & SIGSEGV \\
+	\hline
+	TRAPPF   & 0x0e	  & page-fault; fault + error          & N/A \\
+	\hline
+	TRAPRES2 & 0x0f	  & reserved                           & N/A \\
+	\hline
+	TRAPMF   & 0x10	  & FPU error; fault + number          & SIGFPE \\
+	\hline
+	TRAPAC   & 0x11	  & alignment check; fault, error == 0 & SIGBUS \\
+	\hline
+	TRAPMC   & 0x12	  & machine check; abort               & SIGABRT \\
+	\hline
+	TRAPXF   & 0x13	  & SIMD exception; fault              & SIGFPE \\
+	\hline
+\end{tabular}
+
+	\textbf{IRQs}
+
+	The following table lists default use of IRQs 0 through 0x0f (15). Zero
+	redirects these to interrupts 0x20 through 0x2f (32 to 47).
+
+\begin{tabular}{ | l | l | l | }
+	\hline
+	Macro       & Number & Description \\
+	\hline
+	IRQTIMER    & 0      & timer interrupt \\
+	\hline
+	IRQKBD      & 1      & keyboard interrupt \\
+	\hline
+	IRQCOM2AND4 & 3      & serial ports 2 and 4 \\
+	\hline
+	IRQCOM1AND3 & 4      & serial ports 1 and 3 \\
+	\hline
+	IRQLPT      & 5      & parallel port \\
+	\hline
+	IRQFD       & 6      & floppy disk drive \\
+	\hline
+	IRQRTC      & 8      & real-time clock \\
+	\hline
+	IRQMOUSE    & 12     & mouse \\
+	\hline
+	IRQFPU      & 13     & floating point unit \\
+	\hline
+	IRQIDE0     & 14     & IDE controller 1 \\
+	\hline
+	IRQIDE1     & 15     & IDE controller 2 \\
+	\hline
+\end{tabular}
+
 \subsubsection{Interrupt Descriptors}
 
 	Entries in the interrupt vector, i.e. interrupt descriptor table
 	(\textbf{IDT}), are called interrupt descriptors. These descriptors,
-	whereas a bit hairy format-wise, consist of interrupt service address,
+	whereas a bit hairy format-wise, consist of interrupt handler address,
 	protection ring (system or user), and certain other attribute flags.
 
 \section{Memory}
@@ -344,8 +575,9 @@
 \subsection{Segment Descriptor Tables}
 
 	A process may use either a global descriptor table with its physical
-	address in GDT or a local one with the address in LDT. Processes are
-	required to declare a handful of entries into their descriptor tables.
+	address in the GDT-register or a local one with the address in the
+	LDT-register. Processes are required to declare a handful of entries
+	into their descriptor tables.
 
 \subsubsection{Segment Descriptors}
 
@@ -399,12 +631,13 @@
 
 \subsection{System Call Mechanism}
 
-	On IA-32 architectures, all of up to 3 system call parameters are passed
-	in registers; the system call number is in \textbf{EAX}. On
+	On \textbf{IA-32} architectures, all of up to 3 system call parameters
+	are passed in registers; the system call number is in \textbf{EAX}. On
 	\textbf{X86-64}	all system call arguments are passed in registers. On
-	both architectures, system calls return a value for \textbf{errno};
-	\textbf{failures} are indicated by setting the \textbf{CF-bit} (carry)
-	in the \textbf{EFLAGS}-register. System calls are, in the first
+	both architectures, system calls return a value for \textbf{errno}; the
+	value is returned in \textbf{EAX} on IA-32, and in \textbf{RAX} on
+	X86-64. \textbf{Failures} are indicated by setting the \textbf{CF-bit}
+	(carry)	in the \textbf{EFLAGS}-register. System calls are, in the first
 	implementation, triggered by \textbf{interrupt 0x80}.
 
 	\textbf{TODO: sysenter + sysexit}
@@ -466,6 +699,8 @@
 	\textbf{environment} strings for the program; the table must be
 	terminated by a final \textbf{NULL} pointer.
 
+\newpage
+
 \subsection{throp}
 
 	\textbf{long sys\_throp(long cmd, long parm, void *arg);}
@@ -495,7 +730,7 @@
 	\hline
 	\textbf{THR\_RTOP}    & thrid & struct thrrtop * & realtime thread settings \\
 	\hline
-	\textbf{THR\_SETATTR} & thrid & struc thrattr *  & set other attributes \\
+	\textbf{THR\_SETATR}  & thrid & struc thratr *  & set other attributes \\
 	\hline
 \end{tabular}
 
@@ -503,26 +738,46 @@
 
 	\textbf{long sys\_pctl(long cmd, long parm, void *arg);}
 
-	The pctl system call provides process operations. The following table
-	lists possible values for the \textbf{cmd} argument.
+	\textbf{TODO: pid as parm, special values for the choices}
+
+	The pctl system call provides process operations. The following tables
+	list provided functionality.
 
 \begin{tabular}{ | l | l | l | l | }
 	\hline
-	\textbf{cmd}    & \textbf{parm} & \textbf{arg} & Notes \\
+	\textbf{cmd}             & \textbf{parm} & Notes \\
 	\hline
-	\textbf{PROC\_GETPID}    & N/A           & N/A & getpid() \\
+	\textbf{PROC\_GETPID}    & N/A           & getpid() \\
 	\hline
-	\textbf{PROC\_GETPGRP}   & N/A           & N/A & getpgrp() \\
+	\textbf{PROC\_GETPGRP}   & N/A           & getpgrp() \\
 	\hline
-	\textbf{PROC\_WAIT}      & procid        & N/A & wait() \\
-	                & \textbf{PROC\_WAITPID} & N/A & wait for pid \\
-                        & \textbf{PROC\_WAITCLD} & N/A & wait for children in the group pid \\
-	                & \textbf{PROC\_WAITGRP} & N/A & wait for children in the group of caller \\
-	                & \textbf{PROC\_WAITANY} & N/A & wait for any child process \\
+	\textbf{PROC\_WAIT}      & -1            & wait for any child \\
+	                         & pid > 0       & wait for pid \\
+	                         & pid == 0      & wait for children in the group of caller \\
+                                 & pid < -1 & wait for children in the group abs(pid) \\
 	\hline
-	\textbf{PROC\_USLEEP}    & milliseconds  & N/A & usleep() \\
+	\textbf{PROC\_USLEEP}    & milliseconds  & usleep() \\
 	\hline
-	\textbf{PROC\_NANOSLEEP} & nanoseconds   & N/A & nanosleep() \\
+	\textbf{PROC\_NANOSLEEP} & nanoseconds   & nanosleep() \\
+	\hline
+\end{tabular}
+
+	\textbf{Notes}
+
+	For \textbf{PROC\_WAIT}, if \textbf{arg} is NULL or
+	\textbf{struct rusage *} for collecting resource usage statistics.
+
+\begin{tabular}{ | l | l | l | l | }
+	\hline
+	\textbf{cmd} & \textbf{parm} & \textbf{arg} & Notes \\
+	\hline
+	\textbf{PROC\_SETSCHED}      & attribute bits & struct syssched * & set scheduling parameters \\
+	\hline
+	\textbf{PROC\_STAT}          & pid or RUSAGE\_SELF & struct rusage * & get resource usage statistics \\
+	\hline
+	\textbf{PROC\_GETLIM}        & limit bits & struct rlimit * & read process limits \\
+	\hline
+	\textbf{PROC\_SETLIM}        & limit bits & struct rlimit * & set process limits \\
 	\hline
 \end{tabular}
 
@@ -600,7 +855,7 @@ struct sigarg {
 	\hline
 	\textbf{MAP\_FIXED}      & map to provided address \\
 	\hline
-	\textbf{MAP\_SINGLE}     & map buffer mapped to single user process and kernel \\
+	\textbf{MAP\_SINGLE}     & map buffer to single user process and kernel \\
 	\hline
 	\textbf{MEM\_NORMAL}     & normal behavior \\
 	\hline
