@@ -17,7 +17,6 @@
  *
  * process interface
  * -----------------
- * void sys_halt(long flg);
  * long sys_sysctl(long cmd, long parm, void *arg);
  * long sys_exit(long val, long flg);
  * void sys_abort(void);

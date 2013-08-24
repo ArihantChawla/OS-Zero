@@ -78,7 +78,7 @@
 	Zero has its roots in old, still simple and elegant versions of the UNIX
 	operating system. I still see many good, timeless things about the UNIX
 	design worth reusing in a new operating system. One thing of particular
-	attraction is the \"everything is a file\" philosophy; I plan to use and
+	attraction is the "everything is a file" philosophy; I plan to use and
 	possibly extend that idea in Zero.
 
 \chapter{System Concepts}
@@ -631,6 +631,8 @@ struct thr {
 
 \subsection{System Call Mechanism}
 
+	\textbf{Interrupt 0x80}
+
 	On \textbf{IA-32} architectures, all of up to 3 system call parameters
 	are passed in registers; the system call number is in \textbf{EAX}. On
 	\textbf{X86-64}	all system call arguments are passed in registers. On
@@ -644,17 +646,23 @@ struct thr {
 
 \section{Process Control}
 
-\subsection{halt}
-
-	\textbf{void sys\_halt(long flg);}
-
-	The halt system call shuts the system down. If the \textbf{flg} argument
-	has the \textbf{HALT\_REBOOT} bit set, the system will be restarted
-	after performing a shutdown.
-
 \subsection{sysctl}
 
 	\textbf{long sys\_sysctl(long cmd, long parm, void *arg);}
+
+	The sysctl system call is used to trigger certain system control
+	operations. The commands, their arguments, and the return values are
+	listed in the next table.
+
+\begin{tabular}{ | l | l | l | l | }
+	\hline
+	\textbf{cmd} & \textbf{parm} & \textbf{arg} & Returns \\
+	\hline
+	\textbf{SYS\_INIT} & runlevel & N/A & new runlevel \\
+	\hline
+\end{tabular}
+
+	\textbf{TODO: SYS\_INIT (SYS\_HALT, SYS\_REBOOT), ...}
 
 \subsection{exit}
 
@@ -679,12 +687,13 @@ struct thr {
 
 	\textbf{long sys\_fork(long flg);}
 
-	The fork system call creates a new child process. If \textbf{flg} has
-	the \textbf{FORK\_VFORK} bit set, the new process shall share the
-	parent's address space; otherwise, the child's address space will be a
-	clone of the parent's address space. If \textbf{flg} has the
-	\textbf{FORK\_COW} bit set, the new process will only clone pages as
-	they are written on.
+	The fork system call creates a new child process. The return value is
+	the process ID of the new child process in the parent, and 0 (zero) in
+	the child process. If \textbf{flg} has the \textbf{FORK\_VFORK} bit set,
+	the new process shall share the	parent's address space; otherwise, the
+	child's address space will be a	clone of the parent's address space. If
+	\textbf{flg} has the \textbf{FORK\_COW} (copy on write) bit set, the new
+	process will only clone pages as they are written on.
 
 \subsection{exec}
 
