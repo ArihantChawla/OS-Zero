@@ -1,0 +1,64 @@
+Dungeon
+-------
+
+This document contains ideas for a Rogue-like adventure game.
+
+The Game
+--------
+
+The goal in the game is to recover Mjölnir, aka the "hammer" (really a dual-side
+axe) of Thor from deep underground to keep the forces of evil from creating
+chaos with thunder and lightnings.
+
+Characters
+----------
+
+To make the most fun off the game and keep it playable on old terminals too,
+the standard "graphics" are drawn as characters.
+
+Table of Characters
+-------------------
+
+The table below lists some ideas for characters.
+
+Character	| Display	| Description
+---------------------------------------------
+altar		| +		| altar of known alignment
+		| 		| - divine, good, neutral, bad, evil
+ant		| a		| ant
+alien		| A		| extraterrestrial creature
+bee		| b		| regular bee, only stings once
+bee queen	| B		| bee queen, killing makes all bees attack you
+cat 		| c		| pet cat
+chest		| C		| chest; may find treasury in them
+corridor	| #		| wall
+dog		| d		| pet dog
+deity		| D		| deity
+Excalibur	| E		| Excalibur, a special sword
+Fenris		| F		| the guardian wolf of gods; kills demons
+floor		| .		| floor/ground
+ghoul		| g		| corpse eater
+gold		| $		| use to get merchandise
+honey		| h		| from beehives after killing the queen
+human		| H		| human being
+knife		| k		| knife, dagger, gurkha, ...
+Mjolnir		| M		| the "hammer" of thor
+pipe		| |		| a pipe for smoking plants
+potion		| ?		| potion
+plant		| *		| plant
+punch card	| =		| to be used on in-dungeon mainframes :)
+ring		| r		| ring
+trap		| t		| trap
+Thor		| T		| god of thunder
+scroll		| s		| spells and other scrolls
+silver		| %		| use for silver bullets
+stairway down	| >		| go down one level
+stairway up	| <		| go up one level
+statue	 	| &		| e.g. Buddha
+sword		| S		| sword
+vampire		| v		| regular vampire
+Dracula		| V		| Dracula; attack will get all vampires to hit
+werewolf	| w		| werewolf
+wizard		| W		| wizard
+zombie		| Z		| zombies; living dead; always evil, attack all
+
