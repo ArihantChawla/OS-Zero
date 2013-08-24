@@ -10,6 +10,9 @@ The goal in the game is to recover Mjölnir, aka the "hammer" (really a dual-side
 axe) of Thor from deep underground to keep the forces of evil from creating
 chaos with thunder and lightnings.
 
+Armed with not much than a few food ratios, your pet dog or cat, a +1 blessed
+armor, and a +3 neutral sword, you enter the Dungeon. Good luck, adventurer!
+
 Characters
 ----------
 
@@ -23,10 +26,11 @@ The table below lists some ideas for characters.
 
 Character	| Display	| Description
 ---------------------------------------------
-altar		| +		| altar of known alignment
-		| 		| - divine, good, neutral, bad, evil
+altar		| +		| altar; try to sacrifice dead creatures on it
 ant		| a		| ant
+		| 		| - regular, soldier ants
 alien		| A		| extraterrestrial creature
+		| 		| - strong, carry laser guns
 bee		| b		| regular bee, only stings once
 bee queen	| B		| bee queen, killing makes all bees attack you
 cat 		| c		| pet cat
@@ -34,31 +38,106 @@ chest		| C		| chest; may find treasury in them
 corridor	| #		| wall
 dog		| d		| pet dog
 deity		| D		| deity
-Excalibur	| E		| Excalibur, a special sword
+fire		| \		| [open] fire
+food		| f		| food ratio
 Fenris		| F		| the guardian wolf of gods; kills demons
 floor		| .		| floor/ground
 ghoul		| g		| corpse eater
 gold		| $		| use to get merchandise
 honey		| h		| from beehives after killing the queen
 human		| H		| human being
+Jatimatic	| J		| sub-machine gun for close range combat
 knife		| k		| knife, dagger, gurkha, ...
+lockpick	| l		| thieves are naturally best at using these
+laser		| L		| laser gun
+mainframe	| m		| computer systems for running punch cards
 Mjolnir		| M		| the "hammer" of thor
+oracle		| O		| oracles know about things
 pipe		| |		| a pipe for smoking plants
+pistol		| p		| pistol
 potion		| ?		| potion
 plant		| *		| plant
 punch card	| =		| to be used on in-dungeon mainframes :)
 ring		| r		| ring
-trap		| t		| trap
-Thor		| T		| god of thunder
-scroll		| s		| spells and other scrolls
+scroll		| ø		| spells and other scrolls
 silver		| %		| use for silver bullets
 stairway down	| >		| go down one level
 stairway up	| <		| go up one level
 statue	 	| &		| e.g. Buddha
-sword		| S		| sword
+sword		| s		| sword
+Stormbringer	| S		| Stormbringer special sword
+trap		| t		| trap
+Thor		| T		| god of thunder
+unicorn		| u		| unicorn
 vampire		| v		| regular vampire
 Dracula		| V		| Dracula; attack will get all vampires to hit
-werewolf	| w		| werewolf
-wizard		| W		| wizard
+water		| ~		| water
+well		| well		| well (water, may be cursed/poisonous)
+wizard		| W		| werewolf
+Excalibur	| X		| Excalibur, a special sword
 zombie		| Z		| zombies; living dead; always evil, attack all
+
+Commands
+--------
+
+Notes
+-----
+- modeled after Rogue
+- movement can also be done using a PC-style numpad
+
+Rogue Commands
+--------------
+
+/		| identify object
+h		| left
+j		| down
+k		| up
+l		| right
+y		| up & left
+u		| up & right
+b		| down & left
+n		| down & right
+<SHIFT><dir>	| run
+<CTRL><dir>	| run till adjacent
+f<dir>		| fight till death or near death
+t<dir>		| throw
+m<dir>		| move but don't pick up
+z<dir>		| zap a wand
+^<dir>		| identify trap type
+s		| search for trap/secret door
+>		| go down
+<		| go up
+.		| rest for a turn
+,		| pick up
+i		| inventory
+I		| inventory single item
+q		| quaff potion
+r		| read scroll
+e		| eat food
+w		| wield a weapon
+W		| wear armor
+T		| take armor off
+P		| put on ring
+R		| remove ring
+d		| drop object
+c		| call object
+a		| repeat last command
+)		| print current weapon
+]		| print current armor
+=		| print current rings
+@		| print current stats
+D		| recall what's been discovered
+o		| examine/set options
+^R		| redraw screen
+^P		| repeat last message
+^[		| cancel command
+S		| save game
+Q		| quit
+
+Mjolnir Extensions
+------------------
+
+u		| use an object with another one
+o		| turn off
+O		| turn on
 
