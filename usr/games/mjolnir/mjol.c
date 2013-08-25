@@ -12,4 +12,3 @@ struct mjolchar {
     long exp;
 };
 
-#endif /* ASCIIGFX */

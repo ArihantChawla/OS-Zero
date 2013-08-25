@@ -43,10 +43,6 @@
 #define MJOL_OBJ_WELL      'w'
 #define MJOL_OBJ_WOLF      'W'
 #define MJOL_OBJ_ZOMBIE    'Z'
-/* events */
-#define MJOL_EV_NONE       0
-#define MJOL_EV_ATTACK     1
-#define MJOL_EV_RETREAT    2
 
 #endif /* __MJOLNIR_MJOL_H__ */
 
