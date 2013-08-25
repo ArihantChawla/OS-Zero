@@ -69,7 +69,6 @@ pistol		| p		| pistol
 ring		| r		| ring
 unicorn		| u		| unicorn
 vampire		| v		| regular vampire
-Dracula		| V		| Dracula; attack will get all vampires to hit
 well		| w		| well (water, may be cursed/poisonous)
 wolf		| W		| may be Fenris
 zombie		| Z		| zombies; living dead; always evil, attack all
@@ -81,6 +80,7 @@ Jatimatic	| G		| sub-machine gun for close range combat
 Mjolnir		| M		| the "hammer" of thor
 Stormbringer	| s		| Stormbringer special sword
 Excalibur	| s		| Excalibur special sword
+Dracula		| V		| Dracula; attack will get all vampires to hit
 Fenris		| W		| the guardian wolf of gods; kills demons
 
 Commands
