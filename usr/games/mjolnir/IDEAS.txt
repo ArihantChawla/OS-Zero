@@ -71,6 +71,7 @@ unicorn		| u		| unicorn
 vampire		| v		| regular vampire
 well		| w		| well (water, may be cursed/poisonous)
 wolf		| W		| may be Fenris
+cross		| X		| cross; may be 
 zombie		| Z		| zombies; living dead; always evil, attack all
 
 Special Items

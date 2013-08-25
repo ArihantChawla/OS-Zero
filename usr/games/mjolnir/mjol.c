@@ -1,6 +1,6 @@
 #include <mjolnir/mjol.h>
 
-typedef void (*mjolfunc_t)(struct dngobj *src, struct dngobj *dest);
+typedef void mjolfunc_t(struct dngobj *src, struct dngobj *dest);
 
 struct mjolchar {
     long hp;
