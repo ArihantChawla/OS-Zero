@@ -1,4 +1,4 @@
-Dungeon
+Mjolnir
 -------
 
 This document contains ideas for a Rogue-like adventure game.
@@ -6,12 +6,13 @@ This document contains ideas for a Rogue-like adventure game.
 The Game
 --------
 
-The goal in the game is to recover Mjölnir, aka the "hammer" (really a dual-side
+The goal in the game is to recover Mjolnir, aka the "hammer" (really a dual-side
 axe) of Thor from deep underground to keep the forces of evil from creating
 chaos with thunder and lightnings.
 
-Armed with not much than a few food ratios, your pet dog or cat, a +1 blessed
-armor, and a +3 neutral sword, you enter the Dungeon. Good luck, adventurer!
+Armed with nothing more than a few food ratios, your pet dog or cat, a +1
+blessed armor, and a +3 neutral sword, you enter the Dungeon. Good luck,
+adventurer!
 
 Characters
 ----------
@@ -26,7 +27,22 @@ The table below lists some ideas for characters.
 
 Character	| Display	| Description
 ---------------------------------------------
+floor		| .		| floor/ground
+corridor	| #		| wall
 altar		| +		| altar; try to sacrifice dead creatures on it
+water		| ~		| water
+gold		| $		| use to get merchandise
+potion		| ?		| potion
+plant		| *		| plant
+punchcard	| =		| to be used on in-dungeon mainframes :)
+silver		| %		| use for silver bullets
+stairway down	| >		| go down one level
+stairway up	| <		| go up one level
+statue	 	| &		| e.g. Buddha
+trap		| ^		| trap
+sword		| |		| sword
+wand		| \		| magic wand
+---------------------------------------------
 ant		| a		| ant
 		| 		| - regular, soldier ants
 alien		| A		| extraterrestrial creature
@@ -35,47 +51,37 @@ bee		| b		| regular bee, only stings once
 bee queen	| B		| bee queen, killing makes all bees attack you
 cat 		| c		| pet cat
 chest		| C		| chest; may find treasury in them
-corridor	| #		| wall
 dog		| d		| pet dog
 deity		| D		| deity
-fire		| \		| [open] fire
 food		| f		| food ratio
-Fenris		| F		| the guardian wolf of gods; kills demons
-floor		| .		| floor/ground
 ghoul		| g		| corpse eater
-gold		| $		| use to get merchandise
+sub-machine gun | G		| may be Jatimatic
 honey		| h		| from beehives after killing the queen
 human		| H		| human being
-Jatimatic	| J		| sub-machine gun for close range combat
 knife		| k		| knife, dagger, gurkha, ...
 lockpick	| l		| thieves are naturally best at using these
 laser		| L		| laser gun
-mainframe	| m		| computer systems for running punch cards
-Mjolnir		| M		| the "hammer" of thor
+mainframe	| m		| computer systems for running punchcards
+mace		| M		| may be Mjolnir
+scroll		| o		| spells and other scrolls
 oracle		| O		| oracles know about things
-pipe		| |		| a pipe for smoking plants
 pistol		| p		| pistol
-potion		| ?		| potion
-plant		| *		| plant
-punch card	| =		| to be used on in-dungeon mainframes :)
 ring		| r		| ring
-scroll		| ø		| spells and other scrolls
-silver		| %		| use for silver bullets
-stairway down	| >		| go down one level
-stairway up	| <		| go up one level
-statue	 	| &		| e.g. Buddha
-sword		| s		| sword
-Stormbringer	| S		| Stormbringer special sword
-trap		| t		| trap
-Thor		| T		| god of thunder
 unicorn		| u		| unicorn
 vampire		| v		| regular vampire
 Dracula		| V		| Dracula; attack will get all vampires to hit
-water		| ~		| water
-well		| well		| well (water, may be cursed/poisonous)
-wizard		| W		| werewolf
-Excalibur	| X		| Excalibur, a special sword
+well		| w		| well (water, may be cursed/poisonous)
+wolf		| W		| may be Fenris
 zombie		| Z		| zombies; living dead; always evil, attack all
+
+Special Items
+-------------
+Thor		| D		| god of thunder
+Jatimatic	| G		| sub-machine gun for close range combat
+Mjolnir		| M		| the "hammer" of thor
+Stormbringer	| s		| Stormbringer special sword
+Excalibur	| s		| Excalibur special sword
+Fenris		| W		| the guardian wolf of gods; kills demons
 
 Commands
 --------
