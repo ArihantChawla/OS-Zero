@@ -107,7 +107,7 @@ n		| down & right
 <CTRL><dir>	| run till adjacent
 f<dir>		| fight till death or near death
 t<dir>		| throw
-m<dir>		| move but don't pick up
+m<dir>		| move on top but don't pick up
 z<dir>		| zap a wand
 ^<dir>		| identify trap type
 s		| search for trap/secret door
