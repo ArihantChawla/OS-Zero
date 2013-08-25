@@ -3,16 +3,20 @@ Mjolnir
 
 This document contains ideas for a Rogue-like adventure game.
 
-The Game
---------
+Introduction
+------------
 
-The goal in the game is to recover Mjolnir, aka the "hammer" (really a dual-side
-axe) of Thor from deep underground to keep the forces of evil from creating
-chaos with thunder and lightnings.
+Legend has it that many moons ago, Fenris, the eldest child of Loki and
+Angrboda, broke free from his chain, Pleignir, and stole Mjolnir from Thor.
+Fenris is believed to have hidden Mjolnir, Thor's hammer, into a dungeon.
+
+It is said that Thor shall ascend the one to return Mjolnir to a deity for
+saving the world from the forces of evil creating chaos with lightnings and
+thunder. Clairvoyants say evil forces are already on the hunt for Mjolnir.
 
 Armed with nothing more than a few food ratios, your pet dog or cat, a +1
-blessed armor, and a +3 neutral sword, you enter the Dungeon. Good luck,
-adventurer!
+blessed armor, a +3 neutral sword, and a piece of Pleignir, you enter the
+Dungeon. Good luck, adventurer, and beware of Fenris!
 
 Characters
 ----------
