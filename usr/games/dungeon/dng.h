@@ -5,6 +5,7 @@ struct dngobj {
     size_t datasz;      // size of object data
     size_t nfunc;       // # of functions in functab
     long   type;        // object type (character, other object)
+    long   flg;         // object flags
     void  *data;        // object data (attributes)
     void  *functab;     // object functions
 };

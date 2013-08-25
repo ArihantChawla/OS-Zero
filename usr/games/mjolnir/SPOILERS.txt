@@ -8,4 +8,5 @@ Notes
 -----
 - if you kill a bee queen, all bees will attack you; you get honey afterwards
 - aliens carry laser guns
+- Holy Cross kills minor demons, e.g. all vampires but Dracula
 

@@ -46,16 +46,15 @@ wand		| \		| magic wand
 ant		| a		| ant
 		| 		| - regular, soldier ants
 alien		| A		| extraterrestrial creature
-		| 		| - strong, carry laser guns
 bee		| b		| regular bee, only stings once
-bee queen	| B		| bee queen, killing makes all bees attack you
+bee queen	| B		| bee queen
 cat 		| c		| pet cat
 chest		| C		| chest; may find treasury in them
 dog		| d		| pet dog
 deity		| D		| deity
 food		| f		| food ratio
-ghoul		| g		| corpse eater
-sub-machine gun | G		| may be Jatimatic
+sub-machine gun | g		| may be Jatimatic
+ghoul		| G		| corpse eater
 honey		| h		| from beehives after killing the queen
 human		| H		| human being
 knife		| k		| knife, dagger, gurkha, ...
@@ -66,22 +65,25 @@ mace		| M		| may be Mjolnir
 scroll		| o		| spells and other scrolls
 oracle		| O		| oracles know about things
 pistol		| p		| pistol
+pipe		| P		| pipe
 ring		| r		| ring
 unicorn		| u		| unicorn
 vampire		| v		| regular vampire
 well		| w		| well (water, may be cursed/poisonous)
 wolf		| W		| may be Fenris
-cross		| X		| cross; may be 
+cross		| x		| cross; may be Holy Cross
 zombie		| Z		| zombies; living dead; always evil, attack all
 
 Special Items
 -------------
 Thor		| D		| god of thunder
-Jatimatic	| G		| sub-machine gun for close range combat
+Jatimatic	| g		| sub-machine gun for close range combat
 Mjolnir		| M		| the "hammer" of thor
 Stormbringer	| s		| Stormbringer special sword
 Excalibur	| s		| Excalibur special sword
 Dracula		| V		| Dracula; attack will get all vampires to hit
+Holy Cross	| x		| holy cross with the names of 4 archangels
+     		  		| - Michael, Raphael, Gabriel, Uriel
 Fenris		| W		| the guardian wolf of gods; kills demons
 
 Commands

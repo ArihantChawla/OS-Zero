@@ -13,7 +13,7 @@
 #include <stdlib.h>
 #include <string.h>
 #include <time.h>
-#include <zero/randk.h>
+#include <zero/randmt32.h>
 #include "dice.h"
 
 void
@@ -53,36 +53,43 @@ void
 diceinit(unsigned int seed)
 {
     if (!seed) {
-        srand(time(NULL));
-    } else {
-        srand(seed);
+        seed = 1;
     }
+    srandmt32(seed);
 
     return;
 }
 
 unsigned long
-dicerolld20(struct diced20 *rollbuf)
+dicerolld20(struct diced20 *dicebuf)
 {
     long retval = 0;
+    long n;
 
-    if (rollbuf->nd4) {
-        retval += rollbuf->nd4 * diceroll(DICE_1D4);
+
+    n = dicebuf->nd4;
+    if (n) {
+        retval += dicerolln(n, DICE_1D4);
     }
-    if (rollbuf->nd6) {
-        retval += rollbuf->nd6 * diceroll(DICE_1D6);
+    n = dicebuf->nd6;
+    if (n) {
+        retval += dicerolln(n, DICE_1D6);
     }
-    if (rollbuf->nd8) {
-        retval += rollbuf->nd8 * diceroll(DICE_1D8);
+    n = dicebuf->nd8;
+    if (n) {
+        retval += dicerolln(n, DICE_1D8);
     }
-    if (rollbuf->nd10) {
-        retval += rollbuf->nd10 * diceroll(DICE_1D10);
+    n = dicebuf->nd10;
+    if (n) {
+        retval += dicerolln(n, DICE_1D10);
     }
-    if (rollbuf->nd12) {
-        retval += rollbuf->nd12 * diceroll(DICE_1D12);
+    n = dicebuf->nd12;
+    if (n) {
+        retval += dicerolln(n, DICE_1D12);
     }
-    if (rollbuf->nd20) {
-        retval += rollbuf->nd20 * diceroll(DICE_1D20);
+    n = dicebuf->nd20;
+    if (n) {
+        retval += dicerolln(n, DICE_1D20);
     }
 
     return retval;
@@ -92,14 +99,13 @@ dicerolld20(struct diced20 *rollbuf)
 int
 main(int argc, char *argv[])
 {
-    struct diced20 rollbuf = { 0, 0, 0, 0, 0, 0 };
+    struct diced20 dicebuf = { 0, 0, 0, 0, 0, 0 };
     int            retval = 0;
 
     diceinit(0);
-    srand(time(NULL));
-    srandk(time(NULL));
-    diceparsecmd(&rollbuf, argc, argv);
-    retval = dicerolld20(&rollbuf);
+    srandmt32(time(NULL));
+    diceparsecmd(&dicebuf, argc, argv);
+    retval = dicerolld20(&dicebuf);
     fprintf(stderr, "DICE: %lu\n", retval);
 
     fprintf(stderr, "%dd%d : %d\n",

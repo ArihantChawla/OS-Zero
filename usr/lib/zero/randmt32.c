@@ -19,7 +19,7 @@
 #include <zero/param.h>
 #include <zero/cdecl.h>
 
-void srand32(uint32_t seed);
+void srandmt32(uint32_t seed);
 
 #define RAND32NBUFITEM   624            // # of buffer values
 /* magic numbers */
@@ -41,7 +41,7 @@ static uint32_t     randndx;
 static volatile int randinit;
 
 void
-srand32(uint32_t seed)
+srandmt32(uint32_t seed)
 {
     uint32_t val;
     int32_t  tmp;
@@ -65,12 +65,9 @@ void
 _randbuf32(void)
 {
     int       i;
-    int       j;
     uint32_t  x;
-    uint32_t *ptr;
     uint32_t  val1;
     uint32_t  val2;
-    uint32_t  val;
     
     for (i = 0 ; i < 623 - 397 ; i++) {
         val1 = i + 1;
@@ -83,7 +80,7 @@ _randbuf32(void)
     }
     for ( ; i < RAND32NBUFITEM ; i++) { 
         val1 = i + 1;
-        x = (randbuf32[i] & 0x80000000) + (randbuf32[val1] 0x7fffffff);
+        x = (randbuf32[i] & 0x80000000) + (randbuf32[val1] & 0x7fffffff);
         randbuf32[i] = randbuf32[val1] ^ (x >> 1);
         i++;
         val2 = i + 1;
@@ -93,9 +90,9 @@ _randbuf32(void)
 }
 
 int
-rand(void)
+randmt32(void)
 {
-    uint32_t x;
+    int x;
 
     if (!randndx) {
         _randbuf32();
@@ -109,11 +106,11 @@ rand(void)
     }
     x = randbuf32[randndx];
     x ^= x >> RAND32SHIFT1;
-    x = (x >> RAND32SHIFT2) & RAND32MASK2;
-    x = (x >> RAND32SHIFT3) & RAND32MASK3;
+    x ^= (x >> RAND32SHIFT2) & RAND32MASK2;
+    x ^= (x >> RAND32SHIFT3) & RAND32MASK3;
     x ^= x >> RAND32SHIFT4;
     randndx = randnext32[randndx];
 
-    return (int)x;
+    return x;
 }
 

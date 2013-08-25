@@ -19,14 +19,22 @@
 
 #if (DICE_SRAND_TIME)
 #include <time.h>
-#define diceroll(val) (srand(time(NULL)), (rand() % (val)) + 1)
-#define dicerolln(n, val)                                               \
-    (srand(time(NULL)), (rand() % (n * (val))) + 1)
+#define diceroll(max) (srandmt32(time(NULL)), (randmt32() % (max)) + 1)
 #else
-#define diceroll(val) ((rand() % (val)) + 1)
-#define dicerolln(n, val)                                               \
-    ((rand() % (n * (val))) + 1)
+#define diceroll(max) ((randmt32() % (max)) + 1)
 #endif
+
+static __inline__ long
+dicerolln(long n, long max)
+{
+    long retval = 0;
+
+    while (n--) {
+        retval += diceroll(max);
+    }
+
+    return retval;
+}
 
 /* roll buffer for d20 dice set */
 struct diced20 {

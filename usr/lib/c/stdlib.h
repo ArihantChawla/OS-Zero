@@ -8,13 +8,7 @@
 #define EXIT_SUCCESS 0
 #define EXIT_FAILURE 1
 
-#define RAND_MAX     0xffffffff
-
-void exit(int status);
-
-#define srand(useed) srand32(useed)
-int    rand(void);
-
+void   exit(int status);
 void * malloc(size_t size);
 void * calloc(size_t n, size_t size);
 void * realloc(void *ptr, size_t size);
