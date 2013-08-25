@@ -51,5 +51,11 @@
 #define MJOL_FLG_FROZEN          0x00000004U    // character can't move
 #define MJOL_FLG_BLIND           0x00000008U    // character is blind
 
+#define MJOL_CMD_IDENTIFY        '/'
+#define MJOL_CMD_LEFT            'h'
+#define MJOL_CMD_DOWN            'j'
+#define MJOL_CMD_UP              'k'
+#define MJOL_CMD_RIGHT           'l'
+
 #endif /* __MJOLNIR_MJOL_H__ */
 

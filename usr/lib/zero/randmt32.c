@@ -19,44 +19,42 @@
 #include <zero/param.h>
 #include <zero/cdecl.h>
 
-void srandmt32(uint32_t seed);
-
-#define RAND32NBUFITEM   624            // # of buffer values
+#define RANDMT32NBUFITEM   624            // # of buffer values
 /* magic numbers */
-#define RAND32MULTIPLIER 0x6c078965
-#define RAND32XORVALUE   0x9908b0df
+#define RANDMT32MULTIPLIER 0x6c078965
+#define RANDMT32XORVALUE   0x9908b0df
 /* shift counts */
-#define RAND32SHIFT      30
-#define RAND32SHIFT1     11
-#define RAND32SHIFT2     7
-#define RAND32SHIFT3     15
-#define RAND32SHIFT4     18
+#define RANDMT32SHIFT      30
+#define RANDMT32SHIFT1     11
+#define RANDMT32SHIFT2     7
+#define RANDMT32SHIFT3     15
+#define RANDMT32SHIFT4     18
 /* bitmasks */
-#define RAND32MASK2      0x9d2c5680
-#define RAND32MASK3      0xefc60000
+#define RANDMT32MASK2      0x9d2c5680
+#define RANDMT32MASK3      0xefc60000
 
-static uint32_t     randbuf32[RAND32NBUFITEM] ALIGNED(PAGESIZE);
-static uint32_t     randnext32[RAND32NBUFITEM];
-static uint32_t     randndx;
+static int32_t      randbuf32[RANDMT32NBUFITEM] ALIGNED(PAGESIZE);
+static int32_t      randnext32[RANDMT32NBUFITEM] ALIGNED(PAGESIZE);
+static int32_t      randndx;
 static volatile int randinit;
 
 void
-srandmt32(uint32_t seed)
+srandmt32(int32_t seed)
 {
-    uint32_t val;
-    int32_t  tmp;
-    int      i;
+    int32_t val;
+    int32_t tmp;
+    int     i;
 
     if (!seed) {
         seed++;
     }
     randbuf32[0] = seed;
-    val = seed >> RAND32SHIFT;
-    tmp = RAND32MULTIPLIER * (seed ^ val) + 1;
+    val = seed >> RANDMT32SHIFT;
+    tmp = RANDMT32MULTIPLIER * (seed ^ val) + 1;
     randbuf32[1] = tmp;
-    for (i = 2 ; i < RAND32NBUFITEM; i++) {
-        val = tmp >> RAND32SHIFT;
-        tmp = RAND32MULTIPLIER * (tmp ^ val) + i;
+    for (i = 2 ; i < RANDMT32NBUFITEM; i++) {
+        val = tmp >> RANDMT32SHIFT;
+        tmp = RANDMT32MULTIPLIER * (tmp ^ val) + i;
         randbuf32[i] = tmp;
     }
 }
@@ -65,9 +63,9 @@ void
 _randbuf32(void)
 {
     int       i;
-    uint32_t  x;
-    uint32_t  val1;
-    uint32_t  val2;
+    int32_t  x;
+    int32_t  val1;
+    int32_t  val2;
     
     for (i = 0 ; i < 623 - 397 ; i++) {
         val1 = i + 1;
@@ -76,23 +74,23 @@ _randbuf32(void)
         i++;
         val2 = i + 1;
         x = (randbuf32[i] & 0x80000000) + (randbuf32[val2] & 0x7fffffff);
-        randbuf32[i] = (randbuf32[i + 397] ^ (x >> 1)) ^ RAND32XORVALUE;
+        randbuf32[i] = (randbuf32[i + 397] ^ (x >> 1)) ^ RANDMT32XORVALUE;
     }
-    for ( ; i < RAND32NBUFITEM ; i++) { 
+    for ( ; i < RANDMT32NBUFITEM ; i++) { 
         val1 = i + 1;
         x = (randbuf32[i] & 0x80000000) + (randbuf32[val1] & 0x7fffffff);
         randbuf32[i] = randbuf32[val1] ^ (x >> 1);
         i++;
         val2 = i + 1;
         x = (randbuf32[i] & 0x80000000) + (randbuf32[val2] & 0x7fffffff);
-        randbuf32[i] = (randbuf32[val2] ^ (x >> 1)) ^ RAND32XORVALUE;
+        randbuf32[i] = (randbuf32[val2] ^ (x >> 1)) ^ RANDMT32XORVALUE;
     }
 }
 
 int
 randmt32(void)
 {
-    int x;
+    int32_t x;
 
     if (!randndx) {
         _randbuf32();
@@ -105,12 +103,12 @@ randmt32(void)
         randinit = 1;
     }
     x = randbuf32[randndx];
-    x ^= x >> RAND32SHIFT1;
-    x ^= (x >> RAND32SHIFT2) & RAND32MASK2;
-    x ^= (x >> RAND32SHIFT3) & RAND32MASK3;
-    x ^= x >> RAND32SHIFT4;
+    x ^= x >> RANDMT32SHIFT1;
+    x ^= (x >> RANDMT32SHIFT2) & RANDMT32MASK2;
+    x ^= (x >> RANDMT32SHIFT3) & RANDMT32MASK3;
+    x ^= x >> RANDMT32SHIFT4;
     randndx = randnext32[randndx];
 
-    return x;
+    return (int)x;
 }
 
