@@ -151,6 +151,6 @@ Mjolnir Extensions
 ------------------
 
 u		| use an object with another one
-o		| turn off
-O		| turn on
+0		| turn off
+1		| turn on
 
