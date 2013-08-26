@@ -1,8 +1,12 @@
 #ifndef __MJOLNIR_MJOL_H__
 #define __MJOLNIR_MJOL_H__
 
+#include <stddef.h>
+#include <dungeon/dng.h>
+#include <mjolnir/win.h>
+
 #define MJOL_DEF_NLVL   128
-#define MJOL_DEF_WITDH  80
+#define MJOL_DEF_WIDTH  80
 #define MJOL_DEF_HEIGHT 24
 
 /* object types/characters */
@@ -86,8 +90,8 @@
 #define MJOL_CMD_ZAP              'z'
 #define MJOL_CMD_IDENTIFY_TRAP    '^'
 #define MJOL_CMD_SEARCH           's'
-#define MJOL_CMD_GO_DOWN          '>'
-#define MJOL_CMD_GO_UP            '<'
+#define MJOL_CMD_LEVEL_DOWN       '>'
+#define MJOL_CMD_LEVEL_UP         '<'
 #define MJOL_CMD_REST             '.'
 #define MJOL_CMD_PICK_UP          ','
 #define MJOL_CMD_INVENTORY        'i'
@@ -119,9 +123,10 @@
 #define MJOLNIR_CMD_TURN_ON       '0'
 #define MJOLNIR_CMD_TURN_OFF      '1'
 
-#define MJOL_WIN_TTY              0
-#define MJOL_WIN_VGA              1
-#define MJOL_WIN_X11              2
+#define MJOL_WIN_NONE             0
+#define MJOL_WIN_TTY              1
+#define MJOL_WIN_VGA_TEXT         2
+#define MJOL_WIN_X11              3
 struct mjolgamedata {
     long              wintype;  // type of "window" to use
     size_t            nlvl;     // # of levels
@@ -176,7 +181,7 @@ mjolcharnturn(struct mjolchardata *chardata)
 {
     long speed = chardata->speed;
     long turn;
-    long retval;
+    long retval = 0;
 
     if (speed < 0) {
         turn = chardata->turn;
@@ -203,7 +208,7 @@ struct mjolobjdata {
     long  weight;       // weight of object
     long  bless;        // BLESSED, NEUTRAL, CURSED
     long  parm;         // e.g. +1 or -1 for armor
-}
+};
 
 #endif /* __MJOLNIR_MJOL_H__ */
 

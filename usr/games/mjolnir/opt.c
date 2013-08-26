@@ -1,3 +1,7 @@
+#include <stdio.h>
+#include <stdlib.h>
+#include <string.h>
+#include <mjolnir/conf.h>
 #include <mjolnir/mjol.h>
 
 long
@@ -29,9 +33,41 @@ mjolgetopt(struct mjolgamedata *gamedata, int argc, char *argv[])
             str = argv[ndx];
 #if (MJOLNIR_VGA_TEXT)
             if (!strncmp(str, "vga", 3)) {
-                
+                gamedata->wintype = MJOL_WIN_VGA_TEXT;
+            }
+#else
+            if (!strncmp(str, "vga", 3)) {
+                fprintf(stderr, "unsupported wintype vga\n");
+
+                exit(1);
             }
 #endif
+            if (!gamedata->wintype) {
+#if (MJOLNIR_TTY)
+                if (!strncmp(str, "tty", 3)) {
+                    gamedata->wintype = MJOL_WIN_TTY;
+                }
+#else
+                if (!strncmp(str, "tty", 3)) {
+                    fprintf(stderr, "unsupported wintype tty\n");
+
+                    exit(1);
+                }
+#endif
+                if (!gamedata->wintype) {
+#if (MJOLNIR_X11)
+                    if (!strncmp(str, "x11", 3)) {
+                        gamedata->wintype = MJOL_WIN_X11;
+                    }
+#else
+                    if (!strncmp(str, "x11", 3)) {
+                        fprintf(stderr, "unsupported wintype x11\n");
+
+                        exit(1);
+                    }
+#endif
+                }
+            }
         } else if (!strncmp(str, "-h", 2)) {
             ndx++;
             str = argv[ndx];

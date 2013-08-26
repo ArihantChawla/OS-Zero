@@ -1,7 +1,7 @@
 #ifndef __MJOLNIR_VGA_H__
 #define __MJOLNIR_VGA_H__
 
-#include <mjol/conf.h>
+#include <mjolnir/conf.h>
 
 #if (MJOLNIR_VGA_TEXT)
 

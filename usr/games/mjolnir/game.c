@@ -1,5 +1,7 @@
 #include <stdlib.h>
-#include <mjol/mjol.h>
+#include <mjolnir/mjol.h>
+
+extern long mjolgetopt(struct mjolgamedata *gamedata, int argc, char *argv[]);
 
 char mjolgamename[] = "mjolnir";
 
@@ -22,7 +24,10 @@ mjolinitgame(struct dnggame *game)
     }
     data->dngtab = calloc(data->nlvl * data->width * data->height,
                           sizeof (char));
+#if 0
+    mjolinitwin(data);
     mjolgendng(data);
+#endif
 
     return retval;
 }

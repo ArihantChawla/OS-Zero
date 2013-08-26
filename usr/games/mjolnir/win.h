@@ -6,11 +6,10 @@
 #if (MJOLNIR_VGA_TEXT)
 #include <mjolnir/vga.h>
 #endif
-#if (MJOLNIR_TTY_GRAPHICS)
-/* curses */
+#if (MJOLNIR_TTY)
 #include <mjolnir/tty.h>
 #endif
-#if (MJOLNIR_X11_GRAPHICS)
+#if (MJOLNIR_X11)
 #define MJOLNIR_USE_IMLIB2
 #include <mjolnir/x11.h>
 #endif

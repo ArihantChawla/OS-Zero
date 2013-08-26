@@ -1,4 +1,7 @@
-/* mjolgetch() etc. */
+#include <mjolnir/conf.h>
+#include <mjolnir/mjol.h>
+
+#if (MJOLNIR_VGA_TEXT) && (__ZERO__)
 
 static struct evkbdqchar *kbdevq;
 
@@ -17,10 +20,13 @@ mjolgetch(void)
     }
     ch = evdeqkbdchar(kbdevq);
     while (!ch) {
+        /* wait for signal; Zero delivers SIGIO on keyboard (and mouse) input */
         pause();
         ch = evdeqkbdchar(kbdevq);
     }
 
     return ch;
 }
+
+#endif /* (MJOLNIR_VGA_TEXT) && (__ZERO__) */
 

@@ -1,16 +1,19 @@
 /* mjolopenwin(), mjolclosewin(), mjolttyexit(), mjoldraw(), mjoldrawscreen() */
 
-#include <mjol/conf.h>
+#include <mjolnir/conf.h>
 
-#if (MJOL_TTY_GRAPHICS)
+#if (MJOL_TTY)
 
-#include <mjol/mjol.h>
-#include <mjol/win.h>
+#include <mjolnir/mjol.h>
+#include <mjolnir/win.h>
 
 void
 mjolopentty(void)
 {
     initscr();
+    raw();
+    keypad(stdscr, TRUE);
+    noecho();
 
     return;
 }
@@ -23,5 +26,5 @@ mjolclosetty(void)
     return;
 }
 
-#endif /* MJOL_TTY_GRAPHICS */
+#endif /* MJOL_TTY */
 

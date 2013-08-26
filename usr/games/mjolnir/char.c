@@ -1,7 +1,8 @@
-#include <mjol/mjol.h>
+#include <zero/trix.h>
+#include <mjolnir/mjol.h>
 
-static uint8_t chdirbitmap[32] ALIGNED(CLSIZE);
-static uint8_t chargbitmap[32] ALIGNED(CLSIZE);
+static uint8_t chdirbitmap[32];
+static uint8_t chargbitmap[32];
 
 void
 mjolchardoturn(struct mjolchardata *chardata)
@@ -14,7 +15,7 @@ mjolchardoturn(struct mjolchardata *chardata)
         mjolprintmsg("You have %ld turns\n", n);
         while (n--) {
             ch1 = mjolgetch();
-            if (bitset(chdirbitmap, ch)) {
+            if (bitset(chdirbitmap, ch1)) {
                 ch2 = mjolgetch();
             }
             chardata->nturn++;
