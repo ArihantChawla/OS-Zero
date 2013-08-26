@@ -8,7 +8,7 @@ mjolgetch(void)
     int ch;
 
     if (!kbdevq) {
-        kbdevq = evreg(EVKEYDOWNMASK, EVKEY8BIT);
+        kbdevq = evreg(EVKEYDOWNMASK, EVKEYASCII);
         if (!kbdevq) {
             fprintf(stderr, "cannot allocate keyboard event queue\n");
 
@@ -16,10 +16,10 @@ mjolgetch(void)
         }
     }
     ch = evdeqkbdchar(kbdevq);
-    do {
+    while (!ch) {
         pause();
         ch = evdeqkbdchar(kbdevq);
-    } while (!ch);
+    }
 
     return ch;
 }

@@ -1,6 +1,10 @@
 #ifndef __MJOLNIR_VGA_H__
 #define __MJOLNIR_VGA_H__
 
+#include <mjol/conf.h>
+
+#if (MJOLNIR_VGA_TEXT)
+
 #include <kern/ev.h>
 #include <kern/io/drv/pc/vga.h>
 
@@ -10,9 +14,10 @@ struct mjolvgascreen {
     long      y;        // screen Y-coordinate
     uint16_t  bgcolor;  // current background color
     uint16_t  fgcolor;  // current foreground color
-    uint8_t  *kbdbuf;   // keyboard events
-    uint16_t *textbuf;  // vga text buffer
+    uint16_t *textbuf;  // VGA text buffer
 };
+
+#endif /* MJOLNIR_VGA_TEXT */
 
 #endif /* __MJOLNIR_VGA_H__ */
 

@@ -1,6 +1,10 @@
 #ifndef __MJOLNIR_MJOL_H__
 #define __MJOLNIR_MJOL_H__
 
+#define MJOL_DEF_NLVL   128
+#define MJOL_DEF_WITDH  80
+#define MJOL_DEF_HEIGHT 24
+
 /* object types/characters */
 #define MJOL_OBJ_PLAYER          '@'
 #define MJOL_OBJ_FLOOR           '.'
@@ -115,7 +119,11 @@
 #define MJOLNIR_CMD_TURN_ON       '0'
 #define MJOLNIR_CMD_TURN_OFF      '1'
 
+#define MJOL_WIN_TTY              0
+#define MJOL_WIN_VGA              1
+#define MJOL_WIN_X11              2
 struct mjolgamedata {
+    long              wintype;  // type of "window" to use
     size_t            nlvl;     // # of levels
     size_t            width;    // width of level in cells
     size_t            height;   // height of level

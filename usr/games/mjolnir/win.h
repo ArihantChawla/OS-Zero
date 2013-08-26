@@ -3,9 +3,8 @@
 
 #include <mjolnir/conf.h>
 
-/* mjolopenwin(), mjolclosewin(), mjolttyexit(), mjoldraw, mjoldrawscreen */
-#if (MJOLNIR_VGACON_GRAPHICS)
-#include <mjolnir/vgacon.h>
+#if (MJOLNIR_VGA_TEXT)
+#include <mjolnir/vga.h>
 #endif
 #if (MJOLNIR_TTY_GRAPHICS)
 /* curses */
