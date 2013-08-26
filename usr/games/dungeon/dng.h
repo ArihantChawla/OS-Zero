@@ -3,6 +3,13 @@
 
 /* data structures */
 
+struct dnggame {
+    char  *name;        // name of the game
+    int    argc;        // cmdline argument count
+    char **argv;        // cmdline arguments
+    void  *objdata;     // per-game object data
+};
+
 struct dngchar {
     long    id;         // character ID
     long    type;       // character type

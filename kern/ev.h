@@ -3,6 +3,7 @@
 
 #include <stdint.h>
 #include <zero/cdecl.h>
+#include <zero/param.h>
 
 /* event header structure */
 
@@ -45,15 +46,15 @@
  */
 
 /* mask-bits for modifier keys */
-#define EVKBDSHIFT        0x00000001    // Shift
-#define EVKBDCAPSLK       0x00000002    // Caps Lock
-#define EVKBDCTRL         0x00000004    // Ctrl
-#define EVKBDMETA         0x00000008    // Meta
-#define EVKBDCOMPOSE      0x00000010    // Compose
-#define EVKBDALT          0x00000020    // Alt
-#define EVKBDALTGR        0x00000040    // AltGr
-#define EVKBDSCRLOCK      0x00000080    // Scroll Lock
-#define EVNUMLOCK         0x00000100    // Num Lock
+#define EVKBDSHIFT       0x00000001     // Shift
+#define EVKBDCAPSLK      0x00000002     // Caps Lock
+#define EVKBDCTRL        0x00000004     // Ctrl
+#define EVKBDMETA        0x00000008     // Meta
+#define EVKBDCOMPOSE     0x00000010     // Compose
+#define EVKBDALT         0x00000020     // Alt
+#define EVKBDALTGR       0x00000040     // AltGr
+#define EVKBDSCRLOCK     0x00000080     // Scroll Lock
+#define EVNUMLOCK        0x00000100     // Num Lock
 #define EVKBDNFLGBIT     9
 #define kbducval(ev)     ((ev)->sym)    // extract Unicode value
 #define kbdbutton(ev, b) ((ev)->state & (1L << ((b) + EVKBDNFLGBIT)))
@@ -62,6 +63,70 @@ struct evkbd {
     int32_t sym;                        // Unicode key symbol + flags
     int32_t state;                      // button state mask if present
 } PACK();
+
+/* dequeue character from keyboard queue. FIXME: may not work */
+static __inline__ char
+evdeqkbdchar(struct evkbdqchar *queue)
+{
+    int32_t n;
+    int32_t cur;
+    int32_t ndx;
+    uint8_t retval = 0;
+
+    mtxlk(&queue->lk);
+    n = queue->n;
+    cur = queue->cur;
+    ndx = queue->ndx;
+    if (ndx) {
+        if (cur != ndx) {
+            if (cur < n - 1 && ndx < cur) {
+                retval = queue->ctab[cur++];
+            } else {
+                cur = 0;
+            }
+            queue->cur = cur;
+        }
+    }
+    mtxunlk(&queue->lk);
+};
+
+/* queue character to keyboard queue. FIXME: may not work */
+static __inline__ void
+evqkdbchar(struct evkdbqchar *queue, char ch)
+{
+    int32_t n;
+    int32_t cur;
+    int32_t ndx;
+
+    mtxlk(&queue->lk);
+    n = queue->n;
+    cur = queue->cur;
+    ndx = queue->ndx;
+    if (n) {
+        if (ndx == n && (cur)) {
+            ndx = 0;
+        }
+        if (ndx < n - 1 && ndx < cur) {
+            queue->ctab[ndx++] = ch;
+        }
+        queue->ndx = ndx;
+    }
+    mtxunlk(&queue->lk);
+}
+
+#define EVKBDQNCHAR (PAGESIZE - 8 * LONGSIZE)
+struct evkbdqchar {
+    volatile long lk;
+    int32_t       n;
+    int32_t       cur;
+    int32_t       ndx;
+#if (LONGSIZE == 4)
+    int32_t       pad[4];
+#elif (LONGSIZE == 8)
+    int32_t       pad[11];
+#endif
+    char          ctab[EVKBDQNCHAR];
+} PACK() ALIGNED(PAGESIZE);
 
 /* pointer such as mouse device events */
 

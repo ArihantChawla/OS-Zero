@@ -115,19 +115,32 @@
 #define MJOLNIR_CMD_TURN_ON       '0'
 #define MJOLNIR_CMD_TURN_OFF      '1'
 
+struct mjolgamedata {
+    size_t            nlvl;     // # of levels
+    size_t            width;    // width of level in cells
+    size_t            height;   // height of level
+    size_t            nchar;    // # of characters
+    struct dngchar   *chartab;  // characters
+    size_t            nobj;     // # of objects
+    struct dngobj    *objtab;   // objects
+    char            **lvltab;   // current level table
+    char           ***dngtab;   // dungeon table
+};
+
 /* event handler function prototype */
-typedef void mjolfunc_t(struct dngobj *src, struct dngobj *dest);
+typedef void mjolfunc_t(struct dnggame *game,
+                        struct dngobj *src, struct dngobj *dest);
 
 /* character flags */
 #define MJOL_CHAR_PICK_UP   0x00000001U // pick object up automatically
 #define MJOL_CHAR_BLIND     0x00000020U // character is blind
 #define MJOL_CHAR_LEVITATES 0x00000040U // character is levitating
 /* speed values */
-#define nturn(cp)           ((cp)->speed)
+
 #define MJOL_CHAR_FAST      2           // character is moving faster
 #define MJOL_CHAR_NORMAL    1           // normal speed
 #define MJOL_CHAR_FROZEN    0           // character can't move
-#define MJOL_CHAR_SLOW      (-1)
+#define MJOL_CHAR_SLOW      (-1)        // slow speed
 struct mjolchardata {
     long flg;           // character flags
     /* Rogue attributes */
@@ -141,13 +154,40 @@ struct mjolchardata {
     long lvl;           // level
     /* mjolnir attributes */
     long turn;          // next turn ID
-    long speed;         // FAST, NORMAL, FROZEN
+    long nturn;         // # of turns used
+    long speed;         // FAST, NORMAL, FROZEN, SLOW
 #if 0
     long dex;           // dexterity
     long lock;          // lock-pick skill
 #endif
 };
 
+/* determine how many continuous turns a character has */
+static __inline__ long
+mjolcharnturn(struct mjolchardata *chardata)
+{
+    long speed = chardata->speed;
+    long turn;
+    long retval;
+
+    if (speed < 0) {
+        turn = chardata->turn;
+        /* only move every abs(speed) turns */
+        if (chardata->nturn == turn) {
+            /* allow movement */
+            retval = 1;
+            turn -= speed;
+            chardata->turn = turn;
+        }
+    } else {
+        /* return speed */
+        retval = speed;
+    }
+
+    return retval;
+}
+
+/* bless values */
 #define MJOL_OBJ_BLESSED 1
 #define MJOL_OBJ_NEUTRAL 0
 #define MJOL_OBJ_CURSED  (-1)
