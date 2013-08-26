@@ -14,7 +14,7 @@ It is said that Thor shall ascend the one to return Mjolnir to a deity for
 saving the world from the forces of evil creating chaos with lightnings and
 thunder. Clairvoyants say evil forces are already on the hunt for Mjolnir.
 
-Armed with nothing more than a few food ratios, your pet dog or cat, a +1
+Armed with nothing more than a few food rations, your pet dog or cat, a +1
 blessed armor, a +3 neutral sword, and a piece of Pleignir, you enter the
 Dungeon. Good luck, adventurer, and beware of Fenris!
 
@@ -31,6 +31,7 @@ The table below lists some ideas for characters.
 
 Character	| Display	| Description
 ---------------------------------------------
+player		| @		| you
 floor		| .		| floor/ground
 corridor	| #		| wall
 altar		| +		| altar; try to sacrifice dead creatures on it
@@ -56,7 +57,7 @@ cat 		| c		| pet cat
 chest		| C		| chest; may find treasury in them
 dog		| d		| pet dog
 deity		| D		| deity
-food		| f		| food ratio
+food		| f		| food ration
 sub-machine gun | g		| may be Jatimatic
 ghoul		| G		| corpse eater
 honey		| h		| from beehives after killing the queen

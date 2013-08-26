@@ -2,6 +2,7 @@
 #define __MJOLNIR_MJOL_H__
 
 /* object types/characters */
+#define MJOL_OBJ_PLAYER          '@'
 #define MJOL_OBJ_FLOOR           '.'
 #define MJOL_OBJ_CORRIDOR        '#'
 #define MJOL_OBJ_ALTAR           '+'
@@ -45,11 +46,6 @@
 #define MJOL_OBJ_WELL            'w'
 #define MJOL_OBJ_WOLF            'W'
 #define MJOL_OBJ_ZOMBIE          'Z'
-/* object flags */
-#define MJOL_FLG_PICK_UP         0x00000001U    // pick object up automatically
-#define MJOL_FLG_LEVITATES       0x00000002U    // character is levitating
-#define MJOL_FLG_FROZEN          0x00000004U    // character can't move
-#define MJOL_FLG_BLIND           0x00000008U    // character is blind
 
 /* commands */
 #define CTRL(x) ((x) & 0x80)
@@ -117,6 +113,47 @@
 #define MJOLNIR_CMD_USE           'u'
 #define MJOLNIR_CMD_TURN_ON       '0'
 #define MJOLNIR_CMD_TURN_OFF      '1'
+
+/* event handler function prototype */
+typedef void mjolfunc_t(struct dngobj *src, struct dngobj *dest);
+
+/* character flags */
+#define MJOL_CHAR_PICK_UP   0x00000001U // pick object up automatically
+#define MJOL_CHAR_BLIND     0x00000020U // character is blind
+#define MJOL_CHAR_LEVITATES 0x00000040U // character is levitating
+/* speed values */
+#define nturn(cp)           ((cp)->speed)
+#define MJOL_CHAR_FAST      2           // character is moving faster
+#define MJOL_CHAR_NORMAL    1           // normal speed
+#define MJOL_CHAR_FROZEN    0           // character can't move
+struct mjolchardata {
+    long flg;           // character flags
+    /* Rogue attributes */
+    long hp;            // current hitpoints
+    long maxhp;         // max hitpoints
+    long gold;          // current gold
+    long str;           // current strength
+    long maxstr;        // max strength
+    long arm;           // armor strength
+    long exp;           // experience
+    long lvl;           // level
+    /* mjolnir attributes */
+    long turn;          // next turn ID
+    long speed;         // FAST, NORMAL, FROZEN
+#if 0
+    long dex;           // dexterity
+    long lock;          // lock-pick skill
+#endif
+};
+
+#define MJOL_OBJ_BLESSED 1
+#define MJOL_OBJ_NEUTRAL 0
+#define MJOL_OBJ_CURSED  (-1)
+struct mjolobjdata {
+    long  weight;       // weight of object
+    long  bless;        // BLESSED, NEUTRAL, CURSED
+    long  parm;         // e.g. +1 or -1 for armor
+}
 
 #endif /* __MJOLNIR_MJOL_H__ */
 

@@ -1,13 +1,26 @@
 #ifndef __DUNGEON_DNG_H__
 #define __DUNGEON_DNG_H__
 
+/* data structures */
+
+struct dngchar {
+    long    id;         // character ID
+    long    type;       // character type
+    long    flg;        // flag bits
+    long    x;          // level X-coordinate
+    long    y;          // level Y-coordinate
+    size_t  objsz;      // size of object data
+    void   *objdata;    // per-game object data
+};
+
 struct dngobj {
-    size_t datasz;      // size of object data
-    size_t nfunc;       // # of functions in functab
-    long   type;        // object type (character, other object)
-    long   flg;         // object flags
-    void  *data;        // object data (attributes)
-    void  *functab;     // object functions
+    long    id;         // object ID
+    long    type;       // character type
+    long    flg;        // flag bits
+    long    x;          // level X-coordinate
+    long    y;          // level Y-coordinate
+    size_t  objsz;      // size of object data
+    void   *objdata;    // per-game object data
 };
 
 #endif /* __DUNGEON_DNG_H__ */
