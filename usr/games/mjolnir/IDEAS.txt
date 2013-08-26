@@ -72,6 +72,7 @@ oracle		| O		| oracles know about things
 pistol		| p		| pistol
 pipe		| P		| pipe
 ring		| r		| ring
+ribbon		| R		| ribbon, may be Pleignir
 unicorn		| u		| unicorn
 vampire		| v		| regular vampire
 well		| w		| well (water, may be cursed/poisonous)
@@ -84,6 +85,7 @@ Special Items
 Thor		| D		| god of thunder
 Jatimatic	| g		| sub-machine gun for close range combat
 Mjolnir		| M		| the "hammer" of thor
+Pleignir	| R		| ribbon that can hold Fenris
 Stormbringer	| s		| Stormbringer special sword
 Excalibur	| s		| Excalibur special sword
 Dracula		| V		| Dracula; attack will get all vampires to hit

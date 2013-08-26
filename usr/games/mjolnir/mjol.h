@@ -41,6 +41,7 @@
 #define MJOL_OBJ_PISTOL          'p'
 #define MJOL_OBJ_PIPE            'P'
 #define MJOL_OBJ_RING            'r'
+#define MJOL_OBJ_RIBBON          'R'
 #define MJOL_OBJ_UNICORN         'u'
 #define MJOL_OBJ_VAMPIRE         'v'
 #define MJOL_OBJ_WELL            'w'
@@ -126,6 +127,7 @@ typedef void mjolfunc_t(struct dngobj *src, struct dngobj *dest);
 #define MJOL_CHAR_FAST      2           // character is moving faster
 #define MJOL_CHAR_NORMAL    1           // normal speed
 #define MJOL_CHAR_FROZEN    0           // character can't move
+#define MJOL_CHAR_SLOW      (-1)
 struct mjolchardata {
     long flg;           // character flags
     /* Rogue attributes */
