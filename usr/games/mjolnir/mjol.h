@@ -11,11 +11,10 @@
 #define MJOL_DEF_WIDTH  80
 #define MJOL_DEF_HEIGHT 24
 
-/* object types/characters */
-#define MJOL_OBJ_PLAYER          '@'
+/* objects */
 #define MJOL_OBJ_FLOOR           '.'
 #define MJOL_OBJ_CORRIDOR        '#'
-#define MJOL_OBJ_ALTAR           '+'
+#define MJOL_OBJ_DOOR            '#'
 #define MJOL_OBJ_WATER           '~'
 #define MJOL_OBJ_GOLD            '$'
 #define MJOL_OBJ_POTION          '?'
@@ -28,35 +27,42 @@
 #define MJOL_OBJ_TRAP            '^'
 #define MJOL_OBJ_SWORD           '|'
 #define MJOL_OBJ_WAND            '\\'
-#define MJOL_OBJ_ANT             'a'
-#define MJOL_OBJ_ALIEN           'A'
-#define MJOL_OBJ_BEE             'b'
-#define MJOL_OBJ_BEE_QUEEN       'B'
-#define MJOL_OBJ_CAT             'c'
+#define MJOL_OBJ_SCROLL          '?'
+#define MJOL_OBJ_RING            '='
+#define MJOL_OBJ_CHAIN           '8'
 #define MJOL_OBJ_CHEST           'C'
-#define MJOL_OBJ_DOG             'd'
-#define MJOL_OBJ_DEITY           'D'
-#define MJOL_OBJ_FOOD            'f'
 #define MJOL_OBJ_SUBMACHINE_GUN  'g'
-#define MJOL_OBJ_GHOUL           'G'
 #define MJOL_OBJ_HONEY           'h'
-#define MJOL_OBJ_HUMAN           'H'
 #define MJOL_OBJ_KNIFE           'k'
 #define MJOL_OBJ_LOCKPICK        'l'
 #define MJOL_OBJ_LASER           'L'
 #define MJOL_OBJ_MAINFRAME       'm'
 #define MJOL_OBJ_MACE            'M'
-#define MJOL_OBJ_SCROLL          'o'
-#define MJOL_OBJ_ORACLE          'O'
-#define MJOL_OBJ_PISTOL          'p'
-#define MJOL_OBJ_PIPE            'P'
-#define MJOL_OBJ_RING            'r'
-#define MJOL_OBJ_RIBBON          'R'
-#define MJOL_OBJ_UNICORN         'u'
-#define MJOL_OBJ_VAMPIRE         'v'
+#define MJOL_OBJ_PIPE            'p'
+#define MJOL_OBJ_PISTOL          'P'
+#define MJOL_OBJ_RATION          'r'
 #define MJOL_OBJ_WELL            'w'
-#define MJOL_OBJ_WOLF            'W'
-#define MJOL_OBJ_ZOMBIE          'Z'
+#define MJOL_OBJ_CROSS           'x'
+#define MJOL_OBJ_ALTAR           'X'
+
+/* characters */
+#define MJOL_CHAR_PLAYER         '@'
+#define MJOL_CHAR_ANT            'a'
+#define MJOL_CHAR_ALIEN          'A'
+#define MJOL_CHAR_BEE            'b'
+#define MJOL_CHAR_BEE_QUEEN      'B'
+#define MJOL_CHAR_CAT            'c'
+#define MJOL_CHAR_DOG            'd'
+#define MJOL_CHAR_DEITY          'D'
+#define MJOL_CHAR_GHOUL          'G'
+#define MJOL_CHAR_HUMAN          'H'
+#define MJOL_CHAR_ORACLE         'O'
+#define MJOL_CHAR_REMNANTS       'R'
+#define MJOL_CHAR_UNICORN        'u'
+#define MJOL_CHAR_VAMPIRE        'v'
+#define MJOL_CHAR_DRACULA        'V'
+#define MJOL_CHAR_WOLF           'W'
+#define MJOL_CHAR_ZOMBIE         'Z'
 
 /* commands */
 #define CTRL(x) ((x) & 0x80)
@@ -150,7 +156,7 @@ typedef void mjolfunc_t(struct dnggame *game,
                         struct dngobj *src, struct dngobj *dest);
 
 /* character flags */
-#define MJOL_CHAR_PICK_UP   0x00000001U // pick object up automatically
+#define MJOL_CHAR_NO_PICK   0x00000001U // do not pick object up automatically
 #define MJOL_CHAR_BLIND     0x00000020U // character is blind
 #define MJOL_CHAR_LEVITATES 0x00000040U // character is levitating
 /* speed values */

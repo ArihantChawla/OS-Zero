@@ -24,22 +24,19 @@ Characters
 To make the most fun off the game and keep it playable on old terminals too,
 the standard "graphics" are drawn as characters.
 
-Table of Characters
--------------------
+Non-Character Objects
+---------------------
 
-The table below lists some ideas for characters.
-
-Character	| Display	| Description
+Object		| Display	| Description
 ---------------------------------------------
-player		| @		| you
 floor		| .		| floor/ground
 corridor	| #		| wall
-altar		| +		| altar; try to sacrifice dead creatures on it
+door		| +		| door
 water		| ~		| water
 gold		| $		| use to get merchandise
-potion		| ?		| potion
+potion		| !		| potion
 plant		| *		| plant
-punchcard	| =		| to be used on in-dungeon mainframes :)
+punchcard	| "		| to be used on in-dungeon mainframes :)
 silver		| %		| use for silver bullets
 stairway down	| >		| go down one level
 stairway up	| <		| go up one level
@@ -47,48 +44,54 @@ statue	 	| &		| e.g. Buddha
 trap		| ^		| trap
 sword		| |		| sword
 wand		| \		| magic wand
----------------------------------------------
-ant		| a		| ant
-		| 		| - regular, soldier ants
-alien		| A		| extraterrestrial creature
-bee		| b		| regular bee, only stings once
-bee queen	| B		| bee queen
-cat 		| c		| pet cat
+scroll		| ?		| spells and other scrolls
+ring		| =		| ring
+chain		| 8		| chain
 chest		| C		| chest; may find treasury in them
-dog		| d		| pet dog
-deity		| D		| deity
-food		| f		| food ration
 sub-machine gun | g		| may be Jatimatic
-ghoul		| G		| corpse eater
 honey		| h		| from beehives after killing the queen
-human		| H		| human being
 knife		| k		| knife, dagger, gurkha, ...
 lockpick	| l		| thieves are naturally best at using these
 laser		| L		| laser gun
 mainframe	| m		| computer systems for running punchcards
 mace		| M		| may be Mjolnir
-scroll		| o		| spells and other scrolls
+pipe		| p		| pipe
+pistol		| P		| pistol
+ration		| r		| food ration
+well		| w		| well (water, may be cursed/poisonous)
+cross		| x		| cross; may be Holy Cross
+altar		| X		| altar; try to sacrifice dead creatures on it
+
+Characters
+----------
+
+Character	| Display	| Description
+---------------------------------------------
+player		| @		| you
+ant		| a		| ant, soldier ant
+alien		| A		| extraterrestrial creature
+bee		| b		| regular bee, only stings once
+bee queen	| B		| bee queen
+cat 		| c		| pet cat
+dog		| d		| pet dog
+deity		| D		| deity
+ghoul		| G		| corpse eater
+human		| H		| human being
 oracle		| O		| oracles know about things
-pistol		| p		| pistol
-pipe		| P		| pipe
-ring		| r		| ring
-ribbon		| R		| ribbon, may be Pleignir
 unicorn		| u		| unicorn
 vampire		| v		| regular vampire
-well		| w		| well (water, may be cursed/poisonous)
+Dracula		| V		| Dracula; attack will get all vampires to hit
 wolf		| W		| may be Fenris
-cross		| x		| cross; may be Holy Cross
 zombie		| Z		| zombies; living dead; always evil, attack all
 
 Special Items
 -------------
 Thor		| D		| god of thunder
 Jatimatic	| g		| sub-machine gun for close range combat
-Mjolnir		| M		| the "hammer" of thor
+Mjolnir		| M		| the hammer of Thor
 Pleignir	| R		| ribbon that can hold Fenris
 Stormbringer	| s		| Stormbringer special sword
 Excalibur	| s		| Excalibur special sword
-Dracula		| V		| Dracula; attack will get all vampires to hit
 Holy Cross	| x		| holy cross with the names of 4 archangels
      		  		| - Michael, Raphael, Gabriel, Uriel
 Fenris		| W		| the guardian wolf of gods; kills demons
