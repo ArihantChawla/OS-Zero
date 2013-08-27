@@ -3,12 +3,12 @@
 
 #include <mjolnir/conf.h>
 
-#if (MJOLNIR_VGA_TEXT)
+#if (MJOL_VGA_TEXT)
 
 #include <kern/ev.h>
 #include <kern/io/drv/pc/vga.h>
 
-#define mjolscrmoveto(scr, x, y) ((scr)->x = (x), (scr)->y = (y))
+#define mjolscrmove(scr, x, y) ((scr)->x = (x), (scr)->y = (y))
 struct mjolvgascreen {
     long      x;        // screen X-coordinate
     long      y;        // screen Y-coordinate
@@ -17,7 +17,7 @@ struct mjolvgascreen {
     uint16_t *textbuf;  // VGA text buffer
 };
 
-#endif /* MJOLNIR_VGA_TEXT */
+#endif /* MJOL_VGA_TEXT */
 
 #endif /* __MJOLNIR_VGA_H__ */
 

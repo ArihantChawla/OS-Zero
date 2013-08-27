@@ -6,3 +6,4 @@ mjolgendng(struct mjolgamedata *gamedata)
     ;
 }
 
+

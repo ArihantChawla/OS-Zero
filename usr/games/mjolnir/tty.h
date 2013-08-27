@@ -3,15 +3,11 @@
 
 #include <mjolnir/conf.h>
 
-#if (MJOLNIR_TTY)
+#if (MJOL_TTY)
 
 #include <curses.h>
 
-#define mjolgetch    getch
-#define mjolprintmsg printw
-#define mjolrefscr   refresh
-
-#endif /* MJOLNIR_TTY */
+#endif /* MJOL_TTY */
 
 #endif /* __MJOLNIR_TTY_H__ */
 

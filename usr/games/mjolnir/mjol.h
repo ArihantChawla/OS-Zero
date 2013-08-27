@@ -3,7 +3,9 @@
 
 #include <stddef.h>
 #include <dungeon/dng.h>
-#include <mjolnir/win.h>
+
+#define MJOL_DEF_NICK   "johndoe"
+#define MJOL_LEN_NICK   16
 
 #define MJOL_DEF_NLVL   128
 #define MJOL_DEF_WIDTH  80
@@ -119,25 +121,28 @@
 #define MJOL_CMD_SAVE             'S'
 #define MJOL_CMD_QUIT             'Q'
 /* mjolnir extensions */
-#define MJOLNIR_CMD_USE           'u'
-#define MJOLNIR_CMD_TURN_ON       '0'
-#define MJOLNIR_CMD_TURN_OFF      '1'
+#define MJOL_CMD_USE              'u'
+#define MJOL_CMD_TURN_ON          '0'
+#define MJOL_CMD_TURN_OFF         '1'
 
-#define MJOL_WIN_NONE             0
-#define MJOL_WIN_TTY              1
-#define MJOL_WIN_VGA_TEXT         2
-#define MJOL_WIN_X11              3
+#define MJOL_SCR_NONE             0
+#define MJOL_SCR_VGA_TEXT         1
+#define MJOL_SCR_TTY              2
+#define MJOL_SCR_X11              3
 struct mjolgamedata {
-    long              wintype;  // type of "window" to use
-    size_t            nlvl;     // # of levels
-    size_t            width;    // width of level in cells
-    size_t            height;   // height of level
-    size_t            nchar;    // # of characters
-    struct dngchar   *chartab;  // characters
-    size_t            nobj;     // # of objects
-    struct dngobj    *objtab;   // objects
-    char            **lvltab;   // current level table
-    char           ***dngtab;   // dungeon table
+    char               **nicks;         // names of players
+    long                 scrtype;       // type of screen to use
+    struct mjolgamescr  *scr;           // screen infrastructure
+    size_t               nlvl;          // # of levels
+    size_t               width;         // width of level in cells
+    size_t               height;        // height of level
+#if 0
+    size_t               nchar;         // # of characters
+    struct dngchar      *chartab;       // characters
+    size_t               nobj;          // # of objects
+    struct dngobj       *objtab;        // objects
+#endif
+    struct mjolobjstk ***dngtab;
 };
 
 /* event handler function prototype */
@@ -155,23 +160,23 @@ typedef void mjolfunc_t(struct dnggame *game,
 #define MJOL_CHAR_FROZEN    0           // character can't move
 #define MJOL_CHAR_SLOW      (-1)        // slow speed
 struct mjolchardata {
-    long flg;           // character flags
+    struct dngchar data;                // common character data
     /* Rogue attributes */
-    long hp;            // current hitpoints
-    long maxhp;         // max hitpoints
-    long gold;          // current gold
-    long str;           // current strength
-    long maxstr;        // max strength
-    long arm;           // armor strength
-    long exp;           // experience
-    long lvl;           // level
+    long           hp;                  // current hitpoints
+    long           maxhp;               // max hitpoints
+    long           gold;                // current gold
+    long           str;                 // current strength
+    long           maxstr;              // max strength
+    long           arm;                 // armor strength
+    long           exp;                 // experience
+    long           lvl;                 // level
     /* mjolnir attributes */
-    long turn;          // next turn ID
-    long nturn;         // # of turns used
-    long speed;         // FAST, NORMAL, FROZEN, SLOW
+    long           turn;                // next turn ID
+    long           nturn;               // # of turns used
+    long           speed;               // FAST, NORMAL, FROZEN, SLOW
 #if 0
-    long dex;           // dexterity
-    long lock;          // lock-pick skill
+    long           dex;                 // dexterity
+    long           lock;                // lock-pick skill
 #endif
 };
 
@@ -205,9 +210,17 @@ mjolcharnturn(struct mjolchardata *chardata)
 #define MJOL_OBJ_NEUTRAL 0
 #define MJOL_OBJ_CURSED  (-1)
 struct mjolobjdata {
-    long  weight;       // weight of object
-    long  bless;        // BLESSED, NEUTRAL, CURSED
-    long  parm;         // e.g. +1 or -1 for armor
+    struct dngobj data;         // common object data
+    long          weight;       // weight of object
+    long          bless;        // BLESSED, NEUTRAL, CURSED
+    long          parm;         // e.g. +1 or -1 for armor
+};
+
+#define MJOLNOBJSTK 14
+struct mjolobjstk {
+    long  top;                  // cached top object character
+    long  cur;                  // current stack index
+    char *stk[MJOLNOBJSTK];     // object stack
 };
 
 #endif /* __MJOLNIR_MJOL_H__ */
