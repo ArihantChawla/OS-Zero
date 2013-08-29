@@ -90,29 +90,10 @@ procinit(long id)
     return 0;
 }
 
-void *
+desc_t
 procgetdesc(struct proc *proc, long id)
 {
-    void      *ret = NULL;
-    long       lim = OBJNDESC - 1;
-    long       val1;
-    long       val2;
-    uintptr_t *tab2;
-    uintptr_t *tab3;
-
-    if (id <= lim) {
-        ret = (void *)(proc->dtab[id]);
-    } else {
-        tab2 = proc->dtab2;
-        if (tab2) {
-            val1 = id >> OBJNDESCLOG2;
-            val2 = id & (OBJNDESC - 1);
-            tab3 = (uintptr_t *)(tab2[val1]);
-            if (tab3) {
-                ret = (void *)(tab3[val2]);
-            }
-        }
-    }
+    desc_t ret = proc->dtab[id];
 
     return ret;
 }

@@ -2,7 +2,7 @@
 #include <mjolnir/vga.h>
 
 struct mjolscreen *
-mjolinitvga(struct mjolgamedata *gamedata)
+mjolinitvga(struct mjolgame *game)
 {
     return NULL;
 }

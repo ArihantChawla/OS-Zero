@@ -11,10 +11,6 @@
 #include <kern/syscall.h>
 #include <kern/proc/thr.h>
 
-/* descriptor table size */
-#define OBJNDESC     (1 << OBJNDESCLOG2)
-#define OBJNDESCLOG2 16
-
 /* user + group credentials */
 struct cred {
     uid_t uid;                          // user ID

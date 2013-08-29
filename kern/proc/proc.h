@@ -22,5 +22,9 @@ long procinit(long id);
 long procgetpid(void);
 void procfreepid(long id);
 
+/* descriptor table size */
+#define OBJNDESC     (1 << OBJNDESCLOG2)
+#define OBJNDESCLOG2 16
+
 #endif /* __KERN_PROC_H__ */
 

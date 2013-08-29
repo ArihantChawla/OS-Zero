@@ -21,7 +21,7 @@ struct mjolgamescr {
     long   x;
     long   y;
     int  (*getch)(void);
-    void (*drawchar)(struct mjolgamedata *, struct mjolchardata *);
+    void (*drawchar)(struct mjolgame *, struct mjolchar *);
     int  (*printmsg)(const char *fmt, ...);
     int  (*refresh)(void);
 };

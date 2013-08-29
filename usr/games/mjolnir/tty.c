@@ -8,23 +8,23 @@
 #include <mjolnir/scr.h>
 
 void
-mjoldrawchartty(struct mjolgamedata *gamedata, struct mjolchardata *chardata)
+mjoldrawchartty(struct mjolgame *game, struct mjolchar *data)
 {
     ;
 }
 
 void
-mjolinittty(struct mjolgamedata *gamedata)
+mjolinittty(struct mjolgame *game)
 {
     initscr();
     cbreak();
     keypad(stdscr, TRUE);
     noecho();
-    gamedata->scr = calloc(1, sizeof(struct mjolgamescr));
-    gamedata->scr->getch = getch;
-    gamedata->scr->drawchar = mjoldrawchartty;
-    gamedata->scr->printmsg = printw;
-    gamedata->scr->refresh = refresh;
+    game->scr = calloc(1, sizeof(struct mjolgamescr));
+    game->scr->getch = getch;
+    game->scr->drawchar = mjoldrawchartty;
+    game->scr->printmsg = printw;
+    game->scr->refresh = refresh;
 
     return;
 }

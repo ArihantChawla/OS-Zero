@@ -14,11 +14,11 @@ mjolusage(void)
 }
 
 void
-mjolgetopt(struct mjolgamedata *gamedata, int argc, char *argv[])
+mjolgetopt(struct mjolgame *game, int argc, char *argv[])
 {
-    long    ndx;
-    char   *str;
-    char   *ptr;
+    long   ndx;
+    char  *str;
+    char  *ptr;
 
     for (ndx = 1 ; ndx < argc ; ndx++) {
         str = argv[ndx];
@@ -30,7 +30,7 @@ mjolgetopt(struct mjolgamedata *gamedata, int argc, char *argv[])
             /* get number of levels */
             ndx++;
             str = argv[ndx];
-            gamedata->nlvl = strtol(str, &ptr, 10);
+            game->nlvl = strtol(str, &ptr, 10);
             if (ptr) {
                 fprintf(stderr, "invalid number of levels: %s\n", str);
             }
@@ -38,11 +38,11 @@ mjolgetopt(struct mjolgamedata *gamedata, int argc, char *argv[])
             /* get number of levels */
             ndx++;
             str = argv[ndx];
-            gamedata->nicks[0] = str;
+            game->nicks[0] = str;
         } else if (!strncmp(str, "-w", 2)) {
             ndx++;
             str = argv[ndx];
-            gamedata->width = strtol(str, &ptr, 10);
+            game->width = strtol(str, &ptr, 10);
             if (ptr) {
                 fprintf(stderr, "invalid level width: %s\n", str);
             }
@@ -51,7 +51,7 @@ mjolgetopt(struct mjolgamedata *gamedata, int argc, char *argv[])
             str = argv[ndx];
 #if (MJOL_VGA_TEXT)
             if (!strncmp(str, "vga", 3)) {
-                gamedata->scrtype = MJOL_SCR_VGA_TEXT;
+                game->scrtype = MJOL_SCR_VGA_TEXT;
             }
 #else
             if (!strncmp(str, "vga", 3)) {
@@ -60,10 +60,10 @@ mjolgetopt(struct mjolgamedata *gamedata, int argc, char *argv[])
                 exit(1);
             }
 #endif
-            if (!gamedata->scrtype) {
+            if (!game->scrtype) {
 #if (MJOL_TTY)
                 if (!strncmp(str, "tty", 3)) {
-                    gamedata->scrtype = MJOL_SCR_TTY;
+                    game->scrtype = MJOL_SCR_TTY;
                 }
 #else
                 if (!strncmp(str, "tty", 3)) {
@@ -72,10 +72,10 @@ mjolgetopt(struct mjolgamedata *gamedata, int argc, char *argv[])
                     exit(1);
                 }
 #endif
-                if (!gamedata->scrtype) {
+                if (!game->scrtype) {
 #if (MJOL_X11)
                     if (!strncmp(str, "x11", 3)) {
-                        gamedata->scrtype = MJOL_SCR_X11;
+                        game->scrtype = MJOL_SCR_X11;
                     }
 #else
                     if (!strncmp(str, "x11", 3)) {
@@ -89,7 +89,7 @@ mjolgetopt(struct mjolgamedata *gamedata, int argc, char *argv[])
         } else if (!strncmp(str, "-h", 2)) {
             ndx++;
             str = argv[ndx];
-            gamedata->height = strtol(str, &ptr, 10);
+            game->height = strtol(str, &ptr, 10);
             if (ptr) {
                 fprintf(stderr, "invalid level height: %s\n", str);
             }

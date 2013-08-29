@@ -5,19 +5,19 @@
 #include <mjolnir/scr.h>
 
 #if (MJOL_VGA_TEXT)
-extern void mjolinitvga(struct mjolgamedata *);
+extern void mjolinitvga(struct mjolgame *game);
 #define MJOL_VGA_TEXT_INIT mjolinitvga
 #else
 #define MJOL_VGA_TEXT_INIT NULL
 #endif
 #if (MJOL_TTY)
-extern void mjolinittty(struct mjolgamedata *gamedata);
+extern void mjolinittty(struct mjolgame *game);
 #define MJOL_TTY_INIT      mjolinittty
 #else
 #define MJOL_TTY_INIT      NULL
 #endif
 #if (MJOL_X11)
-extern void mjolinitx11(struct mjolgamedata *);
+extern void mjolinitx11(struct mjolgame *game);
 #define MJOL_X11_INIT      mjolinitx11
 #else
 #define MJOL_X11_INIT      NULL
@@ -25,7 +25,7 @@ extern void mjolinitx11(struct mjolgamedata *);
 
 struct mjolgamescr mjolgamescr;
 
-typedef void mjolinitscrfunc(struct mjolgamedata *);
+typedef void mjolinitscrfunc(struct mjolgame *);
 static mjolinitscrfunc *mjolinitscrfunctab[4] = {
     NULL,
     MJOL_VGA_TEXT_INIT,
@@ -34,12 +34,12 @@ static mjolinitscrfunc *mjolinitscrfunctab[4] = {
 };
 
 void
-mjolinitscr(struct mjolgamedata *gamedata)
+mjolinitscr(struct mjolgame *game)
 {
-    mjolinitscrfunc *func = mjolinitscrfunctab[gamedata->scrtype];
+    mjolinitscrfunc *func = mjolinitscrfunctab[game->scrtype];
 
     if (func) {
-        func(gamedata);
+        func(game);
     } else {
         fprintf(stderr, "no initializer for screen type\n");
 

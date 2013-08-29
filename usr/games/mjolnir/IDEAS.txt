@@ -30,19 +30,21 @@ Non-Character Objects
 Object		| Display	| Description
 ---------------------------------------------
 floor		| .		| floor/ground
-corridor	| #		| wall
+pathway		| #		| pathway
+wall		| -		| horizontal wall
+wall		| |		| vertical wall
 door		| +		| door
+ration		| %		| food ration
 water		| ~		| water
 gold		| $		| use to get merchandise
+silver bullet	| §		| use for demons
 potion		| !		| potion
 plant		| *		| plant
 punchcard	| "		| to be used on in-dungeon mainframes :)
-silver		| %		| use for silver bullets
 stairway down	| >		| go down one level
 stairway up	| <		| go up one level
 statue	 	| &		| e.g. Buddha
 trap		| ^		| trap
-sword		| |		| sword
 wand		| \		| magic wand
 scroll		| ?		| spells and other scrolls
 ring		| =		| ring
@@ -57,7 +59,6 @@ mainframe	| m		| computer systems for running punchcards
 mace		| M		| may be Mjolnir
 pipe		| p		| pipe
 pistol		| P		| pistol
-ration		| r		| food ration
 well		| w		| well (water, may be cursed/poisonous)
 cross		| x		| cross; may be Holy Cross
 altar		| X		| altar; try to sacrifice dead creatures on it
@@ -72,7 +73,6 @@ ant		| a		| ant, soldier ant
 alien		| A		| extraterrestrial creature
 bee		| b		| regular bee, only stings once
 bee queen	| B		| bee queen
-cat 		| c		| pet cat
 dog		| d		| pet dog
 deity		| D		| deity
 ghoul		| G		| corpse eater
@@ -82,6 +82,7 @@ unicorn		| u		| unicorn
 vampire		| v		| regular vampire
 Dracula		| V		| Dracula; attack will get all vampires to hit
 wolf		| W		| may be Fenris
+sword		| s		| sword
 zombie		| Z		| zombies; living dead; always evil, attack all
 
 Special Items

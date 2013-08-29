@@ -13,19 +13,21 @@
 
 /* objects */
 #define MJOL_OBJ_FLOOR           '.'
-#define MJOL_OBJ_CORRIDOR        '#'
-#define MJOL_OBJ_DOOR            '#'
+#define MJOL_OBJ_PATHWAY         '#'
+#define MJOL_OBJ_HORIZONTAL_WALL '-'
+#define MJOL_OBJ_VERTICAL_WALL   '|'
+#define MJOL_OBJ_DOOR            '+'
+#define MJOL_OBJ_FOOD            '%'
 #define MJOL_OBJ_WATER           '~'
 #define MJOL_OBJ_GOLD            '$'
+#define MJOL_OBJ_SILVER_BULLET   '§'
 #define MJOL_OBJ_POTION          '?'
 #define MJOL_OBJ_PLANT           '*'
 #define MJOL_OBJ_PUNCHCARD       '='
-#define MJOL_OBJ_SILVER          '%'
 #define MJOL_OBJ_DOWN            '<'
 #define MJOL_OBJ_UP              '>'
 #define MJOL_OBJ_STATUE          '&'
 #define MJOL_OBJ_TRAP            '^'
-#define MJOL_OBJ_SWORD           '|'
 #define MJOL_OBJ_WAND            '\\'
 #define MJOL_OBJ_SCROLL          '?'
 #define MJOL_OBJ_RING            '='
@@ -40,7 +42,6 @@
 #define MJOL_OBJ_MACE            'M'
 #define MJOL_OBJ_PIPE            'p'
 #define MJOL_OBJ_PISTOL          'P'
-#define MJOL_OBJ_RATION          'r'
 #define MJOL_OBJ_WELL            'w'
 #define MJOL_OBJ_CROSS           'x'
 #define MJOL_OBJ_ALTAR           'X'
@@ -51,7 +52,6 @@
 #define MJOL_CHAR_ALIEN          'A'
 #define MJOL_CHAR_BEE            'b'
 #define MJOL_CHAR_BEE_QUEEN      'B'
-#define MJOL_CHAR_CAT            'c'
 #define MJOL_CHAR_DOG            'd'
 #define MJOL_CHAR_DEITY          'D'
 #define MJOL_CHAR_GHOUL          'G'
@@ -61,6 +61,7 @@
 #define MJOL_CHAR_UNICORN        'u'
 #define MJOL_CHAR_VAMPIRE        'v'
 #define MJOL_CHAR_DRACULA        'V'
+#define MJOL_OBJ_SWORD           's'
 #define MJOL_CHAR_WOLF           'W'
 #define MJOL_CHAR_ZOMBIE         'Z'
 
@@ -135,20 +136,16 @@
 #define MJOL_SCR_VGA_TEXT         1
 #define MJOL_SCR_TTY              2
 #define MJOL_SCR_X11              3
-struct mjolgamedata {
-    char               **nicks;         // names of players
-    long                 scrtype;       // type of screen to use
-    struct mjolgamescr  *scr;           // screen infrastructure
-    size_t               nlvl;          // # of levels
-    size_t               width;         // width of level in cells
-    size_t               height;        // height of level
-#if 0
-    size_t               nchar;         // # of characters
-    struct dngchar      *chartab;       // characters
-    size_t               nobj;          // # of objects
-    struct dngobj       *objtab;        // objects
-#endif
-    struct mjolobjstk ***dngtab;
+struct mjolgame {
+    struct dnggame        data;
+    char                **nicks;        // names of players
+    long                  scrtype;      // type of screen to use
+    struct mjolgamescr   *scr;          // screen infrastructure
+    size_t                nlvl;         // # of levels
+    size_t                width;        // width of level in cells
+    size_t                height;       // height of level
+    size_t                nobj;         // # of objects
+    struct dngobj      ***objtab;       // objects on the level
 };
 
 /* event handler function prototype */
@@ -165,30 +162,30 @@ typedef void mjolfunc_t(struct dnggame *game,
 #define MJOL_CHAR_NORMAL    1           // normal speed
 #define MJOL_CHAR_FROZEN    0           // character can't move
 #define MJOL_CHAR_SLOW      (-1)        // slow speed
-struct mjolchardata {
-    struct dngchar data;                // common character data
+struct mjolchar {
+    struct dngobj data;                 // common character data
     /* Rogue attributes */
-    long           hp;                  // current hitpoints
-    long           maxhp;               // max hitpoints
-    long           gold;                // current gold
-    long           str;                 // current strength
-    long           maxstr;              // max strength
-    long           arm;                 // armor strength
-    long           exp;                 // experience
-    long           lvl;                 // level
+    long          hp;                   // current hitpoints
+    long          maxhp;                // max hitpoints
+    long          gold;                 // current gold
+    long          str;                  // current strength
+    long          maxstr;               // max strength
+    long          arm;                  // armor strength
+    long          exp;                  // experience
+    long          lvl;                  // level
     /* mjolnir attributes */
-    long           turn;                // next turn ID
-    long           nturn;               // # of turns used
-    long           speed;               // FAST, NORMAL, FROZEN, SLOW
+    long          turn;                 // next turn ID
+    long          nturn;                // # of turns used
+    long          speed;                // FAST, NORMAL, FROZEN, SLOW
 #if 0
-    long           dex;                 // dexterity
-    long           lock;                // lock-pick skill
+    long          dex;                  // dexterity
+    long          lock;                 // lock-pick skill
 #endif
 };
 
 /* determine how many continuous turns a character has */
 static __inline__ long
-mjolcharnturn(struct mjolchardata *chardata)
+mjolcharnturn(struct mjolchar *chardata)
 {
     long speed = chardata->speed;
     long turn;
@@ -227,6 +224,15 @@ struct mjolobjstk {
     long  top;                  // cached top object character
     long  cur;                  // current stack index
     char *stk[MJOLNOBJSTK];     // object stack
+};
+
+struct mjolrect {
+    long             x;
+    long             y;
+    long             width;
+    long             height;
+    struct mjolrect *left;
+    struct mjolrect *right;
 };
 
 #endif /* __MJOLNIR_MJOL_H__ */

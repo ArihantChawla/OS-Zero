@@ -9,9 +9,9 @@ static uint8_t chdirbitmap[32];
 static uint8_t chargbitmap[32];
 
 void
-mjolchardoturn(struct mjolgamedata *gamedata, struct mjolchardata *chardata)
+mjolchardoturn(struct mjolgame *game, struct mjolchar *data)
 {
-    long   n = mjolcharnturn(chardata);
+    long   n = mjolcharnturn(data);
     int  (*printmsg)(const char *, ...) = mjolgamescr.printmsg;
     int  (*getkbd)(void) = mjolgamescr.getch;
     int    cmd;
@@ -22,7 +22,7 @@ mjolchardoturn(struct mjolgamedata *gamedata, struct mjolchardata *chardata)
         printmsg("You have %ld turns", n);
         while (n--) {
             cmd = getkbd();
-            clrmsg();
+//            clrmsg();
             if (bitset(chdirbitmap, cmd)) {
                 printmsg("Which direction?");
                 dir = getkbd();
@@ -30,7 +30,7 @@ mjolchardoturn(struct mjolgamedata *gamedata, struct mjolchardata *chardata)
             if (bitset(chargbitmap, cmd)) {
                 obj = getkbd();
             }
-            chardata->nturn++;
+            data->nturn++;
         }
     }
 }

@@ -2,9 +2,9 @@
 #include <stdlib.h>
 #include <mjolnir/mjol.h>
 
-extern long mjolgetopt(struct mjolgamedata *gamedata, int argc, char *argv[]);
-extern void mjolinitscr(struct mjolgamedata *data);
-extern void mjolgendng(struct mjolgamedata *gamedata);
+extern long mjolgetopt(struct mjolgame *game, int argc, char *argv[]);
+extern void mjolinitscr(struct mjolgame *game);
+extern void mjolgendng(struct mjolgame *game);
 
 extern struct mjolscr mjolscr;
 
@@ -31,44 +31,48 @@ mjolgameintro(void)
 }
 
 void
-mjolinitgame(struct dnggame *game)
+mjolinitgame(struct mjolgame *game, int argc, char *argv[])
 {
-    struct mjolgamedata *data = calloc(1, sizeof(struct mjolgamedata *));
-    char                 ch;
+    struct dnggame *data = calloc(1, sizeof(struct mjolgame *));
+    char            ch;
+    
+    if (!data) {
+        fprintf(stderr, "failed to allocate game data\n");
 
-    game->name = mjolgamename;
-    data->nicks = calloc(1, sizeof(struct dngchar *));
-    mjolgetopt(data, game->argc, game->argv);
-    if (!data->nicks[0]) {
-        data->nicks[0] = MJOL_DEF_NICK;
+        exit(1);
     }
-    if (!data->scrtype) {
+    data->name = mjolgamename;
+    game->nicks = calloc(1, sizeof(struct dngchar *));
+    mjolgetopt(game, argc, argv);
+    if (!game->nicks[0]) {
+        game->nicks[0] = MJOL_DEF_NICK;
+    }
+    if (!game->scrtype) {
         fprintf(stderr, "no supported screen type found\n");
-
+        
         exit(1);
     }
     mjolgameintro();
     ch = getchar();
-    mjolinitscr(data);
-    if (!data->nlvl) {
-        data->nlvl = MJOL_DEF_NLVL;
+    mjolinitscr(game);
+    if (!game->nlvl) {
+        game->nlvl = MJOL_DEF_NLVL;
     }
-    if (!data->width) {
-        data->width = MJOL_DEF_WIDTH;
+    if (!game->width) {
+        game->width = MJOL_DEF_WIDTH;
     }
-    if (!data->height) {
-        data->height = MJOL_DEF_HEIGHT;
+    if (!game->height) {
+        game->height = MJOL_DEF_HEIGHT;
     }
-    data->dngtab = calloc(data->nlvl * data->width * data->height,
+    game->objtab = calloc(game->nlvl * game->width * game->height,
                           sizeof(struct mjolobjstk));
-    mjolinitscr(data);
-    mjolgendng(data);
-
+    mjolinitscr(game);
+    
     return;
 }
 
 void
-mjolgameloop(struct dnggame *dng)
+mjolgameloop(struct mjolgame *game)
 {
     ;
 }

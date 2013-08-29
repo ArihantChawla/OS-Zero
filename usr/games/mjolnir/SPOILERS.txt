@@ -27,3 +27,15 @@ Scrolls
 - scroll of see monsters
 - scroll of teleportation
 - scroll of healing
+
+Wands
+-----
+- wand of fire bolt
+- wand of ice bolt
+- wand of silver bolt (use on demons)
+
+Punchcards
+----------
+- punchcard of execute hack
+- punchcard of hint
+

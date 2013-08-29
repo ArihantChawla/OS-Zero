@@ -62,7 +62,7 @@ srandmt32(int32_t seed)
 void
 _randbuf32(void)
 {
-    int       i;
+    int      i;
     int32_t  x;
     int32_t  val1;
     int32_t  val2;
@@ -109,6 +109,6 @@ randmt32(void)
     x ^= x >> RANDMT32SHIFT4;
     randndx = randnext32[randndx];
 
-    return (int)x;
+    return (int)(x & 0x7fffffff);
 }
 
