@@ -30,7 +30,7 @@ Non-Character Objects
 Object		| Display	| Description
 ---------------------------------------------
 floor		| .		| floor/ground
-pathway		| #		| pathway
+corridor	| #		| corridor
 wall		| -		| horizontal wall
 wall		| |		| vertical wall
 door		| +		| door

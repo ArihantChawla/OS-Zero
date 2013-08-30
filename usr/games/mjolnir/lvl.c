@@ -4,10 +4,135 @@
 #include <zero/trix.h>
 #include <mjolnir/mjol.h>
 
+extern struct mjolobj * mjolmkdoor(void);
+
+struct mjolobj mjolfloor;
+struct mjolobj mjolcorridor;
+
 void
-mjolgenroom(struct mjolgame *game, struct mjolrect *rect)
+mjolconnrects(struct mjolgame *game,
+              struct mjolrect *src, struct mjolrect *dest)
 {
-    ;
+    long x;
+    long y;
+    long lim;
+    long tmp;
+
+    if (dest->y + dest->height < src->y) {
+        /* dest is above src */
+        if (dest->x + dest->width <= src->x) {
+            /* topleft */
+            lim = dest->x + max(randmt32() % dest->width, 1);
+            x = src->x;
+            y = src->y + max(randmt32() % src->height, 1);
+            game->objtab[x][y] = mjolmkdoor();
+            while (x-- > lim) {
+                game->objtab[x][y] = &mjolcorridor;
+            }
+            lim = dest->y + dest->height;
+            while (y > lim) {
+                game->objtab[x][y] = &mjolcorridor;
+                y--;
+            }
+            game->objtab[x][y] = mjolmkdoor();
+        } else if (dest->x >= src->x + src->width) {
+            /* topright */
+            lim = dest->x + max(randmt32() % dest->width, 1);
+            x = src->x + src->width;
+            y = src->y + max(randmt32() % src->height, 1);
+            game->objtab[x][y] = mjolmkdoor();
+            while (x++ < lim) {
+                game->objtab[x][y] = &mjolcorridor;
+            }
+            lim = dest->y + dest->height;
+            while (y > lim) {
+                game->objtab[x][y] = &mjolcorridor;
+                y--;
+            }
+            game->objtab[x][y] = mjolmkdoor();
+        } else {
+            /* above, straight line */
+            tmp = dest->x + dest->width - src->x;
+            lim = dest->y + dest->height;
+            x = dest->x + dest->width - max(randmt32() % tmp, 1);
+            y = src->y;
+            game->objtab[x][y] = mjolmkdoor();
+            while (y-- > lim) {
+                game->objtab[x][y] = &mjolcorridor;
+            }
+            game->objtab[x][y] = mjolmkdoor();
+        }
+    } else if (dest->x + dest->width <= src->x) {
+        /* dest is to the left of src */
+        if (dest->y >= src->y + src->height) {
+            /* bottomleft */
+            lim = dest->x + max(randmt32() % dest->width, 1);
+            x = src->x;
+            y = src->y + max(randmt32() % src->height, 1);
+            game->objtab[x][y] = mjolmkdoor();
+            while (x-- > lim) {
+                game->objtab[x][y] = &mjolcorridor;
+            }
+            lim = dest->y;
+            while (y < lim) {
+                game->objtab[x][y] = &mjolcorridor;
+                y++;
+            }
+            game->objtab[x][y] = mjolmkdoor();
+        } else {
+            /* to the left, straight line */
+            tmp = dest->y + dest->height - src->y;
+            lim = dest->x;
+            x = src->x;
+            y = dest->y + dest->height - max(randmt32() % tmp, 1);
+            game->objtab[x][y] = mjolmkdoor();
+            while (x-- > lim) {
+                game->objtab[x][y] = &mjolcorridor;
+            }
+            game->objtab[x][y] = mjolmkdoor();
+        }
+    } else if (dest->y > src->y + src->height) {
+        /* dest is below src */
+        if (src->x < dest->x + dest->width) {
+            /* bottomright */
+            lim = dest->x + max(randmt32() % dest->width, 1);
+            x = src->x;
+            y = src->y + max(randmt32() % src->height, 1);
+            game->objtab[x][y] = mjolmkdoor();
+            while (x++ < lim) {
+                game->objtab[x][y] = &mjolcorridor;
+            }
+            lim = dest->y;
+            while (y < lim) {
+                game->objtab[x][y] = &mjolcorridor;
+                y++;
+            }
+            game->objtab[x][y] = mjolmkdoor();
+        } else {
+            /* below, straight line */
+            lim = dest->y;
+            x = src->x + max(randmt32() % src->width, 1);
+            y = src->y;
+            game->objtab[x][y] = mjolmkdoor();
+            while (y++ < lim) {
+                game->objtab[x][y] = &mjolcorridor;
+            }
+            game->objtab[x][y] = mjolmkdoor();
+        }
+    } else {
+        /* dest is to the right of src, straight line */
+        tmp = dest->y + dest->height - src->y;
+        lim = dest->x;
+        x = src->x;
+        y = dest->y + dest->height - max(randmt32() % tmp, 1);
+        game->objtab[x][y] = mjolmkdoor();
+        while (x++ < lim) {
+            game->objtab[x][y] = &mjolcorridor;
+        }
+        game->objtab[x][y] = mjolmkdoor();
+    }
+
+    return;
 }
 
 #define MJOL_DIR_HORIZONTAL  0
@@ -72,28 +197,28 @@ mjolsplitrect(struct mjolrect *rect)
 }
 
 struct mjolrect **
-mjolgenlvl(struct mjolgame *game, long *nroom)
+mjolgenrooms(struct mjolgame *game, long *nroom, long width, long height)
 {
-    struct mjolrect  *tab[MJOL_MAX_ROOMS << 1] = { NULL };
-    struct mjolrect  *item = calloc(1, sizeof(struct mjolrect));
-    struct mjolrect  *rect;
-    long              n = MJOL_MIN_ROOMS + (randmt32()
+    struct mjolrect   *tab[MJOL_MAX_ROOMS << 1] = { NULL };
+    struct mjolrect   *item = calloc(1, sizeof(struct mjolrect));
+    struct mjolrect   *rect;
+    long               n = MJOL_MIN_ROOMS + (randmt32()
                                             % (MJOL_MAX_ROOMS
                                                - MJOL_MIN_ROOMS));
-    struct mjolrect **ret;
-    long              ndx = 0;
-    long              val = 0;
-    long              l;
-    long              m;
-    long              x;
-    long              y;
-    long              w;
-    long              h;
+    struct mjolrect  **ret;
+    long               ndx = 0;
+    long               val = 0;
+    long               l;
+    long               m;
+    long               x;
+    long               y;
+    long               w;
+    long               h;
 
     l = n;
     n++;
     ret = calloc(n, sizeof(struct mjolrect *));
-    if (!tab || !item || !ret) {
+    if (!ret || !tab || !item) {
         fprintf(stderr, "memory allocation failure\n");
 
         exit(1);

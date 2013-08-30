@@ -13,7 +13,7 @@
 
 /* objects */
 #define MJOL_OBJ_FLOOR           '.'
-#define MJOL_OBJ_PATHWAY         '#'
+#define MJOL_OBJ_CORRIDOR        '#'
 #define MJOL_OBJ_HORIZONTAL_WALL '-'
 #define MJOL_OBJ_VERTICAL_WALL   '|'
 #define MJOL_OBJ_DOOR            '+'
@@ -145,7 +145,7 @@ struct mjolgame {
     size_t                width;        // width of level in cells
     size_t                height;       // height of level
     size_t                nobj;         // # of objects
-    struct dngobj      ***objtab;       // objects on the level
+    struct mjolobj     ***objtab;       // objects on the level
 };
 
 /* event handler function prototype */
@@ -208,11 +208,13 @@ mjolcharnturn(struct mjolchar *chardata)
     return retval;
 }
 
+/* data.flg values */
+#define MJOL_OBJ_HIDDEN  0x00000001
 /* bless values */
 #define MJOL_OBJ_BLESSED 1
 #define MJOL_OBJ_NEUTRAL 0
 #define MJOL_OBJ_CURSED  (-1)
-struct mjolobjdata {
+struct mjolobj {
     struct dngobj data;         // common object data
     long          weight;       // weight of object
     long          bless;        // BLESSED, NEUTRAL, CURSED
