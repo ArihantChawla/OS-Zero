@@ -1,6 +1,7 @@
 #include <stdio.h>
 #include <stdlib.h>
 #include <mjolnir/mjol.h>
+#include <mjolnir/conf.h>
 
 extern long mjolgetopt(struct mjolgame *game, int argc, char *argv[]);
 extern void mjolinitscr(struct mjolgame *game);
@@ -13,6 +14,7 @@ char mjolgamename[] = "mjolnir";
 void
 mjolgameintro(void)
 {
+    printf("\n");
     printf("Legend has it that many moons ago, Fenris, the eldest child of Loki and\n");
     printf("Angrboda, broke free from his chain, Pleignir, and stole Mjolnir from Thor.\n");
     printf("Fenris is believed to have hidden Mjolnir, Thor's hammer, into a dungeon.\n");
@@ -48,10 +50,19 @@ mjolinitgame(struct mjolgame *game, int argc, char *argv[])
         game->nicks[0] = MJOL_DEF_NICK;
     }
     if (!game->scrtype) {
+#if (MJOL_TTY)
+        game->scrtype = MJOL_SCR_TTY;
+#elif (MJOL_VGA_TEXT)
+        game->scrtype = MJOL_SCR_VGA_TEXT;
+#endif
+    }
+#if 0
+    if (!game->scrtype) {
         fprintf(stderr, "no supported screen type found\n");
         
         exit(1);
     }
+#endif
     mjolgameintro();
     ch = getchar();
     mjolinitscr(game);

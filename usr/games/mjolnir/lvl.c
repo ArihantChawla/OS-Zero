@@ -1,6 +1,3 @@
-#if (TEST)
-#include <assert.h>
-#endif
 #include <stdio.h>
 #include <stdlib.h>
 #include <zero/randmt32.h>
@@ -13,11 +10,13 @@ mjolgenroom(struct mjolgame *game, struct mjolrect *rect)
     ;
 }
 
-#define MJOL_DIR_HORIZONTAL 0
-#define MJOL_DIR_VERTICAL   1
-#define MJOL_ROOM_MIN_DIM   4
-#define MJOL_MIN_ROOMS      2
-#define MJOL_MAX_ROOMS      8
+#define MJOL_DIR_HORIZONTAL  0
+#define MJOL_DIR_VERTICAL    1
+#define MJOL_ROOM_MIN_DIM    4
+#define MJOL_ROOM_MIN_WIDTH  8
+#define MJOL_ROOM_MIN_HEIGHT 4
+#define MJOL_MIN_ROOMS       2
+#define MJOL_MAX_ROOMS       8
 
 struct mjolrect *
 mjolsplitrect(struct mjolrect *rect)
@@ -26,14 +25,13 @@ mjolsplitrect(struct mjolrect *rect)
     long             dir = randmt32() & 0x01;
     long             pos;
 
-    assert(rect->width != 0);
     if (!ret) {
         fprintf(stderr, "memory allocation failure\n");
 
         exit(1);
     }
     if (dir == MJOL_DIR_HORIZONTAL) {
-        pos = MJOL_ROOM_MIN_DIM + (randmt32() % rect->width);
+        pos = MJOL_ROOM_MIN_WIDTH + (randmt32() % rect->width);
         pos = min(pos, rect->width >> 1);
         ret->left = calloc(1, sizeof(struct mjolrect));
         ret->right = calloc(1, sizeof(struct mjolrect));
@@ -51,7 +49,7 @@ mjolsplitrect(struct mjolrect *rect)
         ret->right->width = rect->width - pos;
         ret->right->height = rect->height;
     } else {
-        pos = MJOL_ROOM_MIN_DIM + (randmt32() % rect->height);
+        pos = MJOL_ROOM_MIN_HEIGHT + (randmt32() % rect->height);
         pos = min(pos, rect->height >> 1);
         ret->left = calloc(1, sizeof(struct mjolrect));
         ret->right = calloc(1, sizeof(struct mjolrect));
@@ -76,8 +74,7 @@ mjolsplitrect(struct mjolrect *rect)
 struct mjolrect **
 mjolgenlvl(struct mjolgame *game, long *nroom)
 {
-    struct mjolrect **tab = calloc(MJOL_MAX_ROOMS << 1,
-                                   sizeof(struct mjolrect *));
+    struct mjolrect  *tab[MJOL_MAX_ROOMS << 1];
     struct mjolrect  *item = calloc(1, sizeof(struct mjolrect));
     struct mjolrect  *rect;
     long              n = MJOL_MIN_ROOMS + (randmt32()
@@ -87,11 +84,13 @@ mjolgenlvl(struct mjolgame *game, long *nroom)
     long              ndx = 0;
     long              val = 0;
     long              l;
+    long              m;
     long              x;
     long              y;
     long              w;
     long              h;
 
+    l = n;
     n++;
     ret = calloc(n, sizeof(struct mjolrect *));
     if (!tab || !item || !ret) {
@@ -106,111 +105,18 @@ mjolgenlvl(struct mjolgame *game, long *nroom)
     item->height = game->height;
     item = mjolsplitrect(item);
     *nroom = n;
-    l = n;
     tab[0] = item;
     tab[1] = item->left;
-    if (l > 1) {
+    if (l) {
         tab[2] = item->right;
-        if (l > 2) {
-            /* TODO: try to replace the switch with a loop */
-            switch (l) {
-                case 3:
-                    item = mjolsplitrect(tab[1]);
-                    tab[3] = item->left;
-                    tab[4] = item->right;
-                    val = 2;
-                    ndx = 4;
-
-                    break;
-                case 4:
-                    item = mjolsplitrect(tab[1]);
-                    tab[3] = item->left;
-                    tab[4] = item->right;
-                    item = mjolsplitrect(tab[2]);
-                    tab[5] = item->left;
-                    tab[6] = item->right;
-                    val = 3;
-                    ndx = 6;
-
-                    break;
-                case 5:
-                    item = mjolsplitrect(tab[1]);
-                    tab[3] = item->left;
-                    tab[4] = item->right;
-                    item = mjolsplitrect(tab[2]);
-                    tab[5] = item->left;
-                    tab[6] = item->right;
-                    item = mjolsplitrect(tab[3]);
-                    tab[7] = item->left;
-                    tab[8] = item->right;
-                    val = 4;
-                    ndx = 8;
-
-                    break;
-                case 6:
-                    item = mjolsplitrect(tab[1]);
-                    tab[3] = item->left;
-                    tab[4] = item->right;
-                    item = mjolsplitrect(tab[2]);
-                    tab[5] = item->left;
-                    tab[6] = item->right;
-                    item = mjolsplitrect(tab[3]);
-                    tab[7] = item->left;
-                    tab[8] = item->right;
-                    item = mjolsplitrect(tab[4]);
-                    tab[9] = item->left;
-                    tab[10] = item->right;
-                    val = 5;
-                    ndx = 10;
-
-                    break;
-                case 7:
-                    item = mjolsplitrect(tab[1]);
-                    tab[3] = item->left;
-                    tab[4] = item->right;
-                    item = mjolsplitrect(tab[2]);
-                    tab[5] = item->left;
-                    tab[6] = item->right;
-                    item = mjolsplitrect(tab[3]);
-                    tab[7] = item->left;
-                    tab[8] = item->right;
-                    item = mjolsplitrect(tab[4]);
-                    tab[9] = item->left;
-                    tab[10] = item->right;
-                    item = mjolsplitrect(tab[5]);
-                    tab[11] = item->left;
-                    tab[12] = item->right;
-                    val = 6;
-                    ndx = 12;
-
-                    break;
-                case 8:
-                    item = mjolsplitrect(tab[1]);
-                    tab[3] = item->left;
-                    tab[4] = item->right;
-                    item = mjolsplitrect(tab[2]);
-                    tab[5] = item->left;
-                    tab[6] = item->right;
-                    item = mjolsplitrect(tab[3]);
-                    tab[7] = item->left;
-                    tab[8] = item->right;
-                    item = mjolsplitrect(tab[4]);
-                    tab[9] = item->left;
-                    tab[10] = item->right;
-                    item = mjolsplitrect(tab[5]);
-                    tab[11] = item->left;
-                    tab[12] = item->right;
-                    item = mjolsplitrect(tab[6]);
-                    tab[13] = item->left;
-                    tab[14] = item->right;
-                    val = 7;
-                    ndx = 14;
-
-                    break;
-                default:
-                    fprintf(stderr, "MJOL_MAX_ROOMS > 8 not supported\n");
-
-                    exit(1);
+        if (l > 1) {
+            val = l;
+            ndx = l << 1;
+            for (n = 2 ; n <= l ; n++) {
+                m = n << 1;
+                item = mjolsplitrect(tab[n - 1]);
+                tab[m - 1] = item->left;
+                tab[m] = item->right;
             }
         } else {
             val = 1;
@@ -225,18 +131,20 @@ mjolgenlvl(struct mjolgame *game, long *nroom)
     while (ndx >= val) {
         rect = tab[ndx];
         ret[l] = rect;
-        x = (randmt32() % rect->width) - MJOL_ROOM_MIN_DIM;
+        x = (randmt32() % rect->width) - MJOL_ROOM_MIN_WIDTH;
         x = max(x, 0);
         x = max(x, rect->width >> 1);
-        y = (randmt32() % rect->height) - MJOL_ROOM_MIN_DIM;
+        y = (randmt32() % rect->height) - MJOL_ROOM_MIN_HEIGHT;
         y = max(y, 0);
         y = max(x, rect->height >> 1);
         rect->x += x;
         rect->y += y;
         w = MJOL_ROOM_MIN_DIM + (randmt32()
-                                 % max(rect->width - x - MJOL_ROOM_MIN_DIM, 1));
+                                 % max(rect->width - x - MJOL_ROOM_MIN_WIDTH,
+                                       1));
         h = MJOL_ROOM_MIN_DIM + (randmt32()
-                                 % max(rect->height - y - MJOL_ROOM_MIN_DIM, 1));
+                                 % max(rect->height - y - MJOL_ROOM_MIN_HEIGHT,
+                                       1));
         w = max(w, MJOL_ROOM_MIN_DIM);
         h = max(h, MJOL_ROOM_MIN_DIM);
         rect->width = w;
