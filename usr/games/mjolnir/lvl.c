@@ -18,16 +18,6 @@ mjolgenroom(struct mjolgame *game, struct mjolrect *rect)
 #define MJOL_MIN_ROOMS       2
 #define MJOL_MAX_ROOMS       8
 
-void
-mjolfreerect(struct mjolrect *rect)
-{
-    if (rect) {
-        free(rect);
-    }
-
-    return;
-}
-
 struct mjolrect *
 mjolsplitrect(struct mjolrect *rect)
 {
@@ -163,7 +153,7 @@ mjolgenlvl(struct mjolgame *game, long *nroom)
         n++;
     }
     while (ndx >= 0) {
-        mjolfreerect(tab[ndx]);
+        free(tab[ndx]);
         ndx--;
     }
 
