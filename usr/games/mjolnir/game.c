@@ -7,7 +7,8 @@
 extern long mjolgetopt(struct mjolgame *game, int argc, char *argv[]);
 extern void mjolinitscr(struct mjolgame *game);
 extern void mjolgendng(struct mjolgame *game);
-extern void mjoldocmd(int ch);
+extern void mjolinitcmd(void);
+extern void mjoldocmd(struct mjolgame *game, int ch);
 
 char          mjolgamename[] = "mjolnir";
 volatile long mjolquit;
@@ -82,6 +83,7 @@ mjolinitgame(struct mjolgame *game, int argc, char *argv[])
         game->objtab[x] = calloc(game->height, sizeof(struct mjolobj *));
     }
     mjolinitscr(game);
+    mjolinitcmd();
     
     return;
 }
@@ -100,7 +102,7 @@ mjolgameloop(struct mjolgame *game)
 
     do {
         ch = getkbd();
-        mjoldocmd(ch);
+        mjoldocmd(game, ch);
         mjolheartbeat();
     } while (!mjolquit);
 }

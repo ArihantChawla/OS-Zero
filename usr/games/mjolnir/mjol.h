@@ -69,14 +69,14 @@
 #define CTRL(x) ((x) & 0x80)
 /* rogue commands */
 #define MJOL_CMD_IDENTIFY         '/'
-#define MJOL_CMD_LEFT             'h'
-#define MJOL_CMD_DOWN             'j'
-#define MJOL_CMD_UP               'k'
-#define MJOL_CMD_RIGHT            'l'
-#define MJOL_CMD_UPLEFT           'y'
-#define MJOL_CMD_UPRIGHT          'u'
-#define MJOL_CMD_DOWNLEFT         'b'
-#define MJOL_CMD_DOWNRIGHT        'n'
+#define MJOL_CMD_MOVE_LEFT        'h'
+#define MJOL_CMD_MOVE_DOWN        'j'
+#define MJOL_CMD_MOVE_UP          'k'
+#define MJOL_CMD_MOVE_RIGHT       'l'
+#define MJOL_CMD_MOVE_UPLEFT      'y'
+#define MJOL_CMD_MOVE_UPRIGHT     'u'
+#define MJOL_CMD_MOVE_DOWNLEFT    'b'
+#define MJOL_CMD_MOVE_DOWNRIGHT   'n'
 #define MJOL_CMD_RUN_LEFT         'H'
 #define MJOL_CMD_RUN_DOWN         'J'
 #define MJOL_CMD_RUN_UP           'K'
@@ -85,7 +85,7 @@
 #define MJOL_CMD_RUN_UPRIGHT      'U'
 #define MJOL_CMD_RUN_DOWNLEFT     'B'
 #define MJOL_CMD_RUN_DOWNRIGHT    'N'
-#define MJOL_CMD_GO_LEFT          'h'
+#define MJOL_CMD_GO_LEFT          CTRL('h')
 #define MJOL_CMD_GO_DOWN          CTRL('j')
 #define MJOL_CMD_GO_UP            CTRL('k')
 #define MJOL_CMD_GO_RIGHT         CTRL('l')
@@ -140,7 +140,7 @@ struct mjolgame {
     struct dnggame    data;
     char            **nicks;    // names of players
     long              scrtype;  // type of screen to use
-    struct mjolscr   *scr;      // screen infrastructure
+    struct mjolscr   *scr;      // screen interface
     size_t            nlvl;     // # of levels
     size_t            width;    // width of level in cells
     size_t            height;   // height of level
