@@ -1,9 +1,9 @@
 #include <mjolnir/mjol.h>
 #include <mjolnir/vga.h>
 
-struct mjolscreen *
+void
 mjolinitvga(struct mjolgame *game)
 {
-    return NULL;
+    ;
 }
 

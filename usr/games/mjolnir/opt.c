@@ -8,9 +8,13 @@ void
 mjolusage(void)
 {
     printf("mjolnir <options>\n");
-    printf("--help\tprint this help\n");
-    printf("-n name\tset name of player\n");
-    
+    printf("--help\t\tprint this help\n");
+    printf("-n name\t\tset name of player\n");
+    printf("-w num\t\tset level width\n");
+    printf("-h num\t\tset level height\n");
+    printf("-W type\t\tset screen type (tty)\n");
+
+    return;
 }
 
 void
@@ -26,29 +30,46 @@ mjolgetopt(struct mjolgame *game, int argc, char *argv[])
             mjolusage();
 
             exit(0);
-        } else if (!strncmp(str, "-l", 2)) {
-            /* get number of levels */
-            ndx++;
-            str = argv[ndx];
-            game->nlvl = strtol(str, &ptr, 10);
-            if (ptr) {
-                fprintf(stderr, "invalid number of levels: %s\n", str);
-            }
         } else if (!strncmp(str, "-n", 2)) {
-            /* get number of levels */
+            /* set player nickname */
             ndx++;
             str = argv[ndx];
             game->nicks[0] = str;
         } else if (!strncmp(str, "-w", 2)) {
+            /* set level width */
             ndx++;
             str = argv[ndx];
+            if (!str) {
+                fprintf(stderr, "level width not specified\n");
+
+                exit(1);
+            }
             game->width = strtol(str, &ptr, 10);
             if (ptr) {
                 fprintf(stderr, "invalid level width: %s\n", str);
             }
-        } else if (!strncmp(str, "-W", 2)) {
+        } else if (!strncmp(str, "-h", 2)) {
+            /* set level height */
             ndx++;
             str = argv[ndx];
+            if (!str) {
+                fprintf(stderr, "level height not specified\n");
+
+                exit(1);
+            }
+            game->height = strtol(str, &ptr, 10);
+            if (ptr) {
+                fprintf(stderr, "invalid level height: %s\n", str);
+            }
+        } else if (!strncmp(str, "-W", 2)) {
+            /* set screen type */
+            ndx++;
+            str = argv[ndx];
+            if (!str) {
+                fprintf(stderr, "screen type not specified\n");
+
+                exit(1);
+            }
 #if (MJOL_VGA_TEXT)
             if (!strncmp(str, "vga", 3)) {
                 game->scrtype = MJOL_SCR_VGA_TEXT;
@@ -85,13 +106,6 @@ mjolgetopt(struct mjolgame *game, int argc, char *argv[])
                     }
 #endif
                 }
-            }
-        } else if (!strncmp(str, "-h", 2)) {
-            ndx++;
-            str = argv[ndx];
-            game->height = strtol(str, &ptr, 10);
-            if (ptr) {
-                fprintf(stderr, "invalid level height: %s\n", str);
             }
         }
     }

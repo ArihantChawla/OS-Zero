@@ -7,8 +7,7 @@
 extern long mjolgetopt(struct mjolgame *game, int argc, char *argv[]);
 extern void mjolinitscr(struct mjolgame *game);
 extern void mjolgendng(struct mjolgame *game);
-
-extern struct mjolscr mjolscr;
+extern void mjoldocmd(int ch);
 
 char          mjolgamename[] = "mjolnir";
 volatile long mjolquit;
@@ -96,7 +95,7 @@ mjolheartbeat(void)
 void
 mjolgameloop(struct mjolgame *game)
 {
-    int (*getkbd)(void) = mjolscr.getch;
+    int (*getkbd)(void) = game->scr->getch;
     int   ch;
 
     do {
