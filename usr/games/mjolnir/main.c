@@ -12,8 +12,6 @@ extern void              mjolinitgame(struct mjolgame *game,
 extern struct mjolrect **mjolgenrooms(struct mjolgame *game, long *nroom);
 extern void              mjolgameloop(struct mjolgame *game);
 
-volatile long mjolquit;
-
 #if (TEST)
 void
 mjolprintrect(struct mjolrect *rect)
@@ -42,10 +40,9 @@ main(int argc, char *argv[])
         }
     }
 #endif
-    while (!mjolquit) {
-        mjolgameloop(&game);
-    }
+    mjolgameloop(&game);
 
+    /* NOTREACHED */
     exit(0);
 }
 

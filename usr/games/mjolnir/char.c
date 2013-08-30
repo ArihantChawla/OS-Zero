@@ -3,7 +3,7 @@
 #include <mjolnir/mjol.h>
 #include <mjolnir/scr.h>
 
-extern struct mjolgamescr mjolgamescr;
+extern struct mjolscr mjolscr;
 
 static uint8_t chdirbitmap[32];
 static uint8_t chargbitmap[32];
@@ -12,8 +12,8 @@ void
 mjolchardoturn(struct mjolgame *game, struct mjolchar *data)
 {
     long   n = mjolcharnturn(data);
-    int  (*printmsg)(const char *, ...) = mjolgamescr.printmsg;
-    int  (*getkbd)(void) = mjolgamescr.getch;
+    int  (*printmsg)(const char *, ...) = mjolscr.printmsg;
+    int  (*getkbd)(void) = mjolscr.getch;
     int    cmd;
     int    dir;
     int    obj;

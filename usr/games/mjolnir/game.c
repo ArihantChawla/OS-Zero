@@ -1,7 +1,8 @@
 #include <stdio.h>
 #include <stdlib.h>
-#include <mjolnir/mjol.h>
 #include <mjolnir/conf.h>
+#include <mjolnir/mjol.h>
+#include <mjolnir/scr.h>
 
 extern long mjolgetopt(struct mjolgame *game, int argc, char *argv[]);
 extern void mjolinitscr(struct mjolgame *game);
@@ -9,7 +10,8 @@ extern void mjolgendng(struct mjolgame *game);
 
 extern struct mjolscr mjolscr;
 
-char mjolgamename[] = "mjolnir";
+char          mjolgamename[] = "mjolnir";
+volatile long mjolquit;
 
 void
 mjolgameintro(void)
@@ -86,8 +88,21 @@ mjolinitgame(struct mjolgame *game, int argc, char *argv[])
 }
 
 void
-mjolgameloop(struct mjolgame *game)
+mjolheartbeat(void)
 {
     ;
+}
+
+void
+mjolgameloop(struct mjolgame *game)
+{
+    int (*getkbd)(void) = mjolscr.getch;
+    int   ch;
+
+    do {
+        ch = getkbd();
+        mjoldocmd(ch);
+        mjolheartbeat();
+    } while (!mjolquit);
 }
 

@@ -20,7 +20,7 @@ mjolinittty(struct mjolgame *game)
     cbreak();
     keypad(stdscr, TRUE);
     noecho();
-    game->scr = calloc(1, sizeof(struct mjolgamescr));
+    game->scr = calloc(1, sizeof(struct mjolscr));
     game->scr->getch = getch;
     game->scr->drawchar = mjoldrawchartty;
     game->scr->printmsg = printw;

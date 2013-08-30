@@ -23,7 +23,7 @@ extern void mjolinitx11(struct mjolgame *game);
 #define MJOL_X11_INIT      NULL
 #endif
 
-struct mjolgamescr mjolgamescr;
+struct mjolscr mjolscr;
 
 typedef void mjolinitscrfunc(struct mjolgame *);
 static mjolinitscrfunc *mjolinitscrfunctab[4] = {

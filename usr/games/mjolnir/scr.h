@@ -17,7 +17,7 @@
 #include <mjolnir/x11.h>
 #endif
 
-struct mjolgamescr {
+struct mjolscr {
     long   x;
     long   y;
     int  (*getch)(void);
