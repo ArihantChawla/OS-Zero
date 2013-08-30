@@ -59,6 +59,7 @@ mainframe	| m		| computer systems for running punchcards
 mace		| M		| may be Mjolnir
 pipe		| p		| pipe
 pistol		| P		| pistol
+sword		| s		| sword
 well		| w		| well (water, may be cursed/poisonous)
 cross		| x		| cross; may be Holy Cross
 altar		| X		| altar; try to sacrifice dead creatures on it
@@ -82,7 +83,6 @@ unicorn		| u		| unicorn
 vampire		| v		| regular vampire
 Dracula		| V		| Dracula; attack will get all vampires to hit
 wolf		| W		| may be Fenris
-sword		| s		| sword
 zombie		| Z		| zombies; living dead; always evil, attack all
 
 Special Items

@@ -35,15 +35,16 @@ mjolgameintro(void)
 void
 mjolinitgame(struct mjolgame *game, int argc, char *argv[])
 {
-    struct dnggame *data = calloc(1, sizeof(struct mjolgame *));
-    char            ch;
+    struct mjolgame *data = calloc(1, sizeof(struct mjolgame *));
+    char             ch;
+    long             x;
     
     if (!data) {
         fprintf(stderr, "failed to allocate game data\n");
 
         exit(1);
     }
-    data->name = mjolgamename;
+    game->data.name = mjolgamename;
     game->nicks = calloc(1, sizeof(struct dngchar *));
     mjolgetopt(game, argc, argv);
     if (!game->nicks[0]) {
@@ -75,8 +76,10 @@ mjolinitgame(struct mjolgame *game, int argc, char *argv[])
     if (!game->height) {
         game->height = MJOL_DEF_HEIGHT;
     }
-    game->objtab = calloc(game->nlvl * game->width * game->height,
-                          sizeof(struct mjolobjstk));
+    game->objtab = calloc(game->width, sizeof(struct mjolobj *));
+    for (x = 0 ; x < game->width ; x++) {
+        game->objtab[x] = calloc(game->height, sizeof(struct mjolobj *));
+    }
     mjolinitscr(game);
     
     return;

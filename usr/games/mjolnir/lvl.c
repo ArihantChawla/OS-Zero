@@ -4,13 +4,11 @@
 #include <zero/trix.h>
 #include <mjolnir/mjol.h>
 
+extern struct mjolobj * mjolmkcorridor(void);
 extern struct mjolobj * mjolmkdoor(void);
 
-struct mjolobj mjolfloor;
-struct mjolobj mjolcorridor;
-
 void
-mjolconnrects(struct mjolgame *game,
+mjolconnrooms(struct mjolgame *game,
               struct mjolrect *src, struct mjolrect *dest)
 {
     long x;
@@ -27,11 +25,11 @@ mjolconnrects(struct mjolgame *game,
             y = src->y + max(randmt32() % src->height, 1);
             game->objtab[x][y] = mjolmkdoor();
             while (x-- > lim) {
-                game->objtab[x][y] = &mjolcorridor;
+                game->objtab[x][y] = mjolmkcorridor();
             }
             lim = dest->y + dest->height;
             while (y > lim) {
-                game->objtab[x][y] = &mjolcorridor;
+                game->objtab[x][y] = mjolmkcorridor();
                 y--;
             }
             game->objtab[x][y] = mjolmkdoor();
@@ -42,11 +40,11 @@ mjolconnrects(struct mjolgame *game,
             y = src->y + max(randmt32() % src->height, 1);
             game->objtab[x][y] = mjolmkdoor();
             while (x++ < lim) {
-                game->objtab[x][y] = &mjolcorridor;
+                game->objtab[x][y] = mjolmkcorridor();
             }
             lim = dest->y + dest->height;
             while (y > lim) {
-                game->objtab[x][y] = &mjolcorridor;
+                game->objtab[x][y] = mjolmkcorridor();
                 y--;
             }
             game->objtab[x][y] = mjolmkdoor();
@@ -58,7 +56,7 @@ mjolconnrects(struct mjolgame *game,
             y = src->y;
             game->objtab[x][y] = mjolmkdoor();
             while (y-- > lim) {
-                game->objtab[x][y] = &mjolcorridor;
+                game->objtab[x][y] = mjolmkcorridor();
             }
             game->objtab[x][y] = mjolmkdoor();
         }
@@ -71,11 +69,11 @@ mjolconnrects(struct mjolgame *game,
             y = src->y + max(randmt32() % src->height, 1);
             game->objtab[x][y] = mjolmkdoor();
             while (x-- > lim) {
-                game->objtab[x][y] = &mjolcorridor;
+                game->objtab[x][y] = mjolmkcorridor();
             }
             lim = dest->y;
             while (y < lim) {
-                game->objtab[x][y] = &mjolcorridor;
+                game->objtab[x][y] = mjolmkcorridor();
                 y++;
             }
             game->objtab[x][y] = mjolmkdoor();
@@ -87,7 +85,7 @@ mjolconnrects(struct mjolgame *game,
             y = dest->y + dest->height - max(randmt32() % tmp, 1);
             game->objtab[x][y] = mjolmkdoor();
             while (x-- > lim) {
-                game->objtab[x][y] = &mjolcorridor;
+                game->objtab[x][y] = mjolmkcorridor();
             }
             game->objtab[x][y] = mjolmkdoor();
         }
@@ -100,11 +98,11 @@ mjolconnrects(struct mjolgame *game,
             y = src->y + max(randmt32() % src->height, 1);
             game->objtab[x][y] = mjolmkdoor();
             while (x++ < lim) {
-                game->objtab[x][y] = &mjolcorridor;
+                game->objtab[x][y] = mjolmkcorridor();
             }
             lim = dest->y;
             while (y < lim) {
-                game->objtab[x][y] = &mjolcorridor;
+                game->objtab[x][y] = mjolmkcorridor();
                 y++;
             }
             game->objtab[x][y] = mjolmkdoor();
@@ -115,7 +113,7 @@ mjolconnrects(struct mjolgame *game,
             y = src->y;
             game->objtab[x][y] = mjolmkdoor();
             while (y++ < lim) {
-                game->objtab[x][y] = &mjolcorridor;
+                game->objtab[x][y] = mjolmkcorridor();
             }
             game->objtab[x][y] = mjolmkdoor();
         }
@@ -127,7 +125,7 @@ mjolconnrects(struct mjolgame *game,
         y = dest->y + dest->height - max(randmt32() % tmp, 1);
         game->objtab[x][y] = mjolmkdoor();
         while (x++ < lim) {
-            game->objtab[x][y] = &mjolcorridor;
+            game->objtab[x][y] = mjolmkcorridor();
         }
         game->objtab[x][y] = mjolmkdoor();
     }
@@ -137,10 +135,10 @@ mjolconnrects(struct mjolgame *game,
 
 #define MJOL_DIR_HORIZONTAL  0
 #define MJOL_DIR_VERTICAL    1
-#define MJOL_ROOM_MIN_DIM    4
+//#define MJOL_ROOM_MIN_DIM    4
 #define MJOL_ROOM_MIN_WIDTH  8
-#define MJOL_ROOM_MIN_HEIGHT 4
-#define MJOL_MIN_ROOMS       2
+#define MJOL_ROOM_MIN_HEIGHT 6
+#define MJOL_MIN_ROOMS       4
 #define MJOL_MAX_ROOMS       8
 
 struct mjolrect *
@@ -199,25 +197,24 @@ mjolsplitrect(struct mjolrect *rect)
 struct mjolrect **
 mjolgenrooms(struct mjolgame *game, long *nroom, long width, long height)
 {
-    struct mjolrect   *tab[MJOL_MAX_ROOMS << 1] = { NULL };
-    struct mjolrect   *item = calloc(1, sizeof(struct mjolrect));
-    struct mjolrect   *rect;
-    long               n = MJOL_MIN_ROOMS + (randmt32()
+    struct mjolrect  *tab[MJOL_MAX_ROOMS << 1] = { NULL };
+    struct mjolrect  *item = calloc(1, sizeof(struct mjolrect));
+    long              n = MJOL_MIN_ROOMS + (randmt32()
                                             % (MJOL_MAX_ROOMS
                                                - MJOL_MIN_ROOMS));
-    struct mjolrect  **ret;
-    long               ndx = 0;
-    long               val = 0;
-    long               l;
-    long               m;
-    long               x;
-    long               y;
-    long               w;
-    long               h;
+    struct mjolrect **ret = calloc(n, sizeof(struct mjolrect *));
+    struct mjolrect  *rect;
+    long              ndx = 0;
+    long              val = 0;
+    long              l;
+    long              m;
+    long              x;
+    long              y;
+    long              w;
+    long              h;
 
     l = n;
     n++;
-    ret = calloc(n, sizeof(struct mjolrect *));
     if (!ret || !tab || !item) {
         fprintf(stderr, "memory allocation failure\n");
 
@@ -234,6 +231,7 @@ mjolgenrooms(struct mjolgame *game, long *nroom, long width, long height)
     tab[1] = item->left;
     if (l) {
         tab[2] = item->right;
+        mjolconnrooms(game, item->left, item->right);
         if (l > 1) {
             val = l;
             ndx = l << 1;
@@ -256,22 +254,22 @@ mjolgenrooms(struct mjolgame *game, long *nroom, long width, long height)
     while (ndx >= val) {
         rect = tab[ndx];
         ret[n] = rect;
-        x = (randmt32() % rect->width) - MJOL_ROOM_MIN_WIDTH;
-        x = max(x, 0);
-        x = max(x, rect->width >> 1);
-        y = (randmt32() % rect->height) - MJOL_ROOM_MIN_HEIGHT;
-        y = max(y, 0);
-        y = max(x, rect->height >> 1);
+        x = randmt32() % rect->width;
+        x = max(x, rect->width - MJOL_ROOM_MIN_WIDTH);
+        x = min(x, rect->width >> 1);
+        y = randmt32() % rect->height;
+        y = max(y, rect->height - MJOL_ROOM_MIN_HEIGHT);
+        y = min(x, rect->height >> 1);
         rect->x += x;
         rect->y += y;
-        w = MJOL_ROOM_MIN_DIM + (randmt32()
-                                 % max(rect->width - x - MJOL_ROOM_MIN_WIDTH,
-                                       1));
-        h = MJOL_ROOM_MIN_DIM + (randmt32()
-                                 % max(rect->height - y - MJOL_ROOM_MIN_HEIGHT,
-                                       1));
+        w = MJOL_ROOM_MIN_WIDTH
+            + (randmt32() % max(rect->width - x - MJOL_ROOM_MIN_WIDTH, 1));
+        h = MJOL_ROOM_MIN_HEIGHT
+            + (randmt32() % max(rect->height - y - MJOL_ROOM_MIN_HEIGHT, 1));
+#if 0
         w = max(w, MJOL_ROOM_MIN_DIM);
         h = max(h, MJOL_ROOM_MIN_DIM);
+#endif
         rect->width = w;
         rect->height = h;
         ndx--;

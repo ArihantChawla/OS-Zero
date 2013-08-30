@@ -7,7 +7,7 @@
 #define MJOL_DEF_NICK   "johndoe"
 #define MJOL_LEN_NICK   16
 
-#define MJOL_DEF_NLVL   128
+#define MJOL_DEF_NLVL   64
 #define MJOL_DEF_WIDTH  80
 #define MJOL_DEF_HEIGHT 24
 
@@ -21,7 +21,7 @@
 #define MJOL_OBJ_WATER           '~'
 #define MJOL_OBJ_GOLD            '$'
 #define MJOL_OBJ_SILVER_BULLET   '§'
-#define MJOL_OBJ_POTION          '?'
+#define MJOL_OBJ_POTION          '!'
 #define MJOL_OBJ_PLANT           '*'
 #define MJOL_OBJ_PUNCHCARD       '='
 #define MJOL_OBJ_DOWN            '<'
@@ -42,6 +42,7 @@
 #define MJOL_OBJ_MACE            'M'
 #define MJOL_OBJ_PIPE            'p'
 #define MJOL_OBJ_PISTOL          'P'
+#define MJOL_OBJ_SWORD           's'
 #define MJOL_OBJ_WELL            'w'
 #define MJOL_OBJ_CROSS           'x'
 #define MJOL_OBJ_ALTAR           'X'
@@ -61,7 +62,6 @@
 #define MJOL_CHAR_UNICORN        'u'
 #define MJOL_CHAR_VAMPIRE        'v'
 #define MJOL_CHAR_DRACULA        'V'
-#define MJOL_OBJ_SWORD           's'
 #define MJOL_CHAR_WOLF           'W'
 #define MJOL_CHAR_ZOMBIE         'Z'
 
