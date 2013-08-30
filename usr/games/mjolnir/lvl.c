@@ -18,6 +18,16 @@ mjolgenroom(struct mjolgame *game, struct mjolrect *rect)
 #define MJOL_MIN_ROOMS       2
 #define MJOL_MAX_ROOMS       8
 
+void
+mjolfreerect(struct mjolrect *rect)
+{
+    if (rect) {
+        free(rect);
+    }
+
+    return;
+}
+
 struct mjolrect *
 mjolsplitrect(struct mjolrect *rect)
 {
@@ -74,7 +84,7 @@ mjolsplitrect(struct mjolrect *rect)
 struct mjolrect **
 mjolgenlvl(struct mjolgame *game, long *nroom)
 {
-    struct mjolrect  *tab[MJOL_MAX_ROOMS << 1];
+    struct mjolrect  *tab[MJOL_MAX_ROOMS << 1] = { NULL };
     struct mjolrect  *item = calloc(1, sizeof(struct mjolrect));
     struct mjolrect  *rect;
     long              n = MJOL_MIN_ROOMS + (randmt32()
@@ -127,10 +137,10 @@ mjolgenlvl(struct mjolgame *game, long *nroom)
         ndx = 1;
     }
     /* build rooms */
-    l = 0;
+    n = 0;
     while (ndx >= val) {
         rect = tab[ndx];
-        ret[l] = rect;
+        ret[n] = rect;
         x = (randmt32() % rect->width) - MJOL_ROOM_MIN_WIDTH;
         x = max(x, 0);
         x = max(x, rect->width >> 1);
@@ -150,7 +160,11 @@ mjolgenlvl(struct mjolgame *game, long *nroom)
         rect->width = w;
         rect->height = h;
         ndx--;
-        l++;
+        n++;
+    }
+    while (ndx >= 0) {
+        mjolfreerect(tab[ndx]);
+        ndx--;
     }
 
     return ret;
