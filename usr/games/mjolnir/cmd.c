@@ -1,5 +1,7 @@
 #include <mjolnir/mjol.h>
 
+extern void mjolbeep(void);
+
 typedef void mjolcmdfunc(struct mjolgame *);
 
 static mjolcmdfunc *cmdfunctab[256];
@@ -77,5 +79,11 @@ mjolinitcmd(void)
 void
 mjoldocmd(struct mjolgame *game, int ch)
 {
-    ;
+    mjolcmdfunc *func = cmdfunctab[ch];
+
+    if (func) {
+        func(game);
+    } else {
+        mjolbeep();
+    }
 }
