@@ -38,4 +38,5 @@ Punchcards
 ----------
 - punchcard of execute hack
 - punchcard of hint
+- punchcard of draw map
 
