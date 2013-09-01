@@ -66,8 +66,11 @@
 #define MJOL_CHAR_ZOMBIE         'Z'
 
 /* commands */
-#define CTRL(x) ((x) & 0x80)
+#define ESC                      '\033'
+#define CTRL(x)              l   ((x) & 0x80)
 /* rogue commands */
+#define MJOL_CMD_BOSS             ESC
+#define MJOL_CMD_MENU             'm'
 #define MJOL_CMD_IDENTIFY         '/'
 #define MJOL_CMD_MOVE_LEFT        'h'
 #define MJOL_CMD_MOVE_DOWN        'j'

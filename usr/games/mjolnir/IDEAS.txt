@@ -108,6 +108,8 @@ Notes
 Rogue Commands
 --------------
 
+ESC		| boss key
+m		| open command menu
 /		| identify object
 h		| left
 j		| down
