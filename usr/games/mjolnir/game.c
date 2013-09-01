@@ -1,5 +1,6 @@
 #include <stdio.h>
 #include <stdlib.h>
+#include <signal.h>
 #include <mjolnir/conf.h>
 #include <mjolnir/mjol.h>
 #include <mjolnir/scr.h>
@@ -9,12 +10,32 @@ extern void mjolinitscr(struct mjolgame *game);
 extern void mjolgendng(struct mjolgame *game);
 extern void mjolinitcmd(void);
 extern void mjoldocmd(struct mjolgame *game, int ch);
+#if (MJOL_TTY)
+extern void mjolclosetty(void);
+#endif
 
-char          mjolgamename[] = "mjolnir";
-volatile long mjolquit;
+static char             mjolgamename[] = "mjolnir";
+static volatile long    mjolquitgame;
+static struct mjolgame *mjolgame;
 
 void
-mjolgameintro(void)
+mjolquit(int sig)
+{
+    switch (mjolgame->scrtype) {
+#if (MJOL_TTY)
+        case MJOL_SCR_TTY:
+            mjolclosetty();
+            
+            break;
+#endif
+    }
+    exit(sig);
+
+    return;
+}
+
+void
+mjolintro(void)
 {
     int ch;
 
@@ -39,11 +60,15 @@ mjolgameintro(void)
 }
 
 void
-mjolinitgame(struct mjolgame *game, int argc, char *argv[])
+mjolinit(struct mjolgame *game, int argc, char *argv[])
 {
     struct mjolgame *data = calloc(1, sizeof(struct mjolgame *));
     long             x;
-    
+
+    mjolgame = game;
+    signal(SIGINT, mjolquit);
+    signal(SIGQUIT, mjolquit);
+    signal(SIGTERM, mjolquit);
     if (!data) {
         fprintf(stderr, "failed to allocate game data\n");
 
@@ -62,14 +87,12 @@ mjolinitgame(struct mjolgame *game, int argc, char *argv[])
         game->scrtype = MJOL_SCR_VGA_TEXT;
 #endif
     }
-#if 0
     if (!game->scrtype) {
         fprintf(stderr, "no supported screen type found\n");
         
         exit(1);
     }
-#endif
-    mjolgameintro();
+    mjolintro();
     mjolinitscr(game);
     if (!game->nlvl) {
         game->nlvl = MJOL_DEF_NLVL;
@@ -104,8 +127,16 @@ mjolgameloop(struct mjolgame *game)
 
     do {
         ch = getkbd();
-        mjoldocmd(game, ch);
-        mjolheartbeat();
-    } while (!mjolquit);
+        if (ch != MJOL_CMD_QUIT) {
+            mjoldocmd(game, ch);
+            mjolheartbeat();
+        } else {
+            mjolquitgame = 1;
+        }
+    } while (!mjolquitgame);
+    mjolquit(0);
+
+    /* NOTREACHED */
+    exit(0);
 }
 

@@ -7,8 +7,8 @@
 #include <dungeon/dng.h>
 #include <mjolnir/mjol.h>
 
-extern void              mjolinitgame(struct mjolgame *game,
-                                      int argc, char *argv[]);
+extern void              mjolinit(struct mjolgame *game,
+                                  int argc, char *argv[]);
 extern struct mjolrect **mjolgenrooms(struct mjolgame *game, long *nroom);
 extern void              mjolgameloop(struct mjolgame *game);
 
@@ -29,7 +29,7 @@ main(int argc, char *argv[])
     long              nroom = 0;
 
     srandmt32(time(NULL));
-    mjolinitgame(&game, argc, argv);
+    mjolinit(&game, argc, argv);
     lvltab = mjolgenrooms(&game, &nroom);
 #if (TEST)
     {

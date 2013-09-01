@@ -218,18 +218,22 @@ mjolcharnturn(struct mjolchar *chardata)
 #define MJOL_OBJ_NEUTRAL 0
 #define MJOL_OBJ_CURSED  (-1)
 struct mjolobj {
-    struct dngobj data;         // common object data
-    long          weight;       // weight of object
-    long          bless;        // BLESSED, NEUTRAL, CURSED
-    long          parm;         // e.g. +1 or -1 for armor
+    struct dngobj   data;       // common object data
+    long            weight;     // weight of object
+    long            bless;      // BLESSED, NEUTRAL, CURSED
+    long            parm;       // e.g. +1 or -1 for armor
+    struct mjolobj *prev;
+    struct mjolobj *next;
 };
 
+#if 0
 #define MJOLNOBJSTK 14
 struct mjolobjstk {
     long  top;                  // cached top object character
     long  cur;                  // current stack index
     char *stk[MJOLNOBJSTK];     // object stack
 };
+#endif
 
 struct mjolrect {
     long             x;
