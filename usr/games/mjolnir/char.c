@@ -1,13 +1,32 @@
 #include <stdio.h>
+#include <stdlib.h>
+#include <zero/cdecl.h>
+#include <zero/param.h>
 #include <zero/trix.h>
 #include <mjolnir/mjol.h>
 #include <mjolnir/scr.h>
 
-static uint8_t chdirbitmap[32];
-static uint8_t chargbitmap[32];
+static uint8_t   chdirbitmap[32] ALIGNED(CLSIZE);
+static uint8_t   chargbitmap[32];
+struct mjolchar *chaseq;
+
+struct mjolchar *
+mjolmkplayer(struct mjolgame *game)
+{
+    struct mjolchar *data = calloc(1, sizeof(struct mjolchar));
+
+    if (!data) {
+        fprintf(stderr, "memory allocation failure\n");
+
+        exit(1);
+    }
+    data->data.type = MJOL_CHAR_PLAYER;
+
+    return data;
+}
 
 void
-mjolchardoturn(struct mjolgame *game, struct mjolchar *data)
+mjoldoturn(struct mjolgame *game, struct mjolchar *data)
 {
     long   n = mjolcharnturn(data);
     int  (*printmsg)(const char *, ...) = game->scr->printmsg;

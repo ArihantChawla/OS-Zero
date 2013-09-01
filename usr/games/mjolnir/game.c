@@ -5,6 +5,7 @@
 #include <mjolnir/mjol.h>
 #include <mjolnir/scr.h>
 
+struct mjolchar * mjolmkplayer(struct mjolgame *game);
 extern long mjolgetopt(struct mjolgame *game, int argc, char *argv[]);
 extern void mjolinitscr(struct mjolgame *game);
 extern void mjolgendng(struct mjolgame *game);
@@ -74,11 +75,14 @@ mjolinit(struct mjolgame *game, int argc, char *argv[])
 
         exit(1);
     }
-    game->data.name = mjolgamename;
-    game->nicks = calloc(1, sizeof(struct dngchar *));
+    game->obj.name = mjolgamename;
+    game->nick = calloc(1, sizeof(struct dngchar *));
     mjolgetopt(game, argc, argv);
-    if (!game->nicks[0]) {
-        game->nicks[0] = MJOL_DEF_NICK;
+    if (!game->player) {
+        game->player = mjolmkplayer(game);
+    }
+    if (!game->nick) {
+        game->nick = MJOL_DEF_NICK;
     }
     if (!game->scrtype) {
 #if (MJOL_TTY)
@@ -116,7 +120,11 @@ mjolinit(struct mjolgame *game, int argc, char *argv[])
 void
 mjolheartbeat(void)
 {
-    ;
+    struct mjolchar *src = mjolpopchase();
+
+    while (src) {
+        mjolchase(src, mjolgame->player);
+    }
 }
 
 void

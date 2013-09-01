@@ -2,7 +2,10 @@
 #define __MJOLNIR_MJOL_H__
 
 #include <stddef.h>
+#include <stdlib.h>
 #include <dungeon/dng.h>
+
+extern struct mjolchar *chaseq;
 
 #define MJOL_DEF_NICK   "johndoe"
 #define MJOL_LEN_NICK   16
@@ -140,8 +143,9 @@
 #define MJOL_SCR_TTY              2
 #define MJOL_SCR_X11              3
 struct mjolgame {
-    struct dnggame    data;
-    char            **nicks;    // names of players
+    struct dnggame    obj;
+    struct mjolchar  *player;
+    char             *nick;     // names of players
     long              scrtype;  // type of screen to use
     struct mjolscr   *scr;      // screen interface
     size_t            nlvl;     // # of levels
@@ -186,31 +190,6 @@ struct mjolchar {
 #endif
 };
 
-/* determine how many continuous turns a character has */
-static __inline__ long
-mjolcharnturn(struct mjolchar *chardata)
-{
-    long speed = chardata->speed;
-    long turn;
-    long retval = 0;
-
-    if (speed < 0) {
-        turn = chardata->turn;
-        /* only move every abs(speed) turns */
-        if (chardata->nturn == turn) {
-            /* allow movement */
-            retval = 1;
-            turn -= speed;
-            chardata->turn = turn;
-        }
-    } else {
-        /* return speed */
-        retval = speed;
-    }
-
-    return retval;
-}
-
 /* data.flg values */
 #define MJOL_OBJ_HIDDEN  0x00000001
 /* bless values */
@@ -243,6 +222,109 @@ struct mjolrect {
     struct mjolrect *left;
     struct mjolrect *right;
 };
+
+/* determine how many continuous turns a character has */
+static __inline__ long
+mjolcharnturn(struct mjolchar *chardata)
+{
+    long speed = chardata->speed;
+    long turn;
+    long retval = 0;
+
+    if (speed < 0) {
+        turn = chardata->turn;
+        /* only move every abs(speed) turns */
+        if (chardata->nturn == turn) {
+            /* allow movement */
+            retval = 1;
+            turn -= speed;
+            chardata->turn = turn;
+        }
+    } else {
+        /* return speed */
+        retval = speed;
+    }
+
+    return retval;
+}
+
+static __inline__ void
+mjolpushchase(struct mjolchar *data)
+{
+    struct mjolchar *next = data->data.next;
+
+    data->data.prev = NULL;
+    next = chaseq;
+    if (chaseq) {
+        chaseq->data.prev = data;
+    }
+    chaseq = data;
+
+    return;
+}
+
+static __inline__ struct mjolchar *
+mjolpopchase(void)
+{
+    struct mjolchar *next = chaseq->data.next;
+    struct mjolchar *data = chaseq;
+
+    if (data) {
+        if (next) {
+            next->data.prev = NULL;
+        }
+        chaseq = next;
+    }
+
+    return data;
+}
+
+static __inline__ void
+mjolrmchase(struct mjolchar *data)
+{
+    struct mjolchar *prev = data->data.prev;
+    struct mjolchar *next = data->data.next;
+
+    if (next) {
+        next->data.prev = prev;
+    }
+    if (prev) {
+        prev->data.next = next;
+    } else {
+        if (next) {
+            next->data.prev = NULL;
+        }
+        chaseq = next;
+    }
+
+    return;
+}
+
+static __inline__ void
+mjolchase(struct mjolchar *src, struct mjolchar *dest)
+{
+    long dx = dest->data.x - src->data.x;
+    long dy = dest->data.y - src->data.y;
+
+    if (labs(dx) == 1 && labs(dy) == 1) {
+        /* attack */
+    } else {
+        if  (dx < -1) {
+            dest->data.x++;
+        } else {
+            /* dx > 1 */
+            dest->data.x--;
+        }
+        if (dy < - 1) {
+            dest->data.y++;
+        } else {
+            /* dy > 1 */
+            dest->data.y--;
+        }
+    }
+
+    return;
+}
 
 #endif /* __MJOLNIR_MJOL_H__ */
 

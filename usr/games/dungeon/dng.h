@@ -11,11 +11,13 @@ struct dnggame {
 };
 
 struct dngobj {
-    long    id;                 // object ID
-    long    type;               // character type
-    long    flg;                // flag bits
-    long    x;                  // level X-coordinate
-    long    y;                  // level Y-coordinate
+    long  id;   // object ID
+    long  type; // character type
+    long  flg;  // flag bits
+    long  x;    // level X-coordinate
+    long  y;    // level Y-coordinate
+    void *prev;
+    void *next;
 };
 
 #endif /* __DUNGEON_DNG_H__ */

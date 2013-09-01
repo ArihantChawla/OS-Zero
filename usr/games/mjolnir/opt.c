@@ -34,7 +34,7 @@ mjolgetopt(struct mjolgame *game, int argc, char *argv[])
             /* set player nickname */
             ndx++;
             str = argv[ndx];
-            game->nicks[0] = str;
+            game->nick = str;
         } else if (!strncmp(str, "-w", 2)) {
             /* set level width */
             ndx++;
