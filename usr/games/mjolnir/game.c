@@ -16,6 +16,8 @@ volatile long mjolquit;
 void
 mjolgameintro(void)
 {
+    int ch;
+
     printf("\n");
     printf("Legend has it that many moons ago, Fenris, the eldest child of Loki and\n");
     printf("Angrboda, broke free from his chain, Pleignir, and stole Mjolnir from Thor.\n");
@@ -25,11 +27,13 @@ mjolgameintro(void)
     printf("saving the world from the forces of evil creating chaos with lightnings and\n");
     printf("thunder. Clairvoyants say evil forces are already on the hunt for Mjolnir.\n");
     printf("\n");
-    printf("Armed with nothing more than a few food rations, your pet dog or cat, a +1\n");
-    printf("blessed armor, a +3 neutral sword, and a piece of Pleignir, you enter the\n");
-    printf("Dungeon. Good luck, adventurer, and beware of Fenris!\n");
+    printf("Armed with nothing more than a few food rations, your pet dog, a +1 blessed\n");
+    printf("armor, a +3 neutral sword, and a piece of Pleignir, you enter the Dungeon.\n");
+    printf("\n");
+    printf("Good luck, adventurer, and beware of Fenris!\n");
     printf("\n");
     printf("Press a key to continue...\n");
+    ch = getchar();
 
     return;
 }
@@ -38,7 +42,6 @@ void
 mjolinitgame(struct mjolgame *game, int argc, char *argv[])
 {
     struct mjolgame *data = calloc(1, sizeof(struct mjolgame *));
-    char             ch;
     long             x;
     
     if (!data) {
@@ -67,7 +70,6 @@ mjolinitgame(struct mjolgame *game, int argc, char *argv[])
     }
 #endif
     mjolgameintro();
-    ch = getchar();
     mjolinitscr(game);
     if (!game->nlvl) {
         game->nlvl = MJOL_DEF_NLVL;

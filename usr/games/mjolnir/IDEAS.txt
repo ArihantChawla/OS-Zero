@@ -14,9 +14,10 @@ It is said that Thor shall ascend the one to return Mjolnir to a deity for
 saving the world from the forces of evil creating chaos with lightnings and
 thunder. Clairvoyants say evil forces are already on the hunt for Mjolnir.
 
-Armed with nothing more than a few food rations, your pet dog or cat, a +1
-blessed armor, a +3 neutral sword, and a piece of Pleignir, you enter the
-Dungeon. Good luck, adventurer, and beware of Fenris!
+Armed with nothing more than a few food rations, your pet dog, a +1 blessed
+armor, a +3 neutral sword, and a piece of Pleignir, you enter the Dungeon.
+
+Good luck, adventurer, and beware of Fenris!
 
 Characters
 ----------
