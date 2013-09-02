@@ -3,7 +3,10 @@
 #endif
 #include <stdlib.h>
 #include <time.h>
+#include <mjolnir/conf.h>
+#if (MJOL_USE_ZERO_RANDMT32)
 #include <zero/randmt32.h>
+#endif
 #include <dungeon/dng.h>
 #include <mjolnir/mjol.h>
 
@@ -29,7 +32,7 @@ main(int argc, char *argv[])
     struct mjolrect **lvltab;
     long              nroom = 0;
 
-    srandmt32(time(NULL));
+    mjolsrand(time(NULL));
     mjolinitobj();
     mjolinit(&game, argc, argv);
     lvltab = mjolgenrooms(&game, &nroom);
