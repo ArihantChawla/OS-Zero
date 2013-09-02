@@ -11,8 +11,6 @@ mjolinitobj(void)
 {
     setbit(mjolisobjtab, MJOL_OBJ_FLOOR);
     setbit(mjolisobjtab, MJOL_OBJ_CORRIDOR);
-    setbit(mjolisobjtab, MJOL_OBJ_HORIZONTAL_WALL);
-    setbit(mjolisobjtab, MJOL_OBJ_VERTICAL_WALL);
     setbit(mjolisobjtab, MJOL_OBJ_DOOR);
     setbit(mjolisobjtab, MJOL_OBJ_FOOD);
     setbit(mjolisobjtab, MJOL_OBJ_WATER);
