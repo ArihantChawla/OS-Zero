@@ -29,6 +29,7 @@ main(int argc, char *argv[])
     long              nroom = 0;
 
     srandmt32(time(NULL));
+    mjolinitobj();
     mjolinit(&game, argc, argv);
     lvltab = mjolgenrooms(&game, &nroom);
 #if (TEST)
