@@ -14,6 +14,14 @@ mjoldrawchartty(struct mjolgame *game, struct mjolchar *data)
 }
 
 void
+mjolclosetty(void)
+{
+    endwin();
+
+    return;
+}
+
+void
 mjolinittty(struct mjolgame *game)
 {
     initscr();
@@ -25,14 +33,7 @@ mjolinittty(struct mjolgame *game)
     game->scr->drawchar = mjoldrawchartty;
     game->scr->printmsg = printw;
     game->scr->refresh = refresh;
-
-    return;
-}
-
-void
-mjolclosetty(void)
-{
-    endwin();
+    game->scr->close = mjolclosetty;
 
     return;
 }

@@ -24,13 +24,10 @@ static struct mjolgame *mjolgame;
 void
 mjolquit(int sig)
 {
-    switch (mjolgame->scrtype) {
-#if (MJOL_TTY)
-        case MJOL_SCR_TTY:
-            mjolclosetty();
-            
-            break;
-#endif
+    void (*func)(void) = mjolgame->scr->close;
+
+    if (func) {
+        func();
     }
     exit(sig);
 

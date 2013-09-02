@@ -24,6 +24,7 @@ struct mjolscr {
     void (*drawchar)(struct mjolgame *, struct mjolchar *);
     int  (*printmsg)(const char *fmt, ...);
     int  (*refresh)(void);
+    void (*close)(void);
 };
 
 #endif /* __MJOLNIR_SCR_H__ */
