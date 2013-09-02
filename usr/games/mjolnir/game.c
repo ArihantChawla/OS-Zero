@@ -15,6 +15,8 @@ extern void mjoldocmd(struct mjolgame *game, int ch);
 extern void mjolclosetty(void);
 #endif
 
+extern struct mjolchar *mjolchaseq;
+
 static char             mjolgamename[] = "mjolnir";
 static volatile long    mjolquitgame;
 static struct mjolgame *mjolgame;
@@ -120,10 +122,11 @@ mjolinit(struct mjolgame *game, int argc, char *argv[])
 void
 mjolheartbeat(void)
 {
-    struct mjolchar *src = mjolpopchase();
+    struct mjolchar *src = mjolchaseq;
 
     while (src) {
         mjolchase(src, mjolgame->player);
+        src = src->data.next;
     }
 }
 

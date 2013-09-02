@@ -8,7 +8,7 @@
 
 static uint8_t   chdirbitmap[32] ALIGNED(CLSIZE);
 static uint8_t   chargbitmap[32];
-struct mjolchar *chaseq;
+struct mjolchar *mjolchaseq;
 
 struct mjolchar *
 mjolmkplayer(struct mjolgame *game)

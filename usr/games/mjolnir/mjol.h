@@ -306,19 +306,17 @@ mjolchase(struct mjolchar *src, struct mjolchar *dest)
     long dx = dest->data.x - src->data.x;
     long dy = dest->data.y - src->data.y;
 
-    if (labs(dx) == 1 && labs(dy) == 1) {
+    if ((labs(dx) == 1 && labs(dy) <= 1) || (labs(dy) == 1 && labs(dx) <= 1)) {
         /* attack */
     } else {
         if  (dx < -1) {
             dest->data.x++;
-        } else {
-            /* dx > 1 */
+        } else if (dx > 1) {
             dest->data.x--;
         }
         if (dy < - 1) {
             dest->data.y++;
-        } else {
-            /* dy > 1 */
+        } else if (dy > 1) {
             dest->data.y--;
         }
     }
