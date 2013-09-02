@@ -57,11 +57,15 @@ mjolconnrooms(struct mjolgame *game,
             y = src->y + max(randmt32() % src->height, 1);
             game->objtab[x][y] = mjolmkdoor();
             while (x-- > lim) {
-                game->objtab[x][y] = mjolmkcorridor();
+                if (!game->objtab[x][y]) {
+                    game->objtab[x][y] = mjolmkcorridor();
+                }
             }
             lim = dest->y + dest->height;
             while (y-- > lim) {
-                game->objtab[x][y] = mjolmkcorridor();
+                if (!game->objtab[x][y]) {
+                    game->objtab[x][y] = mjolmkcorridor();
+                }
             }
             game->objtab[x][y] = mjolmkdoor();
         } else if (dest->x >= src->x + src->width) {
@@ -71,11 +75,15 @@ mjolconnrooms(struct mjolgame *game,
             y = src->y + max(randmt32() % src->height, 1);
             game->objtab[x][y] = mjolmkdoor();
             while (x++ < lim) {
-                game->objtab[x][y] = mjolmkcorridor();
+                if (!game->objtab[x][y]) {
+                    game->objtab[x][y] = mjolmkcorridor();
+                }
             }
             lim = dest->y + dest->height;
             while (y-- > lim) {
-                game->objtab[x][y] = mjolmkcorridor();
+                if (!game->objtab[x][y]) {
+                    game->objtab[x][y] = mjolmkcorridor();
+                }
             }
             game->objtab[x][y] = mjolmkdoor();
         } else {
@@ -94,13 +102,17 @@ mjolconnrooms(struct mjolgame *game,
                 game->objtab[x][y] = mjolmkdoor();
                 y++;
                 while (x-- > lim) {
-                    game->objtab[x][y] = mjolmkcorridor();
+                    if (!game->objtab[x][y]) {
+                        game->objtab[x][y] = mjolmkcorridor();
+                    }
                 }
             }
             /* draw vertical line */
             lim = dest->y + dest->height;
             while (y-- > lim) {
-                game->objtab[x][y] = mjolmkcorridor();
+                if (!game->objtab[x][y]) {
+                    game->objtab[x][y] = mjolmkcorridor();
+                }
             }
             game->objtab[x][y] = mjolmkdoor();
         }
@@ -113,11 +125,15 @@ mjolconnrooms(struct mjolgame *game,
             y = src->y + max(randmt32() % src->height, 1);
             game->objtab[x][y] = mjolmkdoor();
             while (x-- > lim) {
-                game->objtab[x][y] = mjolmkcorridor();
+                if (!game->objtab[x][y]) {
+                    game->objtab[x][y] = mjolmkcorridor();
+                }
             }
             lim = dest->y;
             while (y++ < lim) {
-                game->objtab[x][y] = mjolmkcorridor();
+                if (!game->objtab[x][y]) {
+                    game->objtab[x][y] = mjolmkcorridor();
+                }
             }
             game->objtab[x][y] = mjolmkdoor();
         } else {
@@ -135,13 +151,17 @@ mjolconnrooms(struct mjolgame *game,
                 y = src->y;
                 game->objtab[x][y] = mjolmkdoor();
                 while (y++ < lim) {
-                    game->objtab[x][y] = mjolmkcorridor();
+                    if (!game->objtab[x][y]) {
+                        game->objtab[x][y] = mjolmkcorridor();
+                    }
                 }
             }
             /* draw horizontal line */
             lim = dest->x + dest->width;
             while (x-- > lim) {
-                game->objtab[x][y] = mjolmkcorridor();
+                if (!game->objtab[x][y]) {
+                    game->objtab[x][y] = mjolmkcorridor();
+                }
             }
             game->objtab[x][y] = mjolmkdoor();
         }
@@ -154,11 +174,15 @@ mjolconnrooms(struct mjolgame *game,
             y = src->y + max(randmt32() % src->height, 1);
             game->objtab[x][y] = mjolmkdoor();
             while (x++ < lim) {
-                game->objtab[x][y] = mjolmkcorridor();
+                if (!game->objtab[x][y]) {
+                    game->objtab[x][y] = mjolmkcorridor();
+                }
             }
             lim = dest->y;
             while (y++ < lim) {
-                game->objtab[x][y] = mjolmkcorridor();
+                if (!game->objtab[x][y]) { 
+                    game->objtab[x][y] = mjolmkcorridor();
+                }
             }
             game->objtab[x][y] = mjolmkdoor();
         } else {
@@ -168,7 +192,9 @@ mjolconnrooms(struct mjolgame *game,
             y = src->y + src->height;
             game->objtab[x][y] = mjolmkdoor();
             while (y++ < lim) {
-                game->objtab[x][y] = mjolmkcorridor();
+                if (!game->objtab[x][y]) {
+                    game->objtab[x][y] = mjolmkcorridor();
+                }
             }
             game->objtab[x][y] = mjolmkdoor();
         }
@@ -187,13 +213,17 @@ mjolconnrooms(struct mjolgame *game,
             y = src->y + max(randmt32() % src->height, 1);
             game->objtab[x][y] = mjolmkdoor();
             while (y--) {
-                game->objtab[x][y] = mjolmkcorridor();
+                if (!game->objtab[x][y]) {
+                    game->objtab[x][y] = mjolmkcorridor();
+                }
             }
         }
         /* draw horizontal line */
         lim = dest->x;
         while (x++ < lim) {
-            game->objtab[x][y] = mjolmkcorridor();
+            if (!game->objtab[x][y]) {
+                game->objtab[x][y] = mjolmkcorridor();
+            }
         }
         game->objtab[x][y] = mjolmkdoor();
     }

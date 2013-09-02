@@ -9,6 +9,7 @@
 
 extern void              mjolinit(struct mjolgame *game,
                                   int argc, char *argv[]);
+void                     mjolinitobj(void);
 extern struct mjolrect **mjolgenrooms(struct mjolgame *game, long *nroom);
 extern void              mjolgameloop(struct mjolgame *game);
 
