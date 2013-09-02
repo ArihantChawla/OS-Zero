@@ -3,8 +3,12 @@
 
 #include <stddef.h>
 #include <stdlib.h>
+#include <zero/trix.h>
 #include <dungeon/dng.h>
 
+#define mjolisobj(type) bitset(mjolisobjtab, type)
+extern struct mjolgame *mjolgame;
+extern uint8_t          mjolisobjtab[32];
 extern struct mjolchar *chaseq;
 
 #define MJOL_DEF_NICK   "johndoe"
@@ -23,7 +27,7 @@ extern struct mjolchar *chaseq;
 #define MJOL_OBJ_FOOD            '%'
 #define MJOL_OBJ_WATER           '~'
 #define MJOL_OBJ_GOLD            '$'
-#define MJOL_OBJ_SILVER_BULLET   '§'
+#define MJOL_OBJ_SILVER_BULLET   'S'
 #define MJOL_OBJ_POTION          '!'
 #define MJOL_OBJ_PLANT           '*'
 #define MJOL_OBJ_PUNCHCARD       '='
@@ -303,21 +307,43 @@ mjolrmchase(struct mjolchar *data)
 static __inline__ void
 mjolchase(struct mjolchar *src, struct mjolchar *dest)
 {
-    long dx = dest->data.x - src->data.x;
-    long dy = dest->data.y - src->data.y;
+    struct mjolobj ***objtab = mjolgame->objtab;
+    long              destx = dest->data.x;
+    long              desty = dest->data.y;
+    long              x = destx;
+    long              y = desty;
+    long              dx = destx - src->data.x;
+    long              dy = desty - src->data.y;
+    long              type;
+    struct mjolobj   *obj;
 
     if ((labs(dx) == 1 && labs(dy) <= 1) || (labs(dy) == 1 && labs(dx) <= 1)) {
         /* attack */
     } else {
         if  (dx < -1) {
-            dest->data.x++;
+            x++;
         } else if (dx > 1) {
-            dest->data.x--;
+            x--;
         }
         if (dy < - 1) {
-            dest->data.y++;
+            y++;
         } else if (dy > 1) {
-            dest->data.y--;
+            y--;
+        }
+        type = objtab[x][y]->data.type;
+        if (mjolisobj(type)) {
+            obj = objtab[destx][desty];
+            if (obj) {
+                if (obj->next) {
+                    obj->next->prev = NULL;
+                }
+                objtab[destx][desty] = obj->next;
+                obj->next = objtab[x][y];
+                if (obj->next) {
+                    obj->next->prev = obj;
+                }
+                objtab[x][y] = obj;
+            }
         }
     }
 

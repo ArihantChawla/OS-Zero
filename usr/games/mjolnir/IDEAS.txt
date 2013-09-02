@@ -38,7 +38,7 @@ door		| +		| door
 ration		| %		| food ration
 water		| ~		| water
 gold		| $		| use to get merchandise
-silver bullet	| §		| use for demons
+silver bullet	| S		| use for demons
 potion		| !		| potion
 plant		| *		| plant
 punchcard	| "		| to be used on in-dungeon mainframes :)

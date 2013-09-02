@@ -19,7 +19,7 @@ extern struct mjolchar *mjolchaseq;
 
 static char             mjolgamename[] = "mjolnir";
 static volatile long    mjolquitgame;
-static struct mjolgame *mjolgame;
+struct mjolgame        *mjolgame;
 
 void
 mjolquit(int sig)
