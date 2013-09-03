@@ -12,10 +12,10 @@
 
 #if (MJOL_USE_ZERO_RANDMT32)
 #define mjolsrand(seed) srandmt32(seed)
-#define mjolrand()  randmt32()
+#define mjolrand()      randmt32()
 #else
 #define mjolsrand(seed) srand(seed)
-#define mjolrand()  rand()
+#define mjolrand()      rand()
 #endif
 
 #endif /* __MJOLNIR_CONF_H__ */
