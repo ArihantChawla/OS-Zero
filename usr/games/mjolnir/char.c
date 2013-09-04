@@ -171,16 +171,22 @@ mjolchase(struct mjolchar *src, struct mjolchar *dest)
                 }
             }
         }
-        obj = objtab[src->data.x][src->data.y];
-        if (obj->next) {
-            obj->next->prev = NULL;
+        if (src->next) {
+            src->next->prev = src->prev;
         }
-        objtab[src->data.x][src->data.y] = obj->next;
-        obj->next = objtab[srcx][srcy];
-        if (obj->next) {
-            obj->next->prev = obj;
+        if (src->prev) {
+            src->prev->next = src->next;
+        } else {
+            objtab[src->data.x][src->data.y] = src->next;
         }
-        objtab[srcx][srcy] = obj;
+        src->prev = NULL;
+        src->next = objtab[srcx][srcy];
+        if (src->next) {
+            src->next->prev = src;
+        }
+        src->data.x = srcx;
+        src->data.y = srcy;
+        objtab[srcx][srcy] = src;
     }
 
     return;
