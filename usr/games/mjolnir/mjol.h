@@ -10,9 +10,11 @@
 #include <zero/randmt32.h>
 #endif
 
-#define mjolisobj(type) bitset(mjolisobjtab, type)
+#define mjolisobj(type)  bitset(mjolisobjtab, type)
+#define mjolisitem(type) bitset(mjolisitemtab, type)
 extern struct mjolgame *mjolgame;
 extern uint8_t          mjolisobjtab[32];
+extern uint8_t          mjolisitemtab[32];
 extern struct mjolchar *chaseq;
 
 #define MJOL_DEF_NICK   "johndoe"
@@ -49,8 +51,8 @@ extern struct mjolchar *chaseq;
 #define MJOL_OBJ_KNIFE           'k'
 #define MJOL_OBJ_LOCKPICK        'l'
 #define MJOL_OBJ_LASER           'L'
-#define MJOL_OBJ_MAINFRAME       'm'
-#define MJOL_OBJ_MACE            'M'
+#define MJOL_OBJ_MACE            'm'
+#define MJOL_OBJ_MAINFRAME       'M'
 #define MJOL_OBJ_PIPE            'p'
 #define MJOL_OBJ_PISTOL          'P'
 #define MJOL_OBJ_SWORD           's'
@@ -306,12 +308,6 @@ mjolrmchase(struct mjolchar *data)
     }
 
     return;
-}
-
-static __inline__ void
-mjolhit(struct mjolchar *src, struct mjolchar *dest)
-{
-    ;
 }
 
 #endif /* __MJOLNIR_MJOL_H__ */

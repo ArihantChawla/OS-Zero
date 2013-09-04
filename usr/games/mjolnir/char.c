@@ -52,11 +52,33 @@ mjoldoturn(struct mjolgame *game, struct mjolchar *data)
     }
 }
 
-void
-mjolchase(struct mjolchar *src, struct mjolchar *dest)
+long
+mjolhit(struct mjolchar *src, struct mjolchar *dest)
 {
+    return 0;
+}
+
+void
+mjoladditem(struct mjolchar *dest, struct mjolobj *item)
+{
+    ;
+}
+
+void
+mjoldie(struct mjolchar *dest)
+{
+    ;
+}
+
+typedef long movefunc(struct mjolchar *, struct mjolchar *);
+long
+mjolfindmove(struct mjolchar *src, struct mjolchar *dest,
+             movefunc *func, long lim)
+{
+    long              retval = 0;
     void           ***objtab = mjolgame->objtab;
     struct mjolobj   *obj;
+    struct mjolobj   *item;
     long              destx = dest->data.x;
     long              desty = dest->data.y;
     long              srcx = src->data.x;
@@ -66,13 +88,19 @@ mjolchase(struct mjolchar *src, struct mjolchar *dest)
     long              type;
     long              val;
 
-    if ((labs(dx) == 1 && labs(dy) <= 1) || (labs(dy) == 1 && labs(dx) <= 1)) {
+    if (srcx == destx && srcy == desty) {
+
+        return retval;
+    }
+    if (((labs(dx) == lim && labs(dy) <= lim)
+         || (labs(dy) == lim && labs(dx) <= lim))
+        && (func)) {
         /* attack */
-        mjolhit(src, dest);
+        retval = func(src, dest);
     } else {
         /* TODO: make collision-checking/path-finding actually work... =) */
-        if (labs(dx) > 1) {
-            if  (dx < -1) {
+        if (labs(dx) > lim) {
+            if  (dx < -lim) {
                 /* dest is to the left of src */
                 dx = -1;
             } else {
@@ -80,10 +108,10 @@ mjolchase(struct mjolchar *src, struct mjolchar *dest)
                 dx = 1;
             }
             srcx += dx;
-            if (dy < -1) {
+            if (dy < -lim) {
                 /* dest is above src */
                 dy = -1;
-            } else if (dy > 1) {
+            } else if (dy > lim) {
                 /* dest is below src */
                 dy = 1;
             }
@@ -108,9 +136,9 @@ mjolchase(struct mjolchar *src, struct mjolchar *dest)
                     }
                 }
             }
-        } else if (labs(dy) > 1) {
+        } else if (labs(dy) > lim) {
             /* vertical movement only */
-            if (dy < -1) {
+            if (dy < -lim) {
                 dy = -1;
             } else {
                 dy = 1;
@@ -172,12 +200,33 @@ mjolchase(struct mjolchar *src, struct mjolchar *dest)
                                 } else {
                                     /* no move found */
 
-                                    return;
+                                    return retval;
                                 }
                             }
                         }
                     }
                 }
+            }
+        }
+        if (!lim && srcx == destx && srcy == desty
+            && !(src->data.flg & MJOL_CHAR_NO_PICK)) {
+            item = objtab[destx][desty];
+            while (item) {
+                type = item->data.type;
+                if (mjolisitem(type)) {
+                    obj = item->data.next;
+                    if (obj) {
+                        obj->data.prev = item->data.prev;
+                    }
+                    obj = item->data.prev;
+                    if (obj) {
+                        obj->data.next = item->data.next;
+                    } else {
+                        objtab[destx][desty] = item->data.next;
+                    }
+                    mjoladditem(dest, item);
+                }
+                obj = obj->next;
             }
         }
         obj = src->data.next;
@@ -199,6 +248,21 @@ mjolchase(struct mjolchar *src, struct mjolchar *dest)
         src->data.x = srcx;
         src->data.y = srcy;
         objtab[srcx][srcy] = src;
+    }
+
+    return retval;
+}
+
+void
+mjolchase(struct mjolchar *src, struct mjolchar *dest)
+{
+    long val = mjolfindmove(src, dest, mjolhit, 1);
+
+    if (val) {
+        dest->hp -= val;
+        if  (dest->hp <= 0) {
+            mjoldie(dest);
+        }
     }
 
     return;

@@ -56,8 +56,8 @@ honey		| h		| from beehives after killing the queen
 knife		| k		| knife, dagger, gurkha, ...
 lockpick	| l		| thieves are naturally best at using these
 laser		| L		| laser gun
-mainframe	| m		| computer systems for running punchcards
-mace		| M		| may be Mjolnir
+mace		| m		| may be Mjolnir
+mainframe	| M		| computer systems for running punchcards
 pipe		| p		| pipe
 pistol		| P		| pistol
 sword		| s		| sword
