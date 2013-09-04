@@ -64,6 +64,12 @@ mjoladditem(struct mjolchar *dest, struct mjolobj *item)
     ;
 }
 
+long
+mjoltrap(struct mjolchar *dest, struct mjolobj *trap)
+{
+    return 0;
+}
+
 void
 mjoldie(struct mjolchar *dest)
 {
@@ -225,13 +231,15 @@ mjolfindmove(struct mjolchar *src, struct mjolchar *dest,
                         objtab[destx][desty] = item->data.next;
                     }
                     mjoladditem(dest, item);
+                } else if (type == MJOL_OBJ_TRAP) {
+                    retval += mjoltrap(dest, item);
                 }
                 obj = obj->next;
             }
         }
         obj = src->data.next;
         if (obj) {
-            obj->data.prev = src->data.prev;
+        obj->data.prev = src->data.prev;
         }
         obj = src->data.prev;
         if (obj) {
