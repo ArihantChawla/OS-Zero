@@ -245,7 +245,7 @@ mjolfindmove(struct mjolchar *src, struct mjolchar *dest,
         }
         obj = src->data.next;
         if (obj) {
-        obj->data.prev = src->data.prev;
+            obj->data.prev = src->data.prev;
         }
         obj = src->data.prev;
         if (obj) {
