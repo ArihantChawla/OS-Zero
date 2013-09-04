@@ -9,14 +9,12 @@
 #define GFXRGB555 2
 #define GFXRGB565 3
 
+#if (_BYTE_ORDER == _LITTLE_ENDIAN)
+
 #define GFXALPHAOFS 24
 #define GFXREDOFS   16
 #define GFXGREENOFS 8
 #define GFXBLUEOFS  0
-
-typedef int32_t argb32_t;
-typedef int16_t rgb555_t;
-typedef int16_t rgb565_t;
 
 struct argb32 {
     uint8_t bval;
@@ -24,6 +22,26 @@ struct argb32 {
     uint8_t rval;
     uint8_t aval;
 };
+
+#elif (_BYTE_ORDER == _BIG_ENDIAN)
+
+#define GFXALPHAOFS 0
+#define GFXREDOFS   8
+#define GFXGREENOFS 16
+#define GFXBLUEOFS  24
+
+struct argb32 {
+    uint8_t aval;
+    uint8_t rval;
+    uint8_t gval;
+    uint8_t bval;
+};
+
+#endif
+
+typedef int32_t argb32_t;
+typedef int16_t rgb555_t;
+typedef int16_t rgb565_t;
 
 /* pix is 32-bit word */
 #define gfxalphaval(pix) ((pix) >> GFXALPHAOFS)		 // alpha component
@@ -96,8 +114,9 @@ struct argb32 {
 #define GFX_RGB565_BLUE_SHIFT     -3
 
 #define gfxtopix(dst, u) (gfxto##dst(u))
-#define gfxtonone(u)                                                   \
+#define gfxtoargb32(u)                                                  \
     (u)
+
 #define gfxtorgb555(u)                                                  \
     (gfxtoc(gfxredval(u),                                               \
             GFX_RGB555_RED_MASK,                                        \

@@ -5,6 +5,10 @@
 #include <stdlib.h>
 #include <zero/trix.h>
 #include <dungeon/dng.h>
+#include <mjolnir/conf.h>
+#if (MJOL_USE_ZERO_RANDMT32)
+#include <zero/randmt32.h>
+#endif
 
 #define mjolisobj(type) bitset(mjolisobjtab, type)
 extern struct mjolgame *mjolgame;
@@ -305,46 +309,140 @@ mjolrmchase(struct mjolchar *data)
 }
 
 static __inline__ void
+mjolhit(struct mjolchar *src, struct mjolchar *dest)
+{
+    ;
+}
+
+static __inline__ void
 mjolchase(struct mjolchar *src, struct mjolchar *dest)
 {
     struct mjolobj ***objtab = mjolgame->objtab;
     long              destx = dest->data.x;
     long              desty = dest->data.y;
-    long              x = destx;
-    long              y = desty;
-    long              dx = destx - src->data.x;
-    long              dy = desty - src->data.y;
+    long              srcx = src->data.x;
+    long              srcy = src->data.y;
+    long              dx = destx - srcx;
+    long              dy = desty - srcy;
     long              type;
+    long              val;
     struct mjolobj   *obj;
 
     if ((labs(dx) == 1 && labs(dy) <= 1) || (labs(dy) == 1 && labs(dx) <= 1)) {
         /* attack */
+        mjolhit(src, dest);
     } else {
-        if  (dx < -1) {
-            x++;
-        } else if (dx > 1) {
-            x--;
-        }
-        if (dy < - 1) {
-            y++;
-        } else if (dy > 1) {
-            y--;
-        }
-        type = objtab[x][y]->data.type;
-        if (mjolisobj(type)) {
-            obj = objtab[destx][desty];
-            if (obj) {
-                if (obj->next) {
-                    obj->next->prev = NULL;
+        /* TODO: make collision-checking/path-finding actually work... =) */
+        if (labs(dx) > 1) {
+            if  (dx < -1) {
+                /* dest is to the left of src */
+                dx = -1;
+            } else {
+                /* dest is to the right of src */
+                dx = 1;
+            }
+            srcx += dx;
+            if (dy < -1) {
+                /* dest is above src */
+                dy = -1;
+            } else if (dy > 1) {
+                /* dest is below src */
+                dy = 1;
+            }
+            type = objtab[srcx][srcy + dy]->data.type;
+            if (mjolisobj(type)) {
+                /* src can moves horizontally and vertically */
+                srcy += dy;
+            } else {
+                type = objtab[srcx][srcy]->data.type;
+                if (mjolisobj(type)) {
+                    /* src moves horizontally but not vertically */
+                    ;
+                } else {
+                    srcx -= dx;
+                    type = objtab[srcx][srcy + dy]->data.type;
+                    if (mjolisobj(type)) {
+                        /* src moves vertically but not horizontally */
+                        srcy += dy;
+                    }
                 }
-                objtab[destx][desty] = obj->next;
-                obj->next = objtab[x][y];
-                if (obj->next) {
-                    obj->next->prev = obj;
+            }
+        } else if (labs(dy) > 1) {
+            /* vertical movement only */
+            if (dy < -1) {
+                dy = -1;
+            } else {
+                dy = 1;
+            }
+            srcy += dy;
+            type = objtab[srcx][srcy]->data.type;
+            if (mjolisobj(type)) {
+                /* src moves vertically */
+            } else {
+                srcy -= dy;
+                val = mjolrand() & 0x01;
+                if (val) {
+                    /* try to move left */
+                    dx = -1;
+                } else {
+                    /* try to move right */
+                    dx = 1;
                 }
-                objtab[x][y] = obj;
+                srcx += dx;
+                type = objtab[srcx][srcy]->data.type;
+                if (mjolisobj(type)) {
+                    /* move into chosen direction */
+                    ;
+                } else {
+                    /* change horizontal direction */
+                    dx = -dx;
+                    srcx += 2 * dx;
+                    type = objtab[srcx][srcy]->data.type;
+                    if (mjolisobj(type)) {
+                        /* valid move */
+                        ;
+                    } else {
+                        /* change vertical direction */
+                        srcx -= dx;
+                        dy = -dy;
+                        srcy += 2 * dy;
+                        type = objtab[srcx][srcy]->data.type;
+                        if (mjolisobj(type)) {
+                            /* valid move */
+                            ;
+                        } else {
+                            /* try vertical and horizontal */
+                            srcx -= dx;
+                            type = objtab[srcx][srcy]->data.type;
+                            if (mjolisobj(type)) {
+                                /* valid move */
+                                ;
+                            } else {
+                                srcx += 2 * dx;
+                                type = objtab[srcx][srcy]->data.type;
+                                if (mjolisobj(type)) {
+                                    /* valid move */
+                                } else {
+                                    /* no move found */
+
+                                    return;
+                                }
+                            }
+                        }
+                    }
+                }
             }
         }
+        obj = objtab[src->data.x][src->data.y];
+        if (obj->next) {
+            obj->next->prev = NULL;
+        }
+        objtab[src->data.x][src->data.y] = obj->next;
+        obj->next = objtab[srcx][srcy];
+        if (obj->next) {
+            obj->next->prev = obj;
+        }
+        objtab[srcx][srcy] = obj;
     }
 
     return;

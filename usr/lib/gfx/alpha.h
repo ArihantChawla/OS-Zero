@@ -112,7 +112,6 @@
 
 #define gfxalphablendloq_asm_mmx(src, dest, aval)                       \
     do {                                                                \
-        __asm__ ("emms\n");                                             \
         __asm__ ("pxor %mm0, %mm0\n");                                  \
         __asm__ ("movd %0, %%mm1\n" : : "rm" (src));                    \
         __asm__ ("movd %0, %%mm2\n" : : "rm" (dest));                   \
@@ -132,6 +131,7 @@
         __asm__ ("paddb %mm4, %mm2\n");                                 \
         __asm__ ("packuswb %mm0, %mm2\n");                              \
         __asm__ __volatile__ ("movd %%mm2, %0\n" : "=rm" (dest));       \
+        __asm__ ("emms\n");                                             \
     } while (FALSE)
 
 #if (__INTEL_MMX__)
@@ -144,7 +144,6 @@
         __m64 _malpha;                                                  \
         __m64 _mtmp;                                                    \
                                                                         \
-        _mm_empty();                                                    \
         _mzero = _mm_cvtsi32_si64(0);              /* 0000000000000000 */ \
         _malpha = _mm_cvtsi32_si64(aval);          /* 00000000000000AA */ \
         _mtmp = _mm_slli_si64(_malpha, 16);        /* 0000000000AA0000 */ \
@@ -161,6 +160,7 @@
         _mdest = _mm_add_pi8(_msrc, _mdest);       /* D = D + T */      \
         _mdest = _mm_packs_pu16(_mdest, _mzero);   /* D:00000000??RRGGBB */ \
         (dest) = _mm_cvtsi64_si32(_mdest);         /* DEST = D */       \
+        _mm_empty();                                                    \
     } while (FALSE)
 #endif /* __INTEL_MMX__ */
 
