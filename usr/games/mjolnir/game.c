@@ -60,8 +60,9 @@ mjolintro(void)
 void
 mjolinit(struct mjolgame *game, int argc, char *argv[])
 {
-    struct mjolgame *data = calloc(1, sizeof(struct mjolgame *));
-    long             x;
+    struct mjolgame   *data = calloc(1, sizeof(struct mjolgame *));
+    struct mjolobj  ***objtab;
+    long               x;
 
     mjolgame = game;
     signal(SIGINT, mjolquit);
@@ -104,10 +105,16 @@ mjolinit(struct mjolgame *game, int argc, char *argv[])
     if (!game->height) {
         game->height = MJOL_DEF_HEIGHT;
     }
-    game->objtab = calloc(game->width, sizeof(struct mjolobj *));
+    objtab = calloc(game->width, sizeof(struct mjolobj *));
     for (x = 0 ; x < game->width ; x++) {
-        game->objtab[x] = calloc(game->height, sizeof(struct mjolobj *));
+        objtab[x] = calloc(game->height, sizeof(struct mjolobj *));
+        if (!objtab[x]) {
+            fprintf(stderr, "memory allocation failure\n");
+            
+            exit(1);
+        }
     }
+    game->objtab = objtab;
     mjolinitscr(game);
     mjolinitcmd();
     

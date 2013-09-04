@@ -46,10 +46,11 @@ void
 mjolconnrooms(struct mjolgame *game,
               struct mjolrect *src, struct mjolrect *dest)
 {
-    long x;
-    long y;
-    long lim;
-    long val;
+    struct mjolobj ***objtab = game->objtab;
+    long              x;
+    long              y;
+    long              lim;
+    long              val;
 
     if (dest->y + dest->height < src->y) {
         /* dest is above src */
@@ -58,37 +59,37 @@ mjolconnrooms(struct mjolgame *game,
             lim = dest->x + max(mjolrand() % dest->width, 1);
             x = src->x;
             y = src->y + max(mjolrand() % src->height, 1);
-            game->objtab[x][y] = mjolmkdoor();
+            objtab[x][y] = mjolmkdoor();
             while (x-- > lim) {
-                if (!game->objtab[x][y]) {
-                    game->objtab[x][y] = mjolmkcorridor();
+                if (!objtab[x][y]) {
+                    objtab[x][y] = mjolmkcorridor();
                 }
             }
             lim = dest->y + dest->height;
             while (y-- > lim) {
-                if (!game->objtab[x][y]) {
-                    game->objtab[x][y] = mjolmkcorridor();
+                if (!objtab[x][y]) {
+                    objtab[x][y] = mjolmkcorridor();
                 }
             }
-            game->objtab[x][y] = mjolmkdoor();
+            objtab[x][y] = mjolmkdoor();
         } else if (dest->x >= src->x + src->width) {
             /* topright */
             lim = dest->x + max(mjolrand() % dest->width, 1);
             x = src->x + src->width;
             y = src->y + max(mjolrand() % src->height, 1);
-            game->objtab[x][y] = mjolmkdoor();
+            objtab[x][y] = mjolmkdoor();
             while (x++ < lim) {
-                if (!game->objtab[x][y]) {
-                    game->objtab[x][y] = mjolmkcorridor();
+                if (!objtab[x][y]) {
+                    objtab[x][y] = mjolmkcorridor();
                 }
             }
             lim = dest->y + dest->height;
             while (y-- > lim) {
-                if (!game->objtab[x][y]) {
-                    game->objtab[x][y] = mjolmkcorridor();
+                if (!objtab[x][y]) {
+                    objtab[x][y] = mjolmkcorridor();
                 }
             }
-            game->objtab[x][y] = mjolmkdoor();
+            objtab[x][y] = mjolmkdoor();
         } else {
             /* dest is above src */
             val = dest->x + dest->width - src->x;
@@ -96,28 +97,28 @@ mjolconnrooms(struct mjolgame *game,
                 /* adjacent, draw straight vertical line */
                 x = dest->x + dest->width - max(mjolrand() % val, 1);
                 y = src->y;
-                game->objtab[x][y] = mjolmkdoor();
+                objtab[x][y] = mjolmkdoor();
             } else {
                 /* draw horizontal line */
                 lim = dest->x + max(mjolrand() % dest->width, 1);
                 x = src->x + max(mjolrand() % src->width, 1);
                 y = src->y;
-                game->objtab[x][y] = mjolmkdoor();
+                objtab[x][y] = mjolmkdoor();
                 y++;
                 while (x-- > lim) {
-                    if (!game->objtab[x][y]) {
-                        game->objtab[x][y] = mjolmkcorridor();
+                    if (!objtab[x][y]) {
+                        objtab[x][y] = mjolmkcorridor();
                     }
                 }
             }
             /* draw vertical line */
             lim = dest->y + dest->height;
             while (y-- > lim) {
-                if (!game->objtab[x][y]) {
-                    game->objtab[x][y] = mjolmkcorridor();
+                if (!objtab[x][y]) {
+                    objtab[x][y] = mjolmkcorridor();
                 }
             }
-            game->objtab[x][y] = mjolmkdoor();
+            objtab[x][y] = mjolmkdoor();
         }
     } else if (dest->x + dest->width <= src->x) {
         /* dest is to the left of src */
@@ -126,19 +127,19 @@ mjolconnrooms(struct mjolgame *game,
             lim = dest->x + max(mjolrand() % dest->width, 1);
             x = src->x;
             y = src->y + max(mjolrand() % src->height, 1);
-            game->objtab[x][y] = mjolmkdoor();
+            objtab[x][y] = mjolmkdoor();
             while (x-- > lim) {
-                if (!game->objtab[x][y]) {
-                    game->objtab[x][y] = mjolmkcorridor();
+                if (!objtab[x][y]) {
+                    objtab[x][y] = mjolmkcorridor();
                 }
             }
             lim = dest->y;
             while (y++ < lim) {
-                if (!game->objtab[x][y]) {
-                    game->objtab[x][y] = mjolmkcorridor();
+                if (!objtab[x][y]) {
+                    objtab[x][y] = mjolmkcorridor();
                 }
             }
-            game->objtab[x][y] = mjolmkdoor();
+            objtab[x][y] = mjolmkdoor();
         } else {
             /* left */
             val = dest->y + dest->height - src->y;
@@ -146,27 +147,27 @@ mjolconnrooms(struct mjolgame *game,
                 /* adjacent, draw straight horizontal line */
                 x = src->x;
                 y = dest->y + dest->height - max(mjolrand() % val, 1);
-                game->objtab[x][y] = mjolmkdoor();
+                objtab[x][y] = mjolmkdoor();
             } else {
                 /* draw vertical line */
                 lim = dest->y + max(mjolrand() % dest->height, 1);
                 x = src->x + max(mjolrand() % src->width, 1);
                 y = src->y;
-                game->objtab[x][y] = mjolmkdoor();
+                objtab[x][y] = mjolmkdoor();
                 while (y++ < lim) {
-                    if (!game->objtab[x][y]) {
-                        game->objtab[x][y] = mjolmkcorridor();
+                    if (!objtab[x][y]) {
+                        objtab[x][y] = mjolmkcorridor();
                     }
                 }
             }
             /* draw horizontal line */
             lim = dest->x + dest->width;
             while (x-- > lim) {
-                if (!game->objtab[x][y]) {
-                    game->objtab[x][y] = mjolmkcorridor();
+                if (!objtab[x][y]) {
+                    objtab[x][y] = mjolmkcorridor();
                 }
             }
-            game->objtab[x][y] = mjolmkdoor();
+            objtab[x][y] = mjolmkdoor();
         }
     } else if (dest->y > src->y + src->height) {
         /* dest is below src */
@@ -175,31 +176,31 @@ mjolconnrooms(struct mjolgame *game,
             lim = dest->x + max(mjolrand() % dest->width, 1);
             x = src->x;
             y = src->y + max(mjolrand() % src->height, 1);
-            game->objtab[x][y] = mjolmkdoor();
+            objtab[x][y] = mjolmkdoor();
             while (x++ < lim) {
-                if (!game->objtab[x][y]) {
-                    game->objtab[x][y] = mjolmkcorridor();
+                if (!objtab[x][y]) {
+                    objtab[x][y] = mjolmkcorridor();
                 }
             }
             lim = dest->y;
             while (y++ < lim) {
-                if (!game->objtab[x][y]) { 
-                    game->objtab[x][y] = mjolmkcorridor();
+                if (!objtab[x][y]) { 
+                    objtab[x][y] = mjolmkcorridor();
                 }
             }
-            game->objtab[x][y] = mjolmkdoor();
+            objtab[x][y] = mjolmkdoor();
         } else {
             /* below, draw straight vertical line */
             lim = dest->y;
             x = src->x + max(mjolrand() % src->width, 1);
             y = src->y + src->height;
-            game->objtab[x][y] = mjolmkdoor();
+            objtab[x][y] = mjolmkdoor();
             while (y++ < lim) {
-                if (!game->objtab[x][y]) {
-                    game->objtab[x][y] = mjolmkcorridor();
+                if (!objtab[x][y]) {
+                    objtab[x][y] = mjolmkcorridor();
                 }
             }
-            game->objtab[x][y] = mjolmkdoor();
+            objtab[x][y] = mjolmkdoor();
         }
     } else {
         /* dest is to the right of src */
@@ -208,27 +209,27 @@ mjolconnrooms(struct mjolgame *game,
             /* adjacent, draw straight horizontal line */
             x = src->x;
             y = dest->y + dest->height - max(mjolrand() % val, 1);
-            game->objtab[x][y] = mjolmkdoor();
+            objtab[x][y] = mjolmkdoor();
         } else {
             /* draw vertical line */
             lim = dest->y + max(mjolrand() % dest->height, 1);
             x = src->x + src->width;
             y = src->y + max(mjolrand() % src->height, 1);
-            game->objtab[x][y] = mjolmkdoor();
+            objtab[x][y] = mjolmkdoor();
             while (y--) {
-                if (!game->objtab[x][y]) {
-                    game->objtab[x][y] = mjolmkcorridor();
+                if (!objtab[x][y]) {
+                    objtab[x][y] = mjolmkcorridor();
                 }
             }
         }
         /* draw horizontal line */
         lim = dest->x;
         while (x++ < lim) {
-            if (!game->objtab[x][y]) {
-                game->objtab[x][y] = mjolmkcorridor();
+            if (!objtab[x][y]) {
+                objtab[x][y] = mjolmkcorridor();
             }
         }
-        game->objtab[x][y] = mjolmkdoor();
+        objtab[x][y] = mjolmkdoor();
     }
 
     return;

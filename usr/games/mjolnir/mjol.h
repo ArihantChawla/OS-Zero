@@ -151,16 +151,16 @@ extern struct mjolchar *chaseq;
 #define MJOL_SCR_TTY              2
 #define MJOL_SCR_X11              3
 struct mjolgame {
-    struct dnggame    obj;
-    struct mjolchar  *player;
-    char             *nick;     // names of players
-    long              scrtype;  // type of screen to use
-    struct mjolscr   *scr;      // screen interface
-    size_t            nlvl;     // # of levels
-    size_t            width;    // width of level in cells
-    size_t            height;   // height of level
-    size_t            nobj;     // # of objects
-    struct mjolobj ***objtab;   // objects on the level
+    struct dnggame   obj;
+    struct mjolchar *player;
+    char            *nick;      // names of players
+    long             scrtype;   // type of screen to use
+    struct mjolscr  *scr;       // screen interface
+    size_t           nlvl;      // # of levels
+    size_t           width;     // width of level in cells
+    size_t           height;    // height of level
+    size_t           nobj;      // # of objects
+    void            *objtab;    // objects on the level
 };
 
 /* event handler function prototype */

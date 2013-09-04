@@ -55,7 +55,8 @@ mjoldoturn(struct mjolgame *game, struct mjolchar *data)
 void
 mjolchase(struct mjolchar *src, struct mjolchar *dest)
 {
-    struct mjolobj ***objtab = mjolgame->objtab;
+    void           ***objtab = mjolgame->objtab;
+    struct mjolobj   *obj;
     long              destx = dest->data.x;
     long              desty = dest->data.y;
     long              srcx = src->data.x;
@@ -64,7 +65,6 @@ mjolchase(struct mjolchar *src, struct mjolchar *dest)
     long              dy = desty - srcy;
     long              type;
     long              val;
-    struct mjolobj   *obj;
 
     if ((labs(dx) == 1 && labs(dy) <= 1) || (labs(dy) == 1 && labs(dx) <= 1)) {
         /* attack */
@@ -87,18 +87,21 @@ mjolchase(struct mjolchar *src, struct mjolchar *dest)
                 /* dest is below src */
                 dy = 1;
             }
-            type = objtab[srcx][srcy + dy]->data.type;
+            obj = objtab[srcx][srcy + dy];
+            type = obj->data.type;
             if (mjolisobj(type)) {
                 /* src can moves horizontally and vertically */
                 srcy += dy;
             } else {
-                type = objtab[srcx][srcy]->data.type;
+                obj = objtab[srcx][srcy];
+                type = obj->data.type;
                 if (mjolisobj(type)) {
                     /* src moves horizontally but not vertically */
                     ;
                 } else {
                     srcx -= dx;
-                    type = objtab[srcx][srcy + dy]->data.type;
+                    obj = objtab[srcx][srcy + dy];
+                    type = obj->data.type;
                     if (mjolisobj(type)) {
                         /* src moves vertically but not horizontally */
                         srcy += dy;
@@ -113,7 +116,8 @@ mjolchase(struct mjolchar *src, struct mjolchar *dest)
                 dy = 1;
             }
             srcy += dy;
-            type = objtab[srcx][srcy]->data.type;
+            obj = objtab[srcx][srcy];
+            type = obj->data.type;
             if (mjolisobj(type)) {
                 /* src moves vertically */
             } else {
@@ -127,7 +131,8 @@ mjolchase(struct mjolchar *src, struct mjolchar *dest)
                     dx = 1;
                 }
                 srcx += dx;
-                type = objtab[srcx][srcy]->data.type;
+                obj = objtab[srcx][srcy];
+                type = obj->data.type;
                 if (mjolisobj(type)) {
                     /* move into chosen direction */
                     ;
@@ -135,7 +140,8 @@ mjolchase(struct mjolchar *src, struct mjolchar *dest)
                     /* change horizontal direction */
                     dx = -dx;
                     srcx += 2 * dx;
-                    type = objtab[srcx][srcy]->data.type;
+                    obj = objtab[srcx][srcy];
+                    type = obj->data.type;
                     if (mjolisobj(type)) {
                         /* valid move */
                         ;
@@ -144,20 +150,23 @@ mjolchase(struct mjolchar *src, struct mjolchar *dest)
                         srcx -= dx;
                         dy = -dy;
                         srcy += 2 * dy;
-                        type = objtab[srcx][srcy]->data.type;
+                        obj = objtab[srcx][srcy];
+                        type = obj->data.type;
                         if (mjolisobj(type)) {
                             /* valid move */
                             ;
                         } else {
                             /* try vertical and horizontal */
                             srcx -= dx;
-                            type = objtab[srcx][srcy]->data.type;
+                            obj = objtab[srcx][srcy];
+                            type = obj->data.type;
                             if (mjolisobj(type)) {
                                 /* valid move */
                                 ;
                             } else {
                                 srcx += 2 * dx;
-                                type = objtab[srcx][srcy]->data.type;
+                                obj = objtab[srcx][srcy];
+                                type = obj->data.type;
                                 if (mjolisobj(type)) {
                                     /* valid move */
                                 } else {
@@ -171,18 +180,21 @@ mjolchase(struct mjolchar *src, struct mjolchar *dest)
                 }
             }
         }
-        if (src->next) {
-            src->next->prev = src->prev;
+        obj = src->data.next;
+        if (obj) {
+            obj->data.prev = src->data.prev;
         }
-        if (src->prev) {
-            src->prev->next = src->next;
+        obj = src->data.prev;
+        if (obj) {
+            obj->data.next = src->data.next;
         } else {
-            objtab[src->data.x][src->data.y] = src->next;
+            objtab[src->data.x][src->data.y] = src->data.next;
         }
-        src->prev = NULL;
-        src->next = objtab[srcx][srcy];
-        if (src->next) {
-            src->next->prev = src;
+        src->data.prev = NULL;
+        src->data.next = objtab[srcx][srcy];
+        obj = src->data.next;
+        if (obj) {
+            obj->data.prev = src;
         }
         src->data.x = srcx;
         src->data.y = srcy;
