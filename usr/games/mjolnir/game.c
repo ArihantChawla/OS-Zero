@@ -73,7 +73,7 @@ mjolinit(struct mjolgame *game, int argc, char *argv[])
 
         exit(1);
     }
-    game->obj.name = mjolgamename;
+    game->data.name = mjolgamename;
     game->nick = calloc(1, sizeof(struct dngchar *));
     mjolgetopt(game, argc, argv);
     if (!game->player) {

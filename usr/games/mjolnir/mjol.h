@@ -151,7 +151,7 @@ extern struct mjolchar *chaseq;
 #define MJOL_SCR_TTY              2
 #define MJOL_SCR_X11              3
 struct mjolgame {
-    struct dnggame   obj;
+    struct dnggame   data;
     struct mjolchar *player;
     char            *nick;      // names of players
     long             scrtype;   // type of screen to use
