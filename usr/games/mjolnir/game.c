@@ -11,9 +11,7 @@ extern void mjolinitscr(struct mjolgame *game);
 extern void mjolgendng(struct mjolgame *game);
 extern void mjolinitcmd(void);
 extern void mjoldocmd(struct mjolgame *game, int ch);
-#if (MJOL_TTY)
-extern void mjolclosetty(void);
-#endif
+extern void mjolchase(struct mjolchar *src, struct mjolchar *dest);
 
 extern struct mjolchar *mjolchaseq;
 
