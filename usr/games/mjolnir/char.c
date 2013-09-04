@@ -231,10 +231,16 @@ mjolfindmove(struct mjolchar *src, struct mjolchar *dest,
                         objtab[destx][desty] = item->data.next;
                     }
                     mjoladditem(dest, item);
-                } else if (type == MJOL_OBJ_TRAP) {
+                }
+                item = item->data.next;
+            }
+            item = objtab[destx][desty];
+            while (item) {
+                type = item->data.type;
+                if (type == MJOL_OBJ_TRAP) {
                     retval += mjoltrap(dest, item);
                 }
-                obj = obj->next;
+                item = item->data.next;
             }
         }
         obj = src->data.next;
