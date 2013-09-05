@@ -6,6 +6,7 @@
 #include <mjolnir/mjol.h>
 #include <mjolnir/scr.h>
 
+extern long mjolhit(struct mjolchar *src, struct mjolchar *dest);
 extern long mjoltrap(struct mjolobj *trap, struct mjolchar *dest);
 
 static uint8_t   chdirbitmap[32] ALIGNED(CLSIZE);
@@ -92,10 +93,10 @@ mjoldie(struct mjolchar *dest)
     ;
 }
 
-typedef long movefunc(struct mjolchar *, struct mjolchar *);
+typedef long hitfunc(struct mjolchar *, struct mjolchar *);
 long
 mjolfindmove(struct mjolchar *src, struct mjolchar *dest,
-             movefunc *func, long lim)
+             hitfunc *func, long lim)
 {
     long              retval = 0;
     void           ***objtab = mjolgame->objtab;

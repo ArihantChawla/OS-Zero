@@ -24,8 +24,8 @@ mjolinitobj(void)
     setbit(mjolisobjtab, MJOL_OBJ_POTION);
     setbit(mjolisobjtab, MJOL_OBJ_PLANT);
     setbit(mjolisobjtab, MJOL_OBJ_PUNCHCARD);
-    setbit(mjolisobjtab, MJOL_OBJ_DOWN);
-    setbit(mjolisobjtab, MJOL_OBJ_UP);
+    setbit(mjolisobjtab, MJOL_OBJ_STAIR_DOWN);
+    setbit(mjolisobjtab, MJOL_OBJ_STAIR_UP);
     setbit(mjolisobjtab, MJOL_OBJ_STATUE);
     setbit(mjolisobjtab, MJOL_OBJ_TRAP);
     setbit(mjolisobjtab, MJOL_OBJ_WAND);
@@ -116,6 +116,26 @@ mjolmkdoor(void)
     obj->data.type = MJOL_OBJ_DOOR;
     if (!l) {
         /* 1/16 chance of a hidden door */
+        obj->data.flg |= MJOL_OBJ_HIDDEN;
+    }
+
+    return obj;
+}
+
+struct mjolobj *
+mjolmkstair(long type)
+{
+    struct mjolobj *obj = calloc(1, sizeof(struct mjolobj));
+    long            l = mjolrand() & 0x0f;
+
+    if (!obj) {
+        fprintf(stderr, "memory allocation failure\n");
+
+        exit(1);
+    }
+    obj->data.type = type;
+    if (!l) {
+        /* 1/16 chance of a hidden stairway */
         obj->data.flg |= MJOL_OBJ_HIDDEN;
     }
 

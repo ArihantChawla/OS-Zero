@@ -13,7 +13,7 @@
 extern void              mjolinit(struct mjolgame *game,
                                   int argc, char *argv[]);
 void                     mjolinitobj(void);
-extern struct mjolrect **mjolgenrooms(struct mjolgame *game, long *nroom);
+extern struct mjolrect **mjolinitrooms(struct mjolgame *game, long *nroom);
 extern void              mjolgameloop(struct mjolgame *game);
 
 #if (TEST)
@@ -35,7 +35,7 @@ main(int argc, char *argv[])
     mjolsrand(time(NULL));
     mjolinitobj();
     mjolinit(&game, argc, argv);
-    lvltab = mjolgenrooms(&game, &nroom);
+    lvltab = mjolinitrooms(&game, &nroom);
 #if (TEST)
     {
         long l;

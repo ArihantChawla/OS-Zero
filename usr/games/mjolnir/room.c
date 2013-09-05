@@ -291,7 +291,7 @@ mjolsplitrect(struct mjolrect *rect)
 }
 
 struct mjolrect **
-mjolgenrooms(struct mjolgame *game, long *nroom, long width, long height)
+mjolinitrooms(struct mjolgame *game, long *nroom, long width, long height)
 {
     struct mjolrect  *tab[MJOL_MAX_ROOMS << 1] = { NULL };
     struct mjolrect  *item = calloc(1, sizeof(struct mjolrect));

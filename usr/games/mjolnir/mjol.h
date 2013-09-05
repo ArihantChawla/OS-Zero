@@ -37,8 +37,8 @@ extern struct mjolchar *chaseq;
 #define MJOL_OBJ_POTION          '!'
 #define MJOL_OBJ_PLANT           '*'
 #define MJOL_OBJ_PUNCHCARD       '='
-#define MJOL_OBJ_DOWN            '<'
-#define MJOL_OBJ_UP              '>'
+#define MJOL_OBJ_STAIR_DOWN      '<'
+#define MJOL_OBJ_STAIR_UP        '>'
 #define MJOL_OBJ_STATUE          '&'
 #define MJOL_OBJ_TRAP            '^'
 #define MJOL_OBJ_WAND            '\\'
@@ -165,6 +165,12 @@ struct mjolgame {
     void            *objtab;    // objects on the level
 };
 
+struct mjolobjfunc {
+    long (*hit)(void *, void *);
+    long (*def)(void *, void *);
+    long (*pick)(void *, void *);
+};
+
 #if 0
 /* event handler function prototype */
 typedef void mjolfunc_t(struct dnggame *game,
@@ -182,30 +188,25 @@ typedef void mjolfunc_t(struct dnggame *game,
 #define MJOL_CHAR_FROZEN    0           // character can't move
 #define MJOL_CHAR_SLOW      (-1)        // slow speed
 struct mjolchar {
-    struct dngobj data;                 // common character data
+    struct dngobj      data;            // common character data
+    struct mjolobjfunc func;
     /* Rogue [visible] attributes */
-    long          hp;                   // current hitpoints
-    long          maxhp;                // max hitpoints
-    long          gold;                 // current gold
-    long          str;                  // current strength
-    long          maxstr;               // max strength
-    long          arm;                  // armor strength
-    long          exp;                  // experience
-    long          lvl;                  // level
+    long               hp;              // current hitpoints
+    long               maxhp;           // max hitpoints
+    long               gold;            // current gold
+    long               str;             // current strength
+    long               maxstr;          // max strength
+    long               arm;             // armor strength
+    long               exp;             // experience
+    long               lvl;             // level
     /* mjolnir [hidden] attributes */
-    long          speed;                // FAST, NORMAL, FROZEN, SLOW
-    unsigned long turn;                 // next turn ID
-    unsigned long nturn;                // # of turns used
+    long               speed;           // FAST, NORMAL, FROZEN, SLOW
+    unsigned long      turn;            // next turn ID
+    unsigned long      nturn;           // # of turns used
 #if 0
-    long          dex;                  // dexterity
-    long          lock;                 // lock-pick skill
+    long               dex;             // dexterity
+    long               lock;            // lock-pick skill
 #endif
-};
-
-struct mjolobjfunc {
-    long (*hit)(void *, void *);
-    long (*def)(void *, void *);
-    long (*pick)(void *, void *);
 };
 
 /* data.flg values */
