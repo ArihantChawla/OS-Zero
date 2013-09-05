@@ -7,45 +7,45 @@
 #include <zero/trix.h>
 #include <mjolnir/mjol.h>
 
-uint8_t mjolisobjtab[32];
-uint8_t mjolisitemtab[32];
+uint8_t mjolisobjmap[32];
+uint8_t mjolisitemmap[32];
 
 /* initialise bitmap for objects you can move on top of */
 void
 mjolinitobj(void)
 {
-    setbit(mjolisobjtab, MJOL_OBJ_FLOOR);
-    setbit(mjolisobjtab, MJOL_OBJ_CORRIDOR);
-    setbit(mjolisobjtab, MJOL_OBJ_DOOR);
-    setbit(mjolisobjtab, MJOL_OBJ_FOOD);
-    setbit(mjolisobjtab, MJOL_OBJ_WATER);
-    setbit(mjolisobjtab, MJOL_OBJ_GOLD);
-    setbit(mjolisobjtab, MJOL_OBJ_SILVER_BULLET);
-    setbit(mjolisobjtab, MJOL_OBJ_POTION);
-    setbit(mjolisobjtab, MJOL_OBJ_PLANT);
-    setbit(mjolisobjtab, MJOL_OBJ_PUNCHCARD);
-    setbit(mjolisobjtab, MJOL_OBJ_STAIR_DOWN);
-    setbit(mjolisobjtab, MJOL_OBJ_STAIR_UP);
-    setbit(mjolisobjtab, MJOL_OBJ_STATUE);
-    setbit(mjolisobjtab, MJOL_OBJ_TRAP);
-    setbit(mjolisobjtab, MJOL_OBJ_WAND);
-    setbit(mjolisobjtab, MJOL_OBJ_SCROLL);
-    setbit(mjolisobjtab, MJOL_OBJ_RING);
-    setbit(mjolisobjtab, MJOL_OBJ_CHAIN);
-    setbit(mjolisobjtab, MJOL_OBJ_CHEST);
-    setbit(mjolisobjtab, MJOL_OBJ_SUBMACHINE_GUN);
-    setbit(mjolisobjtab, MJOL_OBJ_HONEY);
-    setbit(mjolisobjtab, MJOL_OBJ_KNIFE);
-    setbit(mjolisobjtab, MJOL_OBJ_LOCKPICK);
-    setbit(mjolisobjtab, MJOL_OBJ_LASER);
-    setbit(mjolisobjtab, MJOL_OBJ_MACE);
-    setbit(mjolisobjtab, MJOL_OBJ_MAINFRAME);
-    setbit(mjolisobjtab, MJOL_OBJ_PIPE);
-    setbit(mjolisobjtab, MJOL_OBJ_PISTOL);
-    setbit(mjolisobjtab, MJOL_OBJ_SWORD);
-    setbit(mjolisobjtab, MJOL_OBJ_WELL);
-    setbit(mjolisobjtab, MJOL_OBJ_CROSS);
-    setbit(mjolisobjtab, MJOL_OBJ_ALTAR);
+    setbit(mjolisobjmap, MJOL_OBJ_FLOOR);
+    setbit(mjolisobjmap, MJOL_OBJ_CORRIDOR);
+    setbit(mjolisobjmap, MJOL_OBJ_DOOR);
+    setbit(mjolisobjmap, MJOL_OBJ_FOOD);
+    setbit(mjolisobjmap, MJOL_OBJ_WATER);
+    setbit(mjolisobjmap, MJOL_OBJ_GOLD);
+    setbit(mjolisobjmap, MJOL_OBJ_SILVER_BULLET);
+    setbit(mjolisobjmap, MJOL_OBJ_POTION);
+    setbit(mjolisobjmap, MJOL_OBJ_PLANT);
+    setbit(mjolisobjmap, MJOL_OBJ_PUNCHCARD);
+    setbit(mjolisobjmap, MJOL_OBJ_STAIR_DOWN);
+    setbit(mjolisobjmap, MJOL_OBJ_STAIR_UP);
+    setbit(mjolisobjmap, MJOL_OBJ_STATUE);
+    setbit(mjolisobjmap, MJOL_OBJ_TRAP);
+    setbit(mjolisobjmap, MJOL_OBJ_WAND);
+    setbit(mjolisobjmap, MJOL_OBJ_SCROLL);
+    setbit(mjolisobjmap, MJOL_OBJ_RING);
+    setbit(mjolisobjmap, MJOL_OBJ_CHAIN);
+    setbit(mjolisobjmap, MJOL_OBJ_CHEST);
+    setbit(mjolisobjmap, MJOL_OBJ_SUBMACHINE_GUN);
+    setbit(mjolisobjmap, MJOL_OBJ_HONEY);
+    setbit(mjolisobjmap, MJOL_OBJ_KNIFE);
+    setbit(mjolisobjmap, MJOL_OBJ_LOCKPICK);
+    setbit(mjolisobjmap, MJOL_OBJ_LASER);
+    setbit(mjolisobjmap, MJOL_OBJ_MACE);
+    setbit(mjolisobjmap, MJOL_OBJ_MAINFRAME);
+    setbit(mjolisobjmap, MJOL_OBJ_PIPE);
+    setbit(mjolisobjmap, MJOL_OBJ_PISTOL);
+    setbit(mjolisobjmap, MJOL_OBJ_SWORD);
+    setbit(mjolisobjmap, MJOL_OBJ_WELL);
+    setbit(mjolisobjmap, MJOL_OBJ_CROSS);
+    setbit(mjolisobjmap, MJOL_OBJ_ALTAR);
 
     return;
 }
@@ -54,30 +54,30 @@ mjolinitobj(void)
 void
 mjolinititem(void)
 {
-    setbit(mjolisitemtab, MJOL_OBJ_FOOD);
-    setbit(mjolisitemtab, MJOL_OBJ_WATER);
-    setbit(mjolisitemtab, MJOL_OBJ_GOLD);
-    setbit(mjolisitemtab, MJOL_OBJ_SILVER_BULLET);
-    setbit(mjolisitemtab, MJOL_OBJ_POTION);
-    setbit(mjolisitemtab, MJOL_OBJ_PLANT);
-    setbit(mjolisitemtab, MJOL_OBJ_PUNCHCARD);
-    setbit(mjolisitemtab, MJOL_OBJ_STATUE);
-    setbit(mjolisitemtab, MJOL_OBJ_WAND);
-    setbit(mjolisitemtab, MJOL_OBJ_SCROLL);
-    setbit(mjolisitemtab, MJOL_OBJ_RING);
-    setbit(mjolisitemtab, MJOL_OBJ_CHAIN);
-    setbit(mjolisitemtab, MJOL_OBJ_CHEST);
-    setbit(mjolisitemtab, MJOL_OBJ_SUBMACHINE_GUN);
-    setbit(mjolisitemtab, MJOL_OBJ_HONEY);
-    setbit(mjolisitemtab, MJOL_OBJ_KNIFE);
-    setbit(mjolisitemtab, MJOL_OBJ_LOCKPICK);
-    setbit(mjolisitemtab, MJOL_OBJ_LASER);
-    setbit(mjolisitemtab, MJOL_OBJ_MACE);
-    setbit(mjolisitemtab, MJOL_OBJ_MAINFRAME);
-    setbit(mjolisitemtab, MJOL_OBJ_PIPE);
-    setbit(mjolisitemtab, MJOL_OBJ_PISTOL);
-    setbit(mjolisitemtab, MJOL_OBJ_SWORD);
-    setbit(mjolisitemtab, MJOL_OBJ_CROSS);
+    setbit(mjolisitemmap, MJOL_OBJ_FOOD);
+    setbit(mjolisitemmap, MJOL_OBJ_WATER);
+    setbit(mjolisitemmap, MJOL_OBJ_GOLD);
+    setbit(mjolisitemmap, MJOL_OBJ_SILVER_BULLET);
+    setbit(mjolisitemmap, MJOL_OBJ_POTION);
+    setbit(mjolisitemmap, MJOL_OBJ_PLANT);
+    setbit(mjolisitemmap, MJOL_OBJ_PUNCHCARD);
+    setbit(mjolisitemmap, MJOL_OBJ_STATUE);
+    setbit(mjolisitemmap, MJOL_OBJ_WAND);
+    setbit(mjolisitemmap, MJOL_OBJ_SCROLL);
+    setbit(mjolisitemmap, MJOL_OBJ_RING);
+    setbit(mjolisitemmap, MJOL_OBJ_CHAIN);
+    setbit(mjolisitemmap, MJOL_OBJ_CHEST);
+    setbit(mjolisitemmap, MJOL_OBJ_SUBMACHINE_GUN);
+    setbit(mjolisitemmap, MJOL_OBJ_HONEY);
+    setbit(mjolisitemmap, MJOL_OBJ_KNIFE);
+    setbit(mjolisitemmap, MJOL_OBJ_LOCKPICK);
+    setbit(mjolisitemmap, MJOL_OBJ_LASER);
+    setbit(mjolisitemmap, MJOL_OBJ_MACE);
+    setbit(mjolisitemmap, MJOL_OBJ_MAINFRAME);
+    setbit(mjolisitemmap, MJOL_OBJ_PIPE);
+    setbit(mjolisitemmap, MJOL_OBJ_PISTOL);
+    setbit(mjolisitemmap, MJOL_OBJ_SWORD);
+    setbit(mjolisitemmap, MJOL_OBJ_CROSS);
 
     return;
 }

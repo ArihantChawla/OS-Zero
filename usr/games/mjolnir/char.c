@@ -9,32 +9,39 @@
 extern long mjolhit(struct mjolchar *src, struct mjolchar *dest);
 extern long mjoltrap(struct mjolobj *trap, struct mjolchar *dest);
 
-static uint8_t   chdirbitmap[32] ALIGNED(CLSIZE);
-static uint8_t   chargbitmap[32];
+mjolcmdfunc *mjolcmdfunctab[256][256];
+
 struct mjolchar *mjolchaseq;
+
+void
+mjolinitchar(struct mjolchar *chardata)
+{
+    ;
+}
 
 struct mjolchar *
 mjolmkplayer(struct mjolgame *game)
 {
-    struct mjolchar *data = calloc(1, sizeof(struct mjolchar));
+    struct mjolchar *player = calloc(1, sizeof(struct mjolchar));
 
-    if (!data) {
+    if (!player) {
         fprintf(stderr, "memory allocation failure\n");
 
         exit(1);
     }
-    data->data.type = MJOL_CHAR_PLAYER;
+    player->data.type = MJOL_CHAR_PLAYER;
+    mjolinitchar(player);
 
-    return data;
+    return player;
 }
 
 /* determine how many continuous turns a character has */
 long
-mjolcharnturn(struct mjolchar *chardata)
+mjolhasnturn(struct mjolchar *chardata)
 {
-    long speed = chardata->speed;
+    long          retval = 0;
+    long          speed = chardata->speed;
     unsigned long turn;
-    long retval = 0;
 
     if (speed < 0) {
         turn = chardata->turn;
@@ -49,7 +56,6 @@ mjolcharnturn(struct mjolchar *chardata)
         /* return speed */
         retval = speed;
     }
-    chardata->nturn++;
 
     return retval;
 }
@@ -57,28 +63,33 @@ mjolcharnturn(struct mjolchar *chardata)
 void
 mjoldoturn(struct mjolgame *game, struct mjolchar *data)
 {
-    long   n = mjolcharnturn(data);
-    int  (*printmsg)(const char *, ...) = game->scr->printmsg;
-    int  (*getkbd)(void) = game->scr->getch;
-    int    cmd;
-    int    dir;
-    int    obj;
-
-    if (n) {
+    long          n = mjolhasnturn(data);
+    int         (*printmsg)(const char *, ...) = game->scr->printmsg;
+    int         (*getkbd)(void) = game->scr->getch;
+    mjolcmdfunc  *func;
+    int           cmd;
+    int           dir;
+    int           item;
+    
+    while (n) {
         printmsg("You have %ld turns", n);
-        while (n--) {
-            cmd = getkbd();
+        cmd = getkbd();
 //            clrmsg();
-            if (bitset(chdirbitmap, cmd)) {
-                printmsg("Which direction?");
-                dir = getkbd();
-            }
-            if (bitset(chargbitmap, cmd)) {
-                obj = getkbd();
-            }
-            data->nturn++;
+        if (mjolhasdir(cmd)) {
+            printmsg("Which direction?");
+            dir = getkbd();
+        }
+        if (mjolhasarg(cmd)) {
+            item = getkbd();
+        }
+        func = mjolcmdfunctab[cmd][item];
+        if (func) {
+            func(data, NULL);
+            n--;
         }
     }
+    
+    return;
 }
 
 void

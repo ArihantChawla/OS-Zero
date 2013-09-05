@@ -10,12 +10,18 @@
 #include <zero/randmt32.h>
 #endif
 
-#define mjolisobj(type)  bitset(mjolisobjtab, type)
-#define mjolisitem(type) bitset(mjolisitemtab, type)
 extern struct mjolgame *mjolgame;
-extern uint8_t          mjolisobjtab[32];
-extern uint8_t          mjolisitemtab[32];
 extern struct mjolchar *chaseq;
+
+#define mjolhasdir(ch)  bitset(mjolcmdhasdirmap, ch)
+#define mjolhasarg(ch)  bitset(mjolcmdhasargmap, ch)
+extern uint8_t          mjolcmdhasdirmap[32];
+extern uint8_t          mjolcmdhasargmap[32];
+
+#define mjolisobj(type)  bitset(mjolisobjmap, type)
+#define mjolisitem(type) bitset(mjolisitemmap, type)
+extern uint8_t          mjolisobjmap[32];
+extern uint8_t          mjolisitemmap[32];
 
 #define MJOL_DEF_NICK   "johndoe"
 #define MJOL_LEN_NICK   16
@@ -206,6 +212,8 @@ struct mjolchar {
 #if 0
     long               dex;             // dexterity
     long               lock;            // lock-pick skill
+    long               intl;            // intelligence
+    long               def;             // defense
 #endif
 };
 
@@ -285,6 +293,8 @@ mjolrmchase(struct mjolchar *data)
 
     return;
 }
+
+typedef void mjolcmdfunc(struct mjolchar *src, struct mjolobj *dest);
 
 #endif /* __MJOLNIR_MJOL_H__ */
 

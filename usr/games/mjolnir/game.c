@@ -5,13 +5,16 @@
 #include <mjolnir/mjol.h>
 #include <mjolnir/scr.h>
 
-struct mjolchar * mjolmkplayer(struct mjolgame *game);
-extern long mjolgetopt(struct mjolgame *game, int argc, char *argv[]);
-extern void mjolinitscr(struct mjolgame *game);
-extern void mjolgendng(struct mjolgame *game);
-extern void mjolinitcmd(void);
-extern void mjoldocmd(struct mjolgame *game, int ch);
-extern void mjolchase(struct mjolchar *src, struct mjolchar *dest);
+extern struct mjolchar * mjolmkplayer(struct mjolgame *game);
+extern long              mjolgetopt(struct mjolgame *game,
+                                    int argc, char *argv[]);
+extern void              mjolinitscr(struct mjolgame *game);
+extern void              mjolgendng(struct mjolgame *game);
+extern void              mjolinitcmd(void);
+extern void              mjoldocmd(struct mjolgame *game, int ch);
+extern void              mjolchase(struct mjolchar *src, struct mjolchar *dest);
+extern void              mjoldoturn(struct mjolgame *game,
+                                    struct mjolchar *data);
 
 extern struct mjolchar *mjolchaseq;
 
@@ -20,16 +23,21 @@ static volatile long    mjolquitgame;
 struct mjolgame        *mjolgame;
 
 void
-mjolquit(int sig)
+mjolquit(long val)
 {
     void (*func)(void) = mjolgame->scr->close;
 
     if (func) {
         func();
     }
-    exit(sig);
 
-    return;
+    exit(val);
+}
+
+void
+mjolquitsig(int sig)
+{
+    mjolquitgame = 1;
 }
 
 void
@@ -65,9 +73,9 @@ mjolinit(struct mjolgame *game, int argc, char *argv[])
     long               x;
 
     mjolgame = game;
-    signal(SIGINT, mjolquit);
-    signal(SIGQUIT, mjolquit);
-    signal(SIGTERM, mjolquit);
+    signal(SIGINT, mjolquitsig);
+    signal(SIGQUIT, mjolquitsig);
+    signal(SIGTERM, mjolquitsig);
     if (!data) {
         fprintf(stderr, "failed to allocate game data\n");
 
@@ -135,16 +143,14 @@ mjolheartbeat(void)
 void
 mjolgameloop(struct mjolgame *game)
 {
-    int (*getkbd)(void) = game->scr->getch;
-    int   ch;
+    struct mjolchar *chtab[4];
+    long             l;
 
     do {
-        ch = getkbd();
-        if (ch != MJOL_CMD_QUIT) {
-            mjoldocmd(game, ch);
-            mjolheartbeat();
-        } else {
-            mjolquitgame = 1;
+        for (l = 0 ; l < 4 ; l++) {
+            if (chtab[l]) {
+                mjoldoturn(game, chtab[l]);
+            }
         }
     } while (!mjolquitgame);
     mjolquit(0);

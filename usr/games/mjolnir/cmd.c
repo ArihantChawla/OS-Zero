@@ -1,61 +1,63 @@
+#include <zero/cdecl.h>
+#include <zero/param.h>
 #include <mjolnir/mjol.h>
 
 extern void mjolbeep(void);
 
-typedef void mjolcmdfunc(struct mjolgame *);
-
-static mjolcmdfunc *cmdfunctab[256];
+mjolcmdfunc *mjolcmdfunctab[256] ALIGNED(CLSIZE);
+uint8_t      mjolcmdhasdirmap[32];
+uint8_t      mjolcmdhasargmap[32];
 
 void
-mjolidentify(struct mjolgame *game)
+mjolidentify(struct mjolchar *src, struct mjolobj *dest)
 {
     ;
 }
 
 void
-mjolmoveleft(struct mjolgame *game)
+mjolmoveleft(struct mjolchar *src, struct mjolobj *dest)
 {
     ;
 }
 
 void
-mjolmovedown(struct mjolgame *game)
+mjolmovedown(struct mjolchar *src, struct mjolobj *dest)
 {
     ;
 }
 
 void
-mjolmoveup(struct mjolgame *game)
+mjolmoveup(struct mjolchar *src, struct mjolobj *dest)
 {
     ;
 }
 
 void
-mjolmoveright(struct mjolgame *game)
+mjolmoveright(struct mjolchar *src, struct mjolobj *dest)
 {
     ;
 }
 
 void
-mjolmoveupleft(struct mjolgame *game)
+mjolmoveupleft(struct mjolchar *src, struct mjolobj *dest)
 {
     ;
 }
 
 void
-mjolmoveupright(struct mjolgame *game)
+mjolmoveupright(struct mjolchar *src, struct mjolobj *dest)
 {
     ;
 }
 
 void
-mjolmovedownleft(struct mjolgame *game)
+mjolmovedownleft(struct mjolchar *src, struct mjolobj *dest)
 {
     ;
 }
 
 void
-mjolmovedownright(struct mjolgame *game)
+mjolmovedownright(struct mjolchar *src, struct mjolobj *dest)
 {
     ;
 }
@@ -63,27 +65,16 @@ mjolmovedownright(struct mjolgame *game)
 void
 mjolinitcmd(void)
 {
-    cmdfunctab[MJOL_CMD_IDENTIFY] = mjolidentify;
-    cmdfunctab[MJOL_CMD_MOVE_LEFT] = mjolmoveleft;
-    cmdfunctab[MJOL_CMD_MOVE_DOWN] = mjolmovedown;
-    cmdfunctab[MJOL_CMD_MOVE_UP] = mjolmoveup;
-    cmdfunctab[MJOL_CMD_MOVE_RIGHT] = mjolmoveright;
-    cmdfunctab[MJOL_CMD_MOVE_UPLEFT] = mjolmoveupleft;
-    cmdfunctab[MJOL_CMD_MOVE_UPRIGHT] = mjolmoveupright;
-    cmdfunctab[MJOL_CMD_MOVE_DOWNLEFT] = mjolmovedownleft;
-    cmdfunctab[MJOL_CMD_MOVE_DOWNRIGHT] = mjolmovedownright;
+    mjolcmdfunctab[MJOL_CMD_IDENTIFY] = mjolidentify;
+    mjolcmdfunctab[MJOL_CMD_MOVE_LEFT] = mjolmoveleft;
+    mjolcmdfunctab[MJOL_CMD_MOVE_DOWN] = mjolmovedown;
+    mjolcmdfunctab[MJOL_CMD_MOVE_UP] = mjolmoveup;
+    mjolcmdfunctab[MJOL_CMD_MOVE_RIGHT] = mjolmoveright;
+    mjolcmdfunctab[MJOL_CMD_MOVE_UPLEFT] = mjolmoveupleft;
+    mjolcmdfunctab[MJOL_CMD_MOVE_UPRIGHT] = mjolmoveupright;
+    mjolcmdfunctab[MJOL_CMD_MOVE_DOWNLEFT] = mjolmovedownleft;
+    mjolcmdfunctab[MJOL_CMD_MOVE_DOWNRIGHT] = mjolmovedownright;
 
     return;
 }
 
-void
-mjoldocmd(struct mjolgame *game, int ch)
-{
-    mjolcmdfunc *func = cmdfunctab[ch];
-
-    if (func) {
-        func(game);
-    } else {
-        mjolbeep();
-    }
-}
