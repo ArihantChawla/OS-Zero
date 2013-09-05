@@ -122,3 +122,31 @@ mjolmkdoor(void)
     return obj;
 }
 
+long
+mjolhit(struct mjolchar *src, struct mjolchar *dest)
+{
+    long   retval = 0;
+    long (*func)(void *, void *);
+
+    func = src->func.hit;
+    if (func) {
+        retval = func(src, dest);
+    }
+
+    return retval;
+}
+
+long
+mjoltrap(struct mjolobj *trap, struct mjolchar *dest)
+{
+    long   retval = 0;
+    long (*func)(void *, void *);
+
+    func = trap->func.hit;
+    if (func) {
+        retval = func(trap, dest);
+    }
+
+    return retval;
+}
+

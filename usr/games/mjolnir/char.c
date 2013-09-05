@@ -6,6 +6,8 @@
 #include <mjolnir/mjol.h>
 #include <mjolnir/scr.h>
 
+extern long mjoltrap(struct mjolobj *trap, struct mjolchar *dest);
+
 static uint8_t   chdirbitmap[32] ALIGNED(CLSIZE);
 static uint8_t   chargbitmap[32];
 struct mjolchar *mjolchaseq;
@@ -23,6 +25,32 @@ mjolmkplayer(struct mjolgame *game)
     data->data.type = MJOL_CHAR_PLAYER;
 
     return data;
+}
+
+/* determine how many continuous turns a character has */
+long
+mjolcharnturn(struct mjolchar *chardata)
+{
+    long speed = chardata->speed;
+    unsigned long turn;
+    long retval = 0;
+
+    if (speed < 0) {
+        turn = chardata->turn;
+        /* only move every abs(speed) turns */
+        if (chardata->nturn == turn) {
+            /* allow movement */
+            retval = 1;
+            turn -= speed;
+            chardata->turn = turn;
+        }
+    } else {
+        /* return speed */
+        retval = speed;
+    }
+    chardata->nturn++;
+
+    return retval;
 }
 
 void
@@ -52,22 +80,10 @@ mjoldoturn(struct mjolgame *game, struct mjolchar *data)
     }
 }
 
-long
-mjolhit(struct mjolchar *src, struct mjolchar *dest)
-{
-    return 0;
-}
-
 void
 mjoladditem(struct mjolchar *dest, struct mjolobj *item)
 {
     ;
-}
-
-long
-mjoltrap(struct mjolchar *dest, struct mjolobj *trap)
-{
-    return 0;
 }
 
 void
@@ -238,7 +254,7 @@ mjolfindmove(struct mjolchar *src, struct mjolchar *dest,
             while (item) {
                 type = item->data.type;
                 if (type == MJOL_OBJ_TRAP) {
-                    retval += mjoltrap(dest, item);
+                    retval += mjoltrap(item, dest);
                 }
                 item = item->data.next;
             }

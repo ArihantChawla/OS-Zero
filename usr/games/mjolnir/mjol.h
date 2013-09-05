@@ -165,9 +165,11 @@ struct mjolgame {
     void            *objtab;    // objects on the level
 };
 
+#if 0
 /* event handler function prototype */
 typedef void mjolfunc_t(struct dnggame *game,
                         struct dngobj *src, struct dngobj *dest);
+#endif
 
 /* character flags */
 #define MJOL_CHAR_NO_PICK   0x00000001U // do not pick object up automatically
@@ -181,7 +183,7 @@ typedef void mjolfunc_t(struct dnggame *game,
 #define MJOL_CHAR_SLOW      (-1)        // slow speed
 struct mjolchar {
     struct dngobj data;                 // common character data
-    /* Rogue attributes */
+    /* Rogue [visible] attributes */
     long          hp;                   // current hitpoints
     long          maxhp;                // max hitpoints
     long          gold;                 // current gold
@@ -190,14 +192,20 @@ struct mjolchar {
     long          arm;                  // armor strength
     long          exp;                  // experience
     long          lvl;                  // level
-    /* mjolnir attributes */
-    long          turn;                 // next turn ID
-    long          nturn;                // # of turns used
+    /* mjolnir [hidden] attributes */
     long          speed;                // FAST, NORMAL, FROZEN, SLOW
+    unsigned long turn;                 // next turn ID
+    unsigned long nturn;                // # of turns used
 #if 0
     long          dex;                  // dexterity
     long          lock;                 // lock-pick skill
 #endif
+};
+
+struct mjolobjfunc {
+    long (*hit)(void *, void *);
+    long (*def)(void *, void *);
+    long (*pick)(void *, void *);
 };
 
 /* data.flg values */
@@ -207,22 +215,14 @@ struct mjolchar {
 #define MJOL_OBJ_NEUTRAL 0
 #define MJOL_OBJ_CURSED  (-1)
 struct mjolobj {
-    struct dngobj   data;       // common object data
-    long            weight;     // weight of object
-    long            bless;      // BLESSED, NEUTRAL, CURSED
-    long            parm;       // e.g. +1 or -1 for armor
-    struct mjolobj *prev;
-    struct mjolobj *next;
+    struct dngobj       data;           // common object data
+    struct mjolobjfunc  func;
+    long                weight;         // weight of object
+    long                bless;          // BLESSED, NEUTRAL, CURSED
+    long                parm;           // e.g. +1 or -1 for armor
+    struct mjolobj     *prev;
+    struct mjolobj     *next;
 };
-
-#if 0
-#define MJOLNOBJSTK 14
-struct mjolobjstk {
-    long  top;                  // cached top object character
-    long  cur;                  // current stack index
-    char *stk[MJOLNOBJSTK];     // object stack
-};
-#endif
 
 struct mjolrect {
     long             x;
@@ -232,31 +232,6 @@ struct mjolrect {
     struct mjolrect *left;
     struct mjolrect *right;
 };
-
-/* determine how many continuous turns a character has */
-static __inline__ long
-mjolcharnturn(struct mjolchar *chardata)
-{
-    long speed = chardata->speed;
-    long turn;
-    long retval = 0;
-
-    if (speed < 0) {
-        turn = chardata->turn;
-        /* only move every abs(speed) turns */
-        if (chardata->nturn == turn) {
-            /* allow movement */
-            retval = 1;
-            turn -= speed;
-            chardata->turn = turn;
-        }
-    } else {
-        /* return speed */
-        retval = speed;
-    }
-
-    return retval;
-}
 
 static __inline__ void
 mjolpushchase(struct mjolchar *data)
