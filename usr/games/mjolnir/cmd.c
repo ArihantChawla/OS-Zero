@@ -8,58 +8,58 @@ mjolcmdfunc *mjolcmdfunctab[256] ALIGNED(CLSIZE);
 uint8_t      mjolcmdhasdirmap[32];
 uint8_t      mjolcmdhasargmap[32];
 
-void
+long
 mjolidentify(struct mjolchar *src, struct mjolobj *dest)
 {
-    ;
+    return 0;
 }
 
-void
+long
 mjolmoveleft(struct mjolchar *src, struct mjolobj *dest)
 {
-    ;
+    return 0;
 }
 
-void
+long
 mjolmovedown(struct mjolchar *src, struct mjolobj *dest)
 {
-    ;
+    return 0;
 }
 
-void
+long
 mjolmoveup(struct mjolchar *src, struct mjolobj *dest)
 {
-    ;
+    return 0;
 }
 
-void
+long
 mjolmoveright(struct mjolchar *src, struct mjolobj *dest)
 {
-    ;
+    return 0;
 }
 
-void
+long
 mjolmoveupleft(struct mjolchar *src, struct mjolobj *dest)
 {
-    ;
+    return 0;
 }
 
-void
+long
 mjolmoveupright(struct mjolchar *src, struct mjolobj *dest)
 {
-    ;
+    return 0;
 }
 
-void
+long
 mjolmovedownleft(struct mjolchar *src, struct mjolobj *dest)
 {
-    ;
+    return 0;
 }
 
-void
+long
 mjolmovedownright(struct mjolchar *src, struct mjolobj *dest)
 {
-    ;
+    return 0;
 }
 
 void

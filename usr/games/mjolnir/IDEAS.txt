@@ -37,6 +37,7 @@ wall		| |		| vertical wall
 door		| +		| door
 ration		| %		| food ration
 water		| ~		| water
+fountain	| {		| fountain
 gold		| $		| use to get merchandise
 silver bullet	| S		| use for demons
 potion		| !		| potion
@@ -49,6 +50,7 @@ trap		| ^		| trap
 wand		| \		| magic wand
 scroll		| ?		| spells and other scrolls
 ring		| =		| ring
+armor		| ]		| suit or armor
 chain		| 8		| chain
 chest		| C		| chest; may find treasury in them
 sub-machine gun | g		| may be Jatimatic

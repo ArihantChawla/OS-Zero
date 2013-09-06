@@ -332,8 +332,8 @@ mjolinitrooms(struct mjolgame *game, long *nroom, long width, long height)
                 m = n << 1;
                 item = mjolsplitrect(tab[n - 1]);
                 tab[m - 1] = item->left;
-                tab[m] = item->right;
                 mjolmkroom(item->left);
+                tab[m] = item->right;
                 mjolmkroom(item->right);
                 mjolconnrooms(game, item->left, item->right);
             }
@@ -349,8 +349,8 @@ mjolinitrooms(struct mjolgame *game, long *nroom, long width, long height)
     n = 0;
     while (ndx >= val) {
         ret[n] = tab[ndx];
-        ndx--;
         n++;
+        ndx--;
     }
     while (ndx >= 0) {
         free(tab[ndx]);

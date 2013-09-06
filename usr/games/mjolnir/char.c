@@ -3,6 +3,7 @@
 #include <zero/cdecl.h>
 #include <zero/param.h>
 #include <zero/trix.h>
+//#include <mjolnir/conf.h>
 #include <mjolnir/mjol.h>
 #include <mjolnir/scr.h>
 
@@ -11,26 +12,53 @@ extern long mjoltrap(struct mjolobj *trap, struct mjolchar *dest);
 
 mjolcmdfunc *mjolcmdfunctab[256][256];
 
+struct mjolchar *mjolplayer;
 struct mjolchar *mjolchaseq;
 
 void
-mjolinitchar(struct mjolchar *chardata)
+mjolinitchar(struct mjolchar *data, long lvl)
 {
-    ;
+    data->hp = 16 + ((lvl > 0)
+                     ? (mjolrand() % lvl)
+                     : 0);
+    data->maxhp = data->hp;
+    data->gold = mjolrand() & 0xff;
+    data->str = 4 + ((lvl > 0)
+                     ? (mjolrand() % lvl)
+                     : 0);
+    data->maxstr = data->str;
+    data->arm = 0;
+    data->exp = 0;
+    data->speed = 1;
+    data->turn = 0;
+    data->nturn = 0;
+/*  dex, lock, intl, def */
+
+    return;
 }
 
 struct mjolchar *
-mjolmkplayer(struct mjolgame *game)
+mjolmkchar(long type)
 {
-    struct mjolchar *player = calloc(1, sizeof(struct mjolchar));
+    struct mjolchar *data = calloc(1, sizeof(struct mjolchar));
 
-    if (!player) {
+    if (!data) {
         fprintf(stderr, "memory allocation failure\n");
 
         exit(1);
     }
-    player->data.type = MJOL_CHAR_PLAYER;
-    mjolinitchar(player);
+    data->data.type = type;
+
+    return data;
+}
+
+struct mjolchar *
+mjolmkplayer(void)
+{
+    struct mjolchar *player = mjolmkchar(MJOL_CHAR_PLAYER);
+
+    mjolinitchar(player, 1);
+    mjolplayer = player;
 
     return player;
 }
@@ -60,9 +88,10 @@ mjolhasnturn(struct mjolchar *chardata)
     return retval;
 }
 
-void
+long
 mjoldoturn(struct mjolgame *game, struct mjolchar *data)
 {
+    long          retval = 0;
     long          n = mjolhasnturn(data);
     int         (*printmsg)(const char *, ...) = game->scr->printmsg;
     int         (*getkbd)(void) = game->scr->getch;
@@ -71,25 +100,37 @@ mjoldoturn(struct mjolgame *game, struct mjolchar *data)
     int           dir;
     int           item;
     
+    if (!n) {
+        printmsg("You cannot move\n");
+    }
     while (n) {
-        printmsg("You have %ld turns", n);
-        cmd = getkbd();
+        if (n > 1) {
+            printmsg("You have %ld turns\n", n);
+        }
+        do {
+            cmd = getkbd();
+        } while (cmd > 0xff);
+        printmsg(" %x\n", cmd);
 //            clrmsg();
         if (mjolhasdir(cmd)) {
             printmsg("Which direction?");
-            dir = getkbd();
+            do {
+                dir = getkbd();
+            } while (dir > 0xff);
         }
         if (mjolhasarg(cmd)) {
-            item = getkbd();
+            do {
+                item = getkbd();
+            } while (item > 0xff);
         }
         func = mjolcmdfunctab[cmd][item];
         if (func) {
-            func(data, NULL);
+            retval += func(data, NULL);
             n--;
         }
     }
     
-    return;
+    return retval;
 }
 
 void
@@ -107,7 +148,7 @@ mjoldie(struct mjolchar *dest)
 typedef long hitfunc(struct mjolchar *, struct mjolchar *);
 long
 mjolfindmove(struct mjolchar *src, struct mjolchar *dest,
-             hitfunc *func, long lim)
+             hitfunc *func, long mindist)
 {
     long              retval = 0;
     void           ***objtab = mjolgame->objtab;
@@ -126,15 +167,15 @@ mjolfindmove(struct mjolchar *src, struct mjolchar *dest,
 
         return retval;
     }
-    if (((labs(dx) == lim && labs(dy) <= lim)
-         || (labs(dy) == lim && labs(dx) <= lim))
+    if (((labs(dx) == 1 && labs(dy) <= 1)
+         || (labs(dy) == 1 && labs(dx) <= 1))
         && (func)) {
         /* attack */
         retval = func(src, dest);
     } else {
         /* TODO: make collision-checking/path-finding actually work... =) */
-        if (labs(dx) > lim) {
-            if  (dx < -lim) {
+        if (labs(dx) > mindist) {
+            if  (dx < -mindist) {
                 /* dest is to the left of src */
                 dx = -1;
             } else {
@@ -142,37 +183,37 @@ mjolfindmove(struct mjolchar *src, struct mjolchar *dest,
                 dx = 1;
             }
             srcx += dx;
-            if (dy < -lim) {
+            if (dy < -mindist) {
                 /* dest is above src */
                 dy = -1;
-            } else if (dy > lim) {
+            } else if (dy > mindist) {
                 /* dest is below src */
                 dy = 1;
             }
             obj = objtab[srcx][srcy + dy];
             type = obj->data.type;
-            if (mjolisobj(type)) {
+            if (mjolcanmoveto(type)) {
                 /* src can moves horizontally and vertically */
                 srcy += dy;
             } else {
                 obj = objtab[srcx][srcy];
                 type = obj->data.type;
-                if (mjolisobj(type)) {
+                if (mjolcanmoveto(type)) {
                     /* src moves horizontally but not vertically */
                     ;
                 } else {
                     srcx -= dx;
                     obj = objtab[srcx][srcy + dy];
                     type = obj->data.type;
-                    if (mjolisobj(type)) {
+                    if (mjolcanmoveto(type)) {
                         /* src moves vertically but not horizontally */
                         srcy += dy;
                     }
                 }
             }
-        } else if (labs(dy) > lim) {
+        } else if (labs(dy) > mindist) {
             /* vertical movement only */
-            if (dy < -lim) {
+            if (dy < -mindist) {
                 dy = -1;
             } else {
                 dy = 1;
@@ -180,7 +221,7 @@ mjolfindmove(struct mjolchar *src, struct mjolchar *dest,
             srcy += dy;
             obj = objtab[srcx][srcy];
             type = obj->data.type;
-            if (mjolisobj(type)) {
+            if (mjolcanmoveto(type)) {
                 /* src moves vertically */
             } else {
                 srcy -= dy;
@@ -195,7 +236,7 @@ mjolfindmove(struct mjolchar *src, struct mjolchar *dest,
                 srcx += dx;
                 obj = objtab[srcx][srcy];
                 type = obj->data.type;
-                if (mjolisobj(type)) {
+                if (mjolcanmoveto(type)) {
                     /* move into chosen direction */
                     ;
                 } else {
@@ -204,7 +245,7 @@ mjolfindmove(struct mjolchar *src, struct mjolchar *dest,
                     srcx += 2 * dx;
                     obj = objtab[srcx][srcy];
                     type = obj->data.type;
-                    if (mjolisobj(type)) {
+                    if (mjolcanmoveto(type)) {
                         /* valid move */
                         ;
                     } else {
@@ -214,7 +255,7 @@ mjolfindmove(struct mjolchar *src, struct mjolchar *dest,
                         srcy += 2 * dy;
                         obj = objtab[srcx][srcy];
                         type = obj->data.type;
-                        if (mjolisobj(type)) {
+                        if (mjolcanmoveto(type)) {
                             /* valid move */
                             ;
                         } else {
@@ -222,14 +263,14 @@ mjolfindmove(struct mjolchar *src, struct mjolchar *dest,
                             srcx -= dx;
                             obj = objtab[srcx][srcy];
                             type = obj->data.type;
-                            if (mjolisobj(type)) {
+                            if (mjolcanmoveto(type)) {
                                 /* valid move */
                                 ;
                             } else {
                                 srcx += 2 * dx;
                                 obj = objtab[srcx][srcy];
                                 type = obj->data.type;
-                                if (mjolisobj(type)) {
+                                if (mjolcanmoveto(type)) {
                                     /* valid move */
                                 } else {
                                     /* no move found */
@@ -242,12 +283,12 @@ mjolfindmove(struct mjolchar *src, struct mjolchar *dest,
                 }
             }
         }
-        if (!lim && srcx == destx && srcy == desty
+        if (!mindist && srcx == destx && srcy == desty
             && !(src->data.flg & MJOL_CHAR_NO_PICK)) {
             item = objtab[destx][desty];
             while (item) {
                 type = item->data.type;
-                if (mjolisitem(type)) {
+                if (mjolcanpickup(type)) {
                     obj = item->data.next;
                     if (obj) {
                         obj->data.prev = item->data.prev;
@@ -295,18 +336,25 @@ mjolfindmove(struct mjolchar *src, struct mjolchar *dest,
     return retval;
 }
 
-void
+long
 mjolchase(struct mjolchar *src, struct mjolchar *dest)
 {
-    long val = mjolfindmove(src, dest, mjolhit, 1);
+    long retval = mjolfindmove(src, dest, mjolhit, 1);
 
-    if (val) {
-        dest->hp -= val;
-        if  (dest->hp <= 0) {
-            mjoldie(dest);
-        }
+    return retval;
+}
+
+long
+mjolchaseall(struct mjolgame *game)
+{
+    long             retval = 0;
+    struct mjolchar *src = mjolchaseq;
+
+    while (src) {
+        retval += mjolchase(src, mjolplayer);
+        src = src->data.next;
     }
 
-    return;
+    return retval;
 }
 

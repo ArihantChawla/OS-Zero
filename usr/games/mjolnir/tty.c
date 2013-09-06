@@ -22,7 +22,7 @@ mjolclosetty(void)
 }
 
 void
-mjolinittty(struct mjolgame *game)
+mjolopentty(struct mjolgame *game)
 {
     initscr();
     cbreak();

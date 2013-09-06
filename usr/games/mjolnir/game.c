@@ -1,21 +1,22 @@
 #include <stdio.h>
 #include <stdlib.h>
-#include <signal.h>
 #include <mjolnir/conf.h>
 #include <mjolnir/mjol.h>
 #include <mjolnir/scr.h>
 
-extern struct mjolchar * mjolmkplayer(struct mjolgame *game);
-extern long              mjolgetopt(struct mjolgame *game,
-                                    int argc, char *argv[]);
-extern void              mjolinitscr(struct mjolgame *game);
-extern void              mjolgendng(struct mjolgame *game);
-extern void              mjolinitcmd(void);
-extern void              mjoldocmd(struct mjolgame *game, int ch);
-extern void              mjolchase(struct mjolchar *src, struct mjolchar *dest);
-extern void              mjoldoturn(struct mjolgame *game,
-                                    struct mjolchar *data);
+extern long               mjolgetopt(struct mjolgame *game,
+                                     int argc, char *argv[]);
+extern struct mjolchar  * mjolmkplayer(struct mjolgame *game);
+extern struct mjolrect ** mjolinitrooms(struct mjolgame *game, long *nroom);
+extern void               mjolopenscr(struct mjolgame *game);
+extern void               mjolgendng(struct mjolgame *game);
+extern void               mjolinitcmd(void);
+extern void               mjoldocmd(struct mjolgame *game, int ch);
+extern long               mjoldoturn(struct mjolgame *game,
+                                     struct mjolchar *data);
+extern long               mjolchaseall(struct mjolgame *game);
 
+extern struct mjolchar *mjolplayer;
 extern struct mjolchar *mjolchaseq;
 
 static char             mjolgamename[] = "mjolnir";
@@ -37,7 +38,7 @@ mjolquit(long val)
 void
 mjolquitsig(int sig)
 {
-    mjolquitgame = 1;
+    mjolquit(sig);
 }
 
 void
@@ -73,9 +74,6 @@ mjolinit(struct mjolgame *game, int argc, char *argv[])
     long               x;
 
     mjolgame = game;
-    signal(SIGINT, mjolquitsig);
-    signal(SIGQUIT, mjolquitsig);
-    signal(SIGTERM, mjolquitsig);
     if (!data) {
         fprintf(stderr, "failed to allocate game data\n");
 
@@ -103,7 +101,7 @@ mjolinit(struct mjolgame *game, int argc, char *argv[])
         exit(1);
     }
     mjolintro();
-    mjolinitscr(game);
+    mjolopenscr(game);
     if (!game->nlvl) {
         game->nlvl = MJOL_DEF_NLVL;
     }
@@ -123,35 +121,22 @@ mjolinit(struct mjolgame *game, int argc, char *argv[])
         }
     }
     game->objtab = objtab;
-    mjolinitscr(game);
+    mjolopenscr(game);
     mjolinitcmd();
     
     return;
 }
 
 void
-mjolheartbeat(void)
-{
-    struct mjolchar *src = mjolchaseq;
-
-    while (src) {
-        mjolchase(src, mjolgame->player);
-        src = src->data.next;
-    }
-}
-
-void
 mjolgameloop(struct mjolgame *game)
 {
-    struct mjolchar *chtab[4];
-    long             l;
+    struct mjolrect **lvltab;
+    long              nroom = 0;
 
+    lvltab = mjolinitrooms(game, &nroom);
     do {
-        for (l = 0 ; l < 4 ; l++) {
-            if (chtab[l]) {
-                mjoldoturn(game, chtab[l]);
-            }
-        }
+        mjolplayer->hp -= mjoldoturn(game, mjolplayer);
+        mjolplayer->hp -= mjolchaseall(game);
     } while (!mjolquitgame);
     mjolquit(0);
 

@@ -1,6 +1,9 @@
 #ifndef __MJOLNIR_MJOL_H__
 #define __MJOLNIR_MJOL_H__
 
+#if (TEST)
+#include <stdio.h>
+#endif
 #include <stddef.h>
 #include <stdlib.h>
 #include <zero/trix.h>
@@ -18,10 +21,14 @@ extern struct mjolchar *chaseq;
 extern uint8_t          mjolcmdhasdirmap[32];
 extern uint8_t          mjolcmdhasargmap[32];
 
-#define mjolisobj(type)  bitset(mjolisobjmap, type)
-#define mjolisitem(type) bitset(mjolisitemmap, type)
-extern uint8_t          mjolisobjmap[32];
-extern uint8_t          mjolisitemmap[32];
+#define mjolcanmoveto(type) bitset(mjolcanmovetomap, type)
+#define mjolcanpickup(type) bitset(mjolcanpickupmap, type)
+#define mjolcanwear(type)   bitset(mjolcanwearmap, type)
+#define mjolcanwield(type)  bitset(mjolcanwieldmap, type)
+extern uint8_t          mjolcanmovetomap[32];
+extern uint8_t          mjolcanpickupmap[32];
+extern uint8_t          mjolcanwearmap[32];
+extern uint8_t          mjolcanwieldmap[32];
 
 #define MJOL_DEF_NICK   "johndoe"
 #define MJOL_LEN_NICK   16
@@ -38,6 +45,7 @@ extern uint8_t          mjolisitemmap[32];
 #define MJOL_OBJ_DOOR            '+'
 #define MJOL_OBJ_FOOD            '%'
 #define MJOL_OBJ_WATER           '~'
+#define MJOL_OBJ_FOUNTAIN        '{'
 #define MJOL_OBJ_GOLD            '$'
 #define MJOL_OBJ_SILVER_BULLET   'S'
 #define MJOL_OBJ_POTION          '!'
@@ -50,6 +58,7 @@ extern uint8_t          mjolisitemmap[32];
 #define MJOL_OBJ_WAND            '\\'
 #define MJOL_OBJ_SCROLL          '?'
 #define MJOL_OBJ_RING            '='
+#define MJOL_OBJ_ARMOR           ']'
 #define MJOL_OBJ_CHAIN           '8'
 #define MJOL_OBJ_CHEST           'C'
 #define MJOL_OBJ_SUBMACHINE_GUN  'g'
@@ -205,16 +214,16 @@ struct mjolchar {
     long               arm;             // armor strength
     long               exp;             // experience
     long               lvl;             // level
+    long               aln;             // alignment; CHAOTIC, NEUTRAL, LAWFUL
     /* mjolnir [hidden] attributes */
-    long               speed;           // FAST, NORMAL, FROZEN, SLOW
-    unsigned long      turn;            // next turn ID
-    unsigned long      nturn;           // # of turns used
-#if 0
+    long               pwr;
     long               dex;             // dexterity
     long               lock;            // lock-pick skill
     long               intl;            // intelligence
     long               def;             // defense
-#endif
+    long               speed;           // FAST, NORMAL, FROZEN, SLOW
+    unsigned long      turn;            // next turn ID
+    unsigned long      nturn;           // # of turns used
 };
 
 /* data.flg values */
@@ -242,6 +251,15 @@ struct mjolrect {
     struct mjolrect *right;
 };
 
+#if (TEST)
+static __inline__ void
+mjolprintrect(struct mjolrect *rect)
+{
+    fprintf(stderr, "x = %ld, y = %ld, width = %ld, height = %ld\n",
+            rect->x, rect->y, rect->width, rect->height);
+}
+#endif
+
 static __inline__ void
 mjolpushchase(struct mjolchar *data)
 {
@@ -252,6 +270,7 @@ mjolpushchase(struct mjolchar *data)
     if (chaseq) {
         chaseq->data.prev = data;
     }
+    data->data.next = chaseq;
     chaseq = data;
 
     return;
@@ -294,7 +313,7 @@ mjolrmchase(struct mjolchar *data)
     return;
 }
 
-typedef void mjolcmdfunc(struct mjolchar *src, struct mjolobj *dest);
+typedef long mjolcmdfunc(struct mjolchar *src, struct mjolobj *dest);
 
 #endif /* __MJOLNIR_MJOL_H__ */
 

@@ -5,41 +5,41 @@
 #include <mjolnir/scr.h>
 
 #if (MJOL_VGA_TEXT)
-extern void mjolinitvga(struct mjolgame *game);
-#define MJOL_VGA_TEXT_INIT mjolinitvga
+extern void mjolopenvga(struct mjolgame *game);
+#define MJOL_VGA_TEXT_OPEN mjolopenvga
 #else
-#define MJOL_VGA_TEXT_INIT NULL
+#define MJOL_VGA_TEXT_OPEN NULL
 #endif
 #if (MJOL_TTY)
-extern void mjolinittty(struct mjolgame *game);
-#define MJOL_TTY_INIT      mjolinittty
+extern void mjolopentty(struct mjolgame *game);
+#define MJOL_TTY_OPEN      mjolopentty
 #else
-#define MJOL_TTY_INIT      NULL
+#define MJOL_TTY_OPEN      NULL
 #endif
 #if (MJOL_X11)
-extern void mjolinitx11(struct mjolgame *game);
-#define MJOL_X11_INIT      mjolinitx11
+extern void mjolopenx11(struct mjolgame *game);
+#define MJOL_X11_OPEN      mjolopenx11
 #else
-#define MJOL_X11_INIT      NULL
+#define MJOL_X11_OPEN      NULL
 #endif
 
-typedef void mjolinitscrfunc(struct mjolgame *);
-static mjolinitscrfunc *mjolinitscrfunctab[4] = {
+typedef void mjolopenscrfunc(struct mjolgame *);
+static mjolopenscrfunc *mjolopenscrfunctab[4] = {
     NULL,
-    MJOL_VGA_TEXT_INIT,
-    MJOL_TTY_INIT,
-    MJOL_X11_INIT
+    MJOL_VGA_TEXT_OPEN,
+    MJOL_TTY_OPEN,
+    MJOL_X11_OPEN
 };
 
 void
-mjolinitscr(struct mjolgame *game)
+mjolopenscr(struct mjolgame *game)
 {
-    mjolinitscrfunc *func = mjolinitscrfunctab[game->scrtype];
+    mjolopenscrfunc *func = mjolopenscrfunctab[game->scrtype];
 
     if (func) {
         func(game);
     } else {
-        fprintf(stderr, "no initializer for screen type\n");
+        fprintf(stderr, "no initiialiser for screen type\n");
 
         exit(1);
     }

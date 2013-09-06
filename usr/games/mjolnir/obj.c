@@ -1,5 +1,6 @@
 #include <stdio.h>
 #include <stdlib.h>
+#include <limits.h>
 #include <mjolnir/conf.h>
 #if (MJOL_USE_ZERO_RANDMT32)
 #include <zero/randmt32.h>
@@ -7,79 +8,119 @@
 #include <zero/trix.h>
 #include <mjolnir/mjol.h>
 
-uint8_t mjolisobjmap[32];
-uint8_t mjolisitemmap[32];
+unsigned char mjolcanmovetomap[256 / CHAR_BIT];
+unsigned char mjolcanpickupmap[256 / CHAR_BIT];
+unsigned char mjolcanwearmap[256 / CHAR_BIT];
+unsigned char mjolcanwieldmap[256 / CHAR_BIT];
 
 /* initialise bitmap for objects you can move on top of */
 void
-mjolinitobj(void)
+mjolinitcanmoveto(void)
 {
-    setbit(mjolisobjmap, MJOL_OBJ_FLOOR);
-    setbit(mjolisobjmap, MJOL_OBJ_CORRIDOR);
-    setbit(mjolisobjmap, MJOL_OBJ_DOOR);
-    setbit(mjolisobjmap, MJOL_OBJ_FOOD);
-    setbit(mjolisobjmap, MJOL_OBJ_WATER);
-    setbit(mjolisobjmap, MJOL_OBJ_GOLD);
-    setbit(mjolisobjmap, MJOL_OBJ_SILVER_BULLET);
-    setbit(mjolisobjmap, MJOL_OBJ_POTION);
-    setbit(mjolisobjmap, MJOL_OBJ_PLANT);
-    setbit(mjolisobjmap, MJOL_OBJ_PUNCHCARD);
-    setbit(mjolisobjmap, MJOL_OBJ_STAIR_DOWN);
-    setbit(mjolisobjmap, MJOL_OBJ_STAIR_UP);
-    setbit(mjolisobjmap, MJOL_OBJ_STATUE);
-    setbit(mjolisobjmap, MJOL_OBJ_TRAP);
-    setbit(mjolisobjmap, MJOL_OBJ_WAND);
-    setbit(mjolisobjmap, MJOL_OBJ_SCROLL);
-    setbit(mjolisobjmap, MJOL_OBJ_RING);
-    setbit(mjolisobjmap, MJOL_OBJ_CHAIN);
-    setbit(mjolisobjmap, MJOL_OBJ_CHEST);
-    setbit(mjolisobjmap, MJOL_OBJ_SUBMACHINE_GUN);
-    setbit(mjolisobjmap, MJOL_OBJ_HONEY);
-    setbit(mjolisobjmap, MJOL_OBJ_KNIFE);
-    setbit(mjolisobjmap, MJOL_OBJ_LOCKPICK);
-    setbit(mjolisobjmap, MJOL_OBJ_LASER);
-    setbit(mjolisobjmap, MJOL_OBJ_MACE);
-    setbit(mjolisobjmap, MJOL_OBJ_MAINFRAME);
-    setbit(mjolisobjmap, MJOL_OBJ_PIPE);
-    setbit(mjolisobjmap, MJOL_OBJ_PISTOL);
-    setbit(mjolisobjmap, MJOL_OBJ_SWORD);
-    setbit(mjolisobjmap, MJOL_OBJ_WELL);
-    setbit(mjolisobjmap, MJOL_OBJ_CROSS);
-    setbit(mjolisobjmap, MJOL_OBJ_ALTAR);
+    setbit(mjolcanmovetomap, MJOL_OBJ_FLOOR);
+    setbit(mjolcanmovetomap, MJOL_OBJ_CORRIDOR);
+    setbit(mjolcanmovetomap, MJOL_OBJ_DOOR);
+    setbit(mjolcanmovetomap, MJOL_OBJ_FOOD);
+    setbit(mjolcanmovetomap, MJOL_OBJ_WATER);
+    setbit(mjolcanmovetomap, MJOL_OBJ_FOUNTAIN);
+    setbit(mjolcanmovetomap, MJOL_OBJ_GOLD);
+    setbit(mjolcanmovetomap, MJOL_OBJ_SILVER_BULLET);
+    setbit(mjolcanmovetomap, MJOL_OBJ_POTION);
+    setbit(mjolcanmovetomap, MJOL_OBJ_PLANT);
+    setbit(mjolcanmovetomap, MJOL_OBJ_PUNCHCARD);
+    setbit(mjolcanmovetomap, MJOL_OBJ_STAIR_DOWN);
+    setbit(mjolcanmovetomap, MJOL_OBJ_STAIR_UP);
+    setbit(mjolcanmovetomap, MJOL_OBJ_STATUE);
+    setbit(mjolcanmovetomap, MJOL_OBJ_TRAP);
+    setbit(mjolcanmovetomap, MJOL_OBJ_WAND);
+    setbit(mjolcanmovetomap, MJOL_OBJ_SCROLL);
+    setbit(mjolcanmovetomap, MJOL_OBJ_RING);
+    setbit(mjolcanmovetomap, MJOL_OBJ_ARMOR);
+    setbit(mjolcanmovetomap, MJOL_OBJ_CHAIN);
+    setbit(mjolcanmovetomap, MJOL_OBJ_CHEST);
+    setbit(mjolcanmovetomap, MJOL_OBJ_SUBMACHINE_GUN);
+    setbit(mjolcanmovetomap, MJOL_OBJ_HONEY);
+    setbit(mjolcanmovetomap, MJOL_OBJ_KNIFE);
+    setbit(mjolcanmovetomap, MJOL_OBJ_LOCKPICK);
+    setbit(mjolcanmovetomap, MJOL_OBJ_LASER);
+    setbit(mjolcanmovetomap, MJOL_OBJ_MACE);
+    setbit(mjolcanmovetomap, MJOL_OBJ_MAINFRAME);
+    setbit(mjolcanmovetomap, MJOL_OBJ_PIPE);
+    setbit(mjolcanmovetomap, MJOL_OBJ_PISTOL);
+    setbit(mjolcanmovetomap, MJOL_OBJ_SWORD);
+    setbit(mjolcanmovetomap, MJOL_OBJ_WELL);
+    setbit(mjolcanmovetomap, MJOL_OBJ_CROSS);
+    setbit(mjolcanmovetomap, MJOL_OBJ_ALTAR);
 
     return;
 }
 
 /* initialise bitmap for objects you can pick up */
 void
-mjolinititem(void)
+mjolinitcanpickup(void)
 {
-    setbit(mjolisitemmap, MJOL_OBJ_FOOD);
-    setbit(mjolisitemmap, MJOL_OBJ_WATER);
-    setbit(mjolisitemmap, MJOL_OBJ_GOLD);
-    setbit(mjolisitemmap, MJOL_OBJ_SILVER_BULLET);
-    setbit(mjolisitemmap, MJOL_OBJ_POTION);
-    setbit(mjolisitemmap, MJOL_OBJ_PLANT);
-    setbit(mjolisitemmap, MJOL_OBJ_PUNCHCARD);
-    setbit(mjolisitemmap, MJOL_OBJ_STATUE);
-    setbit(mjolisitemmap, MJOL_OBJ_WAND);
-    setbit(mjolisitemmap, MJOL_OBJ_SCROLL);
-    setbit(mjolisitemmap, MJOL_OBJ_RING);
-    setbit(mjolisitemmap, MJOL_OBJ_CHAIN);
-    setbit(mjolisitemmap, MJOL_OBJ_CHEST);
-    setbit(mjolisitemmap, MJOL_OBJ_SUBMACHINE_GUN);
-    setbit(mjolisitemmap, MJOL_OBJ_HONEY);
-    setbit(mjolisitemmap, MJOL_OBJ_KNIFE);
-    setbit(mjolisitemmap, MJOL_OBJ_LOCKPICK);
-    setbit(mjolisitemmap, MJOL_OBJ_LASER);
-    setbit(mjolisitemmap, MJOL_OBJ_MACE);
-    setbit(mjolisitemmap, MJOL_OBJ_MAINFRAME);
-    setbit(mjolisitemmap, MJOL_OBJ_PIPE);
-    setbit(mjolisitemmap, MJOL_OBJ_PISTOL);
-    setbit(mjolisitemmap, MJOL_OBJ_SWORD);
-    setbit(mjolisitemmap, MJOL_OBJ_CROSS);
+    setbit(mjolcanpickupmap, MJOL_OBJ_FOOD);
+    setbit(mjolcanpickupmap, MJOL_OBJ_WATER);
+    setbit(mjolcanpickupmap, MJOL_OBJ_GOLD);
+    setbit(mjolcanpickupmap, MJOL_OBJ_SILVER_BULLET);
+    setbit(mjolcanpickupmap, MJOL_OBJ_POTION);
+    setbit(mjolcanpickupmap, MJOL_OBJ_PLANT);
+    setbit(mjolcanpickupmap, MJOL_OBJ_PUNCHCARD);
+    setbit(mjolcanpickupmap, MJOL_OBJ_STATUE);
+    setbit(mjolcanpickupmap, MJOL_OBJ_WAND);
+    setbit(mjolcanpickupmap, MJOL_OBJ_SCROLL);
+    setbit(mjolcanpickupmap, MJOL_OBJ_RING);
+    setbit(mjolcanpickupmap, MJOL_OBJ_ARMOR);
+    setbit(mjolcanpickupmap, MJOL_OBJ_CHAIN);
+    setbit(mjolcanpickupmap, MJOL_OBJ_CHEST);
+    setbit(mjolcanpickupmap, MJOL_OBJ_SUBMACHINE_GUN);
+    setbit(mjolcanpickupmap, MJOL_OBJ_HONEY);
+    setbit(mjolcanpickupmap, MJOL_OBJ_KNIFE);
+    setbit(mjolcanpickupmap, MJOL_OBJ_LOCKPICK);
+    setbit(mjolcanpickupmap, MJOL_OBJ_LASER);
+    setbit(mjolcanpickupmap, MJOL_OBJ_MACE);
+    setbit(mjolcanpickupmap, MJOL_OBJ_MAINFRAME);
+    setbit(mjolcanpickupmap, MJOL_OBJ_PIPE);
+    setbit(mjolcanpickupmap, MJOL_OBJ_PISTOL);
+    setbit(mjolcanpickupmap, MJOL_OBJ_SWORD);
+    setbit(mjolcanpickupmap, MJOL_OBJ_CROSS);
 
     return;
+}
+
+/* initialise bitmap for objects you can wear */
+void
+mjolinitcanwear(void)
+{
+    setbit(mjolcanwearmap, MJOL_OBJ_ARMOR);
+
+    return;
+}
+
+/* initialise bitmap for weapons you can wield */
+void
+mjolinitcanwield(void)
+{
+    setbit(mjolcanwieldmap, MJOL_OBJ_CHAIN);
+    setbit(mjolcanwieldmap, MJOL_OBJ_SUBMACHINE_GUN);
+    setbit(mjolcanwieldmap, MJOL_OBJ_KNIFE);
+    setbit(mjolcanwieldmap, MJOL_OBJ_LASER);
+    setbit(mjolcanwieldmap, MJOL_OBJ_MACE);
+    setbit(mjolcanwieldmap, MJOL_OBJ_PIPE);
+    setbit(mjolcanwieldmap, MJOL_OBJ_PISTOL);
+    setbit(mjolcanwieldmap, MJOL_OBJ_SWORD);
+    setbit(mjolcanwieldmap, MJOL_OBJ_CROSS);
+
+    return;
+}
+
+void
+mjolinitobj(void)
+{
+    mjolinitcanmoveto();
+    mjolinitcanpickup();
+    mjolinitcanwear();
+    mjolinitcanwield();
 }
 
 struct mjolobj *
