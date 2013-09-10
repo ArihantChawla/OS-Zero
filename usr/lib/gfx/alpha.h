@@ -31,7 +31,7 @@
         _dg = gfxalphablendchiq(_sg, _dg, _a);                          \
         _db = gfxalphablendchiq(_sb, _db, _a);                          \
         (dest) = gfxmkpix(0, _dr, _dg, _db);                            \
-    } while (FALSE)
+    } while (0)
 
 #define gfxalphablendhiq_p(src, dest, aval)                             \
     do {                                                                \
@@ -47,7 +47,7 @@
         _dg = gfxalphablendchiq(_sg, _dg, _a);                          \
         _db = gfxalphablendchiq(_sb, _db, _a);                          \
         gfxmkpix_p((dest), 0, _dr, _dg, _db);                           \
-    } while (FALSE)
+    } while (0)
 
 #define gfxalphablendloq(src, dest, aval)                               \
     do {                                                                \
@@ -63,7 +63,7 @@
         _dg = gfxalphablendfast(_sg, _dg, _a);                          \
         _db = gfxalphablendfast(_sb, _db, _a);                          \
         (dest) = gfxmkpix(0, _dr, _dg, _db);                            \
-    } while (FALSE)
+    } while (0)
 
 #define gfxalphablendloq_p(src, dest, aval)                             \
         do {                                                            \
@@ -79,7 +79,7 @@
         _dg = gfxalphablendfast(_sg, _dg, _a);                          \
         _db = gfxalphablendfast(_sb, _db, _a);                          \
         *(dest) = gfxmkpix(0, _dr, _dg, _db);                           \
-    } while (FALSE)
+    } while (0)
 
 /* Jose's fast alphablend-algorithm */
 
@@ -99,16 +99,17 @@
 
 #define gfxalphablend_nodiv(src, dest, a)                               \
     do {                                                                \
-        argb32_t _mask = 0x00ff00ff;                                    \
+        argb32_t _m1 = 0x00ff00ff;                                      \
+        argb32_t _m2 = 0xff00ff00;                                      \
         argb32_t _ss = (src) >> 8;                                      \
         argb32_t _ds = (dest) >> 8;                                     \
                                                                         \
-        (dest) =  (((((((_ss) & 0xff00ff) - ((_ds) & 0xff00ff)) * (a))  \
-                     + ((dest) & 0xff00ff00)) & 0xff00ff00)             \
-                   + (((((((src) & 0xff00ff)                            \
-                          - ((dest) & 0xff00ff)) * (a)) >> 8)           \
-                       + ((dest) & 0xff00ff)) & 0xff00ff));             \
-    } while (FALSE)
+        (dest) =  (((((((_ss) & _m1) - ((_ds) & _m1)) * (a))            \
+                     + ((dest) & _m2)) & _m2)                           \
+                   + (((((((src) & _m1)                                 \
+                          - ((dest) & _m1)) * (a)) >> 8)                \
+                       + ((dest) & _m1)) & _m1));                       \
+} while (0)
 
 #define gfxalphablendloq_asm_mmx(src, dest, aval)                       \
     do {                                                                \
@@ -132,7 +133,7 @@
         __asm__ ("packuswb %mm0, %mm2\n");                              \
         __asm__ __volatile__ ("movd %%mm2, %0\n" : "=rm" (dest));       \
         __asm__ ("emms\n");                                             \
-    } while (FALSE)
+    } while (0)
 
 #if (__INTEL_MMX__)
 /* NOTE: leaves destination ALPHA undefined */
@@ -161,7 +162,7 @@
         _mdest = _mm_packs_pu16(_mdest, _mzero);   /* D:00000000??RRGGBB */ \
         (dest) = _mm_cvtsi64_si32(_mdest);         /* DEST = D */       \
         _mm_empty();                                                    \
-    } while (FALSE)
+    } while (0)
 #endif /* __INTEL_MMX__ */
 
 #define gfxalphablend_hiq_const(src, dest, a)                           \
@@ -178,7 +179,7 @@
         _dg = gfxalphablendc(_sg, _dg, _a);                             \
         _db = gfxalphablendc(_sb, _db, _a);                             \
         gfxmkpix_p((dest), 0, _dr, _dg, _db);                           \
-    } while (FALSE)
+    } while (0)
 
 #define gfxalphablend_hiq_const2(src, dest, a)                          \
     do {                                                                \
@@ -207,7 +208,7 @@
         _dg <<= 8;                                                      \
         _dr <<= 16;                                                     \
         (dest) = _db | _dg | _dr;                                       \
-    } while (FALSE)
+    } while (0)
 
 #define gfxalphablendfast_const(src, dest, a)                           \
     do {                                                                \
@@ -224,7 +225,7 @@
         _dg = gfxalphablendc2(_sg, _dg, _a);                            \
         _db = gfxalphablendc2(_sb, _db, _a);                            \
         gfxmkpix_p((dest), 0, _dr, _dg, _db);                           \
-    } while (FALSE)
+    } while (0)
 
 #define gfxalphablendfast_const2(src, dest, a)                          \
     do {                                                                \

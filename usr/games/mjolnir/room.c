@@ -293,7 +293,7 @@ mjolsplitrect(struct mjolrect *rect)
 struct mjolrect **
 mjolinitrooms(struct mjolgame *game, long *nroom, long width, long height)
 {
-    struct mjolrect  *tab[MJOL_MAX_ROOMS << 1] = { NULL };
+    struct mjolrect  *tab[MJOL_MAX_ROOMS << 1];
     struct mjolrect  *item = calloc(1, sizeof(struct mjolrect));
     long              n = MJOL_MIN_ROOMS + (mjolrand()
                                             % (MJOL_MAX_ROOMS
@@ -345,16 +345,15 @@ mjolinitrooms(struct mjolgame *game, long *nroom, long width, long height)
         val = 1;
         ndx = 1;
     }
-    /* build rooms */
-    n = 0;
+    /* build room table */
+    l = 0;
     while (ndx >= val) {
-        ret[n] = tab[ndx];
-        n++;
+        ret[l] = tab[ndx];
+        l++;
         ndx--;
     }
-    while (ndx >= 0) {
+    while (ndx-- >= 0) {
         free(tab[ndx]);
-        ndx--;
     }
 
     return ret;

@@ -4,8 +4,6 @@
  * to RAM.
  */
 
-#define BUFLKBITMAP 0
-
 #define __KERNEL__ 1
 #include <stddef.h>
 #include <zero/mtx.h>
@@ -21,20 +19,23 @@
 #endif
 #include <kern/mem/mag.h>
 
+#define bufadrtoid(ptr)                                                 \
+    ((bufzone) ? ((uint8_t *)ptr - (uint8_t *)bufzone) >> BUFSIZELOG2 : NULL)
+
 #define bufempty()   (bufstknext == bufnstk)
 //#define buffull()    (!bufstknext)
 #define bufpop()     (bufstk[bufstknext++])
 #define bufpush(ptr) (bufstk[--bufstknext] = (ptr))
 
-#if (BUFLKBITMAP)
-#else
-#define buflk(adr)   mtxlk(&buflktab[(uinptr_t)(adr) >> BUFSIZELOG2])
-#define bufunlk(adr) mtxunlk(&buflktab[(uinptr_t)(adr) >> BUFSIZELOG2])
-#endif
+#define buflk(adr)   mtxlk(&buflktab[bufadrtoid(adr)])
+#define bufunlk(adr) mtxunlk(&buflktab[bufadrtoid(adr)])
 
 /* TODO: stack for heap-based buffer allocation */
 
+static struct bufblk     buftab[BUFNBLK] ALIGNED(PAGESIZE);
+static volatile long     buflktab[BUFNBLK] ALIGNED(PAGESIZE);
 static void             *bufstk[BUFNBLK] ALIGNED(PAGESIZE);
+static struct bufblkq    buflruq;
 static volatile long     bufstklk;
 static long              bufnstk;
 static long              bufstknext;
@@ -42,11 +43,6 @@ static volatile long     bufzonelk;
 static void             *bufzone;
 //static uintptr_t         bufbrk;
 static size_t            bufnbyte;
-#if (BUFLKBITMAP)
-static volatile uint8_t  buflkmap[BUFNBLK >> 3];
-#else
-static volatile long     buflktab[BUFNBLK];
-#endif
 
 /* flush nbuf buffers onto disks */
 void *
