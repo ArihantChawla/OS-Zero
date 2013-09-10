@@ -1,0 +1,9 @@
+This list is by no means complete, but I'll try to list at least the biggest
+issues in the kernel code base here.
+
+- [32-bit] SMP bootstrap code is broken
+- a lot of stuff is untested; I will try to comment such code better
+- building of bootable CD-ROM images (kern/unit/ia32/mkcdimg.sh) is broken;
+  grub-mkrescue used to work, but something has changed Somewhere (TM) after
+  that (may be my fault, too)
+
