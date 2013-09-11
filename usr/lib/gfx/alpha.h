@@ -212,7 +212,6 @@
 
 #define gfxalphablendfast_const(src, dest, a)                           \
     do {                                                                \
-        argb32_t _pix;                                                  \
         argb32_t _a = (a);                                              \
         argb32_t _sr = gfxredval(src);                                  \
         argb32_t _sg = gfxgreenval(src);                                \

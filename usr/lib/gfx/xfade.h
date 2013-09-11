@@ -23,6 +23,15 @@
         gfxalphablendloq_asm_mmx(src2, dest, (val));                    \
     } while (FALSE)
 
+#if (__INTEL_MMX__)
+#define gfxxfade2_mmx(src1, src2, dest, val)                            \
+    do {                                                                \
+        gfxalphablendloq_intel_mmx(src1, dest, 0xff - (val));             \
+        gfxalphablendloq_intel_mmx(src2, dest, (val));                    \
+    } while (FALSE)
+
+#endif
+
 /* tested OK */
 #define gfxxfade1_jose(src1, src2, dest, val)                           \
     do {                                                                \

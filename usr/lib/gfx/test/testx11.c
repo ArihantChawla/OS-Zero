@@ -13,7 +13,7 @@
 #define USE_XV        0
 #define USE_COMPOSITE 0
 #define USE_RENDER    0
-#define USE_MMX       0
+#define USE_MMX       1
 #define SSE           0
 #if (SSE)
 #include <xmmintrin.h>
@@ -30,6 +30,8 @@ struct _v128 {
     uint16_t w8;
 };
 #endif
+
+uint8_t fadetab[256][256];
 
 #define TEST_FADE_IN     1
 #define TEST_ALPHA_BLEND 0
@@ -422,6 +424,7 @@ init(void)
         p128->w8 = (uint16_t)ul;
     }
 #endif
+    gfxinitfade1(fadetab);
 }
 
 void
@@ -811,12 +814,15 @@ testfadeint(unsigned long usecs)
         }
         if (val != lastval) {
             for (ul = 0 ; ul < TEST_WIDTH * TEST_HEIGHT ; ul++) {
+                gfxfadein2(*ptr2, *ptr1, val, fadetab);
+#if 0
 #if (USE_MMX)
                 gfxalphablendloq_asm_mmx(*ptr2, *ptr1, val);
 //                *ptr1 = tmp;
 #else
 //                gfxalphablendhiq_const(*ptr2, *ptr1, val);
                 gfxalphablendhiq(*ptr2, *ptr1, val);
+#endif
 #endif
                 ptr2++;
                 ptr1++;
@@ -875,10 +881,12 @@ testfadeoutt(unsigned long usecs)
             diff = usecs - tvcmp(&cur, &end);
             diff = min(diff, usecs);
             fmul = (float)diff / usecs;
-            val = 0xff - (argb32_t)(0xff * fmul);
+            val = (argb32_t)(0xff * fmul);
         }
         if (val != lastval) {
             for (ul = 0 ; ul < TEST_WIDTH * TEST_HEIGHT ; ul++) {
+                gfxfadeout2(*ptr2, *ptr1, val, fadetab);
+#if 0
 #if (USE_MMX)
 //                gfxalphablendfast_const_mmx(*ptr2, *ptr1, val);
                 gfxalphablendloq_asm_mmx(*ptr2, *ptr1, val);
@@ -886,6 +894,7 @@ testfadeoutt(unsigned long usecs)
 #else
 //                gfxalphablendhiq_const(*ptr2, *ptr1, val);
                 gfxalphablendhiq(*ptr2, *ptr1, val);
+#endif
 #endif
                 ptr2++;
                 ptr1++;
@@ -901,6 +910,8 @@ testfadeoutt(unsigned long usecs)
                 TEST_WIDTH, TEST_HEIGHT,
                 256, profclkdiff(fade));
     }
+    putimg(&_blackimg, _attr.win);
+    XFlush(_attr.disp);
     profstopclk(clock);
     fprintf(stderr,
             "fade: %dx%d, %d steps: %lu microsecs\n",
@@ -962,7 +973,7 @@ testxfade1t(unsigned long usecs)
             fprintf(stderr, "val: %x\n", val);
             _mm_empty();
             for (ul = 0 ; ul < TEST_WIDTH * TEST_HEIGHT ; ul++) {
-                gfxxfade1_mmx(*ptr2, *ptr3, *ptr1, val);
+                gfxxfade2_mmx(*ptr2, *ptr3, *ptr1, val);
                 ptr2++;
                 ptr3++;
                 ptr1++;
@@ -1105,11 +1116,11 @@ main(int argc,
     initimgs();
     initwin();
 
-    testxfade1t(5000000);
+    testfadeoutt(500000);
 #if 0
-    testfadeint(5000000);
+    testxfade1t(5000000);
     testscale();
-    testfadeout();
+    testfadeint(5000000);
 #endif
 //    testfadein_mmx();
 

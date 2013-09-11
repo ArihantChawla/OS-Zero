@@ -20,7 +20,7 @@
         _gval = (argb32_t)(_ftor * gfxgreenval(src) + _ftor * gfxgreenval(dest)); \
         _bval = (argb32_t)(_ftor * gfxblueval(src) + _ftor * gfxblueval(dest)); \
         gfxmkpix_p(dest, 0, _rval, _gval, _bval);                       \
-    } while (FALSE)
+    } while (0)
 
 #define gfxfadeout1(src, dest, val)                                     \
     do {                                                                \
@@ -34,7 +34,7 @@
         _gval = (argb32_t)(_ftor * gfxgreenval(src));                   \
         _bval = (argb32_t)(_ftor * gfxblueval(src));                    \
         gfxmkpix_p(dest, 0, _rval, _gval, _bval);                       \
-    } while (FALSE)
+    } while (0)
 
 /* use lookup table to eliminate division _and_ multiplication + typecasts */
 
@@ -48,8 +48,9 @@
     do {                                                                \
         long  _l, _m;                                                   \
         float _f;                                                       \
+                                                                        \
         for (_l = 0 ; _l <= 0xff ; _l++) {                              \
-            f = (float)val / 0xff;                                      \
+            _f = (float)_l / 0xff;                                      \
             for (_m = 0 ; _m <= 0xff ; _m++) {                          \
                 (u8p64k)[_l][_m] = (uint8_t)(_f * _m);                  \
             }                                                           \
@@ -58,20 +59,29 @@
 
 #define gfxfadein2(src, dest, val, tab)                                 \
     do {                                                                \
-        _rval = (tab)[val][redval(src)];                                \
-        _gval = (tab)[val][greenval(src)];                              \
-        _bval = (tab)[val][blueval(src)];                               \
-        gfxmkpix(dest, 0, _rval, _gval, _bval);                         \
-    } while (FALSE)
+        argb32_t _rval;                                                 \
+        argb32_t _gval;                                                 \
+        argb32_t _bval;                                                 \
+                                                                        \
+        _rval = (tab)[val][gfxredval(src)];                             \
+        _gval = (tab)[val][gfxgreenval(src)];                           \
+        _bval = (tab)[val][gfxblueval(src)];                            \
+        (dest) = gfxmkpix(0, _rval, _gval, _bval);                      \
+    } while (0)
 
-#define gfxfadeout2(src, dest, val)                                     \
+#define gfxfadeout2(src, dest, val, tab)                                \
     do {                                                                \
-        val = 0xff - val;                                               \
-        _rval = (tab)[val][redval(src)];                                \
-        _gval = (tab)[val][greenval(src)];                              \
-        _bval = (tab)[val][blueval(src)];                               \
-        gfxmkpix(dest, 0, _rval, _gval, _bval);                         \
-    } while (FALSE)
+        argb32_t _val;                                                  \
+        argb32_t _rval;                                                 \
+        argb32_t _gval;                                                 \
+        argb32_t _bval;                                                 \
+                                                                        \
+        _val = 0xff - val;                                              \
+        _rval = (tab)[_val][gfxredval(src)];                            \
+        _gval = (tab)[_val][gfxgreenval(src)];                          \
+        _bval = (tab)[_val][gfxblueval(src)];                           \
+        (dest) = gfxmkpix(0, _rval, _gval, _bval);                      \
+    } while (0)
 
 #endif /* __GFX_FADE_H__ */
 
