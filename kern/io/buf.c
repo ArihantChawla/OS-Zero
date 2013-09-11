@@ -122,12 +122,13 @@ buffree(void *ptr)
 
 #if (BUFMULTITAB)
 
-struct bufblk *
-devbufblk(struct devbuf *buf, long num, void *data)
+void
+devbufblk(struct devbuf *buf, struct devblk *blk)
 {
     struct buftab *tab;
     struct buftab *ptr = NULL;
     struct bufblk *blk = NULL;
+    long           num = blk->num;
     long           fail = 0;
     long           key0;
     long           key1;
@@ -207,16 +208,15 @@ devbufblk(struct devbuf *buf, long num, void *data)
         tab = tab[key2].ptr;
         tab = &tab[key3];
         tab->nref++;
-        tab->ptr = data;
-        blk = data;
+        tab->ptr = blk;
     }
     mtxunlk(&buf->lk);
     
-    return blk;
+    return;
 }
 
 struct bufblk *
-devfindbuf(struct devbuf *buf, long num, long free)
+devfindbuf(struct devbuf *buf, long num, long rel)
 {
     struct bufblk *blk = NULL;
     struct buftab *tab;
@@ -243,7 +243,7 @@ devfindbuf(struct devbuf *buf, long num, long free)
             }
         }
     }
-    if (!free) {
+    if (!rel) {
         mtxunlk(&buf->lk);
     }
 
@@ -328,7 +328,7 @@ devbufblk(struct bufblk *blk)
 }
 
 struct bufblk *
-devfindbuf(long dev, long num)
+devfindbuf(long dev, long num, long rel)
 {
     long           key = bufkey(num);
     struct bufblk *blk;
@@ -336,8 +336,18 @@ devfindbuf(long dev, long num)
     mtxlk(&bufhashlktab[key]);
     blk = bufhashtab[key];
     while (blk) {
-        if (blk->num == num) {
-            
+        if (blk->dev == num && blk->num == num) {
+            if (rel) {
+                if (blk->prev) {
+                    blk->prev->next = blk->next;
+                } else {
+                    bufhashtab[key] = blk->next;
+                }
+                if (blk->next) {
+                    blk->next->prev = blk->prev;
+                }
+            }
+
             break;
         }
         blk = blk->next;
@@ -347,32 +357,12 @@ devfindbuf(long dev, long num)
     return blk;
 }
 
-struct bufblk *
+void
 devfreebuf(long dev, long num)
 {
-    long           key = bufkey(num);
-    struct bufblk *blk;
+    devfindbuf(dev, num, 1);
 
-    mtxlk(&bufhashlktab[key]);
-    blk = bufhashtab[key];
-    while (blk) {
-        if (blk->num == num) {
-            if (blk->prev) {
-                blk->prev->next = blk->next;
-            } else {
-                bufhashtab[key] = blk->next;
-            }
-            if (blk->next) {
-                blk->next->prev = blk->prev;
-            }
-            
-            break;
-        }
-        blk = blk->next;
-    }
-    mtxunlk(&bufhashlktab[key]);
-
-    return blk;
+    return;
 }
 
 #endif /* BUFMULTITAB */
