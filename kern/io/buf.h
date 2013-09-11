@@ -8,8 +8,6 @@
 /* API */
 void *bufalloc(void);
 
-typedef uint64_t blknum_t;
-
 #define devgetblk(buf, blk) devfindblk(buf, blk, 0)
 
 #define BUFSIZE     (1UL << BUFSIZELOG2)
@@ -60,17 +58,22 @@ struct devbuf {
 
 #endif /* BUFMULTITAB */
 
+/* type values */
+#define BUFUNUSED 0x00
+#define BUFSUPER  0x01
+#define BUFINODE  0x02
+#define BUFDIR    0x03
+#define BUFFILE   0x04
+#define BUFPIPE   0x05
 struct bufblk {
-    blknum_t       num;         // per-device block #
+    long           type;
     long           dev;         // device #
+    long           num;         // per-device block #
     long           flg;         // block flag-bits
     long           nb;          // # of bytes
     void          *data;        // in-core block data
     struct bufblk *prev;        // previous in LRU queue
     struct bufblk *next;        // next in LRU queue
-#if (LONGSIZE == 8)
-    long           pad;         // pad to 8 long-words
-#endif
 };
 
 struct bufblkq {

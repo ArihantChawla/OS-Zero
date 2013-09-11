@@ -122,12 +122,12 @@ buffree(void *ptr)
 
 #if (BUFMULTITAB)
 
-void *
-devbufblk(struct devbuf *buf, blkid_t blk, void *data)
+struct bufblk *
+devbufblk(struct devbuf *buf, long num, void *data)
 {
     struct buftab *tab;
     struct buftab *ptr = NULL;
-    void          *ret = NULL;
+    struct bufblk *blk = NULL;
     long           fail = 0;
     long           key0;
     long           key1;
@@ -135,10 +135,10 @@ devbufblk(struct devbuf *buf, blkid_t blk, void *data)
     long           key3;
     void          *pstk[BUFNKEY] = { NULL, NULL, NULL, NULL };
 
-    key0 = bufkey0(blk);
-    key1 = bufkey1(blk);
-    key2 = bufkey2(blk);
-    key3 = bufkey3(blk);
+    key0 = bufkey0(num);
+    key1 = bufkey1(num);
+    key2 = bufkey2(num);
+    key3 = bufkey3(num);
     mtxlk(&buf->lk);
     ptr = buf->tab.ptr;
     if (!ptr) {
@@ -208,27 +208,27 @@ devbufblk(struct devbuf *buf, blkid_t blk, void *data)
         tab = &tab[key3];
         tab->nref++;
         tab->ptr = data;
-        ret = data;
+        blk = data;
     }
     mtxunlk(&buf->lk);
     
-    return ret;
+    return blk;
 }
 
-void *
-devfindblk(struct devbuf *buf, blkid_t blk, long free)
+struct bufblk *
+devfindbuf(struct devbuf *buf, long num, long free)
 {
-    void          *ret = NULL;
+    struct bufblk *blk = NULL;
     struct buftab *tab;
     long           key0;
     long           key1;
     long           key2;
     long           key3;
 
-    key0 = bufkey0(blk);
-    key1 = bufkey1(blk);
-    key2 = bufkey2(blk);
-    key3 = bufkey3(blk);
+    key0 = bufkey0(num);
+    key1 = bufkey1(num);
+    key2 = bufkey2(num);
+    key3 = bufkey3(num);
     mtxlk(&buf->lk);
     tab = buf->tab.ptr;
     if (tab) {
@@ -238,7 +238,7 @@ devfindblk(struct devbuf *buf, blkid_t blk, long free)
             if (tab) {
                 tab = tab[key2].ptr;
                 if (tab) {
-                    ret = tab[key3].ptr;
+                    blk = tab[key3].ptr;
                 }
             }
         }
@@ -247,24 +247,24 @@ devfindblk(struct devbuf *buf, blkid_t blk, long free)
         mtxunlk(&buf->lk);
     }
 
-    return ret;
+    return blk;
 }
 
-void *
-devfreeblk(struct devbuf *buf, blkid_t blk)
+void
+devfreebuf(struct devbuf *buf, long num)
 {
-    long           key0 = bufkey0(blk);
-    long           key1 = bufkey1(blk);
-    long           key2 = bufkey2(blk);
-    long           key3 = bufkey3(blk);
-    void          *ret = devfindblk(buf, blk, 1);
+    long           key0 = bufkey0(num);
+    long           key1 = bufkey1(num);
+    long           key2 = bufkey2(num);
+    long           key3 = bufkey3(num);
+    void          *buf = devfindbuf(buf, num, 1);
     void          *ptr;
     struct buftab *tab;
     long           nref;
     long           val;
     void          *pstk[BUFNKEY] = { NULL, NULL, NULL, NULL };
 
-    if (ret) {
+    if (buf) {
         tab = buf->tab.ptr;
         nref = --tab->nref;
         if (!nref) {
@@ -302,7 +302,7 @@ devfreeblk(struct devbuf *buf, blkid_t blk)
     }
     mtxunlk(&buf->lk);
 
-    return ret;
+    return;
 }
 
 #else /* !BUFMULTITAB */
@@ -328,7 +328,7 @@ devbufblk(struct bufblk *blk)
 }
 
 struct bufblk *
-devfindblk(long dev, blknum_t num)
+devfindbuf(long dev, long num)
 {
     long           key = bufkey(num);
     struct bufblk *blk;
@@ -348,7 +348,7 @@ devfindblk(long dev, blknum_t num)
 }
 
 struct bufblk *
-devfreeblk(long dev, blknum_t num)
+devfreebuf(long dev, long num)
 {
     long           key = bufkey(num);
     struct bufblk *blk;
