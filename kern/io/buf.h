@@ -77,18 +77,23 @@ struct bufblk {
 };
 
 struct bufblkq {
+    volatile long  lk;
     struct bufblk *head;
     struct bufblk *tail;
+    long           pad;
 };
 
 /* push bp in front of LRU queue */
 #define bufpushqblk(qp, bp)                                             \
     do {                                                                \
-        struct bufblk *_head = (qp)->head;                              \
-        struct bufblk *_tail = (qp)->tail;                              \
+        struct bufblk *_head;                                           \
+        struct bufblk *_tail;                                           \
                                                                         \
         (bp)->prev = NULL;                                              \
         (bp)->next = NULL;                                              \
+        mtxlk(&(qp)->lk);                                               \
+        _head = (qp)->head;                                             \
+        _tail = (qp)->tail;                                             \
         if (_head) {                                                    \
             _head->prev = (bp);                                         \
             if (!_tail) {                                               \
@@ -97,14 +102,18 @@ struct bufblkq {
             (bp)->next = _head;                                         \
         }                                                               \
         (qp)->head = (bp);                                              \
+        mtxunlk(&(qp)->lk);                                             \
     } while (0)
 
-/* remove block from the front of queue */
+/* remove block from the front of LRU queue */
 #define bufpopqblk(qp, bp)                                              \
     do {                                                                \
-        struct bufblk *_head = (qp)->head;                              \
-        struct bufblk *_tail = (qp)->tail;                              \
+        struct bufblk *_head;                                           \
+        struct bufblk *_tail;                                           \
                                                                         \
+        mtxlk(&(qp)->lk);                                               \
+        _head = (qp)->head;                                             \
+        _tail = (qp)->tail;                                             \
         if (_head) {                                                    \
             if (_head->next) {                                          \
                 _head->next->prev = NULL;                               \
@@ -115,14 +124,36 @@ struct bufblkq {
             (qp)->head = _head->next;                                   \
             (bp) = _head;                                               \
         }                                                               \
+        mtxunlk(&(qp)->lk);                                             \
 } while (0)
+
+/* add block to the back of LRU queue */
+#define bufqblk(qp, bp)                                                 \
+    do {                                                                \
+        struct bufblk *_tail;                                           \
+                                                                        \
+        (bp)->next = NULL;                                              \
+        mtxlk(&(qp)->lk);                                               \
+        _tail  = (qp)->tail;                                            \
+        (bp)->prev = _tail;                                             \
+        if (_tail) {                                                    \
+            (qp)->tail = (bp);                                          \
+        } else {                                                        \
+            (bp)->prev = NULL;                                          \
+            (qp)->head = (bp);                                          \
+        }                                                               \
+        mtxunlk(&(qp)->lk);                                             \
+    } while (0)
 
 /* remove block from the back of LRU queue, store pointer to bp */
 #define bufdeqblk(qp, bp)                                               \
     do {                                                                \
-        struct bufblk *_head = (qp)->head;                              \
-        struct bufblk *_tail = (qp)->tail;                              \
+        struct bufblk *_head;                                           \
+        struct bufblk *_tail;                                           \
                                                                         \
+        mtxlk(&(qp)->lk);                                               \
+        _head = (qp)->head;                                             \
+        _tail = (qp)->tail;                                             \
         if (_tail) {                                                    \
             if (_tail->prev) {                                          \
                 _tail->prev->next = NULL;                               \
@@ -137,6 +168,7 @@ struct bufblkq {
             (bp) = (qp)->head;                                          \
             (qp)->head = NULL;                                          \
         }                                                               \
+        mtxunlk(&(qp)->lk);                                             \
     } while (0)
 
 /* remove block bp from LRU queue */
@@ -145,6 +177,9 @@ struct bufblkq {
         struct bufblk *_prev = (bp)->prev;                              \
         struct bufblk *_next = (bp)->next;                              \
                                                                         \
+        mtxlk(&(qp)->lk);                                               \
+        _prev = (bp)->prev;                                             \
+        _next = (bp)->next;                                             \
         if (_prev) {                                                    \
             _prev->next = _next;                                        \
         } else {                                                        \
@@ -153,6 +188,7 @@ struct bufblkq {
         if (_next) {                                                    \
             _next->prev = _prev;                                        \
         }                                                               \
+        mtxunlk(&(qp)->lk);                                             \
     } while (0)
         
 #endif /* __KERN_IO_BUF_H__ */

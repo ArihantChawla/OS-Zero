@@ -257,14 +257,14 @@ devfreebuf(struct devbuf *buf, long num)
     long           key1 = bufkey1(num);
     long           key2 = bufkey2(num);
     long           key3 = bufkey3(num);
-    void          *buf = devfindbuf(buf, num, 1);
+    void          *blk = devfindbuf(buf, num, 1);
     void          *ptr;
     struct buftab *tab;
     long           nref;
     long           val;
     void          *pstk[BUFNKEY] = { NULL, NULL, NULL, NULL };
 
-    if (buf) {
+    if (blk) {
         tab = buf->tab.ptr;
         nref = --tab->nref;
         if (!nref) {
@@ -301,6 +301,7 @@ devfreebuf(struct devbuf *buf, long num)
         }
     }
     mtxunlk(&buf->lk);
+    bufqblk(&buflruq, blk);
 
     return;
 }
@@ -360,7 +361,11 @@ devfindbuf(long dev, long num, long rel)
 void
 devfreebuf(long dev, long num)
 {
-    devfindbuf(dev, num, 1);
+    struct bufblk *blk = devfindbuf(dev, num, 1);
+
+    if (blk) {
+        bufqblk(&buflruq, blk);
+    }
 
     return;
 }
