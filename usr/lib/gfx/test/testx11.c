@@ -13,7 +13,7 @@
 #define USE_XV        0
 #define USE_COMPOSITE 0
 #define USE_RENDER    0
-#define USE_MMX       1
+#define USE_MMX       0
 #define SSE           0
 #if (SSE)
 #include <xmmintrin.h>
@@ -251,8 +251,9 @@ gfxscale2x(argb32_t *src, argb32_t *dest, unsigned long srcw, unsigned long srch
     val8 = srcptr[srcw];
     val9 = srcptr[srcw + 1];
     srcptr++;
+//    destptr = dest + 2;
     destptr = dest + 2;
-    for (srcx = 1 ; srcx < srcw ; srcx++) {
+    for (srcx = 0 ; srcx < srcw - 1; srcx++) {
         destptr[0] = (val4 == val2 && val2 != val6 && val4 != val8)
             ? val4
             : val5;
@@ -287,7 +288,7 @@ gfxscale2x(argb32_t *src, argb32_t *dest, unsigned long srcw, unsigned long srch
         val8 = srcptr[srcw];
         val9 = srcptr[srcw + 1];
         srcptr++;
-        for (srcx = 1 ; srcx < srcw ; srcx++) {
+        for (srcx = 1 ; srcx < srcw - 1; srcx++) {
             destptr[0] = (val4 == val2 && val2 != val6 && val4 != val8)
                 ? val4
                 : val5;
@@ -325,7 +326,7 @@ gfxscale2x(argb32_t *src, argb32_t *dest, unsigned long srcw, unsigned long srch
     val8 = 0;
     val9 = 0;
     srcptr++;
-    for (srcx = 1 ; srcx < srcw ; srcx++) {
+    for (srcx = 1 ; srcx < srcw - 1; srcx++) {
         destptr[0] = (val4 == val2 && val2 != val6 && val4 != val8)
             ? val4
             : val5;
@@ -673,7 +674,7 @@ initwin(void)
     _attr.pict = XRenderCreatePicture(_attr.disp, _attr.win, _attr.rendfmt,
                                       CPSubwindowMode, &pattr);
 #endif
-    XSelectInput(_attr.disp, _attr.win, ExposureMask);
+    XSelectInput(_attr.disp, _attr.win, ExposureMask | KeyPressMask);
     XMapWindow(_attr.disp, _attr.win);
     while (!exposed) {
         XEvent event;
@@ -1058,12 +1059,12 @@ testscale(void)
     profstartclk(clock);
 //    gfxscaleimg(&_smallimg, &_scaleimg, 0, 0, 0, 0, TEST_WIDTH, TEST_HEIGHT);
 #if 0
-    scaleantialias(_srcimg->xim.data, _scaleimg->xim.data,
+    scaleantialias(_smallimg.xim->data, _scaleimg.xim->data,
                    TEST_WIDTH / 2, TEST_HEIGHT / 2,
                    TEST_WIDTH, TEST_HEIGHT);
 #endif
-//    scale2x(_smallimg.data, _scaleimg.data, TEST_WIDTH / 2, TEST_HEIGHT / 2);
-    gfxscale2x(_smallimg.data, _scaleimg.data, TEST_WIDTH / 2, TEST_HEIGHT / 2);
+    gfxscaleimg2x(&_smallimg, &_scaleimg);
+//    gfxscale2x(_smallimg.xim->data, _scaleimg.xim->data, TEST_WIDTH / 2, TEST_HEIGHT / 2);
     putimg(&_scaleimg, _attr.win);
 //    putimg(&_scaleimg, _scaleimg.pmap);
     XFlush(_attr.disp);
@@ -1116,10 +1117,10 @@ main(int argc,
     initimgs();
     initwin();
 
-    testfadeoutt(500000);
-#if 0
-    testxfade1t(5000000);
     testscale();
+#if 0
+    testxfade1t(2500000);
+    testfadeoutt(500000);
     testfadeint(5000000);
 #endif
 //    testfadein_mmx();
@@ -1131,20 +1132,20 @@ main(int argc,
     dtimg(&_attr, &_winimg, 0);
 #endif
 
-#if 0
     while (1) {
         XEvent ev;
 
         XNextEvent(_attr.disp, &ev);
         if (ev.type == Expose) {
-            XSetWindowBackgroundPixmap(_attr.disp, _attr.win, _scaleimg.pmap);
+//            XSetWindowBackgroundPixmap(_attr.disp, _attr.win, _scaleimg.pmap);
             XClearWindow(_attr.disp, _attr.win);
+        } else if (ev.type == KeyPress) {
+
+            exit(0);
         }
     }
-#endif
 
-    sleep(4);
-
+    /* NOTREACHED */
     exit(0);
 }
 
