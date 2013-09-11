@@ -139,6 +139,16 @@ typedef int16_t rgb565_t;
               GFX_RGB565_BLUE_MASK,                                     \
               GFX_RGB565_BLUE_SHIFT))
 
+#define gfxtorgb888_p(u, p)                                             \
+    do {                                                                \
+        struct argb32 *_src = &u;                                       \
+        struct argb32 *_dest = p;                                       \
+                                                                        \
+        _dest->rval = gfxredval_p(p);                                   \
+        _dest->gval = gfxgreenval_p(p);                                 \
+        _dest->bval = gfxblueval_p(p);                                  \
+    } while (0)
+
 #define gfxtorgb888(u, p)                                               \
     (((uint8_t *)(p))[GFXREDOFS] = gfxredval(u),                        \
      ((uint8_t *)(p))[GFXGREENOFS] = gfxgreenval(u),                    \

@@ -1,6 +1,8 @@
 #ifndef __GFX_X11_H__
 #define __GFX_X11_H__
 
+#define USE_SHM 0
+
 #include <X11/Xlib.h>
 #if (USE_SHM)
 #include <sys/ipc.h>
