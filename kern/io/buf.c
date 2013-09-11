@@ -6,9 +6,13 @@
 
 #define __KERNEL__ 1
 #include <stddef.h>
+#include <zero/cdecl.h>
+#include <zero/param.h>
 #include <zero/mtx.h>
+#include <zero/trix.h>
 #include <kern/util.h>
 #include <kern/mem.h>
+#include <kern/conf.h>
 #include <kern/io/buf.h>
 #if defined(__x86_64__) || defined(__amd64__)
 #include <kern/unit/x86-64/vm.h>
@@ -18,6 +22,12 @@
 #include <kern/mem/slab32.h>
 #endif
 #include <kern/mem/mag.h>
+
+#if (!BUFMULTITAB)
+#if (!powerof2(BUFNHASHITEM))
+#error BUFNHASHITEM must be a power of two
+#endif
+#endif
 
 #define bufadrtoid(ptr)                                                 \
     ((bufzone) ? ((uint8_t *)ptr - (uint8_t *)bufzone) >> BUFSIZELOG2 : NULL)
@@ -32,7 +42,10 @@
 
 /* TODO: stack for heap-based buffer allocation */
 
-static struct bufblk     buftab[BUFNBLK] ALIGNED(PAGESIZE);
+#if (!BUFMULTITAB)
+static struct bufblk    *bufhashtab[BUFNHASHITEM] ALIGNED(PAGESIZE);
+static volatile long     bufhashlktab[BUFNHASHITEM] ALIGNED(PAGESIZE);
+#endif
 static volatile long     buflktab[BUFNBLK] ALIGNED(PAGESIZE);
 static void             *bufstk[BUFNBLK] ALIGNED(PAGESIZE);
 static struct bufblkq    buflruq;
@@ -106,6 +119,8 @@ buffree(void *ptr)
 
     return;
 }
+
+#if (BUFMULTITAB)
 
 void *
 devbufblk(struct devbuf *buf, blkid_t blk, void *data)
@@ -289,4 +304,76 @@ devfreeblk(struct devbuf *buf, blkid_t blk)
 
     return ret;
 }
+
+#else /* !BUFMULTITAB */
+
+void
+devbufblk(struct bufblk *blk)
+{
+    long           key = bufkey(blk->num);
+    struct bufblk *head;
+
+    blk->prev = NULL;
+    blk->next = NULL;
+    mtxlk(&bufhashlktab[key]);
+    head = bufhashtab[key];
+    if (head) {
+        head->prev = blk;
+    }
+    blk->next = head;
+    bufhashtab[key] = blk;
+    mtxunlk(&bufhashlktab[key]);
+
+    return;
+}
+
+struct bufblk *
+devfindblk(long dev, blknum_t num)
+{
+    long           key = bufkey(num);
+    struct bufblk *blk;
+
+    mtxlk(&bufhashlktab[key]);
+    blk = bufhashtab[key];
+    while (blk) {
+        if (blk->num == num) {
+            
+            break;
+        }
+        blk = blk->next;
+    }
+    mtxunlk(&bufhashlktab[key]);
+
+    return blk;
+}
+
+struct bufblk *
+devfreeblk(long dev, blknum_t num)
+{
+    long           key = bufkey(num);
+    struct bufblk *blk;
+
+    mtxlk(&bufhashlktab[key]);
+    blk = bufhashtab[key];
+    while (blk) {
+        if (blk->num == num) {
+            if (blk->prev) {
+                blk->prev->next = blk->next;
+            } else {
+                bufhashtab[key] = blk->next;
+            }
+            if (blk->next) {
+                blk->next->prev = blk->prev;
+            }
+            
+            break;
+        }
+        blk = blk->next;
+    }
+    mtxunlk(&bufhashlktab[key]);
+
+    return blk;
+}
+
+#endif /* BUFMULTITAB */
 

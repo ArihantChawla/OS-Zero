@@ -2,17 +2,18 @@
 #define __KERN_IO_BUF_H__
 
 #include <stdint.h>
+#include <kern/conf.h>
 #include <kern/perm.h>
 
 /* API */
 void *bufalloc(void);
 
-typedef uint64_t blkid_t;
+typedef uint64_t blknum_t;
 
 #define devgetblk(buf, blk) devfindblk(buf, blk, 0)
 
 #define BUFSIZE     (1UL << BUFSIZELOG2)
-#define BUFSIZELOG2 16
+#define BUFSIZELOG2 13                          // TODO: make this per-device
 
 #define BUFNEVICT   8
 #define BUFNBYTE    (32768 * 1024)
@@ -20,6 +21,8 @@ typedef uint64_t blkid_t;
 
 #define BUFNET      (1U << (PERMNBIT + 1))      // precalculate checksum
 #define BUFNOLK     (1U << (PERMNBIT + 2))      // don't lock on access
+
+#if (BUFMULTITAB)
 
 #define NLVL0BIT    16
 #define NLVL1BIT    16
@@ -50,9 +53,16 @@ struct devbuf {
     struct buftab  tab;         // multi-level table of blocks
 };
 
+#else /* !BUFMULTITAB */
+
+#define BUFNHASHITEM 65536
+#define bufkey(num) ((num) & (BUFNHASHITEM - 1))
+
+#endif /* BUFMULTITAB */
+
 struct bufblk {
-    blkid_t        blknum;      // per-device block #
-    long           devnum;      // device #
+    blknum_t       num;         // per-device block #
+    long           dev;         // device #
     long           flg;         // block flag-bits
     long           nb;          // # of bytes
     void          *data;        // in-core block data
