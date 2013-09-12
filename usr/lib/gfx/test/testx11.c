@@ -13,7 +13,7 @@
 #define USE_XV        0
 #define USE_COMPOSITE 0
 #define USE_RENDER    0
-#define USE_MMX       0
+#define USE_MMX       1
 #define SSE           0
 #if (SSE)
 #include <xmmintrin.h>
