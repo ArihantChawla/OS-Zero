@@ -35,7 +35,7 @@ kinit(void)
     unsigned long    pmemsz;
 
 //    __asm__ __volatile__ ("sti\n");
-    __asm__ __volatile__ ("cli\n");
+//    __asm__ __volatile__ ("cli\n");
     /* determine amount of RAM */
     /* boot.S leaves the multiboot header address in %ebx */
     __asm__ __volatile__ ("movl %%ebx, %0\n" : "=rm" (boothdr));

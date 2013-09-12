@@ -38,16 +38,12 @@
 .globl	trapde, trapdb, trapnmi, trapbp, trapof, trapbr, trapud, trapnm, trapdf
 .globl	trapts, trapnp, trapss, trapgp, trappf, trapmf, trapac, trapmc, trapxf
 .globl	irqtimer0, irqtimer, irqkbd, irqmouse, irqerror, irqspurious
-#if (VBE2DRV)
-.globl	trapv86, v86csel, v86ip, v86sp
-#endif
 .globl	irqvec
 
 .extern	sigfunc, tmrsyncscr, schedyield, vmpagefault, kbdtrap, mousetrap
 #if (SMP)
 .extern	mpspurint
 #endif
-.extern v86func
 
 .text	32
 

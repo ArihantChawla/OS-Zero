@@ -1,6 +1,6 @@
 /*
  * load low kernel at 1M physical
- * DMA buffers (8 * 128K) at 3M physical
+ * DMA buffers (8 * 128K) at 4M physical
  * locate high kernel at 3G virtual
  */
 

@@ -2,7 +2,6 @@
 #define __UNIT_X86_TRAP_H__
 
 #include <kern/conf.h>
-//#include <kern/unit/x86/trap.h>
 
 #if !defined(__ASSEMBLY__)
 #include <stdint.h>
