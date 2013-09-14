@@ -1,6 +1,7 @@
 #include <stddef.h>
 #include <stdint.h>
 #include <kern/conf.h>
+#include <kern/util.h>
 #include <kern/unit/x86/hpet.h>
 
 #if (HPET)
@@ -8,7 +9,7 @@
 #define ACPIBASEADR 0xe0000
 #define ACPIMEMSZ   (0xfffff - ACPIBASEADR)
 
-volatile uint32_t *hpetptr;
+volatile struct hpet *hpetptr;
 
 static long
 hpetsum(uint8_t *ptr, unsigned long len)
@@ -41,10 +42,9 @@ hpetfind(uintptr_t adr, unsigned long len)
     return hpet;
 }
 
-long
+void
 hpetinit(void)
 {
-    long           retval = 0;
     uintptr_t      adr = (uintptr_t)(((uint16_t *)EBDAADR)[0]) << 4;
     unsigned long  len = 0xa0000 - adr;
     struct hpet   *hpet = NULL;
@@ -52,16 +52,16 @@ hpetinit(void)
     hpet = hpetfind(adr, len);
     if (!hpet) {
         adr = ACPIBASEADR;
-        hpet = hpetfind(adr, ACPIMEWSZ);
+        hpet = hpetfind(ACPIBASEADR, ACPIMEMSZ);
     }
     if (hpet) {
         kprintf("HPET table found @ %p\n", hpet);
-        retval = 1;
     } else {
         kprintf("HPET not found\n");
     }
+    hpetptr = hpet;
 
-    return retval;
+    return;
 }
 
 #endif /* HPET */

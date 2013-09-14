@@ -101,7 +101,6 @@ mjolinit(struct mjolgame *game, int argc, char *argv[])
         exit(1);
     }
     mjolintro();
-    mjolopenscr(game);
     if (!game->nlvl) {
         game->nlvl = MJOL_DEF_NLVL;
     }

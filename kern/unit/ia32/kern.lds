@@ -50,6 +50,9 @@ SECTIONS {
     	mp.o(.text)
     	mp.o(.data)
     	mp.o(.bss)
+    	hpet.o(.text)
+    	hpet.o(.data)
+    	hpet.o(.bss)
         _eboot = .;
 	. = ALIGN(PAGESIZE);
     }

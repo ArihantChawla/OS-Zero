@@ -7,7 +7,6 @@
 #include <kern/unit/x86/trap.h>
 #include <kern/unit/ia32/boot.h>
 #include <kern/unit/ia32/vm.h>
-#include <kern/unit/ia32/mp.h>
 #if 0
 #include <zero/types.h>
 #include <zero/trix.h>
@@ -24,9 +23,6 @@
 extern void trapinit(void);
 extern void kmain(struct mboothdr *hdr, unsigned long pmemsz);
 
-extern struct m_cpu  cputab[NCPU];
-extern volatile long mpncpu;
-
 ASMLINK
 void
 kinit(void)
@@ -42,21 +38,6 @@ kinit(void)
     pmemsz = grubmemsz(boothdr);
     /* multiprocessor probe */
     /* bootstrap kernel */
-#if (SMP)
-    mpinit();
-    if (mpmultiproc) {
-//        mpstart();
-    }
-    if (mpncpu == 1) {
-        kprintf("found %ld processor\n", mpncpu);
-    } else {
-        kprintf("found %ld processors\n", mpncpu);
-    }
-    if (mpapic) {
-        kprintf("local APIC @ 0x%p\n", mpapic);
-    }
-    curcpu = &cputab[0];
-#endif
     trapinit();                         // interrupt management
     kmain(boothdr, pmemsz);
 }

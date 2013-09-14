@@ -1,7 +1,7 @@
 #ifndef __KERN_CONF_H__
 #define __KERN_CONF_H__
 
-#define SMP       0     // enable multiprocessor support; currently broken
+#define SMP       1     // enable multiprocessor support; currently broken
 #define HZ        250
 #define ZEROSCHED 1     // default scheduler
 #define NPROC     1024  // maximum number of running processes
@@ -25,7 +25,7 @@
 #define DEVEL     1     // debugging
 
 /* planned drivers */
-#define HPET      0     // high precision event timer support
+#define HPET      1     // high precision event timer support
 #define PS2DRV    1     // enable PS/2 mouse and keyboard drivers
 #define VBE2      0     // VBE2 graphics driver
 #define VGAGFX    0     // VGA graphics driver

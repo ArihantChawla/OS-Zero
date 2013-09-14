@@ -20,7 +20,9 @@
 struct mjolscr {
     long   x;
     long   y;
+    void  *data;
     int  (*getch)(void);
+    void (*moveto)(int, int);
     void (*drawchar)(struct mjolgame *, struct mjolchar *);
     int  (*printmsg)(const char *fmt, ...);
     int  (*refresh)(void);

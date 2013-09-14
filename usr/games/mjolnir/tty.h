@@ -7,6 +7,14 @@
 
 #include <curses.h>
 
+struct mjolwindatatty {
+    void *mainwin;
+    void *msgwin;
+    void *statwin;
+    void *gamewin;
+    void *uiwin;
+};
+
 #endif /* MJOL_TTY */
 
 #endif /* __MJOLNIR_TTY_H__ */

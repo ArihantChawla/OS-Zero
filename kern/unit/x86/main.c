@@ -20,12 +20,23 @@
 #include <kern/unit/ia32/link.h>
 #include <kern/unit/ia32/boot.h>
 #include <kern/unit/ia32/vm.h>
+#if (SMP)
+#include <kern/unit/ia32/mp.h>
+#endif
+
+#if (HPET)
+extern void hpetinit(void);
+#endif
+#if (SMP)
+extern void mpstart(void);
+#endif
 
 extern uint8_t            kerniomap[8192] ALIGNED(PAGESIZE);
 extern struct proc        proctab[NPROC];
 extern struct m_cpu       mpcputab[NCPU];
 extern struct vmpagestat  vmpagestat;
 #if (SMP)
+extern struct m_cpu       cputab[NCPU];
 extern volatile uint32_t *mpapic;
 extern volatile long      mpncpu;
 extern volatile long      mpmultiproc;
@@ -42,10 +53,29 @@ kmain(struct mboothdr *hdr, unsigned long pmemsz)
     curproc = &proctab[0];
     vgainitcon(80, 25);
     meminit(vmphysadr(&_ebssvirt), pmemsz);
+    /* TODO: use memory map from GRUB */
     vminitphys((uintptr_t)&_ebss, pmemsz - (unsigned long)&_ebss);
 //    meminit(vmphysadr(&_ebssvirt), max(pmemsz, 3UL * 1024 * 1024 * 1024));
     kmemset(&kerniomap, 0xff, sizeof(kerniomap));
 //    vgainitcon(80, 25);
+#if (SMP)
+    mpinit();
+    if (mpmultiproc) {
+//        mpstart();
+    }
+    if (mpncpu == 1) {
+        kprintf("found %ld processor\n", mpncpu);
+    } else {
+        kprintf("found %ld processors\n", mpncpu);
+    }
+    if (mpapic) {
+        kprintf("local APIC @ 0x%p\n", mpapic);
+    }
+    curcpu = &cputab[0];
+#endif
+#if (HPET)
+    hpetinit();
+#endif
 #if (VBE2)
     vbe2init(hdr);
     {

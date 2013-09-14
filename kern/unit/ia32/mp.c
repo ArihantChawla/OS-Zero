@@ -194,8 +194,8 @@ mpinit(void)
     }
     if ((mpncpu == 1) || !mpmultiproc) {
         mpncpu = 1;
-        mpapic = NULL;
-        mpioapicid = 0;
+//        mpapic = NULL;
+//        mpioapicid = 0;
 
         return;
     } else {
@@ -203,11 +203,11 @@ mpinit(void)
             outb(0x70, 0x22);               // select IMCR
             outb(inb(0x23) | 0x01, 0x23);   // mask external timer interrupts
         }
-        /* local APIC initialisation where present */
-        apicinit(0);
-        /* I/O APIC initialisation */
-        ioapicinit(0);
     }
+    /* local APIC initialisation where present */
+    apicinit(0);
+    /* I/O APIC initialisation */
+    ioapicinit(0);
 
     return;
 }
@@ -239,7 +239,7 @@ mpstart(void)
 //    __asm__ __volatile__ ("sti\n");
     lim = &mpcputab[0] + mpncpu;
     kbcopy((void *)MPENTRY, &_mpentry, (uint8_t *)&_emp - (uint8_t *)&_mpentry);
-    fp = (struct m_fartptr *)MPGDT;
+    fp = (void *)MPGDT;
     fp->lim = NMPGDT * sizeof(uint64_t) - 1;
     fp->adr = (uint32_t)(MPENTRY + 8);
     gdt = (uint64_t *)MPENTRY + 1;
