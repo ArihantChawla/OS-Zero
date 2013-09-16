@@ -54,7 +54,7 @@ CC	= @CC@
 #
 # Default IEEE libm
 #
-CFLAGS	= @CFLAGS@ -D_IEEE_LIBM
+CFLAGS	= @CFLAGS@ -D_IEEE_LIBM -fPIC
 
 CFLAGS2	= @CFLAGS@ -D_IEEE_LIBM -fPIC -shared
 
@@ -128,7 +128,7 @@ check:
 	@echo This package does not have a validation suite.
 
 clean:
-	-$(RM) *~ #* core a.out
+	-$(RM) *.o *~ #* core a.out
 
 distclean:	mostlyclean
 	-$(RM) $(LIB)

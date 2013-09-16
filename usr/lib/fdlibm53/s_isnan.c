@@ -18,6 +18,7 @@
 
 #include "fdlibm.h"
 
+#if 0
 #ifdef __STDC__
 	int isnan(double x)
 #else
@@ -32,3 +33,5 @@
 	hx = 0x7ff00000 - hx;
 	return ((unsigned)(hx))>>31;
 }
+#endif
+

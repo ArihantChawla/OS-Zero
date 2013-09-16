@@ -1,4 +1,3 @@
-#include "zero.h"
 
 /* @(#)k_sin.c 1.3 95/01/18 */
 /*
@@ -42,10 +41,12 @@
 
 #include "fdlibm.h"
 
+#if 0
 #ifdef __STDC__
 static const double 
 #else
 static double 
+#endif
 #endif
 
 #if (!I387FPU)
