@@ -18,8 +18,6 @@
 #endif
 
 struct mjolscr {
-    long   x;
-    long   y;
     void  *data;
     int  (*getch)(void);
     void (*moveto)(int, int);

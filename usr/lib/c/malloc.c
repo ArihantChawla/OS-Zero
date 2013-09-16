@@ -5,6 +5,28 @@
  * See the file LICENSE for more information about using this software.
  */
 
+/*
+ * TODO
+ * ----
+ * - tune nmbuf() and other behavior
+ * - implement mallopt()
+ * - improve fault handling
+ */
+
+/*
+ * THANKS
+ * ------
+ * - Matthew 'kinetik' Gregan for pointing out bugs, giving me cool routines to
+ *   find more of them, and all the constructive criticism etc.
+ * - Thomas 'Freaky' Hurst for patience with early crashes, 64-bit hints, and
+ *   helping me find some bottlenecks.
+ * - Henry 'froggey' Harrington for helping me fix issues on AMD64.
+ * - Dale 'swishy' Anderson for the enthusiasism, encouragement, and everything
+ *   else.
+ * - Martin 'bluet' Stensgård for an account on an AMD64 system for testing
+ *   earlier versions.
+ */
+
 #define NEWSLAB    0
 #define FREEBUF    1
 #define ISTK       1
@@ -69,28 +91,6 @@
 #ifndef MTSAFE
 #define MTSAFE  1
 #endif
-
-/*
- * TODO
- * ----
- * - tune nmbuf() and other behavior
- * - implement mallopt()
- * - improve fault handling
- */
-
-/*
- * THANKS
- * ------
- * - Matthew 'kinetik' Gregan for pointing out bugs, giving me cool routines to
- *   find more of them, and all the constructive criticism etc.
- * - Thomas 'Freaky' Hurst for patience with early crashes, 64-bit hints, and
- *   helping me find some bottlenecks.
- * - Henry 'froggey' Harrington for helping me fix issues on AMD64.
- * - Dale 'swishy' Anderson for the enthusiasism, encouragement, and everything
- *   else.
- * - Martin 'bluet' Stensgård for an account on an AMD64 system for testing
- *   earlier versions.
- */
 
 #include <features.h>
 #include <errno.h>

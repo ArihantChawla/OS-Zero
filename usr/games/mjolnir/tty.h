@@ -12,7 +12,6 @@ struct mjolwindatatty {
     void *msgwin;
     void *statwin;
     void *gamewin;
-    void *uiwin;
 };
 
 #endif /* MJOL_TTY */

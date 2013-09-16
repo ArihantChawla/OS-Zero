@@ -6,6 +6,10 @@
 #include <stdlib.h>
 #include <math.h>
 #include <time.h>
+#if (PROF)
+#include <stdio.h>
+#include <zero/prof.h>
+#endif
 
 #define PI_OVER_180 (0.01745329252)
 #define DEG_TO_RAD(d) ((d)*PI_OVER_180)
@@ -48,9 +52,20 @@ void limitfps(struct fpsctx* t);
 
 int main (void)
 {
+#if (PROF)
+    PROFDECLCLK(clk);
+#endif
+
     if (init()) {
         while(!processEvents()) {
+#if (PROF)
+            profstartclk(clk);
+#endif
             drawPlasma(surface);
+#if (PROF)
+            profstopclk(clk);
+            fprintf(stderr, "%ld\n", profclkdiff(clk));
+#endif
             drawLogo(surface, logo);
             SDL_Flip(surface);
             limitfps(&fpstimer);
@@ -64,10 +79,18 @@ int main (void)
 
 bool init(void)
 {
+#if (PROF)
+    PROFDECLCLK(clk);
+#endif
+
     if (OUT_HEIGHT < OFFSET_MAG) {
         puts("Output screen/window size is too small.");
         return false;
     }
+
+#if (PROF)
+    profstartclk(clk);
+#endif
 
     // init sdl
     if (SDL_Init(SDL_INIT_VIDEO) != 0) return false;
@@ -119,12 +142,20 @@ bool init(void)
 
     // void init_offsetTable(void)
     unsigned len = sizeof offsetTable / sizeof offsetTable[0];
+//    double factor = (double)len / 360.0;
+    double factor = 360.0 / (double)len;
     for (i = 0; i < len; i++) {
-        offsetTable[i] = sin(DEG_TO_RAD((double)i / len * 360.0)) * OFFSET_MAG;
+//        offsetTable[i] = sin(DEG_TO_RAD((double)i / len * 360.0)) * OFFSET_MAG;
+        offsetTable[i] = sin(DEG_TO_RAD((double)i * factor)) * OFFSET_MAG;
     }
 
     // set target fps
     initfpstimer(&fpstimer, TARGET_FPS);
+
+#if (PROF)
+    profstopclk(clk);
+    fprintf(stderr, "INIT: %ld\n", profclkdiff(clk));
+#endif
 
     return true;
 }
