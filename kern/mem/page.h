@@ -49,94 +49,14 @@ struct swapdev {
     struct pageq  freeq;
 };
 
-#define pagegetqid(pg) (tzerol(pg->nflt))
-#define pagepop(pq, rpp)                                                \
-    do {                                                                \
-        struct page  *_pg1;                                             \
-        struct page  *_pg2 = NULL;                                      \
-                                                                        \
-        _pg1 = (pq)->head;                                              \
-        if (_pg1) {                                                     \
-            _pg2 = (struct page *)_pg1->next;                           \
-        }                                                               \
-        if (_pg2) {                                                     \
-            _pg2->prev = NULL;                                          \
-        } else {                                                        \
-            (pq)->tail = NULL;                                          \
-        }                                                               \
-        (pq)->head = _pg2;                                              \
-        *(rpp) = _pg1;                                                  \
-    } while (0)
-      
-#define pagepush(pq, pg)                                                \
-    do {                                                                \
-        struct page *_pg;                                               \
-                                                                        \
-        (pg)->prev = NULL;                                              \
-        _pg = (pq)->head;                                               \
-        if (_pg) {                                                      \
-            (_pg)->prev = (pg);                                         \
-        } else {                                                        \
-            (pq)->head = (pg);                                          \
-            (pq)->tail = (pg);                                          \
-        }                                                               \
-        pg->next = _pg;                                                 \
-        (pq)->head = pg;                                                \
-    } while (0)
-
-#define pagedeq(pq, rpp)                                                \
-    do {                                                                \
-        struct page *_pg1;                                              \
-        struct page *_pg2;                                              \
-                                                                        \
-        _pg1 = (pq)->tail;                                              \
-        if (_pg1) {                                                     \
-            _pg2 = _pg1->prev;                                          \
-            if (!_pg2) {                                                \
-                (pq)->head = (pq)->tail = NULL;                         \
-            } else {                                                    \
-                _pg2->next = NULL;                                      \
-                (pq)->tail = _pg2;                                      \
-            }                                                           \
-            *(rpp) = _pg1;                                              \
-        }                                                               \
-    } while (0)
-
-#define pagerm(pg)                                                      \
-    do {                                                                \
-        long          _pqid;                                            \
-        struct pageq *_pq;                                              \
-        struct page  *_tmp;                                             \
-                                                                        \
-        _pqid = pagegetqid(pg);                                         \
-        mtxlk(&_pg->lk);                                                \
-        _tmp = (pg)->prev;                                              \
-        if (_tmp) {                                                     \
-            _tmp->next = (pg)->next;                                    \
-        } else {                                                        \
-            _tmp = (pg)->next;                                          \
-            _pq->head = _tmp;                                           \
-            if (_tmp) {                                                 \
-                _tmp->prev = (pg)->prev;                                \
-            } else {                                                    \
-                _pq->tail = _tmp;                                       \
-            }                                                           \
-            _pq->head = _tmp;                                           \
-        }                                                               \
-        _tmp = (pg)->next;                                              \
-        if (_tmp) {                                                     \
-            _tmp->prev = (pg)->prev;                                    \
-        } else {                                                        \
-            _tmp = (pg)->prev;                                          \
-            _pq->tail = _tmp;                                           \
-            if (_tmp) {                                                 \
-                _tmp->next = NULL;                                      \
-            } else {                                                    \
-                _pq->head = _pq->tail = _tmp;                           \
-            }                                                           \
-        }                                                               \
-        mtxunlk(&_pq-lk);                                               \
-    } while (0)
+#define LIST_TYPE  struct page
+#define LIST_QTYPE struct pageq
+#include <zero/list.h>
+#define pagegetqid(pg)   (tzerol(pg->nflt))
+#define pagepop(pq, rpp) listpop(pq, rpp)
+#define pagepush(pq, pg) listpush(pq, pg)
+#define pagedeq(pq, rpp) listdeq(pq, rpp)
+#define pagerm(pq, pg)   listrm(pq, pg)
 
 void         pageinitzone(uintptr_t base, struct pageq *zone, unsigned long nb);
 void         pageinit(uintptr_t base, unsigned long nb);

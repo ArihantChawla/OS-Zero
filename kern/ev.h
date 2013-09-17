@@ -184,21 +184,16 @@ struct zevent {
 } PACK();
 
 /* API */
-/* event-queue is mapped to both kernel and user space to avoid copying data */
+/* TODO: implement ring-buffer for event queues */
+/* event queue is mapped to both kernel and user space to avoid copying data */
 /* register to listen to ev with flg parameters on event queue at qadr */
 void evreg(long mask, long flg, void *qadr);
-/* check queue for event type ev; parameters in flg */
-/* check current queue; don't flush server connection */
+long evpeek(struct zevent *ev, long mask, void *qadr);
+/* check current queue; don't flush the connection */
 #define EVNOFLUSH       0x01
-/* remove event from queue */
-#define EVREMOVE        0x02
-long evchk(struct zevent *ev, long mask, void *qadr);
+/* do not remove event from queue */
+#define EVNOREMOVE      0x02
 /* read next event from queue */
-/* flg bits */
-/* leave copy of fetched event in the queue */
-#define EVNOREMOVE      0x01
-/* do not flush server connection before get */
-#define EVNOFLUSH       0x02
 void evget(struct zevent *ev, long flg, void *qadr);
 
 #endif /* __KERN_EV_H__ */
