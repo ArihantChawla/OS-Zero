@@ -2,7 +2,6 @@
 #include <stdio.h>
 #include <stdlib.h>
 #endif
-#include <features.h>
 #include <fenv.h>
 #include <errno.h>
 #include <math.h>
@@ -15,7 +14,7 @@
 
 __inline__ double
 #if (MATHTEST)
-_sqrt(double x)
+zsqrt(double x)
 #else
 sqrt(double x)
 #endif
@@ -49,7 +48,7 @@ sqrt(double x)
 
 __inline__ double
 #if (MATHTEST)
-_sin(double x)
+zsin(double x)
 #else
 sin(double x)
 #endif
@@ -79,7 +78,7 @@ sin(double x)
 
 __inline__ double
 #if (MATHTEST)
-_cos(double x)
+zcos(double x)
 #else
 cos(double x)
 #endif
@@ -97,7 +96,7 @@ cos(double x)
 
 __inline__ double
 #if (MATHTEST)
-_tan(double x)
+ztan(double x)
 #else
 tan(double x)
 #endif
@@ -131,10 +130,9 @@ tan(double x)
 }
 
 /* FIXME: atan() doesn't work yet */
-#if 0
 __inline__ double
 #if (MATHTEST)
-_atan(double x)
+zatan(double x)
 #else
 atan(double x)
 #endif
@@ -159,15 +157,14 @@ atan(double x)
 
     return retval;
 }
-#endif
 
 #if ((_BSD_SOURCE) || (_SVID_SOURCE) || _XOPEN_SOURCE >= 600            \
     || (_ISOC99_SOURCE) || _POSIX_C_SOURCE >= 200112L)
 
+__inline__ float
 /* FIXME: sqrtf doesn't work yet */
-#if 0
 #if (MATHTEST)
-_sqrtf(float x)
+zsqrtf(float x)
 #else
 sqrtf(float x)
 #endif
@@ -196,11 +193,10 @@ sqrtf(float x)
         
     return retval;
 }
-#endif
 
 __inline__ float
 #if (MATHTEST)
-_sinf(float x)
+zsinf(float x)
 #else
 sinf(float x)
 #endif
@@ -218,7 +214,7 @@ sinf(float x)
 
 __inline__ float
 #if (MATHTEST)
-_cosf(float x)
+zcosf(float x)
 #else
 cosf(float x)
 #endif
@@ -233,15 +229,17 @@ cosf(float x)
     return retval;
 }
 
+#if 0 /* BROKEN */
 __inline__ float
 #if (MATHTEST)
-_tanf(float x)
+ztanf(float x)
 #else
 tanf(float x)
 #endif
 {
-    float tmp;
-    float retval;
+    uint32_t fcw;
+    uint32_t tmp;
+    float    retval;
 
     if (isnan(x) || fpclassify(x) == FP_ZERO) {
         retval = x;
@@ -252,12 +250,21 @@ tanf(float x)
             retval = M_PI * 0.5;
         }
     } else {
-        __asm__ __volatile__ ("flds %0\n" : : "m" (x));
-        __asm__ __volatile__ ("fptan\n");
-        __asm__ __volatile__ ("fstps %0\n" : "=m" (tmp));
-        __asm__ __volatile__ ("fstps %0\n"
+        __asm__ __volatile__ ("fstcw %0\n"
+                              "movw %0, %%dx\n"
+                              "orw $0x0800, %%dx\n"
+                              "andw $0xfbff, %%dx\n"
+                              "movw %%dx, %1\n"
+                              "fldcw %1\n"
+                              "flds %3\n"
+                              "fptan\n"
+                              "fstps %2\n"
+                              "fstps %2\n"
+                              "fldcw %0\n"
                               "fwait\n"
-                              : "=m" (retval));
+                              : "=m" (fcw), "=m" (tmp), "=m" (retval)
+                              : "m" (x)
+                              : "edx");
         if (fgetsign(retval) && isnan(retval)) {
             retval = 0.0;
         }
@@ -265,11 +272,12 @@ tanf(float x)
 
     return retval;
 }
+#endif /* 0 */
 
 /* TODO: sqrtl() doesn't work yet */
-#if 0
+__inline__ long double
 #if (MATHTEST)
-_sqrtl(long double x)
+zsqrtl(long double x)
 #else
 sqrtl(long double x)
 #endif
@@ -298,11 +306,10 @@ sqrtl(long double x)
         
     return retval;
 }
-#endif
 
 __inline__ long double
 #if (MATHTEST)
-_sinl(long double x)
+zsinl(long double x)
 #else
 sinl(long double x)
 #endif
@@ -320,7 +327,7 @@ sinl(long double x)
 
 __inline__ long double
 #if (MATHTEST)
-_cosl(long double x)
+zcosl(long double x)
 #else
 cosl(long double x)
 #endif
@@ -340,7 +347,7 @@ cosl(long double x)
 #if 0
 __inline__ long double
 #if (MATHTEST)
-_tanl(long double x)
+ztanl(long double x)
 #else
 tanl(long double x)
 #endif
@@ -374,7 +381,7 @@ tanl(long double x)
 #if (_GNU_SOURCE)
 #if (MATHTEST)
 void
-_sincos(double x, double *sin, double *cos)
+zsincos(double x, double *sin, double *cos)
 #else
 void
 sincos(double x, double *sin, double *cos)
@@ -394,7 +401,7 @@ sincos(double x, double *sin, double *cos)
 
 #if (MATHTEST)
 void
-_sincosf(float x, float *sin, float *cos)
+zsincosf(float x, float *sin, float *cos)
 #else
 void
 sincosf(float x, float *sin, float *cos)
@@ -414,7 +421,7 @@ sincosf(float x, float *sin, float *cos)
 
 #if (MATHTEST)
 void
-_sincosl(long double x, long double *sin, long double *cos)
+zsincosl(long double x, long double *sin, long double *cos)
 #else
 void
 sincosl(long double x, long double *sin, long double *cos)
@@ -464,7 +471,7 @@ main(int argc,
     fprintf(stderr, "sin 0 == %f\n", sin(0));
     for ( d = -RADMAX ; d < RADMAX ; d += 0.125 ) {
         d1 = sqrt(d);
-        d2 = _sqrt(d);
+        d2 = zsqrt(d);
         if (d1 != d2 && (fpclassify(d1) != fpclassify(d2))) {
             fprintf(stderr, "SQRT failure (%e: %ex != %e)\n", d, d1, d2);
 
@@ -472,7 +479,7 @@ main(int argc,
         }
 #if 0
         sincos(d, &sin1, &cos1);
-        _sincos(d, &sin2, &cos2);
+        zsincos(d, &sin2, &cos2);
         if (sin1 != sin2 || cos1 != cos2) {
             fprintf(stderr, "SINCOS failure (%f/%f/%f) -> (%f/%f/%f)\n",
                 d, sin1, cos1, d, sin2, cos2);
@@ -481,21 +488,21 @@ main(int argc,
         }
 #endif
         d1 = sin(d);
-        d2 = _sin(d);
+        d2 = zsin(d);
         if (d2 != d1 && (fpclassify(d1) != fpclassify(d2))) {
             fprintf(stderr, "SIN(%e): ERROR %e should be %e\n", d, d2, d1);
             
             return 1;
         }
         d1 = cos(d);
-        d2 = _cos(d);
+        d2 = zcos(d);
         if (d2 != d1 && (fpclassify(d1) != fpclassify(d2))) {
             fprintf(stderr, "COS(%e): ERROR %e should be %e\n", d, d2, d1);
             
             return 1;
         }
         d1 = tan(d);
-        d2 = _tan(d);
+        d2 = ztan(d);
         if (d2 != d1 && (fpclassify(d1) != fpclassify(d2))) {
             fprintf(stderr, "TAN(%e): ERROR %e should be %e\n", d, d2, d1);
             
@@ -503,7 +510,7 @@ main(int argc,
         }
 #if 0
         d1 = atan(d);
-        d2 = _atan(d);
+        d2 = zatan(d);
         if (d2 != d1 && (fpclassify(d1) != fpclassify(d2))) {
             fprintf(stderr, "ATAN(%e): ERROR %e should be %e\n", d, d2, d1);
             
@@ -515,15 +522,15 @@ main(int argc,
     for ( ld = -100.0 ; ld < 100.0 ; ld += 1.0 ) {
 #if 0
         ld1 = sqrtl(ld);
-        ld2 = _sqrtl(ld);
+        ld2 = zsqrtl(ld);
         if (ld1 != ld2) {
-            fprintf(stderr, "SQRTL(%Lf) failure(L%f/L%f)\n", ld, ld2, ld1);
+            fprintf(stderr, "SQRTL(%Lf) failure(%Lf/%Lf)\n", ld, ld2, ld1);
 
             exit(1);
         }
 #endif
         sincosl(ld, &sinld1, &cosld1);
-        _sincosl(ld, &sinld2, &cosld2);
+        zsincosl(ld, &sinld2, &cosld2);
         if ((sinld1 != sinld2 || cosld1 != cosld2)
             && (fpclassify(sinld1) != fpclassify(sinld2))) {
             fprintf(stderr, "SINCOSL failure (%Lf/%Lf/%Lf) -> (%Lf/%Lf/%Lf\n",
@@ -532,7 +539,7 @@ main(int argc,
             exit(1);
         }
         ld1 = sinl(ld);
-        ld2 = _sinl(ld);
+        ld2 = zsinl(ld);
         if (ld2 != ld1 && (fpclassify(ld1) != fpclassify(ld2))) {
             fprintf(stderr, "SINLD: ERROR(%Le) %Le should be %Le\n", ld, ld1, ld2);
                 
@@ -543,7 +550,7 @@ main(int argc,
 #endif
         }
         ld1 = cosl(ld);
-        ld2 = _cosl(ld);
+        ld2 = zcosl(ld);
         if (ld2 != ld1 && (fpclassify(ld1) != fpclassify(ld2))) {
             fprintf(stderr, "COSLD: ERROR(%Le) %Le should be %Le\n", ld, ld2, ld1);
             
@@ -555,7 +562,7 @@ main(int argc,
         }
 #if 0
         ld1 = tanl(ld);
-        ld2 = _tanl(ld);
+        ld2 = ztanl(ld);
         if (ld2 != ld1 && (fpclassify(ld1) != fpclassify(ld2))) {
             fprintf(stderr, "TANL: ERROR(%Le) %Le should be %Le\n", ld, ld2, ld1);
             
@@ -571,7 +578,7 @@ main(int argc,
     for ( f = -100.0 ; f < 100.0 ; f += 1.0 ) {
 #if 0
         f1 = sqrtf(f);
-        f2 = _sqrtf(f);
+        f2 = zsqrtf(f);
         if (f1 != f2) {
             fprintf(stderr, "SQRTF(%f) failure(%f/%f)\n", f, f2, f1);
 
@@ -579,7 +586,7 @@ main(int argc,
         }
 #endif
         sincosf(f, &sinf1, &cosf1);
-        _sincosf(f, &sinf2, &cosf2);
+        zsincosf(f, &sinf2, &cosf2);
         if (sinf1 != sinf2 || cosf1 != cosf2) {
             fprintf(stderr, "SINCOSF failure (%f/%f/%f) -> (%f/%f/%f)\n",
                 f, sinf1, cosf1, f, sinf2, cosf2);
@@ -587,7 +594,7 @@ main(int argc,
             exit(1);
         }
         f1 = sinf(f);
-        f2 = _sinf(f);
+        f2 = zsinf(f);
         if (f2 != f1) {
             fprintf(stderr, "SINF: ERROR(%e) %e should be %e\n", f, f1, f2);
                 
@@ -598,7 +605,7 @@ main(int argc,
 #endif
         }
         f1 = cosf(f);
-        f2 = _cosf(f);
+        f2 = zcosf(f);
         if (f2 != f1) {
             fprintf(stderr, "COSF: ERROR(%e) %e should be %e\n", f, f2, f1);
             
@@ -608,8 +615,9 @@ main(int argc,
             fprintf(stderr, "COS(%e) == %e\n", f, f2);
 #endif
         }
+#if 0
         f1 = tanf(f);
-        f2 = _tanf(f);
+        f2 = ztanf(f);
         if (f2 != f1) {
             fprintf(stderr, "TANF: ERROR(%e) %e should be %e\n", f, f2, f1);
             
@@ -619,6 +627,7 @@ main(int argc,
             fprintf(stderr, "TANF(%e) == %e\n", f, f2);
 #endif
         }
+#endif
     }
 
     return 0;

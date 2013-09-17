@@ -412,7 +412,7 @@ ceilpow2_64(uint64_t u)
 #define fgetsign(f)       (_ftou32(f) >> 31)
 #define fsetmant(f, mant) (_ftou32(f) |= (mant) & 0x007fffff)
 #define fsetexp(f, exp)   (_ftou32(f) |= ((exp) & 0xff) << 23)
-#define fsetsign(f)       (_ftou32(f) | 0x80000000)
+#define fsetsign(f)       (_ftou32(f) |= 0x80000000)
 /*
  * IEEE 64-bit
  * 0..51  - mantissa
@@ -439,7 +439,7 @@ ceilpow2_64(uint64_t u)
 #define ldgetmant(ld)       (*((uint64_t *)&ld))
 #define ldgetexp(ld)        (*((uint32_t *)&ld + 2) & 0x7fff)
 #define ldgetsign(ld)       (*((uint32_t *)&ld + 3) & 0x8000)
-#define ldsetmant(ld, mant) (*((uint64_t *)&ld = (mant)))
+#define ldsetmant(ld, mant) (*((uint64_t *)&ld) = (mant))
 #define ldsetexp(ld, exp)   (*((uint32_t *)&ld + 2) |= (exp) & 0x7fff)
 #define ldsetsign(ld)       (*((uint32_t *)&ld + 3) |= 0x80000000)
 

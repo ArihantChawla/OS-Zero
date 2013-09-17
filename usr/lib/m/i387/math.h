@@ -10,7 +10,7 @@
 #define getsnanf(f)                                                     \
     (fsetsign(f), fsetexp(f, 0x7ff), fsetmant(f, 0x007fffff), (f))
 #define getnanl(ld)                                                      \
-    (ldsetexp(f, 0x7fff), ldsetmant(ld, 0xffffffffffffffff), (ld))
+    (ldsetexp(ld, 0x7fff), ldsetmant(ld, 0xffffffffffffffff), (ld))
 #define getsnanl(ld) \
     (ldsetsign(ld), ldsetexp(ld, 0x7fff), ldsetmant(ld, 0xffffffffffffffff), (ld))
 
