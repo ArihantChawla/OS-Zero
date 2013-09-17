@@ -1,14 +1,21 @@
 #ifndef __ZERO_LIST_H__
 #define __ZERO_LIST_H__
 
+/*
+ * Assumptions
+ * -----------
+ * - LIST_TYPE (struct/union) has members prev and next of LIST_TYPE
+ * - if _REENTRANT is declared and non-zero, LIST_TYPE has a volatile lk member
+ */
+
 /* #define LIST_TYPE  */
 /* #define LIST_QTYPE */
 
 /* get item from the front of queue */
 #define listpop(queue, retpp)                                           \
     do {                                                                \
-        LIST_TYPE  *_item1;                                             \
-        LIST_TYPE  *_item2 = NULL;                                      \
+        LIST_TYPE *_item1;                                              \
+        LIST_TYPE *_item2 = NULL;                                       \
                                                                         \
         if (_REENTRANT) {                                               \
             mtxlk(&(queue)->lk);                                        \
@@ -65,7 +72,8 @@
         if (_item1) {                                                   \
             _item2 = _item1->prev;                                      \
             if (!_item2) {                                              \
-                (queue)->head = (queue)->tail = NULL;                   \
+                (queue)->head = NULL;                                   \
+                (queue)->tail = NULL;                                   \
             } else {                                                    \
                 _item2->next = NULL;                                    \
                 (queue)->tail = _item2;                                 \
@@ -107,7 +115,8 @@
             if (_tmp) {                                                 \
                 _tmp->next = NULL;                                      \
             } else {                                                    \
-                (queue)->head = (queue)->tail = _tmp;                   \
+                (queue)->head = _tmp;                                   \
+                (queue)->tail = _tmp;                                   \
             }                                                           \
         }                                                               \
         if (_REENTRANT) {                                               \
