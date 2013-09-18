@@ -4,8 +4,6 @@
 
 void dumpcode(void *base, void *lim);
 
-#define TEXT_WIDTH 80
-
 extern void _start(void);
 extern char _etext;
 
@@ -21,19 +19,10 @@ void
 dumpcode(void *base, void *lim)
 {
     uint8_t *ptr = base;
-    int      x = 0;
 
     while (ptr < (uint8_t *)lim) {
-        printf("%x", *ptr);
-        x++;
-        if (x == TEXT_WIDTH) {
-            printf("\n");
-            x = 0;
-        }
+        printf("%2x", *ptr);
         ptr++;
-    }
-    if (x) {
-        printf("\n");
     }
 
     return;
