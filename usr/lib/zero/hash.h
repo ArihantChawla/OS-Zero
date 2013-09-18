@@ -33,6 +33,8 @@
     do {                                                                \
         HASH_KEYTYPE  _key = HASH_FUNC(item);                           \
         HASH_TYPE    *_item = NULL;                                     \
+        HASH_TYPE    *_item1;                                           \
+        HASH_TYPE    *_item2;                                           \
                                                                         \
         if (_REENTRANT) {                                               \
             mtxlk(&(htab)->lk);                                         \
@@ -41,11 +43,13 @@
         while (_item) {                                                 \
             if (!HASH_CMP(_item, item)) {                               \
                 if (rm) {                                               \
-                    if (_item->prev) {                                  \
-                        _item->prev->next = _item->next;                \
+                    _item1 = _item->prev;                               \
+                    _item2 = _item->next;                               \
+                    if (_item1) {                                       \
+                        _item1->next = _item2;                          \
                     }                                                   \
-                    if (_item->next) {                                  \
-                        _item->next->prev = _item->prev;                \
+                    if (_item2) {                                       \
+                        _item2->prev = _item1;                          \
                     }                                                   \
                 }                                                       \
                                                                         \
