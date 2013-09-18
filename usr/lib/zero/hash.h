@@ -3,33 +3,67 @@
 /* #define HASH_TYPE    - hash table item type */
 /* #define HASH_KEYTYPE - hash key type (such as long) */
 
-#define hashadd(htab, item)                                             \
+/*
+ * Example
+ * -------
+ *
+ * struct hash {
+ * #if (_REENTRANT)
+ *     volatile long  lk;
+ * #endif
+ *     HASH_TYPE     *tab;
+ * };
+ *
+ * typedef long HASH_KEYTYPE;
+ *
+ * typedef struct {
+ *     HASH_KEYTYPE  key;
+ *     HASH_TYPE    *prev;
+ *     HASH_TYPE    *next;
+ * } HASH_TYPE;
+ *
+ * #define HASH_TABSZ         65536
+ * #define HASH_FUNC(ip)      ((ip)->key & 0xffff)
+ * #define HASH_CMP(ip1, ip2) (!((ip1)->key == (ip2)->key))
+ */
+
+#define hashinit(rpp)                                                   \
+    do {                                                                \
+        HASH_TYPE *_hash = calloc(1, sizeof(HASH_TYPE));                \
+                                                                        \
+        if (_hash) {                                                    \
+            _hash->tab = calloc(HASH_TABSZ, sizeof(HASH_TYPE));         \
+        }                                                               \
+        *rpp = _hash;                                                   \
+    } while (0)
+
+#define hashadd(hash, item)                                             \
     do {                                                                \
         HASH_KEYTYPE  _key = HASH_FUNC(item);                           \
         HASH_TYPE    *_item;                                            \
                                                                         \
         (item)->prev = NULL;                                            \
         if (_REENTRANT) {                                               \
-            mtxlk(&(htab)->lk);                                         \
+            mtxlk(&(hash)->lk);                                         \
         }                                                               \
-        _item = (htab)[_key];                                           \
+        _item = (hash)->tab[_key];                                      \
         if (_item) {                                                    \
             _item->prev = item;                                         \
         }                                                               \
         (item)->next = _item;                                           \
-        (htab)[_key] = item;                                            \
+        (hash)->tab[_key] = item;                                       \
         if (_REENTRANT) {                                               \
-            mtxunlk(&(htab)->lk);                                       \
+            mtxunlk(&(hash)->lk);                                       \
         }                                                               \
     } while (0)
 
-#define hashfind(htab, item, rpp)                                       \
-        _hashsrch(htab, item, rpp, 0)
+#define hashfind(hash, item, rpp)                                       \
+        _hashsrch(hash, item, rpp, 0)
 
-#define hashrm(htab, item, rpp)                                         \
-        _hashsrch(htab, item, rpp, 1)
+#define hashrm(hash, item, rpp)                                         \
+        _hashsrch(hash, item, rpp, 1)
 
-#define _hashsrch(htab, item, rpp, rm)                                  \
+#define _hashsrch(hash, item, rpp, rm)                                  \
     do {                                                                \
         HASH_KEYTYPE  _key = HASH_FUNC(item);                           \
         HASH_TYPE    *_item = NULL;                                     \
@@ -37,9 +71,9 @@
         HASH_TYPE    *_item2;                                           \
                                                                         \
         if (_REENTRANT) {                                               \
-            mtxlk(&(htab)->lk);                                         \
+            mtxlk(&(hash)->lk);                                         \
         }                                                               \
-        _item = (htab)[key];                                            \
+        _item = (hash)->tab[key];                                       \
         while (_item) {                                                 \
             if (!HASH_CMP(_item, item)) {                               \
                 if (rm) {                                               \
@@ -58,7 +92,7 @@
             _item = _item->next;                                        \
         }                                                               \
         if (_REENTRANT) {                                               \
-            mtxunlk(&(htab)->lk);                                       \
+            mtxunlk(&(hash)->lk);                                       \
         }                                                               \
         *(rpp) = _item;                                                 \
     } while (FALSE)
