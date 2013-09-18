@@ -2,7 +2,7 @@
 #include <stdlib.h>
 #include <stdint.h>
 
-#define DUMPCODE_NPERLINE 24
+#define DUMPCODE_NPERLINE 16
 
 void dumpcode(void *base, void *lim);
 
@@ -29,7 +29,11 @@ dumpcode(void *base, void *lim)
         while (ptr < (uint8_t *)lim) {
             x++;
             if (x != DUMPCODE_NPERLINE) {
-                printf(" %02x", *ptr);
+                if (!(x & 0x03)) {
+                    printf("    %02x", *ptr);
+                } else {
+                    printf(" %02x", *ptr);
+                }
             } else {
                 printf("\n%02x");
                 x = 0;
