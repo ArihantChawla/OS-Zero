@@ -5,13 +5,14 @@
  * Assumptions
  * -----------
  * - LIST_TYPE (struct/union) has members prev and next of LIST_TYPE
- * - if _REENTRANT is declared and non-zero, LIST_TYPE has a volatile lk member
+ * - LIST_QTYPE has members head and tail of LIST_TYPE
+ * - if _REENTRANT is declared and non-zero, LIST_QTYPE has a volatile lk member
  */
 
 /* #define LIST_TYPE  */
 /* #define LIST_QTYPE */
 
-/* get item from the front of queue */
+/* get item from the head of queue */
 #define listpop(queue, retpp)                                           \
     do {                                                                \
         LIST_TYPE *_item1;                                              \
@@ -36,7 +37,7 @@
         *(retpp) = _item1;                                              \
     } while (0)
 
-/* queue item to the front of queue */
+/* queue item to the head of queue */
 #define listpush(queue, item)                                           \
     do {                                                                \
         LIST_TYPE *_item;                                               \
@@ -59,7 +60,7 @@
         }                                                               \
     } while (0)
 
-/* get item from the back of queue */
+/* get item from the tail of queue */
 #define listdeq(queue, retpp)                                           \
     do {                                                                \
         LIST_TYPE *_item1;                                              \
