@@ -1,6 +1,3 @@
-#ifndef __ZERO_LIST_H__
-#define __ZERO_LIST_H__
-
 /*
  * Assumptions
  * -----------
@@ -124,6 +121,4 @@
             mtxunlk(&(queue)-lk);                                       \
         }                                                               \
     } while (0)
-
-#endif /* __ZERO_LIST_H__ */
 
