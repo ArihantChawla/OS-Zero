@@ -20,9 +20,14 @@ dumpcode(void *base, void *lim)
 {
     uint8_t *ptr = base;
 
-    while (ptr < (uint8_t *)lim) {
+    if (ptr < (uint8_t *)lim) {
         printf("%2x", *ptr);
         ptr++;
+        while (ptr < (uint8_t *)lim) {
+            printf(" %02x", *ptr);
+            ptr++;
+        }
+        printf("\n");
     }
 
     return;
