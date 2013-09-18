@@ -10,7 +10,7 @@ extern char _etext;
 int
 main(int argc, char *argv[])
 {
-    dumpcode((void *)_start, &_etext);
+    dumpcode(_start, &_etext);
 
     exit(0);
 }
