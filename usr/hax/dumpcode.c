@@ -6,12 +6,13 @@ void dumpcode(void *base, void *lim);
 
 #define TEXT_WIDTH 80
 
+extern void _start(void);
 extern char _etext;
 
 int
 main(int argc, char *argv[])
 {
-    dumpcode((void *)&main, &_etext);
+    dumpcode((void *)&_start, &_etext);
 
     exit(0);
 }
