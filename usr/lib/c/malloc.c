@@ -28,7 +28,7 @@
  */
 
 #define NEWSLAB    0
-#define FREEBUF    0
+#define FREEBUF    1
 #define ISTK       0
 #define NOSTK      1
 #define BIGSLAB    0
