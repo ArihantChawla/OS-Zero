@@ -33,8 +33,8 @@ randlfg(void)
             for (i = 0 ; i < RAND_N ; i++) {
                 randbuf[i] = randmt32();
             }
+            randinit = 1;
         }
-        randinit = 1;
     }
     randndx++;
     val1 = randbuf[(randndx - RAND_A) & RAND_M];
