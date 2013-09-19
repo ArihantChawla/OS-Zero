@@ -9,7 +9,7 @@
 #include <zero/asm.h>
 #if (__KERNEL__) && (__MTKERNEL__)
 #include <kern/proc/sched.h>
-#else
+#elif (PTHREAD)
 /* on some Linux setups, the pthread library declares no prototype */
 extern int pthread_yield(void);
 #endif
@@ -46,7 +46,7 @@ mtxlk2(volatile long *lp, long val)
         if (res != MTXINITVAL) {
 #if (__KERNEL__)
             schedyield();
-#else
+#elif (PTHREAD)
             pthread_yield();
 #endif
         }

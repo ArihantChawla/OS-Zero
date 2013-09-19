@@ -35,7 +35,7 @@ m_xaddq(volatile long *p,
  * - if *p == want, let *p = val
  * - return original *p
  */
-static __inline__ uint8_t
+static __inline__ char
 m_cmpxchgb(volatile long *p,
            long want,
            long val)
@@ -55,7 +55,7 @@ m_cmpxchgb(volatile long *p,
  * - if *p == want, let *p = val
  * - return original *p
  */
-static __inline__ uint8_t
+static __inline__ char
 m_cmpxchgq(volatile long *p,
            long want,
            long val)

@@ -1,3 +1,5 @@
+#include <stdlib.h>
+
 /* #define HASH_FUNC    - takes one parameter of HASH_TYPE * */
 /* #define HASH_CMP     - takes two parameters of HASH_TYPE *; 0 if equal */
 /* #define HASH_TYPE    - hash table item type */

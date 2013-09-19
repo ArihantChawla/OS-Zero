@@ -50,7 +50,7 @@
             (queue)->head = (item);                                     \
             (queue)->tail = (item);                                     \
         }                                                               \
-        item->next = _item;                                             \
+        (item)->next = _item;                                           \
         (queue)->head = item;                                           \
         if (_REENTRANT) {                                               \
             mtxunlk(&(queue)->lk);                                      \
@@ -89,18 +89,17 @@
         LIST_TYPE *_tmp;                                                \
                                                                         \
         if (_REENTRANT) {                                               \
-            mtxlk(&queue->lk);                                          \
+            mtxlk(&(queue)->lk);                                        \
         }                                                               \
         _tmp = (item)->prev;                                            \
         if (_tmp) {                                                     \
             _tmp->next = (item)->next;                                  \
         } else {                                                        \
             _tmp = (item)->next;                                        \
-            (queue)->head = _tmp;                                       \
             if (_tmp) {                                                 \
                 _tmp->prev = (item)->prev;                              \
             } else {                                                    \
-                (queue)->tail = _tmp;                                   \
+                (queue)->tail = NULL;                                   \
             }                                                           \
             (queue)->head = _tmp;                                       \
         }                                                               \
@@ -109,16 +108,15 @@
             _tmp->prev = (item)->prev;                                  \
         } else {                                                        \
             _tmp = (item)->prev;                                        \
-            (queue)->tail = _tmp;                                       \
             if (_tmp) {                                                 \
                 _tmp->next = NULL;                                      \
             } else {                                                    \
-                (queue)->head = _tmp;                                   \
-                (queue)->tail = _tmp;                                   \
+                (queue)->head = NULL;                                   \
             }                                                           \
+            (queue)->tail = _tmp;                                       \
         }                                                               \
         if (_REENTRANT) {                                               \
-            mtxunlk(&(queue)-lk);                                       \
+            mtxunlk(&(queue)->lk);                                      \
         }                                                               \
     } while (0)
 
