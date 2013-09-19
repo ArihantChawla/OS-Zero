@@ -28,10 +28,10 @@
  */
 
 #define NEWSLAB    0
-#define FREEBUF    1
-#define ISTK       1
+#define FREEBUF    0
+#define ISTK       0
 #define NOSTK      1
-#define BIGSLAB    1
+#define BIGSLAB    0
 #define BIGHDR     1
 #define INTSTAT    0
 #define STAT       0
@@ -75,7 +75,7 @@
  *          - mmap() interface; thread-safe
  */
 
-#define HACKS   1
+#define HACKS   0
 #define ZEROMTX 1
 //#define STAT    0
 #define ARNQBUF 1
@@ -157,14 +157,14 @@ typedef pthread_mutex_t LK_T;
 #define TUNEBUF 1
 #endif
 #endif
-#define TUNEBUF 1
+#define TUNEBUF 0
 
 /* basic allocator parameters */
 #if (HACKS)
 #define BLKMINLOG2    5  /* minimum-size allocation */
 #define SLABTEENYLOG2 8
 #define SLABTINYLOG2  12 /* little block */
-#define SLABBIGLOG2 16 /* small-size block */
+#define SLABBIGLOG2   16 /* small-size block */
 #if (NEWSLAB)
 #define SLABLOG2      18
 #define MAPMIDLOG2    23
@@ -494,11 +494,12 @@ typedef pthread_mutex_t LK_T;
 #define slabid(ptr)       ((uintptr_t)(ptr) >> SLABLOG2)
 #endif
 #if (BIGHDR)
-#define NBHDR             (4 * PAGESIZE)
+#define NBHDR             (8 * PAGESIZE)
+#define NBUFHDR           32
 #else
 #define NBHDR             PAGESIZE
-#endif
 #define NBUFHDR           16
+#endif
 
 #define thrid()           ((_aid >= 0) ? _aid : (_aid = getaid()))
 #define blksz(bid)        (1UL << (bid))
@@ -596,8 +597,12 @@ struct mconf {
     long        narn;
 };
 
+#if (ISTK)
 #define istk(bid)                                                       \
     ((nblk(bid) << 1) * sizeof(void *) <= NBHDR - offsetof(struct mag, data))
+#else
+#define istk(bid) 0
+#endif
 struct mag {
     long        cur;
     long        max;
@@ -1100,12 +1105,12 @@ initmall(void)
 #else
     _mdir = mapanon(_mapfd, NL1KEY * sizeof(void *));
 #endif
-    for (bid = 0 ; bid < NBKT ; bid++) {
 #if (TUNEBUF)
+    for (bid = 0 ; bid < NBKT ; bid++) {
         _nbuftab[bid] = nbufinit(bid);
         _nslablog2tab[bid] = nmagslablog2init(bid);
-#endif
     }
+#endif
     _conf.flags |= CONF_INIT;
     munlk(&_conf.initlk);
 #if (X11VIS)
@@ -1387,8 +1392,10 @@ freemap(struct mag *mag)
     long         bid = mag->bid;
     long         bsz = blksz(bid);
     long         max = mag->max;
+#if (TUNEBUF)
     long         nfree;
     long         queue;
+#endif
 #if (HACKS) && (!ARNQBUF)
     struct mag  *mptr1;
     struct mag  *mptr2;
@@ -1418,7 +1425,7 @@ freemap(struct mag *mag)
                 if (gtpow2(max, 1)) {
                     if (!istk(bid)) {
 #if (INTSTAT) || (STAT)
-                        nstkbytes[aid] -= (mag->max << 1) << sizeof(void *); 
+                        nstkbytes[aid] -= (mag->max << 1) * sizeof(void *); 
 #endif
                         unmapstk(mag);
                         mag->bptr = NULL;
@@ -1446,16 +1453,22 @@ freemap(struct mag *mag)
 
 #if (ARNQBUF)
     mlk(&_flktab[bid]);
+#if (TUNEBUF)
     nfree = _fcnt[bid];
+#endif
 #else
     nfree = 0;
 #endif
     cur = arn->hcur;
     hbuf = arn->htab;
-#if (BIGSLAB) || (TUNEBUF)
+#if (BIGSLAB) && (TUNEBUF)
     queue = nfree < _nbuftab[bid];
 #endif
-    if (!cur || !ismapbkt(bid) || (queue)) {
+    if (!cur || !ismapbkt(bid)
+#if (TUNEBUF)
+        || (queue)
+#endif
+        ) {
         mag->prev = NULL;
 #if (!ARNQBUF)
         mlk(&_flktab[bid]);
@@ -1484,7 +1497,7 @@ freemap(struct mag *mag)
             if (gtpow2(max, 1)) {
                 if (!istk(bid)) {
 #if (INTSTAT) || (STAT)
-                    nstkbytes[aid] -= (mag->max << 1) << sizeof(void *); 
+                    nstkbytes[aid] -= (mag->max << 1) * sizeof(void *); 
 #endif
                     unmapstk(mag);
                     mag->bptr = NULL;
@@ -1532,7 +1545,9 @@ getmem(size_t size,
     struct mag  *mag = NULL;
     void       **stk;
     long         l;
+#if (FREEBUF)
     long         n;
+#endif
     long         get = 0;
     long         glob = 0;
     
@@ -1729,71 +1744,71 @@ getmem(size_t size,
                 }
             }
         }
-    }
 #else /* !FREEBUF */
-    mag = gethdr(aid);
-    if (mag) {
-        mag->aid = aid;
-        mag->cur = 0;
-        mag->max = max;
-        mag->bid = bid;
-        mag->adr = ptr;
-        if (ptr) {
-            if (gtpow2(max, 1)) {
-                if (istk(bid)) {
+        mag = gethdr(aid);
+        if (mag) {
+            mag->aid = aid;
+            mag->cur = 0;
+            mag->max = max;
+            mag->bid = bid;
+            mag->adr = ptr;
+            if (ptr) {
+                if (gtpow2(max, 1)) {
+                    if (istk(bid)) {
 #if (ISTK)
-                    stk = (void **)(&mag->data);
+                        stk = (void **)(&mag->data);
 #elif (NOSTK)
-                    stk = mag->bptr;
+                        stk = mag->bptr;
 #else
-                    stk = (void **)mag->stk;
+                        stk = (void **)mag->stk;
 #endif
-                } else {
-                    stk = mapstk(max);
-                }
-                mag->bptr = stk;
-                if (stk != MAP_FAILED) {
-#if (FREEBITMAP)
-                    mag->fmap = mapfmap(max);
-                    if (mag->fmap == MAP_FAILED) {
-                        unmapstk(mag);
-                        
-                        return NULL;
+                    } else {
+                        stk = mapstk(max);
                     }
+                    mag->bptr = stk;
+                    if (stk != MAP_FAILED) {
+#if (FREEBITMAP)
+                        mag->fmap = mapfmap(max);
+                        if (mag->fmap == MAP_FAILED) {
+                            unmapstk(mag);
+                            
+                            return NULL;
+                        }
 #endif
 #if (INTSTAT) || (STAT)
-                    nstkbytes[aid] += (max << 1) * sizeof(void *); 
+                        nstkbytes[aid] += (max << 1) * sizeof(void *); 
 #endif
 #if (VALGRIND)
-                    if (RUNNING_ON_VALGRIND) {
-                        VALGRIND_MALLOCLIKE_BLOCK(stk, (max << 1) * sizeof(void *), 0, 0);
-                    }
+                        if (RUNNING_ON_VALGRIND) {
+                            VALGRIND_MALLOCLIKE_BLOCK(stk, (max << 1) * sizeof(void *), 0, 0);
+                        }
 #endif
 //                        n = max << nmagslablog2(bid);
-                    for (l = 0 ; l < max ; l++) {
-                        stk[l] = ptr;
-                        ptr += bsz;
-                    }
-                    mag->prev = NULL;
+                        for (l = 0 ; l < max ; l++) {
+                            stk[l] = ptr;
+                            ptr += bsz;
+                        }
+                        mag->prev = NULL;
 #if (HACKS)
-                    _fcnt[bid]++;
+                        _fcnt[bid]++;
 #endif
-                    mag->glob = 0;
-                    mag->next = arn->btab[bid];
-                    if (mag->next) {
-                        mag->next->prev = mag;
-                    }
-                    arn->btab[bid] = mag;
-                } else {
+                        mag->glob = 0;
+                        mag->next = arn->btab[bid];
+                        if (mag->next) {
+                            mag->next->prev = mag;
+                        }
+                        arn->btab[bid] = mag;
+                    } else {
 #if (STDIO)
-                    fprintf(stderr, "failed to allocate stack: bkt %ld\n", bid);
+                        fprintf(stderr, "failed to allocate stack: bkt %ld\n", bid);
 #endif
-                    abort();
+                        abort();
+                    }
                 }
             }
         }
-    }
 #endif /* FREEBUF */
+    }
     if (mag) {
         ptr = getblk(mag);
         retptr = clrptr(ptr);
@@ -1962,7 +1977,11 @@ putmem(void *ptr)
                     }
                 }
                 if (ismapbkt(bid)
-                    && !(isbufbkt(bid) && (_fcnt[bid] < _nbuftab[(bid)]))) {
+                    && !(isbufbkt(bid)
+#if (TUNEBUF)
+                         && (_fcnt[bid] < _nbuftab[(bid)])
+#endif
+                        )) {
                     freed = 1;
                 } else {
                     mag->prev = mag->next = NULL;
