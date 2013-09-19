@@ -63,8 +63,8 @@ main(int argc, char *argv[])
     for (i = 0 ; i < 64 ; i++) {
         listrm(&q, &ltab[i]);
         printf("%ld - %ld..%ld\n", ltab[i].key,
-               (q.head) ? q.head->key : 0xffffffff,
-               (q.tail) ? q.tail->key : 0xffffffff);
+               (q.head) ? q.head->key : 255,
+               (q.tail) ? q.tail->key : 255);
     }
     listpop(&q, &lp);
     printf("%p\n", lp);
@@ -77,8 +77,8 @@ main(int argc, char *argv[])
     for (i = 63 ; i >= 0 ; i--) {
         listrm(&q, &ltab[i]);
         printf("%ld - %ld..%ld\n", ltab[i].key,
-               (q.head) ? q.head->key : 0xffffffff,
-               (q.tail) ? q.tail->key : 0xffffffff);
+               (q.head) ? q.head->key : 255,
+               (q.tail) ? q.tail->key : 255);
     }
     listpop(&q, &lp);
     printf("%p\n", lp);

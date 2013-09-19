@@ -1,4 +1,12 @@
 #include <stdlib.h>
+#if defined(_REENTRANT)
+#include <zero/mtx.h>
+#define hashlk(lp)   mtxlk(lp)
+#define hashunlk(lp) mtxunlk(lp)
+#else
+#define hashlk(lp)
+#define hashunlk(lp)
+#endif
 
 /* #define HASH_FUNC    - takes one parameter of HASH_TYPE * */
 /* #define HASH_CMP     - takes two parameters of HASH_TYPE *; 0 if equal */
@@ -45,18 +53,14 @@
         HASH_TYPE    *_item;                                            \
                                                                         \
         (item)->prev = NULL;                                            \
-        if (_REENTRANT) {                                               \
-            mtxlk(&(hash)->lk);                                         \
-        }                                                               \
+        hashlk(&(hash)->lk);                                            \
         _item = (hash)->tab[_key];                                      \
         if (_item) {                                                    \
             _item->prev = item;                                         \
         }                                                               \
         (item)->next = _item;                                           \
         (hash)->tab[_key] = item;                                       \
-        if (_REENTRANT) {                                               \
-            mtxunlk(&(hash)->lk);                                       \
-        }                                                               \
+        hashunlk(&(hash)->lk);                                          \
     } while (0)
 
 #define hashfind(hash, item, rpp)                                       \
@@ -72,9 +76,7 @@
         HASH_TYPE    *_item1;                                           \
         HASH_TYPE    *_item2;                                           \
                                                                         \
-        if (_REENTRANT) {                                               \
-            mtxlk(&(hash)->lk);                                         \
-        }                                                               \
+        hashlk(&(hash)->lk);                                            \
         _item = (hash)->tab[key];                                       \
         while (_item) {                                                 \
             if (!HASH_CMP(_item, item)) {                               \
@@ -93,9 +95,7 @@
             }                                                           \
             _item = _item->next;                                        \
         }                                                               \
-        if (_REENTRANT) {                                               \
-            mtxunlk(&(hash)->lk);                                       \
-        }                                                               \
+        hashunlk(&(hash)->lk);                                          \
         *(rpp) = _item;                                                 \
     } while (FALSE)
 

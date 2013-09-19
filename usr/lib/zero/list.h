@@ -1,3 +1,12 @@
+#if defined(_REENTRANT)
+#include <zero/mtx.h>
+#define listlk(lp)   mtxlk(lp)
+#define listunlk(lp) mtxunlk(lp)
+#else
+#define listlk(lp)
+#define listunlk(lp)
+#endif
+
 /*
  * Assumptions
  * -----------
@@ -15,9 +24,7 @@
         LIST_TYPE *_item1;                                              \
         LIST_TYPE *_item2 = NULL;                                       \
                                                                         \
-        if (_REENTRANT) {                                               \
-            mtxlk(&(queue)->lk);                                        \
-        }                                                               \
+        listlk(&(queue)->lk);                                           \
         _item1 = (queue)->head;                                         \
         if (_item1) {                                                   \
             _item2 = _item1->next;                                      \
@@ -28,9 +35,7 @@
             (queue)->tail = NULL;                                       \
         }                                                               \
         (queue)->head = _item2;                                         \
-        if (_REENTRANT) {                                               \
-            mtxunlk(&(queue)->lk);                                      \
-        }                                                               \
+        listunlk(&(queue)->lk);                                         \
         *(retpp) = _item1;                                              \
     } while (0)
 
@@ -40,9 +45,7 @@
         LIST_TYPE *_item;                                               \
                                                                         \
         (item)->prev = NULL;                                            \
-        if (_REENTRANT) {                                               \
-            mtxlk(&(queue)->lk);                                        \
-        }                                                               \
+        listlk(&(queue)->lk);                                           \
         _item = (queue)->head;                                          \
         if (_item) {                                                    \
             (_item)->prev = (item);                                     \
@@ -52,9 +55,7 @@
         }                                                               \
         (item)->next = _item;                                           \
         (queue)->head = item;                                           \
-        if (_REENTRANT) {                                               \
-            mtxunlk(&(queue)->lk);                                      \
-        }                                                               \
+        listunlk(&(queue)->lk);                                         \
     } while (0)
 
 /* get item from the tail of queue */
@@ -63,9 +64,7 @@
         LIST_TYPE *_item1;                                              \
         LIST_TYPE *_item2;                                              \
                                                                         \
-        if (_REENTRANT) {                                               \
-            mtxlk(&(queue)->lk);                                        \
-        }                                                               \
+        listlk(&(queue)->lk);                                           \
         _item1 = (queue)->tail;                                         \
         if (_item1) {                                                   \
             _item2 = _item1->prev;                                      \
@@ -77,9 +76,7 @@
                 (queue)->tail = _item2;                                 \
             }                                                           \
         }                                                               \
-        if (_REENTRANT) {                                               \
-            mtxunlk(&(queue)->lk);                                      \
-        }                                                               \
+        listunlk(&(queue)->lk);                                         \
         *(retpp) = _item1;                                              \
     } while (0)
 
@@ -88,9 +85,7 @@
     do {                                                                \
         LIST_TYPE *_tmp;                                                \
                                                                         \
-        if (_REENTRANT) {                                               \
-            mtxlk(&(queue)->lk);                                        \
-        }                                                               \
+        listlk(&(queue)->lk);                                           \
         _tmp = (item)->prev;                                            \
         if (_tmp) {                                                     \
             _tmp->next = (item)->next;                                  \
@@ -115,8 +110,6 @@
             }                                                           \
             (queue)->tail = _tmp;                                       \
         }                                                               \
-        if (_REENTRANT) {                                               \
-            mtxunlk(&(queue)->lk);                                      \
-        }                                                               \
+        listunlk(&(queue)->lk);                                         \
     } while (0)
 
