@@ -33,8 +33,8 @@
 #define RANDMT32MASK2      0x9d2c5680
 #define RANDMT32MASK3      0xefc60000
 
-static int32_t      randbuf32[RANDMT32NBUFITEM] ALIGNED(PAGESIZE);
-static int32_t      randnext32[RANDMT32NBUFITEM] ALIGNED(PAGESIZE);
+static int32_t      randbuf[RANDMT32NBUFITEM] ALIGNED(PAGESIZE);
+static int32_t      randnext[RANDMT32NBUFITEM] ALIGNED(PAGESIZE);
 static int32_t      randndx;
 static volatile int randinit;
 
@@ -48,19 +48,19 @@ srandmt32(int32_t seed)
     if (!seed) {
         seed++;
     }
-    randbuf32[0] = seed;
+    randbuf[0] = seed;
     val = seed >> RANDMT32SHIFT;
     tmp = RANDMT32MULTIPLIER * (seed ^ val) + 1;
-    randbuf32[1] = tmp;
+    randbuf[1] = tmp;
     for (i = 2 ; i < RANDMT32NBUFITEM; i++) {
         val = tmp >> RANDMT32SHIFT;
         tmp = RANDMT32MULTIPLIER * (tmp ^ val) + i;
-        randbuf32[i] = tmp;
+        randbuf[i] = tmp;
     }
 }
 
 void
-_randbuf32(void)
+_randbuf(void)
 {
     int      i;
     int32_t  x;
@@ -69,21 +69,21 @@ _randbuf32(void)
     
     for (i = 0 ; i < 623 - 397 ; i++) {
         val1 = i + 1;
-        x = (randbuf32[i] & 0x80000000) + (randbuf32[val1] & 0x7fffffff);
-        randbuf32[i] = randbuf32[i + 397] ^ (x >> 1);
+        x = (randbuf[i] & 0x80000000) + (randbuf[val1] & 0x7fffffff);
+        randbuf[i] = randbuf[i + 397] ^ (x >> 1);
         i++;
         val2 = i + 1;
-        x = (randbuf32[i] & 0x80000000) + (randbuf32[val2] & 0x7fffffff);
-        randbuf32[i] = (randbuf32[i + 397] ^ (x >> 1)) ^ RANDMT32XORVALUE;
+        x = (randbuf[i] & 0x80000000) + (randbuf[val2] & 0x7fffffff);
+        randbuf[i] = (randbuf[i + 397] ^ (x >> 1)) ^ RANDMT32XORVALUE;
     }
     for ( ; i < RANDMT32NBUFITEM ; i++) { 
         val1 = i + 1;
-        x = (randbuf32[i] & 0x80000000) + (randbuf32[val1] & 0x7fffffff);
-        randbuf32[i] = randbuf32[val1] ^ (x >> 1);
+        x = (randbuf[i] & 0x80000000) + (randbuf[val1] & 0x7fffffff);
+        randbuf[i] = randbuf[val1] ^ (x >> 1);
         i++;
         val2 = i + 1;
-        x = (randbuf32[i] & 0x80000000) + (randbuf32[val2] & 0x7fffffff);
-        randbuf32[i] = (randbuf32[val2] ^ (x >> 1)) ^ RANDMT32XORVALUE;
+        x = (randbuf[i] & 0x80000000) + (randbuf[val2] & 0x7fffffff);
+        randbuf[i] = (randbuf[val2] ^ (x >> 1)) ^ RANDMT32XORVALUE;
     }
 }
 
@@ -92,22 +92,22 @@ randmt32(void)
 {
     int32_t x;
 
-    if (!randndx) {
-        _randbuf32();
-    }
     if (!randinit) {
         for (x = 0 ; x < 623 ; x++) {
-            randnext32[x] = x + 1;
+            randnext[x] = x + 1;
         }
-        randnext32[623] = 0;
+        randnext[623] = 0;
         randinit = 1;
     }
-    x = randbuf32[randndx];
+    if (!randndx) {
+        _randbuf();
+    }
+    x = randbuf[randndx];
     x ^= x >> RANDMT32SHIFT1;
     x ^= (x >> RANDMT32SHIFT2) & RANDMT32MASK2;
     x ^= (x >> RANDMT32SHIFT3) & RANDMT32MASK3;
     x ^= x >> RANDMT32SHIFT4;
-    randndx = randnext32[randndx];
+    randndx = randnext[randndx];
 
     return (int)(x & 0x7fffffff);
 }
