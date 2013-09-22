@@ -49,7 +49,7 @@ void
 kbzero(void *adr, size_t len)
 {
     long *next;
-    long *ptr;
+    long *ptr = adr;
     long  val = 0;
     long  incr = 8;
     long  nleft = 0;

@@ -168,16 +168,18 @@ extern uint8_t          mjolcanwieldmap[32];
 #define MJOL_SCR_TTY              2
 #define MJOL_SCR_X11              3
 struct mjolgame {
-    struct dnggame   data;
-    struct mjolchar *player;
-    char            *nick;      // names of players
-    long             scrtype;   // type of screen to use
-    struct mjolscr  *scr;       // screen interface
-    size_t           nlvl;      // # of levels
-    size_t           width;     // width of level in cells
-    size_t           height;    // height of level
-    size_t           nobj;      // # of objects
-    void            *objtab;    // objects on the level
+    struct dnggame     data;
+    struct mjolchar   *player;
+    char              *nick;            // names of players
+    long               scrtype;         // type of screen to use
+    struct mjolscr    *scr;             // screen interface
+    long               nlvl;            // # of levels
+    long              *nroomtab;        // per-level # of rooms
+    struct mjolroom ***lvltab;          // level data
+    long               width;           // width of level in cells
+    long               height;          // height of level
+    long               nobj;            // # of objects
+    void              *objtab;          // objects on the level
 };
 
 struct mjolobjfunc {
@@ -242,35 +244,40 @@ struct mjolobj {
     struct mjolobj     *next;
 };
 
-struct mjolrect {
+struct mjolroom {
     long             x;
     long             y;
     long             width;
     long             height;
-    struct mjolrect *left;
-    struct mjolrect *right;
+    struct mjolroom *left;
+    struct mjolroom *right;
+};
+
+struct mjollvl {
+    long              nroom;
+    struct mjolroom **roomtab;
 };
 
 #if (TEST)
 static __inline__ void
-mjolprintrect(struct mjolrect *rect)
+mjolprintroom(struct mjolroom *room)
 {
     fprintf(stderr, "x = %ld, y = %ld, width = %ld, height = %ld\n",
-            rect->x, rect->y, rect->width, rect->height);
+            room->x, room->y, room->width, room->height);
 }
 #endif
 
 static __inline__ void
 mjolpushchase(struct mjolchar *data)
 {
-    struct mjolchar *next = data->data.next;
+    struct mjolchar *next;
 
     data->data.prev = NULL;
     next = chaseq;
     if (chaseq) {
         chaseq->data.prev = data;
     }
-    data->data.next = chaseq;
+    data->data.next = next;
     chaseq = data;
 
     return;

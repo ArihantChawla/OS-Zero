@@ -9,8 +9,9 @@ extern long               mjolgetopt(struct mjolgame *game,
 extern struct mjolchar  * mjolmkplayer(struct mjolgame *game);
 extern struct mjolrect ** mjolinitrooms(struct mjolgame *game, long *nroom);
 extern void               mjolopenscr(struct mjolgame *game);
-extern void               mjolgendng(struct mjolgame *game);
 extern void               mjolinitcmd(void);
+extern void               mjolinitobj(void);
+void                      mjolgendng(struct mjolgame *game);
 extern void               mjoldocmd(struct mjolgame *game, int ch);
 extern long               mjoldoturn(struct mjolgame *game,
                                      struct mjolchar *data);
@@ -44,8 +45,6 @@ mjolquitsig(int sig)
 void
 mjolintro(void)
 {
-    int ch;
-
     printf("\n");
     printf("Legend has it that many moons ago, Fenris, the eldest child of Loki and\n");
     printf("Angrboda, broke free from his chain, Pleignir, and stole Mjolnir from Thor.\n");
@@ -61,7 +60,7 @@ mjolintro(void)
     printf("Good luck, adventurer, and beware of Fenris!\n");
     printf("\n");
     printf("Press a key to continue...\n");
-    ch = getchar();
+    getchar();
 
     return;
 }
@@ -121,7 +120,9 @@ mjolinit(struct mjolgame *game, int argc, char *argv[])
     }
     game->objtab = objtab;
     mjolopenscr(game);
+    mjolinitobj();
     mjolinitcmd();
+    mjolgendng(game);
     
     return;
 }
@@ -129,10 +130,6 @@ mjolinit(struct mjolgame *game, int argc, char *argv[])
 void
 mjolgameloop(struct mjolgame *game)
 {
-    struct mjolrect **lvltab;
-    long              nroom = 0;
-
-    lvltab = mjolinitrooms(game, &nroom);
     do {
         mjolplayer->hp -= mjoldoturn(game, mjolplayer);
         mjolplayer->hp -= mjolchaseall(game);

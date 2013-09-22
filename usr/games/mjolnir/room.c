@@ -17,34 +17,34 @@ extern struct mjolobj * mjolmkcorridor(void);
 extern struct mjolobj * mjolmkdoor(void);
 
 void
-mjolmkroom(struct mjolrect *rect)
+mjolmkroom(struct mjolroom *room)
 {
     long x;
     long y;
     long w;
     long h;
 
-    x = mjolrand() % rect->width;
-    x = max(x, rect->width - MJOL_ROOM_MIN_WIDTH);
-    x = min(x, rect->width >> 2);
-    y = mjolrand() % rect->height;
-    y = max(y, rect->height - MJOL_ROOM_MIN_HEIGHT);
-    y = min(x, rect->height >> 2);
-    rect->x += x;
-    rect->y += y;
+    x = mjolrand() % room->width;
+    x = max(x, room->width - MJOL_ROOM_MIN_WIDTH);
+    x = min(x, room->width >> 2);
+    y = mjolrand() % room->height;
+    y = max(y, room->height - MJOL_ROOM_MIN_HEIGHT);
+    y = min(x, room->height >> 2);
+    room->x += x;
+    room->y += y;
     w = MJOL_ROOM_MIN_WIDTH
-        + (mjolrand() % max(rect->width - x - MJOL_ROOM_MIN_WIDTH, 1));
+        + (mjolrand() % max(room->width - x - MJOL_ROOM_MIN_WIDTH, 1));
     h = MJOL_ROOM_MIN_HEIGHT
-        + (mjolrand() % max(rect->height - y - MJOL_ROOM_MIN_HEIGHT, 1));
-    rect->width = w;
-    rect->height = h;
+        + (mjolrand() % max(room->height - y - MJOL_ROOM_MIN_HEIGHT, 1));
+    room->width = w;
+    room->height = h;
 
     return;
 }
 
 void
 mjolconnrooms(struct mjolgame *game,
-              struct mjolrect *src, struct mjolrect *dest)
+              struct mjolroom *src, struct mjolroom *dest)
 {
     struct mjolobj ***objtab = game->objtab;
     long              x;
@@ -237,10 +237,10 @@ mjolconnrooms(struct mjolgame *game,
 
 #define MJOL_DIR_HORIZONTAL  0
 #define MJOL_DIR_VERTICAL    1
-struct mjolrect *
-mjolsplitrect(struct mjolrect *rect)
+struct mjolroom *
+mjolsplitroom(struct mjolroom *room)
 {
-    struct mjolrect *ret = calloc(1, sizeof(struct mjolrect));
+    struct mjolroom *ret = calloc(1, sizeof(struct mjolroom));
     long             dir = mjolrand() & 0x01;
     long             pos;
 
@@ -250,55 +250,55 @@ mjolsplitrect(struct mjolrect *rect)
         exit(1);
     }
     if (dir == MJOL_DIR_HORIZONTAL) {
-        pos = MJOL_ROOM_MIN_WIDTH + (mjolrand() % rect->width);
-        pos = min(pos, rect->width >> 1);
-        ret->left = calloc(1, sizeof(struct mjolrect));
-        ret->right = calloc(1, sizeof(struct mjolrect));
+        pos = MJOL_ROOM_MIN_WIDTH + (mjolrand() % room->width);
+        pos = min(pos, room->width >> 1);
+        ret->left = calloc(1, sizeof(struct mjolroom));
+        ret->right = calloc(1, sizeof(struct mjolroom));
         if (!ret->left || !ret->right) {
             fprintf(stderr, "memory allocation failure\n");
 
             exit(1);
         }
-        ret->left->x = rect->x;
-        ret->left->y = rect->y;
+        ret->left->x = room->x;
+        ret->left->y = room->y;
         ret->left->width = pos;
-        ret->left->height = rect->height;
+        ret->left->height = room->height;
         ret->right->x = pos;
-        ret->right->y = rect->y;
-        ret->right->width = rect->width - pos;
-        ret->right->height = rect->height;
+        ret->right->y = room->y;
+        ret->right->width = room->width - pos;
+        ret->right->height = room->height;
     } else {
-        pos = MJOL_ROOM_MIN_HEIGHT + (mjolrand() % rect->height);
-        pos = min(pos, rect->height >> 1);
-        ret->left = calloc(1, sizeof(struct mjolrect));
-        ret->right = calloc(1, sizeof(struct mjolrect));
+        pos = MJOL_ROOM_MIN_HEIGHT + (mjolrand() % room->height);
+        pos = min(pos, room->height >> 1);
+        ret->left = calloc(1, sizeof(struct mjolroom));
+        ret->right = calloc(1, sizeof(struct mjolroom));
         if (!ret->left || !ret->right) {
             fprintf(stderr, "memory allocation failure\n");
 
             exit(1);
         }
-        ret->left->x = rect->x;
-        ret->left->y = rect->y;
-        ret->left->width = rect->width;
+        ret->left->x = room->x;
+        ret->left->y = room->y;
+        ret->left->width = room->width;
         ret->left->height = pos;
-        ret->right->x = rect->x;
+        ret->right->x = room->x;
         ret->right->y = pos;
-        ret->right->width = rect->width;
-        ret->right->height = rect->height - pos;
+        ret->right->width = room->width;
+        ret->right->height = room->height - pos;
     }
 
     return ret;
 }
 
-struct mjolrect **
-mjolinitrooms(struct mjolgame *game, long *nroom, long width, long height)
+struct mjolroom **
+mjolinitrooms(struct mjolgame *game, long *nroom)
 {
-    struct mjolrect  *tab[MJOL_MAX_ROOMS << 1];
-    struct mjolrect  *item = calloc(1, sizeof(struct mjolrect));
+    struct mjolroom  *tab[MJOL_MAX_ROOMS << 1];
+    struct mjolroom  *item = calloc(1, sizeof(struct mjolroom));
     long              n = MJOL_MIN_ROOMS + (mjolrand()
                                             % (MJOL_MAX_ROOMS
                                                - MJOL_MIN_ROOMS));
-    struct mjolrect **ret = calloc(n, sizeof(struct mjolrect *));
+    struct mjolroom **ret = calloc(n, sizeof(struct mjolroom *));
     long              ndx = 0;
     long              val = 0;
     long              l;
@@ -306,7 +306,7 @@ mjolinitrooms(struct mjolgame *game, long *nroom, long width, long height)
 
     l = n;
     n++;
-    if (!ret || !tab || !item) {
+    if (!ret || !item) {
         fprintf(stderr, "memory allocation failure\n");
 
         exit(1);
@@ -316,7 +316,7 @@ mjolinitrooms(struct mjolgame *game, long *nroom, long width, long height)
     item->y = 0;
     item->width = game->width;
     item->height = game->height;
-    item = mjolsplitrect(item);
+    item = mjolsplitroom(item);
     *nroom = n;
     tab[0] = item;
     tab[1] = item->left;
@@ -330,7 +330,7 @@ mjolinitrooms(struct mjolgame *game, long *nroom, long width, long height)
             ndx = l << 1;
             for (n = 2 ; n <= l ; n++) {
                 m = n << 1;
-                item = mjolsplitrect(tab[n - 1]);
+                item = mjolsplitroom(tab[n - 1]);
                 tab[m - 1] = item->left;
                 mjolmkroom(item->left);
                 tab[m] = item->right;
@@ -357,5 +357,37 @@ mjolinitrooms(struct mjolgame *game, long *nroom, long width, long height)
     }
 
     return ret;
+}
+
+void
+mjolgendng(struct mjolgame *game)
+{
+    long               nlvl = game->nlvl;
+    long              *nroomtab = calloc(nlvl, sizeof(long));
+    struct mjolroom ***lvltab = calloc(nlvl, sizeof(struct mjolroom **));
+    struct mjolroom  **roomtab;
+    long               nroom;
+    long               ndx;
+
+    if (!nroomtab) {
+        fprintf(stderr, "memory allocation failure\n");
+
+        exit(1);
+    }
+    mjolsrand(1);
+    for (ndx = 0 ; ndx < nlvl ; ndx++) {
+        roomtab = mjolinitrooms(game, &nroom);
+        if (!roomtab) {
+            fprintf(stderr, "memory allocation failure\n");
+
+            exit(1);
+        }
+        nroomtab[ndx] = nroom;
+        lvltab[ndx] = roomtab;
+    }
+    game->nroomtab = nroomtab;
+    game->lvltab = lvltab;
+
+    return;
 }
 

@@ -5,9 +5,6 @@
 #include <signal.h>
 #include <time.h>
 #include <mjolnir/conf.h>
-#if (MJOL_USE_ZERO_RANDMT32)
-#include <zero/randmt32.h>
-#endif
 #include <dungeon/dng.h>
 #include <mjolnir/mjol.h>
 
@@ -18,7 +15,6 @@ extern void               mjolinit(struct mjolgame *game,
 extern void               mjolinitobj(void);
 extern void               mjolgameloop(struct mjolgame *game);
 
-struct mjolrect ** mjolinitrooms(struct mjolgame *game, long *nroom);
 int
 main(int argc, char *argv[])
 {
@@ -27,8 +23,6 @@ main(int argc, char *argv[])
     signal(SIGINT, mjolquitsig);
     signal(SIGQUIT, mjolquitsig);
     signal(SIGTERM, mjolquitsig);
-    mjolsrand(time(NULL));
-    mjolinitobj();
     mjolinit(&game, argc, argv);
     mjolgameloop(&game);
 
