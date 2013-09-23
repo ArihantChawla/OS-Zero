@@ -7,9 +7,6 @@
 #include <zero/trix.h>
 #include <mjolnir/mjol.h>
 
-//#define max(a, b) ((a) > (b) ? (a) : (b))
-//#define min(a, b) ((a) < (b) ? (a) : (b))
-
 //#define MJOL_ROOM_MIN_DIM    4
 #define MJOL_ROOM_MIN_WIDTH  8
 #define MJOL_ROOM_MIN_HEIGHT 6
@@ -213,8 +210,8 @@ mjolconnrooms(struct mjolgame *game,
         if (val > 1) {
             /* adjacent, draw straight horizontal line */
             x = src->x;
-//            y = dest->y + dest->height - max(mjolrand() % val, 1);
-            y = src->y + max(mjolrand() % val, 1);
+            y = dest->y + dest->height - max(mjolrand() % val, 1);
+//            y = src->y + max(mjolrand() % val, 1);
             objtab[y][x] = mjolmkdoor();
         } else {
             /* draw vertical line */

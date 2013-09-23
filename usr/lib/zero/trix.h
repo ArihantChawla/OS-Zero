@@ -32,11 +32,15 @@
 /* m - mask of bits to be copied from a. 1 -> copy, 0 -> leave alone. */
 #define copybits(a, b, m) (((a) | (m)) | ((b) & ~(m)))
 
+#define min(a, b) ((a) <= (b) ? (a) : (b))
+#define max(a, b) ((a) >= (b) ? (a) : (b))
+#if 0
 /* compute minimum and maximum of a and b without branching */
 #define min(a, b)                                                       \
     ((b) + (((a) - (b)) & -((a) < (b))))
 #define max(a, b)                                                       \
     ((a) - (((a) - (b)) & -((a) < (b))))
+#endif
 /* compare with power-of-two p2 */
 #define gtpow2(u, p2)  /* true if u > p2 */                             \
     ((u) & ~(p2))

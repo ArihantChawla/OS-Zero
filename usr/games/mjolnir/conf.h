@@ -15,7 +15,7 @@
 #define mjolrand()      randmt32()
 #else
 #define mjolsrand(seed) srand(seed)
-#define mjolrand()      rand()
+#define mjolrand()      (rand() & 0x7fffffff)
 #endif
 
 #endif /* __MJOLNIR_CONF_H__ */
