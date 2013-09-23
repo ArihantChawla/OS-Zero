@@ -90,7 +90,7 @@ _randbuf(void)
 int
 randmt32(void)
 {
-    int32_t x;
+    int x;
 
     if (!randinit) {
         for (x = 0 ; x < 623 ; x++) {
@@ -109,6 +109,6 @@ randmt32(void)
     x ^= x >> RANDMT32SHIFT4;
     randndx = randnext[randndx];
 
-    return (int)(x & 0x7fffffff);
+    return (x & 0x7fffffff);
 }
 

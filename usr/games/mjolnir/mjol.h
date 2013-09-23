@@ -168,18 +168,20 @@ extern uint8_t          mjolcanwieldmap[32];
 #define MJOL_SCR_TTY              2
 #define MJOL_SCR_X11              3
 struct mjolgame {
-    struct dnggame     data;
-    struct mjolchar   *player;
-    char              *nick;            // names of players
-    long               scrtype;         // type of screen to use
-    struct mjolscr    *scr;             // screen interface
-    long               nlvl;            // # of levels
-    long              *nroomtab;        // per-level # of rooms
-    struct mjolroom ***lvltab;          // level data
-    long               width;           // width of level in cells
-    long               height;          // height of level
-    long               nobj;            // # of objects
-    void              *objtab;          // objects on the level
+    struct dnggame       data;
+    struct mjolchar     *player;
+    char                *nick;          // names of players
+    long                 scrtype;       // type of screen to use
+    struct mjolscr      *scr;           // screen interface
+    struct mjolchar ****chartab;        // in-dungeon live characters
+    long                 nlvl;          // # of levels
+    long                 lvl;           // current level
+    struct mjolobj  ****objtab;         // level data
+    long                *nroomtab;      // per-level # of rooms
+    struct mjolroom  ***lvltab;         // level data
+    long                 width;         // width of level in cells
+    long                 height;        // height of level
+    long                 nobj;          // # of objects
 };
 
 struct mjolobjfunc {

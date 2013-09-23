@@ -150,18 +150,20 @@ long
 mjolfindmove(struct mjolchar *src, struct mjolchar *dest,
              hitfunc *func, long mindist)
 {
-    long              retval = 0;
-    void           ***objtab = mjolgame->objtab;
-    struct mjolobj   *obj;
-    struct mjolobj   *item;
-    long              destx = dest->data.x;
-    long              desty = dest->data.y;
-    long              srcx = src->data.x;
-    long              srcy = src->data.y;
-    long              dx = destx - srcx;
-    long              dy = desty - srcy;
-    long              type;
-    long              val;
+    long               retval = 0;
+    struct mjolchar ***chartab = mjolgame->chartab[mjolgame->lvl];
+    struct mjolobj  ***objtab = mjolgame->objtab[mjolgame->lvl];
+    struct mjolchar   *chr;
+    struct mjolobj    *obj;
+    struct mjolobj    *item;
+    long               destx = dest->data.x;
+    long               desty = dest->data.y;
+    long               srcx = src->data.x;
+    long               srcy = src->data.y;
+    long               dx = destx - srcx;
+    long               dy = desty - srcy;
+    long               type;
+    long               val;
 
     if (srcx == destx && srcy == desty) {
 
@@ -190,21 +192,21 @@ mjolfindmove(struct mjolchar *src, struct mjolchar *dest,
                 /* dest is below src */
                 dy = 1;
             }
-            obj = objtab[srcx][srcy + dy];
-            type = obj->data.type;
+            chr = chartab[srcy + dy][srcx];
+            type = chr->data.type;
             if (mjolcanmoveto(type)) {
                 /* src can moves horizontally and vertically */
                 srcy += dy;
             } else {
-                obj = objtab[srcx][srcy];
-                type = obj->data.type;
+                chr = chartab[srcy][srcx];
+                type = chr->data.type;
                 if (mjolcanmoveto(type)) {
                     /* src moves horizontally but not vertically */
                     ;
                 } else {
                     srcx -= dx;
-                    obj = objtab[srcx][srcy + dy];
-                    type = obj->data.type;
+                    chr = chartab[srcy + dy][srcx];
+                    type = chr->data.type;
                     if (mjolcanmoveto(type)) {
                         /* src moves vertically but not horizontally */
                         srcy += dy;
@@ -219,8 +221,8 @@ mjolfindmove(struct mjolchar *src, struct mjolchar *dest,
                 dy = 1;
             }
             srcy += dy;
-            obj = objtab[srcx][srcy];
-            type = obj->data.type;
+            chr = chartab[srcy][srcx];
+            type = chr->data.type;
             if (mjolcanmoveto(type)) {
                 /* src moves vertically */
             } else {
@@ -234,17 +236,17 @@ mjolfindmove(struct mjolchar *src, struct mjolchar *dest,
                     dx = 1;
                 }
                 srcx += dx;
-                obj = objtab[srcx][srcy];
-                type = obj->data.type;
+                chr = chartab[srcy][srcx];
+                type = chr->data.type;
                 if (mjolcanmoveto(type)) {
                     /* move into chosen direction */
                     ;
                 } else {
                     /* change horizontal direction */
                     dx = -dx;
-                    srcx += 2 * dx;
-                    obj = objtab[srcx][srcy];
-                    type = obj->data.type;
+                    srcx += dx << 1;
+                    chr = chartab[srcy][srcx];
+                    type = chr->data.type;
                     if (mjolcanmoveto(type)) {
                         /* valid move */
                         ;
@@ -252,24 +254,24 @@ mjolfindmove(struct mjolchar *src, struct mjolchar *dest,
                         /* change vertical direction */
                         srcx -= dx;
                         dy = -dy;
-                        srcy += 2 * dy;
-                        obj = objtab[srcx][srcy];
-                        type = obj->data.type;
+                        srcy += dy << 1;
+                        chr = chartab[srcy][srcx];
+                        type = chr->data.type;
                         if (mjolcanmoveto(type)) {
                             /* valid move */
                             ;
                         } else {
                             /* try vertical and horizontal */
                             srcx -= dx;
-                            obj = objtab[srcx][srcy];
-                            type = obj->data.type;
+                            chr = chartab[srcy][srcx];
+                            type = chr->data.type;
                             if (mjolcanmoveto(type)) {
                                 /* valid move */
                                 ;
                             } else {
                                 srcx += 2 * dx;
-                                obj = objtab[srcx][srcy];
-                                type = obj->data.type;
+                                chr = chartab[srcy][srcx];
+                                type = chr->data.type;
                                 if (mjolcanmoveto(type)) {
                                     /* valid move */
                                 } else {
@@ -297,7 +299,7 @@ mjolfindmove(struct mjolchar *src, struct mjolchar *dest,
                     if (obj) {
                         obj->data.next = item->data.next;
                     } else {
-                        objtab[destx][desty] = item->data.next;
+                        chartab[destx][desty] = item->data.next;
                     }
                     mjoladditem(dest, item);
                 }
@@ -320,17 +322,17 @@ mjolfindmove(struct mjolchar *src, struct mjolchar *dest,
         if (obj) {
             obj->data.next = src->data.next;
         } else {
-            objtab[src->data.x][src->data.y] = src->data.next;
+            objtab[src->data.y][src->data.x] = src->data.next;
         }
         src->data.prev = NULL;
-        src->data.next = objtab[srcx][srcy];
+        src->data.next = objtab[srcy][srcx];
         obj = src->data.next;
         if (obj) {
             obj->data.prev = src;
         }
         src->data.x = srcx;
         src->data.y = srcy;
-        objtab[srcx][srcy] = src;
+        chartab[srcy][srcx] = src;
     }
 
     return retval;

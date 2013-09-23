@@ -164,6 +164,36 @@ mjolmkdoor(void)
 }
 
 struct mjolobj *
+mjolmkhorwall(void)
+{
+    struct mjolobj *obj = calloc(1, sizeof(struct mjolobj));
+
+    if (!obj) {
+        fprintf(stderr, "memory allocation failure\n");
+
+        exit(1);
+    }
+    obj->data.type = MJOL_OBJ_HORIZONTAL_WALL;
+
+    return obj;
+}
+
+struct mjolobj *
+mjolmkvertwall(void)
+{
+    struct mjolobj *obj = calloc(1, sizeof(struct mjolobj));
+
+    if (!obj) {
+        fprintf(stderr, "memory allocation failure\n");
+
+        exit(1);
+    }
+    obj->data.type = MJOL_OBJ_VERTICAL_WALL;
+
+    return obj;
+}
+
+struct mjolobj *
 mjolmkstair(long type)
 {
     struct mjolobj *obj = calloc(1, sizeof(struct mjolobj));

@@ -68,9 +68,14 @@ mjolintro(void)
 void
 mjolinit(struct mjolgame *game, int argc, char *argv[])
 {
-    struct mjolgame   *data = calloc(1, sizeof(struct mjolgame *));
-    struct mjolobj  ***objtab;
-    long               x;
+    struct mjolgame    *data = calloc(1, sizeof(struct mjolgame *));
+    struct mjolobj  ****objtab;
+    struct mjolchar ****chartab;
+    long                y;
+    long                w;
+    long                h;
+    long                lvl;
+    long                lim;
 
     mjolgame = game;
     if (!data) {
@@ -109,7 +114,9 @@ mjolinit(struct mjolgame *game, int argc, char *argv[])
     if (!game->height) {
         game->height = MJOL_DEF_HEIGHT;
     }
-    objtab = calloc(game->width, sizeof(struct mjolobj *));
+    objtab = calloc(game->nlvl, sizeof(struct mjolobj ***));
+    chartab = calloc(game->nlvl, sizeof(struct mjolchar ***));
+#if 0
     for (x = 0 ; x < game->width ; x++) {
         objtab[x] = calloc(game->height, sizeof(struct mjolobj *));
         if (!objtab[x]) {
@@ -118,7 +125,20 @@ mjolinit(struct mjolgame *game, int argc, char *argv[])
             exit(1);
         }
     }
+#endif
+    lim = game->nlvl;
+    w = game->width;
+    h = game->height;
+    for (lvl = 0 ; lvl < lim ; lvl++) {
+        objtab[lvl] = calloc(h, sizeof(struct mjolobj ***));
+        chartab[lvl] = calloc(h, sizeof(struct mjolchar ***));
+        for (y = 0 ; y < h ; y++) {
+            objtab[lvl][y] = calloc(w, sizeof(struct mjolobj **));
+            chartab[lvl][y] = calloc(w, sizeof(struct mjolchar **));
+        }
+    }
     game->objtab = objtab;
+    game->chartab = chartab;
     mjolopenscr(game);
     mjolinitobj();
     mjolinitcmd();
