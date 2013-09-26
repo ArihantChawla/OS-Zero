@@ -5,7 +5,7 @@
 
 #define PRIMEN 1048576
 
-/* Sieve of Erastosthenes */
+/* Sieve of Erastosthenes with the optimisation to start from l^2 */
 void *
 sieve(size_t lim)
 {
@@ -18,8 +18,7 @@ sieve(size_t lim)
         memset(tab, 0xff, (PRIMEN >> 3) * sizeof(char));
         l = 2;
         while (1) {
-            for (m = l << 1 ; m < PRIMEN ; m += l) {
-//            for (m = l * l ; m < PRIMEN ; m += l) {
+            for (m = l * l ; m < PRIMEN ; m += l) {
                 clrbit(tab, m);
             }
             for ( ++l ; l < PRIMEN ; l++) {
