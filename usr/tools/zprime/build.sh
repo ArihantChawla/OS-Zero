@@ -1,3 +1,3 @@
 #! /bin/sh
 
-gcc -g -O -Wall -I../../lib -o prime prime.c
+gcc -DPRIMEPROF=1 -g -O -Wall -I../../lib -o prime prime.c
