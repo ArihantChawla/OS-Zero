@@ -14,7 +14,7 @@ mjolmovetotty(int x, int y)
 }
 
 void
-mjoldrawchartty(struct mjolgame *game, struct mjolchar *data)
+mjoldrawchrtty(struct mjolgame *game, struct mjolchr *data)
 {
     ;
 }
@@ -74,7 +74,7 @@ mjolmkscrtty(struct mjolgame *game)
         game->scr->data = data;
         game->scr->getch = getch;
         game->scr->moveto = mjolmovetotty;
-        game->scr->drawchar = mjoldrawchartty;
+        game->scr->drawchr = mjoldrawchrtty;
         game->scr->printmsg = printw;
         game->scr->refresh = refresh;
         game->scr->close = mjolclosetty;

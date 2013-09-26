@@ -1,5 +1,7 @@
+#include <stdint.h>
 #include <gfx/types.h>
 
+#if 0
 /*
  * Here is a highly-tuned version of the AdvMame2x scaler.
  *
@@ -20,15 +22,15 @@ gfxscaleimg2x(struct gfximg *src,
     argb32_t       val7;
     argb32_t       val8;
     argb32_t       val9;
-    long           ndx1;
-    long           ndx2;
-    long           lim;
-    long           srcx;
-    long           srcy;
-    long           srcw;
-    long           srch;
-    long           destw;
-    long           desth;
+    long        ndx1;
+    long        ndx2;
+    long        lim;
+    long        srcx;
+    long        srcy;
+    long        srcw;
+    long        srch;
+    long        destw;
+    long        desth;
     uint_fast8_t   bool;
     uint_fast8_t   zero;
     uint_fast8_t   cond1;
@@ -36,9 +38,8 @@ gfxscaleimg2x(struct gfximg *src,
     uint_fast8_t   cond3;
     uint_fast8_t   cond4;
 
-    srcptr = src->xim->data;
-//    destptr = dest->xim->data + 2;
-    destptr = dest->xim->data;
+    srcptr = src->data;
+    destptr = dest->data + 2;
     srcw = src->w;
     srch = src->h;
     zero = 0;
@@ -55,9 +56,8 @@ gfxscaleimg2x(struct gfximg *src,
     val8 = srcptr[ndx2++];
     val6 = srcptr[ndx1];
     val9 = srcptr[ndx2];
-//    srcptr++;
-//    srcx = 1;
-    srcx = 0;
+    srcptr++;
+    srcx = 1;
     /* top row */
     while (srcx < srcw) {
         /* setup. */
@@ -82,25 +82,25 @@ gfxscaleimg2x(struct gfximg *src,
         ndx2 = srcw;
         val5 = srcptr[ndx1++];
         val9 = srcptr[ndx2];
-        val6 = srcptr[ndx1++];
+        val6 = srcptr[ndx1];
         srcx++;
+        ndx1 = 2;
         srcptr++;
         destptr += ndx1;
     }
     /* middle rows */
-    destptr += destw;
+    destptr += destw - 2;
     lim = srch - 1;
     srcy = 1;
     while (srcy < lim) {
-        ndx1 = zero;
+        ndx1 = 0;
         ndx2 = -srcw;
         val1 = val4 = val7 = zero;
         val5 = srcptr[ndx1++];
         val3 = srcptr[ndx2++];
         val6 = srcptr[ndx1];
         val9 = srcptr[ndx2];
-//        srcx = 1;
-        srcx = 0;
+        srcx = 1;
         while (srcx < srcw) {
             ndx1 = zero;
             ndx2 = destw;
@@ -124,16 +124,18 @@ gfxscaleimg2x(struct gfximg *src,
             val3 = srcptr[ndx2];
             val5 = srcptr[ndx1++];
             ndx2 = srcw + 1;
-            val6 = srcptr[ndx1++];
+            val6 = srcptr[ndx1];
             val7 = val8;
             val8 = val9;
+            ndx1 = 2;
             val9 = srcptr[ndx2];
             srcx++;
             srcptr++;
             destptr += ndx1;
         }
+        ndx1 = destw - 2;
         srcy++;
-        destptr += destw;
+        destptr += ndx1;
     }
     /* bottom row. */
     ndx1 = 0;
@@ -144,8 +146,7 @@ gfxscaleimg2x(struct gfximg *src,
     val3 = srcptr[ndx2];
     val6 = srcptr[ndx1];
     srcptr++;
-//    srcx = 1;
-    srcx = 0;
+    srcx = 1;
     while (srcx < srcw) {
         ndx1 = zero;
         ndx2 = destw;
@@ -159,9 +160,10 @@ gfxscaleimg2x(struct gfximg *src,
         bool = ((cond3) && !(cond1) && !(cond4));
         destptr[ndx2++] = (bool) ? val4 : val5;
         bool = ((cond2) && !(cond1) && !(cond4));
-        destptr[ndx1++] = (bool) ? val4 : val5;
+        destptr[ndx1] = (bool) ? val4 : val5;
         bool = ((cond4) && !(cond3) && !(cond2));
         destptr[ndx2] = (bool) ? val4 : val5;
+        ndx1 = 2;
         srcx++;
         srcptr++;
         destptr += ndx1;
@@ -169,4 +171,5 @@ gfxscaleimg2x(struct gfximg *src,
 
     return;
 }
+#endif
 

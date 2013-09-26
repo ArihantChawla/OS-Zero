@@ -214,7 +214,7 @@ mjolmkstair(long type)
 }
 
 long
-mjolhit(struct mjolchar *src, struct mjolchar *dest)
+mjolhit(struct mjolchr *src, struct mjolchr *dest)
 {
     long   retval = 0;
     long (*func)(void *, void *);
@@ -228,7 +228,7 @@ mjolhit(struct mjolchar *src, struct mjolchar *dest)
 }
 
 long
-mjoltrap(struct mjolobj *trap, struct mjolchar *dest)
+mjoltrap(struct mjolobj *trap, struct mjolchr *dest)
 {
     long   retval = 0;
     long (*func)(void *, void *);

@@ -13,7 +13,8 @@
 #define USE_XV        0
 #define USE_COMPOSITE 0
 #define USE_RENDER    0
-#define USE_MMX       1
+//#define USE_SHM       1
+#define USE_MMX       0
 #define SSE           0
 #if (SSE)
 #include <xmmintrin.h>
@@ -30,8 +31,6 @@ struct _v128 {
     uint16_t w8;
 };
 #endif
-
-uint8_t fadetab[256][256];
 
 #define TEST_FADE_IN     1
 #define TEST_ALPHA_BLEND 0
@@ -251,9 +250,8 @@ gfxscale2x(argb32_t *src, argb32_t *dest, unsigned long srcw, unsigned long srch
     val8 = srcptr[srcw];
     val9 = srcptr[srcw + 1];
     srcptr++;
-//    destptr = dest + 2;
     destptr = dest + 2;
-    for (srcx = 0 ; srcx < srcw - 1; srcx++) {
+    for (srcx = 1 ; srcx < srcw ; srcx++) {
         destptr[0] = (val4 == val2 && val2 != val6 && val4 != val8)
             ? val4
             : val5;
@@ -288,7 +286,7 @@ gfxscale2x(argb32_t *src, argb32_t *dest, unsigned long srcw, unsigned long srch
         val8 = srcptr[srcw];
         val9 = srcptr[srcw + 1];
         srcptr++;
-        for (srcx = 1 ; srcx < srcw - 1; srcx++) {
+        for (srcx = 1 ; srcx < srcw ; srcx++) {
             destptr[0] = (val4 == val2 && val2 != val6 && val4 != val8)
                 ? val4
                 : val5;
@@ -326,7 +324,7 @@ gfxscale2x(argb32_t *src, argb32_t *dest, unsigned long srcw, unsigned long srch
     val8 = 0;
     val9 = 0;
     srcptr++;
-    for (srcx = 1 ; srcx < srcw - 1; srcx++) {
+    for (srcx = 1 ; srcx < srcw ; srcx++) {
         destptr[0] = (val4 == val2 && val2 != val6 && val4 != val8)
             ? val4
             : val5;
@@ -353,7 +351,7 @@ gfxscale2x(argb32_t *src, argb32_t *dest, unsigned long srcw, unsigned long srch
 }
 
 void
-gfxxfade3(struct gfximg *src1, struct gfximg *src2, struct gfximg *dest, argb32_t val)
+gfxmorph1(struct gfximg *src1, struct gfximg *src2, struct gfximg *dest, argb32_t val)
 {
     argb32_t *sptr1;
     argb32_t *sptr2;
@@ -374,7 +372,7 @@ gfxxfade3(struct gfximg *src1, struct gfximg *src2, struct gfximg *dest, argb32_
 }
 
 void
-gfxxfade4(struct gfximg *src1, struct gfximg *src2, struct gfximg *dest, argb32_t val)
+gfxmorph2(struct gfximg *src1, struct gfximg *src2, struct gfximg *dest, argb32_t val)
 {
     argb32_t *sptr1;
     argb32_t *sptr2;
@@ -425,7 +423,6 @@ init(void)
         p128->w8 = (uint16_t)ul;
     }
 #endif
-    gfxinitfade1(fadetab);
 }
 
 void
@@ -632,16 +629,16 @@ initimgs(void)
     loadimg(&_attr, &_smallimg, "testhalf.jpg");
     _smallimg.w = TEST_WIDTH >> 1;
     _smallimg.h = TEST_HEIGHT >> 1;
-    initimg(&_attr, &_smallimg, 0);
     getimg(_smallimg.pmap, &_smallimg);
+    initimg(&_attr, &_smallimg, 0);
     loadimg(&_attr, &_plasmaimg, "test.jpg");
-    initimg(&_attr, &_plasmaimg, 0);
     getimg(_plasmaimg.pmap, &_plasmaimg);
+    initimg(&_attr, &_plasmaimg, 0);
     imlib_free_pixmap_and_mask(_plasmaimg.pmap);
     _plasmaimg.pmap = _plasmaimg.mask = 0;
     loadimg(&_attr, &_swordimg, "sword.jpg");
-    initimg(&_attr, &_swordimg, 0);
     getimg(_swordimg.pmap, &_swordimg);
+    initimg(&_attr, &_swordimg, 0);
     imlib_free_pixmap_and_mask(_swordimg.pmap);
     _swordimg.pmap = _swordimg.mask = 0;
     _blackimg.w = _winimg.w = TEST_WIDTH;
@@ -649,8 +646,8 @@ initimgs(void)
     initimg(&_attr, &_blackimg, 1);
     _scaleimg.w = TEST_WIDTH;
     _scaleimg.h = TEST_HEIGHT;
-    initimg(&_attr, &_scaleimg, 1);
     getimg(_blackimg.pmap, &_scaleimg);
+    initimg(&_attr, &_scaleimg, 1);
     XSetForeground(_attr.disp, _attr.gc, BlackPixel(_attr.disp, DefaultScreen(_attr.disp)));
     XFillRectangle(_attr.disp, _blackimg.pmap, _attr.gc, 0, 0, _blackimg.w, _blackimg.h);
     initimg(&_attr, &_winimg, 0);
@@ -674,7 +671,7 @@ initwin(void)
     _attr.pict = XRenderCreatePicture(_attr.disp, _attr.win, _attr.rendfmt,
                                       CPSubwindowMode, &pattr);
 #endif
-    XSelectInput(_attr.disp, _attr.win, ExposureMask | KeyPressMask);
+    XSelectInput(_attr.disp, _attr.win, ExposureMask);
     XMapWindow(_attr.disp, _attr.win);
     while (!exposed) {
         XEvent event;
@@ -815,15 +812,12 @@ testfadeint(unsigned long usecs)
         }
         if (val != lastval) {
             for (ul = 0 ; ul < TEST_WIDTH * TEST_HEIGHT ; ul++) {
-                gfxfadein2(*ptr2, *ptr1, val, fadetab);
-#if 0
 #if (USE_MMX)
                 gfxalphablendloq_asm_mmx(*ptr2, *ptr1, val);
 //                *ptr1 = tmp;
 #else
 //                gfxalphablendhiq_const(*ptr2, *ptr1, val);
                 gfxalphablendhiq(*ptr2, *ptr1, val);
-#endif
 #endif
                 ptr2++;
                 ptr1++;
@@ -882,12 +876,10 @@ testfadeoutt(unsigned long usecs)
             diff = usecs - tvcmp(&cur, &end);
             diff = min(diff, usecs);
             fmul = (float)diff / usecs;
-            val = (argb32_t)(0xff * fmul);
+            val = 0xff - (argb32_t)(0xff * fmul);
         }
         if (val != lastval) {
             for (ul = 0 ; ul < TEST_WIDTH * TEST_HEIGHT ; ul++) {
-                gfxfadeout2(*ptr2, *ptr1, val, fadetab);
-#if 0
 #if (USE_MMX)
 //                gfxalphablendfast_const_mmx(*ptr2, *ptr1, val);
                 gfxalphablendloq_asm_mmx(*ptr2, *ptr1, val);
@@ -895,7 +887,6 @@ testfadeoutt(unsigned long usecs)
 #else
 //                gfxalphablendhiq_const(*ptr2, *ptr1, val);
                 gfxalphablendhiq(*ptr2, *ptr1, val);
-#endif
 #endif
                 ptr2++;
                 ptr1++;
@@ -911,8 +902,6 @@ testfadeoutt(unsigned long usecs)
                 TEST_WIDTH, TEST_HEIGHT,
                 256, profclkdiff(fade));
     }
-    putimg(&_blackimg, _attr.win);
-    XFlush(_attr.disp);
     profstopclk(clock);
     fprintf(stderr,
             "fade: %dx%d, %d steps: %lu microsecs\n",
@@ -921,7 +910,7 @@ testfadeoutt(unsigned long usecs)
 }
 
 void
-testxfade1t(unsigned long usecs)
+testmorph1t(unsigned long usecs)
 {
     argb32_t      *ptr1;
     argb32_t      *ptr2;
@@ -974,7 +963,7 @@ testxfade1t(unsigned long usecs)
             fprintf(stderr, "val: %x\n", val);
             _mm_empty();
             for (ul = 0 ; ul < TEST_WIDTH * TEST_HEIGHT ; ul++) {
-                gfxxfade2_mmx(*ptr2, *ptr3, *ptr1, val);
+                gfxxfade1_mmx(*ptr2, *ptr3, *ptr1, val);
                 ptr2++;
                 ptr3++;
                 ptr1++;
@@ -1059,12 +1048,12 @@ testscale(void)
     profstartclk(clock);
 //    gfxscaleimg(&_smallimg, &_scaleimg, 0, 0, 0, 0, TEST_WIDTH, TEST_HEIGHT);
 #if 0
-    scaleantialias(_smallimg.xim->data, _scaleimg.xim->data,
+    scaleantialias(_srcimg->xim.data, _scaleimg->xim.data,
                    TEST_WIDTH / 2, TEST_HEIGHT / 2,
                    TEST_WIDTH, TEST_HEIGHT);
 #endif
-    gfxscaleimg2x(&_smallimg, &_scaleimg);
-//    gfxscale2x(_smallimg.xim->data, _scaleimg.xim->data, TEST_WIDTH / 2, TEST_HEIGHT / 2);
+//    scale2x(_smallimg.data, _scaleimg.data, TEST_WIDTH / 2, TEST_HEIGHT / 2);
+    gfxscale2x(_smallimg.data, _scaleimg.data, TEST_WIDTH / 2, TEST_HEIGHT / 2);
     putimg(&_scaleimg, _attr.win);
 //    putimg(&_scaleimg, _scaleimg.pmap);
     XFlush(_attr.disp);
@@ -1074,13 +1063,13 @@ testscale(void)
 }
 
 void
-testxfade1(void)
+testmorph1(void)
 {
     argb32_t val;
 
     for (val = 0 ; val < 256 ; val += 5) {
         fprintf(stderr, "%d\n", val);
-        gfxxfade3(&_plasmaimg, &_swordimg, &_winimg, val);
+        gfxmorph1(&_plasmaimg, &_swordimg, &_winimg, val);
         putimg(&_winimg, _attr.win);
         XFlush(_attr.disp);
     }
@@ -1117,11 +1106,11 @@ main(int argc,
     initimgs();
     initwin();
 
-    testscale();
-#if 0
-    testxfade1t(2500000);
-    testfadeoutt(500000);
     testfadeint(5000000);
+#if 0
+    testmorph1t(5000000);
+    testscale();
+    testfadeout();
 #endif
 //    testfadein_mmx();
 
@@ -1132,20 +1121,20 @@ main(int argc,
     dtimg(&_attr, &_winimg, 0);
 #endif
 
+#if 0
     while (1) {
         XEvent ev;
 
         XNextEvent(_attr.disp, &ev);
         if (ev.type == Expose) {
-//            XSetWindowBackgroundPixmap(_attr.disp, _attr.win, _scaleimg.pmap);
+            XSetWindowBackgroundPixmap(_attr.disp, _attr.win, _scaleimg.pmap);
             XClearWindow(_attr.disp, _attr.win);
-        } else if (ev.type == KeyPress) {
-
-            exit(0);
         }
     }
+#endif
 
-    /* NOTREACHED */
+    sleep(4);
+
     exit(0);
 }
 

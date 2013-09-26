@@ -21,12 +21,12 @@
 /* get n bits starting from index j */
 #define getbits(i, j, n)    (lobits((i) >> (j), (n)))
 /* set n bits starting from index j to value b */
-#define setbits(i, j, n, b) ((i) |= (((b) << (j)) & ~(((1U << (n)) << (j)) - 0x01)))
-#define bitset(p, b)        (((uint8_t *)(p))[(b) >> 3] & (1U << ((b) & 0x07)))
+#define setbits(i, j, n, b) ((i) |= (((b) << (j)) & ~(((1UL << (n)) << (j)) - 0x01)))
+#define bitset(p, b)        (((uint8_t *)(p))[(b) >> 3] & (1UL << ((b) & 0x07)))
 /* set bit # b in *p */
-#define setbit(p, b)        (((uint8_t *)(p))[(b) >> 3] |= (1U << ((b) & 0x07)))
+#define setbit(p, b)        (((uint8_t *)(p))[(b) >> 3] |= (1UL << ((b) & 0x07)))
 /* clear bit # b in *p */
-#define clrbit(p, b)        (((uint8_t *)(p))[(b) >> 3] &= ~(1U << ((b) & 0x07)))
+#define clrbit(p, b)        (((uint8_t *)(p))[(b) >> 3] &= ~(1UL << ((b) & 0x07)))
 /* m - mask of bits to be taken from b. */
 #define mergebits(a, b, m)  ((a) ^ (((a) ^ (b)) & (m)))
 /* m - mask of bits to be copied from a. 1 -> copy, 0 -> leave alone. */

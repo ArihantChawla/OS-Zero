@@ -211,7 +211,6 @@ mjolconnrooms(struct mjolgame *game,
             /* adjacent, draw straight horizontal line */
             x = src->x;
             y = dest->y + dest->height - max(mjolrand() % val, 1);
-//            y = src->y + max(mjolrand() % val, 1);
             objtab[y][x] = mjolmkdoor();
         } else {
             /* draw vertical line */

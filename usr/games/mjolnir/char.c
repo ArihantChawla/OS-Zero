@@ -7,16 +7,16 @@
 #include <mjolnir/mjol.h>
 #include <mjolnir/scr.h>
 
-extern long mjolhit(struct mjolchar *src, struct mjolchar *dest);
-extern long mjoltrap(struct mjolobj *trap, struct mjolchar *dest);
+extern long mjolhit(struct mjolchr *src, struct mjolchr *dest);
+extern long mjoltrap(struct mjolobj *trap, struct mjolchr *dest);
 
 mjolcmdfunc *mjolcmdfunctab[256][256];
 
-struct mjolchar *mjolplayer;
-struct mjolchar *mjolchaseq;
+struct mjolchr *mjolplayer;
+struct mjolchr *mjolchaseq;
 
 void
-mjolinitchar(struct mjolchar *data, long lvl)
+mjolinitchr(struct mjolchr *data, long lvl)
 {
     data->hp = 16 + ((lvl > 0)
                      ? (mjolrand() % lvl)
@@ -37,10 +37,10 @@ mjolinitchar(struct mjolchar *data, long lvl)
     return;
 }
 
-struct mjolchar *
-mjolmkchar(long type)
+struct mjolchr *
+mjolmkchr(long type)
 {
-    struct mjolchar *data = calloc(1, sizeof(struct mjolchar));
+    struct mjolchr *data = calloc(1, sizeof(struct mjolchr));
 
     if (!data) {
         fprintf(stderr, "memory allocation failure\n");
@@ -52,12 +52,12 @@ mjolmkchar(long type)
     return data;
 }
 
-struct mjolchar *
+struct mjolchr *
 mjolmkplayer(void)
 {
-    struct mjolchar *player = mjolmkchar(MJOL_CHAR_PLAYER);
+    struct mjolchr *player = mjolmkchr(MJOL_CHAR_PLAYER);
 
-    mjolinitchar(player, 1);
+    mjolinitchr(player, 1);
     mjolplayer = player;
 
     return player;
@@ -65,20 +65,20 @@ mjolmkplayer(void)
 
 /* determine how many continuous turns a character has */
 long
-mjolhasnturn(struct mjolchar *chardata)
+mjolhasnturn(struct mjolchr *chrdata)
 {
     long          retval = 0;
-    long          speed = chardata->speed;
+    long          speed = chrdata->speed;
     unsigned long turn;
 
     if (speed < 0) {
-        turn = chardata->turn;
+        turn = chrdata->turn;
         /* only move every abs(speed) turns */
-        if (chardata->nturn == turn) {
+        if (chrdata->nturn == turn) {
             /* allow movement */
             retval = 1;
             turn -= speed;
-            chardata->turn = turn;
+            chrdata->turn = turn;
         }
     } else {
         /* return speed */
@@ -89,7 +89,7 @@ mjolhasnturn(struct mjolchar *chardata)
 }
 
 long
-mjoldoturn(struct mjolgame *game, struct mjolchar *data)
+mjoldoturn(struct mjolgame *game, struct mjolchr *data)
 {
     long          retval = 0;
     long          n = mjolhasnturn(data);
@@ -134,36 +134,36 @@ mjoldoturn(struct mjolgame *game, struct mjolchar *data)
 }
 
 void
-mjoladditem(struct mjolchar *dest, struct mjolobj *item)
+mjoladditem(struct mjolchr *dest, struct mjolobj *item)
 {
     ;
 }
 
 void
-mjoldie(struct mjolchar *dest)
+mjoldie(struct mjolchr *dest)
 {
     ;
 }
 
-typedef long hitfunc(struct mjolchar *, struct mjolchar *);
+typedef long hitfunc(struct mjolchr *, struct mjolchr *);
 long
-mjolfindmove(struct mjolchar *src, struct mjolchar *dest,
+mjolfindmove(struct mjolchr *src, struct mjolchr *dest,
              hitfunc *func, long mindist)
 {
-    long               retval = 0;
-    struct mjolchar ***chartab = mjolgame->chartab[mjolgame->lvl];
-    struct mjolobj  ***objtab = mjolgame->objtab[mjolgame->lvl];
-    struct mjolchar   *chr;
-    struct mjolobj    *obj;
-    struct mjolobj    *item;
-    long               destx = dest->data.x;
-    long               desty = dest->data.y;
-    long               srcx = src->data.x;
-    long               srcy = src->data.y;
-    long               dx = destx - srcx;
-    long               dy = desty - srcy;
-    long               type;
-    long               val;
+    long              retval = 0;
+    struct mjolchr ***chrtab = mjolgame->chrtab[mjolgame->lvl];
+    struct mjolobj ***objtab = mjolgame->objtab[mjolgame->lvl];
+    struct mjolchr  *chr;
+    struct mjolobj   *obj;
+    struct mjolobj   *item;
+    long              destx = dest->data.x;
+    long              desty = dest->data.y;
+    long              srcx = src->data.x;
+    long              srcy = src->data.y;
+    long              dx = destx - srcx;
+    long              dy = desty - srcy;
+    long              type;
+    long              val;
 
     if (srcx == destx && srcy == desty) {
 
@@ -192,20 +192,20 @@ mjolfindmove(struct mjolchar *src, struct mjolchar *dest,
                 /* dest is below src */
                 dy = 1;
             }
-            chr = chartab[srcy + dy][srcx];
+            chr = chrtab[srcy + dy][srcx];
             type = chr->data.type;
             if (mjolcanmoveto(type)) {
                 /* src can moves horizontally and vertically */
                 srcy += dy;
             } else {
-                chr = chartab[srcy][srcx];
+                chr = chrtab[srcy][srcx];
                 type = chr->data.type;
                 if (mjolcanmoveto(type)) {
                     /* src moves horizontally but not vertically */
                     ;
                 } else {
                     srcx -= dx;
-                    chr = chartab[srcy + dy][srcx];
+                    chr = chrtab[srcy + dy][srcx];
                     type = chr->data.type;
                     if (mjolcanmoveto(type)) {
                         /* src moves vertically but not horizontally */
@@ -221,7 +221,7 @@ mjolfindmove(struct mjolchar *src, struct mjolchar *dest,
                 dy = 1;
             }
             srcy += dy;
-            chr = chartab[srcy][srcx];
+            chr = chrtab[srcy][srcx];
             type = chr->data.type;
             if (mjolcanmoveto(type)) {
                 /* src moves vertically */
@@ -236,7 +236,7 @@ mjolfindmove(struct mjolchar *src, struct mjolchar *dest,
                     dx = 1;
                 }
                 srcx += dx;
-                chr = chartab[srcy][srcx];
+                chr = chrtab[srcy][srcx];
                 type = chr->data.type;
                 if (mjolcanmoveto(type)) {
                     /* move into chosen direction */
@@ -245,7 +245,7 @@ mjolfindmove(struct mjolchar *src, struct mjolchar *dest,
                     /* change horizontal direction */
                     dx = -dx;
                     srcx += dx << 1;
-                    chr = chartab[srcy][srcx];
+                    chr = chrtab[srcy][srcx];
                     type = chr->data.type;
                     if (mjolcanmoveto(type)) {
                         /* valid move */
@@ -255,7 +255,7 @@ mjolfindmove(struct mjolchar *src, struct mjolchar *dest,
                         srcx -= dx;
                         dy = -dy;
                         srcy += dy << 1;
-                        chr = chartab[srcy][srcx];
+                        chr = chrtab[srcy][srcx];
                         type = chr->data.type;
                         if (mjolcanmoveto(type)) {
                             /* valid move */
@@ -263,14 +263,14 @@ mjolfindmove(struct mjolchar *src, struct mjolchar *dest,
                         } else {
                             /* try vertical and horizontal */
                             srcx -= dx;
-                            chr = chartab[srcy][srcx];
+                            chr = chrtab[srcy][srcx];
                             type = chr->data.type;
                             if (mjolcanmoveto(type)) {
                                 /* valid move */
                                 ;
                             } else {
                                 srcx += 2 * dx;
-                                chr = chartab[srcy][srcx];
+                                chr = chrtab[srcy][srcx];
                                 type = chr->data.type;
                                 if (mjolcanmoveto(type)) {
                                     /* valid move */
@@ -286,7 +286,7 @@ mjolfindmove(struct mjolchar *src, struct mjolchar *dest,
             }
         }
         if (!mindist && srcx == destx && srcy == desty
-            && !(src->data.flg & MJOL_CHAR_NO_PICK)) {
+            && !(src->data.flg & MJOL_CHR_NO_PICK)) {
             item = objtab[destx][desty];
             while (item) {
                 type = item->data.type;
@@ -299,7 +299,7 @@ mjolfindmove(struct mjolchar *src, struct mjolchar *dest,
                     if (obj) {
                         obj->data.next = item->data.next;
                     } else {
-                        chartab[destx][desty] = item->data.next;
+                        chrtab[destx][desty] = item->data.next;
                     }
                     mjoladditem(dest, item);
                 }
@@ -332,14 +332,14 @@ mjolfindmove(struct mjolchar *src, struct mjolchar *dest,
         }
         src->data.x = srcx;
         src->data.y = srcy;
-        chartab[srcy][srcx] = src;
+        chrtab[srcy][srcx] = src;
     }
 
     return retval;
 }
 
 long
-mjolchase(struct mjolchar *src, struct mjolchar *dest)
+mjolchase(struct mjolchr *src, struct mjolchr *dest)
 {
     long retval = mjolfindmove(src, dest, mjolhit, 1);
 
@@ -349,8 +349,8 @@ mjolchase(struct mjolchar *src, struct mjolchar *dest)
 long
 mjolchaseall(struct mjolgame *game)
 {
-    long             retval = 0;
-    struct mjolchar *src = mjolchaseq;
+    long            retval = 0;
+    struct mjolchr *src = mjolchaseq;
 
     while (src) {
         retval += mjolchase(src, mjolplayer);

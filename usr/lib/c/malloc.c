@@ -175,7 +175,8 @@ typedef pthread_mutex_t LK_T;
 #define MAPMIDLOG2    26
 #define MAPBIGLOG2    28
 #else
-#define SLABLOG2      20
+//#define SLABLOG2      20
+#define SLABLOG2      21
 #define MAPMIDLOG2    24
 #define MAPBIGLOG2    26
 #endif

@@ -9,55 +9,55 @@ uint8_t      mjolcmdhasdirmap[32];
 uint8_t      mjolcmdhasargmap[32];
 
 long
-mjolidentify(struct mjolchar *src, struct mjolobj *dest)
+mjolidentify(struct mjolchr *src, struct mjolobj *dest)
 {
     return 0;
 }
 
 long
-mjolmoveleft(struct mjolchar *src, struct mjolobj *dest)
+mjolmoveleft(struct mjolchr *src, struct mjolobj *dest)
 {
     return 0;
 }
 
 long
-mjolmovedown(struct mjolchar *src, struct mjolobj *dest)
+mjolmovedown(struct mjolchr *src, struct mjolobj *dest)
 {
     return 0;
 }
 
 long
-mjolmoveup(struct mjolchar *src, struct mjolobj *dest)
+mjolmoveup(struct mjolchr *src, struct mjolobj *dest)
 {
     return 0;
 }
 
 long
-mjolmoveright(struct mjolchar *src, struct mjolobj *dest)
+mjolmoveright(struct mjolchr *src, struct mjolobj *dest)
 {
     return 0;
 }
 
 long
-mjolmoveupleft(struct mjolchar *src, struct mjolobj *dest)
+mjolmoveupleft(struct mjolchr *src, struct mjolobj *dest)
 {
     return 0;
 }
 
 long
-mjolmoveupright(struct mjolchar *src, struct mjolobj *dest)
+mjolmoveupright(struct mjolchr *src, struct mjolobj *dest)
 {
     return 0;
 }
 
 long
-mjolmovedownleft(struct mjolchar *src, struct mjolobj *dest)
+mjolmovedownleft(struct mjolchr *src, struct mjolobj *dest)
 {
     return 0;
 }
 
 long
-mjolmovedownright(struct mjolchar *src, struct mjolobj *dest)
+mjolmovedownright(struct mjolchr *src, struct mjolobj *dest)
 {
     return 0;
 }

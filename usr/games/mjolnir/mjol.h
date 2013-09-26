@@ -14,7 +14,7 @@
 #endif
 
 extern struct mjolgame *mjolgame;
-extern struct mjolchar *chaseq;
+extern struct mjolchr  *chaseq;
 
 #define mjolhasdir(ch)  bitset(mjolcmdhasdirmap, ch)
 #define mjolhasarg(ch)  bitset(mjolcmdhasargmap, ch)
@@ -168,20 +168,20 @@ extern uint8_t          mjolcanwieldmap[32];
 #define MJOL_SCR_TTY              2
 #define MJOL_SCR_X11              3
 struct mjolgame {
-    struct dnggame       data;
-    struct mjolchar     *player;
-    char                *nick;          // names of players
-    long                 scrtype;       // type of screen to use
-    struct mjolscr      *scr;           // screen interface
-    struct mjolchar ****chartab;        // in-dungeon live characters
-    long                 nlvl;          // # of levels
-    long                 lvl;           // current level
+    struct dnggame      data;
+    struct mjolchr     *player;
+    char               *nick;           // names of players
+    long                scrtype;        // type of screen to use
+    struct mjolscr     *scr;            // screen interface
+    struct mjolchr  ****chrtab;         // in-dungeon live characters
+    long                nlvl;           // # of levels
+    long                lvl;            // current level
     struct mjolobj  ****objtab;         // level data
-    long                *nroomtab;      // per-level # of rooms
+    long               *nroomtab;       // per-level # of rooms
     struct mjolroom  ***lvltab;         // level data
-    long                 width;         // width of level in cells
-    long                 height;        // height of level
-    long                 nobj;          // # of objects
+    long                width;          // width of level in cells
+    long                height;         // height of level
+    long                nobj;           // # of objects
 };
 
 struct mjolobjfunc {
@@ -197,16 +197,16 @@ typedef void mjolfunc_t(struct dnggame *game,
 #endif
 
 /* character flags */
-#define MJOL_CHAR_NO_PICK   0x00000001U // do not pick object up automatically
-#define MJOL_CHAR_BLIND     0x00000020U // character is blind
-#define MJOL_CHAR_LEVITATES 0x00000040U // character is levitating
+#define MJOL_CHR_NO_PICK   0x00000001U // do not pick object up automatically
+#define MJOL_CHR_BLIND     0x00000020U // character is blind
+#define MJOL_CHR_LEVITATES 0x00000040U // character is levitating
 /* speed values */
 
-#define MJOL_CHAR_FAST      2           // character is moving faster
-#define MJOL_CHAR_NORMAL    1           // normal speed
-#define MJOL_CHAR_FROZEN    0           // character can't move
-#define MJOL_CHAR_SLOW      (-1)        // slow speed
-struct mjolchar {
+#define MJOL_CHR_FAST      2           // character is moving faster
+#define MJOL_CHR_NORMAL    1           // normal speed
+#define MJOL_CHR_FROZEN    0           // character can't move
+#define MJOL_CHR_SLOW      (-1)        // slow speed
+struct mjolchr {
     struct dngobj      data;            // common character data
     struct mjolobjfunc func;
     /* Rogue [visible] attributes */
@@ -270,9 +270,9 @@ mjolprintroom(struct mjolroom *room)
 #endif
 
 static __inline__ void
-mjolpushchase(struct mjolchar *data)
+mjolpushchase(struct mjolchr *data)
 {
-    struct mjolchar *next;
+    struct mjolchr *next;
 
     data->data.prev = NULL;
     next = chaseq;
@@ -285,11 +285,11 @@ mjolpushchase(struct mjolchar *data)
     return;
 }
 
-static __inline__ struct mjolchar *
+static __inline__ struct mjolchr *
 mjolpopchase(void)
 {
-    struct mjolchar *next = chaseq->data.next;
-    struct mjolchar *data = chaseq;
+    struct mjolchr *next = chaseq->data.next;
+    struct mjolchr *data = chaseq;
 
     if (data) {
         if (next) {
@@ -302,10 +302,10 @@ mjolpopchase(void)
 }
 
 static __inline__ void
-mjolrmchase(struct mjolchar *data)
+mjolrmchase(struct mjolchr *data)
 {
-    struct mjolchar *prev = data->data.prev;
-    struct mjolchar *next = data->data.next;
+    struct mjolchr *prev = data->data.prev;
+    struct mjolchr *next = data->data.next;
 
     if (next) {
         next->data.prev = prev;
@@ -322,7 +322,7 @@ mjolrmchase(struct mjolchar *data)
     return;
 }
 
-typedef long mjolcmdfunc(struct mjolchar *src, struct mjolobj *dest);
+typedef long mjolcmdfunc(struct mjolchr *src, struct mjolobj *dest);
 
 #endif /* __MJOLNIR_MJOL_H__ */
 
