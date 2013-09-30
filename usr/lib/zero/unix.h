@@ -76,5 +76,7 @@
 
 #define growheap(ofs) sbrk(ofs)
 
+void * readfile(char *filename, size_t *sizeret);
+
 #endif /* __ZERO_UNIX_H__ */
 
