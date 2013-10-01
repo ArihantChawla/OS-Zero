@@ -21,3 +21,4 @@ richard boulanger, victor lazzarini and max mathews
 	       - the audio programming book
 john h. crawford & patrick p. kelsinger
      	       - programming the 80386
+john lions     - lions' commentary on unix 6th edition with source code
