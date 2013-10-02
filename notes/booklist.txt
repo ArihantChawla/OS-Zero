@@ -1,24 +1,27 @@
-This file currently lists some books I own, many of which I have bought
-recently. Have fun & enjoy reading. :) I will add items to the list as I come by
-them in my collection.
+This file currently lists some books I own or have owned, many of which I have
+bought recently. Have fun & enjoy reading. :) I will add items to the list as I
+come by them in my collection. Unfortunately, I lost my copy of Michael Abrash's
+Graphics Programming Black Book during a move... :(
 
-rick booth     - inner loops
-randall hyde   - write great code volume one - understanding the machine
-andre lamothe  - black art of 3d game programming
-clive maxfied  - the definitive guide to how computers do math
-maurice bach   - the design of the unix operating system
-marshall kirk mckusick & george v. neville-neil
-	       - the design and implementation of the freebsd operating system
-steve pate     - unix filesystems: evolution, design, and implementation
 michael abrash - graphics programming black book
-richard w stevens
-	       - advanced programming in the unix environment
-brian kernighan & dennis ritchie
-      	       - the c programming language, second edition
-daniel mitchell
-               - basicsynth
+maurice bach   - the design of the unix operating system
+rick booth     - inner loops
 richard boulanger, victor lazzarini and max mathews
 	       - the audio programming book
 john h. crawford & patrick p. kelsinger
      	       - programming the 80386
+randall hyde   - write great code volume one - understanding the machine
+brian kernighan & dennis ritchie
+      	       - the c programming language, second edition
+andre lamothe  - black art of 3d game programming
+john r levine  - linkers and loaders
 john lions     - lions' commentary on unix 6th edition with source code
+clive maxfield - the definitive guide to how computers do math
+marshall kirk mckusick & george v. neville-neil
+	       - the design and implementation of the freebsd operating system
+daniel mitchell
+               - basicsynth
+steve pate     - unix filesystems: evolution, design, and implementation
+richard w stevens
+	       - advanced programming in the unix environment
+
