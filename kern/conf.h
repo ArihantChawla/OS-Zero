@@ -1,6 +1,9 @@
 #ifndef __KERN_CONF_H__
 #define __KERN_CONF_H__
 
+#define BUFSIZE     (1UL << BUFSIZELOG2)
+#define BUFSIZELOG2 12                          // TODO: make this per-device
+
 #define SMP       1     // enable multiprocessor support; currently broken
 #define HZ        250
 #define ZEROSCHED 1     // default scheduler

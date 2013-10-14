@@ -24,6 +24,8 @@
 #include <kern/unit/ia32/mp.h>
 #endif
 
+extern void * bufinit(void);
+
 #if (HPET)
 extern void hpetinit(void);
 #endif
@@ -58,6 +60,15 @@ kmain(struct mboothdr *hdr, unsigned long pmemsz)
 //    meminit(vmphysadr(&_ebssvirt), max(pmemsz, 3UL * 1024 * 1024 * 1024));
     kmemset(&kerniomap, 0xff, sizeof(kerniomap));
 //    vgainitcon(80, 25);
+#if 0
+    if (!bufinit()) {
+        kprintf("failed to allocate buffer cache\n");
+
+        while (1) {
+            ;
+        }
+    }
+#endif
 #if (SMP)
     mpinit();
     if (mpmultiproc) {

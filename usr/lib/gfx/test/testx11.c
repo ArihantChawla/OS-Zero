@@ -13,8 +13,8 @@
 #define USE_XV        0
 #define USE_COMPOSITE 0
 #define USE_RENDER    0
-//#define USE_SHM       1
-#define USE_MMX       0
+#define USE_SHM       0
+#define USE_MMX       1
 #define SSE           0
 #if (SSE)
 #include <xmmintrin.h>
@@ -351,7 +351,7 @@ gfxscale2x(argb32_t *src, argb32_t *dest, unsigned long srcw, unsigned long srch
 }
 
 void
-gfxmorph1(struct gfximg *src1, struct gfximg *src2, struct gfximg *dest, argb32_t val)
+gfxxfade1(struct gfximg *src1, struct gfximg *src2, struct gfximg *dest, argb32_t val)
 {
     argb32_t *sptr1;
     argb32_t *sptr2;
@@ -372,7 +372,7 @@ gfxmorph1(struct gfximg *src1, struct gfximg *src2, struct gfximg *dest, argb32_
 }
 
 void
-gfxmorph2(struct gfximg *src1, struct gfximg *src2, struct gfximg *dest, argb32_t val)
+test_gfxxfade2(struct gfximg *src1, struct gfximg *src2, struct gfximg *dest, argb32_t val)
 {
     argb32_t *sptr1;
     argb32_t *sptr2;
@@ -910,7 +910,7 @@ testfadeoutt(unsigned long usecs)
 }
 
 void
-testmorph1t(unsigned long usecs)
+testxfade1t(unsigned long usecs)
 {
     argb32_t      *ptr1;
     argb32_t      *ptr2;
@@ -1033,8 +1033,8 @@ testdith15(void)
     rgb555_t *ptr2;
     unsigned long ul;
     
-    ptr1 = _swordimg.xim->data;
-    ptr2 = _winimg.xim->data;
+    ptr1 = (argb32_t *)_swordimg.xim->data;
+    ptr2 = (rgb555_t *)_winimg.xim->data;
     for (ul = 0 ; ul < TEST_WIDTH * TEST_HEIGHT ; ul++) {
         ;
     }
@@ -1063,13 +1063,13 @@ testscale(void)
 }
 
 void
-testmorph1(void)
+testxfade1(void)
 {
     argb32_t val;
 
     for (val = 0 ; val < 256 ; val += 5) {
         fprintf(stderr, "%d\n", val);
-        gfxmorph1(&_plasmaimg, &_swordimg, &_winimg, val);
+        gfxxfade1(&_plasmaimg, &_swordimg, &_winimg, val);
         putimg(&_winimg, _attr.win);
         XFlush(_attr.disp);
     }
@@ -1108,8 +1108,7 @@ main(int argc,
 
     testfadeint(5000000);
 #if 0
-    testmorph1t(5000000);
-    testscale();
+    testxfade1t(5000000);
     testfadeout();
 #endif
 //    testfadein_mmx();

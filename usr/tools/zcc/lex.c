@@ -29,7 +29,7 @@ extern struct hashstr preprochash[];
 extern struct hashstr atrhash[];
 #endif
 
-static int  zccreadfile(char *name, int curfile);
+static int  zccreadfile(char *name, int curfile, int doinclude);
 static void zppqueuetoken(struct zpptoken *token, int curfile);
 #if (NEWHASH)
 extern void zccaddid(struct hashstr **tab, char *str, long val);
@@ -794,7 +794,7 @@ zccgetinclude(char *str, char **retstr, int curfile)
             }
             if (*str == '"') {
                 *ptr = '\0';
-                ret = zccreadfile(name, curfile);
+                ret = zccreadfile(name, curfile, 1);
             } else {
                 fprintf(stderr, "invalid #include directive %s\n",
                         name);
@@ -812,7 +812,7 @@ zccgetinclude(char *str, char **retstr, int curfile)
                 strcat(name, strtok(path, ":"));
                 strcat(name, ptr);
                 while (ret == ZCC_FILE_ERROR) {
-                    ret = zccreadfile(name, curfile);
+                    ret = zccreadfile(name, curfile, 1);
                     name[0] = '\0';
                     cp = strtok(NULL, ":");
                     if (cp) {
@@ -868,7 +868,7 @@ zppqueuetoken(struct zpptoken *token, int curfile)
 }
 
 static int
-zccreadfile(char *name, int curfile)
+zccreadfile(char *name, int curfile, int doinclude)
 {
     long              buflen = NLINEBUF;
     FILE             *fp = fopen(name, "r");
@@ -991,7 +991,7 @@ zccreadfile(char *name, int curfile)
                 }
 //                fprintf(stderr, "BUF: %s\n", str);
             }
-        } else {
+        } else if (doinclude) {
             tmp = zccgetinclude(str, &str, curfile);
             if (tmp != ZCC_FILE_ERROR) {
                 curfile = tmp;
@@ -1040,6 +1040,14 @@ zccreadfile(char *name, int curfile)
             } else {
                 done = 1;
             }
+        } else if (!strncmp((char *)str, "#include", 8)) {
+            tok = malloc(sizeof(struct zpptoken));
+            tok->type = ZPP_INCLUDE_TOKEN;
+            tok->parm = ZCC_NONE;
+            tok->str = strndup(str, 8);
+            tok->data = 0;
+        } else if (!*str) {
+            done = 1;
         }
     }
     fclose(fp);
@@ -1061,7 +1069,7 @@ zpplex(int argc,
         exit(1);
     }
     for (l = arg; l < argc ; l++) {
-        zcccurfile = zccreadfile(argv[l], zcccurfile);
+        zcccurfile = zccreadfile(argv[l], zcccurfile, 1);
         if (zcccurfile == ZCC_FILE_ERROR) {
             
             exit(1);

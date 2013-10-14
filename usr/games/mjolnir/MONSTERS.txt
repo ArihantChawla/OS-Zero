@@ -1,8 +1,8 @@
 a - Ant
 -------
 
-Ants are an easy opponent to defeat, expect perhaps when the appear en masse. Of
-ants, the strongest are soldier ants.
+Ants are an easy opponent to defeat, expect perhaps when they appear en masse.
+Of ants, the strongest are soldier ants.
 
 A - Alien
 ---------
@@ -13,15 +13,14 @@ powers, and as such, can be tricky opponents to beat in combat.
 b - Bee
 -------
 
-Bees are relatively easy opponnents, for they can only sting once. Bees protect
+Bees are relatively easy opponents, for they can only sting once. Bees protect
 their queen.
 
 B - Bee Queen
 -------------
 
 Bee queens are hard to get in contact with; they have armies of bees surrounding
-them to protect them with their lives. You have to defeat all of the bees to get
-to fight the queen.
+them to protect them with their lives.
 
 d - Dog
 -------
@@ -39,12 +38,12 @@ beings have individual supernatural powers.
 G - Ghoul
 ---------
 
-Ghouls are corpse easter, therefore common around graveyards. Ghoul wounds may
+Ghouls are corpse-eaters, therefore common around graveyards. Ghoul wounds may
 cause infections, even kill the unlucky traveler later.
 
 H - Human
 ---------
 
 Human beings are usually friendly unless you attack them. You may get rare items
-by looting remrants of human beings or by trading items for gold with them.
+by looting remrants of human beings or by trading items with them.
 

@@ -10,9 +10,6 @@ void *bufalloc(void);
 
 #define devgetblk(buf, blk) devfindblk(buf, blk, 0)
 
-#define BUFSIZE     (1UL << BUFSIZELOG2)
-#define BUFSIZELOG2 13                          // TODO: make this per-device
-
 #define BUFNEVICT   8
 #define BUFNBYTE    (32768 * 1024)
 #define BUFNBLK     (BUFNBYTE >> BUFSIZELOG2)
@@ -58,6 +55,7 @@ struct devbuf {
 
 #endif /* BUFMULTITAB */
 
+#if 0
 /* type values */
 #define BUFUNUSED 0x00
 #define BUFSUPER  0x01
@@ -65,15 +63,24 @@ struct devbuf {
 #define BUFDIR    0x03
 #define BUFFILE   0x04
 #define BUFPIPE   0x05
+#endif
+
+/* status values */
+#define BUFLOCKED    0x01       // buffer is locked
+#define BUFHASDATA   0x02       // buffer has valid data
+#define BUFMUSTWRITE 0x04       // the kernel must write before reassigning
+#define BUFDOINGIO   0x08       // the kernel is reading or writing data
+#define BUfWAIT      0x10       // a process is waiting for buffer release
 struct bufblk {
-    long           type;
     long           dev;         // device #
     long           num;         // per-device block #
-    long           flg;         // block flag-bits
+    long           status;      // status flags
     long           nb;          // # of bytes
     void          *data;        // in-core block data
-    struct bufblk *prev;        // previous in LRU queue
-    struct bufblk *next;        // next in LRU queue
+    struct bufblk *hashprev;    // previous block on hash chain
+    struct bufblk *hashnext;    // next block on hash chain
+    struct bufblk *freeprev;    // previous block on free list
+    struct bufblk *freenext;    // next block on free list
 };
 
 struct bufblkq {
@@ -82,6 +89,15 @@ struct bufblkq {
     struct bufblk *tail;
     long           pad;
 };
+
+struct bufhash {
+#if (_REENTRANT)
+    volatile long lk;
+#endif
+    struct bufblkq *tab;
+};
+
+#if 0
 
 /* push bp in front of LRU queue */
 #define bufpushqblk(qp, bp)                                             \
@@ -190,6 +206,8 @@ struct bufblkq {
         }                                                               \
         mtxunlk(&(qp)->lk);                                             \
     } while (0)
+
+#endif /* 0 */
         
 #endif /* __KERN_IO_BUF_H__ */
 

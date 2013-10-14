@@ -40,6 +40,11 @@ kern/
 	--------------
 	- standard PC device drivers
 	  - ps2/		- PS/2 keyboard and mouse drivers
+	  - gfx/		- graphics hardware drivers
+	  - snd/		- sound support
+	    - ac97.c, ac97.h	- AC97 audio interface
+	  - dma.c, dma.h	- DMA transfer interface
+	  - vbe2.c, vbe2.h	- VESA BIOS Extensions Revision 2 graphics
 	  - vga.c, vga.h	- VGA text console support
 
 usr/

@@ -46,8 +46,10 @@ SECTIONS {
 	pic.o(.text)
 	seg.o(.text)
 	vm.o(.text)
+/*	vm.o(.data)
+	vm.o(.bss) */
 	util.o(.text)
-    	mp.o(.text)
+	mp.o(.text)
     	mp.o(.data)
     	mp.o(.bss)
     	hpet.o(.text)

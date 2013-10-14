@@ -23,8 +23,32 @@
 #endif
 #include <kern/mem/mag.h>
 
+#define LIST_TYPE  struct bufblk
+#define LIST_QTYPE struct bufblkq
+#define LISTPREV   freeprev
+#define LISTNEXT   freenext
+#include <zero/list.h>
+#define bufqueueblk(blk)                                                \
+    listpush(&buflruq, blk)
+#define bufdeqblk(retpp)                                                \
+    listdeq(&buflruq, retpp)
+#define bufpopblk(blk)                                                    \
+    listqueue(&buflruq, blk)
+#define bufrmfree(blk)                                                  \
+    listrm(&buflruq, blk)
+#define HASH_KEYTYPE long
+#define HASH_TYPE    struct bufhash
+#define HASHPREV     hashprev
+#define HASHNEXT     hashnext
+#define HASH_TABSZ   65536
+#define HASH_FUNC(bp) ((bp)->num & 0xffff)
+#define HASH_CMP(bp1, bp2)                                              \
+    ((bp1)->dev == (bp2)->dev && (bp1)->num == (bp2)->num)
+#define HASH_ALLOC(n, sz) kwalloc((n) * (sz))
+#include <zero/hash.h>
+
 #if (!BUFMULTITAB)
-#if (!powerof2(BUFNHASHITEM))
+#if (!powerof2(HASH_TABSZ))
 #error BUFNHASHITEM must be a power of two
 #endif
 #endif
@@ -43,8 +67,7 @@
 /* TODO: stack for heap-based buffer allocation */
 
 #if (!BUFMULTITAB)
-static struct bufblk    *bufhashtab[BUFNHASHITEM] ALIGNED(PAGESIZE);
-static volatile long     bufhashlktab[BUFNHASHITEM] ALIGNED(PAGESIZE);
+static struct bufblkq   *bufhashtab[BUFNHASHITEM] ALIGNED(PAGESIZE);
 #endif
 static volatile long     buflktab[BUFNBLK] ALIGNED(PAGESIZE);
 static void             *bufstk[BUFNBLK] ALIGNED(PAGESIZE);
@@ -56,6 +79,16 @@ static volatile long     bufzonelk;
 static void             *bufzone;
 //static uintptr_t         bufbrk;
 static size_t            bufnbyte;
+
+#if 0
+void *
+bufinit(void)
+{
+    hashinit(&bufhashtab);
+
+    return bufhashtab;
+}
+#endif
 
 /* flush nbuf buffers onto disks */
 void *
@@ -308,6 +341,15 @@ devfreebuf(struct devbuf *buf, long num)
 
 #else /* !BUFMULTITAB */
 
+#if 0
+void
+devbufblk(struct bufblk *blk)
+{
+    ;
+}
+#endif
+
+#if 0
 void
 devbufblk(struct bufblk *blk)
 {
@@ -337,7 +379,7 @@ devfindbuf(long dev, long num, long rel)
     mtxlk(&bufhashlktab[key]);
     blk = bufhashtab[key];
     while (blk) {
-        if (blk->dev == num && blk->num == num) {
+        if (blk->dev == dev && blk->num == num) {
             if (rel) {
                 if (blk->prev) {
                     blk->prev->next = blk->next;
@@ -369,6 +411,7 @@ devfreebuf(long dev, long num)
 
     return;
 }
+#endif
 
 #endif /* BUFMULTITAB */
 

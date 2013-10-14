@@ -1,0 +1,7 @@
+early block device plans
+------------------------
+
+- Unix-style hash table based buffer cache implementation (fixed size first)
+- disk driver
+- tape driver(?)
+

@@ -35,16 +35,21 @@
  * #define HASH_TABSZ         65536
  * #define HASH_FUNC(ip)      ((ip)->key & 0xffff)
  * #define HASH_CMP(ip1, ip2) (!((ip1)->key == (ip2)->key))
+ * #define HASH_ALLOC(n, sz)  calloc(n, sz)
  */
+
+#if !defined(HASH_ALLOC)
+#define HASH_ALLOC(n, sz)     calloc(n, sz)
+#endif
 
 #define hashinit(rpp)                                                   \
     do {                                                                \
-        HASH_TYPE *_hash = calloc(1, sizeof(HASH_TYPE));                \
+        HASH_TYPE *_hash = HASH_ALLOC(1, sizeof(HASH_TYPE));            \
                                                                         \
         if (_hash) {                                                    \
-            _hash->tab = calloc(HASH_TABSZ, sizeof(HASH_TYPE));         \
+            _hash->tab = HASH_ALLOC(HASH_TABSZ, sizeof(HASH_TYPE));     \
         }                                                               \
-        *rpp = _hash;                                                   \
+        *(rpp) = _hash;                                                 \
     } while (0)
 
 #define hashadd(hash, item)                                             \
@@ -52,13 +57,13 @@
         HASH_KEYTYPE  _key = HASH_FUNC(item);                           \
         HASH_TYPE    *_item;                                            \
                                                                         \
-        (item)->prev = NULL;                                            \
+        (item)->HASHPREV = NULL;                                        \
         hashlk(&(hash)->lk);                                            \
         _item = (hash)->tab[_key];                                      \
         if (_item) {                                                    \
-            _item->prev = item;                                         \
+            _item->HASHPREV = item;                                     \
         }                                                               \
-        (item)->next = _item;                                           \
+        (item)->HASHNEXT = _item;                                       \
         (hash)->tab[_key] = item;                                       \
         hashunlk(&(hash)->lk);                                          \
     } while (0)
@@ -81,19 +86,19 @@
         while (_item) {                                                 \
             if (!HASH_CMP(_item, item)) {                               \
                 if (rm) {                                               \
-                    _item1 = _item->prev;                               \
-                    _item2 = _item->next;                               \
+                    _item1 = _item->HASHPREV;                           \
+                    _item2 = _item->HASHNEXT;                           \
                     if (_item1) {                                       \
-                        _item1->next = _item2;                          \
+                        _item1->HASHNEXT = _item2;                      \
                     }                                                   \
                     if (_item2) {                                       \
-                        _item2->prev = _item1;                          \
+                        _item2->HASHPREV = _item1;                      \
                     }                                                   \
                 }                                                       \
                                                                         \
                 break;                                                  \
             }                                                           \
-            _item = _item->next;                                        \
+            _item = _item->HASHNEXT;                                    \
         }                                                               \
         hashunlk(&(hash)->lk);                                          \
         *(rpp) = _item;                                                 \

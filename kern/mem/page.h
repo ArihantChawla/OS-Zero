@@ -8,7 +8,7 @@
 #include <zero/mtx.h>
 
 #define pagenum(adr)       ((adr) >> PAGESIZELOG2)
-#define swapblknum(sp, pg) ((pg) - (sp)->pgtab)
+//#define swapblknum(sp, pg) ((pg) - (sp)->pgtab)
 #if 0
 #define pageadr(pg, pt)                                                 \
     ((!(pg)) ? NULL : ((void *)(((pg) - (pt)) << PAGESIZELOG2)))

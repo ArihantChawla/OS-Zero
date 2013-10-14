@@ -221,6 +221,11 @@ test(void *dummy)
     for ( ; ; ) {
         for (l = 0 ; l < NALLOC ; l++) {
             ptrtab[l] = memalloc(rand() & (8 * SLABMIN - 1), MEMZERO);
+#if (MEMPRINT)
+            if (!ptrtab[l]) {
+                fprintf(stderr, "failed to allocate memory\n");
+            }
+#endif
         }
         l = NALLOC;
         while (l--) {
@@ -229,7 +234,9 @@ test(void *dummy)
                 ptrtab[l] = NULL;
             }
         }
+#if (MEMPRINT)
         slabprintall();
+#endif
     }
 
     return NULL;

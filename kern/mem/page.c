@@ -29,9 +29,8 @@ pageinitzone(uintptr_t base,
     pg += n;
     mtxlk(&zone->lk);
     vmpagestat.nphys = n;
-#if (MEMTEST)
-    printf("initializing %ld (%lx) pages\n", n, n);
-#endif
+    kprintf("initializing %ld (%lx) pages @ %p (%lx)\n",
+            n, n, vmphystab, pagenum(base));
     while (n--) {
         pg--;
         pg->adr = adr;

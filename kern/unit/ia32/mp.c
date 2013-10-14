@@ -1,6 +1,4 @@
-#include <kern/conf.h>
-
-#if (SMP)
+//#include <kern/conf.h>
 
 #include <stddef.h>
 #include <sys/io.h>
@@ -279,6 +277,4 @@ mpspurint(void)
 
     return;
 }
-
-#endif /* SMP */
 

@@ -12,7 +12,7 @@
     ((((c) << 8) + (c) + 256) >> 16)
 #define gfxdiv256(c)                                                    \
     ((c) >> 8)
-#define gfxalphablendcfast(src, dest, a)                                 \
+#define gfxalphablendcfast(src, dest, a)                                \
     ((dest) + gfxdiv256(((src) - (dest)) * (a)))
 #define gfxalphablendchiq(src, dest, a)                                 \
     ((dest) + gfxdiv255(((src) - (dest)) * (a)))
@@ -229,7 +229,7 @@
 #define gfxalphablendfast_const2(src, dest, a)                          \
     do {                                                                \
         uint64_t _rbmask = 0x00ff00ff00ff00ffULL;                       \
-        argb32_t _gamask = 0xff00ff00ff00ff00ULL;                       \
+        uint64_t _gamask = 0xff00ff00ff00ff00ULL;                       \
         argb32_t _srcrb;                                                \
         argb32_t _destrb;                                               \
         argb32_t _destag;                                               \
@@ -249,8 +249,8 @@
         _val1 &= _rbmask;                                               \
         _srcrb -= _destrb;                                              \
         _val1 -= _val2;                                                 \
-        _srcrb *= (aval);                                               \
-        _val1 *= (aval);                                                \
+        _srcrb *= (a);                                                  \
+        _val1 *= (a);                                                   \
         _srcrb >>= 8;                                                   \
         _val1 += _destag;                                               \
         _srcrb += _destrb;                                              \

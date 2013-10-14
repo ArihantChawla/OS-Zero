@@ -98,7 +98,8 @@ struct zccsym {
 #define ZPP_PREPROC_TOKEN      0x0021
 #define ZPP_CONCAT_TOKEN       0x0022
 #define ZPP_STRINGIFY_TOKEN    0x0023
-#define ZPP_NTOKTYPE           0x0024
+#define ZPP_INCLUDE_TOKEN      0x0024
+#define ZPP_NTOKTYPE           0x0025
 /* parm bits */
 /* high 16 bits */
 #define ZCC_UNSIGNED           0x80000000U

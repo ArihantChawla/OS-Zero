@@ -23,7 +23,7 @@ void  vmmapseg(uint32_t *pagetab, uint32_t virt, uint32_t phys, uint32_t lim,
 #define vmpageofs(adr)    ((uint32_t)(adr) & (PAGESIZE - 1))
 
 #define vmpageid(adr)     ((uint32_t)(adr) >> PAGESIZELOG2)
-#define vmbufid(adr)      ((uint32_t)(adr) >> BUFSIZELOG2)
+#define vmbufid(adr)      ((uint32_t)(adr) >> PAGESIZELOG2)
 #define vmisbufadr(adr)   (!((uint32_t)(adr) & (BUFSIZE - 1)))
 
 //#define vmpageadr(pg, pt) (((pg) - (pt)) << PAGESIZELOG2)

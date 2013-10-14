@@ -1,0 +1,8 @@
+early feature plan
+------------------
+
+- support for ISO 9660 CD-ROM filesystem
+- support for FAT filesystem (USB flash drives and such)
+- support for UFS2, BEFS, or perhaps a hybrid of such filesystems
+  - look into journaling later
+

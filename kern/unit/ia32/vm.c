@@ -15,7 +15,7 @@
 #include <kern/util.h>
 //#include <kern/proc/task.h>
 #include <kern/mem/page.h>
-#include <kern/io/buf.h>
+// #include <kern/io/buf.h>
 #include <kern/unit/x86/dma.h>
 #if (SMP)
 #include <kern/unit/ia32/mp.h>
@@ -36,9 +36,11 @@ struct pageq         vmlrutab[1UL << (LONGSIZELOG2 + 3)];
 static struct dev    vmdevtab[NPAGEDEV];
 static volatile long vmdevlktab[NPAGEDEV];
 #endif
+#if 0
 static struct vmbuf  vmbuftab[1L << (PTRBITS - BUFSIZELOG2)];
-struct pageq         vmphysq;
 struct vmbufq        vmbufq;
+#endif
+struct pageq         vmphysq;
 struct vmpagestat    vmpagestat;
 
 /*
@@ -196,11 +198,11 @@ vmmapvirt(uint32_t *pagetab, void *virt, uint32_t size, uint32_t flg)
 void
 vmfreephys(void *virt, uint32_t size)
 {
-    struct vmbuf *buf;
+//    struct vmbuf *buf;
     uint32_t      adr;
     uint32_t     *pte;
     long          n;
-    long          nref;
+//    long          nref;
 //    struct page  *pg;
 
     n = rounduppow2(size, PAGESIZE) >> PAGESIZELOG2;
@@ -209,12 +211,14 @@ vmfreephys(void *virt, uint32_t size)
         adr = *pte;
         adr &= PFPAGEMASK;
         if (*pte & PAGEBUF) {
+#if 0
             buf = &vmbuftab[vmbufid(adr)];
             nref = vmgetbufnref(buf);
             vmsetbufnref(buf, --nref);
             if (!nref) {
                 vmrmbuf(adr);
             }
+#endif
         } else if (*pte & PAGESWAPPED) {
 //            swapfree(adr);
         } else if (adr) {
@@ -251,10 +255,12 @@ vmpagefault(unsigned long pid, uint32_t adr, uint32_t flags)
         pg = pagealloc();
         if (pg) {
             if (flg & PAGEBUF) {
+#if 0
                 vmpagestat.nbuf++;
                 if (vmisbufadr(adr)) {
                     vmaddbuf(adr);
                 }
+#endif
             } else if (flg & PAGEWIRED) {
                 vmpagestat.nwired++;
             } else {

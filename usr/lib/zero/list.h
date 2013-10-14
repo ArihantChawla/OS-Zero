@@ -6,6 +6,12 @@
 #define listlk(lp)
 #define listunlk(lp)
 #endif
+#if !defined(LISTPREV)
+#define LISTPREV     prev
+#endif
+#if !defined(LISTNEXT)
+#define LISTNEXT     next
+#endif
 
 /*
  * Assumptions
@@ -27,10 +33,10 @@
         listlk(&(queue)->lk);                                           \
         _item1 = (queue)->head;                                         \
         if (_item1) {                                                   \
-            _item2 = _item1->next;                                      \
+            _item2 = _item1->LISTNEXT;                                  \
         }                                                               \
         if (_item2) {                                                   \
-            _item2->prev = NULL;                                        \
+            _item2->LISTPREV = NULL;                                    \
         } else {                                                        \
             (queue)->tail = NULL;                                       \
         }                                                               \
@@ -44,16 +50,16 @@
     do {                                                                \
         LIST_TYPE *_item;                                               \
                                                                         \
-        (item)->prev = NULL;                                            \
+        (item)->LISTPREV = NULL;                                        \
         listlk(&(queue)->lk);                                           \
         _item = (queue)->head;                                          \
         if (_item) {                                                    \
-            (_item)->prev = (item);                                     \
+            (_item)->LISTPREV = (item);                                 \
         } else {                                                        \
             (queue)->head = (item);                                     \
             (queue)->tail = (item);                                     \
         }                                                               \
-        (item)->next = _item;                                           \
+        (item)->LISTNEXT = _item;                                       \
         (queue)->head = item;                                           \
         listunlk(&(queue)->lk);                                         \
     } while (0)
@@ -67,17 +73,35 @@
         listlk(&(queue)->lk);                                           \
         _item1 = (queue)->tail;                                         \
         if (_item1) {                                                   \
-            _item2 = _item1->prev;                                      \
+            _item2 = _item1->LISTPREV;                                  \
             if (!_item2) {                                              \
                 (queue)->head = NULL;                                   \
                 (queue)->tail = NULL;                                   \
             } else {                                                    \
-                _item2->next = NULL;                                    \
+                _item2->LISTNEXT = NULL;                                \
                 (queue)->tail = _item2;                                 \
             }                                                           \
         }                                                               \
         listunlk(&(queue)->lk);                                         \
         *(retpp) = _item1;                                              \
+    } while (0)
+
+/* add block to the tail of queue */
+#define listqueue(queue, item)                                          \
+    do {                                                                \
+        LIST_TYPE *_tail;                                               \
+                                                                        \
+        (item)->next = NULL;                                            \
+        mtxlk(&(qp)->lk);                                               \
+        _tail  = (queue)->tail;                                         \
+        (item)->LISTPREV = _tail;                                       \
+        if (_tail) {                                                    \
+            (queue)->tail = (item);                                     \
+        } else {                                                        \
+            (item)->LISTPREV = NULL;                                    \
+            (queue)->head = (item);                                     \
+        }                                                               \
+        mtxunlk(&(qp)->lk);                                             \
     } while (0)
 
 /* remove item from queue */
@@ -86,25 +110,25 @@
         LIST_TYPE *_tmp;                                                \
                                                                         \
         listlk(&(queue)->lk);                                           \
-        _tmp = (item)->prev;                                            \
+        _tmp = (item)->LISTPREV;                                        \
         if (_tmp) {                                                     \
-            _tmp->next = (item)->next;                                  \
+            _tmp->LISTNEXT = (item)->LISTNEXT;                                  \
         } else {                                                        \
-            _tmp = (item)->next;                                        \
+            _tmp = (item)->LISTNEXT;                                    \
             if (_tmp) {                                                 \
-                _tmp->prev = (item)->prev;                              \
+                _tmp->LISTPREV = (item)->prev;                          \
             } else {                                                    \
                 (queue)->tail = NULL;                                   \
             }                                                           \
             (queue)->head = _tmp;                                       \
         }                                                               \
-        _tmp = (item)->next;                                            \
+        _tmp = (item)->LISTNEXT;                                        \
         if (_tmp) {                                                     \
             _tmp->prev = (item)->prev;                                  \
         } else {                                                        \
             _tmp = (item)->prev;                                        \
             if (_tmp) {                                                 \
-                _tmp->next = NULL;                                      \
+                _tmp->LISTNEXT = NULL;                                  \
             } else {                                                    \
                 (queue)->head = NULL;                                   \
             }                                                           \

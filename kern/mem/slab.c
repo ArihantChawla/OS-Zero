@@ -64,7 +64,7 @@ slabinit(struct memzone *virtzone, unsigned long base, unsigned long nbphys)
         nbphys -= adr - base;
         nbphys = rounddownpow2(nbphys, PAGESIZELOG2);
     }
-    kprintf("%lu kilobytes kernel virtual memory free @ %lx\n", nbphys >> 10, adr);
+    kprintf("%l kilobytes kernel virtual memory free @ %lx\n", nbphys >> 10, adr);
     while ((nbphys) && bkt >= SLABMINLOG2) {
         if (nbphys & ul) {
             hdr = slabgethdr(adr, virtzone);
