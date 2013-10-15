@@ -53,7 +53,9 @@ kmain(struct mboothdr *hdr, unsigned long pmemsz)
     kbzero(&_bssvirt, (uint32_t)&_ebss - (uint32_t)&_bss);
 //    __asm__ __volatile__ ("sti\n");
     curproc = &proctab[0];
+#if (!VBE2)
     vgainitcon(80, 25);
+#endif
     meminit(vmphysadr(&_ebssvirt), pmemsz);
     /* TODO: use memory map from GRUB */
     vminitphys((uintptr_t)&_ebss, pmemsz - (unsigned long)&_ebss);

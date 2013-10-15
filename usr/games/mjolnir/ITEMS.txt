@@ -1,0 +1,38 @@
+# - corridor
+------------
+- may be hidden
+- may be a hidden door
+
++ - door
+--------
+- may be hidden
+
+. - floor
+---------
+- may have hidden traps
+
+^ - trap
+--------
+- usually hidden unless you have used search or identify
+- dart, dagger, drop level down, teleport
+
+" - punchcard
+-------------
+- hints for the game
+- maps
+- level control programs; animate the undead, freeze the undead, turn lights on
+  or off, etc.
+
+- - horizontal wall
+-------------------
+
+| - vertical wall
+-----------------
+
+/ - whip
+--------
+
+T - teleport
+------------
+- teleports player to another location
+

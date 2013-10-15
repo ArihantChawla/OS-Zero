@@ -64,6 +64,7 @@ mainframe	| M		| computer systems for running punchcards
 pipe		| p		| pipe
 pistol		| P		| pistol
 sword		| s		| sword
+teleport	| T		| teleport
 well		| w		| well (water, may be cursed/poisonous)
 cross		| x		| cross; may be Holy Cross
 altar		| X		| altar; try to sacrifice dead creatures on it

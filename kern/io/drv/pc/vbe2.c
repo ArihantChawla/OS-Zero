@@ -28,7 +28,9 @@ vbe2init(struct mboothdr *hdr)
                            : ((bpp == 16)
                               ? GFXRGB565
                               : GFXRGB555));
-        vmmapseg((uint32_t *)&_pagetab, vbe2screen.fbuf, vbe2screen.fbuf,
+        vmmapseg((uint32_t *)&_pagetab,
+                 (uint32_t)vbe2screen.fbuf,
+                 (uint32_t)vbe2screen.fbuf,
                  (uint32_t)vbe2screen.fbuf
                  + ((bpp == 24)
                     ? mode->xres * mode->yres * 3
