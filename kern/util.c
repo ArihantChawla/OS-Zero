@@ -4,6 +4,7 @@
 #include <zero/cdecl.h>
 #include <zero/param.h>
 #include <zero/trix.h>
+#include <kern/io/drv/char/con.h>
 #include <kern/io/drv/pc/vga.h>
 
 #define MAXPRINTFSTR 2048
@@ -396,133 +397,135 @@ kprintf(char *fmt, ...)
     va_list  al;
     char     buf[LONGBUFSIZE];
     char     str[MAXPRINTFSTR];
-    
-    va_start(al, fmt);
-    len = MAXPRINTFSTR - 1;
-    len = kstrncpy(str, fmt, len);
-    sptr = str;
-    while (*sptr) {
-        isch = 0;
-        isdec = 0;
-        ishex = 0;
-        val = 0;
-        arg = _strtok(sptr, '%');
-        if (arg) {
-            vgaputs(sptr);
-            arg++;
-            if (*arg) {
-                switch (*arg) {
-                    case 'c':
+
+    if (conputs) {
+        va_start(al, fmt);
+        len = MAXPRINTFSTR - 1;
+        len = kstrncpy(str, fmt, len);
+        sptr = str;
+        while (*sptr) {
+            isch = 0;
+            isdec = 0;
+            ishex = 0;
+            val = 0;
+            arg = _strtok(sptr, '%');
+            if (arg) {
+                conputs(sptr);
+                arg++;
+                if (*arg) {
+                    switch (*arg) {
+                        case 'c':
                         isch = 1;
                         val = (char)va_arg(al, int);
                         arg++;
                         
                         break;
-                    case 'h':
-                        isdec = 1;
-                        val = (short)va_arg(al, int);
-                        arg++;
-                        
-                        break;
-                    case 'd':
-                        isdec = 1;
-                        val = va_arg(al, int);
-                        arg++;
-                        
-                        break;
-                    case 'p':
-                    case 'l':
-                        isdec = 1;
-                        if (*arg == 'p') {
-                            ishex = 1;
-                            val = (long)va_arg(al, void *);
-                        } else {
-                            val = va_arg(al, long);
-                        }
-                        arg++;
-                        if (*arg) {
-                            if (*arg == 'd') {
-                                arg++;
-                            } else if (*arg == 'x') {
-                                arg++;
+                        case 'h':
+                            isdec = 1;
+                            val = (short)va_arg(al, int);
+                            arg++;
+                            
+                            break;
+                        case 'd':
+                            isdec = 1;
+                            val = va_arg(al, int);
+                            arg++;
+                            
+                            break;
+                        case 'p':
+                        case 'l':
+                            isdec = 1;
+                            if (*arg == 'p') {
                                 ishex = 1;
-                            }
-                        }
-                        
-                        break;
-                    case 'x':
-                        val = va_arg(al, int);
-                        arg++;
-                        ishex = 1;
-                        
-                        break;
-                    case 'u':
-                        arg++;
-                        if (*arg) {
-                            switch (*arg) {
-                                case 'c':
-                                    isch = 1;
-                                    val = (char)va_arg(al, unsigned int);
-                                    
-                                    break;
-                                case 'h':
-                                    isdec = 1;
-                                    val = (short)va_arg(al, unsigned int);
-                                    
-                                    break;
-                                case 'd':
-                                    isdec = 1;
-                                    val = va_arg(al, unsigned int);
-                                    
-                                    break;
-                                case 'l':
-                                    isdec = 1;
-                                    val = va_arg(al, unsigned long);
-                                    
-                                    break;
-                                default:
-
-                                    break;
+                                val = (long)va_arg(al, void *);
+                            } else {
+                                val = va_arg(al, long);
                             }
                             arg++;
-                        } else {
-                            va_end(al);
+                            if (*arg) {
+                                if (*arg == 'd') {
+                                    arg++;
+                                } else if (*arg == 'x') {
+                                    arg++;
+                                    ishex = 1;
+                                }
+                            }
                             
-                            return;
-                        }
-                        
-                        break;
-                    default:
-                        
-                        break;
-                }
-                if (ishex) {
-                    l = _ltoxn(val, buf, LONGBUFSIZE);
-                    vgaputs(&buf[l]);
-                } else if (isdec) {
-                    l = _ltodn(val, buf, LONGBUFSIZE);
-                    vgaputs(&buf[l]);
-                } else if ((isch) && isprint(val)) {
-                    vgaputchar((int)val);
+                            break;
+                        case 'x':
+                            val = va_arg(al, int);
+                            arg++;
+                            ishex = 1;
+                            
+                            break;
+                        case 'u':
+                            arg++;
+                            if (*arg) {
+                                switch (*arg) {
+                                    case 'c':
+                                        isch = 1;
+                                        val = (char)va_arg(al, unsigned int);
+                                        
+                                        break;
+                                    case 'h':
+                                        isdec = 1;
+                                        val = (short)va_arg(al, unsigned int);
+                                        
+                                        break;
+                                    case 'd':
+                                        isdec = 1;
+                                        val = va_arg(al, unsigned int);
+                                        
+                                        break;
+                                    case 'l':
+                                        isdec = 1;
+                                        val = va_arg(al, unsigned long);
+                                        
+                                        break;
+                                    default:
+                                        
+                                        break;
+                                }
+                                arg++;
+                            } else {
+                                va_end(al);
+                                
+                                return;
+                            }
+                            
+                            break;
+                        default:
+                            
+                            break;
+                    }
+                    if (ishex) {
+                        l = _ltoxn(val, buf, LONGBUFSIZE);
+                        conputs(&buf[l]);
+                    } else if (isdec) {
+                        l = _ltodn(val, buf, LONGBUFSIZE);
+                        conputs(&buf[l]);
+                    } else if ((isch) && isprint(val)) {
+                        conputchar((int)val);
+                    } else {
+                        conputchar(' ');
+                    }
                 } else {
-                    vgaputchar(' ');
+                    va_end(al);
+                    
+                    return;
                 }
             } else {
+                if (*sptr) {
+                    conputs(sptr);
+                }
                 va_end(al);
                 
                 return;
             }
-        } else {
-            if (*sptr) {
-                vgaputs(sptr);
-            }
-            va_end(al);
-            
-            return;
+            sptr = arg;
         }
-        sptr = arg;
+        va_end(al);
     }
-    va_end(al);
     
     return;
 }
