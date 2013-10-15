@@ -15,9 +15,9 @@ vbe2init(struct mboothdr *hdr)
 {
     struct vbemode *mode = (struct vbemode *)hdr->vbemodeinfo;
     long            bpp = (mode) ? mode->npixbit : 0;
-    long            retval = 0;
+    long            retval;
 
-    retval = (hdr->flags & GRUBVBE);
+    retval = (hdr->flags | GRUBVBE);
     if (retval) {
         vbe2screen.fbuf = (void *)mode->fbadr;
         vbe2screen.w = mode->xres;

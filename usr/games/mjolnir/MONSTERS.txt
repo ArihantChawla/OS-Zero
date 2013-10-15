@@ -38,12 +38,57 @@ beings have individual supernatural powers.
 G - Ghoul
 ---------
 
-Ghouls are corpse-eaters, therefore common around graveyards. Ghoul wounds may
-cause infections, even kill the unlucky traveler later.
+Ghouls are flesh-eaters, therefore common around graveyards. Ghoul wounds may
+cause infections, even kill the unlucky traveler later. Ghouls can assuime the
+guise of an animal, especially hyena. Ghouls drink blood, steal gold, and eat
+the dead, then taking the form of the person most recently eaten.
 
 H - Human
 ---------
 
 Human beings are usually friendly unless you attack them. You may get rare items
 by looting remrants of human beings or by trading items with them.
+
+O - Oracle
+----------
+
+Oracles share pieces of wisdom to give hints for the game.
+
+u - Unicorn
+-----------
+
+v - Vampire
+-----------
+
+In Slavic and Chinese traditions, any corpse that was jumped over by an animal,
+particularly a dog or cat, was feared to become one of the undead.
+
+In Mjolnir, vampires can be killed by staking them throught the heart with a
+piece of oak, shooting them with a silver bullet, drowning them, or sprinkling
+holy water on their bodies. Vampires avoid garlic. Vampires, including Dracula,
+can also be killed by touching them with the Holy Cross.
+
+V - Dracula
+-----------
+
+The prince of vampires. Protected by other vampires. For ways to defeat Dracula,
+see under Vampire.
+
+w - Wolf
+--------
+
+Wolves howl at night. They tend to wander in packs, therefore making them a bit
+harder an opponent to fight.
+
+W - Fenris
+----------
+
+A wolf-born deity of mighty powers. Can only be chained using Mjolnir.
+
+Z - zombie
+----------
+
+Zombies are a form of undead. Always hostile, zombies will attack any target but
+other zombies at sight. Zombies can be killed by cutting them in pieces or by
+shooting them with a silver bullet. The demon whip is also good agains zombies.
 

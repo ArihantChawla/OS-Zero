@@ -4,7 +4,8 @@ character device plan
 /dev/rand32	- 32-bit random number generator
 /dev/null	- NULL device
 /dev/zero	- zero device
-/dev/con	- console device
+/dev/con/	- console device
+		- stdin, stdout, stderr
 /def/fifo/	- pipes
 /dev/sock/	- sockets
 /dev/mtx/	- mutexes

@@ -27,7 +27,7 @@ pageinitzone(uintptr_t base,
 
     adr += n << PAGESIZELOG2;
     pg += n;
-    mtxlk(&zone->lk);
+//    mtxlk(&zone[0]->lk);
     vmpagestat.nphys = n;
     kprintf("initializing %ld (%lx) pages @ %p (%lx)\n",
             n, n, vmphystab, pagenum(base));
@@ -35,10 +35,10 @@ pageinitzone(uintptr_t base,
         pg--;
         pg->adr = adr;
         pg->nflt = 0;
-        pagepush(&zone[0], pg);
+        pagepush(zone, pg);
         adr -= PAGESIZE;
     }
-    mtxunlk(&zone->lk);
+//    mtxunlk(&zone[0]->lk);
 }
 
 void
@@ -58,15 +58,15 @@ pagealloc(void)
     long          qid;
     long          l;
 
-    mtxlk(&vmphysq.lk);
+//    mtxlk(&vmphysq.lk);
     pagepop(&vmphysq, &pg);
-    mtxunlk(&vmphysq.lk);
+//    mtxunlk(&vmphysq.lk);
     if (!pg) {
         for (l = 0 ; l < LONGSIZE * CHAR_BIT ; l++) {
             qp = &vmlrutab[l];
-            mtxlk(&qp->lk);
+//            mtxlk(&qp->lk);
             pagedeq(qp, &pg);
-            mtxunlk(&qp->lk);
+//            mtxunlk(&qp->lk);
             if (pg) {
                 pg->nflt++;
 
@@ -74,9 +74,9 @@ pagealloc(void)
             }
             qid = pagegetqid(pg);
             qp = &vmlrutab[qid];
-            mtxlk(&qp->lk);
+//            mtxlk(&qp->lk);
             pagepush(qp, pg);
-            mtxunlk(&qp->lk);
+//            mtxunlk(&qp->lk);
         }
     }
 
@@ -90,11 +90,11 @@ pagefree(void *adr)
     struct page   *pg;
 
     /* free physical page */
-    mtxlk(&vmphysq.lk);
+//    mtxlk(&vmphysq.lk);
     id = (uintptr_t)adr >> PAGESIZELOG2;
     pg = &vmphystab[id];
     pagepush(&vmphysq, pg);
-    mtxunlk(&vmphysq.lk);
+//    mtxunlk(&vmphysq.lk);
 
     return;
 }

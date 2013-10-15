@@ -141,72 +141,73 @@ struct vbescreen {
 #define vbe2pixadr(x, y)                                                \
     ((uint8_t *)vbe2screen.fbuf + ((y) * vbe2screen.w + (x)) * 3)
 
+/* TODO: currently hardwired for RGB888 */
 #define vbe2putpix(pix, x, y)                                           \
     do {                                                                \
-        uint8_t *ptr = vbe2pixadr(x, y);                                \
+        uint8_t *_ptr = vbe2pixadr(x, y);                               \
                                                                         \
-        gfxtorgb888(pix, ptr);                                          \
+        gfxtorgb888(pix, _ptr);                                         \
     } while (0)
 
 /* draw character with background */
 #define vbe2drawchar(c, x, y, fg, bg)                                   \
     do {                                                                \
-        int cy;                                                         \
-        int yofs;                                                       \
-        uint8_t *gp = (uint8_t *)_vgafontbuf + ((int)c << 4);           \
-        uint8_t  g;                                                     \
+        int      _cy;                                                   \
+        int      _yofs;                                                 \
+        uint8_t *_gp = (uint8_t *)_vgafontbuf + ((int)c << 4);          \
+        uint8_t  _g;                                                    \
                                                                         \
-        for (cy = 0 ; cy < VGAGLYPHH ; cy++) {                          \
-            g = *gp;                                                    \
-            yofs = y + cy - 12;                                         \
-            vbe2putpix((g & 0x01) ? fg : bg, x, yofs);                  \
-            vbe2putpix((g & 0x02) ? fg : bg, x + 1, yofs);              \
-            vbe2putpix((g & 0x04) ? fg : bg, x + 2, yofs);              \
-            vbe2putpix((g & 0x08) ? fg : bg, x + 3, yofs);              \
-            vbe2putpix((g & 0x10) ? fg : bg, x + 4, yofs);              \
-            vbe2putpix((g & 0x20) ? fg : bg, x + 5, yofs);              \
-            vbe2putpix((g & 0x40) ? fg : bg, x + 6, yofs);              \
-            vbe2putpix((g & 0x80) ? fg : bg, x + 7, yofs);              \
-            gp++;                                                       \
+        for (_cy = 0 ; _cy < VGAGLYPHH ; _cy++) {                       \
+            _g = *_gp;                                                  \
+            _yofs = y + _cy - 12;                                       \
+            vbe2putpix((g & 0x01) ? fg : bg, x, _yofs);                 \
+            vbe2putpix((g & 0x02) ? fg : bg, x + 1, _yofs);             \
+            vbe2putpix((g & 0x04) ? fg : bg, x + 2, _yofs);             \
+            vbe2putpix((g & 0x08) ? fg : bg, x + 3, _yofs);             \
+            vbe2putpix((g & 0x10) ? fg : bg, x + 4, _yofs);             \
+            vbe2putpix((g & 0x20) ? fg : bg, x + 5, _yofs);             \
+            vbe2putpix((g & 0x40) ? fg : bg, x + 6, _yofs);             \
+            vbe2putpix((g & 0x80) ? fg : bg, x + 7, _yofs);             \
+            _gp++;                                                      \
         }                                                               \
     } while (0)                                                         \
         
 /* draw character without background (transparent) */
 #define vbe2drawcharfg(c, x, y, fg, bg)                                 \
     do {                                                                \
-        int cy;                                                         \
-        int yofs;                                                       \
-        uint8_t *gp = (uint8_t *)_vgafontbuf + ((int)c << 4);           \
-        uint8_t  g;                                                     \
+        int      _cy;                                                   \
+        int      _yofs;                                                 \
+        uint8_t *_gp = (uint8_t *)_vgafontbuf + ((int)c << 4);          \
+        uint8_t  _g;                                                    \
                                                                         \
-        for (cy = 0 ; cy < VGAGLYPHH ; cy++) {                          \
-            g = *gp;                                                    \
-            yofs = y + cy - 12;                                         \
-            if (g & 0x01) {                                             \
+        for (_cy = 0 ; _cy < VGAGLYPHH ; _cy++) {                       \
+            _g = *_gp;                                                  \
+            _yofs = y + _cy - 12;                                       \
+            if (_g & 0x01) {                                            \
                 vbe2putpix(fg, x, yofs);                                \
             }                                                           \
-            if (g & 0x02) {                                             \
+            if (_g & 0x02) {                                            \
                 vbe2putpix(fg, x + 1, yofs);                            \
             }                                                           \
-            if (g & 0x04) {                                             \
+            if (_g & 0x04) {                                            \
                 vbe2putpix(fg, x + 2, yofs);                            \
             }                                                           \
-            if (g & 0x08) {                                             \
+            if (_g & 0x08) {                                            \
                 vbe2putpix(fg, x + 3, yofs);                            \
             }                                                           \
-            if (g & 0x10) {                                             \
+            if (_g & 0x10) {                                            \
                 vbe2putpix(fg, x + 4, yofs);                            \
             }                                                           \
-            if (g & 0x20) {                                             \
+            if (_g & 0x20) {                                            \
                 vbe2putpix(fg, x + 5, yofs);                            \
             }                                                           \
-            if (g & 0x40) {                                             \
+            if (_g & 0x40) {                                            \
                 vbe2putpix(fg, x + 6, yofs);                            \
             }                                                           \
-            if (g & 0x80) {                                             \
+            if (_g & 0x80) {                                            \
                 vbe2putpix(fg, x + 7, yofs);                            \
             }                                                           \
-            gp++;                                                       \
+            _gp++;                                                      \
         }                                                               \
     } while (0)                                                         \
 

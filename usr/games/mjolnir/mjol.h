@@ -58,6 +58,7 @@ extern uint8_t          mjolcanwieldmap[32];
 #define MJOL_OBJ_WAND            '\\'
 #define MJOL_OBJ_SCROLL          '?'
 #define MJOL_OBJ_RING            '='
+#define MJOL_OBJ_WHIP            '/'
 #define MJOL_OBJ_ARMOR           ']'
 #define MJOL_OBJ_CHAIN           '8'
 #define MJOL_OBJ_CHEST           'C'
@@ -90,7 +91,7 @@ extern uint8_t          mjolcanwieldmap[32];
 #define MJOL_CHAR_UNICORN        'u'
 #define MJOL_CHAR_VAMPIRE        'v'
 #define MJOL_CHAR_DRACULA        'V'
-#define MJOL_CHAR_WOLF           'W'
+#define MJOL_CHAR_WOLF           'w'
 #define MJOL_CHAR_ZOMBIE         'Z'
 
 /* commands */

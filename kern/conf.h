@@ -5,7 +5,8 @@
 #define BUFSIZELOG2 12                          // TODO: make this per-device
 
 #define SMP       1     // enable multiprocessor support; currently broken
-#define HZ        250
+#define HZ        250   // scheduler timer frequency
+#define EVHZ      1000  // event timer frequency
 #define ZEROSCHED 1     // default scheduler
 #define NPROC     1024  // maximum number of running processes
 #define NTHR      4096  // maximum number of running threads

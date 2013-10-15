@@ -50,6 +50,7 @@ trap		| ^		| trap
 wand		| \		| magic wand
 scroll		| ?		| spells and other scrolls
 ring		| =		| ring
+whip		| /		| whip
 armor		| ]		| suit or armor
 chain		| 8		| chain
 chest		| C		| chest; may find treasury in them
@@ -85,11 +86,13 @@ oracle		| O		| oracles know about things
 unicorn		| u		| unicorn
 vampire		| v		| regular vampire
 Dracula		| V		| Dracula; attack will get all vampires to hit
-wolf		| W		| may be Fenris
+wolf		| w		| may be Fenris
+Fenris		| W		| the guardian wolf of gods; kills demons
 zombie		| Z		| zombies; living dead; always evil, attack all
 
 Special Items
 -------------
+Demon Whip	| /		| weapon against different forms of undead
 Thor		| D		| god of thunder
 Jatimatic	| g		| sub-machine gun for close range combat
 Mjolnir		| M		| the hammer of Thor
@@ -98,7 +101,6 @@ Stormbringer	| s		| Stormbringer special sword
 Excalibur	| s		| Excalibur special sword
 Holy Cross	| x		| holy cross with the names of 4 archangels
      		  		| - Michael, Raphael, Gabriel, Uriel
-Fenris		| W		| the guardian wolf of gods; kills demons
 
 Commands
 --------
