@@ -2,20 +2,15 @@
 #include <stddef.h>
 #include <zero/cdecl.h>
 #include <kern/conf.h>
-#if (VGAGFX) || (VBE2)
-#include <gfx/rgb.h>
-#include <kern/mem.h>
-#endif
+
+#if (!VBE2)
+
 #include <kern/util.h>
 #include <kern/io/drv/pc/vga.h>
 
 struct vgacon  _vgacontab[VGANCON] ALIGNED(PAGESIZE);
 long           vgacurcon;
-#if (VGAGFX) || (VBE2)
 static void   *_vgafontbuf;
-#endif
-
-#if (VGAGFX) || (VBE2)
 
 void
 vgainitgfx(void)
@@ -33,9 +28,7 @@ vgagetfont(void)
     outw(0x0402, 0x03c4);
     outw(0x0704, 0x03c4);
     kbcopy(_vgafontbuf, (void *)VGAFONTADR, VGAFONTSIZE);
-#if (!VBE2)
     vgareset();
-#endif
 
     return;
 }
@@ -46,29 +39,18 @@ vgaputpix(int32_t pix, int32_t x, int32_t y)
     ;
 }
 
-#endif /* VGAGFX */
-
 /* initialise 8 consoles */
 void
 vgainitcon(int w, int h)
 {
     struct vgacon *con = _vgacontab;
-#if !((VGAGFX) || (VBE2))
     uint8_t       *ptr = (uint8_t *)VGABUFADR;
-#endif
     long           l;
 
-#if (VGAGFX) && !(VBE2)
     vgagetfont();
-#endif
     for (l = 0 ; l < VGANCON ; l++) {
         kbzero(ptr, PAGESIZE);
-#if (VGAGFX) || (VBE2)
-        con->fg = 0xffffffff;
-        con->buf = kwalloc(w * h * sizeof(argb32_t));
-#else
         con->buf = (uint16_t *)ptr;
-#endif
         con->x = 0;
         con->y = 0;
         con->w = w;
@@ -79,9 +61,6 @@ vgainitcon(int w, int h)
         con->nbufln = 0;
         /* TODO: allocate scrollback buffer */
         con->data = NULL;
-#if !((VGAGFX) || (VBE2))
-        ptr += VGABUFSIZE;
-#endif
         con++;
     }
     vgacurcon = 0;
@@ -228,4 +207,6 @@ vgasyncscr(void)
 {
     ;
 }
+
+#endif /* !VBE2 */
 
