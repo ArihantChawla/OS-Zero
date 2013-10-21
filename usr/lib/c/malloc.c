@@ -27,6 +27,7 @@
  *   earlier versions.
  */
 
+#define NEWMALLOC  0
 #define NEWSLAB    0
 #define FREEBUF    1
 #define ISTK       0
@@ -160,12 +161,17 @@ typedef pthread_mutex_t LK_T;
 #define TUNEBUF 0
 
 /* basic allocator parameters */
-#if (HACKS)
+#define BLKMINLOG2    5  /* minimum-size allocation */
+#if (NEWMALLOC)
+#define SLABLOG2      21
+#define MAPMIDLOG2    24
+#define MAPBIGLOG2    26
+#elif (HACKS)
 #define BLKMINLOG2    5  /* minimum-size allocation */
 #define SLABTEENYLOG2 8
 #define SLABTINYLOG2  12 /* little block */
 #define SLABBIGLOG2   16 /* small-size block */
-#if (NEWSLAB)
+#elif (NEWSLAB)
 #define SLABLOG2      18
 #define MAPMIDLOG2    23
 #define MAPBIGLOG2    26
@@ -174,14 +180,12 @@ typedef pthread_mutex_t LK_T;
 #define SLABLOG2      23 /* base size for heap allocations */
 #define MAPMIDLOG2    26
 #define MAPBIGLOG2    28
-#else
+//#elif
 //#define SLABLOG2      20
-#define SLABLOG2      21
-#define MAPMIDLOG2    24
-#define MAPBIGLOG2    26
-#endif
+//#define SLABLOG2      21
+//#define MAPMIDLOG2    24
+//#define MAPBIGLOG2    26
 #else
-#define BLKMINLOG2    5  /* minimum-size allocation */
 #define SLABTINYLOG2  12 /* little block */
 #define SLABBIGLOG2 16 /* small-size block */
 #define SLABLOG2      20 /* base size for heap allocations */

@@ -22,6 +22,8 @@ marshall kirk mckusick & george v. neville-neil
 daniel mitchell
                - basicsynth
 steve pate     - unix filesystems: evolution, design, and implementation
+curt schimmel  - unix systems for modern architectures
+     	         - symmetric multiprocessing and caching for kernel programmers
 richard w stevens
 	       - advanced programming in the unix environment
 

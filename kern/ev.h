@@ -46,6 +46,7 @@
  */
 
 /* mask-bits for modifier keys */
+#define EVKBDSTATE       0x80000000     // 1 if event has state member set
 #define EVKBDSHIFT       0x00000001     // Shift
 #define EVKBDCAPSLK      0x00000002     // Caps Lock
 #define EVKBDCTRL        0x00000004     // Ctrl
@@ -56,12 +57,13 @@
 #define EVKBDSCRLOCK     0x00000080     // Scroll Lock
 #define EVNUMLOCK        0x00000100     // Num Lock
 #define EVKBDNFLGBIT     9
+#define kbdevlen64(ev)   ((ev)->sym & EVKBDSTATE)
 #define kbducval(ev)     ((ev)->sym)    // extract Unicode value
 #define kbdbutton(ev, b) ((ev)->state & (1L << ((b) + EVKBDNFLGBIT)))
 #define kbdmod(ev, mod)  ((ev)->state & (mod))
 struct evkbd {
     int32_t sym;                        // Unicode key symbol + flags
-    int32_t state;                      // button state mask if present
+    int32_t state;                      // button and modifier state if present
 } PACK();
 
 /* dequeue character from keyboard queue. FIXME: may not work */
