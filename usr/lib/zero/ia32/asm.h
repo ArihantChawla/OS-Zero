@@ -36,7 +36,7 @@ m_xchgl(volatile long *adr, long val)
 {
     volatile long res;
 
-    __asm__ __volatile__ ("lock; xchgl %0, %2\n"
+    __asm__ __volatile__ ("lock xchgl %0, %2\n"
                           : "+m" (*adr), "=a" (res)
                           : "r" (val)
                           : "cc");
