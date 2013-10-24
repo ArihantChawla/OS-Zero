@@ -10,7 +10,11 @@
 
 struct vgacon  _vgacontab[VGANCON] ALIGNED(PAGESIZE);
 long           vgacurcon;
+#if (VGAGFX)
 static void   *_vgafontbuf;
+#endif
+
+#if (VGAGFX)
 
 void
 vgainitgfx(void)
@@ -39,6 +43,8 @@ vgaputpix(int32_t pix, int32_t x, int32_t y)
     ;
 }
 
+#endif /* VGAGFX */
+
 /* initialise 8 consoles */
 void
 vgainitcon(int w, int h)
@@ -47,7 +53,9 @@ vgainitcon(int w, int h)
     uint8_t       *ptr = (uint8_t *)VGABUFADR;
     long           l;
 
+#if (VGAGFX)
     vgagetfont();
+#endif
     for (l = 0 ; l < VGANCON ; l++) {
         kbzero(ptr, PAGESIZE);
         con->buf = (uint16_t *)ptr;
