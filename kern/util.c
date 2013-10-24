@@ -415,19 +415,16 @@ kprintf(char *fmt, ...)
                 if (*arg) {
                     switch (*arg) {
                         case 'c':
-<<<<<<< HEAD
                             isch = 1;
                             val = (char)va_arg(al, int);
                             arg++;
                             
                             break;
-=======
                         isch = 1;
                         val = (char)va_arg(al, int);
                         arg++;
                         
                         break;
->>>>>>> 4ba65285dd4ff9b45eae84f8074d0bcd2de8e413
                         case 'h':
                             isdec = 1;
                             val = (short)va_arg(al, int);

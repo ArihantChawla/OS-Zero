@@ -10,33 +10,31 @@
 /* user input events */
 
 /* masks for choosing events */
-#define EVKEYDOWNMASK    (1UL << 0)
-#define EVKEYUPMASK      (1UL << 1)
-#define EVBUTTONDOWNMASK (1UL << 2)
-#define EVBUTTONUPMASK   (1UL << 3)
-#define EVPNTMOTIONMASK  (1UL << 4)
-#define EVIPCMASK        (1UL << 5)
-#define EVFSCREATMASK    (1UL << 6)
-#define EVFUNLINKMASK    (1UL << 7)
-#define EVFSMKDIRMASK    (1UL << 8)
-#define EVFSRMDIRMASK    (1UL << 9)
+#define EVKEYDOWNMASK    (1UL << EVKEYDOWN)
+#define EVKEYUPMASK      (1UL << EVKEYUP)
+#define EVBUTTONDOWNMASK (1UL << EVBUTTONDOWN)
+#define EVBUTTONUPMASK   (1UL << EVBUTTONUP)
+#define EVPNTMOTIONMASK  (1UL << EVPNTMOTION)
+#define EVIPCMASK        (1UL << EVIPC)
+#define EVFSCREATMASK    (1UL << EVFSCREAT)
+#define EVFUNLINKMASK    (1UL << EVFSUNLINK)
+#define EVFSMKDIRMASK    (1UL << EVFSMKDIR)
+#define EVFSRMDIRMASK    (1UL << EVFSRMDIR)
 
 /* keyboard events */
-#define EVKEYDOWN        0x01
-#define EVKEYUP          0x02
+#define EVKEYDOWN        0x01   // keyboard key down event
+#define EVKEYUP          0x02   // keyboard key up event
 /* pointer events */
-#define EVBUTTONDOWN     0x03
-#define EVBUTTONUP       0x04
+#define EVBUTTONDOWN     0x03   // mouse/pointer button down event
+#define EVBUTTONUP       0x04   // mouse/pointer button up event
 #define EVPNTMOTION      0x05
 /* IPC events */
-#define EVCMD            0x06
-#define EVMSG            0x07
-#define EVDATA           0x08
+#define EVIPC            0x06   // protocol messages + data
 /* filesystem events */
-#define EVFSCREAT        0x09
-#define EVFSUNLINK       0x0a
-#define EVFSMKDIR        0x0b
-#define EVFSRMDIR        0x0c
+#define EVFSCREAT        0x07   // file creation event
+#define EVFSUNLINK       0x08   // file unlink event
+#define EVFSMKDIR        0x09   // add directory
+#define EVFSRMDIR        0x0a   // remove directory
 
 /* keyboard events */
 
@@ -56,78 +54,31 @@
 #define EVKBDALTGR       0x00000040     // AltGr
 #define EVKBDSCRLOCK     0x00000080     // Scroll Lock
 #define EVNUMLOCK        0x00000100     // Num Lock
-#define EVKBDNFLGBIT     9
+#define EVKBDNMODBIT     9
+#define EVNBUTTON        (32 - EVKBNMODBIT)
 #define kbdevlen64(ev)   ((ev)->sym & EVKBDSTATE)
 #define kbducval(ev)     ((ev)->sym)    // extract Unicode value
-#define kbdbutton(ev, b) ((ev)->state & (1L << ((b) + EVKBDNFLGBIT)))
+#define kbdbutton(ev, b) ((ev)->state & (1L << ((b) + EVKBDNMODBIT)))
 #define kbdmod(ev, mod)  ((ev)->state & (mod))
 struct evkbd {
     int32_t sym;                        // Unicode key symbol + flags
     int32_t state;                      // button and modifier state if present
 } PACK();
 
-/* dequeue character from keyboard queue. FIXME: may not work */
-static __inline__ char
-evdeqkbdchar(struct evkbdqchar *queue)
-{
-    int32_t n;
-    int32_t cur;
-    int32_t ndx;
-    uint8_t retval = 0;
-
-    mtxlk(&queue->lk);
-    n = queue->n;
-    cur = queue->cur;
-    ndx = queue->ndx;
-    if (ndx) {
-        if (cur != ndx) {
-            if (cur < n - 1 && ndx < cur) {
-                retval = queue->ctab[cur++];
-            } else {
-                cur = 0;
-            }
-            queue->cur = cur;
-        }
-    }
-    mtxunlk(&queue->lk);
-};
-
-/* queue character to keyboard queue. FIXME: may not work */
-static __inline__ void
-evqkdbchar(struct evkdbqchar *queue, char ch)
-{
-    int32_t n;
-    int32_t cur;
-    int32_t ndx;
-
-    mtxlk(&queue->lk);
-    n = queue->n;
-    cur = queue->cur;
-    ndx = queue->ndx;
-    if (n) {
-        if (ndx == n && (cur)) {
-            ndx = 0;
-        }
-        if (ndx < n - 1 && ndx < cur) {
-            queue->ctab[ndx++] = ch;
-        }
-        queue->ndx = ndx;
-    }
-    mtxunlk(&queue->lk);
-}
-
 #define EVKBDQNCHAR (PAGESIZE - 8 * LONGSIZE)
 struct evkbdqchar {
-    volatile long lk;
-    int32_t       n;
-    int32_t       cur;
-    int32_t       ndx;
+    volatile long lk;                   // queue lock mutex
+    int32_t       n;                    // number of chars in queue
+    int32_t       cur;                  // index of next character to read
+    int32_t       ndx;                  // index of next character to buffer
+    /* PADDING */
 #if (LONGSIZE == 4)
     int32_t       pad[4];
 #elif (LONGSIZE == 8)
     int32_t       pad[11];
 #endif
-    char          ctab[EVKBDQNCHAR];
+    /* character data */
+    unsigned char ctab[EVKBDQNCHAR];
 } PACK() ALIGNED(PAGESIZE);
 
 /* pointer such as mouse device events */
@@ -137,9 +88,9 @@ struct evkbdqchar {
 struct evpnt {
     uint32_t button;                    // button ID
     uint32_t state;                     // state bits for buttons; 1 -> down
-    uint32_t x;                         // screen X coordinate
-    uint32_t y;                         // screen Y coordinate
-    uint32_t z;                         // screen Z coordinate
+    int32_t x;                          // screen X coordinate
+    int32_t y;                          // screen Y coordinate
+    int32_t z;                          // screen Z coordinate
 } PACK();
 
 /* IPC events */
@@ -170,6 +121,7 @@ struct evdata {
 struct evfs {
     uint32_t dev;                       // device ID
     uint32_t node;                      // node (file, directory) ID
+    uint32_t datalen;                   // length of data in bytes
     uint8_t  data[EMPTY];               // optional event data
 } PACK();
 
@@ -187,16 +139,20 @@ struct zevent {
 
 /* API */
 /* TODO: implement ring-buffer for event queues */
-/* event queue is mapped to both kernel and user space to avoid copying data */
-/* register to listen to ev with flg parameters on event queue at qadr */
-void evreg(long mask, long flg, void *qadr);
-long evpeek(struct zevent *ev, long mask, void *qadr);
+/* - wired to physical memory permanently */
+/* - event queue is mapped to both kernel and user space to avoid data copies */
+/* - register to listen to ev with flg parameters */
+/*   - evreg returns pointer to dual-mapped event queue (page) */
+void * evreg(long mask, long flg);
+long   evpeek(struct zevent *ev, long mask);
 /* check current queue; don't flush the connection */
 #define EVNOFLUSH       0x01
 /* do not remove event from queue */
 #define EVNOREMOVE      0x02
 /* read next event from queue */
-void evget(struct zevent *ev, long flg, void *qadr);
+/* flush queue unless flg has the EVNOFLUSH-bit set */
+/* remove from queue unless flg has the NOREMOVE-bit set */
+void   evget(struct zevent *ev, long flg);
 
 #endif /* __KERN_EV_H__ */
 
