@@ -7,82 +7,85 @@
  */
 
 /* dequeue character from keyboard queue. FIXME: may not work */
-static char
+unsigned char
 evdeqkbdchar(struct evkbdqchar *queue)
 {
     int32_t       n;
-    int32_t       cur;
-    int32_t       ndx;
+    int32_t       in;
+    int32_t       out;
     unsigned char retval = 0;
+    int           done = 0;
 
     mtxlk(&queue->lk);
-    n = queue->n;
-    cur = queue->cur;
-    ndx = queue->ndx;
-    if (ndx) {
-        if (cur != ndx) {
-            if (cur < n - 1 && cur < ndx) {
-                retval = queue->ctab[cur++];
-                queue->cur = cur;
-                mtxunlk(&queue->lk);
-            } else {
-                mtxunlk(&queue->lk);
-                do {
-                    mtxlk(&queue->lk);
-                    n = queue->n;
-                    cur = queue->cur;
-                    ndx = queue->ndx;
-                    if (cur == n - 1) {
-                        cur = 0;
-                    }
-                    retval = queue->ctab[cur];
-                    if (cur != ndx) {
-                        cur++;
-                        queue->cur = cur;
-                    }
-                    mtxunlk(&queue->lk);
-                } while (cur == ndx);
+    n = EVKBDQNCHAR;
+    in = queue->in;
+    out = queue->out;
+    if (in == n - 1) {
+        in = 0;
+        queue->in = in;
+    }
+    if (in < out) {
+        retval = queue->ctab[in];
+        in++;
+        queue->in = in;
+        mtxunlk(&queue->lk);
+    } else {
+        mtxunlk(&queue->lk);
+        do {
+            mtxlk(&queue->lk);
+            n = EVKBDQNCHAR;
+            in = queue->in;
+            if (in < out || in < n - 1) {
+                retval = queue->ctab[in];
+                in++;
+                queue->in = in;
+                done = 1;
             }
-        }
+            mtxunlk(&queue->lk);
+        } while (!done);
     }
 
     return retval;
 };
 
 /* queue character to keyboard queue. FIXME: may not work */
-static void
+void
 evqkbdchar(struct evkbdqchar *queue, unsigned char ch)
 {
     int32_t n;
-    int32_t cur;
-    int32_t ndx;
+    int32_t in;
+    int32_t out;
+    int     done = 0;
 
     mtxlk(&queue->lk);
-    n = queue->n;
-    cur = queue->cur;
-    ndx = queue->ndx;
-    if (n) {
-        if (ndx == n - 1) {
-            ndx = 0;
-        }
-        if (ndx < n - 1 && ndx < cur) {
-            queue->ctab[ndx++] = ch;
-            queue->ndx = ndx;
-            mtxunlk(&queue->lk);
-        } else {
-            mtxunlk(&queue->lk);
-            do {
-                mtxlk(&queue->lk);
-                n = queue->n;
-                cur = queue->cur;
-                ndx = queue->ndx;
-                if ((ndx < n - 1 && ndx > cur) || ndx < cur) {
-                    queue->ctab[ndx++] = ch;
-                    queue->ndx = ndx;
-                }
-                mtxunlk(&queue->lk);
-            } while (ndx == cur);
-        }
+    n = EVKBDQNCHAR;
+    in = queue->in;
+    out = queue->out;
+    if (out == n - 1) {
+        out = 0;
     }
+    if (out < n - 1 && out < in) {
+        queue->ctab[out] = ch;
+        out++;
+        queue->out = out;
+        mtxunlk(&queue->lk);
+    } else {
+        mtxunlk(&queue->lk);
+        do {
+            mtxlk(&queue->lk);
+            n = EVKBDQNCHAR;
+            in = queue->in;
+            out = queue->out;
+            if (out < n - 1 || out < in) {
+                queue->ctab[out] = ch;
+                out++;
+                queue->out = out;
+                done = 1;
+            }
+            mtxunlk(&queue->lk);
+        } while (!done);
+    }
+
+    return;
 }
 
