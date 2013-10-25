@@ -69,8 +69,8 @@ struct evkbd {
 struct evkbdqchar {
     volatile long lk;                   // queue lock mutex
     int32_t       n;                    // number of chars in queue
-    int32_t       out;                  // index of next character to read
-    int32_t       in;                   // index of next character to buffer
+    int32_t       out;                  // index of next character to write
+    int32_t       in;                   // index of next character to read
     /* PADDING */
 #if (LONGSIZE == 4)
     int32_t       pad[4];
