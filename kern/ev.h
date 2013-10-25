@@ -138,7 +138,7 @@ struct zevent {
 } PACK();
 
 /* API */
-/* TODO: implement ring-buffer for event queues */
+/* TODO: implement ring-buffers for event queues */
 /* - wired to physical memory permanently */
 /* - event queue is mapped to both kernel and user space to avoid data copies */
 /* - register to listen to ev with flg parameters */
@@ -153,6 +153,9 @@ long   evpeek(struct zevent *ev, long mask);
 /* flush queue unless flg has the EVNOFLUSH-bit set */
 /* remove from queue unless flg has the NOREMOVE-bit set */
 void   evget(struct zevent *ev, long flg);
+
+unsigned char evdeqkbdchar(struct evkbdqchar *queue);
+void          evqkbdchar(struct evkbdqchar *queue, unsigned char ch);
 
 #endif /* __KERN_EV_H__ */
 

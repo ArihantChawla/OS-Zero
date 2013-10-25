@@ -10,14 +10,13 @@
 unsigned char
 evdeqkbdchar(struct evkbdqchar *queue)
 {
-    int32_t       n;
-    int32_t       in;
-    int32_t       out;
+    long          n = EVKBDQNCHAR;
+    long          in;
+    long          out;
     unsigned char retval = 0;
     int           done = 0;
 
     mtxlk(&queue->lk);
-    n = EVKBDQNCHAR;
     in = queue->in;
     out = queue->out;
     if (in == n - 1) {
@@ -33,7 +32,6 @@ evdeqkbdchar(struct evkbdqchar *queue)
         mtxunlk(&queue->lk);
         do {
             mtxlk(&queue->lk);
-            n = EVKBDQNCHAR;
             in = queue->in;
             if (in < out || in < n - 1) {
                 retval = queue->ctab[in];
@@ -52,13 +50,12 @@ evdeqkbdchar(struct evkbdqchar *queue)
 void
 evqkbdchar(struct evkbdqchar *queue, unsigned char ch)
 {
-    int32_t n;
-    int32_t in;
-    int32_t out;
-    int     done = 0;
+    long n = EVKBDQNCHAR;
+    long in;
+    long out;
+    int  done = 0;
 
     mtxlk(&queue->lk);
-    n = EVKBDQNCHAR;
     in = queue->in;
     out = queue->out;
     if (out == n - 1) {
@@ -73,7 +70,6 @@ evqkbdchar(struct evkbdqchar *queue, unsigned char ch)
         mtxunlk(&queue->lk);
         do {
             mtxlk(&queue->lk);
-            n = EVKBDQNCHAR;
             in = queue->in;
             out = queue->out;
             if (out < n - 1 || out < in) {
