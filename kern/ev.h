@@ -15,7 +15,7 @@
 #define EVBUTTONDOWNMASK (1UL << EVBUTTONDOWN)
 #define EVBUTTONUPMASK   (1UL << EVBUTTONUP)
 #define EVPNTMOTIONMASK  (1UL << EVPNTMOTION)
-#define EVIPCMASK        (1UL << EVIPC)
+#define EVIPCMASK        ((1UL << EVCMD) | (1UL << EVMSG) | (1UL << EVDATA))
 #define EVFSCREATMASK    (1UL << EVFSCREAT)
 #define EVFUNLINKMASK    (1UL << EVFSUNLINK)
 #define EVFSMKDIRMASK    (1UL << EVFSMKDIR)
@@ -29,7 +29,9 @@
 #define EVBUTTONUP       0x04   // mouse/pointer button up event
 #define EVPNTMOTION      0x05
 /* IPC events */
-#define EVIPC            0x06   // protocol messages + data
+#define EVMSG            0x06   // message events such as errors
+#define EVCMD            0x07   // RPC commands
+#define EVDATA           0x08   // data transfer
 /* filesystem events */
 #define EVFSCREAT        0x07   // file creation event
 #define EVFSUNLINK       0x08   // file unlink event
@@ -65,17 +67,17 @@ struct evkbd {
     int32_t state;                      // button and modifier state if present
 } PACK();
 
+/* ring-buffer event queue for 8-bit character keyboard events */
 #define EVKBDQNCHAR (PAGESIZE - 8 * LONGSIZE)
 struct evkbdqchar {
     volatile long lk;                   // queue lock mutex
-    int32_t       n;                    // number of chars in queue
     int32_t       out;                  // index of next character to write
     int32_t       in;                   // index of next character to read
     /* PADDING */
 #if (LONGSIZE == 4)
-    int32_t       pad[4];
+    int32_t       pad[5];
 #elif (LONGSIZE == 8)
-    int32_t       pad[11];
+    int32_t       pad[6];
 #endif
     /* character data */
     unsigned char ctab[EVKBDQNCHAR];
@@ -95,17 +97,17 @@ struct evpnt {
 
 /* IPC events */
 
+/* message packet */
+struct evmsg {
+    uint32_t nbyte;                     // number of octets
+    uint8_t  data[EMPTY];               // data (place-holder)
+} PACK();
+
 /* command packet */
 struct evcmd {
     uint32_t cmd;                       // RPC command
     uint32_t src;                       // src object
     uint32_t dest;                      // destination object
-} PACK();
-
-/* message packet */
-struct evmsg {
-    uint32_t nbyte;                     // number of octets
-    uint8_t  data[EMPTY];               // data (place-holder)
 } PACK();
 
 /* header + data */
