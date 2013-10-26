@@ -10,14 +10,20 @@
 /* user input events */
 
 /* masks for choosing events */
+#define EVKEYMASK        (EVKEYDOWNMASK | EVKEYUPMASK)
 #define EVKEYDOWNMASK    (1UL << EVKEYDOWN)
 #define EVKEYUPMASK      (1UL << EVKEYUP)
+#define EVBUTTONMASK     (EVBUTTONDOWNMASK | EVBUTTONUPMASK)
 #define EVBUTTONDOWNMASK (1UL << EVBUTTONDOWN)
 #define EVBUTTONUPMASK   (1UL << EVBUTTONUP)
 #define EVPNTMOTIONMASK  (1UL << EVPNTMOTION)
 #define EVIPCMASK        ((1UL << EVCMD) | (1UL << EVMSG) | (1UL << EVDATA))
+#define EVFSMASK         ((EVFSCREATMASK                                \
+                           | EVFSUNLINKMASK                             \
+                           | EVFSMKDIRMASK                              \
+                           | EVFSRMDIRMASK))
 #define EVFSCREATMASK    (1UL << EVFSCREAT)
-#define EVFUNLINKMASK    (1UL << EVFSUNLINK)
+#define EVFSUNLINKMASK   (1UL << EVFSUNLINK)
 #define EVFSMKDIRMASK    (1UL << EVFSMKDIR)
 #define EVFSRMDIRMASK    (1UL << EVFSRMDIR)
 
@@ -45,8 +51,10 @@
  * be used as flags if need be
  */
 
+/* keyboard event state field existence */
+#define EVKBDSTATE       0x80000000     // 1 if event has state member
+#define EVKBDNFLGBIT     1
 /* mask-bits for modifier keys */
-#define EVKBDSTATE       0x80000000     // 1 if event has state member set
 #define EVKBDSHIFT       0x00000001     // Shift
 #define EVKBDCAPSLK      0x00000002     // Caps Lock
 #define EVKBDCTRL        0x00000004     // Ctrl
@@ -57,7 +65,7 @@
 #define EVKBDSCRLOCK     0x00000080     // Scroll Lock
 #define EVNUMLOCK        0x00000100     // Num Lock
 #define EVKBDNMODBIT     9
-#define EVNBUTTON        (32 - EVKBNMODBIT)
+#define EVNBUTTON        (32 - EVKBNMODBIT - EVKBDNFLGBIT)
 #define kbdevlen64(ev)   ((ev)->sym & EVKBDSTATE)
 #define kbducval(ev)     ((ev)->sym)    // extract Unicode value
 #define kbdbutton(ev, b) ((ev)->state & (1L << ((b) + EVKBDNMODBIT)))
@@ -71,8 +79,8 @@ struct evkbd {
 #define EVKBDQNCHAR (PAGESIZE - 8 * LONGSIZE)
 struct evkbdqchar {
     volatile long lk;                   // queue lock mutex
-    int32_t       out;                  // index of next character to write
-    int32_t       in;                   // index of next character to read
+    long          out;                  // index of next character to write
+    long          in;                   // index of next character to read
     /* PADDING */
 #if (LONGSIZE == 4)
     int32_t       pad[5];
@@ -100,13 +108,13 @@ struct evpnt {
 /* message packet */
 struct evmsg {
     uint32_t nbyte;                     // number of octets
-    uint8_t  data[EMPTY];               // data (place-holder)
+    uint32_t mqid;                      // message queue ID
 } PACK();
 
 /* command packet */
 struct evcmd {
     uint32_t cmd;                       // RPC command
-    uint32_t src;                       // src object
+    uint32_t src;                       // source object
     uint32_t dest;                      // destination object
 } PACK();
 
