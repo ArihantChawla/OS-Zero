@@ -42,14 +42,13 @@
 #define HASH_ALLOC(n, sz)     calloc(n, sz)
 #endif
 
-#define hashinit(rpp)                                                   \
+#define hashinit()                                                      \
     do {                                                                \
         HASH_TYPE *_hash = HASH_ALLOC(1, sizeof(HASH_TYPE));            \
                                                                         \
         if (_hash) {                                                    \
             _hash->tab = HASH_ALLOC(HASH_TABSZ, sizeof(HASH_TYPE));     \
         }                                                               \
-        *(rpp) = _hash;                                                 \
     } while (0)
 
 #define hashadd(hash, item)                                             \

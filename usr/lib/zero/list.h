@@ -91,7 +91,7 @@
     do {                                                                \
         LIST_TYPE *_tail;                                               \
                                                                         \
-        (item)->next = NULL;                                            \
+        (item)->LISTNEXT = NULL;                                        \
         mtxlk(&(qp)->lk);                                               \
         _tail  = (queue)->tail;                                         \
         (item)->LISTPREV = _tail;                                       \
@@ -116,7 +116,7 @@
         } else {                                                        \
             _tmp = (item)->LISTNEXT;                                    \
             if (_tmp) {                                                 \
-                _tmp->LISTPREV = (item)->prev;                          \
+                _tmp->LISTPREV = (item)->LISTPREV;                      \
             } else {                                                    \
                 (queue)->tail = NULL;                                   \
             }                                                           \
@@ -124,9 +124,9 @@
         }                                                               \
         _tmp = (item)->LISTNEXT;                                        \
         if (_tmp) {                                                     \
-            _tmp->prev = (item)->prev;                                  \
+            _tmp->prev = (item)->LISTPREV;                              \
         } else {                                                        \
-            _tmp = (item)->prev;                                        \
+            _tmp = (item)->LISTPREV;                                        \
             if (_tmp) {                                                 \
                 _tmp->LISTNEXT = NULL;                                  \
             } else {                                                    \

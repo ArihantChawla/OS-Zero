@@ -28,16 +28,17 @@
 #define LISTPREV   freeprev
 #define LISTNEXT   freenext
 #include <zero/list.h>
-#define bufqueueblk(blk)                                                \
-    listpush(&buflruq, blk)
+#define bufqblk(blk)                                                    \
+    listpush(&buffreelist, blk)
 #define bufdeqblk(retpp)                                                \
-    listdeq(&buflruq, retpp)
-#define bufpopblk(blk)                                                    \
-    listqueue(&buflruq, blk)
+    listdeq(&buffreelist, retpp)
+#define bufpopblk(blk)                                                  \
+    listqueue(&buffreelist, blk)
 #define bufrmfree(blk)                                                  \
-    listrm(&buflruq, blk)
+    listrm(&buffreelist, blk)
 #define HASH_KEYTYPE long
 #define HASH_TYPE    struct bufhash
+#define HASH_ITEM    struct bufblkq
 #define HASHPREV     hashprev
 #define HASHNEXT     hashnext
 #define HASH_TABSZ   65536
@@ -47,15 +48,13 @@
 #define HASH_ALLOC(n, sz) kwalloc((n) * (sz))
 #include <zero/hash.h>
 
-#if (!BUFMULTITAB)
 #if (!powerof2(HASH_TABSZ))
 #error BUFNHASHITEM must be a power of two
-#endif
 #endif
 
 #define bufadrtoid(ptr)                                                 \
     ((bufzone) ? ((uint8_t *)ptr - (uint8_t *)bufzone) >> BUFSIZELOG2 : NULL)
-
+    
 #define bufempty()   (bufstknext == bufnstk)
 //#define buffull()    (!bufstknext)
 #define bufpop()     (bufstk[bufstknext++])
@@ -66,12 +65,11 @@
 
 /* TODO: stack for heap-based buffer allocation */
 
-#if (!BUFMULTITAB)
-static struct bufblkq   *bufhashtab[BUFNHASHITEM] ALIGNED(PAGESIZE);
-#endif
-static volatile long     buflktab[BUFNBLK] ALIGNED(PAGESIZE);
+static struct bufblk    *bufhashtab[BUFNHASHITEM] ALIGNED(PAGESIZE);
+static volatile long     bufhashlktab[BUFNHASHITEM] ALIGNED(PAGESIZE);
+//static volatile long     buflktab[BUFNBLK] ALIGNED(PAGESIZE);
 static void             *bufstk[BUFNBLK] ALIGNED(PAGESIZE);
-static struct bufblkq    buflruq;
+static struct bufblkq    buffreelist;
 static volatile long     bufstklk;
 static long              bufnstk;
 static long              bufstknext;
@@ -80,15 +78,20 @@ static void             *bufzone;
 //static uintptr_t         bufbrk;
 static size_t            bufnbyte;
 
-#if 0
-void *
+long
 bufinit(void)
 {
-    hashinit(&bufhashtab);
+    long retval = 0;
 
-    return bufhashtab;
+    hashinit();
+    kprintf("allocating %ld bytes of buffer cache\n", BUFNBYTE);
+    bufzone = memalloc(BUFNBYTE, PAGEBUF | PAGEWIRED);
+    if (bufzone) {
+        retval = 1;
+    }
+
+    return retval;
 }
-#endif
 
 /* flush nbuf buffers onto disks */
 void *
@@ -108,7 +111,7 @@ bufalloc(void)
 
     mtxlk(&bufzonelk);
     if (!bufzone) {
-        bufzone = memalloc(BUFNBYTE, PAGEBUF | PAGEWIRED);
+        bufinit();
         if (bufzone) {
             /*
              * buffers are zeroed on allocation so we don't force them to be
@@ -143,227 +146,34 @@ bufalloc(void)
     return ptr;
 }
 
-void
-buffree(void *ptr)
-{
-    mtxlk(&bufstklk);
-    bufpush(ptr);
-    mtxunlk(&bufstklk);
-
-    return;
-}
-
-#if (BUFMULTITAB)
-
-void
-devbufblk(struct devbuf *buf, struct devblk *blk)
-{
-    struct buftab *tab;
-    struct buftab *ptr = NULL;
-    struct bufblk *blk = NULL;
-    long           num = blk->num;
-    long           fail = 0;
-    long           key0;
-    long           key1;
-    long           key2;
-    long           key3;
-    void          *pstk[BUFNKEY] = { NULL, NULL, NULL, NULL };
-
-    key0 = bufkey0(num);
-    key1 = bufkey1(num);
-    key2 = bufkey2(num);
-    key3 = bufkey3(num);
-    mtxlk(&buf->lk);
-    ptr = buf->tab.ptr;
-    if (!ptr) {
-        ptr = kmalloc(NLVL0BLK * sizeof(struct buftab));
-        if (ptr) {
-            kbzero(ptr, NLVL0BLK * sizeof(struct buftab));
-        }
-        pstk[0] = ptr;
-    }
-    if (ptr) {
-        ptr = ptr[key0].ptr;
-        if (!ptr) {
-            ptr = kmalloc(NLVL1BLK * sizeof(struct buftab));
-            if (ptr) {
-                kbzero(ptr, NLVL1BLK * sizeof(struct buftab));
-            }
-            pstk[1] = ptr;
-        }
-    } else {
-        fail = 1;
-    }
-    if (ptr) {
-        ptr = ptr[key1].ptr;
-        if (!ptr) {
-            ptr = kmalloc(NLVL2BLK * sizeof(struct buftab));
-            if (ptr) {
-                kbzero(ptr, NLVL2BLK * sizeof(struct buftab));
-            }
-            pstk[2] = ptr;
-        }
-    } else {
-        fail = 1;
-    }
-    if (ptr) {
-        ptr = ptr[key2].ptr;
-        if (!ptr) {
-            ptr = kmalloc(NLVL3BLK * sizeof(struct buftab));
-            if (ptr) {
-                kbzero(ptr, NLVL3BLK * sizeof(struct buftab));
-            }
-            pstk[3] = ptr;
-        }
-    } else {
-        fail = 1;
-    }
-    if (!fail) {
-        if (pstk[0]) {
-            buf->tab.nref++;
-            buf->tab.ptr = pstk[0];
-        }
-        tab = buf->tab.ptr;
-        if (pstk[1]) {
-            tab[key0].nref++;
-            tab[key0].ptr = pstk[1];
-        }
-        tab = tab[key0].ptr;
-        if (pstk[2]) {
-            tab[key1].nref++;
-            tab[key1].ptr = pstk[2];
-        }
-        tab = tab[key1].ptr;
-        if (pstk[3]) {
-            tab[key2].nref++;
-            tab[key2].ptr = pstk[3];
-        }
-        tab = tab[key2].ptr;
-        tab = &tab[key3];
-        tab->nref++;
-        tab->ptr = blk;
-    }
-    mtxunlk(&buf->lk);
-    
-    return;
-}
-
-struct bufblk *
-devfindbuf(struct devbuf *buf, long num, long rel)
-{
-    struct bufblk *blk = NULL;
-    struct buftab *tab;
-    long           key0;
-    long           key1;
-    long           key2;
-    long           key3;
-
-    key0 = bufkey0(num);
-    key1 = bufkey1(num);
-    key2 = bufkey2(num);
-    key3 = bufkey3(num);
-    mtxlk(&buf->lk);
-    tab = buf->tab.ptr;
-    if (tab) {
-        tab = tab[key0].ptr;
-        if (tab) {
-            tab = tab[key1].ptr;
-            if (tab) {
-                tab = tab[key2].ptr;
-                if (tab) {
-                    blk = tab[key3].ptr;
-                }
-            }
-        }
-    }
-    if (!rel) {
-        mtxunlk(&buf->lk);
-    }
-
-    return blk;
-}
-
-void
-devfreebuf(struct devbuf *buf, long num)
-{
-    long           key0 = bufkey0(num);
-    long           key1 = bufkey1(num);
-    long           key2 = bufkey2(num);
-    long           key3 = bufkey3(num);
-    void          *blk = devfindbuf(buf, num, 1);
-    void          *ptr;
-    struct buftab *tab;
-    long           nref;
-    long           val;
-    void          *pstk[BUFNKEY] = { NULL, NULL, NULL, NULL };
-
-    if (blk) {
-        tab = buf->tab.ptr;
-        nref = --tab->nref;
-        if (!nref) {
-            pstk[0] = tab;
-            buf->tab.ptr = NULL;
-        }
-        tab = tab[key0].ptr;
-        nref = --tab->nref;
-        if (!nref) {
-            pstk[1] = tab;
-            tab[key0].ptr = NULL;
-        }
-        tab = tab[key1].ptr;
-        nref = --tab->nref;
-        if (!nref) {
-            pstk[2] = tab;
-            tab[key1].ptr = NULL;
-        }
-        tab = tab[key2].ptr;
-        nref = --tab->nref;
-        if (!nref) {
-            pstk[3] = tab;
-            tab[key2].ptr = NULL;
-        }
-        tab = &tab[key3];
-        nref = --tab->nref;
-        if (!nref) {
-            for (val = 0 ; val < BUFNKEY ; val++) {
-                ptr = pstk[val];
-                if (ptr) {
-                    kfree(ptr);
-                }
-            }
-        }
-    }
-    mtxunlk(&buf->lk);
-    bufqblk(&buflruq, blk);
-
-    return;
-}
-
-#else /* !BUFMULTITAB */
-
 #if 0
 void
-devbufblk(struct bufblk *blk)
+bufaddblk(struct bufblk *blk)
 {
     ;
 }
 #endif
 
-#if 0
 void
-devbufblk(struct bufblk *blk)
+bufaddblk(struct bufblk *blk)
 {
     long           key = bufkey(blk->num);
+    struct bufblk *tmp;
     struct bufblk *head;
 
-    blk->prev = NULL;
-    blk->next = NULL;
+    if (blk->freenext || blk->freeprev) {
+        bufdeqblk(&tmp);
+    }
+    blk->freeprev = NULL;
+    blk->freenext = NULL;
+    blk->hashprev = NULL;
+    blk->hashnext = NULL;
     mtxlk(&bufhashlktab[key]);
     head = bufhashtab[key];
     if (head) {
-        head->prev = blk;
+        head->hashprev = blk;
     }
-    blk->next = head;
+    blk->hashnext = head;
     bufhashtab[key] = blk;
     mtxunlk(&bufhashlktab[key]);
 
@@ -381,19 +191,19 @@ devfindbuf(long dev, long num, long rel)
     while (blk) {
         if (blk->dev == dev && blk->num == num) {
             if (rel) {
-                if (blk->prev) {
-                    blk->prev->next = blk->next;
+                if (blk->hashprev) {
+                    blk->hashprev->hashnext = blk->hashnext;
                 } else {
-                    bufhashtab[key] = blk->next;
+                    bufhashtab[key] = blk->hashnext;
                 }
-                if (blk->next) {
-                    blk->next->prev = blk->prev;
+                if (blk->hashnext) {
+                    blk->hashnext->hashprev = blk->hashprev;
                 }
             }
 
             break;
         }
-        blk = blk->next;
+        blk = blk->hashnext;
     }
     mtxunlk(&bufhashlktab[key]);
 
@@ -401,17 +211,14 @@ devfindbuf(long dev, long num, long rel)
 }
 
 void
-devfreebuf(long dev, long num)
+buffree(long dev, long num)
 {
     struct bufblk *blk = devfindbuf(dev, num, 1);
 
     if (blk) {
-        bufqblk(&buflruq, blk);
+        bufqblk(blk);
     }
 
     return;
 }
-#endif
-
-#endif /* BUFMULTITAB */
 
