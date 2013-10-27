@@ -5,7 +5,6 @@
  */
 
 #define __KERNEL__ 1
-#include <stddef.h>
 #include <zero/cdecl.h>
 #include <zero/param.h>
 #include <zero/mtx.h>
@@ -76,7 +75,7 @@ static long              bufstknext;
 static volatile long     bufzonelk;
 static void             *bufzone;
 //static uintptr_t         bufbrk;
-static size_t            bufnbyte;
+static long              bufnbyte;
 
 long
 bufinit(void)
