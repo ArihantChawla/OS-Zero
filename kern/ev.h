@@ -44,6 +44,10 @@
 #define EVFSMKDIR        0x09   // add directory
 #define EVFSRMDIR        0x0a   // remove directory
 
+/* queue events */
+#define EVQUEUE          0x01
+#define EVDEQUEUE        0x02
+
 /* keyboard events */
 
 /*

@@ -1,6 +1,16 @@
 #ifndef __KERN_CONF_H__
 #define __KERN_CONF_H__
 
+#if defined(__x86_64__)
+#include <kern/unit/x86-64/conf.h>
+#elif defined(__i386__)
+#include <kern/unit/ia32/conf.h>
+#elif defined(__arm__)
+#include <kern/unit/arm/conf.h>
+#elif defined(__ppc__)
+#include <kern/unit/ppc/conf.h>
+#endif
+
 #define BUFSIZE     (1UL << BUFSIZELOG2)
 #define BUFSIZELOG2 12                          // TODO: make this per-device
 
@@ -16,7 +26,9 @@
 #define NCPU      1
 #endif
 #define NPROCFD   32768 // maximum number of file descriptors per process
+#if !defined(NPAGEPHYS)
 #define NPAGEPHYS (16ULL * 1024 * 1024)         // maximum number of physical pages
+#endif
 #define NBPHYS    (NPAGEPHYS * PAGESIZE)        // maximum amount of RAM
 
 #define GFXWIDTH  1024                          // horizontal screen resolution

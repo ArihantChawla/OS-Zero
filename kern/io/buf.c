@@ -1,7 +1,7 @@
 /*
- * buffer cache is allocated at-once (given size).
- * buffers are zeroed on-allocation, which forces them to be mapped and wired
- * to RAM.
+ * buffer cache is allocated at-once (fixed size).
+ * buffers are zeroed on-allocation, which forces them to be mapped to RAM
+ * buffer address space is wired to physical memory
  */
 
 #define __KERNEL__ 1
@@ -24,149 +24,112 @@
 
 #define LIST_TYPE  struct bufblk
 #define LIST_QTYPE struct bufblkq
-#define LISTPREV   freeprev
-#define LISTNEXT   freenext
+#define LISTPREV   listprev
+#define LISTNEXT   listnext
 #include <zero/list.h>
-#define bufqblk(blk)                                                    \
+#define bufpushfree(blk)                                                \
     listpush(&buffreelist, blk)
-#define bufdeqblk(retpp)                                                \
-    listdeq(&buffreelist, retpp)
-#define bufpopblk(blk)                                                  \
-    listqueue(&buffreelist, blk)
-#define bufrmfree(blk)                                                  \
-    listrm(&buffreelist, blk)
-#define HASH_KEYTYPE long
-#define HASH_TYPE    struct bufhash
-#define HASH_ITEM    struct bufblkq
-#define HASHPREV     hashprev
-#define HASHNEXT     hashnext
-#define HASH_TABSZ   65536
-#define HASH_FUNC(bp) ((bp)->num & 0xffff)
-#define HASH_CMP(bp1, bp2)                                              \
-    ((bp1)->dev == (bp2)->dev && (bp1)->num == (bp2)->num)
-#define HASH_ALLOC(n, sz) kwalloc((n) * (sz))
-#include <zero/hash.h>
+#define bufpopfree(blk)                                                 \
+    listpop(&buffreelist, blk)
+#define bufqlru(blk)                                                    \
+    listpush(&buflruq, blk)
+#define bufdeqlru(rpp)                                                  \
+    listdeq(&buflruq, rpp)
 
-#if (!powerof2(HASH_TABSZ))
+#if (!powerof2(BUFNHASHITEM))
 #error BUFNHASHITEM must be a power of two
 #endif
 
 #define bufadrtoid(ptr)                                                 \
     ((bufzone) ? ((uint8_t *)ptr - (uint8_t *)bufzone) >> BUFSIZELOG2 : NULL)
-    
-#define bufempty()   (bufstknext == bufnstk)
-//#define buffull()    (!bufstknext)
-#define bufpop()     (bufstk[bufstknext++])
-#define bufpush(ptr) (bufstk[--bufstknext] = (ptr))
-
-#define buflk(adr)   mtxlk(&buflktab[bufadrtoid(adr)])
-#define bufunlk(adr) mtxunlk(&buflktab[bufadrtoid(adr)])
-
-/* TODO: stack for heap-based buffer allocation */
 
 static struct bufblk    *bufhashtab[BUFNHASHITEM] ALIGNED(PAGESIZE);
 static volatile long     bufhashlktab[BUFNHASHITEM] ALIGNED(PAGESIZE);
-//static volatile long     buflktab[BUFNBLK] ALIGNED(PAGESIZE);
-static void             *bufstk[BUFNBLK] ALIGNED(PAGESIZE);
+static struct bufblk     bufhdrtab[BUFNBLK];
 static struct bufblkq    buffreelist;
-static volatile long     bufstklk;
-static long              bufnstk;
-static long              bufstknext;
+static struct bufblkq    buflruq;
 static volatile long     bufzonelk;
 static void             *bufzone;
-//static uintptr_t         bufbrk;
 static long              bufnbyte;
 
 long
 bufinit(void)
 {
-    long retval = 0;
+    long           retval = 0;
+    uint8_t       *u8ptr;
+    struct bufblk *blk;
+    long           n;
 
-    hashinit();
     kprintf("allocating %ld bytes of buffer cache\n", BUFNBYTE);
-    bufzone = memalloc(BUFNBYTE, PAGEBUF | PAGEWIRED);
+    bufzone = memalloc(BUFNBYTE, PAGEWIRED);
     if (bufzone) {
+        kbzero(bufzone, BUFNBYTE);
+        n = BUFNBLK;
+        blk = bufhdrtab;
+        u8ptr = bufzone;
+        while (n--) {
+            blk->data = u8ptr;
+            bufpushfree(blk);
+            u8ptr += BUFSIZE;
+            blk++;
+        }
+        bufnbyte = BUFNBYTE;
         retval = 1;
     }
 
     return retval;
 }
 
-/* flush nbuf buffers onto disks */
-void *
-bufevict(long nbuf)
-{
-    void *ptr = NULL;
-
-    return ptr;
-}
-
-void *
-bufalloc(void)
-{
-    void    *ptr = NULL;
-    uint8_t *u8ptr;
-    long     l;
-
-    mtxlk(&bufzonelk);
-    if (!bufzone) {
-        bufinit();
-        if (bufzone) {
-            /*
-             * buffers are zeroed on allocation so we don't force them to be
-             * mapped to ram with kbzero() yet.
-             */
-            u8ptr = bufzone;
-            mtxlk(&bufstklk);
-            for (l = 0 ; l < BUFNBLK ; l++) {
-                bufstk[l] = u8ptr;
-                u8ptr += BUFSIZE;
-            }
-            mtxunlk(&bufstklk);
-            bufnbyte = BUFNBYTE;
-        } else {
-
-            return NULL;
-        }
-    }
-    mtxunlk(&bufzonelk);
-    do {
-        mtxlk(&bufstklk);
-        if (!bufempty()) {
-            ptr = bufpop();
-            mtxunlk(&bufstklk);
-            kbzero(ptr, BUFSIZE);
-        } else {
-            bufevict(BUFNEVICT);
-            mtxunlk(&bufstklk);
-        }
-    } while (!ptr);
-
-    return ptr;
-}
-
-#if 0
 void
-bufaddblk(struct bufblk *blk)
+bufwrite(struct bufblk *blk)
 {
     ;
 }
-#endif
+
+struct bufblk *
+bufevict(void)
+{
+    struct bufblk *blk = NULL;
+
+    do {
+        bufdeqlru(&blk);
+    } while (!blk);
+    bufwrite(blk);
+
+    return blk;
+}
+
+struct bufblk *
+bufgetfree(void)
+{
+    struct bufblk *blk = NULL;
+
+    do {
+        mtxlk(&buffreelist.lk);
+        bufpopfree(&blk);
+        mtxunlk(&buffreelist.lk);
+        if (blk) {
+            blk->listprev = NULL;
+            blk->listnext = NULL;
+            blk->hashprev = NULL;
+            blk->hashnext = NULL;
+        } else {
+            blk = bufevict();
+        }
+    } while (!blk);
+
+    return blk;
+}
 
 void
-bufaddblk(struct bufblk *blk)
+bufaddblk(long dev, long num, void *data)
 {
-    long           key = bufkey(blk->num);
-    struct bufblk *tmp;
+    struct bufblk *blk;
+    long           key;
     struct bufblk *head;
 
-    if (blk->freenext || blk->freeprev) {
-        bufdeqblk(&tmp);
-    }
-    blk->freeprev = NULL;
-    blk->freenext = NULL;
-    blk->hashprev = NULL;
-    blk->hashnext = NULL;
+    blk = bufgetfree();
+    key = bufkey(blk->num);
     mtxlk(&bufhashlktab[key]);
     head = bufhashtab[key];
     if (head) {
@@ -174,13 +137,14 @@ bufaddblk(struct bufblk *blk)
     }
     blk->hashnext = head;
     bufhashtab[key] = blk;
+    bufqlru(blk);
     mtxunlk(&bufhashlktab[key]);
 
     return;
 }
 
 struct bufblk *
-devfindbuf(long dev, long num, long rel)
+buffind(long dev, long num, long rel)
 {
     long           key = bufkey(num);
     struct bufblk *blk;
@@ -210,12 +174,15 @@ devfindbuf(long dev, long num, long rel)
 }
 
 void
-buffree(long dev, long num)
+buffree(long dev, long num, long flush)
 {
-    struct bufblk *blk = devfindbuf(dev, num, 1);
+    struct bufblk *blk = buffind(dev, num, 1);
 
     if (blk) {
-        bufqblk(blk);
+        if (flush) {
+            bufwrite(blk);
+        }
+        bufpushfree(blk);
     }
 
     return;

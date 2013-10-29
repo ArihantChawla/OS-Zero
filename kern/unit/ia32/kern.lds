@@ -42,6 +42,8 @@ SECTIONS {
 	trap.o(.bss)
 	isr.o(.text)
 	isr.o(.data)
+	tss.o(.text)
+	tss.o(.data)
 	tss.o(.bss)
 	pic.o(.text)
 	seg.o(.text)

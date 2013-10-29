@@ -40,7 +40,7 @@ static __inline__ void
 mtxlk2(volatile long *lp, long val)
 {
     volatile long res = val;
-
+    
     do {
         res = m_cmpswap(lp, MTXINITVAL, val);
         if (res != MTXINITVAL) {

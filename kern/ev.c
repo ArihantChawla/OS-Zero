@@ -6,6 +6,20 @@
  * early pseudo-code. :)
  */
 
+/* wait for event of type on kernel data structure wadr */
+void
+evwait(void *wadr, long type)
+{
+    ;
+}
+
+/* awaken threads waiting for event type on kernel data structure wadr */
+void
+evpost(void *wadr, long type)
+{
+    ;
+}
+
 /* dequeue character from keyboard queue. FIXME: may not work */
 unsigned char
 evdeqkbdchar(struct evkbdqchar *queue)
@@ -40,6 +54,11 @@ evdeqkbdchar(struct evkbdqchar *queue)
                 done = 1;
             }
             mtxunlk(&queue->lk);
+            if (!done) {
+                evwait(queue, EVQUEUE);
+            } else {
+                evpost(queue, EVDEQUEUE);
+            }
         } while (!done);
     }
 
@@ -79,6 +98,11 @@ evqkbdchar(struct evkbdqchar *queue, unsigned char ch)
                 done = 1;
             }
             mtxunlk(&queue->lk);
+            if (!done) {
+                evwait(queue, EVDEQUEUE);
+            } else {
+                evpost(queue, EVQUEUE);
+            }
         } while (!done);
     }
 

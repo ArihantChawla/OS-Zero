@@ -70,6 +70,7 @@ kmain(struct mboothdr *hdr, unsigned long pmemsz)
         }
     }
 #if (SMP)
+    /* multiprocessor probe */
     mpinit();
     if (mpmultiproc) {
 //        mpstart();
@@ -100,7 +101,6 @@ kmain(struct mboothdr *hdr, unsigned long pmemsz)
 #if (!VBE2)
     logoprint();
 #endif
-    /* multiprocessor probe */
     /* CPU interface */
     taskinit();
     tssinit(0);                        // initialize CPU TSS
