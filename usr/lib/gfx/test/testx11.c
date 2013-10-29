@@ -1805,8 +1805,6 @@ main(int argc,
     initimgs();
     initwin();
 
-#if 0
-
     for (i = 0 ; i < TEST_IMAGES - 1 ; i++) {
         loadimg(&_attr, &_srcimg, imgtab[i]);
         loadimg(&_attr, &_destimg, imgtab[i + 1]);
@@ -1834,9 +1832,7 @@ main(int argc,
 #endif
     }
 
-#endif
-
-    testscale();
+//    testscale();
 #if 0
     testxfade1t(10000000);
     testfadeint(1000000);
