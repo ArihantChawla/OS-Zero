@@ -16,7 +16,7 @@
 
 \title{\LARGE{Zero Volume 0 - The Kernel} \\
        \large{Design and Implementation} \\
-       \large{DRAFT 1, Revision 11}}
+       \large{DRAFT 1, Revision 12}}
 \author{Tuomo Petteri Venäläinen}
 \date{\today}
 \maketitle
@@ -52,30 +52,37 @@
 	\textbf{Design}
 
 	Zero is a multithreaded multiprocessor-enabled kernel. Design goals
-	include fast response to user actions as well as high multimedia
+	include fast response to user interaction as well as high multimedia
 	performance.
 
 \section{Acknowledgements}
 
-	\textbf{Contributors}
+\subsection{Contributors}
 
-	At the moment, I have kept Zero a one-man project on purpose. I feel
-	it's too much of a moving target to spend other people's time working on
-	things that may change any moment. I will do my best to bring Zero ready
-	for others to work on - I have been offered help, and I want to thank
-	you guys (who know yourself) here. :)
+	At the moment, I have kept Zero mostly a one-man project on purpose. I
+	feel it's too much of a moving target to spend other people's time
+	working on things that may change any moment. I will do my best to bring
+	Zero ready for others to work on - I have been offered help, and I want
+	to thank you guys (who know yourself) here. :)
 
-	\textbf{Open Source Community}
+	At the time being, I want to thank \textbf{Craig Robbins} for some
+	graphical effects as well as \textbf{Leonardo Taglialegne} for some
+	audio hacks. :)
+
+\subsection{Open Source Community}
 
 	First and foremost, I want to thank \textbf{the developers} of open and
 	free software for their work and courage to release their work for
-	others to use and modify. Keep the spirit strong!
+	others to use and modify. Keep strong in spirit!
 
-	\textbf{TODO: thanks and greetings etc.}
+	As his work has been used for the purpose of inspiration, thanks go to
+	\textbf{Carsten Haitzler} for his work on \textbf{Enlightenment} and his
+	mission to reinvent graphical user interfaces. Keep up the good work,
+	Raster! :)
 
 \section{Background}
 
-	Zero has its roots in old, still simple and elegant versions of the UNIX
+	Zero has its roots in early, simple and elegant versions of the UNIX
 	operating system. I still see many good, timeless things about the UNIX
 	design worth reusing in a new operating system. One thing of particular
 	attraction is the "everything is a file" philosophy; I plan to use and
@@ -113,12 +120,32 @@
 	scheduler time slices to not interfere with the rest of the system too
 	much.
 
+	\textbf{Event Task}
+
+	Certain events trigger threads or processes listening to them to run for
+	a short period of time immediately. The timer used may be the same as
+	for interval tasks (see \textbf{Fast Timer}). The idea is to let
+	user interaction events 'steal' a bit of time from the rest of the
+	system.
+
+	\textbf{Fast Timer}
+
+	A timer separate from the standard thread scheduling timer. In default
+	configuration, the fast timer fires an interrupt 1,000 times a second,
+	whereas normal threads are scheduled slices of 4 millisecond at the
+	frequency of 250 Hz. On X86 platforms, HPET event timers are utilised.
+
 	\textbf{Interval Task}
 
 	Short-lived, frequent tasks such as audio and video buffer
 	synchronisation are scheduled with priority higher than normal tasks.
 	It is likely such tasks should be given a slice of time shorter than
 	other threads.
+
+	\textbf{Hybrid Scheduler}
+
+	See \textbf{Event Task}, \textbf{Fast Timer}, and \textbf{Interval Task}
+	for more information.
 
 	\textbf{Page}
 
@@ -149,7 +176,8 @@
 
 	\textbf{Task}
 
-	In the context of Zero, the term task is synonymous the term process.
+	In the context of Zero, the term task is usually used to refer to either
+	\textbf{a process or a thread}.
 
 	\textbf{Thread}
 
@@ -334,14 +362,7 @@
 	The following code snippet lists thread classes in decreasing order of
 	priority.
 
-\begin{verbatim}
-#define THRRT     0  // real-time thread
-#define THRUSER   1  // user thread
-#define THRBATCH  2  // batch thread
-#define THRIDLE   3  // idle thread
-#define THRNCLASS 4
-#define THRNPRIO  64 // # of priorities per class
-\end{verbatim}
+	\textbf{TODO: add thread classes when final}
 
 \subsubsection{Priorities}
 
@@ -354,26 +375,7 @@
 	Every time a thread stops running, its priority is adjusted with the
 	function below.
 
-\begin{verbatim}
-/* adjust thread priority */
-static __inline__ long
-thradjprio(struct thr *thr)
-{
-    long class = thr->class;
-    long prio = thr->prio;
-
-    if (class != THRRT) {
-        /* wrap around back to 0 at THRNPRIO / 2 */
-        prio++;
-        prio &= (THRNPRIO >> 1) - 1;
-        prio = (THRNPRIO * class) + (THRNPRIO >> 1) + prio + thr->nice;
-        prio = max(THRNPRIO * THRNCLASS - 1, prio);
-        thr->prio = prio;
-    }
-
-    return prio;
-}
-\end{verbatim}
+	\textbf{TODO: add final priority adjustment algorithm}
 
 \subsubsection{Data Structures}
 
@@ -391,46 +393,7 @@ thradjprio(struct thr *thr)
 
 	\textbf{IA-32 Implementation}
 
-\begin{verbatim}
-/* process */
-struct proc {
-    struct thr       *thr;              // current running thread
-    long              nthr;             // # of threads
-    /* round-robin queue */
-    struct thrq       thrq;             // queue of ready threads
-    /* page directory */
-    pde_t            *pdir;             // page directory address
-    /* stacks */
-    uint8_t          *ustk;             // user-mode stack
-    uint8_t          *kstk;             // kernel-mode stack
-    long              class;
-    /* memory attributes */
-    uint8_t          *brk;
-    /* process credentials */
-    pid_t             pid;              // process ID
-    pid_t             parent;           // parent process
-    uid_t             ruid;             // real user ID
-    gid_t             rgid;             // real group ID
-    uid_t             euid;             // effective user ID
-    gid_t             egid;             // effective group ID
-    /* descriptor tables */
-    desc_t           *dtab;
-    /* signal state */
-    sigset_t          sigmask;          // signal mask
-    sigset_t          sigpend;          // pending signals
-    signalhandler_t  *sigvec[NSIG];
-    /* runtime arguments */
-    long              argc;             // argument count
-    char            **argv;             // argument vector
-    char            **envp;             // environment strings
-    /* memory management */
-    struct slabhdr   *vmtab[PTRBITS];
-    /* event queue */
-    struct ev        *evq;
-} PACK() ALIGNED(PAGESIZE);
-\end{verbatim}
-
-\newpage
+	\textbf{TODO: add final proc structure}
 
 	\textbf{struct thr}
 
@@ -439,32 +402,7 @@ struct proc {
 
 	\textbf{IA-32 Implementation}
 
-\begin{verbatim}
-struct thr {
-    /* thread control block */
-    struct m_tcb   m_tcb;               // context
-    /* thread stacks */
-    uintptr_t      ustk;                // user-mode stack
-    uintptr_t      kstk;                // kernel-mode stack
-    /* state */
-    long           state;               // thread state
-    /* wait channel */
-    uintptr_t      wchan;               // wait channel
-    /* linkage */
-    struct proc   *proc;                // owner process
-    /* queue linkage */
-    struct thr    *prev;                // previous in queue
-    struct thr    *next;                // next in queue
-    long           id;
-    /* scheduler parameters */
-    long           nice;                // priority adjustment
-    long           class;               // thread class
-    long           prio;                // priority
-    long           runtime;             // run time
-    /* system call context */
-    struct syscall syscall;             // current system call
-} PACK();
-\end{verbatim}
+	\textbf{TODO: add final thr structure}
 
 \subsection{Interrupt Vector}
 
@@ -477,7 +415,7 @@ struct thr {
 
 \newpage
 
-	\textbf{Interrupts}
+\subsubsection{X86 Interrupts}
 
 	The following table lists X86 interrupts along with their associated
 	signals.
@@ -528,7 +466,7 @@ struct thr {
 	\hline
 \end{tabular}
 
-	\textbf{IRQs}
+\subsubsection{IRQs}
 
 	The following table lists default use of IRQs 0 through 0x0f (15). Zero
 	redirects these to interrupts 0x20 through 0x2f (32 to 47).
@@ -631,7 +569,7 @@ struct thr {
 
 \subsection{System Call Mechanism}
 
-	\textbf{Interrupt 0x80}
+\subsubsection{Interrupt 0x80}
 
 	On \textbf{IA-32} architectures, all of up to 3 system call parameters
 	are passed in registers; the system call number is in \textbf{EAX}. On
@@ -641,6 +579,8 @@ struct thr {
 	X86-64. \textbf{Failures} are indicated by setting the \textbf{CF-bit}
 	(carry)	in the \textbf{EFLAGS}-register. System calls are, in the first
 	implementation, triggered by \textbf{interrupt 0x80}.
+
+\subsubsection{SYSENTER and SYSEXIT}
 
 	\textbf{TODO: sysenter + sysexit}
 
@@ -990,8 +930,6 @@ struct sysmem {
 \section{Events}
 
 \section{I/O}
-
-
 
 \part{User Environment}
 

@@ -1,7 +1,6 @@
 #include <stdint.h>
 #include <gfx/types.h>
 
-#if 0
 /*
  * Here is a highly-tuned version of the AdvMame2x scaler.
  *
@@ -171,5 +170,4 @@ gfxscaleimg2x(struct gfximg *src,
 
     return;
 }
-#endif
 

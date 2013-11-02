@@ -148,7 +148,7 @@ struct zevent {
         struct evmsg  msg;
         struct evdata data;
         struct evfs   fs;
-    };
+    } msg;
 } PACK();
 
 /* API */

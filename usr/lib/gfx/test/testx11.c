@@ -445,6 +445,11 @@ struct _v128 {
 #include <X11/Xlocale.h>
 #include <X11/cursorfont.h>
 #include <X11/keysym.h>
+#if (USE_RENDER)
+#include <X11/extensions/Xrender.h>
+#include <X11/extensions/render.h>
+#include <X11/extensions/renderproto.h>
+#endif
 #include <Imlib2.h>
 
 #include <zero/prof.h>
@@ -1246,17 +1251,12 @@ loadimg(struct attr *attr, struct img *img, char *filename)
     return 0;
 }
 
-#define _getimg(d, i) (i)->xim = XGetImage(_attr.disp, (d), 0, 0, (i)->width, (i)->height, ~0UL, ZPixmap)
 #if (USE_SHM)
 #define getimg(d, i) XShmGetImage(_attr.disp, (d), (i)->xim, 0, 0, ~0UL)
-#define putimg(i, d) XShmPutImage(_attr.disp, (d), _attr.gc, (i)->xim, 0, 0, 0, 0, (i)->width, (i)->height, False);
+#define putimg(i, d) XShmPutImage(_attr.disp, (d), _attr.gc, (i)->xim, 0, 0, 0, 0, (i)->width, (i)->height, False); XSync(_attr.disp, False)
 #else
-#define getimg(d, i) _getimg(d, i)
-#define putimg(i, d) XPutImage(_attr.disp, (d), _attr.gc, (i)->xim, 0, 0, 0, 0, (i)->width, (i)->height);
-#endif
-
-#if (USE_SHM)
-#else
+#define getimg(d, i) (i)->xim = XGetImage(_attr.disp, (d), 0, 0, (i)->width, (i)->height, ~0UL, ZPixmap)
+#define putimg(i, d) XPutImage(_attr.disp, (d), _attr.gc, (i)->xim, 0, 0, 0, 0, (i)->width, (i)->height); XSync(_attr.disp, False)
 #endif
 
 void
@@ -1265,12 +1265,12 @@ initimgs(void)
 #if 0
     loadimg(&_attr, &_plasmaimg, "test.jpg");
     initimg(&_attr, &_plasmaimg, 0);
-    _getimg(_plasmaimg.pmap, &_plasmaimg);
+    getimg(_plasmaimg.pmap, &_plasmaimg);
     imlib_free_pixmap_and_mask(_plasmaimg.pmap);
     _plasmaimg.pmap = _plasmaimg.mask = 0;
     loadimg(&_attr, &_demiimg, "demi.jpg");
     initimg(&_attr, &_demiimg, 0);
-    _getimg(_demiimg.pmap, &_demiimg);
+    getimg(_demiimg.pmap, &_demiimg);
     imlib_free_pixmap_and_mask(_demiimg.pmap);
     _demiimg.pmap = _demiimg.mask = 0;
     _blackimg.width = _winimg.width = TEST_WIDTH;
@@ -1294,7 +1294,7 @@ initimgs(void)
     _winimg.height = TEST_HEIGHT;
     loadimg(&_attr, &_winimg, imgtab[0]);
     initimg(&_attr, &_winimg, 0);
-    _getimg(_winimg.pmap, &_winimg);
+    getimg(_winimg.pmap, &_winimg);
 #if 0
     initimg(&_attr, &_srcimg, 0);
     initimg(&_attr, &_destimg, 0);
@@ -1704,7 +1704,7 @@ testscale(void)
 
     loadimg(&_attr, &_srcimg, "testhalf.jpg");
     initimg(&_attr, &_srcimg, 0);
-    _getimg(_srcimg.pmap, &_srcimg);
+    getimg(_srcimg.pmap, &_srcimg);
     _scaleimg.width = TEST_WIDTH;
     _scaleimg.height = TEST_HEIGHT;
     initimg(&_attr, &_scaleimg, 0);
@@ -1808,8 +1808,8 @@ main(int argc,
     for (i = 0 ; i < TEST_IMAGES - 1 ; i++) {
         loadimg(&_attr, &_srcimg, imgtab[i]);
         loadimg(&_attr, &_destimg, imgtab[i + 1]);
-        _getimg(_srcimg.pmap, &_srcimg);
-        _getimg(_destimg.pmap, &_destimg);
+        getimg(_srcimg.pmap, &_srcimg);
+        getimg(_destimg.pmap, &_destimg);
 //        initimg(&_attr, &_srcimg, 0);
 //        initimg(&_attr, &_destimg, 0);
         profstartclk(clk);
@@ -1823,13 +1823,13 @@ main(int argc,
 #endif
 #endif
         }
-        profstopclk(clk);
-        fprintf(stderr, "xfade time %lu\n", profclkdiff(clk));
-        sleep(2);
 #if (USE_SHM)
         dtimg(&_attr, &_srcimg, 0);
         dtimg(&_attr, &_destimg, 0);
 #endif
+        profstopclk(clk);
+        fprintf(stderr, "xfade time %lu\n", profclkdiff(clk));
+        sleep(2);
     }
 
 //    testscale();

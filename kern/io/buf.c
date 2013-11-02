@@ -174,7 +174,7 @@ buffind(long dev, long num, long rel)
 }
 
 void
-buffree(long dev, long num, long flush)
+bufrel(long dev, long num, long flush)
 {
     struct bufblk *blk = buffind(dev, num, 1);
 
