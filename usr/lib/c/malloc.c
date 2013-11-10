@@ -27,7 +27,7 @@
  *   earlier versions.
  */
 
-#define NEWMALLOC  0
+#define NEWMALLOC  1
 #define NEWSLAB    0
 #define FREEBUF    1
 #define ISTK       0
@@ -158,12 +158,16 @@ typedef pthread_mutex_t LK_T;
 #define TUNEBUF 1
 #endif
 #endif
-#define TUNEBUF 0
+#define TUNEBUF 1
 
 /* basic allocator parameters */
 #define BLKMINLOG2    5  /* minimum-size allocation */
 #if (NEWMALLOC)
 #define SLABLOG2      21
+#if (TUNEBUF)
+#define SLABTINYLOG2  12
+#define SLABBIGLOG2   16
+#endif
 #define MAPMIDLOG2    24
 #define MAPBIGLOG2    26
 #elif (HACKS)
@@ -265,6 +269,7 @@ typedef pthread_mutex_t LK_T;
 //#define isbufbkt(bid)     0
 #define isbufbkt(bid)     (_nbuftab[(bid)])
 #define nmagslablog2(bid) (_nslablog2tab[(bid)])
+#define nbufinit(bid)     0
 //#define nmagslablog2(bid) 0
 #else
 #define isbufbkt(bid)     0
@@ -671,7 +676,7 @@ static LK_T                 _blktab[NBKT];
 #endif
 static struct mag          *_btab[NBKT];
 static struct mag          *_ftab[NBKT];
-#if (HACKS)
+#if (HACKS) || (TUNEBUF)
 static long                 _fcnt[NBKT];
 #endif
 static void               **_mdir;
@@ -1466,7 +1471,7 @@ freemap(struct mag *mag)
 #endif
     cur = arn->hcur;
     hbuf = arn->htab;
-#if (BIGSLAB) && (TUNEBUF)
+#if (BIGSLAB) || (TUNEBUF)
     queue = nfree < _nbuftab[bid];
 #endif
     if (!cur || !ismapbkt(bid)

@@ -4,6 +4,8 @@
  * buffer address space is wired to physical memory
  */
 
+#define BUFSYNCQ   1
+
 #define __KERNEL__ 1
 #include <zero/cdecl.h>
 #include <zero/param.h>
@@ -43,6 +45,11 @@
 #define bufadrtoid(ptr)                                                 \
     ((bufzone) ? ((uint8_t *)ptr - (uint8_t *)bufzone) >> BUFSIZELOG2 : NULL)
 
+#if (BUFSYNCQ)
+/* kept in sort by dev and num */
+volatile long            bufsynclk;
+static struct bufblk    *bufsyncq;
+#endif
 static struct bufblk    *bufhashtab[BUFNHASHITEM] ALIGNED(PAGESIZE);
 static volatile long     bufhashlktab[BUFNHASHITEM] ALIGNED(PAGESIZE);
 static struct bufblk     bufhdrtab[BUFNBLK];
@@ -80,22 +87,111 @@ bufinit(void)
     return retval;
 }
 
+void *
+kgetdev(dev)
+{
+    return NULL;
+}
+
+void
+devseek(long dev, off_t ofs)
+{
+    struct kdev *kdev = kgetdev(dev);
+
+    dev->seek(kdev, ofs);
+}
+
+static __inline__ void
+bufseekdev(long dev, long num)
+{
+    devseek(dev, num * BUFSIZE);
+}
+
 void
 bufwrite(struct bufblk *blk)
 {
-    ;
+    bufseekdev(blk->dev, blk->num);
+    bufwriteblk(blk->dev, blk->data);
+
+    return;
 }
+
+#if (BUFSYNCQ)
+
+void
+bufaddsync(struct bufblk *blk)
+{
+    struct bufblk *item;
+    struct bufblk *last = NULL;
+
+    if (blk) {
+        blk->listprev = NULL;
+        blk->listnext = NULL;
+        mtxlk(&bufsynclk);
+        item = bufsyncq;
+        if (item) {
+            while ((item) && blk->dev < item->dev) {
+                last = item;
+                item = item->listnext;
+            }
+            while ((item) && blk->num < item->num) {
+                last = item;
+                item = item->listnext;
+            }
+            blk->listprev = last;
+            blk->listnext = last->listnext;
+            last->listnext = blk;
+        } else {
+            bufsyncq = blk;
+        }
+        mtxunlk(&bufsynclk);
+    }
+}
+
+struct bufblk *
+bufsync(void)
+{
+    struct bufblk *blk;
+    struct bufblk *ret;
+
+    mtxlk(&bufsynclk);
+    blk = bufsyncq;
+    ret = blk;
+    while (blk) {
+        bufwrite(blk);
+        blk = blk->listnext;
+    }
+    mtxunlk(&bufsynclk);
+
+    return ret;
+}
+
+#endif
 
 struct bufblk *
 bufevict(void)
 {
     struct bufblk *blk = NULL;
-
+#if (BUFSYNCQ)
+    long           n = 8;
+#endif
+    
+#if (BUFSYNCQ)
+    do {
+        bufdeqlru(&blk);
+        if (blk) {
+            bufaddsync(blk);
+            n--;
+        }
+    } while (n > 0);
+    blk = bufsync();
+#else
     do {
         bufdeqlru(&blk);
     } while (!blk);
     bufwrite(blk);
-
+#endif
+    
     return blk;
 }
 

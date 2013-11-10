@@ -104,8 +104,8 @@ randmt32(void)
     }
     x = randbuf[randndx];
     x ^= x >> RANDMT32SHIFT1;
-    x ^= (x >> RANDMT32SHIFT2) & RANDMT32MASK2;
-    x ^= (x >> RANDMT32SHIFT3) & RANDMT32MASK3;
+    x ^= (x << RANDMT32SHIFT2) & RANDMT32MASK2;
+    x ^= (x << RANDMT32SHIFT3) & RANDMT32MASK3;
     x ^= x >> RANDMT32SHIFT4;
     randndx = randnext[randndx];
 
