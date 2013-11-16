@@ -16,6 +16,10 @@
 #include <stdlib.h>
 #include <zero/param.h>
 #include <zero/cdecl.h>
+#if (RANDPROF)
+#include <stdio.h>
+#include <zero/prof.h>
+#endif
 
 #define RANDMT32NBUFITEM   624            // # of buffer values
 #define RANDMT32MAGIC      397
@@ -45,11 +49,13 @@ srandmt32(unsigned long seed)
     tmp = seed & 0xffffffffUL;
     randbuf32[0] = tmp;
     val = RANDMT32MULTIPLIER * (tmp ^ (tmp >> RANDMT32SHIFT)) + 1;
-    randbuf32[1] = val & 0xffffffffUL;
+    val &= 0xffffffffUL;
+    randbuf32[1] = val;
     for (i = 2 ; i < RANDMT32NBUFITEM ; i++) {
-        tmp = val & 0xffffffffUL;
+        tmp = val;
         val = RANDMT32MULTIPLIER * (tmp ^ (tmp >> RANDMT32SHIFT)) +  i;
-        randbuf32[i] = val & 0xffffffffUL;
+        val &= 0xffffffffUL;
+        randbuf32[i] = val;
     }
     randndx = i;
 
@@ -63,6 +69,9 @@ _randbuf32(void)
     unsigned long x;
     unsigned long val1;
     unsigned long val2;
+    unsigned long tmp1;
+    unsigned long tmp2;
+    unsigned long tmp3;
     int           i;
 
     if (randndx == RANDMT32NBUFITEM + 1) {
@@ -70,16 +79,25 @@ _randbuf32(void)
     }
     for (i = 0 ; i < RANDMT32NBUFITEM - RANDMT32MAGIC ; i++) {
         val1 = i + 1;
-        x = (randbuf32[i] & 0x80000000UL) | (randbuf32[val1] & 0x7fffffffUL);
-        randbuf32[i] = randbuf32[i + RANDMT32MAGIC] ^ (x >> 1) ^ mask[x & 0x01];
+        tmp1 = randbuf32[i] & 0x80000000UL;
+        tmp2 = randbuf32[val1] & 0x7fffffffUL;
+        tmp3 = randbuf32[i + RANDMT32MAGIC];
+        x = tmp1 | tmp2;
+        randbuf32[i] = tmp3 ^ (x >> 1) ^ mask[x & 0x01];
     }
     for ( ; i < RANDMT32NBUFITEM - 1 ; i++) {
         val1 = i + 1;
-        x = (randbuf32[i] & 0x80000000UL) | (randbuf32[val1] & 0x7fffffffUL);
-        randbuf32[i] = randbuf32[i + RANDMT32MAGIC - RANDMT32NBUFITEM] ^ (x >> 1) ^ mask[x & 0x01];
+        tmp1 = randbuf32[i] & 0x80000000UL;
+        tmp2 = randbuf32[val1] & 0x7fffffffUL;
+        tmp3 = randbuf32[i + RANDMT32MAGIC - RANDMT32NBUFITEM];
+        x = tmp1 | tmp2;
+        randbuf32[i] = tmp3 ^ (x >> 1) ^ mask[x & 0x01];
     }
-    x = (randbuf32[RANDMT32NBUFITEM - 1] & 0x80000000UL) | (randbuf32[0] & 0x7fffffffUL);
-    randbuf32[RANDMT32NBUFITEM - 1] = randbuf32[RANDMT32MAGIC - 1] ^ (x >> 1) ^ RANDMT32MATRIX;
+    tmp1 = randbuf32[RANDMT32NBUFITEM - 1] & 0x80000000UL;
+    tmp2 = (randbuf32[0] & 0x7fffffffUL);
+    tmp3 = randbuf32[RANDMT32MAGIC - 1];
+    x = tmp1 | tmp2;
+    randbuf32[RANDMT32NBUFITEM - 1] = tmp3 ^ (x >> 1) ^ RANDMT32MATRIX;
     randndx = 0;
 
     return;
@@ -103,3 +121,37 @@ randmt32(void)
     return x;
 }
 
+int main(void)
+{
+    int i;
+#if (RANDPROF)
+    PROFDECLCLK(clk);
+    unsigned long *buf;
+#endif
+
+#if (RANDPROF)
+    buf = calloc(65536, sizeof(unsigned long));
+    profstartclk(clk);
+    for (i = 0 ; i < 65536 ; i++) {
+        buf[i] = randmt32();
+    }
+    profstopclk(clk);
+    fprintf(stderr, "%lu microseconds\n", profclkdiff(clk));
+#else
+//    unsigned long init[4]={0x123, 0x234, 0x345, 0x456}, length=4;
+//    init_by_array(init, length);
+    printf("4096 outputs of genrand_int32()\n");
+    for (i=0; i<4096; i++) {
+      printf("%8lx ", randmt32());
+      if (i%5==4) printf("\n");
+    }
+#endif
+#if 0
+    printf("\n4096 outputs of genrand_real2()\n");
+    for (i=0; i<4096; i++) {
+      printf("%10.8f ", genrand_real2());
+      if (i%5==4) printf("\n");
+    }
+#endif
+    return 0;
+}
