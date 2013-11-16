@@ -68,7 +68,6 @@ _randbuf32(void)
     unsigned long mask[2] = { 0UL, RANDMT32MATRIX };
     unsigned long x;
     unsigned long val1;
-    unsigned long val2;
     unsigned long tmp1;
     unsigned long tmp2;
     unsigned long tmp3;
@@ -121,7 +120,9 @@ randmt32(void)
     return x;
 }
 
-int main(void)
+#if (TESTRAND)
+int
+main(void)
 {
     int i;
 #if (RANDPROF)
@@ -138,20 +139,13 @@ int main(void)
     profstopclk(clk);
     fprintf(stderr, "%lu microseconds\n", profclkdiff(clk));
 #else
-//    unsigned long init[4]={0x123, 0x234, 0x345, 0x456}, length=4;
-//    init_by_array(init, length);
-    printf("4096 outputs of genrand_int32()\n");
-    for (i=0; i<4096; i++) {
+    printf("4096 outputs of randmt32()\n");
+    for (i = 0; i < 4096; i++) {
       printf("%8lx ", randmt32());
-      if (i%5==4) printf("\n");
+      if (i & 4 == 3) printf("\n");
     }
 #endif
-#if 0
-    printf("\n4096 outputs of genrand_real2()\n");
-    for (i=0; i<4096; i++) {
-      printf("%10.8f ", genrand_real2());
-      if (i%5==4) printf("\n");
-    }
-#endif
+
     return 0;
 }
+#endif
