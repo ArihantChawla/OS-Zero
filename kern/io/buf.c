@@ -4,6 +4,8 @@
  * buffer address space is wired to physical memory
  */
 
+/* TODO: implement per-device buffers */
+
 #define BUFSYNCQ   1
 
 #define __KERNEL__ 1
@@ -45,11 +47,6 @@
 #define bufadrtoid(ptr)                                                 \
     ((bufzone) ? ((uint8_t *)ptr - (uint8_t *)bufzone) >> BUFSIZELOG2 : NULL)
 
-#if (BUFSYNCQ)
-/* kept in sort by dev and num */
-volatile long            bufsynclk;
-static struct bufblk    *bufsyncq;
-#endif
 static struct bufblk    *bufhashtab[BUFNHASHITEM] ALIGNED(PAGESIZE);
 static volatile long     bufhashlktab[BUFNHASHITEM] ALIGNED(PAGESIZE);
 static struct bufblk     bufhdrtab[BUFNBLK];
@@ -58,6 +55,11 @@ static struct bufblkq    buflruq;
 static volatile long     bufzonelk;
 static void             *bufzone;
 static long              bufnbyte;
+#if (BUFSYNCQ)
+/* kept in sort by dev and num */
+volatile long            bufsynclk;
+static struct bufblk    *bufsyncq;
+#endif
 
 long
 bufinit(void)

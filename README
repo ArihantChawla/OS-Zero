@@ -1,7 +1,8 @@
-Zero is early software. The project consists of a somewhat functional kernel
-framework, a partially-implemented C standard library (mostly C99 with things
-from C11 being planned), a couple of in-progress support libraries, and some
-(too little at the moment) documentation for different parts of the project.
+Zero is an early operating system project. Zero consists of a somewhat
+functional kernel framework, a partially-implemented C standard library
+(mostly C99 with things from C11 being planned), a couple of in-progress
+support libraries, and some (too little at the moment) documentation for
+different parts of the project.
 
 I hereby invite you to take a look at another project I'm keen on,
 
