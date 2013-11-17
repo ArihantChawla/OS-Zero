@@ -142,7 +142,7 @@ main(void)
     printf("4096 outputs of randmt32()\n");
     for (i = 0; i < 4096; i++) {
       printf("%8lx ", randmt32());
-      if (i & 4 == 3) printf("\n");
+      if ((i & 3) == 0x03) printf("\n");
     }
 #endif
 

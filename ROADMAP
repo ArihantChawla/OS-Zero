@@ -12,40 +12,75 @@ kern/
 	kern/
 	-----
 	- higher half kernel implementation
-	  - sched		- thread scheduler
-	  - proc		- process abstraction
-	  - thr			- thread scheduler
-	  - buf			- buffer cache
-	  - signal		- signal messaging (realtime included)
+	  - ev			- event interface
+	  - mem			- high-level memory interface
+	  - obj			- kernel objects
+	  - perm		- permission checks
 	  - syscall		- system call interface
+	  - types		- kernel type declarations
 	  - util		- miscellaneous utilities
 
-	kern/mem
+	kern/io/
 	--------
-	- kernel memory management
-	  - page		- page daemon
-	  - slab32		- 32-bit slab allocator
-	  - mag32		- 32-bit mag allocator
+	- I/O interface
+	  - buf			- buffer cache
 
-	kern/unit/ia32
-	--------------
-	- IA-32 platform version of [32-bit] kernel
-	  - apic	 	 - advanced programmable interrupt controller
+	kern/io/fs/
+	-----------
+	- filesystem implementations
 
 	kern/io/drv
 	-----------
 	- kernel I/O drivers
 
-	kern/io/dev/pc
+	kern/io/drv/blk/
+	----------------
+	- block device interface
+
+	kern/io/drv/bus/
+	----------------
+	- bus drivers
+
+	kern/io/drv/chr/
+	----------------
+	- character device interface
+
+	kern/io/drv/pc
 	--------------
 	- standard PC device drivers
-	  - ps2/		- PS/2 keyboard and mouse drivers
-	  - gfx/		- graphics hardware drivers
-	  - snd/		- sound support
-	    - ac97.c, ac97.h	- AC97 audio interface
-	  - dma.c, dma.h	- DMA transfer interface
-	  - vbe2.c, vbe2.h	- VESA BIOS Extensions Revision 2 graphics
+	  - vbe2		- VBE2 graphics support
 	  - vga.c, vga.h	- VGA text console support
+
+	kern/io/drv/pc/ps2/
+	-------------------
+	- PS/2 drivers
+	  - kbd*		- keyboard driver
+	  - mouse		- mouse driver
+
+	kern/mem
+	--------
+	- kernel memory management
+	  - mag			- magazine allocator
+	  - page		- page daemon
+	  - slab*		- slab allocator routines
+
+	kern/proc/
+	----------
+	- process interface
+	  - proc		- process interface
+	  - sched		- thread scheduler
+	  - sig			- signal interface
+	  - task		- process and thread abstractions
+	  - thr			- thread scheduler
+	  - tmr			- timer interface
+
+	kern/unit/
+	----------
+	- lower-half kernel
+
+	kern/unit/ia32
+	--------------
+	- IA-32 platform version of [32-bit] kernel
 
 usr/
 ----
