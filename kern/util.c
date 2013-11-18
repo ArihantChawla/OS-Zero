@@ -4,7 +4,7 @@
 #include <zero/cdecl.h>
 #include <zero/param.h>
 #include <zero/trix.h>
-#include <kern/io/drv/char/con.h>
+#include <kern/io/drv/chr/con.h>
 #include <kern/io/drv/pc/vga.h>
 
 #define MAXPRINTFSTR 2048

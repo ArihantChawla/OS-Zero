@@ -9,6 +9,7 @@
 #define BUFSYNCQ   1
 
 #define __KERNEL__ 1
+#include <sys/types.h>
 #include <zero/cdecl.h>
 #include <zero/param.h>
 #include <zero/mtx.h>
@@ -89,6 +90,8 @@ bufinit(void)
     return retval;
 }
 
+#if 0
+
 void *
 kgetdev(dev)
 {
@@ -100,7 +103,7 @@ devseek(long dev, off_t ofs)
 {
     struct kdev *kdev = kgetdev(dev);
 
-    dev->seek(kdev, ofs);
+    kdev->seek(kdev, ofs);
 }
 
 static __inline__ void
@@ -117,6 +120,8 @@ bufwrite(struct bufblk *blk)
 
     return;
 }
+
+#endif
 
 #if (BUFSYNCQ)
 
@@ -160,7 +165,7 @@ bufsync(void)
     blk = bufsyncq;
     ret = blk;
     while (blk) {
-        bufwrite(blk);
+//        bufwrite(blk);
         blk = blk->listnext;
     }
     mtxunlk(&bufsynclk);
@@ -191,7 +196,7 @@ bufevict(void)
     do {
         bufdeqlru(&blk);
     } while (!blk);
-    bufwrite(blk);
+//    bufwrite(blk);
 #endif
     
     return blk;
@@ -278,7 +283,7 @@ bufrel(long dev, long num, long flush)
 
     if (blk) {
         if (flush) {
-            bufwrite(blk);
+//            bufwrite(blk);
         }
         bufpushfree(blk);
     }
