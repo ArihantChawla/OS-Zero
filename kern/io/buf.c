@@ -230,10 +230,10 @@ bufgetfree(void)
 }
 
 void
-bufaddblk(long dev, uint64_t num, void *data, unsigned long nb)
+bufaddblk(struct bufblk *blk)
 {
     struct bufblk   *blk;
-    uint64_t         key = bufkey(num);
+    uint64_t         key = bufkey(blk->num);
 #if (BUFNIDBIT <= 48)
     long             key1 = (key >> 32) & 0xffff;
     long             key2 = (key >> 16) & 0xffff;
@@ -241,10 +241,6 @@ bufaddblk(long dev, uint64_t num, void *data, unsigned long nb)
 #endif
     struct bufblk   *ptr = NULL;
 
-    blk = bufgetfree();
-    blk->dev = dev;
-    blk->num = num;
-    kbcopy(blk->data, data, nb);
 #if (BUFNIDBIT <= 48)
     mtxlk(&buflktab[key1]);
     tab = buftab[key1];
