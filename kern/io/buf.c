@@ -225,12 +225,12 @@ bufgetfree(void)
             blk = bufevict();
         }
     } while (!blk);
-
+    
     return blk;
 }
 
 void
-bufaddblk(long dev, uint64_t num, void *data)
+bufaddblk(long dev, uint64_t num, void *data, unsigned long nb)
 {
     struct bufblk   *blk;
     uint64_t         key = bufkey(num);
@@ -239,12 +239,12 @@ bufaddblk(long dev, uint64_t num, void *data)
     long             key2 = (key >> 16) & 0xffff;
     struct bufblk  **tab;
 #endif
-    struct bufblk   *ptr;
+    struct bufblk   *ptr = NULL;
 
     blk = bufgetfree();
     blk->dev = dev;
     blk->num = num;
-    blk->data = data;
+    kbcopy(blk->data, data, nb);
 #if (BUFNIDBIT <= 48)
     mtxlk(&buflktab[key1]);
     tab = buftab[key1];
@@ -258,7 +258,6 @@ bufaddblk(long dev, uint64_t num, void *data)
     } else {
         /* ERROR */
     }
-    mtxunlk(&buflktab[key1]);
 #else
     mtxlk(&bufhashlktab[key]);
     ptr = bufhashtab[key];
@@ -270,9 +269,9 @@ bufaddblk(long dev, uint64_t num, void *data)
     blk->tabnext = ptr;
 #if (BUFNIDBIT <= 48)
     tab[key2] = blk;
+    mtxunlk(&buflktab[key1]);
 #else
     bufhashtab[key] = blk;
-#endif
     mtxunlk(&bufhashlktab[key]);
 #endif
     bufqlru(blk);
@@ -305,19 +304,22 @@ buffind(long devid, uint64_t num, long rel)
     if (tab) {
         blk = tab[key2];
     }
-    mtxunlk(&buflktab[key1]);
 #else
     mtxlk(&bufhashlktab[key]);
     blk = bufhashtab[key];
 #endif
     while (blk) {
-        if (blk->dev == dev && blk->num == num) {
+        if (blk->dev == devid && blk->num == num) {
             if (rel) {
                 ptr = blk->tabprev;
                 if (ptr) {
                     ptr->tabnext = blk->tabnext;
                 } else {
+#if (BUFNIDBIT <= 48)
+                    tab[key2] = blk->tabnext;
+#else
                     bufhashtab[key] = blk->tabnext;
+#endif
                 }
                 ptr = blk->tabnext;
                 if (ptr) {
@@ -329,7 +331,10 @@ buffind(long devid, uint64_t num, long rel)
         }
         blk = blk->tabnext;
     }
-#if (BUFNIDBIT > 48)
+
+#if (BUFNIDBIT <= 48)
+    mtxunlk(&buflktab[key1]);
+#else
     mtxunlk(&bufhashlktab[key]);
 #endif
 
