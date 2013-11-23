@@ -6,8 +6,6 @@
 
 /* TODO: implement per-device buffers */
 
-#define BUFSYNCQ   1
-
 #define __KERNEL__ 1
 #include <sys/types.h>
 #include <zero/cdecl.h>
@@ -61,11 +59,6 @@ static struct bufblkq   buflruq;
 static volatile long    bufzonelk;
 static void            *bufzone;
 static long             bufnbyte;
-#if (BUFSYNCQ)
-/* kept in sort by dev and num */
-volatile long           bufsynclk;
-static struct bufblk   *bufsyncq;
-#endif
 
 long
 bufinit(void)
@@ -126,83 +119,17 @@ bufwrite(struct bufblk *blk)
     return;
 }
 
-#endif
-
-#if (BUFSYNCQ)
-
-void
-bufaddsync(struct bufblk *blk)
-{
-    struct bufblk *item;
-    struct bufblk *last = NULL;
-
-    if (blk) {
-        blk->listprev = NULL;
-        blk->listnext = NULL;
-        mtxlk(&bufsynclk);
-        item = bufsyncq;
-        if (item) {
-            while ((item) && blk->dev < item->dev) {
-                last = item;
-                item = item->listnext;
-            }
-            while ((item) && blk->num < item->num) {
-                last = item;
-                item = item->listnext;
-            }
-            blk->listprev = last;
-            blk->listnext = last->listnext;
-            last->listnext = blk;
-        } else {
-            bufsyncq = blk;
-        }
-        mtxunlk(&bufsynclk);
-    }
-}
-
-struct bufblk *
-bufsync(void)
-{
-    struct bufblk *blk;
-    struct bufblk *ret;
-
-    mtxlk(&bufsynclk);
-    blk = bufsyncq;
-    ret = blk;
-    while (blk) {
-//        bufwrite(blk);
-        blk = blk->listnext;
-    }
-    mtxunlk(&bufsynclk);
-
-    return ret;
-}
-
-#endif
+#endif /* 0 */
 
 struct bufblk *
 bufevict(void)
 {
     struct bufblk *blk = NULL;
-#if (BUFSYNCQ)
-    long           n = 8;
-#endif
-    
-#if (BUFSYNCQ)
-    do {
-        bufdeqlru(&blk);
-        if (blk) {
-            bufaddsync(blk);
-            n--;
-        }
-    } while (n > 0);
-    blk = bufsync();
-#else
+
     do {
         bufdeqlru(&blk);
     } while (!blk);
 //    bufwrite(blk);
-#endif
     
     return blk;
 }
