@@ -5,6 +5,8 @@
 #include <kern/conf.h>
 #include <kern/perm.h>
 
+#define BUFPERDEV    1
+
 #define BUFNBYTE     (32768 * 1024)
 #define BUFNBLK      (BUFNBYTE >> BUFSIZELOG2)
 #define BUFNIDBIT    48
@@ -31,10 +33,13 @@
 #define BUFDOINGIO   0x08       // the kernel is reading or writing data
 #define BUfWAIT      0x10       // a process is waiting for buffer release
 struct bufblk {
+#if (BUFLK)
+    volatile long  lk;
+#endif
     long           dev;         // device #
-    long           num;         // per-device block #
+    uint64_t       num;         // per-device block #
     long           status;      // status flags
-//    long           nb;          // # of bytes
+    long           nb;          // # of bytes
     void          *data;        // in-core block data (kernel virtual address)
     struct bufblk *tabprev;     // previous block on hash chain
     struct bufblk *tabnext;     // next block on hash chain

@@ -46,7 +46,9 @@
 #define bufadrtoid(ptr)                                                 \
     ((bufzone) ? ((uint8_t *)ptr - (uint8_t *)bufzone) >> BUFSIZELOG2 : NULL)
 
-#if (BUFNIDBIT <= 48)
+#if (BUFPERDEV)
+struct bufdev           devtab[BUFNDEV] ALIGNED(PAGESIZE);
+#elif (BUFNIDBIT <= 48)
 static struct bufblk  **buftab[BUFNTABITEM] ALIGNED(PAGESIZE);
 static volatile long    buflktab[BUFNTABITEM] ALIGNED(PAGESIZE);
 #else
@@ -59,10 +61,17 @@ static struct bufblkq   buflruq;
 static volatile long    bufzonelk;
 static void            *bufzone;
 static long             bufnbyte;
+#if (BUFPERDEV)
+static volatile long    bufdevlk;
+struct bufdev          *bufdevq;
+#endif
 
 long
 bufinit(void)
 {
+#if (BUFPERDEV)
+    struct bufdev *dev;
+#endif
     long           retval = 0;
     uint8_t       *u8ptr;
     struct bufblk *blk;
@@ -83,6 +92,15 @@ bufinit(void)
         }
         bufnbyte = BUFNBYTE;
         retval = 1;
+#if (BUFPERDEV)
+        n = BUFNDEV;
+        mtxlk(&bufdevlk);
+        while (n--) {
+            dev = &devtab[n];
+            dev->next = bufdevq;
+            bufdevq = dev;
+        }
+#endif
     }
 
     return retval;
@@ -156,10 +174,124 @@ bufgetfree(void)
     return blk;
 }
 
+#if (BUFPERDEV)
+
 void
 bufaddblk(struct bufblk *blk)
 {
-    struct bufblk   *blk;
+    struct bufdev   *dev;
+    uint64_t         key = bufkey(blk->num);
+#if (BUFNIDBIT <= 48)
+    long             key1 = (key >> 32) & 0xffff;
+    long             key2 = (key >> 16) & 0xffff;
+    struct bufblk  **tab;
+#endif
+    struct bufblk   *ptr = NULL;
+
+    dev = &devtab[blk->dev];
+#if (BUFNIDBIT <= 48)
+    mtxlk(&dev->buflktab[key1]);
+    tab = dev->buftab[key1];
+    if (!tab) {
+        tab = kmalloc(65536 * sizeof(struct bufblk *));
+        kbzero(tab, 65536 * sizeof(struct bufblk *));
+        dev->buftab[key1] = tab;
+    }
+    if (tab) {
+        ptr = tab[key2];
+    } else {
+        /* ERROR */
+    }
+#else
+    mtxlk(&bufhashlktab[key]);
+    ptr = dev->bufhashtab[key];
+#endif
+    blk->tabprev = NULL;
+    if (ptr) {
+        ptr->tabprev = blk;
+    }
+    blk->tabnext = ptr;
+#if (BUFNIDBIT <= 48)
+    tab[key2] = blk;
+    mtxunlk(&dev->buflktab[key1]);
+#else
+    bufhashtab[key] = blk;
+    mtxunlk(&bufhashlktab[key]);
+#endif
+    bufqlru(blk);
+
+    return;
+}
+
+struct bufblk *
+buffindblk(long devid, uint64_t num, long rel)
+{
+    struct bufdev   *dev;
+    struct bufblk   *blk = NULL;
+    uint64_t         key = bufkey(num);
+#if (BUFNIDBIT <= 48)
+    long             key1 = (key >> 32) & 0xffff;
+    long             key2 = (key >> 16) & 0xffff;
+    struct bufblk  **tab;
+#endif
+    struct bufblk   *ptr;
+
+    dev = &devtab[devid];
+#if (BUFNIDBIT <= 48)
+    mtxlk(&dev->buflktab[key1]);
+    tab = dev->buftab[key1];
+    if (!tab) {
+        tab = kmalloc(65536 * sizeof(struct bufblk *));
+        if (tab) {
+            kbzero(tab, 65536 * sizeof(struct bufblk *));
+        }
+        dev->buftab[key1] = tab;
+    }
+    if (tab) {
+        blk = tab[key2];
+    }
+#else
+    mtxlk(&bufhashlktab[key]);
+    blk = bufhashtab[key];
+#endif
+    while (blk) {
+        if (blk->dev == devid && blk->num == num) {
+            if (rel) {
+                ptr = blk->tabprev;
+                if (ptr) {
+                    ptr->tabnext = blk->tabnext;
+                } else {
+#if (BUFNIDBIT <= 48)
+                    tab[key2] = blk->tabnext;
+#else
+                    bufhashtab[key] = blk->tabnext;
+#endif
+                }
+                ptr = blk->tabnext;
+                if (ptr) {
+                    ptr->tabprev = blk->tabprev;
+                }
+            }
+
+            break;
+        }
+        blk = blk->tabnext;
+    }
+
+#if (BUFNIDBIT <= 48)
+    mtxunlk(&dev->buflktab[key1]);
+#else
+    mtxunlk(&bufhashlktab[key]);
+#endif
+
+    return blk;
+}
+
+#else /* !BUFPERDEV */
+
+void
+bufaddblk(struct bufblk *blk)
+{
     uint64_t         key = bufkey(blk->num);
 #if (BUFNIDBIT <= 48)
     long             key1 = (key >> 32) & 0xffff;
@@ -203,7 +335,7 @@ bufaddblk(struct bufblk *blk)
 }
 
 struct bufblk *
-buffind(long devid, uint64_t num, long rel)
+buffindblk(long devid, uint64_t num, long rel)
 {
     uint64_t         key = bufkey(num);
     struct bufblk   *blk = NULL;
@@ -264,10 +396,12 @@ buffind(long devid, uint64_t num, long rel)
     return blk;
 }
 
+#endif /* BUFPERDEV */
+
 void
 bufrel(long dev, uint64_t num, long flush)
 {
-    struct bufblk *blk = buffind(dev, num, 1);
+    struct bufblk *blk = buffindblk(dev, num, 1);
 
     if (blk) {
         if (flush) {
