@@ -3,6 +3,7 @@
 #include <string.h>
 #include <zero/trix.h>
 #if (PRIMEPROF)
+#include <unistd.h>
 #include <zero/prof.h>
 #endif
 
@@ -19,22 +20,24 @@ sieve1(size_t lim)
     void *tab;
     long  l;
     long  m;
-    
-    tab = malloc(PRIMEN >> 3 * sizeof(char));
+    long  n;
+
+    n = rounduppow2(lim, 8) >> 3;
+    tab = malloc(n * sizeof(char));
     if (tab) {
-        memset(tab, 0xff, (PRIMEN >> 3) * sizeof(char));
+        memset(tab, 0xff, n * sizeof(char));
         l = 2;
         while (1) {
-            for (m = l * l ; m < PRIMEN ; m += l) {
+            for (m = l * l ; m < lim ; m += l) {
                 clrbit(tab, m);
             }
-            for ( ++l ; l < PRIMEN ; l++) {
+            for ( ++l ; l < lim ; l++) {
                 if (bitset(tab, l)) {
                     
                     break;
                 }
             }
-            if (l == PRIMEN) {
+            if (l == lim) {
                 
                 break;
             }
@@ -50,27 +53,29 @@ sieve2(size_t lim)
     void *tab;
     long  l;
     long  m;
-    
-    tab = malloc(PRIMEN >> 3 * sizeof(char));
+    long  n;
+
+    n = rounduppow2(lim, 8) >> 3;
+    tab = malloc(n * sizeof(char));
     if (tab) {
-        memset(tab, 0xff, (PRIMEN >> 3) * sizeof(char));
+        memset(tab, 0xff, n * sizeof(char));
         l = 2;
         while (1) {
-            for (m = l * l ; m < PRIMEN ; m += l) {
+            for (m = l * l ; m < lim ; m += l) {
                 clrbit(tab, m);
             }
             l++;
             if (!(l & 0x01)) {
                 l++;
             }
-            while (l < PRIMEN) {
+            while (l < lim) {
                 if (bitset(tab, l)) {
                     
                     break;
                 }
                 l += 2;
             }
-            if (l >= PRIMEN) {
+            if (l >= lim) {
                 
                 break;
             }
@@ -86,25 +91,27 @@ sieve3(size_t lim)
     void *tab;
     long  l;
     long  m;
-    
-    tab = malloc(PRIMEN >> 3 * sizeof(char));
+    long  n;
+
+    n = rounduppow2(lim, 8) >> 3;
+    tab = malloc(n * sizeof(char));
     if (tab) {
-        memset(tab, 0xff, (PRIMEN >> 3) * sizeof(char));
+        memset(tab, 0xff, n * sizeof(char));
         l = 2;
         while (1) {
-            for (m = l * l ; m < PRIMEN ; m += l) {
+            for (m = l * l ; m < lim ; m += l) {
                 clrbit(tab, m);
             }
             l++;
             l += !(l & 0x01);
-            while (l < PRIMEN) {
+            while (l < lim) {
                 if (bitset(tab, l)) {
                     
                     break;
                 }
                 l += 2;
             }
-            if (l >= PRIMEN) {
+            if (l >= lim) {
                 
                 break;
             }
@@ -120,29 +127,31 @@ sieve4(size_t lim)
     void *tab;
     long  l;
     long  m;
-    
-    tab = malloc(PRIMEN >> 3 * sizeof(char));
+    long  n;
+
+    n = rounduppow2(lim, 8) >> 3;
+    tab = malloc(n * sizeof(char));
     if (tab) {
-        memset(tab, 0xff, (PRIMEN >> 3) * sizeof(char));
+        memset(tab, 0xff, n * sizeof(char));
         l = 2;
-        for (m = l * l ; m < PRIMEN ; m += l) {
+        for (m = l * l ; m < lim ; m += l) {
             clrbit(tab, m);
         }
         l++;
         while (1) {
-            for (m = l * l ; m < PRIMEN ; m += (l << 1)) {
+            for (m = l * l ; m < lim ; m += (l << 1)) {
                 clrbit(tab, m);
             }
             l++;
             l += !(l & 0x01);
-            while (l < PRIMEN) {
+            while (l < lim) {
                 if (bitset(tab, l)) {
                     
                     break;
                 }
                 l += 2;
             }
-            if (l >= PRIMEN) {
+            if (l >= lim) {
                 
                 break;
             }
@@ -150,22 +159,6 @@ sieve4(size_t lim)
     }
     
     return tab;
-}
-
-void *
-sieve5(size_t lim)
-{
-    void *tab;
-    long  l;
-    long  m;
-
-    tab = malloc(PRIMEN >> 3 * sizeof(char));
-    if (tab) {
-        memset(tab, 0xff, (PRIMEN >> 3) * sizeof(char));
-        for (l = 1 ; l < PRIMEN ; l++) {
-            
-        }
-    }
 }
 
 int

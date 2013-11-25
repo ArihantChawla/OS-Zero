@@ -6,6 +6,8 @@
  * REFERENCE: https://en.wikipedia.org/wiki/Mersenne_twister
  */
 
+/* Thanks to Craig Robbins for pointing out errors and other help. :) */
+
 /*
  * optimisations
  * -------------
