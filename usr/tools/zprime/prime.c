@@ -1,13 +1,20 @@
+#include <ctype.h>
 #include <stdio.h>
 #include <stdlib.h>
 #include <string.h>
 #include <zero/trix.h>
-#if (PRIMEPROF)
 #include <unistd.h>
+#if (PRIMEPROF)
 #include <zero/prof.h>
 #endif
 
-#define PRIMEN 1048576
+#define PRIMECHK 1
+#define PRIMEN   (1U << 20)     // 1M
+
+#if (PRIMECHK)
+static unsigned long long  primelim;
+static char               *primemap;
+#endif
 
 /*
  * Thanks to Warren Driscoll for spotting some redundant code and optimisations.
@@ -161,6 +168,174 @@ sieve4(size_t lim)
     return tab;
 }
 
+#if (PRIMECHK)
+
+static int
+sieve(unsigned long long lim)
+{
+    void *tab = primemap;
+    long  l;
+    long  m;
+    long  n;
+
+    n = rounduppow2(lim, 8) >> 3;
+    if (primelim <= lim) {
+        if (tab) {
+            tab = realloc(tab, n * sizeof(char));
+        } else {
+            tab = malloc(n * sizeof(char));
+        }
+        if (tab) {
+            primemap = tab;
+        }
+    }
+    if (tab) {
+        memset(tab, 0xff, n * sizeof(char));
+        l = 2;
+        for (m = l * l ; m < lim ; m += l) {
+            clrbit(tab, m);
+        }
+        l++;
+        while (1) {
+            for (m = l * l ; m < lim ; m += (l << 1)) {
+                clrbit(tab, m);
+            }
+            l++;
+            l += !(l & 0x01);
+            while (l < lim) {
+                if (bitset(tab, l)) {
+                    
+                    break;
+                }
+                l += 2;
+            }
+            if (l >= lim) {
+                
+                break;
+            }
+            primemap = tab;
+            primelim = lim;
+        }
+    }
+
+    if (tab) {
+
+        return 1;
+    } else {
+
+        return 0;
+    }
+}
+
+static void
+primeinit(unsigned long long num)
+{
+    if  (!sieve(num)) {
+        fprintf(stderr, "cannot initialise prime bitmap\n");
+
+        exit(1);
+    }
+}
+
+int
+isprime(unsigned long long num)
+{
+    int retval;
+
+    if (!primelim || primelim <= num) {
+        primeinit(num + 1);
+    }
+    retval = bitset(primemap, num);
+
+    return retval;
+}
+
+static void
+usage(void)
+{
+    fprintf(stderr, "USAGE\n");
+    fprintf(stderr, "-----\n");
+    fprintf(stderr, "prime <num>\n");
+    fprintf(stderr, "prime -l <lim>\n");
+    fprintf(stderr, "\n");
+
+    return;
+}
+
+static void
+primelst(unsigned long long lim)
+{
+    unsigned long long ull;
+
+    sieve(lim);
+    for (ull = 0 ; ull < 1 ; ull++) {
+        if (bitset(primemap, ull)) {
+            printf("%llu\n", ull);
+        }
+    }
+
+    return;
+}
+
+int
+main(int argc, char *argv[])
+{
+    unsigned long long  val;
+    char               *str;
+    char               *ptr;
+    char               *cp;
+    int                 res;
+
+    str = argv[1];
+    ptr = str;
+    if (argc == 3) {
+        if (*str == '-' && str[0] == 'l') {
+            str = argv[2];
+        } else {
+            usage();
+
+            exit(1);
+        }
+    } else if (argc != 2) {
+        usage();
+
+        exit(1);
+    }
+    if (*str == '0') {
+        if (toupper(str[1]) == 'X') {
+            ptr = str + 2;
+            val = strtoull(ptr, &cp, 16);
+        } else {
+            ptr = str + 1;
+            val = strtoull(ptr, &cp, 8);
+        }
+    } else {
+        val = strtoull(str, &cp, 10);
+    }
+    if (*cp) {
+        fprintf(stderr, "%s is not valid argument\n", str);
+
+        exit(1);
+    }
+    if (argc == 2) {
+        res = isprime(val);
+        if (isatty(STDOUT_FILENO)) {
+            if (res) {
+                printf("%s is a prime\n", str);
+            } else {
+                printf("%s is NOT a prime\n", str);
+            }
+        }
+    } else {
+        res = 0;
+        primelst(val);
+    }
+
+    exit(res);
+}
+
+#else
+
 int
 main(int argc, char *argv[])
 {
@@ -230,4 +405,6 @@ main(int argc, char *argv[])
 
     exit(0);
 }
+
+#endif /* PRIMECHK */
 
