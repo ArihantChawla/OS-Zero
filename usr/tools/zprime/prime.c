@@ -326,6 +326,7 @@ main(int argc, char *argv[])
                 printf("%s is NOT a prime\n", str);
             }
         }
+        res = !res;
     } else {
         res = 0;
         primelst(val);
