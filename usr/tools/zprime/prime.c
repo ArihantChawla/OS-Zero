@@ -285,11 +285,17 @@ main(int argc, char *argv[])
     char               *ptr;
     char               *cp;
     int                 res;
+#if (PRIMEPROF)
+    PROFDECLCLK(clk);
+#endif
 
+#if (PRIMEPROF)
+    profstartclk(clk);
+#endif
     str = argv[1];
     ptr = str;
     if (argc == 3) {
-        if (*str == '-' && str[0] == 'l') {
+        if (*str == '-' && toupper(str[1]) == 'L') {
             str = argv[2];
         } else {
             usage();
@@ -331,6 +337,10 @@ main(int argc, char *argv[])
         res = 0;
         primelst(val);
     }
+#if (PRIMEPROF)
+    profstopclk(clk);
+    fprintf(stderr, "%s: %ld\n", argv[0], profclkdiff(clk));
+#endif
 
     exit(res);
 }
