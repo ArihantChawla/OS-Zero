@@ -12,6 +12,7 @@
 void zpcprintqueue(struct zpctoken *queue);
 
 extern uint8_t     zpcoperchartab[256];
+extern long        zpcradix;
 
 struct zpcstkitem *zpcinputitem;
 struct zpctoken   *zpcregstk[NREGSTK];
@@ -70,6 +71,7 @@ stkqueueinput(const char *str)
         }
         *cp = '\0';
         item->scur = cp;
+        fprintf(stderr, "INPUT: %ld\n", item->radix);
     }
 
     return;
@@ -80,7 +82,23 @@ stkenterinput(void)
 {
     struct zpcstkitem *item = zpcinputitem;
 
+#if 0    
+    if (!item->radix) {
+        if (*item->str == '0') {
+            if (item->str[1] == 'x' || item->str[1] == 'X') {
+                item->radix = 16;
+            } else if (item->str[1] == 'b' || item->str[1] == 'B') {
+                item->radix = 2;
+            } else {
+                item->radix = 8;
+            }
+        } else {
+            item->radix = 10;
+        }
+    }
+#endif
     if (item->scur != item->str) {
+        fprintf(stderr, "STR: %s\n", item->str);
         item->tokq = zpctokenize(item->str);
         if (item->tokq) {
 //        item->parseq = zpcparse(item->tokq);
@@ -111,6 +129,8 @@ stkinit(void)
     return;
 }
 
+#if 0
+#if (ZPCDEBUG)
 void
 stkprint(void)
 {
@@ -127,3 +147,6 @@ stkprint(void)
 
     return;
 }
+#endif
+#endif
+

@@ -986,6 +986,18 @@ buttonpress(void *arg, XEvent *event)
                 } else {
                     dtok = src;
                 }
+#if (SMARTRADIX)
+                if (src->radix == 16 || dest->radix == 16) {
+                    token->radix = 16;
+                } else if (src->radix == 8 || dest->radix == 8) {
+                    token->radix = 8;
+                } else if (src->radix == 2 || dest->radix == 2) {
+                    token->radix = 2;
+                } else {
+//                    token->radix = 10;
+                    token->radix = zpcradix;
+                }
+#else
                 if (dtok->radix == 16) {
                     token->radix = 16;
                 } else if (dtok->radix == 8) {
@@ -993,8 +1005,11 @@ buttonpress(void *arg, XEvent *event)
                 } else if (dtok->radix == 2) {
                     token->radix = 2;
                 } else {
-                    token->radix = 10;
+//                    token->radix = 10;
+                    token->radix = zpcradix;
                 }
+#endif
+                token->radix = zpcradix;
 #if (SMARTTYPES)
                 token->type = dtok->type;
                 token->flags = dtok->flags;

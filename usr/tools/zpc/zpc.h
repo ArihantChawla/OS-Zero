@@ -293,7 +293,7 @@ struct zpctoken * zpceval(struct zpctoken *srcqueue);
                                                                         \
                 break;                                                  \
             case 8:                                                     \
-                snprintf((tok)->str, (tok)->slen, "%llo", (long long)(val)); \
+                snprintf((tok)->str, (tok)->slen, "0%llo", (long long)(val)); \
                                                                         \
                 break;                                                  \
             case 10:                                                    \
