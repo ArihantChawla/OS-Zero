@@ -12,8 +12,13 @@
 
 typedef uintptr_t wpmadr_t;
 typedef uintptr_t wpmpage_t;
+#if (WPMWORDSIZE == 32)
 typedef uint32_t  wpmsize_t;
 typedef uint32_t  wpmmemadr_t;
+#elif (WPMWORDSIZE == 64)
+typedef uint64_t  wpmsize_t;
+typedef uint64_t  wpmmemadr_t;
+#endif
 
 void        wpminitmem(wpmsize_t nbphys);
 wpmmemadr_t mempalloc(wpmsize_t size);
@@ -80,17 +85,21 @@ memstoreq(int64_t src, wpmmemadr_t virt)
 {
     int64_t *ptr = NULL;
 
-    if (virt < MEMSIZE) {
-        ptr = (int64_t *)(&physmem[virt]);
-    } else if (virt < MEMHWBASE) {
-        ptr = (int64_t *)((int8_t *)mempagetab[pagenum(virt)] + pageofs(virt));
+    if (virt >= WPMTEXTBASE) {
+        if (virt < MEMSIZE) {
+            ptr = (int64_t *)(&physmem[virt]);
+        } else if (virt < MEMHWBASE) {
+            ptr = (int64_t *)((int8_t *)mempagetab[pagenum(virt)]
+                              + pageofs(virt));
+        }
+        if (!ptr) {
+            fprintf(stderr, "illegal write at address 0x%lx\n",
+                    (unsigned long)virt);
+            
+            exit(1);
+        }
+        *ptr = src;
     }
-    if (!ptr) {
-        fprintf(stderr, "illegal write at address 0x%lx\n", (unsigned long)virt);
-
-        exit(1);
-    }
-    *ptr = src;
 
     return;
 }
@@ -100,17 +109,21 @@ memstorel(int32_t src, wpmmemadr_t virt)
 {
     int32_t *ptr = NULL;
 
-    if (virt < MEMSIZE) {
-        ptr = (int32_t *)(&physmem[virt]);
-    } else if (virt < MEMHWBASE) {
-        ptr = (int32_t *)((int8_t *)mempagetab[pagenum(virt)] + pageofs(virt));
+    if (virt >= WPMTEXTBASE) {
+        if (virt < MEMSIZE) {
+            ptr = (int32_t *)(&physmem[virt]);
+        } else if (virt < MEMHWBASE) {
+            ptr = (int32_t *)((int8_t *)mempagetab[pagenum(virt)]
+                              + pageofs(virt));
+        }
+        if (!ptr) {
+            fprintf(stderr, "illegal write at address 0x%lx\n",
+                    (unsigned long)virt);
+            
+            exit(1);
+        }
+        *ptr = src;
     }
-    if (!ptr) {
-        fprintf(stderr, "illegal write at address 0x%lx\n", (unsigned long)virt);
-
-        exit(1);
-    }
-    *ptr = src;
 
     return;
 }
@@ -120,17 +133,20 @@ memstoreb(int8_t src, wpmmemadr_t virt)
 {
     int8_t *ptr = NULL;
 
-    if (virt < MEMSIZE) {
-        ptr = (int8_t *)(&physmem[virt]);
-    } else if (virt < MEMHWBASE) {
-        ptr = (int8_t *)mempagetab[pagenum(virt)] + pageofs(virt);
+    if (virt >= WPMTEXTBASE) {
+        if (virt < MEMSIZE) {
+            ptr = (int8_t *)(&physmem[virt]);
+        } else if (virt < MEMHWBASE) {
+            ptr = (int8_t *)mempagetab[pagenum(virt)] + pageofs(virt);
+        }
+        if (!ptr) {
+            fprintf(stderr, "illegal write at address 0x%lx\n",
+                    (unsigned long)virt);
+            
+            exit(1);
+        }
+        *ptr = src;
     }
-    if (!ptr) {
-        fprintf(stderr, "illegal write at address 0x%lx\n", (unsigned long)virt);
-
-        exit(1);
-    }
-    *ptr = src;
 
     return;
 }
@@ -140,17 +156,19 @@ memstorew(int16_t src, wpmmemadr_t virt)
 {
     int16_t *ptr = NULL;
 
-    if (virt < MEMSIZE) {
-        ptr = (int16_t *)(&physmem[virt]);
-    } else if (virt < MEMHWBASE) {
-        ptr = (int16_t *)((int8_t *)mempagetab[pagenum(virt)] + pageofs(virt));
+    if (virt >= WPMTEXTBASE) {
+        if (virt < MEMSIZE) {
+            ptr = (int16_t *)(&physmem[virt]);
+        } else if (virt < MEMHWBASE) {
+            ptr = (int16_t *)((int8_t *)mempagetab[pagenum(virt)] + pageofs(virt));
+        }
+        if (!ptr) {
+            fprintf(stderr, "illegal write at address 0x%lx\n", (unsigned long)virt);
+            
+            exit(1);
+        }
+        *ptr = src;
     }
-    if (!ptr) {
-        fprintf(stderr, "illegal write at address 0x%lx\n", (unsigned long)virt);
-
-        exit(1);
-    }
-    *ptr = src;
 
     return;
 }
@@ -159,22 +177,26 @@ static __inline__ int64_t
 memfetchq(wpmmemadr_t virt)
 {
     int64_t *ptr = NULL;
-    int64_t  retval;
+    int64_t  retval = INT64_C(0);
 
-    if (virt < MEMSIZE) {
-        ptr = (int64_t *)(&physmem[virt]);
-    } else if (virt < MEMHWBASE) {
-        ptr = (int64_t *)((int8_t *)mempagetab[pagenum(virt)] + pageofs(virt));
-    }
-    if (!ptr) {
-        fprintf(stderr, "illegal read at address %lx (%lx)\n", (unsigned long)virt, MEMSIZE);
-
-        exit(1);
+    if (virt >= WPMTEXTBASE) {
+        if (virt < MEMSIZE) {
+            ptr = (int64_t *)(&physmem[virt]);
+        } else if (virt < MEMHWBASE) {
+            ptr = (int64_t *)((int8_t *)mempagetab[pagenum(virt)] +
+                              pageofs(virt));
+        }
+        if (!ptr) {
+            fprintf(stderr, "illegal read at address %lx (%lx)\n",
+                    (unsigned long)virt, MEMSIZE);
+            
+            exit(1);
+        }
+        retval = *ptr;
     }
 #if (WPMPREWARM)
     __builtin_prefetch(ptr);
 #endif
-    retval = *ptr;
 
     return retval;
 }
@@ -183,22 +205,26 @@ static __inline__ int32_t
 memfetchl(wpmmemadr_t virt)
 {
     int32_t *ptr = NULL;
-    int32_t  retval;
+    int32_t  retval = ~0;
 
-    if (virt < MEMSIZE) {
-        ptr = (int32_t *)(&physmem[virt]);
-    } else if (virt < MEMHWBASE) {
-        ptr = (int32_t *)((int8_t *)mempagetab[pagenum(virt)] + pageofs(virt));
-    }
-    if (!ptr) {
-        fprintf(stderr, "illegal read at address %lx (%lx)\n", (unsigned long)virt, MEMSIZE);
-
-        exit(1);
+    if (virt >= WPMTEXTBASE) {
+        if (virt < MEMSIZE) {
+            ptr = (int32_t *)(&physmem[virt]);
+        } else if (virt < MEMHWBASE) {
+            ptr = (int32_t *)((int8_t *)mempagetab[pagenum(virt)]
+                              + pageofs(virt));
+        }
+        if (!ptr) {
+            fprintf(stderr, "illegal read at address %lx (%lx)\n",
+                    (unsigned long)virt, MEMSIZE);
+            
+            exit(1);
+        }
+        retval = *ptr;
     }
 #if (WPMPREWARM)
     __builtin_prefetch(ptr);
 #endif
-    retval = *ptr;
 
     return retval;
 }
@@ -207,22 +233,26 @@ static __inline__ int8_t
 memfetchb(wpmmemadr_t virt)
 {
     int8_t *ptr = NULL;
-    int8_t  retval;
+    int8_t  retval = ~0;
 
-    if (virt < MEMSIZE) {
-        ptr = (int8_t *)(&physmem[virt]);
-    } else if (virt < MEMHWBASE) {
-        ptr = (int8_t *)((int8_t *)mempagetab[pagenum(virt)] + pageofs(virt));
-    }
-    if (!ptr) {
-        fprintf(stderr, "illegal read at address %lx\n", (unsigned long)virt);
+    if (virt >= WPMTEXTBASE) {
+        if (virt < MEMSIZE) {
+            ptr = (int8_t *)(&physmem[virt]);
+        } else if (virt < MEMHWBASE) {
+            ptr = (int8_t *)((int8_t *)mempagetab[pagenum(virt)]
+                             + pageofs(virt));
+        }
+        if (!ptr) {
+            fprintf(stderr, "illegal read at address %lx\n",
+                    (unsigned long)virt);
 
-        exit(1);
+            exit(1);
+        }
+        retval = *ptr;
     }
 #if (WPMPREWARM)
     __builtin_prefetch(ptr);
 #endif
-    retval = *ptr;
 
     return retval;
 }
@@ -231,22 +261,25 @@ static __inline__ int16_t
 memfetchw(wpmmemadr_t virt)
 {
     int16_t *ptr = NULL;
-    int16_t  retval;
+    int16_t  retval = ~0;
 
-    if (virt < MEMSIZE) {
-        ptr = (int16_t *)(&physmem[virt]);
-    } else if (virt < MEMHWBASE) {
-        ptr = (int16_t *)((int8_t *)mempagetab[pagenum(virt)] + pageofs(virt));
-    }
-    if (!ptr) {
-        fprintf(stderr, "illegal read at address %lx\n", (long)virt);
-
-        exit(1);
+    if (virt >= WPMTEXTBASE) {
+        if (virt < MEMSIZE) {
+            ptr = (int16_t *)(&physmem[virt]);
+        } else if (virt < MEMHWBASE) {
+            ptr = (int16_t *)((int8_t *)mempagetab[pagenum(virt)]
+                              + pageofs(virt));
+        }
+        if (!ptr) {
+            fprintf(stderr, "illegal read at address %lx\n", (long)virt);
+            
+            exit(1);
+        }
+        retval = *ptr;
     }
 #if (WPMPREWARM)
     __builtin_prefetch(ptr);
 #endif
-    retval = *ptr;
 
     return retval;
 }
@@ -257,17 +290,24 @@ memcopy(uint32_t src, uint32_t dest, uint32_t len)
     void *srcp = NULL;
     void *destp = NULL;
 
-    if (src < MEMSIZE) {
-        srcp = &physmem[src];
-    } else if (src < MEMHWBASE) {
-        srcp = (int8_t *)mempagetab[pagenum(src)] + pageofs(src);
-    }
-    if (dest < MEMSIZE) {
-        destp = &physmem[dest];
-    } else if (dest < MEMHWBASE) {
-        destp = (int8_t *)mempagetab[pagenum(dest)] + pageofs(dest);
-    }
-    memcpy(destp, srcp, len);
+    if (len) {
+        if (src >= WPMTEXTBASE) {
+            if (src < MEMSIZE) {
+                srcp = &physmem[src];
+            } else if (src < MEMHWBASE) {
+                srcp = (int8_t *)mempagetab[pagenum(src)] + pageofs(src);
+            }
+        }
+        if (dest >= WPMTEXTBASE) {
+            if (dest < MEMSIZE) {
+                destp = &physmem[dest];
+            } else if (dest < MEMHWBASE) {
+                destp = (int8_t *)mempagetab[pagenum(dest)] + pageofs(dest);
+            }
+        }
+        if ((destp) && (srcp)) {
+            memcpy(destp, srcp, len);
+        }
 
     return;
 }

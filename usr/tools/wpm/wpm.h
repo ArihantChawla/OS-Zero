@@ -2,6 +2,7 @@
 #define __WPM_WPM_H__
 
 #define WPMWORDSIZE 32
+//#define WPMMMU      1
 
 #include <stdint.h>
 #include <zero/cdecl.h>
@@ -17,8 +18,11 @@
 #if (WPMWORDSIZE == 32)
 typedef int32_t  wpmword_t;
 typedef uint32_t wpmuword_t;
+#elif (WPMWORDSIZE == 64)
+typedef int64_t  wpmword_t;
+typedef uint64_t wpmuword_t;
 #else
-#error implement WPMWORDSIZE for non-32-bit setups
+#error implement WPMWORDSIZE
 #endif
 
 #if 0
@@ -121,32 +125,32 @@ typedef uint32_t wpmuword_t;
 #define OPPOP	    0x1c	// pop from stack
 #define OPPUSH	    0x1d	// push to stack
 #define OPMOV	    0x1e	// load/store 32-bit longword
-#define OPMOVB      0x1f // load/store 8-bit byte
-#define OPMOVW      0x20 // load/store 16-bit word
-#define OPJMP       0x21 // jump to given address
+#define OPMOVB      0x1f        // load/store 8-bit byte
+#define OPMOVW      0x20        // load/store 16-bit word
+#define OPJMP       0x21        // jump to given address
 #define OPCALL      0x22	// call subroutine
 #define OPENTER     0x23	// subroutine prologue
 #define OPLEAVE     0x24	// subroutine epilogue
 #define OPRET	    0x25	// return from subroutine
 #define OPLMSW      0x26	// load machine status word
 #define OPSMSW	    0x27	// store machine status word
-#define OPRESET     0x28 // reset into well-known state
-#define OPNOP       0x29 // dummy operation
-#define OPHLT       0x2a // halt execution
-#define OPBRK       0x2b // breakpoint
-#define OPTRAP      0x2c // trigger a trap (software interrupt)
-#define OPCLI       0x2d // disable interrupts
-#define OPSTI       0x2e // enable interrupts
-#define OPIRET      0x2f // return from interrupt handler
-#define OPTHR       0x30 // start new thread at given address
-#define OPCMPSWAP   0x31 // atomic compare and swap
-#define OPINB       0x32 // read 8-bit byte from port
-#define OPOUTB      0x33 // write 8-bit byte to port
-#define OPINW       0x34 // read 16-bit word
-#define OPOUTW      0x35 // write 16-bit word
-#define OPINL       0x36 // read 32-bit long
-#define OPOUTL      0x37 // write 32-bit long
-#define OPHOOK      0x38 // system services
+#define OPRESET     0x28        // reset into well-known state
+#define OPNOP       0x29        // dummy operation
+#define OPHLT       0x2a 	// halt execution
+#define OPBRK       0x2b 	// breakpoint
+#define OPTRAP      0x2c 	// trigger a trap (software interrupt)
+#define OPCLI       0x2d 	// disable interrupts
+#define OPSTI       0x2e 	// enable interrupts
+#define OPIRET      0x2f 	// return from interrupt handler
+#define OPTHR       0x30 	// start new thread at given address
+#define OPCMPSWAP   0x31 	// atomic compare and swap
+#define OPINB       0x32 	// read 8-bit byte from port
+#define OPOUTB      0x33 	// write 8-bit byte to port
+#define OPINW       0x34 	// read 16-bit word
+#define OPOUTW      0x35 	// write 16-bit word
+#define OPINL       0x36 	// read 32-bit long
+#define OPOUTL      0x37 	// write 32-bit long
+#define OPHOOK      0x38 	// system services
 #define WPMNASMOP   256
 /* unit IDS */
 #define UNIT_ALU    0x00	// arithmetic logical unit
@@ -157,8 +161,8 @@ typedef uint32_t wpmuword_t;
 #define NREG       16
 #define NVREG      16
 struct _wpmopcode {
-    wpmuword_t code;
-    wpmword_t  args[2];
+    wpmuword_t op;      // instruction opcode; see above
+    wpmword_t  args[2]; // up to 2 word arguments within instruction
 };
 /* VCODE instruction IDs */
 #define VECOPADD       0x01
@@ -244,6 +248,9 @@ struct wpmopcode {
     unsigned  reg1     : 6;	// register #1 ID + addressing flags
     unsigned  reg2     : 6;	// register #2 ID + addressing flags
     unsigned  size     : 3;     // operation size == size << 2
+#if (WPMWORDSIZE == 64)
+    uint32_t  pad;
+#endif
     wpmword_t args[2];
 } PACK();
 
