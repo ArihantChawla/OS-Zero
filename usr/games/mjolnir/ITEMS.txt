@@ -16,12 +16,26 @@
 - usually hidden unless you have used search or identify
 - dart, dagger, drop level down, teleport
 
+X - altar
+---------
+- sacrifices on altars may yield special items
+
+! - potion
+----------
+- booze, herb
+
+? - scroll
+----------
+- spells and magic
+  - animate the undead, freeze the undead, see gold, see monsters, see map,
+    identify
+
 " - punchcard
 -------------
 - hints for the game
 - maps
-- level control programs; animate the undead, freeze the undead, turn lights on
-  or off, etc.
+- level control programs; turn lights on or off, show gold, show monsters, show
+  map, etc.
 
 - - horizontal wall
 -------------------
