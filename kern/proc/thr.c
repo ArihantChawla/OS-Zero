@@ -90,7 +90,7 @@ thraddwait(struct thr *thr)
     uint64_t        key1;
     uint64_t        key2;
     uint64_t        key3;
-    void           *pstk[THRNKEY] = { NULL, NULL, NULL, NULL };
+    void           *ptab[THRNKEY] = { NULL, NULL, NULL, NULL };
 
     key0 = thrwaitkey0(wchan);
     key1 = thrwaitkey1(wchan);
@@ -104,7 +104,7 @@ thraddwait(struct thr *thr)
         if (ptr) {
             kbzero(ptr, NLVL0THR * sizeof(struct thrwait));
         }
-        pstk[0] = ptr;
+        ptab[0] = ptr;
     }
     if (ptr) {
         ptr = ptr[key0].ptr;
@@ -113,7 +113,7 @@ thraddwait(struct thr *thr)
             if (ptr) {
                 kbzero(ptr, NLVL1THR * sizeof(struct thrwait));
             }
-            pstk[1] = ptr;
+            ptab[1] = ptr;
         }
     } else {
         fail = 1;
@@ -125,7 +125,7 @@ thraddwait(struct thr *thr)
             if (ptr) {
                 kbzero(ptr, NLVL2THR * sizeof(struct thrwait));
             }
-            pstk[2] = ptr;
+            ptab[2] = ptr;
         }
     } else {
         fail = 1;
@@ -137,41 +137,39 @@ thraddwait(struct thr *thr)
             if (ptr) {
                 kbzero(ptr, NLVL3THR * sizeof(struct thrwait));
             }
-            pstk[3] = ptr;
+            ptab[3] = ptr;
         }
     } else {
         fail = 1;
     }
     if (!fail) {
-        if (pstk[0]) {
+        if (ptab[0]) {
             tab->nref++;
-            tab->ptr = pstk[0];
+            tab->ptr = ptab[0];
         }
         tab = tab->ptr;
-        if (pstk[1]) {
+        if (ptab[1]) {
             tab[key0].nref++;
-            tab[key0].ptr = pstk[1];
+            tab[key0].ptr = ptab[1];
         }
         tab = tab[key0].ptr;
-        if (pstk[2]) {
+        if (ptab[2]) {
             tab[key1].nref++;
-            tab[key1].ptr = pstk[2];
+            tab[key1].ptr = ptab[2];
         }
         tab = tab[key1].ptr;
-        if (pstk[3]) {
+        if (ptab[3]) {
             tab[key2].nref++;
-            tab[key2].ptr = pstk[3];
+            tab[key2].ptr = ptab[3];
         }
         tab = tab[key2].ptr;
         tab = &tab[key3];
         tab->nref++;
-//        thr->prev = NULL;
+        thr->prev = NULL;
         thr->next = tab->ptr;
-#if 0
         if (thr->next) {
             thr->next->prev = thr;
         }
-#endif
         tab->ptr = thr;
         ret ^= ret;
     }
@@ -193,22 +191,22 @@ thrwakeup(uintptr_t wchan)
     long            key2 = thrwaitkey2(wchan);
     long            key3 = thrwaitkey3(wchan);
 //    long            n;
-    struct thrwait *pstk[4] = { NULL };
+    struct thrwait *ptab[4] = { NULL };
 
     tab = &thrwaittab[key0];
     mtxlk(&tab->lk);
     ptr = tab;
     if (ptr) {
-        pstk[0] = ptr;
+        ptab[0] = ptr;
         ptr = ((void **)ptr->ptr)[key0];
         if (ptr) {
-            pstk[1] = ptr;
+            ptab[1] = ptr;
             ptr = ((void **)ptr->ptr)[key1];
             if (ptr) {
-                pstk[2] = ptr;
+                ptab[2] = ptr;
                 ptr = ((void **)ptr->ptr)[key2];
                 if (ptr) {
-                    pstk[3] = ptr;
+                    ptab[3] = ptr;
                     ptr = ((void **)ptr->ptr)[key3];
                 }
             }
@@ -227,25 +225,25 @@ thrwakeup(uintptr_t wchan)
         }
 #endif
         /* TODO: free tables if possible */
-        ptr = pstk[0];
+        ptr = ptab[0];
         if (ptr) {
             if (!--ptr->nref) {
                 kfree(ptr->ptr);
                 ptr->ptr = NULL;
             }
-            ptr = pstk[1];
+            ptr = ptab[1];
             if (ptr) {
                 if (!--ptr->nref) {
                     kfree(ptr->ptr);
                     ptr->ptr = NULL;
                 }
-                ptr = pstk[2];
+                ptr = ptab[2];
                 if (ptr) {
                     if (!--ptr->nref) {
                         kfree(ptr->ptr);
                         ptr->ptr = NULL;
                     }
-                    ptr = pstk[3];
+                    ptr = ptab[3];
                     if (ptr) {
                         if (!--ptr->nref) {
                             kfree(ptr->ptr);
