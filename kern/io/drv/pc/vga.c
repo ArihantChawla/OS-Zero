@@ -3,8 +3,6 @@
 #include <zero/cdecl.h>
 #include <kern/conf.h>
 
-#if (!VBE2)
-
 #include <kern/util.h>
 #include <kern/io/drv/pc/vga.h>
 
@@ -215,6 +213,4 @@ vgasyncscr(void)
 {
     ;
 }
-
-#endif /* !VBE2 */
 

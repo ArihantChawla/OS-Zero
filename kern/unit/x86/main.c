@@ -32,6 +32,9 @@ extern void hpetinit(void);
 #if (SMP)
 extern void mpstart(void);
 #endif
+#if (VBE2)
+long vbe2init(struct mboothdr *hdr);
+#endif
 
 extern uint8_t            kerniomap[8192] ALIGNED(PAGESIZE);
 extern struct proc        proctab[NPROC];
@@ -44,6 +47,14 @@ extern volatile long      mpncpu;
 extern volatile long      mpmultiproc;
 #endif
 
+#if (VBE2)
+void
+vbe2kludge(void)
+{
+    kmemset(vbe2screen.fbuf, 0xff, vbe2screen.w * vbe2screen.h * 3);
+}
+#endif
+
 ASMLINK
 void
 kmain(struct mboothdr *hdr, unsigned long pmemsz)
@@ -53,15 +64,17 @@ kmain(struct mboothdr *hdr, unsigned long pmemsz)
     kbzero(&_bssvirt, (uint32_t)&_ebss - (uint32_t)&_bss);
 //    __asm__ __volatile__ ("sti\n");
     curproc = &proctab[0];
-#if (!VBE2)
-    vgainitcon(80, 25);
-#endif
     meminit(vmphysadr(&_ebssvirt), pmemsz);
     /* TODO: use memory map from GRUB */
     vminitphys((uintptr_t)&_ebss, pmemsz - (unsigned long)&_ebss);
 //    meminit(vmphysadr(&_ebssvirt), max(pmemsz, 3UL * 1024 * 1024 * 1024));
     kmemset(&kerniomap, 0xff, sizeof(kerniomap));
 //    vgainitcon(80, 25);
+    vgainitcon(80, 25);
+#if (VBE2)
+    vbe2init(hdr);
+    vbe2kludge();
+#endif
     if (!bufinit()) {
         kprintf("failed to allocate buffer cache\n");
 
@@ -88,11 +101,11 @@ kmain(struct mboothdr *hdr, unsigned long pmemsz)
 #if (HPET)
     hpetinit();
 #endif
+#if 0
 #if (VBE2)
     vbe2init(hdr);
-    {
-        kmemset(vbe2screen.fbuf, 0xff, vbe2screen.w * vbe2screen.h * 3);
-    }
+    vbe2kludge();
+#endif
 #endif
 #if (AC97)
     ac97init();

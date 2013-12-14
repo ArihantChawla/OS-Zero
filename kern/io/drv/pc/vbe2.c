@@ -17,7 +17,7 @@ vbe2init(struct mboothdr *hdr)
     long            bpp = (mode) ? mode->npixbit : 0;
     long            retval;
 
-    retval = (hdr->flags | GRUBVBE);
+    retval = (hdr->flags & GRUBVBE);
     if (retval) {
         kprintf("framebuffer @ %x\n", mode->fbadr);
         vbe2screen.fbuf = (void *)mode->fbadr;
