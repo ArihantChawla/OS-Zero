@@ -108,7 +108,7 @@ typedef pthread_mutex_t LK_T;
 #define SBRK_FAILED ((void *)-1L)
 
 #define HACKS   0
-#define ZEROMTX 1
+//#define ZEROMTX 1
 //#define STAT    0
 #define ARNQBUF 1
 
