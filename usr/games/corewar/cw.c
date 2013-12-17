@@ -2,6 +2,7 @@
 
 #include <stdio.h>
 #include <stdlib.h>
+#include <stdint.h>
 #include <zero/param.h>
 #include <zero/cdecl.h>
 
@@ -9,101 +10,151 @@
 
 typedef long cwinstrfunc(long);
 
-static struct cwinstr  cwcore[CWNCORE];
-static long            cwcoretab[CWNCORE];
 static struct cwinstr *cwoptab[CWNCORE];
 static cwinstrfunc    *cwfunctab[CWNOP];
 
-#define cwreadargs(op, arg1, arg2)                                      \
+/* read n (1 or 2) arguments into arg1 and arg2 */
+#define cwreadargs(op, ip, arg1, arg2, n)                               \
     do {                                                                \
+        uintptr_t _arg1 = CWNONE;                                       \
+        uintptr_t _arg2 = CWNONE;                                       \
+        uintptr_t _tmp;                                                 \
+                                                                        \
         (arg1) = CWNONE;                                                \
         (arg2) = CWNONE;                                                \
-        if ((op)->aflg & CWRELBIT) {                                    \
-            (arg1) = ip + (op)->a;                                      \
-        } else if ((op)->aflg & CWIMMBIT) {                             \
-            (arg1) = (op)->a;                                           \
-        } else if ((op)->aflg & CWINDIRBIT) {                           \
-            long *lp = &cwcoretab[ip];                                  \
-            (arg1) = lp[(op)->a];                                       \
+        if (n == 2) {                                                   \
+            if ((op)->aflg & CWIMMBIT) {                                \
+                _tmp = (op)->a;                                         \
+                _arg1 = (uintptr_t)cwoptab[_tmp];                       \
+                _arg1 &= CWNCORE - 1;                                   \
+            } else if ((op)->aflg & CWINDIRBIT) {                       \
+                struct cwinstr *_ptr;                                   \
+                                                                        \
+                _tmp = ip + (op)->a;                                    \
+                _tmp &= CWNCORE - 1;                                    \
+                _ptr = cwoptab[_tmp];                                   \
+                _tmp += (uintptr_t)_ptr;                                \
+                _arg1 = (uintptr_t)cwoptab[_tmp];                       \
+                _arg1 &= CWNCORE - 1;                                   \
+            } else {                                                    \
+                _tmp = (ip) + (op)->a;                                  \
+                _arg1 = (uintptr_t)cwoptab[_tmp];                       \
+                _arg1 &= CWNCORE - 1;                                   \
+            }                                                           \
         }                                                               \
-        if ((op)->bflg & CWRELBIT) {                                    \
-            (arg2) = ip + (op)->b;                                      \
-        } else if ((op)->bflg & CWIMMBIT) {                             \
-            (arg2) = (op)->b;                                           \
+        if ((op)->bflg & CWIMMBIT) {                                    \
+            _tmp = (op)->b;                                             \
+            _arg2 = (uintptr_t)cwoptab[_tmp];                           \
+            _arg2 &= CWNCORE - 1;                                       \
         } else if ((op)->bflg & CWINDIRBIT) {                           \
-            long *lp = &cwcoretab[ip];                                  \
-            (arg2) = lp[(op)->b];                                       \
+            struct cwinstr *_ptr;                                       \
+                                                                        \
+            _tmp = ip + (op)->b;                                        \
+            _tmp &= CWNCORE - 1;                                        \
+            _ptr = cwoptab[_tmp];                                       \
+            _tmp += (uintptr_t)_ptr;                                    \
+            _arg2 = (uintptr_t)cwoptab[_tmp];                           \
+            _arg2 &= CWNCORE - 1;                                       \
+        } else {                                                        \
+            _tmp = (ip) + (op)->b;                                      \
+            _arg2 = (uintptr_t)cwoptab[_tmp];                           \
+            _arg2 &= CWNCORE - 1;                                       \
         }                                                               \
-        (arg2) &= CWNCORE - 1;                                          \
-        (arg1) &= CWNCORE - 1;                                          \
+        (arg1) = _arg1;                                                 \
+        (arg2) = _arg2;                                                 \
     } while (0)
 
+/* DAT B; initialise location to B */
 long
 cwdatop(long ip)
 {
     struct cwinstr *op = cwoptab[ip];
-    long            ret = op->b;
+    uintptr_t       dummy;
+    uintptr_t       val;
 
-    return ret;
+    cwreadargs(op, ip, dummy, val, 1);
+    cwoptab[ip] = (struct cwinstr *)val;
+    ip++;
+    ip &= CWNCORE - 1;
+
+    return ip;
 }
 
 long
 cwmovop(long ip)
 {
     struct cwinstr *op = cwoptab[ip];
-    long            ret = ip;
-    long            dest;
-    long            src;
+    uintptr_t       src;
+    uintptr_t       dest;
 
-    cwreadargs(op, src, dest);
-    cwcoretab[dest] = cwcoretab[src];
-    cwoptab[dest] = cwoptab[src];
-    /* FIXME: does cwoptab[src] become empty/NULL? */
-    cwoptab[src] = NULL;
-    ret++;
-    ret &= CWNCORE - 1;
+    if (op->bflg & CWIMMBIT) {
+        fprintf(stderr, "MOV: invalid immediate B-field\n");
 
-    return ret;
+        exit(1);
+    }
+    cwreadargs(op, ip, src, dest, 2);
+    cwoptab[dest] = (struct cwinstr *)src;
+    ip++;
+    ip &= CWNCORE - 1;
+
+    return ip;
 }
 
 long
 cwaddop(long ip)
 {
     struct cwinstr *op = cwoptab[ip];
-    long            ret = ip;
     long            sum;
-    long            dest;
-    long            src;
+    uintptr_t       src;
+    uintptr_t       dest;
+    long            a;
+    long            b;
 
-    cwreadargs(op, src, dest);
-    sum = cwcoretab[src] + cwcoretab[dest];
+    if (op->bflg & CWIMMBIT) {
+        fprintf(stderr, "ADD: invalid immediate B-field\n");
+
+        exit(1);
+    }
+    cwreadargs(op, ip, src, dest, 2);
+    a = *((long *)&src);
+    b = *((long *)&dest);
+    sum = src + dest;
     sum &= CWNCORE - 1;
-    cwcoretab[dest] = sum;
-    cwoptab[dest] = cwoptab[sum];
-    ret++;
-    ret &= CWNCORE - 1;
+    cwoptab[dest] = (struct cwinstr *)sum;
+    ip++;
+    ip &= CWNCORE - 1;
 
-    return ret;
+    return ip;
 }
 
 long
 cwsubop(long ip)
 {
     struct cwinstr *op = cwoptab[ip];
-    long            ret = ip;
     long            diff;
     long            dest;
     long            src;
+    long            a;
+    long            b;
 
-    cwreadargs(op, src, dest);
-    diff = cwcoretab[src] - cwcoretab[dest];
+    if (op->bflg & CWIMMBIT) {
+        fprintf(stderr, "SUB: invalid immediate B-field\n");
+
+        exit(1);
+    }
+    cwreadargs(op, ip, src, dest, 2);
+    a = *((long *)&src);
+    b = *((long *)&dest);
+    diff = b - a;
+    if (diff < 0) {
+        diff += CWNCORE;
+    }
     diff &= CWNCORE - 1;
-    cwcoretab[dest] = diff;
-    cwoptab[dest] = cwoptab[diff];
-    ret++;
-    ret &= CWNCORE - 1;
+    cwoptab[dest] = (struct cwinstr *)diff;
+    ip++;
+    ip &= CWNCORE - 1;
 
-    return ret;
+    return ip;
 }
 
 long
@@ -113,7 +164,12 @@ cwjmpop(long ip)
     long            dummy;
     long            dest;
 
-    cwreadargs(op, dummy, dest);
+    if (op->bflg & CWIMMBIT) {
+        fprintf(stderr, "JMP: invalid immediate B-field\n");
+
+        exit(1);
+    }
+    cwreadargs(op, ip, dummy, dest, 1);
     dest &= CWNCORE - 1;
 
     return dest;
@@ -123,60 +179,68 @@ long
 cwjmzop(long ip)
 {
     struct cwinstr *op = cwoptab[ip];
-    long            ret = ip;
     long            cond;
     long            dest;
 
-    cwreadargs(op, cond, dest);
-    if (!cond) {
-        ret = dest;
-    } else {
-        ret++;
-        ret &= CWNCORE - 1;
-    }
+    if (op->bflg & CWIMMBIT) {
+        fprintf(stderr, "JMZ: invalid immediate B-field\n");
 
-    return ret;
+        exit(1);
+    }
+    cwreadargs(op, ip, cond, dest, 2);
+    if (!cond) {
+        ip = dest;
+    } else {
+        ip++;
+    }
+    ip &= CWNCORE - 1;
+
+    return ip;
 }
 
 long
 cwdjzop(long ip)
 {
     struct cwinstr *op = cwoptab[ip];
-    long            ret = ip;
     long            src;
     long            dest;
-
-    cwreadargs(op, src, dest);
+ 
+    if (op->bflg & CWIMMBIT) {
+        fprintf(stderr, "JZ: invalid immediate B-field\n");
+ 
+        exit(1);
+    }
+    cwreadargs(op, ip, src, dest, 2);
     src--;
     if (src < 0) {
         src = CWNCORE - 1;
+        ip++;
     } else if (!src) {
-        ret = dest;
+        ip = dest;
     } else {
-        ret++;
-        ret &= CWNCORE - 1;
+        ip++;
     }
+    ip &= CWNCORE - 1;
 
-    return ret;
+    return ip;
 }
 
 long
 cwcmpop(long ip)
 {
     struct cwinstr *op = cwoptab[ip];
-    long            ret = ip;
     long            src;
     long            dest;
 
-    cwreadargs(op, src, dest);
+    cwreadargs(op, ip, src, dest, 2);
     if (src != dest) {
-        ret += 2;
+        ip += 2;
     } else {
-        ret++;
+        ip++;
     }
-    ret &= CWNCORE - 1;
+    ip &= CWNCORE - 1;
 
-    return ret;
+    return ip;
 }
 
 void
@@ -190,18 +254,6 @@ cwinitop(void)
     cwfunctab[CWOPJMZ] = cwjmzop;
     cwfunctab[CWOPDJZ] = cwdjzop;
     cwfunctab[CWOPCMP] = cwcmpop;
-}
-
-void
-cwinitcore(void)
-{
-    long l;
-
-    for (l = 0 ; l < CWNCORE ; l++) {
-        cwoptab[l] = &cwcore[l];
-    }
-
-    return;
 }
 
 void
@@ -222,7 +274,7 @@ int
 main(int argc, char *argv[])
 {
     cwinitop();
-    cwinitcore();
 
     exit(0);
 }
+
