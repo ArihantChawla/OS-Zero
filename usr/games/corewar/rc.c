@@ -4,6 +4,8 @@
 
 #include <corewar/cw.h>
 
+extern struct cwinstr **cwoptab;
+
 static void       *rcparsetab[128];
 static const char *rcoptab[CWNOP]
 = {
@@ -70,6 +72,30 @@ rcaddop(const char *name, long id)
     return;
 }
 
+long
+rcfindop(char *str)
+{
+    long  op = CWNONE;
+    char *cp = str;
+    void *ptr;
+
+    ptr = rcparsetab[toupper(*cp)];
+    cp++;
+    if ((ptr) && isalpha(*cp)) {
+        ptr = ((void **)ptr)[toupper(*cp)];
+        cp++;
+        if ((ptr) && isalpha(*cp)) {
+            ptr = ((void **)ptr)[toupper(*cp)];
+            cp++;
+            if (isspace(*cp)) {
+                op = *((long *)ptr);
+            }
+        }
+    }
+
+    return op;
+}
+
 void
 rcinitop(void)
 {
@@ -118,9 +144,8 @@ rcdisasm(struct cwinstr *op, FILE *fp)
 struct cwinstr *
 rcgetop(const char *str)
 {
-    const char     *cp = str;
+    char           *cp = str;
     struct cwinstr *instr = NULL;
-    void           *ptr;
     long            op = CWNONE;
     long            val;
 
@@ -135,29 +160,22 @@ rcgetop(const char *str)
             cp++;
         }
         if (isalpha(*cp)) {
-            ptr = rcparsetab[toupper(*cp)];
-            cp++;
-            if ((ptr) && isalpha(*cp)) {
-                ptr = ((void **)ptr)[toupper(*cp)];
-                cp++;
-                if ((ptr) && isalpha(*cp)) {
-                    ptr = ((void **)ptr)[toupper(*cp)];
-                    cp++;
-                    if (isspace(*cp)) {
-                        op = *((long *)ptr);
-                    }
-                }
-            }
+            op = rcfindop(cp);
         }
         if (op != CWNONE) {
             instr->op = op;
+            while (isalpha(*cp)) {
+                cp++;
+            }
         } else {
             fprintf(stderr, "invalid mnemonic: %s\n", str);
 
             exit(1);
         }
-        instr->aflg = 0;
-        instr->bflg = 0;
+        instr->aflg = CWNONE;
+        instr->bflg = CWNONE;
+        instr->a = CWNONE;
+        instr->b = CWNONE;
         if (*cp) {
             while (isspace(*cp)) {
                 cp++;
@@ -223,5 +241,70 @@ rcgetop(const char *str)
     }
 
     return instr;
+}
+
+char *
+rcgetline(FILE *fp)
+{
+    char *buf;
+    long  n = 32;
+    long  ndx = 0;
+    int   ch = fgetc(fp);
+
+    buf = malloc(n * sizeof(char));
+    if (buf) {
+        while (ch != EOF) {
+            if (ndx == n) {
+                n <<= 1;
+                buf = realloc(buf, n * sizeof(char));
+            }
+            if (ch == '\n') {
+                
+                break;
+            }
+            buf[ndx] = ch;
+            ndx++;
+            ch = fgetc(fp);
+        }
+        buf[ndx] = '\0';
+    }
+
+    return buf;
+}
+
+long
+rcxlate(FILE *fp, long base, long *baseret, long *limret)
+{
+    char           *linebuf;
+    struct cwinstr *instr;
+    long            ip = base;
+    long            n = 0;
+
+    *baseret = ip;
+    while (1) {
+        linebuf = rcgetline(fp);
+        if (linebuf) {
+            instr = rcgetop(linebuf);
+            if (instr) {
+                n++;
+                if (cwoptab[ip]) {
+                    fprintf(stderr, "programs overlap\n");
+
+                    exit(1);
+                }
+                cwoptab[ip] = instr;
+                ip++;
+                ip &= CWNCORE - 1;
+            }
+        } else {
+            *limret = ip;
+
+            return n;
+        }
+    }
+    /* NOTREACHED */
+    *limret = CWNONE;
+
+    return n;
 }
 
