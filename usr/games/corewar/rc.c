@@ -35,8 +35,9 @@ rcaddop(char *name, long id)
 {
     void *ptr1;
     void *ptr2;
-    long  ndx = *name++;
+    long  ndx = toupper(*name);
 
+    name++;
     if (ndx) {
         ptr1 = rcparsetab[ndx];
         if (!ptr1) {
@@ -48,7 +49,8 @@ rcaddop(char *name, long id)
 
             exit(1);
         }
-        ndx = *name++;
+        ndx = toupper(*name);
+        name++;
         if (ndx) {
             ptr2 = ((void **)ptr1)[ndx];
             if (!ptr2) {
@@ -60,7 +62,8 @@ rcaddop(char *name, long id)
                 
                 exit(1);
             }
-            ndx = *name++;
+            ndx = toupper(*name);
+            name++;
             if (ndx) {
                 ptr1 = ((long **)ptr2)[ndx];
                 if (!ptr1) {
@@ -72,10 +75,7 @@ rcaddop(char *name, long id)
                     
                     exit(1);
                 }
-                ndx = *name++;
-                if (ndx) {
-                    ((long *)ptr1)[ndx] = id;
-                }
+                *((long *)ptr1) = id;
             }
         }
     }
@@ -113,14 +113,14 @@ rcfindop(char *str, long *narg)
 void
 rcinitop(void)
 {
-    rcaddop("DAT", 0);
-    rcaddop("MOV", 1);
-    rcaddop("ADD", 2);
-    rcaddop("SUB", 3);
-    rcaddop("JMP", 4);
-    rcaddop("JMZ", 5);
-    rcaddop("DJZ", 6);
-    rcaddop("CMP", 7);
+    rcaddop("DAT", CWOPDAT);
+    rcaddop("MOV", CWOPMOV);
+    rcaddop("ADD", CWOPADD);
+    rcaddop("SUB", CWOPSUB);
+    rcaddop("JMP", CWOPJMP);
+    rcaddop("JMZ", CWOPJMZ);
+    rcaddop("DJZ", CWOPDJZ);
+    rcaddop("CMP", CWOPCMP);
 }
 
 void
@@ -131,16 +131,20 @@ rcdisasm(struct cwinstr *op, FILE *fp)
     if (op) {
         fprintf(fp, "\t%s\t", rcoptab[op->op]);
     }
-    ch = '\0';
-    if (op->aflg & CWIMMBIT) {
-        ch = '#';
-    } else if (op->aflg & CWINDIRBIT) {
-        ch = '@';
+    if (rcnargtab[op->op] == 2) {
+        ch = '\0';
+        if (op->aflg & CWIMMBIT) {
+            ch = '#';
+        } else if (op->aflg & CWINDIRBIT) {
+            ch = '@';
+        }
+        if (ch) {
+            fprintf(fp, "%c", ch);
+        }
+        fprintf(fp, "%d\t", op->a);
+    } else {
+        fprintf(fp, "\t");
     }
-    if (ch) {
-        fprintf(fp, "%c", ch);
-    }
-    fprintf(stderr, "%d\t", op->a);
     ch = '\0';
     if (op->bflg & CWIMMBIT) {
         ch = '#';
@@ -160,8 +164,8 @@ rcgetop(char *str)
 {
     char           *cp = str;
     struct cwinstr *instr = NULL;
-    long            op = CWNONE;
-    long            sign = 0;
+    long            op;
+    long            sign;
     long            val;
     long            narg;
 
@@ -175,6 +179,7 @@ rcgetop(char *str)
         while (isspace(*cp)) {
             cp++;
         }
+        op = CWNONE;
         if (isalpha(*cp)) {
             op = rcfindop(cp, &narg);
         }
@@ -188,8 +193,8 @@ rcgetop(char *str)
 
             exit(1);
         }
-        instr->aflg = CWNONE;
-        instr->bflg = CWNONE;
+        instr->aflg = 0;
+        instr->bflg = 0;
         instr->a = CWNONE;
         instr->b = CWNONE;
         if (*cp) {
@@ -206,6 +211,7 @@ rcgetop(char *str)
                         cp++;
                     }
                     val = CWNONE;
+                    sign = 0;
                     if (*cp == '-') {
                         sign = 1;
                         cp++;
@@ -217,17 +223,15 @@ rcgetop(char *str)
                             val += *cp - '0';
                             cp++;
                         }
-                    }
-                    if (sign) {
-                        val = -val;
-                    }
-                    if (val != CWNONE && val <= CWNCORE - 1) {
-                        instr->a = val;
                     } else {
                         fprintf(stderr, "invalid A-field: %s\n", str);
                         
                         exit(1);
                     }
+                    if (sign) {
+                        val = -val;
+                    }
+                    instr->a = val;
                 }
                 while (isspace(*cp)) {
                     cp++;
@@ -246,6 +250,7 @@ rcgetop(char *str)
                     cp++;
                 }
                 val = CWNONE;
+                sign = 0;
                 if (*cp == '-') {
                     sign = 1;
                     cp++;
@@ -257,17 +262,15 @@ rcgetop(char *str)
                         val += *cp - '0';
                         cp++;
                     }
+                } else {
+                    fprintf(stderr, "invalid B-field: %s\n", str);
+
+                    exit(1);
                 }
                 if (sign) {
                     val = -val;
                 }
-                if (val != CWNONE && val <= CWNCORE - 1) {
-                    instr->b = val;
-                } else {
-                    fprintf(stderr, "invalid B-field: %s\n", str);
-                    
-                    exit(1);
-                }
+                instr->b = val;
             }
         }
     }
@@ -278,27 +281,30 @@ rcgetop(char *str)
 char *
 rcgetline(FILE *fp)
 {
-    char *buf;
+    char *buf = NULL;
     long  n = 32;
     long  ndx = 0;
-    int   ch = fgetc(fp);
+    int   ch;
 
-    buf = malloc(n * sizeof(char));
-    if (buf) {
-        while (ch != EOF) {
-            if (ndx == n) {
-                n <<= 1;
-                buf = realloc(buf, n * sizeof(char));
+    ch = fgetc(fp);
+    if (ch != EOF) {
+        buf = malloc(n * sizeof(char));
+        if (buf) {
+            while (ch != EOF) {
+                if (ndx == n) {
+                    n <<= 1;
+                    buf = realloc(buf, n * sizeof(char));
+                }
+                if (ch == '\n') {
+                    
+                    break;
+                }
+                buf[ndx] = ch;
+                ndx++;
+                ch = fgetc(fp);
             }
-            if (ch == '\n') {
-                
-                break;
-            }
-            buf[ndx] = ch;
-            ndx++;
-            ch = fgetc(fp);
+            buf[ndx] = '\n';
         }
-        buf[ndx] = '\0';
     }
 
     return buf;
@@ -337,6 +343,10 @@ rcxlate(FILE *fp, long base, long *baseret, long *limret)
                     cwoptab[ip] = instr;
                     ip++;
                     ip &= CWNCORE - 1;
+                } else {
+                    fprintf(stderr, "invalid instruction: %s\n", linebuf);
+
+                    exit(1);
                 }
             } else if (wrap) {
 
@@ -346,13 +356,11 @@ rcxlate(FILE *fp, long base, long *baseret, long *limret)
                 break;
             }
         } else {
-            *limret = ip;
 
-            return n;
+            break;
         }
     }
-    /* NOTREACHED */
-    *limret = CWNONE;
+    *limret = ip;
 
     return n;
 }

@@ -3,6 +3,7 @@
 #include <stdio.h>
 #include <stdlib.h>
 #include <stdint.h>
+#include <time.h>
 #include <zero/param.h>
 #include <zero/cdecl.h>
 
@@ -23,13 +24,17 @@ struct cwinstr     **cwoptab;
                                                                         \
         if (n == 2) {                                                   \
             if ((op)->aflg & CWIMMBIT) {                                \
-                _tmp = (op)->a;                                         \
-                _arg1 = (uint64_t)cwoptab[_tmp];                        \
+                _arg1 = (op)->a;                                        \
                 _arg1 &= CWNCORE - 1;                                   \
             } else if ((op)->aflg & CWINDIRBIT) {                       \
                 struct cwinstr *_ptr;                                   \
                                                                         \
                 _tmp = ip + (op)->a;                                    \
+                if (_tmp < 0) {                                         \
+                    _tmp = CWNCORE - _tmp;                              \
+                } else {                                                \
+                    _tmp &= CWNCORE - 1;                                \
+                }                                                       \
                 _tmp &= CWNCORE - 1;                                    \
                 _ptr = cwoptab[_tmp];                                   \
                 _tmp += (uint64_t)_ptr;                                 \
@@ -37,25 +42,30 @@ struct cwinstr     **cwoptab;
                 _arg1 &= CWNCORE - 1;                                   \
             } else {                                                    \
                 _tmp = (ip) + (op)->a;                                  \
+                _tmp &= CWNCORE - 1;                                    \
                 _arg1 = (uint64_t)cwoptab[_tmp];                        \
                 _arg1 &= CWNCORE - 1;                                   \
             }                                                           \
         }                                                               \
         if ((op)->bflg & CWIMMBIT) {                                    \
-            _tmp = (op)->b;                                             \
-            _arg2 = (uint64_t)cwoptab[_tmp];                            \
+            _arg2 = (op)->b;                                            \
             _arg2 &= CWNCORE - 1;                                       \
         } else if ((op)->bflg & CWINDIRBIT) {                           \
             struct cwinstr *_ptr;                                       \
                                                                         \
             _tmp = ip + (op)->b;                                        \
-            _tmp &= CWNCORE - 1;                                        \
+            if (_tmp < 0) {                                             \
+                _tmp = CWNCORE - _tmp;                                  \
+            } else {                                                    \
+                _tmp &= CWNCORE - 1;                                    \
+            }                                                           \
             _ptr = cwoptab[_tmp];                                       \
             _tmp += (uint64_t)_ptr;                                     \
             _arg2 = (uint64_t)cwoptab[_tmp];                            \
             _arg2 &= CWNCORE - 1;                                       \
         } else {                                                        \
             _tmp = (ip) + (op)->b;                                      \
+            _tmp &= CWNCORE - 1;                                        \
             _arg2 = (uint64_t)cwoptab[_tmp];                            \
             _arg2 &= CWNCORE - 1;                                       \
         }                                                               \
@@ -68,6 +78,8 @@ long
 cwdatop(long ip)
 {
     struct cwinstr *op = cwoptab[ip];
+    void           *ptr1;
+    void           *ptr2;
     uint64_t        dummy;
     uint64_t        val;
 
@@ -75,6 +87,7 @@ cwdatop(long ip)
     cwoptab[ip] = (struct cwinstr *)val;
     ip++;
     ip &= CWNCORE - 1;
+    fprintf(stderr, "DAT: %ld\n", ip);
 
     return ip;
 }
@@ -169,7 +182,11 @@ cwjmpop(long ip)
         exit(1);
     }
     cwreadargs(op, ip, dummy, dest, 1);
-    dest &= CWNCORE - 1;
+    if (dest) {
+        dest &= CWNCORE - 1;
+    } else {
+        dest = ip;
+    }
 
     return dest;
 }
@@ -274,18 +291,22 @@ cwloop(long start1, long start2)
     while (1) {
         op = cwoptab[ip1];
         if (!op) {
-            fprintf(stderr, "program #2 won\n");
+            fprintf(stderr, "program #2 (%ld) won\n", ip2);
 
             exit(0);
         }
+        fprintf(stderr, "PROCESS #1 (%ld)\n", ip1);
+        rcdisasm(op, stderr);
         func = cwfunctab[op->op];
         ip1 = func(ip1);
         op = cwoptab[ip2];
         if (!op) {
-            fprintf(stderr, "program #1 won\n");
+            fprintf(stderr, "program #1 (%ld) won\n", ip1);
 
             exit(0);
         }
+        fprintf(stderr, "PROCESS #2 (%ld)\n", ip2);
+        rcdisasm(op, stderr);
         func = cwfunctab[op->op];
         ip2 = func(ip2);
     }
@@ -302,7 +323,9 @@ main(int argc, char *argv[])
     long  ip1;
     long  ip2;
 
+    srand(time(NULL));
     cwinitop();
+    rcinitop();
     cwoptab = calloc(CWNCORE, sizeof(struct cwinstr *));
     if (!cwoptab) {
         fprintf(stderr, "failed to allocate core\n");
@@ -325,6 +348,7 @@ main(int argc, char *argv[])
 
         exit(1);
     }
+    fclose(fp);
     ip1 = base;
     if (lim < base) {
         base = lim + ((base - lim) >> 1);
@@ -344,6 +368,7 @@ main(int argc, char *argv[])
 
         exit(1);
     }
+    fclose(fp);
     ip2 = base;
     cwloop(ip1, ip2);
 
