@@ -30,7 +30,6 @@ kinit(void)
     struct mboothdr *boothdr;
     unsigned long    pmemsz;
 
-    __asm__ __volatile__ ("sti\n");
 //    __asm__ __volatile__ ("cli\n");
     /* determine amount of RAM */
     /* boot.S leaves the multiboot header address in %ebx */
@@ -39,6 +38,7 @@ kinit(void)
     /* multiprocessor probe */
     /* bootstrap kernel */
     trapinit();                         // interrupt management
+    __asm__ __volatile__ ("sti\n");
     kmain(boothdr, pmemsz);
 }
 
