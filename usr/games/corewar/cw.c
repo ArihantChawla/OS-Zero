@@ -17,16 +17,14 @@ struct cwinstr     **cwoptab;
 /* read n (1 or 2) arguments into arg1 and arg2 */
 #define cwreadargs(op, ip, arg1, arg2, n)                               \
     do {                                                                \
-        uintptr_t _arg1 = CWNONE;                                       \
-        uintptr_t _arg2 = CWNONE;                                       \
-        uintptr_t _tmp;                                                 \
+        uint64_t _arg1 = ~UINT64_C(0);                                  \
+        uint64_t _arg2 = ~UINT64_C(0);                                  \
+        uint64_t _tmp;                                                  \
                                                                         \
-        (arg1) = CWNONE;                                                \
-        (arg2) = CWNONE;                                                \
         if (n == 2) {                                                   \
             if ((op)->aflg & CWIMMBIT) {                                \
                 _tmp = (op)->a;                                         \
-                _arg1 = (uintptr_t)cwoptab[_tmp];                       \
+                _arg1 = (uint64_t)cwoptab[_tmp];                        \
                 _arg1 &= CWNCORE - 1;                                   \
             } else if ((op)->aflg & CWINDIRBIT) {                       \
                 struct cwinstr *_ptr;                                   \
@@ -34,18 +32,18 @@ struct cwinstr     **cwoptab;
                 _tmp = ip + (op)->a;                                    \
                 _tmp &= CWNCORE - 1;                                    \
                 _ptr = cwoptab[_tmp];                                   \
-                _tmp += (uintptr_t)_ptr;                                \
-                _arg1 = (uintptr_t)cwoptab[_tmp];                       \
+                _tmp += (uint64_t)_ptr;                                 \
+                _arg1 = (uint64_t)cwoptab[_tmp];                        \
                 _arg1 &= CWNCORE - 1;                                   \
             } else {                                                    \
                 _tmp = (ip) + (op)->a;                                  \
-                _arg1 = (uintptr_t)cwoptab[_tmp];                       \
+                _arg1 = (uint64_t)cwoptab[_tmp];                        \
                 _arg1 &= CWNCORE - 1;                                   \
             }                                                           \
         }                                                               \
         if ((op)->bflg & CWIMMBIT) {                                    \
             _tmp = (op)->b;                                             \
-            _arg2 = (uintptr_t)cwoptab[_tmp];                           \
+            _arg2 = (uint64_t)cwoptab[_tmp];                            \
             _arg2 &= CWNCORE - 1;                                       \
         } else if ((op)->bflg & CWINDIRBIT) {                           \
             struct cwinstr *_ptr;                                       \
@@ -53,12 +51,12 @@ struct cwinstr     **cwoptab;
             _tmp = ip + (op)->b;                                        \
             _tmp &= CWNCORE - 1;                                        \
             _ptr = cwoptab[_tmp];                                       \
-            _tmp += (uintptr_t)_ptr;                                    \
-            _arg2 = (uintptr_t)cwoptab[_tmp];                           \
+            _tmp += (uint64_t)_ptr;                                     \
+            _arg2 = (uint64_t)cwoptab[_tmp];                            \
             _arg2 &= CWNCORE - 1;                                       \
         } else {                                                        \
             _tmp = (ip) + (op)->b;                                      \
-            _arg2 = (uintptr_t)cwoptab[_tmp];                           \
+            _arg2 = (uint64_t)cwoptab[_tmp];                            \
             _arg2 &= CWNCORE - 1;                                       \
         }                                                               \
         (arg1) = _arg1;                                                 \
@@ -70,8 +68,8 @@ long
 cwdatop(long ip)
 {
     struct cwinstr *op = cwoptab[ip];
-    uintptr_t       dummy;
-    uintptr_t       val;
+    uint64_t        dummy;
+    uint64_t        val;
 
     cwreadargs(op, ip, dummy, val, 1);
     cwoptab[ip] = (struct cwinstr *)val;
@@ -85,8 +83,8 @@ long
 cwmovop(long ip)
 {
     struct cwinstr *op = cwoptab[ip];
-    uintptr_t       src;
-    uintptr_t       dest;
+    uint64_t        src;
+    uint64_t        dest;
 
     if (op->bflg & CWIMMBIT) {
         fprintf(stderr, "MOV: invalid immediate B-field\n");
@@ -106,8 +104,8 @@ cwaddop(long ip)
 {
     struct cwinstr *op = cwoptab[ip];
     long            sum;
-    uintptr_t       src;
-    uintptr_t       dest;
+    uint64_t        src;
+    uint64_t        dest;
     long            a;
     long            b;
 
@@ -255,6 +253,14 @@ cwinitop(void)
     cwfunctab[CWOPJMZ] = cwjmzop;
     cwfunctab[CWOPDJZ] = cwdjzop;
     cwfunctab[CWOPCMP] = cwcmpop;
+    rcaddop("DAT", CWOPDAT);
+    rcaddop("MOV", CWOPMOV);
+    rcaddop("ADD", CWOPADD);
+    rcaddop("SUB", CWOPSUB);
+    rcaddop("JMP", CWOPJMP);
+    rcaddop("JMZ", CWOPJMZ);
+    rcaddop("DJZ", CWOPDJZ);
+    rcaddop("CMP", CWOPCMP);
 }
 
 void
@@ -296,6 +302,7 @@ main(int argc, char *argv[])
     long  ip1;
     long  ip2;
 
+    cwinitop();
     cwoptab = calloc(CWNCORE, sizeof(struct cwinstr *));
     if (!cwoptab) {
         fprintf(stderr, "failed to allocate core\n");
@@ -338,7 +345,6 @@ main(int argc, char *argv[])
         exit(1);
     }
     ip2 = base;
-    cwinitop();
     cwloop(ip1, ip2);
 
     /* NOTREACHED */

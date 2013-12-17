@@ -5,7 +5,7 @@
 #include <zero/cdecl.h>
 
 #define CWNCORE     4096
-#define CWNONE      (~0UL)
+#define CWNONE      (~0)
 #define CWCOREEMPTY NULL
 
 /* opcodes */
@@ -18,22 +18,26 @@
 #define CWOPDJZ     6
 #define CWOPCMP     7
 #define CWNOP       8
+/* flags */
+/* signed value */
+#define CWSIGNED    0x00
 /* addressing modes, default is relative */
-#define CWADRIMM    0   // immediate
-#define CWADRINDIR  1   // indirect
+#define CWADRIMM    0x01        // immediate
+#define CWADRINDIR  0x02        // indirect
 
 /* instruction flags */
+#define CWSIGNBIT   (1U << CWSIGNED)
 #define CWIMMBIT    (1U << CWADRIMM)
 #define CWINDIRBIT  (1U << CWADRINDIR)
 
-/* 32-bit structure */
+/* 64-bit structure */
 struct cwinstr {
-    unsigned op   : 3;
-    unsigned aflg : 2;
-    unsigned bflg : 2;
-    unsigned pad  : 1;
-    unsigned a    : 12;
-    unsigned b    : 12;
+    unsigned op   : 8;
+    unsigned aflg : 8;
+    unsigned bflg : 8;
+    unsigned pad  : 8;
+    signed a      : 16;
+    signed b      : 16;
 } PACK();
 
 #endif /* __COREWAR_CW_H__ */
