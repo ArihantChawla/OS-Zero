@@ -1,5 +1,6 @@
 #include <stdio.h>
 #include <stdlib.h>
+#include <stdint.h>
 #include <ctype.h>
 
 #include <corewar/cw.h>
@@ -139,35 +140,50 @@ rcdisasm(struct cwinstr *op, FILE *fp)
 
     if (op) {
         fprintf(fp, "\t%s\t", rcoptab[op->op]);
-    }
-    ch = '\0';
-    if (op->aflg & CWIMMBIT) {
-        ch = '#';
-    } else if (op->aflg & CWINDIRBIT) {
-        ch = '@';
-    }
-    if (ch) {
-        fprintf(fp, "%c", ch);
-    }
-    fprintf(fp, "%d", op->a);
-    if (rcnargtab[op->op] == 2) {
         ch = '\0';
-        if (op->bflg & CWIMMBIT) {
+        if (op->aflg & CWIMMBIT) {
             ch = '#';
-        } else if (op->bflg & CWINDIRBIT) {
+        } else if (op->aflg & CWINDIRBIT) {
             ch = '@';
         }
         if (ch) {
-            fprintf(fp, "\t%c", ch);
-        } else {
-            fprintf(fp, "\t");
+            fprintf(fp, "%c", ch);
         }
-        fprintf(stderr, "%d\n", op->b);
-    } else {
-        fprintf(stderr, "\n");
+        fprintf(fp, "%d", op->a);
+        if (rcnargtab[op->op] == 2) {
+            ch = '\0';
+            if (op->bflg & CWIMMBIT) {
+                ch = '#';
+            } else if (op->bflg & CWINDIRBIT) {
+                ch = '@';
+            }
+            if (ch) {
+                fprintf(fp, "\t%c", ch);
+            } else {
+                fprintf(fp, "\t");
+            }
+            fprintf(stderr, "%d\n", op->b);
+        } else {
+            fprintf(stderr, "\n");
+        }
     }
 
     return;
+}
+
+void
+rcshowmem(void)
+{
+    struct cwinstr *op;
+    long            l;
+
+    for (l = 0 ; l < CWNCORE ; l++) {
+        op = &cwoptab[l];
+        if (*(uint64_t *)op) {
+            fprintf(stderr, "%ld\t", l);
+            rcdisasm(op, stderr);
+        }
+    }
 }
 
 struct cwinstr *
@@ -206,8 +222,8 @@ rcgetop(char *str)
         }
         instr->aflg = 0;
         instr->bflg = 0;
-        instr->a = CWNONE;
-        instr->b = CWNONE;
+        instr->a = 0;
+        instr->b = 0;
         if (*cp) {
             while (isspace(*cp)) {
                 cp++;
@@ -322,10 +338,11 @@ rcgetline(FILE *fp)
 }
 
 long
-rcxlate(FILE *fp, long base, long *baseret, long *limret)
+rcxlate(FILE *fp, long pid, long base, long *baseret, long *limret)
 {
     char           *linebuf;
     char           *cp;
+    struct cwinstr *op;
     struct cwinstr *instr;
     long            ip = base;
     long            n = 0;
@@ -343,15 +360,16 @@ rcxlate(FILE *fp, long base, long *baseret, long *limret)
                 cp++;
             }
             if (isalpha(*cp)) {
-                instr = rcgetop(cp);
-                if (instr) {
+                op = rcgetop(cp);
+                if (op) {
                     n++;
-                    if (cwoptab[ip].op != CWINVAL) {
+                    instr = &cwoptab[ip];
+                    if (*((uint64_t *)instr)) {
                         fprintf(stderr, "programs overlap\n");
                         
                         exit(1);
                     }
-                    cwoptab[ip] = *instr;
+                    cwoptab[ip] = *op;
                     ip++;
                     ip &= CWNCORE - 1;
                 } else {

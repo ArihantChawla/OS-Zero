@@ -23,8 +23,8 @@ struct cwinstr     *cwoptab;
 
 #define cwgetargs(op, ip, arg1, arg2)                                   \
     do {                                                                \
-        long _arg1 = ~0UL;                                              \
-        long _arg2 = ~0UL;                                              \
+        long _arg1 = 0;                                                 \
+        long _arg2 = 0;                                                 \
         long _tmp;                                                      \
                                                                         \
         if ((op)->aflg & CWIMMBIT) {                                    \
@@ -33,8 +33,6 @@ struct cwinstr     *cwoptab;
             _tmp = (ip) + (op)->a;                                      \
             if (_tmp < 0) {                                             \
                 _tmp += CWNCORE;                                        \
-            } else {                                                    \
-                _tmp &= CWNCORE - 1;                                    \
             }                                                           \
             _tmp &= CWNCORE - 1;                                        \
             if ((op)->aflg & CWINDIRBIT) {                              \
@@ -42,7 +40,7 @@ struct cwinstr     *cwoptab;
                                                                         \
                 _ptr = &cwoptab[_tmp];                                  \
                 _arg1 = _ptr->b;                                        \
-                _arg2 += (ip);                                          \
+                _arg1 += (ip);                                          \
             } else {                                                    \
                 _arg1 = _tmp;                                           \
             }                                                           \
@@ -53,9 +51,7 @@ struct cwinstr     *cwoptab;
         } else {                                                        \
             _tmp = (ip) + (op)->b;                                      \
             if (_tmp < 0) {                                             \
-                _tmp = CWNCORE - _tmp;                                  \
-            } else {                                                    \
-                _tmp &= CWNCORE - 1;                                    \
+                _tmp += CWNCORE;                                        \
             }                                                           \
             _tmp &= CWNCORE - 1;                                        \
             if ((op)->bflg & CWINDIRBIT) {                              \
@@ -64,6 +60,8 @@ struct cwinstr     *cwoptab;
                 _ptr = &cwoptab[_tmp];                                  \
                 _arg2 = _ptr->b;                                        \
                 _arg2 += (ip);                                          \
+            } else {                                                    \
+                _arg2 = _tmp;                                           \
             }                                                           \
         }                                                               \
         _arg2 &= (CWNCORE - 1);                                         \
@@ -74,6 +72,12 @@ struct cwinstr     *cwoptab;
 long
 cwdatop(long pid, long ip)
 {
+    struct cwinstr *op = &cwoptab[ip];
+    long            arg1;
+    long            arg2;
+
+    cwgetargs(op, ip, arg1, arg2);
+
     return CWNONE;
 }
 
@@ -109,15 +113,14 @@ cwaddop(long pid, long ip)
     long            b;
     
     cwgetargs(op, ip, arg1, arg2);
+    ofs = arg2;
     if (op->aflg & CWIMMBIT) {
-        ofs = arg2;
         a = arg1;
         b = cwoptab[ofs].b;
         b += a;
         b &= CWNCORE - 1;
         cwoptab[ofs].b = b;
     } else {
-        ofs = arg2;
         a = arg1;
         b = arg2;
         a += cwoptab[ofs].a;
@@ -190,8 +193,8 @@ cwjmpop(long pid, long ip)
         ip = arg1;
         cwrunqueue[pid][cnt - 1] = ip;
     }
-    ip++;
-    ip &= CWNCORE - 1;
+//    ip++;
+//    ip &= CWNCORE - 1;
     
     return ip;
 }
@@ -346,9 +349,9 @@ cwsplop(long pid, long ip)
     ip++;
     ip &= CWNCORE - 1;
     cnt = cwproccnt[pid];
-    cwrunqueue[pid][cnt] = ip;
+    cwrunqueue[pid][cnt - 1] = ip;
     if (cnt < CWNCORE - 1) {
-        cwrunqueue[pid][cnt + 1] = arg2;
+        cwrunqueue[pid][cnt] = arg2;
     }
     
     return ip;
@@ -394,17 +397,15 @@ cwexec(long pid)
     cur = cwproccur[pid];
     ip = cwrunqueue[pid][cur];
     op = &cwoptab[ip];
-    if (op->op == CWINVAL) {
+    if (!(*((uint64_t *)op))) {
         if (pid == 0) {
-            fprintf(stderr, "program #2 won\n");
+            fprintf(stderr, "program #2 won (%ld)\n", ip);
         } else {
-            fprintf(stderr, "program #1 won\n");
+            fprintf(stderr, "program #1 won (%ld)\n", ip);
         }
         
         exit(0);
     }
-    fprintf(stderr, "PID: %ld\n", pid);
-    rcdisasm(op, stderr);
     func = cwfunctab[op->op];
     ip = func(pid, ip);
     cnt = cwproccnt[pid];
@@ -424,12 +425,13 @@ cwexec(long pid)
         }
         cwproccnt[pid] = cnt;
     } else {
-        cwrunqueue[pid][cnt] = ip;
+        cwrunqueue[pid][cnt - 1] = ip;
         cur++;
     }
     if (cur == cnt) {
         cur = 0;
     }
+    cwproccur[pid] = cur;
     
     return;
 }
@@ -457,8 +459,7 @@ main(int argc, char *argv[])
     srand(time(NULL));
     cwinitop();
     rcinitop();
-    cwoptab = malloc(CWNCORE * sizeof(struct cwinstr));
-    memset(cwoptab, 0xff, CWNCORE * sizeof(struct cwinstr));
+    cwoptab = calloc(CWNCORE, sizeof(struct cwinstr));
     if (!cwoptab) {
         fprintf(stderr, "failed to allocate core\n");
         
@@ -476,7 +477,7 @@ main(int argc, char *argv[])
         
         exit(1);
     }
-    if (!rcxlate(fp, base, &base, &lim)) {
+    if (!rcxlate(fp, 0, base, &base, &lim)) {
         fprintf(stderr, "failed to translate %s\n", argv[1]);
 
         exit(1);
@@ -499,7 +500,7 @@ main(int argc, char *argv[])
 
         exit(1);
     }
-    if (!rcxlate(fp, base, &base, &lim)) {
+    if (!rcxlate(fp, 1, base, &base, &lim)) {
         fprintf(stderr, "failed to translate %s\n", argv[1]);
 
         exit(1);
