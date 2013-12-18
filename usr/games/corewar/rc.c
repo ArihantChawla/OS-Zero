@@ -151,7 +151,11 @@ rcdisasm(struct cwinstr *op, FILE *fp)
         if (ch) {
             fprintf(fp, "%c", ch);
         }
-        fprintf(fp, "%d", op->a);
+        if (op->aflg & CWSIGNBIT) {
+            fprintf(fp, "%d", op->a - CWNCORE);
+        } else {
+            fprintf(fp, "%d", op->a);
+        }
         if (rcnargtab[op->op] == 2) {
             ch = '\0';
             if (op->bflg & CWIMMBIT) {
@@ -166,7 +170,11 @@ rcdisasm(struct cwinstr *op, FILE *fp)
             } else {
                 fprintf(fp, "\t");
             }
-            fprintf(stderr, "%d\n", op->b);
+            if (op->bflg & CWSIGNBIT) {
+                fprintf(fp, "%d\n", op->b - CWNCORE);
+            } else {
+                fprintf(stderr, "%d\n", op->b);
+            }
         } else {
             fprintf(stderr, "\n");
         }
@@ -262,7 +270,8 @@ rcgetop(char *str)
                     exit(1);
                 }
                 if (sign) {
-                    val = -val;
+                    instr->aflg |= CWSIGNBIT;
+                    val = CWNCORE - val;
                 }
                 instr->a = val;
                 if (narg == 2) {
@@ -304,7 +313,8 @@ rcgetop(char *str)
                         exit(1);
                     }
                     if (sign) {
-                        val = -val;
+                        instr->bflg |= CWSIGNBIT;
+                        val = CWNCORE - val;
                     }
                     instr->b = val;
                 }

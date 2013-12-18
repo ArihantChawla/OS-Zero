@@ -31,9 +31,6 @@ struct cwinstr     *cwoptab;
             _arg1 = (op)->a;                                            \
         } else {                                                        \
             _tmp = (ip) + (op)->a;                                      \
-            if (_tmp < 0) {                                             \
-                _tmp += CWNCORE;                                        \
-            }                                                           \
             _tmp &= CWNCORE - 1;                                        \
             if ((op)->aflg & (CWINDIRBIT | CWPREDECBIT)) {              \
                 struct cwinstr *_ptr;                                   \
@@ -53,9 +50,6 @@ struct cwinstr     *cwoptab;
             _arg2 = (op)->b;                                            \
         } else {                                                        \
             _tmp = (ip) + (op)->b;                                      \
-            if (_tmp < 0) {                                             \
-                _tmp += CWNCORE;                                        \
-            }                                                           \
             _tmp &= CWNCORE - 1;                                        \
             if ((op)->bflg & (CWINDIRBIT | CWPREDECBIT)) {              \
                 struct cwinstr *_ptr;                                   \
