@@ -145,6 +145,8 @@ rcdisasm(struct cwinstr *op, FILE *fp)
             ch = '#';
         } else if (op->aflg & CWINDIRBIT) {
             ch = '@';
+        } else if (op->aflg & CWPREDECBIT) {
+            ch = '<';
         }
         if (ch) {
             fprintf(fp, "%c", ch);
@@ -156,6 +158,8 @@ rcdisasm(struct cwinstr *op, FILE *fp)
                 ch = '#';
             } else if (op->bflg & CWINDIRBIT) {
                 ch = '@';
+            } else if (op->aflg & CWPREDECBIT) {
+                ch = '<';
             }
             if (ch) {
                 fprintf(fp, "\t%c", ch);
@@ -235,6 +239,9 @@ rcgetop(char *str)
                 } else if (*cp == '@') {
                     instr->aflg |= CWINDIRBIT;
                     cp++;
+                } else if (*cp == '<') {
+                    instr->aflg |= CWPREDECBIT;
+                    cp++;
                 }
                 val = CWNONE;
                 sign = 0;
@@ -273,6 +280,9 @@ rcgetop(char *str)
                         cp++;
                     } else if (*cp == '@') {
                         instr->bflg |= CWINDIRBIT;
+                        cp++;
+                    } else if (*cp == '<') {
+                        instr->bflg |= CWPREDECBIT;
                         cp++;
                     }
                     val = CWNONE;
@@ -345,6 +355,7 @@ rcxlate(FILE *fp, long pid, long base, long *baseret, long *limret)
     struct cwinstr *op;
     struct cwinstr *instr;
     long            ip = base;
+    long            ret = -1;
     long            n = 0;
     long            wrap = 0;
 
@@ -370,6 +381,9 @@ rcxlate(FILE *fp, long pid, long base, long *baseret, long *limret)
                         exit(1);
                     }
                     cwoptab[ip] = *op;
+                    if (ret < 0 && op->op != CWOPDAT) {
+                        ret = ip;
+                    }
                     ip++;
                     ip &= CWNCORE - 1;
                 } else {
@@ -391,6 +405,6 @@ rcxlate(FILE *fp, long pid, long base, long *baseret, long *limret)
     }
     *limret = ip;
 
-    return n;
+    return ret;
 }
 

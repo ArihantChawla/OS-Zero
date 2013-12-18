@@ -29,11 +29,13 @@
 /* addressing modes, default is relative */
 #define CWADRIMM    0x01        // immediate
 #define CWADRINDIR  0x02        // indirect
+#define CWADRPREDEC 0x03
 
 /* instruction flags */
 #define CWSIGNBIT   (1U << CWSIGNED)
 #define CWIMMBIT    (1U << CWADRIMM)
 #define CWINDIRBIT  (1U << CWADRINDIR)
+#define CWPREDECBIT (1U << CWADRPREDEC)
 
 /* 64-bit structure */
 struct cwinstr {

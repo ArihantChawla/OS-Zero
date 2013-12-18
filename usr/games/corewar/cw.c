@@ -17,7 +17,7 @@ extern long         rcnargtab[CWNOP];
 
 static long         cwrunqueue[2][CWNPROC];
 static long         cwproccnt[2];
-static long         cwproccur[2];
+static long         cwcurproc[2];
 static cwinstrfunc *cwfunctab[CWNOP];
 struct cwinstr     *cwoptab;
 
@@ -35,10 +35,13 @@ struct cwinstr     *cwoptab;
                 _tmp += CWNCORE;                                        \
             }                                                           \
             _tmp &= CWNCORE - 1;                                        \
-            if ((op)->aflg & CWINDIRBIT) {                              \
+            if ((op)->aflg & (CWINDIRBIT | CWPREDECBIT)) {              \
                 struct cwinstr *_ptr;                                   \
                                                                         \
                 _ptr = &cwoptab[_tmp];                                  \
+                if ((op)->aflg & CWPREDECBIT) {                         \
+                    _ptr--;                                             \
+                }                                                       \
                 _arg1 = _ptr->b;                                        \
                 _arg1 += (ip);                                          \
             } else {                                                    \
@@ -54,10 +57,13 @@ struct cwinstr     *cwoptab;
                 _tmp += CWNCORE;                                        \
             }                                                           \
             _tmp &= CWNCORE - 1;                                        \
-            if ((op)->bflg & CWINDIRBIT) {                              \
+            if ((op)->bflg & (CWINDIRBIT | CWPREDECBIT)) {              \
                 struct cwinstr *_ptr;                                   \
                                                                         \
                 _ptr = &cwoptab[_tmp];                                  \
+                if ((op)->aflg & CWPREDECBIT) {                         \
+                    _ptr--;                                             \
+                }                                                       \
                 _arg2 = _ptr->b;                                        \
                 _arg2 += (ip);                                          \
             } else {                                                    \
@@ -394,7 +400,7 @@ cwexec(long pid)
     long            ip;
     long            l;
 
-    cur = cwproccur[pid];
+    cur = cwcurproc[pid];
     ip = cwrunqueue[pid][cur];
     op = &cwoptab[ip];
     if (!(*((uint64_t *)op))) {
@@ -406,6 +412,8 @@ cwexec(long pid)
         
         exit(0);
     }
+    fprintf(stderr, "IP == %ld: ", ip);
+    rcdisasm(op, stderr);
     func = cwfunctab[op->op];
     ip = func(pid, ip);
     cnt = cwproccnt[pid];
@@ -423,6 +431,7 @@ cwexec(long pid)
             
             exit(0);
         }
+        cnt++;
         cwproccnt[pid] = cnt;
     } else {
         cwrunqueue[pid][cnt - 1] = ip;
@@ -431,7 +440,7 @@ cwexec(long pid)
     if (cur == cnt) {
         cur = 0;
     }
-    cwproccur[pid] = cur;
+    cwcurproc[pid] = cur;
     
     return;
 }
@@ -477,13 +486,13 @@ main(int argc, char *argv[])
         
         exit(1);
     }
-    if (!rcxlate(fp, 0, base, &base, &lim)) {
+    ip1 = rcxlate(fp, 0, base, &base, &lim);
+    if (ip1 < 0) {
         fprintf(stderr, "failed to translate %s\n", argv[1]);
 
         exit(1);
     }
     fclose(fp);
-    ip1 = base;
 #if 0
     if (lim < base) {
         base = lim + rand() % ((base - lim) >> 2);
@@ -500,15 +509,15 @@ main(int argc, char *argv[])
 
         exit(1);
     }
-    if (!rcxlate(fp, 1, base, &base, &lim)) {
+    ip2 = rcxlate(fp, 1, base, &base, &lim);
+    if (ip2 < 0) {
         fprintf(stderr, "failed to translate %s\n", argv[1]);
 
         exit(1);
     }
     fclose(fp);
-    ip2 = base;
-    cwproccur[0] = 0;
-    cwproccur[1] = 0;
+    cwcurproc[0] = 0;
+    cwcurproc[1] = 0;
     cwproccnt[0] = 1;
     cwproccnt[1] = 1;
     cwrunqueue[0][0] = ip1;
