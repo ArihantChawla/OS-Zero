@@ -4,7 +4,7 @@
 
 #include <corewar/cw.h>
 
-extern struct cwinstr **cwoptab;
+extern struct cwinstr *cwoptab;
 
 static void       *rcparsetab[128];
 static const char *rcoptab[CWNOP]
@@ -15,19 +15,25 @@ static const char *rcoptab[CWNOP]
     "SUB",
     "JMP",
     "JMZ",
-    "DJZ",
-    "CMP"
+    "JMN",
+    "CMP",
+    "SLT",
+    "DJN",
+    "SPL",
 };
-static long        rcnargtab[CWNOP]
+long               rcnargtab[CWNOP]
 = {
-    1,
+    0,
     2,
     2,
     2,
     1,
     2,
     2,
-    2
+    2,
+    2,
+    2,
+    1
 };
 
 void
@@ -119,8 +125,11 @@ rcinitop(void)
     rcaddop("SUB", CWOPSUB);
     rcaddop("JMP", CWOPJMP);
     rcaddop("JMZ", CWOPJMZ);
-    rcaddop("DJZ", CWOPDJZ);
+    rcaddop("JMN", CWOPJMN);
     rcaddop("CMP", CWOPCMP);
+    rcaddop("SLT", CWOPSLT);
+    rcaddop("DJN", CWOPDJN);
+    rcaddop("SPL", CWOPSPL);
 }
 
 void
@@ -131,30 +140,32 @@ rcdisasm(struct cwinstr *op, FILE *fp)
     if (op) {
         fprintf(fp, "\t%s\t", rcoptab[op->op]);
     }
-    if (rcnargtab[op->op] == 2) {
-        ch = '\0';
-        if (op->aflg & CWIMMBIT) {
-            ch = '#';
-        } else if (op->aflg & CWINDIRBIT) {
-            ch = '@';
-        }
-        if (ch) {
-            fprintf(fp, "%c", ch);
-        }
-        fprintf(fp, "%d\t", op->a);
-    } else {
-        fprintf(fp, "\t");
-    }
     ch = '\0';
-    if (op->bflg & CWIMMBIT) {
+    if (op->aflg & CWIMMBIT) {
         ch = '#';
-    } else if (op->bflg & CWINDIRBIT) {
+    } else if (op->aflg & CWINDIRBIT) {
         ch = '@';
     }
     if (ch) {
         fprintf(fp, "%c", ch);
     }
-    fprintf(stderr, "%d\n", op->b);
+    fprintf(fp, "%d", op->a);
+    if (rcnargtab[op->op] == 2) {
+        ch = '\0';
+        if (op->bflg & CWIMMBIT) {
+            ch = '#';
+        } else if (op->bflg & CWINDIRBIT) {
+            ch = '@';
+        }
+        if (ch) {
+            fprintf(fp, "\t%c", ch);
+        } else {
+            fprintf(fp, "\t");
+        }
+        fprintf(stderr, "%d\n", op->b);
+    } else {
+        fprintf(stderr, "\n");
+    }
 
     return;
 }
@@ -202,51 +213,11 @@ rcgetop(char *str)
                 cp++;
             }
             if (*cp) {
-                if (narg == 2) {
-                    if (*cp == '#') {
-                        instr->aflg |= CWIMMBIT;
-                        cp++;
-                    } else if (*cp == '@') {
-                        instr->aflg |= CWINDIRBIT;
-                        cp++;
-                    }
-                    val = CWNONE;
-                    sign = 0;
-                    if (*cp == '-') {
-                        sign = 1;
-                        cp++;
-                    }
-                    if (isdigit(*cp)) {
-                        val = 0;
-                        while (isdigit(*cp)) {
-                            val *= 10;
-                            val += *cp - '0';
-                            cp++;
-                        }
-                    } else {
-                        fprintf(stderr, "invalid A-field: %s\n", str);
-                        
-                        exit(1);
-                    }
-                    if (sign) {
-                        val = -val;
-                    }
-                    instr->a = val;
-                }
-                while (isspace(*cp)) {
-                    cp++;
-                }
-                if (*cp == ',') {
-                    cp++;
-                    while (isspace(*cp)) {
-                        cp++;
-                    }
-                }
                 if (*cp == '#') {
-                    instr->bflg |= CWIMMBIT;
+                    instr->aflg |= CWIMMBIT;
                     cp++;
                 } else if (*cp == '@') {
-                    instr->bflg |= CWINDIRBIT;
+                    instr->aflg |= CWINDIRBIT;
                     cp++;
                 }
                 val = CWNONE;
@@ -263,14 +234,54 @@ rcgetop(char *str)
                         cp++;
                     }
                 } else {
-                    fprintf(stderr, "invalid B-field: %s\n", str);
-
+                    fprintf(stderr, "invalid A-field: %s\n", str);
+                    
                     exit(1);
                 }
                 if (sign) {
                     val = -val;
                 }
-                instr->b = val;
+                instr->a = val;
+                if (narg == 2) {
+                    while (isspace(*cp)) {
+                        cp++;
+                    }
+                    if (*cp == ',') {
+                        cp++;
+                        while (isspace(*cp)) {
+                            cp++;
+                        }
+                    }
+                    if (*cp == '#') {
+                        instr->bflg |= CWIMMBIT;
+                        cp++;
+                    } else if (*cp == '@') {
+                        instr->bflg |= CWINDIRBIT;
+                        cp++;
+                    }
+                    val = CWNONE;
+                    sign = 0;
+                    if (*cp == '-') {
+                        sign = 1;
+                        cp++;
+                    }
+                    if (isdigit(*cp)) {
+                        val = 0;
+                        while (isdigit(*cp)) {
+                            val *= 10;
+                            val += *cp - '0';
+                            cp++;
+                        }
+                    } else {
+                        fprintf(stderr, "invalid B-field: %s\n", str);
+                        
+                        exit(1);
+                    }
+                    if (sign) {
+                        val = -val;
+                    }
+                    instr->b = val;
+                }
             }
         }
     }
@@ -335,12 +346,12 @@ rcxlate(FILE *fp, long base, long *baseret, long *limret)
                 instr = rcgetop(cp);
                 if (instr) {
                     n++;
-                    if (cwoptab[ip]) {
+                    if (cwoptab[ip].op != CWINVAL) {
                         fprintf(stderr, "programs overlap\n");
                         
                         exit(1);
                     }
-                    cwoptab[ip] = instr;
+                    cwoptab[ip] = *instr;
                     ip++;
                     ip &= CWNCORE - 1;
                 } else {

@@ -4,6 +4,8 @@
 #include <zero/param.h>
 #include <zero/cdecl.h>
 
+#define CWNPROC     128
+#define CWINVAL     0xff
 #define CWNCORE     4096
 #define CWNONE      (~0)
 #define CWCOREEMPTY NULL
@@ -15,9 +17,12 @@
 #define CWOPSUB     3
 #define CWOPJMP     4
 #define CWOPJMZ     5
-#define CWOPDJZ     6
+#define CWOPJMN     6
 #define CWOPCMP     7
-#define CWNOP       8
+#define CWOPSLT     8
+#define CWOPDJN     9
+#define CWOPSPL     10
+#define CWNOP       11
 /* flags */
 /* signed value */
 #define CWSIGNED    0x00
