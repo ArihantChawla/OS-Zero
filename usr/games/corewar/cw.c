@@ -146,7 +146,6 @@ long
 cwmovop(long pid, long ip)
 {
     struct cwinstr *op = &cwoptab[ip];
-    long            ofs;
     long            arg1;
     long            arg2;
     
@@ -510,8 +509,12 @@ cwexec(long pid)
 void
 cwloop(void)
 {
-    long cnt;
+    long first = rand() & 0x01;
 
+    if (!first) {
+        cwexec(0);
+    }
+    cwexec(1);
     while (1) {
         cwexec(0);
         cwexec(1);
