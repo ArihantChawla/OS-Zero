@@ -133,11 +133,13 @@ cwdatop(long pid, long ip)
 {
     if (pid) {
         fprintf(stderr, "program #1 won\n");
-
-        exit(0);
+    } else {
+        fprintf(stderr, "program #2 won\n");
     }
+    exit(0);
 
-    return;
+    /* NOTREACHED */
+    return CWNONE;
 }
 
 long
@@ -264,8 +266,10 @@ cwjmpop(long pid, long ip)
         ip = arg1;
         cwrunqueue[pid][cnt - 1] = ip;
     }
-//    ip++;
-//    ip &= CWNCORE - 1;
+#if 0
+    ip++;
+    ip &= CWNCORE - 1;
+#endif
     
     return ip;
 }
@@ -459,8 +463,8 @@ cwexec(long pid)
     cur = cwcurproc[pid];
     ip = cwrunqueue[pid][cur];
     op = &cwoptab[ip];
-//    fprintf(stderr, "%ld\t%ld\t", pid, ip);
-//    rcdisasm(op, stderr);
+    fprintf(stderr, "%ld\t%ld\t", pid, ip);
+    rcdisasm(op, stderr);
     if (!(*((uint64_t *)op))) {
         if (pid == 0) {
             fprintf(stderr, "program #2 won (%ld)\n", ip);
@@ -487,7 +491,7 @@ cwexec(long pid)
             
             exit(0);
         }
-        cnt++;
+        cnt--;
         cwproccnt[pid] = cnt;
     } else {
         cwrunqueue[pid][cnt - 1] = ip;
