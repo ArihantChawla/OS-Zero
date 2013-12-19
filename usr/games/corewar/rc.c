@@ -8,20 +8,6 @@
 extern struct cwinstr *cwoptab;
 
 static void       *rcparsetab[128];
-static const char *rcoptab[CWNOP]
-= {
-    "DAT",
-    "MOV",
-    "ADD",
-    "SUB",
-    "JMP",
-    "JMZ",
-    "JMN",
-    "CMP",
-    "SLT",
-    "DJN",
-    "SPL",
-};
 long               rcnargtab[CWNOP]
 = {
     2,
@@ -131,71 +117,6 @@ rcinitop(void)
     rcaddop("SLT", CWOPSLT);
     rcaddop("DJN", CWOPDJN);
     rcaddop("SPL", CWOPSPL);
-}
-
-void
-rcdisasm(struct cwinstr *op, FILE *fp)
-{
-    char ch;
-
-    if (op) {
-        fprintf(fp, "\t%s\t", rcoptab[op->op]);
-        ch = '\0';
-        if (op->aflg & CWIMMBIT) {
-            ch = '#';
-        } else if (op->aflg & CWINDIRBIT) {
-            ch = '@';
-        } else if (op->aflg & CWPREDECBIT) {
-            ch = '<';
-        }
-        if (ch) {
-            fprintf(fp, "%c", ch);
-        }
-        if (op->aflg & CWSIGNBIT) {
-            fprintf(fp, "%d", op->a - CWNCORE);
-        } else {
-            fprintf(fp, "%d", op->a);
-        }
-        if (rcnargtab[op->op] == 2) {
-            ch = '\0';
-            if (op->bflg & CWIMMBIT) {
-                ch = '#';
-            } else if (op->bflg & CWINDIRBIT) {
-                ch = '@';
-            } else if (op->aflg & CWPREDECBIT) {
-                ch = '<';
-            }
-            if (ch) {
-                fprintf(fp, "\t%c", ch);
-            } else {
-                fprintf(fp, "\t");
-            }
-            if (op->bflg & CWSIGNBIT) {
-                fprintf(fp, "%d\n", op->b - CWNCORE);
-            } else {
-                fprintf(stderr, "%d\n", op->b);
-            }
-        } else {
-            fprintf(stderr, "\n");
-        }
-    }
-
-    return;
-}
-
-void
-rcshowmem(void)
-{
-    struct cwinstr *op;
-    long            l;
-
-    for (l = 0 ; l < CWNCORE ; l++) {
-        op = &cwoptab[l];
-        if (*(uint64_t *)op) {
-            fprintf(stderr, "%ld\t", l);
-            rcdisasm(op, stderr);
-        }
-    }
 }
 
 struct cwinstr *

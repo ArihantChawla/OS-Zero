@@ -4,6 +4,7 @@
 #include <zero/param.h>
 #include <zero/cdecl.h>
 
+#define CWNTURN     (1024 * 1024)
 #define CWNPROC     128
 #define CWINVAL     0xff
 #define CWNCORE     4096

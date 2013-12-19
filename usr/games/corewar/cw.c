@@ -16,11 +16,75 @@ typedef long cwinstrfunc(long, long);
 
 extern long         rcnargtab[CWNOP];
 
+const char         *cwopnametab[CWNOP]
+= {
+    "DAT",
+    "MOV",
+    "ADD",
+    "SUB",
+    "JMP",
+    "JMZ",
+    "JMN",
+    "CMP",
+    "SLT",
+    "DJN",
+    "SPL",
+};
 static long         cwrunqueue[2][CWNPROC];
 static long         cwproccnt[2];
 static long         cwcurproc[2];
 static cwinstrfunc *cwfunctab[CWNOP];
 struct cwinstr     *cwoptab;
+
+void
+cwdisasm(struct cwinstr *op, FILE *fp)
+{
+    char ch;
+
+    if (op) {
+        fprintf(fp, "\t%s\t", cwopnametab[op->op]);
+        ch = '\0';
+        if (op->aflg & CWIMMBIT) {
+            ch = '#';
+        } else if (op->aflg & CWINDIRBIT) {
+            ch = '@';
+        } else if (op->aflg & CWPREDECBIT) {
+            ch = '<';
+        }
+        if (ch) {
+            fprintf(fp, "%c", ch);
+        }
+        if (op->aflg & CWSIGNBIT) {
+            fprintf(fp, "%d", op->a - CWNCORE);
+        } else {
+            fprintf(fp, "%d", op->a);
+        }
+        if (rcnargtab[op->op] == 2) {
+            ch = '\0';
+            if (op->bflg & CWIMMBIT) {
+                ch = '#';
+            } else if (op->bflg & CWINDIRBIT) {
+                ch = '@';
+            } else if (op->aflg & CWPREDECBIT) {
+                ch = '<';
+            }
+            if (ch) {
+                fprintf(fp, "\t%c", ch);
+            } else {
+                fprintf(fp, "\t");
+            }
+            if (op->bflg & CWSIGNBIT) {
+                fprintf(fp, "%d\n", op->b - CWNCORE);
+            } else {
+                fprintf(stderr, "%d\n", op->b);
+            }
+        } else {
+            fprintf(stderr, "\n");
+        }
+    }
+
+    return;
+}
 
 void
 cwgetargs(struct cwinstr *op, long ip, long *argp1, long *argp2)
@@ -412,7 +476,7 @@ cwexec(long pid)
     ip = cwrunqueue[pid][cur];
     op = &cwoptab[ip];
     fprintf(stderr, "%ld\t%ld\t", pid, ip);
-    rcdisasm(op, stderr);
+    cwdisasm(op, stderr);
     if (!(*((uint64_t *)op))) {
         if (pid == 0) {
             fprintf(stderr, "program #2 won (%ld)\n", ip);
@@ -449,8 +513,6 @@ cwexec(long pid)
         cur = 0;
     }
     cwcurproc[pid] = cur;
-//    rcshowmem();
-//    sleep(1);
 
     return;
 }
@@ -459,15 +521,18 @@ void
 cwloop(void)
 {
     long first = rand() & 0x01;
+    long n;
 
     if (!first) {
         cwexec(0);
     }
     cwexec(1);
-    while (1) {
+    n = CWNTURN - 1;
+    while (n--) {
         cwexec(0);
         cwexec(1);
     }
+    fprintf(stderr, "TIE\n");
     
     exit(0);
 }
