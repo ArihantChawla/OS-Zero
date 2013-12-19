@@ -43,8 +43,8 @@ struct cwinstr {
     unsigned aflg : 8;
     unsigned bflg : 8;
     unsigned pad  : 8;
-    signed a      : 16;
-    signed b      : 16;
+    unsigned a    : 16;
+    unsigned b    : 16;
 } PACK();
 
 #endif /* __COREWAR_CW_H__ */

@@ -1,4 +1,5 @@
 /* REFERENCE:  http://corewar.co.uk/cwg.txt */
+/* REFERENCE: http://seblog.cs.uni-kassel.de/fileadmin/se/courses/SE1/WS0708/redcode-icws-88-2.pdf */
 
 #include <stdio.h>
 #include <stdlib.h>
@@ -471,15 +472,9 @@ cwloop(void)
     exit(0);
 }
 
-int
-main(int argc, char *argv[])
+void
+cwinit(void)
 {
-    FILE *fp;
-    long  base;
-    long  lim;
-    long  ip1;
-    long  ip2;
-    
     srand(time(NULL));
     cwinitop();
     rcinitop();
@@ -489,11 +484,25 @@ main(int argc, char *argv[])
         
         exit(1);
     }
+
+    return;
+}
+
+int
+main(int argc, char *argv[])
+{
+    FILE *fp;
+    long  base;
+    long  lim;
+    long  ip1;
+    long  ip2;
+    
     if (argc != 3) {
         fprintf(stderr, "usage: %s prog1.rc prog2.rc\n", argv[0]);
         
         exit(1);
     }
+    cwinit();
     base = rand() & (CWNCORE - 1);
     fp = fopen(argv[1], "r");
     if (!fp) {
