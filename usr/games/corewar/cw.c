@@ -43,6 +43,9 @@ cwdisasm(struct cwinstr *op, FILE *fp)
 
     if (op) {
         fprintf(fp, "\t%s\t", cwopnametab[op->op]);
+        if (rcnargtab[op->op] == 1) {
+            fprintf(fp, "\t");
+        }
         ch = '\0';
         if (op->aflg & CWIMMBIT) {
             ch = '#';
@@ -275,7 +278,7 @@ cwjmpop(long pid, long ip)
     cwgetargs(op, ip, &arg1, &arg2);
     cnt = cwproccnt[pid];
     if (cnt < CWNPROC) {
-        ip = arg1;
+        ip = arg2;
         cwrunqueue[pid][cnt - 1] = ip;
     }
 #if 0
@@ -430,7 +433,7 @@ cwsplop(long pid, long ip)
     ip &= CWNCORE - 1;
     cnt = cwproccnt[pid];
     cwrunqueue[pid][cnt - 1] = ip;
-    cwrunqueue[pid][cnt] = arg1;
+    cwrunqueue[pid][cnt] = arg2;
     
     return ip;
 }
@@ -475,8 +478,8 @@ cwexec(long pid)
     cur = cwcurproc[pid];
     ip = cwrunqueue[pid][cur];
     op = &cwoptab[ip];
-    fprintf(stderr, "%ld\t%ld\t", pid, ip);
-    cwdisasm(op, stderr);
+//    fprintf(stderr, "%ld\t%ld\t", pid, ip);
+//    cwdisasm(op, stderr);
     if (!(*((uint64_t *)op))) {
         if (pid == 0) {
             fprintf(stderr, "program #2 won (%ld)\n", ip);

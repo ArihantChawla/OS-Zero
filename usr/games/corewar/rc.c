@@ -10,7 +10,7 @@ extern struct cwinstr *cwoptab;
 static void       *rcparsetab[128];
 long               rcnargtab[CWNOP]
 = {
-    2,
+    1,
     2,
     2,
     2,
@@ -162,59 +162,15 @@ rcgetop(char *str)
                 cp++;
             }
             if (*cp) {
-                if (*cp == '#') {
-                    instr->aflg |= CWIMMBIT;
-                    cp++;
-                } else if (*cp == '@') {
-                    instr->aflg |= CWINDIRBIT;
-                    cp++;
-                } else if (*cp == '<') {
-                    instr->aflg |= CWPREDECBIT;
-                    cp++;
-                } else if (*cp == '$') {
-                    cp++;
-                }
-                val = CWNONE;
-                sign = 0;
-                if (*cp == '-') {
-                    sign = 1;
-                    cp++;
-                }
-                if (isdigit(*cp)) {
-                    val = 0;
-                    while (isdigit(*cp)) {
-                        val *= 10;
-                        val += *cp - '0';
-                        cp++;
-                    }
-                } else {
-                    fprintf(stderr, "invalid A-field: %s\n", str);
-                    
-                    exit(1);
-                }
-                if (sign) {
-                    instr->aflg |= CWSIGNBIT;
-                    val = CWNCORE - val;
-                }
-                instr->a = val;
                 if (narg == 2) {
-                    while (isspace(*cp)) {
-                        cp++;
-                    }
-                    if (*cp == ',') {
-                        cp++;
-                        while (isspace(*cp)) {
-                            cp++;
-                        }
-                    }
                     if (*cp == '#') {
-                        instr->bflg |= CWIMMBIT;
+                        instr->aflg |= CWIMMBIT;
                         cp++;
                     } else if (*cp == '@') {
-                        instr->bflg |= CWINDIRBIT;
+                        instr->aflg |= CWINDIRBIT;
                         cp++;
                     } else if (*cp == '<') {
-                        instr->bflg |= CWPREDECBIT;
+                        instr->aflg |= CWPREDECBIT;
                         cp++;
                     } else if (*cp == '$') {
                         cp++;
@@ -233,16 +189,60 @@ rcgetop(char *str)
                             cp++;
                         }
                     } else {
-                        fprintf(stderr, "invalid B-field: %s\n", str);
+                        fprintf(stderr, "invalid A-field: %s\n", str);
                         
                         exit(1);
                     }
                     if (sign) {
-                        instr->bflg |= CWSIGNBIT;
+                        instr->aflg |= CWSIGNBIT;
                         val = CWNCORE - val;
                     }
-                    instr->b = val;
+                    instr->a = val;
                 }
+                while (isspace(*cp)) {
+                    cp++;
+                }
+                if (*cp == ',') {
+                    cp++;
+                    while (isspace(*cp)) {
+                        cp++;
+                    }
+                }
+                if (*cp == '#') {
+                    instr->bflg |= CWIMMBIT;
+                    cp++;
+                } else if (*cp == '@') {
+                    instr->bflg |= CWINDIRBIT;
+                    cp++;
+                } else if (*cp == '<') {
+                    instr->bflg |= CWPREDECBIT;
+                    cp++;
+                } else if (*cp == '$') {
+                    cp++;
+                }
+                val = CWNONE;
+                sign = 0;
+                if (*cp == '-') {
+                    sign = 1;
+                    cp++;
+                }
+                if (isdigit(*cp)) {
+                    val = 0;
+                    while (isdigit(*cp)) {
+                        val *= 10;
+                        val += *cp - '0';
+                        cp++;
+                    }
+                } else {
+                    fprintf(stderr, "invalid B-field: %s\n", str);
+                    
+                    exit(1);
+                }
+                if (sign) {
+                    instr->bflg |= CWSIGNBIT;
+                    val = CWNCORE - val;
+                }
+                instr->b = val;
             }
         }
     }
