@@ -36,10 +36,12 @@ struct cwinstr     *cwoptab;
                 struct cwinstr *_ptr;                                   \
                                                                         \
                 _ptr = &cwoptab[_tmp];                                  \
+                _tmp = _ptr->b;                                         \
                 if ((op)->aflg & CWPREDECBIT) {                         \
-                    _ptr--;                                             \
+                    _tmp--;                                             \
+                    _ptr->b = _tmp;                                     \
                 }                                                       \
-                _arg1 = _ptr->b;                                        \
+                _arg1 = _tmp;                                           \
                 _arg1 += (ip);                                          \
             } else {                                                    \
                 _arg1 = _tmp;                                           \
@@ -55,16 +57,18 @@ struct cwinstr     *cwoptab;
                 struct cwinstr *_ptr;                                   \
                                                                         \
                 _ptr = &cwoptab[_tmp];                                  \
-                if ((op)->aflg & CWPREDECBIT) {                         \
-                    _ptr--;                                             \
+                _tmp = _ptr->b;                                         \
+                if ((op)->bflg & CWPREDECBIT) {                         \
+                    _tmp--;                                             \
+                    _ptr->b = _tmp;                                     \
                 }                                                       \
-                _arg2 = _ptr->b;                                        \
+                _arg2 = _tmp;                                           \
                 _arg2 += (ip);                                          \
             } else {                                                    \
                 _arg2 = _tmp;                                           \
             }                                                           \
         }                                                               \
-        _arg2 &= (CWNCORE - 1);                                         \
+        _arg2 &= CWNCORE - 1;                                           \
         (arg1) = _arg1;                                                 \
         (arg2) = _arg2;                                                 \
     } while (0)
@@ -72,29 +76,27 @@ struct cwinstr     *cwoptab;
 long
 cwdatop(long pid, long ip)
 {
-    struct cwinstr *op = &cwoptab[ip];
-    long            arg1;
-    long            arg2;
+    if (pid) {
+        fprintf(stderr, "program #1 won\n");
 
-    cwgetargs(op, ip, arg1, arg2);
+        exit(0);
+    }
 
-    return CWNONE;
+    return;
 }
 
 long
 cwmovop(long pid, long ip)
 {
     struct cwinstr *op = &cwoptab[ip];
-    long            ofs;
     long            arg1;
     long            arg2;
     
     cwgetargs(op, ip, arg1, arg2);
-    ofs = arg2;
     if (op->aflg & CWIMMBIT) {
-        cwoptab[ofs].b = arg1;
+        cwoptab[arg2].b = arg1;
     } else {
-        cwoptab[ofs] = *op;
+        cwoptab[arg2] = *op;
     }
     ip++;
     ip &= CWNCORE - 1;
@@ -106,33 +108,30 @@ long
 cwaddop(long pid, long ip)
 {
     struct cwinstr *op = &cwoptab[ip];
-    long            ofs;
     long            arg1;
     long            arg2;
     long            a;
     long            b;
     
     cwgetargs(op, ip, arg1, arg2);
-    ofs = arg2;
     if (op->aflg & CWIMMBIT) {
         a = arg1;
-        b = cwoptab[ofs].b;
+        b = cwoptab[arg2].b;
         b += a;
         b &= CWNCORE - 1;
-        cwoptab[ofs].b = b;
+        cwoptab[arg2].b = b;
     } else {
-        a = arg1;
-        b = arg2;
-        a += cwoptab[ofs].a;
-        b += cwoptab[ofs].b;
+        a = cwoptab[arg1].a;
+        b = cwoptab[arg1].b;
+        a += cwoptab[arg2].a;
+        b += cwoptab[arg2].b;
         a &= CWNCORE - 1;
         b &= CWNCORE - 1;
-        cwoptab[ofs].a = a;
-        cwoptab[ofs].b = b;
+        cwoptab[arg2].a = a;
+        cwoptab[arg2].b = b;
     }
     ip++;
     ip &= CWNCORE - 1;
-    
     
     return ip;
 }
@@ -141,7 +140,6 @@ long
 cwsubop(long pid, long ip)
 {
     struct cwinstr *op = &cwoptab[ip];
-    long            ofs;
     long            arg1;
     long            arg2;
     long            a;
@@ -149,32 +147,29 @@ cwsubop(long pid, long ip)
     
     cwgetargs(op, ip, arg1, arg2);
     if (op->aflg & CWIMMBIT) {
-        ofs = arg2;
         a = arg1;
-        b = cwoptab[ofs].b;
+        b = cwoptab[arg2].b;
         b -= a;
         if (b < 0) {
             b += CWNCORE;
         }
-        cwoptab[ofs].b = b;
+        cwoptab[arg2].b = b;
     } else {
-        ofs = arg2;
-        a = arg1;
-        b = arg2;
-        a -= cwoptab[ofs].a;
-        b -= cwoptab[ofs].b;
+        a = cwoptab[arg1].a;
+        b = cwoptab[arg1].b;
+        a -= cwoptab[arg2].a;
+        b -= cwoptab[arg2].b;
         if (a < 0) {
             a += CWNCORE;
         }
         if (b < 0) {
             b += CWNCORE;
         }
-        cwoptab[ofs].a = a;
-        cwoptab[ofs].b = b;
+        cwoptab[arg2].a = a;
+        cwoptab[arg2].b = b;
     }
     ip++;
     ip &= CWNCORE - 1;
-    
     
     return ip;
 }
@@ -203,21 +198,21 @@ long
 cwjmzop(long pid, long ip)
 {
     struct cwinstr *op = &cwoptab[ip];
-    long            ofs;
     long            cnt;
     long            arg1;
     long            arg2;
     long            b;
     
     cwgetargs(op, ip, arg1, arg2);
-    ofs = arg2;
-    b = cwoptab[ofs].b;
+    b = cwoptab[arg2].b;
     if (!b) {
         cnt = cwproccnt[pid];
-        cwrunqueue[pid][cnt - 1] = arg1;
+        ip = arg1;
+        cwrunqueue[pid][cnt - 1] = ip;
+    } else {
+        ip++;
+        ip &= CWNCORE - 1;
     }
-    ip++;
-    ip &= CWNCORE - 1;
     
     return ip;
 }
@@ -226,22 +221,22 @@ long
 cwjmnop(long pid, long ip)
 {
     struct cwinstr *op = &cwoptab[ip];
-    long            ofs;
     long            cnt;
     long            arg1;
     long            arg2;
     long            b;
     
     cwgetargs(op, ip, arg1, arg2);
-    ofs = arg2;
-    b = cwoptab[ofs].b;
+    b = cwoptab[arg2].b;
     if (b) {
         cnt = cwproccnt[pid];
-        cwrunqueue[pid][cnt - 1] = arg1;
+        ip = arg1;
+        cwrunqueue[pid][cnt - 1] = ip;
+    } else {
+        ip++;
+        ip &= CWNCORE - 1;
     }
-    ip++;
-    ip &= CWNCORE - 1;
-
+    
     return ip;
 }
 
@@ -249,7 +244,6 @@ long
 cwcmpop(long pid, long ip)
 {
     struct cwinstr *op = &cwoptab[ip];
-    long            ofs;
     long            arg1;
     long            arg2;
     long            a;
@@ -257,9 +251,8 @@ cwcmpop(long pid, long ip)
     
     cwgetargs(op, ip, arg1, arg2);
     if (op->aflg & CWIMMBIT) {
-        ofs = arg2;
-        b = cwoptab[ofs].b;
-        if (op->a == b) {
+        b = cwoptab[arg2].b;
+        if (arg1 == b) {
             ip++;
         }
     } else {
@@ -279,19 +272,17 @@ long
 cwsltop(long pid, long ip)
 {
     struct cwinstr *op = &cwoptab[ip];
-    long            ofs;
     long            arg1;
     long            arg2;
     long            b;
     
     cwgetargs(op, ip, arg1, arg2);
-    ofs = op->b;
-    b = cwoptab[ofs].b;
+    b = cwoptab[arg2].b;
     if (op->aflg & CWIMMBIT) {
         if (arg1 < b) {
             ip++;
         }
-    } else if (arg2 < b) {
+    } else if (cwoptab[arg2].b < b) {
         ip++;
     }
     ip++;
@@ -304,7 +295,6 @@ long
 cwdjnop(long pid, long ip)
 {
     struct cwinstr *op = &cwoptab[ip];
-    long            ofs;
     long            cnt;
     long            arg1;
     long            arg2;
@@ -312,26 +302,24 @@ cwdjnop(long pid, long ip)
     
     cwgetargs(op, ip, arg1, arg2);
     if (op->bflg & CWIMMBIT) {
-        b = arg2;
+        b = cwoptab[arg1].b;
         b--;
         if (b < 0) {
             b += CWNCORE;
         }
-        op->b = b;
+        cwoptab[arg1].b = b;
     } else {
-        ofs = arg2;
-        b = cwoptab[ofs].b;
+        b = cwoptab[arg2].b;
         b--;
         if (b < 0) {
             b += CWNCORE;
         }
-        cwoptab[ofs].b = b;
+        cwoptab[arg2].b = b;
     }
     if (b) {
         cnt = cwproccnt[pid];
-        if (cnt < CWNPROC) {
-            cwrunqueue[pid][cnt - 1] = arg1;
-        }
+        ip = arg1;
+        cwrunqueue[pid][cnt - 1] = ip;
     }
     
     return ip;
@@ -350,9 +338,7 @@ cwsplop(long pid, long ip)
     ip &= CWNCORE - 1;
     cnt = cwproccnt[pid];
     cwrunqueue[pid][cnt - 1] = ip;
-    if (cnt < CWNCORE - 1) {
-        cwrunqueue[pid][cnt] = arg2;
-    }
+    cwrunqueue[pid][cnt] = arg1;
     
     return ip;
 }
@@ -397,6 +383,8 @@ cwexec(long pid)
     cur = cwcurproc[pid];
     ip = cwrunqueue[pid][cur];
     op = &cwoptab[ip];
+    fprintf(stderr, "%ld\t%ld\t", pid, ip);
+    rcdisasm(op, stderr);
     if (!(*((uint64_t *)op))) {
         if (pid == 0) {
             fprintf(stderr, "program #2 won (%ld)\n", ip);
@@ -406,8 +394,6 @@ cwexec(long pid)
         
         exit(0);
     }
-    fprintf(stderr, "IP == %ld: ", ip);
-    rcdisasm(op, stderr);
     func = cwfunctab[op->op];
     ip = func(pid, ip);
     cnt = cwproccnt[pid];
@@ -442,6 +428,8 @@ cwexec(long pid)
 void
 cwloop(void)
 {
+    long cnt;
+
     while (1) {
         cwexec(0);
         cwexec(1);

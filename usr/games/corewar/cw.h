@@ -26,7 +26,7 @@
 /* flags */
 /* signed value */
 #define CWSIGNED    0x00
-/* addressing modes, default is relative */
+/* addressing modes, default is direct (relative) */
 #define CWADRIMM    0x01        // immediate
 #define CWADRINDIR  0x02        // indirect
 #define CWADRPREDEC 0x03

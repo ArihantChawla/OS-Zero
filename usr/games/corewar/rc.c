@@ -24,7 +24,7 @@ static const char *rcoptab[CWNOP]
 };
 long               rcnargtab[CWNOP]
 = {
-    0,
+    2,
     2,
     2,
     2,
@@ -250,6 +250,8 @@ rcgetop(char *str)
                 } else if (*cp == '<') {
                     instr->aflg |= CWPREDECBIT;
                     cp++;
+                } else if (*cp == '$') {
+                    cp++;
                 }
                 val = CWNONE;
                 sign = 0;
@@ -292,6 +294,8 @@ rcgetop(char *str)
                         cp++;
                     } else if (*cp == '<') {
                         instr->bflg |= CWPREDECBIT;
+                        cp++;
+                    } else if (*cp == '$') {
                         cp++;
                     }
                     val = CWNONE;
