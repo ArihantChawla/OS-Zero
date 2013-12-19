@@ -459,8 +459,8 @@ cwexec(long pid)
     cur = cwcurproc[pid];
     ip = cwrunqueue[pid][cur];
     op = &cwoptab[ip];
-    fprintf(stderr, "%ld\t%ld\t", pid, ip);
-    rcdisasm(op, stderr);
+//    fprintf(stderr, "%ld\t%ld\t", pid, ip);
+//    rcdisasm(op, stderr);
     if (!(*((uint64_t *)op))) {
         if (pid == 0) {
             fprintf(stderr, "program #2 won (%ld)\n", ip);
