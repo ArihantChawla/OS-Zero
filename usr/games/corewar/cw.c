@@ -421,6 +421,7 @@ cwexec(long pid)
         cur = 0;
     }
     cwcurproc[pid] = cur;
+    fprintf(stderr, "CUR: %ld\n", cur);
     
     return;
 }
