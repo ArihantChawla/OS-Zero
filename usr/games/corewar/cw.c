@@ -21,111 +21,59 @@ static long         cwcurproc[2];
 static cwinstrfunc *cwfunctab[CWNOP];
 struct cwinstr     *cwoptab;
 
-#if 0
-#define cwgetargs(op, ip, arg1, arg2)                                   \
-    do {                                                                \
-        long _arg1 = 0;                                                 \
-        long _arg2 = 0;                                                 \
-        long _tmp;                                                      \
-                                                                        \
-        if ((op)->aflg & CWIMMBIT) {                                    \
-            _arg1 = (op)->a;                                            \
-        } else {                                                        \
-            _tmp = (ip) + (op)->a;                                      \
-            _tmp &= CWNCORE - 1;                                        \
-            if ((op)->aflg & (CWINDIRBIT | CWPREDECBIT)) {              \
-                struct cwinstr *_ptr;                                   \
-                                                                        \
-                _ptr = &cwoptab[_tmp];                                  \
-                _tmp = _ptr->b;                                         \
-                if ((op)->aflg & CWPREDECBIT) {                         \
-                    _tmp--;                                             \
-                    _ptr->b = _tmp;                                     \
-                }                                                       \
-                _arg1 = _tmp;                                           \
-                _arg1 += (ip);                                          \
-            } else {                                                    \
-                _arg1 = _tmp;                                           \
-            }                                                           \
-        }                                                               \
-        _arg1 &= (CWNCORE - 1);                                         \
-        if ((op)->bflg & CWIMMBIT) {                                    \
-            _arg2 = (op)->b;                                            \
-        } else {                                                        \
-            _tmp = (ip) + (op)->b;                                      \
-            _tmp &= CWNCORE - 1;                                        \
-            if ((op)->bflg & (CWINDIRBIT | CWPREDECBIT)) {              \
-                struct cwinstr *_ptr;                                   \
-                                                                        \
-                _ptr = &cwoptab[_tmp];                                  \
-                _tmp = _ptr->b;                                         \
-                if ((op)->bflg & CWPREDECBIT) {                         \
-                    _tmp--;                                             \
-                    _ptr->b = _tmp;                                     \
-                }                                                       \
-                _arg2 = _tmp;                                           \
-                _arg2 += (ip);                                          \
-            } else {                                                    \
-                _arg2 = _tmp;                                           \
-            }                                                           \
-        }                                                               \
-        _arg2 &= CWNCORE - 1;                                           \
-        (arg1) = _arg1;                                                 \
-        (arg2) = _arg2;                                                 \
-    } while (0)
-#endif
-
 void
 cwgetargs(struct cwinstr *op, long ip, long *argp1, long *argp2)
 {
-        long arg1 = 0;
-        long arg2 = 0;
-        long tmp;
-
-        if ((op)->aflg & CWIMMBIT) {
-            arg1 = (op)->a;
-        } else {
-            tmp = (ip) + (op)->a;
-            tmp &= CWNCORE - 1;
-            if ((op)->aflg & (CWINDIRBIT | CWPREDECBIT)) {
-                struct cwinstr *ptr;
-
-                ptr = &cwoptab[tmp];
-                tmp = ptr->b;
-                if ((op)->aflg & CWPREDECBIT) {
-                    tmp--;
-                    ptr->b = tmp;
-                }
-                arg1 = tmp;
-                arg1 += (ip);
-            } else {
-                arg1 = tmp;
+    long arg1 = 0;
+    long arg2 = 0;
+    long tmp;
+    
+    if ((op)->aflg & CWIMMBIT) {
+        arg1 = (op)->a;
+    } else {
+        tmp = (ip) + (op)->a;
+        tmp &= CWNCORE - 1;
+        if ((op)->aflg & (CWINDIRBIT | CWPREDECBIT)) {
+            struct cwinstr *ptr;
+            
+            ptr = &cwoptab[tmp];
+            tmp = ptr->b;
+            if ((op)->aflg & CWPREDECBIT) {
+                tmp--;
+                ptr->b = tmp;
             }
-        }
-        arg1 &= (CWNCORE - 1);
-        if ((op)->bflg & CWIMMBIT) {
-            arg2 = (op)->b;
+            arg1 = tmp;
+            arg1 += (ip);
         } else {
-            tmp = (ip) + (op)->b;
-            tmp &= CWNCORE - 1;
-            if ((op)->bflg & (CWINDIRBIT | CWPREDECBIT)) {
-                struct cwinstr *ptr;
-
-                ptr = &cwoptab[tmp];
-                tmp = ptr->b;
-                if ((op)->bflg & CWPREDECBIT) {
-                    tmp--;
-                    ptr->b = tmp;
-                }
-                arg2 = tmp;
-                arg2 += (ip);
-            } else {
-                arg2 = tmp;
-            }
+            arg1 = tmp;
         }
-        arg2 &= CWNCORE - 1;
-        *argp1 = arg1;
-        *argp2 = arg2;
+    }
+    arg1 &= (CWNCORE - 1);
+    if ((op)->bflg & CWIMMBIT) {
+        arg2 = (op)->b;
+    } else {
+        tmp = (ip) + (op)->b;
+        tmp &= CWNCORE - 1;
+        if ((op)->bflg & (CWINDIRBIT | CWPREDECBIT)) {
+            struct cwinstr *ptr;
+            
+            ptr = &cwoptab[tmp];
+            tmp = ptr->b;
+            if ((op)->bflg & CWPREDECBIT) {
+                tmp--;
+                ptr->b = tmp;
+            }
+            arg2 = tmp;
+            arg2 += (ip);
+        } else {
+            arg2 = tmp;
+        }
+    }
+    arg2 &= CWNCORE - 1;
+    *argp1 = arg1;
+    *argp2 = arg2;
+
+    return;
 }
 
 long
