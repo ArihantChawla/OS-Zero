@@ -16,7 +16,7 @@
 #define ZEUSDBNCOL   80
 #define ZEUSDBNROW   4
 #define ZEUSSIMW     256
-#define ZEUSSIMH     532
+#define ZEUSSIMH     32
 
 extern struct cwinstr *cwoptab;
 
@@ -52,7 +52,6 @@ zeusinitx11win(struct zeusx11 *x11)
     long                 y = 0;
 
     fprintf(stderr, "MAIN: %dx%d\n", winw, winh);
-    exit(0);
     atr.background_pixel = BlackPixel(x11->disp, x11->screen);
     win = XCreateWindow(x11->disp,
                         parent,
@@ -411,7 +410,7 @@ zeusdrawsim(struct zeusx11 *x11)
                                    4, 4);
                 } else {
                     XFillRectangle(x11->disp, x11->pixbuf,
-                                   x11->prog2gc,
+                                   x11->prog1gc,
                                    x, y,
                                    4, 4);
                 }

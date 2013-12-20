@@ -5,6 +5,10 @@
  * See the file LICENSE for more information about using this software.
  */
 
+#if !defined(MTSAFE)
+#define MTSAFE     1
+#endif
+
 #define NEWMALLOC  1
 #define NEWSLAB    1
 #define FREEBUF    1
