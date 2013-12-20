@@ -409,7 +409,7 @@ zeusdrawsim(struct zeusx11 *x11)
                                    2, 2);
                 } else {
                     XFillRectangle(x11->disp, x11->pixbuf,
-                                   x11->prog21c,
+                                   x11->prog2gc,
                                    x, y,
                                    2, 2);
                 }

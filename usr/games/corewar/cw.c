@@ -506,7 +506,9 @@ cwexec(long pid)
         
         exit(0);
     }
+#if (ZEUS)
     zeusdrawdb(zeusx11, ip);
+#endif
     func = cwfunctab[op->op];
     ip = func(pid, ip);
     cnt = cwproccnt[pid];
