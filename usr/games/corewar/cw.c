@@ -161,7 +161,9 @@ cwdatop(long pid, long ip)
     } else {
         fprintf(stderr, "program #2 won\n");
     }
+#if (ZEUS)
     sleep(5);
+#endif
     exit(0);
 
     /* NOTREACHED */
@@ -502,7 +504,9 @@ cwexec(long pid)
         } else {
             fprintf(stderr, "program #1 won (%ld)\n", ip);
         }
+#if (ZEUS)
         sleep(5);
+#endif
         
         exit(0);
     }
@@ -526,7 +530,9 @@ cwexec(long pid)
             } else {
                 fprintf(stderr, "program #1 won\n");
             }
+#if (ZEUS)
             sleep(5);
+#endif
             
             exit(0);
         }
@@ -571,7 +577,9 @@ cwloop(void)
         cwexec(1);
     }
     fprintf(stderr, "TIE\n");
+#if (ZEUS)
     sleep(5);
+#endif
     
     exit(0);
 }
