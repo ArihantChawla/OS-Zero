@@ -308,6 +308,7 @@ rcxlate(FILE *fp, long pid, long base, long *baseret, long *limret)
             if (isalpha(*cp)) {
                 op = rcgetop(cp);
                 if (op) {
+                    op->pid = pid;
                     n++;
                     instr = &cwoptab[ip];
                     if (*((uint64_t *)instr)) {

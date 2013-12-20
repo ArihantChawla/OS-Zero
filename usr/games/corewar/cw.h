@@ -43,7 +43,7 @@ struct cwinstr {
     unsigned op   : 8;
     unsigned aflg : 8;
     unsigned bflg : 8;
-    unsigned pad  : 8;
+    unsigned pid  : 8;
     unsigned a    : 16;
     unsigned b    : 16;
 } PACK();
