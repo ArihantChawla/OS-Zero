@@ -14,7 +14,7 @@
 #define ZEUSTEXTNCOL 80
 #define ZEUSTEXTNROW 16
 #define ZEUSDBNCOL   80
-#define ZEUSDBNROW   16
+#define ZEUSDBNROW   4
 #define ZEUSSIMW     256
 #define ZEUSSIMH     532
 
@@ -46,11 +46,13 @@ zeusinitx11win(struct zeusx11 *x11)
     Window               win;
     Window               parent = RootWindow(x11->disp, x11->screen);
     int                  winw = max((ZEUSTEXTNCOL + ZEUSDBNCOL) * x11->fontw,
-                                    ZEUSSIMW * 2);
-    int                  winh = (ZEUSTEXTNROW + ZEUSDBNROW) * x11->fonth + ZEUSSIMH * 2;
+                                    ZEUSSIMW * 4);
+    int                  winh = (ZEUSTEXTNROW + ZEUSDBNROW) * x11->fonth + ZEUSSIMH * 4;
     long                 x = 0;
     long                 y = 0;
 
+    fprintf(stderr, "MAIN: %dx%d\n", winw, winh);
+    exit(0);
     atr.background_pixel = BlackPixel(x11->disp, x11->screen);
     win = XCreateWindow(x11->disp,
                         parent,
@@ -71,8 +73,8 @@ zeusinitx11win(struct zeusx11 *x11)
     x11->w = winw;
     x11->h = winh;
     parent = win;
-    winw = ZEUSSIMW * 2;
-    winh = ZEUSSIMH * 2;
+    winw = ZEUSSIMW * 4;
+    winh = ZEUSSIMH * 4;
     win = XCreateWindow(x11->disp,
                         parent,
                         x, y,
@@ -154,7 +156,7 @@ zeusinitx11buf(struct zeusx11 *x11)
     XFillRectangle(x11->disp, pmap,
                    x11->textgc,
                    0, 0,
-                   ZEUSSIMH * 2, ZEUSSIMH * 2);
+                   ZEUSSIMH * 4, ZEUSSIMH * 4);
     x11->pixbuf = pmap;
 
     return;
@@ -370,8 +372,8 @@ zeusdrawsim(struct zeusx11 *x11)
 
 #if 0
     for (l = 0 ; l < CWNCORE ; l++) {
-        x = l % (ZEUSSIMW * 2);
-        y = l / (ZEUSSIMH * 2);
+        x = l % (ZEUSSIMW * 4);
+        y = l / (ZEUSSIMH * 4);
         op = &cwoptab[l];
         if (op->op == CWOPDAT) {
             fprintf(stderr, "%ld: draw: (%d, %d)\n", l, x, y);
@@ -391,9 +393,9 @@ zeusdrawsim(struct zeusx11 *x11)
     XFillRectangle(x11->disp, x11->pixbuf,
                    x11->textgc,
                    0, 0,
-                   ZEUSSIMH * 2, ZEUSSIMH * 2);
-    for (y = 0 ; y < ZEUSSIMH * 2 ; y += 2) {
-        for (x = 0 ; x < ZEUSSIMW * 2 ; x += 2) {
+                   ZEUSSIMH * 4, ZEUSSIMH * 4);
+    for (y = 0 ; y < ZEUSSIMH * 4 ; y += 4) {
+        for (x = 0 ; x < ZEUSSIMW * 4 ; x += 4) {
             op = &cwoptab[l];
             if (op->op == CWOPDAT) {
 //                fprintf(stderr, "%ld: draw: (%d, %d)\n", l, x, y);
@@ -401,17 +403,17 @@ zeusdrawsim(struct zeusx11 *x11)
                     XFillRectangle(x11->disp, x11->pixbuf,
                                    x11->textgc,
                                    x, y,
-                                   2, 2);
+                                   4, 4);
                 } else if (op->pid) {
                     XFillRectangle(x11->disp, x11->pixbuf,
                                    x11->prog2gc,
                                    x, y,
-                                   2, 2);
+                                   4, 4);
                 } else {
                     XFillRectangle(x11->disp, x11->pixbuf,
                                    x11->prog2gc,
                                    x, y,
-                                   2, 2);
+                                   4, 4);
                 }
             }
             l++;

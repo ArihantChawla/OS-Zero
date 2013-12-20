@@ -1,4 +1,4 @@
-dat		#-1	; bacwards copy offset
+dat		#-2	; bacwards copy offset
 dat		#-1	; forward copy offset
 add	#4,	-1	; increment forward offset
 sub	#4,	-3	; decrement backwards offset
