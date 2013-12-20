@@ -11,6 +11,9 @@
 
 #include <corewar/cw.h>
 #include <corewar/rc.h>
+#if (ZEUS)
+#include <corewar/zeus.h>
+#endif
 
 typedef long cwinstrfunc(long, long);
 
@@ -34,6 +37,9 @@ static long         cwrunqueue[2][CWNPROC];
 static long         cwproccnt[2];
 static long         cwcurproc[2];
 static cwinstrfunc *cwfunctab[CWNOP];
+#if (ZEUS)
+struct zeusx11     *zeusx11;
+#endif
 struct cwinstr     *cwoptab;
 
 void
@@ -147,11 +153,15 @@ cwgetargs(struct cwinstr *op, long ip, long *argp1, long *argp2)
 long
 cwdatop(long pid, long ip)
 {
+#if (ZEUS)
+    zeusdrawsim(zeusx11);
+#endif
     if (pid) {
         fprintf(stderr, "program #1 won\n");
     } else {
         fprintf(stderr, "program #2 won\n");
     }
+    sleep(5);
     exit(0);
 
     /* NOTREACHED */
@@ -474,6 +484,9 @@ cwexec(long pid)
     long            cnt;
     long            ip;
     long            l;
+#if (ZEUS)
+    static long     ref = 0;
+#endif
 
     cur = cwcurproc[pid];
     ip = cwrunqueue[pid][cur];
@@ -481,14 +494,19 @@ cwexec(long pid)
 //    fprintf(stderr, "%ld\t%ld\t", pid, ip);
 //    cwdisasm(op, stderr);
     if (!(*((uint64_t *)op))) {
+#if (ZEUS)
+        zeusdrawsim(zeusx11);
+#endif
         if (pid == 0) {
             fprintf(stderr, "program #2 won (%ld)\n", ip);
         } else {
             fprintf(stderr, "program #1 won (%ld)\n", ip);
         }
+        sleep(5);
         
         exit(0);
     }
+    zeusdrawdb(zeusx11, ip);
     func = cwfunctab[op->op];
     ip = func(pid, ip);
     cnt = cwproccnt[pid];
@@ -498,11 +516,15 @@ cwexec(long pid)
                 cwrunqueue[pid][l] = cwrunqueue[pid][l + 1];
             }
         } else {
+#if (ZEUS)
+            zeusdrawsim(zeusx11);
+#endif
             if (!pid) {
                 fprintf(stderr, "program #2 won\n");
             } else {
                 fprintf(stderr, "program #1 won\n");
             }
+            sleep(5);
             
             exit(0);
         }
@@ -516,6 +538,17 @@ cwexec(long pid)
         cur = 0;
     }
     cwcurproc[pid] = cur;
+#if (ZEUS)
+    ref++;
+    if (ref == 32) {
+        zeusdrawsim(zeusx11);
+        ref = 0;
+        sleep(1);
+    }
+    if (XEventsQueued(zeusx11->disp, QueuedAfterFlush)) {
+        zeusprocev(zeusx11);
+    }
+#endif
 
     return;
 }
@@ -536,6 +569,7 @@ cwloop(void)
         cwexec(1);
     }
     fprintf(stderr, "TIE\n");
+    sleep(5);
     
     exit(0);
 }
@@ -564,7 +598,10 @@ main(int argc, char *argv[])
     long  lim;
     long  ip1;
     long  ip2;
-    
+
+#if (ZEUS)
+    zeusx11 = zeusinitx11();
+#endif
     if (argc != 3) {
         fprintf(stderr, "usage: %s prog1.rc prog2.rc\n", argv[0]);
         
