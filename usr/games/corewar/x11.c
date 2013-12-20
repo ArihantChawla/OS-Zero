@@ -155,7 +155,7 @@ zeusinitx11buf(struct zeusx11 *x11)
     XFillRectangle(x11->disp, pmap,
                    x11->textgc,
                    0, 0,
-                   ZEUSSIMH * 4, ZEUSSIMH * 4);
+                   x11->simh, x11->simh);
     x11->pixbuf = pmap;
 
     return;
@@ -352,7 +352,7 @@ zeusdrawdb(struct zeusx11 *x11, long ip)
         XDrawString(x11->disp, x11->dbwin, x11->textgc,
                     0, nline * x11->fonth,
                     line, strlen(line));
-        nline++;
+//        nline++;
         free(line);
     }
 
@@ -366,35 +366,14 @@ zeusdrawsim(struct zeusx11 *x11)
     long            l;
     int             x;
     int             y;
-    int             row;
-    int             col;
 
-#if 0
-    for (l = 0 ; l < CWNCORE ; l++) {
-        x = l % (ZEUSSIMW * 4);
-        y = l / (ZEUSSIMH * 4);
-        op = &cwoptab[l];
-        if (op->op == CWOPDAT) {
-            fprintf(stderr, "%ld: draw: (%d, %d)\n", l, x, y);
-            XFillRectangle(x11->disp, x11->pixbuf,
-                           x11->datgc,
-                           x, y,
-                           4, 4);
-        } else {
-            XFillRectangle(x11->disp, x11->pixbuf,
-                           x11->textgc,
-                           x, y,
-                           4, 4);
-        }
-    }
-#endif
     l = 0;
     XFillRectangle(x11->disp, x11->pixbuf,
                    x11->textgc,
                    0, 0,
-                   ZEUSSIMH * 4, ZEUSSIMH * 4);
-    for (y = 0 ; y < ZEUSSIMH * 4 ; y += 4) {
-        for (x = 0 ; x < ZEUSSIMW * 4 ; x += 4) {
+                   x11->simh, x11->simh);
+    for (y = 0 ; y < x11->simh ; y += 4) {
+        for (x = 0 ; x < x11->simw ; x += 4) {
             op = &cwoptab[l];
             if (op->op == CWOPDAT) {
 //                fprintf(stderr, "%ld: draw: (%d, %d)\n", l, x, y);

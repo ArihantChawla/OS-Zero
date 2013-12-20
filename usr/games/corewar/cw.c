@@ -12,6 +12,7 @@
 #include <corewar/cw.h>
 #include <corewar/rc.h>
 #if (ZEUS)
+#include <unistd.h>
 #include <corewar/zeus.h>
 #endif
 

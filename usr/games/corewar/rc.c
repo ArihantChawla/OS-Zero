@@ -285,7 +285,7 @@ rcgetline(FILE *fp)
 long
 rcxlate(FILE *fp, long pid, long base, long *baseret, long *limret)
 {
-    char           *linebuf;
+    char           *linebuf = NULL;
     char           *cp;
     struct cwinstr *op;
     struct cwinstr *instr;
@@ -328,16 +328,20 @@ rcxlate(FILE *fp, long pid, long base, long *baseret, long *limret)
                     exit(1);
                 }
             } else if (wrap) {
+                free(linebuf);
 
                 continue;
             } else {
-
+                
                 break;
             }
         } else {
 
             break;
         }
+    }
+    if (linebuf) {
+        free(linebuf);
     }
     *limret = ip;
 
