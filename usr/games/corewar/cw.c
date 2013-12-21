@@ -447,21 +447,18 @@ cwsplop(long pid, long ip)
     ip &= CWNCORE - 1;
     cnt = cwproccnt[pid];
     cur = cwcurproc[pid];
+#if 0
     for (ndx = cur ; ndx < cnt ; ndx++) {
         cwrunqueue[pid][ndx] = cwrunqueue[pid][ndx + 1];
     }
-    cwrunqueue[pid][cnt - 1] = ip;
+#endif
+    cwrunqueue[pid][cur] = ip;
     if (cnt < CWNPROC) {
 #if 0
         for (ndx = cur + 1 ; ndx < cnt ; ndx++) {
             cwrunqueue[pid][ndx] = cwrunqueue[pid][ndx + 1];
         }
 #endif
-
-        op = &cwoptab[arg2];
-        fprintf(stderr, "SPL: %ld\t%ld\t", pid, arg2);
-        cwdisasm(op, stderr);
-
         cwrunqueue[pid][cnt] = arg2;
         cnt++;
         cwproccnt[pid] = cnt;
@@ -515,11 +512,6 @@ cwexec(long pid)
     op = &cwoptab[ip];
     fprintf(stderr, "%ld\t%ld\t", pid, ip);
     cwdisasm(op, stderr);
-    fprintf(stderr, "%ld -> cur == %ld, ip == %ld\n", pid, cur, ip);
-    for (l = 0 ; l < cwproccnt[pid] ; l++) {
-        fprintf(stderr, "%ld : ", cwrunqueue[pid][l]);
-    }
-    fprintf(stderr, "\n");
     if (!(*((uint64_t *)op))) {
 #if (ZEUS)
         zeusdrawsim(zeusx11);
@@ -564,9 +556,9 @@ cwexec(long pid)
         cnt--;
         cwproccnt[pid] = cnt;
     } else if (op->op != CWOPSPL) {
-        cwrunqueue[pid][cnt - 1] = ip;
+        cwrunqueue[pid][cur] = ip;
+        cur++;
     }
-    cur++;
     cnt = cwproccnt[pid];
     if (cur == cnt) {
         cur = 0;
@@ -577,7 +569,7 @@ cwexec(long pid)
     if (ref == 32) {
         zeusdrawsim(zeusx11);
         ref = 0;
-        sleep(1);
+//        sleep(1);
     }
     if (XEventsQueued(zeusx11->disp, QueuedAfterFlush)) {
         zeusprocev(zeusx11);

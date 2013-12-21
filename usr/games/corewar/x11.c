@@ -259,7 +259,7 @@ zeusinitx11gc(struct zeusx11 *x11)
     x11->prog1datgc = gc;
     if (!XParseColor(x11->disp,
                      x11->colormap,
-                     "light yellow",
+                     "yellow",
                      &color)) {
         fprintf(stderr, "failed to parse color\n");
 
@@ -284,7 +284,7 @@ zeusinitx11gc(struct zeusx11 *x11)
     x11->prog2gc = gc;
     if (!XParseColor(x11->disp,
                      x11->colormap,
-                     "dark green",
+                     "gold",
                      &color)) {
         fprintf(stderr, "failed to parse color\n");
 

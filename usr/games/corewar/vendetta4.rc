@@ -1,0 +1,8 @@
+dat		#3
+dat		#-3
+sub	#8,	-2
+add	#8,	-2
+mov	-4	@-4
+mov	-4	@-4
+spl		-4
+jmp		-5
