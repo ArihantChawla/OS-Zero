@@ -53,44 +53,43 @@ cwdisasm(struct cwinstr *op, FILE *fp)
         if (rcnargtab[op->op] == 1) {
             fprintf(fp, "\t");
         }
-        ch = '\0';
-        if (op->aflg & CWIMMBIT) {
-            ch = '#';
-        } else if (op->aflg & CWINDIRBIT) {
-            ch = '@';
-        } else if (op->aflg & CWPREDECBIT) {
-            ch = '<';
-        }
-        if (ch) {
-            fprintf(fp, "%c", ch);
-        }
-        if (op->aflg & CWSIGNBIT) {
-            fprintf(fp, "%d", op->a - CWNCORE);
-        } else {
-            fprintf(fp, "%d", op->a);
-        }
-        if (rcnargtab[op->op] == 2) {
+        if  (rcnargtab[op->op] == 2) {
             ch = '\0';
-            if (op->bflg & CWIMMBIT) {
+            if (op->aflg & CWIMMBIT) {
                 ch = '#';
-            } else if (op->bflg & CWINDIRBIT) {
+            } else if (op->aflg & CWINDIRBIT) {
                 ch = '@';
             } else if (op->aflg & CWPREDECBIT) {
                 ch = '<';
             }
             if (ch) {
-                fprintf(fp, "\t%c", ch);
-            } else {
-                fprintf(fp, "\t");
+                fprintf(fp, "%c", ch);
             }
-            if (op->bflg & CWSIGNBIT) {
-                fprintf(fp, "%d\n", op->b - CWNCORE);
+            if (op->aflg & CWSIGNBIT) {
+                fprintf(fp, "%d", op->a - CWNCORE);
             } else {
-                fprintf(stderr, "%d\n", op->b);
+                fprintf(fp, "%d", op->a);
             }
-        } else {
-            fprintf(stderr, "\n");
         }
+        ch = '\0';
+        if (op->bflg & CWIMMBIT) {
+            ch = '#';
+        } else if (op->bflg & CWINDIRBIT) {
+            ch = '@';
+        } else if (op->aflg & CWPREDECBIT) {
+            ch = '<';
+        }
+        if (ch) {
+            fprintf(fp, "\t%c", ch);
+        } else {
+                fprintf(fp, "\t");
+        }
+        if (op->bflg & CWSIGNBIT) {
+            fprintf(fp, "%d\n", op->b - CWNCORE);
+        } else {
+            fprintf(stderr, "%d\n", op->b);
+        }
+        fprintf(stderr, "\n");
     }
 
     return;
@@ -438,6 +437,7 @@ cwsplop(long pid, long ip)
 {
     struct cwinstr *op = &cwoptab[ip];
     long            cnt;
+    long            cur;
     long            arg1;
     long            arg2;
     long            ndx;
@@ -446,11 +446,22 @@ cwsplop(long pid, long ip)
     ip++;
     ip &= CWNCORE - 1;
     cnt = cwproccnt[pid];
-    for (ndx = cwcurproc[pid] ; ndx < cnt - 2 ; ndx++) {
+    cur = cwcurproc[pid];
+    for (ndx = cur ; ndx < cnt ; ndx++) {
         cwrunqueue[pid][ndx] = cwrunqueue[pid][ndx + 1];
     }
-    cwrunqueue[pid][ndx] = ip;
+    cwrunqueue[pid][cnt - 1] = ip;
     if (cnt < CWNCORE) {
+#if 0
+        for (ndx = cur + 1 ; ndx < cnt ; ndx++) {
+            cwrunqueue[pid][ndx] = cwrunqueue[pid][ndx + 1];
+        }
+#endif
+
+        op = &cwoptab[arg2];
+        fprintf(stderr, "SPL: %ld\t%ld\t", pid, arg2);
+        cwdisasm(op, stderr);
+
         cwrunqueue[pid][cnt] = arg2;
         cnt++;
         cwproccnt[pid] = cnt;
@@ -504,6 +515,11 @@ cwexec(long pid)
     op = &cwoptab[ip];
     fprintf(stderr, "%ld\t%ld\t", pid, ip);
     cwdisasm(op, stderr);
+    fprintf(stderr, "%ld -> cur == %ld, ip == %ld\n", pid, cur, ip);
+    for (l = 0 ; l < cwproccnt[pid] ; l++) {
+        fprintf(stderr, "%ld : ", cwrunqueue[pid][l]);
+    }
+    fprintf(stderr, "\n");
     if (!(*((uint64_t *)op))) {
 #if (ZEUS)
         zeusdrawsim(zeusx11);
@@ -549,8 +565,8 @@ cwexec(long pid)
         cwproccnt[pid] = cnt;
     } else if (op->op != CWOPSPL) {
         cwrunqueue[pid][cnt - 1] = ip;
-        cur++;
     }
+    cur++;
     cnt = cwproccnt[pid];
     if (cur == cnt) {
         cur = 0;

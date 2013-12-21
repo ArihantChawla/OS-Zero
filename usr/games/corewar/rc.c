@@ -10,17 +10,17 @@ extern struct cwinstr *cwoptab;
 static void       *rcparsetab[128];
 long               rcnargtab[CWNOP]
 = {
-    1,
-    2,
-    2,
-    2,
-    1,
-    2,
-    2,
-    2,
-    2,
-    2,
-    1
+    1, /* DAT */
+    2, /* MOV */
+    2, /* ADD */
+    2, /* SUB */
+    1, /* JMP */
+    2, /* JMZ */
+    2, /* JMN */
+    2, /* CMP */
+    2, /* SLT */
+    2, /* DJN */
+    1  /* SPL */
 };
 
 void

@@ -142,9 +142,9 @@ void
 zeusinitx11buf(struct zeusx11 *x11)
 {
     Pixmap pmap = XCreatePixmap(x11->disp,
-                                x11->mainwin,
-                                x11->w,
-                                x11->h,
+                                x11->simwin,
+                                x11->simw,
+                                x11->simh,
                                 x11->depth);
 
     if (!pmap) {
