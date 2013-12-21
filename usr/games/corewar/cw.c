@@ -451,7 +451,7 @@ cwsplop(long pid, long ip)
         cwrunqueue[pid][ndx] = cwrunqueue[pid][ndx + 1];
     }
     cwrunqueue[pid][cnt - 1] = ip;
-    if (cnt < CWNCORE) {
+    if (cnt < CWNPROC) {
 #if 0
         for (ndx = cur + 1 ; ndx < cnt ; ndx++) {
             cwrunqueue[pid][ndx] = cwrunqueue[pid][ndx + 1];
