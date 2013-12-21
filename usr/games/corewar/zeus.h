@@ -19,10 +19,12 @@ struct zeusx11win {
 
 struct zeusx11 {
     Display     *disp;
-    GC           textgc;
+    GC           bggc;
     GC           datgc;
     GC           prog1gc;
+    GC           prog1datgc;
     GC           prog2gc;
+    GC           prog2datgc;
     XFontStruct *font;
     int          fontw;
     int          fonth;

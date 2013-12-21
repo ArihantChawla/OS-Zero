@@ -305,6 +305,11 @@ rcxlate(FILE *fp, long pid, long base, long *baseret, long *limret)
                 }
                 cp++;
             }
+            if (*cp == ';') {
+                free(linebuf);
+
+                continue;
+            }
             if (isalpha(*cp)) {
                 op = rcgetop(cp);
                 if (op) {

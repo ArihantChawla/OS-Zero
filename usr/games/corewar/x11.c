@@ -153,7 +153,7 @@ zeusinitx11buf(struct zeusx11 *x11)
         exit(1);
     }
     XFillRectangle(x11->disp, pmap,
-                   x11->textgc,
+                   x11->bggc,
                    0, 0,
                    x11->simh, x11->simh);
     x11->pixbuf = pmap;
@@ -181,7 +181,7 @@ zeusinitx11gc(struct zeusx11 *x11)
 
         exit(1);
     }
-    x11->textgc = gc;
+    x11->bggc = gc;
     if (!XParseColor(x11->disp,
                      x11->colormap,
                      "magenta",
@@ -234,7 +234,32 @@ zeusinitx11gc(struct zeusx11 *x11)
     x11->prog1gc = gc;
     if (!XParseColor(x11->disp,
                      x11->colormap,
-                     "yellow",
+                     "dark green",
+                     &color)) {
+        fprintf(stderr, "failed to parse color\n");
+
+        exit(1);
+    }
+    if (!XAllocColor(x11->disp,
+                     x11->colormap,
+                     &color)) {
+        fprintf(stderr, "failed to allocate color\n");
+
+        exit(1);
+    }
+    gcval.foreground = color.pixel;
+    gc = XCreateGC(x11->disp, x11->textwin,
+                   GCForeground | GCFunction | GCLineWidth | GCFont,
+                   &gcval);
+    if (!gc) {
+        fprintf(stderr, "failed to create GC\n");
+
+        exit(1);
+    }
+    x11->prog1datgc = gc;
+    if (!XParseColor(x11->disp,
+                     x11->colormap,
+                     "light yellow",
                      &color)) {
         fprintf(stderr, "failed to parse color\n");
 
@@ -257,6 +282,31 @@ zeusinitx11gc(struct zeusx11 *x11)
         exit(1);
     }
     x11->prog2gc = gc;
+    if (!XParseColor(x11->disp,
+                     x11->colormap,
+                     "dark green",
+                     &color)) {
+        fprintf(stderr, "failed to parse color\n");
+
+        exit(1);
+    }
+    if (!XAllocColor(x11->disp,
+                     x11->colormap,
+                     &color)) {
+        fprintf(stderr, "failed to allocate color\n");
+
+        exit(1);
+    }
+    gcval.foreground = color.pixel;
+    gc = XCreateGC(x11->disp, x11->textwin,
+                   GCForeground | GCFunction | GCLineWidth | GCFont,
+                   &gcval);
+    if (!gc) {
+        fprintf(stderr, "failed to create GC\n");
+
+        exit(1);
+    }
+    x11->prog2datgc = gc;
 
     return;
 }
@@ -319,7 +369,7 @@ zeusprocev(struct zeusx11 *x11)
             case Expose:
                 fprintf(stderr, "EXPOSE\n");
                 XCopyArea(x11->disp, x11->pixbuf, x11->simwin,
-                          x11->textgc,
+                          x11->bggc,
                           0, 0,
                           x11->simw, x11->simh,
                           0, 0);
@@ -349,7 +399,7 @@ zeusdrawdb(struct zeusx11 *x11, long ip)
     long            nline = x11->ndbline;
 
     if (line) {
-        XDrawString(x11->disp, x11->dbwin, x11->textgc,
+        XDrawString(x11->disp, x11->dbwin, x11->bggc,
                     0, nline * x11->fonth,
                     line, strlen(line));
 //        nline++;
@@ -369,7 +419,7 @@ zeusdrawsim(struct zeusx11 *x11)
 
     l = 0;
     XFillRectangle(x11->disp, x11->pixbuf,
-                   x11->textgc,
+                   x11->bggc,
                    0, 0,
                    x11->simh, x11->simh);
     for (y = 0 ; y < x11->simh ; y += 4) {
@@ -379,20 +429,31 @@ zeusdrawsim(struct zeusx11 *x11)
 //                fprintf(stderr, "%ld: draw: (%d, %d)\n", l, x, y);
                 if (!op->a && !op->b) {
                     XFillRectangle(x11->disp, x11->pixbuf,
-                                   x11->textgc,
+                                   x11->datgc,
                                    x, y,
                                    4, 4);
                 } else if (op->pid) {
                     XFillRectangle(x11->disp, x11->pixbuf,
-                                   x11->prog2gc,
+                                   x11->prog2datgc,
                                    x, y,
                                    4, 4);
                 } else {
                     XFillRectangle(x11->disp, x11->pixbuf,
-                                   x11->prog1gc,
+                                   x11->prog1datgc,
                                    x, y,
                                    4, 4);
                 }
+            } else if (op->pid) {
+                    XFillRectangle(x11->disp, x11->pixbuf,
+                                   x11->prog2gc,
+                                   x, y,
+                                   4, 4);
+                
+            } else {
+                    XFillRectangle(x11->disp, x11->pixbuf,
+                                   x11->prog1gc,
+                                   x, y,
+                                   4, 4);
             }
             l++;
         }
