@@ -440,13 +440,21 @@ cwsplop(long pid, long ip)
     long            cnt;
     long            arg1;
     long            arg2;
+    long            ndx;
     
     cwgetargs(op, ip, &arg1, &arg2);
     ip++;
     ip &= CWNCORE - 1;
     cnt = cwproccnt[pid];
-    cwrunqueue[pid][cnt - 1] = ip;
-    cwrunqueue[pid][cnt] = arg2;
+    for (ndx = cwcurproc[pid] ; ndx < cnt - 2 ; ndx++) {
+        cwrunqueue[pid][ndx] = cwrunqueue[pid][ndx + 1];
+    }
+    cwrunqueue[pid][ndx] = ip;
+    if (cnt < CWNCORE) {
+        cwrunqueue[pid][cnt] = arg2;
+        cnt++;
+        cwproccnt[pid] = cnt;
+    }
     
     return ip;
 }
@@ -494,8 +502,8 @@ cwexec(long pid)
     cur = cwcurproc[pid];
     ip = cwrunqueue[pid][cur];
     op = &cwoptab[ip];
-//    fprintf(stderr, "%ld\t%ld\t", pid, ip);
-//    cwdisasm(op, stderr);
+    fprintf(stderr, "%ld\t%ld\t", pid, ip);
+    cwdisasm(op, stderr);
     if (!(*((uint64_t *)op))) {
 #if (ZEUS)
         zeusdrawsim(zeusx11);
@@ -539,10 +547,11 @@ cwexec(long pid)
         }
         cnt--;
         cwproccnt[pid] = cnt;
-    } else {
+    } else if (op->op != CWOPSPL) {
         cwrunqueue[pid][cnt - 1] = ip;
         cur++;
     }
+    cnt = cwproccnt[pid];
     if (cur == cnt) {
         cur = 0;
     }
