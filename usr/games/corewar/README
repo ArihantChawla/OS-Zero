@@ -1,8 +1,17 @@
-This directory holds an early implementation of Core War as described in
+This directory holds an early implementation of Core War as described in the
+included PDF.
 
-	http://corewar.co.uk/cwg.txt
+I have included a few (.rc) example warriors. To try vendetta against vendetta2,
+do
+	./cw vendetta.rc vendetta2.rc
+
+For the visualisation, do
+
+	./zeus vendetta.rc vendetta2.rc
 
 Enjoy! :)
 
 /* vendu */
+
+P.S. I know, it's still a bit rough around the edges... :)
 
