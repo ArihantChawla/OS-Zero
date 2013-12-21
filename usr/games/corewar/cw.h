@@ -6,7 +6,7 @@
 
 //#define CWNTURN     (128 * 1024)
 #define CWNTURN     0xffffffff
-#define CWNPROC     128
+#define CWNPROC     1024
 #define CWINVAL     0xff
 #define CWNCORE     8000
 #define CWNONE      (~0)

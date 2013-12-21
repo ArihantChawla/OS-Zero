@@ -50,9 +50,6 @@ cwdisasm(struct cwinstr *op, FILE *fp)
 
     if (op) {
         fprintf(fp, "\t%s\t", cwopnametab[op->op]);
-        if (rcnargtab[op->op] == 1) {
-            fprintf(fp, "\t");
-        }
         if  (rcnargtab[op->op] == 2) {
             ch = '\0';
             if (op->aflg & CWIMMBIT) {
@@ -436,7 +433,6 @@ cwsplop(long pid, long ip)
     long            cur;
     long            arg1;
     long            arg2;
-    long            ndx;
     
     cwgetargs(op, ip, &arg1, &arg2);
     ip++;
