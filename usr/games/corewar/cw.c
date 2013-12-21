@@ -106,7 +106,7 @@ cwgetargs(struct cwinstr *op, long ip, long *argp1, long *argp2)
         arg1 = (op)->a;
     } else {
         tmp = (ip) + (op)->a;
-        tmp &= CWNCORE - 1;
+        tmp %= CWNCORE;
         if ((op)->aflg & (CWINDIRBIT | CWPREDECBIT)) {
             struct cwinstr *ptr;
             
@@ -122,12 +122,12 @@ cwgetargs(struct cwinstr *op, long ip, long *argp1, long *argp2)
             arg1 = tmp;
         }
     }
-    arg1 &= (CWNCORE - 1);
+    arg1 %= CWNCORE;
     if ((op)->bflg & CWIMMBIT) {
         arg2 = (op)->b;
     } else {
         tmp = (ip) + (op)->b;
-        tmp &= CWNCORE - 1;
+        tmp %= CWNCORE;
         if ((op)->bflg & (CWINDIRBIT | CWPREDECBIT)) {
             struct cwinstr *ptr;
             
@@ -143,7 +143,7 @@ cwgetargs(struct cwinstr *op, long ip, long *argp1, long *argp2)
             arg2 = tmp;
         }
     }
-    arg2 &= CWNCORE - 1;
+    arg2 %= CWNCORE;
     *argp1 = arg1;
     *argp2 = arg2;
 
@@ -188,7 +188,7 @@ cwmovop(long pid, long ip)
         cwoptab[arg2] = cwoptab[arg1];
     }
     ip++;
-    ip &= CWNCORE - 1;
+    ip %= CWNCORE;
     
     return ip;
 }
@@ -211,7 +211,7 @@ cwaddop(long pid, long ip)
             b = cwoptab[arg2].b;
         }
         b += a;
-        b &= CWNCORE - 1;
+        b %= CWNCORE;
         if (op->bflg & CWIMMBIT) {
             op->bflg &= ~CWSIGNBIT;
             op->b = b;
@@ -223,20 +223,20 @@ cwaddop(long pid, long ip)
         a = arg1;
         b = arg2;
         b += a;
-        b &= CWNCORE - 1;
+        b %= CWNCORE;
         op->b = b;
     } else {
         a = cwoptab[arg1].a;
         b = cwoptab[arg1].b;
         a += cwoptab[arg2].a;
         b += cwoptab[arg2].b;
-        a &= CWNCORE - 1;
-        b &= CWNCORE - 1;
+        a %= CWNCORE;
+        b %= CWNCORE;
         cwoptab[arg2].a = a;
         cwoptab[arg2].b = b;
     }
     ip++;
-    ip &= CWNCORE - 1;
+    ip %= CWNCORE;
     
     return ip;
 }
@@ -274,7 +274,7 @@ cwsubop(long pid, long ip)
         cwoptab[arg2].b = b;
     }
     ip++;
-    ip &= CWNCORE - 1;
+    ip %= CWNCORE;
     
     return ip;
 }
@@ -293,10 +293,6 @@ cwjmpop(long pid, long ip)
         ip = arg2;
         cwrunqueue[pid][cnt - 1] = ip;
     }
-#if 0
-    ip++;
-    ip &= CWNCORE - 1;
-#endif
     
     return ip;
 }
@@ -318,7 +314,7 @@ cwjmzop(long pid, long ip)
         cwrunqueue[pid][cnt - 1] = ip;
     } else {
         ip++;
-        ip &= CWNCORE - 1;
+        ip %= CWNCORE;
     }
     
     return ip;
@@ -341,7 +337,7 @@ cwjmnop(long pid, long ip)
         cwrunqueue[pid][cnt - 1] = ip;
     } else {
         ip++;
-        ip &= CWNCORE - 1;
+        ip %= CWNCORE;
     }
     
     return ip;
@@ -370,7 +366,7 @@ cwcmpop(long pid, long ip)
         }
     }
     ip++;
-    ip &= CWNCORE - 1;
+    ip %= CWNCORE;
     
     return ip;
 }
@@ -393,7 +389,7 @@ cwsltop(long pid, long ip)
         ip++;
     }
     ip++;
-    ip &= CWNCORE - 1;
+    ip %= CWNCORE;
     
     return ip;
 }
@@ -444,7 +440,7 @@ cwsplop(long pid, long ip)
     
     cwgetargs(op, ip, &arg1, &arg2);
     ip++;
-    ip &= CWNCORE - 1;
+    ip %= CWNCORE;
     cnt = cwproccnt[pid];
     cur = cwcurproc[pid];
 #if 0
@@ -636,7 +632,7 @@ main(int argc, char *argv[])
         exit(1);
     }
     cwinit();
-    base = rand() & (CWNCORE - 1);
+    base = rand() % CWNCORE;
     fp = fopen(argv[1], "r");
     if (!fp) {
         fprintf(stderr, "failed to open %s\n", argv[1]);
@@ -659,7 +655,7 @@ main(int argc, char *argv[])
         base = rand() % (base >> 2);
     }
 #endif
-    base = rand() & (CWNCORE - 1);
+    base = rand() % CWNCORE;
     fp = fopen(argv[2], "r");
     if (!fp) {
         fprintf(stderr, "failed to open %s\n", argv[2]);

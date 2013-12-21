@@ -8,7 +8,7 @@
 #define CWNTURN     0xffffffff
 #define CWNPROC     128
 #define CWINVAL     0xff
-#define CWNCORE     4096
+#define CWNCORE     8000
 #define CWNONE      (~0)
 #define CWCOREEMPTY NULL
 

@@ -326,7 +326,7 @@ rcxlate(FILE *fp, long pid, long base, long *baseret, long *limret)
                         ret = ip;
                     }
                     ip++;
-                    ip &= CWNCORE - 1;
+                    ip %= CWNCORE;
                 } else {
                     fprintf(stderr, "invalid instruction: %s\n", linebuf);
 

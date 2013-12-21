@@ -1,7 +1,7 @@
-dat		#-2	; backwards copy offset
+dat		#-2	; backward copy offset
 dat		#-1	; forward copy offset
 add	#4,	-1	; increment forward offset
-sub	#4,	-3	; decrement backwards offset
+sub	#4,	-3	; decrement backward offset
 mov	-3,	@-3	; drop DAT-bomb
 mov	-5	@-5	; drop DAT-bomb
 jmp		-4	; jump back to increment
