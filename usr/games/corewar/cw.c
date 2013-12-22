@@ -604,10 +604,15 @@ cwloop(void)
 void
 cwinit(void)
 {
+    time_t seed32 = (((time(NULL) & 0xff) << 24)
+                     | ((time(NULL) & 0xff) << 16)
+                     | ((time(NULL) & 0xff) << 8)
+                     | (time(NULL) & 0xff));
+
 #if (CWRANDMT32)
-    srandmt32(time(NULL));
+    srandmt32(seed32);
 #else
-    srand(time(NULL));
+    srand(time(&seed32));
 #endif
     cwinitop();
     rcinitop();
