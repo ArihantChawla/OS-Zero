@@ -565,7 +565,6 @@ cwexec(long pid)
     if (ref == 32) {
         zeusdrawsim(zeusx11);
         ref = 0;
-//        sleep(1);
     }
     if (XEventsQueued(zeusx11->disp, QueuedAfterFlush)) {
         zeusprocev(zeusx11);

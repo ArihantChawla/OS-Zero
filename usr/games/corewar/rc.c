@@ -292,7 +292,7 @@ rcxlate(FILE *fp, long pid, long base, long *baseret, long *limret)
     char           *linebuf = NULL;
     char           *cp;
     struct cwinstr *op;
-    struct cwinstr *instr;
+    struct cwinstr  instr;
     long            pc = base;
     long            ret = -1;
     long            n = 0;
@@ -319,13 +319,13 @@ rcxlate(FILE *fp, long pid, long base, long *baseret, long *limret)
                 if (op) {
                     op->pid = pid;
                     n++;
-                    instr = &cwoptab[pc];
-                    if (*((uint64_t *)instr)) {
+                    *((uint64_t *)&instr) = *((uint64_t *)&cwoptab[pc]);
+                    if (*((uint64_t *)&instr)) {
                         fprintf(stderr, "programs overlap\n");
                         
                         exit(1);
                     }
-                    cwoptab[pc] = *op;
+                    *((uint64_t *)(&cwoptab[pc])) = *((uint64_t *)op);
                     if (ret < 0 && op->op != CWOPDAT) {
                         ret = pc;
                     }
