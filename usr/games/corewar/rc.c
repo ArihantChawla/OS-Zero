@@ -174,6 +174,8 @@ rcgetop(char *str)
                         cp++;
                     } else if (*cp == '$') {
                         cp++;
+                    } else {
+                        instr->aflg |= CWRELBIT;
                     }
                     val = CWNONE;
                     sign = 0;
@@ -219,6 +221,8 @@ rcgetop(char *str)
                     cp++;
                 } else if (*cp == '$') {
                     cp++;
+                } else {
+                    instr->aflg |= CWRELBIT;
                 }
                 val = CWNONE;
                 sign = 0;

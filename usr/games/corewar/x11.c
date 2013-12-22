@@ -429,7 +429,7 @@ zeusdrawsim(struct zeusx11 *x11)
             op = &cwoptab[l];
             if (op->op == CWOPDAT) {
 //                fprintf(stderr, "%ld: draw: (%d, %d)\n", l, x, y);
-                if (!op->a && !op->b) {
+                if (!op->a && !op->b && !op->aflg && !op->bflg) {
                     XFillRectangle(x11->disp, x11->pixbuf,
                                    x11->datgc,
                                    x, y,

@@ -28,12 +28,14 @@
 /* signed value */
 #define CWSIGNED    0x00
 /* addressing modes, default is direct (relative) */
-#define CWADRIMM    0x01        // immediate
-#define CWADRINDIR  0x02        // indirect
-#define CWADRPREDEC 0x03
+#define CWADRREL    0x01        // relative (default)
+#define CWADRIMM    0x02        // immediate
+#define CWADRINDIR  0x03        // indirect
+#define CWADRPREDEC 0x04
 
 /* instruction flags */
 #define CWSIGNBIT   (1U << CWSIGNED)
+#define CWRELBIT    (1U << CWADRREL)
 #define CWIMMBIT    (1U << CWADRIMM)
 #define CWINDIRBIT  (1U << CWADRINDIR)
 #define CWPREDECBIT (1U << CWADRPREDEC)
