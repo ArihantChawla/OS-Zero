@@ -46,12 +46,11 @@ zeusinitx11win(struct zeusx11 *x11)
     Window               win;
     Window               parent = RootWindow(x11->disp, x11->screen);
     int                  winw = max((ZEUSTEXTNCOL + ZEUSDBNCOL) * x11->fontw,
-                                    ZEUSSIMW * 4);
-    int                  winh = (ZEUSTEXTNROW + ZEUSDBNROW) * x11->fonth + ZEUSSIMH * 4;
+                                    ZEUSSIMW * 5);
+    int                  winh = (ZEUSTEXTNROW + ZEUSDBNROW) * x11->fonth + ZEUSSIMH * 5;
     long                 x = 0;
     long                 y = 0;
 
-    fprintf(stderr, "MAIN: %dx%d\n", winw, winh);
     atr.background_pixel = BlackPixel(x11->disp, x11->screen);
     win = XCreateWindow(x11->disp,
                         parent,
@@ -72,8 +71,8 @@ zeusinitx11win(struct zeusx11 *x11)
     x11->w = winw;
     x11->h = winh;
     parent = win;
-    winw = ZEUSSIMW * 4;
-    winh = ZEUSSIMH * 4;
+    winw = ZEUSSIMW * 5;
+    winh = ZEUSSIMH * 5;
     win = XCreateWindow(x11->disp,
                         parent,
                         x, y,
@@ -92,7 +91,7 @@ zeusinitx11win(struct zeusx11 *x11)
     x11->simwin = win;
     x11->simw = winw;
     x11->simh = winh;
-    y += ZEUSSIMH;
+    y += winh;
     winw = ZEUSTEXTNCOL * x11->fontw;
     winh = ZEUSTEXTNROW * x11->fonth;
     win = XCreateWindow(x11->disp,
@@ -143,8 +142,8 @@ zeusinitx11buf(struct zeusx11 *x11)
 {
     Pixmap pmap = XCreatePixmap(x11->disp,
                                 x11->simwin,
-                                x11->simw,
-                                x11->simh,
+                                x11->w,
+                                x11->h,
                                 x11->depth);
 
     if (!pmap) {
@@ -155,7 +154,7 @@ zeusinitx11buf(struct zeusx11 *x11)
     XFillRectangle(x11->disp, pmap,
                    x11->bggc,
                    0, 0,
-                   x11->simh, x11->simh);
+                   x11->w, x11->h);
     x11->pixbuf = pmap;
 
     return;
@@ -339,7 +338,6 @@ zeusinitx11(void)
         XMapRaised(info->disp, info->textwin);
         XMapRaised(info->disp, info->dbwin);
         XMapRaised(info->disp, info->mainwin);
-        XSync(info->disp, False);
     } else {
         fprintf(stderr, "failed to allocate x11 structure\n");
 
@@ -359,6 +357,7 @@ zeusprocev(struct zeusx11 *x11)
         switch (ev.type) {
             case Expose:
                 /* IGNORE */
+
                 break;
             default:
                 
@@ -367,13 +366,14 @@ zeusprocev(struct zeusx11 *x11)
     } else if (ev.xany.window == x11->simwin) {
         switch (ev.type) {
             case Expose:
-                fprintf(stderr, "EXPOSE\n");
-                XCopyArea(x11->disp, x11->pixbuf, x11->simwin,
-                          x11->bggc,
-                          0, 0,
-                          x11->simw, x11->simh,
-                          0, 0);
-                
+                if (!ev.xexpose.count) {
+                    XCopyArea(x11->disp, x11->pixbuf, x11->simwin,
+                              x11->bggc,
+                              0, 0,
+                              x11->simw, x11->simh,
+                              0, 0);
+                }
+
                 break;
             case ButtonPress:
                 exit(0);
@@ -389,6 +389,8 @@ zeusprocev(struct zeusx11 *x11)
     } else if (ev.xany.window == x11->dbwin) {
         ;
     }
+
+    return;
 }
 
 void
@@ -422,8 +424,8 @@ zeusdrawsim(struct zeusx11 *x11)
                    x11->bggc,
                    0, 0,
                    x11->simh, x11->simh);
-    for (y = 0 ; y < x11->simh ; y += 4) {
-        for (x = 0 ; x < x11->simw ; x += 4) {
+    for (y = 0 ; y < x11->simh ; y += 5) {
+        for (x = 0 ; x < x11->simw ; x += 5) {
             op = &cwoptab[l];
             if (op->op == CWOPDAT) {
 //                fprintf(stderr, "%ld: draw: (%d, %d)\n", l, x, y);
@@ -459,7 +461,7 @@ zeusdrawsim(struct zeusx11 *x11)
         }
     }
     XCopyArea(x11->disp, x11->pixbuf, x11->simwin,
-              x11->datgc,
+              x11->bggc,
               0, 0,
               x11->simw, x11->simh,
               0, 0);
