@@ -8,6 +8,9 @@
 #include <time.h>
 #include <zero/param.h>
 #include <zero/cdecl.h>
+#if (CWRANDMT32)
+#include <zero/randmt32.h>
+#endif
 
 #include <corewar/cw.h>
 #include <corewar/rc.h>
@@ -574,7 +577,11 @@ cwexec(long pid)
 void
 cwloop(void)
 {
+#if (CWRANDMT32)
+    long first = randmt32() & 0x01;
+#else
     long first = rand() & 0x01;
+#endif
     long n;
 
     if (!first) {
@@ -597,7 +604,11 @@ cwloop(void)
 void
 cwinit(void)
 {
+#if (CWRANDMT32)
+    srandmt32(time(NULL));
+#else
     srand(time(NULL));
+#endif
     cwinitop();
     rcinitop();
     cwoptab = calloc(CWNCORE, sizeof(struct cwinstr));
@@ -628,7 +639,11 @@ main(int argc, char *argv[])
         exit(1);
     }
     cwinit();
+#if (CWRANDMT32)
+    base = randmt32() % CWNCORE;
+#else
     base = rand() % CWNCORE;
+#endif
     fp = fopen(argv[1], "r");
     if (!fp) {
         fprintf(stderr, "failed to open %s\n", argv[1]);
@@ -644,14 +659,30 @@ main(int argc, char *argv[])
     fclose(fp);
 #if 0
     if (lim < base) {
+#if (CWRANDMT32)
+        base = lim + randmt32() % ((base - lim) >> 2);
+#else
         base = lim + rand() % ((base - lim) >> 2);
+#endif
     } else if (lim - base < CWNCORE - lim) {
+#if (CWRANDMT32)
+        base = lim + randmt32() % ((CWNCORE - lim) >> 2);
+#else
         base = lim + rand() % ((CWNCORE - lim) >> 2);
+#endif
     } else {
+#if (CWRANDMT32)
+        base = randmt32() % (base >> 2);
+#else
         base = rand() % (base >> 2);
+#endif
     }
 #endif
+#if (CWRANDMT32)
+    base = randmt32() % CWNCORE;
+#else
     base = rand() % CWNCORE;
+#endif
     fp = fopen(argv[2], "r");
     if (!fp) {
         fprintf(stderr, "failed to open %s\n", argv[2]);
