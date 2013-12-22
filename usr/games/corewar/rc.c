@@ -279,6 +279,10 @@ rcgetline(FILE *fp)
                 ndx++;
                 ch = fgetc(fp);
             }
+            if (ndx == n) {
+                n <<= 1;
+                buf = realloc(buf, n * sizeof(char));
+            }
             buf[ndx] = '\n';
         }
     }
