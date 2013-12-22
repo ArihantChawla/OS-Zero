@@ -1,7 +1,7 @@
 ; vendetta5
 ; Tuomo 'vendu' Venäläinen
 ; based on dwarf
-; multitasking bi-directional bomber
+; silly multitasking bi-directional bomber
 dat		#8	; backward copy offset
 dat		#-6	; forward copy offset
 sub	#13,	-2	; adjust backward copy offset

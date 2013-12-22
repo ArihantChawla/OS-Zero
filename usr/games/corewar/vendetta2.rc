@@ -1,3 +1,6 @@
+; vendetta2
+; Tuomo 'vendu' Venäläinen
+; bidirectional bomber
 dat		#-2	; backward copy offset
 dat		#-1	; forward copy offset
 add	#4,	-1	; increment forward offset

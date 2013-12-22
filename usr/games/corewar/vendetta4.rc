@@ -1,3 +1,6 @@
+; vendetta4
+; Tuomo 'vendu' Venäläinen
+; bidirectional, silly multitasking bomber
 dat		#2	; backward copy offset
 dat		#-4	; forward copy offset
 sub	#7,	-2	; adjust backward copy offset
