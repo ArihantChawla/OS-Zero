@@ -293,12 +293,12 @@ rcxlate(FILE *fp, long pid, long base, long *baseret, long *limret)
     char           *cp;
     struct cwinstr *op;
     struct cwinstr *instr;
-    long            ip = base;
+    long            pc = base;
     long            ret = -1;
     long            n = 0;
     long            wrap = 0;
 
-    *baseret = ip;
+    *baseret = pc;
     while (1) {
         linebuf = rcgetline(fp);
         if (linebuf) {
@@ -319,18 +319,18 @@ rcxlate(FILE *fp, long pid, long base, long *baseret, long *limret)
                 if (op) {
                     op->pid = pid;
                     n++;
-                    instr = &cwoptab[ip];
+                    instr = &cwoptab[pc];
                     if (*((uint64_t *)instr)) {
                         fprintf(stderr, "programs overlap\n");
                         
                         exit(1);
                     }
-                    cwoptab[ip] = *op;
+                    cwoptab[pc] = *op;
                     if (ret < 0 && op->op != CWOPDAT) {
-                        ret = ip;
+                        ret = pc;
                     }
-                    ip++;
-                    ip %= CWNCORE;
+                    pc++;
+                    pc %= CWNCORE;
                 } else {
                     fprintf(stderr, "invalid instruction: %s\n", linebuf);
 
@@ -352,7 +352,7 @@ rcxlate(FILE *fp, long pid, long base, long *baseret, long *limret)
     if (linebuf) {
         free(linebuf);
     }
-    *limret = ip;
+    *limret = pc;
 
     return ret;
 }
