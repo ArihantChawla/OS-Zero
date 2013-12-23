@@ -15,8 +15,8 @@
 #define ZEUSTEXTNROW 16
 #define ZEUSDBNCOL   80
 #define ZEUSDBNROW   4
-#define ZEUSSIMW     256
-#define ZEUSSIMH     32
+#define ZEUSSIMW     200
+#define ZEUSSIMH     40
 
 extern struct cwinstr *cwoptab;
 
@@ -30,12 +30,14 @@ zeusinitx11font(struct zeusx11 *x11)
         x11->font = font;
         x11->fontw = font->max_bounds.width;
         x11->fonth = font->ascent + font->descent;
-        x11->fonth = font->ascent;
+        x11->fontasc = font->ascent;
     } else {
         fprintf(stderr, "failed to load font\n");
 
         exit(1);
     }
+    fprintf(stderr, "FONT: h == %d, asc == %d, desc == %d\n",
+            x11->fonth, x11->fontasc, font->descent);
 
     return;
 }
@@ -48,7 +50,7 @@ zeusinitx11win(struct zeusx11 *x11)
     Window               parent = RootWindow(x11->disp, x11->screen);
     int                  winw = max((ZEUSTEXTNCOL + ZEUSDBNCOL) * x11->fontw,
                                     ZEUSSIMW * 5);
-#if (ZEUSTOOLTIP)
+#if (ZEUSHOVERTOOLTIP) || (ZEUSCLICKTOOLTIP)
     int                  winh = x11->fonth + (ZEUSTEXTNROW + ZEUSDBNROW) * x11->fonth + ZEUSSIMH * 5;
 #else
     int                  winh = (ZEUSTEXTNROW + ZEUSDBNROW) * x11->fonth + ZEUSSIMH * 5;
@@ -57,7 +59,7 @@ zeusinitx11win(struct zeusx11 *x11)
     long                 y = 0;
 
     atr.background_pixel = BlackPixel(x11->disp, x11->screen);
-#if (ZEUSTOOLTIP)
+#if (ZEUSHOVERTOOLTIP) || (ZEUSCLICKTOOLTIP)
 //    atr.override_redirect = True;
     atr.override_redirect = False;
     win = XCreateWindow(x11->disp,
@@ -378,11 +380,11 @@ zeusinitx11(void)
                      | PointerMotionMask
 //                     | PointerMotionHintMask
                      | ExposureMask);
+        XMapRaised(info->disp, info->mainwin);
         XMapRaised(info->disp, info->tipwin);
         XMapRaised(info->disp, info->simwin);
         XMapRaised(info->disp, info->textwin);
         XMapRaised(info->disp, info->dbwin);
-        XMapRaised(info->disp, info->mainwin);
     } else {
         fprintf(stderr, "failed to allocate x11 structure\n");
 
@@ -393,21 +395,45 @@ zeusinitx11(void)
 }
 
 void
-zeusshowtip(struct zeusx11 *x11, int x, int y)
+zeusprinttip(struct zeusx11 *x11, int simx, int simy)
 {
     int ndx;
 
-    x /= 5;
-    y /= 5;
-    ndx = y * (x11->simw / 5) + x;
+    simx /= 5;
+    simy /= 5;
+    ndx = simy * (x11->simw / 5) + simx;
     if (x11->tipstr) {
         free(x11->tipstr);
         x11->tipstr = NULL;
     }
-    x11->tipstr = zeusdisasm(&cwoptab[ndx], &x11->tiplen);
-    fprintf(stderr, "DRAW(%d): %s\n", x11->tiplen, x11->tipstr);
+    x11->tipstr = zeusdisasm(&cwoptab[ndx]);
+    x11->tiplen = strlen(x11->tipstr);
+    fprintf(stderr, "DRAW(%d @ (%d, %d)): %s\n", x11->tiplen, 0, x11->fontasc, x11->tipstr);
     XDrawString(x11->disp, x11->tipwin, x11->textgc,
                 0, x11->fontasc,
+                x11->tipstr, strlen(x11->tipstr));
+//    XMapRaised(x11->disp, x11->tipwin);
+
+    return;
+}
+
+void
+zeusprintdb(struct zeusx11 *x11, int simx, int simy, int x, int y)
+{
+    int ndx;
+
+    simx /= 5;
+    simy /= 5;
+    ndx = simy * (x11->simw / 5) + simx;
+    if (x11->tipstr) {
+        free(x11->tipstr);
+        x11->tipstr = NULL;
+    }
+    x11->tipstr = zeusdisasm(&cwoptab[ndx]);
+    x11->tiplen = strlen(x11->tipstr);
+    fprintf(stderr, "DRAW(%d): %s\n", x11->tiplen, x11->tipstr);
+    XDrawString(x11->disp, x11->tipwin, x11->textgc,
+                x, y,
                 x11->tipstr, x11->tiplen);
 //    XMapRaised(x11->disp, x11->tipwin);
 
@@ -432,18 +458,30 @@ zeusprocev(struct zeusx11 *x11)
             }
     } else if (ev.xany.window == x11->simwin) {
         switch (ev.type) {
-#if (ZEUSTOOLTIP)
+#if (ZEUSHOVERTOOLTIP)
             case MotionNotify:
-                zeusshowtip(x11, ev.xmotion.x, ev.xmotion.y);
+                zeusprinttip(x11, ev.xmotion.x, ev.xmotion.y);
 
                 break;
             case EnterNotify:
-                zeusshowtip(x11, ev.xcrossing.x, ev.xcrossing.y);
+                zeusprinttip(x11, ev.xcrossing.x, ev.xcrossing.y);
 
                 break;
             case LeaveNotify:
                 XUnmapWindow(x11->disp, x11->tipwin);
 
+                break;
+#endif
+#if (ZEUSCLICKTOOLTIP)
+            case ButtonPress:
+                zeusprinttip(x11, ev.xbutton.x, ev.xbutton.y);
+
+                break;
+#else
+            case ButtonPress:
+                exit(0);
+
+                /* NOTREACHED */
                 break;
 #endif
             case Expose:
@@ -461,16 +499,11 @@ zeusprocev(struct zeusx11 *x11)
 
                 /* NOTREACHED */
                 break;
-            case ButtonPress:
-                exit(0);
-
-                /* NOTREACHED */
-                break;
             default:
                 
                 break;
         }
-#if (ZEUSTOOLTIP)
+#if (ZEUSHOVERTOOLTIP)
     } else if (ev.xany.window == x11->tipwin) {
         switch (ev.type) {
             case Expose:
@@ -501,14 +534,13 @@ void
 zeusdrawdb(struct zeusx11 *x11, long ip)
 {
     struct cwinstr *op = &cwoptab[ip];
-    int             len;
-    char           *line = zeusdisasm(op, &len);
+    char           *line = zeusdisasm(op);
     long            nline = x11->ndbline;
 
-    if ((line) && (len)) {
+    if (line) {
         XDrawString(x11->disp, x11->dbwin, x11->bggc,
                     0, nline * x11->fonth,
-                    line, len);
+                    line, strlen(line));
 //        nline++;
         free(line);
     }
