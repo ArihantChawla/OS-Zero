@@ -26,8 +26,8 @@
 #include <zero/prof.h>
 #endif
 #include <zas/zas.h>
-#include <wpm/mem.h>
-#include <wpm/wpm.h>
+//#include <wpm/mem.h>
+//#include <wpm/wpm.h>
 
 #if (ZASMMAP)
 struct zasmap {
@@ -194,7 +194,7 @@ zasgetc(int fd, int bufid)
         buf->lim = (uint8_t *)buf->data + ZASBUFSIZE - nleft;
         ch = *buf->cur++;
     }
-
+    
     return ch;
 }
 #endif
@@ -206,7 +206,7 @@ printtoken(struct zastoken *token)
         case TOKENVALUE:
             fprintf(stderr, "value 0x%08x (size == %d)\n",
                     token->data.value.val, token->data.value.size);
-
+            
             break;
         case TOKENLABEL:
             fprintf(stderr, "label %s (adr == 0x%08lx)\n",

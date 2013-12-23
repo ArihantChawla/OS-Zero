@@ -504,7 +504,7 @@ cwexec(long pid)
     cur = cwcurproc[pid];
     pc = cwrunqueue[pid][cur];
     op = &cwoptab[pc];
-#if (ZEUS)
+#if (ZEUS) && 0
     fprintf(stderr, "%ld\t%ld\t", pid, pc);
     cwdisasm(op, stderr);
 #endif

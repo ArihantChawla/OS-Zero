@@ -489,35 +489,35 @@ x11findwininfo(Window id)
 void
 x11initpmaps(void)
 {
-    smallbuttonpmaps[BUTTONNORMAL] = imlib2loadimage(app, "buttonsmall.png",
+    smallbuttonpmaps[BUTTONNORMAL] = imlib2loadimage(app, "../../share/img/buttonsmall.png",
                                                      ZPC_SMALL_BUTTON_WIDTH,
                                                      ZPC_SMALL_BUTTON_HEIGHT);
 #if (SMALLBUTTONS)
-    buttonpmaps[BUTTONNORMAL] = imlib2loadimage(app, "button.png",
+    buttonpmaps[BUTTONNORMAL] = imlib2loadimage(app, "../../share/img/button.png",
                                                 ZPC_BUTTON_WIDTH,
                                                 ZPC_BUTTON_HEIGHT);
-    buttonpmaps[BUTTONHOVER] = imlib2loadimage(app, "buttonhilite.png",
+    buttonpmaps[BUTTONHOVER] = imlib2loadimage(app, "../../share/img/buttonhilite.png",
                                                ZPC_BUTTON_WIDTH,
                                                ZPC_BUTTON_HEIGHT);
-    buttonpmaps[BUTTONCLICKED] = imlib2loadimage(app, "buttonpress.png",
+    buttonpmaps[BUTTONCLICKED] = imlib2loadimage(app, "../../share/img/buttonpress.png",
                                                  ZPC_BUTTON_WIDTH,
                                                  ZPC_BUTTON_HEIGHT);
 #else
-    buttonpmaps[BUTTONNORMAL] = imlib2loadimage(app, "button_small.png",
+    buttonpmaps[BUTTONNORMAL] = imlib2loadimage(app, "../../share/img/button_small.png",
                                                 ZPC_BUTTON_WIDTH,
                                                 ZPC_BUTTON_HEIGHT);
-    buttonpmaps[BUTTONHOVER] = imlib2loadimage(app, "buttonhilite_small.png",
+    buttonpmaps[BUTTONHOVER] = imlib2loadimage(app, "../../share/img/buttonhilite_small.png",
                                                ZPC_BUTTON_WIDTH,
                                                ZPC_BUTTON_HEIGHT);
-    buttonpmaps[BUTTONCLICKED] = imlib2loadimage(app, "buttonpress_small.png",
+    buttonpmaps[BUTTONCLICKED] = imlib2loadimage(app, "../../share/img/buttonpress_small.png",
                                                  ZPC_BUTTON_WIDTH,
                                                  ZPC_BUTTON_HEIGHT);
 #endif
 #if 0
-    buttonpmaps[BUTTONHOVER] = imlib2loadimage(app, "button.png",
+    buttonpmaps[BUTTONHOVER] = imlib2loadimage(app, "../../share/img/button.png",
                                                ZPC_BUTTON_WIDTH,
                                                ZPC_BUTTON_HEIGHT);
-    buttonpmaps[BUTTONCLICKED] = imlib2loadimage(app, "button.png",
+    buttonpmaps[BUTTONCLICKED] = imlib2loadimage(app, "../../share/img/button.png",
                                                  ZPC_BUTTON_WIDTH,
                                                  ZPC_BUTTON_HEIGHT);
 #endif
@@ -529,7 +529,7 @@ x11initpmaps(void)
                                                ZPC_BUTTON_WIDTH,
                                                ZPC_BUTTON_HEIGHT);
 #if 0
-    buttonpmaps[BUTTONCLICKED] = imlib2loadimage("button_clicked.png",
+    buttonpmaps[BUTTONCLICKED] = imlib2loadimage("../../share/img/button_clicked.png",
                                                  ZPC_BUTTON_WIDTH,
                                                  ZPC_BUTTON_HEIGHT);
 #endif
@@ -893,7 +893,9 @@ buttonpress(void *arg, XEvent *event)
     zpcaction_t        *action;
     struct zpctoken    *src = NULL;
     struct zpctoken    *dest = NULL;
-    struct zpctoken    *dtok;
+#if (!SMARTRADIX)
+    struct zpctoken    *dtok = NULL;
+#endif
     int64_t             res;
 //    int64_t             src;
 //    int64_t             dest;
@@ -981,11 +983,6 @@ buttonpress(void *arg, XEvent *event)
             if (func) {
                 token->type = type;
                 res = func(src, dest);
-                if (dest) {
-                    dtok = dest;
-                } else {
-                    dtok = src;
-                }
 #if (SMARTRADIX)
                 if (src->radix == 16 || dest->radix == 16) {
                     token->radix = 16;
@@ -998,6 +995,11 @@ buttonpress(void *arg, XEvent *event)
                     token->radix = zpcradix;
                 }
 #else
+                if (dest) {
+                    dtok = dest;
+                } else {
+                    dtok = src;
+                }
                 if (dtok->radix == 16) {
                     token->radix = 16;
                 } else if (dtok->radix == 8) {

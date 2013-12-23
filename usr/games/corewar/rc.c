@@ -331,6 +331,7 @@ rcxlate(FILE *fp, long pid, long base, long *baseret, long *limret)
                     }
                     *((uint64_t *)(&cwoptab[pc])) = *((uint64_t *)op);
                     if (ret < 0 && op->op != CWOPDAT) {
+                        /* execution starts at first non-DAT instruction */
                         ret = pc;
                     }
                     pc++;

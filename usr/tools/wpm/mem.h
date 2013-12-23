@@ -20,6 +20,8 @@ typedef uint64_t  wpmsize_t;
 typedef uint64_t  wpmmemadr_t;
 #endif
 
+#include <wpm/wpm.h>
+
 void        wpminitmem(wpmsize_t nbphys);
 wpmmemadr_t mempalloc(wpmsize_t size);
 void        mempfree(wpmmemadr_t adr);
@@ -289,7 +291,7 @@ memcopy(uint32_t src, uint32_t dest, uint32_t len)
 {
     void *srcp = NULL;
     void *destp = NULL;
-
+    
     if (len) {
         if (src >= WPMTEXTBASE) {
             if (src < MEMSIZE) {
@@ -308,9 +310,9 @@ memcopy(uint32_t src, uint32_t dest, uint32_t len)
         if ((destp) && (srcp)) {
             memcpy(destp, srcp, len);
         }
-
+    }    
     return;
 }
-
+    
 #endif /* __WPM_MEM_H__ */
 

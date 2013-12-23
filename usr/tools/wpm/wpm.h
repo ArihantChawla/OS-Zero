@@ -3,6 +3,8 @@
 
 #define WPMWORDSIZE 32
 //#define WPMMMU      1
+#define THRSTKSIZE  (128 * 1024)
+#define WPMTEXTBASE 8192UL
 
 #include <stdint.h>
 #include <zero/cdecl.h>
@@ -11,9 +13,6 @@
 #if (WPMVEC)
 #include <vec/vec.h>
 #endif
-
-#define THRSTKSIZE  (128 * 1024)
-#define WPMTEXTBASE 8192UL
 
 #if (WPMWORDSIZE == 32)
 typedef int32_t  wpmword_t;

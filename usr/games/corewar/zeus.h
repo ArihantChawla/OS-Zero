@@ -21,6 +21,7 @@ struct zeusx11 {
     Display     *disp;
     GC           bggc;
     GC           datgc;
+    GC           textgc;
     GC           prog1gc;
     GC           prog1datgc;
     GC           prog2gc;
@@ -28,6 +29,7 @@ struct zeusx11 {
     XFontStruct *font;
     int          fontw;
     int          fonth;
+    int          fontasc;
     int          depth;
     Colormap     colormap;
     Visual      *visual;
@@ -38,18 +40,21 @@ struct zeusx11 {
     Window       simwin;
     Window       textwin;
     Window       dbwin;
+    Window       tipwin;
     int          simw;
     int          simh;
     int          textw;
     int          texth;
     int          dbw;
     int          dbh;
+    int          tiplen;
+    char        *tipstr;
     Pixmap       pixbuf;
     int          ndbline;
     void        *dbdata;
 };
 
-char           * zeusdisasm(struct cwinstr *op);
+char           * zeusdisasm(struct cwinstr *op, int *lenret);
 struct zeusx11 * zeusinitx11(void);
 void             zeusprocev(struct zeusx11 *x11);
 void             zeusdrawdb(struct zeusx11 *x11, long ip);

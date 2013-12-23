@@ -1075,7 +1075,7 @@ zpcparse(struct zpctoken *srcqueue)
     struct zpctoken *stack = NULL;
 
     while (token1) {
-//        printtoken(token1);
+//        zpcprinttoken(token1);
         token = malloc(sizeof(struct zpctoken));
         token3 = token1->next;
         memcpy(token, token1, sizeof(struct zpctoken));
@@ -1202,10 +1202,10 @@ zpceval(struct zpctoken *srcqueue)
             arg1 = token1;
             fprintf(stderr, "ARGS:\n");
             if (arg1) {
-                printtoken(arg1);
+                zpcprinttoken(arg1);
             }
             if (arg2) {
-                printtoken(arg2);
+                zpcprinttoken(arg2);
             }
             switch (zpcopnargtab[token->type]) {
                 case 2:
