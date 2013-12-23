@@ -407,7 +407,6 @@ zeusprinttip(struct zeusx11 *x11, int simx, int simy)
         x11->tipstr = NULL;
     }
     x11->tipstr = zeusdisasm(&cwoptab[ndx], &x11->tiplen);
-    x11->tiplen = strlen(x11->tipstr);
     fprintf(stderr, "DRAW(%d @ (%d, %d)): %s\n", x11->tiplen, 0, x11->fontasc, x11->tipstr);
     XDrawString(x11->disp, x11->tipwin, x11->textgc,
                 0, x11->fontasc,
