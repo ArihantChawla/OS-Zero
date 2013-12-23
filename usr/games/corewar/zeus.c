@@ -25,7 +25,7 @@ extern struct cwinstr *cwoptab;
 #define ZEUSDEFLINE 256
 
 char *
-zeusdisasm(struct cwinstr *op)
+zeusdisasm(struct cwinstr *op, int *lenret)
 {
     char   *ptr = malloc(ZEUSDEFLINE * sizeof(char));
     char   *str = ptr;
@@ -143,6 +143,7 @@ zeusdisasm(struct cwinstr *op)
         }
         if (len) {
             *str = '\0';
+            *lenret = ZEUSDEFLINE - len;
         } else {
             fprintf(stderr, "debug line too long\n");
 
@@ -159,12 +160,13 @@ zeusshowmem(void)
     char           *cp;
     struct cwinstr *op;
     long            l;
+    int             dummy;
 
     for (l = 0 ; l < CWNCORE ; l++) {
         op = &cwoptab[l];
         if (*(uint64_t *)op) {
             fprintf(stderr, "%ld\t", l);
-            cp = zeusdisasm(op);
+            cp = zeusdisasm(op, &dummy);
             if (!cp) {
                 fprintf(stderr, "failed to allocate memory\n");
 

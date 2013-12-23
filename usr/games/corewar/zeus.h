@@ -54,7 +54,7 @@ struct zeusx11 {
     void        *dbdata;
 };
 
-char           * zeusdisasm(struct cwinstr *op);
+char           * zeusdisasm(struct cwinstr *op, int *lenret);
 struct zeusx11 * zeusinitx11(void);
 void             zeusprocev(struct zeusx11 *x11);
 void             zeusdrawdb(struct zeusx11 *x11, long ip);

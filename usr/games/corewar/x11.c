@@ -406,12 +406,12 @@ zeusprinttip(struct zeusx11 *x11, int simx, int simy)
         free(x11->tipstr);
         x11->tipstr = NULL;
     }
-    x11->tipstr = zeusdisasm(&cwoptab[ndx]);
+    x11->tipstr = zeusdisasm(&cwoptab[ndx], &x11->tiplen);
     x11->tiplen = strlen(x11->tipstr);
     fprintf(stderr, "DRAW(%d @ (%d, %d)): %s\n", x11->tiplen, 0, x11->fontasc, x11->tipstr);
     XDrawString(x11->disp, x11->tipwin, x11->textgc,
                 0, x11->fontasc,
-                x11->tipstr, strlen(x11->tipstr));
+                x11->tipstr, x11->tiplen);
 //    XMapRaised(x11->disp, x11->tipwin);
 
     return;
@@ -429,8 +429,7 @@ zeusprintdb(struct zeusx11 *x11, int simx, int simy, int x, int y)
         free(x11->tipstr);
         x11->tipstr = NULL;
     }
-    x11->tipstr = zeusdisasm(&cwoptab[ndx]);
-    x11->tiplen = strlen(x11->tipstr);
+    x11->tipstr = zeusdisasm(&cwoptab[ndx], &x11->tiplen);
     fprintf(stderr, "DRAW(%d): %s\n", x11->tiplen, x11->tipstr);
     XDrawString(x11->disp, x11->tipwin, x11->textgc,
                 x, y,
@@ -534,13 +533,14 @@ void
 zeusdrawdb(struct zeusx11 *x11, long ip)
 {
     struct cwinstr *op = &cwoptab[ip];
-    char           *line = zeusdisasm(op);
+    int             len;
+    char           *line = zeusdisasm(op, &len);
     long            nline = x11->ndbline;
 
-    if (line) {
+    if ((line) && (len)) {
         XDrawString(x11->disp, x11->dbwin, x11->bggc,
                     0, nline * x11->fonth,
-                    line, strlen(line));
+                    line, len);
 //        nline++;
         free(line);
     }
