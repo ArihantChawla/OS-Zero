@@ -22,6 +22,7 @@ struct zeusx11 {
     GC           bggc;
     GC           datgc;
     GC           textgc;
+//    GC           hilitegc;
     GC           prog1gc;
     GC           prog1datgc;
     GC           prog2gc;
