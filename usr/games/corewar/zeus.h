@@ -1,67 +1,21 @@
 #ifndef __COREWAR_ZEUS_H__
 #define __COREWAR_ZEUS_H__
 
-#define ZEUSWINX11 1
-
 #if (ZEUSWINX11)
 #include <X11/X.h>
 #include <X11/Xlib.h>
 #include <X11/keysymdef.h>
 #include <X11/Xutil.h>
+
+#include <corewar/x11.h>
 #endif
 
-#if (ZEUSWINX11)
-
-struct zeusx11win {
-    Display *disp;
-    Window   id;
+struct zeussel {
+    uint8_t *bmap;
+    int      last;
 };
 
-struct zeusx11 {
-    Display     *disp;
-    GC           bggc;
-    GC           datgc;
-    GC           textgc;
-//    GC           hilitegc;
-    GC           prog1gc;
-    GC           prog1datgc;
-    GC           prog2gc;
-    GC           prog2datgc;
-    XFontStruct *font;
-    int          fontw;
-    int          fonth;
-    int          fontasc;
-    int          depth;
-    Colormap     colormap;
-    Visual      *visual;
-    int          screen;
-    int          w;
-    int          h;
-    Window       mainwin;
-    Window       simwin;
-    Window       textwin;
-    Window       dbwin;
-    Window       tipwin;
-    int          simw;
-    int          simh;
-    int          textw;
-    int          texth;
-    int          dbw;
-    int          dbh;
-    int          tiplen;
-    char        *tipstr;
-    Pixmap       pixbuf;
-    int          ndbline;
-    void        *dbdata;
-};
-
-char           * zeusdisasm(struct cwinstr *op, int *lenret);
-struct zeusx11 * zeusinitx11(void);
-void             zeusprocev(struct zeusx11 *x11);
-void             zeusdrawdb(struct zeusx11 *x11, long ip);
-void             zeusdrawsim(struct zeusx11 *x11);
-
-#endif /* ZEUSWINX11 */
+char * zeusdisasm(long pc, int *lenret);
 
 #endif /* __COREWAR_ZEUS_H__ */
 

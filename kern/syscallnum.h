@@ -36,7 +36,20 @@
 #define SYS_FCTL      30
 #define SYS_POLL      31
 #define SYS_SELECT    32
-#define NSYSCALL      33
+#define SYS_SEMINIT   33
+#define SYS_SEMUP     34
+#define SYS_SEMDOWN   35
+#define SYS_SEMOP     36
+#define SYS_MQINIT    37
+#define SYS_MQSEND    38
+#define SYS_MQRECV    39
+#define SYS_MQOP      40
+#define SYS_EVREG     41
+#define SYS_EVSEND    42
+#define SYS_EVRECV    43
+#define SYS_EVOP      44
+
+#define NSYSCALL      45
 
 #endif /* __KERN_SYSCALLNUM_H__ */
 

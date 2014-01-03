@@ -5,10 +5,10 @@
 
 #include <corewar/cw.h>
 
-extern struct cwinstr *cwoptab;
+extern struct cwmars  cwmars;
 
-static void       *rcparsetab[128];
-long               rcnargtab[CWNOP]
+static void          *rcparsetab[128];
+long                  rcnargtab[CWNOP]
 = {
     1, /* DAT */
     2, /* MOV */
@@ -323,13 +323,13 @@ rcxlate(FILE *fp, long pid, long base, long *baseret, long *limret)
                 if (op) {
                     op->pid = pid;
                     n++;
-                    *((uint64_t *)&instr) = *((uint64_t *)&cwoptab[pc]);
+                    *((uint64_t *)&instr) = *((uint64_t *)&cwmars.optab[pc]);
                     if (*((uint64_t *)&instr)) {
                         fprintf(stderr, "programs overlap\n");
                         
                         exit(1);
                     }
-                    *((uint64_t *)(&cwoptab[pc])) = *((uint64_t *)op);
+                    *((uint64_t *)(&cwmars.optab[pc])) = *((uint64_t *)op);
                     if (ret < 0 && op->op != CWOPDAT) {
                         /* execution starts at first non-DAT instruction */
                         ret = pc;

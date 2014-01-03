@@ -1,5 +1,6 @@
 #include <stdlib.h>
 #include <string.h>
+#include <unistd.h>
 #include <zero/trix.h>
 #include <corewar/cw.h>
 #include <corewar/rc.h>
@@ -9,16 +10,324 @@
 #include <X11/Xlib.h>
 #include <X11/keysymdef.h>
 #include <X11/Xutil.h>
+#include <corewar/x11.h>
+#endif
+#if (ZEUSIMLIB2)
+#include <Imlib2.h>
 #endif
 
-#define ZEUSTEXTNCOL 80
-#define ZEUSTEXTNROW 16
-#define ZEUSDBNCOL   80
-#define ZEUSDBNROW   10
-#define ZEUSSIMW     200
-#define ZEUSSIMH     40
+#define ZEUSBUTTONTEXTCOLOR "orange"
+//#define ZEUSDATCOLOR        "magenta"
+#define ZEUSDATCOLOR        "blue"
+#define ZEUSPROG1COLOR      "green"
+#define ZEUSPROG1DATCOLOR   "dark green"
+#define ZEUSPROG2COLOR      "orange"
+#define ZEUSPROG2DATCOLOR   "gold"
+#define ZEUSTEXTNCOL        80
+#define ZEUSTEXTNROW        16
+#define ZEUSDBNCOL          80
+#define ZEUSDBNROW          16
+#define ZEUSSIMNCOL         200
+#define ZEUSSIMNROW         40
+#define ZEUSBUTTONW         64
+#define ZEUSBUTTONH         48
 
-extern struct cwinstr *cwoptab;
+extern struct cwmars  cwmars;
+extern struct zeussel zeussel;
+
+struct zeusx11buttons zeusx11buttons;
+
+void zeusdrawsimop(struct zeusx11 *x11, long pc);
+
+void
+zeustogglesel(struct zeusx11 *x11, XEvent *event)
+{
+    int  x = event->xbutton.x;
+    int  y = event->xbutton.y;
+    long pc;
+
+    x /= 5;
+    y /= 5;
+    pc = y * (x11->w / 5) + x;
+    if (!zeussel.bmap) {
+        zeussel.bmap = calloc(CWNCORE >> 3, sizeof(uint8_t));
+    }
+    if (!zeussel.bmap) {
+        fprintf(stderr, "memory allocation failure\n");
+    } else if (bitset(zeussel.bmap, pc)) {
+        clrbit(zeussel.bmap, pc);
+    } else {
+        setbit(zeussel.bmap, pc);
+    }
+    zeussel.last = pc;
+    zeusdrawsimop(x11, pc);
+
+    return;
+}
+
+void
+zeusaddsel(struct zeusx11 *x11, XEvent *event)
+{
+    int  x = event->xbutton.x;
+    int  y = event->xbutton.y;
+    int  lim;
+    long pc;
+
+    x /= 5;
+    y /= 5;
+    pc = y * (x11->w / 5) + x;
+    if (!zeussel.bmap) {
+        zeussel.bmap = calloc(CWNCORE >> 3, sizeof(uint8_t));
+    }
+    if (!zeussel.bmap) {
+        fprintf(stderr, "memory allocation failure\n");
+    } else if (zeussel.last >= 0) {
+        if (pc < zeussel.last) {
+            lim = zeussel.last;
+        } else {
+            lim = pc;
+            pc = zeussel.last;
+        }
+        while (pc <= lim) {
+            setbit(zeussel.bmap, pc);
+            zeusdrawsimop(x11, pc);
+            pc++;
+        }
+        zeussel.last = pc;
+    }
+
+    return;
+}
+
+void
+zeusrun(struct zeusx11 *x11, XEvent *event)
+{
+    long pid = cwmars.curpid;
+
+    cwmars.running = 1;
+    while ((cwmars.running) && (cwmars.nturn[pid])) {
+        cwexec(pid);
+        pid++;
+        pid &= 0x01;
+        cwmars.curpid = pid;
+        cwmars.nturn[pid]--;
+    }
+    if (!cwmars.nturn[pid]) {
+        fprintf(stderr, "TIE\n");
+        sleep(5);
+
+        exit(0);
+    }
+
+    return;
+}
+
+void
+zeusstop(struct zeusx11 *x11, XEvent *event)
+{
+    cwmars.running = 0;
+}
+
+void
+zeusstep(struct zeusx11 *x11, XEvent *event)
+{
+    long pid = cwmars.curpid;
+
+    cwmars.running = 0;
+    if (cwmars.nturn[pid]--) {
+        cwexec(pid);
+        pid++;
+        pid &= 0x01;
+        cwmars.curpid = pid;
+    } else {
+        fprintf(stderr, "TIE\n");
+        sleep(5);
+    }
+
+    return;
+}
+
+void
+zeusfence(struct zeusx11 *x11, XEvent *event)
+{
+    ;
+}
+
+void
+zeusclear(struct zeusx11 *x11, XEvent *event)
+{
+    if (zeussel.bmap) {
+        memset(zeussel.bmap, 0, CWNCORE >> 3);
+    }
+    zeussel.last = -1;
+    zeusdrawsim(x11);
+}
+
+void
+zeusexit(struct zeusx11 *x11, XEvent *event)
+{
+    exit(0);
+}
+
+int
+zeusfindbutton(Window win)
+{
+    int    id;
+
+    for (id = 0 ; id < ZEUSNBUTTON ; id++) {
+        if (zeusx11buttons.wins[id] == win) {
+
+            break;
+        }
+    }
+
+    return id;
+}
+
+char *
+zeusbuttonstring(Window win, int *lenret)
+{
+    char  *str = NULL;
+    int    id = zeusfindbutton(win);
+
+    if (id < ZEUSNBUTTON) {
+        str = zeusx11buttons.strs[id];
+        if (str) {
+            *lenret = zeusx11buttons.strlens[id];
+        }
+    }
+
+    return str;
+}
+
+void
+zeusenterx11button(struct zeusx11 *x11, XEvent *event)
+{
+    Window  win = event->xany.window;
+    int     len;
+    char   *str = zeusbuttonstring(win, &len);
+
+    if (str) {
+        XSetWindowBackgroundPixmap(x11->disp,
+                                   win,
+                                   zeusx11buttons.pmaps.hover);
+        XClearWindow(x11->disp, win);
+        XDrawString(x11->disp,
+                    win,
+                    x11->buttongc,
+                    (ZEUSBUTTONW - len * x11->fontw) >> 1, (ZEUSBUTTONH + x11->fontasc) >> 1,
+                    str,
+                    len);
+        XSync(x11->disp, False);
+    }
+
+    return;
+}
+
+void
+zeusleavex11button(struct zeusx11 *x11, XEvent *event)
+{
+    Window  win = event->xany.window;
+    int     len;
+    char   *str = zeusbuttonstring(win, &len);
+    
+    if (str) {
+        XSetWindowBackgroundPixmap(x11->disp,
+                                   win,
+                                   zeusx11buttons.pmaps.norm);
+        XClearWindow(x11->disp, win);
+        XDrawString(x11->disp,
+                    win,
+                    x11->buttongc,
+                    (ZEUSBUTTONW - len * x11->fontw) >> 1, (ZEUSBUTTONH + x11->fontasc) >> 1,
+                    str,
+                    len);
+        XSync(x11->disp, False);
+    }
+    
+    return;
+}
+
+void
+zeusclickx11button(struct zeusx11 *x11, XEvent *event)
+{
+    Window             win = event->xany.window;
+    int                id = zeusfindbutton(win);
+    int                len;
+    char              *str = zeusbuttonstring(win, &len);
+    zeusx11buttonfunc *func;
+    
+    if (str) {
+        win = event->xany.window;
+        func = zeusx11buttons.functab[id];
+        func(x11, event);
+        XSetWindowBackgroundPixmap(x11->disp,
+                                   win,
+                                   zeusx11buttons.pmaps.click);
+        XClearWindow(x11->disp, win);
+        XDrawString(x11->disp,
+                    win,
+                    x11->buttongc,
+                    (ZEUSBUTTONW - len * x11->fontw) >> 1, (ZEUSBUTTONH + x11->fontasc) >> 1,
+                    str,
+                    len);
+        XSync(x11->disp, False);
+    }
+    
+    return;
+}
+
+void
+zeusreleasex11button(struct zeusx11 *x11, XEvent *event)
+{
+    Window          win = event->xany.window;
+    int             len;
+    char           *str = zeusbuttonstring(win, &len);
+    
+    if (str) {
+        win = event->xany.window;
+        XSetWindowBackgroundPixmap(x11->disp,
+                                   win,
+                                   zeusx11buttons.pmaps.hover);
+        XClearWindow(x11->disp, win);
+        XDrawString(x11->disp,
+                    win,
+                    x11->buttongc,
+                    (ZEUSBUTTONW - len * x11->fontw) >> 1, (ZEUSBUTTONH + x11->fontasc) >> 1,
+                    str,
+                    len);
+        XSync(x11->disp, False);
+    }
+    
+    return;
+}
+
+void
+zeusexposex11button(struct zeusx11 *x11, XEvent *event)
+{
+    Window win = event->xany.window;
+    int    len;
+    int     id = zeusfindbutton(win);
+    char   *str = zeusbuttonstring(win, &len);
+    
+    if (!event->xexpose.count) {
+        win = event->xany.window;
+        if (!zeusx11buttons.exposed[id]) {
+            XSetWindowBackgroundPixmap(x11->disp, win, zeusx11buttons.pmaps.norm);
+            zeusx11buttons.exposed[id] = 1;
+        }
+        XClearWindow(x11->disp, win);
+        XDrawString(x11->disp,
+                    win,
+                    x11->buttongc,
+                    (ZEUSBUTTONW - len * x11->fontw) >> 1, (ZEUSBUTTONH + x11->fontasc) >> 1,
+                    str,
+                    len);
+        XSync(x11->disp, False);
+    }
+
+    return;
+}
 
 void
 zeusinitx11font(struct zeusx11 *x11)
@@ -36,8 +345,6 @@ zeusinitx11font(struct zeusx11 *x11)
 
         exit(1);
     }
-    fprintf(stderr, "FONT: h == %d, asc == %d, desc == %d\n",
-            x11->fonth, x11->fontasc, font->descent);
 
     return;
 }
@@ -49,37 +356,16 @@ zeusinitx11win(struct zeusx11 *x11)
     Window               win;
     Window               parent = RootWindow(x11->disp, x11->screen);
     int                  winw = max((ZEUSTEXTNCOL + ZEUSDBNCOL) * x11->fontw,
-                                    ZEUSSIMW * 5);
-#if (ZEUSHOVERTOOLTIP) || (ZEUSCLICKTOOLTIP)
-    int                  winh = x11->fonth + (ZEUSTEXTNROW + ZEUSDBNROW) * x11->fonth + ZEUSSIMH * 5;
+                                    ZEUSSIMNCOL * 5);
+#if (ZEUSIMLIB2)
+    int                  winh = ZEUSBUTTONH + ZEUSDBNROW * x11->fonth + ZEUSSIMNROW * 5;
 #else
-    int                  winh = (ZEUSTEXTNROW + ZEUSDBNROW) * x11->fonth + ZEUSSIMH * 5;
+    int                  winh = ZEUSDBNROW * x11->fonth + ZEUSSIMNROW * 5;
 #endif
-    long                 x = 0;
-    long                 y = 0;
+    int                  x = 0;
+    int                  y = 0;
 
     atr.background_pixel = BlackPixel(x11->disp, x11->screen);
-#if (ZEUSHOVERTOOLTIP) || (ZEUSCLICKTOOLTIP)
-//    atr.override_redirect = True;
-    atr.override_redirect = False;
-    win = XCreateWindow(x11->disp,
-                        parent,
-                        0, 0,
-                        x11->fontw * 80, x11->fonth,
-                        0,
-                        x11->depth,
-                        InputOutput,
-                        x11->visual,
-                        CWBackPixel | CWOverrideRedirect,
-                        &atr);
-    if (!win) {
-        fprintf(stderr, "failed to create tooltip window\n");
-
-        exit(1);
-    }
-    x11->tipwin = win;
-    y += x11->fonth;
-#endif
     win = XCreateWindow(x11->disp,
                         parent,
                         x, y,
@@ -99,8 +385,34 @@ zeusinitx11win(struct zeusx11 *x11)
     x11->w = winw;
     x11->h = winh;
     parent = win;
-    winw = ZEUSSIMW * 5;
-    winh = ZEUSSIMH * 5;
+
+    x11->simw = ZEUSSIMNCOL * 5;
+    x11->simh = ZEUSSIMNROW * 5;
+
+#if (ZEUSIMLIB2)
+    win = XCreateWindow(x11->disp,
+                        parent,
+                        0, x11->simh,
+                        ZEUSNBUTTON * ZEUSBUTTONW, ZEUSBUTTONH,
+                        0,
+                        x11->depth,
+                        InputOutput,
+                        x11->visual,
+                        CWBackPixel,
+                        &atr);
+    if (!win) {
+        fprintf(stderr, "failed to create main window\n");
+
+        exit(1);
+    }
+    x11->buttonwin = win;
+#if (ZEUSDEBUG)
+    XSelectInput(x11->buttonwin, ExporuseMask);
+#endif
+#endif
+
+    winw = ZEUSSIMNCOL * 5;
+    winh = ZEUSSIMNROW * 5;
     win = XCreateWindow(x11->disp,
                         parent,
                         x, y,
@@ -117,30 +429,11 @@ zeusinitx11win(struct zeusx11 *x11)
         exit(1);
     }
     x11->simwin = win;
-    x11->simw = winw;
-    x11->simh = winh;
-    y += winh;
-    winw = ZEUSTEXTNCOL * x11->fontw;
-    winh = ZEUSTEXTNROW * x11->fonth;
-    win = XCreateWindow(x11->disp,
-                        parent,
-                        x, y,
-                        winw, winh,
-                        0,
-                        x11->depth,
-                        InputOutput,
-                        x11->visual,
-                        CWBackPixel,
-                        &atr);
-    if (!win) {
-        fprintf(stderr, "failed to create text window\n");
+    y = x11->simh;
+#if (ZEUSIMLIB2)
+    y += ZEUSBUTTONH;
+#endif
 
-        exit(1);
-    }
-    x11->textwin = win;
-    x11->textw = winw;
-    x11->texth = winh;
-    y += winh;
     winw = ZEUSDBNCOL * x11->fontw;
     winh = ZEUSDBNROW * x11->fonth;
     win = XCreateWindow(x11->disp,
@@ -166,6 +459,318 @@ zeusinitx11win(struct zeusx11 *x11)
 }
 
 void
+zeusinitx11title(struct zeusx11 *x11)
+{
+    XTextProperty  prop;
+    char          *str = "Zero MARS";
+
+    XStringListToTextProperty(&str, 1, &prop);
+    XSetWMName(x11->disp, x11->mainwin, &prop);
+    XFree(prop.value);
+
+    return;
+}
+
+void
+zeusinitx11gc(struct zeusx11 *x11)
+{
+    XGCValues       gcval;
+    GC              gc;
+    XColor          color;
+
+    gcval.foreground = BlackPixel(x11->disp, DefaultScreen(x11->disp));
+    gcval.graphics_exposures = False;
+    gcval.font = x11->font->fid;
+    gcval.line_width = 1;
+    gc = XCreateGC(x11->disp, x11->mainwin,
+                   GCForeground | GCLineWidth | GCFont,
+                   &gcval);
+    if (!gc) {
+        fprintf(stderr, "failed to create GC\n");
+
+        exit(1);
+    }
+    x11->bggc = gc;
+    gcval.foreground = WhitePixel(x11->disp, DefaultScreen(x11->disp));
+    gc = XCreateGC(x11->disp, x11->mainwin,
+                   GCForeground | GCLineWidth | GCFont,
+                   &gcval);
+    if (!gc) {
+        fprintf(stderr, "failed to create GC\n");
+
+        exit(1);
+    }
+    x11->selgc = gc;
+    if (!XParseColor(x11->disp,
+                     x11->colormap,
+                     ZEUSBUTTONTEXTCOLOR,
+                     &color)) {
+        fprintf(stderr, "failed to parse color\n");
+
+        exit(1);
+    }
+    if (!XAllocColor(x11->disp,
+                     x11->colormap,
+                     &color)) {
+        fprintf(stderr, "failed to allocate color\n");
+
+        exit(1);
+    }
+    gcval.foreground = color.pixel;
+    gc = XCreateGC(x11->disp, x11->mainwin,
+                   GCForeground | GCLineWidth | GCFont,
+                   &gcval);
+    if (!gc) {
+        fprintf(stderr, "failed to create GC\n");
+
+        exit(1);
+    }
+    x11->buttongc = gc;
+    if (!XParseColor(x11->disp,
+                     x11->colormap,
+                     ZEUSDATCOLOR,
+                     &color)) {
+        fprintf(stderr, "failed to parse color\n");
+
+        exit(1);
+    }
+    if (!XAllocColor(x11->disp,
+                     x11->colormap,
+                     &color)) {
+        fprintf(stderr, "failed to allocate color\n");
+
+        exit(1);
+    }
+    gcval.foreground = color.pixel;
+    gc = XCreateGC(x11->disp, x11->mainwin,
+                   GCForeground | GCLineWidth | GCFont,
+                   &gcval);
+    if (!gc) {
+        fprintf(stderr, "failed to create GC\n");
+
+        exit(1);
+    }
+    x11->datgc = gc;
+    if (!XParseColor(x11->disp,
+                     x11->colormap,
+                     ZEUSPROG1COLOR,
+                     &color)) {
+        fprintf(stderr, "failed to parse color\n");
+
+        exit(1);
+    }
+    if (!XAllocColor(x11->disp,
+                     x11->colormap,
+                     &color)) {
+        fprintf(stderr, "failed to allocate color\n");
+
+        exit(1);
+    }
+    gcval.foreground = color.pixel;
+    gc = XCreateGC(x11->disp, x11->mainwin,
+                   GCForeground | GCLineWidth | GCFont,
+                   &gcval);
+    if (!gc) {
+        fprintf(stderr, "failed to create GC\n");
+
+        exit(1);
+    }
+    x11->prog1gc = gc;
+    if (!XParseColor(x11->disp,
+                     x11->colormap,
+                     ZEUSPROG1DATCOLOR,
+                     &color)) {
+        fprintf(stderr, "failed to parse color\n");
+
+        exit(1);
+    }
+    if (!XAllocColor(x11->disp,
+                     x11->colormap,
+                     &color)) {
+        fprintf(stderr, "failed to allocate color\n");
+
+        exit(1);
+    }
+    gcval.foreground = color.pixel;
+    gc = XCreateGC(x11->disp, x11->mainwin,
+                   GCForeground | GCLineWidth | GCFont,
+                   &gcval);
+    if (!gc) {
+        fprintf(stderr, "failed to create GC\n");
+
+        exit(1);
+    }
+    x11->prog1datgc = gc;
+    if (!XParseColor(x11->disp,
+                     x11->colormap,
+                     ZEUSPROG2COLOR,
+                     &color)) {
+        fprintf(stderr, "failed to parse color\n");
+
+        exit(1);
+    }
+    if (!XAllocColor(x11->disp,
+                     x11->colormap,
+                     &color)) {
+        fprintf(stderr, "failed to allocate color\n");
+
+        exit(1);
+    }
+    gcval.foreground = color.pixel;
+    gc = XCreateGC(x11->disp, x11->mainwin,
+                   GCForeground | GCLineWidth | GCFont,
+                   &gcval);
+    if (!gc) {
+        fprintf(stderr, "failed to create GC\n");
+
+        exit(1);
+    }
+    x11->prog2gc = gc;
+    if (!XParseColor(x11->disp,
+                     x11->colormap,
+                     ZEUSPROG2DATCOLOR,
+                     &color)) {
+        fprintf(stderr, "failed to parse color\n");
+
+        exit(1);
+    }
+    if (!XAllocColor(x11->disp,
+                     x11->colormap,
+                     &color)) {
+        fprintf(stderr, "failed to allocate color\n");
+
+        exit(1);
+    }
+    gcval.foreground = color.pixel;
+    gc = XCreateGC(x11->disp, x11->mainwin,
+                   GCForeground | GCLineWidth | GCFont,
+                   &gcval);
+    if (!gc) {
+        fprintf(stderr, "failed to create GC\n");
+
+        exit(1);
+    }
+    x11->prog2datgc = gc;
+
+    return;
+}
+
+#if (ZEUSIMLIB2)
+
+void
+zeusinitimlib2(struct zeusx11 *x11)
+{
+    imlib_context_set_display(x11->disp);
+    imlib_context_set_drawable(x11->buttonwin);
+    imlib_context_set_visual(x11->visual);
+    imlib_context_set_colormap(x11->colormap);
+    imlib_context_set_blend(0);
+    imlib_context_set_mask(0);
+}
+
+void
+zeusloadx11buttonimgs(struct zeusx11 *x11)
+{
+    Imlib_Image *img;
+
+    img = imlib_load_image("../../share/img/button.png");
+    if (!img) {
+        fprintf(stderr, "failed to load button image\n");
+
+        exit(1);
+    }
+    imlib_context_set_image(img);
+    imlib_render_pixmaps_for_whole_image_at_size(&zeusx11buttons.pmaps.norm,
+                                                 &zeusx11buttons.pmaps.normmask,
+                                                 ZEUSBUTTONW, ZEUSBUTTONH);
+    img = imlib_load_image("../../share/img/buttonhilite.png");
+    if (!img) {
+        fprintf(stderr, "failed to load button image\n");
+
+        exit(1);
+    }
+    imlib_context_set_image(img);
+    imlib_render_pixmaps_for_whole_image_at_size(&zeusx11buttons.pmaps.hover,
+                                                 &zeusx11buttons.pmaps.hovermask,
+                                                 ZEUSBUTTONW, ZEUSBUTTONH);
+
+    img = imlib_load_image("../../share/img/buttonpress.png");
+    if (!img) {
+        fprintf(stderr, "failed to load button image\n");
+
+        exit(1);
+    }
+    imlib_context_set_image(img);
+    imlib_render_pixmaps_for_whole_image_at_size(&zeusx11buttons.pmaps.click,
+                                                 &zeusx11buttons.pmaps.clickmask,
+                                                 ZEUSBUTTONW, ZEUSBUTTONH);
+
+    return;
+}
+
+#endif /* ZEUSIMLIB2 */
+
+/* TODO: event selection */
+void
+zeusaddx11button(struct zeusx11 *x11, int id, char *str,
+                 zeusx11buttonfunc *func)
+{
+    Window               parent = x11->buttonwin;
+    Window               win;
+    XSetWindowAttributes atr = { 0 };
+
+    if (!id) {
+#if (ZEUSIMLIB2)
+        zeusloadx11buttonimgs(x11);
+#endif
+        zeusx11buttons.funcs.enter = zeusenterx11button;
+        zeusx11buttons.funcs.leave = zeusleavex11button;
+        zeusx11buttons.funcs.click = zeusclickx11button;
+        zeusx11buttons.funcs.release = zeusreleasex11button;
+        zeusx11buttons.funcs.expose = zeusexposex11button;
+    }
+    atr.background_pixel = BlackPixel(x11->disp, x11->screen);
+    win = XCreateWindow(x11->disp,
+                        parent,
+                        id * ZEUSBUTTONW, 0,
+                        ZEUSBUTTONW, ZEUSBUTTONH,
+                        0,
+                        x11->depth,
+                        InputOutput,
+                        x11->visual,
+                        CWBackPixel,
+                        &atr);
+    if (!win) {
+        fprintf(stderr, "failed to create button window\n");
+
+        exit(1);
+    }
+    zeusx11buttons.wins[id] = win;
+    zeusx11buttons.strs[id] = str;
+    zeusx11buttons.strlens[id] = strlen(str);
+    zeusx11buttons.functab[id] = func;
+    XSelectInput(x11->disp,
+                 win,
+                 ExposureMask
+                 | EnterWindowMask
+                 | LeaveWindowMask
+                 | ButtonPressMask
+                 | ButtonReleaseMask);
+    XMapRaised(x11->disp, win);
+    XSync(x11->disp, False);
+
+    return;
+}
+
+#if (ZEUSIMLIB2)
+void
+zeusinitx11buttons(struct zeusx11 *x11)
+{
+    zeusloadx11buttonimgs(x11);
+}
+#endif
+
+void
 zeusinitx11buf(struct zeusx11 *x11)
 {
     Pixmap pmap = XCreatePixmap(x11->disp,
@@ -189,283 +794,142 @@ zeusinitx11buf(struct zeusx11 *x11)
 }
 
 void
-zeusinitx11gc(struct zeusx11 *x11)
+zeusinitx11(struct zeusx11 *info)
 {
-    XGCValues       gcval;
-    GC              gc;
-    XColor          color;
+    Display *disp;
 
-    gcval.foreground = BlackPixel(x11->disp, DefaultScreen(x11->disp));
-    gcval.graphics_exposures = False;
-    gcval.font = x11->font->fid;
-    gcval.function = GXcopy;
-    gcval.line_width = 1;
-    gc = XCreateGC(x11->disp, x11->textwin,
-                   GCForeground | GCFunction | GCLineWidth | GCFont,
-                   &gcval);
-    if (!gc) {
-        fprintf(stderr, "failed to create GC\n");
-
+    XInitThreads();
+    disp = XOpenDisplay(NULL);
+    if (!disp) {
+        fprintf(stderr, "failed to open display\n");
+        
         exit(1);
     }
-    x11->bggc = gc;
-    gcval.foreground = WhitePixel(x11->disp, DefaultScreen(x11->disp));
-    gc = XCreateGC(x11->disp, x11->textwin,
-                   GCForeground | GCFunction | GCLineWidth | GCFont,
-                   &gcval);
-    if (!gc) {
-        fprintf(stderr, "failed to create GC\n");
-
-        exit(1);
-    }
-    x11->textgc = gc;
-    if (!XParseColor(x11->disp,
-                     x11->colormap,
-                     "magenta",
-                     &color)) {
-        fprintf(stderr, "failed to parse color\n");
-
-        exit(1);
-    }
-    if (!XAllocColor(x11->disp,
-                     x11->colormap,
-                     &color)) {
-        fprintf(stderr, "failed to allocate color\n");
-
-        exit(1);
-    }
-    gcval.foreground = color.pixel;
-    gc = XCreateGC(x11->disp, x11->textwin,
-                   GCForeground | GCFunction | GCLineWidth | GCFont,
-                   &gcval);
-    if (!gc) {
-        fprintf(stderr, "failed to create GC\n");
-
-        exit(1);
-    }
-    x11->datgc = gc;
-    if (!XParseColor(x11->disp,
-                     x11->colormap,
-                     "green",
-                     &color)) {
-        fprintf(stderr, "failed to parse color\n");
-
-        exit(1);
-    }
-    if (!XAllocColor(x11->disp,
-                     x11->colormap,
-                     &color)) {
-        fprintf(stderr, "failed to allocate color\n");
-
-        exit(1);
-    }
-    gcval.foreground = color.pixel;
-    gc = XCreateGC(x11->disp, x11->textwin,
-                   GCForeground | GCFunction | GCLineWidth | GCFont,
-                   &gcval);
-    if (!gc) {
-        fprintf(stderr, "failed to create GC\n");
-
-        exit(1);
-    }
-    x11->prog1gc = gc;
-//    x11->hilitegc = gc;
-    if (!XParseColor(x11->disp,
-                     x11->colormap,
-                     "dark green",
-                     &color)) {
-        fprintf(stderr, "failed to parse color\n");
-
-        exit(1);
-    }
-    if (!XAllocColor(x11->disp,
-                     x11->colormap,
-                     &color)) {
-        fprintf(stderr, "failed to allocate color\n");
-
-        exit(1);
-    }
-    gcval.foreground = color.pixel;
-    gc = XCreateGC(x11->disp, x11->textwin,
-                   GCForeground | GCFunction | GCLineWidth | GCFont,
-                   &gcval);
-    if (!gc) {
-        fprintf(stderr, "failed to create GC\n");
-
-        exit(1);
-    }
-    x11->prog1datgc = gc;
-    if (!XParseColor(x11->disp,
-                     x11->colormap,
-                     "yellow",
-                     &color)) {
-        fprintf(stderr, "failed to parse color\n");
-
-        exit(1);
-    }
-    if (!XAllocColor(x11->disp,
-                     x11->colormap,
-                     &color)) {
-        fprintf(stderr, "failed to allocate color\n");
-
-        exit(1);
-    }
-    gcval.foreground = color.pixel;
-    gc = XCreateGC(x11->disp, x11->textwin,
-                   GCForeground | GCFunction | GCLineWidth | GCFont,
-                   &gcval);
-    if (!gc) {
-        fprintf(stderr, "failed to create GC\n");
-
-        exit(1);
-    }
-    x11->prog2gc = gc;
-    if (!XParseColor(x11->disp,
-                     x11->colormap,
-                     "gold",
-                     &color)) {
-        fprintf(stderr, "failed to parse color\n");
-
-        exit(1);
-    }
-    if (!XAllocColor(x11->disp,
-                     x11->colormap,
-                     &color)) {
-        fprintf(stderr, "failed to allocate color\n");
-
-        exit(1);
-    }
-    gcval.foreground = color.pixel;
-    gc = XCreateGC(x11->disp, x11->textwin,
-                   GCForeground | GCFunction | GCLineWidth | GCFont,
-                   &gcval);
-    if (!gc) {
-        fprintf(stderr, "failed to create GC\n");
-
-        exit(1);
-    }
-    x11->prog2datgc = gc;
+    info->disp = disp;
+    info->screen = DefaultScreen(disp);
+    info->colormap = DefaultColormap(disp, info->screen);
+    info->depth = DefaultDepth(disp, info->screen);
+    info->visual = DefaultVisual(disp, info->screen);
+    zeusinitx11font(info);
+    zeusinitx11win(info);
+    zeusinitx11title(info);
+    zeusinitx11gc(info);
+#if (ZEUSIMLIB2)
+    zeusinitimlib2(info);
+    zeusinitx11buttons(info);
+    XMapRaised(disp, info->mainwin);
+    XMapRaised(disp, info->buttonwin);
+    zeusinitx11buf(info);
+    XSelectInput(disp, info->simwin,
+                 KeyPressMask
+                 | ButtonPressMask
+                 | EnterWindowMask
+                 | LeaveWindowMask
+#if (ZEUSHOVERTOOLTIP)
+                 | PointerMotionMask
+#endif
+                 | ExposureMask);
+//        XMapRaised(disp, info->tipwin);
+    XMapRaised(disp, info->simwin);
+    XMapRaised(disp, info->dbwin);
+    zeusaddx11button(info, 0, "RUN", zeusrun);
+    zeusaddx11button(info, 1, "STOP", zeusstop);
+    zeusaddx11button(info, 2, "STEP", zeusstep);
+    zeusaddx11button(info, 3, "FENCE", zeusfence);
+    zeusaddx11button(info, 4, "CLEAR", zeusclear);
+    zeusaddx11button(info, 4, "EXIT", zeusexit);
+    zeussel.last = -1;
+#endif
 
     return;
 }
 
-struct zeusx11 *
-zeusinitx11(void)
+int
+zeusprintop(struct zeusx11 *x11, long pc, Window win, int x, int y)
 {
-    Display        *disp;
-    struct zeusx11 *info = calloc(1, sizeof(struct zeusx11));
+    struct cwinstr *op = &cwmars.optab[pc];
+    char           *str;
+    int             len;
 
-    if (info) {
-        XInitThreads();
-        disp = XOpenDisplay(NULL);
-        if (!disp) {
-            fprintf(stderr, "failed to open display\n");
-
-            exit(1);
+    str = zeusdisasm(pc, &len);
+    if (str) {
+        if (op->op == CWOPDAT) {
+            if (!*((uint64_t *)op)) {
+                XDrawString(x11->disp, x11->dbwin, x11->datgc,
+                            x, y,
+                            str, len);
+            } else if (op->pid) {
+                XDrawString(x11->disp, x11->dbwin, x11->prog2datgc,
+                            x, y,
+                            str, len);
+            } else {
+                XDrawString(x11->disp, x11->dbwin, x11->prog1datgc,
+                            x, y,
+                            str, len);
+            }
+        } else if (op->pid) {
+            XDrawString(x11->disp, x11->dbwin, x11->prog2gc,
+                        x, y,
+                        str, len);        
+        } else {
+            XDrawString(x11->disp, x11->dbwin, x11->prog1gc,
+                        x, y,
+                        str, len);        
         }
-        info->disp = disp;
-        info->screen = DefaultScreen(disp);
-        info->colormap = DefaultColormap(disp, info->screen);
-        info->depth = DefaultDepth(disp, info->screen);
-        info->visual = DefaultVisual(disp, info->screen);
-        zeusinitx11font(info);
-        zeusinitx11win(info);
-        zeusinitx11gc(info);
-        zeusinitx11buf(info);
-        XSelectInput(info->disp, info->tipwin, ExposureMask);
-        XSelectInput(info->disp, info->simwin,
-                     KeyPressMask
-                     | ButtonPressMask
-                     | EnterWindowMask
-                     | LeaveWindowMask
-                     | PointerMotionMask
-//                     | PointerMotionHintMask
-                     | ExposureMask);
-        XMapRaised(info->disp, info->mainwin);
-//        XMapRaised(info->disp, info->tipwin);
-        XMapRaised(info->disp, info->simwin);
-        XMapRaised(info->disp, info->textwin);
-        XMapRaised(info->disp, info->dbwin);
-    } else {
-        fprintf(stderr, "failed to allocate x11 structure\n");
-
-        exit(1);
+        free(str);
     }
 
-    return info;
-}
-
-void
-zeusprinttip(struct zeusx11 *x11, int simx, int simy)
-{
-    int ndx;
-
-    simx /= 5;
-    simy /= 5;
-    ndx = simy * (x11->simw / 5) + simx;
-    if (x11->tipstr) {
-        free(x11->tipstr);
-        x11->tipstr = NULL;
-    }
-    x11->tipstr = zeusdisasm(&cwoptab[ndx], &x11->tiplen);
-    fprintf(stderr, "DRAW(%d @ (%d, %d)): %s\n", x11->tiplen, 0, x11->fontasc, x11->tipstr);
-    XDrawString(x11->disp, x11->tipwin, x11->textgc,
-                0, x11->fontasc,
-                x11->tipstr, x11->tiplen);
-//    XMapRaised(x11->disp, x11->tipwin);
-
-    return;
+    return len;
 }
 
 void
 zeusprintdb(struct zeusx11 *x11, int simx, int simy)
 {
-    char *str;
-    int ndx;
-    int len;
-    int i;
+    struct cwinstr *op;
+    char           *str = " <";
+    int             slen = strlen(str);
+    long            pc;
+    int             len;
+    int             i;
 
     simx /= 5;
     simy /= 5;
-    ndx = simy * (x11->w / 5) + simx;
-    if (ndx >= 4) {
-        ndx -= 4;
-    } else {
-        ndx = CWNCORE - ndx;
-    }
-    for (i = 0 ; i < 4 ; i++) {
-        str = zeusdisasm(&cwoptab[ndx], &len);
-        XDrawString(x11->disp, x11->dbwin, x11->textgc,
-                    0, (i + 1) * x11->fontasc,
-                    str, len);
-//    XMapRaised(x11->disp, x11->tipwin);
-        ndx++;
-        ndx %= CWNCORE;
-        free(str);
-    }
-    str = zeusdisasm(&cwoptab[ndx], &len);
-    if (cwoptab[ndx].pid) {
+    pc = simy * (x11->w / 5) + simx;
+    XFillRectangle(x11->disp, x11->dbwin,
+                   x11->bggc,
+                   0, 0,
+                   x11->dbw, x11->dbh);
+    len = zeusprintop(x11, pc, x11->dbwin, 0, x11->fontasc);
+    op = &cwmars.optab[pc];
+    if (op->op == CWOPDAT) {
+        if (!*((uint64_t *)op)) {
+            XDrawString(x11->disp, x11->dbwin, x11->datgc,
+                        len * x11->fontw, x11->fontasc,
+                        str, slen);
+        } else if (op->pid) {
+            XDrawString(x11->disp, x11->dbwin, x11->prog2datgc,
+                        len * x11->fontw, x11->fontasc,
+                        str, slen);
+        } else {
+            XDrawString(x11->disp, x11->dbwin, x11->prog1datgc,
+                        len * x11->fontw, x11->fontasc,
+                        str, slen);
+        }
+    } else if (op->pid) {
         XDrawString(x11->disp, x11->dbwin, x11->prog2gc,
-                    0, (i + 1) * x11->fontasc,
-                    str, len);
-//    XMapRaised(x11->disp, x11->tipwin);
+                    len * x11->fontw, x11->fontasc,
+                    str, slen);        
     } else {
         XDrawString(x11->disp, x11->dbwin, x11->prog1gc,
-                    0, (i + 1) * x11->fontasc,
-                    str, len);
+                    len * x11->fontw, x11->fontasc,
+                    str, slen);        
     }
-    ndx++;
-    ndx %= CWNCORE;
-    free(str);
-    for (i = 0 ; i < 4 ; i++) {
-        str = zeusdisasm(&cwoptab[ndx], &len);
-        XDrawString(x11->disp, x11->dbwin, x11->textgc,
-                    0, (i + 6) * x11->fontasc,
-                    str, len);
-//    XMapRaised(x11->disp, x11->tipwin);
-        ndx++;
-        ndx %= CWNCORE;
-        free(str);
+    pc++;
+    pc %= CWNCORE;
+    for (i = 0 ; i < 15 ; i++) {
+        zeusprintop(x11, pc, x11->dbwin, 0, (i + 2) * x11->fontasc);
+        pc++;
+        pc %= CWNCORE;
     }
 
     return;
@@ -475,9 +939,27 @@ void
 zeusprocev(struct zeusx11 *x11)
 {
     XEvent ev;
+    Window win;
+    int    id;
 
     XNextEvent(x11->disp, &ev);
-    if (ev.xany.window == x11->mainwin) {
+    win = ev.xany.window;
+#if (ZEUSIMLIB2)
+    id = zeusfindbutton(win);
+#endif
+#if (ZEUSDEBUG)
+    if (win == x11->buttonwin) {
+        switch (ev.type) {
+            case Expose:
+
+                break;
+            default:
+
+                break;
+        }
+    } else
+#endif    
+    if (win == x11->mainwin) {
         switch (ev.type) {
             case Expose:
                 /* IGNORE */
@@ -487,7 +969,7 @@ zeusprocev(struct zeusx11 *x11)
                 
                 break;
             }
-    } else if (ev.xany.window == x11->simwin) {
+    } else if (win == x11->simwin) {
         switch (ev.type) {
 #if (ZEUSHOVERTOOLTIP)
             case MotionNotify:
@@ -503,18 +985,17 @@ zeusprocev(struct zeusx11 *x11)
 
                 break;
 #endif
-#if (ZEUSCLICKTOOLTIP)
             case ButtonPress:
-                zeusprintdb(x11, ev.xbutton.x, ev.xbutton.y);
+                if (ev.xbutton.button == Button1) {
+                    if (ev.xbutton.state & ControlMask) {
+                        zeustogglesel(x11, &ev);
+                    } else if (ev.xbutton.state & ShiftMask) {
+                        zeusaddsel(x11, &ev);
+                    }
+                    zeusprintdb(x11, ev.xbutton.x, ev.xbutton.y);
+                }
 
                 break;
-#else
-            case ButtonPress:
-                exit(0);
-
-                /* NOTREACHED */
-                break;
-#endif
             case Expose:
                 if (!ev.xexpose.count) {
                     XCopyArea(x11->disp, x11->pixbuf, x11->simwin,
@@ -526,20 +1007,17 @@ zeusprocev(struct zeusx11 *x11)
 
                 break;
             case KeyPress:
-                exit(0);
 
-                /* NOTREACHED */
                 break;
             default:
                 
                 break;
         }
 #if (ZEUSHOVERTOOLTIP)
-    } else if (ev.xany.window == x11->tipwin) {
+    } else if (win == x11->tipwin) {
         switch (ev.type) {
             case Expose:
                 if (!ev.xexpose.count) {
-                    fprintf(stderr, "DRAW(%d): %s\n", x11->tiplen, x11->tipstr);
                     XDrawString(x11->disp, x11->tipwin, x11->textgc,
                                 0, x11->fontasc,
                                 x11->tipstr, x11->tiplen);
@@ -551,31 +1029,87 @@ zeusprocev(struct zeusx11 *x11)
                 break;
         }
 #endif
-    } else if (ev.xany.window == x11->textwin) {
+    } else if (win == x11->dbwin) {
         ;
-    } else if (ev.xany.window == x11->dbwin) {
-        ;
+#if (ZEUSIMLIB2)
+    } else if (id < ZEUSNBUTTON) {
+        switch (ev.type) {
+            case Expose:
+                zeusx11buttons.funcs.expose(x11, &ev);
+
+                break;
+            case EnterNotify:
+                zeusx11buttons.funcs.enter(x11, &ev);
+
+                break;
+            case LeaveNotify:
+                zeusx11buttons.funcs.leave(x11, &ev);
+
+                break;
+            case ButtonPress:
+                zeusx11buttons.funcs.click(x11, &ev);
+
+                break;
+            case ButtonRelease:
+                zeusx11buttons.funcs.release(x11, &ev);
+
+                break;
+        }
+#endif
     }
-//    XSync(x11->disp, False);
 
     return;
 }
 
 void
-zeusdrawdb(struct zeusx11 *x11, long ip)
+zeusdrawsimop(struct zeusx11 *x11, long pc)
 {
-    struct cwinstr *op = &cwoptab[ip];
-    int             len;
-    char           *line = zeusdisasm(op, &len);
-    long            nline = x11->ndbline;
+    struct cwinstr *op;
+    int             row = pc / ZEUSSIMNCOL;
+    int             col = pc - row * ZEUSSIMNCOL;
+    int             x = col * 5;
+    int             y = row * 5;
 
-    if ((line) && (len)) {
-        XDrawString(x11->disp, x11->dbwin, x11->bggc,
-                    0, nline * x11->fonth,
-                    line, len);
-//        nline++;
-        free(line);
+    op = &cwmars.optab[pc];
+    if ((zeussel.bmap) && bitset(zeussel.bmap, pc)) {
+        XFillRectangle(x11->disp, x11->pixbuf,
+                       x11->selgc,
+                       x, y,
+                       4, 4);
+    } else if (op->op == CWOPDAT) {
+        if (!*((uint64_t *)op)) {
+            XFillRectangle(x11->disp, x11->pixbuf,
+                           x11->datgc,
+                           x, y,
+                           4, 4);
+        } else if (op->pid) {
+            XFillRectangle(x11->disp, x11->pixbuf,
+                           x11->prog2datgc,
+                           x, y,
+                           4, 4);
+        } else {
+            XFillRectangle(x11->disp, x11->pixbuf,
+                           x11->prog1datgc,
+                           x, y,
+                           4, 4);
+        }
+    } else if (op->pid) {
+        XFillRectangle(x11->disp, x11->pixbuf,
+                       x11->prog2gc,
+                       x, y,
+                       4, 4);
+        
+    } else {
+        XFillRectangle(x11->disp, x11->pixbuf,
+                       x11->prog1gc,
+                       x, y,
+                       4, 4);
     }
+    XCopyArea(x11->disp, x11->pixbuf, x11->simwin,
+              x11->bggc,
+              x, y,
+              4, 4,
+              x, y);
 
     return;
 }
@@ -583,58 +1117,16 @@ zeusdrawdb(struct zeusx11 *x11, long ip)
 void
 zeusdrawsim(struct zeusx11 *x11)
 {
-    struct cwinstr *op;
-    long            l;
-    int             x;
-    int             y;
+    long pc;
 
-    l = 0;
-    XFillRectangle(x11->disp, x11->pixbuf,
-                   x11->bggc,
-                   0, 0,
-                   x11->simh, x11->simh);
-    for (y = 0 ; y < x11->simh ; y += 5) {
-        for (x = 0 ; x < x11->simw ; x += 5) {
-            op = &cwoptab[l];
-            if (op->op == CWOPDAT) {
-//                fprintf(stderr, "%ld: draw: (%d, %d)\n", l, x, y);
-                if (!op->a && !op->b && !op->aflg && !op->bflg) {
-                    XFillRectangle(x11->disp, x11->pixbuf,
-                                   x11->datgc,
-                                   x, y,
-                                   4, 4);
-                } else if (op->pid) {
-                    XFillRectangle(x11->disp, x11->pixbuf,
-                                   x11->prog2datgc,
-                                   x, y,
-                                   4, 4);
-                } else {
-                    XFillRectangle(x11->disp, x11->pixbuf,
-                                   x11->prog1datgc,
-                                   x, y,
-                                   4, 4);
-                }
-            } else if (op->pid) {
-                    XFillRectangle(x11->disp, x11->pixbuf,
-                                   x11->prog2gc,
-                                   x, y,
-                                   4, 4);
-                
-            } else {
-                    XFillRectangle(x11->disp, x11->pixbuf,
-                                   x11->prog1gc,
-                                   x, y,
-                                   4, 4);
-            }
-            l++;
-        }
+    for (pc = 0 ; pc < CWNCORE ; pc++) {
+        zeusdrawsimop(x11, pc);
     }
     XCopyArea(x11->disp, x11->pixbuf, x11->simwin,
               x11->bggc,
               0, 0,
               x11->simw, x11->simh,
               0, 0);
-    XSync(x11->disp, False);
 
     return;
 }

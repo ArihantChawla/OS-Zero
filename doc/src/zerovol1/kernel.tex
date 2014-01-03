@@ -10,13 +10,13 @@
 \usepackage[table, gray]{xcolor}
 \setlength{\arrayrulewidth}{1pt}
 \rowcolors{0}{white}{lightgray}
-\hypersetup{backref, colorlinks=true, linkcolor=blue}
+\hypersetup{colorlinks=true, linkcolor=blue}
 
 \begin{document}
 
 \title{\LARGE{Zero Volume 0 - The Kernel} \\
        \large{Design and Implementation} \\
-       \large{DRAFT 1, Revision 12}}
+       \large{DRAFT 1, Revision 13}}
 \author{Tuomo Petteri Venäläinen}
 \date{\today}
 \maketitle
@@ -28,6 +28,26 @@
 \tableofcontents
 
 \part{Overview}
+
+	Zero is an operating system project; at the time of this writing, the
+	project has several pieces under construction, some of them rather good
+	already.
+
+	Zero is open source. The choice of license is the so-called New BSD
+	License; I chose it over the GPL in the hopes of possibly making it easy
+	to adopt this software for business projects - after all, we all have to
+	make a living. I do, however, plan to keep the base system (the kernel
+	and support software) open source and free of charge; I have the feeling
+	tailoring Zero for needs of clients might be fruitful for business.
+
+	At the moment, I have implemented the so-far-relevant parts of the C
+	standard library implementation for 3 platforms: 32-bit X86 (IA-32),
+	64-bit X86 (AMD64), and some versions of the ARM microprocessor family.
+	I would love to port the kernel to all of these as well as other
+	platforms such as some 64-bit architectures common in UNIX workstations
+	during the old times. Alpha, MIPS, Sparc, PowerPC etc. With such
+	interests, donations of old server and workstation hardware would be
+	very welcome, provided I have the room to set them up. :)
 
 \chapter{Preface}
 
@@ -66,8 +86,8 @@
 	to thank you guys (who know yourself) here. :)
 
 	At the time being, I want to thank \textbf{Craig Robbins} for some
-	graphical effects as well as \textbf{Leonardo Taglialegne} for some
-	audio hacks. :)
+	graphical effects, \textbf{Leonardo Taglialegne} for some audio hacks,
+	and \textbf{Ivan Rubinson} for some graphics. :)
 
 \subsection{Open Source Community}
 
@@ -75,15 +95,15 @@
 	free software for their work and courage to release their work for
 	others to use and modify. Keep strong in spirit!
 
-	As his work has been used for the purpose of inspiration, thanks go to
-	\textbf{Carsten Haitzler} for his work on \textbf{Enlightenment} and his
-	mission to reinvent graphical user interfaces. Keep up the good work,
-	Raster! :)
+	As their work has been used for the purpose of inspiration, thanks go to
+	\textbf{Carsten 'raster' Haitzler} and his team for their work on
+	\textbf{Enlightenment} and their mission to reinvent graphical user
+	interfaces. Keep up the good work, guys! :)
 
 \section{Background}
 
 	Zero has its roots in early, simple and elegant versions of the UNIX
-	operating system. I still see many good, timeless things about the UNIX
+	operating system. I still see many good, timeless things about UNIX
 	design worth reusing in a new operating system. One thing of particular
 	attraction is the "everything is a file" philosophy; I plan to use and
 	possibly extend that idea in Zero.
@@ -97,11 +117,11 @@
 	\textbf{Buffer}
 
 	Buffers are used to avoid excess I/O system calls when reading and
-	writing to and from I/O devices. This memory is allocated from a
-	separate buffer cache, which can be either static or dynamic size.
-	Buffer pages are 'wired' to memory; they will never get paged out to
-	disk or other external devices, but instead buffer eviction leads to
-	writing the buffer to a location on some device; typically a disk.
+	writing to and from I/O devices. Buffer memory is allocated from a
+	separate buffer cache, which may be either static or dynamic size.
+	On Zero, buffer pages are 'wired' to memory; they will never get paged
+	out to disk or other external devices, but instead buffer eviction leads
+	to writing the buffer to a location on some device; typically a disk.
 
 	\textbf{Event}
 
@@ -173,6 +193,16 @@
 	allocated, whereas the data segment is read from the binary image. Also
 	Note that in a different context, segments are used to refer to hardware
 	memory management.
+
+	\textbf{Signal}
+
+	Signals are asynchronous events. Signals may be delivered by the kernel,
+	by other processes, or by a process itself. Typical uses include
+	notifying processes of things such as division by zero (SIGFPE),
+	undefined memory access (SIGSEGV and SIGBUS) or illegal machine
+	instructions (SIGILL).
+
+	Two predefined signals exists for application use; SIGUSR1 and SIGUSR2.
 
 	\textbf{Task}
 
@@ -344,27 +374,21 @@
 	The code modules above will be discussed in-depth in the later parts of
 	this book.
 
-\chapter{Kernel Environment}
-
-	This chapter describes the kernel-mode execution environment.
-	Hardware-specific things are described for the IA-32 and X86-64
-	architectures.
-
-\section{Processor Support}
+\chapter{Processor Support}
 
 	Initially, Zero shall support 32-bit and 64-bit X86 architectures. The
 	plan is to port Zero at least to ARM in addition.
 
-\subsection{Thread Scheduler}
+\section{Thread Scheduler}
 
-\subsubsection{Thread Classes}
+\subsection{Thread Classes}
 
 	The following code snippet lists thread classes in decreasing order of
 	priority.
 
 	\textbf{TODO: add thread classes when final}
 
-\subsubsection{Priorities}
+\subsection{Priorities}
 
 	\textbf{Priority Queue}
 
@@ -375,9 +399,9 @@
 	Every time a thread stops running, its priority is adjusted with the
 	function below.
 
-	\textbf{TODO: add final priority adjustment algorithm}
+	\textbf{TODO: implement a simple hybrid priority adjustment algorithm}
 
-\subsubsection{Data Structures}
+\subsection{Data Structures}
 
 	The structures \textbf{struct proc} and \textbf{struct thr} are declared
 	in \textbf{<kern/obj.h>}. The example implementations below are for the
@@ -404,7 +428,7 @@
 
 	\textbf{TODO: add final thr structure}
 
-\subsection{Interrupt Vector}
+\section{Interrupt Vector}
 
 	The interrupt vector is an array of interrupt descriptors. The
 	descriptors contain interrupt service routine base address for the
@@ -415,7 +439,7 @@
 
 \newpage
 
-\subsubsection{X86 Interrupts}
+\subsection{X86 Interrupts}
 
 	The following table lists X86 interrupts along with their associated
 	signals.
@@ -466,7 +490,7 @@
 	\hline
 \end{tabular}
 
-\subsubsection{IRQs}
+\subsection{IRQs}
 
 	The following table lists default use of IRQs 0 through 0x0f (15). Zero
 	redirects these to interrupts 0x20 through 0x2f (32 to 47).
@@ -499,60 +523,90 @@
 	\hline
 \end{tabular}
 
-\subsubsection{Interrupt Descriptors}
+\subsection{Interrupt Descriptors}
 
 	Entries in the interrupt vector, i.e. interrupt descriptor table
 	(\textbf{IDT}), are called interrupt descriptors. These descriptors,
 	whereas a bit hairy format-wise, consist of interrupt handler address,
 	protection ring (system or user), and certain other attribute flags.
 
-\section{Memory}
+\chapter{Memory}
 
-\subsection{Overview}
+\section{Segmentation}
 
-\subsection{Segment Descriptor Tables}
+	Zero uses what is traditionally called a flat memory model; the use of
+	segmentation is kept to the bare minimum required for successful code
+	execution. Protection is done at page level.
 
 	A process may use either a global descriptor table with its physical
 	address in the GDT-register or a local one with the address in the
 	LDT-register. Processes are required to declare a handful of entries
 	into their descriptor tables.
 
-\subsubsection{Segment Descriptors}
+	A segment descriptor is a CPU-specific data structure. On \textbf{IA-32}
+	and \textbf{X86-64} architectures, the descriptors have base address and
+	limit fields, permission bits, and other such values.
 
-	A segment descriptor is a CPU-specific data structure. On
-	\textbf{IA-32} and \textbf{X86-64} architectures, the descriptors have
-	base address and limit fields, permission bits, and other such values.
-
-	The following code snippet illustrates important values in segment
-	descriptors on \textbf{IA-32}.
-
-\begin{verbatim}
-#define SEGDEFBITS (SEG32BIT | SEG4KGRAN | SEGPRES)
-#define SEGTSS     (SEGAVAILTSS | SEGUSER | SEGPRES)
-\end{verbatim}
-
-\subsection{Paging Data Structures}
+\section{Paging Data Structures}
 
 	Protection and other control of memory appears on per-page basis.
 
-\subsubsection{Page Directory Entry}
+\subsection{Page Directory}
 
-\subsubsection{Page Table Entry}
+	The page directory points to page tables; page tables, in turn, point to
+	pages that may or may not be present in physical memory. This provides
+	a hierarchical view of memory; by providing a virtual address, it is
+	possible to obtain a physical one for memory access.
 
-\subsubsection{Page Directory}
+\subsection{Page Tables}
 
-\subsubsection{Page Tables}
-
-\subsection{Page Daemon}
+\section{Page Daemon}
 
 \subsection{Zone Allocator}
 
 	The Zero memory manager was crafted to use aggressive buffering of
 	allocations. The higher buffer level is a \textbf{Bonwick}-style
 	\textbf{magazine} layer consisting of allocation stacks for sub-slab
-	blocks.	The lower level is a typical \textbf{slab allocator}.
+	blocks.	The lower level is a typical \textbf{slab allocator} dealing
+	with slabs of power of two sizes to make book-keeping easier.
 
-\subsubsection{Page Replacement Algorithm}
+\subsection{Page Replacement Algorithm}
+
+\chapter{I/O}
+
+\section{Hardware I/O}
+
+\subsection{Character I/O Transfers}
+
+	Some devices operate in character based (raw) mode. This is typically
+	feasible for so-called slow devices such as terminals. It is noteworthy
+	that a system call needs to be triggered for every character.
+
+\subsection{Block I/O Transfers}
+
+	Block I/O works using a buffer cache mechanism. Instead of doing
+	single-character operations, I/O is buffered using bigger blocks
+	(typically 4 to 64 kilobytes) to dramatically reduce the number of
+	system calls involved in I/O operations.
+
+	Block based devices include hard drives, optical drives, and network
+	interfaces. In case of network packets, the system caches checksums for
+	static data to avoid redoing it on retransmittal.
+
+\chapter{Inter-Process Communications (IPC)}
+
+	Zero provides typical IPC primitives such as mutexes and generic
+	semaphores, shared memory, and message queues.
+
+	Mutexes (binary semaphores) and other semaphores are used to restrict
+	access to critical regions; e.g., linked lists need to be locked to
+	avoid simultaneous access by multiple threads to ensure consistency of
+	list data.
+
+	Shared memory is a fast form of IPC; shared memory is physical memory
+	mapped to virtual address spaces of the kernel and user processes. It's
+	recommended to use shared memory where possible to obtain zero-copy (or
+	close) message passing.
 
 \chapter{System Call Interface}
 
@@ -566,6 +620,8 @@
 	as well as semaphores.
 
 \section{Conventions}
+
+	By convention, system calls return -1 on failure.
 
 \subsection{System Call Mechanism}
 
@@ -790,6 +846,9 @@ struct sigarg {
 	existing systems, mapping the device special file \textbf{/dev/zero} is
 	similar to using the \textbf{flg} value of \textbf{MAP\_ANON}.
 
+	The return value is user virtual memory address of the mapped region or
+	((void *)-1) on failure.
+
 \begin{tabular}{ | l | l | }
 	\hline
 	flg             & Notes \\
@@ -833,13 +892,13 @@ struct sysmem {
 
 \subsection{umap}
 
-	\textbf{long  sys\_umap(void *adr, size\_t size);}
+	\textbf{long sys\_umap(void *adr, size\_t size);}
 
 	The umap system call unmaps memory regions mapped with sys\_map().
 
 \subsection{mhint}
 
-	\textbf{long  sys\_mhint(void *adr, long flg, struct sysmem *arg);}
+	\textbf{long sys\_mhint(void *adr, long flg, struct sysmem *arg);}
 
 	The mhint system call is used to hint the kernel of a memory region
 	use patterns. The possible bits for \textbf{flg} are shown in the table
@@ -903,7 +962,7 @@ struct sysmem {
 
 \subsection{shmctl}
 
-	\textbf{sys\_shmctl(long id, long cmd, void *arg);}
+	\textbf{void sys\_shmctl(long id, long cmd, void *arg);}
 
 	The shmctl system call provides control operations for shared memory
 	segments. The possible values for \textbf{cmd} are listed in the
@@ -921,13 +980,115 @@ struct sysmem {
 	\hline
 \end{tabular}
 
-	\textbf{TODO}: shared memory, message queues, semaphores, events
-
 \section{Semaphores}
+
+	\textbf{long sys\_seminit(void);}
+
+	The seminit system call initialises a semaphore at the given virtual
+	user address to unlocked state. The kernel maps the semaphore to its own
+	virtual address space and returns the \textbf{ID of the new semaphore}.
+
+	The return value is the ID of the new semaphore on success, -1 on
+	failure.
+
+\subsection{semup}
+
+	\textbf{long sys\_semup(long id);}
+
+	The semup system call atomically increases the value of a semaphore. The
+	return value is the new semaphore value or -1 on failure:
+
+\subsection{semdown}
+
+	\textbf{long sys\_semdown(long id);}
+
+	The semup system call atomically decreases the value of a semaphore. The
+	return value is the new semaphore value or -1 on failure.
+
+\subsection{semop}
+
+	\textbf{long sys\_semop(long id, long cmd, long flg);}
+
+	The semop system call performs a semaphore operation. See the table
+	below for defined values.
+
+\begin{tabular}{ | l | l | l | }
+	\textbf{cmd} & \textbf{flg} & brief \\
+	\hline
+	IPC\_STAT    & N/A          & obtain semaphore value \\
+	\hline
+	IPC\_SET     & permissions  & set semaphore permissions \\
+	\hline
+	IPC\_RMID    & N/A          & remove semaphore \\
+	\hline
+\end{tabular}
 
 \section{Message Queues}
 
+	\textbf{TODO}: MQSYNC-priority (0)
+
+\subsection{mqinit}
+
+	\textbf{long sys\_mqinit(long perm, long prio, long nbyte);}
+
+	The mqinit system call initialises a message queue with permissions and
+	priority as supplied. The nbyte parameter determines the size of the
+	region allocated for queue messages in octets.
+
+	mqinit returns the ID of the new message queue or -1 on failure
+
+\subsection{mqsend}
+
+	\textbf{long sys\_mqsend(long qid, void *buf, long nbyte);}
+
+	The mqsend system call sends nbyte bytes of message data from buffer to
+	the specified queue. If the queue is too full for the message to fit,
+	the system call will block until the transmittal can be processed; if,
+	however, the queue was initialised with MQASYNC, the system call will
+	return and the data shall be transmitted asynchronously.
+
+	The return value is the number of bytes sent or -1 on failure.
+
+\subsection{mqrecv}
+
+	\textbf{long sys\_mqrecv(long qid, void *buf, long nbyte);}
+
+	The return value is the number of bytes received, 0 if the message
+	queue is empty, and -1 on failure.
+
+\subsection{mqop}
+
+	\textbf{long sys\_mqop(long qid, long cmd, long parm);}
+
 \section{Events}
+
+	/* TODO: EVSHM, EVMQ */
+
+\subsection{evreg}
+
+	\textbf{long evreg(long ev, long flg, void (*func)(void *buf));}
+
+	The evreg system call registers a handler function for the supplied
+	event type.
+
+\subsection{evsend}
+
+	\textbf{long evsend(void *buf, long flg, long dest);}
+
+	The evsend system call sends an event stored in a buffer to a receiver
+	such as a desktop window (shared memory queue) or message queue
+	(local or remote over a network)
+
+\subsection{evrecv}
+
+	\textbf{long evrecv(void *buf, long flg, long src);}
+
+	The evrecv system call reads an event from a source such as shared
+	memory (local) or a message queue (local or remote).
+
+\subsection{evop}
+
+	\textbf{long sys\_evop(long cmd, long flg, void *atr);}
 
 \section{I/O}
 
@@ -939,7 +1100,7 @@ struct sysmem {
 
 \begin{tabular}{ | l | l | l | }
 	\hline
-	Segment & Brief                 & Parameters \\
+	Segment          & Brief                 & Parameters \\
 	\hline
 	\textbf{stack}   & process stack         & read, write, grow-down \\
 	\hline
@@ -962,10 +1123,6 @@ struct sysmem {
 	addresses grow upwards}
 	\item{the stack segment grows downwards in memory}
 	\item{the BSS segment is allocated at run-time}
-\end{itemize}
-
-\begin{itemize}
-	\item{segments are shown in descending address order}
 \end{itemize}
 
 \end{document}

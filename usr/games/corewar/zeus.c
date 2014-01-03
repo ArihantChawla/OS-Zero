@@ -1,9 +1,3 @@
-/*
- * TODO
- * ----
- * - visualisation; DAT is blue, program #1 is green, program #2 is yellow
- */
-
 #include <stdio.h>
 #include <stdlib.h>
 #include <stdint.h>
@@ -18,31 +12,56 @@
 #include <X11/Xutil.h>
 #endif
 
-extern long            rcnargtab[CWNOP];
-extern const char     *cwopnametab[CWNOP];
-extern struct cwinstr *cwoptab;
+extern struct cwmars  cwmars;
+extern long           rcnargtab[CWNOP];
+
+struct zeussel        zeussel;
 
 #define ZEUSDEFLINE 256
 
 char *
-zeusdisasm(struct cwinstr *op, int *lenret)
+zeusdisasm(long pc, int *lenret)
 {
-    char   *ptr = malloc(ZEUSDEFLINE * sizeof(char));
-    char   *str = ptr;
-    int     len = ZEUSDEFLINE;
-    int     ret;
-    char    ch;
+    struct cwinstr *op = &cwmars.optab[pc];
+    char           *ptr = malloc(ZEUSDEFLINE * sizeof(char));
+    char           *str = ptr;
+    int             len = ZEUSDEFLINE;
+    int             ret;
+    char            ch;
 
-    if ((op) && (ptr)) {
-        ret = snprintf(str, len, "%s ", cwopnametab[op->op]);
+    if (ptr) {
+        ret = snprintf(str, len, "%ld ", pc);
         if (ret < 0) {
-            fprintf(stderr, "failed to construct debug line\n");
+            free(ptr);
             
-            exit(1);
+            return NULL;
         }
         len -= ret;
         str += ret;
-//        fprintf(stderr, "LEN == %d: %s\n", len, ptr);
+        if (pc < 10000) {
+            ret = snprintf(str, len, "    ");
+        } else if (pc < 100000) {
+            ret = snprintf(str, len, "   ");
+        } else if (pc < 1000000) {
+            ret = snprintf(str, len, "  ");
+        } else if (pc < 10000000) {
+            ret = snprintf(str, len, " ");
+        }
+        if (ret < 0) {
+            free(ptr);
+            
+            return NULL;
+        }
+        len -= ret;
+        str += ret;
+        ret = snprintf(str, len, "%s ", cwmars.opnames[op->op]);
+        if (ret < 0) {
+            free(ptr);
+            
+            return NULL;
+        }
+        len -= ret;
+        str += ret;
         if (rcnargtab[op->op] == 2) {
             ch = '\0';
             if (op->aflg & CWIMMBIT) {
@@ -57,38 +76,25 @@ zeusdisasm(struct cwinstr *op, int *lenret)
                     *str++ = ch;
                     len--;
                 }
-#if 0
-                ret = snprintf(str, len, "%c", ch);
-                if (ret < 0) {
-                    fprintf(stderr, "failed to construct debug line\n");
-                    
-                    exit(1);
-                }
-                len -= ret;
-                str += ret;
-//                fprintf(stderr, "LEN == %d: %s\n", len, ptr);
-#endif
             }
             if (op->aflg & CWSIGNBIT) {
                 ret = snprintf(str, len, "%d,", op->a - CWNCORE);
                 if (ret < 0) {
-                    fprintf(stderr, "failed to construct debug line\n");
+                    free(ptr);
                     
-                    exit(1);
+                    return NULL;
                 }
                 len -= ret;
                 str += ret;
-//                fprintf(stderr, "LEN == %d: %s\n", len, ptr);
             } else {
                 ret = snprintf(str, len, "%d,", op->a);
                 if (ret < 0) {
-                    fprintf(stderr, "failed to construct debug line\n");
+                    free(ptr);
                     
-                    exit(1);
+                    return NULL;
                 }
                 len -= ret;
                 str += ret;
-//                fprintf(stderr, "LEN == %d: %s\n", len, ptr);
             }
         }
         ch = '\0';
@@ -100,46 +106,38 @@ zeusdisasm(struct cwinstr *op, int *lenret)
             ch = '<';
         }
         if (ch) {
-            ret = snprintf(str, len, " %c", ch);
-            if (ret < 0) {
-                fprintf(stderr, "failed to construct debug line\n");
-                
-                exit(1);
+            if (len > 0) {
+                *str++ = ch;
+                len--;
             }
-            len -= ret;
-            str += ret;
-//            fprintf(stderr, "LEN == %d: %s\n", len, ptr);
         } else {
             ret = snprintf(str, len, " ");
             if (ret < 0) {
-                fprintf(stderr, "failed to construct debug line\n");
+                free(ptr);
                 
-                exit(1);
+                return NULL;
             }
             len -= ret;
             str += ret;
-//            fprintf(stderr, "LEN == %d: %s\n", len, ptr);
         }
         if (op->bflg & CWSIGNBIT) {
             ret = snprintf(str, len, "%d", op->b - CWNCORE);
             if (ret < 0) {
-                fprintf(stderr, "failed to construct debug line\n");
+                free(ptr);
                 
-                exit(1);
+                return NULL;
             }
             len -= ret;
             str += ret;
-//            fprintf(stderr, "LEN == %d: %s\n", len, ptr);
         } else {
             ret = snprintf(str, len, "%d", op->b);
             if (ret < 0) {
-                fprintf(stderr, "failed to construct debug line\n");
+                free(ptr);
                 
-                exit(1);
+                return NULL;
             }
             len -= ret;
             str += ret;
-//            fprintf(stderr, "LEN == %d: %s\n", len, ptr);
         }
         if (len) {
             *str = '\0';
@@ -147,34 +145,36 @@ zeusdisasm(struct cwinstr *op, int *lenret)
         } else {
             fprintf(stderr, "debug line too long\n");
 
-            exit(1);
+            return NULL;
         }
     }
 
     return ptr;
 }
 
+#if 0
 void
 zeusshowmem(void)
 {
-    char           *cp;
+    char           *str;
     struct cwinstr *op;
-    long            l;
+    long            pc;
     int             dummy;
 
-    for (l = 0 ; l < CWNCORE ; l++) {
-        op = &cwoptab[l];
+    for (pc = 0 ; pc < CWNCORE ; pc++) {
+        op = &cwmars.optab[pc];
         if (*(uint64_t *)op) {
-            fprintf(stderr, "%ld\t", l);
-            cp = zeusdisasm(op, &dummy);
-            if (!cp) {
+            fprintf(stderr, "%ld\t", pc);
+            str = zeusdisasm(pc, &dummy);
+            if (!str) {
                 fprintf(stderr, "failed to allocate memory\n");
 
                 exit(1);
             }
-            fprintf(stderr, "%s\n", cp);
-            free(cp);
+            fprintf(stderr, "%s\n", str);
+            free(str);
         }
     }
 }
+#endif /* 0 */
 

@@ -16,13 +16,14 @@
 #define HZ           250
 
 /* thread scheduler classes */
-#define THRRT        0  // real-time thread
-#define THRUSER      1  // user thread
-#define THRBATCH     2  // batch thread
-#define THRIDLE      3  // idle thread
-#define THRNCLASS    4
-#define THRNPRIO     64 // # of priorities per class
-#define THRNPRIOLOG2 6
+#define THRINTR      0  // interrupt thread (keyboard, mouse, etc.)
+#define THRRT        1  // real-time thread
+#define THRUSER      2  // user thread
+#define THRBATCH     3  // batch thread
+#define THRIDLE      4  // idle thread
+#define THRNCLASS    5
+#define THRNPRIO     32 // # of priorities per class
+#define THRNPRIOLOG2 5
 
 #include <kern/proc/thr.h>
 

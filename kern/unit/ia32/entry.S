@@ -159,7 +159,18 @@ _sysfunc:
 	.long	_syscall3	// fctl
 	.long	_syscall3	// poll
 	.long	_syscall2	// select
-
+	.long	_syscall0	// seminit
+	.long	_syscall1	// semup
+	.long	_syscall1	// semdown
+	.long	_syscall3	// semop
+	.long	_syscall3	// mqinit
+	.long	_syscall3	// mqsend
+	.long	_syscall3	// mqrecv
+	.long	_syscall3	// mqop
+	.long	_syscall3	// evreg
+	.long	_syscall3	// evsend
+	.long	_syscall3	// evrecv
+	.long	_syscall3	// evop
 sysvec:
 	/* TODO: fill with sys_ function addresses */
 	.space	4 * NSYSCALL

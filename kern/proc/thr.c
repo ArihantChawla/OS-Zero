@@ -48,14 +48,17 @@ thradjprio(struct thr *thr)
     long class = thr->class;
     long prio = thr->prio;
 
-    if (class != THRRT) {
+    if (class == THRINTR) {
+        /* thr->prio is IRQ ID */
+        prio = trappriotab[thr->prio];
+    } else if (class != THRRT) {
         /* wrap around back to 0 at THRNPRIO / 2 */
         prio++;
         prio &= (THRNPRIO >> 1) - 1;
         prio = (THRNPRIO * class) + (THRNPRIO >> 1) + prio + thr->nice;
         prio = max(THRNPRIO * THRNCLASS - 1, prio);
-        thr->prio = prio;
     }
+    thr->prio = prio;
 
     return prio;
 }

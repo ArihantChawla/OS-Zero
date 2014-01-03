@@ -4,6 +4,10 @@
 #include <zero/param.h>
 #include <zero/cdecl.h>
 
+#if (ZEUS)
+#include <corewar/zeus.h>
+#endif
+
 #define CWNTURN     (128 * 1024)
 #define CWNPROC     1024
 #define CWINVAL     0xff
@@ -49,6 +53,25 @@ struct cwinstr {
     unsigned a    : 16;
     unsigned b    : 16;
 } PACK();
+
+typedef long cwinstrfunc(long, long);
+
+struct cwmars {
+    long             runqtab[2][CWNPROC];
+    cwinstrfunc     *functab[CWNOP];
+    long             proccnt[2];
+    long             curproc[2];
+    long             nturn[2];
+    long             running;
+    long             curpid;
+#if (ZEUSWINX11)
+    struct zeusx11   zeusx11;
+#endif
+    struct cwinstr  *optab;
+    char           **opnames;
+};
+
+void cwexec(long pid);
 
 #endif /* __COREWAR_CW_H__ */
 
