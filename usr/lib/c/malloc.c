@@ -12,8 +12,8 @@
 #define NEWMALLOC  1
 #define NEWSLAB    1
 #define FREEBUF    1
-#define ISTK       0
-#define NOSTK      1
+#define ISTK       1
+#define NOSTK      0
 #define BIGSLAB    0
 #define BIGHDR     1
 #define INTSTAT    0
@@ -137,16 +137,15 @@ typedef pthread_mutex_t LK_T;
 #define TUNEBUF 1
 #endif
 #endif
-#define TUNEBUF 0
+#define TUNEBUF 1
 
 /* basic allocator parameters */
-#if (HACKS)
 #define BLKMINLOG2    5  /* minimum-size allocation */
 #define SLABTEENYLOG2 8
 #define SLABTINYLOG2  12 /* little block */
-#define SLABBIGLOG2 16 /* small-size block */
+#define SLABBIGLOG2   16 /* small-size block */
 #if (NEWSLAB)
-#define SLABLOG2      18
+#define SLABLOG2      20
 #define MAPMIDLOG2    23
 #define MAPBIGLOG2    26
 #elif (BIGSLAB)
@@ -158,13 +157,6 @@ typedef pthread_mutex_t LK_T;
 #define SLABLOG2      20
 #define MAPMIDLOG2    24
 #define MAPBIGLOG2    26
-#endif
-#else
-#define BLKMINLOG2    5  /* minimum-size allocation */
-#define SLABTINYLOG2  12 /* little block */
-#define SLABBIGLOG2 16 /* small-size block */
-#define SLABLOG2      20 /* base size for heap allocations */
-#define MAPMIDLOG2    22
 #endif
 #define MINSZ         (1UL << BLKMINLOG2)
 #define HQMAX         SLABLOG2
@@ -192,10 +184,12 @@ typedef pthread_mutex_t LK_T;
 
 #define NL2BIT     16
 #define NL3BIT     (PTRBITS - SLABLOG2 - NL1BIT - NL2BIT)
+//#define NL3BIT     (PTRBITS - NL1BIT - NL2BIT)
 
 #else
 
 #define NL2BIT     (PTRBITS - SLABLOG2 - NL1BIT)
+//#define NL2BIT     (PTRBITS - NL1BIT)
 #define NL3BIT     0
 
 #endif /* PTRBITS > 48 */
@@ -260,7 +254,6 @@ typedef pthread_mutex_t LK_T;
             }                                                           \
         }                                                               \
     } while (0)
-#if (HACKS)
 #define nbufinit(bid)                                                   \
     (((bid) <= MAPMIDLOG2)                                              \
      ? 8                                                                \
@@ -446,7 +439,6 @@ typedef pthread_mutex_t LK_T;
            ? 1                                                          \
            : 2)))
 #endif
-#endif
 #if 0
 #define nblklog2(bid)                                                   \
     ((!(ismapbkt(bid))                                                  \
@@ -474,7 +466,7 @@ typedef pthread_mutex_t LK_T;
 #define slabid(ptr)       ((uintptr_t)(ptr) >> SLABLOG2)
 #endif
 #if (BIGHDR)
-#define NBHDR             (4 * PAGESIZE)
+#define NBHDR             (8 * PAGESIZE)
 #else
 #define NBHDR             PAGESIZE
 #endif
@@ -1131,9 +1123,12 @@ initmall(void)
 
 #if (MTSAFE)
 #if (PTRBITS > 32)
-#define l1ndx(ptr) getbits((uintptr_t)ptr, L1NDX, NL1BIT)
-#define l2ndx(ptr) getbits((uintptr_t)ptr, L2NDX, NL2BIT)
-#define l3ndx(ptr) getbits((uintptr_t)ptr, L3NDX, NL3BIT)
+//#define l1ndx(ptr) getbits((uintptr_t)ptr, L1NDX, NL1BIT)
+//#define l2ndx(ptr) getbits((uintptr_t)ptr, L2NDX, NL2BIT)
+//#define l3ndx(ptr) getbits((uintptr_t)ptr, L3NDX, NL3BIT)
+#define l1ndx(ptr) (((uintptr_t)ptr >> L1NDX) & ((1 << NL1BIT) - 1))
+#define l2ndx(ptr) (((uintptr_t)ptr >> L2NDX) & ((1 << NL2BIT) - 1))
+#define l3ndx(ptr) (((uintptr_t)ptr >> L3NDX) & ((1 << NL3BIT) - 1))
 #if (PTRBITS > 48)
 static struct mag *
 findmag(void *ptr)
@@ -1287,7 +1282,7 @@ gethdr(long aid)
         while (cur) {
             mag = (struct mag *)ptr;
             *hbuf++ = mag;
-#if (!NOSTK)
+#if (!ISTK) && (!NOSTK)
             mag->bptr = mag->stk;
 #endif
             cur--;
@@ -1405,7 +1400,7 @@ freemap(struct mag *mag)
     long         nfree;
     long         queue;
 #endif
-#if (HACKS) && (!ARNQBUF)
+#if (!ARNQBUF)
     struct mag  *mptr1;
     struct mag  *mptr2;
 #endif
@@ -1970,8 +1965,11 @@ putmem(void *ptr)
             }
             clrbit(mag->fmap, blkid(mag, mptr));
 #endif
+#if 0
             mptr = setflg(mptr, BDIRTY);
             putblk(mag, mptr);
+#endif
+            putblk(mag, setflg(mptr, BDIRTY));
             if (magfull(mag)) {
                 if (gtpow2(max, 1)) {
                     if (mag->prev) {
@@ -1985,8 +1983,9 @@ putmem(void *ptr)
                         mag->next->prev = mag->prev;
                     }
                 }
+                addblk(mptr, NULL);
                 if (ismapbkt(bid)
-                    && !(isbufbkt(bid)
+                    && (!isbufbkt(bid)
 #if (TUNEBUF)
                          && (_fcnt[bid] < _nbuftab[(bid)])
 #endif
