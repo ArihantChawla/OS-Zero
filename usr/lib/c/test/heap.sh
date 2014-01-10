@@ -1,7 +1,7 @@
 #! /bin/sh
 
-CC=gcc
-#CC=clang
+#CC=gcc
+CC=clang
 
 # As of October 24 2011, gcc -O2 produces slower code than -O // vendu
 # - same thing with -finline-functions and -funroll-loops
