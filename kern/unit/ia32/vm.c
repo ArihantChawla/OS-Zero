@@ -117,10 +117,10 @@ vminit(void *pagetab)
         pde++;
     }
 
-    /* identity-map 0..1M */
+    /* identity-map PAGESIZE..1M */
     vmmapseg(pagetab, 0, 0,
-           HICORE,
-           PAGEPRES | PAGEWRITE);
+             HICORE,
+             PAGEPRES | PAGEWRITE);
 
 #if (SMP)
 #if 0

@@ -53,8 +53,8 @@ seginit(long id)
     segsetdesc(&gdt[CPUSEG], &cpu->cpu, 4 * sizeof(void *),
                SEGCPU);
 #if (GERRY)
-    gdt[REALCODESEG] = UINT64_C(0x00009a000000ffff);
-    gdt[REALDATASEG] = UINT64_C(0x000092000000ffff);
+    gdt[REALCODESEG] = UINT64_C(0xffff0000009a0000);
+    gdt[REALDATASEG] = UINT64_C(0xffff000000920000);
 #endif
     /* initialize segmentation */
     gdtptr.lim = NGDT * sizeof(uint64_t) - 1;

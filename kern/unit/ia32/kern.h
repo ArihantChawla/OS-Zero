@@ -3,9 +3,10 @@
 
 #include <stdint.h>
 
+void trapinit(void);
 void seginit(long core);
 void vminit(void *pagetab);
-void trapinit(void);
+void picinit(void);
 void meminit(uintptr_t base, unsigned long nbphys);
 void vgainitcon(int w, int h);
 void kbdinit(void);

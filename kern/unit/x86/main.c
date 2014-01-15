@@ -63,11 +63,11 @@ void
 kmain(struct mboothdr *hdr, unsigned long pmemsz)
 {
     seginit(0);                         // memory segments
-    vminit((uint32_t *)&_pagetab);      // virtual memory
-    kbzero(&_bssvirt, (uint32_t)&_ebss - (uint32_t)&_bss);
 #if (GERRY)
     vbegetinfo();
 #endif
+    vminit((uint32_t *)&_pagetab);      // virtual memory
+    kbzero(&_bssvirt, (uint32_t)&_ebss - (uint32_t)&_bss);
 //    __asm__ __volatile__ ("sti\n");
     curproc = &proctab[0];
     meminit(vmphysadr(&_ebssvirt), pmemsz);

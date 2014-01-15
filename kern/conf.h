@@ -12,7 +12,7 @@
 #endif
 
 /* use Gerard Green's [modified] real-mode hacks to fire up VBE graphics */
-#define GERRY     0
+#define GERRY     1
 
 #define BUFSIZE     (1UL << BUFSIZELOG2)
 #define BUFSIZELOG2 12                          // TODO: make this per-device

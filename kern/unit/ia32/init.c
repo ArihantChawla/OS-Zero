@@ -35,7 +35,6 @@ kinit(void)
     /* boot.S leaves the multiboot header address in %ebx */
     __asm__ __volatile__ ("movl %%ebx, %0\n" : "=rm" (boothdr));
     pmemsz = grubmemsz(boothdr);
-    /* multiprocessor probe */
     /* bootstrap kernel */
     trapinit();                         // interrupt management
     __asm__ __volatile__ ("sti\n");
