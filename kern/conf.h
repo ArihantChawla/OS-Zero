@@ -14,7 +14,7 @@
 #define BUFSIZE     (1UL << BUFSIZELOG2)
 #define BUFSIZELOG2 12                          // TODO: make this per-device
 
-#define SMP       1     // enable multiprocessor support; currently broken
+#define SMP       0     // enable multiprocessor support; currently broken
 #define HZ        250   // scheduler timer frequency
 #define EVHZ      1000  // event timer frequency
 #define ZEROSCHED 1     // default scheduler
@@ -33,7 +33,7 @@
 
 #define GFXWIDTH  1024                          // horizontal screen resolution
 #define GFXHEIGHT 768                           // vertical screen resolution
-#define GFXDEPTH  24                            // bits per pixel
+#define GFXDEPTH  32                            // bits per pixel
 
 /* NOTE: it's not recommended to edit anything below unless you develop Zero */
 

@@ -28,8 +28,6 @@ usleep(long nusec)
     }
 }
 
-#endif /* SMP */
-
 void
 apicinit(long id)
 {
@@ -116,4 +114,6 @@ apicsethz(long hz)
 {
     ;
 }
+
+#endif /* SMP */
 

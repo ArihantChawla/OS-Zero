@@ -27,7 +27,6 @@ mboothdr:
 .long	_MBMAGIC
 .long	_MBFLAGS
 .long	_MBCHKSUM
-#if (VBE2)
 .long	0	// header_addr
 .long	0	// load_addr
 .long	0	// load_end_addr
@@ -37,7 +36,6 @@ mboothdr:
 .long	GFXWIDTH	// video width
 .long	GFXHEIGHT	// video height
 .long	GFXDEPTH	// video depth
-#endif
 
 	/* kernel startup */
 _start2:

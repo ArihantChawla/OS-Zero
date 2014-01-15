@@ -9,7 +9,7 @@
 #endif
 #include <kern/unit/ia32/boot.h>
 
-#define NIDT 256
+#define NINTR 256
 
 #if !defined(__ASSEMBLY__)
 

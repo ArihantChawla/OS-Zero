@@ -44,8 +44,13 @@ extern void syscall(void);
 #if (SMP)
 extern volatile long   mpmultiproc;
 #endif
-extern uint64_t        kernidt[];
+extern uint64_t        kernidt[NINTR];
 extern struct m_farptr idtptr;
+
+long                   trappriotab[NINTR];
+
+#define trapsetprio(irq, prio)                                          \
+    (trappriotab[(irq)] = (prio))
 
 void
 idtinit(uint64_t *idt)
@@ -82,11 +87,20 @@ idtinit(uint64_t *idt)
     trapsetintgate(&idt[TRAPV86MODE], trapv86, TRAPUSER);
 #endif
     /* initialize interrupts */
-    idtptr.lim = NIDT * sizeof(uint64_t) - 1;
+    idtptr.lim = NINTR * sizeof(uint64_t) - 1;
     idtptr.adr = (uint32_t)idt;
     idtset();
 
     return;
+}
+
+void
+trapinitprio(void)
+{
+    trapsetprio(IRQKBD, 0);
+    trapsetprio(IRQMOUSE, 1);
+    trapsetprio(IRQIDE0, 2);
+    trapsetprio(IRQIDE1, 3);
 }
 
 void
@@ -97,6 +111,7 @@ trapinit(void)
     /* mask timer interrupt, enable other interrupts */
     outb(0x01, 0x21);
     outb(0x00, 0xa1);
+    trapinitprio();
 //    pitinit();  // initialise interrupt timer
 
     return;
