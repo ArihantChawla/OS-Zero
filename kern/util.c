@@ -152,7 +152,7 @@ kmemset(void *adr, int byte, size_t len)
 }
 
 void
-kbcopy(void *dest, void *src, unsigned long len)
+kmemcpy(void *dest, void *src, unsigned long len)
 {
     unsigned long  nleft = len;
     long          *dptr = NULL;

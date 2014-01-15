@@ -38,6 +38,12 @@ mboothdr:
 .long	GFXDEPTH	// video depth
 
 	/* kernel startup */
+#if (GERRY)
+_start1:
+	movl	$KERNREALSTK, %esp	// real mode stack
+	pushl	%eax			// push GRUB magic number
+	pushl	%ebx			// push multiboot info address
+#endif /* GERRY */
 _start2:
 	/* set kernel stack up */
 	movl	$KERNSTKTOP, %esp

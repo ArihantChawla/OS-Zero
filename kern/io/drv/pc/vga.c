@@ -29,7 +29,7 @@ vgagetfont(void)
     outw(0x0406, 0x03ce);
     outw(0x0402, 0x03c4);
     outw(0x0704, 0x03c4);
-    kbcopy(_vgafontbuf, (void *)VGAFONTADR, VGAFONTSIZE);
+    kmemcpy(_vgafontbuf, (void *)VGAFONTADR, VGAFONTSIZE);
     vgareset();
 
     return;

@@ -65,6 +65,10 @@ struct mboothdr {
 
 #define KERNSTKTOP   0x00080000
 #define KERNSTKSIZE  8192
+#if (GERRY)
+#define KERNREALSTK  0x4000
+#define KERNREALBASE 0x7000
+#endif
 
 /* segment IDs */
 #define NULLSEG      0
@@ -74,7 +78,13 @@ struct mboothdr {
 #define UTEXTSEG     4
 #define UDATASEG     5
 #define CPUSEG       6
+#if (GERRY)
+#define REALCODESEG  7
+#define REALDATASEG  8
+#define NGDT         9
+#else
 #define NGDT         7
+#endif
 
 /* segment selectors */
 #define NULLSEL      0x0000
@@ -84,6 +94,10 @@ struct mboothdr {
 #define UTEXTSEL     0x0020
 #define UDATASEL     0x0028
 #define CPUSEL       0x0030
+#if (GERRY)
+#define REALCODESEL  0x0038
+#define REALDATASEL  0x0040
+#endif
 
 /* page size in bytes */
 #define NBPG         4096

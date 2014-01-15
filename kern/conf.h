@@ -11,6 +11,9 @@
 #include <kern/unit/ppc/conf.h>
 #endif
 
+/* use Gerard Green's [modified] real-mode hacks to fire up VBE graphics */
+#define GERRY     0
+
 #define BUFSIZE     (1UL << BUFSIZELOG2)
 #define BUFSIZELOG2 12                          // TODO: make this per-device
 
@@ -33,7 +36,7 @@
 
 #define GFXWIDTH  1024                          // horizontal screen resolution
 #define GFXHEIGHT 768                           // vertical screen resolution
-#define GFXDEPTH  32                            // bits per pixel
+#define GFXDEPTH  24                            // bits per pixel
 
 /* NOTE: it's not recommended to edit anything below unless you develop Zero */
 
@@ -43,7 +46,7 @@
 /* planned drivers */
 #define HPET      1     // high precision event timer support
 #define PS2DRV    1     // enable PS/2 mouse and keyboard drivers
-#define VBE2      1     // VBE2 graphics driver
+#define VBE2      0     // VBE2 graphics driver
 #define VGAGFX    0     // VGA graphics driver
 #define SB16      0     // Soundblaster 16 audio driver
 #define AC97      0     // AC97 audio drivers

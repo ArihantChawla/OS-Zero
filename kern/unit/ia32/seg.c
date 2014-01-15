@@ -52,6 +52,10 @@ seginit(long id)
     /* per-CPU data segment for curcpu etc. */
     segsetdesc(&gdt[CPUSEG], &cpu->cpu, 4 * sizeof(void *),
                SEGCPU);
+#if (GERRY)
+    gdt[REALCODESEG] = UINT64_C(0x00009a000000ffff);
+    gdt[REALDATASEG] = UINT64_C(0x000092000000ffff);
+#endif
     /* initialize segmentation */
     gdtptr.lim = NGDT * sizeof(uint64_t) - 1;
     gdtptr.adr = (uint32_t)gdt;

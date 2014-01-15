@@ -238,7 +238,7 @@ mpstart(void)
 
 //    __asm__ __volatile__ ("sti\n");
     lim = &mpcputab[0] + mpncpu;
-    kbcopy((void *)MPENTRY, &_mpentry, (uint8_t *)&_emp - (uint8_t *)&_mpentry);
+    kmemcpy((void *)MPENTRY, &_mpentry, (uint8_t *)&_emp - (uint8_t *)&_mpentry);
     fp = (void *)MPGDT;
     fp->lim = NMPGDT * sizeof(uint64_t) - 1;
     fp->adr = (uint32_t)(MPENTRY + 8);

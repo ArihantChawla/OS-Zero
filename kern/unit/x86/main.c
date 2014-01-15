@@ -33,7 +33,10 @@ extern void hpetinit(void);
 extern void mpstart(void);
 #endif
 #if (VBE2)
-long vbe2init(struct mboothdr *hdr);
+extern long vbe2init(struct mboothdr *hdr);
+#endif
+#if (GERRY)
+extern void vbegetinfo(void);
 #endif
 
 extern uint8_t            kerniomap[8192] ALIGNED(PAGESIZE);
@@ -62,6 +65,9 @@ kmain(struct mboothdr *hdr, unsigned long pmemsz)
     seginit(0);                         // memory segments
     vminit((uint32_t *)&_pagetab);      // virtual memory
     kbzero(&_bssvirt, (uint32_t)&_ebss - (uint32_t)&_bss);
+#if (GERRY)
+    vbegetinfo();
+#endif
 //    __asm__ __volatile__ ("sti\n");
     curproc = &proctab[0];
     meminit(vmphysadr(&_ebssvirt), pmemsz);
@@ -74,6 +80,8 @@ kmain(struct mboothdr *hdr, unsigned long pmemsz)
 #if (VBE2)
     vbe2init(hdr);
     vbe2kludge();
+#elif (GERRY)
+//    vbegetinfo();
 #endif
     if (!bufinit()) {
         kprintf("failed to allocate buffer cache\n");
