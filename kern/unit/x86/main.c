@@ -65,6 +65,7 @@ kmain(struct mboothdr *hdr, unsigned long pmemsz)
     seginit(0);                         // memory segments
 #if (GERRY)
     vbegetinfo();
+    picinit();
 #endif
     vminit((uint32_t *)&_pagetab);      // virtual memory
     kbzero(&_bssvirt, (uint32_t)&_ebss - (uint32_t)&_bss);
