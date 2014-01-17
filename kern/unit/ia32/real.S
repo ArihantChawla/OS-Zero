@@ -100,7 +100,7 @@ _espsave:
 
 _realidtptr:
 	.short	0x0000
-	.short	0x00000000
+	.long	0x00000000
 
 .align 4
 	
