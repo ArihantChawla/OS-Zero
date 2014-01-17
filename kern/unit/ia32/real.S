@@ -38,7 +38,7 @@ realstart:
 	and	$(~(CR0PE | CR0PG)), %eax
 	mov	%eax, %cr0
 	/* jump to real mode code */
-	ljmpl	$0x0, $(_real16 - realstart + KERNREALBASE)
+	ljmpl	$0x0000, $(_real16 - realstart + KERNREALBASE)
 _real16:
 	/* zero segment registers */
 	xorw	%ax, %ax

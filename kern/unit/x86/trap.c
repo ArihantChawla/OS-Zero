@@ -108,7 +108,7 @@ trapinit(void)
 {
     idtinit(kernidt);
     trapinitprio();
-#if 0
+#if (!GERRY)
     picinit();  // initialise interrupt controllers
     /* mask timer interrupt, enable other interrupts */
     outb(0x01, 0x21);
