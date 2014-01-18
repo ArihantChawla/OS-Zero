@@ -108,12 +108,10 @@ trapinit(void)
 {
     idtinit(kernidt);
     trapinitprio();
-#if (!GERRY)
     picinit();  // initialise interrupt controllers
     /* mask timer interrupt, enable other interrupts */
     outb(0x01, 0x21);
     outb(0x00, 0xa1);
-#endif
     __asm__ __volatile__ ("sti\n");
 //    pitinit();  // initialise interrupt timer
 

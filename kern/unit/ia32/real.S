@@ -58,7 +58,8 @@ _real16:
 	cli
 	lgdtl	_realgdtdesc - realstart + KERNREALBASE
 	mov	%cr0, %eax
-	orl	$(CR0PE | CR0PG), %eax
+//	orl	$(CR0PE | CR0PG), %eax
+	orl	$CR0PE, %eax
 	mov	%eax, %cr0
 	ljmpl	$0x08, $(_protmode - realstart + KERNREALBASE)
 
