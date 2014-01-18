@@ -1,5 +1,5 @@
-#ifndef __KERN_IO_DRV_PC_VBE2_H__
-#define __KERN_IO_DRV_PC_VBE2_H__
+#ifndef __KERN_UNIT_IA32_VBE_H__
+#define __KERN_UNIT_IA32_VBE_H__
 
 #include <gfx/rgb.h>
 #include <kern/unit/ia32/boot.h>
@@ -215,5 +215,5 @@ extern struct vbescreen vbe2screen;
         
 #endif /* !defined(__ASSEMBLY__) */
 
-#endif /* __KERN_IO_DRV_PC_VBE2_H__ */
+#endif /* __KERN_UNIT_IA32_VBE_H__ */
 

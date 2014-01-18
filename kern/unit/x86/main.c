@@ -35,7 +35,7 @@ extern void mpstart(void);
 #if (VBE2)
 extern long vbe2init(struct mboothdr *hdr);
 #endif
-#if (GERRY)
+#if (VBE)
 extern void vbegetinfo(void);
 #endif
 
@@ -63,7 +63,7 @@ void
 kmain(struct mboothdr *hdr, unsigned long pmemsz)
 {
     seginit(0);                         // memory segments
-#if (GERRY)
+#if (VBE)
     vbegetinfo();
     trapinit();
 #endif
@@ -81,7 +81,7 @@ kmain(struct mboothdr *hdr, unsigned long pmemsz)
 #if (VBE2)
     vbe2init(hdr);
     vbe2kludge();
-#elif (GERRY)
+#elif (VBE)
 //    vbegetinfo();
 #endif
     if (!bufinit()) {

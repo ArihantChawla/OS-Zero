@@ -11,9 +11,6 @@
 #include <kern/unit/ppc/conf.h>
 #endif
 
-/* use Gerard Green's [modified] real-mode hacks to fire up VBE graphics */
-#define GERRY     1
-
 #define BUFSIZE     (1UL << BUFSIZELOG2)
 #define BUFSIZELOG2 12                          // TODO: make this per-device
 
@@ -46,7 +43,7 @@
 /* planned drivers */
 #define HPET      1     // high precision event timer support
 #define PS2DRV    1     // enable PS/2 mouse and keyboard drivers
-#define VBE2      0     // VBE2 graphics driver
+#define VBE       1     // VBE2 graphics driver
 #define VGAGFX    0     // VGA graphics driver
 #define SB16      0     // Soundblaster 16 audio driver
 #define AC97      0     // AC97 audio drivers

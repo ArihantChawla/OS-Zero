@@ -14,12 +14,7 @@
 #define MBMAGIC     0x1BADB002
 #define MBPAGEALIGN (1 << 0)
 #define MBMEMINFO   (1 << 1)
-#if (VBE2)
-#define MBVIDEOMODE (1 << 2)
-#define MBFLAGS     (MBPAGEALIGN | MBMEMINFO | MBVIDEOMODE)
-#else
 #define MBFLAGS     (MBPAGEALIGN | MBMEMINFO)
-#endif
 #define MBCHKSUM    (-(MBMAGIC + MBFLAGS))
 
 /* flags to select fields to fill */
@@ -65,7 +60,7 @@ struct mboothdr {
 
 #define KERNSTKTOP   0x00080000
 #define KERNSTKSIZE  8192
-#if (GERRY)
+#if (VBE)
 #define KERNREALSTK  0xe000
 #define KERNREALBASE 0x7000
 #endif
@@ -78,7 +73,7 @@ struct mboothdr {
 #define UTEXTSEG     4
 #define UDATASEG     5
 #define CPUSEG       6
-#if (GERRY)
+#if (VBE)
 #define REALCODESEG  7
 #define REALDATASEG  8
 #define NGDT         9
@@ -94,7 +89,7 @@ struct mboothdr {
 #define UTEXTSEL     0x0020
 #define UDATASEL     0x0028
 #define CPUSEL       0x0030
-#if (GERRY)
+#if (VBE)
 #define REALCODESEL  0x0038
 #define REALDATASEL  0x0040
 #endif

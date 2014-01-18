@@ -1,6 +1,6 @@
 #include <kern/conf.h>
 
-#if (GERRY)
+#if (VBE)
 
 #define __ASSEMBLY__ 1
 #include <kern/unit/ia32/boot.h>
@@ -107,5 +107,5 @@ _realidtptr:
 	
 realend:
 
-#endif /* GERRY */
+#endif /* VBE */
 

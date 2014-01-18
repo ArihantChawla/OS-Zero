@@ -36,7 +36,7 @@ kinit(void)
     __asm__ __volatile__ ("movl %%ebx, %0\n" : "=rm" (boothdr));
     pmemsz = grubmemsz(boothdr);
     /* bootstrap kernel */
-#if (!GERRY)
+#if (!VBE)
     trapinit();                         // interrupt management
 #endif
     __asm__ __volatile__ ("sti\n");
