@@ -9,19 +9,15 @@
 #include <kern/unit/ia32/boot.h>
 #include <kern/unit/ia32/real.h>
 #include <kern/unit/ia32/vbe.h>
-//#include <kern/io/drv/pc/vbe2.h>
-//#include <kern/unit/ia32/link.h>
 #include <kern/unit/ia32/vm.h>
-
-//#include <kern/io/drv/pc/vbe2.h>
 
 extern void gdtinit(void);
 extern void realint10(void);
 
 #define VBEPTR(x) ((((uint32_t)(x) & 0xffffffff) >> 12) | ((uint32_t)(x) & 0xffff))
 
-struct vbescreen vbescreen;
-struct vbeinfo   vbectlinfo;
+struct vbescreen        vbescreen;
+static struct vbeinfo   vbectlinfo;
 
 void
 vbeint10(struct realregs *regs)
@@ -38,20 +34,39 @@ vbeint10(struct realregs *regs)
             regs,
             sizeof(struct realregs));
     realint10();
-    gdtinit();
 }
 
 void
-vbegetinfo(void)
+vbeinit(void)
 {
     struct realregs  regs;
-    uint16_t        *modeptr;
 
     regs.ax = 0x4f00;
     regs.di = 0xa000;
     vbeint10(&regs);
-    kmemcpy(&vbectlinfo, (void *)0xa000, sizeof(struct vbeinfo));
+    gdtinit();
+
+    return;
+}
+
+void
+vbeprintinfo(void)
+{
+    struct vbeinfo *info = (void *)0xa000;
+    uint16_t *modeptr = (uint16_t *)VBEPTR(info->modelst);
+
+//    kmemcpy(&vbectlinfo, (void *)0xa000, sizeof(struct vbeinfo));
     modeptr = (uint16_t *)VBEPTR(vbectlinfo.modelst);
+    kprintf("VBE modes:");
+    while (*modeptr != VBEMODELSTEND) {
+        if (*modeptr) {
+            kprintf(" %x", *modeptr);
+        }
+        modeptr++;
+    }
+    kprintf("\n");
+
+    return;
 }
 
 #if 0

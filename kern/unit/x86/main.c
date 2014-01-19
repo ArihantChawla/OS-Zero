@@ -36,7 +36,7 @@ extern void mpstart(void);
 extern long vbe2init(struct mboothdr *hdr);
 #endif
 #if (VBE)
-extern void vbegetinfo(void);
+extern void vbeinit(void);
 #endif
 
 extern uint8_t            kerniomap[8192] ALIGNED(PAGESIZE);
@@ -64,7 +64,7 @@ kmain(struct mboothdr *hdr, unsigned long pmemsz)
 {
     seginit(0);                         // memory segments
 #if (VBE)
-    vbegetinfo();
+    vbeinit();
     trapinit();
 #endif
     vminit((uint32_t *)&_pagetab);      // virtual memory
@@ -82,7 +82,7 @@ kmain(struct mboothdr *hdr, unsigned long pmemsz)
     vbe2init(hdr);
     vbe2kludge();
 #elif (VBE)
-//    vbegetinfo();
+    vbeprintinfo();
 #endif
     if (!bufinit()) {
         kprintf("failed to allocate buffer cache\n");

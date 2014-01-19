@@ -138,19 +138,19 @@ struct vbescreen {
     long  fmt;
 };
 
-#define vbe2pixadr(x, y)                                                \
-    ((uint8_t *)vbe2screen.fbuf + ((y) * vbe2screen.w + (x)) * 3)
+#define vbepixadr(x, y)                                                 \
+    ((uint8_t *)vbescreen.fbuf + ((y) * vbescreen.w + (x)) * 3)
 
 /* TODO: currently hardwired for RGB888 */
-#define vbe2putpix(pix, x, y)                                           \
+#define vbeputpix(pix, x, y)                                            \
     do {                                                                \
-        uint8_t *_ptr = vbe2pixadr(x, y);                               \
+        uint8_t *_ptr = vbepixadr(x, y);                                \
                                                                         \
         gfxtorgb888(pix, _ptr);                                         \
     } while (0)
 
 /* draw character with background */
-#define vbe2drawchar(c, x, y, fg, bg)                                   \
+#define vbedrawchar(c, x, y, fg, bg)                                    \
     do {                                                                \
         int      _cy;                                                   \
         int      _yofs;                                                 \
@@ -160,20 +160,20 @@ struct vbescreen {
         for (_cy = 0 ; _cy < VGAGLYPHH ; _cy++) {                       \
             _g = *_gp;                                                  \
             _yofs = y + _cy - 12;                                       \
-            vbe2putpix((g & 0x01) ? fg : bg, x, _yofs);                 \
-            vbe2putpix((g & 0x02) ? fg : bg, x + 1, _yofs);             \
-            vbe2putpix((g & 0x04) ? fg : bg, x + 2, _yofs);             \
-            vbe2putpix((g & 0x08) ? fg : bg, x + 3, _yofs);             \
-            vbe2putpix((g & 0x10) ? fg : bg, x + 4, _yofs);             \
-            vbe2putpix((g & 0x20) ? fg : bg, x + 5, _yofs);             \
-            vbe2putpix((g & 0x40) ? fg : bg, x + 6, _yofs);             \
-            vbe2putpix((g & 0x80) ? fg : bg, x + 7, _yofs);             \
+            vbeputpix((g & 0x01) ? fg : bg, x, _yofs);                  \
+            vbeputpix((g & 0x02) ? fg : bg, x + 1, _yofs);              \
+            vbeputpix((g & 0x04) ? fg : bg, x + 2, _yofs);              \
+            vbeputpix((g & 0x08) ? fg : bg, x + 3, _yofs);              \
+            vbeputpix((g & 0x10) ? fg : bg, x + 4, _yofs);              \
+            vbeputpix((g & 0x20) ? fg : bg, x + 5, _yofs);              \
+            vbeputpix((g & 0x40) ? fg : bg, x + 6, _yofs);              \
+            vbeputpix((g & 0x80) ? fg : bg, x + 7, _yofs);              \
             _gp++;                                                      \
         }                                                               \
     } while (0)                                                         \
         
 /* draw character without background (transparent) */
-#define vbe2drawcharfg(c, x, y, fg, bg)                                 \
+#define vbedrawcharfg(c, x, y, fg, bg)                                  \
     do {                                                                \
         int      _cy;                                                   \
         int      _yofs;                                                 \
@@ -184,34 +184,34 @@ struct vbescreen {
             _g = *_gp;                                                  \
             _yofs = y + _cy - 12;                                       \
             if (_g & 0x01) {                                            \
-                vbe2putpix(fg, x, yofs);                                \
+                vbeputpix(fg, x, yofs);                                 \
             }                                                           \
             if (_g & 0x02) {                                            \
-                vbe2putpix(fg, x + 1, yofs);                            \
+                vbeputpix(fg, x + 1, yofs);                             \
             }                                                           \
             if (_g & 0x04) {                                            \
-                vbe2putpix(fg, x + 2, yofs);                            \
+                vbeputpix(fg, x + 2, yofs);                             \
             }                                                           \
             if (_g & 0x08) {                                            \
-                vbe2putpix(fg, x + 3, yofs);                            \
+                vbeputpix(fg, x + 3, yofs);                             \
             }                                                           \
             if (_g & 0x10) {                                            \
-                vbe2putpix(fg, x + 4, yofs);                            \
+                vbeputpix(fg, x + 4, yofs);                             \
             }                                                           \
             if (_g & 0x20) {                                            \
-                vbe2putpix(fg, x + 5, yofs);                            \
+                vbeputpix(fg, x + 5, yofs);                             \
             }                                                           \
             if (_g & 0x40) {                                            \
-                vbe2putpix(fg, x + 6, yofs);                            \
+                vbeputpix(fg, x + 6, yofs);                             \
             }                                                           \
             if (_g & 0x80) {                                            \
-                vbe2putpix(fg, x + 7, yofs);                            \
+                vbeputpix(fg, x + 7, yofs);                             \
             }                                                           \
             _gp++;                                                      \
         }                                                               \
     } while (0)                                                         \
-
-extern struct vbescreen vbe2screen;
+        
+extern struct vbescreen vbescreen;
         
 #endif /* !defined(__ASSEMBLY__) */
 
