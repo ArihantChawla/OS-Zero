@@ -23,6 +23,7 @@
 #if (SMP)
 #include <kern/unit/ia32/mp.h>
 #endif
+#include <kern/unit/x86/asm.h>
 
 extern long bufinit(void);
 
@@ -73,7 +74,7 @@ kmain(struct mboothdr *hdr, unsigned long pmemsz)
 #if (VBE)
 //    vbeinit();
     vbeinitscr();
-    trapinit();
+//    trapinit();
 #endif
 //    __asm__ __volatile__ ("sti\n");
     curproc = &proctab[0];
@@ -88,7 +89,7 @@ kmain(struct mboothdr *hdr, unsigned long pmemsz)
     vbe2init(hdr);
     vbe2kludge();
 #elif (VBE)
-    vbe2kludge();
+//    vbe2kludge();
 //    vbeprintinfo();
 #endif
     if (!bufinit()) {
@@ -156,7 +157,7 @@ kmain(struct mboothdr *hdr, unsigned long pmemsz)
     pitinit();
     /* pseudo-scheduler loop; interrupted by timer [and other] interrupts */
     while (1) {
-        m_waitint();
+        k_waitint();
     }
 }
 

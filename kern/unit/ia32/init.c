@@ -39,7 +39,7 @@ kinit(void)
 #if (!VBE)
     trapinit();                         // interrupt management
 #endif
-    __asm__ __volatile__ ("sti\n");
+//    __asm__ __volatile__ ("sti\n");
     kmain(boothdr, pmemsz);
 }
 

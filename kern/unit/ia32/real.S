@@ -58,11 +58,11 @@ _real16:
 	/* load real mode IDT */
 	movw	$0x3ff, _realidtptr - realstart + KERNREALBASE
 	lidtl	(_realidtptr - realstart + KERNREALBASE)
-	sti
 	popa
+	sti
 	int	$0x10
-	pusha
 	cli
+	pusha
 	mov	%cr0, %eax
 	orl	$(CR0PE), %eax
 	mov	%eax, %cr0
@@ -86,6 +86,7 @@ _protmode:
 	movl	%ebp, %esp
 	popl	%ebp
 	lidt	(idtptr)
+	sti
 	retl
 
 .align	16
