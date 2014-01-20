@@ -10,8 +10,8 @@
 #include <kern/proc/sched.h>
 //#include <kern/thr.h>
 #include <kern/io/drv/pc/vga.h>
-#if (VBE2)
-#include <kern/io/drv/pc/vbe2.h>
+#if (VBE)
+#include <kern/unit/ia32/vbe.h>
 #endif
 #include <kern/unit/x86/cpu.h>
 #include <kern/unit/x86/pit.h>
@@ -50,11 +50,11 @@ extern volatile long      mpncpu;
 extern volatile long      mpmultiproc;
 #endif
 
-#if (VBE2)
+#if (VBE2) || (VBE)
 void
 vbe2kludge(void)
 {
-    kmemset(vbe2screen.fbuf, 0xff, vbe2screen.w * vbe2screen.h * 3);
+    kmemset(vbescreen.fbuf, 0xff, vbescreen.w * vbescreen.h * 3);
 }
 #endif
 
@@ -70,7 +70,7 @@ kmain(struct mboothdr *hdr, unsigned long pmemsz)
     vminit((uint32_t *)&_pagetab);      // virtual memory
     kbzero(&_bssvirt, (uint32_t)&_ebss - (uint32_t)&_bss);
 #if (VBE)
-//    vbeinit();
+    vbeinitscr();
 //    trapinit();
 #endif
 //    __asm__ __volatile__ ("sti\n");
@@ -86,7 +86,8 @@ kmain(struct mboothdr *hdr, unsigned long pmemsz)
     vbe2init(hdr);
     vbe2kludge();
 #elif (VBE)
-    vbeprintinfo();
+    vbe2kludge();
+//    vbeprintinfo();
 #endif
     if (!bufinit()) {
         kprintf("failed to allocate buffer cache\n");

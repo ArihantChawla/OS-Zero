@@ -22,6 +22,9 @@
 #endif
 #include <kern/unit/ia32/link.h>
 #include <kern/unit/ia32/vm.h>
+#if (VBE)
+//#include <kern/unit/ia32/vbe.h>
+#endif
 
 #define HICORE (1024 * 1024)
 
@@ -117,7 +120,7 @@ vminit(void *pagetab)
         pde++;
     }
 
-    /* identity-map PAGESIZE..1M */
+    /* identity-map 0..1M */
     vmmapseg(pagetab, 0, 0,
              HICORE,
              PAGEPRES | PAGEWRITE);
@@ -160,6 +163,18 @@ vminit(void *pagetab)
 
     /* identity-map 3.5G..4G */
 //    devmap(pagetab, DEVMEM, 512 * 1024 * 1024);
+
+#if (VBE) && 0
+    /* map VBE framebuffer */
+    vmmapseg((uint32_t *)&_pagetab,
+             (uint32_t)vbescreen.fbuf,
+             (uint32_t)vbescreen.fbuf,
+             (uint32_t)vbescreen.fbuf
+             + ((vbescreen.nbpp == 24)
+                ? vbescreen.mode->xres * vbescreen.mode->yres * 3
+                : vbescreen.mode->xres * vbescreen.mode->yres * 2),
+             PAGEPRES | PAGEWRITE);
+#endif
 
     /* initialize paging */
     pginit();

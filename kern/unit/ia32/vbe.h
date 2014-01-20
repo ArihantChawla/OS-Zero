@@ -5,7 +5,7 @@
 #include <kern/unit/ia32/boot.h>
 
 #define VBEINFOADR       0xa000
-#define VBEMODEADR       0x2000
+#define VBEMODEADR       0xb000
 #define VBESEGSIZE       (1L << VBESEGSIZELOG2)
 #define VBESEGSIZELOG2   16
 #define VBEMODEBIT       0x0100  // 1 if VESA-defined
@@ -20,6 +20,8 @@
 
 /* commands */
 #define VBEGETINFO       0x4f00
+#define VBEGETMODEINFO   0x4f01
+#define VBESETMODE       0x4f02
 
 #if !defined(__ASSEMBLY__)
 
@@ -133,12 +135,13 @@ struct vbemode {
 
 /* VBE screen information */
 struct vbescreen {
-    void *fbuf;
-    void *dbuf;
-    long  w;
-    long  h;
-    long  nbpp;
-    long  fmt;
+    void           *fbuf;
+    void           *dbuf;
+    long            w;
+    long            h;
+    long            nbpp;
+    long            fmt;
+    struct vbemode *mode;
 };
 
 #define vbepixadr(x, y)                                                 \

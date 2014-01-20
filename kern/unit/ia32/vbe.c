@@ -7,6 +7,7 @@
 #include <gfx/rgb.h>
 #include <kern/util.h>
 #include <kern/unit/ia32/boot.h>
+//#include <kern/unit/ia32/link.h>
 #include <kern/unit/ia32/real.h>
 #include <kern/unit/ia32/vbe.h>
 #include <kern/unit/ia32/vm.h>
@@ -21,9 +22,9 @@ struct vbe {
     long mode;
 };
 
-struct vbe              vbe;
-struct vbescreen        vbescreen;
-static struct vbeinfo   vbectlinfo;
+struct vbe            vbe;
+struct vbescreen      vbescreen;
+static struct vbeinfo vbectlinfo;
 
 void
 vbeint10(struct realregs *regs)
@@ -36,9 +37,11 @@ vbeint10(struct realregs *regs)
                 (unsigned long)&realend - (unsigned long)&realstart);
         first = 0;
     }
+#if 0
     kmemcpy((void *)(KERNREALSTK - sizeof(struct realregs)),
             regs,
             sizeof(struct realregs));
+#endif
     realint10();
 
     return;
@@ -47,18 +50,58 @@ vbeint10(struct realregs *regs)
 void
 vbeinit(void)
 {
-    struct realregs  regs;
-    struct vbeinfo  *info = (struct vbeinfo *)VBEINFOADR;
+    struct realregs *regs = (void *)(KERNREALSTK - sizeof(struct realregs));
+    struct vbeinfo  *info = (void *)VBEINFOADR;
 
     kbzero(info, sizeof(struct vbeinfo));
+#if 0
     regs.ax = VBEGETINFO;
     regs.di = VBEINFOADR;
+#endif
+    regs->ax = VBEGETINFO;
+    regs->di = VBEINFOADR;
     info->sig[0] = 'V';
     info->sig[1] = 'B';
     info->sig[2] = 'E';
     info->sig[3] = '2';
-    vbeint10(&regs);
+    vbeint10(regs);
     gdtinit();
+    if (regs->ax != 0x004f) {
+
+        return;
+    }
+    regs->ax = VBEGETMODEINFO;
+    regs->cx = 0x118;
+    regs->di = VBEMODEADR;
+    vbeint10(regs);
+    gdtinit();
+    if (regs->ax != 0x004f) {
+
+        return;
+    }
+    regs->ax = VBESETMODE;
+    regs->bx = 0x118 | VBELINFBBIT;
+    vbeint10(regs);
+    gdtinit();
+    if (regs->ax != 0x004f) {
+
+        return;
+    }
+
+    return;
+}
+
+void
+vbeinitscr(void)
+{
+    struct vbemode  *mode = (void *)VBEMODEADR;
+
+    vbescreen.fbuf = mode->fbadr;
+    vbescreen.w = mode->xres;
+    vbescreen.h = mode->yres;
+    vbescreen.nbpp = mode->npixbit;
+// TODO: set vbescreen->fmt
+    vbescreen.mode = mode;
 
     return;
 }
@@ -66,10 +109,12 @@ vbeinit(void)
 void
 vbeprintinfo(void)
 {
-    struct vbeinfo *info = (void *)0xa000;
-    uint16_t *modeptr = (uint16_t *)VBEPTR(info->modelst);
+    struct vbeinfo *info = (void *)VBEMODEADR;
+    uint16_t       *modeptr = (uint16_t *)VBEPTR(info->modelst);
+    struct vbemode *mode = (void *)VBEMODEADR;
 
 //    kmemcpy(&vbectlinfo, (void *)0xa000, sizeof(struct vbeinfo));
+    kprintf("VBE OEM: %s\n", VBEPTR(*((uint32_t *)info->oem)));
     modeptr = (uint16_t *)VBEPTR(vbectlinfo.modelst);
     kprintf("VBE modes:");
     while (*modeptr != VBEMODELSTEND) {
