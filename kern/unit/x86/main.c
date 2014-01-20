@@ -70,8 +70,9 @@ kmain(struct mboothdr *hdr, unsigned long pmemsz)
     vminit((uint32_t *)&_pagetab);      // virtual memory
     kbzero(&_bssvirt, (uint32_t)&_ebss - (uint32_t)&_bss);
 #if (VBE)
+//    vbeinit();
     vbeinitscr();
-//    trapinit();
+    trapinit();
 #endif
 //    __asm__ __volatile__ ("sti\n");
     curproc = &proctab[0];

@@ -64,7 +64,7 @@ _real16:
 	pusha
 	cli
 	mov	%cr0, %eax
-	orl	$CR0PE, %eax
+	orl	$(CR0PE), %eax
 	mov	%eax, %cr0
 	ljmpl	$0x08, $(_protmode - realstart + KERNREALBASE)
 

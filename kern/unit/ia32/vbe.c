@@ -7,7 +7,7 @@
 #include <gfx/rgb.h>
 #include <kern/util.h>
 #include <kern/unit/ia32/boot.h>
-//#include <kern/unit/ia32/link.h>
+#include <kern/unit/ia32/link.h>
 #include <kern/unit/ia32/real.h>
 #include <kern/unit/ia32/vbe.h>
 #include <kern/unit/ia32/vm.h>
@@ -66,7 +66,7 @@ vbeinit(void)
     info->sig[3] = '2';
     vbeint10(regs);
     gdtinit();
-    if (regs->ax != 0x004f) {
+    if (regs->ax != VBESUPPORTED) {
 
         return;
     }
@@ -75,7 +75,7 @@ vbeinit(void)
     regs->di = VBEMODEADR;
     vbeint10(regs);
     gdtinit();
-    if (regs->ax != 0x004f) {
+    if (regs->ax != VBESUPPORTED) {
 
         return;
     }
@@ -83,10 +83,21 @@ vbeinit(void)
     regs->bx = 0x118 | VBELINFBBIT;
     vbeint10(regs);
     gdtinit();
-    if (regs->ax != 0x004f) {
+    if (regs->ax != VBESUPPORTED) {
 
         return;
     }
+
+    /* for testing only */
+    regs->ax = 0x4f03;
+    vbeint10(regs);
+    gdtinit();
+    if (regs->ax != VBESUPPORTED) {
+
+        return;
+    }
+
+
 
     return;
 }
@@ -102,6 +113,15 @@ vbeinitscr(void)
     vbescreen.nbpp = mode->npixbit;
 // TODO: set vbescreen->fmt
     vbescreen.mode = mode;
+    /* identity-map VBE framebuffer */
+    vmmapseg((uint32_t *)&_pagetab,
+             (uint32_t)vbescreen.fbuf,
+             (uint32_t)vbescreen.fbuf,
+             (uint32_t)vbescreen.fbuf
+             + ((vbescreen.nbpp == 24)
+                ? vbescreen.mode->xres * vbescreen.mode->yres * 3
+                : vbescreen.mode->xres * vbescreen.mode->yres * 2),
+             PAGEPRES | PAGEWRITE);
 
     return;
 }

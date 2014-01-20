@@ -1,11 +1,22 @@
 build
 -----
 
-1. execute ./build sh or
-2. after successfully running tup init in the toplevel repository directory,
-   execute:
-   tup upd
-3. execute ./mkcdimg.sh to create a cdrom image
+NOTE: you need a 32-bit build of GRUB 2 to successfully build a bootable CD-ROM
+image.
+
+To obtain GRUB and install it, do the following:
+
+1. git clone git://git.savannah.gnu.org/grub.git
+2. cd grub
+3. ./configure --target=i686
+4. make
+5. (as root) make install
+
+These steps will install GRUB under /usr/local.
+
+To build a CD-ROM image (cd.iso), do the following:
+
+1. ./mkcdimg2.sh
 
 test
 ----
