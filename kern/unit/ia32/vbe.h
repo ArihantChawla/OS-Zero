@@ -4,7 +4,7 @@
 #include <gfx/rgb.h>
 #include <kern/unit/ia32/boot.h>
 
-#define VBEINFOADR       0x1000
+#define VBEINFOADR       0xa000
 #define VBEMODEADR       0x2000
 #define VBESEGSIZE       (1L << VBESEGSIZELOG2)
 #define VBESEGSIZELOG2   16
@@ -13,10 +13,13 @@
 #define VBEPRESVMEMBIT   0x8000  // 1 - preserve display memory, 0 - clear
 #define VBESAVEMODE      0x81ff  // preserve contents, give access to all memory
 
-/* function 0x00 - return VBE controller information */
+/* return status in %ax */
+#define VBESUPPORTED     0x004f
+#define VBESUCCESS       0x0000
+#define VBEFAILURE       0x0001
 
-#define VBESUCCESS       0x4f00
-#define VBEFAILURE       0x4f01
+/* commands */
+#define VBEGETINFO       0x4f00
 
 #if !defined(__ASSEMBLY__)
 

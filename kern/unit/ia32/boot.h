@@ -61,7 +61,7 @@ struct mboothdr {
 #define KERNSTKTOP   0x00080000
 #define KERNSTKSIZE  8192
 #if (VBE)
-#define KERNREALSTK  0xe000
+#define KERNREALSTK  0xb000
 #define KERNREALBASE 0x7000
 #endif
 

@@ -12,15 +12,19 @@
 
 .code32
 
+.align	4
+
 realint10:
 	pushl	%ebp
 	movl	%esp, %ebp
 	pushfl
 	cli
 	pushal
-	mov	%esp, _espsave
+	movl	%esp, _espsave
 	cld
 	ljmpl	$REALCODESEL, $KERNREALBASE
+
+.align	4
 
 .code16
 realstart:
@@ -39,6 +43,9 @@ realstart:
 	mov	%eax, %cr0
 	/* jump to real mode code */
 	ljmpl	$0x0000, $(_real16 - realstart + KERNREALBASE)
+
+.align	4
+	
 _real16:
 	/* zero segment registers */
 	xorw	%ax, %ax
@@ -56,17 +63,17 @@ _real16:
 	int	$0x10
 	pusha
 	cli
-	lgdtl	_realgdtdesc - realstart + KERNREALBASE
 	mov	%cr0, %eax
-//	orl	$(CR0PE | CR0PG), %eax
 	orl	$CR0PE, %eax
 	mov	%eax, %cr0
 	ljmpl	$0x08, $(_protmode - realstart + KERNREALBASE)
 
+.align	4
+
 .code32
 _protmode:
 	/* set up segment registers */
-	movw	$0x10, %ax
+	movw	$DATASEL, %ax
 	movw	%ax, %ds
 	movw	%ax, %es
 	movw	%ax, %fs
@@ -83,27 +90,29 @@ _protmode:
 
 .align	16
 
+#if 0
 _realgdt:
 	/* NULL */
-	.word	0, 0
+	.short	0, 0
 	.byte	0, 0, 0, 0
-	/* ring 0 32-bit code selector */
-	.word	0xffff, 0
+	/* ring 0 32-bit code descriptor */
+	.short	0xffff, 0
 	.byte	0, 0x98, 0xcf, 0
-	/* ring 0 32-bit data selector */
-	.word	0xffff, 0
+	/* ring 0 32-bit data descriptor */
+	.short	0xffff, 0
 	.byte	0, 0x92, 0xcf, 0
+
 _realgdtdesc:
-	.word	_realgdtdesc - _realgdt - 1
+	.short	_realgdtdesc - _realgdt - 1
 	.long	_realgdt - realstart + KERNREALBASE
+#endif
 _espsave:
 	.long	0x00000000
-
 _realidtptr:
 	.short	0x0000
 	.long	0x00000000
 
-.align 4
+.align	4
 	
 realend:
 

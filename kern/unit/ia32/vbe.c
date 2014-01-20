@@ -16,6 +16,12 @@ extern void realint10(void);
 
 #define VBEPTR(x) ((((uint32_t)(x) & 0xffffffff) >> 12) | ((uint32_t)(x) & 0xffff))
 
+struct vbe {
+    long found;
+    long mode;
+};
+
+struct vbe              vbe;
 struct vbescreen        vbescreen;
 static struct vbeinfo   vbectlinfo;
 
@@ -34,15 +40,23 @@ vbeint10(struct realregs *regs)
             regs,
             sizeof(struct realregs));
     realint10();
+
+    return;
 }
 
 void
 vbeinit(void)
 {
     struct realregs  regs;
+    struct vbeinfo  *info = (struct vbeinfo *)VBEINFOADR;
 
-    regs.ax = 0x4f00;
-    regs.di = 0xa000;
+    kbzero(info, sizeof(struct vbeinfo));
+    regs.ax = VBEGETINFO;
+    regs.di = VBEINFOADR;
+    info->sig[0] = 'V';
+    info->sig[1] = 'B';
+    info->sig[2] = 'E';
+    info->sig[3] = '2';
     vbeint10(&regs);
     gdtinit();
 

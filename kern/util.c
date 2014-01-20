@@ -51,9 +51,10 @@ kbzero(void *adr, size_t len)
 {
     long *next;
     long *ptr = adr;
+    char *cptr;
     long  val = 0;
     long  incr = 8;
-    long  nleft = 0;
+    long  nleft = len;
     
     if (len > (1UL << (LONGSIZELOG2 + 3))) {
         /* zero non-cacheline-aligned head long-word by long-word */
@@ -87,9 +88,15 @@ kbzero(void *adr, size_t len)
             ptr = next;
         }
     }
-    while (nleft--) {
+    len = nleft >> LONGSIZELOG2;
+    nleft -= len << LONGSIZELOG2;
+    while (len--) {
         /* zero tail long-words */
         *ptr++ = val;
+    }
+    cptr = (char *)ptr;
+    while (nleft--) {
+        *cptr++ = 0;
     }
     
     return;
@@ -101,9 +108,10 @@ kmemset(void *adr, int byte, size_t len)
 {
     long *next;
     long *ptr;
+    char *cptr;
     long  val = 0;
     long  incr = 8;
-    long  nleft = 0;
+    long  nleft = len;
     
     val = byte;
     val |= (val << 8);
@@ -143,9 +151,15 @@ kmemset(void *adr, int byte, size_t len)
             ptr = next;
         }
     }
-    while (nleft--) {
+    len = nleft >> LONGSIZELOG2;
+    nleft -= len << LONGSIZELOG2;
+    while (len--) {
         /* zero tail long-words */
         *ptr++ = val;
+    }
+    cptr = (char *)ptr;
+    while (nleft--) {
+        *cptr++ = 0;
     }
     
     return;
@@ -157,6 +171,8 @@ kmemcpy(void *dest, void *src, unsigned long len)
     unsigned long  nleft = len;
     long          *dptr = NULL;
     long          *sptr = NULL;
+    char          *dcptr;
+    char          *scptr;
     long          *dnext;
     long          *snext;
     long           incr;
@@ -193,8 +209,15 @@ kmemcpy(void *dest, void *src, unsigned long len)
         dptr[6] = sptr[6];
         dptr[7] = sptr[7];
     }
-    while (nleft--) {
+    len = nleft >> LONGSIZELOG2;
+    nleft -= len << LONGSIZELOG2;
+    while (len--) {
         *dptr++ = *sptr++;
+    }
+    dcptr = (char *)dptr;
+    scptr = (char *)sptr;
+    while (nleft--) {
+        *dcptr++ = *scptr++;
     }
 
     return;
@@ -205,6 +228,7 @@ kbfill(void *adr, uint8_t byte, unsigned long len)
 {
     unsigned long  nleft = len;
     long          *ptr = NULL;
+    char          *cptr;
     long          *next;
     long           val;
     long           incr;
@@ -240,8 +264,14 @@ kbfill(void *adr, uint8_t byte, unsigned long len)
         ptr[6] = val;
         ptr[7] = val;
     }
-    while (nleft--) {
+    len = nleft >> LONGSIZELOG2;
+    nleft -= len << LONGSIZELOG2;
+    while (len--) {
         *ptr++ = val;
+    }
+    cptr = (char *)ptr;
+    while (nleft--) {
+        *cptr++ = byte;
     }
 
     return;
