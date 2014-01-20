@@ -37,6 +37,7 @@ extern long vbe2init(struct mboothdr *hdr);
 #endif
 #if (VBE)
 extern void vbeinit(void);
+extern void vbeinitscr(void);
 #endif
 
 extern uint8_t            kerniomap[8192] ALIGNED(PAGESIZE);

@@ -107,7 +107,7 @@ vbeinitscr(void)
 {
     struct vbemode  *mode = (void *)VBEMODEADR;
 
-    vbescreen.fbuf = mode->fbadr;
+    vbescreen.fbuf = (void *)mode->fbadr;
     vbescreen.w = mode->xres;
     vbescreen.h = mode->yres;
     vbescreen.nbpp = mode->npixbit;
@@ -131,7 +131,6 @@ vbeprintinfo(void)
 {
     struct vbeinfo *info = (void *)VBEMODEADR;
     uint16_t       *modeptr = (uint16_t *)VBEPTR(info->modelst);
-    struct vbemode *mode = (void *)VBEMODEADR;
 
 //    kmemcpy(&vbectlinfo, (void *)0xa000, sizeof(struct vbeinfo));
     kprintf("VBE OEM: %s\n", VBEPTR(*((uint32_t *)info->oem)));
