@@ -15,10 +15,10 @@
 .align	4
 
 realint10:
+	cli
 	pushl	%ebp
 	movl	%esp, %ebp
 	pushfl
-	cli
 	pushal
 	movl	%esp, _espsave
 	cld
@@ -39,7 +39,7 @@ realstart:
 	movw	%ax, %ss
 	/* clear protected mode bit */
 	mov	%cr0, %eax
-	and	$(~(CR0PE | CR0PG)), %eax
+	and	$(~CR0PE), %eax
 	mov	%eax, %cr0
 	/* jump to real mode code */
 	ljmpl	$0x0000, $(_real16 - realstart + KERNREALBASE)
@@ -72,11 +72,13 @@ _real16:
 
 .code32
 _protmode:
+//	lgdt	(gdtptr)
 	/* set up segment registers */
 	movw	$DATASEL, %ax
 	movw	%ax, %ds
 	movw	%ax, %es
 	movw	%ax, %fs
+//	movw	$CPUSEL, %ax
 	movw	%ax, %gs
 	movw	%ax, %ss
 	movl	_espsave, %esp
@@ -86,6 +88,8 @@ _protmode:
 	movl	%ebp, %esp
 	popl	%ebp
 	lidt	(idtptr)
+//	ljmpl	$TEXTSEL, $_protret
+//_protret:
 	sti
 	retl
 

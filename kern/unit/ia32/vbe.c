@@ -53,11 +53,8 @@ vbeinit(void)
     struct realregs *regs = (void *)(KERNREALSTK - sizeof(struct realregs));
     struct vbeinfo  *info = (void *)VBEINFOADR;
 
+    kbzero(regs, sizeof(struct realregs));
     kbzero(info, sizeof(struct vbeinfo));
-#if 0
-    regs.ax = VBEGETINFO;
-    regs.di = VBEINFOADR;
-#endif
     regs->ax = VBEGETINFO;
     regs->di = VBEINFOADR;
     info->sig[0] = 'V';
@@ -70,6 +67,7 @@ vbeinit(void)
 
         return;
     }
+    kbzero(regs, sizeof(struct realregs));
     regs->ax = VBEGETMODEINFO;
     regs->cx = 0x118;
     regs->di = VBEMODEADR;
@@ -79,6 +77,7 @@ vbeinit(void)
 
         return;
     }
+    kbzero(regs, sizeof(struct realregs));
     regs->ax = VBESETMODE;
     regs->bx = 0x118 | VBELINFBBIT;
     vbeint10(regs);
@@ -89,6 +88,7 @@ vbeinit(void)
     }
 
     /* for testing only */
+    kbzero(regs, sizeof(struct realregs));
     regs->ax = 0x4f03;
     vbeint10(regs);
     gdtinit();

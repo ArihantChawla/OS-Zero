@@ -8,20 +8,22 @@
 #define VBEMODEADR       0xb000
 #define VBESEGSIZE       (1L << VBESEGSIZELOG2)
 #define VBESEGSIZELOG2   16
-#define VBEMODEBIT       0x0100  // 1 if VESA-defined
-#define VBELINFBBIT      0x4000  // 1 for linear/flat frame buffer
-#define VBEPRESVMEMBIT   0x8000  // 1 - preserve display memory, 0 - clear
-#define VBESAVEMODE      0x81ff  // preserve contents, give access to all memory
+#define VBEMODEBIT       0x0100 // 1 if VESA-defined
+#define VBELINFBBIT      0x4000 // 1 for linear/flat frame buffer
+#define VBEPRESVMEMBIT   0x8000 // 1 - preserve display memory, 0 - clear
+#define VBESAVEMODE      0x81ff // preserve contents, give access to all memory
 
 /* return status in %ax */
 #define VBESUPPORTED     0x004f
+#if 0
 #define VBESUCCESS       0x0000
 #define VBEFAILURE       0x0001
+#endif
 
 /* commands */
-#define VBEGETINFO       0x4f00
-#define VBEGETMODEINFO   0x4f01
-#define VBESETMODE       0x4f02
+#define VBEGETINFO       0x4f00 // get controller information
+#define VBEGETMODEINFO   0x4f01 // get mode information
+#define VBESETMODE       0x4f02 // set graphics mode
 
 #if !defined(__ASSEMBLY__)
 
@@ -154,6 +156,8 @@ struct vbescreen {
                                                                         \
         gfxtorgb888(pix, _ptr);                                         \
     } while (0)
+
+/* TODO: optimise these draw routines not to recalculate pixel addresses */
 
 /* draw character with background */
 #define vbedrawchar(c, x, y, fg, bg)                                    \
