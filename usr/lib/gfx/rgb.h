@@ -141,20 +141,27 @@ typedef int16_t rgb565_t;
               GFX_RGB565_BLUE_MASK,                                     \
               GFX_RGB565_BLUE_SHIFT))
 
-#define gfxtorgb888_p(u, p)                                             \
+#define gfxsetrgb888_p(u, p)                                            \
     do {                                                                \
-        struct argb32 *_src = &u;                                       \
-        struct argb32 *_dest = p;                                       \
+        struct argb32 *_src = (struct argb32 *)&u;                      \
+        struct argb32 *_dest = (struct argb32 *)p;                      \
                                                                         \
-        _dest->rval = gfxredval_p(p);                                   \
-        _dest->gval = gfxgreenval_p(p);                                 \
-        _dest->bval = gfxblueval_p(p);                                  \
+        _dest->rval = gfxredval_p(_src);                                \
+        _dest->gval = gfxgreenval_p(_src);                              \
+        _dest->bval = gfxblueval_p(_src);                               \
     } while (0)
 
-#define gfxtorgb888(u, p)                                               \
-    (((uint8_t *)(p))[GFXREDOFS] = gfxredval(u),                        \
-     ((uint8_t *)(p))[GFXGREENOFS] = gfxgreenval(u),                    \
-     ((uint8_t *)(p))[GFXBLUEOFS] = gfxblueval(u))
+#if (_BYTE_ORDER == _LITTLE_ENDIAN)
+#define gfxsetrgb888(u, p)                                              \
+    (((uint8_t *)(p))[2] = gfxredval(u),                        \
+     ((uint8_t *)(p))[1] = gfxgreenval(u),                    \
+     ((uint8_t *)(p))[0] = gfxblueval(u))
+#else
+#define gfxsetrgb888(u, p)                                              \
+    (((uint8_t *)(p))[0] = gfxredval(u),                        \
+     ((uint8_t *)(p))[1] = gfxgreenval(u),                    \
+     ((uint8_t *)(p))[2] = gfxblueval(u))
+#endif
 #define gfxtoc(u, m, s)                                                 \
     ((s) > 0 ? (((u) >> (s)) & (m)) : (((u) << -(s)) & (m)))
 

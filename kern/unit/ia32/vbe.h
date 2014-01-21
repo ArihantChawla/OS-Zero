@@ -1,6 +1,8 @@
 #ifndef __KERN_UNIT_IA32_VBE_H__
 #define __KERN_UNIT_IA32_VBE_H__
 
+#include <zero/param.h>
+#include <zero/cdecl.h>
 #include <gfx/rgb.h>
 #include <kern/unit/ia32/boot.h>
 
@@ -66,7 +68,7 @@ struct vbeinfo {
     /* scratch area */
     uint8_t   oemdata[256];     // OEM strings
 #endif
-};
+} PACK();
 
 /* function 0x01 - return VBE mode information */
 
@@ -133,7 +135,7 @@ struct vbemode {
     uint32_t   offscrofs;
     uint16_t   nkboffscr;
 //    uint8_t    res2[206];
-};
+} PACK();
 
 /* VBE screen information */
 struct vbescreen {
@@ -154,7 +156,7 @@ struct vbescreen {
     do {                                                                \
         uint8_t *_ptr = vbepixadr(x, y);                                \
                                                                         \
-        gfxtorgb888(pix, _ptr);                                         \
+        gfxsetrgb888_p(pix, _ptr);                                      \
     } while (0)
 
 /* TODO: optimise these draw routines not to recalculate pixel addresses */

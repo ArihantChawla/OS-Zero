@@ -59,10 +59,11 @@ vbe2kludge(void)
 {
     long x;
     long y;
+    long pix = 0x00ff0000;
 
     for (x = 0 ; x < vbescreen.w ; x++) {
         for (y = 0 ; y < vbescreen.h ; y++) {
-            vbeputpix(0x00ff0000, x, y);
+            vbeputpix(pix, x, y);
         }
     }
 
