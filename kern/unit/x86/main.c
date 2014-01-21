@@ -53,10 +53,20 @@ extern volatile long      mpmultiproc;
 #endif
 
 #if (VBE2) || (VBE)
+#include <kern/unit/ia32/vbe.h>
 void
 vbe2kludge(void)
 {
-    kmemset(vbescreen.fbuf, 0xff, vbescreen.w * vbescreen.h * 3);
+    long x;
+    long y;
+
+    for (x = 0 ; x < vbescreen.w ; x++) {
+        for (y = 0 ; y < vbescreen.h ; y++) {
+            vbeputpix(0x00ff0000, x, y);
+        }
+    }
+
+    return;
 }
 #endif
 
@@ -84,12 +94,12 @@ kmain(struct mboothdr *hdr, unsigned long pmemsz)
 //    meminit(vmphysadr(&_ebssvirt), max(pmemsz, 3UL * 1024 * 1024 * 1024));
     kmemset(&kerniomap, 0xff, sizeof(kerniomap));
 //    vgainitcon(80, 25);
-    vgainitcon(80, 25);
+//    vgainitcon(80, 25);
 #if (VBE2)
     vbe2init(hdr);
     vbe2kludge();
 #elif (VBE)
-//    vbe2kludge();
+    vbe2kludge();
 //    vbeprintinfo();
 #endif
     if (!bufinit()) {

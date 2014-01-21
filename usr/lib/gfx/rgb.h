@@ -3,6 +3,8 @@
 
 #include <stdint.h>
 #include <endian.h>
+#include <zero/param.h>
+#include <zero/cdecl.h>
 
 #define GFXARGB32 0
 #define GFXRGB888 1
@@ -21,7 +23,7 @@ struct argb32 {
     uint8_t gval;
     uint8_t rval;
     uint8_t aval;
-};
+} PACK();
 
 #elif (_BYTE_ORDER == _BIG_ENDIAN)
 
@@ -35,7 +37,7 @@ struct argb32 {
     uint8_t rval;
     uint8_t gval;
     uint8_t bval;
-};
+} PACK();
 
 #endif
 

@@ -88,15 +88,17 @@ kbzero(void *adr, size_t len)
             ptr = next;
         }
     }
-    len = nleft >> LONGSIZELOG2;
-    nleft -= len << LONGSIZELOG2;
-    while (len--) {
-        /* zero tail long-words */
-        *ptr++ = val;
-    }
-    cptr = (char *)ptr;
-    while (nleft--) {
-        *cptr++ = 0;
+    if (nleft > 0) {
+        len = nleft >> LONGSIZELOG2;
+        nleft -= len << LONGSIZELOG2;
+        while (len--) {
+            /* zero tail long-words */
+            *ptr++ = val;
+        }
+        cptr = (char *)ptr;
+        while (nleft--) {
+            *cptr++ = 0;
+        }
     }
     
     return;
@@ -107,7 +109,7 @@ void
 kmemset(void *adr, int byte, size_t len)
 {
     long *next;
-    long *ptr;
+    long *ptr = adr;
     char *cptr;
     long  val = 0;
     long  incr = 8;
@@ -151,15 +153,17 @@ kmemset(void *adr, int byte, size_t len)
             ptr = next;
         }
     }
-    len = nleft >> LONGSIZELOG2;
-    nleft -= len << LONGSIZELOG2;
-    while (len--) {
-        /* zero tail long-words */
-        *ptr++ = val;
-    }
-    cptr = (char *)ptr;
-    while (nleft--) {
-        *cptr++ = 0;
+    if (nleft > 0) {
+        len = nleft >> LONGSIZELOG2;
+        nleft -= len << LONGSIZELOG2;
+        while (len--) {
+            /* zero tail long-words */
+            *ptr++ = val;
+        }
+        cptr = (char *)ptr;
+        while (nleft--) {
+            *cptr++ = 0;
+        }
     }
     
     return;
@@ -169,8 +173,8 @@ void
 kmemcpy(void *dest, void *src, unsigned long len)
 {
     unsigned long  nleft = len;
-    long          *dptr = NULL;
-    long          *sptr = NULL;
+    long          *dptr = dest;
+    long          *sptr = src;
     char          *dcptr;
     char          *scptr;
     long          *dnext;
@@ -209,15 +213,17 @@ kmemcpy(void *dest, void *src, unsigned long len)
         dptr[6] = sptr[6];
         dptr[7] = sptr[7];
     }
-    len = nleft >> LONGSIZELOG2;
-    nleft -= len << LONGSIZELOG2;
-    while (len--) {
-        *dptr++ = *sptr++;
-    }
-    dcptr = (char *)dptr;
-    scptr = (char *)sptr;
-    while (nleft--) {
-        *dcptr++ = *scptr++;
+    if (nleft > 0) {
+        len = nleft >> LONGSIZELOG2;
+        nleft -= len << LONGSIZELOG2;
+        while (len--) {
+            *dptr++ = *sptr++;
+        }
+        dcptr = (char *)dptr;
+        scptr = (char *)sptr;
+        while (nleft--) {
+            *dcptr++ = *scptr++;
+        }
     }
 
     return;
@@ -264,14 +270,16 @@ kbfill(void *adr, uint8_t byte, unsigned long len)
         ptr[6] = val;
         ptr[7] = val;
     }
-    len = nleft >> LONGSIZELOG2;
-    nleft -= len << LONGSIZELOG2;
-    while (len--) {
-        *ptr++ = val;
-    }
-    cptr = (char *)ptr;
-    while (nleft--) {
-        *cptr++ = byte;
+    if (nleft > 0) {
+        len = nleft >> LONGSIZELOG2;
+        nleft -= len << LONGSIZELOG2;
+        while (len--) {
+            *ptr++ = val;
+        }
+        cptr = (char *)ptr;
+        while (nleft--) {
+            *cptr++ = byte;
+        }
     }
 
     return;
