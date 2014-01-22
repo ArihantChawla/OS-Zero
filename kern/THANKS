@@ -1,0 +1,3 @@
+Thanks to Gerard 'gerryg' Green for the real mode code I adopted to probe and
+initialise VBE graphics modes.
+
