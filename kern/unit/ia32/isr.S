@@ -437,6 +437,7 @@ irqtimer0:
 	movl	%esp, %ebp
 
 	movl	$irqvec, %eax
+	jz	_tmr0fin
 	movl	0(%eax), %ebx
 	jz	_tmr0fin
 	call	*%ebx

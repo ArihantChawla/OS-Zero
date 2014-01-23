@@ -1,10 +1,14 @@
 #ifndef __KERN_UNIT_IA32_VBE_H__
 #define __KERN_UNIT_IA32_VBE_H__
 
+#include <stdint.h>
+
 #include <zero/param.h>
 #include <zero/cdecl.h>
 #include <gfx/rgb.h>
 #include <kern/unit/ia32/boot.h>
+
+void vbeclrscr(uint32_t pix);
 
 #define VBEINFOADR       0xa000
 #define VBEMODEADR       0xb000

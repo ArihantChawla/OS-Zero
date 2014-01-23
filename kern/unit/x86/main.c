@@ -54,21 +54,6 @@ extern volatile long      mpmultiproc;
 
 #if (VBE2) || (VBE)
 #include <kern/unit/ia32/vbe.h>
-void
-vbe2kludge(void)
-{
-    long x;
-    long y;
-    long pix = 0x00ff0000;
-
-    for (x = 0 ; x < vbescreen.w ; x++) {
-        for (y = 0 ; y < vbescreen.h ; y++) {
-            vbeputpix(pix, x, y);
-        }
-    }
-
-    return;
-}
 #endif
 
 ASMLINK
@@ -100,7 +85,8 @@ kmain(struct mboothdr *hdr, unsigned long pmemsz)
     vbe2init(hdr);
     vbe2kludge();
 #elif (VBE)
-    vbe2kludge();
+    vbeclrscr(0x0000ff00);
+    plasmaloop();
 //    vbeprintinfo();
 #endif
     if (!bufinit()) {

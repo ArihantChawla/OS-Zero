@@ -147,6 +147,21 @@ vbeprintinfo(void)
     return;
 }
 
+void
+vbeclrscr(uint32_t pix)
+{
+    long x;
+    long y;
+
+    for (x = 0 ; x < vbescreen.w ; x++) {
+        for (y = 0 ; y < vbescreen.h ; y++) {
+            vbeputpix(pix, x, y);
+        }
+    }
+
+    return;
+}
+
 #if 0
 long
 vbeinit(void)

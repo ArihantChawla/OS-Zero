@@ -6,20 +6,43 @@
  *
  * gcc -O3 -lm -lSDL filename.c
  */
+#if (!__KERNEL__)
 #include <SDL/SDL.h>
 #include <SDL/SDL_main.h>
+#endif
 #include <stdbool.h>
+#if (!__KERNEL__)
 #include <stdio.h>
-#include <stdint.h>
 #include <stdlib.h>
+#endif
+#include <stdint.h>
+#if (!__KERNEL__)
 #include <math.h>
 #include <time.h>
+#endif
+#if (__KERNEL__)
+#include <gfx/rgb.h>
+#include <kern/mem.h>
+#include <kern/unit/x86/asm.h>
+#include <kern/unit/x86/pit.h>
+#include <kern/unit/ia32/vbe.h>
+#include <kern/unit/i387/math.h>
+#endif
+
+#if (__KERNEL__)
+#define malloc(sz) kmalloc(sz)
+#endif
 
 #define PI_OVER_180 (0.01745329252)
 #define DEG_TO_RAD(d) ((d)*PI_OVER_180)
 
+#if (__KERNEL__)
+#define OUT_WIDTH  1024
+#define OUT_HEIGHT 768
+#else
 #define OUT_WIDTH  800
 #define OUT_HEIGHT 600
+#endif
 
 #define MAX_SHIFT 256
 
@@ -34,6 +57,14 @@
 
 #define NOLOGO
 
+#if (__KERNEL__)
+
+#define PLASMAFPS  25
+
+uint8_t *plasmafb;
+
+#else
+
 struct fpsctx {
     uint32_t prevtick;
     uint16_t tickInterval;
@@ -42,6 +73,14 @@ struct fpsctx {
 static SDL_Surface* surface;
 static SDL_Surface* logo;
 
+#endif
+
+#if (__KERNEL__)
+static uint8_t rtab[INTER_WIDTH * INTER_HEIGHT];
+static uint8_t gtab[INTER_WIDTH * INTER_HEIGHT];
+static uint8_t btab[INTER_WIDTH * INTER_HEIGHT];
+#endif
+
 static uint8_t palette1[PALETTE_SIZE];
 
 static uint8_t *intermediateR;
@@ -49,21 +88,61 @@ static uint8_t *intermediateG;
 static uint8_t *intermediateB;
 
 static int16_t offsetTable[512];
+#if (!__KERNEL__)
 static struct fpsctx fpstimer;
+#endif
 
 bool init(void);
 void cleanup(void);
+#if (__KERNEL__)
+void plasmainit(void);
+void plasmadraw(void);
+#else
 bool processEvents(void);
 void drawPlasma(SDL_Surface *surface);
 void drawLogo(SDL_Surface *surface, const SDL_Surface *logo);
+#endif
+#if (!__KERNEL__)
 void initfpstimer(struct fpsctx* t, int fpslimit);
 void limitfps(struct fpsctx* t);
+#endif
 
 
 /*
  * TODO: Clean this mess up
  */
 
+#if (__KERNEL__)
+
+void
+plasmainit(void)
+{
+    plasmafb = vbescreen.fbuf;
+    vbeclrscr(GFXBLACK);
+    __asm__ __volatile__ ("finit\n");
+    init();
+
+    return;
+}
+
+void
+plasmaloop(void)
+{
+    static long ndx = 0;
+    long nfrm = PLASMAFPS * 5;
+
+    plasmainit();
+    for (ndx = 0 ; ndx < PLASMAFPS * 25 ; ndx++) {
+        plasmadraw();
+        ndx++;
+#if 0
+        pitsleep((1000 / 2) / PLASMAFPS, NULL);
+        k_waitint();
+#endif
+    }
+}
+
+#else
 
 int main (void)
 {
@@ -83,14 +162,20 @@ int main (void)
     return 0;
 }
 
+#endif /* __KERNEL__ */
+
 bool init(void)
 {
     if (OUT_HEIGHT < OFFSET_MAG) {
+#if (!__KERNEL__)
         puts("Output screen/window size is too small.");
+#endif
         return false;
     }
 
     // init sdl
+#if (!__KERNEL__)
+
     if (SDL_Init(SDL_INIT_VIDEO) != 0) return false;
     atexit(SDL_Quit);
     surface = SDL_SetVideoMode(OUT_WIDTH, OUT_HEIGHT, 32,
@@ -105,7 +190,9 @@ bool init(void)
     tmpSurf = SDL_LoadBMP("./oszero.bmp");
     if (!tmpSurf) return false;
     if (tmpSurf->w > surface->w || tmpSurf->h > surface->h) {
+#if (!__KERNEL__)
         puts("Logo too large. Aborting.");
+#endif
         return 0;
     }
     logo = SDL_ConvertSurface(tmpSurf, surface->format, 0);
@@ -113,6 +200,13 @@ bool init(void)
     SDL_LockSurface(logo);
 #endif
 
+#endif /* !__KERNEL__ */
+
+#if (__KERNEL__)
+    intermediateR = rtab;
+    intermediateG = gtab;
+    intermediateB = btab;
+#else
     // Intermediate pixel destinations
     intermediateR = malloc(INTER_WIDTH * INTER_HEIGHT * sizeof(*intermediateR));
     if (!intermediateR) return false;
@@ -122,7 +216,8 @@ bool init(void)
     
     intermediateB = malloc(INTER_WIDTH * INTER_HEIGHT * sizeof(*intermediateB));
     if (!intermediateR) return false;
-    
+#endif
+
     unsigned i;
 
     // init palettes
@@ -133,7 +228,7 @@ bool init(void)
 
     for (i = 0; i < PALETTE_SIZE / 2; i++) {
 
-        int b = min_colour + ceil(i * step);
+        int b = min_colour + (int)ceil(i * step);
 
         if (b > max_colour) b = max_colour;
 
@@ -148,12 +243,24 @@ bool init(void)
         offsetTable[i] = sin(DEG_TO_RAD((double)i / len * 360.0)) * OFFSET_MAG;
     }
 
+#if (!__KERNEL__)
     // set target fps
     initfpstimer(&fpstimer, TARGET_FPS);
+#endif
 
     return true;
 }
 
+#if (__KERNEL__)
+void
+cleanup(void)
+{
+    kfree(intermediateR);
+    kfree(intermediateG);
+    kfree(intermediateB);
+    vbeclrscr(GFXBLACK);
+}
+#else
 void cleanup(void)
 {
     free(intermediateR);
@@ -162,6 +269,9 @@ void cleanup(void)
     
     SDL_Quit();
 }
+#endif
+
+#if (!__KERNEL__)
 
 bool processEvents(void)
 {
@@ -181,7 +291,13 @@ bool processEvents(void)
     return quit;
 }
 
+#endif
+
+#if (__KERNEL__)
+void plasmadraw(void)
+#else
 void drawPlasma(SDL_Surface *surface)
+#endif
 {
     int x, y;
 
@@ -214,8 +330,11 @@ void drawPlasma(SDL_Surface *surface)
     uint16_t    p3_sinposx;
     int         p3_palettePos = OFFSET_MAG;
         
-
+#if (__KERNEL__)
+    uint8_t *dest = plasmafb;
+#else
     uint32_t *dest = surface->pixels;
+#endif
 
     p1_sinposx = p1_sinpos_start_x;
     p2_sinposx = p2_sinpos_start_x;
@@ -251,7 +370,13 @@ void drawPlasma(SDL_Surface *surface)
             for (x = 0; x < OUT_WIDTH; x++) {
                 int srcpos;
                 uint32_t colour;
+#if (__KERNEL__)
+                argb32_t r;
+                argb32_t g;
+                argb32_t b;
+#endif
                 
+
                 if (x % 7) {
                     // copy to row y
                     srcpos = OFFSET_MAG + x
@@ -259,13 +384,22 @@ void drawPlasma(SDL_Surface *surface)
                     
                     /* FIXME: SDL_MapRGB() is very likely not a very fast way to do this
                     */
+#if (__KERNEL__)
+                    r = intermediateR[srcpos];
+                    g = intermediateG[srcpos];
+                    b = intermediateB[srcpos];
+                    colour = gfxmkpix(0, r, g, b);
+                    gfxsetrgb888(colour, dest + x * 3);
+#else
                     colour = SDL_MapRGB(surface->format,
                                     intermediateG[srcpos],
                                     intermediateR[srcpos],
                                     intermediateB[srcpos]);
-                                
                     *(dest + x) = colour;
+#endif
                 }
+#if (__KERNEL__)
+#endif
             }
         }
 
@@ -280,7 +414,11 @@ void drawPlasma(SDL_Surface *surface)
         p3_sinposx += 397;
 
         // advance to next output row
+#if (__KERNEL__)
+        dest += vbescreen.w * 3;
+#else
         dest += surface->w;
+#endif
         ypos += INTER_WIDTH;
 
     }
@@ -335,6 +473,8 @@ void drawLogo(SDL_Surface *surface, const SDL_Surface *logo)
 }
 #endif
 
+#if (!__KERNEL__)
+
 void initfpstimer(struct fpsctx* t, int fpslimit)
 {
     t->prevtick  = SDL_GetTicks();
@@ -358,3 +498,6 @@ void limitfps(struct fpsctx* t)
 
     t->prevtick = SDL_GetTicks();
 }
+
+#endif /* !__KERNEL__ */
+

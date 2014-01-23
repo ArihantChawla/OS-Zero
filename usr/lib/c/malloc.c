@@ -9,6 +9,7 @@
 #define MTSAFE     1
 #endif
 
+#define NEWMAP     1
 #define NEWMALLOC  1
 #define NEWSLAB    1
 #define FREEBUF    0
@@ -265,8 +266,58 @@ typedef pthread_mutex_t LK_T;
         ? 4                                                             \
         : 0))
 #endif
-#define nmagslablog2init(bid) 0
-#if (NEWSLAB)
+//#define nmagslablog2init(bid) 0
+#if (NEWMAP)
+#define nmagslablog2init(bid) nmagslablog2m64(bid)
+#define nmagslablog2m64(bid)                                            \
+    (((ismapbkt(bid))                                                   \
+      ? (((bid) <= MAPMIDLOG2)                                          \
+         ? 2                                                            \
+         : (((bid) <= MAPBIGLOG2)                                       \
+            ? 0                                                         \
+            : 0))                                                       \
+      : (((bid) <= SLABTEENYLOG2)                                       \
+         ? 0                                                            \
+         : (((bid) <= SLABTINYLOG2)                                     \
+            ? 1                                                         \
+            : 2))))
+#define nmagslablog2m128(bid)                                           \
+    (((ismapbkt(bid))                                                   \
+      ? (((bid) <= MAPMIDLOG2)                                          \
+         ? 2                                                            \
+         : (((bid) <= MAPBIGLOG2)                                       \
+            ? 0                                                         \
+            : 0))                                                       \
+      : (((bid) <= SLABTEENYLOG2)                                       \
+         ? 0                                                            \
+         : (((bid) <= SLABTINYLOG2)                                     \
+            ? 1                                                         \
+            : 2))))
+#define nmagslablog2m256(bid)                                           \
+    (((ismapbkt(bid))                                                   \
+      ? (((bid) <= MAPMIDLOG2)                                          \
+         ? 1                                                            \
+         : (((bid) <= MAPBIGLOG2)                                       \
+            ? 0                                                         \
+            : 0))                                                       \
+      : (((bid) <= SLABTEENYLOG2)                                       \
+         ? 0                                                            \
+         : (((bid) <= SLABTINYLOG2)                                     \
+            ? 2                                                         \
+            : 3))))
+#define nmagslablog2m512(bid)                                           \
+    (((ismapbkt(bid))                                                   \
+      ? (((bid) <= MAPMIDLOG2)                                          \
+         ? 1                                                            \
+         : (((bid) <= MAPBIGLOG2)                                       \
+            ? 0                                                         \
+            : 0))                                                       \
+      : (((bid) <= SLABTEENYLOG2)                                       \
+         ? 0                                                            \
+         : (((bid) <= SLABTINYLOG2)                                     \
+            ? 2                                                         \
+            : 3))))
+#elif (NEWSLAB)
 #define nmagslablog2init(bid) 0
 #define nmagslablog2m64(bid)                                            \
     (((ismapbkt(bid))                                                   \

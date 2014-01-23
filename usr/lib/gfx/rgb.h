@@ -11,6 +11,8 @@
 #define GFXRGB555 2
 #define GFXRGB565 3
 
+#define GFXBLACK  0x00000000
+
 #if (_BYTE_ORDER == _LITTLE_ENDIAN)
 
 #define GFXALPHAOFS 24
@@ -143,7 +145,8 @@ typedef int16_t rgb565_t;
 
 #define gfxsetrgb888_p(u, p)                                            \
     do {                                                                \
-        struct argb32 *_src = (struct argb32 *)&u;                      \
+        argb32_t       _pix = (u);                                      \
+        struct argb32 *_src = (struct argb32 *)&_pix;                   \
         struct argb32 *_dest = (struct argb32 *)p;                      \
                                                                         \
         _dest->rval = gfxredval_p(_src);                                \
@@ -153,13 +156,13 @@ typedef int16_t rgb565_t;
 
 #if (_BYTE_ORDER == _LITTLE_ENDIAN)
 #define gfxsetrgb888(u, p)                                              \
-    (((uint8_t *)(p))[2] = gfxredval(u),                        \
-     ((uint8_t *)(p))[1] = gfxgreenval(u),                    \
+    (((uint8_t *)(p))[2] = gfxredval(u),                                \
+     ((uint8_t *)(p))[1] = gfxgreenval(u),                              \
      ((uint8_t *)(p))[0] = gfxblueval(u))
 #else
 #define gfxsetrgb888(u, p)                                              \
-    (((uint8_t *)(p))[0] = gfxredval(u),                        \
-     ((uint8_t *)(p))[1] = gfxgreenval(u),                    \
+    (((uint8_t *)(p))[0] = gfxredval(u),                                \
+     ((uint8_t *)(p))[1] = gfxgreenval(u),                              \
      ((uint8_t *)(p))[2] = gfxblueval(u))
 #endif
 #define gfxtoc(u, m, s)                                                 \
