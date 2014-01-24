@@ -62,6 +62,7 @@ kmain(struct mboothdr *hdr, unsigned long pmemsz)
 {
     seginit(0);                         // memory segments
 #if (VBE)
+    vgainit();
     vbeinit();
     trapinit();
 #endif

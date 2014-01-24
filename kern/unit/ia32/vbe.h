@@ -9,6 +9,7 @@
 #include <kern/unit/ia32/boot.h>
 
 void vbeclrscr(uint32_t pix);
+void vbedrawchar(unsigned char c, int x, int y, argb32_t fg, argb32_t bg);
 
 #define VBEINFOADR       0xa000
 #define VBEMODEADR       0xb000
@@ -156,77 +157,15 @@ struct vbescreen {
     ((uint8_t *)vbescreen.fbuf + ((y) * vbescreen.w + (x)) * 3)
 
 /* TODO: currently hardwired for RGB888 */
+#if 0
 #define vbeputpix(pix, x, y)                                            \
     do {                                                                \
         uint8_t *_ptr = vbepixadr(x, y);                                \
                                                                         \
         gfxsetrgb888_p(pix, _ptr);                                      \
     } while (0)
+#endif
 
-/* TODO: optimise these draw routines not to recalculate pixel addresses */
-
-/* draw character with background */
-#define vbedrawchar(c, x, y, fg, bg)                                    \
-    do {                                                                \
-        int      _cy;                                                   \
-        int      _yofs;                                                 \
-        uint8_t *_gp = (uint8_t *)_vgafontbuf + ((int)c << 4);          \
-        uint8_t  _g;                                                    \
-                                                                        \
-        for (_cy = 0 ; _cy < VGAGLYPHH ; _cy++) {                       \
-            _g = *_gp;                                                  \
-            _yofs = y + _cy - 12;                                       \
-            vbeputpix((g & 0x01) ? fg : bg, x, _yofs);                  \
-            vbeputpix((g & 0x02) ? fg : bg, x + 1, _yofs);              \
-            vbeputpix((g & 0x04) ? fg : bg, x + 2, _yofs);              \
-            vbeputpix((g & 0x08) ? fg : bg, x + 3, _yofs);              \
-            vbeputpix((g & 0x10) ? fg : bg, x + 4, _yofs);              \
-            vbeputpix((g & 0x20) ? fg : bg, x + 5, _yofs);              \
-            vbeputpix((g & 0x40) ? fg : bg, x + 6, _yofs);              \
-            vbeputpix((g & 0x80) ? fg : bg, x + 7, _yofs);              \
-            _gp++;                                                      \
-        }                                                               \
-    } while (0)                                                         \
-        
-/* draw character without background (transparent) */
-#define vbedrawcharfg(c, x, y, fg, bg)                                  \
-    do {                                                                \
-        int      _cy;                                                   \
-        int      _yofs;                                                 \
-        uint8_t *_gp = (uint8_t *)_vgafontbuf + ((int)c << 4);          \
-        uint8_t  _g;                                                    \
-                                                                        \
-        for (_cy = 0 ; _cy < VGAGLYPHH ; _cy++) {                       \
-            _g = *_gp;                                                  \
-            _yofs = y + _cy - 12;                                       \
-            if (_g & 0x01) {                                            \
-                vbeputpix(fg, x, yofs);                                 \
-            }                                                           \
-            if (_g & 0x02) {                                            \
-                vbeputpix(fg, x + 1, yofs);                             \
-            }                                                           \
-            if (_g & 0x04) {                                            \
-                vbeputpix(fg, x + 2, yofs);                             \
-            }                                                           \
-            if (_g & 0x08) {                                            \
-                vbeputpix(fg, x + 3, yofs);                             \
-            }                                                           \
-            if (_g & 0x10) {                                            \
-                vbeputpix(fg, x + 4, yofs);                             \
-            }                                                           \
-            if (_g & 0x20) {                                            \
-                vbeputpix(fg, x + 5, yofs);                             \
-            }                                                           \
-            if (_g & 0x40) {                                            \
-                vbeputpix(fg, x + 6, yofs);                             \
-            }                                                           \
-            if (_g & 0x80) {                                            \
-                vbeputpix(fg, x + 7, yofs);                             \
-            }                                                           \
-            _gp++;                                                      \
-        }                                                               \
-    } while (0)                                                         \
-        
 extern struct vbescreen vbescreen;
         
 #endif /* !defined(__ASSEMBLY__) */

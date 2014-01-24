@@ -11,10 +11,15 @@
 #define VGABUFADR      0x000b8000U
 #define VGACONBUFSIZE  (VGANCON * VGABUFSIZE)
 #define VGAFONTADR     0x000a0000
+//#define VGAFONTSIZE    4096
+#define VGAFONTBUF     0x4000
 #define VGAFONTSIZE    4096
 #define VGANGLYPH      256
 #define VGAGLYPHH      16
 #define VGAGLYPHW      8
+
+void vgainit(void);
+void vgagetfont(void *);
 
 /* text interface */
 
@@ -121,14 +126,16 @@ struct vgacon {
 
 /* graphics interface */
 
-#if 0
 #define vgareset()                                                      \
     do {                                                                \
-        outw(0x0302, 0x03c4);                                           \
-        outw(0x1005, 0x03ce);                                           \
-        outw(0x0a06, 0x03ce);                                           \
+        uint16_t _port = 0x03c4;                                        \
+                                                                        \
+        outw(0x0302, _port);                                            \
+        outw(0x0204, _port);                                            \
+        _port = 0x03ce;                                                 \
+        outw(0x1005, _port);                                            \
+        outw(0x0e06, _port);                                            \
     } while (0)
-#endif
 
 void vgasyncscr(void);
 void vgaputs(char *str);
