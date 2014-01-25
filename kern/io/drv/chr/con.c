@@ -1,16 +1,12 @@
+#include <gfx/rgb.h>
 #include <kern/conf.h>
-#if (!VBE2)
 #include <kern/io/drv/pc/vga.h>
-#endif
 
 typedef void conputsfunc(char *str);
 typedef void conputcharfunc(int ch);
 
-#if (VBE2)
-conputsfunc    *conputs;
-conputcharfunc *conputchar;
-#else
+argb32_t        confgcolor = GFXWHITE;
+argb32_t        conbgcolor = GFXBLACK;
 conputsfunc    *conputs = vgaputs;
 conputcharfunc *conputchar = vgaputchar;
-#endif
 

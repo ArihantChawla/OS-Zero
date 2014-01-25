@@ -134,7 +134,6 @@ plasmaloop(void)
     plasmainit();
     for (ndx = 0 ; ndx < PLASMAFPS * 25 ; ndx++) {
         plasmadraw();
-        vbehello();
         ndx++;
 #if 0
         pitsleep((1000 / 2) / PLASMAFPS, NULL);

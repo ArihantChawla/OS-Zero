@@ -12,6 +12,7 @@
 #define GFXRGB565 3
 
 #define GFXBLACK  0x00000000
+#define GFXWHITE  0x00ffffff
 
 #if (_BYTE_ORDER == _LITTLE_ENDIAN)
 

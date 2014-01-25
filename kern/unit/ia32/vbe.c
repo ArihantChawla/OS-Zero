@@ -13,7 +13,6 @@
 #include <kern/unit/ia32/vbe.h>
 #include <kern/unit/ia32/vm.h>
 
-extern void  gdtinit(void);
 extern void  realint10(void);
 
 extern void *vgafontbuf;
@@ -67,7 +66,6 @@ vbeinit(void)
     info->sig[2] = 'E';
     info->sig[3] = '2';
     vbeint10(regs);
-    gdtinit();
     if (regs->ax != VBESUPPORTED) {
 
         return;
@@ -77,7 +75,6 @@ vbeinit(void)
     regs->cx = 0x118;
     regs->di = VBEMODEADR;
     vbeint10(regs);
-    gdtinit();
     if (regs->ax != VBESUPPORTED) {
 
         return;
@@ -86,7 +83,6 @@ vbeinit(void)
     regs->ax = VBESETMODE;
     regs->bx = 0x118 | VBELINFBBIT;
     vbeint10(regs);
-    gdtinit();
     if (regs->ax != VBESUPPORTED) {
 
         return;

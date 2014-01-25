@@ -62,7 +62,7 @@ kmain(struct mboothdr *hdr, unsigned long pmemsz)
 {
     seginit(0);                         // memory segments
 #if (VBE)
-    vgainit();
+    vgainitcon(768 >> 3, 1024 >> 3);
     vbeinit();
     trapinit();
 #endif
@@ -86,8 +86,8 @@ kmain(struct mboothdr *hdr, unsigned long pmemsz)
     vbe2init(hdr);
     vbe2kludge();
 #elif (VBE)
-    vbeclrscr(0x0000ff00);
-    plasmaloop();
+//    vbeclrscr(0x0000ff00);
+//    plasmaloop();
 //    vbeprintinfo();
 #endif
     if (!bufinit()) {

@@ -40,6 +40,8 @@
 #define BOCHS     1
 #define DEVEL     1     // debugging
 
+#define CMOV      1
+
 /* planned drivers */
 #define HPET      1     // high precision event timer support
 #define PS2DRV    1     // enable PS/2 mouse and keyboard drivers

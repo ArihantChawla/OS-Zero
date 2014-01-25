@@ -2,9 +2,10 @@
 #include <stddef.h>
 #include <zero/param.h>
 #include <zero/cdecl.h>
+#include <gfx/rgb.h>
 #include <kern/conf.h>
-
 #include <kern/util.h>
+#include <kern/io/drv/chr/con.h>
 #include <kern/io/drv/pc/vga.h>
 #include <kern/unit/ia32/link.h>
 #include <kern/unit/ia32/vm.h>
@@ -294,15 +295,6 @@ vgaputpix(int32_t pix, int32_t x, int32_t y)
 
 #if (VGAGFX) || (VBE)
 
-void
-vgainit(void)
-{
-//    vgagetfont(vgafontbuf);
-//    vgafontbuf = &vgafont8[0];
-
-    return;
-}
-
 /* copy font from VGA RAM */
 void
 vgagetfont(void *bufadr)
@@ -344,7 +336,10 @@ vgainitcon(int w, int h)
     uint8_t       *ptr = (uint8_t *)VGABUFADR;
     long           l;
 
-#if (VGAGFX)
+#if (VBE)
+//    con->fg = GFXWHITE;
+//    con->bg = GFXBLACK;
+#elif (VGAGFX)
 //    vgagetfont(vgafontbuf);
 #endif
     for (l = 0 ; l < VGANCON ; l++) {
@@ -363,7 +358,9 @@ vgainitcon(int w, int h)
         con++;
     }
     vgacurcon = 0;
+#if (!VBE)
     vgamoveto(0, 0);
+#endif
 #if 0
     kprintf("VGA @ 0x%x - width = %d, height = %d, %d consoles\n",
             VGABUFADR, w, h, VGANCON);
@@ -414,8 +411,10 @@ vgaputs(char *str)
                     y = 0;
                 }
             }
-#if (VGAGFX)
-            vgadrawchar(ch, (x << 3), (y << 3), con->fg, con->bg);
+#if (VBE)
+            vbedrawchar(ch, x << 3, y << 3, confgcolor, conbgcolor);
+#elif (VGAGFX)
+            vgadrawchar(ch, x << 3, y << 3, con->fg, con->bg);
 #else
             vgaputch3(ptr, ch, atr);
 #endif
@@ -468,8 +467,10 @@ vgaputs2(struct vgacon *con, char *str)
                     y = 0;
                 }
             }
-#if (VGAGFX)
-            vgadrawchar(ch, (x << 3), (y << 3), con->fg, con->bg);
+#if (VBE)
+            vbedrawchar(ch, x << 3, y << 3, confgcolor, conbgcolor);
+#elif (VGAGFX)
+            vgadrawchar(ch, x << 3, y << 3, con->fg, con->bg);
 #else
             vgaputch3(ptr, ch, atr);
 #endif
@@ -491,7 +492,9 @@ vgaputchar(int ch)
 #endif
 
     con = &_vgacontab[vgacurcon];
-#if (VGAGFX)
+#if (VBE)
+    vbedrawchar(ch, (con->x << 3), (con->y << 3), confgcolor, conbgcolor);
+#elif (VGAGFX)
     vgadrawchar(ch, (con->x << 3), (con->y << 3), con->fg, con->bg);
 #else
     ptr = con->buf + con->w * con->x + con->y;

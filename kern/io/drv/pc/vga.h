@@ -106,7 +106,7 @@ void vgagetfont(void *);
 
 /* vga [text] console structure */
 struct vgacon {
-#if (VGAGFX) || (VBE2)
+#if (VGAGFX)
     int32_t  fg;
     int32_t  bg;
     void    *buf;

@@ -72,15 +72,15 @@ _real16:
 
 .code32
 _protmode:
-//	lgdt	(gdtptr)
+	lgdt	(gdtptr)
 	/* set up segment registers */
 	movw	$DATASEL, %ax
 	movw	%ax, %ds
 	movw	%ax, %es
 	movw	%ax, %fs
-//	movw	$CPUSEL, %ax
-	movw	%ax, %gs
 	movw	%ax, %ss
+	movw	$CPUSEL, %ax
+	movw	%ax, %gs
 	movl	_espsave, %esp
 	popal
 	popfl
@@ -88,8 +88,8 @@ _protmode:
 	movl	%ebp, %esp
 	popl	%ebp
 	lidt	(idtptr)
-//	ljmpl	$TEXTSEL, $_protret
-//_protret:
+	ljmpl	$TEXTSEL, $(_protret - realstart + KERNREALBASE)
+_protret:
 	sti
 	retl
 
@@ -110,7 +110,7 @@ _realgdt:
 _realgdtdesc:
 	.short	_realgdtdesc - _realgdt - 1
 	.long	_realgdt - realstart + KERNREALBASE
-#endif
+#endif /* 0 */
 _espsave:
 	.long	0x00000000
 _realidtptr:
