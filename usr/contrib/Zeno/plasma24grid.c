@@ -118,7 +118,7 @@ void
 plasmainit(void)
 {
     plasmafb = vbescreen.fbuf;
-    vbeclrscr(GFXBLACK);
+    vbeclrscr(RGBBLACK);
     __asm__ __volatile__ ("finit\n");
     init();
 
@@ -132,7 +132,7 @@ plasmaloop(void)
     long nfrm = PLASMAFPS * 5;
 
     plasmainit();
-    for (ndx = 0 ; ndx < PLASMAFPS * 25 ; ndx++) {
+    for (ndx = 0 ; ndx < nfrm ; ndx++) {
         plasmadraw();
         ndx++;
 #if 0
@@ -258,7 +258,7 @@ cleanup(void)
     kfree(intermediateR);
     kfree(intermediateG);
     kfree(intermediateB);
-    vbeclrscr(GFXBLACK);
+    vbeclrscr(RGBBLACK);
 }
 #else
 void cleanup(void)

@@ -270,8 +270,6 @@ const unsigned char vgafont8[VGAFONTSIZE] =
     0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00
 };
 
-struct vgacon  _vgacontab[VGANCON] ALIGNED(PAGESIZE);
-long           vgacurcon;
 #if (VGAGFX) || (VBE)
 //void          *vgafontbuf = (void *)VGAFONTBUF;
 void          *vgafontbuf = vgafont8;
@@ -328,138 +326,53 @@ vgagetfont(void *bufadr)
 
 #endif /* VGAGFX || VBE */
 
-/* initialise 8 consoles */
+#if (!VBE)
+
 void
 vgainitcon(int w, int h)
 {
-    struct vgacon *con = _vgacontab;
-#if (!VBE)
-    uint8_t       *ptr = (uint8_t *)VGABUFADR;
-#endif
-    long           l;
+    struct con *con = contab;
+    uint8_t    *ptr = (uint8_t *)VGABUFADR;
+    long        l;
 
-#if (VBE)
-    con->fg = GFXWHITE;
-    con->bg = GFXBLACK;
-#elif (VGAGFX)
-//    vgagetfont(vgafontbuf);
-#endif
-    for (l = 0 ; l < VGANCON ; l++) {
-#if (!VBE)
+    for (l = 0 ; l < NCON ; l++) {
         kbzero(ptr, PAGESIZE);
-#endif
-#if (!VBE)
         con->buf = (uint16_t *)ptr;
-#endif
         con->x = 0;
         con->y = 0;
         con->w = w;
         con->h = h;
-#if (!VGAGFX)
         con->chatr = vgasetfg(0, VGAWHITE);
-#endif
         con->nbufln = 0;
         /* TODO: allocate scrollback buffer */
         con->data = NULL;
         con++;
     }
-    vgacurcon = 0;
-#if (!VBE)
+    concur = 0;
     vgamoveto(0, 0);
-#endif
-#if 0
-    kprintf("VGA @ 0x%x - width = %d, height = %d, %d consoles\n",
-            VGABUFADR, w, h, VGANCON);
-#endif
-
-    return;
-}
-
-/* output string on the current console */
-void
-vgaputs(char *str)
-{
-    struct vgacon *con;
-#if (!VGAGFX)
-    uint16_t      *ptr;
-#endif
-    int            x;
-    int            y;
-    int            w;
-    int            h;
-    uint8_t        ch;
-#if (!VGAGFX)
-    uint8_t        atr;
-#endif
-
-    con = &_vgacontab[vgacurcon];
-    x = con->x;
-    y = con->y;
-    w = con->w;
-    h = con->h;
-#if (!VGAGFX)
-    atr = con->chatr;
-#endif
-    while (*str) {
-#if (!VGAGFX) && (!VBE)
-        ptr = con->buf + y * w + x;
-#endif
-        ch = *str;
-        if (ch == '\n') {
-            if (++y == h) {
-                y = 0;
-            }
-            x = 0;
-        } else {
-            if (++x == w) {
-                x = 0;
-                if (++y == h) {
-                    y = 0;
-                }
-            }
-#if (VBE)
-            vbedrawchar(ch, x << 3, y << 3, confgcolor, conbgcolor);
-#elif (VGAGFX)
-            vgadrawchar(ch, x << 3, y << 3, con->fg, con->bg);
-#else
-            vgaputch3(ptr, ch, atr);
-#endif
-        }
-        str++;
-        con->x = x;
-        con->y = y;
-    }
 
     return;
 }
 
 /* output string on a given console */
 void
-vgaputs2(struct vgacon *con, char *str)
+vgaputs2(struct con *con, char *str)
 {
-#if (!VGAGFX)
     uint16_t      *ptr;
-#endif
     int            x;
     int            y;
     int            w;
     int            h;
     uint8_t        ch;
-#if (!VGAGFX)
     uint8_t        atr;
-#endif
 
     x = con->x;
     y = con->y;
     w = con->w;
     h = con->h;
-#if (!VGAGFX)
     atr = con->chatr;
-#endif
     while (*str) {
-#if (!VGAGFX) && (!VBE)
         ptr = con->buf + y * w + x;
-#endif
         ch = *str;
         if (ch == '\n') {
             if (++y == h) {
@@ -473,13 +386,7 @@ vgaputs2(struct vgacon *con, char *str)
                     y = 0;
                 }
             }
-#if (VBE)
-            vbedrawchar(ch, x << 3, y << 3, confgcolor, conbgcolor);
-#elif (VGAGFX)
-            vgadrawchar(ch, x << 3, y << 3, con->fg, con->bg);
-#else
             vgaputch3(ptr, ch, atr);
-#endif
         }
         str++;
         con->x = x;
@@ -492,20 +399,12 @@ vgaputs2(struct vgacon *con, char *str)
 void
 vgaputchar(int ch)
 {
-    struct vgacon *con;
-#if (!VGAGFX)
-    uint16_t      *ptr;
-#endif
+    struct con *con;
+    uint16_t   *ptr;
 
-    con = &_vgacontab[vgacurcon];
-#if (VBE)
-    vbedrawchar(ch, (con->x << 3), (con->y << 3), confgcolor, conbgcolor);
-#elif (VGAGFX)
-    vgadrawchar(ch, (con->x << 3), (con->y << 3), con->fg, con->bg);
-#else
+    con = &contab[concur];
     ptr = con->buf + con->w * con->x + con->y;
     *ptr = _vgamkch(ch, con->chatr);
-#endif
 
     return;
 }
@@ -516,3 +415,4 @@ vgasyncscr(void)
     ;
 }
 
+#endif /* !VBE */

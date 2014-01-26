@@ -104,29 +104,6 @@ void vgagetfont(void *);
 #define VGAYELLOW     0x0e
 #define VGABWHITE     0x0f
 
-/* vga [text] console structure */
-struct vgacon {
-#if (VGAGFX)
-    int32_t  fg;
-    int32_t  bg;
-    void    *buf;
-#elif (VBE)
-    int32_t  fg;
-    int32_t  bg;
-#else
-    uint16_t *buf;
-#endif
-    uint8_t   x;
-    uint8_t   y;
-    uint8_t   w;
-    uint8_t   h;
-#if (!VGAGFX)
-    uint16_t  chatr;
-#endif
-    long      nbufln;   // number of buffered lines
-    void     *data;     // text buffers
-} PACK;
-
 /* graphics interface */
 
 #define vgareset()                                                      \

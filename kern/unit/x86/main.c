@@ -67,10 +67,10 @@ kmain(struct mboothdr *hdr, unsigned long pmemsz)
 #if (VBE)
     vbeinit();
     trapinit();
-//    vgainitcon(768 >> 3, 1024 >> 3);
 #endif
     vminit((uint32_t *)&_pagetab);      // virtual memory
     kbzero(&_bssvirt, (uint32_t)&_ebss - (uint32_t)&_bss);
+    coninit(768 >> 3, 1024 >> 3);
 #if (VBE)
 //    vbeinit();
     vbeinitscr();
@@ -93,7 +93,7 @@ kmain(struct mboothdr *hdr, unsigned long pmemsz)
     vbe2kludge();
 #elif (VBE)
 //    vbeclrscr(0x0000ff00);
-//    plasmaloop();
+    plasmaloop();
 //    vbeprintinfo();
 #endif
     if (!bufinit()) {
@@ -105,17 +105,21 @@ kmain(struct mboothdr *hdr, unsigned long pmemsz)
     }
 #if (SMP)
     /* multiprocessor probe */
-    mpinit();
-    if (mpmultiproc) {
+    if (!acpidesc) {
+        mpinit();
+        if (mpmultiproc) {
 //        mpstart();
-    }
-    if (mpncpu == 1) {
-        kprintf("found %ld processor\n", mpncpu);
+        }
+        if (mpncpu == 1) {
+            kprintf("found %ld processor\n", mpncpu);
+        } else {
+            kprintf("found %ld processors\n", mpncpu);
+        }
+        if (mpapic) {
+            kprintf("local APIC @ 0x%p\n", mpapic);
+        }
     } else {
-        kprintf("found %ld processors\n", mpncpu);
-    }
-    if (mpapic) {
-        kprintf("local APIC @ 0x%p\n", mpapic);
+        /* TODO: ACPI magic goes here */
     }
     curcpu = &cputab[0];
 #endif

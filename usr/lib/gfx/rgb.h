@@ -6,20 +6,20 @@
 #include <zero/param.h>
 #include <zero/cdecl.h>
 
-#define GFXARGB32 0
-#define GFXRGB888 1
-#define GFXRGB555 2
-#define GFXRGB565 3
+#define RGBARGB32 0
+#define RGBRGB888 1
+#define RGBRGB555 2
+#define RGBRGB565 3
 
-#define GFXBLACK  0x00000000
-#define GFXWHITE  0x00ffffff
+#define RGBBLACK  0x00000000
+#define RGBWHITE  0x00ffffff
 
 #if (_BYTE_ORDER == _LITTLE_ENDIAN)
 
-#define GFXALPHAOFS 24
-#define GFXREDOFS   16
-#define GFXGREENOFS 8
-#define GFXBLUEOFS  0
+#define RGBALPHAOFS 24
+#define RGBREDOFS   16
+#define RGBGREENOFS 8
+#define RGBBLUEOFS  0
 
 struct argb32 {
     uint8_t bval;
@@ -30,10 +30,10 @@ struct argb32 {
 
 #elif (_BYTE_ORDER == _BIG_ENDIAN)
 
-#define GFXALPHAOFS 0
-#define GFXREDOFS   8
-#define GFXGREENOFS 16
-#define GFXBLUEOFS  24
+#define RGBALPHAOFS 0
+#define RGBREDOFS   8
+#define RGBGREENOFS 16
+#define RGBBLUEOFS  24
 
 struct argb32 {
     uint8_t aval;
@@ -49,10 +49,10 @@ typedef int16_t rgb555_t;
 typedef int16_t rgb565_t;
 
 /* pix is 32-bit word */
-#define gfxalphaval(pix) ((pix) >> GFXALPHAOFS)		 // alpha component
-#define gfxredval(pix)   (((pix) >> GFXREDOFS) & 0xff)	 // red component
-#define gfxgreenval(pix) (((pix) >> GFXGREENOFS) & 0xff) // green component
-#define gfxblueval(pix)  (((pix) >> GFXBLUEOFS) & 0xff)	 // blue component
+#define gfxalphaval(pix) ((pix) >> RGBALPHAOFS)		 // alpha component
+#define gfxredval(pix)   (((pix) >> RGBREDOFS) & 0xff)	 // red component
+#define gfxgreenval(pix) (((pix) >> RGBGREENOFS) & 0xff) // green component
+#define gfxblueval(pix)  (((pix) >> RGBBLUEOFS) & 0xff)	 // blue component
 
 /* pointer version; faster byte-fetches from memory */
 #define gfxalphaval_p(p) (((struct argb32 *)(p))->aval)
@@ -75,10 +75,10 @@ typedef int16_t rgb565_t;
 
 /* compose pixel value from components */
 #define gfxmkpix(a, r, g, b)                                            \
-    (((a) << GFXALPHAOFS)                                               \
-     | ((r) << GFXREDOFS)                                               \
-     | ((g) << GFXGREENOFS)                                             \
-     | ((b) << GFXBLUEOFS))
+    (((a) << RGBALPHAOFS)                                               \
+     | ((r) << RGBREDOFS)                                               \
+     | ((g) << RGBGREENOFS)                                             \
+     | ((b) << RGBBLUEOFS))
 #define gfxmkpix_p(dest, a, r, g, b)                                    \
     ((dest) = gfxmkpix(a, r, g, b))
 #define gfxsetpix_p(p, a, r, g, b)                                      \
@@ -88,35 +88,35 @@ typedef int16_t rgb565_t;
      ((struct argb32 *)(p))->bval = (b))
 
 #if (_BYTE_ORDER == _LITTLE_ENDIAN)
-#define GFX_ARGB32_RED_SHIFT       16
-#define GFX_ARGB32_GREEN_SHIFT     8
-#define GFX_ARGB32_BLUE_SHIFT      0
-#define GFX_RGB888_RED_OFS         2
-#define GFX_RGB888_GREEN_OFS       1
-#define GFX_RGB888_BLUE_OFS        0
+#define RGB_ARGB32_RED_SHIFT       16
+#define RGB_ARGB32_GREEN_SHIFT     8
+#define RGB_ARGB32_BLUE_SHIFT      0
+#define RGB_RGB888_RED_OFS         2
+#define RGB_RGB888_GREEN_OFS       1
+#define RGB_RGB888_BLUE_OFS        0
 #else
-#define GFX_RGB888_RED_OFS         0
-#define GFX_RGB888_GREEN_OFS       1
-#define GFX_RGB888_BLUE_OFS        2
+#define RGB_RGB888_RED_OFS         0
+#define RGB_RGB888_GREEN_OFS       1
+#define RGB_RGB888_BLUE_OFS        2
 #endif
 
-#define GFX_RGB555_RED_MASK        0x00007c00
-#define GFX_RGB555_GREEN_MASK      0x000003e0
-#define GFX_RGB555_BLUE_MASK       0x0000001f
-//#define GFX_RGB555_MASK            0x00007fff
+#define RGB_RGB555_RED_MASK        0x00007c00
+#define RGB_RGB555_GREEN_MASK      0x000003e0
+#define RGB_RGB555_BLUE_MASK       0x0000001f
+//#define RGB_RGB555_MASK            0x00007fff
 
-#define GFX_RGB555_RED_SHIFT       7
-#define GFX_RGB555_GREEN_SHIFT     2
-#define GFX_RGB555_BLUE_SHIFT     -3
+#define RGB_RGB555_RED_SHIFT       7
+#define RGB_RGB555_GREEN_SHIFT     2
+#define RGB_RGB555_BLUE_SHIFT     -3
 
-#define GFX_RGB565_RED_MASK        0x0000f800
-#define GFX_RGB565_GREEN_MASK      0x000007e0
-#define GFX_RGB565_BLUE_MASK       0x0000001f
-//#define GFX_RGB565_MASK            0x0000ffff
+#define RGB_RGB565_RED_MASK        0x0000f800
+#define RGB_RGB565_GREEN_MASK      0x000007e0
+#define RGB_RGB565_BLUE_MASK       0x0000001f
+//#define RGB_RGB565_MASK            0x0000ffff
 
-#define GFX_RGB565_RED_SHIFT       8
-#define GFX_RGB565_GREEN_SHIFT     3
-#define GFX_RGB565_BLUE_SHIFT     -3
+#define RGB_RGB565_RED_SHIFT       8
+#define RGB_RGB565_GREEN_SHIFT     3
+#define RGB_RGB565_BLUE_SHIFT     -3
 
 #define gfxtopix(dst, u) (gfxto##dst(u))
 #define gfxtoargb32(u)                                                  \
@@ -124,25 +124,25 @@ typedef int16_t rgb565_t;
 
 #define gfxtorgb555(u)                                                  \
     (gfxtoc(gfxredval(u),                                               \
-            GFX_RGB555_RED_MASK,                                        \
-            GFX_RGB555_RED_SHIFT)                                       \
+            RGB_RGB555_RED_MASK,                                        \
+            RGB_RGB555_RED_SHIFT)                                       \
      | gfxtoc(gfxgreenval(u),                                           \
-              GFX_RGB555_GREEN_MASK,                                    \
-              GFX_RGB555_GREEN_SHIFT)                                   \
+              RGB_RGB555_GREEN_MASK,                                    \
+              RGB_RGB555_GREEN_SHIFT)                                   \
      | gfxtoc(gfxblueval(u),                                            \
-              GFX_RGB555_BLUE_MASK,                                     \
-              GFX_RGB555_BLUE_SHIFT))
+              RGB_RGB555_BLUE_MASK,                                     \
+              RGB_RGB555_BLUE_SHIFT))
 
 #define gfxtorgb565(u)                                                  \
     (gfxtoc(gfxredval(u),                                               \
-            GFX_RGB565_RED_MASK,                                        \
-            GFX_RGB565_RED_SHIFT)                                       \
+            RGB_RGB565_RED_MASK,                                        \
+            RGB_RGB565_RED_SHIFT)                                       \
      | gfxtoc(gfxgreenval(u),                                           \
-              GFX_RGB565_GREEN_MASK,                                    \
-              GFX_RGB565_GREEN_SHIFT)                                   \
+              RGB_RGB565_GREEN_MASK,                                    \
+              RGB_RGB565_GREEN_SHIFT)                                   \
      | gfxtoc(gfxblueval(u),                                            \
-              GFX_RGB565_BLUE_MASK,                                     \
-              GFX_RGB565_BLUE_SHIFT))
+              RGB_RGB565_BLUE_MASK,                                     \
+              RGB_RGB565_BLUE_SHIFT))
 
 #define gfxsetrgb888_p(u, p)                                            \
     do {                                                                \

@@ -6,6 +6,7 @@
 
 #include <gfx/rgb.h>
 #include <kern/util.h>
+#include <kern/io/drv/chr/con.h>
 #include <kern/io/drv/pc/vga.h>
 #include <kern/unit/ia32/boot.h>
 #include <kern/unit/ia32/link.h>
@@ -17,16 +18,23 @@ extern void  realint10(void);
 
 extern void *vgafontbuf;
 
+void vbeputs(char *str);
+void vbeputchar(int ch);
+
 void vbedrawchar(unsigned char c, int x, int y, argb32_t fg, argb32_t bg);
 
 #define VBEPTR(x) ((((uint32_t)(x) & 0xffffffff) >> 12) | ((uint32_t)(x) & 0xffff))
 
+#if 0
 struct vbe {
     long found;
     long mode;
 };
+#endif
 
+#if 0
 struct vbe            vbe;
+#endif
 struct vbescreen      vbescreen;
 static struct vbeinfo vbectlinfo;
 
@@ -124,6 +132,34 @@ vbeinitscr(void)
                 : vbescreen.mode->xres * vbescreen.mode->yres * 2),
              PAGEPRES | PAGEWRITE);
     vbehello();
+
+    return;
+}
+
+void
+vbeinitcon(int w, int h)
+{
+    struct con *con = contab;
+    long        l;
+
+    for (l = 0 ; l < VGANCON ; l++) {
+//        kbzero(ptr, PAGESIZE);
+        con->puts = vbeputs;
+        con->putchar = vbeputchar;
+        con->fg = RGBWHITE;
+        con->bg = RGBBLACK;
+        con->buf = vbescreen.fbuf;
+        con->x = 0;
+        con->y = 0;
+        con->w = w;
+        con->h = h;
+//        con->chatr = vgasetfg(0, VGAWHITE);
+        con->nbufln = 0;
+        /* TODO: allocate scrollback buffer */
+        con->data = NULL;
+        con++;
+    }
+    concur = 0;
 
     return;
 }
@@ -240,6 +276,104 @@ vbedrawcharbg(unsigned char c, int x, int y, argb32_t fg, argb32_t bg)
         glyph++;
         ptr += incr;
     }
+
+    return;
+}
+
+/* output string on the current console */
+void
+vbeputs(char *str)
+{
+    struct con *con;
+    uint16_t   *ptr;
+    int         x;
+    int         y;
+    int         w;
+    int         h;
+    uint8_t     ch;
+//    uint8_t   atr;
+
+    con = &contab[concur];
+    x = con->x;
+    y = con->y;
+    w = con->w;
+    h = con->h;
+//    atr = con->chatr;
+    while (*str) {
+        ptr = con->buf + y * w + x;
+        ch = *str;
+        if (ch == '\n') {
+            if (++y == h) {
+                y = 0;
+            }
+            x = 0;
+        } else {
+            if (++x == w) {
+                x = 0;
+                if (++y == h) {
+                    y = 0;
+                }
+            }
+            vbedrawchar(ch, x << 3, y << 3, con->fg, con->bg);
+        }
+        str++;
+        con->x = x;
+        con->y = y;
+    }
+
+    return;
+}
+
+/* output string on a given console */
+void
+vbeputs2(struct con *con, char *str)
+{
+    uint16_t      *ptr;
+    int            x;
+    int            y;
+    int            w;
+    int            h;
+    uint8_t        ch;
+    uint8_t        atr;
+
+    x = con->x;
+    y = con->y;
+    w = con->w;
+    h = con->h;
+    atr = con->chatr;
+    while (*str) {
+        ptr = con->buf + y * w + x;
+        ch = *str;
+        if (ch == '\n') {
+            if (++y == h) {
+                y = 0;
+            }
+            x = 0;
+        } else {
+            if (++x == w) {
+                x = 0;
+                if (++y == h) {
+                    y = 0;
+                }
+            }
+            vbedrawchar(ch, x << 3, y << 3, con->fg, con->bg);
+        }
+        str++;
+        con->x = x;
+        con->y = y;
+    }
+
+    return;
+}
+
+void
+vbeputchar(int ch)
+{
+    struct con *con;
+    uint16_t      *ptr;
+
+    con = &contab[concur];
+    vbedrawchar(ch, (con->x << 3), (con->y << 3), con->fg, con->bg);
 
     return;
 }

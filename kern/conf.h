@@ -37,6 +37,8 @@
 
 /* NOTE: it's not recommended to edit anything below unless you develop Zero */
 
+#define NCON      8
+
 #define BOCHS     1
 #define DEVEL     1     // debugging
 
