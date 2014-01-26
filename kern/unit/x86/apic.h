@@ -15,7 +15,7 @@ void apicstart(uint8_t core, uint32_t adr);
 
 /* initialisation */
 #define RTCBASE        0x70
-#define BIOSWRV        0x467   // warm reset vector
+#define BIOSWRV        0x467            // warm reset vector
 
 /* registers */
 #define APICID         0x0020

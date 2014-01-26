@@ -39,7 +39,7 @@ volatile struct m_cpu *mpbootcpu;
 volatile long          mpmultiproc;
 volatile long          mpncpu;
 volatile long          mpioapicid;
-volatile uint32_t     *mpapic;
+volatile uint32_t     *mptab;
 volatile uint32_t     *mpioapic;
 
 static long
@@ -156,7 +156,7 @@ mpinit(void)
     }
     cpuinit((struct m_cpu *)mpbootcpu);
     mpmultiproc = 1;
-    mpapic = conf->apicadr;
+    mptab = conf->apicadr;
     for (u8ptr = (uint8_t *)(conf + 1), lim = (uint8_t *)conf + conf->len ;
          u8ptr < lim ; ) {
         switch (*u8ptr) {
@@ -194,7 +194,7 @@ mpinit(void)
     }
     if ((mpncpu == 1) || !mpmultiproc) {
         mpncpu = 1;
-//        mpapic = NULL;
+//        mptab = NULL;
 //        mpioapicid = 0;
 
         return;

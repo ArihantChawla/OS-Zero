@@ -15,14 +15,14 @@
 extern void segmap(uint32_t *pagetab, uint32_t virt, uint32_t phys,
                    uint32_t lim,
                    uint32_t flg);
-extern volatile uint32_t     *mpapic;
+extern volatile uint32_t     *mptab;
 extern volatile struct m_cpu  mpcputab[NCPU];
 extern volatile struct m_cpu *mpbootcpu;
 
 void
 usleep(long nusec)
 {
-    nusec <<= 1;
+    nusec <<= 20;
     while (nusec--) {
         nusec--;
     }
@@ -33,14 +33,14 @@ apicinit(long id)
 {
     volatile struct m_cpu *cpu = &mpcputab[id];
 
-    if (!mpapic) {
+    if (!mptab) {
 
         return;
     }
-    /* identity-map local APIC */
+    /* identity-map MP table */
     if (cpu == mpbootcpu) {
-        vmmapseg((uint32_t *)&_pagetab, (uint32_t)mpapic, (uint32_t)mpapic,
-                 (uint32_t)((uint8_t *)mpapic + PAGESIZE),
+        vmmapseg((uint32_t *)&_pagetab, (uint32_t)mptab, (uint32_t)mptab,
+                 (uint32_t)((uint8_t *)mptab + PAGESIZE),
                  PAGEPRES | PAGEWRITE);
     }
     cpu->id = id;

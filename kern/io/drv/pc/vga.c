@@ -333,18 +333,24 @@ void
 vgainitcon(int w, int h)
 {
     struct vgacon *con = _vgacontab;
+#if (!VBE)
     uint8_t       *ptr = (uint8_t *)VGABUFADR;
+#endif
     long           l;
 
 #if (VBE)
-//    con->fg = GFXWHITE;
-//    con->bg = GFXBLACK;
+    con->fg = GFXWHITE;
+    con->bg = GFXBLACK;
 #elif (VGAGFX)
 //    vgagetfont(vgafontbuf);
 #endif
     for (l = 0 ; l < VGANCON ; l++) {
+#if (!VBE)
         kbzero(ptr, PAGESIZE);
+#endif
+#if (!VBE)
         con->buf = (uint16_t *)ptr;
+#endif
         con->x = 0;
         con->y = 0;
         con->w = w;
@@ -395,7 +401,7 @@ vgaputs(char *str)
     atr = con->chatr;
 #endif
     while (*str) {
-#if (!VGAGFX)
+#if (!VGAGFX) && (!VBE)
         ptr = con->buf + y * w + x;
 #endif
         ch = *str;
@@ -451,7 +457,7 @@ vgaputs2(struct vgacon *con, char *str)
     atr = con->chatr;
 #endif
     while (*str) {
-#if (!VGAGFX)
+#if (!VGAGFX) && (!VBE)
         ptr = con->buf + y * w + x;
 #endif
         ch = *str;

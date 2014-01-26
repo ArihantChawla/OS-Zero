@@ -40,6 +40,9 @@ extern long vbe2init(struct mboothdr *hdr);
 extern void vbeinit(void);
 extern void vbeinitscr(void);
 #endif
+#if (ACPI)
+extern void acpiinit(void);
+#endif
 
 extern uint8_t            kerniomap[8192] ALIGNED(PAGESIZE);
 extern struct proc        proctab[NPROC];
@@ -62,9 +65,9 @@ kmain(struct mboothdr *hdr, unsigned long pmemsz)
 {
     seginit(0);                         // memory segments
 #if (VBE)
-    vgainitcon(768 >> 3, 1024 >> 3);
     vbeinit();
     trapinit();
+//    vgainitcon(768 >> 3, 1024 >> 3);
 #endif
     vminit((uint32_t *)&_pagetab);      // virtual memory
     kbzero(&_bssvirt, (uint32_t)&_ebss - (uint32_t)&_bss);
@@ -72,6 +75,9 @@ kmain(struct mboothdr *hdr, unsigned long pmemsz)
 //    vbeinit();
     vbeinitscr();
 //    trapinit();
+#endif
+#if (ACPI)
+    acpiinit();
 #endif
 //    __asm__ __volatile__ ("sti\n");
     curproc = &proctab[0];

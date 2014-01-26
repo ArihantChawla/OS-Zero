@@ -110,6 +110,9 @@ struct vgacon {
     int32_t  fg;
     int32_t  bg;
     void    *buf;
+#elif (VBE)
+    int32_t  fg;
+    int32_t  bg;
 #else
     uint16_t *buf;
 #endif
