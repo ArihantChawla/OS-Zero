@@ -1,15 +1,9 @@
 #ifndef __IO_DRV_CHR_CON_H__
 #define __IO_DRV_CHR_CON_H__
 
+#include <stdint.h>
+
 #include <gfx/rgb.h>
-
-#if 0
-extern void     (*conputs)(char *str);
-extern void     (*conputchar)(int ch);
-
-extern argb32_t   confgcolor;
-extern argb32_t   conbgcolor;
-#endif
 
 typedef void conputsfunc(char *str);
 typedef void conputcharfunc(int ch);
@@ -27,7 +21,7 @@ struct con {
     uint16_t        chatr;      // text attributes such as color
     long            nbufln;     // number of buffered lines
     void           *data;       // text buffers
-} PACK;
+} PACK();
 
 extern struct con contab[NCON];
 extern long       concur;

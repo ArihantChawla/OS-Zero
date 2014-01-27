@@ -4,22 +4,22 @@
 #define _iodelay()  __asm__ __volatile__ ("outb %%al, $0x80\n")
 
 static __inline__
-unsigned char inb(int port)
+unsigned char inb(short port)
 {
     unsigned char ret = 0;
 
-    __asm__ ("inb %1, %b0\n" : "=a" (ret) : "Nd" (port));
+    __asm__ __volatile__ ("inb %1, %b0\n" : "=a" (ret) : "Nd" (port));
 
     return ret;
     
 }
 
 static __inline__
-unsigned char inb_p(int port)
+unsigned char inb_p(short port)
 {
     unsigned char ret = 0;
 
-    __asm__ ("inb %1, %b0\n" : "=a" (ret) : "Nd" (port));
+    __asm__ __volatile__ ("inb %1, %b0\n" : "=a" (ret) : "Nd" (port));
     _iodelay();
 
     return ret;
@@ -27,22 +27,22 @@ unsigned char inb_p(int port)
 }
 
 static __inline__
-unsigned short inw(int port)
+unsigned short inw(short port)
 {
     unsigned short ret = 0;
 
-    __asm__ ("inw %1, %w0\n" : "=a" (ret) : "Nd" (port));
+    __asm__ __volatile__ ("inw %1, %w0\n" : "=a" (ret) : "Nd" (port));
 
     return ret;
     
 }
 
 static __inline__
-unsigned short inw_p(int port)
+unsigned short inw_p(short port)
 {
     unsigned short ret = 0;
 
-    __asm__ ("inw %1, %w0\n" : "=a" (ret) : "Nd" (port));
+    __asm__ __volatile__ ("inw %1, %w0\n" : "=a" (ret) : "Nd" (port));
     _iodelay();
 
     return ret;
@@ -50,22 +50,22 @@ unsigned short inw_p(int port)
 }
 
 static __inline__
-unsigned int inl(int port)
+unsigned int inl(short port)
 {
     unsigned int ret = 0;
 
-    __asm__ ("inl %1, %0\n" : "=a" (ret) : "Nd" (port));
+    __asm__ __volatile__ ("inl %1, %0\n" : "=a" (ret) : "Nd" (port));
 
     return ret;
     
 }
 
 static __inline__
-unsigned int inl_p(int port)
+unsigned int inl_p(short port)
 {
     unsigned int ret = 0;
 
-    __asm__ ("inl %1, %0\n" : "=a" (ret) : "Nd" (port));
+    __asm__ __volatile__ ("inl %1, %0\n" : "=a" (ret) : "Nd" (port));
     _iodelay();
 
     return ret;

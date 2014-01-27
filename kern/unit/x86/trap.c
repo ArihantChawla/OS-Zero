@@ -106,7 +106,7 @@ trapinitprio(void)
 void
 trapinit(void)
 {
-    idtinit(kernidt);
+//    idtinit(kernidt);
     trapinitprio();
     picinit();  // initialise interrupt controllers
     /* mask timer interrupt, enable other interrupts */

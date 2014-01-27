@@ -10,12 +10,16 @@
 #include <kern/proc/sched.h>
 //#include <kern/thr.h>
 #include <kern/io/drv/pc/vga.h>
-#if (VBE)
-#include <kern/unit/ia32/vbe.h>
+#if (ACPI)
+#include <kern/io/drv/pc/acpi.h>
 #endif
 #include <kern/unit/x86/cpu.h>
 #include <kern/unit/x86/pit.h>
 #include <kern/unit/x86/dma.h>
+#if (VBE)
+#include <kern/unit/x86/trap.h>
+#include <kern/unit/ia32/vbe.h>
+#endif
 #include <kern/unit/ia32/kern.h>
 #include <kern/unit/ia32/link.h>
 #include <kern/unit/ia32/boot.h>
@@ -37,6 +41,7 @@ extern void mpstart(void);
 extern long vbe2init(struct mboothdr *hdr);
 #endif
 #if (VBE)
+extern void idtinit(uint64_t *idt);
 extern void vbeinit(void);
 extern void vbeinitscr(void);
 #endif
@@ -44,27 +49,29 @@ extern void vbeinitscr(void);
 extern void acpiinit(void);
 #endif
 
-extern uint8_t            kerniomap[8192] ALIGNED(PAGESIZE);
-extern struct proc        proctab[NPROC];
-extern struct m_cpu       mpcputab[NCPU];
-extern struct vmpagestat  vmpagestat;
+extern uint8_t                   kerniomap[8192] ALIGNED(PAGESIZE);
+extern struct proc               proctab[NPROC];
+extern struct m_cpu              mpcputab[NCPU];
+#if (VBE)
+extern uint64_t                  kernidt[NINTR];
+#endif
+extern struct vmpagestat         vmpagestat;
 #if (SMP)
-extern struct m_cpu       cputab[NCPU];
-extern volatile uint32_t *mpapic;
-extern volatile long      mpncpu;
-extern volatile long      mpmultiproc;
+extern struct m_cpu              cputab[NCPU];
+#if (ACPI)
+extern volatile struct acpidesc *acpidesc;
 #endif
-
-#if (VBE2) || (VBE)
-#include <kern/unit/ia32/vbe.h>
+extern volatile uint32_t        *mpapic;
+extern volatile long             mpncpu;
+extern volatile long             mpmultiproc;
 #endif
-
 ASMLINK
 void
 kmain(struct mboothdr *hdr, unsigned long pmemsz)
 {
     seginit(0);                         // memory segments
 #if (VBE)
+    idtinit(kernidt);
     vbeinit();
     trapinit();
 #endif
@@ -72,29 +79,29 @@ kmain(struct mboothdr *hdr, unsigned long pmemsz)
     kbzero(&_bssvirt, (uint32_t)&_ebss - (uint32_t)&_bss);
     coninit(768 >> 3, 1024 >> 3);
 #if (VBE)
-//    vbeinit();
     vbeinitscr();
-//    trapinit();
 #endif
 #if (ACPI)
     acpiinit();
 #endif
-//    __asm__ __volatile__ ("sti\n");
     curproc = &proctab[0];
-    meminit(vmphysadr(&_ebssvirt), pmemsz);
     /* TODO: use memory map from GRUB */
+    meminit(vmphysadr(&_ebssvirt), pmemsz);
     vminitphys((uintptr_t)&_ebss, pmemsz - (unsigned long)&_ebss);
-//    meminit(vmphysadr(&_ebssvirt), max(pmemsz, 3UL * 1024 * 1024 * 1024));
     kmemset(&kerniomap, 0xff, sizeof(kerniomap));
-//    vgainitcon(80, 25);
-//    vgainitcon(80, 25);
 #if (VBE2)
     vbe2init(hdr);
     vbe2kludge();
 #elif (VBE)
-//    vbeclrscr(0x0000ff00);
     plasmaloop();
-//    vbeprintinfo();
+#endif
+    logoprint();
+#if (ACPI)
+    if (acpidesc) {
+        kprintf("ACPI: RSDP found @ 0x%p\n", acpidesc);
+    } else {
+        kprintf("ACPI: RSDP not found\n");
+    }
 #endif
     if (!bufinit()) {
         kprintf("failed to allocate buffer cache\n");
@@ -108,7 +115,7 @@ kmain(struct mboothdr *hdr, unsigned long pmemsz)
     if (!acpidesc) {
         mpinit();
         if (mpmultiproc) {
-//        mpstart();
+            mpstart();
         }
         if (mpncpu == 1) {
             kprintf("found %ld processor\n", mpncpu);
@@ -135,15 +142,11 @@ kmain(struct mboothdr *hdr, unsigned long pmemsz)
 #if (AC97)
     ac97init();
 #endif
-//    vgainitcon(80, 25);
-#if (!VBE2)
-    logoprint();
-#endif
     /* CPU interface */
     taskinit();
-    tssinit(0);                        // initialize CPU TSS
+    tssinit(0);
 #if 0
-    machinit();                         // initialise machine
+    machinit();
 #endif
     /* HID devices */
     kbdinit();
@@ -155,7 +158,7 @@ kmain(struct mboothdr *hdr, unsigned long pmemsz)
     kprintf("DMA buffers (%ul x %ul kilobytes) @ 0x%p\n",
             DMANCHAN, DMACHANBUFSIZE >> 10, DMABUFBASE);
     kprintf("VM page tables @ 0x%p\n", (unsigned long)&_pagetab);
-    kprintf("%ld kilobytes physical memory\n", pmemsz >> 10);
+//    kprintf("%ld kilobytes physical memory\n", pmemsz >> 10);
     kprintf("%ld kilobytes kernel memory\n", (uint32_t)&_ebss >> 10);
     kprintf("%ld kilobytes allocated physical memory (%ld wired, %ld total)\n",
             (vmpagestat.nwired + vmpagestat.nmapped + vmpagestat.nbuf) << (PAGESIZELOG2 - 10),

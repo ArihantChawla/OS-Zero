@@ -55,6 +55,7 @@ vbeint10(struct realregs *regs)
             sizeof(struct realregs));
 #endif
     realint10();
+    gdtinit();
 
     return;
 }
@@ -205,7 +206,7 @@ vbeputpix(argb32_t pix, int x, int y)
 {
     uint8_t *_ptr = vbepixadr(x, y);
 
-    gfxsetrgb888_p(pix, _ptr);
+    gfxsetrgb888(pix, _ptr);
 
     return;
 }

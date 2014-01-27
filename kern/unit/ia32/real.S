@@ -63,6 +63,7 @@ _real16:
 	int	$0x10
 	cli
 	pusha
+	lgdtl	(_realgdtptr - realstart + KERNREALBASE)
 	mov	%cr0, %eax
 	orl	$(CR0PE), %eax
 	mov	%eax, %cr0
@@ -72,15 +73,16 @@ _real16:
 
 .code32
 _protmode:
-	lgdt	(gdtptr)
+//	lgdtl	(gdtptr)
 	/* set up segment registers */
-	movw	$DATASEL, %ax
+	movw	$0x10, %ax
 	movw	%ax, %ds
 	movw	%ax, %es
 	movw	%ax, %fs
 	movw	%ax, %ss
-	movw	$CPUSEL, %ax
 	movw	%ax, %gs
+//	movw	$CPUSEL, %ax
+//	movw	%ax, %gs
 	movl	_espsave, %esp
 	popal
 	popfl
@@ -95,7 +97,6 @@ _protret:
 
 .align	16
 
-#if 0
 _realgdt:
 	/* NULL */
 	.short	0, 0
@@ -107,10 +108,12 @@ _realgdt:
 	.short	0xffff, 0
 	.byte	0, 0x92, 0xcf, 0
 
-_realgdtdesc:
-	.short	_realgdtdesc - _realgdt - 1
+_realgdtptr:
+	.short	_realgdtptr - _realgdt - 1
 	.long	_realgdt - realstart + KERNREALBASE
-#endif /* 0 */
+
+.align	4
+	
 _espsave:
 	.long	0x00000000
 _realidtptr:

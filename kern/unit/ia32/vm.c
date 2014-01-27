@@ -163,7 +163,6 @@ vminit(void *pagetab)
 
     /* initialize paging */
     pginit();
-    kprintf("VM page tables at 0x%ul\n", (unsigned long)pagetab);
     
     return;
 }
