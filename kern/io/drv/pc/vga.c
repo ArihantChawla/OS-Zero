@@ -5,7 +5,7 @@
 #include <gfx/rgb.h>
 #include <kern/conf.h>
 #include <kern/util.h>
-#include <kern/io/drv/chr/con.h>
+#include <kern/io/drv/chr/cons.h>
 #include <kern/io/drv/pc/vga.h>
 #include <kern/unit/ia32/link.h>
 #include <kern/unit/ia32/vm.h>
@@ -329,26 +329,26 @@ vgagetfont(void *bufadr)
 #if (!VBE)
 
 void
-vgainitcon(int w, int h)
+vgainitcons(int w, int h)
 {
-    struct con *con = contab;
-    uint8_t    *ptr = (uint8_t *)VGABUFADR;
-    long        l;
+    struct cons *cons = constab;
+    uint8_t     *ptr = (uint8_t *)VGABUFADR;
+    long         l;
 
-    for (l = 0 ; l < NCON ; l++) {
+    for (l = 0 ; l < NCONS ; l++) {
         kbzero(ptr, PAGESIZE);
-        con->buf = (uint16_t *)ptr;
-        con->x = 0;
-        con->y = 0;
-        con->w = w;
-        con->h = h;
-        con->chatr = vgasetfg(0, VGAWHITE);
-        con->nbufln = 0;
+        cons->buf = (uint16_t *)ptr;
+        cons->x = 0;
+        cons->y = 0;
+        cons->w = w;
+        cons->h = h;
+        cons->chatr = vgasetfg(0, VGAWHITE);
+        cons->nbufln = 0;
         /* TODO: allocate scrollback buffer */
-        con->data = NULL;
-        con++;
+        cons->data = NULL;
+        cons++;
     }
-    concur = 0;
+    conscur = 0;
     vgamoveto(0, 0);
 
     return;
@@ -356,23 +356,23 @@ vgainitcon(int w, int h)
 
 /* output string on a given console */
 void
-vgaputs2(struct con *con, char *str)
+vgaputs2(struct cons *cons, char *str)
 {
-    uint16_t      *ptr;
-    int            x;
-    int            y;
-    int            w;
-    int            h;
-    uint8_t        ch;
-    uint8_t        atr;
+    uint16_t *ptr;
+    int       x;
+    int       y;
+    int       w;
+    int       h;
+    uint8_t   ch;
+    uint8_t   atr;
 
-    x = con->x;
-    y = con->y;
-    w = con->w;
-    h = con->h;
-    atr = con->chatr;
+    x = cons->x;
+    y = cons->y;
+    w = cons->w;
+    h = cons->h;
+    atr = cons->chatr;
     while (*str) {
-        ptr = con->buf + y * w + x;
+        ptr = cons->buf + y * w + x;
         ch = *str;
         if (ch == '\n') {
             if (++y == h) {
@@ -389,8 +389,8 @@ vgaputs2(struct con *con, char *str)
             vgaputch3(ptr, ch, atr);
         }
         str++;
-        con->x = x;
-        con->y = y;
+        cons->x = x;
+        cons->y = y;
     }
 
     return;
@@ -399,12 +399,12 @@ vgaputs2(struct con *con, char *str)
 void
 vgaputchar(int ch)
 {
-    struct con *con;
-    uint16_t   *ptr;
+    struct cons *cons;
+    uint16_t    *ptr;
 
-    con = &contab[concur];
-    ptr = con->buf + con->w * con->x + con->y;
-    *ptr = _vgamkch(ch, con->chatr);
+    cons = &constab[conscur];
+    ptr = cons->buf + cons->w * cons->x + cons->y;
+    *ptr = _vgamkch(ch, cons->chatr);
 
     return;
 }
@@ -416,3 +416,4 @@ vgasyncscr(void)
 }
 
 #endif /* !VBE */
+

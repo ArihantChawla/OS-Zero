@@ -68,9 +68,9 @@ SECTIONS {
 	sig.o(.text)
 	sig.o(.data)
 	sig.o(.bss)
-	con.o(.text)
-	con.o(.data)
-	con.o(.bss)
+	cons.o(.text)
+	cons.o(.data)
+	cons.o(.bss)
         _eboot = .;
 	. = ALIGN(PAGESIZE);
     }

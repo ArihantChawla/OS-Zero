@@ -50,7 +50,6 @@ sigfunc(uint32_t trap)
     signalhandler_t *sigfunc;
 
 //    kprintf("trap %ld -> signal %ld\n", trap, signum);
-#if 0
     if (signum == SIGKILL) {
         kill(proc);
     } else if ((signum) && sigismember(&proc->sigmask, signum)) {
@@ -64,7 +63,6 @@ sigfunc(uint32_t trap)
             }
         }
     }
-#endif
 
     return;
 }

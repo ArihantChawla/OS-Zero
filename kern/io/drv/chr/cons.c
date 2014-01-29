@@ -1,6 +1,6 @@
 #include <gfx/rgb.h>
 #include <kern/conf.h>
-#include <kern/io/drv/chr/con.h>
+#include <kern/io/drv/chr/cons.h>
 #include <kern/io/drv/pc/vga.h>
 
 #if 0
@@ -10,15 +10,15 @@ conputsfunc    *conputs = vgaputs;
 conputcharfunc *conputchar = vgaputchar;
 #endif
 
-struct con contab[NCON] ALIGNED(PAGESIZE);
-long       concur;
+struct cons constab[NCONS] ALIGNED(PAGESIZE);
+long        conscur;
 
 void
-coninit(int w, int h)
+consinit(int w, int h)
 {
 #if (VBE)
-    vbeinitcon(w, h);
+    vbeinitcons(w, h);
 #else
-    vgainitcon(w, h);
+    vgainitcons(w, h);
 #endif
 }

@@ -8,17 +8,20 @@
 #include <kern/obj.h>
 #include <kern/proc/proc.h>
 #include <kern/proc/sched.h>
+#include <kern/io/drv/chr/cons.h>
 //#include <kern/thr.h>
 #include <kern/io/drv/pc/vga.h>
 #if (ACPI)
 #include <kern/io/drv/pc/acpi.h>
+#endif
+#if (VBE)
+#include <kern/io/drv/pc/vbe.h>
 #endif
 #include <kern/unit/x86/cpu.h>
 #include <kern/unit/x86/pit.h>
 #include <kern/unit/x86/dma.h>
 #if (VBE)
 #include <kern/unit/x86/trap.h>
-#include <kern/unit/ia32/vbe.h>
 #endif
 #include <kern/unit/ia32/kern.h>
 #include <kern/unit/ia32/link.h>
@@ -77,7 +80,7 @@ kmain(struct mboothdr *hdr, unsigned long pmemsz)
 #endif
     vminit((uint32_t *)&_pagetab);      // virtual memory
     kbzero(&_bssvirt, (uint32_t)&_ebss - (uint32_t)&_bss);
-    coninit(768 >> 3, 1024 >> 3);
+    consinit(768 >> 3, 1024 >> 3);
 #if (VBE)
     vbeinitscr();
 #endif

@@ -4,7 +4,7 @@
 #include <zero/cdecl.h>
 #include <zero/param.h>
 #include <zero/trix.h>
-#include <kern/io/drv/chr/con.h>
+#include <kern/io/drv/chr/cons.h>
 #include <kern/io/drv/pc/vga.h>
 
 #define MAXPRINTFSTR 2048
@@ -424,21 +424,21 @@ void
 kprintf(char *fmt, ...)
 {
 //    char    *str = fmt;
-    struct con *con;
-    char       *arg;
-    char       *sptr;
-    long        val;
-    long        isch;
-    long        isdec;
-    long        ishex;
-    long        l;
-    long        len;
-    va_list     al;
-    char        buf[LONGBUFSIZE];
-    char        str[MAXPRINTFSTR];
+    struct cons *cons;
+    char        *arg;
+    char        *sptr;
+    long         val;
+    long         isch;
+    long         isdec;
+    long         ishex;
+    long         l;
+    long         len;
+    va_list      al;
+    char         buf[LONGBUFSIZE];
+    char         str[MAXPRINTFSTR];
 
-    con = &contab[concur];
-    if (con->puts) {
+    cons = &constab[conscur];
+    if (cons->puts) {
         va_start(al, fmt);
         len = MAXPRINTFSTR - 1;
         len = kstrncpy(str, fmt, len);
@@ -450,7 +450,7 @@ kprintf(char *fmt, ...)
             val = 0;
             arg = _strtok(sptr, '%');
             if (arg) {
-                con->puts(sptr);
+                cons->puts(sptr);
                 arg++;
                 if (*arg) {
                     switch (*arg) {
@@ -545,14 +545,14 @@ kprintf(char *fmt, ...)
                     }
                     if (ishex) {
                         l = _ltoxn(val, buf, LONGBUFSIZE);
-                        con->puts(&buf[l]);
+                        cons->puts(&buf[l]);
                     } else if (isdec) {
                         l = _ltodn(val, buf, LONGBUFSIZE);
-                        con->puts(&buf[l]);
+                        cons->puts(&buf[l]);
                     } else if ((isch) && isprint(val)) {
-                        con->putchar((int)val);
+                        cons->putchar((int)val);
                     } else {
-                        con->putchar(' ');
+                        cons->putchar(' ');
                     }
                 } else {
                     va_end(al);
@@ -561,7 +561,7 @@ kprintf(char *fmt, ...)
                 }
             } else {
                 if (*sptr) {
-                    con->puts(sptr);
+                    cons->puts(sptr);
                 }
                 va_end(al);
                 
