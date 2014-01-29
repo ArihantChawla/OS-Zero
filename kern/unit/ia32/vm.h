@@ -4,6 +4,8 @@
 #include <stdint.h>
 //#include <kern/buf.h>
 
+#include <kern/unit/ia32/link.h>
+
 #if !defined(__KERNEL__)
 #define __KERNEL__ 1
 #endif
@@ -16,7 +18,8 @@ void  vmmapseg(uint32_t *pagetab, uint32_t virt, uint32_t phys, uint32_t lim,
                uint32_t flg);
 
 #define KERNVIRTBASE      0xc0000000U
-#define vmphysadr(adr)    ((uint32_t)(adr) - KERNVIRTBASE)
+#define vmlinkadr(adr)    ((uint32_t)(adr) - KERNVIRTBASE)
+#define vmphysadr(adr)    (((uint32_t *)&_pagetab[vmpagenum(adr)]) & VMPGMASK)
 
 #define vmpagedirnum(adr) ((uint32_t)(adr) >> PDSHIFT)
 #define vmpagenum(adr)    ((uint32_t)(adr) >> PTSHIFT)

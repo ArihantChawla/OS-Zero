@@ -86,7 +86,7 @@ kmain(struct mboothdr *hdr, unsigned long pmemsz)
 #endif
     curproc = &proctab[0];
     /* TODO: use memory map from GRUB */
-    meminit(vmphysadr(&_ebssvirt), pmemsz);
+    meminit(vmlinkadr(&_ebssvirt), pmemsz);
     vminitphys((uintptr_t)&_ebss, pmemsz - (unsigned long)&_ebss);
     kmemset(&kerniomap, 0xff, sizeof(kerniomap));
 #if (VBE2)
@@ -96,7 +96,7 @@ kmain(struct mboothdr *hdr, unsigned long pmemsz)
     plasmaloop();
 #endif
     logoprint();
-#if (ACPI)
+#if (ACPI) && 0
     if (acpidesc) {
         kprintf("ACPI: RSDP found @ 0x%p\n", acpidesc);
     } else {

@@ -44,8 +44,6 @@ struct pageq         vmphysq;
 struct vmpagestat    vmpagestat;
 
 /*
- * virt == 0 -> identity-map
- *
  * 32-bit page directory is flat 4-megabyte table of page-tables.
  * for virtual address virt,
  *
@@ -58,11 +56,6 @@ vmmapseg(uint32_t *pagetab, uint32_t virt, uint32_t phys, uint32_t lim,
     uint32_t  *pte;
     long       n;
 
-#if 0
-    if (!virt) {
-        virt = phys;
-    }
-#endif
     n = rounduppow2(lim - virt, PAGESIZE) >> PAGESIZELOG2;
     pte = pagetab + vmpagenum(virt);
     while (n--) {
@@ -76,6 +69,7 @@ vmmapseg(uint32_t *pagetab, uint32_t virt, uint32_t phys, uint32_t lim,
 
 /*
  * initialise virtual memory
+ * - no locking; call before going multiprocessor
  * - zero page tables
  * - initialize page directory
  * - map page directory index page
@@ -149,12 +143,12 @@ vminit(void *pagetab)
            PAGEPRES | PAGEWRITE);
 
     /* map kernel text/read-only segments */
-    vmmapseg(pagetab, (uint32_t)&_text, vmphysadr((uint32_t)&_textvirt),
+    vmmapseg(pagetab, (uint32_t)&_text, vmlinkadr((uint32_t)&_textvirt),
            (uint32_t)&_etextvirt,
            PAGEPRES);
 
     /* map kernel DATA and BSS segments */
-    vmmapseg(pagetab, (uint32_t)&_data, vmphysadr((uint32_t)&_datavirt),
+    vmmapseg(pagetab, (uint32_t)&_data, vmlinkadr((uint32_t)&_datavirt),
            (uint32_t)&_ebssvirt,
            PAGEPRES | PAGEWRITE);
 

@@ -89,7 +89,7 @@ _protmode:
 	/* leave */
 	movl	%ebp, %esp
 	popl	%ebp
-	lidt	(idtptr)
+	lidtl	(idtptr)
 	ljmpl	$TEXTSEL, $(_protret - realstart + KERNREALBASE)
 _protret:
 	sti
