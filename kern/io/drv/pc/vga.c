@@ -340,8 +340,8 @@ vgainitcons(int w, int h)
         cons->buf = (uint16_t *)ptr;
         cons->x = 0;
         cons->y = 0;
-        cons->w = w;
-        cons->h = h;
+        cons->ncol = w;
+        cons->nrow = h;
         cons->chatr = vgasetfg(0, VGAWHITE);
         cons->nbufln = 0;
         /* TODO: allocate scrollback buffer */
@@ -368,8 +368,8 @@ vgaputs2(struct cons *cons, char *str)
 
     x = cons->x;
     y = cons->y;
-    w = cons->w;
-    h = cons->h;
+    w = cons->ncol;
+    h = cons->nrow;
     atr = cons->chatr;
     while (*str) {
         ptr = cons->buf + y * w + x;
@@ -403,7 +403,7 @@ vgaputchar(int ch)
     uint16_t    *ptr;
 
     cons = &constab[conscur];
-    ptr = cons->buf + cons->w * cons->x + cons->y;
+    ptr = cons->buf + cons->ncol * cons->x + cons->y;
     *ptr = _vgamkch(ch, cons->chatr);
 
     return;
