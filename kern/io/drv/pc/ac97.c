@@ -2,6 +2,7 @@
 
 #include <kern/util.h>
 #include <kern/mem.h>
+#include <kern/io/drv/pc/pci.h>
 #include <kern/io/drv/pc/ac97.h>
 
 extern void *irqvec[];
@@ -14,8 +15,11 @@ static long               _ac97dma;
 static long               _ac97inbufhalf = 0;
 static long               _ac97outbufhalf = 0;
 
+#define ac97chkdev(dev)                                                 \
+    ((dev)->vendor == 0x8086 && (dev)->id == 0x2415)
+
 /*
- * - allocate the max of 32 * 128K buffers for both input and output
+ * - allocate the max of 32 * 4K buffers for both input and output
  * - receive interrupts on completion of every 16 buffers
  */
 long
@@ -61,13 +65,34 @@ ac97initbuf(void)
     return 1;
 }
 
+long
+ac97probe(void)
+{
+    struct pcidev *dev;
+    long           ndev;
+
+    dev = &pcidevtab[0];
+    ndev = pcindev;
+    if (ndev) {
+        while (ndev--) {
+            if (ac97chkdev(dev)) {
+
+                return 1;
+            }
+            dev++;
+        }
+    }
+}
+
 void
 ac97init(void)
 {
-    if (!ac97initbuf()) {
+    if (!ac97probe() || !ac97initbuf()) {
         kprintf("AC97: failed to initialise audio buffers\n");
 
         return;
+    } else {
+        kprintf("AC97: audio controller found\n");
     }
 }
 

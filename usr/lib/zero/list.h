@@ -92,7 +92,7 @@
         LIST_TYPE *_tail;                                               \
                                                                         \
         (item)->LISTNEXT = NULL;                                        \
-        mtxlk(&(qp)->lk);                                               \
+        mtxlk(&(queue)->lk);                                            \
         _tail  = (queue)->tail;                                         \
         (item)->LISTPREV = _tail;                                       \
         if (_tail) {                                                    \
@@ -101,7 +101,7 @@
             (item)->LISTPREV = NULL;                                    \
             (queue)->head = (item);                                     \
         }                                                               \
-        mtxunlk(&(qp)->lk);                                             \
+        mtxunlk(&(queue)->lk);                                          \
     } while (0)
 
 /* remove item from queue */

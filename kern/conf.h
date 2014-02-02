@@ -45,14 +45,15 @@
 #define CMOV      1
 
 /* planned drivers */
+#define PCI       1
 #define ACPI      1
 #define ACPICA    0
-#define HPET      1     // high precision event timer support
+#define HPET      0     // high precision event timer support
 #define PS2DRV    1     // enable PS/2 mouse and keyboard drivers
 #define VBE       1     // VBE2 graphics driver
 #define VGAGFX    0     // VGA graphics driver
 #define SB16      0     // Soundblaster 16 audio driver
-#define AC97      0     // AC97 audio drivers
+#define AC97      1     // AC97 audio drivers
 #define ENS1370   0     // Ensoniq 1370 audio driver
 
 #endif /* __KERN_CONF_H__ */

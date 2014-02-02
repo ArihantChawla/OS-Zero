@@ -5,7 +5,11 @@
 
 #include <gfx/rgb.h>
 
+#define CONSNTEXTROW 4096
+
 void consinit(int w, int h);
+
+typedef uint8_t conschar_t;
 
 typedef void consputsfunc(char *str);
 typedef void consputcharfunc(int ch);
@@ -23,8 +27,8 @@ struct cons {
 //    long             w;         // width in pixels
 //    long             h;         // height in pixels
     long             chatr;     // text attributes such as color
-    long             nbufln;    // number of buffered lines
-    void            *data;      // text buffers
+    long             ntextrow;  // number of buffer lines
+    void            *textbuf;   // text buffers
 } PACK();
 
 extern struct cons constab[NCONS];

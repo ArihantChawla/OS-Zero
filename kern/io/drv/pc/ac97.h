@@ -3,6 +3,7 @@
 
 /* interface for PCI device 0x31, function 5 (audio controller) */
 
+#define AC97BUFSIZE       4096
 #define AC97NBUF          32
 
 #define AC97BASE          
@@ -57,10 +58,6 @@
 #define AC97BUSMASTER     0x04
 #define AC97IOSPACE       0x01
 #define AC97INIT          (AC97BUSMASTER | AC97IOSPACE)
-
-#define AC97NBUF          32
-//#define AC97BUFSIZE       (65536 * sizeof(int16_t))
-#define AC97BUFSIZE       4096
 
 #define ac97setptr(bp, ptr)                                             \
     ((bp)->adr |= ((uint32_t)ptr & 0x7ffffffe))

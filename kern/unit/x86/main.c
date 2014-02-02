@@ -48,6 +48,9 @@ extern void idtinit(uint64_t *idt);
 extern void vbeinit(void);
 extern void vbeinitscr(void);
 #endif
+#if (PCI)
+extern void pciinit(void);
+#endif
 #if (ACPI)
 extern void acpiinit(void);
 #endif
@@ -68,6 +71,7 @@ extern volatile uint32_t        *mpapic;
 extern volatile long             mpncpu;
 extern volatile long             mpmultiproc;
 #endif
+
 ASMLINK
 void
 kmain(struct mboothdr *hdr, unsigned long pmemsz)
@@ -84,9 +88,6 @@ kmain(struct mboothdr *hdr, unsigned long pmemsz)
 #if (VBE)
     vbeinitscr();
 #endif
-#if (ACPI)
-    acpiinit();
-#endif
     curproc = &proctab[0];
     /* TODO: use memory map from GRUB */
     meminit(vmlinkadr(&_ebssvirt), pmemsz);
@@ -99,6 +100,12 @@ kmain(struct mboothdr *hdr, unsigned long pmemsz)
     plasmaloop();
 #endif
     logoprint();
+#if (PCI)
+    pciinit();
+#endif
+#if (ACPI)
+    acpiinit();
+#endif
 #if (ACPI) && 0
     if (acpidesc) {
         kprintf("ACPI: RSDP found @ 0x%p\n", acpidesc);
@@ -135,12 +142,6 @@ kmain(struct mboothdr *hdr, unsigned long pmemsz)
 #endif
 #if (HPET)
     hpetinit();
-#endif
-#if 0
-#if (VBE2)
-    vbe2init(hdr);
-    vbe2kludge();
-#endif
 #endif
 #if (AC97)
     ac97init();

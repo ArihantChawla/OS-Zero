@@ -5,16 +5,24 @@
 #include <zero/param.h>
 #include <zero/cdecl.h>
 
-#define PCICONFADR  0x0cf8
-#define PCICONFDATA 0x0cfc
+#define PCINDEV       16
+#define PCICONFADR    0x0cf8
+#define PCICONFDATA   0x0cfc
 
-#define PCIRES1MASK 0x00000003
-#define PCIREGMASK  0x000000fc
-#define PCIFUNCMASK 0x00000700
-#define PCIDEVMASK  0x0000f800
-#define PCIBUSMASK  0x00ff0000
-#define PCIRES2MASK 0x7f000000
-#define PCICONFBIT  0x80000000
+#define PCIRES1MASK   0x00000003
+#define PCIREGMASK    0x000000fc
+#define PCIFUNCMASK   0x00000700
+#define PCIDEVMASK    0x0000f800
+#define PCIBUSMASK    0x00ff0000
+#define PCIRES2MASK   0x7f000000
+#define PCICONFBIT    0x80000000
+
+#define PCIREADCONFB  0xb108
+#define PCIREADCONFW  0xb109
+#define PCIREADCONFL  0xb10a
+#define PCIWRITECONFB 0xb10b
+#define PCIWRITECONFW 0xb10c
+#define PCIWRITECONFL 0xb10d
 
 /* class codes */
 #define PCINOCLASS    0x00
@@ -35,6 +43,22 @@
 #define PCISATELLITE  0x0f
 #define PCICRYPT      0x10
 #define PCIDATASIGNAL 0x11
+
+struct pcidev {
+    struct pcidev *prev;
+    struct pcidev *next;
+    char          *devstr;
+    uint16_t       vendor;
+    uint16_t       id;
+    uint8_t        bus;
+    uint8_t        slot;
+};
+
+struct pcidevlist {
+    volatile long  lk;
+    struct pcidev *head;
+    struct pcidev *tail;
+};
 
 struct pcihdr00 {
     uint16_t vendor;
@@ -161,6 +185,9 @@ struct pciiobaseadr {
     unsigned res : 1;
     unsigned adr : 30;
 } PACK();
+
+extern struct pcidev pcidevtab[PCINDEV];
+extern long          pcindev;
 
 #endif /* __KERN_IO_DRV_PC_PCI_H__ */
 

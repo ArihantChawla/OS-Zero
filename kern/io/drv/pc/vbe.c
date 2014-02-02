@@ -157,9 +157,8 @@ vbeinitcons(int w, int h)
         cons->ncol = w;
         cons->nrow = h;
 //        cons->chatr = vgasetfg(0, VGAWHITE);
-        cons->nbufln = 0;
+        cons->ntextrow = 0;
         /* TODO: allocate scrollback buffer */
-        cons->data = NULL;
         cons++;
     }
     conscur = 0;
