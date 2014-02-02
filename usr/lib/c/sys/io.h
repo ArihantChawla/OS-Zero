@@ -4,7 +4,7 @@
 #define _iodelay()  __asm__ __volatile__ ("outb %%al, $0x80\n")
 
 static __inline__
-unsigned char inb(short port)
+unsigned char inb(unsigned short port)
 {
     unsigned char ret = 0;
 
@@ -15,7 +15,7 @@ unsigned char inb(short port)
 }
 
 static __inline__
-unsigned char inb_p(short port)
+unsigned char inb_p(unsigned short port)
 {
     unsigned char ret = 0;
 
@@ -27,7 +27,7 @@ unsigned char inb_p(short port)
 }
 
 static __inline__
-unsigned short inw(short port)
+unsigned short inw(unsigned short port)
 {
     unsigned short ret = 0;
 
@@ -38,7 +38,7 @@ unsigned short inw(short port)
 }
 
 static __inline__
-unsigned short inw_p(short port)
+unsigned short inw_p(unsigned short port)
 {
     unsigned short ret = 0;
 
@@ -50,7 +50,7 @@ unsigned short inw_p(short port)
 }
 
 static __inline__
-unsigned int inl(short port)
+unsigned int inl(unsigned short port)
 {
     unsigned int ret = 0;
 
@@ -61,7 +61,7 @@ unsigned int inl(short port)
 }
 
 static __inline__
-unsigned int inl_p(short port)
+unsigned int inl_p(unsigned short port)
 {
     unsigned int ret = 0;
 

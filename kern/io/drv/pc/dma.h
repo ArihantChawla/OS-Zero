@@ -9,16 +9,20 @@
 
 extern const uint8_t dmapageports[];
 
+#define DMADRAMCHAN     0       // reserved (DRAM refresh)
+#define DMAFDCHAN       2       // hardwired channel for floppy disk controllers
+#define DMACASCADECHAN  4       // reserved (cascade)
+
 #define DMAIDLE         0
 #define DMAREADOP       1
 #define DMAWRITEOP      2
 
 #define DMANCHAN        8
-#define DMACHANBUFSIZE  (512 * 1024)
+#define DMACHANBUFSIZE  (1024 * 1024)
 #define DMAIOBUFSIZE    65536
 
 #define DMABUFBASE      0x00400000U
-#define DMABUFSIZE      0x00400000U
+#define DMABUFSIZE      (DMANCHAN * DMACHANBUFSIZE)
 //#define DMACBUFSIZE     (1U << DMACBUFSIZELOG2)
 #define DMABUFNPAGE     (DMACHANBUFSIZE >> PAGESIZELOG2)
 //#define DMACBUFSIZELOG2 17
@@ -71,11 +75,12 @@ extern const uint8_t dmapageports[];
 #define DMACNT6         0xcaU
 #define DMACNT7         0xceU
 
-/* page registers for low byte (23-16) */
+/* page registers for high byte (23-16) */
 #define DMAPAGE0        0x87U
 #define DMAPAGE1        0x83U
 #define DMAPAGE2        0x81U
 #define DMAPAGE3        0x82U
+#define DMAPAGE4        0x8fU
 #define DMAPAGE5        0x8bU
 #define DMAPAGE6        0x89U
 #define DMAPAGE7        0x8aU
@@ -133,9 +138,9 @@ static __inline__ void
 dmaunmask(uint8_t chan)
 {
     if (_isdma1(chan)) {
-	outb(DMACHANMASK, chan);
+	outb(chan, DMA1MASK);
     } else {
-	outb(DMA2MASK, chan & DMACHANMASK);
+	outb(chan & DMACHANMASK, DMA2MASK);
     }
 }
 
@@ -143,9 +148,9 @@ static __inline__ void
 dmamask(uint8_t chan)
 {
     if (_isdma1(chan)) {
-	outb(DMACHANMASK, chan | DMAMASKBIT);
+	outb(chan | DMAMASKBIT, DMA1MASK);
     } else {
-	outb(DMA2MASK, (chan & DMACHANMASK) | DMAMASKBIT);
+	outb((chan & DMACHANMASK) | DMAMASKBIT, DMA2MASK);
     }
 }
 
@@ -153,9 +158,9 @@ static __inline__ void
 dmaclrptr(uint8_t chan)
 {
     if (_isdma1(chan)) {
-	outb(DMA1CLRPTR, 0x00);
+	outb(0x00, DMA1CLRPTR);
     } else {
-	outb(DMA2CLRPTR, 0x00);
+	outb(0x00, DMA2CLRPTR);
     }
 }
 
@@ -163,9 +168,9 @@ static __inline__ void
 dmasetmode(uint8_t chan, uint8_t mode)
 {
     if (_isdma1(chan)) {
-	outb(DMA1MODE, mode | chan);
+	outb(mode | chan, DMA1MODE);
     } else {
-	outb(DMA1MODE, mode | (chan & DMACHANMASK));
+	outb(mode | (chan & DMACHANMASK), DMA2MODE);
     }
 }
 
@@ -173,9 +178,9 @@ static __inline__ void
 dmasetpage(uint8_t chan, uint8_t page)
 {
     if (_isdma1(chan)) {
-	outb(dmapageports[page], chan);
+	outb(chan, dmapageports[page]);
     } else {
-	outb(dmapageports[page], chan & 0xfe);
+	outb(chan & 0xfe, dmapageports[page]);
     }
 }
 
@@ -188,12 +193,12 @@ dmasetadr(uint8_t chan, void *ptr)
     dmasetpage(chan, adr >> 16);
     if (_isdma1(chan)) {
 	port = DMA1BASE + ((chan & DMACHANMASK) << 1);
-	outb(port, adr & 0xff);
-	outb(port, (adr >> 8) & 0xff);
+	outb(adr & 0xff, port);
+	outb((adr >> 8) & 0xff, port);
     } else {
 	port = DMA1BASE + ((chan & DMACHANMASK) << 2);
-	outb(port, (adr >> 1) & 0xff);
-	outb(port, (adr >> 9) & 0xff);
+	outb((adr >> 1) & 0xff, port);
+	outb((adr >> 9) & 0xff, port);
     }
 }
 
@@ -208,12 +213,12 @@ dmasetcnt(uint8_t chan, uint32_t cnt)
     cnt--;
     if (_isdma1(chan)) {
 	port = DMA1BASE + ((chan & DMACHANMASK) << 1) + 1;
-	outb(port, cnt & 0xff);
-	outb(port, (cnt >> 8) & 0xff);
+	outb(cnt & 0xff, port);
+	outb((cnt >> 8) & 0xff, port);
     } else {
 	port = DMA1BASE + ((chan & DMACHANMASK) << 1) + 2;
-	outb(port, (cnt >> 1) & 0xff);
-	outb(port, (cnt >> 9) & 0xff);
+	outb((cnt >> 1) & 0xff, port);
+	outb((cnt >> 9) & 0xff, port);
     }
 }
 

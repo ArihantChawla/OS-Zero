@@ -11,6 +11,21 @@
 
 volatile struct acpidesc *acpidesc;
 
+static
+uint8_t acpichksum(void *tab, long size)
+{
+    uint8_t *ptr;
+    uint8_t  sum;
+
+    ptr = tab;
+    sum = 0;
+    while (size--) {
+        sum += *ptr++;
+    }
+
+    return sum;
+}
+
 struct acpidesc *
 acpifind(void)
 {
@@ -21,7 +36,9 @@ acpifind(void)
     ptr = (uint64_t *)(EBDAADR << 4);
     lim = ptr + 512;
     while (ptr < lim) {
-        if (*ptr == ACPIRSDPTRSIG) {
+        if (*ptr == ACPIRSDPTRSIG
+            && !acpichksum(ptr, 20)
+            && !acpichksum(ptr, sizeof(struct acpidesc))) {
 
             return (struct acpidesc *)ptr;
         }
@@ -31,7 +48,9 @@ acpifind(void)
     ptr = (uint64_t *)0xe0000;
     lim = (uint64_t *)0xfffff;
     while (ptr < lim) {
-        if (*ptr == ACPIRSDPTRSIG) {
+        if (*ptr == ACPIRSDPTRSIG
+            && !acpichksum(ptr, 20)
+            && !acpichksum(ptr, sizeof(struct acpidesc))) {
 
             return (struct acpidesc *)ptr;
         }
@@ -45,6 +64,9 @@ void
 acpiinit(void)
 {
     acpidesc = acpifind();
+    if (acpidesc) {
+        kprintf("ACPI: RSDP found @ 0x%p\n", acpidesc);
+    }
 
     return;
 }

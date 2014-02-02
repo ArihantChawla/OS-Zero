@@ -3,7 +3,8 @@
 
 /* interface for PCI device 0x31, function 5 (audio controller) */
 
-#define AC97BUFSIZE       4096
+/* 32 * 32K == 1024K buffer space */
+#define AC97BUFSIZE       32768
 #define AC97NBUF          32
 
 #define AC97BASE          
@@ -61,10 +62,10 @@
 
 #define ac97setptr(bp, ptr)                                             \
     ((bp)->adr |= ((uint32_t)ptr & 0x7ffffffe))
-#define ac97setioq(bp)                                                  \
-    ((bp)->adr |= 0x80000000)
-#define ac97clrioq(bp)                                                  \
-    ((bp)->adr &= 0x7fffffff)
+#define ac97setioc(bp)                                                  \
+    ((bp)->adr |= AC97IOCBIT)
+#define ac97clrioc(bp)                                                  \
+    ((bp)->adr &= ~AC97IOCBIT)
 #define ac97setbup(bp, bup)                                             \
     ((bp)->info |= (bup) << 30))
 #define ac97setlen(bp, len)                                             \

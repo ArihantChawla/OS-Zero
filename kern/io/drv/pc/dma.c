@@ -4,7 +4,7 @@
 
 const uint8_t dmapageports[DMANCHAN]
 = {
-    DMAPAGE0,
+    0x00,
     DMAPAGE1,
     DMAPAGE2,
     DMAPAGE3,
