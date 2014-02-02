@@ -52,6 +52,8 @@ struct pcidev {
     uint16_t       id;
     uint8_t        bus;
     uint8_t        slot;
+    uint8_t        irq;
+    uint8_t        dma;
 };
 
 struct pcidevlist {

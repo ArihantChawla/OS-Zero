@@ -16,7 +16,7 @@
 //#include <kern/proc/task.h>
 #include <kern/mem/page.h>
 // #include <kern/io/buf.h>
-#include <kern/unit/x86/dma.h>
+#include <kern/io/drv/pc/dma.h>
 #if (SMP)
 #include <kern/unit/ia32/mp.h>
 #endif

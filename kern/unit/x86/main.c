@@ -10,6 +10,7 @@
 #include <kern/proc/sched.h>
 #include <kern/io/drv/chr/cons.h>
 //#include <kern/thr.h>
+#include <kern/io/drv/pc/dma.h>
 #include <kern/io/drv/pc/vga.h>
 #if (ACPI)
 #include <kern/io/drv/pc/acpi.h>
@@ -19,7 +20,6 @@
 #endif
 #include <kern/unit/x86/cpu.h>
 #include <kern/unit/x86/pit.h>
-#include <kern/unit/x86/dma.h>
 #if (VBE)
 #include <kern/unit/x86/trap.h>
 #endif

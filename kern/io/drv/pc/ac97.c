@@ -1,5 +1,8 @@
 #include <stdint.h>
 
+#include <zero/param.h>
+#include <zero/cdecl.h>
+
 #include <kern/util.h>
 #include <kern/mem.h>
 #include <kern/io/drv/pc/pci.h>
@@ -8,12 +11,8 @@
 extern void *irqvec[];
 
 /* TODO: add microphone support */
-static struct ac97bufdesc _ac97inbuftab[AC97NBUF];
-static struct ac97bufdesc _ac97outbuftab[AC97NBUF];
-static long               _ac97irq;
-static long               _ac97dma;
-static long               _ac97inbufhalf = 0;
-static long               _ac97outbufhalf = 0;
+
+static struct ac97drv ac97drv ALIGNED(PAGESIZE);
 
 #define ac97chkdev(dev)                                                 \
     ((dev)->vendor == 0x8086 && (dev)->id == 0x2415)
@@ -26,8 +25,8 @@ long
 ac97initbuf(void)
 {
     long                l = AC97NBUF;
-    struct ac97bufdesc *inbuf = _ac97inbuftab;
-    struct ac97bufdesc *outbuf = _ac97outbuftab;
+    struct ac97bufdesc *inbuf = ac97drv.inbuftab;
+    struct ac97bufdesc *outbuf = ac97drv.outbuftab;
     uint8_t            *inptr;
     uint8_t            *outptr;
 

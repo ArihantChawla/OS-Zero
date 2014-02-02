@@ -74,5 +74,14 @@ struct ac97bufdesc {
     uint32_t info;      // flags, length
 } PACK();
 
+struct ac97drv {
+    struct ac97bufdesc inbuftab[AC97NBUF];
+    struct ac97bufdesc outbuftab[AC97NBUF];
+    long               irq;
+    long               dma;
+    long               inbufhalf;
+    long               outbufhalf;
+};
+
 #endif /* __KERN_IO_DRV_PC_AC97_H__ */
 

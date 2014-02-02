@@ -80,7 +80,7 @@ extern const uint8_t dmapageports[];
 #define DMAPAGE6        0x89U
 #define DMAPAGE7        0x8aU
 /* low byte page refresh */
-#define DMAPAGEREFR     0x8fU
+#define DMAPAGEREFRESH  0x8fU
 
 /* operation modes */
 #define DMAREAD         0x44U
@@ -153,9 +153,9 @@ static __inline__ void
 dmaclrptr(uint8_t chan)
 {
     if (_isdma1(chan)) {
-	outb(DMA1CLRPTR, 0);
+	outb(DMA1CLRPTR, 0x00);
     } else {
-	outb(DMA2CLRPTR, 0);
+	outb(DMA2CLRPTR, 0x00);
     }
 }
 
