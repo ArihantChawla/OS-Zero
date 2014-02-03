@@ -307,10 +307,13 @@ void drawPlasma(SDL_Surface *surface)
                     p2_yoff = 0x0003,
                     p3_xoff = 0x0000,
                     p3_yoff = 0x0000;
-                    
+
+#if 0                    
     static uint16_t p1_fade = 0x0000,
                     p2_fade = 0x0000,
                     p3_fade = 0x0000;
+#endif
+    static uint16_t p1_fade = 0x0000;
     
     uint16_t    p1_sinpos_start_x = p1_xoff;
     uint16_t    p1_sinpos_start_y = p1_yoff;

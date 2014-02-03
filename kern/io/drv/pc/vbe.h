@@ -8,6 +8,7 @@
 #include <gfx/rgb.h>
 #include <kern/unit/ia32/boot.h>
 
+void vbeinitcons(int w, int h);
 void vbeclrscr(uint32_t pix);
 void vbedrawchar(unsigned char c, int x, int y, argb32_t fg, argb32_t bg);
 

@@ -272,7 +272,7 @@ const unsigned char vgafont8[VGAFONTSIZE] =
 
 #if (VGAGFX) || (VBE)
 //void          *vgafontbuf = (void *)VGAFONTBUF;
-void          *vgafontbuf = vgafont8;
+void          *vgafontbuf = (void *)vgafont8;
 #endif
 
 #if (VGAGFX)

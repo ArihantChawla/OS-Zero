@@ -5,6 +5,7 @@
 #include <stdint.h>
 #include <stddef.h>
 
+#include <kern/util.h>
 #include <kern/io/drv/pc/acpi.h>
 
 #define EBDAADR 0x040e

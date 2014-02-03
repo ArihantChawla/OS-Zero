@@ -5,6 +5,9 @@
 #include <kern/mem.h>
 #include <kern/io/drv/chr/cons.h>
 #include <kern/io/drv/pc/vga.h>
+#if (VBE)
+#include <kern/io/drv/pc/vbe.h>
+#endif
 
 #if 0
 argb32_t        confgcolor = GFXWHITE;
@@ -19,18 +22,18 @@ long        conscur;
 void
 consinit(int w, int h)
 {
-    struct cons *cons;
-    long         bufsz;
-    long         l;
+//    struct cons *cons;
+//    long         bufsz;
+//    long         l;
 
 #if (VBE)
     vbeinitcons(w, h);
 #else
     vgainitcons(w, h);
 #endif
+#if 0
     cons = &constab[0];
     bufsz = CONSNTEXTROW * (w + 1) * sizeof(conschar_t);
-#if 0
     for (l = 0 ; l < NCONS ; l++) {
         cons->textbuf = kmalloc(bufsz);
         if (!cons->textbuf) {

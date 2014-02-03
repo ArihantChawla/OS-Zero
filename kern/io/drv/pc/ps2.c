@@ -288,10 +288,6 @@ kbdint(void)
         } else if (u8 == KBD_UP_BYTE) {
             kbdread(u8);
             val = keytabup[u8];
-#if (DEVEL)
-
-            return;
-#endif
         } else {
             if (u8 & KBD_UP_BIT) {
                 isup = 1;

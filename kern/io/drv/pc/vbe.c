@@ -287,7 +287,7 @@ void
 vbeputs(char *str)
 {
     struct cons *cons;
-    uint16_t    *ptr;
+//    uint16_t    *ptr;
     int          col;
     int          row;
     int          w;
@@ -302,7 +302,7 @@ vbeputs(char *str)
     h = cons->nrow;
 //    atr = cons->chatr;
     while (*str) {
-        ptr = cons->buf + row * w + col;
+//        ptr = cons->buf + row * w + col;
         ch = *str;
         if (ch == '\n') {
             if (row == h) {
@@ -335,21 +335,21 @@ vbeputs(char *str)
 void
 vbeputs2(struct cons *cons, char *str)
 {
-    uint16_t *ptr;
+//    uint16_t *ptr;
     int       x;
     int       row;
     int       w;
     int       h;
     uint8_t   ch;
-    uint8_t   atr;
+//    uint8_t   atr;
 
     x = cons->col;
     row = cons->row;
     w = cons->ncol;
     h = cons->nrow;
-    atr = cons->chatr;
+//    atr = cons->chatr;
     while (*str) {
-        ptr = cons->buf + row * w + x;
+//        ptr = cons->buf + row * w + x;
         ch = *str;
         if (ch == '\n') {
             if (++row == h) {
@@ -377,7 +377,7 @@ void
 vbeputchar(int ch)
 {
     struct cons *cons;
-    uint16_t    *ptr;
+//    uint16_t    *ptr;
 
     cons = &constab[conscur];
     vbedrawchar(ch, (cons->col << 3), (cons->row << 3), cons->fg, cons->bg);

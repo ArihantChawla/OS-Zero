@@ -37,6 +37,12 @@ extern long bufinit(void);
 #if (HPET)
 extern void hpetinit(void);
 #endif
+#if (AC97)
+extern void ac97init(void);
+#endif
+#if (PS2DRV)
+extern void ps2init(void);
+#endif
 #if (SMP)
 extern void mpstart(void);
 #endif
@@ -47,6 +53,9 @@ extern long vbe2init(struct mboothdr *hdr);
 extern void idtinit(uint64_t *idt);
 extern void vbeinit(void);
 extern void vbeinitscr(void);
+#if (PLASMA)
+extern void plasmaloop(void);
+#endif
 #endif
 #if (PCI)
 extern void pciinit(void);
@@ -96,7 +105,7 @@ kmain(struct mboothdr *hdr, unsigned long pmemsz)
 #if (VBE2)
     vbe2init(hdr);
     vbe2kludge();
-#elif (VBE)
+#elif (VBE) && (PLASMA)
     plasmaloop();
 #endif
     logoprint();
@@ -155,10 +164,6 @@ kmain(struct mboothdr *hdr, unsigned long pmemsz)
     /* HID devices */
 #if (PS2DRV)
     ps2init();
-#endif
-#if 0
-    kbdinit();
-    mouseinit();
 #endif
     /* execution environment */
     procinit(0);

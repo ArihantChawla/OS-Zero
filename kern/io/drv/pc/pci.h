@@ -5,7 +5,7 @@
 #include <zero/param.h>
 #include <zero/cdecl.h>
 
-#define PCINDEV       16
+#define PCINDEV       64
 #define PCICONFADR    0x0cf8
 #define PCICONFDATA   0x0cfc
 

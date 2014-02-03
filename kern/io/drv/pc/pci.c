@@ -5,6 +5,7 @@
 //#define LISTQ_TYPE struct pcidevlist
 //#include <zero/list.h>
 
+#include <kern/util.h>
 #include <kern/io/drv/pc/pci.h>
 
 struct pcidev     pcidevtab[PCINDEV];

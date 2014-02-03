@@ -69,9 +69,11 @@ ac97probe(void)
 {
     struct pcidev *dev;
     long           ndev;
+    long           retval;
 
     dev = &pcidevtab[0];
     ndev = pcindev;
+    retval = ndev;
     if (ndev) {
         while (ndev--) {
             if (ac97chkdev(dev)) {
@@ -81,6 +83,8 @@ ac97probe(void)
             dev++;
         }
     }
+
+    return retval;
 }
 
 void

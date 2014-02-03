@@ -40,9 +40,9 @@
 #define NCONS     8
 
 #define BOCHS     1
-#define DEVEL     1     // debugging
+#define DEVEL     0     // debugging
 
-#define CMOV      1
+#define PLASMA    1
 
 /* planned drivers */
 #define PCI       1
