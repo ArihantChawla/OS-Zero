@@ -96,43 +96,12 @@ extern const uint8_t dmapageports[];
 #define DMABLOCK        0x80U
 #define DMACASCADE      0xc0U
 
-#if 0
-/*
- * channel structure
- * num    - channel number
- * buf    - I/O buffer
- * bufsz  - buffer size in bytes
-  */
-struct m_dmachan {
-    long      num;
-    void     *buf;
-    size_t    bufsz;
-};
-#endif
+#define DMACHANMASK     0x03
+#define DMA2BIT         0x04
+#define DMAMASKBIT      0x04
 
-#if 0
-struct m_iodev {
-    /* DMA channel number, -1 means PIO */
-    long           dma;
-    /*
-     * iochans - device I/O channel table
-     * niochan - number of channels in iochans
-     */
-    uint16_t      *iochans;
-    long           niochan;
-    /* system call interface */
-    long          (*open)(char *, long, long);
-    long long     (*seek)(long, long long, long);
-    unsigned long (*read)(long, void *, unsigned long);
-    unsigned long (*write)(long, void *, unsigned long);
-}
-#endif
-
-#define DMACHANMASK    0x03
-#define DMA2BIT        0x04
-#define DMAMASKBIT     0x04
-
-#define _isdma1(c)     (!(~((c) & DMACHANMASK)))
+//#define _isdma1(c)     (!(~((c) & DMACHANMASK)))
+#define _isdma1(c)      (!((c) & (~DMACHANMASK)))
 
 static __inline__ void
 dmaunmask(uint8_t chan)

@@ -5,6 +5,15 @@
 #include <zero/param.h>
 #include <zero/cdecl.h>
 
+long pciprobe(void);
+
+#define pciconf1adr(bus, slot, func, reg)                               \
+    (PCICONFBIT                                                         \
+     | (((reg) & 0xf00) << 16)                                          \
+     | ((bus) << 16)                                                    \
+     | ((slot) << 11)                                                   \
+     | ((func) << 8))
+
 #define PCINDEV       64
 #define PCICONFADR    0x0cf8
 #define PCICONFDATA   0x0cfc

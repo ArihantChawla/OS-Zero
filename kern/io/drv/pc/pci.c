@@ -27,24 +27,102 @@ pciprobe(void)
     return 1;
 }
 
-uint16_t
-pcireadconfw(uint8_t busid, uint8_t slotid, uint8_t funcid, uint8_t ofs)
+uint8_t
+pcireadconfb(uint8_t busid, uint8_t slotid, uint8_t funcid, uint8_t ofs)
 {
-    uint32_t adr;
+    uint32_t conf;
     uint32_t bus = busid;
     uint32_t slot = slotid;
     uint32_t func = funcid;
-    uint16_t tmp = 0;
+    uint16_t byte = 0;
 
-    adr = (bus << 16)
-        | (slot << 11)
-        | (func << 8)
-        | (ofs & 0xfc)
-        | (0x80000000U);
-    outl(adr, PCICONFADR);
-    tmp = (uint16_t)(inl(PCICONFDATA) >> ((ofs & 0x02) << 3) & 0xffff);
+    conf = (bus << 16) | (slot << 11) | (func << 8) | ofs | PCICONFBIT;
+    outl(conf, PCICONFADR);
+    byte = inb(PCICONFADR + (ofs & 0x03));
 
-    return tmp;
+    return byte;
+}
+
+uint16_t
+pcireadconfw(uint8_t busid, uint8_t slotid, uint8_t funcid, uint8_t ofs)
+{
+    uint32_t conf;
+    uint32_t bus = busid;
+    uint32_t slot = slotid;
+    uint32_t func = funcid;
+    uint16_t word = 0;
+
+    conf = (bus << 16) | (slot << 11) | (func << 8) | ofs | PCICONFBIT;
+    outl(conf, PCICONFADR);
+//    tmp = inw(PCICONFDATA) >> ((ofs & 0x02) << 3) & 0xffff);
+    word = inw(PCICONFDATA + (ofs & 0x02));
+
+    return word;
+}
+
+uint16_t
+pcireadconfl(uint8_t busid, uint8_t slotid, uint8_t funcid, uint8_t ofs)
+{
+    uint32_t conf;
+    uint32_t bus = busid;
+    uint32_t slot = slotid;
+    uint32_t func = funcid;
+    uint16_t longword = 0;
+
+    conf = (bus << 16) | (slot << 11) | (func << 8) | ofs | PCICONFBIT;
+    outl(conf, PCICONFADR);
+//    tmp = inw(PCICONFDATA) >> ((ofs & 0x02) << 3) & 0xffff);
+    longword = inl(PCICONFDATA);
+
+    return longword;
+}
+
+int
+pcireadconf1(uint8_t busid, uint8_t slotid, uint8_t funcid,
+             uint16_t regid, uint8_t len)
+{
+    int retval;
+
+    outl(pciconf1adr(busid, slotid, funcid, regid), PCICONFADR);
+    switch (len) {
+        case 4:
+            retval = inl(PCICONFADR);
+
+            break;
+        case 2:
+            retval = inw(PCICONFADR + (regid & 0x02));
+
+            break;
+        case 1:
+            retval = inb(PCICONFADR + (regid & 0x03));
+
+            break;
+    }
+
+    return retval;
+}
+
+void
+pciwriteconf1(uint8_t busid, uint8_t slotid, uint8_t funcid,
+              uint16_t regid, uint8_t len, uint32_t val)
+{
+    outl(pciconf1adr(busid, slotid, funcid, regid), PCICONFADR);
+    switch (len) {
+        case 4:
+            outl(val, PCICONFADR);
+
+            break;
+        case 2:
+            outw((uint16_t)val, PCICONFADR + (regid & 0x02));
+
+            break;
+        case 1:
+            outb((uint8_t)val, PCICONFADR + (regid & 0x03));
+
+            break;
+    }
+
+    return;
 }
 
 uint16_t

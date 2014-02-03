@@ -1,4 +1,5 @@
 #include <stdint.h>
+#include <sys/io.h>
 
 #include <zero/param.h>
 #include <zero/cdecl.h>
@@ -64,38 +65,61 @@ ac97initbuf(void)
     return 1;
 }
 
-long
+struct pcidev *
 ac97probe(void)
 {
-    struct pcidev *dev;
+    struct pcidev *dev = NULL;
     long           ndev;
-    long           retval;
+//    uint16_t       word;
 
     dev = &pcidevtab[0];
     ndev = pcindev;
-    retval = ndev;
     if (ndev) {
         while (ndev--) {
+            kprintf("AC97DEBUG: %x, %x\n", dev->vendor, dev->id);
             if (ac97chkdev(dev)) {
-
-                return 1;
+                /* legacy PCI initialisation */
+#if 0
+                pciwriteconfl(AC97INIT,
+                              dev->bus, dev->slot,
+                              AC97AUDFUNC, PCICONFADR);
+                do {
+                    word = pcireadconfw(dev->bus,
+                                        dev->slot,
+                                        AC97AUDFUNC,
+                                        AC97GLOBALSTAT1);
+                    kprintf("AC97STAT: %x\n", word);
+                } while (word == 0xffff || !(word & AC97CODEC1READY));
+                dev->irq = pcireadconfw(dev->bus, dev->slot,
+                                        AC97AUDFUNC, AC97INTLINE);
+#endif
+                
+                return dev;
             }
             dev++;
         }
     }
 
-    return retval;
+    return NULL;
 }
 
 void
 ac97init(void)
 {
-    if (!ac97probe() || !ac97initbuf()) {
+    struct pcidev *dev;
+
+    dev = ac97probe();
+    if (!dev) {
+        kprintf("AC97 controller not found\n");
+    }
+    if (!ac97initbuf()) {
         kprintf("AC97: failed to initialise audio buffers\n");
 
         return;
-    } else {
-        kprintf("AC97: audio controller found\n");
     }
+    kprintf("AC97 audio controller: v == %x, d == %x, b == %x, s == %x, i == %x, d == %x\n",
+            dev->vendor, dev->id, dev->bus, dev->slot, dev->irq, dev->dma);
+
+    return;
 }
 
