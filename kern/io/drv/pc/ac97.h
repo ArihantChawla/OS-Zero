@@ -34,7 +34,7 @@
 #define AC97PIC2BASE       0xa0
 #define AC97PIC2CMD        0xa1
 #define AC97ICW1           0x10         // write to controller base address
-#define AC97ICW2           0x07         // IRQs 7 and 14
+#define AC97ICW2           0x05         // IRQs 7 and 14
 #define AC97ICW3           0x04         // IRQ 2 used for cascading the slave
 #define AC97ICW4           0x01         // Intel-architecture
 

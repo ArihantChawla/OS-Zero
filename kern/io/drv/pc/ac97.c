@@ -70,6 +70,7 @@ void
 ac97initdev(struct pcidev *dev)
 {
     uint16_t word;
+    uint8_t  byte;
 
     /* perform register reset */
     pciwriteconf1(dev->bus,
@@ -131,6 +132,13 @@ ac97initdev(struct pcidev *dev)
                   AC97PIC1CMD,
                   1,
                   AC97ICW4);
+    byte = pcireadconf1(dev->bus,
+                        dev->slot,
+                        AC97AUDFUNC,
+                        AC97INTRLINE,
+                        1);
+    /* FIXME: is this correct? */
+    dev->irq = (byte >> 3) & 0x1f;
 
     return;
 }
@@ -147,11 +155,6 @@ ac97probe(void)
         while (ndev--) {
             if (ac97chkdev(dev)) {
                 ac97initdev(dev);
-                dev->irq = pcireadconf2(dev->bus,
-                                        dev->slot,
-                                        AC97AUDFUNC,
-                                        AC97INTRLINE,
-                                        1);
                 
                 return dev;
             }
