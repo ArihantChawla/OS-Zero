@@ -153,8 +153,13 @@ kmain(struct mboothdr *hdr, unsigned long pmemsz)
     machinit();
 #endif
     /* HID devices */
+#if (PS2DRV)
+    ps2init();
+#endif
+#if 0
     kbdinit();
     mouseinit();
+#endif
     /* execution environment */
     procinit(0);
     curthr = curproc->thr;

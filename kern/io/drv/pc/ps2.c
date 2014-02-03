@@ -2,41 +2,48 @@
 
 #if (PS2DRV)
 
-#include <stdint.h>
-#include <sys/io.h>
-#include <kern/util.h>
-//#include <kern/event.h>
-#include <kern/unit/x86/trap.h>
-
 /*
  * 19:49 <PeanutHorst>
  * { == curly brace   < == angle bracket   [ == bracket   ( == parentheses
  */
 
-#include "kbd.h"
-#include "keysym.h"
+#include <stdint.h>
+#include <sys/io.h>
+#include <kern/util.h>
+
+#include <zero/param.h>
+#include <zero/cdecl.h>
+
+//#include <kern/event.h>
+#include <kern/unit/x86/trap.h>
+#include <kern/unit/x86/trap.h>
+#include <kern/io/drv/pc/ps2.h>
 
 extern void *irqvec[];
 
 void kbdinit_us(void);
 void kbdint(void);
+void mouseint(void);
 
 #if 0
 /* modifier keys. */
 static int32_t keytabmod[KBD_NTAB];
 #endif
-static int32_t modmask;
 /* single-code values. */
-static int32_t keytab1b[KBD_NTAB];
+static int32_t keytab1b[KBD_NTAB] ALIGNED(PAGESIZE);
 /* 0xe0-prefixed values. */
 static int32_t keytabmb[KBD_NTAB];
 /* release values. */
 static int32_t keytabup[KBD_NTAB];
+static struct mousestat _mousestat;
+static int32_t modmask;
 
 #define kbdread(u8)                                                     \
     __asm__ ("inb %w1, %b0\n" : "=a" (u8) : "Nd" (KBD_PORT))
 #define kbdsend(u8)                                                     \
     __asm__ ("outb %b0, %w1\n" : : "a" (u8), "Nd" (KBD_PORT))
+#define mouseread(u8)                                                   \
+    __asm__("inb %w1, %b0" : "=a" (u8) : "i" (MOUSE_INPORT))
 
 #if 0
 #define setkeymod(name)                                                 \
@@ -304,6 +311,119 @@ kbdint(void)
     }
 
     return;
+}
+
+void
+mouseinit(void)
+{
+    irqvec[IRQMOUSE] = mouseint;
+    kprintf("PS/2 mouse interrupt enabled\n");
+
+    return;
+}
+
+void
+mouseint(void)
+{
+    uint32_t val;
+    int32_t  xmov;
+    int32_t  ymov;
+    int32_t  zmov;
+    int32_t  xtra;
+    int32_t  shift;
+    int32_t  tmp;
+    uint8_t  msk;
+    uint8_t  stat;
+    uint8_t  u8;
+
+    mouseread(msk);
+    mouseread(u8);
+    xmov = u8;
+    mouseread(u8);
+    ymov = u8;
+
+    val = _mousestat.flags;
+    zmov = 0;
+    val &= MOUSE_WHEELMSK;                        /* scroll-wheel?. */
+    stat = msk & MOUSE_3BTNMSK;                   /* button 1, 2 & 3 states. */
+    if (val) {
+        /* mouse with scroll-wheel, extra (4th) data byte. */
+        mouseread(u8);
+        xtra = u8;
+        val &= MOUSE_WHEEL5BTN;                   /* 5-button?. */
+        zmov = xtra & MOUSE_ZMSK;                 /* z-axis movement. */
+        tmp = xtra & MOUSE_ZSIGN;                 /* extract sign bit. */
+        if (val) {
+            stat |= (xtra >> 1) & MOUSE_XBTNMSK;  /* button 4 & 5 states. */
+        }
+        if (tmp) {
+            zmov = -zmov;
+        }
+    }
+    _mousestat.state = stat;
+
+    shift = _mousestat.shift;                     /* scale (speed) value. */
+
+    val = _mousestat.x;
+    tmp = msk & MOUSE_XOVERFLOW;
+    if (tmp) {
+        xmov = 0xff;
+    } else if (shift > 0) {
+        xmov <<= shift;
+    } else {
+        xmov >>= shift;
+    }
+    tmp = msk & MOUSE_XSIGN;
+//    xmov |= tmp << 27; /* sign. */
+    if (tmp) {
+        xmov = -xmov;
+    }
+    if (xmov < 0) {
+        _mousestat.x = (val < -xmov) ? 0 : (val + xmov);
+    } else {
+        tmp = _mousestat.xmax;
+        _mousestat.x = (val < tmp - val) ? (val + xmov) : tmp;
+    }
+
+    val = _mousestat.y;
+    tmp = msk & MOUSE_YOVERFLOW;
+    if (tmp) {
+        ymov = 0xff;
+    } else if (shift > 0) {
+        ymov <<= shift;
+    } else {
+        ymov >>= shift;
+    }
+    tmp = msk & MOUSE_YSIGN;
+//    ymov |= tmp << 26; /* sign. */
+    if (tmp) {
+        ymov = -ymov;
+    }
+    if (ymov < 0) {
+        _mousestat.y = (val < -ymov) ? 0 : (val + ymov);
+    } else {
+        tmp = _mousestat.ymax;
+        _mousestat.y = (val < tmp - val) ? (val + ymov) : tmp;
+    }
+
+    if (zmov) {
+        val = _mousestat.z;
+        if (zmov < 0) {
+            _mousestat.z = (val < -zmov) ? 0 : (val + zmov);
+        } else {
+            tmp = _mousestat.zmax;
+            _mousestat.z = (val < tmp - val) ? (val + zmov) : tmp;
+        }
+    }
+
+    return;
+}
+
+void
+ps2init(void)
+{
+    kbdinit();
+    mouseinit();
 }
 
 #endif /* PS2DRV */

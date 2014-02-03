@@ -50,6 +50,7 @@
 #define ACPICA    0
 #define HPET      0     // high precision event timer support
 #define PS2DRV    1     // enable PS/2 mouse and keyboard drivers
+#define KBDUS     1
 #define VBE       1     // VBE2 graphics driver
 #define VGAGFX    0     // VGA graphics driver
 #define SB16      0     // Soundblaster 16 audio driver
