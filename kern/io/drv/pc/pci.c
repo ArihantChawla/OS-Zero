@@ -5,6 +5,7 @@
 //#define LISTQ_TYPE struct pcidevlist
 //#include <zero/list.h>
 
+#include <kern/conf.h>
 #include <kern/util.h>
 #include <kern/io/drv/pc/pci.h>
 
@@ -60,6 +61,57 @@ pcireadconfw(uint8_t busid, uint8_t slotid, uint8_t funcid, uint8_t ofs)
     return word;
 }
 
+uint32_t
+pcireadconfl(uint8_t busid, uint8_t slotid, uint8_t funcid, uint8_t ofs)
+{
+    uint32_t conf;
+    uint32_t bus = busid;
+    uint32_t slot = slotid;
+    uint32_t func = funcid;
+    uint32_t longword = 0;
+
+    conf = (bus << 16) | (slot << 11) | (func << 8) | ofs | PCICONFBIT;
+    outl(conf, PCICONFADR);
+//    tmp = inw(PCICONFDATA) >> ((ofs & 0x02) << 3) & 0xffff);
+    longword = inl(PCICONFDATA);
+
+    return longword;
+}
+
+#if 0
+void
+pciwriteconfb(uint8_t busid, uint8_t slotid, uint8_t funcid, uint8_t ofs,
+                  uint8_t val)
+{
+    uint32_t conf;
+    uint32_t bus = busid;
+    uint32_t slot = slotid;
+    uint32_t func = funcid;
+    uint16_t byte = 0;
+
+    conf = (bus << 16) | (slot << 11) | (func << 8) | ofs | PCICONFBIT;
+    outb(conf, PCICONFADR);
+
+    return byte;
+}
+
+void
+pciwriteconfw(uint8_t busid, uint8_t slotid, uint8_t funcid, uint8_t ofs)
+{
+    uint32_t conf;
+    uint32_t bus = busid;
+    uint32_t slot = slotid;
+    uint32_t func = funcid;
+    uint16_t word = 0;
+
+    conf = (bus << 16) | (slot << 11) | (func << 8) | ofs | PCICONFBIT;
+    outl(conf, PCICONFADR);
+//    tmp = inw(PCICONFDATA) >> ((ofs & 0x02) << 3) & 0xffff);
+    word = inw(PCICONFDATA + (ofs & 0x02));
+
+    return word;
+}
+
 uint16_t
 pcireadconfl(uint8_t busid, uint8_t slotid, uint8_t funcid, uint8_t ofs)
 {
@@ -76,6 +128,7 @@ pcireadconfl(uint8_t busid, uint8_t slotid, uint8_t funcid, uint8_t ofs)
 
     return longword;
 }
+#endif
 
 int
 pcireadconf1(uint8_t busid, uint8_t slotid, uint8_t funcid,
@@ -83,7 +136,7 @@ pcireadconf1(uint8_t busid, uint8_t slotid, uint8_t funcid,
 {
     int retval;
 
-    outl(pciconf1adr(busid, slotid, funcid, regid), PCICONFADR);
+    outl(pciconfadr1(busid, slotid, funcid, regid), PCICONFADR);
     switch (len) {
         case 4:
             retval = inl(PCICONFADR);
@@ -106,7 +159,7 @@ void
 pciwriteconf1(uint8_t busid, uint8_t slotid, uint8_t funcid,
               uint16_t regid, uint8_t len, uint32_t val)
 {
-    outl(pciconf1adr(busid, slotid, funcid, regid), PCICONFADR);
+    outl(pciconfadr1(busid, slotid, funcid, regid), PCICONFADR);
     switch (len) {
         case 4:
             outl(val, PCICONFADR);
@@ -125,15 +178,71 @@ pciwriteconf1(uint8_t busid, uint8_t slotid, uint8_t funcid,
     return;
 }
 
+int
+pcireadconf2(uint8_t busid, uint8_t slotid, uint8_t funcid,
+             uint16_t regid, uint8_t len)
+{
+    int retval = ~0;
+
+    if (!(slotid & 0x10)) {
+        outb((uint8_t)(0xf0 | (funcid << 1)), PCICONFADR);
+        outb(busid, 0xcfa);
+        switch (len) {
+            case 4:
+                retval = inl(pciconfadr2(slotid, regid));
+
+                break;
+            case 2:
+                retval = inw(pciconfadr2(slotid, regid));
+
+                break;
+            case 1:
+                retval = inb(pciconfadr2(slotid, regid));
+
+                break;
+        }
+        outb(0, PCICONFADR);
+    }
+
+    return retval;
+}
+
+void
+pciwriteconf2(uint8_t busid, uint8_t slotid, uint8_t funcid,
+              uint16_t regid, uint8_t len, uint8_t val)
+{
+    if (!(slotid & 0x10)) {
+        outb((uint8_t)(0xf0 | (funcid << 1)), PCICONFADR);
+        outb(busid, 0xcfa);
+        switch (len) {
+            case 4:
+                outl(val, pciconfadr2(slotid, regid));
+                
+                break;
+            case 2:
+                outw(val, pciconfadr2(slotid, regid));
+
+                break;
+            case 1:
+                outb(val, pciconfadr2(slotid, regid));
+
+                break;
+        }
+        outb(0, PCICONFADR);
+    }
+
+    return;
+}
+
 uint16_t
-pcichkvendor(uint8_t bus, uint8_t slot, uint16_t *devret)
+pcichkvendor(uint8_t busid, uint8_t slotid, uint16_t *devret)
 {
     uint16_t vendor;
     uint16_t dev;
 
-    vendor = pcireadconfw(bus, slot, 0, 0);
+    vendor = pcireadconfw(busid, slotid, 0, 0);
     if (vendor != 0xffff && (devret)) {
-        dev = pcireadconfw(bus, slot, 0, 2);
+        dev = pcireadconfw(busid, slotid, 0, 2);
         *devret = dev;
     }
 

@@ -22,8 +22,8 @@
 extern void *irqvec[];
 
 void kbdinit_us(void);
-void kbdint(void);
-void mouseint(void);
+void kbdintr(void);
+void mouseintr(void);
 
 #if 0
 /* modifier keys. */
@@ -85,7 +85,7 @@ kbdinit(void)
     } while (u8 != KBD_ACK);
     kbdinit_us();
     kprintf("PS/2 keyboard with US keymap initialized\n");
-    irqvec[IRQKBD] = kbdint;
+    irqvec[IRQKBD] = kbdintr;
     kprintf("PS/2 keyboard interrupt enabled\n");
 
     return;
@@ -249,7 +249,7 @@ kbdinit_us(void)
 
 /* keyboard interrupt handler. */
 void
-kbdint(void)
+kbdintr(void)
 {
     int32_t isup = 0;
     int32_t val;
@@ -312,14 +312,14 @@ kbdint(void)
 void
 mouseinit(void)
 {
-    irqvec[IRQMOUSE] = mouseint;
+    irqvec[IRQMOUSE] = mouseintr;
     kprintf("PS/2 mouse interrupt enabled\n");
 
     return;
 }
 
 void
-mouseint(void)
+mouseintr(void)
 {
     uint32_t val;
     int32_t  xmov;

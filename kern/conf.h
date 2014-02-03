@@ -42,9 +42,11 @@
 #define BOCHS     1
 #define DEVEL     0     // debugging
 
-#define PLASMA    1
+#define PLASMA    0
 
 /* planned drivers */
+#define AMDPCI    1
+#define INTELPCI  1
 #define PCI       1
 #define ACPI      1
 #define ACPICA    0

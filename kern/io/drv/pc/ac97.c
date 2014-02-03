@@ -8,6 +8,7 @@
 #include <kern/mem.h>
 #include <kern/io/drv/pc/pci.h>
 #include <kern/io/drv/pc/ac97.h>
+#include <kern/unit/x86/asm.h>
 
 extern void *irqvec[];
 
@@ -65,34 +66,92 @@ ac97initbuf(void)
     return 1;
 }
 
+void
+ac97initdev(struct pcidev *dev)
+{
+    uint16_t word;
+
+    /* perform register reset */
+    pciwriteconf1(dev->bus,
+                  dev->slot,
+                  AC97AUDFUNC,
+                  AC97MIXRESET,
+                  0,
+                  2);
+    /* wait for codec #1 to become ready */
+    do {
+        word = pcireadconf1(dev->bus,
+                            dev->slot,
+                            AC97AUDFUNC,
+                            AC97GLOBALSTAT,
+                            2);
+//                    kprintf("AC97STAT: %x\n", word);
+    } while (word == 0xffff || !(word & AC97CODEC1READY));
+    /* legacy PCI initialisation */
+    /* initialise controller; bus-mastering, enable I/O space */
+    pciwriteconf1(dev->bus,
+                  dev->slot,
+                  AC97AUDFUNC,
+                  AC97GLOBALCTL,
+                  AC97INIT,
+                  4);
+    /* wait for codec #1 to become ready */
+    do {
+        word = pcireadconf1(dev->bus,
+                            dev->slot,
+                            AC97AUDFUNC,
+                            AC97GLOBALSTAT,
+                            2);
+//                    kprintf("AC97STAT: %x\n", word);
+    } while (word == 0xffff || !(word & AC97CODEC1READY));
+    /* 4-byte initialisation sequence */
+    /* write ICW1 to primary PIC */
+    pciwriteconf2(dev->bus,
+                  dev->slot,
+                  AC97AUDFUNC,
+                  AC97PIC1BASE,
+                  1,
+                  AC97ICW1);
+    /* write ICW2 to primary PIC */
+    pciwriteconf2(dev->bus,
+                  dev->slot,
+                  AC97AUDFUNC,
+                  AC97PIC1CMD,
+                  1,
+                  AC97ICW2);
+    pciwriteconf2(dev->bus,
+                  dev->slot,
+                  AC97AUDFUNC,
+                  AC97PIC1CMD,
+                  1,
+                  AC97ICW3);
+    pciwriteconf2(dev->bus,
+                  dev->slot,
+                  AC97AUDFUNC,
+                  AC97PIC1CMD,
+                  1,
+                  AC97ICW4);
+
+    return;
+}
+
 struct pcidev *
 ac97probe(void)
 {
     struct pcidev *dev = NULL;
     long           ndev;
-//    uint16_t       word;
 
     dev = &pcidevtab[0];
     ndev = pcindev;
     if (ndev) {
         while (ndev--) {
-            kprintf("AC97DEBUG: %x, %x\n", dev->vendor, dev->id);
             if (ac97chkdev(dev)) {
-                /* legacy PCI initialisation */
-#if 0
-                pciwriteconfl(AC97INIT,
-                              dev->bus, dev->slot,
-                              AC97AUDFUNC, PCICONFADR);
-                do {
-                    word = pcireadconfw(dev->bus,
+                ac97initdev(dev);
+                dev->irq = pcireadconf2(dev->bus,
                                         dev->slot,
                                         AC97AUDFUNC,
-                                        AC97GLOBALSTAT1);
-                    kprintf("AC97STAT: %x\n", word);
-                } while (word == 0xffff || !(word & AC97CODEC1READY));
-                dev->irq = pcireadconfw(dev->bus, dev->slot,
-                                        AC97AUDFUNC, AC97INTLINE);
-#endif
+                                        AC97INTRLINE,
+                                        1);
                 
                 return dev;
             }
@@ -117,7 +176,7 @@ ac97init(void)
 
         return;
     }
-    kprintf("AC97 audio controller: v == %x, d == %x, b == %x, s == %x, i == %x, d == %x\n",
+    kprintf("AC97 audio controller: vendor == 0x%x, devid == 0x%x, bus == 0x%x, slot == 0x%x, irq == 0x%x, dma == 0x%x\n",
             dev->vendor, dev->id, dev->bus, dev->slot, dev->irq, dev->dma);
 
     return;

@@ -12,31 +12,55 @@
 #define AC97BUFSIZE        32768
 #define AC97NBUF           32
 
-/* registers */
-#define AC97GLOBALCTLSTAT 0x60 // global control/status register
-#define AC97CMD 0x04
-#define AC97MIXERBASE 0x10
-#define AC97BUSMASTERBASE 0x14
-#define AC97INTLINE 0x3c
+/* configuration registers */
+#define AC97VENDORID       0x00         // 16-bit
+#define AC97DEVID          0x02         // 16-bit
+#define AC97CMD            0x04         // 16-bit
+#define AC97STAT           0x06         // 16-bit
+#define AC97REVISIONID     0x08         // 8-bit
+#define AC97PROGINTERFACE  0x09         // 8-bit
+#define AC97SUBCLASS       0x0a         // 8-bit
+#define AC97BASECLASS      0x0b         // 8-bit
+#define AC97HDRTYPE        0x0e         // 8-bit
+#define AC97MIXERBASE      0x10         // 32-bit
+#define AC97AUDIOBASEADR   0x14         // 32-bit
+#define AC97MIXERBASEADR   0x18         // 32-bit
+#define AC97BUSMASTERADR   0x1c         // 32-bit
+#define AC97INTRLINE       0x3c         // 8-bit
+
+/* initialisation */
+#define AC97PIC1BASE       0x20
+#define AC97PIC1CMD        0x21
+#define AC97PIC2BASE       0xa0
+#define AC97PIC2CMD        0xa1
+#define AC97ICW1           0x10         // write to controller base address
+#define AC97ICW2           0x07         // IRQs 7 and 14
+#define AC97ICW3           0x04         // IRQ 2 used for cascading the slave
+#define AC97ICW4           0x01         // Intel-architecture
+
 /* mixer registers */
-#define AC97MIXRST 0x00
-#define AC97MIXMASTVOL 0x02
-#define AC97MIXAOUTVOL 0x04
-#define AC97MIXMONOVOL 0x06
-#define AC97MIXMASTTONE 0x08
-#define AC97MIXBEEPVOL 0x0a
+#define AC97MIXRESET       0x00
+#define AC97MIXMASTVOL     0x02
+#define AC97MIXAOUTVOL     0x04
+#define AC97MIXMONOVOL     0x06
+#define AC97MIXMASTTONE    0x08
+#define AC97MIXBEEPVOL     0x0a
 /* phone volume is 0x0c; audio only */
-#define AC97MIXMICVOL 0x0e
-#define AC97MIXLINEINVOL 0x10
-#define AC97MIXCDVOL 0x12
-#define AC97MIXVIDEOVOL 0x14
-#define AC97MIXAUXINVOL 0x16
-#define AC97MIXPCMOUTVOL 0x18
-#define AC97MIXRECSEL 0x1a
-#define AC97MIXRECGAIN 0x1c
-#define AC97MINRECGAINMIC 0x1e
-#define AC97MIXGENPURP 0x20
-#define AC97MIX3DCTL 0x22
+#define AC97MIXMICVOL      0x0e
+#define AC97MIXLINEINVOL   0x10
+#define AC97MIXCDVOL       0x12
+#define AC97MIXVIDEOVOL    0x14
+#define AC97MIXAUXINVOL    0x16
+#define AC97MIXPCMOUTVOL   0x18
+#define AC97MIXRECSEL      0x1a
+#define AC97MIXRECGAIN     0x1c
+#define AC97MINRECGAINMIC  0x1e
+#define AC97MIXGENPURP     0x20
+#define AC97MIX3DCTL       0x22
+#define AC97GLOBALCTL      0x2c // global control/status register
+#define AC97GLOBALSTAT     0x30 // global control/status register
+/* status bits */
+#define AC97CODEC1READY    0x100
 
 /* buffers */
 #define AC97PCMINBUF       0x00

@@ -7,12 +7,15 @@
 
 long pciprobe(void);
 
-#define pciconf1adr(bus, slot, func, reg)                               \
+#define pciconfadr1(bus, slot, func, reg)                               \
     (PCICONFBIT                                                         \
      | (((reg) & 0xf00) << 16)                                          \
      | ((bus) << 16)                                                    \
      | ((slot) << 11)                                                   \
-     | ((func) << 8))
+     | ((func) << 8)                                                    \
+     | ((reg) & 0xfc))
+#define pciconfadr2(slot, reg)                                          \
+    ((uint16_t)(0xc000 | ((slot) << 8) | (reg)))
 
 #define PCINDEV       64
 #define PCICONFADR    0x0cf8
