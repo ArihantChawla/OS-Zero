@@ -37,9 +37,6 @@ extern long bufinit(void);
 #if (HPET)
 extern void hpetinit(void);
 #endif
-#if (AC97)
-extern void ac97init(void);
-#endif
 #if (PS2DRV)
 extern void ps2init(void);
 #endif
@@ -151,9 +148,6 @@ kmain(struct mboothdr *hdr, unsigned long pmemsz)
 #endif
 #if (HPET)
     hpetinit();
-#endif
-#if (AC97)
-    ac97init();
 #endif
     /* CPU interface */
     taskinit();

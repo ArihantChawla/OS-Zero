@@ -5,7 +5,17 @@
 #include <zero/param.h>
 #include <zero/cdecl.h>
 
-long pciprobe(void);
+long     pciprobe(void);
+uint16_t pcireadconfw(uint8_t busid, uint8_t slotid,
+                      uint8_t funcid, uint8_t ofs);
+int      pcireadconf1(uint8_t busid, uint8_t slotid, uint8_t funcid,
+                      uint16_t regid, uint8_t len);
+void     pciwriteconf1(uint8_t busid, uint8_t slotid, uint8_t funcid,
+                       uint16_t regid, uint8_t len, uint32_t val);
+int      pcireadconf2(uint8_t busid, uint8_t slotid, uint8_t funcid,
+                      uint16_t regid, uint8_t len);
+void     pciwriteconf2(uint8_t busid, uint8_t slotid, uint8_t funcid,
+                       uint16_t regid, uint8_t len, uint8_t val);
 
 #define pciconfadr1(bus, slot, func, reg)                               \
     (PCICONFBIT                                                         \

@@ -1,4 +1,5 @@
 #include <stdint.h>
+#include <stddef.h>
 #include <sys/io.h>
 
 //#define LIST_TYPE  struct pcidev
@@ -6,13 +7,21 @@
 //#include <zero/list.h>
 
 #include <kern/conf.h>
+#include <kern/mem.h>
 #include <kern/util.h>
 #include <kern/io/drv/pc/pci.h>
 
-struct pcidev     pcidevtab[PCINDEV];
+#if (AC97)
+extern void ac97init(struct pcidev *);
+#endif
+
+typedef void pciinitfunc_t(struct pcidev *dev);
+
+static void    *pcidrvtab[4096] ALIGNED(PAGESIZE);
+struct pcidev   pcidevtab[PCINDEV];
 //struct pcidevlist pcidevlist;
-long              pcifound;
-long              pcindev;
+long            pcifound;
+long            pcindev;
 
 long
 pciprobe(void)
@@ -28,6 +37,76 @@ pciprobe(void)
     return 1;
 }
 
+pciinitfunc_t *
+pcifinddrv(uint16_t vendor, uint16_t devid)
+{
+    pciinitfunc_t *initfunc = NULL;
+    void          *ptr;
+    uint32_t       vd;
+    uint16_t       key1;
+    uint16_t       key2;
+    uint16_t       key3;
+
+    vd = vendor;
+    vd <<= 16;
+    vd |= devid;
+    key1 = vd >> 20;
+    key2 = (vd >> 10) & 0x3ff;
+    key3 = vd & 0x3ff;
+    ptr = ((void **)pcidrvtab)[key1];
+    if (ptr) {
+        ptr = ((void **)ptr)[key2];
+        if (ptr) {
+            initfunc = ((void **)ptr)[key3];
+        }
+    }
+
+    return initfunc;
+}
+
+void
+pciadddrv(uint16_t vendor, uint16_t devid, pciinitfunc_t *initfunc)
+{
+    void     *ptr1;
+    void     *ptr2;
+    uint32_t  vd;
+    uint16_t  key1;
+    uint16_t  key2;
+    uint16_t  key3;
+    
+    vd = vendor;
+    vd <<= 16;
+    vd |= devid;
+    key1 = vd >> 20;
+    key2 = (vd >> 10) & 0x3ff;
+    key3 = vd & 0x3ff;
+    ptr1 = ((void **)pcidrvtab)[key1];
+    if (!ptr1) {
+        ptr1 = kmalloc(4096 * sizeof(void *));
+        if  (ptr1) {
+            kbzero(ptr1, 4096 * sizeof(void *));
+            ((void **)pcidrvtab)[key1] = ptr1;
+        }
+    }
+    if (ptr1) {
+        ptr2 = ((void **)ptr1)[key2];
+        if (!ptr2) {
+            ptr2 = kmalloc(1024 * sizeof(void *));
+            if (ptr2) {
+                kbzero(ptr2, 1024 * sizeof(void *));
+                ((void **)ptr1)[key2] = ptr2;
+            }
+        }
+        ptr1 = ptr2;
+    }
+    if (ptr1) {
+        ((void **)ptr1)[key3] = initfunc;
+    }
+
+    return;
+}
+
+#if 0
 uint8_t
 pcireadconfb(uint8_t busid, uint8_t slotid, uint8_t funcid, uint8_t ofs)
 {
@@ -43,6 +122,7 @@ pcireadconfb(uint8_t busid, uint8_t slotid, uint8_t funcid, uint8_t ofs)
 
     return byte;
 }
+#endif
 
 uint16_t
 pcireadconfw(uint8_t busid, uint8_t slotid, uint8_t funcid, uint8_t ofs)
@@ -61,6 +141,7 @@ pcireadconfw(uint8_t busid, uint8_t slotid, uint8_t funcid, uint8_t ofs)
     return word;
 }
 
+#if 0
 uint32_t
 pcireadconfl(uint8_t busid, uint8_t slotid, uint8_t funcid, uint8_t ofs)
 {
@@ -77,6 +158,7 @@ pcireadconfl(uint8_t busid, uint8_t slotid, uint8_t funcid, uint8_t ofs)
 
     return longword;
 }
+#endif
 
 #if 0
 void
@@ -261,6 +343,7 @@ void
 pciinit(void)
 {
     struct pcidev *dev;
+    pciinitfunc_t *func;
     uint16_t       vendor;
     uint16_t       devid;
     long           bus;
@@ -269,6 +352,9 @@ pciinit(void)
 
     pcifound = pciprobe();
     if (pcifound) {
+#if (AC97)
+        pciadddrv(0x8086, 0x2415, ac97init);
+#endif
         ndev = 0;
         for (bus = 0 ; bus < 256 ; bus++) {
             for (slot = 0 ; slot < 32 ; slot++) {
@@ -292,6 +378,10 @@ pciinit(void)
         while (ndev--) {
             kprintf("PCI: bus: %x, slot: %x, vendor: 0x%x, device: 0x%x\n",
                     dev->bus, dev->slot, dev->vendor, dev->id);
+            func = pcifinddrv(dev->vendor, dev->id);
+            if (func) {
+                func(dev);
+            }
             dev++;
         }
     }

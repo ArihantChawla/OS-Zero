@@ -16,8 +16,10 @@ extern void *irqvec[];
 
 static struct ac97drv ac97drv ALIGNED(PAGESIZE);
 
+#if 0
 #define ac97chkdev(dev)                                                 \
     ((dev)->vendor == 0x8086 && (dev)->id == 0x2415)
+#endif
 
 /*
  * - allocate the max of 32 * 4K buffers for both input and output
@@ -143,6 +145,7 @@ ac97initdev(struct pcidev *dev)
     return;
 }
 
+#if 0
 struct pcidev *
 ac97probe(void)
 {
@@ -164,16 +167,12 @@ ac97probe(void)
 
     return NULL;
 }
+#endif
 
 void
-ac97init(void)
+ac97init(struct pcidev *dev)
 {
-    struct pcidev *dev;
-
-    dev = ac97probe();
-    if (!dev) {
-        kprintf("AC97 controller not found\n");
-    }
+    ac97initdev(dev);
     if (!ac97initbuf()) {
         kprintf("AC97: failed to initialise audio buffers\n");
 
