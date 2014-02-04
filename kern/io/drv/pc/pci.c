@@ -340,7 +340,7 @@ pcichkdev(uint8_t busid, uint8_t devid, uint8_t func)
 #endif
 
 void
-pciinitdrv(struct pcidev *dev)
+pciiinitdrv(struct pcidev *dev)
 {
     pciinitfunc_t *func;
 
