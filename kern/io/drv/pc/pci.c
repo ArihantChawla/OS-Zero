@@ -65,7 +65,7 @@ pcifinddrv(uint16_t vendor, uint16_t devid)
 }
 
 void
-pciadddrv(uint16_t vendor, uint16_t devid, pciinitfunc_t *initfunc)
+pciregdrv(uint16_t vendor, uint16_t devid, pciinitfunc_t *initfunc)
 {
     void     *ptr1;
     void     *ptr2;
@@ -353,7 +353,7 @@ pciinit(void)
     pcifound = pciprobe();
     if (pcifound) {
 #if (AC97)
-        pciadddrv(0x8086, 0x2415, ac97init);
+        pciregdrv(0x8086, 0x2415, ac97init);
 #endif
         ndev = 0;
         for (bus = 0 ; bus < 256 ; bus++) {
@@ -371,18 +371,18 @@ pciinit(void)
                 }
             }
         }
-    }
-    pcindev = ndev;
-    if (ndev) {
-        dev = &pcidevtab[0];
-        while (ndev--) {
-            kprintf("PCI: bus: %x, slot: %x, vendor: 0x%x, device: 0x%x\n",
-                    dev->bus, dev->slot, dev->vendor, dev->id);
-            func = pcifinddrv(dev->vendor, dev->id);
-            if (func) {
-                func(dev);
+        if (ndev) {
+            pcindev = ndev;
+            dev = &pcidevtab[0];
+            while (ndev--) {
+                kprintf("PCI: bus: %x, slot: %x, vendor: 0x%x, device: 0x%x\n",
+                        dev->bus, dev->slot, dev->vendor, dev->id);
+                func = pcifinddrv(dev->vendor, dev->id);
+                if (func) {
+                    func(dev);
+                }
+                dev++;
             }
-            dev++;
         }
     }
 
