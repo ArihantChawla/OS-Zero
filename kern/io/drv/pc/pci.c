@@ -340,10 +340,22 @@ pcichkdev(uint8_t busid, uint8_t devid, uint8_t func)
 #endif
 
 void
+pciinitdrv(struct pcidev *dev)
+{
+    pciinitfunc_t *func;
+
+    func = pcifinddrv(dev->vendor, dev->id);
+    if (func) {
+        func(dev);
+    }
+
+    return;
+ }
+
+void
 pciinit(void)
 {
     struct pcidev *dev;
-    pciinitfunc_t *func;
     uint16_t       vendor;
     uint16_t       devid;
     long           bus;
@@ -377,10 +389,7 @@ pciinit(void)
             while (ndev--) {
                 kprintf("PCI: bus: %x, slot: %x, vendor: 0x%x, device: 0x%x\n",
                         dev->bus, dev->slot, dev->vendor, dev->id);
-                func = pcifinddrv(dev->vendor, dev->id);
-                if (func) {
-                    func(dev);
-                }
+                pcinitdrv(dev);
                 dev++;
             }
         }
