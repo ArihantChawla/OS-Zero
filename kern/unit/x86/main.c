@@ -60,6 +60,9 @@ extern void pciinit(void);
 #if (ACPI)
 extern void acpiinit(void);
 #endif
+#if (SB16)
+extern void sb16init(void);
+#endif
 
 extern uint8_t                   kerniomap[8192] ALIGNED(PAGESIZE);
 extern struct proc               proctab[NPROC];
@@ -108,6 +111,9 @@ kmain(struct mboothdr *hdr, unsigned long pmemsz)
     logoprint();
 #if (PCI)
     pciinit();
+#endif
+#if (SB16)
+    sb16init();
 #endif
 #if (ACPI)
     acpiinit();

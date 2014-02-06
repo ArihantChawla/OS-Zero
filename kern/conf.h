@@ -14,7 +14,7 @@
 #define BUFSIZE     (1UL << BUFSIZELOG2)
 #define BUFSIZELOG2 12                          // TODO: make this per-device
 
-#define SMP       0     // enable multiprocessor support; currently broken
+#define SMP       1     // enable multiprocessor support; currently broken
 #define HZ        250   // scheduler timer frequency
 #define EVHZ      1000  // event timer frequency
 #define ZEROSCHED 1     // default scheduler
@@ -53,7 +53,7 @@
 #define KBDUS     1
 #define VBE       1     // VBE2 graphics driver
 #define VGAGFX    0     // VGA graphics driver
-#define SB16      0     // Soundblaster 16 audio driver
+#define SB16      1     // Soundblaster 16 audio driver
 #define AC97      1     // AC97 audio drivers
 #define ENS1370   0     // Ensoniq 1370 audio driver
 

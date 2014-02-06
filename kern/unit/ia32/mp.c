@@ -230,17 +230,19 @@ mpmain(struct m_cpu *cpu)
 void
 mpstart(void)
 {
-    volatile static int    first = 1;
+//    volatile static int    first = 1;
     volatile struct m_cpu *cpu;
     volatile struct m_cpu *lim;
     uint32_t              *mpentrystk = (uint32_t *)MPENTRYSTK;
 
     lim = &mpcputab[0] + mpncpu;
+#if 0
     if (first) {
         kmemcpy((void *)MPENTRY,
                 mpentry, (uint8_t *)&mpend - (uint8_t *)&mpentry);
         first = 0;
     }
+#endif
     for (cpu = &mpcputab[0] ; cpu < lim ; cpu++) {
         if (cpu == mpbootcpu) {
             /* started already */

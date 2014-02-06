@@ -3,6 +3,7 @@
 #include <sys/io.h>
 #include <kern/conf.h>
 #include <kern/util.h>
+#include <kern/unit/x86/asm.h>
 #include <kern/unit/x86/trap.h>
 #include <kern/unit/x86/pit.h>
 #include <kern/unit/x86/pic.h>
@@ -46,7 +47,7 @@ pitsleep(long msec, void (*func)(void))
     outb(PITDUALBYTE | PITONESHOT, PITCTRL);
     pitsethz(hz);
     while (!irqtimerfired) {
-        m_waitint();
+        k_waitint();
     }
     /* enable all interrupts */
     outb(0x00, PICMASK1);

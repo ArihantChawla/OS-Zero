@@ -12,19 +12,16 @@
 #include <kern/unit/ia32/pit.h>
 #endif
 
-extern void segmap(uint32_t *pagetab, uint32_t virt, uint32_t phys,
-                   uint32_t lim,
-                   uint32_t flg);
 extern volatile uint32_t     *mpapic;
 extern volatile struct m_cpu  mpcputab[NCPU];
 extern volatile struct m_cpu *mpbootcpu;
 
 void
-usleep(long nusec)
+usleep(unsigned long nusec)
 {
-    nusec <<= 20;
+    nusec <<= 8;
     while (nusec--) {
-        nusec--;
+        ;
     }
 }
 
