@@ -33,19 +33,17 @@ mpentry:
 	/* set data segment */
 	movw	$(MPENTRY >> 4), %ax
 	movw	%ax, %ds
+	/* zero the rest of segment registers */
 	xorw	%ax, %ax
 	movw	%ax, %es
 	movw	%ax, %fs
 	movw	%ax, %gs
 	movw	%ax, %ss
-	/* set up segmentation */
-//	.byte	0x66
 	lgdtl	(_mpgdtptr - mpentry + MPENTRY)
 	/* switch to protected mode */
 	movl	%cr0, %eax
 	orl	$CR0PE, %eax
 	movl	%eax, %cr0
-	.byte	0x66
 	ljmpl	$TEXTSEL, $(_mpentry32 - mpentry + MPENTRY)
 
 .text	32
@@ -57,7 +55,6 @@ _mpentry32:
 	movw	%ax, %fs
 	movw	%ax, %gs
 	/* set the stack up */
-//	movw	$STKSEL, %ax
 	movw	%ax, %ss
 	movl	$(MPENTRYSTK - 8), %esp
 #if 0
@@ -70,11 +67,11 @@ _mpentry32:
 	movl	%eax, %cr0
 #endif
 	popl	%eax			// kernel stack address
-	popl	%ebx			// APIC ID
+//	popl	%ebx			// APIC ID
 	/* initialise processor kernel stack */
 	movl	%eax, %esp
 	/* the stack has the APIC ID as an argument for mpmain */
-	pushl	%ebx
+//	pushl	%ebx
 	call	mpmain
 
 .align	16
