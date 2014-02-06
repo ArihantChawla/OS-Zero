@@ -84,7 +84,7 @@ kmain(struct mboothdr *hdr, unsigned long pmemsz)
 {
     seginit(0);                         // memory segments
 #if (VBE)
-    idtinit(kernidt);
+//    idtinit(kernidt);
     vbeinit();
     trapinit();
 #endif
@@ -128,22 +128,20 @@ kmain(struct mboothdr *hdr, unsigned long pmemsz)
     }
 #if (SMP)
     /* multiprocessor probe */
-    if (!acpidesc) {
-        mpinit();
-        if (mpmultiproc) {
-            mpstart();
-        }
-        if (mpncpu == 1) {
-            kprintf("found %ld processor\n", mpncpu);
-        } else {
-            kprintf("found %ld processors\n", mpncpu);
-        }
-        if (mpapic) {
-            kprintf("local APIC @ 0x%p\n", mpapic);
-        }
-    } else {
-        /* TODO: ACPI magic goes here */
+    mpinit();
+    if (mpmultiproc) {
+        mpstart();
     }
+    if (mpncpu == 1) {
+        kprintf("found %ld processor\n", mpncpu);
+    } else {
+        kprintf("found %ld processors\n", mpncpu);
+    }
+#if 0
+    if (mpapic) {
+        kprintf("local APIC @ 0x%p\n", mpapic);
+    }
+#endif
     curcpu = &cputab[0];
 #endif
 #if (HPET)

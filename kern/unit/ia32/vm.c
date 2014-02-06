@@ -116,15 +116,10 @@ vminit(void *pagetab)
              HICORE,
              PAGEPRES | PAGEWRITE);
 
-#if (SMP)
-#if 0
-    vmmapseg(pagetab, (uint32_t)KERNMPENTRY, (uint32_t)&_mpentry,
-           (uint32_t)&_emp - (uint32_t)&_mpentry + KERNMPENTRY,
-           PAGEPRES);
-#endif
-    vmmapseg(pagetab, (uint32_t)&_mpentry, (uint32_t)&_mpentry,
-           (uint32_t)&_emp, 
-           PAGEPRES);
+#if (SMP) && 0
+    vmmapseg(pagetab, (uint32_t)MPENTRY, (uint32_t)MPENTRY,
+             (uint32_t)&mpend - (uint32_t)&mpentry + MPENTRY,
+             PAGEPRES);
 #endif
 
     /* identity-map kernel boot segment */

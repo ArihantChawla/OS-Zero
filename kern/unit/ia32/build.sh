@@ -1,5 +1,6 @@
 #! /bin/sh
 
+# clang doesn't support everything it would need to for the kernel to build
 export CC=gcc
 export AS=gcc
 export LD=ld

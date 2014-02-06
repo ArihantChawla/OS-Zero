@@ -10,6 +10,7 @@
 #include <zero/types.h>
 #include <kern/util.h>
 #include <kern/mem.h>
+#include <kern/unit/x86/asm.h>
 #include <kern/unit/x86/cpu.h>
 #include <kern/unit/x86/apic.h>
 #include <kern/unit/ia32/link.h>
@@ -27,23 +28,24 @@
 
 extern uint32_t *kernpagedir[NPDE];
 
-extern void pginit(void);
-extern void idtinit(void);
-extern void ioapicinit(long id);
-extern void cpuinit(struct m_cpu *cpu);
-extern void seginit(long id);
-extern void idtset(void);
+extern void      gdtinit(void);
+extern void      pginit(void);
+extern void      idtinit(void);
+extern void      ioapicinit(long id);
+extern void      cpuinit(struct m_cpu *cpu);
+extern void      seginit(long id);
+extern void      idtset(void);
 
 volatile struct m_cpu  mpcputab[NCPU] ALIGNED(PAGESIZE);
 volatile struct m_cpu *mpbootcpu;
 volatile long          mpmultiproc;
 volatile long          mpncpu;
 volatile long          mpioapicid;
-volatile uint32_t     *mptab;
+volatile uint32_t     *mpapic;
 volatile uint32_t     *mpioapic;
 
 static long
-mpsum(uint8_t *ptr, unsigned long len)
+mpchksum(uint8_t *ptr, unsigned long len)
 {
     uint8_t sum = 0;
 
@@ -62,7 +64,7 @@ mpfind(uintptr_t adr, unsigned long len)
     uint32_t  *ptr = (uint32_t *)adr;
 
     while (ptr < lim) {
-        if (*ptr == MPSIG && !mpsum((uint8_t *)ptr, sizeof(struct mp))) {
+        if (*ptr == MPSIG && !mpchksum((uint8_t *)ptr, sizeof(struct mp))) {
             mp = (struct mp *)ptr;
 
             return mp;
@@ -121,7 +123,7 @@ mpconf(struct mp **mptab)
         conf = mp->conftab;
         if (!kmemcmp(conf, "PCMP", 4)) {
             if ((conf->ver == 1 || conf->ver == 4)
-                && !mpsum((uint8_t *)conf, conf->len)) {
+                && !mpchksum((uint8_t *)conf, conf->len)) {
                 *mptab = mp;
 
                 return conf;
@@ -156,7 +158,7 @@ mpinit(void)
     }
     cpuinit((struct m_cpu *)mpbootcpu);
     mpmultiproc = 1;
-    mptab = conf->apicadr;
+    mpapic = conf->apicadr;
     for (u8ptr = (uint8_t *)(conf + 1), lim = (uint8_t *)conf + conf->len ;
          u8ptr < lim ; ) {
         switch (*u8ptr) {
@@ -212,55 +214,45 @@ mpinit(void)
     return;
 }
 
-ASMLINK void
-mpmain(long core)
+ASMLINK
+void
+mpmain(struct m_cpu *cpu)
 {
-    volatile struct m_cpu *cpu = &mpcputab[core];
-
-    seginit(core);
+//    gdtinit();
+    seginit(cpu->id);
     idtset();
     m_xchgl(&cpu->started, 1L);
-//    cpu->started = 1;
     while (1) {
-        m_waitint();
+        k_waitint();
     }
 }
 
 void
 mpstart(void)
 {
+    volatile static int    first = 1;
     volatile struct m_cpu *cpu;
     volatile struct m_cpu *lim;
-    struct m_farptr       *fp;
-    uint64_t              *gdt;
-//    uint32_t              *mpentrystk = (uint32_t *)MPENTRYSTK;
     uint32_t              *mpentrystk = (uint32_t *)MPENTRYSTK;
 
-//    __asm__ __volatile__ ("sti\n");
     lim = &mpcputab[0] + mpncpu;
-    kmemcpy((void *)MPENTRY, &_mpentry, (uint8_t *)&_emp - (uint8_t *)&_mpentry);
-    fp = (void *)MPGDT;
-    fp->lim = NMPGDT * sizeof(uint64_t) - 1;
-    fp->adr = (uint32_t)(MPENTRY + 8);
-    gdt = (uint64_t *)MPENTRY + 1;
-    segsetdesc(&gdt[NULLSEG], 0, 0,
-               0);
-    segsetdesc(&gdt[TEXTSEG], 0, NPAGEMAX - 1,
-               SEGCODE);
-    segsetdesc(&gdt[DATASEG], 0, NPAGEMAX - 1,
-               SEGDATA);
+    if (first) {
+        kmemcpy((void *)MPENTRY,
+                mpentry, (uint8_t *)&mpend - (uint8_t *)&mpentry);
+        first = 0;
+    }
     for (cpu = &mpcputab[0] ; cpu < lim ; cpu++) {
         if (cpu == mpbootcpu) {
             /* started already */
-
+            
             continue;
         }
         kprintf("starting CPU %ld @ 0x%lx\n", cpu->id, MPENTRY);
         cpuinit((struct m_cpu *)cpu);
         apicinit(cpu->id);
         ioapicinit(cpu->id);
-        *--mpentrystk = cpu->id;
-        *--mpentrystk = MPSTKSIZE + cpu->id * MPSTKSIZE;
+        *--mpentrystk = (uint32_t)cpu;
+        *--mpentrystk = MPENTRYSTK - cpu->id * MPSTKSIZE;
         *--mpentrystk = (uint32_t)&kernpagedir;
         apicstart(cpu->id, MPENTRY);
         while (!cpu->started) {

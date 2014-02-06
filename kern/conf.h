@@ -45,10 +45,8 @@
 #define PLASMA    0
 
 /* planned drivers */
-#define AMDPCI    1
-#define INTELPCI  1
 #define PCI       1
-#define ACPI      1
+#define ACPI      0
 #define ACPICA    0
 #define HPET      0     // high precision event timer support
 #define PS2DRV    1     // enable PS/2 mouse and keyboard drivers

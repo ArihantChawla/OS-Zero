@@ -83,17 +83,17 @@ apicwrite(uint32_t val, uint32_t reg)
 static __inline__ void
 apicsendirq(uint32_t hi, uint32_t lo, long nusec)
 {
-    long cnt = nusec << 1;
+    long cnt = nusec << 4;
     __asm__ __volatile__ ("pushfl\n");
     __asm__ __volatile__ ("cli\n");
     apicwrite(hi, APICINTHI);
     while (cnt--) {
-        cnt--;
+        ;
     }
     apicwrite(lo, APICINTLO);
-    cnt = nusec << 1;
+    cnt = nusec << 4;
     while (cnt--) {
-        cnt--;
+        ;
     }
     __asm__ __volatile__ ("sti\n");
     __asm__ __volatile__ ("popfl\n");

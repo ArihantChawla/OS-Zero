@@ -59,6 +59,9 @@ SECTIONS {
 	vm.o(.data)
 	vm.o(.bss)
 	util.o(.text)
+	mpentry.o(.text)
+	mpentry.o(.data)
+	mpentry.o(.bss)
 	mp.o(.text)
     	mp.o(.data)
     	mp.o(.bss)
@@ -73,13 +76,6 @@ SECTIONS {
 	cons.o(.bss)
         _eboot = .;
 	. = ALIGN(PAGESIZE);
-    }
-
-    /* multiprocessor bootstrap */
-    .mp : AT(HICORE + SIZEOF(.boot)) {
-        _mpentry = .;
-	mpentry.o(.text)
-	_emp = .;
     }
 
     . = DMABUF;

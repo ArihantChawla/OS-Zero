@@ -13,7 +13,6 @@
  * 0x9e000	- stack top
  * 0x9dffc	- APIC ID
  * 0x9dff8	- processor kernel stack address
- * 0x9dff4	- page directory address
  */
 
 #include <kern/conf.h>
@@ -24,29 +23,33 @@
 #include <kern/unit/ia32/boot.h>
 #include <kern/unit/ia32/mp.h>
 
+.globl	mpentry, mpend
+
 .text	16
 
 mpentry:
 	/* disable interrupts */
 	cli
 	/* set data segment */
-	movw	$0x9e00, %ax
+	movw	$(MPENTRY >> 4), %ax
 	movw	%ax, %ds
+	xorw	%ax, %ax
+	movw	%ax, %es
+	movw	%ax, %fs
+	movw	%ax, %gs
+	movw	%ax, %ss
 	/* set up segmentation */
-	.byte	0x66
-	lgdt	(MPGDT)
-//	.byte	0x66, 0x0f, 0x01, 0x15, 0x00, 0xe0, 0x09, 0x00
+//	.byte	0x66
+	lgdtl	(_mpgdtptr - mpentry + MPENTRY)
 	/* switch to protected mode */
 	movl	%cr0, %eax
 	orl	$CR0PE, %eax
 	movl	%eax, %cr0
+	.byte	0x66
+	ljmpl	$TEXTSEL, $(_mpentry32 - mpentry + MPENTRY)
 
 .text	32
 _mpentry32:
-	/* initialise %cs */
-//	.byte	0x66
-	ljmp	$TEXTSEL, $(_mpflush - mpentry + 0x9f000)
-_mpflush:
 	/* load other segment registers */
 	movw	$DATASEL, %ax
 	movw	%ax, %ds
@@ -57,23 +60,43 @@ _mpflush:
 //	movw	$STKSEL, %ax
 	movw	%ax, %ss
 	movl	$(MPENTRYSTK - 8), %esp
-//	movl	$_mpdone, %ecx
+#if 0
+	movl	$(MPENTRYSTK - 12), %esp
 	/* load PDBR and enable paging */
 	popl	%eax			// page directory address
 	movl	%eax, %cr3
 	movl	%cr0, %eax
 	orl	$CR0PG, %eax
 	movl	%eax, %cr0
+#endif
 	popl	%eax			// kernel stack address
 	popl	%ebx			// APIC ID
 	/* initialise processor kernel stack */
 	movl	%eax, %esp
-	/* the stack has the APIC ID as an argument */
+	/* the stack has the APIC ID as an argument for mpmain */
 	pushl	%ebx
 	call	mpmain
-//	jmp	*%ecx
-//_mpdone:
-//	ret
+
+.align	16
+
+_mpgdt:
+	/* NULL */
+	.short	0, 0
+	.byte	0, 0, 0, 0
+	/* ring 0 32-bit code descriptor */
+	.short	0xffff, 0
+	.byte	0, 0x98, 0xcf, 0
+	/* ring 0 32-bit data descriptor */
+	.short	0xffff, 0
+	.byte	0, 0x92, 0xcf, 0
+
+_mpgdtptr:
+	.short	_mpgdtptr - _mpgdt - 1
+	.long	_mpgdt - mpentry + MPENTRY
+
+.align	4
+	
+mpend:
 	
 #endif /* SMP */
 

@@ -216,7 +216,7 @@ int
 pcireadconf1(uint8_t busid, uint8_t slotid, uint8_t funcid,
              uint16_t regid, uint8_t len)
 {
-    int retval;
+    int retval = ~0;
 
     outl(pciconfadr1(busid, slotid, funcid, regid), PCICONFADR);
     switch (len) {
@@ -330,14 +330,6 @@ pcichkvendor(uint8_t busid, uint8_t slotid, uint16_t *devret)
 
     return vendor;
 }
-
-#if 0
-void
-pcichkdev(uint8_t busid, uint8_t devid, uint8_t func)
-{
-    uint16_t vendor;
-}
-#endif
 
 void
 pciinitdrv(struct pcidev *dev)

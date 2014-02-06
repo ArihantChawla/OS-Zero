@@ -5,11 +5,11 @@
 
 #if (SMP)
 
-#define MPENTRY     0x9f000
-#define MPENTRYSTK  0x9e000
-#define MPGDT       0x9e000
-#define MPSTKSIZE   16384
-#define NMPGDT      3
+#define MPENTRY    0x9f000
+#define MPENTRYSTK 0x9e000
+
+//#define MPGDT       0x9e000
+#define MPSTKSIZE   8192
 
 #if !defined(__ASSEMBLY__)
 
@@ -20,7 +20,9 @@
 #include <kern/unit/x86/apic.h>
 #include <kern/unit/ia32/mp.h>
 
-void mpinit(void);
+extern void   mpentry(void);
+void          mpinit(void);
+extern void * mpend;
 
 extern volatile long mpmultiproc;
 

@@ -28,9 +28,9 @@ ASMLINK void
 seginit(long id)
 {
 #if (SMP)
-    struct m_cpu    *cpu = &mpcputab[curcpu->id];
+    struct m_cpu    *cpu = &mpcputab[id];
 #else
-    struct m_cpu    *cpu = &cputab[curcpu->id];
+    struct m_cpu    *cpu = &cputab[id];
 #endif
     uint64_t        *gdt;
 

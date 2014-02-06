@@ -68,7 +68,6 @@ trapde:
 	iret
 
 trapdb:
-#if 0
 	pushal
 	pushl	%ds
 	pushl	%es
@@ -85,7 +84,6 @@ trapdb:
 	popl	%es
 	popl	%ds
 	popal
-#endif
 	sti
 	iret
 
