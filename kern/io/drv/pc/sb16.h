@@ -85,6 +85,36 @@ typedef int16_t sb16pcm16_t; /* little endian */
 #define SB16INPUTRATE    0x41
 #define SB16OUTPUTRATE   0x42
 
+struct sb16drv {
+    volatile long  buflock;
+    long           init;
+    uint8_t       *dmabuf8;
+    uint16_t      *dmabuf16;
+    uint8_t        irq;
+    uint8_t        dma8;
+    uint8_t        dma16;
+    long           dmainofs8;
+    long           dmainofs16;
+    long           dmaoutofs8;
+    long           dmaoutofs16;
+    long           dmain8full;
+    long           dmain16full;
+    long           dmaout8empty;
+    long           dmaout16empty;
+    uint8_t       *inbuf8;
+    uint8_t       *outbuf8;
+    uint16_t      *inbuf16;
+    uint16_t      *outbuf16;
+    void          *inptr8;
+    void          *inlim8;
+    void          *outptr8;
+    void          *outlim8;
+    void          *inptr16;
+    void          *inlim16;
+    void          *outptr16;
+    void          *outlim16;
+};
+
 /*
  * - write 1 to reset port
  * - wait 3 microseconds

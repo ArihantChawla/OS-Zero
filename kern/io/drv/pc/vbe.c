@@ -133,7 +133,7 @@ vbeinitscr(void)
              + ((vbescreen.nbpp == 24)
                 ? vbescreen.mode->xres * vbescreen.mode->yres * 3
                 : vbescreen.mode->xres * vbescreen.mode->yres * 2),
-             PAGEPRES | PAGEWRITE);
+             PAGEPRES | PAGEWRITE | PAGENOCACHE);
     vbehello();
 
     return;

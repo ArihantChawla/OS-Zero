@@ -24,34 +24,7 @@ extern void *irqvec[];
 #define SB16DATA8BUFSIZE  (4 * SB16BUFSIZE)
 #define SB16DATA16BUFSIZE (8 * SB16BUFSIZE)
 
-static long      _sb16init = 0;
-static uint8_t  *_sb16dmabuf8;
-static uint16_t *_sb16dmabuf16;
-static uint8_t   _sb16irq;
-static uint8_t   _sb16dma8;
-static uint8_t   _sb16dma16;
-static long      _sb16buflock = MTXINITVAL;
-static long      _sb16dmainofs8 = 0;
-static long      _sb16dmainofs16 = 0;
-static long      _sb16dmaoutofs8 = 0;
-static long      _sb16dmaoutofs16 = 0;
-static long      _sb16dmain8full = 0;
-static long      _sb16dmain16full = 0;
-static long      _sb16dmaout8empty = 1;
-static long      _sb16dmaout16empty = 1;
-
-static uint8_t  *_sb16inbuf8;
-static uint8_t  *_sb16outbuf8;
-static uint16_t *_sb16inbuf16;
-static uint16_t *_sb16outbuf16;
-static void     *_sb16inptr8;
-static void     *_sb16inlim8;
-static void     *_sb16outptr8;
-static void     *_sb16outlim8;
-static void     *_sb16inptr16;
-static void     *_sb16inlim16;
-static void     *_sb16outptr16;
-static void     *_sb16outlim16;
+static struct sb16drv sb16drv;
 
 #if 0
 uint16_t
@@ -73,15 +46,15 @@ sb16setup(void)
     u8val = inb(SB16MIXERDATA);
     switch (u8val) {
         case SB16IRQ5BIT:
-            _sb16irq = 5;
+            sb16drv.irq = 5;
 
             break;
         case SB16IRQ7BIT:
-            _sb16irq = 7;
+            sb16drv.irq = 7;
 
             break;
         case SB16IRQ10BIT:
-            _sb16irq = 10;
+            sb16drv.irq = 10;
 
             break;
     }
@@ -90,51 +63,51 @@ sb16setup(void)
     u8val = inb(SB16MIXERDATA);
     switch (u8val & 0x0f) {
         case SB16DMA0BIT:
-            _sb16dma8 = 0;
+            sb16drv.dma8 = 0;
 
             break;
         case SB16DMA1BIT:
-            _sb16dma8 = 1;
+            sb16drv.dma8 = 1;
 
             break;
         case SB16DMA3BIT:
-            _sb16dma8 = 3;
+            sb16drv.dma8 = 3;
 
             break;
     }
     switch (u8val & 0xf0) {
         case SB16DMA5BIT:
-            _sb16dma16 = 5;
+            sb16drv.dma16 = 5;
 
             break;
         case SB16DMA6BIT:
-            _sb16dma16 = 6;
+            sb16drv.dma16 = 6;
 
             break;
         case SB16DMA7BIT:
-            _sb16dma16 = 7;
+            sb16drv.dma16 = 7;
 
             break;
     }
     kprintf("SB16 @ 0x%x, IRQ %d, DMA %d (8-bit), DMA %d (16-bit)\n",
-            SB16BASE, _sb16irq, _sb16dma8, _sb16dma16);
+            SB16BASE, sb16drv.irq, sb16drv.dma8, sb16drv.dma16);
     /* initialize interrupt management */
-    irqvec[_sb16irq] = sb16intr;
+    irqvec[sb16drv.irq] = sb16intr;
     /* initialize DMA interface */
-    _sb16dmabuf8 = dmabufadr(_sb16dma8);
-    _sb16dmabuf16 = dmabufadr(_sb16dma16);
-    dmasetmode(_sb16dma8, DMAAUTOINIT | DMAADRINCR | DMABLOCK);
-    dmasetmode(_sb16dma16, DMAAUTOINIT | DMAADRINCR | DMABLOCK);
-    dmasetadr(_sb16dma8, _sb16dmabuf8);
-    dmasetadr(_sb16dma16, _sb16dmabuf16);
-    dmasetcnt(_sb16dma8, SB16BUFSIZE >> 1);
-    dmasetcnt(_sb16dma16, SB16BUFSIZE >> 1);
+    sb16drv.dmabuf8 = dmabufadr(sb16drv.dma8);
+    sb16drv.dmabuf16 = dmabufadr(sb16drv.dma16);
+    dmasetmode(sb16drv.dma8, DMAAUTOINIT | DMAADRINCR | DMABLOCK);
+    dmasetmode(sb16drv.dma16, DMAAUTOINIT | DMAADRINCR | DMABLOCK);
+    dmasetadr(sb16drv.dma8, sb16drv.dmabuf8);
+    dmasetadr(sb16drv.dma16, sb16drv.dmabuf16);
+    dmasetcnt(sb16drv.dma8, SB16BUFSIZE >> 1);
+    dmasetcnt(sb16drv.dma16, SB16BUFSIZE >> 1);
     /* set input and output rates */
     sbsetrate(SB16INPUTRATE, 44100);
     sbsetrate(SB16OUTPUTRATE, 44100);
     /* set block transfer size (16-bit words) */
     outw(SB16BUFSIZE >> 2, SB16SETBLKSIZE);
-    _sb16init = 1;
+    sb16drv.init = 1;
 
     return;
 }
@@ -142,23 +115,25 @@ sb16setup(void)
 void
 sb16init(void)
 {
+    sb16drv.dmaout8empty = 1;
+    sb16drv.dmaout16empty = 1;
     /* initialise and zero wired buffers */
-    _sb16inbuf8 = kwalloc(SB16DATA8BUFSIZE);
-    kbzero(_sb16inbuf8, SB16DATA8BUFSIZE);
-    _sb16outbuf8 = kwalloc(SB16DATA8BUFSIZE);
-    kbzero(_sb16outbuf8, SB16DATA8BUFSIZE);
-    _sb16inbuf16 = kwalloc(SB16DATA16BUFSIZE);
-    kbzero(_sb16inbuf16, SB16DATA16BUFSIZE);
-    _sb16outbuf16 = kwalloc(SB16DATA16BUFSIZE);
-    kbzero(_sb16outbuf16, SB16DATA16BUFSIZE);
-    _sb16inptr8 = _sb16inbuf8;
-    _sb16inlim8 = _sb16inbuf8 + SB16DATA8BUFSIZE - (SB16BUFSIZE >> 1);
-    _sb16outptr8 = _sb16outbuf8;
-    _sb16outlim8 = _sb16outbuf8 + SB16DATA8BUFSIZE - (SB16BUFSIZE >> 1);
-    _sb16inptr16 = _sb16inbuf16;
-    _sb16inlim16 = _sb16inbuf16 + SB16DATA16BUFSIZE - (SB16BUFSIZE >> 2);
-    _sb16outptr16 = _sb16outbuf16;
-    _sb16outlim16 = _sb16outbuf16 + SB16DATA16BUFSIZE - (SB16BUFSIZE >> 2);
+    sb16drv.inbuf8 = kwalloc(SB16DATA8BUFSIZE);
+    kbzero(sb16drv.inbuf8, SB16DATA8BUFSIZE);
+    sb16drv.outbuf8 = kwalloc(SB16DATA8BUFSIZE);
+    kbzero(sb16drv.outbuf8, SB16DATA8BUFSIZE);
+    sb16drv.inbuf16 = kwalloc(SB16DATA16BUFSIZE);
+    kbzero(sb16drv.inbuf16, SB16DATA16BUFSIZE);
+    sb16drv.outbuf16 = kwalloc(SB16DATA16BUFSIZE);
+    kbzero(sb16drv.outbuf16, SB16DATA16BUFSIZE);
+    sb16drv.inptr8 = sb16drv.inbuf8;
+    sb16drv.inlim8 = sb16drv.inbuf8 + SB16DATA8BUFSIZE - (SB16BUFSIZE >> 1);
+    sb16drv.outptr8 = sb16drv.outbuf8;
+    sb16drv.outlim8 = sb16drv.outbuf8 + SB16DATA8BUFSIZE - (SB16BUFSIZE >> 1);
+    sb16drv.inptr16 = sb16drv.inbuf16;
+    sb16drv.inlim16 = sb16drv.inbuf16 + SB16DATA16BUFSIZE - (SB16BUFSIZE >> 2);
+    sb16drv.outptr16 = sb16drv.outbuf16;
+    sb16drv.outlim16 = sb16drv.outbuf16 + SB16DATA16BUFSIZE - (SB16BUFSIZE >> 2);
     /* reset sound card */
     sb16reset();
     /* sleep for SB16RESETMS milliseconds, then trigger sb16setup() */
@@ -172,10 +147,10 @@ sb16init(void)
 void
 sb16unload(void)
 {
-    kfree(_sb16inbuf8);
-    kfree(_sb16outbuf8);
-    kfree(_sb16inbuf16);
-    kfree(_sb16outbuf16);
+    kfree(sb16drv.inbuf8);
+    kfree(sb16drv.outbuf8);
+    kfree(sb16drv.inbuf16);
+    kfree(sb16drv.outbuf16);
 
     return;
 }
@@ -222,69 +197,69 @@ sb16intr(void)
         case SB16DMA8MIDIBIT:
             reg = SB16DMA8MIDISTAT;
             val = DMAIOBUFSIZE >> 1;
-            mtxlk(&_sb16buflock);
+            mtxlk(&sb16drv.buflock);
             if (op == DMAREADOP) {
-                if (_sb16dmain8full) {
+                if (sb16drv.dmain8full) {
                     sb16flushinbuf8();
                 }
-                kmemcpy(_sb16inptr8, _sb16dmabuf8 + _sb16dmainofs8, val);
-                _sb16dmainofs8 = (_sb16dmainofs8 + val) & (DMAIOBUFSIZE - 1);
-                if (_sb16inptr8 < _sb16inlim8) {
-                    _sb16inptr8 += val;
-                    _sb16dmain8full ^= _sb16dmain8full;
+                kmemcpy(sb16drv.inptr8, sb16drv.dmabuf8 + sb16drv.dmainofs8, val);
+                sb16drv.dmainofs8 = (sb16drv.dmainofs8 + val) & (DMAIOBUFSIZE - 1);
+                if (sb16drv.inptr8 < sb16drv.inlim8) {
+                    sb16drv.inptr8 += val;
+                    sb16drv.dmain8full ^= sb16drv.dmain8full;
                 } else {
-                    _sb16inptr8 = _sb16inbuf8;
-                    _sb16dmain8full = 1;
+                    sb16drv.inptr8 = sb16drv.inbuf8;
+                    sb16drv.dmain8full = 1;
                 }
             } else {
-                if (_sb16dmaout8empty) {
+                if (sb16drv.dmaout8empty) {
                     sb16filloutbuf8();
                 }
-                kmemcpy(_sb16dmabuf8 + _sb16dmaoutofs8, _sb16outptr8, val);
-                _sb16dmaoutofs8 = (_sb16dmaoutofs8 + val) & (DMAIOBUFSIZE - 1);
-                if (_sb16outptr8 < _sb16outlim8) {
-                    _sb16outptr8 += val;
-                    _sb16dmaout8empty ^= _sb16dmaout8empty;
+                kmemcpy(sb16drv.dmabuf8 + sb16drv.dmaoutofs8, sb16drv.outptr8, val);
+                sb16drv.dmaoutofs8 = (sb16drv.dmaoutofs8 + val) & (DMAIOBUFSIZE - 1);
+                if (sb16drv.outptr8 < sb16drv.outlim8) {
+                    sb16drv.outptr8 += val;
+                    sb16drv.dmaout8empty ^= sb16drv.dmaout8empty;
                 } else {
-                    _sb16outptr8 = _sb16outbuf8;
-                    _sb16dmaout8empty = 1;
+                    sb16drv.outptr8 = sb16drv.outbuf8;
+                    sb16drv.dmaout8empty = 1;
                 }
             }
-            mtxunlk(&_sb16buflock);
+            mtxunlk(&sb16drv.buflock);
 
             break;
         case SB16DMA16BIT:
             reg = SB16DMA16STAT;
             val = DMAIOBUFSIZE >> 2;
-            mtxlk(&_sb16buflock);
+            mtxlk(&sb16drv.buflock);
             if (op == DMAREADOP) {
-                if (_sb16dmain16full) {
+                if (sb16drv.dmain16full) {
                     sb16flushinbuf16();
                 }
-                kmemcpy(_sb16inptr16, _sb16dmabuf16 + _sb16dmainofs16, val);
-                _sb16dmainofs16 = (_sb16dmainofs16 + val) & (DMAIOBUFSIZE - 1);
-                if (_sb16inptr16 < _sb16inlim16) {
-                    _sb16inptr16 += val;
-                    _sb16dmain16full ^= _sb16dmain16full;
+                kmemcpy(sb16drv.inptr16, sb16drv.dmabuf16 + sb16drv.dmainofs16, val);
+                sb16drv.dmainofs16 = (sb16drv.dmainofs16 + val) & (DMAIOBUFSIZE - 1);
+                if (sb16drv.inptr16 < sb16drv.inlim16) {
+                    sb16drv.inptr16 += val;
+                    sb16drv.dmain16full ^= sb16drv.dmain16full;
                 } else {
-                    _sb16inptr16 = _sb16inbuf16;
-                    _sb16dmain16full = 1;
+                    sb16drv.inptr16 = sb16drv.inbuf16;
+                    sb16drv.dmain16full = 1;
                 }
             } else {
-                if (_sb16dmaout16empty) {
+                if (sb16drv.dmaout16empty) {
                     sb16filloutbuf16();
                 }
-                kmemcpy(_sb16dmabuf16 + _sb16dmaoutofs16, _sb16outptr16, val);
-                _sb16dmaoutofs16 = (_sb16dmaoutofs16 + val) & (DMAIOBUFSIZE - 1);
-                if (_sb16outptr16 < _sb16outlim16) {
-                    _sb16outptr16 += val;
-                    _sb16dmaout16empty ^= _sb16dmaout16empty;
+                kmemcpy(sb16drv.dmabuf16 + sb16drv.dmaoutofs16, sb16drv.outptr16, val);
+                sb16drv.dmaoutofs16 = (sb16drv.dmaoutofs16 + val) & (DMAIOBUFSIZE - 1);
+                if (sb16drv.outptr16 < sb16drv.outlim16) {
+                    sb16drv.outptr16 += val;
+                    sb16drv.dmaout16empty ^= sb16drv.dmaout16empty;
                 } else {
-                    _sb16outptr16 = _sb16outbuf16;
-                    _sb16dmaout16empty = 1;
+                    sb16drv.outptr16 = sb16drv.outbuf16;
+                    sb16drv.dmaout16empty = 1;
                 }
             }
-            mtxunlk(&_sb16buflock);
+            mtxunlk(&sb16drv.buflock);
 
             break;
         case SB16MPU401BIT:

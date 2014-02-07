@@ -114,7 +114,7 @@ vminit(void *pagetab)
     /* identity-map 0..1M */
     vmmapseg(pagetab, 0, 0,
              HICORE,
-             PAGEPRES | PAGEWRITE);
+             PAGEPRES | PAGEWRITE | PAGENOCACHE);
 
 #if (SMP) && 0
     vmmapseg(pagetab, (uint32_t)MPENTRY, (uint32_t)MPENTRY,
@@ -124,23 +124,23 @@ vminit(void *pagetab)
 
     /* identity-map kernel boot segment */
     vmmapseg(pagetab, HICORE, HICORE,
-           (uint32_t)&_eboot,
-           PAGEPRES | PAGEWRITE);
+             (uint32_t)&_eboot,
+             PAGEPRES | PAGEWRITE);
 
     /* map kernel DMA buffers */
     vmmapseg(pagetab, (uint32_t)&_dmabuf, DMABUFBASE,
-           (uint32_t)&_dmabuf + DMABUFSIZE,
-           PAGEPRES | PAGEWRITE);
+             (uint32_t)&_dmabuf + DMABUFSIZE,
+             PAGEPRES | PAGEWRITE | PAGENOCACHE);
 
     /* identity map page tables */
     vmmapseg(pagetab, (uint32_t)pagetab, (uint32_t)pagetab,
-           (uint32_t)pagetab + PAGETABSIZE,
-           PAGEPRES | PAGEWRITE);
+             (uint32_t)pagetab + PAGETABSIZE,
+             PAGEPRES | PAGEWRITE);
 
     /* map kernel text/read-only segments */
     vmmapseg(pagetab, (uint32_t)&_text, vmlinkadr((uint32_t)&_textvirt),
-           (uint32_t)&_etextvirt,
-           PAGEPRES);
+             (uint32_t)&_etextvirt,
+             PAGEPRES);
 
     /* map kernel DATA and BSS segments */
     vmmapseg(pagetab, (uint32_t)&_data, vmlinkadr((uint32_t)&_datavirt),
