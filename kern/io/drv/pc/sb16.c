@@ -24,7 +24,7 @@ extern void *irqvec[];
 #define SB16DATA8BUFSIZE  (4 * SB16BUFSIZE)
 #define SB16DATA16BUFSIZE (8 * SB16BUFSIZE)
 
-static struct sb16drv sb16drv;
+static struct sb16drv sb16drv ALIGNED(PAGESIZE);
 
 #if 0
 uint16_t
@@ -206,7 +206,7 @@ sb16intr(void)
                 sb16drv.dmainofs8 = (sb16drv.dmainofs8 + val) & (DMAIOBUFSIZE - 1);
                 if (sb16drv.inptr8 < sb16drv.inlim8) {
                     sb16drv.inptr8 += val;
-                    sb16drv.dmain8full ^= sb16drv.dmain8full;
+                    sb16drv.dmain8full = 0;
                 } else {
                     sb16drv.inptr8 = sb16drv.inbuf8;
                     sb16drv.dmain8full = 1;
@@ -219,7 +219,7 @@ sb16intr(void)
                 sb16drv.dmaoutofs8 = (sb16drv.dmaoutofs8 + val) & (DMAIOBUFSIZE - 1);
                 if (sb16drv.outptr8 < sb16drv.outlim8) {
                     sb16drv.outptr8 += val;
-                    sb16drv.dmaout8empty ^= sb16drv.dmaout8empty;
+                    sb16drv.dmaout8empty = 0;
                 } else {
                     sb16drv.outptr8 = sb16drv.outbuf8;
                     sb16drv.dmaout8empty = 1;
@@ -240,7 +240,7 @@ sb16intr(void)
                 sb16drv.dmainofs16 = (sb16drv.dmainofs16 + val) & (DMAIOBUFSIZE - 1);
                 if (sb16drv.inptr16 < sb16drv.inlim16) {
                     sb16drv.inptr16 += val;
-                    sb16drv.dmain16full ^= sb16drv.dmain16full;
+                    sb16drv.dmain16full = 0;
                 } else {
                     sb16drv.inptr16 = sb16drv.inbuf16;
                     sb16drv.dmain16full = 1;
@@ -253,7 +253,7 @@ sb16intr(void)
                 sb16drv.dmaoutofs16 = (sb16drv.dmaoutofs16 + val) & (DMAIOBUFSIZE - 1);
                 if (sb16drv.outptr16 < sb16drv.outlim16) {
                     sb16drv.outptr16 += val;
-                    sb16drv.dmaout16empty ^= sb16drv.dmaout16empty;
+                    sb16drv.dmaout16empty = 0;
                 } else {
                     sb16drv.outptr16 = sb16drv.outbuf16;
                     sb16drv.dmaout16empty = 1;
