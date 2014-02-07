@@ -133,7 +133,8 @@ sb16init(void)
     sb16drv.inptr16 = sb16drv.inbuf16;
     sb16drv.inlim16 = sb16drv.inbuf16 + SB16DATA16BUFSIZE - (SB16BUFSIZE >> 2);
     sb16drv.outptr16 = sb16drv.outbuf16;
-    sb16drv.outlim16 = sb16drv.outbuf16 + SB16DATA16BUFSIZE - (SB16BUFSIZE >> 2);
+    sb16drv.outlim16 = sb16drv.outbuf16
+        + SB16DATA16BUFSIZE - (SB16BUFSIZE >> 2);
     /* reset sound card */
     sb16reset();
     /* sleep for SB16RESETMS milliseconds, then trigger sb16setup() */
@@ -202,8 +203,11 @@ sb16intr(void)
                 if (sb16drv.dmain8full) {
                     sb16flushinbuf8();
                 }
-                kmemcpy(sb16drv.inptr8, sb16drv.dmabuf8 + sb16drv.dmainofs8, val);
-                sb16drv.dmainofs8 = (sb16drv.dmainofs8 + val) & (DMAIOBUFSIZE - 1);
+                kmemcpy(sb16drv.inptr8,
+                        sb16drv.dmabuf8 + sb16drv.dmainofs8,
+                        val);
+                sb16drv.dmainofs8 = (sb16drv.dmainofs8 + val)
+                    & (DMAIOBUFSIZE - 1);
                 if (sb16drv.inptr8 < sb16drv.inlim8) {
                     sb16drv.inptr8 += val;
                     sb16drv.dmain8full = 0;
@@ -215,8 +219,11 @@ sb16intr(void)
                 if (sb16drv.dmaout8empty) {
                     sb16filloutbuf8();
                 }
-                kmemcpy(sb16drv.dmabuf8 + sb16drv.dmaoutofs8, sb16drv.outptr8, val);
-                sb16drv.dmaoutofs8 = (sb16drv.dmaoutofs8 + val) & (DMAIOBUFSIZE - 1);
+                kmemcpy(sb16drv.dmabuf8 + sb16drv.dmaoutofs8,
+                        sb16drv.outptr8,
+                        val);
+                sb16drv.dmaoutofs8 = (sb16drv.dmaoutofs8 + val)
+                    & (DMAIOBUFSIZE - 1);
                 if (sb16drv.outptr8 < sb16drv.outlim8) {
                     sb16drv.outptr8 += val;
                     sb16drv.dmaout8empty = 0;
@@ -236,8 +243,11 @@ sb16intr(void)
                 if (sb16drv.dmain16full) {
                     sb16flushinbuf16();
                 }
-                kmemcpy(sb16drv.inptr16, sb16drv.dmabuf16 + sb16drv.dmainofs16, val);
-                sb16drv.dmainofs16 = (sb16drv.dmainofs16 + val) & (DMAIOBUFSIZE - 1);
+                kmemcpy(sb16drv.inptr16,
+                        sb16drv.dmabuf16 + sb16drv.dmainofs16,
+                        val);
+                sb16drv.dmainofs16 = (sb16drv.dmainofs16 + val)
+                    & (DMAIOBUFSIZE - 1);
                 if (sb16drv.inptr16 < sb16drv.inlim16) {
                     sb16drv.inptr16 += val;
                     sb16drv.dmain16full = 0;
@@ -249,8 +259,11 @@ sb16intr(void)
                 if (sb16drv.dmaout16empty) {
                     sb16filloutbuf16();
                 }
-                kmemcpy(sb16drv.dmabuf16 + sb16drv.dmaoutofs16, sb16drv.outptr16, val);
-                sb16drv.dmaoutofs16 = (sb16drv.dmaoutofs16 + val) & (DMAIOBUFSIZE - 1);
+                kmemcpy(sb16drv.dmabuf16 + sb16drv.dmaoutofs16,
+                        sb16drv.outptr16,
+                        val);
+                sb16drv.dmaoutofs16 = (sb16drv.dmaoutofs16 + val)
+                    & (DMAIOBUFSIZE - 1);
                 if (sb16drv.outptr16 < sb16drv.outlim16) {
                     sb16drv.outptr16 += val;
                     sb16drv.dmaout16empty = 0;
