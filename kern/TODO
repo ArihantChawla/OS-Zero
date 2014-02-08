@@ -1,6 +1,13 @@
-- port usr/gfx/zplasma/plasma.c to use [VBE] framebuffer (24-bit)
+acute things
+------------
+
 - implement [block] I/O buffer cache
 - implement ATA and SATA drivers
 - implement ISO 9660 filesystem for CD and DVD discs
 - implement ELF linker/loader
+
+future things
+-------------
+- hack Zero to run rogue :)
 - make usr/games/mjolnir run on Zero :)
+
