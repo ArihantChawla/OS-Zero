@@ -44,7 +44,8 @@ pageinitzone(uintptr_t base,
 void
 pageinit(uintptr_t base, unsigned long nb)
 {
-    pageinitzone(base, &vmphysq, nb);
+    pageinitzone(base, &vmphysq, max(nb, DEVMEMBASE));
+    /* TODO: allocate unused device regions (in 3.5G..4G) */
 
     return;
 }

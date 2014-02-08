@@ -19,7 +19,7 @@ meminit(uintptr_t base, unsigned long nbphys)
     || defined(__arm__)
 //    slabinit((unsigned long)&_ebss, (char *)KERNVIRTBASE - &_ebss);
     slabinit(&slabvirtzone, (unsigned long)&_ebss,
-             max(nbphys, DEVMEMBASE) - (uintptr_t)&_ebss);
+             DEVMEMBASE - (uintptr_t)&_ebss);
 #elif defined(__x86_64__) || defined(__amd64__)
 #error implement x86-64 memory management
 #endif
