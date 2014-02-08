@@ -9,19 +9,21 @@
 #endif
 
 struct m_cpu     cputab[NCPU] ALIGNED(PAGESIZE);
-struct m_cpuinfo cpuinfo[NCPU];
+struct m_cpuinfo cpuinfotab[NCPU];
 
 void
 cpuinit(struct m_cpu *cpu)
 {
+    long core = cpu->id;
 #if (SMP)
-    void *kstk = (uint8_t *)MPSTKSIZE + cpu->id * MPSTKSIZE;
+    void *kstk = (uint8_t *)MPENTRYSTK - cpu->id * MPSTKSIZE;
 #else
     void *kstk = (void *)KERNSTKTOP;
 #endif
 
     cpu->cpu = cpu;
     cpu->kstk = kstk;
+    cpuprobe(&cpuinfotab[core]);
 
     return;
 };

@@ -9,7 +9,7 @@
 void thrsave(struct thr *thr);
 void thrjmp(struct thr *thr);
 
-extern struct m_cpuinfo cpuinfo;
+//extern struct m_cpuinfo cpuinfo;
 
 #if (ZEROSCHED)
 void thryield(void);
@@ -57,7 +57,7 @@ m_tcbsave(struct m_tcb *mtcb)
                           :
                           : "m" (mtcb));
     /* save FPU state */
-    if (cpuinfo.flags & CPUHASFXSR) {
+    if (curcpu->info->flags & CPUHASFXSR) {
         __asm__ __volatile__ ("fxsave (%esp)\n");
     } else {
         __asm__ __volatile__ ("fnsave (%esp)\n");
@@ -95,7 +95,7 @@ m_tcbjmp(struct m_tcb *mtcb)
                           :
                           : "m" (mtcb));
     /* restore FPU state */
-    if (cpuinfo.flags & CPUHASFXSR) {
+    if (curcpu->info->flags & CPUHASFXSR) {
         __asm__ __volatile__ ("fxrstor (%esp)\n");
     } else {
         __asm__ __volatile__ ("frstor (%esp)\n");

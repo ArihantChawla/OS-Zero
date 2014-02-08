@@ -200,11 +200,9 @@ mpinit(void)
 //        mpioapicid = 0;
 
         return;
-    } else {
-        if (mp->intmode) {
-            outb(0x70, 0x22);               // select IMCR
-            outb(inb(0x23) | 0x01, 0x23);   // mask external timer interrupts
-        }
+    } else if (mp->intmode) {
+        outb(0x70, 0x22);               // select IMCR
+        outb(inb(0x23) | 0x01, 0x23);   // mask external timer interrupts
     }
     /* local APIC initialisation where present */
     apicinit(0);
