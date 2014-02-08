@@ -1,13 +1,15 @@
 acute things
 ------------
 
-- implement [block] I/O buffer cache
 - implement ATA and SATA drivers
 - implement ISO 9660 filesystem for CD and DVD discs
+- implement [block] I/O buffer cache
 - implement ELF linker/loader
+- implement virtual filesystem (VFS)
 
 future things
 -------------
+- terminal/TTY driver
 - hack Zero to run rogue :)
 - make usr/games/mjolnir run on Zero :)
 
