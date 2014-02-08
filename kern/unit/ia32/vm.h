@@ -39,6 +39,9 @@ vmflushtlb(void *adr)
     __asm__ __volatile__ ("invlpg (%0)\n" : : "r" (adr) : "memory");
 }
 
+/* physical memory limit; leave high areas for devices */
+#define DEVMEMBASE      0xe0000000                      // 3.5 G
+
 /* virtual memory parameters */
 #define NPAGEMAX        (NPDE * NPTE)                   // # of virtual pages
 #define NPDE            1024                            // per directory

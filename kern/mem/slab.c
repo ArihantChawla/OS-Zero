@@ -15,6 +15,7 @@
 
 extern unsigned long  npagefree;
 extern struct memzone magvirtzone;
+
 struct memzone        slabvirtzone ALIGNED(PAGESIZE);
 static volatile long  slablk;
 /*
