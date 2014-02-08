@@ -33,8 +33,8 @@ thrsave(struct thr *thr)
 void
 thrjmp(struct thr *thr)
 {
-    curthr = thr;
-    curproc = thr->proc;
+    k_curthr = thr;
+    k_curproc = thr->proc;
     m_tcbjmp(&thr->m_tcb);
 
     /* NOTREACHED */
@@ -269,15 +269,15 @@ thryield(void)
     struct thr  *thr = NULL;
     struct thrq *thrq;
     long         prio;
-    long         state = curthr->state;
+    long         state = k_curthr->state;
 
-    thrsave(curthr);
-    prio = thradjprio(curthr);
+    thrsave(k_curthr);
+    prio = thradjprio(k_curthr);
     if (state == THRREADY) {
         thrq = &thrruntab[prio];
-        thrqueue(curthr, thrq);
+        thrqueue(k_curthr, thrq);
     } else if (state == THRWAIT) {
-        thraddwait(curthr);
+        thraddwait(k_curthr);
     }
     while (!thr) {
         for (prio = 0 ; prio < THRNCLASS * THRNPRIO ; prio++) {
@@ -292,7 +292,7 @@ thryield(void)
                 }
                 thrq->head = thr->next;
                 mtxunlk(&thrq->lk);
-                if (thr != curthr) {
+                if (thr != k_curthr) {
                     thrjmp(thr);
                 } else {
 

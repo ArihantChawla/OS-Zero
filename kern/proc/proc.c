@@ -21,11 +21,11 @@ procinit(long id)
 
     if (!id) {
         /* bootstrap */
-        curproc = proc;
+        k_curproc = proc;
         /* process ID will be zero */
         thr = &thrtab[0];
         proc->thr = thr;
-        curthr = thr;
+        k_curthr = thr;
     }
     if (proc) {
         /* initialise page directory */
@@ -106,7 +106,7 @@ newproc(int argc, char *argv[], char *envp[], int class)
 
     proc->class = class;
     proc->pid = taskgetpid();
-    proc->parent = curproc->pid;
+    proc->parent = k_curproc->pid;
     proc->argc = argc;
     proc->argv = argv;
     proc->envp = envp;

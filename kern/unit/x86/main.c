@@ -97,7 +97,7 @@ kmain(struct mboothdr *hdr, unsigned long pmemsz)
 #if (VBE)
     vbeinitscr();
 #endif
-    curproc = &proctab[0];
+    k_curproc = &proctab[0];
     /* TODO: use memory map from GRUB */
     meminit(vmlinkadr(&_ebssvirt), pmemsz);
     vminitphys((uintptr_t)&_ebss, pmemsz - (unsigned long)&_ebss);
@@ -148,7 +148,7 @@ kmain(struct mboothdr *hdr, unsigned long pmemsz)
         kprintf("local APIC @ 0x%p\n", mpapic);
     }
 #endif
-    curcpu = &cputab[0];
+    k_curcpu = &cputab[0];
 #endif
 #if (HPET)
     hpetinit();
@@ -165,7 +165,7 @@ kmain(struct mboothdr *hdr, unsigned long pmemsz)
 #endif
     /* execution environment */
     procinit(0);
-    curthr = curproc->thr;
+    k_curthr = k_curproc->thr;
 //    sysinit();
     kprintf("DMA buffers (%ul x %ul kilobytes) @ 0x%p\n",
             DMANCHAN, DMACHANBUFSIZE >> 10, DMABUFBASE);

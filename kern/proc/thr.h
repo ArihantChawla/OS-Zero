@@ -57,7 +57,7 @@ m_tcbsave(struct m_tcb *mtcb)
                           :
                           : "m" (mtcb));
     /* save FPU state */
-    if (curcpu->info->flags & CPUHASFXSR) {
+    if (k_curcpu->info->flags & CPUHASFXSR) {
         __asm__ __volatile__ ("fxsave (%esp)\n");
     } else {
         __asm__ __volatile__ ("fnsave (%esp)\n");
@@ -95,7 +95,7 @@ m_tcbjmp(struct m_tcb *mtcb)
                           :
                           : "m" (mtcb));
     /* restore FPU state */
-    if (curcpu->info->flags & CPUHASFXSR) {
+    if (k_curcpu->info->flags & CPUHASFXSR) {
         __asm__ __volatile__ ("fxrstor (%esp)\n");
     } else {
         __asm__ __volatile__ ("frstor (%esp)\n");

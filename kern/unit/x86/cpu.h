@@ -26,14 +26,14 @@ struct m_cpuinfo {
 void cpuprobe(struct m_cpuinfo *cpuinfo);
 
 #if (PTRBITS == 32)
-extern struct m_cpu *curcpu  __asm__ ("%gs:0");
-extern struct proc  *curproc __asm__ ("%gs:4");
-extern struct thr   *curthr  __asm__ ("%gs:8");
+extern struct m_cpu *k_curcpu  __asm__ ("%gs:0");
+extern struct proc  *k_curproc __asm__ ("%gs:4");
+extern struct thr   *k_curthr  __asm__ ("%gs:8");
 //extern pde_t        *curpdir __asm__ ("%gs:12");
 #elif (PTRBITS == 64)
-extern struct m_cpu *curcpu  __asm__ ("%gs:0");
-extern struct proc  *curproc __asm__ ("%gs:8");
-extern struct thr   *curthr  __asm__ ("%gs:12");
+extern struct m_cpu *k_curcpu  __asm__ ("%gs:0");
+extern struct proc  *k_curproc __asm__ ("%gs:8");
+extern struct thr   *k_curthr  __asm__ ("%gs:12");
 //extern uint64_t     *curpml4 __asm__ ("%gs:16");
 #endif
 struct m_cpu {

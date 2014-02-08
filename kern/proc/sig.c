@@ -45,7 +45,7 @@ kill(struct proc *proc)
 void
 sigfunc(uint32_t trap)
 {
-    struct proc     *proc = curproc;
+    struct proc     *proc = k_curproc;
     long             signum = signumtab[trap];
     signalhandler_t *sigfunc;
 
