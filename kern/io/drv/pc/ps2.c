@@ -9,11 +9,11 @@
 
 #include <stdint.h>
 #include <sys/io.h>
-#include <kern/util.h>
 
 #include <zero/param.h>
 #include <zero/cdecl.h>
 
+#include <kern/util.h>
 //#include <kern/event.h>
 #include <kern/unit/x86/trap.h>
 #include <kern/unit/x86/trap.h>
@@ -21,48 +21,52 @@
 
 extern void *irqvec[];
 
-void kbdinit_us(void);
-void kbdintr(void);
-void mouseintr(void);
+void ps2initkbd_us(void);
+void ps2kbdintr(void);
+void ps2mouseintr(void);
 
+struct ps2drv {
 #if 0
 /* modifier keys. */
-static int32_t keytabmod[KBD_NTAB];
+    int32_t          keytabmod[PS2KBD_NTAB];
 #endif
 /* single-code values. */
-static int32_t keytab1b[KBD_NTAB] ALIGNED(PAGESIZE);
+    int32_t          keytab1b[PS2KBD_NTAB];
 /* 0xe0-prefixed values. */
-static int32_t keytabmb[KBD_NTAB];
+    int32_t          keytabmb[PS2KBD_NTAB];
 /* release values. */
-static int32_t keytabup[KBD_NTAB];
-static struct mousestat _mousestat;
-static int32_t modmask;
+    int32_t          keytabup[PS2KBD_NTAB];
+    struct mousestat mousestat;
+    int32_t          modmask;
+};
 
-#define kbdread(u8)                                                     \
-    __asm__ ("inb %w1, %b0\n" : "=a" (u8) : "Nd" (KBD_PORT))
-#define kbdsend(u8)                                                     \
-    __asm__ ("outb %b0, %w1\n" : : "a" (u8), "Nd" (KBD_PORT))
-#define mouseread(u8)                                                   \
-    __asm__("inb %w1, %b0" : "=a" (u8) : "i" (MOUSE_INPORT))
+static struct ps2drv ps2drv ALIGNED(PAGESIZE);
+
+#define ps2readkbd(u8)                                                  \
+    __asm__ ("inb %w1, %b0\n" : "=a" (u8) : "Nd" (PS2KBD_PORT))
+#define ps2sendkbd(u8)                                                  \
+    __asm__ ("outb %b0, %w1\n" : : "a" (u8), "Nd" (PS2KBD_PORT))
+#define ps2readmouse(u8)                                                \
+    __asm__("inb %w1, %b0" : "=a" (u8) : "i" (PS2MOUSE_INPORT))
 
 #if 0
-#define setkeymod(name)                                                 \
+#define ps2setkeymod(name)                                              \
     (keytabmod[name] = (name##_FLAG))
 #endif
 #define ismodkey(val)                                                   \
     (((val) & 0x80000000) && ((val) & 0xfffffff0) == 0xfffffff0)
 #if 0
-#define setkeymod(name)                                                 \
+#define ps2setkeymod(name)                                              \
     (keytabmod[name] = (1 << (-(name##_SYM))))
 #endif
-#define setkeycode(name)                                    \
-    (((((name) >> 8) & 0xff) == KBD_UP_BYTE)                \
-     ? (keytabup[name >> 16] = name##_SYM | KBD_UP_BIT)     \
-     : ((((name) & 0xff) == KBD_PREFIX_BYTE)                \
-        ? (keytabmb[name >> 8] = name##_SYM,                \
-           keytabup[name >> 8] = name##_SYM | KBD_UP_BIT)   \
-        : (keytab1b[name] = name##_SYM,                     \
-           keytabup[name] = name##_SYM | KBD_UP_BIT)))
+#define ps2setkeycode(name)                                             \
+    (((((name) >> 8) & 0xff) == PS2KBD_UP_BYTE)                         \
+     ? (ps2drv.keytabup[name >> 16] = name##_SYM | PS2KBD_UP_BIT)       \
+     : ((((name) & 0xff) == PS2KBD_PREFIX_BYTE)                         \
+        ? (ps2drv.keytabmb[name >> 8] = name##_SYM,                     \
+           ps2drv.keytabup[name >> 8] = name##_SYM | PS2KBD_UP_BIT)     \
+        : (ps2drv.keytab1b[name] = name##_SYM,                          \
+           ps2drv.keytabup[name] = name##_SYM | PS2KBD_UP_BIT)))
 
 void
 kbdinit(void)
@@ -70,239 +74,239 @@ kbdinit(void)
     uint8_t u8;
 
     /* enable keyboard */
-    kbdsend(KBD_ENABLE);
+    ps2sendkbd(PS2KBD_ENABLE);
     do {
-        kbdread(u8);
-    } while (u8 != KBD_ACK);
+        ps2readkbd(u8);
+    } while (u8 != PS2KBD_ACK);
     /* choose scancode set 1 */
-    kbdsend(KBD_SETSCAN);
+    ps2sendkbd(PS2KBD_SETSCAN);
     do {
-        kbdread(u8);
-    } while (u8 != KBD_ACK);
-    kbdsend(0x01);
+        ps2readkbd(u8);
+    } while (u8 != PS2KBD_ACK);
+    ps2sendkbd(0x01);
     do {
-        kbdread(u8);
-    } while (u8 != KBD_ACK);
-    kbdinit_us();
+        ps2readkbd(u8);
+    } while (u8 != PS2KBD_ACK);
+    ps2initkbd_us();
     kprintf("PS/2 keyboard with US keymap initialized\n");
-    irqvec[IRQKBD] = kbdintr;
+    irqvec[IRQKBD] = ps2kbdintr;
     kprintf("PS/2 keyboard interrupt enabled\n");
 
     return;
 }
 
 void
-kbdinit_us(void)
+ps2initkbd_us(void)
 {
     /* modifiers. */
-    setkeycode(KBD_LEFTCTRL);
-    setkeycode(KBD_LEFTSHIFT);
-    setkeycode(KBD_RIGHTSHIFT);
-    setkeycode(KBD_LEFTALT);
-    setkeycode(KBD_RIGHTALT);
-    setkeycode(KBD_CAPSLOCK);
-    setkeycode(KBD_NUMLOCK);
-    setkeycode(KBD_SCROLLLOCK);
+    ps2setkeycode(PS2KBD_LEFTCTRL);
+    ps2setkeycode(PS2KBD_LEFTSHIFT);
+    ps2setkeycode(PS2KBD_RIGHTSHIFT);
+    ps2setkeycode(PS2KBD_LEFTALT);
+    ps2setkeycode(PS2KBD_RIGHTALT);
+    ps2setkeycode(PS2KBD_CAPSLOCK);
+    ps2setkeycode(PS2KBD_NUMLOCK);
+    ps2setkeycode(PS2KBD_SCROLLLOCK);
 
     /* single-byte keys. */
 
-    setkeycode(KBD_ESC);
-    setkeycode(KBD_1);
-    setkeycode(KBD_2);
-    setkeycode(KBD_3);
-    setkeycode(KBD_4);
-    setkeycode(KBD_5);
-    setkeycode(KBD_6);
-    setkeycode(KBD_7);
-    setkeycode(KBD_8);
-    setkeycode(KBD_9);
-    setkeycode(KBD_0);
-    setkeycode(KBD_MINUS);
-    setkeycode(KBD_PLUS);
-    setkeycode(KBD_BACKSPACE);
+    ps2setkeycode(PS2KBD_ESC);
+    ps2setkeycode(PS2KBD_1);
+    ps2setkeycode(PS2KBD_2);
+    ps2setkeycode(PS2KBD_3);
+    ps2setkeycode(PS2KBD_4);
+    ps2setkeycode(PS2KBD_5);
+    ps2setkeycode(PS2KBD_6);
+    ps2setkeycode(PS2KBD_7);
+    ps2setkeycode(PS2KBD_8);
+    ps2setkeycode(PS2KBD_9);
+    ps2setkeycode(PS2KBD_0);
+    ps2setkeycode(PS2KBD_MINUS);
+    ps2setkeycode(PS2KBD_PLUS);
+    ps2setkeycode(PS2KBD_BACKSPACE);
 
-    setkeycode(KBD_TAB);
-    setkeycode(KBD_q);
-    setkeycode(KBD_w);
-    setkeycode(KBD_e);
-    setkeycode(KBD_r);
-    setkeycode(KBD_t);
-    setkeycode(KBD_y);
-    setkeycode(KBD_u);
-    setkeycode(KBD_i);
-    setkeycode(KBD_o);
-    setkeycode(KBD_p);
-    setkeycode(KBD_OPENBRACKET);
-    setkeycode(KBD_CLOSEBRACKET);
+    ps2setkeycode(PS2KBD_TAB);
+    ps2setkeycode(PS2KBD_q);
+    ps2setkeycode(PS2KBD_w);
+    ps2setkeycode(PS2KBD_e);
+    ps2setkeycode(PS2KBD_r);
+    ps2setkeycode(PS2KBD_t);
+    ps2setkeycode(PS2KBD_y);
+    ps2setkeycode(PS2KBD_u);
+    ps2setkeycode(PS2KBD_i);
+    ps2setkeycode(PS2KBD_o);
+    ps2setkeycode(PS2KBD_p);
+    ps2setkeycode(PS2KBD_OPENBRACKET);
+    ps2setkeycode(PS2KBD_CLOSEBRACKET);
 
-    setkeycode(KBD_ENTER);
+    ps2setkeycode(PS2KBD_ENTER);
 
-    setkeycode(KBD_LEFTCTRL);
+    ps2setkeycode(PS2KBD_LEFTCTRL);
 
-    setkeycode(KBD_a);
-    setkeycode(KBD_s);
-    setkeycode(KBD_d);
-    setkeycode(KBD_f);
-    setkeycode(KBD_g);
-    setkeycode(KBD_h);
-    setkeycode(KBD_i);
-    setkeycode(KBD_j);
-    setkeycode(KBD_k);
-    setkeycode(KBD_l);
-    setkeycode(KBD_SEMICOLON);
-    setkeycode(KBD_QUOTE);
+    ps2setkeycode(PS2KBD_a);
+    ps2setkeycode(PS2KBD_s);
+    ps2setkeycode(PS2KBD_d);
+    ps2setkeycode(PS2KBD_f);
+    ps2setkeycode(PS2KBD_g);
+    ps2setkeycode(PS2KBD_h);
+    ps2setkeycode(PS2KBD_i);
+    ps2setkeycode(PS2KBD_j);
+    ps2setkeycode(PS2KBD_k);
+    ps2setkeycode(PS2KBD_l);
+    ps2setkeycode(PS2KBD_SEMICOLON);
+    ps2setkeycode(PS2KBD_QUOTE);
 
-    setkeycode(KBD_BACKQUOTE);
+    ps2setkeycode(PS2KBD_BACKQUOTE);
 
-    setkeycode(KBD_LEFTSHIFT);
+    ps2setkeycode(PS2KBD_LEFTSHIFT);
 
-    setkeycode(KBD_BACKSLASH);
+    ps2setkeycode(PS2KBD_BACKSLASH);
 
-    setkeycode(KBD_z);
-    setkeycode(KBD_x);
-    setkeycode(KBD_c);
-    setkeycode(KBD_v);
-    setkeycode(KBD_b);
-    setkeycode(KBD_n);
-    setkeycode(KBD_m);
-    setkeycode(KBD_COMMA);
-    setkeycode(KBD_DOT);
-    setkeycode(KBD_SLASH);
+    ps2setkeycode(PS2KBD_z);
+    ps2setkeycode(PS2KBD_x);
+    ps2setkeycode(PS2KBD_c);
+    ps2setkeycode(PS2KBD_v);
+    ps2setkeycode(PS2KBD_b);
+    ps2setkeycode(PS2KBD_n);
+    ps2setkeycode(PS2KBD_m);
+    ps2setkeycode(PS2KBD_COMMA);
+    ps2setkeycode(PS2KBD_DOT);
+    ps2setkeycode(PS2KBD_SLASH);
 
-    setkeycode(KBD_RIGHTSHIFT);
+    ps2setkeycode(PS2KBD_RIGHTSHIFT);
 
-    setkeycode(KBD_KEYPADASTERISK);
+    ps2setkeycode(PS2KBD_KEYPADASTERISK);
 
-    setkeycode(KBD_SPACE);
+    ps2setkeycode(PS2KBD_SPACE);
 
-    setkeycode(KBD_CAPSLOCK);
+    ps2setkeycode(PS2KBD_CAPSLOCK);
 
-    setkeycode(KBD_F1);
-    setkeycode(KBD_F2);
-    setkeycode(KBD_F3);
-    setkeycode(KBD_F4);
-    setkeycode(KBD_F5);
-    setkeycode(KBD_F6);
-    setkeycode(KBD_F7);
-    setkeycode(KBD_F8);
-    setkeycode(KBD_F9);
-    setkeycode(KBD_F10);
+    ps2setkeycode(PS2KBD_F1);
+    ps2setkeycode(PS2KBD_F2);
+    ps2setkeycode(PS2KBD_F3);
+    ps2setkeycode(PS2KBD_F4);
+    ps2setkeycode(PS2KBD_F5);
+    ps2setkeycode(PS2KBD_F6);
+    ps2setkeycode(PS2KBD_F7);
+    ps2setkeycode(PS2KBD_F8);
+    ps2setkeycode(PS2KBD_F9);
+    ps2setkeycode(PS2KBD_F10);
 
-    setkeycode(KBD_NUMLOCK);
-    setkeycode(KBD_SCROLLLOCK);
+    ps2setkeycode(PS2KBD_NUMLOCK);
+    ps2setkeycode(PS2KBD_SCROLLLOCK);
 
-    setkeycode(KBD_F11);
-    setkeycode(KBD_F12);
+    ps2setkeycode(PS2KBD_F11);
+    ps2setkeycode(PS2KBD_F12);
 
-    setkeycode(KBD_KEYPAD7);
-    setkeycode(KBD_KEYPAD8);
-    setkeycode(KBD_KEYPAD9);
+    ps2setkeycode(PS2KBD_KEYPAD7);
+    ps2setkeycode(PS2KBD_KEYPAD8);
+    ps2setkeycode(PS2KBD_KEYPAD9);
 
-    setkeycode(KBD_KEYPADMINUS2);
+    ps2setkeycode(PS2KBD_KEYPADMINUS2);
 
-    setkeycode(KBD_KEYPAD4);
-    setkeycode(KBD_KEYPAD5);
-    setkeycode(KBD_KEYPAD6);
+    ps2setkeycode(PS2KBD_KEYPAD4);
+    ps2setkeycode(PS2KBD_KEYPAD5);
+    ps2setkeycode(PS2KBD_KEYPAD6);
 
-    setkeycode(KBD_KEYPADPLUS);
+    ps2setkeycode(PS2KBD_KEYPADPLUS);
 
-    setkeycode(KBD_KEYPADEND);
-    setkeycode(KBD_KEYPADDOWN);
-    setkeycode(KBD_KEYPADPGDN);
+    ps2setkeycode(PS2KBD_KEYPADEND);
+    ps2setkeycode(PS2KBD_KEYPADDOWN);
+    ps2setkeycode(PS2KBD_KEYPADPGDN);
 
-    setkeycode(KBD_KEYPADINS);
-    setkeycode(KBD_KEYPADDEL);
+    ps2setkeycode(PS2KBD_KEYPADINS);
+    ps2setkeycode(PS2KBD_KEYPADDEL);
 
-    setkeycode(KBD_SYSRQ);
+    ps2setkeycode(PS2KBD_SYSRQ);
 
     /* dual-byte sequences. */
 
-    setkeycode(KBD_KEYPADENTER);
-    setkeycode(KBD_RIGHTCTRL);
-    setkeycode(KBD_FAKELEFTSHIFT);
-    setkeycode(KBD_KEYPADMINUS3);
-    setkeycode(KBD_FAKERIGHTSHIFT);
-    setkeycode(KBD_CTRLPRINTSCREEN);
-    setkeycode(KBD_RIGHTALT);
-    setkeycode(KBD_CTRLBREAK);
-    setkeycode(KBD_HOME);
-    setkeycode(KBD_UP);
-    setkeycode(KBD_PGUP);
-    setkeycode(KBD_LEFT);
-    setkeycode(KBD_RIGHT);
-    setkeycode(KBD_END);
-    setkeycode(KBD_DOWN);
-    setkeycode(KBD_PGDN);
-    setkeycode(KBD_INS);
-    setkeycode(KBD_DEL);
+    ps2setkeycode(PS2KBD_KEYPADENTER);
+    ps2setkeycode(PS2KBD_RIGHTCTRL);
+    ps2setkeycode(PS2KBD_FAKELEFTSHIFT);
+    ps2setkeycode(PS2KBD_KEYPADMINUS3);
+    ps2setkeycode(PS2KBD_FAKERIGHTSHIFT);
+    ps2setkeycode(PS2KBD_CTRLPRINTSCREEN);
+    ps2setkeycode(PS2KBD_RIGHTALT);
+    ps2setkeycode(PS2KBD_CTRLBREAK);
+    ps2setkeycode(PS2KBD_HOME);
+    ps2setkeycode(PS2KBD_UP);
+    ps2setkeycode(PS2KBD_PGUP);
+    ps2setkeycode(PS2KBD_LEFT);
+    ps2setkeycode(PS2KBD_RIGHT);
+    ps2setkeycode(PS2KBD_END);
+    ps2setkeycode(PS2KBD_DOWN);
+    ps2setkeycode(PS2KBD_PGDN);
+    ps2setkeycode(PS2KBD_INS);
+    ps2setkeycode(PS2KBD_DEL);
 
     /* acpi codes. */
-    setkeycode(KBD_POWER);
-    setkeycode(KBD_SLEEP);
-    setkeycode(KBD_WAKE);
-    setkeycode(KBD_POWERUP);
-    setkeycode(KBD_SLEEPUP);
-    setkeycode(KBD_WAKEUP);
+    ps2setkeycode(PS2KBD_POWER);
+    ps2setkeycode(PS2KBD_SLEEP);
+    ps2setkeycode(PS2KBD_WAKE);
+    ps2setkeycode(PS2KBD_POWERUP);
+    ps2setkeycode(PS2KBD_SLEEPUP);
+    ps2setkeycode(PS2KBD_WAKEUP);
 
     return;
 }
 
 /* keyboard interrupt handler. */
 void
-kbdintr(void)
+ps2kbdintr(void)
 {
     int32_t isup = 0;
     int32_t val;
     uint8_t u8;
     
     val = 0;
-    kbdread(u8);
-    if (u8 == KBD_PAUSE_BYTE1) {
+    ps2readkbd(u8);
+    if (u8 == PS2KBD_PAUSE_BYTE1) {
         /* pause/break. */
-        kbdread(u8); /* 0x1d */
-        kbdread(u8); /* 0x45 */
-        kbdread(u8); /* 0xe1 */
-        kbdread(u8); /* 0x9d */
-        kbdread(u8); /* 0xc5 */
-        u8 &= KBD_VAL_MSK;
-        val = keytab1b[u8];
-    } else if (u8 != KBD_PREFIX_BYTE) {
+        ps2readkbd(u8); /* 0x1d */
+        ps2readkbd(u8); /* 0x45 */
+        ps2readkbd(u8); /* 0xe1 */
+        ps2readkbd(u8); /* 0x9d */
+        ps2readkbd(u8); /* 0xc5 */
+        u8 &= PS2KBD_VAL_MSK;
+        val = ps2drv.keytab1b[u8];
+    } else if (u8 != PS2KBD_PREFIX_BYTE) {
         /* single-byte value. */
-        if (u8 & KBD_UP_BIT) {
+        if (u8 & PS2KBD_UP_BIT) {
             /* release. */
             isup = 1;
-            u8 &= ~KBD_UP_BIT;
-            val = keytabup[u8];
+            u8 &= ~PS2KBD_UP_BIT;
+            val = ps2drv.keytabup[u8];
         } else {
-            val = keytab1b[u8];
+            val = ps2drv.keytab1b[u8];
         }
     } else {
         /* 0xe0-prefixed. */
-        kbdread(u8);
-        if (u8 == KBD_PRINT_BYTE2 || u8 == KBD_CTRLPAUSE_BYTE2) {
+        ps2readkbd(u8);
+        if (u8 == PS2KBD_PRINT_BYTE2 || u8 == PS2KBD_CTRLPAUSE_BYTE2) {
             /* print screen or ctrl-pause. */
-            kbdread(u8); /* 0xe0 */
-            kbdread(u8); /* 0x37 (prtsc) or 0xc6 (ctrl-pause) */
-            val &= KBD_VAL_MSK;
-            val = keytabmb[u8];
-        } else if (u8 == KBD_UP_BYTE) {
-            kbdread(u8);
-            val = keytabup[u8];
+            ps2readkbd(u8); /* 0xe0 */
+            ps2readkbd(u8); /* 0x37 (prtsc) or 0xc6 (ctrl-pause) */
+            val &= PS2KBD_VAL_MSK;
+            val = ps2drv.keytabmb[u8];
+        } else if (u8 == PS2KBD_UP_BYTE) {
+            ps2readkbd(u8);
+            val = ps2drv.keytabup[u8];
         } else {
-            if (u8 & KBD_UP_BIT) {
+            if (u8 & PS2KBD_UP_BIT) {
                 isup = 1;
-                u8 &= ~KBD_UP_BIT;
-                val = keytabup[u8];
+                u8 &= ~PS2KBD_UP_BIT;
+                val = ps2drv.keytabup[u8];
             } else {
-                val = keytabmb[u8];
+                val = ps2drv.keytabmb[u8];
             }
         }
     }
     if (ismodkey(val)) {
         if (isup) {
-            modmask &= ~(1 << (-val));
+            ps2drv.modmask &= ~(1 << (-val));
         } else {
-            modmask |= 1 << (-val);
+            ps2drv.modmask |= 1 << (-val);
         }
     }
 
@@ -312,14 +316,14 @@ kbdintr(void)
 void
 mouseinit(void)
 {
-    irqvec[IRQMOUSE] = mouseintr;
+    irqvec[IRQMOUSE] = ps2mouseintr;
     kprintf("PS/2 mouse interrupt enabled\n");
 
     return;
 }
 
 void
-mouseintr(void)
+ps2mouseintr(void)
 {
     uint32_t val;
     int32_t  xmov;
@@ -332,36 +336,36 @@ mouseintr(void)
     uint8_t  stat;
     uint8_t  u8;
 
-    mouseread(msk);
-    mouseread(u8);
+    ps2readmouse(msk);
+    ps2readmouse(u8);
     xmov = u8;
-    mouseread(u8);
+    ps2readmouse(u8);
     ymov = u8;
 
-    val = _mousestat.flags;
+    val = ps2drv.mousestat.flags;
     zmov = 0;
-    val &= MOUSE_WHEELMSK;                        /* scroll-wheel?. */
-    stat = msk & MOUSE_3BTNMSK;                   /* button 1, 2 & 3 states. */
+    val &= PS2MOUSE_WHEELMSK;                     /* scroll-wheel?. */
+    stat = msk & PS2MOUSE_3BTNMSK;                /* button 1, 2 & 3 states. */
     if (val) {
         /* mouse with scroll-wheel, extra (4th) data byte. */
-        mouseread(u8);
+        ps2readmouse(u8);
         xtra = u8;
-        val &= MOUSE_WHEEL5BTN;                   /* 5-button?. */
-        zmov = xtra & MOUSE_ZMSK;                 /* z-axis movement. */
-        tmp = xtra & MOUSE_ZSIGN;                 /* extract sign bit. */
+        val &= PS2MOUSE_WHEEL5BTN;                /* 5-button?. */
+        zmov = xtra & PS2MOUSE_ZMSK;              /* z-axis movement. */
+        tmp = xtra & PS2MOUSE_ZSIGN;              /* extract sign bit. */
         if (val) {
-            stat |= (xtra >> 1) & MOUSE_XBTNMSK;  /* button 4 & 5 states. */
+            stat |= (xtra >> 1) & PS2MOUSE_XBTNMSK; /* button 4 & 5 states. */
         }
         if (tmp) {
             zmov = -zmov;
         }
     }
-    _mousestat.state = stat;
+    ps2drv.mousestat.state = stat;
 
-    shift = _mousestat.shift;                     /* scale (speed) value. */
+    shift = ps2drv.mousestat.shift;               /* scale (speed) value. */
 
-    val = _mousestat.x;
-    tmp = msk & MOUSE_XOVERFLOW;
+    val = ps2drv.mousestat.x;
+    tmp = msk & PS2MOUSE_XOVERFLOW;
     if (tmp) {
         xmov = 0xff;
     } else if (shift > 0) {
@@ -369,20 +373,20 @@ mouseintr(void)
     } else {
         xmov >>= shift;
     }
-    tmp = msk & MOUSE_XSIGN;
+    tmp = msk & PS2MOUSE_XSIGN;
 //    xmov |= tmp << 27; /* sign. */
     if (tmp) {
         xmov = -xmov;
     }
     if (xmov < 0) {
-        _mousestat.x = (val < -xmov) ? 0 : (val + xmov);
+        ps2drv.mousestat.x = (val < -xmov) ? 0 : (val + xmov);
     } else {
-        tmp = _mousestat.xmax;
-        _mousestat.x = (val < tmp - val) ? (val + xmov) : tmp;
+        tmp = ps2drv.mousestat.xmax;
+        ps2drv.mousestat.x = (val < tmp - val) ? (val + xmov) : tmp;
     }
 
-    val = _mousestat.y;
-    tmp = msk & MOUSE_YOVERFLOW;
+    val = ps2drv.mousestat.y;
+    tmp = msk & PS2MOUSE_YOVERFLOW;
     if (tmp) {
         ymov = 0xff;
     } else if (shift > 0) {
@@ -390,25 +394,25 @@ mouseintr(void)
     } else {
         ymov >>= shift;
     }
-    tmp = msk & MOUSE_YSIGN;
+    tmp = msk & PS2MOUSE_YSIGN;
 //    ymov |= tmp << 26; /* sign. */
     if (tmp) {
         ymov = -ymov;
     }
     if (ymov < 0) {
-        _mousestat.y = (val < -ymov) ? 0 : (val + ymov);
+        ps2drv.mousestat.y = (val < -ymov) ? 0 : (val + ymov);
     } else {
-        tmp = _mousestat.ymax;
-        _mousestat.y = (val < tmp - val) ? (val + ymov) : tmp;
+        tmp = ps2drv.mousestat.ymax;
+        ps2drv.mousestat.y = (val < tmp - val) ? (val + ymov) : tmp;
     }
 
     if (zmov) {
-        val = _mousestat.z;
+        val = ps2drv.mousestat.z;
         if (zmov < 0) {
-            _mousestat.z = (val < -zmov) ? 0 : (val + zmov);
+            ps2drv.mousestat.z = (val < -zmov) ? 0 : (val + zmov);
         } else {
-            tmp = _mousestat.zmax;
-            _mousestat.z = (val < tmp - val) ? (val + zmov) : tmp;
+            tmp = ps2drv.mousestat.zmax;
+            ps2drv.mousestat.z = (val < tmp - val) ? (val + zmov) : tmp;
         }
     }
 

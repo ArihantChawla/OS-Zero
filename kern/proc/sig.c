@@ -6,11 +6,12 @@
 #include <kern/obj.h>
 //#include <kern/proc.h>
 #if !defined(__arm__)
+#include <kern/unit/x86/trap.h>
 #include <kern/unit/x86/cpu.h>
 #endif
 
 /* cpu traps */
-long signumtab[]
+long signumtab[TRAPNCPU]
 = {
     SIGFPE, 
     0,
@@ -47,19 +48,19 @@ sigfunc(uint32_t trap)
 {
     struct proc     *proc = k_curproc;
     long             signum = signumtab[trap];
-    signalhandler_t *sigfunc;
+    signalhandler_t *func;
 
 //    kprintf("trap %ld -> signal %ld\n", trap, signum);
     if (signum == SIGKILL) {
         kill(proc);
     } else if ((signum) && sigismember(&proc->sigmask, signum)) {
-        sigfunc = proc->sigvec[signum];
-        if (sigfunc) {
-            sigfunc(signum);
+        func = proc->sigvec[signum];
+        if (func) {
+            func(signum);
         } else {
-            sigfunc = sigfunctab[signum];
-            if (sigfunc) {
-                sigfunc(signum);
+            func = sigfunctab[signum];
+            if (func) {
+                func(signum);
             }
         }
     }
