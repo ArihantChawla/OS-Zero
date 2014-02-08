@@ -44,20 +44,20 @@ apicinit(long id)
     /* enable local APIC; set spurious interrupt vector */
     apicwrite(APICENABLE | (IRQTIMER + IRQSPURIOUS), APICSPURIOUS);
     /*
-     * timer counts down at bus frequency from APICTMRINITCNT and issues an
-     * an interrupt
+     * timer counts down at bus frequency from APICTMRINITCNT and issues
+     * the interrupt IRQBASE + IRQTIMER
      */
     apicwrite(APICBASEDIV, APICTMRDIVCONF);
     apicwrite(APICPERIODIC | (IRQBASE + IRQTIMER), APICTIMER);
     apicwrite(10000000, APICTMRINITCNT);
     /* disable logical interrupt lines */
-    apicwrite(APICMASKED, APICLINT0);
+    apicwrite(APICMASKED, APICLINTR0);
+    apicwrite(APICMASKED, APICLINTR1);
     /* disable performance counter overflow interrupts */
-    apicwrite(APICMASKED, APICLINT1);
     if (((apicread(APICVER) >> 16) & 0xff) >= 4) {
-        apicwrite(APICMASKED, APICPERFINT);
+        apicwrite(APICMASKED, APICPERFINTR);
     }
-    /* map error interrupt */
+    /* map error interrupt to IRQERROR */
     apicwrite(IRQERROR, APICERROR);
     /* clear error status registers */
     apicwrite(0, APICERRSTAT);
@@ -66,7 +66,7 @@ apicinit(long id)
     apicwrite(0, APICEOI);
     /* send init level deassert to synchronise arbitration IDs */
     apicsendirq(0, APICBCAST | APICINIT | APICLEVEL, 0);
-    while (apicread(APICINTLO) & APICDELIVS) {
+    while (apicread(APICINTRLO) & APICDELIVS) {
         ;
     }
     /* enable APIC (but not CPU) interrupts */
@@ -86,19 +86,16 @@ apicstart(uint8_t id, uint32_t adr)
     warmreset[1] = adr >> 4;
 
     /* INIT IPI */
-    apicsendirq(id << 24, APICINIT | APICLEVEL | APICASSERT, 100);
-//    usleep(1000);
-    while (apicread(APICINTLO) & APICDELIVS) {
+    apicsendirq(id << 24, APICINIT | APICLEVEL | APICASSERT, 200);
+    while (apicread(APICINTRLO) & APICDELIVS) {
         ;
     }
     apicsendirq(id << 24, APICINIT | APICLEVEL, 0);
-    while (apicread(APICINTLO) & APICDELIVS) {
+    while (apicread(APICINTRLO) & APICDELIVS) {
         ;
     }
-    apicsendirq(id << 24, APICASSERT | APICSTART | adr >> 12, 0);
-//    usleep(200);
-    apicsendirq(id << 24, APICASSERT | APICSTART | adr >> 12, 0);
-//    usleep(200);
+    apicsendirq(id << 24, APICASSERT | APICSTART | adr >> 12, 200);
+    apicsendirq(id << 24, APICASSERT | APICSTART | adr >> 12, 200);
 
     return;
 }

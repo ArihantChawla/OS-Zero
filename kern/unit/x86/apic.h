@@ -1,5 +1,5 @@
-#ifndef __UNIT_X86_APIC_H__
-#define __UNIT_X86_APIC_H__
+#ifndef __KERN_UNIT_X86_APIC_H__
+#define __KERN_UNIT_X86_APIC_H__
 
 #include <kern/conf.h>
 
@@ -12,6 +12,9 @@ extern volatile uint32_t *mpapic;
 
 void apicinit(long core);
 void apicstart(uint8_t core, uint32_t adr);
+void usleep(unsigned long nusec);
+
+#define apiceoi()      apicwrite(0, APICEOI)
 
 /* initialisation */
 #define RTCBASE        0x70
@@ -25,13 +28,13 @@ void apicstart(uint8_t core, uint32_t adr);
 #define APICLDR        0x00d0
 #define APICSPURIOUS   0x00f0
 #define APICERRSTAT    0x0280
-#define APICINTLO      0x0300
-#define APICINTHI      0x0310
+#define APICINTRLO     0x0300
+#define APICINTRHI     0x0310
 #define APICTIMER      0x0320           // timer
 #define APICTHERMAL    0x0330           // thermal sensor interrupt
-#define APICPERFINT    0x0340           // performance counter overflow
-#define APICLINT0      0x0350
-#define APICLINT1      0x0360           // NMI
+#define APICPERFINTR   0x0340           // performance counter overflow
+#define APICLINTR0     0x0350
+#define APICLINTR1     0x0360           // NMI
 #define APICERROR      0x0370
 #define APICTMRINITCNT 0x0380
 #define APICTMRCURCNT  0x0390
@@ -58,7 +61,7 @@ void apicstart(uint8_t core, uint32_t adr);
 #define APICPENDING    0x00001000
 #define APICFIXED      0x00000000
 #define APICSMI        0x00000200
-#define APICEXTINT     0x00000700
+#define APICEXTINTR    0x00000700
 #define APICMASKED     0x00010000
 #define APICSELF       0x00040000
 #define APICBUTSELF    0x00080000
@@ -83,37 +86,17 @@ apicwrite(uint32_t val, uint32_t reg)
 static __inline__ void
 apicsendirq(uint32_t hi, uint32_t lo, long nusec)
 {
-    long cnt = nusec << 4;
     __asm__ __volatile__ ("pushfl\n");
     __asm__ __volatile__ ("cli\n");
-    apicwrite(hi, APICINTHI);
-    while (cnt--) {
-        ;
-    }
-    apicwrite(lo, APICINTLO);
-    cnt = nusec << 4;
-    while (cnt--) {
-        ;
-    }
-    __asm__ __volatile__ ("sti\n");
-    __asm__ __volatile__ ("popfl\n");
-}
-
-#if 0
-static __inline__ void
-apicsendirq(uint32_t hi, uint32_t lo, long nusec)
-{
-    __asm__ __volatile__ ("pushfl\n");
-    __asm__ __volatile__ ("cli\n");
-    apicwrite(hi, APICINTHI);
+    apicwrite(hi, APICINTRHI);
     usleep(nusec);
-    apicwrite(lo, APICINTLO);
+    apicwrite(lo, APICINTRLO);
+    usleep(nusec);
     __asm__ __volatile__ ("sti\n");
     __asm__ __volatile__ ("popfl\n");
 }
-#endif
 
 #endif /* SMP */
 
-#endif /* __UNIT_X86_APIC_H__ */
+#endif /* __KERN_UNIT_X86_APIC_H__ */
 

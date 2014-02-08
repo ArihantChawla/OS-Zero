@@ -1,5 +1,5 @@
-#ifndef __UNIT_X86_CPU_H__
-#define __UNIT_X86_CPU_H__
+#ifndef __KERN_UNIT_X86_CPU_H__
+#define __KERN_UNIT_X86_CPU_H__
 
 #include <kern/conf.h>
 #include <stdint.h>
@@ -54,5 +54,5 @@ struct m_cpu {
     struct m_tss   utss;
 };
 
-#endif /* __UNIT_X86_CPU_H__ */
+#endif /* __KERN_UNIT_X86_CPU_H__ */
 

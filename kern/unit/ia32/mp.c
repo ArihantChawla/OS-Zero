@@ -269,7 +269,7 @@ mpstart(void)
 void
 mpspurint(void)
 {
-    apicwrite(0, APICEOI);
+    apiceoi();
 
     return;
 }

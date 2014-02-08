@@ -1,5 +1,5 @@
-#ifndef __UNIT_X86_PIT_H__
-#define __UNIT_X86_PIT_H__
+#ifndef __KERN_UNIT_X86_PIT_H__
+#define __KERN_UNIT_X86_PIT_H__
 
 void pitinit(void);
 void pitsleep(long msec, void (*func)(void));
@@ -32,5 +32,5 @@ void pitsleep(long msec, void (*func)(void));
         outb(_hz >> 8, PITCHAN0);                                       \
     } while (0)
 
-#endif /* __UNIT_X86_PIT_H__ */
+#endif /* __KERN_UNIT_X86_PIT_H__ */
 
