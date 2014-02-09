@@ -19,7 +19,7 @@ extern volatile struct m_cpu *mpbootcpu;
 void
 usleep(unsigned long nusec)
 {
-    nusec <<= 8;
+    nusec <<= 12;
     while (nusec--) {
         ;
     }

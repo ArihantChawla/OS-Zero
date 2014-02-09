@@ -1,6 +1,5 @@
 acute things
 ------------
-
 - implement ATA and SATA drivers
 - implement ISO 9660 filesystem for CD and DVD discs
 - implement [block] I/O buffer cache

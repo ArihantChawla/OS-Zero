@@ -57,6 +57,9 @@ extern void plasmaloop(void);
 #if (PCI)
 extern void pciinit(void);
 #endif
+#if (ATA)
+extern void atainit(void);
+#endif
 #if (ACPI)
 extern void acpiinit(void);
 #endif
@@ -111,6 +114,9 @@ kmain(struct mboothdr *hdr, unsigned long pmemsz)
     logoprint();
 #if (PCI)
     pciinit();
+#endif
+#if (ATA)
+    atainit();
 #endif
 #if (SB16)
     sb16init();

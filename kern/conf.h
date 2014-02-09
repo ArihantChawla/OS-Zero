@@ -46,6 +46,7 @@
 
 /* planned drivers */
 #define PCI       1
+#define ATA       1
 #define ACPI      0
 #define ACPICA    0
 #define HPET      0     // high precision event timer support
