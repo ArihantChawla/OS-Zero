@@ -9,6 +9,8 @@
 #include <kern/io/drv/pc/ata.h>
 #include <kern/unit/x86/apic.h>
 
+static uint16_t ataconftab[4][256];
+
 #if 0
 static const char *ataerrtab[6]
 = {
@@ -25,13 +27,16 @@ static const char *ataerrtab[6]
 long
 ataprobedrv(uint16_t iobase, uint8_t id)
 {
-    uint8_t       byte1;
-    uint8_t       byte2;
+    uint16_t *confptr;
+    long      ndx;
+    uint8_t   retval;
+    uint8_t   byte1;
+    uint8_t   byte2;
 
     /* use ATA IDENTIFY command */
     outb(id, iobase + 6);               // select master or slave
     outb(0, iobase + 2);                // set sector count to zero
-    outb(0, iobase + 3);                // set LBAio to zero
+    outb(0, iobase + 3);                // set LBAlo to zero
     outb(0, iobase + 4);                // set LBAmid to zero
     outb(0, iobase + 5);                // set LBAhigh to zero
     outb(ATAIDENTIFY, iobase + 7);      // send IDENTIFY to command port
@@ -41,47 +46,66 @@ ataprobedrv(uint16_t iobase, uint8_t id)
     if (byte1 == 0x14 && byte2 == 0xeb) {
         /* ATAPI */
         
-        return 2;
+        retval = 2;
     } else if (byte1 == 0x3c && byte2 == 0xc3) {
         /* SATA */
 
-        return 3;
+        retval = 3;
     }
-    while (1) {
-        byte1 = inb(iobase + 7);        // read status port
-        if (!byte1) {
-
-            return 0;
-        } else if (byte1 & ATABSY) {
-
-            continue;
-        } else {
-            byte1 = inb(iobase + 4);    // LBAmid
-            byte2 = inb(iobase + 5);    // LBAhi
-            if ((byte1) || (byte2)) {
-
+    if (!retval) {
+        do {
+            byte1 = inb(iobase + 7);        // read status port
+            if (!byte1) {
+                
                 return 0;
+            } else if (byte1 & ATABSY) {
+                
+                continue;
             } else {
-                while (1) {
-                    byte1 = inb(iobase + 7);
-                    byte2 = byte1 & (ATADRQ | ATAERR);
-                    if (!byte2) {
-                        
-                        continue;
-                    } else if (byte2 == ATAERR) {
-
-                        return 0;
-                    } else {
-
-                        return 1;
+                byte1 = inb(iobase + 4);    // LBAmid
+                byte2 = inb(iobase + 5);    // LBAhi
+                if ((byte1) || (byte2)) {
+                    
+                    return 0;
+                } else {
+                    while (!retval) {
+                        byte1 = inb(iobase + 7);
+                        byte2 = byte1 & (ATADRQ | ATAERR);
+                        if (!byte2) {
+                            
+                            continue;
+                        } else if (byte2 & ATAERR) {
+                            
+                            return 0;
+                        } else {
+                            
+                            retval = 1;
+                        }
                     }
                 }
             }
+        } while (!retval);
+    }
+    if (retval) {
+        if (iobase == ATAPRIMARY) {
+            ndx = 0;
+            if (id == ATASELSLAVE) {
+                ndx++;
+            }
+        } else if (iobase == ATASECONDARY) {
+            ndx = 2;
+            if (id == ATASELSLAVE) {
+                ndx++;
+            }
+        }
+        confptr = &ataconftab[ndx][0];
+        ndx = 256;
+        while (ndx--) {
+            confptr[ndx] = inw(iobase);
         }
     }
 
-    /* NOTREACHED */
-    return 0;
+    return retval;
 }
 
 void
