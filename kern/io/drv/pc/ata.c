@@ -28,8 +28,8 @@ long
 ataprobedrv(uint16_t iobase, uint8_t id)
 {
     uint16_t *confptr;
-    long      ndx;
-    uint8_t   retval;
+    long      ndx = 0;
+    uint8_t   retval = 0;
     uint8_t   byte1;
     uint8_t   byte2;
 
@@ -51,6 +51,10 @@ ataprobedrv(uint16_t iobase, uint8_t id)
         /* SATA */
 
         retval = 3;
+    } else if (byte1 == 0x69 && byte2 == 0x96) {
+        /* SATAPI */
+
+        retval = 4;
     }
     if (!retval) {
         do {

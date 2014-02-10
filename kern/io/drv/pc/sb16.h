@@ -4,6 +4,8 @@
 #include <stdint.h>
 #include <sys/io.h>
 
+#include <kern/tmr.h>
+
 typedef uint8_t sb16pcm8_t;
 typedef int16_t sb16pcm16_t; /* little endian */
 
@@ -126,7 +128,7 @@ struct sb16drv {
         unsigned long stat = 0;                                         \
                                                                         \
         outw(0x01, SB16RESET);                                          \
-        /* usleep(3); */                                                \
+        usleep(3);                                                      \
         outw(0x00, SB16RESET);                                          \
         do {                                                            \
             stat = inb(SB16RDBUFSTAT) & SB16BUFSTATBIT;                 \

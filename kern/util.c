@@ -11,12 +11,13 @@
 
 #define isprint(c) ((c) >= 0x20 && (c) < 0x7f)
 
-#define CACHEPREWARM 0
+#define CACHEPREWARM    0
 #if (LONGSIZE == 4)
-#define LONGBUFSIZE 16
+#define LONGBUFSIZE     16
 #else
-#define LONGBUFSIZE 32
+#define LONGBUFSIZE     32
 #endif
+#define LONGLONGBUFSIZE 32
 
 /*
  * NOTES
@@ -341,7 +342,7 @@ kstrncpy(char *dest, char *src, long len)
 }
 
 static long
-_ltoxn(long val, char *buf, unsigned long len)
+_lltoxn(long val, char *buf, unsigned long len)
 {
     uint8_t u8;
     long    l;
@@ -372,7 +373,7 @@ _ltoxn(long val, char *buf, unsigned long len)
 }
 
 static long
-_ltodn(long val, char *buf, unsigned long len)
+_lltodn(long val, char *buf, unsigned long len)
 {
     uint8_t u8;
     long    l;
@@ -434,7 +435,7 @@ kprintf(char *fmt, ...)
     long         l;
     long         len;
     va_list      al;
-    char         buf[LONGBUFSIZE];
+    char         buf[LONGLONGBUFSIZE];
     char         str[MAXPRINTFSTR];
 
     cons = &constab[conscur];
@@ -544,10 +545,10 @@ kprintf(char *fmt, ...)
                             break;
                     }
                     if (ishex) {
-                        l = _ltoxn(val, buf, LONGBUFSIZE);
+                        l = _lltoxn(val, buf, LONGLONGBUFSIZE);
                         cons->puts(&buf[l]);
                     } else if (isdec) {
-                        l = _ltodn(val, buf, LONGBUFSIZE);
+                        l = _lltodn(val, buf, LONGLONGBUFSIZE);
                         cons->puts(&buf[l]);
                     } else if ((isch) && isprint(val)) {
                         cons->putchar((int)val);

@@ -8,6 +8,7 @@
 #include <zero/trix.h>
 
 #include <kern/util.h>
+#include <kern/tmr.h>
 #include <kern/mem.h>
 //#include <kern/prio.h>
 //#include <kern/thr.h>
@@ -17,7 +18,6 @@
 void        sb16intr(void);
 void        sbsetrate(long cmd, uint16_t hz);
 //extern void pitsleep(long msec, void (*func)(void));
-extern void usleep(unsigned long nusec);
 
 extern void *irqvec[];
 
@@ -183,7 +183,7 @@ sb16flushinbuf16(void)
 void
 sb16intr(void)
 {
-    uint16_t reg;
+    uint16_t reg = 0;
     uint16_t stat;
     long     val;
     long     op = DMAWRITEOP;

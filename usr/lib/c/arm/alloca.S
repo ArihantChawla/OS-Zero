@@ -11,6 +11,7 @@
  * sp	- stack pointer
  * lr	- return address
  */
+	/* TODO: round size to a multiple of 4 */
 alloca:
 	sub	sp, sp, r0	// subtract size from stack pointer
 	mov	r0, sp		// set return value
