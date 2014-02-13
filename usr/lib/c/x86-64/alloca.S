@@ -1,4 +1,4 @@
-#if defined(__x86_64__) || defined(__amd64__) && !defined(__GNUC__)
+#if defined(__x86_64__) || defined(__amd64__) && !defined(__GNUC__) && 0
 
 .globl alloca
 
@@ -13,8 +13,12 @@
  * ------------------
  * return address <- stack pointer
  */
-alloca:	
+alloca:
 	subq	$8, %rdi	// adjust for popped return address
+	/* <FIXME> */
+	addq	$7, %rdi
+	andq	$0xfffffffffffffff8, %rdi
+	/* </FIXME> */
 	movq	%rsp, %rax	// copy stack pointer
 	subq	%rdi, %rax	// reserve space; return value is in RAX
 	ret			// return
