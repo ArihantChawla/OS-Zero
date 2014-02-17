@@ -34,7 +34,6 @@ apicinit(long id)
 
         return;
     }
-    kprintf("APIC: local APIC @ 0x%p\n", mpapic);
     /* identity-map MP table */
     if (cpu == mpbootcpu) {
         vmmapseg((uint32_t *)&_pagetab, (uint32_t)mpapic, (uint32_t)mpapic,

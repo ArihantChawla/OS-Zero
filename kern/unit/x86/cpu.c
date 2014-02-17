@@ -21,7 +21,7 @@ cpuinit(struct m_cpu *cpu)
     void *kstk = (void *)KERNSTKTOP;
 #endif
 
-    cpu->cpu = cpu;
+//    cpu->cpu = cpu;
     cpu->kstk = kstk;
     cpuprobe(&cpuinfotab[core]);
 

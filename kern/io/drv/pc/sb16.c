@@ -17,6 +17,7 @@
 
 void sb16intr(void);
 void sb16setrate(long cmd, uint16_t hz);
+void sb16setvol(uint16_t reg, uint8_t val);
 //extern void pitsleep(long msec, void (*func)(void));
 
 extern void *irqvec[];
@@ -105,7 +106,7 @@ sb16setup(void)
     sb16setrate(SB16INPUTRATE, 44100);
     sb16setrate(SB16OUTPUTRATE, 44100);
     /* set volume */
-    sb16setvol(SB16MAXVOL >> 1);
+//    sb16setvol(SB16MAXVOL >> 1);
     /* set block transfer size (16-bit words) */
     outw(SB16BUFSIZE >> 2, SB16SETBLKSIZE);
     sb16drv.init = 1;

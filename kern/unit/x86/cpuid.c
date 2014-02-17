@@ -16,6 +16,10 @@
 #endif
 
 #include <stdint.h>
+
+#include <zero/param.h>
+#include <zero/cdecl.h>
+
 #include <kern/util.h>
 #include <kern/unit/x86/cpu.h>
 
@@ -37,7 +41,7 @@
 #define M_CPUIDL1_AMD  0x80000005
 #define M_CPUIDL2_AMD  0x80000006
 
-#define cpuid(op, ptr) \
+#define cpuid(op, ptr)                                                  \
     __asm__ __volatile__ ("movl %4, %%eax\n"                            \
     "cpuid\n"                                                           \
     "movl %%eax, %0\n"                                                  \
@@ -56,12 +60,12 @@ struct m_cpuid {
     uint32_t ebx;
     uint32_t ecx;
     uint32_t edx;
-};
+} PACK();
 
 union m_cpuidvendor {
     uint32_t      wtab[4];
     unsigned char str[16];
-};
+} PACK();
 
 #define M_CPUIDINSTRTLB   0x00
 #define M_CPUIDDATATLB    0x01
@@ -73,7 +77,7 @@ struct m_cacheinfo {
     uint32_t size;
     uint32_t nway;
     uint32_t xsize;
-};
+} PACK();
 
 /* vendor strings. */
 /* vendor strings. */
@@ -104,7 +108,7 @@ static char *_vendortab[]
     "RiseRiseRise"
 };
 
-static struct m_cacheinfo cpuidcacheinfo[256];
+static struct m_cacheinfo cpuidcacheinfo[256] ALIGNED(PAGESIZE);
 struct m_cpuinfo          cpuinfo;
 
 #define cpuidaddci(id, t, s, n, x) \
@@ -132,7 +136,6 @@ cpuidinitci_intel(void)
     cpuidaddci(0x44, M_CPUIDUNICACHE, 1048576, 4, 32);
 }
 
-#if (TEST)
 static void
 cpuid_print_cache_info_intel(uint8_t id)
 {
@@ -142,32 +145,27 @@ cpuid_print_cache_info_intel(uint8_t id)
     if (info->size) {
         switch (info->type) {
             case M_CPUIDINSTRTLB:
-                fprintf(stderr,
-                        "itlb: %luK pages, %lu-way, %lu entries\n",
+                kprintf("itlb: %luK pages, %lu-way, %lu entries\n",
                         info->size / 1024, info->nway, info->xsize);
                 
                 break;
             case M_CPUIDDATATLB:
-                fprintf(stderr,
-                        "dtlb: %luK pages, %lu-way, %lu entries\n",
+                kprintf("dtlb: %luK pages, %lu-way, %lu entries\n",
                         info->size / 1024, info->nway, info->xsize);
                 
                 break;
             case M_CPUIDINSTRCACHE:
-                fprintf(stderr,
-                        "icache: %luK, %lu-way, %lu-byte line\n",
+                kprintf("icache: %luK, %lu-way, %lu-byte line\n",
                         info->size / 1024, info->nway, info->xsize);
                 
                 break;
             case M_CPUIDDATACACHE:
-                fprintf(stderr,
-                        "dcache: %luK, %lu-way, %lu-byte line\n",
+                kprintf("dcache: %luK, %lu-way, %lu-byte line\n",
                         info->size / 1024, info->nway, info->xsize);
                 
                 break;
             case M_CPUIDUNICACHE:
-                fprintf(stderr,
-                        "ucache: %luK, %lu-way, %lu-byte line\n",
+                kprintf("ucache: %luK, %lu-way, %lu-byte line\n",
                         info->size / 1024, info->nway, info->xsize);
                 
                 break;
@@ -180,23 +178,23 @@ cpuid_print_cache_info_intel(uint8_t id)
 static void
 cpuid_print_l1_info_amd(struct m_cpuid *cpuid)
 {
-    fprintf(stderr, "dtlb: 4K pages, %lu-way, %lu entries\n",
+    kprintf("dtlb: 4K pages, %lu-way, %lu entries\n",
             cpuid->ebx >> 24, (cpuid->ecx >> 16) & 0xff);
-    fprintf(stderr, "dtlb: 2M pages, %lu-way, %lu entries\n",
+    kprintf("dtlb: 2M pages, %lu-way, %lu entries\n",
             cpuid->eax >> 24, cpuid->eax & 0xff);
-    fprintf(stderr, "dtlb: 4M pages, %lu-way, %lu entries\n",
+    kprintf("dtlb: 4M pages, %lu-way, %lu entries\n",
             cpuid->eax >> 24, (cpuid->eax & 0xff) >> 1);
 
-    fprintf(stderr, "itlb: 4K pages, %lu-way, %lu entries\n",
+    kprintf("itlb: 4K pages, %lu-way, %lu entries\n",
             (cpuid->ebx >> 8) & 0xff, cpuid->edx & 0xff);
-    fprintf(stderr, "itlb: 2M pages, %lu-way, %lu entries\n",
+    kprintf("itlb: 2M pages, %lu-way, %lu entries\n",
             (cpuid->eax >> 8) & 0xff, cpuid->eax & 0xff);
-    fprintf(stderr, "itlb: 4M pages, %lu-way, %lu entries\n",
+    kprintf("itlb: 4M pages, %lu-way, %lu entries\n",
             (cpuid->eax >> 8) & 0xff, (cpuid->eax & 0xff) >> 1);
 
-    fprintf(stderr, "dcache: %luK, %lu-way, %lu-byte line\n",
+    kprintf("dcache: %luK, %lu-way, %lu-byte line\n",
             cpuid->ecx >> 24, (cpuid->ecx >> 16) & 0xff, cpuid->ecx & 0xff);
-    fprintf(stderr, "icache: %luK, %lu-way, %lu-byte line\n",
+    kprintf("icache: %luK, %lu-way, %lu-byte line\n",
             cpuid->edx >> 24, (cpuid->edx >> 16) & 0xff, cpuid->edx & 0xff);
 
     return;
@@ -205,26 +203,25 @@ cpuid_print_l1_info_amd(struct m_cpuid *cpuid)
 static void
 cpuid_print_l2_info_amd(struct m_cpuid *cpuid)
 {
-    fprintf(stderr, "l2: %luK, %lu-way, %lu-byte line\n",
+    kprintf("l2: %luK, %lu-way, %lu-byte line\n",
             cpuid->ecx >> 16, (cpuid->ecx >> 12) & 0x0f, cpuid->ecx & 0xff);
 
-    fprintf(stderr, "l2dtlb: 4K, %lu-way,  %lu entries\n",
+    kprintf("l2dtlb: 4K, %lu-way,  %lu entries\n",
             cpuid->ebx >> 28, (cpuid->ebx >> 16) & 0x0fff);
-    fprintf(stderr, "l2dtlb: 2M, %lu-way,  %lu entries\n",
+    kprintf("l2dtlb: 2M, %lu-way,  %lu entries\n",
             cpuid->eax >> 28, (cpuid->eax >> 16) & 0x0fff);
-    fprintf(stderr, "l2dtlb: 4M, %lu-way,  %lu entries\n",
+    kprintf("l2dtlb: 4M, %lu-way,  %lu entries\n",
             cpuid->eax >> 28, ((cpuid->eax >> 16) & 0x0fff) >> 1);
 
-    fprintf(stderr, "l2itlb: 4K, %lu-way,  %lu entries\n",
+    kprintf("l2itlb: 4K, %lu-way,  %lu entries\n",
             (cpuid->ebx >> 12) & 0x0f, cpuid->ebx & 0x0fff);
-    fprintf(stderr, "l2itlb: 2M, %lu-way,  %lu entries\n",
+    kprintf("l2itlb: 2M, %lu-way,  %lu entries\n",
             (cpuid->eax >> 12) & 0x0f, cpuid->eax & 0x0fff);
-    fprintf(stderr, "l2itlb: 4M, %lu-way,  %lu entries\n",
+    kprintf("l2itlb: 4M, %lu-way,  %lu entries\n",
             (cpuid->eax >> 12) & 0x0f, (cpuid->eax & 0x0fff) >> 1);
 
     return;
 }
-#endif /* TEST */
 
 #define cpuidgetvendor(ptr) \
     __asm__("movl %0, %%eax" : : "i" (M_CPUIDVENDOR)); \
@@ -412,30 +409,25 @@ cpuprobe(struct m_cpuinfo *cpuinfo)
     return;
 }
 
-#if (TEST)
-int
-main(int argc,
-     char *argv[])
+void
+cpuprintinfo(void)
 {
     struct m_cpuid       buf;
     union  m_cpuidvendor vbuf;
 #if defined(__ZEROKERNEL__)
     struct m_cpuidcregs  mbuf;
 #endif
-
-    cpuprobe();
-
+    
     cpuidgetvendor(&vbuf);
-    fprintf(stderr, "vendor: %s\n", vbuf.str);
-
-    if (!kstrcmp(vbuf.str, _vendortab[CPUIDINTEL])) {
+//    kprintf("vendor: %s\n", vbuf.str);
+    if (!kstrcmp((const char *)vbuf.str, _vendortab[CPUIDINTEL])) {
         cpuidinitci_intel();
         cpuidgetci_intel(&buf);
         cpuid_print_cache_info_intel(buf.eax);
         cpuid_print_cache_info_intel(buf.ebx);
         cpuid_print_cache_info_intel(buf.ecx);
         cpuid_print_cache_info_intel(buf.edx);
-    } else if (!kstrcmp(vbuf.str, _vendortab[CPUIDAMD])) {
+    } else if (!kstrcmp((const char *)vbuf.str, _vendortab[CPUIDAMD])) {
         cpuidgetl1_amd(&buf);
         cpuid_print_l1_info_amd(&buf);
         cpuidgetl2_amd(&buf);
@@ -443,84 +435,95 @@ main(int argc,
     }
     /* stepping, model, family, type, ext_model, ext_family */
     cpuidgetinfo(&buf);
-    fprintf(stderr, "cpu info:\n");
-    fprintf(stderr, "\tstepping: %u\n", cpuidstepping(&buf));
-    fprintf(stderr, "\tmodel: %u\n", cpuidmodel(&buf));
-    fprintf(stderr, "\tfamily: %u\n", cpuidfamily(&buf));
-    fprintf(stderr, "\ttype: %u\n", cpuidtype(&buf));
-    fprintf(stderr, "\text_model: %u\n", cpuidextmodel(&buf));
-    fprintf(stderr, "\text_family: %u\n", cpuidextfamily(&buf));
-
-    fprintf(stderr, "cpu features:");
+    kprintf("cpu info:\n");
+    kprintf("\tstepping: %u\n", cpuidstepping(&buf));
+    kprintf("\tmodel: %u\n", cpuidmodel(&buf));
+    kprintf("\tfamily: %u\n", cpuidfamily(&buf));
+    kprintf("\ttype: %u\n", cpuidtype(&buf));
+    kprintf("\text_model: %u\n", cpuidextmodel(&buf));
+    kprintf("\text_family: %u\n", cpuidextfamily(&buf));
+    
+    kprintf("cpu features:");
     if (cpuidhaspse(&buf)) {
-        fprintf(stderr, " pse");
+        kprintf(" pse");
     }
     if (cpuidhastsc(&buf)) {
-        fprintf(stderr, " tsc");
+        kprintf(" tsc");
     }
     if (cpuidhassep(&buf)) {
-        fprintf(stderr, " sep");
+        kprintf(" sep");
     }
     if (cpuidhaspge(&buf)) {
-        fprintf(stderr, " pge");
+        kprintf(" pge");
     }
     if (cpuidhasmmx(&buf)) {
-        fprintf(stderr, " mmx");
+        kprintf(" mmx");
     }
     if (cpuidhasclfl(&buf)) {
-        fprintf(stderr, " clfl");
+        kprintf(" clfl");
     }
     if (cpuidhasfxsr(&buf)) {
-        fprintf(stderr, " fxsr");
+        kprintf(" fxsr");
     }
     if (cpuidhassse(&buf)) {
-        fprintf(stderr, " sse");
+        kprintf(" sse");
     }
     if (cpuidhassse2(&buf)) {
-        fprintf(stderr, " sse2");
+        kprintf(" sse2");
     }
     if (cpuidhassse3(&buf)) {
-        fprintf(stderr, " sse3");
+        kprintf(" sse3");
     }
-    fprintf(stderr, "\n");
-
+    kprintf("\n");
+    
     cpuidgetexti(&buf);
-    fprintf(stderr, "amd features: ");
+    kprintf("amd features: ");
     if (cpuidhasamd_mmx(&buf)) {
-        fprintf(stderr, " mmx");
+        kprintf(" mmx");
     }
     if (cpuidhas3dnow(&buf)) {
-        fprintf(stderr, " 3dnow");
+        kprintf(" 3dnow");
     }
     if (cpuidhas3dnow2(&buf)) {
-        fprintf(stderr, " 3dnow2");
+        kprintf(" 3dnow2");
     }
-    fprintf(stderr, "\n");
-
+    kprintf("\n");
+    
 #if defined(__ZEROKERNEL__)
     cpuidgetmodes(&mbuf);
-    fprintf(stderr, "cpu modes:");
+    kprintf("cpu modes:");
     if (cpuidhaspwt(&mbuf)) {
-        fprintf(stderr, " pwt");
+        kprintf(" pwt");
     }
     if (cpuidhaspcd(&mbuf)) {
-        fprintf(stderr, " pcd");
+        kprintf(" pcd");
     }
     if (cpuidhasrdtsc(&mbuf)) {
-        fprintf(stderr, " rdtsc");
+        kprintf(" rdtsc");
     }
     if (cpuidhaspse(&mbuf)) {
-        fprintf(stderr, " pse");
+        kprintf(" pse");
     }
     if (cpuidhaspge(&mbuf)) {
-        fprintf(stderr, " pge");
+        kprintf(" pge");
     }
     if (cpuidhasrdpmc(&mbuf)) {
-        fprintf(stderr, " rdpmc");
+        kprintf(" rdpmc");
     }
-    fprintf(stderr, "\n");
+    kprintf("\n");
 #endif /* 0 */
+ 
+    return;
+}
 
+#if (TEST)
+int
+main(int argc,
+     char *argv[])
+{
+    cpuprobe();
+    cpuprintinfo();
+    
     exit(0);
 }
 #endif /* TEST */
