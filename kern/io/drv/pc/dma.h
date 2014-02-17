@@ -5,7 +5,7 @@
 #include <sys/io.h>
 #include <kern/unit/ia32/vm.h>
 
-#define dmabufadr(chan) ((void *)(DMABUFBASE + (chan) * DMACHANBUFSIZE))
+#define dmabufadr(chan) ((uint8_t *)(DMABUFBASE + (chan) * DMACHANBUFSIZE))
 
 extern const uint8_t dmapageports[];
 

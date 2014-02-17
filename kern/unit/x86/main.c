@@ -105,6 +105,9 @@ kmain(struct mboothdr *hdr, unsigned long pmemsz)
     meminit(vmlinkadr(&_ebssvirt), pmemsz);
     vminitphys((uintptr_t)&_ebss, pmemsz - (unsigned long)&_ebss);
     kmemset(&kerniomap, 0xff, sizeof(kerniomap));
+#if (PS2DRV)
+    ps2init();
+#endif
 #if (VBE2)
     vbe2init(hdr);
     vbe2kludge();
@@ -112,6 +115,7 @@ kmain(struct mboothdr *hdr, unsigned long pmemsz)
     plasmaloop();
 #endif
     logoprint();
+    /* HID devices */
 #if (PCI)
     pciinit();
 #endif
@@ -149,11 +153,9 @@ kmain(struct mboothdr *hdr, unsigned long pmemsz)
     } else {
         kprintf("found %ld processors\n", mpncpu);
     }
-#if 0
     if (mpapic) {
         kprintf("local APIC @ 0x%p\n", mpapic);
     }
-#endif
     k_curcpu = &cputab[0];
 #endif
 #if (HPET)
@@ -164,10 +166,6 @@ kmain(struct mboothdr *hdr, unsigned long pmemsz)
     tssinit(0);
 #if 0
     machinit();
-#endif
-    /* HID devices */
-#if (PS2DRV)
-    ps2init();
 #endif
     /* execution environment */
     procinit(0);
@@ -183,7 +181,7 @@ kmain(struct mboothdr *hdr, unsigned long pmemsz)
             vmpagestat.nwired << (PAGESIZELOG2 - 10),
             vmpagestat.nphys << (PAGESIZELOG2 - 10));
     schedinit();
-    pitinit();
+//    pitinit();
     /* pseudo-scheduler loop; interrupted by timer [and other] interrupts */
     while (1) {
         k_waitint();

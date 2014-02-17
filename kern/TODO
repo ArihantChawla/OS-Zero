@@ -5,6 +5,7 @@ acute things
 - implement [block] I/O buffer cache
 - implement ELF linker/loader
 - implement virtual filesystem (VFS)
+- implement filesystem such as UFS2 and/or BeFS
 
 future things
 -------------

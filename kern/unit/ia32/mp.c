@@ -204,6 +204,7 @@ mpinit(void)
         outb(0x70, 0x22);               // select IMCR
         outb(inb(0x23) | 0x01, 0x23);   // mask external timer interrupts
     }
+    /* Boot CPU */
     /* local APIC initialisation where present */
     apicinit(0);
     /* I/O APIC initialisation */

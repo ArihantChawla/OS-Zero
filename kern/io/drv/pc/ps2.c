@@ -2,6 +2,8 @@
 
 #if (PS2DRV)
 
+#define PS2KEYBUF 1
+
 /*
  * 19:49 <PeanutHorst>
  * { == curly brace   < == angle bracket   [ == bracket   ( == parentheses
@@ -12,6 +14,9 @@
 
 #include <zero/param.h>
 #include <zero/cdecl.h>
+#if (PS2KEYBUF)
+#include <zero/mtx.h>
+#endif
 
 #include <kern/util.h>
 //#include <kern/event.h>
@@ -24,21 +29,6 @@ extern void *irqvec[];
 void ps2initkbd_us(void);
 void ps2kbdintr(void);
 void ps2mouseintr(void);
-
-struct ps2drv {
-#if 0
-/* modifier keys. */
-    int32_t          keytabmod[PS2KBD_NTAB];
-#endif
-/* single-code values. */
-    int32_t          keytab1b[PS2KBD_NTAB];
-/* 0xe0-prefixed values. */
-    int32_t          keytabmb[PS2KBD_NTAB];
-/* release values. */
-    int32_t          keytabup[PS2KBD_NTAB];
-    struct mousestat mousestat;
-    int32_t          modmask;
-};
 
 static struct ps2drv ps2drv ALIGNED(PAGESIZE);
 
@@ -251,29 +241,92 @@ ps2initkbd_us(void)
     return;
 }
 
+#if (PS2KEYBUF)
+
+void
+ps2kbdflush(uint64_t keycode, int32_t keyval)
+{
+    ;
+}
+
+void
+ps2kbdaddkey(uint64_t keycode, int32_t keyval)
+{
+    mtxlk(&ps2drv.keylk);
+    if (ps2drv.lastkey == ps2drv.keybuf + PS2KBD_NBUFKEY - 1) {
+        ps2drv.lastkey = &ps2drv.keybuf[0];
+    }
+    if (!ps2drv.curkey) {
+        ps2drv.keybuf[0] = keycode;
+        ps2drv.curkey = ps2drv.keybuf;
+        ps2drv.lastkey = ps2drv.keybuf;
+        ps2drv.keyvalbuf[0] = keyval;
+        ps2drv.curkeyval = ps2drv.keyvalbuf;
+        ps2drv.lastkeyval = ps2drv.keyvalbuf;
+    } else if (ps2drv.lastkey < ps2drv.curkey
+               || ps2drv.lastkey < ps2drv.keybuf + PS2KBD_NBUFKEY - 1) {
+        ps2drv.lastkey[1] = keycode;
+        ps2drv.lastkey++;
+        ps2drv.lastkeyval[1] = keyval;
+        ps2drv.lastkeyval++;
+    } else if (ps2drv.lastkey == ps2drv.curkey) {
+        ps2kbdflush(*ps2drv.curkey, *ps2drv.curkeyval);
+        ps2drv.curkey++;
+        ps2drv.curkeyval++;
+        ps2drv.lastkey[1] = keycode;
+        ps2drv.lastkey++;
+        ps2drv.lastkeyval[1] = keyval;
+        ps2drv.lastkeyval++;
+        mtxunlk(&ps2drv.keylk);
+    }
+}
+
+#endif /* PS2KEYBUF */
+
 /* keyboard interrupt handler. */
 void
 ps2kbdintr(void)
 {
-    int32_t isup = 0;
-    int32_t val;
-    uint8_t u8;
+#if (PS2KEYBUF)
+    uint64_t keycode = 0;
+#endif
+    int32_t  isup = 0;
+    int32_t  val;
+    uint8_t  u8;
     
     val = 0;
     ps2readkbd(u8);
     if (u8 == PS2KBD_PAUSE_BYTE1) {
         /* pause/break. */
         ps2readkbd(u8); /* 0x1d */
+#if (PS2KEYBUF)
+        keycode = 0x1d;
+#endif
         ps2readkbd(u8); /* 0x45 */
+#if (PS2KEYBUF)
+        keycode |= UINT64_C(0x45) << 8;
+#endif
         ps2readkbd(u8); /* 0xe1 */
+#if (PS2KEYBUF)
+        keycode |= UINT64_C(0xe1) << 16;
+#endif
         ps2readkbd(u8); /* 0x9d */
+#if (PS2KEYBUF)
+        keycode |= UINT64_C(0x9d) << 24;
+#endif
         ps2readkbd(u8); /* 0xc5 */
+#if (PS2KEYBUF)
+        keycode |= UINT64_C(0xc5) << 32;
+#endif
         u8 &= PS2KBD_VAL_MSK;
         val = ps2drv.keytab1b[u8];
     } else if (u8 != PS2KBD_PREFIX_BYTE) {
         /* single-byte value. */
         if (u8 & PS2KBD_UP_BIT) {
             /* release. */
+#if (PS2KEYBUF)
+            keycode = u8;
+#endif
             isup = 1;
             u8 &= ~PS2KBD_UP_BIT;
             val = ps2drv.keytabup[u8];
@@ -283,14 +336,30 @@ ps2kbdintr(void)
     } else {
         /* 0xe0-prefixed. */
         ps2readkbd(u8);
+#if (PS2KEYBUF)
+        keycode = 0xe0;
+        keycode |= (uint64_t)u8 << 8;
+#endif
         if (u8 == PS2KBD_PRINT_BYTE2 || u8 == PS2KBD_CTRLPAUSE_BYTE2) {
             /* print screen or ctrl-pause. */
             ps2readkbd(u8); /* 0xe0 */
+#if (PS2KEYBUF)
+            keycode |= (uint64_t)u8 << 16;
+#endif
             ps2readkbd(u8); /* 0x37 (prtsc) or 0xc6 (ctrl-pause) */
-            val &= PS2KBD_VAL_MSK;
+#if (PS2KEYBUF)
+            keycode |= (uint64_t)u8 << 24;
+#endif
+//            val &= PS2KBD_VAL_MSK;
             val = ps2drv.keytabmb[u8];
         } else if (u8 == PS2KBD_UP_BYTE) {
+#if (PS2KEYBUF)
+            keycode = u8;
+#endif
             ps2readkbd(u8);
+#if (PS2KEYBUF)
+            keycode = (uint64_t)u8 << 8;
+#endif
             val = ps2drv.keytabup[u8];
         } else {
             if (u8 & PS2KBD_UP_BIT) {
@@ -309,6 +378,9 @@ ps2kbdintr(void)
             ps2drv.modmask |= 1 << (-val);
         }
     }
+#if (PS2KEYBUF)
+    ps2kbdaddkey(keycode, val);
+#endif
 
     return;
 }

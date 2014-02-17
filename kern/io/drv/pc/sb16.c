@@ -95,7 +95,7 @@ sb16setup(void)
     irqvec[sb16drv.irq] = sb16intr;
     /* initialize DMA interface */
     sb16drv.dmabuf8 = dmabufadr(sb16drv.dma8);
-    sb16drv.dmabuf16 = dmabufadr(sb16drv.dma16);
+    sb16drv.dmabuf16 = (uint16_t *)dmabufadr(sb16drv.dma16);
     dmasetmode(sb16drv.dma8, DMAAUTOINIT | DMAADRINCR | DMABLOCK);
     dmasetmode(sb16drv.dma16, DMAAUTOINIT | DMAADRINCR | DMABLOCK);
     dmasetadr(sb16drv.dma8, sb16drv.dmabuf8);
@@ -117,7 +117,14 @@ sb16init(void)
 {
     sb16drv.dmaout8empty = 1;
     sb16drv.dmaout16empty = 1;
+    /* reset sound card */
+    sb16reset();
+    /* sleep for SB16RESETMS milliseconds, then trigger sb16setup() */
+//    pitsleep(SB16RESETMS, sb16setup);
+    usleep(SB16RESETMS * 1000);
+    sb16setup();
     /* initialise and zero wired buffers */
+#if 0
     sb16drv.inbuf8 = kwalloc(SB16DATA8BUFSIZE);
     kbzero(sb16drv.inbuf8, SB16DATA8BUFSIZE);
     sb16drv.outbuf8 = kwalloc(SB16DATA8BUFSIZE);
@@ -125,6 +132,16 @@ sb16init(void)
     sb16drv.inbuf16 = kwalloc(SB16DATA16BUFSIZE);
     kbzero(sb16drv.inbuf16, SB16DATA16BUFSIZE);
     sb16drv.outbuf16 = kwalloc(SB16DATA16BUFSIZE);
+    kbzero(sb16drv.outbuf16, SB16DATA16BUFSIZE);
+#endif
+    sb16drv.inbuf8 = dmabufadr(sb16drv.dma8);
+    kbzero(sb16drv.inbuf8, SB16DATA8BUFSIZE);
+    sb16drv.outbuf8 = dmabufadr(sb16drv.dma8) + (DMACHANBUFSIZE >> 1);
+    kbzero(sb16drv.outbuf8, SB16DATA8BUFSIZE);
+    sb16drv.inbuf16 = (uint16_t *)dmabufadr(sb16drv.dma16);
+    kbzero(sb16drv.inbuf16, SB16DATA16BUFSIZE);
+    sb16drv.outbuf16 = (uint16_t *)dmabufadr(sb16drv.dma16)
+        + (DMACHANBUFSIZE >> 2);
     kbzero(sb16drv.outbuf16, SB16DATA16BUFSIZE);
     sb16drv.inptr8 = sb16drv.inbuf8;
     sb16drv.inlim8 = sb16drv.inbuf8 + SB16DATA8BUFSIZE - (SB16BUFSIZE >> 1);
@@ -135,12 +152,6 @@ sb16init(void)
     sb16drv.outptr16 = sb16drv.outbuf16;
     sb16drv.outlim16 = sb16drv.outbuf16
         + SB16DATA16BUFSIZE - (SB16BUFSIZE >> 2);
-    /* reset sound card */
-    sb16reset();
-    /* sleep for SB16RESETMS milliseconds, then trigger sb16setup() */
-//    pitsleep(SB16RESETMS, sb16setup);
-    usleep(SB16RESETMS * 1000);
-    sb16setup();
 
     return;
 }

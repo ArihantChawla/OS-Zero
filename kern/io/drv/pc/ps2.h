@@ -1,7 +1,12 @@
 #ifndef __KERN_IO_DRV_PC_PS2_H__
 #define __KERN_IO_DRV_PC_PS2_H__
 
+#include <zero/param.h>
+#include <zero/cdecl.h>
+
 /* KEYBOARD */
+
+#define PS2KBD_NBUFKEY              (PAGESIZE >> 3)
 
 #define PS2KBD_NTAB                 128
 
@@ -372,6 +377,28 @@ struct mousestat {
     uint32_t zmax;
     int32_t shift;
 } PACK();
+
+struct ps2drv {
+    uint64_t          keybuf[PS2KBD_NBUFKEY];
+    int32_t           keyvalbuf[PS2KBD_NBUFKEY];
+    volatile long     keylk;
+    uint64_t         *curkey;
+    uint64_t         *lastkey;
+    int32_t          *curkeyval;
+    int32_t          *lastkeyval;
+#if 0
+/* modifier keys. */
+    int32_t           keytabmod[PS2KBD_NTAB];
+#endif
+/* single-code values. */
+    int32_t           keytab1b[PS2KBD_NTAB] ALIGNED(PAGESIZE);
+/* 0xe0-prefixed values. */
+    int32_t           keytabmb[PS2KBD_NTAB];
+/* release values. */
+    int32_t           keytabup[PS2KBD_NTAB];
+    struct mousestat  mousestat;
+    int32_t           modmask;
+} ALIGNED(PAGESIZE);
 
 #endif /* __KERN_IO_DRV_PC_PS2_H__ */
 
