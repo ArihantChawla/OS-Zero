@@ -15,14 +15,15 @@
 #include <kern/io/drv/pc/dma.h>
 #include <kern/io/drv/pc/sb16.h>
 
-void        sb16intr(void);
-void        sbsetrate(long cmd, uint16_t hz);
+void sb16intr(void);
+void sb16setrate(long cmd, uint16_t hz);
 //extern void pitsleep(long msec, void (*func)(void));
 
 extern void *irqvec[];
 
-#define SB16DATA8BUFSIZE  (4 * SB16BUFSIZE)
-#define SB16DATA16BUFSIZE (8 * SB16BUFSIZE)
+/* intpu and output buffers are allocated from DMA zone */
+#define SB16DATA8BUFSIZE  (8 * SB16BUFSIZE)
+#define SB16DATA16BUFSIZE (16 * SB16BUFSIZE)
 
 static struct sb16drv sb16drv ALIGNED(PAGESIZE);
 
@@ -91,8 +92,6 @@ sb16setup(void)
     }
     kprintf("SB16 @ 0x%x, IRQ %d, DMA %d (8-bit), DMA %d (16-bit)\n",
             SB16BASE, sb16drv.irq, sb16drv.dma8, sb16drv.dma16);
-    /* initialize interrupt management */
-    irqvec[sb16drv.irq] = sb16intr;
     /* initialize DMA interface */
     sb16drv.dmabuf8 = dmabufadr(sb16drv.dma8);
     sb16drv.dmabuf16 = (uint16_t *)dmabufadr(sb16drv.dma16);
@@ -103,11 +102,15 @@ sb16setup(void)
     dmasetcnt(sb16drv.dma8, SB16BUFSIZE >> 1);
     dmasetcnt(sb16drv.dma16, SB16BUFSIZE >> 1);
     /* set input and output rates */
-    sbsetrate(SB16INPUTRATE, 44100);
-    sbsetrate(SB16OUTPUTRATE, 44100);
+    sb16setrate(SB16INPUTRATE, 44100);
+    sb16setrate(SB16OUTPUTRATE, 44100);
+    /* set volume */
+    sb16setvol(SB16MAXVOL >> 1);
     /* set block transfer size (16-bit words) */
     outw(SB16BUFSIZE >> 2, SB16SETBLKSIZE);
     sb16drv.init = 1;
+    /* initialize interrupt management */
+    irqvec[sb16drv.irq] = sb16intr;
 
     return;
 }
@@ -120,7 +123,6 @@ sb16init(void)
     /* reset sound card */
     sb16reset();
     /* sleep for SB16RESETMS milliseconds, then trigger sb16setup() */
-//    pitsleep(SB16RESETMS, sb16setup);
     usleep(SB16RESETMS * 1000);
     sb16setup();
     /* initialise and zero wired buffers */
@@ -299,7 +301,7 @@ sb16intr(void)
 void
 sb16setvol(uint16_t reg, uint8_t val)
 {
-    val = max(val, SB16MAXVOL);
+    val = min(val, SB16MAXVOL);
     outb(reg, SB16MIXERADR);
     outb(val, SB16MIXERDATA);
 
@@ -308,7 +310,7 @@ sb16setvol(uint16_t reg, uint8_t val)
 
 /* cmd is SB16INPUTRATE or SB16OUTPUTRATE */
 void
-sbsetrate(long cmd, uint16_t hz)
+sb16setrate(long cmd, uint16_t hz)
 {
     outb(cmd, SB16WRITE);
     outb(hz & 0xff, SB16WRITE);

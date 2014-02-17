@@ -5,7 +5,8 @@ acute things
 - implement [block] I/O buffer cache
 - implement ELF linker/loader
 - implement virtual filesystem (VFS)
-- implement filesystem such as UFS2 and/or BeFS
+- implement filesystems such as UFS2 and/or BeFS
+- fix Soundblaster 16 and AC97 audio drivers... =)
 
 future things
 -------------
