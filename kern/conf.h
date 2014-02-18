@@ -42,14 +42,14 @@
 #define BOCHS     1
 #define DEVEL     0     // debugging
 
-#define PLASMA    1
+#define PLASMA    0
 
 /* planned drivers */
 #define PCI       1
 #define ATA       1
 #define ACPI      1
 #define ACPICA    0
-#define HPET      0     // high precision event timer support
+#define HPET      1     // high precision event timer support
 #define PS2DRV    1     // enable PS/2 mouse and keyboard drivers
 #define KBDUS     1
 #define VBE       1     // VBE2 graphics driver

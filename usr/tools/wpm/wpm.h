@@ -317,6 +317,7 @@ struct wpmcpustate {
 struct wpm {
     struct wpmcpustate cpustat;
     volatile long      shutdown;
+    volatile long      waitintr;
     volatile long      thrid;
     wpmadr_t           brk;
 };

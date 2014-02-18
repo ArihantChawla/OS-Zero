@@ -24,6 +24,7 @@ cpuinit(struct m_cpu *cpu)
 //    cpu->cpu = cpu;
     cpu->kstk = kstk;
     cpuprobe(&cpuinfotab[core]);
+    cpuprintinfo();
 
     return;
 };

@@ -1,9 +1,12 @@
 #ifndef __KERN_UNIT_X86_HPET_H__
 #define __KERN_UNIT_X86_HPET_H__
 
+#define HPETBASE      0x7ed00000
+
 #define HPETREGSIZE   1024
 #define HPETREGSIZE64 65536
-#define HPETSIG       0x54455048U       // "HPET"
+//#define HPETSIG       0x54455048U       // "HPET"
+#define HPETSIG       0x54455048U
 
 /* configuration space register offsets */
 #define hpettmrconfofs(id)                                              \
@@ -96,12 +99,15 @@ struct hpet {
     uint32_t sig;               // HPETSIG ("HPET")
     uint32_t len;               // length in bytes
     uint8_t  rev;               // revision
-    uint8_t  cksum;             // table must sum to zero
+    uint8_t  chksum;            // table must sum to zero
     uint8_t  oemid[6];          // OEM id
     uint64_t oemtabid;          // manufacturer model ID
     uint32_t oemrev;            // OEM revision
     uint32_t creatid;           // creator ID
     uint32_t creatrev;          // creator revision
+};
+
+struct hpetinfo {
     uint32_t tmrblkid;          // event timer block ID
     uint8_t  adrtype;           // ACPI address type -> 0 = memory, 1 = I/O
     uint8_t  regsz;             // register width in bits

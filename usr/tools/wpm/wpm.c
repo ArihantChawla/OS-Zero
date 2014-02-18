@@ -24,7 +24,8 @@
 
 #if defined(__i386__) || defined(__i486__) || defined(__i586__)         \
     || defined(__i686__) || defined(__x86_64__) || defined(__amd64__)
-#define USEASM 0
+/* use assembly-optimised routines on x86 */
+#define USEASM 1
 #include <wpm/ia32/asm.h>
 #else
 #define USEASM 0
@@ -1718,7 +1719,7 @@ opreset(struct wpmopcode *op)
 void
 ophlt(struct wpmopcode *op)
 {
-    wpm->shutdown = 1;
+    wpm->waitintr = 1;
 
     return;
 }

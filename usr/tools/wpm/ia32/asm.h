@@ -12,10 +12,10 @@
 #define asmshl(cnt, dest)                                               \
     __asm__ __volatile__ ("shl %%cl, %0\n"                              \
                           : "=r" (dest) : "c" (cnt), "0" (dest))
-#define asmshr(cnt, dest)                                               \
+#define asmshra(cnt, dest)                                              \
     __asm__ __volatile__ ("sar %%cl, %0\n"                              \
                           : "=r" (dest) : "c" (cnt), "0" (dest))
-#define asmshrl(cnt, dest)                                              \
+#define asmshr(cnt, dest)                                               \
     __asm__ __volatile__ ("shr %%cl, %0\n"                              \
                           : "=r" (dest) : "c" (cnt), "0" (dest))
 #define asmror(cnt, dest)                                               \
