@@ -103,18 +103,6 @@ vbeinit(void)
 }
 
 void
-vbehello(void)
-{
-    vbedrawchar('h', 0, 0, 0x00ffffff, 0x00000000);
-    vbedrawchar('e', 8, 0, 0x00ffffff, 0x00000000);
-    vbedrawchar('l', 16, 0, 0x00ffffff, 0x00000000);
-    vbedrawchar('l', 24, 0, 0x00ffffff, 0x00000000);
-    vbedrawchar('o', 32, 0, 0x00ffffff, 0x00000000);
-
-    return;
-}
-
-void
 vbeinitscr(void)
 {
     struct vbemode  *mode = (void *)VBEMODEADR;
@@ -134,7 +122,6 @@ vbeinitscr(void)
                 ? vbescreen.mode->xres * vbescreen.mode->yres * 3
                 : vbescreen.mode->xres * vbescreen.mode->yres * 2),
              PAGEPRES | PAGEWRITE | PAGENOCACHE | PAGEWIRED);
-    vbehello();
 
     return;
 }

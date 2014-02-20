@@ -1,4 +1,5 @@
 #include <stddef.h>
+#include <signal.h>
 #include <kern/conf.h>
 #include <kern/util.h>
 #include <kern/obj.h>

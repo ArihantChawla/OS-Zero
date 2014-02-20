@@ -101,18 +101,6 @@ vminit(void *pagetab)
     /* zero page tables */
     kbzero(pagetab, PAGETABSIZE);
 
-#if 0
-    /* identity map 3.5G..4G for devices */
-    pde = pagetab + vmpagenum(3584UL * 1024 * 1024);
-    adr = 3584UL * 1024 * 1024;
-    n = (512 * 1024 * 1024) >> PAGESIZELOG2;
-    while (n--) {
-        *pde = adr | PAGEPRES | PAGEWRITE;
-        adr += PAGESIZE;
-        pde++;
-    }
-#endif
-
     /* identity-map 0..1M */
     vmmapseg(pagetab, 0, 0,
              HICORE,
@@ -124,7 +112,7 @@ vminit(void *pagetab)
              PAGEPRES);
 #endif
 
-    /* identity-map kernel boot segment */
+    /* identity-map kernel low-half boot segment */
     vmmapseg(pagetab, HICORE, HICORE,
              (uint32_t)&_eboot,
              PAGEPRES | PAGEWRITE);

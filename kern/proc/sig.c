@@ -35,7 +35,7 @@ long signumtab[TRAPNCPU]
     SIGFPE
 };
 
-signalhandler_t *sigfunctab[NSIG];
+signalhandler_t *ksigfunctab[NSIG];
 
 void
 kill(struct proc *proc)
@@ -64,7 +64,7 @@ sigfunc(uint32_t trap, uint32_t errcode)
         if (func) {
             func(signum);
         } else {
-            func = sigfunctab[signum];
+            func = ksigfunctab[signum];
             if (func) {
                 func(signum);
             }

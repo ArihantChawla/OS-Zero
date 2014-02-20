@@ -222,15 +222,18 @@ trapnm:
 	iret
 
 trapdf:
+	/* EAX	- error code */
+	/* EBX	- return IP */
+	popl	%eax
 	pusha
-	movl	32(%esp), %eax
+	movl	32(%esp), %ebx
 	pushl	%ds
 	pushl	%es
 	pushl	%fs
 	pushl	%gs
 	movl	%esp, %ebp
 
-	pushl	$0x00000000
+	pushl	%ebx
 	pushl	$TRAPDF
 	call	sigfunc
 
@@ -319,8 +322,10 @@ trapss:
 	iret
 
 trapgp:
-	/* fault eip <- stack pointer */
-	movl	0(%esp), %eax		// faulting instruction pointer
+	/* EAX	- error code */
+	/* EBX	- fault IP */
+	movl	0(%esp), %ebx
+	movl	4(%esp), %ebx		// faulting instruction pointer
 	pushal
 	movl	32(%esp), %eax
 	pushl	%ds
@@ -329,7 +334,7 @@ trapgp:
 	pushl	%gs
 	movl	%esp, %ebp
 
-	pushl	%eax
+	pushl	%ebx
 	pushl	$TRAPGP
 	call	sigfunc
 
