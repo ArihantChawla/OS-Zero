@@ -44,17 +44,22 @@ kill(struct proc *proc)
 }
 
 void
-sigfunc(uint32_t trap)
+sigfunc(uint32_t trap, uint32_t errcode)
 {
     struct proc     *proc = k_curproc;
     long             signum = signumtab[trap];
     signalhandler_t *func;
 
-    if (signum == SIGKILL) {
-        kprintf("trap 0x%lx -> signal 0x%lx\n", trap, signum);
+//    kprintf("trap 0x%lx -> signal 0x%lx\n", trap, signum);
+    if (trap == TRAPUD) {
+        kprintf("PANIC: #UD (0x%lx)\n", errcode);
+    } else if (trap == TRAPGP) {
+        kprintf("PANIC: #GP (0x%lx)\n", errcode);
+    } else if (signum == SIGKILL) {
+//        kprintf("trap 0x%lx -> signal 0x%lx\n", trap, signum);
         kill(proc);
     } else if ((signum) && sigismember(&proc->sigmask, signum)) {
-        kprintf("trap 0x%lx -> signal 0x%lx\n", trap, signum);
+//        kprintf("trap 0x%lx -> signal 0x%lx\n", trap, signum);
         func = proc->sigvec[signum];
         if (func) {
             func(signum);

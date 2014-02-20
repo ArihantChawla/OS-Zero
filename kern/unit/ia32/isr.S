@@ -48,6 +48,8 @@
 .text	32
 
 trapde:
+	/* fault eip <- stack pointer */
+	movl	0(%esp), %eax		// faulting instruction pointer
 	pushal
 	pushl	%ds
 	pushl	%es
@@ -55,6 +57,7 @@ trapde:
 	pushl	%gs
 	movl	%esp, %ebp
 
+	pushl	%eax
 	pushl	$TRAPDE
 	call	sigfunc
 
@@ -148,6 +151,8 @@ trapof:
 	iret
 
 trapbr:
+	/* fault eip <- stack pointer */
+	movl	0(%esp), %eax		// faulting instruction pointer
 	pushal
 	pushl	%ds
 	pushl	%es
@@ -155,6 +160,7 @@ trapbr:
 	pushl	%gs
 	movl	%esp, %ebp
 
+	pushl	%eax
 	pushl	$TRAPBR
 	call	sigfunc
 
@@ -168,6 +174,8 @@ trapbr:
 	iret
 
 trapud:
+	/* fault eip <- stack pointer */
+	movl	0(%esp), %eax		// faulting instruction pointer
 	pushal
 	pushl	%ds
 	pushl	%es
@@ -175,6 +183,7 @@ trapud:
 	pushl	%gs
 	movl	%esp, %ebp
 
+	pushl	%eax
 	pushl	$TRAPUD
 	call	sigfunc
 
@@ -230,6 +239,8 @@ trapdf:
 	iret
 
 trapts:
+	/* fault eip <- stack pointer */
+	movl	0(%esp), %eax		// faulting segment selector
 	pushal
 	movl	32(%esp), %eax
 	pushl	%ds
@@ -238,6 +249,7 @@ trapts:
 	pushl	%gs
 	movl	%esp, %ebp
 
+	pushl	%eax
 	pushl	$TRAPTS
 	call	sigfunc
 
@@ -251,6 +263,8 @@ trapts:
 	sti
 	iret
 trapnp:
+	/* fault eip <- stack pointer */
+	movl	0(%esp), %eax		// faulting segment selector
 	pushal
 	movl	32(%esp), %eax
 	pushl	%ds
@@ -259,6 +273,7 @@ trapnp:
 	pushl	%gs
 	movl	%esp, %ebp
 
+	pushl	%eax
 	pushl	$TRAPNP
 	call	sigfunc
 
@@ -273,6 +288,8 @@ trapnp:
 	iret
 
 trapss:
+	/* fault eip <- stack pointer */
+	movl	0(%esp), %eax		// faulting segment selector
 	pushal
 	movl	32(%esp), %eax
 	pushl	%ds
@@ -281,6 +298,7 @@ trapss:
 	pushl	%gs
 	movl	%esp, %ebp
 
+	pushl	%eax
 	pushl	$TRAPSS
 	call	sigfunc
 
@@ -295,6 +313,8 @@ trapss:
 	iret
 
 trapgp:
+	/* fault eip <- stack pointer */
+	movl	0(%esp), %eax		// faulting instruction pointer
 	pushal
 	movl	32(%esp), %eax
 	pushl	%ds
@@ -303,6 +323,7 @@ trapgp:
 	pushl	%gs
 	movl	%esp, %ebp
 
+	pushl	%eax
 	pushl	$TRAPGP
 	call	sigfunc
 
@@ -343,6 +364,7 @@ trappf:
 	iret
 
 trapmf:
+	/* no error on stack */
 	pushal
 	movl	32(%esp), %eax
 	pushl	%ds
@@ -351,6 +373,7 @@ trapmf:
 	pushl	%gs
 	movl	%esp, %ebp
 
+	pushl	$0x00000000
 	pushl	$TRAPMF
 	call	sigfunc
 
@@ -365,6 +388,8 @@ trapmf:
 	iret
 
 trapac:
+	/* fault eip <- stack pointer */
+	movl	0(%esp), %eax		// faulting instruction pointer
 	pushal
 	movl	32(%esp), %eax
 	pushl	%ds
@@ -373,6 +398,7 @@ trapac:
 	pushl	%gs
 	movl	%esp, %ebp
 
+	pushl	%eax
 	pushl	$TRAPAC
 	call	sigfunc
 
@@ -394,6 +420,7 @@ trapmc:
 	pushl	%gs
 	movl	%esp, %ebp
 
+	pushl	$0x00000000
 	pushl	$TRAPMC
 	call	sigfunc
 
@@ -407,6 +434,8 @@ trapmc:
 	iret
 
 trapxf:
+	/* fault eip <- stack pointer */
+	movl	0(%esp), %eax		// faulting instruction pointer
 	pushal
 	pushl	%ds
 	pushl	%es
@@ -414,6 +443,7 @@ trapxf:
 	pushl	%gs
 	movl	%esp, %ebp
 
+	pushl	%eax
 	pushl	$TRAPXF
 	call	sigfunc
 

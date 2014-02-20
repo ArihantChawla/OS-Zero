@@ -118,7 +118,7 @@ vminit(void *pagetab)
              HICORE,
              PAGEPRES | PAGEWRITE | PAGENOCACHE | PAGEWIRED);
 
-#if (SMP) && 0
+#if (SMP)
     vmmapseg(pagetab, (uint32_t)MPENTRY, (uint32_t)MPENTRY,
              (uint32_t)&mpend - (uint32_t)&mpentry + MPENTRY,
              PAGEPRES);

@@ -14,7 +14,7 @@
 #define BUFSIZE     (1UL << BUFSIZELOG2)
 #define BUFSIZELOG2 12                          // TODO: make this per-device
 
-#define SMP       1     // enable multiprocessor support; currently broken
+#define SMP       0     // enable multiprocessor support; currently broken
 #define HZ        250   // scheduler timer frequency
 #define EVHZ      1000  // event timer frequency
 #define ZEROSCHED 1     // default scheduler
@@ -46,7 +46,7 @@
 
 /* planned drivers */
 #define PCI       1
-#define ATA       1
+#define ATA       0
 #define ACPI      1
 #define ACPICA    0
 #define HPET      1     // high precision event timer support

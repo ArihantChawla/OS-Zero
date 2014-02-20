@@ -16,6 +16,8 @@ extern volatile uint32_t     *mpapic;
 extern volatile struct m_cpu  mpcputab[NCPU];
 extern volatile struct m_cpu *mpbootcpu;
 
+#endif /* SMP */
+
 void
 usleep(unsigned long nusec)
 {
@@ -24,6 +26,8 @@ usleep(unsigned long nusec)
         ;
     }
 }
+
+#if (SMP)
 
 void
 apicinit(long id)

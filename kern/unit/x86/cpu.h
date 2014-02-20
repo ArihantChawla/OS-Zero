@@ -26,15 +26,17 @@ struct m_cpuinfo {
 void cpuprobe(struct m_cpuinfo *cpuinfo);
 
 #if (PTRBITS == 32)
-extern struct m_cpu *k_curcpu  __asm__ ("%gs:0");
-extern struct proc  *k_curproc __asm__ ("%gs:4");
-extern struct thr   *k_curthr  __asm__ ("%gs:8");
-//extern pde_t        *curpdir __asm__ ("%gs:12");
+extern struct m_cpu *k_curcpu    __asm__ ("%gs:0");
+extern struct proc  *k_curproc   __asm__ ("%gs:4");
+extern struct thr   *k_curthr    __asm__ ("%gs:8");
+extern pde_t        *k_curpdir   __asm__ ("%gs:12");
+//extern pde_t        *k_cursigvec __asm__ ("%gs:16");
 #elif (PTRBITS == 64)
-extern struct m_cpu *k_curcpu  __asm__ ("%gs:0");
-extern struct proc  *k_curproc __asm__ ("%gs:8");
-extern struct thr   *k_curthr  __asm__ ("%gs:12");
-//extern uint64_t     *curpml4 __asm__ ("%gs:16");
+extern struct m_cpu *k_curcpu    __asm__ ("%gs:0");
+extern struct proc  *k_curproc   __asm__ ("%gs:8");
+extern struct thr   *k_curthr    __asm__ ("%gs:16");
+extern uint64_t     *k_curpml4   __asm__ ("%gs:24");
+//extern pde_t        *k_cursigvec __asm__ ("%gs:32");
 #endif
 struct m_cpu {
     /* cpu-local variables */
@@ -47,6 +49,7 @@ struct m_cpu {
 #elif (PTRBITS == 64)
     uint64_t          pml4;
 #endif
+//    signalhandler_t  *sigvec;
     /* end of cpu local variables */
     long              id;
     volatile long     started;
