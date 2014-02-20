@@ -78,6 +78,7 @@ trapdb:
 	pushl	%gs
 	movl	%esp, %ebp
 
+	pushl	$0x00000000
 	pushl	$TRAPDB
 	call	sigfunc
 
@@ -98,6 +99,7 @@ trapnmi:
 	pushl	%gs
 	movl	%esp, %ebp
 
+	pushl	$0x00000000
 	pushl	$TRAPNMI
 	call	sigfunc
 
@@ -118,6 +120,7 @@ trapbp:
 	pushl	%gs
 	movl	%esp, %ebp
 
+	pushl	$0x00000000
 	pushl	$TRAPBP
 	call	sigfunc
 
@@ -138,6 +141,7 @@ trapof:
 	pushl	%gs
 	movl	%esp, %ebp
 
+	pushl	$0x00000000
 	pushl	$TRAPOF
 	call	sigfunc
 
@@ -204,6 +208,7 @@ trapnm:
 	pushl	%gs
 	movl	%esp, %ebp
 
+	pushl	$0x00000000
 	pushl	$TRAPNM
 	call	sigfunc
 
@@ -225,6 +230,7 @@ trapdf:
 	pushl	%gs
 	movl	%esp, %ebp
 
+	pushl	$0x00000000
 	pushl	$TRAPDF
 	call	sigfunc
 
