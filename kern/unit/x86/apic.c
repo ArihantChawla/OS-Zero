@@ -19,7 +19,7 @@ extern volatile struct m_cpu *mpbootcpu;
 void
 usleep(unsigned long nusec)
 {
-    nusec <<= 20;
+    nusec <<= 16;
     while (nusec--) {
         ;
     }
@@ -28,14 +28,19 @@ usleep(unsigned long nusec)
 void
 apicinit(long id)
 {
+    static long            first = 1;
     volatile struct m_cpu *cpu = &mpcputab[id];
 
     if (!mpapic) {
 
         return;
     }
-    /* identity-map MP table */
-    if (cpu == mpbootcpu) {
+    if (first) {
+        first = 0;
+        kprintf("local APIC @ 0x%p\n", mpapic);
+        /* identity-map MP APIC table */
+        kprintf("APIC: map MP APIC (%l bytes) @ 0x%lx\n",
+                PAGESIZE, (long)mpapic);
         vmmapseg((uint32_t *)&_pagetab, (uint32_t)mpapic, (uint32_t)mpapic,
                  (uint32_t)((uint8_t *)mpapic + PAGESIZE),
                  PAGEPRES | PAGEWRITE);

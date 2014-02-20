@@ -53,7 +53,7 @@ struct mpconf {
     uint32_t      *oemtab;              // OEM table pointer
     uint16_t       oemlen;              // OEM table length
     uint16_t       entry;               // entry count
-    uint32_t      *apicadr;            // local APIC address
+    uint32_t      *apicadr;             // local APIC address
     uint16_t       xlen;                // extended table length
     unsigned char  xchksum;             // extended table checksum
     unsigned char  res;

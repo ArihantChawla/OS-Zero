@@ -9,6 +9,7 @@
 
 #include <kern/util.h>
 #include <kern/tmr.h>
+#include <kern/unit/ia32/vm.h>
 #include <kern/mem.h>
 //#include <kern/prio.h>
 //#include <kern/thr.h>
@@ -22,7 +23,7 @@ void sb16setvol(uint16_t reg, uint8_t val);
 
 extern void *irqvec[];
 
-/* intpu and output buffers are allocated from DMA zone */
+/* intpu and output buffers are allocated from DMA zone according to channels */
 #define SB16DATA8BUFSIZE  (8 * SB16BUFSIZE)
 #define SB16DATA16BUFSIZE (16 * SB16BUFSIZE)
 
@@ -94,8 +95,10 @@ sb16setup(void)
     kprintf("SB16 @ 0x%x, IRQ %d, DMA %d (8-bit), DMA %d (16-bit)\n",
             SB16BASE, sb16drv.irq, sb16drv.dma8, sb16drv.dma16);
     /* initialize DMA interface */
+    /* reserve buffers from DMA zone */
     sb16drv.dmabuf8 = dmabufadr(sb16drv.dma8);
     sb16drv.dmabuf16 = (uint16_t *)dmabufadr(sb16drv.dma16);
+    /* initialise DMA transfer environment */
     dmasetmode(sb16drv.dma8, DMAAUTOINIT | DMAADRINCR | DMABLOCK);
     dmasetmode(sb16drv.dma16, DMAAUTOINIT | DMAADRINCR | DMABLOCK);
     dmasetadr(sb16drv.dma8, sb16drv.dmabuf8);
@@ -105,7 +108,7 @@ sb16setup(void)
     /* set input and output rates */
     sb16setrate(SB16INPUTRATE, 44100);
     sb16setrate(SB16OUTPUTRATE, 44100);
-    /* set volume */
+    /* TODO: set mixer volumes */
 //    sb16setvol(SB16MAXVOL >> 1);
     /* set block transfer size (16-bit words) */
     outw(SB16BUFSIZE >> 2, SB16SETBLKSIZE);
@@ -137,6 +140,16 @@ sb16init(void)
     sb16drv.outbuf16 = kwalloc(SB16DATA16BUFSIZE);
     kbzero(sb16drv.outbuf16, SB16DATA16BUFSIZE);
 #endif
+    vmmapseg((uint32_t *)&_pagetab,
+             (uint32_t)dmabufadr(sb16drv.dma8),
+             (uint32_t)dmabufadr(sb16drv.dma8),
+             (uint32_t)dmabufadr(sb16drv.dma8) + SB16DATA8BUFSIZE,
+             PAGEPRES | PAGEWRITE | PAGENOCACHE);
+    vmmapseg((uint32_t *)&_pagetab,
+             (uint32_t)dmabufadr(sb16drv.dma16),
+             (uint32_t)dmabufadr(sb16drv.dma16),
+             (uint32_t)dmabufadr(sb16drv.dma16) + SB16DATA16BUFSIZE,
+             PAGEPRES | PAGEWRITE | PAGENOCACHE);
     sb16drv.inbuf8 = dmabufadr(sb16drv.dma8);
     kbzero(sb16drv.inbuf8, SB16DATA8BUFSIZE);
     sb16drv.outbuf8 = dmabufadr(sb16drv.dma8) + (DMACHANBUFSIZE >> 1);

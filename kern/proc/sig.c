@@ -50,10 +50,11 @@ sigfunc(uint32_t trap)
     long             signum = signumtab[trap];
     signalhandler_t *func;
 
-//    kprintf("trap %ld -> signal %ld\n", trap, signum);
     if (signum == SIGKILL) {
+        kprintf("trap 0x%lx -> signal 0x%lx\n", trap, signum);
         kill(proc);
     } else if ((signum) && sigismember(&proc->sigmask, signum)) {
+        kprintf("trap 0x%lx -> signal 0x%lx\n", trap, signum);
         func = proc->sigvec[signum];
         if (func) {
             func(signum);

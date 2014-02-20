@@ -471,7 +471,7 @@ wpmloop(void *cpustat)
 #endif
 
     wpminit();
-#if (WPMTRACE)
+#if (WPMTRACE) && 0
     fprintf(stderr, "memory\n");
     fprintf(stderr, "------\n");
     for (i = WPMTEXTBASE ; i < WPMTEXTBASE + 256 ; i++) {
@@ -496,6 +496,9 @@ wpmloop(void *cpustat)
             wpm->cpustat.pc = rounduppow2(wpm->cpustat.pc, sizeof(wpmword_t));
             op = (struct wpmopcode *)&physmem[wpm->cpustat.pc];
             func = wpmopfunctab[op->unit][op->inst];
+#if (WPMTRACE)
+            wpmprintop(op);
+#endif
             if (func) {
 #if (WPMDB)
                 line = zasfindline(wpm->cpustat.pc);
@@ -1719,7 +1722,7 @@ opreset(struct wpmopcode *op)
 void
 ophlt(struct wpmopcode *op)
 {
-    wpm->waitintr = 1;
+    wpm->shutdown = 1;
 
     return;
 }

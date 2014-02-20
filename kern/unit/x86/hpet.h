@@ -1,8 +1,9 @@
 #ifndef __KERN_UNIT_X86_HPET_H__
 #define __KERN_UNIT_X86_HPET_H__
 
-#define HPETBASE      0x7ed00000
-
+/* base addresses */
+#define HPET0BASE     0xfed00000
+#define HPET1BASE     0xfed80000
 #define HPETREGSIZE   1024
 #define HPETREGSIZE64 65536
 //#define HPETSIG       0x54455048U       // "HPET"
@@ -50,11 +51,20 @@
 /*
  * allow main counter to run and allow timer interrupts if enabled
  */
-#define HPETCONFENABLE  0x0001
-#define HPETCONFLEGRT   0x0002
+#define HPETIDREG       0x0000  // general capabilities and ID, read-only
+#define HPETGENCAPLO    0x0000
+#define HPETGENCAPHIGH  0x0004
+#define HPETGENCAP64    0x0000
+#define HPETCONFENABLE  0x0001  // enable clock source for the chip
+#define HPETCONFLEGRT   0x0002  // per-timer settings
+#define HPETREVIDMASK   0x00ff  // revision of implemented functions
+#define HPETNUMTIMMASK  0x1f00  // # of the last timer
+#define HPETCNTSIZEMASK 0x2000  // 0 = 32-bit, 1 = 64-bit
+#define HPETLEGRTBIT    0x8000  // 1 = support legacy replacement route
+#define HPETVENDORMASK  0xffff0000
+#define HPETCNTRPERIOD  UINT64_C(0xffffffff00000000)
 /* all except the ID register are read-write */
-#define HPETIDREG       0x0000
-#define HPETCONFREG     0x0010
+#define HPETCONFREG     0x0010  
 #define HPETINTSTATREG  0x0020
 #define HPETMAINCNTREG  0x00f0
 #define HPETTMR0CONFREG 0x0100
@@ -67,6 +77,7 @@
 #define HPETTMR2CMPREG  0x0148
 #define HPETTMR2FSBREG  0x0150
 
+#if 0
 /* tmrblkid */
 #define hpettmrid0(hdp)                                                 \
     ((hdp->tmrblkid) >> 16)
@@ -105,9 +116,6 @@ struct hpet {
     uint32_t oemrev;            // OEM revision
     uint32_t creatid;           // creator ID
     uint32_t creatrev;          // creator revision
-};
-
-struct hpetinfo {
     uint32_t tmrblkid;          // event timer block ID
     uint8_t  adrtype;           // ACPI address type -> 0 = memory, 1 = I/O
     uint8_t  regsz;             // register width in bits
@@ -118,6 +126,33 @@ struct hpetinfo {
     uint16_t mintick;           // main counter minimum tick in periodic mode
     uint8_t  protoematr;
 } PACK();
+#endif /* 0 */
+
+#define hpetrevid(hpet)                                                 \
+    ((hpet)->gencaplo & 0xff)
+#define hpetnumtim(hpet)                                                \
+    (((hpet)->gencaplo >> 8) & 0x1f)
+#define hpetcntsize(hpet)                                               \
+    ((hpet)->gencaplo & HPETCNTSIZEMASK)
+#define hpetlegrt(hpet)                                                 \
+    (((hpet)->gencaplo & HPETLEGRTBIT))
+#define hpetvendor(hpet)                                                \
+    (((hpet)->gencaplo) >> 16)
+#define hpetclkperiod(hpet)                                             \
+    ((hpet)->gencaphi)
+struct hpetdrv {
+    void *iobase0;              // base I/O address for primary HPET
+    void *iobase1;              // base I/O address for secondary HPET
+    long  ntmr0;                // # of available timers for primary HPET
+    long  tmr0size;             // non-zero if 64-bit, zero if 32-bit
+    long  ntmr1;                // # of available timers for secondary HPET
+    long  tmr1size;             // non-zero if 64-bit, zero if 32-bit
+};
+
+struct hpet {
+    uint32_t gencaplo;
+    uint32_t gencaphi;
+};
 
 #endif /* __KERN_UNIT_X86_HPET_H__ */
 

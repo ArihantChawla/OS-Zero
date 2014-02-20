@@ -6,70 +6,54 @@
 #include <kern/unit/ia32/vm.h>
 
 #if (HPET)
-#define EBDAADR     0x040e
-#define ACPIBASEADR 0xe0000
-#define ACPIMEMSZ   (0xfffff - ACPIBASEADR + 1)
 
-volatile struct hpet *hpetptr;
+static struct hpetdrv hpetdrv;
 
-static long
-hpetchksum(uint8_t *ptr, unsigned long len)
+void
+hpetprobe(long id)
 {
-    uint8_t sum = 0;
+    struct hpet *ptr = !id ? (void *)HPET0BASE : (void *)HPET1BASE;
+    uint32_t     dword1;
+    uint32_t     dword2;
 
-    while (len--) {
-        sum += *ptr++;
-    }
-
-    return sum;
-}
-
-static struct hpet *
-hpetfind(uintptr_t adr, unsigned long len)
-{
-    uint32_t    *lim = (uint32_t *)(adr + len);
-    struct hpet *hpet = NULL;
-    uint32_t    *ptr = (uint32_t *)adr;
-
-    while (ptr < lim) {
-        if (*ptr == HPETSIG
-            && !hpetchksum((uint8_t *)ptr, sizeof(struct hpet))) {
-            hpet = (struct hpet *)ptr;
-
-            return hpet;
+    dword1 = ptr->gencaplo;
+    dword2 = ptr->gencaphi;
+    if ((dword1) || (dword2)) {
+        if (!id) {
+            hpetdrv.iobase0 = ptr;
+            hpetdrv.ntmr0 = hpetnumtim(ptr);
+            hpetdrv.tmr0size = hpetcntsize(ptr);
+            kprintf("HPET0: rev = 0x%x, vendor = 0x%x, %l timers, 64-bit = %x\n",
+                    hpetrevid(ptr), hpetvendor(ptr),
+                    hpetnumtim(ptr), hpetcntsize(ptr) >> 13);
+        } else {
+            hpetdrv.iobase1 = ptr;
+            hpetdrv.ntmr1 = hpetnumtim(ptr);
+            hpetdrv.tmr1size = hpetcntsize(ptr);
+            kprintf("HPET1: rev = 0x%x, vendor = 0x%x, %l timers, 64-bit: %x\n",
+                    hpetrevid(ptr), hpetvendor(ptr),
+                    hpetnumtim(ptr), hpetcntsize(ptr));
         }
-        ptr++;
     }
 
-    return hpet;
+    return;
 }
 
 void
 hpetinit(void)
 {
-    uintptr_t      adr = EBDAADR << 4;
-    unsigned long  len = 0xa0000 - adr;
-    struct hpet   *hpet = NULL;
+    unsigned long  len = HPETREGSIZE64;
 
-    hpet = hpetfind(adr, len);
-    if (!hpet) {
-        adr = ACPIBASEADR;
-        hpet = hpetfind(ACPIBASEADR, ACPIMEMSZ);
-    }
-    if (hpet) {
-        kprintf("HPET table found @ %p\n", hpet);
-    } else {
-        adr = HPETBASE;
-        len = PAGESIZE;
-        vmmapseg((uint32_t *)&_pagetab, HPETBASE, HPETBASE,
-                 HPETBASE + len,
-                 PAGEPRES | PAGEWRITE | PAGENOCACHE);
-        hpet = hpetfind(adr, len);
-    }
-    if (!hpet) {
-        kprintf("HPET table not found\n");
-    }
-    hpetptr = hpet;
+    kprintf("HPET: map HPET0 @ 0x%lx\n", HPET0BASE);
+    vmmapseg((uint32_t *)&_pagetab, HPET0BASE, HPET0BASE,
+             HPET0BASE + len,
+             PAGEPRES | PAGEWRITE | PAGENOCACHE | PAGEWIRED);
+    kprintf("HPET: map HPET1 @ 0x%lx\n", HPET1BASE);
+    vmmapseg((uint32_t *)&_pagetab, HPET1BASE, HPET1BASE,
+             HPET1BASE + len,
+             PAGEPRES | PAGEWRITE | PAGENOCACHE | PAGEWIRED);
+    hpetprobe(0);
+    hpetprobe(1);
 
     return;
 }

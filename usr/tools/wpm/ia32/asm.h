@@ -43,4 +43,7 @@
     __asm__ __volatile__ ("idiv %0\n" : "=r" (dest) : "r" (src), "0" (dest)); \
     __asm__ __volatile__ ("mov %%edx, %0\n" : "=r" (dest))
 
+#define asmhlt()                                                        \
+    __asm__ __volatile__ ("hlt\n" : : : "memory")
+
 #endif /* __WPM_IA32_ASM_H__ */

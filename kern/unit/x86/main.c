@@ -145,6 +145,9 @@ kmain(struct mboothdr *hdr, unsigned long pmemsz)
 #if (SMP)
     /* multiprocessor probe */
     mpinit();
+    if (mpapic) {
+        apicinit(0);
+    }
     if (mpmultiproc) {
         mpstart();
     }
@@ -152,9 +155,6 @@ kmain(struct mboothdr *hdr, unsigned long pmemsz)
         kprintf("found %ld processor\n", mpncpu);
     } else {
         kprintf("found %ld processors\n", mpncpu);
-    }
-    if (mpapic) {
-        kprintf("local APIC @ 0x%p\n", mpapic);
     }
     k_curcpu = &cputab[0];
 #endif

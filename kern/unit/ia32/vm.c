@@ -101,6 +101,7 @@ vminit(void *pagetab)
     /* zero page tables */
     kbzero(pagetab, PAGETABSIZE);
 
+#if 0
     /* identity map 3.5G..4G for devices */
     pde = pagetab + vmpagenum(3584UL * 1024 * 1024);
     adr = 3584UL * 1024 * 1024;
@@ -110,11 +111,12 @@ vminit(void *pagetab)
         adr += PAGESIZE;
         pde++;
     }
+#endif
 
     /* identity-map 0..1M */
     vmmapseg(pagetab, 0, 0,
              HICORE,
-             PAGEPRES | PAGEWRITE | PAGENOCACHE);
+             PAGEPRES | PAGEWRITE | PAGENOCACHE | PAGEWIRED);
 
 #if (SMP) && 0
     vmmapseg(pagetab, (uint32_t)MPENTRY, (uint32_t)MPENTRY,
@@ -130,12 +132,12 @@ vminit(void *pagetab)
     /* map kernel DMA buffers */
     vmmapseg(pagetab, (uint32_t)&_dmabuf, DMABUFBASE,
              (uint32_t)&_dmabuf + DMABUFSIZE,
-             PAGEPRES | PAGEWRITE | PAGENOCACHE);
+             PAGEPRES | PAGEWRITE | PAGENOCACHE | PAGEWIRED);
 
     /* identity map page tables */
     vmmapseg(pagetab, (uint32_t)pagetab, (uint32_t)pagetab,
              (uint32_t)pagetab + PAGETABSIZE,
-             PAGEPRES | PAGEWRITE);
+             PAGEPRES | PAGEWRITE | PAGEWIRED);
 
     /* map kernel text/read-only segments */
     vmmapseg(pagetab, (uint32_t)&_text, vmlinkadr((uint32_t)&_textvirt),

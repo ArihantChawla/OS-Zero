@@ -145,27 +145,27 @@ cpuid_print_cache_info_intel(uint8_t id)
     if (info->size) {
         switch (info->type) {
             case M_CPUIDINSTRTLB:
-                kprintf("itlb: %luK pages, %lu-way, %lu entries\n",
+                kprintf("itlb: %lK pages, %l-way, %l entries\n",
                         info->size / 1024, info->nway, info->xsize);
                 
                 break;
             case M_CPUIDDATATLB:
-                kprintf("dtlb: %luK pages, %lu-way, %lu entries\n",
+                kprintf("dtlb: %lK pages, %l-way, %l entries\n",
                         info->size / 1024, info->nway, info->xsize);
                 
                 break;
             case M_CPUIDINSTRCACHE:
-                kprintf("icache: %luK, %lu-way, %lu-byte line\n",
+                kprintf("icache: %lK, %l-way, %l-byte line\n",
                         info->size / 1024, info->nway, info->xsize);
                 
                 break;
             case M_CPUIDDATACACHE:
-                kprintf("dcache: %luK, %lu-way, %lu-byte line\n",
+                kprintf("dcache: %lK, %l-way, %l-byte line\n",
                         info->size / 1024, info->nway, info->xsize);
                 
                 break;
             case M_CPUIDUNICACHE:
-                kprintf("ucache: %luK, %lu-way, %lu-byte line\n",
+                kprintf("ucache: %lK, %l-way, %l-byte line\n",
                         info->size / 1024, info->nway, info->xsize);
                 
                 break;
@@ -178,23 +178,23 @@ cpuid_print_cache_info_intel(uint8_t id)
 static void
 cpuid_print_l1_info_amd(struct m_cpuid *cpuid)
 {
-    kprintf("dtlb: 4K pages, %lu-way, %lu entries\n",
+    kprintf("dtlb: 4K pages, %l-way, %l entries\n",
             cpuid->ebx >> 24, (cpuid->ecx >> 16) & 0xff);
-    kprintf("dtlb: 2M pages, %lu-way, %lu entries\n",
+    kprintf("dtlb: 2M pages, %l-way, %l entries\n",
             cpuid->eax >> 24, cpuid->eax & 0xff);
-    kprintf("dtlb: 4M pages, %lu-way, %lu entries\n",
+    kprintf("dtlb: 4M pages, %l-way, %l entries\n",
             cpuid->eax >> 24, (cpuid->eax & 0xff) >> 1);
 
-    kprintf("itlb: 4K pages, %lu-way, %lu entries\n",
+    kprintf("itlb: 4K pages, %l-way, %l entries\n",
             (cpuid->ebx >> 8) & 0xff, cpuid->edx & 0xff);
-    kprintf("itlb: 2M pages, %lu-way, %lu entries\n",
+    kprintf("itlb: 2M pages, %l-way, %l entries\n",
             (cpuid->eax >> 8) & 0xff, cpuid->eax & 0xff);
-    kprintf("itlb: 4M pages, %lu-way, %lu entries\n",
+    kprintf("itlb: 4M pages, %l-way, %l entries\n",
             (cpuid->eax >> 8) & 0xff, (cpuid->eax & 0xff) >> 1);
 
-    kprintf("dcache: %luK, %lu-way, %lu-byte line\n",
+    kprintf("dcache: %lK, %l-way, %l-byte line\n",
             cpuid->ecx >> 24, (cpuid->ecx >> 16) & 0xff, cpuid->ecx & 0xff);
-    kprintf("icache: %luK, %lu-way, %lu-byte line\n",
+    kprintf("icache: %lK, %l-way, %l-byte line\n",
             cpuid->edx >> 24, (cpuid->edx >> 16) & 0xff, cpuid->edx & 0xff);
 
     return;
@@ -203,21 +203,21 @@ cpuid_print_l1_info_amd(struct m_cpuid *cpuid)
 static void
 cpuid_print_l2_info_amd(struct m_cpuid *cpuid)
 {
-    kprintf("l2: %luK, %lu-way, %lu-byte line\n",
+    kprintf("l2: %lK, %l-way, %l-byte line\n",
             cpuid->ecx >> 16, (cpuid->ecx >> 12) & 0x0f, cpuid->ecx & 0xff);
 
-    kprintf("l2dtlb: 4K, %lu-way,  %lu entries\n",
+    kprintf("l2dtlb: 4K, %l-way,  %l entries\n",
             cpuid->ebx >> 28, (cpuid->ebx >> 16) & 0x0fff);
-    kprintf("l2dtlb: 2M, %lu-way,  %lu entries\n",
+    kprintf("l2dtlb: 2M, %l-way,  %l entries\n",
             cpuid->eax >> 28, (cpuid->eax >> 16) & 0x0fff);
-    kprintf("l2dtlb: 4M, %lu-way,  %lu entries\n",
+    kprintf("l2dtlb: 4M, %l-way,  %l entries\n",
             cpuid->eax >> 28, ((cpuid->eax >> 16) & 0x0fff) >> 1);
 
-    kprintf("l2itlb: 4K, %lu-way,  %lu entries\n",
+    kprintf("l2itlb: 4K, %l-way,  %l entries\n",
             (cpuid->ebx >> 12) & 0x0f, cpuid->ebx & 0x0fff);
-    kprintf("l2itlb: 2M, %lu-way,  %lu entries\n",
+    kprintf("l2itlb: 2M, %l-way,  %l entries\n",
             (cpuid->eax >> 12) & 0x0f, cpuid->eax & 0x0fff);
-    kprintf("l2itlb: 4M, %lu-way,  %lu entries\n",
+    kprintf("l2itlb: 4M, %l-way,  %l entries\n",
             (cpuid->eax >> 12) & 0x0f, (cpuid->eax & 0x0fff) >> 1);
 
     return;
@@ -435,6 +435,7 @@ cpuprintinfo(void)
     }
     /* stepping, model, family, type, ext_model, ext_family */
     cpuidgetinfo(&buf);
+#if 0
     kprintf("cpu info:\n");
     kprintf("\tstepping: %u\n", cpuidstepping(&buf));
     kprintf("\tmodel: %u\n", cpuidmodel(&buf));
@@ -442,6 +443,7 @@ cpuprintinfo(void)
     kprintf("\ttype: %u\n", cpuidtype(&buf));
     kprintf("\text_model: %u\n", cpuidextmodel(&buf));
     kprintf("\text_family: %u\n", cpuidextfamily(&buf));
+#endif
     
     kprintf("cpu features:");
     if (cpuidhaspse(&buf)) {
@@ -474,10 +476,10 @@ cpuprintinfo(void)
     if (cpuidhassse3(&buf)) {
         kprintf(" sse3");
     }
-    kprintf("\n");
+//    kprintf("\n");
     
     cpuidgetexti(&buf);
-    kprintf("amd features: ");
+//    kprintf("amd features: ");
     if (cpuidhasamd_mmx(&buf)) {
         kprintf(" mmx");
     }
