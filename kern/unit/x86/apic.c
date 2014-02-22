@@ -1,6 +1,6 @@
 #include <kern/conf.h>
 
-#if (SMP)
+#if (SMP) || (APIC)
 
 #include <stdint.h>
 #include <sys/io.h>
@@ -12,11 +12,15 @@
 #include <kern/unit/ia32/pit.h>
 #endif
 
-extern volatile uint32_t     *mpapic;
-extern volatile struct m_cpu  mpcputab[NCPU];
-extern volatile struct m_cpu *mpbootcpu;
-
-#endif /* SMP */
+extern void                    irqtimer(void);
+extern void                  (*irqerror)(void);
+extern void                  (*irqspurious)(void);
+extern void                  (*mpspurint)(void);
+extern uint64_t                kernidt[NINTR];
+extern void                   *irqvec[];
+extern volatile uint32_t      *mpapic;
+extern volatile struct m_cpu   mpcputab[NCPU];
+extern volatile struct m_cpu  *mpbootcpu;
 
 void
 usleep(unsigned long nusec)
@@ -27,11 +31,10 @@ usleep(unsigned long nusec)
     }
 }
 
-#if (SMP)
-
 void
 apicinit(long id)
 {
+    uint64_t              *idt = kernidt;
     static long            first = 1;
     volatile struct m_cpu *cpu = &mpcputab[id];
 
@@ -39,6 +42,10 @@ apicinit(long id)
 
         return;
     }
+
+    kprintf("initialising timer interrupt to %d Hz\n", HZ);
+    trapsetintgate(&idt[trapirqid(IRQTIMER)], irqtimer, TRAPUSER);
+
     if (first) {
         first = 0;
         kprintf("local APIC @ 0x%p\n", mpapic);
@@ -48,6 +55,8 @@ apicinit(long id)
         vmmapseg((uint32_t *)&_pagetab, (uint32_t)mpapic, (uint32_t)mpapic,
                  (uint32_t)((uint8_t *)mpapic + PAGESIZE),
                  PAGEPRES | PAGEWRITE);
+        irqvec[IRQERROR] = irqerror;
+        irqvec[IRQSPURIOUS] = irqspurious;
     }
     cpu->id = id;
     /* enable local APIC; set spurious interrupt vector */
@@ -58,7 +67,8 @@ apicinit(long id)
      */
     apicwrite(APICBASEDIV, APICTMRDIVCONF);
     apicwrite(APICPERIODIC | (IRQBASE + IRQTIMER), APICTIMER);
-    apicwrite(10000000, APICTMRINITCNT);
+//    apicwrite(10000000, APICTMRINITCNT);
+    apicwrite(1000, APICTMRINITCNT);
     /* disable logical interrupt lines */
     apicwrite(APICMASKED, APICLINTR0);
     apicwrite(APICMASKED, APICLINTR1);
@@ -113,9 +123,14 @@ apicstart(uint8_t id, uint32_t adr)
 
 /* set APIC interrupt frequency */
 void
-apicsethz(long hz)
+apicsettmr(long hz, long flg)
 {
+    if (flg & APICONESHOT) {
+        /* one-shot timer */
+    } else {
+        /* periodic timer */
+    }
 }
 
-#endif /* SMP */
+#endif /* SMP || APIC */
 

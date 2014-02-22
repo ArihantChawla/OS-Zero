@@ -3,8 +3,9 @@
 
 #include <kern/conf.h>
 
-#if (SMP)
+#if (SMP) || (APIC)
 
+#define MPENTRYSEG 0x9f00
 #define MPENTRY    0x9f000
 #define MPENTRYSTK 0x9e000
 

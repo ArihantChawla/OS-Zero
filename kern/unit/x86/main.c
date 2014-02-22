@@ -147,6 +147,7 @@ kmain(struct mboothdr *hdr, unsigned long pmemsz)
     mpinit();
     if (mpapic) {
         apicinit(0);
+        ioapicinit(0);
     }
     if (mpmultiproc) {
         mpstart();

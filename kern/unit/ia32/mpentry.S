@@ -30,6 +30,8 @@
 mpentry:
 	/* disable interrupts */
 	cli
+//	ljmpl	$MPENTRYSEG, (_mpflush - mpentry + MPENTRY)
+//_mpflush:
 	/* set data segment */
 	movw	$(MPENTRY >> 4), %ax
 	movw	%ax, %ds

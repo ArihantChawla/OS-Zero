@@ -39,16 +39,15 @@
 .globl	trapts, trapnp, trapss, trapgp, trappf, trapmf, trapac, trapmc, trapxf
 .globl	irqtimer0, irqtimer, irqkbd, irqmouse, irqerror, irqspurious
 .globl	irqvec
+#if (SMP) || (APIC)
+.globl	irqerror, irqspurious, mpspurint
+#endif
 
 .extern	sigfunc, tmrsyncscr, schedyield, vmpagefault, kbdtrap, mousetrap
-#if (SMP)
-.extern	mpspurint
-#endif
 
 .text	32
 
 trapde:
-	/* fault eip <- stack pointer */
 	movl	0(%esp), %eax		// faulting instruction pointer
 	pushal
 	pushl	%ds
@@ -155,7 +154,6 @@ trapof:
 	iret
 
 trapbr:
-	/* fault eip <- stack pointer */
 	movl	0(%esp), %eax		// faulting instruction pointer
 	pushal
 	pushl	%ds
@@ -178,7 +176,6 @@ trapbr:
 	iret
 
 trapud:
-	/* fault eip <- stack pointer */
 	movl	0(%esp), %eax		// faulting instruction pointer
 	pushal
 	pushl	%ds
@@ -248,7 +245,6 @@ trapdf:
 	iret
 
 trapts:
-	/* fault eip <- stack pointer */
 	movl	0(%esp), %eax		// faulting segment selector
 	pushal
 	movl	32(%esp), %eax
@@ -272,7 +268,6 @@ trapts:
 	sti
 	iret
 trapnp:
-	/* fault eip <- stack pointer */
 	movl	0(%esp), %eax		// faulting segment selector
 	pushal
 	movl	32(%esp), %eax
@@ -297,7 +292,6 @@ trapnp:
 	iret
 
 trapss:
-	/* fault eip <- stack pointer */
 	movl	0(%esp), %eax		// faulting segment selector
 	pushal
 	movl	32(%esp), %eax
@@ -361,7 +355,7 @@ trappf:
 	pushl	%eax			// error code
 	movl	%cr2, %eax		// linear address
 	pushl	%eax
-	pushl	$0x00000000
+	pushl	$0x00000000		// TODO: push PID here
 	call	vmpagefault
 
 	movl	%ebp, %esp
@@ -509,9 +503,6 @@ irqtimer:
 //	call	tmrfunc
 	movl	schedyield, %eax
 	call	*%eax
-#if 0
-	call	thryield
-#endif
 
 	movb	$0x20, %al
 	outb	%al, $0x20
@@ -644,7 +635,7 @@ _irqmousedone:
 	sti
 	iret
 
-#if (SMP)
+#if (SMP) || (APIC)
 irqerror:
 	sti
 	iret
@@ -676,6 +667,10 @@ irqspurious:
 
 .align	32
 
+	/* 0x00..0x1f	- IRQs 0-15 */
+	/* 19		- IRQERROR */
+	/* 29		- IRQIPI */
+	/* 31		- IRQSPURIOUS */
 irqvec:
 	.long	0x00000000
 	.long	0x00000000
@@ -693,4 +688,56 @@ irqvec:
 	.long	0x00000000
 	.long	0x00000000
 	.long	0x00000000
+#if (SMP) || (APIC)
+	.long	0x00000000
+	.long	0x00000000
+	.long	0x00000000
+	.long	0x00000000
+	.long	0x00000000
+	.long	0x00000000
+	.long	0x00000000
+	.long	0x00000000
+	.long	0x00000000
+	.long	0x00000000
+	.long	0x00000000
+	.long	0x00000000
+	.long	0x00000000
+	.long	0x00000000
+	.long	0x00000000
+	.long	0x00000000
+	.long	0x00000000
+	.long	0x00000000
+	.long	0x00000000
+	.long	0x00000000
+	.long	0x00000000
+	.long	0x00000000
+	.long	0x00000000
+	.long	0x00000000
+	.long	0x00000000
+	.long	0x00000000
+	.long	0x00000000
+	.long	0x00000000
+	.long	0x00000000
+	.long	0x00000000
+	.long	0x00000000
+	.long	0x00000000
+	.long	0x00000000
+	.long	0x00000000
+	.long	0x00000000
+	.long	0x00000000
+	.long	0x00000000
+	.long	0x00000000
+	.long	0x00000000
+	.long	0x00000000
+	.long	0x00000000
+	.long	0x00000000
+	.long	0x00000000
+	.long	0x00000000
+	.long	0x00000000
+	.long	0x00000000
+	.long	0x00000000
+	.long	0x00000000
+#endif
+
+
 

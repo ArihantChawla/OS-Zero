@@ -8,6 +8,7 @@
 #include <zero/types.h>
 
 #define CPUHASFXSR 0x00000001
+#define CPUHASAPIC 0x00000002
 
 struct m_cpucache {
     uint32_t size;

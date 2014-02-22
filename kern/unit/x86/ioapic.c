@@ -1,6 +1,6 @@
 #include <kern/conf.h>
 
-#if (SMP)
+#if (SMP) || (APIC)
 
 #include <stdint.h>
 #include <kern/unit/x86/trap.h>

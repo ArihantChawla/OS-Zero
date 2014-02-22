@@ -52,9 +52,9 @@ sigfunc(uint32_t trap, uint32_t errcode)
 
 //    kprintf("trap 0x%lx -> signal 0x%lx\n", trap, signum);
     if (trap == TRAPUD) {
-        kprintf("PANIC: #UD (0x%lx)\n", errcode);
+//        kprintf("PANIC: #UD (0x%lx)\n", errcode);
     } else if (trap == TRAPGP) {
-        kprintf("PANIC: #GP (0x%lx)\n", errcode);
+//        kprintf("PANIC: #GP (0x%lx)\n", errcode);
     } else if (signum == SIGKILL) {
 //        kprintf("trap 0x%lx -> signal 0x%lx\n", trap, signum);
         kill(proc);

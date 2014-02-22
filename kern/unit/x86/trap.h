@@ -144,10 +144,10 @@ m_lidt(struct m_farptr *fp)
 #define IRQIDE0     14  // IDE controller 1
 #define IRQIDE1     15  // IDE controller 2
 #define NIRQ        16
-#if (SMP)
+#if (SMP) || (APIC)
 #define IRQERROR    19
 #define IRQIPI      29
-#define IRQSPURIOUS 31
+#define IRQSPURIOUS 47
 #endif
 
 #endif /* __KERN_UNIT_X86_TRAP_H__ */

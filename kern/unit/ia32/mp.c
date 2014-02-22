@@ -1,6 +1,6 @@
 #include <kern/conf.h>
 
-#if (SMP)
+#if (SMP) || (APIC)
 
 #include <stddef.h>
 #include <sys/io.h>
@@ -206,9 +206,9 @@ mpinit(void)
     }
     /* Boot CPU */
     /* local APIC initialisation where present */
-    apicinit(0);
+//    apicinit(0);
     /* I/O APIC initialisation */
-    ioapicinit(0);
+//    ioapicinit(0);
 
     return;
 }
@@ -273,5 +273,5 @@ mpspurint(void)
     return;
 }
 
-#endif /* SMP */
+#endif /* SMP || APIC */
 

@@ -3,7 +3,7 @@
 
 #include <kern/conf.h>
 
-#if (SMP)
+#if (SMP) || (APIC)
 
 #include <stdint.h>
 #include <kern/unit/ia32/link.h>
@@ -46,7 +46,7 @@ void usleep(unsigned long nusec);
 /* timer configuration */
 #define APICDISABLE    0x00010000
 //#define APICDIV1       0x00000008
-#define APICBASEDIV    0x00100000
+#define APICBASEDIV    0x0000000b
 #define APICPERIODIC   0x00020000
 
 /* flags */
@@ -96,7 +96,7 @@ apicsendirq(uint32_t hi, uint32_t lo, long nusec)
     __asm__ __volatile__ ("popfl\n");
 }
 
-#endif /* SMP */
+#endif /* SMP || APIC */
 
 #endif /* __KERN_UNIT_X86_APIC_H__ */
 

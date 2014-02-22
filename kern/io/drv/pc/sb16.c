@@ -109,7 +109,8 @@ sb16setup(void)
     sb16setrate(SB16INPUTRATE, 44100);
     sb16setrate(SB16OUTPUTRATE, 44100);
     /* TODO: set mixer volumes */
-//    sb16setvol(SB16MAXVOL >> 1);
+    sb16setvol(SB16MASTERLVOL, SB16MAXVOL >> 1);
+    sb16setvol(SB16MASTERRVOL, SB16MAXVOL >> 1);
     /* set block transfer size (16-bit words) */
     outw(SB16BUFSIZE >> 2, SB16SETBLKSIZE);
     sb16drv.init = 1;
@@ -175,10 +176,12 @@ sb16init(void)
 void
 sb16unload(void)
 {
+#if 0
     kfree(sb16drv.inbuf8);
     kfree(sb16drv.outbuf8);
     kfree(sb16drv.inbuf16);
     kfree(sb16drv.outbuf16);
+#endif
 
     return;
 }

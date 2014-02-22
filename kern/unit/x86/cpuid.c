@@ -223,65 +223,67 @@ cpuid_print_l2_info_amd(struct m_cpuid *cpuid)
     return;
 }
 
-#define cpuidgetvendor(ptr) \
-    __asm__("movl %0, %%eax" : : "i" (M_CPUIDVENDOR)); \
-    __asm__("cpuid" : : : "eax", "ebx", "ecx", "edx"); \
-    __asm__("movl %%ebx, %0" : "=m" ((ptr)->wtab[0])); \
-    __asm__("movl %%edx, %0" : "=m" ((ptr)->wtab[1])); \
-    __asm__("movl %%ecx, %0" : "=m" ((ptr)->wtab[2])); \
-    __asm__("xorl %eax, %eax"); \
+#define cpuidgetvendor(ptr)                                             \
+    __asm__("movl %0, %%eax" : : "i" (M_CPUIDVENDOR));                  \
+    __asm__("cpuid" : : : "eax", "ebx", "ecx", "edx");                  \
+    __asm__("movl %%ebx, %0" : "=m" ((ptr)->wtab[0]));                  \
+    __asm__("movl %%edx, %0" : "=m" ((ptr)->wtab[1]));                  \
+    __asm__("movl %%ecx, %0" : "=m" ((ptr)->wtab[2]));                  \
+    __asm__("xorl %eax, %eax");                                         \
     __asm__("movl %%eax, %0" : "=m" ((ptr)->wtab[3]));
-#define cpuidgetinfo(ptr) \
+#define cpuidgetinfo(ptr)                                               \
     cpuid(M_CPUIDINFO, ptr)
-#define cpuidgetexti(ptr) \
+#define cpuidgetexti(ptr)                                               \
     cpuid(M_CPUIDEXTINFO, ptr)
-#define cpuidgetci_intel(ptr) \
+#define cpuidgetci_intel(ptr)                                           \
     cpuid(M_CPUIDCACHE, ptr)
-#define cpuidgetl1_amd(ptr) \
+#define cpuidgetl1_amd(ptr)                                             \
     cpuid(M_CPUIDL1_AMD, ptr)
-#define cpuidgetl2_amd(ptr) \
+#define cpuidgetl2_amd(ptr)                                             \
     cpuid(M_CPUIDL2_AMD, ptr)
 
 /* M_CPUIDINFO */
-#define cpuidstepping(ptr) \
+#define cpuidstepping(ptr)                                              \
     ((ptr)->eax & 0x0000000f)
-#define cpuidmodel(ptr) \
+#define cpuidmodel(ptr)                                                 \
     (((ptr)->eax & 0x000000f0) >> 4)
-#define cpuidfamily(ptr) \
+#define cpuidfamily(ptr)                                                \
     (((ptr)->eax & 0x00000f00) >> 8)
-#define cpuidtype(ptr) \
+#define cpuidtype(ptr)                                                  \
     (((ptr)->eax & 0x00003000) >> 12)
-#define cpuidextmodel(ptr) \
+#define cpuidextmodel(ptr)                                              \
     (((ptr)->eax & 0x000f0000) >> 16)
-#define cpuidextfamily(ptr) \
+#define cpuidextfamily(ptr)                                             \
     (((ptr)->eax & 0x0ff00000) >> 20)
-#define cpuidhaspse(ptr) \
+#define cpuidhaspse(ptr)                                                \
     ((ptr)->edx & CPUIDPSE)
-#define cpuidhastsc(ptr) \
+#define cpuidhastsc(ptr)                                                \
     ((ptr)->edx & CPUIDTSC)
-#define cpuidhassep(ptr) \
+#define cpuidhassep(ptr)                                                \
     ((ptr)->edx & CPUIDSEP)
-#define cpuidhaspge(ptr) \
+#define cpuidhaspge(ptr)                                                \
     ((ptr)->edx & CPUIDPGE)
-#define cpuidhasmmx(ptr) \
+#define cpuidhasmmx(ptr)                                                \
     ((ptr)->edx & CPUIDMMX)
-#define cpuidhasclfl(ptr) \
+#define cpuidhasclfl(ptr)                                               \
     ((ptr)->edx & CPUIDCLFL)
-#define cpuidhasfxsr(ptr) \
+#define cpuidhasfxsr(ptr)                                               \
     ((ptr)->edx & CPUIDFXSR)
-#define cpuidhassse(ptr) \
+#define cpuidhassse(ptr)                                                \
     ((ptr)->edx & CPUIDSSE)
-#define cpuidhassse2(ptr) \
+#define cpuidhassse2(ptr)                                               \
     ((ptr)->edx & CPUIDSSE2)
-#define cpuidhassse3(ptr) \
+#define cpuidhassse3(ptr)                                               \
     ((ptr)->ecx & CPUIDSSE3)
+#define cpuidhasapic(ptr)                                               \
+    ((ptr)->edx & CPUIDAPIC)
 
 /* CPUIDEXTINFO */
-#define cpuidhasamd_mmx(ptr) \
+#define cpuidhasamd_mmx(ptr)                                            \
     ((ptr)->edx & CPUIDAMD_MMX)
-#define cpuidhas3dnow(ptr) \
+#define cpuidhas3dnow(ptr)                                              \
     ((ptr)->edx & CPUID3DNOW)
-#define cpuidhas3dnow2(ptr) \
+#define cpuidhas3dnow2(ptr)                                             \
     ((ptr)->edx & CPUID3DNOW2)
 
 /* %edx flags. */
@@ -404,6 +406,9 @@ cpuprobe(struct m_cpuinfo *cpuinfo)
     cpuidgetinfo(&buf);
     if (cpuidhasfxsr(&buf)) {
         cpuinfo->flags |= CPUHASFXSR;
+    }
+    if (cpuidhasapic(&buf)) {
+        cpuinfo->flags |= CPUHASAPIC;
     }
 
     return;
