@@ -1,0 +1,24 @@
+Zero Virtual Filesystem Plans and Ideas
+---------------------------------------
+- show nodes Unix-style in a single tree
+- device and other special nodes under /dev
+- per-process accounting under /proc
+- system accounting under /sys
+
+Node Types
+----------
+- these are the low-level node types; the system shall do further identification
+  and other processing in user application space
+
+- file; regular file
+- dir; directory (of files)
+- fifo; a [bi-directional] pipe
+- sock; Berkeley-style network socket
+- mtx; binary semamphore
+- sem; generic semaphore
+- mq; message queues (with priorities)
+- rwlk; read-write lock
+- meta? per-file metadata, db-like interface (DB2?)
+- chr; raw/character device
+- blk; block device
+

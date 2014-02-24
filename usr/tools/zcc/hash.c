@@ -332,7 +332,7 @@ static uint16_t chvaltab[256] =
 };
 
 /* calculate hash value for symbol name */
-static __inline__ uint16_t
+uint16_t
 zcchashsym(char *name)
 {
     uint16_t ret;
@@ -352,7 +352,7 @@ zcchashsym(char *name)
 }
 
 /* add symbol into lookup hash table */
-static __inline__ void
+void
 zccaddsym(struct zccsym *sym)
 {
     uint16_t       val = zcchashsym(sym->name);
@@ -368,7 +368,7 @@ zccaddsym(struct zccsym *sym)
 }
 
 /* search hash table for symbol */
-static __inline__ struct zccsym *
+struct zccsym *
 zccfindsym(char *name)
 {
     char          *ptr = name;
@@ -387,7 +387,7 @@ zccfindsym(char *name)
 }
 
 /* remove symbol from hash table */
-static __inline__ void
+void
 zccrmsym(struct zccsym *sym)
 {
     uint16_t val;
@@ -406,7 +406,7 @@ zccrmsym(struct zccsym *sym)
 }
 
 /* calculate hash value for type name */
-static __inline__ uint16_t
+uint16_t
 zcchashtype(char *name)
 {
     uint16_t ret;
@@ -426,7 +426,7 @@ zcchashtype(char *name)
 }
 
 /* add type into lookup hash table */
-static __inline__ void
+void
 zccaddtype(struct zcctoken *token)
 {
     uint16_t val = zcchashtype(token->str);
@@ -442,7 +442,7 @@ zccaddtype(struct zcctoken *token)
 }
 
 /* search hash table for type */
-__inline__ long
+long
 zccfindtype(char *name)
 {
     char            *ptr = name;
@@ -463,7 +463,7 @@ zccfindtype(char *name)
 }
 
 /* remove type from hash table */
-static __inline__ void
+void
 zccrmtype(struct zcctoken *token)
 {
     uint16_t val;

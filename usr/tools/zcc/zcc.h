@@ -278,8 +278,6 @@ struct zccmach {
 struct zppinput * zpplex(int argc, char *argv[]);
 struct zcctoken * zpppreproc(struct zpptoken *token, struct zcctoken **tailret);
 
-__inline__ long   zccfindtype(char *name);
-
 #if (ZCCPRINT)
 void              zppprintqueue(struct zpptokenq *queue);
 #endif
