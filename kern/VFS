@@ -24,3 +24,14 @@ Node Types
 - chr; raw/character device
 - blk; block device
 
+Locks
+-----
+- locks are managed in a filesystem-persistent fashion; they only disappear at
+  system reset time
+- kernel locks must be governed by system-global mutexes
+- for read-write locks, it's possible to use per-user locks (such as daemon lock
+  files)
+- a read-write lock could be named /fs/lock/123/456.rwlk for the inode 456 on
+  device ID 123. This would facilitate more portable, less-hassle lock files for
+  user processes (their executables).
+
