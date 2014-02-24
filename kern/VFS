@@ -10,11 +10,13 @@ Node Types
 - these are the low-level node types; the system shall do further identification
   and other processing in user application space
 
+- link; hard link
+- symlink; symbolic link
 - file; regular file
 - dir; directory (of files)
 - fifo; a [bi-directional] pipe
 - sock; Berkeley-style network socket
-- mtx; binary semamphore
+- mtx; binary semaphore (mutex)
 - sem; generic semaphore
 - mq; message queues (with priorities)
 - rwlk; read-write lock
