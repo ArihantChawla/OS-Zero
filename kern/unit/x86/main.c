@@ -79,6 +79,8 @@ extern struct m_cpu              cputab[NCPU];
 #if (ACPI)
 extern volatile struct acpidesc *acpidesc;
 #endif
+extern struct pageq              vmphysq;
+extern struct pageq              vmshmq;
 extern volatile uint32_t        *mpapic;
 extern volatile long             mpncpu;
 extern volatile long             mpmultiproc;
@@ -103,7 +105,7 @@ kmain(struct mboothdr *hdr, unsigned long pmemsz)
     k_curproc = &proctab[0];
     /* TODO: use memory map from GRUB */
     meminit(vmlinkadr(&_ebssvirt), pmemsz);
-    vminitphys((uintptr_t)&_ebss, pmemsz - (unsigned long)&_ebss);
+//    vminitphys((uintptr_t)&_ebss, pmemsz - (unsigned long)&_ebss);
     kmemset(&kerniomap, 0xff, sizeof(kerniomap));
 #if (PS2DRV)
     ps2init();
@@ -115,6 +117,7 @@ kmain(struct mboothdr *hdr, unsigned long pmemsz)
     plasmaloop();
 #endif
     logoprint();
+    vminitphys((uintptr_t)&_ebss, pmemsz - (unsigned long)&_ebss);
     /* HID devices */
 #if (PCI)
     pciinit();
@@ -146,9 +149,14 @@ kmain(struct mboothdr *hdr, unsigned long pmemsz)
     /* multiprocessor probe */
     mpinit();
     if (mpapic) {
+#if (HPET)
+        hpetinit();
+#endif
         apicinit(0);
         ioapicinit(0);
     }
+    /* allocate unused device regions (in 3.5G..4G) */
+    pageaddzone(DEVMEMBASE, &vmshmq, 0xffffffff - DEVMEMBASE + 1);
     if (mpmultiproc) {
         mpstart();
     }
@@ -158,9 +166,6 @@ kmain(struct mboothdr *hdr, unsigned long pmemsz)
         kprintf("found %ld processors\n", mpncpu);
     }
     k_curcpu = &cputab[0];
-#endif
-#if (HPET)
-    hpetinit();
 #endif
     /* CPU interface */
     taskinit();
@@ -183,7 +188,7 @@ kmain(struct mboothdr *hdr, unsigned long pmemsz)
             vmpagestat.nphys << (PAGESIZELOG2 - 10));
     schedinit();
 //    pitinit();
-    /* pseudo-scheduler loop; interrupted by timer [and other] interrupts */
+    /* scheduler loop; interrupted by timer [and other] interrupts */
     while (1) {
         k_waitint();
     }

@@ -41,6 +41,7 @@ static struct vmbuf  vmbuftab[1L << (PTRBITS - BUFSIZELOG2)];
 struct vmbufq        vmbufq;
 #endif
 struct pageq         vmphysq;
+struct pageq         vmshmq;
 struct vmpagestat    vmpagestat;
 
 /*
@@ -65,6 +66,12 @@ vmmapseg(uint32_t *pagetab, uint32_t virt, uint32_t phys, uint32_t lim,
     }
 
     return;
+}
+
+void
+vmmapshm(uint32_t *pagetab, uint32_t virt, uint32_t lim, uint32_t flg)
+{
+    
 }
 
 /*

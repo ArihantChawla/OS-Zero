@@ -35,3 +35,8 @@ Locks
   device ID 123. This would facilitate more portable, less-hassle lock files for
   user processes (their executables).
 
+Maps
+----
+- reserve virtual memory [32-bit] 3.5..4G minus kernel device mappings for
+  shared memory buffers
+

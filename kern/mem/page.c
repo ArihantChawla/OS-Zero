@@ -15,6 +15,7 @@ extern struct page       vmphystab[NPAGEPHYS];
 extern struct pageq      vmlrutab[1UL << (LONGSIZELOG2 + 3)];
 extern struct vmpagestat vmpagestat;
 extern struct pageq      vmphysq;
+extern struct pageq      vmshmq;
 
 void
 pageinitzone(uintptr_t base,
@@ -42,10 +43,38 @@ pageinitzone(uintptr_t base,
 }
 
 void
+pageaddzone(uintptr_t base,
+            struct pageq *zone,
+            unsigned long nb)
+{
+    uintptr_t      adr = rounduppow2(base, PAGESIZE);
+    struct page   *pg = &vmphystab[pagenum(adr)];
+    uint32_t      *pte = (uint32_t *)&_pagetab + vmpagenum(adr);
+    unsigned long  n  = max(1, (nb - adr) >> PAGESIZELOG2);
+
+    adr += n << PAGESIZELOG2;
+    pg += n;
+//    mtxlk(&zone[0]->lk);
+    vmpagestat.nphys = n;
+    kprintf("reserving %ld (%lx) maps @ %p (%lx)\n",
+            n, n, vmphystab, pagenum(base));
+    while (n--) {
+        if (!*pte) {
+            pg--;
+            pg->adr = adr;
+            pg->nflt = 0;
+            pagepush(zone, pg);
+            adr -= PAGESIZE;
+        }
+        pte++;
+    }
+//    mtxunlk(&zone[0]->lk);
+}
+
+void
 pageinit(uintptr_t base, unsigned long nb)
 {
     pageinitzone(base, &vmphysq, max(nb, DEVMEMBASE));
-    /* TODO: allocate unused device regions (in 3.5G..4G) */
 
     return;
 }

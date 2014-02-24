@@ -125,10 +125,10 @@ apicstart(uint8_t id, uint32_t adr)
 void
 apicsettmr(long hz, long flg)
 {
-    if (flg & APICONESHOT) {
-        /* one-shot timer */
-    } else {
+    if (flg & APICPERIODIC) {
         /* periodic timer */
+    } else {
+        /* one-shot timer */
     }
 }
 
