@@ -1,0 +1,24 @@
+ac97
+----
+- configure and test DMA transfers
+
+dma
+---
+- test and fix DMA routines
+
+pci
+---
+- add more vendor and device IDs + drivers
+
+ps2
+---
+- fix event interface
+
+sb16
+----
+- test DMA transfers
+
+vbe
+---
+- implement basic graphics library for framebuffer? libfb?
+
