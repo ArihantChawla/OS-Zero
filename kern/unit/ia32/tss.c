@@ -15,7 +15,7 @@ extern uint64_t     kerngdt[NTHR][NGDT];
 
 //extern void _tssinit(long);
 
-struct m_tss tsstab[NTHR];
+struct m_tss tsstab[NCPU];
 
 void
 tssinit(long id)

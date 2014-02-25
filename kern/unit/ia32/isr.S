@@ -48,7 +48,6 @@
 .text	32
 
 trapde:
-	movl	0(%esp), %eax		// faulting instruction pointer
 	pushal
 	pushl	%ds
 	pushl	%es
@@ -56,7 +55,6 @@ trapde:
 	pushl	%gs
 	movl	%esp, %ebp
 
-	pushl	%eax
 	pushl	$TRAPDE
 	call	sigfunc
 
@@ -77,7 +75,6 @@ trapdb:
 	pushl	%gs
 	movl	%esp, %ebp
 
-	pushl	$0x00000000
 	pushl	$TRAPDB
 	call	sigfunc
 
@@ -98,7 +95,6 @@ trapnmi:
 	pushl	%gs
 	movl	%esp, %ebp
 
-	pushl	$0x00000000
 	pushl	$TRAPNMI
 	call	sigfunc
 
@@ -119,7 +115,6 @@ trapbp:
 	pushl	%gs
 	movl	%esp, %ebp
 
-	pushl	$0x00000000
 	pushl	$TRAPBP
 	call	sigfunc
 
@@ -140,7 +135,6 @@ trapof:
 	pushl	%gs
 	movl	%esp, %ebp
 
-	pushl	$0x00000000
 	pushl	$TRAPOF
 	call	sigfunc
 
@@ -154,7 +148,6 @@ trapof:
 	iret
 
 trapbr:
-	movl	0(%esp), %eax		// faulting instruction pointer
 	pushal
 	pushl	%ds
 	pushl	%es
@@ -162,7 +155,6 @@ trapbr:
 	pushl	%gs
 	movl	%esp, %ebp
 
-	pushl	%eax
 	pushl	$TRAPBR
 	call	sigfunc
 
@@ -176,7 +168,6 @@ trapbr:
 	iret
 
 trapud:
-	movl	0(%esp), %eax		// faulting instruction pointer
 	pushal
 	pushl	%ds
 	pushl	%es
@@ -184,7 +175,6 @@ trapud:
 	pushl	%gs
 	movl	%esp, %ebp
 
-	pushl	%eax
 	pushl	$TRAPUD
 	call	sigfunc
 
@@ -205,7 +195,6 @@ trapnm:
 	pushl	%gs
 	movl	%esp, %ebp
 
-	pushl	$0x00000000
 	pushl	$TRAPNM
 	call	sigfunc
 
@@ -219,8 +208,6 @@ trapnm:
 	iret
 
 trapdf:
-	/* EAX	- error code */
-	/* EBX	- return IP */
 	popl	%eax
 	pusha
 	movl	32(%esp), %ebx
@@ -230,7 +217,6 @@ trapdf:
 	pushl	%gs
 	movl	%esp, %ebp
 
-	pushl	%ebx
 	pushl	$TRAPDF
 	call	sigfunc
 
@@ -245,7 +231,6 @@ trapdf:
 	iret
 
 trapts:
-	movl	0(%esp), %eax		// faulting segment selector
 	pushal
 	movl	32(%esp), %eax
 	pushl	%ds
@@ -254,7 +239,6 @@ trapts:
 	pushl	%gs
 	movl	%esp, %ebp
 
-	pushl	%eax
 	pushl	$TRAPTS
 	call	sigfunc
 
@@ -268,7 +252,6 @@ trapts:
 	sti
 	iret
 trapnp:
-	movl	0(%esp), %eax		// faulting segment selector
 	pushal
 	movl	32(%esp), %eax
 	pushl	%ds
@@ -277,7 +260,6 @@ trapnp:
 	pushl	%gs
 	movl	%esp, %ebp
 
-	pushl	%eax
 	pushl	$TRAPNP
 	call	sigfunc
 
@@ -292,7 +274,6 @@ trapnp:
 	iret
 
 trapss:
-	movl	0(%esp), %eax		// faulting segment selector
 	pushal
 	movl	32(%esp), %eax
 	pushl	%ds
@@ -301,7 +282,6 @@ trapss:
 	pushl	%gs
 	movl	%esp, %ebp
 
-	pushl	%eax
 	pushl	$TRAPSS
 	call	sigfunc
 
@@ -316,10 +296,7 @@ trapss:
 	iret
 
 trapgp:
-	/* EAX	- error code */
-	/* EBX	- fault IP */
-	movl	0(%esp), %ebx
-	movl	4(%esp), %ebx		// faulting instruction pointer
+	/* EAX	- fault IP */
 	pushal
 	movl	32(%esp), %eax
 	pushl	%ds
@@ -328,7 +305,6 @@ trapgp:
 	pushl	%gs
 	movl	%esp, %ebp
 
-	pushl	%ebx
 	pushl	$TRAPGP
 	call	sigfunc
 
@@ -378,7 +354,6 @@ trapmf:
 	pushl	%gs
 	movl	%esp, %ebp
 
-	pushl	$0x00000000
 	pushl	$TRAPMF
 	call	sigfunc
 
@@ -394,7 +369,6 @@ trapmf:
 
 trapac:
 	/* fault eip <- stack pointer */
-	movl	0(%esp), %eax		// faulting instruction pointer
 	pushal
 	movl	32(%esp), %eax
 	pushl	%ds
@@ -403,7 +377,6 @@ trapac:
 	pushl	%gs
 	movl	%esp, %ebp
 
-	pushl	%eax
 	pushl	$TRAPAC
 	call	sigfunc
 
@@ -425,7 +398,6 @@ trapmc:
 	pushl	%gs
 	movl	%esp, %ebp
 
-	pushl	$0x00000000
 	pushl	$TRAPMC
 	call	sigfunc
 
@@ -440,7 +412,6 @@ trapmc:
 
 trapxf:
 	/* fault eip <- stack pointer */
-	movl	0(%esp), %eax		// faulting instruction pointer
 	pushal
 	pushl	%ds
 	pushl	%es
@@ -448,7 +419,6 @@ trapxf:
 	pushl	%gs
 	movl	%esp, %ebp
 
-	pushl	%eax
 	pushl	$TRAPXF
 	call	sigfunc
 

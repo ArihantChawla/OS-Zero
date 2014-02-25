@@ -44,11 +44,9 @@ hpetinit(void)
 {
     unsigned long  len = HPETREGSIZE64;
 
-    kprintf("HPET: map HPET0 @ 0x%lx\n", HPET0BASE);
     vmmapseg((uint32_t *)&_pagetab, HPET0BASE, HPET0BASE,
              HPET0BASE + len,
              PAGEPRES | PAGEWRITE | PAGENOCACHE | PAGEWIRED);
-    kprintf("HPET: map HPET1 @ 0x%lx\n", HPET1BASE);
     vmmapseg((uint32_t *)&_pagetab, HPET1BASE, HPET1BASE,
              HPET1BASE + len,
              PAGEPRES | PAGEWRITE | PAGENOCACHE | PAGEWIRED);

@@ -68,12 +68,6 @@ vmmapseg(uint32_t *pagetab, uint32_t virt, uint32_t phys, uint32_t lim,
     return;
 }
 
-void
-vmmapshm(uint32_t *pagetab, uint32_t virt, uint32_t lim, uint32_t flg)
-{
-    
-}
-
 /*
  * initialise virtual memory
  * - no locking; call before going multiprocessor

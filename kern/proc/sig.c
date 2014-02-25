@@ -43,8 +43,9 @@ kill(struct proc *proc)
     ;
 }
 
+ASMLINK
 void
-sigfunc(uint32_t trap, uint32_t errcode)
+sigfunc(uint32_t trap)
 {
     struct proc     *proc = k_curproc;
     long             signum = signumtab[trap];

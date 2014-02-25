@@ -11,6 +11,7 @@
 extern volatile uint32_t *mpapic;
 
 void apicinit(long core);
+void ioapicinit(long core);
 void apicstart(uint8_t core, uint32_t adr);
 void usleep(unsigned long nusec);
 

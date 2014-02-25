@@ -59,6 +59,7 @@ struct swapdev {
 #define pagerm(pq, pg)   listrm(pq, pg)
 
 void         pageinitzone(uintptr_t base, struct pageq *zone, unsigned long nb);
+void         pageaddzone(uintptr_t base, struct pageq *zone, unsigned long nb);
 void         pageinit(uintptr_t base, unsigned long nb);
 struct page *pagealloc(void);
 void         pagefree(void *adr);

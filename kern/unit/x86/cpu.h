@@ -39,6 +39,8 @@ extern struct thr   *k_curthr    __asm__ ("%gs:16");
 extern uint64_t     *k_curpml4   __asm__ ("%gs:24");
 //extern pde_t        *k_cursigvec __asm__ ("%gs:32");
 #endif
+
+#define NCPUWORD     6 /* cpu, proc, thr, info, pdir/pml4, started */
 struct m_cpu {
     /* cpu-local variables */
     struct m_cpu     *cpu;
@@ -50,10 +52,10 @@ struct m_cpu {
 #elif (PTRBITS == 64)
     uint64_t          pml4;
 #endif
+    volatile long     started;
 //    signalhandler_t  *sigvec;
     /* end of cpu local variables */
     long              id;
-    volatile long     started;
     struct m_tcb     *schedtcb;
     uint8_t          *kstk;
     uint64_t         *gdt;

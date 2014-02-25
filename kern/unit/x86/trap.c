@@ -53,7 +53,7 @@ long                   trappriotab[NINTR];
     (trappriotab[(irq)] = (prio))
 
 void
-idtinit(uint64_t *idt)
+trapinitidt(uint64_t *idt)
 {
     trapsetintgate(&idt[TRAPDE], trapde, TRAPSYS);
     trapsetintgate(&idt[TRAPDB], trapdb, TRAPSYS);
@@ -106,7 +106,7 @@ trapinitprio(void)
 void
 trapinit(void)
 {
-    idtinit(kernidt);
+    trapinitidt(kernidt);
     trapinitprio();
     picinit();  // initialise interrupt controllers
     /* mask timer interrupt, enable other interrupts */

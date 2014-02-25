@@ -4,6 +4,7 @@
 
 #include <stdint.h>
 #include <sys/io.h>
+#include <kern/util.h>
 #include <kern/unit/x86/trap.h>
 #include <kern/unit/x86/apic.h>
 #include <kern/unit/ia32/link.h>
@@ -68,7 +69,7 @@ apicinit(long id)
     apicwrite(APICBASEDIV, APICTMRDIVCONF);
     apicwrite(APICPERIODIC | (IRQBASE + IRQTIMER), APICTIMER);
 //    apicwrite(10000000, APICTMRINITCNT);
-    apicwrite(1000, APICTMRINITCNT);
+    apicwrite(10000000, APICTMRINITCNT);
     /* disable logical interrupt lines */
     apicwrite(APICMASKED, APICLINTR0);
     apicwrite(APICMASKED, APICLINTR1);

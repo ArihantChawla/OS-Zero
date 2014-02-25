@@ -134,11 +134,8 @@ plasmaloop(void)
     plasmainit();
     for (ndx = 0 ; ndx < nfrm ; ndx++) {
         plasmadraw();
-        ndx++;
-#if 0
-        pitsleep((1000 / 2) / PLASMAFPS, NULL);
-        k_waitint();
-#endif
+//        pitsleep((1000 / 2) / PLASMAFPS, NULL);
+//        k_waitint();
     }
 }
 

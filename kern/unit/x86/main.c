@@ -8,6 +8,7 @@
 #include <kern/obj.h>
 #include <kern/proc/proc.h>
 #include <kern/proc/sched.h>
+#include <kern/mem/page.h>
 #include <kern/io/drv/chr/cons.h>
 //#include <kern/thr.h>
 #include <kern/io/drv/pc/dma.h>
@@ -98,6 +99,7 @@ kmain(struct mboothdr *hdr, unsigned long pmemsz)
 #endif
     vminit((uint32_t *)&_pagetab);      // virtual memory
     kbzero(&_bssvirt, (uint32_t)&_ebss - (uint32_t)&_bss);
+    kmemset(&kerniomap, 0xff, sizeof(kerniomap));
     consinit(768 >> 3, 1024 >> 3);
 #if (VBE)
     vbeinitscr();
@@ -105,8 +107,7 @@ kmain(struct mboothdr *hdr, unsigned long pmemsz)
     k_curproc = &proctab[0];
     /* TODO: use memory map from GRUB */
     meminit(vmlinkadr(&_ebssvirt), pmemsz);
-//    vminitphys((uintptr_t)&_ebss, pmemsz - (unsigned long)&_ebss);
-    kmemset(&kerniomap, 0xff, sizeof(kerniomap));
+    vminitphys((uintptr_t)&_ebss, pmemsz - (unsigned long)&_ebss);
 #if (PS2DRV)
     ps2init();
 #endif
@@ -117,7 +118,7 @@ kmain(struct mboothdr *hdr, unsigned long pmemsz)
     plasmaloop();
 #endif
     logoprint();
-    vminitphys((uintptr_t)&_ebss, pmemsz - (unsigned long)&_ebss);
+//    vminitphys((uintptr_t)&_ebss, pmemsz - (unsigned long)&_ebss);
     /* HID devices */
 #if (PCI)
     pciinit();
@@ -145,6 +146,9 @@ kmain(struct mboothdr *hdr, unsigned long pmemsz)
             ;
         }
     }
+    /* allocate unused device regions (in 3.5G..4G) */
+//    pageaddzone(DEVMEMBASE, &vmshmq, 0xffffffff - DEVMEMBASE + 1);
+    pageaddzone(DEVMEMBASE, &vmshmq, 0xffffffffU - DEVMEMBASE + 1);
 #if (SMP)
     /* multiprocessor probe */
     mpinit();
@@ -154,9 +158,8 @@ kmain(struct mboothdr *hdr, unsigned long pmemsz)
 #endif
         apicinit(0);
         ioapicinit(0);
+//        tssinit(0);
     }
-    /* allocate unused device regions (in 3.5G..4G) */
-    pageaddzone(DEVMEMBASE, &vmshmq, 0xffffffff - DEVMEMBASE + 1);
     if (mpmultiproc) {
         mpstart();
     }

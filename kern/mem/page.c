@@ -79,6 +79,21 @@ pageinit(uintptr_t base, unsigned long nb)
     return;
 }
 
+/* allocate identity-mapped frame */
+void *
+pagevalloc(void)
+{
+    struct page *pg;
+
+    pagepop(&vmshmq, &pg);
+    if (pg) {
+
+        return (void *)pg->adr;
+    }
+
+    return NULL;
+}
+
 /* TODO: evict pages from LRU if none free / low water */
 struct page *
 pagealloc(void)

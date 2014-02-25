@@ -49,8 +49,8 @@ seginit(long id)
 #endif
     segsetdesc(&gdt[UTEXTSEG], 0, NPAGEMAX - 1, SEGCODE | SEGUSER);
     segsetdesc(&gdt[UDATASEG], 0, NPAGEMAX - 1, SEGDATA | SEGUSER);
-    /* per-CPU data segment for curcpu etc. */
-    segsetdesc(&gdt[CPUSEG], &cpu->cpu, 5 * sizeof(void *),
+    /* per-CPU data segment */
+    segsetdesc(&gdt[CPUSEG], &cpu->cpu, 6 * sizeof(void *),
                SEGCPU);
 #if (VBE)
     gdt[REALCODESEG] = UINT64_C(0x00009a000000ffff);

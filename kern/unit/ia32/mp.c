@@ -19,6 +19,11 @@
 #include <kern/unit/ia32/mp.h>
 #include <kern/unit/ia32/vm.h>
 
+#if (HPET)
+extern void hpetinit(void);
+#endif
+extern void tssinit(long id);
+
 /* used to scan for MP table */
 #define EBDAADR   0x040e
 #define TOPMEMADR 0x0413
@@ -30,7 +35,7 @@ extern uint32_t *kernpagedir[NPDE];
 
 extern void      gdtinit(void);
 extern void      pginit(void);
-extern void      idtinit(void);
+extern void      trapinitidt(void);
 extern void      ioapicinit(long id);
 extern void      cpuinit(struct m_cpu *cpu);
 extern void      seginit(long id);
@@ -150,13 +155,13 @@ mpinit(void)
     uint8_t         *u8ptr;
     uint8_t         *lim;
 
-    mpbootcpu = &mpcputab[0];
+//    mpbootcpu = &mpcputab[0];
     conf = mpconf(&mp);
     if (!conf) {
 
         return;
     }
-    cpuinit((struct m_cpu *)mpbootcpu);
+//    cpuinit((struct m_cpu *)mpbootcpu);
     mpmultiproc = 1;
     mpapic = conf->apicadr;
     for (u8ptr = (uint8_t *)(conf + 1), lim = (uint8_t *)conf + conf->len ;
@@ -169,6 +174,7 @@ mpinit(void)
                 }
                 if (cpu->flags & MPCPUBOOT) {
                     mpbootcpu = &mpcputab[mpncpu];
+                    cpuinit((struct m_cpu *)mpbootcpu);
                 }
                 mpcputab[mpncpu].id = mpncpu;
                 mpncpu++;
@@ -204,11 +210,13 @@ mpinit(void)
         outb(0x70, 0x22);               // select IMCR
         outb(inb(0x23) | 0x01, 0x23);   // mask external timer interrupts
     }
+#if 0
     /* Boot CPU */
     /* local APIC initialisation where present */
 //    apicinit(0);
     /* I/O APIC initialisation */
 //    ioapicinit(0);
+#endif
 
     return;
 }
@@ -221,6 +229,13 @@ mpmain(struct m_cpu *cpu)
     seginit(cpu->id);
     idtset();
     m_xchgl(&cpu->started, 1L);
+    /* TODO: initialise HPET; enable [rerouted] interrupts */
+#if (HPET)
+    hpetinit();
+    apicinit(cpu->id);
+    ioapicinit(cpu->id);
+    tssinit(cpu->id);
+#endif
     while (1) {
         k_waitint();
     }
@@ -250,8 +265,10 @@ mpstart(void)
         }
         kprintf("starting CPU %ld @ 0x%lx\n", cpu->id, MPENTRY);
         cpuinit((struct m_cpu *)cpu);
+#if 0
         apicinit(cpu->id);
         ioapicinit(cpu->id);
+#endif
         *--mpentrystk = (uint32_t)cpu;
         *--mpentrystk = MPENTRYSTK - cpu->id * MPSTKSIZE;
         *--mpentrystk = (uint32_t)&kernpagedir;
