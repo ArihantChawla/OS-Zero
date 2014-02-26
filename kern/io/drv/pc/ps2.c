@@ -318,7 +318,7 @@ ps2kbdintr(void)
 #if (PS2KEYBUF)
         keycode |= UINT64_C(0xc5) << 32;
 #endif
-        u8 &= PS2KBD_VAL_MSK;
+        u8 &= PS2KBD_VAL_MASK;
         val = ps2drv.keytab1b[u8];
     } else if (u8 != PS2KBD_PREFIX_BYTE) {
         /* single-byte value. */
@@ -350,7 +350,7 @@ ps2kbdintr(void)
 #if (PS2KEYBUF)
             keycode |= (uint64_t)u8 << 24;
 #endif
-//            val &= PS2KBD_VAL_MSK;
+//            val &= PS2KBD_VAL_MASK;
             val = ps2drv.keytabmb[u8];
         } else if (u8 == PS2KBD_UP_BYTE) {
 #if (PS2KEYBUF)
@@ -404,40 +404,40 @@ ps2mouseintr(void)
     int32_t  xtra;
     int32_t  shift;
     int32_t  tmp;
-    uint8_t  msk;
-    uint8_t  stat;
+    uint8_t  mask;
+    uint8_t  state;
     uint8_t  u8;
 
-    ps2readmouse(msk);
+    ps2readmouse(mask);
     ps2readmouse(u8);
     xmov = u8;
     ps2readmouse(u8);
     ymov = u8;
 
-    val = ps2drv.mousestat.flags;
+    val = ps2drv.mousestate.flags;
     zmov = 0;
-    val &= PS2MOUSE_WHEELMSK;                     /* scroll-wheel?. */
-    stat = msk & PS2MOUSE_3BTNMSK;                /* button 1, 2 & 3 states. */
+    val &= PS2MOUSE_WHEELMASK;                     /* scroll-wheel?. */
+    state = mask & PS2MOUSE_3BTNMASK;               /* button 1, 2 & 3 states. */
     if (val) {
         /* mouse with scroll-wheel, extra (4th) data byte. */
         ps2readmouse(u8);
         xtra = u8;
         val &= PS2MOUSE_WHEEL5BTN;                /* 5-button?. */
-        zmov = xtra & PS2MOUSE_ZMSK;              /* z-axis movement. */
+        zmov = xtra & PS2MOUSE_ZMASK;              /* z-axis movement. */
         tmp = xtra & PS2MOUSE_ZSIGN;              /* extract sign bit. */
         if (val) {
-            stat |= (xtra >> 1) & PS2MOUSE_XBTNMSK; /* button 4 & 5 states. */
+            state |= (xtra >> 1) & PS2MOUSE_XBTNMASK; /* button 4 & 5 states. */
         }
         if (tmp) {
             zmov = -zmov;
         }
     }
-    ps2drv.mousestat.state = stat;
+    ps2drv.mousestate.state = state;
 
-    shift = ps2drv.mousestat.shift;               /* scale (speed) value. */
+    shift = ps2drv.mousestate.shift;               /* scale (speed) value. */
 
-    val = ps2drv.mousestat.x;
-    tmp = msk & PS2MOUSE_XOVERFLOW;
+    val = ps2drv.mousestate.x;
+    tmp = mask & PS2MOUSE_XOVERFLOW;
     if (tmp) {
         xmov = 0xff;
     } else if (shift > 0) {
@@ -445,20 +445,20 @@ ps2mouseintr(void)
     } else {
         xmov >>= shift;
     }
-    tmp = msk & PS2MOUSE_XSIGN;
+    tmp = mask & PS2MOUSE_XSIGN;
 //    xmov |= tmp << 27; /* sign. */
     if (tmp) {
         xmov = -xmov;
     }
     if (xmov < 0) {
-        ps2drv.mousestat.x = (val < -xmov) ? 0 : (val + xmov);
+        ps2drv.mousestate.x = (val < -xmov) ? 0 : (val + xmov);
     } else {
-        tmp = ps2drv.mousestat.xmax;
-        ps2drv.mousestat.x = (val < tmp - val) ? (val + xmov) : tmp;
+        tmp = ps2drv.mousestate.xmax;
+        ps2drv.mousestate.x = (val < tmp - val) ? (val + xmov) : tmp;
     }
 
-    val = ps2drv.mousestat.y;
-    tmp = msk & PS2MOUSE_YOVERFLOW;
+    val = ps2drv.mousestate.y;
+    tmp = mask & PS2MOUSE_YOVERFLOW;
     if (tmp) {
         ymov = 0xff;
     } else if (shift > 0) {
@@ -466,25 +466,25 @@ ps2mouseintr(void)
     } else {
         ymov >>= shift;
     }
-    tmp = msk & PS2MOUSE_YSIGN;
+    tmp = mask & PS2MOUSE_YSIGN;
 //    ymov |= tmp << 26; /* sign. */
     if (tmp) {
         ymov = -ymov;
     }
     if (ymov < 0) {
-        ps2drv.mousestat.y = (val < -ymov) ? 0 : (val + ymov);
+        ps2drv.mousestate.y = (val < -ymov) ? 0 : (val + ymov);
     } else {
-        tmp = ps2drv.mousestat.ymax;
-        ps2drv.mousestat.y = (val < tmp - val) ? (val + ymov) : tmp;
+        tmp = ps2drv.mousestate.ymax;
+        ps2drv.mousestate.y = (val < tmp - val) ? (val + ymov) : tmp;
     }
 
     if (zmov) {
-        val = ps2drv.mousestat.z;
+        val = ps2drv.mousestate.z;
         if (zmov < 0) {
-            ps2drv.mousestat.z = (val < -zmov) ? 0 : (val + zmov);
+            ps2drv.mousestate.z = (val < -zmov) ? 0 : (val + zmov);
         } else {
-            tmp = ps2drv.mousestat.zmax;
-            ps2drv.mousestat.z = (val < tmp - val) ? (val + zmov) : tmp;
+            tmp = ps2drv.mousestate.zmax;
+            ps2drv.mousestate.z = (val < tmp - val) ? (val + zmov) : tmp;
         }
     }
 

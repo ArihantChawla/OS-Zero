@@ -28,7 +28,7 @@
 #define PS2KBD_ACKFAIL              0xfe
 #define PS2KBD_ERROR2               0xff
 
-#define PS2KBD_VAL_MSK              0xff
+#define PS2KBD_VAL_MASK             0xff
 #define PS2KBD_PREFIX_BYTE          0xe0
 #define PS2KBD_UP_BIT               0x80
 #define PS2KBD_UP_BYTE              0xf0
@@ -349,10 +349,10 @@
 #define PS2MOUSE_LEFTBTN   0x01 /* left button flag. */
 #define PS2MOUSE_RIGHTBTN  0x02 /* right button flag. */
 #define PS2MOUSE_MIDDLEBTN 0x04 /* middle button flag. */
-#define PS2MOUSE_3BTNMSK   0x07 /* 3-button mask. */
+#define PS2MOUSE_3BTNMASK  0x07 /* 3-button mask. */
 #define PS2MOUSE_BTN4      0x08 /* button 4 flag. */
 #define PS2MOUSE_BTN5      0x10 /* button 5 flag. */
-#define PS2MOUSE_XBTNMSK   0x18 /* extra button (4 & 5) mask. */
+#define PS2MOUSE_XBTNMASK  0x18 /* extra button (4 & 5) mask. */
 /* other data. */
 #define PS2MOUSE_XSIGN     0x10 /* x-movement sign. */
 #define PS2MOUSE_YSIGN     0x20 /* y-movement sign. */
@@ -360,13 +360,13 @@
 #define PS2MOUSE_YOVERFLOW 0x80 /* y-movement overflow. */
 /* extra byte. */
 #define PS2MOUSE_ZSIGN     0x08 /* z-movement sign. */
-#define PS2MOUSE_ZMSK      0x07 /* z-movement mask. */
-#define PS2MOUSE_5BTNMSK   0x30 /* extra button (4 & 5) mask. */
+#define PS2MOUSE_ZMASK     0x07 /* z-movement mask. */
+#define PS2MOUSE_5BTNMASK  0x30 /* extra button (4 & 5) mask. */
 /* flags. */
-#define PS2MOUSE_WHEEL      0x01 /* scroll wheel flag. */
+#define PS2MOUSE_WHEEL     0x01 /* scroll wheel flag. */
 #define PS2MOUSE_WHEEL5BTN 0x02 /* 5-button flag. */
-#define PS2MOUSE_WHEELMSK  0x03 /* intellimouse mask. */
-struct mousestat {
+#define PS2MOUSE_WHEELMASK 0x03 /* intellimouse mask. */
+struct mousestate {
     uint16_t flags;
     uint16_t state;
     uint32_t x;
@@ -396,7 +396,7 @@ struct ps2drv {
     int32_t           keytabmb[PS2KBD_NTAB];
 /* release values. */
     int32_t           keytabup[PS2KBD_NTAB];
-    struct mousestat  mousestat;
+    struct mousestate mousestate;
     int32_t           modmask;
 } ALIGNED(PAGESIZE);
 

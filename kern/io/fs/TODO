@@ -5,4 +5,5 @@ early feature plan
 - support for FAT filesystem (USB flash drives and such)
 - support for UFS2, BEFS, or perhaps a hybrid of such filesystems
   - look into journaling later
+- per-file locks under /fs/lock/<devid>/<inode>.rwlk and such
 

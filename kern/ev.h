@@ -133,8 +133,8 @@ struct evdata {
 /* file system events */
 
 struct evfs {
+    uint64_t node;                      // node (file, directory) ID
     uint32_t dev;                       // device ID
-    uint32_t node;                      // node (file, directory) ID
     uint32_t datalen;                   // length of data in bytes
     uint8_t  data[EMPTY];               // optional event data
 } PACK();
