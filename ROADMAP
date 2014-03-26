@@ -24,6 +24,8 @@ kern/
 	--------
 	- I/O interface
 	  - buf			- buffer cache
+	  - blk			- block-based I/O routines
+	  - chr			- character-based "raw" I/O
 
 	kern/io/fs/
 	-----------
@@ -35,7 +37,7 @@ kern/
 
 	kern/io/drv/blk/
 	----------------
-	- block device interface
+	- block device drivers
 
 	kern/io/drv/bus/
 	----------------
@@ -48,21 +50,16 @@ kern/
 	kern/io/drv/pc
 	--------------
 	- standard PC device drivers
+	  - ps2			- PS/2 keyboard and mouse driver
 	  - vbe2		- VBE2 graphics support
 	  - vga.c, vga.h	- VGA text console support
-
-	kern/io/drv/pc/ps2/
-	-------------------
-	- PS/2 drivers
-	  - kbd*		- keyboard driver
-	  - mouse		- mouse driver
 
 	kern/mem
 	--------
 	- kernel memory management
 	  - mag			- magazine allocator
 	  - page		- page daemon
-	  - slab*		- slab allocator routines
+	  - slab		- slab allocator routines
 
 	kern/proc/
 	----------

@@ -10,13 +10,12 @@
 #endif
 
 #define NEWMAP     1
-#define NEWMALLOC  1
 #define NEWSLAB    1
 #define FREEBUF    0
 #define ISTK       1
 #define NOSTK      0
 #define BIGSLAB    0
-#define BIGHDR     1
+#define BIGHDR     0
 #define INTSTAT    0
 #define STAT       0
 #define STDIO      1
@@ -137,7 +136,7 @@ typedef pthread_mutex_t LK_T;
 #define TUNEBUF 1
 #endif
 #endif
-#define TUNEBUF 1
+#define TUNEBUF 0
 
 /* basic allocator parameters */
 #define BLKMINLOG2    5  /* minimum-size allocation */
@@ -149,16 +148,19 @@ typedef pthread_mutex_t LK_T;
 #define SLABTINYLOG2  16 /* little block */
 //#define SLABBIGLOG2   16 /* small-size block */
 #if (NEWSLAB)
-#define SLABLOG2      20
+#define SLABLOG2      18
+#define SLABBIGLOG2   16
 #define MAPMIDLOG2    23
 #define MAPBIGLOG2    26
 #elif (BIGSLAB)
 //#define SLABLOG2      24 /* base size for heap allocations */
 #define SLABLOG2      23 /* base size for heap allocations */
+#define SLABBIGLOG2   20
 #define MAPMIDLOG2    26
 #define MAPBIGLOG2    28
 #else
 #define SLABLOG2      20
+#define SLABBIGLOG2   18
 #define MAPMIDLOG2    24
 #define MAPBIGLOG2    26
 #endif
@@ -228,8 +230,6 @@ typedef pthread_mutex_t LK_T;
               ? 1                                                       \
               : 0))))
 #endif
-#else
-#define narnbufmag(bid)   0
 #endif
 #define ismapbkt(bid)     ((bid) > HQMAX)
 #if (TUNEBUF)
@@ -247,6 +247,7 @@ typedef pthread_mutex_t LK_T;
 #define nmaplog2(bid)     0
 #endif
 
+#define nmagslablog2init(bid) 0
 #if (TUNEBUF)
 /* adjust how much is buffered based on current use */
 #define nmagslablog2up(m, v, t)                                         \
@@ -266,9 +267,9 @@ typedef pthread_mutex_t LK_T;
         ? 4                                                             \
         : 0))
 #endif
-//#define nmagslablog2init(bid) 0
+#endif
 #if (NEWMAP)
-#define nmagslablog2init(bid) nmagslablog2m64(bid)
+//#define nmagslablog2init(bid) nmagslablog2m64(bid)
 #define nmagslablog2m64(bid)                                            \
     (((ismapbkt(bid))                                                   \
       ? (((bid) <= MAPMIDLOG2)                                          \
@@ -318,7 +319,7 @@ typedef pthread_mutex_t LK_T;
             ? 2                                                         \
             : 3))))
 #elif (NEWSLAB)
-#define nmagslablog2init(bid) 0
+//#define nmagslablog2init(bid) 0
 #define nmagslablog2m64(bid)                                            \
     (((ismapbkt(bid))                                                   \
       ? (((bid) <= MAPMIDLOG2)                                          \
@@ -368,7 +369,7 @@ typedef pthread_mutex_t LK_T;
             ? 1                                                         \
             : 1))))
 #elif (BIGSLAB)
-#define nmagslablog2init(bid) 0
+//#define nmagslablog2init(bid) 0
 #define nmagslablog2m64(bid)                                            \
     (((ismapbkt(bid))                                                   \
       ? 0                                                               \
@@ -401,7 +402,7 @@ typedef pthread_mutex_t LK_T;
          : (((bid) <= SLABTINYLOG2)                                     \
             ? -1                                                        \
             : 0))))
-#else /* !BIGSLAB */
+#elif (!BIGSLAB)
 #define nmagslablog2m64(bid)                                            \
     ((ismapbkt(bid))                                                    \
      ? (((bid) <= MAPMIDLOG2)                                           \
@@ -426,7 +427,6 @@ typedef pthread_mutex_t LK_T;
         ? 2                                                             \
         : 0)                                                            \
     : 0)
-#endif
 #elif (BIGSLAB)
 #define nmagslablog2init(bid)                                           \
     ((ismapbkt(bid))                                                    \
@@ -542,9 +542,9 @@ typedef pthread_mutex_t LK_T;
 #define slabid(ptr)       ((uintptr_t)(ptr) >> SLABLOG2)
 #endif
 #if (BIGHDR)
-#define NBHDR             (8 * PAGESIZE)
+#define NBHDR             (16 * PAGESIZE)
 #else
-#define NBHDR             PAGESIZE
+#define NBHDR             (4 * PAGESIZE)
 #endif
 #define NBUFHDR           64
 
@@ -1534,7 +1534,7 @@ freemap(struct mag *mag)
 #endif
     cur = arn->hcur;
     hbuf = arn->htab;
-#if (BIGSLAB) || (TUNEBUF)
+#if (BIGSLAB) && (TUNEBUF)
     queue = nfree < _nbuftab[bid];
 #endif
     if (!cur || !ismapbkt(bid)
