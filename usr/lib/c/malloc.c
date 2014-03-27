@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2008-2013 Tuomo Petteri Venäläinen. All rights
+ * Copyright (C) 2008-2014 Tuomo Petteri Venäläinen. All rights
  * reserved.
  *
  * See the file LICENSE for more information about using this software.
@@ -9,18 +9,23 @@
 #define MTSAFE     1
 #endif
 
+#define NOSBRK     0
+#define TAILFREE   1
+
 #define NEWMAP     1
 #define NEWSLAB    1
 #define FREEBUF    0
 #define ISTK       1
 #define NOSTK      0
 #define BIGSLAB    0
-#define BIGHDR     0
+#define BIGHDR     1
 #define INTSTAT    0
 #define STAT       0
 #define STDIO      1
 #define FREEBITMAP 0
+
 #define ZEROMTX    1
+#define PTHREAD    1
 
 #include <features.h>
 #include <errno.h>
@@ -136,7 +141,7 @@ typedef pthread_mutex_t LK_T;
 #define TUNEBUF 1
 #endif
 #endif
-#define TUNEBUF 0
+#define TUNEBUF 1
 
 /* basic allocator parameters */
 #define BLKMINLOG2    5  /* minimum-size allocation */
@@ -144,32 +149,31 @@ typedef pthread_mutex_t LK_T;
 #define SLABTEENYLOG2 8
 #define SLABTINYLOG2  12 /* little block */
 #endif
+#if 0
 #define SLABTEENYLOG2 12
 #define SLABTINYLOG2  16 /* little block */
+#endif
 //#define SLABBIGLOG2   16 /* small-size block */
-#if (NEWSLAB)
+#if (!BIGSLAB)
 #define SLABLOG2      18
 #define SLABBIGLOG2   16
-#define MAPMIDLOG2    23
-#define MAPBIGLOG2    26
-#elif (BIGSLAB)
+#define SLABTINYLOG2  12
+#define SLABTEENYLOG2 8
+#define MAPMIDLOG2    20
+#define MAPBIGLOG2    24
+#else
 //#define SLABLOG2      24 /* base size for heap allocations */
 #define SLABLOG2      23 /* base size for heap allocations */
 #define SLABBIGLOG2   20
 #define MAPMIDLOG2    26
 #define MAPBIGLOG2    28
-#else
-#define SLABLOG2      20
-#define SLABBIGLOG2   18
-#define MAPMIDLOG2    24
-#define MAPBIGLOG2    26
 #endif
 #define MINSZ         (1UL << BLKMINLOG2)
 #define HQMAX         SLABLOG2
 //#define HQMAX         20
 #define NBKT          (8 * PTRSIZE)
 #if (MTSAFE)
-#define NARN          8
+#define NARN          16
 #else
 #define NARN          1
 #endif
@@ -231,7 +235,11 @@ typedef pthread_mutex_t LK_T;
               : 0))))
 #endif
 #endif
+#if (NOSBRK)
+#define ismapbkt(bid)     0
+#else
 #define ismapbkt(bid)     ((bid) > HQMAX)
+#endif
 #if (TUNEBUF)
 //#define isbufbkt(bid)     ((bid) <= MAPMIDLOG2)
 //#define isbufbkt(bid)     0
@@ -259,66 +267,7 @@ typedef pthread_mutex_t LK_T;
         }                                                               \
     } while (0)
 #define nbufinit(bid) 0
-#if 0
-#define nbufinit(bid)                                                   \
-    (((bid) <= MAPMIDLOG2)                                              \
-     ? 8                                                                \
-     : (((bid) <= MAPBIGLOG2)                                           \
-        ? 4                                                             \
-        : 0))
-#endif
-#endif
-#if (NEWMAP)
-//#define nmagslablog2init(bid) nmagslablog2m64(bid)
-#define nmagslablog2m64(bid)                                            \
-    (((ismapbkt(bid))                                                   \
-      ? (((bid) <= MAPMIDLOG2)                                          \
-         ? 2                                                            \
-         : (((bid) <= MAPBIGLOG2)                                       \
-            ? 0                                                         \
-            : 0))                                                       \
-      : (((bid) <= SLABTEENYLOG2)                                       \
-         ? 0                                                            \
-         : (((bid) <= SLABTINYLOG2)                                     \
-            ? 1                                                         \
-            : 2))))
-#define nmagslablog2m128(bid)                                           \
-    (((ismapbkt(bid))                                                   \
-      ? (((bid) <= MAPMIDLOG2)                                          \
-         ? 2                                                            \
-         : (((bid) <= MAPBIGLOG2)                                       \
-            ? 0                                                         \
-            : 0))                                                       \
-      : (((bid) <= SLABTEENYLOG2)                                       \
-         ? 0                                                            \
-         : (((bid) <= SLABTINYLOG2)                                     \
-            ? 1                                                         \
-            : 2))))
-#define nmagslablog2m256(bid)                                           \
-    (((ismapbkt(bid))                                                   \
-      ? (((bid) <= MAPMIDLOG2)                                          \
-         ? 1                                                            \
-         : (((bid) <= MAPBIGLOG2)                                       \
-            ? 0                                                         \
-            : 0))                                                       \
-      : (((bid) <= SLABTEENYLOG2)                                       \
-         ? 0                                                            \
-         : (((bid) <= SLABTINYLOG2)                                     \
-            ? 2                                                         \
-            : 3))))
-#define nmagslablog2m512(bid)                                           \
-    (((ismapbkt(bid))                                                   \
-      ? (((bid) <= MAPMIDLOG2)                                          \
-         ? 1                                                            \
-         : (((bid) <= MAPBIGLOG2)                                       \
-            ? 0                                                         \
-            : 0))                                                       \
-      : (((bid) <= SLABTEENYLOG2)                                       \
-         ? 0                                                            \
-         : (((bid) <= SLABTINYLOG2)                                     \
-            ? 2                                                         \
-            : 3))))
-#elif (NEWSLAB)
+#if (NEWSLAB)
 //#define nmagslablog2init(bid) 0
 #define nmagslablog2m64(bid)                                            \
     (((ismapbkt(bid))                                                   \
@@ -402,65 +351,6 @@ typedef pthread_mutex_t LK_T;
          : (((bid) <= SLABTINYLOG2)                                     \
             ? -1                                                        \
             : 0))))
-#elif (!BIGSLAB)
-#define nmagslablog2m64(bid)                                            \
-    ((ismapbkt(bid))                                                    \
-     ? (((bid) <= MAPMIDLOG2)                                           \
-        ? 1                                                             \
-        : 0)                                                            \
-    : 0)
-#define nmagslablog2m128(bid)                                           \
-    ((ismapbkt(bid))                                                    \
-     ? (((bid) <= MAPMIDLOG2)                                           \
-        ? 1                                                             \
-        : 0)                                                            \
-    : 0)
-#define nmagslablog2m256(bid)                                           \
-    ((ismapbkt(bid))                                                    \
-     ? (((bid) <= MAPMIDLOG2)                                           \
-        ? 2                                                             \
-        : 0)                                                            \
-    : 0)
-#define nmagslablog2m512(bid)                                           \
-    ((ismapbkt(bid))                                                    \
-     ? (((bid) <= MAPMIDLOG2)                                           \
-        ? 2                                                             \
-        : 0)                                                            \
-    : 0)
-#elif (BIGSLAB)
-#define nmagslablog2init(bid)                                           \
-    ((ismapbkt(bid))                                                    \
-     ? 0                                                                \
-     : (((bid) <= SLABTINYLOG2)                                         \
-        ? -4                                                            \
-        : (((bid) <= SLABBIGLOG2)                                       \
-           ? -2                                                         \
-           : 0)))
-#define nmagslablog2m64(bid)                                            \
-    ((ismapbkt(bid))                                                    \
-     ? 0                                                                \
-     : (((bid) <= SLABTINYLOG2)                                         \
-        ? -3                                                            \
-        : (((bid) <= SLABBIGLOG2)                                       \
-           ? -1                                                         \
-           : 0)))
-#define nmagslablog2m128(bid)                                           \
-    ((ismapbkt(bid))                                                    \
-     ? 0                                                                \
-     : (((bid) <= SLABTINYLOG2)                                         \
-        ? -2                                                            \
-        : (((bid) <= SLABBIGLOG2)                                       \
-           ? -1                                                         \
-           : 0)))
-#define nmagslablog2m256(bid)                                           \
-    ((ismapbkt(bid))                                                    \
-     ? 0                                                                \
-     : (((bid) <= SLABTINYLOG2)                                         \
-        ? -1                                                            \
-        : (((bid) <= SLABBIGLOG2)                                       \
-           ? -1                                                         \
-           : 0)))
-#define nmagslablog2m512(bid) 0
 #else
 #define nmagslablog2init(bid)                                           \
     ((ismapbkt(bid))                                                    \
@@ -511,12 +401,6 @@ typedef pthread_mutex_t LK_T;
            ? 1                                                          \
            : 2)))
 #endif
-#if 0
-#define nblklog2(bid)                                                   \
-    ((!(ismapbkt(bid))                                                  \
-      ? (SLABLOG2 - (bid))                                              \
-      : nmagslablog2(bid)))
-#endif
 #if (FREEBUF)
 #define nblklog2(bid)                                                   \
     ((!ismapbkt(bid))                                                   \
@@ -527,6 +411,7 @@ typedef pthread_mutex_t LK_T;
     ((!ismapbkt(bid))                                                   \
     ? (SLABLOG2 - (bid) + nmagslablog2(bid))                            \
     : nmagslablog2(bid))
+#endif
 #endif
 #define nblk(bid)         (1UL << nblklog2(bid))
 #define NBSLAB            (1UL << SLABLOG2)
@@ -542,11 +427,11 @@ typedef pthread_mutex_t LK_T;
 #define slabid(ptr)       ((uintptr_t)(ptr) >> SLABLOG2)
 #endif
 #if (BIGHDR)
-#define NBHDR             (16 * PAGESIZE)
+#define NBHDR             (8 * PAGESIZE)
 #else
 #define NBHDR             (4 * PAGESIZE)
 #endif
-#define NBUFHDR           64
+#define NBUFHDR           16
 
 #define thrid()           ((_aid >= 0) ? _aid : (_aid = getaid()))
 #define blksz(bid)        (1UL << (bid))
@@ -742,6 +627,9 @@ static LK_T                 _flktab[NBKT];
 static LK_T                 _blktab[NBKT];
 #endif
 static struct mag          *_btab[NBKT];
+#if (TAILFREE)
+static struct mag          *_btail[NBKT];
+#endif
 static struct mag          *_ftab[NBKT];
 #if (HACKS) || (TUNEBUF)
 static long                 _fcnt[NBKT];
@@ -886,12 +774,15 @@ relarn(void *arg)
                     mag = mag->next;
                 }
                 mlk(&_blktab[bid]);
+                if (!_btab[bid]) {
+                    _btail[bid] = mag;
+                }
                 mag->next = _btab[bid];
                 _btab[bid] = head;
 #if (HACKS)
                 _fcnt[bid] += n;
 #endif
-                munlk(&_flktab[bid]);
+                munlk(&_blktab[bid]);
                 arn->btab[bid] = NULL;
             }
             munlk(&arn->lktab[bid]);
@@ -1171,12 +1062,14 @@ initmall(void)
 #endif
     }
 #endif
+#if (!NOSBRK)
     mlk(&_conf.heaplk);
     ofs = NBSLAB - ((long)growheap(0) & (NBSLAB - 1));
     if (ofs != NBSLAB) {
         growheap(ofs);
     }
     munlk(&_conf.heaplk);
+#endif
 #if (PTRBITS <= 32)
     _mdir = mapanon(_mapfd, NSLAB * sizeof(void *));
 #else
@@ -1534,7 +1427,7 @@ freemap(struct mag *mag)
 #endif
     cur = arn->hcur;
     hbuf = arn->htab;
-#if (BIGSLAB) && (TUNEBUF)
+#if (TUNEBUF)
     queue = nfree < _nbuftab[bid];
 #endif
     if (!cur || !ismapbkt(bid)
@@ -1611,9 +1504,6 @@ getmem(size_t size,
     struct mag  *mag = NULL;
     void       **stk;
     long         l;
-#if (FREEBUF)
-    long         n;
-#endif
     long         get = 0;
     long         glob = 0;
     
@@ -1655,6 +1545,8 @@ getmem(size_t size,
     } else if (mag->cur == mag->max - 1) {
         if (mag->next) {
             mag->next->prev = NULL;
+        } else {
+            _btail[bid] = NULL;
         }
         arn->btab[bid] = mag->next;
         mag->next = NULL;
@@ -2040,6 +1932,8 @@ putmem(void *ptr)
                     }
                     if (mag->next) {
                         mag->next->prev = mag->prev;
+                    } else {
+                        _btail[bid] = mag->prev;
                     }
                 }
                 addblk(mptr, NULL);
