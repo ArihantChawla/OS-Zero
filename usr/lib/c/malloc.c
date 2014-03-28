@@ -9,6 +9,7 @@
 #define MTSAFE     1
 #endif
 
+#define CONSTBUF   1
 #define NOSBRK     0
 #define TAILFREE   1
 
@@ -210,19 +211,6 @@ typedef pthread_mutex_t LK_T;
 /* macros */
 
 #define narnbufmag(bid)   (1L << narnbufmaglog2(bid))
-#if (NEWSLAB)
-#define narnbufmaglog2(bid)                                             \
-    (ismapbkt(bid)                                                      \
-     ? 0                                                                \
-     :(((bid) <= MAPMIDLOG2)                                            \
-       ? 4                                                              \
-       : (((bid) <= MAPBIGLOG2)                                         \
-          ? 2                                                           \
-          : 0)))
-//#define narnbufmaglog2(bid) 0
-#elif (BIGSLAB)
-#define narnbufmaglog2(bid) 0
-#if 0
 #define narnbufmaglog2(bid)                                             \
     (((bid) <= SLABTEENYLOG2)                                           \
      ? 2                                                                \
@@ -233,8 +221,6 @@ typedef pthread_mutex_t LK_T;
            : (((bid) <= MAPBIGLOG2)                                     \
               ? 1                                                       \
               : 0))))
-#endif
-#endif
 #if (NOSBRK)
 #define ismapbkt(bid)     0
 #else
@@ -257,6 +243,20 @@ typedef pthread_mutex_t LK_T;
 
 #define nmagslablog2init(bid) 0
 #if (TUNEBUF)
+#if (CONSTBUF)
+#define nmagslablog2init(bid)                                           \
+    (((ismapbkt(bid))                                                   \
+      ? (((bid) <= MAPMIDLOG2)                                          \
+         ? 2                                                            \
+         : (((bid) <= MAPBIGLOG2)                                       \
+            ? 1                                                         \
+            : 0))                                                       \
+      : (((bid) <= SLABTEENYLOG2)                                       \
+         ? 0                                                            \
+         : (((bid) <= SLABTINYLOG2)                                     \
+            ? 1                                                         \
+            : 2))))
+#else /* !CONSTBUF */
 /* adjust how much is buffered based on current use */
 #define nmagslablog2up(m, v, t)                                         \
     do {                                                                \
@@ -401,6 +401,7 @@ typedef pthread_mutex_t LK_T;
            ? 1                                                          \
            : 2)))
 #endif
+#endif /* !CONSTBUF */
 #if (FREEBUF)
 #define nblklog2(bid)                                                   \
     ((!ismapbkt(bid))                                                   \
@@ -1268,7 +1269,7 @@ gethdr(long aid)
     return mag;
 }
 
-#if (TUNEBUF)
+#if (TUNEBUF) && (!CONSTBUF)
 static void
 tunebuf(long val)
 {
@@ -1341,7 +1342,7 @@ getslab(long aid,
             abort();
         }
     }
-#if (TUNEBUF)
+#if (TUNEBUF) && (!CONSTBUF)
     if (ptr != MAP_FAILED && ptr != SBRK_FAILED) {
         tmp = _nbmap + _nbheap;
         if (!tunesz) {
