@@ -135,25 +135,10 @@ typedef pthread_mutex_t LK_T;
 #endif
 
 /* experimental */
-#if 0
-#if (PTRBITS > 32)
-#define TUNEBUF 0
-#else
-#define TUNEBUF 1
-#endif
-#endif
 #define TUNEBUF 1
 
 /* basic allocator parameters */
 #define BLKMINLOG2    5  /* minimum-size allocation */
-#if 0
-#define SLABTEENYLOG2 8
-#define SLABTINYLOG2  12 /* little block */
-#endif
-#if 0
-#define SLABTEENYLOG2 12
-#define SLABTINYLOG2  16 /* little block */
-#endif
 //#define SLABBIGLOG2   16 /* small-size block */
 #if (!BIGSLAB)
 #define SLABLOG2      18
@@ -229,6 +214,7 @@ typedef pthread_mutex_t LK_T;
 #if (TUNEBUF)
 //#define isbufbkt(bid)     ((bid) <= MAPMIDLOG2)
 //#define isbufbkt(bid)     0
+#define nbufinit(bid)     0
 #define isbufbkt(bid)     (_nbuftab[(bid)])
 #define nmagslablog2(bid) (_nslablog2tab[(bid)])
 //#define nmagslablog2(bid) 0
@@ -241,7 +227,6 @@ typedef pthread_mutex_t LK_T;
 #define nmaplog2(bid)     0
 #endif
 
-#define nmagslablog2init(bid) 0
 #if (TUNEBUF)
 #if (CONSTBUF)
 #define nmagslablog2init(bid)                                           \
@@ -258,6 +243,7 @@ typedef pthread_mutex_t LK_T;
             : 2))))
 #else /* !CONSTBUF */
 /* adjust how much is buffered based on current use */
+#define nmagslablog2init(bid) 0
 #define nmagslablog2up(m, v, t)                                         \
     do {                                                                \
         if (t >= (v)) {                                                 \
@@ -266,7 +252,6 @@ typedef pthread_mutex_t LK_T;
             }                                                           \
         }                                                               \
     } while (0)
-#define nbufinit(bid) 0
 #if (NEWSLAB)
 //#define nmagslablog2init(bid) 0
 #define nmagslablog2m64(bid)                                            \
@@ -413,15 +398,11 @@ typedef pthread_mutex_t LK_T;
     ? (SLABLOG2 - (bid) + nmagslablog2(bid))                            \
     : nmagslablog2(bid))
 #endif
-#endif
+#endif /* TUNEBUF */
 #define nblk(bid)         (1UL << nblklog2(bid))
 #define NBSLAB            (1UL << SLABLOG2)
 #define nbmap(bid)        (1UL << (nblklog2(bid) + (bid)))
 #define nbmag(bid)        (1UL << (nblklog2(bid) + (bid)))
-#if 0
-#define nbmap(bid)        (1UL << (nmagslablog2(bid) + (bid)))
-#define nbmag(bid)        (1UL << (nmagslablog2(bid) + SLABLOG2))
-#endif
 
 #if (PTRBITS <= 32)
 #define NSLAB             (1UL << (PTRBITS - SLABLOG2))
@@ -589,9 +570,6 @@ struct mag {
 #define nbarn() (blksz(bktid(sizeof(struct arn))))
 struct arn {
     struct mag  *btab[NBKT];
-#if 0
-    struct mag  *ftab[NBKT];
-#endif
     long         nref;
     long         hcur;
     long         nhdr;
@@ -651,21 +629,6 @@ static int64_t              _nbmap;
 static int                  _mapfd = -1;
 
 /* utility functions */
-
-#if 0
-static __inline__ long
-bktid(size_t size)
-{
-    long tmp = tzerol(size);
-    long bid = tmp;
-
-    if (!powerof2(size)) {
-        bid++;
-    }
-
-    return bid;
-}
-#endif
 
 static __inline__ long
 bktid(size_t size)
@@ -860,9 +823,6 @@ printintstat(void)
 #include <X11/Xlib.h>
 
 static LK_T  x11visinitlk;
-#if 0
-static LK_T  x11vislk;
-#endif
 long         x11visinit = 0;
 Display     *x11visdisp = NULL;
 Window       x11viswin = None;
@@ -1301,7 +1261,7 @@ getslab(long aid,
 {
     uint8_t     *ptr = NULL;
     long         nb;
-#if (TUNEBUF)
+#if (TUNEBUF) && (!CONSTBUF)
     unsigned long tmp;
     static long tunesz = 0;
 #endif
@@ -1916,10 +1876,6 @@ putmem(void *ptr)
                 return;
             }
             clrbit(mag->fmap, blkid(mag, mptr));
-#endif
-#if 0
-            mptr = setflg(mptr, BDIRTY);
-            putblk(mag, mptr);
 #endif
             putblk(mag, setflg(mptr, BDIRTY));
             if (magfull(mag)) {
