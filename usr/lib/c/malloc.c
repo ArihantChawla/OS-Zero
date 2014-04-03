@@ -11,7 +11,7 @@
 
 #define CONSTBUF   1
 #define NOSBRK     0
-#define TAILFREE   1
+#define TAILFREE   0
 
 #define NEWMAP     1
 #define NEWSLAB    1
@@ -214,7 +214,9 @@ typedef pthread_mutex_t LK_T;
 #if (TUNEBUF)
 //#define isbufbkt(bid)     ((bid) <= MAPMIDLOG2)
 //#define isbufbkt(bid)     0
+#if (!CONSTBUF)
 #define nbufinit(bid)     0
+#endif
 #define isbufbkt(bid)     (_nbuftab[(bid)])
 #define nmagslablog2(bid) (_nslablog2tab[(bid)])
 //#define nmagslablog2(bid) 0
@@ -229,6 +231,12 @@ typedef pthread_mutex_t LK_T;
 
 #if (TUNEBUF)
 #if (CONSTBUF)
+#define nbufinit(bid)                                                   \
+    (!ismapbkt(bid)                                                     \
+     ? 0                                                                \
+     : (((bid) < MAPBIGLOG2)                                            \
+        ? 1                                                             \
+       : 0))
 #define nmagslablog2init(bid)                                           \
     (((ismapbkt(bid))                                                   \
       ? (((bid) <= MAPMIDLOG2)                                          \
@@ -738,11 +746,14 @@ relarn(void *arg)
                     mag = mag->next;
                 }
                 mlk(&_blktab[bid]);
+#if (TAILFREE)
                 if (!_btab[bid]) {
                     _btail[bid] = mag;
                 }
+#endif
                 mag->next = _btab[bid];
                 _btab[bid] = head;
+#endif
 #if (HACKS)
                 _fcnt[bid] += n;
 #endif
@@ -755,8 +766,6 @@ relarn(void *arg)
 
     return;
 }
-
-#endif /* MTSAFE */
 
 /* statistics */
 
@@ -1506,8 +1515,10 @@ getmem(size_t size,
     } else if (mag->cur == mag->max - 1) {
         if (mag->next) {
             mag->next->prev = NULL;
+#if (TAILFREE)
         } else {
             _btail[bid] = NULL;
+#endif
         }
         arn->btab[bid] = mag->next;
         mag->next = NULL;
@@ -1889,8 +1900,10 @@ putmem(void *ptr)
                     }
                     if (mag->next) {
                         mag->next->prev = mag->prev;
+#if (TAILFREE)
                     } else {
                         _btail[bid] = mag->prev;
+#endif
                     }
                 }
                 addblk(mptr, NULL);

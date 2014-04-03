@@ -156,7 +156,7 @@ kmain(struct mboothdr *hdr, unsigned long pmemsz)
 #if (HPET)
         hpetinit();
 #endif
-        apicinit(0);
+        apicinitcpu(0);
         ioapicinit(0);
 //        tssinit(0);
     }
@@ -190,7 +190,9 @@ kmain(struct mboothdr *hdr, unsigned long pmemsz)
             vmpagestat.nwired << (PAGESIZELOG2 - 10),
             vmpagestat.nphys << (PAGESIZELOG2 - 10));
     schedinit();
-//    pitinit();
+#if (!SMP)
+    pitinit();
+#endif
     /* scheduler loop; interrupted by timer [and other] interrupts */
     while (1) {
         k_waitint();

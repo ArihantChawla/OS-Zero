@@ -232,7 +232,7 @@ mpmain(struct m_cpu *cpu)
     /* TODO: initialise HPET; enable [rerouted] interrupts */
 #if (HPET)
     hpetinit();
-    apicinit(cpu->id);
+    apicinitcpu(cpu->id);
     ioapicinit(cpu->id);
     tssinit(cpu->id);
 #endif

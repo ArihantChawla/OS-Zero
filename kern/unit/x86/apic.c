@@ -5,6 +5,7 @@
 #include <stdint.h>
 #include <sys/io.h>
 #include <kern/util.h>
+#include <kern/unit/x86/asm.h>
 #include <kern/unit/x86/trap.h>
 #include <kern/unit/x86/apic.h>
 #include <kern/unit/ia32/link.h>
@@ -23,6 +24,7 @@ extern volatile uint32_t      *mpapic;
 extern volatile struct m_cpu   mpcputab[NCPU];
 extern volatile struct m_cpu  *mpbootcpu;
 
+/* TODO: fix this kludge */
 void
 usleep(unsigned long nusec)
 {
@@ -32,13 +34,48 @@ usleep(unsigned long nusec)
     }
 }
 
+struct apic *
+apicprobe(void)
+{
+    long adr = k_readmsr(APICMSR);
+
+    adr &= 0xfffff000;
+    kprintf("local APIC @ %lx\n", adr);
+
+    return (struct apic *)adr;
+}
+
 void
-apicinit(long id)
+apicinit(void)
+{
+//    struct apic *apic = apicprobe();
+    struct apic *apic = (struct apic *)mpapic;
+
+    apic->destfmt.model = 0x0f;
+    apic->logdest.val = 0x01;
+    apic->lvttmr.mask = 1;
+    apic->lvttherm.mask = 1;
+    apic->lvtlint0.mask = 1;
+    apic->lvtlint1.mask = 1;
+    apic->lvterror.mask = 1;
+    apic->spurint.eoibcs = 1;
+    apic->taskprio.lvl = 0;
+
+    return;
+}
+
+void
+apicinitcpu(long id)
 {
     uint64_t              *idt = kernidt;
     static long            first = 1;
     volatile struct m_cpu *cpu = &mpcputab[id];
 
+    if (!mpapic) {
+        mpapic = (volatile uint32_t *)apicprobe();
+
+        return;
+    }
     if (!mpapic) {
 
         return;
@@ -59,6 +96,7 @@ apicinit(long id)
         irqvec[IRQERROR] = irqerror;
         irqvec[IRQSPURIOUS] = irqspurious;
     }
+    apicinit();
     cpu->id = id;
     /* enable local APIC; set spurious interrupt vector */
     apicwrite(APICENABLE | (IRQTIMER + IRQSPURIOUS), APICSPURIOUS);
