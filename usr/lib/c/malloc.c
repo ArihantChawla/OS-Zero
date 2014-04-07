@@ -231,12 +231,15 @@ typedef pthread_mutex_t LK_T;
 
 #if (TUNEBUF)
 #if (CONSTBUF)
+#define nbufinit(bid)     0
+#if 0
 #define nbufinit(bid)                                                   \
     (!ismapbkt(bid)                                                     \
      ? 0                                                                \
      : (((bid) < MAPBIGLOG2)                                            \
         ? 1                                                             \
        : 0))
+#endif
 #define nmagslablog2init(bid)                                           \
     (((ismapbkt(bid))                                                   \
       ? (((bid) <= MAPMIDLOG2)                                          \
