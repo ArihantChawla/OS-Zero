@@ -7,8 +7,8 @@
 
 extern struct cwmars  cwmars;
 
-static void          *rcparsetab[128];
-long                  rcnargtab[CWNOP]
+static void          *rcparsetab[128];  // instruction lookup table
+long                  rcnargtab[CWNOP]  // per-instruction argument counts
 = {
     1, /* DAT */
     2, /* MOV */
@@ -23,6 +23,7 @@ long                  rcnargtab[CWNOP]
     1  /* SPL */
 };
 
+/* register supported operation */
 void
 rcaddop(char *name, long id)
 {
@@ -76,6 +77,7 @@ rcaddop(char *name, long id)
     return;
 }
 
+/* look instruction up */
 long
 rcfindop(char *str, long *narg)
 {
@@ -103,6 +105,7 @@ rcfindop(char *str, long *narg)
     return op;
 }
 
+/* register supported instructions */
 void
 rcinitop(void)
 {
@@ -119,6 +122,7 @@ rcinitop(void)
     rcaddop("SPL", CWOPSPL);
 }
 
+/* read instruction from source file */
 struct cwinstr *
 rcgetop(char *str)
 {
@@ -254,6 +258,7 @@ rcgetop(char *str)
     return instr;
 }
 
+/* read input line */
 char *
 rcgetline(FILE *fp)
 {
@@ -290,6 +295,7 @@ rcgetline(FILE *fp)
     return buf;
 }
 
+/* translate source file to bytecode */
 long
 rcxlate(FILE *fp, long pid, long base, long *baseret, long *limret)
 {

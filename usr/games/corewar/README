@@ -5,6 +5,9 @@ To build the programs, run
 
 	./build.sh
 
+NOTE: you will need an imlib2 package installed; some systems require you to
+install a dev version to get the header files installed.
+
 I have included a few (.rc) example warriors. To try vendetta against vendetta2,
 do
 	./cw vendetta.rc vendetta2.rc

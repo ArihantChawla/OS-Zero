@@ -21,8 +21,8 @@
 
 extern long    rcnargtab[CWNOP];
 
-struct cwmars  cwmars ALIGNED(PAGESIZE);
-char          *cwopnametab[CWNOP]
+struct cwmars  cwmars ALIGNED(PAGESIZE);        // virtual machine structure
+char          *cwopnametab[CWNOP]               // instruction name table
 = {
     "DAT",
     "MOV",
@@ -37,6 +37,7 @@ char          *cwopnametab[CWNOP]
     "SPL",
 };
 
+/* disassembe instruction */
 void
 cwdisasm(struct cwinstr *op, FILE *fp)
 {
@@ -85,6 +86,7 @@ cwdisasm(struct cwinstr *op, FILE *fp)
     return;
 }
 
+/* read instruction operands */
 void
 cwgetargs(struct cwinstr *op, long pc, long *argp1, long *argp2)
 {
@@ -140,6 +142,7 @@ cwgetargs(struct cwinstr *op, long pc, long *argp1, long *argp2)
     return;
 }
 
+/* instruction handler for DAT */
 long
 cwdatop(long pid, long pc)
 {
@@ -160,6 +163,7 @@ cwdatop(long pid, long pc)
     return CWNONE;
 }
 
+/* instruction handler for MOV */
 long
 cwmovop(long pid, long pc)
 {
@@ -183,6 +187,7 @@ cwmovop(long pid, long pc)
     return pc;
 }
 
+/* instruction handler for ADD */
 long
 cwaddop(long pid, long pc)
 {
@@ -231,6 +236,7 @@ cwaddop(long pid, long pc)
     return pc;
 }
 
+/* instruction handler for SUB */
 long
 cwsubop(long pid, long pc)
 {
@@ -269,6 +275,7 @@ cwsubop(long pid, long pc)
     return pc;
 }
 
+/* instruction handler for JMP */
 long
 cwjmpop(long pid, long pc)
 {
@@ -287,6 +294,7 @@ cwjmpop(long pid, long pc)
     return pc;
 }
 
+/* instruction handler for JMZ */
 long
 cwjmzop(long pid, long pc)
 {
@@ -310,6 +318,7 @@ cwjmzop(long pid, long pc)
     return pc;
 }
 
+/* instruction handler for JMN */
 long
 cwjmnop(long pid, long pc)
 {
@@ -333,6 +342,7 @@ cwjmnop(long pid, long pc)
     return pc;
 }
 
+/* instruction handler for CMP */
 long
 cwcmpop(long pid, long pc)
 {
@@ -361,6 +371,7 @@ cwcmpop(long pid, long pc)
     return pc;
 }
 
+/* instruction handler for SLT */
 long
 cwsltop(long pid, long pc)
 {
@@ -384,6 +395,7 @@ cwsltop(long pid, long pc)
     return pc;
 }
 
+/* instruction handler for DJN */
 long
 cwdjnop(long pid, long pc)
 {
@@ -418,6 +430,7 @@ cwdjnop(long pid, long pc)
     return pc;
 }
 
+/* instruction handler for SPL */
 long
 cwsplop(long pid, long pc)
 {
@@ -452,6 +465,7 @@ cwsplop(long pid, long pc)
     return pc;
 }
 
+/* initialise instruction handling */
 void
 cwinitop(void)
 {
@@ -480,6 +494,7 @@ cwinitop(void)
     rcaddop("SPL", CWOPSPL);
 }
 
+/* execute program pid for one instruction */
 void
 cwexec(long pid)
 {
@@ -565,6 +580,7 @@ cwexec(long pid)
     return;
 }
 
+/* virtual machine main loop */
 void
 cwloop(void)
 {
@@ -584,6 +600,7 @@ cwloop(void)
     exit(0);
 }
 
+/* initialise virtual machine */
 void
 cwinit(void)
 {
@@ -645,27 +662,6 @@ main(int argc, char *argv[])
         exit(1);
     }
     fclose(fp);
-#if 0
-    if (lim < base) {
-#if (CWRANDMT32)
-        base = lim + randmt32() % ((base - lim) >> 2);
-#else
-        base = lim + rand() % ((base - lim) >> 2);
-#endif
-    } else if (lim - base < CWNCORE - lim) {
-#if (CWRANDMT32)
-        base = lim + randmt32() % ((CWNCORE - lim) >> 2);
-#else
-        base = lim + rand() % ((CWNCORE - lim) >> 2);
-#endif
-    } else {
-#if (CWRANDMT32)
-        base = randmt32() % (base >> 2);
-#else
-        base = rand() % (base >> 2);
-#endif
-    }
-#endif
 #if (CWRANDMT32)
     base = randmt32() % CWNCORE;
 #else
