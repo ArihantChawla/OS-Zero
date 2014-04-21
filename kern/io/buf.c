@@ -211,7 +211,8 @@ buffindblk(int64_t dev, int64_t num, long rel)
     long            bkey3 = (key >> 16) & 0xfff;
     struct bufblk **tab1;
     struct bufblk **tab2;
-    struct bufblk  *ptr;
+    struct bufblk  *prev;
+    struct bufblk  *next;
 
     mtxlk(&buflktab[dkey]);
     /* device table */
@@ -229,16 +230,15 @@ buffindblk(int64_t dev, int64_t num, long rel)
                     /* scan chain */
                     if (blk->dev == dev && blk->num == num) {
                         if (rel) {
-                            ptr = blk->tabprev;
-                            if (ptr) {
+                            prev = blk->tabprev;
+                            next = blk->tabnext;
+                            if (prev) {
                                 ptr->tabnext = blk->tabnext;
-                                ptr = blk->tabnext;
                             } else {
-                                ptr = blk->tabnext;
-                                tab1[bkey3] = ptr;
+                                tab1[bkey3] = next;
                             }
-                            if (ptr) {
-                                ptr->tabprev = blk->tabprev;
+                            if (next) {
+                                next->tabprev = prev;
                             }
                         }
                         
