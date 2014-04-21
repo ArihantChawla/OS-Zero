@@ -141,7 +141,7 @@ typedef pthread_mutex_t LK_T;
 #define BLKMINLOG2    5  /* minimum-size allocation */
 //#define SLABBIGLOG2   16 /* small-size block */
 #if (!BIGSLAB)
-#define SLABLOG2      18
+#define SLABLOG2      20
 #define SLABBIGLOG2   16
 #define SLABTINYLOG2  12
 #define SLABTEENYLOG2 8
@@ -242,6 +242,15 @@ typedef pthread_mutex_t LK_T;
 #endif
 #define nmagslablog2init(bid)                                           \
     (((ismapbkt(bid))                                                   \
+      ? 0                                                               \
+      : (((bid) <= SLABTEENYLOG2)                                       \
+         ? 0                                                            \
+         : (((bid) <= SLABTINYLOG2)                                     \
+            ? 1                                                         \
+            : 2))))
+#if 0
+#define nmagslablog2init(bid)                                           \
+    (((ismapbkt(bid))                                                   \
       ? (((bid) <= MAPMIDLOG2)                                          \
          ? 2                                                            \
          : (((bid) <= MAPBIGLOG2)                                       \
@@ -252,6 +261,7 @@ typedef pthread_mutex_t LK_T;
          : (((bid) <= SLABTINYLOG2)                                     \
             ? 1                                                         \
             : 2))))
+#endif
 #else /* !CONSTBUF */
 /* adjust how much is buffered based on current use */
 #define nmagslablog2init(bid) 0
