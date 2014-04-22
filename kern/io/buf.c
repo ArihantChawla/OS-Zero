@@ -276,7 +276,7 @@ buffindblk(int64_t dev, int64_t num, long rel)
                             prev = blk->tabprev;
                             next = blk->tabnext;
                             if (prev) {
-                                ptr->tabnext = blk->tabnext;
+                                prev->tabnext = blk->tabnext;
                             } else {
                                 tab1[bkey3] = next;
                             }
