@@ -11,9 +11,6 @@
 #include <kern/unit/ppc/conf.h>
 #endif
 
-#define BUFSIZE     (1UL << BUFSIZELOG2)
-#define BUFSIZELOG2 12                          // TODO: make this per-device
-
 #define APIC      1     // local [per-cpu] APIC support
 #define SMP       1     // enable multiprocessor support; currently broken
 #define HZ        250   // scheduler timer frequency

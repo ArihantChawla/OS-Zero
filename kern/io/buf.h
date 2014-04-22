@@ -5,20 +5,37 @@
 #include <kern/conf.h>
 #include <kern/perm.h>
 
-#define BUFNBYTE     (65536 * 1024)
-#define BUFNBLK      (BUFNBYTE >> BUFSIZELOG2)
-#define BUFNIDBIT    48
-#define BUFNDEV      256
-#define BUFNTABITEM  65536
+/*
+ * 64-bit off_t
+ * 48 significant off_t bits for buffers
+ * 2^16-byte buffer size
+ */
 
-#define BUFNL1ITEM (1UL << 10)
-#define BUFNL2ITEM (1UL << 10)
-#define BUFNL3ITEM (1UL << 12)
+/* buffer size */
+#define BUFSIZE     (1UL << BUFSIZELOG2)
+#define BUFSIZELOG2 16
+/* size of buffer cache */
+#define BUFNBYTE    (65536 * 1024)
+/* max # of cached blocks */
+#define BUFNBLK     (BUFNBYTE >> BUFSIZELOG2)
+#define BUFNIDBIT   48
+#define BUFNDEV     256
+#define BUFDEVMASK  (BUFNDEV - 1)
+#define BUFNOFSBIT  16
+#define BUFNL1BIT   10
+#define BUFNL2BIT   10
+#define BUFNL3BIT   12
+#define BUFNL1ITEM  (1UL << BUFNL1BIT)
+#define BUFNL2ITEM  (1UL << BUFNL2BIT)
+#define BUFNL3ITEM  (1UL << BUFNL3BIT)
+#define BUFL1SHIFT  (BUFNL2BIT + BUFNL3BIT + BUFNOFSBIT)
+#define BUFL2SHIFT  (BUFNL3BIT + BUFNOFSBIT)
+#define BUFL3SHIFT  BUFNOFSBIT
+#define BUFL1MASK   (BUFNL1ITEM - 1)
+#define BUFL2MASK   (BUFNL2ITEM - 1)
+#define BUFL3MASK   (BUFNL3ITEM - 1)
 
-#define bufkey(num)                                                     \
-    ((num) & UINT64_C(0xffff000000000000)                               \
-     ? INT64_C(-1)                                                      \
-     : ((num) >> 32))
+#define bufkey(num) (((num) >> BUFNOFSBIT) & ((UINT64_C(1) << BUFNIDBIT) - 1))
 
 /* status values */
 #define BUFLOCKED    0x01       // buffer is locked
@@ -29,6 +46,7 @@
 struct bufblk {
     int64_t        dev;         // device #
     int64_t        num;         // per-device block #
+    int64_t        chksum;      // checksum such as IPv4 or IPv6
     long           status;      // status flags
     long           nb;          // # of bytes
     void          *data;        // in-core block data (kernel virtual address)

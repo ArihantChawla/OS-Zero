@@ -39,10 +39,6 @@
 #define bufdeqlru(rpp)                                                  \
     listdeq(&buflruq, rpp)
 
-#if (!powerof2(BUFNHASHITEM))
-#error BUFNHASHITEM must be a power of two
-#endif
-
 #define bufadrtoid(ptr)                                                 \
     ((bufzone) ? ((uint8_t *)ptr - (uint8_t *)bufzone) >> BUFSIZELOG2 : NULL)
 
@@ -141,10 +137,10 @@ void
 bufaddblk(struct bufblk *blk)
 {
     int64_t         key = bufkey(blk->num);
-    long            dkey = blk->dev & 0xff;
-    long            bkey1 = (key >> 38) & 0x3ff;
-    long            bkey2 = (key >> 28) & 0x3ff;
-    long            bkey3 = (key >> 16) & 0xfff;
+    long            dkey = blk->dev & BUFDEVMASK;
+    long            bkey1 = (key >> 38) & BUFL1MASK;
+    long            bkey2 = (key >> 28) & BUFL2MASK;
+    long            bkey3 = (key >> 16) & BUFL3MASK;
     long            fail = 0;
     long            ndx;
     long            nref;
@@ -241,10 +237,10 @@ buffindblk(int64_t dev, int64_t num, long rel)
 {
     int64_t         key = bufkey(num);
     struct bufblk  *blk = NULL;
-    long            dkey = dev & 0xff;
-    long            bkey1 = (key >> 38) & 0x3ff;
-    long            bkey2 = (key >> 28) & 0x3ff;
-    long            bkey3 = (key >> 16) & 0xfff;
+    long            dkey = dev & BUFDEVMASK;
+    long            bkey1 = (key >> BUFL1SHIFT) & BUFL1MASK;
+    long            bkey2 = (key >> BUFL2SHIFT) & BUFL2MASK;
+    long            bkey3 = (key >> BUFL3SHIFT) & BUFL3MASK;
     long            ndx;
     long            nref;
     struct bufblk  *ptr;
