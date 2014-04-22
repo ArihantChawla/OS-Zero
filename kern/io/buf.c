@@ -126,16 +126,14 @@ bufgetfree(void)
     return blk;
 }
 
-#define BUFNL1ITEM (1UL << 10)
-#define BUFNL2ITEM (1UL << 10)
-#define BUFNL3ITEM (1UL << 12)
 /*
  * multilevel table
  * ----------------
- * device ID bits 0..7 -> buffer table index
- * block ID bits 38..47 -> block table #1 index
- * block ID bits 28..37 -> block table #2 index
- * block ID bits 16..27 -> block table #3 index
+ * subtables are allocated and freed automatically
+ * device ID bits 0..7 -> 8-bit buffer table index
+ * block ID bits 38..47 -> 10-bit block table #1 index
+ * block ID bits 28..37 -> 10-bit block table #2 index
+ * block ID bits 16..27 -> 12-bit block table #3 index
  */
 
 /* add block to buffer cache */
@@ -147,9 +145,13 @@ bufaddblk(struct bufblk *blk)
     long            bkey1 = (key >> 38) & 0x3ff;
     long            bkey2 = (key >> 28) & 0x3ff;
     long            bkey3 = (key >> 16) & 0xfff;
+    long            fail = 0;
+    long            ndx;
+    long            nref;
     struct bufblk **tab1;
     struct bufblk **tab2;
     struct bufblk  *ptr = NULL;
+    struct bufblk  *stk[3];
 
     mtxlk(&buflktab[dkey]);
     /* device table */
@@ -162,40 +164,74 @@ bufaddblk(struct bufblk *blk)
     }
     /* block table level #1 */
     if (tab1) {
+        ptr = (struct bufblk *)tab1;
+        stk[0] = ptr;
         tab2 = (struct bufblk **)(tab1[bkey1]);
-    } else {
-        /* allocate */
-        tab2 = kmalloc(BUFNL1ITEM * sizeof(struct bufblk *));
-        kbzero(tab2, BUFNL1ITEM * sizeof(struct bufblk *));
-        tab1[bkey1] = (struct bufblk *)tab2;
-    }
-    if (tab2) {
-        /* block table level #2 */
-        tab1 = (struct bufblk **)(tab2[bkey2]);
-        if (!tab1) {
-            tab1 = kmalloc(BUFNL2ITEM * sizeof(struct bufblk *));
-            kbzero(tab1, BUFNL2ITEM * sizeof(struct bufblk *));
-            tab2[bkey2] = (struct bufblk *)tab1;
-        }
-        /* block table level #3 */
-        tab2 = (struct bufblk **)(tab1[bkey3]);
         if (!tab2) {
-            tab2 = kmalloc(BUFNL3ITEM * sizeof(struct bufblk *));
-            kbzero(tab2, BUFNL3ITEM * sizeof(struct bufblk *));
-            tab1[bkey3] = (struct bufblk *)tab2;
+            /* allocate */
+            tab2 = kmalloc(BUFNL1ITEM * sizeof(struct bufblk *));
+            kbzero(tab2, BUFNL1ITEM * sizeof(struct bufblk *));
+            tab1[bkey1] = (struct bufblk *)tab2;
         }
-        ptr = *tab2;
-        /* add to beginning of chain */
-        blk->tabprev = NULL;
-        blk->tabnext = ptr;
-        if (ptr) {
-            ptr->tabprev = blk;
+        if (tab2) {
+            ptr->nref++;
+            /* block table level #2 */
+            ptr = (struct bufblk *)tab2;
+            stk[1] = ptr;
+            tab1 = (struct bufblk **)(tab2[bkey2]);
+            if (!tab1) {
+                tab1 = kmalloc(BUFNL2ITEM * sizeof(struct bufblk *));
+                kbzero(tab1, BUFNL2ITEM * sizeof(struct bufblk *));
+                tab2[bkey2] = (struct bufblk *)tab1;
+            }
+            if (tab1) {
+                ptr->nref++;
+                ptr = (struct bufblk *)tab1;
+                stk[2] = ptr;
+                /* block table level #3 */
+                tab2 = (struct bufblk **)(tab1[bkey3]);
+                if (!tab2) {
+                    tab2 = kmalloc(BUFNL3ITEM * sizeof(struct bufblk *));
+                    kbzero(tab2, BUFNL3ITEM * sizeof(struct bufblk *));
+                    tab1[bkey3] = (struct bufblk *)tab2;
+                }
+                if (tab2) {
+                    ptr->nref++;
+                    ptr = *tab2;
+                    /* add to beginning of chain */
+                    blk->tabprev = NULL;
+                    blk->tabnext = ptr;
+                    if (ptr) {
+                        ptr->tabprev = blk;
+                    }
+                    *tab2 = blk;
+                }
+            } else {
+                fail++;
+            }
+        } else {
+            fail++;
         }
-        *tab2 = blk;
+    } else {
+        fail++;
+    }
+    if (fail) {
+        ndx = 3;
+        while (ndx--) {
+            ptr = stk[ndx];
+            if (ptr) {
+                nref = ptr->nref;
+                nref--;
+                ptr->nref = nref;
+                if (!nref) {
+                    kfree(ptr);
+                }
+            }
+        }
     }
     mtxunlk(&buflktab[dkey]);
     bufqlru(blk);
-
+    
     return;
 }
 
@@ -209,22 +245,29 @@ buffindblk(int64_t dev, int64_t num, long rel)
     long            bkey1 = (key >> 38) & 0x3ff;
     long            bkey2 = (key >> 28) & 0x3ff;
     long            bkey3 = (key >> 16) & 0xfff;
+    long            ndx;
+    long            nref;
+    struct bufblk  *ptr;
     struct bufblk **tab1;
     struct bufblk **tab2;
     struct bufblk  *prev;
     struct bufblk  *next;
+    struct bufblk  *stk[3];
 
     mtxlk(&buflktab[dkey]);
     /* device table */
     tab1 = buftab[dkey];
     if (tab1) {
         /* block table level #1 */
+        stk[0] = (struct bufblk *)tab1;
         tab2 = (struct bufblk **)(tab1[bkey1]);
         if (tab2) {
             /* block table level #2 */
+            stk[1] = (struct bufblk *)tab2;
             tab1 = (struct bufblk **)(tab2[bkey2]);
             if (tab1) {
                 /* block table level #3 */
+                stk[2] = (struct bufblk *)tab1;
                 blk = tab1[bkey3];
                 while (blk) {
                     /* scan chain */
@@ -239,6 +282,16 @@ buffindblk(int64_t dev, int64_t num, long rel)
                             }
                             if (next) {
                                 next->tabprev = prev;
+                            }
+                            ndx = 3;
+                            while (ndx--) {
+                                ptr = stk[ndx];
+                                nref = ptr->nref;
+                                nref--;
+                                ptr->nref = nref;
+                                if (!nref) {
+                                    kfree(ptr);
+                                }
                             }
                         }
                         

@@ -11,6 +11,10 @@
 #define BUFNDEV      256
 #define BUFNTABITEM  65536
 
+#define BUFNL1ITEM (1UL << 10)
+#define BUFNL2ITEM (1UL << 10)
+#define BUFNL3ITEM (1UL << 12)
+
 #define bufkey(num)                                                     \
     ((num) & UINT64_C(0xffff000000000000)                               \
      ? INT64_C(-1)                                                      \
@@ -28,6 +32,7 @@ struct bufblk {
     long           status;      // status flags
     long           nb;          // # of bytes
     void          *data;        // in-core block data (kernel virtual address)
+    long           nref;        // # of items in subtables
     struct bufblk *tabprev;     // previous block on hash chain
     struct bufblk *tabnext;     // next block on hash chain
     struct bufblk *listprev;    // previous block on free list or LRU
