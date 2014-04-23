@@ -4,6 +4,12 @@
  * buffer address space is wired to physical memory
  */
 
+/*
+ * events
+ * ------
+ * bufqlru()
+ */
+
 /* TODO: implement per-device buffers */
 
 #define __KERNEL__ 1
@@ -36,8 +42,10 @@
     listpop(&buffreelist, blk)
 #define bufqlru(blk)                                                    \
     listpush(&buflruq, blk)
-#define bufdeqlru(rpp)                                                  \
-    listdeq(&buflruq, rpp)
+#define bufdeqlru(blk)                                                  \
+    listdeq(&buflruq, blk)                                              \
+#define bufdeq(blk)                                                     \
+    listrm(buflruq, blk)
 
 #define bufadrtoid(ptr)                                                 \
     ((bufzone) ? ((uint8_t *)ptr - (uint8_t *)bufzone) >> BUFSIZELOG2 : NULL)
@@ -56,7 +64,7 @@ static volatile long    bufzonelk;
 static void            *bufzone;
 static long             bufnbyte;
 
-/* initialise buffer cache */
+/* initialise buffer cache; called at boot time */
 long
 bufinit(void)
 {
@@ -92,9 +100,16 @@ bufevict(void)
     struct bufblk *blk = NULL;
 
     do {
-        bufdeqlru(&blk);
+        bufdeqlru(blk);
+        if (!blk) {
+            /* TODO: wait for bufqlru() */
+        } else {
+            if (buf->status & BUFMUSTWRITE) {
+                bufwrite(blk);
+            }
+            bufclr(blk);
+        }
     } while (!blk);
-//    bufwrite(blk);
     
     return blk;
 }
@@ -104,20 +119,14 @@ struct bufblk *
 bufgetfree(void)
 {
     struct bufblk *blk = NULL;
+    void          *tmp = NULL;
 
-    do {
-        mtxlk(&buffreelist.lk);
-        bufpopfree(&blk);
-        mtxunlk(&buffreelist.lk);
-        if (blk) {
-            blk->listprev = NULL;
-            blk->listnext = NULL;
-            blk->tabprev = NULL;
-            blk->tabnext = NULL;
-        } else {
-            blk = bufevict();
-        }
-    } while (!blk);
+    mtxlk(&buffreelist.lk);
+    bufpopfree(&blk);
+    mtxunlk(&buffreelist.lk);
+    if (!blk) {
+        blk = bufevict();
+    }
     
     return blk;
 }
@@ -269,6 +278,7 @@ buffindblk(int64_t dev, int64_t num, long rel)
                     /* scan chain */
                     if (blk->dev == dev && blk->num == num) {
                         if (rel) {
+                            /* remove from chain */
                             prev = blk->tabprev;
                             next = blk->tabnext;
                             if (prev) {
@@ -279,6 +289,7 @@ buffindblk(int64_t dev, int64_t num, long rel)
                             if (next) {
                                 next->tabprev = prev;
                             }
+                            /* deallocate empty subtables */
                             ndx = 3;
                             while (ndx--) {
                                 ptr = stk[ndx];
@@ -309,9 +320,11 @@ bufrel(long dev, int64_t num, long flush)
     struct bufblk *blk = buffindblk(dev, num, 1);
 
     if (blk) {
+#if 0
         if (flush) {
-//            bufwrite(blk);
+            bufwrite(blk);
         }
+#endif
         bufpushfree(blk);
     }
 

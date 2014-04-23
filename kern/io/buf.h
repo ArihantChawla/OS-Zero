@@ -36,13 +36,20 @@
 #define BUFL3MASK   (BUFNL3ITEM - 1)
 
 #define bufkey(num) (((num) >> BUFNOFSBIT) & ((UINT64_C(1) << BUFNIDBIT) - 1))
-
+#define bufclr(blk)                                                     \
+    do {                                                                \
+        void *_tmp = NULL;                                              \
+                                                                        \
+        buf->status = 0;                                                \
+        blk->listprev = tmp;                                            \
+        blk->listnext = tmp;                                            \
+        blk->tabprev = tmp;                                             \
+        blk->tabnext = tmp;                                             \
+    } while (0)
 /* status values */
-#define BUFLOCKED    0x01       // buffer is locked
-#define BUFHASDATA   0x02       // buffer has valid data
-#define BUFMUSTWRITE 0x04       // the kernel must write before reassigning
-#define BUFDOINGIO   0x08       // the kernel is reading or writing data
-#define BUFWAIT      0x10       // a process is waiting for buffer release
+#define BUFHASDATA   0x01       // buffer has valid data
+#define BUFMUSTWRITE 0x02       // kernel must write before reassigning
+#define BUFDOINGIO   0x04       // kernel is reading or writing data
 struct bufblk {
     int64_t        dev;         // device #
     int64_t        num;         // per-device block #
