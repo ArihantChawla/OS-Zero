@@ -40,11 +40,11 @@
     do {                                                                \
         void *_tmp = NULL;                                              \
                                                                         \
-        buf->status = 0;                                                \
-        blk->listprev = tmp;                                            \
-        blk->listnext = tmp;                                            \
-        blk->tabprev = tmp;                                             \
-        blk->tabnext = tmp;                                             \
+        blk->status = 0;                                                \
+        blk->listprev = _tmp;                                           \
+        blk->listnext = _tmp;                                           \
+        blk->tabprev = _tmp;                                            \
+        blk->tabnext = _tmp;                                            \
     } while (0)
 /* status values */
 #define BUFHASDATA   0x01       // buffer has valid data
@@ -56,8 +56,8 @@ struct bufblk {
     int64_t        chksum;      // checksum such as IPv4 or IPv6
     long           status;      // status flags
     long           nb;          // # of bytes
-    void          *data;        // in-core block data (kernel virtual address)
     long           nref;        // # of items in subtables
+    void          *data;        // in-core block data (kernel virtual address)
     struct bufblk *tabprev;     // previous block on hash chain
     struct bufblk *tabnext;     // next block on hash chain
     struct bufblk *listprev;    // previous block on free list or LRU

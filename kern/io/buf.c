@@ -43,26 +43,21 @@
 #define bufqlru(blk)                                                    \
     listpush(&buflruq, blk)
 #define bufdeqlru(blk)                                                  \
-    listdeq(&buflruq, blk)                                              \
+    listdeq(&buflruq, blk)
 #define bufdeq(blk)                                                     \
     listrm(buflruq, blk)
 
 #define bufadrtoid(ptr)                                                 \
     ((bufzone) ? ((uint8_t *)ptr - (uint8_t *)bufzone) >> BUFSIZELOG2 : NULL)
 
-#if (BUFNIDBIT <= 48)
-static struct bufblk  **buftab[BUFNDEV] ALIGNED(PAGESIZE);
-static volatile long    buflktab[BUFNDEV] ALIGNED(PAGESIZE);
-#else
-static struct bufblk   *bufhashtab[BUFNHASHITEM] ALIGNED(PAGESIZE);
-static volatile long    bufhashlktab[BUFNHASHITEM] ALIGNED(PAGESIZE);
-#endif
-static struct bufblk    bufhdrtab[BUFNBLK];
-static struct bufblkq   buffreelist;
-static struct bufblkq   buflruq;
-static volatile long    bufzonelk;
-static void            *bufzone;
-static long             bufnbyte;
+static struct bufblk   bufhdrtab[BUFNBLK] ALIGNED(PAGESIZE);
+static void           *buftab[BUFNDEV] ALIGNED(PAGESIZE);
+static volatile long   buflktab[BUFNDEV] ALIGNED(PAGESIZE);
+static struct bufblkq  buffreelist;
+static struct bufblkq  buflruq;
+static volatile long   bufzonelk;
+static void           *bufzone;
+static long            bufnbyte;
 
 /* initialise buffer cache; called at boot time */
 long
@@ -76,21 +71,30 @@ bufinit(void)
     kprintf("allocating %ld bytes of buffer cache\n", BUFNBYTE);
     bufzone = memalloc(BUFNBYTE, PAGEWIRED);
     if (bufzone) {
+        /* allocate buffer cache */
         kbzero(bufzone, BUFNBYTE);
+        /* initialise buffer headers */
         n = BUFNBLK;
-        blk = bufhdrtab;
+        blk = &bufhdrtab[n - 1];
         u8ptr = bufzone;
         while (n--) {
             blk->data = u8ptr;
             bufpushfree(blk);
             u8ptr += BUFSIZE;
-            blk++;
+            blk--;
         }
         bufnbyte = BUFNBYTE;
         retval = 1;
     }
 
     return retval;
+}
+
+void
+bufwrite(struct bufblk *blk)
+{
+    /* TODO */
+    ;
 }
 
 /* evict buffer; write back to disk */
@@ -100,11 +104,11 @@ bufevict(void)
     struct bufblk *blk = NULL;
 
     do {
-        bufdeqlru(blk);
+        bufdeqlru(&blk);
         if (!blk) {
             /* TODO: wait for bufqlru() */
         } else {
-            if (buf->status & BUFMUSTWRITE) {
+            if (blk->status & BUFMUSTWRITE) {
                 bufwrite(blk);
             }
             bufclr(blk);
@@ -119,7 +123,6 @@ struct bufblk *
 bufgetfree(void)
 {
     struct bufblk *blk = NULL;
-    void          *tmp = NULL;
 
     mtxlk(&buffreelist.lk);
     bufpopfree(&blk);
@@ -145,71 +148,67 @@ bufgetfree(void)
 void
 bufaddblk(struct bufblk *blk)
 {
-    int64_t         key = bufkey(blk->num);
-    long            dkey = blk->dev & BUFDEVMASK;
-    long            bkey1 = (key >> 38) & BUFL1MASK;
-    long            bkey2 = (key >> 28) & BUFL2MASK;
-    long            bkey3 = (key >> 16) & BUFL3MASK;
-    long            fail = 0;
-    long            ndx;
-    long            nref;
-    struct bufblk **tab1;
-    struct bufblk **tab2;
-    struct bufblk  *ptr = NULL;
-    struct bufblk  *stk[3];
+    int64_t        key = bufkey(blk->num);
+    long           dkey = blk->dev & BUFDEVMASK;
+    long           bkey1 = (key >> 38) & BUFL1MASK;
+    long           bkey2 = (key >> 28) & BUFL2MASK;
+    long           bkey3 = (key >> 16) & BUFL3MASK;
+    long           fail = 0;
+    long           ndx;
+    long           nref;
+    struct bufblk *tab1;
+    struct bufblk *tab2;
+    struct bufblk *ptr = NULL;
+    struct bufblk *btab;
+    struct bufblk *bptr;
+    void          *stk[3];
 
     mtxlk(&buflktab[dkey]);
     /* device table */
     tab1 = buftab[dkey];
     if (!tab1) {
         /* allocate */
-        tab1 = kmalloc(BUFNDEV * sizeof(struct bufblk *));
-        kbzero(tab1, BUFNDEV * sizeof(struct bufblk *));
+        tab1 = kmalloc(BUFNL1ITEM * sizeof(struct bufblk));
+        kbzero(tab1, BUFNL1ITEM * sizeof(struct bufblk));
         buftab[dkey] = tab1;
     }
     /* block table level #1 */
     if (tab1) {
-        ptr = (struct bufblk *)tab1;
+        ptr = tab1;
         stk[0] = ptr;
-        tab2 = (struct bufblk **)(tab1[bkey1]);
+        tab2 = ((struct bufblk **)tab1)[bkey1];
         if (!tab2) {
             /* allocate */
-            tab2 = kmalloc(BUFNL1ITEM * sizeof(struct bufblk *));
-            kbzero(tab2, BUFNL1ITEM * sizeof(struct bufblk *));
-            tab1[bkey1] = (struct bufblk *)tab2;
+            tab2 = kmalloc(BUFNL2ITEM * sizeof(struct bufblk));
+            kbzero(tab2, BUFNL2ITEM * sizeof(struct bufblk));
+            ((struct bufblk **)tab1)[bkey1] = tab2;
         }
         if (tab2) {
             ptr->nref++;
             /* block table level #2 */
-            ptr = (struct bufblk *)tab2;
+            ptr = tab2;
             stk[1] = ptr;
-            tab1 = (struct bufblk **)(tab2[bkey2]);
+            tab1 = ((struct bufblk **)tab2)[bkey2];
             if (!tab1) {
-                tab1 = kmalloc(BUFNL2ITEM * sizeof(struct bufblk *));
-                kbzero(tab1, BUFNL2ITEM * sizeof(struct bufblk *));
-                tab2[bkey2] = (struct bufblk *)tab1;
+                tab1 = kmalloc(BUFNL3ITEM * sizeof(struct bufblk));
+                kbzero(tab1, BUFNL3ITEM * sizeof(struct bufblk));
+                ((struct bufblk **)tab2)[bkey2] = tab1;
             }
             if (tab1) {
                 ptr->nref++;
-                ptr = (struct bufblk *)tab1;
+                ptr = tab1;
                 stk[2] = ptr;
                 /* block table level #3 */
-                tab2 = (struct bufblk **)(tab1[bkey3]);
-                if (!tab2) {
-                    tab2 = kmalloc(BUFNL3ITEM * sizeof(struct bufblk *));
-                    kbzero(tab2, BUFNL3ITEM * sizeof(struct bufblk *));
-                    tab1[bkey3] = (struct bufblk *)tab2;
-                }
-                if (tab2) {
+                btab = ((struct bufblk **)tab1)[bkey3];
+                if (btab) {
                     ptr->nref++;
-                    ptr = *tab2;
                     /* add to beginning of chain */
-                    blk->tabprev = NULL;
-                    blk->tabnext = ptr;
-                    if (ptr) {
-                        ptr->tabprev = blk;
+                    bptr = btab;
+                    if (bptr) {
+                        bptr->tabprev = blk;
                     }
-                    *tab2 = blk;
+                    blk->tabnext = bptr;
+                    *((struct bufblk **)btab) = bptr;
                 }
             } else {
                 fail++;
@@ -244,36 +243,36 @@ bufaddblk(struct bufblk *blk)
 struct bufblk *
 buffindblk(int64_t dev, int64_t num, long rel)
 {
-    int64_t         key = bufkey(num);
-    struct bufblk  *blk = NULL;
-    long            dkey = dev & BUFDEVMASK;
-    long            bkey1 = (key >> BUFL1SHIFT) & BUFL1MASK;
-    long            bkey2 = (key >> BUFL2SHIFT) & BUFL2MASK;
-    long            bkey3 = (key >> BUFL3SHIFT) & BUFL3MASK;
-    long            ndx;
-    long            nref;
-    struct bufblk  *ptr;
-    struct bufblk **tab1;
-    struct bufblk **tab2;
-    struct bufblk  *prev;
-    struct bufblk  *next;
-    struct bufblk  *stk[3];
+    int64_t        key = bufkey(num);
+    struct bufblk *blk = NULL;
+    long           dkey = dev & BUFDEVMASK;
+    long           bkey1 = (key >> BUFL1SHIFT) & BUFL1MASK;
+    long           bkey2 = (key >> BUFL2SHIFT) & BUFL2MASK;
+    long           bkey3 = (key >> BUFL3SHIFT) & BUFL3MASK;
+    long           ndx;
+    long           nref;
+    struct bufblk *ptr;
+    struct bufblk *tab1;
+    struct bufblk *tab2;
+    struct bufblk *prev;
+    struct bufblk *next;
+    struct bufblk *stk[3];
 
     mtxlk(&buflktab[dkey]);
     /* device table */
     tab1 = buftab[dkey];
     if (tab1) {
         /* block table level #1 */
-        stk[0] = (struct bufblk *)tab1;
-        tab2 = (struct bufblk **)(tab1[bkey1]);
+        stk[0] = tab1;
+        tab2 = ((struct bufblk **)tab1)[bkey1];
         if (tab2) {
             /* block table level #2 */
-            stk[1] = (struct bufblk *)tab2;
-            tab1 = (struct bufblk **)(tab2[bkey2]);
+            stk[1] = tab2;
+            tab1 = ((struct bufblk **)tab2)[bkey2];
             if (tab1) {
                 /* block table level #3 */
-                stk[2] = (struct bufblk *)tab1;
-                blk = tab1[bkey3];
+                stk[2] = tab1;
+                blk = ((struct bufblk **)tab1)[bkey3];
                 while (blk) {
                     /* scan chain */
                     if (blk->dev == dev && blk->num == num) {
@@ -284,7 +283,7 @@ buffindblk(int64_t dev, int64_t num, long rel)
                             if (prev) {
                                 prev->tabnext = blk->tabnext;
                             } else {
-                                tab1[bkey3] = next;
+                                ((struct bufblk **)tab1)[bkey3] = next;
                             }
                             if (next) {
                                 next->tabprev = prev;

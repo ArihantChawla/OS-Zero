@@ -141,8 +141,8 @@ typedef pthread_mutex_t LK_T;
 #define BLKMINLOG2    5  /* minimum-size allocation */
 //#define SLABBIGLOG2   16 /* small-size block */
 #if (!BIGSLAB)
-#define SLABLOG2      20
-#define SLABBIGLOG2   16
+#define SLABLOG2      18
+#define SLABBIGLOG2   15
 #define SLABTINYLOG2  12
 #define SLABTEENYLOG2 8
 #define MAPMIDLOG2    20
