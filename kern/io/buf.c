@@ -150,9 +150,9 @@ bufaddblk(struct bufblk *blk)
 {
     int64_t        key = bufkey(blk->num);
     long           dkey = blk->dev & BUFDEVMASK;
-    long           bkey1 = (key >> 38) & BUFL1MASK;
-    long           bkey2 = (key >> 28) & BUFL2MASK;
-    long           bkey3 = (key >> 16) & BUFL3MASK;
+    long           bkey1 = (key >> BUFL1SHIFT) & BUFL1MASK;
+    long           bkey2 = (key >> BUFL2SHIFT) & BUFL2MASK;
+    long           bkey3 = (key >> BUFL3SHIFT) & BUFL3MASK;
     long           fail = 0;
     long           ndx;
     long           nref;
