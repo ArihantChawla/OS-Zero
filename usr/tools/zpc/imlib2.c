@@ -4,7 +4,11 @@
 #include <X11/X.h>
 #include <X11/Xlib.h>
 #include <Imlib2.h>
+#include <x11/x11.h>
 #include "x11.h"
+
+void   imlib2init(struct x11app *app);
+Pixmap imlib2loadimage(struct x11app *app, const char *filename, int w, int h);
 
 void
 imlib2init(struct x11app *app)

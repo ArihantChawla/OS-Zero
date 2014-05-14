@@ -10,6 +10,8 @@
 #include <kern/unit/ia32/link.h>
 #include <kern/unit/ia32/vm.h>
 
+#include "progcsz.h"
+
 const unsigned char vgafont8[VGAFONTSIZE] =
 {
     0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00,
@@ -271,8 +273,9 @@ const unsigned char vgafont8[VGAFONTSIZE] =
 };
 
 #if (VGAGFX) || (VBE)
-//void          *vgafontbuf = (void *)VGAFONTBUF;
-void          *vgafontbuf = (void *)vgafont8;
+//void *vgafontbuf = (void *)VGAFONTBUF;
+//void *vgafontbuf = (void *)vgafont8;
+void *vgafontbuf = proggycleansztab;
 #endif
 
 #if (VGAGFX)

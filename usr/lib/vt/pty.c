@@ -9,6 +9,7 @@ vtopenpty_posix(char **masterpath, char **slavepath)
     int     mfd;
     size_t  len;
     char   *slave;
+    char   *path;
 
 #if (VT_POSIX_OPENPT)
     mfd = posix_openpt(O_RDWR);
@@ -41,28 +42,35 @@ vtopenpty_posix(char **masterpath, char **slavepath)
 
         return -1;
     }
-    len = strlen(slavename) + 1;
+    len = strlen(slave) + 1;
     if (masterpath) {
-        *masterpath = malloc(1, len);
-        if (!*masterpath) {
+        path = malloc(1, len);
+        if (!path) {
             fprintf(stderr, "failed to allocate masterpath\n");
             close(mfd);
 
             return -1;
         }
-        strncpy(*masterpath, slave, len);
+        strncpy(path, slave, len);
+        path[len] = '\0';
+        *masterpath = path;
     }
+#if 0
     if (slavepath) {
-        *slavepath = malloc(1, len);
-        if (!*slavepath) {
+        path = malloc(1, len);
+        if (!path) {
             fprintf(stderr, "failed to allocate slavepath\n");
-            free(*masterpath);
+            free(slave);
+            free(path);
             close(mfd);
 
             return -1;
         }
-        strncpy(slavepath, slave, len);
+        strncpy(path, slave, len);
+        path[len] = '\0';
+        *slavepath = path;
     }
+#endif
 
     return mfd;
 }

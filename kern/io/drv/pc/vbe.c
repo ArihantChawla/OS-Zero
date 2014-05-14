@@ -4,6 +4,10 @@
 
 #include <stdint.h>
 
+#if (NEWFONT)
+#include <zero/trix.h>
+#endif
+
 #include <gfx/rgb.h>
 #include <kern/util.h>
 #include <kern/io/drv/chr/cons.h>
@@ -18,6 +22,10 @@ extern void  realint10(void);
 extern void  gdtinit(void);
 
 extern void *vgafontbuf;
+#if (NEWFONT)
+long         vgafontw = 7;
+long         vgafonth = 13;
+#endif
 
 void vbeputpix(argb32_t pix, int x, int row);
 void vbeputs(char *str);
@@ -199,6 +207,56 @@ vbeputpix(argb32_t pix, int x, int y)
     return;
 }
 
+#if (NEWFONT)
+
+void
+vbedrawchar(unsigned char c, int x, int y, argb32_t fg, argb32_t bg)
+{
+    long      cy;
+    long      incr = vbescreen.w * (vbescreen.nbpp >> 3);
+//    uint8_t *glyph = (uint8_t *)vgafontbuf + ((int)c * vgafonth);
+    uint16_t *glyph = (uint16_t *)vgafontbuf + (int)c * vgafonth;
+    uint8_t  *ptr = vbepixadr(x, y);
+    uint16_t  mask;
+    
+
+    for (cy = 0 ; cy < vgafonth ; cy++) {
+        mask = *glyph;
+#if 0
+        if (mask & 0x80) {
+            gfxsetrgb888(fg, ptr);
+        }
+#endif
+        if (mask & 0x40) {
+            gfxsetrgb888(fg, ptr + 3);
+        }
+        if (mask & 0x20) {
+            gfxsetrgb888(fg, ptr + 6);
+        }
+        if (mask & 0x10) {
+            gfxsetrgb888(fg, ptr + 9);
+        }
+        if (mask & 0x08) {
+            gfxsetrgb888(fg, ptr + 12);
+        }
+        if (mask & 0x04) {
+            gfxsetrgb888(fg, ptr + 15);
+        }
+        if (mask & 0x02) {
+            gfxsetrgb888(fg, ptr + 18);
+        }
+        if (mask & 0x01) {
+            gfxsetrgb888(fg, ptr + 21);
+        }
+        glyph++;
+        ptr += incr;
+    }
+
+    return;
+}
+
+#else
+
 void
 vbedrawchar(unsigned char c, int x, int y, argb32_t fg, argb32_t bg)
 {
@@ -269,6 +327,8 @@ vbedrawcharbg(unsigned char c, int x, int y, argb32_t fg, argb32_t bg)
     return;
 }
 
+#endif
+
 /* output string on the current console */
 void
 vbeputs(char *str)
@@ -307,7 +367,11 @@ vbeputs(char *str)
                     row++;
                 }
             }
+#if (NEWFONT)
+            vbedrawchar(ch, col * vgafontw, row * vgafonth, cons->fg, cons->bg);
+#else
             vbedrawchar(ch, col << 3, row << 3, cons->fg, cons->bg);
+#endif
             col++;
         }
         str++;

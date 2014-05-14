@@ -16,6 +16,7 @@
 #include <zpc/op.h>
 #include <zero/cdecl.h>
 #include <zero/param.h>
+#include <x11/x11.h>
 #include "x11.h"
 
 #define HOVERBUTTONS 1
@@ -291,33 +292,6 @@ x11drawdisp(void)
 }
 
 void
-x11initwm(void)
-{
-    wmdelete = XInternAtom(app->display,
-                           "WM_DELETE_WINDOW",
-                           False);
-    XSetWMProtocols(app->display,
-                    mainwin,
-                    &wmdelete,
-                    1);
-
-    return;
-}
-
-void
-x11inittitle(void)
-{
-    XTextProperty titleprop;
-    char          *str = ZPC_TITLE;
-
-    XStringListToTextProperty(&str, 1, &titleprop);
-    XSetWMName(app->display, mainwin, &titleprop);
-    XFree(titleprop.value);
-
-    return;
-}
-
-void
 x11initgcs(void)
 {
     XGCValues gcval;
@@ -540,61 +514,6 @@ x11initpmaps(void)
     return;
 }
 #endif
-
-struct x11app *
-x11initapp(char *displayname)
-{
-    struct x11app *app;
-    Display       *disp;
-
-    app = calloc(1, sizeof(struct x11app));
-    XInitThreads();
-    disp = XOpenDisplay(displayname);
-    if (!disp) {
-        fprintf(stderr, "failed to open display\n");
-
-        exit(1);
-    }
-    app->display = disp;
-    app->screen = DefaultScreen(disp);
-    app->depth = DefaultDepth(disp, app->screen);
-    app->visual = DefaultVisual(disp, app->screen);
-    app->colormap = DefaultColormap(disp, app->screen);
-
-    return app;
-}
-
-Window
-x11initwin(struct x11app *app, Window parent, int x, int y, int w, int h,
-           int rvid)
-{
-    XSetWindowAttributes atr;
-    Window               win;
-
-    memset(&atr, 0, sizeof(atr));
-    if (!parent) {
-        parent = RootWindow(app->display, app->screen);
-    }
-    if (rvid) {
-        atr.background_pixel = BlackPixel(app->display, app->screen);
-    } else {
-        atr.background_pixel = WhitePixel(app->display, app->screen);
-    }
-    win = XCreateWindow(app->display,
-                        parent,
-                        x,
-                        y,
-                        w,
-                        h,
-                        0,
-                        app->depth,
-                        InputOutput,
-                        app->visual,
-                        CWBackPixel,
-                        &atr);
-
-    return win;
-}
 
 void
 zpcdrawlabel(struct x11wininfo *wininfo)
@@ -1129,8 +1048,9 @@ x11init(void)
 
         exit(1);
     }
-    x11initwm();
-    x11inittitle();
+    x11initwm(app);
+    wmdelete = app->wmdelete;
+    x11inittitle(app, ZPC_TITLE);
     x11initgcs();
 #if (ZPCIMLIB2)
     imlib2init(app);

@@ -1904,6 +1904,7 @@ putmem(void *ptr)
             putblk(mag, setflg(mptr, BDIRTY));
             if (magfull(mag)) {
                 if (gtpow2(max, 1)) {
+                    mlk(&_flktab[bid]);
                     if (mag->prev) {
                         mag->prev->next = mag->next;
                     } else if (mag->glob) {
@@ -1918,6 +1919,7 @@ putmem(void *ptr)
                         _btail[bid] = mag->prev;
 #endif
                     }
+                    munlk(&_flktab[bid]);
                 }
                 addblk(mptr, NULL);
                 if (ismapbkt(bid)
@@ -1975,6 +1977,7 @@ putmem(void *ptr)
 //    munlk(&x11vislk);
 #endif
         } else {
+            munlk(&arn->lktab[bid]);
             fprintf(stderr, "invalid free %p\n", ptr);
 
             abort();
