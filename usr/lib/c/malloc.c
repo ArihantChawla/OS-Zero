@@ -9,9 +9,11 @@
 #define MTSAFE     1
 #endif
 
+#define FREETAB    1
+#define BLKTAB     0
 #define CONSTBUF   1
 #define NOSBRK     0
-#define TAILFREE   0
+#define TAILFREE   1
 
 #define NEWMAP     1
 #define NEWSLAB    1
@@ -575,7 +577,6 @@ struct mag {
     long        bid;
     void       *adr;
     void       *bptr;
-    long        glob;
     struct mag *prev;
     struct mag *next;
 #if (FREEBITMAP)
@@ -624,13 +625,13 @@ static long                 _nslablog2tab[NBKT];
 #endif
 #if (MTSAFE)
 static LK_T                 _flktab[NBKT];
-static LK_T                 _blktab[NBKT];
 #endif
-static struct mag          *_btab[NBKT];
 #if (TAILFREE)
-static struct mag          *_btail[NBKT];
+static struct mag          *_ftail[NBKT];
 #endif
+#if (FREETAB)
 static struct mag          *_ftab[NBKT];
+#endif
 #if (HACKS) || (TUNEBUF)
 static long                 _fcnt[NBKT];
 #endif
@@ -758,19 +759,19 @@ relarn(void *arg)
 #endif
                     mag = mag->next;
                 }
-                mlk(&_blktab[bid]);
+                mlk(&_flktab[bid]);
 #if (TAILFREE)
-                if (!_btab[bid]) {
-                    _btail[bid] = mag;
+                if (!_ftab[bid]) {
+                    _ftail[bid] = mag;
                 }
 #endif
-                mag->next = _btab[bid];
-                _btab[bid] = head;
+                mag->next = _ftab[bid];
+                _ftab[bid] = head;
 #endif
 #if (HACKS)
                 _fcnt[bid] += n;
 #endif
-                munlk(&_blktab[bid]);
+                munlk(&_flktab[bid]);
                 arn->btab[bid] = NULL;
             }
             munlk(&arn->lktab[bid]);
@@ -1361,6 +1362,7 @@ freemap(struct mag *mag)
     arn = _atab[aid];
     mlk(&arn->lktab[bid]);
 #if (HACKS)
+    mlk(&_flktab[bid]);
     mptr1 = _ftab[bid];
     while (mptr1) {
         mptr2 = mptr1->next;
@@ -1419,9 +1421,20 @@ freemap(struct mag *mag)
 #endif
         ) {
         mag->prev = NULL;
+#if (FREETAB)
         mlk(&_flktab[bid]);
         mag->next = _ftab[bid];
         _ftab[bid] = mag;
+#else
+        mlk(&_flktab[bid]);
+        mag->next = _ftab[bid];
+        _ftab[bid] = mag;
+#if (TAILFREE)
+        if (!_ftail[bid]) {
+            _ftail[bid] = mag;
+        }
+#endif
+#endif
 #if (HACKS)
         _fcnt[bid]++;
 #endif
@@ -1488,7 +1501,6 @@ getmem(size_t size,
     void       **stk;
     long         l;
     long         get = 0;
-    long         glob = 0;
     
     if (!(_conf.flags & CONF_INIT)) {
         initmall();
@@ -1498,11 +1510,7 @@ getmem(size_t size,
     arn = _atab[aid];
     mlk(&arn->lktab[bid]);
     mag = arn->btab[bid];
-    if (!mag) {
-        glob = 1;
-        mlk(&_blktab[bid]);
-        mag = _btab[bid];
-    }
+#if (FREETAB)
     if (!mag) {
         mlk(&_flktab[bid]);
         mag = _ftab[bid];
@@ -1530,15 +1538,13 @@ getmem(size_t size,
             mag->next->prev = NULL;
 #if (TAILFREE)
         } else {
-            _btail[bid] = NULL;
+            _ftail[bid] = NULL;
 #endif
         }
         arn->btab[bid] = mag->next;
         mag->next = NULL;
     }
-    if (glob) {
-        munlk(&_blktab[bid]);
-    }
+#endif
     if (!mag) {
         get = 1;
         if (!ismapbkt(bid)) {
@@ -1605,7 +1611,7 @@ getmem(size_t size,
 #if (HACKS)
                         _fcnt[bid]++;
 #endif
-                        mag->glob = 0;
+//                        mag->glob = 0;
                         mag->next = arn->btab[bid];
                         if (mag->next) {
                             mag->next->prev = mag;
@@ -1667,7 +1673,7 @@ getmem(size_t size,
 #if (HACKS)
                         _fcnt[bid]++;
 #endif
-                        mag->glob = 1;
+//                        mag->glob = 1;
                         mlk(&_flktab[bid]);
                         mag->next = _ftab[bid];
                         if (mag->next) {
@@ -1732,7 +1738,7 @@ getmem(size_t size,
 #if (HACKS)
                         _fcnt[bid]++;
 #endif
-                        mag->glob = 0;
+//                        mag->glob = 0;
                         mag->next = arn->btab[bid];
                         if (mag->next) {
                             mag->next->prev = mag;
@@ -1852,7 +1858,7 @@ putmem(void *ptr)
     long        tid = thrid();
     long        bid = -1;
     long        max;
-    long        glob = 0;
+//    long        glob = 0;
     long        freed = 0;
 
     if (mag) {
@@ -1863,7 +1869,7 @@ putmem(void *ptr)
 #endif
         aid = mag->aid;
         if (aid < 0) {
-            glob++;
+//            glob++;
             mag->aid = aid = tid;
         }
         bid = mag->bid;
@@ -1871,7 +1877,7 @@ putmem(void *ptr)
         arn = _atab[aid];
         mlk(&arn->lktab[bid]);
         if (gtpow2(max, 1) && magempty(mag)) {
-            mag->glob = 0;
+//            mag->glob = 0;
             mag->next = arn->btab[bid];
             if (mag->next) {
                 mag->next->prev = mag;
@@ -1907,8 +1913,6 @@ putmem(void *ptr)
                     mlk(&_flktab[bid]);
                     if (mag->prev) {
                         mag->prev->next = mag->next;
-                    } else if (mag->glob) {
-                        _btab[bid] = mag->next;
                     } else {
                         arn->btab[bid] = mag->next;
                     }
@@ -1916,7 +1920,7 @@ putmem(void *ptr)
                         mag->next->prev = mag->prev;
 #if (TAILFREE)
                     } else {
-                        _btail[bid] = mag->prev;
+                        _ftail[bid] = mag->prev;
 #endif
                     }
                     munlk(&_flktab[bid]);
