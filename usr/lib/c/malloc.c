@@ -763,15 +763,22 @@ relarn(void *arg)
                 mag->glob = 1;
 #if (TAILFREE)
                 if (!_btab[bid]) {
-                    _btail[bid] = mag;
                     _btab[bid] = head;
+                    _btail[bid] = mag;
                 } else {
                     head->prev = _btail[bid];
-                    _btail[bid]->next = head;
+                    if (_btail[bid]) {
+                        _btail[bid]->next = head;
+                    } else {
+                        _btab[bid] = head;
+                    }
                     _btail[bid] = mag;
                 }
 #else
                 mag->next = _btab[bid];
+                if (_btab[bid]) {
+                    _btab[bid]->prev = mag;
+                }
                 _btab[bid] = head;
 #endif
 #if (HACKS)
@@ -1047,8 +1054,10 @@ initmall(void)
     while (bid--) {
 #if (ZEROMTX)
         mtxinit(&_flktab[bid]);
+        mtxinit(&_blktab[bid]);
 #elif (PTHREAD) && !SPINLK
         pthread_mutex_init(&_flktab[bid], NULL);
+        pthread_mutex_init(&_blktab[bid], NULL);
 #endif
     }
 #endif
@@ -1435,7 +1444,9 @@ freemap(struct mag *mag)
             _ftail[bid] = mag;
         } else {
             mag->prev = _ftail[bid];
-            _ftail[bid]->next = mag;
+            if (_ftail[bid]) {
+                _ftail[bid]->next = mag;
+            }
             _ftail[bid] = mag;
         }
 #else
@@ -1636,7 +1647,7 @@ getmem(size_t size,
 #if (HACKS)
                         _fcnt[bid]++;
 #endif
-//                        mag->glob = 0;
+                        mag->glob = 0;
                         mag->next = arn->btab[bid];
                         if (mag->next) {
                             mag->next->prev = mag;
@@ -1707,7 +1718,9 @@ getmem(size_t size,
                             _ftail[bid] = mag;
                         } else {
                             mag->prev = _ftail[bid];
-                            _ftail[bid]->next = mag;
+                            if (ftail[bid]) {
+                                _ftail[bid]->next = mag;
+                            }
                             _ftail[bid] = mag;
                         }
 #else
@@ -1873,7 +1886,7 @@ getmem(size_t size,
         fprintf(stderr, "%lx failed to allocate %ld bytes (heap: %ld, map: %ld\n) - initialised == %ld", aid, 1UL << bid, (long)_nbheap, (long)_nbmap, _conf.flags & CONF_INIT);
 #endif
 
-        abort();
+//        abort();
     }
 #if (INTSTAT) || (STAT)
     nalloc[aid][bid]++;
@@ -1895,7 +1908,7 @@ putmem(void *ptr)
     long        tid = thrid();
     long        bid = -1;
     long        max;
-//    long        glob = 0;
+    long        glob = 0;
     long        freed = 0;
 
     if (mag) {
@@ -1906,7 +1919,8 @@ putmem(void *ptr)
 #endif
         aid = mag->aid;
         if (aid < 0) {
-//            glob++;
+            mag->glob = 1;
+            glob++;
             mag->aid = aid = tid;
         }
         bid = mag->bid;
@@ -1914,7 +1928,7 @@ putmem(void *ptr)
         arn = _atab[aid];
         mlk(&arn->lktab[bid]);
         if (gtpow2(max, 1) && magempty(mag)) {
-//            mag->glob = 0;
+            mag->glob = 0;
             mag->next = arn->btab[bid];
             if (mag->next) {
                 mag->next->prev = mag;
@@ -1950,10 +1964,12 @@ putmem(void *ptr)
 //                    mlk(&_flktab[bid]);
                     if (mag->glob) {
                         mlk(&_blktab[bid]);
+                    } else {
+                        mlk(&_flktab[bid]);
                     }
                     if (mag->prev) {
                         mag->prev->next = mag->next;
-                    } else if (mag->glob) {
+                    } else if ((glob) && (mag->glob)) {
                         _btab[bid] = mag->next;
                     } else {
                         arn->btab[bid] = mag->next;
@@ -1961,13 +1977,15 @@ putmem(void *ptr)
                     if (mag->next) {
                         mag->next->prev = mag->prev;
 #if (TAILFREE)
-                    } else if (mag->glob) {
+                    } else if ((glob) && (mag->glob)) {
                         _btail[bid] = mag->prev;
 #endif
                     }
 //                    munlk(&_flktab[bid]);
-                    if (mag->glob) {
+                    if ((glob) && (mag->glob)) {
                         munlk(&_blktab[bid]);
+                    } else {
+                        munlk(&_flktab[bid]);
                     }
                 }
                 addblk(mptr, NULL);
@@ -2039,7 +2057,6 @@ putmem(void *ptr)
         } else {
             munlk(&arn->lktab[bid]);
             fprintf(stderr, "invalid free %p\n", ptr);
-
             abort();
         }
     }
