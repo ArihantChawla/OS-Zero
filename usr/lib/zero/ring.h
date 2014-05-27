@@ -45,6 +45,8 @@ ringput(struct ringbuf *buf, RING_TYPE val)
         item = val;
     }
     mtxunlk(&buf->lk);
+
+    return val;
 }
 
 #endif
