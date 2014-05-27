@@ -12,6 +12,7 @@
 #define CONSTBUF   1
 #define NOSBRK     0
 #define TAILFREE   0
+#define TESTING    1
 
 #define NEWMAP     1
 #define NEWSLAB    1
@@ -240,6 +241,8 @@ typedef pthread_mutex_t LK_T;
         ? 1                                                             \
        : 0))
 #endif
+#define nmagslablog2init(bid) 0
+#if 0
 #define nmagslablog2init(bid)                                           \
     (((ismapbkt(bid))                                                   \
       ? 0                                                               \
@@ -249,6 +252,7 @@ typedef pthread_mutex_t LK_T;
             ? 1                                                         \
             : 2))))
 #if 0
+#endif
 #define nmagslablog2init(bid)                                           \
     (((ismapbkt(bid))                                                   \
       ? (((bid) <= MAPMIDLOG2)                                          \
@@ -430,11 +434,11 @@ typedef pthread_mutex_t LK_T;
 #define slabid(ptr)       ((uintptr_t)(ptr) >> SLABLOG2)
 #endif
 #if (BIGHDR)
-#define NBHDR             (8 * PAGESIZE)
+#define NBHDR             (16 * PAGESIZE)
 #else
 #define NBHDR             (4 * PAGESIZE)
 #endif
-#define NBUFHDR           16
+#define NBUFHDR           32
 
 #define thrid()           ((_aid >= 0) ? _aid : (_aid = getaid()))
 #define blksz(bid)        (1UL << (bid))
@@ -1451,6 +1455,11 @@ freemap(struct mag *mag)
         }
 #else
         mag->next = _ftab[bid];
+#if (TESTING)
+        if (_ftab[bid]) {
+            _ftab[bid]->prev = mag;
+        }
+#endif
         _ftab[bid] = mag;
 #endif
 #endif
@@ -1540,7 +1549,17 @@ getmem(size_t size,
         mag = _ftab[bid];
         if (mag) {
             mag->aid = aid;
+#if (TESTING)
+            if (mag->next) {
+                mag->next->prev = NULL;
+            }
+#endif
             _ftab[bid] = mag->next;
+#if (TESTING)
+            if (mag->next) {
+                mag->next->prev = NULL;
+            }
+#endif
 #if (TAILFREE)
             if (!mag->next) {
                 _ftail[bid] = NULL;
@@ -1568,6 +1587,11 @@ getmem(size_t size,
         }
         if (glob) {
             _btab[bid] = mag->next;
+#if (TESTING)
+            if (mag->next) {
+                mag->next->prev = NULL;
+            }
+#endif
 #if (TAILFREE)
             if (!mag->next) {
                 _btail[bid] = NULL;
@@ -1725,9 +1749,11 @@ getmem(size_t size,
                         }
 #else
                         mag->next = _ftab[bid];
+#if (TESTING)
                         if (mag->next) {
                             mag->next->prev = mag;
                         }
+#endif
                         _ftab[bid] = mag;
 #endif
                         munlk(&_flktab[bid]);
@@ -2010,6 +2036,11 @@ putmem(void *ptr)
                     }
 #else
                     mag->next = _ftab[bid];
+#if (TESTING)
+                    if (_ftab[bid]) {
+                        _ftab[bid]->prev = mag;
+                    }
+#endif
                     _ftab[bid] = mag;
 #endif
 #if (HACKS)

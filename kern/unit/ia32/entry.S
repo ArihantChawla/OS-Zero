@@ -84,10 +84,16 @@ _syscall3:
 	jmp	_failure
 
 _invlsys:
-	movl	$ENOSYS, %eax
+	movl	$ENOSYS, errno
+	movl	%ebp, %esp
+	popal
+	movl	$-1, %eax
+	sti
+	iret
+
 _failure:
-	cmpl	$EINTR, %eax
-	je	_intr
+//	cmpl	$EINTR, %eax
+//	je	_intr
 	movl	%ebp, %esp
 	movl	%eax, errno
 	popal
@@ -95,6 +101,7 @@ _failure:
 	sti
 	iret
 
+#if 0
 _intr:
 	movl	%eax, errno
 	/* pop actual return value */
@@ -105,6 +112,7 @@ _intr:
 	movl	retval, %eax
 	sti
 	iret
+#endif
 
 _success:	
 	movl	%eax, retval

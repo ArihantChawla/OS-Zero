@@ -34,7 +34,6 @@
  * long  sys_umap(void *adr, size_t size);
  * - unmap file or anonymous memory
  * long  sys_mhint(void *adr, long flg, struct sysmem *arg);
- * - NORMAL, RANDOM, SEQUENTIAL, WILLNEED, DONTNEED, REMOVE, DONTFORK, DOFORK
  *
  * shared memory
  * -------------
@@ -180,7 +179,7 @@ struct syswait {
 #define MEM_SEQUENTIAL  0x00000080
 #define MEM_RANDOM      0x00000100
 #define MEM_WILLNEED    0x00000200
-#define MEM_DONTNEED    0x00000400
+#define MEM_WONTNEED    0x00000400
 #define MEM_DONTFORK    0x00000800
 
 struct sysmem {
@@ -190,15 +189,29 @@ struct sysmem {
     long  perm;
 };
 
+/*
+ * Inter-Process Communications
+ */
 #define IPC_CREAT       0x00000001
 #define IPC_PRIVATE     0L
 #define IPC_STAT        1
 #define IPC_SET         2
 #define IPC_RMID        3
 
+/*
+ * I/O interface
+ */
+
 #define SEEK_CUR        0x00
 #define SEEK_BEG        0x01
 #define SEEK_END        0x02
+
+#define IO_NORMAL       0x00000001
+#define IO_SEQUENTIAL   0x00000002
+#define IO_WILLNEED     0x00000004
+#define IO_WONTNEED     0x00000008
+#define IO_NONBLOCK     0x00000010
+#define IO_SYNC         0x00000020
 
 struct syscall {
     long    arg1;
