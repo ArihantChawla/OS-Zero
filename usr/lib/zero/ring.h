@@ -2,12 +2,14 @@
 #define __ZERO_RING_H__
 
 #include <stdint.h>
+#include <zero/mtx.h>
 
 /* RING_TYPE    - type of items in ring buffer */
 /* RING_INVAL   - invalid/non-present item value */
 
 struct ringbuf {
     volatile long  lk;
+    volatile long  init;
     RING_TYPE     *base;
     RING_TYPE     *lim;
     RING_TYPE     *inptr;
@@ -36,6 +38,8 @@ ringinit(struct ringbuf *buf, void *base, long n)
         retval = 1;
     }
     if (base) {
+        buf->lk = MTXINITVAL;
+        buf->init = 0;
         buf->base = base;
         buf->lim = (uint8_t *)base + n * sizeof(RING_TYPE);
         buf->inptr = buf->base;
@@ -54,7 +58,7 @@ ringget(struct ringbuf *buf)
     if (buf->inptr == buf->lim) {
         buf->inptr = buf->base;
     }
-    if (buf->inptr < buf->outptr) {
+    if (buf->inptr != buf->outptr) {
         item = *buf->inptr++;
     }
     mtxunlk(&buf->lk);
@@ -71,9 +75,13 @@ ringput(struct ringbuf *buf, RING_TYPE val)
     if (buf->outptr == buf->lim) {
         buf->outptr = buf->base;
     }
-    if (buf->outptr < buf->inptr) {
+    if (buf->outptr != buf->inptr) {
         *buf->outptr++ = val;
         item = val;
+    } else if (!buf->init) {
+        *buf->outptr++ = val;
+        item = val;
+        buf->init = 1;
     }
     mtxunlk(&buf->lk);
 
