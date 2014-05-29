@@ -5,6 +5,9 @@
 #include <sys/io.h>
 #include <kern/unit/ia32/vm.h>
 
+long dmagetchan(long is16bit);
+long dmatakechan(unsigned long chan);
+
 #define dmabufadr(chan) ((uint8_t *)(DMABUFBASE + (chan) * DMACHANBUFSIZE))
 
 extern const uint8_t dmapageports[];

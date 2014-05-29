@@ -146,30 +146,6 @@ ac97initdev(struct pcidev *dev)
     return;
 }
 
-#if 0
-struct pcidev *
-ac97probe(void)
-{
-    struct pcidev *dev = NULL;
-    long           ndev;
-
-    dev = &pcidevtab[0];
-    ndev = pcindev;
-    if (ndev) {
-        while (ndev--) {
-            if (ac97chkdev(dev)) {
-                ac97initdev(dev);
-                
-                return dev;
-            }
-            dev++;
-        }
-    }
-
-    return NULL;
-}
-#endif
-
 void
 ac97init(struct pcidev *dev)
 {

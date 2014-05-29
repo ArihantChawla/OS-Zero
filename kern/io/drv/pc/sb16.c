@@ -78,6 +78,7 @@ sb16setup(void)
 
             break;
     }
+    dmatakechan(sb16drv.dma8);
     switch (u8val & 0xf0) {
         case SB16DMA5BIT:
             sb16drv.dma16 = 5;
@@ -92,6 +93,7 @@ sb16setup(void)
 
             break;
     }
+    dmatakechan(sb16drv.dma16);
     kprintf("SB16 @ 0x%x, IRQ %d, DMA %d (8-bit), DMA %d (16-bit)\n",
             SB16BASE, sb16drv.irq, sb16drv.dma8, sb16drv.dma16);
     /* initialize DMA interface */

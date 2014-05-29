@@ -59,6 +59,7 @@ dmatakechan(unsigned long chan)
     long bits;
 
     if (gtepow2(chan, 8)) {
+        kprintf("invalid DMA channel: %ld\n", chan);
 
         return retval;
     }
@@ -68,6 +69,8 @@ dmatakechan(unsigned long chan)
         bits |= 1 << chan;
         dmachanmgr.bits = bits;
         retval = chan;
+    } else {
+        kprintf("DMA channel in use already: %ld\n", chan);
     }
     mtxunlk(&dmachanmgr.lk);
 
