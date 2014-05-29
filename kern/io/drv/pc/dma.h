@@ -10,7 +10,7 @@ long dmatakechan(unsigned long chan);
 
 #define dmabufadr(chan) ((uint8_t *)(DMABUFBASE + (chan) * DMACHANBUFSIZE))
 
-extern const uint8_t dmapageports[];
+//extern const uint8_t dmapageports[];
 
 #define DMADRAMCHAN     0       // reserved (DRAM refresh)
 #define DMAFDCHAN       2       // hardwired channel for floppy disk controllers
@@ -113,6 +113,8 @@ struct dmadrv {
     long           chanbits;
 };
 
+extern struct dmadrv dmadrv;
+
 static __inline__ void
 dmaunmask(uint8_t chan)
 {
@@ -157,9 +159,9 @@ static __inline__ void
 dmasetpage(uint8_t chan, uint8_t page)
 {
     if (_isdma1(chan)) {
-	outb(chan, dmapageports[page]);
+	outb(chan, dmadrv.ports[page]);
     } else {
-	outb(chan & 0xfe, dmapageports[page]);
+	outb(chan & 0xfe, dmadrv.ports[page]);
     }
 }
 
