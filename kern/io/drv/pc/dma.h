@@ -103,6 +103,12 @@ extern const uint8_t dmapageports[];
 //#define _isdma1(c)     (!(~((c) & DMACHANMASK)))
 #define _isdma1(c)      (!((c) & (~DMACHANMASK)))
 
+#define DMANOCHAN       0xff
+struct dmachanmgr {
+    volatile long lk;
+    uint8_t       bits;
+};
+
 static __inline__ void
 dmaunmask(uint8_t chan)
 {
