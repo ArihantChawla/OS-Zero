@@ -2,6 +2,7 @@
 
 #include <zero/param.h>
 #include <zero/cdecl.h>
+#include <zero/trix.h>
 #include <kern/io/drv/pc/dma.h>
 
 const uint8_t dmapageports[DMANCHAN]
@@ -14,22 +15,22 @@ const uint8_t dmapageports[DMANCHAN]
     DMAPAGE5,
     DMAPAGE6,
     DMAPAGE7
-} ALIGNED(PAGESIZE);
+};
 
 struct dmachanmgr dmachanmgr;
 
 /* allocate an unused DMA channel 0-7; return DMANOCHAN if none available */
-uint8_t
+long
 dmagetchan(long is16bit)
 {
-    uint8_t  retval = 0;
-    uint32_t bits;
-    uint32_t tmp;
+    long retval = 0;
+    long bits;
+    long tmp;
 
     mtxlk(&dmachanmgr.lk);
     bits = dmachanmgr.bits;
     if (is16bit) {
-        if (bits & 0xf0 == 0xf0) {
+        if ((bits & 0xf0) == 0xf0) {
             retval = DMANOCHAN;
         } else {
             tmp = bits;
@@ -41,9 +42,32 @@ dmagetchan(long is16bit)
         }
     }
     if (retval != DMANOCHAN) {
-        retval = 31 - lzero32(bits);
-        bits ~= 1 << retval;
+        retval = 31 - lzerol(bits);
+        bits |= 1 << retval;
         dmachanmgr.bits = bits;
+    }
+    mtxunlk(&dmachanmgr.lk);
+
+    return retval;
+}
+
+/* mark a DMA channel in-use; return DMANOCHAN on failure */
+long
+dmatakechan(unsigned long chan)
+{
+    long retval = DMANOCHAN;
+    long bits;
+
+    if (gtepow2(chan, 8)) {
+
+        return retval;
+    }
+    mtxlk(&dmachanmgr.lk);
+    bits = dmachanmgr.bits;
+    if (!(bits & (1 << chan))) {
+        bits |= 1 << chan;
+        dmachanmgr.bits = bits;
+        retval = chan;
     }
     mtxunlk(&dmachanmgr.lk);
 

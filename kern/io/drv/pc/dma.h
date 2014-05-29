@@ -106,7 +106,7 @@ extern const uint8_t dmapageports[];
 #define DMANOCHAN       0xff
 struct dmachanmgr {
     volatile long lk;
-    uint8_t       bits;
+    long          bits;
 };
 
 static __inline__ void
