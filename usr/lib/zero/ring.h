@@ -4,6 +4,7 @@
 #include <stdint.h>
 #include <zero/mtx.h>
 
+/* MALLOC       - function used to allocate data buffer */
 /* RING_TYPE    - type of items in ring buffer */
 /* RING_INVAL   - invalid/non-present item value */
 
@@ -26,11 +27,7 @@ ringinit(struct ringbuf *buf, void *base, long n)
     long retval = 0;
 
     if (!base) {
-#if (__KERNEL__)
-        base = kmalloc(n * sizeof(RING_TYPE));
-#else
-        base = malloc(n * sizeof(RING_TYPE));
-#endif
+        base = MALLOC(n * sizeof(RING_TYPE));
         if (base) {
             retval = 1;
         }

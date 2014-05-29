@@ -134,6 +134,7 @@ ac97initdev(struct pcidev *dev)
                   AC97PIC1CMD,
                   1,
                   AC97ICW4);
+    /* detect IRQ */
     byte = pcireadconf1(dev->bus,
                         dev->slot,
                         AC97AUDFUNC,

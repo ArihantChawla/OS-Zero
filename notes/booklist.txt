@@ -4,12 +4,16 @@ come by them in my collection. Unfortunately, I lost my copy of Michael Abrash's
 Graphics Programming Black Book during a move... :(
 
 michael abrash - graphics programming black book
+gregory r. andrews
+               - foundations of multithreaded, parallel, and distributed
+	         programming
 maurice bach   - the design of the unix operating system
 rick booth     - inner loops
 richard boulanger, victor lazzarini and max mathews
 	       - the audio programming book
 john h. crawford & patrick p. kelsinger
      	       - programming the 80386
+neal ford      - the productive programmer
 randall hyde   - write great code volume one - understanding the machine
 brian kernighan & dennis ritchie
       	       - the c programming language, second edition
@@ -22,6 +26,9 @@ marshall kirk mckusick & george v. neville-neil
 daniel mitchell
                - basicsynth
 steve pate     - unix filesystems: evolution, design, and implementation
+john r. pierce - an introduction to information theory;
+     	       	 symbols, signals, and noise
+stephen prata  - c primer plus, sixth edition
 curt schimmel  - unix systems for modern architectures
      	         - symmetric multiprocessing and caching for kernel programmers
 richard w stevens
