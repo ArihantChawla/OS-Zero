@@ -107,9 +107,10 @@ extern const uint8_t dmapageports[];
 #define _isdma1(c)      (!((c) & (~DMACHANMASK)))
 
 #define DMANOCHAN       0xff
-struct dmachanmgr {
-    volatile long lk;
-    long          bits;
+struct dmadrv {
+    const uint8_t *ports;
+    volatile long  lk;
+    long           chanbits;
 };
 
 static __inline__ void
