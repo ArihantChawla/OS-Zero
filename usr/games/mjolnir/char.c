@@ -110,7 +110,6 @@ mjoldoturn(struct mjolgame *game, struct mjolchr *data)
         do {
             cmd = getkbd();
         } while (cmd > 0xff);
-        printmsg(" %x\n", cmd);
 //            clrmsg();
         if (mjolhasdir(cmd)) {
             printmsg("Which direction?");

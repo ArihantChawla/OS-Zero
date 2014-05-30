@@ -74,6 +74,11 @@ mjolinitcmd(void)
     mjolcmdfunctab[MJOL_CMD_MOVE_UPRIGHT] = mjolmoveupright;
     mjolcmdfunctab[MJOL_CMD_MOVE_DOWNLEFT] = mjolmovedownleft;
     mjolcmdfunctab[MJOL_CMD_MOVE_DOWNRIGHT] = mjolmovedownright;
+    mjolsetdir(MJOL_CMD_FIGHT);
+    mjolsetdir(MJOL_CMD_THROW);
+    mjolsetdir(MJOL_CMD_MOVE);
+    mjolsetdir(MJOL_CMD_ZAP);
+    mjolsetdir(MJOL_CMD_IDENTIFY_TRAP);
 
     return;
 }

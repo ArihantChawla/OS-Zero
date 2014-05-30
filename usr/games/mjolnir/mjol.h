@@ -17,6 +17,7 @@ extern struct mjolgame *mjolgame;
 extern struct mjolchr  *chaseq;
 
 #define mjolhasdir(ch)  bitset(mjolcmdhasdirmap, ch)
+#define mjolsetdir(ch)  setbit(mjolcmdhasdirmap, ch)
 #define mjolhasarg(ch)  bitset(mjolcmdhasargmap, ch)
 extern uint8_t          mjolcmdhasdirmap[32];
 extern uint8_t          mjolcmdhasargmap[32];
@@ -248,6 +249,9 @@ struct mjolchr {
 #define MJOL_OBJ_NEUTRAL 0
 #define MJOL_OBJ_CURSED  (-1)
 struct mjolobj {
+#if (MJOL_VT) || (MJOL_CURSES)
+    int                 id;
+#endif
     struct dngobj       data;           // common object data
     struct mjolobjfunc  func;
     long                weight;         // weight of object

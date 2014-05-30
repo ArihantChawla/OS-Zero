@@ -5,7 +5,11 @@
 
 #if (MJOL_TTY)
 
+#if (MJOL_VT)
+#include <stdio.h>
+#else
 #include <curses.h>
+#endif
 
 struct mjolwindatatty {
     void *mainwin;

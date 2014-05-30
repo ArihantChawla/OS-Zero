@@ -7,6 +7,10 @@
 #define MJOL_X11               0
 #define MJOL_USE_COLORS        1
 #define MJOL_USE_ZERO_RANDMT32 0
+#if (MJOL_TTY)
+#define MJOL_VT                0
+#define MJOL_CURSES            1
+#endif
 
 /* PLEASE DO NOT EDIT BELOW */
 

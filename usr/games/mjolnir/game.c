@@ -60,7 +60,9 @@ mjolintro(void)
     printf("Good luck, adventurer, and beware of Fenris!\n");
     printf("\n");
     printf("Press a key to continue...\n");
+#if (MJOL_VT) || (MJOL_CURSES)
     getchar();
+#endif
 
     return;
 }

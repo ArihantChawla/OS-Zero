@@ -1,3 +1,6 @@
+- main module is aud.c + aud.h
+- use WAV as internal file format
+  - up to 1024 KHz
 - support for different audio file formats
   - wav
   - flac
