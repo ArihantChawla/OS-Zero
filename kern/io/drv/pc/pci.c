@@ -417,19 +417,14 @@ pciinit(void)
     pcifound = pciprobe();
     if (pcifound) {
         pciregdrv(0x8086, 0x1237, "Intel 82440LX/EX Chipset", NULL);
-        kprintf("%p\n", pcifinddrv(0x8086, 0x1237));
         pciregdrv(0x8086, 0x7000, "Intel 82371SB PCI-to-ISA Bridge (Triton II)",
                   NULL);
-        kprintf("%p\n", pcifinddrv(0x8086, 0x1237));
         pciregdrv(0x1013, 0xb8, "Cirrus Logic CL-GD5546 Graphics Card", NULL);
-        kprintf("%p\n", pcifinddrv(0x8086, 0x1237));
         pciregdrv(0x8086, 0x100e, "Intel PRO 1000/MT Ethernet Controller",
                   NULL);
-        kprintf("%p\n", pcifinddrv(0x8086, 0x1237));
 #if (AC97)
         pciregdrv(0x8086, 0x2415, "Aureal AD1881 SOUNDMAX (AC97)", ac97init);
 #endif
-        kprintf("%p\n", pcifinddrv(0x8086, 0x1237));
         ndev = 0;
         for (bus = 0 ; bus < PCINBUS ; bus++) {
             for (slot = 0 ; slot < PCINSLOT ; slot++) {
@@ -451,11 +446,11 @@ pciinit(void)
             pcindev = ndev;
             dev = &pcidevtab[0];
             while (ndev--) {
-                kprintf("%p\n", pcifinddrv(0x8086, 0x1237));
                 drv = pcifinddrv(dev->vendor, dev->id);
                 if (drv) {
                     kprintf("PCI: %s: bus: %x, slot: %x, vendor: 0x%x, device: 0x%x\n",
-                            drv->str, dev->bus, dev->slot,
+                            (drv->str) ? drv->str : "UNKNOWN",
+                            dev->bus, dev->slot,
                             dev->vendor, dev->id);
                     initfunc = drv->init;
                     if (initfunc) {

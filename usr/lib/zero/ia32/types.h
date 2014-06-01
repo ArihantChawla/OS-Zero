@@ -8,7 +8,7 @@
 #include <zero/param.h>
 
 /* C call frame */
-struct m_cframe {
+struct m_stkframe {
     /* automatic variables go here */
     int32_t fp;         // caller frame pointer
     int32_t pc;         // return address

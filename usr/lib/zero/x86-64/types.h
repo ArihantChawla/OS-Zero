@@ -5,18 +5,20 @@
 #include <zero/param.h>
 
 /* C call frame */
-struct m_cframe {
+struct m_stkframe {
     /* automatic variables go here */
     int64_t fp;         // caller frame pointer
     int64_t pc;         // return address
     /* call parameters on stack go here in 'reverse order' */
 };
 
+#if 0
 /* far pointer structure */
 struct m_farptr {
     uint16_t lim;
     uint32_t adr;
 } PACK();
+#endi
 
 #if 0
 
