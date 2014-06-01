@@ -15,13 +15,12 @@
 extern void ac97init(struct pcidev *);
 #endif
 
-typedef void pciinitfunc_t(struct pcidev *dev);
-
-static void    *pcidrvtab[4096] ALIGNED(PAGESIZE);
-struct pcidev   pcidevtab[PCINDEV];
+//static void    *pcidrvtab[4096] ALIGNED(PAGESIZE);
+static struct pcidrvent *pcidrvtab[65536];
+struct pcidev            pcidevtab[PCINDEV];
 //struct pcidevlist pcidevlist;
-long            pcifound;
-long            pcindev;
+long                     pcifound;
+long                     pcindev;
 
 long
 pciprobe(void)
@@ -37,15 +36,52 @@ pciprobe(void)
     return 1;
 }
 
-pciinitfunc_t *
+struct pcidrvent *
 pcifinddrv(uint16_t vendor, uint16_t devid)
 {
-    pciinitfunc_t *initfunc = NULL;
-    void          *ptr;
-    uint32_t       vd;
-    uint16_t       key1;
-    uint16_t       key2;
-    uint16_t       key3;
+    struct pcidrvent *ptr = pcidrvtab[vendor];
+    struct pcidrvent *drv = NULL;
+
+    if (ptr) {
+        drv = &ptr[devid];
+    }
+
+    return drv;
+}
+
+void
+pciregdrv(uint16_t vendor, uint16_t devid,
+          const char *str, pciinitfunc_t *initfunc)
+{
+    struct pcidrvent *ptr = pcidrvtab[vendor];
+    struct pcidrvent *drv;
+
+    if (!ptr) {
+        ptr = kmalloc(65536 * sizeof(struct pcidrvent));
+        if (ptr) {
+            kbzero(ptr, 65536 * sizeof(struct pcidrvent));
+            pcidrvtab[vendor] = ptr;
+        }
+    }
+    if (ptr) {
+        drv = &ptr[devid];
+        drv->init = initfunc;
+        drv->str = str;
+    }
+
+    return;
+}
+
+#if 0
+struct pcidrvent *
+pcifinddrv(uint16_t vendor, uint16_t devid)
+{
+    struct pcidrvent *drv = NULL;
+    void             *ptr;
+    uint32_t          vd;
+    uint16_t          key1;
+    uint16_t          key2;
+    uint16_t          key3;
 
     vd = vendor;
     vd <<= 16;
@@ -53,26 +89,49 @@ pcifinddrv(uint16_t vendor, uint16_t devid)
     key1 = vd >> 20;
     key2 = (vd >> 10) & 0x3ff;
     key3 = vd & 0x3ff;
+    kprintf("FIND: %x:%x:%x - ", key1, key2, key3);
     ptr = ((void **)pcidrvtab)[key1];
     if (ptr) {
+        {
+            long  ndx;
+            long *lptr = ptr;
+            
+            for (ndx = 0 ; ndx < 1024 ; ndx++) {
+                if (*lptr) {
+                    kprintf("%ld: %ld\n", ndx, *lptr);
+                }
+            }
+        }
+        kprintf("%p - ", ptr);
+//        ptr = ((void **)ptr)[key2];
+#if 0
         ptr = ((void **)ptr)[key2];
+        kprintf("%p - ", ptr);
         if (ptr) {
-            initfunc = ((void **)ptr)[key3];
+            drv = &(((struct pcidrvent *)ptr)[key3]);
+        }
+#endif
+        ptr = ((struct pcidrvent **)ptr)[key2];
+        kprintf("%p - ", ptr);
+        if (ptr) {
+            drv = &(((struct pcidrvent *)ptr)[key3]);
         }
     }
+    kprintf("%p\n", drv);
 
-    return initfunc;
+    return drv;
 }
 
 void
-pciregdrv(uint16_t vendor, uint16_t devid, pciinitfunc_t *initfunc)
+pciregdrv(uint16_t vendor, uint16_t devid, char *str, pciinitfunc_t *initfunc)
 {
-    void     *ptr1;
-    void     *ptr2;
-    uint32_t  vd;
-    uint16_t  key1;
-    uint16_t  key2;
-    uint16_t  key3;
+    struct pcidrvent *drv = NULL;
+    void             *ptr1 = NULL;
+    void             *ptr2 = NULL;
+    uint32_t          vd;
+    uint16_t          key1;
+    uint16_t          key2;
+    uint16_t          key3;
     
     vd = vendor;
     vd <<= 16;
@@ -80,31 +139,43 @@ pciregdrv(uint16_t vendor, uint16_t devid, pciinitfunc_t *initfunc)
     key1 = vd >> 20;
     key2 = (vd >> 10) & 0x3ff;
     key3 = vd & 0x3ff;
+    kprintf("REG: %x:%x:%x - %s - ", key1, key2, key3, str);
     ptr1 = ((void **)pcidrvtab)[key1];
     if (!ptr1) {
         ptr1 = kmalloc(4096 * sizeof(void *));
+        kprintf("ALLOC - ");
         if  (ptr1) {
-            kbzero(ptr1, 4096 * sizeof(void *));
+//            kbzero(ptr1, 4096 * sizeof(void *));
+            kmemset(ptr1, 0, 4096 * sizeof(void *));
             ((void **)pcidrvtab)[key1] = ptr1;
         }
     }
+    kprintf("%p - ", ptr1);
     if (ptr1) {
         ptr2 = ((void **)ptr1)[key2];
         if (!ptr2) {
-            ptr2 = kmalloc(1024 * sizeof(void *));
+            ptr2 = kmalloc(1024 * sizeof(struct pcidrvent));
+            kprintf("ALLOC - ");
             if (ptr2) {
-                kbzero(ptr2, 1024 * sizeof(void *));
+//                kbzero(ptr2, 1024 * sizeof(struct pcidrvent));
+                kmemset(ptr2, 0, 1024 * sizeof(struct pcidrvent));
                 ((void **)ptr1)[key2] = ptr2;
             }
         }
-        ptr1 = ptr2;
+//        ptr1 = ptr2;
     }
-    if (ptr1) {
-        ((void **)ptr1)[key3] = initfunc;
+    kprintf("%p - ", ptr2);
+    if (ptr2) {
+//        drv = &(((struct pcidrvent *)ptr1)[key3]);
+        drv = &(((struct pcidrvent *)ptr2)[key3]);
+        drv->init = initfunc;
+        drv->str = str;
     }
+    kprintf("%p\n", drv);
 
     return;
 }
+#endif
 
 #if 0
 uint8_t
@@ -332,43 +403,44 @@ pcichkvendor(uint8_t busid, uint8_t slotid, uint16_t *devret)
 }
 
 void
-pciinitdrv(struct pcidev *dev)
-{
-    pciinitfunc_t *func;
-
-    func = pcifinddrv(dev->vendor, dev->id);
-    if (func) {
-        func(dev);
-    }
-
-    return;
- }
-
-void
 pciinit(void)
 {
-    struct pcidev *dev;
-    uint16_t       vendor;
-    uint16_t       devid;
-    long           bus;
-    long           slot;
-    long           ndev;
+    struct pcidrvent *drv;
+    struct pcidev    *dev;
+    pciinitfunc_t    *initfunc;
+    uint16_t          vendor;
+    uint16_t          devid;
+    long              bus;
+    long              slot;
+    long              ndev;
 
     pcifound = pciprobe();
     if (pcifound) {
+        pciregdrv(0x8086, 0x1237, "Intel 82440LX/EX Chipset", NULL);
+        kprintf("%p\n", pcifinddrv(0x8086, 0x1237));
+        pciregdrv(0x8086, 0x7000, "Intel 82371SB PCI-to-ISA Bridge (Triton II)",
+                  NULL);
+        kprintf("%p\n", pcifinddrv(0x8086, 0x1237));
+        pciregdrv(0x1013, 0xb8, "Cirrus Logic CL-GD5546 Graphics Card", NULL);
+        kprintf("%p\n", pcifinddrv(0x8086, 0x1237));
+        pciregdrv(0x8086, 0x100e, "Intel PRO 1000/MT Ethernet Controller",
+                  NULL);
+        kprintf("%p\n", pcifinddrv(0x8086, 0x1237));
 #if (AC97)
-        pciregdrv(0x8086, 0x2415, ac97init);
+        pciregdrv(0x8086, 0x2415, "Aureal AD1881 SOUNDMAX (AC97)", ac97init);
 #endif
+        kprintf("%p\n", pcifinddrv(0x8086, 0x1237));
         ndev = 0;
-        for (bus = 0 ; bus < 256 ; bus++) {
-            for (slot = 0 ; slot < 32 ; slot++) {
+        for (bus = 0 ; bus < PCINBUS ; bus++) {
+            for (slot = 0 ; slot < PCINSLOT ; slot++) {
                 vendor = pcichkvendor(bus, slot, &devid);
                 if (vendor != 0xffff) {
                     if (ndev < PCINDEV) {
-                        pcidevtab[ndev].vendor = vendor;
-                        pcidevtab[ndev].id = devid;
-                        pcidevtab[ndev].bus = bus;
-                        pcidevtab[ndev].slot = slot;
+                        dev = &pcidevtab[ndev];
+                        dev->vendor = vendor;
+                        dev->id = devid;
+                        dev->bus = bus;
+                        dev->slot = slot;
 //                        listqueue(&pcidevlist, &pcidevtab[ndev]);
                         ndev++;
                     }
@@ -379,9 +451,21 @@ pciinit(void)
             pcindev = ndev;
             dev = &pcidevtab[0];
             while (ndev--) {
-                kprintf("PCI: bus: %x, slot: %x, vendor: 0x%x, device: 0x%x\n",
-                        dev->bus, dev->slot, dev->vendor, dev->id);
-                pciinitdrv(dev);
+                kprintf("%p\n", pcifinddrv(0x8086, 0x1237));
+                drv = pcifinddrv(dev->vendor, dev->id);
+                if (drv) {
+                    kprintf("PCI: %s: bus: %x, slot: %x, vendor: 0x%x, device: 0x%x\n",
+                            drv->str, dev->bus, dev->slot,
+                            dev->vendor, dev->id);
+                    initfunc = drv->init;
+                    if (initfunc) {
+                        initfunc(dev);
+                    }
+                } else {
+                    kprintf("PCI: bus: %x, slot: %x, vendor: 0x%x, device: 0x%x\n",
+                            dev->bus, dev->slot,
+                            dev->vendor, dev->id);
+                }
                 dev++;
             }
         }

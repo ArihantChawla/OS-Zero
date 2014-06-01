@@ -428,6 +428,7 @@ kprintf(char *fmt, ...)
     struct cons *cons;
     char        *arg;
     char        *sptr;
+    char        *cptr;
     long         val;
     long         isch;
     long         isdec;
@@ -455,17 +456,20 @@ kprintf(char *fmt, ...)
                 arg++;
                 if (*arg) {
                     switch (*arg) {
+                        case 's':
+                            cptr = (char *)va_arg(al, char *);
+                            arg++;
+                            if (cptr) {
+                                cons->puts(cptr);
+                            }
+
+                            break;
                         case 'c':
                             isch = 1;
                             val = (char)va_arg(al, int);
                             arg++;
                             
                             break;
-                        isch = 1;
-                        val = (char)va_arg(al, int);
-                        arg++;
-                        
-                        break;
                         case 'h':
                             isdec = 1;
                             val = (short)va_arg(al, int);

@@ -155,8 +155,8 @@ ac97init(struct pcidev *dev)
 
         return;
     }
-    kprintf("AC97 audio controller: vendor == 0x%x, devid == 0x%x, bus == 0x%x, slot == 0x%x, irq == 0x%x, dma == 0x%x\n",
-            dev->vendor, dev->id, dev->bus, dev->slot, dev->irq, dev->dma);
+    kprintf("AC97 audio controller: vendor == 0x%x, devid == 0x%x, bus == 0x%x, slot == 0x%x, irq == 0x%x\n",
+            dev->vendor, dev->id, dev->bus, dev->slot, dev->irq);
 
     return;
 }

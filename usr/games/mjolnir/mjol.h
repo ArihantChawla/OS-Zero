@@ -16,9 +16,13 @@
 extern struct mjolgame *mjolgame;
 extern struct mjolchr  *chaseq;
 
+#define mjolismove(ch)  bitset(mjolcmdismovemap, ch)
+#define mjolsetmove(ch) setbit(mjolcmdismovemap, ch)
 #define mjolhasdir(ch)  bitset(mjolcmdhasdirmap, ch)
 #define mjolsetdir(ch)  setbit(mjolcmdhasdirmap, ch)
 #define mjolhasarg(ch)  bitset(mjolcmdhasargmap, ch)
+#define mjolsetarg(ch)  setbit(mjolcmdhasargmap, ch)
+extern uint8_t          mjolcmdismovemap[32];
 extern uint8_t          mjolcmdhasdirmap[32];
 extern uint8_t          mjolcmdhasargmap[32];
 
@@ -183,6 +187,7 @@ struct mjolgame {
     struct dnggame      data;
     struct mjolchr     *player;
     char               *nick;           // names of players
+    struct mjolobj    **inventory;      // inventory
     long                scrtype;        // type of screen to use
     struct mjolscr     *scr;            // screen interface
     struct mjolchr  ****chrtab;         // in-dungeon live characters
@@ -197,6 +202,7 @@ struct mjolgame {
 };
 
 struct mjolobjfunc {
+    char  *str;
     long (*hit)(void *, void *);
     long (*def)(void *, void *);
     long (*pick)(void *, void *);
@@ -337,7 +343,10 @@ mjolrmchase(struct mjolchr *data)
     return;
 }
 
-typedef long mjolcmdfunc(struct mjolchr *src, struct mjolobj *dest);
+typedef long             mjolcmdfunc(struct mjolchr *src,
+                                     struct mjolobj *dest);
+typedef struct mjolobj * mjolcmdmovefunc(struct mjolgame *game,
+                                         struct mjolchr *chr);
 
 #endif /* __MJOLNIR_MJOL_H__ */
 

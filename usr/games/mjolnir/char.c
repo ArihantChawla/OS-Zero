@@ -10,28 +10,29 @@
 extern long mjolhit(struct mjolchr *src, struct mjolchr *dest);
 extern long mjoltrap(struct mjolobj *trap, struct mjolchr *dest);
 
-mjolcmdfunc *mjolcmdfunctab[256][256];
+extern mjolcmdfunc     *mjolcmdfunctab[256][256];
+extern mjolcmdmovefunc *mjolcmdmovefunctab[256];
 
 struct mjolchr *mjolplayer;
 struct mjolchr *mjolchaseq;
 
 void
-mjolinitchr(struct mjolchr *data, long lvl)
+mjolinitchr(struct mjolchr *chr, long lvl)
 {
-    data->hp = 16 + ((lvl > 0)
-                     ? (mjolrand() % lvl)
-                     : 0);
-    data->maxhp = data->hp;
-    data->gold = mjolrand() & 0xff;
-    data->str = 4 + ((lvl > 0)
-                     ? (mjolrand() % lvl)
-                     : 0);
-    data->maxstr = data->str;
-    data->arm = 0;
-    data->exp = 0;
-    data->speed = 1;
-    data->turn = 0;
-    data->nturn = 0;
+    chr->hp = 16 + ((lvl > 0)
+                    ? (mjolrand() % lvl)
+                    : 0);
+    chr->maxhp = chr->hp;
+    chr->gold = mjolrand() & 0xff;
+    chr->str = 4 + ((lvl > 0)
+                    ? (mjolrand() % lvl)
+                    : 0);
+    chr->maxstr = chr->str;
+    chr->arm = 0;
+    chr->exp = 0;
+    chr->speed = 1;
+    chr->turn = 0;
+    chr->nturn = 0;
 /*  dex, lock, intl, def */
 
     return;
@@ -40,16 +41,16 @@ mjolinitchr(struct mjolchr *data, long lvl)
 struct mjolchr *
 mjolmkchr(long type)
 {
-    struct mjolchr *data = calloc(1, sizeof(struct mjolchr));
+    struct mjolchr *chr = calloc(1, sizeof(struct mjolchr));
 
-    if (!data) {
+    if (!chr) {
         fprintf(stderr, "memory allocation failure\n");
 
         exit(1);
     }
-    data->data.type = type;
+    chr->data.type = type;
 
-    return data;
+    return chr;
 }
 
 struct mjolchr *
@@ -65,20 +66,20 @@ mjolmkplayer(void)
 
 /* determine how many continuous turns a character has */
 long
-mjolhasnturn(struct mjolchr *chrdata)
+mjolhasnturn(struct mjolchr *chr)
 {
     long          retval = 0;
-    long          speed = chrdata->speed;
+    long          speed = chr->speed;
     unsigned long turn;
 
     if (speed < 0) {
-        turn = chrdata->turn;
+        turn = chr->turn;
         /* only move every abs(speed) turns */
-        if (chrdata->nturn == turn) {
+        if (chr->nturn == turn) {
             /* allow movement */
             retval = 1;
             turn -= speed;
-            chrdata->turn = turn;
+            chr->turn = turn;
         }
     } else {
         /* return speed */
@@ -89,16 +90,21 @@ mjolhasnturn(struct mjolchr *chrdata)
 }
 
 long
-mjoldoturn(struct mjolgame *game, struct mjolchr *data)
+mjoldoturn(struct mjolgame *game, struct mjolchr *chr)
 {
-    long          retval = 0;
-    long          n = mjolhasnturn(data);
-    int         (*printmsg)(const char *, ...) = game->scr->printmsg;
-    int         (*getkbd)(void) = game->scr->getch;
-    mjolcmdfunc  *func;
-    int           cmd;
-    int           dir;
-    int           item;
+    struct mjolobj  *dest = NULL;
+    long             lvl;
+    long             retval = 0;
+    long             n = mjolhasnturn(chr);
+    long             x;
+    long             y;
+    int            (*printmsg)(const char *, ...) = game->scr->printmsg;
+    int            (*getkbd)(void) = game->scr->getch;
+    mjolcmdfunc     *func;
+    mjolcmdmovefunc *movefunc;
+    int              cmd;
+    int              dir;
+    int              item = 0;
     
     if (!n) {
         printmsg("You cannot move\n");
@@ -111,21 +117,55 @@ mjoldoturn(struct mjolgame *game, struct mjolchr *data)
             cmd = getkbd();
         } while (cmd > 0xff);
 //            clrmsg();
-        if (mjolhasdir(cmd)) {
-            printmsg("Which direction?");
-            do {
-                dir = getkbd();
-            } while (dir > 0xff);
-        }
-        if (mjolhasarg(cmd)) {
-            do {
-                item = getkbd();
-            } while (item > 0xff);
-        }
-        func = mjolcmdfunctab[cmd][item];
-        if (func) {
-            retval += func(data, NULL);
-            n--;
+        if (cmd == MJOL_CMD_BOSS) {
+                
+            exit(0);
+        } else if (mjolismove(cmd)) {
+            movefunc = mjolcmdmovefunctab[cmd];
+            movefunc(game, chr);
+        } else {
+            if (mjolhasdir(cmd)) {
+                lvl = game->lvl;
+                x = chr->data.x;
+                y = chr->data.y;
+                printmsg("Which direction?");
+                do {
+                    dir = getkbd();
+                } while (dir > 0xff);
+#if (MJOL_CURSES)
+                if (dir == KEY_UP) {
+                    printmsg("UP");
+                    y--;
+                } else if (dir == KEY_DOWN) {
+                    printmsg("DOWN");
+                    y++;
+                } else if (dir == KEY_LEFT) {
+                    printmsg("LEFT");
+                    x--;
+                } else if (dir == KEY_RIGHT) {
+                    printmsg("RIGHT");
+                    x++;
+                } else {
+                    printmsg("%lx\n", dir);
+                }
+                dest = game->objtab[lvl][x][y];
+#endif
+            }
+            if (mjolhasarg(cmd)) {
+                printmsg("Which item?");
+                do {
+                    item = getkbd();
+                } while (item > 0xff);
+                printmsg("%c\n", item);
+                dest = game->inventory[item];
+            }
+            if (dest) {
+                func = mjolcmdfunctab[cmd][item];
+                if (func) {
+                    retval += func(chr, dest);
+                    n--;
+                }
+            }
         }
     }
     

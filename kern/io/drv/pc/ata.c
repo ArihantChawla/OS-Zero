@@ -23,6 +23,13 @@ static const char *ataerrtab[6]
 };
 #endif
 
+#define ATAIDATAPIBYTE1  0x14
+#define ATAIDATAPIBYTE2  0xeb
+#define ATAIDSATABYTE1   0x3c
+#define ATAIDSATABYTE2   0xc3
+#define ATAIDSATAPIBYTE1 0x69
+#define ATAIDSATAPIBYTE2 0x96
+
 /* use id ATASELMASTER or ATASELSLAVE */
 long
 ataprobedrv(uint16_t iobase, uint8_t id)
@@ -43,15 +50,15 @@ ataprobedrv(uint16_t iobase, uint8_t id)
     /* check for ATAPI */
     byte1 = inb(iobase + 4);
     byte2 = inb(iobase + 5);
-    if (byte1 == 0x14 && byte2 == 0xeb) {
+    if (byte1 == ATAIDATAPIBYTE1 && byte2 == ATAIDATAPIBYTE2) {
         /* ATAPI */
         
         retval = 2;
-    } else if (byte1 == 0x3c && byte2 == 0xc3) {
+    } else if (byte1 == ATAIDSATABYTE1 && byte2 == ATAIDSATABYTE2) {
         /* SATA */
 
         retval = 3;
-    } else if (byte1 == 0x69 && byte2 == 0x96) {
+    } else if (byte1 == ATAIDSATAPIBYTE1 && byte2 == ATAIDSATAPIBYTE2) {
         /* SATAPI */
 
         retval = 4;
