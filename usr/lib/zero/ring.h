@@ -22,17 +22,17 @@
 /* MALLOC       - function used to allocate data buffer */
 /* FREE         - function used to free buffers */
 /* MEMCPY       - function used to copy data */
-/* RING_TYPE    - type of items in ring buffer */
+/* RING_ITEM    - type of items in ring buffer */
 /* RING_INVAL   - invalid/non-present item value */
 
 struct ringbuf {
     volatile long  lk;
     volatile long  init;
     long           n;
-    RING_TYPE     *base;
-    RING_TYPE     *lim;
-    RING_TYPE     *inptr;
-    RING_TYPE     *outptr;
+    RING_ITEM     *base;
+    RING_ITEM     *lim;
+    RING_ITEM     *inptr;
+    RING_ITEM     *outptr;
 };
 
 /*
@@ -50,7 +50,7 @@ ringinit(struct ringbuf *buf, void *base, long n)
         return;
     }
     if (!base) {
-        base = MALLOC(n * sizeof(RING_TYPE));
+        base = MALLOC(n * sizeof(RING_ITEM));
         if (base) {
             retval++;
         }
@@ -61,7 +61,7 @@ ringinit(struct ringbuf *buf, void *base, long n)
         buf->init = 0;
         buf->n = n;
         buf->base = base;
-        buf->lim = (uint8_t *)base + n * sizeof(RING_TYPE);
+        buf->lim = (uint8_t *)base + n * sizeof(RING_ITEM);
         buf->inptr = buf->base;
         buf->outptr = buf->base;
     }
@@ -71,10 +71,10 @@ ringinit(struct ringbuf *buf, void *base, long n)
 }
 
 /* fetch next item from ring buffer */
-static __inline__ RING_TYPE
+static __inline__ RING_ITEM
 ringget(struct ringbuf *buf)
 {
-    RING_TYPE item = RING_INVAL;
+    RING_ITEM item = RING_INVAL;
 
     mtxlk(&buf->lk);
     if (buf->inptr == buf->lim) {
@@ -89,10 +89,10 @@ ringget(struct ringbuf *buf)
 }
 
 /* queue item into ring buffer */
-static __inline__ RING_TYPE
-ringput(struct ringbuf *buf, RING_TYPE val)
+static __inline__ RING_ITEM
+ringput(struct ringbuf *buf, RING_ITEM val)
 {
-    RING_TYPE item = RING_INVAL;
+    RING_ITEM item = RING_INVAL;
 
     mtxlk(&buf->lk);
     if (buf->outptr == buf->lim) {
@@ -120,7 +120,7 @@ ringresize(struct ringbuf *buf, long n)
 
     mtxlk(&buf->lk);
     src = buf->base;
-    buf = malloc(n * sizeof(RING_TYPE));
+    buf = malloc(n * sizeof(RING_ITEM));
     if (buf) {
         if (src && (buf->init)) {
             memcpy(buf, src, buf->n);
