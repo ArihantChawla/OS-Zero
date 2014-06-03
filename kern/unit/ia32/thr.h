@@ -2,22 +2,6 @@
 #define __KERN_UNIT_IA32_THR_H__
 
 #if 0
-#include <kern/conf.h>
-#include <stddef.h>
-#include <zero/types.h>
-#include <kern/unit/x86/cpu.h>
-#if defined(__x86_64__)
-#include <kern/unit/x86-64/asm.h>
-#elif defined(__i386__)
-#include <kern/unit/ia32/asm.h>
-#elif defined(__arm__)
-#include <kern/unit/arm/asm.h>
-#elif defined(__ppc__)
-#include <kern/unit/ppc/asm.h>
-#endif
-#endif
-
-#if 0
 static __inline__ void
 m_tcbsave(struct m_tcb *tcb)
 {
@@ -163,8 +147,8 @@ m_tcbjmp(struct m_tcb *tcb)
                           : "i" (offsetof(struct m_tcb, pdbr)),
                             "i" (-(sizeof(struct m_trapframe)
                                    + sizeof(int32_t)
-                                   + sizeof(struct m_pusha))));
-
+                                   + sizeof(struct m_pusha)))
+                          : "memory");
     /* NOTREACHED */
 }
       

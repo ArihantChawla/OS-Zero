@@ -1,0 +1,8 @@
+- main module is img.c + img.h
+- use hardware format (ARGB32?) as internal data format
+- support for different image file formats
+  - tif
+  - gif
+  - jpg
+  - png
+

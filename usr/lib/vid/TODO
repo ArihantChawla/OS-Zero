@@ -1,0 +1,5 @@
+- main module is vid.c + vid.h
+- support for different video file formats
+  - mpeg
+  - raw
+

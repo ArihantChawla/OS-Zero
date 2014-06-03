@@ -5,8 +5,6 @@
 #include <zero/cdecl.h>
 #include <zero/param.h>
 
-/* event header structure */
-
 /* user input events */
 
 /* masks for choosing events */
@@ -58,7 +56,7 @@
 /* keyboard event state field existence */
 #define EVKBDSTATE       0x80000000     // 1 if event has state member
 #define EVKBDNFLGBIT     1
-/* mask-bits for modifier keys */
+/* state-bits for modifier keys */
 #define EVKBDSHIFT       0x00000001     // Shift
 #define EVKBDCAPSLK      0x00000002     // Caps Lock
 #define EVKBDCTRL        0x00000004     // Ctrl
@@ -86,10 +84,13 @@ struct evkbdqchar {
     long          out;                  // index of next character to write
     long          in;                   // index of next character to read
     /* PADDING */
+    long          pad[5];
+#if 0
 #if (LONGSIZE == 4)
     int32_t       pad[5];
 #elif (LONGSIZE == 8)
     int32_t       pad[6];
+#endif
 #endif
     /* character data */
     unsigned char ctab[EVKBDQNCHAR];

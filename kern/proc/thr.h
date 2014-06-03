@@ -8,7 +8,7 @@
 #if defined(__x86_64__)
 #include <kern/unit/x86-64/asm.h>
 #elif defined(__i386__)
-#include <kern/unit/ia32/asm.h>
+#include <kern/unit/ia32/thr.h>
 #elif defined(__arm__)
 #include <kern/unit/arm/asm.h>
 #elif defined(__ppc__)

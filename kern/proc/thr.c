@@ -10,7 +10,7 @@
 #include <kern/mem.h>
 #include <kern/unit/x86/cpu.h>
 #include <kern/unit/x86/trap.h>
-#include <kern/unit/ia32/asm.h>
+//#include <kern/unit/ia32/asm.h>
 
 static struct thrwait thrwaittab[NLVL0THR] ALIGNED(PAGESIZE);
 static struct thrq    thrruntab[THRNCLASS * THRNPRIO];
@@ -39,7 +39,6 @@ thrjmp(struct thr *thr)
     m_tcbjmp(&thr->m_tcb);
 
     /* NOTREACHED */
-    return;
 }
 
 #if (ZEROSCHED)
