@@ -269,6 +269,15 @@ ps2kbdflush(uint64_t keycode, int32_t keyval)
 }
 
 void
+ps2kbdaddkey(uint64_t keycode)
+{
+    mtxlk(&kbdring->lk);
+    ringput(kbdring, keycode);
+    mtxunlk(&kbdring->lk);
+}
+
+#if 0
+void
 ps2kbdaddkey(uint64_t keycode, int32_t keyval)
 {
     mtxlk(&ps2drv.keylk);
@@ -299,6 +308,7 @@ ps2kbdaddkey(uint64_t keycode, int32_t keyval)
         mtxunlk(&ps2drv.keylk);
     }
 }
+#endif
 
 #endif /* PS2KEYBUF */
 
@@ -309,11 +319,13 @@ ps2kbdintr(void)
 #if (PS2KEYBUF)
     uint64_t keycode = 0;
 #endif
-    int32_t  isup = 0;
-    int32_t  val;
+#if 0
+   int32_t   isup = 0; 
+   int32_t   val;
+#endif
     uint8_t  u8;
     
-    val = 0;
+//    val = 0;
     ps2readkbd(u8);
     if (u8 == PS2KBD_PAUSE_BYTE1) {
         /* pause/break. */
@@ -338,7 +350,7 @@ ps2kbdintr(void)
         keycode |= UINT64_C(0xc5) << 32;
 #endif
         u8 &= PS2KBD_VAL_MASK;
-        val = ps2drv.keytab1b[u8];
+//        val = ps2drv.keytab1b[u8];
     } else if (u8 != PS2KBD_PREFIX_BYTE) {
         /* single-byte value. */
         if (u8 & PS2KBD_UP_BIT) {
@@ -346,11 +358,13 @@ ps2kbdintr(void)
 #if (PS2KEYBUF)
             keycode = u8;
 #endif
-            isup = 1;
+//            isup = 1;
             u8 &= ~PS2KBD_UP_BIT;
-            val = ps2drv.keytabup[u8];
+//            val = ps2drv.keytabup[u8];
+#if 0
         } else {
             val = ps2drv.keytab1b[u8];
+#endif
         }
     } else {
         /* 0xe0-prefixed. */
@@ -369,8 +383,7 @@ ps2kbdintr(void)
 #if (PS2KEYBUF)
             keycode |= (uint64_t)u8 << 24;
 #endif
-//            val &= PS2KBD_VAL_MASK;
-            val = ps2drv.keytabmb[u8];
+//            val = ps2drv.keytabmb[u8];
         } else if (u8 == PS2KBD_UP_BYTE) {
 #if (PS2KEYBUF)
             keycode = u8;
@@ -379,17 +392,20 @@ ps2kbdintr(void)
 #if (PS2KEYBUF)
             keycode = (uint64_t)u8 << 8;
 #endif
-            val = ps2drv.keytabup[u8];
+//            val = ps2drv.keytabup[u8];
         } else {
             if (u8 & PS2KBD_UP_BIT) {
-                isup = 1;
+//                isup = 1;
                 u8 &= ~PS2KBD_UP_BIT;
-                val = ps2drv.keytabup[u8];
+//                val = ps2drv.keytabup[u8];
+#if 0
             } else {
                 val = ps2drv.keytabmb[u8];
+#endif
             }
         }
     }
+#if 0
     if (ismodkey(val)) {
         if (isup) {
             ps2drv.modmask &= ~(1 << (-val));
@@ -397,8 +413,9 @@ ps2kbdintr(void)
             ps2drv.modmask |= 1 << (-val);
         }
     }
+#endif
 #if (PS2KEYBUF)
-    ps2kbdaddkey(keycode, val);
+    ps2kbdaddkey(keycode);
 #endif
 
     return;
