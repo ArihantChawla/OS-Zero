@@ -2,6 +2,8 @@
 #define __ZERO_RING_H__
 
 #include <stdint.h>
+#include <zero/cdecl.h>
+#include <zero/param.h>
 #include <zero/mtx.h>
 #if !defined(MALLOC) || !defined(FREE)
 #include <stdlib.h>
@@ -33,7 +35,8 @@ struct ringbuf {
     RING_ITEM     *lim;
     RING_ITEM     *inptr;
     RING_ITEM     *outptr;
-};
+    uint8_t        data[EMPTY] ALIGNED(CLSIZE);
+} PACK();
 
 /*
  * initialise ring buffer
@@ -47,7 +50,7 @@ ringinit(struct ringbuf *buf, void *base, long n)
     mtxlk(&buf->lk);
     if (buf->init) {
 
-        return;
+        return 1;
     }
     if (!base) {
         base = MALLOC(n * sizeof(RING_ITEM));
@@ -61,7 +64,7 @@ ringinit(struct ringbuf *buf, void *base, long n)
         buf->init = 0;
         buf->n = n;
         buf->base = base;
-        buf->lim = (uint8_t *)base + n * sizeof(RING_ITEM);
+        buf->lim = (RING_ITEM *)((uint8_t *)base + n * sizeof(RING_ITEM));
         buf->inptr = buf->base;
         buf->outptr = buf->base;
     }
@@ -115,23 +118,23 @@ ringput(struct ringbuf *buf, RING_ITEM val)
 void *
 ringresize(struct ringbuf *buf, long n)
 {
-    void *buf = NULL;
+    void *ptr = NULL;
     void *src;
 
     mtxlk(&buf->lk);
     src = buf->base;
-    buf = malloc(n * sizeof(RING_ITEM));
-    if (buf) {
+    ptr = MALLOC(n * sizeof(RING_ITEM));
+    if (ptr) {
         if (src && (buf->init)) {
-            memcpy(buf, src, buf->n);
+            MEMCPY(ptr, src, buf->n);
         }
         FREE(src);
-        buf->base = buf;
+        buf->base = ptr;
         buf->n = n;
     }
     mtxunlk(&buf->lk);
 
-    return buf;
+    return ptr;
 }
 
 #endif /* __ZERO_RING_H__ */

@@ -20,6 +20,8 @@ evpost(void *wadr, long type)
     ;
 }
 
+#if 0
+
 /* dequeue character from keyboard queue. FIXME: may not work */
 unsigned char
 evdeqkbdchar(struct evkbdqchar *queue)
@@ -108,4 +110,6 @@ evqkbdchar(struct evkbdqchar *queue, unsigned char ch)
 
     return;
 }
+
+#endif /* 0 */
 

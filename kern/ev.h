@@ -5,9 +5,8 @@
 #include <zero/cdecl.h>
 #include <zero/param.h>
 
-/* user input events */
-
 /* masks for choosing events */
+/* user input events */
 #define EVKEYMASK        (EVKEYDOWNMASK | EVKEYUPMASK)
 #define EVKEYDOWNMASK    (1UL << EVKEYDOWN)
 #define EVKEYUPMASK      (1UL << EVKEYUP)
@@ -15,11 +14,13 @@
 #define EVBUTTONDOWNMASK (1UL << EVBUTTONDOWN)
 #define EVBUTTONUPMASK   (1UL << EVBUTTONUP)
 #define EVPNTMOTIONMASK  (1UL << EVPNTMOTION)
+/* IPC events */
 #define EVIPCMASK        ((1UL << EVCMD) | (1UL << EVMSG) | (1UL << EVDATA))
 #define EVFSMASK         ((EVFSCREATMASK                                \
                            | EVFSUNLINKMASK                             \
                            | EVFSMKDIRMASK                              \
                            | EVFSRMDIRMASK))
+/* filesystem events */
 #define EVFSCREATMASK    (1UL << EVFSCREAT)
 #define EVFSUNLINKMASK   (1UL << EVFSUNLINK)
 #define EVFSMKDIRMASK    (1UL << EVFSMKDIR)
@@ -53,6 +54,8 @@
  * be used as flags if need be
  */
 
+#if 0 /* TODO: this stuff belongs into the desktop environment */
+
 /* keyboard event state field existence */
 #define EVKBDSTATE       0x80000000     // 1 if event has state member
 #define EVKBDNFLGBIT     1
@@ -77,6 +80,9 @@ struct evkbd {
     int32_t state;                      // button and modifier state if present
 } PACK();
 
+#endif
+
+#if 0
 /* ring-buffer event queue for 8-bit character keyboard events */
 #define EVKBDQNCHAR (PAGESIZE - 8 * LONGSIZE)
 struct evkbdqchar {
@@ -95,6 +101,7 @@ struct evkbdqchar {
     /* character data */
     unsigned char ctab[EVKBDQNCHAR];
 } PACK() ALIGNED(PAGESIZE);
+#endif
 
 /* pointer such as mouse device events */
 
@@ -143,7 +150,8 @@ struct evfs {
 struct zevent {
     uint32_t type;
     union {
-        struct evkbd  kbd;
+//        struct evkbd  kbd;
+        uint64_t      key;
         struct evpnt  pnt;
         struct evcmd  cmd;
         struct evmsg  msg;
@@ -169,8 +177,10 @@ long   evpeek(struct zevent *ev, long mask);
 /* remove from queue unless flg has the NOREMOVE-bit set */
 void   evget(struct zevent *ev, long flg);
 
+#if 0
 unsigned char evdeqkbdchar(struct evkbdqchar *queue);
 void          evqkbdchar(struct evkbdqchar *queue, unsigned char ch);
+#endif
 
 #endif /* __KERN_EV_H__ */
 

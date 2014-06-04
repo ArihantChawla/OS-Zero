@@ -16,6 +16,15 @@
 #include <zero/cdecl.h>
 #if (PS2KEYBUF)
 #include <zero/mtx.h>
+#define VAL(x)        (x)
+#define NOP(x)        ((void)0)
+#define NOP3(x, y, z) ((void)0)
+#define MALLOC(x)     ((void*)VAL(x))
+#define FREE          NOP
+#define MEMCPY        NOP3
+#define RING_ITEM     uint64_t
+#define RING_INVAL    UINT64_C(0)
+#include <zero/ring.h>
 #endif
 
 #include <kern/util.h>
@@ -58,11 +67,21 @@ static struct ps2drv ps2drv ALIGNED(PAGESIZE);
         : (ps2drv.keytab1b[name] = name##_SYM,                          \
            ps2drv.keytabup[name] = name##_SYM | PS2KBD_UP_BIT)))
 
+#if (PS2KEYBUF)
+uint8_t         kbdbuf[PAGESIZE] ALIGNED(PAGESIZE);
+struct ringbuf *kbdring = (struct ringbuf *)kbdbuf;
+#endif
+
 void
 kbdinit(void)
 {
     uint8_t u8;
 
+#if (PS2KEYBUF)
+    ringinit(kbdring,
+             kbdbuf + offsetof(struct ringbuf, data),
+             (PAGESIZE - offsetof(struct ringbuf, data)) / sizeof(RING_ITEM));
+#endif
     /* enable keyboard */
     ps2sendkbd(PS2KBD_ENABLE);
     do {
