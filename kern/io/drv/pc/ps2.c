@@ -30,7 +30,7 @@
 
 extern void *irqvec[];
 
-void ps2initkbd_us(void);
+//void ps2initkbd_us(void);
 void ps2kbdintr(void);
 void ps2mouseintr(void);
 
@@ -60,7 +60,7 @@ uint8_t         kbdbuf[PAGESIZE] ALIGNED(PAGESIZE);
 struct ringbuf *kbdring = (struct ringbuf *)kbdbuf;
 
 void
-kbdinit(void)
+ps2initkbd(void)
 {
     uint8_t u8;
 
@@ -299,7 +299,7 @@ ps2kbdintr(void)
 }
 
 void
-mouseinit(void)
+ps2initmouse(void)
 {
     irqvec[IRQMOUSE] = ps2mouseintr;
     kprintf("PS/2 mouse interrupt enabled\n");
@@ -405,8 +405,8 @@ ps2mouseintr(void)
 void
 ps2init(void)
 {
-    kbdinit();
-    mouseinit();
+    ps2initkbd();
+    ps2initmouse();
 }
 
 #endif /* PS2DRV */
