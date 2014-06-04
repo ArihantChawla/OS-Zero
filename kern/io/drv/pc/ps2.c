@@ -2,8 +2,6 @@
 
 #if (PS2DRV)
 
-#define PS2KEYBUF 1
-
 /*
  * 19:49 <PeanutHorst>
  * { == curly brace   < == angle bracket   [ == bracket   ( == parentheses
@@ -14,7 +12,6 @@
 
 #include <zero/param.h>
 #include <zero/cdecl.h>
-#if (PS2KEYBUF)
 #include <zero/mtx.h>
 #define VAL(x)        (x)
 #define NOP(x)        ((void)0)
@@ -25,10 +22,8 @@
 #define RING_ITEM     uint64_t
 #define RING_INVAL    UINT64_C(0)
 #include <zero/ring.h>
-#endif
 
 #include <kern/util.h>
-//#include <kern/event.h>
 #include <kern/unit/x86/trap.h>
 #include <kern/unit/x86/trap.h>
 #include <kern/io/drv/pc/ps2.h>
@@ -48,16 +43,8 @@ static struct ps2drv ps2drv ALIGNED(PAGESIZE);
 #define ps2readmouse(u8)                                                \
     __asm__("inb %w1, %b0" : "=a" (u8) : "i" (PS2MOUSE_INPORT))
 
-#if 0
-#define ps2setkeymod(name)                                              \
-    (keytabmod[name] = (name##_FLAG))
-#endif
 #define ismodkey(val)                                                   \
     (((val) & 0x80000000) && ((val) & 0xfffffff0) == 0xfffffff0)
-#if 0
-#define ps2setkeymod(name)                                              \
-    (keytabmod[name] = (1 << (-(name##_SYM))))
-#endif
 #define ps2setkeycode(name)                                             \
     (((((name) >> 8) & 0xff) == PS2KBD_UP_BYTE)                         \
      ? (ps2drv.keytabup[name >> 16] = name##_SYM | PS2KBD_UP_BIT)       \
@@ -67,21 +54,17 @@ static struct ps2drv ps2drv ALIGNED(PAGESIZE);
         : (ps2drv.keytab1b[name] = name##_SYM,                          \
            ps2drv.keytabup[name] = name##_SYM | PS2KBD_UP_BIT)))
 
-#if (PS2KEYBUF)
 uint8_t         kbdbuf[PAGESIZE] ALIGNED(PAGESIZE);
 struct ringbuf *kbdring = (struct ringbuf *)kbdbuf;
-#endif
 
 void
 kbdinit(void)
 {
     uint8_t u8;
 
-#if (PS2KEYBUF)
     ringinit(kbdring,
              kbdbuf + offsetof(struct ringbuf, data),
              (PAGESIZE - offsetof(struct ringbuf, data)) / sizeof(RING_ITEM));
-#endif
     /* enable keyboard */
     ps2sendkbd(PS2KBD_ENABLE);
     do {
@@ -260,8 +243,6 @@ ps2initkbd_us(void)
     return;
 }
 
-#if (PS2KEYBUF)
-
 void
 ps2kbdflush(uint64_t keycode, int32_t keyval)
 {
@@ -276,147 +257,39 @@ ps2kbdaddkey(uint64_t keycode)
     mtxunlk(&kbdring->lk);
 }
 
-#if 0
-void
-ps2kbdaddkey(uint64_t keycode, int32_t keyval)
-{
-    mtxlk(&ps2drv.keylk);
-    if (ps2drv.lastkey == ps2drv.keybuf + PS2KBD_NBUFKEY - 1) {
-        ps2drv.lastkey = &ps2drv.keybuf[0];
-    }
-    if (!ps2drv.curkey) {
-        ps2drv.keybuf[0] = keycode;
-        ps2drv.curkey = ps2drv.keybuf;
-        ps2drv.lastkey = ps2drv.keybuf;
-        ps2drv.keyvalbuf[0] = keyval;
-        ps2drv.curkeyval = ps2drv.keyvalbuf;
-        ps2drv.lastkeyval = ps2drv.keyvalbuf;
-    } else if (ps2drv.lastkey < ps2drv.curkey
-               || ps2drv.lastkey < ps2drv.keybuf + PS2KBD_NBUFKEY - 1) {
-        ps2drv.lastkey[1] = keycode;
-        ps2drv.lastkey++;
-        ps2drv.lastkeyval[1] = keyval;
-        ps2drv.lastkeyval++;
-    } else if (ps2drv.lastkey == ps2drv.curkey) {
-        ps2kbdflush(*ps2drv.curkey, *ps2drv.curkeyval);
-        ps2drv.curkey++;
-        ps2drv.curkeyval++;
-        ps2drv.lastkey[1] = keycode;
-        ps2drv.lastkey++;
-        ps2drv.lastkeyval[1] = keyval;
-        ps2drv.lastkeyval++;
-        mtxunlk(&ps2drv.keylk);
-    }
-}
-#endif
-
-#endif /* PS2KEYBUF */
-
 /* keyboard interrupt handler. */
 void
 ps2kbdintr(void)
 {
-#if (PS2KEYBUF)
     uint64_t keycode = 0;
-#endif
-#if 0
-   int32_t   isup = 0; 
-   int32_t   val;
-#endif
     uint8_t  u8;
     
-//    val = 0;
     ps2readkbd(u8);
+    keycode = u8;
     if (u8 == PS2KBD_PAUSE_BYTE1) {
         /* pause/break. */
         ps2readkbd(u8); /* 0x1d */
-#if (PS2KEYBUF)
-        keycode = 0x1d;
-#endif
+        keycode = 0x1d << 8;
         ps2readkbd(u8); /* 0x45 */
-#if (PS2KEYBUF)
-        keycode |= UINT64_C(0x45) << 8;
-#endif
+        keycode |= UINT64_C(0x45) << 16;
         ps2readkbd(u8); /* 0xe1 */
-#if (PS2KEYBUF)
-        keycode |= UINT64_C(0xe1) << 16;
-#endif
+        keycode |= UINT64_C(0xe1) << 24;
         ps2readkbd(u8); /* 0x9d */
-#if (PS2KEYBUF)
-        keycode |= UINT64_C(0x9d) << 24;
-#endif
+        keycode |= UINT64_C(0x9d) << 32;
         ps2readkbd(u8); /* 0xc5 */
-#if (PS2KEYBUF)
-        keycode |= UINT64_C(0xc5) << 32;
-#endif
-        u8 &= PS2KBD_VAL_MASK;
-//        val = ps2drv.keytab1b[u8];
-    } else if (u8 != PS2KBD_PREFIX_BYTE) {
-        /* single-byte value. */
-        if (u8 & PS2KBD_UP_BIT) {
-            /* release. */
-#if (PS2KEYBUF)
-            keycode = u8;
-#endif
-//            isup = 1;
-            u8 &= ~PS2KBD_UP_BIT;
-//            val = ps2drv.keytabup[u8];
-#if 0
-        } else {
-            val = ps2drv.keytab1b[u8];
-#endif
-        }
-    } else {
+        keycode |= UINT64_C(0xc5) << 40;
+    } else if (u8 & PS2KBD_PREFIX_BYTE) {
         /* 0xe0-prefixed. */
-        ps2readkbd(u8);
-#if (PS2KEYBUF)
-        keycode = 0xe0;
-        keycode |= (uint64_t)u8 << 8;
-#endif
-        if (u8 == PS2KBD_PRINT_BYTE2 || u8 == PS2KBD_CTRLPAUSE_BYTE2) {
-            /* print screen or ctrl-pause. */
-            ps2readkbd(u8); /* 0xe0 */
-#if (PS2KEYBUF)
-            keycode |= (uint64_t)u8 << 16;
-#endif
-            ps2readkbd(u8); /* 0x37 (prtsc) or 0xc6 (ctrl-pause) */
-#if (PS2KEYBUF)
-            keycode |= (uint64_t)u8 << 24;
-#endif
-//            val = ps2drv.keytabmb[u8];
-        } else if (u8 == PS2KBD_UP_BYTE) {
-#if (PS2KEYBUF)
-            keycode = u8;
-#endif
+        ps2readkbd(u8); /* 0xe0 */
+        keycode |= 0xe0 << 8;
+        if (u8 == PS2KBD_PRINT_BYTE2
+            || u8 == PS2KBD_CTRLPAUSE_BYTE2
+            || u8 == PS2KBD_UP_BYTE) {
             ps2readkbd(u8);
-#if (PS2KEYBUF)
-            keycode = (uint64_t)u8 << 8;
-#endif
-//            val = ps2drv.keytabup[u8];
-        } else {
-            if (u8 & PS2KBD_UP_BIT) {
-//                isup = 1;
-                u8 &= ~PS2KBD_UP_BIT;
-//                val = ps2drv.keytabup[u8];
-#if 0
-            } else {
-                val = ps2drv.keytabmb[u8];
-#endif
-            }
+            keycode |= (uint64_t)u8 << 16;
         }
     }
-#if 0
-    if (ismodkey(val)) {
-        if (isup) {
-            ps2drv.modmask &= ~(1 << (-val));
-        } else {
-            ps2drv.modmask |= 1 << (-val);
-        }
-    }
-#endif
-#if (PS2KEYBUF)
     ps2kbdaddkey(keycode);
-#endif
 
     return;
 }
@@ -482,7 +355,6 @@ ps2mouseintr(void)
         xmov >>= shift;
     }
     tmp = mask & PS2MOUSE_XSIGN;
-//    xmov |= tmp << 27; /* sign. */
     if (tmp) {
         xmov = -xmov;
     }
@@ -503,7 +375,6 @@ ps2mouseintr(void)
         ymov >>= shift;
     }
     tmp = mask & PS2MOUSE_YSIGN;
-//    ymov |= tmp << 26; /* sign. */
     if (tmp) {
         ymov = -ymov;
     }
