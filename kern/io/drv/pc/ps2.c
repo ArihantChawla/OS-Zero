@@ -43,6 +43,7 @@ static struct ps2drv ps2drv ALIGNED(PAGESIZE);
 #define ps2readmouse(u8)                                                \
     __asm__("inb %w1, %b0" : "=a" (u8) : "i" (PS2MOUSE_INPORT))
 
+#if 0
 #define ismodkey(val)                                                   \
     (((val) & 0x80000000) && ((val) & 0xfffffff0) == 0xfffffff0)
 #define ps2setkeycode(name)                                             \
@@ -53,6 +54,7 @@ static struct ps2drv ps2drv ALIGNED(PAGESIZE);
            ps2drv.keytabup[name >> 8] = name##_SYM | PS2KBD_UP_BIT)     \
         : (ps2drv.keytab1b[name] = name##_SYM,                          \
            ps2drv.keytabup[name] = name##_SYM | PS2KBD_UP_BIT)))
+#endif
 
 uint8_t         kbdbuf[PAGESIZE] ALIGNED(PAGESIZE);
 struct ringbuf *kbdring = (struct ringbuf *)kbdbuf;
@@ -79,7 +81,7 @@ kbdinit(void)
     do {
         ps2readkbd(u8);
     } while (u8 != PS2KBD_ACK);
-    ps2initkbd_us();
+//    ps2initkbd_us();
     kprintf("PS/2 keyboard with US keymap initialized\n");
     irqvec[IRQKBD] = ps2kbdintr;
     kprintf("PS/2 keyboard interrupt enabled\n");
@@ -87,6 +89,7 @@ kbdinit(void)
     return;
 }
 
+#if 0
 void
 ps2initkbd_us(void)
 {
@@ -242,6 +245,7 @@ ps2initkbd_us(void)
 
     return;
 }
+#endif /* 0 */
 
 void
 ps2kbdflush(uint64_t keycode, int32_t keyval)
@@ -261,7 +265,7 @@ ps2kbdaddkey(uint64_t keycode)
 void
 ps2kbdintr(void)
 {
-    uint64_t keycode = 0;
+    uint64_t keycode;
     uint8_t  u8;
     
     ps2readkbd(u8);
@@ -269,7 +273,7 @@ ps2kbdintr(void)
     if (u8 == PS2KBD_PAUSE_BYTE1) {
         /* pause/break. */
         ps2readkbd(u8); /* 0x1d */
-        keycode = 0x1d << 8;
+        keycode = UINT64_C(0x1d) << 8;
         ps2readkbd(u8); /* 0x45 */
         keycode |= UINT64_C(0x45) << 16;
         ps2readkbd(u8); /* 0xe1 */
@@ -281,7 +285,7 @@ ps2kbdintr(void)
     } else if (u8 & PS2KBD_PREFIX_BYTE) {
         /* 0xe0-prefixed. */
         ps2readkbd(u8); /* 0xe0 */
-        keycode |= 0xe0 << 8;
+        keycode |= UINT64_C(0xe0) << 8;
         if (u8 == PS2KBD_PRINT_BYTE2
             || u8 == PS2KBD_CTRLPAUSE_BYTE2
             || u8 == PS2KBD_UP_BYTE) {
