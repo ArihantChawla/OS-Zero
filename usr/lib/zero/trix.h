@@ -6,7 +6,7 @@
  * HAKMEM and the book Hacker's Delight
  */
 
-#define ZEROABS 1
+#define ZEROABS 0
 
 #include <stdint.h>
 #include <limits.h>

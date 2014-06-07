@@ -1,3 +1,9 @@
+#include <stdio.h>
+#include <stdlib.h>
+#include <string.h>
+#include <unistd.h>
+#include <fcntl.h>
+
 #define VT_POSIX_OPENPT 1
 #define VT_GETPT        0
 #define VT_DEV_PTMX     0
@@ -6,48 +12,48 @@
 int
 vtopenpty_posix(char **masterpath, char **slavepath)
 {
-    int     mfd;
+    int     fd = -1;
     size_t  len;
     char   *slave;
     char   *path;
 
 #if (VT_POSIX_OPENPT)
-    mfd = posix_openpt(O_RDWR);
+    fd = posix_openpt(O_RDWR);
 #elif (VT_GETPT)
-    mfd = getpt();
+    fd = getpt();
 #elif (VT_DEV_PTMX)
-    mfd = open(VT_PTMX_DEVICE, O_RDWR);
+    fd = open(VT_PTMX_DEVICE, O_RDWR);
 #endif
-    if (mfd < 0) {
+    if (fd < 0) {
         fprintf(stderr, "failed to open PTY device\n");
 
         return -1;
     }
-    if (grantpt(mfd)) {
+    if (grantpt(fd)) {
         fprintf(stderr, "grantpt() failed\n");
-        close(mfd);
+        close(fd);
 
         return -1;
     }
-    if (unlockpt(mfd)) {
+    if (unlockpt(fd)) {
         fprintf(stderr, "unlockpt() failed\n");
-        close(mfd);
+        close(fd);
 
         return -1;
     }
-    slave = ptsname(mfd);
+    slave = ptsname(fd);
     if (!slave) {
         fprintf(stderr, "ptsname() failed\n");
-        close(mfd);
+        close(fd);
 
         return -1;
     }
     len = strlen(slave) + 1;
     if (masterpath) {
-        path = malloc(1, len);
+        path = malloc(len);
         if (!path) {
             fprintf(stderr, "failed to allocate masterpath\n");
-            close(mfd);
+            close(fd);
 
             return -1;
         }
@@ -55,14 +61,13 @@ vtopenpty_posix(char **masterpath, char **slavepath)
         path[len] = '\0';
         *masterpath = path;
     }
-#if 0
     if (slavepath) {
-        path = malloc(1, len);
+        path = malloc(len);
         if (!path) {
             fprintf(stderr, "failed to allocate slavepath\n");
             free(slave);
             free(path);
-            close(mfd);
+            close(fd);
 
             return -1;
         }
@@ -70,8 +75,7 @@ vtopenpty_posix(char **masterpath, char **slavepath)
         path[len] = '\0';
         *slavepath = path;
     }
-#endif
 
-    return mfd;
+    return fd;
 }
 

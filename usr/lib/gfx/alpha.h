@@ -23,13 +23,22 @@
         argb32_t _sr = gfxredval(src);                                  \
         argb32_t _sg = gfxgreenval(src);                                \
         argb32_t _sb = gfxblueval(src);                                 \
-        argb32_t _dr = gfxredval(dest);                                 \
-        argb32_t _dg = gfxgreenval(dest);                               \
-        argb32_t _db = gfxblueval(dest);                                \
+        argb32_t _dr;                                                   \
+        argb32_t _dg;                                                   \
+        argb32_t _db;                                                   \
                                                                         \
-        _dr = gfxalphablendchiq(_sr, _dr, _a);                          \
-        _dg = gfxalphablendchiq(_sg, _dg, _a);                          \
-        _db = gfxalphablendchiq(_sb, _db, _a);                          \
+        if ((aval) == 0xff) {                                           \
+            _dr = _sr;                                                  \
+            _dg = _sg;                                                  \
+            _db = _sb;                                                  \
+        } else if (aval) {                                              \
+            _dr = gfxredval(dest);                                      \
+            _dg = gfxgreenval(dest);                                    \
+            _db = gfxblueval(dest);                                     \
+            _dr = gfxalphablendchiq(_sr, _dr, _a);                      \
+            _dg = gfxalphablendchiq(_sg, _dg, _a);                      \
+            _db = gfxalphablendchiq(_sb, _db, _a);                      \
+        }                                                               \
         (dest) = gfxmkpix(0, _dr, _dg, _db);                            \
     } while (0)
 

@@ -12,13 +12,13 @@
 #include <string.h>
 #endif
 #if !defined(MALLOC)
-#define MALLOC malloc
+#define MALLOC(x)            malloc(x)
 #endif
 #if !defined(FREE)
-#define FREE   free
+#define FREE(x)              free(x)
 #endif
 #if !defined(MEMCPY)
-#define MEMCPY memcpy
+#define MEMCPY(dest, src, n) memcpy(dest, src, n)
 #endif
 
 /* MALLOC       - function used to allocate data buffer */
@@ -115,7 +115,7 @@ ringput(struct ringbuf *buf, RING_ITEM val)
 }
 
 /* resize data buffer */
-void *
+static __inline__ void *
 ringresize(struct ringbuf *buf, long n)
 {
     void *ptr = NULL;

@@ -505,7 +505,7 @@ static void * _realloc(void *ptr, size_t size, long rel);
 
 #define LKDBG    0
 #define SYSDBG   0
-#define VALGRIND 0
+#define VALGRIND 1
 
 #include <string.h>
 #if (MTSAFE)
@@ -566,7 +566,7 @@ struct mconf {
     long        narn;
 };
 
-#if (ISTK)
+#if (ISTK) && (!NOSTK)
 #define istk(bid)                                                       \
     ((nblk(bid) << 1) * sizeof(void *) <= NBHDR - offsetof(struct mag, data))
 #else
@@ -589,6 +589,8 @@ struct mag {
     uint8_t     data[EMPTY];
 #elif (!NOSTK)
     struct mag *stk[EMPTY];
+#else
+    struct mag *stk;
 #endif
 };
 
@@ -1403,7 +1405,9 @@ freemap(struct mag *mag)
 #if (INTSTAT) || (STAT)
                         nstkbytes[aid] -= (mag->max << 1) * sizeof(void *); 
 #endif
+#if (NOSTK)
                         unmapstk(mag);
+#endif
                         mag->bptr = NULL;
 #if (FREEBITMAP)
                         unmapfmap(mag);
@@ -1636,10 +1640,10 @@ getmem(size_t size,
                     if (istk(bid)) {
 #if (ISTK)
                         stk = (void **)(&mag->data);
-#elif (NOSTK)
-                        stk = mag->bptr;
-#else
+#elif (!NOSTK)
                         stk = (void **)mag->stk;
+#else
+                        stk = mapstk(max);
 #endif
                     } else {
                         stk = mapstk(max);
@@ -1699,7 +1703,8 @@ getmem(size_t size,
 #if (ISTK)
                         stk = (void **)(&mag->data);
 #elif (NOSTK)
-                        stk = mag->bptr;
+//                        stk = mag->bptr;
+                        stk = mapstk(max);
 #else
                         stk = (void **)mag->stk;
 #endif
@@ -1780,7 +1785,8 @@ getmem(size_t size,
 #if (ISTK)
                         stk = (void **)(&mag->data);
 #elif (NOSTK)
-                        stk = mag->bptr;
+//                        stk = mag->bptr;
+                        stk = mapstk(max);
 #else
                         stk = (void **)mag->stk;
 #endif
