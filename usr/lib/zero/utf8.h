@@ -76,6 +76,7 @@ utf8decode(uint8_t *str, uint8_t *retstr)
     if ((*str & 0x80) == 0) {
         uc = *str;
         len = 1;
+        str += len;
     } else if ((*str & 0xe0) == 0xc0) {
         mask = ~0xc0;
         len = 2;
@@ -94,7 +95,7 @@ utf8decode(uint8_t *str, uint8_t *retstr)
     }
     if (len > 1) {
         n = len;
-        str += n;
+        str += len;
         uc = str[0] & mask;
         mask = 0x3f;
         while (--n) {
