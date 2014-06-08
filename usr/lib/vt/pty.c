@@ -1,10 +1,4 @@
-#define VT_POSIX_OPENPT 1
-#define VT_GETPT        0
-#define VT_DEV_PTMX     0
-#define VT_PTMX_DEVICE  "/dev/ptmx"
-#if (VT_GETPT)
-#define _GNU_SOURCE     1
-#endif
+#include <vt/conf.h>
 
 #include <stdio.h>
 #include <string.h>
