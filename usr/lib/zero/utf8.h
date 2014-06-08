@@ -65,7 +65,7 @@ utf8encode(int32_t uc, uint8_t *str, uint8_t **retstr)
 }
 
 int32_t
-utf8dec(uint8_t *str, uint8_t *retstr)
+utf8decode(uint8_t *str, uint8_t *retstr)
 {
     int32_t uc = 0;
     int32_t tmp;
