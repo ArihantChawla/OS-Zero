@@ -83,7 +83,7 @@ uimkwin_x11(struct ui *ui, Window parent,
             free(win);
         }
         win->id = id;
-        evtab = calloc(UIX11NDEFEV, sizeof(void *));
+        evtab = calloc(UIXORGNDEFEV, sizeof(void *));
         if (!evtab) {
             fprintf(stderr, "UI: failed to allocate function table\n");
             free(win);
@@ -96,7 +96,7 @@ uimkwin_x11(struct ui *ui, Window parent,
     return win;
 }
 
-#if (UITESTX11)
+#if (UITESTXORG)
 
 #include <stdio.h>
 
@@ -107,7 +107,7 @@ main(int argc, char *argv[])
     struct uiwin *win;
 
     uiinit_xorg(&ui, argc, argv);
-    win = uimkwin_x11(&ui, UIX11ROOTWINID,
+    win = uimkwin_x11(&ui, UIXORGROOTWINID,
                       0, 0,
                       16, 16);
     fprintf(stderr, "%p\n", win);
@@ -115,5 +115,5 @@ main(int argc, char *argv[])
     exit(0);
 }
 
-#endif /* UITESTX11 */
+#endif /* UITESTXORG */
 

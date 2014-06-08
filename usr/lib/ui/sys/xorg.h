@@ -6,8 +6,8 @@
 #include <X11/Xutil.h>
 #include <X11/keysymdef.h>
 
-#define UIX11NDEFEV    LASTEvent
-#define UIX11ROOTWINID None
+#define UIXORGNDEFEV    LASTEvent
+#define UIXORGROOTWINID None
 
 struct uienv_x11 {
     Display      *display;
