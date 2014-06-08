@@ -3,11 +3,13 @@
 #endif
 #include <stdlib.h>
 #include <limits.h>
+#include <zero/cdecl.h>
+#include <zero/param.h>
 #include <vt/vt.h>
 #include <vt/pty.h>
 #include <vt/color.h>
 
-int32_t vtxtermcolortab[256] = {
+int32_t vtxtermcolortab[256] ALIGNED(PAGESIZE) = {
     VT_XTERM_COLOR_0,
     VT_XTERM_COLOR_1,
     VT_XTERM_COLOR_2,

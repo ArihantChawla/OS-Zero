@@ -1,6 +1,25 @@
 #ifndef __VT_COLOR_H__
 #define __VT_COLOR_H__
 
+/* regular terminal colors */
+#define VT_BLACK_COLOR          0x000000
+#define VT_RED_COLOR            0xaa0000
+#define VT_GREEN_COLOR          0x008800
+#define VT_YELLOW_COLOR         0xaa5522
+#define VT_BLUE_COLOR           0x0000aa
+#define VT_MAGENTA_COLOR        0xaa00aa
+#define VT_CYAN_COLOR           0x00aaaa
+#define VT_WHITE_COLOR          0xaaaaaa
+/* bright terminal colors */
+#define VT_BRIGHT_BLACK_COLOR   0x808080
+#define VT_BRIGHT_RED_COLOR     0xff8080
+#define VT_BRIGHT_GREEN_COLOR   0x80ff80
+#define VT_BRIGHT_YELLOW_COLOR  0xffff80
+#define VT_BRIGHT_BLUE_COLOR    0x8080ff
+#define VT_BRIGHT_MAGENTA_COLOR 0xff80ff
+#define VT_BRIGHT_CYAN_COLOR    0x80ffff
+#define VT_BRIGHT_WHITE_COLOR   0xffffff
+
 /* 256-color xterm palette strings; "#RRGGBB" */
 #define VT_XTERM_COLOR_SPEC_0   "#000000"
 #define VT_XTERM_COLOR_SPEC_1   "#cd0000"
