@@ -268,8 +268,30 @@ int32_t vtxtermcolortab[256] ALIGNED(PAGESIZE) = {
     VT_XTERM_COLOR_255
 };
 
+#define vtdefcolor(i)     (vtdefcolortab[(c)])
+#define vtfgtodefcolor(i) ((c) - 30)
+#define vtbgtodefcolor(i) ((c) - 40)
+int32_t vtdefcolortab[16] ALIGNED(CLSIZE) = {
+    VT_BLACK_COLOR,
+    VT_RED_COLOR,
+    VT_GREEN_COLOR,
+    VT_YELLOW_COLOR,
+    VT_BLUE_COLOR,
+    VT_MAGENTA_COLOR,
+    VT_CYAN_COLOR,
+    VT_WHITE_COLOR,
+    VT_BRIGHT_BLACK_COLOR,
+    VT_BRIGHT_RED_COLOR,
+    VT_BRIGHT_GREEN_COLOR,
+    VT_BRIGHT_YELLOW_COLOR,
+    VT_BRIGHT_BLUE_COLOR,
+    VT_BRIGHT_MAGENTA_COLOR,
+    VT_BRIGHT_CYAN_COLOR,
+    VT_BRIGHT_WHITE_COLOR
+};
+
 void
-vtfree(struct vt *vt, long newvt)
+vtfree(struct vt *vt)
 {
     if (vt->inbuf.base) {
         free(vt->inbuf.base);
@@ -287,9 +309,8 @@ vtfree(struct vt *vt, long newvt)
         free(vt->slavepath);
         vt->masterpath = NULL;
     }
-    if (newvt) {
-        free(vt);
-    }
+
+    return;
 }
 
 struct vt *
@@ -308,13 +329,19 @@ vtinit(struct vt *vt)
         || !ringinit(&vt->inbuf, NULL, VTBUFSIZE / sizeof(RING_ITEM))
         || !(vt->masterpath = malloc(PATH_MAX))
         || !(vt->slavepath = malloc(PATH_MAX))) {
-        vtfree(vt, newvt);
+        vtfree(vt);
+        if (newvt) {
+            free(vt);
+        }
         
         return NULL;
     }
     vt->fd = vtopenpty_posix(&vt->masterpath, &vt->slavepath);
     if (vt->fd < 0) {
-        vtfree(vt, newvt);
+        vtfree(vt);
+        if (newvt) {
+            free(vt);
+        }
 
         return NULL;
     }
