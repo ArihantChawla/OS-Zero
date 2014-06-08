@@ -5,17 +5,20 @@
 #include <zero/trix.h>
 #include <vt/vt.h>
 
-typedef long vtescfunc_t(struct vt *vt, long num1, long num2);
+#define vtisesccmd(c)   bitset(vtesc.esccmdmap, c)
+#define vtiscsicmd(c)   bitset(vtesc.csicmdmap, c)
+#define vtishashcmd(c)  bitset(vtesc.hashcmdmap, c)
+#define vtsetesccmd(c)  setbit(vtesc.esccmdmap, c)
+#define vtsetcsicmd(c)  setbit(vtesc.csicmdmap, c)
+#define vtsethashcmd(c) setbit(vtesc.hashcmdmap, c)
 
-#define vtisesccmd(c)  bitset(vtesccmdmap, c)
-#define vtiscsicmd(c)  bitset(vtcsicmdmap, c)
-#define vtishashcmd(c) bitset(vthashcmdmap, c)
-uint8_t      vtesccmdmap[32] ALIGNED(CLSIZE);
-uint8_t      vtcsicmdmap[32] ALIGNED(CLSIZE);
-uint8_t      vthashcmdmap[32] ALIGNED(CLSIZE);
-vtescfunc_t *vtescfunctab[256];
-vtescfunc_t *vtcsifunctab[256];
-vtescfunc_t *vthashfunctab[256];
+static struct vtesc vtesc ALIGNED(PAGESIZE);
+
+void
+vtinitesc(void)
+{
+    ;
+}
 
 long
 vtescgetnum(char *str, char **retstr)
@@ -59,7 +62,7 @@ vtescparse(struct vt *vt, char *str, char **retstr)
             cmd = *str;
             if (vtiscsicmd(cmd)) {
                 str++;
-                func = vtcsifunctab[cmd];
+                func = vtesc.csifunctab[cmd];
                 func(vt, num1, num2);
             }
         } else if (*str == VTCHARSET) {

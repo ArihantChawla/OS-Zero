@@ -2,9 +2,10 @@
 #define __ZERO_UTF8_H__
 
 #include <stdint.h>
+#include <stddef.h>
 
 static __inline__ long
-utf8encode(int32_t uc, uint8_t *str, uint8_t **retstr)
+utf8encode(int32_t uc, uint8_t *str, uint8_t **retstr, size_t nbmax)
 {
     long    len = -1;
     int32_t mask1;
@@ -13,49 +14,61 @@ utf8encode(int32_t uc, uint8_t *str, uint8_t **retstr)
     mask2 = 0x3f;
     if (uc < 0x80) {
         mask1 = 0x7f;
-        len = 1;
-        str[0] = (uint8_t)(uc & mask1);
-        str += len;
+        if (nbmax) {
+            len = 1;
+            str[0] = (uint8_t)(uc & mask1);
+            str += len;
+        }
     } else if (uc < 0x800) {
         mask1 = 0x1f;
-        len = 2;
-        str[0] = (uint8_t)(0xc0 | ((uc >> 6) & mask1));
-        str[1] = (uint8_t)(0x80 | (uc & mask2));
-        str += len;
+        if (nbmax >= 2) {
+            len = 2;
+            str[0] = (uint8_t)(0xc0 | ((uc >> 6) & mask1));
+            str[1] = (uint8_t)(0x80 | (uc & mask2));
+            str += len;
+        }
     } else if (uc < 0x10000) {
         mask1 = 0x0f;
-        len = 3;
-        str[0] = (uint8_t)(0xe0 | ((uc >> 12) & mask1));
-        str[1] = (uint8_t)(0x80 | ((uc >> 6) & mask2));
-        str[2] = (uint8_t)(0x80 | (uc & mask2));
-        str += len;
+        if (nbmax >= 3) {
+            len = 3;
+            str[0] = (uint8_t)(0xe0 | ((uc >> 12) & mask1));
+            str[1] = (uint8_t)(0x80 | ((uc >> 6) & mask2));
+            str[2] = (uint8_t)(0x80 | (uc & mask2));
+            str += len;
+        }
     } else if (uc < 0x2000000) {
         mask1 = 0x07;
-        len = 4;
-        str[0] = (uint8_t)(0xf0 | ((uc >> 18) & mask1));
-        str[1] = (uint8_t)(0x80 | ((uc >> 12) % mask2));
-        str[2] = (uint8_t)(0x80 | ((uc >> 6) & mask2));
-        str[3] = (uint8_t)(0x80 | (uc & mask2));
-        str += len;
+        if (nbmax >= 4) {
+            len = 4;
+            str[0] = (uint8_t)(0xf0 | ((uc >> 18) & mask1));
+            str[1] = (uint8_t)(0x80 | ((uc >> 12) % mask2));
+            str[2] = (uint8_t)(0x80 | ((uc >> 6) & mask2));
+            str[3] = (uint8_t)(0x80 | (uc & mask2));
+            str += len;
+        }
     } else if (uc < 0x040000000) {
         mask1 = 0x03;
-        len = 5;
-        str[0] = (uint8_t)(0xf8 | ((uc >> 24) & mask1));
-        str[1] = (uint8_t)(0x80 | ((uc >> 18) & mask2));
-        str[2] = (uint8_t)(0x80 | (uc >> 12) & mask2);
-        str[3] = (uint8_t)(0x80 | ((uc >> 6) & mask2));
-        str[4] = (uint8_t)(0x80 | (uc & mask2));
-        str += len;
+        if (nbmax >= 5) {
+            len = 5;
+            str[0] = (uint8_t)(0xf8 | ((uc >> 24) & mask1));
+            str[1] = (uint8_t)(0x80 | ((uc >> 18) & mask2));
+            str[2] = (uint8_t)(0x80 | (uc >> 12) & mask2);
+            str[3] = (uint8_t)(0x80 | ((uc >> 6) & mask2));
+            str[4] = (uint8_t)(0x80 | (uc & mask2));
+            str += len;
+        }
     } else {
         mask1 = 0x01;
-        len = 6;
-        str[0] = (uint8_t)(0xfc | ((uc >> 30) & mask1));
-        str[1] = (uint8_t)(0x80 | ((uc >> 24) & mask2));
-        str[2] = (uint8_t)(0x80 | ((uc >> 18) & mask2));
-        str[3] = (uint8_t)(0x80 | (uc >> 12) & mask2);
-        str[4] = (uint8_t)(0x80 | ((uc >> 6) & mask2));
-        str[5] = (uint8_t)(0x80 | (uc & mask2));
-        str += len;
+        if (nbmax >= 6) {
+            len = 6;
+            str[0] = (uint8_t)(0xfc | ((uc >> 30) & mask1));
+            str[1] = (uint8_t)(0x80 | ((uc >> 24) & mask2));
+            str[2] = (uint8_t)(0x80 | ((uc >> 18) & mask2));
+            str[3] = (uint8_t)(0x80 | (uc >> 12) & mask2);
+            str[4] = (uint8_t)(0x80 | ((uc >> 6) & mask2));
+            str[5] = (uint8_t)(0x80 | (uc & mask2));
+            str += len;
+        }
     }
     if (retstr) {
         *retstr = str;
@@ -65,7 +78,7 @@ utf8encode(int32_t uc, uint8_t *str, uint8_t **retstr)
 }
 
 int32_t
-utf8decode(uint8_t *str, uint8_t *retstr)
+utf8decode(uint8_t *str, uint8_t *retstr, size_t nbmax)
 {
     int32_t uc = 0;
     int32_t tmp;
@@ -75,8 +88,10 @@ utf8decode(uint8_t *str, uint8_t *retstr)
 
     if ((*str & 0x80) == 0) {
         uc = *str;
-        len = 1;
-        str += len;
+        if (nbmax) {
+            len = 1;
+            str += len;
+        }
     } else if ((*str & 0xe0) == 0xc0) {
         mask = ~0xc0;
         len = 2;
@@ -93,7 +108,7 @@ utf8decode(uint8_t *str, uint8_t *retstr)
         mask = ~0xfd;
         len = 6;
     }
-    if (len > 1) {
+    if (len > 1 && nbmax >= len) {
         n = len;
         str += len;
         uc = str[0] & mask;
@@ -104,7 +119,7 @@ utf8decode(uint8_t *str, uint8_t *retstr)
             uc |= str[0] & mask;
         }
     }
-    if (retstr) {
+    if ((len) && (retstr)) {
         *retstr = str;
     }
     return uc;

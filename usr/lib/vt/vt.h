@@ -77,5 +77,15 @@ struct vt {
     struct vtrend  **rendbuf;           // rendition attribute data
 };
 
+typedef long vtescfunc_t(struct vt *vt, long num1, long num2);
+struct vtesc {
+    uint8_t      esccmdmap[32];
+    uint8_t      csicmdmap[32];
+    uint8_t      hashcmdmap[32];
+    vtescfunc_t *escfunctab[256];
+    vtescfunc_t *csifunctab[256];
+    vtescfunc_t *hashfunctab[256];
+};
+
 #endif /* __VT_VT_H__ */
 
