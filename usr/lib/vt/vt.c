@@ -4,6 +4,7 @@
 #include <stdlib.h>
 #include <limits.h>
 #include <vt/vt.h>
+#include <vt/pty.h>
 
 void
 vtfree(struct vt *vt, long newvt)
@@ -32,7 +33,6 @@ vtfree(struct vt *vt, long newvt)
 struct vt *
 vtinit(struct vt *vt)
 {
-    void *ptr;
     long  newvt = (vt) ? 0 : 1;
 
     if (!vt) {
@@ -42,8 +42,8 @@ vtinit(struct vt *vt)
             return vt;
         }
     }
-    if (!ringinit(&vt->inbuf, NULL, PAGESIZE / sizeof(RING_ITEM))
-        || !ringinit(&vt->inbuf, NULL, PAGESIZE / sizeof(RING_ITEM))
+    if (!ringinit(&vt->inbuf, NULL, VTBUFSIZE / sizeof(RING_ITEM))
+        || !ringinit(&vt->inbuf, NULL, VTBUFSIZE / sizeof(RING_ITEM))
         || !(vt->masterpath = malloc(PATH_MAX))
         || !(vt->slavepath = malloc(PATH_MAX))) {
         vtfree(vt, newvt);

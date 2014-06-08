@@ -1,6 +1,12 @@
 #ifndef __VT_VT_H__
 #define __VT_VT_H__
 
+#include <stdint.h>
+#include <zero/cdecl.h>
+#include <zero/param.h>
+
+#define VTBUFSIZE    PAGESIZE
+
 #define VTDEFMODE    0x00000000U
 #define VTDEFFGCOLOR 0xffffffffU
 #define VTDEFBGCOLOR 0xff000000U
@@ -11,10 +17,23 @@
 #define VTATRMASK    0xffe00000U
 
 /* character attribute bits */
-#define VTREVERSE    0x00200000
-#define VTUNDERLINE  0x00400000
-#define VTBOLD       0x00800000
-#define VTBLINK      0x01000000
+#define VTREVERSE    0x80000000 // reverse color
+#define VTUNDERLINE  0x40000000 // underlined text
+#define VTBOLD       0x20000000 // bold text
+#define VTBLINK      0x10000000 // blinking text
+#define VTANTIALIAS  0x08000000 // antialiased text (interpolation)
+#define VTDRAWBG     0x04000000 // draw text background
+#define VTDRAWFG     0x02000000 // draw text foreground
+#define VTFGMASK     0x00000100 // standard or 256-color xterm palette entry
+#define VTBGMASK     0x0003fe00 // standard or 256-color xterm palette entry
+
+#define VTREND256COL 0x100
+struct vtrend {
+    unsigned fgcolor : 9;       // standard or 256-color xterm palette entry
+    unsigned bgcolor : 9;       // standard or 256-color xterm palette entry
+    unsigned pad     : 7;       // extra room for later flags
+    unsigned atr     : 7;       // specified text attributes
+} PACK();
 
 /* Unicode character plus attributes such as underline */
 //typedef int32_t vtchar_t;
@@ -25,6 +44,7 @@
 #define RING_INVAL   0x00000000
 #include <zero/ring.h>
 
+#define VTESC          '\033'
 /* sequence postfixes after ESC */
 #define VTCSI          '['
 #define VTCHARSET      '('
@@ -39,20 +59,22 @@
 #define VTCURSORHOME   'H'
 #define VTREVLINEFEED  'I'
 #define VTCLRTOSCREND  'J'
-#define VTCLRTLLINEEND 'K'
+#define VTCLRTOLINEEND 'K'
 #define VTCURSORADR    'Y'
 
 struct vt {
-    struct ringbuf  inbuf;      // input ring-buffer
-    struct ringbuf  outbuf;     // output ring-buffer
-    int             fd;         // master PTY file descriptor
-    char           *masterpath; // master teletype device
-    char           *slavepath;  // slave teletype device
-    uint64_t        mode;       // private mode etc. mask
-    uint64_t        state;      // modifier and button mask
-    uint32_t        fgcolor;    // foreground text color
-    uint32_t        bgcolor;    // background text color
-    uint32_t        textatr;    // current text attributes
+    struct ringbuf   inbuf;             // input ring-buffer
+    struct ringbuf   outbuf;            // output ring-buffer
+    int              fd;                // master PTY file descriptor
+    char            *masterpath;        // master teletype device
+    char            *slavepath;         // slave teletype device
+    uint64_t         mode;              // private mode etc. mask
+    uint64_t         state;             // modifier and button mask
+    uint32_t         fgcolor;           // foreground text color
+    uint32_t         bgcolor;           // background text color
+    uint32_t         textatr;           // current text attributes
+    int32_t        **textbuf;           // Unicode text data
+    struct vtrend  **rendbuf;           // rendition attribute data
 };
 
 #endif /* __VT_VT_H__ */
