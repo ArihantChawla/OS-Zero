@@ -336,7 +336,7 @@ vtinit(struct vt *vt)
         
         return NULL;
     }
-    vt->fd = vtopenpty_posix(&vt->masterpath, &vt->slavepath);
+    vt->fd = vtopenpty(&vt->masterpath, &vt->slavepath);
     if (vt->fd < 0) {
         vtfree(vt);
         if (newvt) {

@@ -7,7 +7,7 @@
 #include <stdlib.h>
 
 int
-vtopenpty_posix(char **masterpath, char **slavepath)
+vtopenpty(char **masterpath, char **slavepath)
 {
     int     fd = -1;
     size_t  len;
