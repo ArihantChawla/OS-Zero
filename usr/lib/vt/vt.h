@@ -64,22 +64,53 @@ struct vtrend {
 #define VTCLRTOLINEEND 'K'
 #define VTCURSORADR    'Y'
 
-struct vt {
-    struct ringbuf   inbuf;             // input ring-buffer
-    struct ringbuf   outbuf;            // output ring-buffer
-    int              fd;                // master PTY file descriptor
-    char            *masterpath;        // master teletype device
-    char            *slavepath;         // slave teletype device
-    uint64_t         mode;              // private mode etc. mask
-    uint64_t         state;             // modifier and button mask
-    uint32_t         fgcolor;           // foreground text color
-    uint32_t         bgcolor;           // background text color
-    uint32_t         textatr;           // current text attributes
-    int32_t        **textbuf;           // Unicode text data
-    struct vtrend  **rendbuf;           // rendition attribute data
+struct vtatr {
+    int   fd;           // master PTY file descriptor
+    char *masterpath;   // master teletype device
+    char *slavepath;    // slave teletype device
 };
 
-typedef long vtescfunc_t(struct vt *vt, long num1, long num2);
+struct vtstate {
+    long     col;       // current column
+    long     row;       // current column
+    long     nrow;      // # of screen rows
+    long     ncol;      // # of screen columns
+    long     w;         // width in characters
+    long     h;         // height in characters
+    uint64_t mode;      // private mode etc. mask
+    uint64_t flags;     // modifier and button mask
+    uint32_t fgcolor;   // foreground text color
+    uint32_t bgcolor;   // background text color
+    uint32_t textatr;   // current text attributes
+};
+
+struct vtdevbuf {
+    struct ringbuf in;          // input ring-buffer
+    struct ringbuf out;         // output ring-buffer
+};
+
+struct vttextbuf {
+    long            nrow;       // # of buffer rows
+//    long            ncol;       // # of colums in buffer rows
+    int32_t       **data;       // Unicode text data
+    struct vtrend **rend;       // rendition attribute data
+};
+
+struct vtcolormap {
+    int32_t *deftab;            // default colors
+    int32_t *xtermtab;          // xterm colors
+};
+
+struct vt {
+    struct vtatr      atr;      // terminal attributes
+    struct vtstate    state;    // terminal status
+    struct vtdevbuf   devbuf;   // input and output buffers
+    struct vttextbuf  textbuf;  // text and rendition buffers
+    struct vttextbuf  scrbuf;   // current screen contents
+    struct vtcolormap colormap; // terminal colormaps
+};
+
+typedef long vtescfunc_t(struct vt *vt, long narg, long *argtab);
 struct vtesc {
     uint8_t      esccmdmap[32];
     uint8_t      csicmdmap[32];

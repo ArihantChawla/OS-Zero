@@ -37,33 +37,37 @@ vtescgetnum(char *str, char **retstr)
     return num;
 }
 
+#define VTESCNARG 32
 void
 vtescparse(struct vt *vt, char *str, char **retstr)
 {
-    long         num1 = 0;
-    long         num2 = 0;
+    long         num = 0;
     long         cmd;
     vtescfunc_t *func;
+    long         narg = 1;
+    long         argtab[VTESCNARG];
 
     while (*str == VTESC) {
         str++;
         if (*str == VTCSI) {
             /* ESC[ command */
             str++;
-            if (isdigit(*str)) {
+            while (isdigit(*str)) {
                 /* read first numerical parameter */
-                num1 = vtescgetnum(str, &str);
+                num = vtescgetnum(str, &str);
+                if (num && narg < VTESCNARG) {
+                    argtab[narg] = num;
+                    narg++;
+                }
                 if (*str == ';') {
                     str++;
-                    /* read second numerical parameter */
-                    num2 = vtescgetnum(str, &str);
                 }
             }
             cmd = *str;
             if (vtiscsicmd(cmd)) {
                 str++;
                 func = vtesc.csifunctab[cmd];
-                func(vt, num1, num2);
+                func(vt, narg, argtab);
             }
         } else if (*str == VTCHARSET) {
             /* ESC( command */

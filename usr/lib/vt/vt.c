@@ -1,3 +1,4 @@
+#include <vt/conf.h>
 #if (VTTEST)
 #include <stdio.h>
 #endif
@@ -293,24 +294,91 @@ int32_t vtdefcolortab[16] ALIGNED(CLSIZE) = {
 void
 vtfree(struct vt *vt)
 {
-    if (vt->inbuf.base) {
-        free(vt->inbuf.base);
-        vt->inbuf.base = NULL;
+    if (vt->devbuf.in.base) {
+        free(vt->devbuf.in.base);
+        vt->devbuf.in.base = NULL;
     }
-    if (vt->outbuf.base) {
-        free(vt->outbuf.base);
-        vt->outbuf.base = NULL;
+    if (vt->devbuf.out.base) {
+        free(vt->devbuf.out.base);
+        vt->devbuf.out.base = NULL;
     }
-    if (vt->masterpath) {
-        free(vt->masterpath);
-        vt->masterpath = NULL;
+    if (vt->atr.masterpath) {
+        free(vt->atr.masterpath);
+        vt->atr.masterpath = NULL;
     }
-    if (vt->slavepath) {
-        free(vt->slavepath);
-        vt->masterpath = NULL;
+    if (vt->atr.slavepath) {
+        free(vt->atr.slavepath);
+        vt->atr.masterpath = NULL;
     }
 
     return;
+}
+
+void
+vtfreetextbuf(struct vttextbuf *buf)
+{
+    int32_t       **data = buf->data;
+    struct vtrend **rend = buf->rend;
+    long            nrow = buf->nrow;
+    long            n;
+
+    if (data) {
+        for (n = 0 ; n < nrow ; n++) {
+            if (data[n]) {
+                free(data[n]);
+            }
+        }
+        free(data);
+    }
+    if (rend) {
+        for (n = 0 ; n < nrow ; n++) {
+            if (rend[n]) {
+                free(rend[n]);
+            }
+        }
+        free(rend);
+    }
+}
+
+long
+vtinittextbuf(struct vttextbuf *buf, long nrow, long ncol)
+{
+    long            ndx;
+    int32_t       **data;
+    struct vtrend **rend;
+    int32_t        *dptr;
+    struct vtrend  *rptr;
+
+    fprintf(stderr, "TEXTBUF: %ld rows, %ld columns\n", nrow, ncol);
+    data = malloc(nrow * sizeof(int32_t *));
+    if (!data) {
+
+        return 0;
+    }
+    rend = malloc(nrow * sizeof(struct vtrend *));
+    if (!rend) {
+        vtfreetextbuf(buf);
+        
+        return 0;
+    }
+    for (ndx = 0 ; ndx < nrow ; ndx++) {
+        dptr = calloc(ncol, sizeof(int32_t));
+        if (!dptr) {
+            vtfreetextbuf(buf);
+
+            return 0;
+        }
+        data[ndx] = dptr;
+        rptr = calloc(ncol, sizeof(struct vtrend));
+        if (!rptr) {
+            vtfreetextbuf(buf);
+
+            return 0;
+        }
+        rend[ndx] = rptr;
+    }
+
+    return 1;
 }
 
 struct vt *
@@ -325,10 +393,10 @@ vtinit(struct vt *vt)
             return vt;
         }
     }
-    if (!ringinit(&vt->inbuf, NULL, VTBUFSIZE / sizeof(RING_ITEM))
-        || !ringinit(&vt->inbuf, NULL, VTBUFSIZE / sizeof(RING_ITEM))
-        || !(vt->masterpath = malloc(PATH_MAX))
-        || !(vt->slavepath = malloc(PATH_MAX))) {
+    if (!ringinit(&vt->devbuf.in, NULL, VTBUFSIZE / sizeof(RING_ITEM))
+        || !ringinit(&vt->devbuf.in, NULL, VTBUFSIZE / sizeof(RING_ITEM))
+        || !(vt->atr.masterpath = malloc(PATH_MAX))
+        || !(vt->atr.slavepath = malloc(PATH_MAX))) {
         vtfree(vt);
         if (newvt) {
             free(vt);
@@ -336,8 +404,8 @@ vtinit(struct vt *vt)
         
         return NULL;
     }
-    vt->fd = vtopenpty(&vt->masterpath, &vt->slavepath);
-    if (vt->fd < 0) {
+    vt->atr.fd = vtopenpty(&vt->atr.masterpath, &vt->atr.slavepath);
+    if (vt->atr.fd < 0) {
         vtfree(vt);
         if (newvt) {
             free(vt);
@@ -345,11 +413,30 @@ vtinit(struct vt *vt)
 
         return NULL;
     }
-    vt->mode = VTDEFMODE;
-    vt->state = 0;
-    vt->fgcolor = VTDEFFGCOLOR;
-    vt->bgcolor = VTDEFBGCOLOR;
-    vt->textatr = VTDEFTEXTATR;
+    vt->state.mode = VTDEFMODE;
+    vt->state.flags = 0;
+    vt->state.fgcolor = VTDEFFGCOLOR;
+    vt->state.bgcolor = VTDEFBGCOLOR;
+    vt->state.textatr = VTDEFTEXTATR;
+    if (!vtinittextbuf(&vt->textbuf, vt->textbuf.nrow, vt->state.ncol)) {
+        vtfree(vt);
+        if (newvt) {
+            free(vt);
+        }
+
+        return NULL;
+    }
+    if (!vtinittextbuf(&vt->scrbuf, vt->state.nrow, vt->state.ncol)) {
+        vtfree(vt);
+        vtfreetextbuf(&vt->textbuf);
+        if (newvt) {
+            free(vt);
+        }
+
+        return NULL;
+    }
+    vt->colormap.deftab = vtdefcolortab;
+    vt->colormap.xtermtab = vtxtermcolortab;
 
     return vt;
 }
@@ -358,18 +445,28 @@ vtinit(struct vt *vt)
 void
 vtprintinfo(struct vt *vt)
 {
-    fprintf(stderr, "VT(%d): %s, %s\n", vt->fd, vt->masterpath, vt->slavepath);
+    fprintf(stderr, "VT(%d): %s, %s\n",
+            vt->atr.fd, vt->atr.masterpath, vt->atr.slavepath);
 
     return;
 }
 
+#define VTFONTWIDTH  7
+#define VTFONTHEIGHT 13
 int
 main(int argc, char *argv[])
 {
-    struct vt *vt = vtinit(NULL);
+    struct vt vt;
 
-    if (vt) {
-        vtprintinfo(vt);
+    memset(&vt, 0, sizeof(struct vt));
+    vt.state.nrow = 24;
+    vt.state.ncol = 80;
+    vt.state.w = vt.state.ncol * VTFONTWIDTH;
+    vt.state.h = vt.state.nrow * VTFONTHEIGHT;
+    vt.textbuf.nrow = VTDEFBUFNROW;
+    vt.scrbuf.nrow = 24;
+    if (vtinit(&vt)) {
+        vtprintinfo(&vt);
     } else {
         fprintf(stderr, "failed to initialise VT\n");
     }
