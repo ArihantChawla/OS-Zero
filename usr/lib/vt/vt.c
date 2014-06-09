@@ -394,7 +394,7 @@ vtinitui(struct vt *vt, int argc, char *argv[])
 }
 
 long
-vtinitcolors_ui(struct vt *vt)
+vtinitcolors(struct vt *vt)
 {
     struct uienv_xorg *env = vt->ui.env;
     struct uiapi_xorg *api = vt->ui.api;
@@ -421,16 +421,6 @@ vtinitcolors_ui(struct vt *vt)
     vt->colormap.xtermtab = xtermtab;
 
     return 1;
-}
-
-long
-vtinitcolors(struct vt *vt)
-{
-    long retval = 1;
-
-    retval = vtinitcolors_ui(vt);
-
-    return retval;
 }
 
 struct vt *
