@@ -1,3 +1,7 @@
+/*
+ * REFERENCE: http://www.termsys.demon.co.uk/vtansi.htm
+ */
+
 #include <stdlib.h>
 #include <stdio.h>
 #include <ctype.h>
