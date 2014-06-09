@@ -405,7 +405,7 @@ vtinitesc(struct vt *vt)
 }
 
 long
-vtescgetnum(char *str, char **retstr)
+vtgetescnum(char *str, char **retstr)
 {
     long num = 0;
 
@@ -422,7 +422,7 @@ vtescgetnum(char *str, char **retstr)
 }
 
 char *
-vtescgetstr(char *str, char **retstr)
+vtgetescstr(char *str, char **retstr)
 {
     long  nb = 32;
     long  len = 0;
@@ -494,7 +494,7 @@ vtparseesc(struct vt *vt, char *str, char **retstr)
             }
             while (isdigit(*str)) {
                 /* read first numerical parameter */
-                num = vtescgetnum(str, &str);
+                num = vtgetescnum(str, &str);
                 if (num && narg < VTESCNARG) {
                     argtab[narg] = sign * num;
                     narg++;
@@ -504,7 +504,7 @@ vtparseesc(struct vt *vt, char *str, char **retstr)
                 }
                 if (*str == '"') {
                     /* associate string to key */
-                    ptr = vtescgetstr(str, &str);
+                    ptr = vtgetescstr(str, &str);
                     if (num < 0x80) {
                         vtkeystrtab[num] = ptr;
                     }

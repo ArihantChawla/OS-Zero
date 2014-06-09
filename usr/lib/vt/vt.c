@@ -229,6 +229,7 @@ vtinit(struct vt *vt, int argc, char *argv[])
     ncol = vt->state.ncol;
     if (!ncol) {
         ncol = VTDEFNCOL;
+        vt->state.ncol = ncol;
     }
     if (!vtinittextbuf(&vt->textbuf, nrow, ncol)) {
         vtfree(vt);
@@ -241,10 +242,7 @@ vtinit(struct vt *vt, int argc, char *argv[])
     nrow = vt->state.nrow;
     if (!nrow) {
         nrow = VTDEFNROW;
-    }
-    ncol = vt->state.ncol;
-    if (!ncol) {
-        ncol = VTDEFNCOL;
+        vt->state.nrow = nrow;
     }
     if (!vtinittextbuf(&vt->scrbuf, nrow, ncol)) {
         vtfree(vt);
