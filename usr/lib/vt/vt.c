@@ -10,31 +10,13 @@
 #include <vt/vt.h>
 #include <vt/pty.h>
 #include <vt/color.h>
-#include <vt/xterm.h>
 
 int32_t vtxtermcolortab[256] ALIGNED(PAGESIZE) = VT_XTERM_COLORMAP;
 
 #define vtdefcolor(i)     (vtdefcolortab[(c)])
 #define vtfgtodefcolor(i) ((c) - 30)
 #define vtbgtodefcolor(i) ((c) - 40)
-int32_t vtdefcolortab[16] ALIGNED(CLSIZE) = {
-    VT_BLACK_COLOR,
-    VT_RED_COLOR,
-    VT_GREEN_COLOR,
-    VT_YELLOW_COLOR,
-    VT_BLUE_COLOR,
-    VT_MAGENTA_COLOR,
-    VT_CYAN_COLOR,
-    VT_WHITE_COLOR,
-    VT_BRIGHT_BLACK_COLOR,
-    VT_BRIGHT_RED_COLOR,
-    VT_BRIGHT_GREEN_COLOR,
-    VT_BRIGHT_YELLOW_COLOR,
-    VT_BRIGHT_BLUE_COLOR,
-    VT_BRIGHT_MAGENTA_COLOR,
-    VT_BRIGHT_CYAN_COLOR,
-    VT_BRIGHT_WHITE_COLOR
-};
+int32_t vtdefcolortab[16] ALIGNED(CLSIZE) = VT_DEFAULT_COLORMAP;
 
 void
 vtfreetextbuf(struct vttextbuf *buf)

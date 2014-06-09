@@ -227,6 +227,7 @@ void
 atainit(void)
 {
     long status;
+
 #if 0
     ataprobedrv2(0x1f0);
     ataprobedrv2(0x170);
