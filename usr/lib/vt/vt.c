@@ -377,10 +377,13 @@ vtinittextbuf(struct vttextbuf *buf, long nrow, long ncol)
         }
         rend[ndx] = rptr;
     }
+    buf->data = data;
+    buf->rend = rend;
 
     return 1;
 }
 
+#if 0
 void
 vtinitui(struct vt *vt, int argc, char *argv[])
 {
@@ -395,6 +398,7 @@ vtinitui(struct vt *vt, int argc, char *argv[])
 
     return;
 }
+#endif
 
 long
 vtinitcolors(struct vt *vt)
@@ -486,7 +490,7 @@ vtinit(struct vt *vt, int argc, char *argv[])
 #if (VTXORG)
 //    api->init = uiinit_xorg;
 #endif
-    vtinitui(vt, argc, argv);
+    uiinit_xorg(&vt->ui, argc, argv);
     if (!vtinitcolors(vt)) {
         vtfree(vt);
         vtfreetextbuf(&vt->textbuf);
@@ -505,8 +509,14 @@ vtinit(struct vt *vt, int argc, char *argv[])
 void
 vtprintinfo(struct vt *vt)
 {
-    fprintf(stderr, "VT(%d): %s, %s\n",
+    fprintf(stderr, "VT: fd == %d, master: %s, slave: %s\n",
             vt->atr.fd, vt->atr.masterpath, vt->atr.slavepath);
+    fprintf(stderr, "VT: %ld rows x %ld columns\n",
+            vt->state.nrow, vt->state.ncol);
+    fprintf(stderr, "VT: %ld buffer rows @ %p\n",
+            vt->textbuf.nrow, vt->textbuf.data);
+    fprintf(stderr, "VT: %ld screen rows @ %p\n",
+            vt->scrbuf.nrow, vt->scrbuf.data);
 
     return;
 }
