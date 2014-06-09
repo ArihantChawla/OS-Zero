@@ -11,5 +11,9 @@ struct ui {
     void *env;
 };
 
+#if (UI_ENV_XORG)
+#include <ui/sys/xorg.h>
+#endif
+
 #endif /* __UI_UI_H__ */
 

@@ -65,8 +65,8 @@ ringinit(struct ringbuf *buf, void *base, long n)
         buf->n = n;
         buf->base = base;
         buf->lim = (RING_ITEM *)((uint8_t *)base + n * sizeof(RING_ITEM));
-        buf->inptr = buf->base;
-        buf->outptr = buf->base;
+        buf->inptr = base;
+        buf->outptr = base;
     }
     mtxunlk(&buf->lk);
 

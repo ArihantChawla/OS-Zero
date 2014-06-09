@@ -4,6 +4,7 @@
 #include <stdint.h>
 #include <zero/cdecl.h>
 #include <zero/param.h>
+#include <ui/ui.h>
 
 #define VTBUFSIZE    PAGESIZE
 
@@ -97,8 +98,8 @@ struct vttextbuf {
 };
 
 struct vtcolormap {
-    int32_t *deftab;            // default colors
-    int32_t *xtermtab;          // xterm colors
+    void *deftab;               // default colors
+    void *xtermtab;             // xterm colors
 };
 
 struct vt {
@@ -107,6 +108,7 @@ struct vt {
     struct vtdevbuf   devbuf;   // input and output buffers
     struct vttextbuf  textbuf;  // text and rendition buffers
     struct vttextbuf  scrbuf;   // current screen contents
+    struct ui         ui;       // user interface
     struct vtcolormap colormap; // terminal colormaps
 };
 

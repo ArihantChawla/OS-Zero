@@ -3,6 +3,7 @@
 
 #define VTDEFBUFNROW    4096
 
+#define VTXORG          1
 #define VT_POSIX_OPENPT 1
 #define VT_GETPT        0
 #define VT_DEV_PTMX     0

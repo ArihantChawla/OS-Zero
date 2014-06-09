@@ -6,6 +6,8 @@
 #include <X11/Xutil.h>
 #include <X11/keysymdef.h>
 
+void uiinit_xorg(struct ui *ui, char argc, char *argv[]);
+
 #define UIXORGNDEFEV    LASTEvent
 #define UIXORGROOTWINID None
 

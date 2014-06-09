@@ -1,5 +1,6 @@
 #include <stdlib.h>
 #include <stdio.h>
+#include <string.h>
 #include <ui/ui.h>
 #include <ui/sys/xorg.h>
 

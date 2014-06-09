@@ -381,8 +381,90 @@ vtinittextbuf(struct vttextbuf *buf, long nrow, long ncol)
     return 1;
 }
 
+long
+vtinitui(struct vt *vt, int argc, char *argv[])
+{
+    long retval = 1;
+
+#if (VTXORG)
+    uiinit_xorg(&vt->ui, argc, argv);
+#endif
+
+    return retval;
+}
+
+#if (VTXORG)
+long
+vtinitcolors_xorg(struct vt *vt)
+{
+    struct uienv_x11 *env = vt->ui.env;
+    unsigned long    *deftab = malloc(16 * sizeof(unsigned long));
+    unsigned long    *xtermtab;
+    long              ndx;
+    unsigned long     pixel;
+    XColor            color;
+
+    if (!deftab) {
+
+        return 0;
+    }
+    xtermtab = malloc(256 * sizeof(unsigned long));
+    if (!xtermtab) {
+
+        return 0;
+    }
+
+    color.flags = DoRed | DoGreen | DoBlue;
+    for (ndx = 0 ; ndx < 16 ; ndx++) {
+        pixel = vtdefcolortab[ndx];
+        color.red = pixel >> 16;
+        color.green = (pixel >> 8) & 0xff;
+        color.blue = pixel & 0xff;
+        if (!XAllocColor(env->display,
+                         env->colormap,
+                         &color)) {
+
+            return 0;
+        }
+        deftab[ndx] = color.pixel;
+    }
+    for (ndx = 0 ; ndx < 256 ; ndx++) {
+        pixel = vtxtermcolortab[ndx];
+        color.red = pixel >> 16;
+        color.green = (pixel >> 8) & 0xff;
+        color.blue = pixel & 0xff;
+        if (!XAllocColor(env->display,
+                         env->colormap,
+                         &color)) {
+
+            return 0;
+        }
+        deftab[ndx] = color.pixel;
+    }
+    vt->colormap.deftab = deftab;
+    vt->colormap.xtermtab = xtermtab;
+
+    return 1;
+}
+#endif
+
+long
+vtinitcolors(struct vt *vt)
+{
+    long retval = 1;
+
+#if (VTXORG)
+    retval = vtinitcolors_xorg(vt);
+#else
+    vt->colormap.deftab = vtdefcolortab;
+    vt->colormap.xtermtab = vtxtermcolortab;
+#endif
+
+    return retval;
+}
+
 struct vt *
-vtinit(struct vt *vt)
+vtinit(struct vt *vt, int argc, char *argv[])
 {
     long  newvt = (vt) ? 0 : 1;
 
@@ -435,8 +517,17 @@ vtinit(struct vt *vt)
 
         return NULL;
     }
-    vt->colormap.deftab = vtdefcolortab;
-    vt->colormap.xtermtab = vtxtermcolortab;
+    if (!vtinitui(vt, argc, argv)
+        || !vtinitcolors(vt)) {
+        vtfree(vt);
+        vtfreetextbuf(&vt->textbuf);
+        vtfreetextbuf(&vt->scrbuf);
+        if (newvt) {
+            free(vt);
+        }
+
+        return NULL;
+    }
 
     return vt;
 }
@@ -465,7 +556,7 @@ main(int argc, char *argv[])
     vt.state.h = vt.state.nrow * VTFONTHEIGHT;
     vt.textbuf.nrow = VTDEFBUFNROW;
     vt.scrbuf.nrow = 24;
-    if (vtinit(&vt)) {
+    if (vtinit(&vt, argc, argv)) {
         vtprintinfo(&vt);
     } else {
         fprintf(stderr, "failed to initialise VT\n");
@@ -473,4 +564,5 @@ main(int argc, char *argv[])
 
     exit(1);
 }
-#endif
+#endif /* VTTEST */
+
