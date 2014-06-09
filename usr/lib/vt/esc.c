@@ -105,6 +105,7 @@ vtclrtab(struct vt *vt, long narg, long *argtab)
     if (narg == 1 && argtab[0] == 3) {
         ncol = vt->state.ncol;
         n = rounduppow2(ncol, 32);
+        n >>= 5;
         while (n--) {
             *tabmap++ = 0;
         }
