@@ -258,7 +258,7 @@ vtinit(struct vt *vt, int argc, char *argv[])
         
         return NULL;
     }
-    ptr = calloc(rounduppow2(vt->state.ncol, 32) >> 3, sizeof(uint8_t));
+    ptr = calloc(rounduppow2(vt->state.ncol, 32) >> 5, sizeof(uint32_t));
     if (!ptr) {
         vtfree(vt);
         vtfreetextbuf(&vt->textbuf);
@@ -272,6 +272,8 @@ vtinit(struct vt *vt, int argc, char *argv[])
         return NULL;
     }
     vt->state.tabmap = ptr;
+    vt->state.scrolltop = 0;
+    vt->state.scrollbottom = vt->state.ncol - 1;
 
     return vt;
 }

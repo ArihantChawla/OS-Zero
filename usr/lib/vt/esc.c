@@ -47,6 +47,7 @@ long vtatrbittab[9] ALIGNED(CLSIZE)
 void
 vtscroll(struct vt *vt, long nrow)
 {
+    /* TODO: scroll screen */
     ;
 }
 
