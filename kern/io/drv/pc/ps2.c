@@ -57,7 +57,7 @@ static struct ps2drv ps2drv ALIGNED(PAGESIZE);
 #endif
 
 //uint8_t         kbdbuf[PAGESIZE] ALIGNED(PAGESIZE);
-struct ringbuf  kbdbuf;
+struct ringbuf  kbdbuf ALIGNED(PAGESIZE);
 struct ringbuf *kbdring = &kbdbuf;
 
 void

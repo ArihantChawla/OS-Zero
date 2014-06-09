@@ -9,7 +9,15 @@
 #include <kern/io/drv/pc/ata.h>
 #include <kern/unit/x86/apic.h>
 
-static uint16_t ataconftab[4][256];
+static uint16_t    ataconftab[4][256] ALIGNED(PAGESIZE);
+static const char *ataidstrtab[5]
+= {
+    "NONE",
+    "ATA",
+    "ATAPI",
+    "SATA",
+    "SATAPI"
+};
 
 #if 0
 static const char *ataerrtab[6]
@@ -224,13 +232,13 @@ atainit(void)
     ataprobedrv2(0x170);
 #endif
     status = ataprobedrv(ATAPRIMARY, ATASELMASTER);
-    kprintf("ATA: primary master 0x%lx\n", status);
+    kprintf("ATA: primary master %s\n", ataidstrtab[status]);
     status = ataprobedrv(ATAPRIMARY, ATASELSLAVE);
-    kprintf("ATA: primary slave 0x%lx\n", status);
+    kprintf("ATA: primary slave %s\n", ataidstrtab[status]);
     status = ataprobedrv(ATASECONDARY, ATASELMASTER);
-    kprintf("ATA: secondary master 0x%lx\n", status);
+    kprintf("ATA: secondary master %s\n", ataidstrtab[status]);
     status = ataprobedrv(ATASECONDARY, ATASELSLAVE);
-    kprintf("ATA: secondary slave 0x%lx\n", status);
+    kprintf("ATA: secondary slave %s\n", ataidstrtab[status]);
 
     return;
 }
