@@ -393,44 +393,42 @@ vtinitui(struct vt *vt, int argc, char *argv[])
     return retval;
 }
 
-#if (VTXORG)
 long
-vtinitcolors_xorg(struct vt *vt)
+vtinitcolors_ui(struct vt *vt)
 {
     struct uienv_xorg *env = vt->ui.env;
     struct uiapi_xorg *api = vt->ui.api;
-    unsigned long     *deftab;
-    unsigned long     *xtermtab;
+    void              *deftab;
+    void              *xtermtab;
 
-    deftab = api->initcolors(env, vtdefcolortab, 16);
-    if (!deftab) {
-
-        return 0;
-    }
-    xtermtab = api->initcolors(env, vtxtermcolortab, 256);
-    if (!xtermtab) {
-        free(deftab);
-
-        return 0;
+    if (api->initcolors) {
+        deftab = api->initcolors(env, vtdefcolortab, 16);
+        if (!deftab) {
+            
+            return 0;
+        }
+        xtermtab = api->initcolors(env, vtxtermcolortab, 256);
+        if (!xtermtab) {
+            free(deftab);
+            
+            return 0;
+        }
+    } else {
+        deftab = vtdefcolortab;
+        xtermtab = vtxtermcolortab;
     }
     vt->colormap.deftab = deftab;
     vt->colormap.xtermtab = xtermtab;
 
     return 1;
 }
-#endif
 
 long
 vtinitcolors(struct vt *vt)
 {
     long retval = 1;
 
-#if (VTXORG)
-    retval = vtinitcolors_xorg(vt);
-#else
-    vt->colormap.deftab = vtdefcolortab;
-    vt->colormap.xtermtab = vtxtermcolortab;
-#endif
+    retval = vtinitcolors_ui(vt);
 
     return retval;
 }
