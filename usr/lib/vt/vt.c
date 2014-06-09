@@ -305,10 +305,10 @@ vtprintinfo(struct vt *vt)
             vt->atr.fd, vt->atr.masterpath, vt->atr.slavepath);
     fprintf(stderr, "VT: %ld rows x %ld columns\n",
             vt->state.nrow, vt->state.ncol);
-    fprintf(stderr, "VT: %ld buffer rows @ %p\n",
-            vt->textbuf.nrow, vt->textbuf.data);
-    fprintf(stderr, "VT: %ld screen rows @ %p\n",
-            vt->scrbuf.nrow, vt->scrbuf.data);
+    fprintf(stderr, "VT: %ld buffer rows\n",
+            vt->textbuf.nrow);
+    fprintf(stderr, "VT: %ld screen rows\n",
+            vt->scrbuf.nrow);
     fprintf(stderr, "VT: font %s (%ldx%ld)\n",
             vt->font.name, vt->font.boxw, vt->font.boxh);
 

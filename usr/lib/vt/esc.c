@@ -165,7 +165,7 @@ vtsavecursatr(struct vt *vt, long narg, long *argtab)
 }
 
 void
-vtrstorcursatr(struct vt *vt, long narg, long *argtab)
+vtrestorcursatr(struct vt *vt, long narg, long *argtab)
 {
     long row = vt->savecurs.row;
     long col = vt->savecurs.col;
@@ -390,7 +390,7 @@ vtinitesc(struct vt *vt)
     vtsetcsifunc(vt, 's', vtsavecurs);
     vtsetcsifunc(vt, 'u', vtunsavecurs);
     vtsetescfunc(vt, '7', vtsavecursatr);
-    vtsetescfunc(vt, '8', vtrstorcursatr);
+    vtsetescfunc(vt, '8', vtrestorcursatr);
     vtsetcsifunc(vt, 'r', vtsetscroll);
     vtsetescfunc(vt, 'D', vtscrolldown);
     vtsetcsifunc(vt, 'M', vtscrollup);
@@ -524,23 +524,23 @@ vtparseesc(struct vt *vt, char *str, char **retstr)
 #if (VTDEBUGESC)
             } else {
                 if (isprint(cmd)) {
-                    fprintf(stderr, "ESC: CSI: unknown command %c\n",
+                    fprintf(stderr, "ESC[: unknown sequence %c\n",
                             (char)cmd);
                 } else {
-                    fprintf(stderr, "ESC: CSI: unknown command %lx\n", cmd);
+                    fprintf(stderr, "ESC[: unknown sequence %lx\n", cmd);
                 }
                 fprintf(stderr, "ARGS:\t");
-                for (ndx = 0 ; ndx < narg ; ndx++) {
+                for (ndx = 0 ; ndx < narg - 1 ; ndx++) {
                     fprintf(stderr, "%ld ", argtab[ndx]);
                 }
-                fprintf(stderr, "\n");
+                fprintf(stderr, "%ld\n", argtab[ndx]);
 #endif
             }
         } else if (*str == VTFONTG0 || *str == VTFONTG1) {
             /* ESC( command */
             /* TODO: implement these? */
 #if (VTDEBUGESC)
-                fprintf(stderr, "ESC: font commands not supported\n");
+                fprintf(stderr, "ESC%c: font commands not supported\n", *str);
 #endif
         } else if (*str == VTHASH) {
             /* ESC# command */
@@ -558,16 +558,16 @@ vtparseesc(struct vt *vt, char *str, char **retstr)
 #if (VTDEBUGESC)
             } else {
                 if (isprint(cmd)) {
-                    fprintf(stderr, "ESC: unknown command %c\n",
+                    fprintf(stderr, "ESC%c: unknown sequence\n",
                             (char)cmd);
                 } else {
-                    fprintf(stderr, "ESC: unknown command %lx\n", cmd);
+                    fprintf(stderr, "ESC: unknown sequence %lx\n", cmd);
                 }
                 fprintf(stderr, "ARGS:\t");
-                for (ndx = 0 ; ndx < narg ; ndx++) {
+                for (ndx = 0 ; ndx < narg - 1 ; ndx++) {
                     fprintf(stderr, "%ld ", argtab[ndx]);
                 }
-                fprintf(stderr, "\n");
+                fprintf(stderr, "%ld\n", argtab[ndx]);
 #endif
             }
         }
