@@ -123,5 +123,9 @@ struct vtesc {
     vtescfunc_t *hashfunctab[256];
 };
 
+#define vtdefcolor(i)     (vtdefcolortab[(c)])
+#define vtfgtodefcolor(i) ((c) - 30)
+#define vtbgtodefcolor(i) ((c) - 40)
+
 #endif /* __VT_VT_H__ */
 

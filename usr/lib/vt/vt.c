@@ -12,10 +12,6 @@
 #include <vt/color.h>
 
 int32_t vtxtermcolortab[256] ALIGNED(PAGESIZE) = VT_XTERM_COLORMAP;
-
-#define vtdefcolor(i)     (vtdefcolortab[(c)])
-#define vtfgtodefcolor(i) ((c) - 30)
-#define vtbgtodefcolor(i) ((c) - 40)
 int32_t vtdefcolortab[16] ALIGNED(CLSIZE) = VT_DEFAULT_COLORMAP;
 
 void
