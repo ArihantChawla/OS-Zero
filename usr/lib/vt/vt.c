@@ -6,6 +6,7 @@
 #include <limits.h>
 #include <zero/cdecl.h>
 #include <zero/param.h>
+#include <zero/trix.h>
 #include <ui/ui.h>
 #include <vt/vt.h>
 #include <vt/pty.h>
@@ -182,6 +183,7 @@ struct vt *
 vtinit(struct vt *vt, int argc, char *argv[])
 {
     long  newvt = (vt) ? 0 : 1;
+    void *ptr;
 
     if (!vt) {
         vt = malloc(sizeof(struct vt));
@@ -255,6 +257,20 @@ vtinit(struct vt *vt, int argc, char *argv[])
         
         return NULL;
     }
+    ptr = calloc(rounduppow2(vt->state.ncol, 32) >> 3, sizeof(uint8_t));
+    if (!ptr) {
+        vtfree(vt);
+        vtfreetextbuf(&vt->textbuf);
+        vtfreetextbuf(&vt->scrbuf);
+        vtfreecolors(vt);
+//        vtfreefonts(vt);
+        if (newvt) {
+            free(vt);
+        }
+        
+        return NULL;
+    }
+    vt->state.tabmap = ptr;
 
     return vt;
 }

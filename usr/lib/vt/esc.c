@@ -40,6 +40,94 @@ long vtatrbittab[9]
     VTHIDDEN
 };
 
+void
+vtscroll(struct vt *vt, long nrow)
+{
+    ;
+}
+
+long
+vtsetscroll(struct vt *vt, long narg, long *argtab)
+{
+    struct vtstate *state = &vt->state;
+
+    if (!narg) {
+        state->scrolltop = 0;
+        state->scrollbottom = state->nrow - 1;
+    } if (narg == 2) {
+        state->scrolltop = argtab[0];
+        state->scrollbottom = argtab[1];
+    }
+
+    return narg;
+}
+
+long
+vtscrolldown(struct vt *vt, long narg, long *argtab)
+{
+    vtscroll(vt, -1);
+
+    return -1;
+}
+
+long
+vtscrollup(struct vt *vt, long narg, long *argtab)
+{
+    vtscroll(vt, 1);
+
+    return 1;
+}
+
+long
+vtsettab(struct vt *vt, long narg, long *argtab)
+{
+//    long     row = vt->state.row;
+    long      col = vt->state.col;
+    uint32_t *tabmap = vt->state.tabmap;
+
+    setbit(tabmap, col);
+
+    return col;
+}
+
+long
+vtclrtab(struct vt *vt, long narg, long *argtab)
+{
+    uint32_t *tabmap = vt->state.tabmap;
+    long      ncol;
+    long      col;
+    long      n;
+
+    if (narg == 1 && argtab[0] == 3) {
+        ncol = vt->state.ncol;
+        n = rounduppow2(ncol, 32);
+        while (n--) {
+            *tabmap++ = 0;
+        }
+    } else {
+        col = vt->state.col;
+        clrbit(tabmap, col);
+    }
+
+    return narg;
+}
+
+long
+vtclralltabs(struct vt *vt, long narg, long *argtab)
+{
+    uint32_t *tabmap = vt->state.tabmap;
+    size_t   n = rounduppow2(vt->state.ncol, 32);
+
+    if (tabmap) {
+        n >>= 3;
+        while (n--) {
+            *tabmap++ = 0;
+        }
+    }
+
+    return 0;
+}
+
 long
 vteraseline(struct vt *vt, long narg, long *argtab)
 {
@@ -120,6 +208,16 @@ vtescsetatr(struct vt *vt, long narg, long *argtab)
 void
 vtinitesc(void)
 {
+    vtsetcsicmd('r');
+    vtsetcsifunc('r', vtsetscroll);
+    vtsetcsicmd('D');
+    vtsetcsifunc('D', vtscrolldown);
+    vtsetcsicmd('M');
+    vtsetcsifunc('M', vtscrollup);
+    vtsetcsicmd('H');
+    vtsetcsifunc('H', vtsettab);
+    vtsetcsicmd('g');
+    vtsetcsifunc('g', vtclrtab);
     vtsetcsicmd('J');
     vtsetcsifunc('J', vterasedir);
     vtsetcsicmd('K');

@@ -74,17 +74,20 @@ struct vtatr {
 };
 
 struct vtstate {
-    long     col;       // current column
-    long     row;       // current column
-    long     nrow;      // # of screen rows
-    long     ncol;      // # of screen columns
-    long     w;         // width in characters
-    long     h;         // height in characters
-    uint64_t mode;      // private mode etc. mask
-    uint64_t flags;     // modifier and button mask
-    int32_t  fgcolor;   // foreground text color
-    int32_t  bgcolor;   // background text color
-    uint32_t textatr;   // current text attributes
+    long      col;              // current column
+    long      row;              // current column
+    long      nrow;             // # of screen rows
+    long      ncol;             // # of screen columns
+    long      w;                // width in characters
+    long      h;                // height in characters
+    uint64_t  mode;             // private mode etc. mask
+    uint64_t  flags;            // modifier and button mask
+    int32_t   fgcolor;          // foreground text color
+    int32_t   bgcolor;          // background text color
+    uint32_t  textatr;          // current text attributes
+    uint32_t *tabmap;           // TAB-position bitmap
+    long      scrolltop;        // scrolling region top row
+    long      scrollbottom;     // scrolling region bottom row
 };
 
 struct vtdevbuf {
