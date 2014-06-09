@@ -135,5 +135,7 @@ struct vtesc {
 
 extern char *vtkeystrtab[128];
 
+void vtgetopt(struct vt *vt, int argc, char *argv[]);
+
 #endif /* __VT_VT_H__ */
 

@@ -3,6 +3,8 @@
 
 #define VTDEFFONT       "fixed"
 #define VTDEFBUFNROW    4096
+#define VTDEFNROW       24
+#define VTDEFNCOL       80
 
 #define VTXORG          1
 #define VT_POSIX_OPENPT 1

@@ -131,6 +131,8 @@ vtinittextbuf(struct vttextbuf *buf, long nrow, long ncol)
         }
         rend[ndx] = rptr;
     }
+    buf->nrow = nrow;
+//    buf->ncol = ncol;
 
     return 1;
 }
@@ -184,6 +186,8 @@ struct vt *
 vtinit(struct vt *vt, int argc, char *argv[])
 {
     long  newvt = (vt) ? 0 : 1;
+    long  nrow;
+    long  ncol;
     void *ptr;
 
     if (!vt) {
@@ -218,7 +222,15 @@ vtinit(struct vt *vt, int argc, char *argv[])
     vt->state.fgcolor = VTDEFFGCOLOR;
     vt->state.bgcolor = VTDEFBGCOLOR;
     vt->state.textatr = VTDEFTEXTATR;
-    if (!vtinittextbuf(&vt->textbuf, vt->textbuf.nrow, vt->state.ncol)) {
+    nrow = vt->textbuf.nrow;
+    if (!nrow) {
+        nrow = VTDEFBUFNROW;
+    }
+    ncol = vt->state.ncol;
+    if (!ncol) {
+        ncol = VTDEFNCOL;
+    }
+    if (!vtinittextbuf(&vt->textbuf, nrow, ncol)) {
         vtfree(vt);
         if (newvt) {
             free(vt);
@@ -226,7 +238,15 @@ vtinit(struct vt *vt, int argc, char *argv[])
 
         return NULL;
     }
-    if (!vtinittextbuf(&vt->scrbuf, vt->state.nrow, vt->state.ncol)) {
+    nrow = vt->state.nrow;
+    if (!nrow) {
+        nrow = VTDEFNROW;
+    }
+    ncol = vt->state.ncol;
+    if (!ncol) {
+        ncol = VTDEFNCOL;
+    }
+    if (!vtinittextbuf(&vt->scrbuf, nrow, ncol)) {
         vtfree(vt);
         vtfreetextbuf(&vt->textbuf);
         if (newvt) {
@@ -302,15 +322,18 @@ main(int argc, char *argv[])
     struct vt vt ALIGNED(CLSIZE);
 
     memset(&vt, 0, sizeof(struct vt));
-    vt.state.nrow = 24;
-    vt.state.ncol = 80;
-    vt.textbuf.nrow = VTDEFBUFNROW;
-    vt.scrbuf.nrow = 24;
+    vtgetopt(&vt, argc, argv);
     if (vtinit(&vt, argc, argv)) {
         vtprintinfo(&vt);
     } else {
         fprintf(stderr, "failed to initialise VT\n");
     }
+#if 0
+    vt.state.nrow = 24;
+    vt.state.ncol = 80;
+    vt.textbuf.nrow = VTDEFBUFNROW;
+    vt.scrbuf.nrow = 24;
+#endif
     vt.state.w = vt.state.ncol * vt.font.boxw;
     vt.state.h = vt.state.nrow * vt.font.boxh;
 
