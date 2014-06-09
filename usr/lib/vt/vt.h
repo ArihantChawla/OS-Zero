@@ -112,26 +112,28 @@ struct vtsavecurs {
     long col;
 };
 
-struct vt {
-    struct vtatr      atr;      // terminal attributes
-    struct vtstate    state;    // terminal status
-    struct vtdevbuf   devbuf;   // input and output buffers
-    struct vttextbuf  textbuf;  // text and rendition buffers
-    struct vttextbuf  scrbuf;   // current screen contents
-    struct ui         ui;       // user interface
-    struct uifont     font;     // default font
-    struct vtcolormap colormap; // terminal colormaps
-    struct vtsavecurs savecurs; // saved cursor and attributes
-};
-
+struct vt;
 typedef void vtescfunc_t(struct vt *, long, long *);
-struct vtesc {
-    uint8_t      esccmdmap[32];
-    uint8_t      csicmdmap[32];
-    uint8_t      hashcmdmap[32];
+struct vtesctabs {
+    uint8_t      escmap[32];
+    uint8_t      csimap[32];
+    uint8_t      hashmap[32];
     vtescfunc_t *escfunctab[256];
     vtescfunc_t *csifunctab[256];
     vtescfunc_t *hashfunctab[256];
+};
+
+struct vt {
+    struct vtatr       atr;             // terminal attributes
+    struct vtstate     state;           // terminal status
+    struct vtdevbuf    devbuf;          // input and output buffers
+    struct vttextbuf   textbuf;         // text and rendition buffers
+    struct vttextbuf   scrbuf;          // current screen contents
+    struct ui          ui;              // user interface
+    struct uifont      font;            // default font
+    struct vtcolormap  colormap;        // terminal colormaps
+    struct vtesctabs  *esctabs;         // escape sequence interface
+    struct vtsavecurs  savecurs;        // saved cursor and attributes
 };
 
 #define vtdefcolor(i)     (((int32_t *)(vt->colormap.deftab))[(i)])
@@ -139,9 +141,11 @@ struct vtesc {
 #define vtfgtodefcolor(i) ((i) - 30)
 #define vtbgtodefcolor(i) ((i) - 40)
 
-extern char *vtkeystrtab[128];
+extern struct vtesctabs  vtesctabs;
+extern char             *vtkeystrtab[128];
 
 void vtgetopt(struct vt *vt, int argc, char *argv[]);
+void vtinitesc(struct vt *vt);
 
 #endif /* __VT_VT_H__ */
 

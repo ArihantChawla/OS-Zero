@@ -292,6 +292,7 @@ vtinit(struct vt *vt, int argc, char *argv[])
         return NULL;
     }
     vt->state.tabmap = ptr;
+    vtinitesc(vt);
     vt->state.scrolltop = 0;
     vt->state.scrollbottom = vt->state.ncol - 1;
 

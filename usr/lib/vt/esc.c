@@ -11,17 +11,20 @@
 #include <zero/trix.h>
 #include <vt/vt.h>
 
-#define vtisesccmd(c)       bitset(vtesc.esccmdmap, c)
-#define vtiscsicmd(c)       bitset(vtesc.csicmdmap, c)
-#define vtishashcmd(c)      bitset(vtesc.hashcmdmap, c)
-#define vtsetesccmd(c)      setbit(vtesc.esccmdmap, c)
-#define vtsetcsicmd(c)      setbit(vtesc.csicmdmap, c)
-#define vtsethashcmd(c)     setbit(vtesc.hashcmdmap, c)
-#define vtsetescfunc(c, f)  (vtesc.escfunctab[(c)] = (f))
-#define vtsetcsifunc(c, f)  (vtesc.csifunctab[(c)] = (f))
-#define vtsethashfunc(c, f) (vtesc.hashfunctab[(c)] = (f))
+#define vtisesccmd(vt, c)       bitset(vt->esctabs->escmap, c)
+#define vtiscsicmd(vt, c)       bitset(vt->esctabs->csimap, c)
+#define vtishashcmd(vt, c)      bitset(vt->esctabs->hashmap, c)
+#define vtsetesccmd(vt, c)      setbit(vt->esctabs->escmap, c)
+#define vtsetcsicmd(vt, c)      setbit(vt->esctabs->csimap, c)
+#define vtsethashcmd(vt, c)     setbit(vt->esctabs->hashmap, c)
+#define vtsetescfunc(vt, c, f)                                          \
+    (vtsetesccmd(vt, c), vt->esctabs->escfunctab[(c)] = (f))
+#define vtsetcsifunc(vt, c, f)                                          \
+    (vtsetcsicmd(vt, c), vt->esctabs->csifunctab[(c)] = (f))
+#define vtsethashfunc(vt, c, f)                                         \
+    (vtsethashcmd(vt, c), vt->esctabs->hashfunctab[(c)] = (f))
 
-static struct vtesc vtesc ALIGNED(PAGESIZE);
+struct vtesctabs vtesctabs ALIGNED(PAGESIZE);
 
 #define VTRESETCMD      0
 #define VTBRIGHTCMD     1
@@ -389,48 +392,30 @@ vtsetatr(struct vt *vt, long narg, long *argtab)
 }
 
 void
-vtinitesc(void)
+vtinitesc(struct vt *vt)
 {
-    vtsetcsicmd('H');
-    vtsetcsifunc('H', vtgoto);
-    vtsetcsicmd('A');
-    vtsetcsifunc('A', vtgoup);
-    vtsetcsicmd('B');
-    vtsetcsifunc('B', vtgodown);
-    vtsetcsicmd('C');
-    vtsetcsifunc('C', vtgoforward);
-    vtsetcsicmd('D');
-    vtsetcsifunc('D', vtgobackward);
-    vtsetcsicmd('f');
-    vtsetcsifunc('f', vtgoto);
-    vtsetcsicmd('s');
-    vtsetcsifunc('s', vtsavecurs);
-    vtsetcsicmd('u');
-    vtsetcsifunc('u', vtunsavecurs);
-    vtsetesccmd('7');
-    vtsetescfunc('7', vtsavecursatr);
-    vtsetesccmd('8');
-    vtsetescfunc('8', vtrstorcursatr);
-    vtsetcsicmd('r');
-    vtsetcsifunc('r', vtsetscroll);
-    vtsetesccmd('D');
-    vtsetescfunc('D', vtscrolldown);
-    vtsetcsicmd('M');
-    vtsetcsifunc('M', vtscrollup);
-    vtsetesccmd('H');
-    vtsetescfunc('H', vtsettab);
-    vtsetcsicmd('g');
-    vtsetcsifunc('g', vtclrtab);
-    vtsetcsicmd('J');
-    vtsetcsifunc('J', vterasedir);
-    vtsetcsicmd('K');
-    vtsetcsifunc('K', vteraseline);
+    vt->esctabs = &vtesctabs;
+    vtsetcsifunc(vt, 'H', vtgoto);
+    vtsetcsifunc(vt, 'A', vtgoup);
+    vtsetcsifunc(vt, 'B', vtgodown);
+    vtsetcsifunc(vt, 'C', vtgoforward);
+    vtsetcsifunc(vt, 'D', vtgobackward);
+    vtsetcsifunc(vt, 'f', vtgoto);
+    vtsetcsifunc(vt, 's', vtsavecurs);
+    vtsetcsifunc(vt, 'u', vtunsavecurs);
+    vtsetescfunc(vt, '7', vtsavecursatr);
+    vtsetescfunc(vt, '8', vtrstorcursatr);
+    vtsetcsifunc(vt, 'r', vtsetscroll);
+    vtsetescfunc(vt, 'D', vtscrolldown);
+    vtsetcsifunc(vt, 'M', vtscrollup);
+    vtsetescfunc(vt, 'H', vtsettab);
+    vtsetcsifunc(vt, 'g', vtclrtab);
+    vtsetcsifunc(vt, 'J', vterasedir);
+    vtsetcsifunc(vt, 'K', vteraseline);
 #if (VTPRINT)
-    vtsetcsicmd('i');
-    vtsetcsifunc('i'; vtprint);
+    vtsetcsifunc(vt, 'i'; vtprint);
 #endif
-    vtsetcsicmd('m');
-    vtsetcsifunc('m', vtsetatr);
+    vtsetcsifunc(vt, 'm', vtsetatr);
 }
 
 long
@@ -543,9 +528,9 @@ vtescparse(struct vt *vt, char *str, char **retstr)
                 }
             }
             cmd = *str;
-            if (vtiscsicmd(cmd)) {
+            if (vtiscsicmd(vt, cmd)) {
                 str++;
-                func = vtesc.csifunctab[cmd];
+                func = vt->esctabs->csifunctab[cmd];
                 func(vt, narg, argtab);
             }
         } else if (*str == VTCHARSET) {
@@ -561,8 +546,8 @@ vtescparse(struct vt *vt, char *str, char **retstr)
             }
         } else {
             cmd = *str;
-            if (vtisesccmd(cmd)) {
-                func = vtesc.escfunctab[cmd];
+            if (vtisesccmd(vt, cmd)) {
+                func = vt->esctabs->escfunctab[cmd];
                 func(vt, 0, NULL);
                 str++;
             }
