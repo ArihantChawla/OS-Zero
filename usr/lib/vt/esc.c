@@ -40,10 +40,10 @@ long vtatrbittab[9]
     VTHIDDEN
 };
 
-void
-vterasescr(struct vt *vt, long narg, long *argtab)
+long
+vteraseline(struct vt *vt, long narg, long *argtab)
 {
-    long arg;
+    long arg = 0;
 
     if (narg == 0) {
         /* erase to end of line */
@@ -55,12 +55,14 @@ vterasescr(struct vt *vt, long narg, long *argtab)
             /* erase entire line */
         }
     }
+
+    return arg;
 }
 
-void
+long
 vterasedir(struct vt *vt, long narg, long *argtab)
 {
-    long arg;
+    long arg = 0;
 
     if (narg == 0) {
         /* erase down */
@@ -72,6 +74,8 @@ vterasedir(struct vt *vt, long narg, long *argtab)
             /* erase screen and move cursor to home */
         }
     }
+
+    return arg;
 }
 
 void
@@ -117,7 +121,7 @@ void
 vtinitesc(void)
 {
     vtsetcsicmd('J');
-    vtsetcsifunc('J', vterasescr);
+    vtsetcsifunc('J', vterasedir);
     vtsetcsicmd('K');
     vtsetcsifunc('K', vteraseline);
     vtsetcsicmd('m');
@@ -142,7 +146,7 @@ vtescgetnum(char *str, char **retstr)
 }
 
 char *
-vtgetstr(char *str, char **retstr)
+vtescgetstr(char *str, char **retstr)
 {
     long  nb = 32;
     long  len = 0;
@@ -211,7 +215,7 @@ vtescparse(struct vt *vt, char *str, char **retstr)
                 }
                 if (*str == '"') {
                     /* associate string to key */
-                    ptr = vtgetstr(str, &str);
+                    ptr = vtescgetstr(str, &str);
                     if (num < 0x80) {
                         vtkeystrtab[num] = ptr;
                     }
