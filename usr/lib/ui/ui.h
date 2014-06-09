@@ -13,6 +13,9 @@ struct ui {
     void *api;
 };
 
+#if (UI_ENV_ZERO)
+#include <ui/sys/zero.h>
+#endif
 #if (UI_ENV_XORG)
 #include <ui/sys/xorg.h>
 #endif

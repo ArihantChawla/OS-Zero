@@ -1,6 +1,9 @@
 #ifndef __UI_ZERO_H__
 #define __UI_ZERO_H__
 
+#include <stddef.h>
+#include <stdint.h>
+
 struct uienv_zero {
     long  consid;       // console ID
     void *bgadr;        // [optional] background image data

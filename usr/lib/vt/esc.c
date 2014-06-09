@@ -31,7 +31,7 @@ static struct vtesc vtesc ALIGNED(PAGESIZE);
 #define VTREVERSECMD    7
 #define VTHIDDENCMD     8
 
-long vtatrbittab[9]
+long vtatrbittab[9] ALIGNED(CLSIZE)
 = {
     0,
     VTBRIGHT,
@@ -42,7 +42,7 @@ long vtatrbittab[9]
     0,
     VTREVERSE,
     VTHIDDEN
-} ALIGNED(CLSIZE);
+};
 
 void
 vtscroll(struct vt *vt, long nrow)
