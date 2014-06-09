@@ -4,6 +4,7 @@
 #include <stdint.h>
 #include <zero/cdecl.h>
 #include <zero/param.h>
+#include <zero/trix.h>
 #include <ui/ui.h>
 
 #define VTBUFSIZE    PAGESIZE

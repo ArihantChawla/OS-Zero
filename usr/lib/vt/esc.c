@@ -8,7 +8,6 @@
 #include <stdint.h>
 #include <zero/cdecl.h>
 #include <zero/param.h>
-#include <zero/trix.h>
 #include <vt/vt.h>
 
 struct vtesctabs vtesctabs ALIGNED(PAGESIZE);
