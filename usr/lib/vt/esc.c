@@ -109,7 +109,7 @@ vtclrtab(struct vt *vt, long narg, long *argtab)
         while (n--) {
             *tabmap++ = 0;
         }
-    } else {
+    } else if (narg == 0) {
         col = vt->state.col;
         clrbit(tabmap, col);
     }
@@ -121,7 +121,7 @@ long
 vtclralltabs(struct vt *vt, long narg, long *argtab)
 {
     uint32_t *tabmap = vt->state.tabmap;
-    size_t   n = rounduppow2(vt->state.ncol, 32);
+    size_t    n = rounduppow2(vt->state.ncol, 32);
 
     n >>= 5;
     while (n--) {
