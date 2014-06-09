@@ -381,16 +381,19 @@ vtinittextbuf(struct vttextbuf *buf, long nrow, long ncol)
     return 1;
 }
 
-long
+void
 vtinitui(struct vt *vt, int argc, char *argv[])
 {
-    long retval = 1;
+//    struct uiapi_xorg *api = vt->ui.api;
 
-#if (VTXORG)
-    uiinit_xorg(&vt->ui, argc, argv);
+#if 0
+    if (api->init) {
+        api->init(&vt->ui, argc, argv);
+    }
 #endif
+    uiinit_xorg(&vt->ui, argc, argv);
 
-    return retval;
+    return;
 }
 
 long
@@ -426,6 +429,9 @@ vtinitcolors(struct vt *vt)
 struct vt *
 vtinit(struct vt *vt, int argc, char *argv[])
 {
+#if (VTXORG)
+//    struct uiapi_xorg *api = vt->ui.api;
+#endif
     long  newvt = (vt) ? 0 : 1;
 
     if (!vt) {
@@ -477,15 +483,18 @@ vtinit(struct vt *vt, int argc, char *argv[])
 
         return NULL;
     }
-    if (!vtinitui(vt, argc, argv)
-        || !vtinitcolors(vt)) {
+#if (VTXORG)
+//    api->init = uiinit_xorg;
+#endif
+    vtinitui(vt, argc, argv);
+    if (!vtinitcolors(vt)) {
         vtfree(vt);
         vtfreetextbuf(&vt->textbuf);
         vtfreetextbuf(&vt->scrbuf);
         if (newvt) {
             free(vt);
         }
-
+        
         return NULL;
     }
 

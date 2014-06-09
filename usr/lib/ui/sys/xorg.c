@@ -58,7 +58,7 @@ uiinitcolors_xorg(void *env, int32_t *tab, size_t n)
 }
 
 void
-uiinit_xorg(struct ui *ui, char argc, char *argv[])
+uiinit_xorg(struct ui *ui, int argc, char *argv[])
 {
     Display           *disp;
     char              *dispname = uigetdisp_xorg(argc, argv);

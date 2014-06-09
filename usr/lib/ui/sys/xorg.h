@@ -6,7 +6,7 @@
 #include <X11/Xutil.h>
 #include <X11/keysymdef.h>
 
-void uiinit_xorg(struct ui *ui, char argc, char *argv[]);
+void uiinit_xorg(struct ui *ui, int argc, char *argv[]);
 
 #define UIXORGNDEFEV    LASTEvent
 #define UIXORGROOTWINID None
@@ -21,8 +21,10 @@ struct uienv_xorg {
     Atom          wmdelete;
 };
 
+typedef void   xorginit_t(struct ui *, int, char **);
 typedef void * xorginitcolors_t(void *, int32_t *, size_t);
 struct uiapi_xorg {
+    xorginit_t       *init;
     xorginitcolors_t *initcolors;
 };
 
