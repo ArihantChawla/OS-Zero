@@ -23,6 +23,32 @@ uigetdisp_xorg(int argc, char *argv[])
     return dispname;
 }
 
+void
+uiinit_xorg(struct ui *ui, int argc, char *argv[])
+{
+    Display           *disp;
+    char              *dispname = uigetdisp_xorg(argc, argv);
+    struct uienv_xorg *env = ui->env;
+    int                i;
+
+    fprintf(stderr, "UI: opening display %s\n", dispname);
+    XInitThreads();
+    disp = XOpenDisplay(dispname);
+    if (!disp) {
+        fprintf(stderr, "failed to open display %s\n", dispname);
+
+        exit(1);
+    }
+    env->display = disp;
+    i = DefaultScreen(disp);
+    env->screen = i;
+    env->depth = DefaultDepth(disp, i);
+    env->visual = DefaultVisual(disp, i);
+    env->colormap = DefaultColormap(disp, i);
+
+    return;
+}
+
 void *
 uiinitcolors_xorg(void *env, int32_t *tab, size_t n)
 {
@@ -56,6 +82,48 @@ uiinitcolors_xorg(void *env, int32_t *tab, size_t n)
     return data;
 }
 
+struct uifont *
+uiinitfont_xorg(struct ui *ui, struct uifont *font, char *fontname)
+{
+    struct uienv_xorg *env = ui->env;
+    XFontStruct       *fontinfo;
+    long               newfont = (font) ? 0 : 1;
+    long               asc;
+    long               desc;
+
+    if (!font) {
+        font = malloc(sizeof(struct uifont));
+        if (!font) {
+            fprintf(stderr, "UI: failed to allocate font\n");
+
+            exit(1);
+        }
+    }
+    if (fontname) {
+        fprintf(stderr, "FONT: loading %s\n", fontname);
+        fontinfo = XLoadQueryFont(env->display, fontname);
+        if (!fontinfo) {
+            if (newfont) {
+                fprintf(stderr, "UI: failed to load font %s\n", fontname);
+                free(font);
+
+                return NULL;
+            }
+        }
+        font->data = fontinfo;
+        asc = fontinfo->ascent;
+        desc = fontinfo->descent;
+        font->ascent = asc;
+        font->descent = desc;
+        font->boxw = fontinfo->max_bounds.width;
+        font->boxh = asc + desc;
+        fprintf(stderr, "UI: loaded font %s, ascent == %ld, descent == %ld, boxw == %ld, boxh == %ld\n",
+                fontname, asc, desc, font->boxw, font->boxh);
+    }
+
+    return font;
+}
+
 void
 uiinitapi_xorg(struct ui *ui)
 {
@@ -63,40 +131,16 @@ uiinitapi_xorg(struct ui *ui)
 
     api->init = uiinit_xorg;
     api->initcolors = uiinitcolors_xorg;
-
-    return;
-}
-
-void
-uiinit_xorg(struct ui *ui, int argc, char *argv[])
-{
-    Display           *disp;
-    char              *dispname = uigetdisp_xorg(argc, argv);
-    struct uienv_xorg *env = ui->env;
-    int                i;
-
-    fprintf(stderr, "UI: opening display %s\n", dispname);
-    XInitThreads();
-    disp = XOpenDisplay(dispname);
-    if (!disp) {
-        fprintf(stderr, "failed to open display %s\n", dispname);
-
-        exit(1);
-    }
-    env->display = disp;
-    i = DefaultScreen(disp);
-    env->screen = i;
-    env->depth = DefaultDepth(disp, i);
-    env->visual = DefaultVisual(disp, i);
-    env->colormap = DefaultColormap(disp, i);
+    api->initfont = uiinitfont_xorg;
 
     return;
 }
 
 struct uiwin *
-uimkwin_xorg(struct ui *ui, Window parent,
-            int x, int y,
-            int w, int h)
+uimkwin_xorg(struct ui *ui,
+             Window parent,
+             int x, int y,
+             int w, int h)
 {
     Window                 id;
     struct uienv_xorg     *env = ui->env;

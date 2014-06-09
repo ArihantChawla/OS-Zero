@@ -1,6 +1,7 @@
 #ifndef __VT_CONF_H__
 #define __VT_CONF_H__
 
+#define VTDEFFONT       "fixed"
 #define VTDEFBUFNROW    4096
 
 #define VTXORG          1

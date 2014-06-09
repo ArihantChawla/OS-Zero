@@ -109,6 +109,7 @@ struct vt {
     struct vttextbuf  textbuf;  // text and rendition buffers
     struct vttextbuf  scrbuf;   // current screen contents
     struct ui         ui;       // user interface
+    struct uifont     font;     // default font
     struct vtcolormap colormap; // terminal colormaps
 };
 

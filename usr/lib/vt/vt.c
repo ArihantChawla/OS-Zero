@@ -341,6 +341,23 @@ vtfreetextbuf(struct vttextbuf *buf)
     }
 }
 
+void
+vtfreecolors(struct vt *vt)
+{
+    void *tab;
+
+    tab = vt->colormap.deftab;
+    if (tab != vtdefcolortab) {
+        free(tab);
+    }
+    tab = vt->colormap.xtermtab;
+    if (tab != vtxtermcolortab) {
+        free(tab);
+    }
+
+    return;
+}
+
 long
 vtinittextbuf(struct vttextbuf *buf, long nrow, long ncol)
 {
@@ -413,6 +430,21 @@ vtinitcolors(struct vt *vt)
     return 1;
 }
 
+long
+vtinitfonts(struct vt *vt)
+{
+    struct uiapi *api = vt->ui.api;
+
+    if (api->initfont) {
+        if (!api->initfont(&vt->ui, &vt->font, VTDEFFONT)) {
+
+            return 0;
+        }
+    }
+
+    return 1;
+}
+
 struct vt *
 vtinit(struct vt *vt, int argc, char *argv[])
 {
@@ -479,6 +511,17 @@ vtinit(struct vt *vt, int argc, char *argv[])
         
         return NULL;
     }
+    if (!vtinitfonts(vt)) {
+        vtfree(vt);
+        vtfreetextbuf(&vt->textbuf);
+        vtfreetextbuf(&vt->scrbuf);
+        vtfreecolors(vt);
+        if (newvt) {
+            free(vt);
+        }
+        
+        return NULL;
+    }
 
     return vt;
 }
@@ -499,8 +542,6 @@ vtprintinfo(struct vt *vt)
     return;
 }
 
-#define VTFONTWIDTH  7
-#define VTFONTHEIGHT 13
 int
 main(int argc, char *argv[])
 {
@@ -509,8 +550,6 @@ main(int argc, char *argv[])
     memset(&vt, 0, sizeof(struct vt));
     vt.state.nrow = 24;
     vt.state.ncol = 80;
-    vt.state.w = vt.state.ncol * VTFONTWIDTH;
-    vt.state.h = vt.state.nrow * VTFONTHEIGHT;
     vt.textbuf.nrow = VTDEFBUFNROW;
     vt.scrbuf.nrow = 24;
     if (vtinit(&vt, argc, argv)) {
@@ -518,6 +557,8 @@ main(int argc, char *argv[])
     } else {
         fprintf(stderr, "failed to initialise VT\n");
     }
+    vt.state.w = vt.state.ncol * vt.font.boxw;
+    vt.state.h = vt.state.nrow * vt.font.boxh;
 
     exit(1);
 }
