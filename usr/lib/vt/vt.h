@@ -18,13 +18,15 @@
 #define VTATRMASK     0xffe00000U
 
 /* character attribute bits */
-#define VTREVERSE     0x80000000 // reverse color
-#define VTUNDERLINE   0x40000000 // underlined text
-#define VTBOLD        0x20000000 // bold text
-#define VTBLINK       0x10000000 // blinking text
-#define VTANTIALIAS   0x08000000 // antialiased text (interpolation)
-#define VTDRAWBG      0x04000000 // draw text background
-#define VTDRAWFG      0x02000000 // draw text foreground
+#define VTBRIGHT      0x80000000
+#define VTDIM         0x40000000
+#define VTUNDERSCORE  0x20000000
+#define VTBLINK       0x10000000
+#define VTREVERSE     0x08000000
+#define VTHIDDEN      0x04000000
+#define VTANTIALIAS   0x02000000 // antialiased text (interpolation)
+#define VTDRAWBG      0x01000000 // draw text background
+#define VTDRAWFG      0x00800000 // draw text foreground
 #define VTFGMASK      0x000001ff // standard or 256-color xterm palette entry
 #define VTBGMASK      0x0003fe00 // standard or 256-color xterm palette entry
 #define VTFG256BIT    0x00000100 // foreground is xterm color
@@ -80,8 +82,8 @@ struct vtstate {
     long     h;         // height in characters
     uint64_t mode;      // private mode etc. mask
     uint64_t flags;     // modifier and button mask
-    uint32_t fgcolor;   // foreground text color
-    uint32_t bgcolor;   // background text color
+    int32_t  fgcolor;   // foreground text color
+    int32_t  bgcolor;   // background text color
     uint32_t textatr;   // current text attributes
 };
 
@@ -113,7 +115,7 @@ struct vt {
     struct vtcolormap colormap; // terminal colormaps
 };
 
-typedef long vtescfunc_t(struct vt *vt, long narg, long *argtab);
+typedef long vtescfunc_t(struct vt *, long, long *);
 struct vtesc {
     uint8_t      esccmdmap[32];
     uint8_t      csicmdmap[32];
@@ -123,9 +125,12 @@ struct vtesc {
     vtescfunc_t *hashfunctab[256];
 };
 
-#define vtdefcolor(i)     (vtdefcolortab[(c)])
-#define vtfgtodefcolor(i) ((c) - 30)
-#define vtbgtodefcolor(i) ((c) - 40)
+#define vtdefcolor(i)     (((int32_t *)(vt->colormap.deftab))[(i)])
+#define vtxtermcolor(i)   (((int32_t *)(vt->colormap.xtermtab))[(i)])
+#define vtfgtodefcolor(i) ((i) - 30)
+#define vtbgtodefcolor(i) ((i) - 40)
+
+extern char *vtkeystrtab[128];
 
 #endif /* __VT_VT_H__ */
 

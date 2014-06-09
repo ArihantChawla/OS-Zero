@@ -11,8 +11,9 @@
 #include <vt/pty.h>
 #include <vt/color.h>
 
-int32_t vtxtermcolortab[256] ALIGNED(PAGESIZE) = VT_XTERM_COLORMAP;
-int32_t vtdefcolortab[16] ALIGNED(CLSIZE) = VT_DEFAULT_COLORMAP;
+int32_t  vtxtermcolortab[256] ALIGNED(PAGESIZE) = VT_XTERM_COLORMAP;
+char    *vtkeystrtab[128] ALIGNED(CLSIZE);
+int32_t  vtdefcolortab[16] ALIGNED(CLSIZE) = VT_DEFAULT_COLORMAP;
 
 void
 vtfreetextbuf(struct vttextbuf *buf)
