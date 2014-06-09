@@ -11,19 +11,6 @@
 #include <zero/trix.h>
 #include <vt/vt.h>
 
-#define vtisesccmd(vt, c)       bitset(vt->esctabs->escmap, c)
-#define vtiscsicmd(vt, c)       bitset(vt->esctabs->csimap, c)
-#define vtishashcmd(vt, c)      bitset(vt->esctabs->hashmap, c)
-#define vtsetesccmd(vt, c)      setbit(vt->esctabs->escmap, c)
-#define vtsetcsicmd(vt, c)      setbit(vt->esctabs->csimap, c)
-#define vtsethashcmd(vt, c)     setbit(vt->esctabs->hashmap, c)
-#define vtsetescfunc(vt, c, f)                                          \
-    (vtsetesccmd(vt, c), vt->esctabs->escfunctab[(c)] = (f))
-#define vtsetcsifunc(vt, c, f)                                          \
-    (vtsetcsicmd(vt, c), vt->esctabs->csifunctab[(c)] = (f))
-#define vtsethashfunc(vt, c, f)                                         \
-    (vtsethashcmd(vt, c), vt->esctabs->hashfunctab[(c)] = (f))
-
 struct vtesctabs vtesctabs ALIGNED(PAGESIZE);
 
 #define VTRESETCMD      0
