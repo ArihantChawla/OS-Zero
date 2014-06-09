@@ -42,7 +42,7 @@ long vtatrbittab[9]
     0,
     VTREVERSE,
     VTHIDDEN
-};
+} ALIGNED(CLSIZE);
 
 void
 vtscroll(struct vt *vt, long nrow)

@@ -88,6 +88,7 @@ vtfree(struct vt *vt)
     vtfreetextbuf(&vt->scrbuf);
     vtfreecolors(vt);
     /* TODO: free fonts */
+    // vtfreefonts(vt);
 
     return;
 }
