@@ -555,7 +555,12 @@ vtescparse(struct vt *vt, char *str, char **retstr)
                 /* TODO: 3, 4, 5, 6 */
             }
         } else {
-            /* TODO: ESC command */
+            cmd = *str;
+            if (vtisesccmd(cmd)) {
+                func = vtesc.escfunctab[cmd];
+                func(vt, 0, NULL);
+                str++;
+            }
         }
     }
     if (retstr) {
