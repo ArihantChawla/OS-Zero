@@ -1,3 +1,4 @@
+#include <stddef.h>
 #include <stdlib.h>
 #include <stdio.h>
 #include <string.h>
@@ -5,7 +6,7 @@
 #include <ui/sys/xorg.h>
 
 char *
-uigetdisp_x11(int argc, char *argv[])
+uigetdisp_xorg(int argc, char *argv[])
 {
     char *dispname = NULL;
     int   ndx;
@@ -23,13 +24,47 @@ uigetdisp_x11(int argc, char *argv[])
     return dispname;
 }
 
+void *
+uiinitcolors_xorg(void *env, int32_t *tab, size_t n)
+{
+    struct uienv_xorg *xenv = env;
+    unsigned long     *data;
+    unsigned long      pixel;
+    long               ndx;
+    XColor             color;
+
+    data = malloc(n * sizeof(unsigned long));
+    if (!data) {
+
+        return NULL;
+    }
+    color.flags = DoRed | DoGreen | DoBlue;
+    for (ndx = 0 ; ndx < 16 ; ndx++) {
+        pixel = tab[ndx];
+        color.red = pixel >> 16;
+        color.green = (pixel >> 8) & 0xff;
+        color.blue = pixel & 0xff;
+        if (!XAllocColor(xenv->display,
+                         xenv->colormap,
+                         &color)) {
+            free(data);
+            
+            return NULL;
+        }
+        data[ndx] = color.pixel;
+    }
+
+    return data;
+}
+
 void
 uiinit_xorg(struct ui *ui, char argc, char *argv[])
 {
-    Display          *disp;
-    char             *dispname = uigetdisp_x11(argc, argv);
-    struct uienv_x11 *env = malloc(sizeof(struct uienv_x11));
-    int               i;
+    Display           *disp;
+    char              *dispname = uigetdisp_xorg(argc, argv);
+    struct uienv_xorg *env = malloc(sizeof(struct uienv_xorg));
+    struct uiapi_xorg *api;
+    int                i;
 
     if (!env) {
         fprintf(stderr, "UI: failed to allocate environment\n");
@@ -37,6 +72,13 @@ uiinit_xorg(struct ui *ui, char argc, char *argv[])
         exit(1);
     }
     ui->env = env;
+    api = malloc(sizeof(struct uienv_xorg));
+    if (!api) {
+        fprintf(stderr, "UI: failed to allocate API\n");
+
+        exit(1);
+    }
+    ui->api = api;
     fprintf(stderr, "UI: opening display %s\n", dispname);
     XInitThreads();
     disp = XOpenDisplay(dispname);
@@ -51,17 +93,18 @@ uiinit_xorg(struct ui *ui, char argc, char *argv[])
     env->depth = DefaultDepth(disp, i);
     env->visual = DefaultVisual(disp, i);
     env->colormap = DefaultColormap(disp, i);
+    api->initcolors = uiinitcolors_xorg;
 
     return;
 }
 
 struct uiwin *
-uimkwin_x11(struct ui *ui, Window parent,
+uimkwin_xorg(struct ui *ui, Window parent,
             int x, int y,
             int w, int h)
 {
     Window                 id;
-    struct uienv_x11      *env = ui->env;
+    struct uienv_xorg     *env = ui->env;
     struct uiwin          *win = malloc(sizeof(struct uiwin));
     void                 **evtab;
     XSetWindowAttributes   atr = { 0 };
@@ -108,7 +151,7 @@ main(int argc, char *argv[])
     struct uiwin *win;
 
     uiinit_xorg(&ui, argc, argv);
-    win = uimkwin_x11(&ui, UIXORGROOTWINID,
+    win = uimkwin_xorg(&ui, UIXORGROOTWINID,
                       0, 0,
                       16, 16);
     fprintf(stderr, "%p\n", win);

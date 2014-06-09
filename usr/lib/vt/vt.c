@@ -397,49 +397,21 @@ vtinitui(struct vt *vt, int argc, char *argv[])
 long
 vtinitcolors_xorg(struct vt *vt)
 {
-    struct uienv_x11 *env = vt->ui.env;
-    unsigned long    *deftab = malloc(16 * sizeof(unsigned long));
-    unsigned long    *xtermtab;
-    long              ndx;
-    unsigned long     pixel;
-    XColor            color;
+    struct uienv_xorg *env = vt->ui.env;
+    struct uiapi_xorg *api = vt->ui.api;
+    unsigned long     *deftab;
+    unsigned long     *xtermtab;
 
+    deftab = api->initcolors(env, vtdefcolortab, 16);
     if (!deftab) {
 
         return 0;
     }
-    xtermtab = malloc(256 * sizeof(unsigned long));
+    xtermtab = api->initcolors(env, vtxtermcolortab, 256);
     if (!xtermtab) {
+        free(deftab);
 
         return 0;
-    }
-
-    color.flags = DoRed | DoGreen | DoBlue;
-    for (ndx = 0 ; ndx < 16 ; ndx++) {
-        pixel = vtdefcolortab[ndx];
-        color.red = pixel >> 16;
-        color.green = (pixel >> 8) & 0xff;
-        color.blue = pixel & 0xff;
-        if (!XAllocColor(env->display,
-                         env->colormap,
-                         &color)) {
-
-            return 0;
-        }
-        deftab[ndx] = color.pixel;
-    }
-    for (ndx = 0 ; ndx < 256 ; ndx++) {
-        pixel = vtxtermcolortab[ndx];
-        color.red = pixel >> 16;
-        color.green = (pixel >> 8) & 0xff;
-        color.blue = pixel & 0xff;
-        if (!XAllocColor(env->display,
-                         env->colormap,
-                         &color)) {
-
-            return 0;
-        }
-        deftab[ndx] = color.pixel;
     }
     vt->colormap.deftab = deftab;
     vt->colormap.xtermtab = xtermtab;

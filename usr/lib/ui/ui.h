@@ -9,6 +9,7 @@
 struct ui {
     long  type;
     void *env;
+    void *api;
 };
 
 #if (UI_ENV_XORG)
