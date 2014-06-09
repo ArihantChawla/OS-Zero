@@ -37,29 +37,6 @@ int32_t vtdefcolortab[16] ALIGNED(CLSIZE) = {
 };
 
 void
-vtfree(struct vt *vt)
-{
-    if (vt->devbuf.in.base) {
-        free(vt->devbuf.in.base);
-        vt->devbuf.in.base = NULL;
-    }
-    if (vt->devbuf.out.base) {
-        free(vt->devbuf.out.base);
-        vt->devbuf.out.base = NULL;
-    }
-    if (vt->atr.masterpath) {
-        free(vt->atr.masterpath);
-        vt->atr.masterpath = NULL;
-    }
-    if (vt->atr.slavepath) {
-        free(vt->atr.slavepath);
-        vt->atr.masterpath = NULL;
-    }
-
-    return;
-}
-
-void
 vtfreetextbuf(struct vttextbuf *buf)
 {
     int32_t       **data = buf->data;
@@ -102,6 +79,38 @@ vtfreecolors(struct vt *vt)
     return;
 }
 
+void
+vtfree(struct vt *vt)
+{
+    void *ptr;
+
+    ptr = vt->devbuf.in.base;
+    if ((ptr) && ptr != vt->devbuf.in.data) {
+        free(ptr);
+        vt->devbuf.in.base = NULL;
+    }
+    ptr = vt->devbuf.out.base;
+    if ((ptr) && ptr != vt->devbuf.out.data) {
+        free(ptr);
+        vt->devbuf.out.base = NULL;
+    }
+    ptr = vt->atr.masterpath;
+    if (ptr) {
+        free(ptr);
+        vt->atr.masterpath = NULL;
+    }
+    ptr = vt->atr.slavepath;
+    if (ptr) {
+        free(ptr);
+        vt->atr.masterpath = NULL;
+    }
+    vtfreetextbuf(&vt->textbuf);
+    vtfreetextbuf(&vt->scrbuf);
+    vtfreecolors(vt);
+
+    return;
+}
+
 long
 vtinittextbuf(struct vttextbuf *buf, long nrow, long ncol)
 {
@@ -122,6 +131,8 @@ vtinittextbuf(struct vttextbuf *buf, long nrow, long ncol)
         
         return 0;
     }
+    buf->data = data;
+    buf->rend = rend;
     for (ndx = 0 ; ndx < nrow ; ndx++) {
         dptr = calloc(ncol, sizeof(int32_t));
         if (!dptr) {
@@ -138,8 +149,6 @@ vtinittextbuf(struct vttextbuf *buf, long nrow, long ncol)
         }
         rend[ndx] = rptr;
     }
-    buf->data = data;
-    buf->rend = rend;
 
     return 1;
 }
@@ -282,6 +291,8 @@ vtprintinfo(struct vt *vt)
             vt->textbuf.nrow, vt->textbuf.data);
     fprintf(stderr, "VT: %ld screen rows @ %p\n",
             vt->scrbuf.nrow, vt->scrbuf.data);
+    fprintf(stderr, "VT: font %s (%ldx%ld)\n",
+            vt->font.name, vt->font.boxw, vt->font.boxh);
 
     return;
 }

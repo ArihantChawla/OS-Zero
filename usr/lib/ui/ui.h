@@ -18,6 +18,7 @@ struct ui {
 #endif
 
 struct uifont {
+    char *name;         // font name
     void *data;         // font information structure
     long  ascent;       // font ascent in pixels
     long  descent;      // font descent in pixels

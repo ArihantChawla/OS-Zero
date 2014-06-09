@@ -110,6 +110,7 @@ uiinitfont_xorg(struct ui *ui, struct uifont *font, char *fontname)
                 return NULL;
             }
         }
+        font->name = fontname;
         font->data = fontinfo;
         asc = fontinfo->ascent;
         desc = fontinfo->descent;
