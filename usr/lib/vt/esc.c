@@ -470,7 +470,7 @@ vtescgetstr(char *str, char **retstr)
 
 #define VTESCNARG 32
 void
-vtescparse(struct vt *vt, char *str, char **retstr)
+vtparseesc(struct vt *vt, char *str, char **retstr)
 {
     long         num = 0;
     long         cmd;
@@ -479,6 +479,9 @@ vtescparse(struct vt *vt, char *str, char **retstr)
     long         argtab[VTESCNARG];
     char        *ptr;
     long         sign = 1;
+#if (VTDEBUGESC)
+    long         ndx;
+#endif
 
     while (*str == VTESC) {
         str++;
@@ -518,11 +521,27 @@ vtescparse(struct vt *vt, char *str, char **retstr)
                 str++;
                 func = vt->esctabs->csifunctab[cmd];
                 func(vt, narg, argtab);
+#if (VTDEBUGESC)
+            } else {
+                if (isprint(cmd)) {
+                    fprintf(stderr, "ESC: CSI: unknown command %c\n",
+                            (char)cmd);
+                } else {
+                    fprintf(stderr, "ESC: CSI: unknown command %lx\n", cmd);
+                }
+                fprintf(stderr, "ARGS:\t");
+                for (ndx = 0 ; ndx < narg ; ndx++) {
+                    fprintf(stderr, "%ld ", argtab[ndx]);
+                }
+                fprintf(stderr, "\n");
+#endif
             }
-        } else if (*str == VTCHARSET) {
+        } else if (*str == VTFONTG0 || *str == VTFONTG1) {
             /* ESC( command */
             /* TODO: implement these? */
-            ;
+#if (VTDEBUGESC)
+                fprintf(stderr, "ESC: font commands not supported\n");
+#endif
         } else if (*str == VTHASH) {
             /* ESC# command */
             if (str[1] == '8') {
@@ -536,6 +555,20 @@ vtescparse(struct vt *vt, char *str, char **retstr)
                 func = vt->esctabs->escfunctab[cmd];
                 func(vt, 0, NULL);
                 str++;
+#if (VTDEBUGESC)
+            } else {
+                if (isprint(cmd)) {
+                    fprintf(stderr, "ESC: unknown command %c\n",
+                            (char)cmd);
+                } else {
+                    fprintf(stderr, "ESC: unknown command %lx\n", cmd);
+                }
+                fprintf(stderr, "ARGS:\t");
+                for (ndx = 0 ; ndx < narg ; ndx++) {
+                    fprintf(stderr, "%ld ", argtab[ndx]);
+                }
+                fprintf(stderr, "\n");
+#endif
             }
         }
     }

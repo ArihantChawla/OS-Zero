@@ -5,6 +5,7 @@
 #include <zero/cdecl.h>
 #include <zero/param.h>
 #include <zero/trix.h>
+#include <vt/conf.h>
 #include <ui/ui.h>
 
 #define VTBUFSIZE    PAGESIZE
@@ -53,7 +54,8 @@ struct vtrend {
 #define VTESC          '\033'
 /* sequence postfixes after ESC */
 #define VTCSI          '['
-#define VTCHARSET      '('
+#define VTFONTG0       '('
+#define VTFONTG1       ')'
 #define VTHASH         '#'
 /* sequences prefixed with ESC */
 #define VTCURSORUP     'A'
