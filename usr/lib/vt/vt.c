@@ -194,7 +194,7 @@ vtinit(struct vt *vt, int argc, char *argv[])
         vt = malloc(sizeof(struct vt));
         if (!vt) {
 
-            return vt;
+            return NULL;
         }
     }
     if (!ringinit(&vt->devbuf.in, NULL, VTBUFSIZE / sizeof(RING_ITEM))

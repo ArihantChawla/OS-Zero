@@ -45,13 +45,159 @@ long vtatrbittab[9] ALIGNED(CLSIZE)
 };
 
 void
+vtgoto(struct vt *vt, long narg, long *argtab)
+{
+    long nrow = vt->state.nrow;
+    long ncol = vt->state.ncol;
+    long row = 0;
+    long col = 0;
+
+    if (!narg) {
+        vt->state.row = row;
+        vt->state.col = col;
+    } else if (narg == 2) {
+        row = argtab[0];
+        col = argtab[1];
+        if (row >= 0 && row < nrow
+            && col >= 0 && col < ncol) {
+            vt->state.row = row;
+            vt->state.col = col;
+        }
+    }
+
+    return;
+}
+
+void
+vtgoup(struct vt *vt, long narg, long *argtab)
+{
+    long arg = 1;
+    long row = vt->state.row;
+
+    if (narg == 1) {
+        arg = argtab[0];
+    }
+    arg = min(arg, row);
+    vt->state.row -= arg;
+
+    return;
+}
+
+void
+vtgodown(struct vt *vt, long narg, long *argtab)
+{
+    long arg = 1;
+    long nrow = vt->state.nrow;
+    long row = vt->state.row;
+
+    if (narg == 1) {
+        arg = argtab[0];
+    }
+    arg = min(arg, nrow - row - 1);
+    vt->state.row += arg;
+
+    return;
+}
+
+void
+vtgoforward(struct vt *vt, long narg, long *argtab)
+{
+    long arg = 1;
+    long ncol = vt->state.ncol;
+    long col = vt->state.col;
+
+    if (narg == 1) {
+        arg = argtab[0];
+    }
+    arg = min(arg, ncol - col - 1);
+    vt->state.col += arg;
+    /* FIXME: line wrap? */
+
+    return;
+}
+
+void
+vtgobackward(struct vt *vt, long narg, long *argtab)
+{
+    long arg = 1;
+    long col = vt->state.col;
+
+    if (narg == 1) {
+        arg = argtab[0];
+    }
+    arg = min(arg, col);
+    vt->state.col -= arg;
+    /* FIXME: line wrap? */
+
+    return;
+}
+
+void
+vtsavecurs(struct vt *vt, long narg, long *argtab)
+{
+    long row = vt->state.row;
+    long col = vt->state.col;
+
+    if (!narg) {
+        vt->savecurs.row = row;
+        vt->savecurs.col = col;
+    }
+
+    return;
+}
+
+void
+vtunsavecurs(struct vt *vt, long narg, long *argtab)
+{
+    long row = vt->savecurs.row;
+    long col = vt->savecurs.col;
+
+    if (!narg) {
+        vt->state.row = row;
+        vt->state.col = col;
+    }
+
+    return;
+}
+
+void
+vtsavecursatr(struct vt *vt, long narg, long *argtab)
+{
+    long row = vt->state.row;
+    long col = vt->state.col;
+
+    if (!narg) {
+        vt->savecurs.row = row;
+        vt->savecurs.col = col;
+        /* TODO: attributes? */
+    }
+
+    return;
+}
+
+void
+vtrstorcursatr(struct vt *vt, long narg, long *argtab)
+{
+    long row = vt->savecurs.row;
+    long col = vt->savecurs.col;
+
+    if (!narg) {
+        vt->state.row = row;
+        vt->state.col = col;
+        /* TODO: attributes */
+    }
+
+    return;
+}
+
+void
 vtscroll(struct vt *vt, long nrow)
 {
     /* TODO: scroll screen */
     ;
 }
 
-long
+void
 vtsetscroll(struct vt *vt, long narg, long *argtab)
 {
     struct vtstate *state = &vt->state;
@@ -64,26 +210,26 @@ vtsetscroll(struct vt *vt, long narg, long *argtab)
         state->scrollbottom = argtab[1];
     }
 
-    return narg;
+    return;
 }
 
-long
+void
 vtscrolldown(struct vt *vt, long narg, long *argtab)
 {
     vtscroll(vt, -1);
 
-    return -1;
+    return;
 }
 
-long
+void
 vtscrollup(struct vt *vt, long narg, long *argtab)
 {
     vtscroll(vt, 1);
 
-    return 1;
+    return;
 }
 
-long
+void
 vtsettab(struct vt *vt, long narg, long *argtab)
 {
 //    long     row = vt->state.row;
@@ -92,10 +238,10 @@ vtsettab(struct vt *vt, long narg, long *argtab)
 
     setbit(tabmap, col);
 
-    return col;
+    return;
 }
 
-long
+void
 vtclrtab(struct vt *vt, long narg, long *argtab)
 {
     uint32_t *tabmap = vt->state.tabmap;
@@ -115,10 +261,10 @@ vtclrtab(struct vt *vt, long narg, long *argtab)
         clrbit(tabmap, col);
     }
 
-    return narg;
+    return;
 }
 
-long
+void
 vtclralltabs(struct vt *vt, long narg, long *argtab)
 {
     uint32_t *tabmap = vt->state.tabmap;
@@ -129,10 +275,10 @@ vtclralltabs(struct vt *vt, long narg, long *argtab)
         *tabmap++ = 0;
     }
 
-    return 0;
+    return;
 }
 
-long
+void
 vteraseline(struct vt *vt, long narg, long *argtab)
 {
     long arg = 0;
@@ -148,13 +294,13 @@ vteraseline(struct vt *vt, long narg, long *argtab)
         }
     }
 
-    return arg;
+    return;
 }
 
-long
+void
 vterasedir(struct vt *vt, long narg, long *argtab)
 {
-    long arg = 0;
+    long arg;
 
     if (narg == 0) {
         /* erase down */
@@ -167,8 +313,41 @@ vterasedir(struct vt *vt, long narg, long *argtab)
         }
     }
 
-    return arg;
+    return;
 }
+
+#if (VTPRINT)
+void
+vtprint(struct vt *vt, long narg, long *argtab)
+{
+    long arg;
+
+    if (!narg) {
+        vtprintscr(vt);
+    } else if (narg == 1) {
+        arg = argtab[0];
+        switch (arg) {
+            case 1:
+                vtprintln(vt);
+
+                break;
+            case 4:
+                vtstoplog(vt);
+
+                break;
+            case 5:
+                vtstartlog(vt);
+
+                break;
+            default:
+
+                break;
+        }
+    }
+
+    return;
+}
+#endif /* VTPRINT */
 
 void
 vtresetatr(struct vt *vt)
@@ -182,8 +361,8 @@ vtresetatr(struct vt *vt)
     return;
 }
 
-long
-vtescsetatr(struct vt *vt, long narg, long *argtab)
+void
+vtsetatr(struct vt *vt, long narg, long *argtab)
 {
     long         n;
     long         cmd;
@@ -206,28 +385,52 @@ vtescsetatr(struct vt *vt, long narg, long *argtab)
         }
     }
 
-    return narg;
+    return;
 }
 
 void
 vtinitesc(void)
 {
+    vtsetcsicmd('H');
+    vtsetcsifunc('H', vtgoto);
+    vtsetcsicmd('A');
+    vtsetcsifunc('A', vtgoup);
+    vtsetcsicmd('B');
+    vtsetcsifunc('B', vtgodown);
+    vtsetcsicmd('C');
+    vtsetcsifunc('C', vtgoforward);
+    vtsetcsicmd('D');
+    vtsetcsifunc('D', vtgobackward);
+    vtsetcsicmd('f');
+    vtsetcsifunc('f', vtgoto);
+    vtsetcsicmd('s');
+    vtsetcsifunc('s', vtsavecurs);
+    vtsetcsicmd('u');
+    vtsetcsifunc('u', vtunsavecurs);
+    vtsetesccmd('7');
+    vtsetescfunc('7', vtsavecursatr);
+    vtsetesccmd('8');
+    vtsetescfunc('8', vtrstorcursatr);
     vtsetcsicmd('r');
     vtsetcsifunc('r', vtsetscroll);
-    vtsetcsicmd('D');
-    vtsetcsifunc('D', vtscrolldown);
+    vtsetesccmd('D');
+    vtsetescfunc('D', vtscrolldown);
     vtsetcsicmd('M');
     vtsetcsifunc('M', vtscrollup);
-    vtsetcsicmd('H');
-    vtsetcsifunc('H', vtsettab);
+    vtsetesccmd('H');
+    vtsetescfunc('H', vtsettab);
     vtsetcsicmd('g');
     vtsetcsifunc('g', vtclrtab);
     vtsetcsicmd('J');
     vtsetcsifunc('J', vterasedir);
     vtsetcsicmd('K');
     vtsetcsifunc('K', vteraseline);
+#if (VTPRINT)
+    vtsetcsicmd('i');
+    vtsetcsifunc('i'; vtprint);
+#endif
     vtsetcsicmd('m');
-    vtsetcsifunc('m', vtescsetatr);
+    vtsetcsifunc('m', vtsetatr);
 }
 
 long
@@ -299,17 +502,22 @@ vtescparse(struct vt *vt, char *str, char **retstr)
     long         narg = 1;
     long         argtab[VTESCNARG];
     char        *ptr;
+    long         sign = 1;
 
     while (*str == VTESC) {
         str++;
         if (*str == VTCSI) {
             /* ESC[ command */
             str++;
+            if (*str == '-') {
+                sign = -1;
+                str++;
+            }
             while (isdigit(*str)) {
                 /* read first numerical parameter */
                 num = vtescgetnum(str, &str);
                 if (num && narg < VTESCNARG) {
-                    argtab[narg] = num;
+                    argtab[narg] = sign * num;
                     narg++;
                 }
                 if (*str == ';') {
@@ -321,6 +529,12 @@ vtescparse(struct vt *vt, char *str, char **retstr)
                     if (num < 0x80) {
                         vtkeystrtab[num] = ptr;
                     }
+                }
+                if (*str == '-') {
+                    sign = -1;
+                    str++;
+                } else {
+                    sign = 1;
                 }
             }
             cmd = *str;

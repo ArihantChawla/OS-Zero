@@ -107,6 +107,11 @@ struct vtcolormap {
     void *xtermtab;             // xterm colors
 };
 
+struct vtsavecurs {
+    long row;
+    long col;
+};
+
 struct vt {
     struct vtatr      atr;      // terminal attributes
     struct vtstate    state;    // terminal status
@@ -116,9 +121,10 @@ struct vt {
     struct ui         ui;       // user interface
     struct uifont     font;     // default font
     struct vtcolormap colormap; // terminal colormaps
+    struct vtsavecurs savecurs; // saved cursor and attributes
 };
 
-typedef long vtescfunc_t(struct vt *, long, long *);
+typedef void vtescfunc_t(struct vt *, long, long *);
 struct vtesc {
     uint8_t      esccmdmap[32];
     uint8_t      csicmdmap[32];
