@@ -626,6 +626,7 @@ zpcgetstr(struct zpctoken *token, const char *str, char **retstr)
     size_t      len = 0;
     const char *ptr = str;
     char       *dest = token->str;
+    char       *mptr;
 
     if (!slen) {
         slen = TOKENSTRLEN;
@@ -637,7 +638,14 @@ zpcgetstr(struct zpctoken *token, const char *str, char **retstr)
             *dest++ = *ptr++;
             len++;
             if (!slen) {
-                token->str = realloc(token->str, len << 1);
+                mptr = realloc(token->str, len << 1);
+                if (!mptr) {
+                    free(token->str);
+                    fprintf(stderr, "out of memory\n");
+
+                    exit(1);
+                }
+                token->str = mptr;
                 token->slen = len << 1;
                 dest = &token->str[len];
                 slen = len;

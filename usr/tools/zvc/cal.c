@@ -37,6 +37,7 @@ calgetline(FILE *fp)
     size_t  sz = 128;
     size_t  len = 0;
     char   *line = NULL;
+    char   *mptr;
     char   *cp;
     int     ch = !fp ? EOF : fgetc(fp);
 
@@ -55,8 +56,15 @@ calgetline(FILE *fp)
                 len++;
                 if (len == sz) {
                     sz <<= 1;
-                    line = realloc(line, sz);
-                        cp = &line[len];
+                    mptr = realloc(line, sz);
+                    if (!mptr) {
+                        free(line);
+                        fprintf(stderr, "out of memory\n");
+
+                        exit(1);
+                    }
+                    line = mptr;
+                    cp = &line[len];
                 }
             }
             ch = fgetc(fp);
@@ -143,6 +151,7 @@ caltokenize(char *line, struct caltoken **tailret)
     char            *cp = line;
     char            *ptr;
     char            *str;
+    char            *mptr;
     size_t           sz = 16;
     size_t           len = 0;
     
@@ -185,7 +194,14 @@ caltokenize(char *line, struct caltoken **tailret)
                             len++;
                             if (len == sz) {
                                 sz <<= 1;
-                                tok->str = realloc(tok->str, sz);
+                                mptr = realloc(tok->str, sz);
+                                if (!mptr) {
+                                    free(tok->str);
+                                    fprintf(stderr, "out of memory\n");
+
+                                    exit(1);
+                                }
+                                tok->str = mptr;
                                 ptr = &tok->str[len];
                             }
                         }

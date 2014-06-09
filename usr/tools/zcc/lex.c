@@ -336,13 +336,21 @@ zppgetstr(char *str, char **retstr)
 {
     char   *buf = malloc(32);
     char   *ptr = buf;
+    char   *mptr;
     size_t  len = 32;
     size_t  n = 0;
 
     while (*str != '"') {
         if (n == len) {
             len <<= 1;
-            buf = realloc(buf, len);
+            mptr = realloc(buf, len);
+            if (!mptr) {
+                free(buf);
+                fprintf(stderr, "out of memory\n");
+
+                exit(1);
+            }
+            buf = mptr;
             ptr = &buf[n];
         }
 #if 0
@@ -382,7 +390,12 @@ zppgetstr(char *str, char **retstr)
     if (buf) {
         if (n == len) {
             len <<= 1;
-            buf = realloc(buf, len);
+            mptr = realloc(buf, len);
+            if (!mptr) {
+                free(buf);
+                fprintf(stderr, "out of memory\n");
+            }
+            buf = mptr;
         }
         buf[n] = '\0';
         *retstr = str;
@@ -612,6 +625,7 @@ zccgettoken(char *str, char **retstr, int curfile)
     long             parm;
     long             atr;
     char            *ptr;
+    void            *mptr;
     struct zpptoken *tok = malloc(sizeof(struct zpptoken));
     struct zccval   *val;
 
@@ -646,7 +660,14 @@ zccgettoken(char *str, char **retstr, int curfile)
         while (zccisoper(str)) {
             if (n == len) {
                 len <<= 1;
-                tok->str = realloc(tok->str, len);
+                mptr = realloc(tok->str, len);
+                if (!mptr) {
+                    free(tok->str);
+                    fprintf(stderr, "out of memory\n");
+
+                    exit(1);
+                }
+                tok->str = mptr;
                 ptr = &tok->str[n];
             }
             *ptr++ = *str++;
@@ -654,7 +675,14 @@ zccgettoken(char *str, char **retstr, int curfile)
         }
         if (n == len) {
             len <<= 1;
-            tok->str = realloc(tok->str, len);
+            mptr = realloc(tok->str, len);
+            if (!mptr) {
+                free(tok->str);
+                fprintf(stderr, "out of memory\n");
+                
+                exit(1);
+            }
+            tok->str = mptr;
             ptr = &tok->str[n];
         }
         *ptr = '\0';

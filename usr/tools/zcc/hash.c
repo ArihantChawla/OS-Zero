@@ -492,6 +492,7 @@ zccaddid(struct hashstr **tab, char *str, long val)
     long            sz = 8;
     long            len = 0;
     struct hashstr *item;
+    void           *mptr;
 
     if ((*str) && (isalpha(*str) || *str == '_')) {
         item = calloc(1, sizeof(struct hashstr));
@@ -507,7 +508,14 @@ zccaddid(struct hashstr **tab, char *str, long val)
             key <<= 3;
             if (len == sz) {
                 sz <<= 1;
-                item->str = realloc(item->str, sz);
+                mptr = realloc(item->str, sz);
+                if (!mptr) {
+                    free(item->str);
+                    fprintf(stderr, "out of memory\n");
+
+                    exit(1);
+                }
+                item->str = mptr;
                 ptr = &item->str[len];
             }
             *ptr++ = *str++;

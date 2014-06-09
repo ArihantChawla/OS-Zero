@@ -15,6 +15,7 @@ vecgetvec(char *str, char **retstr)
 {
     char       *ptr = str;
     struct vec *vec = NULL;
+    char       *mptr;
     vecfloat    fval = 0.0;
     vecint      ival;
     long        ndx = 0;
@@ -96,7 +97,13 @@ vecgetvec(char *str, char **retstr)
                 }
                 if (len == n) {
                     n <<= 1;
-                    vec->data = realloc(vec->data, n * sizeof(struct vecval));
+                    mptr = realloc(vec->data, n * sizeof(struct vecval));
+                    if (!mptr) {
+                        fprintf(stderr, "out of memory");
+
+                        exit(1);
+                    }
+                    vec->data = mptr;
                 }
                 if (bool) {
                     vec->data[len].type = VEC_BOOL;

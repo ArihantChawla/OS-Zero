@@ -174,6 +174,7 @@ static int
 sieve(unsigned long long lim)
 {
     void *tab = primemap;
+    void *mptr;
     long  l;
     long  m;
     long  n;
@@ -181,7 +182,14 @@ sieve(unsigned long long lim)
     n = rounduppow2(lim, 8) >> 3;
     if (primelim <= lim) {
         if (tab) {
-            tab = realloc(tab, n * sizeof(char));
+            mptr = realloc(tab, n * sizeof(char));
+            if (!mptr) {
+                free(tab);
+                fprintf(stderr, "out of memory\n");
+
+                exit(1);
+            }
+            tab = mptr;
         } else {
             tab = malloc(n * sizeof(char));
         }

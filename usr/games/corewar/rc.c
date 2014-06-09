@@ -263,6 +263,7 @@ char *
 rcgetline(FILE *fp)
 {
     char *buf = NULL;
+    char *ptr;
     long  n = 32;
     long  ndx = 0;
     int   ch;
@@ -274,7 +275,14 @@ rcgetline(FILE *fp)
             while (ch != EOF) {
                 if (ndx == n) {
                     n <<= 1;
-                    buf = realloc(buf, n * sizeof(char));
+                    ptr = realloc(buf, n * sizeof(char));
+                    if (!ptr) {
+                        free(buf);
+                        fprintf(stderr, "failed to allocate line buffer\n");
+
+                        exit(1);
+                    }
+                    buf = ptr;
                 }
                 if (ch == '\n') {
                     
@@ -286,7 +294,14 @@ rcgetline(FILE *fp)
             }
             if (ndx == n) {
                 n <<= 1;
-                buf = realloc(buf, n * sizeof(char));
+                ptr = realloc(buf, n * sizeof(char));
+                if (!ptr) {
+                    free(buf);
+                    fprintf(stderr, "failed to allocate line buffer\n");
+
+                    exit(1);
+                }
+                buf = ptr;
             }
             buf[ndx] = '\n';
         }

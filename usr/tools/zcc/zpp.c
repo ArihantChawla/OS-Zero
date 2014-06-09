@@ -399,6 +399,7 @@ zppgetstruct(struct zpptoken *token, struct zpptoken **nextret, size_t *sizeret)
     struct zccstruct *newstruct = NULL;
     struct zcctoken  *tok;
     struct zcctoken  *last;
+    void             *mptr;
     long              parm;
     size_t            msz;
     size_t            sz = 0;
@@ -416,10 +417,24 @@ zppgetstruct(struct zpptoken *token, struct zpptoken **nextret, size_t *sizeret)
                 if (token->type == ZPP_VAR_TOKEN) {
                     if (n == nmemb) {
                         nmemb <<= 1;
-                        newstruct->mtab = realloc(newstruct->mtab,
-                                                  nmemb * sizeof(struct zcctoken *));
-                        newstruct->ofstab = realloc(newstruct->ofstab,
-                                                    nmemb * sizeof(size_t));
+                        mptr = realloc(newstruct->mtab,
+                                       nmemb * sizeof(struct zcctoken *));
+                        if (!mptr) {
+                            free(newstruct->mtab);
+                            fprintf(stderr, "out of memory\n");
+
+                            exit(1);
+                        }
+                        newstruct->mtab = mptr;
+                        mptr = realloc(newstruct->ofstab,
+                                       nmemb * sizeof(size_t));
+                        if (!mptr) {
+                            free(newstruct->ofstab);
+                            fprintf(stderr, "out of memory\n");
+
+                            exit(1);
+                        }
+                        newstruct->ofstab = mptr;
                     }
                     tok = malloc(sizeof(struct zcctoken));
                     if (tok) {

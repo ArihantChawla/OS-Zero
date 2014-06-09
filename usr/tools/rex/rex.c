@@ -199,6 +199,7 @@ main(int argc, char *argv[])
     int         n = LINEDEFLEN;
     char       *linebuf = malloc(n);
     char       *cp = linebuf;
+    char       *mptr;
     int         retval;
 
 #if (TRANSLATE)
@@ -231,7 +232,14 @@ main(int argc, char *argv[])
                 if (i == n) {
                     ns++;
                     n = LINEDEFLEN << ns;
-                    linebuf = realloc(linebuf, n);
+                    mptr = realloc(linebuf, n);
+                    if (!mptr) {
+                        free(linebuf);
+                        fprintf(stderr, "out of memory\n");
+
+                        exit(1);
+                    }
+                    linebuf = mptr;
                 }
                 i++;
             }
@@ -262,7 +270,14 @@ main(int argc, char *argv[])
                 if (i == n) {
                     ns++;
                     n = LINEDEFLEN << ns;
-                    linebuf = realloc(linebuf, n);
+                    mptr = realloc(linebuf, n);
+                    if (!mptr) {
+                        free(linebuf);
+                        fprintf(stderr, "out of memory\n");
+
+                        exit(1);
+                    }
+                    linebuf = mptr;
                     linebuf[i] = '\0';
                 }
                 i++;

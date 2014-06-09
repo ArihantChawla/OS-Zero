@@ -48,6 +48,7 @@ stkqueueinput(const char *str)
 {
     struct zpcstkitem *item = zpcinputitem;
     char              *cp = (item) ? item->scur : NULL;
+    void              *mptr;
 
     if ((item) && (*str)) {
 #if 0
@@ -57,7 +58,14 @@ stkqueueinput(const char *str)
 #endif
         while (*str) {
             if (cp == item->str + item->slen) {
-                item->str = realloc(item->str, item->slen << 1);
+                mptr = realloc(item->str, item->slen << 1);
+                if (!mptr) {
+                    free(item->str);
+                    fprintf(stderr, "out of memory\n");
+
+                    exit(1);
+                }
+                item->str = mptr;
                 cp = item->str + item->slen;
                 if (item->str) {
                     item->slen <<= 1;

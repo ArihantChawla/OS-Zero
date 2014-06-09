@@ -456,6 +456,7 @@ vtescgetstr(char *str, char **retstr)
     long  nb = 32;
     long  len = 0;
     char *ptr = malloc(nb);
+    char *mptr;
 
     if (!ptr) {
         fprintf(stderr, "out of memory\n");
@@ -465,24 +466,28 @@ vtescgetstr(char *str, char **retstr)
     while (*str != '"') {
         if (len == nb) {
             nb <<= 1;
-            ptr = realloc(ptr, nb);
-            if (!ptr) {
+            mptr = realloc(ptr, nb);
+            if (!mptr) {
                 fprintf(stderr, "out of memory\n");
+                free(ptr);
 
                 exit(1);
             }
+            ptr = mptr;
         }
         *ptr++ = *str++;
         len++;
     }
     if (len == nb) {
         nb <<= 1;
-        ptr = realloc(ptr, nb);
-        if (!ptr) {
+        mptr = realloc(ptr, nb);
+        if (!mptr) {
+            free(ptr);
             fprintf(stderr, "out of memory\n");
             
             exit(1);
         }
+        ptr = mptr;
     }
     ptr[len] = '\0';
     if ((len) && retstr) {
