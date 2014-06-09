@@ -27,8 +27,6 @@ static struct vtesc vtesc ALIGNED(PAGESIZE);
 #define VTREVERSECMD    7
 #define VTHIDDENCMD     8
 
-void vtresetatr(struct vt *vt);
-
 long vtatrbittab[9]
 = {
     0,
@@ -41,6 +39,52 @@ long vtatrbittab[9]
     VTREVERSE,
     VTHIDDEN
 };
+
+void
+vterasescr(struct vt *vt, long narg, long *argtab)
+{
+    long arg;
+
+    if (narg == 0) {
+        /* erase to end of line */
+    } else {
+        arg = argtab[0];
+        if (arg == 1) {
+            /* erase to start of line */
+        } else if (arg == 2) {
+            /* erase entire line */
+        }
+    }
+}
+
+void
+vterasedir(struct vt *vt, long narg, long *argtab)
+{
+    long arg;
+
+    if (narg == 0) {
+        /* erase down */
+    } else {
+        arg = argtab[0];
+        if (arg == 1) {
+            /* erase up */
+        } else if (arg == 2) {
+            /* erase screen and move cursor to home */
+        }
+    }
+}
+
+void
+vtresetatr(struct vt *vt)
+{
+    struct vtstate *state = &vt->state;
+
+    state->fgcolor = VTDEFFGCOLOR;
+    state->bgcolor = VTDEFBGCOLOR;
+    state->textatr = VTDEFTEXTATR;
+
+    return;
+}
 
 long
 vtescsetatr(struct vt *vt, long narg, long *argtab)
@@ -70,20 +114,12 @@ vtescsetatr(struct vt *vt, long narg, long *argtab)
 }
 
 void
-vtresetatr(struct vt *vt)
-{
-    struct vtstate *state = &vt->state;
-
-    state->fgcolor = VTDEFFGCOLOR;
-    state->bgcolor = VTDEFBGCOLOR;
-    state->textatr = VTDEFTEXTATR;
-
-    return;
-}
-
-void
 vtinitesc(void)
 {
+    vtsetcsicmd('J');
+    vtsetcsifunc('J', vterasescr);
+    vtsetcsicmd('K');
+    vtsetcsifunc('K', vteraseline);
     vtsetcsicmd('m');
     vtsetcsifunc('m', vtescsetatr);
 }
