@@ -56,8 +56,9 @@ static struct ps2drv ps2drv ALIGNED(PAGESIZE);
            ps2drv.keytabup[name] = name##_SYM | PS2KBD_UP_BIT)))
 #endif
 
-uint8_t         kbdbuf[PAGESIZE] ALIGNED(PAGESIZE);
-struct ringbuf *kbdring = (struct ringbuf *)kbdbuf;
+//uint8_t         kbdbuf[PAGESIZE] ALIGNED(PAGESIZE);
+struct ringbuf  kbdbuf;
+struct ringbuf *kbdring = &kbdbuf;
 
 void
 ps2initkbd(void)
@@ -65,7 +66,7 @@ ps2initkbd(void)
     uint8_t u8;
 
     ringinit(kbdring,
-             kbdbuf + offsetof(struct ringbuf, data),
+             kbdbuf.data,
              (PAGESIZE - offsetof(struct ringbuf, data)) / sizeof(RING_ITEM));
     /* enable keyboard */
     ps2sendkbd(PS2KBD_ENABLE);

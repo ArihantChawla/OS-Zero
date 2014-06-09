@@ -35,8 +35,9 @@ struct ringbuf {
     RING_ITEM     *lim;
     RING_ITEM     *inptr;
     RING_ITEM     *outptr;
-    uint8_t        data[PAGESIZE - 8 * sizeof(int64_t)] ALIGNED(CLSIZE);
-} PACK();
+    long           pad;
+    uint8_t        data[PAGESIZE - 8 * sizeof(int64_t)];
+} PACK() ALIGNED(PAGESIZE);
 
 /*
  * initialise ring buffer

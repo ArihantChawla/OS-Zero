@@ -107,6 +107,7 @@ vtfree(struct vt *vt)
     vtfreetextbuf(&vt->textbuf);
     vtfreetextbuf(&vt->scrbuf);
     vtfreecolors(vt);
+    /* TODO: free fonts */
 
     return;
 }
@@ -300,7 +301,7 @@ vtprintinfo(struct vt *vt)
 int
 main(int argc, char *argv[])
 {
-    struct vt vt;
+    struct vt vt ALIGNED(CLSIZE);
 
     memset(&vt, 0, sizeof(struct vt));
     vt.state.nrow = 24;
