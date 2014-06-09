@@ -122,11 +122,9 @@ vtclralltabs(struct vt *vt, long narg, long *argtab)
     uint32_t *tabmap = vt->state.tabmap;
     size_t   n = rounduppow2(vt->state.ncol, 32);
 
-    if (tabmap) {
-        n >>= 3;
-        while (n--) {
-            *tabmap++ = 0;
-        }
+    n >>= 3;
+    while (n--) {
+        *tabmap++ = 0;
     }
 
     return 0;
