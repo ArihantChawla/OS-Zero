@@ -3,7 +3,6 @@
 #include <stdio.h>
 #include <string.h>
 #include <ui/ui.h>
-#include <ui/sys/xorg.h>
 
 char *
 uigetdisp_xorg(int argc, char *argv[])
@@ -58,27 +57,24 @@ uiinitcolors_xorg(void *env, int32_t *tab, size_t n)
 }
 
 void
+uiinitapi_xorg(struct ui *ui)
+{
+    struct uiapi *api = ui->api;
+
+    api->init = uiinit_xorg;
+    api->initcolors = uiinitcolors_xorg;
+
+    return;
+}
+
+void
 uiinit_xorg(struct ui *ui, int argc, char *argv[])
 {
     Display           *disp;
     char              *dispname = uigetdisp_xorg(argc, argv);
-    struct uienv_xorg *env = malloc(sizeof(struct uienv_xorg));
-    struct uiapi_xorg *api;
+    struct uienv_xorg *env = ui->env;
     int                i;
 
-    if (!env) {
-        fprintf(stderr, "UI: failed to allocate environment\n");
-
-        exit(1);
-    }
-    ui->env = env;
-    api = malloc(sizeof(struct uienv_xorg));
-    if (!api) {
-        fprintf(stderr, "UI: failed to allocate API\n");
-
-        exit(1);
-    }
-    ui->api = api;
     fprintf(stderr, "UI: opening display %s\n", dispname);
     XInitThreads();
     disp = XOpenDisplay(dispname);
@@ -93,7 +89,6 @@ uiinit_xorg(struct ui *ui, int argc, char *argv[])
     env->depth = DefaultDepth(disp, i);
     env->visual = DefaultVisual(disp, i);
     env->colormap = DefaultColormap(disp, i);
-    api->initcolors = uiinitcolors_xorg;
 
     return;
 }

@@ -6,6 +6,7 @@
 #include <limits.h>
 #include <zero/cdecl.h>
 #include <zero/param.h>
+#include <ui/ui.h>
 #include <vt/vt.h>
 #include <vt/pty.h>
 #include <vt/color.h>
@@ -349,7 +350,6 @@ vtinittextbuf(struct vttextbuf *buf, long nrow, long ncol)
     int32_t        *dptr;
     struct vtrend  *rptr;
 
-    fprintf(stderr, "TEXTBUF: %ld rows, %ld columns\n", nrow, ncol);
     data = malloc(nrow * sizeof(int32_t *));
     if (!data) {
 
@@ -383,28 +383,11 @@ vtinittextbuf(struct vttextbuf *buf, long nrow, long ncol)
     return 1;
 }
 
-#if 0
-void
-vtinitui(struct vt *vt, int argc, char *argv[])
-{
-//    struct uiapi_xorg *api = vt->ui.api;
-
-#if 0
-    if (api->init) {
-        api->init(&vt->ui, argc, argv);
-    }
-#endif
-    uiinit_xorg(&vt->ui, argc, argv);
-
-    return;
-}
-#endif
-
 long
 vtinitcolors(struct vt *vt)
 {
     struct uienv_xorg *env = vt->ui.env;
-    struct uiapi_xorg *api = vt->ui.api;
+    struct uiapi      *api = vt->ui.api;
     void              *deftab;
     void              *xtermtab;
 
@@ -433,9 +416,6 @@ vtinitcolors(struct vt *vt)
 struct vt *
 vtinit(struct vt *vt, int argc, char *argv[])
 {
-#if (VTXORG)
-//    struct uiapi_xorg *api = vt->ui.api;
-#endif
     long  newvt = (vt) ? 0 : 1;
 
     if (!vt) {
@@ -487,10 +467,8 @@ vtinit(struct vt *vt, int argc, char *argv[])
 
         return NULL;
     }
-#if (VTXORG)
-//    api->init = uiinit_xorg;
-#endif
-    uiinit_xorg(&vt->ui, argc, argv);
+    uisetsys(&vt->ui, UI_SYS_XORG);
+    uiinit(&vt->ui, argc, argv);
     if (!vtinitcolors(vt)) {
         vtfree(vt);
         vtfreetextbuf(&vt->textbuf);
