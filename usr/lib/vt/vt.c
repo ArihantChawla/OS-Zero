@@ -60,6 +60,18 @@ vtfreecolors(struct vt *vt)
 }
 
 void
+vtfreefonts(struct vt *vt)
+{
+    struct uiapi *api = vt->ui.api;
+
+    if (api->freefont) {
+        api->freefont(&vt->ui, &vt->font);
+    }
+
+    return;
+}
+
+void
 vtfree(struct vt *vt)
 {
     void *ptr;
@@ -87,8 +99,7 @@ vtfree(struct vt *vt)
     vtfreetextbuf(&vt->textbuf);
     vtfreetextbuf(&vt->scrbuf);
     vtfreecolors(vt);
-    /* TODO: free fonts */
-    // vtfreefonts(vt);
+    vtfreefonts(vt);
 
     return;
 }
@@ -282,7 +293,7 @@ vtinit(struct vt *vt, int argc, char *argv[])
         vtfreetextbuf(&vt->textbuf);
         vtfreetextbuf(&vt->scrbuf);
         vtfreecolors(vt);
-//        vtfreefonts(vt);
+        vtfreefonts(vt);
         if (newvt) {
             free(vt);
         }
@@ -327,6 +338,7 @@ main(int argc, char *argv[])
     } else {
         fprintf(stderr, "failed to initialise VT\n");
     }
+    vtfree(&vt);
 #if 0
     vt.state.nrow = 24;
     vt.state.ncol = 80;

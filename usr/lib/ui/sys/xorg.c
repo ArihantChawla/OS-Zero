@@ -126,6 +126,18 @@ uiinitfont_xorg(struct ui *ui, struct uifont *font, char *fontname)
 }
 
 void
+uifreefont_xorg(struct ui *ui, struct uifont *font)
+{
+    struct uienv_xorg *env = ui->env;
+
+    if ((font) && (font->data)) {
+        XFreeFont(env->display, font->data);
+    }
+
+    return;
+}
+
+void
 uiinitapi_xorg(struct ui *ui)
 {
     struct uiapi *api = ui->api;
@@ -133,6 +145,7 @@ uiinitapi_xorg(struct ui *ui)
     api->init = uiinit_xorg;
     api->initcolors = uiinitcolors_xorg;
     api->initfont = uiinitfont_xorg;
+    api->freefont = uifreefont_xorg;
 
     return;
 }

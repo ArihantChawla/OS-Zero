@@ -35,10 +35,12 @@ void uiinit(struct ui *ui, int argc, char *argv[]);
 typedef void            uiinit_t(struct ui *, int, char **);
 typedef void          * uiinitcolors_t(void *, int32_t *, size_t);
 typedef struct uifont * uiinitfont_t(struct ui *, struct uifont *, char *);
+typedef void            uifreefont_t(struct ui *, struct uifont *);
 struct uiapi {
-    uiinit_t        *init;
-    uiinitcolors_t  *initcolors;
-    uiinitfont_t    *initfont;
+    uiinit_t       *init;
+    uiinitcolors_t *initcolors;
+    uiinitfont_t   *initfont;
+    uifreefont_t   *freefont;
 //    uiinitwindows_t *initwindows;
 };
 
