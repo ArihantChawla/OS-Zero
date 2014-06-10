@@ -96,6 +96,11 @@ vtfree(struct vt *vt)
         free(ptr);
         vt->atr.masterpath = NULL;
     }
+    ptr = vt->state.tabmap;
+    if (ptr) {
+        free(ptr);
+        vt->state.tabmap = NULL;
+    }
     vtfreetextbuf(&vt->textbuf);
     vtfreetextbuf(&vt->scrbuf);
     vtfreecolors(vt);
@@ -143,7 +148,6 @@ vtinittextbuf(struct vttextbuf *buf, long nrow, long ncol)
         rend[ndx] = rptr;
     }
     buf->nrow = nrow;
-//    buf->ncol = ncol;
 
     return 1;
 }

@@ -41,7 +41,6 @@ struct uiapi {
     uiinitcolors_t *initcolors;
     uiinitfont_t   *initfont;
     uifreefont_t   *freefont;
-//    uiinitwindows_t *initwindows;
 };
 
 #endif /* __UI_UI_H__ */
