@@ -162,6 +162,7 @@ extern char             *vtkeystrtab[128];
 
 void vtgetopt(struct vt *vt, int argc, char *argv[]);
 void vtinitesc(struct vt *vt);
+void vtfree(struct vt *vt);
 
 #endif /* __VT_VT_H__ */
 

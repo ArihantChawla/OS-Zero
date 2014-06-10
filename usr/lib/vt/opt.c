@@ -73,6 +73,13 @@ vtgetopt(struct vt *vt, int argc, char *argv[])
 
                 exit(1);
             }
+        } else if (!strncmp(cp, "--exec", 6)) {
+            fprintf(stderr, "CMD:");
+            while (ndx < argc - 1) {
+                ndx++;
+                fprintf(stderr, " %s", argv[ndx]);
+            }
+            fprintf(stderr, "\n");
         }
     }
 

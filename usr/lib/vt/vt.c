@@ -94,7 +94,7 @@ vtfree(struct vt *vt)
     ptr = vt->atr.slavepath;
     if (ptr) {
         free(ptr);
-        vt->atr.masterpath = NULL;
+        vt->atr.slavepath = NULL;
     }
     ptr = vt->state.tabmap;
     if (ptr) {
@@ -333,7 +333,8 @@ vtprintinfo(struct vt *vt)
 int
 main(int argc, char *argv[])
 {
-    struct vt vt ALIGNED(CLSIZE);
+    struct vt    vt ALIGNED(CLSIZE);
+    struct term *term;
 
     memset(&vt, 0, sizeof(struct vt));
     vtgetopt(&vt, argc, argv);
@@ -342,7 +343,6 @@ main(int argc, char *argv[])
     } else {
         fprintf(stderr, "failed to initialise VT\n");
     }
-    vtfree(&vt);
 #if 0
     vt.state.nrow = 24;
     vt.state.ncol = 80;
@@ -351,6 +351,8 @@ main(int argc, char *argv[])
 #endif
     vt.state.w = vt.state.ncol * vt.font.boxw;
     vt.state.h = vt.state.nrow * vt.font.boxh;
+    term = termrun(&vt);
+    vtfree(&vt);
 
     exit(1);
 }
