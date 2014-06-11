@@ -27,17 +27,17 @@ dumphex(void *base, uint8_t *lim)
     if (ptr < lim) {
         x = 0;
         while (ptr < lim) {
-            if (x > 0 && x < 3) {
+            if (x == DUMPHEX_NPERLINE) {
+                printf("\n");
+                x = 0;
+            }
+            if (x > 0) {
                 printf("  ");
             }
             if (isprint(*ptr) && !isspace(*ptr)) {
                 printf(" %c", *ptr);
             } else {
-                printf("  %02x", *ptr);
-            }
-            if (x == DUMPHEX_NPERLINE) {
-                printf("\n");
-                x = 0;
+                printf("%02x", *ptr);
             }
             x++;
             ptr++;
