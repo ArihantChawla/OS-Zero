@@ -1,5 +1,6 @@
 #include <stdio.h>
 #include <stdlib.h>
+#include <ctype.h>
 #include <stdint.h>
 
 #define DUMPHEX_NPERLINE 16
@@ -46,7 +47,7 @@ dumphex(void *base, void *lim)
                     }
                     line++;
                 }
-                printf("\n%02x");
+                printf("\n");
                 x = 0;
             }
             ptr++;
