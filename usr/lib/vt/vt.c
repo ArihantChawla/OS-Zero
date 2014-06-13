@@ -10,37 +10,12 @@
 #include <ui/ui.h>
 #include <vt/vt.h>
 #include <vt/pty.h>
+#include <vt/textbuf.h>
 #include <vt/color.h>
 
 int32_t  vtxtermcolortab[256] ALIGNED(PAGESIZE) = VT_XTERM_COLORMAP;
 char    *vtkeystrtab[128] ALIGNED(CLSIZE);
 int32_t  vtdefcolortab[16] ALIGNED(CLSIZE) = VT_DEFAULT_COLORMAP;
-
-void
-vtfreetextbuf(struct vttextbuf *buf)
-{
-    int32_t       **data = buf->data;
-    struct vtrend **rend = buf->rend;
-    long            nrow = buf->nrow;
-    long            n;
-
-    if (data) {
-        for (n = 0 ; n < nrow ; n++) {
-            if (data[n]) {
-                free(data[n]);
-            }
-        }
-        free(data);
-    }
-    if (rend) {
-        for (n = 0 ; n < nrow ; n++) {
-            if (rend[n]) {
-                free(rend[n]);
-            }
-        }
-        free(rend);
-    }
-}
 
 void
 vtfreecolors(struct vt *vt)
@@ -107,49 +82,6 @@ vtfree(struct vt *vt)
     vtfreefonts(vt);
 
     return;
-}
-
-long
-vtinittextbuf(struct vttextbuf *buf, long nrow, long ncol)
-{
-    long            ndx;
-    int32_t       **data;
-    struct vtrend **rend;
-    int32_t        *dptr;
-    struct vtrend  *rptr;
-
-    data = malloc(nrow * sizeof(int32_t *));
-    if (!data) {
-
-        return 0;
-    }
-    rend = malloc(nrow * sizeof(struct vtrend *));
-    if (!rend) {
-        vtfreetextbuf(buf);
-        
-        return 0;
-    }
-    buf->data = data;
-    buf->rend = rend;
-    for (ndx = 0 ; ndx < nrow ; ndx++) {
-        dptr = calloc(ncol, sizeof(int32_t));
-        if (!dptr) {
-            vtfreetextbuf(buf);
-
-            return 0;
-        }
-        data[ndx] = dptr;
-        rptr = calloc(ncol, sizeof(struct vtrend));
-        if (!rptr) {
-            vtfreetextbuf(buf);
-
-            return 0;
-        }
-        rend[ndx] = rptr;
-    }
-    buf->nrow = nrow;
-
-    return 1;
 }
 
 long
@@ -246,6 +178,7 @@ vtinit(struct vt *vt, int argc, char *argv[])
         ncol = VTDEFNCOL;
         vt->state.ncol = ncol;
     }
+#if 0 /* TODO: initialise textbuffers in term.c */
     if (!vtinittextbuf(&vt->textbuf, nrow, ncol)) {
         vtfree(vt);
         if (newvt) {
@@ -268,6 +201,7 @@ vtinit(struct vt *vt, int argc, char *argv[])
 
         return NULL;
     }
+#endif
     uisetsys(&vt->ui, UI_SYS_XORG);
     uiinit(&vt->ui, argc, argv);
     if (!vtinitcolors(vt)) {
@@ -311,50 +245,4 @@ vtinit(struct vt *vt, int argc, char *argv[])
 
     return vt;
 }
-
-#if (VTTEST)
-void
-vtprintinfo(struct vt *vt)
-{
-    fprintf(stderr, "VT: fd == %d, master: %s, slave: %s\n",
-            vt->atr.fd, vt->atr.masterpath, vt->atr.slavepath);
-    fprintf(stderr, "VT: %ld rows x %ld columns\n",
-            vt->state.nrow, vt->state.ncol);
-    fprintf(stderr, "VT: %ld buffer rows\n",
-            vt->textbuf.nrow);
-    fprintf(stderr, "VT: %ld screen rows\n",
-            vt->scrbuf.nrow);
-    fprintf(stderr, "VT: font %s (%ldx%ld)\n",
-            vt->font.name, vt->font.boxw, vt->font.boxh);
-
-    return;
-}
-
-int
-main(int argc, char *argv[])
-{
-    struct vt    vt ALIGNED(CLSIZE);
-    struct term *term;
-
-    memset(&vt, 0, sizeof(struct vt));
-    vtgetopt(&vt, argc, argv);
-    if (vtinit(&vt, argc, argv)) {
-        vtprintinfo(&vt);
-    } else {
-        fprintf(stderr, "failed to initialise VT\n");
-    }
-#if 0
-    vt.state.nrow = 24;
-    vt.state.ncol = 80;
-    vt.textbuf.nrow = VTDEFBUFNROW;
-    vt.scrbuf.nrow = 24;
-#endif
-    vt.state.w = vt.state.ncol * vt.font.boxw;
-    vt.state.h = vt.state.nrow * vt.font.boxh;
-    term = termrun(&vt);
-    vtfree(&vt);
-
-    exit(1);
-}
-#endif /* VTTEST */
 

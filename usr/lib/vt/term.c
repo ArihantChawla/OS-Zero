@@ -5,6 +5,7 @@
 #include <unistd.h>
 #include <ui/ui.h>
 #include <vt/vt.h>
+#include <vt/textbuf.h>
 #include <vt/term.h>
 
 void
@@ -138,4 +139,50 @@ termrun(struct vt *vt)
 
     return term;
 }
+
+#if (VTTEST)
+void
+vtprintinfo(struct vt *vt)
+{
+    fprintf(stderr, "VT: fd == %d, master: %s, slave: %s\n",
+            vt->atr.fd, vt->atr.masterpath, vt->atr.slavepath);
+    fprintf(stderr, "VT: %ld rows x %ld columns\n",
+            vt->state.nrow, vt->state.ncol);
+    fprintf(stderr, "VT: %ld buffer rows\n",
+            vt->textbuf.nrow);
+    fprintf(stderr, "VT: %ld screen rows\n",
+            vt->scrbuf.nrow);
+    fprintf(stderr, "VT: font %s (%ldx%ld)\n",
+            vt->font.name, vt->font.boxw, vt->font.boxh);
+
+    return;
+}
+
+int
+main(int argc, char *argv[])
+{
+    struct vt    vt ALIGNED(CLSIZE);
+    struct term *term;
+
+    memset(&vt, 0, sizeof(struct vt));
+    vtgetopt(&vt, argc, argv);
+    if (vtinit(&vt, argc, argv)) {
+        vtprintinfo(&vt);
+    } else {
+        fprintf(stderr, "failed to initialise VT\n");
+    }
+#if 0
+    vt.state.nrow = 24;
+    vt.state.ncol = 80;
+    vt.textbuf.nrow = VTDEFBUFNROW;
+    vt.scrbuf.nrow = 24;
+#endif
+    vt.state.w = vt.state.ncol * vt.font.boxw;
+    vt.state.h = vt.state.nrow * vt.font.boxh;
+    term = termrun(&vt);
+    vtfree(&vt);
+
+    exit(1);
+}
+#endif /* VTTEST */
 
