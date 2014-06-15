@@ -100,8 +100,10 @@ struct vtdevbuf {
 
 struct vtiobuf {
     long  nin;                  // # of items in input buffer
+    void *inptr;                // current input pointer
     void *inbuf;                // input buffer
     long  nout;                 // # of items in output buffer
+    void *outptr;               // current output pointer
     void *outbuf;               // output buffer
 };
 

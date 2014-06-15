@@ -51,18 +51,6 @@ vtfree(struct vt *vt)
     void *ptr;
 
     vtfreebuf(vt);
-#if 0
-    ptr = vt->atr.masterpath;
-    if (ptr) {
-        free(ptr);
-        vt->atr.masterpath = NULL;
-    }
-    ptr = vt->atr.slavepath;
-    if (ptr) {
-        free(ptr);
-        vt->atr.slavepath = NULL;
-    }
-#endif
     vtfreepty(vt);
     ptr = vt->state.tabmap;
     if (ptr) {
