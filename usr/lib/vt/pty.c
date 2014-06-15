@@ -2,9 +2,11 @@
 
 #include <stdio.h>
 #include <string.h>
+#include <limits.h>
 #include <unistd.h>
 #include <fcntl.h>
 #include <stdlib.h>
+#include <vt/vt.h>
 
 int
 vtopenpty(char **masterpath, char **slavepath)
@@ -74,5 +76,58 @@ vtopenpty(char **masterpath, char **slavepath)
     }
 
     return fd;
+}
+
+long
+vtinitpty(struct vt *vt)
+{
+    void *ptr;
+
+    ptr = malloc(PATH_MAX);
+    if (!ptr) {
+
+        return 0;
+    }
+    vt->atr.masterpath = ptr;
+    ptr = malloc(PATH_MAX);
+    if (!ptr) {
+        free(vt->atr.masterpath);
+
+        return 0;
+    }
+    vt->atr.slavepath = ptr;
+    vt->atr.fd = vtopenpty(&vt->atr.masterpath, &vt->atr.slavepath);
+    if (vt->atr.fd < 0) {
+        free(vt->atr.masterpath);
+        free(vt->atr.slavepath);
+
+        return 0;
+    }
+
+    return 1;
+}
+
+void
+vtfreepty(struct vt *vt)
+{
+    void *ptr;
+    int   fd;
+
+    ptr = vt->atr.masterpath;
+    if (ptr) {
+        free(ptr);
+        vt->atr.masterpath = NULL;
+    }
+    ptr = vt->atr.slavepath;
+    if (ptr) {
+        free(ptr);
+        vt->atr.slavepath = NULL;
+    }
+    fd = vt->atr.fd;
+    if (fd >= 0) {
+        close(fd);
+    }
+
+    return;
 }
 

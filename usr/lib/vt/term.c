@@ -163,14 +163,41 @@ main(int argc, char *argv[])
 {
     struct vt    vt ALIGNED(CLSIZE);
     struct term *term;
+    long         nrow;
+    long         ncol;
 
     memset(&vt, 0, sizeof(struct vt));
     vtgetopt(&vt, argc, argv);
-    if (vtinit(&vt, argc, argv)) {
-        vtprintinfo(&vt);
-    } else {
+    if (!vtinit(&vt, argc, argv)) {
         fprintf(stderr, "failed to initialise VT\n");
+
+        exit(1);
     }
+    nrow = vt.textbuf.nrow;
+    if (!nrow) {
+        nrow = VTDEFBUFNROW;
+    }
+    ncol = vt.state.ncol;
+    if (!ncol) {
+        ncol = VTDEFNCOL;
+        vt.state.ncol = ncol;
+    }
+    if (!vtinittextbuf(&vt.textbuf, nrow, ncol)) {
+        vtfree(&vt);
+
+        exit(1);
+    }
+    nrow = vt.state.nrow;
+    if (!nrow) {
+        nrow = VTDEFNROW;
+        vt.state.nrow = nrow;
+    }
+    if (!vtinittextbuf(&vt.scrbuf, nrow, ncol)) {
+        vtfree(&vt);
+
+        exit(1);
+    }
+    vtprintinfo(&vt);
 #if 0
     vt.state.nrow = 24;
     vt.state.ncol = 80;

@@ -8,7 +8,7 @@
 #include <vt/conf.h>
 #include <ui/ui.h>
 
-#define VTBUFSIZE    PAGESIZE
+#define VTBUFSIZE     PAGESIZE
 
 #define VTDEFMODE     0x00000000U
 #define VTDEFFGCOLOR  0xffffffffU
@@ -98,6 +98,13 @@ struct vtdevbuf {
     struct ringbuf out;         // output ring-buffer
 };
 
+struct vtiobuf {
+    long  nin;                  // # of items in input buffer
+    void *inbuf;                // input buffer
+    long  nout;                 // # of items in output buffer
+    void *outbuf;               // output buffer
+};
+
 struct vttextbuf {
     long            nrow;       // # of buffer rows
 //    long            ncol;       // # of colums in buffer rows
@@ -129,7 +136,11 @@ struct vtesctabs {
 struct vt {
     struct vtatr       atr;             // terminal attributes
     struct vtstate     state;           // terminal status
+#if (__KERNEL__)
     struct vtdevbuf    devbuf;          // input and output buffers
+#else
+    struct vtiobuf     iobuf;
+#endif
     struct vttextbuf   textbuf;         // text and rendition buffers
     struct vttextbuf   scrbuf;          // current screen contents
     struct ui          ui;              // user interface
@@ -164,6 +175,8 @@ void vtgetopt(struct vt *vt, int argc, char *argv[]);
 struct vt * vtinit(struct vt *vt, int argc, char *argv[]);
 void vtinitesc(struct vt *vt);
 void vtfree(struct vt *vt);
+long vtinitbuf(struct vt *vt);
+void vtfreebuf(struct vt *vt);
 
 #endif /* __VT_VT_H__ */
 

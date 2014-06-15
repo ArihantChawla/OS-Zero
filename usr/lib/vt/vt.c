@@ -3,7 +3,6 @@
 #include <stdio.h>
 #endif
 #include <stdlib.h>
-#include <limits.h>
 #include <zero/cdecl.h>
 #include <zero/param.h>
 #include <zero/trix.h>
@@ -51,16 +50,8 @@ vtfree(struct vt *vt)
 {
     void *ptr;
 
-    ptr = vt->devbuf.in.base;
-    if ((ptr) && ptr != vt->devbuf.in.data) {
-        free(ptr);
-        vt->devbuf.in.base = NULL;
-    }
-    ptr = vt->devbuf.out.base;
-    if ((ptr) && ptr != vt->devbuf.out.data) {
-        free(ptr);
-        vt->devbuf.out.base = NULL;
-    }
+    vtfreebuf(vt);
+#if 0
     ptr = vt->atr.masterpath;
     if (ptr) {
         free(ptr);
@@ -71,6 +62,8 @@ vtfree(struct vt *vt)
         free(ptr);
         vt->atr.slavepath = NULL;
     }
+#endif
+    vtfreepty(vt);
     ptr = vt->state.tabmap;
     if (ptr) {
         free(ptr);
@@ -133,30 +126,18 @@ struct vt *
 vtinit(struct vt *vt, int argc, char *argv[])
 {
     long  newvt = (vt) ? 0 : 1;
-    long  nrow;
-    long  ncol;
     void *ptr;
 
     if (!vt) {
-        vt = malloc(sizeof(struct vt));
+        vt = calloc(1, sizeof(struct vt));
         if (!vt) {
 
             return NULL;
         }
     }
-    if (!ringinit(&vt->devbuf.in, NULL, VTBUFSIZE / sizeof(RING_ITEM))
-        || !ringinit(&vt->devbuf.in, NULL, VTBUFSIZE / sizeof(RING_ITEM))
-        || !(vt->atr.masterpath = malloc(PATH_MAX))
-        || !(vt->atr.slavepath = malloc(PATH_MAX))) {
-        vtfree(vt);
-        if (newvt) {
-            free(vt);
-        }
-        
-        return NULL;
-    }
-    vt->atr.fd = vtopenpty(&vt->atr.masterpath, &vt->atr.slavepath);
-    if (vt->atr.fd < 0) {
+    vt->atr.fd = -1;
+    if (!vtinitbuf(vt)
+        || !vtinitpty(vt)) {
         vtfree(vt);
         if (newvt) {
             free(vt);
@@ -165,10 +146,10 @@ vtinit(struct vt *vt, int argc, char *argv[])
         return NULL;
     }
     vt->state.mode = VTDEFMODE;
-    vt->state.flags = 0;
     vt->state.fgcolor = VTDEFFGCOLOR;
     vt->state.bgcolor = VTDEFBGCOLOR;
     vt->state.textatr = VTDEFTEXTATR;
+#if 0 /* TODO: initialise textbuffers in term.c */
     nrow = vt->textbuf.nrow;
     if (!nrow) {
         nrow = VTDEFBUFNROW;
@@ -178,7 +159,6 @@ vtinit(struct vt *vt, int argc, char *argv[])
         ncol = VTDEFNCOL;
         vt->state.ncol = ncol;
     }
-#if 0 /* TODO: initialise textbuffers in term.c */
     if (!vtinittextbuf(&vt->textbuf, nrow, ncol)) {
         vtfree(vt);
         if (newvt) {

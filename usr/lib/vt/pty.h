@@ -1,7 +1,8 @@
 #ifndef __VT_PTY_H__
 #define __VT_PTY_H__
 
-int vtopenpty(char **masterpath, char **slavepath);
+long vtinitpty(struct vt *vt);
+void vtfreepty(struct vt *vt);
 
 struct vtpty {
     int   fd;           // teletype file descriptor
