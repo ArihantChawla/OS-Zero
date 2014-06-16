@@ -34,3 +34,10 @@ void *kcwalloc(unsigned long nb);
 
 kcwalloc() clears, wires, and maps a chunk of physical memory.
 
+void kfree(void *virt);
+----------------------
+
+kfree() frees a block of physical memory mapped to the virtual address virt.
+
+TODO: freeing and invalidating physical memory hasn't been implemented yet.
+
