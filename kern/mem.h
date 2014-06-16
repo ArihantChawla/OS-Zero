@@ -3,8 +3,10 @@
 
 #include <kern/unit/ia32/vm.h>
 
-#define  kwalloc(nb) memalloc(nb, PAGEWIRED)
-#define  kmalloc(nb) memalloc(nb, 0)
+#define  kwalloc(nb)  memalloc(nb, MEMWIRE)
+#define  kmalloc(nb)  memalloc(nb, 0)
+#define  kcalloc(nb)  memalloc(nb, MEMZERO)
+#define  kcwalloc(nb) memalloc(nb, MEMZERO | MEMWIRE)
 void    *memalloc(unsigned long nb, long flg);
 void     kfree(void *ptr);
 

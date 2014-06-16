@@ -1,0 +1,36 @@
+Zero Memory Interface
+---------------------
+
+Zero sports a modern, magazine-based memory allocator. This document describes
+the memory interface for kernel programmers.
+
+Macros
+------
+
+These macros present an interface to the underlying low-level memory allocator.
+
+void * kmalloc(unsigned long nb);
+---------------------------------
+
+kmalloc() allocates a block of kernel memory without mapping it to physical
+memory right off. The return value is a [virtual] pointer to this new block
+or NULL in case an error occurred.
+
+void * kwalloc(unsigned long nb);
+---------------------------------
+
+kwalloc() behaves like kmalloc() except it wires the allocated block to physical
+memory permanently after its initial mapping to virtual memory. kwalloc() does
+not, however, map the block to physical memory immediately.
+
+void *kcalloc(unsigned long nb);
+--------------------------------
+
+kcalloc() works like kmalloc() with the difference that it clears the block by
+setting it to zero as well as maps the memory to a physical region [of RAM].
+
+void *kcwalloc(unsigned long nb);
+---------------------------------
+
+kcwalloc() clears, wires, and maps a chunk of physical memory.
+
