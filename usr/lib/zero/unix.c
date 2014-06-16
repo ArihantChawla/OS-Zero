@@ -5,8 +5,8 @@
 #include <unistd.h>
 #include <fcntl.h>
 
-#if !defined(EWOULDBLOCK)
-#define EWOULDBLOCK EAGAIN
+#if !defined(EAGAIN)
+#define EAGAIN EWOULDBLOCK
 #endif
 
 void *
@@ -146,7 +146,7 @@ zreadnb(int fd, void *buf, size_t nb)
 	    if (errno == EINTR) {
 
 		continue;
-	    } else if (errno == EAGAIN || errno == EWOULDBLOCK) {
+	    } else if (errno == EAGAIN) {
 
 		return len;
 	    }
@@ -203,7 +203,7 @@ zwritenb(int fd, void *buf, size_t nb)
 	    if (errno == EINTR) {
 
 		continue;
-	    } else if (errno == EAGAIN || errno == EWOULDBLOCK) {
+	    } else if (errno == EAGAIN) {
 
 		return len;
 	    }
