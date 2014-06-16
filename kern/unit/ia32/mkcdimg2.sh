@@ -3,7 +3,7 @@ echo Building kernel
 ./build.sh
 echo Creating bootable CD image...
 cp zero cdimg2/kern
-./build/bin/grub-mkimage --prefix="$topdir/build" --format=i386-pc --output=core.img \
+./build/bin/grub-mkimage --prefix=/boot/grub --directory=./build/lib/grub/i386-pc --format=i386-pc --output=core.img \
     --config="cdimg2/boot/grub/grub.cfg" loadenv biosdisk part_msdos part_gpt fat ntfs \
     ext2 ntfscomp iso9660 loopback search linux boot minicmd cat cpuid chain \
     halt help ls reboot echo test configfile normal sleep memdisk tar font \

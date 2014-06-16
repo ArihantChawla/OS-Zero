@@ -2,17 +2,10 @@ build
 -----
 
 NOTE: you need a 32-bit build of GRUB 2 to successfully build a bootable CD-ROM
-image.
+image. There is a convenience script to build a local copy of GRUB2 within the
+Zero tree:
 
-To obtain GRUB and install it, do the following:
-
-1. git clone git://git.savannah.gnu.org/grub.git
-2. cd grub
-3. ./configure --target=i686
-4. make
-5. (as root) make install
-
-These steps will install GRUB under /usr/local.
+./mkgrub.sh
 
 To build a CD-ROM image (cd.iso), do the following:
 
