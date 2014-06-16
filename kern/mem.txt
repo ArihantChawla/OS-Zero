@@ -21,18 +21,22 @@ void * kwalloc(unsigned long nb);
 
 kwalloc() behaves like kmalloc() except it wires the allocated block to physical
 memory permanently after its initial mapping to virtual memory. kwalloc() does
-not, however, map the block to physical memory immediately.
+not, however, map the block to physical memory immediately. The return value is
+a [virtual] pointer to the newly allocated block or NULL in case of error.
 
 void *kcalloc(unsigned long nb);
 --------------------------------
 
 kcalloc() works like kmalloc() with the difference that it clears the block by
 setting it to zero as well as maps the memory to a physical region [of RAM].
+The return value is a [virtual] pointer to the new block or NULL in case of
+error.
 
 void *kcwalloc(unsigned long nb);
 ---------------------------------
 
-kcwalloc() clears, wires, and maps a chunk of physical memory.
+kcwalloc() clears, wires, and maps a chunk of physical memory. The return value
+is a [virtual] pointer to the new block or NULL in case of error.
 
 void kfree(void *virt);
 ----------------------
