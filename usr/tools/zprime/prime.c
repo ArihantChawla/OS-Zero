@@ -263,8 +263,8 @@ usage(void)
 {
     fprintf(stderr, "USAGE\n");
     fprintf(stderr, "-----\n");
-    fprintf(stderr, "prime <num>\n");
-    fprintf(stderr, "prime -l <lim>\n");
+    fprintf(stderr, "prime <num>\ttest <num>\n");
+    fprintf(stderr, "prime -l <lim>\tlist primes 0..<lim>\n");
     fprintf(stderr, "\n");
 
     return;
@@ -276,7 +276,7 @@ primelst(unsigned long long lim)
     unsigned long long ull;
 
     sieve(lim);
-    for (ull = 0 ; ull < 1 ; ull++) {
+    for (ull = 0 ; ull < lim ; ull++) {
         if (bitset(primemap, ull)) {
             printf("%llu\n", ull);
         }
