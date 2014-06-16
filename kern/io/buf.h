@@ -15,7 +15,7 @@
 #define BUFSIZE     (1UL << BUFSIZELOG2)
 #define BUFSIZELOG2 16
 /* size of buffer cache */
-#define BUFNBYTE    (65536 * 1024)
+#define BUFNBYTE    (NMEGBUF * 1024 * 1024)
 /* max # of cached blocks */
 #define BUFNBLK     (BUFNBYTE >> BUFSIZELOG2)
 #define BUFNIDBIT   48

@@ -30,6 +30,7 @@
 #define NPAGEPHYS (16ULL * 1024 * 1024) // maximum number of physical pages
 #endif
 #define NBPHYS    (NPAGEPHYS * PAGESIZE) // maximum amount of RAM
+#define NMEGBUF   64
 
 #define GFXWIDTH  1024  // horizontal screen resolution
 #define GFXHEIGHT 768   // vertical screen resolution

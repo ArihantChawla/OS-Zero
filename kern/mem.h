@@ -1,8 +1,7 @@
 #ifndef __KERN_MEM_H__
 #define __KERN_MEM_H__
 
-#include <kern/unit/ia32/vm.h>
-
+#include <kern/mem/mem.h>
 #define  kwalloc(nb)  memalloc(nb, MEMWIRE)
 #define  kmalloc(nb)  memalloc(nb, 0)
 #define  kcalloc(nb)  memalloc(nb, MEMZERO)

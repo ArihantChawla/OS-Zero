@@ -5,10 +5,17 @@
 #include <zero/trix.h>
 
 /* allocation flags */
+#if 0
 #define MEMFREE    0x01L
 #define MEMWIRE    0x02L
 #define MEMZERO    0x04L
 #define MEMFLGBITS 0x07L
+#define MEMNFLGBIT 3
+#endif
+#define MEMFREE    0x00000001
+#define MEMZERO    0x00000002
+#define MEMWIRE    0x00000004
+#define MEMFLGBITS (MEMFREE | MEMZERO | MEMWIRE)
 #define MEMNFLGBIT 3
 
 #define MEM_CONST_SIZE_TRICK 1

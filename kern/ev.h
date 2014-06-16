@@ -53,55 +53,48 @@
  * Unicode specifies 0x10ffff as maximum value, leaving us with 11 high bits to
  * be used as flags if need be
  */
-
-#if 0 /* TODO: this stuff belongs into the desktop environment */
-
-/* keyboard event state field existence */
-#define EVKBDSTATE       0x80000000     // 1 if event has state member
-#define EVKBDNFLGBIT     1
+/* flag-bits in scan member */
+#define EVKBDSTATE       UINT64_C(0x8000000000000000)
+#define EVKBDRELEASE     UINT64_C(0x4000000000000000)
 /* state-bits for modifier keys */
-#define EVKBDSHIFT       0x00000001     // Shift
-#define EVKBDCAPSLK      0x00000002     // Caps Lock
-#define EVKBDCTRL        0x00000004     // Ctrl
-#define EVKBDMETA        0x00000008     // Meta
-#define EVKBDCOMPOSE     0x00000010     // Compose
-#define EVKBDALT         0x00000020     // Alt
-#define EVKBDALTGR       0x00000040     // AltGr
-#define EVKBDSCRLOCK     0x00000080     // Scroll Lock
-#define EVNUMLOCK        0x00000100     // Num Lock
+#define EVKBDSHIFT       0x80000000
+#define EVKBDCAPSLK      0x40000000
+#define EVKBDCTRL        0x20000000
+#define EVKBDMETA        0x10000000
+#define EVKBDCOMPOSE     0x08000000
+#define EVKBDALT         0x04000000
+#define EVKBDALTGR       0x02000000
+#define EVKBDSCRLOCK     0x01000000
+#define EVNUMLOCK        0x00800000
 #define EVKBDNMODBIT     9
 #define EVNBUTTON        (32 - EVKBNMODBIT - EVKBDNFLGBIT)
 #define kbdevlen64(ev)   ((ev)->sym & EVKBDSTATE)
-#define kbducval(ev)     ((ev)->sym)    // extract Unicode value
-#define kbdbutton(ev, b) ((ev)->state & (1L << ((b) + EVKBDNMODBIT)))
+#define kbdupevent(ev)   ((ev)->sym & EVKBDRELEASE)
+#define kbdbutton(ev, b) ((ev)->state & (1L << (b)))
 #define kbdmod(ev, mod)  ((ev)->state & (mod))
+/* keyboard event size in octets */
+#define kbdevsize(ev)    (((ev)->sym & EVKBDSTATE) ? 12 : 8)
+struct kbdev {
+    uint64_t scan;
+    uint32_t state;
+    uint32_t pad;
+} PACK();
+
+#if 0
+/* TODO: this stuff belongs into the desktop environment; rework kernel
+ * keyboard events to be 64-bit scan codes
+ */
+
+/* keyboard event state field existence */
+#define EVKBDSTATE       0x80000000     // 1 if event has state member
+#define EVKBDRELEASE     0x40000000     // 1 if keyrelease event
+#define EVKBDNFLGBIT     2
 struct evkbd {
     int32_t sym;                        // Unicode key symbol + flags
     int32_t state;                      // button and modifier state if present
 } PACK();
 
-#endif
-
-#if 0
-/* ring-buffer event queue for 8-bit character keyboard events */
-#define EVKBDQNCHAR (PAGESIZE - 8 * LONGSIZE)
-struct evkbdqchar {
-    volatile long lk;                   // queue lock mutex
-    long          out;                  // index of next character to write
-    long          in;                   // index of next character to read
-    /* PADDING */
-    long          pad[5];
-#if 0
-#if (LONGSIZE == 4)
-    int32_t       pad[5];
-#elif (LONGSIZE == 8)
-    int32_t       pad[6];
-#endif
-#endif
-    /* character data */
-    unsigned char ctab[EVKBDQNCHAR];
-} PACK() ALIGNED(PAGESIZE);
-#endif
+#endif /* 0 */
 
 /* pointer such as mouse device events */
 

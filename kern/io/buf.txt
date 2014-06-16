@@ -1,0 +1,6 @@
+Zero Buffer Cache Implementation
+--------------------------------
+
+Zero has, in the first versions at least, a fixed size buffer cache. The size
+is specified in megabytes with the macro NMEGBUF in <kern/conf.h>.
+
