@@ -5,12 +5,16 @@
 #include <unistd.h>
 #include <fcntl.h>
 
+#if !defined(EWOULDBLOCK)
+#define EWOULDBLOCK EAGAIN
+#endif
+
 void *
 zreadfile(char *filename, size_t *sizeret)
 {
     void        *buf = NULL;
     struct stat  statbuf;
-    size_t       nread;
+    ssize_t      nread;
     size_t       nleft;
     int          fd;
 
@@ -25,7 +29,7 @@ zreadfile(char *filename, size_t *sizeret)
 
         return NULL;
     }
-    fd = open(name, O_RDONLY);
+    fd = open(filename, O_RDONLY);
     if (fd < 0) {
 
         return NULL;
@@ -63,13 +67,11 @@ zreadfile(char *filename, size_t *sizeret)
 int
 zwritefile(char *filename, void *buf, size_t nb)
 {
-    void        *buf = NULL;
-//    struct stat  statbuf;
-    size_t       nwritten;
-    size_t       nleft;
-    int          fd;
+    ssize_t nwritten;
+    size_t  nleft;
+    int     fd;
 
-    fd = open(name, O_WRONLY);
+    fd = open(filename, O_WRONLY);
     if (fd < 0) {
 
         return -1;
