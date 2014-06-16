@@ -101,6 +101,7 @@ zwritefile(char *filename, void *buf, size_t nb)
     return 0;
 }
 
+/* read in blocking mode */
 ssize_t
 zread(int fd, void *buf, size_t nb)
 {
@@ -130,6 +131,7 @@ zread(int fd, void *buf, size_t nb)
     return len;
 }
 
+/* read in non-blocking mode */
 ssize_t
 zreadnb(int fd, void *buf, size_t nb)
 {
@@ -159,6 +161,7 @@ zreadnb(int fd, void *buf, size_t nb)
     return len;
 }
 
+/* write in blocking mode */
 ssize_t
 zwrite(int fd, void *buf, size_t nb)
 {
@@ -185,6 +188,7 @@ zwrite(int fd, void *buf, size_t nb)
     return len;
 }
 
+/* write in non-blocking mode */
 ssize_t
 zwritenb(int fd, void *buf, size_t nb)
 {
