@@ -11,17 +11,23 @@ the way it was intended.
 Scripting Language
 ------------------
 
+Notes
+-----
+
+Skrypt programs are input one instruction per line; therefore, a statement
+terminator such as ';' in C is not necessary.
+
 Built-In Variables
 ------------------
 
 Variable	Brief
 --------	-----
-scrx		screen X-coordinate
-scry		screen Y-coordinate
-scrw		screen widht in characters
-scrh		screen height in characters
-fontw		font width in pixels
-fonth		font height in pixels
+$scrx		screen X-coordinate
+$scry		screen Y-coordinate
+$scrw		screen widht in characters
+$scrh		screen height in characters
+$fontw		font width in pixels
+$fonth		font height in pixels
 
 Instructions
 ------------
@@ -29,9 +35,11 @@ Instructions
 Command	Arguments		Brief
 -------	---------		-----
 brush	<up | down>		control drawing of movements
+call	<func>			call function func
 clr	NONE			clear current cursor position to background
 goto	<X>, <Y>		move to (column, row) on the screen
 insb	<N>  			insert N blank characters
+loop	<N>, <{ block } | func>	loop over block or call func N times
 move	<X>, <Y>		move X horizontal and Y vertical steps
 print	<0..255>		print [8-bit] character on the screen
 				- some characters such as BACKSPACE have special
@@ -48,4 +56,25 @@ setatr	<atr>, <0 | 1>		toggle terminal attribute flags
 	TERMANTIALIAS		draw antialiased text
 	TERMDRAWFG		foreground draw mode
 	TERMDRAWBG		background draw mode
+
+Functions
+---------
+
+Declaration Syntax
+------------------
+
+A functions body, called "code" below, contains Skrypt instructions.
+
+func name { code }
+
+Preprocessor
+------------
+
+Commands
+--------
+
+Command	Arguments		Brief
+-------	---------		-----
+inc	<filename>		include file into the input stream
+load	<objname>		load object file into program core
 
