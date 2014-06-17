@@ -1,9 +1,10 @@
 #include <stddef.h>
 #include <stdlib.h>
 #include <stdio.h>
+#include <stdint.h>
 #include <skrypt/skr.h>
 
-typedef void skrcmdfunc(unsigned char *, unsigned char **);
+typedef void skrcmdfunc(uintptr_t, uintptr_t);
 struct skrcmd {
     skrcmdfunc     *func;               // command handler function
     struct skrcmd **tab;                // next-level command table
@@ -12,6 +13,76 @@ static struct skrcmd  *skrcmdtab[256];  // command lookup table
 static unsigned char **skroutbuf;       // outbut buffer
 static size_t          skroutndx;       // current output index
 static size_t          skroutnrow;      // number of rows in skroutbuf
+
+void
+skraddcmd(const char *str, skrcmdfunc *func)
+{
+    struct skrcmd **tab = skrcmdtab;
+    struct skrcmd  *cmd;
+    long            ndx;
+    long            fail = 0;
+    void           *stk[8];
+
+    while (*str) {
+        ndx = str[0];
+        cmd = tab[ndx];
+        if (!cmd) {
+            cmd = calloc(256, sizeof(struct skrcmd));
+            if (!cmd) {
+                fail++;
+
+                break;
+            } else {
+                tab[ndx] = cmd;
+            }
+        }
+        if (!cmd) {
+            fail++;
+
+            break;
+        }
+        tab = cmd->tab;
+        if (!tab) {
+            tab = calloc(256, sizeof(struct skrcmd));
+            if (tab) {
+                fail++;
+
+                break;
+            }
+            cmd->tab = tab;
+        }
+        stk[ndx] = cmd->tab;
+        ndx++;
+        str++;
+    }
+    if (fail) {
+        if (ndx) {
+            while (--ndx) {
+                free(stk[ndx]);
+                fprintf(stderr,
+                        "SKRADDCMD: out of memory\n");
+
+                exit(1);
+            }
+        }
+    }
+}
+
+void
+skrcallfunc(uintptr_t func, uintptr_t dummy)
+{
+    skrcmdfunc *fptr = (skrcmdfunc *)func;
+
+    if (fptr) {
+        fptr(func, dummy);
+    }
+}
+
+void
+skrinit(void)
+{
+    skraddcmd("call", skrcallfunc);
+}
 
 unsigned char *
 skrstrtoesc(unsigned char *line)
@@ -42,7 +113,7 @@ skrcomp(FILE *infp, FILE *outfp)
                 if (!mptr) {
                     free(line);
                     fprintf(stderr,
-                            "SKRCOMP: failed to allocate line buffer\n");
+                            "SKRCOMP: out of memory\n");
                     
                     exit(1);
                 }
@@ -70,7 +141,7 @@ skrcomp(FILE *infp, FILE *outfp)
                     if (!mptr) {
                         free(skroutbuf);
                         fprintf(stderr,
-                                "SKRCOMP: failed to allocate output buffer\n");
+                                "SKRCOMP: out of memory\n");
                         
                         exit(1);
                     }
