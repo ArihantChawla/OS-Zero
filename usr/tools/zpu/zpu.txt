@@ -5,6 +5,18 @@ The goal of the ZPU project is to implement a simple ALU and utilise software
 floating point math. This would be done to facilitate building mini game
 consoles using FPGA hardware such as Papilio with graphics and audio support.
 
+ZPU shall use 64-bit registers with support for rational numbers as 32-bit
+nominator and denominator fields as well as 64-bit IEEE double-precision
+point values.
+
+Registers
+---------
+- 8 64-bit general purpose registers
+- frame pointer register
+- stack pointer register
+- program counter (instruction pointer) register
+- machine status long-word register
+
 Cpu Status Long-Word
 --------------------
 
