@@ -1,0 +1,86 @@
+Zero Processor Unit
+-------------------
+
+The goal of the ZPU project is to implement a simple ALU and utilise software
+floating point math. This would be done to facilitate building mini game
+consoles using FPGA hardware such as Papilio with graphics and audio support.
+
+Cpu Status Long-Word
+--------------------
+
+The MSW register is used to store the following bits:
+
+CF  - carry
+IF  - interrupt flag (1 if enabled)
+VF  - overflow
+ZF  - zero (result)
+
+Instruction Set
+---------------
+
+The instruction names in parentheses indicate potentially optional instructions
+to keep the base design minimalistic.
+
+Instruction	# of Arguments	Brief
+/* logical bitwise instructions */
+NOT		1		2's complement
+AND		2		logical AND
+OR		2		logical OR
+XOR		2		logical exclusive OR
+
+/* shift instructions */
+SHR
+(SHRA)
+SHL
+(ROR)
+(ROL)
+
+/* ALU instructions */
+(INC)
+(DEC)
+ADD
+SUB
+CMP
+MUL
+DIV
+MOD
+
+/* comparative instructions */
+BZ
+BNZ
+BLT
+BLE
+BGT
+BGE
+BO
+NO
+BC
+BNC
+
+/* stack operations */
+POP
+PUSH
+PUSHA
+
+/* load/store operations */
+MOV
+MOVB
+MOVW
+
+/* flow control */
+JMP
+CALL
+(ENTER)
+(LEAVE)
+RET
+
+/* machine status word */
+LMSW
+SMSW
+
+Instruction Format
+------------------
+- 3 bits for instruction group:
+  - OP_LOG, OP_SHIFT, OP_ARITH, OP_CMP, OP_STK, OP_LDSTR, OP_FLOW, OP_MSW
+- 6 bits for instruction ID
+
