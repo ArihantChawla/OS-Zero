@@ -1,8 +1,17 @@
+#include <stddef.h>
+#include <stdlib.h>
+#include <stdio.h>
 #include <skrypt/skr.h>
 
-static unsigned char *skroutbuf;
-size_t                skroutndx;
-size_t                skroutlen;
+static unsigned char **skroutbuf;
+size_t                 skroutndx;
+size_t                 skroutlen;
+
+unsigned char *
+skrstrtoesc(unsigned char *line)
+{
+    return NULL;
+}
 
 /* compile skrypt file into escape sequences */
 long
@@ -35,7 +44,7 @@ skrcomp(FILE *infp, FILE *outfp)
             }
             line[ndx] = ch;
             ch++;
-            ch = fgetc(fp);
+            ch = fgetc(infp);
             ndx++;
         }
         line[ndx] = '\0';
@@ -51,7 +60,7 @@ skrcomp(FILE *infp, FILE *outfp)
             if (esc) {
                 if (skroutndx == skroutlen) {
                     skroutlen <<= 1;
-                    mptr = realloc(skroutbuf, skroutlen);
+                    mptr = realloc(skroutbuf[skroutndx], skroutlen);
                     if (!mptr) {
                         free(skroutbuf);
                         fprintf(stderr,
@@ -59,14 +68,14 @@ skrcomp(FILE *infp, FILE *outfp)
                         
                         exit(1);
                     }
-                    skroutbuf = mptr;
+                    skroutbuf[skroutndx] = mptr;
                 }
                 skroutbuf[skroutndx] = esc;
                 free(line);
                 skroutndx++;
             } else {
                 fprintf(stderr,
-                        "SKRCOMP: invalid command: %s\n" line);
+                        "SKRCOMP: invalid command: %s\n", (char *)line);
                 free(line);
                 
                 exit(1);
@@ -80,3 +89,8 @@ skrcomp(FILE *infp, FILE *outfp)
     return retval;
 }
 
+int
+main(int argc, char *argv[])
+{
+    exit(0);
+}
