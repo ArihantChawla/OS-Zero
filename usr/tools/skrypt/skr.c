@@ -4,54 +4,52 @@
 #include <stdint.h>
 #include <skrypt/skr.h>
 
-typedef void skrcmdfunc(uintptr_t, uintptr_t);
-struct skrcmd {
-    skrcmdfunc     *func;               // command handler function
-    struct skrcmd **tab;                // next-level command table
+typedef uintptr_t skrcall_t(void *adr);
+struct skrfuncs {
+    skrcall_t *call;
 };
-static struct skrcmd  *skrcmdtab[256];  // command lookup table
-static unsigned char **skroutbuf;       // outbut buffer
-static size_t          skroutndx;       // current output index
-static size_t          skroutnrow;      // number of rows in skroutbuf
+
+typedef void skrcmdfunc(long, long, void *);
+struct skrcmd {
+    skrcmdfunc     *func;                       // command handler function
+    struct skrcmd **tab;                        // next-level command table
+};
+static struct skrcmd    *skrcmdtab[256];        // command lookup table
+static struct skrfuncs   skrfuncs;              // command handler functions
+static unsigned char   **skroutbuf;             // outbut buffer
+static size_t            skroutndx;             // current output index
+static size_t            skroutnrow;            // number of rows in skroutbuf
 
 void
 skraddcmd(const char *str, skrcmdfunc *func)
 {
     struct skrcmd **tab = skrcmdtab;
-    struct skrcmd  *cmd;
+    struct skrcmd **tptr;
     long            ndx;
     long            fail = 0;
     void           *stk[8];
 
     while (*str) {
         ndx = str[0];
-        cmd = tab[ndx];
-        if (!cmd) {
-            cmd = calloc(256, sizeof(struct skrcmd));
-            if (!cmd) {
+        tptr = tab;
+        tab = tptr[ndx]->tab;
+        if (!tab) {
+            tab = calloc(256, sizeof(struct skrcmd));
+            if (!tptr) {
                 fail++;
-
+                
                 break;
             } else {
-                tab[ndx] = cmd;
+                tptr[ndx]->tab = tab;
             }
+            tptr = tab;
         }
-        if (!cmd) {
+        if (!tab) {
             fail++;
 
             break;
         }
-        tab = cmd->tab;
-        if (!tab) {
-            tab = calloc(256, sizeof(struct skrcmd));
-            if (tab) {
-                fail++;
-
-                break;
-            }
-            cmd->tab = tab;
-        }
-        stk[ndx] = cmd->tab;
+        stk[ndx] = tab;
         ndx++;
         str++;
     }
@@ -69,13 +67,20 @@ skraddcmd(const char *str, skrcmdfunc *func)
 }
 
 void
-skrcallfunc(uintptr_t func, uintptr_t dummy)
+skrcallfunc(long cmd, long narg, void *args)
 {
-    skrcmdfunc *fptr = (skrcmdfunc *)func;
+    skrcall_t  *call = skrfuncs.call;
+    void      **argtab = args;
 
-    if (fptr) {
-        fptr(func, dummy);
+    if (narg != 1) {
+        if (args) {
+            free(args);
+        }
+        fprintf(stderr, "SKRCALL: invalid number of arguments: %ld\n", narg);
+
+        exit(1);
     }
+    call(argtab[0]);
 }
 
 void
