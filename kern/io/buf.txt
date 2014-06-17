@@ -4,3 +4,25 @@ Zero Buffer Cache Implementation
 Zero has, in the first versions at least, a fixed size buffer cache. The size
 is specified in megabytes with the macro NMEGBUF in <kern/conf.h>.
 
+Functions
+---------
+
+struct bufblk * bufalloc(void);
+-------------------------------
+
+bufalloc() allocates a free buffer; in case one is not found, it evicts a block
+buffer from memory. The return value is the [virtual] address of the allocated
+buffer.
+
+void bufaddblk(struct bufblk *blk);
+-----------------------------------
+
+bufaddblk() adds a block buffer into buffer cache.
+
+struct bufblk * buffindblk(int64_t dev, int64_t num, long rel);
+---------------------------------------------------------------
+
+buffindblk() searches buffer cache for block num of device dev. If rel is non-
+zero, this block will be removed from the buffer cache. The return value is
+a block address or NULL if block data was not found in the cache.
+

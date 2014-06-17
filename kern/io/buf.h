@@ -71,5 +71,10 @@ struct bufblkq {
     long           pad;
 };
 
+long            bufinit(void);
+struct bufblk * bufalloc(void);
+void            bufaddblk(struct bufblk *blk);
+struct bufblk * buffindblk(int64_t dev, int64_t num, long rel);
+
 #endif /* __KERN_IO_BUF_H__ */
 

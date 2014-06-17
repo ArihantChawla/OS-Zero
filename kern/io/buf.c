@@ -118,9 +118,9 @@ bufevict(void)
     return blk;
 }
 
-/* get free buffer entry */
+/* allocate buffer entry */
 struct bufblk *
-bufgetfree(void)
+bufalloc(void)
 {
     struct bufblk *blk = NULL;
 
@@ -234,7 +234,9 @@ bufaddblk(struct bufblk *blk)
         }
     }
     mtxunlk(&buflktab[dkey]);
-    bufqlru(blk);
+    if (!fail) {
+        bufqlru(blk);
+    }
     
     return;
 }

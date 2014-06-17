@@ -1,0 +1,36 @@
+Skrypt Terminal Scripting Language
+----------------------------------
+
+Skrypt aims to provide a compiler for a simple scripting language used to
+control drawing of text on terminal emulators and system consoles. This is done
+by translating code into escape sequences.
+
+The plan is to support modem rate emulation to draw existing ANSI and ASCII art
+the way it was intended.
+
+Scripting Language
+------------------
+
+Command	Arguments		Brief
+-------	---------		-----
+brush	<up | down>		control drawing of movements
+clr	NONE			clear current cursor position to background
+goto	<X>, <Y>		move to (column, row) on the screen
+insb	<N>  			insert N blank characters
+move	<X>, <Y>		move X horizontal and Y vertical steps
+print	<0..255>		print [8-bit] character on the screen
+				- some characters such as BACKSPACE have special
+				  interpretations
+setfg	<C | 0..255>		set foreground color
+setbg	<C | 0..255>		set background color
+setatr	<atr>, <0 | 1>		toggle terminal attribute flags
+	TERMBRIGHT  		bright mode
+	TERMDIM			dim mode
+	TERMUNDERSCORE		underline mode
+	TERMBLINK		blink mode
+	TERMREVERSE		reverse video mode
+	TERMHIDDEN		hide drawn characters
+	TERMANTIALIAS		draw antialiased text
+	TERMDRAWFG		foreground draw mode
+	TERMDRAWBG		background draw mode
+
