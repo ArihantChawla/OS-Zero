@@ -3,9 +3,15 @@
 #include <stdio.h>
 #include <skrypt/skr.h>
 
-static unsigned char **skroutbuf;
-size_t                 skroutndx;
-size_t                 skroutlen;
+typedef void skrcmdfunc(unsigned char *, unsigned char **);
+struct skrcmd {
+    skrcmdfunc     *func;               // command handler function
+    struct skrcmd **tab;                // next-level command table
+};
+static struct skrcmd  *skrcmdtab[256];  // command lookup table
+static unsigned char **skroutbuf;       // outbut buffer
+static size_t          skroutndx;       // current output index
+static size_t          skroutnrow;      // number of rows in skroutbuf
 
 unsigned char *
 skrstrtoesc(unsigned char *line)
@@ -58,9 +64,9 @@ skrcomp(FILE *infp, FILE *outfp)
         if (len) {
             esc = skrstrtoesc(line);
             if (esc) {
-                if (skroutndx == skroutlen) {
-                    skroutlen <<= 1;
-                    mptr = realloc(skroutbuf[skroutndx], skroutlen);
+                if (skroutndx == skroutnrow) {
+                    skroutnrow <<= 1;
+                    mptr = realloc(skroutbuf[skroutndx], skroutnrow);
                     if (!mptr) {
                         free(skroutbuf);
                         fprintf(stderr,
