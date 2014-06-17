@@ -5,11 +5,14 @@
 #include <zpu/zpu.h>
 
 static zpuinstfunc   *zpuinstfunctab[ZPUNINST];
+struct zpuctx         zpuctx;
 static uint8_t       *zpucore;
 static volatile long  zpulk;
 
+#define zpusetinst(id, func) (zpuinstfunctab[(id)] = (func))
+
 void
-zpuinit(void)
+zpuinitcore(void)
 {
     void *ptr;
 
@@ -25,18 +28,37 @@ zpuinit(void)
 }
 
 uint32_t
+zpuopnot(struct zpuop *op)
+{
+    
+}
+
+void
+zpuinitinst(void)
+{
+    zpusetinst(OP_NOT, zpuopnot);
+}
+
+void
+zpuinit(void)
+{
+    zpuinitcore();
+    zpuinitinst();
+
+    return;
+}
+
+uint32_t
 zpuruninst(struct zpuctx *ctx)
 {
     long          opadr = ctx->pc;
     struct zpuop *op = (struct zpuop *)&zpucore[opadr];
     uint32_t      pc = OP_INVAL;
     long          inst = op->inst;
-    int64_t       src;
-    int64_t       dest;
     zpuinstfunc  *func = zpuinstfunctab[inst];
 
     if (func) {
-        func(src, dest);
+        pc = func(op);
     }
 
     return pc;
@@ -45,7 +67,14 @@ zpuruninst(struct zpuctx *ctx)
 int
 main(int argc, char *argv[])
 {
+    uint32_t pc;
+
     zpuinit();
+
+    while (1) {
+        pc = zpuruninst(&zpuctx);
+        zpuctx.pc = pc;
+    }
 
     exit(0);
 }
