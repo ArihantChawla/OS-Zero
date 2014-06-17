@@ -44,8 +44,8 @@ move	<X>, <Y>		move X horizontal and Y vertical steps
 print	<0..255>		print [8-bit] character on the screen
 				- some characters such as BACKSPACE have special
 				  interpretations
-setfg	<C | 0..255>		set foreground color
 setbg	<C | 0..255>		set background color
+setfg	<C | 0..255>		set foreground color
 setatr	<atr>, <0 | 1>		toggle terminal attribute flags
 	TERMBRIGHT  		bright mode
 	TERMDIM			dim mode
@@ -56,6 +56,33 @@ setatr	<atr>, <0 | 1>		toggle terminal attribute flags
 	TERMANTIALIAS		draw antialiased text
 	TERMDRAWFG		foreground draw mode
 	TERMDRAWBG		background draw mode
+
+Argument Syntax
+---------------
+
+setbg, setfg
+------------
+
+Argument	Brief
+--------	-----
+C		color identifier for 16-color mode
+		- black
+		- red
+		- green
+		- yellow
+		- blue
+		- magenta
+		- cyan
+		- white
+		- brightblack
+		- brightred
+		- brightgreen
+		- brightyellow
+		- brightblue
+		- brightmagenta
+		- brightcyan
+		- brightwhite
+0..255		numerical value 0..255 for 256-color xterm palette
 
 Functions
 ---------
