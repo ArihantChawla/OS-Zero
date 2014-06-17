@@ -3,6 +3,7 @@
 
 #include <zero/cdecl.h>
 #include <zero/param.h>
+#include <zpu/conf.h>
 
 #define ZPUNREG     8
 #define ZPUZEROREG  0x00
@@ -62,6 +63,18 @@
 #define OP_LMSW     0x26
 #define OP_SMSW     0x27
 
+/* floating point unit intstruction flag */
+#define OP_FPU      0x40
+
+/* maximum number of instructions supported */
+#define ZPUNINST    128
+
+/* invalid instruction PC return value */
+#define OP_INVAL    0xffffffffU
+
+/* TODO: FPU instruction set with trigonometry etc. */
+/* SIN, COS, TAN, ASIN, ACOS, ATAN, SINH, COSH, TANH, LOG, POW, ... */
+
 /* machine status long-word */
 #define MSW_CF      0x01
 #define MSW_IF      0x02
@@ -77,13 +90,13 @@
 #define ARG_ADR     0x02        // address argument
 #define ARG_REG     0x03        // register argument
 struct zpuop {
-    unsigned instr   : 6;       // numerical instruction ID
+    unsigned inst    : 7;       // numerical instruction ID
     unsigned group   : 3;       // instruction group
     unsigned src     : 6;       // 3-bit register ID + INDIR + INDEX + DOUBLE
     unsigned dest    : 6;       // similar to src
     unsigned arg1    : 2;       // NONE, IMMED, ADR, REG
     unsigned arg2    : 2;       // NONE, IMMED, ADR, REG
-    unsigned immed   : 7;       // small immediate constant like MSW flags
+    unsigned immed   : 6;       // small immediate constant like MSW flags
     int64_t  args[EMPTY];       // optional arguments
 } PACK();
 
@@ -93,12 +106,14 @@ struct zpurat {
 };
 
 struct zpuctx {
-    int64_t regs[ZPUNREG];      // register values
-    int32_t fp;                 // frame pointer
-    int32_t sp;                 // stack pointer
-    int32_t pc;                 // program counter ("instruction pointer")
-    int32_t msw;                // machine status long-word
+    int64_t  regs[ZPUNREG];     // register values
+    uint32_t fp;                // frame pointer
+    uint32_t sp;                // stack pointer
+    uint32_t pc;                // program counter ("instruction pointer")
+    int32_t  msw;               // machine status long-word
 } PACK();
+
+typedef uint32_t zpuinstfunc(int64_t, int64_t);
 
 #endif /* __ZPU_ZPU_H__ */
 
