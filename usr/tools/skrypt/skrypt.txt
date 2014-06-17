@@ -11,6 +11,21 @@ the way it was intended.
 Scripting Language
 ------------------
 
+Built-In Variables
+------------------
+
+Variable	Brief
+--------	-----
+scrx		screen X-coordinate
+scry		screen Y-coordinate
+scrw		screen widht in characters
+scrh		screen height in characters
+fontw		font width in pixels
+fonth		font height in pixels
+
+Instructions
+------------
+
 Command	Arguments		Brief
 -------	---------		-----
 brush	<up | down>		control drawing of movements
