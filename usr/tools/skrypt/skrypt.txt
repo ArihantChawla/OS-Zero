@@ -28,22 +28,39 @@ $scrw		screen widht in characters
 $scrh		screen height in characters
 $fontw		font width in pixels
 $fonth		font height in pixels
+$black		#RRGGBB pixel value in hexadecimal or <R, G, B> in decimal
+$red
+$green
+$yellow
+$blue
+$magenta
+$cyan
+$white
+$brightblack
+$brightred
+$brightgreen
+$brightyellow
+$brightblue
+$brightmagenta
+$brightcyan
+$brightwhite
 
 Instructions
 ------------
 
 Command	Arguments		Brief
 -------	---------		-----
-brush	<up | down>		control drawing of movements
 call	<func>			call function func
 clr	NONE			clear current cursor position to background
 goto	<X>, <Y>		move to (column, row) on the screen
 insb	<N>  			insert N blank characters
 loop	<N>, <{ block } | func>	loop over block or call func N times
 move	<X>, <Y>		move X horizontal and Y vertical steps
+pen	<up | down>		control drawing of movements
 print	<0..255>		print [8-bit] character on the screen
 				- some characters such as BACKSPACE have special
 				  interpretations
+setcv	<C | 0..255>, CSPEC
 setbg	<C | 0..255>		set background color
 setfg	<C | 0..255>		set foreground color
 setatr	<atr>, <0 | 1>		toggle terminal attribute flags
@@ -60,28 +77,35 @@ setatr	<atr>, <0 | 1>		toggle terminal attribute flags
 Argument Syntax
 ---------------
 
+setcv
+
+Argument	Brief
+--------	-----
+C		See setgb, setfg
+CSPEC		#RRGGBB hexadecimal or <R, G, B> decimal color specification
+
 setbg, setfg
 ------------
 
 Argument	Brief
 --------	-----
 C		color identifier for 16-color mode
-		- black
-		- red
-		- green
-		- yellow
-		- blue
-		- magenta
-		- cyan
-		- white
-		- brightblack
-		- brightred
-		- brightgreen
-		- brightyellow
-		- brightblue
-		- brightmagenta
-		- brightcyan
-		- brightwhite
+		- $black
+		- $red
+		- $green
+		- $yellow
+		- $blue
+		- $magenta
+		- $cyan
+		- $white
+		- $brightblack
+		- $brightred
+		- $brightgreen
+		- $brightyellow
+		- $brightblue
+		- $brightmagenta
+		- $brightcyan
+		- $brightwhite
 0..255		numerical value 0..255 for 256-color xterm palette
 
 Functions
