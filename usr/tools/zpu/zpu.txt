@@ -14,7 +14,8 @@ point values.
 
 Zero will be a RISC-like system with a single load/store instruction that
 operates on memory; the rest of the instruction set is used to manipulate
-registers.
+registers. In addition to these datatypes, the initial design supports 32-bit
+integral values.
 
 Registers
 ---------

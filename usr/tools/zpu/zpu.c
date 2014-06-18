@@ -221,6 +221,6 @@ main(int argc, char *argv[])
     zpuinit(&zpu);
     zpurun(&zpu);
 
-    exit(0);
+    exit(zpu->exitflg);
 }
 
