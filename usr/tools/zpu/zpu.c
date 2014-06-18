@@ -4,6 +4,7 @@
 #include <zero/cdecl.h>
 #include <zero/param.h>
 #include <zero/mtx.h>
+#include <zero/trix.h>
 #include <zpu/zpu.h>
 
 static zpuopfunc  *zpuopfunctab[ZPUNINST] ALIGNED(PAGESIZE);
@@ -218,9 +219,12 @@ zpurun(struct zpu *zpu)
 int
 main(int argc, char *argv[])
 {
+    fprintf(stderr, "GCD(%d, %d) == %d\n", 100, 1000, gcdu32(100, 1000));
+    fflush(stderr);
+
     zpuinit(&zpu);
     zpurun(&zpu);
 
-    exit(zpu->exitflg);
+    exit(zpu.exitflg);
 }
 

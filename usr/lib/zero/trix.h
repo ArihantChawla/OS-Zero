@@ -515,5 +515,19 @@ divu100(unsigned long x)
 #define leapyear2(u)                                                    \
     (!((u) & 0x03) && ((((u) % 100)) || !((u) % 400)))
 
+/* Thanks to Jeremy 'jercos' Sturdivant for this one. */
+static __inline__
+uint32_t gcd32(uint32_t a, uint32_t b)
+{
+    while(b) {
+        a %= b;
+        b ^= a;
+        a ^= b;
+        b ^= a;
+    }
+
+    return a;
+}
+
 #endif /* __ZERO_TRIX_H__ */
 
