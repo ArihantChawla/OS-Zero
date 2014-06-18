@@ -80,7 +80,7 @@
 #define MSW_IF      0x02
 #define MSW_VF      0x04
 #define MSW_ZF      0x08
-#define MSW_NBIT    4
+#define MSWNBIT     4
 
 #define REG_INDIR   0x01        // indirect addressing
 #define REG_INDEX   0x02        // indirect addressing
@@ -115,6 +115,7 @@ struct zpuctx {
 } PACK();
 
 typedef void  ZPUOPRET;
+struct zpu;
 typedef ZPUOPRET zpuinstfunc(struct zpu *, struct zpuop *);
 struct zpu {
     zpuinstfunc   **functab;
@@ -132,7 +133,7 @@ zpusetmsw(struct zpu *zpu, int64_t val)
     } else if (!val) {
         msw |= MSW_ZF;
     }
-    zpu->msw |= msw;
+    zpu->ctx.msw |= msw;
 
     return;
 }

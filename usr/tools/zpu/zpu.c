@@ -188,7 +188,7 @@ zpuruninst(struct zpu *zpu)
     zpuinstfunc  *func = zpu->functab[inst];
 
     if (func) {
-        pc = func(op);
+        func(zpu, op);
     }
 
     return pc;
