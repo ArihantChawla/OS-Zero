@@ -106,21 +106,25 @@ struct zpurat {
     int32_t denom;
 };
 
+#define zpuchkintr(zpu, i) ((zpu)->intrmask & (1U << (i)))
+#define zpusetintr(zpu, i) ((zpu)->intrmask |= 1U << (i))
 struct zpuctx {
     int64_t  regs[ZPUNREG];     // register values
     uint32_t fp;                // frame pointer
     uint32_t sp;                // stack pointer
     uint32_t pc;                // program counter ("instruction pointer")
     int32_t  msw;               // machine status long-word
+    uint32_t intrmask;          // mask of pending interrupts
 } PACK();
 
 typedef void  ZPUOPRET;
 struct zpu;
-typedef ZPUOPRET zpuinstfunc(struct zpu *, struct zpuop *);
+typedef ZPUOPRET zpuopfunc(struct zpu *, struct zpuop *);
 struct zpu {
-    zpuinstfunc   **functab;
+    zpuopfunc     **functab;
     struct zpuctx   ctx;
     uint8_t        *core;
+    uint8_t         exitflg;
 };
 
 static __inline__ void

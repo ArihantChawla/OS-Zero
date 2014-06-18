@@ -6,10 +6,10 @@
 #include <zero/mtx.h>
 #include <zpu/zpu.h>
 
-static zpuinstfunc *zpuinstfunctab[ZPUNINST] ALIGNED(PAGESIZE);
-static struct zpu   zpu ALIGNED(PAGESIZE);
+static zpuopfunc  *zpuopfunctab[ZPUNINST] ALIGNED(PAGESIZE);
+static struct zpu  zpu ALIGNED(PAGESIZE);
 
-#define zpusetinst(id, func) (zpuinstfunctab[(id)] = (func))
+#define zpusetinst(id, func) (zpuopfunctab[(id)] = (func))
 
 void
 zpuinitcore(struct zpu *zpu)
@@ -174,7 +174,7 @@ void
 zpuinitinst(struct zpu *zpu)
 {
     zpusetinst(OP_NOT, zpuopnot);
-    zpu->functab = zpuinstfunctab;
+    zpu->functab = zpuopfunctab;
 }
 
 void
@@ -186,19 +186,22 @@ zpuinit(struct zpu *zpu)
     return;
 }
 
+/* virtual machine main loop */
 void
 zpurun(struct zpu *zpu)
 {
     long          opadr;
     struct zpuop *op;
     long          inst;
-    zpuinstfunc  *func;
+    zpuopfunc    *func;
     long          msw;
 
-    while (1) {
+    while (!zpu->exitflg) {
+        /* get instruction */
         opadr = zpu->ctx.pc;
         op = (struct zpuop *)&zpu->core[opadr];
         inst = op->inst;
+        /* dispatch instruction */
         func = zpu->functab[inst];
         if (func) {
             func(zpu, op);
