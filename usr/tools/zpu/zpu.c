@@ -27,8 +27,31 @@ zpuinitcore(struct zpu *zpu)
     return;
 }
 
-int32_t
-zpuopnot(struct zpuop *op)
+ZPUOPRET
+zpuopnot(struct zpu *zpu, struct zpuop *op)
+{
+    int64_t sreg = op->src & ((1 << ZPUNREG) - 1);
+    int64_t dreg = sreg;
+    int64_t src = zpu->regs[sreg];
+    int64_t dest = ~src;
+
+    zpu->regs[dreg] = dest;
+    zpusetmsw(zpu, dest);
+    zpu->pc += 4;
+
+    return;
+}
+
+ZPUOPRET
+zpulmsw(struct zpu *zpu, struct zpuop *op)
+{
+    long flg = op->src & ((1 << MSWNBIT) - 1);
+
+    zpu->msw = flg;
+}
+
+ZPUOPRET
+zpusmsw(struct zpu *zpu, struct zpuop *op)
 {
     ;
 }

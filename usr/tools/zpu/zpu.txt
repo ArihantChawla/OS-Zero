@@ -11,13 +11,13 @@ point values.
 
 Registers
 ---------
-- 8 64-bit general purpose registers
+- 16 64-bit general purpose registers
 - frame pointer register
 - stack pointer register
 - program counter (instruction pointer) register
 - machine status long-word register
 
-Cpu Status Long-Word
+CPU Status Long-Word
 --------------------
 
 The MSW register is used to store the following bits:

@@ -5,7 +5,7 @@
 #include <zero/param.h>
 #include <zpu/conf.h>
 
-#define ZPUNREG     8
+#define ZPUNREG     16
 #define ZPUZEROREG  0x00
 
 /* logical bitwise instructions */
@@ -80,6 +80,7 @@
 #define MSW_IF      0x02
 #define MSW_VF      0x04
 #define MSW_ZF      0x08
+#define MSW_NBIT    4
 
 #define REG_INDIR   0x01        // indirect addressing
 #define REG_INDEX   0x02        // indirect addressing
@@ -92,11 +93,11 @@
 struct zpuop {
     unsigned inst    : 7;       // numerical instruction ID
     unsigned group   : 3;       // instruction group
-    unsigned src     : 6;       // 3-bit register ID + INDIR + INDEX + DOUBLE
-    unsigned dest    : 6;       // similar to src
+    unsigned src     : 7;       // 4-bit register ID + INDIR + INDEX + DOUBLE
+    unsigned dest    : 7;       // similar to src
     unsigned arg1    : 2;       // NONE, IMMED, ADR, REG
     unsigned arg2    : 2;       // NONE, IMMED, ADR, REG
-    unsigned immed   : 6;       // small immediate constant like MSW flags
+    unsigned immed   : 3;       // small immediate constant like MSW flags
     int64_t  args[EMPTY];       // optional arguments
 } PACK();
 
@@ -113,12 +114,28 @@ struct zpuctx {
     int32_t  msw;               // machine status long-word
 } PACK();
 
-typedef int32_t zpuinstfunc(struct zpuop *);
+typedef void  ZPUOPRET;
+typedef ZPUOPRET zpuinstfunc(struct zpu *, struct zpuop *);
 struct zpu {
     zpuinstfunc   **functab;
     struct zpuctx   ctx;
     uint8_t        *core;
 };
+
+static __inline__ void
+zpusetmsw(struct zpu *zpu, int64_t val)
+{
+    long msw = 0;
+
+    if (val & INT64_C(0xffffffff00000000)) {
+        msw |= (MSW_CF | MSW_VF);
+    } else if (!val) {
+        msw |= MSW_ZF;
+    }
+    zpu->msw |= msw;
+
+    return;
+}
 
 #endif /* __ZPU_ZPU_H__ */
 
