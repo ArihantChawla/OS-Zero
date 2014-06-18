@@ -1,6 +1,9 @@
 Zero Processor Unit
 -------------------
 
+Preface
+-------
+
 The goal of the ZPU project is to implement a simple ALU and utilise software
 floating point math. This would be done to facilitate building mini game
 consoles using FPGA hardware such as Papilio with graphics and audio support.
@@ -9,21 +12,55 @@ ZPU shall use 64-bit registers with support for rational numbers as 32-bit
 nominator and denominator fields as well as 64-bit IEEE double-precision
 point values.
 
+Zero will be a RISC-like system with a single load/store instruction that
+operates on memory; the rest of the instruction set is used to manipulate
+registers.
+
 Registers
 ---------
 - 16 64-bit general purpose registers
 - frame pointer register
 - stack pointer register
 - program counter (instruction pointer) register
-- machine status long-word register
+- machine status word register
 
-CPU Status Long-Word
---------------------
+Registers
+---------
+
+Mask Registers
+--------------
+
+Name	Brief			Notes
+----	-----			-----
+B0	all zero bits		64-bit
+B0L	all zero bits		32-bit lower half of B0 for integer operations
+B1	all one bits		64-bit
+B1L	all one bits		32-bit lower half of B1 for integer operations
+
+General Purpose Registers
+-------------------------
+
+Name	Brief			Notes
+----	-----			-----
+R0..R15	general purpose		for program use
+
+Special Registers
+-----------------
+
+Name	Brief			Notes
+----	-----			-----
+FP	frame pointer		pointer to current stack frame
+SP	stack pointer		pointer to current stack position
+PC	program counter		pointer to next instruction to run
+MSW	machine status word	status of the latest instruction executed
+
+Machine Status Word
+-------------------
 
 The MSW register is used to store the following bits:
 
 CF  - carry
-IF  - interrupt flag (1 if enabled)
+IF  - interrupt flag (1 if interrupts pending)
 VF  - overflow
 ZF  - zero (result)
 

@@ -186,32 +186,37 @@ zpuinit(struct zpu *zpu)
     return;
 }
 
-uint32_t
-zpuruninst(struct zpu *zpu)
+void
+zpurun(struct zpu *zpu)
 {
-    long          opadr = zpu->ctx.pc;
-    struct zpuop *op = (struct zpuop *)&zpu->core[opadr];
-    uint32_t      pc = OP_INVAL;
-    long          inst = op->inst;
-    zpuinstfunc  *func = zpu->functab[inst];
+    long          opadr;
+    struct zpuop *op;
+    long          inst;
+    zpuinstfunc  *func;
+    long          msw;
 
-    if (func) {
-        func(zpu, op);
+    while (1) {
+        opadr = zpu->ctx.pc;
+        op = (struct zpuop *)&zpu->core[opadr];
+        inst = op->inst;
+        func = zpu->functab[inst];
+        if (func) {
+            func(zpu, op);
+        }
+        msw = zpu->ctx.msw;
+        if (msw & MSW_IF) {
+            /* TODO: dispatch pending interrupts */
+        }
     }
 
-    return pc;
+    return;
 }
 
 int
 main(int argc, char *argv[])
 {
-    uint32_t pc;
-
     zpuinit(&zpu);
-
-    while (1) {
-        pc = zpuruninst(&zpu);
-    }
+    zpurun(&zpu);
 
     exit(0);
 }
