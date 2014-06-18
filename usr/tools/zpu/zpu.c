@@ -6,8 +6,8 @@
 #include <zero/mtx.h>
 #include <zpu/zpu.h>
 
-static zpuinstfunc   *zpuinstfunctab[ZPUNINST] ALIGNED(PAGESIZE);
-static struct zpu zpu ALIGNED(PAGESIZE);
+static zpuinstfunc *zpuinstfunctab[ZPUNINST] ALIGNED(PAGESIZE);
+static struct zpu   zpu ALIGNED(PAGESIZE);
 
 #define zpusetinst(id, func) (zpuinstfunctab[(id)] = (func))
 
@@ -32,7 +32,8 @@ zpuopnot(struct zpu *zpu, struct zpuop *op)
 {
     int64_t sreg = op->src & ((1 << ZPUNREG) - 1);
     int64_t dreg = sreg;
-    int64_t src = zpu->ctx.regs[sreg] & INT64_C(0xffffffff);
+    int64_t mask32 = INT64_C(0xffffffff);
+    int64_t src = zpu->ctx.regs[sreg] & mask32;
     int64_t dest = ~src;
 
     zpu->ctx.regs[dreg] = dest;
@@ -47,8 +48,9 @@ zpuopand(struct zpu *zpu, struct zpuop *op)
 {
     int64_t sreg = op->src & ((1 << ZPUNREG) - 1);
     int64_t dreg = op->dest & ((1 << ZPUNREG) - 1);
-    int64_t src = zpu->ctx.regs[sreg] & INT64_C(0xffffffff);
-    int64_t dest = zpu->ctx.regs[dreg] & INT64_C(0xffffffff);
+    int64_t mask32 = INT64_C(0xffffffff);
+    int64_t src = zpu->ctx.regs[sreg] & mask32;
+    int64_t dest = zpu->ctx.regs[dreg] & mask32;
 
     dest &= src;
     zpu->ctx.regs[dreg] = dest;
@@ -63,8 +65,9 @@ zpuopor(struct zpu *zpu, struct zpuop *op)
 {
     int64_t sreg = op->src & ((1 << ZPUNREG) - 1);
     int64_t dreg = op->dest & ((1 << ZPUNREG) - 1);
-    int64_t src = zpu->ctx.regs[sreg] & INT64_C(0xffffffff);
-    int64_t dest = zpu->ctx.regs[dreg] & INT64_C(0xffffffff);
+    int64_t mask32 = INT64_C(0xffffffff);
+    int64_t src = zpu->ctx.regs[sreg] & mask32;
+    int64_t dest = zpu->ctx.regs[dreg] & mask32;
 
     dest |= src;
     zpu->ctx.regs[dreg] = dest;
@@ -79,8 +82,9 @@ zpuopxor(struct zpu *zpu, struct zpuop *op)
 {
     int64_t sreg = op->src & ((1 << ZPUNREG) - 1);
     int64_t dreg = op->dest & ((1 << ZPUNREG) - 1);
-    int64_t src = zpu->ctx.regs[sreg] & INT64_C(0xffffffff);
-    int64_t dest = zpu->ctx.regs[dreg] & INT64_C(0xffffffff);
+    int64_t mask32 = INT64_C(0xffffffff);
+    int64_t src = zpu->ctx.regs[sreg] & mask32;
+    int64_t dest = zpu->ctx.regs[dreg] & mask32;
 
     dest ^= src;
     zpu->ctx.regs[dreg] = dest;
@@ -95,9 +99,10 @@ zpuopshr(struct zpu *zpu, struct zpuop *op)
 {
     int64_t sreg = op->src & ((1 << ZPUNREG) - 1);
     int64_t dreg = op->dest & ((1 << ZPUNREG) - 1);
-    int64_t src = zpu->ctx.regs[sreg] & INT64_C(0xffffffff);
-    int64_t dest = zpu->ctx.regs[dreg] & INT64_C(0xffffffff);
-    int64_t mask = INT64_C(1) << ((64 - src) - 1);
+    int64_t mask32 = INT64_C(0xffffffff);
+    int64_t src = zpu->ctx.regs[sreg] & mask32;
+    int64_t dest = zpu->ctx.regs[dreg] & mask32;
+    int64_t mask = INT64_C(1) << ((32 - src) - 1);
 
     dest >>= src;
     dest &= mask;
@@ -113,16 +118,17 @@ zpuopshra(struct zpu *zpu, struct zpuop *op)
 {
     int64_t sreg = op->src & ((1 << ZPUNREG) - 1);
     int64_t dreg = op->dest & ((1 << ZPUNREG) - 1);
-    int64_t src = zpu->ctx.regs[sreg] & INT64_C(0xffffffff);
-    int64_t dest = zpu->ctx.regs[dreg] & INT64_C(0xffffffff);
+    int64_t mask32 = INT64_C(0xffffffff);
+    int64_t src = zpu->ctx.regs[sreg] & mask32;
+    int64_t dest = zpu->ctx.regs[dreg] & mask32;
     int64_t mask = ~INT64_C(0);
 
     dest >>= src;
-    if (src & (INT64_C(1) << 63)) {
+    if (src & (INT64_C(1) << 31)) {
         mask -= (INT64_C(1) << src) - 1;
         dest |= mask;
     } else {
-        mask -= (INT64_C(1) << (64 - src)) - 1;
+        mask -= (INT64_C(1) << (32 - src)) - 1;
         dest &= mask;
     }
     zpu->ctx.regs[dreg] = dest;
@@ -137,10 +143,12 @@ zpuopshl(struct zpu *zpu, struct zpuop *op)
 {
     int64_t sreg = op->src & ((1 << ZPUNREG) - 1);
     int64_t dreg = op->dest & ((1 << ZPUNREG) - 1);
-    int64_t src = zpu->ctx.regs[sreg] & INT64_C(0xffffffff);
-    int64_t dest = zpu->ctx.regs[dreg] & INT64_C(0xffffffff);
+    int64_t mask32 = INT64_C(0xffffffff);
+    int64_t src = zpu->ctx.regs[sreg] & mask32;
+    int64_t dest = zpu->ctx.regs[dreg] & mask32;
 
     dest <<= src;
+    dest &= mask32;
     zpu->ctx.regs[dreg] = dest;
     zpusetmsw(zpu, dest);
     zpu->ctx.pc += 4;
