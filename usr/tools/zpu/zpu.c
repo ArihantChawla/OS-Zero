@@ -32,12 +32,118 @@ zpuopnot(struct zpu *zpu, struct zpuop *op)
 {
     int64_t sreg = op->src & ((1 << ZPUNREG) - 1);
     int64_t dreg = sreg;
-    int64_t src = zpu->regs[sreg];
+    int64_t src = zpu->ctx.regs[sreg];
     int64_t dest = ~src;
 
-    zpu->regs[dreg] = dest;
+    zpu->ctx.regs[dreg] = dest;
     zpusetmsw(zpu, dest);
-    zpu->pc += 4;
+    zpu->ctx.pc += 4;
+
+    return;
+}
+
+ZPUOPRET
+zpuopand(struct zpu *zpu, struct zpuop *op)
+{
+    int64_t sreg = op->src & ((1 << ZPUNREG) - 1);
+    int64_t dreg = op->dest & ((1 << ZPUNREG) - 1);
+    int64_t src = zpu->ctx.regs[sreg];
+    int64_t dest = zpu->ctx.regs[dreg];
+
+    dest &= src;
+    zpu->ctx.regs[dreg] = dest;
+    zpusetmsw(zpu, dest);
+    zpu->ctx.pc += 4;
+
+    return;
+}
+
+ZPUOPRET
+zpuopor(struct zpu *zpu, struct zpuop *op)
+{
+    int64_t sreg = op->src & ((1 << ZPUNREG) - 1);
+    int64_t dreg = op->dest & ((1 << ZPUNREG) - 1);
+    int64_t src = zpu->ctx.regs[sreg];
+    int64_t dest = zpu->ctx.regs[dreg];
+
+    dest |= src;
+    zpu->ctx.regs[dreg] = dest;
+    zpusetmsw(zpu, dest);
+    zpu->ctx.pc += 4;
+
+    return;
+}
+
+ZPUOPRET
+zpuopxor(struct zpu *zpu, struct zpuop *op)
+{
+    int64_t sreg = op->src & ((1 << ZPUNREG) - 1);
+    int64_t dreg = op->dest & ((1 << ZPUNREG) - 1);
+    int64_t src = zpu->ctx.regs[sreg];
+    int64_t dest = zpu->ctx.regs[dreg];
+
+    dest ^= src;
+    zpu->ctx.regs[dreg] = dest;
+    zpusetmsw(zpu, dest);
+    zpu->ctx.pc += 4;
+
+    return;
+}
+
+ZPUOPRET
+zpuopshr(struct zpu *zpu, struct zpuop *op)
+{
+    int64_t sreg = op->src & ((1 << ZPUNREG) - 1);
+    int64_t dreg = op->dest & ((1 << ZPUNREG) - 1);
+    int64_t src = zpu->ctx.regs[sreg];
+    int64_t dest = zpu->ctx.regs[dreg];
+    int64_t mask = INT64_C(1) << ((64 - src) - 1);
+
+    dest >>= src;
+    dest &= mask;
+    zpu->ctx.regs[dreg] = dest;
+    zpusetmsw(zpu, dest);
+    zpu->ctx.pc += 4;
+
+    return;
+}
+
+ZPUOPRET
+zpuopshra(struct zpu *zpu, struct zpuop *op)
+{
+    int64_t sreg = op->src & ((1 << ZPUNREG) - 1);
+    int64_t dreg = op->dest & ((1 << ZPUNREG) - 1);
+    int64_t src = zpu->ctx.regs[sreg];
+    int64_t dest = zpu->ctx.regs[dreg];
+    int64_t mask = ~INT64_C(0);
+
+    dest >>= src;
+    if (src & (INT64_C(1) << 63)) {
+        mask -= (INT64_C(1) << src) - 1;
+        dest |= mask;
+    } else {
+        mask -= (INT64_C(1) << (64 - src)) - 1;
+        dest &= mask;
+    }
+    zpu->ctx.regs[dreg] = dest;
+    zpusetmsw(zpu, dest);
+    zpu->ctx.pc += 4;
+
+    return;
+}
+
+ZPUOPRET
+zpuopshl(struct zpu *zpu, struct zpuop *op)
+{
+    int64_t sreg = op->src & ((1 << ZPUNREG) - 1);
+    int64_t dreg = op->dest & ((1 << ZPUNREG) - 1);
+    int64_t src = zpu->ctx.regs[sreg];
+    int64_t dest = zpu->ctx.regs[dreg];
+
+    dest <<= src;
+    zpu->ctx.regs[dreg] = dest;
+    zpusetmsw(zpu, dest);
+    zpu->ctx.pc += 4;
 
     return;
 }
@@ -47,7 +153,7 @@ zpulmsw(struct zpu *zpu, struct zpuop *op)
 {
     long flg = op->src & ((1 << MSWNBIT) - 1);
 
-    zpu->msw = flg;
+    zpu->ctx.msw = flg;
 }
 
 ZPUOPRET
