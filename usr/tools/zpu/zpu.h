@@ -114,6 +114,11 @@ struct zpuctx {
 } PACK();
 
 typedef int32_t zpuinstfunc(struct zpuop *);
+struct zpu {
+    zpuinstfunc   **functab;
+    struct zpuctx   ctx;
+    uint8_t        *core;
+};
 
 #endif /* __ZPU_ZPU_H__ */
 

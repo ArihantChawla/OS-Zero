@@ -6,12 +6,7 @@
 #include <zero/mtx.h>
 #include <zpu/zpu.h>
 
-static zpuinstfunc   *zpuinstfunctab[ZPUNINST];
-struct zpu {
-    zpuinstfunc   **functab;
-    struct zpuctx   ctx;
-    uint8_t        *core;
-};
+static zpuinstfunc   *zpuinstfunctab[ZPUNINST] ALIGNED(PAGESIZE);
 static struct zpu zpu ALIGNED(PAGESIZE);
 
 #define zpusetinst(id, func) (zpuinstfunctab[(id)] = (func))
