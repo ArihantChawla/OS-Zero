@@ -113,7 +113,7 @@ struct zpuctx {
     int32_t  msw;               // machine status long-word
 } PACK();
 
-typedef uint32_t zpuinstfunc(struct zpuop *);
+typedef int32_t zpuinstfunc(struct zpuop *);
 
 #endif /* __ZPU_ZPU_H__ */
 

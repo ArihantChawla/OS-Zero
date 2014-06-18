@@ -1,18 +1,23 @@
 #include <stdlib.h>
 #include <stdio.h>
 #include <stdint.h>
+#include <zero/cdecl.h>
+#include <zero/param.h>
 #include <zero/mtx.h>
 #include <zpu/zpu.h>
 
 static zpuinstfunc   *zpuinstfunctab[ZPUNINST];
-struct zpuctx         zpuctx;
-static uint8_t       *zpucore;
-static volatile long  zpulk;
+struct zpu {
+    zpuinstfunc   **functab;
+    struct zpuctx   ctx;
+    uint8_t        *core;
+};
+static struct zpu zpu ALIGNED(PAGESIZE);
 
 #define zpusetinst(id, func) (zpuinstfunctab[(id)] = (func))
 
 void
-zpuinitcore(void)
+zpuinitcore(struct zpu *zpu)
 {
     void *ptr;
 
@@ -22,40 +27,41 @@ zpuinitcore(void)
 
         exit(1);
     }
-    zpucore = ptr;
+    zpu->core = ptr;
 
     return;
 }
 
-uint32_t
+int32_t
 zpuopnot(struct zpuop *op)
 {
-    
+    ;
 }
 
 void
-zpuinitinst(void)
+zpuinitinst(struct zpu *zpu)
 {
     zpusetinst(OP_NOT, zpuopnot);
+    zpu->functab = zpuinstfunctab;
 }
 
 void
-zpuinit(void)
+zpuinit(struct zpu *zpu)
 {
-    zpuinitcore();
-    zpuinitinst();
+    zpuinitinst(zpu);
+    zpuinitcore(zpu);
 
     return;
 }
 
 uint32_t
-zpuruninst(struct zpuctx *ctx)
+zpuruninst(struct zpu *zpu)
 {
-    long          opadr = ctx->pc;
-    struct zpuop *op = (struct zpuop *)&zpucore[opadr];
+    long          opadr = zpu->ctx.pc;
+    struct zpuop *op = (struct zpuop *)&zpu->core[opadr];
     uint32_t      pc = OP_INVAL;
     long          inst = op->inst;
-    zpuinstfunc  *func = zpuinstfunctab[inst];
+    zpuinstfunc  *func = zpu->functab[inst];
 
     if (func) {
         pc = func(op);
@@ -69,11 +75,10 @@ main(int argc, char *argv[])
 {
     uint32_t pc;
 
-    zpuinit();
+    zpuinit(&zpu);
 
     while (1) {
-        pc = zpuruninst(&zpuctx);
-        zpuctx.pc = pc;
+        pc = zpuruninst(&zpu);
     }
 
     exit(0);
