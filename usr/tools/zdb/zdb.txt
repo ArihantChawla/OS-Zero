@@ -1,0 +1,7 @@
+Zero Debugger
+-------------
+- debugger for WPM and ZPU
+- graphical frontends for GDB (source-level) as well as QEMU and/or Bochs
+  (machine-level)
+- db.c (WPM and ZPU), gdb.c, qemu.c, bochs.c
+

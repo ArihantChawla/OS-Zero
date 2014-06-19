@@ -2,6 +2,7 @@
 #include <stdlib.h>
 #include <stdio.h>
 #include <string.h>
+#define UI_ENV_XORG 1
 #include <ui/ui.h>
 
 char *
