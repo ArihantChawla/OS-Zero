@@ -4,14 +4,22 @@
 #include <zdb/zdb.h>
 
 void
+zdbsetdefopt(struct zdb *zdb)
+{
+    zdb->ui.type = ZDB_DEFUI;
+    zdb->api.type = ZDB_DEFAPI;
+
+    return;
+}
+
+void
 zdbgetopt(struct zdb *zdb, int argc, char *argv[])
 {
     int   ndx;
     char *cp;
     long  val;
 
-    zdb->ui.type = ZDB_DEFUI;
-    zdb->api.type = ZDB_DEFAPI;
+    zdbsetdefopt(zdb);
     for (ndx = 1 ; ndx < argc ; ndx++) {
         cp = argv[ndx];
         if (!strncmp(cp, "--ui", 4)) {
