@@ -6,6 +6,11 @@
 #include <zpu/conf.h>
 
 #define ZPUNREG     16
+#define ZPUNGENREG  12
+#define ZPUFPREG    12
+#define ZPUSPREG    13
+#define ZPUPCREG    14
+#define ZPUMSWREG   15
 #define ZPUZEROREG  0x00
 
 /* 4-bit unit ID */
@@ -19,6 +24,7 @@
 #define OP_SREG     0x07
 #define OP_FPU      0x08
 #define ZPUNUNITBIT 4
+#define ZPUNUNIT    (1U << ZPUNUNITBIT)
 
 /* logical bitwise instructions */
 #define OP_NOT      0x01
@@ -28,7 +34,7 @@
 
 /* shift instructions */
 #define OP_SHR      0x05
-#define OP_SHRA     0x06
+#define OP_SAR      0x06
 #define OP_SHL      0x07
 #define OP_ROR      0x08
 #define OP_ROL      0x09
@@ -51,32 +57,34 @@
 #define OP_BGT      0x16
 #define OP_BGE      0x17
 #define OP_BO       0x18
-#define OP_BC       0x19
-#define OP_BNC      0x1a
+#define OP_BNO      0x19
+#define OP_BC       0x1a
+#define OP_BNC      0x1b
 
 /* stack operations */
-#define OP_POP      0x1b
-#define OP_PUSH     0x1c
-#define OP_PUSHA    0x1d
+#define OP_POP      0x1c
+#define OP_PUSH     0x1d
+#define OP_PUSHA    0x1e
 
 /* load/store operations */
-#define OP_MOV      0x1e
-#define OP_MOVB     0x1f
-#define OP_MOVW     0x20
+#define OP_MOV      0x1f
+#define OP_MOVB     0x20
+#define OP_MOVW     0x21
+#define OP_MOVQ     0x22
 
 /* flow control */
-#define OP_JMP      0x21
-#define OP_CALL     0x22
-#define OP_ENTER    0x23
-#define OP_LEAVE    0x24
-#define OP_RET      0x25
+#define OP_JMP      0x23
+#define OP_CALL     0x24
+#define OP_ENTER    0x25
+#define OP_LEAVE    0x26
+#define OP_RET      0x27
 
 /* machine status word */
-#define OP_LMSW     0x26
-#define OP_SMSW     0x27
+#define OP_LMSW     0x28
+#define OP_SMSW     0x29
 
 /* maximum number of instructions supported */
-#define ZPUNOP      128
+#define ZPUNOP      (1U << ZPUNOPBIT)
 #define ZPUNOPBIT   7
 #define ZPUNINSTBIT (ZPUNUNITBIT + ZPUNOPBIT)
 #define ZPUNINST    (1U << (ZPUNINSTBIT))
@@ -94,26 +102,24 @@
 #define MSW_ZF      0x08
 #define MSWNBIT     4
 
-#define REG_INDIR   0x01        // indirect addressing
-#define REG_INDEX   0x02        // indirect addressing
-#define REG_DOUBLE  0x04        // 1 if 64-bit IEEE double
+#define ARG_INDIR   0x01        // indirect addressing
+#define ARG_INDEX   0x02        // indexed addressing
+#define ARG_IMMED   0x04        // immediate argument
+#define ARG_ADR     0x08        // address argument
+#define ARG_REG     0x10        // register argument
 
-#define ARG_NONE    0x00        // argument not present
-#define ARG_IMMED   0x01        // immediate argument
-#define ARG_ADR     0x02        // address argument
-#define ARG_REG     0x03        // register argument
-
+/* opcode is 32-bit with extra arguments following where necessary */
 #define zpusetinst(id, unit, func)                                      \
     (zpuopfunctab[((unit) << ZPUNOPBIT) + (id)] = (func))
 struct zpuop {
     unsigned unit    : 4;       // unit ID
     unsigned inst    : 7;       // numerical instruction ID
-    unsigned group   : 3;       // instruction group
-    unsigned src     : 7;       // 4-bit register ID + INDIR + INDEX + DOUBLE
-    unsigned dest    : 7;       // similar to src
-    unsigned arg1    : 2;       // NONE, IMMED, ADR, REG
-    unsigned arg2    : 2;       // NONE, IMMED, ADR, REG
-    int64_t  args[EMPTY];       // optional arguments
+    unsigned sflg    : 5;       // INDIR, INDEX, IMMED, ADR, REG
+    unsigned src     : 4;       // 4-bit source register ID
+    unsigned dflg    : 5;       // INDIR, INDEX, IMMED, ADR, REG
+    unsigned dest    : 4;       // 4-bit destination register
+    unsigned argsz   : 3;       // operation size is 1 << (opsize + 1)
+    int32_t  args[EMPTY];       // optional arguments
 } PACK();
 
 struct zpurat {
@@ -125,10 +131,12 @@ struct zpurat {
 #define zpusetintr(zpu, i) ((zpu)->intrmask |= 1U << (i))
 struct zpuctx {
     int64_t  regs[ZPUNREG];     // register values
+#if 0
     uint32_t fp;                // frame pointer
     uint32_t sp;                // stack pointer
     uint32_t pc;                // program counter ("instruction pointer")
     int32_t  msw;               // machine status long-word
+#endif
     uint32_t intrmask;          // mask of pending interrupts
 } PACK();
 
@@ -152,7 +160,7 @@ zpusetmsw(struct zpu *zpu, int64_t val)
     } else if (!val) {
         msw |= MSW_ZF;
     }
-    zpu->ctx.msw |= msw;
+    zpu->ctx.regs[ZPUMSWREG] |= msw;
 
     return;
 }
