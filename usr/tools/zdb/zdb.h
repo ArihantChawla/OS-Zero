@@ -1,12 +1,13 @@
 #ifndef __ZDB_DB_H__
 #define __ZDB_DB_H__
 
-#define ZDB_DEFUI   UI_SYS_XORG
-#define ZDB_DEFAPI  ZDB_API_ZPU
+#define ZDB_DEFUI     UI_SYS_XORG
+#define ZDB_DEFAPI    ZDB_API_ZPU
 
-#define ZDB_API_GDB 1
-#define ZDB_API_WPM 2
-#define ZDB_API_ZPU 3
+#define ZDB_API_GDB   1
+#define ZDB_API_WPM   2
+#define ZDB_API_ZPU   3
+#define ZDB_API_BOCHS 4
 
 #include <ui/ui.h>
 #if (ZPU)

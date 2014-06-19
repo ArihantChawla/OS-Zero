@@ -48,11 +48,13 @@ zdbgetopt(struct zdb *zdb, int argc, char *argv[])
             if (ndx < argc) {
                 cp = argv[ndx];
                 if (!strncmp(cp, "gdb", 3)) {
-                    zdb->ui.type = ZDB_API_GDB;
+                    zdb->api.type = ZDB_API_GDB;
                 } else if (!strncmp(cp, "wpm", 3)) {
-                    zdb->ui.type = ZDB_API_WPM;
+                    zdb->api.type = ZDB_API_WPM;
                 } else if (!strncmp(cp, "zpu", 3)) {
-                    zdb->ui.type = ZDB_API_ZPU;
+                    zdb->api.type = ZDB_API_ZPU;
+                } else if (!strncmp(cp, "bochs", 5)) {
+                    zdb->api.type = ZDB_API_ZPU;
                 } else {
                     fprintf(stderr, "ZDB: --uitype: invalid argument %s\n",
                             cp);
