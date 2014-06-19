@@ -103,7 +103,7 @@ BLE
 BGT
 BGE
 BO
-NO
+BNO
 BC
 BNC
 
