@@ -6,7 +6,7 @@
  * HAKMEM and the book Hacker's Delight
  */
 
-#define ZEROABS 0
+#define ZEROABS 1
 
 #include <stdint.h>
 #include <limits.h>
@@ -48,12 +48,28 @@
     ((u) & -(p2))
 /* swap a and b without a temporary variable */
 #define swap(a, b)     ((a) ^= (b), (b) ^= (a), (a) ^= (b))
+#define swap32(a, b)                                                    \
+    do {                                                                \
+        int32_t _tmp = a;                                               \
+                                                                        \
+        a = b;                                                          \
+        b = _tmp;                                                       \
+    } while (0)
 /* compute absolute value of integer without branching; PATENTED in USA :( */
 #if (ZEROABS)
 #define zeroabs(a)                                                      \
     (((a) ^ (((a) >> (CHAR_BIT * sizeof(a) - 1))))                      \
      - ((a) >> (CHAR_BIT * sizeof(a) - 1)))
-#define abs(a)         zeroabs(a)
+static __inline__ int
+abs32(int a)
+{
+    int _tmp1 = a ^ (((a) >> (CHAR_BIT * sizeof(a) - 1)));
+    int _tmp2 = a >> (CHAR_BIT * sizeof(a) - 1);
+    int _val = _tmp1 - _tmp2;
+    
+    return _val;
+}
+//#define abs(a)         zeroabs(a)
 #define labs(a)        zeroabs(a)
 #define llabs(a)       zeroabs(a)
 #endif
@@ -515,15 +531,19 @@ divu100(unsigned long x)
 #define leapyear2(u)                                                    \
     (!((u) & 0x03) && ((((u) % 100)) || !((u) % 400)))
 
+#define SWAPTMP 1
+
 /* Thanks to Jeremy 'jercos' Sturdivant for this one. */
 static __inline__
-uint32_t gcd32(uint32_t a, uint32_t b)
+uint32_t gcdu32(uint32_t a, uint32_t b)
 {
-    while(b) {
+    while (b) {
         a %= b;
-        b ^= a;
-        a ^= b;
-        b ^= a;
+#if (SWAPTMP)
+        swap32(b, a);
+#else
+        swap(b, a);
+#endif
     }
 
     return a;

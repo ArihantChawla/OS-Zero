@@ -8,6 +8,18 @@
 #define ZPUNREG     16
 #define ZPUZEROREG  0x00
 
+/* 4-bit unit ID */
+#define OP_LOGIC    0x00
+#define OP_SHIFT    0x01
+#define OP_ARITH    0x02
+#define OP_COMPAR   0x03
+#define OP_STACK    0x04
+#define OP_LDSTR    0x05
+#define OP_FLOW     0x06
+#define OP_SREG     0x07
+#define OP_FPU      0x08
+#define ZPUNUNITBIT 4
+
 /* logical bitwise instructions */
 #define OP_NOT      0x01
 #define OP_AND      0x02
@@ -21,7 +33,7 @@
 #define OP_ROR      0x08
 #define OP_ROL      0x09
 
-/* ALU instructions */
+/* arithmetical instructions */
 #define OP_INC      0x0a
 #define OP_DEC      0x0b
 #define OP_ADD      0x0c
@@ -63,11 +75,11 @@
 #define OP_LMSW     0x26
 #define OP_SMSW     0x27
 
-/* floating point unit intstruction flag */
-#define OP_FPU      0x40
-
 /* maximum number of instructions supported */
-#define ZPUNINST    128
+#define ZPUNOP      128
+#define ZPUNOPBIT   7
+#define ZPUNINSTBIT (ZPUNUNITBIT + ZPUNOPBIT)
+#define ZPUNINST    (1U << (ZPUNINSTBIT))
 
 /* invalid instruction PC return value */
 #define OP_INVAL    0xffffffffU
@@ -90,14 +102,17 @@
 #define ARG_IMMED   0x01        // immediate argument
 #define ARG_ADR     0x02        // address argument
 #define ARG_REG     0x03        // register argument
+
+#define zpusetinst(id, unit, func)                                      \
+    (zpuopfunctab[((unit) << ZPUNOPBIT) + (id)] = (func))
 struct zpuop {
+    unsigned unit    : 4;       // unit ID
     unsigned inst    : 7;       // numerical instruction ID
     unsigned group   : 3;       // instruction group
     unsigned src     : 7;       // 4-bit register ID + INDIR + INDEX + DOUBLE
     unsigned dest    : 7;       // similar to src
     unsigned arg1    : 2;       // NONE, IMMED, ADR, REG
     unsigned arg2    : 2;       // NONE, IMMED, ADR, REG
-    unsigned immed   : 3;       // small immediate constant like MSW flags
     int64_t  args[EMPTY];       // optional arguments
 } PACK();
 

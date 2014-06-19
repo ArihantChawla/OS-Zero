@@ -4,13 +4,14 @@
 #include <zero/cdecl.h>
 #include <zero/param.h>
 #include <zero/mtx.h>
+#if (ZPUPROF)
+#include <zero/prof.h>
 #include <zero/trix.h>
+#endif
 #include <zpu/zpu.h>
 
 static zpuopfunc  *zpuopfunctab[ZPUNINST] ALIGNED(PAGESIZE);
 static struct zpu  zpu ALIGNED(PAGESIZE);
-
-#define zpusetinst(id, func) (zpuopfunctab[(id)] = (func))
 
 void
 zpuinitcore(struct zpu *zpu)
@@ -174,7 +175,20 @@ zpusmsw(struct zpu *zpu, struct zpuop *op)
 void
 zpuinitinst(struct zpu *zpu)
 {
-    zpusetinst(OP_NOT, zpuopnot);
+    /* logical bitwise instructions */
+    zpusetinst(OP_NOT, OP_LOGIC, zpuopnot);
+    zpusetinst(OP_AND, OP_LOGIC, zpuopand);
+    zpusetinst(OP_OR, OP_LOGIC, zpuopor);
+    zpusetinst(OP_XOR, OP_LOGIC, zpuopxor);
+    /* shift instructions */
+    zpusetinst(OP_SHR, OP_SHIFT, zpuopshr);
+    zpusetinst(OP_SHRA, OP_SHIFT, zpuopshra);
+    zpusetinst(OP_SHL, OP_SHIFT, zpuopshl);
+    zpusetinst(OP_ROR, OP_SHIFT, zpuopror);
+    zpusetinst(OP_ROL, OP_SHIFT, zpuoprol);
+    /* special-register instructions */
+    zpusetinst(OP_LMSW, OP_SREG, zpuoplmsw);
+    zpusetinst(OP_SMSW, OP_SREG, zpuopsmsw);
     zpu->functab = zpuopfunctab;
 }
 
@@ -219,6 +233,32 @@ zpurun(struct zpu *zpu)
 int
 main(int argc, char *argv[])
 {
+    int   i;
+    int   j;
+    int   a;
+    int   b;
+    int **tab;
+    PROFDECLCLK(clk);
+
+    tab = malloc(65536 * sizeof(long *));
+    profstartclk(clk);
+    for (i = 1 ; i < 65536 ; i++) {
+        tab[i] = malloc(65536 * sizeof(long));
+        for (j = 1 ; j < 256 ; j++) {
+//            fprintf(stderr, "%ld : %ld\n", i, j);
+            a = abs32(i - j);
+            b = abs(i - j);
+            if (a != abs(i - j)) {
+                fprintf(stderr, "%d: %d != %d\n", i - j,
+                        a, b);
+            }
+            tab[i][j] = gcdu32(i, j);
+        }
+        free(tab[i]);
+    }
+    profstopclk(clk);
+    fprintf(stderr, "GCD: %ld microseconds\n", profclkdiff(clk));
+
     fprintf(stderr, "GCD(%d, %d) == %d\n", 100, 1000, gcdu32(100, 1000));
     fflush(stderr);
 
