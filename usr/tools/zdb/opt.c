@@ -11,9 +11,10 @@ zdbgetopt(struct zdb *zdb, int argc, char *argv[])
     long  val;
 
     zdb->ui.type = ZDB_DEFUI;
+    zdb->api.type = ZDB_DEFAPI;
     for (ndx = 1 ; ndx < argc ; ndx++) {
         cp = argv[ndx];
-        if (!strncmp(cp, "--uitype", 8)) {
+        if (!strncmp(cp, "--ui", 4)) {
             ndx++;
             if (ndx < argc) {
                 cp = argv[ndx];
@@ -22,13 +23,13 @@ zdbgetopt(struct zdb *zdb, int argc, char *argv[])
                 } else if (!strncmp(cp, "xorg", 4)) {
                     zdb->ui.type = UI_SYS_XORG;
                 } else {
-                    fprintf(stderr, "ZDB: --uitype: invalide argument %s\n",
+                    fprintf(stderr, "ZDB: --ui: invalid argument %s\n",
                             cp);
 
                     exit(1);
                 }
             } else {
-                fprintf(stderr, "ZDB: --uitype: no argument\n");
+                fprintf(stderr, "ZDB: --ui: no argument\n");
 
                 exit(1);
             }
@@ -42,7 +43,30 @@ zdbgetopt(struct zdb *zdb, int argc, char *argv[])
 
                 exit(1);
             }
+        } else if (!strncmp(cp, "--api", 5)) {
+            ndx++;
+            if (ndx < argc) {
+                cp = argv[ndx];
+                if (!strncmp(cp, "gdb", 3)) {
+                    zdb->ui.type = ZDB_API_GDB;
+                } else if (!strncmp(cp, "wpm", 3)) {
+                    zdb->ui.type = ZDB_API_WPM;
+                } else if (!strncmp(cp, "zpu", 3)) {
+                    zdb->ui.type = ZDB_API_ZPU;
+                } else {
+                    fprintf(stderr, "ZDB: --uitype: invalid argument %s\n",
+                            cp);
+                    
+                    exit(1);
+                }
+            } else {
+                fprintf(stderr, "ZDB: --api: no argument\n");
+
+                exit(1);
+            }
         }
     }
+
+    return;
 }
 
