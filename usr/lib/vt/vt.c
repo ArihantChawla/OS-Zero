@@ -7,9 +7,9 @@
 #include <zero/param.h>
 #include <zero/trix.h>
 #include <ui/ui.h>
+#include <ui/text.h>
 #include <vt/vt.h>
 #include <vt/pty.h>
-#include <vt/textbuf.h>
 #include <vt/color.h>
 
 int32_t  vtxtermcolortab[256] ALIGNED(PAGESIZE) = VT_XTERM_COLORMAP;
@@ -57,8 +57,8 @@ vtfree(struct vt *vt)
         free(ptr);
         vt->state.tabmap = NULL;
     }
-    vtfreetextbuf(&vt->textbuf);
-    vtfreetextbuf(&vt->scrbuf);
+    uifreetextbuf(&vt->textbuf);
+    uifreetextbuf(&vt->scrbuf);
     vtfreecolors(vt);
     vtfreefonts(vt);
 
@@ -147,7 +147,7 @@ vtinit(struct vt *vt, int argc, char *argv[])
         ncol = VTDEFNCOL;
         vt->state.ncol = ncol;
     }
-    if (!vtinittextbuf(&vt->textbuf, nrow, ncol)) {
+    if (!uiinittextbuf(&vt->textbuf, nrow, ncol)) {
         vtfree(vt);
         if (newvt) {
             free(vt);
@@ -160,9 +160,8 @@ vtinit(struct vt *vt, int argc, char *argv[])
         nrow = VTDEFNROW;
         vt->state.nrow = nrow;
     }
-    if (!vtinittextbuf(&vt->scrbuf, nrow, ncol)) {
+    if (!uiinittextbuf(&vt->scrbuf, nrow, ncol)) {
         vtfree(vt);
-        vtfreetextbuf(&vt->textbuf);
         if (newvt) {
             free(vt);
         }
@@ -174,8 +173,6 @@ vtinit(struct vt *vt, int argc, char *argv[])
     uiinit(&vt->ui, argc, argv);
     if (!vtinitcolors(vt)) {
         vtfree(vt);
-        vtfreetextbuf(&vt->textbuf);
-        vtfreetextbuf(&vt->scrbuf);
         if (newvt) {
             free(vt);
         }
@@ -184,9 +181,6 @@ vtinit(struct vt *vt, int argc, char *argv[])
     }
     if (!vtinitfonts(vt)) {
         vtfree(vt);
-        vtfreetextbuf(&vt->textbuf);
-        vtfreetextbuf(&vt->scrbuf);
-        vtfreecolors(vt);
         if (newvt) {
             free(vt);
         }
@@ -196,10 +190,6 @@ vtinit(struct vt *vt, int argc, char *argv[])
     ptr = calloc(rounduppow2(vt->state.ncol, 32) >> 5, sizeof(uint32_t));
     if (!ptr) {
         vtfree(vt);
-        vtfreetextbuf(&vt->textbuf);
-        vtfreetextbuf(&vt->scrbuf);
-        vtfreecolors(vt);
-        vtfreefonts(vt);
         if (newvt) {
             free(vt);
         }

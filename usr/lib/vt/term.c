@@ -3,10 +3,10 @@
 #include <limits.h>
 #include <signal.h>
 #include <unistd.h>
-#include <ui/ui.h>
-#include <vt/vt.h>
-#include <vt/textbuf.h>
 #include <vt/term.h>
+#include <ui/ui.h>
+#include <ui/text.h>
+#include <vt/vt.h>
 
 void
 termsetsigs(void)
@@ -182,7 +182,7 @@ main(int argc, char *argv[])
         ncol = VTDEFNCOL;
         vt.state.ncol = ncol;
     }
-    if (!vtinittextbuf(&vt.textbuf, nrow, ncol)) {
+    if (!uiinittextbuf(&vt.textbuf, nrow, ncol)) {
         vtfree(&vt);
 
         exit(1);
@@ -192,7 +192,7 @@ main(int argc, char *argv[])
         nrow = VTDEFNROW;
         vt.state.nrow = nrow;
     }
-    if (!vtinittextbuf(&vt.scrbuf, nrow, ncol)) {
+    if (!uiinittextbuf(&vt.scrbuf, nrow, ncol)) {
         vtfree(&vt);
 
         exit(1);

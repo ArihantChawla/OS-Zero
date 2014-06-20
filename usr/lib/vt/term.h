@@ -8,7 +8,6 @@
 #define TERMXORG    1
 #define TERMNSCREEN 2
 
-#define VTCHAR_T       uint8_t
 #define TERMINBUFSIZE  (8 * PAGESIZE)
 #define TERMOUTBUFSIZE (8 * PAGESIZE)
 

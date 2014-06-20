@@ -1,9 +1,10 @@
 #if !(__KERNEL__)
 #include <stdlib.h>
 #endif
-#include <vt/vt.h>
+#include <ui/ui.h>
+#include <ui/text.h>
 #if !defined(FREE)
-#define FREE(x) FREE(x)
+#define FREE(x) free(x)
 #endif
 #if !defined(MALLOC)
 #define MALLOC(x) malloc(x)
@@ -12,16 +13,16 @@
 #define CALLOC(n, s) calloc(n, s)
 #endif
 #if !defined(MEMCPY)
-#define MALLOC(dest, src, len) mempcy(dest, src, len)
+#define MEMCPY(dest, src, len) mempcy(dest, src, len)
 #endif
 
 void
-vtfreetextbuf(struct vttextbuf *buf)
+uifreetextbuf(struct uitextbuf *buf)
 {
-    int32_t       **data = buf->data;
-    struct vtrend **rend = buf->rend;
-    long            nrow = buf->nrow;
-    long            n;
+    TEXT_T          **data = buf->data;
+    struct textrend **rend = buf->rend;
+    long              nrow = buf->nrow;
+    long              n;
 
     if (data) {
         for (n = 0 ; n < nrow ; n++) {
@@ -42,38 +43,38 @@ vtfreetextbuf(struct vttextbuf *buf)
 }
 
 long
-vtinittextbuf(struct vttextbuf *buf, long nrow, long ncol)
+uiinittextbuf(struct uitextbuf *buf, long nrow, long ncol)
 {
-    long            ndx;
-    int32_t       **data;
-    struct vtrend **rend;
-    int32_t        *dptr;
-    struct vtrend  *rptr;
+    long              ndx;
+    TEXT_T          **data;
+    struct textrend **rend;
+    TEXT_T          *dptr;
+    struct textrend  *rptr;
 
-    data = MALLOC(nrow * sizeof(int32_t *));
+    data = MALLOC(nrow * sizeof(TEXT_T *));
     if (!data) {
 
         return 0;
     }
-    rend = MALLOC(nrow * sizeof(struct vtrend *));
+    rend = MALLOC(nrow * sizeof(struct textrend *));
     if (!rend) {
-        vtfreetextbuf(buf);
+        uifreetextbuf(buf);
         
         return 0;
     }
     buf->data = data;
     buf->rend = rend;
     for (ndx = 0 ; ndx < nrow ; ndx++) {
-        dptr = CALLOC(ncol, sizeof(int32_t));
+        dptr = CALLOC(ncol, sizeof(TEXT_T));
         if (!dptr) {
-            vtfreetextbuf(buf);
+            uifreetextbuf(buf);
 
             return 0;
         }
         data[ndx] = dptr;
-        rptr = CALLOC(ncol, sizeof(struct vtrend));
+        rptr = CALLOC(ncol, sizeof(struct textrend));
         if (!rptr) {
-            vtfreetextbuf(buf);
+            uifreetextbuf(buf);
 
             return 0;
         }

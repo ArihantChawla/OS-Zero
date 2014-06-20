@@ -54,7 +54,7 @@ vtinitbuf(struct vt *vt)
 
         return 0;
     }
-    vt->iobuf.nin = TERMINBUFSIZE / sizeof(VTCHAR_T);
+    vt->iobuf.nin = TERMINBUFSIZE / sizeof(TEXT_T);
     vt->iobuf.inbuf = ptr;
     vt->iobuf.inptr = ptr;
     ptr = MALLOC(TERMOUTBUFSIZE);
@@ -65,7 +65,7 @@ vtinitbuf(struct vt *vt)
 
         return 0;
     }
-    vt->iobuf.nout = TERMOUTBUFSIZE / sizeof(VTCHAR_T);
+    vt->iobuf.nout = TERMOUTBUFSIZE / sizeof(TEXT_T);
     vt->iobuf.outbuf = ptr;
     vt->iobuf.outptr = ptr;
 

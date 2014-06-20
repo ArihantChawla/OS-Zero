@@ -7,6 +7,7 @@
 #include <zero/trix.h>
 #include <vt/conf.h>
 #include <ui/ui.h>
+#include <ui/text.h>
 
 #define VTBUFSIZE     PAGESIZE
 
@@ -35,12 +36,6 @@
 #define VTBG256BIT    0x00020000 // foreground is xterm color
 
 #define VTXTERM256BIT 0x100 // xterm 256-color palette entry
-struct vtrend {
-    unsigned fgcolor : 9;       // standard or 256-color xterm palette entry
-    unsigned bgcolor : 9;       // standard or 256-color xterm palette entry
-    unsigned pad     : 7;       // extra room for later flags
-    unsigned atr     : 7;       // specified text attributes
-} PACK();
 
 /* Unicode character plus attributes such as underline */
 //typedef int32_t vtchar_t;
@@ -107,13 +102,6 @@ struct vtiobuf {
     void *outbuf;               // output buffer
 };
 
-struct vttextbuf {
-    long            nrow;       // # of buffer rows
-//    long            ncol;       // # of colums in buffer rows
-    int32_t       **data;       // Unicode text data
-    struct vtrend **rend;       // rendition attribute data
-};
-
 struct vtcolormap {
     void *deftab;               // default colors
     void *xtermtab;             // xterm colors
@@ -143,8 +131,8 @@ struct vt {
 #else
     struct vtiobuf     iobuf;
 #endif
-    struct vttextbuf   textbuf;         // text and rendition buffers
-    struct vttextbuf   scrbuf;          // current screen contents
+    struct uitextbuf   textbuf;         // text and rendition buffers
+    struct uitextbuf   scrbuf;          // current screen contents
     struct ui          ui;              // user interface
     struct uifont      font;            // default font
     struct vtcolormap  colormap;        // terminal colormaps
