@@ -1,7 +1,7 @@
 #include <ui/ui.h>
 
 void *
-uiinitcolors_zero(void *env, int32_t *tab, size_t n)
+uiinitcolors_zero(struct ui *ui, int32_t *tab, size_t n)
 {
     return tab;
 }

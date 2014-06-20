@@ -12,7 +12,7 @@ struct uienv_zero {
 };
 
 void   uiinitapi_zero(struct ui *ui);
-void * uiinitcolors_zero(void *env, int32_t *tab, size_t n);
+void * uiinitcolors_zero(struct ui *, int32_t *tab, size_t n);
 
 #endif /* __UI_ZERO_H__ */
 

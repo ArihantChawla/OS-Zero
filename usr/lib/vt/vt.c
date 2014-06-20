@@ -68,6 +68,42 @@ vtfree(struct vt *vt)
 long
 vtinitcolors(struct vt *vt)
 {
+    void              *deftab;
+    void              *xtermtab;
+
+    deftab = uiinitcolors(&vt->ui, vtdefcolortab, 16);
+    if (!deftab) {
+
+        return 0;
+    }
+    xtermtab = uiinitcolors(&vt->ui, vtxtermcolortab, 256);
+    if (!xtermtab) {
+        free(deftab);
+
+        return 0;
+    }
+    vt->colormap.deftab = deftab;
+    vt->colormap.xtermtab = xtermtab;
+
+    return 1;
+}
+
+long
+vtinitfonts(struct vt *vt)
+{
+
+    if (!uiinitfont(&vt->ui, &vt->font, VTDEFFONT)) {
+
+        return 0;
+    }
+
+    return 1;
+}
+
+#if 0
+long
+vtinitcolors(struct vt *vt)
+{
     struct uienv_xorg *env = vt->ui.env;
     struct uiapi      *api = vt->ui.api;
     void              *deftab;
@@ -109,6 +145,7 @@ vtinitfonts(struct vt *vt)
 
     return 1;
 }
+#endif
 
 struct vt *
 vtinit(struct vt *vt, int argc, char *argv[])
@@ -137,38 +174,6 @@ vtinit(struct vt *vt, int argc, char *argv[])
     vt->state.fgcolor = VTDEFFGCOLOR;
     vt->state.bgcolor = VTDEFBGCOLOR;
     vt->state.textatr = VTDEFTEXTATR;
-#if 0 /* TODO: initialise textbuffers in term.c */
-    nrow = vt->textbuf.nrow;
-    if (!nrow) {
-        nrow = VTDEFBUFNROW;
-    }
-    ncol = vt->state.ncol;
-    if (!ncol) {
-        ncol = VTDEFNCOL;
-        vt->state.ncol = ncol;
-    }
-    if (!uiinittextbuf(&vt->textbuf, nrow, ncol)) {
-        vtfree(vt);
-        if (newvt) {
-            free(vt);
-        }
-
-        return NULL;
-    }
-    nrow = vt->state.nrow;
-    if (!nrow) {
-        nrow = VTDEFNROW;
-        vt->state.nrow = nrow;
-    }
-    if (!uiinittextbuf(&vt->scrbuf, nrow, ncol)) {
-        vtfree(vt);
-        if (newvt) {
-            free(vt);
-        }
-
-        return NULL;
-    }
-#endif
     uisetsys(&vt->ui, UI_SYS_XORG);
     uiinit(&vt->ui, argc, argv);
     if (!vtinitcolors(vt)) {

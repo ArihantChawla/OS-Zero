@@ -29,11 +29,13 @@ struct uifont {
     long  boxh;         // bounding box height in pixels
 };
 
-void uisetsys(struct ui *ui, long type);
-void uiinit(struct ui *ui, int argc, char *argv[]);
+void            uisetsys(struct ui *ui, long type);
+void            uiinit(struct ui *ui, int argc, char *argv[]);
+void          * uiinitcolors(struct ui *ui, int32_t *tab, size_t n);
+struct uifont * uiinitfont(struct ui *ui, struct uifont *font, char *name);
 
 typedef void            uiinit_t(struct ui *, int, char **);
-typedef void          * uiinitcolors_t(void *, int32_t *, size_t);
+typedef void          * uiinitcolors_t(struct ui *, int32_t *, size_t);
 typedef struct uifont * uiinitfont_t(struct ui *, struct uifont *, char *);
 typedef void            uifreefont_t(struct ui *, struct uifont *);
 struct uiapi {

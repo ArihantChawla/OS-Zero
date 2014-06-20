@@ -27,9 +27,9 @@ uigetdisp_xorg(int argc, char *argv[])
 void
 uiinit_xorg(struct ui *ui, int argc, char *argv[])
 {
+    struct uienv_xorg *env = ui->env;
     Display           *disp;
     char              *dispname = uigetdisp_xorg(argc, argv);
-    struct uienv_xorg *env = ui->env;
     int                i;
 
     fprintf(stderr, "UI: opening display %s\n", dispname);
@@ -51,9 +51,9 @@ uiinit_xorg(struct ui *ui, int argc, char *argv[])
 }
 
 void *
-uiinitcolors_xorg(void *env, int32_t *tab, size_t n)
+uiinitcolors_xorg(struct ui *ui, int32_t *tab, size_t n)
 {
-    struct uienv_xorg *xenv = env;
+    struct uienv_xorg *env = ui->env;
     unsigned long     *data;
     unsigned long      pixel;
     long               ndx;
@@ -70,8 +70,8 @@ uiinitcolors_xorg(void *env, int32_t *tab, size_t n)
         color.red = pixel >> 16;
         color.green = (pixel >> 8) & 0xff;
         color.blue = pixel & 0xff;
-        if (!XAllocColor(xenv->display,
-                         xenv->colormap,
+        if (!XAllocColor(env->display,
+                         env->colormap,
                          &color)) {
             free(data);
             
@@ -84,7 +84,7 @@ uiinitcolors_xorg(void *env, int32_t *tab, size_t n)
 }
 
 struct uifont *
-uiinitfont_xorg(struct ui *ui, struct uifont *font, char *fontname)
+uiinitfont_xorg(struct ui *ui, struct uifont *font, char *name)
 {
     struct uienv_xorg *env = ui->env;
     XFontStruct       *fontinfo;
@@ -100,18 +100,18 @@ uiinitfont_xorg(struct ui *ui, struct uifont *font, char *fontname)
             exit(1);
         }
     }
-    if (fontname) {
-        fprintf(stderr, "FONT: loading %s\n", fontname);
-        fontinfo = XLoadQueryFont(env->display, fontname);
+    if (name) {
+        fprintf(stderr, "FONT: loading %s\n", name);
+        fontinfo = XLoadQueryFont(env->display, name);
         if (!fontinfo) {
             if (newfont) {
-                fprintf(stderr, "UI: failed to load font %s\n", fontname);
+                fprintf(stderr, "UI: failed to load font %s\n", name);
                 free(font);
 
                 return NULL;
             }
         }
-        font->name = fontname;
+        font->name = name;
         font->data = fontinfo;
         asc = fontinfo->ascent;
         desc = fontinfo->descent;
@@ -120,7 +120,7 @@ uiinitfont_xorg(struct ui *ui, struct uifont *font, char *fontname)
         font->boxw = fontinfo->max_bounds.width;
         font->boxh = asc + desc;
         fprintf(stderr, "UI: loaded font %s, ascent == %ld, descent == %ld, boxw == %ld, boxh == %ld\n",
-                fontname, asc, desc, font->boxw, font->boxh);
+                name, asc, desc, font->boxw, font->boxh);
     }
 
     return font;
