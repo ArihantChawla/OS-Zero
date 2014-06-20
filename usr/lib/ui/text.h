@@ -1,7 +1,11 @@
 #ifndef __UI_TEXT_H__
 #define __UI_TEXT_H__
 
-typedef uint8_t TEXT_T;
+#include <stdint.h>
+
+#if !defined(TEXT_T)
+#define TEXT_T uint8_t
+#endif
 
 struct textrend {
     unsigned fgcolor : 9;       // standard or 256-color xterm palette entry
