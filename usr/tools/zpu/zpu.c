@@ -91,9 +91,11 @@ static const long  zpunargtab[ZPUNOP]
     0,  // push
     0,  // pusha
     2,  // mov
+#if 0
     2,  // movb
     2,  // movw
     2,  // movq
+#endif
     1,  // jmp
     1,  // call
     1,  // enter
