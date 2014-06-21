@@ -354,7 +354,7 @@ zpudisasm(struct zpu *zpu, struct zpuop *op)
     long nimm = 0;
     long long arg;
 
-    fprintf(stderr, "%lu:\t%s\t", (uint8_t *)op - zpu->core,
+    fprintf(stderr, "0x%lx:\t%s\t", (uint8_t *)op - zpu->core,
             zpuopnametab[op->inst]);
     if (op->sflg & ARG_INDIR) {
         fprintf(stderr, "*");

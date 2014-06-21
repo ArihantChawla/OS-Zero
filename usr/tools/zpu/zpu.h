@@ -1,6 +1,8 @@
 #ifndef __ZPU_ZPU_H__
 #define __ZPU_ZPU_H__
 
+#include <stdint.h>
+
 #include <zero/cdecl.h>
 #include <zero/param.h>
 #include <zpu/conf.h>
