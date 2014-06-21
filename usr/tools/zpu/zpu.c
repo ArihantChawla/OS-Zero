@@ -45,9 +45,11 @@ static const char *zpuopnametab[ZPUNOP]
     "push",
     "pusha",
     "mov",
+#if 0
     "movb",
     "movw",
     "movq",
+#endif
     "jmp",
     "call",
     "enter",
