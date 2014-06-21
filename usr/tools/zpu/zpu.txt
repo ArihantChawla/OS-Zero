@@ -109,7 +109,7 @@ BNC		1		branch if no carry
 
 /* stack operations */
 POP		1		pop register from stack
-PUSH		1		pop register to stack
+PUSH		1		push register to stack
 PUSHA		1		push all registers to stack
 
 /* load/store operations */
