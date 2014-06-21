@@ -19,7 +19,7 @@ integral values.
 
 Registers
 ---------
-- 16 64-bit general purpose registers
+- 12 64-bit general purpose registers
 - frame pointer register
 - stack pointer register
 - program counter (instruction pointer) register
@@ -80,49 +80,49 @@ XOR		2		logical exclusive OR
 
 /* shift instructions */
 SHR
-(SHRA)
+(SAR)
 SHL
 (ROR)
 (ROL)
 
 /* ALU instructions */
-(INC)
-(DEC)
-ADD
-SUB
-CMP
-MUL
-DIV
-MOD
+(INC)		1		increment by one
+(DEC)		1		decrement by one
+ADD		2		addition
+SUB		2		subtraction
+CMP		2		comparison
+MUL		2		multiplication
+DIV		2		division
+MOD	
 
 /* comparative instructions */
-BZ
-BNZ
-BLT
-BLE
-BGT
-BGE
-BO
-BNO
-BC
-BNC
+BZ		1		branch if zero
+BNZ		1		branch if non-zero
+BLT		1		branch if less than
+BLE		1		branch if less than or equal
+BGT		1		branch if greater than
+BGE		1		branch if greater than or equal to
+BO		1		branch if overflow
+BNO		1		branch if no overflow
+BC		1		branch if carry
+BNC		1		branch if no carry
 
 /* stack operations */
-POP
-PUSH
-PUSHA
+POP		1		pop register from stack
+PUSH		1		pop register to stack
+PUSHA		1		push all registers to stack
 
 /* load/store operations */
-MOV
-MOVB
-MOVW
-
+MOV		1		move 32-bit word between register and memory
+MOVB		1		move 8-bit byte between register and memory
+MOVW		1		move 16-bit word between register and memory
+MOVQ		1		move 64-bit word between register and memory
 /* flow control */
-JMP
-CALL
-(ENTER)
-(LEAVE)
-RET
+JMP		1		jump to given memory addres
+CALL		1		initiate subroutine call
+(ENTER)		1		subroutine call prologue
+(LEAVE)		1		subroutine call epilogue
+RET		1		return from subroutine
 
 /* machine status word */
 LMSW

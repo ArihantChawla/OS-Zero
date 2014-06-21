@@ -68,20 +68,22 @@
 
 /* load/store operations */
 #define OP_MOV      0x1f
+#if 0
 #define OP_MOVB     0x20
 #define OP_MOVW     0x21
 #define OP_MOVQ     0x22
+#endif
 
 /* flow control */
-#define OP_JMP      0x23
-#define OP_CALL     0x24
-#define OP_ENTER    0x25
-#define OP_LEAVE    0x26
-#define OP_RET      0x27
+#define OP_JMP      0x20
+#define OP_CALL     0x21
+#define OP_ENTER    0x22
+#define OP_LEAVE    0x23
+#define OP_RET      0x24
 
 /* machine status word */
-#define OP_LMSW     0x28
-#define OP_SMSW     0x29
+#define OP_LMSW     0x25
+#define OP_SMSW     0x26
 
 /* maximum number of instructions supported */
 #define ZPUNOP      (1U << ZPUNOPBIT)
