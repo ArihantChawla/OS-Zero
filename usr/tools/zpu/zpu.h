@@ -24,7 +24,8 @@
 #define OP_LDSTR    0x05
 #define OP_FLOW     0x06
 #define OP_SREG     0x07
-#define OP_FPU      0x08
+#define OP_RAT      0x0e
+#define OP_FPU      0x0f
 #define ZPUNUNITBIT 4
 #define ZPUNUNIT    (1U << ZPUNUNITBIT)
 
