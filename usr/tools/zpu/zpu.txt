@@ -65,8 +65,8 @@ IF  - interrupt flag (1 if interrupts pending)
 VF  - overflow
 ZF  - zero (result)
 
-Instruction Set
----------------
+Base Instruction Set
+--------------------
 
 The instruction names in parentheses indicate potentially optional instructions
 to keep the base design minimalistic.
@@ -128,9 +128,27 @@ RET		1		return from subroutine
 LMSW
 SMSW
 
-Instruction Format
-------------------
-- 3 bits for instruction group:
-  - OP_LOG, OP_SHIFT, OP_ARITH, OP_CMP, OP_STK, OP_LDSTR, OP_FLOW, OP_MSW
-- 6 bits for instruction ID
+Optional Instructions
+---------------------
 
+/* rational number operations */
+RADD		2		rational addition
+RSUB		2		rational subtraction
+RMUL		2		rational multiplication
+RDIV		2		rational division
+
+/* SIMD "vector" operations */
+VSHRB		2		shift 8-bit bytes right
+VSHRW		2		shift 16-bit words right
+VSARB		2		shift 8-bit bytes right arithmetically
+VSARW		2		shift 16-bit words right arithmetically
+VSHLB		2		shift 8-bit bytes left
+VSHLW		2		shift 16-bit words left
+VADDB		2		add 8-bit bytes
+VADDW		2		add 16-bit words
+VSUBB		2		add 8-bit bytes
+VSUBW		2		add 16-bit words
+VMULB		2		add 8-bit bytes
+VMULW		2		add 16-bit words
+VDIVB		2		add 8-bit bytes
+VDIVW		2		add 16-bit words

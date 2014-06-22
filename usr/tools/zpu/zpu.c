@@ -146,8 +146,8 @@ zpuopnot(struct zpu *zpu, struct zpuop *op)
 {
     int64_t sreg = op->src;
     int64_t dreg = sreg;
-    int64_t mask32 = INT64_C(0xffffffff);
-    int64_t src = zpu->ctx.regs[sreg] & mask32;
+    int64_t onemask = INT64_C(0xffffffff);
+    int64_t src = zpu->ctx.regs[sreg] & onemask;
     int64_t dest = ~src;
 
     zpu->ctx.regs[dreg] = dest;
@@ -162,9 +162,9 @@ zpuopand(struct zpu *zpu, struct zpuop *op)
 {
     int64_t sreg = op->src;
     int64_t dreg = op->dest;
-    int64_t mask32 = INT64_C(0xffffffff);
-    int64_t src = zpu->ctx.regs[sreg] & mask32;
-    int64_t dest = zpu->ctx.regs[dreg] & mask32;
+    int64_t onemask = INT64_C(0xffffffff);
+    int64_t src = zpu->ctx.regs[sreg] & onemask;
+    int64_t dest = zpu->ctx.regs[dreg] & onemask;
 
     dest &= src;
     zpu->ctx.regs[dreg] = dest;
@@ -179,9 +179,9 @@ zpuopor(struct zpu *zpu, struct zpuop *op)
 {
     int64_t sreg = op->src;
     int64_t dreg = op->dest;
-    int64_t mask32 = INT64_C(0xffffffff);
-    int64_t src = zpu->ctx.regs[sreg] & mask32;
-    int64_t dest = zpu->ctx.regs[dreg] & mask32;
+    int64_t onemask = INT64_C(0xffffffff);
+    int64_t src = zpu->ctx.regs[sreg] & onemask;
+    int64_t dest = zpu->ctx.regs[dreg] & onemask;
 
     dest |= src;
     zpu->ctx.regs[dreg] = dest;
@@ -196,9 +196,9 @@ zpuopxor(struct zpu *zpu, struct zpuop *op)
 {
     int64_t sreg = op->src;
     int64_t dreg = op->dest;
-    int64_t mask32 = INT64_C(0xffffffff);
-    int64_t src = zpu->ctx.regs[sreg] & mask32;
-    int64_t dest = zpu->ctx.regs[dreg] & mask32;
+    int64_t onemask = INT64_C(0xffffffff);
+    int64_t src = zpu->ctx.regs[sreg] & onemask;
+    int64_t dest = zpu->ctx.regs[dreg] & onemask;
 
     dest ^= src;
     zpu->ctx.regs[dreg] = dest;
@@ -213,9 +213,9 @@ zpuopshr(struct zpu *zpu, struct zpuop *op)
 {
     int64_t sreg = op->src;
     int64_t dreg = op->dest;
-    int64_t mask32 = INT64_C(0xffffffff);
-    int64_t src = zpu->ctx.regs[sreg] & mask32;
-    int64_t dest = zpu->ctx.regs[dreg] & mask32;
+    int64_t onemask = INT64_C(0xffffffff);
+    int64_t src = zpu->ctx.regs[sreg] & onemask;
+    int64_t dest = zpu->ctx.regs[dreg] & onemask;
     int64_t mask = INT64_C(1) << ((32 - src) - 1);
 
     dest >>= src;
@@ -232,9 +232,9 @@ zpuopsar(struct zpu *zpu, struct zpuop *op)
 {
     int64_t sreg = op->src;
     int64_t dreg = op->dest;
-    int64_t mask32 = INT64_C(0xffffffff);
-    int64_t src = zpu->ctx.regs[sreg] & mask32;
-    int64_t dest = zpu->ctx.regs[dreg] & mask32;
+    int64_t onemask = INT64_C(0xffffffff);
+    int64_t src = zpu->ctx.regs[sreg] & onemask;
+    int64_t dest = zpu->ctx.regs[dreg] & onemask;
     int64_t mask = ~INT64_C(0);
 
     dest >>= src;
@@ -257,12 +257,12 @@ zpuopshl(struct zpu *zpu, struct zpuop *op)
 {
     int64_t sreg = op->src;
     int64_t dreg = op->dest;
-    int64_t mask32 = INT64_C(0xffffffff);
-    int64_t src = zpu->ctx.regs[sreg] & mask32;
-    int64_t dest = zpu->ctx.regs[dreg] & mask32;
+    int64_t onemask = INT64_C(0xffffffff);
+    int64_t src = zpu->ctx.regs[sreg] & onemask;
+    int64_t dest = zpu->ctx.regs[dreg] & onemask;
 
     dest <<= src;
-    dest &= mask32;
+    dest &= onemask;
     zpu->ctx.regs[dreg] = dest;
     zpusetmsw(zpu, dest);
     zpu->ctx.regs[ZPUPCREG] += 4;

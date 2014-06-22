@@ -7,13 +7,13 @@
 #include <zero/param.h>
 #include <zpu/conf.h>
 
-#define ZPUNREG     16
+/* register names; r0..r11 are 0..11 respectively */
 #define ZPUNGENREG  12
 #define ZPUFPREG    12
 #define ZPUSPREG    13
 #define ZPUPCREG    14
 #define ZPUMSWREG   15
-#define ZPUZEROREG  0x00
+#define ZPUNREG     16
 
 /* 4-bit unit ID */
 #define OP_LOGIC    0x00
@@ -88,6 +88,11 @@
 #define OP_LMSW     0x25
 #define OP_SMSW     0x26
 
+#define OP_RADD     0x27
+#define OP_RSUB     0x28
+#define OP_RMUL     0x29
+#define OP_RDIV     0x2a
+
 /* maximum number of instructions supported */
 #define ZPUNOP      (1U << ZPUNOPBIT)
 #define ZPUNOPBIT   7
@@ -123,7 +128,7 @@ struct zpuop {
     unsigned src     : 4;       // 4-bit source register ID
     unsigned dflg    : 5;       // INDIR, INDEX, IMMED, ADR, REG
     unsigned dest    : 4;       // 4-bit destination register
-    unsigned argsz   : 3;       // operation size is 1 << (opsize + 1)
+    unsigned argsz   : 3;       // operation size is 1 << (opsize + 1) bytes
     int32_t  args[EMPTY];       // optional arguments
 } PACK();
 
@@ -132,26 +137,79 @@ struct zpurat {
     int32_t denom;
 };
 
-#define zpuchkintr(zpu, i) ((zpu)->intrmask & (1U << (i)))
-#define zpusetintr(zpu, i) ((zpu)->intrmask |= 1U << (i))
-struct zpuctx {
-    int64_t  regs[ZPUNREG];     // register values
-#if 0
-    uint32_t fp;                // frame pointer
-    uint32_t sp;                // stack pointer
-    uint32_t pc;                // program counter ("instruction pointer")
-    int32_t  msw;               // machine status long-word
-#endif
-    uint32_t intrmask;          // mask of pending interrupts
+#define zpugetb0_32(p) (((struct zpuvecb32 *)&(p))->b0)
+#define zpugetb1_32(p) (((struct zpuvecb32 *)&(p))->b1)
+#define zpugetb2_32(p) (((struct zpuvecb32 *)&(p))->b2)
+#define zpugetb3_32(p) (((struct zpuvecb32 *)&(p))->b3)
+struct zpuvecb32 {
+    int8_t b0;
+    int8_t b1;
+    int8_t b2;
+    int8_t b3;
 } PACK();
 
-typedef void  ZPUOPRET;
+#define zpugetw0_32(p) (((struct zpuvecb32 *)&(p))->w0)
+#define zpugetw1_32(p) (((struct zpuvecb32 *)&(p))->w1)
+struct zpuvecw32 {
+    int16_t w0;
+    int16_t w1;
+} PACK();
+
+#if (ZPUIREGSIZE == 8)
+
+#define zpugetb0_64(p) (((struct zpuvecb64 *)&(p))->b0)
+#define zpugetb1_64(p) (((struct zpuvecb64 *)&(p))->b1)
+#define zpugetb2_64(p) (((struct zpuvecb64 *)&(p))->b2)
+#define zpugetb3_64(p) (((struct zpuvecb64 *)&(p))->b3)
+#define zpugetb4_64(p) (((struct zpuvecb64 *)&(p))->b4)
+#define zpugetb5_64(p) (((struct zpuvecb64 *)&(p))->b5)
+#define zpugetb6_64(p) (((struct zpuvecb64 *)&(p))->b6)
+#define zpugetb7_64(p) (((struct zpuvecb64 *)&(p))->b7)
+struct zpuvecb64 {
+    int8_t b0;
+    int8_t b1;
+    int8_t b2;
+    int8_t b3;
+    int8_t b4;
+    int8_t b5;
+    int8_t b6;
+    int8_t b7;
+} PACK();
+
+#define zpugetw0_64(p) (((struct zpuvecb64 *)&(p))->w0)
+#define zpugetw1_64(p) (((struct zpuvecb64 *)&(p))->w1)
+#define zpugetw2_64(p) (((struct zpuvecb64 *)&(p))->w2)
+#define zpugetw3_64(p) (((struct zpuvecb64 *)&(p))->w3)
+struct zpuvecw64 {
+    int16_t w0;
+    int16_t w1;
+    int16_t w2;
+    int16_t w3;
+} PACK();
+
+#define zpugetl0_64(p) (((struct zpuvecb64 *)&(p))->l0)
+#define zpugetl1_64(p) (((struct zpuvecb64 *)&(p))->l1)
+struct zpuvecl64 {
+    int32_t l0;
+    int32_t l1;
+} PACK();
+
+#endif /* ZPUIREGSIZE == 8 */
+
+struct zpuctx {
+    int64_t  regs[ZPUNREG];     // register values
+} PACK();
+
+typedef void ZPUOPRET;
 struct zpu;
 typedef ZPUOPRET zpuopfunc(struct zpu *, struct zpuop *);
+#define zpuchkintr(zpu, i) ((zpu)->intrmask & (1U << (i)))
+#define zpusetintr(zpu, i) ((zpu)->intrmask |= 1U << (i))
 struct zpu {
     zpuopfunc     **functab;
     struct zpuctx   ctx;
     uint8_t        *core;
+    uint32_t        intrmask;   // mask of pending interrupts
     uint8_t         exitflg;
 };
 
