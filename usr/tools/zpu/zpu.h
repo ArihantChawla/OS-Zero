@@ -36,9 +36,9 @@
 #define OP_XOR      0x04
 
 /* shift instructions */
-#define OP_SHR      0x05
-#define OP_SAR      0x06
-#define OP_SHL      0x07
+#define OP_SHR      0x05        // shr, shrb, shrw, shrl
+#define OP_SAR      0x06        // sar, sarb, sarw, sarl
+#define OP_SHL      0x07        // shl, shlb, shlw, shll
 #define OP_ROR      0x08
 #define OP_ROL      0x09
 
@@ -70,12 +70,7 @@
 #define OP_PUSHA    0x1e
 
 /* load/store operations */
-#define OP_MOV      0x1f
-#if 0
-#define OP_MOVB     0x20
-#define OP_MOVW     0x21
-#define OP_MOVQ     0x22
-#endif
+#define OP_MOV      0x1f        // mov, movb, movw, movq
 
 /* flow control */
 #define OP_JMP      0x20
@@ -88,10 +83,16 @@
 #define OP_LMSW     0x25
 #define OP_SMSW     0x26
 
+/* rational number operations */
 #define OP_RADD     0x27
 #define OP_RSUB     0x28
 #define OP_RMUL     0x29
 #define OP_RDIV     0x2a
+
+/* SIMD operations */
+#define OP_ADDS     0x2b
+#define OP_ADDU     0x2c
+/* OP_SUBS, OP_SUBU? */
 
 /* maximum number of instructions supported */
 #define ZPUNOP      (1U << ZPUNOPBIT)
