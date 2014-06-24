@@ -6,7 +6,7 @@
  * know.
  */
 
-#include "prof.h"
+#include <zero/prof.h>
 
 #define PROF_ITERATIONS 524288
 

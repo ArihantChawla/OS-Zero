@@ -4,7 +4,7 @@
 #include <limits.h>
 #include <unistd.h>
 
-#include "../prof.h"
+#include <zero/prof.h>
 
 #define PROF_ITERATIONS 1000
 
