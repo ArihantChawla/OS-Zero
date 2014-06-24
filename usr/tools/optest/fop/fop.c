@@ -6,7 +6,7 @@
 
 #include <zero/prof.h>
 
-#define PROF_ITERATIONS 1000
+#define PROF_ITERATIONS 1024
 
 void
 profadd(void)
@@ -215,7 +215,7 @@ profdiv(void)
 int
 main(int argc, char *argv[])
 {
-    fprintf(stderr, "op\ttick/op\tusec/op\n");
+    fprintf(stderr, "op\ttick/loosp\tusec/op\n");
     profadd();
     profsub();
     profmul();

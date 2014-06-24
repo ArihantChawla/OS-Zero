@@ -227,32 +227,38 @@ zpuopxor(struct zpu *zpu, struct zpuop *op)
     return;
 }
 
+7 -> 1
+3 -> 2
+1 -> 4
+0 -> 8
+
 ZPUOPRET
 zpuopshr(struct zpu *zpu, struct zpuop *op)
 {
     long    sz = op->argsz;
-    long    cnt = 0;
     int64_t sreg = op->src;
     int64_t dreg = op->dest;
-    int64_t onemask = 0xff - ((INT64_C(1) << (8 - src)) - 1);
+    long    cnt = 0;
+    long    n = (sz == 7) ? 1 : ((sz == 3) ? 2 : ((sz == 1) ? 4 : 8));
+    int64_t onemask = (INT64_C(1) << (((sz + 1) << 3) - src)) - 1;
+    int64_t src = zpu->ctx.regs[sreg];
+    int64_t dest = zpu->ctx.regs[dreg];;
     int64_t val = 0;
-    int64_t src = zpu->ctx[sreg];
-    int64_t dest;
-    int64_t mask;
     int64_t res;
 
-    dest = zpu->ctx.regs[dreg];
-    while (sz) {
+    while (n) {
         val = dest & onemask;
         dest >>= 8;
         val >> = src;
-        sz++;
-        val |= onemask;
-        cnt += 8;
+        n--;
+        val &= onemask;
         res |= val << cnt;
+        cnt += 8;
     }
     zpu->ctx.regs[dreg] = res;
-    zpusetmsw(zpu, res);
+    if (sz == ZPUIREGSIZE) {
+        zpusetmsw(zpu, res);
+    }
     zpu->ctx.regs[ZPUPCREG] += 4;
 
     return;
@@ -261,28 +267,37 @@ zpuopshr(struct zpu *zpu, struct zpuop *op)
 ZPUOPRET
 zpuopsar(struct zpu *zpu, struct zpuop *op)
 {
+    long    sz = op->argsz;
     int64_t sreg = op->src;
     int64_t dreg = op->dest;
-    int64_t onemask = INT64_C(0xffffffff);
-    int64_t src = zpu->ctx.regs[sreg] & onemask;
-    int64_t dest = zpu->ctx.regs[dreg] & onemask;
+    long    cnt = 0;
+    long    n = (sz == 7) ? 1 : ((sz == 3) ? 2 : ((sz == 1) ? 4 : 8));
+    int64_t onemask = (INT64_C(1) << (((sz + 1) << 3) - src)) - 1;
+    int64_t src = zpu->ctx.regs[sreg];
+    int64_t dest = zpu->ctx.regs[dreg];
     int64_t mask = ~INT64_C(0);
+    int64_t val = 0;
+    int64_t res;
 
-    if (ZPUIREGSIZE == 8 && sz == 8) {
-    } else if (sz == 4) {
-    } else if (sz == 2) {
-    } else if (sz == 1) {
+    while (n) {
+        val = dest & onemask;
+        dest >>= 8;
+        val >>= src;
+        n--;
+        if (val & (INT64_C(1) << (((sz + 1) << 3) - 1))) {
+            mask = onemask - ((INT64_C(1) << src) - 1);
+            val |= mask;
+        } else {
+            mask = (INT64_C(1) << (((sz + 1) << 3) - src)) - 1;
+            val &= mask;
+        }
+        res |= val << cnt;
+        cnt += 8;
     }
-    dest >>= src;
-    if (src & (INT64_C(1) << ((op->argssz << 1) - 1))) {
-        mask -= (INT64_C(1) << src) - 1;
-        dest |= mask;
-    } else {
-        mask -= (INT64_C(1) << (32 - src)) - 1;
-        dest &= mask;
+    zpu->ctx.regs[dreg] = res;
+    if (sz == ZPUIREGSIZE) {
+        zpusetmsw(zpu, res);
     }
-    zpu->ctx.regs[dreg] = dest;
-    zpusetmsw(zpu, dest);
     zpu->ctx.regs[ZPUPCREG] += 4;
 
     return;
@@ -291,16 +306,30 @@ zpuopsar(struct zpu *zpu, struct zpuop *op)
 ZPUOPRET
 zpuopshl(struct zpu *zpu, struct zpuop *op)
 {
+    long    sz = op->argsz;
     int64_t sreg = op->src;
     int64_t dreg = op->dest;
-    int64_t onemask = INT64_C(0xffffffff);
-    int64_t src = zpu->ctx.regs[sreg] & onemask;
-    int64_t dest = zpu->ctx.regs[dreg] & onemask;
+    long    cnt = 0;
+    long    n = (sz == 7) ? 1 : ((sz == 3) ? 2 : ((sz == 1) ? 4 : 8));
+    int64_t onemask = (INT64_C(1) << ((sz + 1) << 3)) - 1;
+    int64_t src = zpu->ctx.regs[sreg];
+    int64_t dest = zpu->ctx.regs[dreg];
+    int64_t val = 0;
+    int64_t res;
 
-    dest <<= src;
-    dest &= onemask;
-    zpu->ctx.regs[dreg] = dest;
-    zpusetmsw(zpu, dest);
+    while (n) {
+        val = dest & onemask;
+        dest >>= 8;
+        val <<= src;
+        n--;
+        val &= mask;
+        res |= val << cnt;
+        cnt += 8;
+    }
+    zpu->ctx.regs[dreg] = res;
+    if (sz == ZPUIREGSIZE) {
+        zpusetmsw(zpu, res);
+    }
     zpu->ctx.regs[ZPUPCREG] += 4;
 
     return;

@@ -83,16 +83,20 @@
 #define OP_LMSW     0x25
 #define OP_SMSW     0x26
 
+#if (ZPURAT)
 /* rational number operations */
 #define OP_RADD     0x27
 #define OP_RSUB     0x28
 #define OP_RMUL     0x29
 #define OP_RDIV     0x2a
+#endif
 
+#if (ZPUSIMD)
 /* SIMD operations */
 #define OP_ADDS     0x2b
 #define OP_ADDU     0x2c
 /* OP_SUBS, OP_SUBU? */
+#endif
 
 /* maximum number of instructions supported */
 #define ZPUNOP      (1U << ZPUNOPBIT)

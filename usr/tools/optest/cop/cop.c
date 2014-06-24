@@ -1,10 +1,14 @@
 #include <stdio.h>
+#include <stdint.h>
 #include <unistd.h>
 
 /*
  * NOTES: if anyone can find a good way to deduce loop overhead please let me
  * know.
  */
+
+int64_t       tickoverhead;
+unsigned long clkoverhead;
 
 #include <zero/prof.h>
 
@@ -312,7 +316,20 @@ profshr(void)
 int
 main(int argc, char *argv[])
 {
+    int i = 0;
+    PROFDECLCLK(clk);
+    PROFDECLTICK(tick);
+
+    profstarttick(tick);
+    profstartclk(clk);
+    for (i = 0 ; i < PROF_ITERATIONS ; i++) ;
+    profstoptick(tick);
+    profstopclk(clk);
+
     fprintf(stderr, "op\ttick/loop\tusec/loop\n");
+    fprintf(stderr, "loop\t%LF\t%LF\n",
+            (long double)proftickdiff(tick) / (long double)PROF_ITERATIONS,
+            (long double)profclkdiff(clk) / (long double)PROF_ITERATIONS);
     sleep(1);
     /* arithmetic operations. */
     profinc();
