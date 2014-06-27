@@ -55,7 +55,7 @@ whip		| /		| whip
 armor		| ]		| suit or armor
 chain		| c		| chain
 chest		| C		| chest; may find treasury in them
-sub-machine gun | g		| may be Jatimatic
+sub-machine gun | g		| close-range combat
 honey		| h		| from beehives after killing the queen
 knife		| k		| knife, dagger, gurkha, ...
 lockpick	| l		| thieves are naturally best at using these
@@ -95,15 +95,14 @@ zombie		| Z		| zombies; living dead; always evil, attack all
 Special Items
 -------------
 Demon Whip	| /		| weapon against different forms of undead
-Thor		| D		| god of thunder
-Jatimatic	| g		| sub-machine gun for close range combat
+Thor		| T		| god of thunder
+Jatimatic	| J		| sub-machine gun for close range combat
 Mjolnir		| M		| the hammer of Thor
 Pleignir	| R		| ribbon that can hold Fenris
 Stormbringer	| s		| Stormbringer special sword
 Excalibur	| s		| Excalibur special sword
 Holy Cross	| x		| holy cross with the names of 4 archangels
      		  		| - Michael, Raphael, Gabriel, Uriel
-
 Commands
 --------
 
