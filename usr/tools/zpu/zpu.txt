@@ -28,16 +28,6 @@ Registers
 Registers
 ---------
 
-Mask Registers
---------------
-
-Name	Brief			Notes
-----	-----			-----
-B0	all zero bits		64-bit
-B0L	all zero bits		32-bit lower half of B0 for integer operations
-B1	all one bits		64-bit
-B1L	all one bits		32-bit lower half of B1 for integer operations
-
 General Purpose Registers
 -------------------------
 

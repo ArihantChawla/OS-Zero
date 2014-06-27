@@ -4,25 +4,25 @@
 
 #include <zpu/zpu.h>
 
-ZPUOPRET
+void
 radd(struct zpu *zpu, struct zpuop *op)
 {
     ;
 }
 
-ZPUOPRET
+void
 rsub(struct zpu *zpu, struct zpuop *op)
 {
     ;
 }
 
-ZPUOPRET
+void
 rmul(struct zpu *zpu, struct zpuop *op)
 {
     ;
 }
 
-ZPUOPRET
+void
 rdiv(struct zpu *zpu, struct zpuop *op)
 {
     ;

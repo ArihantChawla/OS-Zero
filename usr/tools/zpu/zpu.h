@@ -205,9 +205,8 @@ struct zpuctx {
     int64_t  regs[ZPUNREG];     // register values
 } PACK();
 
-typedef void ZPUOPRET;
 struct zpu;
-typedef ZPUOPRET zpuopfunc(struct zpu *, struct zpuop *);
+typedef void zpuopfunc(struct zpu *, struct zpuop *);
 #define zpuchkintr(zpu, i) ((zpu)->intrmask & (1U << (i)))
 #define zpusetintr(zpu, i) ((zpu)->intrmask |= 1U << (i))
 struct zpu {

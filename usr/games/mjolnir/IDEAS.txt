@@ -43,6 +43,7 @@ silver bullet	| S		| use for demons
 potion		| !		| potion
 plant		| *		| plant
 punchcard	| "		| to be used on in-dungeon mainframes :)
+tape		| 8		| for in-dungeon mainframes
 stairway down	| >		| go down one level
 stairway up	| <		| go up one level
 statue	 	| &		| e.g. Buddha
@@ -52,7 +53,7 @@ scroll		| ?		| spells and other scrolls
 ring		| =		| ring
 whip		| /		| whip
 armor		| ]		| suit or armor
-chain		| 8		| chain
+chain		| c		| chain
 chest		| C		| chest; may find treasury in them
 sub-machine gun | g		| may be Jatimatic
 honey		| h		| from beehives after killing the queen
