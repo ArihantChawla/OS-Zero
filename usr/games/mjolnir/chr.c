@@ -10,8 +10,8 @@
 extern long mjolhit(struct mjolchr *src, struct mjolchr *dest);
 extern long mjoltrap(struct mjolobj *trap, struct mjolchr *dest);
 
-extern mjolcmdfunc     *mjolcmdfunctab[256][256];
-extern mjolcmdmovefunc *mjolcmdmovefunctab[256];
+extern mjolcmdfunc     *mjolcmdfunctab[1024][1024];
+extern mjolcmdmovefunc *mjolcmdmovefunctab[1024];
 
 struct mjolchr *mjolplayer;
 struct mjolchr *mjolchaseq;
@@ -133,22 +133,39 @@ mjoldoturn(struct mjolgame *game, struct mjolchr *chr)
                     dir = getkbd();
                 } while (dir > 0xff);
 #if (MJOL_CURSES)
-                if (dir == KEY_UP) {
+                if (dir == KEY_UP || dir == MJOL_CMD_MOVE_UP) {
                     printmsg("UP");
-                    y--;
-                } else if (dir == KEY_DOWN) {
+#if 0
+                    if (y) {
+                        y--;
+                    }
+#endif
+                } else if (dir == KEY_DOWN || dir == MJOL_CMD_MOVE_DOWN) {
                     printmsg("DOWN");
-                    y++;
-                } else if (dir == KEY_LEFT) {
+#if 0
+                    if (y < game->lvl->height - 1) {
+                        y++;
+                    }
+#endif
+                } else if (dir == KEY_LEFT || dir == MJOL_CMD_MOVE_LEFT) {
                     printmsg("LEFT");
-                    x--;
-                } else if (dir == KEY_RIGHT) {
+#if 0
+                    if (x) {
+                        x--;
+                    }
+#endif
+                } else if (dir == KEY_RIGHT || dir == MJOL_CMD_MOVE_RIGHT) {
                     printmsg("RIGHT");
-                    x++;
+#if 0
+                    if (x < game->lvl->width - 1) {
+                        x++;
+                    }
+#endif
                 } else {
                     printmsg("%lx\n", dir);
                 }
-                dest = game->objtab[lvl][x][y];
+//                dest = game->objtab[lvl][x][y];
+                func = mjolcmdfunctab[cmd][dir];
 #endif
             }
             if (mjolhasarg(cmd)) {

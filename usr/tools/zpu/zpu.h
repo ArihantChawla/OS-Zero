@@ -131,7 +131,6 @@
 #define zpusetinst(id, unit, func)                                      \
     (zpuopfunctab[((unit) << ZPUNOPBIT) + (id)] = (func))
 struct zpuop {
-//    unsigned unit    : 4;       // unit ID
     unsigned flg     : 4;       // instruction flags */
     unsigned inst    : 7;       // numerical instruction ID
     unsigned sflg    : 5;       // INDIR, INDEX, IMMED, ADR, REG
