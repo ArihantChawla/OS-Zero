@@ -228,28 +228,104 @@ vbedrawchar(unsigned char c, int x, int y, argb32_t fg, argb32_t bg)
         }
 #endif
         if (mask & 0x40) {
-            gfxsetrgb888(fg, ptr + 3);
+            gfxsetrgb888(fg, ptr);
         }
         if (mask & 0x20) {
-            gfxsetrgb888(fg, ptr + 6);
+            gfxsetrgb888(fg, ptr + 3);
         }
         if (mask & 0x10) {
-            gfxsetrgb888(fg, ptr + 9);
+            gfxsetrgb888(fg, ptr + 6);
         }
         if (mask & 0x08) {
-            gfxsetrgb888(fg, ptr + 12);
+            gfxsetrgb888(fg, ptr + 9);
         }
         if (mask & 0x04) {
-            gfxsetrgb888(fg, ptr + 15);
+            gfxsetrgb888(fg, ptr + 12);
         }
         if (mask & 0x02) {
-            gfxsetrgb888(fg, ptr + 18);
+            gfxsetrgb888(fg, ptr + 15);
         }
         if (mask & 0x01) {
-            gfxsetrgb888(fg, ptr + 21);
+            gfxsetrgb888(fg, ptr + 18);
         }
         glyph++;
         ptr += incr;
+    }
+
+    return;
+}
+
+void
+vbedrawcharbg(unsigned char c, int x, int y, argb32_t fg, argb32_t bg)
+{
+    long      cy;
+    long      cx;
+    long      incr = vbescreen.w * (vbescreen.nbpp >> 3);
+//    uint8_t *glyph = (uint8_t *)vgafontbuf + ((int)c * vgafonth);
+    uint16_t *glyph = (uint16_t *)vgafontbuf + (int)c * vgafonth;
+    uint8_t  *ptr = vbepixadr(x, y);
+    uint16_t  mask;
+    long      cnt;
+    
+
+    for (cy = 0 ; cy < vgafonth ; cy++) {
+        mask = *glyph;
+#if 0
+        cnt = vgafontw;
+        for (cx = 0 ; cx < vgafontw ; cx++) {
+            if ((mask >> cnt) & 0x01) {
+                gfxsetrgb888(fg, ptr);
+            } else {
+                gfxsetrgb888(bg, ptr);
+            }
+            cnt--;
+            ptr += incr;
+        }
+#endif
+#if 0
+        if (mask & 0x80) {
+            gfxsetrgb888(fg, ptr);
+        } else {
+            gfxsetrgb888(bg, ptr);
+        }
+#endif
+        if (mask & 0x40) {
+            gfxsetrgb888(fg, ptr);
+        } else {
+            gfxsetrgb888(bg, ptr);
+        }
+        if (mask & 0x20) {
+            gfxsetrgb888(fg, ptr + 3);
+        } else {
+            gfxsetrgb888(bg, ptr + 3);
+        }
+        if (mask & 0x10) {
+            gfxsetrgb888(fg, ptr + 6);
+        } else {
+            gfxsetrgb888(bg, ptr + 6);
+        }
+        if (mask & 0x08) {
+            gfxsetrgb888(fg, ptr + 9);
+        } else {
+            gfxsetrgb888(bg, ptr + 9);
+        }
+        if (mask & 0x04) {
+            gfxsetrgb888(fg, ptr + 12);
+        } else {
+            gfxsetrgb888(bg, ptr + 12);
+        }
+        if (mask & 0x02) {
+            gfxsetrgb888(fg, ptr + 15);
+        } else {
+            gfxsetrgb888(bg, ptr + 15);
+        }
+        if (mask & 0x01) {
+            gfxsetrgb888(fg, ptr + 18);
+        } else {
+            gfxsetrgb888(bg, ptr + 18);
+        }
+        ptr += incr;
+        glyph++;
     }
 
     return;
@@ -368,7 +444,8 @@ vbeputs(char *str)
                 }
             }
 #if (NEWFONT)
-            vbedrawchar(ch, col * vgafontw, row * vgafonth, cons->fg, cons->bg);
+            vbedrawcharbg(ch, col * vgafontw, row * vgafonth,
+                          cons->fg, cons->bg);
 #else
             vbedrawchar(ch, col << 3, row << 3, cons->fg, cons->bg);
 #endif
