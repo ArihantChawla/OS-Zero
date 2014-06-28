@@ -12,6 +12,9 @@
 #if (MJOL_USE_ZERO_RANDMT32)
 #include <zero/randmt32.h>
 #endif
+#if (MJOL_CURSES)
+#include <curses.h>
+#endif
 
 extern struct mjolgame *mjolgame;
 extern struct mjolchr  *chaseq;
@@ -127,6 +130,10 @@ extern uint8_t          mjolcanwieldmap[32];
 #define MJOL_CMD_MOVE_UPRIGHT     'u'
 #define MJOL_CMD_MOVE_DOWNLEFT    'b'
 #define MJOL_CMD_MOVE_DOWNRIGHT   'n'
+#define MJOL_CMD_LEFT             (KEY_LEFT)
+#define MJOL_CMD_DOWN             (KEY_DOWN)
+#define MJOL_CMD_UP               (KEY_UP)
+#define MJOL_CMD_RIGHT            (KEY_RIGHT)
 #define MJOL_CMD_RUN_LEFT         'H'
 #define MJOL_CMD_RUN_DOWN         'J'
 #define MJOL_CMD_RUN_UP           'K'

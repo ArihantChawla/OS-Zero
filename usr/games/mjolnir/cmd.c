@@ -4,8 +4,8 @@
 
 extern void mjolbeep(void);
 
+mjolcmdmovefunc *mjolcmdmovefunctab[65536] ALIGNED(PAGESIZE);
 mjolcmdfunc     *mjolcmdfunctab[256][256] ALIGNED(CLSIZE);
-mjolcmdmovefunc *mjolcmdmovefunctab[256];
 uint8_t          mjolcmdismovemap[32];
 uint8_t          mjolcmdhasdirmap[32];
 uint8_t          mjolcmdhasargmap[32];
@@ -98,6 +98,10 @@ mjolinitcmd(void)
     mjolcmdmovefunctab[MJOL_CMD_MOVE_DOWN] = mjolmovedown;
     mjolcmdmovefunctab[MJOL_CMD_MOVE_UP] = mjolmoveup;
     mjolcmdmovefunctab[MJOL_CMD_MOVE_RIGHT] = mjolmoveright;
+    mjolcmdmovefunctab[MJOL_CMD_LEFT] = mjolmoveleft;
+    mjolcmdmovefunctab[MJOL_CMD_DOWN] = mjolmovedown;
+    mjolcmdmovefunctab[MJOL_CMD_UP] = mjolmoveup;
+    mjolcmdmovefunctab[MJOL_CMD_RIGHT] = mjolmoveright;
     mjolcmdmovefunctab[MJOL_CMD_MOVE_UPLEFT] = mjolmoveupleft;
     mjolcmdmovefunctab[MJOL_CMD_MOVE_UPRIGHT] = mjolmoveupright;
     mjolcmdmovefunctab[MJOL_CMD_MOVE_DOWNLEFT] = mjolmovedownleft;
@@ -106,6 +110,10 @@ mjolinitcmd(void)
     mjolsetmove(MJOL_CMD_MOVE_DOWN);
     mjolsetmove(MJOL_CMD_MOVE_UP);
     mjolsetmove(MJOL_CMD_MOVE_RIGHT);
+    mjolsetmove(MJOL_CMD_LEFT);
+    mjolsetmove(MJOL_CMD_DOWN);
+    mjolsetmove(MJOL_CMD_UP);
+    mjolsetmove(MJOL_CMD_RIGHT);
     mjolsetmove(MJOL_CMD_MOVE_UPLEFT);
     mjolsetmove(MJOL_CMD_MOVE_UPRIGHT);
     mjolsetmove(MJOL_CMD_MOVE_DOWNLEFT);

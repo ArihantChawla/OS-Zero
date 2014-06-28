@@ -92,10 +92,13 @@
 #endif
 
 #if (ZPUSIMD)
-/* SIMD operations */
-#define OP_ADDS     0x2b
-#define OP_ADDU     0x2c
-/* OP_SUBS, OP_SUBU? */
+/* SIMD vector operations */
+#define OP_ADDBS    0x2b        // add bytes with signed saturation
+#define OP_ADDBU    0x2c        // add bytes with unsigned saturation
+#define OP_SUBBS    0x2d        // subtract bytes with signed saturation
+#define OP_SUBBU    0x2e        // subtract bytes with unsigned saturation
+#define OP_UNPKBS   0x2f        // unpack signed bytes into 16-bit words
+#define OP_UNPKBU   0x30        // unpack unsigned bytes into 16-bit words
 #endif
 
 /* maximum number of instructions supported */
@@ -103,9 +106,6 @@
 #define ZPUNOPBIT   7
 #define ZPUNINSTBIT (ZPUNUNITBIT + ZPUNOPBIT)
 #define ZPUNINST    (1U << (ZPUNINSTBIT))
-
-/* invalid instruction PC return value */
-#define OP_INVAL    0xffffffffU
 
 /* TODO: FPU instruction set with trigonometry etc. */
 /* SIN, COS, TAN, ASIN, ACOS, ATAN, SINH, COSH, TANH, LOG, POW, ... */
@@ -123,11 +123,16 @@
 #define ARG_ADR     0x08        // address argument
 #define ARG_REG     0x10        // register argument
 
+/* flg values for struct zpuop */
+#define ARITH_SATS  0x01        // use signed saturation arithmetics
+#define ARITH_SATU  0x02        // use unsigned saturation arithmetics
+
 /* opcode is 32-bit with extra arguments following where necessary */
 #define zpusetinst(id, unit, func)                                      \
     (zpuopfunctab[((unit) << ZPUNOPBIT) + (id)] = (func))
 struct zpuop {
-    unsigned unit    : 4;       // unit ID
+//    unsigned unit    : 4;       // unit ID
+    unsigned flg     : 4;       // instruction flags */
     unsigned inst    : 7;       // numerical instruction ID
     unsigned sflg    : 5;       // INDIR, INDEX, IMMED, ADR, REG
     unsigned src     : 4;       // 4-bit source register ID
@@ -142,10 +147,14 @@ struct zpurat {
     int32_t denom;
 };
 
-#define zpugetb0_32(p) (((struct zpuvecb32 *)&(p))->b0)
-#define zpugetb1_32(p) (((struct zpuvecb32 *)&(p))->b1)
-#define zpugetb2_32(p) (((struct zpuvecb32 *)&(p))->b2)
-#define zpugetb3_32(p) (((struct zpuvecb32 *)&(p))->b3)
+#define zpugetb0_32(p)    (((struct zpuvecb32 *)&(p))->b0)
+#define zpugetb1_32(p)    (((struct zpuvecb32 *)&(p))->b1)
+#define zpugetb2_32(p)    (((struct zpuvecb32 *)&(p))->b2)
+#define zpugetb3_32(p)    (((struct zpuvecb32 *)&(p))->b3)
+#define zpusetb0_32(p, v) (((struct zpuvecb32 *)&(p))->b0 = (v) & 0xff)
+#define zpusetb1_32(p, v) (((struct zpuvecb32 *)&(p))->b1 = (v) & 0xff)
+#define zpusetb2_32(p, v) (((struct zpuvecb32 *)&(p))->b2 = (v) & 0xff)
+#define zpusetb3_32(p, v) (((struct zpuvecb32 *)&(p))->b3 = (v) & 0xff)
 struct zpuvecb32 {
     int8_t b0;
     int8_t b1;
@@ -230,6 +239,23 @@ zpusetmsw(struct zpu *zpu, int64_t val)
     zpu->ctx.regs[ZPUMSWREG] |= msw;
 
     return;
+}
+
+static __inline__ int64_t
+zpuread64(struct zpu *zpu, struct zpuop *op)
+{
+    int64_t retval = op->args[0];
+    int64_t tmp = op->args[1];
+
+#if (__BYTE_ORDER == __LITTLE_ENDIAN)
+    tmp <<= 32;
+    retval |= tmp;
+#else
+    retval <<= 32;
+    retval |= tmp;
+#endif
+
+    return retval;
 }
 
 #endif /* __ZPU_ZPU_H__ */

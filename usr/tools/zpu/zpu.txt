@@ -142,3 +142,5 @@ VMULB		2		add 8-bit bytes
 VMULW		2		add 16-bit words
 VDIVB		2		add 8-bit bytes
 VDIVW		2		add 16-bit words
+VUNPKBS		2		unpack 4 signed 8-bit bytes
+VUNPKBU		2		unpack 4 unsigned 8-bit bytes

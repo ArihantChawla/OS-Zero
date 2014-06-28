@@ -21,6 +21,7 @@ mjolgetchtty(void)
         exit(0);
     }
 #elif (MJOL_CURSES)
+    retval = getch();
 #endif
 
     return retval;
