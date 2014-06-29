@@ -33,17 +33,17 @@ General Purpose Registers
 
 Name	Brief			Notes
 ----	-----			-----
-R0..R15	general purpose		for program use
+r0..r11	general purpose		for program use
 
 Special Registers
 -----------------
 
 Name	Brief			Notes
 ----	-----			-----
-FP	frame pointer		pointer to current stack frame
-SP	stack pointer		pointer to current stack position
-PC	program counter		pointer to next instruction to run
-MSW	machine status word	status of the latest instruction executed
+fp	frame pointer		pointer to current stack frame; r12
+sp	stack pointer		pointer to current stack position; r13
+pc	program counter		pointer to next instruction to run; r14
+msw	machine status word	status of the latest instruction executed; r15
 
 Machine Status Word
 -------------------
