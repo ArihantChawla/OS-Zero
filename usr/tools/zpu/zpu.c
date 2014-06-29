@@ -60,6 +60,60 @@ zpuopfunc *zpuopfunctab[ZPUNOP] ALIGNED(PAGESIZE)
     zpuoprdiv,
     zpuopunpk
 };
+
+struct zasopinfo zasopinfotab[]
+= {
+    { "hlt", 0, 0, OP_HLT, 0 },
+    { "not", 1, 0, OP_NOT, 2 },
+    { "and", 2, 0, OP_AND, 2 },
+    { "or", 2, 0, OP_OR, 2 },
+    { "xor", 2, 0, OP_XOR, 2 },
+    { "shr", 2, 0, OP_SHR, 2 },
+    { "sar", 2, 0, OP_SAR, 2 },
+    { "shl", 2, 0, OP_SHL, 2 },
+    { "ror", 2, 0, OP_ROR, 2 },
+    { "rol", 2, 0, OP_ROL, 2 },
+    { "inc", 1, 0, OP_INC, 2 },
+    { "dec", 1, 0, OP_DEC, 2 },
+    { "add", 2, 0, OP_ADD, 2 },
+    { "sub", 2, 0, OP_SUB, 2 },
+    { "cmp", 2, 0, OP_CMP, 2 },
+    { "mul", 2, 0, OP_MUL, 2 },
+    { "div", 2, 0, OP_DIV, 2 },
+    { "mod", 2, 0, OP_MOD, 2 },
+    { "bz", 0, 0, OP_BZ, 2 },
+    { "bnz", 0, 0, OP_BNZ, 2 },
+    { "blt", 0, 0, OP_BLT, 2 },
+    { "ble", 0, 0, OP_BLE, 2 },
+    { "bgt", 0, 0, OP_BGT, 2 },
+    { "bge", 0, 0, OP_BGE, 2 },
+    { "bo", 0, 0, OP_BO, 2 },
+    { "bno", 0, 0, OP_BNO, 2 },
+    { "bc", 0, 0, OP_BC, 2 },
+    { "bnc", 0, 0, OP_BNC, 2 },
+    { "pop", 0, 0, OP_POP, 2 },
+    { "push", 1, 0, OP_PUSH, 2 },
+    { "pusha", 0, 0, OP_PUSHA, 2 },
+    { "mov", 2, 0, OP_MOV, 2 },
+    { "movb", 2, 0, OP_MOV, 0 },
+    { "movw", 2, 0, OP_MOV, 1 },
+    { "movq", 2, 0, OP_MOV, 7 },
+    { "jmp", 2, 0, OP_JMP, 2 },
+    { "call", 2, 0, OP_CALL, 2 },
+    { "enter", 1, 0, OP_ENTER, 2 },
+    { "leave", 1, 0, OP_LEAVE, 2 },
+    { "ret", 1, 0, OP_RET, 2 },
+    { "lmsw", 1, 0, OP_LMSW, 2 },
+    { "smsw", 1, 0, OP_SMSW, 2 },
+    /* rational number extensions */
+    { "radd", 2, 0, OP_RADD, 7 },
+    { "rsub", 2, 0, OP_RSUB, 7 },
+    { "rmul", 2, 0, OP_RMUL, 7 },
+    { "rdiv", 2, 0, OP_RDIV, 7 },
+    /* SIMD extensions */
+    { "unpk" }
+};
+#if 0
 const char *zpuopnametab[ZPUNOP]
 = {
     "hlt",
@@ -116,8 +170,8 @@ const char *zpuopnametab[ZPUNOP]
 const long zpuopnargtab[ZPUNOP]
 = {
     0,  // hlt
-    0,  // not
-    1,  // and
+    1,  // not
+    2,  // and
     2,  // or
     2,  // xor
     2,  // shr
@@ -160,6 +214,7 @@ const long zpuopnargtab[ZPUNOP]
     2,  // rdiv
     2,  // unpk
 };
+#endif
 static const char *zpuregnametab[ZPUNREG]
 = {
     "r0",
@@ -198,6 +253,7 @@ zpuinitcore(struct zpu *zpu)
 
         exit(1);
     }
+    memset(ptr, 0, ZPUCORESIZE);
     zpu->core = ptr;
     physmem = ptr;
 
@@ -239,14 +295,14 @@ zpuinit(struct zpu *zpu)
 void
 zpudisasm(struct zpu *zpu, struct zpuop *op)
 {
-    long src = op->src;
-    long dest = op->dest;
-    long argsz = op->argsz;
-    long nimm = 0;
+    struct zasopinfo *info = &zasopinfotab[op->inst];
+    long              src = op->src;
+    long              dest = op->dest;
+    long              argsz = op->argsz;
+    long              nimm = 0;
     long long arg;
 
-    fprintf(stderr, "0x%lx:\t%s\t", (uint8_t *)op - zpu->core,
-            zpuopnametab[op->inst]);
+    fprintf(stderr, "0x%lx:\t%s\t", (uint8_t *)op - zpu->core, info->name);
     if (op->sflg & ARG_INDIR) {
         fprintf(stderr, "*");
         if (op->sflg & ARG_REG) {
@@ -277,7 +333,7 @@ zpudisasm(struct zpu *zpu, struct zpuop *op)
     } else if (op->sflg & ARG_REG) {
         fprintf(stderr, "%s", zpuregnametab[src]);
     }
-    if (zpuopnargtab[op->inst] == 2) {
+    if (info->narg == 2) {
         if (op->dflg & ARG_INDIR) {
             fprintf(stderr, ", *");
             if (op->dflg & ARG_REG) {

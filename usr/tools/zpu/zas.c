@@ -1,4 +1,4 @@
-#define ZASDEBUG   0
+#define ZASDEBUG   1
 #define ZASBUFSIZE 131072
 
 #if (WPM)
@@ -56,40 +56,41 @@ struct zasmap {
 
 typedef struct zastoken * zastokfunc_t(struct zastoken *, zasmemadr_t, zasmemadr_t *);
 
-static zasuword_t        zasgetreg(uint8_t *str, uint8_t **retptr);
-static uint8_t         * zasgetlabel(uint8_t *str, uint8_t **retptr);
-static struct zasop    * zasgetinst(uint8_t *str, uint8_t **retptr);
-static uint8_t         * zasgetsym(uint8_t *str, uint8_t **retptr);
-static zasuword_t        zasgetvalue(uint8_t *str, zasword_t *retval,
+static zasuword_t         zasgetreg(uint8_t *str, uint8_t **retptr);
+static uint8_t          * zasgetlabel(uint8_t *str, uint8_t **retptr);
+static struct zasopinfo * zasgetinst(uint8_t *str, uint8_t **retptr);
+static uint8_t          * zasgetsym(uint8_t *str, uint8_t **retptr);
+static zasuword_t         zasgetvalue(uint8_t *str, zasword_t *retval,
                                      uint8_t **retptr);
-static uint8_t           zasgetchar(uint8_t *str, uint8_t **retptr);
+static uint8_t            zasgetchar(uint8_t *str, uint8_t **retptr);
 #if (ZASMMAP)
-static struct zastoken * zasgettoken(uint8_t *str, uint8_t **retptr,
+static struct zastoken  * zasgettoken(uint8_t *str, uint8_t **retptr,
                                      struct zasmap *map);
 #else
-static struct zastoken * zasgettoken(uint8_t *str, uint8_t **retptr);
+static struct zastoken  * zasgettoken(uint8_t *str, uint8_t **retptr);
 #endif
 
-static struct zastoken * zasprocvalue(struct zastoken *, zasmemadr_t, zasmemadr_t *);
-static struct zastoken * zasproclabel(struct zastoken *, zasmemadr_t, zasmemadr_t *);
-static struct zastoken * zasprocinst(struct zastoken *, zasmemadr_t, zasmemadr_t *);
-static struct zastoken * zasprocchar(struct zastoken *, zasmemadr_t, zasmemadr_t *);
-static struct zastoken * zasprocdata(struct zastoken *, zasmemadr_t, zasmemadr_t *);
-static struct zastoken * zasprocglobl(struct zastoken *, zasmemadr_t, zasmemadr_t *);
-static struct zastoken * zasprocspace(struct zastoken *, zasmemadr_t, zasmemadr_t *);
-static struct zastoken * zasprocorg(struct zastoken *, zasmemadr_t, zasmemadr_t *);
-static struct zastoken * zasprocalign(struct zastoken *, zasmemadr_t, zasmemadr_t *);
-static struct zastoken * zasprocasciz(struct zastoken *, zasmemadr_t, zasmemadr_t *);
+static struct zastoken  * zasprocvalue(struct zastoken *, zasmemadr_t, zasmemadr_t *);
+static struct zastoken  * zasproclabel(struct zastoken *, zasmemadr_t, zasmemadr_t *);
+static struct zastoken  * zasprocinst(struct zastoken *, zasmemadr_t, zasmemadr_t *);
+static struct zastoken  * zasprocchar(struct zastoken *, zasmemadr_t, zasmemadr_t *);
+static struct zastoken  * zasprocdata(struct zastoken *, zasmemadr_t, zasmemadr_t *);
+static struct zastoken  * zasprocglobl(struct zastoken *, zasmemadr_t, zasmemadr_t *);
+static struct zastoken  * zasprocspace(struct zastoken *, zasmemadr_t, zasmemadr_t *);
+static struct zastoken  * zasprocorg(struct zastoken *, zasmemadr_t, zasmemadr_t *);
+static struct zastoken  * zasprocalign(struct zastoken *, zasmemadr_t, zasmemadr_t *);
+static struct zastoken  * zasprocasciz(struct zastoken *, zasmemadr_t, zasmemadr_t *);
 
 #if (WPM)
 /* TODO: combine these into a structure table for better cache locality */
 //static char    **zasopnametab;
 //static uint8_t  *zasopnargtab;
-static struct zasopinfo *zasopinfotab[WPMNUNIT];
+//static struct zasopinfo *zasopinfotab[WPMNUNIT];
 //extern struct zasopinfo   wpmopinfotab[WPMNUNIT][WPMNASMOP];
 #elif (ZEN)
-extern const char *zpuopnametab[ZPUNOP];
-extern const long  zpuopnargtab[ZPUNOP];
+extern struct zasopinfo zasopinfotab[];
+//extern const char *zpuopnametab[ZPUNOP];
+//extern const long  zpuopnargtab[ZPUNOP];
 #endif
 
 struct zassymrec {
@@ -99,10 +100,7 @@ struct zassymrec {
 };
 
 #define NHASHITEM 1024
-static struct zasop     *ophash[NHASHITEM] ALIGNED(PAGESIZE);
-#if (WPMVEC)
-static struct zasop     *vecophash[NHASHITEM];
-#endif
+static struct zasopinfo *ophash[NHASHITEM] ALIGNED(PAGESIZE);
 static struct zassymrec *symhash[NHASHITEM];
 static struct zasval    *valhash[NHASHITEM];
 static struct zaslabel  *globhash[NHASHITEM];
@@ -314,9 +312,9 @@ zasqueuetoken(struct zastoken *token)
 }
 
 static void
-zasaddop(struct zasop *op)
+zasaddop(struct zasopinfo *op)
 {
-    uint8_t       *str = op->name;
+    uint8_t       *str = (uint8_t *)op->name;
     unsigned long  key = 0;
     unsigned long  len = 0;
 
@@ -324,7 +322,7 @@ zasaddop(struct zasop *op)
         key += *str++;
         len++;
     }
-    op->len = len;
+    op->namelen = len;
     key &= (NHASHITEM - 1);
     op->next = ophash[key];
     ophash[key] = op;
@@ -332,66 +330,24 @@ zasaddop(struct zasop *op)
     return;
 }
 
-struct zasop *
+struct zasopinfo *
 zasfindop(uint8_t *name)
 {
-    struct zasop  *op = NULL;
-    uint8_t       *str = name;
-    unsigned long  key = 0;
+    struct zasopinfo *info = NULL;
+    uint8_t          *str = name;
+    unsigned long     key = 0;
 
     while ((*str) && isalpha(*str)) {
         key += *str++;
     }
     key &= (NHASHITEM - 1);
-    op = ophash[key];
-    while ((op) && strncmp((char *)op->name, (char *)name, op->len)) {
-        op = op->next;
+    info = ophash[key];
+    while ((info) && strncmp((char *)info->name, (char *)name, info->namelen)) {
+        info = info->next;
     }
 
-    return op;
+    return info;
 }
-
-#if (WPMVEC)
-
-static void
-zasaddvecop(struct zasop *op)
-{
-    uint8_t       *str = op->name;
-    unsigned long  key = 0;
-    unsigned long  len = 0;
-
-    while (*str) {
-        key += *str++;
-        len++;
-    }
-    op->len = len;
-    key &= (NHASHITEM - 1);
-    op->next = vecophash[key];
-    vecophash[key] = op;
-
-    return;
-}
-
-struct zasop *
-zasfindvecop(uint8_t *name)
-{
-    struct zasop  *op = NULL;
-    uint8_t       *str = name;
-    unsigned long  key = 0;
-
-    while ((*str) && isalpha(*str)) {
-        key += *str++;
-    }
-    key &= (NHASHITEM - 1);
-    op = vecophash[key];
-    while ((op) && strncmp((char *)op->name, (char *)name, op->len)) {
-        op = op->next;
-    }
-
-    return op;
-}
-
-#endif
 
 #if (ZASDB) || (WPMDB)
 void
@@ -613,15 +569,17 @@ zasinitop(void)
 void
 zasinitop(void)
 {
-    struct zasop *op;
-    long          l;
+    struct zasopinfo *info;
+    long              l;
 
-    for (l = 0 ; (zpuopnametab[l]) ; l++) {
-        op = malloc(sizeof(struct zasop));
-        op->name = (uint8_t *)(zpuopnametab[l]);
-        op->code = (uint8_t)l;
-        op->narg = zpuopnargtab[l];
-        zasaddop(op);
+    for (l = 0 ; (zasopinfotab[l].name) ; l++) {
+        info = malloc(sizeof(struct zasopinfo));
+        info->name = zasopinfotab[l].name;
+        info->narg = zasopinfotab[l].narg;
+        info->flg = 0;
+        info->code = zasopinfotab[l].code;
+        info->argsz = zasopinfotab[l].argsz;
+        zasaddop(info);
     }
 }
 #endif
@@ -740,21 +698,21 @@ zasgetlabel(uint8_t *str, uint8_t **retptr)
     return name;
 }
 
-static struct zasop *
+static struct zasopinfo *
 zasgetinst(uint8_t *str, uint8_t **retptr)
 {
-    struct zasop *op;
+    struct zasopinfo *info;
 
-    op = zasfindop(str);
+    info = zasfindop(str);
 #if (ZASDEBUG)
     fprintf(stderr, "getinst: %s\n", str);
 #endif
-    if (op) {
-        str += op->len;
+    if (info) {
+        str += info->namelen;
         *retptr = str;
     }
 
-    return op;
+    return info;
 }
 
 #if (WPMVEC)
@@ -770,7 +728,7 @@ zasgetvecinst(uint8_t *str, uint8_t **retptr)
 #endif
     if (op) {
         op->flg = OP_QUAD;
-        str += op->len;
+        str += op->namelen;
         if (*str == '_') {
             str++;
             while (isalpha(*str)) {
@@ -1092,19 +1050,19 @@ static struct zastoken *
 zasgettoken(uint8_t *str, uint8_t **retptr)
 #endif
 {
-    long             buflen = LINELEN;
-    long             len;
-    uint8_t         *buf = strbuf;
-    struct zastoken *token1 = malloc(sizeof(struct zastoken));
-    struct zastoken *token2;
-    struct zasop    *op = NULL;
-    uint8_t         *name = str;
-    zasword_t        val = RESOLVE;
-    long             size = 0;
-    zasword_t        ndx;
-    int              ch;
+    long              buflen = LINELEN;
+    long              len;
+    uint8_t          *buf = strbuf;
+    struct zastoken  *token1 = malloc(sizeof(struct zastoken));
+    struct zastoken  *token2;
+    struct zasopinfo *info = NULL;
+    uint8_t          *name = str;
+    zasword_t         val = RESOLVE;
+    long              size = 0;
+    zasword_t         ndx;
+    int               ch;
 #if (ZASDB)
-    uint8_t         *ptr;
+    uint8_t          *ptr;
 #endif
 
     while (*str && isspace(*str)) {
@@ -1207,34 +1165,33 @@ zasgettoken(uint8_t *str, uint8_t **retptr)
 #endif
 #if (WPMVEC)
             if (*str == 'v') {
-                op = zasgetvecinst(str, &str);
-                if (op) {
+                info = zasgetvecinst(str, &str);
+                if (info) {
                     token1->unit = UNIT_VEC;
                 }
             }
-            if (!op) {
-                op = zasgetinst(str, &str);
-                if (op) {
+            if (!info) {
+                info = zasgetinst(str, &str);
+                if (info) {
                     token1->unit = UNIT_ALU;
                 }
             }
 #else
-            op = zasgetinst(str, &str);
+            info = zasgetinst(str, &str);
 #endif
-            if (op) {
+            if (info) {
                 token1->type = TOKENINST;
 #if (!WPMVEC) && !ZEN
                 token1->unit = UNIT_ALU;
 #endif
-                token1->data.inst.name = op->name;
-                token1->data.inst.op = op->code;
-//                token1->data.inst.narg = op->narg;
-                token1->data.inst.narg = zpuopnargtab[op->code];
+                token1->data.inst.name = (uint8_t *)info->name;
+                token1->data.inst.op = info->code;
+                token1->data.inst.narg = info->narg;
 #if (ZASDB)
                 token1->data.inst.data = (uint8_t *)strdup((char *)ptr);
 #endif
 #if (WPMVEC)
-                token1->data.inst.flg = op->flg;
+                token1->data.inst.flg = info->flg;
 #endif
             } else {
                 name = zasgetsym(str, &str);
@@ -1554,10 +1511,12 @@ zasprocinst(struct zastoken *token, zasmemadr_t adr,
             adr++;
         } else
             if (!narg) {
+                op->flg = 0;
                 op->arg1t = ARGNONE;
                 op->arg2t = ARGNONE;
                 op->reg1 = 0;
                 op->reg2 = 0;
+                op->argsz = 2;
                 retval = token->next;
             } else {
                 token1 = token->next;

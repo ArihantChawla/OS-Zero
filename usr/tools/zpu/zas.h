@@ -1,6 +1,9 @@
 #ifndef __ZPU_ZAS_H__
 #define __ZPU_ZAS_H__
 
+#include <stdint.h>
+#include <zero/cdecl.h>
+#include <zero/param.h>
 #if (WPM)
 #include <wpm/wpm.h>
 #elif (ZEN)
@@ -18,8 +21,6 @@ typedef uint32_t  zassize_t;
 //typedef uint64_t  zasuword_t;
 //typedef uint64_t  zassize_t;
 //#endif
-
-#include <stdint.h>
 
 #define LINELEN     4096
 
@@ -49,20 +50,30 @@ typedef uint32_t  zassize_t;
 #define NTOKTYPE    0x16
 
 struct zasopinfo {
-    const char *name;
-    uint8_t     narg;
-};
+    const char       *name;
+    long              namelen;
+    uint8_t           narg;
+    uint8_t           flg;
+    uint8_t           code;
+    uint8_t           argsz;
+    struct zasopinfo *next;
+} PACK();
 
+#if 0
 struct zasop {
     uint8_t      *name;
     uint8_t       code;
     uint8_t       narg;
     uint8_t       len;
-#if (WPMVEC)
+#if (WPMVEC) || (ZEN)
     uint32_t      flg;
+#endif
+#if (ZEN)
+    uint8_t       argsz;
 #endif
     struct zasop *next;
 };
+#endif
 
 struct zaslabel {
     uint8_t         *name;

@@ -1,10 +1,17 @@
 #include <stdlib.h>
+#if (ZPUDEBUG)
+#include <stdio.h>
+#endif
 #include <zpu/conf.h>
 #include <zpu/zpu.h>
 
 void
 zpuophlt(struct zpu *zpu, struct zpuop *op)
 {
+#if (ZPUDEBUG)
+    fprintf(stderr, "hlt\n");
+#endif
+
     exit(0);
 }
 
@@ -141,6 +148,9 @@ zpuopsar(struct zpu *zpu, struct zpuop *op)
     int64_t val = 0;
     int64_t res = 0;
 
+#if (ZPUDEBUG)
+    fprintf(stderr, "sar\n");
+#endif
     while (n) {
         val = dest & onemask;
         dest >>= 8;
