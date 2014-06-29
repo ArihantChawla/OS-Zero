@@ -26,6 +26,7 @@ int    posix_memalign(void **ret, size_t align, size_t size);
     && !(_POSIX_C_SOURCE >= 200112L || _XOPEN_SOURCE >= 600))
 void * valloc(size_t size);
 #endif /* BSD || XOPEN || POSIX */
+void * memalign(size_t align, size_t size)
 
 #if (_BSD_SOURCE)
 void * reallocf(void *ptr, size_t size);
@@ -39,3 +40,4 @@ void   qsort(void *const base, size_t nitems, size_t size,
              int (*cmp)(const void *, const void *));
 
 #endif /* __STDLIB_H__ */
+
