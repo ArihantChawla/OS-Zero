@@ -1,5 +1,6 @@
 #include <stdlib.h>
 #include <stdio.h>
+#include <string.h>
 #include <stdint.h>
 #include <zero/cdecl.h>
 #include <zero/param.h>
@@ -9,11 +10,59 @@
 #include <zero/trix.h>
 #endif
 #include <zpu/zpu.h>
+#include <zpu/zas.h>
 
-static zpuopfunc  *zpuopfunctab[ZPUNINST] ALIGNED(PAGESIZE);
-static const char *zpuopnametab[ZPUNOP]
+//typedef void zpuophandler_t(struct zpuop *);
+zpuopfunc *zpuopfunctab[ZPUNOP] ALIGNED(PAGESIZE)
 = {
-    NULL,
+    zpuophlt,
+    zpuopnot,
+    zpuopand,
+    zpuopor,
+    zpuopxor,
+    zpuopshr,
+    zpuopsar,
+    zpuopshl,
+    zpuopror,
+    zpuoprol,
+    zpuopinc,
+    zpuopdec,
+    zpuopadd,
+    zpuopsub,
+    zpuopcmp,
+    zpuopmul,
+    zpuopdiv,
+    zpuopmod,
+    zpuopbz,
+    zpuopbnz,
+    zpuopblt,
+    zpuopble,
+    zpuopbgt,
+    zpuopbge,
+    zpuopbo,
+    zpuopbno,
+    zpuopbc,
+    zpuopbnc,
+    zpuoppop,
+    zpuoppush,
+    zpuoppusha,
+    zpuopmov,
+    zpuopjmp,
+    zpuopcall,
+    zpuopenter,
+    zpuopleave,
+    zpuopret,
+    zpuoplmsw,
+    zpuopsmsw,
+    zpuopradd,
+    zpuoprsub,
+    zpuoprmul,
+    zpuoprdiv,
+    zpuopunpk
+};
+const char *zpuopnametab[ZPUNOP]
+= {
+    "hlt",
     "not",
     "and",
     "or",
@@ -56,10 +105,17 @@ static const char *zpuopnametab[ZPUNOP]
     "leave",
     "ret",
     "lmsw",
-    "smsw"
+    "smsw",
+    "radd",
+    "rsub",
+    "rmul",
+    "rdiv",
+    "unpk",
+    NULL
 };
-static const long  zpunargtab[ZPUNOP]
+const long zpuopnargtab[ZPUNOP]
 = {
+    0,  // hlt
     0,  // not
     1,  // and
     2,  // or
@@ -91,18 +147,18 @@ static const long  zpunargtab[ZPUNOP]
     0,  // push
     0,  // pusha
     2,  // mov
-#if 0
-    2,  // movb
-    2,  // movw
-    2,  // movq
-#endif
     1,  // jmp
     1,  // call
     1,  // enter
     1,  // leave
     1,  // ret
     1,  // lmsw
-    1   // smsw
+    1,  // smsw
+    2,  // radd
+    2,  // rsub
+    2,  // rmul
+    2,  // rdiv
+    2,  // unpk
 };
 static const char *zpuregnametab[ZPUNREG]
 = {
@@ -123,7 +179,13 @@ static const char *zpuregnametab[ZPUNREG]
     "pc",
     "msw"
 };
-static struct zpu  zpu ALIGNED(PAGESIZE);
+static struct zpu       zpu ALIGNED(PAGESIZE);
+uint8_t                *physmem;
+extern struct zastoken *zastokenqueue;
+extern struct zastoken *zastokentail;
+extern unsigned long    zasinputread;
+extern long             readbufcur;
+extern zasmemadr_t      _startadr;
 
 void
 zpuinitcore(struct zpu *zpu)
@@ -137,211 +199,9 @@ zpuinitcore(struct zpu *zpu)
         exit(1);
     }
     zpu->core = ptr;
+    physmem = ptr;
 
     return;
-}
-
-void
-zpuopnot(struct zpu *zpu, struct zpuop *op)
-{
-    int64_t sreg = op->src;
-    int64_t dreg = sreg;
-#if (ZPUIREGSIZE == 4)
-    int64_t onemask = INT64_C(0xffffffff);
-    int64_t src = zpu->ctx.regs[sreg] & onemask;
-#else
-    int64_t src = zpu->ctx.regs[sreg];
-#endif
-    int64_t dest = ~src;
-
-    zpu->ctx.regs[dreg] = dest;
-    zpusetmsw(zpu, dest);
-    zpu->ctx.regs[ZPUPCREG] += 4;
-
-    return;
-}
-
-void
-zpuopand(struct zpu *zpu, struct zpuop *op)
-{
-    int64_t sreg = op->src;
-    int64_t dreg = op->dest;
-#if (ZPUIREGSIZE == 4)
-    int64_t onemask = INT64_C(0xffffffff);
-    int64_t src = zpu->ctx.regs[sreg] & onemask;
-    int64_t dest = zpu->ctx.regs[dreg] & onemask;
-#else
-    int64_t src = zpu->ctx.regs[sreg];
-    int64_t dest = zpu->ctx.regs[dreg];
-#endif
-
-    dest &= src;
-    zpu->ctx.regs[dreg] = dest;
-    zpusetmsw(zpu, dest);
-    zpu->ctx.regs[ZPUPCREG] += 4;
-
-    return;
-}
-
-void
-zpuopor(struct zpu *zpu, struct zpuop *op)
-{
-    int64_t sreg = op->src;
-    int64_t dreg = op->dest;
-#if (ZPUIREGSIZE == 4)
-    int64_t onemask = INT64_C(0xffffffff);
-    int64_t src = zpu->ctx.regs[sreg] & onemask;
-    int64_t dest = zpu->ctx.regs[dreg] & onemask;
-#else
-    int64_t src = zpu->ctx.regs[sreg];
-    int64_t dest = zpu->ctx.regs[dreg];
-#endif
-
-    dest |= src;
-    zpu->ctx.regs[dreg] = dest;
-    zpusetmsw(zpu, dest);
-    zpu->ctx.regs[ZPUPCREG] += 4;
-
-    return;
-}
-
-void
-zpuopxor(struct zpu *zpu, struct zpuop *op)
-{
-    int64_t sreg = op->src;
-    int64_t dreg = op->dest;
-#if (ZPUIREGSIZE == 4)
-    int64_t onemask = INT64_C(0xffffffff);
-    int64_t src = zpu->ctx.regs[sreg] & onemask;
-    int64_t dest = zpu->ctx.regs[dreg] & onemask;
-#else
-    int64_t src = zpu->ctx.regs[sreg];
-    int64_t dest = zpu->ctx.regs[dreg];
-#endif
-
-    dest ^= src;
-    zpu->ctx.regs[dreg] = dest;
-    zpusetmsw(zpu, dest);
-    zpu->ctx.regs[ZPUPCREG] += 4;
-
-    return;
-}
-
-void
-zpuopshr(struct zpu *zpu, struct zpuop *op)
-{
-    long    sz = op->argsz;
-    int64_t sreg = op->src;
-    int64_t dreg = op->dest;
-    long    cnt = 0;
-    long    n = (sz == 7) ? 1 : ((sz == 3) ? 2 : ((sz == 1) ? 4 : 8));
-    int64_t src = zpu->ctx.regs[sreg];
-    int64_t dest = zpu->ctx.regs[dreg];;
-    int64_t onemask = (INT64_C(1) << (((sz + 1) << 3) - src)) - 1;
-    int64_t val = 0;
-    int64_t res = 0;
-
-    while (n) {
-        val = dest & onemask;
-        dest >>= 8;
-        val >>= src;
-        n--;
-        val &= onemask;
-        res |= val << cnt;
-        cnt += 8;
-    }
-    zpu->ctx.regs[dreg] = res;
-    if (sz == ZPUIREGSIZE) {
-        zpusetmsw(zpu, res);
-    }
-    zpu->ctx.regs[ZPUPCREG] += 4;
-
-    return;
-}
-
-void
-zpuopsar(struct zpu *zpu, struct zpuop *op)
-{
-    long    sz = op->argsz;
-    int64_t sreg = op->src;
-    int64_t dreg = op->dest;
-    long    cnt = 0;
-    long    n = (sz == 7) ? 1 : ((sz == 3) ? 2 : ((sz == 1) ? 4 : 8));
-    int64_t src = zpu->ctx.regs[sreg];
-    int64_t dest = zpu->ctx.regs[dreg];
-    int64_t onemask = (INT64_C(1) << (((sz + 1) << 3) - src)) - 1;
-    int64_t mask = ~INT64_C(0);
-    int64_t val = 0;
-    int64_t res = 0;
-
-    while (n) {
-        val = dest & onemask;
-        dest >>= 8;
-        val >>= src;
-        n--;
-        if (val & (INT64_C(1) << (((sz + 1) << 3) - 1))) {
-            mask = onemask - ((INT64_C(1) << src) - 1);
-            val |= mask;
-        } else {
-            mask = (INT64_C(1) << (((sz + 1) << 3) - src)) - 1;
-            val &= mask;
-        }
-        res |= val << cnt;
-        cnt += 8;
-    }
-    zpu->ctx.regs[dreg] = res;
-    if (sz == ZPUIREGSIZE) {
-        zpusetmsw(zpu, res);
-    }
-    zpu->ctx.regs[ZPUPCREG] += 4;
-
-    return;
-}
-
-void
-zpuopshl(struct zpu *zpu, struct zpuop *op)
-{
-    long    sz = op->argsz;
-    int64_t sreg = op->src;
-    int64_t dreg = op->dest;
-    long    cnt = 0;
-    long    n = (sz == 7) ? 1 : ((sz == 3) ? 2 : ((sz == 1) ? 4 : 8));
-    int64_t onemask = (INT64_C(1) << ((sz + 1) << 3)) - 1;
-    int64_t src = zpu->ctx.regs[sreg];
-    int64_t dest = zpu->ctx.regs[dreg];
-    int64_t val = 0;
-    int64_t res = 0;
-
-    while (n) {
-        val = dest & onemask;
-        dest >>= 8;
-        val <<= src;
-        n--;
-        val &= onemask;
-        res |= val << cnt;
-        cnt += 8;
-    }
-    zpu->ctx.regs[dreg] = res;
-    if (sz == ZPUIREGSIZE) {
-        zpusetmsw(zpu, res);
-    }
-    zpu->ctx.regs[ZPUPCREG] += 4;
-
-    return;
-}
-
-void
-zpuoplmsw(struct zpu *zpu, struct zpuop *op)
-{
-    long flg = op->src & ((1 << MSWNBIT) - 1);
-
-    zpu->ctx.regs[ZPUMSWREG] |= flg;
-}
-
-void
-zpuopsmsw(struct zpu *zpu, struct zpuop *op)
-{
-    ;
 }
 
 void
@@ -371,35 +231,6 @@ zpuinit(struct zpu *zpu)
 {
     zpuinitinst(zpu);
     zpuinitcore(zpu);
-
-    return;
-}
-
-/* virtual machine main loop */
-void
-zpurun(struct zpu *zpu)
-{
-    long          opadr;
-    struct zpuop *op;
-    long          inst;
-    zpuopfunc    *func;
-    long          msw;
-
-    while (!zpu->exitflg) {
-        /* get instruction */
-        opadr = zpu->ctx.regs[ZPUPCREG];
-        op = (struct zpuop *)&zpu->core[opadr];
-        inst = op->inst;
-        /* dispatch instruction */
-        func = zpu->functab[inst];
-        if (func) {
-            func(zpu, op);
-        }
-        msw = zpu->ctx.regs[ZPUMSWREG];
-        if (msw & MSW_IF) {
-            /* TODO: dispatch pending interrupts */
-        }
-    }
 
     return;
 }
@@ -446,7 +277,7 @@ zpudisasm(struct zpu *zpu, struct zpuop *op)
     } else if (op->sflg & ARG_REG) {
         fprintf(stderr, "%s", zpuregnametab[src]);
     }
-    if (zpunargtab[op->inst] == 2) {
+    if (zpuopnargtab[op->inst] == 2) {
         if (op->dflg & ARG_INDIR) {
             fprintf(stderr, ", *");
             if (op->dflg & ARG_REG) {
@@ -482,6 +313,37 @@ zpudisasm(struct zpu *zpu, struct zpuop *op)
     return;
 }
 
+/* virtual machine main loop */
+void
+zpurun(struct zpu *zpu)
+{
+    long          opadr;
+    struct zpuop *op;
+    long          inst;
+    zpuopfunc    *func;
+    long          msw;
+
+    while (!zpu->exitflg) {
+        /* get instruction */
+        opadr = zpu->ctx.regs[ZPUPCREG];
+        op = (struct zpuop *)&zpu->core[opadr];
+        inst = op->inst;
+        zpudisasm(zpu, op);
+        /* dispatch instruction */
+        func = zpu->functab[inst];
+        if (func) {
+            func(zpu, op);
+        }
+        msw = zpu->ctx.regs[ZPUMSWREG];
+        if (msw & MSW_IF) {
+            /* TODO: dispatch pending interrupts */
+        }
+    }
+
+    return;
+}
+
+#if 0
 int
 main(int argc, char *argv[])
 {
@@ -529,5 +391,69 @@ main(int argc, char *argv[])
     zpurun(&zpu);
 
     exit(zpu.exitflg);
+}
+#endif
+
+int
+zpumain(int argc, char *argv[])
+{
+    long        l;
+    zasmemadr_t adr = ZPUTEXTBASE;
+#if (ZASPROF)
+    PROFDECLCLK(clk);
+#endif
+
+    if (argc < 2) {
+        fprintf(stderr, "usage: zpu <file1> ...\n");
+
+        exit(1);
+    }
+    zpuinit(&zpu);
+    zasinit(NULL, NULL);
+    memset(physmem, 0, ZPUTEXTBASE);
+#if (ZASPROF)
+    profstartclk(clk);
+#endif
+    for (l = 1 ; l < argc ; l++) {
+#if (ZASBUF)
+        zasreadfile(argv[l], adr, readbufcur);
+#else
+        zasreadfile(argv[l], adr);
+#endif
+        if (!zastokenqueue) {
+            fprintf(stderr, "WARNING: no input in %s\n", argv[l]);
+        } else {
+            zasinputread = 1;
+            adr = zastranslate(adr);
+            zasresolve(ZPUTEXTBASE);
+            zasremovesyms();
+#if (ZASPROF)
+            profstopclk(clk);
+            fprintf(stderr, "%ld microseconds to process %s\n",
+                    profclkdiff(clk), argv[l]);
+#endif        
+        }
+    }
+    if (!zasinputread) {
+        fprintf(stderr, "empty input\n");
+
+        exit(1);
+    }
+    fprintf(stderr, "START: %lx\n", (long)_startadr);
+    zpu.ctx.regs[ZPUPCREG] = _startadr;
+    zpurun(&zpu);
+
+    exit(zpu.exitflg);
+}
+
+int
+main(int argc, char *argv[])
+{
+    if (argc < 2) {
+        fprintf(stderr, "usage: wpm <asmfile>\n");
+
+        exit(1);
+    }
+    exit(zpumain(argc, argv));
 }
 

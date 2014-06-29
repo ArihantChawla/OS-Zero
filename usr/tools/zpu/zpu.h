@@ -7,6 +7,10 @@
 #include <zero/param.h>
 #include <zpu/conf.h>
 
+#define ZPUTEXTBASE 0x00000000
+extern uint8_t *physmem;
+#define RESOLVE     0xffffffffU
+
 /* register names; r0..r11 are 0..11 respectively */
 #define ZPUNGENREG  12
 #define ZPUFPREG    12
@@ -14,6 +18,8 @@
 #define ZPUPCREG    14
 #define ZPUMSWREG   15
 #define ZPUNREG     16
+#define REGINDIR    0x10
+#define REGINDEX    0x20
 
 /* 4-bit unit ID */
 #define OP_LOGIC    0x00
@@ -29,7 +35,9 @@
 #define ZPUNUNITBIT 4
 #define ZPUNUNIT    (1U << ZPUNUNITBIT)
 
+#define OP_NOP      0x7f
 /* logical bitwise instructions */
+#define OP_HLT      0x00
 #define OP_NOT      0x01
 #define OP_AND      0x02
 #define OP_OR       0x03
@@ -93,12 +101,13 @@
 
 #if (ZPUSIMD)
 /* SIMD vector operations */
+#if 0
 #define OP_ADDBS    0x2b        // add bytes with signed saturation
 #define OP_ADDBU    0x2c        // add bytes with unsigned saturation
 #define OP_SUBBS    0x2d        // subtract bytes with signed saturation
 #define OP_SUBBU    0x2e        // subtract bytes with unsigned saturation
-#define OP_UNPKBS   0x2f        // unpack signed bytes into 16-bit words
-#define OP_UNPKBU   0x30        // unpack unsigned bytes into 16-bit words
+#endif
+#define OP_UNPK     0x2b        // unpack signed bytes into 16-bit words
 #endif
 
 /* maximum number of instructions supported */
@@ -117,6 +126,7 @@
 #define MSW_ZF      0x08
 #define MSWNBIT     4
 
+#define ARG_NONE    0x00
 #define ARG_INDIR   0x01        // indirect addressing
 #define ARG_INDEX   0x02        // indexed addressing
 #define ARG_IMMED   0x04        // immediate argument
@@ -129,7 +139,7 @@
 
 /* opcode is 32-bit with extra arguments following where necessary */
 #define zpusetinst(id, unit, func)                                      \
-    (zpuopfunctab[((unit) << ZPUNOPBIT) + (id)] = (func))
+    (zpuopfunctab[(id)] = (func))
 struct zpuop {
     unsigned flg     : 4;       // instruction flags */
     unsigned inst    : 7;       // numerical instruction ID
@@ -137,7 +147,7 @@ struct zpuop {
     unsigned src     : 4;       // 4-bit source register ID
     unsigned dflg    : 5;       // INDIR, INDEX, IMMED, ADR, REG
     unsigned dest    : 4;       // 4-bit destination register
-    unsigned argsz   : 3;       // operation size is 1 << (opsize + 1) bytes
+    unsigned argsz   : 3;       // operation size is 1 << (argsz + 1) bytes
     int32_t  args[EMPTY];       // optional arguments
 } PACK();
 
@@ -256,6 +266,53 @@ zpuread64(struct zpu *zpu, struct zpuop *op)
 
     return retval;
 }
+
+typedef void zpuophandler_t(struct zpuop *);
+
+void zpuophlt(struct zpu *, struct zpuop *);
+void zpuopnot(struct zpu *, struct zpuop *);
+void zpuopand(struct zpu *, struct zpuop *);
+void zpuopor(struct zpu *, struct zpuop *);
+void zpuopxor(struct zpu *, struct zpuop *);
+void zpuopshr(struct zpu *, struct zpuop *);
+void zpuopsar(struct zpu *, struct zpuop *);
+void zpuopshl(struct zpu *, struct zpuop *);
+void zpuopror(struct zpu *, struct zpuop *);
+void zpuoprol(struct zpu *, struct zpuop *);
+void zpuopinc(struct zpu *, struct zpuop *);
+void zpuopdec(struct zpu *, struct zpuop *);
+void zpuopadd(struct zpu *, struct zpuop *);
+void zpuopsub(struct zpu *, struct zpuop *);
+void zpuopcmp(struct zpu *, struct zpuop *);
+void zpuopmul(struct zpu *, struct zpuop *);
+void zpuopdiv(struct zpu *, struct zpuop *);
+void zpuopmod(struct zpu *, struct zpuop *);
+void zpuopbz(struct zpu *, struct zpuop *);
+void zpuopbnz(struct zpu *, struct zpuop *);
+void zpuopblt(struct zpu *, struct zpuop *);
+void zpuopble(struct zpu *, struct zpuop *);
+void zpuopbgt(struct zpu *, struct zpuop *);
+void zpuopbge(struct zpu *, struct zpuop *);
+void zpuopbo(struct zpu *, struct zpuop *);
+void zpuopbno(struct zpu *, struct zpuop *);
+void zpuopbc(struct zpu *, struct zpuop *);
+void zpuopbnc(struct zpu *, struct zpuop *);
+void zpuoppop(struct zpu *, struct zpuop *);
+void zpuoppush(struct zpu *, struct zpuop *);
+void zpuoppusha(struct zpu *, struct zpuop *);
+void zpuopmov(struct zpu *, struct zpuop *);
+void zpuopjmp(struct zpu *, struct zpuop *);
+void zpuopcall(struct zpu *, struct zpuop *);
+void zpuopenter(struct zpu *, struct zpuop *);
+void zpuopleave(struct zpu *, struct zpuop *);
+void zpuopret(struct zpu *, struct zpuop *);
+void zpuoplmsw(struct zpu *, struct zpuop *);
+void zpuopsmsw(struct zpu *, struct zpuop *);
+void zpuopradd(struct zpu *, struct zpuop *);
+void zpuoprsub(struct zpu *, struct zpuop *);
+void zpuoprmul(struct zpu *, struct zpuop *);
+void zpuoprdiv(struct zpu *, struct zpuop *);
+void zpuopunpk(struct zpu *, struct zpuop *);
 
 #endif /* __ZPU_ZPU_H__ */
 

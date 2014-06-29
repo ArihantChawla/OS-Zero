@@ -1,5 +1,5 @@
-#ifndef __ZAS_ZAS_H__
-#define __ZAS_ZAS_H__
+#ifndef __ZPU_ZAS_H__
+#define __ZPU_ZAS_H__
 
 #if (WPM)
 #include <wpm/wpm.h>
@@ -169,5 +169,5 @@ void        zasreadfile(char *name, zasmemadr_t adr, int bufid);
 void        zasreadfile(char *name, zasmemadr_t adr);
 #endif
 
-#endif /* __ZAS_ZAS_H__ */
+#endif /* __ZPU_ZAS_H__ */
 

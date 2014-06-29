@@ -17,6 +17,7 @@
 #define arg1t    sflg
 #define arg2t    dflg
 #define size     argsz
+#define NREG     ZPUNREG
 #endif
 #include <stdio.h>
 #include <stdlib.h>
@@ -39,7 +40,8 @@
 #if (ZASPROF)
 #include <zero/prof.h>
 #endif
-#include <zas/zas.h>
+#include <zpu/zas.h>
+//#include <zpu/zpu.h>
 //#include <wpm/mem.h>
 //#include <wpm/wpm.h>
 
@@ -87,7 +89,7 @@ static struct zasopinfo *zasopinfotab[WPMNUNIT];
 //extern struct zasopinfo   wpmopinfotab[WPMNUNIT][WPMNASMOP];
 #elif (ZEN)
 extern const char *zpuopnametab[ZPUNOP];
-extern const char *zpuopnargtab[ZPUNOP];
+extern const long  zpuopnargtab[ZPUNOP];
 #endif
 
 struct zassymrec {
@@ -141,7 +143,7 @@ static zasmemadr_t       _startset;
 unsigned long            zasinputread;
 static uint8_t          *linebuf;
 static uint8_t          *strbuf;
-#if (ZASBUF) && (!ZASMMAP)
+#if (ZASBUF)
 struct readbuf {
     void    *data;
     uint8_t *cur;
@@ -219,7 +221,7 @@ zasgetc(int fd, int bufid)
 #endif
 
 void
-printtoken(struct zastoken *token)
+zasprinttoken(struct zastoken *token)
 {
     switch (token->type) {
         case TOKENVALUE:
@@ -614,11 +616,11 @@ zasinitop(void)
     struct zasop *op;
     long          l;
 
-    for (l = 1 ; (zasopinfotab[name]) ; l++) {
+    for (l = 0 ; (zpuopnametab[l]) ; l++) {
         op = malloc(sizeof(struct zasop));
         op->name = (uint8_t *)(zpuopnametab[l]);
         op->code = (uint8_t)l;
-        op->narg = zpunargtab[l];
+        op->narg = zpuopnargtab[l];
         zasaddop(op);
     }
 }
@@ -664,7 +666,7 @@ zasgetreg(uint8_t *str, uint8_t **retptr)
         while (*str == ')' || *str == ',') {
             str++;
         }
-        *retptr = str;
+//        *retptr = str;
 #if (WPMVEC)
     } else if (*str == 'v') {
         str++;
@@ -683,12 +685,29 @@ zasgetreg(uint8_t *str, uint8_t **retptr)
         while (*str == ')' || *str == ',') {
             str++;
         }
-        *retptr = str;
+//        *retptr = str;
+#endif
+#if (ZEN)
+    } else if (*str == 'f' && str[1] == 'p') {
+        reg = ZPUFPREG;
+        str += 2;
+    } else if (*str == 's' && str[1] == 'p') {
+        reg = ZPUSPREG;
+        str += 2;
+    } else if (*str == 'p' && str[1] == 'c') {
+        reg = ZPUPCREG;
+        str += 2;
+    } else if (*str == 'm' && str[1] == 's' && str[2] == 'w') {
+        reg = ZPUMSWREG;
+        str += 3;
 #endif
     } else {
         fprintf(stderr, "invalid register name %s\n", str);
         
         exit(1);
+    }
+    if (reg != 0xff) {
+        *retptr = str;
     }
 #if (WPMVEC)
     reg |= flg;
@@ -975,13 +994,11 @@ zasgetindex(uint8_t *str, zasword_t *retndx, uint8_t **retptr)
             str++;
         }
         reg = zasgetreg(str, &str);
-#if 0
         if (reg >= NREG) {
             fprintf(stderr, "invalid register name %s\n", str);
 
             exit(1);
         }
-#endif
         *retptr = str;
     }
     if (neg) {
@@ -1113,7 +1130,8 @@ zasgettoken(uint8_t *str, uint8_t **retptr)
             token1->data.value.val = val;
             token1->data.value.size = size;
         } else {
-            fprintf(stderr, "invalid token %s\n", linebuf);
+            fprintf(stderr, "%s:%d: invalid token %s\n", __FILE__, __LINE__, linebuf);
+            zasprinttoken(token1);
                 
             exit(1);
         }
@@ -1210,7 +1228,8 @@ zasgettoken(uint8_t *str, uint8_t **retptr)
 #endif
                 token1->data.inst.name = op->name;
                 token1->data.inst.op = op->code;
-                token1->data.inst.narg = op->narg;
+//                token1->data.inst.narg = op->narg;
+                token1->data.inst.narg = zpuopnargtab[op->code];
 #if (ZASDB)
                 token1->data.inst.data = (uint8_t *)strdup((char *)ptr);
 #endif
@@ -1231,7 +1250,8 @@ zasgettoken(uint8_t *str, uint8_t **retptr)
                         token1->data.sym.name = name;
                         token1->data.sym.adr = RESOLVE;
                     } else {
-                        fprintf(stderr, "invalid token %s\n", linebuf);
+                        fprintf(stderr, "%s:%d: invalid token %s\n", __FILE__, __LINE__, linebuf);
+                        zasprinttoken(token1);
                         
                         exit(1);
                     }
@@ -1254,7 +1274,8 @@ zasgettoken(uint8_t *str, uint8_t **retptr)
                     token1->data.adr.name = name;
                     token1->data.adr.val = RESOLVE;
                 } else {
-                    fprintf(stderr, "invalid token %s\n", linebuf);
+                    fprintf(stderr, "%s:%d: invalid token %s\n", __FILE__, __LINE__, linebuf);
+                    zasprinttoken(token1);
                     
                     exit(1);
                 }
@@ -1338,12 +1359,14 @@ zasgettoken(uint8_t *str, uint8_t **retptr)
                 zasqueuetoken(token1);
                 token1 = token2;
             } else {
-                fprintf(stderr, "invalid token %s\n", linebuf);
+                fprintf(stderr, "%s:%d: invalid token %s\n", __FILE__, __LINE__, linebuf);
+                zasprinttoken(token1);
 
                 exit(1);
             }
         } else {
-            fprintf(stderr, "invalid token %s\n", linebuf);
+            fprintf(stderr, "%s:%d: invalid token %s\n", __FILE__, __LINE__, linebuf);
+            zasprinttoken(token1);
             
             exit(1);
         }
@@ -1481,7 +1504,7 @@ zasprocinst(struct zastoken *token, zasmemadr_t adr,
                     break;
                 default:
                     fprintf(stderr, "invalid argument 1 of type %lx\n", token1->type);
-                    printtoken(token1);
+                    zasprinttoken(token1);
                     
                     exit(1);
                     
@@ -1508,7 +1531,7 @@ zasprocinst(struct zastoken *token, zasmemadr_t adr,
                     break;
                 default:
                     fprintf(stderr, "invalid argument 2 of type %lx\n", token2->type);
-                    printtoken(token2);
+                    zasprinttoken(token2);
 
                     exit(1);
 
@@ -1597,7 +1620,7 @@ zasprocinst(struct zastoken *token, zasmemadr_t adr,
                             break;
                         default:
                             fprintf(stderr, "invalid argument 1 of type %lx\n", token1->type);
-                            printtoken(token1);
+                            zasprinttoken(token1);
                             
                             exit(1);
                             
@@ -1699,7 +1722,7 @@ zasprocinst(struct zastoken *token, zasmemadr_t adr,
                             break;
                         default:
                             fprintf(stderr, "invalid argument 2 of type %lx\n", token2->type);
-                            printtoken(token2);
+                            zasprinttoken(token2);
                             
                             exit(1);
                             
@@ -1909,8 +1932,10 @@ zasprocasciz(struct zastoken *token, zasmemadr_t adr,
 void
 zasinit(struct zasopinfo *opinfotab, struct zasopinfo *vecinfotab)
 {
+#if 0
     zasopinfotab[0] = opinfotab;
     zasopinfotab[1] = vecinfotab;
+#endif
     zasinitop();
     zasinitbuf();
 }
@@ -1927,13 +1952,13 @@ zastranslate(zasmemadr_t base)
         func = zasktokfunctab[token->type];
         if (func) {
             token1 = func(token, adr, &adr);
-            if (!token) {
+            if (!token1) {
 
                 break;
             }
         } else {
             fprintf(stderr, "stray token of type %lx\n", token->type);
-            printtoken(token);
+            zasprinttoken(token);
 
             exit(1);
         }
