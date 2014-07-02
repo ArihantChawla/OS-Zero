@@ -207,7 +207,12 @@ zpuopshl(struct zpu *zpu, struct zpuop *op)
     return;
 }
 
-void zpuopror(struct zpu *zpu, struct zpuop *op) { }
+void
+zpuopror(struct zpu *zpu, struct zpuop *op)
+{
+    
+}
+
 void zpuoprol(struct zpu *zpu, struct zpuop *op) { }
 void zpuopinc(struct zpu *zpu, struct zpuop *op) { }
 void zpuopdec(struct zpu *zpu, struct zpuop *op) { }

@@ -160,7 +160,7 @@ typedef pthread_mutex_t LK_T;
 //#define HQMAX         20
 #define NBKT          (8 * PTRSIZE)
 #if (MTSAFE)
-#define NARN          16
+#define NARN          4
 #else
 #define NARN          1
 #endif
