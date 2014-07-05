@@ -9,7 +9,7 @@ floating point math. This would be done to facilitate building mini game
 consoles using FPGA hardware such as Papilio with graphics and audio support.
 
 ZPU shall use 64-bit registers with support for rational numbers as 32-bit
-nominator and denominator fields as well as 64-bit IEEE double-precision
+numerator and denominator fields as well as 64-bit IEEE double-precision
 point values.
 
 Zero will be a RISC-like system with a single load/store instruction that

@@ -23,14 +23,14 @@ rmul(struct zpu *zpu, struct zpuop *op)
     int64_t dreg = op->dest;
     int64_t src = zpu->ctx.regs[sreg];
     int64_t dest = zpu->ctx.regs[dreg];
-    int64_t snom = zpugetnom64(src);
+    int64_t snum = zpugetnum64(src);
     int64_t sden = zpugetdenom64(src);
-    int64_t dnom = zpugetnom64(dest);
+    int64_t dnum = zpugetnum64(dest);
     int64_t dden = zpugetdenom64(dest);
 
-    dnom *= snom;
+    dnum *= snum;
     dden *= sden;
-    zpusetnom64(dest, dnom);
+    zpusetnum64(dest, dnum);
     zpusetdenom64(dest, dden);
     zpu->ctx.regs[dreg] = dest;
     zpu->ctx.regs[ZPUPCREG] += 4;
@@ -43,14 +43,14 @@ rdiv(struct zpu *zpu, struct zpuop *op)
     int64_t dreg = op->dest;
     int64_t src = zpu->ctx.regs[sreg];
     int64_t dest = zpu->ctx.regs[dreg];
-    int64_t snom = zpugetnom64(src);
+    int64_t snum = zpugetnum64(src);
     int64_t sden = zpugetdenom64(src);
-    int64_t dnom = zpugetnom64(dest);
+    int64_t dnum = zpugetnum64(dest);
     int64_t dden = zpugetdenom64(dest);
 
-    dnom *= sden;
-    dden *= snom;
-    zpusetnom64(dest, dnom);
+    dnum *= sden;
+    dden *= snum;
+    zpusetnum64(dest, dnum);
     zpusetdenom64(dest, dden);
     zpu->ctx.regs[dreg] = dest;
     zpu->ctx.regs[ZPUPCREG] += 4;

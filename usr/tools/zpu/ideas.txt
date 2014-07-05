@@ -3,7 +3,7 @@ Zero Processor Unit Ideas
 
 Rational Numbers
 ----------------
-- pairs of 32-bit nominator and denominator
+- pairs of 32-bit numerator and denominator
 - assembly immediate: $(n, d)
 - C syntax: 0xNNNNNNNN_DDDDDDDD
 
