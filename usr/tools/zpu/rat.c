@@ -48,6 +48,10 @@ rsub(struct zpu *zpu, struct zpuop *op)
 
     dnum = snum * dden - sden * dnum;
     dden *= sden;
+    if ((dnum & INT64_C(0xffffffff00000000))
+        || (dden & INT64_C(0xffffffff00000000))) {
+        zpu->ctx.regs[ZPUMSWREG] |= MSW_VF;
+    }
     ratreduce(&dnum, &dden);
     zpusetnum64(dest, dnum);
     zpusetdenom64(dest, dden);
