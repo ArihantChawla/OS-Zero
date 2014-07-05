@@ -549,5 +549,22 @@ uint32_t gcdu32(uint32_t a, uint32_t b)
     return a;
 }
 
+/* Thanks to Jeremy 'jercos' Sturdivant for this one. */
+static __inline__ void
+ratreduce(int64_t *num, int64_t *den)
+{
+    int64_t a = *num;
+    int64_t b = *den;
+    int64_t c = a % b;
+
+    while (c) {
+        a = b;
+        b = c;
+        c = a % b;
+    }
+    *num /= b;
+    *den /= b;
+}
+
 #endif /* __ZERO_TRIX_H__ */
 
