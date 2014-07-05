@@ -9,7 +9,7 @@
 #define MTSAFE     1
 #endif
 
-#define CONSTBUF   1
+#define CONSTBUF   0
 #define NOSBRK     0
 #define TAILFREE   0
 #define TESTING    1
@@ -17,7 +17,7 @@
 #define NEWMAP     1
 #define NEWSLAB    1
 #define FREEBUF    0
-#define ISTK       1
+#define ISTK       0
 #define NOSTK      0
 #define BIGSLAB    0
 #define BIGHDR     1
@@ -31,6 +31,7 @@
 
 #include <features.h>
 #include <errno.h>
+#include <assert.h>
 #include <stddef.h>
 #include <stdlib.h>
 #include <stdint.h>
@@ -251,8 +252,6 @@ typedef pthread_mutex_t LK_T;
          : (((bid) <= SLABTINYLOG2)                                     \
             ? 1                                                         \
             : 2))))
-#if 0
-#endif
 #define nmagslablog2init(bid)                                           \
     (((ismapbkt(bid))                                                   \
       ? (((bid) <= MAPMIDLOG2)                                          \
@@ -282,33 +281,33 @@ typedef pthread_mutex_t LK_T;
 #define nmagslablog2m64(bid)                                            \
     (((ismapbkt(bid))                                                   \
       ? (((bid) <= MAPMIDLOG2)                                          \
-         ? 3                                                            \
+         ? 1                                                            \
          : (((bid) <= MAPBIGLOG2)                                       \
-            ? 2                                                         \
+            ? 0                                                         \
             : 0))                                                       \
       : (((bid) <= SLABTEENYLOG2)                                       \
          ? 0                                                            \
          : (((bid) <= SLABTINYLOG2)                                     \
-            ? 1                                                         \
+            ? 0                                                         \
             : 1))))
 #define nmagslablog2m128(bid)                                           \
     (((ismapbkt(bid))                                                   \
       ? (((bid) <= MAPMIDLOG2)                                          \
-         ? 4                                                            \
+         ? 1                                                            \
          : (((bid) <= MAPBIGLOG2)                                       \
-            ? 3                                                         \
+            ? 1                                                         \
             : 0))                                                       \
       : (((bid) <= SLABTEENYLOG2)                                       \
          ? 0                                                            \
          : (((bid) <= SLABTINYLOG2)                                     \
-            ? 1                                                         \
+            ? 0                                                         \
             : 2))))
 #define nmagslablog2m256(bid)                                           \
     (((ismapbkt(bid))                                                   \
       ? (((bid) <= MAPMIDLOG2)                                          \
-         ? 5                                                            \
+         ? 1                                                            \
          : (((bid) <= MAPBIGLOG2)                                       \
-            ? 3                                                         \
+            ? 1                                                         \
             : 0))                                                       \
       : (((bid) <= SLABTEENYLOG2)                                       \
          ? 0                                                            \
@@ -318,9 +317,9 @@ typedef pthread_mutex_t LK_T;
 #define nmagslablog2m512(bid)                                           \
     (((ismapbkt(bid))                                                   \
       ? (((bid) <= MAPMIDLOG2)                                          \
-         ? 6                                                            \
+         ? 2                                                            \
          : (((bid) <= MAPBIGLOG2)                                       \
-            ? 4                                                         \
+            ? 1                                                         \
             : 0))                                                       \
       : (((bid) <= SLABTEENYLOG2)                                       \
          ? 0                                                            \
@@ -423,6 +422,11 @@ typedef pthread_mutex_t LK_T;
     ? (SLABLOG2 - (bid) + nmagslablog2(bid))                            \
     : nmagslablog2(bid))
 #endif
+#else
+#define nblklog2(bid)                                                   \
+    ((!ismapbkt(bid))                                                   \
+     ? (SLABLOG2 - (bid))                                               \
+     : 0)
 #endif /* TUNEBUF */
 #define nblk(bid)         (1UL << nblklog2(bid))
 #define NBSLAB            (1UL << SLABLOG2)
@@ -434,7 +438,7 @@ typedef pthread_mutex_t LK_T;
 #define slabid(ptr)       ((uintptr_t)(ptr) >> SLABLOG2)
 #endif
 #if (BIGHDR)
-#define NBHDR             (16 * PAGESIZE)
+#define NBHDR             (32 * PAGESIZE)
 #else
 #define NBHDR             (4 * PAGESIZE)
 #endif
@@ -1328,6 +1332,11 @@ getslab(long aid,
             fprintf(stderr, "failed to grow heap %ld bytes: bkt %ld\n", nb, bid);
 #endif
             abort();
+#ifdef ENOMEM
+            errno = ENOMEM;
+#endif
+
+            return NULL;
         }
     } else {
         nb = nbmap(bid);
@@ -1344,6 +1353,11 @@ getslab(long aid,
             fprintf(stderr, "failed to map %ld bytes: bkt %ld\n", nb, bid);
 #endif
             abort();
+#ifdef ENOMEM
+            errno = ENOMEM;
+#endif
+
+            return NULL;
         }
     }
 #if (TUNEBUF) && (!CONSTBUF)
@@ -1918,7 +1932,7 @@ getmem(size_t size,
         fprintf(stderr, "%lx failed to allocate %ld bytes (heap: %ld, map: %ld\n) - initialised == %ld", aid, 1UL << bid, (long)_nbheap, (long)_nbmap, _conf.flags & CONF_INIT);
 #endif
 
-//        abort();
+        return NULL;
     }
 #if (INTSTAT) || (STAT)
     nalloc[aid][bid]++;

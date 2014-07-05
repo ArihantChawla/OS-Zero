@@ -1,6 +1,10 @@
 #ifndef __ZPU_RAT_H__
 #define __ZPU_RAT_H__
 
+#include <zpu/conf.h>
+
+#if (ZPURAT)
+
 #include <stdint.h>
 #include <endian.h>
 #include <zero/cdecl.h>
@@ -21,6 +25,10 @@
 #define RAT_E64  ((INT64_C(_RAT_E_NOM) << 32) | INT64_C(_RAT_E_DENOM))
 #endif
 
+#define zpugetnom64(i64)      (((struct zpurat *)&i64)->nom)
+#define zpusetnom64(i64, n)   (((struct zpurat *)&i64)->nom = (n))
+#define zpugetdenom64(i64)    (((struct zpurat *)&i64)->denom)
+#define zpusetdenom64(i64, d) (((struct zpurat *)&i64)->denom = (d))
 struct zpurat {
     int32_t nom;
     int32_t denom;
@@ -43,6 +51,13 @@ struct zpurat {
 #define ratisposinf(rp) ((rp)->nom == 0x7fffffff && !(rp)->denom)
 #define ratisneginf(rp) ((rp)->nom == 0x80000000 && !(rp)->denom)
 #endif
+
+void radd(struct zpu *zpu, struct zpuop *op);
+void rsub(struct zpu *zpu, struct zpuop *op);
+void rmul(struct zpu *zpu, struct zpuop *op);
+void rdiv(struct zpu *zpu, struct zpuop *op);
+
+#endif /* ZPURAT */
 
 #endif /* __ZPU_RAT_H__ */
 

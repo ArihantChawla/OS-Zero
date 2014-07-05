@@ -151,11 +151,6 @@ struct zpuop {
     int32_t  args[EMPTY];       // optional arguments
 } PACK();
 
-struct zpurat {
-    int32_t nom;
-    int32_t denom;
-};
-
 #define zpugetb0_32(p)    (((struct zpuvecb32 *)&(p))->b0)
 #define zpugetb1_32(p)    (((struct zpuvecb32 *)&(p))->b1)
 #define zpugetb2_32(p)    (((struct zpuvecb32 *)&(p))->b2)
