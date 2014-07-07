@@ -7,45 +7,45 @@
 
 /* masks for choosing events */
 /* user input events */
-#define EVKEYMASK        (EVKEYDOWNMASK | EVKEYUPMASK)
-#define EVKEYDOWNMASK    (1UL << EVKEYDOWN)
-#define EVKEYUPMASK      (1UL << EVKEYUP)
-#define EVBUTTONMASK     (EVBUTTONDOWNMASK | EVBUTTONUPMASK)
-#define EVBUTTONDOWNMASK (1UL << EVBUTTONDOWN)
-#define EVBUTTONUPMASK   (1UL << EVBUTTONUP)
-#define EVPNTMOTIONMASK  (1UL << EVPNTMOTION)
+#define EVKEYMASK         (EVKEYDOWNMASK | EVKEYUPMASK)
+#define EVKEYDOWNMASK     (1UL << EVKEYDOWN)
+#define EVKEYUPMASK       (1UL << EVKEYUP)
+#define EVBUTTONMASK      (EVBUTTONDOWNMASK | EVBUTTONUPMASK)
+#define EVBUTTONDOWNMASK  (1UL << EVBUTTONDOWN)
+#define EVBUTTONUPMASK    (1UL << EVBUTTONUP)
+#define EVPNTMOTIONMASK   (1UL << EVPNTMOTION)
 /* IPC events */
-#define EVIPCMASK        ((1UL << EVCMD) | (1UL << EVMSG) | (1UL << EVDATA))
-#define EVFSMASK         ((EVFSCREATMASK                                \
-                           | EVFSUNLINKMASK                             \
-                           | EVFSMKDIRMASK                              \
-                           | EVFSRMDIRMASK))
+#define EVIPCMASK         ((1UL << EVCMD) | (1UL << EVMSG) | (1UL << EVDATA))
+#define EVFSMASK          ((EVFSCREATMASK                                \
+                            | EVFSUNLINKMASK                            \
+                            | EVFSMKDIRMASK                             \
+                            | EVFSRMDIRMASK))
 /* filesystem events */
-#define EVFSCREATMASK    (1UL << EVFSCREAT)
-#define EVFSUNLINKMASK   (1UL << EVFSUNLINK)
-#define EVFSMKDIRMASK    (1UL << EVFSMKDIR)
-#define EVFSRMDIRMASK    (1UL << EVFSRMDIR)
+#define EVFSCREATMASK     (1UL << EVFSCREAT)
+#define EVFSUNLINKMASK    (1UL << EVFSUNLINK)
+#define EVFSMKDIRMASK     (1UL << EVFSMKDIR)
+#define EVFSRMDIRMASK     (1UL << EVFSRMDIR)
 
 /* keyboard events */
-#define EVKEYDOWN        0x01   // keyboard key down event
-#define EVKEYUP          0x02   // keyboard key up event
+#define EVKEYDOWN         0x01   // keyboard key down event
+#define EVKEYUP           0x02   // keyboard key up event
 /* pointer events */
-#define EVBUTTONDOWN     0x03   // mouse/pointer button down event
-#define EVBUTTONUP       0x04   // mouse/pointer button up event
-#define EVPNTMOTION      0x05
+#define EVBUTTONDOWN      0x03   // mouse/pointer button down event
+#define EVBUTTONUP        0x04   // mouse/pointer button up event
+#define EVPNTMOTION       0x05
 /* IPC events */
-#define EVMSG            0x06   // message events such as errors
-#define EVCMD            0x07   // RPC commands
-#define EVDATA           0x08   // data transfer
+#define EVMSG             0x06   // message events such as errors
+#define EVCMD             0x07   // RPC commands
+#define EVDATA            0x08   // data transfer
 /* filesystem events */
-#define EVFSCREAT        0x07   // file creation event
-#define EVFSUNLINK       0x08   // file unlink event
-#define EVFSMKDIR        0x09   // add directory
-#define EVFSRMDIR        0x0a   // remove directory
+#define EVFSCREAT         0x07   // file creation event
+#define EVFSUNLINK        0x08   // file unlink event
+#define EVFSMKDIR         0x09   // add directory
+#define EVFSRMDIR         0x0a   // remove directory
 
 /* queue events */
-#define EVQUEUE          0x01
-#define EVDEQUEUE        0x02
+#define EVQUEUE           0x01
+#define EVDEQUEUE         0x02
 
 /* keyboard events */
 
@@ -54,26 +54,26 @@
  * be used as flags if need be
  */
 /* flag-bits in scan member */
-#define EVKBDSTATE       UINT64_C(0x8000000000000000)
-#define EVKBDRELEASE     UINT64_C(0x4000000000000000)
+#define EVKBDSTATE        UINT64_C(0x8000000000000000)
+#define EVKBDRELEASE      UINT64_C(0x4000000000000000)
 /* state-bits for modifier keys */
-#define EVKBDSHIFT       0x80000000
-#define EVKBDCAPSLK      0x40000000
-#define EVKBDCTRL        0x20000000
-#define EVKBDMETA        0x10000000
-#define EVKBDCOMPOSE     0x08000000
-#define EVKBDALT         0x04000000
-#define EVKBDALTGR       0x02000000
-#define EVKBDSCRLOCK     0x01000000
-#define EVNUMLOCK        0x00800000
-#define EVKBDNMODBIT     9
-#define EVNBUTTON        (32 - EVKBNMODBIT - EVKBDNFLGBIT)
-#define kbdevlen64(ev)   ((ev)->sym & EVKBDSTATE)
-#define kbdupevent(ev)   ((ev)->sym & EVKBDRELEASE)
-#define kbdbutton(ev, b) ((ev)->state & (1L << (b)))
-#define kbdmod(ev, mod)  ((ev)->state & (mod))
+#define EVKBDSHIFT        0x80000000
+#define EVKBDCAPSLK       0x40000000
+#define EVKBDCTRL         0x20000000
+#define EVKBDMETA         0x10000000
+#define EVKBDCOMPOSE      0x08000000
+#define EVKBDALT          0x04000000
+#define EVKBDALTGR        0x02000000
+#define EVKBDSCRLOCK      0x01000000
+#define EVNUMLOCK         0x00800000
+#define EVKBDNMODBIT      9
+#define EVNBUTTON         (32 - EVKBNMODBIT - EVKBDNFLGBIT)
+#define kbdevhasstate(ev) ((ev)->sym & EVKBDSTATE)
+#define kbdupevent(ev)    ((ev)->scan & EVKBDRELEASE)
+#define kbdbutton(ev, b)  ((ev)->state & (1L << (b)))
+#define kbdmod(ev, mod)   ((ev)->state & (mod))
 /* keyboard event size in octets */
-#define kbdevsize(ev)    (((ev)->sym & EVKBDSTATE) ? 12 : 8)
+#define kbdevsize(ev)     (((ev)->sym & EVKBDSTATE) ? 12 : 8)
 struct kbdev {
     uint64_t scan;
     uint32_t state;
@@ -86,9 +86,9 @@ struct kbdev {
  */
 
 /* keyboard event state field existence */
-#define EVKBDSTATE       0x80000000     // 1 if event has state member
-#define EVKBDRELEASE     0x40000000     // 1 if keyrelease event
-#define EVKBDNFLGBIT     2
+#define EVKBDSTATE        0x80000000    // 1 if event has state member
+#define EVKBDRELEASE      0x40000000    // 1 if keyrelease event
+#define EVKBDNFLGBIT      2
 struct evkbd {
     int32_t sym;                        // Unicode key symbol + flags
     int32_t state;                      // button and modifier state if present
@@ -103,9 +103,9 @@ struct evkbd {
 struct evpnt {
     uint32_t button;                    // button ID
     uint32_t state;                     // state bits for buttons; 1 -> down
-    int32_t x;                          // screen X coordinate
-    int32_t y;                          // screen Y coordinate
-    int32_t z;                          // screen Z coordinate
+    int32_t  x;                         // screen X coordinate
+    int32_t  y;                         // screen Y coordinate
+    int32_t  z;                         // screen Z coordinate
 } PACK();
 
 /* IPC events */

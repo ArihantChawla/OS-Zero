@@ -15,6 +15,12 @@ john h. crawford & patrick p. kelsinger
      	       - programming the 80386
 neal ford      - the productive programmer
 randall hyde   - write great code volume one - understanding the machine
+kai hwang, faye a. briggs
+		- computer architecture and parallel processing
+richard johnsonbaugh & martin kalin
+		- applications programming in ansi c, third edition
+kris kaspersky
+		- code optimization: effective memory usage
 brian kernighan & dennis ritchie
       	       - the c programming language, second edition
 andre lamothe  - black art of 3d game programming
