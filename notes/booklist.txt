@@ -11,9 +11,14 @@ maurice bach   - the design of the unix operating system
 rick booth     - inner loops
 richard boulanger, victor lazzarini and max mathews
 	       - the audio programming book
+henry arnold bradford
+		- logic and boolean algebra
 john h. crawford & patrick p. kelsinger
      	       - programming the 80386
 neal ford      - the productive programmer
+ronald l. graham, donald e. knuth, oren patashnik
+		- concrete mathematics: a foundation for computer science
+		  (2nd edition)
 randall hyde   - write great code volume one - understanding the machine
 kai hwang, faye a. briggs
 		- computer architecture and parallel processing
