@@ -22,7 +22,7 @@
 #define BIGHDR     0
 #define INTSTAT    0
 #define STAT       0
-#define STDIO      1
+#define STDIO      0
 #define FREEBITMAP 0
 
 #define ZEROMTX    1
@@ -1686,7 +1686,9 @@ putmem(void *ptr)
 #endif
 #if (FREEBITMAP)
             if (!bitset(mag->fmap, blkid(mag, mptr))) {
+#if (STDIO)
                 fprintf(stderr, "duplicate free: %p\n", mag->adr);
+#endif
                 
                 return;
             }
@@ -1793,7 +1795,9 @@ putmem(void *ptr)
 #endif
         } else {
             munlk(&arn->lktab[bid]);
+#if (STDIO)
             fprintf(stderr, "invalid free %p\n", ptr);
+#endif
             abort();
         }
     }

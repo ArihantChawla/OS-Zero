@@ -6,6 +6,7 @@
 #include <zero/param.h>
 
 /* masks for choosing events */
+
 /* user input events */
 #define EVKEYMASK         (EVKEYDOWNMASK | EVKEYUPMASK)
 #define EVKEYDOWNMASK     (1UL << EVKEYDOWN)
@@ -26,6 +27,8 @@
 #define EVFSMKDIRMASK     (1UL << EVFSMKDIR)
 #define EVFSRMDIRMASK     (1UL << EVFSRMDIR)
 
+/* event IDs */
+
 /* keyboard events */
 #define EVKEYDOWN         0x01   // keyboard key down event
 #define EVKEYUP           0x02   // keyboard key up event
@@ -38,10 +41,10 @@
 #define EVCMD             0x07   // RPC commands
 #define EVDATA            0x08   // data transfer
 /* filesystem events */
-#define EVFSCREAT         0x07   // file creation event
-#define EVFSUNLINK        0x08   // file unlink event
-#define EVFSMKDIR         0x09   // add directory
-#define EVFSRMDIR         0x0a   // remove directory
+#define EVFSCREAT         0x09   // file creation event
+#define EVFSUNLINK        0x0a   // file unlink event
+#define EVFSMKDIR         0x0b   // add directory
+#define EVFSRMDIR         0x0c   // remove directory
 
 /* queue events */
 #define EVQUEUE           0x01
@@ -77,7 +80,7 @@
 struct kbdev {
     uint64_t scan;
     uint32_t state;
-    uint32_t pad;
+//    uint32_t pad;
 } PACK();
 
 #if 0
@@ -110,41 +113,55 @@ struct evpnt {
 
 /* IPC events */
 
-/* message packet */
+/*
+ * message packet
+ * --------------
+ * reply is 32-bit object ID or 0 on failure
+ */
 struct evmsg {
     uint32_t nbyte;                     // number of octets
-    uint32_t mqid;                      // message queue ID
+    uint32_t mq;                        // message queue ID
+    uint32_t prio;                      // queue priority
+    uint8_t  data[EMPTY];               // message data
 } PACK();
 
 /* command packet */
+/*
+ * message packet
+ * --------------
+ * - reply is 0 on success, 32-bit error ID on failure
+ * - can be done asynchronously with no reply checks
+ */
+#define EVCMDASYNC 0x01U
 struct evcmd {
     uint32_t cmd;                       // RPC command
     uint32_t src;                       // source object
     uint32_t dest;                      // destination object
+    uint8_t  flg;                       // ASYNC, ...
 } PACK();
 
-/* header + data */
+/*
+ * data transfer
+ * -------------
+ * - reply will be 32-bit object ID or 0 on failure
+ */
 struct evdata {
     uint32_t fmt;                       // data format
-    uint32_t itemsz;                    // data-word size
+    uint32_t nbyte;                     // data-word size in bytes
     uint32_t nitem;                     // number of items to follow
-    uint32_t obj;                       // data object ID
+    uint8_t  data[EMPTY];               // data message
 } PACK();
 
-/* file system events */
-
+/* file system events; EVFSCREAT, EVFSUNLINK, EVFSMKDIR, EVFSRMDIR */
 struct evfs {
     uint64_t node;                      // node (file, directory) ID
     uint32_t dev;                       // device ID
-    uint32_t datalen;                   // length of data in bytes
-    uint8_t  data[EMPTY];               // optional event data
 } PACK();
 
 struct zevent {
     uint32_t type;
     union {
-//        struct evkbd  kbd;
-        uint64_t      key;
+        struct evkbd  kbd;
         struct evpnt  pnt;
         struct evcmd  cmd;
         struct evmsg  msg;

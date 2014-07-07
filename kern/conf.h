@@ -2,7 +2,7 @@
 #define __KERN_CONF_H__
 
 #if defined(__x86_64__)
-#include <kern/unit/x86-64/conf.h>
+//#include <kern/unit/x86-64/conf.h>
 #elif defined(__i386__)
 #include <kern/unit/ia32/conf.h>
 #elif defined(__arm__)
