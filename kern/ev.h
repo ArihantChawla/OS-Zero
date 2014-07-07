@@ -53,6 +53,7 @@
 /* keyboard events */
 
 /*
+ * TODO: move this comment elsewhere...
  * Unicode specifies 0x10ffff as maximum value, leaving us with 11 high bits to
  * be used as flags if need be
  */
@@ -70,7 +71,7 @@
 #define EVKBDSCRLOCK      0x01000000
 #define EVNUMLOCK         0x00800000
 #define EVKBDNMODBIT      9
-#define EVNBUTTON         (32 - EVKBNMODBIT - EVKBDNFLGBIT)
+#define EVNBUTTON         (32 - EVKBNMODBIT)
 #define kbdevhasstate(ev) ((ev)->sym & EVKBDSTATE)
 #define kbdupevent(ev)    ((ev)->scan & EVKBDRELEASE)
 #define kbdbutton(ev, b)  ((ev)->state & (1L << (b)))
