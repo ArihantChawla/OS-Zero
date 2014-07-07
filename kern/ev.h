@@ -116,7 +116,7 @@ struct evpnt {
 /*
  * message packet
  * --------------
- * reply is 32-bit object ID or 0 on failure
+ * - reply is 32-bit object ID or 0 on failure
  */
 struct evmsg {
     uint32_t nbyte;                     // number of octets
