@@ -28,6 +28,8 @@ kris kaspersky
 		- code optimization: effective memory usage
 brian kernighan & dennis ritchie
       	       - the c programming language, second edition
+mark j. kilgard
+		- opengl programming for the x window system
 andre lamothe  - black art of 3d game programming
 john r levine  - linkers and loaders
 john lions     - lions' commentary on unix 6th edition with source code
