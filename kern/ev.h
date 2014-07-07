@@ -81,7 +81,6 @@
 struct kbdev {
     uint64_t scan;
     uint32_t state;
-//    uint32_t pad;
 } PACK();
 
 #if 0
