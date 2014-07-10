@@ -1,11 +1,12 @@
 #include <stdint.h>
 #include <zero/trix.h>
-#include <mach/cdecl.h>
-#include <mach/arm/vm.h>
-
-extern uint32_t vml2pagetab[];
+#include <zero/param.h>
+#include <zero/cdecl.h>
+#include <kern/unit/arm/link.h>
+#include <kern/unit/arm/vm.h>
 
 uint32_t *vml1pagetab[NL1PAGETAB] ALIGNED(16384);
+uint32_t *vml2pagetab = (uint32_t *)&_l2pagetab;
 
 void
 segmap(uint32_t adr, uint32_t npg, uint32_t flg)

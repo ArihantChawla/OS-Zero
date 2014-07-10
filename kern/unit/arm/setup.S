@@ -35,15 +35,15 @@ _intfiq:
 	
 _intreset:
 	/* initialise interrupt stack */
-	mov	r1, #INTDISAB|INTIRQ32
+	mov	r1, #TRAPDISAB|TRAPIRQ32
 	msr	cpsr_c, r1
 	mov	sp, #_intstk
 	/* svc stack */
-	mov	r1, #INTDISAB|INTSVC32
+	mov	r1, #TRAPDISAB|TRAPSVC32
 	msr	cpsr_c, r1
 	mov	sp, #_svcstk
 	/* user stack */
-	mov	r1, #INTUSR32
+	mov	r1, #TRAPUSR32
 	msr	cpsr_c, r1
 	mov	sp, #_usrstk
 	/* enable interrupts */
@@ -85,9 +85,9 @@ _intirq:
 	bx	lr
 
 _intstk:	
-	.long	M_INTSTK
+	.long	TRAPINTSTK
 _svcstk:
-	.long	M_SVCSTK
+	.long	TRAPSVCSTK
 _usrstk:
-	.long	M_USRSTK
+	.long	TRAPUSRSTK
 

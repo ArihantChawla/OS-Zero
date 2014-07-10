@@ -11,6 +11,7 @@
 #include <stdint.h>
 #include <limits.h>
 #include <zero/param.h>
+#include <zero/mtx.h>
 #include <zero/asm.h>
 
 /* get the lowest 1-bit in a */

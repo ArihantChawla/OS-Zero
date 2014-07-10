@@ -1,8 +1,8 @@
 #ifndef __UNIT_ARM_SETUP_H__
 #define __UNIT_ARM_SETUP_H__
 
-#include <mach/param.h>
-#include <mach/arm/int.h>
+#include <zero/param.h>
+#include <unit/arm/trap.h>
 
 /*
  * stack organization
@@ -12,7 +12,7 @@
  */
 #define TRAPINTSTK   0x00000000
 #define TRAPSVCSTK   0xfffff000
-#define TRAPUSRSTK   (TRAPSVCSTK - PAGESIZE)
+#define TRAPUSRSTK   (TRAPSVCSTK - 4096)
 
 #define TRAPBXTBIT   0x00000001   // 16-bit thumb mode
 

@@ -6,6 +6,9 @@
  * :)
  */
 
+#define MTXINITVAL 0L
+#define MTXLKVAL   1L
+
 #include <zero/asm.h>
 #if (__KERNEL__) && (__MTKERNEL__)
 #include <kern/proc/sched.h>
@@ -13,9 +16,6 @@
 /* on some Linux setups, the pthread library declares no prototype */
 extern int pthread_yield(void);
 #endif
-
-#define MTXINITVAL 0L
-#define MTXLKVAL   1L
 
 #define mtxinit(lp) (*(lp) = MTXINITVAL)
 

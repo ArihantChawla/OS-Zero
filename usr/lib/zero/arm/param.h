@@ -12,8 +12,10 @@
 #define PTRSIZE      4
 #define PTRBITS      32
 #define ADRBITS      32
+#define PAGESIZELOG2 12
 
 #define CLSIZE       32
+#define PAGESIZE     (1UL << PAGESIZELOG2)
 
 #endif /* __ZERO_ARM_PARAM_H__ */
 

@@ -5,6 +5,7 @@ extern char _elocore;
 extern char _etext;
 extern char _data;
 extern char _ebss;
+extern char _l2pagetab;
 
 #endif /* __UNIT_ARM_LINK_H__ */
 

@@ -1,6 +1,8 @@
 #ifndef __UNIT_ARM_VM_H__
 #define __UNIT_ARM_VM_H__
 
+#include <zero/param.h>
+
 #define VIRTBASE        0xc0000000U
 
 #define PAGEBITS        0x00000013U
@@ -10,8 +12,8 @@
 #define pagegetadr(pte) ((pte) & PAGEFRAMEMSK)
 #define pagesetflt(pte) ((pte) &= ~0x03)
 
-#define PAGETABSIZE    (1024 * sizeof(uint32_t))
-#define PAGESIZE       4096
+//#define PAGETABSIZE    (1024 * sizeof(uint32_t))
+//#define PAGESIZE       4096
 #define NL1PAGETAB     4096
 #define NL2PAGETAB     1024
 #define NL1PAGETABLOG2 12

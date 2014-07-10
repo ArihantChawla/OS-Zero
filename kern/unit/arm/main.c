@@ -1,7 +1,5 @@
 #if defined(__arm__)
 
-#include <zero/arm/asm.h>
-
 void
 kmain(void) {
 

@@ -13,7 +13,7 @@
 #endif
 
 static __inline__ long
-m_cmpswap_armv6(long *p, long want, long val)
+m_cmpswap_armv6(volatile long *p, long want, long val)
 {
     volatile long res = MTXINITVAL;
 
@@ -37,7 +37,7 @@ m_cmpswap_armv6(long *p, long want, long val)
 }
 
 static __inline__ long
-m_cmpswap(long *p, long want, long val)
+m_cmpswap(volatile long *p, long want, long val)
 {
     volatile long res;
     volatile long tmp;

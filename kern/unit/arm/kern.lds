@@ -2,8 +2,8 @@ OUTPUT_FORMAT("elf32-littlearm", "elf32-bigarm", "elf32-littlearm")
 
 PAGESIZE = 4K;
 BOOTBASE = 0x00000000;
-//PAGETAB = 20M;
-//PAGETABSIZE = 20M; /* u-boot relocates at 16 megabytes */
+PAGETAB = 4K;
+PAGETABSIZE = 4096;
 
 ENTRY(_start)
 
