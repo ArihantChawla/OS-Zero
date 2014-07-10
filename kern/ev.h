@@ -53,6 +53,14 @@
 /* keyboard events */
 
 /*
+ * - the kernel passes raw keyboard scan-codes to userland as 64-bit integers
+ * - the longest scan-codes I'm aware on PC keyboards are 6-byte
+ * - these scan-codes are read from the keyboard byte by byte
+ * - we leave the translation to userland according to locale and such settings
+ * - userland processing of scan-codes keeps our interrupt handler minimal
+ */
+
+/*
  * TODO: move this comment elsewhere...
  * Unicode specifies 0x10ffff as maximum value, leaving us with 11 high bits to
  * be used as flags if need be
