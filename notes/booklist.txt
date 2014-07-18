@@ -16,6 +16,9 @@ henry arnold bradford
 john h. crawford & patrick p. kelsinger
      	       - programming the 80386
 neal ford      - the productive programmer
+simson l. garfinkel
+		- the unix-haters handbook: the best of unix-haters on-line
+		  mailing reveals why unix must die
 ronald l. graham, donald e. knuth, oren patashnik
 		- concrete mathematics: a foundation for computer science
 		  (2nd edition)

@@ -5,6 +5,8 @@
  * See the file LICENSE for more information about using this software.
  */
 
+#define HACKS    0
+
 #define LKDBG    0
 #define SYSDBG   0
 #define VALGRIND 1
@@ -13,10 +15,11 @@
 #define MTSAFE     1
 #endif
 
-#define CONSTBUF   0
+#define CONSTBUF   1
 #define NOSBRK     0
 #define TAILFREE   1
 
+#define SMALLBUF   1
 #define ISTK       0
 #define NOSTK      0
 #define BIGHDR     0
@@ -118,7 +121,6 @@ typedef pthread_mutex_t LK_T;
 
 #define SBRK_FAILED ((void *)-1L)
 
-#define HACKS   0
 //#define ZEROMTX 1
 //#define STAT    0
 
@@ -141,12 +143,21 @@ typedef pthread_mutex_t LK_T;
 /* basic allocator parameters */
 #define BLKMINLOG2    4  /* minimum-size allocation */
 //#define SLABBIGLOG2   16 /* small-size block */
+#if (SMALLBUF)
+#define SLABLOG2      18
+#define SLABBIGLOG2   14
+#define SLABTINYLOG2  12
+#define SLABTEENYLOG2 10
+#define MAPMIDLOG2    20
+#define MAPBIGLOG2    22
+#else
 #define SLABLOG2      20
 #define SLABBIGLOG2   16
 #define SLABTINYLOG2  13
 #define SLABTEENYLOG2 10
 #define MAPMIDLOG2    20
 #define MAPBIGLOG2    24
+#endif
 #define MINSZ         (1UL << BLKMINLOG2)
 #define HQMAX         SLABLOG2
 //#define HQMAX         20
@@ -216,11 +227,10 @@ typedef pthread_mutex_t LK_T;
 #define nmaplog2(bid)     0
 #endif
 
-#if (TUNEBUF)
-#define nbufinit(bid)         0
 #if (CONSTBUF)
 #define nmagslablog2init(bid) 0
-#else /* !CONSTBUF */
+#if (TUNEBUF)
+#define nbufinit(bid)         0
 /* adjust how much is buffered based on current use */
 #define nmagslablog2init(bid) 0
 #define nmagslablog2up(m, v, t)                                         \
@@ -465,7 +475,7 @@ static long                 nheapbytes[NARN];
 static unsigned long long   nheapreq[NBKT] ALIGNED(PAGESIZE);
 static unsigned long long   nmapreq[NBKT];
 #endif
-#if (TUNEBUF) && (!CONSTBUF)
+#if (TUNEBUF)
 static long                 _nbuftab[NBKT];
 static long                 _nslablog2tab[NBKT];
 #endif
@@ -479,7 +489,7 @@ static struct mag          *_btail[NBKT];
 #endif
 static struct mag          *_ftab[NBKT];
 static struct mag          *_btab[NBKT];
-#if (HACKS) || (TUNEBUF)
+#if (TUNEBUF)
 static long                 _fcnt[NBKT];
 #endif
 static void               **_mdir;
@@ -491,10 +501,10 @@ static __thread long        _aid = -1;
 #else
 static long                 _aid = -1;
 #endif
-#if (TUNEBUF)
-#endif
+#if (STAT) || (INTSTAT)
 static int64_t              _nbheap;
 static int64_t              _nbmap;
+#endif
 static int                  _mapfd = -1;
 
 /* utility functions */
@@ -923,7 +933,7 @@ initmall(void)
 #else
     _mdir = mapanon(_mapfd, NL1KEY * sizeof(void *));
 #endif
-#if (TUNEBUF)
+#if (TUNEBUF) || (CONSTBUF)
     for (bid = 0 ; bid < NBKT ; bid++) {
         _nbuftab[bid] = nbufinit(bid);
         _nslablog2tab[bid] = nmagslablog2init(bid);
@@ -1325,42 +1335,39 @@ freemap(struct mag *mag)
         _fcnt[bid]++;
 #endif
         munlk(&_flktab[bid]);
-    } else {
-        if (!unmapanon(clrptr(mag->adr), max * bsz)) {
+    } else if (!unmapanon(clrptr(mag->adr), max * bsz)) {
 #if (VALGRIND)
-            if (RUNNING_ON_VALGRIND) {
-                VALGRIND_FREELIKE_BLOCK(clrptr(mag->adr), 0);
+        if (RUNNING_ON_VALGRIND) {
+            VALGRIND_FREELIKE_BLOCK(clrptr(mag->adr), 0);
             }
 #endif
 #if (INTSTAT) || (STAT)
-            nmapbytes[aid] -= max * bsz;
+        nmapbytes[aid] -= max * bsz;
+        _nbmap -= max * bsz;
 #endif
-#if (TUNEBUF)
-            _nbmap -= max * bsz;
-#endif
-            if (gtpow2(max, 1)) {
-                if (!istk(bid)) {
+        if (gtpow2(max, 1)) {
+            if (!istk(bid)) {
 #if (INTSTAT) || (STAT)
-                    nstkbytes[aid] -= (mag->max << 1) * sizeof(void *); 
+                nstkbytes[aid] -= (mag->max << 1) * sizeof(void *); 
 #endif
-                    unmapstk(mag);
-                    mag->bptr = NULL;
+                unmapstk(mag);
+                mag->bptr = NULL;
 #if (FREEBITMAP)
-                    unmapfmap(mag);
-                    mag->fmap = NULL;
+                unmapfmap(mag);
+                mag->fmap = NULL;
 #endif
 #if (VALGRIND)
-                    if (RUNNING_ON_VALGRIND) {
-                        VALGRIND_FREELIKE_BLOCK(mag, 0);
-                    }
-#endif
+                if (RUNNING_ON_VALGRIND) {
+                    VALGRIND_FREELIKE_BLOCK(mag, 0);
                 }
+#endif
             }
-            mag->adr = NULL;
-            hbuf[--cur] = mag;
-            arn->hcur = cur;
         }
+        mag->adr = NULL;
+        hbuf[--cur] = mag;
+        arn->hcur = cur;
     }
+
     munlk(&arn->lktab[bid]);
 
     return;
