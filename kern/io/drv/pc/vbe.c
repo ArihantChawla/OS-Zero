@@ -2,6 +2,8 @@
 
 #if (VBE)
 
+#define VBEDEFMODE 0x118        // 1024x768 24-bit
+
 #include <stdint.h>
 
 #if (NEWFONT)
@@ -18,8 +20,8 @@
 #include <kern/unit/ia32/real.h>
 #include <kern/unit/ia32/vm.h>
 
-extern void  realint10(void);
-extern void  gdtinit(void);
+extern void realint10(void);
+extern void gdtinit(void);
 
 extern void *vgafontbuf;
 #if (NEWFONT)
@@ -30,21 +32,11 @@ long         vgafonth = 13;
 void vbeputpix(argb32_t pix, int x, int row);
 void vbeputs(char *str);
 void vbeputchar(int ch);
-
 void vbedrawchar(unsigned char c, int x, int y, argb32_t fg, argb32_t bg);
 
-#define VBEPTR(x) ((((uint32_t)(x) & 0xffffffff) >> 12) | ((uint32_t)(x) & 0xffff))
+#define VBEPTR(x)                                                       \
+    ((((uint32_t)(x) & 0xffffffff) >> 12) | ((uint32_t)(x) & 0xffff))
 
-#if 0
-struct vbe {
-    long found;
-    long mode;
-};
-#endif
-
-#if 0
-struct vbe            vbe;
-#endif
 struct vbescreen      vbescreen;
 static struct vbeinfo vbectlinfo;
 
@@ -70,6 +62,12 @@ vbeint10(struct realregs *regs)
     return;
 }
 
+/*
+ * initialise VBE graphics
+ * - probe the controller
+ * - probe the modes
+ * - set the default mode
+ */
 void
 vbeinit(void)
 {
@@ -91,7 +89,7 @@ vbeinit(void)
     }
     kbzero(regs, sizeof(struct realregs));
     regs->ax = VBEGETMODEINFO;
-    regs->cx = 0x118;
+    regs->cx = VBEDEFMODE;
     regs->di = VBEMODEADR;
     vbeint10(regs);
     if (regs->ax != VBESUPPORTED) {
@@ -100,7 +98,7 @@ vbeinit(void)
     }
     kbzero(regs, sizeof(struct realregs));
     regs->ax = VBESETMODE;
-    regs->bx = 0x118 | VBELINFBBIT;
+    regs->bx = VBEDEFMODE | VBELINFBBIT;
     vbeint10(regs);
     if (regs->ax != VBESUPPORTED) {
 
@@ -259,36 +257,14 @@ void
 vbedrawcharbg(unsigned char c, int x, int y, argb32_t fg, argb32_t bg)
 {
     long      cy;
-    long      cx;
     long      incr = vbescreen.w * (vbescreen.nbpp >> 3);
-//    uint8_t *glyph = (uint8_t *)vgafontbuf + ((int)c * vgafonth);
     uint16_t *glyph = (uint16_t *)vgafontbuf + (int)c * vgafonth;
     uint8_t  *ptr = vbepixadr(x, y);
     uint16_t  mask;
-    long      cnt;
     
 
     for (cy = 0 ; cy < vgafonth ; cy++) {
         mask = *glyph;
-#if 0
-        cnt = vgafontw;
-        for (cx = 0 ; cx < vgafontw ; cx++) {
-            if ((mask >> cnt) & 0x01) {
-                gfxsetrgb888(fg, ptr);
-            } else {
-                gfxsetrgb888(bg, ptr);
-            }
-            cnt--;
-            ptr += incr;
-        }
-#endif
-#if 0
-        if (mask & 0x80) {
-            gfxsetrgb888(fg, ptr);
-        } else {
-            gfxsetrgb888(bg, ptr);
-        }
-#endif
         if (mask & 0x40) {
             gfxsetrgb888(fg, ptr);
         } else {

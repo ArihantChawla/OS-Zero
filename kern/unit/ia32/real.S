@@ -14,6 +14,7 @@
 
 .align	4
 
+/* interrupt handler for 0x10 */
 realint10:
 	cli
 	pushl	%ebp
@@ -26,6 +27,7 @@ realint10:
 
 .align	4
 
+/* drop back to 16-bit real mode */
 .code16
 realstart:
 	/* load NULL IDT */
@@ -45,7 +47,8 @@ realstart:
 	ljmpl	$0x0000, $(_real16 - realstart + KERNREALBASE)
 
 .align	4
-	
+
+/* generate interrupt 0x10 in real mode */
 _real16:
 	/* zero segment registers */
 	xorw	%ax, %ax
@@ -71,6 +74,7 @@ _real16:
 
 .align	4
 
+/* reinitialise 32-bit protected mode */
 .code32
 _protmode:
 //	lgdtl	(gdtptr)
@@ -116,6 +120,9 @@ _realgdtptr:
 	
 _espsave:
 	.long	0x00000000
+
+.align	8
+
 _realidtptr:
 	.short	0x0000
 	.long	0x00000000

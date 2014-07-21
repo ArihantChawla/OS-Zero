@@ -78,34 +78,18 @@
 #define EVKBDALTGR        0x02000000
 #define EVKBDSCRLOCK      0x01000000
 #define EVNUMLOCK         0x00800000
-#define EVKBDNMODBIT      9
-#define EVNBUTTON         (32 - EVKBNMODBIT)
-#define kbdevhasstate(ev) ((ev)->sym & EVKBDSTATE)
+#define EVKBDNMODBIT      32
+#define EVNBUTTON         (64 - EVKBNMODBIT)
+#define kbdevhasstate(ev) ((ev)->scan & EVKBDSTATE)
 #define kbdupevent(ev)    ((ev)->scan & EVKBDRELEASE)
 #define kbdbutton(ev, b)  ((ev)->state & (1L << (b)))
 #define kbdmod(ev, mod)   ((ev)->state & (mod))
 /* keyboard event size in octets */
 #define kbdevsize(ev)     (((ev)->sym & EVKBDSTATE) ? 12 : 8)
-struct kbdev {
-    uint64_t scan;
-    uint32_t state;
-} PACK();
-
-#if 0
-/* TODO: this stuff belongs into the desktop environment; rework kernel
- * keyboard events to be 64-bit scan codes
- */
-
-/* keyboard event state field existence */
-#define EVKBDSTATE        0x80000000    // 1 if event has state member
-#define EVKBDRELEASE      0x40000000    // 1 if keyrelease event
-#define EVKBDNFLGBIT      2
 struct evkbd {
-    int32_t sym;                        // Unicode key symbol + flags
-    int32_t state;                      // button and modifier state if present
+    uint64_t scan;
+    uint64_t state;
 } PACK();
-
-#endif /* 0 */
 
 /* pointer such as mouse device events */
 
@@ -178,6 +162,8 @@ struct zevent {
     } msg;
 } PACK();
 
+#if 0 /* THE STUFF BELOW MAY CHANGE */
+
 /* API */
 /* TODO: implement ring-buffers for event queues */
 /* - wired to physical memory permanently */
@@ -195,10 +181,7 @@ long   evpeek(struct zevent *ev, long mask);
 /* remove from queue unless flg has the NOREMOVE-bit set */
 void   evget(struct zevent *ev, long flg);
 
-#if 0
-unsigned char evdeqkbdchar(struct evkbdqchar *queue);
-void          evqkbdchar(struct evkbdqchar *queue, unsigned char ch);
-#endif
+#endif /* 0 */
 
 #endif /* __KERN_EV_H__ */
 
