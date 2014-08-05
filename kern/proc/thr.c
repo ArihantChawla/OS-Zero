@@ -273,14 +273,15 @@ thryield(void)
     long         prio;
     long         state = thr->state;
 
-    kprintf("THRSAVE: %p\n", thr);
-    thrsave(thr);
-    prio = thradjprio(thr);
-    if (state == THRREADY) {
-        thrq = &thrruntab[prio];
-        thrqueue(thr, thrq);
-    } else if (state == THRWAIT) {
-        thraddwait(thr);
+    if (thr) {
+        thrsave(thr);
+        prio = thradjprio(thr);
+        if (state == THRREADY) {
+            thrq = &thrruntab[prio];
+            thrqueue(thr, thrq);
+        } else if (state == THRWAIT) {
+            thraddwait(thr);
+        }
     }
     thr = NULL;
     while (!thr) {
@@ -296,22 +297,25 @@ thryield(void)
                 }
                 thrq->head = thr->next;
                 mtxunlk(&thrq->lk);
-#if 0
+                __asm__ __volatile__ ("sti\n");
                 if (thr != k_curthr) {
                     thrjmp(thr);
                 } else {
 
                     return;
                 }
-#endif
+#if 0
                 thrjmp(thr);
+#endif
             } else {
                 mtxunlk(&thrq->lk);
             }
         }
+#if 0
         if (!thr) {
             m_waitint();
         }
+#endif
     }
 
     return;
