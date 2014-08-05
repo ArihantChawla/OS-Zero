@@ -7,7 +7,7 @@
 #include <zero/cdecl.h>
 #include <zero/param.h>
 
-/* C call frame */
+/* C call frame - 8 bytes */
 struct m_stkframe {
     /* automatic variables go here */
     int32_t fp;         // caller frame pointer
@@ -21,7 +21,7 @@ struct m_farptr {
     uint32_t adr;
 } PACK();
 
-/* return stack for IRET */
+/* return stack for IRET - 20 bytes */
 struct m_trapframe {
     int32_t eip;	// old instruction pointer
     int16_t cs;		// code segment selector
@@ -33,6 +33,7 @@ struct m_trapframe {
     int16_t pad2;	// pad to 32-bit boundary
 };
 
+/* general purpose registers - 32 bytes */
 struct m_pusha {
     int32_t edi;
     int32_t esi;
@@ -44,6 +45,7 @@ struct m_pusha {
     int32_t eax;
 };
 
+/* task state segment */
 struct m_tss {
     uint16_t link, _linkhi;
     uint32_t esp0;
@@ -75,6 +77,7 @@ struct m_tss {
 //    uint8_t  iomap[8192] ALIGNED(CLSIZE);
 } PACK();
 
+/* data segment registers - 16 bytes */
 struct m_segregs {
     int32_t ds;         // data segment
     int32_t es;         // data segment
@@ -85,11 +88,11 @@ struct m_segregs {
 /* thread control block */
 #define TCBFCTXSIZE 512
 struct m_tcb {
-    uint8_t            fctx[TCBFCTXSIZE];
-    struct m_trapframe iret;
-    struct m_segregs   segregs;
-    int32_t            pdbr;
-    struct m_pusha     genregs;
+    uint8_t            fctx[TCBFCTXSIZE];       // @ 0
+    struct m_trapframe iret;                    // @ 512 bytes
+    struct m_segregs   segregs;                 // @ 532 bytes
+    int32_t            pdbr;                    // @ 548 bytes
+    struct m_pusha     genregs;                 // @ 552 bytes
 } PACK() ALIGNED(PAGESIZE);
 
 #endif /* __ZERO_IA32_TYPES_H__ */

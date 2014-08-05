@@ -3,6 +3,8 @@
 
 #include <kern/conf.h>
 #include <stddef.h>
+#include <zero/cdecl.h>
+#include <zero/param.h>
 #include <zero/types.h>
 #include <kern/unit/x86/cpu.h>
 #if defined(__x86_64__)
@@ -15,8 +17,8 @@
 #include <kern/unit/ppc/asm.h>
 #endif
 
-void thrsave(struct thr *thr);
-void thrjmp(struct thr *thr);
+ASMLINK void thrsave(struct thr *thr);
+ASMLINK void thrjmp(struct thr *thr);
 
 //extern struct m_cpuinfo cpuinfo;
 

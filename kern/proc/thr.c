@@ -10,13 +10,14 @@
 #include <kern/mem.h>
 #include <kern/unit/x86/cpu.h>
 #include <kern/unit/x86/trap.h>
-//#include <kern/unit/ia32/asm.h>
+#include <kern/unit/ia32/thr.h>
 
 static struct thrwait thrwaittab[NLVL0THR] ALIGNED(PAGESIZE);
 static struct thrq    thrruntab[THRNCLASS * THRNPRIO];
 extern long           trappriotab[NINTR];
 
 /* save thread context */
+ASMLINK
 void
 thrsave(struct thr *thr)
 {
@@ -31,6 +32,7 @@ thrsave(struct thr *thr)
 }
 
 /* run thread */
+ASMLINK
 void
 thrjmp(struct thr *thr)
 {
@@ -58,7 +60,7 @@ thradjprio(struct thr *thr)
         prio++;
         prio &= (THRNPRIO >> 1) - 1;
         prio = (THRNPRIO * class) + (THRNPRIO >> 1) + prio + thr->nice;
-        prio = max(THRNPRIO * THRNCLASS - 1, prio);
+        prio = min(THRNPRIO * THRNCLASS - 1, prio);
     }
     thr->prio = prio;
 
@@ -266,19 +268,21 @@ thrwakeup(uintptr_t wchan)
 void
 thryield(void)
 {
-    struct thr  *thr = NULL;
+    struct thr  *thr = k_curthr;
     struct thrq *thrq;
     long         prio;
-    long         state = k_curthr->state;
+    long         state = thr->state;
 
-    thrsave(k_curthr);
-    prio = thradjprio(k_curthr);
+    kprintf("THRSAVE: %p\n", thr);
+    thrsave(thr);
+    prio = thradjprio(thr);
     if (state == THRREADY) {
         thrq = &thrruntab[prio];
-        thrqueue(k_curthr, thrq);
+        thrqueue(thr, thrq);
     } else if (state == THRWAIT) {
-        thraddwait(k_curthr);
+        thraddwait(thr);
     }
+    thr = NULL;
     while (!thr) {
         for (prio = 0 ; prio < THRNCLASS * THRNPRIO ; prio++) {
             thrq = &thrruntab[prio];
@@ -286,7 +290,7 @@ thryield(void)
             thr = thrq->head;
             if (thr) {
                 if (thr->next) {
-                    thr->next->prev = thr;
+                    thr->next->prev = NULL;
                 } else {
                     thrq->tail = NULL;
                 }

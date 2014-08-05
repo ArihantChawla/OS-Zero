@@ -1,6 +1,20 @@
 #ifndef __KERN_UNIT_IA32_THR_H__
 #define __KERN_UNIT_IA32_THR_H__
 
+#include <zero/cdecl.h>
+#include <zero/param.h>
+
+#if (ASMSWITCH)
+
+ASMLINK
+void
+m_tcbsave(struct m_tcb *tcb);
+ASMLINK
+void
+m_tcbjmp(struct m_tcb *tcb);
+
+#else /* ! ASMSWITCH */
+
 static __inline__ void
 m_tcbsave(struct m_tcb *tcb)
 {
@@ -64,13 +78,14 @@ m_tcbjmp(struct m_tcb *tcb)
                           /* jump to thread with IRET */
                           "iret\n"
                           :
-                          : "i" (offsetof(struct m_tcb, pdbr)
-                                 + sizeof(int32_t)),
+                          : "i" (offsetof(struct m_tcb, pdbr)),
                             "m" (tcb),
                             "i" (offsetof(struct m_tcb, iret))
                           : "memory");
     /* NOTREACHED */
 }
+
+#endif /* ASMSWITCH */
 
 #endif /* __KERN_UNIT_IA32_THR_H__ */
 
