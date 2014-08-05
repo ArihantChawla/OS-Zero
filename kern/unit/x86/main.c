@@ -80,12 +80,12 @@ extern struct m_cpu              cputab[NCPU];
 #if (ACPI)
 extern volatile struct acpidesc *acpidesc;
 #endif
-extern struct pageq              vmphysq;
-extern struct pageq              vmshmq;
 extern volatile uint32_t        *mpapic;
 extern volatile long             mpncpu;
 extern volatile long             mpmultiproc;
 #endif
+extern struct pageq              vmphysq;
+extern struct pageq              vmshmq;
 
 ASMLINK
 void
@@ -176,6 +176,9 @@ kmain(struct mboothdr *hdr, unsigned long pmemsz)
 #if 0
     machinit();
 #endif
+#if (PS2DRV)
+//    ps2init();
+#endif
     /* execution environment */
     procinit(0);
     k_curthr = k_curproc->thr;
@@ -193,6 +196,7 @@ kmain(struct mboothdr *hdr, unsigned long pmemsz)
 #if (!SMP)
     pitinit();
 #endif
+    __asm__ __volatile__ ("sti\n");
     /* scheduler loop; interrupted by timer [and other] interrupts */
     while (1) {
         k_waitint();

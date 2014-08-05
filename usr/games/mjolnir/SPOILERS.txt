@@ -7,10 +7,12 @@ out of the game. :)
 Notes
 -----
 - if you kill a bee queen, all bees will attack you; you get honey afterwards
+  - otherwise, bees won't attack unless you hit first
 - aliens carry laser guns
 - Holy Cross kills minor demons, e.g. all vampires but Dracula
 - your pet dog hears and smells much better than you
-- your pet dog shows its pride by showing you objects it finds
+- your pet dog shows its pride by bringing you objects it finds
+- sacrificing dead monsters on altars may yield special gifts from your deity
 
 Potions
 -------
@@ -23,6 +25,8 @@ Potions
 Scrolls
 -------
 - scroll of summon deity
+- scroll of summon monster
+- scroll of bless item
 - scroll of identify
 - scroll of see monsters
 - scroll of teleportation

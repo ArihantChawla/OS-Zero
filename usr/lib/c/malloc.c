@@ -9,12 +9,13 @@
 
 #define LKDBG    0
 #define SYSDBG   0
-#define VALGRIND 1
+#define VALGRIND 0
 
 #if !defined(MTSAFE)
 #define MTSAFE     1
 #endif
 
+#define NEWBUF     1
 #define CONSTBUF   1
 #define NOSBRK     0
 #define TAILFREE   1
@@ -199,7 +200,9 @@ typedef pthread_mutex_t LK_T;
 
 /* macros */
 
-#define narnbufmag(bid)   (1L << narnbufmaglog2(bid))
+//#define narnbufmag(bid)   (1L << narnbufmaglog2(bid))
+#define narnbufmag(bid)   1
+#if 0
 #define narnbufmaglog2(bid)                                             \
     (((bid) <= SLABTEENYLOG2)                                           \
      ? 2                                                                \
@@ -210,6 +213,7 @@ typedef pthread_mutex_t LK_T;
            : (((bid) <= MAPBIGLOG2)                                     \
               ? 1                                                       \
               : 0))))
+#endif
 #if (NOSBRK)
 #define ismapbkt(bid)     0
 #else
@@ -229,7 +233,43 @@ typedef pthread_mutex_t LK_T;
 
 #if (CONSTBUF)
 #define nmagslablog2init(bid) 0
-#if (TUNEBUF)
+#if (NEWBUF)
+#define nbufinit(bid)         0
+/* adjust how much is buffered based on current use */
+#define nmagslablog2init(bid) 0
+#define nmagslablog2up(m, v, t)                                         \
+    do {                                                                \
+        if (t >= (v)) {                                                 \
+            for (t = 0 ; t < NBKT ; t++) {                              \
+                _nslablog2tab[(t)] = m(t);                              \
+            }                                                           \
+        }                                                               \
+    } while (0)
+#define nmagslablog2m64(bid)                                            \
+    ((ismapbkt(bid))                                                    \
+     ? 0                                                                \
+     : (((bid) <= SLABTINYLOG2)                                         \
+        ? 0                                                             \
+        : 1))
+#define nmagslablog2m128(bid)                                           \
+    ((ismapbkt(bid))                                                    \
+     ? 0                                                                \
+     : (((bid) <= SLABBIGLOG2)                                          \
+        ? 0                                                             \
+        : 1))
+#define nmagslablog2m256(bid)                                           \
+    ((ismapbkt(bid))                                                    \
+     ? 0                                                                \
+     : (((bid) <= SLABBIGLOG2)                                          \
+        : 1                                                             \
+        : 0))
+#define nmagslablog2m512(bid)                                           \
+    ((ismapbkt(bid))                                                    \
+     ? 0                                                                \
+     : (((bid) <= SLABBIGLOG2)                                          \
+        : 1                                                             \
+        : 1))
+#elif (TUNEBUF)
 #define nbufinit(bid)         0
 /* adjust how much is buffered based on current use */
 #define nmagslablog2init(bid) 0
@@ -1373,6 +1413,76 @@ freemap(struct mag *mag)
     return;
 }
 
+void
+initmag(struct mag *mag)
+{
+    struct arn  *arn = _atab[mag->aid];
+    uint8_t     *ptr = mag->adr;
+    void       **stk;
+    long         bid = mag->bid;
+    long         max = mag->max;
+    long         bsz = blksz(bid);
+    long         l;
+
+    if (ptr) {
+        if (gtpow2(max, 1)) {
+            if (istk(bid)) {
+#if (ISTK)
+                stk = (void **)(&mag->data);
+#elif (NOSTK)
+//                        stk = mag->bptr;
+                stk = mapstk(max);
+#else
+                stk = (void **)mag->stk;
+#endif
+            } else {
+                stk = mapstk(max);
+            }
+            mag->bptr = stk;
+            if (stk != MAP_FAILED) {
+#if (FREEBITMAP)
+                mag->fmap = mapfmap(max);
+                if (mag->fmap == MAP_FAILED) {
+                            unmapstk(mag);
+                            
+                            return NULL;
+                }
+#endif
+#if (INTSTAT) || (STAT)
+                nstkbytes[aid] += (max << 1) * sizeof(void *); 
+#endif
+#if (VALGRIND)
+                if (RUNNING_ON_VALGRIND) {
+                    VALGRIND_MALLOCLIKE_BLOCK(stk, (max << 1) * sizeof(void *), 0, 0);
+                }
+#endif
+//                        n = max << nmagslablog2(bid);
+                for (l = 0 ; l < max ; l++) {
+                    stk[l] = ptr;
+                    ptr += bsz;
+                }
+                mag->prev = NULL;
+#if (HACKS)
+                _fcnt[bid]++;
+#endif
+                mag->glob = 0;
+                mag->next = arn->btab[bid];
+                if (mag->next) {
+                    mag->next->prev = mag;
+                }
+                arn->btab[bid] = mag;
+            } else {
+#if (STDIO)
+                fprintf(stderr, "failed to allocate stack: bkt %ld\n", bid);
+#endif
+                abort();
+            }
+        }
+    }
+
+    return;
+}
+
 #define blkalnsz(sz, aln)                                               \
     (((aln) <= MINSZ)                                                   \
      ? max(sz, aln)                                                     \
@@ -1391,8 +1501,6 @@ getmem(size_t size,
     uint8_t     *ptr = NULL;
     long         max = nblk(bid);
     struct mag  *mag = NULL;
-    void       **stk;
-    long         l;
     long         get = 0;
     long         glob = 0;
     
@@ -1489,61 +1597,7 @@ getmem(size_t size,
             mag->max = max;
             mag->bid = bid;
             mag->adr = ptr;
-            if (ptr) {
-                if (gtpow2(max, 1)) {
-                    if (istk(bid)) {
-#if (ISTK)
-                        stk = (void **)(&mag->data);
-#elif (NOSTK)
-//                        stk = mag->bptr;
-                        stk = mapstk(max);
-#else
-                        stk = (void **)mag->stk;
-#endif
-                    } else {
-                        stk = mapstk(max);
-                    }
-                    mag->bptr = stk;
-                    if (stk != MAP_FAILED) {
-#if (FREEBITMAP)
-                        mag->fmap = mapfmap(max);
-                        if (mag->fmap == MAP_FAILED) {
-                            unmapstk(mag);
-                            
-                            return NULL;
-                        }
-#endif
-#if (INTSTAT) || (STAT)
-                        nstkbytes[aid] += (max << 1) * sizeof(void *); 
-#endif
-#if (VALGRIND)
-                        if (RUNNING_ON_VALGRIND) {
-                            VALGRIND_MALLOCLIKE_BLOCK(stk, (max << 1) * sizeof(void *), 0, 0);
-                        }
-#endif
-//                        n = max << nmagslablog2(bid);
-                        for (l = 0 ; l < max ; l++) {
-                            stk[l] = ptr;
-                            ptr += bsz;
-                        }
-                        mag->prev = NULL;
-#if (HACKS)
-                        _fcnt[bid]++;
-#endif
-                        mag->glob = 0;
-                        mag->next = arn->btab[bid];
-                        if (mag->next) {
-                            mag->next->prev = mag;
-                        }
-                        arn->btab[bid] = mag;
-                    } else {
-#if (STDIO)
-                        fprintf(stderr, "failed to allocate stack: bkt %ld\n", bid);
-#endif
-                        abort();
-                    }
-                }
-            }
+            initmag(mag);
         }
     }
     if (mag) {

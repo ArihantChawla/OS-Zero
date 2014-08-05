@@ -150,6 +150,7 @@ struct evfs {
     uint32_t dev;                       // device ID
 } PACK();
 
+/* event structure */
 struct zevent {
     uint32_t type;
     union {

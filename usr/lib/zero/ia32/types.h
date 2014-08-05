@@ -87,9 +87,9 @@ struct m_segregs {
 struct m_tcb {
     uint8_t            fctx[TCBFCTXSIZE];
     struct m_trapframe iret;
+    struct m_segregs   segregs;
     int32_t            pdbr;
     struct m_pusha     genregs;
-    struct m_segregs   segregs;
 } PACK() ALIGNED(PAGESIZE);
 
 #endif /* __ZERO_IA32_TYPES_H__ */

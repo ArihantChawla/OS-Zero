@@ -208,9 +208,9 @@ trapnm:
 	iret
 
 trapdf:
-	popl	%eax
 	pusha
-	movl	32(%esp), %ebx
+	popl	%eax
+//	movl	32(%esp), %ebx
 	pushl	%ds
 	pushl	%es
 	pushl	%fs
@@ -225,14 +225,14 @@ trapdf:
 	popl	%fs
 	popl	%es
 	popl	%ds
-	popal
 	addl	$4, %esp
+	popal
 	sti
 	iret
 
 trapts:
+//	movl	32(%esp), %eax
 	pushal
-	movl	32(%esp), %eax
 	pushl	%ds
 	pushl	%es
 	pushl	%fs
@@ -252,8 +252,8 @@ trapts:
 	sti
 	iret
 trapnp:
+//	movl	32(%esp), %eax
 	pushal
-	movl	32(%esp), %eax
 	pushl	%ds
 	pushl	%es
 	pushl	%fs
@@ -274,8 +274,8 @@ trapnp:
 	iret
 
 trapss:
+//	movl	32(%esp), %eax
 	pushal
-	movl	32(%esp), %eax
 	pushl	%ds
 	pushl	%es
 	pushl	%fs
@@ -297,8 +297,8 @@ trapss:
 
 trapgp:
 	/* EAX	- fault IP */
+//	movl	32(%esp), %eax
 	pushal
-	movl	32(%esp), %eax
 	pushl	%ds
 	pushl	%es
 	pushl	%fs
@@ -320,8 +320,8 @@ _gpfin:
 	iret
 
 trappf:
+//	movl	32(%esp), %eax
 	pushal
-	movl	32(%esp), %eax
 	pushl	%ds
 	pushl	%es
 	pushl	%fs
@@ -346,8 +346,8 @@ trappf:
 
 trapmf:
 	/* no error on stack */
+//	movl	32(%esp), %eax
 	pushal
-	movl	32(%esp), %eax
 	pushl	%ds
 	pushl	%es
 	pushl	%fs
@@ -369,8 +369,8 @@ trapmf:
 
 trapac:
 	/* fault eip <- stack pointer */
+//	movl	32(%esp), %eax
 	pushal
-	movl	32(%esp), %eax
 	pushl	%ds
 	pushl	%es
 	pushl	%fs
