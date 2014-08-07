@@ -21,7 +21,7 @@ ASMLINK
 void
 thrsave(struct thr *thr)
 {
-    uint32_t pc;
+    int32_t pc;
 
     /* threads return to thryield() */
     m_getretadr(pc);
@@ -39,6 +39,7 @@ thrjmp(struct thr *thr)
     k_curthr = thr;
     k_curproc = thr->proc;
     m_tcbjmp(&thr->m_tcb);
+    __asm__ __volatile__ ("sti\n");
 
     /* NOTREACHED */
 }
@@ -67,11 +68,13 @@ thradjprio(struct thr *thr)
     return prio;
 }
 
+/* TODO: use <zero/list.h> */
+
 /* add thread to end of queue */
 void
 thrqueue(struct thr *thr, struct thrq *thrq)
 {
-    mtxlk(&thrq->lk);
+//    mtxlk(&thrq->lk);
     thr->prev = thrq->tail;
     if (thr->prev) {
         thr->prev->next = thr;
@@ -79,7 +82,7 @@ thrqueue(struct thr *thr, struct thrq *thrq)
         thrq->head = thr;
     }
     thrq->tail = thr;
-    mtxunlk(&thrq->lk);
+//    mtxunlk(&thrq->lk);
 
     return;
 }
@@ -191,6 +194,7 @@ thrwakeup(uintptr_t wchan)
 {
     struct thrwait *tab;
     struct thrwait *ptr = NULL;
+    struct thrq    *thrq;
     struct thr     *thr1;
     struct thr     *thr2;
     long            key0 = thrwaitkey0(wchan);
@@ -221,8 +225,11 @@ thrwakeup(uintptr_t wchan)
         thr1 = ptr->ptr;
         if (thr1) {
             thr2 = thr1->next;
+            thrq = &thrruntab[thr1->prio];
+            mtxlk(&thrq->lk);
             thrqueue(thr1, &thrruntab[thr1->prio]);
             ptr->ptr = thr2;
+            mtxunlk(&thrq->lk);
         }
 #if 0
         while (thr1) {
@@ -271,14 +278,17 @@ thryield(void)
     struct thr  *thr = k_curthr;
     struct thrq *thrq;
     long         prio;
-    long         state = thr->state;
+    long         state;
 
     if (thr) {
         thrsave(thr);
         prio = thradjprio(thr);
+        state = thr->state;
         if (state == THRREADY) {
             thrq = &thrruntab[prio];
+            mtxlk(&thrq->lk);
             thrqueue(thr, thrq);
+            mtxunlk(&thrq->lk);
         } else if (state == THRWAIT) {
             thraddwait(thr);
         }
@@ -297,7 +307,6 @@ thryield(void)
                 }
                 thrq->head = thr->next;
                 mtxunlk(&thrq->lk);
-                __asm__ __volatile__ ("sti\n");
                 if (thr != k_curthr) {
                     thrjmp(thr);
                 } else {

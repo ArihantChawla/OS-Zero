@@ -93,6 +93,16 @@ SECTIONS {
 	mp.o(.text)
 	mp.o(.data)
 	mp.o(.bss)
+
+	thr.o(.text)
+	thr.o(.data)
+	thr.o(.bss)
+	tcb.o(.text)
+	tcb.o(.data)
+	tcb.o(.bss)
+
+
+
     	hpet.o(.text)
     	hpet.o(.data)
     	hpet.o(.bss)

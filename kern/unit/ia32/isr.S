@@ -469,6 +469,11 @@ irqtimer:
 	pushl	%gs
 	movl	%esp, %ebp
 
+	movb	$0x01, %al
+	outb	%al, $0x21
+	movb	$0x00, %al
+	outb	%al, $0xa1
+
 //	call	tmrsyncscr
 //	call	tmrfunc
 	movl	schedyield, %eax
@@ -483,7 +488,7 @@ irqtimer:
 	popl	%es
 	popl	%ds
 	popal
-	sti
+//	sti
 	iret
 
 irqkbd:

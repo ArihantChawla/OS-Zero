@@ -17,9 +17,6 @@
 #include <kern/unit/ppc/asm.h>
 #endif
 
-ASMLINK void thrsave(struct thr *thr);
-ASMLINK void thrjmp(struct thr *thr);
-
 //extern struct m_cpuinfo cpuinfo;
 
 #if (ZEROSCHED)
