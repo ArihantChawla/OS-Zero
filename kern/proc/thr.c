@@ -1,4 +1,5 @@
 #include <stddef.h>
+#include <sys/io.h>
 #include <zero/cdecl.h>
 #include <zero/param.h>
 #include <zero/trix.h>
@@ -17,7 +18,6 @@ static struct thrq    thrruntab[THRNCLASS * THRNPRIO];
 extern long           trappriotab[NINTR];
 
 /* save thread context */
-ASMLINK
 void
 thrsave(struct thr *thr)
 {
@@ -32,14 +32,12 @@ thrsave(struct thr *thr)
 }
 
 /* run thread */
-ASMLINK
 void
 thrjmp(struct thr *thr)
 {
     k_curthr = thr;
     k_curproc = thr->proc;
     m_tcbjmp(&thr->m_tcb);
-    __asm__ __volatile__ ("sti\n");
 
     /* NOTREACHED */
 }
@@ -307,25 +305,22 @@ thryield(void)
                 }
                 thrq->head = thr->next;
                 mtxunlk(&thrq->lk);
+#if 0
                 if (thr != k_curthr) {
                     thrjmp(thr);
                 } else {
 
                     return;
                 }
-#if 0
-                thrjmp(thr);
 #endif
+                thrjmp(thr);
             } else {
                 mtxunlk(&thrq->lk);
             }
         }
-#if 0
-        if (!thr) {
-            m_waitint();
-        }
-#endif
     }
+    outb(0x00, 0x21);
+    outb(0x00, 0xa1);
 
     return;
 }
