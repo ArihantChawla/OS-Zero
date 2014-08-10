@@ -18,20 +18,22 @@ static struct thrq    thrruntab[THRNCLASS * THRNPRIO];
 extern long           trappriotab[NINTR];
 
 /* save thread context */
+FASTCALL
 void
-thrsave(struct thr *thr)
+thrsave(struct thr *thr, long retadr)
 {
-    int32_t pc;
+//    int32_t pc;
 
-    /* threads return to thryield() */
-    m_getretadr(pc);
+//    m_getretadr(pc);
+//    thr->m_tcb.iret.eip = pc;
+    thr->m_tcb.iret.eip = retadr;
     m_tcbsave(&thr->m_tcb);
-    thr->m_tcb.iret.eip = pc;
 
     return;
 }
 
 /* run thread */
+FASTCALL
 void
 thrjmp(struct thr *thr)
 {
@@ -270,7 +272,8 @@ thrwakeup(uintptr_t wchan)
 }
 
 /* switch threads */
-void
+FASTCALL
+struct m_tcb *
 thryield(void)
 {
     struct thr  *thr = k_curthr;
@@ -279,7 +282,7 @@ thryield(void)
     long         state;
 
     if (thr) {
-        thrsave(thr);
+//        thrsave(thr);
         prio = thradjprio(thr);
         state = thr->state;
         if (state == THRREADY) {
@@ -297,6 +300,7 @@ thryield(void)
             thrq = &thrruntab[prio];
             mtxlk(&thrq->lk);
             thr = thrq->head;
+            thr->prev = NULL;
             if (thr) {
                 if (thr->next) {
                     thr->next->prev = NULL;
@@ -313,16 +317,25 @@ thryield(void)
                     return;
                 }
 #endif
+#if 0
                 thrjmp(thr);
+#endif
+
+                return &thr->m_tcb;
             } else {
                 mtxunlk(&thrq->lk);
             }
         }
     }
-    outb(0x00, 0x21);
-    outb(0x00, 0xa1);
+//    outb(0x00, 0x21);
+//    outb(0x00, 0xa1);
 
-    return;
+    if (thr) {
+        return &thr->m_tcb;
+    } else {
+
+        return NULL;
+    }
 }
 
 #endif /* ZEROSCHED */

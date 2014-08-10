@@ -200,7 +200,7 @@ kmain(struct mboothdr *hdr, unsigned long pmemsz)
     /* scheduler loop; interrupted by timer [and other] interrupts */
     while (1) {
         k_waitint();
-        thryield();
+//        thryield();
     }
 }
 

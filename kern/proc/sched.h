@@ -2,6 +2,7 @@
 #define __KERN_SCHED_H__
 
 #include <kern/conf.h>
+#include <zero/types.h>
 /*
  * thread scheduler
  * ----------------
@@ -27,7 +28,7 @@
 
 #include <kern/proc/thr.h>
 
-extern void (*schedyield)(void);
+extern FASTCALL struct m_tcb * (*schedyield)(void);
 void          schedinit(void);
 
 #if (ZEROSCHED)

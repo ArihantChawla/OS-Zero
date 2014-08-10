@@ -1,9 +1,10 @@
 #include <zero/cdecl.h>
 #include <zero/param.h>
+#include <zero/types.h>
 #include <zero/mtx.h>
 #include <kern/proc/sched.h>
 
-void (*schedyield)(void);
+FASTCALL struct m_tcb *(*schedyield)(void);
 
 void
 schedinit(void)

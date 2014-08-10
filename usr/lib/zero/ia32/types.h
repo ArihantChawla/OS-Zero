@@ -82,7 +82,7 @@ struct m_segregs {
     int32_t ds;         // data segment
     int32_t es;         // data segment
     int32_t fs;         // buffer cache segment
-    int32_t gs;         // per-CPU data segment
+//    int32_t gs;         // per-CPU data segment
 };
 
 /* thread control block */
@@ -91,8 +91,8 @@ struct m_tcb {
     uint8_t            fctx[TCBFCTXSIZE];       // @ 0
     struct m_trapframe iret;                    // @ 512 bytes
     struct m_segregs   segregs;                 // @ 532 bytes
-    int32_t            pdbr;                    // @ 548 bytes
-    struct m_pusha     genregs;                 // @ 552 bytes
+    int32_t            pdbr;                    // @ 544 bytes
+    struct m_pusha     genregs;                 // @ 548 bytes
 } PACK() ALIGNED(PAGESIZE);
 
 #endif /* __ZERO_IA32_TYPES_H__ */

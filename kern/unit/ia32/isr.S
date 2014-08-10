@@ -44,6 +44,7 @@
 #endif
 
 .extern	sigfunc, tmrsyncscr, schedyield, vmpagefault, kbdtrap, mousetrap
+.extern	thrsave, thrjmp
 
 .text	32
 
@@ -469,27 +470,45 @@ irqtimer:
 	pushl	%gs
 	movl	%esp, %ebp
 
+	/* mask timer interrupts, enable other ones */
 	movb	$0x01, %al
 	outb	%al, $0x21
 	movb	$0x00, %al
 	outb	%al, $0xa1
 
-//	call	tmrsyncscr
-//	call	tmrfunc
-	movl	schedyield, %eax
-	call	*%eax
+	/* arguments for thrsave */
+//	movl	48(%ebp), %edx		// return address
+	movl	%gs:8, %eax
+
+	call	thrsave
 
 	movb	$0x20, %al
 	outb	%al, $0x20
-	
+	/* schedyield returns thread ID in eax */
+	movl	schedyield, %ebx
+	call	*%ebx
+	movl	%eax, %ebx
+
+	movb	$0x20, %al
+	outb	%al, $0x20
+
+	movl	%ebx, %eax
+	call	thrjmp
+
+#if 0
 	movl	%ebp, %esp
 	popl	%gs
 	popl	%fs
 	popl	%es
 	popl	%ds
 	popal
+	movb	$0x00, %al
+	outb	%al, $0x21
+	outb	%al, $0xa1
 //	sti
+	movl	%gs:8, %esp
 	iret
+#endif
 
 irqkbd:
 	pushal

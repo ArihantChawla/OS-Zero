@@ -17,13 +17,13 @@ m_tcbsave:
 	/* save FPU context */
 	fnsave	(%esp)
 	/* push general purpose registers */
-	addl	$584, %esp
+	addl	$580, %esp
 	pushal
 	/* save caller stack pointer in m_pusha */
 	leal	-8(%ebp), %eax
 	movl	%eax, 8(%esp)
 	/* save caller stack pointer for iret */
-	movl	%eax, -28(%esp)
+	movl	%eax, -24(%esp)
 	/* save caller frame pointer in m_pusha */
 	leal	(%ebp), %eax
 	movl	%eax, 12(%esp)
@@ -32,7 +32,7 @@ m_tcbsave:
 	subl	$4, %esp
 	movl	%ebx, (%esp)
 	/* push segment registers */
-	pushl	%gs
+//	pushl	%gs
 	pushl	%fs
 	pushl	%es
 	pushl	%ds
@@ -41,6 +41,8 @@ m_tcbsave:
 	pushfl
 	pushl	%cs
 	/* caller sets return address */
+//	movl	4(%ebp), %eax
+//	pushl	%eax
 	movl	%ebp, %esp
 	popl	%ebp
 	ret
@@ -48,17 +50,17 @@ m_tcbsave:
 .align	32
 
 m_tcbjmp:
-	movl	8(%ebp), %eax
-	leal	548(%eax), %esp
+//	movl	8(%ebp), %eax
+	leal	544(%eax), %esp
 	popl	%eax
 	movl	%eax, %cr3
 	popal
-	subl	$52, (%esp)
+	subl	$48, %esp
 	popl	%ds
 	popl	%es
 	popl	%fs
-	popl	%gs
-	subl	$36, (%esp)
+//	popl	%gs
+	subl	$32, %esp
 	iret
 
 #endif /* ASMSWITCH */

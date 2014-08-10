@@ -45,7 +45,7 @@ mtxlk2(volatile long *lp, long val)
         res = m_cmpswap(lp, MTXINITVAL, val);
         if (res != MTXINITVAL) {
 #if (__KERNEL__)
-            schedyield();
+//            schedyield();
 #elif (PTHREAD)
             pthread_yield();
 #endif

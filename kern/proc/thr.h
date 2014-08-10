@@ -20,7 +20,7 @@
 //extern struct m_cpuinfo cpuinfo;
 
 #if (ZEROSCHED)
-void thryield(void);
+FASTCALL struct m_tcb * thryield(void);
 #endif
 
 #define __KERNEL__ 1
