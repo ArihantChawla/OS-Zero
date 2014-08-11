@@ -477,7 +477,7 @@ irqtimer:
 	outb	%al, $0xa1
 
 	/* arguments for thrsave */
-//	movl	48(%ebp), %edx		// return address
+	movl	48(%ebp), %edx		// return address
 	movl	%gs:8, %eax
 
 	call	thrsave
