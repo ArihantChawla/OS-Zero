@@ -8,6 +8,12 @@
  */
 
 /*
+ * FIXME
+ * - make the interrupt handlers add to interrupt mask, not set it
+ * - use local APIC instead of PIC + PIT
+ */
+
+/*
  * CPU pushes EFLAGS, CS, and EIP and an ERROR-code word if used.
  * return with IRET after return from handler.
  *
