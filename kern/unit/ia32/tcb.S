@@ -11,7 +11,7 @@
 
 .align	32
 
-	/* ASMLINK void m_tcbsave(struct m_tcb *tcb);
+	/* ASMLINK void m_tcbsave(struct m_tcb *tcb); */
 
 m_tcbsave:
 	/* prologue */
