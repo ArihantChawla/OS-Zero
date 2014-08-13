@@ -20,6 +20,7 @@
 #include <kern/io/drv/pc/vbe.h>
 #endif
 #include <kern/unit/x86/cpu.h>
+#include <kern/unit/x86/pic.h>
 #include <kern/unit/x86/pit.h>
 #if (VBE)
 #include <kern/unit/x86/trap.h>
@@ -111,11 +112,13 @@ kmain(struct mboothdr *hdr, unsigned long pmemsz)
 #if (PS2DRV)
     ps2init();
 #endif
+#if 0
 #if (VBE2)
     vbe2init(hdr);
     vbe2kludge();
 #elif (VBE) && (PLASMA)
     plasmaloop();
+#endif
 #endif
     logoprint();
 //    vminitphys((uintptr_t)&_ebss, pmemsz - (unsigned long)&_ebss);
@@ -152,6 +155,7 @@ kmain(struct mboothdr *hdr, unsigned long pmemsz)
 #if (SMP)
     /* multiprocessor probe */
     mpinit();
+#if 0
     if (mpapic) {
 #if (HPET)
         hpetinit();
@@ -168,6 +172,7 @@ kmain(struct mboothdr *hdr, unsigned long pmemsz)
     } else {
         kprintf("found %ld processors\n", mpncpu);
     }
+#endif
     k_curcpu = &cputab[0];
 #endif
     /* CPU interface */
@@ -196,9 +201,12 @@ kmain(struct mboothdr *hdr, unsigned long pmemsz)
 #if (!SMP)
     pitinit();
 #endif
-    __asm__ __volatile__ ("sti\n");
+//    __asm__ __volatile__ ("sti\n");
     /* scheduler loop; interrupted by timer [and other] interrupts */
     while (1) {
+        /* enable all interrupts */
+        outb(0x00, PICMASK1);
+        outb(0x00, PICMASK2);
         k_waitint();
 //        thryield();
     }

@@ -28,7 +28,7 @@ picinit(void)
     /* set masks to zero; enable all interrupts */
     outb(0x00, 0x21);
     outb(0x00, 0xa1);
-    __asm__ __volatile__ ("sti\n");
+//    __asm__ __volatile__ ("sti\n");
 
     return;
 }

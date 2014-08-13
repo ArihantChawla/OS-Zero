@@ -20,9 +20,6 @@ pitinit(void)
 
     kprintf("initialising timer interrupt to %d Hz\n", HZ);
     trapsetintgate(&idt[trapirqid(IRQTIMER)], irqtimer, TRAPUSER);
-    /* enable all interrupts */
-    outb(0x00, PICMASK1);
-    outb(0x00, PICMASK2);
     /* initialise timer */
     outb(PITCMD, PITCTRL);
     pitsethz(HZ);

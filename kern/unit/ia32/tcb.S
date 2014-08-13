@@ -3,7 +3,7 @@
 
 #if (ASMSWITCH)
 
-	/* TODO: stack switches, per-cpu segment (%gs) */
+	/* TODO: privilege transition(?), per-cpu segment (%gs), tss/ltr */
 
 .globl	m_tcbsave, m_tcbjmp
 
@@ -71,6 +71,9 @@ m_tcbjmp:
 //	popl	%gs
 	/* adjust %esp to &tcb->iret */ 
 	subl	$32, %esp
+	movb	$0x20, %al
+	outb	%al, $0x20
+	sti
 	iret
 
 #endif /* ASMSWITCH */

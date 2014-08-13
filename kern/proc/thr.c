@@ -309,27 +309,12 @@ thryield(void)
                 }
                 thrq->head = thr->next;
                 mtxunlk(&thrq->lk);
-#if 0
-                if (thr != k_curthr) {
-                    thrjmp(thr);
-                } else {
-
-                    return;
-                }
-#endif
-#if 0
-                thrjmp(thr);
-#endif
-
                 return &thr->m_tcb;
             } else {
                 mtxunlk(&thrq->lk);
             }
         }
     }
-//    outb(0x00, 0x21);
-//    outb(0x00, 0xa1);
-
     if (thr) {
         return &thr->m_tcb;
     } else {

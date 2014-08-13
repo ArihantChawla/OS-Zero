@@ -112,7 +112,7 @@ trapinit(void)
     /* mask timer interrupt, enable other interrupts */
     outb(0x01, 0x21);
     outb(0x00, 0xa1);
-    __asm__ __volatile__ ("sti\n");
+//    __asm__ __volatile__ ("sti\n");
 //    pitinit();  // initialise interrupt timer
 
     return;

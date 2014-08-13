@@ -36,7 +36,6 @@
 /*
  * interrupt epilogue
  * ------------------
- * IRQ routines need to end with intfinirq(i).
  * interrupt routines with error must adjust stack pointer.
  * in the end, we enable interrupts with STI.
  */
@@ -55,6 +54,7 @@
 .text	32
 
 trapde:
+	cli
 	pushal
 	pushl	%ds
 	pushl	%es
@@ -75,6 +75,7 @@ trapde:
 	iret
 
 trapdb:
+	cli
 	pushal
 	pushl	%ds
 	pushl	%es
@@ -95,6 +96,7 @@ trapdb:
 	iret
 
 trapnmi:
+	cli
 	pushal
 	pushl	%ds
 	pushl	%es
@@ -115,6 +117,7 @@ trapnmi:
 	iret
 
 trapbp:
+	cli
 	pushal
 	pushl	%ds
 	pushl	%es
@@ -135,6 +138,7 @@ trapbp:
 	iret
 
 trapof:
+	cli
 	pushal
 	pushl	%ds
 	pushl	%es
@@ -155,6 +159,7 @@ trapof:
 	iret
 
 trapbr:
+	cli
 	pushal
 	pushl	%ds
 	pushl	%es
@@ -175,6 +180,7 @@ trapbr:
 	iret
 
 trapud:
+	cli
 	pushal
 	pushl	%ds
 	pushl	%es
@@ -195,6 +201,7 @@ trapud:
 	iret
 
 trapnm:
+	cli
 	pushal
 	pushl	%ds
 	pushl	%es
@@ -215,6 +222,7 @@ trapnm:
 	iret
 
 trapdf:
+	cli
 	pusha
 	popl	%eax
 //	movl	32(%esp), %ebx
@@ -238,6 +246,7 @@ trapdf:
 	iret
 
 trapts:
+	cli
 //	movl	32(%esp), %eax
 	pushal
 	pushl	%ds
@@ -259,6 +268,7 @@ trapts:
 	sti
 	iret
 trapnp:
+	cli
 //	movl	32(%esp), %eax
 	pushal
 	pushl	%ds
@@ -281,6 +291,7 @@ trapnp:
 	iret
 
 trapss:
+	cli
 //	movl	32(%esp), %eax
 	pushal
 	pushl	%ds
@@ -303,6 +314,7 @@ trapss:
 	iret
 
 trapgp:
+	cli
 	/* EAX	- fault IP */
 //	movl	32(%esp), %eax
 	pushal
@@ -316,6 +328,7 @@ trapgp:
 	call	sigfunc
 
 _gpfin:	
+	cli
 	movl	%ebp, %esp
 	popl	%gs
 	popl	%fs
@@ -327,6 +340,7 @@ _gpfin:
 	iret
 
 trappf:
+	cli
 //	movl	32(%esp), %eax
 	pushal
 	pushl	%ds
@@ -352,6 +366,7 @@ trappf:
 	iret
 
 trapmf:
+	cli
 	/* no error on stack */
 //	movl	32(%esp), %eax
 	pushal
@@ -375,6 +390,7 @@ trapmf:
 	iret
 
 trapac:
+	cli
 	/* fault eip <- stack pointer */
 //	movl	32(%esp), %eax
 	pushal
@@ -398,6 +414,7 @@ trapac:
 	iret
 
 trapmc:
+	cli
 	pushal
 	pushl	%ds
 	pushl	%es
@@ -418,6 +435,7 @@ trapmc:
 	iret
 
 trapxf:
+	cli
 	/* fault eip <- stack pointer */
 	pushal
 	pushl	%ds
@@ -439,6 +457,7 @@ trapxf:
 	iret
 
 irqtimer0:
+	cli
 	pushal
 	pushl	%ds
 	pushl	%es
@@ -469,6 +488,7 @@ _tmr0fin:
 	iret
 	
 irqtimer:
+	cli
 	pushal
 	pushl	%ds
 	pushl	%es
@@ -476,47 +496,19 @@ irqtimer:
 	pushl	%gs
 	movl	%esp, %ebp
 
-	/* mask timer interrupts, enable other ones */
-	movb	$0x01, %al
-	outb	%al, $0x21
-	movb	$0x00, %al
-	outb	%al, $0xa1
-
 	/* arguments for thrsave */
 	movl	48(%ebp), %edx		// return address
 	movl	%gs:8, %eax
-
 	call	thrsave
-
-	movb	$0x20, %al
-	outb	%al, $0x20
 	/* schedyield returns thread ID in eax */
 	movl	schedyield, %ebx
 	call	*%ebx
 	movl	%eax, %ebx
-
-	movb	$0x20, %al
-	outb	%al, $0x20
-
 	movl	%ebx, %eax
 	call	thrjmp
 
-#if 0
-	movl	%ebp, %esp
-	popl	%gs
-	popl	%fs
-	popl	%es
-	popl	%ds
-	popal
-	movb	$0x00, %al
-	outb	%al, $0x21
-	outb	%al, $0xa1
-//	sti
-	movl	%gs:8, %esp
-	iret
-#endif
-
 irqkbd:
+	cli
 	pushal
 	pushl	%ds
 	pushl	%es
@@ -545,6 +537,7 @@ _irqkbddone:
 	iret
 
 irq3:
+	cli
 	pushal
 	pushl	%ds
 	pushl	%es
@@ -565,6 +558,7 @@ irq3:
 	iret
 
 irq4:
+	cli
 	pushal
 	pushl	%ds
 	pushl	%es
@@ -585,6 +579,7 @@ irq4:
 	iret
 
 irq5:
+	cli
 	pushal
 	pushl	%ds
 	pushl	%es
@@ -610,6 +605,7 @@ _irq5done:
 	iret
 
 irqmouse:
+	cli
 	pushal
 	pushl	%ds
 	pushl	%es
@@ -641,6 +637,7 @@ irqerror:
 	iret
 
 irqspurious:
+	cli
 	pushal
 	pushl	%ds
 	pushl	%es
@@ -738,6 +735,4 @@ irqvec:
 	.long	0x00000000
 	.long	0x00000000
 #endif
-
-
 
