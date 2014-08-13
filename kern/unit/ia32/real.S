@@ -30,6 +30,9 @@ realint10:
 /* drop back to 16-bit real mode */
 .code16
 realstart:
+#if (VBENEW)
+	cli
+#endif
 	/* load NULL IDT */
 	lidtl	(_realidtptr - realstart + KERNREALBASE)
 	/* set up 16-bit segments */

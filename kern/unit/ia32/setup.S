@@ -16,6 +16,9 @@
 	 * - set code segment register CS up with a far jump
 	 */
 gdtinit:
+#if (VBENEW)
+	cli
+#endif
 	lgdt	(gdtptr)
 	movw	$DATASEL, %ax
 	movw	%ax, %ds
