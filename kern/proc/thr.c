@@ -22,10 +22,13 @@ FASTCALL
 void
 thrsave(struct thr *thr, long retadr)
 {
-//    int32_t pc;
+    uint8_t *fctx = thr->m_tcb.fctx;
 
-//    m_getretadr(pc);
-//    thr->m_tcb.iret.eip = pc;
+    if (k_curcpu->info->flags & CPUHASFXSR) {
+        __asm__ __volatile__ ("fxsave (%0)\n" : : "r" (fctx));
+    } else {
+        __asm__ __volatile__ ("fnsave (%0)\n" : : "r" (fctx));
+    }
     thr->m_tcb.iret.eip = retadr;
     m_tcbsave(&thr->m_tcb);
 
@@ -37,6 +40,13 @@ FASTCALL
 void
 thrjmp(struct thr *thr)
 {
+    uint8_t *fctx = thr->m_tcb.fctx;
+
+    if (k_curcpu->info->flags & CPUHASFXSR) {
+        __asm__ __volatile__ ("fxrstor (%0)\n" : : "r" (fctx));
+    } else {
+        __asm__ __volatile__ ("frstor (%0)\n" : : "r" (fctx));
+    }
     k_curthr = thr;
     k_curproc = thr->proc;
     m_tcbjmp(&thr->m_tcb);
@@ -74,7 +84,6 @@ thradjprio(struct thr *thr)
 void
 thrqueue(struct thr *thr, struct thrq *thrq)
 {
-//    mtxlk(&thrq->lk);
     thr->prev = thrq->tail;
     if (thr->prev) {
         thr->prev->next = thr;
@@ -82,7 +91,6 @@ thrqueue(struct thr *thr, struct thrq *thrq)
         thrq->head = thr;
     }
     thrq->tail = thr;
-//    mtxunlk(&thrq->lk);
 
     return;
 }
@@ -282,7 +290,6 @@ thryield(void)
     long         state;
 
     if (thr) {
-//        thrsave(thr);
         prio = thradjprio(thr);
         state = thr->state;
         if (state == THRREADY) {

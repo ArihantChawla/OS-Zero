@@ -19,8 +19,8 @@ m_tcbsave:
 	movl	%esp, %ebp
 	/* load tcb-argument into %esp */
 	movl	8(%ebp), %esp
-	/* save FPU context */
-	fnsave	(%esp)
+//	/* save FPU context */
+//	fnsave	(%esp)
 	/* push general purpose registers */
 	addl	$580, %esp
 	pushal
