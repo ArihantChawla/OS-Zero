@@ -120,7 +120,7 @@ apicinit(void)
 //    freq = (0xffffffff - apic->tmrcnt.cur + 1) * 16 * 100;
     freq = (0xffffffff - apicread(APICTMRCURCNT) + 1) * 16 * 100;
     tmp = freq / HZ / 16;
-    kprintf("APIC interrupt frequency: %ld\n", (long)freq);
+    kprintf("APIC interrupt frequency: %ld MHz\n", (long)freq / 1000000);
 
     trapsetintgate(&kernidt[trapirqid(IRQTIMER)], irqtimer, TRAPUSER);
 
@@ -170,7 +170,7 @@ apicinitcpu(long id)
         irqvec[IRQERROR] = irqerror;
         irqvec[IRQSPURIOUS] = irqspurious;
     }
-    if (cpu->id != 0) {
+    if (id != 0) {
         apicinit();
     }
     cpu->id = id;
