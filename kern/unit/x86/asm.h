@@ -20,5 +20,11 @@ k_readmsr(long adr)
     return retval;
 }
 
+static inline void
+k_writemsr(uint32_t adr, uint64_t val)
+{
+    __asm__ __volatile__ ("wrmsr" : : "c" (adr), "A" (val));
+}
+
 #endif /* __KERN_UNIT_X86_ASM_H__ */
 

@@ -13,8 +13,8 @@
 
 #define NEWFONT   1
 
-#define APIC      1     // local [per-cpu] APIC support
-#define SMP       0     // enable multiprocessor support; currently broken
+#define APIC      1     // local [per-CPU] APIC support
+#define SMP       1     // enable multiprocessor support; currently broken
 #define HZ        250   // scheduler timer frequency
 #define EVHZ      1000  // event timer frequency
 #define ZEROSCHED 1     // default scheduler

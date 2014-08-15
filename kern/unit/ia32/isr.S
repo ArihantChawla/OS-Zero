@@ -45,11 +45,14 @@
 .globl	irqtimer0, irqtimer, irqkbd, irqmouse, irqerror, irqspurious
 .globl	irqvec
 #if (SMP) || (APIC)
-.globl	irqerror, irqspurious, mpspurint
+.globl	irqerror, irqspurious, mpspurint, irqtimercnt
 #endif
 
 .extern	sigfunc, tmrsyncscr, schedyield, vmpagefault, kbdtrap, mousetrap
 .extern	thrsave, thrjmp
+#if (APIC)
+.extern	mpapic
+#endif
 
 .text	32
 
@@ -455,6 +458,12 @@ trapxf:
 	popal
 	sti
 	iret
+
+#if (APIC)
+irqtimercnt:
+	movl	$0x00000000, 0xfee000b0
+	iret
+#endif
 
 irqtimer0:
 	cli

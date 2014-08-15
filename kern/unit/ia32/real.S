@@ -14,7 +14,7 @@
 
 .align	4
 
-/* interrupt handler for 0x10 */
+	/* interrupt handler for 0x10 */
 realint10:
 	cli
 	pushl	%ebp
@@ -27,10 +27,11 @@ realint10:
 
 .align	4
 
-/* drop back to 16-bit real mode */
 .code16
+
+	/* drop back to 16-bit real mode */
 realstart:
-#if (VBENEW)
+#if (NEWCLI)
 	cli
 #endif
 	/* load NULL IDT */
@@ -51,7 +52,7 @@ realstart:
 
 .align	4
 
-/* generate interrupt 0x10 in real mode */
+	/* generate interrupt 0x10 in real mode */
 _real16:
 	/* zero segment registers */
 	xorw	%ax, %ax
@@ -77,8 +78,9 @@ _real16:
 
 .align	4
 
-/* reinitialise 32-bit protected mode */
 .code32
+
+	/* reinitialise 32-bit protected mode */
 _protmode:
 //	lgdtl	(gdtptr)
 	/* set up segment registers */

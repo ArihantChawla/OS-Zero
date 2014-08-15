@@ -36,6 +36,8 @@ extern void irqkbd(void);
 extern void irqmouse(void);
 #if (SMP)
 extern void irqerror(void);
+#endif
+#if (APIC)
 extern void irqspurious(void);
 #endif
 
@@ -81,6 +83,9 @@ trapinitidt(uint64_t *idt)
     trapsetintgate(&idt[trapirqid(IRQMOUSE)], irqmouse, TRAPUSER);
 #if (SMP)
     trapsetintgate(&idt[trapirqid(IRQERROR)], irqerror, TRAPUSER);
+#endif
+#if (APIC)
+    trapsetintgate(&idt[trapirqid(IRQAPICTMR)], irqtimer, TRAPUSER);
     trapsetintgate(&idt[trapirqid(IRQSPURIOUS)], irqspurious, TRAPUSER);
 #endif
 #if 0

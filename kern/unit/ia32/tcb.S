@@ -71,8 +71,12 @@ m_tcbjmp:
 //	popl	%gs
 	/* adjust %esp to &tcb->iret */ 
 	subl	$32, %esp
+#if (APIC)
+	movl	$0x00000000, 0xfee000b0
+#else
 	movb	$0x20, %al
 	outb	%al, $0x20
+#endif
 	sti
 	iret
 

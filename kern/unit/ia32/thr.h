@@ -3,6 +3,7 @@
 
 #include <zero/cdecl.h>
 #include <zero/param.h>
+#include <kern/syscall.h>
 
 #if (ASMSWITCH)
 

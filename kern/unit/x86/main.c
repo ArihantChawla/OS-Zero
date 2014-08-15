@@ -68,6 +68,9 @@ extern void acpiinit(void);
 #if (SB16)
 extern void sb16init(void);
 #endif
+#if (APIC)
+extern void apicinit(void);
+#endif
 
 extern uint8_t                   kerniomap[8192] ALIGNED(PAGESIZE);
 extern struct proc               proctab[NPROC];
@@ -81,12 +84,14 @@ extern struct m_cpu              cputab[NCPU];
 #if (ACPI)
 extern volatile struct acpidesc *acpidesc;
 #endif
-extern volatile uint32_t        *mpapic;
 extern volatile long             mpncpu;
 extern volatile long             mpmultiproc;
 #endif
 extern struct pageq              vmphysq;
 extern struct pageq              vmshmq;
+#if (SMP) || (APIC)
+extern volatile uint32_t        *mpapic;
+#endif
 
 ASMLINK
 void
@@ -152,10 +157,11 @@ kmain(struct mboothdr *hdr, unsigned long pmemsz)
     /* allocate unused device regions (in 3.5G..4G) */
 //    pageaddzone(DEVMEMBASE, &vmshmq, 0xffffffff - DEVMEMBASE + 1);
     pageaddzone(DEVMEMBASE, &vmshmq, 0xffffffffU - DEVMEMBASE + 1);
-#if (SMP)
+#if (SMP) || (APIC)
     /* multiprocessor probe */
+#if (SMP)
     mpinit();
-#if 0
+#endif
     if (mpapic) {
 #if (HPET)
         hpetinit();
@@ -164,6 +170,7 @@ kmain(struct mboothdr *hdr, unsigned long pmemsz)
         ioapicinit(0);
 //        tssinit(0);
     }
+#if (SMP)
     if (mpmultiproc) {
         mpstart();
     }
@@ -173,6 +180,8 @@ kmain(struct mboothdr *hdr, unsigned long pmemsz)
         kprintf("found %ld processors\n", mpncpu);
     }
 #endif
+#endif
+#if 0
     k_curcpu = &cputab[0];
 #endif
     /* CPU interface */
@@ -198,17 +207,22 @@ kmain(struct mboothdr *hdr, unsigned long pmemsz)
             vmpagestat.nwired << (PAGESIZELOG2 - 10),
             vmpagestat.nphys << (PAGESIZELOG2 - 10));
     schedinit();
-#if (!SMP)
+#if (APIC)
+    apicinit();
+#else
     pitinit();
 #endif
-//    __asm__ __volatile__ ("sti\n");
     /* scheduler loop; interrupted by timer [and other] interrupts */
     while (1) {
         /* enable all interrupts */
+#if (APIC)
+        k_enabintr();
+#else
         outb(0x00, PICMASK1);
         outb(0x00, PICMASK2);
+#endif
+        /* wait for interrupt */
         k_waitint();
-//        thryield();
     }
 }
 

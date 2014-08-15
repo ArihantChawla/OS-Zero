@@ -16,7 +16,7 @@
 	 * - set code segment register CS up with a far jump
 	 */
 gdtinit:
-#if (VBENEW)
+#if (NEWCLI)
 	cli
 #endif
 	lgdt	(gdtptr)

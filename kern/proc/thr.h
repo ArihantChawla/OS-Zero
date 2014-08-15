@@ -60,5 +60,40 @@ struct thrwait {
 #endif
 #endif
 
+/* thread */
+/* states */
+#define THRNONE   0x00                 // undefined
+#define THRINIT   0x01                 // being initialised
+#define THRRUN    0x02                 // running
+#define THRREADY  0x03                 // ready to run
+#define THRWAIT   0x04                 // waiting on system descriptor
+#define THRSTOP   0x05                 // stopped
+#define THRZOMBIE 0x06                 // finished but not waited for
+struct thr {
+    /* thread control block */
+    struct m_tcb   m_tcb;               // context
+    /* thread stacks */
+    uintptr_t      ustk;                // user-mode stack
+    uintptr_t      kstk;                // kernel-mode stack
+    /* state */
+    long           state;               // thread state
+    /* wait channel */
+    uintptr_t      wchan;               // wait channel
+    /* linkage */
+    struct proc   *proc;                // owner process
+    /* queue linkage */
+    struct thr    *prev;                // previous in queue
+    struct thr    *next;                // next in queue
+    long           id;
+    /* scheduler parameters */
+    long           nice;                // priority adjustment
+    long           class;               // thread class
+    long           prio;                // priority
+//    long           interact;
+    long           runtime;             // run time
+    /* system call context */
+    struct syscall syscall;             // current system call
+} PACK();
+
 #endif /* __KERN_THR_H__ */
 

@@ -147,7 +147,9 @@ m_lidt(struct m_farptr *fp)
 #if (SMP) || (APIC)
 #define IRQERROR    19
 #define IRQIPI      29
-#define IRQSPURIOUS 47
+#define IRQAPICTMR  32
+//#define IRQSPURIOUS 47
+#define IRQSPURIOUS 39
 #endif
 
 #endif /* __KERN_UNIT_X86_TRAP_H__ */

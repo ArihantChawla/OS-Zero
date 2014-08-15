@@ -8,6 +8,7 @@
 #include <stdint.h>
 #include <zero/param.h>
 #include <zero/cdecl.h>
+#include <kern/unit/x86/pit.h>
 #include <kern/unit/ia32/link.h>
 
 extern volatile uint32_t *mpapic;
@@ -17,61 +18,64 @@ void ioapicinit(long id);
 void apicstart(uint8_t id, uint32_t adr);
 void usleep(unsigned long nusec);
 
-#define apiceoi()      apicwrite(0, APICEOI)
+#define apiceoi()        apicwrite(0, APICEOI)
 
-#define APICBASE       0xfee00000
-#define APICMSR        0x1b
+#define APICBASE         0xfee00000
+#define APICMSR          0x1b
+#define APICGLOBENABLE   0x00000800
 
 /* initialisation */
-#define RTCBASE        0x70
-#define BIOSWRV        0x467            // warm reset vector
+#define RTCBASE          0x70
+#define BIOSWRV          0x467          // warm reset vector
 
 /* registers */
-#define APICID         0x0020
-#define APICVER        0x0030
-#define APICTASKPRIO   0x0080
-#define APICEOI        0x00b0
-#define APICLDR        0x00d0
-#define APICSPURIOUS   0x00f0
-#define APICERRSTAT    0x0280
-#define APICINTRLO     0x0300
-#define APICINTRHI     0x0310
-#define APICTIMER      0x0320           // timer
-#define APICTHERMAL    0x0330           // thermal sensor interrupt
-#define APICPERFINTR   0x0340           // performance counter overflow
-#define APICLINTR0     0x0350
-#define APICLINTR1     0x0360           // NMI
-#define APICERROR      0x0370
-#define APICTMRINITCNT 0x0380
-#define APICTMRCURCNT  0x0390
-#define APICTMRDIVCONF 0x03e0
-#define APICLAST       0x038f
+#define APICID           0x0020
+#define APICVER          0x0030
+#define APICTASKPRIO     0x0080
+#define APICEOI          0x00b0
+#define APICLDR          0x00d0
+#define APICDFR          0x00e0
+#define APICSPURIOUS     0x00f0
+#define APICERRSTAT      0x0280
+#define APICINTRLO       0x0300
+#define APICINTRHI       0x0310
+#define APICTIMER        0x0320         // timer
+#define APICTHERMAL      0x0330         // thermal sensor interrupt
+#define APICPERFINTR     0x0340         // performance counter overflow
+#define APICLINTR0       0x0350
+#define APICLINTR1       0x0360         // NMI
+#define APICERROR        0x0370
+#define APICTMRINITCNT   0x0380
+#define APICTMRCURCNT    0x0390
+#define APICTMRDIVCONF   0x03e0
+#define APICLAST         0x038f
 //#define APICENABLE     0x0100
-#define APICCPUFOCUS   0x0200
+#define APICCPUFOCUS     0x0200
 #define APICNMI        (4 << 8)
 /* timer configuration */
-#define APICDISABLE    0x00010000
+#define APICDISABLE      0x00010000
 //#define APICDIV1       0x00000008
-#define APICBASEDIV    0x0000000b
-#define APICPERIODIC   0x00020000
+#define APICBASEDIV      0x0000000b
+#define APICPERIODIC     0x00020000
+//#define APICMODEPERIODIC 0x02
 
 /* flags */
-#define APICENABLE     0x00000100
-#define APICINIT       0x00000500
-#define APICSTART      0x00000600
-#define APICDELIVS     0x00001000
-#define APICASSERT     0x00004000
-#define APICDEASSERT   0x00000000
-#define APICLEVEL      0x00008000
-#define APICBCAST      0x00080000
-#define APICPENDING    0x00001000
-#define APICFIXED      0x00000000
-#define APICSMI        0x00000200
-#define APICEXTINTR    0x00000700
-#define APICMASKED     0x00010000
-#define APICSELF       0x00040000
-#define APICBUTSELF    0x00080000
-#define APICALL        0x000c0000
+#define APICSWENABLE     0x00000100
+#define APICINIT         0x00000500
+#define APICSTART        0x00000600
+#define APICDELIVS       0x00001000
+#define APICASSERT       0x00004000
+#define APICDEASSERT     0x00000000
+#define APICLEVEL        0x00008000
+#define APICBCAST        0x00080000
+#define APICPENDING      0x00001000
+#define APICFIXED        0x00000000
+#define APICSMI          0x00000200
+#define APICEXTINTR      0x00000700
+#define APICMASKED       0x00010000
+#define APICSELF         0x00040000
+#define APICBUTSELF      0x00080000
+#define APICALL          0x000c0000
 
 struct lvtreg {
     unsigned vec : 8;
@@ -196,12 +200,12 @@ struct apic {
     struct lvtreg  lvtlint1;
     struct lvtreg  lvterror;
     /* initial count register for timer */
-    const struct {
-        uint32_t   init;
+    struct {
+        uint32_t   cnt;
         uint32_t   res42[3];
     } tmrinit;
     /* current count register for timer */
-    const struct {
+    struct {
         uint32_t   cur;
         uint32_t   res42[3];
     } tmrcnt;
@@ -211,7 +215,7 @@ struct apic {
         unsigned   div   : 4;
         unsigned   res44 : 28;
         uint32_t   res45[3];
-    };
+    } divconf;
     uint32_t       res46[4];
 } PACK();
 

@@ -3,8 +3,8 @@
 #include <signal.h>
 #include <zero/types.h>
 #include <kern/util.h>
-#include <kern/obj.h>
-//#include <kern/proc.h>
+//#include <kern/obj.h>
+#include <kern/proc/proc.h>
 #if !defined(__arm__)
 #include <kern/unit/x86/trap.h>
 #include <kern/unit/x86/cpu.h>
