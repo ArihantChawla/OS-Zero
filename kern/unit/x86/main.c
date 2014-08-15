@@ -29,7 +29,7 @@
 #include <kern/unit/ia32/link.h>
 #include <kern/unit/ia32/boot.h>
 #include <kern/unit/ia32/vm.h>
-#if (SMP)
+#if (SMP) || (APIC)
 #include <kern/unit/ia32/mp.h>
 #endif
 #include <kern/unit/x86/asm.h>
@@ -69,7 +69,8 @@ extern void acpiinit(void);
 extern void sb16init(void);
 #endif
 #if (APIC)
-extern void apicinit(void);
+extern volatile uint32_t * apicprobe(void);
+extern volatile uint32_t * apicinit(void);
 #endif
 
 extern uint8_t                   kerniomap[8192] ALIGNED(PAGESIZE);
@@ -159,14 +160,17 @@ kmain(struct mboothdr *hdr, unsigned long pmemsz)
     pageaddzone(DEVMEMBASE, &vmshmq, 0xffffffffU - DEVMEMBASE + 1);
 #if (SMP) || (APIC)
     /* multiprocessor probe */
-#if (SMP)
     mpinit();
-#endif
+    if (!mpapic) {
+        mpapic = apicprobe();
+    }
     if (mpapic) {
 #if (HPET)
         hpetinit();
 #endif
+#if (SMP)
         apicinitcpu(0);
+#endif
         ioapicinit(0);
 //        tssinit(0);
     }
@@ -180,7 +184,10 @@ kmain(struct mboothdr *hdr, unsigned long pmemsz)
         kprintf("found %ld processors\n", mpncpu);
     }
 #endif
-#endif
+    if (mpapic) {
+        apicinit();
+    }
+#endif /* SMP || APIC */
 #if 0
     k_curcpu = &cputab[0];
 #endif
@@ -208,7 +215,7 @@ kmain(struct mboothdr *hdr, unsigned long pmemsz)
             vmpagestat.nphys << (PAGESIZELOG2 - 10));
     schedinit();
 #if (APIC)
-    apicinit();
+//    apicinit();
 #else
     pitinit();
 #endif

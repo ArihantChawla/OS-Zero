@@ -53,7 +53,7 @@ void usleep(unsigned long nusec);
 #define APICCPUFOCUS     0x0200
 #define APICNMI        (4 << 8)
 /* timer configuration */
-#define APICDISABLE      0x00010000
+//#define APICDISABLE      0x00010000
 //#define APICDIV1       0x00000008
 #define APICBASEDIV      0x0000000b
 #define APICPERIODIC     0x00020000
@@ -219,10 +219,10 @@ struct apic {
     uint32_t       res46[4];
 } PACK();
 
-static __inline__ uint32_t
+static __inline__ volatile uint32_t
 apicread(uint32_t reg)
 {
-    uint32_t ret = mpapic[reg >> 2];
+    volatile uint32_t ret = mpapic[reg >> 2];
 
     return ret;
 }

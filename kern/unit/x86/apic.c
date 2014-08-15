@@ -82,10 +82,10 @@ apicinit(void)
 #endif
     apicwrite(0xffffffff, APICDFR);
     apicwrite((apicread(APICLDR) & 0x00ffffff) | 1, APICLDR);
-    apicwrite(APICDISABLE, APICTIMER);
+    apicwrite(APICMASKED, APICTIMER);
     apicwrite(APICNMI, APICPERFINTR);
-    apicwrite(APICDISABLE, APICLINTR0);
-    apicwrite(APICDISABLE, APICLINTR1);
+    apicwrite(APICMASKED, APICLINTR0);
+    apicwrite(APICMASKED, APICLINTR1);
     apicwrite(0, APICTASKPRIO);
 
     /* enable APIC */
@@ -110,7 +110,7 @@ apicinit(void)
 #if 0
     apic->lvttmr.mask = 1;
 #endif
-    apicwrite(APICDISABLE, APICTIMER);
+    apicwrite(APICMASKED, APICTIMER);
 
     /* start counting */
     tmp8 = inb(0x64) & 0xfe;
