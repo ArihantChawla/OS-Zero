@@ -530,11 +530,12 @@ irqkbd:
 	jz	_irqkbddone
 	call	*%ebx
 _irqkbddone:	
+#if (APIC)
+	movl	$0x00000000, 0xfee000b0
+#else
 	movb	$0x20, %al
 	outb	%al, $0x20
-
-	movb	$0x20, %al
-	outb	%al, $0x20
+#endif
 	
 	movl	%ebp, %esp
 	popl	%gs
@@ -554,8 +555,12 @@ irq3:
 	pushl	%gs
 	movl	%esp, %ebp
 
+#if (APIC)
+	movl	$0x00000000, 0xfee000b0
+#else
 	movb	$0x20, %al
 	outb	%al, $0x20
+#endif
 	
 	movl	%ebp, %esp
 	popl	%gs
@@ -575,8 +580,12 @@ irq4:
 	pushl	%gs
 	movl	%esp, %ebp
 
+#if (APIC)
+	movl	$0x00000000, 0xfee000b0
+#else
 	movb	$0x20, %al
 	outb	%al, $0x20
+#endif
 	
 	movl	%ebp, %esp
 	popl	%gs
@@ -601,8 +610,12 @@ irq5:
 	jz	_irq5done
 	call	*%ebx
 _irq5done:	
+#if (APIC)
+	movl	$0x00000000, 0xfee000b0
+#else
 	movb	$0x20, %al
 	outb	%al, $0x20
+#endif
 	
 	movl	%ebp, %esp
 	popl	%gs
@@ -627,9 +640,13 @@ irqmouse:
 	jz	_irqmousedone
 	call	*%ebx
 _irqmousedone:	
+#if (APIC)
+	movl	$0x00000000, 0xfee000b0
+#else
 	movb	$0x20, %al
 	outb	%al, $0xa0
 	outb	%al, $0x20
+#endif
 	
 	movl	%ebp, %esp
 	popl	%gs
@@ -656,8 +673,10 @@ irqspurious:
 
 	call	mpspurint
 
+#if 0	
 	movb	$0x20, %al
 	outb	%al, $0x20
+#endif
 	
 	movl	%ebp, %esp
 	popl	%gs

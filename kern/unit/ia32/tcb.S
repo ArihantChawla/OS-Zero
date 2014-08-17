@@ -1,5 +1,6 @@
 #define __ASSEMBLY__ 1
 #include <kern/conf.h>
+#include <kern/unit/x86/trap.h>
 
 #if (ASMSWITCH)
 
@@ -73,6 +74,7 @@ m_tcbjmp:
 	subl	$32, %esp
 #if (APIC)
 	movl	$0x00000000, 0xfee000b0
+	movl	$0x00000000, 0xfee00080
 #else
 	movb	$0x20, %al
 	outb	%al, $0x20
