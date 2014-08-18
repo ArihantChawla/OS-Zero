@@ -73,9 +73,12 @@ m_tcbjmp:
 	/* adjust %esp to &tcb->iret */ 
 	subl	$32, %esp
 #if (APIC)
+	/* send APIC EOI (end of interrupt) */
 	movl	$0x00000000, 0xfee000b0
+	/* write zero to APIC task priority register */
 	movl	$0x00000000, 0xfee00080
 #else
+	/* send EOI to the PIC */
 	movb	$0x20, %al
 	outb	%al, $0x20
 #endif
