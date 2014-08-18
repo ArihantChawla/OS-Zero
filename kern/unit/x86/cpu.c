@@ -8,15 +8,17 @@
 #include <kern/unit/ia32/boot.h>
 #endif
 
-struct m_cpu     cputab[NCPU] ALIGNED(PAGESIZE);
-struct m_cpuinfo cpuinfotab[NCPU];
+extern void cpuprintinfo(void);
+
+volatile struct m_cpu cputab[NCPU] ALIGNED(PAGESIZE);
+struct m_cpuinfo      cpuinfotab[NCPU];
 
 void
 cpuinit(struct m_cpu *cpu)
 {
     long core = cpu->id;
 #if (SMP)
-    void *kstk = (uint8_t *)MPENTRYSTK - cpu->id * MPSTKSIZE;
+    void *kstk = (uint8_t *)MPENTRYSTK - core * MPSTKSIZE;
 #else
     void *kstk = (void *)KERNSTKTOP;
 #endif
@@ -24,9 +26,7 @@ cpuinit(struct m_cpu *cpu)
 //    cpu->cpu = cpu;
     cpu->kstk = kstk;
     cpuprobe(&cpuinfotab[core]);
-#if (APIC)
-#endif
-//    cpuprintinfo();
+    cpuprintinfo();
 
     return;
 };

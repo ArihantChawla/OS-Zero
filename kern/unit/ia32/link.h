@@ -1,6 +1,8 @@
 #ifndef __KERN_UNIT_IA32_LINK_H__
 #define __KERN_UNIT_IA32_LINK_H__
 
+#if !defined(__ASSEMBLY__)
+
 #include <stdint.h>
 #include <kern/conf.h>
 
@@ -26,8 +28,11 @@ extern char _bssvirt;
 extern char _ebssvirt;
 extern long _kernsize;
 
+#endif /* !defined(__ASSEMBLY__) */
+
 #define KVIRTBASE 0xc0000000U
 #define KPHYSBASE 0x00100000U
+
 #if 0
 #define KIDTADR   0x00800000U
 #define KIDTSIZE  (NIDT * sizeof(uint64_t))

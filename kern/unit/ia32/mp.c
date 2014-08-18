@@ -41,13 +41,14 @@ extern void      cpuinit(struct m_cpu *cpu);
 extern void      seginit(long id);
 extern void      idtset(void);
 
-volatile struct m_cpu  mpcputab[NCPU] ALIGNED(PAGESIZE);
-volatile struct m_cpu *mpbootcpu;
-volatile long          mpmultiproc;
-volatile long          mpncpu;
-volatile long          mpioapicid;
-volatile uint32_t     *mpapic;
-volatile uint32_t     *mpioapic;
+//volatile struct m_cpu  mpcputab[NCPU] ALIGNED(PAGESIZE);
+extern volatile struct m_cpu  cputab[NCPU];
+volatile struct m_cpu        *mpbootcpu;
+volatile long                 mpmultiproc;
+volatile long                 mpncpu;
+volatile long                 mpioapicid;
+volatile uint32_t            *mpapic;
+volatile uint32_t            *mpioapic;
 
 static long
 mpchksum(uint8_t *ptr, unsigned long len)
@@ -152,6 +153,7 @@ mpinit(void)
     struct mpconf   *conf;
     struct mpcpu    *cpu;
     struct mpioapic *ioapic;
+    long             core;
     uint8_t         *u8ptr;
     uint8_t         *lim;
 
@@ -169,14 +171,15 @@ mpinit(void)
         switch (*u8ptr) {
             case MPCPU:
                 cpu = (struct mpcpu *)u8ptr;
-                if (mpncpu != cpu->id) {
+                core = cpu->id;
+                if (mpncpu != core) {
                     mpmultiproc = 0;
                 }
                 if (cpu->flags & MPCPUBOOT) {
-                    mpbootcpu = &mpcputab[mpncpu];
+                    mpbootcpu = &cputab[core];
                     cpuinit((struct m_cpu *)mpbootcpu);
                 }
-                mpcputab[mpncpu].id = mpncpu;
+                cputab[core].id = core;
                 mpncpu++;
                 u8ptr += sizeof(struct mpcpu);
 
@@ -249,7 +252,7 @@ mpstart(void)
     volatile struct m_cpu *lim;
     uint32_t              *mpentrystk = (uint32_t *)MPENTRYSTK;
 
-    lim = &mpcputab[0] + mpncpu;
+    lim = &cputab[0] + mpncpu;
 #if 0
     if (first) {
         kmemcpy((void *)MPENTRY,
@@ -257,7 +260,7 @@ mpstart(void)
         first = 0;
     }
 #endif
-    for (cpu = &mpcputab[0] ; cpu < lim ; cpu++) {
+    for (cpu = &cputab[0] ; cpu < lim ; cpu++) {
         if (cpu == mpbootcpu) {
             /* started already */
             
@@ -266,7 +269,7 @@ mpstart(void)
         kprintf("starting CPU %ld @ 0x%lx\n", cpu->id, MPENTRY);
         cpuinit((struct m_cpu *)cpu);
 #if 0
-        apicinit(cpu->id);
+        apicinit();
         ioapicinit(cpu->id);
 #endif
         *--mpentrystk = (uint32_t)cpu;

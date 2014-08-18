@@ -29,7 +29,7 @@
 #include <kern/unit/ia32/link.h>
 #include <kern/unit/ia32/boot.h>
 #include <kern/unit/ia32/vm.h>
-#if (SMP) || (APIC)
+#if (SMP)
 #include <kern/unit/ia32/mp.h>
 #endif
 #include <kern/unit/x86/asm.h>
@@ -52,9 +52,10 @@ extern long vbe2init(struct mboothdr *hdr);
 extern void idtinit(uint64_t *idt);
 extern void vbeinit(void);
 extern void vbeinitscr(void);
+#endif
+extern void cpuinit(struct m_cpu *cpu);
 #if (PLASMA)
 extern void plasmaloop(void);
-#endif
 #endif
 #if (PCI)
 extern void pciinit(void);
@@ -69,19 +70,19 @@ extern void acpiinit(void);
 extern void sb16init(void);
 #endif
 #if (APIC)
-extern volatile uint32_t * apicprobe(void);
-extern volatile uint32_t * apicinit(void);
+extern void apicinit(void);
 #endif
 
 extern uint8_t                   kerniomap[8192] ALIGNED(PAGESIZE);
 extern struct proc               proctab[NPROC];
-extern struct m_cpu              mpcputab[NCPU];
+extern struct m_cpu              cputab[NCPU];
 #if (VBE)
 extern uint64_t                  kernidt[NINTR];
+extern long                      vbefontw;
+extern long                      vbefonth;
 #endif
 extern struct vmpagestat         vmpagestat;
 #if (SMP)
-extern struct m_cpu              cputab[NCPU];
 #if (ACPI)
 extern volatile struct acpidesc *acpidesc;
 #endif
@@ -98,56 +99,61 @@ ASMLINK
 void
 kmain(struct mboothdr *hdr, unsigned long pmemsz)
 {
-    seginit(0);                         // memory segments
+    /* initialise memory segmentation */
+    seginit(0);
 #if (VBE)
-//    idtinit(kernidt);
+    /* initialise VBE graphics subsystem */
     vbeinit();
-    trapinit();
 #endif
-    vminit((uint32_t *)&_pagetab);      // virtual memory
+    /* initialise interrupt management */
+    trapinit();
+    /* initialise virtual memory */
+    vminit((uint32_t *)&_pagetab);
+    /* zero kernel BSS segment */
     kbzero(&_bssvirt, (uint32_t)&_ebss - (uint32_t)&_bss);
+    /* set kernel I/O permission bitmap to all 1-bits */
     kmemset(&kerniomap, 0xff, sizeof(kerniomap));
+#if (VBE) && (NEWFONT)
+    consinit(768 / vbefontw, 1024 / vbefonth);
+#elif (VBE)
     consinit(768 >> 3, 1024 >> 3);
+#endif
 #if (VBE)
     vbeinitscr();
 #endif
     k_curproc = &proctab[0];
-    /* TODO: use memory map from GRUB */
+    k_curcpu = &cputab[0];
+    cpuinit(k_curcpu);
+
+    /* TODO: use memory map from GRUB? */
     meminit(vmlinkadr(&_ebssvirt), pmemsz);
     vminitphys((uintptr_t)&_ebss, pmemsz - (unsigned long)&_ebss);
 #if (PS2DRV)
     ps2init();
 #endif
-#if 0
-#if (VBE2)
-    vbe2init(hdr);
-    vbe2kludge();
-#elif (VBE) && (PLASMA)
+#if (VBE) && (PLASMA)
     plasmaloop();
-#endif
 #endif
     logoprint();
 //    vminitphys((uintptr_t)&_ebss, pmemsz - (unsigned long)&_ebss);
     /* HID devices */
 #if (PCI)
+    /* initialise PCI bus driver */
     pciinit();
 #endif
 #if (ATA)
+    /* initialise ATA driver */
     atainit();
 #endif
 #if (SB16)
+    /* initialise Soundblaster 16 driver */
     sb16init();
 #endif
 #if (ACPI)
+    /* initialise ACPI subsystem */
     acpiinit();
 #endif
-#if (ACPI) && 0
-    if (acpidesc) {
-        kprintf("ACPI: RSDP found @ 0x%p\n", acpidesc);
-    } else {
-        kprintf("ACPI: RSDP not found\n");
-    }
-#endif
+    /* initialise block I/O buffer cache */
     if (!bufinit()) {
         kprintf("failed to allocate buffer cache\n");
 
@@ -156,23 +162,19 @@ kmain(struct mboothdr *hdr, unsigned long pmemsz)
         }
     }
     /* allocate unused device regions (in 3.5G..4G) */
-//    pageaddzone(DEVMEMBASE, &vmshmq, 0xffffffff - DEVMEMBASE + 1);
-    pageaddzone(DEVMEMBASE, &vmshmq, 0xffffffffU - DEVMEMBASE + 1);
+//    pageaddzone(DEVMEMBASE, &vmshmq, 0xffffffffU - DEVMEMBASE + 1);
 #if (SMP) || (APIC)
-    /* multiprocessor probe */
+#if (SMP)
+    /* multiprocessor initialisation */
     mpinit();
-    if (!mpapic) {
-        mpapic = apicprobe();
-    }
+#endif
     if (mpapic) {
 #if (HPET)
+        /* initialise high precision event timers */
         hpetinit();
 #endif
-#if (SMP)
         apicinitcpu(0);
-#endif
         ioapicinit(0);
-//        tssinit(0);
     }
 #if (SMP)
     if (mpmultiproc) {
@@ -184,22 +186,11 @@ kmain(struct mboothdr *hdr, unsigned long pmemsz)
         kprintf("found %ld processors\n", mpncpu);
     }
 #endif
-    if (mpapic) {
-        apicinit();
-    }
-#endif /* SMP || APIC */
-#if 0
-    k_curcpu = &cputab[0];
 #endif
     /* CPU interface */
     taskinit();
     tssinit(0);
-#if 0
-    machinit();
-#endif
-#if (PS2DRV)
-//    ps2init();
-#endif
+//    machinit();
     /* execution environment */
     procinit(0);
     k_curthr = k_curproc->thr;
@@ -215,7 +206,7 @@ kmain(struct mboothdr *hdr, unsigned long pmemsz)
             vmpagestat.nphys << (PAGESIZELOG2 - 10));
     schedinit();
 #if (APIC)
-//    apicinit();
+    apicinit();
 #else
     pitinit();
 #endif

@@ -9,7 +9,10 @@ _MBCHKSUM    = MBCHKSUM
 
 /* globals */
 .globl	_start, start
-.globl	kernidt, kerngdt, kernpagedir, kerniomap
+#if !(LOCORE)
+.globl	kernidt
+#endif
+.globl	kerngdt, kernpagedir, kerniomap
 .extern	kinit
 	
 .text	32
@@ -46,6 +49,7 @@ _start2:
 
 .align	NBPG
 
+#if !(LOCORE)
 /* IDT; interrupt descriptor table; shared between processors */
 kernidt:
 	.space	NBPG
@@ -55,6 +59,7 @@ kernpagedir:
 /* kernel I/O protection bitmap */
 kerniomap:
 	.space	8192
+#endif
 
 /* per-CPU GDTs; kernel segment descriptor tables */
 .align	4096

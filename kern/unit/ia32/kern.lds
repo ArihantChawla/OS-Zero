@@ -18,12 +18,6 @@ OUTPUT_FORMAT("elf32-i386")
 ENTRY(_start)
 
 SECTIONS {
-/*
-    . = 0x00010000;
-    .real : AT(0x00010000) {
-        real.o(.*)
-    }
-*/
 
     . = MPENTRY;
 
@@ -39,7 +33,7 @@ SECTIONS {
     . = HICORE;
 
     /* identity-mapped low kernel segment */
-    .boot : AT(HICORE) {
+    .boot : AT(HICORE + SIZEOF(.hicore)) {
     	boot.o(.text)
     	boot.o(.data)
     	boot.o(.bss)

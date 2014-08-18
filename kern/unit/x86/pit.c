@@ -10,8 +10,8 @@
 
 extern uint64_t  kernidt[];
 extern void     *irqvec[];
-extern void      irqtimer(void);
-volatile long    irqtimerfired;
+extern void      irqtmr(void);
+volatile long    irqtmrfired;
 
 void
 pitinit(void)
@@ -19,7 +19,7 @@ pitinit(void)
     uint64_t *idt = kernidt;
 
     kprintf("initialising timer interrupt to %d Hz\n", HZ);
-    trapsetintgate(&idt[trapirqid(IRQTIMER)], irqtimer, TRAPUSER);
+    trapsetintgate(&idt[trapirqid(IRQTMR)], irqtmr, TRAPUSER);
     /* initialise timer */
     outb(PITCMD, PITCTRL);
     pitsethz(HZ);
@@ -39,11 +39,11 @@ pitsleep(long msec, void (*func)(void))
     /* enable timer interrupt, disable other interrupts */
     outb(~0x01, PICMASK1);
     outb(~0x00, PICMASK2);
-    irqtimerfired = 0;
-    irqvec[IRQTIMER] = func;
+    irqtmrfired = 0;
+    irqvec[IRQTMR] = func;
     outb(PITDUALBYTE | PITONESHOT, PITCTRL);
     pitsethz(hz);
-    while (!irqtimerfired) {
+    while (!irqtmrfired) {
         k_waitint();
     }
     /* enable all interrupts */

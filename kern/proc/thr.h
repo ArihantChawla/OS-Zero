@@ -20,7 +20,7 @@
 //extern struct m_cpuinfo cpuinfo;
 
 #if (ZEROSCHED)
-FASTCALL struct m_tcb * thryield(void);
+volatile FASTCALL struct m_tcb * thryield(void);
 #endif
 
 #define __KERNEL__ 1

@@ -39,7 +39,7 @@ void usleep(unsigned long nusec);
 #define APICERRSTAT      0x0280
 #define APICINTRLO       0x0300
 #define APICINTRHI       0x0310
-#define APICTIMER        0x0320         // timer
+#define APICTMR          0x0320         // timer
 #define APICTHERMAL      0x0330         // thermal sensor interrupt
 #define APICPERFINTR     0x0340         // performance counter overflow
 #define APICLINTR0       0x0350

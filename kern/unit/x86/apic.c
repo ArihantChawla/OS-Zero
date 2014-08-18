@@ -15,17 +15,16 @@
 #include <kern/unit/ia32/pit.h>
 #endif
 
-extern void                    irqtimer(void);
-extern void                    irqtimercnt(void);
+extern void                    irqtmr(void);
+extern void                    irqtmrcnt(void);
 extern void                  (*irqerror)(void);
 extern void                  (*irqspurious)(void);
 extern void                  (*mpspurint)(void);
 extern uint64_t                kernidt[NINTR];
 extern void                   *irqvec[];
+extern volatile struct m_cpu   cputab[NCPU];
 extern volatile uint32_t      *mpapic;
-extern volatile struct m_cpu   mpcputab[NCPU];
 extern volatile struct m_cpu  *mpbootcpu;
-extern uint64_t                kernidt[NINTR];
 
 /* TODO: fix this kludge */
 void
@@ -61,7 +60,7 @@ apicinit(void)
     uint32_t     tmp;
     uint8_t      tmp8;
 
-    trapsetintgate(&kernidt[trapirqid(IRQTIMER)], irqtimercnt, TRAPUSER);
+    trapsetintgate(&kernidt[trapirqid(IRQTMR)], irqtmrcnt, TRAPUSER);
 
     /* initialise APIC */
 #if 0
@@ -82,7 +81,7 @@ apicinit(void)
 #endif
     apicwrite(0xffffffff, APICDFR);
     apicwrite((apicread(APICLDR) & 0x00ffffff) | 1, APICLDR);
-    apicwrite(APICMASKED, APICTIMER);
+    apicwrite(APICMASKED, APICTMR);
     apicwrite(APICNMI, APICPERFINTR);
     apicwrite(APICMASKED, APICLINTR0);
     apicwrite(APICMASKED, APICLINTR1);
@@ -91,7 +90,7 @@ apicinit(void)
     /* enable APIC */
     k_writemsr((uint32_t)apic | APICGLOBENABLE, APICMSR);
     apicwrite(APICSWENABLE | (uint32_t)apic, APICSPURIOUS);
-    apicwrite(IRQAPICTMR, APICTIMER);
+    apicwrite(IRQAPICTMR, APICTMR);
     apicwrite(0x03, APICTMRDIVCONF);
 
     /* initialise PIT channel 2 in one-shot mode */
@@ -110,7 +109,7 @@ apicinit(void)
 #if 0
     apic->lvttmr.mask = 1;
 #endif
-    apicwrite(APICMASKED, APICTIMER);
+    apicwrite(APICMASKED, APICTMR);
 
     /* start counting */
     tmp8 = inb(0x64) & 0xfe;
@@ -122,7 +121,7 @@ apicinit(void)
     tmp = freq / HZ / 16;
     kprintf("APIC interrupt frequency: %ld MHz\n", (long)freq / 1000000);
 
-    trapsetintgate(&kernidt[trapirqid(IRQTIMER)], irqtimer, TRAPUSER);
+    trapsetintgate(&kernidt[trapirqid(IRQTMR)], irqtmr, TRAPUSER);
 
 #if 0
     apic->tmrinit.cnt = max(tmp, 16);
@@ -132,7 +131,7 @@ apicinit(void)
 #endif
     tmp = max(tmp, 16);
     apicwrite(tmp, APICTMRINITCNT);
-    apicwrite(IRQAPICTMR | APICPERIODIC, APICTIMER);
+    apicwrite(IRQAPICTMR | APICPERIODIC, APICTMR);
     apicwrite(0x03, APICTMRDIVCONF);
 
     return;
@@ -143,7 +142,7 @@ apicinitcpu(long id)
 {
     uint64_t              *idt = kernidt;
     static long            first = 1;
-    volatile struct m_cpu *cpu = &mpcputab[id];
+    volatile struct m_cpu *cpu = &cputab[id];
 
     if (!mpapic) {
         mpapic = (volatile uint32_t *)apicprobe();
@@ -156,7 +155,7 @@ apicinitcpu(long id)
     }
 
     kprintf("initialising timer interrupt to %d Hz\n", HZ);
-    trapsetintgate(&idt[trapirqid(IRQTIMER)], irqtimer, TRAPUSER);
+    trapsetintgate(&idt[trapirqid(IRQTMR)], irqtmr, TRAPUSER);
 
     if (first) {
         first = 0;
@@ -175,13 +174,13 @@ apicinitcpu(long id)
     }
     cpu->id = id;
     /* enable local APIC; set spurious interrupt vector */
-    apicwrite(APICSWENABLE | (IRQTIMER + IRQSPURIOUS), APICSPURIOUS);
+    apicwrite(APICSWENABLE | (IRQTMR + IRQSPURIOUS), APICSPURIOUS);
     /*
      * timer counts down at bus frequency from APICTMRINITCNT and issues
-     * the interrupt IRQBASE + IRQTIMER
+     * the interrupt IRQBASE + IRQTMR
      */
     apicwrite(APICBASEDIV, APICTMRDIVCONF);
-    apicwrite(APICPERIODIC | (IRQBASE + IRQTIMER), APICTIMER);
+    apicwrite(APICPERIODIC | (IRQBASE + IRQTMR), APICTMR);
 //    apicwrite(10000000, APICTMRINITCNT);
     apicwrite(10000000, APICTMRINITCNT);
     /* disable logical interrupt lines */
@@ -232,19 +231,6 @@ apicstart(uint8_t id, uint32_t adr)
     apicsendirq(id << 24, APICASSERT | APICSTART | adr >> 12, 200);
 
     return;
-}
-
-/* TODO */
-
-/* set APIC interrupt frequency */
-void
-apicsettmr(long hz, long flg)
-{
-    if (flg & APICPERIODIC) {
-        /* periodic timer */
-    } else {
-        /* one-shot timer */
-    }
 }
 
 #endif /* SMP || APIC */

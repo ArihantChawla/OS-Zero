@@ -9,7 +9,7 @@
 #include <kern/unit/ia32/mp.h>
 #include <kern/unit/ia32/vm.h>
 
-extern volatile struct m_cpu     mpcputab[NCPU];
+extern volatile struct m_cpu     cputab[NCPU];
 extern volatile long             mpmultiproc;
 extern volatile struct m_cpu    *mpbootcpu;
 extern volatile struct mpioapic *mpioapic;
@@ -18,7 +18,7 @@ volatile struct ioapic          *ioapic;
 void
 ioapicinit(long id)
 {
-    struct m_cpu *cpu = (struct m_cpu *)&mpcputab[id];
+    struct m_cpu *cpu = (struct m_cpu *)&cputab[id];
     long ntrap;
 //    long id;
     long l;
@@ -36,7 +36,7 @@ ioapicinit(long id)
     ntrap = (ioapicread(IOAPICVER) >> 16) & 0xff;
 //    id = ioapicread(IOAPICID) >> 24;
     for (l = 0 ; l < ntrap ; l++) {
-        ioapicwrite(IOAPICDISABLED | (IRQTIMER + l), IOAPICTAB + 2 * l);
+        ioapicwrite(IOAPICDISABLED | (IRQTMR + l), IOAPICTAB + 2 * l);
         ioapicwrite(0, IOAPICTAB + 2 * l + 1);
     }
 
@@ -50,7 +50,7 @@ ioapicsetirq(long irq, long id)
 
         return;
     }
-    ioapicwrite(IRQTIMER + irq, IOAPICTAB + 2 * irq);
+    ioapicwrite(IRQTMR + irq, IOAPICTAB + 2 * irq);
     ioapicwrite(id << 24, IOAPICTAB + 2 * irq + 1);
 
     return;

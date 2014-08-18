@@ -25,8 +25,8 @@ extern void gdtinit(void);
 
 extern void *vgafontbuf;
 #if (NEWFONT)
-long         vgafontw = 7;
-long         vgafonth = 13;
+long         vbefontw = 7;
+long         vbefonth = 13;
 #endif
 
 void vbeputpix(argb32_t pix, int x, int row);
@@ -212,13 +212,13 @@ vbedrawchar(unsigned char c, int x, int y, argb32_t fg, argb32_t bg)
 {
     long      cy;
     long      incr = vbescreen.w * (vbescreen.nbpp >> 3);
-//    uint8_t *glyph = (uint8_t *)vgafontbuf + ((int)c * vgafonth);
-    uint16_t *glyph = (uint16_t *)vgafontbuf + (int)c * vgafonth;
+//    uint8_t *glyph = (uint8_t *)vgafontbuf + ((int)c * vbefonth);
+    uint16_t *glyph = (uint16_t *)vgafontbuf + (int)c * vbefonth;
     uint8_t  *ptr = vbepixadr(x, y);
     uint16_t  mask;
     
 
-    for (cy = 0 ; cy < vgafonth ; cy++) {
+    for (cy = 0 ; cy < vbefonth ; cy++) {
         mask = *glyph;
 #if 0
         if (mask & 0x80) {
@@ -258,12 +258,12 @@ vbedrawcharbg(unsigned char c, int x, int y, argb32_t fg, argb32_t bg)
 {
     long      cy;
     long      incr = vbescreen.w * (vbescreen.nbpp >> 3);
-    uint16_t *glyph = (uint16_t *)vgafontbuf + (int)c * vgafonth;
+    uint16_t *glyph = (uint16_t *)vgafontbuf + (int)c * vbefonth;
     uint8_t  *ptr = vbepixadr(x, y);
     uint16_t  mask;
     
 
-    for (cy = 0 ; cy < vgafonth ; cy++) {
+    for (cy = 0 ; cy < vbefonth ; cy++) {
         mask = *glyph;
         if (mask & 0x40) {
             gfxsetrgb888(fg, ptr);
@@ -420,7 +420,7 @@ vbeputs(char *str)
                 }
             }
 #if (NEWFONT)
-            vbedrawcharbg(ch, col * vgafontw, row * vgafonth,
+            vbedrawcharbg(ch, col * vbefontw, row * vbefonth,
                           cons->fg, cons->bg);
 #else
             vbedrawchar(ch, col << 3, row << 3, cons->fg, cons->bg);

@@ -1,6 +1,7 @@
 #define __ASSEMBLY__ 1
 #include <kern/conf.h>
 #include <kern/unit/x86/trap.h>
+#include <kern/unit/ia32/boot.h>
 
 /*
  * NOTE: we use interrupt gates, which automatically disable further
@@ -14,7 +15,7 @@
  */
 
 /*
- * CPU pushes EFLAGS, CS, and EIP and an ERROR-code word if used.
+ * CPU pushes EFLAGS, CS, and EIP, as well as an ERROR-code word if used.
  * return with IRET after return from handler.
  *
  * top of stack after interrupt
@@ -42,10 +43,10 @@
 
 .globl	trapde, trapdb, trapnmi, trapbp, trapof, trapbr, trapud, trapnm, trapdf
 .globl	trapts, trapnp, trapss, trapgp, trappf, trapmf, trapac, trapmc, trapxf
-.globl	irqtimer0, irqtimer, irqkbd, irqmouse, irqerror, irqspurious
+.globl	irqtmr0, irqtmr, irqkbd, irqmouse, irqerror, irqspurious
 .globl	irqvec
 #if (SMP) || (APIC)
-.globl	irqerror, irqspurious, mpspurint, irqtimercnt
+.globl	irqerror, irqspurious, mpspurint, irqtmrcnt
 #endif
 
 .extern	sigfunc, tmrsyncscr, schedyield, vmpagefault, kbdtrap, mousetrap
@@ -57,19 +58,16 @@
 .text	32
 
 trapde:
-	cli
 	pushal
 	pushl	%ds
 	pushl	%es
 	pushl	%fs
-	pushl	%gs
 	movl	%esp, %ebp
 
 	pushl	$TRAPDE
 	call	sigfunc
 
 	movl	%ebp, %esp
-	popl	%gs
 	popl	%fs
 	popl	%es
 	popl	%ds
@@ -78,19 +76,16 @@ trapde:
 	iret
 
 trapdb:
-	cli
 	pushal
 	pushl	%ds
 	pushl	%es
 	pushl	%fs
-	pushl	%gs
 	movl	%esp, %ebp
 
 	pushl	$TRAPDB
 	call	sigfunc
 
 	movl	%ebp, %esp
-	popl	%gs
 	popl	%fs
 	popl	%es
 	popl	%ds
@@ -99,19 +94,16 @@ trapdb:
 	iret
 
 trapnmi:
-	cli
 	pushal
 	pushl	%ds
 	pushl	%es
 	pushl	%fs
-	pushl	%gs
 	movl	%esp, %ebp
 
 	pushl	$TRAPNMI
 	call	sigfunc
 
 	movl	%ebp, %esp
-	popl	%gs
 	popl	%fs
 	popl	%es
 	popl	%ds
@@ -120,19 +112,16 @@ trapnmi:
 	iret
 
 trapbp:
-	cli
 	pushal
 	pushl	%ds
 	pushl	%es
 	pushl	%fs
-	pushl	%gs
 	movl	%esp, %ebp
 
 	pushl	$TRAPBP
 	call	sigfunc
 
 	movl	%ebp, %esp
-	popl	%gs
 	popl	%fs
 	popl	%es
 	popl	%ds
@@ -141,19 +130,16 @@ trapbp:
 	iret
 
 trapof:
-	cli
 	pushal
 	pushl	%ds
 	pushl	%es
 	pushl	%fs
-	pushl	%gs
 	movl	%esp, %ebp
 
 	pushl	$TRAPOF
 	call	sigfunc
 
 	movl	%ebp, %esp
-	popl	%gs
 	popl	%fs
 	popl	%es
 	popl	%ds
@@ -162,19 +148,16 @@ trapof:
 	iret
 
 trapbr:
-	cli
 	pushal
 	pushl	%ds
 	pushl	%es
 	pushl	%fs
-	pushl	%gs
 	movl	%esp, %ebp
 
 	pushl	$TRAPBR
 	call	sigfunc
 
 	movl	%ebp, %esp
-	popl	%gs
 	popl	%fs
 	popl	%es
 	popl	%ds
@@ -183,19 +166,16 @@ trapbr:
 	iret
 
 trapud:
-	cli
 	pushal
 	pushl	%ds
 	pushl	%es
 	pushl	%fs
-	pushl	%gs
 	movl	%esp, %ebp
 
 	pushl	$TRAPUD
 	call	sigfunc
 
 	movl	%ebp, %esp
-	popl	%gs
 	popl	%fs
 	popl	%es
 	popl	%ds
@@ -204,19 +184,16 @@ trapud:
 	iret
 
 trapnm:
-	cli
 	pushal
 	pushl	%ds
 	pushl	%es
 	pushl	%fs
-	pushl	%gs
 	movl	%esp, %ebp
 
 	pushl	$TRAPNM
 	call	sigfunc
 
 	movl	%ebp, %esp
-	popl	%gs
 	popl	%fs
 	popl	%es
 	popl	%ds
@@ -225,21 +202,17 @@ trapnm:
 	iret
 
 trapdf:
-	cli
 	pusha
 	popl	%eax
-//	movl	32(%esp), %ebx
 	pushl	%ds
 	pushl	%es
 	pushl	%fs
-	pushl	%gs
 	movl	%esp, %ebp
 
 	pushl	$TRAPDF
 	call	sigfunc
 
 	movl	%ebp, %esp
-	popl	%gs
 	popl	%fs
 	popl	%es
 	popl	%ds
@@ -249,20 +222,16 @@ trapdf:
 	iret
 
 trapts:
-	cli
-//	movl	32(%esp), %eax
 	pushal
 	pushl	%ds
 	pushl	%es
 	pushl	%fs
-	pushl	%gs
 	movl	%esp, %ebp
 
 	pushl	$TRAPTS
 	call	sigfunc
 
 	movl	%ebp, %esp
-	popl	%gs
 	popl	%fs
 	popl	%es
 	popl	%ds
@@ -271,20 +240,16 @@ trapts:
 	sti
 	iret
 trapnp:
-	cli
-//	movl	32(%esp), %eax
 	pushal
 	pushl	%ds
 	pushl	%es
 	pushl	%fs
-	pushl	%gs
 	movl	%esp, %ebp
 
 	pushl	$TRAPNP
 	call	sigfunc
 
 	movl	%ebp, %esp
-	popl	%gs
 	popl	%fs
 	popl	%es
 	popl	%ds
@@ -294,20 +259,16 @@ trapnp:
 	iret
 
 trapss:
-	cli
-//	movl	32(%esp), %eax
 	pushal
 	pushl	%ds
 	pushl	%es
 	pushl	%fs
-	pushl	%gs
 	movl	%esp, %ebp
 
 	pushl	$TRAPSS
 	call	sigfunc
 
 	movl	%ebp, %esp
-	popl	%gs
 	popl	%fs
 	popl	%es
 	popl	%ds
@@ -317,23 +278,17 @@ trapss:
 	iret
 
 trapgp:
-	cli
-	/* EAX	- fault IP */
-//	movl	32(%esp), %eax
 	pushal
 	pushl	%ds
 	pushl	%es
 	pushl	%fs
-	pushl	%gs
 	movl	%esp, %ebp
 
 	pushl	$TRAPGP
 	call	sigfunc
 
 _gpfin:	
-	cli
 	movl	%ebp, %esp
-	popl	%gs
 	popl	%fs
 	popl	%es
 	popl	%ds
@@ -343,13 +298,10 @@ _gpfin:
 	iret
 
 trappf:
-	cli
-//	movl	32(%esp), %eax
 	pushal
 	pushl	%ds
 	pushl	%es
 	pushl	%fs
-	pushl	%gs
 	movl	%esp, %ebp
 
 	pushl	%eax			// error code
@@ -359,7 +311,6 @@ trappf:
 	call	vmpagefault
 
 	movl	%ebp, %esp
-	popl	%gs
 	popl	%fs
 	popl	%es
 	popl	%ds
@@ -369,21 +320,16 @@ trappf:
 	iret
 
 trapmf:
-	cli
-	/* no error on stack */
-//	movl	32(%esp), %eax
 	pushal
 	pushl	%ds
 	pushl	%es
 	pushl	%fs
-	pushl	%gs
 	movl	%esp, %ebp
 
 	pushl	$TRAPMF
 	call	sigfunc
 
 	movl	%ebp, %esp
-	popl	%gs
 	popl	%fs
 	popl	%es
 	popl	%ds
@@ -393,21 +339,16 @@ trapmf:
 	iret
 
 trapac:
-	cli
-	/* fault eip <- stack pointer */
-//	movl	32(%esp), %eax
 	pushal
 	pushl	%ds
 	pushl	%es
 	pushl	%fs
-	pushl	%gs
 	movl	%esp, %ebp
 
 	pushl	$TRAPAC
 	call	sigfunc
 
 	movl	%ebp, %esp
-	popl	%gs
 	popl	%fs
 	popl	%es
 	popl	%ds
@@ -417,19 +358,16 @@ trapac:
 	iret
 
 trapmc:
-	cli
 	pushal
 	pushl	%ds
 	pushl	%es
 	pushl	%fs
-	pushl	%gs
 	movl	%esp, %ebp
 
 	pushl	$TRAPMC
 	call	sigfunc
 
 	movl	%ebp, %esp
-	popl	%gs
 	popl	%fs
 	popl	%es
 	popl	%ds
@@ -438,20 +376,16 @@ trapmc:
 	iret
 
 trapxf:
-	cli
-	/* fault eip <- stack pointer */
 	pushal
 	pushl	%ds
 	pushl	%es
 	pushl	%fs
-	pushl	%gs
 	movl	%esp, %ebp
 
 	pushl	$TRAPXF
 	call	sigfunc
 
 	movl	%ebp, %esp
-	popl	%gs
 	popl	%fs
 	popl	%es
 	popl	%ds
@@ -460,18 +394,18 @@ trapxf:
 	iret
 
 #if (APIC)
-irqtimercnt:
+	/* dummy interrupt handler for probing APIC frequency */
+irqtmrcnt:
+	/* send APIC EOI */
 	movl	$0x00000000, 0xfee000b0
 	iret
 #endif
 
-irqtimer0:
-	cli
+irqtmr0:
 	pushal
 	pushl	%ds
 	pushl	%es
 	pushl	%fs
-	pushl	%gs
 	movl	%esp, %ebp
 
 	movl	$irqvec, %eax
@@ -487,42 +421,36 @@ _tmr0fin:
 	outb	%al, $0x20
 	
 	movl	%ebp, %esp
-	popl	%gs
 	popl	%fs
 	popl	%es
 	popl	%ds
 	popal
-	movl	$1, irqtimerfired
+	movl	$1, irqtmrfired
 	sti
 	iret
 	
-irqtimer:
-	cli
+irqtmr:
 	pushal
 	pushl	%ds
 	pushl	%es
 	pushl	%fs
-	pushl	%gs
 	movl	%esp, %ebp
 
 	/* arguments for thrsave */
-	movl	48(%ebp), %edx		// return address
+	movl	44(%ebp), %edx		// return address
 	movl	%gs:8, %eax
 	call	thrsave
 	/* schedyield returns thread ID in eax */
 	movl	schedyield, %ebx
 	call	*%ebx
-	movl	%eax, %ebx
-	movl	%ebx, %eax
+	/* thread ID argument in eax */
 	call	thrjmp
 
 irqkbd:
-	cli
 	pushal
 	pushl	%ds
 	pushl	%es
 	pushl	%fs
-	pushl	%gs
 	movl	%esp, %ebp
 
 	movl	$irqvec, %eax
@@ -538,7 +466,6 @@ _irqkbddone:
 #endif
 	
 	movl	%ebp, %esp
-	popl	%gs
 	popl	%fs
 	popl	%es
 	popl	%ds
@@ -547,12 +474,10 @@ _irqkbddone:
 	iret
 
 irq3:
-	cli
 	pushal
 	pushl	%ds
 	pushl	%es
 	pushl	%fs
-	pushl	%gs
 	movl	%esp, %ebp
 
 #if (APIC)
@@ -563,7 +488,6 @@ irq3:
 #endif
 	
 	movl	%ebp, %esp
-	popl	%gs
 	popl	%fs
 	popl	%es
 	popl	%ds
@@ -572,12 +496,10 @@ irq3:
 	iret
 
 irq4:
-	cli
 	pushal
 	pushl	%ds
 	pushl	%es
 	pushl	%fs
-	pushl	%gs
 	movl	%esp, %ebp
 
 #if (APIC)
@@ -588,7 +510,6 @@ irq4:
 #endif
 	
 	movl	%ebp, %esp
-	popl	%gs
 	popl	%fs
 	popl	%es
 	popl	%ds
@@ -597,12 +518,10 @@ irq4:
 	iret
 
 irq5:
-	cli
 	pushal
 	pushl	%ds
 	pushl	%es
 	pushl	%fs
-	pushl	%gs
 	movl	%esp, %ebp
 
 	movl	$irqvec, %eax
@@ -618,7 +537,6 @@ _irq5done:
 #endif
 	
 	movl	%ebp, %esp
-	popl	%gs
 	popl	%fs
 	popl	%es
 	popl	%ds
@@ -627,12 +545,10 @@ _irq5done:
 	iret
 
 irqmouse:
-	cli
 	pushal
 	pushl	%ds
 	pushl	%es
 	pushl	%fs
-	pushl	%gs
 	movl	%esp, %ebp
 
 	movl	$irqvec, %eax
@@ -649,7 +565,6 @@ _irqmousedone:
 #endif
 	
 	movl	%ebp, %esp
-	popl	%gs
 	popl	%fs
 	popl	%es
 	popl	%ds
@@ -658,109 +573,39 @@ _irqmousedone:
 	iret
 
 #if (SMP) || (APIC)
+
 irqerror:
 	sti
 	iret
 
 irqspurious:
-	cli
 	pushal
 	pushl	%ds
 	pushl	%es
 	pushl	%fs
-	pushl	%gs
 	movl	%esp, %ebp
 
 	call	mpspurint
 
-#if 0	
-	movb	$0x20, %al
-	outb	%al, $0x20
-#endif
-	
 	movl	%ebp, %esp
-	popl	%gs
 	popl	%fs
 	popl	%es
 	popl	%ds
 	popal
 	sti
 	iret
-#endif
+
+#endif /* SMP || APIC */
 
 .data
 
-.align	32
+.align	NBPG
 
+	/* interrupt vector */
 	/* 0x00..0x1f	- IRQs 0-15 */
 	/* 19		- IRQERROR */
 	/* 29		- IRQIPI */
 	/* 31		- IRQSPURIOUS */
 irqvec:
-	.long	0x00000000
-	.long	0x00000000
-	.long	0x00000000
-	.long	0x00000000
-	.long	0x00000000
-	.long	0x00000000
-	.long	0x00000000
-	.long	0x00000000
-	.long	0x00000000
-	.long	0x00000000
-	.long	0x00000000
-	.long	0x00000000
-	.long	0x00000000
-	.long	0x00000000
-	.long	0x00000000
-	.long	0x00000000
-#if (SMP) || (APIC)
-	.long	0x00000000
-	.long	0x00000000
-	.long	0x00000000
-	.long	0x00000000
-	.long	0x00000000
-	.long	0x00000000
-	.long	0x00000000
-	.long	0x00000000
-	.long	0x00000000
-	.long	0x00000000
-	.long	0x00000000
-	.long	0x00000000
-	.long	0x00000000
-	.long	0x00000000
-	.long	0x00000000
-	.long	0x00000000
-	.long	0x00000000
-	.long	0x00000000
-	.long	0x00000000
-	.long	0x00000000
-	.long	0x00000000
-	.long	0x00000000
-	.long	0x00000000
-	.long	0x00000000
-	.long	0x00000000
-	.long	0x00000000
-	.long	0x00000000
-	.long	0x00000000
-	.long	0x00000000
-	.long	0x00000000
-	.long	0x00000000
-	.long	0x00000000
-	.long	0x00000000
-	.long	0x00000000
-	.long	0x00000000
-	.long	0x00000000
-	.long	0x00000000
-	.long	0x00000000
-	.long	0x00000000
-	.long	0x00000000
-	.long	0x00000000
-	.long	0x00000000
-	.long	0x00000000
-	.long	0x00000000
-	.long	0x00000000
-	.long	0x00000000
-	.long	0x00000000
-	.long	0x00000000
-#endif
+	.space	(8 * NINTR)
 

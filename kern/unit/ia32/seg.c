@@ -17,21 +17,13 @@ extern uint64_t        kerngdt[NCPU][NGDT];
 extern uint64_t        kerngdt[NGDT];
 #endif
 //extern struct m_tss    tsstab[NTHR];
-#if (SMP)
-extern struct m_cpu    mpcputab[NCPU];
-#else
 extern struct m_cpu    cputab[NCPU];
-#endif
 extern struct m_farptr gdtptr;
 
 ASMLINK void
 seginit(long id)
 {
-#if (SMP)
-    struct m_cpu    *cpu = &mpcputab[id];
-#else
     struct m_cpu    *cpu = &cputab[id];
-#endif
     uint64_t        *gdt;
 
     /* set descriptors */

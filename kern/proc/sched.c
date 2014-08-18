@@ -4,7 +4,7 @@
 #include <zero/mtx.h>
 #include <kern/proc/sched.h>
 
-FASTCALL struct m_tcb *(*schedyield)(void);
+volatile FASTCALL struct m_tcb *(*schedyield)(void);
 
 void
 schedinit(void)

@@ -280,6 +280,7 @@ thrwakeup(uintptr_t wchan)
 }
 
 /* switch threads */
+volatile
 FASTCALL
 struct m_tcb *
 thryield(void)

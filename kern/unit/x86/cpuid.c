@@ -6,6 +6,8 @@
  * -vendu
  */
 
+/* TODO: fix this stuff to run on SMP (per-CPU m_cpuinfo structures) */
+
 /*
  * README: http://softpixel.com/~cwright/programming/simd/cpuid.php
  */
@@ -424,7 +426,7 @@ cpuprintinfo(void)
 #endif
     
     cpuidgetvendor(&vbuf);
-//    kprintf("vendor: %s\n", vbuf.str);
+    kprintf("CPU: vendor: %s\n", vbuf.str);
     if (!kstrcmp((const char *)vbuf.str, _vendortab[CPUIDINTEL])) {
         cpuidinitci_intel();
         cpuidgetci_intel(&buf);
@@ -450,7 +452,7 @@ cpuprintinfo(void)
     kprintf("\text_family: %u\n", cpuidextfamily(&buf));
 #endif
     
-    kprintf("cpu features:");
+    kprintf("CPU: features:");
     if (cpuidhaspse(&buf)) {
         kprintf(" pse");
     }

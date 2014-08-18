@@ -28,8 +28,8 @@
 
 #include <kern/proc/thr.h>
 
-extern FASTCALL struct m_tcb * (*schedyield)(void);
-void          schedinit(void);
+extern volatile FASTCALL struct m_tcb * (*schedyield)(void);
+void                                      schedinit(void);
 
 #if (ZEROSCHED)
 struct thrprioq {

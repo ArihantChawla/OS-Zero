@@ -1,5 +1,7 @@
 acute things
 ------------
+- hack a bitmap to denote which pages are reserved for hardware access
+  - initialise the kernel virtual memory allocator with this bitmap
 - implement ATA and SATA drivers
 - implement ISO 9660 filesystem for CD and DVD discs
 - implement [block] I/O buffer cache

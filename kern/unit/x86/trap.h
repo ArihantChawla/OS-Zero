@@ -131,7 +131,7 @@ m_lidt(struct m_farptr *fp)
 #define TRAPMASK 0xff
 
 /* irq numbers */
-#define IRQTIMER    0   // timer
+#define IRQTMR      0   // timer
 #define IRQKBD      1   // keyboard
 //#define IRQCASCADE  2
 #define IRQCOM2AND4 3   // serial ports 2 and 4

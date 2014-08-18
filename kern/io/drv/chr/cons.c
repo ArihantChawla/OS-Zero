@@ -9,13 +9,6 @@
 #include <kern/io/drv/pc/vbe.h>
 #endif
 
-#if 0
-argb32_t        confgcolor = GFXWHITE;
-argb32_t        conbgcolor = GFXBLACK;
-conputsfunc    *conputs = vgaputs;
-conputcharfunc *conputchar = vgaputchar;
-#endif
-
 struct cons constab[NCONS] ALIGNED(PAGESIZE);
 long        conscur;
 
