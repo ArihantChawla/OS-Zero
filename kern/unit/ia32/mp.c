@@ -36,7 +36,9 @@ extern uint32_t *kernpagedir[NPDE];
 extern void      gdtinit(void);
 extern void      pginit(void);
 extern void      trapinitidt(void);
+#if (IOAPIC)
 extern void      ioapicinit(long id);
+#endif
 extern void      cpuinit(struct m_cpu *cpu);
 extern void      seginit(long id);
 extern void      idtset(void);
@@ -235,10 +237,12 @@ mpmain(struct m_cpu *cpu)
     /* TODO: initialise HPET; enable [rerouted] interrupts */
 #if (HPET)
     hpetinit();
-    apicinitcpu(cpu->id);
-    ioapicinit(cpu->id);
-    tssinit(cpu->id);
 #endif
+    apicinitcpu(cpu->id);
+#if (IOAPIC)
+    ioapicinit(cpu->id);
+#endif
+    tssinit(cpu->id);
     while (1) {
         k_waitint();
     }

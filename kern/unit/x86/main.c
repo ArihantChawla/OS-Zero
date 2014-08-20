@@ -180,7 +180,9 @@ kmain(struct mboothdr *hdr, unsigned long pmemsz)
         hpetinit();
 #endif
         apicinitcpu(0);
+#if (IOAPIC)
         ioapicinit(0);
+#endif
     }
 #if (SMP)
     if (mpmultiproc) {

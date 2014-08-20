@@ -76,7 +76,7 @@ m_tcbjmp:
 	/* send APIC EOI (end of interrupt) */
 	movl	$0x00000000, 0xfee000b0
 	/* write zero to APIC task priority register - TODO: is this necessary? */
-//	movl	$0x00000000, 0xfee00080
+	movl	$0x00000000, 0xfee00080
 #else
 	/* send EOI to the PIC */
 	movb	$0x20, %al
