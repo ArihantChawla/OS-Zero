@@ -65,9 +65,9 @@ mpchksum(uint8_t *ptr, unsigned long len)
 static struct mp *
 mpfind(uintptr_t adr, unsigned long len)
 {
-    uint32_t  *lim = (uint32_t *)(adr + len);
     struct mp *mp = NULL;
     uint32_t  *ptr = (uint32_t *)adr;
+    uint32_t  *lim = (uint32_t *)(adr + len);
 
     while (ptr < lim) {
         if (*ptr == MPSIG && !mpchksum((uint8_t *)ptr, sizeof(struct mp))) {

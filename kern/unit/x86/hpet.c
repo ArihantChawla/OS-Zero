@@ -1,18 +1,21 @@
+#include <kern/conf.h>
+
+#if (HPET)
+
 #include <stddef.h>
 #include <stdint.h>
-#include <kern/conf.h>
 #include <kern/util.h>
 #include <kern/unit/x86/hpet.h>
 #include <kern/unit/ia32/vm.h>
-
-#if (HPET)
 
 static struct hpetdrv hpetdrv;
 
 void
 hpetprobe(long id)
 {
-    struct hpet *ptr = !id ? (void *)HPET0BASE : (void *)HPET1BASE;
+//    struct hpet *ptr = !id ? (void *)HPET0BASE : (void *)HPET1BASE;
+    struct hpet *ptr = (struct hpet *)((uint8_t *)HPET0BASE
+                                       + id * (HPET1BASE - HPET0BASE));
     uint32_t     dword1;
     uint32_t     dword2;
 
@@ -21,18 +24,18 @@ hpetprobe(long id)
     if ((dword1) || (dword2)) {
         if (!id) {
             hpetdrv.iobase0 = ptr;
-            hpetdrv.ntmr0 = hpetnumtim(ptr);
+            hpetdrv.ntmr0 = hpetntmr(ptr);
             hpetdrv.tmr0size = hpetcntsize(ptr);
             kprintf("HPET0: rev = 0x%x, vendor = 0x%x, %l timers, 64-bit = %x\n",
                     hpetrevid(ptr), hpetvendor(ptr),
-                    hpetnumtim(ptr), hpetcntsize(ptr) >> 13);
+                    hpetntmr(ptr), hpetcntsize(ptr) >> 13);
         } else {
             hpetdrv.iobase1 = ptr;
-            hpetdrv.ntmr1 = hpetnumtim(ptr);
+            hpetdrv.ntmr1 = hpetntmr(ptr);
             hpetdrv.tmr1size = hpetcntsize(ptr);
             kprintf("HPET1: rev = 0x%x, vendor = 0x%x, %l timers, 64-bit: %x\n",
                     hpetrevid(ptr), hpetvendor(ptr),
-                    hpetnumtim(ptr), hpetcntsize(ptr));
+                    hpetntmr(ptr), hpetcntsize(ptr));
         }
     }
 

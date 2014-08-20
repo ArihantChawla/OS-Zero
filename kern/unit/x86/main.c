@@ -34,13 +34,11 @@
 #endif
 #include <kern/unit/x86/asm.h>
 
+extern void cpuinit(struct m_cpu *cpu);
 extern long bufinit(void);
 
 #if (HPET)
 extern void hpetinit(void);
-#endif
-#if (PS2DRV)
-extern void ps2init(void);
 #endif
 #if (SMP)
 extern void mpstart(void);
@@ -53,7 +51,12 @@ extern void idtinit(uint64_t *idt);
 extern void vbeinit(void);
 extern void vbeinitscr(void);
 #endif
-extern void cpuinit(struct m_cpu *cpu);
+#if (SMBIOS)
+extern void smbiosinit(void);
+#endif
+#if (PS2DRV)
+extern void ps2init(void);
+#endif
 #if (PLASMA)
 extern void plasmaloop(void);
 #endif
@@ -128,6 +131,9 @@ kmain(struct mboothdr *hdr, unsigned long pmemsz)
     /* TODO: use memory map from GRUB? */
     meminit(vmlinkadr(&_ebssvirt), pmemsz);
     vminitphys((uintptr_t)&_ebss, pmemsz - (unsigned long)&_ebss);
+#if (SMBIOS)
+    smbiosinit();
+#endif
 #if (PS2DRV)
     ps2init();
 #endif

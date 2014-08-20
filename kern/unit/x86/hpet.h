@@ -1,6 +1,10 @@
 #ifndef __KERN_UNIT_X86_HPET_H__
 #define __KERN_UNIT_X86_HPET_H__
 
+#include <stdint.h>
+#include <zero/cdecl.h>
+#include <zero/param.h>
+
 /* base addresses */
 #define HPET0BASE     0xfed00000
 #define HPET1BASE     0xfed80000
@@ -8,6 +12,10 @@
 #define HPETREGSIZE64 65536
 //#define HPETSIG       0x54455048U       // "HPET"
 #define HPETSIG       0x54455048U
+
+/* arguments for hpetprobe() */
+#define HPET0         0
+#define HPET1         1
 
 /* configuration space register offsets */
 #define hpettmrconfofs(id)                                              \
@@ -58,7 +66,7 @@
 #define HPETCONFENABLE  0x0001  // enable clock source for the chip
 #define HPETCONFLEGRT   0x0002  // per-timer settings
 #define HPETREVIDMASK   0x00ff  // revision of implemented functions
-#define HPETNUMTIMMASK  0x1f00  // # of the last timer
+#define HPETNTMRMASK    0x1f00  // # of the last timer
 #define HPETCNTSIZEMASK 0x2000  // 0 = 32-bit, 1 = 64-bit
 #define HPETLEGRTBIT    0x8000  // 1 = support legacy replacement route
 #define HPETVENDORMASK  0xffff0000
@@ -130,7 +138,7 @@ struct hpet {
 
 #define hpetrevid(hpet)                                                 \
     ((hpet)->gencaplo & 0xff)
-#define hpetnumtim(hpet)                                                \
+#define hpetntmr(hpet)                                                  \
     (((hpet)->gencaplo >> 8) & 0x1f)
 #define hpetcntsize(hpet)                                               \
     ((hpet)->gencaplo & HPETCNTSIZEMASK)
