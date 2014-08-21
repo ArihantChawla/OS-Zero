@@ -21,15 +21,10 @@ m_tcbsave:
 	/* load tcb-argument into %esp */
 	movl	8(%ebp), %esp
 	/* push general purpose registers */
-	addl	$580, %esp
-	pushal
+	addl	$548, %esp
 	movl	(%ebp), %eax
 	movl	%eax, 12(%esp)
 	/* save page directory base register */
-#if 0
-	movl	%cr3, %eax
-	pushl	%eax
-#endif
 	movl	%cr3, %edx
 	pushl	%edx
 	/* push segment registers; %gs is per-CPU and loaded in thrjmp */
