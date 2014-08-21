@@ -145,7 +145,7 @@ ataprobedrv2(uint16_t iobase)
 
             break;
         }
-        usleep(1000);
+        pitsleep(1);
         timeout--;
     }
     if (!timeout) {
@@ -170,7 +170,7 @@ ataprobedrv2(uint16_t iobase)
 
             break;
         }
-        usleep(1000);
+        pitsleep(1);
         timeout--;
     }
     if (!timeout) {
@@ -180,7 +180,7 @@ ataprobedrv2(uint16_t iobase)
     }
     /* execute drive diagnostics */
     outb(0x90, port);
-    usleep(1);  // 400 nanoseconds */
+    pitsleep(1);  // 400 nanoseconds */
     timeout = 5000;
     while (timeout) {
         byte1 = inb(port);
@@ -188,7 +188,7 @@ ataprobedrv2(uint16_t iobase)
 
             break;
         }
-        usleep(1000);
+        pitsleep(1);
         timeout--;
     }
     if (!timeout) {
@@ -209,7 +209,7 @@ ataprobedrv2(uint16_t iobase)
         kprintf("ATA: no slave drive on interface 0x%x\n", iobase);
     } else {
         outb(0xb0, iobase + 6);  // select slave
-        usleep(1);              // 400 nanoseconds
+        pitsleep(1);             // 400 nanoseconds
         byte1 = inb(iobase + 1); // read slave diagnostic code
         byte2 = byte1 & 0x7f;
 #if 0

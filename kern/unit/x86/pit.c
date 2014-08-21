@@ -1,3 +1,4 @@
+#include <stddef.h>
 #include <stdint.h>
 #include <zero/asm.h>
 #include <sys/io.h>
@@ -11,7 +12,7 @@
 extern uint64_t  kernidt[];
 extern void     *irqvec[];
 extern void      irqtmr(void);
-volatile long    irqtmrfired;
+//volatile long    irqtmrfired;
 
 void
 pitinit(void)
@@ -29,23 +30,24 @@ pitinit(void)
 
 /*
  * sleep for msec milliseconds, then call trigger func
- * only to be used before the scheduler is enabled
+ * only to be used before the APIC timers and scheduler are enabled
  */
 void
-pitsleep(long msec, void (*func)(void))
+pitsleep(long msec)
 {
     long hz = 1000L / msec;
 
     /* enable timer interrupt, disable other interrupts */
     outb(~0x01, PICMASK1);
     outb(~0x00, PICMASK2);
-    irqtmrfired = 0;
-    irqvec[IRQTMR] = func;
+//  irqtmrfired = 0;
+//    irqvec[IRQTMR] = func;
+    irqvec[IRQTMR] = NULL;
     outb(PITDUALBYTE | PITONESHOT, PITCTRL);
     pitsethz(hz);
-    while (!irqtmrfired) {
+//    while (!irqtmrfired) {
         k_waitint();
-    }
+//    }
     /* enable all interrupts */
     outb(0x00, PICMASK1);
     outb(0x00, PICMASK2);

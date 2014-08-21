@@ -41,6 +41,8 @@
  * in the end, we enable interrupts with STI.
  */
 
+//.extern	irqtimerfired
+
 .globl	trapde, trapdb, trapnmi, trapbp, trapof, trapbr, trapud, trapnm, trapdf
 .globl	trapts, trapnp, trapss, trapgp, trappf, trapmf, trapac, trapmc, trapxf
 .globl	irqtmr0, irqtmr, irqkbd, irqmouse, irqerror, irqspurious
@@ -401,6 +403,10 @@ irqtmrcnt:
 	iret
 #endif
 
+	/*
+	 * simple interface to let the PIT do sleep() and such actions early in
+	 * the bootstrap process
+	 */
 irqtmr0:
 	pushal
 	pushl	%ds
@@ -409,8 +415,9 @@ irqtmr0:
 	movl	%esp, %ebp
 
 	movl	$irqvec, %eax
-	jz	_tmr0fin
+//	jz	_tmr0fin
 	movl	0(%eax), %ebx
+	cmpl	$0, %ebx
 	jz	_tmr0fin
 	call	*%ebx
 	movl	$irqvec, %eax
@@ -425,7 +432,7 @@ _tmr0fin:
 	popl	%es
 	popl	%ds
 	popal
-	movl	$1, irqtmrfired
+//	movl	$1, irqtmrfired
 	sti
 	iret
 	

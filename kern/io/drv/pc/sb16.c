@@ -1,4 +1,3 @@
-#include <stddef.h>
 #include <stdint.h>
 #include <sys/io.h>
 
@@ -130,7 +129,8 @@ sb16init(void)
     /* reset sound card */
     sb16reset();
     /* sleep for SB16RESETMS milliseconds, then trigger sb16setup() */
-    usleep(SB16RESETMS * 1000);
+    /* usleep(SB16RESETMS * 1000); */
+    pitsleep(SB16RESETMS);
     sb16setup();
     /* initialise and zero wired buffers */
 #if 0
