@@ -18,7 +18,8 @@ static struct thrq    thrruntab[THRNCLASS * THRNPRIO];
 extern long           trappriotab[NINTR];
 
 /* save thread context */
-FASTCALL
+//FASTCALL
+ASMLINK
 void
 thrsave(struct thr *thr, long retadr, long fp)
 {
@@ -32,7 +33,7 @@ thrsave(struct thr *thr, long retadr, long fp)
 //    thr->m_tcb.iret.eip = retadr;
     m_tcbsave(&thr->m_tcb);
     thr->m_tcb.iret.eip = retadr;
-    thr->m_tcb.iret.uesp = fp - 20;
+    thr->m_tcb.iret.uesp = fp - sizeof(struct m_trapframe);
     thr->m_tcb.genregs.ebp = fp;
 
     return;

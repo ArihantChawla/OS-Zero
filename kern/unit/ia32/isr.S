@@ -430,13 +430,26 @@ _tmr0fin:
 	iret
 	
 irqtmr:
-//	movl	%esp, %ebp
-//	movl	%ebp, %esp
+#if (NEWSWITCH)
+	/* store %ecx, %edx, and %eax temporarily */
+	pushl	%ecx
+	pushl	%edx
+	pushl	%eax
 	/* arguments for thrsave */
-	movl	%esp, %ecx		// frame pointer
-	addl	$20, %ecx
-	movl	(%esp), %edx		// return address
-	movl	%gs:8, %eax		// thread structure
+	movl	%ebp, %ecx		// frame pointer
+	movl	12(%esp), %edx		// return address
+	movl	%gs:8, %eax		// thread structure address
+	/* push 3rd argument (frame pointer) */
+	pushl	%ecx
+	/* push 2nd argument (return address) */
+	pushl	%edx
+	/* push 1st argument (thread structure address) */
+	pushl	%eax
+	/* restore %eax, %edx, and %ecx */
+	movl	12(%esp), %eax
+	movl	16(%esp), %edx
+	movl	20(%esp), %ecx
+#endif
 	call	thrsave
 	/* schedyield returns thread ID in eax */
 	movl	schedyield, %ebx
