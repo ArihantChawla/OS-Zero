@@ -77,7 +77,7 @@ m_tcbjmp:
 	movb	$0x20, %al
 	outb	%al, $0x20
 #endif
-	sti
+//	sti
 	iret
 
 #endif /* ASMSWITCH */

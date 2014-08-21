@@ -23,17 +23,15 @@ void
 schedloop(void)
 {
     /* scheduler loop; interrupted by timer [and other] interrupts */
-    while (1) {
+    do {
         /* enable all interrupts */
-#if (APIC)
-        k_enabintr();
-#else
+#if !(APIC)
         outb(0x00, PICMASK1);
         outb(0x00, PICMASK2);
 #endif
         /* wait for interrupt */
         k_waitint();
-    }
+    } while (1);
 
     /* NOTREACHED */
     return;
