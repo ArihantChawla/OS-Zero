@@ -35,22 +35,26 @@ pitinit(void)
 void
 pitsleep(long msec)
 {
-    long hz = 1000L / msec;
+    uint64_t *idt = kernidt;
+    long       hz = 1000L / msec;
 
-    /* enable timer interrupt, disable other interrupts */
-    outb(~0x01, PICMASK1);
-    outb(~0x00, PICMASK2);
+    k_disabintr();
 //  irqtmrfired = 0;
 //    irqvec[IRQTMR] = func;
     irqvec[IRQTMR] = NULL;
+    trapsetintgate(&idt[trapirqid(IRQTMR)], irqtmr0, TRAPUSER);
     outb(PITDUALBYTE | PITONESHOT, PITCTRL);
     pitsethz(hz);
+    /* enable timer interrupt, disable other interrupts */
+    outb(~0x01, PICMASK1);
+    outb(~0x00, PICMASK2);
 //    while (!irqtmrfired) {
         k_waitint();
 //    }
     /* enable all interrupts */
     outb(0x00, PICMASK1);
     outb(0x00, PICMASK2);
+    k_enabintr();
 
     return;
 }

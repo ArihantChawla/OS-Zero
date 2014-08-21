@@ -441,12 +441,16 @@ irqtmr:
 	pushl	%ebp
 	/* store %ecx */
 	pushl	%ecx
-	/* push general purpose registers into thread control block */
+	/* store stack pointer */
 	movl	%esp, %ebp
+	/* load [per-CPU] thread structure address */
 	movl	%gs:8, %ecx
 	leal	580(%ecx), %esp
+	/* load %ebx original value */
 	movl	(%ebp), %ecx
+	/* push general purpose registers into thread control block */
 	pushal
+	/* restore frame pointer */
 	leal	4(%ebp), %esp
 	popl	%ebp
 	/* arguments for thrsave */
