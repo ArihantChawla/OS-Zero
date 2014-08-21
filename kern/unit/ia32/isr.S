@@ -407,33 +407,34 @@ irqtmrcnt:
 	 * simple interface to let the PIT do sleep() and such actions early in
 	 * the bootstrap process
 	 */
+	/* dummy interrupt handler */
 irqtmr0:
+	/* push general purpose registers */
 	pushal
-	pushl	%ds
-	pushl	%es
-	pushl	%fs
+	/* store stack pointer */
 	movl	%esp, %ebp
-
+	/* load interrupt vector address */
 	movl	$irqvec, %eax
-//	jz	_tmr0fin
+	/* load interrupt handler address */
 	movl	0(%eax), %ebx
+	/* call if non-zero */
 	cmpl	$0, %ebx
 	jz	_tmr0fin
 	call	*%ebx
+	/* zero interrupt handler address */
 	movl	$irqvec, %eax
 	movl	$0x00000000, 0(%eax)
 
 _tmr0fin:
+	/* send PIT EOI */
 	movb	$0x20, %al
 	outb	%al, $0x20
-	
 	movl	%ebp, %esp
-	popl	%fs
-	popl	%es
-	popl	%ds
+	/* pop general purpose registers */
 	popal
-//	movl	$1, irqtmrfired
+	/* re-enable interrupts */
 	sti
+	/* return */
 	iret
 	
 irqtmr:
