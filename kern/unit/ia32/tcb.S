@@ -20,23 +20,18 @@ m_tcbsave:
 	movl	%esp, %ebp
 	/* load tcb-argument into %esp */
 	movl	8(%ebp), %esp
-//	/* save FPU context */
-//	fnsave	(%esp)
 	/* push general purpose registers */
 	addl	$580, %esp
 	pushal
-	/* save caller stack pointer in m_pusha */
-	leal	-8(%ebp), %eax
-	movl	%eax, 8(%esp)
-	/* save caller stack pointer for iret */
-	movl	%eax, -24(%esp)
-	/* save caller frame pointer in m_pusha */
-	leal	(%ebp), %eax
+	movl	(%ebp), %eax
 	movl	%eax, 12(%esp)
 	/* save page directory base register */
-	movl	%cr3, %ebx
-	subl	$4, %esp
-	movl	%ebx, (%esp)
+#if 0
+	movl	%cr3, %eax
+	pushl	%eax
+#endif
+	movl	%cr3, %edx
+	pushl	%edx
 	/* push segment registers; %gs is per-CPU and loaded in thrjmp */
 	pushl	%fs
 	pushl	%es
@@ -76,7 +71,7 @@ m_tcbjmp:
 	/* send APIC EOI (end of interrupt) */
 	movl	$0x00000000, 0xfee000b0
 	/* write zero to APIC task priority register - TODO: is this necessary? */
-	movl	$0x00000000, 0xfee00080
+//	movl	$0x00000000, 0xfee00080
 #else
 	/* send EOI to the PIC */
 	movb	$0x20, %al

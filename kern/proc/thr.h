@@ -22,6 +22,8 @@
 #if (ZEROSCHED)
 volatile FASTCALL struct m_tcb * thryield(void);
 #endif
+FASTCALL void                    thrsave(struct thr *thr, long retadr, long fp);
+FASTCALL void                    thrjmp(struct thr *thr);
 
 #define __KERNEL__ 1
 #include <zero/mtx.h>

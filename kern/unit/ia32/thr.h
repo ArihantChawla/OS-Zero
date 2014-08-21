@@ -7,6 +7,7 @@
 
 #if (ASMSWITCH)
 
+//ASMLINK void m_tcbsave(struct m_tcb *tcb);
 ASMLINK void m_tcbsave(struct m_tcb *tcb);
 FASTCALL void m_tcbjmp(struct m_tcb *tcb);
 

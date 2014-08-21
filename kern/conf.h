@@ -13,7 +13,7 @@
 
 #define NEWFONT   1
 
-#define IOAPIC    0
+#define IOAPIC    1
 #define SMBIOS    1
 #define APIC      1     // local [per-CPU] APIC support
 #define SMP       1     // enable multiprocessor support; currently broken

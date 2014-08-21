@@ -32,7 +32,7 @@
 #if (SMP)
 #include <kern/unit/ia32/mp.h>
 #endif
-#include <kern/unit/x86/asm.h>
+//#include <kern/unit/x86/asm.h>
 
 extern void cpuinit(struct m_cpu *cpu);
 extern long bufinit(void);
@@ -75,6 +75,7 @@ extern void sb16init(void);
 #if (APIC)
 extern void apicinit(void);
 #endif
+extern void schedloop(void);
 
 extern uint8_t                   kerniomap[8192] ALIGNED(PAGESIZE);
 extern struct proc               proctab[NPROC];
@@ -218,17 +219,9 @@ kmain(struct mboothdr *hdr, unsigned long pmemsz)
 #else
     pitinit();
 #endif
-    /* scheduler loop; interrupted by timer [and other] interrupts */
-    while (1) {
-        /* enable all interrupts */
-#if (APIC)
-        k_enabintr();
-#else
-        outb(0x00, PICMASK1);
-        outb(0x00, PICMASK2);
-#endif
-        /* wait for interrupt */
-        k_waitint();
-    }
+    schedloop();
+
+    /* NOTREACHED */
+    return;
 }
 

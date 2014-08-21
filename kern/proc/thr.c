@@ -20,7 +20,7 @@ extern long           trappriotab[NINTR];
 /* save thread context */
 FASTCALL
 void
-thrsave(struct thr *thr, long retadr)
+thrsave(struct thr *thr, long retadr, long fp)
 {
     uint8_t *fctx = thr->m_tcb.fctx;
 
@@ -29,8 +29,11 @@ thrsave(struct thr *thr, long retadr)
     } else {
         __asm__ __volatile__ ("fnsave (%0)\n" : : "r" (fctx));
     }
-    thr->m_tcb.iret.eip = retadr;
+//    thr->m_tcb.iret.eip = retadr;
     m_tcbsave(&thr->m_tcb);
+    thr->m_tcb.iret.eip = retadr;
+    thr->m_tcb.iret.uesp = fp - 20;
+    thr->m_tcb.genregs.ebp = fp;
 
     return;
 }

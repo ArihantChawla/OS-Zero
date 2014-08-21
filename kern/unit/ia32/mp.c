@@ -179,7 +179,9 @@ mpinit(void)
                 }
                 if (cpu->flags & MPCPUBOOT) {
                     mpbootcpu = &cputab[core];
+#if 0
                     cpuinit((struct m_cpu *)mpbootcpu);
+#endif
                 }
                 cputab[core].id = core;
                 mpncpu++;

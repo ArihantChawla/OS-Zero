@@ -31,7 +31,7 @@ struct m_trapframe {
     int32_t uesp;	// user stack pointer
     int16_t uss;	// user stack segment selector
     int16_t pad2;	// pad to 32-bit boundary
-};
+} PACK();
 
 /* general purpose registers - 32 bytes */
 struct m_pusha {
@@ -43,7 +43,7 @@ struct m_pusha {
     int32_t edx;
     int32_t ecx;
     int32_t eax;
-};
+} PACK();
 
 /* task state segment */
 struct m_tss {
@@ -83,7 +83,7 @@ struct m_segregs {
     int32_t es;         // data segment
     int32_t fs;         // buffer cache segment
 //    int32_t gs;         // per-CPU data segment
-};
+} PACK();
 
 /* thread control block */
 #define TCBFCTXSIZE 512
