@@ -2,6 +2,7 @@
 #define __SYS_IO_H__
 
 #define _IODELAY()  "outb %%al, $0x80\n"
+#define iodelay() __asm__ __volatile__ ("outb %al, $0x80\n");
 
 static __inline__ unsigned char
 inb(unsigned short port)
