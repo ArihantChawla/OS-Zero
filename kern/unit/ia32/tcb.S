@@ -2,8 +2,6 @@
 #include <kern/conf.h>
 #include <kern/unit/x86/trap.h>
 
-#if (ASMSWITCH)
-
 	/* TODO: privilege transition(?), per-cpu segment (%gs), tss/ltr */
 
 .globl	m_tcbsave, m_tcbjmp
@@ -74,6 +72,4 @@ m_tcbjmp:
 #endif
 //	sti
 	iret
-
-#endif /* ASMSWITCH */
 
