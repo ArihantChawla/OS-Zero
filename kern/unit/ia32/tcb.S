@@ -1,10 +1,8 @@
 #define __ASSEMBLY__ 1
 #include <kern/conf.h>
 #include <kern/unit/x86/trap.h>
-#include <kern/unit/x86/pic.h>
 #include <kern/unit/ia32/boot.h>
-
-_APICEOIADR = APICEOIADR
+#include <kern/unit/ia32/macro.S>
 
 	/* TODO: privilege transition(?), per-cpu segment (%gs), tss/ltr */
 
@@ -66,14 +64,9 @@ m_tcbjmp:
 	/* adjust %esp to &tcb->iret */ 
 	subl	$32, %esp
 #if (APIC)
-	/* send APIC EOI (end of interrupt) */
-	movl	$0x00000000, _APICEOIADR
-	/* write zero to APIC task priority register - TODO: is this necessary? */
-//	movl	$0x00000000, 0xfee00080
+	_eoi
 #else
-	/* send EOI to the PIC */
-	movb	$0x20, %al
-	outb	%al, PIC1
+	_eoi1
 #endif
 //	sti
 	iret

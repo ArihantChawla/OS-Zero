@@ -286,7 +286,7 @@ thrwakeup(uintptr_t wchan)
 volatile
 FASTCALL
 struct m_tcb *
-thryield(void)
+thrpick(void)
 {
     struct thr  *thr = k_curthr;
     struct thrq *thrq;

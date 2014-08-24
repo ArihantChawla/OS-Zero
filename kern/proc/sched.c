@@ -5,13 +5,13 @@
 #include <kern/proc/sched.h>
 #include <kern/unit/x86/asm.h>
 
-volatile FASTCALL struct m_tcb *(*schedyield)(void);
+volatile FASTCALL struct m_tcb *(*schedpickthr)(void);
 
 void
 schedinit(void)
 {
 #if (ZEROSCHED)
-    schedyield = thryield;
+    schedpickthr = thrpick;
 #else
 #error define supported scheduler such as ZEROSCHED
 #endif

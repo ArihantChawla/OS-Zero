@@ -20,7 +20,7 @@
 //extern struct m_cpuinfo cpuinfo;
 
 #if (ZEROSCHED)
-volatile FASTCALL struct m_tcb * thryield(void);
+volatile FASTCALL struct m_tcb * thrpick(void);
 #endif
 ASMLINK void                     thrsave(struct thr *thr, long retadr, long fp);
 FASTCALL void                    thrjmp(struct thr *thr);

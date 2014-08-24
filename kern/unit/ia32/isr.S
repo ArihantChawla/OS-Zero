@@ -2,8 +2,7 @@
 #include <kern/conf.h>
 #include <kern/unit/x86/trap.h>
 #include <kern/unit/ia32/boot.h>
-
-_APICEOIADR = APICEOIADR	
+#include <kern/unit/ia32/macro.S>
 
 /*
  * NOTE: we use interrupt gates, which automatically disable further
@@ -53,7 +52,7 @@ _APICEOIADR = APICEOIADR
 .globl	irqerror, irqspurious, mpspurint, irqtmrcnt
 #endif
 
-.extern	sigfunc, tmrsyncscr, schedyield, vmpagefault, kbdtrap, mousetrap
+.extern	sigfunc, tmrsyncscr, schedpickthr, vmpagefault, kbdtrap, mousetrap
 .extern	thrsave, thrjmp
 #if (APIC)
 .extern	mpapic
@@ -400,8 +399,7 @@ trapxf:
 #if (APIC)
 	/* dummy interrupt handler for probing APIC frequency */
 irqtmrcnt:
-	/* send APIC EOI */
-	movl	$0x00000000, _APICEOIADR
+	_eoi
 	iret
 #endif
 
@@ -428,9 +426,7 @@ irqtmr0:
 	movl	$0x00000000, 0(%eax)
 
 _tmr0fin:
-	/* send PIT EOI */
-	movb	$0x20, %al
-	outb	%al, PIC1
+	_eoi1
 	movl	%ebp, %esp
 	/* pop general purpose registers */
 	popal
@@ -466,8 +462,8 @@ irqtmr:
 	/* push 1st argument (thread structure address) */
 	pushl	%eax
 	call	thrsave
-	/* schedyield returns thread ID in eax */
-	movl	schedyield, %ebx
+	/* schedpickthr() returns thread ID in eax */
+	movl	schedpickthr, %ebx
 	call	*%ebx
 	/* thread ID argument in eax */
 	call	thrjmp
@@ -485,10 +481,9 @@ irqkbd:
 	call	*%ebx
 _irqkbddone:	
 #if (APIC)
-	movl	$0x00000000, _APICEOIADR
+	_eoi
 #else
-	movb	$0x20, %al
-	outb	%al, PIC1
+	_eoi1
 #endif
 	
 	movl	%ebp, %esp
@@ -507,10 +502,9 @@ irq3:
 	movl	%esp, %ebp
 
 #if (APIC)
-	movl	$0x00000000, _APICEOIADR
+	_eoi
 #else
-	movb	$0x20, %al
-	outb	%al, PIC1
+	_eoi1
 #endif
 	
 	movl	%ebp, %esp
@@ -529,10 +523,9 @@ irq4:
 	movl	%esp, %ebp
 
 #if (APIC)
-	movl	$0x00000000, _APICEOIADR
+	_eoi
 #else
-	movb	$0x20, %al
-	outb	%al, PIC1
+	_eoi1
 #endif
 	
 	movl	%ebp, %esp
@@ -556,10 +549,9 @@ irq5:
 	call	*%ebx
 _irq5done:	
 #if (APIC)
-	movl	$0x00000000, _APICEOIADR
+	_eoi
 #else
-	movb	$0x20, %al
-	outb	%al, PIC1
+	_eoi1
 #endif
 	
 	movl	%ebp, %esp
@@ -583,13 +575,10 @@ irqmouse:
 	call	*%ebx
 _irqmousedone:	
 #if (APIC)
-	/* send APIC EOI (end of interrupt) */
-	movl	$0x00000000, _APICEOIADR
+	_eoi
 #else
-	/* send EOI to the PICs */
-	movb	$0x20, %al
-	outb	%al, PIC2
-	outb	%al, PIC1
+	_eoi1
+	_eoi2
 #endif
 	
 	movl	%ebp, %esp
