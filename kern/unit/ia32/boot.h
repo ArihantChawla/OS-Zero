@@ -6,6 +6,9 @@
 #endif
 #include <kern/conf.h>
 
+#define APICBASE   0xfee00000
+#define APICEOIADR (APICBASE + 0xb0)
+
 #if !defined(__ASSEMBLY__)
 /* RAM-size in bytes */
 #define grubmemsz(hdr) ((1024 + (hdr)->himem) << 10)

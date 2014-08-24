@@ -1,6 +1,10 @@
 #define __ASSEMBLY__ 1
 #include <kern/conf.h>
 #include <kern/unit/x86/trap.h>
+#include <kern/unit/x86/pic.h>
+#include <kern/unit/ia32/boot.h>
+
+_APICEOIADR = APICEOIADR
 
 	/* TODO: privilege transition(?), per-cpu segment (%gs), tss/ltr */
 
@@ -11,6 +15,7 @@
 .align	32
 
 	/* ASMLINK void m_tcbsave(struct m_tcb *tcb); */
+	/* NOTE: caller (timer interrupt handler) has already done PUSHA */
 
 m_tcbsave:
 	/* prologue */
@@ -62,13 +67,13 @@ m_tcbjmp:
 	subl	$32, %esp
 #if (APIC)
 	/* send APIC EOI (end of interrupt) */
-	movl	$0x00000000, 0xfee000b0
+	movl	$0x00000000, _APICEOIADR
 	/* write zero to APIC task priority register - TODO: is this necessary? */
 //	movl	$0x00000000, 0xfee00080
 #else
 	/* send EOI to the PIC */
 	movb	$0x20, %al
-	outb	%al, $0x20
+	outb	%al, PIC1
 #endif
 //	sti
 	iret

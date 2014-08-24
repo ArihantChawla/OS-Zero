@@ -3,6 +3,8 @@
 #include <kern/unit/x86/trap.h>
 #include <kern/unit/ia32/boot.h>
 
+_APICEOIADR = APICEOIADR	
+
 /*
  * NOTE: we use interrupt gates, which automatically disable further
  * interrupts.
@@ -399,7 +401,7 @@ trapxf:
 	/* dummy interrupt handler for probing APIC frequency */
 irqtmrcnt:
 	/* send APIC EOI */
-	movl	$0x00000000, 0xfee000b0
+	movl	$0x00000000, _APICEOIADR
 	iret
 #endif
 
@@ -428,7 +430,7 @@ irqtmr0:
 _tmr0fin:
 	/* send PIT EOI */
 	movb	$0x20, %al
-	outb	%al, $0x20
+	outb	%al, PIC1
 	movl	%ebp, %esp
 	/* pop general purpose registers */
 	popal
@@ -483,10 +485,10 @@ irqkbd:
 	call	*%ebx
 _irqkbddone:	
 #if (APIC)
-	movl	$0x00000000, 0xfee000b0
+	movl	$0x00000000, _APICEOIADR
 #else
 	movb	$0x20, %al
-	outb	%al, $0x20
+	outb	%al, PIC1
 #endif
 	
 	movl	%ebp, %esp
@@ -505,10 +507,10 @@ irq3:
 	movl	%esp, %ebp
 
 #if (APIC)
-	movl	$0x00000000, 0xfee000b0
+	movl	$0x00000000, _APICEOIADR
 #else
 	movb	$0x20, %al
-	outb	%al, $0x20
+	outb	%al, PIC1
 #endif
 	
 	movl	%ebp, %esp
@@ -527,10 +529,10 @@ irq4:
 	movl	%esp, %ebp
 
 #if (APIC)
-	movl	$0x00000000, 0xfee000b0
+	movl	$0x00000000, _APICEOIADR
 #else
 	movb	$0x20, %al
-	outb	%al, $0x20
+	outb	%al, PIC1
 #endif
 	
 	movl	%ebp, %esp
@@ -554,10 +556,10 @@ irq5:
 	call	*%ebx
 _irq5done:	
 #if (APIC)
-	movl	$0x00000000, 0xfee000b0
+	movl	$0x00000000, _APICEOIADR
 #else
 	movb	$0x20, %al
-	outb	%al, $0x20
+	outb	%al, PIC1
 #endif
 	
 	movl	%ebp, %esp
@@ -581,11 +583,13 @@ irqmouse:
 	call	*%ebx
 _irqmousedone:	
 #if (APIC)
-	movl	$0x00000000, 0xfee000b0
+	/* send APIC EOI (end of interrupt) */
+	movl	$0x00000000, _APICEOIADR
 #else
+	/* send EOI to the PICs */
 	movb	$0x20, %al
-	outb	%al, $0xa0
-	outb	%al, $0x20
+	outb	%al, PIC2
+	outb	%al, PIC1
 #endif
 	
 	movl	%ebp, %esp
