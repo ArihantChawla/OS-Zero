@@ -9,26 +9,26 @@ _APICEOIADR	= APICEOIADR
 
 /* INTERRUPT MANAGEMENT */
 
-.macro	_trapsaveregs
+.macro	_trapenter
 	pushal
 //	pushl	%ds
 //	pushl	%es
 //	pushl	%fs
 .endm
-.macro	_traploadregs
+.macro	_trapleave
 //	popl	%fs
 //	popl	%es
 //	popl	%ds
 	popal
 .endm
-.macro	_trapsaveregserr
+.macro	_trapentererr
 	pushal
 	movl	32(%esp), %ecx
 //	pushl	%ds
 //	pushl	%es
 //	pushl	%fs
 .endm
-.macro	_traploadregserr
+.macro	_trapleaveerr
 //	popl	%fs
 //	popl	%es
 //	popl	%ds

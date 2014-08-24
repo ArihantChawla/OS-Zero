@@ -61,7 +61,7 @@
 .text	32
 
 trapde:
-	_trapsaveregs
+	_trapenter
 	movl	%esp, %ebp
 
 #if (FASTINTR)
@@ -75,12 +75,12 @@ trapde:
 	call	sigfunc
 
 	movl	%ebp, %esp
-	_traploadregs
+	_trapleave
 	sti
 	iret
 
 trapdb:
-	_trapsaveregs
+	_trapenter
 	movl	%esp, %ebp
 
 #if (FASTINTR)
@@ -94,12 +94,12 @@ trapdb:
 	call	sigfunc
 
 	movl	%ebp, %esp
-	_traploadregs
+	_trapleave
 	sti
 	iret
 
 trapnmi:
-	_trapsaveregs
+	_trapenter
 	movl	%esp, %ebp
 
 #if (FASTINTR)
@@ -113,12 +113,12 @@ trapnmi:
 	call	sigfunc
 
 	movl	%ebp, %esp
-	_traploadregs
+	_trapleave
 	sti
 	iret
 
 trapbp:
-	_trapsaveregs
+	_trapenter
 	movl	%esp, %ebp
 
 #if (FASTINTR)
@@ -132,12 +132,12 @@ trapbp:
 	call	sigfunc
 
 	movl	%ebp, %esp
-	_traploadregs
+	_trapleave
 	sti
 	iret
 
 trapof:
-	_trapsaveregs
+	_trapenter
 	movl	%esp, %ebp
 
 #if (FASTINTR)
@@ -151,12 +151,12 @@ trapof:
 	call	sigfunc
 
 	movl	%ebp, %esp
-	_traploadregs
+	_trapleave
 	sti
 	iret
 
 trapbr:
-	_trapsaveregs
+	_trapenter
 	movl	%esp, %ebp
 
 #if (FASTINTR)
@@ -170,12 +170,12 @@ trapbr:
 	call	sigfunc
 
 	movl	%ebp, %esp
-	_traploadregs
+	_trapleave
 	sti
 	iret
 
 trapud:
-	_trapsaveregs
+	_trapenter
 	movl	%esp, %ebp
 
 #if (FASTINTR)
@@ -189,12 +189,12 @@ trapud:
 	call	sigfunc
 
 	movl	%ebp, %esp
-	_traploadregs
+	_trapleave
 	sti
 	iret
 
 trapnm:
-	_trapsaveregs
+	_trapenter
 	movl	%esp, %ebp
 
 #if (FASTINTR)
@@ -208,12 +208,12 @@ trapnm:
 	call	sigfunc
 
 	movl	%ebp, %esp
-	_traploadregs
+	_trapleave
 	sti
 	iret
 
 trapdf:
-	_trapsaveregserr
+	_trapentererr
 	movl	%esp, %ebp
 
 #if (FASTINTR)
@@ -227,12 +227,12 @@ trapdf:
 	call	sigfunc
 
 	movl	%ebp, %esp
-	_traploadregserr
+	_trapleaveerr
 	sti
 	iret
 
 trapts:
-	_trapsaveregserr
+	_trapentererr
 	movl	%esp, %ebp
 
 #if (FASTINTR)
@@ -246,11 +246,11 @@ trapts:
 	call	sigfunc
 
 	movl	%ebp, %esp
-	_traploadregserr
+	_trapleaveerr
 	sti
 	iret
 trapnp:
-	_trapsaveregserr
+	_trapentererr
 	movl	%esp, %ebp
 
 #if (FASTINTR)
@@ -264,12 +264,12 @@ trapnp:
 	call	sigfunc
 
 	movl	%ebp, %esp
-	_traploadregserr
+	_trapleaveerr
 	sti
 	iret
 
 trapss:
-	_trapsaveregserr
+	_trapentererr
 	movl	%esp, %ebp
 
 #if (FASTINTR)
@@ -283,12 +283,12 @@ trapss:
 	call	sigfunc
 
 	movl	%ebp, %esp
-	_traploadregserr
+	_trapleaveerr
 	sti
 	iret
 
 trapgp:
-	_trapsaveregserr
+	_trapentererr
 	movl	%esp, %ebp
 
 #if (FASTINTR)
@@ -303,12 +303,12 @@ trapgp:
 
 _gpfin:	
 	movl	%ebp, %esp
-	_traploadregserr
+	_trapleaveerr
 	sti
 	iret
 
 trappf:
-	_trapsaveregserr
+	_trapentererr
 	movl	%esp, %ebp
 
 #if (FASTINTR)
@@ -324,12 +324,12 @@ trappf:
 	call	vmpagefault
 
 	movl	%ebp, %esp
-	_traploadregserr
+	_trapleaveerr
 	sti
 	iret
 
 trapmf:
-	_trapsaveregs
+	_trapenter
 	movl	%esp, %ebp
 
 #if (FASTINTR)
@@ -343,12 +343,12 @@ trapmf:
 	call	sigfunc
 
 	movl	%ebp, %esp
-	_traploadregserr
+	_trapleaveerr
 	sti
 	iret
 
 trapac:
-	_trapsaveregs
+	_trapenter
 	movl	%esp, %ebp
 
 #if (FASTINTR)
@@ -362,12 +362,12 @@ trapac:
 	call	sigfunc
 
 	movl	%ebp, %esp
-	_traploadregserr
+	_trapleaveerr
 	sti
 	iret
 
 trapmc:
-	_trapsaveregs
+	_trapenter
 	movl	%esp, %ebp
 
 #if (FASTINTR)
@@ -381,12 +381,12 @@ trapmc:
 	call	sigfunc
 
 	movl	%ebp, %esp
-	_traploadregs
+	_trapleave
 	sti
 	iret
 
 trapxf:
-	_trapsaveregs
+	_trapenter
 	movl	%esp, %ebp
 
 #if (FASTINTR)
@@ -400,7 +400,7 @@ trapxf:
 	call	sigfunc
 
 	movl	%ebp, %esp
-	_traploadregs
+	_trapleave
 	sti
 	iret
 
@@ -477,7 +477,7 @@ irqtmr:
 	call	thrjmp
 
 irqkbd:
-	_trapsaveregs
+	_trapenter
 	movl	%esp, %ebp
 
 	movl	$irqvec, %eax
@@ -492,12 +492,12 @@ _irqkbddone:
 #endif
 	
 	movl	%ebp, %esp
-	_traploadregs
+	_trapleave
 	sti
 	iret
 
 irq3:
-	_trapsaveregs
+	_trapenter
 	movl	%esp, %ebp
 
 #if (APIC)
@@ -507,12 +507,12 @@ irq3:
 #endif
 	
 	movl	%ebp, %esp
-	_traploadregs
+	_trapleave
 	sti
 	iret
 
 irq4:
-	_trapsaveregs
+	_trapenter
 	movl	%esp, %ebp
 
 #if (APIC)
@@ -522,12 +522,12 @@ irq4:
 #endif
 	
 	movl	%ebp, %esp
-	_traploadregs
+	_trapleave
 	sti
 	iret
 
 irq5:
-	_trapsaveregs
+	_trapenter
 	movl	%esp, %ebp
 
 	movl	$irqvec, %eax
@@ -542,12 +542,12 @@ _irq5done:
 #endif
 	
 	movl	%ebp, %esp
-	_traploadregs
+	_trapleave
 	sti
 	iret
 
 irqmouse:
-	_trapsaveregs
+	_trapenter
 	movl	%esp, %ebp
 
 	movl	$irqvec, %eax
@@ -563,7 +563,7 @@ _irqmousedone:
 #endif
 	
 	movl	%ebp, %esp
-	_traploadregs
+	_trapleave
 	sti
 	iret
 
@@ -574,13 +574,13 @@ irqerror:
 	iret
 
 irqspurious:
-	_trapsaveregs
+	_trapenter
 	movl	%esp, %ebp
 
 	call	mpspurint
 
 	movl	%ebp, %esp
-	_traploadregs
+	_trapleave
 	sti
 	iret
 
