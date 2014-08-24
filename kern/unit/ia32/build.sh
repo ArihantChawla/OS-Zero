@@ -8,8 +8,8 @@ export AS=gcc
 export LD=ld
 
 ./clean.sh
-$CC -DNEWSWITCH=1 -DNEWCLI=1 -DKLUDGE=1 -DMEMTEST=0 -D_REENTRANT=1 -DQEMU=1 -g -DKERN32BIT=1 -D__KERNEL__=1 -D__MTKERNEL__ -march=pentium-mmx -m32 -fno-asynchronous-unwind-tables -ffreestanding -static -Wall -I../../.. -I../../../usr/lib -I../../../usr/lib/c -g -m32 -O -fno-omit-frame-pointer -fno-stack-protector -fno-builtin -c *.c ../../*.c ../x86/*.c ../../proc/*.c ../../mem/*.c ../../io/*.c ../../io/drv/chr/cons.c ../../io/drv/pc/*.c ../i387/math.c ../../../usr/contrib/Zeno/plasma24grid.c
-$AS -DNEWSWITCH=1 -DNEWCLI=1 -DQEMU=1 -g -D__KERNEL__=1 -D__MTKERNEL__ -ffreestanding -static -Wall -I../../.. -I../../../usr/lib -I../../../usr/lib/c -g -m32 -O -fno-omit-frame-pointer -fno-stack-protector -fno-builtin -c *.S
+$CC -DFASTINTR=1 -DNEWCLI=1 -DKLUDGE=1 -DMEMTEST=0 -D_REENTRANT=1 -DQEMU=1 -g -DKERN32BIT=1 -D__KERNEL__=1 -D__MTKERNEL__ -march=pentium-mmx -m32 -fno-asynchronous-unwind-tables -ffreestanding -static -Wall -I../../.. -I../../../usr/lib -I../../../usr/lib/c -g -m32 -O -fno-omit-frame-pointer -fno-stack-protector -fno-builtin -c *.c ../../*.c ../x86/*.c ../../proc/*.c ../../mem/*.c ../../io/*.c ../../io/drv/chr/cons.c ../../io/drv/pc/*.c ../i387/math.c ../../../usr/contrib/Zeno/plasma24grid.c
+$AS -DFASTINTR=1 -DNEWCLI=1 -DQEMU=1 -g -D__KERNEL__=1 -D__MTKERNEL__ -ffreestanding -static -Wall -I../../.. -I../../../usr/lib -I../../../usr/lib/c -g -m32 -O -fno-omit-frame-pointer -fno-stack-protector -fno-builtin -c *.S
 $LD -nostdlib -nodefaultlibs -g -static -T kern.lds -m elf_i386 -Map zero.sym -o zero *.o
 #objdump --line-numbers --source zero.elf > zero.lst
 #nm -n zero.elf > zero.sym

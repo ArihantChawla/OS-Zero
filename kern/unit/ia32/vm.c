@@ -221,6 +221,9 @@ vmfreephys(void *virt, uint32_t size)
     return;
 }
 
+#if (FASTINTR)
+FASTCALL
+#endif
 void
 vmpagefault(unsigned long pid, uint32_t adr, uint32_t flags)
 {

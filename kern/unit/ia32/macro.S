@@ -21,6 +21,13 @@ _APICEOIADR	= APICEOIADR
 //	popl	%ds
 	popal
 .endm
+.macro	_trapsaveregserr
+	pushal
+	movl	32(%esp), %ecx
+//	pushl	%ds
+//	pushl	%es
+//	pushl	%fs
+.endm
 .macro	_traploadregserr
 //	popl	%fs
 //	popl	%es

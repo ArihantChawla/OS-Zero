@@ -32,7 +32,7 @@
  * ------------------
  * ESP points to IRET stack frame OR ERROR-code right below it.
  * push general-purpose registers with PUSHA.
- * possible ERROR-code is passed in EAX.
+ * possible ERROR-code is stored EDX.
  */
 
 /*
@@ -64,7 +64,14 @@ trapde:
 	_trapsaveregs
 	movl	%esp, %ebp
 
+#if (FASTINTR)
+	movl	$TRAPDE, %ebx
+	xorl	%eax, %eax
+#else
+	pushl	%ecx
 	pushl	$TRAPDE
+	pushl	$0x00000000
+#endif
 	call	sigfunc
 
 	movl	%ebp, %esp
@@ -76,7 +83,14 @@ trapdb:
 	_trapsaveregs
 	movl	%esp, %ebp
 
+#if (FASTINTR)
+	movl	$TRAPDB, %ebx
+	xorl	%eax, %eax
+#else
+	pushl	%ecx
 	pushl	$TRAPDB
+	pushl	$0x00000000
+#endif
 	call	sigfunc
 
 	movl	%ebp, %esp
@@ -88,7 +102,14 @@ trapnmi:
 	_trapsaveregs
 	movl	%esp, %ebp
 
+#if (FASTINTR)
+	movl	$TRAPNMI, %ebx
+	xorl	%eax, %eax
+#else
+	pushl	%ecx
 	pushl	$TRAPNMI
+	pushl	$0x00000000
+#endif
 	call	sigfunc
 
 	movl	%ebp, %esp
@@ -100,7 +121,14 @@ trapbp:
 	_trapsaveregs
 	movl	%esp, %ebp
 
+#if (FASTINTR)
+	movl	$TRAPBP, %ebx
+	xorl	%eax, %eax
+#else
+	pushl	%ecx
 	pushl	$TRAPBP
+	pushl	$0x00000000
+#endif
 	call	sigfunc
 
 	movl	%ebp, %esp
@@ -112,7 +140,14 @@ trapof:
 	_trapsaveregs
 	movl	%esp, %ebp
 
+#if (FASTINTR)
+	movl	$TRAPOF, %ebx
+	xorl	%eax, %eax
+#else
+	pushl	%ecx
 	pushl	$TRAPOF
+	pushl	$0x00000000
+#endif
 	call	sigfunc
 
 	movl	%ebp, %esp
@@ -124,7 +159,14 @@ trapbr:
 	_trapsaveregs
 	movl	%esp, %ebp
 
+#if (FASTINTR)
+	movl	$TRAPBR, %ebx
+	xorl	%eax, %eax
+#else
+	pushl	%ecx
 	pushl	$TRAPBR
+	pushl	$0x00000000
+#endif
 	call	sigfunc
 
 	movl	%ebp, %esp
@@ -136,7 +178,14 @@ trapud:
 	_trapsaveregs
 	movl	%esp, %ebp
 
+#if (FASTINTR)
+	movl	$TRAPUD, %ebx
+	xorl	%eax, %eax
+#else
+	pushl	%ecx
 	pushl	$TRAPUD
+	pushl	$0x00000000
+#endif
 	call	sigfunc
 
 	movl	%ebp, %esp
@@ -148,7 +197,14 @@ trapnm:
 	_trapsaveregs
 	movl	%esp, %ebp
 
+#if (FASTINTR)
+	movl	$TRAPNM, %ebx
+	xorl	%eax, %eax
+#else
+	pushl	%ecx
 	pushl	$TRAPNM
+	pushl	$0x00000000
+#endif
 	call	sigfunc
 
 	movl	%ebp, %esp
@@ -157,10 +213,17 @@ trapnm:
 	iret
 
 trapdf:
-	_trapsaveregs
+	_trapsaveregserr
 	movl	%esp, %ebp
 
+#if (FASTINTR)
+	movl	$TRAPDF, %ebx
+	xorl	%eax, %eax
+#else
+	pushl	%ecx
 	pushl	$TRAPDF
+	pushl	$0x00000000
+#endif
 	call	sigfunc
 
 	movl	%ebp, %esp
@@ -169,10 +232,17 @@ trapdf:
 	iret
 
 trapts:
-	_trapsaveregs
+	_trapsaveregserr
 	movl	%esp, %ebp
 
+#if (FASTINTR)
+	movl	$TRAPTS, %ebx
+	xorl	%eax, %eax
+#else
+	pushl	%ecx
 	pushl	$TRAPTS
+	pushl	$0x00000000
+#endif
 	call	sigfunc
 
 	movl	%ebp, %esp
@@ -180,10 +250,17 @@ trapts:
 	sti
 	iret
 trapnp:
-	_trapsaveregs
+	_trapsaveregserr
 	movl	%esp, %ebp
 
+#if (FASTINTR)
+	movl	$TRAPNP, %ebx
+	xorl	%eax, %eax
+#else
+	pushl	%ecx
 	pushl	$TRAPNP
+	pushl	$0x00000000
+#endif
 	call	sigfunc
 
 	movl	%ebp, %esp
@@ -192,10 +269,17 @@ trapnp:
 	iret
 
 trapss:
-	_trapsaveregs
+	_trapsaveregserr
 	movl	%esp, %ebp
 
+#if (FASTINTR)
+	movl	$TRAPSS, %ebx
+	xorl	%eax, %eax
+#else
+	pushl	%ecx
 	pushl	$TRAPSS
+	pushl	$0x00000000
+#endif
 	call	sigfunc
 
 	movl	%ebp, %esp
@@ -204,10 +288,17 @@ trapss:
 	iret
 
 trapgp:
-	_trapsaveregs
+	_trapsaveregserr
 	movl	%esp, %ebp
 
+#if (FASTINTR)
+	movl	$TRAPGP, %ebx
+	xorl	%eax, %eax
+#else
+	pushl	%ecx
 	pushl	$TRAPGP
+	pushl	$0x00000000
+#endif
 	call	sigfunc
 
 _gpfin:	
@@ -217,13 +308,19 @@ _gpfin:
 	iret
 
 trappf:
-	_trapsaveregs
+	_trapsaveregserr
 	movl	%esp, %ebp
 
-	pushl	%eax			// error code
-	movl	%cr2, %eax		// linear address
-	pushl	%eax
-	pushl	$0x00000000		// TODO: push PID here
+#if (FASTINTR)
+	/* error code is in %ecx */
+	movl	%cr2, %edx		// fault address
+	xorl	%eax, %eax		// FIXME: PID
+#else
+	movl	%cr2, %edx		// linear address
+	pushl	%ecx			// error code
+	pushl	%edx
+	pushl	$0x00000000		// FIXME: push PID here
+#endif	
 	call	vmpagefault
 
 	movl	%ebp, %esp
@@ -235,7 +332,14 @@ trapmf:
 	_trapsaveregs
 	movl	%esp, %ebp
 
+#if (FASTINTR)
+	movl	$TRAPMF, %ebx
+	xorl	%eax, %eax
+#else
+	pushl	%ecx
 	pushl	$TRAPMF
+	pushl	$0x00000000
+#endif
 	call	sigfunc
 
 	movl	%ebp, %esp
@@ -247,7 +351,14 @@ trapac:
 	_trapsaveregs
 	movl	%esp, %ebp
 
+#if (FASTINTR)
+	movl	$TRAPAC, %ebx
+	xorl	%eax, %eax
+#else
+	pushl	%ecx
 	pushl	$TRAPAC
+	pushl	$0x00000000
+#endif
 	call	sigfunc
 
 	movl	%ebp, %esp
@@ -259,7 +370,14 @@ trapmc:
 	_trapsaveregs
 	movl	%esp, %ebp
 
+#if (FASTINTR)
+	movl	$TRAPMC, %ebx
+	xorl	%eax, %eax
+#else
+	pushl	%ecx
 	pushl	$TRAPMC
+	pushl	$0x00000000
+#endif
 	call	sigfunc
 
 	movl	%ebp, %esp
@@ -271,7 +389,14 @@ trapxf:
 	_trapsaveregs
 	movl	%esp, %ebp
 
+#if (FASTINTR)
+	movl	$TRAPXF, %ebx
+	xorl	%eax, %eax
+#else
+	pushl	%ecx
 	pushl	$TRAPXF
+	pushl	$0x00000000
+#endif
 	call	sigfunc
 
 	movl	%ebp, %esp

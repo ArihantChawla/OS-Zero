@@ -43,9 +43,11 @@ kill(struct proc *proc)
     ;
 }
 
-ASMLINK
+#if (FASTINTR)
+FASTCALL
+#endif
 void
-sigfunc(uint32_t trap)
+sigfunc(unsigned long pid, uint32_t trap, long errnum)
 {
     struct proc     *proc = k_curproc;
     long             signum = signumtab[trap];
