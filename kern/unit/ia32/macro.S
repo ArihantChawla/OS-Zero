@@ -7,21 +7,41 @@
 _APICEOIADR	= APICEOIADR
 #endif
 
-#if (APIC)
-.macro	_eoi
+/* INTERRUPT MANAGEMENT */
+
+.macro	_trapsaveregs
+	pushal
+//	pushl	%ds
+//	pushl	%es
+//	pushl	%fs
+.endm
+.macro	_traploadregs
+//	popl	%fs
+//	popl	%es
+//	popl	%ds
+	popal
+.endm
+.macro	_traploadregserr
+//	popl	%fs
+//	popl	%es
+//	popl	%ds
+	popal
+	addl	$4, %esp	// skip error code
+.endm
+
+	#if (APIC)
+.macro	_apiceoi
 	/* send APIC EOI (end of interrupt) */
 	movl	$0x00000000, _APICEOIADR
-	/* write zero to APIC task priority register - TODO: is this necessary? */
-//	movl	$0x00000000, 0xfee00080
 .endm
 #endif /* APIC */
 
-.macro	_eoi1
-	/* send EOI to the PIC1 */
-	movb	$0x20, %al
+.macro	_piteoi1
+	/* send EOI to PIC1 */
+	movb	$PICEOI, %al
 	outb	%al, $PIC1
 .endm
-.macro	_eoi2
+.macro	_piteoi2
 	/* send EOI to PIC2 */
 	outb	%al, $PIC2
 .endm

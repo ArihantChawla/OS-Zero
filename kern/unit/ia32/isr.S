@@ -61,230 +61,150 @@
 .text	32
 
 trapde:
-	pushal
-	pushl	%ds
-	pushl	%es
-	pushl	%fs
+	_trapsaveregs
 	movl	%esp, %ebp
 
 	pushl	$TRAPDE
 	call	sigfunc
 
 	movl	%ebp, %esp
-	popl	%fs
-	popl	%es
-	popl	%ds
-	popal
+	_traploadregs
 	sti
 	iret
 
 trapdb:
-	pushal
-	pushl	%ds
-	pushl	%es
-	pushl	%fs
+	_trapsaveregs
 	movl	%esp, %ebp
 
 	pushl	$TRAPDB
 	call	sigfunc
 
 	movl	%ebp, %esp
-	popl	%fs
-	popl	%es
-	popl	%ds
-	popal
+	_traploadregs
 	sti
 	iret
 
 trapnmi:
-	pushal
-	pushl	%ds
-	pushl	%es
-	pushl	%fs
+	_trapsaveregs
 	movl	%esp, %ebp
 
 	pushl	$TRAPNMI
 	call	sigfunc
 
 	movl	%ebp, %esp
-	popl	%fs
-	popl	%es
-	popl	%ds
-	popal
+	_traploadregs
 	sti
 	iret
 
 trapbp:
-	pushal
-	pushl	%ds
-	pushl	%es
-	pushl	%fs
+	_trapsaveregs
 	movl	%esp, %ebp
 
 	pushl	$TRAPBP
 	call	sigfunc
 
 	movl	%ebp, %esp
-	popl	%fs
-	popl	%es
-	popl	%ds
-	popal
+	_traploadregs
 	sti
 	iret
 
 trapof:
-	pushal
-	pushl	%ds
-	pushl	%es
-	pushl	%fs
+	_trapsaveregs
 	movl	%esp, %ebp
 
 	pushl	$TRAPOF
 	call	sigfunc
 
 	movl	%ebp, %esp
-	popl	%fs
-	popl	%es
-	popl	%ds
-	popal
+	_traploadregs
 	sti
 	iret
 
 trapbr:
-	pushal
-	pushl	%ds
-	pushl	%es
-	pushl	%fs
+	_trapsaveregs
 	movl	%esp, %ebp
 
 	pushl	$TRAPBR
 	call	sigfunc
 
 	movl	%ebp, %esp
-	popl	%fs
-	popl	%es
-	popl	%ds
-	popal
+	_traploadregs
 	sti
 	iret
 
 trapud:
-	pushal
-	pushl	%ds
-	pushl	%es
-	pushl	%fs
+	_trapsaveregs
 	movl	%esp, %ebp
 
 	pushl	$TRAPUD
 	call	sigfunc
 
 	movl	%ebp, %esp
-	popl	%fs
-	popl	%es
-	popl	%ds
-	popal
+	_traploadregs
 	sti
 	iret
 
 trapnm:
-	pushal
-	pushl	%ds
-	pushl	%es
-	pushl	%fs
+	_trapsaveregs
 	movl	%esp, %ebp
 
 	pushl	$TRAPNM
 	call	sigfunc
 
 	movl	%ebp, %esp
-	popl	%fs
-	popl	%es
-	popl	%ds
-	popal
+	_traploadregs
 	sti
 	iret
 
 trapdf:
-	pusha
-	popl	%eax
-	pushl	%ds
-	pushl	%es
-	pushl	%fs
+	_trapsaveregs
 	movl	%esp, %ebp
 
 	pushl	$TRAPDF
 	call	sigfunc
 
 	movl	%ebp, %esp
-	popl	%fs
-	popl	%es
-	popl	%ds
-	addl	$4, %esp
-	popal
+	_traploadregserr
 	sti
 	iret
 
 trapts:
-	pushal
-	pushl	%ds
-	pushl	%es
-	pushl	%fs
+	_trapsaveregs
 	movl	%esp, %ebp
 
 	pushl	$TRAPTS
 	call	sigfunc
 
 	movl	%ebp, %esp
-	popl	%fs
-	popl	%es
-	popl	%ds
-	popal
-	addl	$4, %esp
+	_traploadregserr
 	sti
 	iret
 trapnp:
-	pushal
-	pushl	%ds
-	pushl	%es
-	pushl	%fs
+	_trapsaveregs
 	movl	%esp, %ebp
 
 	pushl	$TRAPNP
 	call	sigfunc
 
 	movl	%ebp, %esp
-	popl	%fs
-	popl	%es
-	popl	%ds
-	popal
-	addl	$4, %esp
+	_traploadregserr
 	sti
 	iret
 
 trapss:
-	pushal
-	pushl	%ds
-	pushl	%es
-	pushl	%fs
+	_trapsaveregs
 	movl	%esp, %ebp
 
 	pushl	$TRAPSS
 	call	sigfunc
 
 	movl	%ebp, %esp
-	popl	%fs
-	popl	%es
-	popl	%ds
-	popal
-	addl	$4, %esp
+	_traploadregserr
 	sti
 	iret
 
 trapgp:
-	pushal
-	pushl	%ds
-	pushl	%es
-	pushl	%fs
+	_trapsaveregs
 	movl	%esp, %ebp
 
 	pushl	$TRAPGP
@@ -292,19 +212,12 @@ trapgp:
 
 _gpfin:	
 	movl	%ebp, %esp
-	popl	%fs
-	popl	%es
-	popl	%ds
-	popal
-	addl	$4, %esp
+	_traploadregserr
 	sti
 	iret
 
 trappf:
-	pushal
-	pushl	%ds
-	pushl	%es
-	pushl	%fs
+	_trapsaveregs
 	movl	%esp, %ebp
 
 	pushl	%eax			// error code
@@ -314,92 +227,62 @@ trappf:
 	call	vmpagefault
 
 	movl	%ebp, %esp
-	popl	%fs
-	popl	%es
-	popl	%ds
-	popal
-	addl	$4, %esp
+	_traploadregserr
 	sti
 	iret
 
 trapmf:
-	pushal
-	pushl	%ds
-	pushl	%es
-	pushl	%fs
+	_trapsaveregs
 	movl	%esp, %ebp
 
 	pushl	$TRAPMF
 	call	sigfunc
 
 	movl	%ebp, %esp
-	popl	%fs
-	popl	%es
-	popl	%ds
-	popal
-	addl	$4, %esp
+	_traploadregserr
 	sti
 	iret
 
 trapac:
-	pushal
-	pushl	%ds
-	pushl	%es
-	pushl	%fs
+	_trapsaveregs
 	movl	%esp, %ebp
 
 	pushl	$TRAPAC
 	call	sigfunc
 
 	movl	%ebp, %esp
-	popl	%fs
-	popl	%es
-	popl	%ds
-	popal
-	addl	$4, %esp
+	_traploadregserr
 	sti
 	iret
 
 trapmc:
-	pushal
-	pushl	%ds
-	pushl	%es
-	pushl	%fs
+	_trapsaveregs
 	movl	%esp, %ebp
 
 	pushl	$TRAPMC
 	call	sigfunc
 
 	movl	%ebp, %esp
-	popl	%fs
-	popl	%es
-	popl	%ds
-	popal
+	_traploadregs
 	sti
 	iret
 
 trapxf:
-	pushal
-	pushl	%ds
-	pushl	%es
-	pushl	%fs
+	_trapsaveregs
 	movl	%esp, %ebp
 
 	pushl	$TRAPXF
 	call	sigfunc
 
 	movl	%ebp, %esp
-	popl	%fs
-	popl	%es
-	popl	%ds
-	popal
+	_traploadregs
 	sti
 	iret
 
 #if (APIC)
 	/* dummy interrupt handler for probing APIC frequency */
 irqtmrcnt:
-	_eoi
+	_apiceoi
 	iret
 #endif
 
@@ -426,7 +309,7 @@ irqtmr0:
 	movl	$0x00000000, 0(%eax)
 
 _tmr0fin:
-	_eoi1
+	_piteoi1
 	movl	%ebp, %esp
 	/* pop general purpose registers */
 	popal
@@ -469,10 +352,7 @@ irqtmr:
 	call	thrjmp
 
 irqkbd:
-	pushal
-	pushl	%ds
-	pushl	%es
-	pushl	%fs
+	_trapsaveregs
 	movl	%esp, %ebp
 
 	movl	$irqvec, %eax
@@ -481,66 +361,48 @@ irqkbd:
 	call	*%ebx
 _irqkbddone:	
 #if (APIC)
-	_eoi
+	_apiceoi
 #else
-	_eoi1
+	_piteoi1
 #endif
 	
 	movl	%ebp, %esp
-	popl	%fs
-	popl	%es
-	popl	%ds
-	popal
+	_traploadregs
 	sti
 	iret
 
 irq3:
-	pushal
-	pushl	%ds
-	pushl	%es
-	pushl	%fs
+	_trapsaveregs
 	movl	%esp, %ebp
 
 #if (APIC)
-	_eoi
+	_apiceoi
 #else
-	_eoi1
+	_piteoi1
 #endif
 	
 	movl	%ebp, %esp
-	popl	%fs
-	popl	%es
-	popl	%ds
-	popal
+	_traploadregs
 	sti
 	iret
 
 irq4:
-	pushal
-	pushl	%ds
-	pushl	%es
-	pushl	%fs
+	_trapsaveregs
 	movl	%esp, %ebp
 
 #if (APIC)
-	_eoi
+	_apiceoi
 #else
-	_eoi1
+	_piteoi1
 #endif
 	
 	movl	%ebp, %esp
-	popl	%fs
-	popl	%es
-	popl	%ds
-	popal
+	_traploadregs
 	sti
 	iret
 
 irq5:
-	pushal
-	pushl	%ds
-	pushl	%es
-	pushl	%fs
+	_trapsaveregs
 	movl	%esp, %ebp
 
 	movl	$irqvec, %eax
@@ -549,24 +411,18 @@ irq5:
 	call	*%ebx
 _irq5done:	
 #if (APIC)
-	_eoi
+	_apiceoi
 #else
-	_eoi1
+	_piteoi1
 #endif
 	
 	movl	%ebp, %esp
-	popl	%fs
-	popl	%es
-	popl	%ds
-	popal
+	_traploadregs
 	sti
 	iret
 
 irqmouse:
-	pushal
-	pushl	%ds
-	pushl	%es
-	pushl	%fs
+	_trapsaveregs
 	movl	%esp, %ebp
 
 	movl	$irqvec, %eax
@@ -575,17 +431,14 @@ irqmouse:
 	call	*%ebx
 _irqmousedone:	
 #if (APIC)
-	_eoi
+	_apiceoi
 #else
-	_eoi1
-	_eoi2
+	_piteoi1
+	_piteoi2
 #endif
 	
 	movl	%ebp, %esp
-	popl	%fs
-	popl	%es
-	popl	%ds
-	popal
+	_traploadregs
 	sti
 	iret
 
@@ -596,19 +449,13 @@ irqerror:
 	iret
 
 irqspurious:
-	pushal
-	pushl	%ds
-	pushl	%es
-	pushl	%fs
+	_trapsaveregs
 	movl	%esp, %ebp
 
 	call	mpspurint
 
 	movl	%ebp, %esp
-	popl	%fs
-	popl	%es
-	popl	%ds
-	popal
+	_traploadregs
 	sti
 	iret
 

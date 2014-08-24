@@ -64,9 +64,9 @@ m_tcbjmp:
 	/* adjust %esp to &tcb->iret */ 
 	subl	$32, %esp
 #if (APIC)
-	_eoi
+	_apiceoi
 #else
-	_eoi1
+	_piteoi1
 #endif
 //	sti
 	iret
