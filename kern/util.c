@@ -507,7 +507,7 @@ kprintf(char *fmt, ...)
     char          *cptr;
     long           val;
     unsigned long  uval;
-    long           uns;
+    long           isuns;
     long           isch;
     long           isdec;
     long           ishex;
@@ -529,7 +529,7 @@ kprintf(char *fmt, ...)
             ishex = 0;
             val = 0;
             uval = 0;
-            uns = 0;
+            isuns = 0;
             arg = _strtok(sptr, '%');
             if (arg) {
                 cons->puts(sptr);
@@ -567,7 +567,13 @@ kprintf(char *fmt, ...)
                             isdec = 1;
                             if (*arg == 'p') {
                                 ishex = 1;
-                                val = (long)va_arg(al, void *);
+                                isuns = 1;
+                                uval = (unsigned long)va_arg(al, void *);
+                            } else if (arg[1] == 'x' || arg[1] == 'u') {
+                                ishex = 1;
+                                isuns = 1;
+                                uval = (unsigned long)va_arg(al, unsigned long);
+                                arg++;
                             } else {
                                 val = va_arg(al, long);
                             }
@@ -575,21 +581,26 @@ kprintf(char *fmt, ...)
                             if (*arg) {
                                 if (*arg == 'd') {
                                     arg++;
+#if 0
                                 } else if (*arg == 'x') {
                                     arg++;
                                     ishex = 1;
+                                    isuns++;
+#endif
                                 }
                             }
                             
                             break;
                         case 'x':
-                            val = va_arg(al, int);
-                            arg++;
+//                            val = va_arg(al, int);
                             ishex = 1;
+                            isuns = 1;
+                            uval = (unsigned int)va_arg(al, unsigned int);
+                            arg++;
                             
                             break;
                         case 'u':
-                            uns = 1;
+                            isuns = 1;
                             arg++;
                             if (*arg) {
                                 switch (*arg) {
@@ -629,7 +640,7 @@ kprintf(char *fmt, ...)
                             
                             break;
                     }
-                    if (uns) {
+                    if (isuns) {
                         if (ishex) {
                             l = _ultoxn(uval, buf, LONGLONGBUFSIZE);
                             cons->puts(&buf[l]);

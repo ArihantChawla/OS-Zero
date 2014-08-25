@@ -29,6 +29,7 @@ pitinit(void)
     return;
 }
 
+#if 0
 void
 pitsleep(long msec)
 {
@@ -41,8 +42,8 @@ pitsleep(long msec)
 
     return;
 }
+#endif
 
-#if 0
 /*
  * sleep for msec milliseconds, then call trigger func
  * only to be used before the APIC timers and scheduler are enabled
@@ -50,7 +51,6 @@ pitsleep(long msec)
 void
 pitsleep(long msec)
 {
-    uint64_t *idt = kernidt;
     long       hz = 1000L / msec;
 
     /* enable timer interrupt, disable other interrupts */
@@ -59,7 +59,7 @@ pitsleep(long msec)
     irqvec[IRQTMR] = NULL;
 //    trapsetintgate(&idt[trapirqid(IRQTMR)], irqtmr0, TRAPUSER);
     outb(PITDUALBYTE | PITONESHOT, PITCTRL);
-    pitsethz(hz);
+    pitsethz(hz, PITCHAN0);
     k_waitint();
     /* enable all interrupts */
     outb(0x00, PICMASK1);
@@ -67,5 +67,4 @@ pitsleep(long msec)
 
     return;
 }
-#endif
 
