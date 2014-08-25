@@ -11,9 +11,6 @@
 #include <kern/unit/x86/apic.h>
 #include <kern/unit/ia32/link.h>
 #include <kern/unit/ia32/vm.h>
-#if 0
-#include <kern/unit/ia32/pit.h>
-#endif
 
 extern void                    irqtmr(void);
 extern void                    irqtmrcnt(void);
@@ -36,7 +33,7 @@ usleep(unsigned long nusec)
     }
 }
 
-struct apic *
+uint32_t *
 apicprobe(void)
 {
     long adr = k_readmsr(APICMSR);
@@ -44,7 +41,7 @@ apicprobe(void)
     adr &= 0xfffff000;
     kprintf("local APIC @ %lx\n", adr);
 
-    return (struct apic *)adr;
+    return (uint32_t *)adr;
 }
 
 void
@@ -70,16 +67,15 @@ void
 apicinittmr(void)
 {
 //    struct apic *apic = apicprobe();
-    volatile struct apic *apic = (struct apic *)mpapic;
-    uint32_t              freq;
-    uint32_t              tmrcnt;
-    uint8_t               tmp8;
+    volatile uint32_t *apic = mpapic;
+    uint32_t           freq;
+    uint32_t           tmrcnt;
+    uint8_t            tmp8;
 
     if (!apic) {
         apic = apicprobe();
-//        mpapic = apic;
+        mpapic = apic;
     }
-//    k_writemsr((uint32_t)apic | APICGLOBENABLE, APICBASEMSR);
     trapsetintgate(&kernidt[trapirqid(IRQTMR)], irqtmrcnt, TRAPUSER);
     /* initialise APIC */
     apicwrite(0xffffffff, APICDFR);
@@ -90,41 +86,34 @@ apicinittmr(void)
     apicwrite(APICMASKED, APICLINTR0);
     apicwrite(APICMASKED, APICLINTR1);
 #endif
-    apicwrite(0, APICTASKPRIO);
     /* enable APIC */
     apicwrite((uint32_t)apic | APICGLOBENABLE, APICSPURIOUS);
     apicwrite(APICSWENABLE | (uint32_t)apic, APICSPURIOUS);
     apicwrite(IRQAPICTMR, APICTMR);
     apicwrite(0x03, APICTMRDIVCONF);
     /* initialise PIT channel 2 in one-shot mode */
-    outb((inb(0x61) & 0xfd) | 1, 0x61);
+    outb((inb(PITCTRL2) & 0xfd) | PITONESHOT, PITCTRL2);
     outb(0xb2, PITCTRL);
-    outb(0x9b, 0x42);
-    inb(0x60);
-    outb(0x2e, 0x42);
+    apicwrite(0, APICTASKPRIO);
+    pitsethz(100, PITCHAN2);
     /* wait until PIT  counter reaches zero */
-    while (!(inb(0x61) & 0x20)) {
+    while (!(inb(PITCTRL2) & 0x20)) {
         ;
     }
     /* stop APIC timer */
     apicwrite(APICMASKED, APICTMR);
     /* calculate APIC interrupt frequency */
-    tmp8 = inb(0x64) & 0xfe;
-    outb(tmp8, 0x61);
-    outb(tmp8 | 1, 0x61);
+    tmp8 = inb(PITCTRL2) & 0xfe;
+    outb(tmp8, PITCTRL2);
+    outb(tmp8 | 1, PITCTRL2);
 
+//    freq = (0xffffffff - apicread(APICTMRCURCNT) + 1) * 16 * 100;
     freq = (0xffffffff - apicread(APICTMRCURCNT) + 1) * 16 * 100;
+    kprintf("APIC interrupt frequency: %ld MHz\n", freq / 1000000);
     tmrcnt = freq / HZ / 16;
-    kprintf("APIC interrupt frequency: %ld MHz\n", (long)freq / 1000000);
 
     trapsetintgate(&kernidt[trapirqid(IRQTMR)], irqtmr, TRAPUSER);
 
-#if 0
-    apic->tmrinit.cnt = max(tmrcnt, 16);
-    apic->divconf.div = 0x03;
-    apic->lvttmr.mode = APICMODEPERIODIC;
-    apic->lvttmr.mask = 0;
-#endif
     tmrcnt = max(tmrcnt, 16);
 #if !(NEWTMR)
     /*
@@ -149,7 +138,7 @@ void
 #endif
 apicinitcpu(long id)
 {
-    uint64_t              *idt = kernidt;
+//    uint64_t              *idt = kernidt;
     static long            first = 1;
     volatile struct m_cpu *cpu = &cputab[id];
 #if (NEWTMR)
@@ -159,11 +148,11 @@ apicinitcpu(long id)
     if (!mpapic) {
         mpapic = (volatile uint32_t *)apicprobe();
 
-        return;
+        return 0;
     }
     if (!mpapic) {
 
-        return;
+        return 0;
     }
 
     if (first) {

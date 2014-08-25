@@ -24,7 +24,7 @@ pitinit(void)
     trapsetintgate(&idt[trapirqid(IRQTMR)], irqtmr, TRAPUSER);
     /* initialise timer */
     outb(PITCMD, PITCTRL);
-    pitsethz(HZ);
+    pitsethz(HZ, PITCHAN0);
 
     return;
 }

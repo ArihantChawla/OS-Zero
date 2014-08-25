@@ -29,7 +29,7 @@
 #include <kern/unit/ia32/link.h>
 #include <kern/unit/ia32/boot.h>
 #include <kern/unit/ia32/vm.h>
-#if (SMP)
+#if (SMP) || (APIC)
 #include <kern/unit/ia32/mp.h>
 #endif
 //#include <kern/unit/x86/asm.h>
@@ -74,6 +74,7 @@ extern void sb16init(void);
 #endif
 #if (APIC)
 extern void apicinit(void);
+extern void apicstarttmr(uint32_t tmrcnt);
 #endif
 extern void schedloop(void);
 
@@ -104,7 +105,7 @@ void
 kmain(struct mboothdr *hdr, unsigned long pmemsz)
 {
 #if (NEWTMR)
-    uint32_t tmrcnt;
+    uint32_t tmrcnt = 0;
 #endif
 
     /* initialise memory segmentation */

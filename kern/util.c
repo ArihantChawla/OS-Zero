@@ -342,14 +342,18 @@ kstrncpy(char *dest, char *src, long len)
 }
 
 static long
-_lltoxn(long val, char *buf, unsigned long len)
+_ltoxn(long val, char *buf, unsigned long len)
 {
     uint8_t u8;
     long    l;
     long    m;
     long    n;
     long    incr = 4;
+    long    sign = 0;
 
+    if (val < 0) {
+        sign = 1;
+    }
     buf[len - 1] = '\0';
     m = len - 2;
     buf[m] = 0;
@@ -368,17 +372,25 @@ _lltoxn(long val, char *buf, unsigned long len)
     while (buf[m] == '0' && m < len - 2) {
         m++;
     }
+    if (sign) {
+        m--;
+        buf[m] = '-';
+    }
 
     return m;
 }
 
 static long
-_lltodn(long val, char *buf, unsigned long len)
+_ltodn(long val, char *buf, unsigned long len)
 {
     uint8_t u8;
     long    l;
     long    n;
+    long    sign = 0;
 
+    if (val < 0) {
+        sign = 1;
+    }
     buf[len - 1] = '\0';
     l = len - 2;
     n = 0;
@@ -392,6 +404,70 @@ _lltodn(long val, char *buf, unsigned long len)
         }
         l--;
     } while (val);
+    l++;
+    l = min(l, len - 2);
+    while (buf[l] == '0' && l < len - 2) {
+        l++;
+    }
+    if (sign) {
+        l--;
+        buf[l] = '-';
+    }
+
+    return l;
+}
+
+static long
+_ultoxn(unsigned long uval, char *buf, unsigned long len)
+{
+    uint8_t u8;
+    long    l;
+    long    m;
+    long    n;
+    long    incr = 4;
+
+    buf[len - 1] = '\0';
+    m = len - 2;
+    buf[m] = 0;
+    n = 0;
+    for (l = 0 ; l < 8 * LONGSIZE ; l += incr) {
+        u8 = (uval >> l) & 0xf;
+        buf[m] = _ltoxtab[u8];
+        if (++n == len) {
+
+            break;
+        }
+        m--;
+    }
+    m++;
+    m = min(m, len - 2);
+    while (buf[m] == '0' && m < len - 2) {
+        m++;
+    }
+
+    return m;
+}
+
+static long
+_ultodn(unsigned long uval, char *buf, unsigned long len)
+{
+    uint8_t u8;
+    long    l;
+    long    n;
+
+    buf[len - 1] = '\0';
+    l = len - 2;
+    n = 0;
+    do {
+        u8 = uval % 10;
+        uval /= 10;
+        buf[l] = _ltoxtab[u8];
+        if (++n == len) {
+            
+            break;
+        }
+        l--;
+    } while (uval);
     l++;
     l = min(l, len - 2);
     while (buf[l] == '0' && l < len - 2) {
@@ -425,19 +501,21 @@ void
 kprintf(char *fmt, ...)
 {
 //    char    *str = fmt;
-    struct cons *cons;
-    char        *arg;
-    char        *sptr;
-    char        *cptr;
-    long         val;
-    long         isch;
-    long         isdec;
-    long         ishex;
-    long         l;
-    long         len;
-    va_list      al;
-    char         buf[LONGLONGBUFSIZE];
-    char         str[MAXPRINTFSTR];
+    struct cons   *cons;
+    char          *arg;
+    char          *sptr;
+    char          *cptr;
+    long           val;
+    unsigned long  uval;
+    long           uns;
+    long           isch;
+    long           isdec;
+    long           ishex;
+    long           l;
+    long           len;
+    va_list        al;
+    char           buf[LONGLONGBUFSIZE];
+    char           str[MAXPRINTFSTR];
 
     cons = &constab[conscur];
     if (cons->puts) {
@@ -450,6 +528,8 @@ kprintf(char *fmt, ...)
             isdec = 0;
             ishex = 0;
             val = 0;
+            uval = 0;
+            uns = 0;
             arg = _strtok(sptr, '%');
             if (arg) {
                 cons->puts(sptr);
@@ -509,27 +589,28 @@ kprintf(char *fmt, ...)
                             
                             break;
                         case 'u':
+                            uns = 1;
                             arg++;
                             if (*arg) {
                                 switch (*arg) {
                                     case 'c':
                                         isch = 1;
-                                        val = (char)va_arg(al, unsigned int);
+                                        uval = (char)va_arg(al, unsigned int);
                                         
                                         break;
                                     case 'h':
                                         isdec = 1;
-                                        val = (short)va_arg(al, unsigned int);
+                                        uval = (short)va_arg(al, unsigned int);
                                         
                                         break;
                                     case 'd':
                                         isdec = 1;
-                                        val = va_arg(al, unsigned int);
+                                        uval = va_arg(al, unsigned int);
                                         
                                         break;
                                     case 'l':
                                         isdec = 1;
-                                        val = va_arg(al, unsigned long);
+                                        uval = va_arg(al, unsigned long);
                                         
                                         break;
                                     default:
@@ -548,16 +629,30 @@ kprintf(char *fmt, ...)
                             
                             break;
                     }
-                    if (ishex) {
-                        l = _lltoxn(val, buf, LONGLONGBUFSIZE);
-                        cons->puts(&buf[l]);
-                    } else if (isdec) {
-                        l = _lltodn(val, buf, LONGLONGBUFSIZE);
-                        cons->puts(&buf[l]);
-                    } else if ((isch) && isprint(val)) {
-                        cons->putchar((int)val);
+                    if (uns) {
+                        if (ishex) {
+                            l = _ultoxn(uval, buf, LONGLONGBUFSIZE);
+                            cons->puts(&buf[l]);
+                        } else if (isdec) {
+                            l = _ultodn(uval, buf, LONGLONGBUFSIZE);
+                            cons->puts(&buf[l]);
+                        } else if ((isch) && isprint(val)) {
+                            cons->putchar((int)uval);
+                        } else {
+                            cons->putchar(' ');
+                        }
                     } else {
-                        cons->putchar(' ');
+                        if (ishex) {
+                            l = _ltoxn(val, buf, LONGLONGBUFSIZE);
+                            cons->puts(&buf[l]);
+                        } else if (isdec) {
+                            l = _ltodn(val, buf, LONGLONGBUFSIZE);
+                            cons->puts(&buf[l]);
+                        } else if ((isch) && isprint(val)) {
+                            cons->putchar((int)val);
+                        } else {
+                            cons->putchar(' ');
+                        }
                     }
                 } else {
                     va_end(al);
