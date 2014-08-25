@@ -48,101 +48,113 @@ apicprobe(void)
 }
 
 void
-apicinit(void)
+apicstarttmr(uint32_t tmrcnt)
 {
-//    struct apic *apic = apicprobe();
-#if (SMP)
-    volatile struct apic *apic = (struct apic *)mpapic;
-#else
-    volatile struct apic *apic = apicprobe();
-#endif
-    uint32_t     freq;
-    uint32_t     tmp;
-    uint8_t      tmp8;
-
-    trapsetintgate(&kernidt[trapirqid(IRQTMR)], irqtmrcnt, TRAPUSER);
-
-    /* initialise APIC */
-#if 0
-   apic->destfmt.model = 0x0f;
-    apic->logdest.val = 0x01;
-    apic->lvttmr.mask = 1;
-    apic->lvttmr.vec = IRQAPICTMR;
-    apic->lvttherm.mask = 1;
-    apic->lvtlint0.mask = 1;
-    apic->lvtlint1.mask = 1;
-    apic->lvterror.mask = 1;
-    apic->spurint.vec = IRQSPURIOUS;
-    apic->spurint.on = 1;
-    apic->spurint.eoibcs = 1;
-    apic->taskprio.lvl = 0;
-    apic->divconf.div = 0x03;
-    apic->tmrinit.cnt = 0xffffffffU;
-#endif
-    apicwrite(0xffffffff, APICDFR);
-    apicwrite((apicread(APICLDR) & 0x00ffffff) | 1, APICLDR);
-    apicwrite(APICMASKED, APICTMR);
-    apicwrite(APICNMI, APICPERFINTR);
-    apicwrite(APICMASKED, APICLINTR0);
-    apicwrite(APICMASKED, APICLINTR1);
+    /*
+     * timer counts down at bus frequency from APICTMRINITCNT and issues
+     * the interrupt IRQAPICTMR
+     */
+    apicwrite(tmrcnt, APICTMRINITCNT);
+    apicwrite(0x03, APICTMRDIVCONF);
+    apicwrite(IRQAPICTMR | APICPERIODIC, APICTMR);
     apicwrite(0, APICTASKPRIO);
 
+    return;
+}
+
+#if (NEWTMR)
+uint32_t
+#else
+void
+#endif
+apicinittmr(void)
+{
+//    struct apic *apic = apicprobe();
+    volatile struct apic *apic = (struct apic *)mpapic;
+    uint32_t              freq;
+    uint32_t              tmrcnt;
+    uint8_t               tmp8;
+
+    if (!apic) {
+        apic = apicprobe();
+//        mpapic = apic;
+    }
+//    k_writemsr((uint32_t)apic | APICGLOBENABLE, APICBASEMSR);
+    trapsetintgate(&kernidt[trapirqid(IRQTMR)], irqtmrcnt, TRAPUSER);
+    /* initialise APIC */
+    apicwrite(0xffffffff, APICDFR);
+    apicwrite((apicread(APICLDR) & 0x00ffffff) | 1, APICLDR);
+#if 0
+    apicwrite(APICMASKED, APICTMR);
+//    apicwrite(APICNMI, APICPERFINTR);
+    apicwrite(APICMASKED, APICLINTR0);
+    apicwrite(APICMASKED, APICLINTR1);
+#endif
+    apicwrite(0, APICTASKPRIO);
     /* enable APIC */
-    k_writemsr((uint32_t)apic | APICGLOBENABLE, APICMSR);
+    apicwrite((uint32_t)apic | APICGLOBENABLE, APICSPURIOUS);
     apicwrite(APICSWENABLE | (uint32_t)apic, APICSPURIOUS);
     apicwrite(IRQAPICTMR, APICTMR);
     apicwrite(0x03, APICTMRDIVCONF);
-
     /* initialise PIT channel 2 in one-shot mode */
     outb((inb(0x61) & 0xfd) | 1, 0x61);
     outb(0xb2, PITCTRL);
     outb(0x9b, 0x42);
     inb(0x60);
     outb(0x2e, 0x42);
-
     /* wait until PIT  counter reaches zero */
     while (!(inb(0x61) & 0x20)) {
         ;
     }
-
     /* stop APIC timer */
-#if 0
-    apic->lvttmr.mask = 1;
-#endif
     apicwrite(APICMASKED, APICTMR);
-
-    /* start counting */
+    /* calculate APIC interrupt frequency */
     tmp8 = inb(0x64) & 0xfe;
     outb(tmp8, 0x61);
     outb(tmp8 | 1, 0x61);
 
-//    freq = (0xffffffff - apic->tmrcnt.cur + 1) * 16 * 100;
     freq = (0xffffffff - apicread(APICTMRCURCNT) + 1) * 16 * 100;
-    tmp = freq / HZ / 16;
+    tmrcnt = freq / HZ / 16;
     kprintf("APIC interrupt frequency: %ld MHz\n", (long)freq / 1000000);
 
     trapsetintgate(&kernidt[trapirqid(IRQTMR)], irqtmr, TRAPUSER);
 
 #if 0
-    apic->tmrinit.cnt = max(tmp, 16);
+    apic->tmrinit.cnt = max(tmrcnt, 16);
     apic->divconf.div = 0x03;
     apic->lvttmr.mode = APICMODEPERIODIC;
     apic->lvttmr.mask = 0;
 #endif
-    tmp = max(tmp, 16);
-    apicwrite(tmp, APICTMRINITCNT);
-    apicwrite(IRQAPICTMR | APICPERIODIC, APICTMR);
+    tmrcnt = max(tmrcnt, 16);
+#if !(NEWTMR)
+    /*
+     * timer counts down at bus frequency from APICTMRINITCNT and issues
+     * the interrupt IRQAPICTMR
+     */
+    apicwrite(tmrcnt, APICTMRINITCNT);
     apicwrite(0x03, APICTMRDIVCONF);
+    apicwrite(IRQAPICTMR | APICPERIODIC, APICTMR);
 
     return;
+#else
+
+    return tmrcnt;
+#endif
 }
 
+#if (NEWTMR)
+uint32_t
+#else
 void
+#endif
 apicinitcpu(long id)
 {
     uint64_t              *idt = kernidt;
     static long            first = 1;
     volatile struct m_cpu *cpu = &cputab[id];
+#if (NEWTMR)
+    uint32_t               tmrcnt;
+#endif
 
     if (!mpapic) {
         mpapic = (volatile uint32_t *)apicprobe();
@@ -154,10 +166,8 @@ apicinitcpu(long id)
         return;
     }
 
-    kprintf("initialising timer interrupt to %d Hz\n", HZ);
-    trapsetintgate(&idt[trapirqid(IRQTMR)], irqtmr, TRAPUSER);
-
     if (first) {
+        /* identity-map APIC to kernel virtual address space */
         first = 0;
         kprintf("local APIC @ 0x%p\n", mpapic);
         /* identity-map MP APIC table */
@@ -165,24 +175,19 @@ apicinitcpu(long id)
                 PAGESIZE, (long)mpapic);
         vmmapseg((uint32_t *)&_pagetab, (uint32_t)mpapic, (uint32_t)mpapic,
                  (uint32_t)((uint8_t *)mpapic + PAGESIZE),
-                 PAGEPRES | PAGEWRITE);
+                 PAGEPRES | PAGEWRITE | PAGENOCACHE);
         irqvec[IRQERROR] = irqerror;
         irqvec[IRQSPURIOUS] = irqspurious;
     }
-    if (id != 0) {
-        apicinit();
-    }
     cpu->id = id;
     /* enable local APIC; set spurious interrupt vector */
-    apicwrite(APICSWENABLE | (IRQTMR + IRQSPURIOUS), APICSPURIOUS);
-    /*
-     * timer counts down at bus frequency from APICTMRINITCNT and issues
-     * the interrupt IRQBASE + IRQTMR
-     */
+    apicwrite(APICSWENABLE | IRQSPURIOUS, APICSPURIOUS);
+    /* nitialise timer, mask interrupts */
     apicwrite(APICBASEDIV, APICTMRDIVCONF);
-    apicwrite(APICPERIODIC | (IRQBASE + IRQTMR), APICTMR);
-//    apicwrite(10000000, APICTMRINITCNT);
+//    apicwrite(APICPERIODIC | IRQAPICTMR, APICTMR);
+    apicwrite(IRQAPICTMR, APICTMR);
     apicwrite(10000000, APICTMRINITCNT);
+    apicwrite(APICMASKED, APICTMR);
     /* disable logical interrupt lines */
     apicwrite(APICMASKED, APICLINTR0);
     apicwrite(APICMASKED, APICLINTR1);
@@ -197,15 +202,24 @@ apicinitcpu(long id)
     apicwrite(0, APICERRSTAT);
     /* acknowledge outstanding interrupts */
     apicwrite(0, APICEOI);
-    /* send init level deassert to synchronise arbitration IDs */
-    apicsendirq(0, APICBCAST | APICINIT | APICLEVEL, 0);
-    while (apicread(APICINTRLO) & APICDELIVS) {
-        ;
+    if (cpu != mpbootcpu) {
+        /* send init level deassert to synchronise arbitration IDs */
+        apicsendirq(0, APICBCAST | APICINIT | APICLEVEL, 0);
+        while (apicread(APICINTRLO) & APICDELIVS) {
+            ;
+        }
     }
+#if (!NEWTMR)
+    apicinittmr();
     /* enable APIC (but not CPU) interrupts */
-    apicwrite(0, APICTASKPRIO);
+//    apicwrite(0, APICTASKPRIO);
 
     return;
+#else
+    tmrcnt = apicinittmr();
+
+    return tmrcnt;
+#endif
 }
 
 void

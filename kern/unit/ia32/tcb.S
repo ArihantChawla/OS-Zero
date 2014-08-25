@@ -48,20 +48,20 @@ m_tcbsave:
 	/* FASTCALL void m_tcbjmp(struct m_tcb *tcb); */
 
 m_tcbjmp:
-	/* load &tcb->pdbr into %esp */
+	/* load tcb->pdbr into %esp */
 	leal	544(%eax), %esp
 	/* retrieve and set page directory page register */
 	popl	%eax
 	movl	%eax, %cr3
 	/* pop general purpose registers */
 	popal
-	/* adjust %esp to &tcb->segregs */
+	/* adjust %esp to tcb->segregs */
 	subl	$48, %esp
 	popl	%ds
 	popl	%es
 	popl	%fs
 //	popl	%gs
-	/* adjust %esp to &tcb->iret */ 
+	/* adjust %esp to tcb->iret */ 
 	subl	$32, %esp
 #if (APIC)
 	_apiceoi

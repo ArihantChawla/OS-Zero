@@ -5,6 +5,7 @@
 
 #if (APIC)
 _APICEOIADR	= APICEOIADR
+_APICEOI	= 0x00000000
 #endif
 
 /* INTERRUPT MANAGEMENT */
@@ -39,7 +40,7 @@ _APICEOIADR	= APICEOIADR
 	#if (APIC)
 .macro	_apiceoi
 	/* send APIC EOI (end of interrupt) */
-	movl	$0x00000000, _APICEOIADR
+	movl	$_APICEOI, _APICEOIADR
 .endm
 #endif /* APIC */
 

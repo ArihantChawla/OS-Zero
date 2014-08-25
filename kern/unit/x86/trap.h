@@ -148,7 +148,6 @@ m_lidt(struct m_farptr *fp)
 #define IRQERROR    19
 #define IRQIPI      29
 #define IRQAPICTMR  32
-//#define IRQSPURIOUS 47
 #define IRQSPURIOUS 39
 #endif
 

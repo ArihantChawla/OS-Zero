@@ -6,6 +6,7 @@
 #if (SMP) || (APIC)
 
 #if !defined(__ASSEMBLY__)
+
 #include <stdint.h>
 #include <zero/param.h>
 #include <zero/cdecl.h>
@@ -14,7 +15,11 @@
 
 extern volatile uint32_t *mpapic;
 
+#if (NEWTMR)
+uint32_t apicinitcpu(long id);
+#else
 void apicinitcpu(long id);
+#endif
 void ioapicinit(long id);
 void apicstart(uint8_t id, uint32_t adr);
 void usleep(unsigned long nusec);

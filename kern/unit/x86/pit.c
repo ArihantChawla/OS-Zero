@@ -35,7 +35,8 @@ pitsleep(long msec)
     long n = 1000L * msec;
 
     while (n--) {
-        iodelay();
+//        iodelay();
+        ;
     }
 
     return;

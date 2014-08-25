@@ -103,6 +103,10 @@ ASMLINK
 void
 kmain(struct mboothdr *hdr, unsigned long pmemsz)
 {
+#if (NEWTMR)
+    uint32_t tmrcnt;
+#endif
+
     /* initialise memory segmentation */
     seginit(0);
 #if (VBE)
@@ -171,16 +175,20 @@ kmain(struct mboothdr *hdr, unsigned long pmemsz)
     /* allocate unused device regions (in 3.5G..4G) */
 //    pageaddzone(DEVMEMBASE, &vmshmq, 0xffffffffU - DEVMEMBASE + 1);
 #if (SMP) || (APIC)
-#if (SMP)
+//#if (SMP)
     /* multiprocessor initialisation */
     mpinit();
-#endif
+//#endif
     if (mpapic) {
 #if (HPET)
         /* initialise high precision event timers */
         hpetinit();
 #endif
+#if (NEWTMR)
+        tmrcnt = apicinitcpu(0);
+#else
         apicinitcpu(0);
+#endif
 #if (IOAPIC)
         ioapicinit(0);
 #endif
@@ -215,7 +223,7 @@ kmain(struct mboothdr *hdr, unsigned long pmemsz)
             vmpagestat.nphys << (PAGESIZELOG2 - 10));
     schedinit();
 #if (APIC)
-    apicinit();
+    apicstarttmr(tmrcnt);
 #else
     pitinit();
 #endif
