@@ -110,10 +110,6 @@ kmain(struct mboothdr *hdr, unsigned long pmemsz)
 
     /* initialise memory segmentation */
     seginit(0);
-#if (VBE)
-    /* initialise VBE graphics subsystem */
-    vbeinit();
-#endif
     /* initialise interrupt management */
     trapinit();
     /* initialise virtual memory */
@@ -122,6 +118,10 @@ kmain(struct mboothdr *hdr, unsigned long pmemsz)
     kbzero(&_bssvirt, (uint32_t)&_ebss - (uint32_t)&_bss);
     /* set kernel I/O permission bitmap to all 1-bits */
     kmemset(&kerniomap, 0xff, sizeof(kerniomap));
+#if (VBE)
+    /* initialise VBE graphics subsystem */
+    vbeinit();
+#endif
 #if (VBE) && (NEWFONT)
     consinit(768 / vbefontw, 1024 / vbefonth);
 #elif (VBE)

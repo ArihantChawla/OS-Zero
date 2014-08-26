@@ -19,22 +19,26 @@ realint10:
 	cli
 	pushl	%ebp
 	movl	%esp, %ebp
-	pushfl
-	pushal
-	movl	%esp, _espsave
+	pushfl					// push EFLAGS
+	pushal					// push general registers
+	movl	%esp, _espsave			// store stack pointer
 	cld
-	ljmpl	$REALCODESEL, $KERNREALBASE
+	ljmpl	$REALCODESEL, $KERNREALBASE	// jump to realstart
 
 .align	4
 
 .code16
 
 	/* drop back to 16-bit real mode */
+	/*
+	 * must be called after the page at 0x00000000 is mapped to virtual
+	 * address space
+	 */
 realstart:
 #if (NEWCLI)
 	cli
 #endif
-	/* load NULL IDT */
+	/* set IDT up at zero */
 	lidtl	(_realidtptr - realstart + KERNREALBASE)
 	/* set up 16-bit segments */
 	movw	$REALDATASEL, %ax
@@ -89,8 +93,7 @@ _protmode:
 	movw	%ax, %es
 	movw	%ax, %fs
 	movw	%ax, %ss
-	movw	%ax, %gs
-//	movw	$CPUSEL, %ax
+	movw	$CPUSEL, %ax
 //	movw	%ax, %gs
 	movl	_espsave, %esp
 	popal
@@ -98,9 +101,9 @@ _protmode:
 	/* leave */
 	movl	%ebp, %esp
 	popl	%ebp
-	lidtl	(idtptr)
 	ljmpl	$TEXTSEL, $(_protret - realstart + KERNREALBASE)
 _protret:
+	lidtl	(idtptr)
 	sti
 	retl
 

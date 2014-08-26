@@ -24,7 +24,7 @@ _APICEOI	= 0x00000000
 .endm
 .macro	_trapentererr
 	pushal
-	movl	32(%esp), %ecx
+	movl	32(%esp), %ecx	// move error code to %ecx
 //	pushl	%ds
 //	pushl	%es
 //	pushl	%fs
@@ -37,7 +37,7 @@ _APICEOI	= 0x00000000
 	addl	$4, %esp	// skip error code
 .endm
 
-	#if (APIC)
+#if (APIC)
 .macro	_apiceoi
 	/* send APIC EOI (end of interrupt) */
 	movl	$_APICEOI, _APICEOIADR
