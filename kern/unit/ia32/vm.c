@@ -103,7 +103,12 @@ vminit(void *pagetab)
     kbzero(pagetab, PAGETABSIZE);
 
     /* identity-map 0..1M */
+    /* map interrupt vector read-only */
     vmmapseg(pagetab, 0, 0,
+             PAGESIZE,
+             PAGEPRES | PAGENOCACHE | PAGEWIRED);
+    /* map the rest of low 1M read-write */
+    vmmapseg(pagetab, PAGESIZE, PAGESIZE,
              HICORE,
              PAGEPRES | PAGEWRITE | PAGENOCACHE | PAGEWIRED);
 
