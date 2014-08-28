@@ -28,7 +28,7 @@ uint8_t acpichksum(void *tab, long size)
 }
 
 struct acpidesc *
-acpifind(void)
+acpiprobe(void)
 {
     uint64_t *ptr;
     uint64_t *lim;
@@ -64,7 +64,7 @@ acpifind(void)
 void
 acpiinit(void)
 {
-    acpidesc = acpifind();
+    acpidesc = acpiprobe();
     if (acpidesc) {
         kprintf("ACPI: RSDP found @ 0x%p\n", acpidesc);
     }

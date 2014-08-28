@@ -86,13 +86,13 @@ extern uint64_t                  kernidt[NINTR];
 extern long                      vbefontw;
 extern long                      vbefonth;
 #endif
+extern volatile long             mpncpu;
+extern volatile long             mpmultiproc;
 extern struct vmpagestat         vmpagestat;
 #if (SMP)
 #if (ACPI)
 extern volatile struct acpidesc *acpidesc;
 #endif
-extern volatile long             mpncpu;
-extern volatile long             mpmultiproc;
 #endif
 extern struct pageq              vmphysq;
 extern struct pageq              vmshmq;
@@ -108,20 +108,25 @@ kmain(struct mboothdr *hdr, unsigned long pmemsz)
     uint32_t tmrcnt = 0;
 #endif
 
+    /* INITIALISE BASE HARDWARE */
     /* initialise memory segmentation */
     seginit(0);
-    /* initialise interrupt management */
-    trapinit();
-    /* initialise virtual memory */
-    vminit((uint32_t *)&_pagetab);
-    /* zero kernel BSS segment */
-    kbzero(&_bssvirt, (uint32_t)&_ebss - (uint32_t)&_bss);
-    /* set kernel I/O permission bitmap to all 1-bits */
-    kmemset(&kerniomap, 0xff, sizeof(kerniomap));
 #if (VBE)
     /* initialise VBE graphics subsystem */
     vbeinit();
 #endif
+    /* initialise interrupt management */
+    trapinit();
+    /* initialise virtual memory */
+    vminit((uint32_t *)&_pagetab);
+    /* FIXME: map possible device memory */
+    vmmapseg((uint32_t *)&_pagetab, DEVMEMBASE, DEVMEMBASE, 0xffffffffU,
+             PAGEPRES | PAGEWRITE | PAGENOCACHE);
+    /* zero kernel BSS segment */
+    kbzero(&_bssvirt, (uint32_t)&_ebss - (uint32_t)&_bss);
+    /* set kernel I/O permission bitmap to all 1-bits */
+    kmemset(&kerniomap, 0xff, sizeof(kerniomap));
+    /* INITIALIZE CONSOLES AND SCREEN */
 #if (VBE) && (NEWFONT)
     consinit(768 / vbefontw, 1024 / vbefonth);
 #elif (VBE)
@@ -137,6 +142,7 @@ kmain(struct mboothdr *hdr, unsigned long pmemsz)
     /* TODO: use memory map from GRUB? */
     meminit(vmlinkadr(&_ebssvirt), pmemsz);
     vminitphys((uintptr_t)&_ebss, pmemsz - (unsigned long)&_ebss);
+    tssinit(0);
 #if (SMBIOS)
     smbiosinit();
 #endif
@@ -180,34 +186,32 @@ kmain(struct mboothdr *hdr, unsigned long pmemsz)
     /* multiprocessor initialisation */
     mpinit();
 //#endif
-    if (mpapic) {
-#if (HPET)
-        /* initialise high precision event timers */
-        hpetinit();
-#endif
-#if (NEWTMR)
-        tmrcnt = apicinitcpu(0);
-#else
-        apicinitcpu(0);
-#endif
-#if (IOAPIC)
-        ioapicinit(0);
-#endif
-    }
-#if (SMP)
-    if (mpmultiproc) {
-        mpstart();
-    }
     if (mpncpu == 1) {
         kprintf("found %ld processor\n", mpncpu);
     } else {
         kprintf("found %ld processors\n", mpncpu);
     }
+#if (HPET)
+    /* initialise high precision event timers */
+    hpetinit();
 #endif
+#if (NEWTMR)
+    tmrcnt = apicinitcpu(0);
+#else
+    apicinitcpu(0);
+#endif
+#if (IOAPIC)
+    ioapicinit(0);
+#endif
+#endif /* SMP || APIC */
+#if (SMP)
+    if (mpmultiproc) {
+        mpstart();
+    }
 #endif
     /* CPU interface */
     taskinit();
-    tssinit(0);
+//    tssinit(0);
 //    machinit();
     /* execution environment */
     procinit(0);

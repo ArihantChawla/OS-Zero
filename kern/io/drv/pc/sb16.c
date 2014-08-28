@@ -212,6 +212,7 @@ sb16flushinbuf16(void)
     ;
 }
 
+/* FIXME: this function doesn't work with virtualbox */
 void
 sb16intr(void)
 {

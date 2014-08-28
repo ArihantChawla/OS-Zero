@@ -1,3 +1,7 @@
+#include <kern/conf.h>
+
+#if (PCI)
+
 #include <stdint.h>
 #include <stddef.h>
 #include <sys/io.h>
@@ -6,7 +10,6 @@
 //#define LISTQ_TYPE struct pcidevlist
 //#include <zero/list.h>
 
-#include <kern/conf.h>
 #include <kern/mem.h>
 #include <kern/util.h>
 #include <kern/io/drv/pc/pci.h>
@@ -16,25 +19,15 @@ extern void ac97init(struct pcidev *);
 #endif
 
 //static void    *pcidrvtab[4096] ALIGNED(PAGESIZE);
-static struct pcidrvent *pcidrvtab[65536];
+static struct pcidrvent *pcidrvtab[65536] ALIGNED(PAGESIZE);
 struct pcidev            pcidevtab[PCINDEV];
 //struct pcidevlist pcidevlist;
+struct pcidrv            pcidrv;
+#if 0
+long                     pcitype;
 long                     pcifound;
 long                     pcindev;
-
-long
-pciprobe(void)
-{
-    outl(PCICONFBIT, PCICONFADR);
-    if (inl(PCICONFADR) != PCICONFBIT) {
-        kprintf("PCI controller not found\n");
-
-        return 0;
-    }
-    kprintf("PCI controller found\n");
-
-    return 1;
-}
+#endif
 
 struct pcidrvent *
 pcifinddrv(uint16_t vendor, uint16_t devid)
@@ -71,6 +64,131 @@ pciregdrv(uint16_t vendor, uint16_t devid,
 
     return;
 }
+
+long
+pciprobe(void)
+{
+    long              type = ~0L;
+    struct pcidrvent *drv;
+    struct pcidev    *dev;
+    pciinitfunc_t    *initfunc = NULL;
+    long              tmp;
+    uint16_t          vendor;
+    uint16_t          devid;
+    long              ndev = 0;
+    long              l;
+
+    outb(0, PCICONFADR1);
+    outb(0, PCICONFADR2);
+    if (!inb(PCICONFADR1) && !inb(PCICONFADR1)) {
+        type = 2;
+    } else {
+        tmp = inl(PCICONFADR1);
+        outl(PCICONFBIT, PCICONFADR1);
+        if (inl(PCICONFADR1) == PCICONFBIT) {
+            type = 1;
+        }
+    }
+    kprintf("PCI: bus of type %ld found\n", type);
+    if (type == 1) {
+        for (l = 0 ; l < 512 ; l++) {
+            outl(PCICONFBIT + (l << 11), PCICONFADR1);
+            tmp = inl(PCICONFDATA);
+            vendor = tmp & 0xffff;
+            devid = (tmp >> 16) & 0xffff;
+            if (vendor != 0xffff && devid != 0xffff) {
+                kprintf("PCI: vendor: 0x%lx, devid == 0x%lx\n", vendor, devid);
+                drv = pcifinddrv(vendor, devid);
+                if (drv) {
+                    initfunc = drv->init;
+                    if (initfunc) {
+                        kprintf("PCI: initialising %s\n", drv->str);
+                        dev = &pcidevtab[ndev];
+                        dev->vendor = vendor;
+                        dev->id = devid;
+//                        dev->bus = bus;
+//                        dev->slot = slot;
+                        ndev++;
+                        initfunc(dev);
+                    }
+                }
+            }
+        }
+        pcidrv.ndev = ndev;
+    } else if (type == 2) {
+        outb(0x80, PCICONFADR1);
+        outb(0, PCICONFADR2);
+        for (l = 0 ; l < 16 ; l++) {
+            tmp = inl((l << 8) + 0xc000);
+            vendor = tmp & 0xffff;
+            devid = (tmp >> 16) & 0xffff;
+            if (vendor != 0xffff && devid != 0xffff) {
+                kprintf("PCI: vendor: 0x%lx, devid == 0x%lx\n", vendor, devid);
+                drv = pcifinddrv(vendor, devid);
+                if (drv) {
+                    initfunc = drv->init;
+                    if (initfunc) {
+                        kprintf("PCI: initialising %s\n", drv->str);
+                        dev = &pcidevtab[ndev];
+                        dev->vendor = vendor;
+                        dev->id = devid;
+//                        dev->bus = bus;
+//                        dev->slot = slot;
+                        ndev++;
+                        initfunc(dev);
+                    }
+                }
+            }
+            outw(0, PCICONFADR1);
+        }
+        pcidrv.ndev = ndev;
+    }
+
+    return type;
+}
+
+void
+pcireg(void)
+{
+    pciregdrv(0x8086, 0x1237, "Intel 82440LX/EX Chipset", NULL);
+    pciregdrv(0x8086, 0x7000, "Intel 82371SB PCI-to-ISA Bridge (Triton II)",
+              NULL);
+    pciregdrv(0x1013, 0xb8, "Cirrus Logic CL-GD5546 Graphics Card", NULL);
+    pciregdrv(0x8086, 0x100e, "Intel PRO 1000/MT Ethernet Controller",
+              NULL);
+#if (AC97)
+    pciregdrv(0x8086, 0x2415, "Aureal AD1881 SOUNDMAX (AC97)", ac97init);
+#endif
+
+    return;
+}
+    
+void
+pciinit(void)
+{
+    pcireg();
+    pcidrv.type = pciprobe();
+
+    return;
+}
+
+#if 0
+
+#if 0
+long
+pciprobe(void)
+{
+    outl(PCICONFBIT, PCICONFADR);
+    if (inl(PCICONFADR) != PCICONFBIT) {
+        kprintf("PCI controller not found\n");
+
+        return 0;
+    }
+    kprintf("PCI controller found\n");
+
+    return 1;
+}
+#endif
 
 #if 0
 struct pcidrvent *
@@ -206,8 +324,8 @@ pcireadconfw(uint8_t busid, uint8_t slotid, uint8_t funcid, uint8_t ofs)
 
     conf = (bus << 16) | (slot << 11) | (func << 8) | ofs | PCICONFBIT;
     outl(conf, PCICONFADR);
-//    tmp = inw(PCICONFDATA) >> ((ofs & 0x02) << 3) & 0xffff);
-    word = inw(PCICONFDATA + (ofs & 0x02));
+    word = inw(PCICONFDATA) >> ((ofs & 0x02) << 3) & 0xffff);
+//    word = inw(PCICONFDATA + (ofs & 0x02));
 
     return word;
 }
@@ -224,8 +342,8 @@ pcireadconfl(uint8_t busid, uint8_t slotid, uint8_t funcid, uint8_t ofs)
 
     conf = (bus << 16) | (slot << 11) | (func << 8) | ofs | PCICONFBIT;
     outl(conf, PCICONFADR);
-//    tmp = inw(PCICONFDATA) >> ((ofs & 0x02) << 3) & 0xffff);
-    longword = inl(PCICONFDATA);
+    longword = inw(PCICONFDATA) >> ((ofs & 0x02) << 3) & 0xffff);
+//    longword = inl(PCICONFDATA);
 
     return longword;
 }
@@ -259,8 +377,8 @@ pciwriteconfw(uint8_t busid, uint8_t slotid, uint8_t funcid, uint8_t ofs)
 
     conf = (bus << 16) | (slot << 11) | (func << 8) | ofs | PCICONFBIT;
     outl(conf, PCICONFADR);
-//    tmp = inw(PCICONFDATA) >> ((ofs & 0x02) << 3) & 0xffff);
-    word = inw(PCICONFDATA + (ofs & 0x02));
+    word = inw(PCICONFDATA) >> ((ofs & 0x02) << 3) & 0xffff);
+//    word = inw(PCICONFDATA + (ofs & 0x02));
 
     return word;
 }
@@ -276,12 +394,14 @@ pcireadconfl(uint8_t busid, uint8_t slotid, uint8_t funcid, uint8_t ofs)
 
     conf = (bus << 16) | (slot << 11) | (func << 8) | ofs | PCICONFBIT;
     outl(conf, PCICONFADR);
-//    tmp = inw(PCICONFDATA) >> ((ofs & 0x02) << 3) & 0xffff);
-    longword = inl(PCICONFDATA);
+    longword = inw(PCICONFDATA) >> ((ofs & 0x02) << 3) & 0xffff);
+//    longword = inl(PCICONFDATA);
 
     return longword;
 }
 #endif
+
+#endif /* 0 */
 
 int
 pcireadconf1(uint8_t busid, uint8_t slotid, uint8_t funcid,
@@ -289,18 +409,18 @@ pcireadconf1(uint8_t busid, uint8_t slotid, uint8_t funcid,
 {
     int retval = ~0;
 
-    outl(pciconfadr1(busid, slotid, funcid, regid), PCICONFADR);
+    outl(pciconfadr1(busid, slotid, funcid, regid), PCICONFADR1);
     switch (len) {
         case 4:
-            retval = inl(PCICONFADR);
+            retval = inl(PCICONFADR1);
 
             break;
         case 2:
-            retval = inw(PCICONFADR + (regid & 0x02));
+            retval = inw(PCICONFADR1 + (regid & 0x02));
 
             break;
         case 1:
-            retval = inb(PCICONFADR + (regid & 0x03));
+            retval = inb(PCICONFADR1 + (regid & 0x03));
 
             break;
     }
@@ -312,18 +432,18 @@ void
 pciwriteconf1(uint8_t busid, uint8_t slotid, uint8_t funcid,
               uint16_t regid, uint8_t len, uint32_t val)
 {
-    outl(pciconfadr1(busid, slotid, funcid, regid), PCICONFADR);
+    outl(pciconfadr1(busid, slotid, funcid, regid), PCICONFADR1);
     switch (len) {
         case 4:
-            outl(val, PCICONFADR);
+            outl(val, PCICONFADR1);
 
             break;
         case 2:
-            outw((uint16_t)val, PCICONFADR + (regid & 0x02));
+            outw((uint16_t)val, PCICONFADR1 + (regid & 0x02));
 
             break;
         case 1:
-            outb((uint8_t)val, PCICONFADR + (regid & 0x03));
+            outb((uint8_t)val, PCICONFADR1 + (regid & 0x03));
 
             break;
     }
@@ -338,7 +458,7 @@ pcireadconf2(uint8_t busid, uint8_t slotid, uint8_t funcid,
     int retval = ~0;
 
     if (!(slotid & 0x10)) {
-        outb((uint8_t)(0xf0 | (funcid << 1)), PCICONFADR);
+        outb((uint8_t)(0xf0 | (funcid << 1)), PCICONFADR1);
         outb(busid, 0xcfa);
         switch (len) {
             case 4:
@@ -354,7 +474,7 @@ pcireadconf2(uint8_t busid, uint8_t slotid, uint8_t funcid,
 
                 break;
         }
-        outb(0, PCICONFADR);
+        outb(0, PCICONFADR1);
     }
 
     return retval;
@@ -365,7 +485,7 @@ pciwriteconf2(uint8_t busid, uint8_t slotid, uint8_t funcid,
               uint16_t regid, uint8_t len, uint8_t val)
 {
     if (!(slotid & 0x10)) {
-        outb((uint8_t)(0xf0 | (funcid << 1)), PCICONFADR);
+        outb((uint8_t)(0xf0 | (funcid << 1)), PCICONFADR1);
         outb(busid, 0xcfa);
         switch (len) {
             case 4:
@@ -381,11 +501,13 @@ pciwriteconf2(uint8_t busid, uint8_t slotid, uint8_t funcid,
 
                 break;
         }
-        outb(0, PCICONFADR);
+        outb(0, PCICONFADR1);
     }
 
     return;
 }
+
+#if 0
 
 uint16_t
 pcichkvendor(uint8_t busid, uint8_t slotid, uint16_t *devret)
@@ -443,7 +565,7 @@ pciinit(void)
             }
         }
         if (ndev) {
-            pcindev = ndev;
+            pcidrv.ndev = ndev;
             dev = &pcidevtab[0];
             while (ndev--) {
                 drv = pcifinddrv(dev->vendor, dev->id);
@@ -468,4 +590,8 @@ pciinit(void)
 
     return;
 }
+
+#endif /* 0 */
+
+#endif /* PCI */
 

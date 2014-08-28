@@ -30,7 +30,8 @@ void     pciwriteconf2(uint8_t busid, uint8_t slotid, uint8_t funcid,
 #define PCINBUS       256       // maximum number of buses
 #define PCINSLOT      32        // maximum number of slots on a bus
 #define PCINDEV       64
-#define PCICONFADR    0x0cf8
+#define PCICONFADR1   0x0cf8
+#define PCICONFADR2   0x0cfa
 #define PCICONFDATA   0x0cfc
 
 #define PCIRES1MASK   0x00000003
@@ -69,8 +70,8 @@ void     pciwriteconf2(uint8_t busid, uint8_t slotid, uint8_t funcid,
 #define PCIDATASIGNAL 0x11
 
 struct pcidev {
-    struct pcidev *prev;
-    struct pcidev *next;
+//    struct pcidev *prev;
+//    struct pcidev *next;
     char          *str;
     uint16_t       vendor;
     uint16_t       id;
@@ -216,6 +217,11 @@ struct pciiobaseadr {
     unsigned res : 1;
     unsigned adr : 30;
 } PACK();
+
+struct pcidrv {
+    long type;
+    long ndev;
+};
 
 typedef void pciinitfunc_t(struct pcidev *dev);
 

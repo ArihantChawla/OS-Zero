@@ -13,7 +13,7 @@
 
 #define NEWFONT   1
 
-#define IOAPIC    1
+#define IOAPIC    0
 #define SMBIOS    1
 #define APIC      1     // local [per-CPU] APIC support
 #define SMP       0     // enable multiprocessor support; currently broken
@@ -49,7 +49,7 @@
 
 /* planned drivers */
 #define PCI       1     // PCI bus driver
-#define ATA       1     // ATA/ATAPI/SATA/SATAPI
+#define ATA       0     // ATA/ATAPI/SATA/SATAPI
 #define ACPI      1     // ACPI
 #define ACPICA    0     // ACPICA
 #define HPET      1     // high precision event timer support
@@ -57,8 +57,8 @@
 #define KBDUS     1     // PS/2 keyboard with US keymap
 #define VBE       1     // VBE2 graphics driver
 #define VGAGFX    0     // VGA graphics driver
-#define SB16      1     // Soundblaster 16 audio driver
-#define AC97      1     // AC97 audio drivers
+#define SB16      0     // Soundblaster 16 audio driver
+#define AC97      0     // AC97 audio drivers
 #define ENS1370   0     // Ensoniq 1370 audio driver
 
 #endif /* __KERN_CONF_H__ */

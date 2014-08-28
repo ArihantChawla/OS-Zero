@@ -65,7 +65,7 @@ mpchksum(uint8_t *ptr, unsigned long len)
 }
 
 static struct mp *
-mpfind(uintptr_t adr, unsigned long len)
+mpprobe(uintptr_t adr, unsigned long len)
 {
     struct mp *mp = NULL;
     uint32_t  *ptr = (uint32_t *)adr;
@@ -92,31 +92,33 @@ mpfind(uintptr_t adr, unsigned long len)
 struct mp *
 mpsearch(void)
 {
-    uint32_t       adr;
-    struct mp     *mp;
+    uint32_t       adr = 0;
+    struct mp     *mp = NULL;
 
     adr = (uint32_t)(((uint16_t *)EBDAADR)[0] << 4);
-    mp = mpfind(adr, 1024);
+    if (adr) {
+        mp = mpprobe(adr, 1024);
+    }
     if (mp) {
 
         return mp;
     }
     adr = (uint32_t)((((uint16_t *)TOPMEMADR)[0] << 10) - 1024);
-    mp = mpfind(adr - 1024, 1024);
+    mp = mpprobe(adr - 1024, 1024);
     if (mp) {
 
         return mp;
     }
     if (adr != TOPMEMDEF - 1024) {
         adr = TOPMEMDEF - 1024;
-        mp = mpfind(adr, 1024);
+        mp = mpprobe(adr, 1024);
         if (mp) {
             
             return mp;
         }
     }
     adr = 0xf0000;
-    mp = mpfind(adr, 0x10000);
+    mp = mpprobe(adr, 0x10000);
 
     return mp;
 }
@@ -166,7 +168,7 @@ mpinit(void)
         return;
     }
 //    cpuinit((struct m_cpu *)mpbootcpu);
-    mpmultiproc = 1;
+//    mpmultiproc = 1;
     mpapic = conf->apicadr;
     for (u8ptr = (uint8_t *)(conf + 1), lim = (uint8_t *)conf + conf->len ;
          u8ptr < lim ; ) {
@@ -174,9 +176,11 @@ mpinit(void)
             case MPCPU:
                 cpu = (struct mpcpu *)u8ptr;
                 core = cpu->id;
+#if 0
                 if (mpncpu != core) {
                     mpmultiproc = 0;
                 }
+#endif
                 if (cpu->flags & MPCPUBOOT) {
                     mpbootcpu = &cputab[core];
 #if 0
@@ -207,13 +211,13 @@ mpinit(void)
                 break;
         }
     }
-    if ((mpncpu == 1) || !mpmultiproc) {
-        mpncpu = 1;
-//        mptab = NULL;
-//        mpioapicid = 0;
+    if (mpncpu > 1) {
+        mpmultiproc = 1;
+    } else {
 
         return;
-    } else if (mp->intmode) {
+    }
+    if (mp->intmode) {
         outb(0x70, 0x22);               // select IMCR
         outb(inb(0x23) | 0x01, 0x23);   // mask external timer interrupts
     }

@@ -22,10 +22,12 @@ cpuinit(struct m_cpu *cpu)
 #else
     void *kstk = (void *)KERNSTKTOP;
 #endif
+    struct m_cpuinfo *info = &cpuinfotab[core];
 
 //    cpu->cpu = cpu;
     cpu->kstk = kstk;
-    cpuprobe(&cpuinfotab[core]);
+    cpuprobe(info);
+    cpu->info = info;
     cpuprintinfo();
 
     return;
