@@ -51,11 +51,6 @@ vbeint10(struct realregs *regs)
                 (unsigned long)&realend - (unsigned long)&realstart);
         first = 0;
     }
-#if 0
-    kmemcpy((void *)(KERNREALSTK - sizeof(struct realregs)),
-            regs,
-            sizeof(struct realregs));
-#endif
     realint10();
     gdtinit();
 

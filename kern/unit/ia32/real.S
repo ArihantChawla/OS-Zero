@@ -14,7 +14,7 @@
 
 .align	4
 
-	/* interrupt handler for 0x10 */
+	/* get ready for initialising 16-bit real mode */
 realint10:
 	cli
 	pushl	%ebp
@@ -30,14 +30,7 @@ realint10:
 .code16
 
 	/* drop back to 16-bit real mode */
-	/*
-	 * must be called after the page at 0x00000000 is mapped to virtual
-	 * address space
-	 */
 realstart:
-#if (NEWCLI)
-	cli
-#endif
 	/* set IDT up at zero */
 	lidtl	(_realidtptr - realstart + KERNREALBASE)
 	/* set up 16-bit segments */

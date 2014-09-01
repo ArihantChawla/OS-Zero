@@ -5,8 +5,9 @@
 #include <kern/conf.h>
 #include <zero/param.h>
 #include <zero/types.h>
-#include <kern/unit/ia32/boot.h>
+#include <kern/unit/x86/asm.h>
 #include <kern/unit/x86/trap.h>
+#include <kern/unit/ia32/boot.h>
 
 extern void picinit(void);
 extern void idtset(void);
@@ -50,6 +51,29 @@ extern uint64_t        kernidt[NINTR];
 extern struct m_farptr idtptr;
 
 long                   trappriotab[NINTR];
+long                   trapsigmap[TRAPNCPU]
+= {
+    SIGFPE, 
+    0,
+    0,
+    SIGTRAP,
+    0,
+    SIGBUS,
+    SIGILL,
+    SIGILL,
+    0,
+    0,
+    0,
+    SIGSEGV,
+    SIGSTKFLT,
+    SIGSEGV,
+    0,
+    0,
+    SIGFPE,
+    SIGBUS,
+    SIGABRT,
+    SIGFPE
+};
 
 #define trapsetprio(irq, prio)                                          \
     (trappriotab[(irq)] = (prio))
@@ -117,6 +141,7 @@ trapinit(void)
     /* mask timer interrupt, enable other interrupts */
     outb(0x01, 0x21);
     outb(0x00, 0xa1);
+    k_enabintr();
 //    __asm__ __volatile__ ("sti\n");
 //    pitinit();  // initialise interrupt timer
 

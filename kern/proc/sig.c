@@ -10,30 +10,7 @@
 #include <kern/unit/x86/cpu.h>
 #endif
 
-/* cpu traps */
-long signumtab[TRAPNCPU]
-= {
-    SIGFPE, 
-    0,
-    0,
-    SIGTRAP,
-    0,
-    SIGBUS,
-    SIGILL,
-    SIGILL,
-    0,
-    0,
-    0,
-    SIGSEGV,
-    SIGSTKFLT,
-    SIGSEGV,
-    0,
-    0,
-    SIGFPE,
-    SIGBUS,
-    SIGABRT,
-    SIGFPE
-};
+extern long      trapsigmap[TRAPNCPU];
 
 signalhandler_t *ksigfunctab[NSIG];
 
@@ -50,7 +27,7 @@ void
 sigfunc(unsigned long pid, uint32_t trap, long errnum)
 {
     struct proc     *proc = k_curproc;
-    long             signum = signumtab[trap];
+    long             signum = trapsigmap[trap];
     signalhandler_t *func;
 
 //    kprintf("trap 0x%lx -> signal 0x%lx\n", trap, signum);

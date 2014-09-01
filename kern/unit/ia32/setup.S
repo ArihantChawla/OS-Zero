@@ -29,7 +29,9 @@ gdtinit:
 	movw	%ax, %gs
 	ljmp	$TEXTSEL, $_gdtret
 _gdtret:
+#if !(NEWCLI)
 	sti
+#endif
 	ret
 
 	/*
