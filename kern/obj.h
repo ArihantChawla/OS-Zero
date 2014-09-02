@@ -27,13 +27,49 @@ struct perm {
 
 #endif
 
+/* File-Like Object Interface */
+
+/* object region */
+struct objreg {
+    struct perm   perm;                 // memory permissions
+    off_t         ofs;                  // region offset
+    uintptr_t     base;                 // base address
+    unsigned long size;                 // size in bytes
+    unsigned long flg;                  // flags
+};
+
+#if 0
+struct objreg {
+    struct perm perm;
+    long        desc;
+    long        ofs;
+    long        len;
+};
+
 /* memory region */
 struct memreg {
     struct perm   perm;                 // memory permissions
-    unsigned long flg;                  // flags
     uintptr_t     base;                 // base address
     unsigned long size;                 // size in bytes
+    unsigned long flg;                  // flags
     off_t         ofs;                  // region offset
+};
+#endif /* 0 */
+
+struct semq {
+	struct semthr *head;
+	struct semthr *tail;
+};
+
+struct semthr {
+	long        id;
+	struct sem *next;
+};
+
+struct sem {
+	long        lk; // access lock
+	long        val; // counter value
+	struct semq q; // queue of waiting threads
 };
 
 /* I/O node */

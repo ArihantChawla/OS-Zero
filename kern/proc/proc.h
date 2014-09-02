@@ -2,10 +2,36 @@
 #define __KERN_PROC_H__
 
 /*
- * map a keyboard event kernel buffer to new task's virtual address PAGESIZE
- * allocate descriptor table
- * initialise <stdio.h> facilities
+ * process startup
+ * ---------------
+ *
+ * kernel world
+ * ------------
+ * - initialise segmentation
+ * - initialise interrupt management
+ * - initialise memory management
+ * - acquire and initialise process and thread structures
+ * - allocate descriptor table
+ *  - initialise <stdio.h> facilities
  * - stdin, stdout, stderr
+ * - argc, argv, envp
+ * - set up for crt0
+ *   - initialise process structure
+ *   - acquire process and thread IDs
+ *   - define _text, _bss, _ebss, _start
+ *   - set up user and system (ring 0) stacks at zero (the highest part of virtual address space)
+ *   - map kernel segment at 3 gigabytes (32-bit systems) or -2 GB
+ *   - load, link, and map program segments
+ *   - configure default signal handlers
+ * userland (c standard library)
+ * -----------------------------
+ * - crt0
+ *   - define _start to start of loaded .text section
+ *   - program initialisation
+ *     - load and runtime-link image
+ *   - zero .bss section
+ *   - call main()
+ *   - call exit()
  */
 
 #define __KERNEL__ 1
@@ -50,7 +76,8 @@ struct proc {
     uid_t             euid;             // effective user ID
     gid_t             egid;             // effective group ID
     /* descriptor tables */
-    desc_t           *dtab;
+	size_t            ndtab;			// number of entries in descriptor table
+    uintptr_t        *dtab;				// descriptor table
     /* signal state */
     sigset_t          sigmask;          // signal mask
     sigset_t          sigpend;          // pending signals
@@ -63,7 +90,7 @@ struct proc {
     struct slabhdr   *vmtab[PTRBITS];
     /* event queue */
     struct ev        *evq;
-} PACK() ALIGNED(PAGESIZE);
+} ALIGNED(PAGESIZE);
 
 #endif /* __KERN_PROC_H__ */
 
