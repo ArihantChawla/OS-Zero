@@ -7,6 +7,8 @@
 #define SHM_W 0x00000080
 #define SHM_R 0x00000100
 
+typedef long key_t;
+
 struct ipc_perm {
 };
 

@@ -7,7 +7,19 @@
 #include <sys/stat.h>
 #include <sys/select.h>
 #include <sys/shm.h>
+#include <zero/cdecl.h>
 #include <zero/param.h>
+#include <kern/perm.h>
+
+/*
+ * TODO
+ * ----
+ * sysctl functionality
+ * --------------------
+ * - commands to access system clock
+ * - commands to query and set system attributes
+ *   - page size, stack size, cacheline size, ...
+ */
 
 /*
  * system call interface
@@ -21,7 +33,7 @@
  * long sys_exit(long val, long flg);
  * void sys_abort(void);
  * long sys_fork(long flg);
- * long sys_exec(char *path, char *argv[], ...);
+ * long sys_exec(char *path, char *argv[], void *arg);
  * long sys_throp(long cmd, long parm, void *arg);
  * long sys_pctl(long cmd, long parm, void *arg);
  * long sys_sigop(long cmd, long parm, void *arg);
@@ -29,18 +41,22 @@
  * memory interface
  * ----------------
  * long  sys_brk(void *adr);
+ * - set top of heap to adr
  * void *sys_map(long desc, long flg, struct sysmem *arg);
  * - map file or anonymous memory
  * long  sys_umap(void *adr, size_t size);
  * - unmap file or anonymous memory
  * long  sys_mhint(void *adr, long flg, struct sysmem *arg);
+ * - hint kernel about memory region use characteristics
+ * long  sys_mctl(void *adr, long flg, struct sysmem *arg);
+ * - memory control operations; locks, permissions, etc.
  *
  * shared memory
  * -------------
- * long  sys_shmget(long key, size_t size, long flg);
- * void *sys_shmat(long id, void *adr, long flg);
- * long  sys_shmdt(void *adr);
- * long  sys_shmctl(long id, long cmd, void *arg);
+ * uintptr_t  sys_shmget(long key, size_t size, long flg);
+ * void      *sys_shmat(uintptr_t id, void *adr, long flg);
+ * long       sys_shmdt(void *adr);
+ * long       sys_shmctl(uintptr_t id, long cmd, void *arg);
  *
  * semaphores
  * ----------
@@ -93,15 +109,37 @@
 
 /* process system calls */
 
-/* halt() flags */
-#define HALT_REBOOT     0x01U   // reboot()
+/* sys_sysctl */
 
-/* exit() flags */
-#define EXIT_DUMPACCT   0x01U
+/* cmd */
+#define SYSCTL_HALT      0x01U  // halt() and reboot()
+#define SYSCTL_SYSINFO   0x02U  // sysconf()
+#define SYSCTL_SYSSTAT   0x03U
+#define SYSCTL_TIME      0x04U
+/* parm */
+/* SYSCTL_HALT */
+#define SYSCTL_REBOOT    0x01U   // reboot()
+/* SYSCTL_SYSINFO */
+#define SYSCTL_CLSIZE    0x01U
+#define SYSCTL_PAGESIZE  0x02U
+#define SYSCTL_STKSIZE   0x03U
+#define SYSCTL_NPROC     0x04U
+#define SYSCTL_NTHR      0x05U
+/* SYSCTL_SYSSTAT */
+#define SYSCTL_UPTIME    0x01U
+/* SYSCTL_TIME */
+#define SYSCTL_GETTIME   0x02U
+#define SYSCTL_SETTIME   0x03U
 
-/* fork() flags */
-#define FORK_VFORK      0x01U   // vfork()
-#define FORK_COW        0x02U   // copy on write
+/* exit() parm flags */
+#define EXIT_DUMPACCT    0x01U
+
+/* abort() parm flags */
+#define ABORT_DUMPCORE   0x01U
+
+/* fork() parm flags */
+#define FORK_VFORK       0x01U   // vfork()
+#define FORK_COW         0x02U   // copy on write
 
 /* thread interface */
 
@@ -169,34 +207,68 @@ struct syswait {
 #define SIG_DUMP        0x02    // dump core on signal
 
 /* memory interface */
+
+/* sys_map() */
 #define MAP_FILE        0x00000001
 #define MAP_ANON        0x00000002
 #define MAP_SHARED      0x00000004
 #define MAP_PRIVATE     0x00000008
 #define MAP_FIXED       0x00000010
 #define MAP_SINGLE      0x00000020
+/* sys_map() and sys_mhint() */
 #define MEM_NORMAL      0x00000040
 #define MEM_SEQUENTIAL  0x00000080
 #define MEM_RANDOM      0x00000100
 #define MEM_WILLNEED    0x00000200
 #define MEM_WONTNEED    0x00000400
 #define MEM_DONTFORK    0x00000800
+/* sys_mctl() */
+/* cmd */
+#define MEM_LOCK        0x01
+#define MEM_UNLOCK      0x02
+/* REFERENCE: <kern/perm.h> */
+#define MEM_GETPERM     0x03
+#define MEM_SETPERM     0x04
 
 struct sysmem {
-    void *base;
-    long  ofs;
-    long  len;
-    long  perm;
+    struct perm  perm;
+    long         cmd;
+    void        *base;
+    long         ofs;
+    long         len;
 };
 
 /*
  * Inter-Process Communications
+ * ----------------------------
+ * - lock primitives; mutexes and other semaphores
+ * - shared memory
+ * - message queues
  */
-#define IPC_CREAT       0x00000001
-#define IPC_PRIVATE     0L
-#define IPC_STAT        1
-#define IPC_SET         2
-#define IPC_RMID        3
+
+typedef long      sysmtx_t;             // system mutex
+typedef long      syssem_t;             // system semaphore
+typedef uintptr_t sysipc_t;             // IPC object descriptor
+
+
+#define IPC_CREAT       0x00000001      // create IPC object
+#define IPC_EXCL        0x00000002      // fail if IPC_CREAT and object exists
+#define IPC_SHARE       0x00000004      // share between kernel and user space
+#define IPC_PRIVATE     0L              // special key for private object
+#define IPC_STAT        1               // query IPC object attributes
+#define IPC_SET         2               // set IPC object attributes
+#define IPC_RMID        3               // remove IPC identifier
+
+struct msg {
+    uintptr_t qid;
+    long      prio;
+    long      nbytes;
+    uint8_t   data[EMPTY];
+};
+
+struct mq {
+    uintptr_t id;
+};
 
 /*
  * I/O interface
@@ -206,12 +278,15 @@ struct sysmem {
 #define SEEK_BEG        0x01
 #define SEEK_END        0x02
 
-#define IO_NORMAL       0x00000001
-#define IO_SEQUENTIAL   0x00000002
-#define IO_WILLNEED     0x00000004
-#define IO_WONTNEED     0x00000008
-#define IO_NONBLOCK     0x00000010
-#define IO_SYNC         0x00000020
+/* flg values for I/O operations in struct ioctl */
+#define IO_NORMAL       0x00000001      // "normal" I/O characteristics
+#define IO_SEQUENTIAL   0x00000002      // object is accessed sequentially
+#define IO_WILLNEED     0x00000004      // object should remain buffered
+#define IO_WONTNEED     0x00000008      // object needs not be buffered
+#define IO_NONBLOCK     0x00000010      // non-blocking I/O mode
+#define IO_SYNC         0x00000020      // synchronous I/O mode
+#define IO_NONBUF       0x00000040      // unbuffered I/O mode
+/* IDEAS: IO_DIRECT */
 
 struct syscall {
     long    arg1;
@@ -222,18 +297,19 @@ struct syscall {
 #endif    
 };
 
-struct freg {
-    long desc;
-    long ofs;
-    long len;
-    long perm;
+struct objreg {
+    struct perm perm;
+    long        desc;
+    long        ofs;
+    long        len;
 };
 
 /* ioctl() */
 struct ioctl {
-    off_t ofs;
-    off_t len;
-    long flg;   // NOBUF
+    struct perm perm;
+    off_t       ofs;
+    off_t       len;
+    long        flg;
 };
 
 struct select {

@@ -22,5 +22,11 @@
 #define permsetgid(perm)
 #define permsetuid(perm)
 
+struct perm {
+    long uid;   // user ID
+    long gid;   // group ID
+    long mask;  // access bitmask
+};
+
 #endif /* __KERN_PERM_H__ */
 

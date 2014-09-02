@@ -11,6 +11,8 @@
 //#include <kern/syscall.h>
 #include <kern/proc/thr.h>
 
+#if 0
+
 /* user + group credentials */
 struct cred {
     uid_t uid;                          // user ID
@@ -22,6 +24,8 @@ struct perm {
     struct cred owner;                  // user + group
     long        flg;                    // permission bits
 };
+
+#endif
 
 /* memory region */
 struct memreg {

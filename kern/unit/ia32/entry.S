@@ -145,6 +145,8 @@ _sysfunc:
 	.long	_syscall1	// brk
 	.long	_syscall3	// map
 	.long	_syscall2	// umap
+	.long	_syscall3	// mhint
+	.long	_syscall3	// mctl
 	.long	_syscall3	// shmget
 	.long	_syscall3	// shmat
 	.long	_syscall1	// shmdt
