@@ -250,7 +250,6 @@ typedef long      sysmtx_t;             // system mutex
 typedef long      syssem_t;             // system semaphore
 typedef uintptr_t sysipc_t;             // IPC object descriptor
 
-
 #define IPC_CREAT       0x00000001      // create IPC object
 #define IPC_EXCL        0x00000002      // fail if IPC_CREAT and object exists
 #define IPC_SHARE       0x00000004      // share between kernel and user space
@@ -258,6 +257,11 @@ typedef uintptr_t sysipc_t;             // IPC object descriptor
 #define IPC_STAT        1               // query IPC object attributes
 #define IPC_SET         2               // set IPC object attributes
 #define IPC_RMID        3               // remove IPC identifier
+
+struct rwlock {
+    long lk;    // access lock
+    long val;   // value; may be negative
+};
 
 struct msg {
     uintptr_t qid;
