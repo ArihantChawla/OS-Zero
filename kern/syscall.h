@@ -208,16 +208,16 @@ struct sysatexit {
 /* TODO: move MTX, SEM, and COND operations under IPC */
 
 /* throp() commands */
-#define THR_NEW         1      // pthread_create()
-#define THR_JOIN        2      // pthread_join()
-#define THR_DETACH      3      // pthread_detach()
-#define THR_EXIT        4      // pthread_exit()
-#define THR_CLEANUP     5      // cleanup; pop and execute handlers etc.
-#define THR_KEYOP       6      // create, delete
-#define THR_SYSOP       7      // atfork, sigmask, sched, scope
-#define THR_STKOP       8      // stack; addr, size, guardsize
-#define THR_RTOP        9      // realtime thread settings
-#define THR_SETATR     10      // set other attributes
+#define THR_NEW             1      // pthread_create()
+#define THR_JOIN            2      // pthread_join()
+#define THR_DETACH          3      // pthread_detach()
+#define THR_EXIT            4      // pthread_exit()
+#define THR_CLEANUP         5      // cleanup; pop and execute handlers etc.
+#define THR_KEYOP           6      // create, delete
+#define THR_SYSOP           7      // atfork, sigmask, sched, scope
+#define THR_STKOP           8      // stack; addr, size, guardsize
+#define THR_RTOP            9      // realtime thread settings
+#define THR_SETATR         10      // set other attributes
 
 /* pctl() commands */
 #define PROC_GETPID        0x01    // getpid()
@@ -232,6 +232,7 @@ struct sysatexit {
 #define PROC_ATEXIT        0x10    // atexit(), on_exit()
 /* pctl() parm attributes */
 #define PROC_GETSTKSIZE    0x01	   // query process stack size
+#define PROC_KERNSTKSIZE   0x03    // query process kernel stack size
 #define PROC_GETDTABLESIZE 0x02    // query process descriptor table size
 
 #if 0
@@ -291,11 +292,11 @@ struct syswait {
 #define MEM_DONTFORK   0x00000800
 /* sys_mctl() */
 /* cmd */
-#define MEM_LOCK    0x01    // mlock(), mlockall()
-#define MEM_UNLOCK  0x02    // munlock(), munlockall()
+#define MEM_LOCK       0x01    // mlock(), mlockall()
+#define MEM_UNLOCK     0x02    // munlock(), munlockall()
 /* REFERENCE: <kern/perm.h> */
-#define MEM_GETPERM 0x03
-#define MEM_SETPERM 0x04
+#define MEM_GETPERM    0x03
+#define MEM_SETPERM    0x04
 
 struct sysmemreg {
     struct perm  perm;					// permission structure
@@ -388,10 +389,11 @@ struct syscall {
 
 /* ioctl() */
 struct ioctl {
-    struct perm perm;
-    off_t       ofs;
-    off_t       len;
-    long        flg;
+    struct perm perm; // permission structure§
+    off_t       ofs;  // offset into object
+    off_t       len;  // size of object
+	long        cmd;  // command to be executed
+    long        parm; // command parameters such as flag-bits
 };
 
 struct select {
