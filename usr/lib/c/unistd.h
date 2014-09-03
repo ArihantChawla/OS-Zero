@@ -18,10 +18,12 @@
 #define _XOPEN_VERSION  4
 #endif
 
+#if 0
 #define _XOPEN_UNIX     1
 #define _XOPEN_CRYPT    1
 #define _XOPEN_ENH_I18N 1
 #define _XOPEN_LEGACY   1
+#endif
 
 extern char **__environ;
 #if (_GNU_SOURCE)
@@ -279,6 +281,11 @@ extern void swab(const void *__restrict from, void *__restrict to, ssize_t n);
 
 #if (_XOPEN_SOURCE)
 extern char *ctermid(char *str);
+#endif
+
+#if (_XOPEN_SOURCE_EXTENDED)
+extern int getdtablesize(void);
+#define getpagesize();
 #endif
 
 #endif /* __UNISTD_H__ */

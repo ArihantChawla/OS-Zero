@@ -25,7 +25,7 @@
  */
 /*
  * <FIXME>
- * - these should be detected by configure.
+ * - these should be detected by configure
  * </FIXME>
  */
 #define CHAR_BIT      8
@@ -77,26 +77,29 @@
 #define _POSIX_STREAM_MAX  8
 #define _POSIX_TZNAME_MAX  3
 /*
- * Default values for possibly indeterminate run-time invariant values.
+ * Default values for possibly indeterminate run-time invariant values
  */
 /*
  * POSIX values.
  */
 #define ARG_MAX     65536 		/* # of argument and environment bytes to exec functions */
 #define CHILD_MAX   256   		/* # of processes per real user ID */
+#define LINK_MAX    127         /* # of links per file
 #define MAX_CANON   255   		/* size of canonical input queue */
+#define MAX_INPUT   255         /* # size of type-ahead buffer
 #define NGROUPS_MAX 16    		/* # of supplementary group ID per process */
 #define OPEN_MAX    32768 		/* # of open files per process */
+#define PIPE_BUF    4096        /* # of bytes in atomic write to pipe
 #define STREAM_MAX  FOPEN_MAX   /* # of open I/O streams per process
 #define NAME_MAX    255         /* # of bytes in file names
-#define PATH_MAX    4095        /* # of (nonzero) bits in file system paths
+#define PATH_MAX    4096        /* # of bits in file system path including terminating NUL
 #define TZNAME_MAX  255         /* # of bytes in timezone names
 
 #endif /* POSIX */
 #define RTSIG_MAX   NRTSIG
 
 /*
- * Unix values.
+ * Unix values
  */
 #define PASS_MAX    8 /* maximum significant characters in password */
 #define LOGIN_MAX   8 // maximum significant characters in login name */

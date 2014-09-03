@@ -167,35 +167,37 @@
 /* sys_sysctl */
 
 /* cmd */
-#define SYSCTL_HALT      0x01U  // halt() and reboot()
-#define SYSCTL_SYSINFO   0x02U  // sysconf()
-#define SYSCTL_SYSSTAT   0x03U  // query system statistics; getrusage()
+#define SYSCTL_HALT     0x01U  // halt() and reboot()
+#define SYSCTL_SYSINFO  0x02U  // sysconf()
+#define SYSCTL_SYSSTAT  0x03U  // query system statistics; getrusage()
 /* parm */
 /* flg value for SYSCTL_HALT */
-#define SYSCTL_REBOOT    0x01U   // reboot()
+#define SYSCTL_REBOOT   0x01U   // reboot()
 /* SYSCTL_SYSINFO */
-#define SYSCTL_CLSIZE    0x01U   // query system cacheline size; getclsize()
-#define SYSCTL_PAGESIZE  0x02U   // getpagesize(); sysconf() with _SC_PAGESIZE/_SC_PAGE_SIZE
-#define SYSCTL_DTSIZE    0x03U   // query system descriptor table size
-#define SYSCTL_STKSIZE   0x03U   // query process stack size; getstksize()
-#define SYSCTL_RAMSIZE   0x04U   // query system memory size; getramsize()
-#define SYSCTL_NPROC     0x05U   // query or set maximum number of processes on system
-#define SYSCTL_NTHR      0x06U   // query or set maximum number of threads on system
+#define SYSCTL_CLSIZE   0x01U   // query system cacheline size; getclsize()
+#define SYSCTL_PAGESIZE 0x02U   // getpagesize(); sysconf() with _SC_PAGESIZE/_SC_PAGE_SIZE
+#if 0
+#define SYSCTL_DTSIZE   0x03U   // query system descriptor table size
+#define SYSCTL_STKSIZE  0x03U   // query process stack size; getstksize()
+#endif
+#define SYSCTL_RAMSIZE  0x04U   // query system memory size; getramsize()
+#define SYSCTL_NPROC    0x05U   // query or set maximum number of processes on system
+#define SYSCTL_NTHR     0x06U   // query or set maximum number of threads on system
 /* SYSCTL_SYSSTAT */
-#define SYSCTL_UPTIME    0x01U   // query system uptime
+#define SYSCTL_UPTIME   0x01U   // query system uptime
 /* SYSCTL_TIME */
-#define SYSCTL_GETTIME   0x01U   // query system time
-#define SYSCTL_SETTIME   0x02U   // set system time
+#define SYSCTL_GETTIME  0x01U   // query system time
+#define SYSCTL_SETTIME  0x02U   // set system time
 
 /* exit() parm flags */
-#define EXIT_DUMPACCT    0x01U   // dump system information at process exit
+#define EXIT_DUMPACCT   0x01U   // dump system information at process exit
 
 /* abort() parm flags */
-#define ABORT_DUMPCORE   0x01U   // dump core image at abnormal process exit
+#define ABORT_DUMPCORE  0x01U   // dump core image at abnormal process exit
 
 /* fork() parm flags */
-#define FORK_VFORK       0x01U   // vfork() semantics; share address space with parent
-#define FORK_COW         0x02U   // copy on write optimisations
+#define FORK_VFORK      0x01U   // vfork() semantics; share address space with parent
+#define FORK_COW        0x02U   // copy on write optimisations
 
 struct sysatexit {
 	void (*func)(void);
@@ -206,35 +208,39 @@ struct sysatexit {
 /* TODO: move MTX, SEM, and COND operations under IPC */
 
 /* throp() commands */
-#define THR_NEW          1      // pthread_create()
-#define THR_JOIN         2      // pthread_join()
-#define THR_DETACH       3      // pthread_detach()
-#define THR_EXIT         4      // pthread_exit()
-#define THR_CLEANUP      5      // cleanup; pop and execute handlers etc.
-#define THR_KEYOP        6      // create, delete
-#define THR_SYSOP        7      // atfork, sigmask, sched, scope
-#define THR_STKOP        8      // stack; addr, size, guardsize
-#define THR_RTOP         9      // realtime thread settings
-#define THR_SETATR      10      // set other attributes
+#define THR_NEW         1      // pthread_create()
+#define THR_JOIN        2      // pthread_join()
+#define THR_DETACH      3      // pthread_detach()
+#define THR_EXIT        4      // pthread_exit()
+#define THR_CLEANUP     5      // cleanup; pop and execute handlers etc.
+#define THR_KEYOP       6      // create, delete
+#define THR_SYSOP       7      // atfork, sigmask, sched, scope
+#define THR_STKOP       8      // stack; addr, size, guardsize
+#define THR_RTOP        9      // realtime thread settings
+#define THR_SETATR     10      // set other attributes
 
 /* pctl() commands */
-#define PROC_GETPID     0x01    // getpid()
-#define PROC_GETPGRP    0x02    // getpgrp()
-#define PROC_WAIT       0x03    // wait()
-#define PROC_USLEEP     0x04    // usleep()
-#define PROC_NANOSLEEP  0x05    // nanosleep()
-#define PROC_SETSCHED   0x07    // nice(), ...
-#define PROC_STAT       0x08    // getrusage()
-#define PROC_GETLIM     0x09    // getrlimit()
-#define PROC_SETLIM     0x09    // setrlimit()
-#define PROC_ATEXIT     0x10    // atexit(), on_exit()
+#define PROC_GETPID        0x01    // getpid()
+#define PROC_GETPGRP       0x02    // getpgrp()
+#define PROC_WAIT          0x03    // wait()
+#define PROC_USLEEP        0x04    // usleep()
+#define PROC_NANOSLEEP     0x05    // nanosleep()
+#define PROC_SETSCHED      0x07    // nice(), ...
+#define PROC_STAT          0x08    // getrusage()
+#define PROC_GETLIM        0x09    // getrlimit(), getstksize(), getdtablesize()
+#define PROC_SETLIM        0x09    // setrlimit()
+#define PROC_ATEXIT        0x10    // atexit(), on_exit()
+/* pctl() parm attributes */
+#define PROC_GETSTKSIZE    0x01	   // query process stack size
+#define PROC_GETDTABLESIZE 0x02    // query process descriptor table size
+
 #if 0
 /* pctl() parameters */
 /* PROC_WAIT flags */
-#define PROC_WAITPID    0x01    // wait for pid
-#define PROC_WAITCLD    0x02    // wait for children in the group pid
-#define PROC_WAITGRP    0x04    // wait for children in the group of caller
-#define PROC_WAITANY    0x08    // wait for any child process
+#define PROC_WAITPID 0x01    // wait for pid
+#define PROC_WAITCLD 0x02    // wait for children in the group pid
+#define PROC_WAITGRP 0x04    // wait for children in the group of caller
+#define PROC_WAITANY 0x08    // wait for any child process
 #endif
 
 struct syswait {
@@ -246,50 +252,50 @@ struct syswait {
 /* signal interface */
 
 /* sigop() commands */
-#define SIG_WAIT        0x01    // pause()
-#define SIG_SETFUNC     0x02    // signal()/sigaction()
-#define SIG_SETMASK     0x03    // sigsetmask()
-#define SIG_SEND        0x04    // raise() etc.
-#define SIG_SETSTK      0x05    // sigaltstack()
-#define SIG_SUSPEND     0x06    // sigsuspend(), sigpause()
+#define SIG_WAIT      0x01    // pause()
+#define SIG_SETFUNC   0x02    // signal()/sigaction()
+#define SIG_SETMASK   0x03    // sigsetmask()
+#define SIG_SEND      0x04    // raise() etc.
+#define SIG_SETSTK    0x05    // sigaltstack()
+#define SIG_SUSPEND   0x06    // sigsuspend(), sigpause()
 /* sigop() arguments */
 /* ----------------- */
 /* SIG_SETFUNC */
-//#define SIG_DEFAULT     (void *)0x01    // SIG_DFL
-//#define SIG_IGNORE      (void *)0x02    // SIG_IGN
+//#define SIG_DEFAULT (void *0)    0x01    // SIG_DFL
+//#define SIG_IGNORE  (void *)    0x02    // SIG_IGN
 /* SIG_SEND */
-#define SIG_SELF       -0x01    // raise()
-#define SIG_CLD        -0x02    // send to children
-#define SIG_GRP        -0x03    // send to group
-#define SIG_PROPCLD     0x01    // propagate to child processes
-#define SIG_PROPGRP     0x02    // propagate to process group
+#define SIG_SELF      -0x01    // raise()
+#define SIG_CLD       -0x02    // send to children
+#define SIG_GRP       -0x03    // send to group
+#define SIG_PROPCLD    0x01    // propagate to child processes
+#define SIG_PROPGRP    0x02    // propagate to process group
 /* SIG_PAUSE */
-#define SIG_EXIT        0x01    // exit process on signal
-#define SIG_DUMP        0x02    // dump core on signal
+#define SIG_EXIT       0x01    // exit process on signal
+#define SIG_DUMP       0x02    // dump core on signal
 
 /* memory interface */
 
 /* sys_map() */
-#define MAP_FILE        0x00000001
-#define MAP_ANON        0x00000002
-#define MAP_SHARED      0x00000004
-#define MAP_PRIVATE     0x00000008
-#define MAP_FIXED       0x00000010
-#define MAP_SINGLE      0x00000020
+#define MAP_FILE       0x00000001
+#define MAP_ANON       0x00000002
+#define MAP_SHARED     0x00000004
+#define MAP_PRIVATE    0x00000008
+#define MAP_FIXED      0x00000010
+#define MAP_SINGLE     0x00000020
 /* sys_map() and sys_mhint() */
-#define MEM_NORMAL      0x00000040
-#define MEM_SEQUENTIAL  0x00000080
-#define MEM_RANDOM      0x00000100
-#define MEM_WILLNEED    0x00000200
-#define MEM_WONTNEED    0x00000400
-#define MEM_DONTFORK    0x00000800
+#define MEM_NORMAL     0x00000040
+#define MEM_SEQUENTIAL 0x00000080
+#define MEM_RANDOM     0x00000100
+#define MEM_WILLNEED   0x00000200
+#define MEM_WONTNEED   0x00000400
+#define MEM_DONTFORK   0x00000800
 /* sys_mctl() */
 /* cmd */
-#define MEM_LOCK        0x01    // mlock(), mlockall()
-#define MEM_UNLOCK      0x02    // munlock(), munlockall()
+#define MEM_LOCK    0x01    // mlock(), mlockall()
+#define MEM_UNLOCK  0x02    // munlock(), munlockall()
 /* REFERENCE: <kern/perm.h> */
-#define MEM_GETPERM     0x03
-#define MEM_SETPERM     0x04
+#define MEM_GETPERM 0x03
+#define MEM_SETPERM 0x04
 
 struct sysmemreg {
     struct perm  perm;					// permission structure
@@ -318,13 +324,13 @@ typedef long      syssem_t;             // system semaphore
 typedef uintptr_t sysipc_t;             // IPC object descriptor
 #endif
 
-#define IPC_CREAT       0x00000001      // create IPC object
-#define IPC_EXCL        0x00000002      // fail if IPC_CREAT and object exists
-#define IPC_SHARE       0x00000004      // share between kernel and user space
-#define IPC_PRIVATE     0L              // special key for private object
-#define IPC_STAT        1               // query IPC object attributes
-#define IPC_SET         2               // set IPC object attributes
-#define IPC_RMID        3               // remove IPC identifier
+#define IPC_CREAT   0x00000001      // create IPC object
+#define IPC_EXCL    0x00000002      // fail if IPC_CREAT and object exists
+#define IPC_SHARE   0x00000004      // share between kernel and user space
+#define IPC_PRIVATE 0L              // special key for private object
+#define IPC_STAT    1               // query IPC object attributes
+#define IPC_SET     2               // set IPC object attributes
+#define IPC_RMID    3               // remove IPC identifier
 
 struct sysvkeyarg {
 	char *path;							// path name for an accessible file
@@ -361,14 +367,14 @@ struct sysmq {
  */
 
 /* flg values for I/O operations in struct ioctl */
-#define IO_RAW          0x00000001      // character I/O mode; unbuffered bytestream
-#define IO_NORMAL       0x00000002      // "normal" I/O characteristics
-#define IO_SEQUENTIAL   0x00000004      // object is accessed sequentially
-#define IO_WILLNEED     0x00000008      // object should remain buffered
-#define IO_WONTNEED     0x00000010      // object needs not be buffered
-#define IO_NONBLOCK     0x00000020      // non-blocking I/O mode
-#define IO_SYNC         0x00000040      // synchronous I/O mode
-#define IO_NONBUF       0x00000080      // unbuffered I/O mode
+#define IO_RAW        0x00000001      // character I/O mode; unbuffered bytestream
+#define IO_NORMAL     0x00000002      // "normal" I/O characteristics
+#define IO_SEQUENTIAL 0x00000004      // object is accessed sequentially
+#define IO_WILLNEED   0x00000008      // object should remain buffered
+#define IO_WONTNEED   0x00000010      // object needs not be buffered
+#define IO_NONBLOCK   0x00000020      // non-blocking I/O mode
+#define IO_SYNC       0x00000040      // synchronous I/O mode
+#define IO_NONBUF     0x00000080      // unbuffered I/O mode
 /* IDEAS: IO_DIRECT */
 
 struct syscall {
