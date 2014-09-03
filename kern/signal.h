@@ -43,10 +43,11 @@
 #define SIGUNUSED    0x1f
 #define SIGRTMIN     0x20    /* minimum real-time signal */
 #define SIGRTMAX     0x3f    /* maximum real-time signal */
-#define SIGRTMASK    0x50
-#define NSIG         64
-#define SIGMASK      0x3f
-#define _NSIG        NSIG   /* alternative name */
+#define SIGRTMASK    0x50    // mask for real-time signal ID bits
+#define NSIG         64      /* # of signals */
+#define NRTSIG       32      /* # of real-time signals */
+#define SIGMASK      0x3f    /* mask for signal ID bits
+#define _NSIG        NSIG    /* alternative name */
 
 #endif /*  __KERN_SIGNAL_H__ */
 

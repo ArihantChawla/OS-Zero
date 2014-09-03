@@ -4,7 +4,7 @@
 #include <features.h>
 #include <stdint.h>
 #include <zero/param.h>
-#include <kern/conf.h>
+#include <kern/signal.h>
 
 /* integral-value limits */
 #define WORD8_MIN     (-0x7f - 1)
@@ -69,7 +69,7 @@
 #define _POSIX_MAX_CANON   255
 #define _POSIX_MAX_INPUT   255
 #define _POSIX_NAME_MAX    14
-#define _POSIX_NGROUPS_MAX 0
+#define _POSIX_NGROUPS_MAX 16		// number of supplementary group IDs if available
 #define _POSIX_OPEN_MAX    16
 #define _POSIX_PATH_MAX    255
 #define _POSIX_PIPE_BUF    512
@@ -82,22 +82,24 @@
 /*
  * POSIX values.
  */
-#define ARG_MAX     65536 /* argument bytes to exec functions */
-#define CHILD_MAX   256   /* number of processes per real user ID */
-#define NGROUPS_MAX 16    /* number of supplementary group ID per process */
-#define OPEN_MAX    32768 /* maximum number of open files per process */
-#define STREAM_MAX  FOPEN_MAX
-#define NAME_MAX    255 
-#define PATH_MAX    4095
-#define TZNAME_MAX  255
+#define ARG_MAX     65536 		/* # of argument and environment bytes to exec functions */
+#define CHILD_MAX   256   		/* # of processes per real user ID */
+#define MAX_CANON   255   		/* size of canonical input queue */
+#define NGROUPS_MAX 16    		/* # of supplementary group ID per process */
+#define OPEN_MAX    32768 		/* # of open files per process */
+#define STREAM_MAX  FOPEN_MAX   /* # of open I/O streams per process
+#define NAME_MAX    255         /* # of bytes in file names
+#define PATH_MAX    4095        /* # of (nonzero) bits in file system paths
+#define TZNAME_MAX  255         /* # of bytes in timezone names
 
 #endif /* POSIX */
+#define RTSIG_MAX   NRTSIG
 
 /*
  * Unix values.
  */
 #define PASS_MAX    8 /* maximum significant characters in password */
-#define LOGIN_MAX   8 // maximum significant characters in login name
+#define LOGIN_MAX   8 // maximum significant characters in login name */
 
 /*
  * Determinate (compile-time) values.

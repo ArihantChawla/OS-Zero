@@ -9,7 +9,7 @@
  * m_fetadd()   	- atomic fetch and add
  * m_getretadr()        - get return address from stack frame
  */
-#if defined(__x86_64__)
+#if defined(__x86_64__) || defined(__amd64__)
 #include <zero/x86-64/asm.h>
 #elif defined(__i386__)
 #include <zero/ia32/asm.h>
