@@ -279,8 +279,8 @@ struct syswait {
 #define MEM_DONTFORK    0x00000800
 /* sys_mctl() */
 /* cmd */
-#define MEM_LOCK        0x01
-#define MEM_UNLOCK      0x02
+#define MEM_LOCK        0x01    // mlock(), mlockall()
+#define MEM_UNLOCK      0x02    // munlock(), munlockall()
 /* REFERENCE: <kern/perm.h> */
 #define MEM_GETPERM     0x03
 #define MEM_SETPERM     0x04
@@ -345,7 +345,7 @@ struct sysmq {
  */
 
 #define SEEK_CUR        0x00
-#define SEEK_BEG        0x01
+#define SEEK_SET        0x01
 #define SEEK_END        0x02
 
 /* flg values for I/O operations in struct ioctl */

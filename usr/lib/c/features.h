@@ -1,6 +1,20 @@
 #ifndef __FEATURES_H__
 #define __FEATURES_H__
 
+#define _REENTRANT          1
+
+#define USEXOPEN2K          1
+#define USEXOPENEXT         1
+#define USEUNIX98           1
+#define USEPOSIX            1
+#define USEPOSIX2           1
+#define USEPOSIX199309      1
+#define USEPOSIX199506      1
+#define USEBSD              1
+#define USEOLDBSD           0
+#define USESVID             1
+#define USEGNU              1
+
 /* feature macro list */
 #define _ISOC11_SOURCE      1           // ISO 9899-2011
 #define _ISOC99_SOURCE      1           // ISO 9899-1999

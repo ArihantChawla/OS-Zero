@@ -1,0 +1,11 @@
+#ifndef __SYS_MMAN_H__
+#define __SYS_MMAN_H__
+
+int mlock(const void *addr, size_t len);
+int munlock(const void *addr, size_t len);
+
+int mlockall(int flags);
+int munlockall(void);
+
+#endif /* __SYS_MMAN_H__ */
+

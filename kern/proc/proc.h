@@ -14,6 +14,7 @@
  * - allocate descriptor table
  *  - initialise <stdio.h> facilities
  * - stdin, stdout, stderr
+ *   - keyboard and console drivers
  * - argc, argv, envp
  * - set up for crt0
  *   - initialise process structure
@@ -23,6 +24,7 @@
  *   - map kernel segment at 3 gigabytes (32-bit systems) or -2 GB
  *   - load, link, and map program segments
  *   - configure default signal handlers
+ *
  * userland (c standard library)
  * -----------------------------
  * - crt0
