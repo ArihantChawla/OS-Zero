@@ -22,7 +22,7 @@ void apicinitcpu(long id);
 #endif
 void ioapicinit(long id);
 void apicstart(uint8_t id, uint32_t adr);
-void usleep(unsigned long nusec);
+void kusleep(unsigned long nusec);
 
 #define apiceoi()        apicwrite(0, APICEOI)
 
@@ -251,9 +251,9 @@ apicsendirq(uint32_t hi, uint32_t lo, long nusec)
     __asm__ __volatile__ ("pushfl\n");
     __asm__ __volatile__ ("cli\n");
     apicwrite(hi, APICINTRHI);
-    usleep(nusec);
+    kusleep(nusec);
     apicwrite(lo, APICINTRLO);
-    usleep(nusec);
+    kusleep(nusec);
     __asm__ __volatile__ ("sti\n");
     __asm__ __volatile__ ("popfl\n");
 }

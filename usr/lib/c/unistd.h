@@ -63,12 +63,10 @@ extern int faccessat(int fd, const char *name, int type, int flg);
 #if (_FILE_OFFSET_BITS == 64)
 #define llseek(fd, ofs, whence) lseek(fd, ofs, whence)
 #endif
-off_t          lseek(int fd, off_t ofs, int whence);
-ssize_t        read(int fd, void *buf, size_t count);
-ssize_t        write(int fd, void *buf, size_t count);
+extern off_t   lseek(int fd, off_t ofs, int whence);
+extern ssize_t read(int fd, void *buf, size_t count);
+extern ssize_t write(int fd, void *buf, size_t count);
 extern int     close(int fd);
-extern ssize_t read(int fd, void *buf, size_t len);
-extern int     write(void *buf, const void *buf, size_t len);
 #if (USEUNIX98)
 extern ssize_t pread(int fd, void *buf, size_t len, off_t ofs);
 extern ssize_t pwrite(int fd, const void *buf, size_t len, off_t ofs);
@@ -87,7 +85,7 @@ extern int fchown(int fd, uid_t uid, gid_t gid);
 extern int lchown(const char *name, uid_t uid, gid_t gid);
 #endif
 #if (_GNU_SOURCE)
-extern fchownat(int fd, const char *name, uid_t uid, gid_t gid);
+extern int fchownat(int fd, const char *name, uid_t uid, gid_t gid);
 #endif
 #if (_BSD_SOURCE) || (USEXOPENEXT)
 extern int fchdir(int fd);
@@ -100,10 +98,10 @@ extern char *getwd(char *buf);
 extern char * get_current_dir_name(void);
 #endif
 int dup(int fd);
-int dup2(int fd, newfd);
+int dup2(int fd, int newfd);
 extern int execve(const char *path, char *const argv[], char *const envp);
 #if (_GNU_SOURCE)
-extern int fexecve(int fd, char *const argv
+extern int fexecve(int fd, char *const argv, char *const envp[]);
 #endif
 extern int execv(const char *path, char *const argv[]);
 extern int execle(const char *path, const char *arg, ...);
@@ -188,14 +186,16 @@ extern int linkat(int fd, const char *from, int newfd, const char *to, int flg);
 #endif
 #if (_BSD_SOURCE) || defined(USEXOPENEXT) || (USEXOPEN2K)
 extern int symlink(const char *from, const char *to);
-extern ssize_t readlink(const char *restrict path, char *restrict buf, size_t len);
+extern ssize_t readlink(const char *__restrict path, char *__restrict buf,
+                        size_t len);
 #endif
 #if (_GNU_SOURCE)
 extern int symlinkat(const char *from, int fd, const char *to);
-extern ssize_t readlinkat(int fd, const char *restrict path, char *restrict buf, size_t len);
+extern ssize_t readlinkat(int fd, const char *__restrict path,
+                          char *__restrict buf, size_t len);
 #endif
 extern int unlink(const char *name);
-#if (GNU_SOURCE)
+#if (_GNU_SOURCE)
 extern int unlinkat(int fd, const char *name, int flg);
 #endif
 extern int rmdir(const char *path);
@@ -206,7 +206,7 @@ extern char *getlogin(void);
 extern int getlogin_r(char *name, size_t len);
 #endif
 #if (_BSD_SOURCE)
-extern int setlogin(const chat *name);
+extern int setlogin(const char *name);
 #endif
 #if (USEPOSIX2)
 #include <getopt.h>
@@ -221,7 +221,8 @@ extern int getdomainname(const char *name, size_t len);
 extern int setdomainname(const char *name, size_t len);
 extern int vhangup(void);
 extern int revoke(const char *file);
-extern int profil(unsigned short *buf, size_t size, size_t ofs, unsigned int scale);
+extern int profil(unsigned short *buf, size_t size, size_t ofs,
+                  unsigned int scale);
 extern int acct(const char *name);
 extern char *getusershell(void);
 extern void endusershell(void);
@@ -249,7 +250,7 @@ extern int brk(void *adr);
 extern void *sbrk(intptr_t delta);
 #endif
 extern long int syscall(long int num, ...);
-if (USEXOPENEXT) && !defined(F_LOCK)
+#if (USEXOPENEXT) && !defined(F_LOCK)
 /* these macros also appear in <fcntl.h> - keep the files consistent */
 #define F_ULOCK 0
 #define F_LOCK  1
@@ -258,23 +259,23 @@ if (USEXOPENEXT) && !defined(F_LOCK)
 #endif
 extern int lockf(int fd, int cmd, off_t len);
 #if (_GNU_SOURCE)
-#define TEMP_FAILURE_RETRY(expr) \
-	(__extension__
-		((long _res;
-			do {
-				_res = (long)(expr);
-			} while (_res == -1L && errno == EINTR);
-			_res;
-			)))
+#define TEMP_FAILURE_RETRY(expr)                                        \
+    (__extension__                                                      \
+     ((long _res;                                                       \
+       do {                                                             \
+           _res = (long)(expr);                                         \
+       } while (_res == -1L && errno == EINTR);                         \
+       _res;                                                            \
+         )))
 #endif
 #if (USEPOSIX199309) || (USEUNIX98)
-extern fdatasync(int fd);
+extern int fdatasync(int fd);
 #endif
 
 #if (_XOPEN_SOURCE)
 extern char *crypt(const char *key, const char *salt);
 extern void encrypt(char *blk, int flg);
-extern void swab(const void *restrict from, void *restrict to, ssize_t n);
+extern void swab(const void *__restrict from, void *__restrict to, ssize_t n);
 #endif
 
 #if (_XOPEN_SOURCE)

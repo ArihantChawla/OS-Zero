@@ -25,7 +25,7 @@ extern volatile struct m_cpu  *mpbootcpu;
 
 /* TODO: fix this kludge */
 void
-usleep(unsigned long nusec)
+kusleep(unsigned long nusec)
 {
     nusec <<= 16;
     while (nusec--) {

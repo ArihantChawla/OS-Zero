@@ -43,9 +43,6 @@ extern void hpetinit(void);
 #if (SMP)
 extern void mpstart(void);
 #endif
-#if (VBE2)
-extern long vbe2init(struct mboothdr *hdr);
-#endif
 #if (VBE)
 extern void idtinit(uint64_t *idt);
 extern void vbeinit(void);

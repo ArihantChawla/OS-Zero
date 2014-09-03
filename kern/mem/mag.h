@@ -22,7 +22,7 @@ struct maghdr {
     volatile long  bkt;
     struct maghdr *prev;
     struct maghdr *next;
-#if (SLABLOG2 - MAGMINLOG2 < (LONGSIZELOG2 + 3))
+#if (SLABMINLOG2 - MAGMINLOG2 < (LONGSIZELOG2 + 3))
     unsigned long  bmap;
 #else
     uint8_t        bmap[1UL << (SLABMINLOG2 - MAGMINLOG2 - 3)];

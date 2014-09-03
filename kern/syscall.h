@@ -344,10 +344,6 @@ struct sysmq {
  *   - internally used as indices to file-structure pointer tables
  */
 
-#define SEEK_CUR        0x00
-#define SEEK_SET        0x01
-#define SEEK_END        0x02
-
 /* flg values for I/O operations in struct ioctl */
 #define IO_RAW          0x00000001      // character I/O mode; unbuffered bytestream
 #define IO_NORMAL       0x00000002      // "normal" I/O characteristics

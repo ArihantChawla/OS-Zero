@@ -14,7 +14,7 @@
 #define RGBBLACK  0x00000000
 #define RGBWHITE  0x00ffffff
 
-#if (_BYTE_ORDER == _LITTLE_ENDIAN)
+#if (__BYTE_ORDER == __LITTLE_ENDIAN)
 
 #define RGBALPHAOFS 24
 #define RGBREDOFS   16
@@ -28,7 +28,7 @@ struct argb32 {
     uint8_t aval;
 } PACK();
 
-#elif (_BYTE_ORDER == _BIG_ENDIAN)
+#elif (__BYTE_ORDER == __BIG_ENDIAN)
 
 #define RGBALPHAOFS 0
 #define RGBREDOFS   8
@@ -87,7 +87,7 @@ typedef int16_t rgb565_t;
      ((struct argb32 *)(p))->gval = (g),                                \
      ((struct argb32 *)(p))->bval = (b))
 
-#if (_BYTE_ORDER == _LITTLE_ENDIAN)
+#if (__BYTE_ORDER == __LITTLE_ENDIAN)
 #define RGB_ARGB32_RED_SHIFT       16
 #define RGB_ARGB32_GREEN_SHIFT     8
 #define RGB_ARGB32_BLUE_SHIFT      0
@@ -155,7 +155,7 @@ typedef int16_t rgb565_t;
         _dest->bval = gfxblueval_p(_src);                               \
     } while (0)
 
-#if (_BYTE_ORDER == _LITTLE_ENDIAN)
+#if (__BYTE_ORDER == __LITTLE_ENDIAN)
 #define gfxsetrgb888(u, p)                                              \
     (((uint8_t *)(p))[2] = gfxredval(u),                                \
      ((uint8_t *)(p))[1] = gfxgreenval(u),                              \

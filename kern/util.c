@@ -9,7 +9,7 @@
 
 #define MAXPRINTFSTR 2048
 
-#define isprint(c) ((c) >= 0x20 && (c) < 0x7f)
+#define isprintascii(c) ((c) >= 0x20 && (c) < 0x7f)
 
 #define CACHEPREWARM    0
 #if (LONGSIZE == 4)
@@ -647,7 +647,7 @@ kprintf(char *fmt, ...)
                         } else if (isdec) {
                             l = _ultodn(uval, buf, LONGLONGBUFSIZE);
                             cons->puts(&buf[l]);
-                        } else if ((isch) && isprint(val)) {
+                        } else if ((isch) && isprintascii(val)) {
                             cons->putchar((int)uval);
                         } else {
                             cons->putchar(' ');
@@ -659,7 +659,7 @@ kprintf(char *fmt, ...)
                         } else if (isdec) {
                             l = _ltodn(val, buf, LONGLONGBUFSIZE);
                             cons->puts(&buf[l]);
-                        } else if ((isch) && isprint(val)) {
+                        } else if ((isch) && isprintascii(val)) {
                             cons->putchar((int)val);
                         } else {
                             cons->putchar(' ');

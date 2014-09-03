@@ -11,6 +11,9 @@
 /*
  * README: http://softpixel.com/~cwright/programming/simd/cpuid.php
  */
+#if !defined(TEST)
+#define TEST 0
+#endif
 
 #if (TEST)
 #include <stdio.h>

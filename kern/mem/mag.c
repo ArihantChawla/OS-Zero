@@ -109,7 +109,7 @@ memalloc(unsigned long nb, long flg)
         }
     }
     if (ptr) {
-#if ((SLABLOG2 - MAGMINLOG2) < (LONGSIZELOG2 + 3))
+#if ((SLABMINLOG2 - MAGMINLOG2) < (LONGSIZELOG2 + 3))
         bmap = &mag->bmap;
 #else
         bmap = mag->bmap;
@@ -143,7 +143,7 @@ kfree(void *ptr)
     volatile long   *lktab = magzone->lktab;
     struct maghdr  **magtab = (struct maghdr **)(magzone->tab);
     struct maghdr   *mag = maggethdr(ptr, magzone);
-#if ((SLABLOG2 - MAGMINLOG2) < (LONGSIZELOG2 + 3))
+#if ((SLABMINLOG2 - MAGMINLOG2) < (LONGSIZELOG2 + 3))
     void            *bmap = &mag->bmap;
 #else
     void            *bmap = mag->bmap;
