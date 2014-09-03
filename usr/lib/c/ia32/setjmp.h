@@ -19,6 +19,9 @@ struct _jmpbuf {
 #elif (_BSD_SOURCE)
     int      sigmask;
 #endif
+#if (_POSIX_C_SOURCE) || (_XOPEN_SOURCE)
+    long     havesigs;
+#endif
 } PACK();
 
 struct _jmpframe {

@@ -10,7 +10,7 @@ extern long  timezone;
 extern char *tzname[];
 
 #if (_ZERO_SOURCE)
-#include <kern/thr.h>
+#include <kern/proc/thr.h>
 #define CLOCKS_PER_SEC HZ
 #else
 #error CLOCKS_PER_SEC undefined

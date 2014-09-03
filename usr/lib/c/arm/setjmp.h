@@ -12,20 +12,23 @@
 /* THANKS to Kazu Hirata for putting this code online :) */
 
 struct _jmpbuf {
-    int32_t r4;
-    int32_t r5;
-    int32_t r6;
-    int32_t r7;
-    int32_t r8;
-    int32_t r9;
-    int32_t r10;
-    int32_t fp;
-    int32_t sp;
-    int32_t lr;
+    int32_t  r4;
+    int32_t  r5;
+    int32_t  r6;
+    int32_t  r7;
+    int32_t  r8;
+    int32_t  r9;
+    int32_t  r10;
+    int32_t  fp;
+    int32_t  sp;
+    int32_t  lr;
 #if (_POSIX_SOURCE)
     sigset_t sigmask;
 #elif (_BSD_SOURCE)
     int      sigmask;
+#endif
+#if (_POSIX_C_SOURCE) || (_XOPEN_SOURCE)
+    int      havesigs;
 #endif
 } PACK();
 

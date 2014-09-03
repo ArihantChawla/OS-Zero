@@ -1,5 +1,5 @@
 #include <features.h>
-//#include <signal.h>
+#include <signal.h>
 #include <setjmp.h>
 #include <zero/cdecl.h>
 
@@ -12,34 +12,32 @@
 #define _loadsigmask(sp) (sigsetmask(*(sp)))
 #endif
 
-#if defined(ASMLINK)
 ASMLINK
-#endif
 int
 setjmp(jmp_buf env)
 {
     __setjmp(env);
-//    _savesigmask(&env->sigmask);
+#if !(USEOLDBSD)
+    _savesigmask(&env->sigmask);
+#endif
 
     return 0;
 }
 
-#if defined(ASMLINK)
 ASMLINK NORET
-#endif
 void
 longjmp(jmp_buf env,
         int val)
 {
-//    _loadsigmask(&env->sigmask);
+#if !(USEOLDBSD)
+    _loadsigmask(&env->sigmask);
+#endif
     __longjmp(env, val);
 
     /* NOTREACHED */
 }
 
-#if defined(ASMLINK)
 ASMLINK
-#endif
 int
 _setjmp(jmp_buf env)
 {
@@ -48,9 +46,7 @@ _setjmp(jmp_buf env)
     return 0;
 }
 
-#if defined(ASMLINK)
 ASMLINK NORET
-#endif
 void
 _longjmp(jmp_buf env,
          int val)
@@ -59,4 +55,25 @@ _longjmp(jmp_buf env,
 
     /* NOTREACHED */
 }
+
+#if (_POSIX_C_SOURCE) || (_XOPEN_SOURCE)
+ASMLINK
+sigsetjmp(sigjmp_buf env, int savesigs)
+{
+    __setjmp(env);
+    if (savesigs) {
+        _savesigmask(&env->sigmask);
+        env->havesigs = 1;
+    }
+}
+
+ASMLINK NORET
+siglongjmp(sigjmp_buf env, int val)
+{
+    if (env->havesigs) {
+        _loadsigmask(&env->sigmask);
+    }
+    __longjmp(env, val);
+}
+#endif
 

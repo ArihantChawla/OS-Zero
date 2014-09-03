@@ -29,7 +29,6 @@ extern char **environ;
 #endif
 
 /* types (hopefully) not declared yet... :) */
-typedef long useconds_t;
 #if (_BSD_SOURCE) || (_XOPEN_SOURCE)
 /* TODO: check what this type is for and what it should be :) */
 typedef long socklen_t;

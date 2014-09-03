@@ -2,6 +2,7 @@
 #define __SYS_MMAN_H__
 
 #include <stddef.h>
+#include <sys/types.h>
 
 #define MAP_FAILED ((void *)-1)
 
@@ -25,9 +26,7 @@ int   madvise(void *adr, size_t len, int advice);
 int   posix_madvise(void *adr, size_t int, int advice);
 #endif
 /* FIXME: what systems is mincore() around on? */
-#if (_UNIX_SOURCE)
 int   mincore(void *adr, size_t len, unsigned char *_vec);
-#endif
 #if (_GNU_SOURCE)
 void *mremap(void *adr, size_t len, size_t newlen, int flg);
 int   remap_file_pages(void *adr, size_t len,
