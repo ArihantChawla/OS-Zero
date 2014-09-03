@@ -285,7 +285,7 @@ extern char *ctermid(char *str);
 
 #if (_XOPEN_SOURCE_EXTENDED)
 extern int getdtablesize(void);
-#define getpagesize();
+#define    getpagesize() PAGESIZE;
 #endif
 
 #endif /* __UNISTD_H__ */
