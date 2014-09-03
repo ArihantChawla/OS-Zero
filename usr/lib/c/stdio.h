@@ -1,6 +1,7 @@
 #ifndef __STDIO_H__
 #define __STDIO_H__
 
+#include <conf.h>
 #include <features.h>
 #include <stddef.h>
 #include <limits.h>
@@ -8,6 +9,7 @@
 #include <sys/types.h>
 #include <zero/param.h>
 #include <kern/io.h>
+#include <kern/io/buf.h>
 #include <stdarg.h>
 
 typedef struct file   FILE;
@@ -18,7 +20,7 @@ extern FILE          *stdout;
 extern FILE          *stderr;
 
 #define EOF           (-1)
-#define BUFSIZ        PAGESIZE
+#define BUFSIZ        BUFSIZE
 #define FILENAME_MAX  NAME_MAX
 #define FOPEN_MAX     OPEN_MAX
 /* setvbuf() arguments */
