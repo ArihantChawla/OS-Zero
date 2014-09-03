@@ -6,6 +6,7 @@
 #include <unistd.h>
 #include <sys/stat.h>
 #include <sys/select.h>
+#include <sys/ipc.h>
 #include <sys/shm.h>
 #include <zero/cdecl.h>
 #include <zero/param.h>
@@ -58,6 +59,11 @@
  * - hint kernel about memory region use characteristics
  * long  sys_mctl(void *adr, long flg, struct sysmemreg *reg);
  * - memory control operations; locks, permissions, etc.
+ *
+ * IPC
+ * ---
+ * key_t sys_ipcmkkey(void *arg);
+ * key_t sys_ipcrelkey(key_t key);
  *
  * shared memory
  * -------------
@@ -286,11 +292,11 @@ struct syswait {
 #define MEM_SETPERM     0x04
 
 struct sysmemreg {
-    struct perm  perm;
-    long         cmd;
-    void        *base;
-    long         ofs;
-    long         len;
+    struct perm  perm;					// permission structure
+    long         cmd;					// memory command
+    void        *base;					// base address of region
+    long         ofs;					// offset into region (for locks and such)
+    long         len;					// length
 };
 
 /*
@@ -299,6 +305,11 @@ struct sysmemreg {
  * - lock primitives; mutexes and other semaphores
  * - shared memory
  * - message queues
+ *
+ * sys_ipcmkkey()
+ * --------------
+ * - combine proj-byte, low 16 bits of inode number, and low 8 bits of device
+ *   number into a 32-bit key
  */
 
 #if 0
@@ -315,24 +326,29 @@ typedef uintptr_t sysipc_t;             // IPC object descriptor
 #define IPC_SET         2               // set IPC object attributes
 #define IPC_RMID        3               // remove IPC identifier
 
+struct sysvkeyarg {
+	char *path;							// path name for an accessible file
+	int   proj;							// nonzero; the low 8 bits are used for generating a key
+};
+
 struct sysrwlock {
-    long lk;    // access lock
-	long val;   // value; may be negative
+    long lk;    						// access lock
+	long val;   						// value; may be negative
 };
 
 struct msg {
-    uintptr_t qid;
-    long      prio;
-    long      len;
-    uint8_t   data[EMPTY];
+    uintptr_t qid;						// queue ID
+    long      prio;						// private
+    long      len;						// size of data field in bytes
+    uint8_t   data[EMPTY];				// message data§
 };
 
 struct sysmq {
-	struct perm  perm;
-	long         lk;
-    uintptr_t    id;
-	struct msg  *head;
-	struct msg  *tail;
+	struct perm  perm;					// message queue permission§
+	long         lk;					// access mutex
+    uintptr_t    id;					// system-wide queue ID
+	struct msg  *head;					// first item in queue for this priority
+	struct msg  *tail;					// last item in queue for this priority
 };
 
 /*

@@ -29,9 +29,14 @@ typedef unsigned int   uint;
 typedef unsigned short ushort;
 typedef unsigned long  ulong;
 /* FIXME: loff_t */
+#if 0
 typedef int64_t        blkcnt_t;
 typedef int64_t        blksize_t;
 typedef int64_t        clock_t;
+#endif
+typedef long           blkcnt_t;
+typedef long           blksize_cnt;
+typedef long           clock_t;
 typedef long           clockid_t;
 typedef int64_t        dev_t;
 typedef uint32_t       fsblkcnt_t;
@@ -45,10 +50,11 @@ typedef int32_t        nlink_t;
 typedef int64_t        off_t;
 typedef long           pid_t;
 typedef long           ssize_t;
-typedef int64_t        time_t;
+//typedef int64_t        time_t;
+typedef long           time_t
 typedef long           timer_t;
 typedef unsigned long  useconds_t;
-typedef long           seconds_t;
+typedef long           suseconds_t;
 
 #endif /* __SYS_TYPES_H__ */
 

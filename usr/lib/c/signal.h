@@ -2,20 +2,9 @@
 #define __SIGNAL_H__
 
 #include <features.h>
-#if (__KERNEL__)
-#include <kern/signal.h>
-#endif
-
-#if 0
 #if (_ZERO_SOURCE)
-/* Zero kernel-user and user-user signaling */
-#define SIGHID SIGRTMIN
-#define SIGAUD (SIGRTMIN + 1)
-#define SIGVID (SIGRTMIN + 2)
-#define sigishid(sp)    sigismember(sp, SIGHID)
-#define sigisaud(sp)    sigismember(sp, SIGAUD)
-#define sigisvid(sp)    sigismember(sp, SIGVID)
-#endif
+/* kernel signal interface */
+#include <kern/signal.h>
 #endif
 
 typedef void signalhandler_t(int);
@@ -36,9 +25,12 @@ typedef volatile long sig_atomic_t;
 #if (!SIG32BIT)
 typedef uint64_t sigset_t;
 #elif (LONGSIZE == 4)
-typedef struct sigset { uint32_t norm; uint32_t rt; } sigset_t;
+typedef struct   sigset { uint32_t norm; uint32_t rt; } sigset_t;
 #elif (LONGSIZE == 8)
-typedef struct sigset { uint64_t mask; } sigset_t;
+#if (NEWSIGNAL)
+typedef long     sigset_t;
+#else
+typedef struct   sigset { uint64_t mask; } sigset_t;
 #endif
 typedef void     sighandler_t(int);
 

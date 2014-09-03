@@ -5,7 +5,13 @@
 #include <stddef.h>
 #include <limits.h>
 #include <stdint.h>
+#if (_XOPEN_SOURCE)
+#if defined(GNUC)
+typedef _G_va_list va_list;
+#else
 #include <stdarg.h>
+#endif
+#endif
 #include <sys/types.h>
 #include <zero/param.h>
 #include <kern/io.h>
@@ -17,6 +23,11 @@ typedef off_t         fpos_t;
 extern FILE          *stdin;
 extern FILE          *stdout;
 extern FILE          *stderr;
+#if defined(__STDC__)
+#define stdin
+#define stdout
+#define stderr
+#endif
 
 #define EOF           (-1)
 #define BUFSIZ        BUFSIZE
@@ -32,7 +43,9 @@ extern FILE          *stderr;
 /* SEEK_CUR, SEEK_END, and SEEK_SET come from <kern/io.h> */
 //#define TMP_MAX      10000
 /* NULL is in <stddef.h> */
+#if (_XOPEN_SOURCE) || (USESVID)
 #define P_tmpdir      "/tmp"
+#endif
 
 /* buffering */
 extern void setbuf(FILE *__restrict stream, char *__restrict buf);
