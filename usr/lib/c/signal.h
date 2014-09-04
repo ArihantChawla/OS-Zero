@@ -235,8 +235,8 @@ extern __sighandler_t sigset(int sig, __sighandler_t func);
 #define sigismember(sp, sig)                                            \
     ((!_sigvalid(sig)                                                   \
       ? (-1)                                                            \
-        (*(sp) & (1L << (sig)), \
-		 0)))
+      : (*(sp) & (1L << (sig)),                                         \
+         0)))
 #if (_GNU_SOURCE)
 #define sigisemptyset(sp) (sp)
 #endif

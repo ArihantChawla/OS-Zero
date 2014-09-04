@@ -15,12 +15,12 @@ typedef struct _jmpbuf sigjmp_buf[1];
 #endif
 
 /* ISO C prototypes. */
-extern ASMLINK int  setjmp(jmp_buf env);
-extern ASMLINK void longjmp(jmp_buf env, int val);
+ASMLINK extern int  setjmp(jmp_buf env);
+ASMLINK NORET extern void longjmp(jmp_buf env, int val);
 
 /* Unix prototypes. */
-extern ASMLINK int  _setjmp(jmp_buf env);
-extern ASMLINK void _longjmp(jmp_buf env, int val);
+ASMLINK extern int  _setjmp(jmp_buf env);
+ASMLINK NORET extern void _longjmp(jmp_buf env, int val);
 
 #endif /* __SETJMP_H__ */
 

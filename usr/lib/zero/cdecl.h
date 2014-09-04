@@ -23,9 +23,9 @@
 #define REGARGS(n)  __attribute__ ((regparm(n)))
 #if defined(__i386__) || defined(__i486__) || defined(__i586__) || defined(__i686__)
 #define FASTCALL    REGARGS(3)
+#endif
 /* pass all arguments on stack for assembly-linkage */
 #define ASMLINK     __attribute__ ((regparm(0)))
-#endif
 /* declare function with no return (e.g., longjmp()) */
 #define NORET       __attribute__ ((noreturn))
 

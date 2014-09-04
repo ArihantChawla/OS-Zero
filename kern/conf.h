@@ -1,14 +1,16 @@
 #ifndef __KERN_CONF_H__
 #define __KERN_CONF_H__
 
+#if 0
 #if defined(__x86_64__)
-//#include <kern/unit/x86-64/conf.h>
+#include <kern/unit/x86-64/conf.h>
 #elif defined(__i386__)
 #include <kern/unit/ia32/conf.h>
 #elif defined(__arm__)
 #include <kern/unit/arm/conf.h>
 #elif defined(__ppc__)
 #include <kern/unit/ppc/conf.h>
+#endif
 #endif
 
 #define NEWFONT   1

@@ -4,25 +4,27 @@
 #include <zero/cdecl.h>
 
 /* TODO: what version of POSIX? */
-#if (_POSIX_C_SOURCE)
+#if (_POSIX_SOURCE)
 
 #if (SIG32BIT)
 #define _savesigmask(sp) ((sp)->norm = sigblock(0))
+#define _loadsigmask(sp) (sigsetmask((sp)->norm))
 #else
 #define _savesigmask(sp) (*(sp) = sigblock(0))
+#define _loadsigmask(sp) (sigsetmask(*(sp)))
 #endif
 
 #elif (_BSD_SOURCE)
 
 #if (SIG32BIT)
 #define _savesigmask(sp) ((sp)->norm = siggetmask())
+#define _loadsigmask(sp) (sigsetmask((sp)->norm))
 #else
 #define _savesigmask(sp) (*(sp) = siggetmask())
+#define _loadsigmask(sp) (sigsetmask(*(sp)))
 #endif
 
 #endif /* _POSIX_SOURCE */
-
-#define _loadsigmask(sp) (sigsetmask((sp)->norm))
 
 ASMLINK
 int
@@ -30,7 +32,7 @@ setjmp(jmp_buf env)
 {
     __setjmp(env);
 #if !(USEOLDBSD)
-    _savesigmask(&env->sigmask);
+    _savesigmask(&(env->sigmask));
 #endif
 
     return 0;
@@ -42,7 +44,7 @@ longjmp(jmp_buf env,
         int val)
 {
 #if !(USEOLDBSD)
-    _loadsigmask(&env->sigmask);
+    _loadsigmask(&(env->sigmask));
 #endif
     __longjmp(env, val);
 
@@ -76,7 +78,7 @@ sigsetjmp(sigjmp_buf env, int savesigs)
 {
     __setjmp(env);
     if (savesigs) {
-        _savesigmask(&env->sigmask);
+        _savesigmask(&(env->sigmask));
         env->havesigs = 1;
     }
 }
@@ -86,7 +88,7 @@ void
 siglongjmp(sigjmp_buf env, int val)
 {
     if (env->havesigs) {
-        _loadsigmask(&env->sigmask);
+        _loadsigmask(&(env->sigmask));
     }
     __longjmp(env, val);
 }

@@ -21,7 +21,7 @@ extern long  __timezone;
 extern int   _daylight;
 
 #if (_ZERO_SOURCE)
-#include <kern/proc/thr.h>
+//#include <kern/proc/thr.h>
 #define CLOCKS_PER_SEC HZ
 #else
 #error CLOCKS_PER_SEC undefined

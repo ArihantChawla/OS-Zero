@@ -10,7 +10,7 @@ static char *_curtok;
 
 volatile uint8_t *colltabptr = &stringcolltab_c_en_US[0];
 
-volatile uint8_t *localecolltab;
+volatile uint8_t * localecolltab;
 
 #define NLANG 2
 

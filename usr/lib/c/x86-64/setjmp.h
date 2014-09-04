@@ -8,6 +8,7 @@
 #ifndef __X86_64_SETJMP_H__
 #define __X86_64_SETJMP_H__
 
+#include <features.h>
 #include <stddef.h>
 #include <stdint.h>
 #include <signal.h>
