@@ -30,10 +30,7 @@
 
 typedef unsigned long shmatt_t;
 
-typedef long key_t;
-
-struct ipc_perm {
-};
+//typedef long key_t;
 
 struct shmid_ds {
     struct ipc_perm shm_perm;	// permission structure

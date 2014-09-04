@@ -83,7 +83,7 @@ struct proc {
     /* signal state */
     sigset_t          sigmask;          // signal mask
     sigset_t          sigpend;          // pending signals
-    signalhandler_t  *sigvec[NSIG];
+    sighandler_t     *sigvec[NSIG];
     /* runtime arguments */
     long              argc;             // argument count
     char            **argv;             // argument vector

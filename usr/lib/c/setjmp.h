@@ -12,6 +12,7 @@
 typedef struct _jmpbuf jmp_buf[1];
 #if (_POSIX_C_SOURCE) || (_XOPEN_SOURCE)
 typedef struct _jmpbuf sigjmp_buf;
+#endif
 
 /* ISO C prototypes. */
 extern int  setjmp(jmp_buf env);

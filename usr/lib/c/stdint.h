@@ -51,18 +51,5 @@ typedef unsigned int       uint_fast32_t;
 #error declare fast types for the platform in <stdint.h>
 #endif
 
-#if 0
-#define __int8_t_defined
-#define __uint8_t_defined
-#define __int16_t_defined
-#define __uint16_t_defined
-#define __int32_t_defined
-#define __uint32_t_defined
-#define __int64_t_defined
-#define __uint64_t_defined
-#define __intptr_t_defined
-#define __uintptr_t_defined
-#endif
-
 #endif /* __STDINT_H__ */
 

@@ -3,9 +3,9 @@
 
 #include <kern/conf.h>
 #include <stdint.h>
-#include <kern/types.h>
 #include <zero/param.h>
 #include <zero/types.h>
+#include <kern/types.h>
 
 #define CPUHASFXSR 0x00000001
 #define CPUHASAPIC 0x00000002

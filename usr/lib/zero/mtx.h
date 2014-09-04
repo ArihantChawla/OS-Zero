@@ -7,11 +7,9 @@
  */
 
 #if (__KERNEL__)
+#undef PTHREAD
 #define PTHREAD    0
-#else
-#define PTHREAD    1
 #endif
-
 #define MTXINITVAL 0L
 #define MTXLKVAL   1L
 

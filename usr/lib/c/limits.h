@@ -82,18 +82,18 @@
 /*
  * POSIX values.
  */
-#define ARG_MAX     65536 		/* # of argument and environment bytes to exec functions */
-#define CHILD_MAX   256   		/* # of processes per real user ID */
-#define LINK_MAX    127         /* # of links per file
-#define MAX_CANON   255   		/* size of canonical input queue */
-#define MAX_INPUT   255         /* # size of type-ahead buffer
-#define NGROUPS_MAX 16    		/* # of supplementary group ID per process */
-#define OPEN_MAX    32768 		/* # of open files per process */
-#define PIPE_BUF    4096        /* # of bytes in atomic write to pipe
-#define STREAM_MAX  FOPEN_MAX   /* # of open I/O streams per process
-#define NAME_MAX    255         /* # of bytes in file names
-#define PATH_MAX    4096        /* # of bits in file system path including terminating NUL
-#define TZNAME_MAX  255         /* # of bytes in timezone names
+#define ARG_MAX     65536 	// # of arg and env bytes to exec functions
+#define CHILD_MAX   256   	// # of processes per real user ID
+#define LINK_MAX    127         // # of links per file
+#define MAX_CANON   255   	// size of canonical input queue
+#define MAX_INPUT   255         // # size of type-ahead buffer
+#define NGROUPS_MAX 16    	// # of supplementary group ID per process
+#define OPEN_MAX    32768 	// # of open files per process
+#define PIPE_BUF    4096        // # of bytes in atomic write to pipe
+#define STREAM_MAX  FOPEN_MAX   // # of open I/O streams per process
+#define NAME_MAX    255         // # of bytes in file names
+#define PATH_MAX    4096        // # of bits in path including terminating NUL
+#define TZNAME_MAX  255         // # of bytes in timezone names
 
 #endif /* POSIX */
 #define RTSIG_MAX   NRTSIG

@@ -2,14 +2,14 @@
 #define __SIGNAL_H__
 
 #include <features.h>
-#if (_POSIX_SOURCE) && defined(USEPOSIX199309)
-#include <time.h>
-#endif
 #include <sys/types.h>
 #include <zero/param.h>
 #if (_ZERO_SOURCE)
 /* kernel signal interface */
 #include <kern/signal.h>
+#endif
+#if (_POSIX_SOURCE) && defined(USEPOSIX199309)
+#include <time.h>
 #endif
 
 /* internal. */
@@ -17,25 +17,26 @@
 #define _sigrt(sig)     ((sig) && (!((sig) & ~SIGRTMASK)))
 #define _signorm(sig)   ((sig) && (!((sig) & SIGRTMASK)))
 
-#if (_POSIX_SOURCE)
-
 #if defined(__x86_64__) || defined(__amd64__) || defined(___alpha__)
 #define SIG32BIT 0
 #else
 #define SIG32BIT 1
 #endif
 
-typedef volatile long  sig_atomic_t;
+#if (_POSIX_SOURCE)
+
+typedef volatile long    sig_atomic_t;
 #if (SIG32BIT)
-typedef struct         sigset { uint32_t norm; uint32_t rt; } sigset_t;
+typedef struct           sigset { uint32_t norm; uint32_t rt; } sigset_t;
 #else
-typedef long           sigset_t;
+typedef long             sigset_t;
 #endif
-typedef void           sighandler_t(int);
 typedef void           (*__sighandler_t)(int);
 #if (_GNU_SOURCE)
-typedef __sighandler_t sighandler_t;
+typedef __sighandler_t   sighandler_t;
 #endif
+
+#endif /* _POSIX_SOURCE */
 
 #if (_BSD_SOURCE)
 /* set handler for signal sig; returns old handler */
@@ -61,7 +62,7 @@ extern int kill(pid_t pid, int sig);
  * send signal sig to all processes in the group pgrp
  * - if pid is zero, send sig to all processes in the current one's group
  */
-extern int kill§pg(pid_t pgrp, int sig);
+extern int killpg(pid_t pgrp, int sig);
 #endif
 
 extern int raise(int sig);
@@ -121,17 +122,19 @@ int siggetmask(void);
 extern int sigprocmask(int how, const sigset_t *__restrict set,
                        sigset_t *__restrict oldset);
 /* change blocked signals to set, wait for a signal, restore the set */
-extern int sigsuspend(onst sigset_t *set);
+extern int sigsuspend(const sigset_t *set);
+#if 0 /* TODO: struct sigaction */
 extern int sigaction(int sig, const struct sigaction *__restrict act,
                      struct sigaction *__restrict oldact);
+#endif
 extern int sigpending(sigset_t *set);
 extern int sigwait(const sigset_t *set, int *__restrict sig);
-#if (USEPOSIX199309)
+#if (USEPOSIX199309) && 0 /* TODO: siginfo_t */
 extern int sigwaitinfo(const sigset_t *__restrict set,
                        siginfo_t *__restrict info);
 extern int sigtimedwait(const sigset_t *__restrict set,
                         siginfo_t *__restrict info,
-						const struct timespec *__restrict timeout);
+                        const struct timespec *__restrict timeout);
 //extern int sigqueue(pid_t pid, int sig, const union sigval val);
 #endif
 #endif

@@ -6,6 +6,7 @@
 #include <zero/cdecl.h>
 #include <zero/param.h>
 #include <zero/types.h>
+#include <kern/syscall.h>
 #include <kern/unit/x86/cpu.h>
 #if defined(__x86_64__)
 #include <kern/unit/x86-64/asm.h>

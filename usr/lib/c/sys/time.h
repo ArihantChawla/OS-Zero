@@ -10,16 +10,16 @@
 #define CLK_TCK        CLOCKS_PER_SEC
 #endif
 #if (_GNU_SOURCE)
-#define TIMEVAL_TO_TIMESPEC(tv, ts) \
-    do {
-		(ts)->tv_sec = (tv)->tv_sec; \
-		(ts)->tv_nsec = (tv)->tv_usec * 1000 \
-	} while (0)
-#define TIMESPEC_TO_TIMEVAL(tv, ts) \
-    do {
-		(tv)->tv_sec = (ts)->tv_sec; \
-		(tv)->tv_usec = (ts)->tv_nsec / 1000 \
-	} while (0)
+#define TIMEVAL_TO_TIMESPEC(tv, ts)                                     \
+    do {                                                                \
+        (ts)->tv_sec = (tv)->tv_sec;                                    \
+        (ts)->tv_nsec = (tv)->tv_usec * 1000;                           \
+    } while (0)
+#define TIMESPEC_TO_TIMEVAL(tv, ts)                                     \
+    do {                                                                \
+        (tv)->tv_sec = (ts)->tv_sec;                                    \
+        (tv)->tv_usec = (ts)->tv_nsec / 1000;                           \
+    } while (0)
 #endif
 #if (_BSD_SOURCE)
 /* obsolete structure that should never be used */
@@ -31,11 +31,17 @@ typedef struct timezone *__restrict timezone_ptr_t;
 #else
 typedef void *__restrict timezone_ptr_t;
 #endif
+
+struct timeval {
+    time_t      tv_sec;
+    suseconds_t tv_usec;
+};
+
 extern int gettimeofday(struct timeval *__restrict tv,
                         timezone_ptr_t tz);
 #if (_BSD_SOURCE)
 extern int settimeofday(const struct timeval *tv, const struct timezone *tz);
-extern int adjtime const struct timeval *delta, struct timeval *olddelta);
+extern int adjtime(const struct timeval *delta, struct timeval *olddelta);
 #endif
 #define ITIMER_REAL    0
 #define ITIMER_VIRTUAL 1
@@ -57,7 +63,7 @@ extern int lutimes(const char *file, const struct timeval tv[2]);
 extern int futimes(int fd, const struct timeval tv[2]);
 #endif
 #if (_GNU_SOURCE)
-extern int futimesat(int fd, const char *file, const struct timeval tv{2]);
+extern int futimesat(int fd, const char *file, const struct timeval tv[2]);
 #endif
 #if (_BSD_SOURCE)
 #define timerisset(tv) ((tv)->tv_sec || (tv)->tv_usec)

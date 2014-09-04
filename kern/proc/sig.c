@@ -10,9 +10,9 @@
 #include <kern/unit/x86/cpu.h>
 #endif
 
-extern long      trapsigmap[TRAPNCPU];
+extern long   trapsigmap[TRAPNCPU];
 
-signalhandler_t *ksigfunctab[NSIG];
+sighandler_t *ksigfunctab[NSIG];
 
 void
 kill(struct proc *proc)
@@ -24,29 +24,29 @@ kill(struct proc *proc)
 FASTCALL
 #endif
 void
-sigfunc(unsigned long pid, uint32_t trap, long errnum)
+sigfunc(unsigned long pid, uint32_t trap, long err)
 {
-    struct proc     *proc = k_curproc;
-    long             signum = trapsigmap[trap];
-    signalhandler_t *func;
+    struct proc  *proc = k_curproc;
+    long          sig = trapsigmap[trap];
+    sighandler_t  func;
 
-//    kprintf("trap 0x%lx -> signal 0x%lx\n", trap, signum);
+//    kprintf("trap 0x%lx -> signal 0x%lx\n", trap, sig);
     if (trap == TRAPUD) {
 //        kprintf("PANIC: #UD (0x%lx)\n", errcode);
     } else if (trap == TRAPGP) {
 //        kprintf("PANIC: #GP (0x%lx)\n", errcode);
-    } else if (signum == SIGKILL) {
-//        kprintf("trap 0x%lx -> signal 0x%lx\n", trap, signum);
-        kill(proc);
-    } else if ((signum) && sigismember(&proc->sigmask, signum)) {
-//        kprintf("trap 0x%lx -> signal 0x%lx\n", trap, signum);
-        func = proc->sigvec[signum];
+    } else if (sig == SIGKILL) {
+//        kprintf("trap 0x%lx -> signal 0x%lx\n", trap, sig);
+//        kill(proc, sig);
+    } else if ((sig) && sigismember(&proc->sigmask, sig)) {
+//        kprintf("trap 0x%lx -> signal 0x%lx\n", trap, sig);
+        func = proc->sigvec[sig];
         if (func) {
-            func(signum);
+            func(sig);
         } else {
-            func = ksigfunctab[signum];
+            func = ksigfunctab[sig];
             if (func) {
-                func(signum);
+                func(sig);
             }
         }
     }
