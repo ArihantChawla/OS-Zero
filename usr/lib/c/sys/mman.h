@@ -1,10 +1,17 @@
 #ifndef __SYS_MMAN_H__
 #define __SYS_MMAN_H__
 
+#include <features.h>
 #include <stddef.h>
 #include <sys/types.h>
+#if (_ZERO_SOURCE)
+#include <kern/syscall.h>
+#endif
 
 #define MAP_FAILED ((void *)-1)
+#define PROT_EXEC  0x01
+#define PROT_WRITE 0x02
+#define PROT_READ  0x04
 
 #if (_GNU_SOURCE)
 typedef int error_t;

@@ -30,7 +30,9 @@
 #define FREEBITMAP 0
 
 #define ZEROMTX    1
+#if !defined(PTHREAD) && (MTSAFE)
 #define PTHREAD    1
+#endif
 
 #include <features.h>
 #include <errno.h>
@@ -402,8 +404,7 @@ static void   putmem(void *ptr);
 static void * _realloc(void *ptr, size_t size, long rel);
 
 #include <string.h>
-#if (MTSAFE)
-#define PTHREAD  1
+#if (PTHREAD)
 #include <pthread.h>
 #endif
 //#include <mach/mach.h>
@@ -573,7 +574,9 @@ getaid(void)
     mlk(&_conf.arnlk);
     aid = _conf.acur++;
     _conf.acur &= NARN - 1;
+#if (PTHREAD)
     pthread_setspecific(_akey, _atab[aid]);
+#endif
     munlk(&_conf.arnlk);
 
     return aid;
@@ -943,7 +946,9 @@ initmall(void)
         _atab[aid]->hcur = NBUFHDR;
     }
     _conf.narn = NARN;
+#if (PTHREAD)
     pthread_key_create(&_akey, relarn);
+#endif
     munlk(&_conf.arnlk);
 #endif
 #if (PTHREAD)
@@ -1375,7 +1380,8 @@ freemap(struct mag *mag)
         _fcnt[bid]++;
 #endif
         munlk(&_flktab[bid]);
-    } else if (!unmapanon(clrptr(mag->adr), max * bsz)) {
+    } else {//if (!unmapanon(clrptr(mag->adr), max * bsz)) {
+        unmapanon(clrptr(mag->adr), max * bsz);
 #if (VALGRIND)
         if (RUNNING_ON_VALGRIND) {
             VALGRIND_FREELIKE_BLOCK(clrptr(mag->adr), 0);
