@@ -26,10 +26,10 @@ typedef unsigned long long uint64_t;
 typedef long               int64_t;
 typedef unsigned long      uint64_t;
 #endif
-#if (PTRBITS == 32)
+#if (PTRBITS <= 32)
 typedef int32_t            intptr_t;
 typedef uint32_t           uintptr_t;
-#elif (PTRBITS == 64)
+#else
 typedef int64_t            intptr_t;
 typedef uint64_t           uintptr_t;
 #endif

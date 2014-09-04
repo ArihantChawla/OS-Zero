@@ -11,7 +11,7 @@
 #define NGROUPS       NGROUPS_MAX
 #endif
 #define MAXSYMLINKS   16
-#defined CANBSIZE     MAX_CANON
+#define CANBSIZE     MAX_CANON
 #define NCARGS        ARG_MAX
 #define MAXPATHLEN    PATH_MAX
 #define NOFILE        OPEN_MAX

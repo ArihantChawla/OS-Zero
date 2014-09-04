@@ -11,16 +11,16 @@
 
 typedef struct _jmpbuf jmp_buf[1];
 #if (_POSIX_C_SOURCE) || (_XOPEN_SOURCE)
-typedef struct _jmpbuf sigjmp_buf;
+typedef struct _jmpbuf sigjmp_buf[1];
 #endif
 
 /* ISO C prototypes. */
-extern int  setjmp(jmp_buf env);
-extern void longjmp(jmp_buf env, int val);
+extern ASMLINK int  setjmp(jmp_buf env);
+extern ASMLINK void longjmp(jmp_buf env, int val);
 
 /* Unix prototypes. */
-extern int  _setjmp(jmp_buf env);
-extern void _longjmp(jmp_buf env, int val);
+extern ASMLINK int  _setjmp(jmp_buf env);
+extern ASMLINK void _longjmp(jmp_buf env, int val);
 
 #endif /* __SETJMP_H__ */
 

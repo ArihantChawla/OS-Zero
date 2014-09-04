@@ -211,7 +211,7 @@ extern int      getlogin_r(char *name, size_t len);
 #if (_BSD_SOURCE)
 extern int      setlogin(const char *name);
 #endif
-#if (USEPOSIX2)
+#if (USEPOSIX2) && 0 /* TODO: getopt.h */
 #include <getopt.h>
 #endif
 #if (_BSD_SOURCE) || (USEUNIX98)

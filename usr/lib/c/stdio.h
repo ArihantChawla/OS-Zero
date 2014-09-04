@@ -6,8 +6,8 @@
 #include <limits.h>
 #include <stdint.h>
 #if (_XOPEN_SOURCE)
-#if defined(GNUC)
-typedef _G_va_list va_list;
+#if defined(__GNUC__) && 0
+typedef G_va_list va_list;
 #else
 #include <stdarg.h>
 #endif

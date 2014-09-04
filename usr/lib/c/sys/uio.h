@@ -11,7 +11,7 @@ struct iovec {
 };
 
 extern ssize_t readv(int fd, const struct iovec *iovec, int cnt);
-extern ssize_t write(int fd, const struct iovec *iovec, int cnt);
+extern ssize_t writev(int fd, const struct iovec *iovec, int cnt);
 
-#endif __SYS_UIO_H__
+#endif /* __SYS_UIO_H__ */
 

@@ -41,7 +41,7 @@ typedef void            signalhandler_t(int);
 #endif /* _POSIX_SOURCE */
 
 #if (_POSIX_SOURCE) && defined(USEPOSIX199309)
-#include <time.h>
+//#include <time.h>
 #endif
 
 #if (_BSD_SOURCE)

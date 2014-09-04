@@ -23,7 +23,7 @@ int   madvise(void *adr, size_t len, int advice);
 #endif
 /* FIXME: what version of XOPEN to check for? */
 #if (_XOPEN_SOURCE)
-int   posix_madvise(void *adr, size_t int, int advice);
+int   posix_madvise(void *adr, size_t len, int advice);
 #endif
 /* FIXME: what systems is mincore() around on? */
 int   mincore(void *adr, size_t len, unsigned char *_vec);

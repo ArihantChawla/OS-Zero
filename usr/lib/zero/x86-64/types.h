@@ -3,6 +3,7 @@
 
 #include <zero/cdecl.h>
 #include <zero/param.h>
+#include <zero/types.h>
 
 /* C call frame */
 struct m_stkframe {
@@ -18,7 +19,7 @@ struct m_farptr {
     uint16_t lim;
     uint32_t adr;
 } PACK();
-#endi
+#endif
 
 #if 0
 
@@ -83,8 +84,6 @@ struct m_segregs {
     int32_t gs;         // per-CPU data segment
 };
 
-#endif /* 0 */
-
 #define TCBFCTXSIZE 512
 struct m_tcb {
     uint8_t            fctx[TCBFCTXSIZE];
@@ -93,6 +92,8 @@ struct m_tcb {
     struct m_pusha     genregs;
     struct m_segregs   segregs;
 } PACK() ALIGNED(PAGESIZE);
+
+#endif /* 0 */
 
 #endif /* __ZERO_X86_64_TYPES_H__ */
 

@@ -5,12 +5,24 @@
 
 /* TODO: what version of POSIX? */
 #if (_POSIX_C_SOURCE)
+
+#if (SIG32BIT)
+#define _savesigmask(sp) ((sp)->norm = sigblock(0))
+#else
 #define _savesigmask(sp) (*(sp) = sigblock(0))
-#define _loadsigmask(sp) (sigsetmask(*(sp)))
-#elif (_BSD_SOURCE)
-#define _savesigmask(sp) (*(sp) = siggetmask())
-#define _loadsigmask(sp) (sigsetmask(*(sp)))
 #endif
+
+#elif (_BSD_SOURCE)
+
+#if (SIG32BIT)
+#define _savesigmask(sp) ((sp)->norm = siggetmask())
+#else
+#define _savesigmask(sp) (*(sp) = siggetmask())
+#endif
+
+#endif /* _POSIX_SOURCE */
+
+#define _loadsigmask(sp) (sigsetmask((sp)->norm))
 
 ASMLINK
 int
@@ -57,7 +69,9 @@ _longjmp(jmp_buf env,
 }
 
 #if (_POSIX_C_SOURCE) || (_XOPEN_SOURCE)
+
 ASMLINK
+int
 sigsetjmp(sigjmp_buf env, int savesigs)
 {
     __setjmp(env);
@@ -68,6 +82,7 @@ sigsetjmp(sigjmp_buf env, int savesigs)
 }
 
 ASMLINK NORET
+void
 siglongjmp(sigjmp_buf env, int val)
 {
     if (env->havesigs) {
@@ -75,5 +90,6 @@ siglongjmp(sigjmp_buf env, int val)
     }
     __longjmp(env, val);
 }
+
 #endif
 

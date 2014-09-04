@@ -74,7 +74,7 @@ extern size_t  strftime(char *__restrict buf, size_t len,
 extern char *strptime(const char *__restrict str, const char *__restrict fmt,
                       struct tm *tm);
 #endif
-#if (_GNU_SOURCE)
+#if (_GNU_SOURCE) && 0 /* TODO: <xlocale.h> */
 #include <xlocale.h>
 extern size_t strftime_1(char *__restrict buf, size_t len,
                          const char *__restrict fmt,
