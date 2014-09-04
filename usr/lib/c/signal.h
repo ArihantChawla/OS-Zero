@@ -8,9 +8,6 @@
 /* kernel signal interface */
 #include <kern/signal.h>
 #endif
-#if (_POSIX_SOURCE) && defined(USEPOSIX199309)
-#include <time.h>
-#endif
 
 /* internal. */
 #define _sigvalid(sig)  ((sig) && (!((sig) & ~SIGMASK)))
@@ -25,18 +22,27 @@
 
 #if (_POSIX_SOURCE)
 
-typedef volatile long    sig_atomic_t;
+typedef volatile long   sig_atomic_t;
 #if (SIG32BIT)
-typedef struct           sigset { uint32_t norm; uint32_t rt; } sigset_t;
+struct _sigset {
+    uint32_t norm;
+    uint32_t rt;
+};
+typedef struct _sigset   sigset_t;
 #else
 typedef long             sigset_t;
 #endif
 typedef void           (*__sighandler_t)(int);
+typedef __sighandler_t  sighandler_t;
 #if (_GNU_SOURCE)
-typedef __sighandler_t   sighandler_t;
+typedef void            signalhandler_t(int);
 #endif
 
 #endif /* _POSIX_SOURCE */
+
+#if (_POSIX_SOURCE) && defined(USEPOSIX199309)
+#include <time.h>
+#endif
 
 #if (_BSD_SOURCE)
 /* set handler for signal sig; returns old handler */
@@ -178,36 +184,37 @@ extern __sighandler_t sigset(int sig, __sighandler_t func);
 
 #if (SIG32BIT)
 
-#define _sigptr(sp) ((struct sigset *)(sp))
+//#define _sigptr(sp) ((struct sigset *)(sp))
 
 /* POSIX */
-#define sigemptyset(p)                                                 \
-    (!_sigptr(sp)->norm && !_sigptr(sp)->rt)
+#define sigemptyset(sp)                                                 \
+    (!(sp)->norm && !(sp)->rt)
 #define sigfillset(sp)                                                  \
-    ((_sigptr(sp)->norm = _sigptr(sp)->rt = ~UINT32_C(0)), 0)
+    (((sp)->norm = (sp)->rt = ~UINT32_C(0)), 0)
 #define sigaddset(sp, sig)                                              \
     ((!_sigvalid(sig)                                                   \
       ? (-1)                                                            \
       : (_signorm(sig)                                                  \
-         ? (_sigptr(sp)->norm |= (1UL << (sig)))                        \
-         : (_sigptr(sp)->rt |= (1UL << ((sig) - SIGRTMIN))))),          \
+         ? ((sp)->norm |= (1UL << (sig)))                               \
+         : ((sp)->rt |= (1UL << ((sig) - SIGRTMIN))))),                 \
      0)
 #define sigdelset(sp, sig)                                              \
     ((!_sigvalid(sig)                                                   \
       ? (-1)                                                            \
       : (_signorm(sig)                                                  \
-         ? (_sigptr(sp)->norm &= ~(1UL << (sig)))                       \
-         : (_sigptr(sp)->rt &= ~(1UL << ((sig) - SIGRTMIN))))),         \
+         ? ((sp)->norm &= ~(1UL << (sig)))                              \
+         : ((sp)->rt &= ~(1UL << ((sig) - SIGRTMIN))))),                \
      0)
 #define sigismember(sp, sig)                                            \
     ((!_sigvalid(sig)                                                   \
       ? (-1)                                                            \
       : (_signorm(sig)                                                  \
-         ? ((_sigptr(sp)->norm >> (sig)) & 0x01)                        \
-         : ((_sigptr(sp)->rt >> (sig - SIGRTMIN)) & 0x01))))
+         ? (((sp)->norm >> (sig)) & 0x01)                               \
+         : (((sp)->rt >> (sig - SIGRTMIN)) & 0x01))))
 #if (_GNU_SOURCE)
 #define sigisemptyset(sp) ((sp)->norm | (sp)->rt)
 #endif
+
 #else /* !SIG32BIT */
 
 /* POSIX */
@@ -217,13 +224,13 @@ extern __sighandler_t sigset(int sig, __sighandler_t func);
     (*(sp) = ~0L)
 #define sigaddset(sp, sig)                                              \
     ((!_sigvalid(sig)                                                   \
-      ? (-1L)                                                            \
-      : (_sigptr(sp)->norm |= (1UL << (sig)),                        \
+      ? (-1L)                                                           \
+      : ((sp)->norm |= (1UL << (sig)),                                  \
          0)))
-#define sigdelsetset(sp, sig)                                              \
+#define sigdelsetset(sp, sig)                                           \
     ((!_sigvalid(sig)                                                   \
-      ? (-1L)                                                            \
-      : (_sigptr(sp)->norm &= ~(1UL << (sig)),                        \
+      ? (-1L)                                                           \
+      : ((sp)->norm &= ~(1UL << (sig)),                                 \
          0)))
 #define sigismember(sp, sig)                                            \
     ((!_sigvalid(sig)                                                   \

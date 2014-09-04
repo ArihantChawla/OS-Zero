@@ -42,7 +42,7 @@ extern void irqerror(void);
 extern void irqspurious(void);
 #endif
 
-extern void syscall(void);
+//extern void syscall(void);
 
 #if (SMP)
 extern volatile long   mpmultiproc;

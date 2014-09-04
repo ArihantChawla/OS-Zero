@@ -65,32 +65,33 @@ extern int futimes(int fd, const struct timeval tv[2]);
 #if (_GNU_SOURCE)
 extern int futimesat(int fd, const char *file, const struct timeval tv[2]);
 #endif
+
 #if (_BSD_SOURCE)
-#define timerisset(tv) ((tv)->tv_sec || (tv)->tv_usec)
-#define timerclear(tv) (!(tv)->tv_sec && !(tv)->tv_usec);
-#define timercmp(tv1, tv2, _cmp) \
-	(((tv1)->tv_sec == (tv2)->tv_sec) \
-	 ? ((tv1)->tv_usec CMP (tv2)->tv_usec) \
-	 : ((tv1)->tv_sec CMP (tv2)->tv_sec))
-# define timeradd(tv1, tv2, res)						      \
-    do {									      \
-		(res->tv_sec = (tv1)->tv_sec + (tv2)->tv_sec;			      \
-		(res)->tv_usec = (tv1)->tv_usec + (tv2)->tv_usec;			      \
-		if ((res)->tv_usec >= 1000000) {									      \
-			++(result)->tv_sec;						      \
-			(result)->tv_usec -= 1000000;					      \
-		}									      \
+#define    timerisset(tv) ((tv)->tv_sec || (tv)->tv_usec)
+#define    timerclear(tv) (!(tv)->tv_sec && !(tv)->tv_usec);
+#define    timercmp(tv1, tv2, _cmp)       \
+    (((tv1)->tv_sec == (tv2)->tv_sec)          \
+     ? ((tv1)->tv_usec CMP (tv2)->tv_usec)     \
+     : ((tv1)->tv_sec CMP (tv2)->tv_sec))
+# define   timeradd(tv1, tv2, res)                                      \
+    do {                                                                \
+        (res)->tv_sec = (tv1)->tv_sec + (tv2)->tv_sec;                  \
+        (res)->tv_usec = (tv1)->tv_usec + (tv2)->tv_usec;               \
+        if ((res)->tv_usec >= 1000000) {                                \
+            ++(result)->tv_sec;                                         \
+            (result)->tv_usec -= 1000000;                               \
+        }                                                               \
     } while (0)
-# define timersub(tv1, b, result)						      \
-    do {									      \
-		(res)->tv_sec = (tv1)->tv_sec - (tv2)->tv_sec;			      \
-		(res)->tv_usec = (tv1)->tv_usec - (tv2)->tv_usec;			      \
-		if ((result)->tv_usec < 0) {					      \
-			--(res)->tv_sec;						      \
-			(res)->tv_usec += 1000000;					      \
-		}									      \
+# define   timersub(tv1, b, result)                                     \
+    do {                                                                \
+        (res)->tv_sec = (tv1)->tv_sec - (tv2)->tv_sec;                  \
+        (res)->tv_usec = (tv1)->tv_usec - (tv2)->tv_usec;               \
+        if ((result)->tv_usec < 0) {                                    \
+            --(res)->tv_sec;                                            \
+            (res)->tv_usec += 1000000;                                  \
+        }                                                               \
     } while (0)
-#endif
+#endif /* _BSD_SOURCE */
 
 #endif /* __SYS_TIME_H__ */
 

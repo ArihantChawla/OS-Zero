@@ -371,7 +371,7 @@ struct sysmq {
 #define IO_NONBUF     0x00000080      // unbuffered I/O mode
 /* IDEAS: IO_DIRECT */
 
-struct syscall {
+struct sysop {
     long    arg1;
     long    arg2;
     long    arg3;

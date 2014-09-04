@@ -10,12 +10,12 @@
 #include <kern/unit/x86/cpu.h>
 #endif
 
-extern long   trapsigmap[TRAPNCPU];
+extern long      trapsigmap[TRAPNCPU];
 
-sighandler_t *ksigfunctab[NSIG];
+signalhandler_t *ksigfunctab[NSIG];
 
 void
-kill(struct proc *proc)
+killproc(struct proc *proc)
 {
     ;
 }
@@ -26,9 +26,9 @@ FASTCALL
 void
 sigfunc(unsigned long pid, uint32_t trap, long err)
 {
-    struct proc  *proc = k_curproc;
-    long          sig = trapsigmap[trap];
-    sighandler_t  func;
+    struct proc     *proc = k_curproc;
+    long             sig = trapsigmap[trap];
+    signalhandler_t *func;
 
 //    kprintf("trap 0x%lx -> signal 0x%lx\n", trap, sig);
     if (trap == TRAPUD) {
@@ -37,7 +37,7 @@ sigfunc(unsigned long pid, uint32_t trap, long err)
 //        kprintf("PANIC: #GP (0x%lx)\n", errcode);
     } else if (sig == SIGKILL) {
 //        kprintf("trap 0x%lx -> signal 0x%lx\n", trap, sig);
-//        kill(proc, sig);
+        killproc(proc);
     } else if ((sig) && sigismember(&proc->sigmask, sig)) {
 //        kprintf("trap 0x%lx -> signal 0x%lx\n", trap, sig);
         func = proc->sigvec[sig];

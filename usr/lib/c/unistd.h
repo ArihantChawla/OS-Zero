@@ -6,6 +6,7 @@
 #include <stdio.h>
 #include <stdint.h>
 #include <sys/types.h>
+#include <zero/param.h>
 
 #if (_POSIX_SOURCE)
 #define _POSIX_VERSION  200112L
@@ -171,86 +172,88 @@ extern int setresgid(gid_t gid, gid_t egid, gid_t sgid);
 extern pid_t fork(void);
 #if (_BSD_SOURCE) || (USEXOPENEXT)
 /*
- * - don't clone the whole address space
+ * - don't clone address space; execute in that of the parent
  * - suspend calling process until exit() or execve()
  */
-extern pid_t vfork(void);
+extern pid_t    vfork(void);
 #endif
-extern char *ttyname(int fd);
-extern int   ttyname_r(int fd, char *buf, size_t len);
+extern char    *ttyname(int fd);
+extern int      ttyname_r(int fd, char *buf, size_t len);
 #if (_BSD_SOURCE) || ((USEXOPENEXT) && !(USEUNIX98))
-extern int ttyslot(void);
+extern int      ttyslot(void);
 #endif
-extern int link(const char *from, const char *to);
+extern int      link(const char *from, const char *to);
 #if (_GNU_SOURCE)
-extern int linkat(int fd, const char *from, int newfd, const char *to, int flg);
+extern int      linkat(int fd, const char *from, int newfd,
+                    const char *to, int flg);
 #endif
 #if (_BSD_SOURCE) || defined(USEXOPENEXT) || (USEXOPEN2K)
-extern int symlink(const char *from, const char *to);
-extern ssize_t readlink(const char *__restrict path, char *__restrict buf,
-                        size_t len);
+extern int      symlink(const char *from, const char *to);
+extern ssize_t  readlink(const char *__restrict path, char *__restrict buf,
+                         size_t len);
 #endif
 #if (_GNU_SOURCE)
-extern int symlinkat(const char *from, int fd, const char *to);
-extern ssize_t readlinkat(int fd, const char *__restrict path,
-                          char *__restrict buf, size_t len);
+extern int      symlinkat(const char *from, int fd, const char *to);
+extern ssize_t  readlinkat(int fd, const char *__restrict path,
+                           char *__restrict buf, size_t len);
 #endif
-extern int unlink(const char *name);
+extern int      unlink(const char *name);
 #if (_GNU_SOURCE)
-extern int unlinkat(int fd, const char *name, int flg);
+extern int      unlinkat(int fd, const char *name, int flg);
 #endif
-extern int rmdir(const char *path);
-extern pid_t tcgetpgrp(int fd);
-extern int tcsetpgrp(int fd, pid_t pgrp);
-extern char *getlogin(void);
+extern int      rmdir(const char *path);
+extern pid_t    tcgetpgrp(int fd);
+extern int      tcsetpgrp(int fd, pid_t pgrp);
+extern char    *getlogin(void);
 #if (_REENTRANT) || (USEPOSIX199506)
-extern int getlogin_r(char *name, size_t len);
+extern int      getlogin_r(char *name, size_t len);
 #endif
 #if (_BSD_SOURCE)
-extern int setlogin(const char *name);
+extern int      setlogin(const char *name);
 #endif
 #if (USEPOSIX2)
 #include <getopt.h>
 #endif
 #if (_BSD_SOURCE) || (USEUNIX98)
-extern int gethostname(char *name, size_t len);
+extern int      gethostname(char *name, size_t len);
 #endif
 #if (_BSD_SOURCE) || ((_XOPEN_SOURCE) && !defined(USEUNIX98))
-extern int sethostnmae(const char *name, size_t len);
-extern int sethostid(long id);
-extern int getdomainname(const char *name, size_t len);
-extern int setdomainname(const char *name, size_t len);
-extern int vhangup(void);
-extern int revoke(const char *file);
-extern int profil(unsigned short *buf, size_t size, size_t ofs,
-                  unsigned int scale);
-extern int acct(const char *name);
-extern char *getusershell(void);
-extern void endusershell(void);
-extern void setusershell(void);
-extern int daemon(int nochdir, int noclose);
+extern int      sethostnmae(const char *name, size_t len);
+extern int      sethostid(long id);
+extern int      getdomainname(const char *name, size_t len);
+extern int      setdomainname(const char *name, size_t len);
+extern int      vhangup(void);
+extern int      revoke(const char *file);
+extern int      profil(unsigned short *buf, size_t size, size_t ofs,
+                       unsigned int scale);
+extern int      acct(const char *name);
+extern char    *getusershell(void);
+extern void     endusershell(void);
+extern void     setusershell(void);
+extern int      daemon(int nochdir, int noclose);
 #endif
 #if (_BSD_SOURCE) || ((_XOPEN_SOURCE) && !(USEXOPEN2K))
-extern int chroot(const char *path);
-extern char *getpass(const char *prompt);
+extern int      chroot(const char *path);
+extern char    *getpass(const char *prompt);
 #endif
 #if (_BSD_SOURCE) || (_XOPEN_SOURCE)
-extern int fsync(int fd);
+extern int      fsync(int fd);
 #endif
 #if (_BSD_SOURCE) || (USEXOPENEXT)
-extern long gethostid(void);
-extern void sync(void);
-extern int getpagesize(void);
+extern long     gethostid(void);
+extern void     sync(void);
+//extern int getpagesize(void);
+#define         getpagesize() PAGESIZE
 #endif
-extern int truncate(const char *file, off_t len);
+extern int      truncate(const char *file, off_t len);
 #if (_BSD_SOURCE) || (USEXOPENEXT) || (USEXOPEN2K)
-extern int ftruncate(int fd, off_t len);
+extern int      ftruncate(int fd, off_t len);
 #endif
 #if (USEXOPENEXT)
-extern int brk(void *adr);
-extern void *sbrk(intptr_t delta);
+extern int      brk(void *adr);
+extern void    *sbrk(intptr_t delta);
 #endif
-extern long int syscall(long int num, ...);
+extern long     syscall(long int num, ...);
 #if (USEXOPENEXT) && !defined(F_LOCK)
 /* these macros also appear in <fcntl.h> - keep the files consistent */
 #define F_ULOCK 0
@@ -275,8 +278,8 @@ extern int fdatasync(int fd);
 
 #if (_XOPEN_SOURCE)
 extern char *crypt(const char *key, const char *salt);
-extern void encrypt(char *blk, int flg);
-extern void swab(const void *__restrict from, void *__restrict to, ssize_t n);
+extern void  encrypt(char *blk, int flg);
+extern void  swab(const void *__restrict from, void *__restrict to, ssize_t n);
 #endif
 
 #if (_XOPEN_SOURCE)

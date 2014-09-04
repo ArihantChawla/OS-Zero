@@ -95,7 +95,7 @@ struct thr {
 //    long           interact;
     long           runtime;             // run time
     /* system call context */
-    struct syscall syscall;             // current system call
+    struct sysop   syscall;             // current system call
 } PACK();
 
 #endif /* __KERN_THR_H__ */

@@ -3,7 +3,7 @@
 # clang doesn't support everything it would need to for the kernel to build
 #export CC="clang -no-integrated-as"
 #export AS="clang -integrated-as"
-export CC=clang
+export CC=gcc
 export AS=gcc
 export LD=ld
 

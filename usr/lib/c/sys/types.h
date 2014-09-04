@@ -4,6 +4,7 @@
 #include <features.h>
 #include <stdint.h>
 #include <stddef.h>
+#include <limits.h>
 //#include <time.h>
 #if (_BSD_SOURCE)
 #include <endian.h>
@@ -55,6 +56,22 @@ typedef long           time_t;
 typedef long           timer_t;
 typedef unsigned long  useconds_t;
 typedef long           suseconds_t;
+
+#if (_POSIX_SOURCE)
+#define FD_SETSIZE _POSIX_FD_SETSIZE
+#else
+#define FD_SETSIZE NPROCFD
+#endif
+
+#define FD_CLR(fd, set)   clrbit(set.fd_bits, fd)
+#define FD_SET(fd, set)   setbit(set.fd_bits, fd)
+#define FD_ISSET(fd, set) bitset(set.fd_bits, fd)
+#define FD_ZERO(set)      memset(set.fd_bits, 0, FD_SETSIZE >> 3)
+
+struct fdset {
+    long fd_bits[FD_SETSIZE >> (LONGSIZELOG2 + 3)];
+};
+typedef struct fdset fd_set;
 
 #endif /* __SYS_TYPES_H__ */
 

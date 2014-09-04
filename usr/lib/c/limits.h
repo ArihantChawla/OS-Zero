@@ -4,6 +4,9 @@
 #include <features.h>
 #include <stdint.h>
 #include <zero/param.h>
+#if (_ZERO_SOURCE)
+#include <kern/conf.h>
+#endif
 #include <kern/signal.h>
 
 /* integral-value limits */
@@ -110,7 +113,11 @@
 #define SSIZE_MAX   LONG_MAX
 
 #if (_POSIX_SOURCE)
+#if (_ZERO_SOURCE)
 #define _POSIX_FD_SETSIZE NPROCFD
+#else
+#define _POSIX_FD_SETSIZE 32768
+#endif
 #endif /* _POSIX_SOURCE */
 
 #endif /* __LIMITS_H__ */
