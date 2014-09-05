@@ -1,16 +1,25 @@
 #ifndef __STDINT_H__
 #define __STDINT_H__
 
+#include <stddef.h>
+#include <limits.h>
 #include <zero/param.h>
 
-#define INT32_C(i)  i
-#define UINT32_C(i) i##U
-#if (LONGSIZE == 4)
-#define INT64_C(i)  i##LL
-#define UINT64_C(i) i##ULL
+#define INT8_C(c)    c
+#define INT16_C(s)   s
+#define INT32_C(i)   i
+#define UINT8_C(uc)  uc##U
+#define UINT16_C(us) us##U
+#define UINT32_C(ui) ui##U
+#if defined(_MSC_VER)
+#define INT64_C(l)   l##i64
+#define UINT64_C(ul) ul##ui64
+#elif (LONGSIZE == 4)
+#define INT64_C(l)   l##LL
+#define UINT64_C(ul) ul##ULL
 #elif (LONGSIZE == 8)
-#define INT64_C(i)  i##L
-#define UINT64_C(i) i##UL
+#define INT64_C(l)   l##L
+#define UINT64_C(ul) ul##UL
 #endif
 
 /* explicit-size types */
@@ -23,7 +32,6 @@ typedef unsigned int       uint32_t;
 #if (LONGSIZE == 4)
 typedef long long          int64_t;
 typedef unsigned long long uint64_t;
-/* FIXME: must use long long types on Windows */
 #elif (LONGSIZE == 8)
 typedef long               int64_t;
 typedef unsigned long      uint64_t;
@@ -112,8 +120,13 @@ typedef uint64_t           uintptr_t;
 #define INT_LEAST64_MIN  INT64_C(-0x7fffffffffffffff - 1)
 #define INT_LEAST64_MAX  INT64_C(0x7fffffffffffffff)
 #define UINT_LEAST64_MAX UINT64_C(0xffffffffffffffff)
-
-#endif /* __x86_64__ || __amd64__ || __i386__ */
+/* other integer type limits */
+#define PTRDIFF_MIN      (~(ptrdiff_t)0 << (sizeof(ptrdiff_t) * CHAR_BIT - 1))
+#define PTRDIFF_MAX      (~PTRDIFF_MIN)
+#define SIG_ATOMIC_MIN   0
+#define SIG_ATOMIC_MAX   (~0L)
+#define SIZE_MAX         (~(size_t)0)
+#endif /* __x86_64_ || __amd64__ || __i386__ */
 
 #endif /* __STDINT_H__ */
 

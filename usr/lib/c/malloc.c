@@ -60,7 +60,19 @@ typedef pthread_mutex_t LK_T;
 #include <zero/cdecl.h>
 #include <zero/trix.h>
 //#include <mach/param.h>
+#if defined(unix) defined(__unix) || defined(__unix__) \
+    || defined(BSD) \
+    || defined(linux) || defined(__linux) || defined(__linux__) \
+       || defined(__gnu_linux) \
+    || (defined(__APPLE__) && defined(__MACH__)) \
+    || defined(_AIX) \
+    || defined(__hpux) || defined(hpux) \
+    || defined(sun) || defined(__sun) || defined(__sun__) || defined(__SunOS) \
+    || defined(__SVR4) || defined(__svr4__)
 #include <zero/unix.h>
+#else
+#error fix <zero/unix.h> functionality for your OS in usr/lib/malloc.c
+#endif
 //#include "_malloc.h"
 
 /*
