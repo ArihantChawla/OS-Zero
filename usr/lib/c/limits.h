@@ -6,9 +6,10 @@
 #include <zero/param.h>
 #if (_ZERO_SOURCE)
 #include <kern/conf.h>
-#endif
 #include <kern/signal.h>
+#endif
 
+#if 0 /* unnecessary with C99 */
 /* integral-value limits */
 #define WORD8_MIN     (-0x7f - 1)
 #define WORD8_MAX     0x7f
@@ -22,6 +23,7 @@
 #define WORD64_MIN    INT64_C(-0x7fffffffffffffff - 1)
 #define WORD64_MAX    INT64_C(0x7fffffffffffffff)
 #define UWORD64_MAX   UINT64_C(0xffffffffffffffff)
+#endif
 
 /*
  * ISO limits.

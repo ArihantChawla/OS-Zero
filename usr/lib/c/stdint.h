@@ -13,43 +13,107 @@
 #define UINT64_C(i) i##UL
 #endif
 
+/* explicit-size types */
 typedef char               int8_t;
 typedef unsigned char      uint8_t;
 typedef short              int16_t;
 typedef unsigned short     uint16_t;
 typedef int                int32_t;
-typedef unsigned           int uint32_t;
+typedef unsigned int       uint32_t;
 #if (LONGSIZE == 4)
 typedef long long          int64_t;
 typedef unsigned long long uint64_t;
+/* FIXME: must use long long types on Windows */
 #elif (LONGSIZE == 8)
 typedef long               int64_t;
 typedef unsigned long      uint64_t;
 #endif
-#if (PTRBITS <= 32)
-typedef int32_t            intptr_t;
-typedef uint32_t           uintptr_t;
-#else
-typedef int64_t            intptr_t;
-typedef uint64_t           uintptr_t;
-#endif
-#if (LONGSIZE == 4)
-typedef long long          int_fast64_t;
-typedef unsigned long long uint_fast64_t;
-#elif (LONGSIZE == 8)
-typedef long               int_fast64_t;
-typedef unsigned long      uint_fast64_t;
-#endif
+
 #if defined(__x86_64__) || defined(__amd64__) || defined(__i386__)
+/* fast types */
 typedef char               int_fast8_t;
 typedef unsigned char      uint_fast8_t;
 typedef short              int_fast16_t;
 typedef unsigned short     uint_fast16_t;
 typedef int                int_fast32_t;
 typedef unsigned int       uint_fast32_t;
+#if (LONGSIZE == 4)
+typedef long long          int_fast64_t;
+typedef unsigned long long uint_fast64_t;
+#elif (LONGSIZE == 8)
+typedef long               int_fast64_t;
+typedef unsigned long      uint_fast64_t;
 #else
 #error declare fast types for the platform in <stdint.h>
 #endif
+/* least-width types */
+typedef char               int_least8_t;
+typedef unsigned char      uint_least8_t;
+typedef short              int_least16_t;
+typedef unsigned short     uint_least16_t;
+typedef int                int_least32_t;
+typedef unsigned int       uint_least32_t;
+#if (LONGSIZE == 4)
+typedef long long          int_least64_t;
+typedef unsigned long long uint_least64_t;
+#elif (LONGSIZE == 8)
+typedef long               int_least64_t;
+typedef unsigned long      uint_least64_t;
+#else
+#error declare least-width types for the platform in <stdint.h>
+#endif
+/* maximum-size integral types */
+typedef long               intmax_t;
+typedef unsigned long      uintmax_t;
+/* pointer integer types */
+#if (PTRBITS <= 32)
+typedef int32_t            intptr_t;
+typedef uint32_t           uintptr_t;
+#else
+typedef int64_t            intptr_t;
+typedef uint64_t           uintptr_t;
+
+/* limits for explicit-size types */
+#define INT8_MIN        (-0x7f - 1)
+#define INT8_MAX        0x7f
+#define UINT8_MAX       0xff
+#define INT16_MIN       (-0x7fff - 1)
+#define INT16_MAX       0x7fff
+#define UINT16_MAX      0xffff
+#define INT32_MIN       (-0x7fffffff - 1)
+#define INT32_MAX       0x7fffffff
+#define UINT32_MAX      0xffffffff
+#define INT64_MIN       INT64_C(-0x7fffffffffffffff - 1)
+#define INT64_MAX       INT64_C(0x7fffffffffffffff)
+#define UINT64_MAX      UINT64_C(0xffffffffffffffff)
+/* limits for fast types */
+#define INT_FAST8_MIN   (-0x7f - 1)
+#define INT_FAST8_MAX   0x7f
+#define UINT_FAST8_MAX  0xff
+#define INT_FAST16_MIN  (-0x7fff - 1)
+#define INT_FAST16_MAX  0x7fff
+#define UINT_FAST16_MAX 0xffff
+#define INT_FAST32_MIN  (-0x7fffffff - 1)
+#define INT_FAST32_MAX  0x7fffffff
+#define UINT_FAST32_MAX 0xffffffff
+#define INT_FAST64_MIN  INT64_C(-0x7fffffffffffffff - 1)
+#define INT_FAST64_MAX  INT64_C(0x7fffffffffffffff)
+#define UINT_FAST64_MAX UINT64_C(0xffffffffffffffff)
+/* limits for least-size types */
+#define INT_LEAST8_MIN   (-0x7f - 1)
+#define INT_LEAST8_MAX   0x7f
+#define UINT_LEAST8_MAX  0xff
+#define INT_LEAST16_MIN  (-0x7fff - 1)
+#define INT_LEAST16_MAX  0x7fff
+#define UINT_LEAST16_MAX 0xffff
+#define INT_LEAST32_MIN  (-0x7fffffff - 1)
+#define INT_LEAST32_MAX  0x7fffffff
+#define UINT_LEAST32_MAX 0xffffffff
+#define INT_LEAST64_MIN  INT64_C(-0x7fffffffffffffff - 1)
+#define INT_LEAST64_MAX  INT64_C(0x7fffffffffffffff)
+#define UINT_LEAST64_MAX UINT64_C(0xffffffffffffffff)
+
+#endif /* __x86_64__ || __amd64__ || __i386__ */
 
 #endif /* __STDINT_H__ */
 
