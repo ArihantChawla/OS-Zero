@@ -4,12 +4,11 @@
 #include <features.h>
 #include <stdint.h>
 #include <stddef.h>
-//#include <limits.h>
+#include <limits.h>
 //#include <time.h>
 #if (_BSD_SOURCE)
 #include <endian.h>
 #include <sys/select.h>
-#include <sys/param.h>
 #include <sys/sysmacros.h>
 #endif
 
@@ -83,6 +82,10 @@ struct fdset {
     fd_mask fd_bits[FD_SETSIZE >> (LONGSIZELOG2 + 3)];
 };
 typedef struct fdset fd_set;
+
+#if (_BSD_SOURCE)
+#include <sys/param.h>
+#endif
 
 #endif /* __SYS_TYPES_H__ */
 

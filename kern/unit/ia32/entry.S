@@ -13,23 +13,25 @@
 /*
  * TODO
  * ----
- * - fix _syscall to deliver pending unmasked signals
- * - make _syscall check for another thread to run
+ * - fix _ksyscall to deliver pending unmasked signals
+ * - make _ksyscall check for another thread to run
  * - do system call profiling
  */
 
-.globl	syscall, sysvec, errno
+.globl	ksyscall, sysvec, errno
 
 .text	32
 
-syscall:
+/* TODO: fix ksyscall() call convention */
+
+ksyscall:
 	pushal
 	movl	%esp, %ebp
 	movl	$_sysfunc, %edi
 	movl	(%edi, %eax, 4), %esi
 	call	*%esi
 	
-_syscall0:
+_ksyscall0:
 	movl	$sysvec, %edi
 	cmpl	$0, %eax
 	jle	_invlsys
@@ -41,7 +43,7 @@ _syscall0:
 	jnc	_success
 	jmp	_failure
 
-_syscall1:
+_ksyscall1:
 	movl	$sysvec, %edi
 	cmpl	$0, %eax
 	jle	_invlsys
@@ -54,7 +56,7 @@ _syscall1:
 	jnc	_success
 	jmp	_failure
 
-_syscall2:
+_ksyscall2:
 	movl	$sysvec, %edi
 	cmpl	$0, %eax
 	jle	_invlsys
@@ -68,7 +70,7 @@ _syscall2:
 	jnc	_success
 	jmp	_failure
 
-_syscall3:
+_ksyscall3:
 	movl	$sysvec, %edi
 	cmpl	$0, %eax
 	jle	_invlsys
@@ -134,53 +136,53 @@ retval:
 
 _sysfunc:
 	.long	0x00000000
-	.long	_syscall3	// sysctl
-	.long	_syscall2	// exit
-	.long	_syscall0	// abort
-	.long	_syscall1	// fork
-	.long	_syscall3	// exec
-	.long	_syscall3	// throp
-	.long	_syscall3	// pctl
-	.long	_syscall3	// sigop
-	.long	_syscall1	// brk
-	.long	_syscall3	// map
-	.long	_syscall2	// umap
-	.long	_syscall3	// mhint
-	.long	_syscall3	// mctl
-	.long	_syscall3	// shmget
-	.long	_syscall3	// shmat
-	.long	_syscall1	// shmdt
-	.long	_syscall3	// shmctl
-	.long	_syscall3	// mnt
-	.long	_syscall2	// umnt
-	.long	_syscall3	// readdir
-	.long	_syscall3	// open
-	.long	_syscall2	// trunc
-	.long	_syscall1	// close
-	.long	_syscall3	// read
-	.long	_syscall3	// readv
-	.long	_syscall3	// write
-	.long	_syscall3	// writev
-	.long	_syscall3	// seek
-	.long	_syscall3	// falloc
-	.long	_syscall3	// stat
-	.long	_syscall3	// fhint
-	.long	_syscall3	// ioctl
-	.long	_syscall3	// fctl
-	.long	_syscall3	// poll
-	.long	_syscall2	// select
-	.long	_syscall0	// seminit
-	.long	_syscall1	// semup
-	.long	_syscall1	// semdown
-	.long	_syscall3	// semop
-	.long	_syscall3	// mqinit
-	.long	_syscall3	// mqsend
-	.long	_syscall3	// mqrecv
-	.long	_syscall3	// mqop
-	.long	_syscall3	// evreg
-	.long	_syscall3	// evsend
-	.long	_syscall3	// evrecv
-	.long	_syscall3	// evop
+	.long	_ksyscall3	// sysctl
+	.long	_ksyscall2	// exit
+	.long	_ksyscall0	// abort
+	.long	_ksyscall1	// fork
+	.long	_ksyscall3	// exec
+	.long	_ksyscall3	// throp
+	.long	_ksyscall3	// pctl
+	.long	_ksyscall3	// sigop
+	.long	_ksyscall1	// brk
+	.long	_ksyscall3	// map
+	.long	_ksyscall2	// umap
+	.long	_ksyscall3	// mhint
+	.long	_ksyscall3	// mctl
+	.long	_ksyscall3	// shmget
+	.long	_ksyscall3	// shmat
+	.long	_ksyscall1	// shmdt
+	.long	_ksyscall3	// shmctl
+	.long	_ksyscall3	// mnt
+	.long	_ksyscall2	// umnt
+	.long	_ksyscall3	// readdir
+	.long	_ksyscall3	// open
+	.long	_ksyscall2	// trunc
+	.long	_ksyscall1	// close
+	.long	_ksyscall3	// read
+	.long	_ksyscall3	// readv
+	.long	_ksyscall3	// write
+	.long	_ksyscall3	// writev
+	.long	_ksyscall3	// seek
+	.long	_ksyscall3	// falloc
+	.long	_ksyscall3	// stat
+	.long	_ksyscall3	// fhint
+	.long	_ksyscall3	// ioctl
+	.long	_ksyscall3	// fctl
+	.long	_ksyscall3	// poll
+	.long	_ksyscall2	// select
+	.long	_ksyscall0	// seminit
+	.long	_ksyscall1	// semup
+	.long	_ksyscall1	// semdown
+	.long	_ksyscall3	// semop
+	.long	_ksyscall3	// mqinit
+	.long	_ksyscall3	// mqsend
+	.long	_ksyscall3	// mqrecv
+	.long	_ksyscall3	// mqop
+	.long	_ksyscall3	// evreg
+	.long	_ksyscall3	// evsend
+	.long	_ksyscall3	// evrecv
+	.long	_ksyscall3	// evop
 sysvec:
 	/* TODO: fill with sys_ function addresses */
 	.space	4 * NSYSCALL

@@ -8,6 +8,14 @@
 #   define EMPTY   0
 #endif
 
+/* __FUNCTION__ for non-C99 compilers */
+#if !defined(__STDC_VERSION__) || (__STDC_VERSION__ < 199901L)
+#if defined(__GNUC__)
+#define __FUNCTION__  __func__
+#else
+#endif
+#endif
+
 #if defined(__GNUC__)
 
 /* align variables, aggregates, and tables to boundary of a */
@@ -20,9 +28,11 @@
  *
  * IA-32 can pass up to 3 register arguments in eax, edx, and ecx
  */
-#define REGARGS(n)  __attribute__ ((regparm(n)))
+#define REGPARM(n)  __attribute__ ((regparm(n)))
 #if defined(__i386__) || defined(__i486__) || defined(__i586__) || defined(__i686__)
-#define FASTCALL    REGARGS(3)
+#define FASTCALL    REGPARM(3)
+#elif defined(__x86_64__) || defined(__amd64__) || defined(__arm__)
+#define FASTCALL    /* at least 3 arguments passed in registers by default */
 #endif
 /* pass all arguments on stack for assembly-linkage */
 #define ASMLINK     __attribute__ ((regparm(0)))

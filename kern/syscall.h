@@ -5,13 +5,15 @@
 #include <stdint.h>
 #include <signal.h>
 #include <unistd.h>
-#include <sys/stat.h>
-#include <sys/select.h>
-#include <sys/ipc.h>
-#include <sys/shm.h>
+//#include <sys/select.h>
+//#include <sys/ipc.h>
+//#include <sys/stat.h>
+//#include <sys/shm.h>
 #include <zero/cdecl.h>
 #include <zero/param.h>
 #include <kern/perm.h>
+
+extern void ksyscall(void);
 
 /*
  * TODO

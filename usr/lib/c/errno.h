@@ -3,7 +3,7 @@
 
 #include <features.h>
 
-extern int errno;
+//extern int errno;
 
 #define ENOSYS       1
 #define EINTR        2

@@ -5,11 +5,10 @@
 #include <stddef.h>
 #include <limits.h>
 #include <stdint.h>
-#if (_XOPEN_SOURCE)
-#if defined(__GNUC__) && 0
-typedef G_va_list va_list;
-#else
 #include <stdarg.h>
+#if (_XOPEN_SOURCE) || (__STDC__)
+#if defined(__GNUC__)
+typedef __gnuc_va_list __stdio_va_list;
 #endif
 #endif
 #include <sys/types.h>
@@ -103,21 +102,21 @@ extern int fprintf(FILE *__restrict stream, const char *__restrict fmt, ...);
 extern int printf(const char *__restrict fmt, ...);
 extern int sprintf(char *__restrict buf, const char *__restrict fmt, ...);
 extern int vfprintf(FILE *__restrict buf, const char *__restrict fmt,
-                    va_list arg);
-extern int vprintf(const char *__restrict fmt, va_list arg);
+                    __stdio_va_list arg);
+extern int vprintf(const char *__restrict fmt, __stdio_va_list arg);
 extern int vsprintf(char *__restrict buf, const char *__restrict fmt,
-                    va_list arg);
+                    __stdio_va_list arg);
 #if (_BSD_SOURCE) || (_ISOC99_SOURCE) || (USEUNIX98)
 extern int snprintf(char *__restrict buf, size_t len,
                     const char *__restrict fmt, ...);
 extern int vsnprintf(char *__restrict buf, size_t len,
-                     const char *__restrict fmt, va_list arg);
+                     const char *__restrict fmt, __stdio_va_list arg);
 #endif
 #if (_GNU_SOURCE)
 extern int vasprintf(char **__restrict ptr, const char *__restrict fmt,
-                     va_list arg);
+                     __stdio_va_list arg);
 extern int asprintf(char **__restrict ptr, const char *__restrict fmt, ...);
-extern int vdprintf(int fd, const char *__restrict fmt, va_list arg);
+extern int vdprintf(int fd, const char *__restrict fmt, __stdio_va_list arg);
 extern int dprintf(int fd, const char *__restrict fmt, ...);
 #endif
 
@@ -125,10 +124,10 @@ extern int fscanf(FILE *__restrict stream, const char *__restrict fmt, ...);
 extern int scanf(const char *__restrict fmt, ...);
 extern int sscanf(const char *__restrict buf, const char *__restrict fmt, ...);
 extern int vfscanf(FILE *__restrict stream, const char *__restrict fmt,
-                   va_list arg);
-extern int vscanf(const char *__restrict fmt, va_list arg);
+                   __stdio_va_list arg);
+extern int vscanf(const char *__restrict fmt, __stdio_va_list arg);
 extern int vsscanf(const char *__restrict buf, const char *__restrict fmt,
-                   va_list arg);
+                   __stdio_va_list arg);
 
 /* character and string operations */
 extern int fgetc(FILE *stream);
@@ -223,7 +222,7 @@ extern int obstack_printf(struct obstack *__restrict stk,
                           const char *__restrict fmt);
 extern int obstack_vprintf(struct obstack *__restrict stk,
                            const char *__restrict fmt,
-                           va_list arg);
+                           __stdio_va_list arg);
 #endif
 
 #if (_GNU_SOURCE)

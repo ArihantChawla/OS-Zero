@@ -2,6 +2,7 @@
 #define __KERN_UTIL_H__
 
 #include <stdint.h>
+#include <zero/cdecl.h>
 
 void kbzero(void *adr, unsigned long len);
 void kmemset(void *adr, int byte, unsigned long len);

@@ -118,7 +118,7 @@ _memcpybk(void *dest,
     u8ptr1 += n;
     u8ptr2 += n;
     val = sizeof(unsigned long);
-    if (abs(u8ptr1 - u8ptr2) >= (val << 3)
+    if (labs(u8ptr1 - u8ptr2) >= (val << 3)
         && nleft >= (val << 3)
         && (((uintptr_t)u8ptr1 & (val - 1))
             == ((uintptr_t)u8ptr2 & (val - 1)))) {

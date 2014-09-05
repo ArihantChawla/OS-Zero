@@ -3,7 +3,7 @@
 
 #include <limits.h>
 #include <zero/param.h>
-#include <zero/trix.h>
+//#include <zero/trix.h>
 
 /* BSD names for some <limits.h> values */
 #define NBBY          CHAR_BIT

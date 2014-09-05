@@ -66,8 +66,8 @@ void *mremap(void *adr, size_t len, size_t newlen, int flg);
 int   remap_file_pages(void *adr, size_t len,
                        int prot, size_t ofs, int flg);
 #endif
-int shm_open(const char *name, int flg, mode_t mode);
-int shm_unlink(const char *name);
+int   shm_open(const char *name, int flg, mode_t mode);
+int   shm_unlink(const char *name);
 
 #if (USEXOPEN2K)
 struct posix_typed_mem_info {

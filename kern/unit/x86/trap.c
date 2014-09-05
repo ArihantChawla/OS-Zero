@@ -5,9 +5,12 @@
 #include <kern/conf.h>
 #include <zero/param.h>
 #include <zero/types.h>
+//#include <kern/syscall.h>
 #include <kern/unit/x86/asm.h>
 #include <kern/unit/x86/trap.h>
 #include <kern/unit/ia32/boot.h>
+
+extern void ksyscall(void);
 
 extern void picinit(void);
 extern void idtset(void);
@@ -41,8 +44,6 @@ extern void irqerror(void);
 #if (APIC)
 extern void irqspurious(void);
 #endif
-
-//extern void syscall(void);
 
 #if (SMP)
 extern volatile long   mpmultiproc;
@@ -100,7 +101,7 @@ trapinitidt(uint64_t *idt)
     trapsetintgate(&idt[TRAPMC], trapmc, TRAPSYS);
     trapsetintgate(&idt[TRAPXF], trapxf, TRAPSYS);
     /* system call trap */
-    trapsetintgate(&idt[TRAPSYSCALL], syscall, TRAPUSER);
+    trapsetintgate(&idt[TRAPSYSCALL], ksyscall, TRAPUSER);
     /* IRQs */
     trapsetintgate(&idt[trapirqid(IRQTMR)], irqtmr0, TRAPUSER);
     trapsetintgate(&idt[trapirqid(IRQKBD)], irqkbd, TRAPUSER);
