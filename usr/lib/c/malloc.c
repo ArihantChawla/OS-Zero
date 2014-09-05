@@ -1349,7 +1349,7 @@ freemap(struct mag *mag)
 #if (TUNEBUF)
     queue = nfree < _nbuftab[bid];
 #endif
-    if (!cur || !ismapbkt(bid)
+    if ((!cur)
 #if (TUNEBUF)
         || (queue)
 #endif

@@ -8,10 +8,37 @@
 #include <kern/syscall.h>
 #endif
 
-#define MAP_FAILED ((void *)-1)
-#define PROT_EXEC  0x01
-#define PROT_WRITE 0x02
-#define PROT_READ  0x04
+#define MAP_FAILED            ((void *)-1L)
+/* protection */
+#define PROT_NONE             0x00              // cannot be accessed
+#define PROT_EXEC             0x01              // can be executed
+#define PROT_WRITE            0x02              // can be written
+#define PROT_READ             0x04              // can be read
+
+#if (_BSD_SOURCE)
+/* madvise() */
+#define MADV_NORMAL           MEM_NORMAL
+#define MADV_RANDOM           MEM_RANDOM
+#define MADV_SEQUENTIAL       MEM_SEQUENTIAL
+#define MADV_WILLNEED         MEM_WILLNEED
+#define MADV_DONTNEED         MEM_DONTNEED
+#define MADV_REMOVE           MEM_REMOVE
+#define MADV_DONTFORK         MEM_DONTFORK
+#define MADV_DOFORK           MEM_DOFORK
+#endif
+
+#if (USEXOPEN2K)
+/* posix_madvise() */
+#define POSIX_MADV_NORMAL     MEM_NORMAL
+#define POSIX_MADV_RANDOM     MEM_RANDOM
+#define POSIX_MADV_SEQUENTIAL MEM_SEQUENTIAL
+#define POSIX_MADV_WILLNEED   MEM_WILLNEED
+#define POSIX_MADV_DONTNEED   MEM_DONTNEED
+/* posix_typed_mem_open() */
+#define POSIX_TYPED_MEM_ALLOCATE        1
+#define POSIX_TYPED_MEM_ALLOCATE_CONTIG 2
+#define POSIX_TYPED_MEM_MAP_ALLOCATABLE 3
+#endif
 
 #if (_GNU_SOURCE)
 typedef int error_t;
@@ -41,6 +68,12 @@ int   remap_file_pages(void *adr, size_t len,
 #endif
 int shm_open(const char *name, int flg, mode_t mode);
 int shm_unlink(const char *name);
+
+#if (USEXOPEN2K)
+struct posix_typed_mem_info {
+    size_t posix_tmi_length;    // maximum allocation from typed memory object
+};
+#endif
 
 #endif /* __SYS_MMAN_H__ */
 

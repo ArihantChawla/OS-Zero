@@ -278,33 +278,50 @@ struct syswait {
 /* memory interface */
 
 /* sys_map() */
-#define MAP_FILE       0x00000001
-#define MAP_ANON       0x00000002
-#define MAP_SHARED     0x00000004
-#define MAP_PRIVATE    0x00000008
-#define MAP_FIXED      0x00000010
-#define MAP_SINGLE     0x00000020
+#define MAP_PRIVATE       0x00000000    // changes are private - default
+#define MAP_FILE          0x00000001    // mapped from file or device
+#define MAP_ANON          0x00000002    // allocate memory, swap space, zeroed
+#define MAP_ANONYMOUS     MAP_ANON
+#define MAP_TYPE          0x0000000f    // type field mask
+#define MAP_COPY          0x00000010    // "copy" region at mmap time - WTF? :)
+#define MAP_SHARED        0x00000020    // share changes
+#define MAP_FIXED         0x00000040    // must use requested address
+#define MAP_NOEXTEND      0x00000080    // for MAP_FILE, don't change file size
+#define MAP_HASSEMAPHORE  0x00000100    // region may have semaphores
+#define MAP_HASSEMPHORE   MAP_HASSEMAPHORE
+#define MAP_GROWSDOWN     0x00000200    // mapping extends downward (stacks)
+#define MAP_LOCKED        0x00000400    // lock pages a'la mlock()
+#define MAP_HUGETLB       0x00000400    // map with huge pages
+#define MAP_NONBLOCK      0x00000800    // don't block on I/O
+#define MAP_POPULATE      0x00001000    // prefault page tables
+#define MAP_STACK         0x00002000
+#define MAP_UNINITIALIZED 0x00004000    // don't zero; SECURITY!
+#define MAP_SINGLE        0x00008000    // kernel + single user process
 /* sys_map() and sys_mhint() */
-#define MEM_NORMAL     0x00000040
-#define MEM_SEQUENTIAL 0x00000080
-#define MEM_RANDOM     0x00000100
-#define MEM_WILLNEED   0x00000200
-#define MEM_WONTNEED   0x00000400
-#define MEM_DONTFORK   0x00000800
+#define MEM_NORMAL        1             // no special treatment
+#define MEM_RANDOM        2             // expect "random" references
+#define MEM_SEQUENTIAL    3             // expect sequential references
+#define MEM_WILLNEED      4             // will need the region
+#define MEM_DONTNEED      5             // won't need the region
+#define MEM_REMOVE        6
+#define MEM_DONTFORK      7
+#define MEM_DOFORK        8
+#define MEM_DONTDUMP      9
+#define MEM_DODUMP        10
 /* sys_mctl() */
 /* cmd */
-#define MEM_LOCK       0x01    // mlock(), mlockall()
-#define MEM_UNLOCK     0x02    // munlock(), munlockall()
+#define MEM_LOCK         0x01   // mlock(), mlockall()
+#define MEM_UNLOCK       0x02   // munlock(), munlockall()
 /* REFERENCE: <kern/perm.h> */
-#define MEM_GETPERM    0x03
-#define MEM_SETPERM    0x04
+#define MEM_GETPERM      0x03
+#define MEM_SETPERM      0x04
 
 struct sysmemreg {
-    struct perm  perm;					// permission structure
-    long         cmd;					// memory command
-    void        *base;					// base address of region
-    long         ofs;					// offset into region (for locks and such)
-    long         len;					// length
+    struct perm  perm;		// permission structure
+    long         cmd;		// memory command
+    void        *base;		// base address of region
+    long         ofs;		// offset into region (for locks and such)
+    long         len;		// length
 };
 
 /*
