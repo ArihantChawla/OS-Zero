@@ -6,19 +6,13 @@
 #define WEOF         ((wint_t)0xffff)	/* 0xffff is invalid character value in Unicode */
 #define WCHAR_MIN    0
 #if (WCHARSIZE == 4)
-#define WCHAR_MAX    0xffffffff
-#define WCHARUCMAX   0x0010ffff
-#define WCHARMASK    0x001fffff
+#define WCHAR_MAX    0x0010ffff
 #define WCHARNBIT    21
 #elif (WCHARSIZE == 2)
 #define WCHAR_MAX    0xffff
-#define WCHARUCMAX   0xffff
-#define WCHARMASK    0xffff
 #define WCHARNBIT    16
 #elif (WCHARSIZE == 1)
 #define WCHAR_MAX    0xff
-#define WCHARUCMAX   0xff
-#define WCHARMASK    0xff
 #define WCHARNBIT    8
 #endif /* WCHARSIZE */
 #define WCHARMASK    ((1 << WCHARNBIT) - 1)
