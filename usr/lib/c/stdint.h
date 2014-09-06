@@ -126,6 +126,8 @@ typedef uint64_t           uintptr_t;
 #define SIG_ATOMIC_MIN   0
 #define SIG_ATOMIC_MAX   (~0L)
 #define SIZE_MAX         (~(size_t)0)
+#define WINT_MIN         ((wint_t)0)
+#define WINT_MAX         (~(wint_t)0)
 #endif /* __x86_64_ || __amd64__ || __i386__ */
 
 #endif /* __STDINT_H__ */
