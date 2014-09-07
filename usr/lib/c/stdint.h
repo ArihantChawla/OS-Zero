@@ -1,7 +1,6 @@
 #ifndef __STDINT_H__
 #define __STDINT_H__
 
-#include <stddef.h>
 #include <limits.h>
 #include <zero/param.h>
 
@@ -37,7 +36,10 @@ typedef long               int64_t;
 typedef unsigned long      uint64_t;
 #endif
 
+#include <stddef.h>
+
 #if defined(__x86_64__) || defined(__amd64__) || defined(__i386__)
+
 /* fast types */
 typedef char               int_fast8_t;
 typedef unsigned char      uint_fast8_t;
@@ -80,6 +82,7 @@ typedef uint32_t           uintptr_t;
 #else
 typedef int64_t            intptr_t;
 typedef uint64_t           uintptr_t;
+#endif
 
 /* limits for explicit-size types */
 #define INT8_MIN        (-0x7f - 1)
@@ -128,6 +131,7 @@ typedef uint64_t           uintptr_t;
 #define SIZE_MAX         (~(size_t)0)
 #define WINT_MIN         ((wint_t)0)
 #define WINT_MAX         (~(wint_t)0)
+
 #endif /* __x86_64_ || __amd64__ || __i386__ */
 
 #endif /* __STDINT_H__ */

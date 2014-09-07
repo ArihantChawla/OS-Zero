@@ -1,14 +1,14 @@
 #ifndef __STDDEF_H__
 #define __STDDEF_H__
 
-#include <features.h>v
+#include <features.h>
 #include <stdint.h>
 
 #define NULL           ((void *)0L)
 
 typedef long           ptrdiff_t;
 typedef unsigned long  size_t;
-#if (__STDC_ISO_10646__)
+#if defined(__STDC_ISO_10646__) || defined(_ZERO_SOURCE)
 /* full ISO10646 character */
 #define WCHARSIZE      4
 #else
