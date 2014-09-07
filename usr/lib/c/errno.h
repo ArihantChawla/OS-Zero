@@ -3,7 +3,9 @@
 
 #include <features.h>
 
-//extern int errno;
+#if !(__KERNEL__)
+extern int errno;
+#endif
 
 #define ENOSYS       1
 #define EINTR        2

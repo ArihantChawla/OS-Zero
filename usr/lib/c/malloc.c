@@ -60,7 +60,7 @@ typedef pthread_mutex_t LK_T;
 #include <zero/cdecl.h>
 #include <zero/trix.h>
 //#include <mach/param.h>
-#if defined(unix) defined(__unix) || defined(__unix__) \
+#if defined(unix) || defined(__unix) || defined(__unix__) \
     || defined(BSD) \
     || defined(linux) || defined(__linux) || defined(__linux__) \
        || defined(__gnu_linux) \
