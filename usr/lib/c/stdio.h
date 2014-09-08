@@ -18,7 +18,11 @@ typedef __gnuc_va_list __stdio_va_list;
 
 typedef struct file   FILE;
 typedef off_t         fpos_t;
-
+#if (_FILE_OFFSET_BITS == 64)
+typedef off_t         fpos64_t;
+#else
+typedef int64_t       fpos64_t;
+#endif
 extern FILE          *stdin;
 extern FILE          *stdout;
 extern FILE          *stderr;
@@ -182,6 +186,13 @@ extern off_t ftello(FILE *stream);
 #endif
 extern int fgetpos(FILE *__restrict stream, fpos_t *__restrict pos);
 extern int fsetpos(FILE *stream, const fpos_t *pos);
+#if (_FILE_OFFSET_BITS == 64)
+#define fgetpos64(s, p) fgetpos(s, p)
+#define fsetpos64(s, p) fsetpos(s, p)
+#else
+extern int fgetpos64(FILE *__restrict stream, fpos64_t *__restrict pos);
+extern int fsetpos64(FILE *__restrict stream, fpos64_t *__restrict pos); 
+#endif
 
 /* errors and file attributes */
 extern void clearerr(FILE *stream);

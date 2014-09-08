@@ -19,7 +19,7 @@
 #define _ISOC11_SOURCE         1        // ISO 9899-2011
 #define _ISOC99_SOURCE         1        // ISO 9899-1999
 #define _FILE_OFFSET_BITS      64       // enable 64-bit off_t
-#define _LARGEFILE_SOURCE      1           
+#define _LARGEFILE_SOURCE      1 
 #define _LARGEFILE64_SOURCE    1
 #define _POSIX_SOURCE          1        // enable POSIX
 #define _POSIX_C_SOURCE        200112L	// POSIX version
