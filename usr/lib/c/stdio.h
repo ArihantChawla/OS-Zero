@@ -47,24 +47,24 @@ extern FILE          *stderr;
 #endif
 
 /* buffering */
-extern void setbuf(FILE *__restrict stream, char *__restrict buf);
-extern int setvbuf(FILE *__restrict stream, char **__restrict ptr,
-                   int modes, size_t len);
+extern void  setbuf(FILE *__restrict stream, char *__restrict buf);
+extern int   setvbuf(FILE *__restrict stream, char **__restrict ptr,
+                     int modes, size_t len);
 #if (_BSD_SOURCE)
-extern void setbuffer(FILE *__restrict stream, char *__restrict buf,
-                      size_t len);
-extern void setlinebuf(FILE *stream);
+extern void  setbuffer(FILE *__restrict stream, char *__restrict buf,
+                       size_t len);
+extern void  setlinebuf(FILE *stream);
 #endif
 
 /* file operations */
-extern int remove(const char *file);
-extern int rename(const char *file, const char *newname);
+extern int   remove(const char *file);
+extern int   rename(const char *file, const char *newname);
 extern FILE *fopen(const char *__restrict name, const char *__restrict mode);
 extern FILE *freopen(const char *__restrict name, const char *__restrict mode,
                      FILE *__restrict stream);
-extern int fclose(FILE *stream);
-extern int fflush(FILE *stream);
-extern int fflush_unlocked(FILE *stream);
+extern int   fclose(FILE *stream);
+extern int   fflush(FILE *stream);
+extern int   fflush_unlocked(FILE *stream);
 #if (_POSIX_SOURCE)
 extern FILE *fdopen(int fd, const char *mode);
 #endif
@@ -77,12 +77,12 @@ extern FILE *fopencookie(void *__restrict cookie, const char *__restrict mode,
 #endif
 extern FILE *fmemopen(void *str, size_t len, const char *mode);
 extern FILE *open_memstream(char **ptr, size_t *size);
-extern int fcloseall(void);
+extern int   fcloseall(void);
 #endif
 
 #if (_GNU_SOURCE)
-extern int renameat(int oldfd, const char *oldname,
-                    int newfd, const char *newname);
+extern int   renameat(int oldfd, const char *oldname,
+                      int newfd, const char *newname);
 
 #endif
 
@@ -94,60 +94,72 @@ extern char *tmpnam_r(char *str);
 #endif
 
 #if (USESVID) || (_XOPEN_SOURCE)
+/*
+ * generate unique temporary filename
+ * - use up to five characters of prefix if not NULL
+ * - pick a directory for this file
+ *   - check TMPDIR environment variable
+ *     - if a writable directory, use it
+ *   - if dir is not NULL, check the value
+ *   - try P_tmpdir
+ *   - try "/tmp"
+ * - allocate storage for filename with malloc()
+ */
 extern char *tempnam(const char *dir, const char *prefix);
 #endif
 
 /* formatted I/O */
-extern int fprintf(FILE *__restrict stream, const char *__restrict fmt, ...);
-extern int printf(const char *__restrict fmt, ...);
-extern int sprintf(char *__restrict buf, const char *__restrict fmt, ...);
-extern int vfprintf(FILE *__restrict buf, const char *__restrict fmt,
-                    __stdio_va_list arg);
-extern int vprintf(const char *__restrict fmt, __stdio_va_list arg);
-extern int vsprintf(char *__restrict buf, const char *__restrict fmt,
-                    __stdio_va_list arg);
+extern int   fprintf(FILE *__restrict stream, const char *__restrict fmt, ...);
+extern int   printf(const char *__restrict fmt, ...);
+extern int   sprintf(char *__restrict buf, const char *__restrict fmt, ...);
+extern int   vfprintf(FILE *__restrict buf, const char *__restrict fmt,
+                      __stdio_va_list arg);
+extern int   vprintf(const char *__restrict fmt, __stdio_va_list arg);
+extern int   vsprintf(char *__restrict buf, const char *__restrict fmt,
+                      __stdio_va_list arg);
 #if (_BSD_SOURCE) || (_ISOC99_SOURCE) || (USEUNIX98)
-extern int snprintf(char *__restrict buf, size_t len,
-                    const char *__restrict fmt, ...);
-extern int vsnprintf(char *__restrict buf, size_t len,
-                     const char *__restrict fmt, __stdio_va_list arg);
+extern int   snprintf(char *__restrict buf, size_t len,
+                      const char *__restrict fmt, ...);
+extern int   vsnprintf(char *__restrict buf, size_t len,
+                       const char *__restrict fmt, __stdio_va_list arg);
 #endif
 #if (_GNU_SOURCE)
-extern int vasprintf(char **__restrict ptr, const char *__restrict fmt,
-                     __stdio_va_list arg);
-extern int asprintf(char **__restrict ptr, const char *__restrict fmt, ...);
-extern int vdprintf(int fd, const char *__restrict fmt, __stdio_va_list arg);
-extern int dprintf(int fd, const char *__restrict fmt, ...);
+extern int   vasprintf(char **__restrict ptr, const char *__restrict fmt,
+                       __stdio_va_list arg);
+extern int   asprintf(char **__restrict ptr, const char *__restrict fmt, ...);
+extern int   vdprintf(int fd, const char *__restrict fmt, __stdio_va_list arg);
+extern int   dprintf(int fd, const char *__restrict fmt, ...);
 #endif
 
-extern int fscanf(FILE *__restrict stream, const char *__restrict fmt, ...);
-extern int scanf(const char *__restrict fmt, ...);
-extern int sscanf(const char *__restrict buf, const char *__restrict fmt, ...);
-extern int vfscanf(FILE *__restrict stream, const char *__restrict fmt,
-                   __stdio_va_list arg);
-extern int vscanf(const char *__restrict fmt, __stdio_va_list arg);
-extern int vsscanf(const char *__restrict buf, const char *__restrict fmt,
-                   __stdio_va_list arg);
+extern int   fscanf(FILE *__restrict stream, const char *__restrict fmt, ...);
+extern int   scanf(const char *__restrict fmt, ...);
+extern int   sscanf(const char *__restrict buf, const char *__restrict fmt,
+                    ...);
+extern int   vfscanf(FILE *__restrict stream, const char *__restrict fmt,
+                     __stdio_va_list arg);
+extern int   vscanf(const char *__restrict fmt, __stdio_va_list arg);
+extern int   vsscanf(const char *__restrict buf, const char *__restrict fmt,
+                     __stdio_va_list arg);
 
 /* character and string operations */
-extern int fgetc(FILE *stream);
-extern int getc(FILE *stream);
-extern int getchar(void);
+extern int   fgetc(FILE *stream);
+extern int   getc(FILE *stream);
+extern int   getchar(void);
 #define getc(fp) iogetc(fp)
 #if (_POSIX_SOURCE)
-extern int getc_unlocked(FILE *stream);
-extern int getchar_unlocked(void);
+extern int   getc_unlocked(FILE *stream);
+extern int   getchar_unlocked(void);
 #endif
-extern int fgetc_unlocked(FILE *stream);
-extern int fputc(int ch, FILE *stream);
-extern int putc(int ch, FILE *stream);
-extern int putchar(int ch);
+extern int   fgetc_unlocked(FILE *stream);
+extern int   fputc(int ch, FILE *stream);
+extern int   putc(int ch, FILE *stream);
+extern int   putchar(int ch);
 #define putc(ch, fp) ioputc(ch, fp);
-extern int fputc_unlocked(int ch, FILE *stream);
-extern int putchar_unlocked(int ch);
+extern int   fputc_unlocked(int ch, FILE *stream);
+extern int   putchar_unlocked(int ch);
 #if (USESVID) || ((_XOPEN_SOURCE) && !(USEXOPEN2K))
-extern int getw(FILE *stream);
-extern int putw(int w, FILE *stream);
+extern int   getw(FILE *stream);
+extern int   putw(int w, FILE *stream);
 #endif
 extern char *fgets(char *__restrict buf, int len, FILE *__restrict stream);
 extern char *gets(char *buf);
@@ -155,11 +167,12 @@ extern char *gets(char *buf);
 extern char *fgets_unlocked(char *__restrict buf, int len,
                             FILE *__restrict stream);
 #endif
-extern int fputs(const char *__restrict buf, FILE *__restrict stream);
-extern int puts(const char *buf);
-extern int ungetc(int ch, FILE *stream);
+extern int   fputs(const char *__restrict buf, FILE *__restrict stream);
+extern int   puts(const char *buf);
+extern int   ungetc(int ch, FILE *stream);
 #if (_GNU_SOURCE)
-extern int fputs_unlocked(const char *__restrict buf, FILE *__restrict stream);
+extern int   fputs_unlocked(const char *__restrict buf,
+                            FILE *__restrict stream);
 #endif
 
 /* generic data operations */

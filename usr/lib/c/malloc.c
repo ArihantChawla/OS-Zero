@@ -16,7 +16,7 @@
 #endif
 
 #define NEWBUF     1
-#define CONSTBUF   1
+#define CONSTBUF   0
 #define NOSBRK     0
 #define TAILFREE   1
 
@@ -159,12 +159,12 @@ typedef pthread_mutex_t LK_T;
 #define BLKMINLOG2    4  /* minimum-size allocation */
 //#define SLABBIGLOG2   16 /* small-size block */
 #if (SMALLBUF)
-#define SLABLOG2      18
+#define SLABLOG2      19
 #define SLABBIGLOG2   14
 #define SLABTINYLOG2  12
 #define SLABTEENYLOG2 10
-#define MAPMIDLOG2    20
-#define MAPBIGLOG2    22
+#define MAPMIDLOG2    21
+#define MAPBIGLOG2    23
 #else
 #define SLABLOG2      20
 #define SLABBIGLOG2   16
@@ -236,7 +236,7 @@ typedef pthread_mutex_t LK_T;
 #if (TUNEBUF)
 #define isbufbkt(bid)     (_nbuftab[(bid)])
 #define nmagslablog2(bid) (_nslablog2tab[(bid)])
-#else
+#else /* !TUNEBUF */
 #define isbufbkt(bid)     0
 #define nmagslablog2(bid) (ismapbkt(bid) ? nmaplog2(bid) : nslablog2(bid))
 #define nslablog2(bid)    0
@@ -247,7 +247,7 @@ typedef pthread_mutex_t LK_T;
 
 #if (CONSTBUF)
 #define nmagslablog2init(bid) 0
-#if (NEWBUF)
+#elif (NEWBUF)
 #define nbufinit(bid)         0
 /* adjust how much is buffered based on current use */
 #define nmagslablog2init(bid) 0
@@ -275,15 +275,19 @@ typedef pthread_mutex_t LK_T;
     ((ismapbkt(bid))                                                    \
      ? 0                                                                \
      : (((bid) <= SLABBIGLOG2)                                          \
-        : 1                                                             \
+        ? 1                                                             \
         : 0))
 #define nmagslablog2m512(bid)                                           \
     ((ismapbkt(bid))                                                    \
      ? 0                                                                \
      : (((bid) <= SLABBIGLOG2)                                          \
-        : 1                                                             \
+        ? 1                                                             \
         : 1))
-#elif (TUNEBUF)
+#define nblklog2(bid)                                                   \
+    ((!ismapbkt(bid))                                                   \
+    ? (SLABLOG2 - (bid) + nmagslablog2(bid))                            \
+    : nmagslablog2(bid))
+#elif (TUNEBUF) /* !NEWBUF */
 #define nbufinit(bid)         0
 /* adjust how much is buffered based on current use */
 #define nmagslablog2init(bid) 0
@@ -325,17 +329,11 @@ typedef pthread_mutex_t LK_T;
         : (((bid) <= SLABBIGLOG2)                                       \
          ? 1                                                            \
          : 2)))
-#endif /* !CONSTBUF */
 #define nblklog2(bid)                                                   \
     ((!ismapbkt(bid))                                                   \
     ? (SLABLOG2 - (bid) + nmagslablog2(bid))                            \
     : nmagslablog2(bid))
-#else
-#define nblklog2(bid)                                                   \
-    ((!ismapbkt(bid))                                                   \
-     ? (SLABLOG2 - (bid))                                               \
-     : 0)
-#endif /* TUNEBUF */
+#endif
 #define nblk(bid)         (1UL << nblklog2(bid))
 #define NBSLAB            (1UL << SLABLOG2)
 #define nbmap(bid)        (1UL << (nblklog2(bid) + (bid)))
@@ -554,7 +552,7 @@ static __thread long        _aid = -1;
 #else
 static long                 _aid = -1;
 #endif
-#if (STAT) || (INTSTAT)
+#if (STAT) || (INTSTAT) || (TUNEBUF)
 static int64_t              _nbheap;
 static int64_t              _nbmap;
 #endif
