@@ -68,37 +68,48 @@
 /*
  * Invariant minimum values.
  */
-#define _POSIX_ARG_MAX     4096
-#define _POSIX_CHILD_MAX   6
-#define _POSIX_LINK_MAX    8
-#define _POSIX_MAX_CANON   255
-#define _POSIX_MAX_INPUT   255
-#define _POSIX_NAME_MAX    14
-#define _POSIX_NGROUPS_MAX 16		// number of supplementary group IDs if available
-#define _POSIX_OPEN_MAX    16
-#define _POSIX_PATH_MAX    255
-#define _POSIX_PIPE_BUF    512
-#define _POSIX_SSIZE_MAX   32767
-#define _POSIX_STREAM_MAX  8
-#define _POSIX_TZNAME_MAX  3
+#define _POSIX_ARG_MAX        4096
+#define _POSIX_CHILD_MAX      6
+#define _POSIX_HOST_NAME_MAX  255
+#define _POSIX_LINK_MAX       8
+#define _POSIX_LOGIN_NAME_MAX 9         // includes terminating NUL
+#define _POSIX_MAX_CANON      255
+#define _POSIX_MAX_INPUT      255
+#define _POSIX_NAME_MAX       14
+#define _POSIX_NGROUPS_MAX    16	// number of supplementary group IDs if available
+#define _POSIX_OPEN_MAX       16
+#define _POSIX_PATH_MAX       255
+#define _POSIX_PIPE_BUF       512
+#define _POSIX_RE_DUP_MAX     255
+#define _POSIX_SSIZE_MAX      32767
+#define _POSIX_STREAM_MAX     8
+#define _POSIX_SYMLINK_MAX    255       // # of bytes in symbolic link
+#define _POSIX_SYMLOOP_MAX    8
+#define _POXIX_TTY_NAME_MAX   9
+#define _POSIX_TZNAME_MAX     3
 /*
  * Default values for possibly indeterminate run-time invariant values
  */
 /*
  * POSIX values.
  */
-#define ARG_MAX     65536 	// # of arg and env bytes to exec functions
-#define CHILD_MAX   256   	// # of processes per real user ID
-#define LINK_MAX    127         // # of links per file
-#define MAX_CANON   255   	// size of canonical input queue
-#define MAX_INPUT   255         // # size of type-ahead buffer
-#define NGROUPS_MAX 16    	// # of supplementary group ID per process
-#define OPEN_MAX    32768 	// # of open files per process
-#define PIPE_BUF    4096        // # of bytes in atomic write to pipe
-#define STREAM_MAX  FOPEN_MAX   // # of open I/O streams per process
-#define NAME_MAX    255         // # of bytes in file names
-#define PATH_MAX    4096        // # of bits in path including terminating NUL
-#define TZNAME_MAX  255         // # of bytes in timezone names
+#define ARG_MAX        65536 	 // # of arg and env bytes to exec functions
+#define CHILD_MAX      256       // # of processes per real user ID
+#define HOST_NAME_MAX  255
+#define LINK_MAX       127       // # of links per file
+#define LOGIN_NAME_MAX 9
+#define MAX_CANON      255   	 // size of canonical input queue
+#define MAX_INPUT      255       // # size of type-ahead buffer
+#define NGROUPS_MAX    16        // # of supplementary group ID per process
+#define OPEN_MAX       32768   	 // # of open files per process
+#define PIPE_BUF       4096      // # of bytes in atomic write to pipe
+#define RE_DUP_MAX     255
+#define STREAM_MAX     FOPEN_MAX // # of open I/O streams per process
+#define SYMLOOP_MAX    8
+#define NAME_MAX       255       // # of bytes in file names
+#define PATH_MAX       4096      // # of bits in path including terminating NUL
+#define TZNAME_MAX     3         // # of bytes in timezone names
+#define TTY_NAME_MAX   9
 
 #endif /* POSIX */
 #define RTSIG_MAX   NRTSIG

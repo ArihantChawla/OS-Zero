@@ -35,7 +35,7 @@ typedef int64_t         clock_t;
 #endif
 typedef long            blksize_t;
 typedef long            blksize_cnt;
-ypedef short           cnt_t;
+typedef short           cnt_t;
 typedef char           *caddr_t;        // core address
 typedef long            daddr_t;        // disk address
 typedef long            clock_t;
@@ -43,8 +43,8 @@ typedef long            clockid_t;
 typedef int32_t         dev_t;          // device number
 typedef dev_t           major_t;
 typedef dev_t           minor_t;
-typedef uint32_t        fsblkcnt_t;     // filesystem block count
-typedef uint32_t        fsfilcnt_t;     // filesystem file count
+//typedef uint32_t        fsblkcnt_t;     // filesystem block count
+//typedef uint32_t        fsfilcnt_t;     // filesystem file count
 typedef uint32_t        gid_t;          // group ID
 //typedef long            id_t;
 typedef long            key_t;          // IPC key
@@ -57,7 +57,7 @@ typedef uint32_t        ino_t;          // inode number
 typedef int32_t         blkcnt_t;
 typedef uint32_t        fsblkcnt_t;
 typedef uint32_t        fsfilcnt;
-#elif
+#elif (_FILE_OFFSET_BITS == 64)
 typedef int64_t         off_t;          // 64-bit file offset
 typedef uint64_t        ino_t;
 typedef int64_t         blkcnt_t;
@@ -90,7 +90,7 @@ typedef uintptr_t       pfn_t;          // page frame #
 typedef unsigned long   pgcnt_t;        // # of pages
 typedef long            spgcnt_t;       // signed # of pages
 typedef unsigned char   use_t;          // use count for swap
-typedef short           sysid_t
+typedef short           sysid_t;
 typedef short           index_t;
 typedef void           *timeout_id_t;   // opaque handle from timeout()
 typedef void           *bufcall_id_t;   // opaque handle from bufcall()
@@ -123,7 +123,8 @@ struct fdset {
 };
 typedef struct fdset fd_set;
 
-#include <time.h>
+/* FIXME: this file should #include <time.h> (?) :) */
+//#include <time.h>
 #if (_BSD_SOURCE)
 #include <sys/param.h>
 #endif

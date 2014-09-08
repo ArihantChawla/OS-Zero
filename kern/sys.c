@@ -1,5 +1,6 @@
 #include <limits.h>
-#include <zero/cdecl.p>
+#include <unistd.h>
+#include <zero/cdecl.h>
 #include <zero/param.h>
 #include <kern/sys.h>
 #include <kern/conf.h>
@@ -16,13 +17,12 @@ sysinit(void)
     sys.conf.val[_SC_LOGIN_NAME_MAX] = LOGIN_NAME_MAX;
     sys.conf.val[_SC_CLK_TCK] = HZ;
     sys.conf.val[_SC_OPEN_MAX] = OPEN_MAX;
-    sys.conf.val[_SC_PAGESIZE] = PAGESIZE;
-    sys.conf.val[_SC_PAGE_SIZE] = _SC_PAGESIZE
+    sys.conf.val[_SC_PAGE_SIZE] = PAGESIZE;
     sys.conf.val[_SC_RE_DUP_MAX] = RE_DUP_MAX;
     sys.conf.val[_SC_STREAM_MAX] = STREAM_MAX;
     sys.conf.val[_SC_SYMLOOP_MAX] = SYMLOOP_MAX;
     sys.conf.val[_SC_TTY_NAME_MAX] = TTY_NAME_MAX;
-    sys.conf.val[_SC_TZNAME_MAX] = TZ_NAME_MAX;
+    sys.conf.val[_SC_TZNAME_MAX] = TZNAME_MAX;
     sys.conf.val[_SC_VERSION] = _POSIX_VERSION;
 /* POSIX.2 values */
     sys.conf.val[_SC_BC_BASE_MAX] = 0;
@@ -51,7 +51,7 @@ sysgetconf(int scval)
     long retval;
     
     if (scval < 0 || scval >= NSYSCONF) {
-        kseterrno(EINVAL);
+//        kseterrno(EINVAL);
         
         return -1;
     }

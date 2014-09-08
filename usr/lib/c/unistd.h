@@ -140,7 +140,7 @@ extern long int fpathconf(int fd, int name);
 #define _SC_COLL_WEIGHTS_MAX 0x00000013
 #define _SC_EXPR_NEST_MAX    0x00000014
 #define _SC_LINE_MAX         0x00000015
-#define _SC_RE_DUP_MAX       0x00000016
+//#define _SC_RE_DUP_MAX       0x00000016
 #define _SC_2_VERSION        0x00000017
 #define _SC_2_C_DEV          0x00000018
 #define _SC2_FORT_DEV        0x00000019

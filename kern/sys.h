@@ -3,9 +3,9 @@
 
 #include <kern/version.h>
 
-/* vals is indexed with _SC-macros from <unistd.h>
+/* vals is indexed with _SC-macros from <unistd.h> */
 struct sysconf {
-	long vals[NSYSCONF];
+	long val[NSYSCONF];
 };
 
 struct sys {
