@@ -150,7 +150,7 @@ extern long int fpathconf(int fd, int name);
 #define _SC_PHYS_PAGES       0x0000001c     // # of pages of physical memory
 #define _SC_AVPHYS_PAGES     0x0000001d     // # of currently available pages of physical memory
 #define _SC_NPROCESSORS_CONF 0x0000001e     // # of processors configured
-#define _SC_NPROCESSOR_ONLN  0x0000001f     // # of processors currently online
+#define _SC_NPROCESSORS_ONLN 0x0000001f     // # of processors currently online
 #define NSYSCONF             32
 extern long int sysconf(int name);
 #if (USEPOSIX2)

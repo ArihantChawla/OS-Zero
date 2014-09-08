@@ -42,7 +42,7 @@ sysinit(void)
     sys.conf.val[_SC_PHYS_PAGES] = 0;
     sys.conf.val[_SC_AVPHYS_PAGES] = 0;
     sys.conf.val[_SC_NPROCESSORS_CONF] = 1;
-    sys.conf.val[_SC_NPROCESSOR_ONLN] = 1;
+    sys.conf.val[_SC_NPROCESSORS_ONLN] = 1;
 }
 
 long
