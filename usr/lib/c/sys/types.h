@@ -25,33 +25,58 @@ typedef unsigned long   u_long;
 typedef int64_t         quad_t;
 typedef uint64_t        u_quad_t;
 typedef quad_t         *qaddr_t;
-/* FIXME: fsid_t, daddr_t, caddr_t */
 #endif
 typedef unsigned int    uint;
 typedef unsigned short  ushort;
 typedef unsigned long   ulong;
-/* FIXME: loff_t */
 #if 0
 typedef int64_t         blkcnt_t;
 typedef int64_t         clock_t;
 #endif
-typedef int64_t         blksize_t;
-typedef long            blkcnt_t;
+typedef long            blksize_t;
 typedef long            blksize_cnt;
+ypedef short           cnt_t;
 typedef char           *caddr_t;        // core address
-typedef int32_t         daddr_t;        // disk address
+typedef long            daddr_t;        // disk address
 typedef long            clock_t;
 typedef long            clockid_t;
 typedef int32_t         dev_t;          // device number
+typedef dev_t           major_t;
+typedef dev_t           minor_t;
 typedef uint32_t        fsblkcnt_t;     // filesystem block count
 typedef uint32_t        fsfilcnt_t;     // filesystem file count
 typedef uint32_t        gid_t;          // group ID
 //typedef long            id_t;
-typedef int32_t         ino_t;          // inode number
 typedef long            key_t;          // IPC key
-typedef long            mode_t;         // permissions
+typedef unsigned long   mode_t;         // permissions
 typedef int32_t         nlink_t;        // link count
-typedef int64_t         off_t;          // file offset
+typedef int64_t         loff_t;
+#if (_FILE_OFFSET_BITS == 32)
+typedef int32_t         off_t;          // 32-bit file offset
+typedef uint32_t        ino_t;          // inode number
+typedef int32_t         blkcnt_t;
+typedef uint32_t        fsblkcnt_t;
+typedef uint32_t        fsfilcnt;
+#elif
+typedef int64_t         off_t;          // 64-bit file offset
+typedef uint64_t        ino_t;
+typedef int64_t         blkcnt_t;
+typedef uint64_t        fsblkcnt_t;
+typedef uint64_t        fsfilcnt_t;
+#endif
+#if defined(_LARGEFILE64_SOURCE)
+typedef int64_t         off64_t;
+typedef uint64_t        ino64_t;
+typedef int64_t         blkcnt64_t;
+typedef uint64_t        fsblkcnt64_t;
+typedef uint64_t        fsfilcnt64_t;
+#endif
+typedef int64_t         offset_t;
+typedef uint64_t        u_offset_t;
+typedef uint64_t        len_t;
+typedef int64_t         diskaddr_t;
+typedef unsigned long   fsid_t;
+typedef long            id_t;
 typedef long            pid_t;          // process ID
 typedef long            ssize_t;
 //typedef int64_t        time_t;
@@ -60,7 +85,22 @@ typedef long            timer_t;
 typedef unsigned long   useconds_t;
 typedef long            suseconds_t;
 
-/* TODO: major(), minor(), makedev() */
+/* virtual memory related types */
+typedef uintptr_t       pfn_t;          // page frame #
+typedef unsigned long   pgcnt_t;        // # of pages
+typedef long            spgcnt_t;       // signed # of pages
+typedef unsigned char   use_t;          // use count for swap
+typedef short           sysid_t
+typedef short           index_t;
+typedef void           *timeout_id_t;   // opaque handle from timeout()
+typedef void           *bufcall_id_t;   // opaque handle from bufcall()
+
+typedef id_t            taskid_t;
+typedef id_t            projid_t;
+
+/* POSIX threads */
+typedef uintptr_t       pthread_t;
+typedef uintptr_t       pthread_key_t;
 
 #if (_POSIX_SOURCE)
 #define FD_SETSIZE _POSIX_FD_SETSIZE
@@ -83,9 +123,18 @@ struct fdset {
 };
 typedef struct fdset fd_set;
 
+#include <time.h>
 #if (_BSD_SOURCE)
 #include <sys/param.h>
 #endif
+
+#define P_MYPID         ((pid_t)0)
+#define P_MYID          (-1)
+#define NOPID           ((pid_t)-1)
+
+#define PFN_INVALID     ((pfn_t)-1)
+
+#define NODEV           ((dev_t)-1L)
 
 #endif /* __SYS_TYPES_H__ */
 

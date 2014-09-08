@@ -54,13 +54,13 @@ extern void ksyscall(void);
  * ----------------
  * long  sys_brk(void *adr);
  * - set top of heap to adr
- * void *sys_map(long desc, long flg, struct sysmemreg *reg);
+ * void *sys_map(long desc, long flg, struct sysmemarg *arg);
  * - map file or anonymous memory
  * long  sys_umap(void *adr, size_t size);
  * - unmap file or anonymous memory
- * long  sys_mhint(void *adr, long flg, struct sysmemreg *reg);
+ * long  sys_mhint(void *adr, long flg, struct sysmemarg *arg);
  * - hint kernel about memory region use characteristics
- * long  sys_mctl(void *adr, long flg, struct sysmemreg *reg);
+ * long  sys_mctl(void *adr, long flg, struct sysmemarg *arg);
  * - memory control operations; locks, permissions, etc.
  *
  * IPC
@@ -172,15 +172,16 @@ extern void ksyscall(void);
 /* cmd */
 #define SYSCTL_HALT     0x01U  // halt() and reboot()
 #define SYSCTL_SYSINFO  0x02U  // sysconf()
+#define SYSCTL_SYSCONF  0x03U  // configure system behavior */
 #define SYSCTL_SYSSTAT  0x03U  // query system statistics; getrusage()
+
 /* parm */
 /* flg value for SYSCTL_HALT */
 #define SYSCTL_REBOOT   0x01U   // reboot()
 /* SYSCTL_SYSINFO */
 #define SYSCTL_CLSIZE   0x01U   // query system cacheline size; getclsize()
-#define SYSCTL_PAGESIZE 0x02U   // getpagesize(); sysconf() with _SC_PAGESIZE/_SC_PAGE_SIZE
 #if 0
-#define SYSCTL_DTSIZE   0x03U   // query system descriptor table size
+#define SYSCTL_DTABSIZE 0x03U   // query system descriptor table size
 #define SYSCTL_STKSIZE  0x03U   // query process stack size; getstksize()
 #endif
 #define SYSCTL_RAMSIZE  0x04U   // query system memory size; getramsize()
@@ -203,7 +204,8 @@ extern void ksyscall(void);
 #define FORK_COW        0x02U   // copy on write optimisations
 
 struct sysatexit {
-	void (*func)(void);
+	void             (*func)(void);
+	struct sysatexit  *next;
 };
 
 /* thread interface */
@@ -234,9 +236,10 @@ struct sysatexit {
 #define PROC_SETLIM        0x09    // setrlimit()
 #define PROC_ATEXIT        0x10    // atexit(), on_exit()
 /* pctl() parm attributes */
-#define PROC_GETSTKSIZE    0x01	   // query process stack size
+/* PROC_GETLIM, PROC_SETLIM */
+#define PROC_STKSIZE       0x01	   // query process stack size
 #define PROC_KERNSTKSIZE   0x03    // query process kernel stack size
-#define PROC_GETDTABLESIZE 0x02    // query process descriptor table size
+#define PROC_DESCTABSIZE   0x02    // query process descriptor table size
 
 #if 0
 /* pctl() parameters */
@@ -320,10 +323,14 @@ struct syswait {
 
 struct sysmemreg {
     struct perm  perm;		// permission structure
-    long         cmd;		// memory command
     void        *base;		// base address of region
-    long         ofs;		// offset into region (for locks and such)
-    long         len;		// length
+    size_t       ofs;		// offset into region (for locks and such)
+    size_t       len;		// length
+};
+
+struct sysmemarg {
+    long             cmd;	// memory command
+	struct sysmemreg reg;
 };
 
 /*
@@ -356,15 +363,17 @@ struct sysrwlock {
 };
 
 struct msg {
-    uintptr_t qid;						// queue ID
-    long      prio;						// private
-    long      len;						// size of data field in bytes
-    uint8_t   data[EMPTY];				// message data§
+    uintptr_t   qid;				    // queue ID
+    long        prio;					// private
+    long        len;					// size of data field in bytes
+	struct msg *prev;
+	struct msg *next;
+    uint8_t     data[EMPTY];			// message data§
 };
 
 struct sysmq {
-	struct perm  perm;					// message queue permission§
 	long         lk;					// access mutex
+	struct perm  perm;					// message queue permission§
     uintptr_t    id;					// system-wide queue ID
 	struct msg  *head;					// first item in queue for this priority
 	struct msg  *tail;					// last item in queue for this priority
@@ -399,13 +408,17 @@ struct sysop {
 #endif    
 };
 
+struct sysioreg {
+    struct perm perm;		// permission structure
+	off_t       ofs;
+	off_t       len;
+};
+
 /* ioctl() */
 struct ioctl {
-    struct perm perm; // permission structure§
-    off_t       ofs;  // offset into object
-    off_t       len;  // size of object
-	long        cmd;  // command to be executed
-    long        parm; // command parameters such as flag-bits
+	long            cmd;	// command to be executed
+    long            parm;	// command parameters such as flag-bits
+	struct sysioreg reg;
 };
 
 struct select {

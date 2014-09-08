@@ -185,6 +185,23 @@ typedef pthread_mutex_t LK_T;
 
 /* lookup tree of tables */
 
+
+#if (PTRBITS > 32)
+#define NL1KEY     (1UL << NL1BIT)
+#define NL2KEY     (1UL << NL2BIT)
+#define NL3KEY     (1UL << NL3BIT)
+#define L1NDX      (L2NDX + NL2BIT)
+#define L2NDX      (L3NDX + NL3BIT)
+//#define L3NDX      SLABLO2G
+#define L3NDX      PAGESIZELOG2
+#define NL1BIT     16
+#define NL2BIT     16
+#define NL3BIT     (PTRBITS - SLABLOG2 - NL1BIT - NL2BIT)
+//#define NL3BIT     (PTRBITS - NL1BIT - NL2BIT)
+#endif /* PTRBITS > 32 */
+
+#if 0
+
 #if (PTRBITS > 32)
 
 #define NL1KEY     (1UL << NL1BIT)
@@ -210,7 +227,9 @@ typedef pthread_mutex_t LK_T;
 
 #endif /* PTRBITS > 48 */
 
-#endif /* PTRBITS <= 32 */
+#endif /* PTRBITS > 32 */
+
+#endif /* 0 */
 
 /* macros */
 

@@ -22,7 +22,7 @@ extern int   _daylight;
 
 #if (_ZERO_SOURCE)
 //#include <kern/proc/thr.h>
-#define CLOCKS_PER_SEC HZ
+#define CLOCKS_PER_SEC 1000000
 #else
 #error CLOCKS_PER_SEC undefined
 #endif

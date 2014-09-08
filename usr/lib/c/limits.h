@@ -23,7 +23,7 @@
 #define WORD64_MIN    INT64_C(-0x7fffffffffffffff - 1)
 #define WORD64_MAX    INT64_C(0x7fffffffffffffff)
 #define UWORD64_MAX   UINT64_C(0xffffffffffffffff)
-#endif
+#endif /* 0 */
 
 /*
  * ISO limits.
