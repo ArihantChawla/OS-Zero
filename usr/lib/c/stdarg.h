@@ -4,9 +4,8 @@
 #if defined(__GNUC__)
 #if !defined(__GNUC_VA_LIST)
 typedef __builtin_va_list __gnuc_va_list;
-#else
-typedef __gnuc_va_list    va_list;
 #endif
+typedef __gnuc_va_list    va_list;
 #endif
 #define va_start(v, l)    __builtin_va_start(v, l)
 #define va_end(v)         __builtin_va_end(v)
