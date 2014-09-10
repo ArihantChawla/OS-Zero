@@ -2,6 +2,7 @@
 #define __FCNTL_H__
 
 #include <features.h>
+#include <sys/types.h>
 #if (_XOPEN_SOURCE)
 #include <sys/stat.h>
 #endif
@@ -44,7 +45,7 @@ extern int     posix_fallocate(int fd, off_t offste, off_t len);
 extern int     posix_fadvise(int fd, off_t offset, size_t len, int advice);
 #endif
 #if (_GNU_SOURCE)
-typedef int64_t off64_t;
+//typedef int64_t off64_t;
 extern ssize_t readahead(int fd, off64_t ofs, size_t count);
 #endif
 
