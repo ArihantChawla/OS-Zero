@@ -4,7 +4,7 @@
 #include <features.h>
 
 #if !(__KERNEL__)
-extern int errno;
+extern __thread int errno;
 #endif
 
 #define ENOSYS       1
