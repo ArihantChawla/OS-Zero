@@ -38,6 +38,11 @@ void * bsearch(const void *key, const void *base,
 
 void   qsort(void *const base, size_t nitems, size_t size,
              int (*cmp)(const void *, const void *));
+			 
+#if (_ZERO_SOURCE)
+/* FIXME: should this be UINT32_MAX? */
+#define RAND_MAX INT32_MAX
+#endif
 
 #endif /* __STDLIB_H__ */
 

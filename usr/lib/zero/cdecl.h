@@ -11,7 +11,7 @@
 /* __FUNCTION__ for non-C99 compilers */
 #if !defined(__STDC_VERSION__) || (__STDC_VERSION__ < 199901L)
 #if defined(__GNUC__)
-#define __FUNCTION__  __func__
+#define __func__ __FUNCTION__
 #else
 #endif
 #endif

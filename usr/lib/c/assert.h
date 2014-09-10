@@ -5,8 +5,13 @@
 
 #undef assert
 #ifdef NDEBUG
+
 #define assert(cond) ((void)0)
+
 #else
+
+#include <zero/cdecl.h>
+
 #define assert(cond)                                                    \
     ((cond)                                                             \
      ? ((void)0)                                                        \
@@ -17,5 +22,6 @@
                 __func__,                                               \
                 __LINE__),                                              \
         abort()))
+
 #endif
 
