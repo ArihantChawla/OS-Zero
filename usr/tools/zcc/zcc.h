@@ -174,6 +174,7 @@ struct zppinput {
 #define ZCC_FLOAT        0x0b
 #define ZCC_DOUBLE       0x0c
 #define ZCC_LDOUBLE      0x0d
+/* void */
 #define ZCC_VOID         0x0e
 #define ZCC_NTYPE        0x0f
 /* register ID in bits 8..15 */
