@@ -5,6 +5,9 @@
  * See the file LICENSE for more information about using this software.
  */
 
+/* FIXME */
+#define MALLOCUSEPTHREAD 0
+
 #define NEWARN     1
 
 #define HACKS      0
@@ -393,13 +396,15 @@ typedef pthread_mutex_t LK_T;
 #endif
 
 static void   initmall(void);
+#if (PTHREAD) && (MTSAFE)
 static void   relarn(void *arg);
+#endif
 static void * getmem(size_t size, size_t align, long zero);
 static void   putmem(void *ptr);
 static void * _realloc(void *ptr, size_t size, long rel);
 
 #include <string.h>
-#if (PTHREAD)
+#if (PTHREAD) && (MALLOCUSEPTHREAD)
 #include <pthread.h>
 #endif
 //#include <mach/mach.h>
@@ -411,9 +416,14 @@ static void * _realloc(void *ptr, size_t size, long rel);
 /* synchronisation */
 
 #if (ZEROMTX)
+#if 0
 #define mlk(mp)           mtxlk2(mp, _aid + 1)
 #define munlk(mp)         mtxunlk2(mp, _aid + 1)
 #define mtylk(mp)         mtxtrylk2(mp, _aid + 1)
+#endif
+#define mlk(mp)           mtxlk(mp)
+#define munlk(mp)         mtxunlk(mp)
+#define mtrylk(mp)        mtxtrylk(mp)
 #elif (SPINLK)
 #define mlk(sp)           spinlk2(sp, _aid + 1)
 #define munlk(sp)         spinunlk2(sp, _aid + 1)
@@ -535,12 +545,12 @@ static void               **_mdir;
 static struct arn         **_atab;
 static struct mconf         _conf;
 #if (MTSAFE)
-static __thread long        _aid = -1;
 #if (PTHREAD)
+static __thread long        _aid = -1;
 static pthread_key_t        _akey;
-#endif
 #else
 static long                 _aid = -1;
+#endif
 #endif
 #if (STAT) || (INTSTAT) || (TUNEBUF)
 static int64_t              _nbheap;
@@ -592,7 +602,7 @@ getaid(void)
 
 /* fork() management */
 
-#if (MTSAFE)
+#if (PTHREAD) && (MTSAFE)
 
 static void
 prefork(void)
@@ -635,6 +645,8 @@ postfork(void)
 
     return;
 }
+
+#if (PTHREAD) && (MTSAFE)
 
 static void
 relarn(void *arg)
@@ -706,6 +718,8 @@ relarn(void *arg)
 
     return;
 }
+
+#endif /* PTHREAD && MTSAFE */
 
 /* statistics */
 
@@ -1346,7 +1360,7 @@ freemap(struct mag *mag)
         _fcnt[bid]++;
 #endif
         munlk(&_flktab[bid]);
-    } else {//if (!unmapanon(clrptr(mag->adr), max * bsz)) {
+    } else {
         unmapanon(clrptr(mag->adr), max * bsz);
 #if (VALGRIND)
         if (RUNNING_ON_VALGRIND) {

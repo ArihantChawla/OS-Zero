@@ -28,7 +28,7 @@
 
 #include <kern/proc/thr.h>
 
-extern volatile FASTCALL struct m_tcb * (*schedyield)(void);
+extern volatile FASTCALL struct m_tcb * (*schedpickthr)(void);
 void                                      schedinit(void);
 
 #if (ZEROSCHED)

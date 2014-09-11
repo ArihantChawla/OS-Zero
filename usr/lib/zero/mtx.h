@@ -10,8 +10,8 @@
 #undef PTHREAD
 #define PTHREAD    0
 #endif
-#define MTXINITVAL 0L
-#define MTXLKVAL   1L
+#define ZEROMTXINITVAL (0L)
+#define ZEROMTXLKVAL   (1L)
 
 #include <zero/asm.h>
 #if (__KERNEL__) && (__MTKERNEL__)
@@ -21,53 +21,52 @@
 extern int pthread_yield(void);
 #endif
 
-#define mtxinit(lp) (*(lp) = MTXINITVAL)
+#define mtxinit(lp) (*(lp) = ZEROMTXINITVAL)
 
 /*
  * try to acquire mutex lock
  * - return non-zero on success, zero if already locked
  */
-#define mtxtrylk(lp) mtxtrylk2(lp, MTXLKVAL)
-
 static __inline__ long
 mtxtrylk2(volatile long *lp, long val)
 {
     volatile long res;
 
-    res = m_cmpswap(lp, MTXINITVAL, val);
+    res = m_cmpswap(lp, ZEROMTXINITVAL, val);
 
-    return (res == MTXINITVAL);
+    return (res == ZEROMTXINITVAL);
 }
+#define mtxtrylk(lp) mtxtrylk2((volatile long *)(lp), ZEROMTXLKVAL)
 
-#define mtxlk(lp) mtxlk2(lp, MTXLKVAL)
 static __inline__ void
 mtxlk2(volatile long *lp, long val)
 {
     volatile long res = val;
     
     do {
-        res = m_cmpswap(lp, MTXINITVAL, val);
-        if (res != MTXINITVAL) {
+        res = m_cmpswap(lp, ZEROMTXINITVAL, val);
+        if (res != ZEROMTXINITVAL) {
 #if (__KERNEL__)
-//            schedyield();
+            schedpickthr();
 #elif (PTHREAD)
             pthread_yield();
 #endif
         }
-    } while (res != MTXINITVAL);
+    } while (res != ZEROMTXINITVAL);
 
     return;
 }
+#define mtxlk(lp) mtxlk2((volatile long *)(lp), ZEROMTXLKVAL)
 
-#define mtxunlk(lp) mtxunlk2(lp, MTXLKVAL)
 static __inline__ void
 mtxunlk2(volatile long *lp, long val)
 {
     m_membar();
-    *lp = MTXINITVAL;
+    *lp = ZEROMTXINITVAL;
 
     return;
 }
+#define mtxunlk(lp) mtxunlk2((volatile long *)(lp), ZEROMTXLKVAL)
 
 #endif /* __ZERO_MTX_H__ */
 
