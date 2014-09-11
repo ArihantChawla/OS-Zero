@@ -48,8 +48,8 @@ extern int adjtime(const struct timeval *delta, struct timeval *olddelta);
 #define ITIMER_PROF    2
 
 struct itimerval {
-	struct timeval it_interval;
-	struct timeval it_value;
+    struct timeval it_interval;
+    struct timeval it_value;
 };
 
 typedef int itimer_which_t;

@@ -16,7 +16,11 @@ typedef __gnuc_va_list __stdio_va_list;
 #include <kern/io.h>
 #include <kern/io/buf.h>
 
+#if defined(__GLIBC__)
+typedef struct _IO_FILE FILE;
+#else
 typedef struct file   FILE;
+#endif
 typedef off_t         fpos_t;
 #if (_FILE_OFFSET_BITS == 64)
 typedef off_t         fpos64_t;

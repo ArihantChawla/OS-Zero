@@ -5,10 +5,11 @@
 #include <stdint.h>
 #include <stddef.h>
 #include <limits.h>
+#include <sys/types.h>
 //#include <time.h>
 #if (_BSD_SOURCE)
 #include <endian.h>
-#include <sys/select.h>
+//#include <sys/select.h>
 #include <sys/sysmacros.h>
 #endif
 

@@ -5,11 +5,13 @@
  * See the file LICENSE for more information about using this software.
  */
 
-#define HACKS    0
+#define NEWARN     1
 
-#define LKDBG    0
-#define SYSDBG   0
-#define VALGRIND 0
+#define HACKS      0
+
+#define LKDBG      0
+#define SYSDBG     0
+#define VALGRIND   0
 
 #if !defined(MTSAFE)
 #define MTSAFE     1
@@ -20,7 +22,7 @@
 #define NOSBRK     0
 #define TAILFREE   1
 
-#define SMALLBUF   1
+#define SMALLBUF   0
 #define ISTK       0
 #define NOSTK      0
 #define BIGHDR     0
@@ -30,9 +32,9 @@
 #define FREEBITMAP 0
 
 #define ZEROMTX    1
-#if !defined(PTHREAD) && (MTSAFE)
-#define PTHREAD    1
-#endif
+//#if !defined(PTHREAD) && (MTSAFE)
+//#define PTHREAD    1
+//#endif
 
 #include <features.h>
 #include <errno.h>
@@ -46,7 +48,7 @@
 #endif
 #if (ZEROMTX)
 #include <zero/mtx.h>
-typedef long            LK_T;
+typedef volatile long   LK_T;
 #elif (SPINLK)
 #include <zero/spin.h>
 typedef long            LK_T;
@@ -168,61 +170,41 @@ typedef pthread_mutex_t LK_T;
 #else
 #define SLABLOG2      20
 #define SLABBIGLOG2   16
-#define SLABTINYLOG2  13
-#define SLABTEENYLOG2 10
-#define MAPMIDLOG2    20
+#define SLABTINYLOG2  14
+#define SLABTEENYLOG2 12
+#define MAPMIDLOG2    22
 #define MAPBIGLOG2    24
 #endif
 #define MINSZ         (1UL << BLKMINLOG2)
 #define HQMAX         SLABLOG2
 //#define HQMAX         20
-#define NBKT          (8 * PTRSIZE)
+#define NBKT          PTRBITS
 #if (MTSAFE)
-#define NARN          4
+#define NARN          8
 #else
 #define NARN          1
 #endif
 
-/* lookup tree of tables */
-
+/* lookup tree of magasine tables */
 
 #if (PTRBITS > 32)
+//#define NL1BIT     (PTRBITS - SLABLOG2 - NL2BIT - NL3BIT)
+#define NL1BIT     (PTRBITS - PAGESIZELOG2 - NL2BIT - NL3BIT)
+#define NL2BIT     16
+#define NL3BIT     16
 #define NL1KEY     (1UL << NL1BIT)
 #define NL2KEY     (1UL << NL2BIT)
 #define NL3KEY     (1UL << NL3BIT)
-#define L1NDX      (L2NDX + NL2BIT)
-#define L2NDX      (L3NDX + NL3BIT)
-//#define L3NDX      SLABLO2G
+//#define L1NDX      (NL2BIT + NL3BIT + SLABLOG2)
+//#define L2NDX      (NL3BIT + SLABLOG2)
+//#define L3NDX      SLABLOG2
+#define L1NDX      (NL2BIT + NL3BIT + PAGESIZELOG2)
+#define L2NDX      (NL3BIT + PAGESIZELOG2)
 #define L3NDX      PAGESIZELOG2
-#define NL1BIT     16
-#define NL2BIT     16
-#define NL3BIT     (PTRBITS - SLABLOG2 - NL1BIT - NL2BIT)
-//#define NL3BIT     (PTRBITS - NL1BIT - NL2BIT)
+#define l1key(ptr) (((uintptr_t)ptr >> L1NDX) & ((1 << NL1BIT) - 1))
+#define l2key(ptr) (((uintptr_t)ptr >> L2NDX) & ((1 << NL2BIT) - 1))
+#define l3key(ptr) (((uintptr_t)ptr >> L3NDX) & ((1 << NL3BIT) - 1))
 #endif /* PTRBITS > 32 */
-
-#if 0
-
-#if (PTRBITS > 32)
-
-#define NL1KEY     (1UL << NL1BIT)
-#define NL2KEY     (1UL << NL2BIT)
-#define NL3KEY     (1UL << NL3BIT)
-#define L1NDX      (L2NDX + NL2BIT)
-#define L2NDX      (L3NDX + NL3BIT)
-//#define L3NDX      SLABLO2G
-#define L3NDX      PAGESIZELOG2
-#define NL1BIT     16
-
-#if (PTRBITS >= 48)
-
-#define NL2BIT     16
-#define NL3BIT     (PTRBITS - SLABLOG2 - NL1BIT - NL2BIT)
-
-#endif /* PTRBITS > 48 */
-
-#endif /* PTRBITS > 32 */
-
-#endif /* 0 */
 
 /* macros */
 
@@ -260,7 +242,14 @@ typedef pthread_mutex_t LK_T;
 #if (CONSTBUF)
 #define nmagslablog2init(bid) 0
 #elif (NEWBUF)
-#define nbufinit(bid)         0
+#define nbufinit(bid)                                                   \
+    ((!ismapbkt(bid)                                                    \
+      ? 0                                                               \
+      : (((bid) < MAPMIDLOG2)                                           \
+         ? 2                                                            \
+         : (((bid) < MAPBIGLOG2)                                        \
+            ? 1                                                         \
+            : 0))))
 /* adjust how much is buffered based on current use */
 #define nmagslablog2init(bid) 0
 #define nmagslablog2up(m, v, t)                                         \
@@ -272,29 +261,13 @@ typedef pthread_mutex_t LK_T;
         }                                                               \
     } while (0)
 #define nmagslablog2m64(bid)                                            \
-    ((ismapbkt(bid))                                                    \
-     ? 0                                                                \
-     : (((bid) <= SLABTINYLOG2)                                         \
-        ? 0                                                             \
-        : 1))
+    0
 #define nmagslablog2m128(bid)                                           \
-    ((ismapbkt(bid))                                                    \
-     ? 0                                                                \
-     : (((bid) <= SLABBIGLOG2)                                          \
-        ? 0                                                             \
-        : 1))
+    0
 #define nmagslablog2m256(bid)                                           \
-    ((ismapbkt(bid))                                                    \
-     ? 0                                                                \
-     : (((bid) <= SLABBIGLOG2)                                          \
-        ? 1                                                             \
-        : 0))
+    0
 #define nmagslablog2m512(bid)                                           \
-    ((ismapbkt(bid))                                                    \
-     ? 0                                                                \
-     : (((bid) <= SLABBIGLOG2)                                          \
-        ? 1                                                             \
-        : 1))
+    0
 #define nblklog2(bid)                                                   \
     ((!ismapbkt(bid))                                                   \
     ? (SLABLOG2 - (bid) + nmagslablog2(bid))                            \
@@ -511,6 +484,9 @@ struct mag {
 #define nbarn() (blksz(bktid(sizeof(struct arn))))
 struct arn {
     struct mag  *btab[NBKT];
+#if (NEWARN)
+    LK_T         lk;
+#endif
     long         nref;
     long         hcur;
     long         nhdr;
@@ -558,9 +534,11 @@ static long                 _fcnt[NBKT];
 static void               **_mdir;
 static struct arn         **_atab;
 static struct mconf         _conf;
-#if (MTSAFE) && (PTHREAD)
-static pthread_key_t        _akey;
+#if (MTSAFE)
 static __thread long        _aid = -1;
+#if (PTHREAD)
+static pthread_key_t        _akey;
+#endif
 #else
 static long                 _aid = -1;
 #endif
@@ -592,12 +570,19 @@ static long
 getaid(void)
 {
     long        aid;
+    struct arn *arn;
 
     mlk(&_conf.arnlk);
     aid = _conf.acur++;
+    arn = _atab[aid];
     _conf.acur &= NARN - 1;
 #if (PTHREAD)
-    pthread_setspecific(_akey, _atab[aid]);
+#if (NEWARN)
+    mtxlk(&arn->lk);
+    arn->nref++;
+    mtxunlk(&arn->lk);
+#endif
+    pthread_setspecific(_akey, arn);
 #endif
     munlk(&_conf.arnlk);
 
@@ -663,7 +648,13 @@ relarn(void *arg)
     struct mag *mag;
     struct mag *head;
 
+#if (NEWARN)
+    mlk(&arn->lk);
+#endif
     nref = --arn->nref;
+#if (NEWARN)
+    munlk(&arn->lk);
+#endif
     if (!nref) {
         bid = NBKT;
         while (bid--) {
@@ -1017,19 +1008,12 @@ initmall(void)
 
 #if (MTSAFE)
 #if (PTRBITS > 32)
-//#define l1ndx(ptr) getbits((uintptr_t)ptr, L1NDX, NL1BIT)
-//#define l2ndx(ptr) getbits((uintptr_t)ptr, L2NDX, NL2BIT)
-//#define l3ndx(ptr) getbits((uintptr_t)ptr, L3NDX, NL3BIT)
-#define l1ndx(ptr) (((uintptr_t)ptr >> L1NDX) & ((1 << NL1BIT) - 1))
-#define l2ndx(ptr) (((uintptr_t)ptr >> L2NDX) & ((1 << NL2BIT) - 1))
-#define l3ndx(ptr) (((uintptr_t)ptr >> L3NDX) & ((1 << NL3BIT) - 1))
-#if (PTRBITS > 48)
 static struct mag *
 findmag(void *ptr)
 {
-    uintptr_t  l1 = l1ndx(ptr);
-    uintptr_t  l2 = l2ndx(ptr);
-    uintptr_t  l3 = l3ndx(ptr);
+    uintptr_t   l1 = l1key(ptr);
+    uintptr_t   l2 = l2key(ptr);
+    uintptr_t   l3 = l3key(ptr);
     void       *ptr1;
     void       *ptr2;
     struct mag *mag = NULL;
@@ -1049,9 +1033,9 @@ static void
 addblk(void *ptr,
        struct mag *mag)
 {
-    uintptr_t    l1 = l1ndx(ptr);
-    uintptr_t    l2 = l2ndx(ptr);
-    uintptr_t    l3 = l3ndx(ptr);
+    uintptr_t    l1 = l1key(ptr);
+    uintptr_t    l2 = l2key(ptr);
+    uintptr_t    l3 = l3key(ptr);
     void        *ptr1;
     void        *ptr2;
     void       **pptr;
@@ -1085,50 +1069,7 @@ addblk(void *ptr,
 
     return;
 }
-#else
-static struct mag *
-findmag(void *ptr)
-{
-    uintptr_t   l1 = l1ndx(ptr);
-    uintptr_t   l2 = l2ndx(ptr);
-    void       *ptr1;
-    struct mag *mag = NULL;
-
-    ptr1 = _mdir[l1];
-    if (ptr1) {
-        mag = ((struct mag **)ptr1)[l2];
-    }
-
-    return mag;
-}
-
-static void
-addblk(void *ptr,
-       struct mag *mag)
-{
-    uintptr_t    l1 = l1ndx(ptr);
-    uintptr_t    l2 = l2ndx(ptr);
-    void        *ptr1;
-    struct mag **item;
-
-    ptr1 = _mdir[l1];
-    if (!ptr1) {
-        _mdir[l1] = ptr1 = mapanon(_mapfd, NL2KEY * sizeof(struct mag *));
-        if (ptr1 == MAP_FAILED) {
-#ifdef ENOMEM
-            errno = ENOMEM;
-#endif
-
-            exit(1);
-        }
-    }
-    item = &((struct mag **)ptr1)[l2];
-    *item = mag;
-
-    return;
-}
-#endif
-#else
+#else /* PTRBITS <= 32 */
 #define findmag(ptr)     (_mdir[slabid(ptr)])
 #define addblk(ptr, mag) (_mdir[slabid(ptr)] = (mag))
 #endif
@@ -1248,7 +1189,9 @@ getslab(long aid,
 #endif
         } else {
 #if (STDIO)
-            fprintf(stderr, "failed to grow heap %ld bytes: bkt %ld\n", nb, bid);
+            fprintf(stderr, "failed to grow heap %ld bytes: bkt %ld\n",
+                    nb, bid);
+            fflush(stderr);
 #endif
             abort();
 #ifdef ENOMEM
@@ -1270,6 +1213,7 @@ getslab(long aid,
         } else {
 #if (STDIO)
             fprintf(stderr, "failed to map %ld bytes: bkt %ld\n", nb, bid);
+            fflush(stderr);
 #endif
             abort();
 #ifdef ENOMEM
@@ -1502,6 +1446,7 @@ initmag(struct mag *mag)
             } else {
 #if (STDIO)
                 fprintf(stderr, "failed to allocate stack: bkt %ld\n", bid);
+                fflush(stderr);
 #endif
                 abort();
             }
@@ -1707,6 +1652,7 @@ getmem(size_t size,
 #endif
 #if (STDIO)
         fprintf(stderr, "%lx failed to allocate %ld bytes (heap: %ld, map: %ld\n) - initialised == %ld", aid, 1UL << bid, (long)_nbheap, (long)_nbmap, _conf.flags & CONF_INIT);
+        fflush(stderr);
 #endif
 
         return NULL;
@@ -1767,6 +1713,7 @@ putmem(void *ptr)
                 if (chkred(u8p) || chkred(u8p + blksz(bid) - RZSZ)) {
 #if (STDIO)
                     fprintf(stderr, "red-zone violation\n");
+                    fflush(stderr);
 #endif
                     abort();
                 }
@@ -1777,6 +1724,7 @@ putmem(void *ptr)
             if (!bitset(mag->fmap, blkid(mag, mptr))) {
 #if (STDIO)
                 fprintf(stderr, "duplicate free: %p\n", mag->adr);
+                fflush(stderr);
 #endif
                 
                 return;
@@ -1886,6 +1834,7 @@ putmem(void *ptr)
             munlk(&arn->lktab[bid]);
 #if (STDIO)
             fprintf(stderr, "invalid free %p\n", ptr);
+            fflush(stderr);
 #endif
             abort();
         }
