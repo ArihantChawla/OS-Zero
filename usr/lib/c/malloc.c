@@ -6,7 +6,7 @@
  */
 
 /* FIXME */
-#define MALLOCUSEPTHREAD 0
+#define MALLOCUSEPTHREAD 1
 
 #define NEWARN     1
 
