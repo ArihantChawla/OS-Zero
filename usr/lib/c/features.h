@@ -4,6 +4,7 @@
 #define _REENTRANT             1        // enable re-entrant thread-safe code
 #define _THREAD_SAFE           1        // thread safety
 #define USEXOPEN2K             1
+#define USEXOPEN2K8            1
 #define USEXOPENEXT            1
 #define USEUNIX98              1
 #define USEPOSIX               1

@@ -519,7 +519,7 @@ divu10(unsigned long x)
 	q = q + (q >> 8);
 	q = q + (q >> 16);
 	q = q >> 3;
-	r = n - q * 10;
+	r = x - q * 10;
 	
 	return q + ((r + 6) >> 4);
 }
@@ -539,7 +539,7 @@ divu100(unsigned long x)
     return q + ((r + 28) >> 7);
 }
 
-#define modu10(u)  ((u) - divu10(u) * 100)
+//#define modu10(u)  ((u) - divu10(u) * 100)
 #define modu100(u) ((u) - divu100(u) * 100)
 #define modu400(u) ((u) - (divu100(u) >> 2) * 400)
 
