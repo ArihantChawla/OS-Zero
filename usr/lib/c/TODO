@@ -1,0 +1,18 @@
+- <cdefs.h>
+- some systems provide <sys/ndir.h>, <sys/dir.h>, and/or <ndir.h>
+- <conio.h>
+- <crtdbg.h>
+- <curses.h>, <eti.h>, <menu.h>, <panel.h>
+- <grp.h>
+- <env.h>
+- <i86.h>
+- <alloc.h>
+- <mem.h>
+- <mig.h> (QNX)
+- <mqueue.h>
+- <process.h>
+- <pwd.h>
+- <queue.h>
+- <semaphore.h>
+- <share.h>
+- <_comdef.h>, <alloc.h>, <graph.h> (Watcom)
