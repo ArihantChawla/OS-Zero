@@ -4,8 +4,7 @@
 #include <features.h>
 
 //#if !defined(__STDC_VERSION__) || (__STDC_VERSION__ < 199901L)
-//#include <stdint.h>
-//typedef uint_fast8_t _Bool;
+//typedef unsigned char _Bool;
 //#endif
 //#if defined(__STDC_VERSION__) && (__STDC_VERSION__ >= 199901L)
 #define bool                          _Bool
