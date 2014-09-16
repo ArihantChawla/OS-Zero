@@ -1,0 +1,32 @@
+zero kernel ideas
+-----------------
+
+scheduler
+---------
+- default time slice is 4 milliseconds
+- minislice is 1 millisecond;
+  - keyboard and mouse input processing (driven by interrupt handlers)
+	- keyboard passes scan-codes as 64-bit integers
+	- mouse packets are 8-bit button ID + 24-bit X- and Y-coordinates (screen)
+	  + 8-bit Z coordinate (wheel)
+
+event interface
+---------------
+- keyboard and pointer (e.g. mouse) events
+- [virtual] file-system events
+- audio and video events
+- network events
+- desktop events
+
+virtual filesystem
+------------------
+- nodes
+  - regular file, directory, named pipe (FIFO), message queue, socket
+- network transparent; implement NFS natively
+- I/O filters;
+  - encryption
+  - multimedia en- and decoding
+    - images
+	- audio streams and samples
+	- video streams and stills/images
+	
