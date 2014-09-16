@@ -30,8 +30,8 @@
 #define _BSD_SOURCE            1        // enable BSD features
 #define _ZERO_SOURCE           1        // enable Zero features
 #define _UNIX_SOURCE           1        // enable Unix features
-#define _MSDOS_SOURCE          1        // enable [some] MS-DOS C features
-#define _QNX_SOURCE            1
+#define _MSDOS_SOURCE          1        // enable [some] MS-DOS style C features
+#define _QNX_SOURCE            1        // [possible] QNX features
 
 /*
  * _POSIX_VERSION

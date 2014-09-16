@@ -506,8 +506,10 @@ ceilpow2_64(uint64_t u)
 #endif
 
 /* calculate modulus u % 10 */
+#if 0
 #define modu10(u)                                                       \
     ((u) - ((((u) * 6554U) >> 16) * 10))
+#endif
 
 static __inline__ unsigned long
 divu10(unsigned long x)
@@ -539,7 +541,7 @@ divu100(unsigned long x)
     return q + ((r + 28) >> 7);
 }
 
-//#define modu10(u)  ((u) - divu10(u) * 100)
+#define modu10(u)  ((u) - divu10(u) * 100)
 #define modu100(u) ((u) - divu100(u) * 100)
 #define modu400(u) ((u) - (divu100(u) >> 2) * 400)
 

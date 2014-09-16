@@ -7,8 +7,8 @@ scheduler
 - minislice is 1 millisecond;
   - keyboard and mouse input processing (driven by interrupt handlers)
 	- keyboard passes scan-codes as 64-bit integers
-	- mouse packets are 8-bit button ID + 24-bit X- and Y-coordinates (screen)
-	  + 8-bit Z coordinate (wheel)
+	- mouse packets are 8-bit button ID + 24-bit X- and Y-coordinates
+	  (screen) + 8-bit Z coordinate (wheel)
 
 event interface
 ---------------
@@ -18,11 +18,28 @@ event interface
 - network events
 - desktop events
 
+IPC
+---
+- transport; shm, mem, buf, file, mq, net
+  - shm
+    - shared memory; may be mapped to same physical memory by both the kernel
+      and users processes; single-process map as a special case without locks
+  - mem
+    - "regular" memory region stores data
+  - buf
+    - block I/O buffer cache relays data
+  - intermediate file is used to pass/map data
+  - mq
+    - message queue; ID + priority
+  - net
+    - TCP/IP or another protocol set is used to carry network packets
+
 virtual filesystem
 ------------------
+- network transparent; implement NFS natively
 - nodes
   - regular file, directory, named pipe (FIFO), message queue, socket
-- network transparent; implement NFS natively
+- I/O streams (analogous with files)
 - I/O filters;
   - encryption
   - multimedia en- and decoding
