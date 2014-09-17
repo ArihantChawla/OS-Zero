@@ -5,6 +5,26 @@
 #include <zero/cdecl.h>
 #include <zero/param.h>
 
+/*
+ * NOTES
+ * -----
+ * - event ID of 0 (zero) is reserved for errors and other protocol messages
+ */
+
+/* kernel events */
+
+/* system events */
+#define EVSHUTDOWN        0x01
+#define EVMOUNT           0x02
+#define EVUNMOUNT         0x03
+
+/* hardware/driver events */
+#define EVLOAD            0x01
+#define EVPLUG            0x02
+#define EVUNPLUG          0x03
+
+/* userland events */
+
 /* masks for choosing events */
 
 /* user input events */
@@ -17,11 +37,11 @@
 #define EVPNTMOTIONMASK   (1UL << EVPNTMOTION)
 /* IPC events */
 #define EVIPCMASK         ((1UL << EVCMD) | (1UL << EVMSG) | (1UL << EVDATA))
-#define EVFSMASK          ((EVFSCREATMASK                                \
+/* filesystem events */
+#define EVFSMASK          ((EVFSCREATMASK                               \
                             | EVFSUNLINKMASK                            \
                             | EVFSMKDIRMASK                             \
                             | EVFSRMDIRMASK))
-/* filesystem events */
 #define EVFSCREATMASK     (1UL << EVFSCREAT)
 #define EVFSUNLINKMASK    (1UL << EVFSUNLINK)
 #define EVFSMKDIRMASK     (1UL << EVFSMKDIR)

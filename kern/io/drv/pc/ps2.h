@@ -6,7 +6,7 @@
 
 /* KEYBOARD */
 
-#define PS2KBD_NBUFKEY              (PAGESIZE >> 3)
+//#define PS2KBD_NBUFKEY              (PAGESIZE >> 3)
 
 #define PS2KBD_NTAB                 128
 
@@ -379,8 +379,10 @@ struct mousestate {
 } PACK();
 
 struct ps2drv {
+#if 0
     uint64_t          keybuf[PS2KBD_NBUFKEY];
     int32_t           keyvalbuf[PS2KBD_NBUFKEY];
+#endif
     volatile long     keylk;
     uint64_t         *curkey;
     uint64_t         *lastkey;

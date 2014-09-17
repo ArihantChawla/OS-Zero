@@ -19,8 +19,8 @@ void bufaddblk(struct bufblk *blk);
 
 bufaddblk() adds a block buffer into buffer cache.
 
-struct bufblk * buffindblk(int64_t dev, int64_t num, long rel);
----------------------------------------------------------------
+struct bufblk * buffindblk(dev_t dev, off_t num, long rel);
+-----------------------------------------------------------
 
 buffindblk() searches buffer cache for block num of device dev. If rel is non-
 zero, this block will be removed from the buffer cache. The return value is

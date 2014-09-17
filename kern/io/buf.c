@@ -243,7 +243,7 @@ bufaddblk(struct bufblk *blk)
 
 /* look buffer up from buffer cache */
 struct bufblk *
-buffindblk(int64_t dev, int64_t num, long rel)
+buffindblk(dev_t dev, off_t num, long rel)
 {
     int64_t        key = bufkey(num);
     struct bufblk *blk = NULL;

@@ -83,7 +83,7 @@ ps2initkbd(void)
         ps2readkbd(u8);
     } while (u8 != PS2KBD_ACK);
 //    ps2initkbd_us();
-    kprintf("PS/2 keyboard with US keymap initialized\n");
+//    kprintf("PS/2 keyboard with US keymap initialized\n");
     irqvec[IRQKBD] = ps2kbdintr;
     kprintf("PS/2 keyboard interrupt enabled\n");
 
@@ -274,7 +274,7 @@ ps2kbdintr(void)
     if (u8 == PS2KBD_PAUSE_BYTE1) {
         /* pause/break. */
         ps2readkbd(u8); /* 0x1d */
-        keycode = UINT64_C(0x1d) << 8;
+        keycode |= UINT64_C(0x1d) << 8;
         ps2readkbd(u8); /* 0x45 */
         keycode |= UINT64_C(0x45) << 16;
         ps2readkbd(u8); /* 0xe1 */
