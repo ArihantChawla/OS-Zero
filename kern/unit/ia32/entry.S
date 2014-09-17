@@ -8,6 +8,7 @@
  * - up to 3 arguments in EBX, ECX, and EDX
  * - set carry-flag on error return; EAX stores errno
  * - if carry not set, EAX is return value
+ * - in case of EINTR, EBX is final return value
  */
 
 /*
