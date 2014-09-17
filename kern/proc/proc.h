@@ -1,6 +1,11 @@
 #ifndef __KERN_PROC_H__
 #define __KERN_PROC_H__
 
+#include <stddef.h>
+#include <signal.h>
+#include <stdint.h>
+#include <sys/types.h>
+
 /*
  * process startup
  * ---------------
@@ -78,8 +83,8 @@ struct proc {
     uid_t             euid;             // effective user ID
     gid_t             egid;             // effective group ID
     /* descriptor tables */
-	size_t            ndtab;			// number of entries in descriptor table
-    uintptr_t        *dtab;				// descriptor table
+    size_t            ndtab;		// number of entries in descriptor table
+    uintptr_t        *dtab;		// descriptor table
     /* signal state */
     sigset_t          sigmask;          // signal mask
     sigset_t          sigpend;          // pending signals
@@ -90,8 +95,12 @@ struct proc {
     char            **envp;             // environment strings
     /* memory management */
     struct slabhdr   *vmtab[PTRBITS];
+    /* keyboard buffer */
+    void             *kbdbuf;
+#if 0
     /* event queue */
     struct ev        *evq;
+#endif
 } ALIGNED(PAGESIZE);
 
 #endif /* __KERN_PROC_H__ */

@@ -1,0 +1,2 @@
+- kernel passes scan-codes as 64-bit integers
+  - first-read byte in low byte

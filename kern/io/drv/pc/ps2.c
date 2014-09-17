@@ -9,14 +9,15 @@
 
 #include <stdint.h>
 #include <sys/io.h>
+#include <sys/zero/ps2.h>
 
 #include <zero/param.h>
 #include <zero/cdecl.h>
 #include <zero/mtx.h>
-#define VAL(x)        (x)
+//#define VAL(x)        (x)
 #define NOP(x)        ((void)0)
 #define NOP3(x, y, z) ((void)0)
-#define MALLOC(x)     ((void*)VAL(x))
+#define MALLOC(x)     ((void *)0)
 #define FREE          NOP
 #define MEMCPY        NOP3
 #define RING_ITEM     uint64_t
@@ -43,7 +44,7 @@ static struct ps2drv ps2drv ALIGNED(PAGESIZE);
 #define ps2readmouse(u8)                                                \
     __asm__("inb %w1, %b0" : "=a" (u8) : "i" (PS2MOUSE_INPORT))
 
-struct ringbuf  kbdbuf ALIGNED(PAGESIZE);
+struct ringbuf kbdbuf ALIGNED(PAGESIZE);
 
 void
 ps2initkbd(void)

@@ -235,11 +235,15 @@ struct sysatexit {
 #define PROC_GETLIM        0x09    // getrlimit(), getstksize(), getdtablesize()
 #define PROC_SETLIM        0x09    // setrlimit()
 #define PROC_ATEXIT        0x10    // atexit(), on_exit()
+#define PROC_MAPBUF        0x11
 /* pctl() parm attributes */
 /* PROC_GETLIM, PROC_SETLIM */
 #define PROC_STKSIZE       0x01	   // query process stack size
 #define PROC_KERNSTKSIZE   0x03    // query process kernel stack size
 #define PROC_DESCTABSIZE   0x02    // query process descriptor table size
+/* PROC_MAPBUF */
+#define PROC_KBDBUF        0x01
+#define PROC_MOUSEBUF      0x02
 
 #if 0
 /* pctl() parameters */

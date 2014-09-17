@@ -1,191 +1,200 @@
 #include <stdint.h>
 #include <zero/param.h>
 #include <zero/cdecl.h>
-#include <sys/zero.h>
-#include <sys/zero/kbd.h>
+#define NOP(x)        ((void)0)
+#define NOP3(x, y, z) ((void)0)
+#define MALLOC(x)     ((void *)0)
+#define FREE          NOP
+#define MEMCPY        NOP3
+#define RING_ITEM     uint64_t
+#define RING_INVAL    UINT64_C(0)
+#include <zero/ring.h>
+#include <sys/zero/ps2.h>
 
-/* kbdsetkey(), kbdscan2wc() */
+#include <kern/syscall.h>
+#include <kern/syscallnum.h>
 
-#define KBDMAXVAL 0x7f
-#define KBDNVAL   128
+extern ASMLINK long _syscall(long num, long arg1, long arg2, long arg3);
 
 #if 0
 #define ismodkey(val)                                                   \
     (((val) & 0x80000000) && ((val) & 0xfffffff0) == 0xfffffff0)
 #endif
-#define setkeycode(name)                                                \
+#define kbdsetcode(name)                                                \
     (((((name) >> 8) & 0xff) == PS2KBD_UP_BYTE)                         \
-     ? (keytabup[(name >> 16) & 0xff] = name##_SYM | PS2KBD_UP_BIT)     \
+     ? (ps2keymap.tabup[(name >> 16) & 0xff] = name##_SYM | PS2KBD_UP_BIT) \
      : ((((name) & 0xff) == PS2KBD_PREFIX_BYTE)                         \
-        ? (keytabmb[(name >> 8) & 0xff] = name##_SYM,                   \
-           keytabup[(name >> 8) & 0xff] = name##_SYM | PS2KBD_UP_BIT)   \
-        : (keytab1b[name & 0xff] = name##_SYM,                          \
-           keytabup[name & 0xff] = name##_SYM | PS2KBD_UP_BIT)))
+        ? (ps2keymap.tabmb[(name >> 8) & 0xff] = name##_SYM,            \
+           ps2keymap.tabup[(name >> 8) & 0xff] = name##_SYM | PS2KBD_UP_BIT) \
+        : (ps2keymap.tab1b[name & 0xff] = name##_SYM,                   \
+           ps2keymap.tabup[name & 0xff] = name##_SYM | PS2KBD_UP_BIT)))
 
-#if 0
-/* modifier keys. */
-static int32_t keytabmod[KBDNVAL];
-#endif
-/* single-code values. */
-static int32_t keytab1b[KBDNVAL] ALIGNED(PAGESIZE);
-/* 0xe0-prefixed values. */
-static int32_t keytabmb[KBDNVAL];
-/* release values. */
-static int32_t keytabup[KBDNVAL];
+static struct ps2keymap ps2keymap ALIGNED(PAGESIZE);
+static struct ringbuf   kbdbuf ALIGNED(PAGESIZE);
 
 void
-kbdinit_us(void)
+kbdinitmap_us(void)
 {
     /* modifiers. */
-    setkeycode(PS2KBD_LEFTCTRL);
-    setkeycode(PS2KBD_LEFTSHIFT);
-    setkeycode(PS2KBD_RIGHTSHIFT);
-    setkeycode(PS2KBD_LEFTALT);
-    setkeycode(PS2KBD_RIGHTALT);
-    setkeycode(PS2KBD_CAPSLOCK);
-    setkeycode(PS2KBD_NUMLOCK);
-    setkeycode(PS2KBD_SCROLLLOCK);
+    kbdsetcode(PS2KBD_LEFTCTRL);
+    kbdsetcode(PS2KBD_LEFTSHIFT);
+    kbdsetcode(PS2KBD_RIGHTSHIFT);
+    kbdsetcode(PS2KBD_LEFTALT);
+    kbdsetcode(PS2KBD_RIGHTALT);
+    kbdsetcode(PS2KBD_CAPSLOCK);
+    kbdsetcode(PS2KBD_NUMLOCK);
+    kbdsetcode(PS2KBD_SCROLLLOCK);
 
     /* single-byte keys. */
 
-    setkeycode(PS2KBD_ESC);
-    setkeycode(PS2KBD_1);
-    setkeycode(PS2KBD_2);
-    setkeycode(PS2KBD_3);
-    setkeycode(PS2KBD_4);
-    setkeycode(PS2KBD_5);
-    setkeycode(PS2KBD_6);
-    setkeycode(PS2KBD_7);
-    setkeycode(PS2KBD_8);
-    setkeycode(PS2KBD_9);
-    setkeycode(PS2KBD_0);
-    setkeycode(PS2KBD_MINUS);
-    setkeycode(PS2KBD_PLUS);
-    setkeycode(PS2KBD_BACKSPACE);
+    kbdsetcode(PS2KBD_ESC);
+    kbdsetcode(PS2KBD_1);
+    kbdsetcode(PS2KBD_2);
+    kbdsetcode(PS2KBD_3);
+    kbdsetcode(PS2KBD_4);
+    kbdsetcode(PS2KBD_5);
+    kbdsetcode(PS2KBD_6);
+    kbdsetcode(PS2KBD_7);
+    kbdsetcode(PS2KBD_8);
+    kbdsetcode(PS2KBD_9);
+    kbdsetcode(PS2KBD_0);
+    kbdsetcode(PS2KBD_MINUS);
+    kbdsetcode(PS2KBD_PLUS);
+    kbdsetcode(PS2KBD_BACKSPACE);
 
-    setkeycode(PS2KBD_TAB);
-    setkeycode(PS2KBD_q);
-    setkeycode(PS2KBD_w);
-    setkeycode(PS2KBD_e);
-    setkeycode(PS2KBD_r);
-    setkeycode(PS2KBD_t);
-    setkeycode(PS2KBD_y);
-    setkeycode(PS2KBD_u);
-    setkeycode(PS2KBD_i);
-    setkeycode(PS2KBD_o);
-    setkeycode(PS2KBD_p);
-    setkeycode(PS2KBD_OPENBRACKET);
-    setkeycode(PS2KBD_CLOSEBRACKET);
+    kbdsetcode(PS2KBD_TAB);
+    kbdsetcode(PS2KBD_q);
+    kbdsetcode(PS2KBD_w);
+    kbdsetcode(PS2KBD_e);
+    kbdsetcode(PS2KBD_r);
+    kbdsetcode(PS2KBD_t);
+    kbdsetcode(PS2KBD_y);
+    kbdsetcode(PS2KBD_u);
+    kbdsetcode(PS2KBD_i);
+    kbdsetcode(PS2KBD_o);
+    kbdsetcode(PS2KBD_p);
+    kbdsetcode(PS2KBD_OPENBRACKET);
+    kbdsetcode(PS2KBD_CLOSEBRACKET);
 
-    setkeycode(PS2KBD_ENTER);
+    kbdsetcode(PS2KBD_ENTER);
 
-    setkeycode(PS2KBD_LEFTCTRL);
+    kbdsetcode(PS2KBD_LEFTCTRL);
 
-    setkeycode(PS2KBD_a);
-    setkeycode(PS2KBD_s);
-    setkeycode(PS2KBD_d);
-    setkeycode(PS2KBD_f);
-    setkeycode(PS2KBD_g);
-    setkeycode(PS2KBD_h);
-    setkeycode(PS2KBD_i);
-    setkeycode(PS2KBD_j);
-    setkeycode(PS2KBD_k);
-    setkeycode(PS2KBD_l);
-    setkeycode(PS2KBD_SEMICOLON);
-    setkeycode(PS2KBD_QUOTE);
+    kbdsetcode(PS2KBD_a);
+    kbdsetcode(PS2KBD_s);
+    kbdsetcode(PS2KBD_d);
+    kbdsetcode(PS2KBD_f);
+    kbdsetcode(PS2KBD_g);
+    kbdsetcode(PS2KBD_h);
+    kbdsetcode(PS2KBD_i);
+    kbdsetcode(PS2KBD_j);
+    kbdsetcode(PS2KBD_k);
+    kbdsetcode(PS2KBD_l);
+    kbdsetcode(PS2KBD_SEMICOLON);
+    kbdsetcode(PS2KBD_QUOTE);
 
-    setkeycode(PS2KBD_BACKQUOTE);
+    kbdsetcode(PS2KBD_BACKQUOTE);
 
-    setkeycode(PS2KBD_LEFTSHIFT);
+    kbdsetcode(PS2KBD_LEFTSHIFT);
 
-    setkeycode(PS2KBD_BACKSLASH);
+    kbdsetcode(PS2KBD_BACKSLASH);
 
-    setkeycode(PS2KBD_z);
-    setkeycode(PS2KBD_x);
-    setkeycode(PS2KBD_c);
-    setkeycode(PS2KBD_v);
-    setkeycode(PS2KBD_b);
-    setkeycode(PS2KBD_n);
-    setkeycode(PS2KBD_m);
-    setkeycode(PS2KBD_COMMA);
-    setkeycode(PS2KBD_DOT);
-    setkeycode(PS2KBD_SLASH);
+    kbdsetcode(PS2KBD_z);
+    kbdsetcode(PS2KBD_x);
+    kbdsetcode(PS2KBD_c);
+    kbdsetcode(PS2KBD_v);
+    kbdsetcode(PS2KBD_b);
+    kbdsetcode(PS2KBD_n);
+    kbdsetcode(PS2KBD_m);
+    kbdsetcode(PS2KBD_COMMA);
+    kbdsetcode(PS2KBD_DOT);
+    kbdsetcode(PS2KBD_SLASH);
 
-    setkeycode(PS2KBD_RIGHTSHIFT);
+    kbdsetcode(PS2KBD_RIGHTSHIFT);
 
-    setkeycode(PS2KBD_KEYPADASTERISK);
+    kbdsetcode(PS2KBD_KEYPADASTERISK);
 
-    setkeycode(PS2KBD_SPACE);
+    kbdsetcode(PS2KBD_SPACE);
 
-    setkeycode(PS2KBD_CAPSLOCK);
+    kbdsetcode(PS2KBD_CAPSLOCK);
 
-    setkeycode(PS2KBD_F1);
-    setkeycode(PS2KBD_F2);
-    setkeycode(PS2KBD_F3);
-    setkeycode(PS2KBD_F4);
-    setkeycode(PS2KBD_F5);
-    setkeycode(PS2KBD_F6);
-    setkeycode(PS2KBD_F7);
-    setkeycode(PS2KBD_F8);
-    setkeycode(PS2KBD_F9);
-    setkeycode(PS2KBD_F10);
+    kbdsetcode(PS2KBD_F1);
+    kbdsetcode(PS2KBD_F2);
+    kbdsetcode(PS2KBD_F3);
+    kbdsetcode(PS2KBD_F4);
+    kbdsetcode(PS2KBD_F5);
+    kbdsetcode(PS2KBD_F6);
+    kbdsetcode(PS2KBD_F7);
+    kbdsetcode(PS2KBD_F8);
+    kbdsetcode(PS2KBD_F9);
+    kbdsetcode(PS2KBD_F10);
 
-    setkeycode(PS2KBD_NUMLOCK);
-    setkeycode(PS2KBD_SCROLLLOCK);
+    kbdsetcode(PS2KBD_NUMLOCK);
+    kbdsetcode(PS2KBD_SCROLLLOCK);
 
-    setkeycode(PS2KBD_F11);
-    setkeycode(PS2KBD_F12);
+    kbdsetcode(PS2KBD_F11);
+    kbdsetcode(PS2KBD_F12);
 
-    setkeycode(PS2KBD_KEYPAD7);
-    setkeycode(PS2KBD_KEYPAD8);
-    setkeycode(PS2KBD_KEYPAD9);
+    kbdsetcode(PS2KBD_KEYPAD7);
+    kbdsetcode(PS2KBD_KEYPAD8);
+    kbdsetcode(PS2KBD_KEYPAD9);
 
-    setkeycode(PS2KBD_KEYPADMINUS2);
+    kbdsetcode(PS2KBD_KEYPADMINUS2);
 
-    setkeycode(PS2KBD_KEYPAD4);
-    setkeycode(PS2KBD_KEYPAD5);
-    setkeycode(PS2KBD_KEYPAD6);
+    kbdsetcode(PS2KBD_KEYPAD4);
+    kbdsetcode(PS2KBD_KEYPAD5);
+    kbdsetcode(PS2KBD_KEYPAD6);
 
-    setkeycode(PS2KBD_KEYPADPLUS);
+    kbdsetcode(PS2KBD_KEYPADPLUS);
 
-    setkeycode(PS2KBD_KEYPADEND);
-    setkeycode(PS2KBD_KEYPADDOWN);
-    setkeycode(PS2KBD_KEYPADPGDN);
+    kbdsetcode(PS2KBD_KEYPADEND);
+    kbdsetcode(PS2KBD_KEYPADDOWN);
+    kbdsetcode(PS2KBD_KEYPADPGDN);
 
-    setkeycode(PS2KBD_KEYPADINS);
-    setkeycode(PS2KBD_KEYPADDEL);
+    kbdsetcode(PS2KBD_KEYPADINS);
+    kbdsetcode(PS2KBD_KEYPADDEL);
 
-    setkeycode(PS2KBD_SYSRQ);
+    kbdsetcode(PS2KBD_SYSRQ);
 
     /* dual-byte sequences. */
 
-    setkeycode(PS2KBD_KEYPADENTER);
-    setkeycode(PS2KBD_RIGHTCTRL);
-    setkeycode(PS2KBD_FAKELEFTSHIFT);
-    setkeycode(PS2KBD_KEYPADMINUS3);
-    setkeycode(PS2KBD_FAKERIGHTSHIFT);
-    setkeycode(PS2KBD_CTRLPRINTSCREEN);
-    setkeycode(PS2KBD_RIGHTALT);
-    setkeycode(PS2KBD_CTRLBREAK);
-    setkeycode(PS2KBD_HOME);
-    setkeycode(PS2KBD_UP);
-    setkeycode(PS2KBD_PGUP);
-    setkeycode(PS2KBD_LEFT);
-    setkeycode(PS2KBD_RIGHT);
-    setkeycode(PS2KBD_END);
-    setkeycode(PS2KBD_DOWN);
-    setkeycode(PS2KBD_PGDN);
-    setkeycode(PS2KBD_INS);
-    setkeycode(PS2KBD_DEL);
+    kbdsetcode(PS2KBD_KEYPADENTER);
+    kbdsetcode(PS2KBD_RIGHTCTRL);
+    kbdsetcode(PS2KBD_FAKELEFTSHIFT);
+    kbdsetcode(PS2KBD_KEYPADMINUS3);
+    kbdsetcode(PS2KBD_FAKERIGHTSHIFT);
+    kbdsetcode(PS2KBD_CTRLPRINTSCREEN);
+    kbdsetcode(PS2KBD_RIGHTALT);
+    kbdsetcode(PS2KBD_CTRLBREAK);
+    kbdsetcode(PS2KBD_HOME);
+    kbdsetcode(PS2KBD_UP);
+    kbdsetcode(PS2KBD_PGUP);
+    kbdsetcode(PS2KBD_LEFT);
+    kbdsetcode(PS2KBD_RIGHT);
+    kbdsetcode(PS2KBD_END);
+    kbdsetcode(PS2KBD_DOWN);
+    kbdsetcode(PS2KBD_PGDN);
+    kbdsetcode(PS2KBD_INS);
+    kbdsetcode(PS2KBD_DEL);
 
     /* acpi codes. */
-    setkeycode(PS2KBD_POWER);
-    setkeycode(PS2KBD_SLEEP);
-    setkeycode(PS2KBD_WAKE);
-    setkeycode(PS2KBD_POWERUP);
-    setkeycode(PS2KBD_SLEEPUP);
-    setkeycode(PS2KBD_WAKEUP);
+    kbdsetcode(PS2KBD_POWER);
+    kbdsetcode(PS2KBD_SLEEP);
+    kbdsetcode(PS2KBD_WAKE);
+    kbdsetcode(PS2KBD_POWERUP);
+    kbdsetcode(PS2KBD_SLEEPUP);
+    kbdsetcode(PS2KBD_WAKEUP);
 
     return;
+}
+
+void
+kbdinit(void)
+{
+    /* TODO: initialise ring buffer */
+    /* pctl(PROC_MAPBUF, PROC_KBDBUF, &kbdbuf); set proc->kbdbuf */
+    _syscall(SYS_PCTL, PROC_MAPBUF, PROC_KBDBUF, (long)&kbdbuf);
+    /* initialise US keymap */
+    kbdinitmap_us();
 }
 

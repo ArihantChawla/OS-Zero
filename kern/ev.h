@@ -86,9 +86,12 @@
  * be used as flags if need be
  */
 /* flag-bits in scan member */
-#define EVKBDSTATE        UINT64_C(0x8000000000000000)
-#define EVKBDRELEASE      UINT64_C(0x4000000000000000)
+#define EVKBDRELEASE      UINT64_C(0x8000000000000000)
+#if 0
+#define EVKBDSTATE        UINT64_C(0x4000000000000000)
+#endif
 /* state-bits for modifier keys */
+#if 0
 #define EVKBDSHIFT        0x80000000
 #define EVKBDCAPSLK       0x40000000
 #define EVKBDCTRL         0x20000000
@@ -101,6 +104,7 @@
 #define EVKBDNMODBIT      32
 #define EVNBUTTON         (64 - EVKBNMODBIT)
 #define kbdevhasstate(ev) ((ev)->scan & EVKBDSTATE)
+#endif
 #define kbdupevent(ev)    ((ev)->scan & EVKBDRELEASE)
 #define kbdbutton(ev, b)  ((ev)->state & (1L << (b)))
 #define kbdmod(ev, mod)   ((ev)->state & (mod))
@@ -108,7 +112,7 @@
 #define kbdevsize(ev)     (((ev)->sym & EVKBDSTATE) ? 12 : 8)
 struct evkbd {
     uint64_t scan;
-    uint64_t state;
+//    uint64_t state;
 } PACK();
 
 /* pointer such as mouse device events */

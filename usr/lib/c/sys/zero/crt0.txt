@@ -1,0 +1,3 @@
+- initialise keyboard buffer
+- initialise mouse buffer
+

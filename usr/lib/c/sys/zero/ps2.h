@@ -1,13 +1,17 @@
-#ifndef __SYS_ZERO_KBD_H__
-#define __SYS_ZERO_KBD_H__
+#ifndef __SYS_ZERO_PS2_H__
+#define __SYS_ZERO_PS2_H__
 
 /* KEYBOARD */
 
 //#define PS2KBD_NBUFKEY              (PAGESIZE >> 3)
 
+#if 0
 #define PS2KBD_NTAB                 128
-
 #define PS2KBD_US                   0x00
+#endif
+
+#define KBDMAXVAL                   0x7f
+#define KBDNVAL                     128
 
 /* protocol scancodes */
 #define PS2KBD_ERROR                0x00
@@ -332,5 +336,18 @@
 #define PS2KBD_SLEEPUP_SYM         (-0x54)
 #define PS2KBD_WAKEUP_SYM          (-0x55)
 
-#endif /* __SYS_ZERO_KBD_H__ */
+struct ps2keymap {
+#if 0
+/* modifier keys. */
+    int32_t mod[KBDNVAL];
+#endif
+/* single-code values. */
+    int32_t tab1b[KBDNVAL];
+/* 0xe0-prefixed values. */
+    int32_t tabmb[KBDNVAL];
+/* release values. */
+    int32_t tabup[KBDNVAL];
+};
+
+#endif /* __SYS_ZERO_PS2_H__ */
 
