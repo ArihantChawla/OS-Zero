@@ -19,6 +19,8 @@ scheduler
 
 event interface
 ---------------
+- events are used to communicate operations and data across threads and
+  processes
 
 kernel events
 -------------
@@ -39,19 +41,34 @@ user events
 IPC
 ---
 - transport; mem, shm, buf, file, mq, net
-  - mem
-    - "regular" memory region stores data
+  - register
+  - cache
+  - vm
+    - "regular" [virtual] memory region stores data
   - shm
     - shared memory; may be mapped to same physical memory by both the kernel
       and users processes; single-process map as a special case without locks
   - buf
     - block I/O buffer cache relays data
   - intermediate file is used to pass/map data
+  - bus
+	- PCI
+      - device and bus
+        - pcid2dmsg - device to device message
+        - pcid2bmsg - device to bus message, may be broadcast
+		- pcib2bmsg - bus to bus message, may be broadcast
+		- pcib2dmsg - bus to device message
+  - I/O
+    - port-level permission bitmap in TSS-segment (X86)
+    - scatter-gather DMA-transfers for capable devices
+    - ioperm()
+    - pcidmareadv(), pcidmawritev()
   - mq
     - message queue; ID + priority
   - net
     - TCP/IP or another protocol set is used to carry network packets
-
+    - precalculate IP-checksums for network packets
+      - 16-bit checksum, max 65,536-byte buffer (64 K)
 virtual filesystem
 ------------------
 - network transparent; implement NFS natively

@@ -420,9 +420,11 @@ struct sysioreg {
 	off_t       len;
 };
 
+#define SYS_IOCTL_IOPERM 0x01   // need CAP_SYS_RAWIO
+
 /* ioctl() */
 struct ioctl {
-	long            cmd;	// command to be executed
+//	long            cmd;	// command to be executed
     long            parm;	// command parameters such as flag-bits
 	struct sysioreg reg;
 };

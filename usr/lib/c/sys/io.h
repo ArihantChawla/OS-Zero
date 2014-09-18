@@ -4,6 +4,20 @@
 #define _IODELAY()  "outb %%al, $0x80\n"
 #define iodelay() __asm__ __volatile__ ("outb %al, $0x80\n");
 
+static __inline__ int
+ioperm(unsigned long from, unsigned long num, int val)
+{
+	struct ioctl buf;
+	int          retval;
+
+	buf.parm = val;
+	buf.reg.ofs = from;
+	buf.reg.len = num;
+    retval = (int)_syscall(SYS_IOCTL, SYS_IOCTL_IOPERM, &buf);
+
+    return retval;
+}
+
 static __inline__ unsigned char
 inb(unsigned short port)
 {

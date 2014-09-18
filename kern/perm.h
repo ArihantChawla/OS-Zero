@@ -14,26 +14,23 @@
 #define PERMVTX    PERMSTICKY
 #define PERMSETGID 0x00000800
 #define PERMSETUID 0x00001000
+#define PERMRAWIO  0x00002000   // permit to do raw device I/O operations
 
 /* TODO */
-#define permcanread(usr, grp, perm)                                     \
-    (!usr                                                               \
-     || ((usr) == (perm)->uid && ((perm)->mask & PERMUREAD))            \
-     || ((gid) == (perm)->gid && ((perm)->mask & PERMGREAD))            \
+#if 0 /* FIXME */
+#define permread(usr, grp, perm)                                        \
+    (!(usr)                                                             \
+		? 1 \
+		: (((usr) == (perm)->uid && ((perm)->mask & PERMUREAD))            \
+     || ((grp) == (perm)->gid && ((perm)->mask & PERMGREAD))            \
      || ((perm)->mask & PERMWREAD))
-#define permcanwrite(usr, grp, perm)                                    \
-    (!usr                                                               \
-     || ((usr) == (perm)->uid && ((perm)->mask & PERMUWRITE))           \
-     || ((gid) == (perm)->gid && ((perm)->mask & PERMGWRITE))           \
-     || ((perm)->mask & PERMWWRITE))
-#define permcanexec(usr, grp, perm)                                     \
-    (!usr                                                               \
-     || ((usr) == (perm)->uid && ((perm)->mask & PERMUEXEC))            \
-     || ((gid) == (perm)->gid && ((perm)->mask & PERMGEXEC))            \
-     || ((perm)->mask & PERMWEXEC))
+#endif /* 0 */
+#define permwrite(usr, grp, perm)                                       \
+#define permexec(usr, grp, perm)                                        \
 #define permsticky(perm) ((perm)->mask & PERMSTICKY)
 #define permsetgid(perm) ((perm)->mask & PERMSETGID)
 #define permsetuid(perm) ((perm)->mask & PERMSETUID)
+#define permrawio(perm)  ((perm)->mask & PERMRAWIO)
 
 struct perm {
     long uid;   // user ID
