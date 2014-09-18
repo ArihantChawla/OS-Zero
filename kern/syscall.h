@@ -235,7 +235,9 @@ struct sysatexit {
 #define PROC_GETLIM        0x09    // getrlimit(), getstksize(), getdtablesize()
 #define PROC_SETLIM        0x09    // setrlimit()
 #define PROC_ATEXIT        0x10    // atexit(), on_exit()
-#define PROC_MAPBUF        0x11
+#define PROC_SETPERM       0x11    // umask()
+#define PROC_GETPERM       0x12    // chmod(), fchmodat()
+#define PROC_MAPBUF        0x13
 /* pctl() parm attributes */
 /* PROC_GETLIM, PROC_SETLIM */
 #define PROC_STKSIZE       0x01	   // query process stack size

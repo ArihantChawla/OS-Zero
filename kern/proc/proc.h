@@ -42,6 +42,7 @@
  */
 
 #define __KERNEL__ 1
+#include <sys/types.h>
 #include <zero/cdecl.h>
 #include <zero/param.h>
 #include <zero/types.h>
@@ -66,7 +67,7 @@ struct proc {
     struct thr       *thr;              // current running thread
     long              nthr;             // # of threads
     /* round-robin queue */
-    struct thrq       thrq;             // queue of ready threads
+//    struct thrq       thrq;             // queue of ready threads
     /* page directory */
     pde_t            *pdir;             // page directory address
     /* stacks */
@@ -82,6 +83,8 @@ struct proc {
     gid_t             rgid;             // real group ID
     uid_t             euid;             // effective user ID
     gid_t             egid;             // effective group ID
+    /* current permission mask */
+    mode_t            umask;
     /* descriptor tables */
     size_t            ndtab;		// number of entries in descriptor table
     uintptr_t        *dtab;		// descriptor table
