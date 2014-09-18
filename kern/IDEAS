@@ -1,6 +1,10 @@
 zero kernel ideas
 -----------------
 
+IDs
+---
+- int; shmid, fd - a table to map these to [in-kernel] structure addresses
+
 user input
 ----------
 - keyboard passes scan-codes as 64-bit integers

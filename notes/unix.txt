@@ -1,0 +1,24 @@
+These notes are based on the book
+
+      The Design of the UNIX Operating System.
+
+----8<----
+
+	1.5.2 Processor Execution Levels
+	--------------------------------
+
+	highest priority	machine errors
+				clock
+				disk
+				network devices
+				terminals
+				software interrupts
+
+	2.2.2.2 Process states
+	----------------------
+
+	1. executing in user mode
+	2. executing in kernel mode
+	3. not executing, but ready to run
+	4. sleeping
+

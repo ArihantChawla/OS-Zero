@@ -16,9 +16,11 @@ struct stat {
     gid_t     st_gid;           // group ID of owner
     dev_t     st_rdev;          // device ID for special files
     off_t     st_size;          // total size in bytes
+#if (_XOPEN_SOURCE) || (USEXOPEN2K)
     time_t    st_atime;         // last access time
     time_t    st_mtime;         // last modification time
     time_t    st_ctime;         // last status change time
+#endif
     blksize_t st_blksize;       // block size for filesystem I/O
     blkcnt_t  st_blocks;        // number of allocated blocks
 };

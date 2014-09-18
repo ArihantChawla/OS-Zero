@@ -1,0 +1,8 @@
+Zero Virtual File System
+------------------------
+- manage pseudo-teletypes; posix.[c|h]
+- use on-disk metadata files; /fs/meta/<inode>.meta
+- obtain and manage block locks; /fs/lock/<devid><inode>.rwlk
+- cache relevant blocks in buffers
+- precalculate checksums such as IP
+

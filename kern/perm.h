@@ -15,12 +15,24 @@
 #define PERMSETUID 0x00001000
 
 /* TODO */
-#define permcanread(uid, gid, perm)
-#define permcanwrite(uid, gid, perm)
-#define permcanexec(uid, gid, perm)
-#define permsticky(perm)
-#define permsetgid(perm)
-#define permsetuid(perm)
+#define permcanread(usr, grp, perm)                                     \
+    (!usr                                                               \
+     || ((usr) == (perm)->uid && ((perm)->mask & PERMUREAD))            \
+     || ((gid) == (perm)->gid && ((perm)->mask & PERMGREAD))            \
+     || ((perm)->mask & PERMWREAD))
+#define permcanwrite(usr, grp, perm)                                    \
+    (!usr                                                               \
+     || ((usr) == (perm)->uid && ((perm)->mask & PERMUWRITE))           \
+     || ((gid) == (perm)->gid && ((perm)->mask & PERMGWRITE))           \
+     || ((perm)->mask & PERMWWRITE))
+#define permcanexec(usr, grp, perm)                                     \
+    (!usr                                                               \
+     || ((usr) == (perm)->uid && ((perm)->mask & PERMUEXEC))            \
+     || ((gid) == (perm)->gid && ((perm)->mask & PERMGEXEC))            \
+     || ((perm)->mask & PERMWEXEC))
+#define permsticky(perm) ((perm)->mask & PERMSTICKY)
+#define permsetgid(perm) ((perm)->mask & PERMSETGID)
+#define permsetuid(perm) ((perm)->mask & PERMSETUID)
 
 struct perm {
     long uid;   // user ID
