@@ -9,7 +9,7 @@
 #define SIGINT       0x02    /* ISO C */
 #define SIGQUIT      0x03    /* POSIX */
 #define SIGILL       0x04    /* ISO C */
-#define SIGTRAP      0x05    /* POSIX */
+#define SIGTRAP      0x05    /* Unix */
 #define SIGABRT      0x06    /* ISO C */
 #define SIGIOT       SIGABRT /* 4.2BSD */
 #define SIGUSR1      0x07    /* POSIX */

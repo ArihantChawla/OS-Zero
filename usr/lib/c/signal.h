@@ -40,6 +40,10 @@ typedef void            signalhandler_t(int);
 
 #endif /* _POSIX_SOURCE */
 
+#if (_BSD_SOURCE)
+typedef void           (*sig_t)(int);
+#endif
+
 #if (_POSIX_SOURCE) && defined(USEPOSIX199309)
 //#include <time.h>
 #endif
@@ -152,6 +156,17 @@ extern const char *__const sys_siglist[_NSIG];
 
 #if (_BSD_SOURCE) || (USEXOPENEXT)
 
+struct sigstack {
+    char *ss_sp;
+    int   ss_onstack;
+};
+
+struct sigaltstack {
+    char *ss_base;
+    int   ss_size;
+    int   ss_flags;
+};
+
 /*
  * if intr is nonzero, make signal sig interrupt system calls (causing them
  * to fail with EINTR); if intr is zero, make system calls be restarted
@@ -159,9 +174,9 @@ extern const char *__const sys_siglist[_NSIG];
  */
 extern int siginterrupt(int sig, int intr);
 
-// extern int sigstack(struct sigstack *stk, struct sigstack *oldstk);
-// extern int sigaltstack(const struct sigaltstack *__restrict stk,
-//                        struct sigaltstack *__restrict oldstk);
+extern int sigstack(struct sigstack *stk, struct sigstack *oldstk);
+extern int sigaltstack(const struct sigaltstack *__restrict stk,
+                       struct sigaltstack *__restrict oldstk);
 
 #if (_XOPEN_SOURCE) && 0
 #include <sys/ucontext.h>
@@ -245,6 +260,11 @@ extern __sighandler_t sigset(int sig, __sighandler_t func);
 
 #endif /* _POSIX_SOURCE */
 
+#if (_BSD_SOURCE)
+#define BADSIG       SIG_ERR
+#define sigmask(sig) (1 << ((m) - 1))
+#endif
+
 /* sigaction() definitions */ 
 #define SA_NOCLDSTOP SIG_NOCLDSTOP
 #define SA_NOCLDWAIT SIG_NOCLDWAIT
@@ -264,6 +284,38 @@ extern __sighandler_t sigset(int sig, __sighandler_t func);
 #define SIG_IGN      ((sighandler_t)0L)
 #define SIG_DFL      ((sighandler_t)1L)
 #define SIG_HOLD     ((sighandler_t)2L)
+
+/* flags for sigprocmask() */
+#define SIG_BLOCK    1
+#define SIG_UNBLOCK  2
+#define SIG_SETMASK  3
+
+union sigval {
+    int   sival_int;
+    void *sival_ptr
+};
+
+struct sigevent {
+    int             sigev_notify;
+    int             sigev_signo;
+    union sigval    sigev_value;
+    void           *sigev_notify_function(union sigval);
+    pthread_attr_t *sigev_notify_attributes;
+};
+
+struct sigaction {
+    void     *sa_handler(int);
+    sigset_t  sa_mask;
+    int       sa_flags;
+    void     *sa_sigaction(int, siginfo_t, void *);
+};
+
+/* TODO: which standards cover the stuff below? */
+struct _stack {
+    void   *ss_sp;
+    size_t  ss_size;
+    int     ss_flags;
+};
 
 #endif /* __SIGNAL_H__ */
 

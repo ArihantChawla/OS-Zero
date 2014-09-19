@@ -3,7 +3,8 @@ zero kernel ideas
 
 IDs
 ---
-- int; shmid, fd - a table to map these to [in-kernel] structure addresses
+- int; shmid, fd - a table structure to map these to [in-kernel] structure
+  addresses (uintptr_t)
 
 user input
 ----------
@@ -77,7 +78,7 @@ virtual filesystem
 - I/O streams (analogous with files)
 - I/O filters;
   - encryption
-  - multimedia en- and decoding
+  - multimedia encoding and decoding
     - images
     - audio streams and samples
     - video streams and stills/images

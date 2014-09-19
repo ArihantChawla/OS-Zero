@@ -30,6 +30,8 @@ extern __thread int errno;
 #define EILSEQ       18
 #define EDOM         19
 #define ERANGE       20
+#define EMSGSIZE     21
+#define ETIMEDOUT    22
 
 #endif /* __ERRNO_H__ */
 
