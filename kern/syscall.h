@@ -138,13 +138,13 @@ extern void ksyscall(void);
  * long sys_seek(long desc, off_t ofs, long whence);
  * - set seek position of file desc
  * long sys_falloc(long desc, long parm, size_t len);
- * - attempt to preallocate len bytes of space for file desc
+ * - attempt to preallocate len bytes of device space for file desc
  * long sys_stat(char *path, struct stat *buf, long flg);
  * - query file attributes
  * long sys_fhint(long desc, long flg, struct objreg *arg);
  * - hint kernel of file usage patterns
  * long sys_ioctl(long desc, long cmd, void *arg);
- * - perform device-dependent I/O operations§
+ * - perform device-dependent I/O operations
  * long sys_fctl(long desc, long cmd, void *arg);
  * - perform file control operations
  * long sys_poll(struct pollfd *fds, long nfd, long timeout);
@@ -426,7 +426,7 @@ struct sysioreg {
 struct ioctl {
 //	long            cmd;	// command to be executed
     long            parm;	// command parameters such as flag-bits
-	struct sysioreg reg;
+    struct sysioreg reg;
 };
 
 struct select {

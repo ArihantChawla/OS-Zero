@@ -73,7 +73,7 @@ struct proc {
     /* stacks */
     uint8_t          *ustk;             // user-mode stack
     uint8_t          *kstk;             // kernel-mode stack
-    long              class;
+    long              class;            // scheduler class
     /* memory attributes */
     uint8_t          *brk;
     /* process credentials */
