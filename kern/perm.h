@@ -25,8 +25,8 @@
      || ((grp) == (perm)->gid && ((perm)->mask & PERMGREAD))            \
      || ((perm)->mask & PERMWREAD))
 #endif /* 0 */
-#define permwrite(usr, grp, perm)                                       \
-#define permexec(usr, grp, perm)                                        \
+#define permwrite(usr, grp, perm)
+#define permexec(usr, grp, perm)
 #define permsticky(perm) ((perm)->mask & PERMSTICKY)
 #define permsetgid(perm) ((perm)->mask & PERMSETGID)
 #define permsetuid(perm) ((perm)->mask & PERMSETUID)

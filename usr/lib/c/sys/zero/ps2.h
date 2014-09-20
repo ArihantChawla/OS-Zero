@@ -10,8 +10,8 @@
 #define PS2KBD_US                   0x00
 #endif
 
-#define KBDMAXVAL                   0x7f
-#define KBDNVAL                     128
+#define KBDMAXVAL                   0xff
+#define KBDNVAL                     256
 
 /* protocol scancodes */
 #define PS2KBD_ERROR                0x00

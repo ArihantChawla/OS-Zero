@@ -6,6 +6,7 @@
 #if (_XOPEN_SOURCE)
 #include <sys/stat.h>
 #endif
+#include <sys/uio.h>
 #if (_XOPEN_SOURCE)
 #include <kern/io.h>
 #endif
@@ -70,7 +71,7 @@
 #define F_RDLCK     0
 #define F_WRLCK     1
 #define F_UNLCK     2
-/* old BSD flock()
+/* old BSD flock() */
 #define F_EXLCK     4
 #define F_SHLCK     8
 #if (_BSD_SOURCE)
@@ -96,8 +97,8 @@
 #define DN_MULTISHOT 0x80000000
 #endif
 
-#if !defined(R_OK)
 /* these constants are in <unistd.h> as well */
+#if !defined(R_OK)
 #define R_OK 4
 #define W_OK 2
 #define X_OK 1
@@ -137,7 +138,7 @@ struct flock {
 
 #if (_LARGEFILE64_SOURCE)
 struct flock64 {
-    short   l_start;
+    short   l_type;
     short   l_whence;
     off64_t l_start;
     off64_t l_len;
@@ -187,7 +188,7 @@ extern ssize_t readahead(int fd, off64_t ofs, size_t count);
 extern int     sync_file_range(int fd, off64_t from, off64_t to,
                                unsigned int flags);
 extern int     vmsplice(int outfd, const struct iovec *iov, size_t cnt,
-                    unsigned int flags);
+                        unsigned int flags);
 extern int     splice(int infd, off64_t inofs, int outfd, off64_t outofs,
                       size_t len, unsigned int flags);
 extern int     tee(int infd, int outfd, size_t len, unsigned int flags);

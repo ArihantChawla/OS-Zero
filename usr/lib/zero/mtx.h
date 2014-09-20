@@ -8,10 +8,10 @@
 
 #if (__KERNEL__)
 #undef PTHREAD
-#define PTHREAD    0
+#define PTHREAD        0
 #endif
-#define ZEROMTXINITVAL (0L)
-#define ZEROMTXLKVAL   (1L)
+#define ZEROMTXINITVAL 0
+#define ZEROMTXLKVAL   1
 
 #include <zero/asm.h>
 #if (__KERNEL__) && (__MTKERNEL__)

@@ -1,30 +1,43 @@
 #ifndef __SYS_IO_H__
 #define __SYS_IO_H__
 
+#if (_ZERO_SOURCE)
+#include <kern/syscall.h>
+#include <kern/syscallnum.h>
+#endif
+
 #define _IODELAY()  "outb %%al, $0x80\n"
 #define iodelay() __asm__ __volatile__ ("outb %al, $0x80\n");
+
+#if (_ZERO_SOURCE)
+extern ASMLINK long _syscall(long num, long arg1, long arg2, long arg3);
+#endif
+
+#if (_ZERO_SOURCE)
 
 static __inline__ int
 ioperm(unsigned long from, unsigned long num, int val)
 {
-	struct ioctl buf;
-	int          retval;
-
-	buf.parm = val;
-	buf.reg.ofs = from;
-	buf.reg.len = num;
+    struct ioctl buf;
+    int          retval;
+    
+    buf.parm = val;
+    buf.reg.ofs = from;
+    buf.reg.len = num;
     retval = (int)_syscall(SYS_IOCTL, SYS_IOCTL_IOPERM, &buf);
 
     return retval;
 }
 
+#endif /* _ZERO_SOURCE */
+
 static __inline__ unsigned char
 inb(unsigned short port)
 {
     unsigned char ret = 0;
-
+    
     __asm__ __volatile__ ("inb %1, %b0\n" : "=a" (ret) : "Nd" (port));
-
+    
     return ret;
     
 }
@@ -33,7 +46,7 @@ static __inline__ unsigned char
 inb_p(unsigned short port)
 {
     unsigned char ret = 0;
-
+    
     __asm__ __volatile__ ("inb %1, %b0\n"
                           _IODELAY()
                           : "=a" (ret) : "Nd" (port));

@@ -1,3 +1,7 @@
+#include <features.h>
+
+#if (_ZERO_SOURCE)
+
 #include <stdint.h>
 #include <zero/param.h>
 #include <zero/cdecl.h>
@@ -197,4 +201,6 @@ kbdinit(void)
     /* initialise US keymap */
     kbdinitmap_us();
 }
+
+#endif /* _ZERO_SOURCE */
 

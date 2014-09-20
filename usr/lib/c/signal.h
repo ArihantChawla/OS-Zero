@@ -4,9 +4,13 @@
 #include <features.h>
 #include <sys/types.h>
 #include <zero/param.h>
+#include <unistd.h>
 #if (_ZERO_SOURCE)
 /* kernel signal interface */
 #include <kern/signal.h>
+#endif
+#if (PTHREAD)
+#include <pthread.h>
 #endif
 
 /* internal. */
@@ -95,7 +99,7 @@ extern int            sigpause(int sig) __asm__ ("__xpg_sigpause\n");
 
 #if (_BSD_SOURCE)
 
-typedef __sighandler_t sig_t;
+//typedef __sighandler_t sig_t;
 /* none of these functions should be used any longer */
 #define sigmask(sig)   (1L << (sig))
 /* block signals in mask, return old mask */
@@ -262,7 +266,6 @@ extern __sighandler_t sigset(int sig, __sighandler_t func);
 
 #if (_BSD_SOURCE)
 #define BADSIG       SIG_ERR
-#define sigmask(sig) (1 << ((m) - 1))
 #endif
 
 /* sigaction() definitions */ 
@@ -292,22 +295,37 @@ extern __sighandler_t sigset(int sig, __sighandler_t func);
 
 union sigval {
     int   sival_int;
-    void *sival_ptr
+    void *sival_ptr;
 };
 
 struct sigevent {
     int             sigev_notify;
     int             sigev_signo;
     union sigval    sigev_value;
-    void           *sigev_notify_function(union sigval);
+    void           (*sigev_notify_function)(union sigval);
+#if (PTHREAD)
     pthread_attr_t *sigev_notify_attributes;
+#endif
 };
 
+struct _siginfo {
+    int           si_signo;
+    int           si_code;
+    int           si_errno;
+    pid_t         si_pid;
+    uid_t         si_uid;
+    void         *si_addr;
+    int           si_status;
+    long          si_band;
+    union sigval  si_value;
+};
+typedef struct _siginfo siginfo_t;
+
 struct sigaction {
-    void     *sa_handler(int);
+    void     (*sa_handler)(int);
     sigset_t  sa_mask;
     int       sa_flags;
-    void     *sa_sigaction(int, siginfo_t, void *);
+    void     (*sa_sigaction)(int, siginfo_t, void *);
 };
 
 /* TODO: which standards cover the stuff below? */

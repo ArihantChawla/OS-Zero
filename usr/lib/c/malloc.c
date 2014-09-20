@@ -416,14 +416,12 @@ static void * _realloc(void *ptr, size_t size, long rel);
 /* synchronisation */
 
 #if (ZEROMTX)
-#if 0
 #define mlk(mp)           mtxlk2(mp, _aid + 1)
 #define munlk(mp)         mtxunlk2(mp, _aid + 1)
-#define mtylk(mp)         mtxtrylk2(mp, _aid + 1)
-#endif
-#define mlk(mp)           mtxlk(mp)
-#define munlk(mp)         mtxunlk(mp)
-#define mtrylk(mp)        mtxtrylk(mp)
+#define mtrylk(mp)<        mtxtrylk2(mp, _aid + 1)
+//#define mlk(mp)           mtxlk(mp)
+//#define munlk(mp)         mtxunlk(mp)
+//#define mtrylk(mp)        mtxtrylk(mp)
 #elif (SPINLK)
 #define mlk(sp)           spinlk2(sp, _aid + 1)
 #define munlk(sp)         spinunlk2(sp, _aid + 1)

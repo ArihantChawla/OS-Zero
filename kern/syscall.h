@@ -267,7 +267,7 @@ struct syswait {
 /* sigop() commands */
 #define SIG_WAIT      0x01    // pause()
 #define SIG_SETFUNC   0x02    // signal()/sigaction()
-#define SIG_SETMASK   0x03    // sigsetmask()
+#define SIG_DEFMASK   0x03    // sigsetmask()
 #define SIG_SEND      0x04    // raise() etc.
 #define SIG_SETSTK    0x05    // sigaltstack()
 #define SIG_SUSPEND   0x06    // sigsuspend(), sigpause()

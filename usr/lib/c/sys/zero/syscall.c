@@ -1,9 +1,24 @@
+/*
+ * libc to syscall interface for Zero
+ */
+
+#include <features.h>
+
+#if (_ZERO_SOURCE)
+
 #include <errno.h>
 #include <zero/param.h>
 #include <zero/cdecl.h>
 
 #if defined(__i386__) && !defined(__x86_64__) && !defined(__amd64__)
 
+/*
+ * prepare for a system call and do it
+ * - EAX/RAX is used for system call number
+ * - EBX/RBX is used for 1st system call argument
+ * - EcX/RCX is used for 2nd system call argument
+ * - EDX/RDX is used for 3rd system call argument
+ */
 ASMLINK
 long
 _syscall(long num, long arg1, long arg2, long arg3)
@@ -63,4 +78,6 @@ _syscall(long num, long arg1, long arg2, long arg3)
 }
 
 #endif
+
+#endif /* _ZERO_SOURCE */
 
