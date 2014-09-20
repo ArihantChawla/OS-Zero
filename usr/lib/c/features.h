@@ -12,7 +12,7 @@
 #define USEPOSIX199309         1
 #define USEPOSIX199506         1
 #define USEBSD                 1
-#define USEOLDBSD              0        // favor old school BSD interfaces
+#define FAVORBSD               0        // favor old school BSD interfaces
 #define USESVID                1
 #define USEGNU                 1
 

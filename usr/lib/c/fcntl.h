@@ -177,10 +177,10 @@ struct flock64 {
 extern int     creat(const char *file, mode_t mode);
 extern int     fcntl(int fd, int cmd, ...);
 #if (_XOPEN_SOURCE >= 600 || _POSIX_C_SOURCE >= 200112L || (USEXOPEN2K))
-extern int     posix_fallocate(int fd, off_t offste, off_t len);
+extern int     posix_fallocate(int fd, off_t ofs, off_t len);
 #endif
 #if (_POSIX_C_SOURCE >= 200112L) || (USEXOPEN2K)
-extern int     posix_fadvise(int fd, off_t offset, size_t len, int advice);
+extern int     posix_fadvise(int fd, off_t ofs, size_t len, int advice);
 #endif
 #if (_GNU_SOURCE)
 //typedef int64_t off64_t;

@@ -158,7 +158,7 @@ extern size_t confstr(int name, char *buf, size_t len);
 #endif
 extern pid_t getpid();
 extern pid_t getppid();
-#if !(USEOLDBSD)
+#if !(FAVORBSD)
 extern pid_t getpgrp();
 #else
 #define getpgrp getpgid
@@ -168,7 +168,7 @@ extern pid_t getpgid(pid_t pid);
 pid_t getpgid(pid_t pid);
 #endif
 #if (USESVID) || (_BSD_SOURCE) || (USEXOPENEXT)
-#if !(USEOLDBSD)
+#if !(FAVORBSD)
 extern int setpgrp(void);
 #else
 #define setpgrp setpgid

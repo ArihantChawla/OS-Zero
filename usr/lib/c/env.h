@@ -11,7 +11,7 @@ extern char *secure_getenv(const char *name);
 extern int   putenv(char *string);
 #endif
 extern int   setenv(const char *name, const char *value, int replace);
-#if (USEOLDBSD)
+#if (FAVORBSD)
 #else
 extern void  unsetenv(const char *name);
 #endif
