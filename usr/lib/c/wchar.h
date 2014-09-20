@@ -1,7 +1,14 @@
 #ifndef __WCHAR_H__
 #define __WCHAR_H__
 
+#include <features.h>
 #include <stddef.h>
+#include <stdint.h>
+
+#if (_ISOC11_SOURCE)
+typedef uint16_t char16_t;
+typedef int32_t  char32_t;
+#endif
 
 #define WEOF         ((wint_t)0xffff)	/* 0xffff is invalid character value in Unicode */
 #define WCHAR_MIN    0

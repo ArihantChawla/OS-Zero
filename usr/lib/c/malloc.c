@@ -161,7 +161,7 @@ typedef pthread_mutex_t LK_T;
 #define TUNEBUF 1
 
 /* basic allocator parameters */
-#define BLKMINLOG2    4  /* minimum-size allocation */
+#define BLKMINLOG2    4  /* minimum-size allocation/alignment */
 //#define SLABBIGLOG2   16 /* small-size block */
 #if (SMALLBUF)
 #define SLABLOG2      19
