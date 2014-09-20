@@ -22,7 +22,7 @@
 #define _FILE_OFFSET_BITS      64       // enable 64-bit off_t
 #define _LARGEFILE_SOURCE      1 
 #define _LARGEFILE64_SOURCE    1
-#define _POSIX_SOURCE          1        // enable POSIX
+#define _POSIX_SOURCE          1        // enable POSIX features
 #define _POSIX_C_SOURCE        200112L	// POSIX version
 #define _XOPEN_SOURCE          600      // XOPEN version
 #define _XOPEN_SOURCE_EXTENDED 1

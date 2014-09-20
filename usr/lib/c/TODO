@@ -1,3 +1,22 @@
+c99
+---
+- <complex.h>
+- <fenv.h>
+- <iso646.h>
+- <tgmath.h>
+- <wctype.h>
+
+c11
+---
+- <stdalign.h>
+- <stdatomic.h>
+- <stdnoreturn.h>
+- <threads.h>
+- <uchar.h>
+
+misc
+----
+
 - <cdefs.h>
 - some systems provide <sys/ndir.h>, <sys/dir.h>, and/or <ndir.h>
 - <conio.h>
