@@ -1,0 +1,24 @@
+tools/zcc
+---------
+- test + fix the tokeniser; add support for more of c99 and c11
+
+tools/zed
+---------
+- small programmer's editor
+  - use zcc tokeniser for c syntax highlights
+  - auto-indent; optionally replace TAB with spaces
+  - modular implementation; allow hooks for different programming languages
+	- indent(), hilite()
+  - use allocated slices for text
+	- 128 or 64 bytes
+	- linked list for editing
+	- readv(), writev()
+
+tools/zvm
+---------
+- a thin machine abstraction for computations
+  - bytecode interpreter ("virtual machine")
+  - utilise zas for assembly programming
+  - RISC-like instruction set
+  - vector-based intermediate language for compilers and such
+
