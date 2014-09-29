@@ -5,7 +5,8 @@ tools/zcc
 tools/zed
 ---------
 - small programmer's editor
-  - use zcc tokeniser for c syntax highlights
+  - use zcc tokeniser for c syntax analysis and highlights
+  - re-engineer zas to work for editing assembly; syntax highlights
   - auto-indent; optionally replace TAB with spaces
   - modular implementation; allow hooks for different programming languages
 	- indent(), hilite()
