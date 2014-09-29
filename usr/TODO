@@ -1,6 +1,15 @@
+tools/zas
+---------
+- modularise input processing
+  - readfile(), getinstr(), getnum(), gettype(), getfunc(), getdecl(),
+	getexpr(), getsym()
+
 tools/zcc
 ---------
 - test + fix the tokeniser; add support for more of c99 and c11
+- implement [first subset of] ANSI/ISO C
+  - some GCC-style extensions implemented
+  . __inline__, aligned, packed
 
 tools/zed
 ---------

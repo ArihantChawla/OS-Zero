@@ -64,7 +64,7 @@
 
  struct zvmopcode {
     unsigned int unit : 4;  // unit to execute the operation on
-    unsigned int op   : 4;  // operation ID
+    unsigned int op   : 4;  // operation IDrin
 };
 
 #endif /* __ZVM_ZVM_H__ */
