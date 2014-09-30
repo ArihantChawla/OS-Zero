@@ -1,3 +1,7 @@
+lib/zero, lib/c
+---------------
+- handle keyboard and mouse actions with events
+
 tools/zas
 ---------
 - modularise input processing
@@ -36,6 +40,9 @@ tools/zcc
     - ccgetnum()
     - ccgetsym()
 - ccgetop()
+- ccgencode()
+  - generate intermediate code for optimisers and such
+  - vector-based a'la VCODE
 
 tools/zed
 ---------
