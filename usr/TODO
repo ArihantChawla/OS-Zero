@@ -1,8 +1,18 @@
 tools/zas
 ---------
 - modularise input processing
-  - readfile(), getinstr(), getnum(), gettype(), getfunc(), getdecl(),
-	getexpr(), getsym()
+  - readfile()
+	- read whole input file; use buffering
+  - getinstr()
+	- read instruction [line]
+	- asgetmnem()
+	  - read operation mnemonic
+	- asgetarg()
+	  - read register or memory operand
+	- asgetsym()
+	- asgetexpr
+	- vmloadarg
+	  - load register or memory location
 
 tools/zcc
 ---------
@@ -10,6 +20,22 @@ tools/zcc
 - implement [first subset of] ANSI/ISO C
   - some GCC-style extensions implemented
   . __inline__, aligned, packed
+- cppgetfile()
+  - cpphashstr()
+  - cpphashmacro()
+  - cppemitmacro()
+- ccgetexpr()
+  - utilise dijkstra's shunting-yard algorithm for expressions
+- ccgettype()
+  - ccgetstdtype()
+  - ccgettypedef()
+- ccgetfunc()
+- ccgetdecl(),
+  - ccgettype()
+  - ccgetid()
+    - ccgetnum()
+    - ccgetsym()
+- ccgetop()
 
 tools/zed
 ---------
