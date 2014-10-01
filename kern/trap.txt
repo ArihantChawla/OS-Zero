@@ -1,0 +1,35 @@
+zero trap interface
+-------------------
+- hardware interrupts, exceptions, aborts, faults etc. are called traps,
+  collectively
+
+usr/lib/zero/sys/trap.c
+-----------------------
+- user-space trap interface
+- trapsetstk(stk)
+- trapsetfunc(trap, func, flg)
+  - initialise trap handler function
+    - execute before signal disposition
+  - flags: TRAPSTK
+  
+special interrupts
+------------------
+- page fault
+  - vmgetpage()
+    - dequeue free page from the head of the freelist
+    - evict pages from RAM to disk
+	  - use low-water mark
+	- queue page to the head of LRU
+
+user interaction
+-----------------
+- trapkbd()
+  - post 64-bit scan-code to userland
+	- receiver processes the keycode, e.g. to 32-bit ISO 10646 (Unicode)
+- trapmouse()
+  - send a message with 
+
+memory management
+-----------------
+- trappageflt()
+

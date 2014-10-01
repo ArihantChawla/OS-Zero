@@ -62,10 +62,17 @@
 #define ZVMOPRESET  0x01 // reset into well-known state
 #define ZVMOPHLT    0x02 // halt execution
 
+/*
+ * - unit
+ * - operation code (within unit)
+ * - flg  - addressing flags (REG, IMMED, INDIR, ...)
+ */
  struct zvmopcode {
     unsigned int unit : 4;  // unit to execute the operation on
-    unsigned int op   : 4;  // operation IDrin
-};
+    unsigned int op   : 4;  // operation ID
+    unsigned int flg  : 8;  // flags for addressing modes etc.
+    unsigned int word : 16; // available storage for immediate values
+} PACK();
 
 #endif /* __ZVM_ZVM_H__ */
 

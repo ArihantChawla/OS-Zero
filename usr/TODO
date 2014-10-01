@@ -1,6 +1,22 @@
 lib/zero, lib/c
 ---------------
 - handle keyboard and mouse actions with events
+  - keydown, keyup, pntdown, pntup
+	- keyboard scan-codes of up to 64 bits
+	  - the biggest I know for PC is 6-byte
+	  - 32-bit modifier mask
+	- mouse actions
+	  - move; new x- and y-coordinates, button/modifier mask of 32 bits
+        - hints and contiguous movement
+	  - click; mouse button pressed
+	  - release; mouse button released
+	  - button ID; 32-bit
+	  - mask; 32-bit mask of 16 buttons and 16 modifier/special keys
+- notification mechanism for filesystem events
+  - creat, destroy, link, unlink, mkdir, rmdir
+- IPC facilities
+  - kernel to user; signals
+  - user to user; mutexes/semaphores, message queues (sysv and posix)
 
 tools/zas
 ---------
@@ -11,6 +27,7 @@ tools/zas
 	- read instruction [line]
 	- asgetmnem()
 	  - read operation mnemonic
+	  - multilevel byte-indexed table lookup structure
 	- asgetarg()
 	  - read register or memory operand
 	- asgetsym()
@@ -63,5 +80,19 @@ tools/zvm
   - bytecode interpreter ("virtual machine")
   - utilise zas for assembly programming
   - RISC-like instruction set
-  - vector-based intermediate language for compilers and such
+  - graphical debugger;
+	- register contents (step, request)
+	  - program counter aka instruction pointer
+	  - stack pointer
+	    - current old frame-pointer and return value on call stack
+		- back-trace stack N steps; default one
+	  - frame pointer
+	- function stack-trace
+	- stack contents
+	  - 
+
+lib/zvc
+-------
+- vector-based intermediate code for compilers and interpreters
+- emit bytecode for zvm and other architectures
 

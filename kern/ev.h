@@ -13,7 +13,7 @@
 
 /* kernel events */
 
-/* system events */
+/* system events *
 #define EVSHUTDOWN        0x01
 #define EVMOUNT           0x02
 #define EVUNMOUNT         0x03
@@ -112,6 +112,7 @@
 #define kbdevsize(ev)     (((ev)->sym & EVKBDSTATE) ? 12 : 8)
 struct evkbd {
     uint64_t scan;
+    uint32_t mask;      // modifier flags in high bits, buttons in low
 //    uint64_t state;
 } PACK();
 
@@ -162,6 +163,7 @@ struct evcmd {
  * - reply will be 32-bit object ID or 0 on failure
  */
 struct evdata {
+    uint32_t flg;                       // data/flags such as BIGENDIAN
     uint32_t fmt;                       // data format
     uint32_t nbyte;                     // data-word size in bytes
     uint32_t nitem;                     // number of items to follow
@@ -176,8 +178,10 @@ struct evfs {
 
 /* event structure */
 struct zevent {
-    uint32_t type;
+    uint32_t type;                      // event type such as EVhey KEYUP
+    uint32_t timestamp;                 // timestamp of server uptime
     union {
+        /* actual event message */
         struct evkbd  kbd;
         struct evpnt  pnt;
         struct evcmd  cmd;

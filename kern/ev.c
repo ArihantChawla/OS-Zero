@@ -6,16 +6,16 @@
  * early pseudo-code. :)
  */
 
-/* wait for event of type on kernel data structure wadr */
+/* wait for event of type on kernel data structure waitadr */
 void
-evwait(void *wadr, long type)
+evwait(void *waitadr, long type)
 {
     ;
 }
 
-/* awaken threads waiting for event type on kernel data structure wadr */
+/* awaken threads waiting for event type on kernel data structure waitadr */
 void
-evpost(void *wadr, long type)
+evpost(void *waitadr, long type)
 {
     ;
 }
