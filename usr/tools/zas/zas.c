@@ -88,6 +88,9 @@ static struct zasopinfo *zasopinfotab[WPMNUNIT];
 #elif (ZEN)
 extern const char *zpuopnametab[ZPUNOP];
 extern const char *zpuopnargtab[ZPUNOP];
+#elif (ZVM)
+extern const char *zvmopnametab[ZVMNOP];
+extern const char *zvmopnargtab[ZVMNOP];
 #endif
 
 struct zassymrec {
@@ -311,6 +314,8 @@ zasqueuetoken(struct zastoken *token)
     return;
 }
 
+#if (!ZVM)
+
 static void
 zasaddop(struct zasop *op)
 {
@@ -348,6 +353,8 @@ zasfindop(uint8_t *name)
 
     return op;
 }
+
+#endif /* !ZVM */
 
 #if (WPMVEC)
 
@@ -622,6 +629,7 @@ zasinitop(void)
         zasaddop(op);
     }
 }
+#elif (ZVM)
 #endif
 
 void
@@ -726,7 +734,11 @@ zasgetinst(uint8_t *str, uint8_t **retptr)
 {
     struct zasop *op;
 
+#if (ZVM)
+    op = zvmfindasmop(str);
+#else
     op = zasfindop(str);
+#endif
 #if (ZASDEBUG)
     fprintf(stderr, "getinst: %s\n", str);
 #endif
@@ -1416,6 +1428,8 @@ zasproclabel(struct zastoken *token, zasmemadr_t adr,
     return retval;
 }
 
+#if (!ZVM)
+
 static struct zastoken *
 zasprocinst(struct zastoken *token, zasmemadr_t adr,
             zasmemadr_t *retadr)
@@ -1716,6 +1730,8 @@ zasprocinst(struct zastoken *token, zasmemadr_t adr,
     return retval;
 }
 
+#endif /* !ZVM */
+
 static struct zastoken *
 zasprocchar(struct zastoken *token, zasmemadr_t adr,
             zasmemadr_t *retadr)
@@ -1911,7 +1927,11 @@ zasinit(struct zasopinfo *opinfotab, struct zasopinfo *vecinfotab)
 {
     zasopinfotab[0] = opinfotab;
     zasopinfotab[1] = vecinfotab;
+#if (ZVM)
+    zvminitasm();
+#else
     zasinitop();
+#endif
     zasinitbuf();
 }
 

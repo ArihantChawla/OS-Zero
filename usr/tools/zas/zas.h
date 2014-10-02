@@ -5,6 +5,8 @@
 #include <wpm/wpm.h>
 #elif (ZEN)
 #include <zpu/zpu.h>
+#elif (ZVM)
+#include <zvm/zvm.h>
 #endif
 
 //#if (ZAS32BIT)
@@ -49,8 +51,11 @@ typedef uint32_t  zassize_t;
 #define NTOKTYPE    0x16
 
 struct zasopinfo {
-    const char *name;
-    uint8_t     narg;
+    const char       *name;
+    uint8_t           narg;
+#if (ZVM)
+    struct zasopinfo *tab;
+#endif
 };
 
 struct zasop {

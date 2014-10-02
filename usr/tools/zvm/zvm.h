@@ -11,7 +11,7 @@
 // /* shift operations */
 #define ZVMOPSHIFT  0x01
 #define ZVMOPSHR    0x01 // logical shift right (fill with zero)
-#define ZVMOPSHRA   0x02 // arithmetic shift right (fill with sign)
+#define ZVMOPSAR    0x02 // arithmetic shift right (fill with sign)
 #define ZVMOPSHL    0x03 // shift left (fill with zero)
 #define ZVMOPROR    0x04 // rotate right
 #define ZVMOPROL    0x05 // rotate left
@@ -42,11 +42,13 @@
 #define ZVMOPSTACK  0x04
 #define ZVMOPPOP    0x01 // pop from stack
 #define ZVMOPPUSH   0x02 // push to stack
+#define ZVMOPPUSHA  0x03 // push all registers to stack
 // /* load-store */
-#define ZVMOPMOV    0x05
+#define ZVMOPLDSTR  0x05
 #define ZVMOPMOV    0x01 // load/store 32-bit longword
 #define ZVMOPMOVB   0x02 // load/store 8-bit byte
 #define ZVMOPMOVW   0x03 // load/store 16-bit word
+#define ZVMOPMOVQ   0x03 // load/store 64-bit quadword
 // /* function calls */
 #define ZVMOPFUNC   0x06
 #define ZVMOPCALL   0x01 // call subroutine
@@ -62,16 +64,20 @@
 #define ZVMOPRESET  0x01 // reset into well-known state
 #define ZVMOPHLT    0x02 // halt execution
 
+#define ZVMNOP      256
+
 /*
  * - unit
  * - operation code (within unit)
  * - flg  - addressing flags (REG, IMMED, INDIR, ...)
  */
  struct zvmopcode {
-    unsigned int unit : 4;  // unit to execute the operation on
-    unsigned int op   : 4;  // operation ID
-    unsigned int flg  : 8;  // flags for addressing modes etc.
-    unsigned int word : 16; // available storage for immediate values
+    unsigned int inst  : 8;
+    unsigned int arg1t : 4;
+    unsigned int arg2t : 4;
+    unsigned int reg1  : 6;
+    unsigned int reg2  : 6;
+    unsigned int size  : 4;
 } PACK();
 
 #endif /* __ZVM_ZVM_H__ */

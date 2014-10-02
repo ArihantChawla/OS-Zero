@@ -23,7 +23,7 @@ tools/zas
 - modularise input processing
   - readfile()
 	- read whole input file; use buffering
-  - getinstr()
+  - asgetinstr()
 	- read instruction [line]
 	- asgetmnem()
 	  - read operation mnemonic
@@ -91,8 +91,10 @@ tools/zvm
 	- stack contents
 	  - 
 
-lib/zvc
+lib/vc
 -------
 - vector-based intermediate code for compilers and interpreters
 - emit bytecode for zvm and other architectures
+  - gen.c and gen.h for machine abstraction
+
 
