@@ -93,12 +93,6 @@ extern const char *zvmopnametab[ZVMNOP];
 extern const char *zvmopnargtab[ZVMNOP];
 #endif
 
-struct zassymrec {
-    struct zassymrec *next;
-    uint8_t          *name;
-    uintptr_t         adr;
-};
-
 #define NHASHITEM 1024
 static struct zasop     *ophash[NHASHITEM] ALIGNED(PAGESIZE);
 #if (WPMVEC)
@@ -629,7 +623,6 @@ zasinitop(void)
         zasaddop(op);
     }
 }
-#elif (ZVM)
 #endif
 
 void
@@ -1928,7 +1921,7 @@ zasinit(struct zasopinfo *opinfotab, struct zasopinfo *vecinfotab)
     zasopinfotab[0] = opinfotab;
     zasopinfotab[1] = vecinfotab;
 #if (ZVM)
-    zvminitasm();
+    zvminit(ZVMMEMSIZE);
 #else
     zasinitop();
 #endif

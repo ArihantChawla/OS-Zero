@@ -1,29 +1,16 @@
+#include <stdlib.h>
 #include <stdio.h>
+#include <string.h>
 #include <stdint.h>
 #include <zero/param.h>
 #include <zero/cdecl.h>
 #include <zas/zas.h>
+#include <zvm/zvm.h>
 
 /* structure copy */
-struct zasop *zvmoptab[ZVMNOP] ALIGNED(PAGESIZE);
-struct zasop  zvmopmtab[128];
-
-void
-zvminitasmop(uint8_t unit, uint8_t code, const char *str, uint8_t narg)
-{
-    struct zasop *op = &zvmopmtab[(unit << 4) | op];
-    
-    op->name = str;
-    op->code = op;
-    op->narg = narg;
-    if (!zvmaddasm(str, op)) {
-        fprintf(stderr, "failed to initialise assembly operation:\n");
-        fprintf(stderr, "unit == %d, op == %d, str == %s, narg = %d\n",
-                (int)unit, (int)op, str, (int)narg);
-        
-        exit(1);
-    }
-}
+struct zasop      *zvmoptab[ZVMNOP] ALIGNED(PAGESIZE);
+struct zasop       zvmopmtab[128];
+static struct zvm  zvm;
 
 /*
  * operation info structure addresses are stored in a multilevel table
@@ -34,7 +21,7 @@ zvmaddasm(const uint8_t *str, struct zasop *op)
 {
     long          key = *str++;
     uint8_t       len = 0;
-    struct zasop *pptr = &zvmoptab[key];
+    struct zasop *pptr = zvmoptab[key];
     struct zasop *ptr = NULL;
     
     if (key) {
@@ -53,7 +40,7 @@ zvmaddasm(const uint8_t *str, struct zasop *op)
             pptr = &ptr[key];
             key = *str++;
         }
-        *pptr = op;
+        *((struct zasop **)pptr) = op;
         op->len = len;
         
         return op;
@@ -88,6 +75,38 @@ zvmfindasm(const uint8_t *str)
     return NULL;
 }
 
+void *
+zvminitmem(long memsize)
+{
+    size_t len = ZASMEMSIZE;
+    void *ptr = malloc(ZASMEMSIZE);
+
+    while (!ptr) {
+        len >>= 1;
+        ptr = malloc(len);
+    }
+    zvm.physsize = len;
+
+    return ptr;
+}
+
+void
+zvminitasmop(uint8_t unit, uint8_t code, uint8_t *str, uint8_t narg)
+{
+    struct zasop *op = &zvmopmtab[(unit << 4) | code];
+    
+    op->name = str;
+    op->code = code;
+    op->narg = narg;
+    if (!zvmaddasm(str, op)) {
+        fprintf(stderr, "failed to initialise assembly operation:\n");
+        fprintf(stderr, "unit == %d, code == %d, str == %s, narg = %d\n",
+                (int)unit, (int)code, str, (int)narg);
+        
+        exit(1);
+    }
+}
+
 void
 zvminitasm(void)
 {
@@ -100,8 +119,8 @@ zvminitasm(void)
     zvminitasmop(ZVMOPSHIFT, ZVMOPSHR, "shr", 2);
     zvminitasmop(ZVMOPSHIFT, ZVMOPSAR, "sar", 2);
     zvminitasmop(ZVMOPSHIFT, ZVMOPSHL, "shl", 2);
-    zvminitasmop(ZVMOPSHIFT, ZVMROR, "ror", 2);
-    zvminitasmop(ZVMOPSHIFT, ZVMROL, "rol", 2);
+    zvminitasmop(ZVMOPSHIFT, ZVMOPROR, "ror", 2);
+    zvminitasmop(ZVMOPSHIFT, ZVMOPROL, "rol", 2);
     /* arithmetic operations */
     zvminitasmop(ZVMOPARITH, ZVMOPINC, "inc", 1);
     zvminitasmop(ZVMOPARITH, ZVMOPDEC, "dec", 1);
@@ -138,14 +157,21 @@ zvminitasm(void)
     zvminitasmop(ZVMOPFUNC, ZVMOPLEAVE, "leave", 1);
     zvminitasmop(ZVMOPFUNC, ZVMOPRET, "ret", 1);
     /* machine status word */
-    zvminitasmop(ZVMOPMSW, ZVMLMSW, "lmsw", 1);
-    zvminitasmop(ZVMOPMSW, ZVMSMSW, "smsw", 1);
+    zvminitasmop(ZVMOPMSW, ZVMOPLMSW, "lmsw", 1);
+    zvminitasmop(ZVMOPMSW, ZVMOPSMSW, "smsw", 1);
     /* machine state */
     zvminitasmop(ZVMOPMACH, ZVMOPRESET, "reset", 0);
     zvminitasmop(ZVMOPMACH, ZVMOPHLT, "hlt", 0);
     
     return;
 };
+
+void
+zvminit(size_t memsize)
+{
+    zasinitmem(memsize);
+    zvminitasm();
+}
 
 static struct zastoken *
 zasprocinst(struct zastoken *token, zasmemadr_t adr,
@@ -159,10 +185,11 @@ zasprocinst(struct zastoken *token, zasmemadr_t adr,
     struct zastoken  *retval = NULL;
     struct zassymrec *sym;
     uint8_t           narg = token->data.inst.narg;
-    uint8_t           len = token->data.inst.op == OPNOP ? 1 : 4;
+//    uint8_t           len = token->data.inst.op == ZVMOPNOP ? 1 : 4;
+    uint8_t           len = 4;
 
     while (adr < opadr) {
-        physmem[adr] = OPNOP;
+        zvm.physmem[adr] = ZVMOPNOP;
         adr++;
     }
 //    adr = opadr;
@@ -170,15 +197,17 @@ zasprocinst(struct zastoken *token, zasmemadr_t adr,
     zasaddline(adr, token->data.inst.data, token->file, token->line);
 #endif
     {
-        op = (struct zvmopcode *)&physmem[adr];
+        op = (struct zvmopcode *)&zvm.physmem[adr];
         op->inst = token->data.inst.op;
         if (op->inst == ZVMOPNOP) {
             retval = token->next;
             adr++;
         } else
             if (!narg) {
-                op->arg1t = ARGNONE;
-                op->arg2t = ARGNONE;
+#if 0
+                op->arg1t = ZVMARGNONE;
+                op->arg2t = ZVMARGNONE;
+#endif
                 op->reg1 = 0;
                 op->reg2 = 0;
                 retval = token->next;
@@ -188,18 +217,18 @@ zasprocinst(struct zastoken *token, zasmemadr_t adr,
                 if (token1) {
                     switch(token1->type) {
                         case TOKENVALUE:
-                            op->arg1t = ARGIMMED;
+                            op->arg1t = ZVMARGIMMED;
                             op->args[0] = token1->data.value.val;
                             len += sizeof(zasword_t);
                             
                             break;
                         case TOKENREG:
-                            op->arg1t = ARGREG;
+                            op->arg1t = ZVMARGREG;
                             op->reg1 = token1->data.reg;
                             
                             break;
                         case TOKENSYM:
-                            op->arg1t = ARGADR;
+                            op->arg1t = ZVMARGADR;
                             sym = malloc(sizeof(struct zassymrec));
                             sym->name = (uint8_t *)strdup((char *)token1->data.sym.name);
                             sym->adr = (uintptr_t)&op->args[0];
@@ -210,7 +239,7 @@ zasprocinst(struct zastoken *token, zasmemadr_t adr,
                         case TOKENINDIR:
                             token1 = token1->next;
                             if (token1->type == TOKENREG) {
-                                op->arg1t = ARGREG;
+                                op->arg1t = ZVMARGREG;
                                 op->reg1 = token1->data.reg;
                             } else {
                                 fprintf(stderr, "indirect addressing requires a register\n");
@@ -220,13 +249,13 @@ zasprocinst(struct zastoken *token, zasmemadr_t adr,
                             
                             break;
                         case TOKENIMMED:
-                            op->arg1t = ARGIMMED;
+                            op->arg1t = ZVMARGIMMED;
                             op->args[0] = token1->val;
                             len += 4;
                             
                             break;
                         case TOKENADR:
-                            op->arg1t = ARGIMMED;
+                            op->arg1t = ZVMARGIMMED;
                             sym = malloc(sizeof(struct zassymrec));
                             sym->name = (uint8_t *)strdup((char *)token1->data.sym.name);
                             sym->adr = (uintptr_t)&op->args[0];
@@ -235,7 +264,7 @@ zasprocinst(struct zastoken *token, zasmemadr_t adr,
 
                             break;
                         case TOKENINDEX:
-                            op->arg1t = ARGREG;
+                            op->arg1t = ZVMARGREG;
                             op->reg1 = token1->data.ndx.reg;
                             op->args[0] = token1->data.ndx.val;
                             len += 4;
@@ -254,24 +283,12 @@ zasprocinst(struct zastoken *token, zasmemadr_t adr,
                     retval = token2;
                 }
                 if (narg == 1) {
-                    op->arg2t = ARGNONE;
+//                    op->arg2t = ZVMARGNONE;
                 } else if (narg == 2 && (token2)) {
                     switch(token2->type) {
-#if (WPMVEC)
-                        case TOKENVAREG:
-                            op->arg2t = ARGVAREG;
-                            op->reg2 = token2->data.reg & 0xff;
-                            
-                            break;
-                        case TOKENVLREG:
-                            op->arg2t = ARGVLREG;
-                            op->reg2 = token2->data.reg & 0xff;
-                            
-                            break;
-#endif
                         case TOKENVALUE:
-                            op->arg2t = ARGIMMED;
-                            if (op->arg1t == ARGREG) {
+                            op->arg2t = ZVMARGIMMED;
+                            if (op->arg1t == ZVMARGREG) {
                                 op->args[0] = token2->data.value.val;
                             } else {
                                 op->args[1] = token2->data.value.val;
@@ -280,15 +297,15 @@ zasprocinst(struct zastoken *token, zasmemadr_t adr,
                             
                             break;
                         case TOKENREG:
-                            op->arg2t = ARGREG;
+                            op->arg2t = ZVMARGREG;
                             op->reg2 = token2->data.reg;
                             
                             break;
                         case TOKENSYM:
-                            op->arg2t = ARGADR;
+                            op->arg2t = ZVMARGADR;
                             sym = malloc(sizeof(struct zassymrec));
                             sym->name = (uint8_t *)strdup((char *)token2->data.sym.name);
-                            if (op->arg1t == ARGREG) {
+                            if (op->arg1t == ZVMARGREG) {
                                 sym->adr = (uintptr_t)&op->args[0];
                             } else {
                                 sym->adr = (uintptr_t)&op->args[1];
@@ -300,7 +317,7 @@ zasprocinst(struct zastoken *token, zasmemadr_t adr,
                         case TOKENINDIR:
                             token2 = token2->next;
                             if (token2->type == TOKENREG) {
-                                op->arg2t = ARGREG;
+                                op->arg2t = ZVMARGREG;
                                 op->reg2 = token2->data.reg;
                             } else {
                                 fprintf(stderr, "indirect addressing requires a register\n");
@@ -310,8 +327,8 @@ zasprocinst(struct zastoken *token, zasmemadr_t adr,
                             
                             break;
                         case TOKENIMMED:
-                            op->arg2t = ARGIMMED;
-                            if (op->arg1t == ARGREG) {
+                            op->arg2t = ZVMARGIMMED;
+                            if (op->arg1t == ZVMARGREG) {
                                 op->args[0] = token2->val;
                             } else {
                                 op->args[1] = token2->val;
@@ -320,10 +337,10 @@ zasprocinst(struct zastoken *token, zasmemadr_t adr,
                             
                             break;
                         case TOKENADR:
-                            op->arg2t = ARGIMMED;
+                            op->arg2t = ZVMARGIMMED;
                             sym = malloc(sizeof(struct zassymrec));
                             sym->name = (uint8_t *)strdup((char *)token2->data.sym.name);
-                            if (op->arg1t == ARGREG) {
+                            if (op->arg1t == ZVMARGREG) {
                                 sym->adr = (uintptr_t)&op->args[0];
                             } else {
                                 sym->adr = (uintptr_t)&op->args[1];
@@ -333,9 +350,9 @@ zasprocinst(struct zastoken *token, zasmemadr_t adr,
                             
                             break;
                         case TOKENINDEX:
-                            op->arg2t = ARGREG;
+                            op->arg2t = ZVMARGREG;
                             op->reg2 = token2->data.ndx.reg;
-                            if (op->arg1t == ARGREG) {
+                            if (op->arg1t == ZVMARGREG) {
                                 op->args[0] = token2->data.ndx.val;
                             } else {
                                 op->args[1] = token2->data.ndx.val;

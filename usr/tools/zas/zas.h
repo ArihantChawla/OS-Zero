@@ -53,9 +53,6 @@ typedef uint32_t  zassize_t;
 struct zasopinfo {
     const char       *name;
     uint8_t           narg;
-#if (ZVM)
-    struct zasopinfo *tab;
-#endif
 };
 
 struct zasop {
@@ -67,6 +64,9 @@ struct zasop {
     uint32_t      flg;
 #endif
     struct zasop *next;
+#if (ZVM)
+    struct zasop *tab;
+#endif
 };
 
 struct zaslabel {
@@ -90,6 +90,12 @@ struct zasinst {
 #if (WPMVEC)
     uint8_t  flg;
 #endif
+};
+
+struct zassymrec {
+    struct zassymrec *next;
+    uint8_t          *name;
+    uintptr_t         adr;
 };
 
 struct zassym {

@@ -1,26 +1,26 @@
 #ifndef __VC_VC_H__
 #define __VC_VC_H__
 
-#define VCOPNOP   0x00
-#define VCOPADD   0x01
-#define VCOPSUB   0x02
-#define VCOPMUL   0x03
-#define VCOPDIV   0x04
-#define VCOPMOD   0x05
-#define VCOPLT    0x06
-#define VCOPLTE   0x07
-#define VCOPGT    0x08
-#define VCOPGTE   0x09
-#define VCOPEQ    0x0a
-#define VCOPNEQ   0x0b
-#define VCOPSHL   0x0c
-#define VCOPSHR   0x0d
-#define VCOPSAR   0x0e
-#define VCOPNOT   0x0f
-#define VCOPAND   0x10
-#define VCOPOR    0x11
-#define VCOPXOR   0x12
-#define VCOPSEL   0x13
+#define VCOPNOP   0x00          // no operation done
+#define VCOPADD   0x01          // dest += src
+#define VCOPSUB   0x02          // dest -= src
+#define VCOPMUL   0x03          // dest *= src
+#define VCOPDIV   0x04          // dest /= src
+#define VCOPMOD   0x05          // dest %= src
+#define VCOPLT    0x06          // branch if src < dest
+#define VCOPLTE   0x07          // branch if src <= dest
+#define VCOPGT    0x08          // branch if src > dest
+#define VCOPGTE   0x09          // branch if src >= dest
+#define VCOPEQ    0x0a          // branch if src == dest
+#define VCOPNEQ   0x0b          // branch if src != dest
+#define VCOPSHL   0x0c          // left shift
+#define VCOPSHR   0x0d          // logical right shift; fill with zero
+#define VCOPSAR   0x0e          // arithmetic right shift; fill with sign-bit
+#define VCOPNOT   0x0f          // bitwise negation; 2's complement
+#define VCOPAND   0x10          // bitwise AND
+#define VCOPOR    0x11          // bitwise OR
+#define VCOPXOR   0x12          // bitwise exclusive-OR
+#define VCOPSEL   0x13          // select
 #define VCOPRAND  0x14
 #define VCOPFLOOR 0x15
 #define VCOPCEIL  0x16 

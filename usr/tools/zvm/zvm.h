@@ -1,6 +1,15 @@
 #ifndef __ZVM_ZVM_H__
 #define __ZVM_ZVM_H__
 
+#include <stddef.h>
+#include <stdint.h>
+
+#define ZASMEMSIZE  (128U * 1024U * 1024U)
+
+#define ZVMARGIMMED 0x00
+#define ZVMARGREG   0x01
+#define ZVMARGADR   0x02
+
 #define ZVMOPNOP    0x00 // dummy operation
 /* logical operations */
 #define ZVMOPLOGIC  0x00
@@ -71,14 +80,23 @@
  * - operation code (within unit)
  * - flg  - addressing flags (REG, IMMED, INDIR, ...)
  */
- struct zvmopcode {
-    unsigned int inst  : 8;
-    unsigned int arg1t : 4;
-    unsigned int arg2t : 4;
-    unsigned int reg1  : 6;
-    unsigned int reg2  : 6;
-    unsigned int size  : 4;
+struct zvmopcode {
+    unsigned int  inst  : 8;
+    unsigned int  arg1t : 4;
+    unsigned int  arg2t : 4;
+    unsigned int  reg1  : 6;
+    unsigned int  reg2  : 6;
+    unsigned int  size  : 4;
+#if (!ZAS32BIT)
+    unsigned int  pad   : 32;
+#endif
+    unsigned long args[EMPTY];
 } PACK();
+
+struct zvm {
+    uint8_t *physmem;
+    size_t   physsize;
+};
 
 #endif /* __ZVM_ZVM_H__ */
 

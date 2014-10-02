@@ -25,7 +25,7 @@
 #define NOSBRK     0
 #define TAILFREE   1
 
-#define SMALLBUF   0
+#define SMALLBUF   1
 #define ISTK       0
 #define NOSTK      0
 #define BIGHDR     0
@@ -164,12 +164,12 @@ typedef pthread_mutex_t LK_T;
 #define BLKMINLOG2    4  /* minimum-size allocation/alignment */
 //#define SLABBIGLOG2   16 /* small-size block */
 #if (SMALLBUF)
-#define SLABLOG2      19
+#define SLABLOG2      18
 #define SLABBIGLOG2   14
 #define SLABTINYLOG2  12
 #define SLABTEENYLOG2 10
-#define MAPMIDLOG2    21
-#define MAPBIGLOG2    23
+#define MAPMIDLOG2    20
+#define MAPBIGLOG2    22
 #else
 #define SLABLOG2      20
 #define SLABBIGLOG2   16
@@ -255,6 +255,7 @@ typedef pthread_mutex_t LK_T;
             : 0))))
 /* adjust how much is buffered based on current use */
 #define nmagslablog2init(bid) 0
+#if 0
 #define nmagslablog2up(m, v, t)                                         \
     do {                                                                \
         if (t >= (v)) {                                                 \
@@ -263,6 +264,8 @@ typedef pthread_mutex_t LK_T;
             }                                                           \
         }                                                               \
     } while (0)
+#endif
+#define nmagslablog2up(m, v, t)
 #define nmagslablog2m64(bid)                                            \
     0
 #define nmagslablog2m128(bid)                                           \

@@ -1,3 +1,18 @@
+The vc-library aims to implement a vector-based intermediate language for
+compilers and such development tools to communicate code in.
+
+The library encapsulates computations commonly taken care of by modern
+microprocessors; the approach is RISC-like, i.e. splitting the computations to
+small parts; e.g. for an optimiser, the code should be relatively easy to tune
+for less data-dependencies and otherwise fast ways for execution.
+
+
+RANDOM NOTES
+------------
+
+The notes below are based on a document I found on VCode somewhere on the
+Internet. :)
+
 primitive types
 ---------------
 - integer (int); signed integers (lets make them 64-bit)
