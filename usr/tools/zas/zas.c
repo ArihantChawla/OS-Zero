@@ -40,6 +40,9 @@
 #include <zero/prof.h>
 #endif
 #include <zas/zas.h>
+#if (ZVM)
+#include <zvm/zvm.h>
+#endif
 //#include <wpm/mem.h>
 //#include <wpm/wpm.h>
 
@@ -50,6 +53,9 @@ struct zasmap {
     uint8_t *lim;
     size_t   sz;
 };
+#endif
+#if (ZVM)
+extern struct zvm zvm;
 #endif
 
 typedef struct zastoken * zastokfunc_t(struct zastoken *, zasmemadr_t, zasmemadr_t *);
@@ -70,7 +76,11 @@ static struct zastoken * zasgettoken(uint8_t *str, uint8_t **retptr);
 
 static struct zastoken * zasprocvalue(struct zastoken *, zasmemadr_t, zasmemadr_t *);
 static struct zastoken * zasproclabel(struct zastoken *, zasmemadr_t, zasmemadr_t *);
+#if (ZVM)
+extern struct zastoken * zasprocinst(struct zastoken *, zasmemadr_t, zasmemadr_t *);
+#else
 static struct zastoken * zasprocinst(struct zastoken *, zasmemadr_t, zasmemadr_t *);
+#endif
 static struct zastoken * zasprocchar(struct zastoken *, zasmemadr_t, zasmemadr_t *);
 static struct zastoken * zasprocdata(struct zastoken *, zasmemadr_t, zasmemadr_t *);
 static struct zastoken * zasprocglobl(struct zastoken *, zasmemadr_t, zasmemadr_t *);
@@ -477,7 +487,7 @@ zasfindval(uint8_t *str, zasword_t *valptr, uint8_t **retptr)
     return val;
 }
 
-static void
+void
 zasqueuesym(struct zassymrec *sym)
 {
     sym->next = NULL;
@@ -728,7 +738,7 @@ zasgetinst(uint8_t *str, uint8_t **retptr)
     struct zasop *op;
 
 #if (ZVM)
-    op = zvmfindasmop(str);
+    op = zvmfindasm(str);
 #else
     op = zasfindop(str);
 #endif
@@ -981,7 +991,7 @@ zasgetindex(uint8_t *str, zasword_t *retndx, uint8_t **retptr)
         }
         reg = zasgetreg(str, &str);
 #if 0
-        if (reg >= NREG) {
+        if (reg >= ZASNREG) {
             fprintf(stderr, "invalid register name %s\n", str);
 
             exit(1);
@@ -1087,7 +1097,7 @@ zasgettoken(uint8_t *str, uint8_t **retptr)
     struct zastoken *token2;
     struct zasop    *op = NULL;
     uint8_t         *name = str;
-    zasword_t        val = RESOLVE;
+    zasword_t        val = ~((zasword_t)0);
     long             size = 0;
     zasword_t        ndx;
     int              ch;
@@ -1109,9 +1119,9 @@ zasgettoken(uint8_t *str, uint8_t **retptr)
 #endif
     if ((*str) && (isdigit(*str) || *str == '-')) {
         val = zasgetindex(str, &ndx, &str);
-        if (val < NREG) {
+        if (val < ZASNREG) {
             token1->type = TOKENINDEX;
-            token1->data.ndx.reg = REGINDEX | val;
+            token1->data.ndx.reg = ZASREGINDEX | val;
             token1->data.ndx.val = ndx;
         } else if (zasgetvalue(str, &val, &str)) {
             token1->type = TOKENVALUE;
@@ -1187,7 +1197,7 @@ zasgettoken(uint8_t *str, uint8_t **retptr)
         if (name) {
             token1->type = TOKENLABEL;
             token1->data.label.name = name;
-            token1->data.label.adr = RESOLVE;
+            token1->data.label.adr = ~((zasword_t)0);
         } else {
 #if (ZASDB)
             ptr = str;
@@ -1201,16 +1211,18 @@ zasgettoken(uint8_t *str, uint8_t **retptr)
             }
             if (!op) {
                 op = zasgetinst(str, &str);
+#if (!ZVM)
                 if (op) {
                     token1->unit = UNIT_ALU;
                 }
+#endif
             }
 #else
             op = zasgetinst(str, &str);
 #endif
             if (op) {
                 token1->type = TOKENINST;
-#if (!WPMVEC) && !ZEN
+#if (!WPMVEC) && !ZEN && !ZVM
                 token1->unit = UNIT_ALU;
 #endif
                 token1->data.inst.name = op->name;
@@ -1227,14 +1239,14 @@ zasgettoken(uint8_t *str, uint8_t **retptr)
                 if (name) {
                     token1->type = TOKENSYM;
                     token1->data.sym.name = name;
-                    token1->data.sym.adr = RESOLVE;
+                    token1->data.sym.adr = ~((zasword_t)0);
                 }
                 if (!name) {
                     name = zasgetadr(str, &str);
                     if (name) {
                         token1->type = TOKENSYM;
                         token1->data.sym.name = name;
-                        token1->data.sym.adr = RESOLVE;
+                        token1->data.sym.adr = ~((zasword_t)0);
                     } else {
                         fprintf(stderr, "invalid token %s\n", linebuf);
                         
@@ -1257,7 +1269,7 @@ zasgettoken(uint8_t *str, uint8_t **retptr)
                 if (name) {
                     token1->type = TOKENADR;
                     token1->data.adr.name = name;
-                    token1->data.adr.val = RESOLVE;
+                    token1->data.adr.val = ~((zasword_t)0);
                 } else {
                     fprintf(stderr, "invalid token %s\n", linebuf);
                     
@@ -1332,7 +1344,7 @@ zasgettoken(uint8_t *str, uint8_t **retptr)
 #else
             token2->type = TOKENREG;
 #endif
-            token2->data.reg = REGINDIR | val;
+            token2->data.reg = ZASREGINDIR | val;
             zasqueuetoken(token1);
             token1 = token2;
         } else if (isalpha(*str) || *str == '_') {
@@ -1363,7 +1375,7 @@ zasprocvalue(struct zastoken *token, zasmemadr_t adr,
              zasmemadr_t *retadr)
 {
     zasmemadr_t      ret = adr + token->data.value.size;
-    uint8_t         *valptr = &physmem[adr];
+    uint8_t         *valptr = &zvm.physmem[adr];
     struct zastoken *retval;
 
     switch (token->data.value.size) {
@@ -1444,7 +1456,7 @@ zasprocinst(struct zastoken *token, zasmemadr_t adr,
     uint8_t           len = token->data.inst.op == OPNOP ? 1 : 4;
 
     while (adr < opadr) {
-        physmem[adr] = OPNOP;
+        zvm.physmem[adr] = OPNOP;
         adr++;
     }
 //    adr = opadr;
@@ -1453,7 +1465,7 @@ zasprocinst(struct zastoken *token, zasmemadr_t adr,
 #endif
 #if (WPMVEC)
     if (token->unit == UNIT_VEC) {
-        vop = (struct vecopcode *)&physmem[adr];
+        vop = (struct vecopcode *)&zvm.physmem[adr];
         vop->inst = token->data.inst.op;
         vop->unit = UNIT_VEC;
         vop->flg = token->opflg;
@@ -1528,9 +1540,9 @@ zasprocinst(struct zastoken *token, zasmemadr_t adr,
 #endif
     {
 #if (WPM)
-        op = (struct wpmopcode *)&physmem[adr];
+        op = (struct wpmopcode *)&zvm.physmem[adr];
 #elif (ZEN)
-        op = (struct zpuop *)&physmem[adr];
+        op = (struct zpuop *)&zvm.physmem[adr];
 #endif
         op->inst = token->data.inst.op;
         if (op->inst == OPNOP) {
@@ -1729,7 +1741,7 @@ static struct zastoken *
 zasprocchar(struct zastoken *token, zasmemadr_t adr,
             zasmemadr_t *retadr)
 {
-    uint8_t         *valptr = &physmem[adr];
+    uint8_t         *valptr = &zvm.physmem[adr];
     struct zastoken *retval;
     
     *valptr = token->data.ch;
@@ -1792,7 +1804,7 @@ zasprocspace(struct zastoken *token, zasmemadr_t adr,
         spcadr = token1->data.value.val;
         token2 = token1->next;
         if ((token2) && token2->type == TOKENVALUE) {
-            ptr = &physmem[spcadr];
+            ptr = &zvm.physmem[spcadr];
             val = token2->data.value.val;
             while (adr < spcadr) {
                 ptr[0] = val;
@@ -1825,7 +1837,7 @@ zasprocorg(struct zastoken *token, zasmemadr_t adr,
     
     token1 = token->next;
     if ((token1) && token1->type == TOKENVALUE) {
-        ptr = &physmem[adr];
+        ptr = &zvm.physmem[adr];
         orgadr = token1->data.value.val;
         val = token1->data.value.val;
         while (adr < orgadr) {
@@ -1870,7 +1882,7 @@ zasprocasciz(struct zastoken *token, zasmemadr_t adr,
 
     token1 = token->next;
     while ((token1) && token1->type == TOKENSTRING) {
-        ptr = &physmem[adr];
+        ptr = &zvm.physmem[adr];
         str = token1->data.str;
         while ((*str) && *str != '\"') {
             if (*str == '\\') {
@@ -1918,10 +1930,12 @@ zasprocasciz(struct zastoken *token, zasmemadr_t adr,
 void
 zasinit(struct zasopinfo *opinfotab, struct zasopinfo *vecinfotab)
 {
+#if (WPM) || (ZEN)
     zasopinfotab[0] = opinfotab;
     zasopinfotab[1] = vecinfotab;
+#endif
 #if (ZVM)
-    zvminit(ZVMMEMSIZE);
+    zvminit(ZASMEMSIZE);
 #else
     zasinitop();
 #endif
@@ -1965,14 +1979,14 @@ zasresolve(zasmemadr_t base)
     struct zaslabel  *label;
 
     while (sym) {
-        if (sym->adr == RESOLVE) {
+        if (sym->adr == ~((zasword_t)0)) {
             fprintf(stderr, "unresolved symbol %s\n", sym->name);
 
             exit(1);
         }
         item = zasfindsym(sym->name);
         if (item) {
-            if (item->adr == RESOLVE) {
+            if (item->adr == ~((zasword_t)0)) {
                 fprintf(stderr, "invalid symbol %s\n", item->name);
 
                 exit(1);

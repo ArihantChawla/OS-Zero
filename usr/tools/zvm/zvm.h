@@ -3,9 +3,13 @@
 
 #include <stddef.h>
 #include <stdint.h>
+#include <zas/zas.h>
 
 #define ZASMEMSIZE  (128U * 1024U * 1024U)
+#define ZASNREG     16
 
+#define ZASREGINDEX 0x04
+#define ZASREGINDIR 0x08
 #define ZVMARGIMMED 0x00
 #define ZVMARGREG   0x01
 #define ZVMARGADR   0x02
@@ -97,6 +101,10 @@ struct zvm {
     uint8_t *physmem;
     size_t   physsize;
 };
+
+struct zasop    * zvmfindasm(const uint8_t *str);
+struct zastoken * zasprocinst(struct zastoken *token, zasmemadr_t adr,
+                              zasmemadr_t *retadr);
 
 #endif /* __ZVM_ZVM_H__ */
 

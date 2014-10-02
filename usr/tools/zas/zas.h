@@ -1,6 +1,22 @@
 #ifndef __ZAS_ZAS_H__
 #define __ZAS_ZAS_H__
 
+#include <stdint.h>
+
+#include <stdint.h>
+
+#if (ZAS32BIT)
+typedef uint32_t  zasmemadr_t;
+typedef int32_t   zasword_t;
+typedef uint32_t  zasuword_t;
+typedef uint32_t  zassize_t;
+#else /* 64-bit */
+typedef uint64_t  zasmemadr_t;
+typedef int64_t   zasword_t;
+typedef uint64_t  zasuword_t;
+typedef uint64_t  zassize_t;
+#endif
+
 #if (WPM)
 #include <wpm/wpm.h>
 #elif (ZEN)
@@ -8,20 +24,6 @@
 #elif (ZVM)
 #include <zvm/zvm.h>
 #endif
-
-//#if (ZAS32BIT)
-typedef uint32_t  zasmemadr_t;
-typedef int32_t   zasword_t;
-typedef uint32_t  zasuword_t;
-typedef uint32_t  zassize_t;
-//#else /* 64-bit */
-//typedef uint64_t  zasmemadr_t;
-//typedef int64_t   zasword_t;
-//typedef uint64_t  zasuword_t;
-//typedef uint64_t  zassize_t;
-//#endif
-
-#include <stdint.h>
 
 #define LINELEN     4096
 
@@ -179,6 +181,9 @@ void        zasreadfile(char *name, zasmemadr_t adr, int bufid);
 #else
 void        zasreadfile(char *name, zasmemadr_t adr);
 #endif
+
+void        zasfreetoken(struct zastoken *token);
+void        zasqueuesym(struct zassymrec *sym);
 
 #endif /* __ZAS_ZAS_H__ */
 
