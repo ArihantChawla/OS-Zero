@@ -206,184 +206,181 @@ zasprocinst(struct zastoken *token, zasmemadr_t adr, zasmemadr_t *retadr)
 #if (ZASDB)
     zasaddline(adr, token->data.inst.data, token->file, token->line);
 #endif
-    {
-        op = (struct zvmopcode *)&zvm.physmem[adr];
-        op->inst = token->data.inst.op;
-        if (op->inst == ZVMOPNOP) {
-            retval = token->next;
-            adr++;
-        } else
-            if (!narg) {
+    op = (struct zvmopcode *)&zvm.physmem[adr];
+    op->inst = token->data.inst.op;
+    if (op->inst == ZVMOPNOP) {
+        retval = token->next;
+        adr++;
+    } else if (!narg) {
 #if 0
-                op->arg1t = ZVMARGNONE;
-                op->arg2t = ZVMARGNONE;
+        op->arg1t = ZVMARGNONE;
+        op->arg2t = ZVMARGNONE;
 #endif
-                op->reg1 = 0;
-                op->reg2 = 0;
-                retval = token->next;
-            } else {
-                token1 = token->next;
-                zasfreetoken(token);
-                if (token1) {
-                    switch(token1->type) {
-                        case TOKENVALUE:
-                            op->arg1t = ZVMARGIMMED;
-                            op->args[0] = token1->data.value.val;
-                            len += sizeof(zasword_t);
-                            
-                            break;
-                        case TOKENREG:
-                            op->arg1t = ZVMARGREG;
-                            op->reg1 = token1->data.reg;
-                            
-                            break;
-                        case TOKENSYM:
-                            op->arg1t = ZVMARGADR;
-                            sym = malloc(sizeof(struct zassymrec));
-                            sym->name = (uint8_t *)strdup((char *)token1->data.sym.name);
-                            sym->adr = (uintptr_t)&op->args[0];
-                            zasqueuesym(sym);
-                            len += 4;
-                            
-                            break;
-                        case TOKENINDIR:
-                            token1 = token1->next;
-                            if (token1->type == TOKENREG) {
-                                op->arg1t = ZVMARGREG;
-                                op->reg1 = token1->data.reg;
-                            } else {
-                                fprintf(stderr, "indirect addressing requires a register\n");
-                                
-                                exit(1);
-                            }
-                            
-                            break;
-                        case TOKENIMMED:
-                            op->arg1t = ZVMARGIMMED;
-                            op->args[0] = token1->val;
-                            len += 4;
-                            
-                            break;
-                        case TOKENADR:
-                            op->arg1t = ZVMARGIMMED;
-                            sym = malloc(sizeof(struct zassymrec));
-                            sym->name = (uint8_t *)strdup((char *)token1->data.sym.name);
-                            sym->adr = (uintptr_t)&op->args[0];
-                            zasqueuesym(sym);
-                            len += 4;
-
-                            break;
-                        case TOKENINDEX:
-                            op->arg1t = ZVMARGREG;
-                            op->reg1 = token1->data.ndx.reg;
-                            op->args[0] = token1->data.ndx.val;
-                            len += 4;
-                            
-                            break;
-                        default:
-                            fprintf(stderr, "invalid argument 1 of type %lx\n", token1->type);
-                            printtoken(token1);
-                            
-                            exit(1);
-                            
-                            break;
+        op->reg1 = 0;
+        op->reg2 = 0;
+        retval = token->next;
+    } else {
+        token1 = token->next;
+        zasfreetoken(token);
+        if (token1) {
+            switch(token1->type) {
+                case TOKENVALUE:
+                    op->arg1t = ZVMARGIMMED;
+                    op->args[0] = token1->data.value.val;
+                    len += sizeof(zasword_t);
+                    
+                    break;
+                case TOKENREG:
+                    op->arg1t = ZVMARGREG;
+                    op->reg1 = token1->data.reg;
+                    
+                    break;
+                case TOKENSYM:
+                    op->arg1t = ZVMARGADR;
+                    sym = malloc(sizeof(struct zassymrec));
+                    sym->name = (uint8_t *)strdup((char *)token1->data.sym.name);
+                    sym->adr = (uintptr_t)&op->args[0];
+                    zasqueuesym(sym);
+                    len += sizeof(uintptr_t);
+                    
+                    break;
+                case TOKENINDIR:
+                    token1 = token1->next;
+                    if (token1->type == TOKENREG) {
+                        op->arg1t = ZVMARGREG;
+                        op->reg1 = token1->data.reg;
+                    } else {
+                        fprintf(stderr, "indirect addressing requires a register\n");
+                        
+                        exit(1);
                     }
-                    token2 = token1->next;
-                    zasfreetoken(token1);
-                    retval = token2;
-                }
-                if (narg == 1) {
-//                    op->arg2t = ZVMARGNONE;
-                } else if (narg == 2 && (token2)) {
-                    switch(token2->type) {
-                        case TOKENVALUE:
-                            op->arg2t = ZVMARGIMMED;
-                            if (op->arg1t == ZVMARGREG) {
-                                op->args[0] = token2->data.value.val;
-                            } else {
-                                op->args[1] = token2->data.value.val;
-                            }
-                            len += sizeof(zasword_t);
-                            
-                            break;
-                        case TOKENREG:
-                            op->arg2t = ZVMARGREG;
-                            op->reg2 = token2->data.reg;
-                            
-                            break;
-                        case TOKENSYM:
-                            op->arg2t = ZVMARGADR;
-                            sym = malloc(sizeof(struct zassymrec));
-                            sym->name = (uint8_t *)strdup((char *)token2->data.sym.name);
-                            if (op->arg1t == ZVMARGREG) {
-                                sym->adr = (uintptr_t)&op->args[0];
-                            } else {
-                                sym->adr = (uintptr_t)&op->args[1];
-                            }
-                            zasqueuesym(sym);
-                            len += 4;
-                            
-                            break;
-                        case TOKENINDIR:
-                            token2 = token2->next;
-                            if (token2->type == TOKENREG) {
-                                op->arg2t = ZVMARGREG;
-                                op->reg2 = token2->data.reg;
-                            } else {
-                                fprintf(stderr, "indirect addressing requires a register\n");
-                                
-                                exit(1);
-                            }
-                            
-                            break;
-                        case TOKENIMMED:
-                            op->arg2t = ZVMARGIMMED;
-                            if (op->arg1t == ZVMARGREG) {
-                                op->args[0] = token2->val;
-                            } else {
-                                op->args[1] = token2->val;
-                            }
-                            len += 4;
-                            
-                            break;
-                        case TOKENADR:
-                            op->arg2t = ZVMARGIMMED;
-                            sym = malloc(sizeof(struct zassymrec));
-                            sym->name = (uint8_t *)strdup((char *)token2->data.sym.name);
-                            if (op->arg1t == ZVMARGREG) {
-                                sym->adr = (uintptr_t)&op->args[0];
-                            } else {
-                                sym->adr = (uintptr_t)&op->args[1];
-                            }
-                            zasqueuesym(sym);
-                            len += 4;
-                            
-                            break;
-                        case TOKENINDEX:
-                            op->arg2t = ZVMARGREG;
-                            op->reg2 = token2->data.ndx.reg;
-                            if (op->arg1t == ZVMARGREG) {
-                                op->args[0] = token2->data.ndx.val;
-                            } else {
-                                op->args[1] = token2->data.ndx.val;
-                            }
-                            len += 4;
-                            
-                            break;
-                        default:
-                            fprintf(stderr, "invalid argument 2 of type %lx\n", token2->type);
-                            printtoken(token2);
-                            
-                            exit(1);
-                            
-                            break;
-                    }
-                    retval = token2->next;
-                    zasfreetoken(token2);
-                }
+                    
+                    break;
+                case TOKENIMMED:
+                    op->arg1t = ZVMARGIMMED;
+                    op->args[0] = token1->val;
+                    len += sizeof(long);
+                    
+                    break;
+                case TOKENADR:
+                    op->arg1t = ZVMARGIMMED;
+                    sym = malloc(sizeof(struct zassymrec));
+                    sym->name = (uint8_t *)strdup((char *)token1->data.sym.name);
+                    sym->adr = (uintptr_t)&op->args[0];
+                    zasqueuesym(sym);
+                    len += sizeof(uintptr_t);
+                    
+                    break;
+                case TOKENINDEX:
+                    op->arg1t = ZVMARGREG;
+                    op->reg1 = token1->data.ndx.reg;
+                    op->args[0] = token1->data.ndx.val;
+                    len += sizeof(long);
+                    
+                    break;
+                default:
+                    fprintf(stderr, "invalid argument 1 of type %lx\n", token1->type);
+                    printtoken(token1);
+                    
+                    exit(1);
+                    
+                    break;
             }
-        op->size = len >> 2;
+            token2 = token1->next;
+            zasfreetoken(token1);
+            retval = token2;
+        }
+        if (narg == 1) {
+//                    op->arg2t = ZVMARGNONE;
+        } else if (narg == 2 && (token2)) {
+            switch(token2->type) {
+                case TOKENVALUE:
+                    op->arg2t = ZVMARGIMMED;
+                    if (op->arg1t == ZVMARGREG) {
+                        op->args[0] = token2->data.value.val;
+                    } else {
+                        op->args[1] = token2->data.value.val;
+                    }
+                    len += sizeof(zasword_t);
+                    
+                    break;
+                case TOKENREG:
+                    op->arg2t = ZVMARGREG;
+                    op->reg2 = token2->data.reg;
+                    
+                    break;
+                case TOKENSYM:
+                    op->arg2t = ZVMARGADR;
+                    sym = malloc(sizeof(struct zassymrec));
+                    sym->name = (uint8_t *)strdup((char *)token2->data.sym.name);
+                    if (op->arg1t == ZVMARGREG) {
+                        sym->adr = (uintptr_t)&op->args[0];
+                    } else {
+                        sym->adr = (uintptr_t)&op->args[1];
+                    }
+                    zasqueuesym(sym);
+                    len += sizeof(uintptr_t);
+                    
+                    break;
+                case TOKENINDIR:
+                    token2 = token2->next;
+                    if (token2->type == TOKENREG) {
+                        op->arg2t = ZVMARGREG;
+                        op->reg2 = token2->data.reg;
+                    } else {
+                        fprintf(stderr, "indirect addressing requires a register\n");
+                        
+                        exit(1);
+                    }
+                    
+                    break;
+                case TOKENIMMED:
+                    op->arg2t = ZVMARGIMMED;
+                    if (op->arg1t == ZVMARGREG) {
+                        op->args[0] = token2->val;
+                    } else {
+                        op->args[1] = token2->val;
+                    }
+                    len += sizeof(long);
+                    
+                    break;
+                case TOKENADR:
+                    op->arg2t = ZVMARGIMMED;
+                    sym = malloc(sizeof(struct zassymrec));
+                    sym->name = (uint8_t *)strdup((char *)token2->data.sym.name);
+                    if (op->arg1t == ZVMARGREG) {
+                        sym->adr = (uintptr_t)&op->args[0];
+                    } else {
+                        sym->adr = (uintptr_t)&op->args[1];
+                    }
+                    zasqueuesym(sym);
+                    len += sizeof(uintptr_t);
+                    
+                    break;
+                case TOKENINDEX:
+                    op->arg2t = ZVMARGREG;
+                    op->reg2 = token2->data.ndx.reg;
+                    if (op->arg1t == ZVMARGREG) {
+                        op->args[0] = token2->data.ndx.val;
+                    } else {
+                        op->args[1] = token2->data.ndx.val;
+                    }
+                    len += sizeof(long);
+                    
+                    break;
+                default:
+                    fprintf(stderr, "invalid argument 2 of type %lx\n", token2->type);
+                    printtoken(token2);
+                    
+                    exit(1);
+                    
+                    break;
+            }
+            retval = token2->next;
+            zasfreetoken(token2);
+        }
     }
+    op->size = len >> 2;
     *retadr = adr + len;
 
     return retval;

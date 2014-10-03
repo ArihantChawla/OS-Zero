@@ -1453,7 +1453,8 @@ zasprocinst(struct zastoken *token, zasmemadr_t adr,
     struct zastoken  *retval = NULL;
     struct zassymrec *sym;
     uint8_t           narg = token->data.inst.narg;
-    uint8_t           len = token->data.inst.op == OPNOP ? 1 : 4;
+//    uint8_t           len = token->data.inst.op == OPNOP ? 1 : 4;
+    uint8_t           len = 4;
 
     while (adr < opadr) {
         zvm.physmem[adr] = OPNOP;
@@ -1486,7 +1487,7 @@ zasprocinst(struct zastoken *token, zasmemadr_t adr,
                 case TOKENIMMED:
                     vop->arg1t = ARGIMMED;
                     vop->args[0] = token1->val;
-                    len += 4;
+                    len += sizeof(zasword_t);
                     
                     break;
                 case TOKENADR:
@@ -1495,7 +1496,7 @@ zasprocinst(struct zastoken *token, zasmemadr_t adr,
                     sym->name = (uint8_t *)strdup((char *)token1->data.sym.name);
                     sym->adr = (uintptr_t)&op->args[0];
                     zasqueuesym(sym);
-                    len += 4;
+                    len += sizeof(uintptr_t);
                     
                     break;
                 default:
@@ -1577,7 +1578,7 @@ zasprocinst(struct zastoken *token, zasmemadr_t adr,
                             sym->name = (uint8_t *)strdup((char *)token1->data.sym.name);
                             sym->adr = (uintptr_t)&op->args[0];
                             zasqueuesym(sym);
-                            len += 4;
+                            len += sizeof(uintptr_t);
                             
                             break;
                         case TOKENINDIR:
@@ -1595,7 +1596,7 @@ zasprocinst(struct zastoken *token, zasmemadr_t adr,
                         case TOKENIMMED:
                             op->arg1t = ARGIMMED;
                             op->args[0] = token1->val;
-                            len += 4;
+                            len += sizeof(zasword_t);
                             
                             break;
                         case TOKENADR:
@@ -1604,14 +1605,14 @@ zasprocinst(struct zastoken *token, zasmemadr_t adr,
                             sym->name = (uint8_t *)strdup((char *)token1->data.sym.name);
                             sym->adr = (uintptr_t)&op->args[0];
                             zasqueuesym(sym);
-                            len += 4;
+                            len += sizeof(uintptr_t);
 
                             break;
                         case TOKENINDEX:
                             op->arg1t = ARGREG;
                             op->reg1 = token1->data.ndx.reg;
                             op->args[0] = token1->data.ndx.val;
-                            len += 4;
+                            len += sizeof(zasword_t);
                             
                             break;
                         default:
@@ -1667,7 +1668,7 @@ zasprocinst(struct zastoken *token, zasmemadr_t adr,
                                 sym->adr = (uintptr_t)&op->args[1];
                             }
                             zasqueuesym(sym);
-                            len += 4;
+                            len += sizeof(uintptr_t);
                             
                             break;
                         case TOKENINDIR:
@@ -1689,7 +1690,7 @@ zasprocinst(struct zastoken *token, zasmemadr_t adr,
                             } else {
                                 op->args[1] = token2->val;
                             }
-                            len += 4;
+                            len += sizeof(zasword_t);
                             
                             break;
                         case TOKENADR:
@@ -1702,7 +1703,7 @@ zasprocinst(struct zastoken *token, zasmemadr_t adr,
                                 sym->adr = (uintptr_t)&op->args[1];
                             }
                             zasqueuesym(sym);
-                            len += 4;
+                            len += sizeof(uintptr_t);
                             
                             break;
                         case TOKENINDEX:
@@ -1713,7 +1714,7 @@ zasprocinst(struct zastoken *token, zasmemadr_t adr,
                             } else {
                                 op->args[1] = token2->data.ndx.val;
                             }
-                            len += 4;
+                            len += sizeof(zasword_t);
                             
                             break;
                         default:
