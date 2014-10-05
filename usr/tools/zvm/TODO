@@ -1,1 +1,4 @@
 - porting zas to emit bytecode for zvm already
+- implement virtual memory / page-level protection (read-only sections)
+- implement [console] I/O and interrupts
+- implement a debugger with graphical frontend

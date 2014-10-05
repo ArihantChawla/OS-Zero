@@ -1,0 +1,23 @@
+- basics of von neumann architecture
+  - processor, memory, I/O
+- RISC-like instruction set; zvm
+- assembly programming 101
+  - at&t syntax
+  - labels; functions and variables
+  - addressing modes; immediate, indirect, indexed indirect
+	$x, x, *x, y(x)
+  - function calls; register and stack arguments
+	- stack frame layout
+- c programming
+  - program anatomy
+	- source and header files
+	- executable images
+	  - sections
+		- text		- code
+		- rodata	- read-only data
+		- data		- initialised data
+		- bss		- uninitialised data
+		- heap		- dynamic memory (brk, sbrk, malloc)
+		- stack		- high memory, grows downwards
+  - on pointers and arrays; peter pointer and angelica array :)
+
