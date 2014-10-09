@@ -6,8 +6,8 @@
 modules
 -------
 - vm; virtual machine implementation
-- mem; memory manager; mags and slabs
 - intr; interrupt handling
+- mem; memory manager; mags and slabs
 - page; page allocator
 - trap; interrupt management/configuration
-
+- io; I/O abstraction

@@ -2,6 +2,8 @@ acute things
 ------------
 - hack a bitmap to denote which pages are reserved for hardware access
   - initialise the kernel virtual memory allocator with this bitmap
+- hack the keyboard driver to pass scancode-events for real =)
+  - improve event interface
 - implement ATA and SATA drivers
 - implement ISO 9660 filesystem for CD and DVD discs
 - implement [block] I/O buffer cache
@@ -15,4 +17,10 @@ future things
 - terminal/TTY driver
 - hack Zero to run rogue :)
 - make usr/games/mjolnir run on Zero :)
-
+- ipc; interprocess communications
+  - shm	- shared memory
+  - mtx	- mutexes aka binary semaphores
+  - sem	- semaphores
+  - mq	- message queues
+  
+  
