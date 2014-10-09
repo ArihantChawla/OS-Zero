@@ -5,7 +5,7 @@ lib/zero, lib/c
 	- keyboard scan-codes of up to 64 bits
 	  - the biggest I know for PC is 6-byte
 	  - 32-bit modifier mask
-	- mouse actions
+	- mouse events
 	  - move; new x- and y-coordinates, button/modifier mask of 32 bits
         - hints and contiguous movement
 	  - click; mouse button pressed

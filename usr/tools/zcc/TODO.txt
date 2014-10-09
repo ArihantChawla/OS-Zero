@@ -8,11 +8,11 @@ Zero C Compiler Ideas
 
 compiler pipeline
 -----------------
-- preprocessor
-- tokeniser
-- lexer
-- optimiser
-- linker
+- zccpreproc(); preprocessor
+- zcctokenise(); tokeniser
+- zcclex(); lexer
+- zccopt(); optimiser
+- zcclink(); linker
 - loader
 
 preprocessor
@@ -30,7 +30,12 @@ compiler
 tokeniser
 ---------
 - tokenize input
+  - literals
+	- char; starts with '
+	- string; starts with "
+	- numeric; starts with digits
   - keywords
+	- start with _ or alphabetic
   - typedef
   - macros
   - functions
