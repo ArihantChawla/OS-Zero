@@ -2,3 +2,12 @@
 - implement virtual memory / page-level protection (read-only sections)
 - implement [console] I/O and interrupts
 - implement a debugger with graphical frontend
+
+modules
+-------
+- vm; virtual machine implementation
+- intr; interrupt handling
+- mem; memory manager; mags and slabs
+- page; page allocator
+- trap; interrupt management/configuration
+- io; I/O abstraction
