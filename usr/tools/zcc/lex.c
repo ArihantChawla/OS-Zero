@@ -623,7 +623,7 @@ zccgettoken(char *str, char **retstr, int curfile)
     long             n;
     long             type;
     long             parm;
-    long             atr;
+//    long             atr;
     char            *ptr;
     void            *mptr;
     struct zpptoken *tok = malloc(sizeof(struct zpptoken));

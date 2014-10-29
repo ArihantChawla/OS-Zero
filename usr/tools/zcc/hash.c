@@ -3,10 +3,7 @@
 #include <stdlib.h>
 #include <string.h>
 #include <zcc/zcc.h>
-#define HASHDEBUG 0
-#if (HASHDEBUG)
 #include <stdio.h>
-#endif
 
 #define NSYMHASH   65536
 #define NTYPEHASH  65536
@@ -336,7 +333,7 @@ uint16_t
 zcchashsym(char *name)
 {
     uint16_t ret;
-    long     val;
+    long     val = 0;
     int      ch;
     int      tmp = *name++;
 
@@ -410,7 +407,7 @@ uint16_t
 zcchashtype(char *name)
 {
     uint16_t ret;
-    long     val;
+    long     val = 0;
     int      ch;
     int      tmp = *name++;
 

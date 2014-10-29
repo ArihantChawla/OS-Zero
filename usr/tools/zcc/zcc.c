@@ -6,8 +6,8 @@
 #endif
 
 #if (ZCCSTAT)
-extern unsigned long   tokcnttab[256];
-extern char          **toknametab[256];
+extern unsigned long     tokcnttab[256];
+extern char             *toknametab[256];
 #endif
 
 extern unsigned long     ntoken;

@@ -151,6 +151,7 @@ struct zppinput {
  * sz is width in [8-bit] bytes
  */
 /* integral types */
+extern long zccfindtype(char *name);
 #define zccgettype(tp)  ((tp)->parm < ZCC_NTYPE \
                          ? (tp)->parm           \
                          : zccfindtype((tp)->str))
