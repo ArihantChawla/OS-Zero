@@ -1955,7 +1955,6 @@ posix_memalign(void **ret,
     void *ptr = getmem(size, align, 0);
     int   retval = -1;
 
-//    if (!powerof2(align) || (size & (sizeof(void *) * CHAR_BIT - 1))) {
     if (!powerof2(align) || (size & (sizeof(void *)))) {
         errno = EINVAL;
     } else {
