@@ -5,6 +5,11 @@
  * See the file LICENSE for more information about using this software.
  */
 
+#define MALLOCTRACE 1
+#if (MALLOCTRACE)
+#include <stdio.h>
+#endif
+
 /* FIXME */
 #define MALLOCUSEPTHREAD 1
 
@@ -164,19 +169,19 @@ typedef pthread_mutex_t LK_T;
 #define BLKMINLOG2    4  /* minimum-size allocation/alignment */
 //#define SLABBIGLOG2   16 /* small-size block */
 #if (SMALLBUF)
-#define SLABLOG2      18
-#define SLABBIGLOG2   14
-#define SLABTINYLOG2  12
-#define SLABTEENYLOG2 10
-#define MAPMIDLOG2    20
-#define MAPBIGLOG2    22
-#else
-#define SLABLOG2      20
-#define SLABBIGLOG2   16
-#define SLABTINYLOG2  14
+#define SLABLOG2      21
+#define SLABBIGLOG2   19
+#define SLABTINYLOG2  16
 #define SLABTEENYLOG2 12
 #define MAPMIDLOG2    22
 #define MAPBIGLOG2    24
+#else
+#define SLABLOG2      22
+#define SLABBIGLOG2   16
+#define SLABTINYLOG2  13
+#define SLABTEENYLOG2 10
+#define MAPMIDLOG2    21
+#define MAPBIGLOG2    22
 #endif
 #define MINSZ         (1UL << BLKMINLOG2)
 #define HQMAX         SLABLOG2
@@ -1950,7 +1955,8 @@ posix_memalign(void **ret,
     void *ptr = getmem(size, align, 0);
     int   retval = -1;
 
-    if (!powerof2(align) || (size & (sizeof(void *) * CHAR_BIT - 1))) {
+//    if (!powerof2(align) || (size & (sizeof(void *) * CHAR_BIT - 1))) {
+    if (!powerof2(align) || (size & (sizeof(void *)))) {
         errno = EINVAL;
     } else {
         ptr = getmem(size, align, 0);
@@ -1958,6 +1964,9 @@ posix_memalign(void **ret,
             retval ^= retval;
         }
     }
+#if (MALLOCTRACE)
+    fprintf(stderr, "posix_memalign(%ld, %ld): %p\n", (long)align, (long)size, ptr);
+#endif
 
     *ret = ptr;
 
@@ -1975,6 +1984,10 @@ valloc(size_t size)
 {
     void *ptr = getmem(size, PAGESIZE, 0);
 
+#if (MALLOCTRACE)
+    fprintf(stderr, "valloc(%ld): %p\n", (long)size, ptr);
+#endif
+
     return ptr;
 }
 #endif
@@ -1990,6 +2003,9 @@ memalign(size_t align,
     } else {
         ptr = getmem(size, align, 0);
     }
+#if (MALLOCTRACE)
+    fprintf(stderr, "memalign(%ld, %ld): %p\n", (long)align, (long)size, ptr);
+#endif
 
     return ptr;
 }
