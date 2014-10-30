@@ -5,7 +5,7 @@
  * See the file LICENSE for more information about using this software.
  */
 
-#define MALLOCTRACE 1
+#define MALLOCTRACE 0
 #if (MALLOCTRACE)
 #include <stdio.h>
 #endif
@@ -169,12 +169,20 @@ typedef pthread_mutex_t LK_T;
 #define BLKMINLOG2    4  /* minimum-size allocation/alignment */
 //#define SLABBIGLOG2   16 /* small-size block */
 #if (SMALLBUF)
-#define SLABLOG2      21
-#define SLABBIGLOG2   19
+#define SLABLOG2      20
+#define SLABBIGLOG2   18
 #define SLABTINYLOG2  16
-#define SLABTEENYLOG2 12
+#define SLABTEENYLOG2 14
 #define MAPMIDLOG2    22
 #define MAPBIGLOG2    24
+#if 0
+#define SLABLOG2      20
+#define SLABBIGLOG2   18
+#define SLABTINYLOG2  16
+#define SLABTEENYLOG2 12
+#define MAPMIDLOG2    21
+#define MAPBIGLOG2    22
+#endif
 #else
 #define SLABLOG2      22
 #define SLABBIGLOG2   16
@@ -188,7 +196,7 @@ typedef pthread_mutex_t LK_T;
 //#define HQMAX         20
 #define NBKT          PTRBITS
 #if (MTSAFE)
-#define NARN          8
+#define NARN          16
 #else
 #define NARN          1
 #endif
@@ -197,7 +205,8 @@ typedef pthread_mutex_t LK_T;
 
 #if (PTRBITS > 32)
 //#define NL1BIT     (PTRBITS - SLABLOG2 - NL2BIT - NL3BIT)
-#define NL1BIT     (PTRBITS - PAGESIZELOG2 - NL2BIT - NL3BIT)
+//#define NL1BIT     (PTRBITS - PAGESIZELOG2 - NL2BIT - NL3BIT)
+#define NL1BIT     (PTRBITS - SLABLOG2 - NL2BIT - NL3BIT)
 #define NL2BIT     16
 #define NL3BIT     16
 #define NL1KEY     (1UL << NL1BIT)
@@ -1870,6 +1879,9 @@ malloc(size_t size)
 {
     void *ptr = getmem(size, 0, 0);
 
+#if (MALLOCTRACE)
+    fprintf(stderr, "malloc(%ld): %p\n", (long)size, ptr);
+#endif    
     return ptr;
 }
 
@@ -1879,6 +1891,9 @@ calloc(size_t n, size_t size)
     size_t  sz = n * (size + (RZSZ << 1));
     void   *ptr = getmem(sz, 0, 1);
 
+#if (MALLOCTRACE)
+    fprintf(stderr, "calloc(%ld, %ld): %p\n", (long)n, (long)size, ptr);
+#endif    
     return ptr;
 }
 

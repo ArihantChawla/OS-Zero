@@ -1,2 +1,4 @@
-- malloc.c; the allocator chokes on some clients, typically video players, so I
-  suspect it's related to bigger allocations (using mmap())
+- malloc() and friends are not totally stable with some applications (typically
+  multimedia players, it seems, so it could have something to do with bigger
+  mmap()'d allocations)
+
