@@ -169,20 +169,20 @@ typedef pthread_mutex_t LK_T;
 #define BLKMINLOG2    4  /* minimum-size allocation/alignment */
 //#define SLABBIGLOG2   16 /* small-size block */
 #if (SMALLBUF)
-#define SLABLOG2      20
-#define SLABBIGLOG2   18
-#define SLABTINYLOG2  16
-#define SLABTEENYLOG2 14
-#define MAPMIDLOG2    22
-#define MAPBIGLOG2    24
 #if 0
-#define SLABLOG2      20
-#define SLABBIGLOG2   18
-#define SLABTINYLOG2  16
+#define SLABLOG2      18
+#define SLABBIGLOG2   16
+#define SLABTINYLOG2  14
 #define SLABTEENYLOG2 12
-#define MAPMIDLOG2    21
-#define MAPBIGLOG2    22
+#define MAPMIDLOG2    20
+#define MAPBIGLOG2    24
 #endif
+#define SLABLOG2      16
+#define SLABBIGLOG2   13
+#define SLABTINYLOG2  10
+#define SLABTEENYLOG2 8
+#define MAPMIDLOG2    18
+#define MAPBIGLOG2    22
 #else
 #define SLABLOG2      22
 #define SLABBIGLOG2   16
@@ -225,8 +225,10 @@ typedef pthread_mutex_t LK_T;
 
 /* macros */
 
-//#define narnbufmag(bid)   (1L << narnbufmaglog2(bid))
+#define narnbufmag(bid)   (1L << narnbufmaglog2(bid))
+#if 0
 #define narnbufmag(bid)   1
+#endif
 #if 0
 #define narnbufmaglog2(bid)                                             \
     (((bid) <= SLABTEENYLOG2)                                           \
@@ -239,6 +241,16 @@ typedef pthread_mutex_t LK_T;
               ? 1                                                       \
               : 0))))
 #endif
+#define narnbufmaglog2(bid)                                             \
+    (((bid) <= SLABTEENYLOG2)                                           \
+     ? (SLABTEENYLOG2 - (bid) + 1)                                      \
+     : (((bid) <= SLABTINYLOG2)                                         \
+        ? (SLABTINYLOG - (bid) + 2)                                     \
+        : (((bid) <= MAPMIDLOG2)                                        \
+           ? (MAPMIDLOG2 - (bid) + 1)                                   \
+           : (((bid) <= MAPBIGLOG2)                                     \
+              ? (MAPBIGLOG2 - (bid) + 2)                                \
+              : 0))))
 #if (NOSBRK)
 #define ismapbkt(bid)     0
 #else
@@ -353,7 +365,7 @@ typedef pthread_mutex_t LK_T;
 #else
 #define NBHDR             (4 * PAGESIZE)
 #endif
-#define NBUFHDR           32
+#define NBUFHDR           16
 
 #define thrid()           ((_aid >= 0) ? _aid : (_aid = getaid()))
 #define blksz(bid)        (1UL << (bid))
