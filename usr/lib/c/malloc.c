@@ -26,7 +26,7 @@
 #define STDIO      1
 #define FREEBITMAP 0
 
-#define ZEROMTX    1
+#define ZEROMTX    0
 #define PTHREAD    1
 
 #include <features.h>
@@ -2193,7 +2193,7 @@ posix_memalign(void **ret,
     void *ptr = getmem(size, align, 0);
     int   retval = -1;
 
-    if (!powerof2(align) || (size & (sizeof(void *) * CHAR_BIT - 1))) {
+    if (!powerof2(align) || (size & sizeof(void *))) {
         errno = EINVAL;
     } else {
         ptr = getmem(size, align, 0);
