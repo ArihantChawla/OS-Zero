@@ -450,11 +450,11 @@ static void * _realloc(void *ptr, size_t size, long rel);
 #if (DEBUGMTX)
 #define mlk(mp)           fprintf(stderr, "LK: %s:%d\n", __func__, __LINE__), mtxlk2(mp, _aid + 1)
 #define munlk(mp)         fprintf(stderr, "UNLK: %s:%d\n", __func__, __LINE__), mtxunlk2(mp, _aid + 1)
-#define mtrylk(mp)<       fprintf(stderr, "TRYLK: %s:%d\n", __func__, __LINE__), mtxtrylk2(mp, _aid + 1)
+#define mtrylk(mp)       fprintf(stderr, "TRYLK: %s:%d\n", __func__, __LINE__), mtxtrylk2(mp, _aid + 1)
 #else
 #define mlk(mp)           mtxlk2(mp, _aid + 1)
 #define munlk(mp)         mtxunlk2(mp, _aid + 1)
-#define mtrylk(mp)<        mtxtrylk2(mp, _aid + 1)
+#define mtrylk(mp)        mtxtrylk2(mp, _aid + 1)
 #endif
 //#define mlk(mp)           mtxlk(mp)
 //#define munlk(mp)         mtxunlk(mp)
