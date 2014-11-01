@@ -156,9 +156,9 @@ typedef uint64_t wpmuword_t;
 #if (WPMVEC)
 #define UNIT_VEC    0x01
 #endif
-#define WPMNUNIT   (1 << 3)
-#define NREG       16
-#define NVREG      16
+#define WPMNUNIT    (1 << 3)
+#define NREG        16
+#define NVREG       16
 struct _wpmopcode {
     wpmuword_t op;      // instruction opcode; see above
     wpmword_t  args[2]; // up to 2 word arguments within instruction

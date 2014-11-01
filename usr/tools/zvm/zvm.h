@@ -3,16 +3,25 @@
 
 #include <stddef.h>
 #include <stdint.h>
+#include <zero/param.h>
+#include <zero/cdecl.h>
 #include <zas/zas.h>
 
 #define ZASMEMSIZE  (128U * 1024U * 1024U)
 #define ZASNREG     16
+#define ZASTEXTBASE PAGESIZE
 
 #define ZASREGINDEX 0x04
 #define ZASREGINDIR 0x08
 #define ZVMARGIMMED 0x00
 #define ZVMARGREG   0x01
 #define ZVMARGADR   0x02
+
+/* machine status word */
+#define ZVMZF       0x01 // zero
+#define ZVMOF       0x02 // overflow
+#define ZVMCF       0x04 // carry
+#define ZVMIF       0x08 // interrupt pending
 
 #define ZVMOPNOP    0x00 // dummy operation
 /* logical operations */
@@ -58,7 +67,7 @@
 #define ZVMOPPUSHA  0x03 // push all registers to stack
 // /* load-store */
 #define ZVMOPLDSTR  0x05
-#define ZVMOPMOV    0x01 // load/store 32-bit longword
+#define ZVMOPMOVL   0x01 // load/store 32-bit longword
 #define ZVMOPMOVB   0x02 // load/store 8-bit byte
 #define ZVMOPMOVW   0x03 // load/store 16-bit word
 #define ZVMOPMOVQ   0x03 // load/store 64-bit quadword
@@ -77,6 +86,7 @@
 #define ZVMOPRESET  0x01 // reset into well-known state
 #define ZVMOPHLT    0x02 // halt execution
 
+#define ZVMNUNIT    16
 #define ZVMNOP      256
 
 /*
@@ -85,7 +95,8 @@
  * - flg  - addressing flags (REG, IMMED, INDIR, ...)
  */
 struct zvmopcode {
-    unsigned int  inst  : 8;
+    unsigned int  unit  : 4;
+    unsigned int  inst  : 4;
     unsigned int  arg1t : 4;
     unsigned int  arg2t : 4;
     unsigned int  reg1  : 6;
@@ -97,9 +108,17 @@ struct zvmopcode {
     unsigned long args[EMPTY];
 } PACK();
 
+typedef void zvmopfunc_t(struct zvmopcode *);
+
 struct zvm {
-    uint8_t *physmem;
-    size_t   physsize;
+    uint8_t   *physmem;
+    size_t     memsize;
+    long       shutdown;
+    zasword_t  msw;
+    zasword_t  fp;
+    zasword_t  sp;
+    zasword_t  pc;
+    zasword_t  regs[ZASNREG] ALIGNED(CLSIZE);
 };
 
 struct zasop    * zvmfindasm(const uint8_t *str);

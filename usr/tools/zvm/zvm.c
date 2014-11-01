@@ -7,10 +7,15 @@
 #include <zero/trix.h>
 #include <zas/zas.h>
 #include <zvm/zvm.h>
+#include <zvm/op.h>
 
-/* structure copy */
+extern struct zastoken *zastokenqueue;
+extern unsigned long    zasinputread;
+extern zasmemadr_t      _startadr;
+
+zvmopfunc_t  *zvmopfunctab[ZVMNOP];
 struct zasop *zvmoptab[ZVMNOP] ALIGNED(PAGESIZE);
-struct zasop  zvmopmtab[128];
+struct zasop  zvmopmtab[ZVMNOP];
 struct zvm    zvm;
 
 /*
@@ -26,7 +31,7 @@ zvmaddasm(const uint8_t *str, struct zasop *op)
     struct zasop *ptr = NULL;
 
     if (!pptr) {
-        ptr = calloc(sizeof(struct zasopinfo), 128);
+        ptr = calloc(sizeof(struct zasopinfo), ZVMNOP);
         if (!ptr) {
             fprintf(stderr, "failed to allocate operation info\n");
             
@@ -40,7 +45,7 @@ zvmaddasm(const uint8_t *str, struct zasop *op)
             len++;
             ptr = pptr->tab;
             if (!ptr) {
-                ptr = calloc(sizeof(struct zasopinfo), 128);
+                ptr = calloc(sizeof(struct zasopinfo), ZVMNOP);
                 if (!ptr) {
                     fprintf(stderr, "failed to allocate operation info\n");
             
@@ -96,23 +101,23 @@ zvminitmem(long memsize)
         len >>= 1;
         ptr = malloc(len);
     }
-    zvm.physsize = len;
+    zvm.memsize = len;
 
     return ptr;
 }
 
 void
-zvminitasmop(uint8_t unit, uint8_t code, uint8_t *str, uint8_t narg)
+zvminitasmop(uint8_t unit, uint8_t inst, uint8_t *str, uint8_t narg)
 {
-    struct zasop *op = &zvmopmtab[(unit << 4) | code];
+    struct zasop *op = &zvmopmtab[(unit << 4) | inst];
     
     op->name = str;
-    op->code = code;
+    op->code = inst;
     op->narg = narg;
     if (!zvmaddasm(str, op)) {
         fprintf(stderr, "failed to initialise assembly operation:\n");
-        fprintf(stderr, "unit == %d, code == %d, str == %s, narg = %d\n",
-                (int)unit, (int)code, str, (int)narg);
+        fprintf(stderr, "unit == %d, inst == %d, str == %s, narg = %d\n",
+                (int)unit, (int)inst, str, (int)narg);
         
         exit(1);
     }
@@ -158,7 +163,7 @@ zvminitasm(void)
     zvminitasmop(ZVMOPSTACK, ZVMOPPUSH, (uint8_t *)"push", 1);
     zvminitasmop(ZVMOPSTACK, ZVMOPPUSHA, (uint8_t *)"pusha", 0);
     /* load/store */
-    zvminitasmop(ZVMOPLDSTR, ZVMOPMOV, (uint8_t *)"mov", 2);
+    zvminitasmop(ZVMOPLDSTR, ZVMOPMOVL, (uint8_t *)"mov", 2);
     zvminitasmop(ZVMOPLDSTR, ZVMOPMOVB, (uint8_t *)"movb", 2);
     zvminitasmop(ZVMOPLDSTR, ZVMOPMOVW, (uint8_t *)"movw", 2);
     zvminitasmop(ZVMOPLDSTR, ZVMOPMOVQ, (uint8_t *)"movq", 2);
@@ -182,6 +187,133 @@ zvminit(size_t memsize)
 {
     zvminitmem(memsize);
     zvminitasm();
+}
+
+void *
+zvmloop(zasmemadr_t _startadr)
+{
+    zvmopfunc_t      *func;
+    struct zvmopcode *op;
+#if (ZVMTRACE)
+    int               i;
+#endif
+#if (ZVMDB)
+    struct zasline *line;
+#endif
+
+#if (ZVMTRACE) && 0
+    fprintf(stderr, "memory\n");
+    fprintf(stderr, "------\n");
+    for (i = ZASTEXTBASE ; i < ZASTEXTBASE + 256 ; i++) {
+        fprintf(stderr, "%02x ", physmem[i]);
+    }
+    fprintf(stderr, "\n");
+    fprintf(stderr, "registers\n");
+    fprintf(stderr, "---------\n");
+    fprintf(stderr, "---------\n");
+    for (i = 0 ; i < NREG ; i++) {
+        fprintf(stderr, "r%d:\t%x\n", i, zvm.regs[i]);
+    }
+#endif
+    zvm.shutdown = 0;
+//    memcpy(&zvm.cpustat, cpustat, sizeof(struct zvmcpustate));
+//    free(cpustat);
+    while (!zvm.shutdown) {
+        op = (struct zvmopcode *)&zvm.physmem[zvm.pc];
+        if (op->inst == ZVMOPNOP) {
+            zvm.pc += 4;
+        } else {
+//            zvm.cpustat.pc = rounduppow2(zvm.pc, sizeof(zasword_t));
+            op = (struct zvmopcode *)&zvm.physmem[zvm.pc];
+            func = zvmopfunctab[op->inst];
+#if (ZVMTRACE)
+            zvmprintop(op);
+#endif
+            if (func) {
+#if (ZVMDB)
+                line = zasfindline(zvm.pc);
+                if (line) {
+                    fprintf(stderr, "%s:%ld:\t%s\n", line->file, line->num, line->data);
+                }
+#endif
+                func(op);
+            } else {
+                fprintf(stderr, "illegal instruction, PC == %lx\n",
+                        (long)zvm.pc);
+#if (ZVM)
+//                zvmprintop(op);
+#endif
+                
+                exit(1);
+            }
+        }
+    }
+#if (ZVMTRACE)
+    fprintf(stderr, "memory\n");
+    fprintf(stderr, "------\n");
+    for (i = ZASTEXTBASE ; i < ZASTEXTBASE + 256 ; i++) {
+        fprintf(stderr, "%02x ", physmem[i]);
+    }
+    fprintf(stderr, "\n");
+    fprintf(stderr, "registers\n");
+    fprintf(stderr, "---------\n");
+    for (i = 0 ; i < NREG ; i++) {
+        fprintf(stderr, "r%d:\t%x\n", i, zvm.regs[i]);
+    }
+#endif
+
+    return NULL;
+}
+
+int
+zvmmain(int argc, char *argv[])
+{
+    long        l;
+    zasmemadr_t adr = ZASTEXTBASE;
+#if (ZASPROF)
+    PROFDECLCLK(clk);
+#endif
+
+    if (argc < 2) {
+        fprintf(stderr, "usage: zvm <file1> ...\n");
+
+        exit(1);
+    }
+    memset(zvm.physmem, 0, ZASTEXTBASE);
+#if (ZASPROF)
+    profstartclk(clk);
+#endif
+    for (l = 1 ; l < argc ; l++) {
+#if (ZASBUF)
+        zasreadfile(argv[l], adr, readbufcur);
+#else
+        zasreadfile(argv[l], adr);
+#endif
+        if (!zastokenqueue) {
+            fprintf(stderr, "WARNING: no input in %s\n", argv[l]);
+        } else {
+            zasinputread = 1;
+            adr = zastranslate(adr);
+            zasresolve(ZASTEXTBASE);
+            zasremovesyms();
+#if (ZASPROF)
+            profstopclk(clk);
+            fprintf(stderr, "%ld microseconds to process %s\n",
+                    profclkdiff(clk), argv[l]);
+#endif        
+        }
+    }
+    if (!zasinputread) {
+        fprintf(stderr, "empty input\n");
+
+        exit(1);
+    }
+    fprintf(stderr, "START: %lx\n", (long)_startadr);
+//    wpminitthr(_startadr);
+    zvmloop(_startadr);
+
+    /* NOTREACHED */
+    exit(0);
 }
 
 struct zastoken *
@@ -241,7 +373,7 @@ zasprocinst(struct zastoken *token, zasmemadr_t adr, zasmemadr_t *retadr)
                     sym->name = (uint8_t *)strdup((char *)token1->data.sym.name);
                     sym->adr = (uintptr_t)&op->args[0];
                     zasqueuesym(sym);
-                    len += sizeof(uintptr_t);
+                    len += sizeof(zasmemadr_t);
                     
                     break;
                 case TOKENINDIR:
@@ -259,7 +391,7 @@ zasprocinst(struct zastoken *token, zasmemadr_t adr, zasmemadr_t *retadr)
                 case TOKENIMMED:
                     op->arg1t = ZVMARGIMMED;
                     op->args[0] = token1->val;
-                    len += sizeof(long);
+                    len += sizeof(zasword_t);
                     
                     break;
                 case TOKENADR:
@@ -268,14 +400,14 @@ zasprocinst(struct zastoken *token, zasmemadr_t adr, zasmemadr_t *retadr)
                     sym->name = (uint8_t *)strdup((char *)token1->data.sym.name);
                     sym->adr = (uintptr_t)&op->args[0];
                     zasqueuesym(sym);
-                    len += sizeof(uintptr_t);
+                    len += sizeof(zasmemadr_t);
                     
                     break;
                 case TOKENINDEX:
                     op->arg1t = ZVMARGREG;
                     op->reg1 = token1->data.ndx.reg;
                     op->args[0] = token1->data.ndx.val;
-                    len += sizeof(long);
+                    len += sizeof(zasword_t);
                     
                     break;
                 default:
@@ -319,7 +451,7 @@ zasprocinst(struct zastoken *token, zasmemadr_t adr, zasmemadr_t *retadr)
                         sym->adr = (uintptr_t)&op->args[1];
                     }
                     zasqueuesym(sym);
-                    len += sizeof(uintptr_t);
+                    len += sizeof(zasmemadr_t);
                     
                     break;
                 case TOKENINDIR:
@@ -341,7 +473,7 @@ zasprocinst(struct zastoken *token, zasmemadr_t adr, zasmemadr_t *retadr)
                     } else {
                         op->args[1] = token2->val;
                     }
-                    len += sizeof(long);
+                    len += sizeof(zasword_t);
                     
                     break;
                 case TOKENADR:
@@ -354,7 +486,7 @@ zasprocinst(struct zastoken *token, zasmemadr_t adr, zasmemadr_t *retadr)
                         sym->adr = (uintptr_t)&op->args[1];
                     }
                     zasqueuesym(sym);
-                    len += sizeof(uintptr_t);
+                    len += sizeof(zasmemadr_t);
                     
                     break;
                 case TOKENINDEX:
@@ -365,7 +497,7 @@ zasprocinst(struct zastoken *token, zasmemadr_t adr, zasmemadr_t *retadr)
                     } else {
                         op->args[1] = token2->data.ndx.val;
                     }
-                    len += sizeof(long);
+                    len += sizeof(zasword_t);
                     
                     break;
                 default:
@@ -390,5 +522,8 @@ int
 main(int argc, char *argv[])
 {
     zasinit(NULL, NULL);
+    zvminit(ZASMEMSIZE);
+
+    exit(zvmmain(argc, argv));
 }
 

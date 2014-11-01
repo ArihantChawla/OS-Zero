@@ -5,6 +5,12 @@
 
 #include <stdint.h>
 
+#if (WPM)
+#define ZASNREG     NREG
+#define ZASREGINDIR REGINDIR
+#define ZASREGINDEX REGINDEX
+#endif
+
 #if (ZAS32BIT)
 typedef uint32_t  zasmemadr_t;
 typedef int32_t   zasword_t;
@@ -101,13 +107,13 @@ struct zassymrec {
 };
 
 struct zassym {
-    uint8_t   *name;
-    uintptr_t  adr;
+    uint8_t    *name;
+    zasuword_t  adr;
 };
 
 struct zasadr {
-    uint8_t     *name;
-    zasmemadr_t  val;
+    uint8_t   *name;
+    uintptr_t  val;
 };
 
 struct zasndx {
