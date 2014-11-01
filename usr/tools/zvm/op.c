@@ -2,40 +2,9 @@
 #include <stdint.h>
 #include <zero/trix.h>
 #include <zvm/zvm.h>
+#include <zvm/op.h>
 
 extern struct zvm zvm;
-
-#define zvmgetarg(op, arg1t, ptr)                                       \
-    (ptr = &zvm.regs[(op)->reg1],                                       \
-     (arg1t) == ZVMARGREG                                               \
-     ? zvm.regs[(op)->reg1]                                             \
-     : (op)->args[0])
-#define zvmgetarg1(op, arg1t)                                           \
-    ((arg1t) == ZVMARGREG                                               \
-     ? zvm.regs[(op)->reg1]                                             \
-     : (op)->args[0])
-#define zvmgetarg2(op, arg1t, arg2t, ptr)                               \
-    (ptr = &zvm.regs[(op)->reg2],                                       \
-     ((arg2t) == ZVMARGREG)                                             \
-     ? zvm.regs[op->reg2]                                               \
-     : (((arg1t) == ZVMARGREG)                                          \
-        ? (op)->args[0]                                                 \
-        : (op)->args[1]))
-#define zvmgetarg1mov(op, arg1t, arg2t)                                 \
-    (((arg1t) == ZVMARGREG)                                             \
-     ? zvm.regs[(op)->reg1]                                             \
-     : (op)->args[0])
-#define zvmgetarg2mov(op, arg1t, arg2t, ptr, t)                         \
-    ((((arg1t) == ZVMARGREG)                                            \
-      ? ((((arg2t) == ZVMARGREG)                                        \
-          ? (ptr = (t *)&zvm.regs[(op)->reg2],                          \
-             *(t *)&zvm.regs[(op)->reg2])                               \
-          : (ptr = (t *)&zvm.regs[(op)->args[0]],                       \
-             *(t *)&zvm.regs[(op)->args[0]])))                          \
-      : (ptr = (t *)&zvm.physmem[(op)->args[1]],                        \
-         *(t *)&zvm.physmem[(op)->args[1]])))
-#define zvmsetzf(val)                                                   \
-    ((val) ? (zvm.msw |= ZVMZF) : (zvm.msw &= ~ZVMZF))
 
 void
 zvmopnot(struct zvmopcode *op)
@@ -56,7 +25,7 @@ zvmopnot(struct zvmopcode *op)
 void
 zvmopand(struct zvmopcode *op)
 {
-    uint_fast8_t  arg1t = op->arg1t;;
+    uint_fast8_t  arg1t = op->arg1t;
     uint_fast8_t  arg2t = ZVMARGREG;
     zasword_t    *dptr;
     zasword_t     src = zvmgetarg1(op, arg1t);

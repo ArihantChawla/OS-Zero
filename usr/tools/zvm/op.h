@@ -111,5 +111,37 @@ void zvmophlt(struct zvmopcode *op);
 #define ZVMOPRESET  0x01 // reset into well-known state
 #define ZVMOPHLT    0x02 // halt execution
 
+#define zvmgetarg(op, arg1t, ptr)                                       \
+    (ptr = &zvm.regs[(op)->reg1],                                       \
+     (arg1t) == ZVMARGREG                                               \
+     ? zvm.regs[(op)->reg1]                                             \
+     : (op)->args[0])
+#define zvmgetarg1(op, arg1t)                                           \
+    ((arg1t) == ZVMARGREG                                               \
+     ? zvm.regs[(op)->reg1]                                             \
+     : (op)->args[0])
+#define zvmgetarg2(op, arg1t, arg2t, ptr)                               \
+    (ptr = &zvm.regs[(op)->reg2],                                       \
+     ((arg2t) == ZVMARGREG)                                             \
+     ? zvm.regs[op->reg2]                                               \
+     : (((arg1t) == ZVMARGREG)                                          \
+        ? (op)->args[0]                                                 \
+        : (op)->args[1]))
+#define zvmgetarg1mov(op, arg1t, arg2t)                                 \
+    (((arg1t) == ZVMARGREG)                                             \
+     ? zvm.regs[(op)->reg1]                                             \
+     : (op)->args[0])
+#define zvmgetarg2mov(op, arg1t, arg2t, ptr, t)                         \
+    ((((arg1t) == ZVMARGREG)                                            \
+      ? ((((arg2t) == ZVMARGREG)                                        \
+          ? (ptr = (t *)&zvm.regs[(op)->reg2],                          \
+             *(t *)&zvm.regs[(op)->reg2])                               \
+          : (ptr = (t *)&zvm.regs[(op)->args[0]],                       \
+             *(t *)&zvm.regs[(op)->args[0]])))                          \
+      : (ptr = (t *)&zvm.physmem[(op)->args[1]],                        \
+         *(t *)&zvm.physmem[(op)->args[1]])))
+#define zvmsetzf(val)                                                   \
+    ((val) ? (zvm.msw |= ZVMZF) : (zvm.msw &= ~ZVMZF))
+
 #endif /* __ZVM_OP_H__ */
 
