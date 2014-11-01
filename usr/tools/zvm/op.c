@@ -594,8 +594,7 @@ zvmopmovb(struct zvmopcode *op)
 }
 
 void
-zvmopmovw
-(struct zvmopcode *op)
+zvmopmovw(struct zvmopcode *op)
 {
     uint_fast8_t  arg1t = op->arg1t;
     uint_fast8_t  arg2t = op->arg2t;
@@ -609,8 +608,7 @@ zvmopmovw
 
 #if (!ZAS32BIT)
 void
-zvmopmovq
-(struct zvmopcode *op)
+zvmopmovq(struct zvmopcode *op)
 {
     uint_fast8_t  arg1t = op->arg1t;
     uint_fast8_t  arg2t = op->arg2t;
