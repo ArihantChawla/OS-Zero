@@ -44,7 +44,6 @@ void zvmopleave(struct zvmopcode *op);
 void zvmopret(struct zvmopcode *op);
 void zvmoplmsw(struct zvmopcode *op);
 void zvmopsmsw(struct zvmopcode *op);
-void zvmopret(struct zvmopcode *op);
 void zvmopreset(struct zvmopcode *op);
 void zvmophlt(struct zvmopcode *op);
 
@@ -55,14 +54,14 @@ void zvmophlt(struct zvmopcode *op);
 #define ZVMOPAND    0x02 // logical AND
 #define ZVMOPOR     0x03 // logical OR
 #define ZVMOPXOR    0x04 // logical exclusive OR
-// /* shift operations */
+/* shift operations */
 #define ZVMOPSHIFT  0x01
 #define ZVMOPSHR    0x01 // logical shift right (fill with zero)
 #define ZVMOPSAR    0x02 // arithmetic shift right (fill with sign)
 #define ZVMOPSHL    0x03 // shift left (fill with zero)
 #define ZVMOPROR    0x04 // rotate right
 #define ZVMOPROL    0x05 // rotate left
-// /* arithmetic operations */
+/* arithmetic operations */
 #define ZVMOPARITH  0x02
 #define ZVMOPINC    0x01 // increment by one
 #define ZVMOPDEC    0x02 // decrement by one
@@ -72,7 +71,7 @@ void zvmophlt(struct zvmopcode *op);
 #define ZVMOPMUL    0x06 // multiplication
 #define ZVMOPDIV    0x07 // division
 #define ZVMOPMOD    0x08 // modulus
-// /* branch instructions */
+/* branch instructions */
 #define ZVMOPBRANCH 0x03
 #define ZVMOPJMP    0x01 // unconditional jump to given address
 #define ZVMOPBZ     0x02 // branch if zero
@@ -85,31 +84,45 @@ void zvmophlt(struct zvmopcode *op);
 #define ZVMOPBNO    0x09 // branch if no overflow
 #define ZVMOPBC     0x0a // branch if carry
 #define ZVMOPBNC    0x0b // branch if no carry
-// /* stack operations */
+/* stack operations */
 #define ZVMOPSTACK  0x04
 #define ZVMOPPOP    0x01 // pop from stack
 #define ZVMOPPUSH   0x02 // push to stack
 #define ZVMOPPUSHA  0x03 // push all registers to stack
-// /* load-store */
-#define ZVMOPLDSTR  0x05
+/* load-store */
+#define ZVMOPMOV    0x05
 #define ZVMOPMOVL   0x01 // load/store 32-bit longword
 #define ZVMOPMOVB   0x02 // load/store 8-bit byte
 #define ZVMOPMOVW   0x03 // load/store 16-bit word
 #define ZVMOPMOVQ   0x03 // load/store 64-bit quadword
-// /* function calls */
+/* function calls */
 #define ZVMOPFUNC   0x06
 #define ZVMOPCALL   0x01 // call subroutine
 #define ZVMOPENTER  0x02 // subroutine prologue
 #define ZVMOPLEAVE  0x03 // subroutine epilogue
 #define ZVMOPRET    0x04 // return from subroutine
-// /* machine status word manipulation */
+/* machine status word manipulation */
 #define ZVMOPMSW    0x07
 #define ZVMOPLMSW   0x01 // load machine status word
 #define ZVMOPSMSW   0x02 // store machine status word
-// /* machine state */
+/* machine state */
 #define ZVMOPMACH   0x08
 #define ZVMOPRESET  0x01 // reset into well-known state
 #define ZVMOPHLT    0x02 // halt execution
+/* I/O */
+#define ZVMOPIO     0x09
+#define ZVMINB      0x01
+#define ZVMINW      0x02
+#define ZVMINL      0x03
+#if (!ZAS32BIT)
+#define ZVMINQ      0x04
+#endif
+#define ZVMOUTB     0x05
+#define ZVMOUTW     0x06
+#define ZVMOUTL     0x07
+#if (!ZAS32BIT)
+#define ZVMOUTQ     0x08
+#endif
 
 #define zvmgetarg(op, arg1t, ptr)                                       \
     (ptr = &zvm.regs[(op)->reg1],                                       \
