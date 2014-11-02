@@ -4,8 +4,6 @@
 #include <zvm/zvm.h>
 #include <zvm/op.h>
 
-extern struct zvm zvm;
-
 void
 zvmopnot(struct zvmopcode *op)
 {

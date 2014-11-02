@@ -1,6 +1,10 @@
 #ifndef __WPM_WPM_H__
 #define __WPM_WPM_H__
 
+#define ZASNREG     NREG
+#define ZASREGINDIR REGINDIR
+#define ZASREGINDEX REGINDEX
+
 #define WPMWORDSIZE 32
 //#define WPMMMU      1
 #define THRSTKSIZE  (128 * 1024)

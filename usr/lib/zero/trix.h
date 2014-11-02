@@ -326,7 +326,7 @@ tzerol(unsigned long ul)
 
 /* count number of leading (high) zero-bits in long-word */
 #if defined(__GNUC__)
-#define lzerol(u) (__builtin_clzl(u));
+#define lzerol(u) (__builtin_clzl(u))
 #elif defined(__i386__) || defined(__x86_64__) || defined(__amd64__)
 #define lzerol(u) ((1UL << (LONGSIZELOG2 + 3)) - m_scanhi1bit(u))
 #elif (LONGSIZE == 4)

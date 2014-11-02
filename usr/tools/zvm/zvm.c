@@ -167,6 +167,7 @@ zvminitasm(void)
     zvminitasmop(ZVMOPSTACK, ZVMOPPUSH, (uint8_t *)"push", 1, zvmoppush);
     zvminitasmop(ZVMOPSTACK, ZVMOPPUSHA, (uint8_t *)"pusha", 0, zvmoppush);
     /* load/store */
+    zvminitasmop(ZVMOPMOV, ZVMOPMOVL, (uint8_t *)"mov", 2, zvmopmovl);
     zvminitasmop(ZVMOPMOV, ZVMOPMOVL, (uint8_t *)"movl", 2, zvmopmovl);
     zvminitasmop(ZVMOPMOV, ZVMOPMOVB, (uint8_t *)"movb", 2, zvmopmovb);
     zvminitasmop(ZVMOPMOV, ZVMOPMOVW, (uint8_t *)"movw", 2, zvmopmovw);
@@ -332,7 +333,6 @@ zvmmain(int argc, char *argv[])
         exit(1);
     }
     fprintf(stderr, "START: %lx\n", (long)_startadr);
-//    wpminitthr(_startadr);
     zvmloop(_startadr);
 
     /* NOTREACHED */
@@ -343,21 +343,18 @@ struct zastoken *
 zasprocinst(struct zastoken *token, zasmemadr_t adr, zasmemadr_t *retadr)
 {
     struct zvmopcode *op = NULL;
-
-    zasmemadr_t       opadr = rounduppow2(adr, 4);
+    zasmemadr_t       opadr = rounduppow2(adr, sizeof(struct zvmopcode));
     struct zastoken  *token1 = NULL;
     struct zastoken  *token2 = NULL;
     struct zastoken  *retval = NULL;
     struct zassymrec *sym;
     uint8_t           narg = token->data.inst.narg;
-//    uint8_t           len = token->data.inst.op == ZVMOPNOP ? 1 : 4;
-    uint8_t           len = 4;
+    uint8_t           len = sizeof(struct zvmopcode);
 
     while (adr < opadr) {
         zvm.physmem[adr] = ZVMOPNOP;
         adr++;
     }
-//    adr = opadr;
 #if (ZASDB)
     zasaddline(adr, token->data.inst.data, token->file, token->line);
 #endif
@@ -367,10 +364,6 @@ zasprocinst(struct zastoken *token, zasmemadr_t adr, zasmemadr_t *retadr)
         retval = token->next;
         adr++;
     } else if (!narg) {
-#if 0
-        op->arg1t = ZVMARGNONE;
-        op->arg2t = ZVMARGNONE;
-#endif
         op->reg1 = 0;
         op->reg2 = 0;
         retval = token->next;
@@ -379,18 +372,18 @@ zasprocinst(struct zastoken *token, zasmemadr_t adr, zasmemadr_t *retadr)
         zasfreetoken(token);
         if (token1) {
             switch(token1->type) {
-                case TOKENVALUE:
+                case ZASTOKENVALUE:
                     op->arg1t = ZVMARGIMMED;
                     op->args[0] = token1->data.value.val;
                     len += sizeof(zasword_t);
                     
                     break;
-                case TOKENREG:
+                case ZASTOKENREG:
                     op->arg1t = ZVMARGREG;
                     op->reg1 = token1->data.reg;
                     
                     break;
-                case TOKENSYM:
+                case ZASTOKENSYM:
                     op->arg1t = ZVMARGADR;
                     sym = malloc(sizeof(struct zassymrec));
                     sym->name = (uint8_t *)strdup((char *)token1->data.sym.name);
@@ -399,9 +392,9 @@ zasprocinst(struct zastoken *token, zasmemadr_t adr, zasmemadr_t *retadr)
                     len += sizeof(zasmemadr_t);
                     
                     break;
-                case TOKENINDIR:
+                case ZASTOKENINDIR:
                     token1 = token1->next;
-                    if (token1->type == TOKENREG) {
+                    if (token1->type == ZASTOKENREG) {
                         op->arg1t = ZVMARGREG;
                         op->reg1 = token1->data.reg;
                     } else {
@@ -411,13 +404,13 @@ zasprocinst(struct zastoken *token, zasmemadr_t adr, zasmemadr_t *retadr)
                     }
                     
                     break;
-                case TOKENIMMED:
+                case ZASTOKENIMMED:
                     op->arg1t = ZVMARGIMMED;
                     op->args[0] = token1->val;
                     len += sizeof(zasword_t);
                     
                     break;
-                case TOKENADR:
+                case ZASTOKENADR:
                     op->arg1t = ZVMARGIMMED;
                     sym = malloc(sizeof(struct zassymrec));
                     sym->name = (uint8_t *)strdup((char *)token1->data.sym.name);
@@ -426,7 +419,7 @@ zasprocinst(struct zastoken *token, zasmemadr_t adr, zasmemadr_t *retadr)
                     len += sizeof(zasmemadr_t);
                     
                     break;
-                case TOKENINDEX:
+                case ZASTOKENINDEX:
                     op->arg1t = ZVMARGREG;
                     op->reg1 = token1->data.ndx.reg;
                     op->args[0] = token1->data.ndx.val;
@@ -449,7 +442,7 @@ zasprocinst(struct zastoken *token, zasmemadr_t adr, zasmemadr_t *retadr)
 //                    op->arg2t = ZVMARGNONE;
         } else if (narg == 2 && (token2)) {
             switch(token2->type) {
-                case TOKENVALUE:
+                case ZASTOKENVALUE:
                     op->arg2t = ZVMARGIMMED;
                     if (op->arg1t == ZVMARGREG) {
                         op->args[0] = token2->data.value.val;
@@ -459,12 +452,12 @@ zasprocinst(struct zastoken *token, zasmemadr_t adr, zasmemadr_t *retadr)
                     len += sizeof(zasword_t);
                     
                     break;
-                case TOKENREG:
+                case ZASTOKENREG:
                     op->arg2t = ZVMARGREG;
                     op->reg2 = token2->data.reg;
                     
                     break;
-                case TOKENSYM:
+                case ZASTOKENSYM:
                     op->arg2t = ZVMARGADR;
                     sym = malloc(sizeof(struct zassymrec));
                     sym->name = (uint8_t *)strdup((char *)token2->data.sym.name);
@@ -477,9 +470,9 @@ zasprocinst(struct zastoken *token, zasmemadr_t adr, zasmemadr_t *retadr)
                     len += sizeof(zasmemadr_t);
                     
                     break;
-                case TOKENINDIR:
+                case ZASTOKENINDIR:
                     token2 = token2->next;
-                    if (token2->type == TOKENREG) {
+                    if (token2->type == ZASTOKENREG) {
                         op->arg2t = ZVMARGREG;
                         op->reg2 = token2->data.reg;
                     } else {
@@ -489,7 +482,7 @@ zasprocinst(struct zastoken *token, zasmemadr_t adr, zasmemadr_t *retadr)
                     }
                     
                     break;
-                case TOKENIMMED:
+                case ZASTOKENIMMED:
                     op->arg2t = ZVMARGIMMED;
                     if (op->arg1t == ZVMARGREG) {
                         op->args[0] = token2->val;
@@ -499,7 +492,7 @@ zasprocinst(struct zastoken *token, zasmemadr_t adr, zasmemadr_t *retadr)
                     len += sizeof(zasword_t);
                     
                     break;
-                case TOKENADR:
+                case ZASTOKENADR:
                     op->arg2t = ZVMARGIMMED;
                     sym = malloc(sizeof(struct zassymrec));
                     sym->name = (uint8_t *)strdup((char *)token2->data.sym.name);
@@ -512,7 +505,7 @@ zasprocinst(struct zastoken *token, zasmemadr_t adr, zasmemadr_t *retadr)
                     len += sizeof(zasmemadr_t);
                     
                     break;
-                case TOKENINDEX:
+                case ZASTOKENINDEX:
                     op->arg2t = ZVMARGREG;
                     op->reg2 = token2->data.ndx.reg;
                     if (op->arg1t == ZVMARGREG) {

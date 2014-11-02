@@ -5,18 +5,6 @@
 #include <wpm/conf.h>
 #elif (ZEN)
 #include <zpu/conf.h>
-#define OPNOP    OP_NOP
-#define ARGNONE  ARG_NONE
-#define ARGINDIR ARG_INDIR
-#define ARGINDEX ARG_INDEX
-#define ARGIMMED ARG_IMMED
-#define ARGADR   ARG_ADR
-#define ARGREG   ARG_REG
-#define reg1     src
-#define reg2     dest
-#define arg1t    sflg
-#define arg2t    dflg
-#define size     argsz
 #endif
 #include <stdio.h>
 #include <stdlib.h>
@@ -40,22 +28,9 @@
 #include <zero/prof.h>
 #endif
 #include <zas/zas.h>
+#include <zas/io.h>
 #if (ZVM)
 #include <zvm/zvm.h>
-#endif
-//#include <wpm/mem.h>
-//#include <wpm/wpm.h>
-
-#if (ZASMMAP)
-struct zasmap {
-    uint8_t *adr;
-    uint8_t *cur;
-    uint8_t *lim;
-    size_t   sz;
-};
-#endif
-#if (ZVM)
-extern struct zvm zvm;
 #endif
 
 typedef struct zastoken * zastokfunc_t(struct zastoken *, zasmemadr_t, zasmemadr_t *);
@@ -89,47 +64,40 @@ static struct zastoken * zasprocorg(struct zastoken *, zasmemadr_t, zasmemadr_t 
 static struct zastoken * zasprocalign(struct zastoken *, zasmemadr_t, zasmemadr_t *);
 static struct zastoken * zasprocasciz(struct zastoken *, zasmemadr_t, zasmemadr_t *);
 
-#if (WPM)
-/* TODO: combine these into a structure table for better cache locality */
-//static char    **zasopnametab;
-//static uint8_t  *zasopnargtab;
+#if (ZVM)
+#elif (WPM)
 static struct zasopinfo *zasopinfotab[WPMNUNIT];
-//extern struct zasopinfo   wpmopinfotab[WPMNUNIT][WPMNASMOP];
 #elif (ZEN)
-extern const char *zpuopnametab[ZPUNOP];
-extern const char *zpuopnargtab[ZPUNOP];
-#elif (ZVM)
-extern const char *zvmopnametab[ZVMNOP];
-extern const char *zvmopnargtab[ZVMNOP];
+extern const char       *zpuopnametab[ZPUNOP];
+extern const char       *zpuopnargtab[ZPUNOP];
 #endif
 
-#define NHASHITEM 1024
-static struct zasop     *ophash[NHASHITEM] ALIGNED(PAGESIZE);
+static struct zasop     *ophash[ZASNHASH] ALIGNED(PAGESIZE);
 #if (WPMVEC)
-static struct zasop     *vecophash[NHASHITEM];
+static struct zasop     *vecophash[ZASNHASH];
 #endif
-static struct zassymrec *symhash[NHASHITEM];
-static struct zasval    *valhash[NHASHITEM];
-static struct zaslabel  *globhash[NHASHITEM];
+static struct zassymrec *symhash[ZASNHASH];
+static struct zasval    *valhash[ZASNHASH];
+static struct zaslabel  *globhash[ZASNHASH];
 #if (ZASDB) || (WPMDB)
-struct zasline          *linehash[NHASHITEM];
+struct zasline          *linehash[ZASNHASH];
 #endif
 
-zastokfunc_t *zasktokfunctab[NTOKTYPE]
+zastokfunc_t *zasktokfunctab[ZASNTOKEN]
 = {
     NULL,
     zasprocvalue,
     zasproclabel,
     zasprocinst,
-    NULL,               // REG
-    NULL,               // VAREG
-    NULL,               // VLREG
-    NULL,               // SYM
+    NULL,               // ZASARGREG
+    NULL,               // ZASARGVAREG
+    NULL,               // ZASARGVLREG
+    NULL,               // ZASARGSYM
     zasprocchar,
-    NULL,               // IMMED
-    NULL,               // INDIR
-    NULL,               // ADR
-    NULL,               // INDEX
+    NULL,               // ZASARGIMMED
+    NULL,               // ZASARGINDIR
+    NULL,               // ZASARGADR
+    NULL,               // ZASARGINDEX
     zasprocdata,
     zasprocglobl,
     zasprocspace,
@@ -229,57 +197,57 @@ void
 printtoken(struct zastoken *token)
 {
     switch (token->type) {
-        case TOKENVALUE:
+        case ZASTOKENVALUE:
             fprintf(stderr, "value 0x%08x (size == %d)\n",
                     token->data.value.val, token->data.value.size);
             
             break;
-        case TOKENLABEL:
+        case ZASTOKENLABEL:
             fprintf(stderr, "label %s (adr == 0x%08lx)\n",
                     token->data.label.name,
                     (unsigned long)token->data.label.adr);
 
             break;
-        case TOKENINST:
+        case ZASTOKENINST:
             fprintf(stderr, "instruction %s (op == 0x%02x)\n",
                     token->data.inst.name, token->data.inst.op);
 
             break;
-        case TOKENREG:
+        case ZASTOKENREG:
             fprintf(stderr, "register r%1lx\n", (long)token->data.ndx.reg);
 
             break;
-        case TOKENVAREG:
+        case ZASTOKENVAREG:
             fprintf(stderr, "address register va%1lx\n", (long)token->data.ndx.reg);
 
             break;
-        case TOKENVLREG:
+        case ZASTOKENVLREG:
             fprintf(stderr, "length register vl%1lx\n", (long)token->data.ndx.reg);
 
             break;
-        case TOKENSYM:
+        case ZASTOKENSYM:
             fprintf(stderr, "symbol %s (adr == 0x%08lx)\n",
                     token->data.sym.name, (long)token->data.sym.adr);
 
             break;
-        case TOKENCHAR:
+        case ZASTOKENCHAR:
             fprintf(stderr, "character 0x%02x\n", token->data.ch);
 
             break;
-        case TOKENIMMED:
+        case ZASTOKENIMMED:
             fprintf(stderr, "immediate (val == 0x%08lx)\n", (long)token->val);
 
             break;
-        case TOKENINDIR:
+        case ZASTOKENINDIR:
             fprintf(stderr, "indirection\n");
 
             break;
-        case TOKENADR:
+        case ZASTOKENADR:
             fprintf(stderr, "address (sym == %s, adr == 0x%08lx)\n",
                     token->data.adr.name, (long)token->data.adr.val);
 
             break;
-        case TOKENINDEX:
+        case ZASTOKENINDEX:
             fprintf(stderr, "index %ld(%%r%ld)\n", (long)token->data.ndx.val,
                     (long)token->data.ndx.reg);
 
@@ -332,7 +300,7 @@ zasaddop(struct zasop *op)
         len++;
     }
     op->len = len;
-    key &= (NHASHITEM - 1);
+    key &= (ZASNHASH - 1);
     op->next = ophash[key];
     ophash[key] = op;
 
@@ -349,7 +317,7 @@ zasfindop(uint8_t *name)
     while ((*str) && isalpha(*str)) {
         key += *str++;
     }
-    key &= (NHASHITEM - 1);
+    key &= (ZASNHASH - 1);
     op = ophash[key];
     while ((op) && strncmp((char *)op->name, (char *)name, op->len)) {
         op = op->next;
@@ -374,7 +342,7 @@ zasaddvecop(struct zasop *op)
         len++;
     }
     op->len = len;
-    key &= (NHASHITEM - 1);
+    key &= (ZASNHASH - 1);
     op->next = vecophash[key];
     vecophash[key] = op;
 
@@ -391,7 +359,7 @@ zasfindvecop(uint8_t *name)
     while ((*str) && isalpha(*str)) {
         key += *str++;
     }
-    key &= (NHASHITEM - 1);
+    key &= (ZASNHASH - 1);
     op = vecophash[key];
     while ((op) && strncmp((char *)op->name, (char *)name, op->len)) {
         op = op->next;
@@ -415,7 +383,7 @@ zasaddline(zasmemadr_t adr, uint8_t *data, uint8_t *filename, unsigned long line
     newline->num = line;
     newline->data = data;
     newline->next = linehash[key];
-    key &= (NHASHITEM - 1);
+    key &= (ZASNHASH - 1);
     linehash[key] = newline;
 
     return;
@@ -428,7 +396,7 @@ zasfindline(zasmemadr_t adr)
     unsigned long   key;
 
     key = (adr & 0xff) + ((adr >> 8) & 0xff) + ((adr >> 16) & 0xff) + ((adr >> 24) & 0xff);
-    key &= (NHASHITEM - 1);
+    key &= (ZASNHASH - 1);
     line = linehash[key];
     while ((line) && line->adr != adr) {
         line = line->next;
@@ -448,7 +416,7 @@ zasaddval(struct zasval *val)
     while (*ptr) {
         key += *ptr++;
     }
-    key &= (NHASHITEM - 1);
+    key &= (ZASNHASH - 1);
     val->next = valhash[key];
     valhash[key] = val;
 
@@ -473,7 +441,7 @@ zasfindval(uint8_t *str, zasword_t *valptr, uint8_t **retptr)
             str++;
             len++;
         }
-        key &= (NHASHITEM - 1);
+        key &= (ZASNHASH - 1);
         val = valhash[key];
         while ((val) && strncmp((char *)val->name, (char *)ptr, len)) {
             val = val->next;
@@ -510,7 +478,7 @@ zasaddsym(struct zassymrec *sym)
     while (*str) {
         key += *str++;
     }
-    key &= (NHASHITEM - 1);
+    key &= (ZASNHASH - 1);
     sym->next = symhash[key];
     symhash[key] = sym;
 
@@ -527,7 +495,7 @@ zasfindsym(uint8_t *name)
     while (*str) {
         key += *str++;
     }
-    key &= (NHASHITEM - 1);
+    key &= (ZASNHASH - 1);
     sym = symhash[key];
     while ((sym) && strcmp((char *)sym->name, (char *)name)) {
         sym = sym->next;
@@ -543,7 +511,7 @@ zasremovesyms(void)
     struct zassymrec *sym2;
     long              l;
 
-    for (l = 0 ; l < NHASHITEM ; l++) {
+    for (l = 0 ; l < ZASNHASH ; l++) {
         sym1 = symhash[l];
         while (sym1) {
             sym2 = sym1;
@@ -565,7 +533,7 @@ zasaddglob(struct zaslabel *label)
     while (*str) {
         key += *str++;
     }
-    key &= (NHASHITEM - 1);
+    key &= (ZASNHASH - 1);
     label->next = globhash[key];
     globhash[key] = label;
 
@@ -582,7 +550,7 @@ zasfindglob(uint8_t *name)
     while (*str) {
         key += *str++;
     }
-    key &= (NHASHITEM - 1);
+    key &= (ZASNHASH - 1);
     label = globhash[key];
     while ((label) && strcmp((char *)label->name, (char *)name)) {
         label = label->next;
@@ -642,8 +610,8 @@ zasinitbuf(void)
     long l;
 #endif
 
-    linebuf = malloc(LINELEN);
-    strbuf = malloc(LINELEN);
+    linebuf = malloc(ZASLINELEN);
+    strbuf = malloc(ZASLINELEN);
 #if (ZASBUF)
     readbuftab = malloc(nreadbuf * sizeof(struct readbuf));
     for (l = 0 ; l < nreadbuf ; l++) {
@@ -1090,7 +1058,7 @@ static struct zastoken *
 zasgettoken(uint8_t *str, uint8_t **retptr)
 #endif
 {
-    long             buflen = LINELEN;
+    long             buflen = ZASLINELEN;
     long             len;
     uint8_t         *buf = strbuf;
     struct zastoken *token1 = malloc(sizeof(struct zastoken));
@@ -1120,11 +1088,11 @@ zasgettoken(uint8_t *str, uint8_t **retptr)
     if ((*str) && (isdigit(*str) || *str == '-')) {
         val = zasgetindex(str, &ndx, &str);
         if (val < ZASNREG) {
-            token1->type = TOKENINDEX;
+            token1->type = ZASTOKENINDEX;
             token1->data.ndx.reg = ZASREGINDEX | val;
             token1->data.ndx.val = ndx;
         } else if (zasgetvalue(str, &val, &str)) {
-            token1->type = TOKENVALUE;
+            token1->type = ZASTOKENVALUE;
             token1->data.value.val = val;
             token1->data.value.size = size;
         } else {
@@ -1173,7 +1141,7 @@ zasgettoken(uint8_t *str, uint8_t **retptr)
         *buf++ = '\0';
         if (*str == '"') {
             str++;
-            token1->type = TOKENSTRING;
+            token1->type = ZASTOKENSTRING;
             token1->data.str = (uint8_t *)strdup((char *)strbuf);
         }
     } else if ((*str) && *str == '%') {
@@ -1181,21 +1149,21 @@ zasgettoken(uint8_t *str, uint8_t **retptr)
         val = zasgetreg(str, &str);
 #if (WPMVEC)
         if (val & REG_VA) {
-            token1->type = TOKENVAREG;
+            token1->type = ZASTOKENVAREG;
         } else if (val & REG_VL) {
-            token1->type = TOKENVLREG;
+            token1->type = ZASTOKENVLREG;
         } else {
-            token1->type = TOKENREG;
+            token1->type = ZASTOKENREG;
         }
         val &= 0xff;    // FIXME: maximum of 256 registers */
 #else
-        token1->type = TOKENREG;
+        token1->type = ZASTOKENREG;
 #endif
         token1->data.reg = val;
     } else if ((*str) && (isalpha(*str) || *str == '_')) {
         name = zasgetlabel(str, &str);
         if (name) {
-            token1->type = TOKENLABEL;
+            token1->type = ZASTOKENLABEL;
             token1->data.label.name = name;
             token1->data.label.adr = ~((zasword_t)0);
         } else {
@@ -1221,7 +1189,7 @@ zasgettoken(uint8_t *str, uint8_t **retptr)
             op = zasgetinst(str, &str);
 #endif
             if (op) {
-                token1->type = TOKENINST;
+                token1->type = ZASTOKENINST;
 #if (!WPMVEC) && !ZEN && !ZVM
                 token1->unit = UNIT_ALU;
 #endif
@@ -1237,14 +1205,14 @@ zasgettoken(uint8_t *str, uint8_t **retptr)
             } else {
                 name = zasgetsym(str, &str);
                 if (name) {
-                    token1->type = TOKENSYM;
+                    token1->type = ZASTOKENSYM;
                     token1->data.sym.name = name;
                     token1->data.sym.adr = ~((zasword_t)0);
                 }
                 if (!name) {
                     name = zasgetadr(str, &str);
                     if (name) {
-                        token1->type = TOKENSYM;
+                        token1->type = ZASTOKENSYM;
                         token1->data.sym.name = name;
                         token1->data.sym.adr = ~((zasword_t)0);
                     } else {
@@ -1259,15 +1227,15 @@ zasgettoken(uint8_t *str, uint8_t **retptr)
         str++;
         if ((*str) && (isalpha(*str) || *str == '_' || *str == '-')) {
             if (zasfindval(str, &val, &str)) {
-                token1->type = TOKENIMMED;
+                token1->type = ZASTOKENIMMED;
                 token1->val = val;
             } else if (zasgetvalue(str, &val, &str)) {
-                token1->type = TOKENIMMED;
+                token1->type = ZASTOKENIMMED;
                 token1->val = val;
             } else {
                 name = zasgetsym(str, &str);
                 if (name) {
-                    token1->type = TOKENADR;
+                    token1->type = ZASTOKENADR;
                     token1->data.adr.name = name;
                     token1->data.adr.val = ~((zasword_t)0);
                 } else {
@@ -1278,7 +1246,7 @@ zasgettoken(uint8_t *str, uint8_t **retptr)
             }
         } else if ((*str) && isdigit(*str)) {
             if (zasgetvalue(str, &val, &str)) {
-                token1->type = TOKENIMMED;
+                token1->type = ZASTOKENIMMED;
                 token1->val = val;
             } else {
                 fprintf(stderr, "invalid immediate %s\n", str);
@@ -1288,61 +1256,61 @@ zasgettoken(uint8_t *str, uint8_t **retptr)
         }
     } else if (*str == '\'') {
         val = zasgetchar(str, &str);
-        token1->type = TOKENCHAR;
+        token1->type = ZASTOKENCHAR;
         token1->data.ch = val;
     } else if (*str == '.') {
         str++;
         size = 0;
         if (!strncmp((char *)str, "quad", 4)) {
             str += 4;
-            token1->type = TOKENDATA;
+            token1->type = ZASTOKENDATA;
             size = token1->data.size = 8;
         } else if (!strncmp((char *)str, "long", 4)) {
             str += 4;
-            token1->type = TOKENDATA;
+            token1->type = ZASTOKENDATA;
             size = token1->data.size = 4;
         } else if (!strncmp((char *)str, "byte", 4)) {
             str += 4;
-            token1->type = TOKENDATA;
+            token1->type = ZASTOKENDATA;
             size = token1->data.size = 1;
         } else if (!strncmp((char *)str, "short", 5)) {
             str += 5;
-            token1->type = TOKENDATA;
+            token1->type = ZASTOKENDATA;
             size = token1->data.size = 2;
         } else if (!strncmp((char *)str, "globl", 5)) {
             str += 5;
-            token1->type = TOKENGLOBL;
+            token1->type = ZASTOKENGLOBL;
         } else if (!strncmp((char *)str, "space", 5)) {
             str += 5;
-            token1->type = TOKENSPACE;
+            token1->type = ZASTOKENSPACE;
         } else if (!strncmp((char *)str, "org", 3)) {
             str += 3;
-            token1->type = TOKENORG;
+            token1->type = ZASTOKENORG;
         } else if (!strncmp((char *)str, "align", 5)) {
             str += 5;
-            token1->type = TOKENALIGN;
+            token1->type = ZASTOKENALIGN;
         } else if (!strncmp((char *)str, "asciz", 5)) {
             str += 5;
-            token1->type = TOKENASCIZ;
+            token1->type = ZASTOKENASCIZ;
         }
     } else if (*str == '*' || *str == '(') {
         str++;
-        token1->type = TOKENINDIR;
+        token1->type = ZASTOKENINDIR;
         token2 = malloc(sizeof(struct zastoken));
         if (*str == '%') {
             str++;
             val = zasgetreg(str, &str);
 #if (WPMVEC)
             if (val & REG_VA) {
-                token2->type = TOKENVAREG;
+                token2->type = ZASTOKENVAREG;
             } else if (val & REG_VL) {
-                token2->type = TOKENVLREG;
+                token2->type = ZASTOKENVLREG;
             } else {
-                token2->type = TOKENREG;
+                token2->type = ZASTOKENREG;
             }
             val &= 0xff;
 #else
-            token2->type = TOKENREG;
+            token2->type = ZASTOKENREG;
 #endif
             token2->data.reg = ZASREGINDIR | val;
             zasqueuetoken(token1);
@@ -1350,7 +1318,7 @@ zasgettoken(uint8_t *str, uint8_t **retptr)
         } else if (isalpha(*str) || *str == '_') {
             name = zasgetsym(str, &str);
             if (name) {
-                token2->type = TOKENSYM;
+                token2->type = ZASTOKENSYM;
                 token2->data.sym.name = name;
                 zasqueuetoken(token1);
                 token1 = token2;
@@ -1437,317 +1405,6 @@ zasproclabel(struct zastoken *token, zasmemadr_t adr,
     return retval;
 }
 
-#if (!ZVM)
-
-static struct zastoken *
-zasprocinst(struct zastoken *token, zasmemadr_t adr,
-            zasmemadr_t *retadr)
-{
-#if (WPM)
-    struct wpmopcode *op = NULL;
-#elif (ZEN)
-    struct zpuop     *op = NULL;
-#endif
-#if (WPMVEC)
-    struct vecopcode *vop = NULL;
-#endif
-    zasmemadr_t       opadr = rounduppow2(adr, 4);
-    struct zastoken  *token1 = NULL;
-    struct zastoken  *token2 = NULL;
-    struct zastoken  *retval = NULL;
-    struct zassymrec *sym;
-    uint8_t           narg = token->data.inst.narg;
-//    uint8_t           len = token->data.inst.op == OPNOP ? 1 : 4;
-    uint8_t           len = 4;
-
-    while (adr < opadr) {
-#if (ZVM)
-        zvm.physmem[adr] = OPNOP;
-#elif (WPM)
-        physmem[adr] = OPNOP;
-#endif
-        adr++;
-    }
-//    adr = opadr;
-#if (ZASDB)
-    zasaddline(adr, token->data.inst.data, token->file, token->line);
-#endif
-#if (WPMVEC)
-    if (token->unit == UNIT_VEC) {
-        vop = (struct vecopcode *)&zvm.physmem[adr];
-        vop->inst = token->data.inst.op;
-        vop->unit = UNIT_VEC;
-        vop->flg = token->opflg;
-        token1 = token->next;
-        zasfreetoken(token);
-        if (token1) {
-            switch(token1->type) {
-                case TOKENVAREG:
-                    vop->arg1t = ARGVAREG;
-                    vop->reg1 = token1->data.reg & 0xff;
-                    
-                    break;
-                case TOKENVLREG:
-                    vop->arg1t = ARGVLREG;
-                    vop->reg1 = token1->data.reg & 0xff;
-                    
-                    break;
-                case TOKENIMMED:
-                    vop->arg1t = ARGIMMED;
-                    vop->args[0] = token1->val;
-                    len += sizeof(zasword_t);
-                    
-                    break;
-                case TOKENADR:
-                    vop->arg1t = ARGIMMED;
-                    sym = malloc(sizeof(struct zassymrec));
-                    sym->name = (uint8_t *)strdup((char *)token1->data.sym.name);
-                    sym->adr = (uintptr_t)&op->args[0];
-                    zasqueuesym(sym);
-                    len += sizeof(uintptr_t);
-                    
-                    break;
-                default:
-                    fprintf(stderr, "invalid argument 1 of type %lx\n", token1->type);
-                    printtoken(token1);
-                    
-                    exit(1);
-                    
-                    break;
-            }
-            token2 = token1->next;
-            zasfreetoken(token1);
-            retval = token2;
-        }
-        vop->narg = len >> 3;
-        if (narg == 1) {
-            vop->arg2t = ARGNONE;
-        } else if (narg == 2 && (token2)) {
-            switch(token2->type) {
-                case TOKENVAREG:
-                    vop->arg2t = ARGVAREG;
-                    vop->reg2 = token2->data.reg & 0xff;
-                    
-                    break;
-                case TOKENVLREG:
-                    vop->arg2t = ARGVLREG;
-                    vop->reg2 = token2->data.reg & 0xff;
-                    
-                    break;
-                default:
-                    fprintf(stderr, "invalid argument 2 of type %lx\n", token2->type);
-                    printtoken(token2);
-
-                    exit(1);
-
-                    break;
-            }
-            retval = token2->next;
-            zasfreetoken(token2);
-        }
-    } else
-#endif
-    {
-#if (ZVM)
-        op = (struct wpmopcode *)&zvm.physmem[adr];
-#elif (WPM)
-        op = (struct wpmopcode *)&physmem[adr];
-#elif (ZEN)
-        op = (struct zpuop *)&zvm.physmem[adr];
-#endif
-        op->inst = token->data.inst.op;
-        if (op->inst == OPNOP) {
-            retval = token->next;
-            adr++;
-        } else
-            if (!narg) {
-                op->arg1t = ARGNONE;
-                op->arg2t = ARGNONE;
-                op->reg1 = 0;
-                op->reg2 = 0;
-                retval = token->next;
-            } else {
-                token1 = token->next;
-                zasfreetoken(token);
-                if (token1) {
-                    switch(token1->type) {
-                        case TOKENVALUE:
-                            op->arg1t = ARGIMMED;
-                            op->args[0] = token1->data.value.val;
-                            len += sizeof(zasword_t);
-                            
-                            break;
-                        case TOKENREG:
-                            op->arg1t = ARGREG;
-                            op->reg1 = token1->data.reg;
-                            
-                            break;
-                        case TOKENSYM:
-                            op->arg1t = ARGADR;
-                            sym = malloc(sizeof(struct zassymrec));
-                            sym->name = (uint8_t *)strdup((char *)token1->data.sym.name);
-                            sym->adr = (uintptr_t)&op->args[0];
-                            zasqueuesym(sym);
-                            len += sizeof(uintptr_t);
-                            
-                            break;
-                        case TOKENINDIR:
-                            token1 = token1->next;
-                            if (token1->type == TOKENREG) {
-                                op->arg1t = ARGREG;
-                                op->reg1 = token1->data.reg;
-                            } else {
-                                fprintf(stderr, "indirect addressing requires a register\n");
-                                
-                                exit(1);
-                            }
-                            
-                            break;
-                        case TOKENIMMED:
-                            op->arg1t = ARGIMMED;
-                            op->args[0] = token1->val;
-                            len += sizeof(zasword_t);
-                            
-                            break;
-                        case TOKENADR:
-                            op->arg1t = ARGIMMED;
-                            sym = malloc(sizeof(struct zassymrec));
-                            sym->name = (uint8_t *)strdup((char *)token1->data.sym.name);
-                            sym->adr = (uintptr_t)&op->args[0];
-                            zasqueuesym(sym);
-                            len += sizeof(uintptr_t);
-
-                            break;
-                        case TOKENINDEX:
-                            op->arg1t = ARGREG;
-                            op->reg1 = token1->data.ndx.reg;
-                            op->args[0] = token1->data.ndx.val;
-                            len += sizeof(zasword_t);
-                            
-                            break;
-                        default:
-                            fprintf(stderr, "invalid argument 1 of type %lx\n", token1->type);
-                            printtoken(token1);
-                            
-                            exit(1);
-                            
-                            break;
-                    }
-                    token2 = token1->next;
-                    zasfreetoken(token1);
-                    retval = token2;
-                }
-                if (narg == 1) {
-                    op->arg2t = ARGNONE;
-                } else if (narg == 2 && (token2)) {
-                    switch(token2->type) {
-#if (WPMVEC)
-                        case TOKENVAREG:
-                            op->arg2t = ARGVAREG;
-                            op->reg2 = token2->data.reg & 0xff;
-                            
-                            break;
-                        case TOKENVLREG:
-                            op->arg2t = ARGVLREG;
-                            op->reg2 = token2->data.reg & 0xff;
-                            
-                            break;
-#endif
-                        case TOKENVALUE:
-                            op->arg2t = ARGIMMED;
-                            if (op->arg1t == ARGREG) {
-                                op->args[0] = token2->data.value.val;
-                            } else {
-                                op->args[1] = token2->data.value.val;
-                            }
-                            len += sizeof(zasword_t);
-                            
-                            break;
-                        case TOKENREG:
-                            op->arg2t = ARGREG;
-                            op->reg2 = token2->data.reg;
-                            
-                            break;
-                        case TOKENSYM:
-                            op->arg2t = ARGADR;
-                            sym = malloc(sizeof(struct zassymrec));
-                            sym->name = (uint8_t *)strdup((char *)token2->data.sym.name);
-                            if (op->arg1t == ARGREG) {
-                                sym->adr = (uintptr_t)&op->args[0];
-                            } else {
-                                sym->adr = (uintptr_t)&op->args[1];
-                            }
-                            zasqueuesym(sym);
-                            len += sizeof(uintptr_t);
-                            
-                            break;
-                        case TOKENINDIR:
-                            token2 = token2->next;
-                            if (token2->type == TOKENREG) {
-                                op->arg2t = ARGREG;
-                                op->reg2 = token2->data.reg;
-                            } else {
-                                fprintf(stderr, "indirect addressing requires a register\n");
-                                
-                                exit(1);
-                            }
-                            
-                            break;
-                        case TOKENIMMED:
-                            op->arg2t = ARGIMMED;
-                            if (op->arg1t == ARGREG) {
-                                op->args[0] = token2->val;
-                            } else {
-                                op->args[1] = token2->val;
-                            }
-                            len += sizeof(zasword_t);
-                            
-                            break;
-                        case TOKENADR:
-                            op->arg2t = ARGIMMED;
-                            sym = malloc(sizeof(struct zassymrec));
-                            sym->name = (uint8_t *)strdup((char *)token2->data.sym.name);
-                            if (op->arg1t == ARGREG) {
-                                sym->adr = (uintptr_t)&op->args[0];
-                            } else {
-                                sym->adr = (uintptr_t)&op->args[1];
-                            }
-                            zasqueuesym(sym);
-                            len += sizeof(uintptr_t);
-                            
-                            break;
-                        case TOKENINDEX:
-                            op->arg2t = ARGREG;
-                            op->reg2 = token2->data.ndx.reg;
-                            if (op->arg1t == ARGREG) {
-                                op->args[0] = token2->data.ndx.val;
-                            } else {
-                                op->args[1] = token2->data.ndx.val;
-                            }
-                            len += sizeof(zasword_t);
-                            
-                            break;
-                        default:
-                            fprintf(stderr, "invalid argument 2 of type %lx\n", token2->type);
-                            printtoken(token2);
-                            
-                            exit(1);
-                            
-                            break;
-                    }
-                    retval = token2->next;
-                    zasfreetoken(token2);
-                }
-            }
-        op->size = len >> 2;
-    }
-    *retadr = adr + len;
-
-    return retval;
-}
-
-#endif /* !ZVM */
-
 static struct zastoken *
 zasprocchar(struct zastoken *token, zasmemadr_t adr,
             zasmemadr_t *retadr)
@@ -1775,7 +1432,7 @@ zasprocdata(struct zastoken *token, zasmemadr_t adr,
     struct zastoken *token1 = token->next;
     zasmemadr_t      valadr = adr;
 
-    while ((token1) && token1->type == TOKENVALUE) {
+    while ((token1) && token1->type == ZASTOKENVALUE) {
         token1->data.value.size = token->data.size;
         token1 = zasprocvalue(token1, valadr, &valadr);
     }
@@ -1792,7 +1449,7 @@ zasprocglobl(struct zastoken *token, zasmemadr_t adr,
     struct zaslabel *label;
 
     token1 = token->next;
-    while ((token1) && token1->type == TOKENSYM) {
+    while ((token1) && token1->type == ZASTOKENSYM) {
         token1 = zasproclabel(token1, adr, &adr);
         label = malloc(sizeof(label));
         label->name = (uint8_t *)strdup((char *)token1->data.label.name);
@@ -1815,10 +1472,10 @@ zasprocspace(struct zastoken *token, zasmemadr_t adr,
     uint8_t          val;
 
     token1 = token->next;
-    if ((token1) && token1->type == TOKENVALUE) {
+    if ((token1) && token1->type == ZASTOKENVALUE) {
         spcadr = token1->data.value.val;
         token2 = token1->next;
-        if ((token2) && token2->type == TOKENVALUE) {
+        if ((token2) && token2->type == ZASTOKENVALUE) {
 #if (ZVM)            
             ptr = &zvm.physmem[spcadr];
 #elif (WPM)
@@ -1855,7 +1512,7 @@ zasprocorg(struct zastoken *token, zasmemadr_t adr,
     uint8_t          val;
     
     token1 = token->next;
-    if ((token1) && token1->type == TOKENVALUE) {
+    if ((token1) && token1->type == ZASTOKENVALUE) {
 #if (ZVM)
         ptr = &zvm.physmem[adr];
 #elif (WPM)
@@ -1880,7 +1537,7 @@ zasprocalign(struct zastoken *token, zasmemadr_t adr,
     struct zastoken *token1;
 
     token1 = token->next;
-    if ((token1) && token1->type == TOKENVALUE) {
+    if ((token1) && token1->type == ZASTOKENVALUE) {
         adr = rounduppow2(adr, token1->data.value.val);
     } else {
         fprintf(stderr, "invalid .align attribute token type %lx\n",
@@ -1904,7 +1561,7 @@ zasprocasciz(struct zastoken *token, zasmemadr_t adr,
     uint8_t         *str;
 
     token1 = token->next;
-    while ((token1) && token1->type == TOKENSTRING) {
+    while ((token1) && token1->type == ZASTOKENSTRING) {
 #if (ZVM)
         ptr = &zvm.physmem[adr];
 #elif (WPM)
@@ -2053,7 +1710,7 @@ zasreadfile(char *name, zasmemadr_t adr)
     int              fd;
     uint8_t         *base;
 #endif
-    long             buflen = LINELEN;
+    long             buflen = ZASLINELEN;
 #if (ZASBUF)
     int              fd = -1;
 #else

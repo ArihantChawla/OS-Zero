@@ -1,15 +1,11 @@
 #ifndef __ZAS_ZAS_H__
 #define __ZAS_ZAS_H__
 
-#include <stdint.h>
+#define ZASNHASH 1024
 
 #include <stdint.h>
 
-#if (WPM)
-#define ZASNREG     NREG
-#define ZASREGINDIR REGINDIR
-#define ZASREGINDEX REGINDEX
-#endif
+#include <stdint.h>
 
 #if (ZAS32BIT)
 typedef uint32_t  zasmemadr_t;
@@ -23,40 +19,38 @@ typedef uint64_t  zasuword_t;
 typedef uint64_t  zassize_t;
 #endif
 
-#if (WPM)
+#if (ZVM)
+#include <zvm/zvm.h>
+#elif (WPM)
 #include <wpm/wpm.h>
 #elif (ZEN)
 #include <zpu/zpu.h>
-#elif (ZVM)
-#include <zvm/zvm.h>
 #endif
 
-#define LINELEN     4096
-
-#define TOKENVALUE  0x01
-#define TOKENLABEL  0x02
-#define TOKENINST   0x03
-#define TOKENREG    0x04
-#define TOKENVAREG  0x05
-#define TOKENVLREG  0x06
-#define TOKENSYM    0x07
-#define TOKENCHAR   0x08
-#define TOKENIMMED  0x09
-#define TOKENINDIR  0x0a
-#define TOKENADR    0x0b
-#define TOKENINDEX  0x0c
-#define TOKENDATA   0x0d
-#define TOKENGLOBL  0x0e
-#define TOKENSPACE  0x0f
-#define TOKENORG    0x10
-#define TOKENALIGN  0x11
-#define TOKENASCIZ  0x12
-#define TOKENSTRING 0x13
-#define TOKENPAREN  0x14
+#define ZASTOKENVALUE  0x01
+#define ZASTOKENLABEL  0x02
+#define ZASTOKENINST   0x03
+#define ZASTOKENREG    0x04
+#define ZASTOKENVAREG  0x05
+#define ZASTOKENVLREG  0x06
+#define ZASTOKENSYM    0x07
+#define ZASTOKENCHAR   0x08
+#define ZASTOKENIMMED  0x09
+#define ZASTOKENINDIR  0x0a
+#define ZASTOKENADR    0x0b
+#define ZASTOKENINDEX  0x0c
+#define ZASTOKENDATA   0x0d
+#define ZASTOKENGLOBL  0x0e
+#define ZASTOKENSPACE  0x0f
+#define ZASTOKENORG    0x10
+#define ZASTOKENALIGN  0x11
+#define ZASTOKENASCIZ  0x12
+#define ZASTOKENSTRING 0x13
+#define ZASTOKENPAREN  0x14
 #if (ZASPREPROC)
-#define TOKENOP     0x15
+#define ZASTOKENOP     0x15
 #endif
-#define NTOKTYPE    0x16
+#define ZASNTOKEN      0x16
 
 struct zasopinfo {
     const char       *name;

@@ -59,6 +59,10 @@ struct zvm {
     zasword_t  regs[ZASNREG] ALIGNED(CLSIZE);
 };
 
+extern const char *zvmopnametab[ZVMNOP];
+extern const char *zvmopnargtab[ZVMNOP];
+extern struct zvm  zvm;
+
 struct zasop    * zvmfindasm(const uint8_t *str);
 struct zastoken * zasprocinst(struct zastoken *token, zasmemadr_t adr,
                               zasmemadr_t *retadr);
