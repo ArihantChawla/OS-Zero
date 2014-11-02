@@ -1,10 +1,15 @@
 /*
- * Copyright (C) 2008-2014 Tuomo Petteri Ven‰l‰inen. All rights
+ * Copyright (C) 2008-2014 Tuomo Petteri Ven√§l√§inen. All rights
  * reserved.
  *
  * See the file LICENSE for more information about using this software.
  */
 
+#define AUTOBUF    1
+#if (AUTOBUF)
+#define NBUFSHIFT  2
+#define NBUFINCR   (1UL << (CHAR_BIT * sizeof(long) - 8))
+#endif
 #if !defined(MTSAFE)
 #define MTSAFE     1
 #endif
@@ -75,7 +80,7 @@ typedef pthread_mutex_t LK_T;
  * - Henry 'froggey' Harrington for helping me fix issues on AMD64.
  * - Dale 'swishy' Anderson for the enthusiasm, encouragement, and everything
  *   else.
- * - Martin 'bluet' StensgÂrd for an account on an AMD64 system for testing
+ * - Martin 'bluet' Stensg√•rd for an account on an AMD64 system for testing
  *   earlier versions.
  */
 
@@ -197,6 +202,7 @@ typedef pthread_mutex_t LK_T;
 /* macros */
 
 #define narnbufmag(bid)   (1L << narnbufmaglog2(bid))
+#if !(AUTOBUF)
 #define narnbufmaglog2(bid)                                             \
     (((bid) <= SLABTEENYLOG2)                                           \
      ? 2                                                                \
@@ -212,10 +218,17 @@ typedef pthread_mutex_t LK_T;
 #else
 #define ismapbkt(bid)     ((bid) > HQMAX)
 #endif
+#if (AUTOBUF)
+#define nbktbuflog2(arn, bid) \
+    (lzerol(arn->nbuftab[bkt]) >> NBUFSHIFT)
+#endif
 #if (TUNEBUF)
 //#define isbufbkt(bid)     ((bid) <= MAPMIDLOG2)
 //#define isbufbkt(bid)     0
-#if (!CONSTBUF)
+#if (AUTOBUF)
+#define nmagslablog2(arn, bid) \
+    (nbktbuflog2(bid))
+#elif (!CONSTBUF)
 #define nbufinit(bid)     0
 #endif
 #define isbufbkt(bid)     (_nbuftab[(bid)])
@@ -412,7 +425,17 @@ typedef pthread_mutex_t LK_T;
            : 2)))
 #endif
 #endif /* !CONSTBUF */
-#if (FREEBUF)
+#if (AUTOBUF)
+#define nblklog2(arn, bid) \
+    ((!ismapbkt(bid)) \
+      ? (SLABLOG2 + nbktbuf(arn, bid)- (bid)) \
+      : nbktbuf(arn, bid))
+#elif (TUNEBUF)
+#define nblklog2(arn, bid) \
+    ((!ismapbkt(bid)) \
+     ? (SLABLOG2 + nbuftkt(arn, bid)) \
+     : nbktbuf(arn, bid))
+#elif (FREEBUF)
 #define nblklog2(bid)                                                   \
     ((!ismapbkt(bid))                                                   \
      ? (SLABLOG2 - (bid))                                               \
@@ -424,7 +447,11 @@ typedef pthread_mutex_t LK_T;
     : nmagslablog2(bid))
 #endif
 #endif /* TUNEBUF */
+#if (AUTOBUF) || (TUNEBUF)
+#define nblk(arn, bid)    nbktbuf(arn, bid)
+#else
 #define nblk(bid)         (1UL << nblklog2(bid))
+#endif
 #define NBSLAB            (1UL << SLABLOG2)
 #define nbmap(bid)        (1UL << (nblklog2(bid) + (bid)))
 #define nbmag(bid)        (1UL << (nblklog2(bid) + (bid)))
@@ -603,6 +630,7 @@ struct arn {
     struct mag **htab;
     long         scur;
     LK_T         lktab[NBKT];
+    long         nbuftab[NBKT]
 };
 
 struct mtree {
@@ -1837,7 +1865,7 @@ getmem(size_t size,
         }
 #endif /* FREEBUF */
     }
-    if (mag) {
+    i<f (mag) {
         ptr = getblk(mag);
         retptr = clrptr(ptr);
 #if (VALGRIND)
@@ -1919,6 +1947,10 @@ getmem(size_t size,
 #endif
 
 //        abort();
+#if (AUTOBUF)
+    } else {
+        arn->nbuftab[bid] += NBUFINCR;
+#endif
     }
 #if (INTSTAT) || (STAT)
     nalloc[aid][bid]++;

@@ -1,3 +1,8 @@
+malloc
+------
+- implement self-tuning allocation buffering
+  - nbuf = clz(nbuf[bkt])
+
 c99
 ---
 - <complex.h>
