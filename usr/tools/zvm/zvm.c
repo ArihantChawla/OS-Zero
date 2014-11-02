@@ -167,7 +167,7 @@ zvminitasm(void)
     zvminitasmop(ZVMOPSTACK, ZVMOPPUSH, (uint8_t *)"push", 1, zvmoppush);
     zvminitasmop(ZVMOPSTACK, ZVMOPPUSHA, (uint8_t *)"pusha", 0, zvmoppush);
     /* load/store */
-    zvminitasmop(ZVMOPMOV, ZVMOPMOVL, (uint8_t *)"mov", 2, zvmopmovl);
+    zvminitasmop(ZVMOPMOV, ZVMOPMOVL, (uint8_t *)"movl", 2, zvmopmovl);
     zvminitasmop(ZVMOPMOV, ZVMOPMOVB, (uint8_t *)"movb", 2, zvmopmovb);
     zvminitasmop(ZVMOPMOV, ZVMOPMOVW, (uint8_t *)"movw", 2, zvmopmovw);
 #if (!ZAS32BIT)
@@ -244,7 +244,7 @@ zvmloop(zasmemadr_t _startadr)
     while (!zvm.shutdown) {
         op = (struct zvmopcode *)&zvm.physmem[zvm.pc];
         if (op->inst == ZVMOPNOP) {
-            zvm.pc += 4;
+            zvm.pc += sizeof(struct zvmopcode);
         } else {
 //            zvm.cpustat.pc = rounduppow2(zvm.pc, sizeof(zasword_t));
             op = (struct zvmopcode *)&zvm.physmem[zvm.pc];
