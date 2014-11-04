@@ -1,6 +1,11 @@
 #ifndef __WPM_WPM_H__
 #define __WPM_WPM_H__
 
+#if (WPMVEC)
+#define ZASREGVA 0x80000000
+#define ZASREGVL 0x40000000
+#endif
+
 #define ZASNREG     NREG
 #define ZASREGINDIR REGINDIR
 #define ZASREGINDEX REGINDEX
@@ -410,6 +415,8 @@ void opoutw(struct wpmopcode *op);
 void opinl(struct wpmopcode *op);
 void opoutl(struct wpmopcode *op);
 void ophook(struct wpmopcode *op);
+
+extern struct zasopinfo *zasopinfotab[WPMNUNIT];
 
 #endif /* __WPM_WPM_H__ */
 

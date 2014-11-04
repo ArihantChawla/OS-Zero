@@ -141,7 +141,7 @@ typedef pthread_mutex_t LK_T;
 #endif
 
 /* experimental */
-#define TUNEBUF 1
+#define TUNEBUF 0
 
 /* basic allocator parameters */
 #define BLKMINLOG2    5  /* minimum-size allocation */
@@ -444,6 +444,11 @@ typedef pthread_mutex_t LK_T;
     ? (SLABLOG2 - (bid) + nmagslablog2(bid))                            \
     : nmagslablog2(bid))
 #endif
+#else
+#define nblklog2(bid)                                                   \
+    ((!ismapbkt(bid))                                                   \
+     ? (SLABLOG2 - (bid))                                               \
+     : 0)
 #endif /* TUNEBUF */
 #if (AUTOBUF)
 #define nblk(mag, bid)                                                  \

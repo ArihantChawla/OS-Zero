@@ -309,5 +309,8 @@ void zpuoprmul(struct zpu *, struct zpuop *);
 void zpuoprdiv(struct zpu *, struct zpuop *);
 void zpuopunpk(struct zpu *, struct zpuop *);
 
+extern const char *zpuopnametab[ZPUNOP];
+extern const char *zpuopnargtab[ZPUNOP];
+
 #endif /* __ZPU_ZPU_H__ */
 

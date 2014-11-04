@@ -53,7 +53,10 @@ static int64_t memfetchq(wpmmemadr_t virt);
 static void    memstorel(int32_t src, wpmmemadr_t virt);
 static int32_t memfetchl(wpmmemadr_t virt);
 
-wpmophandler_t *wpmopfunctab[WPMNUNIT][WPMNASMOP] ALIGNED(PAGESIZE)
+#if (WPMVEC)
+static struct zasop *vecophash[ZASNHASH];
+#endif
+wpmophandler_t      *wpmopfunctab[WPMNUNIT][WPMNASMOP] ALIGNED(PAGESIZE)
 = {
     {
         NULL,

@@ -1,3 +1,45 @@
+#if (!ZVM)
+
+static void
+zasaddop(struct zasop *op)
+{
+    uint8_t       *str = op->name;
+    unsigned long  key = 0;
+    unsigned long  len = 0;
+
+    while (isalpha(*str)) {
+        key += *str++;
+        len++;
+    }
+    op->len = len;
+    key &= (ZASNHASH - 1);
+    op->next = zasophash[key];
+    zasophash[key] = op;
+
+    return;
+}
+
+struct zasop *
+zasfindop(uint8_t *name)
+{
+    struct zasop  *op = NULL;
+    uint8_t       *str = name;
+    unsigned long  key = 0;
+
+    while ((*str) && isalpha(*str)) {
+        key += *str++;
+    }
+    key &= (ZASNHASH - 1);
+    op = zasophash[key];
+    while ((op) && strncmp((char *)op->name, (char *)name, op->len)) {
+        op = op->next;
+    }
+
+    return op;
+}
+
+#endif /* !ZVM */
+
 static struct zastoken *
 zasprocinst(struct zastoken *token, zasmemadr_t adr,
             zasmemadr_t *retadr)

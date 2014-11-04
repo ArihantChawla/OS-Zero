@@ -14,82 +14,7 @@ extern unsigned long    zasinputread;
 extern zasmemadr_t      _startadr;
 
 zvmopfunc_t  *zvmfunctab[ZVMNOP] ALIGNED(PAGESIZE);
-struct zasop  zvminsttab[ZVMNOP];
-struct zasop *zvmoptab[ZVMNOP];
 struct zvm    zvm;
-
-/*
- * operation info structure addresses are stored in a multilevel table
- * - the top level table is indexed with the first byte of mnemonic and so on
- */
-struct zasop *
-zvmaddasm(const uint8_t *str, struct zasop *op)
-{
-    long          key = *str++;
-    uint8_t       len = 0;
-    struct zasop *pptr = zvmoptab[key];
-    struct zasop *ptr = NULL;
-
-    if (!pptr) {
-        ptr = calloc(sizeof(struct zasopinfo), ZVMNOP);
-        if (!ptr) {
-            fprintf(stderr, "failed to allocate operation info\n");
-            
-            return NULL;
-        }
-        zvmoptab[key] = ptr;
-        pptr = ptr;
-    }
-    if (key) {
-        while (key) {
-            len++;
-            ptr = pptr->tab;
-            if (!ptr) {
-                ptr = calloc(sizeof(struct zasopinfo), ZVMNOP);
-                if (!ptr) {
-                    fprintf(stderr, "failed to allocate operation info\n");
-            
-                    return NULL;
-                }
-                pptr->tab = ptr;
-            }
-            pptr = &ptr[key];
-            key = *str++;
-        }
-        *((struct zasop **)pptr) = op;
-        op->len = len;
-        
-        return op;
-    }
-    
-    return NULL;
-}
-
-struct zasop *
-zvmfindasm(const uint8_t *str)
-{
-    long          key = *str++;
-    struct zasop *ptr = zvmoptab[key];
-
-    if (key) {
-        while (key) {   
-            if (!*str) {
-        
-                return ptr;
-            } else if (ptr->tab) {
-                key = *str++;
-                ptr = &ptr->tab[key];
-            } else {
-            
-                return NULL;
-            }
-        }
-        
-        return ptr;
-    }
-    
-    return NULL;
-}
 
 void *
 zvminitmem(long memsize)
@@ -117,7 +42,7 @@ zvminitasmop(uint8_t unit, uint8_t inst, uint8_t *str, uint8_t narg,
     op->name = str;
     op->code = inst;
     op->narg = narg;
-    if (!zvmaddasm(str, op)) {
+    if (!zasaddop(str, op)) {
         fprintf(stderr, "failed to initialise assembly operation:\n");
         fprintf(stderr, "unit == %d, inst == %d, str == %s, narg = %d\n",
                 (int)unit, (int)inst, str, (int)narg);
@@ -428,7 +353,7 @@ zasprocinst(struct zastoken *token, zasmemadr_t adr, zasmemadr_t *retadr)
                     break;
                 default:
                     fprintf(stderr, "invalid argument 1 of type %lx\n", token1->type);
-                    printtoken(token1);
+                    zasprinttoken(token1);
                     
                     exit(1);
                     
@@ -518,7 +443,7 @@ zasprocinst(struct zastoken *token, zasmemadr_t adr, zasmemadr_t *retadr)
                     break;
                 default:
                     fprintf(stderr, "invalid argument 2 of type %lx\n", token2->type);
-                    printtoken(token2);
+                    zasprinttoken(token2);
                     
                     exit(1);
                     

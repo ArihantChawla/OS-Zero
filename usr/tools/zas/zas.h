@@ -19,12 +19,14 @@ typedef uint64_t  zasuword_t;
 typedef uint64_t  zassize_t;
 #endif
 
+#if 0
 #if (ZVM)
 #include <zvm/zvm.h>
 #elif (WPM)
 #include <wpm/wpm.h>
 #elif (ZEN)
 #include <zpu/zpu.h>
+#endif
 #endif
 
 #define ZASTOKENVALUE  0x01
@@ -121,18 +123,6 @@ struct zasval {
     struct zasval *next;
 };
 
-#if (WPMVEC)
-#if 0
-#define VEC_BYTE  1
-#define VEC_WORD  2
-#define VEC_LONG  4
-#define VEC_QUAD  8
-#define VEC_SATU  0x01
-#define VEC_SATS  0x02
-#endif
-#define REG_VA    0x80000000
-#define REG_VL    0x40000000
-#endif
 struct zastoken {
     struct zastoken     *prev;
     struct zastoken     *next;
@@ -184,6 +174,9 @@ void        zasreadfile(char *name, zasmemadr_t adr);
 
 void        zasfreetoken(struct zastoken *token);
 void        zasqueuesym(struct zassymrec *sym);
+
+typedef struct zastoken * zastokfunc_t(struct zastoken *, zasmemadr_t,
+                                       zasmemadr_t *);
 
 #endif /* __ZAS_ZAS_H__ */
 

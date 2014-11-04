@@ -12,8 +12,10 @@
 #include <zpu/zpu.h>
 #include <zpu/zas.h>
 
+const char *zpuopnametab[ZPUNOP];
+const char *zpuopnargtab[ZPUNOP];
 //typedef void zpuophandler_t(struct zpuop *);
-zpuopfunc *zpuopfunctab[ZPUNOP] ALIGNED(PAGESIZE)
+zpuopfunc  *zpuopfunctab[ZPUNOP] ALIGNED(PAGESIZE)
 = {
     zpuophlt,
     zpuopnot,

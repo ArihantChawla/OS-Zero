@@ -1,11 +1,7 @@
-#define ZASDEBUG   0
-#define ZASBUFSIZE 131072
+/* zero assembler main file */
 
-#if (WPM)
-#include <wpm/conf.h>
-#elif (ZEN)
-#include <zpu/conf.h>
-#endif
+#define ZASDEBUG   0
+
 #include <stdio.h>
 #include <stdlib.h>
 #include <stdint.h>
@@ -15,15 +11,6 @@
 #include <zero/cdecl.h>
 #include <zero/param.h>
 #include <zero/trix.h>
-#if (ZASMMAP)
-#include <errno.h>
-#include <fcntl.h>
-#include <sys/stat.h>
-#include <sys/mman.h>
-#elif (ZASBUF)
-#include <errno.h>
-#include <fcntl.h>
-#endif
 #if (ZASPROF)
 #include <zero/prof.h>
 #endif
@@ -31,11 +18,13 @@
 #include <zas/io.h>
 #if (ZVM)
 #include <zvm/zvm.h>
+#elif (WPM)
+#include <wpm/wpm.h>
 #endif
 
-typedef struct zastoken * zastokfunc_t(struct zastoken *, zasmemadr_t, zasmemadr_t *);
-
-static zasuword_t        zasgetreg(uint8_t *str, uint8_t **retptr);
+extern struct zasop *    zasfindop(const uint8_t *str);
+    
+extern zasuword_t        zasgetreg(uint8_t *str, uint8_t **retptr);
 static uint8_t         * zasgetlabel(uint8_t *str, uint8_t **retptr);
 static struct zasop    * zasgetinst(uint8_t *str, uint8_t **retptr);
 static uint8_t         * zasgetsym(uint8_t *str, uint8_t **retptr);
@@ -51,11 +40,8 @@ static struct zastoken * zasgettoken(uint8_t *str, uint8_t **retptr);
 
 static struct zastoken * zasprocvalue(struct zastoken *, zasmemadr_t, zasmemadr_t *);
 static struct zastoken * zasproclabel(struct zastoken *, zasmemadr_t, zasmemadr_t *);
-#if (ZVM)
+/* zasprocinst() is machine-specific */
 extern struct zastoken * zasprocinst(struct zastoken *, zasmemadr_t, zasmemadr_t *);
-#else
-static struct zastoken * zasprocinst(struct zastoken *, zasmemadr_t, zasmemadr_t *);
-#endif
 static struct zastoken * zasprocchar(struct zastoken *, zasmemadr_t, zasmemadr_t *);
 static struct zastoken * zasprocdata(struct zastoken *, zasmemadr_t, zasmemadr_t *);
 static struct zastoken * zasprocglobl(struct zastoken *, zasmemadr_t, zasmemadr_t *);
@@ -64,23 +50,12 @@ static struct zastoken * zasprocorg(struct zastoken *, zasmemadr_t, zasmemadr_t 
 static struct zastoken * zasprocalign(struct zastoken *, zasmemadr_t, zasmemadr_t *);
 static struct zastoken * zasprocasciz(struct zastoken *, zasmemadr_t, zasmemadr_t *);
 
-#if (ZVM)
-#elif (WPM)
-static struct zasopinfo *zasopinfotab[WPMNUNIT];
-#elif (ZEN)
-extern const char       *zpuopnametab[ZPUNOP];
-extern const char       *zpuopnargtab[ZPUNOP];
-#endif
-
-static struct zasop     *ophash[ZASNHASH] ALIGNED(PAGESIZE);
-#if (WPMVEC)
-static struct zasop     *vecophash[ZASNHASH];
-#endif
-static struct zassymrec *symhash[ZASNHASH];
-static struct zasval    *valhash[ZASNHASH];
-static struct zaslabel  *globhash[ZASNHASH];
-#if (ZASDB) || (WPMDB)
-struct zasline          *linehash[ZASNHASH];
+static struct zasop     *zasophash[ZASNHASH] ALIGNED(PAGESIZE);
+static struct zassymrec *zassymhash[ZASNHASH];
+static struct zasval    *zasvalhash[ZASNHASH];
+static struct zaslabel  *zasglobhash[ZASNHASH];
+#if (ZASDB)
+struct zasline          *zaslinehash[ZASNHASH];
 #endif
 
 zastokfunc_t *zasktokfunctab[ZASNTOKEN]
@@ -114,87 +89,14 @@ static struct zassymrec *symqueue;
 zasmemadr_t              _startadr;
 static zasmemadr_t       _startset;
 unsigned long            zasinputread;
-static uint8_t          *linebuf;
-static uint8_t          *strbuf;
-#if (ZASBUF) && (!ZASMMAP)
-struct readbuf {
-    void    *data;
-    uint8_t *cur;
-    uint8_t *lim;
-};
-struct readbuf          *readbuftab;
-static long              nreadbuf = 16;
-long                     readbufcur = 0;
-#endif
-
-#if (ZASMMAP)
-#define zasgetc(map) ((map)->cur < (map)->lim ? *(map)->cur++ : EOF)
-#if 0
-static int
-zasgetc(struct zasmap *map)
-{
-    int ch = EOF;
-
-    if (map->cur < map->adr + map->sz) {
-        ch = *map->cur++;
-    }
-
-    return ch;
-}
-#endif
-#elif (ZASBUF)
-static int
-zasgetc(int fd, int bufid)
-{
-    struct readbuf *buf = &readbuftab[bufid];
-    ssize_t         nleft = ZASBUFSIZE;
-    ssize_t         n;
-    int             ch = EOF;
-    long            l = nreadbuf;
-
-    if (bufid >= nreadbuf) {
-        nreadbuf <<= 1;
-        readbuftab = realloc(readbuftab, nreadbuf * sizeof(struct readbuf));
-        for ( ; l < nreadbuf ; l++) {
-            readbuftab[l].data = malloc(ZASBUFSIZE);
-        }
-    }
-    if (buf->cur < buf->lim) {
-        ch = *buf->cur++;
-    } else if (buf->cur == buf->lim) {
-        n = 0;
-        while (nleft) {
-            n = read(fd, buf->data, ZASBUFSIZE);
-            if (n < 0) {
-                if (errno == EINTR) {
-                    
-                    continue;
-                } else {
-                    
-                    return EOF;
-                }
-            } else if (n == 0) {
-
-                break;
-            } else {
-                nleft -= n;
-            }
-        }
-        if (nleft == ZASBUFSIZE) {
-
-            return EOF;
-        }
-        buf->cur = buf->data;
-        buf->lim = (uint8_t *)buf->data + ZASBUFSIZE - nleft;
-        ch = *buf->cur++;
-    }
-    
-    return ch;
-}
-#endif
+static uint8_t          *zaslinebuf;
+static uint8_t          *zasstrbuf;
+struct readbuf          *zasreadbuftab;
+static long              zasnreadbuf = 16;
+long                     zasreadbufcur = 0;
 
 void
-printtoken(struct zastoken *token)
+zasprinttoken(struct zastoken *token)
 {
     switch (token->type) {
         case ZASTOKENVALUE:
@@ -286,91 +188,8 @@ zasqueuetoken(struct zastoken *token)
     return;
 }
 
-#if (!ZVM)
+#if (ZASDB)
 
-static void
-zasaddop(struct zasop *op)
-{
-    uint8_t       *str = op->name;
-    unsigned long  key = 0;
-    unsigned long  len = 0;
-
-    while (isalpha(*str)) {
-        key += *str++;
-        len++;
-    }
-    op->len = len;
-    key &= (ZASNHASH - 1);
-    op->next = ophash[key];
-    ophash[key] = op;
-
-    return;
-}
-
-struct zasop *
-zasfindop(uint8_t *name)
-{
-    struct zasop  *op = NULL;
-    uint8_t       *str = name;
-    unsigned long  key = 0;
-
-    while ((*str) && isalpha(*str)) {
-        key += *str++;
-    }
-    key &= (ZASNHASH - 1);
-    op = ophash[key];
-    while ((op) && strncmp((char *)op->name, (char *)name, op->len)) {
-        op = op->next;
-    }
-
-    return op;
-}
-
-#endif /* !ZVM */
-
-#if (WPMVEC)
-
-static void
-zasaddvecop(struct zasop *op)
-{
-    uint8_t       *str = op->name;
-    unsigned long  key = 0;
-    unsigned long  len = 0;
-
-    while (*str) {
-        key += *str++;
-        len++;
-    }
-    op->len = len;
-    key &= (ZASNHASH - 1);
-    op->next = vecophash[key];
-    vecophash[key] = op;
-
-    return;
-}
-
-struct zasop *
-zasfindvecop(uint8_t *name)
-{
-    struct zasop  *op = NULL;
-    uint8_t       *str = name;
-    unsigned long  key = 0;
-
-    while ((*str) && isalpha(*str)) {
-        key += *str++;
-    }
-    key &= (ZASNHASH - 1);
-    op = vecophash[key];
-    while ((op) && strncmp((char *)op->name, (char *)name, op->len)) {
-        op = op->next;
-    }
-
-    return op;
-}
-
-#endif
-
-#if (ZASDB) || (WPMDB)
 void
 zasaddline(zasmemadr_t adr, uint8_t *data, uint8_t *filename, unsigned long line)
 {
@@ -382,9 +201,9 @@ zasaddline(zasmemadr_t adr, uint8_t *data, uint8_t *filename, unsigned long line
     newline->file = (uint8_t *)strdup((char *)filename);
     newline->num = line;
     newline->data = data;
-    newline->next = linehash[key];
+    newline->next = zaslinehash[key];
     key &= (ZASNHASH - 1);
-    linehash[key] = newline;
+    zaslinehash[key] = newline;
 
     return;
 }
@@ -397,13 +216,14 @@ zasfindline(zasmemadr_t adr)
 
     key = (adr & 0xff) + ((adr >> 8) & 0xff) + ((adr >> 16) & 0xff) + ((adr >> 24) & 0xff);
     key &= (ZASNHASH - 1);
-    line = linehash[key];
+    line = zaslinehash[key];
     while ((line) && line->adr != adr) {
         line = line->next;
     }
 
     return line;
 }
+
 #endif
 
 void
@@ -417,8 +237,8 @@ zasaddval(struct zasval *val)
         key += *ptr++;
     }
     key &= (ZASNHASH - 1);
-    val->next = valhash[key];
-    valhash[key] = val;
+    val->next = zasvalhash[key];
+    zasvalhash[key] = val;
 
     return;
 }
@@ -442,7 +262,7 @@ zasfindval(uint8_t *str, zasword_t *valptr, uint8_t **retptr)
             len++;
         }
         key &= (ZASNHASH - 1);
-        val = valhash[key];
+        val = zasvalhash[key];
         while ((val) && strncmp((char *)val->name, (char *)ptr, len)) {
             val = val->next;
         }
@@ -479,8 +299,8 @@ zasaddsym(struct zassymrec *sym)
         key += *str++;
     }
     key &= (ZASNHASH - 1);
-    sym->next = symhash[key];
-    symhash[key] = sym;
+    sym->next = zassymhash[key];
+    zassymhash[key] = sym;
 
     return;
 }
@@ -496,7 +316,7 @@ zasfindsym(uint8_t *name)
         key += *str++;
     }
     key &= (ZASNHASH - 1);
-    sym = symhash[key];
+    sym = zassymhash[key];
     while ((sym) && strcmp((char *)sym->name, (char *)name)) {
         sym = sym->next;
     }
@@ -512,13 +332,13 @@ zasremovesyms(void)
     long              l;
 
     for (l = 0 ; l < ZASNHASH ; l++) {
-        sym1 = symhash[l];
+        sym1 = zassymhash[l];
         while (sym1) {
             sym2 = sym1;
             sym1 = sym1->next;
             free(sym2);
         }
-        symhash[l] = NULL;
+        zassymhash[l] = NULL;
     }
 
     return;
@@ -534,8 +354,8 @@ zasaddglob(struct zaslabel *label)
         key += *str++;
     }
     key &= (ZASNHASH - 1);
-    label->next = globhash[key];
-    globhash[key] = label;
+    label->next = zasglobhash[key];
+    zasglobhash[key] = label;
 
     return;
 }
@@ -551,57 +371,13 @@ zasfindglob(uint8_t *name)
         key += *str++;
     }
     key &= (ZASNHASH - 1);
-    label = globhash[key];
+    label = zasglobhash[key];
     while ((label) && strcmp((char *)label->name, (char *)name)) {
         label = label->next;
     }
 
     return label;
 }
-
-#if (WPM)
-void
-zasinitop(void)
-{
-    struct zasop *op;
-    long       l;
-
-    for (l = 1 ; (zasopinfotab[UNIT_ALU][l].name) ; l++) {
-        op = malloc(sizeof(struct zasop));
-        op->name = (uint8_t *)(zasopinfotab[UNIT_ALU][l].name);
-        op->code = (uint8_t)l;
-        op->narg = zasopinfotab[UNIT_ALU][l].narg;
-        zasaddop(op);
-    }
-
-#if (WPMVEC)
-    for (l = 1 ; (zasopinfotab[UNIT_VEC][l].name) ; l++) {
-        op = malloc(sizeof(struct zasop));
-        op->name = (uint8_t *)(zasopinfotab[UNIT_VEC][l].name);
-        op->code = (uint8_t)l;
-        op->narg = zasopinfotab[UNIT_VEC][l].narg;
-        zasaddvecop(op);
-    }
-#endif
-
-    return;
-}
-#elif (ZEN)
-void
-zasinitop(void)
-{
-    struct zasop *op;
-    long          l;
-
-    for (l = 1 ; (zasopinfotab[name]) ; l++) {
-        op = malloc(sizeof(struct zasop));
-        op->name = (uint8_t *)(zpuopnametab[l]);
-        op->code = (uint8_t)l;
-        op->narg = zpunargtab[l];
-        zasaddop(op);
-    }
-}
-#endif
 
 void
 zasinitbuf(void)
@@ -610,70 +386,16 @@ zasinitbuf(void)
     long l;
 #endif
 
-    linebuf = malloc(ZASLINELEN);
-    strbuf = malloc(ZASLINELEN);
+    zaslinebuf = malloc(ZASLINELEN);
+    zasstrbuf = malloc(ZASLINELEN);
 #if (ZASBUF)
-    readbuftab = malloc(nreadbuf * sizeof(struct readbuf));
-    for (l = 0 ; l < nreadbuf ; l++) {
-        readbuftab[l].data = malloc(ZASBUFSIZE);
+    zasreadbuftab = malloc(zasnreadbuf * sizeof(struct readbuf));
+    for (l = 0 ; l < zasnreadbuf ; l++) {
+        zasreadbuftab[l].data = malloc(ZASBUFSIZE);
     }
 #endif
 
     return;
-}
-
-static zasuword_t
-zasgetreg(uint8_t *str, uint8_t **retptr)
-{
-    zasuword_t reg = 0;
-#if (WPMVEC)
-    zasuword_t flg = 0;
-#endif
-    
-#if (ZASDEBUG)
-    fprintf(stderr, "getreg: %s\n", str);
-#endif
-    if (*str == 'r') {
-        str++;
-        while ((*str) && isdigit(*str)) {
-            reg *= 10;
-            reg += *str - '0';
-            str++;
-        }
-        while (*str == ')' || *str == ',') {
-            str++;
-        }
-        *retptr = str;
-#if (WPMVEC)
-    } else if (*str == 'v') {
-        str++;
-        if (*str == 'a') {
-            flg = REG_VA;
-            str++;
-        } else if (*str == 'l') {
-            flg = REG_VL;
-            str++;
-        }
-        while ((*str) && isdigit(*str)) {
-            reg *= 10;
-            reg += *str - '0';
-            str++;
-        }
-        while (*str == ')' || *str == ',') {
-            str++;
-        }
-        *retptr = str;
-#endif
-    } else {
-        fprintf(stderr, "invalid register name %s\n", str);
-        
-        exit(1);
-    }
-#if (WPMVEC)
-    reg |= flg;
-#endif
-
-    return reg;
 }
 
 static uint8_t *
@@ -705,11 +427,7 @@ zasgetinst(uint8_t *str, uint8_t **retptr)
 {
     struct zasop *op;
 
-#if (ZVM)
-    op = zvmfindasm(str);
-#else
     op = zasfindop(str);
-#endif
 #if (ZASDEBUG)
     fprintf(stderr, "getinst: %s\n", str);
 #endif
@@ -720,67 +438,6 @@ zasgetinst(uint8_t *str, uint8_t **retptr)
 
     return op;
 }
-
-#if (WPMVEC)
-
-static struct zasop *
-zasgetvecinst(uint8_t *str, uint8_t **retptr)
-{
-    struct zasop *op;
-
-    op = zasfindvecop(str);
-#if (ZASDEBUG)
-    fprintf(stderr, "getvecinst: %s\n", str);
-#endif
-    if (op) {
-        op->flg = OP_QUAD;
-        str += op->len;
-        if (*str == '_') {
-            str++;
-            while (isalpha(*str)) {
-                switch (*str) {
-                    case 'f' :
-                        op->flg = OP_FLOAT;
-
-                        break;
-                    case 'b' :
-                        op->flg = OP_BYTE;
-
-                        break;
-                    case 'w' :
-                        op->flg = OP_WORD;
-
-                        break;
-                    case 'l' :
-                        op->flg = OP_LONG;
-
-                        break;
-                    case 'q' :
-                        op->flg = OP_QUAD;
-
-                        break;
-                    case 'u' :
-                        op->flg |= OP_SATU;
-
-                        break;
-                    case 's' :
-                        op->flg |= OP_SATS;
-
-                        break;
-                    default:
-
-                        break;
-                }
-                str++;
-            }
-        }
-        *retptr = str;
-    }
-
-    return op;
-}
-
-#endif
 
 static uint8_t *
 zasgetsym(uint8_t *str, uint8_t **retptr)
@@ -1060,7 +717,7 @@ zasgettoken(uint8_t *str, uint8_t **retptr)
 {
     long             buflen = ZASLINELEN;
     long             len;
-    uint8_t         *buf = strbuf;
+    uint8_t         *buf = zasstrbuf;
     struct zastoken *token1 = malloc(sizeof(struct zastoken));
     struct zastoken *token2;
     struct zasop    *op = NULL;
@@ -1096,7 +753,7 @@ zasgettoken(uint8_t *str, uint8_t **retptr)
             token1->data.value.val = val;
             token1->data.value.size = size;
         } else {
-            fprintf(stderr, "invalid token %s\n", linebuf);
+            fprintf(stderr, "invalid token %s\n", zaslinebuf);
                 
             exit(1);
         }
@@ -1108,7 +765,7 @@ zasgettoken(uint8_t *str, uint8_t **retptr)
             len++;
             if (len == buflen) {
                 fprintf(stderr, "overlong line (%ld == %ld): %s\n",
-                        len, buflen, linebuf);
+                        len, buflen, zaslinebuf);
 
                 exit(1);
             }
@@ -1142,15 +799,15 @@ zasgettoken(uint8_t *str, uint8_t **retptr)
         if (*str == '"') {
             str++;
             token1->type = ZASTOKENSTRING;
-            token1->data.str = (uint8_t *)strdup((char *)strbuf);
+            token1->data.str = (uint8_t *)strdup((char *)zasstrbuf);
         }
     } else if ((*str) && *str == '%') {
         str++;
         val = zasgetreg(str, &str);
 #if (WPMVEC)
-        if (val & REG_VA) {
+        if (val & ZASREGVA) {
             token1->type = ZASTOKENVAREG;
-        } else if (val & REG_VL) {
+        } else if (val & ZASREGVL) {
             token1->type = ZASTOKENVLREG;
         } else {
             token1->type = ZASTOKENREG;
@@ -1216,7 +873,7 @@ zasgettoken(uint8_t *str, uint8_t **retptr)
                         token1->data.sym.name = name;
                         token1->data.sym.adr = ~((zasword_t)0);
                     } else {
-                        fprintf(stderr, "invalid token %s\n", linebuf);
+                        fprintf(stderr, "invalid token %s\n", zaslinebuf);
                         
                         exit(1);
                     }
@@ -1239,7 +896,7 @@ zasgettoken(uint8_t *str, uint8_t **retptr)
                     token1->data.adr.name = name;
                     token1->data.adr.val = ~((zasword_t)0);
                 } else {
-                    fprintf(stderr, "invalid token %s\n", linebuf);
+                    fprintf(stderr, "invalid token %s\n", zaslinebuf);
                     
                     exit(1);
                 }
@@ -1301,9 +958,9 @@ zasgettoken(uint8_t *str, uint8_t **retptr)
             str++;
             val = zasgetreg(str, &str);
 #if (WPMVEC)
-            if (val & REG_VA) {
+            if (val & ZASREGVA) {
                 token2->type = ZASTOKENVAREG;
-            } else if (val & REG_VL) {
+            } else if (val & ZASREGVL) {
                 token2->type = ZASTOKENVLREG;
             } else {
                 token2->type = ZASTOKENREG;
@@ -1323,12 +980,12 @@ zasgettoken(uint8_t *str, uint8_t **retptr)
                 zasqueuetoken(token1);
                 token1 = token2;
             } else {
-                fprintf(stderr, "invalid token %s\n", linebuf);
+                fprintf(stderr, "invalid token %s\n", zaslinebuf);
 
                 exit(1);
             }
         } else {
-            fprintf(stderr, "invalid token %s\n", linebuf);
+            fprintf(stderr, "invalid token %s\n", zaslinebuf);
             
             exit(1);
         }
@@ -1644,7 +1301,7 @@ zastranslate(zasmemadr_t base)
             }
         } else {
             fprintf(stderr, "stray token of type %lx\n", token->type);
-            printtoken(token);
+            zasprinttoken(token);
 
             exit(1);
         }
@@ -1721,7 +1378,7 @@ zasreadfile(char *name, zasmemadr_t adr)
     struct zasval   *def;
     uint8_t         *fname;
     uint8_t         *ptr;
-    uint8_t         *str = linebuf;
+    uint8_t         *str = zaslinebuf;
     uint8_t         *lim = NULL;
     long             loop = 1;
     int              ch;
@@ -1777,7 +1434,7 @@ zasreadfile(char *name, zasmemadr_t adr)
                 
                 break;
             }
-            str = linebuf;
+            str = zaslinebuf;
             done = 0;
 #if (ZASMMAP)
             ch = zasgetc(&map);
@@ -1800,7 +1457,7 @@ zasreadfile(char *name, zasmemadr_t adr)
                     len++;
                     if (len == buflen) {
                         fprintf(stderr, "overlong line (%ld == %ld): %s\n",
-                                len, buflen, linebuf);
+                                len, buflen, zaslinebuf);
                         
                         exit(1);
                     }
@@ -1814,7 +1471,7 @@ zasreadfile(char *name, zasmemadr_t adr)
                 }
                 eof = (ch == EOF);
                 *str = '\0';
-                str = linebuf;
+                str = zaslinebuf;
                 lim = str + len;
                 while ((*str) && isspace(*str)) {
                     str++;
@@ -1901,7 +1558,7 @@ zasreadfile(char *name, zasmemadr_t adr)
                     zasremovesyms();
                 } else {
                     fprintf(stderr, "invalid .import directive %s\n",
-                            strbuf);
+                            zasstrbuf);
 
                     exit(1);
                 }
