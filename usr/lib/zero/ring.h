@@ -1,6 +1,10 @@
 #ifndef __ZERO_RING_H__
 #define __ZERO_RING_H__
 
+#if !defined(RINGSHAREBUF)
+#define RINGSHAREBUF 0
+#endif
+
 #include <stdint.h>
 #include <zero/cdecl.h>
 #include <zero/param.h>

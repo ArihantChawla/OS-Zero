@@ -1,6 +1,7 @@
 #ifndef __SYS_IO_H__
 #define __SYS_IO_H__
 
+#include <features.h>
 #if (_ZERO_SOURCE)
 #include <kern/syscall.h>
 #include <kern/syscallnum.h>
@@ -24,7 +25,7 @@ ioperm(unsigned long from, unsigned long num, int val)
     buf.parm = val;
     buf.reg.ofs = from;
     buf.reg.len = num;
-    retval = (int)_syscall(SYS_IOCTL, SYS_IOCTL_IOPERM, &buf);
+    retval = (int)_syscall(SYS_IOCTL, -1, SYS_IOCTL_IOPERM, (long)&buf);
 
     return retval;
 }

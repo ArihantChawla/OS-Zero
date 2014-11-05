@@ -13,7 +13,7 @@
 
 /* kernel events */
 
-/* system events *
+/* system events */
 #define EVSHUTDOWN        0x01
 #define EVMOUNT           0x02
 #define EVUNMOUNT         0x03

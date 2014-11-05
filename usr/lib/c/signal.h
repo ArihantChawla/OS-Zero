@@ -1,6 +1,10 @@
 #ifndef __SIGNAL_H__
 #define __SIGNAL_H__
 
+#if !defined(PTHREAD) || defined(__KERNEL__)
+#define PTHREAD 0
+#endif
+
 #include <features.h>
 #include <sys/types.h>
 #include <zero/param.h>
