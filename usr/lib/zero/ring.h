@@ -41,15 +41,17 @@ struct ringbuf {
     RING_ITEM     *outptr;
     long           pad;
 #if (RINGSHAREBUF)
+#if 0
     /* pad to end of first page */
     uint8_t        _pad[PAGESIZE - 8 * sizeof(int64_t)];
+#endif
     /* data buffer, mapped read-only in userland */
-    uint8_t        data[EMPTY];
+    uint8_t        data[EMPTY] ALIGNED(PAGESIZE);
 #else
     /* data buffer */
     uint8_t        data[PAGESIZE - 8 * sizeof(int64_t)];
 #endif
-} PACK() ALIGNED(PAGESIZE);
+} ALIGNED(PAGESIZE);
 
 /*
  * initialise ring buffer
