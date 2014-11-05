@@ -1,0 +1,33 @@
+kernel
+------
+- the basic kernel boots on IA-32
+  - hasn't been tested on real hardware yet
+- timer interrupts tick at 250 Hz in the default configuration
+  - the macro HZ is declared in <kern/conf.h>
+- interrupt handlers are installed for signal disposition, page faults,
+  and some other system functionality
+- system call interface is in design phase; see 
+- virtual memory is mapped to physical on-demand
+  - there is no disk drivers or real page-replacement for paging yet
+- PS/2 keyboard and mouse drivers have been partially implemented
+- PCI bus driver is under development
+- timer interrupts should work using either the PIT or local APICs
+
+games
+-----
+
+corewar
+-------
+- usr/games/corewar has a simple instruction set implemented for the
+  programming game Core War
+  - see usr/games/corewar/README for more information
+
+mjolnir
+-------
+- the rogue-like is an undergoing design
+  - a set of objects and creatures is documented
+  - BSP-table is used for dungeon generation, but it hasn't been tested
+    yet because there is no graphical or text interface implemented (yet ;)
+  - the dungeon crawler's plot will have references to Norse and other
+    mythologies
+

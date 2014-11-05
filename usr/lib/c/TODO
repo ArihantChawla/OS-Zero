@@ -2,6 +2,8 @@ malloc
 ------
 - implement self-tuning allocation buffering
   - nbuf = clz(nbuf[bkt])
+  - different strategies of adaptive buffering have been slower than
+    the default slab allocator with magazine buffer layer
 
 c99
 ---
