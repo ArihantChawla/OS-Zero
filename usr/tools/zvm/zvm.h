@@ -7,25 +7,41 @@
 #include <zero/cdecl.h>
 #include <zas/zas.h>
 
-#define ZASMEMSIZE  (128U * 1024U * 1024U)
-#define ZASNREG     16
-#define ZASTEXTBASE PAGESIZE
+#if (ZVMVIRTMEM)
+#define ZASTEXTBASE     ZVMPAGESIZE
+#define ZASNPAGE        (1UL << ZVMADRBITS - PAGESIZELOG2)
+#if (ZAS32BIT)
+#define ZVMADRBITS      32
+#else
+#define ZVMADRBITS      ADRBITS
+#endif
+#define ZVMPAGESIZE     PAGESIZE
+#define ZVMPAGESIZELOG2 PAGESIZELOG2
+#define ZVMPAGEPRES     0x01
+#define ZVMPAGEREAD     0x02
+#define ZVMPAGEWRITE    0x04
+#define ZVMPAGEEXEC     0x08
+#else
+#define ZASTEXTBASE     PAGESIZE
+#define ZVMMEMSIZE      (128U * 1024U * 1024U)
+#endif
+#define ZASNREG         32
 
-#define ZASREGINDEX 0x04
-#define ZASREGINDIR 0x08
-#define ZVMARGIMMED 0x00
-#define ZVMARGREG   0x01
-#define ZVMARGADR   0x02
+#define ZASREGINDEX     0x04
+#define ZASREGINDIR     0x08
+#define ZVMARGIMMED     0x00
+#define ZVMARGREG       0x01
+#define ZVMARGADR       0x02
 
 /* number of units and instructions */
-#define ZVMNUNIT    16
-#define ZVMNOP      256
+#define ZVMNUNIT        16
+#define ZVMNOP          256
 
 /* machine status word */
-#define ZVMZF       0x01 // zero
-#define ZVMOF       0x02 // overflow
-#define ZVMCF       0x04 // carry
-#define ZVMIF       0x08 // interrupt pending
+#define ZVMZF           0x01 // zero
+#define ZVMOF           0x02 // overflow
+#define ZVMCF           0x04 // carry
+#define ZVMIF           0x08 // interrupt pending
 
 /*
  * - unit
@@ -49,48 +65,63 @@ struct zvmopcode {
 typedef void zvmopfunc_t(struct zvmopcode *);
 
 struct zvm {
-    uint8_t   *physmem;
-    size_t     memsize;
-    long       shutdown;
-    zasword_t  msw;
-    zasword_t  fp;
-    zasword_t  sp;
-    zasword_t  pc;
-    zasword_t  regs[ZASNREG] ALIGNED(CLSIZE);
+    zasword_t    regs[ZASNREG] ALIGNED(CLSIZE);
+#if !(ZVMVIRTMEM)
+    uint8_t     *physmem;
+    size_t       memsize;
+#endif
+    long         shutdown;
+    zasword_t    msw;
+    zasword_t    fp;
+    zasword_t    sp;
+    zasword_t    pc;
+#if (ZASVIRTMEM)
+    void       **pagetab;
+#endif
 };
 
 #if (ZVMVIRTMEM)
+#define zvmpagenum(adr)                                                 \
+    ((adr) >> ZVMPAGESIZELOG2)
+#define zvmreadmem(adr, t)                                              \
+    (
 #else
+#define zvmreadmem(adr, t)                                              \
+    (*(t *)&zvm.physmem[(adr)])
+#endif
 #define zvmgetmem(adr)                                                  \
     ((adr) & (sizeof(zasword_t) - 1)                                    \
      ? zvmsigbus(adr, sizeof(zasword_t))                                \
-     : *(zasword_t *)&zvm.physmem[(adr)])
+     : zvmreadmem(adr, zasword_t))
 #define zvmgetmemt(adr, t)                                              \
     ((adr) & (sizeof(t) - 1)                                            \
      ? zvmsigbus(adr, sizeof(t))                                        \
-     : *(t *)&zvm.physmem[(adr)])
+     : zvmreadmem(adr, t))
+#if 0
 #define zvmgetmemb(adr)                                                 \
-    (zvm.physmem[(adr)])
+    zvmreadmem(adr, int8_t))
 #define zvmgetmemw(adr)                                                 \
     ((adr) & (sizeof(int16_t) - 1)                                      \
      ? zvmsigbus(adr, sizeof(int16_t))                                  \
-     : *(int16_t *)&zvm.physmem[(adr)])
+     : zvmreadmem(adr, int16_t))
 #define zvmgetmeml(adr)                                                 \
     ((adr) & (sizeof(int32_t) - 1)                                      \
      ? zvmsigbus(adr, sizeof(int32_t))                                  \
-     : *(int32_t *)&zvm.physmem[(adr)])
+     : zvmreadmem(adr, int32_t))
 #define zvmgetmemq(adr)                                                 \
     ((adr) & (sizeof(int64_t) - 1)                                      \
      ? zvmsigbus(adr, sizeof(int64_t))                                  \
-     : *(int64_t *)&zvm.physmem[(adr)])
+     : zvmreadmem(adr, int64_t))
 #endif
+
 extern struct zasop  zvminsttab[ZVMNOP];
 extern struct zasop *zvmoptab[ZVMNOP];
 extern const char   *zvmopnametab[ZVMNOP];
 extern const char   *zvmopnargtab[ZVMNOP];
 extern struct zvm    zvm;
 
-void              zvminit(size_t memsize);
+void              zvminit(void);
+size_t            zvminitmem(void);
 struct zasop    * asmaddop(const uint8_t *str, struct zasop *op);
 struct zasop    * zvmfindasm(const uint8_t *str);
 struct zastoken * zasprocinst(struct zastoken *token, zasmemadr_t adr,

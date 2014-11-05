@@ -16,25 +16,6 @@ extern zasmemadr_t      _startadr;
 zvmopfunc_t  *zvmfunctab[ZVMNOP] ALIGNED(PAGESIZE);
 struct zvm    zvm;
 
-#if (ZVMVIRTMEM)
-#else
-void *
-zvminitmem(long memsize)
-{
-    size_t len = ZASMEMSIZE;
-    void *ptr = malloc(ZASMEMSIZE);
-
-    while (!ptr) {
-        len >>= 1;
-        ptr = malloc(len);
-    }
-    zvm.physmem = ptr;
-    zvm.memsize = len;
-
-    return ptr;
-}
-#endif
-
 void
 zvminitasmop(uint8_t unit, uint8_t inst, uint8_t *str, uint8_t narg,
              zvmopfunc_t *func)
@@ -137,9 +118,11 @@ zvminitasm(void)
 };
 
 void
-zvminit(size_t memsize)
+zvminit(void)
 {
-    zvminitmem(memsize);
+    size_t memsize;
+    
+    memsize = zvminitmem();
     zvminitasm();
     zvm.sp = memsize;
     zvm.pc = ZASTEXTBASE;
@@ -277,7 +260,7 @@ int
 main(int argc, char *argv[])
 {
     zasinit(NULL, NULL);
-    zvminit(ZASMEMSIZE);
+    zvminit();
 
     exit(zvmmain(argc, argv));
 }

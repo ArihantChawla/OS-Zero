@@ -1276,7 +1276,7 @@ zasinit(struct zasopinfo *opinfotab, struct zasopinfo *vecinfotab)
     zasopinfotab[1] = vecinfotab;
 #endif
 #if (ZVM)
-    zvminit(ZASMEMSIZE);
+    zvminit();
 #else
     zasinitop();
 #endif
