@@ -6,6 +6,7 @@
 #endif
 
 #include <stdint.h>
+#include <limits.h>
 #include <zero/cdecl.h>
 #include <zero/param.h>
 #include <zero/mtx.h>
@@ -41,15 +42,11 @@ struct ringbuf {
     RING_ITEM     *outptr;
     long           pad;
 #if (RINGSHAREBUF)
-#if 0
-    /* pad to end of first page */
-    uint8_t        _pad[PAGESIZE - 8 * sizeof(int64_t)];
-#endif
-    /* data buffer, mapped read-only in userland */
-    uint8_t        data[EMPTY] ALIGNED(PAGESIZE);
+    uint8_t       *data;
 #else
     /* data buffer */
-    uint8_t        data[PAGESIZE - 8 * sizeof(int64_t)];
+//    uint8_t        data[PAGESIZE - 8 * sizeof(int64_t)];
+    uint8_t        data[PAGESIZE - CHAR_BIT * (4 * sizeof(long) + 4 * sizeof(void *))];
 #endif
 } ALIGNED(PAGESIZE);
 
@@ -68,7 +65,11 @@ ringinit(struct ringbuf *buf, void *base, long n)
         return 1;
     }
     if (!base) {
+#if (RINGSHAREBUF)
+        base = VALLOC(n * sizeof(RING_ITEM));
+#else
         base = MALLOC(n * sizeof(RING_ITEM));
+#endif
         if (base) {
             retval++;
         }
