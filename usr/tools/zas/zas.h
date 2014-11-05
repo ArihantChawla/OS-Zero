@@ -175,6 +175,8 @@ void        zasreadfile(char *name, zasmemadr_t adr);
 void        zasfreetoken(struct zastoken *token);
 void        zasqueuesym(struct zassymrec *sym);
 
+void        zasprinttoken(struct zastoken *token);
+
 typedef struct zastoken * zastokfunc_t(struct zastoken *, zasmemadr_t,
                                        zasmemadr_t *);
 

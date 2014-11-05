@@ -22,9 +22,9 @@
 #include <wpm/wpm.h>
 #endif
 
-extern struct zasop *    zasfindop(const uint8_t *str);
+extern struct zasop *    asmfindop(const uint8_t *str);
     
-extern zasuword_t        zasgetreg(uint8_t *str, uint8_t **retptr);
+extern zasuword_t        asmgetreg(uint8_t *str, uint8_t **retptr);
 static uint8_t         * zasgetlabel(uint8_t *str, uint8_t **retptr);
 static struct zasop    * zasgetinst(uint8_t *str, uint8_t **retptr);
 static uint8_t         * zasgetsym(uint8_t *str, uint8_t **retptr);
@@ -40,8 +40,8 @@ static struct zastoken * zasgettoken(uint8_t *str, uint8_t **retptr);
 
 static struct zastoken * zasprocvalue(struct zastoken *, zasmemadr_t, zasmemadr_t *);
 static struct zastoken * zasproclabel(struct zastoken *, zasmemadr_t, zasmemadr_t *);
-/* zasprocinst() is machine-specific */
-extern struct zastoken * zasprocinst(struct zastoken *, zasmemadr_t, zasmemadr_t *);
+/* asmprocinst() is machine-specific */
+extern struct zastoken * asmprocinst(struct zastoken *, zasmemadr_t, zasmemadr_t *);
 static struct zastoken * zasprocchar(struct zastoken *, zasmemadr_t, zasmemadr_t *);
 static struct zastoken * zasprocdata(struct zastoken *, zasmemadr_t, zasmemadr_t *);
 static struct zastoken * zasprocglobl(struct zastoken *, zasmemadr_t, zasmemadr_t *);
@@ -63,7 +63,7 @@ zastokfunc_t *zasktokfunctab[ZASNTOKEN]
     NULL,
     zasprocvalue,
     zasproclabel,
-    zasprocinst,
+    asmprocinst,
     NULL,               // ZASARGREG
     NULL,               // ZASARGVAREG
     NULL,               // ZASARGVLREG
@@ -427,7 +427,7 @@ zasgetinst(uint8_t *str, uint8_t **retptr)
 {
     struct zasop *op;
 
-    op = zasfindop(str);
+    op = asmfindop(str);
 #if (ZASDEBUG)
     fprintf(stderr, "getinst: %s\n", str);
 #endif
@@ -614,7 +614,7 @@ zasgetindex(uint8_t *str, zasword_t *retndx, uint8_t **retptr)
         if (*str == '%') {
             str++;
         }
-        reg = zasgetreg(str, &str);
+        reg = asmgetreg(str, &str);
 #if 0
         if (reg >= ZASNREG) {
             fprintf(stderr, "invalid register name %s\n", str);
@@ -803,8 +803,8 @@ zasgettoken(uint8_t *str, uint8_t **retptr)
         }
     } else if ((*str) && *str == '%') {
         str++;
-        val = zasgetreg(str, &str);
-#if (WPMVEC)
+        val = asmgetreg(str, &str);
+#if (ZASVEC)
         if (val & ZASREGVA) {
             token1->type = ZASTOKENVAREG;
         } else if (val & ZASREGVL) {
@@ -827,7 +827,7 @@ zasgettoken(uint8_t *str, uint8_t **retptr)
 #if (ZASDB)
             ptr = str;
 #endif
-#if (WPMVEC)
+#if (ZASVEC)
             if (*str == 'v') {
                 op = zasgetvecinst(str, &str);
                 if (op) {
@@ -847,7 +847,7 @@ zasgettoken(uint8_t *str, uint8_t **retptr)
 #endif
             if (op) {
                 token1->type = ZASTOKENINST;
-#if (!WPMVEC) && !ZEN && !ZVM
+#if (!ZASVEC) && !ZEN && !ZVM
                 token1->unit = UNIT_ALU;
 #endif
                 token1->data.inst.name = op->name;
@@ -856,7 +856,7 @@ zasgettoken(uint8_t *str, uint8_t **retptr)
 #if (ZASDB)
                 token1->data.inst.data = (uint8_t *)strdup((char *)ptr);
 #endif
-#if (WPMVEC)
+#if (ZASVEC)
                 token1->data.inst.flg = op->flg;
 #endif
             } else {
@@ -956,8 +956,8 @@ zasgettoken(uint8_t *str, uint8_t **retptr)
         token2 = malloc(sizeof(struct zastoken));
         if (*str == '%') {
             str++;
-            val = zasgetreg(str, &str);
-#if (WPMVEC)
+            val = asmgetreg(str, &str);
+#if (ZASVEC)
             if (val & ZASREGVA) {
                 token2->type = ZASTOKENVAREG;
             } else if (val & ZASREGVL) {

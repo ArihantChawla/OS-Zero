@@ -59,12 +59,21 @@ struct zvm {
     zasword_t  regs[ZASNREG] ALIGNED(CLSIZE);
 };
 
+#if (ZVMVIRTMEM)
+#else
+#define zvmgetmemb(adr) (zvm.physmem[(adr)])
+#define zvmgetmemw(adr) (*(int16_t *)&(zvm.physmem[(adr)]))
+#define zvmgetmeml(adr) (*(int32_t *)&(zvm.physmem[(adr)]))
+#define zvmgetmemq(adr) (*(int64_t *)&(zvm.physmem[(adr)]))
+#endif
 extern struct zasop  zvminsttab[ZVMNOP];
 extern struct zasop *zvmoptab[ZVMNOP];
 extern const char   *zvmopnametab[ZVMNOP];
 extern const char   *zvmopnargtab[ZVMNOP];
 extern struct zvm    zvm;
 
+void              zvminit(size_t memsize);
+struct zasop    * asmaddop(const uint8_t *str, struct zasop *op);
 struct zasop    * zvmfindasm(const uint8_t *str);
 struct zastoken * zasprocinst(struct zastoken *token, zasmemadr_t adr,
                               zasmemadr_t *retadr);

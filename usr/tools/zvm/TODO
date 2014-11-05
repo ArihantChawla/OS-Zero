@@ -2,6 +2,7 @@
 - implement virtual memory / page-level protection (read-only sections)
 - implement [console] I/O and interrupts
 - implement a debugger with graphical frontend
+- implement different access sizes (byte, word, longword, quadword)
 
 modules
 -------
