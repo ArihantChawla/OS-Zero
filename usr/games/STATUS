@@ -1,0 +1,15 @@
+corewar
+-------
+- usr/games/corewar has a simple instruction set implemented for the
+  programming game Core War
+  - see usr/games/corewar/README for more information
+
+mjolnir
+-------
+- the rogue-like is an undergoing design
+  - a set of objects and creatures is documented
+  - BSP-table is used for dungeon generation, but it hasn't been tested
+    yet because there is no graphical or text interface implemented (yet ;)
+  - the dungeon crawler's plot will have references to Norse and other
+    mythologies
+
