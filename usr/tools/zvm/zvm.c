@@ -107,6 +107,10 @@ zvminitasm(void)
     zvminitasmop(ZVMOPFUNC, ZVMOPENTER, (uint8_t *)"enter", 1, zvmopenter);
     zvminitasmop(ZVMOPFUNC, ZVMOPLEAVE, (uint8_t *)"leave", 1, zvmopleave);
     zvminitasmop(ZVMOPFUNC, ZVMOPRET, (uint8_t *)"ret", 1, zvmopret);
+#if 0
+    /* thread interface */
+    zvminitasmop(ZVMOPFUNC, ZVMOPTHR, (uint8_t *)"thr", 1, zvmopthr);
+#endif
     /* machine status word */
     zvminitasmop(ZVMOPMSW, ZVMOPLMSW, (uint8_t *)"lmsw", 1, zvmoplmsw);
     zvminitasmop(ZVMOPMSW, ZVMOPSMSW, (uint8_t *)"smsw", 1, zvmopsmsw);
@@ -157,7 +161,7 @@ zvmloop(zasmemadr_t _startadr)
     fprintf(stderr, "memory\n");
     fprintf(stderr, "------\n");
     for (i = ZASTEXTBASE ; i < ZASTEXTBASE + 256 ; i++) {
-        fprintf(stderr, "%02x ", physmem[i]);
+        fprintf(stderr, "%02x ", zvmgetmemb(i);
     }
     fprintf(stderr, "\n");
     fprintf(stderr, "registers\n");
@@ -171,12 +175,14 @@ zvmloop(zasmemadr_t _startadr)
 //    memcpy(&zvm.cpustat, cpustat, sizeof(struct zvmcpustate));
 //    free(cpustat);
     while (!zvm.shutdown) {
-        op = (struct zvmopcode *)&zvm.physmem[zvm.pc];
+//        op = (struct zvmopcode *)&zvm.physmem[zvm.pc];
+        op = zvmgetmemt(zvm.pc, struct zvmopcode *);
         if (op->inst == ZVMOPNOP) {
             zvm.pc += sizeof(struct zvmopcode);
         } else {
 //            zvm.cpustat.pc = rounduppow2(zvm.pc, sizeof(zasword_t));
-            op = (struct zvmopcode *)&zvm.physmem[zvm.pc];
+//            op = (struct zvmopcode *)&zvm.physmem[zvm.pc];
+            op = zvmgetmemt(zvm.pc, struct zvmopcode *);
             func = zvmfunctab[op->inst];
 #if (ZVMTRACE)
             zvmprintop(op);
@@ -204,7 +210,7 @@ zvmloop(zasmemadr_t _startadr)
     fprintf(stderr, "memory\n");
     fprintf(stderr, "------\n");
     for (i = ZASTEXTBASE ; i < ZASTEXTBASE + 256 ; i++) {
-        fprintf(stderr, "%02x ", physmem[i]);
+        fprintf(stderr, "%02x ", zasgetmemb(i));
     }
     fprintf(stderr, "\n");
     fprintf(stderr, "registers\n");

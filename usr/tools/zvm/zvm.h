@@ -61,10 +61,28 @@ struct zvm {
 
 #if (ZVMVIRTMEM)
 #else
-#define zvmgetmemb(adr) (zvm.physmem[(adr)])
-#define zvmgetmemw(adr) (*(int16_t *)&(zvm.physmem[(adr)]))
-#define zvmgetmeml(adr) (*(int32_t *)&(zvm.physmem[(adr)]))
-#define zvmgetmemq(adr) (*(int64_t *)&(zvm.physmem[(adr)]))
+#define zvmgetmem(adr)                                                  \
+    ((adr) & (sizeof(zasword_t) - 1)                                    \
+     ? zvmsigbus(adr, sizeof(zasword_t))                                \
+     : *(zasword_t *)&zvm.physmem[(adr)])
+#define zvmgetmemt(adr, t)                                              \
+    ((adr) & (sizeof(t) - 1)                                            \
+     ? zvmsigbus(adr, sizeof(t))                                        \
+     : *(t *)&zvm.physmem[(adr)])
+#define zvmgetmemb(adr)                                                 \
+    (zvm.physmem[(adr)])
+#define zvmgetmemw(adr)                                                 \
+    ((adr) & (sizeof(int16_t) - 1)                                      \
+     ? zvmsigbus(adr, sizeof(int16_t))                                  \
+     : *(int16_t *)&zvm.physmem[(adr)])
+#define zvmgetmeml(adr)                                                 \
+    ((adr) & (sizeof(int32_t) - 1)                                      \
+     ? zvmsigbus(adr, sizeof(int32_t))                                  \
+     : *(int32_t *)&zvm.physmem[(adr)])
+#define zvmgetmemq(adr)                                                 \
+    ((adr) & (sizeof(int64_t) - 1)                                      \
+     ? zvmsigbus(adr, sizeof(int64_t))                                  \
+     : *(int64_t *)&zvm.physmem[(adr)])
 #endif
 extern struct zasop  zvminsttab[ZVMNOP];
 extern struct zasop *zvmoptab[ZVMNOP];
@@ -77,6 +95,8 @@ struct zasop    * asmaddop(const uint8_t *str, struct zasop *op);
 struct zasop    * zvmfindasm(const uint8_t *str);
 struct zastoken * zasprocinst(struct zastoken *token, zasmemadr_t adr,
                               zasmemadr_t *retadr);
+
+void            * zvmsigbus(zasmemadr_t adr, size_t size);
 
 #endif /* __ZVM_ZVM_H__ */
 

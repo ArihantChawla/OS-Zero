@@ -101,6 +101,7 @@ void zvmophlt(struct zvmopcode *op);
 #define ZVMOPENTER  0x02 // subroutine prologue
 #define ZVMOPLEAVE  0x03 // subroutine epilogue
 #define ZVMOPRET    0x04 // return from subroutine
+#define ZVMOPTHR    0x05 // launch a new thread
 /* machine status word manipulation */
 #define ZVMOPMSW    0x07
 #define ZVMOPLMSW   0x01 // load machine status word
