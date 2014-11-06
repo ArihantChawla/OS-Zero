@@ -17,14 +17,41 @@
 #include <string.h>
 #endif
 #if !defined(MALLOC)
-#define MALLOC(x)            malloc(x)
+#define MALLOC(n)            malloc(n)
 #endif
 #if !defined(FREE)
-#define FREE(x)              free(x)
+#define FREE(ptr)            free(ptr)
 #endif
 #if !defined(MEMCPY)
 #define MEMCPY(dest, src, n) memcpy(dest, src, n)
 #endif
+#if (RINGSHAREBUF)
+#if defined(_ISOC11_SOURCE) && (_ISOC11_SOURCE)
+#defined VALLOC(n)           aligned_alloc(PAGESIZE, n)
+#elif (((defined(_BSD_SOURCE) && (_BSD_SOURCE))                         \
+        || (defined(_XOPEN_SOURCE) && (_XOPEN_SOURCE >= 500             \
+                                       || ((defined(_XOPEN_SOURCE_EXTENDED) \
+                                            && (_XOPEN_SOURCE_EXTENDED)))))) \
+       && !((USEPOSIX200112)                                            \
+            || (defined(_XOPEN_SOURCE) && (_XOPEN_SOURCE >= 600))))     \
+#define VALLOC(n)            valloc(n)
+#elif (USEPOSIX200112 || (defined(_XOPEN_SOURCE) && (_XOPEN_SOURCE >= 600)))
+static __inline__ void *
+VALLOC(size_t n)
+{
+    void * _ptr;
+
+    if (posix_memalign(&_ptr, PAGESIZE, n)) {
+
+        return NULL;
+    }
+
+    return _ptr;
+}
+#else
+#define VALLOC(n)            memalign(PAGESIZE, n)
+#endif
+#endif /* RINGSHAREBUF */
 
 /* MALLOC       - function used to allocate data buffer */
 /* FREE         - function used to free buffers */

@@ -11,6 +11,8 @@
 #define USEPOSIX2              1
 #define USEPOSIX199309         1
 #define USEPOSIX199506         1
+#define USEPOSIX200112         (defined(_POSIX_SOURCE)                  \
+                                && _POSIX_SOURCE >= 200112L)
 #define USEBSD                 1
 #define FAVORBSD               0        // favor old school BSD interfaces
 #define USESVID                1
