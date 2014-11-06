@@ -164,7 +164,11 @@ typedef pthread_mutex_t LK_T;
 #define HQMAX         SLABLOG2
 //#define HQMAX         20
 #define NBKT          (8 * PTRSIZE)
-#if (MTSAFE)
+#if defined(_SC_NPROCESSORS_CONF)
+#define NARN          (2 * sysconf(_SC_NPROCESSORS_CONF))
+#elif (_GNU_SOURCE)
+#define NARN          (2 * get_nprocs_conf())
+#elif (MTSAFE)
 #define NARN          16
 #else
 #define NARN          1

@@ -66,7 +66,7 @@ extern void ksyscall(void);
  * IPC
  * ---
  * key_t sys_ipcmkkey(void *arg);
- * key_t sys_ipcrelkey(key_t key);
+ * key_t sys_ipcrmkey(key_t key);
  *
  * shared memory
  * -------------
@@ -84,7 +84,7 @@ extern void ksyscall(void);
  * ----------
  * uintptr_t sys_mksem(long cnt);
  * - allocate semaphore and initialise it with value cnt
- * void      sys_relsem(uintptr_t id);
+ * void      sys_rmsem(uintptr_t id);
  * - deallocate semaphore
  * long      sys_semup(uintptr_t sem, long n);
  * - increase semaphore value by n
@@ -93,25 +93,30 @@ extern void ksyscall(void);
  *
  * read-write locks
  * ----------------
- * uintptr_t sys_mkrwlk(long desc, long flg, struct objreg *arg);
+ * FIXME
+ * -----
+ * uintptr_t sys_rwlkinit(long desc, long flg, struct objreg *arg);
  * - allocate and initialise read-write lock
- * void      sys_relrwlk(long desc, long flg);
+ * void      sys_rwlkrm(long desc, long flg);
  * - deallocate read-write lock
- * uintptr_t    sys_lockrd(long desc, long flg, struct objreg *arg);
+ * uintptr_t    sys_rdlock(long desc, long flg, struct objreg *arg);
  * - acquire read-lock of object desc
- * uintptr_t sys_lockwr(long desc, long flg, struct objreg *arg);
+ * uintptr_t sys_wrlock(long desc, long flg, struct objreg *arg);
  * - acquire write-lock on object describe
  * void      sys_unlock(uintptr_t lk);
  * - unlock a read-write lock
  *
  * message queues
  * --------------
- * uintptr_t sys_mkmq(long nprio, size_t qsize);
- * long      sys_postmsg(long prio, struct msg *arg);
- * long      sys_readmsg(long mq, struct msg *arg);
+ * FIXME (sys_mqpeek()?)
+ * -----
+ * uintptr_t sys_mqinit(long mq, long nprio, size_t qsize);
+ * long      sys_mqsend(long mq, long prio, struct msg *arg);
+ * long      sys_mqregv(long mq, long prio, struct msg *arg);
  *
  * events
  * ------
+ * TODO: evreg(), evsend(), evrecv(), evctl()
  *
  * I/O interface
  * -------------
@@ -306,7 +311,7 @@ struct syswait {
 #define MAP_NONBLOCK      0x00000800    // don't block on I/O
 #define MAP_POPULATE      0x00001000    // prefault page tables
 #define MAP_STACK         0x00002000
-#define MAP_UNINITIALIZED 0x00004000    // don't zero; SECURITY!
+#define MAP_UNINITIALIZED 0x00004000    // don't zero; SECURITY! (ignored)
 #define MAP_SINGLE        0x00008000    // kernel + single user process
 /* sys_map() and sys_mhint() */
 #define MEM_NORMAL        1             // no special treatment
@@ -321,11 +326,12 @@ struct syswait {
 #define MEM_DODUMP        10
 /* sys_mctl() */
 /* cmd */
-#define MEM_LOCK         0x01   // mlock(), mlockall()
-#define MEM_UNLOCK       0x02   // munlock(), munlockall()
+#define MEM_SHARE         0x01          // umap()
+#define MEM_LOCK          0x02          // mlock(), mlockall()
+#define MEM_UNLOCK        0x03          // munlock(), munlockall()
 /* REFERENCE: <kern/perm.h> */
-#define MEM_GETPERM      0x03
-#define MEM_SETPERM      0x04
+#define MEM_GETPERM       0x04
+#define MEM_SETPERM       0x05
 
 struct sysmemreg {
     struct perm  perm;		// permission structure

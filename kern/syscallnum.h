@@ -45,11 +45,11 @@
 #define SYS_MQINIT    39
 #define SYS_MQSEND    40
 #define SYS_MQRECV    41
-#define SYS_MQOP      42
+#define SYS_MQCTL     42
 #define SYS_EVREG     43
 #define SYS_EVSEND    44
 #define SYS_EVRECV    45
-#define SYS_EVOP      46
+#define SYS_EVCTL     46
 
 #define NSYSCALL      45
 

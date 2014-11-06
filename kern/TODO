@@ -11,7 +11,8 @@ acute things
 - implement virtual filesystem (VFS)
 - implement filesystems such as UFS2 and/or BeFS
 - fix Soundblaster 16 and AC97 audio drivers... =)
-
+- umap(struct sysmemreg *reg, long flg)
+  - share kernel memory with user applications
 future things
 -------------
 - terminal/TTY driver
