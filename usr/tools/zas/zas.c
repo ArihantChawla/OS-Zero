@@ -1004,11 +1004,7 @@ zasprocvalue(struct zastoken *token, zasmemadr_t adr,
              zasmemadr_t *retadr)
 {
     zasmemadr_t      ret = adr + token->data.value.size;
-#if (ZVMVIRTMEM)
-    uint8_t         *valptr = zvmvtophys(adr);
-#else
-    uint8_t         *valptr = &zvm.physmem[adr];
-#endif
+    uint8_t         *valptr = zvmadrtoptr(adr);
     struct zastoken *retval;
 
     switch (token->data.value.size) {
@@ -1070,11 +1066,7 @@ static struct zastoken *
 zasprocchar(struct zastoken *token, zasmemadr_t adr,
             zasmemadr_t *retadr)
 {
-#if (ZVMVIRTMEM)
-    uint8_t         *valptr = zvmvtophys(adr);
-#else
-    uint8_t         *valptr = &zvm.physmem[adr];
-#endif
+    uint8_t         *valptr = zvmadrtoptr(adr);
     struct zastoken *retval;
     
     *valptr = token->data.ch;
@@ -1137,11 +1129,7 @@ zasprocspace(struct zastoken *token, zasmemadr_t adr,
         spcadr = token1->data.value.val;
         token2 = token1->next;
         if ((token2) && token2->type == ZASTOKENVALUE) {
-#if  (ZVMVIRTMEM)
-            ptr = zvmvtophys(spcadr);
-#else
-            ptr = &zvm.physmem[spcadr];
-#endif
+            ptr = zvmadrtoptr(spcadr);
             val = token2->data.value.val;
             while (adr < spcadr) {
                 ptr[0] = val;
@@ -1174,11 +1162,7 @@ zasprocorg(struct zastoken *token, zasmemadr_t adr,
     
     token1 = token->next;
     if ((token1) && token1->type == ZASTOKENVALUE) {
-#if (ZVMVIRTMEM)
-        ptr = zvmvtophys(adr);
-#else
-        ptr = &zvm.physmem[adr];
-#endif
+        ptr = zvmadrtoptr(adr);
         orgadr = token1->data.value.val;
         val = token1->data.value.val;
         while (adr < orgadr) {
@@ -1223,11 +1207,7 @@ zasprocasciz(struct zastoken *token, zasmemadr_t adr,
 
     token1 = token->next;
     while ((token1) && token1->type == ZASTOKENSTRING) {
-#if (ZVMVIRTMEM)
-        ptr = zvmvtophys(adr);
-#else
-        ptr = &zvm.physmem[adr];
-#endif
+        ptr = zvmadrtoptr(adr);
         str = token1->data.str;
         while ((*str) && *str != '\"') {
             if (*str == '\\') {

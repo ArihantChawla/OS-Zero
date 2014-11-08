@@ -112,7 +112,7 @@ void            * zvmsigsegv(zasmemadr_t adr, long reason);
      : _zvmwritemem(adr, t, val))
 /* memory read and write macros */
 #if (ZVMVIRTMEM)
-#define zvmvtophys(adr)                                                 \
+#define zvmadrtoptr(adr)                                                \
     (((!zvm.pagetab[zvmpagenum(adr)])                                   \
       ? NULL                                                            \
       : &zvm.pagetab[zvmpagenum(adr)][zvmpageofs(adr)]))
@@ -133,6 +133,8 @@ void            * zvmsigsegv(zasmemadr_t adr, long reason);
          ? zvmsigbus(adr, t)                                            \
          : *(t *)(zvm.pagetab[zvmpagenum(adr)][zvmpageofs(t)]) = (val)))
 #else /* !ZVMVIRTMEM */
+#define zvmadrtoptr(adr)                                                \
+    (&zvm.physmem[(adr)])
 #define _zvmreadmem(adr, t)                                             \
     (((adr) >= ZVMMEMSIZE)                                              \
      ? zvmsigsegv(adr, ZVMMEMREAD)                                      \
