@@ -1004,7 +1004,11 @@ zasprocvalue(struct zastoken *token, zasmemadr_t adr,
              zasmemadr_t *retadr)
 {
     zasmemadr_t      ret = adr + token->data.value.size;
+#if (ZVMVIRTMEM)
+    uint8_t         *valptr = zvmvtophys(adr);
+#else
     uint8_t         *valptr = &zvm.physmem[adr];
+#endif
     struct zastoken *retval;
 
     switch (token->data.value.size) {

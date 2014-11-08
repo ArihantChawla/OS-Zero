@@ -112,6 +112,10 @@ void            * zvmsigsegv(zasmemadr_t adr, long reason);
      : _zvmwritemem(adr, t, val))
 /* memory read and write macros */
 #if (ZVMVIRTMEM)
+#define zvmvtophys(adr)                                                 \
+    (((!zvm.pagetab[zvmpagenum(adr)])                                   \
+      ? NULL                                                            \
+      : &zvm.pagetab[zvmpagenum(adr)][zvmpageofs(adr)]))
 #define _zvmpagenum(adr)                                                \
     ((adr) >> ZVMPAGESIZELOG2)
 #define _zvmpageofs(adr)                                                \
