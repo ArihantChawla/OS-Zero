@@ -1070,10 +1070,10 @@ static struct zastoken *
 zasprocchar(struct zastoken *token, zasmemadr_t adr,
             zasmemadr_t *retadr)
 {
-#if (ZVM)
+#if (ZVMVIRTMEM)
+    uint8_t         *valptr = zvmvtophys(adr);
+#else
     uint8_t         *valptr = &zvm.physmem[adr];
-#elif (WPM)
-    uint8_t         *valptr = &physmem[adr];
 #endif
     struct zastoken *retval;
     
@@ -1137,10 +1137,10 @@ zasprocspace(struct zastoken *token, zasmemadr_t adr,
         spcadr = token1->data.value.val;
         token2 = token1->next;
         if ((token2) && token2->type == ZASTOKENVALUE) {
-#if (ZVM)            
+#if  (ZVMVIRTMEM)
+            ptr = zvmvtophys(spcadr);
+#else
             ptr = &zvm.physmem[spcadr];
-#elif (WPM)
-            ptr = &physmem[spcadr];
 #endif
             val = token2->data.value.val;
             while (adr < spcadr) {
@@ -1174,10 +1174,10 @@ zasprocorg(struct zastoken *token, zasmemadr_t adr,
     
     token1 = token->next;
     if ((token1) && token1->type == ZASTOKENVALUE) {
-#if (ZVM)
+#if (ZVMVIRTMEM)
+        ptr = zvmvtophys(adr);
+#else
         ptr = &zvm.physmem[adr];
-#elif (WPM)
-        ptr = &physmem[adr];
 #endif
         orgadr = token1->data.value.val;
         val = token1->data.value.val;
@@ -1223,10 +1223,10 @@ zasprocasciz(struct zastoken *token, zasmemadr_t adr,
 
     token1 = token->next;
     while ((token1) && token1->type == ZASTOKENSTRING) {
-#if (ZVM)
+#if (ZVMVIRTMEM)
+        ptr = zvmvtophys(adr);
+#else
         ptr = &zvm.physmem[adr];
-#elif (WPM)
-        ptr = &physmem[adr];
 #endif
         str = token1->data.str;
         while ((*str) && *str != '\"') {
