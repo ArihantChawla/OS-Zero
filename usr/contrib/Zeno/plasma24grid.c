@@ -6,6 +6,15 @@
  *
  * gcc -O3 -lm -lSDL filename.c
  */
+
+#if (__KERNEL__)
+#define PLASMADOUBLEBUF 1
+#if (PLASMADOUBLEBUF)
+#include <kern/util.h>
+void plasmasync(void);
+#endif
+#endif
+
 #if (!__KERNEL__)
 #include <SDL/SDL.h>
 #include <SDL/SDL_main.h>
@@ -62,6 +71,9 @@
 #define PLASMAFPS  25
 
 uint8_t *plasmafb;
+#if (PLASMADOUBLEBUF)
+uint8_t *plasmabuf;
+#endif
 
 #else
 
@@ -118,6 +130,9 @@ void
 plasmainit(void)
 {
     plasmafb = vbescreen.fbuf;
+#if (PLASMADOUBLEBUF)
+    plasmabuf = kcalloc(INTER_WIDTH * INTER_HEIGHT * 3 * sizeof(uint8_t));
+#endif
     vbeclrscr(RGBBLACK);
     __asm__ __volatile__ ("finit\n");
     init();
@@ -134,6 +149,9 @@ plasmaloop(void)
     plasmainit();
     for (ndx = 0 ; ndx < nfrm ; ndx++) {
         plasmadraw();
+#if (PLASMADOUBLEBUF)
+        plasmasync();
+#endif
 //        pitsleep((1000 / 2) / PLASMAFPS, NULL);
 //        k_waitint();
     }
@@ -331,7 +349,11 @@ void drawPlasma(SDL_Surface *surface)
     int         p3_palettePos = OFFSET_MAG;
         
 #if (__KERNEL__)
+#if (PLASMADOUBLEBUF)
+    uint8_t *dest = plasmabuf;
+#else
     uint8_t *dest = plasmafb;
+#endif
 #else
     uint32_t *dest = surface->pixels;
 #endif
@@ -433,6 +455,17 @@ void drawPlasma(SDL_Surface *surface)
     p3_yoff += 89;
     
 }
+
+#if (__KERNEL__) && (PLASMADOUBLEBUF)
+void
+plasmasync(void)
+{
+    kmemcpy(plasmafb, plasmabuf,
+            INTER_WIDTH * INTER_HEIGHT * 3 * sizeof(uint8_t));
+
+    return;
+}
+#endif
 
 #ifndef NOLOGO
 void drawLogo(SDL_Surface *surface, const SDL_Surface *logo)
