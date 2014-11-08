@@ -7,7 +7,14 @@
 #include <zero/trix.h>
 
 struct zasop  zvminsttab[ZVMNOP];
+#if (ZVMMULTITAB)
 struct zasop *zvmoptab[ZVMNOP];
+#else
+struct zasop *zvmophash[ZASNHASH];
+#endif
+
+#if (ZVMMULTITAB)
+
 /*
  * operation info structure addresses are stored in a multilevel table
  * - the top level table is indexed with the first byte of mnemonic and so on
@@ -31,7 +38,7 @@ asmaddop(const uint8_t *str, struct zasop *op)
         pptr = ptr;
     }
     if (key) {
-        while (key) {
+        while (key && !isspace(key)) {
             len++;
             ptr = pptr->tab;
             if (!ptr) {
@@ -62,7 +69,7 @@ asmfindop(const uint8_t *str)
     struct zasop *ptr = zvmoptab[key];
 
     if (key) {
-        while (key) {   
+        while (key && !isspace(*str)) {   
             if (!*str) {
         
                 return ptr;
@@ -80,6 +87,49 @@ asmfindop(const uint8_t *str)
     
     return NULL;
 }
+
+#else
+
+long
+asmaddop(const uint8_t *str, struct zasop *op)
+{
+//    uint8_t       *str = (uint8_t *)op->name;
+    unsigned long key = 0;
+    long          len = 0;
+
+    while (isalpha(*str)) {
+        key += *str++;
+        len++;
+    }
+//    op->namelen = len;
+    op->len = len;
+    key &= (ZASNHASH - 1);
+    op->next = zvmophash[key];
+    zvmophash[key] = op;
+
+    return len;
+}
+
+struct zasop *
+asmfindop(uint8_t *name)
+{
+    struct zasop  *op = NULL;
+    uint8_t       *str = name;
+    unsigned long  key = 0;
+
+    while ((*str) && isalpha(*str)) {
+        key += *str++;
+    }
+    key &= (ZASNHASH - 1);
+    op = zvmophash[key];
+    while ((op) && strncmp((char *)op->name, (char *)name, op->len)) {
+        op = op->next;
+    }
+
+    return op;
+}
+
+#endif /* ZVMMULTITAB */
 
 zasuword_t
 asmgetreg(uint8_t *str, zasword_t *retsize, uint8_t **retptr)

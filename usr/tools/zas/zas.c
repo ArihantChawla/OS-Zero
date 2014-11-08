@@ -65,15 +65,15 @@ zastokfunc_t *zasktokfunctab[ZASNTOKEN]
     zasprocvalue,
     zasproclabel,
     asmprocinst,
-    NULL,               // ZASARGREG
-    NULL,               // ZASARGVAREG
-    NULL,               // ZASARGVLREG
-    NULL,               // ZASARGSYM
+    NULL,               // ZASTOKENREG
+    NULL,               // ZASTOKENVAREG
+    NULL,               // ZASTOKENVLREG
+    NULL,               // ZASTOKENSYM
     zasprocchar,
-    NULL,               // ZASARGIMMED
-    NULL,               // ZASARGINDIR
-    NULL,               // ZASARGADR
-    NULL,               // ZASARGINDEX
+    NULL,               // ZASTOKENIMMED
+    NULL,               // ZASTOKENINDIR
+    NULL,               // ZASTOKENADR
+    NULL,               // ZASTOKENINDEX
     zasprocdata,
     zasprocglobl,
     zasprocspace,

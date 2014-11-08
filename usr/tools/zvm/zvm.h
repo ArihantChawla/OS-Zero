@@ -94,7 +94,7 @@ extern struct zvm    zvm;
 /* function prototypes */
 void              zvminit(void);
 size_t            zvminitmem(void);
-struct zasop    * asmaddop(const uint8_t *str, struct zasop *op);
+long              asmaddop(const uint8_t *str, struct zasop *op);
 struct zasop    * zvmfindasm(const uint8_t *str);
 struct zastoken * zasprocinst(struct zastoken *token, zasmemadr_t adr,
                               zasmemadr_t *retadr);

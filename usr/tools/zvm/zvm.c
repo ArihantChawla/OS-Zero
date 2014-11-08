@@ -77,7 +77,7 @@ zvminitasm(void)
     zvminitasmop(ZVMOPSTACK, ZVMOPPUSHA, (uint8_t *)"pusha", 0, zvmoppush);
     /* load/store */
     zvminitasmop(ZVMOPMOV, ZVMOPMOVL, (uint8_t *)"mov", 2, zvmopmovl);
-    zvminitasmop(ZVMOPMOV, ZVMOPMOVL, (uint8_t *)"movl", 2, zvmopmovl);
+//    zvminitasmop(ZVMOPMOV, ZVMOPMOVL, (uint8_t *)"movl", 2, zvmopmovl);
     zvminitasmop(ZVMOPMOV, ZVMOPMOVB, (uint8_t *)"movb", 2, zvmopmovb);
     zvminitasmop(ZVMOPMOV, ZVMOPMOVW, (uint8_t *)"movw", 2, zvmopmovw);
 #if (!ZAS32BIT)
@@ -112,7 +112,7 @@ zvminitasm(void)
 #if (!ZAS32BIT)
     zvminitasmop(ZVMOPIO, ZVMOUTQ, (uint8_t *)"outq", 2, zvmopoutq);
 #endif
-#endif
+#endif /* 0 */
     
     return;
 };
@@ -124,7 +124,9 @@ zvminit(void)
     
     memsize = zvminitmem();
     zvminitasm();
+#if (!ZVMVIRTMEM)
     zvm.sp = memsize;
+#endif
     zvm.pc = ZASTEXTBASE;
 }
 
@@ -198,7 +200,7 @@ zvmloop(zasmemadr_t _startadr)
     fprintf(stderr, "\n");
     fprintf(stderr, "registers\n");
     fprintf(stderr, "---------\n");
-    for (i = 0 ; i < NREG ; i++) {
+    for (i = 0 ; i < ZASNREG ; i++) {
         fprintf(stderr, "r%d:\t%x\n", i, zvm.regs[i]);
     }
 #endif
@@ -220,7 +222,11 @@ zvmmain(int argc, char *argv[])
 
         exit(1);
     }
+    zasinit(NULL, NULL);
+    zvminit();
+#if (!ZVMVIRTMEM)
     memset(zvm.physmem, 0, ZASTEXTBASE);
+#endif
 #if (ZASPROF)
     profstartclk(clk);
 #endif
@@ -259,9 +265,6 @@ zvmmain(int argc, char *argv[])
 int
 main(int argc, char *argv[])
 {
-    zasinit(NULL, NULL);
-    zvminit();
-
     exit(zvmmain(argc, argv));
 }
 
