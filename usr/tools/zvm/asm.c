@@ -23,7 +23,7 @@ asmaddop(const uint8_t *str, struct zasop *op)
     if (!pptr) {
         ptr = calloc(sizeof(struct zasopinfo), ZVMNOP);
         if (!ptr) {
-            fprintf(stderr, "failed to allocate operation info\n");
+            fprintf(stderr, "failed to allocate operation table\n");
             
             return NULL;
         }
@@ -37,7 +37,7 @@ asmaddop(const uint8_t *str, struct zasop *op)
             if (!ptr) {
                 ptr = calloc(sizeof(struct zasopinfo), ZVMNOP);
                 if (!ptr) {
-                    fprintf(stderr, "failed to allocate operation info\n");
+                    fprintf(stderr, "failed to allocate operation table\n");
             
                     return NULL;
                 }
@@ -82,13 +82,54 @@ asmfindop(const uint8_t *str)
 }
 
 zasuword_t
-asmgetreg(uint8_t *str, uint8_t **retptr)
+asmgetreg(uint8_t *str, zasword_t *retsize, uint8_t **retptr)
 {
     zasuword_t reg = 0;
+    zasword_t  size = 0;
     
 #if (ZASDEBUG)
     fprintf(stderr, "getreg: %s\n", str);
 #endif
+#if (ZASNEWHACKS)
+    if (*str == 'r') {
+        str++;
+#if (ZAS32BIT)
+        size = 4;
+#else
+        size = 8;
+#endif
+    } else if (*str == 'b') {
+        str++;
+        size = 1;
+    } else if (*str == 'w') {
+        str++;
+        size = 2;
+    } else if (*str == 'l') {
+        str++;
+        size = 4;
+#if (!ZAS32BIT)
+    } else if (*str == 'q') {
+        str++;
+        size = 8;
+#endif
+    }
+    if (size) {
+        while ((*str) && isdigit(*str)) {
+            reg *= 10;
+            reg += *str - '0';
+            str++;
+        }
+        while (*str == ')' || *str == ',') {
+            str++;
+        }
+        *retsize = size;
+        *retptr = str;
+    } else {
+        fprintf(stderr, "invalid register name %s\n", str);
+        
+        exit(1);
+    }
+#else
     if (*str == 'r') {
         str++;
         while ((*str) && isdigit(*str)) {
@@ -105,6 +146,7 @@ asmgetreg(uint8_t *str, uint8_t **retptr)
         
         exit(1);
     }
+#endif
 #if (WPMVEC)
     reg |= flg;
 #endif

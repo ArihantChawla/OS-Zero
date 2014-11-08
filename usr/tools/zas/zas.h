@@ -24,6 +24,8 @@ typedef uint64_t  zassize_t;
 #define zasputmemt(adr, t, val) zvmputmemt(adr, t, val)
 #endif
 
+#define ZASRESOLVE     (~((zasword_t)0))
+
 #define ZASTOKENVALUE  0x01
 #define ZASTOKENLABEL  0x02
 #define ZASTOKENINST   0x03
@@ -125,6 +127,9 @@ struct zastoken {
     struct zastoken     *next;
     unsigned long        type;
     zasword_t            val;
+#if (ZASNEWHACKS)
+    zasword_t            size;
+#endif
     zasword_t            unit;
 #if (WPMVEC)
     uint32_t             opflg;

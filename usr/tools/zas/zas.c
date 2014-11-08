@@ -24,7 +24,8 @@
 
 extern struct zasop *    asmfindop(const uint8_t *str);
     
-extern zasuword_t        asmgetreg(uint8_t *str, uint8_t **retptr);
+extern zasuword_t        asmgetreg(uint8_t *str, zasword_t *retsize,
+                                   uint8_t **retptr);
 static uint8_t         * zasgetlabel(uint8_t *str, uint8_t **retptr);
 static struct zasop    * zasgetinst(uint8_t *str, uint8_t **retptr);
 static uint8_t         * zasgetsym(uint8_t *str, uint8_t **retptr);
@@ -566,6 +567,9 @@ zasgetindex(uint8_t *str, zasword_t *retndx, uint8_t **retptr)
     zasuword_t reg = 0xff;
     zasword_t  val = 0;
     zasword_t  ndx = 0;
+#if (ZASNEWHACKS)
+    zasword_t  size = 0;
+#endif
     long       neg = 0;
 
 #if (ZASDEBUG)
@@ -618,7 +622,7 @@ zasgetindex(uint8_t *str, zasword_t *retndx, uint8_t **retptr)
         if (*str == '%') {
             str++;
         }
-        reg = asmgetreg(str, &str);
+        reg = asmgetreg(str, &size, &str);
 #if 0
         if (reg >= ZASNREG) {
             fprintf(stderr, "invalid register name %s\n", str);
@@ -628,6 +632,11 @@ zasgetindex(uint8_t *str, zasword_t *retndx, uint8_t **retptr)
 #endif
         *retptr = str;
     }
+#if (ZASNEWHACKS)
+    if (size) {
+        val &= (1L << (CHAR_BIT * size)) - 1;
+    }
+#endif
     if (neg) {
         val = -val;
     }
@@ -726,8 +735,8 @@ zasgettoken(uint8_t *str, uint8_t **retptr)
     struct zastoken *token2;
     struct zasop    *op = NULL;
     uint8_t         *name = str;
-    zasword_t        val = ~((zasword_t)0);
-    long             size = 0;
+    zasword_t        val = ZASRESOLVE;
+    zasword_t        size = 0;
     zasword_t        ndx;
     int              ch;
 #if (ZASDB)
@@ -807,7 +816,7 @@ zasgettoken(uint8_t *str, uint8_t **retptr)
         }
     } else if ((*str) && *str == '%') {
         str++;
-        val = asmgetreg(str, &str);
+        val = asmgetreg(str, &size, &str);
 #if (ZASVEC)
         if (val & ZASREGVA) {
             token1->type = ZASTOKENVAREG;
@@ -820,13 +829,16 @@ zasgettoken(uint8_t *str, uint8_t **retptr)
 #else
         token1->type = ZASTOKENREG;
 #endif
+#if (ZASNEWHACKS)
+        token1->size = size;
+#endif
         token1->data.reg = val;
     } else if ((*str) && (isalpha(*str) || *str == '_')) {
         name = zasgetlabel(str, &str);
         if (name) {
             token1->type = ZASTOKENLABEL;
             token1->data.label.name = name;
-            token1->data.label.adr = ~((zasword_t)0);
+            token1->data.label.adr = ZASRESOLVE;
         } else {
 #if (ZASDB)
             ptr = str;
@@ -868,14 +880,14 @@ zasgettoken(uint8_t *str, uint8_t **retptr)
                 if (name) {
                     token1->type = ZASTOKENSYM;
                     token1->data.sym.name = name;
-                    token1->data.sym.adr = ~((zasword_t)0);
+                    token1->data.sym.adr = ZASRESOLVE;
                 }
                 if (!name) {
                     name = zasgetadr(str, &str);
                     if (name) {
                         token1->type = ZASTOKENSYM;
                         token1->data.sym.name = name;
-                        token1->data.sym.adr = ~((zasword_t)0);
+                        token1->data.sym.adr = ZASRESOLVE;
                     } else {
                         fprintf(stderr, "invalid token %s\n", zaslinebuf);
                         
@@ -898,7 +910,7 @@ zasgettoken(uint8_t *str, uint8_t **retptr)
                 if (name) {
                     token1->type = ZASTOKENADR;
                     token1->data.adr.name = name;
-                    token1->data.adr.val = ~((zasword_t)0);
+                    token1->data.adr.val = ZASRESOLVE;
                 } else {
                     fprintf(stderr, "invalid token %s\n", zaslinebuf);
                     
@@ -960,7 +972,7 @@ zasgettoken(uint8_t *str, uint8_t **retptr)
         token2 = malloc(sizeof(struct zastoken));
         if (*str == '%') {
             str++;
-            val = asmgetreg(str, &str);
+            val = asmgetreg(str, &size, &str);
 #if (ZASVEC)
             if (val & ZASREGVA) {
                 token2->type = ZASTOKENVAREG;
@@ -972,6 +984,9 @@ zasgettoken(uint8_t *str, uint8_t **retptr)
             val &= 0xff;
 #else
             token2->type = ZASTOKENREG;
+#endif
+#if (ZASNEWHACKS)
+            token2->size = size;
 #endif
             token2->data.reg = ZASREGINDIR | val;
             zasqueuetoken(token1);
@@ -1304,14 +1319,14 @@ zasresolve(zasmemadr_t base)
     struct zaslabel  *label;
 
     while (sym) {
-        if (sym->adr == ~((zasword_t)0)) {
+        if (sym->adr == ZASRESOLVE) {
             fprintf(stderr, "unresolved symbol %s\n", sym->name);
 
             exit(1);
         }
         item = zasfindsym(sym->name);
         if (item) {
-            if (item->adr == ~((zasword_t)0)) {
+            if (item->adr == ZASRESOLVE) {
                 fprintf(stderr, "invalid symbol %s\n", item->name);
 
                 exit(1);

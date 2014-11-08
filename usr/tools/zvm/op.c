@@ -230,9 +230,13 @@ zvmopadd(struct zvmopcode *op)
     dest += src;
     zvm.msw &= ~(ZVMZF | ZVMOF | ZVMCF);
     zvmsetzf(dest);
+#if (ZAS32BIT)
     if (res & INT64_C(0xffffffff00000000)) {
         zvm.msw |= ZVMOF;
     }
+#else
+#error fix integer overflow detection in zvmopadd
+#endif
     *dptr = dest;
     zvm.pc += op->size << 2;
 
@@ -293,9 +297,13 @@ zvmopmul(struct zvmopcode *op)
     dest *= src;
     zvm.msw &= ~(ZVMZF | ZVMOF | ZVMCF);
     zvmsetzf(dest);
+#if (ZAS32BIT)
     if (res & INT64_C(0xffffffff00000000)) {
         zvm.msw |= ZVMOF;
     }
+#else
+#error fix integer overflow detection in zvmopmul
+#endif
     *dptr = dest;
     zvm.pc += op->size << 2;
 
