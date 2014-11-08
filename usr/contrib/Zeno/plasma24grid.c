@@ -7,6 +7,11 @@
  * gcc -O3 -lm -lSDL filename.c
  */
 
+/*
+ * Tuomo "vendu" Venäläinen
+ * - hacks to make it run with zero kernel using graphics framebuffer
+ */
+
 #if (__KERNEL__)
 #define PLASMADOUBLEBUF 0
 #if (PLASMADOUBLEBUF)
