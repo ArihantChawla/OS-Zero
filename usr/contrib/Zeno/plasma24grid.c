@@ -8,7 +8,7 @@
  */
 
 #if (__KERNEL__)
-#define PLASMADOUBLEBUF 1
+#define PLASMADOUBLEBUF 0
 #if (PLASMADOUBLEBUF)
 #include <kern/util.h>
 void plasmasync(void);
@@ -155,6 +155,9 @@ plasmaloop(void)
 //        pitsleep((1000 / 2) / PLASMAFPS, NULL);
 //        k_waitint();
     }
+#if (__KERNEL__) && (PLASMADOUBLEBUF)
+//    kfree(plasmabuf);
+#endif
 }
 
 #else
