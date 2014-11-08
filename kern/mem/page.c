@@ -134,6 +134,7 @@ pagefree(void *adr)
     unsigned long  id;
     struct page   *pg;
 
+    vmflushtlb(adr);
     /* free physical page */
 //    mtxlk(&vmphysq.lk);
     id = (uintptr_t)adr >> PAGESIZELOG2;

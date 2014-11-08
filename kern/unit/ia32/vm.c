@@ -199,6 +199,10 @@ vmfreephys(void *virt, uint32_t size)
     while (n--) {
         adr = *pte;
         adr &= PFPAGEMASK;
+        if (!adr) {
+
+            continue;
+        }
         if (*pte & PAGEBUF) {
 #if 0
             buf = &vmbuftab[vmbufid(adr)];
@@ -210,20 +214,17 @@ vmfreephys(void *virt, uint32_t size)
 #endif
         } else if (*pte & PAGESWAPPED) {
 //            swapfree(adr);
-        } else if (adr) {
-//            kprintf("PHYSFREE: %lx\n", (long)adr);
-            if (!(*pte & PAGEWIRED)) {
+        } else if (!(*pte & PAGEWIRED)) {
 #if 0
-                pg = pagefind(adr);
-                pagerm(pg);
+            pg = pagefind(adr);
+            pagerm(pg);
 #endif
-                vmpagestat.nmapped++;
-            } else {
+            vmpagestat.nmapped++;
+        } else {
 //                kprintf("UNWIRE\n");
-                vmpagestat.nwired++;
-            }
-            pagefree((void *)adr);
+            vmpagestat.nwired++;
         }
+        pagefree((void *)adr);
         *pte = 0;
         pte++;
     }

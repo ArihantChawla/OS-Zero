@@ -161,7 +161,7 @@ plasmaloop(void)
 //        k_waitint();
     }
 #if (__KERNEL__) && (PLASMADOUBLEBUF)
-//    kfree(plasmabuf);
+    kfree(plasmabuf);
 #endif
 }
 

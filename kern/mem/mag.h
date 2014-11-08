@@ -37,7 +37,9 @@ struct maghdr {
     ((void *)((uintptr_t)(ptr) & ~(SLABMIN - 1)))
 #endif
 #define maggethdr(ptr, zone)                                            \
-    (!(ptr) ? NULL : (struct maghdr *)((zone)->hdrtab) + magblknum(ptr, zone))
+    (!(ptr)                                                             \
+     ? NULL                                                             \
+     : (struct maghdr *)((zone)->hdrtab) + magblknum(ptr, zone))
 
 #endif /* __MEM_MAG_H__ */
 

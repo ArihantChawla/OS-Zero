@@ -152,7 +152,7 @@ kfree(void *ptr)
     unsigned long    ndx;
     unsigned long    freed = 0;
 
-    if (!ptr || mag >= (struct maghdr *)magzone->hdrtab + magzone->nhdr) {
+    if (!ptr) {
 
         return;
     }
