@@ -43,6 +43,10 @@
 #define ZVMCF           0x04 // carry
 #define ZVMIF           0x08 // interrupt pending
 
+/* memory operation failure codes */
+#define ZVMMEMREAD      0
+#define ZVMMEMWRITE     1
+
 /*
  * - unit
  * - operation code (within unit)
@@ -80,54 +84,60 @@ struct zvm {
 #endif
 };
 
-#if (ZVMVIRTMEM)
-#define zvmpagenum(adr)                                                 \
-    ((adr) >> ZVMPAGESIZELOG2)
-#define zvmreadmem(adr, t)                                              \
-    (
-#else
-#define zvmreadmem(adr, t)                                              \
-    (*(t *)&zvm.physmem[(adr)])
-#endif
-#define zvmgetmem(adr)                                                  \
-    ((adr) & (sizeof(zasword_t) - 1)                                    \
-     ? zvmsigbus(adr, sizeof(zasword_t))                                \
-     : zvmreadmem(adr, zasword_t))
-#define zvmgetmemt(adr, t)                                              \
-    ((adr) & (sizeof(t) - 1)                                            \
-     ? zvmsigbus(adr, sizeof(t))                                        \
-     : zvmreadmem(adr, t))
-#if 0
-#define zvmgetmemb(adr)                                                 \
-    zvmreadmem(adr, int8_t))
-#define zvmgetmemw(adr)                                                 \
-    ((adr) & (sizeof(int16_t) - 1)                                      \
-     ? zvmsigbus(adr, sizeof(int16_t))                                  \
-     : zvmreadmem(adr, int16_t))
-#define zvmgetmeml(adr)                                                 \
-    ((adr) & (sizeof(int32_t) - 1)                                      \
-     ? zvmsigbus(adr, sizeof(int32_t))                                  \
-     : zvmreadmem(adr, int32_t))
-#define zvmgetmemq(adr)                                                 \
-    ((adr) & (sizeof(int64_t) - 1)                                      \
-     ? zvmsigbus(adr, sizeof(int64_t))                                  \
-     : zvmreadmem(adr, int64_t))
-#endif
-
+/* external declarations */
 extern struct zasop  zvminsttab[ZVMNOP];
 extern struct zasop *zvmoptab[ZVMNOP];
 extern const char   *zvmopnametab[ZVMNOP];
 extern const char   *zvmopnargtab[ZVMNOP];
 extern struct zvm    zvm;
 
+/* function prototypes */
 void              zvminit(void);
 size_t            zvminitmem(void);
 struct zasop    * asmaddop(const uint8_t *str, struct zasop *op);
 struct zasop    * zvmfindasm(const uint8_t *str);
 struct zastoken * zasprocinst(struct zastoken *token, zasmemadr_t adr,
                               zasmemadr_t *retadr);
+void            * zvmsigbus(zasmemadr_t adr, long size);
+void            * zvmsigsegv(zasmemadr_t adr, long reason);
 
-void            * zvmsigbus(zasmemadr_t adr, size_t size);
+/* memory fetch and store macros */
+#define zvmgetmemt(adr, t)                                              \
+    (((adr) & (sizeof(t) - 1))                                          \
+     ? zvmsigbus(adr, sizeof(t))                                        \
+     : _zvmreadmem(adr, t))
+#define zvmputmemt(adr, t, val)                                         \
+    (((adr) & (sizeof(t) - 1))                                          \
+     ? zvmsigbus(adr, sizeof(t))                                        \
+     : _zvmwritemem(adr, t, val))
+/* memory read and write macros */
+#if (ZVMVIRTMEM)
+#define _zvmpagenum(adr)                                                \
+    ((adr) >> ZVMPAGESIZELOG2)
+#define _zvmpageofs(adr)                                                \
+    ((adr) & (ZVMPAGESIZE - 1))
+#define _zvmreadmem(adr, t)                                             \
+    (!(zvm.pagetab[zvmpagenum(adr)])                                    \
+     ? zvmsigsegv(adr, ZVMMEMREAD)                                      \
+     : (((zvmpageofs(adr) & (sizeof(t) - 1))                            \
+         ? zvmsigbus(adr, t)                                            \
+         : *(t *)zvm.pagetab[zvmpagenum(adr)][zvmpageofs(t)])))
+#define _zvmwritemem(adr, t, val)                                       \
+    (!(zvm.pagetab[zvmpagenum(adr)])                                    \
+     ? zvmsigsegv(adr, ZVMMEMREAD)                                      \
+     : (((zvmpageofs(adr) & (sizeof(t) - 1))                            \
+         ? zvmsigbus(adr, t)                                            \
+         : *(t *)(zvm.pagetab[zvmpagenum(adr)][zvmpageofs(t)]) = (val)))
+#else /* !ZVMVIRTMEM */
+#define _zvmreadmem(adr, t)                                             \
+    (((adr) >= ZVMMEMSIZE)                                              \
+     ? zvmsigsegv(adr, ZVMMEMREAD)                                      \
+     : *(t *)&zvm.physmem[(adr)]))
+#define _zvmwritemem(adr, t, val)                                       \
+    (((adr) >= ZVMMEMSIZE)                                              \
+     ? (t)zvmsigsegv(adr, ZVMMEMWRITE)                                  \
+     : *(t *)&zvm.physmem[(adr)] = (t)(val))
+#endif
 
 #endif /* __ZVM_ZVM_H__ */
 

@@ -119,14 +119,18 @@ zasprinttoken(struct zastoken *token)
             fprintf(stderr, "register r%1lx\n", (long)token->data.ndx.reg);
 
             break;
+#if (ZASVEC)
+            /* vector address register */
         case ZASTOKENVAREG:
             fprintf(stderr, "address register va%1lx\n", (long)token->data.ndx.reg);
 
             break;
+            /* vector length register */
         case ZASTOKENVLREG:
             fprintf(stderr, "length register vl%1lx\n", (long)token->data.ndx.reg);
 
             break;
+#endif
         case ZASTOKENSYM:
             fprintf(stderr, "symbol %s (adr == 0x%08lx)\n",
                     token->data.sym.name, (long)token->data.sym.adr);
@@ -1000,11 +1004,7 @@ zasprocvalue(struct zastoken *token, zasmemadr_t adr,
              zasmemadr_t *retadr)
 {
     zasmemadr_t      ret = adr + token->data.value.size;
-#if (ZVM)
     uint8_t         *valptr = &zvm.physmem[adr];
-#elif (WPM)
-    uint8_t         *valptr = &physmem[adr];
-#endif
     struct zastoken *retval;
 
     switch (token->data.value.size) {

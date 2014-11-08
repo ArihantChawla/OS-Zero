@@ -144,7 +144,7 @@ zvmloop(zasmemadr_t _startadr)
     fprintf(stderr, "memory\n");
     fprintf(stderr, "------\n");
     for (i = ZASTEXTBASE ; i < ZASTEXTBASE + 256 ; i++) {
-        fprintf(stderr, "%02x ", zvmgetmemb(i);
+        fprintf(stderr, "%02x ", zvmgetmemt(i, int8_t);
     }
     fprintf(stderr, "\n");
     fprintf(stderr, "registers\n");
@@ -159,13 +159,13 @@ zvmloop(zasmemadr_t _startadr)
 //    free(cpustat);
     while (!zvm.shutdown) {
 //        op = (struct zvmopcode *)&zvm.physmem[zvm.pc];
-        op = zvmgetmemt(zvm.pc, struct zvmopcode *);
+        op = (struct zvmopcode *)&zvm.physmem[zvm.pc];
         if (op->inst == ZVMOPNOP) {
             zvm.pc += sizeof(struct zvmopcode);
         } else {
 //            zvm.cpustat.pc = rounduppow2(zvm.pc, sizeof(zasword_t));
 //            op = (struct zvmopcode *)&zvm.physmem[zvm.pc];
-            op = zvmgetmemt(zvm.pc, struct zvmopcode *);
+//            op = &zvm.physmem[zvm.pc];
             func = zvmfunctab[op->inst];
 #if (ZVMTRACE)
             zvmprintop(op);
@@ -193,7 +193,7 @@ zvmloop(zasmemadr_t _startadr)
     fprintf(stderr, "memory\n");
     fprintf(stderr, "------\n");
     for (i = ZASTEXTBASE ; i < ZASTEXTBASE + 256 ; i++) {
-        fprintf(stderr, "%02x ", zasgetmemb(i));
+        fprintf(stderr, "%02x ", zasgetmemt(i, int8_t));
     }
     fprintf(stderr, "\n");
     fprintf(stderr, "registers\n");

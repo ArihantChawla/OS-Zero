@@ -19,22 +19,19 @@ typedef uint64_t  zasuword_t;
 typedef uint64_t  zassize_t;
 #endif
 
-#if 0
 #if (ZVM)
-#include <zvm/zvm.h>
-#elif (WPM)
-#include <wpm/wpm.h>
-#elif (ZEN)
-#include <zpu/zpu.h>
-#endif
+#define zasgetmemt(adr, t, val) zvmgetmemt(adr, t, val)
+#define zasputmemt(adr, t, val) zvmputmemt(adr, t, val)
 #endif
 
 #define ZASTOKENVALUE  0x01
 #define ZASTOKENLABEL  0x02
 #define ZASTOKENINST   0x03
 #define ZASTOKENREG    0x04
+#if (ZASVEC)
 #define ZASTOKENVAREG  0x05
 #define ZASTOKENVLREG  0x06
+#endif
 #define ZASTOKENSYM    0x07
 #define ZASTOKENCHAR   0x08
 #define ZASTOKENIMMED  0x09
