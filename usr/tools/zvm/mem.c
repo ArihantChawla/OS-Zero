@@ -2,6 +2,7 @@
 #include <stdlib.h>
 #include <stdint.h>
 #include <zvm/zvm.h>
+#include <zvm/mem.h>
 
 #if (ZVMVIRTMEM) && (ZAS32BIT)
 size_t

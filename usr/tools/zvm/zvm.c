@@ -8,6 +8,7 @@
 #include <zas/zas.h>
 #include <zvm/zvm.h>
 #include <zvm/op.h>
+#include <zvm/mem.h>
 
 extern struct zastoken *zastokenqueue;
 extern unsigned long    zasinputread;

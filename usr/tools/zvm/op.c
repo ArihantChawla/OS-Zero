@@ -3,6 +3,7 @@
 #include <zero/trix.h>
 #include <zvm/zvm.h>
 #include <zvm/op.h>
+#include <zvm/mem.h>
 
 void
 zvmopnot(struct zvmopcode *op)

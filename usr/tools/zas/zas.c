@@ -18,6 +18,7 @@
 #include <zas/io.h>
 #if (ZVM)
 #include <zvm/zvm.h>
+#include <zvm/mem.h>
 #elif (WPM)
 #include <wpm/wpm.h>
 #endif
