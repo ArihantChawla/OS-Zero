@@ -53,8 +53,9 @@
  * - flg  - addressing flags (REG, IMMED, INDIR, ...)
  */
 struct zvmopcode {
-    unsigned int  unit  : 4;
-    unsigned int  inst  : 4;
+    unsigned int  code  : 8;
+//    unsigned int  unit  : 4;
+//    unsigned int  inst  : 4;
     unsigned int  arg1t : 4;
     unsigned int  arg2t : 4;
     unsigned int  reg1  : 6;
@@ -69,18 +70,18 @@ struct zvmopcode {
 typedef void zvmopfunc_t(struct zvmopcode *);
 
 struct zvm {
-    zasword_t    regs[ZASNREG] ALIGNED(CLSIZE);
+    zasword_t       regs[ZASNREG] ALIGNED(CLSIZE);
 #if !(ZVMVIRTMEM)
-    uint8_t     *physmem;
-    size_t       memsize;
+    uint8_t        *physmem;
+    size_t          memsize;
 #endif
-    long         shutdown;
-    zasword_t    msw;
-    zasword_t    fp;
-    zasword_t    sp;
-    zasword_t    pc;
+    volatile long   shutdown;
+    zasword_t       msw;
+    zasword_t       fp;
+    zasword_t       sp;
+    zasword_t       pc;
 #if (ZASVIRTMEM)
-    void       **pagetab;
+    void          **pagetab;
 #endif
 };
 
@@ -92,14 +93,15 @@ extern const char   *zvmopnargtab[ZVMNOP];
 extern struct zvm    zvm;
 
 /* function prototypes */
-void              zvminit(void);
-size_t            zvminitmem(void);
-long              asmaddop(const uint8_t *str, struct zasop *op);
-struct zasop    * zvmfindasm(const uint8_t *str);
-struct zastoken * zasprocinst(struct zastoken *token, zasmemadr_t adr,
-                              zasmemadr_t *retadr);
-void            * zvmsigbus(zasmemadr_t adr, long size);
-void            * zvmsigsegv(zasmemadr_t adr, long reason);
+extern void              zvminit(void);
+extern size_t            zvminitmem(void);
+extern long              asmaddop(const uint8_t *str, struct zasop *op);
+extern struct zasop    * zvmfindasm(const uint8_t *str);
+extern struct zastoken * zasprocinst(struct zastoken *token, zasmemadr_t adr,
+                                     zasmemadr_t *retadr);
+extern int8_t            zvmsigbus(zasmemadr_t adr, long size);
+extern int8_t            zvmsigsegv(zasmemadr_t adr, long reason);
+extern void              asmprintop(struct zvmopcode *op);
 
 /* memory fetch and store macros */
 #define zvmgetmemt(adr, t)                                              \
@@ -129,8 +131,8 @@ void            * zvmsigsegv(zasmemadr_t adr, long reason);
 #define _zvmwritemem(adr, t, val)                                       \
     (!(zvm.pagetab[zvmpagenum(adr)])                                    \
      ? zvmsigsegv(adr, ZVMMEMREAD)                                      \
-     : (((zvmpageofs(adr) & (sizeof(t) - 1))                            \
-         ? zvmsigbus(adr, t)                                            \
+    : (((zvmpageofs(adr) & (sizeof(t) - 1))                             \
+        ? zvmsigbus(adr, t)                                             \
          : *(t *)(zvm.pagetab[zvmpagenum(adr)][zvmpageofs(t)]) = (val)))
 #else /* !ZVMVIRTMEM */
 #define zvmadrtoptr(adr)                                                \
@@ -138,11 +140,11 @@ void            * zvmsigsegv(zasmemadr_t adr, long reason);
 #define _zvmreadmem(adr, t)                                             \
     (((adr) >= ZVMMEMSIZE)                                              \
      ? zvmsigsegv(adr, ZVMMEMREAD)                                      \
-     : *(t *)&zvm.physmem[(adr)]))
+     : *(t *)&zvm.physmem[(adr)])
 #define _zvmwritemem(adr, t, val)                                       \
     (((adr) >= ZVMMEMSIZE)                                              \
-     ? (t)zvmsigsegv(adr, ZVMMEMWRITE)                                  \
-     : *(t *)&zvm.physmem[(adr)] = (t)(val))
+     ? zvmsigsegv(adr, ZVMMEMWRITE)                                     \
+     : *(t *)&zvm.physmem[(adr)] = (val))
 #endif
 
 #endif /* __ZVM_ZVM_H__ */

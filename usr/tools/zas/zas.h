@@ -20,7 +20,7 @@ typedef uint64_t  zassize_t;
 #endif
 
 #if (ZVM)
-#define zasgetmemt(adr, t, val) zvmgetmemt(adr, t, val)
+#define zasgetmemt(adr, t)      zvmgetmemt(adr, t)
 #define zasputmemt(adr, t, val) zvmputmemt(adr, t, val)
 #endif
 
@@ -164,20 +164,20 @@ struct zasline {
 struct zasline * zasfindline(zasmemadr_t adr);
 #endif
 
-void        zasinit(struct zasopinfo *opinfotab, struct zasopinfo *vecinfotab);
-zasmemadr_t zastranslate(zasmemadr_t base);
-void        zasresolve(zasmemadr_t base);
-void        zasremovesyms(void);
+extern void        zasinit(void);
+extern zasmemadr_t zastranslate(zasmemadr_t base);
+extern void        zasresolve(zasmemadr_t base);
+extern void        zasremovesyms(void);
 #if (ZASBUF)
-void        zasreadfile(char *name, zasmemadr_t adr, int bufid);
+extern void        zasreadfile(char *name, zasmemadr_t adr, int bufid);
 #else
-void        zasreadfile(char *name, zasmemadr_t adr);
+extern void        zasreadfile(char *name, zasmemadr_t adr);
 #endif
 
-void        zasfreetoken(struct zastoken *token);
-void        zasqueuesym(struct zassymrec *sym);
+extern void        zasfreetoken(struct zastoken *token);
+extern void        zasqueuesym(struct zassymrec *sym);
 
-void        zasprinttoken(struct zastoken *token);
+extern void        zasprinttoken(struct zastoken *token);
 
 typedef struct zastoken * zastokfunc_t(struct zastoken *, zasmemadr_t,
                                        zasmemadr_t *);

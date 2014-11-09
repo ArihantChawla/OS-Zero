@@ -208,7 +208,7 @@ struct zastoken *
 asmprocinst(struct zastoken *token, zasmemadr_t adr, zasmemadr_t *retadr)
 {
     struct zvmopcode *op = NULL;
-    zasmemadr_t       opadr = rounduppow2(adr, sizeof(struct zvmopcode));
+    zasmemadr_t       opadr = adr;
     struct zastoken  *token1 = NULL;
     struct zastoken  *token2 = NULL;
     struct zastoken  *retval = NULL;
@@ -216,6 +216,9 @@ asmprocinst(struct zastoken *token, zasmemadr_t adr, zasmemadr_t *retadr)
     uint8_t           narg = token->data.inst.narg;
     uint8_t           len = sizeof(struct zvmopcode);
 
+    if (opadr & (sizeof(struct zvmopcode) - 1)) {
+        opadr = rounduppow2(adr, sizeof(struct zvmopcode));
+    }
     while (adr < opadr) {
         zvm.physmem[adr] = ZVMOPNOP;
         adr++;
@@ -224,8 +227,8 @@ asmprocinst(struct zastoken *token, zasmemadr_t adr, zasmemadr_t *retadr)
     zasaddline(adr, token->data.inst.data, token->file, token->line);
 #endif
     op = (struct zvmopcode *)&zvm.physmem[adr];
-    op->inst = token->data.inst.op;
-    if (op->inst == ZVMOPNOP) {
+    op->code = token->data.inst.op;
+    if (op->code == ZVMOPNOP) {
         retval = token->next;
         adr++;
     } else if (!narg) {
@@ -397,5 +400,11 @@ asmprocinst(struct zastoken *token, zasmemadr_t adr, zasmemadr_t *retadr)
     *retadr = adr + len;
 
     return retval;
+}
+
+void
+asmprintop(struct zvmopcode *op)
+{
+    ;
 }
 

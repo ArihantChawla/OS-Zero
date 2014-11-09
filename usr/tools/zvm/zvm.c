@@ -24,7 +24,7 @@ zvminitasmop(uint8_t unit, uint8_t inst, uint8_t *str, uint8_t narg,
     struct zasop *op = &zvminsttab[id];
     
     op->name = str;
-    op->code = inst;
+    op->code = id;
     op->narg = narg;
     if (!asmaddop(str, op)) {
         fprintf(stderr, "failed to initialise assembly operation:\n");
@@ -157,20 +157,21 @@ zvmloop(zasmemadr_t _startadr)
     }
 #endif
     zvm.shutdown = 0;
+    zvm.pc = _startadr;
 //    memcpy(&zvm.cpustat, cpustat, sizeof(struct zvmcpustate));
 //    free(cpustat);
     while (!zvm.shutdown) {
 //        op = (struct zvmopcode *)&zvm.physmem[zvm.pc];
         op = (struct zvmopcode *)&zvm.physmem[zvm.pc];
-        if (op->inst == ZVMOPNOP) {
+        if (op->code == ZVMOPNOP) {
             zvm.pc += sizeof(struct zvmopcode);
         } else {
 //            zvm.cpustat.pc = rounduppow2(zvm.pc, sizeof(zasword_t));
 //            op = (struct zvmopcode *)&zvm.physmem[zvm.pc];
 //            op = &zvm.physmem[zvm.pc];
-            func = zvmfunctab[op->inst];
+            func = zvmfunctab[op->code];
 #if (ZVMTRACE)
-            zvmprintop(op);
+            asmprintop(op);
 #endif
             if (func) {
 #if (ZVMDB)
@@ -184,7 +185,7 @@ zvmloop(zasmemadr_t _startadr)
                 fprintf(stderr, "illegal instruction, PC == %lx\n",
                         (long)zvm.pc);
 #if (ZVM)
-//                zvmprintop(op);
+//                asmprintop(op);
 #endif
                 
                 exit(1);
@@ -195,7 +196,7 @@ zvmloop(zasmemadr_t _startadr)
     fprintf(stderr, "memory\n");
     fprintf(stderr, "------\n");
     for (i = ZASTEXTBASE ; i < ZASTEXTBASE + 256 ; i++) {
-        fprintf(stderr, "%02x ", zasgetmemt(i, int8_t));
+        fprintf(stderr, "%02x ", zvmgetmemt(i, int8_t));
     }
     fprintf(stderr, "\n");
     fprintf(stderr, "registers\n");
@@ -222,7 +223,7 @@ zvmmain(int argc, char *argv[])
 
         exit(1);
     }
-    zasinit(NULL, NULL);
+    zasinit();
     zvminit();
 #if (!ZVMVIRTMEM)
     memset(zvm.physmem, 0, ZASTEXTBASE);

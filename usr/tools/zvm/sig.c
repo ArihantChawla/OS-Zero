@@ -3,7 +3,7 @@
 #include <zas/zas.h>
 #include <zvm/zvm.h>
 
-void *
+int8_t
 zvmsigbus(zasmemadr_t adr, long size)
 {
     fprintf(stderr, "SIGBUS: %llx (%ld)\n", (long long)adr, (long)size);
@@ -11,7 +11,7 @@ zvmsigbus(zasmemadr_t adr, long size)
     abort();
 }
 
-void *
+int8_t
 zvmsigsegv(zasmemadr_t adr, long reason)
 {
     if (reason == ZVMMEMREAD) {

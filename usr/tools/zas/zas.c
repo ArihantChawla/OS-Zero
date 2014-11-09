@@ -1058,6 +1058,9 @@ zasproclabel(struct zastoken *token, zasmemadr_t adr,
 #if (WPMTRACE)
         fprintf(stderr, "_start == 0x%08x\n", adr);
 #endif
+        if (adr & (sizeof(struct zvmopcode) - 1)) {
+            adr = rounduppow2(adr, sizeof(struct zvmopcode));
+        }
         _startadr = adr;
         _startset = 1;
     }
@@ -1268,17 +1271,8 @@ zasprocasciz(struct zastoken *token, zasmemadr_t adr,
 }
 
 void
-zasinit(struct zasopinfo *opinfotab, struct zasopinfo *vecinfotab)
+zasinit(void)
 {
-#if (WPM) || (ZEN)
-    zasopinfotab[0] = opinfotab;
-    zasopinfotab[1] = vecinfotab;
-#endif
-#if (ZVM)
-    zvminit();
-#else
-    zasinitop();
-#endif
     zasinitbuf();
 }
 

@@ -47,7 +47,7 @@ void zvmopsmsw(struct zvmopcode *op);
 void zvmopreset(struct zvmopcode *op);
 void zvmophlt(struct zvmopcode *op);
 
-#define ZVMOPNOP    0x00 // dummy operation
+#define ZVMOPNOP    0xff // dummy operation
 /* logical operations */
 #define ZVMOPLOGIC  0x00
 #define ZVMOPNOT    0x01 // 2's complement
@@ -152,8 +152,15 @@ void zvmophlt(struct zvmopcode *op);
              *(t *)&zvm.regs[(op)->reg2])                               \
           : (ptr = (t *)&zvm.regs[(op)->args[0]],                       \
              *(t *)&zvm.regs[(op)->args[0]])))                          \
+      : (((arg2t == ZVMARGREG)                                          \
+          ? (ptr = (t *)&zvm.regs[(op)->reg2],                          \
+             *(t *)&zvm.regs[(op)->reg2])                               \
+          : (ptr = (t *)&zvm.regs[(op)->args[1]],                       \
+             *(t *)&zvm.regs[(op)->args[1]])))))
+#if 0
       : (ptr = (t *)&zvm.physmem[(op)->args[1]],                        \
          *(t *)&zvm.physmem[(op)->args[1]])))
+#endif
 #define zvmsetzf(val)                                                   \
     ((val) ? (zvm.msw |= ZVMZF) : (zvm.msw &= ~ZVMZF))
 
