@@ -142,18 +142,18 @@ zvmloop(zasmemadr_t _startadr)
     struct zasline *line;
 #endif
 
-#if (ZVMTRACE) && 0
+#if (ZVMTRACE)
     fprintf(stderr, "memory\n");
     fprintf(stderr, "------\n");
     for (i = ZASTEXTBASE ; i < ZASTEXTBASE + 256 ; i++) {
-        fprintf(stderr, "%02x ", zvmgetmemt(i, int8_t);
+        fprintf(stderr, "%02x ", (int8_t)(zvmgetmemt(i, int8_t)) & 0xff);
     }
     fprintf(stderr, "\n");
     fprintf(stderr, "registers\n");
     fprintf(stderr, "---------\n");
     fprintf(stderr, "---------\n");
-    for (i = 0 ; i < NREG ; i++) {
-        fprintf(stderr, "r%d:\t%x\n", i, zvm.regs[i]);
+    for (i = 0 ; i < ZASNREG ; i++) {
+        fprintf(stderr, "r%d:\t0x%x\n", i, zvm.regs[i]);
     }
 #endif
     zvm.shutdown = 0;
@@ -196,13 +196,13 @@ zvmloop(zasmemadr_t _startadr)
     fprintf(stderr, "memory\n");
     fprintf(stderr, "------\n");
     for (i = ZASTEXTBASE ; i < ZASTEXTBASE + 256 ; i++) {
-        fprintf(stderr, "%02x ", zvmgetmemt(i, int8_t));
+        fprintf(stderr, "%02x ", (int8_t)(zvmgetmemt(i, int8_t)) & 0xff);
     }
     fprintf(stderr, "\n");
     fprintf(stderr, "registers\n");
     fprintf(stderr, "---------\n");
     for (i = 0 ; i < ZASNREG ; i++) {
-        fprintf(stderr, "r%d:\t%x\n", i, zvm.regs[i]);
+        fprintf(stderr, "r%d:\t0x%x\n", i, zvm.regs[i]);
     }
 #endif
 

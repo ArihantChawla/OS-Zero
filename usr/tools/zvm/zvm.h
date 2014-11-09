@@ -21,17 +21,18 @@
 #define ZVMPAGEREAD     0x02
 #define ZVMPAGEWRITE    0x04
 #define ZVMPAGEEXEC     0x08
-#else
+#else /* !ZVMVIRTMEM */
 #define ZASTEXTBASE     PAGESIZE
 #define ZVMMEMSIZE      (128U * 1024U * 1024U)
 #endif
-#define ZASNREG         32
+#define ZASNREG         16
 
-#define ZASREGINDEX     0x04
-#define ZASREGINDIR     0x08
+#define ZASREGINDEX     0x20
+#define ZASREGINDIR     0x10
 #define ZVMARGIMMED     0x00
 #define ZVMARGREG       0x01
 #define ZVMARGADR       0x02
+#define ZASREGMASK      0x0f
 
 /* number of units and instructions */
 #define ZVMNUNIT        16
@@ -53,18 +54,18 @@
  * - flg  - addressing flags (REG, IMMED, INDIR, ...)
  */
 struct zvmopcode {
-    unsigned int  code  : 8;
+    unsigned int code  : 8;
 //    unsigned int  unit  : 4;
 //    unsigned int  inst  : 4;
-    unsigned int  arg1t : 4;
-    unsigned int  arg2t : 4;
-    unsigned int  reg1  : 6;
-    unsigned int  reg2  : 6;
-    unsigned int  size  : 4;
+    unsigned int arg1t : 4;
+    unsigned int arg2t : 4;
+    unsigned int reg1  : 6;
+    unsigned int reg2  : 6;
+    unsigned int size  : 4;
 #if (!ZAS32BIT)
-    unsigned int  pad   : 32;
+    unsigned int pad   : 32;
 #endif
-    unsigned long args[EMPTY];
+    zasword_t    args[EMPTY];
 } PACK();
 
 typedef void zvmopfunc_t(struct zvmopcode *);
@@ -115,9 +116,9 @@ extern void              asmprintop(struct zvmopcode *op);
 /* memory read and write macros */
 #if (ZVMVIRTMEM)
 #define zvmadrtoptr(adr)                                                \
-    (((!zvm.pagetab[zvmpagenum(adr)])                                   \
+    (((!zvm.pagetab[zvmpagenum(ZVMTEXTBASE + adr)])                     \
       ? NULL                                                            \
-      : &zvm.pagetab[zvmpagenum(adr)][zvmpageofs(adr)]))
+      : &zvm.pagetab[zvmpagenum(ZVMTEXTBASE + adr)][zvmpageofs(adr)]))
 #define _zvmpagenum(adr)                                                \
     ((adr) >> ZVMPAGESIZELOG2)
 #define _zvmpageofs(adr)                                                \
@@ -130,10 +131,10 @@ extern void              asmprintop(struct zvmopcode *op);
          : *(t *)zvm.pagetab[zvmpagenum(adr)][zvmpageofs(t)])))
 #define _zvmwritemem(adr, t, val)                                       \
     (!(zvm.pagetab[zvmpagenum(adr)])                                    \
-     ? zvmsigsegv(adr, ZVMMEMREAD)                                      \
+    ? zvmsigsegv(adr, ZVMMEMWRITE)                                      \
     : (((zvmpageofs(adr) & (sizeof(t) - 1))                             \
         ? zvmsigbus(adr, t)                                             \
-         : *(t *)(zvm.pagetab[zvmpagenum(adr)][zvmpageofs(t)]) = (val)))
+        : *(t *)(zvm.pagetab[zvmpagenum(adr)][zvmpageofs(t)]) = (val)))
 #else /* !ZVMVIRTMEM */
 #define zvmadrtoptr(adr)                                                \
     (&zvm.physmem[(adr)])

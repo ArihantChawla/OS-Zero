@@ -143,23 +143,58 @@ void zvmophlt(struct zvmopcode *op);
         : (op)->args[1]))
 #define zvmgetarg1mov(op, arg1t, arg2t)                                 \
     (((arg1t) == ZVMARGREG)                                             \
-     ? zvm.regs[(op)->reg1]                                             \
-     : (op)->args[0])
+     ? (((op)->reg1 & ZASREGINDEX)                                      \
+        ? zvmgetmemt(zvm.regs[(op)->reg1 & ZASREGMASK] + op->args[0],   \
+                     zasword_t)                                         \
+        : (((op)->reg1 & ZASREGINDIR)                                   \
+           ? zvmgetmemt(zvm.regs[(op)->reg1 & ZASREGMASK], zasword_t)   \
+           : zvm.regs[(op)->reg1 & ZASREGMASK]))                        \
+     : (((arg1t) == ZVMARGADR)                                          \
+        ? *(zasword_t *)zvmadrtoptr((op)->args[0])                      \
+        : (op)->args[0]))
+#define zvmgetarg2mov(op, arg1t, arg2t, ptr, t)                         \
+    (((arg1t) == ZVMARGREG)                                             \
+     ? (((arg2t) == ZVMARGREG)                                          \
+        ? (((op)->reg2 & ZASREGINDEX)                                   \
+           ? (ptr = (t *)zvmadrtoptr(zvm.regs[(op)->reg2 & ZASREGMASK] + (op)->args[0]), \
+              *(ptr))                                                   \
+           : (((op)->reg2 & ZASREGINDIR)                                \
+              ? (ptr = (t *)zvmadrtoptr(zvm.regs[(op)->reg2 & ZASREGMASK]), \
+                 *(ptr))                                                \
+              : (ptr = (t *)&zvm.regs[(op)->reg2],                      \
+                 *(ptr))))                                              \
+        : (ptr = (t *)zvmadrtoptr((op)->args[0]),                       \
+           *(ptr)))                                                     \
+     : (((arg2t) == ZVMARGREG)                                          \
+        ? (((op)->reg2 & ZASREGINDEX)                                   \
+           ? (ptr = (t *)zvmadrtoptr(zvm.regs[(op)->reg2 & ZASREGMASK] + (op)->args[1]), \
+              *(ptr))                                                   \
+           : (((op)->reg2 & ZASREGINDIR)                                \
+              ? (ptr = (t *)zvmadrtoptr(zvm.regs[(op)->reg2 & ZASREGMASK]), \
+                 *(ptr))                                                \
+              : (ptr = (t *)&zvm.regs[(op)->reg2],                      \
+                 *(ptr))))                                              \
+        : (ptr = (t *)zvmadrtoptr((op)->args[1]),                       \
+           *(ptr))))
+#if 0
 #define zvmgetarg2mov(op, arg1t, arg2t, ptr, t)                         \
     ((((arg1t) == ZVMARGREG)                                            \
       ? ((((arg2t) == ZVMARGREG)                                        \
           ? (ptr = (t *)&zvm.regs[(op)->reg2],                          \
-             *(t *)&zvm.regs[(op)->reg2])                               \
-          : (ptr = (t *)&zvm.regs[(op)->args[0]],                       \
-             *(t *)&zvm.regs[(op)->args[0]])))                          \
+             *(ptr))                                                    \
+          : (((arg2t == ZVMARGADR)                                      \
+              ? (ptr = (t *)&(op)->args[0],                             \
+                 *(ptr))                                                \
+              : (ptr = (t *)&zvm.regs[(op)->args[0]],                   \
+                 *(ptr))))))                                            \
       : (((arg2t == ZVMARGREG)                                          \
           ? (ptr = (t *)&zvm.regs[(op)->reg2],                          \
-             *(t *)&zvm.regs[(op)->reg2])                               \
-          : (ptr = (t *)&zvm.regs[(op)->args[1]],                       \
-             *(t *)&zvm.regs[(op)->args[1]])))))
-#if 0
-      : (ptr = (t *)&zvm.physmem[(op)->args[1]],                        \
-         *(t *)&zvm.physmem[(op)->args[1]])))
+             *(ptr))                                                    \
+          : (((arg2t == ZVMARGADR)                                      \
+              ? (ptr = (t *)&(op)->args[1],                             \
+                 *(ptr))                                                \
+              : (ptr = (t *)&zvm.regs[(op)->args[1]],                   \
+                 *(ptr))))))))
 #endif
 #define zvmsetzf(val)                                                   \
     ((val) ? (zvm.msw |= ZVMZF) : (zvm.msw &= ~ZVMZF))

@@ -306,9 +306,7 @@ asmprocinst(struct zastoken *token, zasmemadr_t adr, zasmemadr_t *retadr)
             zasfreetoken(token1);
             retval = token2;
         }
-        if (narg == 1) {
-//                    op->arg2t = ZVMARGNONE;
-        } else if (narg == 2 && (token2)) {
+        if (narg == 2 && (token2)) {
             switch(token2->type) {
                 case ZASTOKENVALUE:
                     op->arg2t = ZVMARGIMMED;

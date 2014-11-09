@@ -757,7 +757,7 @@ zasgettoken(uint8_t *str, uint8_t **retptr)
 #endif
     if ((*str) && (isdigit(*str) || *str == '-')) {
         val = zasgetindex(str, &ndx, &str);
-        if (val < ZASNREG) {
+        if (val < 0xff) {
             token1->type = ZASTOKENINDEX;
             token1->data.ndx.reg = ZASREGINDEX | val;
             token1->data.ndx.val = ndx;
@@ -825,7 +825,7 @@ zasgettoken(uint8_t *str, uint8_t **retptr)
         } else {
             token1->type = ZASTOKENREG;
         }
-        val &= 0xff;    // FIXME: maximum of 256 registers */
+        val &= ZASREGMASK;    // FIXME: maximum of 256 registers */
 #else
         token1->type = ZASTOKENREG;
 #endif
@@ -981,7 +981,7 @@ zasgettoken(uint8_t *str, uint8_t **retptr)
             } else {
                 token2->type = ZASTOKENREG;
             }
-            val &= 0xff;
+            val &= ZASREGMASK;
 #else
             token2->type = ZASTOKENREG;
 #endif
