@@ -197,7 +197,7 @@ void zvmophlt(struct zvmopcode *op);
                  *(ptr))))))))
 #endif
 #define zvmsetzf(val)                                                   \
-    ((val) ? (zvm.msw |= ZVMZF) : (zvm.msw &= ~ZVMZF))
+    (!(val) ? (zvm.msw |= ZVMZF) : (zvm.msw &= ~ZVMZF))
 
 #endif /* __ZVM_OP_H__ */
 
