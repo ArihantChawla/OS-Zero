@@ -2,7 +2,7 @@
 #define __ZVM_MEM_H__
 
 #if (ZVMVIRTMEM)
-#define ZASTEXTBASE     ZVMPAGESIZE
+#define ZASTEXTBASE     (2 * ZVMPAGESIZE)
 #define ZASNPAGE        (1UL << ZVMADRBITS - PAGESIZELOG2)
 #if (ZAS32BIT)
 #define ZVMADRBITS      32

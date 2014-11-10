@@ -68,6 +68,7 @@ extern struct zvm    zvm;
 extern void              zvminit(void);
 extern void              zvminitopt(void);
 extern size_t            zvminitmem(void);
+extern void              zvminitio(void);
 extern long              asmaddop(const uint8_t *str, struct zasop *op);
 extern struct zasop    * zvmfindasm(const uint8_t *str);
 extern struct zastoken * zasprocinst(struct zastoken *token, zasmemadr_t adr,

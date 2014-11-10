@@ -2,6 +2,10 @@
 #include <stdio.h>
 #include <string.h>
 #include <stdint.h>
+#if (ZVMXCB)
+#include <unistd.h>
+#include <xcb/xcb.h>
+#endif
 #include <zero/param.h>
 #include <zero/cdecl.h>
 //#include <zero/trix.h>
@@ -9,6 +13,9 @@
 #include <zvm/zvm.h>
 #include <zvm/op.h>
 #include <zvm/mem.h>
+#if (ZVMXCB)
+#include <zvm/xcb.h>
+#endif
 
 extern struct zastoken *zastokenqueue;
 extern unsigned long    zasinputread;
@@ -129,18 +136,27 @@ zvminit(void)
     zvm.sp = memsize;
 #endif
     zvm.pc = ZASTEXTBASE;
+    zvminitio();
+#if (ZVMXCB)
+    zvminitui();
+#endif
+
+    return;
 }
 
 void *
 zvmloop(zasmemadr_t _startadr)
 {
-    zvmopfunc_t      *func;
-    struct zvmopcode *op;
+    zvmopfunc_t         *func;
+    struct zvmopcode    *op;
 #if (ZVMTRACE)
-    int               i;
+    int                  i;
 #endif
 #if (ZVMDB)
-    struct zasline *line;
+    struct zasline      *line;
+#endif
+#if (ZVMXCB)
+    xcb_void_cookie_t    cookie;
 #endif
 
 #if (ZVMTRACE)
@@ -162,6 +178,9 @@ zvmloop(zasmemadr_t _startadr)
 //    memcpy(&zvm.cpustat, cpustat, sizeof(struct zvmcpustate));
 //    free(cpustat);
     while (!zvm.shutdown) {
+#if (ZVMXCB)
+        xcbdoevent();
+#endif
 //        op = (struct zvmopcode *)&zvm.physmem[zvm.pc];
         op = (struct zvmopcode *)&zvm.physmem[zvm.pc];
         if (op->code == ZVMOPNOP) {
@@ -204,6 +223,11 @@ zvmloop(zasmemadr_t _startadr)
     fprintf(stderr, "---------\n");
     for (i = 0 ; i < ZASNREG ; i++) {
         fprintf(stderr, "r%d:\t0x%x\n", i, zvm.regs[i]);
+    }
+#endif
+#if (ZVMXCB)
+    while (1) {
+        xcbdoevent();
     }
 #endif
 
