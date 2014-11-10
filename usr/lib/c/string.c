@@ -576,7 +576,7 @@ memset(void *ptr,
         val = LONGSIZELOG2 + 3;
         ul |= (ul << 16);
         cnt = nleft >> val;
-#if (LONG_SIZE == 8)
+#if (LONGSIZE == 8)
         ul |= (ul << 32);
 #endif
         nleft -= cnt << val;
