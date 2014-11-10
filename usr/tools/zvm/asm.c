@@ -203,11 +203,13 @@ asmprocinst(struct zastoken *token, zasmemadr_t adr, zasmemadr_t *retadr)
     uint8_t           narg = token->data.inst.narg;
     uint8_t           len = sizeof(struct zvmopcode);
 
+#if 0
     opadr = zasalignop(adr);
     while (adr < opadr) {
         zvm.physmem[adr] = ZVMOPNOP;
         adr++;
     }
+#endif
 #if (ZASDB)
     zasaddline(adr, token->data.inst.data, token->file, token->line);
 #endif
