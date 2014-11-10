@@ -3,7 +3,7 @@
 
 #include <features.h>
 
-#if !(__KERNEL__)
+#if !(__KERNEL__) && (PTHREAD)
 extern __thread int errno;
 #endif
 

@@ -30,7 +30,7 @@ typedef int64_t       fpos64_t;
 extern FILE          *stdin;
 extern FILE          *stdout;
 extern FILE          *stderr;
-#if defined(__STDC__)
+#if defined(__STDC__) && 0
 #define stdin
 #define stdout
 #define stderr

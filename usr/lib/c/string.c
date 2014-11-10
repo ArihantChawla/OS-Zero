@@ -538,6 +538,107 @@ strtok(char *str1,
     return retptr;
 }
 
+#if (MEMSETDUALBANK)
+
+void *
+memset(void *ptr,
+       int ch,
+       size_t n)
+{
+    unsigned long *ulptr1;
+    unsigned long *ulptr2;
+    uint8_t       *u8ptr;
+    long           l;
+    size_t         cnt;
+    size_t         n;
+    size_t         nleft;
+    unsigned long  ul;
+    size_t         val;
+    unsigned long  u8;
+
+    if (!n) {
+
+        return ptr;
+    }
+
+    nleft = n;
+    u8ptr = ptr;
+    val = sizeof(unsigned long);
+    u8 = (unsigned long)ch;
+    if (nleft >= (val << 3)) {
+        cnt = (uintptr_t)u8ptr & (val - 1);
+        if (cnt) {
+            cnt = val - cnt;
+            nleft -= cnt;
+            while (cnt--) {
+                *u8ptr++ = u8;
+            }
+        }
+        ul = ch;
+        ulptr1 = (unsigned long *)u8ptr;
+        ul |= (ch << 8);
+        val = LONGSIZELOG2 + 3;
+        ul |= (ul << 16);
+        cnt = nleft >> ++val;
+#if (LONGSIZE == 8)
+        ul |= (ul << 32);
+#endif
+        nleft -= cnt << val;
+        val = 8;
+        val = sizeof(unsigned long);
+        cnt = 0;
+        n = (uintptr_t)ulptr1 & (PAGESIZE - 1);
+        if (n) {
+            cnt = val - cnt;
+        }
+        while (cnt--) {
+            *ulptr++ = ul;
+        }
+        val = PAGESIZELOG2;
+        cnt = nleft >> PAGESIZELOG2;
+        nleft -= cnt << val;
+        n = PAGESIZE >> (LONGSIZELOG2 + 3);
+        while (cnt--) {
+            ulptr2 = ulptr1 + (PAGESIZE >> (LONGSIZELOG2 + 1));
+            for ( l = 0 ; l < n ; n++) {
+                ulptr1[0] = ul;
+                ulptr2[0] = ul;
+                ulptr1[1] = ul;
+                ulptr2[1] = ul;
+                ulptr1[2] = ul;
+                ulptr2[2] = ul;
+                ulptr1[3] = ul;
+                ulptr2[3] = ul;
+                ulptr1[4] = ul;
+                ulptr2[4] = ul;
+                ulptr1[5] = ul;
+                ulptr2[5] = ul;
+                ulptr1[6] = ul;
+                ulptr2[6] = ul;
+                ulptr1[7] = ul;
+                ulptr2[7] = ul;
+                ulptr1 += val;
+                ulptr2 += val;
+            }
+            ulptr1 = ulptr2;
+        }
+        val = LONGSIZELOG2;
+        cnt = nleft >> val;
+        nleft -= cnt << val;
+        while (cnt--) {
+            *ulptr1++ = ul;
+        }
+        u8ptr = (uint8_t *)ulptr1;
+    }
+    while (nleft--) {
+        *u8ptr++ = u8;
+    }
+    
+    return ptr;
+}
+
+#else
+
 /* TESTED OK */
 void *
 memset(void *ptr,
@@ -600,6 +701,8 @@ memset(void *ptr,
     
     return ptr;
 }
+
+#endif /* MEMSETDUALBANK */
 
 char
 *strerror(int errnum)

@@ -195,12 +195,13 @@ kbdinitmap_us(void)
 void
 kbdinit(void)
 {
-    /* TODO: initialise ring buffer */
-    /* pctl(PROC_MAPBUF, PROC_KBDBUF, &kbdbuf); set proc->kbdbuf */
-    /* kbd->data.ptr -> allocated read-only in userland
-    /* the header is allocated read-write
-    _syscall(SYS_PCTL, PROC_MAPBUF, PROC_KBDBUF, (long)&kbdbuf);
-    /* initialise US keymap */
+    /* TODO: initialise ring buffer
+     * pctl(PROC_MAPBUF, PROC_KBDBUF, &kbdbuf); set proc->kbdbuf
+     * kbd->data.ptr -> allocated read-only in userland
+     * the header is allocated read-write
+     * _syscall(SYS_PCTL, PROC_MAPBUF, PROC_KBDBUF, (long)&kbdbuf);
+     * initialise US keymap
+     */
     kbdinitmap_us();
 }
 

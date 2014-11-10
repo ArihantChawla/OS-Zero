@@ -31,8 +31,10 @@
 #define STDIO      1
 #define FREEBITMAP 0
 
-#define ZEROMTX    0
-#define PTHREAD    1
+#define ZEROMTX    1
+#if !defined(PTHREAD)
+#define PTHREAD    0
+#endif
 
 #include <features.h>
 #include <errno.h>
@@ -45,10 +47,10 @@
 #endif
 #if (ZEROMTX)
 #include <zero/mtx.h>
-typedef long            LK_T;
+typedef volatile long   LK_T;
 #elif (SPINLK)
 #include <zero/spin.h>
-typedef long            LK_T;
+typedef volatile long   LK_T;
 #elif (PTHREAD)
 typedef pthread_mutex_t LK_T;
 #endif
@@ -543,17 +545,19 @@ typedef pthread_mutex_t LK_T;
 #endif
 
 static void   initmall(void);
+#if (PTHREAD)
 static void   relarn(void *arg);
+#endif
 static void * getmem(size_t size, size_t align, long zero);
 static void   putmem(void *ptr);
 static void * _realloc(void *ptr, size_t size, long rel);
 
 #define LKDBG    0
 #define SYSDBG   0
-#define VALGRIND 1
+#define VALGRIND 0
 
 #include <string.h>
-#if (MTSAFE)
+#if (MTSAFE) && (PTHREAD)
 #define PTHREAD  1
 #include <pthread.h>
 #endif
@@ -571,7 +575,7 @@ static void * _realloc(void *ptr, size_t size, long rel);
 #if (ZEROMTX)
 #define mlk(mp)           mtxlk2(mp, _aid + 1)
 #define munlk(mp)         mtxunlk2(mp, _aid + 1)
-#define mtylk(mp)         mtxtrylk2(mp, _aid + 1)
+#define mtrylk(mp)        mtxtrylk2(mp, _aid + 1)
 #elif (SPINLK)
 #define mlk(sp)           spinlk2(sp, _aid + 1)
 #define munlk(sp)         spinunlk2(sp, _aid + 1)
@@ -738,7 +742,9 @@ getaid(void)
     mlk(&_conf.arnlk);
     aid = _conf.acur++;
     _conf.acur &= NARN - 1;
+#if (PTHREAD)
     pthread_setspecific(_akey, _atab[aid]);
+#endif
     munlk(&_conf.arnlk);
 
     return aid;
@@ -791,6 +797,7 @@ postfork(void)
     return;
 }
 
+#if (PTHREAD)
 static void
 relarn(void *arg)
 {
@@ -855,6 +862,7 @@ relarn(void *arg)
 
     return;
 }
+#endif
 
 /* statistics */
 
@@ -1098,7 +1106,7 @@ initmall(void)
     while (aid--) {
         for (bid = 0 ; bid < NBKT ; bid++) {
 #if (ZEROMTX)
-            mtxinit(_atab[aid]->lktab[bid]);
+            mtxinit(&_atab[aid]->lktab[bid]);
 #elif (PTHREAD) && !SPINLK
             pthread_mutex_init(&_atab[aid]->lktab[bid], NULL);
 #endif
@@ -1106,7 +1114,9 @@ initmall(void)
         _atab[aid]->hcur = NBUFHDR;
     }
     _conf.narn = NARN;
+#if (PTHREAD)
     pthread_key_create(&_akey, relarn);
+#endif
     munlk(&_conf.arnlk);
 #endif
 #if (PTHREAD)
@@ -1446,21 +1456,21 @@ freemap(struct mag *mag)
     while (mptr1) {
         mptr2 = mptr1->next;
         if (ismapbkt(mptr1->bid)) {
-            if (!unmapanon(clrptr(mag->adr), max * bsz)) {
+            unmapanon(clrptr(mag->adr), max * bsz);
 #if (VALGRIND)
-                if (RUNNING_ON_VALGRIND) {
-                    VALGRIND_FREELIKE_BLOCK(clrptr(mag->adr), 0);
-                }
+            if (RUNNING_ON_VALGRIND) {
+                VALGRIND_FREELIKE_BLOCK(clrptr(mag->adr), 0);
+            }
 #endif
 #if (INTSTAT) || (STAT)
-                nmapbytes[aid] -= max * bsz;
+            nmapbytes[aid] -= max * bsz;
 #endif
 #if (TUNEBUF)
-                _nbmap -= max * bsz;
+            _nbmap -= max * bsz;
 #endif
-                if (gtpow2(max, 1)) {
+            if (gtpow2(max, 1)) {
 #if (AUTOBUF)
-                    if (!istk(mag, bid)) {
+                if (!istk(mag, bid)) {
 #else
                     if (!istk(bid)) {
 #endif
@@ -1534,21 +1544,21 @@ freemap(struct mag *mag)
 #endif
         munlk(&_flktab[bid]);
     } else {
-        if (!unmapanon(clrptr(mag->adr), max * bsz)) {
+        unmapanon(clrptr(mag->adr), max * bsz);
 #if (VALGRIND)
-            if (RUNNING_ON_VALGRIND) {
-                VALGRIND_FREELIKE_BLOCK(clrptr(mag->adr), 0);
-            }
+        if (RUNNING_ON_VALGRIND) {
+            VALGRIND_FREELIKE_BLOCK(clrptr(mag->adr), 0);
+        }
 #endif
 #if (INTSTAT) || (STAT)
-            nmapbytes[aid] -= max * bsz;
+        nmapbytes[aid] -= max * bsz;
 #endif
 #if (TUNEBUF)
-            _nbmap -= max * bsz;
+        _nbmap -= max * bsz;
 #endif
-            if (gtpow2(max, 1)) {
+        if (gtpow2(max, 1)) {
 #if (AUTOBUF)
-                if (!istk(mag, bid)) {
+            if (!istk(mag, bid)) {
 #else
                 if (!istk(bid)) {
 #endif
@@ -1572,12 +1582,10 @@ freemap(struct mag *mag)
             hbuf[--cur] = mag;
             arn->hcur = cur;
         }
-    }
-    munlk(&arn->lktab[bid]);
-
-    return;
-}
-
+        munlk(&arn->lktab[bid]);
+        
+        return;
+     }
 #define blkalnsz(sz, aln)                                               \
     (((aln) <= MINSZ)                                                   \
      ? max(sz, aln)                                                     \

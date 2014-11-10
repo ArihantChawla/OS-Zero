@@ -9,6 +9,7 @@
 
 typedef long           ptrdiff_t;
 typedef unsigned long  size_t;
+
 #if defined(__STDC_ISO_10646__) || defined(_ZERO_SOURCE)
 /* full ISO10646 character */
 #define WCHARSIZE      4

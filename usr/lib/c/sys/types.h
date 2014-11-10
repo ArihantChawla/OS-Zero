@@ -100,8 +100,10 @@ typedef id_t            taskid_t;
 typedef id_t            projid_t;
 
 /* POSIX threads */
+#if 0
 typedef uintptr_t       pthread_t;
 typedef uintptr_t       pthread_key_t;
+#endif
 
 #if (_POSIX_SOURCE)
 #define FD_SETSIZE _POSIX_FD_SETSIZE
