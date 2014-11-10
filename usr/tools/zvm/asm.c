@@ -4,6 +4,7 @@
 #include <string.h>
 #include <zvm/zvm.h>
 #include <zvm/op.h>
+#include <zvm/mach.h>
 #include <zero/trix.h>
 
 struct zasop  zvminsttab[ZVMNOP];
@@ -19,47 +20,25 @@ struct zasop *zvmophash[ZASNHASH];
  * operation info structure addresses are stored in a multilevel table
  * - the top level table is indexed with the first byte of mnemonic and so on
  */
-struct zasop *
+long
 asmaddop(const uint8_t *str, struct zasop *op)
 {
-    long          key = *str++;
-    uint8_t       len = 0;
-    struct zasop *pptr = zvmoptab[key];
-    struct zasop *ptr = NULL;
+    long           key = *str++;
+    uint8_t        len = (key) ? 1 : 0;
+    struct zasop  *ptr1 = zvmoptab[key];
+    struct zasop **ptr2;
 
-    if (!pptr) {
-        ptr = calloc(sizeof(struct zasopinfo), ZVMNOP);
-        if (!ptr) {
+    if (!ptr1) {
+        ptr1 = calloc(sizeof(struct zasopinfo *), ZVMNOP);
+        if (!ptr1) {
             fprintf(stderr, "failed to allocate operation table\n");
             
-            return NULL;
+            return 0;
         }
-        zvmoptab[key] = ptr;
-        pptr = ptr;
-    }
-    if (key) {
-        while (key && !isspace(key)) {
-            len++;
-            ptr = pptr->tab;
-            if (!ptr) {
-                ptr = calloc(sizeof(struct zasopinfo), ZVMNOP);
-                if (!ptr) {
-                    fprintf(stderr, "failed to allocate operation table\n");
-            
-                    return NULL;
-                }
-                pptr->tab = ptr;
-            }
-            pptr = &ptr[key];
-            key = *str++;
-        }
-        *((struct zasop **)pptr) = op;
-        op->len = len;
-        
-        return op;
+        zvmoptab[key] = ptr1;
     }
     
-    return NULL;
+    return 0;
 }
 
 struct zasop *
@@ -69,11 +48,8 @@ asmfindop(const uint8_t *str)
     struct zasop *ptr = zvmoptab[key];
 
     if (key) {
-        while (key && !isspace(*str)) {   
-            if (!*str) {
-        
-                return ptr;
-            } else if (ptr->tab) {
+        while (key && isalpha(*str)) {   
+            if ((ptr) && (ptr->tab)) {
                 key = *str++;
                 ptr = &ptr->tab[key];
             } else {
@@ -216,9 +192,7 @@ asmprocinst(struct zastoken *token, zasmemadr_t adr, zasmemadr_t *retadr)
     uint8_t           narg = token->data.inst.narg;
     uint8_t           len = sizeof(struct zvmopcode);
 
-    if (opadr & (sizeof(struct zvmopcode) - 1)) {
-        opadr = rounduppow2(adr, sizeof(struct zvmopcode));
-    }
+    opadr = zvmalignop(adr);
     while (adr < opadr) {
         zvm.physmem[adr] = ZVMOPNOP;
         adr++;
