@@ -2,10 +2,11 @@
 #include <stdio.h>
 #include <ctype.h>
 #include <string.h>
+#include <zero/trix.h>
+#include <zas/zas.h>
+#include <zas/opt.h>
 #include <zvm/zvm.h>
 #include <zvm/op.h>
-#include <zvm/mach.h>
-#include <zero/trix.h>
 
 struct zasop  zvminsttab[ZVMNOP];
 #if (ZVMMULTITAB)
@@ -13,6 +14,16 @@ struct zasop *zvmoptab[ZVMNOP];
 #else
 struct zasop *zvmophash[ZASNHASH];
 #endif
+
+void
+zvminitopt(void)
+{
+#if (ZASALIGN)
+    zasinitalign(sizeof(struct zvmopcode));
+#endif
+
+    return;
+}
 
 #if (ZVMMULTITAB)
 
@@ -192,7 +203,7 @@ asmprocinst(struct zastoken *token, zasmemadr_t adr, zasmemadr_t *retadr)
     uint8_t           narg = token->data.inst.narg;
     uint8_t           len = sizeof(struct zvmopcode);
 
-    opadr = zvmalignop(adr);
+    opadr = zasalignop(adr);
     while (adr < opadr) {
         zvm.physmem[adr] = ZVMOPNOP;
         adr++;

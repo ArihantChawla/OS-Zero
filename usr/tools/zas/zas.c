@@ -15,6 +15,7 @@
 #include <zero/prof.h>
 #endif
 #include <zas/zas.h>
+#include <zas/opt.h>
 #include <zas/io.h>
 #if (ZVM)
 #include <zvm/zvm.h>
@@ -60,7 +61,7 @@ static struct zaslabel  *zasglobhash[ZASNHASH];
 struct zasline          *zaslinehash[ZASNHASH];
 #endif
 
-zastokfunc_t *zasktokfunctab[ZASNTOKEN]
+zastokfunc_t            *zasktokfunctab[ZASNTOKEN]
 = {
     NULL,
     zasprocvalue,
@@ -84,6 +85,9 @@ zastokfunc_t *zasktokfunctab[ZASNTOKEN]
     NULL,
     NULL
 };
+#if (ZASALIGN)
+zasmemadr_t              zastokalntab[ZASNTOKEN];
+#endif
 
 struct zastoken         *zastokenqueue;
 struct zastoken         *zastokentail;
@@ -1288,6 +1292,9 @@ zastranslate(zasmemadr_t base)
     while (token) {
         func = zasktokfunctab[token->type];
         if (func) {
+#if (ZASALIGN)
+            adr = zasaligntok(adr, token->type);
+#endif
             token1 = func(token, adr, &adr);
             if (!token) {
 

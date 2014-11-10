@@ -66,6 +66,7 @@ extern struct zvm    zvm;
 
 /* function prototypes */
 extern void              zvminit(void);
+extern void              zvminitopt(void);
 extern size_t            zvminitmem(void);
 extern long              asmaddop(const uint8_t *str, struct zasop *op);
 extern struct zasop    * zvmfindasm(const uint8_t *str);

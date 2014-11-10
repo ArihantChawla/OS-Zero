@@ -225,6 +225,7 @@ zvmmain(int argc, char *argv[])
         exit(1);
     }
     zasinit();
+    zvminitopt();
     zvminit();
 #if (!ZVMVIRTMEM)
     memset(zvm.physmem, 0, ZASTEXTBASE);

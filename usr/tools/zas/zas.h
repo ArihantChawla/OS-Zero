@@ -3,8 +3,7 @@
 
 #define ZASNHASH 1024
 
-#include <stdint.h>
-
+#include <stddef.h>
 #include <stdint.h>
 
 #if (ZAS32BIT)
@@ -165,6 +164,8 @@ struct zasline * zasfindline(zasmemadr_t adr);
 #endif
 
 extern void        zasinit(void);
+extern void        zasinitopt(size_t opsize);
+extern void        zasinitalign(size_t opsize);
 extern zasmemadr_t zastranslate(zasmemadr_t base);
 extern void        zasresolve(zasmemadr_t base);
 extern void        zasremovesyms(void);
