@@ -2,7 +2,10 @@
 #include <stdio.h>
 #include <string.h>
 #include <stdint.h>
-#if (ZVMXCB)
+#if (ZVMXORG)
+#include <unistd.h>
+#include <zvm/xorg.h>
+#elif (ZVMXCB)
 #include <unistd.h>
 #include <xcb/xcb.h>
 #endif
@@ -137,7 +140,7 @@ zvminit(void)
 #endif
     zvm.pc = ZASTEXTBASE;
     zvminitio();
-#if (ZVMXCB)
+#if (ZVMXORG) || (ZVMXCB)
     zvminitui();
 #endif
 
@@ -225,9 +228,9 @@ zvmloop(zasmemadr_t _startadr)
         fprintf(stderr, "r%d:\t0x%x\n", i, zvm.regs[i]);
     }
 #endif
-#if (ZVMXCB)
+#if (ZVMXORG) || (ZVMXCB)
     while (1) {
-        xcbdoevent();
+        zvmdouievent();
     }
 #endif
 
