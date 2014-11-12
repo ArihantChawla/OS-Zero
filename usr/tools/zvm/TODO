@@ -31,7 +31,7 @@
   	- user interface
   	  - executing programs
   	  - the debugger
-  	  	- graphical interfaces with x11 + efl
+  	  	- graphical interfaces with X11 + EFL
   	  	- view
   	  	  - registers
   	  	  - current stack frame
