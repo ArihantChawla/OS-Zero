@@ -10,9 +10,8 @@
 #undef PTHREAD
 #define PTHREAD        0
 #endif
-#define ZEROMTXINITVAL 0L
-#define ZEROMTXLKVAL   1L
-#define ZEROMTXCONTVAL 2L
+#define ZEROMTXINITVAL 0
+#define ZEROMTXLKVAL   1
 
 #include <zero/asm.h>
 #if (__KERNEL__) && (__MTKERNEL__)
@@ -35,56 +34,39 @@ mtxtrylk2(volatile long *lp, long val)
 
     res = m_cmpswap(lp, ZEROMTXINITVAL, val);
 
-    return (res == ZEROMTXINITVAL) ? ZEROMTXLKVAL : 0;
+    return (res == ZEROMTXINITVAL);
 }
 #define mtxtrylk(lp) mtxtrylk2((volatile long *)(lp), ZEROMTXLKVAL)
 
-static __inline__ long
+static __inline__ void
 mtxlk2(volatile long *lp, long val)
 {
     volatile long res = val;
     
     do {
         res = m_cmpswap(lp, ZEROMTXINITVAL, val);
-        if (res == ZEROMTXINITVAL) { 
-
-            return ZEROMTXLKVAL;
-        }
-        if (res == ZEROMTXLKVAL) {
+        if (res != ZEROMTXINITVAL) {
 #if (__KERNEL__)
             schedpickthr();
 #elif (PTHREAD)
             pthread_yield();
 #endif
-        } else {
-            res = m_cmpswap(lp, ZEROMTXCONTVAL, ZEROMTXLKVAL);
-            if (res == ZEROMTXCONTVAL) {
-
-                return res;
-            }
         }
     } while (res != ZEROMTXINITVAL);
 
-    return res;
+    return;
 }
 #define mtxlk(lp) mtxlk2((volatile long *)(lp), ZEROMTXLKVAL)
 
 static __inline__ void
 mtxunlk2(volatile long *lp, long val)
 {
-    volatile long unlk = m_cmpswap(lp, ZEROMTXINITVAL, ZEROMTXLKVAL);
-    volatile long cont = m_cmpswap()
-    membar();
-    if (mtx != ZEROMTXLKVAL)
+    m_membar();
+    *lp = ZEROMTXINITVAL;
 
-        retu
-//    m_membar();
-
-    *lp = val;
-
-    return val;
+    return;
 }
-#define mtxunlk(lp) mtxunlk2((volatile long *)(lp), ZEROMTXINITVAL)
+#define mtxunlk(lp) mtxunlk2((volatile long *)(lp), ZEROMTXLKVAL)
 
 #endif /* __ZERO_MTX_H__ */
 

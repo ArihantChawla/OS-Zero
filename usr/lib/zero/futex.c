@@ -29,37 +29,37 @@ mutex_init(mutex_t *mutex, const pthread_mutexattr_t *atr)
 long
 mutex_destroy(mutex_t *mutex)
 {
-	(void)mutex;
-
-	return 0;
+    (void)mutex;
+    
+    return 0;
 }
 
 mutex_t
 mutex_lock(mutex_t *mutex)
 {
-	volatile long mtx = 0L;
-	long          l;
-
-	do {
-	    mtx = m_cmpswap(mutex, ZEROMTXINITVAL, ZEROMTXLKVAL);
-	    if (mtx == ZEROMTXCONTVAL) {
+    volatile long mtx = 0L;
+    long          l;
+    
+    mtx = m_cmpswap(mutex, ZEROMTXINITVAL, ZEROMTXLKVAL);
+    if (mtx != ZEROMTXLKVAL) {
+        if (mtx == ZEROMTXCONTVAL) {
             mtx = m_cmpswap(mutex, ZEROMTXCONTVAL, ZEROMTXLKVAL);
-
+            
             return mtx;
-	    } else {
+        } else {
             for (l = 0 ; l < 100; l++) {
                 mtx = m_cmpswap(mutex, ZEROMTXINITVAL, ZEROMTXLKVAL);
                 if (!mtx) {
                     mtx = m_cmpswap(mutex, ZEROMTXCONTVAL, ZEROMTXLKVAL);
-                    if (mtx != ZEROMTXCONTVAL) {}
+                    if (!mtx) {
                         m_waitint();
                     }
                 }
-	        }
-	    }
-	} while (mtx == 0L)
-
-	return mtx;
+            }
+        }
+    }
+        
+    return mtx;
 }
 
 mutex_t

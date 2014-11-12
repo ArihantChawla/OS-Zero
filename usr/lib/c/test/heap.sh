@@ -13,3 +13,4 @@ $CC -DPTHREAD=1 -D_ZERO_SOURCE=1 -D_REENTRANT -DX11VIS=1 -g -Wall -O -I../.. -o 
 $CC -DPTHREAD=1 -D_ZERO_SOURCE=1 -D_REENTRANT -DDEVEL=0 -g -Wall -O -I../.. -fPIC -shared -o zmalloc.so ../malloc.c -pthread
 $CC -DPTHREAD=1 -D_ZERO_SOURCE=1 -D_REENTRANT -DX11VIS=1 -DEVEL=0 -g -Wall -O -I../.. -fPIC -shared -o xzmalloc.so ../malloc.c -lX11 -pthread
 #$CC -DPTHREAD=1  -DX11VIS=1 -D_ZERO_SOURCE=1 -D_REENTRANT -g -Wall -O -I../../../include -fPIC -shared -o xmalloc.so ../stdlib/../malloc.c -pthread
+

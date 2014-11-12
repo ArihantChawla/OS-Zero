@@ -5,6 +5,8 @@
  * See the file LICENSE for more information about using this software.
  */
 
+#if (ZEROMALLOC)
+
 #define AUTOBUF    0 /* FIXME: broken :) */
 #if (AUTOBUF)
 #define NBUFSHIFT  SLABLOG2
@@ -45,6 +47,7 @@
 #if (STDIO)
 #include <stdio.h>
 #endif
+#include <zero/asm.h>
 #if (ZEROMTX)
 #include <zero/mtx.h>
 typedef volatile long   LK_T;
@@ -167,9 +170,9 @@ typedef pthread_mutex_t LK_T;
 //#define HQMAX         20
 #define NBKT          (8 * PTRSIZE)
 #if defined(_SC_NPROCESSORS_CONF)
-#define NARN          (2 * sysconf(_SC_NPROCESSORS_CONF))
+#define NARN          (8 * sysconf(_SC_NPROCESSORS_CONF))
 #elif (_GNU_SOURCE)
-#define NARN          (2 * get_nprocs_conf())
+#define NARN          (8 * get_nprocs_conf())
 #elif (MTSAFE)
 #define NARN          16
 #else
@@ -652,7 +655,8 @@ struct mag {
 #endif
 };
 
-#define nbarn() (blksz(bktid(sizeof(struct arn))))
+//#define nbarn() (blksz(bktid(sizeof(struct arn))))
+#define nbarn()  PAGESIZE;
 struct arn {
     struct mag  *btab[NBKT];
     long         nref;
@@ -715,7 +719,7 @@ static long                 _aid = -1;
 static int64_t              _nbheap;
 static int64_t              _nbmap;
 static int                  _mapfd = -1;
-#if (_GNU_SOURCE)
+#if (_GNU_SOURCE) && (GNUMALLOCHOOKS)
 void *(*__malloc_hook)(size_t size, const void *caller);
 void *(*__realloc_hook)(void *ptr, size_t size, const void *caller);
 void *(*__memalign_hook)(size_t align, size_t size, const void *caller);
@@ -776,8 +780,10 @@ prefork(void)
     aid = _conf.narn;
     while (aid--) {
         arn = _atab[aid];
-        for (bid = 0 ; bid < NBKT ; bid++) {
-            mlk(&arn->lktab[bid]);
+        if (arn) {
+            for (bid = 0 ; bid < NBKT ; bid++) {
+                mlk(&arn->lktab[bid]);
+            }
         }
     }
     bid = NBKT;
@@ -802,8 +808,10 @@ postfork(void)
     aid = _conf.narn;
     while (aid--) {
         arn = _atab[aid];
-        for (bid = 0 ; bid < NBKT ; bid++) {
-            munlk(&arn->lktab[bid]);
+        if (arn) {
+            for (bid = 0 ; bid < NBKT ; bid++) {
+                munlk(&arn->lktab[bid]);
+            }
         }
     }
     munlk(&_conf.heaplk);
@@ -1175,7 +1183,7 @@ initmall(void)
 #if (X11VIS)
     initx11vis();
 #endif
-#if (_GNU_SOURCE)
+#if (_GNU_SOURCE) && (GNUMALLOCHOOKS)
     if (__malloc_initialize_hook) {
         __malloc_initialize_hook();
     }
@@ -1404,7 +1412,7 @@ getslab(long aid,
         mlk(&_conf.heaplk);
         ptr = growheap(nb);
         munlk(&_conf.heaplk);
-#if (_GNU_SOURCE)
+#if (_GNU_SOURCE) && (GNUMALLOCHOOKS)
         if (__after_morecore_hook) {
             __after_morecore_hook();
         }
@@ -1645,15 +1653,20 @@ getmem(size_t size,
 
     aid = thrid();
     arn = _atab[aid];
-    mlk(&arn->lktab[bid]);
-    mag = arn->btab[bid];
-#if (AUTOBUF)
-    max = nblk(mag, bid);
-#endif
+    if (arn) {
+        mlk(&arn->lktab[bid]);
+        mag = arn->btab[bid];
+    }
     if (!mag) {
         glob++;
         mlk(&_blktab[bid]);
         mag = _btab[bid];
+#if 0
+    } else {
+#if (AUTOBUF)
+        max = nblk(mag, bid);
+#endif
+#endif
     }
     if (!mag) {
         mlk(&_flktab[bid]);
@@ -2231,15 +2244,16 @@ malloc(size_t size)
 {
     void *ptr;
 
-#if (_GNU_SOURCE)
+#if (_GNU_SOURCE) && (GNUMALLOCHOOKS)
     if (__malloc_hook) {
         void *caller;
 
-        m_getretadr(caller):
-        __malloc_hook(size, (const void *)caller);
+        caller = m_getretadr();
+        __malloc_hook(size, (const void *)caller);;
     }
 #endif
     ptr = getmem(size, 0, 0);
+
     return ptr;
 }
 
@@ -2286,16 +2300,16 @@ realloc(void *ptr,
 {
     void *retptr = NULL;
 
-#if (_GNU_SOURCE)
+#if (_GNU_SOURCE) && (GNUMALLOCHOOKS)
     if (__realloc_hook) {
         void *caller;
 
-        m_getretadr(caller):
-        __realloc_hook(ptr, size, (const void *)caller)
+        caller = m_getretadr();
+        __realloc_hook(ptr, size, (const void *)caller);
     }
 #endif
     if (!size && (ptr)) {
-        free(ptr)
+        free(ptr);
     } else {
         retptr =  _realloc(ptr, size, 1);
     }
@@ -2310,7 +2324,7 @@ free(void *ptr)
     if (__free_hook) {
         void *caller;
 
-        m_getretadr(caller);
+        caller = m_getretadr();
         __free_hook(ptr, (const void *)caller);
     }
 #endif
@@ -2328,11 +2342,11 @@ aligned_alloc(size_t align,
 {
     void *ptr = NULL;
 
-#if (_GNU_SOURCE)
+#if (_GNU_SOURCE) && (GNUMALLOCHOOKS)
     if (__memalign_hook) {
         void *caller;
 
-        m_getretadr(caller);
+        caller = m_getretadr();
         __memalign_hook(align, size, (const void *)caller);
     }
 #endif
@@ -2356,15 +2370,15 @@ posix_memalign(void **ret,
     void *ptr;
     int   retval = -1;
 
-#if (_GNU_SOURCE)
+#if (_GNU_SOURCE) && (GNUMALLOCHOOKS)
     if (__memalign_hook) {
         void *caller;
 
-        m_getretadr(caller);
+        caller = m_getretadr();
         __memalign_hook(align, size, (const void *)caller);
     }
 #endif
-    ptr = getmem(size, align, 0)
+    ptr = getmem(size, align, 0);
     if (!powerof2(align) || (size & sizeof(void *))) {
         errno = EINVAL;
     } else {
@@ -2390,12 +2404,12 @@ valloc(size_t size)
 {
     void *ptr;
 
-#if (_GNU_SOURCE)
+#if (_GNU_SOURCE) && (GNUMALLOCHOOKS)
     if (__memalign_hook) {
         void *caller;
 
-        m_getretadr(caller);
-        __memalign_hook(align, size, (const void *)caller);
+        caller = m_getretadr();
+        __memalign_hook(PAGESIZE, size, (const void *)caller);
     }
 #endif
     ptr = getmem(size, PAGESIZE, 0);
@@ -2410,11 +2424,11 @@ memalign(size_t align,
 {
     void *ptr = NULL;
 
-#if (_GNU_SOURCE)
+#if (_GNU_SOURCE) && (GNUMALLOCHOOKS)
     if (__memalign_hook) {
         void *caller;
 
-        m_getretadr(caller);
+        caller = m_getretadr();
         __memalign_hook(align, size, (const void *)caller);
     }
 #endif
@@ -2485,4 +2499,6 @@ malloc_size(void *ptr)
 
     return sz;
 }
+
+#endif /* ZEROMALLOC */
 
