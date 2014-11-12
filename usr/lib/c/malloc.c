@@ -2284,7 +2284,7 @@ void *
 realloc(void *ptr,
         size_t size)
 {
-    void *retptr;
+    void *retptr = NULL;
 
 #if (_GNU_SOURCE)
     if (__realloc_hook) {
@@ -2294,7 +2294,11 @@ realloc(void *ptr,
         __realloc_hook(ptr, size, (const void *)caller)
     }
 #endif
-    retptr = _realloc(ptr, size, 1)
+    if (!size && (ptr)) {
+        free(ptr)
+    } else {
+        retptr =  _realloc(ptr, size, 1);
+    }
 
     return retptr;
 }
