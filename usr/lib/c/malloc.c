@@ -715,6 +715,14 @@ static long                 _aid = -1;
 static int64_t              _nbheap;
 static int64_t              _nbmap;
 static int                  _mapfd = -1;
+#if (_GNU_SOURCE)
+void *(*__malloc_hook)(size_t size, const void *caller);
+void *(*__realloc_hook)(void *ptr, size_t size, const void *caller);
+void *(*__memalign_hook)(size_t align, size_t size, const void *caller);
+void  (*__free_hook)(void *ptr, const void *caller);
+void *(*__malloc_initialize_hook)(void);
+void  (*__after_morecore_hook)(void);
+#endif
 
 /* utility functions */
 
@@ -772,6 +780,10 @@ prefork(void)
             mlk(&arn->lktab[bid]);
         }
     }
+    bid = NBKT;
+    while (bid--) {
+        mlk(&_flktab[bid]);
+    }
 
     return;
 }
@@ -783,6 +795,10 @@ postfork(void)
     long        bid;
     struct arn *arn;
 
+    bid = NBKT;
+    while (bid--) {
+        munlk(&_flktab[bid]);
+    }
     aid = _conf.narn;
     while (aid--) {
         arn = _atab[aid];
@@ -1159,6 +1175,11 @@ initmall(void)
 #if (X11VIS)
     initx11vis();
 #endif
+#if (_GNU_SOURCE)
+    if (__malloc_initialize_hook) {
+        __malloc_initialize_hook();
+    }
+#endif
 
     return;
 }
@@ -1383,6 +1404,11 @@ getslab(long aid,
         mlk(&_conf.heaplk);
         ptr = growheap(nb);
         munlk(&_conf.heaplk);
+#if (_GNU_SOURCE)
+        if (__after_morecore_hook) {
+            __after_morecore_hook();
+        }
+#endif
         if (ptr != SBRK_FAILED) {
 #if (INTSTAT) || (STAT)
             nheapbytes[aid] += nb;
@@ -2203,8 +2229,17 @@ putmem(void *ptr)
 void *
 malloc(size_t size)
 {
-    void *ptr = getmem(size, 0, 0);
+    void *ptr;
 
+#if (_GNU_SOURCE)
+    if (__malloc_hook) {
+        void *caller;
+
+        m_getretadr(caller):
+        __malloc_hook(size, (const void *)caller);
+    }
+#endif
+    ptr = getmem(size, 0, 0);
     return ptr;
 }
 
@@ -2249,7 +2284,21 @@ void *
 realloc(void *ptr,
         size_t size)
 {
-    void *retptr = _realloc(ptr, size, 0);
+    void *retptr = NULL;
+
+#if (_GNU_SOURCE)
+    if (__realloc_hook) {
+        void *caller;
+
+        m_getretadr(caller):
+        __realloc_hook(ptr, size, (const void *)caller)
+    }
+#endif
+    if (!size && (ptr)) {
+        free(ptr)
+    } else {
+        retptr =  _realloc(ptr, size, 1);
+    }
 
     return retptr;
 }
@@ -2257,6 +2306,14 @@ realloc(void *ptr,
 void
 free(void *ptr)
 {
+#if (_BNU_SOURCE)
+    if (__free_hook) {
+        void *caller;
+
+        m_getretadr(caller);
+        __free_hook(ptr, (const void *)caller);
+    }
+#endif
     if (ptr) {
         putmem(ptr);
     }
@@ -2270,6 +2327,15 @@ aligned_alloc(size_t align,
               size_t size)
 {
     void *ptr = NULL;
+
+#if (_GNU_SOURCE)
+    if (__memalign_hook) {
+        void *caller;
+
+        m_getretadr(caller);
+        __memalign_hook(align, size, (const void *)caller);
+    }
+#endif
     if (!powerof2(align) || (size & (align - 1))) {
         errno = EINVAL;
     } else {
@@ -2287,9 +2353,18 @@ posix_memalign(void **ret,
                size_t align,
                size_t size)
 {
-    void *ptr = getmem(size, align, 0);
+    void *ptr;
     int   retval = -1;
 
+#if (_GNU_SOURCE)
+    if (__memalign_hook) {
+        void *caller;
+
+        m_getretadr(caller);
+        __memalign_hook(align, size, (const void *)caller);
+    }
+#endif
+    ptr = getmem(size, align, 0)
     if (!powerof2(align) || (size & sizeof(void *))) {
         errno = EINVAL;
     } else {
@@ -2313,7 +2388,17 @@ posix_memalign(void **ret,
 void *
 valloc(size_t size)
 {
-    void *ptr = getmem(size, PAGESIZE, 0);
+    void *ptr;
+
+#if (_GNU_SOURCE)
+    if (__memalign_hook) {
+        void *caller;
+
+        m_getretadr(caller);
+        __memalign_hook(align, size, (const void *)caller);
+    }
+#endif
+    ptr = getmem(size, PAGESIZE, 0);
 
     return ptr;
 }
@@ -2325,6 +2410,14 @@ memalign(size_t align,
 {
     void *ptr = NULL;
 
+#if (_GNU_SOURCE)
+    if (__memalign_hook) {
+        void *caller;
+
+        m_getretadr(caller);
+        __memalign_hook(align, size, (const void *)caller);
+    }
+#endif
     if (!powerof2(align)) {
         errno = EINVAL;
     } else {

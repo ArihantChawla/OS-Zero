@@ -37,6 +37,7 @@
   	  	  - current stack frame
   	  	  - variable value lookup
   	  	  - globals (symbol + value)
+  	  	  - current file + function/line
 
 modules
 -------
