@@ -1084,6 +1084,10 @@ initmall(void)
     long        aid = NARN;
     long        ofs;
     uint8_t    *ptr;
+#if (MALLOCHASH)
+    long        l;
+    long        n;
+#endif
 
     mlk(&_conf.initlk);
     if (_conf.flags & CONF_INIT) {
@@ -1147,12 +1151,10 @@ initmall(void)
 #endif
 #if (MALLOCHASH)
     {
-        long l, n;
-
-        ptr = mapanon(_mapfd, CLSIZE * NHASH * sizeof(struct mptr));
+        ptr = mapanon(_mapfd, 4 * CLSIZE * NHASH * sizeof(struct mptr));
         for (l = 0 ; l < NHASH ; l++) {
-            for (n = 0 ; n < CLSIZE / sizeof(struct mptr) ; n++) {
-                _mtab[l].ntab = CLSIZE / sizeof(struct mptr);
+            for (n = 0 ; n < 4 * CLSIZE / sizeof(struct mptr) ; n++) {
+                _mtab[l].ntab = 4 * CLSIZE / sizeof(struct mptr);
                 _mtab[l].tab = (struct mptr *)ptr;
                 ptr += sizeof(struct mptr);
             }
@@ -1205,18 +1207,24 @@ findmag(void *ptr)
         struct mptr *lim;
         
         mptr = mptr->tab;
-        lim = mptr + mptr->ntab;
-        do {
-            if (mptr->ptr == ptr) {
+        if (mptr) {
+            lim = mptr + mptr->ntab;
+            do {
+                if (mptr->ptr == ptr) {
+                    munlk(&_hlktab[key]);
+                    
+                    return mptr->mag;
+                }
+                mptr++;
+            } while (mptr < lim);
+            if (mptr == lim) {
                 munlk(&_hlktab[key]);
                 
-                return mptr->mag;
+                return NULL;
             }
-            mptr++;
-        } while (mptr < lim);
-        if (mptr == lim) {
+        } else {
             munlk(&_hlktab[key]);
-
+            
             return NULL;
         }
     }
@@ -1251,9 +1259,11 @@ addblk(void *ptr,
                 exit(1);
             }
             if (mptr->tab) {
-                memcpy(tab, mptr->tab, mptr->n * sizeof(struct mptr));
-                bzero(tab + mptr->ntab, mptr->n * sizeof(struct mptr));
+                memcpy(tab, mptr->tab, mptr->ntab * sizeof(struct mptr));
+                bzero(tab + mptr->ntab, mptr->ntab * sizeof(struct mptr));
             }
+            unmapanon(mptr->tab,
+                      rounduppow2(mptr->ntab * sizeof(struct mptr), PAGESIZE));
             mptr->n++;
             mptr->tab = tab;
             mptr->ntab = n;
