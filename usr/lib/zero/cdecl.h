@@ -39,8 +39,8 @@
 /* declare function with no return (e.g., longjmp()) */
 #define NORET       __attribute__ ((noreturn))
 
-#define likely(x)   __builtin_expect(!!(x), 1)
-#define unlikely(x) __builtin_expect(!!(x), 0)
+#define likely(x)   __builtin_expect((x), 1)
+#define unlikely(x) __builtin_expect((x), 0)
 #define isconst(x)  __builtin_constant_p(x)
 
 #else /* !defined(__GNUC__) */
