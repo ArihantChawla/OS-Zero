@@ -198,12 +198,13 @@ typedef pthread_mutex_t LK_T;
 #if (PTRBITS > 48)
 
 #define NL2BIT     16
-#define NL3BIT     (PTRBITS - SLABLOG2 - NL1BIT - NL2BIT)
+//#define NL3BIT     (PTRBITS - SLABLOG2 - NL1BIT - NL2BIT)
+#define NL3BIT     (PTRBITS - PAGESIZELOG2 - NL1BIT - NL2BIT)
 //#define NL3BIT     (PTRBITS - NL1BIT - NL2BIT)
 
 #else
 
-#define NL2BIT     (PTRBITS - SLABLOG2 - NL1BIT)
+#define NL2BIT     (PTRBITS - PAGESIZELOG2 - NL1BIT)
 //#define NL2BIT     (PTRBITS - NL1BIT)
 #define NL3BIT     0
 
