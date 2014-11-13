@@ -583,13 +583,14 @@ static void * _realloc(void *ptr, size_t size, long rel);
 
 #if (MALLOCHASH)
 struct mptr {
-//    LK_T         lk;
     void        *ptr;
     long         n;
     long         ntab;
     struct mptr *tab;
     struct mag  *mag;
     struct mptr *next;
+    long         nbtab;
+    long         pad; /* pad to 8 long-words */
 };
 #endif
 
@@ -1151,11 +1152,13 @@ initmall(void)
 #endif
 #if (MALLOCHASH)
     {
-        ptr = mapanon(_mapfd, 4 * CLSIZE * NHASH * sizeof(struct mptr));
+        ptr = mapanon(_mapfd, PAGESIZE * NHASH);
         for (l = 0 ; l < NHASH ; l++) {
-            for (n = 0 ; n < 4 * CLSIZE / sizeof(struct mptr) ; n++) {
-                _mtab[l].ntab = 4 * CLSIZE / sizeof(struct mptr);
+            ptr = (uint8_t *)rounduppow2((uintptr_t)ptr, PAGESIZE);
+            for (n = 0 ; n < PAGESIZE / sizeof(struct mptr) ; n++) {
                 _mtab[l].tab = (struct mptr *)ptr;
+                _mtab[l].ntab = PAGESIZE / sizeof(struct mptr);
+                _mtab[l].nbtab = PAGESIZE;
                 ptr += sizeof(struct mptr);
             }
         }
@@ -1251,7 +1254,8 @@ addblk(void *ptr,
         if (mptr->n == mptr->ntab) {
             long         n = max(mptr->ntab << 1,
                                  PAGESIZE / sizeof(struct mptr));
-            struct mptr *tab = mapanon(_mapfd, n * sizeof(struct mptr));
+            long         nb = rounduppow2(n * sizeof(struct mptr), PAGESIZE);
+            struct mptr *tab = mapanon(_mapfd, nb);
 
             if (!tab) {
                 munlk(&_hlktab[key]);
@@ -1261,13 +1265,14 @@ addblk(void *ptr,
             if (mptr->tab) {
                 memcpy(tab, mptr->tab, mptr->ntab * sizeof(struct mptr));
                 bzero(tab + mptr->ntab, mptr->ntab * sizeof(struct mptr));
+                unmapanon(mptr->tab,
+                          mptr->nbtab);
             }
-            unmapanon(mptr->tab,
-                      rounduppow2(mptr->ntab * sizeof(struct mptr), PAGESIZE));
-            mptr->n++;
             mptr->tab = tab;
-            mptr->ntab = n;
             mptr = &mptr->tab[mptr->n];
+            mptr->ntab = n;
+            mptr->nbtab = nb;
+            mptr->n++;
         }
         mptr->ptr = ptr;
         mptr->mag = mag;
@@ -2141,6 +2146,9 @@ putmem(void *ptr)
     long        freed = 0;
 
     if (mag) {
+#if (MALLOCHASH)
+        addblk(ptr, NULL);
+#endif
 #if (VALGRIND)
         if (RUNNING_ON_VALGRIND) {
             VALGRIND_FREELIKE_BLOCK(ptr, 0);
@@ -2217,7 +2225,9 @@ putmem(void *ptr)
                         munlk(&_flktab[bid]);
                     }
                 }
+#if 0
                 addblk(mptr, NULL);
+#endif
                 if (ismapbkt(bid)
                     && (!isbufbkt(bid)
 #if (TUNEBUF)
