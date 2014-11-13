@@ -1241,7 +1241,7 @@ addblk(void *ptr,
        struct mag *mag)
 {
     unsigned long  ul = *(unsigned long *)&ptr;
-    unsigned long  key = ul >> BLKMINLOG2;
+    unsigned long  key = ul;
     struct mptr   *mptr;
 
     key = hashq128(&key, sizeof(unsigned long), NHASHBIT);
@@ -1257,6 +1257,10 @@ addblk(void *ptr,
             long         nb = rounduppow2(n * sizeof(struct mptr), PAGESIZE);
             struct mptr *tab = mapanon(_mapfd, nb);
 
+            if (nb & (PAGESIZE - 1)) {
+
+                abort();
+            }
             if (!tab) {
                 munlk(&_hlktab[key]);
 
@@ -1269,11 +1273,11 @@ addblk(void *ptr,
                           mptr->nbtab);
             }
             mptr->tab = tab;
-            mptr = &mptr->tab[mptr->n];
             mptr->ntab = n;
             mptr->nbtab = nb;
-            mptr->n++;
         }
+        mptr = &mptr->tab[mptr->n];
+        mptr->n++;
         mptr->ptr = ptr;
         mptr->mag = mag;
     }
