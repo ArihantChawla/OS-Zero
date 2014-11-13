@@ -196,6 +196,9 @@ zvmopinc(struct zvmopcode *op)
     dest++;
     zvm.msw &= ~(ZVMZF | ZVMOF | ZVMCF);
     zvmsetzf(dest);
+    if (!dest) {
+        zvm.msw |= ZVMOF;
+    }
     *dptr = dest;
     zvm.pc += op->size << 2;
 

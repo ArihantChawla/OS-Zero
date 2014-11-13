@@ -15,6 +15,7 @@
 #define PAGESIZELOG2 12
 
 #define CLSIZE       32
+#define CLSIZELOG2   5
 #define PAGESIZE     (1UL << PAGESIZELOG2)
 
 #endif /* __ZERO_ARM_PARAM_H__ */

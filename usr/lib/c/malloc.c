@@ -12,6 +12,7 @@
 #define MTSAFE     1
 #endif
 
+#define SMALLBUF   1
 #define CONSTBUF   1
 #define NOSBRK     0
 #define TAILFREE   0
@@ -151,15 +152,22 @@ typedef pthread_mutex_t LK_T;
 #endif
 
 /* experimental */
-#define TUNEBUF 1
+#define TUNEBUF 0
 
 /* basic allocator parameters */
-#define BLKMINLOG2    5  /* minimum-size allocation */
+#define BLKMINLOG2    CLSIZELOG2  /* minimum-size allocation */
 //#define SLABBIGLOG2   16 /* small-size block */
-#if (!BIGSLAB)
+#if (SMALLBUF)
 #define SLABLOG2      18
-#define SLABBIGLOG2   15
-#define SLABTINYLOG2  12
+#define SLABBIGLOG2   16
+#define SLABTINYLOG2  13
+#define SLABTEENYLOG2 10
+#define MAPMIDLOG2    20
+#define MAPBIGLOG2    22
+#elif (!BIGSLAB)
+#define SLABLOG2      19
+#define SLABBIGLOG2   16
+#define SLABTINYLOG2  13
 #define SLABTEENYLOG2 8
 #define MAPMIDLOG2    20
 #define MAPBIGLOG2    24
@@ -255,39 +263,7 @@ typedef pthread_mutex_t LK_T;
 #if (TUNEBUF)
 #if (CONSTBUF)
 #define nbufinit(bid)     0
-#if 0
-#define nbufinit(bid)                                                   \
-    (!ismapbkt(bid)                                                     \
-     ? 0                                                                \
-     : (((bid) < MAPBIGLOG2)                                            \
-        ? 1                                                             \
-       : 0))
-#endif
 #define nmagslablog2init(bid) 0
-#if 0
-#define nmagslablog2init(bid)                                           \
-    (((ismapbkt(bid))                                                   \
-      ? 0                                                               \
-      : (((bid) <= SLABTEENYLOG2)                                       \
-         ? 0                                                            \
-         : (((bid) <= SLABTINYLOG2)                                     \
-            ? 1                                                         \
-            : 2))))
-#if 0
-#endif
-#define nmagslablog2init(bid)                                           \
-    (((ismapbkt(bid))                                                   \
-      ? (((bid) <= MAPMIDLOG2)                                          \
-         ? 2                                                            \
-         : (((bid) <= MAPBIGLOG2)                                       \
-            ? 1                                                         \
-            : 0))                                                       \
-      : (((bid) <= SLABTEENYLOG2)                                       \
-         ? 0                                                            \
-         : (((bid) <= SLABTINYLOG2)                                     \
-            ? 1                                                         \
-            : 2))))
-#endif
 #else /* !CONSTBUF */
 /* adjust how much is buffered based on current use */
 #define nmagslablog2init(bid) 0
@@ -445,6 +421,8 @@ typedef pthread_mutex_t LK_T;
     ? (SLABLOG2 - (bid) + nmagslablog2(bid))                            \
     : nmagslablog2(bid))
 #endif
+#else
+#define nblklog2(bid)     (ismapbkt(bid) ? 1UL : SLABLOG2 - (bid))
 #endif /* TUNEBUF */
 #define nblk(bid)         (1UL << nblklog2(bid))
 #define NBSLAB            (1UL << SLABLOG2)
@@ -452,7 +430,7 @@ typedef pthread_mutex_t LK_T;
 #define nbmag(bid)        (1UL << (nblklog2(bid) + (bid)))
 
 #if (MALLOCHASH)
-#define NHASHBIT          16
+#define NHASHBIT          18
 #define NHASH             (1U << NHASHBIT)
 #elif (PTRBITS <= 32)
 #define NSLAB             (1UL << (PTRBITS - SLABLOG2))
@@ -592,6 +570,7 @@ struct mptr {
     long         nbtab;
     long         pad; /* pad to 8 long-words */
 };
+#define MPTRSIZE (8 * sizeof(long))
 #endif
 
 /* configuration */
@@ -662,7 +641,8 @@ struct mtree {
 /* globals */
 
 #if (MALLOCHASH)
-static LK_T                 _hlktab[NHASH];
+static LK_T                 _hlktab[NHASH] ALIGNED(PAGESIZE);
+static struct mptr          _mtab[NHASH];
 #endif
 #if (INTSTAT) || (STAT)
 static uint64_t             nalloc[NARN][NBKT];
@@ -670,7 +650,7 @@ static long                 nhdrbytes[NARN];
 static long                 nstkbytes[NARN];
 static long                 nmapbytes[NARN];
 static long                 nheapbytes[NARN];
-static unsigned long long   nheapreq[NBKT] ALIGNED(PAGESIZE);
+static unsigned long long   nheapreq[NBKT];
 static unsigned long long   nmapreq[NBKT];
 #endif
 #if (TUNEBUF)
@@ -690,11 +670,7 @@ static struct mag          *_btab[NBKT];
 #if (HACKS) || (TUNEBUF)
 static long                 _fcnt[NBKT];
 #endif
-#if (MALLOCHASH)
-static struct mptr          _mtab[NHASH];
-#else
 static void               **_mdir;
-#endif
 static struct arn         **_atab;
 static struct mconf         _conf;
 #if (MTSAFE) && (PTHREAD)
@@ -738,7 +714,7 @@ bktid(size_t size)
 static long
 getaid(void)
 {
-    long        aid;
+    long aid;
 
     mlk(&_conf.arnlk);
     aid = _conf.acur++;
@@ -1151,18 +1127,20 @@ initmall(void)
     munlk(&_conf.heaplk);
 #endif
 #if (MALLOCHASH)
+#if 0
     {
         ptr = mapanon(_mapfd, PAGESIZE * NHASH);
         for (l = 0 ; l < NHASH ; l++) {
             ptr = (uint8_t *)rounduppow2((uintptr_t)ptr, PAGESIZE);
-            for (n = 0 ; n < PAGESIZE / sizeof(struct mptr) ; n++) {
+            for (n = 0 ; n < PAGESIZE / MPTRSIZE ; n++) {
                 _mtab[l].tab = (struct mptr *)ptr;
-                _mtab[l].ntab = PAGESIZE / sizeof(struct mptr);
+                _mtab[l].ntab = PAGESIZE / MPTRSIZE;
                 _mtab[l].nbtab = PAGESIZE;
-                ptr += sizeof(struct mptr);
+                ptr += MPTRSIZE;
             }
         }
     }
+    #endif
 #elif (PTRBITS <= 32)
     _mdir = mapanon(_mapfd, NSLAB * sizeof(void *));
 #else
@@ -1198,14 +1176,16 @@ findmag(void *ptr)
     unsigned long  ul = *(unsigned long *)&ptr;
     unsigned long  key = ul >> BLKMINLOG2;
     struct mptr   *mptr;
+    struct mag    *mag;
 
     key = hashq128(&key,sizeof(unsigned long), NHASHBIT);
     mlk(&_hlktab[key]);
     mptr = &_mtab[key];
     if (mptr->ptr == ptr) {
+        mag = mptr->mag;
         munlk(&_hlktab[key]);
 
-        return mptr->mag;
+        return mag;
     } else {
         struct mptr *lim;
         
@@ -1214,9 +1194,10 @@ findmag(void *ptr)
             lim = mptr + mptr->ntab;
             do {
                 if (mptr->ptr == ptr) {
+                    mag = mptr->mag;
                     munlk(&_hlktab[key]);
                     
-                    return mptr->mag;
+                    return mag;
                 }
                 mptr++;
             } while (mptr < lim);
@@ -1241,7 +1222,7 @@ addblk(void *ptr,
        struct mag *mag)
 {
     unsigned long  ul = *(unsigned long *)&ptr;
-    unsigned long  key = ul;
+    unsigned long  key = ul >> BLKMINLOG2;
     struct mptr   *mptr;
 
     key = hashq128(&key, sizeof(unsigned long), NHASHBIT);
@@ -1251,32 +1232,35 @@ addblk(void *ptr,
         mptr->ptr = ptr;
         mptr->mag = mag;
     } else {
-        if (mptr->n == mptr->ntab) {
+        if (!mptr ||mptr->n == mptr->ntab) {
             long         n = max(mptr->ntab << 1,
-                                 PAGESIZE / sizeof(struct mptr));
-            long         nb = rounduppow2(n * sizeof(struct mptr), PAGESIZE);
+                                 PAGESIZE / MPTRSIZE);
+            long         nb = rounduppow2(n * MPTRSIZE, PAGESIZE);
             struct mptr *tab = mapanon(_mapfd, nb);
-
+#if 0
             if (nb & (PAGESIZE - 1)) {
 
                 abort();
             }
+#endif
             if (!tab) {
                 munlk(&_hlktab[key]);
 
                 exit(1);
             }
             if (mptr->tab) {
-                memcpy(tab, mptr->tab, mptr->ntab * sizeof(struct mptr));
-                bzero(tab + mptr->ntab, mptr->ntab * sizeof(struct mptr));
+                memcpy(tab, mptr->tab, mptr->ntab * MPTRSIZE);
+                bzero(tab + mptr->ntab, mptr->ntab * MPTRSIZE);
                 unmapanon(mptr->tab,
                           mptr->nbtab);
             }
             mptr->tab = tab;
             mptr->ntab = n;
             mptr->nbtab = nb;
+            mptr = &mptr->tab[mptr->n];
+        } else {
+            mptr = &mptr->tab[mptr->n];
         }
-        mptr = &mptr->tab[mptr->n];
         mptr->n++;
         mptr->ptr = ptr;
         mptr->mag = mag;
@@ -2137,7 +2121,7 @@ static void
 putmem(void *ptr)
 {
 #if (RZSZ)
-    uint8_t    *u8p = ptr;
+    uint8_t    *u8ptr = ptr;
 #endif
     struct arn *arn;
     void       *mptr;
@@ -2181,8 +2165,8 @@ putmem(void *ptr)
             putptr(mag, ptr, NULL);
 #if (RZSZ)
             if (!chkflg(mptr, BALIGN)) {
-                u8p = mptr - RZSZ;
-                if (chkred(u8p) || chkred(u8p + blksz(bid) - RZSZ)) {
+                u8ptr = mptr - RZSZ;
+                if (chkred(u8ptr) || chkred(u8ptr + blksz(bid) - RZSZ)) {
 #if (STDIO)
                     fprintf(stderr, "red-zone violation\n");
 #endif
@@ -2229,8 +2213,9 @@ putmem(void *ptr)
                         munlk(&_flktab[bid]);
                     }
                 }
-#if 0
-                addblk(mptr, NULL);
+//                addblk(mptr, NULL);
+#if !(MALLOCHASH)
+                addblk(ptr, NULL);
 #endif
                 if (ismapbkt(bid)
                     && (!isbufbkt(bid)
