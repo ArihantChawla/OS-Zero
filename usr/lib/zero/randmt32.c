@@ -18,9 +18,12 @@
 #include <stdlib.h>
 #include <zero/param.h>
 #include <zero/cdecl.h>
-#if (RANDPROF)
+#include <zero/mtx.h>
+#if (RANDMT32TEST)
 #include <stdio.h>
+#if (RANDMT32PROF)
 #include <zero/prof.h>
+#endif
 #endif
 
 #define RANDMT32NBUFITEM   624            // # of buffer values
@@ -40,6 +43,7 @@
 
 static unsigned long randbuf32[RANDMT32NBUFITEM] ALIGNED(PAGESIZE);
 static unsigned long randndx = RANDMT32NBUFITEM + 1;
+static volatile long randmtx;
 
 void
 srandmt32(unsigned long seed)
@@ -60,6 +64,31 @@ srandmt32(unsigned long seed)
         randbuf32[i] = val;
     }
     randndx = i;
+
+    return;
+}
+
+void
+srandmt32_r(unsigned long seed)
+{
+    unsigned long val;
+    unsigned long tmp;
+    int           i;
+
+    mtxlk(&randmtx);
+    tmp = seed & 0xffffffffUL;
+    randbuf32[0] = tmp;
+    val = RANDMT32MULTIPLIER * (tmp ^ (tmp >> RANDMT32SHIFT)) + 1;
+    val &= 0xffffffffUL;
+    randbuf32[1] = val;
+    for (i = 2 ; i < RANDMT32NBUFITEM ; i++) {
+        tmp = val;
+        val = RANDMT32MULTIPLIER * (tmp ^ (tmp >> RANDMT32SHIFT)) +  i;
+        val &= 0xffffffffUL;
+        randbuf32[i] = val;
+    }
+    randndx = i;
+    mtxunlk(&randmtx);
 
     return;
 }
@@ -122,21 +151,41 @@ randmt32(void)
     return x;
 }
 
-#if (TESTRAND)
+unsigned long
+randmt32_r(void)
+{
+    unsigned long x;
+
+    mtxlk(&randmtx);
+    if (randndx >= RANDMT32NBUFITEM) {
+        _randbuf32();
+    }
+    x = randbuf32[randndx];
+    x ^= x >> RANDMT32SHIFT1;
+    x ^= (x << RANDMT32SHIFT2) & RANDMT32MASK2;
+    x ^= (x << RANDMT32SHIFT3) & RANDMT32MASK3;
+    x ^= x >> RANDMT32SHIFT4;
+    randndx++;
+    mtxunlk(&randmtx);
+
+    return x;
+}
+
+#if (RANDMT32TEST)
 int
 main(void)
 {
     int i;
-#if (RANDPROF)
+#if (RANDMT32PROF)
     PROFDECLCLK(clk);
     unsigned long *buf;
 #endif
 
-#if (RANDPROF)
+#if (RANDMT32PROF)
     buf = calloc(65536, sizeof(unsigned long));
     profstartclk(clk);
     for (i = 0 ; i < 65536 ; i++) {
-        buf[i] = randmt32();
+        buf[i] = randmt32_r();
     }
     profstopclk(clk);
     fprintf(stderr, "%lu microseconds\n", profclkdiff(clk));
@@ -151,3 +200,4 @@ main(void)
     return 0;
 }
 #endif
+
