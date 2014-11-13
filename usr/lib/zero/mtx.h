@@ -12,6 +12,7 @@
 #endif
 #define ZEROMTXINITVAL 0
 #define ZEROMTXLKVAL   1
+#define ZEROMTXCONTVAL 2
 
 #include <zero/asm.h>
 #if (__KERNEL__) && (__MTKERNEL__)

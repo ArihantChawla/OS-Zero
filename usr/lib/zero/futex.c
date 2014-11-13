@@ -1,10 +1,21 @@
+#if (ZEROFUTEX)
+
 /* TODO: implement linux-like futexes (fast userspace mutexes) */
 #include <features.h>
 #include <pthread.h>
-#endif
-#endif
 #include <zero/asm.h>
 #include <zero/futex.h>
+
+#if defined(__linux__)
+int
+futex(void *adr1, long op, long val1, struct timespec *timeout,
+      void *adr2, int val2)
+{
+    long retval = syscall(SYS_futex, adr1, op, val1, timeout, adr2, val2);
+
+    return (int)retval;
+}
+#endif /* defined(__linux__) */
 
 long
 mutex_init(mutex_t *mutex, const pthread_mutexattr_t *atr)
@@ -33,7 +44,7 @@ mutex_lock(mutex_t *mutex)
     /* spin and try to lock mutex */
     for (l = 0 ; l < 100; l++) {
         mtx = m_cmpswap(mutex, MUTEXUNLOCKED, MUTEXLOCKED);
-        if (c != MUTEXUNLOCKED) {
+        if (mtx != MUTEXUNLOCKED) {
 
             return 0;
         }
@@ -44,7 +55,7 @@ mutex_lock(mutex_t *mutex)
         mtx = m_xchg(mutex, MUTEXCONTD);
     }
     while (mtx) {
-        sys_futex(mutex, FUTEX_WAIT_PRIVATE, MUTEXCONTD, NULL, NULL, 0);
+        futex(mutex, FUTEX_WAIT_PRIVATE, MUTEXCONTD, NULL, NULL, 0);
         mtx = m_xchg(mutex, MUTEXCONTD);
     }
     
@@ -72,8 +83,10 @@ mutex_unlock(mutex_t *mutex)
         }
         m_waitint();
     }
-    sys_futex(mutex, FUTEX_WAKE_PRIVATE, MUTEXLOCKED, NULL, NULL, 0);
+    futex(mutex, FUTEX_WAKE_PRIVATE, MUTEXLOCKED, NULL, NULL, 0);
 
     return mtx;
 }
+
+#endif /* ZEROFUTEX */
 

@@ -25,7 +25,7 @@
 #define O_SYNC      010000
 #define O_FSYNC     O_SYNC
 #define O_ASYNC     020000
-#if (_GNU_SOURCE)
+#if defined(_GNU_SOURCE)
 #define O_DIRECT    040000
 #define O_DIRECTORY 0200000
 #define O_NOFOLLOW  0400000
@@ -59,7 +59,7 @@
 #define F_SETOWN    8
 #define F_GETOWN    9
 #endif
-#if (_GNU_SOURCE)
+#if defined(_GNU_SOURCE)
 #define F_SETSIG    10
 #define F_GETSIG    11
 #define F_SETLEASE  1024
@@ -80,14 +80,14 @@
 #define LOCK_NB     4
 #define LOCK_UN     8
 #endif
-#if (_GNU_SOURCE)
+#if defined(_GNU_SOURCE)
 #define LOCK_MAND   0x00000020
 #define LOCK_READ   0x00000040
 #define LOCK_WRITE  0x00000080
 #define LOCK_RW     (LOCK_READ | LOCK_WRITE)
 #endif
 
-#if (_GNU_SOURCE)
+#if defined(_GNU_SOURCE)
 #define DN_ACCESS    0x00000001
 #define DN_MODIFY    0x00000002
 #define DN_CREATE    0x00000004
@@ -115,7 +115,7 @@
 extern int lockf(int fd, int cmd, off_t len);
 #endif
 
-#if (_GNU_SOURCE)
+#if defined(_GNU_SOURCE)
 #define AT_FDCWD            -100
 #define AT_SYMLINK_NOFOLLOW 0x100
 #define AT_REMOVEDIR        0x200
@@ -163,7 +163,7 @@ struct flock64 {
 #define POSIX_FADV_NOREUSE    5
 #endif
 
-#if (_GNU_SOURCE)
+#if defined(_GNU_SOURCE)
 #define SYNC_FILE_RANGE_WAIT_BEFORE 1
 #define SYNC_FILE_RANGE_WRITE       2
 #define SYNC_FILE_RANGE_WAIT_AFTER  4
@@ -182,7 +182,7 @@ extern int     posix_fallocate(int fd, off_t ofs, off_t len);
 #if (_POSIX_C_SOURCE >= 200112L) || (USEXOPEN2K)
 extern int     posix_fadvise(int fd, off_t ofs, size_t len, int advice);
 #endif
-#if (_GNU_SOURCE)
+#if defined(_GNU_SOURCE)
 //typedef int64_t off64_t;
 extern ssize_t readahead(int fd, off64_t ofs, size_t count);
 extern int     sync_file_range(int fd, off64_t from, off64_t to,
@@ -194,7 +194,7 @@ extern int     splice(int infd, off64_t inofs, int outfd, off64_t outofs,
 extern int     tee(int infd, int outfd, size_t len, unsigned int flags);
 #endif
 
-#if (_GNU_SOURCE)
+#if defined(_GNU_SOURCE)
 extern int     openat(int fd, const char *file, int flg);
 #endif
 

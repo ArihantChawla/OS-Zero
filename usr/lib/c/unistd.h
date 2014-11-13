@@ -27,7 +27,7 @@
 #endif
 
 extern char **__environ;
-#if (_GNU_SOURCE)
+#if defined(_GNU_SOURCE)
 extern char **environ;
 #endif
 
@@ -52,7 +52,7 @@ typedef int32_t uid_t;
 #define X_OK 1
 #define F_OK 0	// check for existence
 extern int access(const char *name, int type);
-#if (_GNU_SOURCE)
+#if defined(_GNU_SOURCE)
 extern int euidaccess(const char *name, int type);
 extern int eaccess(const char *name, int type);
 extern int faccessat(int fd, const char *name, int type, int flg);
@@ -86,7 +86,7 @@ extern int chown(const char *name, uid_t uid, gid_t gid);
 extern int fchown(int fd, uid_t uid, gid_t gid);
 extern int lchown(const char *name, uid_t uid, gid_t gid);
 #endif
-#if (_GNU_SOURCE)
+#if defined(_GNU_SOURCE)
 extern int fchownat(int fd, const char *name, uid_t uid, gid_t gid);
 #endif
 #if (_BSD_SOURCE) || (USEXOPENEXT)
@@ -96,13 +96,13 @@ extern char *getcwd(char *buf, size_t len);
 #if (_BSD_SOURCE) || (USEXOPENEXT)
 extern char *getwd(char *buf);
 #endif
-#if (_GNU_SOURCE)
+#if defined(_GNU_SOURCE)
 extern char * get_current_dir_name(void);
 #endif
 int dup(int fd);
 int dup2(int fd, int newfd);
 extern int execve(const char *path, char *const argv[], char *const envp);
-#if (_GNU_SOURCE)
+#if defined(_GNU_SOURCE)
 extern int fexecve(int fd, char *const argv, char *const envp[]);
 #endif
 extern int execv(const char *path, char *const argv[]);
@@ -183,7 +183,7 @@ extern uid_t geteuid(void);
 extern gid_t getgid(void);
 extern gid_t getegid(void);
 extern int getgroups(int len, gid_t list[]);
-#if (_GNU_SOURCE)
+#if defined(_GNU_SOURCE)
 extern int group_member(gid_t gid);
 #endif
 extern int setuid(uid_t uid);
@@ -200,7 +200,7 @@ extern int setregid(gid_t rgid, gid_t egid);
 #if (_BSD_SOURCE) || (USEXOPEN2K)
 extern int setegid(gid_t gid);
 #endif
-#if (_GNU_SOURCE)
+#if defined(_GNU_SOURCE)
 extern int getresuid(uid_t *ruid, uid_t *euid, uid_t *suid);
 extern int getresgid(gid_t *rgid, gid_t *egid, gid_t *sgid);
 extern int setresuid(uid_t ruid, uid_t euid, uid_t suid);
@@ -220,7 +220,7 @@ extern int      ttyname_r(int fd, char *buf, size_t len);
 extern int      ttyslot(void);
 #endif
 extern int      link(const char *from, const char *to);
-#if (_GNU_SOURCE)
+#if defined(_GNU_SOURCE)
 extern int      linkat(int fd, const char *from, int newfd,
                     const char *to, int flg);
 #endif
@@ -229,13 +229,13 @@ extern int      symlink(const char *from, const char *to);
 extern ssize_t  readlink(const char *__restrict path, char *__restrict buf,
                          size_t len);
 #endif
-#if (_GNU_SOURCE)
+#if defined(_GNU_SOURCE)
 extern int      symlinkat(const char *from, int fd, const char *to);
 extern ssize_t  readlinkat(int fd, const char *__restrict path,
                            char *__restrict buf, size_t len);
 #endif
 extern int      unlink(const char *name);
-#if (_GNU_SOURCE)
+#if defined(_GNU_SOURCE)
 extern int      unlinkat(int fd, const char *name, int flg);
 #endif
 extern int      rmdir(const char *path);
@@ -299,7 +299,7 @@ extern long     syscall(long int num, ...);
 #define F_TEST  3
 #endif
 extern int lockf(int fd, int cmd, off_t len);
-#if (_GNU_SOURCE)
+#if defined(_GNU_SOURCE)
 #define TEMP_FAILURE_RETRY(expr)                                        \
     (__extension__                                                      \
      ((long _res;                                                       \
