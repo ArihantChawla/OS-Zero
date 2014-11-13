@@ -1145,13 +1145,24 @@ initmall(void)
     }
     munlk(&_conf.heaplk);
 #endif
-#if !(MALLOCHASH)
-#if (PTRBITS <= 32)
+#if (MALLOCHASH)
+    {
+        long l, n;
+
+        ptr = mapanon(_mapfd, CLSIZE * NHASH * sizeof(struct mptr));
+        for (l = 0 ; l < NHASH ; l++) {
+            for (n = 0 ; n < CLSIZE / sizeof(struct mptr) ; n++) {
+                _mtab[l].ntab = CLSIZE / sizeof(struct mptr);
+                _mtab[l].tab = (struct mptr *)ptr;
+                ptr += sizeof(struct mptr);
+            }
+        }
+    }
+#elif (PTRBITS <= 32)
     _mdir = mapanon(_mapfd, NSLAB * sizeof(void *));
 #else
     _mdir = mapanon(_mapfd, NL1KEY * sizeof(void *));
 #endif
-#endif /* !MALLOCHASH */
 #if (TUNEBUF)
     for (bid = 0 ; bid < NBKT ; bid++) {
         _nbuftab[bid] = nbufinit(bid);
