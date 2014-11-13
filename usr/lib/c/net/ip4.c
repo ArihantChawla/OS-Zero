@@ -21,20 +21,22 @@
 #define ip4chksum(buf, sz) ip4chksum64(buf, sz)
 #endif
 
-unsigned short ip4chksum16(const char *buf, unsigned size)
+uint16_t ip4chksum16(const uint8_t *buf, size_t size)
 {
-    unsigned sum = 0;
-    int i;
+    uint32_t sum = 0;
+    int            i;
     
     /* Accumulate checksum */
     for (i = 0; i < size - 1; i += 2) {
-        unsigned short word16 = *(unsigned short *)&buf[i];
+        uint16_t word16 = *(uint16_t *)&buf[i];
+
         sum += word16;
     }
     
     /* Handle odd-sized case */
     if (size & 1) {
-        unsigned short word16 = (unsigned char)buf[i];
+        uint16_t word16 = (uint8_t)buf[i];
+
         sum += word16;
     }
     
@@ -45,40 +47,44 @@ unsigned short ip4chksum16(const char *buf, unsigned size)
     return ~sum;
 }
 
-unsigned short ip4chksum64(const char *buf, unsigned size)
+uint16_t ip4chksum64(const uint8_t *buf, size_t size)
 {
-    unsigned long long sum = 0;
-    const unsigned long long *b = (unsigned long long *)buf;
+    uint64_t        sum = 0;
+    const uint64_t *b = (uint64_t *)buf;
     
-    unsigned t1, t2;
-    unsigned short t3, t4;
+    uint32_t t1, t2;
+    uint16_t t3, t4;
     
     /* Main loop - 8 bytes at a time */
-    while (size >= sizeof(unsigned long long)) {
-        unsigned long long s = *b++;
+    while (size >= sizeof(uint64_t)) {
+        uint64_t s = *b++;
+
         sum += s;
         if (sum < s) sum++;
         size -= 8;
     }
     
     /* Handle tail less than 8-bytes long */
-    buf = (const char *) b;
+    buf = (const uint8_t *) b;
     if (size & 4) {
-        unsigned s = *(unsigned *)buf;
+        uint32_t s = *(uint32_t *)buf;
+
         sum += s;
         if (sum < s) sum++;
         buf += 4;
     }
     
     if (size & 2) {
-        unsigned short s = *(unsigned short *)buf;
+        uint16_t s = *(uint16_t *)buf;
+
         sum += s;
         if (sum < s) sum++;
         buf += 2;
     }
     
     if (size) {
-        unsigned char s = *(unsigned char *)buf;
+        uint8_t s = *(uint8_t *)buf;
+
         sum += s;
         if (sum < s) sum++;
     }
@@ -123,14 +129,14 @@ main(int argc, char *argv[])
     }
     profstartclk(clk);
     for (l = 0 ; l < IP4NPKT ; l++) {
-        chk1tab[l] = ip4chksum16((const char *)pkttab[l], lentab[l]);
+        chk1tab[l] = ip4chksum16((const uint8_t *)pkttab[l], lentab[l]);
     }
     profstopclk(clk);
     fprintf(stderr, "%ld microseconds\n", profclkdiff(clk));
     /* make the compiler not optimise the loop above out :) */
     profstartclk(clk);
     for (l = 0 ; l < IP4NPKT ; l++) {
-        chk2tab[l] = ip4chksum64((const char *)pkttab[l], lentab[l]);
+        chk2tab[l] = ip4chksum64((const uint8_t *)pkttab[l], lentab[l]);
     }
     profstopclk(clk);
     fprintf(stderr, "%ld microseconds\n", profclkdiff(clk));
