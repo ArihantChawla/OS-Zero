@@ -5,6 +5,7 @@
  * See the file LICENSE for more information about using this software.
  */
 
+#define DEBUGMTX   0
 #define GNUMALLOCHOOKS 1
 
 #if !defined(MTSAFE)
@@ -48,6 +49,9 @@ typedef volatile long   LK_T;
 typedef long            LK_T;
 #elif (PTHREAD)
 typedef pthread_mutex_t LK_T;
+#endif
+#if (MALLOCHASH)
+#include <zero/hash.h>
 #endif
 #if (VALGRIND)
 #include <valgrind/valgrind.h>
@@ -447,7 +451,10 @@ typedef pthread_mutex_t LK_T;
 #define nbmap(bid)        (1UL << (nblklog2(bid) + (bid)))
 #define nbmag(bid)        (1UL << (nblklog2(bid) + (bid)))
 
-#if (PTRBITS <= 32)
+#if (MALLOCHASH)
+#define NHASHBIT          16
+#define NHASH             (1U << NHASHBIT)
+#elif (PTRBITS <= 32)
 #define NSLAB             (1UL << (PTRBITS - SLABLOG2))
 #define slabid(ptr)       ((uintptr_t)(ptr) >> SLABLOG2)
 #endif
@@ -542,9 +549,15 @@ static void * _realloc(void *ptr, size_t size, long rel);
 /* synchronisation */
 
 #if (ZEROMTX)
+#if (DEBUGMTX)
+#define mlk(mp)           fprintf(stderr, "LK: %d\n", __LINE__); mtxlk2(mp, _aid + 1)
+#define munlk(mp)         fprintf(stderr, "UNLK: %d\n", __LINE__); mtxunlk2(mp, _aid + 1)
+#define mtrylk(mp)        fprintf(stderr, "TRYLK: %d\n", __LINE__); mtxunlk2(mp, _aid + 1))
+#else
 #define mlk(mp)           mtxlk2(mp, _aid + 1)
 #define munlk(mp)         mtxunlk2(mp, _aid + 1)
-#define mtylk(mp)         mtxtrylk2(mp, _aid + 1)
+#define mtrylk(mp)         mtxtrylk2(mp, _aid + 1)
+#endif
 #elif (SPINLK)
 #define mlk(sp)           spinlk2(sp, _aid + 1)
 #define munlk(sp)         spinunlk2(sp, _aid + 1)
@@ -567,6 +580,18 @@ static void * _realloc(void *ptr, size_t size, long rel);
 #define mlkspin(sp)       spinlk(sp)
 #define munlkspin(sp)     spinunlk(sp)
 #define mtrylkspin(sp)    spintry(sp)
+
+#if (MALLOCHASH)
+struct mptr {
+//    LK_T         lk;
+    void        *ptr;
+    long         n;
+    long         ntab;
+    struct mptr *tab;
+    struct mag  *mag;
+    struct mptr *next;
+};
+#endif
 
 /* configuration */
 
@@ -635,6 +660,9 @@ struct mtree {
 
 /* globals */
 
+#if (MALLOCHASH)
+static LK_T                 _hlktab[NHASH];
+#endif
 #if (INTSTAT) || (STAT)
 static uint64_t             nalloc[NARN][NBKT];
 static long                 nhdrbytes[NARN];
@@ -661,7 +689,11 @@ static struct mag          *_btab[NBKT];
 #if (HACKS) || (TUNEBUF)
 static long                 _fcnt[NBKT];
 #endif
+#if (MALLOCHASH)
+static struct mptr          _mtab[NHASH];
+#else
 static void               **_mdir;
+#endif
 static struct arn         **_atab;
 static struct mconf         _conf;
 #if (MTSAFE) && (PTHREAD)
@@ -1113,11 +1145,13 @@ initmall(void)
     }
     munlk(&_conf.heaplk);
 #endif
+#if !(MALLOCHASH)
 #if (PTRBITS <= 32)
     _mdir = mapanon(_mapfd, NSLAB * sizeof(void *));
 #else
     _mdir = mapanon(_mapfd, NL1KEY * sizeof(void *));
 #endif
+#endif /* !MALLOCHASH */
 #if (TUNEBUF)
     for (bid = 0 ; bid < NBKT ; bid++) {
         _nbuftab[bid] = nbufinit(bid);
@@ -1139,14 +1173,102 @@ initmall(void)
 }
 
 #if (MTSAFE)
+
+#if (MALLOCHASH)
+
+static struct mag *
+findmag(void *ptr)
+{
+    unsigned long  ul = *(unsigned long *)&ptr;
+    unsigned long  key = ul >> BLKMINLOG2;
+    struct mptr   *mptr;
+
+    key = hashq128(&key,sizeof(unsigned long), NHASHBIT);
+    mlk(&_hlktab[key]);
+    mptr = &_mtab[key];
+    if (mptr->ptr == ptr) {
+        munlk(&_hlktab[key]);
+
+        return mptr->mag;
+    } else {
+        struct mptr *lim;
+        
+        mptr = mptr->tab;
+        lim = mptr + mptr->ntab;
+        do {
+            if (mptr->ptr == ptr) {
+                munlk(&_hlktab[key]);
+                
+                return mptr->mag;
+            }
+            mptr++;
+        } while (mptr < lim);
+        if (mptr == lim) {
+            munlk(&_hlktab[key]);
+
+            return NULL;
+        }
+    }
+    munlk(&_hlktab[key]);
+
+    return NULL;
+}
+
+static void
+addblk(void *ptr,
+       struct mag *mag)
+{
+    unsigned long  ul = *(unsigned long *)&ptr;
+    unsigned long  key = ul >> BLKMINLOG2;
+    struct mptr   *mptr;
+
+    key = hashq128(&key, sizeof(unsigned long), NHASHBIT);
+    mlk(&_hlktab[key]);
+    mptr = &_mtab[key];
+    if (!mptr->ptr) {
+        mptr->ptr = ptr;
+        mptr->mag = mag;
+    } else {
+        if (mptr->n == mptr->ntab) {
+            long         n = max(mptr->ntab << 1,
+                                 PAGESIZE / sizeof(struct mptr));
+            struct mptr *tab = mapanon(_mapfd, n * sizeof(struct mptr));
+
+            if (!tab) {
+                munlk(&_hlktab[key]);
+
+                exit(1);
+            }
+            if (mptr->tab) {
+                memcpy(tab, mptr->tab, mptr->n * sizeof(struct mptr));
+                bzero(tab + mptr->ntab, mptr->n * sizeof(struct mptr));
+            }
+            mptr->n++;
+            mptr->tab = tab;
+            mptr->ntab = n;
+            mptr = &mptr->tab[mptr->n];
+        }
+        mptr->ptr = ptr;
+        mptr->mag = mag;
+    }
+    munlk(&_hlktab[key]);
+
+    return;
+}
+
+#else /* !MALLOCHASH */
+
 #if (PTRBITS > 32)
+
 //#define l1ndx(ptr) getbits((uintptr_t)ptr, L1NDX, NL1BIT)
 //#define l2ndx(ptr) getbits((uintptr_t)ptr, L2NDX, NL2BIT)
 //#define l3ndx(ptr) getbits((uintptr_t)ptr, L3NDX, NL3BIT)
 #define l1ndx(ptr) (((uintptr_t)ptr >> L1NDX) & ((1 << NL1BIT) - 1))
 #define l2ndx(ptr) (((uintptr_t)ptr >> L2NDX) & ((1 << NL2BIT) - 1))
 #define l3ndx(ptr) (((uintptr_t)ptr >> L3NDX) & ((1 << NL3BIT) - 1))
+
 #if (PTRBITS > 48)
+
 static struct mag *
 findmag(void *ptr)
 {
@@ -1208,7 +1330,9 @@ addblk(void *ptr,
 
     return;
 }
-#else
+
+#elif (PTRBITS > 32)
+
 static struct mag *
 findmag(void *ptr)
 {
@@ -1250,12 +1374,19 @@ addblk(void *ptr,
 
     return;
 }
-#endif
-#else
+
+#else /* PTRBITS <= 32 */
+
 #define findmag(ptr)     (_mdir[slabid(ptr)])
 #define addblk(ptr, mag) (_mdir[slabid(ptr)] = (mag))
+
 #endif
+
 #endif
+
+#endif /* MALLOCHASH */
+
+#endif /* MTSAFE */
 
 static struct mag *
 gethdr(long aid)
