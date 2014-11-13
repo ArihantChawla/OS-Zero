@@ -58,9 +58,14 @@ typedef pthread_mutex_t LK_T;
 //#include <mach/param.h>
 #include <zero/unix.h>
 //#include "_malloc.h"
-#if (MTSAFE) && (_GNU_SOURCE)
+#if (MTSAFE)
+#if (_POSIX_SOURCE)
+#include <unistd.h>
+#endif
+#if (_GNU_SOURCE)
 #include <sys/sysinfo.h>
 #endif
+#endif /* MTSAFE */
 
 /*
  * TODO
