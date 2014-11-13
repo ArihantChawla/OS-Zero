@@ -1,5 +1,6 @@
 #define IP4NPKT    16348
 #define IP4PKTSIZE 65536
+#include <stddef.h>
 #include <stdlib.h>
 #include <stdint.h>
 #include <zero/trix.h>
