@@ -34,11 +34,21 @@ mtxtrylk2(volatile long *lp, long val)
 
     res = m_cmpswap(lp, ZEROMTXINITVAL, val);
 
+#if (ZERONEWMTX)
+    if (res == ZEROMTXINITVAL) {
+
+        return ZEROMTXLKVAL;
+    } else {
+
+        return 0;
+    }
+#else
     return (res == ZEROMTXINITVAL);
+#endif
 }
 #define mtxtrylk(lp) mtxtrylk2((volatile long *)(lp), ZEROMTXLKVAL)
 
-static __inline__ void
+static __inline__ long
 mtxlk2(volatile long *lp, long val)
 {
     volatile long res = val;
@@ -52,12 +62,26 @@ mtxlk2(volatile long *lp, long val)
             pthread_yield();
 #endif
         }
+        /* TODO: should I activate m_waitint() here? :) */
     } while (res != ZEROMTXINITVAL);
 
-    return;
+    return ZEROMTXLKVAL;
 }
 #define mtxlk(lp) mtxlk2((volatile long *)(lp), ZEROMTXLKVAL)
 
+#if (ZERONEWMTX)
+static __inline__ long
+mtxunlk2(volatile long *lp, long val)
+{
+    volatile long res;
+    
+    m_membar();
+//    *lp = ZEROMTXINITVAL;
+    res = m_cmpswap(lp, ZEROMTXLKVAL, ZEROMTXINITVAL);
+
+    return (res == ZEROMTXLKVAL);
+}
+#else
 static __inline__ void
 mtxunlk2(volatile long *lp, long val)
 {
@@ -66,6 +90,7 @@ mtxunlk2(volatile long *lp, long val)
 
     return;
 }
+#endif
 #define mtxunlk(lp) mtxunlk2((volatile long *)(lp), ZEROMTXLKVAL)
 
 #endif /* __ZERO_MTX_H__ */

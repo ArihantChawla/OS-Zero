@@ -58,6 +58,9 @@ typedef pthread_mutex_t LK_T;
 //#include <mach/param.h>
 #include <zero/unix.h>
 //#include "_malloc.h"
+#if (MTSAFE) && (_GNU_SOURCE)
+#include <sys/sysinfo.h>
+#endif
 
 /*
  * TODO
@@ -165,7 +168,7 @@ typedef pthread_mutex_t LK_T;
 #if defined(_SC_NROCESSORS_CONF)
 #define NARN          (2 * sysconf(_SC_NPROCESSORS_CONF))
 #elif (_GNU_SOURCE)
-#define NARN          (2 * get_nprocs_conf());
+#define NARN          (2 * get_nprocs_conf())
 #else
 #define NARN          16
 #endif
@@ -513,7 +516,7 @@ static void * _realloc(void *ptr, size_t size, long rel);
 
 #define LKDBG    0
 #define SYSDBG   0
-#define VALGRIND 1
+#define VALGRIND 0
 
 #include <string.h>
 #if (MTSAFE)
@@ -2306,7 +2309,7 @@ valloc(size_t size)
         void *caller;
         
         caller = m_getretadr();
-        __memalign_hook(align, size, (const void *)caller);
+        __memalign_hook(PAGESIZE, size, (const void *)caller);
     }
 #endif
     ptr = getmem(size, PAGESIZE, 0);

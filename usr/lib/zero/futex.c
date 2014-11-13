@@ -1,27 +1,17 @@
 /* TODO: implement linux-like futexes (fast userspace mutexes) */
 #include <features.h>
-#if defined(__linux__)
-#if !defined(_GNU_SOURCE)
-#define _GNU_SOURCE
-#endif
-#include <unistd.h>
 #include <pthread.h>
-#include <sys/syscall.h>
 #endif
 #endif
 #include <zero/asm.h>
-#include <zero/mtx.h>
 #include <zero/futex.h>
-
-#if defined(__linux__)
-long syscall(long num, ...);
-#endif
 
 long
 mutex_init(mutex_t *mutex, const pthread_mutexattr_t *atr)
 {
     (void)atr;
-    *mutex = ZEROMTXINITVAL;
+    m_membar();
+    *mutex = MUTEXUNLOCKED;
 
     return 0;
 }
@@ -34,42 +24,55 @@ mutex_destroy(mutex_t *mutex)
     return 0;
 }
 
-mutex_t
+long
 mutex_lock(mutex_t *mutex)
 {
-    volatile long mtx = 0L;
+    volatile long mtx = MUTEXLOCKED;
     long          l;
-    
-    mtx = m_cmpswap(mutex, ZEROMTXINITVAL, ZEROMTXLKVAL);
-    if (mtx != ZEROMTXLKVAL) {
-        if (mtx == ZEROMTXCONTVAL) {
-            mtx = m_cmpswap(mutex, ZEROMTXCONTVAL, ZEROMTXLKVAL);
-            
-            return mtx;
-        } else {
-            for (l = 0 ; l < 100; l++) {
-                mtx = m_cmpswap(mutex, ZEROMTXINITVAL, ZEROMTXLKVAL);
-                if (!mtx) {
-                    mtx = m_cmpswap(mutex, ZEROMTXCONTVAL, ZEROMTXLKVAL);
-                    if (!mtx) {
-                        m_waitint();
-                    }
-                }
-            }
+
+    /* spin and try to lock mutex */
+    for (l = 0 ; l < 100; l++) {
+        mtx = m_cmpswap(mutex, MUTEXUNLOCKED, MUTEXLOCKED);
+        if (c != MUTEXUNLOCKED) {
+
+            return 0;
         }
+        m_waitint();
     }
-        
+    /* mutex is now contended */
+    if (mtx == MUTEXUNLOCKED) {
+        mtx = m_xchg(mutex, MUTEXCONTD);
+    }
+    while (mtx) {
+        sys_futex(mutex, FUTEX_WAIT_PRIVATE, MUTEXCONTD, NULL, NULL, 0);
+        mtx = m_xchg(mutex, MUTEXCONTD);
+    }
+    
     return mtx;
 }
 
-mutex_t
+long
 mutex_unlock(mutex_t *mutex)
 {
-    volatile long mtx = m_cmpswap(mutex, ZEROMTXLKVAL, ZEROMTXINITVAL);
+    volatile long mtx = m_cmpswap(mutex, MUTEXCONTD, MUTEXUNLOCKED);
+    long          l;
 
-    if (mtx) {
-        mtx = m_cmpswap(mutex, ZEROMTXCONTVAL, ZEROMTXINITVAL);
+    if (mtx != MUTEXCONTD
+        || m_xchg(mutex, MUTEXUNLOCKED) == MUTEXLOCKED) {
+        
+        return 0;
     }
+    for (l = 0 ; l < 200; l++) {
+        m_membar();
+        if (*mutex) {
+            if (m_cmpswap(mutex, MUTEXLOCKED, MUTEXCONTD)) {
+
+                return 0;
+            }
+        }
+        m_waitint();
+    }
+    sys_futex(mutex, FUTEX_WAKE_PRIVATE, MUTEXLOCKED, NULL, NULL, 0);
 
     return mtx;
 }

@@ -1,7 +1,7 @@
 #ifndef __SYS_SYSINFO_H__
 #define __SYS_SYSINFO_H__
 
-#include <features.h
+#include <features.h>
 
 /* TODO: struct sysinfo, sysinfo() */
 

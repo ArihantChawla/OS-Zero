@@ -6,9 +6,9 @@
 /* API declarations */
 #define m_membar()               __asm__ __volatile__ ("" : : : "memory")
 #define m_waitint()              __asm__ __volatile__ ("pause\n")
+#define m_fetadd(p, val)         m_xaddl(p, val)
 #define m_cmpswap(p, want, val)  m_cmpxchgl(p, want, val)
 #define m_cmpswapb(p, want, val) m_cmpxchgb(p, want, val)
-#define m_fetadd(p, val)         m_xaddl(p, val)
 #define m_scanlo1bit(l)          m_bsfl(l)
 #define m_scanhi1bit(l)          m_bsrl(l)
 #define m_getretadr(r)                                                  \

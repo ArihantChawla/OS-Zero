@@ -7,9 +7,10 @@
                                                        : : : "memory")
 #define m_waitint()              __asm__ __volatile__ ("pause\n"        \
                                                        : : : "memory")
+#define m_xchg(p, val)           m_xchgq(p, val)
+#define m_fetadd(p, val)         m_xaddq(p, val)
 #define m_cmpswap(p, want, val)  m_cmpxchgq(p, want, val)
 #define m_cmpswapb(p, want, val) m_cmpxchgb(p, want, val)
-#define m_fetadd(p, val)         m_xaddq(p, val)
 #define m_scanlo1bit(l)          m_bsfq(l)
 #define m_scanhi1bit(l)          m_bsrq(l)
 #if 0
@@ -26,6 +27,18 @@ m_getretadr(void)
     return ptr;
 }
 
+static __inline__ long
+m_xchgq(volatile long *p,
+        long val)
+{
+    __asm__ __volatile__ ("lock xchgq %%rax, %q1\n"
+                          : "=a" (val)
+                          : "m" (*(p))
+                          : "memory");
+
+    return val;
+}
+
 /*
  * atomic fetch and add
  * - let *p = *p + val
@@ -35,7 +48,7 @@ static __inline__ long
 m_xaddq(volatile long *p,
         long val)
 {
-    __asm__ __volatile__ ("lock xaddq %%rax, %b2\n"
+    __asm__ __volatile__ ("lock xaddq %%rax, %q2\n"
                           : "=a" (val)
                           : "a" (val), "m" (*(p))
                           : "memory");
