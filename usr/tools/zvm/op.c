@@ -250,7 +250,6 @@ zvmopsub(struct zvmopcode *op)
     zasword_t    *dptr;
     zasword_t     src = zvmgetarg1(op, arg1t);
     zasword_t     dest = zvmgetarg2(op, arg1t, arg2t, dptr);
-    int64_t       res = dest - src;
 
     dest -= src;
     zvm.msw &= ~(ZVMZF | ZVMOF | ZVMCF);
