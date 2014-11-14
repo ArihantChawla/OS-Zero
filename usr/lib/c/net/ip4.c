@@ -120,6 +120,72 @@ ip4chksum64(const uint8_t *buf, size_t size)
     return ~tmp3;
 }
 
+uint_fast16_t
+ip4chksum64_2(const uint8_t *buf, size_t size)
+{
+    uint64_t        sum = 0;
+    const uint64_t *ptr = (uint64_t *)buf;
+    size_t          len = size >> 3;
+    uint32_t        tmp1;
+    uint32_t        tmp2;
+    uint16_t        tmp3;
+    uint16_t        tmp4;
+
+    size -= len << 3;
+    while (len--) {
+        uint64_t u = *ptr;
+
+        sum += u;
+        ptr++;
+        if (sum >= u) {
+
+            continue;
+        }
+        sum++;
+    }
+
+    /* Handle tail less than 8-bytes long */
+    buf = (const uint8_t *)ptr;
+    if (size & 4) {
+        uint32_t u = *(uint32_t *)buf;
+
+        sum += u;
+        buf += sizeof(uint32_t);
+        if (sum < u) {
+            sum++;
+        }
+    }
+    
+    if (size & 2) {
+        uint16_t u = *(uint16_t *)buf;
+
+        sum += u;
+        buf += sizeof(uint16_t);
+        if (sum < u) {
+            sum++;
+        }
+    }
+    
+    if (size) {
+        uint8_t u = *(uint8_t *)buf;
+
+        sum += u;
+        if (sum < u) sum++;
+    }
+    
+    /* Fold down to 16 bits */
+    tmp1 = sum;
+    tmp2 = sum >> 32;
+    tmp1 += tmp2;
+    if (tmp1 < tmp2) tmp1++;
+    tmp3 = tmp1;
+    tmp4 = tmp1 >> 16;
+    tmp3 += tmp4;
+    if (tmp3 < tmp4) tmp3++;
+    
+    return ~tmp3;
+}
+
 #endif /* LONGSIZE == 8 || IP4TEST */
 
 #if (IP4TEST)
@@ -140,7 +206,7 @@ main(int argc, char *argv[])
 
     srandmt32(666);
     for (l = 0 ; l < IP4NPKT ; l++) {
-        len = randmt32() & (IP4PKTSIZE - 1);
+        len = (randmt32() & (IP4PKTSIZE - 1)) + 1;
         lentab[l] = len;
         pkttab[l] = calloc(rounduppow2(len, sizeof(uint64_t)) / sizeof(uint64_t), sizeof(uint64_t));
         ptr = (uint8_t *)pkttab[l];
@@ -160,15 +226,15 @@ main(int argc, char *argv[])
     profstopclk(clk);
     fprintf(stderr, "%ld microseconds\n", profclkdiff(clk));
     fprintf(stderr, "%f KB/s\n", (1000000.0 * ((double)nbyte / (double)profclkdiff(clk))) / 1024.0);
-#if 0
     profstartclk(clk);
     for (l = 0 ; l < IP4NPKT ; l++) {
-        chk2tab[l] = ip4chksum64_3((const uint8_t *)pkttab[l], lentab[l]);
+        chk2tab[l] = ip4chksum64_2((const uint8_t *)pkttab[l], lentab[l]);
     }
     profstopclk(clk);
     fprintf(stderr, "%ld microseconds\n", profclkdiff(clk));
-#endif
+#if 0
     memcpy(chk2tab, chk1tab, sizeof(uint16_t) * IP4NPKT);
+#endif
     for (l = 0 ; l < IP4NPKT ; l++) {
         if (chk1tab[l] != chk2tab[l]) {
             fprintf(stderr, "%ld\n", l);
