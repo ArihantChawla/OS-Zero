@@ -76,19 +76,8 @@ ip4chksum64(const uint8_t *buf, size_t size)
         if (sum < u) {
             sum++;
         }
-   }
-    
-    while (size >= sizeof(uint64_t)) {
-        uint64_t u = *ptr;
-
-        sum += u;
-        size -= sizeof(uint64_t);
-        ptr++;
-        if (sum < u) {
-            sum++;
-        }
     }
-    
+
     /* Handle tail less than 8-bytes long */
     buf = (const uint8_t *)ptr;
     if (size & 4) {
@@ -174,7 +163,7 @@ main(int argc, char *argv[])
 #if 0
     profstartclk(clk);
     for (l = 0 ; l < IP4NPKT ; l++) {
-        chk2tab[l] = ip4chksum64_2((const uint8_t *)pkttab[l], lentab[l]);
+        chk2tab[l] = ip4chksum64_3((const uint8_t *)pkttab[l], lentab[l]);
     }
     profstopclk(clk);
     fprintf(stderr, "%ld microseconds\n", profclkdiff(clk));
