@@ -229,21 +229,14 @@ zvmopadd(struct zvmopcode *op)
     zasword_t    *dptr;
     zasword_t     src = zvmgetarg1(op, arg1t);
     zasword_t     dest = zvmgetarg2(op, arg1t, arg2t, dptr);
-    int64_t       res = src + dest;
+    zasword_t     res = src + dest;
 
-    dest += src;
     zvm.msw &= ~(ZVMZF | ZVMOF | ZVMCF);
-    zvmsetzf(dest);
-#if (ZAS32BIT)
-    if (res & INT64_C(0xffffffff00000000)) {
-        zvm.msw |= ZVMOF;
-    }
-#else
+    zvmsetzf(res);
     if (res < dest) {
         zvm.msw |= ZVMOF;
     }
-#endif
-    *dptr = dest;
+    *dptr = res;
     zvm.pc += op->size << 2;
 
     return;
