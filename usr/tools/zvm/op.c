@@ -239,7 +239,9 @@ zvmopadd(struct zvmopcode *op)
         zvm.msw |= ZVMOF;
     }
 #else
-#error fix integer overflow detection in zvmopadd
+    if (res < dest) {
+        zvm.msw |= ZVMOF;
+    }
 #endif
     *dptr = dest;
     zvm.pc += op->size << 2;

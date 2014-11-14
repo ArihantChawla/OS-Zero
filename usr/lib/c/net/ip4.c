@@ -144,7 +144,6 @@ ip4chksum64_2(const uint8_t *buf, size_t size)
         sum++;
     }
 
-    /* Handle tail less than 8-bytes long */
     buf = (const uint8_t *)ptr;
     if (size & 4) {
         uint32_t u = *(uint32_t *)buf;
@@ -155,7 +154,6 @@ ip4chksum64_2(const uint8_t *buf, size_t size)
             sum++;
         }
     }
-    
     if (size & 2) {
         uint16_t u = *(uint16_t *)buf;
 
@@ -165,15 +163,12 @@ ip4chksum64_2(const uint8_t *buf, size_t size)
             sum++;
         }
     }
-    
     if (size) {
         uint8_t u = *(uint8_t *)buf;
 
         sum += u;
         if (sum < u) sum++;
     }
-    
-    /* Fold down to 16 bits */
     tmp1 = sum;
     tmp2 = sum >> 32;
     tmp1 += tmp2;
