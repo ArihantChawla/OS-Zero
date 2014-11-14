@@ -208,7 +208,8 @@ main(int argc, char *argv[])
     for (l = 0 ; l < IP4NPKT ; l++) {
         len = (randmt32() & (IP4PKTSIZE - 1)) + 1;
         lentab[l] = len;
-        pkttab[l] = calloc(rounduppow2(len, sizeof(uint64_t)) / sizeof(uint64_t), sizeof(uint64_t));
+//        pkttab[l] = calloc(rounduppow2(len, sizeof(uint64_t)) / sizeof(uint64_t), sizeof(uint64_t));
+        pkttab[l] = malloc(rounduppow2(len, sizeof(uint64_t)) * sizeof(uint64_t));
         ptr = (uint8_t *)pkttab[l];
         for (n = 0 ; n < len ; n++) {
             ptr[n] = randmt32() % 0xff;
