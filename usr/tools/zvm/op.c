@@ -5,6 +5,8 @@
 #include <zvm/op.h>
 #include <zvm/mem.h>
 
+/* TODO: there be bugs here; proof-read the whole file and fix it... :) */
+
 void
 zvmopnot(struct zvmopcode *op)
 {
