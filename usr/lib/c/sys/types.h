@@ -65,6 +65,9 @@ typedef int64_t         blkcnt_t;
 typedef uint64_t        fsblkcnt_t;
 typedef uint64_t        fsfilcnt_t;
 #endif
+#if !defined(__pid_t_defined)
+typedef long            pid_t;          // process ID
+#endif
 #if defined(_LARGEFILE64_SOURCE)
 typedef int64_t         off64_t;
 typedef uint64_t        ino64_t;
@@ -72,19 +75,18 @@ typedef int64_t         blkcnt64_t;
 typedef uint64_t        fsblkcnt64_t;
 typedef uint64_t        fsfilcnt64_t;
 #endif
+typedef long            id_t;
+typedef long            ssize_t;
+typedef unsigned long   useconds_t;
+typedef long            suseconds_t;
+typedef long            time_t;
+typedef long            timer_t;
 typedef int64_t         offset_t;
 typedef uint64_t        u_offset_t;
 typedef uint64_t        len_t;
 typedef int64_t         diskaddr_t;
 typedef unsigned long   fsid_t;
-typedef long            id_t;
-typedef long            pid_t;          // process ID
-typedef long            ssize_t;
 //typedef int64_t        time_t;
-typedef long            time_t;
-typedef long            timer_t;
-typedef unsigned long   useconds_t;
-typedef long            suseconds_t;
 
 /* virtual memory related types */
 typedef uintptr_t       pfn_t;          // page frame #
