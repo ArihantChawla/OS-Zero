@@ -5,6 +5,8 @@
  * See the file LICENSE for more information about using this software.
  */
 
+#define VALGRIND   1
+
 #define DEBUGMTX   0
 #define GNUMALLOCHOOKS 1
 
@@ -30,7 +32,7 @@
 #define STDIO      1
 #define FREEBITMAP 0
 
-#define ZEROMTX    1
+#define ZEROMTX    0
 #define PTHREAD    1
 
 #include <features.h>
@@ -152,7 +154,7 @@ typedef pthread_mutex_t LK_T;
 #endif
 
 /* experimental */
-#define TUNEBUF 0
+#define TUNEBUF 1
 
 /* basic allocator parameters */
 #define BLKMINLOG2    CLSIZELOG2  /* minimum-size allocation */
@@ -430,7 +432,7 @@ typedef pthread_mutex_t LK_T;
 #define nbmag(bid)        (1UL << (nblklog2(bid) + (bid)))
 
 #if (MALLOCHASH)
-#define NHASHBIT          18
+#define NHASHBIT          20
 #define NHASH             (1U << NHASHBIT)
 #elif (PTRBITS <= 32)
 #define NSLAB             (1UL << (PTRBITS - SLABLOG2))
@@ -506,10 +508,6 @@ static void * getmem(size_t size, size_t align, long zero);
 static void   putmem(void *ptr);
 static void * _realloc(void *ptr, size_t size, long rel);
 
-#define LKDBG    0
-#define SYSDBG   0
-#define VALGRIND 0
-
 #include <string.h>
 #if (MTSAFE)
 #define PTHREAD  1
@@ -566,11 +564,11 @@ struct mptr {
     long         ntab;
     struct mptr *tab;
     struct mag  *mag;
-    struct mptr *next;
+//    struct mptr *next;
     long         nbtab;
-    long         pad; /* pad to 8 long-words */
+    long         pad[2]; /* pad to 8 long-words */
 };
-#define MPTRSIZE (8 * sizeof(long))
+#define MPTRSIZE (8 * max(sizeof(long), sizeof(void *)))
 #endif
 
 /* configuration */
@@ -1173,12 +1171,13 @@ initmall(void)
 static struct mag *
 findmag(void *ptr)
 {
-    unsigned long  ul = *(unsigned long *)&ptr;
-    unsigned long  key = ul >> BLKMINLOG2;
-    struct mptr   *mptr;
-    struct mag    *mag;
+//    uintptr_t    up = (uintptr_t)ptr;
+    uintptr_t    key = (uintptr_t)ptr;
+//    uintptr_t    key = up >> BLKMINLOG2;
+    struct mptr *mptr;
+    struct mag  *mag;
 
-    key = hashq128(&key,sizeof(unsigned long), NHASHBIT);
+    key = hashq128(&key,sizeof(uintptr_t), NHASHBIT);
     mlk(&_hlktab[key]);
     mptr = &_mtab[key];
     if (mptr->ptr == ptr) {
@@ -1221,11 +1220,12 @@ static void
 addblk(void *ptr,
        struct mag *mag)
 {
-    unsigned long  ul = *(unsigned long *)&ptr;
-    unsigned long  key = ul >> BLKMINLOG2;
-    struct mptr   *mptr;
+//    uintptr_t    up = (uintptr_t)ptr;
+    uintptr_t    key = (uintptr_t)ptr;
+//    uintptr_t    key = up >> BLKMINLOG2;
+    struct mptr *mptr;
 
-    key = hashq128(&key, sizeof(unsigned long), NHASHBIT);
+    key = hashq128(&key, sizeof(uintptr_t), NHASHBIT);
     mlk(&_hlktab[key]);
     mptr = &_mtab[key];
     if (!mptr->ptr) {
@@ -1237,12 +1237,7 @@ addblk(void *ptr,
                                  PAGESIZE / MPTRSIZE);
             long         nb = rounduppow2(n * MPTRSIZE, PAGESIZE);
             struct mptr *tab = mapanon(_mapfd, nb);
-#if 0
-            if (nb & (PAGESIZE - 1)) {
 
-                abort();
-            }
-#endif
             if (!tab) {
                 munlk(&_hlktab[key]);
 
@@ -1630,7 +1625,7 @@ freemap(struct mag *mag)
 #if (TUNEBUF)
     queue = nfree < _nbuftab[bid];
 #endif
-    if (!cur || !ismapbkt(bid)
+    if (!cur // || !ismapbkt(bid)
 #if (TUNEBUF)
         || (queue)
 #endif
@@ -2134,9 +2129,6 @@ putmem(void *ptr)
     long        freed = 0;
 
     if (mag) {
-#if (MALLOCHASH)
-        addblk(ptr, NULL);
-#endif
 #if (VALGRIND)
         if (RUNNING_ON_VALGRIND) {
             VALGRIND_FREELIKE_BLOCK(ptr, 0);
@@ -2163,6 +2155,9 @@ putmem(void *ptr)
         mptr = getptr(mag, ptr);
         if (mptr) {
             putptr(mag, ptr, NULL);
+#if (MALLOCHASH)
+            addblk(ptr, NULL);
+#endif
 #if (RZSZ)
             if (!chkflg(mptr, BALIGN)) {
                 u8ptr = mptr - RZSZ;
@@ -2290,7 +2285,7 @@ putmem(void *ptr)
         } else {
             munlk(&arn->lktab[bid]);
             fprintf(stderr, "invalid free %p\n", ptr);
-            abort();
+//            abort();
         }
     }
 

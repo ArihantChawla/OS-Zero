@@ -45,12 +45,15 @@ static int g_loops;
 static int g_debug;
 static int g_touchmem;
 
+#define debugprint(from, msg)
+#if 0
 static void
 debugprint(const char * from, const char * msg)
 {
   if (g_debug)
     fprintf(stderr, "%x: %s: %s\n", (unsigned int) pthread_self(), from, msg);
 }
+#endif
 
 static void *
 threadmain(void * v)

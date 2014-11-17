@@ -1,6 +1,7 @@
+/* TODO: console scrollback buffer */
+
 #include <zero/trix.h>
 #include <gfx/rgb.h>
-
 #include <kern/conf.h>
 #include <kern/mem.h>
 #include <kern/io/drv/chr/cons.h>
