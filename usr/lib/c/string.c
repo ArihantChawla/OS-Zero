@@ -538,7 +538,7 @@ strtok(char *str1,
     return retptr;
 }
 
-#if (MEMSETDUALBANK)
+#if defined(MEMSETDUALBANK) && (MEMSETDUALBANK)
 
 void *
 memset(void *ptr,
@@ -637,7 +637,7 @@ memset(void *ptr,
     return ptr;
 }
 
-#else
+#else /* !MEMSETDUALBANK */
 
 /* TESTED OK */
 void *

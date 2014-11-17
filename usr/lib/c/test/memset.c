@@ -15,8 +15,10 @@ main(int argc, char *argv[])
     
     PROFDECLCLK(clk);
     ptr = malloc(4 * PAGESIZE);
-    memset(ptr, 0xff, PAGESIZE);
+    memset(ptr, 0xff, 4 * PAGESIZE);
+#if 0
     memset((uint8_t *)ptr + 2 * PAGESIZE, 0xff, PAGESIZE);
+#endif
     profinitclk(clk);
     profstartclk(clk);
     memset((uint8_t *)ptr + PAGESIZE, 0, PAGESIZE);
@@ -34,10 +36,18 @@ main(int argc, char *argv[])
         }
     }
     l = PAGESIZE >> LONGSIZELOG2;
+    lptr = (long *)((uint8_t *)ptr + PAGESIZE);
+    while (l--) {
+        if (*lptr++ != 0L) {
+            printf("MEMSET #2 (%lx)\n", (uint8_t *)lptr - (uint8_t *)ptr - 1);
+            abort();
+        }
+    }
+    l = PAGESIZE >> LONGSIZELOG2;
     lptr = (long *)((uint8_t *)ptr + 2 * PAGESIZE);
     while (l--) {
         if (*lptr++ != ~0L) {
-            printf("MEMSET #2 (%lx)\n", (uint8_t *)lptr - (uint8_t *)ptr - 1);
+            printf("MEMSET #3 (%lx)\n", (uint8_t *)lptr - (uint8_t *)ptr - 1);
             abort();
         }
     }
