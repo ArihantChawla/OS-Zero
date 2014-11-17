@@ -1,6 +1,12 @@
 #if (ZEROFUTEX)
 
-/* TODO: implement linux-like futexes (fast userspace mutexes) */
+/*
+ * TODO
+ * ----
+ * - implement linux-like futexes (fast userspace mutexes) for zero
+ * - test and fix the functions in this file
+ */
+
 #include <features.h>
 #include <pthread.h>
 #include <zero/asm.h>
@@ -74,9 +80,8 @@ mutex_unlock(mutex_t *mutex)
         return 0;
     }
     for (l = 0 ; l < 200; l++) {
-        m_membar();
-        if (*mutex) {
-            if (m_cmpswap(mutex, MUTEXLOCKED, MUTEXCONTD)) {
+        if (*mutex != MUTEXUNLOCKED) {
+            if (m_cmpswap(mutex, MUTEXLOCKED, MUTEXUNLOCKED)) {
 
                 return 0;
             }

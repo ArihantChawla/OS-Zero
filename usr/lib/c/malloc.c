@@ -26,7 +26,7 @@
 #define ISTK       1
 #define NOSTK      0
 #define BIGSLAB    0
-#define BIGHDR     1
+#define BIGHDR     0
 #define INTSTAT    0
 #define STAT       0
 #define STDIO      1
@@ -441,7 +441,7 @@ typedef pthread_mutex_t LK_T;
 #else
 #define NBHDR             (4 * PAGESIZE)
 #endif
-#define NBUFHDR           32
+#define NBUFHDR           8
 
 #define thrid()           ((_aid >= 0) ? _aid : (_aid = getaid()))
 #define blksz(bid)        (1UL << (bid))
