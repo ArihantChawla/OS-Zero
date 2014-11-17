@@ -32,7 +32,7 @@
 #define STDIO      1
 #define FREEBITMAP 0
 
-#define ZEROMTX    0
+#define ZEROMTX    1
 #define PTHREAD    1
 
 #include <features.h>
