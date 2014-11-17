@@ -15,7 +15,7 @@
 #endif
 
 #define SMALLBUF   1
-#define CONSTBUF   1
+#define CONSTBUF   0
 #define NOSBRK     0
 #define TAILFREE   0
 #define TESTING    1
@@ -158,9 +158,8 @@ typedef pthread_mutex_t LK_T;
 
 /* basic allocator parameters */
 #define BLKMINLOG2    CLSIZELOG2  /* minimum-size allocation */
-//#define SLABBIGLOG2   16 /* small-size block */
 #if (SMALLBUF)
-#define SLABLOG2      18
+#define SLABLOG2      19
 #define SLABBIGLOG2   16
 #define SLABTINYLOG2  13
 #define SLABTEENYLOG2 10
@@ -174,7 +173,6 @@ typedef pthread_mutex_t LK_T;
 #define MAPMIDLOG2    20
 #define MAPBIGLOG2    24
 #else
-//#define SLABLOG2      24 /* base size for heap allocations */
 #define SLABLOG2      23 /* base size for heap allocations */
 #define SLABBIGLOG2   20
 #define MAPMIDLOG2    26

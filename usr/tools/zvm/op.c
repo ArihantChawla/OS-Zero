@@ -708,5 +708,7 @@ void
 zvmophlt(struct zvmopcode *op)
 {
     zvm.shutdown = 1;
+
+    return;
 }
 
