@@ -677,8 +677,6 @@ static __thread long        _aid = -1;
 #else
 static long                 _aid = -1;
 #endif
-#if (TUNEBUF)
-#endif
 static int64_t              _nbheap;
 static int64_t              _nbmap;
 static int                  _mapfd = -1;
@@ -1199,7 +1197,7 @@ findmag(void *ptr)
                     return mag;
                 }
                 mptr++;
-            } while (mptr < lim);
+            } while ((mptr->ptr) && mptr < lim);
             if (mptr == lim) {
                 munlk(&_hlktab[key]);
                 
@@ -2285,7 +2283,7 @@ putmem(void *ptr)
         } else {
             munlk(&arn->lktab[bid]);
             fprintf(stderr, "invalid free %p\n", ptr);
-//            abort();
+            abort();
         }
     }
 
