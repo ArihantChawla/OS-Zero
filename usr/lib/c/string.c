@@ -1,6 +1,5 @@
 #include <stddef.h>
 #include <stdlib.h>
-//#include <stdio.h>
 #include <stdint.h>
 #include <zero/param.h>
 #include <zero/trix.h>
@@ -10,14 +9,14 @@ static char *_curtok;
 
 volatile uint8_t *colltabptr = &stringcolltab_c_en_US[0];
 
-volatile uint8_t * localecolltab;
+const volatile uint8_t *localecolltab;
 
 #define NLANG 2
 
-const char *colltab[NLANG]
+const unsigned char *colltab[NLANG]
 = {
-    "en_US",
-    "fi_FI"
+    (unsigned char *)"en_US",
+    (unsigned char *)"fi_FI"
 };
 
 int
@@ -27,8 +26,9 @@ setcoll(int coll)
 
         return -1;
     }
-
     localecolltab = colltab[coll];
+
+    return 0;
 }
 
 /* TESTED OK */

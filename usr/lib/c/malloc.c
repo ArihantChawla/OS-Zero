@@ -5,7 +5,9 @@
  * See the file LICENSE for more information about using this software.
  */
 
-#define VALGRIND   1
+#if !defined(VALGRIND)
+#define VALGRIND   0
+#endif
 
 #define DEBUGMTX   0
 #define GNUMALLOCHOOKS 1
@@ -1183,7 +1185,8 @@ findmag(void *ptr)
         return mag;
     } else {
         struct mptr *lim;
-        
+
+#if 0
         mptr = mptr->tab;
         if (mptr) {
             lim = mptr + mptr->ntab;
@@ -1197,6 +1200,29 @@ findmag(void *ptr)
                 mptr++;
             } while ((mptr->ptr) && mptr < lim);
             if (mptr == lim) {
+                munlk(&_hlktab[key]);
+                
+                return NULL;
+            }
+        } else {
+            munlk(&_hlktab[key]);
+            
+            return NULL;
+        }
+#endif
+        lim = mptr->tab;
+        mptr = mptr->tab + mptr->n;
+        if (mptr) {
+            do {
+                if (mptr->ptr == ptr) {
+                    mag = mptr->mag;
+                    munlk(&_hlktab[key]);
+                    
+                    return mag;
+                }
+                mptr--;
+            } while ((mptr->ptr) && mptr >= lim);
+            if (mptr < lim) {
                 munlk(&_hlktab[key]);
                 
                 return NULL;
@@ -1224,7 +1250,25 @@ addblk(void *ptr,
     key = hashq128(&key, sizeof(uintptr_t), NHASHBIT);
     mlk(&_hlktab[key]);
     mptr = &_mtab[key];
-    if (!mptr->ptr) {
+    if (!mag) {
+        if (mptr->ptr == ptr) {
+            mptr->ptr = NULL;
+            mptr->mag = mag;
+        } else {
+            struct mptr *tmp = mptr->tab;
+            long         ndx;
+
+            if (tmp) {
+                for (ndx = mptr->n - 1 ; ndx >= 0 ; ndx++) {
+                    if (tmp[ndx].ptr == ptr) {
+                        mptr->n--;
+                        tmp[ndx] = tmp[mptr->n];
+//                        tmp[mptr->n].ptr = NULL;
+                    }
+                }
+            }
+        }
+    } else if (!mptr->ptr) {
         mptr->ptr = ptr;
         mptr->mag = mag;
     } else {
