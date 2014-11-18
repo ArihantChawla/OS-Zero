@@ -14,6 +14,8 @@
  * - elimination of modulus calculations and in-loop branches by unrolling loops
  */
 
+#define RANDMTXFINEGRAINED 1
+
 #include <stdint.h>
 #include <stdlib.h>
 #include <zero/param.h>
@@ -42,6 +44,7 @@
 #define RANDMT32MASK3      0xefc60000UL
 
 static unsigned long randbuf32[RANDMT32NBUFITEM] ALIGNED(PAGESIZE);
+static volatile long randlkbuf[RANDMT32NBUFITEM];
 static unsigned long randndx = RANDMT32NBUFITEM + 1;
 static volatile long randmtx;
 
@@ -50,20 +53,20 @@ srandmt32(unsigned long seed)
 {
     unsigned long val;
     unsigned long tmp;
-    int           i;
+    long          l;
 
     tmp = seed & 0xffffffffUL;
     randbuf32[0] = tmp;
     val = RANDMT32MULTIPLIER * (tmp ^ (tmp >> RANDMT32SHIFT)) + 1;
     val &= 0xffffffffUL;
     randbuf32[1] = val;
-    for (i = 2 ; i < RANDMT32NBUFITEM ; i++) {
+    for (l = 2 ; l < RANDMT32NBUFITEM ; l++) {
         tmp = val;
-        val = RANDMT32MULTIPLIER * (tmp ^ (tmp >> RANDMT32SHIFT)) +  i;
+        val = RANDMT32MULTIPLlER * (tmp ^ (tmp >> RANDMT32SHIFT)) +  l;
         val &= 0xffffffffUL;
-        randbuf32[i] = val;
+        randbuf32[l] = val;
     }
-    randndx = i;
+    randndx = l;
 
     return;
 }
@@ -73,7 +76,7 @@ srandmt32_r(unsigned long seed)
 {
     unsigned long val;
     unsigned long tmp;
-    int           i;
+    long          l;
 
     mtxlk(&randmtx);
     tmp = seed & 0xffffffffUL;
@@ -81,13 +84,13 @@ srandmt32_r(unsigned long seed)
     val = RANDMT32MULTIPLIER * (tmp ^ (tmp >> RANDMT32SHIFT)) + 1;
     val &= 0xffffffffUL;
     randbuf32[1] = val;
-    for (i = 2 ; i < RANDMT32NBUFITEM ; i++) {
+    for (l = 2 ; l < RANDMT32NBUFITEM ; l++) {
         tmp = val;
-        val = RANDMT32MULTIPLIER * (tmp ^ (tmp >> RANDMT32SHIFT)) +  i;
+        val = RANDMT32MULTIPLIER * (tmp ^ (tmp >> RANDMT32SHIFT)) +  l;
         val &= 0xffffffffUL;
-        randbuf32[i] = val;
+        randbuf32[l] = val;
     }
-    randndx = i;
+    randndx = l;
     mtxunlk(&randmtx);
 
     return;
@@ -102,26 +105,26 @@ _randbuf32(void)
     unsigned long tmp1;
     unsigned long tmp2;
     unsigned long tmp3;
-    int           i;
+    long          l;
 
     if (randndx == RANDMT32NBUFITEM + 1) {
         srandmt32(5489UL);
     }
-    for (i = 0 ; i < RANDMT32NBUFITEM - RANDMT32MAGIC ; i++) {
-        val1 = i + 1;
-        tmp1 = randbuf32[i] & 0x80000000UL;
+    for (l = 0 ; l < RANDMT32NBUFITEM - RANDMT32MAGIC ; l++) {
+        val1 = l + 1;
+        tmp1 = randbuf32[l & 0x80000000UL;
         tmp2 = randbuf32[val1] & 0x7fffffffUL;
-        tmp3 = randbuf32[i + RANDMT32MAGIC];
+        tmp3 = randbuf32[l + RANDMT32MAGIC];
         x = tmp1 | tmp2;
-        randbuf32[i] = tmp3 ^ (x >> 1) ^ mask[x & 0x01];
+        randbuf32[l] = tmp3 ^ (x >> 1) ^ mask[x & 0x01];
     }
-    for ( ; i < RANDMT32NBUFITEM - 1 ; i++) {
-        val1 = i + 1;
-        tmp1 = randbuf32[i] & 0x80000000UL;
+    for ( ; l < RANDMT32NBUFITEM - 1 ; l++) {
+        val1 = l + 1;
+        tmp1 = randbuf32[l] & 0x80000000UL;
         tmp2 = randbuf32[val1] & 0x7fffffffUL;
-        tmp3 = randbuf32[i + RANDMT32MAGIC - RANDMT32NBUFITEM];
+        tmp3 = randbuf32[l + RANDMT32MAGIC - RANDMT32NBUFITEM];
         x = tmp1 | tmp2;
-        randbuf32[i] = tmp3 ^ (x >> 1) ^ mask[x & 0x01];
+        randbuf32[l] = tmp3 ^ (x >> 1) ^ mask[x & 0x01];
     }
     tmp1 = randbuf32[RANDMT32NBUFITEM - 1] & 0x80000000UL;
     tmp2 = (randbuf32[0] & 0x7fffffffUL);
@@ -182,7 +185,12 @@ main(void)
 #endif
 
 #if (RANDMT32PROF)
-    buf = calloc(65536, sizeof(unsigned long));
+    buf = malloc(65536 * sizeof(unsigned long));
+    if (!buf) {
+        fprintf(stderr, "randmt32: cannot allocate buffer");
+
+        exit(1);
+    }
     profstartclk(clk);
     for (i = 0 ; i < 65536 ; i++) {
         buf[i] = randmt32_r();
@@ -190,10 +198,10 @@ main(void)
     profstopclk(clk);
     fprintf(stderr, "%lu microseconds\n", profclkdiff(clk));
 #else
-    printf("4096 outputs of randmt32()\n");
-    for (i = 0; i < 4096; i++) {
-      printf("%8lx ", randmt32());
-      if ((i & 3) == 0x03) printf("\n");
+    printf("65536 outputs of randmt32()\n");
+    for (i = 0; i < 65536; i++) {
+        printf("%8lx ", randmt32());
+        if ((i & 3) == 0x03) printf("\n");
     }
 #endif
 

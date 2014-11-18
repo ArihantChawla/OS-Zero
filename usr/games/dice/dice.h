@@ -13,8 +13,8 @@
 #define DICE_1D12 12
 #define DICE_1D20 20
 
-#define MINLOG2 2
-#define NLEVEL  24
+#define MINLOG2   2
+#define NLEVEL    24
 #define diceshift(l) (MINLOG2 + (l))
 
 #if (DICE_SRAND_TIME)
@@ -24,10 +24,10 @@
 #define diceroll(max) ((randmt32() % (max)) + 1)
 #endif
 
-static __inline__ long
-dicerolln(long n, long max)
+static __inline__ unsigned long
+dicerolln(unsigned long n, unsigned long max)
 {
-    long retval = 0;
+    unsigned long retval = 0;
 
     while (n--) {
         retval += diceroll(max);

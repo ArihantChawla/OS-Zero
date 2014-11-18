@@ -50,10 +50,10 @@ diceparsecmd(struct diced20 *buf, int argc, char *argv[])
  * initialise random number generator with current time
  */
 void
-diceinit(unsigned int seed)
+diceinit(unsigned long seed)
 {
     if (!seed) {
-        seed = 1;
+        seed = 0xffffffff;
     }
     srandmt32(seed);
 
@@ -63,8 +63,8 @@ diceinit(unsigned int seed)
 unsigned long
 dicerolld20(struct diced20 *dicebuf)
 {
-    long retval = 0;
-    long n;
+    unsigned long retval = 0;
+    unsigned long n;
 
 
     n = dicebuf->nd4;
