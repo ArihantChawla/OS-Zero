@@ -62,7 +62,7 @@ srandmt32(unsigned long seed)
     randbuf32[1] = val;
     for (l = 2 ; l < RANDMT32NBUFITEM ; l++) {
         tmp = val;
-        val = RANDMT32MULTIPLlER * (tmp ^ (tmp >> RANDMT32SHIFT)) +  l;
+        val = RANDMT32MULTIPLIER * (tmp ^ (tmp >> RANDMT32SHIFT)) +  l;
         val &= 0xffffffffUL;
         randbuf32[l] = val;
     }
@@ -112,7 +112,7 @@ _randbuf32(void)
     }
     for (l = 0 ; l < RANDMT32NBUFITEM - RANDMT32MAGIC ; l++) {
         val1 = l + 1;
-        tmp1 = randbuf32[l & 0x80000000UL;
+        tmp1 = randbuf32[l & 0x80000000UL];
         tmp2 = randbuf32[val1] & 0x7fffffffUL;
         tmp3 = randbuf32[l + RANDMT32MAGIC];
         x = tmp1 | tmp2;
