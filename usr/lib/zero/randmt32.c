@@ -6,6 +6,19 @@
  * REFERENCE: https://en.wikipedia.org/wiki/Mersenne_twister
  */
 
+/*
+ * API
+ * ---
+ * void srandmt32(unsigned long seed);
+ * - seed the pseudo-random number generator with the argument
+ * unsigned long randmt32(void);
+ * - get the next PRN in series
+ *
+ * void srandmt32_r(unsigned long seed);
+ * unsigned lonsg randmt32_t(void);
+ * - re-entrant versions [for multithreaded processes]
+ */
+
 /* Thanks to Craig Robbins for pointing out errors and other help. :) */
 
 /*
