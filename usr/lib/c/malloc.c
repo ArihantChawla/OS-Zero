@@ -5,6 +5,8 @@
  * See the file LICENSE for more information about using this software.
  */
 
+#define MALLOCBUFHDR 1
+
 #if !defined(VALGRIND)
 #define VALGRIND   0
 #endif
@@ -443,7 +445,7 @@ typedef pthread_mutex_t LK_T;
 #else
 #define NBHDR             (4 * PAGESIZE)
 #endif
-#define NBUFHDR           8
+#define NBUFHDR           16
 
 #define thrid()           ((_aid >= 0) ? _aid : (_aid = getaid()))
 #define blksz(bid)        (1UL << (bid))
@@ -641,6 +643,11 @@ struct mtree {
 #if (MALLOCHASH)
 static LK_T                 _hlktab[NHASH] ALIGNED(PAGESIZE);
 static struct mptr          _mtab[NHASH];
+#endif
+#if (MALLOCBUFHDR)
+static LK_T                 _hdrlktab[NBKT];
+static long                 _nhdrtab[NBKT];
+static struct mag          *_hdrtab[NBKT];
 #endif
 #if (INTSTAT) || (STAT)
 static uint64_t             nalloc[NARN][NBKT];
@@ -1437,8 +1444,13 @@ addblk(void *ptr,
 
 #endif /* MTSAFE */
 
+#if (MALLOCBUFHDR)
+static struct mag *
+gethdr(long aid, long bid)
+#else
 static struct mag *
 gethdr(long aid)
+#endif
 {
     struct arn  *arn;
     long         cur;
@@ -1449,6 +1461,21 @@ gethdr(long aid)
     arn = _atab[aid];
     hbuf = arn->htab;
     if (!arn->nhdr) {
+#if (MALLOCBUFHDR)
+        mlk(&_hdrlktab[bid]);
+        mag = _hdrtab[bid];
+        if (mag) {
+            _hdrtab[bid] = mag->next;
+            if (mag->next) {
+                mag->next->prev = NULL;
+            }
+            munlk(&_hdrlktab[bid]);
+
+            return mag;
+        }
+        _nhdrtab[bid]++;
+        munlk(&_hdrlktab[bid]);
+#endif
         hbuf = mapanon(_mapfd, rounduppow2(NBUFHDR * NBHDR, PAGESIZE));
         if (hbuf != MAP_FAILED) {
 #if (INTSTAT) || (STAT)
@@ -1479,7 +1506,9 @@ gethdr(long aid)
         while (cur) {
             mag = (struct mag *)ptr;
             *hbuf++ = mag;
-#if (!ISTK) && (!NOSTK)
+#if (MALLOCBUFHDR)
+            mag->bptr = (struct mag *)(&mag->data);
+#elif (!ISTK) && (!NOSTK)
             mag->bptr = mag->stk;
 #endif
             cur--;
@@ -1629,6 +1658,16 @@ freemap(struct mag *mag)
             _nbmap -= max * bsz;
 #endif
             if (gtpow2(max, 1)) {
+#if (MALLOCBUFHDR)
+                mlk(&_hdrlktab[bid]);
+                mag->next = _hdrtab[bid];
+                if (mag->next) {
+                    mag->next->prev = mag;
+                }
+                _hdrtab[bid] = mag;
+                _nhdrtab[bid]++;
+                munlk(&_hdrlktab[bid]);
+#else
                 if (!istk(bid)) {
 #if (INTSTAT) || (STAT)
                     nstkbytes[aid] -= (mag->max << 1) * sizeof(void *); 
@@ -1647,6 +1686,7 @@ freemap(struct mag *mag)
                     }
 #endif
                 }
+#endif /* MALLOCBUFHDR */
             }
             if (mptr1->prev) {
                 mptr1->prev->next = mptr2;
@@ -1713,11 +1753,22 @@ freemap(struct mag *mag)
 #endif
         if (gtpow2(max, 1)) {
             if (!istk(bid)) {
+#if (MALLOCBUFHDR)
+                mlk(&_hdrlktab[bid]);
+                mag->next = _hdrtab[bid];
+                if (mag->next) {
+                    mag->next->prev = NULL;
+                }
+                _hdrtab[bid] = mag->next;
+                _nhdrtab[bid]++;
+                munlk(&_hdrlktab[bid]);
+#else /* !MALLOCBUFHDR */
 #if (INTSTAT) || (STAT)
                 nstkbytes[aid] -= (mag->max << 1) * sizeof(void *); 
 #endif
                 unmapstk(mag);
                 mag->bptr = NULL;
+#endif /* MALLOCBUFHDR */
 #if (FREEBITMAP)
                 unmapfmap(mag);
                 mag->fmap = NULL;
@@ -1756,7 +1807,7 @@ getmem(size_t size,
     uint8_t     *ptr = NULL;
     long         max = nblk(bid);
     struct mag  *mag = NULL;
-    void       **stk;
+    void       **stk = NULL;
     long         l;
     long         get = 0;
     long         glob = 0;
@@ -1852,7 +1903,11 @@ getmem(size_t size,
             }
 #endif
         }
+#if (MALLOCBUFHDR)
+        mag = gethdr(aid, bid);
+#else
         mag = gethdr(aid);
+#endif
 #if (FREEBUF)
         if (mag) {
             mag->aid = aid;
@@ -1863,16 +1918,25 @@ getmem(size_t size,
             if (ptr) {
                 if (gtpow2(max, 1)) {
                     if (istk(bid)) {
-#if (ISTK)
+#if (MALLOCBUFHDR)
+                        stk = mag->bptr;
+#elif (ISTK)
                         stk = (void **)(&mag->data);
 #elif (!NOSTK)
                         stk = (void **)mag->stk;
 #else
                         stk = mapstk(max);
 #endif
+#if (!MALLOCBUFHDR)
                     } else {
                         stk = mapstk(max);
+#endif
                     }
+#if (MALLOCBUFHDR)
+                    if (!stk) {
+                        stk = mapstk(max);
+                    }
+#endif
                     mag->bptr = stk;
                     if (stk != MAP_FAILED) {
 #if (FREEBITMAP)
@@ -1914,90 +1978,107 @@ getmem(size_t size,
                     }
                 }
             }
-        }
-        mag = gethdr(aid);
-        if (mag) {
-            mag->aid = aid;
-            mag->cur = 0;
-            mag->max = max;
-            mag->bid = bid;
-            mag->adr = ptr;
-            if (ptr) {
-                if (gtpow2(max, 1)) {
-                    if (istk(bid)) {
-#if (ISTK)
-                        stk = (void **)(&mag->data);
-#elif (NOSTK)
-//                        stk = mag->bptr;
-                        stk = mapstk(max);
+        } else {
+#if (MALLOCBUFHDR)
+            mag = gethdr(aid, bid);
 #else
-                        stk = (void **)mag->stk;
+            mag = gethdr(aid);
 #endif
-                    } else {
-                        stk = mapstk(max);
-                    }
-                    mag->bptr = stk;
-                    if (stk != MAP_FAILED) {
-#if (FREEBITMAP)
-                        mag->fmap = mapfmap(max);
-                        if (mag->fmap == MAP_FAILED) {
-                            unmapstk(mag);
-                            
-                            return NULL;
+            if (mag) {
+                mag->aid = aid;
+                mag->cur = 0;
+                mag->max = max;
+                mag->bid = bid;
+                mag->adr = ptr;
+                if (ptr) {
+                    if (gtpow2(max, 1)) {
+                        if (istk(bid)) {
+#if (MALLOCBUFHDR)
+                            stk = mag->bptr;
+#elif (ISTK)
+                            stk = (void **)(&mag->data);
+#elif (NOSTK)
+                            stk = mapstk(max);
+#else
+                            stk = (void **)mag->stk;
+#endif
+#if (!MALLOCBUFHDR)
+                        } else {
+                            stk = mapstk(max);
+#endif
                         }
+#if (MALLOCBUFHDR)
+                        if (!stk) {
+                            stk = mapstk(max);
+                        }
+#endif
+                        mag->bptr = stk;
+                        if (stk != MAP_FAILED) {
+#if (FREEBITMAP)
+                            mag->fmap = mapfmap(max);
+                            if (mag->fmap == MAP_FAILED) {
+                                unmapstk(mag);
+                                
+                                return NULL;
+                            }
 #endif
 #if (INTSTAT) || (STAT)
-                        nstkbytes[aid] += (max << 1) * sizeof(void *); 
+                            nstkbytes[aid] += (max << 1) * sizeof(void *); 
 #endif
 #if (VALGRIND)
-                        if (RUNNING_ON_VALGRIND) {
-                            VALGRIND_MALLOCLIKE_BLOCK(stk, (max << 1) * sizeof(void *), 0, 0);
-                        }
+                            if (RUNNING_ON_VALGRIND) {
+                                VALGRIND_MALLOCLIKE_BLOCK(stk, (max << 1) * sizeof(void *), 0, 0);
+                            }
 #endif
 //                        n = max << nmagslablog2(bid);
-                        for (l = 0 ; l < max ; l++) {
-                            stk[l] = ptr;
-                            ptr += bsz;
-                        }
-                        mag->prev = NULL;
-                        mag->next = NULL;
+                            for (l = 0 ; l < max ; l++) {
+                                stk[l] = ptr;
+                                ptr += bsz;
+                                }
+                            mag->prev = NULL;
+                            mag->next = NULL;
 #if (HACKS)
-                        _fcnt[bid]++;
+                            _fcnt[bid]++;
 #endif
-                        mag->glob = 1;
-                        mlk(&_flktab[bid]);
+                            mag->glob = 1;
+                            mlk(&_flktab[bid]);
 #if (TAILFREE)
-                        if (!_ftab[bid]) {
-                            _ftab[bid] = mag;
-                            _ftail[bid] = mag;
-                        } else {
-                            mag->prev = _ftail[bid];
-                            if (ftail[bid]) {
-                                _ftail[bid]->next = mag;
+                            if (!_ftab[bid]) {
+                                _ftab[bid] = mag;
+                                _ftail[bid] = mag;
+                                } else {
+                                mag->prev = _ftail[bid];
+                                if (ftail[bid]) {
+                                    _ftail[bid]->next = mag;
+                                }
+                                _ftail[bid] = mag;
                             }
-                            _ftail[bid] = mag;
-                        }
 #else
-                        mag->next = _ftab[bid];
+                            mag->next = _ftab[bid];
 #if (TESTING)
-                        if (mag->next) {
+                            if (mag->next) {
                             mag->next->prev = mag;
-                        }
+                            }
 #endif
-                        _ftab[bid] = mag;
+                            _ftab[bid] = mag;
 #endif
                         munlk(&_flktab[bid]);
-                    } else {
+                        } else {
 #if (STDIO)
-                        fprintf(stderr, "failed to map stack: bkt %ld\n", bid);
+                            fprintf(stderr, "failed to map stack: bkt %ld\n", bid);
 #endif
-                        abort();
+                            abort();
+                        }
                     }
                 }
             }
         }
 #else /* !FREEBUF */
+#if (MALLOCBUFHDR)
+        mag = gethdr(aid, bid);
+#else
         mag = gethdr(aid);
+#endif
         if (mag) {
             mag->aid = aid;
             mag->cur = 0;
@@ -2007,17 +2088,25 @@ getmem(size_t size,
             if (ptr) {
                 if (gtpow2(max, 1)) {
                     if (istk(bid)) {
-#if (ISTK)
+#if (MALLOCBUFHDR)
+                        stk = mag->bptr;
+#elif (STK)
                         stk = (void **)(&mag->data);
 #elif (NOSTK)
-//                        stk = mag->bptr;
                         stk = mapstk(max);
 #else
                         stk = (void **)mag->stk;
 #endif
+#if (!MALLOCBUFHDR)
                     } else {
                         stk = mapstk(max);
+#endif
                     }
+#if (MALLOCBUFHDR)
+                    if (!stk) {
+                        stk = mapstk(max);
+                    }
+#endif
                     mag->bptr = stk;
                     if (stk != MAP_FAILED) {
 #if (FREEBITMAP)
