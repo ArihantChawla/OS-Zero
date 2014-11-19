@@ -21,6 +21,9 @@
 /* on some Linux setups, the pthread library declares no prototype */
 extern int pthread_yield(void);
 #endif
+#if defined(__linux__)
+#include <sched.h>
+#endif
 
 #define mtxinit(lp) (*(lp) = ZEROMTXINITVAL)
 
@@ -57,7 +60,9 @@ mtxlk2(volatile long *lp, long val)
     do {
         res = m_cmpswap(lp, ZEROMTXINITVAL, val);
         if (res != ZEROMTXINITVAL) {
-#if (__KERNEL__)
+#if defined(__linux__)
+            sched_yield();
+#elif (__KERNEL__)
             schedpickthr();
 #elif (PTHREAD)
             pthread_yield();
