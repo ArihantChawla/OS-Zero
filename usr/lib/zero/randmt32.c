@@ -171,18 +171,20 @@ unsigned long
 randmt32_r(void)
 {
     unsigned long x;
+    unsigned long ndx;
 
     mtxlk(&randmtx);
-    if (randndx >= RANDMT32NBUFITEM) {
+    ndx = randndx++;
+    if (ndx >= RANDMT32NBUFITEM) {
         _randbuf32();
+        ndx = randndx++;
     }
-    x = randbuf32[randndx];
+    x = randbuf32[ndx];
+    mtxunlk(&randmtx);
     x ^= x >> RANDMT32SHIFT1;
     x ^= (x << RANDMT32SHIFT2) & RANDMT32MASK2;
     x ^= (x << RANDMT32SHIFT3) & RANDMT32MASK3;
     x ^= x >> RANDMT32SHIFT4;
-    randndx++;
-    mtxunlk(&randmtx);
 
     return x;
 }
