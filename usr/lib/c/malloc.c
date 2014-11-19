@@ -1702,7 +1702,9 @@ freemap(struct mag *mag)
 #endif
     cur = arn->hcur;
     hbuf = arn->htab;
-#if (TUNEBUF)
+#if (MALLOCHDRBUF)
+    queue = _nhdrtab[bid] < NBUFHDR;
+#elif (TUNEBUF)
     queue = nfree < _nbuftab[bid];
 #endif
     if (!cur // || !ismapbkt(bid)
