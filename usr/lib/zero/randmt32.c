@@ -174,11 +174,12 @@ randmt32_r(void)
     unsigned long ndx;
 
     mtxlk(&randmtx);
-    ndx = randndx++;
+    ndx = randndx;
     if (ndx >= RANDMT32NBUFITEM) {
         _randbuf32();
-        ndx = randndx++;
+        ndx = randndx;
     }
+    randndx++;
     x = randbuf32[ndx];
     mtxunlk(&randmtx);
     x ^= x >> RANDMT32SHIFT1;
