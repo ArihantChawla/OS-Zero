@@ -19,7 +19,7 @@
 #endif
 
 #define SMALLBUF   1
-#define CONSTBUF   0
+#define CONSTBUF   1
 #define NOSBRK     0
 #define TAILFREE   0
 #define TESTING    1
@@ -158,7 +158,7 @@ typedef pthread_mutex_t LK_T;
 #endif
 
 /* experimental */
-#define TUNEBUF 1
+#define TUNEBUF 0
 
 /* basic allocator parameters */
 #define BLKMINLOG2    CLSIZELOG2  /* minimum-size allocation */
