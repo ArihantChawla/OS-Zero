@@ -5,6 +5,7 @@
  * See the file LICENSE for more information about using this software.
  */
 
+#define MALLOCLAZYSTK 1
 #define MALLOCBUFHDR 1
 
 #if !defined(VALGRIND)
@@ -472,10 +473,12 @@ typedef pthread_mutex_t LK_T;
     ((gtpow2(mag->max, 1)                                               \
       ? (((void **)(mag)->bptr)[--(mag)->cur] = (ptr))                  \
       : ((mag)->cur = 0, (mag)->adr = (ptr))))
+#if !(MALLOCLAZYSTK)
 #define getblk(mag)                                                     \
     ((gtpow2(mag->max, 1)                                               \
       ? (((void **)(mag)->bptr)[(mag)->cur++])                          \
       : ((mag)->cur = 1, ((mag)->adr))))
+#endif
 #define NPFBIT BLKMINLOG2
 #define BPMASK (~((1UL << NPFBIT) - 1))
 #define BDIRTY 0x01UL
@@ -697,6 +700,27 @@ void  (*__after_morecore_hook)(void);
 #endif
 
 /* utility functions */
+
+#if (MALLOCLAZYSTK)
+static __inline__ void *
+getblk(struct mag *mag)
+{
+    void *ptr = NULL;
+
+    if (gtpow2(mag->max, 1)) {
+        ptr = ((void **)mag->bptr)[mag->cur];
+        if (!ptr) {
+            ptr = (uint8_t *)mag->adr + (mag->cur << mag->bid);
+        }
+        mag->cur++;
+    } else {
+        mag->cur = 1;
+        ptr = mag->adr;
+    }
+
+    return ptr;
+}
+#endif
 
 static __inline__ long
 bktid(size_t size)
@@ -1956,10 +1980,12 @@ getmem(size_t size,
                         }
 #endif
 //                        n = max << nmagslablog2(bid);
+#if (!MALLOCLAZYSTK)
                         for (l = 0 ; l < max ; l++) {
                             stk[l] = ptr;
                             ptr += bsz;
                         }
+#endif
                         mag->prev = NULL;
 #if (HACKS)
                         _fcnt[bid]++;
