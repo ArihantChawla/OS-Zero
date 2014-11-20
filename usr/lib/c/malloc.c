@@ -5,7 +5,7 @@
  * See the file LICENSE for more information about using this software.
  */
 
-#define MALLOCTRIM    0
+#define MALLOCTRIM    0 /* TODO: try to fix heap trim */
 #define MALLOCLAZYSTK 1
 #define MALLOCBUFHDR  1
 
@@ -1655,9 +1655,6 @@ gethdr(long aid)
     _nhbuf++;
 #endif
     mag = hbuf[cur++];
-#if (MALLOCLAZYSTK)
-    memset(mag->bptr, 0, (mag->max << 1) * sizeof(void *));
-#endif
     arn->hcur = cur;
 
     return mag;
@@ -2071,7 +2068,11 @@ getmem(size_t size,
                         }
 #endif
 //                        n = max << nmagslablog2(bid);
-#if !(MALLOCLAZYSTK)
+#if (MALLOCLAZYSTK)
+                        memset(stk,
+                               0,
+                               max * sizeof(void *));
+#else
                         for (l = 0 ; l < max ; l++) {
                             stk[l] = ptr;
                             ptr += bsz;
@@ -2137,7 +2138,11 @@ getmem(size_t size,
                         }
 #endif
 //                        n = max << nmagslablog2(bid);
-#if !(MALLOCLAZYSTK)
+#if (MALLOCLAZYSTK)
+                        memset(stk,
+                               0,
+                               max * sizeof(void *));
+#else
                         for (l = 0 ; l < max ; l++) {
                             stk[l] = ptr;
                             ptr += bsz;
@@ -2160,16 +2165,16 @@ getmem(size_t size,
                         abort();
                     }
                 }
-            }
 #if (MALLOCTRIM)
-            if  (!ismapbkt(bid)) {
-                mlk(&_conf.trimlk);
-                mag->prevheap = _topmag;
-                _heaptop = mag->adr + sz;
-                _topmag = mag;
-                munlk(&_conf.trimlk);
-            }
+                if  (!ismapbkt(bid)) {
+                    mlk(&_conf.trimlk);
+                    mag->prevheap = _topmag;
+                    _heaptop = mag->adr + sz;
+                    _topmag = mag;
+                    munlk(&_conf.trimlk);
+                }
 #endif
+            }
         }
 #endif /* FREEBUF */
     }
@@ -2359,13 +2364,13 @@ putmem(void *ptr)
                     } else {
                         munlk(&_flktab[bid]);
                     }
+                }
 #if (MALLOCTRIM)
 //                    munlk(&mag->lk);
-                    if (!ismapbkt(bid)) {
-                        trimheap();
-                    }
-#endif
+                if (!ismapbkt(bid)) {
+                    trimheap();
                 }
+#endif
 //                addblk(mptr, NULL);
 #if !(MALLOCHASH)
                 addblk(ptr, NULL);
@@ -2403,6 +2408,11 @@ putmem(void *ptr)
 #endif
                     munlk(&_flktab[bid]);
                 }
+#if (MALLOCTRIM)
+                if (!ismapbkt(bid)) {
+                    trimheap();
+                }
+#endif
             }
             munlk(&arn->lktab[bid]);
             if (freed) {
