@@ -5,12 +5,10 @@
  * See the file LICENSE for more information about using this software.
  */
 
-#define MALLOCTRIM    0
-#define MALLOCLAZYSTK 0
-#define MALLOCBUFHDR  1
+#define MALLOCLAZYSTK 1
 
 #if !defined(VALGRIND)
-#define VALGRIND   1
+#define VALGRIND   0
 #endif
 
 #define DEBUGMTX   0
@@ -21,10 +19,10 @@
 #endif
 
 #define SMALLBUF   1
-#define CONSTBUF   1
+#define CONSTBUF   0
 #define NOSBRK     0
 #define TAILFREE   0
-#define TESTING    0
+#define TESTING    1
 
 #define NEWMAP     1
 #define NEWSLAB    1
@@ -160,18 +158,18 @@ typedef pthread_mutex_t LK_T;
 #endif
 
 /* experimental */
-#define TUNEBUF 0
+#define TUNEBUF 1
 
 /* basic allocator parameters */
 #define BLKMINLOG2    CLSIZELOG2  /* minimum-size allocation */
 #if (SMALLBUF)
-#define SLABLOG2      20
+#define SLABLOG2      19
 #define SLABBIGLOG2   16
 #define SLABTINYLOG2  13
 #define SLABTEENYLOG2 10
 #define MAPMIDLOG2    20
 #define MAPBIGLOG2    22
-#elif !(BIGSLAB)
+#elif (!BIGSLAB)
 #define SLABLOG2      19
 #define SLABBIGLOG2   16
 #define SLABTINYLOG2  13
@@ -251,7 +249,7 @@ typedef pthread_mutex_t LK_T;
 #if (TUNEBUF)
 //#define isbufbkt(bid)     ((bid) <= MAPMIDLOG2)
 //#define isbufbkt(bid)     0
-#if !(CONSTBUF)
+#if (!CONSTBUF)
 #define nbufinit(bid)     0
 #endif
 #define isbufbkt(bid)     (_nbuftab[(bid)])
@@ -416,10 +414,17 @@ typedef pthread_mutex_t LK_T;
            : 2)))
 #endif
 #endif /* !CONSTBUF */
+#if (FREEBUF)
 #define nblklog2(bid)                                                   \
-    (!(ismapbkt(bid))                                                   \
+    ((!ismapbkt(bid))                                                   \
+     ? (SLABLOG2 - (bid))                                               \
+     : 0)
+#else
+#define nblklog2(bid)                                                   \
+    ((!ismapbkt(bid))                                                   \
     ? (SLABLOG2 - (bid) + nmagslablog2(bid))                            \
     : nmagslablog2(bid))
+#endif
 #else
 #define nblklog2(bid)     (ismapbkt(bid) ? 1UL : SLABLOG2 - (bid))
 #endif /* TUNEBUF */
@@ -440,12 +445,12 @@ typedef pthread_mutex_t LK_T;
 #else
 #define NBHDR             (4 * PAGESIZE)
 #endif
-#define NBUFHDR           32
+#define NBUFHDR           8
 
 #define thrid()           ((_aid >= 0) ? _aid : (_aid = getaid()))
 #define blksz(bid)        (1UL << (bid))
 #define usrsz(bid)        (blksz(bid) - RZSZ)
-#define magfull(mag)      !((mag)->cur)
+#define magfull(mag)      (!(mag)->cur)
 #define magempty(mag)     ((mag)->cur == (mag)->max)
 #if (ALNSTK)
 #define nbstk(bid)        max(nblk(bid) * sizeof(void *), PAGESIZE)
@@ -463,7 +468,6 @@ typedef pthread_mutex_t LK_T;
 #endif
 #define mapstk(n)         mapanon(_mapfd, ((n) << 1) * sizeof(void *))
 #define unmapstk(mag)     unmapanon((mag)->bptr, (mag->max << 1) * sizeof(void *))
-#if !(MALLOCLAZYSTK)
 #define putblk(mag, ptr)                                                \
     ((gtpow2(mag->max, 1)                                               \
       ? (((void **)(mag)->bptr)[--(mag)->cur] = (ptr))                  \
@@ -472,7 +476,6 @@ typedef pthread_mutex_t LK_T;
     ((gtpow2(mag->max, 1)                                               \
       ? (((void **)(mag)->bptr)[(mag)->cur++])                          \
       : ((mag)->cur = 1, ((mag)->adr))))
-#endif
 #define NPFBIT BLKMINLOG2
 #define BPMASK (~((1UL << NPFBIT) - 1))
 #define BDIRTY 0x01UL
@@ -525,9 +528,9 @@ static void * _realloc(void *ptr, size_t size, long rel);
 
 #if (ZEROMTX)
 #if (DEBUGMTX)
-#define mlk(mp)           fprintf(stderr, "LK: %d\n", __LINE__), mtxlk2(mp, _aid + 1)
-#define munlk(mp)         fprintf(stderr, "UNLK: %d\n", __LINE__), mtxunlk2(mp, _aid + 1)
-#define mtrylk(mp)        fprintf(stderr, "TRYLK: %d\n", __LINE__, mtxtrylk2(mp, _aid + 1))
+#define mlk(mp)           fprintf(stderr, "LK: %d\n", __LINE__); mtxlk2(mp, _aid + 1)
+#define munlk(mp)         fprintf(stderr, "UNLK: %d\n", __LINE__); mtxunlk2(mp, _aid + 1)
+#define mtrylk(mp)        fprintf(stderr, "TRYLK: %d\n", __LINE__); mtxunlk2(mp, _aid + 1))
 #else
 #define mlk(mp)           mtxlk2(mp, _aid + 1)
 #define munlk(mp)         mtxunlk2(mp, _aid + 1)
@@ -581,24 +584,19 @@ struct mconf {
     LK_T        initlk;
     LK_T        arnlk;
     LK_T        heaplk;
-    LK_T        trimlk;
 #endif
     long        scur;
     long        acur;
     long        narn;
 };
 
-#if (ISTK) && !(NOSTK)
+#if (ISTK) && (!NOSTK)
 #define istk(bid)                                                       \
     ((nblk(bid) << 1) * sizeof(void *) <= NBHDR - offsetof(struct mag, data))
 #else
 #define istk(bid) 0
 #endif
 struct mag {
-#if (MALLOCTRIM)
-    LK_T        lk;
-    struct mag *prevheap;
-#endif
     long        cur;
     long        max;
     long        aid;
@@ -613,7 +611,7 @@ struct mag {
 #endif
 #if (ISTK)
     uint8_t     data[EMPTY];
-#elif !(NOSTK)
+#elif (!NOSTK)
     struct mag *stk[EMPTY];
 #else
     struct mag *stk;
@@ -629,9 +627,6 @@ struct arn {
     long         nhdr;
     struct mag **htab;
     long         scur;
-#if (MALLOCBUFHDR)
-    LK_T         hdrlk;
-#endif
     LK_T         lktab[NBKT];
 };
 
@@ -648,11 +643,6 @@ struct mtree {
 #if (MALLOCHASH)
 static LK_T                 _hlktab[NHASH] ALIGNED(PAGESIZE);
 static struct mptr          _mtab[NHASH];
-#endif
-#if (MALLOCBUFHDR)
-static LK_T                 _hdrlktab[NBKT];
-static long                 _nhdrtab[NBKT];
-static struct mag          *_hdrtab[NBKT];
 #endif
 #if (INTSTAT) || (STAT)
 static uint64_t             nalloc[NARN][NBKT];
@@ -692,10 +682,6 @@ static long                 _aid = -1;
 static int64_t              _nbheap;
 static int64_t              _nbmap;
 static int                  _mapfd = -1;
-#if (MALLOCTRIM)
-static struct mag          *_heaptop;
-#endif
-
 #if defined(_GNU_SOURCE) && (GNUMALLOCHOOKS)
 void *(*__malloc_hook)(size_t size, const void *caller);
 void *(*__realloc_hook)(void *ptr, size_t size, const void *caller);
@@ -706,40 +692,6 @@ void  (*__after_morecore_hook)(void);
 #endif
 
 /* utility functions */
-
-#if (MALLOCLAZYSTK)
-static __inline__ void
-putblk(struct mag *mag, void *ptr)
-{
-    if (gtpow2(mag->max, 1)) {
-        ((void **)mag->bptr)[--mag->cur] = ptr;
-    } else {
-        mag->cur = 0;
-        mag->adr = ptr;
-    }
-
-    return;
-}
-
-static __inline__ void *
-getblk(struct mag *mag)
-{
-    void *ptr;
-
-    if (gtpow2(mag->max, 1)) {
-        ptr = ((void **)mag->bptr)[mag->cur];
-        if (!ptr) {
-            ptr = (uint8_t *)mag->adr + (mag->cur << mag->bid);
-        }
-        mag->cur++;
-    } else {
-        mag->cur = 1;
-        ptr = mag->adr;
-    }
-
-    return ptr;
-}
-#endif
 
 static __inline__ long
 bktid(size_t size)
@@ -755,103 +707,6 @@ bktid(size_t size)
 
     return bid;
 }
-
-#if (MALLOCTRIM)
-static void
-trimheap(void)
-{
-    unsigned long  bid;
-    long           sz;
-    struct mag    *top;
-    struct mag    *mag;
-    struct mag    *tmp;
-    struct mag    *low;
-
-    if (!mtrylk(&_conf.trimlk)) {
-
-        return;
-    }
-    if (!mtrylk(&_conf.heaplk)) {
-        munlk(&_conf.trimlk);
-
-        return;
-    }
-    top = _heaptop;
-    if (!mtrylk(&top->lk)) {
-        munlk(&_conf.heaplk);
-        munlk(&_conf.trimlk);
-
-        return;
-    }
-    sz = 0;
-    mag = top;
-    while (mag) {
-        if (!mtrylk(&mag->lk)) {
-            
-            break;
-        }
-        bid = mag->bid;
-        if (magfull(mag)) {
-#if 0
-            if (ismapbkt(bid)) {
-                
-                break;
-            }
-#endif
-            mlk(&_blktab[bid]);
-            mlk(&_flktab[bid]);
-            if (mag->prev) {
-                mag->prev->next = mag->next;
-            } else if (mag->glob) {
-                _btab[bid] = mag->next;
-            } else {
-                _ftab[mag->bid] = mag->next;
-            }
-            if (mag->next) {
-                mag->next->prev = NULL;
-#if (TAILFREE)
-            } else if (mag->glob) {
-                _btail[bid] = mag->prev;
-            } else {
-                _ftail[bid] = mag->prev;
-#endif
-            }
-            sz += mag->max * blksz(bid);
-            mag = mag->prevheap;
-            munlk(&_flktab[bid]);
-            munlk(&_blktab[bid]);
-        } else {
-            munlk(&mag->lk);
-
-            break;
-        }
-        munlk(&mag->lk);
-    }
-    low = mag;
-    if (sz) {
-        fprintf(stderr, "TRIM: %ld\n", (unsigned long)sz);
-        sbrk(-sz);
-        mag = top;
-        while (mag != low) {
-#if (VALGRIND)
-            if (RUNNING_ON_VALGRIND) {
-                VALGRIND_FREELIKE_BLOCK(mag->adr, 0);
-            }
-#endif
-            tmp = mag;
-            mag = mag->prevheap;
-            munlk(&tmp->lk);
-        }
-        _heaptop = low;
-    } else {
-        munlk(&top->lk);
-    }
-    munlk(&_conf.heaplk);
-    munlk(&_conf.trimlk);
-
-    return;
-}
-#endif
 
 #if (MTSAFE)
 static long
@@ -883,16 +738,10 @@ prefork(void)
     mlk(&_conf.initlk);
     mlk(&_conf.arnlk);
     mlk(&_conf.heaplk);
-#if (MALLOCTRIM) && (PTHREAD) && !(ZEROMTX)
-    mlk(&_conf.trimlk);
-#endif
-//    mlk(&_conf.lk);
+    mlk(&_conf.lk);
     aid = _conf.narn;
     while (aid--) {
         arn = _atab[aid];
-#if (MALLOCBUFHDR)
-        mlk(&arn->hdrlk);
-#endif
         for (bid = 0 ; bid < NBKT ; bid++) {
             mlk(&arn->lktab[bid]);
         }
@@ -900,10 +749,6 @@ prefork(void)
     bid = NBKT;
     while (bid--) {
         mlk(&_flktab[bid]);
-        mlk(&_blktab[bid]);
-#if (MALLOCBUFHDR)
-        mlk(&_hdrlktab[bid]);
-#endif
     }
 
     return;
@@ -918,26 +763,16 @@ postfork(void)
 
     bid = NBKT;
     while (bid--) {
-#if (MALLOCBUFHDR)
-        munlk(&_hdrlktab[bid]);
-#endif
-        munlk(&_blktab[bid]);
         munlk(&_flktab[bid]);
     }
     aid = _conf.narn;
-//    munlk(&_conf.lk);
+    munlk(&_conf.lk);
     while (aid--) {
         arn = _atab[aid];
         for (bid = 0 ; bid < NBKT ; bid++) {
             munlk(&arn->lktab[bid]);
         }
-#if (MALLOCBUFHDR)
-        munlk(&arn->hdrlk);
-#endif
     }
-#if (MALLOCTRIM) && (PTHREAD) && !(ZEROMTX)
-    munlk(&_conf.trimlk);
-#endif
     munlk(&_conf.heaplk);
     munlk(&_conf.arnlk);
     munlk(&_conf.initlk);
@@ -1244,9 +1079,6 @@ initmall(void)
     _mapfd = open("/dev/zero", O_RDWR);
 #endif
 #if (MTSAFE)
-#if (MALLOCTRIM) && (PTHREAD) && !(ZEROMTX)
-    pthread_mutex_init(&_conf.trimlk, NULL);
-#endif
     mlk(&_conf.arnlk);
     _atab = mapanon(_mapfd, NARN * sizeof(struct arn **));
     ptr = mapanon(_mapfd, NARN * nbarn());
@@ -1282,12 +1114,9 @@ initmall(void)
         pthread_mutex_init(&_flktab[bid], NULL);
         pthread_mutex_init(&_blktab[bid], NULL);
 #endif
-#if (MALLOCBUFHDR) && (PTHREAD) && !(ZEROMTX)
-        pthread_mutex_init(&_hdrlktab[bid], NULL);
-#endif
     }
 #endif
-#if !(NOSBRK)
+#if (!NOSBRK)
     mlk(&_conf.heaplk);
     ofs = NBSLAB - ((long)growheap(0) & (NBSLAB - 1));
     if (ofs != NBSLAB) {
@@ -1348,51 +1177,65 @@ findmag(void *ptr)
     struct mptr *mptr;
     struct mag  *mag;
 
-    if (!ptr) {
-
-        return NULL;
-    }
     key = hashq128(&key,sizeof(uintptr_t), NHASHBIT);
-    mlk(&_hdrlktab[key]);
+    mlk(&_hlktab[key]);
     mptr = &_mtab[key];
     if (mptr->ptr == ptr) {
-#if (MALLOCTRIM)
-        mlk(&mag->lk);
-#endif
         mag = mptr->mag;
-        munlk(&_hdrlktab[key]);
+        munlk(&_hlktab[key]);
 
         return mag;
     } else {
         struct mptr *lim;
 
+#if 0
+        mptr = mptr->tab;
+        if (mptr) {
+            lim = mptr + mptr->ntab;
+            do {
+                if (mptr->ptr == ptr) {
+                    mag = mptr->mag;
+                    munlk(&_hlktab[key]);
+                    
+                    return mag;
+                }
+                mptr++;
+            } while ((mptr->ptr) && mptr < lim);
+            if (mptr == lim) {
+                munlk(&_hlktab[key]);
+                
+                return NULL;
+            }
+        } else {
+            munlk(&_hlktab[key]);
+            
+            return NULL;
+        }
+#endif
         lim = mptr->tab;
         mptr = mptr->tab + mptr->n;
         if (mptr) {
             do {
                 if (mptr->ptr == ptr) {
                     mag = mptr->mag;
-#if (MALLOCTRIM)
-                    mlk(&mag->lk);
-#endif
-                    munlk(&_hdrlktab[key]);
+                    munlk(&_hlktab[key]);
                     
                     return mag;
                 }
                 mptr--;
             } while ((mptr->ptr) && mptr >= lim);
             if (mptr < lim) {
-                munlk(&_hdrlktab[key]);
+                munlk(&_hlktab[key]);
                 
                 return NULL;
             }
         } else {
-            munlk(&_hdrlktab[key]);
+            munlk(&_hlktab[key]);
             
             return NULL;
         }
     }
-    munlk(&_hdrlktab[key]);
+    munlk(&_hlktab[key]);
 
     return NULL;
 }
@@ -1407,7 +1250,7 @@ addblk(void *ptr,
     struct mptr *mptr;
 
     key = hashq128(&key, sizeof(uintptr_t), NHASHBIT);
-    mlk(&_hdrlktab[key]);
+    mlk(&_hlktab[key]);
     mptr = &_mtab[key];
     if (!mag) {
         if (mptr->ptr == ptr) {
@@ -1438,7 +1281,7 @@ addblk(void *ptr,
             struct mptr *tab = mapanon(_mapfd, nb);
 
             if (!tab) {
-                munlk(&_hdrlktab[key]);
+                munlk(&_hlktab[key]);
 
                 exit(1);
             }
@@ -1459,7 +1302,7 @@ addblk(void *ptr,
         mptr->ptr = ptr;
         mptr->mag = mag;
     }
-    munlk(&_hdrlktab[key]);
+    munlk(&_hlktab[key]);
 
     return;
 }
@@ -1596,53 +1439,22 @@ addblk(void *ptr,
 
 #endif /* MTSAFE */
 
-#if (MALLOCBUFHDR)
-static struct mag *
-gethdr(long aid, long bid)
-#else
 static struct mag *
 gethdr(long aid)
-#endif
 {
     struct arn  *arn;
     long         cur;
     struct mag **hbuf;
     struct mag  *mag = NULL;
     uint8_t     *ptr;
-    size_t       sz;
     
     arn = _atab[aid];
-#if (MALLOCBUFHDR)
-    mlk(&arn->hdrlk);
-#endif
     hbuf = arn->htab;
     if (!arn->nhdr) {
-        sz = rounduppow2(NBUFHDR * sizeof(struct mag *), PAGESIZE);
-#if (MALLOCBUFHDR)
-        mlk(&_hdrlktab[bid]);
-        mag = _hdrtab[bid];
-        if (mag) {
-            _hdrtab[bid] = mag->next;
-            if (mag->next) {
-                mag->next->prev = NULL;
-            }
-            munlk(&_hdrlktab[bid]);
-            munlk(&arn->hdrlk);
-
-            return mag;
-        }
-        _nhdrtab[bid]++;
-        munlk(&_hdrlktab[bid]);
-#endif
-        hbuf = mapanon(_mapfd, sz);
+        hbuf = mapanon(_mapfd, rounduppow2(NBUFHDR * NBHDR, PAGESIZE));
         if (hbuf != MAP_FAILED) {
 #if (INTSTAT) || (STAT)
-            nhdrbytes[aid] += sz;
-#endif
-#if (VALGRIND)
-            if (RUNNING_ON_VALGRIND) {
-                VALGRIND_MALLOCLIKE_BLOCK(mag, sz, 0, 0);
-            }
+            nhdrbytes[aid] += rounduppow2(NBUFHDR * NBHDR, PAGESIZE);
 #endif
             arn->htab = hbuf;
             arn->hcur = NBUFHDR;
@@ -1650,11 +1462,8 @@ gethdr(long aid)
         }
     }
     cur = arn->hcur;
-    hbuf = arn->htab;
-//    if (gtepow2(cur, NBUFHDR)) {
-    if (cur == NBUFHDR) {
-        sz = NBUFHDR * NBHDR;
-        mag = mapanon(_mapfd, sz);
+    if (gtepow2(cur, NBUFHDR)) {
+        mag = mapanon(_mapfd, rounduppow2(NBUFHDR * NBHDR, PAGESIZE));
         if (mag == MAP_FAILED) {
 #ifdef ENOMEM
             errno = ENOMEM;
@@ -1664,40 +1473,32 @@ gethdr(long aid)
         } else {
 #if (VALGRIND)
             if (RUNNING_ON_VALGRIND) {
-                VALGRIND_MALLOCLIKE_BLOCK(mag, sz, 0, 0);
+                VALGRIND_MALLOCLIKE_BLOCK(mag, PAGESIZE, 0, 0);
             }
 #endif
         }
         ptr = (uint8_t *)mag;
-        while (--cur) {
+        while (cur) {
             mag = (struct mag *)ptr;
             *hbuf++ = mag;
-#if (MALLOCBUFHDR)
-            mag->bptr = (struct mag *)(&mag->data);
-#elif !(ISTK) && !(NOSTK)
+#if (!ISTK) && (!NOSTK)
             mag->bptr = mag->stk;
 #endif
+            cur--;
             ptr += NBHDR;
         }
-        cur = 0;
-        hbuf = arn->htab;
     }
+    hbuf = arn->htab;
 #if (SYSDBG)
     _nhbuf++;
 #endif
     mag = hbuf[cur++];
     arn->hcur = cur;
-#if (MALLOCBUFHDR)
-    munlk(&arn->hdrlk);
-#endif
-#if (MALLOCTRIM)
-    mlk(&mag->lk);
-#endif
-    
+
     return mag;
 }
 
-#if (TUNEBUF) && !(CONSTBUF)
+#if (TUNEBUF) && (!CONSTBUF)
 static void
 tunebuf(long val)
 {
@@ -1729,7 +1530,7 @@ getslab(long aid,
 {
     uint8_t     *ptr = NULL;
     long         nb;
-#if (TUNEBUF) && !(CONSTBUF)
+#if (TUNEBUF) && (!CONSTBUF)
     unsigned long tmp;
     static long tunesz = 0;
 #endif
@@ -1775,7 +1576,7 @@ getslab(long aid,
             abort();
         }
     }
-#if (TUNEBUF) && !(CONSTBUF)
+#if (TUNEBUF) && (!CONSTBUF)
     if (ptr != MAP_FAILED && ptr != SBRK_FAILED) {
         tmp = _nbmap + _nbheap;
         if (!tunesz) {
@@ -1829,11 +1630,10 @@ freemap(struct mag *mag)
 #if (TUNEBUF)
             _nbmap -= max * bsz;
 #endif
-#if !(MALLOCBUFHDR)
             if (gtpow2(max, 1)) {
                 if (!istk(bid)) {
 #if (INTSTAT) || (STAT)
-                    nstkbytes[aid] -= rounduppow2((mag->max << 1) * sizeof(void *), PAGESIZE); 
+                    nstkbytes[aid] -= (mag->max << 1) * sizeof(void *); 
 #endif
 #if (NOSTK)
                     unmapstk(mag);
@@ -1850,22 +1650,9 @@ freemap(struct mag *mag)
 #endif
                 }
             }
-#endif /* !MALLOCBUFHDR */
-#if (MALLOCBUFHDR) && 0
-            if (!istk(bid)) {
-                mlk(&_hdrlktab[bid]);
-                mag->next = _hdrtab[bid];
-                if (mag->next) {
-                    mag->next->prev = mag;
-                }
-                _hdrtab[bid] = mag;
-                _nhdrtab[bid]++;
-                munlk(&_hdrlktab[bid]);
-                if (mptr1->prev) {
-                    mptr1->prev->next = mptr2;
-                }
+            if (mptr1->prev) {
+                mptr1->prev->next = mptr2;
             }
-#endif
         }
         mptr1 = mptr2;
     }
@@ -1885,9 +1672,6 @@ freemap(struct mag *mag)
         || (queue)
 #endif
         ) {
-#if  (MALLOCTRIM)
-//        mlk(&mag->lk);
-#endif
         mag->prev = NULL;
         mag->next = NULL;
         mlk(&_flktab[bid]);
@@ -1912,17 +1696,11 @@ freemap(struct mag *mag)
         _ftab[bid] = mag;
 #endif
 #endif
-#if  (MALLOCTRIM)
-//        munlk(&mag->lk);
-#endif
 #if (HACKS)
         _fcnt[bid]++;
 #endif
         munlk(&_flktab[bid]);
     } else {
-#if  (MALLOCTRIM)
-//        mlk(&mag->lk);
-#endif
         unmapanon(clrptr(mag->adr), max * bsz);
 #if (VALGRIND)
         if (RUNNING_ON_VALGRIND) {
@@ -1935,11 +1713,10 @@ freemap(struct mag *mag)
 #if (TUNEBUF)
         _nbmap -= max * bsz;
 #endif
-#if !(MALLOCBUFHDR)
         if (gtpow2(max, 1)) {
             if (!istk(bid)) {
 #if (INTSTAT) || (STAT)
-                nstkbytes[aid] -= rounduppow2((mag->max << 1) * sizeof(void *), PAGESIZE);
+                nstkbytes[aid] -= (mag->max << 1) * sizeof(void *); 
 #endif
                 unmapstk(mag);
                 mag->bptr = NULL;
@@ -1954,23 +1731,7 @@ freemap(struct mag *mag)
 #endif
             }
         }
-#endif /* MALLOCBUFHDR */
-#if (MALLOCBUFHDR)
-        if (!istk(bid)) {
-            mlk(&_hdrlktab[bid]);
-            mag->next = _hdrtab[bid];
-            if (mag->next) {
-                mag->next->prev = NULL;
-            }
-            _hdrtab[bid] = mag->next;
-            _nhdrtab[bid]++;
-            munlk(&_hdrlktab[bid]);
-        }
-#endif /* MALLOCBUFHDR */
-//        mag->adr = NULL;
-#if  (MALLOCTRIM)
-//        munlk(&mag->lk);
-#endif
+        mag->adr = NULL;
         hbuf[--cur] = mag;
         arn->hcur = cur;
     }
@@ -1998,9 +1759,7 @@ getmem(size_t size,
     long         max = nblk(bid);
     struct mag  *mag = NULL;
     void       **stk;
-#if !(MALLOCLAZYSTK)
     long         l;
-#endif
     long         get = 0;
     long         glob = 0;
     
@@ -2015,19 +1774,11 @@ getmem(size_t size,
         glob++;
         mlk(&_blktab[bid]);
         mag = _btab[bid];
-#if (MALLOCTRIM)
-        if (mag) {
-            mlk(&mag->lk);
-        }
-#endif
     }
     if (!mag) {
         mlk(&_flktab[bid]);
         mag = _ftab[bid];
         if (mag) {
-#if (MALLOCTRIM) && 0
-            mlk(&mag->lk);
-#endif
             mag->aid = aid;
 #if (TESTING)
             if (mag->next) {
@@ -2103,15 +1854,72 @@ getmem(size_t size,
             }
 #endif
         }
-#if (MALLOCBUFHDR)
-        mag = gethdr(aid, bid);
-#else
         mag = gethdr(aid);
-#endif
+#if (FREEBUF)
         if (mag) {
-#if (MALLOCTRIM) && 0
-//            mlk(&mag->lk);
+            mag->aid = aid;
+            mag->cur = 0;
+            mag->max = max;
+            mag->bid = bid;
+            mag->adr = ptr;
+            if (ptr) {
+                if (gtpow2(max, 1)) {
+                    if (istk(bid)) {
+#if (ISTK)
+                        stk = (void **)(&mag->data);
+#elif (!NOSTK)
+                        stk = (void **)mag->stk;
+#else
+                        stk = mapstk(max);
 #endif
+                    } else {
+                        stk = mapstk(max);
+                    }
+                    mag->bptr = stk;
+                    if (stk != MAP_FAILED) {
+#if (FREEBITMAP)
+                        mag->fmap = mapfmap(max);
+                        if (mag->fmap == MAP_FAILED) {
+                            unmapstk(mag);
+                            
+                            return NULL;
+                        }
+#endif
+#if (INTSTAT) || (STAT)
+                        nstkbytes[aid] += (max << 1) * sizeof(void *); 
+#endif
+#if (VALGRIND)
+                        if (RUNNING_ON_VALGRIND) {
+                            VALGRIND_MALLOCLIKE_BLOCK(stk, (max << 1) * sizeof(void *), 0, 0);
+                        }
+#endif
+//                        n = max << nmagslablog2(bid);
+                        for (l = 0 ; l < max ; l++) {
+                            stk[l] = ptr;
+                            ptr += bsz;
+                        }
+                        mag->prev = NULL;
+#if (HACKS)
+                        _fcnt[bid]++;
+#endif
+                        mag->glob = 0;
+                        mag->next = arn->btab[bid];
+                        if (mag->next) {
+                            mag->next->prev = mag;
+                        }
+                        arn->btab[bid] = mag;
+                    } else {
+#if (STDIO)
+                        fprintf(stderr, "failed to map stk: bkt %ld\n", bid);
+#endif
+                        abort();
+                    }
+                }
+            }
+        }
+#else /* !FREEBUF */
+        mag = gethdr(aid);
+        if (mag) {
             mag->aid = aid;
             mag->cur = 0;
             mag->max = max;
@@ -2125,27 +1933,11 @@ getmem(size_t size,
 #elif (NOSTK)
 //                        stk = mag->bptr;
                         stk = mapstk(max);
-#if (INTSTAT) || (STAT)
-                        nstkbytes[aid] += rounduppow2((max << 1) * sizeof(void *), PAGESIZE);
-#endif
-#if (VALGRIND)
-                        if (RUNNING_ON_VALGRIND) {
-                            VALGRIND_MALLOCLIKE_BLOCK(stk, rounduppow2((max << 1) * sizeof(void *), PAGESIZE), 0, 0);
-                        }
-#endif
 #else
                         stk = (void **)mag->stk;
 #endif
                     } else {
                         stk = mapstk(max);
-#if (INTSTAT) || (STAT)
-                        nstkbytes[aid] += rounduppow2((max << 1) * sizeof(void *), PAGESIZE);
-#endif
-#if (VALGRIND)
-                        if (RUNNING_ON_VALGRIND) {
-                            VALGRIND_MALLOCLIKE_BLOCK(stk, rounduppow2((max << 1) * sizeof(void *), PAGESIZE), 0, 0);
-                        }
-#endif
                     }
                     mag->bptr = stk;
                     if (stk != MAP_FAILED) {
@@ -2157,13 +1949,19 @@ getmem(size_t size,
                             return NULL;
                         }
 #endif
+#if (INTSTAT) || (STAT)
+                        nstkbytes[aid] += (max << 1) * sizeof(void *); 
+#endif
+#if (VALGRIND)
+                        if (RUNNING_ON_VALGRIND) {
+                            VALGRIND_MALLOCLIKE_BLOCK(stk, (max << 1) * sizeof(void *), 0, 0);
+                        }
+#endif
 //                        n = max << nmagslablog2(bid);
-#if !(MALLOCLAZYSTK)
                         for (l = 0 ; l < max ; l++) {
                             stk[l] = ptr;
                             ptr += bsz;
                         }
-#endif
                         mag->prev = NULL;
 #if (HACKS)
                         _fcnt[bid]++;
@@ -2181,18 +1979,9 @@ getmem(size_t size,
                         abort();
                     }
                 }
-#if (MALLOCTRIM)
-                mlk(&_conf.trimlk);
-                mag->prevheap = _heaptop;
-                _heaptop = mag;
-                munlk(&_conf.trimlk);
-                munlk(&mag->lk);
-#endif
-            } else {
-                    
-                return NULL;
             }
         }
+#endif /* FREEBUF */
     }
     if (mag) {
         ptr = getblk(mag);
@@ -2229,7 +2018,7 @@ getmem(size_t size,
             addblk(retptr, mag);
         }
     }
-#if !(DEVEL)
+#if (!DEVEL)
     if ((get) && ismapbkt(bid)) {
         munlk(&_flktab[bid]);
     }
@@ -2290,7 +2079,7 @@ putmem(void *ptr)
 #if (RZSZ)
     uint8_t    *u8ptr = ptr;
 #endif
-    struct arn *arn = NULL;
+    struct arn *arn;
     void       *mptr;
     struct mag *mag = (ptr) ? findmag(ptr) : NULL;
     long        aid = -1;
@@ -2301,8 +2090,10 @@ putmem(void *ptr)
     long        freed = 0;
 
     if (mag) {
-#if (MALLOCTRIM)
-//        mlk(&mag->lk);
+#if (VALGRIND)
+        if (RUNNING_ON_VALGRIND) {
+            VALGRIND_FREELIKE_BLOCK(ptr, 0);
+        }
 #endif
         aid = mag->aid;
         if (aid < 0) {
@@ -2343,9 +2134,6 @@ putmem(void *ptr)
 #if (FREEBITMAP)
             if (!bitset(mag->fmap, blkid(mag, mptr))) {
                 fprintf(stderr, "duplicate free: %p\n", mag->adr);
-#if (MALLOCTRIM)
-//                munlk(&mag->lk);
-#endif
                 
                 return;
             }
@@ -2418,61 +2206,46 @@ putmem(void *ptr)
 #endif
                     munlk(&_flktab[bid]);
                 }
-#if (MALLOCTRIM)
-                munlk(&mag->lk);
-                if (!ismapbkt(bid)) {
-                    trimheap();
-                }
-#endif
             }
-#if (VALGRIND)
-            if (RUNNING_ON_VALGRIND) {
-                VALGRIND_FREELIKE_BLOCK(ptr, 0);
+            munlk(&arn->lktab[bid]);
+            if (freed) {
+                freemap(mag);
             }
-#endif
-        }
-        munlk(&arn->lktab[bid]);
-        if (freed) {
-            freemap(mag);
-        }
 #if (X11VIS)
 //    mlk(&x11vislk);
-        if (x11visinit) {
-            ptr = mptr;
-            if (ptr) {
-                if (freed) {
-                    long     l = nbmap(bid) >> BLKMINLOG2;
-                    uint8_t *vptr = ptr;
-                    
-                    while (l--) {
-                        x11vismarkfreed(vptr);
-                        vptr += MINSZ;
-                    }
+            if (x11visinit) {
+                ptr = mptr;
+                if (ptr) {
+                    if (freed) {
+                        long     l = nbmap(bid) >> BLKMINLOG2;
+                        uint8_t *vptr = ptr;
+                        
+                        while (l--) {
+                            x11vismarkfreed(vptr);
+                            vptr += MINSZ;
+                        }
                 } else {
-                    long     l = blksz(bid) >> BLKMINLOG2;
-                    uint8_t *vptr = ptr;
-                    
-                    while (l--) {
-                        x11vismarkfreed(vptr);
-                        vptr += MINSZ;
+                        long     l = blksz(bid) >> BLKMINLOG2;
+                        uint8_t *vptr = ptr;
+                        
+                        while (l--) {
+                            x11vismarkfreed(vptr);
+                            vptr += MINSZ;
+                        }
                     }
                 }
+                XSetWindowBackgroundPixmap(x11visdisp,
+                                           x11viswin,
+                                           x11vispmap);
+                XClearWindow(x11visdisp,
+                             x11viswin);
+                XFlush(x11visdisp);
             }
-            XSetWindowBackgroundPixmap(x11visdisp,
-                                       x11viswin,
-                                       x11vispmap);
-            XClearWindow(x11visdisp,
-                         x11viswin);
-            XFlush(x11visdisp);
-        }
 //    munlk(&x11vislk);
 #endif
-#if (MALLOCTRIM)
-        munlk(&mag->lk);
-#endif
-    } else {
-        fprintf(stderr, "invalid free %p\n", ptr);
-        if (mag) {
+        } else {
+            munlk(&arn->lktab[bid]);
+            fprintf(stderr, "invalid free %p\n", ptr);
             abort();
         }
     }
@@ -2523,9 +2296,6 @@ _realloc(void *ptr,
     if (!ptr) {
         retptr = getmem(size, 0, 0);
     } else if ((mag) && mag->bid != bid) {
-#if (MALLOCTRIM)
-        munlk(&mag->lk);
-#endif
         retptr = getmem(size, 0, 0);
         if (retptr) {
             memcpy(retptr, ptr, min(sz, bsz));
@@ -2566,7 +2336,7 @@ realloc(void *ptr,
 void
 free(void *ptr)
 {
-#if (_GNU_SOURCE)
+#if (_BNU_SOURCE)
     if (__free_hook) {
         void *caller;
 
@@ -2723,10 +2493,6 @@ malloc_usable_size(void *ptr)
     struct mag *mag = findmag(ptr);
     size_t      sz = usrsz(mag->bid);
 
-#if (MALLOCTRIM)
-    munlk(&mag->lk);
-#endif
-
     return sz;
 }
 
@@ -2744,10 +2510,6 @@ malloc_size(void *ptr)
 {
     struct mag *mag = findmag(ptr);
     size_t      sz = (mag) ? blksz(mag->bid) : 0;
-
-#if (MALLOCTRIM)
-    munlk(&mag->lk);
-#endif
 
     return sz;
 }
