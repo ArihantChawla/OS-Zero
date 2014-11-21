@@ -160,7 +160,7 @@ typedef pthread_mutex_t LK_T;
 #endif
 
 /* experimental */
-#define TUNEBUF 1
+#define TUNEBUF 0
 
 /* basic allocator parameters */
 #define BLKMINLOG2    CLSIZELOG2  /* minimum-size allocation */
@@ -637,6 +637,9 @@ struct arn {
     long         nhdr;
     struct mag **htab;
     long         scur;
+#if (MALLOCBUFHDR)
+    LK_T         hdrlk;
+#endif
     LK_T         lktab[NBKT];
 };
 
@@ -679,6 +682,11 @@ static struct mag          *_ftab[NBKT];
 static struct mag          *_btab[NBKT];
 #if (HACKS) || (TUNEBUF)
 static long                 _fcnt[NBKT];
+#endif
+#if (MALLOCBUFHDR)
+static LK_T                 _hdrlktab[NBKT];
+static long                 _nhdrtab[NBKT];
+static struct mag          *_hdrtab[NBKT];
 #endif
 static void               **_mdir;
 static struct arn         **_atab;
@@ -878,6 +886,7 @@ getaid(void)
 #endif
 
 /* fork() management */
+/* TODO: acquire and release MALLOCHASH locks if feasible */
 
 #if (MTSAFE)
 
@@ -901,10 +910,17 @@ prefork(void)
         for (bid = 0 ; bid < NBKT ; bid++) {
             mlk(&arn->lktab[bid]);
         }
+#if (MALLOCBUFHDR)
+        mlk(&arn->hdrlk);
+#endif
     }
     bid = NBKT;
     while (bid--) {
+#if (MALLOCBUFHDR)
+        mlk(&_hdrlktab[bid]);
+#endif
         mlk(&_flktab[bid]);
+        mlk(&_blktab[bid]);
     }
 
     return;
@@ -919,12 +935,19 @@ postfork(void)
 
     bid = NBKT;
     while (bid--) {
+        munlk(&_blktab[bid]);
         munlk(&_flktab[bid]);
+#if (MALLOCBUFHDR)
+        munlk(&_hdrlktab[bid]);
+#endif
     }
     aid = _conf.narn;
     munlk(&_conf.lk);
     while (aid--) {
         arn = _atab[aid];
+#if (MALLOCBUFHDR)
+        munlk(&arn->hdrlk);
+#endif
         for (bid = 0 ; bid < NBKT ; bid++) {
             munlk(&arn->lktab[bid]);
         }
@@ -1278,9 +1301,15 @@ initmall(void)
 #if (ZEROMTX)
         mtxinit(&_flktab[bid]);
         mtxinit(&_blktab[bid]);
+#if (MALLOCBUFHDR)
+        mtxinit(&_hdrlktab[bid]);
+#endif
 #elif (PTHREAD) && !SPINLK
         pthread_mutex_init(&_flktab[bid], NULL);
         pthread_mutex_init(&_blktab[bid], NULL);
+#if (MALLOCBUFHDR)
+        pthread_mutex_init(&_hdrlktab[bid], NULL);
+#endif
 #endif
     }
 #endif
@@ -1608,8 +1637,13 @@ addblk(void *ptr,
 
 #endif /* MTSAFE */
 
+#if (MALLOCBUFHDR)
+static struct mag *
+gethdr(long aid, long bid)
+#else
 static struct mag *
 gethdr(long aid)
+#endif
 {
     struct arn  *arn;
     long         cur;
@@ -1618,6 +1652,26 @@ gethdr(long aid)
     uint8_t     *ptr;
     
     arn = _atab[aid];
+#if (MALLOCBUFHDR)
+    mlk(&arn->hdrlk);
+    mlk(&_hdrlktab[bid]);
+    mag = _hdrtab[bid];
+    if (mag) {
+#if (MALLOCTRIM)
+        mlk(&mag->lk);
+#endif
+        _hdrtab[bid] = mag->next;
+        if (mag->next) {
+            mag->next->prev = NULL;
+        }
+        _nhdrtab[bid]++;
+        munlk(&_hdrlktab[bid]);
+        munlk(&arn->hdrlk);
+        
+        return mag;
+    }
+    munlk(&_hdrlktab[bid]);
+#endif /* MALLOCBUFHDR */
     hbuf = arn->htab;
     if (!arn->nhdr) {
         hbuf = mapanon(_mapfd, rounduppow2(NBUFHDR * NBHDR, PAGESIZE));
@@ -1663,6 +1717,9 @@ gethdr(long aid)
 #endif
     mag = hbuf[cur++];
     arn->hcur = cur;
+#if (MALLOCBUFHDR)
+    munlk(&arn->hdrlk);
+#endif
 
     return mag;
 }
@@ -1806,6 +1863,7 @@ freemap(struct mag *mag)
 #if (TUNEBUF)
             _nbmap -= max * bsz;
 #endif
+#if !(MALLOCBUFHDR)
             if (gtpow2(max, 1)) {
                 if (!istk(bid)) {
 #if (INTSTAT) || (STAT)
@@ -1826,6 +1884,21 @@ freemap(struct mag *mag)
 #endif
                 }
             }
+#else /* MALLOCBUFHDR */
+            if (!istk(bid)) {
+                mlk(&_hdrlktab[bid]);
+                if (mptr1->prev) {
+                    mptr1->prev->next = mptr2;
+                }
+                mptr1->next = _hdrtab[bid];
+                if (mptr1->next) {
+                    mptr1->next->prev = mptr1;
+                }
+                _hdrtab[bid] = mptr1;
+//                _nhdrtab[bid]++;
+                munlk(&_hdrlktab[bid]);
+            }
+#endif
             if (mptr1->prev) {
                 mptr1->prev->next = mptr2;
             }
@@ -1889,6 +1962,7 @@ freemap(struct mag *mag)
 #if (TUNEBUF)
         _nbmap -= max * bsz;
 #endif
+#if !(MALLOCBUFHDR)
         if (gtpow2(max, 1)) {
             if (!istk(bid)) {
 #if (INTSTAT) || (STAT)
@@ -1907,6 +1981,18 @@ freemap(struct mag *mag)
 #endif
             }
         }
+#else /* MALLOCBUFHDR */
+        if (!istk(bid)) {
+            mlk(&_hdrlktab[bid]);
+            mag->next = _hdrtab[bid];
+            if (mag->next) {
+                mag->next->prev = NULL;
+            }
+            _hdrtab[bid] = mag->next;
+            _nhdrtab[bid]++;
+            munlk(&_hdrlktab[bid]);
+        }
+#endif
         mag->adr = NULL;
         hbuf[--cur] = mag;
         arn->hcur = cur;
@@ -2065,7 +2151,11 @@ getmem(size_t size,
             }
 #endif
         }
+#if (MALLOCBUFHDR)
+        mag = gethdr(aid, bid);
+#else
         mag = gethdr(aid);
+#endif
 #if (FREEBUF)
         if (mag) {
             sz = rounduppow2((max << 1) * sizeof(void *), PAGESIZE);
@@ -2136,7 +2226,11 @@ getmem(size_t size,
             }
         }
 #else /* !FREEBUF */
+#if (MALLOCBUFHDR)
+        mag = gethdr(aid, bid);
+#else
         mag = gethdr(aid);
+#endif
         if (mag) {
             mag->aid = aid;
             mag->cur = 0;
