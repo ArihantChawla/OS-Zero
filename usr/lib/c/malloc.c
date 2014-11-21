@@ -5,6 +5,8 @@
  * See the file LICENSE for more information about using this software.
  */
 
+#define MALLOCBUFMAP  1
+#define NEWBUF        1
 #define ARNREFCNT     1
 #define MALLOCTRIM    0 /* TODO: try to fix heap trim */
 #define MALLOCZEROSTK 1
@@ -267,7 +269,22 @@ typedef pthread_mutex_t LK_T;
 #define nmaplog2(bid)     0
 #endif
 
-#if (TUNEBUF)
+#if (NEWBUF)
+#define nblklog2(bid)                                                   \
+    (((!ismapbkt(bid))                                                  \
+      ? (((bid) < SLABTEENYLOG2)                                        \
+         ? (SLABLOG2 - (bid))                                           \
+         : (((bid) < SLABTINYLOG2)                                      \
+            ? (SLABLOG2 - (bid) + 1)                                    \
+            : (((bid) < SLABBIGLOG2)                                    \
+               ? (SLABLOG2 - (bid) + 2)                                 \
+               : (SLABLOG2 - (bid)))))                                  \
+      : (((bid) < MAPMIDLOG2)                                           \
+         ? 2                                                            \
+         : (((bid) < MAPBIGLOG2)                                        \
+            ? 1                                                         \
+            : 0))))
+#elif (TUNEBUF)
 #if (CONSTBUF)
 #define nbufinit(bid)     0
 #define nmagslablog2init(bid) 0
@@ -449,6 +466,7 @@ typedef pthread_mutex_t LK_T;
 #define NBHDR             (4 * PAGESIZE)
 #endif
 #define NBUFHDR           8
+#define NBUFMAP           8
 
 #define thrid()           ((_aid >= 0) ? _aid : (_aid = getaid()))
 #define blksz(bid)        (1UL << (bid))
@@ -667,8 +685,10 @@ static long                 nheapbytes[NARN];
 static unsigned long long   nheapreq[NBKT];
 static unsigned long long   nmapreq[NBKT];
 #endif
-#if (TUNEBUF)
+#if (TUNEBUF) || (MALLOCBUFMAP)
 static long                 _nbuftab[NBKT];
+#endif
+#if (TUNEBUF)
 static long                 _nslablog2tab[NBKT];
 #endif
 #if (MTSAFE)
@@ -989,7 +1009,7 @@ relarn(void *arg)
 
 #if (ARNREFCNT)
     mlk(&_nreflktab[aid]);
-    nref = _nreftab[aid]--;
+    nref = --_nreftab[aid];
     munlk(&_nreflktab[aid]);
 #endif
 //    nref = --arn->nref;
@@ -1686,7 +1706,7 @@ gethdr(long aid)
         if (mag->next) {
             mag->next->prev = NULL;
         }
-        _nhdrtab[bid]++;
+        _nhdrtab[bid]--;
         munlk(&_hdrlktab[bid]);
         munlk(&arn->hdrlk);
         
@@ -1850,20 +1870,26 @@ static void
 freemap(struct mag *mag)
 {
     struct arn  *arn;
+#if !(MALLOCBUFHDR)
     long         cur;
+#endif
     long         aid = mag->aid;
     long         bid = mag->bid;
     long         bsz = blksz(bid);
     long         max = mag->max;
+#if (TUNEBUF) || (MALLOCBUFHDR)
+    long         queue;
+#endif
 #if (TUNEBUF)
     long         nfree;
-    long         queue;
 #endif
 #if (HACKS)
     struct mag  *mptr1;
     struct mag  *mptr2;
 #endif
+#if !(MALLOCBUFHDR)
     struct mag **hbuf;
+#endif
 
     arn = _atab[aid];
     mlk(&arn->lktab[bid]);
@@ -1917,7 +1943,7 @@ freemap(struct mag *mag)
                     mptr1->next->prev = mptr1;
                 }
                 _hdrtab[bid] = mptr1;
-//                _nhdrtab[bid]++;
+                _nhdrtab[bid]++;
                 munlk(&_hdrlktab[bid]);
             }
 #endif
@@ -1933,14 +1959,23 @@ freemap(struct mag *mag)
 #if (TUNEBUF)
     nfree = _fcnt[bid];
 #endif
+#if (MALLOCBUFHDR)
+    queue = 0;
+#else
     cur = arn->hcur;
     hbuf = arn->htab;
-#if (TUNEBUF)
+#endif
+#if (MALLOCBUFMAP)
+    queue = _nbuftab[bid] < NBUFMAP;
+#elif (TUNEBUF)
     queue = nfree < _nbuftab[bid];
 #endif
-    if (!cur // || !ismapbkt(bid)
-#if (TUNEBUF)
-        || (queue)
+    if (
+#if !(MALLOCBUFHDR)
+        !cur || // || !ismapbkt(bid)
+#endif
+#if (TUNEBUF) || (MALLOCBUFHDR)
+        (queue)
 #endif
         ) {
         mag->prev = NULL;
@@ -2003,8 +2038,11 @@ freemap(struct mag *mag)
 #endif
             }
         }
+        mag->adr = NULL;
+        hbuf[--cur] = mag;
+        arn->hcur = cur;
 #else /* MALLOCBUFHDR */
-        if (!istk(bid)) {
+//        if (!istk(bid)) {
             mlk(&_hdrlktab[bid]);
             mag->next = _hdrtab[bid];
             if (mag->next) {
@@ -2013,11 +2051,8 @@ freemap(struct mag *mag)
             _hdrtab[bid] = mag->next;
             _nhdrtab[bid]++;
             munlk(&_hdrlktab[bid]);
-        }
+//        }
 #endif
-        mag->adr = NULL;
-        hbuf[--cur] = mag;
-        arn->hcur = cur;
     }
     munlk(&arn->lktab[bid]);
 
@@ -2547,8 +2582,10 @@ putmem(void *ptr)
 #endif
                 if (ismapbkt(bid)
                     && (!isbufbkt(bid)
-#if (TUNEBUF)
-                         && (_fcnt[bid] < _nbuftab[(bid)])
+#if (MALLOCBUFMAP)
+                        && (_nbuftab[(bid)] >= NBUFMAP)
+#elif (TUNEBUF)
+                        && (_fcnt[bid] < _nbuftab[(bid)])
 #endif
                         )) {
                     freed = 1;
