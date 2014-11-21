@@ -5,8 +5,9 @@
  * See the file LICENSE for more information about using this software.
  */
 
+#define ARNREFCNT     1
 #define MALLOCTRIM    0 /* TODO: try to fix heap trim */
-#define MALLOCLAZYSTK 1
+#define MALLOCZEROSTK 1
 #define MALLOCBUFHDR  1
 
 #if !defined(VALGRIND)
@@ -474,7 +475,7 @@ typedef pthread_mutex_t LK_T;
     ((gtpow2(mag->max, 1)                                               \
       ? (((void **)(mag)->bptr)[--(mag)->cur] = (ptr))                  \
       : ((mag)->cur = 0, (mag)->adr = (ptr))))
-#if !(MALLOCLAZYSTK)
+#if !(MALLOCZEROSTK)
 #define getblk(mag)                                                     \
     ((gtpow2(mag->max, 1)                                               \
       ? (((void **)(mag)->bptr)[(mag)->cur++])                          \
@@ -632,7 +633,7 @@ struct mag {
 #define nbarn() PAGESIZE
 struct arn {
     struct mag  *btab[NBKT];
-    long         nref;
+//    long         nref;
     long         hcur;
     long         nhdr;
     struct mag **htab;
@@ -705,6 +706,10 @@ static int                  _mapfd = -1;
 static struct mag          *_topmag;
 //static uint8_t             *_heaptop;
 #endif
+#if (ARNREFCNT)
+static LK_T                *_nreflktab;
+static unsigned long       *_nreftab;
+#endif
 
 #if defined(_GNU_SOURCE) && (GNUMALLOCHOOKS)
 void *(*__malloc_hook)(size_t size, const void *caller);
@@ -732,7 +737,7 @@ bktid(size_t size)
     return bid;
 }
 
-#if (MALLOCLAZYSTK)
+#if (MALLOCZEROSTK)
 static __inline__ void *
 getblk(struct mag *mag)
 {
@@ -878,6 +883,11 @@ getaid(void)
     mlk(&_conf.arnlk);
     aid = _conf.acur++;
     _conf.acur &= NARN - 1;
+#if (ARNREFCNT)
+    mlk(&_nreflktab[aid]);
+    _nreftab[aid]++;
+    munlk(&_nreflktab[aid]);
+#endif
     pthread_setspecific(_akey, _atab[aid]);
     munlk(&_conf.arnlk);
 
@@ -969,12 +979,20 @@ relarn(void *arg)
 #if (HACKS)
     long        n = 0;
 #endif
+#if (ARNREFCNT)
+    long        aid = thrid();
     long        nref;
+#endif
     long        bid;
     struct mag *mag;
     struct mag *head;
 
-    nref = --arn->nref;
+#if (ARNREFCNT)
+    mlk(&_nreflktab[aid]);
+    nref = _nreftab[aid]--;
+    munlk(&_nreflktab[aid]);
+#endif
+//    nref = --arn->nref;
     if (!nref) {
         bid = NBKT;
 #if (MALLOCTRIM)
@@ -1278,6 +1296,10 @@ initmall(void)
         _atab[aid] = (struct arn *)ptr;
         ptr += nbarn();
     }
+#if (ARNREFCNT)
+    _nreftab = mapanon(_mapfd, NARN * sizeof(unsigned long));
+    _nreflktab = mapanon(_mapfd, NARN * sizeof(LK_T));
+#endif
     aid = NARN;
     while (aid--) {
         for (bid = 0 ; bid < NBKT ; bid++) {
@@ -2021,7 +2043,7 @@ getmem(size_t size,
     long         max = nblk(bid);
     struct mag  *mag = NULL;
     void       **stk;
-#if !(MALLOCLAZYSTK)
+#if !(MALLOCZEROSTK)
     long         l;
 #endif
     long         get = 0;
@@ -2196,7 +2218,7 @@ getmem(size_t size,
                         }
 #endif
 //                        n = max << nmagslablog2(bid);
-#if (MALLOCLAZYSTK)
+#if (MALLOCZEROSTK)
                         memset(stk,
                                0,
                                max * sizeof(void *));
@@ -2270,7 +2292,7 @@ getmem(size_t size,
                         }
 #endif
 //                        n = max << nmagslablog2(bid);
-#if (MALLOCLAZYSTK)
+#if (MALLOCZEROSTK)
                         memset(stk,
                                0,
                                max * sizeof(void *));
