@@ -13,7 +13,7 @@
 #define VALGRIND   0
 #endif
 
-#define DEBUGMTX   0
+#define DEBUGMTX   1
 #define GNUMALLOCHOOKS 1
 
 #if !defined(MTSAFE)
@@ -38,7 +38,7 @@
 #define STDIO      1
 #define FREEBITMAP 0
 
-#define ZEROMTX    1
+#define ZEROMTX    0
 #define PTHREAD    1
 
 #include <features.h>
@@ -532,13 +532,13 @@ static void * _realloc(void *ptr, size_t size, long rel);
 
 #if (ZEROMTX)
 #if (DEBUGMTX)
-#define mlk(mp)           fprintf(stderr, "LK: %d\n", __LINE__); mtxlk2(mp, _aid + 1)
-#define munlk(mp)         fprintf(stderr, "UNLK: %d\n", __LINE__); mtxunlk2(mp, _aid + 1)
-#define mtrylk(mp)        fprintf(stderr, "TRYLK: %d\n", __LINE__); mtxunlk2(mp, _aid + 1))
+#define mlk(mp)           fprintf(stderr, "LK: %d\n", __LINE__), mtxlk2(mp, _aid + 1)
+#define munlk(mp)         fprintf(stderr, "UNLK: %d\n", __LINE__), mtxunlk2(mp, _aid + 1)
+#define mtrylk(mp)        fprintf(stderr, "TRYLK: %d\n", __LINE__), mtxtrylk2(mp, _aid + 1)
 #else
 #define mlk(mp)           mtxlk2(mp, _aid + 1)
 #define munlk(mp)         mtxunlk2(mp, _aid + 1)
-#define mtrylk(mp)         mtxtrylk2(mp, _aid + 1)
+#define mtrylk(mp)        mtxtrylk2(mp, _aid + 1)
 #endif
 #elif (SPINLK)
 #define mlk(sp)           spinlk2(sp, _aid + 1)
@@ -564,6 +564,7 @@ static void * _realloc(void *ptr, size_t size, long rel);
 #define mtrylkspin(sp)    spintry(sp)
 
 #if (MALLOCHASH)
+#define MPTRSIZE (8 * max(sizeof(long), sizeof(void *)))
 struct mptr {
     void        *ptr;
     long         n;
@@ -574,7 +575,6 @@ struct mptr {
     long         nbtab;
     long         pad[2]; /* pad to 8 long-words */
 };
-#define MPTRSIZE (8 * max(sizeof(long), sizeof(void *)))
 #endif
 
 /* configuration */
@@ -605,7 +605,6 @@ struct mconf {
 #endif
 struct mag {
 #if (MALLOCTRIM)
-//    LK_T        lk;
     struct mag *prevheap;
 #endif
     long        cur;
@@ -694,9 +693,9 @@ static int64_t              _nbheap;
 static int64_t              _nbmap;
 static int                  _mapfd = -1;
 #if (MALLOCTRIM)
-static LK_T                 _toplk;
+//static LK_T                 _toplk;
 static struct mag          *_topmag;
-static uint8_t             *_heaptop;
+//static uint8_t             *_heaptop;
 #endif
 
 #if defined(_GNU_SOURCE) && (GNUMALLOCHOOKS)
@@ -747,34 +746,46 @@ getblk(struct mag *mag)
 #endif
 
 #if (MALLOCTRIM)
-static void
+static long
 trimheap(void)
 {
-    unsigned long  bid;
     long           sz;
+    unsigned long  bid;
     struct mag    *top;
     struct mag    *mag;
     struct mag    *low;
+    struct mag    *tmp;
 
     fprintf(stderr, "trimheap()\n");
+#if 0
     if (!mtrylk(&_conf.trimlk)) {
-
-        return;
+        
+        return 0;
     }
+#endif
 #if 0
     if (!mtrylk(&_conf.heaplk)) {
         munlk(&_conf.trimlk);
 
-        return;
+        return 0;
     }
 #endif
+#if 0
     if (!mtrylk(&_toplk)) {
         munlk(&_conf.trimlk);
 
         return;
     }
+#endif
     top = _topmag;
-    #if 0
+#if 0
+    if (mtrylk(&top->lk)) {
+        munlk(&_conf.trimlk);
+
+        return;
+    }
+#endif
+#if 0
     if (!mtrylk(&top->lk)) {
         munlk(&_conf.heaplk);
         munlk(&_conf.trimlk);
@@ -787,22 +798,19 @@ trimheap(void)
     while (mag) {
 #if 0
         if (!mtrylk(&mag->lk)) {
-            
+            tmp = top;
+            while (tmp != mag) {
+                munlk(&tmp->lk);
+                tmp = tmp->prevheap;
+
+                return 0;
+            }
+
             break;
         }
 #endif
         bid = mag->bid;
         if (magfull(mag)) {
-#if 0
-            if (ismapbkt(bid)) {
-                
-                break;
-            }
-#endif
-#if 0
-            mlk(&_blktab[bid]);
-            mlk(&_flktab[bid]);
-#endif
             if (mag->prev) {
                 mag->prev->next = mag->next;
             } else if (mag->glob) {
@@ -819,42 +827,37 @@ trimheap(void)
                 _ftail[bid] = mag->prev;
 #endif
             }
-//            sz += mag->max * blksz(bid);
+            sz += mag->max * blksz(bid);
             mag = mag->prevheap;
-#if 0
-            munlk(&_flktab[bid]);
-            munlk(&_blktab[bid]);
-#endif
         } else {
 //            munlk(&mag->lk);
 
             break;
         }
-//        munlk(&mag->lk);
     }
     low = mag;
-    if (low != _topmag) {
-        sz = _heaptop - (uint8_t *)low->adr;
+    if (low != top) {
+//        sz = _heaptop - (uint8_t *)low->adr;
         fprintf(stderr, "TRIM: %ld\n", (unsigned long)sz);
         sbrk(-sz);
         mag = top;
-        while ((mag->adr) && mag != low) {
+        while (mag != low) {
+//            munlk(&mag->lk);
 #if (VALGRIND)
             if (RUNNING_ON_VALGRIND) {
                 VALGRIND_FREELIKE_BLOCK(mag->adr, 0);
             }
 #endif
-//            tmp = mag;
             mag = mag->prevheap;
-//            munlk(&tmp->lk);
         }
         _topmag = low;
-        _heaptop = low->adr + low->max * blksz(low->bid);
+//        _heaptop = low->adr + low->max * blksz(low->bid);
     }
-    munlk(&_toplk);
-    munlk(&_conf.trimlk);
+//    munlk(&_toplk);
+//    munlk(&_conf.trimlk);
+//    munlk(&top->lk);
 
-    return;
+    return sz;
 }
 #endif
 
@@ -887,6 +890,9 @@ prefork(void)
 
     mlk(&_conf.initlk);
     mlk(&_conf.arnlk);
+#if (MALLOCTRIM)
+    mlk(&_conf.trimlk);
+#endif
     mlk(&_conf.heaplk);
     mlk(&_conf.lk);
     aid = _conf.narn;
@@ -924,6 +930,9 @@ postfork(void)
         }
     }
     munlk(&_conf.heaplk);
+#if (MALLOCTRIM)
+    munlk(&_conf.trimlk);
+#endif
     munlk(&_conf.arnlk);
     munlk(&_conf.initlk);
 
@@ -945,6 +954,9 @@ relarn(void *arg)
     nref = --arn->nref;
     if (!nref) {
         bid = NBKT;
+#if (MALLOCTRIM)
+        mlk(&_conf.trimlk);
+#endif
         while (bid--) {
             mlk(&arn->lktab[bid]);
             head = arn->btab[bid];
@@ -990,6 +1002,9 @@ relarn(void *arg)
             }
             munlk(&arn->lktab[bid]);
         }
+#if (MALLOCTRIM)
+        munlk(&_conf.trimlk);
+#endif
     }
 
     return;
@@ -1279,7 +1294,7 @@ initmall(void)
         growheap(ofs);
     }
 #if (MALLOCTRIM)
-    _heaptop = growheap(0);
+//    _heaptop = growheap(0);
 #endif
     munlk(&_conf.heaplk);
 #if (MALLOCTRIM)
@@ -1333,9 +1348,7 @@ initmall(void)
 static struct mag *
 findmag(void *ptr)
 {
-//    uintptr_t    up = (uintptr_t)ptr;
     uintptr_t    key = (uintptr_t)ptr;
-//    uintptr_t    key = up >> BLKMINLOG2;
     struct mptr *mptr;
     struct mag  *mag;
 
@@ -1406,9 +1419,7 @@ static void
 addblk(void *ptr,
        struct mag *mag)
 {
-//    uintptr_t    up = (uintptr_t)ptr;
     uintptr_t    key = (uintptr_t)ptr;
-//    uintptr_t    key = up >> BLKMINLOG2;
     struct mptr *mptr;
 
     key = hashq128(&key, sizeof(uintptr_t), NHASHBIT);
@@ -1427,7 +1438,6 @@ addblk(void *ptr,
                     if (tmp[ndx].ptr == ptr) {
                         mptr->n--;
                         tmp[ndx] = tmp[mptr->n];
-//                        tmp[mptr->n].ptr = NULL;
                     }
                 }
             }
@@ -1473,9 +1483,6 @@ addblk(void *ptr,
 
 #if (PTRBITS > 32)
 
-//#define l1ndx(ptr) getbits((uintptr_t)ptr, L1NDX, NL1BIT)
-//#define l2ndx(ptr) getbits((uintptr_t)ptr, L2NDX, NL2BIT)
-//#define l3ndx(ptr) getbits((uintptr_t)ptr, L3NDX, NL3BIT)
 #define l1ndx(ptr) (((uintptr_t)ptr >> L1NDX) & ((1 << NL1BIT) - 1))
 #define l2ndx(ptr) (((uintptr_t)ptr >> L2NDX) & ((1 << NL2BIT) - 1))
 #define l3ndx(ptr) (((uintptr_t)ptr >> L3NDX) & ((1 << NL3BIT) - 1))
@@ -1700,7 +1707,7 @@ getslab(long aid,
     if (!ismapbkt(bid)) {
         nb = nbmag(bid);
 #if (MALLOCTRIM)
-        mlk(&_conf.trimlk);
+//        mlk(&_conf.trimlk);
 #endif
         mlk(&_conf.heaplk);
         ptr = growheap(nb);
@@ -1709,14 +1716,14 @@ getslab(long aid,
             __after_morecore_hook();
         }
 #endif
-#if (MALLOCTRIM)
-        _heaptop = ptr + nb;
-#endif
-        munlk(&_conf.heaplk);
-#if (MALLOCTRIM)
-        munlk(&_conf.trimlk);
-#endif
         if (ptr != SBRK_FAILED) {
+#if (MALLOCTRIM)
+//            _heaptop = ptr + nb;
+#endif
+            munlk(&_conf.heaplk);
+#if (MALLOCTRIM)
+//            munlk(&_conf.trimlk);
+#endif
 #if (INTSTAT) || (STAT)
             nheapbytes[aid] += nb;
 #endif
@@ -1748,14 +1755,12 @@ getslab(long aid,
         }
     }
 #if (TUNEBUF) && (!CONSTBUF)
-    if (ptr != MAP_FAILED && ptr != SBRK_FAILED) {
-        tmp = _nbmap + _nbheap;
-        if (!tunesz) {
-            tunesz = 64;
-        }
-        if ((tmp >> 10) >= tunesz) {
-            tunebuf(tunesz);
-        }
+    tmp = _nbmap + _nbheap;
+    if (!tunesz) {
+        tunesz = 64;
+    }
+    if ((tmp >> 10) >= tunesz) {
+        tunebuf(tunesz);
     }
 #endif
 
@@ -1935,6 +1940,10 @@ getmem(size_t size,
 #endif
     long         get = 0;
     long         glob = 0;
+#if (MALLOCTRIM)
+//    long         top = 0;
+    long         lk = 0;
+#endif
     
     if (!(_conf.flags & CONF_INIT)) {
         initmall();
@@ -1944,14 +1953,34 @@ getmem(size_t size,
     mlk(&arn->lktab[bid]);
     mag = arn->btab[bid];
     if (!mag) {
-        glob++;
+        glob = 1;
+#if (MALLOCTRIM)
+        if (!ismapbkt(bid)) {
+            mlk(&_conf.trimlk);
+            lk = 1;
+        }
+#endif
         mlk(&_blktab[bid]);
         mag = _btab[bid];
+#if (MALLOCTRIM)
+        if (mag) {
+//            mlk(&mag->lk);
+        }
+#endif
     }
     if (!mag) {
+#if (MALLOCTRIM)
+        if (!ismapbkt(bid)) {
+            mtrylk(&_conf.trimlk);
+            lk = 1;
+        }
+#endif
         mlk(&_flktab[bid]);
         mag = _ftab[bid];
         if (mag) {
+#if (MALLOCTRIM)
+//            mlk(&mag->lk);
+#endif
             mag->aid = aid;
 #if (TESTING)
             if (mag->next) {
@@ -1972,6 +2001,9 @@ getmem(size_t size,
             mag->next = NULL;
 #if (HACKS)
             _fcnt[bid]--;
+#endif
+#if (MALLOCTRIM)
+//            munlk(&mag->lk);
 #endif
         }
         munlk(&_flktab[bid]);
@@ -2011,6 +2043,12 @@ getmem(size_t size,
     }
     if (!mag) {
         get = 1;
+#if (MALLOCTRIM)
+        if (!ismapbkt(bid)) {
+            mtrylk(&_conf.trimlk);
+            lk = 1;
+        }
+#endif
         if (!ismapbkt(bid)) {
             ptr = getslab(aid, bid);
             if (ptr == (void *)-1L) {
@@ -2167,17 +2205,19 @@ getmem(size_t size,
                 }
 #if (MALLOCTRIM)
                 if  (!ismapbkt(bid)) {
-                    mlk(&_conf.trimlk);
                     mag->prevheap = _topmag;
-                    _heaptop = mag->adr + sz;
                     _topmag = mag;
-                    munlk(&_conf.trimlk);
                 }
 #endif
             }
         }
 #endif /* FREEBUF */
     }
+#if (MALLOCTRIM)
+    if (lk) {
+        munlk(&_conf.trimlk);
+    }
+#endif
     if (mag) {
         ptr = getblk(mag);
         retptr = clrptr(ptr);
@@ -2212,7 +2252,12 @@ getmem(size_t size,
             putptr(mag, retptr, ptr);
             addblk(retptr, mag);
         }
-    }
+#if (MALLOCTRIM)
+        if (lk) {
+            munlk(&_conf.trimlk);
+        }
+#endif
+    }    
 #if (!DEVEL)
     if ((get) && ismapbkt(bid)) {
         munlk(&_flktab[bid]);
@@ -2281,9 +2326,12 @@ putmem(void *ptr)
     long        tid = thrid();
     long        bid = -1;
     long        max;
-    long        glob = 0;
+//    long        glob = 0;
     long        freed = 0;
 
+#if (MALLOCTRIM)
+    mlk(&_conf.trimlk);
+#endif
     if (mag) {
 #if (VALGRIND)
         if (RUNNING_ON_VALGRIND) {
@@ -2293,7 +2341,7 @@ putmem(void *ptr)
         aid = mag->aid;
         if (aid < 0) {
             mag->glob = 1;
-            glob++;
+//            glob = 1;
             mag->aid = aid = tid;
         }
         bid = mag->bid;
@@ -2366,9 +2414,15 @@ putmem(void *ptr)
                     }
                 }
 #if (MALLOCTRIM)
+                if (mag == _topmag && !ismapbkt(bid)) {
+                    if (trimheap()) {
+                        munlk(&_conf.trimlk);
+//                        munlk(&mag->lk);
+                        munlk(&arn->lktab[bid]);
+
+                        return;
+                    }
 //                    munlk(&mag->lk);
-                if (!ismapbkt(bid)) {
-                    trimheap();
                 }
 #endif
 //                addblk(mptr, NULL);
@@ -2408,11 +2462,6 @@ putmem(void *ptr)
 #endif
                     munlk(&_flktab[bid]);
                 }
-#if (MALLOCTRIM)
-                if (!ismapbkt(bid)) {
-                    trimheap();
-                }
-#endif
             }
             munlk(&arn->lktab[bid]);
             if (freed) {
@@ -2456,6 +2505,9 @@ putmem(void *ptr)
             abort();
         }
     }
+#if (MALLOCTRIM)
+    munlk(&_conf.trimlk);
+#endif
 
     return;
 }
