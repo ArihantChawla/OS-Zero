@@ -10,11 +10,11 @@
 #define NEWBUF        0
 #define ARNREFCNT     1
 #define MALLOCTRIM    0 /* TODO: try to fix heap trim */
-#define MALLOCZEROSTK 1
+#define MALLOCZEROSTK 0
 #define MALLOCBUFHDR  1
 
 #if !defined(VALGRIND)
-#define VALGRIND   0
+#define VALGRIND   1
 #endif
 
 #define DEBUGMTX   1
@@ -36,7 +36,7 @@
 #define ISTK       1
 #define NOSTK      0
 #define BIGSLAB    0
-#define BIGHDR     0
+#define BIGHDR     1
 #define INTSTAT    0
 #define STAT       0
 #define STDIO      1
@@ -169,12 +169,12 @@ typedef pthread_mutex_t LK_T;
 /* basic allocator parameters */
 #define BLKMINLOG2    CLSIZELOG2  /* minimum-size allocation */
 #if (SMALLBUF)
-#define SLABLOG2      19
+#define SLABLOG2      20
 #define SLABBIGLOG2   16
 #define SLABTINYLOG2  13
 #define SLABTEENYLOG2 10
-#define MAPMIDLOG2    20
-#define MAPBIGLOG2    22
+#define MAPMIDLOG2    22
+#define MAPBIGLOG2    24
 #elif (!BIGSLAB)
 #define SLABLOG2      19
 #define SLABBIGLOG2   16
@@ -221,7 +221,6 @@ typedef pthread_mutex_t LK_T;
 
 #define NL2BIT     16
 #if (ADRBITS < PTRBITS)
-#define ADRMASK    ((1UL << ADRBITS) - 1)
 #define NL3BIT     (ADRBITS - BLKMINLOG2 - NL1BIT - NL2BIT)
 #else
 #define NL3BIT     (PTRBITS - BLKMINLOG2 - NL1BIT - NL2BIT)
@@ -238,6 +237,16 @@ typedef pthread_mutex_t LK_T;
 
 /* macros */
 
+#if (MALLOCBUFMAP)
+#define nbufmap(bid) (1L << nbufmaplog2(bid))
+#define nbufmaplog2(bid)                                                \
+    (((bid) <= MAPMIDLOG2)                                              \
+     ? 2                                                                \
+     : (((bid) <= MAPBIGLOG2)                                           \
+        ? 1                                                             \
+        : 0))
+#endif
+#if 0
 #define narnbufmag(bid)   (1L << narnbufmaglog2(bid))
 #define narnbufmaglog2(bid)                                             \
     (((bid) <= SLABTEENYLOG2)                                           \
@@ -249,6 +258,7 @@ typedef pthread_mutex_t LK_T;
            : (((bid) <= MAPBIGLOG2)                                     \
               ? 1                                                       \
               : 0))))
+#endif
 #if (NOSBRK)
 #define ismapbkt(bid)     0
 #else
@@ -481,8 +491,8 @@ typedef pthread_mutex_t LK_T;
 #if (BIGHDR)
 #define NBHDR             (16 * PAGESIZE)
 #else
-//#define NBHDR             (4 * PAGESIZE)
-#define NBHDR             PAGESIZE
+#define NBHDR             (4 * PAGESIZE)
+//#define NBHDR             PAGESIZE
 #endif
 #define NBUFHDR           8
 #define NBUFMAP           8
@@ -506,8 +516,11 @@ typedef pthread_mutex_t LK_T;
                                     rounduppow2(((mag)->max * sizeof(uint8_t)) >> 3, \
                                                 PAGESIZE))
 #endif
-#define mapstk(n)         mapanon(_mapfd, ((n) << 1) * sizeof(void *))
-#define unmapstk(mag)     unmapanon((mag)->bptr, (mag->max << 1) * sizeof(void *))
+#define mapstk(n)         mapanon(_mapfd,                               \
+                                  rounduppow2(((n) << 1) * sizeof(void *), \
+                                              PAGESIZE))
+#define unmapstk(mag)     unmapanon((mag)->bptr,                        \
+                                    rounduppow2((mag->max << 1) * sizeof(void *), PAGESIZE))
 #define putblk(mag, ptr)                                                \
     ((gtpow2(mag->max, 1)                                               \
       ? (((void **)(mag)->bptr)[--(mag)->cur] = (ptr))                  \
@@ -1014,7 +1027,9 @@ static void
 relarn(void *arg)
 {
     struct arn *arn = arg;
+#if (TUNEBUF) || (MALLOCBUFMAP)
     long        n = 0;
+#endif
 #if (ARNREFCNT)
     long        aid = thrid();
     long        nref;
@@ -1038,7 +1053,7 @@ relarn(void *arg)
             mlk(&arn->lktab[bid]);
             head = arn->btab[bid];
             if (head) {
-#if (HACKS)
+#if (TUNEBUF) || (MALLOCBUFMAP)
                 n++;
 #endif
                 mag = head;
@@ -1071,7 +1086,9 @@ relarn(void *arg)
                 }
                 _btab[bid] = head;
 #endif
+#if (TUNEBUF) || (MALLOCBUFMAP)
                 _fcnt[bid] += n;
+#endif
                 munlk(&_blktab[bid]);
                 arn->btab[bid] = NULL;
             }
@@ -1736,11 +1753,11 @@ gethdr(long aid)
 #endif
             
             return NULL;
-        } else {
 #if (VALGRIND)
-            if (RUNNING_ON_VALGRIND) {
-                VALGRIND_MALLOCLIKE_BLOCK(mag, PAGESIZE, 0, 0);
-            }
+        } else if (RUNNING_ON_VALGRIND) {
+            VALGRIND_MALLOCLIKE_BLOCK(mag,
+                                      rounduppow2(NBUFHDR * NBHDR, PAGESIZE),
+                                      0, 0);
 #endif
         }
         ptr = (uint8_t *)mag;
@@ -1871,15 +1888,15 @@ static void
 freemap(struct mag *mag)
 {
     struct arn  *arn;
-#if !(MALLOCBUFHDR)
     long         cur;
-#endif
     long         aid = mag->aid;
     long         bid = mag->bid;
     long         bsz = blksz(bid);
     long         max = mag->max;
 #if (TUNEBUF) || (MALLOCBUFHDR)
     long         queue;
+#endif
+#if (TUNEBUF) || (MALLOCBUFMAP)
     long         nfree;
 #endif
 #if (HACKS)
@@ -1914,20 +1931,25 @@ freemap(struct mag *mag)
             if (gtpow2(max, 1)) {
                 if (!istk(bid)) {
 #if (INTSTAT) || (STAT)
-                    nstkbytes[aid] -= (mag->max << 1) * sizeof(void *); 
+                    nstkbytes[aid] -= (max << 1) * sizeof(void *); 
 #endif
 #if (NOSTK)
                     unmapstk(mag);
+#if (VALGRIND)
+                    if (RUNNING_ON_VALGRIND) {
+                        VALGRIND_FREELIKE_BLOCK(mag->bptr, 0);
+                    }
+#endif
 #endif
                     mag->bptr = NULL;
 #if (FREEBITMAP)
                     unmapfmap(mag);
                     mag->fmap = NULL;
-#endif
 #if (VALGRIND)
                     if (RUNNING_ON_VALGRIND) {
-                        VALGRIND_FREELIKE_BLOCK(mag, 0);
+                        VALGRIND_FREELIKE_BLOCK(mag->fmap, 0);
                     }
+#endif
 #endif
                 }
             }
@@ -1959,22 +1981,20 @@ freemap(struct mag *mag)
     nfree = _fcnt[bid];
 #endif
 #if (MALLOCBUFHDR)
+    cur = 0;
     queue = 0;
 #else
     cur = arn->hcur;
     hbuf = arn->htab;
 #endif
 #if (MALLOCBUFMAP)
-    queue = nfree < NBUFMAP;
+    queue = nfree < nbufmap(bid);
 #elif (TUNEBUF)
     queue = nfree < _nbuftab[bid];
 #endif
-    if (
-#if !(MALLOCBUFHDR)
-        !cur || // || !ismapbkt(bid)
-#endif
-#if (TUNEBUF) || (MALLOCBUFHDR)
-        (queue)
+    if (!cur // || !ismapbkt(bid)
+#if (TUNEBUF) || (MALLOCBUFHDR) || (MALLOCBUFMAP)
+        || (queue)
 #endif
         ) {
         mag->prev = NULL;
@@ -2001,7 +2021,9 @@ freemap(struct mag *mag)
         _ftab[bid] = mag;
 #endif
 #endif
+#if (TUNEBUF) || (MALLOCBUFMAP)
         _fcnt[bid]++;
+#endif
         munlk(&_flktab[bid]);
     } else {
         unmapanon(clrptr(mag->adr), max * bsz);
@@ -2023,15 +2045,20 @@ freemap(struct mag *mag)
                 nstkbytes[aid] -= (mag->max << 1) * sizeof(void *); 
 #endif
                 unmapstk(mag);
+#if (VALGRIND)
+                if (RUNNING_ON_VALGRIND) {
+                    VALGRIND_FREELIKE_BLOCK(mag->bptr, 0);
+                }
+#endif
                 mag->bptr = NULL;
 #if (FREEBITMAP)
                 unmapfmap(mag);
-                mag->fmap = NULL;
-#endif
 #if (VALGRIND)
                 if (RUNNING_ON_VALGRIND) {
-                    VALGRIND_FREELIKE_BLOCK(mag, 0);
+                    VALGRIND_FREELIKE_BLOCK(mag->fmap, 0);
                 }
+#endif
+                mag->fmap = NULL;
 #endif
             }
         }
@@ -2137,7 +2164,9 @@ getmem(size_t size,
             }
 #endif
             mag->next = NULL;
+#if (TUNEBUF) || (MALLOCBUFMAP)
             _fcnt[bid]--;
+#endif
 #if (MALLOCTRIM)
 //            munlk(&mag->lk);
 #endif
@@ -2301,6 +2330,7 @@ getmem(size_t size,
                     }
                     mag->bptr = stk;
                     if (stk != MAP_FAILED) {
+                        sz = rounduppow2((max << 1) * sizeof(void *), PAGESIZE);
 #if (FREEBITMAP)
                         mag->fmap = mapfmap(max);
                         if (mag->fmap == MAP_FAILED) {
@@ -2310,12 +2340,16 @@ getmem(size_t size,
                         }
 #endif
 #if (INTSTAT) || (STAT)
-                        nstkbytes[aid] += (max << 1) * sizeof(void *); 
+                        nstkbytes[aid] += sz; 
 #endif
 #if (VALGRIND)
-                        if (RUNNING_ON_VALGRIND) {
-                            VALGRIND_MALLOCLIKE_BLOCK(stk, (max << 1) * sizeof(void *), 0, 0);
+#if (NOSTK) && !(ISTK)
+                        if (istk(bid)) {
+                            if (RUNNING_ON_VALGRIND) {
+                                VALGRIND_MALLOCLIKE_BLOCK(stk, sz, 0, 0);
+                            }
                         }
+#endif
 #endif
 //                        n = max << nmagslablog2(bid);
 #if (MALLOCZEROSTK)
@@ -2601,7 +2635,9 @@ putmem(void *ptr)
 #endif
                     _ftab[bid] = mag;
 #endif
+#if (TUNEBUF) || (MALLOCBUFMAP)
                     _fcnt[bid]++;
+#endif
                     munlk(&_flktab[bid]);
                 }
             }

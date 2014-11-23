@@ -140,7 +140,7 @@ zvminit(void)
 #endif
     zvm.pc = ZASTEXTBASE;
     zvminitio();
-#if (ZVMXORG) || (ZVMXCB)
+#if (ZVMEFL) || (ZVMXORG) || (ZVMXCB)
     zvminitui();
 #endif
 
@@ -287,6 +287,9 @@ zvmmain(int argc, char *argv[])
     }
     fprintf(stderr, "START: %lx\n", (long)_startadr);
     zvmloop(_startadr);
+#if (ZVMEFL)
+    sleep(5);
+#endif
 
     /* NOTREACHED */
     exit(0);
