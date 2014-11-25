@@ -10,6 +10,24 @@
 #include <corewar/x11.h>
 #endif
 
+#if (ZEUSWINX11)
+#define ZEUSBUTTONTEXTCOLOR "orange"
+//#define ZEUSDATCOLOR        "magenta"
+#define ZEUSDATCOLOR        "blue"
+#define ZEUSPROG1COLOR      "green"
+#define ZEUSPROG1DATCOLOR   "dark green"
+#define ZEUSPROG2COLOR      "orange"
+#define ZEUSPROG2DATCOLOR   "gold"
+#endif /* ZEUSWINX11 */
+#define ZEUSTEXTNCOL        80
+#define ZEUSTEXTNROW        16
+#define ZEUSDBNCOL          80
+#define ZEUSDBNROW          16
+#define ZEUSSIMNCOL         200
+#define ZEUSSIMNROW         40
+#define ZEUSBUTTONW         64
+#define ZEUSBUTTONH         48
+
 struct zeussel {
     uint8_t *bmap;
     int      last;

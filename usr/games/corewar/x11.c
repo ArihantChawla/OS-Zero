@@ -16,189 +16,12 @@
 #include <Imlib2.h>
 #endif
 
-#define ZEUSBUTTONTEXTCOLOR "orange"
-//#define ZEUSDATCOLOR        "magenta"
-#define ZEUSDATCOLOR        "blue"
-#define ZEUSPROG1COLOR      "green"
-#define ZEUSPROG1DATCOLOR   "dark green"
-#define ZEUSPROG2COLOR      "orange"
-#define ZEUSPROG2DATCOLOR   "gold"
-#define ZEUSTEXTNCOL        80
-#define ZEUSTEXTNROW        16
-#define ZEUSDBNCOL          80
-#define ZEUSDBNROW          16
-#define ZEUSSIMNCOL         200
-#define ZEUSSIMNROW         40
-#define ZEUSBUTTONW         64
-#define ZEUSBUTTONH         48
-
 extern struct cwmars  cwmars;
 extern struct zeussel zeussel;
 
 struct zeusx11buttons zeusx11buttons;
 
 void zeusdrawsimop(struct zeusx11 *x11, long pc);
-
-void
-zeustogglesel(struct zeusx11 *x11, XEvent *event)
-{
-    int  x = event->xbutton.x;
-    int  y = event->xbutton.y;
-    long pc;
-
-    x /= 5;
-    y /= 5;
-    pc = y * (x11->w / 5) + x;
-    if (!zeussel.bmap) {
-        zeussel.bmap = calloc(CWNCORE >> 3, sizeof(uint8_t));
-    }
-    if (!zeussel.bmap) {
-        fprintf(stderr, "memory allocation failure\n");
-    } else if (bitset(zeussel.bmap, pc)) {
-        clrbit(zeussel.bmap, pc);
-    } else {
-        setbit(zeussel.bmap, pc);
-    }
-    zeussel.last = pc;
-    zeusdrawsimop(x11, pc);
-
-    return;
-}
-
-void
-zeusaddsel(struct zeusx11 *x11, XEvent *event)
-{
-    int  x = event->xbutton.x;
-    int  y = event->xbutton.y;
-    int  lim;
-    long pc;
-
-    x /= 5;
-    y /= 5;
-    pc = y * (x11->w / 5) + x;
-    if (!zeussel.bmap) {
-        zeussel.bmap = calloc(CWNCORE >> 3, sizeof(uint8_t));
-    }
-    if (!zeussel.bmap) {
-        fprintf(stderr, "memory allocation failure\n");
-    } else if (zeussel.last >= 0) {
-        if (pc < zeussel.last) {
-            lim = zeussel.last;
-        } else {
-            lim = pc;
-            pc = zeussel.last;
-        }
-        while (pc <= lim) {
-            setbit(zeussel.bmap, pc);
-            zeusdrawsimop(x11, pc);
-            pc++;
-        }
-        zeussel.last = pc;
-    }
-
-    return;
-}
-
-void
-zeusrun(struct zeusx11 *x11, XEvent *event)
-{
-    long pid = cwmars.curpid;
-
-    cwmars.running = 1;
-    while ((cwmars.running) && (cwmars.nturn[pid])) {
-        cwexec(pid);
-        pid++;
-        pid &= 0x01;
-        cwmars.curpid = pid;
-        cwmars.nturn[pid]--;
-    }
-    if (!cwmars.nturn[pid]) {
-        fprintf(stderr, "TIE\n");
-        sleep(5);
-
-        exit(0);
-    }
-
-    return;
-}
-
-void
-zeusstop(struct zeusx11 *x11, XEvent *event)
-{
-    cwmars.running = 0;
-}
-
-void
-zeusstep(struct zeusx11 *x11, XEvent *event)
-{
-    long pid = cwmars.curpid;
-
-    cwmars.running = 0;
-    if (cwmars.nturn[pid]--) {
-        cwexec(pid);
-        pid++;
-        pid &= 0x01;
-        cwmars.curpid = pid;
-    } else {
-        fprintf(stderr, "TIE\n");
-        sleep(5);
-    }
-
-    return;
-}
-
-void
-zeusfence(struct zeusx11 *x11, XEvent *event)
-{
-    ;
-}
-
-void
-zeusclear(struct zeusx11 *x11, XEvent *event)
-{
-    if (zeussel.bmap) {
-        memset(zeussel.bmap, 0, CWNCORE >> 3);
-    }
-    zeussel.last = -1;
-    zeusdrawsim(x11);
-}
-
-void
-zeusexit(struct zeusx11 *x11, XEvent *event)
-{
-    exit(0);
-}
-
-int
-zeusfindbutton(Window win)
-{
-    int    id;
-
-    for (id = 0 ; id < ZEUSNBUTTON ; id++) {
-        if (zeusx11buttons.wins[id] == win) {
-
-            break;
-        }
-    }
-
-    return id;
-}
-
-char *
-zeusbuttonstring(Window win, int *lenret)
-{
-    char  *str = NULL;
-    int    id = zeusfindbutton(win);
-
-    if (id < ZEUSNBUTTON) {
-        str = zeusx11buttons.strs[id];
-        if (str) {
-            *lenret = zeusx11buttons.strlens[id];
-        }
-    }
-
-    return str;
-}
 
 void
 zeusenterx11button(struct zeusx11 *x11, XEvent *event)
@@ -305,8 +128,8 @@ zeusreleasex11button(struct zeusx11 *x11, XEvent *event)
 void
 zeusexposex11button(struct zeusx11 *x11, XEvent *event)
 {
-    Window win = event->xany.window;
-    int    len;
+    Window  win = event->xany.window;
+    int     len;
     int     id = zeusfindbutton(win);
     char   *str = zeusbuttonstring(win, &len);
     

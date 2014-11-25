@@ -636,7 +636,11 @@ main(int argc, char *argv[])
     long  pc2;
 
 #if (ZEUS)
+#if (ZEUSWINX11)
     zeusinitx11(&cwmars.zeusx11);
+#elif (ZEUSWINEFL)
+    zeusinitefl(&cwmars.zeusefl);
+#endif
 #endif
     if (argc != 3) {
         fprintf(stderr, "usage: %s prog1.rc prog2.rc\n", argv[0]);

@@ -5,7 +5,9 @@
 #include <corewar/cw.h>
 #include <corewar/rc.h>
 #include <corewar/zeus.h>
-#if (ZEUSWINX11)
+#if (ZEUSWINEFL)
+
+#elif (ZEUSWINX11)
 #include <X11/X.h>
 #include <X11/Xlib.h>
 #include <X11/keysymdef.h>

@@ -2,6 +2,7 @@
 #define __COREWAR_X11_H__
 
 #if (ZEUSWINX11)
+
 #if (ZEUSIMLIB2)
 #include <Imlib2.h>
 #endif

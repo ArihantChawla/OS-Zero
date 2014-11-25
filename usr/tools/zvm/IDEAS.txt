@@ -1,0 +1,34 @@
+ZVM GUI Layout
+--------------
+
+--------------------------------------------------------------------------------
+graphics window
+STDFB
+--------------------------------------------------------------------------------
+execution console
+STDIN, STDOUT, STDERR
+
+
+                                                                 (adr, sym)
+                                                                 keyboard
+                                                                    |
+                                                  window keyboard (# of steps)
+                                    files files      |      |       |
+                                    args  keyboard (file:line or function)
+                                      |      |       |      |       |
+--------------------------------------------------------------------------------
+debugger| hex | dec | oct | 32-bit | run | break | trace | step | print | cont |
+--------------------------------------------------------------------------------
+r0	r1	r2	r3		pc	sp	fp	msw
+r4	r5	r6	r7		---------------------------
+r8	r9	r10	r11		| stack frame (adr, sym)  |
+r12	r13	r14	r15		| args, caller, ret, vars |
+					-----------|---------------
+--------------------------------------------------------------------------------
+disassembler | file | function | line | signal | stack | trace | intr |
+--------------------------------------------------------------------------------
+mov	$NTRAP, %r0
+call	trapinit	<- program counter (aka instruction pointer)
+nop
+--------------------------------------------------------------------------------
+
