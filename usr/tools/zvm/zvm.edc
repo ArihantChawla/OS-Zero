@@ -1,0 +1,70 @@
+externals {
+    external: "elm";
+}
+
+images {
+    image: "../../share/img/button/menunormal.png" COMP;
+    image: "../../share/img/button/menuhilite.png" COMP;
+    image: "../../share/img/button/menupress.png" COMP;
+    image: "../../share/img/background/tile_caverock.jpg" COMP;
+}
+
+fonts {
+    font: "../../share/fonts/ProggyCleanSZ.ttf" "proggycleansz";
+}
+
+color_classes {
+    color_class {
+        name: "textcolor";
+        color: 255 255 255 255;
+    }
+}
+
+collections {
+    group {
+        name: "main";
+        min: 800 600;
+        max: 800 1024;
+    }
+    group {
+        name: "gfxwin";
+        min: 800 600;
+        max: 800 600;
+    }
+    group {
+        name: "debugbar";
+        min: 800 16;
+        max: 800 16;
+        parts {
+            part {
+                name: "runbutton";
+                type: IMAGE;
+                mouse_events: 1;
+                repeat_events: 0;
+                description {
+                    state: "default" 0.0;
+                    image {
+                        normal: "../../share/img/button/menunormal.png";
+                    }
+                }
+            }
+            part {
+                name: "runargs";
+                type: TEXTBLOCK;
+                entry_mode: EDITABLE;
+                select_mode: DEFAULT;
+                cursor_mode: BEFORE;
+                multiline: 0;
+            }
+            part {
+                // TODO: this should be file chooser
+                name: "runfile";
+                type: TEXTBLOCK;
+                entry_mode: EDITABLE;
+                select_mode: DEFAULT;
+                cursor_mode: BEFORE;
+                multiline: 0;
+            }
+        }
+    }
+}
