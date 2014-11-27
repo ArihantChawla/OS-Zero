@@ -27,11 +27,7 @@ typedef uint8_t        wchar_t;
 typedef int            wint_t;
 
 #if (_ISOC11_SOURCE)
-#if defined(_MSC_VER) && (LONGSIZE == 4)
 typedef long long      max_align_t;
-#else
-typedef long           max_align_t;
-#endif
 #endif /* _ISOC11_SOURCE */
 
 #define offsetof(t, m) ((size_t)(&((t *)0)->m))
