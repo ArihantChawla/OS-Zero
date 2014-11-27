@@ -22,21 +22,25 @@ color_classes {
 
 collections {
     group {
+        // application main window
         name: "main";
         min: 800 600;
         max: 800 1024;
     }
     group {
+        // framebuffer/graphics window
         name: "gfxwin";
         min: 800 600;
         max: 800 600;
     }
     group {
+        // debug toolbar
         name: "debugbar";
         min: 800 16;
         max: 800 16;
         parts {
             part {
+	        // run button
                 name: "runbutton";
                 type: IMAGE;
                 mouse_events: 1;
@@ -49,6 +53,7 @@ collections {
                 }
             }
             part {
+	        // run button argument dialog
                 name: "runargs";
                 type: TEXTBLOCK;
                 entry_mode: EDITABLE;
@@ -57,7 +62,7 @@ collections {
                 multiline: 0;
             }
             part {
-                // TODO: this should be file chooser
+                // TODO: run button file chooser
                 name: "runfile";
                 type: TEXTBLOCK;
                 entry_mode: EDITABLE;
