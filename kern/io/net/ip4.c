@@ -29,7 +29,8 @@
 
 #if (LONGSIZE == 4) || (IP4TEST)
 
-uint_fast16_t ip4chksum16(const uint8_t *buf, size_t size)
+uint_fast16_t
+ip4chksum16(const uint8_t *buf, size_t size)
 {
     uint32_t sum = 0;
     int            i;
@@ -49,7 +50,7 @@ uint_fast16_t ip4chksum16(const uint8_t *buf, size_t size)
     }
     
     /* Fold to get the ones-complement result */
-    while (sum >> 16) sum = (sum & 0xFFFF)+(sum >> 16);
+    while (sum >> 16) sum = (sum & 0xffff)+(sum >> 16);
 
     /* Invert to get the negative in ones-complement arithmetic */
     return ~sum;
