@@ -21,6 +21,7 @@ extern void ksyscall(void);
  * sysctl functionality
  * --------------------
  * - commands to access system clock
+ * - commands to query system status
  * - commands to query and set system attributes
  *   - page size, stack size, cacheline size, ...
  */

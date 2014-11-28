@@ -1,6 +1,10 @@
 #ifndef __ZERO_MTX_H__
 #define __ZERO_MTX_H__
 
+#if !defined(ZERONEWMTX)
+#define ZERONEWMTX 0
+#endif
+
 /*
  * Special thanks to Matthew 'kinetik' Gregan for help with the mutex code.
  * :)
@@ -21,7 +25,7 @@
 /* on some Linux setups, the pthread library declares no prototype */
 extern int pthread_yield(void);
 #endif
-#if defined(__linux__)
+#if defined(__linux__) && !(__KERNEL__)
 #include <sched.h>
 #endif
 
@@ -60,7 +64,7 @@ mtxlk2(volatile long *lp, long val)
     do {
         res = m_cmpswap(lp, ZEROMTXINITVAL, val);
         if (res != ZEROMTXINITVAL) {
-#if defined(__linux__)
+#if defined(__linux__) && !(__KERNEL__)
             sched_yield();
 #elif (__KERNEL__)
             schedpickthr();
