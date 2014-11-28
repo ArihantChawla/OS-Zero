@@ -101,8 +101,6 @@ typedef void           *bufcall_id_t;   // opaque handle from bufcall()
 typedef id_t            taskid_t;
 typedef id_t            projid_t;
 
-#define __pid_t_defined
-
 /* POSIX threads */
 #if 0
 typedef uintptr_t       pthread_t;
