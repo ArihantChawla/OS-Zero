@@ -1,3 +1,7 @@
+#if !defined(IP4TEST)
+#define IP4TEST 0
+#endif
+
 #define IP4NPKT    16348
 #define IP4PKTSIZE 65536
 #include <stddef.h>
@@ -11,7 +15,6 @@
 #include <zero/prof.h>
 #include <zero/randmt32.h>
 #endif
-
 
 /*
  * This code is based on what I found at
@@ -54,7 +57,7 @@ uint_fast16_t ip4chksum16(const uint8_t *buf, size_t size)
 
 #endif /* LONGSIZE == 4 || IP4TEST */
 
-#if (LONGSIZE == 8) || (IPTEST)
+#if (LONGSIZE == 8) || (IP4TEST)
 
 uint_fast16_t
 ip4chksum64(const uint8_t *buf, size_t size)
