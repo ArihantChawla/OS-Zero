@@ -14,10 +14,10 @@
 #define MALLOCBUFHDR  1
 
 #if !defined(VALGRIND)
-#define VALGRIND   1
+#define VALGRIND   0
 #endif
 
-#define DEBUGMTX   1
+#define DEBUGMTX   0
 #define GNUMALLOCHOOKS 1
 
 #if !defined(MTSAFE)
@@ -42,7 +42,7 @@
 #define STDIO      1
 #define FREEBITMAP 0
 
-#define ZEROMTX    0
+#define ZEROMTX    1
 #define PTHREAD    1
 
 #include <features.h>
