@@ -180,19 +180,17 @@ extern void ksyscall(void);
 #define SYSCTL_SYSINFO  0x02U  // sysconf()
 #define SYSCTL_SYSCONF  0x03U  // configure system behavior */
 #define SYSCTL_SYSSTAT  0x03U  // query system statistics; getrusage()
+#define SYSCTL_TIME     0x04U
 
 /* parm */
 /* flg value for SYSCTL_HALT */
 #define SYSCTL_REBOOT   0x01U   // reboot()
 /* SYSCTL_SYSINFO */
-#define SYSCTL_CLSIZE   0x01U   // query system cacheline size; getclsize()
-#if 0
-#define SYSCTL_DTABSIZE 0x03U   // query system descriptor table size
-#define SYSCTL_STKSIZE  0x03U   // query process stack size; getstksize()
-#endif
-#define SYSCTL_RAMSIZE  0x04U   // query system memory size; getramsize()
-#define SYSCTL_NPROC    0x05U   // query or set maximum number of processes on system
-#define SYSCTL_NTHR     0x06U   // query or set maximum number of threads on system
+#define SYSCTL_DTABSIZE 0x01U   // query process descriptor table size; getdtablesize()
+#define SYSCTL_STKSIZE  0x02U   // query process stack size; getstksize()
+#define SYSCTL_RAMSIZE  0x03U   // query system memory size; getramsize()
+#define SYSCTL_NPROC    0x04U   // query or set maximum number of processes on system
+#define SYSCTL_NTHR     0x05U   // query or set maximum number of threads on system
 /* SYSCTL_SYSSTAT */
 #define SYSCTL_UPTIME   0x01U   // query system uptime
 /* SYSCTL_TIME */
