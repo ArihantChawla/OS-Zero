@@ -1,3 +1,7 @@
 This directory tree contains a partial implementation of a standard library for
-the C programming language.
+the C programming language. The goal is to have a full-feature C library
+complaining to standards such as ISO C and POSIX.
+
+As a featured highlight, malloc.c implements a currently little unstable, state
+of the art high performance dynamic memory allocator.
 
