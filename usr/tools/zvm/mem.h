@@ -3,9 +3,12 @@
 #ifndef __ZVM_MEM_H__
 #define __ZVM_MEM_H__
 
+#include <zero/cdecl.h>
+#include <zero/param.h>
 #include <zvm/conf.h>
 
 #if (ZVMVIRTMEM)
+
 #define ZASTEXTBASE     (2 * ZVMPAGESIZE)
 #define ZASNPAGE        (1UL << ZVMADRBITS - PAGESIZELOG2)
 #if (ZAS32BIT)
@@ -19,9 +22,13 @@
 #define ZVMPAGEREAD     0x02 // page read permission
 #define ZVMPAGEWRITE    0x04 // page write permission
 #define ZVMPAGEEXEC     0x08 // page execute permission
+
 #else /* !ZVMVIRTMEM */
-#define ZASTEXTBASE     PAGESIZE
-#define ZVMMEMSIZE      (128U * 1024U * 1024U)
+
+#define ZVMPAGESIZE     PAGESIZE
+#define ZASTEXTBASE     (2 * ZVMPAGESIZE)
+#define ZVMMEMSIZE      (32U * 1024U * 1024U)
+
 #endif
 
 /* memory operation failure codes */

@@ -24,6 +24,167 @@ struct zeusx11buttons zeusx11buttons;
 void zeusdrawsimop(struct zeusx11 *x11, long pc);
 
 void
+zeustogglesel(struct zeusx11 *x11, XEvent *event)
+{
+    int  x = event->xbutton.x;
+    int  y = event->xbutton.y;
+    long pc;
+
+    x /= 5;
+    y /= 5;
+    pc = y * (x11->w / 5) + x;
+    if (!zeussel.bmap) {
+        zeussel.bmap = calloc(CWNCORE >> 3, sizeof(uint8_t));
+    }
+    if (!zeussel.bmap) {
+        fprintf(stderr, "memory allocation failure\n");
+    } else if (bitset(zeussel.bmap, pc)) {
+        clrbit(zeussel.bmap, pc);
+    } else {
+        setbit(zeussel.bmap, pc);
+    }
+    zeussel.last = pc;
+    zeusdrawsimop(x11, pc);
+
+    return;
+}
+
+void
+zeusaddsel(struct zeusx11 *x11, XEvent *event)
+{
+    int  x = event->xbutton.x;
+    int  y = event->xbutton.y;
+    int  lim;
+    long pc;
+
+    x /= 5;
+    y /= 5;
+    pc = y * (x11->w / 5) + x;
+    if (!zeussel.bmap) {
+        zeussel.bmap = calloc(CWNCORE >> 3, sizeof(uint8_t));
+    }
+    if (!zeussel.bmap) {
+        fprintf(stderr, "memory allocation failure\n");
+    } else if (zeussel.last >= 0) {
+        if (pc < zeussel.last) {
+            lim = zeussel.last;
+        } else {
+            lim = pc;
+            pc = zeussel.last;
+        }
+        while (pc <= lim) {
+            setbit(zeussel.bmap, pc);
+            zeusdrawsimop(x11, pc);
+            pc++;
+        }
+        zeussel.last = pc;
+    }
+
+    return;
+}
+
+void
+zeusrun(struct zeusx11 *x11, XEvent *event)
+{
+    long pid = cwmars.curpid;
+
+    cwmars.running = 1;
+    while ((cwmars.running) && (cwmars.nturn[pid])) {
+        cwexec(pid);
+        pid++;
+        pid &= 0x01;
+        cwmars.curpid = pid;
+        cwmars.nturn[pid]--;
+    }
+    if (!cwmars.nturn[pid]) {
+        fprintf(stderr, "TIE\n");
+        sleep(5);
+
+        exit(0);
+    }
+
+    return;
+}
+
+void
+zeusstop(struct zeusx11 *x11, XEvent *event)
+{
+    cwmars.running = 0;
+}
+
+void
+zeusstep(struct zeusx11 *x11, XEvent *event)
+{
+    long pid = cwmars.curpid;
+
+    cwmars.running = 0;
+    if (cwmars.nturn[pid]--) {
+        cwexec(pid);
+        pid++;
+        pid &= 0x01;
+        cwmars.curpid = pid;
+    } else {
+        fprintf(stderr, "TIE\n");
+        sleep(5);
+    }
+
+    return;
+}
+
+void
+zeusfence(struct zeusx11 *x11, XEvent *event)
+{
+    ;
+}
+
+void
+zeusclear(struct zeusx11 *x11, XEvent *event)
+{
+    if (zeussel.bmap) {
+        memset(zeussel.bmap, 0, CWNCORE >> 3);
+    }
+    zeussel.last = -1;
+    zeusdrawsim(x11);
+}
+
+void
+zeusexit(struct zeusx11 *x11, XEvent *event)
+{
+    exit(0);
+}
+
+int
+zeusfindbutton(Window win)
+{
+    int    id;
+
+    for (id = 0 ; id < ZEUSNBUTTON ; id++) {
+        if (zeusx11buttons.wins[id] == win) {
+
+            break;
+        }
+    }
+
+    return id;
+}
+
+char *
+zeusbuttonstring(Window win, int *lenret)
+{
+    char  *str = NULL;
+    int    id = zeusfindbutton(win);
+
+    if (id < ZEUSNBUTTON) {
+        str = zeusx11buttons.strs[id];
+        if (str) {
+            *lenret = zeusx11buttons.strlens[id];
+        }
+    }
+
+    return str;
+}
+
+void
 zeusenterx11button(struct zeusx11 *x11, XEvent *event)
 {
     Window  win = event->xany.window;
@@ -496,7 +657,7 @@ zeusloadx11buttonimgs(struct zeusx11 *x11)
 {
     Imlib_Image *img;
 
-    img = imlib_load_image("../../share/img/button.png");
+    img = imlib_load_image("../../share/img/button/button.png");
     if (!img) {
         fprintf(stderr, "failed to load button image\n");
 
@@ -506,7 +667,7 @@ zeusloadx11buttonimgs(struct zeusx11 *x11)
     imlib_render_pixmaps_for_whole_image_at_size(&zeusx11buttons.pmaps.norm,
                                                  &zeusx11buttons.pmaps.normmask,
                                                  ZEUSBUTTONW, ZEUSBUTTONH);
-    img = imlib_load_image("../../share/img/buttonhilite.png");
+    img = imlib_load_image("../../share/img/button/buttonhilite.png");
     if (!img) {
         fprintf(stderr, "failed to load button image\n");
 
@@ -517,7 +678,7 @@ zeusloadx11buttonimgs(struct zeusx11 *x11)
                                                  &zeusx11buttons.pmaps.hovermask,
                                                  ZEUSBUTTONW, ZEUSBUTTONH);
 
-    img = imlib_load_image("../../share/img/buttonpress.png");
+    img = imlib_load_image("../../share/img/button/buttonpress.png");
     if (!img) {
         fprintf(stderr, "failed to load button image\n");
 

@@ -24,12 +24,14 @@ size_t
 zvminitmem(void)
 {
     size_t  len = ZVMMEMSIZE;
-    void   *ptr = malloc(ZVMMEMSIZE);
+    void   *ptr = malloc(len);
 
+#if 0
     while (!ptr) {
         len >>= 1;
         ptr = malloc(len);
     }
+#endif
     zvm.physmem = ptr;
     zvm.memsize = len;
 

@@ -2,6 +2,9 @@
 #include <stdio.h>
 #include <string.h>
 #include <stdint.h>
+#if !(ZVMVIRTMEM)
+#include <assert.h>
+#endif
 #if (ZVMXORG)
 #include <unistd.h>
 #include <zvm/xorg.h>
@@ -255,6 +258,7 @@ zvmmain(int argc, char *argv[])
     zvminitopt();
     zvminit();
 #if (!ZVMVIRTMEM)
+    assert(zvm.physmem == NULL);
     memset(zvm.physmem, 0, ZASTEXTBASE);
 #endif
 #if (ZASPROF)

@@ -10,7 +10,7 @@ void
 zvminitio(void)
 {
 #if (_ZERO_SOURCE)
-    kbdinit();
+//    kbdinit();
 #endif
 
     return;

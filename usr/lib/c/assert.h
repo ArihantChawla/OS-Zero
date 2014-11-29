@@ -13,7 +13,7 @@
 #include <zero/cdecl.h>
 
 #define assert(cond)                                                    \
-    ((cond)                                                             \
+    (!(cond)                                                             \
      ? ((void)0)                                                        \
      : (fprintf(stderr,                                                 \
                 "Assertion failed: %s, file %s, function %s, line %d\n", \
