@@ -1,3 +1,7 @@
+/* zero virtual machine instruction set implementation */
+
+#include <zvm/conf.h>
+
 #include <limits.h>
 #include <stdint.h>
 #include <zero/trix.h>

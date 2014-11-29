@@ -1,3 +1,7 @@
+/* zero assembler [virtual] machine interface */
+
+#include <zas/conf.h>
+
 #if (!ZVM)
 
 static void

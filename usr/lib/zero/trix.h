@@ -1,3 +1,7 @@
+/* libzero tricks and techniques collection... */
+
+/* HAZARD: tricky code to follow... =) */
+
 #ifndef __ZERO_TRIX_H__
 #define __ZERO_TRIX_H__
 

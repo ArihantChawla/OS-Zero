@@ -1,29 +1,36 @@
+/* zero virtual machine Enlightenment Foundation Libraries interface */
+
+#include <zvm/conf.h>
+
 #if (ZVMEFL)
 
 #include <Ecore.h>
 #include <Ecore_Evas.h>
 #include <Edje.h>
-
-#define ZVMWIDTH  800
-#define ZVMHEIGHT 600
-
-struct zvmui {
-    Ecore_Evas  *core;
-    Evas        *evas;
-    Evas_Object *edje;
-};
+#include <zvm/efl.h>
 
 static struct zvmui zvmui;
 
 static void
 zvminiteflobjs(void)
 {
+    /* TODO: initialise objects such as windows here */
+
+    return;
 }
 
 static void
 zvmcloseefl(void)
 {
     ecore_evas_shutdown();
+
+    return;
+}
+
+static void
+zvmonscrsync(void)
+{
+    /* TODO: draw the main Evas canvas */
 
     return;
 }

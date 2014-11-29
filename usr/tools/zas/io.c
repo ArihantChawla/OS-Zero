@@ -1,4 +1,31 @@
-#include <zas/zash.h>
+/* zero assembler I/O interface */
+
+#include <zas/conf.h>
+#include <zas/zas.h>
+
+extern uint8_t        *zaslinebuf;
+extern uint8_t        *zasstrbuf;
+extern struct readbuf *zasreadbuftab;
+extern long            zasnreadbuf;
+
+void
+zasinitbuf(void)
+{
+#if (ZASBUF)
+    long l;
+#endif
+
+    zaslinebuf = malloc(ZASLINELEN);
+    zasstrbuf = malloc(ZASLINELEN);
+#if (ZASBUF)
+    zasreadbuftab = malloc(zasnreadbuf * sizeof(struct readbuf));
+    for (l = 0 ; l < zasnreadbuf ; l++) {
+        zasreadbuftab[l].data = malloc(ZASBUFSIZE);
+    }
+#endif
+
+    return;
+}
 
 #if (ZASMMAP)
 #define zasgetc(map) ((map)->cur < (map)->lim ? *(map)->cur++ : EOF)

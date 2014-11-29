@@ -1,3 +1,5 @@
+#include <zvm/conf.h>
+
 #if (ZVMXORG)
 
 #include <stdio.h>

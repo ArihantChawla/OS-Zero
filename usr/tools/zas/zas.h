@@ -1,7 +1,14 @@
 #ifndef __ZAS_ZAS_H__
 #define __ZAS_ZAS_H__
 
+#include <zas/conf.h>
+
+#if (ZASZEROHASH)
+#define NHASHBIT 16
+#define ZASNHASH (1UL << NHASHBIT)
+#else
 #define ZASNHASH 1024
+#endif
 
 #include <stddef.h>
 #include <stdint.h>
@@ -164,8 +171,9 @@ struct zasline * zasfindline(zasmemadr_t adr);
 #endif
 
 extern void        zasinit(void);
-extern void        zasinitopt(size_t opsize);
-extern void        zasinitalign(size_t opsize);
+#if (ZASALIGN)
+extern void        zasinitalign(void);
+#endif
 extern zasmemadr_t zastranslate(zasmemadr_t base);
 extern void        zasresolve(zasmemadr_t base);
 extern void        zasremovesyms(void);

@@ -1,6 +1,10 @@
 /* zero assembler main file */
 
-#define ZASDEBUG   0
+#include <zas/conf.h>
+
+#ifndef ZASDEBUG
+#define ZASDEBUG 0
+#endif
 
 #include <stdio.h>
 #include <stdlib.h>
@@ -11,6 +15,9 @@
 #include <zero/cdecl.h>
 #include <zero/param.h>
 #include <zero/trix.h>
+#if (ZASZEROHASH)
+#include <zero/hash.h>
+#endif
 #if (ZASPROF)
 #include <zero/prof.h>
 #endif
@@ -95,10 +102,9 @@ static struct zassymrec *symqueue;
 zasmemadr_t              _startadr;
 static zasmemadr_t       _startset;
 unsigned long            zasinputread;
-static uint8_t          *zaslinebuf;
-static uint8_t          *zasstrbuf;
-struct readbuf          *zasreadbuftab;
-static long              zasnreadbuf = 16;
+uint8_t                 *zaslinebuf;
+uint8_t                 *zasstrbuf;
+long                     zasnreadbuf = 16;
 long                     zasreadbufcur = 0;
 
 void
@@ -308,7 +314,11 @@ zasaddsym(struct zassymrec *sym)
     while (*str) {
         key += *str++;
     }
+#if (ZASZEROHASH)
+    key = hashq128(&key, sizeof(unsigned long), NHASHBIT)
+#else
     key &= (ZASNHASH - 1);
+#endif
     sym->next = zassymhash[key];
     zassymhash[key] = sym;
 
@@ -325,7 +335,11 @@ zasfindsym(uint8_t *name)
     while (*str) {
         key += *str++;
     }
+#if (ZASZEROHASH)
+    key = hashq128(&key, sizeof(unsigned long), NHASHBIT)
+#else
     key &= (ZASNHASH - 1);
+#endif
     sym = zassymhash[key];
     while ((sym) && strcmp((char *)sym->name, (char *)name)) {
         sym = sym->next;
@@ -387,25 +401,6 @@ zasfindglob(uint8_t *name)
     }
 
     return label;
-}
-
-void
-zasinitbuf(void)
-{
-#if (ZASBUF)
-    long l;
-#endif
-
-    zaslinebuf = malloc(ZASLINELEN);
-    zasstrbuf = malloc(ZASLINELEN);
-#if (ZASBUF)
-    zasreadbuftab = malloc(zasnreadbuf * sizeof(struct readbuf));
-    for (l = 0 ; l < zasnreadbuf ; l++) {
-        zasreadbuftab[l].data = malloc(ZASBUFSIZE);
-    }
-#endif
-
-    return;
 }
 
 static uint8_t *
@@ -1279,6 +1274,9 @@ void
 zasinit(void)
 {
     zasinitbuf();
+#if (ZASALIGN)
+    zasinitalign();
+#endif
 }
 
 zasmemadr_t

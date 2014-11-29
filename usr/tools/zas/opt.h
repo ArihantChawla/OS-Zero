@@ -1,3 +1,5 @@
+/* zero assembler configuration and command-line options */
+
 #ifndef __ZAS_OPT_H__
 #define __ZAS_OPT_H__
 

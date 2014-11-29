@@ -1,3 +1,7 @@
+/* zero virtual machine assembler interface for zero assembler (zas) */
+
+#include <zas/conf.h>
+
 #include <stdlib.h>
 #include <stdio.h>
 #include <ctype.h>

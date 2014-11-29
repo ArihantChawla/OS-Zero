@@ -1,6 +1,11 @@
 ZVM GUI Layout
 --------------
 
+This file is about ideas for the Zero Virtual Machine project. The graphical
+user interface aims to implement new ways to test and debug software using
+a graphical debugger frontend. I'm in the hopes of developing such source-
+and machine-level debugger frontends for tools such as GDB, Qemu, and Bochs.
+
 --------------------------------------------------------------------------------
 graphics window
 STDFB
@@ -31,6 +36,21 @@ mov	$NTRAP, %r0
 call	trapinit	<- program counter (aka instruction pointer)
 nop
 --------------------------------------------------------------------------------
+
+graphics window
+---------------
+- framebuffer interface, 800x600x24-bit resolution
+- double-buffer enabled to minimise flicker
+- default is draw on demand;
+  - support for optional frame rate setting
+  - user-settable scronsync() handler for screen refreshes
+    - defaults to drawing main Evas canvas
+- framebuffer address
+
+execution console window
+------------------------
+- C-like standard I/O with ports STDIN (keyboard), STDOUT (console), and STDERR
+  (console) streams
 
 debugger buttons
 ----------------

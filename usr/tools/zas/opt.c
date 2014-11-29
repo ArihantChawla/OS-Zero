@@ -1,3 +1,6 @@
+/* zero assembler configuration and command-line options */
+
+#include <zas/conf.h>
 #include <zas/zas.h>
 #include <zas/opt.h>
 
@@ -7,14 +10,16 @@ extern zasmemadr_t zastokalntab[ZASNTOKEN];
 
 #if (ZASALIGN)
 void
-zasinitalign(size_t opsize)
+zasinitalign(void)
 {
-    zastokalntab[ZASTOKENVALUE] = sizeof(zasword_t);
-    zastokalntab[ZASTOKENLABEL] = sizeof(zasword_t);
-    zastokalntab[ZASTOKENINST] = opsize;
-    zastokalntab[ZASTOKENSYM] = sizeof(zasword_t);
-    zastokalntab[ZASTOKENDATA] = sizeof(zasword_t);
-    zastokalntab[ZASTOKENSPACE] = sizeof(zasword_t);
+	zasmemadr_t aln = sizeof(zasword_t);
+
+    zastokalntab[ZASTOKENVALUE] = aln;
+    zastokalntab[ZASTOKENLABEL] = aln;
+    zastokalntab[ZASTOKENINST] = aln;
+    zastokalntab[ZASTOKENSYM] = aln;
+    zastokalntab[ZASTOKENDATA] = aln;
+    zastokalntab[ZASTOKENSPACE] = aln;
 
     return;
 }

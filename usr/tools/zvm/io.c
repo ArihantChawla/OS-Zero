@@ -1,3 +1,5 @@
+#include <zvm/conf.h>
+
 #if (_ZERO_SOURCE)
 #include <zero/kbd.h>
 #endif

@@ -1,3 +1,5 @@
+/* libzero hash functions */
+
 /*
  * This stuff is based on Chris Anderson's C-conversion of the code described
  * at http://locklessinc.com/articles/fast_hash/

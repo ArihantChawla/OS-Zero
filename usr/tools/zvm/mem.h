@@ -1,5 +1,9 @@
+/* zero virtual machine memory interface */
+
 #ifndef __ZVM_MEM_H__
 #define __ZVM_MEM_H__
+
+#include <zvm/conf.h>
 
 #if (ZVMVIRTMEM)
 #define ZASTEXTBASE     (2 * ZVMPAGESIZE)
@@ -11,10 +15,10 @@
 #endif
 #define ZVMPAGESIZE     PAGESIZE
 #define ZVMPAGESIZELOG2 PAGESIZELOG2
-#define ZVMPAGEPRES     0x01
-#define ZVMPAGEREAD     0x02
-#define ZVMPAGEWRITE    0x04
-#define ZVMPAGEEXEC     0x08
+#define ZVMPAGEPRES     0x01 // page is present i.e. mapped to physical page
+#define ZVMPAGEREAD     0x02 // page read permission
+#define ZVMPAGEWRITE    0x04 // page write permission
+#define ZVMPAGEEXEC     0x08 // page execute permission
 #else /* !ZVMVIRTMEM */
 #define ZASTEXTBASE     PAGESIZE
 #define ZVMMEMSIZE      (128U * 1024U * 1024U)
