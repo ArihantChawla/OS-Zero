@@ -25,10 +25,32 @@ r8	r9	r10	r11		| stack frame (adr, sym)  |
 r12	r13	r14	r15		| args, caller, ret, vars |
 					-----------|---------------
 --------------------------------------------------------------------------------
-disassembler | file | function | line | signal | stack | trace | intr |
+disassembler | file | function | line | signal | stack | trace | intr | memory |
 --------------------------------------------------------------------------------
 mov	$NTRAP, %r0
 call	trapinit	<- program counter (aka instruction pointer)
 nop
 --------------------------------------------------------------------------------
+
+debugger buttons
+----------------
+- hex/dec/oct display modes (bin)
+- word size; display, based on the program under execution
+- run; argument input + file chooser
+- break; set based on file and line or symbol (function name or other label)
+- trace; separate window showing disassembly + file + line + function
+- step; single, text input for N
+- print; address/variable/symbol
+- cont; continue execution
+
+disassembler interface
+----------------------
+- file + function + line display
+- signal mask (blocked signals), signal being handled, signal handler window
+- stack; function arguments, return address, caller frame pointer, automatic
+  variables, stack pointer (window for call chain)
+- interrupts; interrupt mask (blocked interrupt level), interrupt being handled,
+  interrupt vector
+- memory; # of mapped virtual pages, # of mapped physical pages, # of total
+  physical pages, page table window
 
