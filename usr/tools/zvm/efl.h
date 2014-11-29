@@ -11,6 +11,8 @@
 #include <Ecore_Evas.h>
 #include <Edje.h>
 
+#define ZVMWIDTH     800
+#define ZVMHEIGHT    1024
 #define ZVMGFXWIDTH  800
 #define ZVMGFXHEIGHT 600
 

@@ -315,7 +315,7 @@ zasaddsym(struct zassymrec *sym)
         key += *str++;
     }
 #if (ZASZEROHASH)
-    key = hashq128(&key, sizeof(unsigned long), NHASHBIT)
+    key = hashq128(&key, sizeof(unsigned long), NHASHBIT);
 #else
     key &= (ZASNHASH - 1);
 #endif
@@ -336,7 +336,7 @@ zasfindsym(uint8_t *name)
         key += *str++;
     }
 #if (ZASZEROHASH)
-    key = hashq128(&key, sizeof(unsigned long), NHASHBIT)
+    key = hashq128(&key, sizeof(unsigned long), NHASHBIT);
 #else
     key &= (ZASNHASH - 1);
 #endif

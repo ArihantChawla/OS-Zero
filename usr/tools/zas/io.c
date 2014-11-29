@@ -1,7 +1,10 @@
 /* zero assembler I/O interface */
 
 #include <zas/conf.h>
+
+#include <stdlib.h>
 #include <zas/zas.h>
+#include <zas/io.h>
 
 extern uint8_t        *zaslinebuf;
 extern uint8_t        *zasstrbuf;
@@ -27,9 +30,7 @@ zasinitbuf(void)
     return;
 }
 
-#if (ZASMMAP)
-#define zasgetc(map) ((map)->cur < (map)->lim ? *(map)->cur++ : EOF)
-#elif (ZASBUF)
+#if !(ZASMMAP) && (ZASBUF)
 static int
 zasgetc(int fd, int bufid)
 {

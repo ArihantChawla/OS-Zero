@@ -23,7 +23,7 @@ void
 zvminitopt(void)
 {
 #if (ZASALIGN)
-    zasinitalign(sizeof(struct zvmopcode));
+    zasinitalign();
 #endif
 
     return;

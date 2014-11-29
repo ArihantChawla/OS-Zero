@@ -32,5 +32,13 @@ struct readbuf {
 };
 #endif
 
+#if (ZASMMAP)
+#define zasgetc(map) ((map)->cur < (map)->lim ? *(map)->cur++ : EOF)
+#elif (ZASBUF)
+static int zasgetc(int fd, int bufid);
+#else
+
+#endif
+
 #endif /* __ZAS_IO_H__ */
 
