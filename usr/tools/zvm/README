@@ -6,8 +6,8 @@ virtual architecture. Currently, this consists of a custom RISC-like
 instruction set, a small assembler called zas, and an early implementation
 of a bytecode interpreter/translator.
 
-Support is being planned for more flexible I/O using ports such as STDIN,
-STDOUT, and STDERR.
+Support is being planned for flexible I/O using ports such as STDIN, STDOUT,
+and STDERR.
 
 Graphics support will most likely be implemented using Enlightenment Foundation
 Libraries (EFL). I will attempt to program the basic GUI in Edje and interface

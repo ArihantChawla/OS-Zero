@@ -9,7 +9,9 @@ mjolnir
 - the rogue-like is an undergoing design
   - a set of objects and creatures is documented
   - BSP-table is used for dungeon generation, but it hasn't been tested
-    yet because there is no graphical or text interface implemented (yet ;)
+    yet because there is no graphical or text interface implemented (yet ;))
   - the dungeon crawler's plot will have references to Norse and other
     mythologies
+  - most of the current ideas for the game are listed in mjolnir/IDEAS.txt
+- core war might be used as a sub-game in mjolnir
 

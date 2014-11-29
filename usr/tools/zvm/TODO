@@ -1,6 +1,8 @@
 - implement virtual memory / page-level protection (read-only sections)
 - implement [console] I/O and interrupts
   - STDIN, STDOUT, STDERR, STDFB
+  - page faults
+  - device interrupts
 - implement a debugger with graphical frontend
 - implement different access sizes (byte, word, longword, quadword)
 - io.[c|h], intr.[c|h]
