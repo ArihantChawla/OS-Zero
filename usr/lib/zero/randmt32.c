@@ -15,7 +15,7 @@
  * - get the next PRN in series
  *
  * void srandmt32_r(unsigned long seed);
- * unsigned lonsg randmt32_r(void);
+ * unsigned long randmt32_r(void);
  * - re-entrant versions [for multithreaded processes]
  */
 
