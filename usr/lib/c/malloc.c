@@ -5,6 +5,7 @@
  * See the file LICENSE for more information about using this software.
  */
 
+#define VARSIZEBUF    1
 #define MALLOCCCTUNE  0
 #define MALLOCBUFMAP  1
 #define NEWBUF        0
@@ -172,7 +173,7 @@ typedef pthread_mutex_t LK_T;
 #define SLABLOG2      20
 #define SLABBIGLOG2   16
 #define SLABTINYLOG2  13
-#define SLABTEENYLOG2 10
+#define SLABTEENYLOG2 8
 #define MAPMIDLOG2    22
 #define MAPBIGLOG2    24
 #elif (!BIGSLAB)
@@ -297,6 +298,16 @@ typedef pthread_mutex_t LK_T;
          : (((bid) < MAPBIGLOG2)                                        \
             ? 1                                                         \
             : 0))))
+#elif (VARSIZEBUF)
+#define nblklog2(bid)                                                   \
+    (((!ismapbkt(bid))                                                  \
+      ? (((bid) < SLABTEENYLOG2)                                        \
+         ? (SLABTINYLOG2 - (bid))                                       \
+         : (((bid) < SLABTINYLOG2)                                      \
+            ? (SLABBIGLOG2 - (bid))                                     \
+            : (SLABLOG2 - (bid))))                                      \
+      : 0))
+
 #elif (NEWBUF)
 #define nblklog2(bid)                                                   \
     (((!ismapbkt(bid))                                                  \
