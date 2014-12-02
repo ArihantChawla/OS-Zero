@@ -1,5 +1,9 @@
 ZVM Book
 --------
+- a book on machine-programming
+  - RISC-like virtual architecture with assembler
+  - stack-based ABI for different programming languages
+    - Forth, C?
 - design and implementation of a virtual architecture
   - instruction set, bytecode interpreter
   - assembler (zas) which emits bytecode for zvm
@@ -8,6 +12,7 @@ ZVM Book
   - assembler
   - debugger; graphical frontend
   - disassembler
+  - C compiler? ;)
 - perhaps hack a simple c compiler for the vm :)
   - https://github.com/rswier/c4 for inspiration :)
   - minimalistic standard library with libc-style interface
@@ -15,6 +20,11 @@ ZVM Book
       - CPU
       - memory management
       - I/O
+- vectorisation with SIMD (usually MMX or SSE)
+  - libvec, a vectorised data-parallel mathematics library
+    - add and sub with signed or unsigned saturation
+    - trigonometric functions?
+    - C implementations and SIMD-optimised ones where useful
 - enlightened graphical interface for debugging and other use of zvm
   - utilise Enlightenment Foundation Libraries (EFL)
     - evas canvas/scene graph
@@ -56,10 +66,11 @@ ZVM Book
 ZVM GUI Layout
 --------------
 
-This file is about ideas for the Zero Virtual Machine project. The graphical
-user interface aims to implement new ways to test and debug software using
-a graphical debugger frontend. I'm in the hopes of developing such source-
-and machine-level debugger frontends for tools such as GDB, Qemu, and Bochs.
+This file is about ideas for the Zero Virtual Machine project. The
+graphical user interface aims to implement new ways to test and debug
+software using a graphical debugger frontend. I'm in the hopes of
+developing such source-and machine-level debugger frontends for tools
+such as GDB, Qemu, and Bochs.
 
 --------------------------------------------------------------------------------
 graphics window

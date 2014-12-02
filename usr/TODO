@@ -70,9 +70,9 @@ tools/zed
   - modular implementation; allow hooks for different programming languages
 	- indent(), hilite()
   - use allocated slices for text
-	- 128 or 64 bytes
+	- 128 or 64 bytes by default, reallocate dynamically
 	- linked list for editing
-	- readv(), writev()
+	- readv(), writev() for vector I/O of buffer lines
 
 tools/zvm
 ---------

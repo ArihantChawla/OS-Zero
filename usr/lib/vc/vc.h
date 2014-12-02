@@ -1,3 +1,5 @@
+/* zero libvc vcode interface library */
+
 #ifndef __VC_VC_H__
 #define __VC_VC_H__
 

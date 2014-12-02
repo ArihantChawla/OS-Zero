@@ -1,28 +1,30 @@
-The vc-library aims to implement a vector-based intermediate language for
-compilers and such development tools to communicate code in.
+The vc-library aims to implement a vector-based intermediate language
+for compilers and such development tools to communicate code in.
 
 The library encapsulates computations commonly taken care of by modern
-microprocessors; the approach is RISC-like, i.e. splitting the computations to
-small parts; e.g. for an optimiser, the code should be relatively easy to tune
-for less data-dependencies and otherwise fast ways for execution.
+microprocessors; the approach is RISC-like, i.e. splitting the 
+computations to small parts; e.g. for an optimiser, the code should be
+relatively easy to tune for less data-dependencies and otherwise fast
+ways for execution.
 
 
 RANDOM NOTES
 ------------
 
-The notes below are based on a document I found on VCode somewhere on the
-Internet. :)
+The notes below are based on a document I found on VCode somewhere on
+the Internet. :)
 
 primitive types
 ---------------
 - integer (int); signed integers (lets make them 64-bit)
 - boolean (bool); T or F (64-bit)
-- floating-point (float); double-precision (64-bit) floating point numbers
+- floating-point (float); double-precision (64-bit) floating point
+  numbers
 - character (char); characters
 - segment descriptor (segdes)
 
-- all objects are homogenous vectors of one of the above types or an untyped
-  pair of vcode objects
+- all objects are homogenous vectors of one of the above types or an
+  untyped pair of vcode objects
 - scalars are simply single-element vectors
 
 instructions
@@ -30,7 +32,6 @@ instructions
 
 elementwise operations
 ----------------------
-
 
 {int | float] + {INT, FLOAT}	- return sum of top two vectors on stack
 {int | float} - {INT, FLOAT}	- return difference of top two vectors
