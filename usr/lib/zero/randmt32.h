@@ -1,3 +1,7 @@
+/*
+ * 32-bit implementation of the Mersenne Twister MT19937 algorithm
+ */
+
 #ifndef __ZERO_RANDMT32_H__
 #define __ZERO_RANDMT32_H__
 

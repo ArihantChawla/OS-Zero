@@ -1,3 +1,5 @@
+/* zero c library quick-sort implementation */
+
 #include <stddef.h>
 #include <stdint.h>
 #include <limits.h>

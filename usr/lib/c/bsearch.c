@@ -1,3 +1,5 @@
+/* zero c library binary-search routines */
+
 #include <stddef.h>
 #include <stdint.h>
 
