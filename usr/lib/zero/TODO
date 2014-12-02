@@ -1,3 +1,4 @@
 - add more generic implementations of data structures such as red-black trees,
   multilevel tables a'la page directories, and so forth
+- implement a Forth interpreter and/or compiler :)
 

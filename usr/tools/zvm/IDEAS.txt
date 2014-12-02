@@ -1,3 +1,58 @@
+ZVM Book
+--------
+- design and implementation of a virtual architecture
+  - instruction set, bytecode interpreter
+  - assembler (zas) which emits bytecode for zvm
+  - currently runtime-translation of assembly programs
+- programming the virtual machine
+  - assembler
+  - debugger; graphical frontend
+  - disassembler
+- perhaps hack a simple c compiler for the vm :)
+  - https://github.com/rswier/c4 for inspiration :)
+  - minimalistic standard library with libc-style interface
+    - modeled after von Neumann machines
+      - CPU
+      - memory management
+      - I/O
+- enlightened graphical interface for debugging and other use of zvm
+  - utilise Enlightenment Foundation Libraries (EFL)
+    - evas canvas/scene graph
+    - edje-scripted, compiled themes
+    - elementary for widgets
+    - experiment with novel debugger interface/feature ideas, implement
+      traditional ones
+      - display mode; hex, dec, oct, bin
+      - run, break, trace, step, print, cont
+      - disassembler
+        - file + function + line display
+        - signal, stack, trace, intr, memory
+          - pending signals + process signal mask
+          - stack frame + back-link to caller
+          - stack trace from leaf to root "nodes"
+          - single-stepping, N-step stepping
+          - interrupt vector (addresses, symbols)
+            - located at 0x00000000
+            - read-only
+            - display interrupt handlers
+          - memory
+            - page directory/tables
+- I/O
+  - STDIN (port #0) for keyboard input
+  - STDOUT (port #1) for console output
+  - STDERR (port #2) for error output (optionally logged into file)
+  - emulate disks and other devices with files
+- graphics
+  - framebuffer with 24-bit RGB pixels
+    - 800x600 or 1024x768 resolution (window size)
+    - store images with ARGB (alpha channel present0
+    - double buffering; draw into off-screen buffer and synchronize
+      screen contents on-demand (request or periodical with timers)
+    - TODO: obtain framebuffer address :)
+  - support alpha-blending of overlay images
+- text
+  - ASCII, ISO 8859-1, Unicode (16-bit or 31-bit)
+
 ZVM GUI Layout
 --------------
 
