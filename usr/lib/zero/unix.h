@@ -47,7 +47,7 @@
 
 #define SBRK_FAILED        ((void *)-1L)
 
-#define MMAP_DEV_ZERO      1 /* set mmap to use /dev/zero. */
+#define MMAP_DEV_ZERO      0 /* set mmap to use /dev/zero. */
 
 /* some systems may need MAP_FILE with MAP_ANON. */
 #ifndef MAP_FILE

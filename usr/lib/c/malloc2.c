@@ -161,13 +161,14 @@ thrarn(void)
 static __inline__ long
 blkbktid(size_t size)
 {
-    unsigned long bktid = 1UL << (LONGSIZELOG2 + 3);
+//    unsigned long bktid = 1UL << (LONGSIZELOG2 + 3);
+    unsigned long bktid = PTRBITS;
     unsigned long nlz;
 
     nlz = lzerol(size);
     bktid -= nlz;
-    if (!powerof2(size)) {
-        bktid++;
+    if (powerof2(size)) {
+        bktid--;
     }
 
     return bktid;
@@ -270,19 +271,19 @@ postfork(void)
     long        bktid;
 
     for (bktid = 0 ; bktid < MALLOCNBKT ; bktid++) {
-        mtxlk(&g_malloc.freelktab[bktid]);
-        mtxlk(&g_malloc.maglktab[bktid]);
+        mtxunlk(&g_malloc.freelktab[bktid]);
+        mtxunlk(&g_malloc.maglktab[bktid]);
     }
     for (arnid = 0 ; arnid < MALLOCNARN ; arnid++) {
         arn = g_malloc.arntab[arnid];
         for (bktid = 0 ; bktid < MALLOCNBKT ; bktid++) {
-            mtxlk(&arn->hdrlktab[bktid]);
-            mtxlk(&arn->freelktab[bktid]);
-            mtxlk(&arn->maglktab[bktid]);
+            mtxunlk(&arn->hdrlktab[bktid]);
+            mtxunlk(&arn->freelktab[bktid]);
+            mtxunlk(&arn->maglktab[bktid]);
         }
     }
-    mtxlk(&g_malloc.heaplk);
-    mtxlk(&g_malloc.initlk);
+    mtxunlk(&g_malloc.heaplk);
+    mtxunlk(&g_malloc.initlk);
     
     return;
 }
@@ -380,11 +381,6 @@ mallinit(void)
         }
     }
     g_malloc.narn = narn;
-//    pthread_key_create(&_akey, relarn);
-//    mtxunlk(&_conf.arnlk);
-#if (PTHREAD)
-//    pthread_atfork(prefork, postfork, postfork);
-#endif
     bktid = MALLOCNBKT;
     while (bktid--) {
         mtxinit(&g_malloc.freelktab[bktid]);
@@ -419,7 +415,6 @@ _malloc(size_t size,
     struct mag  *mag;
     uint8_t     *ptr;
     uint8_t     *ptrval;
-    void        *retptr = NULL;
     void       **stk = NULL;
     long         arnid;
     long         sz = max(blkalignsz(size, align), MALLOCMINSIZE);
@@ -599,7 +594,7 @@ _malloc(size_t size,
                             mag->next->prev = mag;
                         }
                         arn->magtab[bktid] = mag;
-            }
+                    }
                     mag->stk = stk;
                     mag->ptrtab = &stk[1UL << nblklog2(bktid)];
                 }
@@ -607,20 +602,25 @@ _malloc(size_t size,
         }
     }
     ptr = clrptr(ptrval);
-    mtxunlk(&arn->maglktab[bktid]);
-    if (zero && (((uintptr_t)ptrval & BLKDIRTY))) {
-        memset(ptr, 0, 1UL << (bktid));
+    if (ptr) {
+        mtxunlk(&arn->maglktab[bktid]);
+        if (zero && (((uintptr_t)ptrval & BLKDIRTY))) {
+            memset(ptr, 0, 1UL << (bktid));
+        }
+        if (align) {
+            ptr = ptralign(ptr, align);
+        }
+        /* store unaligned source pointer */
+        magputptr(mag, ptr, ptrval);
+        /* add magazine to lookup structure using retptr as key */
+        setmag(ptr, mag);
+#if defined(ENOMEM)
+    } else {
+        errno = ENOMEM;
+#endif
     }
-    retptr = clrptr(ptrval);
-    if (align) {
-        retptr = ptralign(retptr, align);
-    }
-    /* store unaligned source pointer */
-    magputptr(mag, retptr, ptr);
-    /* add magazine to lookup structure using retptr as key */
-    setmag(retptr, mag);
 
-    return retptr;
+    return ptr;
 }
 
 void
@@ -635,6 +635,7 @@ _free(void *ptr)
 
     mag = findmag(ptr);
     if (mag) {
+//        setmag(ptr, NULL);
         arnid = mag->arnid;
         bktid = mag->bktid;
         arn = g_malloc.arntab[arnid];
