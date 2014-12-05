@@ -143,7 +143,7 @@ long                 curarn;
 #define NL3BIT    (ADRBITS - NL1BIT - NL2BIT - MALLOCMINLOG2)
 
 long
-thrarn(void)
+thrarnid(void)
 {
     if (_arnid >= 0) {
 
@@ -427,7 +427,7 @@ _malloc(size_t size,
     if (!(g_malloc.flags & MALLOCINIT)) {
         mallinit();
     }
-    arnid = thrarn();
+    arnid = thrarnid();
     arn = g_malloc.arntab[arnid];
     mtxlk(&arn->maglktab[bktid]);
     /* try to allocate from a partially used magazine */
@@ -628,7 +628,7 @@ _free(void *ptr)
 {
     struct arn *arn;
     struct mag *mag;
-    long        arnid; // = thrarn();
+    long        arnid;
     long        max;
     long        bktid;
     long        freemap = 0;
