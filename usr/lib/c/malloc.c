@@ -5,6 +5,7 @@
  * See the file LICENSE for more information about using this software.
  */
 
+#define MAPFALLBACK   0
 #define VARSIZEBUF    1
 #define MALLOCCCTUNE  0
 #define MALLOCBUFMAP  1
@@ -170,12 +171,21 @@ typedef pthread_mutex_t LK_T;
 /* basic allocator parameters */
 #define BLKMINLOG2    CLSIZELOG2  /* minimum-size allocation */
 #if (SMALLBUF)
+#if (VARSIZEBUF)
+#define SLABLOG2      18
+#define SLABBIGLOG2   16
+#define SLABTINYLOG2  12
+#define SLABTEENYLOG2 10
+#define MAPMIDLOG2    22
+#define MAPBIGLOG2    24
+#else
 #define SLABLOG2      20
 #define SLABBIGLOG2   16
 #define SLABTINYLOG2  13
 #define SLABTEENYLOG2 8
 #define MAPMIDLOG2    22
 #define MAPBIGLOG2    24
+#endif
 #elif (!BIGSLAB)
 #define SLABLOG2      19
 #define SLABBIGLOG2   16
@@ -206,6 +216,10 @@ typedef pthread_mutex_t LK_T;
 #endif
 
 /* lookup tree of tables */
+
+#define l1ndx(ptr) (((uintptr_t)ptr >> L1NDX) & ((1 << NL1BIT) - 1))
+#define l2ndx(ptr) (((uintptr_t)ptr >> L2NDX) & ((1 << NL2BIT) - 1))
+#define l3ndx(ptr) (((uintptr_t)ptr >> L3NDX) & ((1 << NL3BIT) - 1))
 
 #if (PTRBITS > 32)
 
@@ -481,8 +495,8 @@ typedef pthread_mutex_t LK_T;
 #else
 #define nblklog2(bid)                                                   \
     ((!ismapbkt(bid))                                                   \
-    ? (SLABLOG2 - (bid) + nmagslablog2(bid))                            \
-    : nmagslablog2(bid))
+     ? (SLABLOG2 - (bid) + nmagslablog2(bid))                           \
+     : nmagslablog2(bid))
 #endif
 #else
 #define nblklog2(bid)     (ismapbkt(bid) ? 1UL : SLABLOG2 - (bid))
@@ -505,7 +519,11 @@ typedef pthread_mutex_t LK_T;
 #define NBHDR             (4 * PAGESIZE)
 //#define NBHDR             PAGESIZE
 #endif
+#if (BIGHDR)
+#define NBUFHDR           16
+#else
 #define NBUFHDR           8
+#endif
 #define NBUFMAP           8
 
 #define thrid()           ((_aid >= 0) ? _aid : (_aid = getaid()))
@@ -546,11 +564,12 @@ typedef pthread_mutex_t LK_T;
 #define BPMASK (~((1UL << NPFBIT) - 1))
 #define BDIRTY 0x01UL
 #define BALIGN 0x02UL
+#define BMAP   0x04UL
 #define clrptr(ptr)       ((void *)((uintptr_t)(ptr) & BPMASK))
 #define setflg(ptr, flg)  ((void *)((uintptr_t)(ptr) | (flg)))
 #define chkflg(ptr, flg)  ((uintptr_t)(ptr) & (flg))
 #define blkid(mag, ptr)                                                 \
-    ((mag)->max + (((uintptr_t)(ptr) - (uintptr_t)(mag)->adr) >> (mag)->bid))
+    ((mag)->max + (((uintptr_t)(ptr) - ((uintptr_t)(mag)->adr & ~BMAP)) >> (mag)->bid))
 #define putptr(mag, ptr1, ptr2)                                         \
     ((gtpow2((mag)->max, 1))                                            \
      ? (((void **)(mag)->bptr)[blkid(mag, ptr1)] = (ptr2))              \
@@ -1343,7 +1362,7 @@ initmall(void)
 #elif (INTSTAT)
     atexit(printintstat);
 #endif
-#if (_MMAP_DEV_ZERO)
+#if (MMAP_DEV_ZERO)
     _mapfd = open("/dev/zero", O_RDWR);
 #endif
 #if (MTSAFE)
@@ -1516,7 +1535,7 @@ findmag(void *ptr)
 }
 
 static void
-addblk(void *ptr,
+setmag(void *ptr,
        struct mag *mag)
 {
     uintptr_t    key = (uintptr_t)ptr;
@@ -1583,10 +1602,6 @@ addblk(void *ptr,
 
 #if (PTRBITS > 32)
 
-#define l1ndx(ptr) (((uintptr_t)ptr >> L1NDX) & ((1 << NL1BIT) - 1))
-#define l2ndx(ptr) (((uintptr_t)ptr >> L2NDX) & ((1 << NL2BIT) - 1))
-#define l3ndx(ptr) (((uintptr_t)ptr >> L3NDX) & ((1 << NL3BIT) - 1))
-
 #if (PTRBITS > 48)
 
 static struct mag *
@@ -1611,7 +1626,7 @@ findmag(void *ptr)
 }
 
 static void
-addblk(void *ptr,
+setmag(void *ptr,
        struct mag *mag)
 {
     uintptr_t    l1 = l1ndx(ptr);
@@ -1624,7 +1639,8 @@ addblk(void *ptr,
 
     ptr1 = _mdir[l1];
     if (!ptr1) {
-        _mdir[l1] = ptr1 = mapanon(_mapfd, NL2KEY * sizeof(void *));
+        _mdir[l1] = ptr1 = mapanon(_mapfd,
+                                           NL2KEY * sizeof(void *));
         if (ptr1 == MAP_FAILED) {
 #ifdef ENOMEM
             errno = ENOMEM;
@@ -1636,7 +1652,8 @@ addblk(void *ptr,
     pptr = ptr1;
     ptr2 = pptr[l2];
     if (!ptr2) {
-        pptr[l2] = ptr2 = mapanon(_mapfd, NL3KEY * sizeof(struct mag *));
+        pptr[l2] = ptr2 = mapanon(_mapfd,
+                                  NL3KEY * sizeof(struct mag *));
         if (ptr2 == MAP_FAILED) {
 #ifdef ENOMEM
             errno = ENOMEM;
@@ -1670,7 +1687,7 @@ findmag(void *ptr)
 }
 
 static void
-addblk(void *ptr,
+setmag(void *ptr,
        struct mag *mag)
 {
     uintptr_t    l1 = l1ndx(ptr);
@@ -1698,7 +1715,7 @@ addblk(void *ptr,
 #else /* PTRBITS <= 32 */
 
 #define findmag(ptr)     (_mdir[slabid(ptr)])
-#define addblk(ptr, mag) (_mdir[slabid(ptr)] = (mag))
+#define setmag(ptr, mag) (_mdir[slabid(ptr)] = (mag))
 
 #endif
 
@@ -1729,7 +1746,7 @@ gethdr(long aid)
     mag = _hdrtab[bid];
     if (mag) {
 #if (MALLOCTRIM)
-        mlk(&mag->lk);
+//        mlk(&mag->lk);
 #endif
         _hdrtab[bid] = mag->next;
         if (mag->next) {
@@ -2116,6 +2133,9 @@ getmem(size_t size,
 #endif
     long         get = 0;
     long         glob = 0;
+#if (MAPFALLBACK)
+    long         mapped = 0;
+#endif
 #if (MALLOCTRIM)
 //    long         top = 0;
     long         lk = 0;
@@ -2147,7 +2167,7 @@ getmem(size_t size,
     if (!mag) {
 #if (MALLOCTRIM)
         if (!ismapbkt(bid)) {
-            mtrylk(&_conf.trimlk);
+            mlk(&_conf.trimlk);
             lk = 1;
         }
 #endif
@@ -2227,9 +2247,20 @@ getmem(size_t size,
 #endif
         if (!ismapbkt(bid)) {
             ptr = getslab(aid, bid);
+#if (MAPFALLBACK)
+            if (ptr == SBRK_FAILED) {
+                ptr = mapanon(_mapfd, nbmag(bid));
+                if (ptr == MAP_FAILED) {
+                    ptr = NULL;
+                } else {
+                    mapped = 1;
+                }
+            }
+#else
             if (ptr == SBRK_FAILED) {
                 ptr = NULL;
             }
+#endif
         } else {
             ptr = mapanon(_mapfd, nbmap(bid));
             if (ptr == MAP_FAILED) {
@@ -2253,6 +2284,11 @@ getmem(size_t size,
             mag->cur = 0;
             mag->max = max;
             mag->bid = bid;
+#if (MAPFALLBACK)
+            if (mapped) {
+                mag->adr = (uint8_t *)((uintptr_t)ptr | BMAP);
+            }
+#endif
             mag->adr = ptr;
             if (ptr) {
                 if (gtpow2(max, 1)) {
@@ -2324,7 +2360,15 @@ getmem(size_t size,
             mag->cur = 0;
             mag->max = max;
             mag->bid = bid;
+#if (MAPFALLBACK)
+            if (mapped) {
+                mag->adr = (uint8_t *)((uintptr_t)ptr | BMAP);
+            } else {
+                mag->adr = ptr;
+            }
+#else
             mag->adr = ptr;
+#endif
             if (ptr) {
                 if (gtpow2(max, 1)) {
                     if (istk(bid)) {
@@ -2420,6 +2464,11 @@ getmem(size_t size,
         }
         ptr = retptr;
 #if (FREEBITMAP)
+        if (bitset(mag->fmap, blkid(mag, ptr))) {
+            fprintf(stderr, "free block already marked as allocated\n");
+
+            abort();
+        }
         setbit(mag->fmap, blkid(mag, ptr));
 #endif
 #if (RZSZ)
@@ -2437,7 +2486,7 @@ getmem(size_t size,
                 ptr = setflg(retptr, BALIGN);
             }
             putptr(mag, retptr, ptr);
-            addblk(retptr, mag);
+            setmag(retptr, mag);
         }
 #if (MALLOCTRIM)
         if (lk) {
@@ -2547,7 +2596,7 @@ putmem(void *ptr)
         if (mptr) {
             putptr(mag, ptr, NULL);
 #if (MALLOCHASH)
-            addblk(ptr, NULL);
+            setmag(ptr, NULL);
 #endif
 #if (RZSZ)
             if (!chkflg(mptr, BALIGN)) {
@@ -2558,7 +2607,7 @@ putmem(void *ptr)
 #endif
                     abort();
                 }
-                ptr = clrptr(mptr);
+//                ptr = clrptr(mptr);
             }
 #endif
 #if (FREEBITMAP)
@@ -2569,7 +2618,8 @@ putmem(void *ptr)
             }
             clrbit(mag->fmap, blkid(mag, mptr));
 #endif
-            putblk(mag, setflg(mptr, BDIRTY));
+            ptr = clrptr(mptr);
+            putblk(mag, setflg(ptr, BDIRTY));
             if (magfull(mag)) {
                 if (gtpow2(max, 1)) {
 //                    mlk(&_flktab[bid]);
@@ -2612,11 +2662,15 @@ putmem(void *ptr)
 //                    munlk(&mag->lk);
                 }
 #endif
-//                addblk(mptr, NULL);
+//                setmag(mptr, NULL);
 #if !(MALLOCHASH)
-                addblk(ptr, NULL);
+                setmag(ptr, NULL);
 #endif
-                if (ismapbkt(bid)
+                if ((ismapbkt(bid)
+#if (MAPFALLBACK)
+                    || ((uintptr_t)mag->adr & BMAP)
+#endif
+                        )
                     && (!isbufbkt(bid)
 #if (MALLOCBUFMAP)
                         && (_fcnt[bid] >= NBUFMAP)

@@ -14,3 +14,4 @@ $CC -DX11VIS=0 -DMALLOCMULTITAB=1 -DZEROHASH=1 -DZEROFUTEX=0 -DZEROMALLOC=1 -DPT
 $CC -DMALLOCMULTITAB=1 -DZEROHASH=1 -DZEROFUTEX=0 -DZEROMALLOC=1 -DPTHREAD=1 -D_REENTRANT -DX11VIS=1 -DEVEL=0 -g -Wall -fno-builtin -O -I../../../.. -I../../../lib -fPIC -shared -o xzmalloc.so ../malloc.c -lX11 -pthread
 #$CC -DPTHREAD=1 -DX11VIS=1 -D_REENTRANT -g -Wall -fno-builtin -O -I../../../.. -I../../../lib /../include -fPIC -shared -o xmalloc.so ../stdlib/../malloc.c -pthread
 
+
