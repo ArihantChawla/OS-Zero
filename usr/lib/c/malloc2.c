@@ -152,6 +152,7 @@ thrarn(void)
     mtxlk(&_arnlk);
     _arnid = curarn++;
     curarn &= (MALLOCNARN - 1);
+    pthread_setspecific(g_malloc.arnkey, g_malloc.arntab[_arnid]);
     mtxunlk(&_arnlk);
 
     return _arnid;
@@ -420,7 +421,7 @@ _malloc(size_t size,
     uint8_t     *ptrval;
     void        *retptr = NULL;
     void       **stk = NULL;
-    long         arnid = thrarn();
+    long         arnid;
     long         sz = max(blkalignsz(size, align), MALLOCMINSIZE);
     long         bktid = blkbktid(sz);
     long         mapped = 0;
@@ -431,7 +432,7 @@ _malloc(size_t size,
     if (!(g_malloc.flags & MALLOCINIT)) {
         mallinit();
     }
-
+    arnid = thrarn();
     arn = g_malloc.arntab[arnid];
     mtxlk(&arn->maglktab[bktid]);
     /* try to allocate from a partially used magazine */
