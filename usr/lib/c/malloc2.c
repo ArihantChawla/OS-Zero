@@ -4,7 +4,64 @@
  * Copyright Tuomo Petteri Venäläinen 2014
  */
 
+/*
+ * THANKS
+ * ------
+ * - Matthew 'kinetik' Gregan for pointing out bugs, giving me cool routines to
+ *   find more of them, and all the constructive criticism etc.
+ * - Thomas 'Freaky' Hurst for patience with early crashes, 64-bit hints, and
+ *   helping me find some bottlenecks.
+ * - Henry 'froggey' Harrington for helping me fix issues on AMD64.
+ * - Dale 'swishy' Anderson for the enthusiasm, encouragement, and everything
+ *   else.
+ * - Martin 'bluet' Stensgård for an account on an AMD64 system for testing
+ *   earlier versions.
+ */
+
+/*
+ *        malloc buffer layers
+ *        --------------------
+ *
+ *                --------
+ *                | mag  |----------------
+ *                --------               |
+ *                    |                  |
+ *                --------               |
+ *                | slab |               |
+ *                --------               |
+ *        --------  |  |   -------  -----------
+ *        | heap |--|  |---| map |--| headers |
+ *        --------         -------  -----------
+ *
+ *        mag
+ *        ---
+ *        - magazine cache with allocation stack of pointers into the slab
+ *          - LIFO to reuse freed blocks of virtual memory
+ *
+ *        slab
+ *        ----
+ *        - slab allocator bottom layer
+ *        - power-of-two size slab allocations
+ *          - supports both heap and mapped regions
+ *
+ *        heap
+ *        ----
+ *        - process heap segment
+ *          - sbrk() interface; needs global lock
+ *
+ *        map
+ *        ---
+ *        - process map segment
+ *          - mmap() interface; thread-safe
+ *
+ *        headers
+ *        -------
+ *        - mapped internal book-keeping for magazines, e.g. pointer stacks
+ */
+
 #define GNUMALLOCHOOKS 1
+
+#include <assert.h>
 
 #include <features.h>
 #include <stddef.h>
@@ -33,7 +90,7 @@
 
 //#define MALLOCNARN     (2 * get_nprocs_conf())
 //#define MALLOCNARN     (2 * sysconf(_SC_NPROCESSORS_CONF))
-#define MALLOCNARN     16
+#define MALLOCNARN     8
 #define MALLOCSLABLOG2 18
 #define MALLOCMINSIZE  (1UL << MALLOCMINLOG2)
 #define MALLOCMINLOG2  CLSIZELOG2
@@ -563,6 +620,7 @@ _malloc(size_t size,
                         }
                         mapped = 1;
                     }
+                    ptrval = ptr;
                     /* initialise magazine header */
                     max = 1UL << nblklog2(bktid);
                     if (mapped) {
@@ -579,7 +637,6 @@ _malloc(size_t size,
                     stk = mag->stk;
                     /* initialise allocation stack */
                     incr = 1UL << bktid;
-                    ptrval = ptr;
                     for (n = 0 ; n < max ; n++) {
                         ptr += incr;
                         stk[n] = ptr;
@@ -608,7 +665,7 @@ _malloc(size_t size,
             ptr = ptralign(ptr, align);
         }
         /* store unaligned source pointer */
-        magputptr(mag, ptr, ptrval);
+        magputptr(mag, ptr, clrptr(ptrval));
         /* add magazine to lookup structure using retptr as key */
         setmag(ptr, mag);
 #if defined(ENOMEM)
@@ -616,6 +673,7 @@ _malloc(size_t size,
         errno = ENOMEM;
 #endif
     }
+    assert(ptr != NULL);
 
     return ptr;
 }
