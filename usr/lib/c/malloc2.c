@@ -1,4 +1,4 @@
-/*
+/*r
  * Zero Malloc Revision 2
  *
  * Copyright Tuomo Petteri Venäläinen 2014
@@ -104,7 +104,9 @@
 #define MAGFLGMASK     MAGMAP
 #define MALLOCMAGSIZE  PAGESIZE
 #define MAGGLOBAL      0x0001
+/* magazines for larger/fewer allocations embed the tables in the structure */
 #define magembedstk(bktid) (nbstk(bktid) <= MALLOCMAGSIZE - offsetof(struct mag, data))
+/* magazine header structure */
 struct mag {
     void        *adr;
     long         cur;
@@ -121,6 +123,7 @@ struct mag {
     uint8_t      data[EMPTY];
 };
 
+/* magazine list header structure */
 struct maglist {
     MUTEX       lk;
     long        n;
@@ -129,26 +132,29 @@ struct maglist {
 };
 
 #define MALLOCARNSIZE      rounduppow2(sizeof(struct arn), PAGESIZE)
+/* arena structure */
 struct arn {
-    struct maglist magtab[MALLOCNBKT];
-    struct maglist freetab[MALLOCNBKT];
-    struct maglist hdrtab[MALLOCNBKT];
-    long        nref;
-    MUTEX       nreflk;
+    struct maglist magtab[MALLOCNBKT];  // partially allocated magazines
+    struct maglist freetab[MALLOCNBKT]; // totally unallocated magazines
+    struct maglist hdrtab[MALLOCNBKT];  // header cache
+    long           nref;                // number of threads using the arena
+    MUTEX          nreflk;              // lock for updating nref
 };
 
+/* malloc global structure */
 #define MALLOCINIT 0x00000001L
 struct malloc {
-    struct maglist  magtab[MALLOCNBKT];
-    struct maglist  freetab[MALLOCNBKT];
-    struct arn    **arntab;
-    void          **mdir;
-    MUTEX           initlk;
-    MUTEX           heaplk;
-    pthread_key_t   arnkey;
-    long            narn;
-    long            flags;
-    int             zerofd;
+    struct maglist  magtab[MALLOCNBKT]; // partially allocated magazines
+    struct maglist  freetab[MALLOCNBKT]; // totally unallocated magazines
+    struct arn    **arntab;             // arena structures
+    void          **mdir;               // allocation header lookup structure
+    MUTEX           initlk;             // initialization lock
+    MUTEX           heaplk;             // lock for sbrk()
+    /* FIXME: should this key be per-thread? */
+    pthread_key_t   arnkey;             // for reclaiming arenas to global pool
+    long            narn;               // number of arenas in action
+    long            flags;              // allocator flags
+    int             zerofd;             // file descriptor for mmap()
 };
 
 static struct malloc g_malloc ALIGNED(PAGESIZE);
@@ -156,8 +162,10 @@ __thread long        _arnid = -1;
 MUTEX                _arnlk;
 long                 curarn;
 
+/* allocation pointer tag bits */
 #define BLKDIRTY    0x01
 #define BLKFLGMASK  (MALLOCMINSIZE - 1)
+/* clear tag bits at allocation time */
 #define clrptr(ptr) ((void *)((uintptr_t)ptr & ~BLKFLGMASK))
 
 #define nblklog2(bktid)                                                 \
