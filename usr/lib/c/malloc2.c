@@ -42,7 +42,7 @@
  *        ----
  *        - slab allocator bottom layer
  *        - power-of-two size slab allocations
- *          - supports both heap and mapped regions
+ *          - supports both heap (sbrk()) and mapped (mmap()) regions
  *
  *        heap
  *        ----
@@ -56,7 +56,11 @@
  *
  *        headers
  *        -------
- *        - mapped internal book-keeping for magazines, e.g. pointer stacks
+ *        - mapped internal book-keeping for magazines
+ *          - pointer stacks
+ *          - table to map allocation pointers to magazine pointers
+ *            - may differ because of alignments etc.
+ *          - optionally, a bitmap to denote unallocated slices in magazines
  */
 
 #define GNUMALLOCHOOKS 1
