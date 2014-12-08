@@ -51,5 +51,14 @@ extern void    malloc_stats(void);
 extern void   *malloc_get_state(void);
 extern int     malloc_set_state(void *ptr);
 
+#if defined(_GNU_SOURCE) && (GNUMALLOCHOOKS)
+extern void *(*__malloc_hook)(size_t size, const void *caller);
+extern void *(*__realloc_hook)(void *ptr, size_t size, const void *caller);
+extern void *(*__memalign_hook)(size_t align, size_t size, const void *caller);
+extern void  (*__free_hook)(void *ptr, const void *caller);
+extern void *(*__malloc_initialize_hook)(void);
+extern void  (*__after_morecore_hook)(void);
+#endif
+
 #endif /* __MALLOC_H__ */
 

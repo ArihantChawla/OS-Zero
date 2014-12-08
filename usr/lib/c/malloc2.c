@@ -4,6 +4,7 @@
  * Copyright Tuomo Petteri Venäläinen 2014
  */
 
+#define MALLOCHACKS      1
 #define MALLOCBUFMAP     0
 #define MALLOCVARSIZEBUF 0
 
@@ -171,8 +172,13 @@ struct mag {
 #if (MAGFREEMAP)
     uint8_t     *freemap;
 #endif
+#if (MALLOCHACKS)
+    uintptr_t   *stk;
+    uintptr_t   *ptrtab;
+#else
     void       **stk;
     void       **ptrtab;
+#endif
     uint8_t      data[EMPTY];
 };
 
@@ -214,14 +220,26 @@ static struct malloc g_malloc ALIGNED(PAGESIZE);
 __thread long        _arnid = -1;
 MUTEX                _arnlk;
 long                 curarn;
+#if defined(_GNU_SOURCE) && (GNUMALLOCHOOKS)
+void *(*__malloc_hook)(size_t size, const void *caller);
+void *(*__realloc_hook)(void *ptr, size_t size, const void *caller);
+void *(*__memalign_hook)(size_t align, size_t size, const void *caller);
+void  (*__free_hook)(void *ptr, const void *caller);
+void *(*__malloc_initialize_hook)(void);
+void  (*__after_morecore_hook)(void);
+#endif
 
-/* allocation pointer tag bits */
+/* allocation pointer flag bits */
 #define BLKDIRTY    0x01
 #define BLKFLGMASK  (MALLOCMINSIZE - 1)
-/* clear tag bits at allocation time */
+/* clear flag bits at allocation time */
 #define clrptr(ptr) ((void *)((uintptr_t)ptr & ~BLKFLGMASK))
 
+#if (MALLOCHACKS)
+#define nbstk(bktid) ((1UL << (magnblklog2(bktid) + 1)) * sizeof(uintptr_t))
+#else
 #define nbstk(bktid) ((1UL << (magnblklog2(bktid) + 1)) * sizeof(void *))
+#endif
 #if (MALLOCVARSIZEBUF)
 #define magnbyte(bktid) (1UL << magnbytelog2(bktid))
 #else
@@ -609,7 +627,11 @@ _malloc(size_t size,
     struct mag  *mag;
     uint8_t     *ptr;
     uint8_t     *ptrval;
+#if (MALLOCHACKS)
+    uintptr_t   *stk = NULL;
+#else
     void       **stk = NULL;
+#endif
     long         arnid;
     long         sz = max(blkalignsz(size, align), MALLOCMINSIZE);
     long         bktid = blkbktid(sz);
@@ -627,7 +649,11 @@ _malloc(size_t size,
     mtxlk(&arn->magtab[bktid].lk);
     mag = arn->magtab[bktid].head;
     if (mag) {
+#if (MALLOCHACKS)
+        ptrval = (void *)mag->stk[mag->cur++];
+#else
         ptrval = mag->stk[mag->cur++];
+#endif
         if (mag->cur == mag->max) {
             /* remove fully allocated magazine from partially allocated list */
             if (mag->next) {
@@ -645,7 +671,11 @@ _malloc(size_t size,
         mag = arn->freetab[bktid].head;
         if (mag) {
             /* remove magazine from list of totally unallocated slabs */
+#if (MALLOCHACKS)
+            ptrval = (void *)mag->stk[mag->cur++];
+#else
             ptrval = mag->stk[mag->cur++];
+#endif
             if (mag->next) {
                 mag->next->prev = NULL;
             }
@@ -668,7 +698,11 @@ _malloc(size_t size,
             mtxlk(&g_malloc.magtab[bktid].lk);
             mag = g_malloc.magtab[bktid].head;
             if (mag) {
+#if (MALLOCHACKS)
+                ptrval = (void *)mag->stk[mag->cur++];
+#else
                 ptrval = mag->stk[mag->cur++];
+#endif
                 if (mag->cur == mag->max) {
                     if (mag->next) {
                         mag->next->prev = NULL;
@@ -683,7 +717,11 @@ _malloc(size_t size,
                 mtxlk(&g_malloc.freetab[bktid].lk);
                 mag = g_malloc.freetab[bktid].head;
                 if (mag) {
+#if (MALLOCHACKS)
+                    ptrval = (void *)mag->stk[mag->cur++];
+#else
                     ptrval = mag->stk[mag->cur++];
+#endif
                     if (mag->next) {
                         mag->next->prev = NULL;
                     }
@@ -728,8 +766,13 @@ _malloc(size_t size,
                         }
                         if (magembedstk(bktid)) {
                             /* use magazine headers data-field for allocation stack */
+#if (MALLOCHACKS)
+                            mag->stk = (uintptr_t *)mag->data;
+                            mag->ptrtab = (uintptr_t *)&mag->stk[1UL << magnblklog2(bktid)];
+#else
                             mag->stk = (void **)mag->data;
                             mag->ptrtab = &mag->stk[1UL << magnblklog2(bktid)];
+#endif
                         } else {
                             /* map new allocation stack */
                             stk = mapanon(g_malloc.zerofd, nbstk(bktid));
@@ -781,7 +824,11 @@ _malloc(size_t size,
                     incr = 1UL << bktid;
                     for (n = 0 ; n < max ; n++) {
                         ptr += incr;
+#if (MALLOCHACKS)
+                        stk[n] = (uintptr_t)ptr;
+#else
                         stk[n] = ptr;
+#endif
                     }
                     if (gtpow2(max, 1)) {
                         /* queue slab with an active allocation */
@@ -800,10 +847,10 @@ _malloc(size_t size,
     ptr = clrptr(ptrval);
     if (ptr) {
         /* TODO: unlock magtab earlier */
-        if (zero && (((uintptr_t)ptrval & BLKDIRTY))) {
+        if ((zero) && (((uintptr_t)ptrval & BLKDIRTY))) {
             memset(ptr, 0, 1UL << (bktid));
         }
-        if (align) {
+        if ((align) && ((uintptr_t)ptr & (align - 1))) {
             ptr = ptralign(ptr, align);
         }
         /* store unaligned source pointer */
@@ -843,7 +890,11 @@ _free(void *ptr)
         arn = g_malloc.arntab[arnid];
         max = mag->max;
         bktid = mag->bktid;
-        mag->stk[--mag->cur] = (uint8_t *)((uintptr_t)ptr | BLKDIRTY);
+#if (MALLOCHACKS)
+        mag->stk[--mag->cur] = (uintptr_t)ptr | BLKDIRTY;
+#else
+        mag->stk[--mag->cur] = (void *)((uintptr_t)ptr | BLKDIRTY);
+#endif
         if (!mag->cur) {
         /* TODO: unlock magtab here? */
             if (gtpow2(max, 1)) {
@@ -961,6 +1012,9 @@ malloc(size_t size)
     }
 #endif
     ptr = _malloc(size, 0, 0);
+#if (MALLOCDEBUG)
+    assert(ptr != NULL);
+#endif
 
     return ptr;
 }
@@ -974,6 +1028,9 @@ calloc(size_t n, size_t size)
     if (!sz) {
         return NULL;
     }
+#if (MALLOCDEBUG)
+    assert(ptr != NULL);
+#endif
 
     return ptr;
 }
@@ -1025,6 +1082,9 @@ realloc(void *ptr,
     } else {
         retptr = _realloc(ptr, size, 0);
     }
+#if (MALLOCDEBUG)
+    assert(retptr != NULL);
+#endif
 
     return retptr;
 }
@@ -1052,7 +1112,8 @@ void *
 aligned_alloc(size_t align,
               size_t size)
 {
-    void *ptr = NULL;
+    void   *ptr = NULL;
+    size_t  aln = max(align, MALLOCMINSIZE);
 
 #if defined(_GNU_SOURCE) && (GNUMALLOCHOOKS)
     if (__memalign_hook) {
@@ -1062,11 +1123,14 @@ aligned_alloc(size_t align,
         __memalign_hook(align, size, (const void *)caller);
     }
 #endif
-    if (!powerof2(align) || (size & (align - 1))) {
+    if (!powerof2(aln) || (size & (aln - 1))) {
         errno = EINVAL;
     } else {
-        ptr = _malloc(size, align, 0);
+        ptr = _malloc(size, aln, 0);
     }
+#if (MALLOCDEBUG)
+    assert(ptr != NULL);
+#endif
 
     return ptr;
 }
@@ -1079,8 +1143,9 @@ posix_memalign(void **ret,
                size_t align,
                size_t size)
 {
-    void *ptr = _malloc(size, align, 0);
-    int   retval = -1;
+    void   *ptr = NULL;
+    size_t  aln = max(align, MALLOCMINSIZE);
+    int     retval = -1;
 
 #if defined(_GNU_SOURCE) && (GNUMALLOCHOOKS)
     if (__memalign_hook) {
@@ -1093,11 +1158,14 @@ posix_memalign(void **ret,
     if (!powerof2(align) || (size & (sizeof(void *) - 1))) {
         errno = EINVAL;
     } else {
-        ptr = _malloc(size, align, 0);
+        ptr = _malloc(size, aln, 0);
         if (ptr) {
-            retval ^= retval;
+            retval = 0;
         }
     }
+#if (MALLOCDEBUG)
+    assert(ptr != NULL);
+#endif
     *ret = ptr;
 
     return retval;
@@ -1123,6 +1191,9 @@ valloc(size_t size)
     }
 #endif
     ptr = _malloc(size, PAGESIZE, 0);
+#if (MALLOCDEBUG)
+    assert(ptr != NULL);
+#endif
     
     return ptr;
 }
@@ -1132,7 +1203,8 @@ void *
 memalign(size_t align,
          size_t size)
 {
-    void *ptr = NULL;
+    void   *ptr = NULL;
+    size_t  aln = max(align, MALLOCMINSIZE);
 
 #if defined(_GNU_SOURCE) && (GNUMALLOCHOOKS)
     if (__memalign_hook) {
@@ -1145,8 +1217,11 @@ memalign(size_t align,
     if (!powerof2(align)) {
         errno = EINVAL;
     } else {
-        ptr = _malloc(size, align, 0);
+        ptr = _malloc(size, aln, 0);
     }
+#if (MALLOCDEBUG)
+    assert(ptr != NULL);
+#endif
 
     return ptr;
 }
@@ -1158,6 +1233,10 @@ reallocf(void *ptr,
 {
     void *retptr = _realloc(ptr, size, 1);
 
+#if (MALLOCDEBUG)
+    assert(retptr != NULL);
+#endif
+
     return retptr;
 }
 #endif
@@ -1168,6 +1247,10 @@ pvalloc(size_t size)
 {
     size_t  sz = rounduppow2(size, PAGESIZE);
     void   *ptr = _malloc(sz, PAGESIZE, 0);
+
+#if (MALLOCDEBUG)
+    assert(ptr != NULL);
+#endif
 
     return ptr;
 }
