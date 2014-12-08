@@ -4,9 +4,10 @@
  * Copyright Tuomo Petteri Venäläinen 2014
  */
 
-#define MALLOCHACKS      1
-#define MALLOCBUFMAP     1
-#define MALLOCVARSIZEBUF 0
+#define MALLOCFREEMAP    0  // use free block bitmaps
+#define MALLOCHACKS      1  // enable experimental features
+#define MALLOCBUFMAP     1  // buffer mapped slabs to global pool
+#define MALLOCVARSIZEBUF 0  // use variable-size slabs; FIXME
 
 /*
  * THANKS
@@ -67,6 +68,13 @@
  *          - optionally, a bitmap to denote unallocated slices in magazines
  */
 
+ /*
+  * TODO
+  * ----
+  * - free inactive subtables from mdir
+  * - fix MALLOCVARSIZEBUF
+  */
+
 #define GNUMALLOCHOOKS 1
 
 #include <assert.h>
@@ -78,6 +86,9 @@
 #include <stdint.h>
 #include <errno.h>
 #include <malloc.h>
+#if (MALLOCFREEMAP)
+#include <limits.h>
+#endif
 
 //#include <sys/sysinfo.h>
 
@@ -169,7 +180,7 @@ struct mag {
     long         bktid;
     struct mag  *prev;
     struct mag  *next;
-#if (MAGFREEMAP)
+#if (MALLOCFREEMAP)
     uint8_t     *freemap;
 #endif
 #if (MALLOCHACKS)
@@ -235,10 +246,29 @@ void  (*__after_morecore_hook)(void);
 /* clear flag bits at allocation time */
 #define clrptr(ptr) ((void *)((uintptr_t)ptr & ~BLKFLGMASK))
 
+#if (MALLOCFREEMAP)
+#define magptrndx(mag, ptr) \
+    (((uintptr_t)ptr - mag->adr) >> mag->bktid)
+#endif
 #if (MALLOCHACKS)
-#define magnbytetab(bktid) ((1UL << (magnblklog2(bktid) + 1)) * sizeof(uintptr_t))
+#if (MALLOCFREEMAP)
+#define magnbytetab(bktid) \
+    ((1UL << (magnblklog2(bktid) + 1)) * sizeof(uintptr_t) \
+        + ((1UL << magnblklog2(bktid)) / CHAR_BIT)) 
 #else
-#define magnbytetab(bktid) ((1UL << (magnblklog2(bktid) + 1)) * sizeof(void *))
+#define magnbytetab(bktid) \
+    ((1UL << (magnblklog2(bktid) + 1)) * sizeof(uintptr_t))
+#endif
+#endif
+#else
+#if (MALLOCFREEMAP)
+#define magnbytetab(bktid) \
+    ((1UL << (magnblklog2(bktid) + 1)) * sizeof(void *)
+        + ((1UL << magnblklog2(bktid)) / CHAR_BIT))
+#else
+#define magnbytetab(bktid) \
+    ((1UL << (magnblklog2(bktid) + 1)) * sizeof(void *))
+#endif
 #endif
 #if (MALLOCVARSIZEBUF)
 #define magnbyte(bktid) (1UL << magnbytelog2(bktid))
@@ -629,8 +659,10 @@ _malloc(size_t size,
     uint8_t     *ptrval;
 #if (MALLOCHACKS)
     uintptr_t   *stk = NULL;
+    uintptr_t   *tab = NULL;
 #else
     void       **stk = NULL;
+    void       **tab = NULL;
 #endif
     long         arnid;
     long         sz = max(blkalignsz(size, align), MALLOCMINSIZE);
@@ -773,6 +805,9 @@ _malloc(size_t size,
                             mag->stk = (void **)mag->data;
                             mag->ptrtab = &mag->stk[1UL << magnblklog2(bktid)];
 #endif
+#if (MALLOCFREEMAP)
+                            mag->freemap = (uint8t_t *)&mag->stk[(1UL << (magnblklog2 + 1))];
+#endif
                         } else {
                             /* map new allocation stack */
                             stk = mapanon(g_malloc.zerofd, magnbytetab(bktid));
@@ -820,14 +855,17 @@ _malloc(size_t size,
                     mag->prev = NULL;
                     mag->next = NULL;
                     stk = mag->stk;
+                    tab = mag->ptrtab;
                     /* initialise allocation stack */
                     incr = 1UL << bktid;
                     for (n = 0 ; n < max ; n++) {
                         ptr += incr;
 #if (MALLOCHACKS)
                         stk[n] = (uintptr_t)ptr;
+                        tab[n] = (uintptr_t)0;
 #else
                         stk[n] = ptr;
+                        tab[n] = NULL;
 #endif
                     }
                     if (gtpow2(max, 1)) {
@@ -855,6 +893,14 @@ _malloc(size_t size,
         }
         /* store unaligned source pointer */
         magputptr(mag, ptr, clrptr(ptrval));
+#if (MALLOCFREEMAP)
+        if (bitset(mag->freemap, magptrndx(mag, ptr))) {
+            fprintf(stderr, "trying to reallocate block");
+
+            abort();
+        }
+        setbit(mag->freemap, magptrndx(mag, ptr));
+#endif
         /* add magazine to lookup structure using retptr as key */
         setmag(ptr, mag);
 #if defined(ENOMEM)
@@ -887,6 +933,14 @@ _free(void *ptr)
         /* remove pointer from allocation lookup structure */
         setmag(ptr, NULL);
         ptr = maggetptr(mag, ptr);
+#if (MALLOCFREEMAP)
+        if (!bitset(mag->freemap, ptr)) {
+            fprintf(stderr, "trying free an unused block\n")
+
+            abort();
+        }
+        clrbit(mag, ptr)
+#endif
         arn = g_malloc.arntab[arnid];
         max = mag->max;
         bktid = mag->bktid;
