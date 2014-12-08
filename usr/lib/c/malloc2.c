@@ -5,7 +5,7 @@
  */
 
 #define MALLOCHACKS      1
-#define MALLOCBUFMAP     0
+#define MALLOCBUFMAP     1
 #define MALLOCVARSIZEBUF 0
 
 /*
@@ -100,7 +100,7 @@
 //#define MALLOCNARN     (2 * sysconf(_SC_NPROCESSORS_CONF))
 #define MALLOCNARN           16
 #if (MALLOCVARSIZEBUF)
-#define MALLOCSLABLOG2       18
+#define MALLOCSLABLOG2       19
 #define MALLOCSMALLSLABLOG2  16
 #define MALLOCTINYSLABLOG2   13
 #define MALLOCTEENYSLABLOG2  10
@@ -159,7 +159,7 @@
 #define MALLOCMAGSIZE  PAGESIZE
 #define MAGGLOBAL      0x0001
 /* magazines for larger/fewer allocations embed the tables in the structure */
-#define magembedstk(bktid) (nbstk(bktid) <= MALLOCMAGSIZE - offsetof(struct mag, data))
+#define magembedstk(bktid) (magnbytetab(bktid) <= MALLOCMAGSIZE - offsetof(struct mag, data))
 /* magazine header structure */
 struct mag {
     void        *adr;
@@ -236,9 +236,9 @@ void  (*__after_morecore_hook)(void);
 #define clrptr(ptr) ((void *)((uintptr_t)ptr & ~BLKFLGMASK))
 
 #if (MALLOCHACKS)
-#define nbstk(bktid) ((1UL << (magnblklog2(bktid) + 1)) * sizeof(uintptr_t))
+#define magnbytetab(bktid) ((1UL << (magnblklog2(bktid) + 1)) * sizeof(uintptr_t))
 #else
-#define nbstk(bktid) ((1UL << (magnblklog2(bktid) + 1)) * sizeof(void *))
+#define magnbytetab(bktid) ((1UL << (magnblklog2(bktid) + 1)) * sizeof(void *))
 #endif
 #if (MALLOCVARSIZEBUF)
 #define magnbyte(bktid) (1UL << magnbytelog2(bktid))
@@ -775,7 +775,7 @@ _malloc(size_t size,
 #endif
                         } else {
                             /* map new allocation stack */
-                            stk = mapanon(g_malloc.zerofd, nbstk(bktid));
+                            stk = mapanon(g_malloc.zerofd, magnbytetab(bktid));
                             if (stk == MAP_FAILED) {
                                 unmapanon(mag, MALLOCMAGSIZE);
                                 
@@ -798,7 +798,7 @@ _malloc(size_t size,
                         if (ptr == MAP_FAILED) {
                             unmapanon(mag, MALLOCMAGSIZE);
                             if (!magembedstk(bktid)) {
-                                unmapanon(stk, nbstk(bktid));
+                                unmapanon(stk, magnbytetab(bktid));
                             }
                             
                             return NULL;
