@@ -4,10 +4,14 @@
  * Copyright Tuomo Petteri Venäläinen 2014
  */
 
+#define MALLOCSTKNDX     1
 #define MALLOCFREEMAP    0  // use free block bitmaps
 #define MALLOCHACKS      1  // enable experimental features
 #define MALLOCBUFMAP     1  // buffer mapped slabs to global pool
 #define MALLOCVARSIZEBUF 0  // use variable-size slabs; FIXME
+#if (MALLOCSTKNDX)
+#define MAGPTRNDX        uint32_t
+#endif
 
 /*
  * THANKS
@@ -167,7 +171,7 @@
 
 #define MAGMAP         0x01
 #define MAGFLGMASK     MAGMAP
-#define MALLOCMAGSIZE  PAGESIZE
+#define MALLOCMAGSIZE  (8 * PAGESIZE)
 #define MAGGLOBAL      0x0001
 /* magazines for larger/fewer allocations embed the tables in the structure */
 #define magembedstk(bktid) (magnbytetab(bktid) <= MALLOCMAGSIZE - offsetof(struct mag, data))
@@ -183,7 +187,10 @@ struct mag {
 #if (MALLOCFREEMAP)
     uint8_t     *freemap;
 #endif
-#if (MALLOCHACKS)
+#if (MALLOCSTKNDX)
+    MAGPTRNDX   *stk;
+    MAGPTRNDX   *ptrtab;
+#elif (MALLOCHACKS)
     uintptr_t   *stk;
     uintptr_t   *ptrtab;
 #else
@@ -257,7 +264,32 @@ void  (*__after_morecore_hook)(void);
     (((uintptr_t)ptr - mag->adr) >> mag->bktid)
 #endif
 #if (MALLOCHACKS)
+#if (MAGPTRNDX)
 #if (MALLOCFREEMAP)
+#define magnbytetab(bktid) \
+    ((1UL << (magnblklog2((bktid) + 1))) * sizeof(MAGPTRNDX)
+        + ((1UL << magnblklog2(bktid)) / CHAR_BIT))
+#else
+#define magnbytetab(bktid) \
+    ((1UL << (magnblklog2(bktid) + 1)) * sizeof(MAGPTRNDX))
+#define magnbyte(bktid) \
+    (1UL << magnbytelog2(bktid))
+#else
+#define magnbytetab(bktid) \
+    ((1UL << (magnblklog2(bktid) + 1)) * sizeof(void *)
+        + ((1UL << magnblklog2(bktid)) / CHAR_BIT))
+#endif
+#else
+#define magnbytetab(bktid) \
+    ((1UL << (magnblklog2(bktid) + 1)) * sizeof(void *))
+#endif
+#endif
+#elif (MALLOCVARSIZEBUF)
+#define magnbyte(bktid) (1UL << magnbytelog2(bktid))
+#else
+#define magnbyte(bktid) (1UL << ((bktid) + magnblklog2(bktid)))
+#endif
+#elif (MALLOCFREEMAP)
 #define magnbytetab(bktid) \
     ((1UL << (magnblklog2(bktid) + 1)) * sizeof(uintptr_t) \
         + ((1UL << magnblklog2(bktid)) / CHAR_BIT)) 
@@ -268,19 +300,6 @@ void  (*__after_morecore_hook)(void);
 #endif
 #else
 #if (MALLOCFREEMAP)
-#define magnbytetab(bktid) \
-    ((1UL << (magnblklog2(bktid) + 1)) * sizeof(void *)
-        + ((1UL << magnblklog2(bktid)) / CHAR_BIT))
-#else
-#define magnbytetab(bktid) \
-    ((1UL << (magnblklog2(bktid) + 1)) * sizeof(void *))
-#endif
-#endif
-#if (MALLOCVARSIZEBUF)
-#define magnbyte(bktid) (1UL << magnbytelog2(bktid))
-#else
-#define magnbyte(bktid) (1UL << ((bktid) + magnblklog2(bktid)))
-#endif
 
 #define ptralign(ptr, pow2)                                             \
     (!((uintptr_t)ptr & (align - 1))                                    \
@@ -291,12 +310,26 @@ void  (*__after_morecore_hook)(void);
      ? max(sz, aln)                                                     \
      : (sz) + (aln))
 
+#if (MALLOCSTKNDX)
+#define magptrid(mag, ptr)                                              \
+    ((MAGPTRNDX)((uintptr_t)(ptr) \
+        - mag((uintptr_t)(mag)->adr & ~MAGFLGMASK)) \
+        >> (mag)->bktid)
+#define magputptr(mag, ptr1, ptr2)                                      \
+    (((void **)(mag)->ptrtab)[magptrid(mag, ptr1)] = ptr2ndx(ptr2))
+#define magndx2ptr(mag, ptr) \
+#define magndx2ptr(mag, ndx) \
+    ((void *)((uintptr_t)mag->adr &~MAPFLGMASK) + ((ndx) << mag->bktid))
+#define magidptr(mag, ptr)                                             \
+    (magndx2ptr(mag, (MAGPTRNDX **)(mag)->ptrtab)[magptrid(mag, ptr)])
+#else /* !MALLOCSTKNDX */
 #define magptrid(mag, ptr)                                              \
     (((uintptr_t)(ptr) - ((uintptr_t)(mag)->adr & ~MAGFLGMASK)) >> (mag)->bktid)
 #define magputptr(mag, ptr1, ptr2)                                      \
     (((void **)(mag)->ptrtab)[magptrid(mag, ptr1)] = (ptr2))
 #define maggetptr(mag, ptr)                                             \
     (((void **)(mag)->ptrtab)[magptrid(mag, ptr)])
+#endif /* MALLOCSTKNDX */
 
 #define mdirl1ndx(ptr) (((uintptr_t)ptr >> MDIRL1NDX) & ((1 << MDIRNL1BIT) - 1))
 #define mdirl2ndx(ptr) (((uintptr_t)ptr >> MDIRL2NDX) & ((1 << MDIRNL2BIT) - 1))
@@ -517,6 +550,7 @@ setmag(void *ptr,
         }
     if (ptr2) {
         ptr2->nref++;
+#endif
     }
 #if (MDIRNL4BIT)
     pptr = ptr2;
@@ -937,7 +971,10 @@ _malloc(size_t size,
                         }
                         if (magembedstk(bktid)) {
                             /* use magazine headers data-field for allocation stack */
-#if (MALLOCHACKS)
+#if (MAGPTRNDX)
+                            mag->stk = (MAGPTRNDX *)mag->data;
+                            mag->ptrtab = (MAGPTRNDX *)&mag->stk[1UL << magnblklog2(mag->bktid)];
+#elif (MALLOCHACKS)
                             mag->stk = (uintptr_t *)mag->data;
                             mag->ptrtab = (uintptr_t *)&mag->stk[1UL << magnblklog2(bktid)];
 #else
