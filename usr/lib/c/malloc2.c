@@ -201,6 +201,12 @@ struct maglist {
     struct mag *tail;
 };
 
+#if (MALLOCFREEMDIR)
+struct magitem {
+    struct mag *mag;
+    long        nref;
+}
+#endif
 #define MALLOCARNSIZE      rounduppow2(sizeof(struct arn), PAGESIZE)
 /* arena structure */
 struct arn {
@@ -389,12 +395,21 @@ findmag(void *ptr)
 #if (MDIRNL4BIT)
         if (ptr2) {
             ptr1 = ((struct mag **)ptr2)[l3];
+#if (MALLOCFREEMDIR)
+            if (ptr1) {
+                mag = ((struct magitem **)ptr1)[l4]->mag;
+            }
+        }
+#endif
             if (ptr1) {
                 mag = ((struct mag **)ptr1)[l4];
             }
         }
 #else
         if (ptr2) {
+#if (MALLOCFREEMDIR)
+            mag = ((struct magitem **)ptr2)[l3]->mag;
+#endif
             mag = ((struct mag **)ptr2)[l3];
         }
 #endif
@@ -407,34 +422,86 @@ static void
 setmag(void *ptr,
        struct mag *mag)
 {
-    uintptr_t    l1 = mdirl1ndx(ptr);
-    uintptr_t    l2 = mdirl2ndx(ptr);
-    uintptr_t    l3 = mdirl3ndx(ptr);
+    uintptr_t        l1 = mdirl1ndx(ptr);
+    uintptr_t        l2 = mdirl2ndx(ptr);
+    uintptr_t        l3 = mdirl3ndx(ptr);
 #if (MDIRNL4BIT)
-    uintptr_t    l4 = mdirl4ndx(ptr);
+    uintptr_t        l4 = mdirl4ndx(ptr);
 #endif
-    void        *ptr1;
-    void        *ptr2;
-    void       **pptr;
+#if (MALLOCFREEMAP)
+    struct magitem **ptr1;
+    struct magitem **ptr1;
+#endif
+    void            *ptr1;
+    void            *ptr2;
+    void           **pptr;
+#if (MALLOCFREEMDIR)
+    struct magitem **item;
+#else
     struct mag **item;
+#endif
+#if (MALLOCFREEMDIR)
+    void        *tab[3] = { NULL, NULL, NULL };
+    long         nref;
+#endif
 
     ptr1 = g_malloc.mdir[l1];
     if (!ptr1) {
+#if (MALLOCFREEMDIR)
+        if (!ptr) {
+
+            return;
+        }
+        g_malloc.mdir[l1] = ptr1 = mapanon(g_malloc.zerofd,
+                                           MDIRNL2KEY * sizeof(struct magitem));
+#else
         g_malloc.mdir[l1] = ptr1 = mapanon(g_malloc.zerofd,
                                            MDIRNL2KEY * sizeof(void *));
+#endif
         if (ptr1 == MAP_FAILED) {
 #ifdef ENOMEM
             errno = ENOMEM;
 #endif
 
             exit(1);
+#if (MALLOCFREEMDIR)
+        } else {
+            ptr1->nref++;
         }
+#if (MALLOCFREEMAP)
+    } else if (!ptr)
+        nref = --ptr1->nref;
+        if (!nref) {
+            tab[0] = ptr1;
+        }
+    } else {
+        ptr1->nref++;
+#endif /* MALLOCFREEMDIR */
     }
     pptr = ptr1;
     ptr2 = pptr[l2];
     if (!ptr2) {
+#if (MALLOCFREEMDIR)
+        if (!ptr) {
+            nref = --ptr1->nref;
+            if (!nref) {
+                tab[1] = ptr1;
+            }
+            ptr1 = tab[0];
+            if (ptr1) {
+                unmapanon(ptr1,
+                    MDIRNL2KEY * sizeof(struct magitem));
+
+                return;
+            }
+        } else {
+            pptr[l2] = ptr2 = mapanon(g_malloc.zerofd,
+                                      MDIRNL3KEY * sizef(struct magitem));
+        }
+#else /* !MALLOCFREEMDIR */
         pptr[l2] = ptr2 = mapanon(g_malloc.zerofd,
                                   MDIRNL3KEY * sizeof(struct mag *));
+#endif /* MALLOCFREEMDIR */
         if (ptr2 == MAP_FAILED) {
 #ifdef ENOMEM
             errno = ENOMEM;
@@ -442,23 +509,95 @@ setmag(void *ptr,
 
             exit(1);
         }
+#if (MALLOCFREEMDIR)
+    } else if (!ptr) {
+        nref = --ptr->nref;
+        if (!nref) {
+            tab[1] = ptr;
+        }
+    if (ptr2) {
+        ptr2->nref++;
     }
 #if (MDIRNL4BIT)
     pptr = ptr2;
     ptr1 = pptr[l3];
     if (!ptr1) {
+#if (MALLOCFREEMDIR)
+        if (!ptr) {
+            ptr1 = tab[0];
+            if (ptr1) {
+                unmapanon(ptr,
+                          MDIRNL2KEY * sizeof(struct magitem));
+            }
+            ptr1 = tab[1];
+            if (ptr1) {
+                unmapanon(ptr,
+                          MDIRNL3KEY * sizeof(struct magitem));
+            }
+
+            return;
+        } else {
+            pptr[l3] = ptr1 = mapanon(g_malloc.zerofd,
+                                      MDIRNL4KEY * sizeof(struct magitem));
+        }
+#else
         pptr[l3] = ptr1 = mapanon(g_malloc.zerofd,
                                   MDIRNL4KEY * sizeof(struct mag *));
-        if (ptr2 == MAP_FAILED) {
-#ifdef ENOMEM
+#endif
+        if (ptr1 == MAP_FAILED) {
+#if defined(ENOMEM)
             errno = ENOMEM;
 #endif
+#if (MALLOCFREEMDIR)
+            if (!ptr) {
+               ptr1 = tab[0];
+                if (ptr1) {
+                    unmapanon(ptr,
+                              MDIRNL2KEY * sizeof(struct magitem));
+                }   
+                ptr1 = tab[1];
+                if (ptr1) {
+                    unmapanon(ptr1,
+                              MDIRNL3KEY * sizeof(struct magitem));
+                }
+
+                return;
+            } else {
+                ptr1->nref++;
+            }
 
             exit(1);
+        } else if (!ptr) {
+            nref = --ptr1->nref;
+            if (!nref) {
+                tab[2] = ptr1;
+            }
+           ptr1 = tab[0];
+            if (ptr1) {
+                unmapanon(ptr1,
+                          MDIRNL2KEY * sizeof(struct magitem));
+            }   
+            ptr1 = tab[1];
+            if (ptr1) {
+                unmapanon(ptr1,
+                          MDIRNL3KEY * sizeof(struct magitem));
+            }
+            ptr1 = tab[2];
+            if (ptr1) {
+                unmapanon(ptr1,
+                          MDIRNL4KEY * sizeof(struct magitem));
+            }
+ 
+            return;
         }
+    } else if (ptr1) {
+        ptr1->nref++;
     }
+    item = &((struct magitem **)ptr1)->ptr;
+#else /* !MALLOCFREEMDIR */
     item = &((struct mag **)ptr1)[l4];
-#else
+#endif
+#else /* !MDIRNL4BIT */
     item = &((struct mag **)ptr2)[l3];
 #endif
     *item = mag;
