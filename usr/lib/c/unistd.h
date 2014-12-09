@@ -34,7 +34,7 @@ extern char **environ;
 /* types (hopefully) not declared yet... :) */
 #if (_BSD_SOURCE) || (_XOPEN_SOURCE)
 /* TODO: check what this type is for and what it should be :) */
-typedef long socklen_t;
+//typedef long socklen_t;
 #endif
 /* system types - TODO: figure out which headers to drop some of these into */
 //typedef int32_t dev_t;

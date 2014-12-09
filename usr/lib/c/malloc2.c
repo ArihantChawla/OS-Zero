@@ -4,6 +4,7 @@
  * Copyright Tuomo Petteri Venäläinen 2014
  */
 
+#define MALLOCDEBUG      0
 #define MALLOCFREEMDIR   0  // under construction
 #define MALLOCSTKNDX     0
 #define MALLOCFREEMAP    0  // use free block bitmaps
@@ -79,8 +80,9 @@
 
 #define GNUMALLOCHOOKS 1
 
+#if (MALLOCDEBUG)
 #include <assert.h>
-
+#endif
 #include <features.h>
 #include <stddef.h>
 #include <stdlib.h>
@@ -221,7 +223,7 @@ struct maglist {
 struct magitem {
     struct mag *mag;
     long        nref;
-}
+};
 #endif
 
 #define MALLOCARNSIZE      rounduppow2(sizeof(struct arn), PAGESIZE)
@@ -310,11 +312,11 @@ void  (*__after_morecore_hook)(void);
 #define magputptr(mag, ptr1, ptr2)                                      \
     ((mag)->ptrtab[magptr2ndx(mag, ptr1)] = magptr2ndx(mag, ptr2))
 #define magptr2ndx(mag, ptr)                                            \
-    ((MAGPTRNDX)(((uintptr_t)ptr - ((uintptr_t)(mag)->adr & ~(MAGFLGMASK))) >> (bktid)))
+    ((MAGPTRNDX)(((uintptr_t)ptr \
+        - ((uintptr_t)(mag)->adr & ~(MAGFLGMASK))) \
+     >> (bktid)))
 #define magndx2ptr(mag, ndx)                                            \
     ((void *)((uintptr_t)(mag)->adr &~MAGFLGMASK) + ((ndx) << (mag)->bktid))
-#define magidptr(mag, ptr)                                              \
-    (magndx2ptr(mag, ndx))
 #define maggetptr(mag, ptr)                                             \
     (magndx2ptr(mag, magptr2ndx(mag, ptr)))
 #else /* !MALLOCSTKNDX */
@@ -1051,9 +1053,8 @@ _malloc(size_t size,
                         /* initialise allocation stack */
                         incr = 1UL << bktid;
                         for (n = 0 ; n < max ; n++) {
-                            ptr += incr;
 #if (MALLOCSTKNDX)
-                            stk[n] = magptr2ndx(mag, ptr);
+                            stk[n] = (MAGPTRNDX)n;
                             tab[n] = (MAGPTRNDX)0;
 #elif (MALLOCHACKS)
                             stk[n] = (uintptr_t)ptr;
@@ -1062,6 +1063,7 @@ _malloc(size_t size,
                             stk[n] = ptr;
                             tab[n] = NULL;
 #endif
+                            ptr += incr;
                         }
                         if (gtpow2(max, 1)) {
                             /* queue slab with an active allocation */
@@ -1130,7 +1132,6 @@ _free(void *ptr)
         arnid = mag->arnid;
         bktid = mag->bktid;
         arn = g_malloc.arntab[arnid];
-//        mtxlk(&arn->magtab[bktid].lk);
         /* remove pointer from allocation lookup structure */
         setmag(ptr, NULL);
         ptr = maggetptr(mag, ptr);
@@ -1153,7 +1154,6 @@ _free(void *ptr)
         mag->stk[--mag->cur] = (void *)((uintptr_t)ptr | BLKDIRTY);
 #endif
         if (!mag->cur) {
-        /* TODO: unlock magtab here? */
             if (gtpow2(max, 1)) {
                 mtxlk(&arn->magtab[bktid].lk);
                 /* remove magazine from partially allocated list */
