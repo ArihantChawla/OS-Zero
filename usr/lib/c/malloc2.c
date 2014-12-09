@@ -181,9 +181,9 @@
 #define MAGMAP         0x01
 #define MAGFLGMASK     MAGMAP
 #define MALLOCMAGSIZE  (8 * PAGESIZE)
-#define MAGGLOBAL      0x0001
 /* magazines for larger/fewer allocations embed the tables in the structure */
-#define magembedstk(bktid) (magnbytetab(bktid) <= MALLOCMAGSIZE - offsetof(struct mag, data))
+#define magembedstk(bktid) \
+    (magnbytetab(bktid) <= MALLOCMAGSIZE - offsetof(struct mag, data))
 /* magazine header structure */
 struct mag {
     void        *adr;
@@ -223,6 +223,7 @@ struct magitem {
     long        nref;
 }
 #endif
+
 #define MALLOCARNSIZE      rounduppow2(sizeof(struct arn), PAGESIZE)
 /* arena structure */
 struct arn {
@@ -253,6 +254,7 @@ static struct malloc g_malloc ALIGNED(PAGESIZE);
 __thread long        _arnid = -1;
 MUTEX                _arnlk;
 long                 curarn;
+
 #if defined(_GNU_SOURCE) && (GNUMALLOCHOOKS)
 void *(*__malloc_hook)(size_t size, const void *caller);
 void *(*__realloc_hook)(void *ptr, size_t size, const void *caller);
