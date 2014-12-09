@@ -4,15 +4,12 @@
  * Copyright Tuomo Petteri Venäläinen 2014
  */
 
-#define MAGFREEMDIR      0  // under construction
+#define MALLOCFREEMDIR   0  // under construction
 #define MALLOCSTKNDX     0
 #define MALLOCFREEMAP    0  // use free block bitmaps
 #define MALLOCHACKS      1  // enable experimental features
 #define MALLOCBUFMAP     1  // buffer mapped slabs to global pool
 #define MALLOCVARSIZEBUF 0  // use variable-size slabs; FIXME
-#if (MALLOCSTKNDX)
-#define MAGPTRNDX        uint16_t
-#endif
 
 /*
  * THANKS
@@ -131,6 +128,9 @@
 #define MALLOCMINSIZE        (1UL << MALLOCMINLOG2)
 #define MALLOCMINLOG2        CLSIZELOG2
 #define MALLOCNBKT           PTRBITS
+#if (MALLOCSTKNDX)
+#define MAGPTRNDX            uint32_t
+#endif
 
 /*
  * magazines for bucket bktid have 1 << magnblklog2(bktid) blocks of
