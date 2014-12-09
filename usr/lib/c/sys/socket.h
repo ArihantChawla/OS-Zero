@@ -20,15 +20,16 @@ extern unsigned char  *CMSG_DATA(struct cmsghdr *cmsg);
 #if defined(EMPTY)
 #define CMSG_DATA(cmsg) ((void *)&(cmsg)->cmsg_data)
 #else
-#define CMSG_DATA(cmsg) ((unsigned char *)cmsg + CMSG_ALIGN(sizeof(struct cmsghdr)))
+#define CMSG_DATA(cmsg) ((unsigned char *)(cmsg) + CMSG_ALIGN(sizeof(struct cmsghdr)))
 #endif
 #define CMSG_FIRSTHDR(msg) \
     (((msg)->msg_controllen) ? (msg)->msg_control : NULL)
 #define CMSG_NEXTHDR(msg, cmsg) \
     ((cmsg) \
-     ? ((((uint8_t *)cmsg + cmsg->cmsg_len) < (uint8_t *)msg->control + (msg)->controllen) \
-    	? (void *)((uint8_t *)cmsg + CMSG_ALIGN(cmsg->cmsg_len)) \
-        : NULL) \
+     ? ((((uint8_t *)(cmsg) (cmsg)->cmsg_len)
+     		< (uint8_t *)(msg)->control + (msg)->controllen) \
+    	? (void *)((uint8_t *)(cmsg) + CMSG_ALIGN((cmsg)->cmsg_len)) \
+        : NULL) \	
      : CMSG_FIRSTHDR(msg))
 #define CMSG_ALIGN(sz) \
     rounduppow2(sz, sizeof(long))
