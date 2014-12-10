@@ -3,8 +3,12 @@
 
 #include <features.h>
 
-#if !(__KERNEL__) && (PTHREAD)
+#if !(__KERNEL__)
+#if (PTHREAD)
 extern __thread int errno;
+#else
+extern int          errno;
+#endif
 #endif
 
 #define ENOSYS       1

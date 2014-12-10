@@ -36,25 +36,25 @@ extern char **__environ;
 extern char **environ;
 #endif
 
-extern int           access(const char *name, int type);
+extern int            access(const char *name, int type);
 #if defined(_GNU_SOURCE)
-extern int           euidaccess(const char *name, int type);
-extern int           eaccess(const char *name, int type);
-extern int           faccessat(int fd, const char *name, int type, int flg);
+extern int            euidaccess(const char *name, int type);
+extern int            eaccess(const char *name, int type);
+extern int            faccessat(int fd, const char *name, int type, int flg);
 #endif
 #if (_FILE_OFFSET_BITS == 64)
-#define              llseek(fd, ofs, whence) lseek(fd, ofs, whence)
+#define               llseek(fd, ofs, whence) lseek(fd, ofs, whence)
 #endif
-extern off_t         lseek(int fd, off_t ofs, int whence);
-extern ssize_t       read(int fd, void *buf, size_t count);
-extern ssize_t       write(int fd, void *buf, size_t count);
-extern int           close(int fd);
+extern off_t          lseek(int fd, off_t ofs, int whence);
+extern ssize_t        read(int fd, void *buf, size_t count);
+extern ssize_t        write(int fd, void *buf, size_t count);
+extern int            close(int fd);
 #if (USEUNIX98)
-extern ssize_t       pread(int fd, void *buf, size_t len, off_t ofs);
-extern ssize_t       pwrite(int fd, const void *buf, size_t len, off_t ofs);
+extern ssize_t        pread(int fd, void *buf, size_t len, off_t ofs);
+extern ssize_t        pwrite(int fd, const void *buf, size_t len, off_t ofs);
 #endif
-extern int           pipe(int fd[2]);
-extern unsigned int  alarm(unsigned int nsec);
+extern int            pipe(int fd[2]);
+extern unsigned int   alarm(unsigned int nsec);
 extern unsigned int   sleep(unsigned int nsec);
 #if (_BSD_SOURCE) || (USEXOPENEXT)
 extern useconds_t     ualarm(useconds_t value, useconds_t interval);
@@ -72,12 +72,12 @@ extern int            fchownat(int fd, const char *name, uid_t uid, gid_t gid);
 #if (_BSD_SOURCE) || (USEXOPENEXT)
 extern int            fchdir(int fd);
 #endif
-extern char          *getcwd(char *buf, size_t len);
+extern char         * getcwd(char *buf, size_t len);
 #if (_BSD_SOURCE) || (USEXOPENEXT)
-extern char          *getwd(char *buf);
+extern char         * getwd(char *buf);
 #endif
 #if defined(_GNU_SOURCE)
-extern char          *get_current_dir_name(void);
+extern char         * get_current_dir_name(void);
 #endif
 extern int            dup(int fd);
 extern int            dup2(int fd, int newfd);
@@ -158,7 +158,7 @@ extern pid_t          fork(void);
  */
 extern pid_t          vfork(void);
 #endif
-extern char          *ttyname(int fd);
+extern char         * ttyname(int fd);
 extern int            ttyname_r(int fd, char *buf, size_t len);
 #if (_BSD_SOURCE) || ((USEXOPENEXT) && !(USEUNIX98))
 extern int            ttyslot(void);
@@ -205,14 +205,14 @@ extern int            revoke(const char *file);
 extern int            profil(unsigned short *buf, size_t size, size_t ofs,
                              unsigned int scale);
 extern int            acct(const char *name);
-extern char          *getusershell(void);
+extern char         * getusershell(void);
 extern void           endusershell(void);
 extern void           setusershell(void);
 extern int            daemon(int nochdir, int noclose);
 #endif
 #if (_BSD_SOURCE) || ((_XOPEN_SOURCE) && !(USEXOPEN2K))
 extern int            chroot(const char *path);
-extern char          *getpass(const char *prompt);
+extern char         * getpass(const char *prompt);
 #endif
 #if (_BSD_SOURCE) || (_XOPEN_SOURCE)
 extern int            fsync(int fd);
@@ -229,7 +229,7 @@ extern int            ftruncate(int fd, off_t len);
 #endif
 #if (USEXOPENEXT)
 extern int            brk(void *adr);
-extern void          *sbrk(intptr_t delta);
+extern void         * sbrk(intptr_t delta);
 #endif
 extern long           syscall(long num, ...);
 extern int            lockf(int fd, int cmd, off_t len);
@@ -238,14 +238,14 @@ extern int            fdatasync(int fd);
 #endif
 
 #if (_XOPEN_SOURCE)
-extern char          *crypt(const char *key, const char *salt);
+extern char         * crypt(const char *key, const char *salt);
 extern void           encrypt(char *blk, int flg);
 extern void           swab(const void *__restrict from, void *__restrict to,
                            ssize_t n);
 #endif
 
 #if (_XOPEN_SOURCE)
-extern char          *ctermid(char *str);
+extern char         * ctermid(char *str);
 #endif
 
 #if (_XOPEN_SOURCE_EXTENDED)

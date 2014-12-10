@@ -46,6 +46,7 @@ typedef dev_t           major_t;
 typedef dev_t           minor_t;
 //typedef uint32_t        fsblkcnt_t;     // filesystem block count
 //typedef uint32_t        fsfilcnt_t;     // filesystem file count
+typedef uint32_t        uid_t;
 typedef uint32_t        gid_t;          // group ID
 //typedef long            id_t;
 typedef long            key_t;          // IPC key
@@ -90,8 +91,8 @@ typedef unsigned long   fsid_t;
 
 /* virtual memory related types */
 typedef uintptr_t       pfn_t;          // page frame #
-typedef unsigned long   pgcnt_t;        // # of pages
-typedef long            spgcnt_t;       // signed # of pages
+typedef uintptr_t       pgcnt_t;        // # of pages
+typedef intptr_t        spgcnt_t;       // signed # of pages
 typedef unsigned char   use_t;          // use count for swap
 typedef short           sysid_t;
 typedef short           index_t;

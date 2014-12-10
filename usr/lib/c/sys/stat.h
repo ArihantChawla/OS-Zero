@@ -5,7 +5,6 @@
 #include <sys/types.h>
 #include <time.h>
 
-/* TODO: perhaps these should be put into a kernel header... */
 #define __S_IFMT   0xff000000
 #define __S_IFDIR  0x01000000
 #define __S_IFCHR  0x02000000
@@ -69,11 +68,18 @@ struct stat {
     time_t    st_ctime;         // last status change time
 };
 
-int stat(const char *path, struct stat *buf);
-int fstat(int fd, struct stat *buf);
+extern int stat(const char *path, struct stat *buf);
+extern int fstat(int fd, struct stat *buf);
 #if (_BSD_SOURCE) || (_XOPEN_SOURCE >= 500)                             \
     || ((_XOPEN_SOURCE) && (_XOPEN_SOURCE_EXTENDED))
-int lstat(const char *path, struct stat *buf);
+extern int lstat(const char *path, struct stat *buf);
+#endif
+/*
+ * fdtype is one of the S_IF* macros defined in <sys/stat.h>
+ * returns 1 if fd is an open object of fdtype, 0 if not, -1 on errror (errno)
+ */
+#if (_UNIX_SOURCE)
+extern int isfdtype(int fd, int type);
 #endif
 
 #endif /* __SYS_STAT_H__ */

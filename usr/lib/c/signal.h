@@ -9,48 +9,14 @@
 #include <sys/types.h>
 #include <zero/param.h>
 #include <unistd.h>
+#include <zero/param.h>
 #if (_ZERO_SOURCE)
-/* kernel signal interface */
 #include <kern/signal.h>
 #endif
 #if (PTHREAD)
 #include <pthread.h>
 #endif
-
-/* internal. */
-#define _sigvalid(sig)  ((sig) && (!((sig) & ~SIGMASK)))
-#define _sigrt(sig)     ((sig) && (!((sig) & ~SIGRTMASK)))
-#define _signorm(sig)   ((sig) && (!((sig) & SIGRTMASK)))
-
-#if defined(__x86_64__) || defined(__amd64__) || defined(___alpha__)
-#define SIG32BIT 0
-#else
-#define SIG32BIT 1
-#endif
-
-#if (_POSIX_SOURCE)
-
-typedef volatile long   sig_atomic_t;
-#if (SIG32BIT)
-struct _sigset {
-    uint32_t norm;
-    uint32_t rt;
-};
-typedef struct _sigset   sigset_t;
-#else
-typedef long             sigset_t;
-#endif
-typedef void           (*__sighandler_t)(int);
-typedef __sighandler_t  sighandler_t;
-#if (_GNU_SOURCE)
-typedef void            signalhandler_t(int);
-#endif
-
-#endif /* _POSIX_SOURCE */
-
-#if (_BSD_SOURCE)
-typedef void           (*sig_t)(int);
-#endif
+#include <bits/signal.h>
 
 #if (_POSIX_SOURCE) && defined(USEPOSIX199309)
 //#include <time.h>
@@ -141,13 +107,11 @@ extern int sigprocmask(int how, const sigset_t *__restrict set,
                        sigset_t *__restrict oldset);
 /* change blocked signals to set, wait for a signal, restore the set */
 extern int sigsuspend(const sigset_t *set);
-#if 0 /* TODO: struct sigaction */
 extern int sigaction(int sig, const struct sigaction *__restrict act,
                      struct sigaction *__restrict oldact);
-#endif
 extern int sigpending(sigset_t *set);
 extern int sigwait(const sigset_t *set, int *__restrict sig);
-#if (USEPOSIX199309) && 0 /* TODO: siginfo_t */
+#if (USEPOSIX199309)
 extern int sigwaitinfo(const sigset_t *__restrict set,
                        siginfo_t *__restrict info);
 extern int sigtimedwait(const sigset_t *__restrict set,
@@ -171,8 +135,8 @@ struct sigstack {
 
 struct sigaltstack {
     char *ss_base;
-    int   ss_size;
-    int   ss_flags;
+    int   ss_len;
+    int   ss_onstack;
 };
 
 /*
@@ -183,11 +147,15 @@ struct sigaltstack {
 extern int siginterrupt(int sig, int intr);
 
 extern int sigstack(struct sigstack *stk, struct sigstack *oldstk);
-extern int sigaltstack(const struct sigaltstack *__restrict stk,
-                       struct sigaltstack *__restrict oldstk);
+#if (USEBSD)
+extern int sigaltstack(const struct sigaltstack *stk,
+                       struct sigaltstack *oldstk);
+#else
+extern int sigaltstack(const stack_t *stk, const stack_t *oldstk)
+#endif
 
-#if (_XOPEN_SOURCE) && 0
-#include <sys/ucontext.h>
+#if (_XOPEN_SOURCE)
+#include <ucontext.h>
 #endif
 
 #endif /* _BSD_SOURCE || USEXOPENEXT */
@@ -235,7 +203,7 @@ extern __sighandler_t sigset(int sig, __sighandler_t func);
          ? (((sp)->norm >> (sig)) & 0x01)                               \
          : (((sp)->rt >> (sig - SIGRTMIN)) & 0x01))))
 #if (_GNU_SOURCE)
-#define sigisemptyset(sp) ((sp)->norm | (sp)->rt)
+#define sigisemptyset(sp) (!(sp)->norm | !(sp)->rt)
 #endif
 
 #else /* !SIG32BIT */
@@ -248,20 +216,20 @@ extern __sighandler_t sigset(int sig, __sighandler_t func);
 #define sigaddset(sp, sig)                                              \
     ((!_sigvalid(sig)                                                   \
       ? (-1L)                                                           \
-      : ((sp)->norm |= (1UL << (sig)),                                  \
+      : ((sp) |= (1UL << (sig)),                                        \
          0)))
-#define sigdelsetset(sp, sig)                                           \
+#define sigdelset(sp, sig)                                              \
     ((!_sigvalid(sig)                                                   \
       ? (-1L)                                                           \
-      : ((sp)->norm &= ~(1UL << (sig)),                                 \
+      : ((sp) &= ~(1UL << (sig)),                                       \
          0)))
 #define sigismember(sp, sig)                                            \
     ((!_sigvalid(sig)                                                   \
       ? (-1)                                                            \
-      : (*(sp) & (1L << (sig)),                                         \
+      : (*(sp) & (1UL << (sig)),                                        \
          0)))
 #if (_GNU_SOURCE)
-#define sigisemptyset(sp) (sp)
+#define sigisemptyset(sp) (!(sp))
 #endif
 
 #endif /* SIG32BIT */
@@ -271,31 +239,6 @@ extern __sighandler_t sigset(int sig, __sighandler_t func);
 #if (_BSD_SOURCE)
 #define BADSIG       SIG_ERR
 #endif
-
-/* sigaction() definitions */ 
-#define SA_NOCLDSTOP SIG_NOCLDSTOP
-#define SA_NOCLDWAIT SIG_NOCLDWAIT
-#define SA_NODEFER   SIG_NODEFER
-#define SA_RESETHAND SIG_RESETHAND
-#define SA_SIGINFO   SIG_SIGINFO
-/* non-POSIX */
-#define SA_ONSTACK   SIG_ONSTACK
-#define SA_RESTART   SIG_RESTART
-
-#define SIGSTKSZ     NBPG
-#define SS_DISABLE   (1 << 0)
-#define SS_ONSTACK   (1 << 1)
-
-/* special values. */
-#define SIG_ERR      ((sighandler_t)-1L)
-#define SIG_IGN      ((sighandler_t)0L)
-#define SIG_DFL      ((sighandler_t)1L)
-#define SIG_HOLD     ((sighandler_t)2L)
-
-/* flags for sigprocmask() */
-#define SIG_BLOCK    1
-#define SIG_UNBLOCK  2
-#define SIG_SETMASK  3
 
 union sigval {
     int   sival_int;
@@ -325,19 +268,12 @@ struct _siginfo {
 };
 typedef struct _siginfo siginfo_t;
 
-struct sigaction {
-    void     (*sa_handler)(int);
-    sigset_t  sa_mask;
-    int       sa_flags;
-    void     (*sa_sigaction)(int, siginfo_t, void *);
-};
-
 /* TODO: which standards cover the stuff below? */
-struct _stack {
+typedef struct {
     void   *ss_sp;
     size_t  ss_size;
     int     ss_flags;
-};
+} stack_t;
 
 #endif /* __SIGNAL_H__ */
 

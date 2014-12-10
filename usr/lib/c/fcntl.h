@@ -10,6 +10,7 @@
 #if (_XOPEN_SOURCE)
 #include <kern/io.h>
 #endif
+#include <bits/fcntl.h>
 
 #if !defined(F_LOCK) && (USEXOPENEXT) && !(_POSIX_SOURCE)
 extern int     lockf(int fd, int cmd, off_t len);

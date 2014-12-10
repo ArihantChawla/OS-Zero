@@ -1,3 +1,7 @@
+/* http://pubs.opengroup.org/onlinepubs/009695399/basedefs/limits.h.html */
+
+/* TODO: add loads of POSIX stuff... =) */
+
 #ifndef __LIMITS_H__
 #define __LIMITS_H__
 
