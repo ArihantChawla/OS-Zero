@@ -3,6 +3,7 @@
 
 #include <features.h>
 #include <stdint.h>
+#include <sys/siginfo.h>
 #if (_ZERO_SOURCE)
 #include <kern/signal.h>
 #endif
@@ -27,6 +28,13 @@
 #define SIG_BLOCK    1
 #define SIG_UNBLOCK  2
 #define SIG_SETMASK  3
+
+#define SIGNO_MASK  0x000000ff
+#define SIGDEFER    0x00000100
+#define SIGHOLD     0x00000200
+#define SIGRELSE    0x00000400
+#define SIGIGNORE   0x00000800
+#define SIGPAUSE    0x00001000
 
 typedef volatile long    sig_atomic_t;
 #if (SIG32BIT)
@@ -62,8 +70,8 @@ typedef void           (*sig_t)(int);
 
 #define MINSIGSTKSZ  PAGESIZE
 #define SIGSTKSZ     (4 * PAGESIZE)
-#define SS_ONSTACK   0x01
-#define SS_DISABLE   0x02
+#define SS_ONSTACK   0x00000001
+#define SS_DISABLE   0x00000002
 
 /* special values. */
 #if 0
@@ -80,6 +88,86 @@ struct sigaction {
     sigset_t  sa_mask;
     int       sa_flags;
 };
+
+#if (_POSIX_SOURCE)
+
+#if (SIG32BIT)
+
+//#define _sigptr(sp) ((struct sigset *)(sp))
+
+/* POSIX */
+#define sigemptyset(sp)                                                 \
+    (!(sp)->norm && !(sp)->rt)
+#define sigfillset(sp)                                                  \
+    (((sp)->norm = (sp)->rt = ~UINT32_C(0)), 0)
+#define sigaddset(sp, sig)                                              \
+    ((!_sigvalid(sig)                                                   \
+      ? (-1)                                                            \
+      : (_signorm(sig)                                                  \
+         ? ((sp)->norm |= (1UL << (sig)))                               \
+         : ((sp)->rt |= (1UL << ((sig) - SIGRTMIN))))),                 \
+     0)
+#define sigdelset(sp, sig)                                              \
+    ((!_sigvalid(sig)                                                   \
+      ? (-1)                                                            \
+      : (_signorm(sig)                                                  \
+         ? ((sp)->norm &= ~(1UL << (sig)))                              \
+         : ((sp)->rt &= ~(1UL << ((sig) - SIGRTMIN))))),                \
+     0)
+#define sigismember(sp, sig)                                            \
+    ((!_sigvalid(sig)                                                   \
+      ? (-1)                                                            \
+      : (_signorm(sig)                                                  \
+         ? (((sp)->norm >> (sig)) & 0x01)                               \
+         : (((sp)->rt >> (sig - SIGRTMIN)) & 0x01))))
+#if (_GNU_SOURCE)
+#define sigisemptyset(sp) (!(sp)->norm | !(sp)->rt)
+#endif
+
+#else /* !SIG32BIT */
+
+/* POSIX */
+#define sigemptyset(sp)                                                 \
+    (!*(sp))
+#define sigfillset(sp)                                                  \
+    (*(sp) = ~0L)
+#define sigaddset(sp, sig)                                              \
+    ((!_sigvalid(sig)                                                   \
+      ? (-1L)                                                           \
+      : ((sp) |= (1UL << (sig)),                                        \
+         0)))
+#define sigdelset(sp, sig)                                              \
+    ((!_sigvalid(sig)                                                   \
+      ? (-1L)                                                           \
+      : ((sp) &= ~(1UL << (sig)),                                       \
+         0)))
+#define sigismember(sp, sig)                                            \
+    ((!_sigvalid(sig)                                                   \
+      ? (-1)                                                            \
+      : (*(sp) & (1UL << (sig)),                                        \
+         0)))
+#if (_GNU_SOURCE)
+#define sigisemptyset(sp) (!(sp))
+#endif
+
+#endif /* SIG32BIT */
+
+#endif /* _POSIX_SOURCE */
+
+#if (_POSIX_SOURCE)
+
+#define MAXSIG      SIGRTMAX
+
+#define S_SIGNAL    1
+#define S_SIGSET    2
+#define S_SIGACTION 3
+#define S_NONE      4
+
+#endif /* _POSIX_SOURCE */
+
+#if (_BSD_SOURCE)
+#define BADSIG      SIG_ERR
+#endif
 
 #endif /* __BITS_SIGNAL_H__ */
 

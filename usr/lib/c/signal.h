@@ -1,6 +1,8 @@
 #ifndef __SIGNAL_H__
 #define __SIGNAL_H__
 
+/* TODO: sysconf(): _SC_SIGRT_MIN, _SC_SIGRT_MAX */
+
 #if !defined(PTHREAD) || defined(__KERNEL__)
 #define PTHREAD 0
 #endif
@@ -18,8 +20,8 @@
 #endif
 #include <bits/signal.h>
 
-#if (_POSIX_SOURCE) && defined(USEPOSIX199309)
-//#include <time.h>
+#if (_POSIX_SOURCE) && (USEPOSIX199309)
+#include <time.h>
 #endif
 
 #if (_BSD_SOURCE)
@@ -33,6 +35,7 @@ extern __sighandler_t sysv_signal(int sig, __sighandler_t func);
 #if (_XOPEN_SOURCE)
 extern __sighandler_t bsd_signal(int sig, __sighandler_t func);
 #endif
+
 #if (_POSIX_SOURCE)
 /*
  * send signal sig to process or group described by pid
@@ -40,20 +43,21 @@ extern __sighandler_t bsd_signal(int sig, __sighandler_t func);
  * - if pid < -1, send sig to all prccesses in the process group -pid
  */
 extern int kill(pid_t pid, int sig);
-#endif
+#endif /* _POSIX_SOURCE */
+
 #if (_BSD_SOURCE) || (USEXOPENEXT)
 /*
  * send signal sig to all processes in the group pgrp
  * - if pid is zero, send sig to all processes in the current one's group
  */
 extern int killpg(pid_t pgrp, int sig);
-#endif
+#endif /* _BSD_SOURCE || USEXOPENEXT */
 
 extern int raise(int sig);
 #if (USESVID)
 extern __sighandler_t ssignal(int sig, __sighandler_t func);
 extern int            gsignal(int sig);
-#endif
+#endif /* USESVID */
 extern void           psignal(int sig);
 #if (FAVORBSD)
 /* set mask to blocked signals, wait for signal, restore the mask */
@@ -102,6 +106,7 @@ int siggetmask(void);
 #endif /* BSD_SOURCE */
 
 #if (_POSIX_SOURCE)
+
 /* get and/or change set of blocked signals */
 extern int sigprocmask(int how, const sigset_t *__restrict set,
                        sigset_t *__restrict oldset);
@@ -118,8 +123,9 @@ extern int sigtimedwait(const sigset_t *__restrict set,
                         siginfo_t *__restrict info,
                         const struct timespec *__restrict timeout);
 //extern int sigqueue(pid_t pid, int sig, const union sigval val);
-#endif
-#endif
+#endif /* USEPOSIX199309 */
+
+#endif /* _POSIX_SOURCE */
 
 #if (_BSD_SOURCE)
 extern const char *__const _sys_siglist[_NSIG];
@@ -133,11 +139,21 @@ struct sigstack {
     int   ss_onstack;
 };
 
+typedef struct {
+  char *ss_sp;
+  int   ss_size;
+  int   ss_flags;
+} stack_t;
+
+#else /* !(_BSD_SOURCE | USEXOPENEXT) */
+
 struct sigaltstack {
     char *ss_base;
     int   ss_len;
     int   ss_onstack;
 };
+
+#endif /* _BSD_SOURCE || USEXOPENEXT */
 
 /*
  * if intr is nonzero, make signal sig interrupt system calls (causing them
@@ -146,19 +162,17 @@ struct sigaltstack {
  */
 extern int siginterrupt(int sig, int intr);
 
+#if (_BSD_SOURCE) || (USEXOPENEXT)
 extern int sigstack(struct sigstack *stk, struct sigstack *oldstk);
-#if (USEBSD)
+extern int sigaltstack(const stack_t *stk, const stack_t *oldstk)
+#else
 extern int sigaltstack(const struct sigaltstack *stk,
                        struct sigaltstack *oldstk);
-#else
-extern int sigaltstack(const stack_t *stk, const stack_t *oldstk)
 #endif
 
 #if (_XOPEN_SOURCE)
 #include <ucontext.h>
 #endif
-
-#endif /* _BSD_SOURCE || USEXOPENEXT */
 
 #if (USEXOPENEXT)
 extern int            sighold(int sig);
@@ -170,75 +184,6 @@ extern __sighandler_t sigset(int sig, __sighandler_t func);
 //int sigprocmask(int how, const sigset_t *set, sigset_t *oset);
 
 /* macros. */
-
-#if (_POSIX_SOURCE)
-
-#if (SIG32BIT)
-
-//#define _sigptr(sp) ((struct sigset *)(sp))
-
-/* POSIX */
-#define sigemptyset(sp)                                                 \
-    (!(sp)->norm && !(sp)->rt)
-#define sigfillset(sp)                                                  \
-    (((sp)->norm = (sp)->rt = ~UINT32_C(0)), 0)
-#define sigaddset(sp, sig)                                              \
-    ((!_sigvalid(sig)                                                   \
-      ? (-1)                                                            \
-      : (_signorm(sig)                                                  \
-         ? ((sp)->norm |= (1UL << (sig)))                               \
-         : ((sp)->rt |= (1UL << ((sig) - SIGRTMIN))))),                 \
-     0)
-#define sigdelset(sp, sig)                                              \
-    ((!_sigvalid(sig)                                                   \
-      ? (-1)                                                            \
-      : (_signorm(sig)                                                  \
-         ? ((sp)->norm &= ~(1UL << (sig)))                              \
-         : ((sp)->rt &= ~(1UL << ((sig) - SIGRTMIN))))),                \
-     0)
-#define sigismember(sp, sig)                                            \
-    ((!_sigvalid(sig)                                                   \
-      ? (-1)                                                            \
-      : (_signorm(sig)                                                  \
-         ? (((sp)->norm >> (sig)) & 0x01)                               \
-         : (((sp)->rt >> (sig - SIGRTMIN)) & 0x01))))
-#if (_GNU_SOURCE)
-#define sigisemptyset(sp) (!(sp)->norm | !(sp)->rt)
-#endif
-
-#else /* !SIG32BIT */
-
-/* POSIX */
-#define sigemptyset(sp)                                                 \
-    (!*(sp))
-#define sigfillset(sp)                                                  \
-    (*(sp) = ~0L)
-#define sigaddset(sp, sig)                                              \
-    ((!_sigvalid(sig)                                                   \
-      ? (-1L)                                                           \
-      : ((sp) |= (1UL << (sig)),                                        \
-         0)))
-#define sigdelset(sp, sig)                                              \
-    ((!_sigvalid(sig)                                                   \
-      ? (-1L)                                                           \
-      : ((sp) &= ~(1UL << (sig)),                                       \
-         0)))
-#define sigismember(sp, sig)                                            \
-    ((!_sigvalid(sig)                                                   \
-      ? (-1)                                                            \
-      : (*(sp) & (1UL << (sig)),                                        \
-         0)))
-#if (_GNU_SOURCE)
-#define sigisemptyset(sp) (!(sp))
-#endif
-
-#endif /* SIG32BIT */
-
-#endif /* _POSIX_SOURCE */
-
-#if (_BSD_SOURCE)
-#define BADSIG       SIG_ERR
-#endif
 
 union sigval {
     int   sival_int;
@@ -255,7 +200,17 @@ struct sigevent {
 #endif
 };
 
-struct _siginfo {
+
+#define MAXSIG      SIGRTMAX
+
+#define S_SIGNAL    1
+#define S_SIGSET    2
+#define S_SIGACTION 3
+#define S_NONE      4
+
+
+#if (_POSIX_SOURCE) && (USEPOSIX199309)
+typedef struct {
     int           si_signo;
     int           si_code;
     int           si_errno;
@@ -265,15 +220,8 @@ struct _siginfo {
     int           si_status;
     long          si_band;
     union sigval  si_value;
-};
-typedef struct _siginfo siginfo_t;
-
-/* TODO: which standards cover the stuff below? */
-typedef struct {
-    void   *ss_sp;
-    size_t  ss_size;
-    int     ss_flags;
-} stack_t;
+} siginfo_t;
+#endif /* _POSIX_SOURCE && USEPOSIX199309 */
 
 #endif /* __SIGNAL_H__ */
 

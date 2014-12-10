@@ -5,6 +5,8 @@
 
 #if !defined(__STDC_NO_THREADS__)
 
+#include <c11threads.h>
+
 #endif /* !defined(__STDC_NO_THREADS__ */
 
 #endif /* __THREADS_H__ */
