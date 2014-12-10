@@ -8,15 +8,6 @@
 #include <zero/cdecl.h>
 #include <zero/trix.h>
 
-#if 0
-extern struct cmsghdr *CMSG_FIRSTHDR(struct msghdr *msg);
-extern struct cmsghdr *CMSG_NXTHDR(struct msghdr *msg, struct cmsghdr *cmsg);
-extern size_t          CMSG_ALIGN(size_t len);
-extern size_t          CMSG_SPACE(size_t len);
-extern size_t          CMSG_LEN(size_t len);
-extern unsigned char  *CMSG_DATA(struct cmsghdr *cmsg);
-#endif
-
 /* cmsg_level argument in struct cmsghdr; level argument for set/getsockopt() */
 #define SOL_SOCKET      1
 /* cmsg_type with cmsg_level == SOL_SOCKET */
