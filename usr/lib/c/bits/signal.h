@@ -3,7 +3,7 @@
 
 #include <features.h>
 #include <stdint.h>
-#include <sys/siginfo.h>
+//#include <sys/siginfo.h>
 #if (_ZERO_SOURCE)
 #include <kern/signal.h>
 #endif
@@ -80,6 +80,35 @@ typedef void           (*sig_t)(int);
 #define SIG_IGN      ((sighandler_t)1L)
 #define SIG_HOLD     ((sighandler_t)2L)
 #endif
+
+union sigval {
+    int   sival_int;
+    void *sival_ptr;
+};
+
+struct sigevent {
+    int             sigev_notify;
+    int             sigev_signo;
+    union sigval    sigev_value;
+    void           (*sigev_notify_function)(union sigval);
+#if (PTHREAD)
+    pthread_attr_t *sigev_notify_attributes;
+#endif
+};
+
+#if (_POSIX_SOURCE) && (USEPOSIX199309)
+typedef struct {
+    int           si_signo;
+    int           si_code;
+    int           si_errno;
+    pid_t         si_pid;
+    uid_t         si_uid;
+    void         *si_addr;
+    int           si_status;
+    long          si_band;
+    union sigval  si_value;
+} siginfo_t;
+#endif /* _POSIX_SOURCE && USEPOSIX199309 */
 
 struct sigaction {
     void     (*sa_handler)(int);
@@ -168,6 +197,13 @@ struct sigaction {
 #if (_BSD_SOURCE)
 #define BADSIG      SIG_ERR
 #endif
+
+#define MAXSIG      SIGRTMAX
+
+#define S_SIGNAL    1
+#define S_SIGSET    2
+#define S_SIGACTION 3
+#define S_NONE      4
 
 #endif /* __BITS_SIGNAL_H__ */
 

@@ -74,9 +74,9 @@ abs32(int a)
     
     return _val;
 }
-//#define abs(a)         zeroabs(a)
-#define labs(a)        zeroabs(a)
-#define llabs(a)       zeroabs(a)
+#define _abs(a)         zeroabs(a)
+#define _labs(a)        zeroabs(a)
+#define _llabs(a)       zeroabs(a)
 #endif
 
 /* true if x is a power of two */

@@ -1,10 +1,10 @@
 #ifndef __BITS_UNISTD_H__
-#define __BIT_UNISTD_H__
+#define __BITS_UNISTD_H__
 
 #include <features.h>
 #include <stdint.h>
 
-typedef int32_t uid_t;
+//typedef int32_t uid_t;
 /* types (hopefully) not declared yet... :) */
 #if (_BSD_SOURCE) || (_XOPEN_SOURCE)
 /* TODO: check what this type is for and what it should be :) */

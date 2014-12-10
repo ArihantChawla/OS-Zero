@@ -3,11 +3,13 @@
 
 #include <signal.h>
 
+/* FIXME: implement mcontext_t for Zero Somewhere(TM) :) */
+
 typedef struct ucontext {
     struct ucontext *uc_link;
     sigset_t         uc_sigmask;
     stack_t          uc_stack;
-    mcontext_t       uc_mcontext;
+//    mcontext_t       uc_mcontext;
 } ucontext_t;
 
 int  getcontext(ucontext_t *uc);

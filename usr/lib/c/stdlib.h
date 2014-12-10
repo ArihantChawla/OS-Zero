@@ -117,7 +117,7 @@ long double          strtold(const char *nptr, char **endptr);
 long                 strtol(const char *nptr, char **endptr, int base);
 long long            strtoll(const char *nptr, char **endptr, int base);
 unsigned long        strtoul(const char *nptr, char **endptr, int base);
-unsigned long long   strtoull(const char *nptr, char **endptr, intbase);
+unsigned long long   strtoull(const char *nptr, char **endptr, int base);
 int                  system(const char *cmd);
 int                  unlockpt(int fd);
 int                  unsetenv(const char *name);

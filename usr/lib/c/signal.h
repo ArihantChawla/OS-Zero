@@ -122,7 +122,7 @@ extern int sigwaitinfo(const sigset_t *__restrict set,
 extern int sigtimedwait(const sigset_t *__restrict set,
                         siginfo_t *__restrict info,
                         const struct timespec *__restrict timeout);
-//extern int sigqueue(pid_t pid, int sig, const union sigval val);
+extern int sigqueue(pid_t pid, int sig, const union sigval val);
 #endif /* USEPOSIX199309 */
 
 #endif /* _POSIX_SOURCE */
@@ -164,7 +164,7 @@ extern int siginterrupt(int sig, int intr);
 
 #if (_BSD_SOURCE) || (USEXOPENEXT)
 extern int sigstack(struct sigstack *stk, struct sigstack *oldstk);
-extern int sigaltstack(const stack_t *stk, const stack_t *oldstk)
+extern int sigaltstack(const stack_t *stk, const stack_t *oldstk);
 #else
 extern int sigaltstack(const struct sigaltstack *stk,
                        struct sigaltstack *oldstk);
@@ -182,46 +182,6 @@ extern __sighandler_t sigset(int sig, __sighandler_t func);
 #endif /* USEXOPENEXT */
 
 //int sigprocmask(int how, const sigset_t *set, sigset_t *oset);
-
-/* macros. */
-
-union sigval {
-    int   sival_int;
-    void *sival_ptr;
-};
-
-struct sigevent {
-    int             sigev_notify;
-    int             sigev_signo;
-    union sigval    sigev_value;
-    void           (*sigev_notify_function)(union sigval);
-#if (PTHREAD)
-    pthread_attr_t *sigev_notify_attributes;
-#endif
-};
-
-
-#define MAXSIG      SIGRTMAX
-
-#define S_SIGNAL    1
-#define S_SIGSET    2
-#define S_SIGACTION 3
-#define S_NONE      4
-
-
-#if (_POSIX_SOURCE) && (USEPOSIX199309)
-typedef struct {
-    int           si_signo;
-    int           si_code;
-    int           si_errno;
-    pid_t         si_pid;
-    uid_t         si_uid;
-    void         *si_addr;
-    int           si_status;
-    long          si_band;
-    union sigval  si_value;
-} siginfo_t;
-#endif /* _POSIX_SOURCE && USEPOSIX199309 */
 
 #endif /* __SIGNAL_H__ */
 

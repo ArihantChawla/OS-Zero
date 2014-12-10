@@ -35,7 +35,7 @@ extern struct mallinfo mallinfo;
 #define M_NBLKS            2
 #define M_GRAIN            3
 #define M_KEEP             4
-#define M_TRIM_TH§RESHOLD -1
+#define M_TRIM_THRESHOLD  -1
 #define M_TOP_PAD         -2
 #define M_MMAP_THRESHOLD  -3
 #define M_MMAP_MAX        -4

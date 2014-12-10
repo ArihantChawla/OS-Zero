@@ -3,6 +3,7 @@
 
 #include <features.h>
 #include <sys/types.h>
+#include <sys/time.h>
 
 #define RUSAGE_SELF     0
 #define RUSAGE_CHILDREN 1
@@ -29,15 +30,6 @@
 #define RLIMIT_STACK    5 // stack size in bytes
 #define RLIMIT_AS       6 // address space size
 
-/* resource usage statistics */
-extern int getrusage(int who, struct rusage *rusage);
-/* nice value routines */
-extern int getpriority(int which, id_t who);
-extern int setpriority(int which, id_t who, int prio);
-/* resource limit routines */
-extern int getrlimit(int which, struct rlimit *lim);
-extern int setrlimit(int which, const struct rlimit *lim);
-
 typedef unsigned long long rlim_t;
 
 struct rlimit {
@@ -63,6 +55,15 @@ struct rusage {
     long           ru_nvcsw;    /* voluntary context switches */
     long           ru_nivcsw;   /* involuntary context switches */
 };
+
+/* resource usage statistics */
+extern int getrusage(int who, struct rusage *rusage);
+/* nice value routines */
+extern int getpriority(int which, id_t who);
+extern int setpriority(int which, id_t who, int prio);
+/* resource limit routines */
+extern int getrlimit(int which, struct rlimit *lim);
+extern int setrlimit(int which, const struct rlimit *lim);
 
 #endif /* __SYS_RESOURCE_H__ */
 

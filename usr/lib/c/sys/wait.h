@@ -10,7 +10,7 @@
 #define WNOHANG              0x00000001
 #define WUNTRACED            0x00000002
 #define WEXITED              0x00000004
-#define WSTOPPED             0x00000008
+//#define WSTOPPED             0x00000008
 #define WCONTINUED           0x00000010
 #define WNOWAIT              0x00000020
 
@@ -80,13 +80,12 @@ union wait {
 #endif
 	} w_S;
 };
-#endif /* !defined(_POSIX_SOURCE) */
 
 #if !(__KERNEL__)
 extern pid_t wait(_WAITSTATUS statret);
 extern pid_t waitpid(pid_t pid, _WAITSTATUS statret, int opts);
 #if (USESVID) || (USEXOPEN)
-#include <bits/siginfo.h>
+//#include <bits/siginfo.h>
 #define P_ALL  0
 #define P_PID  1
 #define P_PGID 2
