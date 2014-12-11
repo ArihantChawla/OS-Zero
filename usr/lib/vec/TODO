@@ -1,0 +1,3 @@
+- add <vec/asm/i387> for things such as trigonometry
+- adopt typical SIMD operations into libvec functions
+
