@@ -1,6 +1,9 @@
 /* zero c11 threads implementation using pthread */
 
-/* based on public domain code written by John Tsiombikas */
+/*
+ * based on public domain code written by John Tsiombikas
+ * - the original project is at https://github.com/jtsiomb/c11threads
+ */
 
 #ifndef __C11_PTHREAD_H__
 #define __C11_PTHREAD_H__
