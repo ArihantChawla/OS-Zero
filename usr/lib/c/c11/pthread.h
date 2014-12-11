@@ -62,7 +62,7 @@ typedef struct {
     pthread_exit((void *)(uintptr_t)val)
 
 static __inline__ int
-thdr_join(thrd_t thr, int *res)
+thrd_join(thrd_t thr, int *res)
 {
     void *valptr;
     int   retval;
