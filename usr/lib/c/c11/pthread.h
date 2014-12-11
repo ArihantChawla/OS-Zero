@@ -16,6 +16,12 @@
 
 #define ONCE_FLAG_INIT   PTHREAD_ONCE_INIT
 
+#if defined(__GNUC__)  || defined(__clang__)
+#define _Thread_local    __thread
+#elif defined(_MSC_VER)
+#define _Thread_local    __declspec(thread)
+#endif
+
 /* types */
 typedef pthread_t        thrd_t;
 typedef pthread_mutex_t  mtx_t;
