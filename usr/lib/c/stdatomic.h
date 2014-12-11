@@ -1,6 +1,11 @@
 #ifndef __STDATOMIC_H__
 #define __STDATOMIC_H__
 
+/* https://gcc.gnu.org/onlinedocs/gcc-4.5.0/gcc/Atomic-Builtins.html */
+/* https://apr.apache.org/docs/apr/1.5/group__apr__atomic.html */
+
+#undef __STDC_NO_ATOMICS__
+
 /* lock-free type */
 typedef long                 atomic_flag;
 

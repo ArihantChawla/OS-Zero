@@ -73,8 +73,13 @@ typedef unsigned long      uint_least64_t;
 #error declare least-width types for the platform in <stdint.h>
 #endif
 /* maximum-size integral types */
+#if defined(__STDC_VERSION__) && (__STDC_VERSION__ >= 199901L)
+typedef long long          intmax_t;
+typedef unsigned long long uintmax_t;
+#else /* before C99 */
 typedef long               intmax_t;
 typedef unsigned long      uintmax_t;
+#endif /* __STDC_VERSION__ */
 /* pointer integer types */
 #if (PTRBITS <= 32)
 typedef int32_t            intptr_t;

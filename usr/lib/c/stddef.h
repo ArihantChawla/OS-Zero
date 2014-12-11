@@ -5,7 +5,9 @@
 #include <stdint.h>
 #include <zero/param.h>
 
+#if !defined(NULL)
 #define NULL           ((void *)0L)
+#endif
 
 typedef long           ptrdiff_t;
 typedef unsigned long  size_t;

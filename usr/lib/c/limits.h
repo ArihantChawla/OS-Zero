@@ -6,62 +6,42 @@
 #define __LIMITS_H__
 
 #include <features.h>
-#include <stdint.h>
+//#include <stdint.h>
 #include <zero/param.h>
 #if (_ZERO_SOURCE)
 #include <kern/conf.h>
 #include <kern/signal.h>
 #endif
 
-#if 0 /* unnecessary with C99 */
-/* integral-value limits */
-#define WORD8_MIN     (-0x7f - 1)
-#define WORD8_MAX     0x7f
-#define UWORD8_MAX    0xff
-#define WORD16_MIN    (-0x7fff - 1)
-#define WORD16_MAX    0x7fff
-#define UWORD16_MAX   0xffff
-#define WORD32_MIN    (-0x7fffffff - 1)
-#define WORD32_MAX    0x7fffffff
-#define UWORD32_MAX   0xffffffff
-#define WORD64_MIN    INT64_C(-0x7fffffffffffffff - 1)
-#define WORD64_MAX    INT64_C(0x7fffffffffffffff)
-#define UWORD64_MAX   UINT64_C(0xffffffffffffffff)
-#endif /* 0 */
-
 /*
  * ISO limits.
  */
-/*
- * <FIXME>
- * - these should be detected by configure
- * </FIXME>
- */
 #define CHAR_BIT      8
-#define CHAR_MAX      WORD8_MAX
-#define CHAR_MIN      WORD8_MIN
-#define SCHAR_MAX     WORD8_MAX
-#define SCHAR_MIN     WORD8_MIN
-#define UCHAR_MAX     UWORD8_MAX
-#define SHRT_MIN      WORD16_MIN
-#define SHRT_MAX      WORD16_MAX
-#define USHRT_MAX     UWORD16_MAX
-#define INT_MAX       WORD32_MAX
-#define INT_MIN       WORD32_MIN
-#define UINT_MAX      UWORD32_MAX
-#if (LONGSIZE == 4)
-#   define LONG_MAX   WORD32_MAX
-#   define LONG_MIN   WORD32_MIN
-#   define ULONG_MAX  UWORD32_MAX
-#elif (LONGSIZE == 8)
-#   define LONG_MAX   WORD64_MAX
-#   define LONG_MIN   WORD64_MIN
-#   define ULONG_MAX  UWORD64_MAX
+#if (__GNUC__)
+#define CHAR_MAX      0xff
+#define CHAR_MIN      (-0x7f - 1)
 #endif
-#   define LLONG_MIN  WORD64_MIN
-#   define LLONG_MAX  WORD64_MAX
-#   define ULLONG_MAX UWORD64_MAX
-
+#define SCHAR_MAX     0x7f
+#define SCHAR_MIN     (-0x7f - 1)
+#define UCHAR_MAX     0xffU
+#define SHRT_MIN      (-0x7fff - 1)
+#define SHRT_MAX      0x7fff
+#define USHRT_MAX     0xffffU
+#define INT_MAX       0xffffffff
+#define INT_MIN       (-0x7fffffff - 1)
+#define UINT_MAX      (0xffffffffU)
+#if (LONGSIZE == 4)
+#   define LONG_MAX   0xffffffffL
+#   define LONG_MIN   (-0x7fffffff - 1L)
+#   define ULONG_MAX  0xffffffffUL
+#elif (LONGSIZE == 8)
+#   define LONG_MAX   0x7fffffffffffffffL
+#   define LONG_MIN   (-0x7fffffffffffffffL - 1L)
+#   define ULONG_MAX  0xffffffffffffffffUL
+#endif
+#define LLONG_MAX     0x7fffffffffffffffLL
+#define LLONG_MIN     (-0x7fffffffffffffffLL - 1LL)
+#define ULLONG_MAX    0xffffffffffffffffULL
 #define MB_LEN_MAX    1
 
 #if defined(_POSIX_SOURCE) && (_POSIX_C_SOURCE >= 200112L)
@@ -116,18 +96,19 @@
 #define TTY_NAME_MAX   9
 
 #endif /* POSIX */
-#define RTSIG_MAX   NRTSIG
+
+#define RTSIG_MAX      NRTSIG
 
 /*
  * Unix values
  */
-#define PASS_MAX    8 /* maximum significant characters in password */
-#define LOGIN_MAX   8 // maximum significant characters in login name */
+#define PASS_MAX       8 /* maximum significant characters in password */
+#define LOGIN_MAX      8 // maximum significant characters in login name */
 
 /*
  * Determinate (compile-time) values.
  */
-#define SSIZE_MAX   LONG_MAX
+#define SSIZE_MAX      LONG_MAX
 
 #if (_POSIX_SOURCE)
 #if (_ZERO_SOURCE)

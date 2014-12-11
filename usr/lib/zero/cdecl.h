@@ -31,7 +31,8 @@
 #define REGPARM(n)  __attribute__ ((regparm(n)))
 #if defined(__x86_64__) || defined(__amd64__) || defined(__arm__)
 #define FASTCALL    /* at least 3 arguments passed in registers by default */
-#elif defined(__i386__) || defined(__i486__) || defined(__i586__) || defined(__i686__)
+#elif defined(__i386__) || defined(__i486__) || defined(__i586__) \
+     || defined(__i686__)
 #define FASTCALL    REGPARM(3)
 #endif
 
