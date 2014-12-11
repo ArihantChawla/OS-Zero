@@ -123,6 +123,9 @@ int                  unlockpt(int fd);
 int                  unsetenv(const char *name);
 size_t               wcstombs(char *dest, const wchar_t *src, size_t n);
 int                  wctomb(char *src, wchar_t wc);
+#if (_ISO_C11_SOURCE)
+/* TODO: quick_exit(), at_quick_exit() */
+#endif
 
 #endif /* __STDLIB_H__ */
 

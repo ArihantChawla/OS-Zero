@@ -8,29 +8,35 @@
 #ifndef __C11_PTHREAD_H__
 #define __C11_PTHREAD_H__
 
+#undef __STDC_NO_THREADS__
+
 #include <time.h>
 #include <errno.h>
 #include <pthread.h>
 #include <sched.h>
 #include <sys/time.h>
 
-#define ONCE_FLAG_INIT   PTHREAD_ONCE_INIT
+#define ONCE_FLAG_INIT         PTHREAD_ONCE_INIT
+#define TSS_DTOR_ITERATIONS    PTHREAD_DESTRUCTOR_ITERATIONS
 
 #if defined(__GNUC__)  || defined(__clang__)
-#define _Thread_local    __thread
+#define _Thread_local          __thread
 #elif defined(_MSC_VER)
-#define _Thread_local    __declspec(thread)
+#define _Thread_local          __declspec(thread)
 #endif
+/** c++11 name */
+#define thread_local           _Thread_local
 
 /* types */
-typedef pthread_t        thrd_t;
-typedef pthread_mutex_t  mtx_t;
-typedef pthread_cond_t   cnd_t;
-typedef pthread_key_t    tss_t;
-typedef pthread_once_t   once_flag;
+typedef pthread_t              thrd_t;
+typedef pthread_mutex_t        mtx_t;
+typedef pthread_cond_t         cnd_t;
+typedef pthread_key_t          tss_t;
+typedef pthread_once_t         once_flag;
 
-typedef void            (*thrd_start_t)(void*);
-typedef void            (*tss_dtor_t)(void*);
+/* TODO: should thrd_start_t return int? */
+typedef int                  (*thrd_start_t)(void*);
+typedef void                 (*tss_dtor_t)(void*);
 
 typedef struct {
     time_t sec;
@@ -38,17 +44,20 @@ typedef struct {
 } xtime;
 
 /* mutex types */
-#define mtx_plain         0
-#define mtx_recursive     1
-#define mtx_timed         2
-#define mtx_try           4
+#define mtx_plain              0x00
+#define mtx_recursive          0x01
+#define mtx_timed              0x02
+#define mtx_try                0x04
+#define mtx_normal             0x08
+#define mtx_errorcheck         0x10
+#define mtx_extras             (mtx_normal | mtx_errorcheck | mtx_recursive)
 
 /* return values */
-#define thrd_success      0
-#define thrd_busy         1
-#define thrd_timedout     2
-#define thrd_error        3
-#define thrd_nomem        4
+#define thrd_success           0
+#define thrd_busy              1
+#define thrd_timedout          2
+#define thrd_error             3
+#define thrd_nomem             4
 
 /* ---- thread management ---- */
 
@@ -212,6 +221,8 @@ mtx_timedlock(mtx_t *mtx, const xtime *xt)
      ? thrd_success               \
      : thrd_error)
 
+/* TODO: chd_broadcast_at_thread_exit()? */
+
 #define cnd_wait(cnd, mtx)         \
     (!pthread_cond_wait(cond, mtx) \
      ? thrd_success                \
@@ -260,6 +271,13 @@ cnd_timedwait(cnd_t *cond, mtx_t *mtx, const xtime *xt)
 #define call_once(flg, func)                                            \
     pthread_once(flg, func)
 
+/* TODO: move this stuff into <time.h> or where it belongs :) */
+
+#define TIME_MONOTONIC 0
+#define TIME_LOCAL     1
+#define TIME_UTC       2
+#define TIME_TAI       3
+
 /* TODO take base into account */
 static __inline__
 int xtime_get(xtime *xt, int base)
@@ -273,6 +291,8 @@ int xtime_get(xtime *xt, int base)
 
     return base;
 }
+
+/* xtime_cmp(), xtime_conv(), xtime_delay(), tz_jump(), ... */
 
 #endif	/* __C11_PTHREAD_H__ */
 

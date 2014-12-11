@@ -3,7 +3,7 @@
 
 /* https://github.com/jtsiomb/c11threads */
 
-#if (__STDC_VERSION__ < 201100) || defined(__STDC_NO_THREADS__)
+#if (__STDC_VERSION__ < 201112L) || defined(__STDC_NO_THREADS__)
 
 #include <c11/pthread.h>
 
