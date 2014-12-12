@@ -1,6 +1,7 @@
 #ifndef __FLOAT_H__
 #define __FLOAT_H__
 
+#include <features.h>
 #include <bits/ieee754.h>
 #if defined(__x86_64__) || defined(__amd64__)
 #include <x86-64/float.h>
@@ -12,7 +13,6 @@
 #elif defined(sparc) || defined(__sparc) || defined(__sparc__)
 #include <sparc/float.h>
 #endif
-#include <fenv.h>
 
 #define FLT_RADIX  2
 #define DBL_RADIX  FLT_RADIX
@@ -26,20 +26,23 @@
  *  2 - toward positive infinity (FE_UPWARD)
  *  3 - toward negative infinity (FE_DOWNWARD)
  */
-#if defined(sparc) || defined(__sparc) || defined(__sparc__)
+#if defined(__ZERO_SOURCE)
+extern int          fegetround(void);
+#define FLT_ROUNDS  fegetround()
+#elif defined(sparc) || defined(__sparc) || defined(__sparc__)
 #if defined(__STDC__)
-extern int __flt_rounds(void);
+extern int          __flt_rounds(void);
 #else /* !defined(__STDC__) */
-extern int __flt_rounds();
+extern int          __flt_rounds();
 #endif /* defined(__STDC__) */
-#define FLT_ROUNDS __flt_rounds()
+#define FLT_ROUNDS  __flt_rounds()
 #else /* !sparc */
-extern int __flt_rounds;
-#define FLT_ROUNDS __flt_rounds
+extern int          __flt_rounds;
+#define FLT_ROUNDS  __flt_rounds
 #if defined(__STDC__)
-extern int __fltrounds(void);
+extern int          __fltrounds(void);
 #else /* !defined(__STDC__) */
-extern int __fltrounds();
+extern int          __fltrounds();
 #endif /* defined(__STDC__) */
 #endif /* sparc */
 /* TODO: fix DBL_ROUNDS and LDBL_ROUNDS */
