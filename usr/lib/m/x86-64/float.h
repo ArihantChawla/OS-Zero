@@ -1,8 +1,6 @@
 #ifndef __X86_64_FLOAT_H__
 #define __X86_64_FLOAT_H__
 
-#include <ia32/float.h>
-
 /*
  * values for FLT_EVAL_METHOD
  * -1 - indeterminable
