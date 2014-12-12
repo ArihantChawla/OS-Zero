@@ -1,6 +1,7 @@
 #ifndef __IA32_FLOAT_H__
 #define __IA32_FLOAT_H__
 
+#define DECIMAL_DIG         21
 /*
  * values for FLT_EVAL_METHOD
  * -1 - indeterminable

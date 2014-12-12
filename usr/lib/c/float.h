@@ -15,8 +15,8 @@
 #include <fenv.h>
 
 #define FLT_RADIX  2
-#define DBL_RADIX  2
-#define LDBL_RADIX 2
+#define DBL_RADIX  FLT_RADIX
+#define LDBL_RADIX FLT_RADIX
 
 /*
  * values for FLT_ROUNDS
@@ -43,8 +43,8 @@ extern int __fltrounds();
 #endif /* defined(__STDC__) */
 #endif /* sparc */
 /* TODO: fix DBL_ROUNDS and LDBL_ROUNDS */
-extern int DBL_ROUNDS;
-extern int LDBL_ROUNDS;
+#define DBL_ROUNDS  FLT_ROUNDS
+#define LDBL_ROUNDS FLT_ROUNDS
 
 /*
  * values for FLT_HAS_SUBNORM, DBL_HAS_SUBNORM, and LDBL_HAS_SUBNORM

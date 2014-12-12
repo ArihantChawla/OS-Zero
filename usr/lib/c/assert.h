@@ -4,11 +4,15 @@
  */
 
 #undef assert
+#if defined(__STDC_VERSION__) && (__STDC_VERSION >= 201112L)
+undef  static_assert
+#endif
+
 #ifdef NDEBUG
 
 #define assert(cond) ((void)0)
 
-#else
+#else /* !NDEBUG */
 
 #include <zero/cdecl.h>
 
@@ -22,6 +26,10 @@
                 __func__,                                               \
                 __LINE__),                                              \
         abort()))
+
+#if defined(__STDC_VERSION__) && (__STDC_VERSION >= 201112L)
+#define static_assert _Static_assert
+#endif
 
 #endif
 

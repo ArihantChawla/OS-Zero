@@ -5,9 +5,11 @@
 #include <stddef.h>
 #include <stdint.h>
 
-#if (_ISOC11_SOURCE)
-typedef uint16_t char16_t;
-typedef int32_t  char32_t;
+struct               tm;
+
+#if (_ISOC11_SOURCE) && 0 /* FIXME: do these belong here? =) */
+typedef uint16_t     char16_t;
+typedef uint32_t     char32_t;
 #endif
 
 #define WCHAR_MIN    0
@@ -17,7 +19,7 @@ typedef int32_t  char32_t;
 #define WCHARNBIT    21
 #elif (WCHARSIZE == 2)
 #define WEOF         ((wint_t)0xffff)	/* 0xffff is invalid character value in Unicode */
-#define WCHAR_MAX    0xffff
+#define WCHAR_MAX    0xffffU
 #define WCHARNBIT    16
 #elif (WCHARSIZE == 1)
 #define WEOF         0x00
