@@ -13,15 +13,15 @@ feclearexcept(int mask)
     fenv_t env;
     
     if (mask == FE_ALL_EXCEPT) {
-        __is387fnclex();
+        __i387fnclex();
     } else {
         __i387fnstenv(&env.__x87);
-        env.__x87.status &= ~mask;
+        env.__x87.__status &= ~mask;
         __i387fldenv(env.__x87);
     }
-    __ssestmxcsr(&env.mxcsr);
-    env.mxcsr &= ~mask;
-    __ldmxcsr(env.mxcsr);
+    __ssestmxcsr(&env.__mxcsr);
+    env.__mxcsr &= ~mask;
+    __sseldmxcsr(env.__mxcsr);
     
     return 0;
 }
@@ -69,8 +69,8 @@ fesetround(int mode)
     ctrl |= mode;
     __i387fldcw(ctrl);
     __ssestmxcsr(&mxcsr);
-    mxcsr &= ~(_ROUND_MASK << _SSE_ROUND_SHIFT);
-    mxcsr |= mode << _SSE_ROUND_SHIFT;
+    mxcsr &= ~(__FE_ROUND_MASK << __SSE_ROUND_SHIFT);
+    mxcsr |= mode << __SSE_ROUND_SHIFT;
     __sseldmxcsr(mxcsr);
     
     return 0;
@@ -86,7 +86,7 @@ fesetenv(const fenv_t *env)
      * to take care and use __i387fldenvx()
      */
     __i387fldenvx(env->__x87);
-    __sseldmxcsr(env->mxcsr);
+    __sseldmxcsr(env->__mxcsr);
 
     return 0;
 }

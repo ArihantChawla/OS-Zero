@@ -25,7 +25,6 @@
  *  2 - toward positive infinity (FE_UPWARD)
  *  3 - toward negative infinity (FE_DOWNWARD)
  */
-extern int          fegetround(void);
 #define FLT_ROUNDS  fegetround()
 /* TODO: fix DBL_ROUNDS and LDBL_ROUNDS */
 #define DBL_ROUNDS  FLT_ROUNDS

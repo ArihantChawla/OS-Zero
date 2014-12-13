@@ -5,7 +5,7 @@
 #define __i387fldenv(env)  __asm__ __volatile__ ("fldenv %0" : : "m" (env))
 #define __i387fldenvx(env) __asm__ __volatile__ ("fldenv %0" : : "m" (env) \
                                                  : "st", "st(1)", "st(2)", \
-                                                   "st(3)", "st(4)", "st(5)". \
+                                                   "st(3)", "st(4)", "st(5)" \
                                                    "st(6)", "st(7)")
 #define __i387fnclex()     __asm__ __volatile__ ("fnclex")
 #define __i387fnstenv(env) __asm__ __volatile__ ("fnstenv %0" : "=m" (*(env)))

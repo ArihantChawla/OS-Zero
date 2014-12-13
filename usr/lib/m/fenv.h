@@ -6,38 +6,6 @@
 #include <float.h>
 #include <zero/cdecl.h>
 #include <zero/param.h>
-#if defined(__i386__) || defined(__i486__) \
-    || defined(__i586__) || defined(__i686__)
-#include <ia32/fenv.h>
-#endif
-
-/* function prototypes from POSIX.1 */
-/* exception handling */
-extern int feclearexcept(int mask);
-extern int fegetexceptflag(fexcept_t *except, int mask);
-extern int fesetexceptflag(const fexcept_t *except, int mask);
-extern int feraiseexcept(int mask);
-extern int feholdexcept(fend_t *env);
-extern int fetestexcept(int mask);
-/* rounding mode */
-extern int fegetround(void);
-extern int fesetround(int mode);
-/* floating-point environment management */
-extern int fegetenv(fenv_t *env);
-extern int fesetenv(const fenv_t *env);
-extern int feupdateenv(const fenv_t *env);
-
-/* non-POSIX.1 functions */
-extern int fedisableexcept(int mask);
-extern int feenableexcept(int mask);
-
-/* rounding modes */
-#if !defined(FE_TOWARDZERO)
-#define FE_TOWARDZERO 0
-#define FE_TONEAREST  1
-#define FE_UPWARD     2
-#define FE_DOWNWARD   3
-#endif /* !defined(FE_TOWARDZERO) */
 
 /* exceptions */
 #define FE_INEXACT    0x01 /* inexact result */
@@ -54,13 +22,40 @@ extern int feenableexcept(int mask);
      | FE_INVALID \
      | FE_DENORMAL)
 
-/* FPU exception state; representable in FPU [control-word] register */
-typedef struct {
-    struct {
-        uint64_t lo;
-        uint64_t hi;
-    } status;
-} fexcept_t;
+#if defined(__x86_64__) || defined(__amd64__) \
+    || defined(__i386__) || defined(__i486__) \
+    || defined(__i586__) || defined(__i686__)
+#include <ia32/fenv.h>
+#endif
+
+/* function prototypes from POSIX.1 */
+/* exception handling */
+extern int feclearexcept(int mask);
+extern int fegetexceptflag(fexcept_t *except, int mask);
+extern int fesetexceptflag(const fexcept_t *except, int mask);
+extern int feraiseexcept(int mask);
+extern int feholdexcept(fenv_t *env);
+extern int fetestexcept(int mask);
+/* rounding mode */
+extern int fegetround(void);
+extern int fesetround(int mode);
+/* floating-point environment management */
+extern int fegetenv(fenv_t *env);
+extern int fesetenv(const fenv_t *env);
+extern int feupdateenv(const fenv_t *env);
+
+#if defined(USEBSD) && (USEBSD)
+extern int fedisableexcept(int mask);
+extern int feenableexcept(int mask);
+#endif
+
+/* rounding modes */
+#if !defined(FE_TOWARDZERO)
+#define FE_TOWARDZERO 0
+#define FE_TONEAREST  1
+#define FE_UPWARD     2
+#define FE_DOWNWARD   3
+#endif /* !defined(FE_TOWARDZERO) */
 
 extern const fenv_t __fe_dfl_env;
 #define FE_DFL_ENV  (&__fe_dfl_env);
