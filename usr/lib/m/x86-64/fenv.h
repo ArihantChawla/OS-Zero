@@ -4,20 +4,92 @@
 #define __SSE_ROUND_SHIFT  3
 #define __SSE_EXCEPT_SHIFT 7
 
-#define __SSE_UNPROBED     (-1)
-#define __SSE_MISSING      0
-#define __SSE_FOUND        1
-#extern int                __sse_supported;
-extern int                 __sse_probe(void);
+extern int __sse_supported;
+extern int __sse_probe(void);
 
-#if defined(__SSE__)
-#define __SSE_SUPPORTED    1
-#else
-#define __SSE_SUPPORTED \
-    (__sse_supported == __SSE_FOUND \
-     || (__sse_supported == __SSE_UNPROBED \
-         && (__sse_supported = __sse_probe())))
-#endif /* defined(__SSE__) */
+static __inline__ int
+feclearexcept(int mask)
+{
+    fenv_t env;
+    
+    if (mask == FE_ALL_EXCEPT) {
+        __is387fnclex();
+    } else {
+        __i387fnstenv(&env.__x87);
+        env.__x87.status &= ~mask;
+        __i387fldenv(env.__x87);
+    }
+    __ssestmxcsr(&env.mxcsr);
+    env.mxcsr &= ~mask;
+    __ldmxcsr(env.mxcsr);
+    
+    return 0;
+}
+
+static __inline__ int
+fegetexceptflag(fexcept_t *except, int mask)
+{
+    int mxcsr;
+    int status;
+    
+    __ssestmxcsr(&mxcsr);
+    __i387fnstsw(&status);
+    *except = (mxcsr | status) & mask;
+
+    return 0;
+}
+
+static __inline__ int
+fetestexcept(int mask)
+{
+    int mxcsr;
+    int status;
+    
+    __ssestmxcsr(&mxcsr);
+    __i387fnstsw(&status);
+    status |= mxcsr;
+    status &= mask;
+    
+    return status;
+}
+
+static __inline__ int
+fesetround(int mode)
+{
+    int mxcsr;
+    int ctrl;
+    
+    if (mode & ~__FE_ROUND_MASK) {
+
+        return -1;
+    }
+    
+    __i387fnstcw(&ctrl);
+    ctrl &= ~__FE_ROUND_MASK;
+    ctrl |= mode;
+    __i387fldcw(ctrl);
+    __ssestmxcsr(&mxcsr);
+    mxcsr &= ~(_ROUND_MASK << _SSE_ROUND_SHIFT);
+    mxcsr |= mode << _SSE_ROUND_SHIFT;
+    __sseldmxcsr(mxcsr);
+    
+    return 0;
+}
+
+static __inline__ int
+fesetenv(const fenv_t *env)
+{
+
+    /* 
+     * restoring tag word from saved environment clobbers i387 register stack;
+     * the ABI allows function calls to do that, but we're inline so we need
+     * to take care and use __i387fldenvx()
+     */
+    __i387fldenvx(env->__x87);
+    __sseldmxcsr(env->mxcsr);
+
+    return 0;
+}
 
 #endif /* __X864_64_FENV_H__ */
 

@@ -6,6 +6,18 @@
 #include <x86-64/fenv.h>
 #endif
 
+#define __SSE_UNPROBED (-1)
+#define __SSE_MISSING  0
+#define __SSE_FOUND    1
+#if defined(__SSE__)
+#define __sse_online() 1
+#else
+#define __sse_online()                                                  \
+    (__sse_supported == __SSE_FOUND                                     \
+     || (__sse_supported == __SSE_UNPROBED                              \
+         && (__sse_supported = __sse_probe())))
+#endif /* defined(__SSE__) */
+
 #define FE_TONEAREST  0x0000
 #define FE_TOWARDZERO 0x0400
 #define FE_UPWARD     0x0800
@@ -30,58 +42,22 @@ typedef struct {
     uint16_t __status;
     uint16_t __mxcsrlo;
     uint32_t __tag;
-//    uint8_t  __other[16];
+    uint8_t  __other[16];
 } fenv_t;
 
 #else /* not 64-bit */
 
 typedef struct {
-    uint32_t __ctrl;
-    uint32_t __status;
-    uint32_t __tag;
+    struct {
+        uint32_t __ctrl;
+        uint32_t __status;
+        uint32_t __tag;
+        uint8_t __other[16];
+    } __x86;
     uint32_t __mxcsr;
 };
 
 #endif
-
-static __inline__ int
-feclearexcept(int mask)
-{
-    fenv_t   env;
-    uint32_t mxcsr;
-    
-    if (mask & FE_ALL_EXCEPT) {
-        __i387fnclex();
-    } else {
-        __i387fnstenv(&env);
-        env.__status &= ~mask;
-        __i387fldenv(env);
-    }
-    if (__sse_online()) {
-        __ssesetmxcsr(env, &mxcsr);
-        mxcsr &= ~mask;
-        __sseldmxcsr(mxcsr);
-    }
-
-    return 0;
-}
-
-static __inline__ int
-fegetexceptflag(fexcept_t *except, int mask)
-{
-    uint32_t mxcsr;
-    int     status;
-    
-    __i387fnstsw(&status);
-    if (__sse_online()) {
-        __ssesetmxcsr(&mxcsr);
-    } else {
-        mxcsr = 0;
-    }
-    *except = (mxcsr | status) & mask;
-
-    return 0;
-}
 
 static __inline__ int
 feraiseexcept(int mask)
@@ -92,24 +68,6 @@ feraiseexcept(int mask)
     __i387fwait();
 
     reutrn 0;
-}
-
-static __inline__ int
-fetestexcept(int mask)
-{
-    int mxcsr;
-    int status;
-
-    __i387fnstsw(&status);
-    if (__sse_online()) {
-        __ssesetmxcsr(&mxcsr);
-    } else {
-        mxcsr = 0;
-    }
-    status |= mxcsr;
-    status &= mask;
-    
-    return status;
 }
 
 static __inline__ int
@@ -131,27 +89,11 @@ fegetexcept(fexcept_t *except, int mask)
 
     __i387fnstsw(&status);
     if (__sse_online()) {
-        __ssesetmxcsr(&mxcsr);
+        __ssestmxcsr(&mxcsr);
     } else {
         mxcsr = 0;
     }
     *except = (mxcsr | status) & mask;
-    
-    return 0;
-}
-
-static __inline__ int
-fesetenv(const fenv_t *env)
-{
-    fenv_t env = *env;
-    int    mxcsr;
-        
-    mxcsr = __fegetmxcsr(env);
-    __ssesetmxcsr(env, ~0);
-    __i387fldenv(env);
-    if (__sse_online()) {
-        __sseldmxcsr(mxcsr);
-    }
     
     return 0;
 }
@@ -167,6 +109,84 @@ fegetexcept(void)
 
     return ctrl;
 }
+
+/* 64-bit architectures have these in <x86-64/fenv.h> which we included */
+#if !defined(__x86_64__) && !defined(__amd64__)
+
+static __inline__ int
+feclearexcept(int mask)
+{
+    fenv_t   env;
+    uint32_t mxcsr;
+    
+    if (mask & FE_ALL_EXCEPT) {
+        __i387fnclex();
+    } else {
+        __i387fnstenv(&env);
+        env.__status &= ~mask;
+        __i387fldenv(env);
+    }
+    if (__sse_online()) {
+        __ssestmxcsr(&mxcsr);
+        mxcsr &= ~mask;
+        __sseldmxcsr(mxcsr);
+    }
+
+    return 0;
+}
+
+static __inline__ int
+fegetexceptflag(fexcept_t *except, int mask)
+{
+    uint32_t mxcsr;
+    int     status;
+    
+    __i387fnstsw(&status);
+    if (__sse_online()) {
+        __ssestmxcsr(&mxcsr);
+    } else {
+        mxcsr = 0;
+    }
+    *except = (mxcsr | status) & mask;
+
+    return 0;
+}
+
+static __inline__ int
+fetestexcept(int mask)
+{
+    int mxcsr;
+    int status;
+
+    __i387fnstsw(&status);
+    if (__sse_online()) {
+        __ssestmxcsr(&mxcsr);
+    } else {
+        mxcsr = 0;
+    }
+    status |= mxcsr;
+    status &= mask;
+    
+    return status;
+}
+
+static __inline__ int
+fesetenv(const fenv_t *env)
+{
+    fenv_t env = *env;
+    int    mxcsr;
+        
+    mxcsr = __fegetmxcsr(env);
+    __fesetmxcsr(env, ~0);
+    __i387fldenv(env);
+    if (__sse_online()) {
+        __sseldmxcsr(mxcsr);
+    }
+    
+    return 0;
+}
+
+#endif /* not 64-bit */
 
 #endif /* __IA32_FENV_H__ */
 

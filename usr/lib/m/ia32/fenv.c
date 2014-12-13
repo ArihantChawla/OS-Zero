@@ -40,6 +40,8 @@ feholdexcept(fenv_t *env)
     return 0;
 }
 
+#if !defined(__x86_64__) && !defined(__amd64__)
+
 int
 fesetround(int mode)
 {
@@ -65,6 +67,8 @@ fesetround(int mode)
 
     return 0;
 }
+
+#endif /* not 64-bit */
 
 int
 fegetenv(fenv_t *env)
