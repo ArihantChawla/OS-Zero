@@ -1,0 +1,14 @@
+This library contains a mathematics library based on code from myself, MIT,
+FreeBSD, IBM, most likely Sun Microsystems, Microsoft corporation.
+
+FPUs are utilised in assembly where necessary, SIMD support is essential,
+the library aims to implement a mathematics library based on vectors of
+data-parallel memory location addresses.
+
+I want to extend personal thanks to everyone whose code I have had the wonderful
+chance to study. :)
+
+/* vendu */
+
+
+
