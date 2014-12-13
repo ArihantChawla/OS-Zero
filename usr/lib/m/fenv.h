@@ -13,23 +13,23 @@
 
 /* function prototypes from POSIX.1 */
 /* exception handling */
-int feclearexcept(int mask);
-int fegetexceptflag(fexcept_t *except, int mask);
-int fesetexceptflag(const fexcept_t *except, int mask);
-int feraiseexcept(int mask);
-int feholdexcept(fend_t *env);
-int fetestexcept(int mask);
+extern int feclearexcept(int mask);
+extern int fegetexceptflag(fexcept_t *except, int mask);
+extern int fesetexceptflag(const fexcept_t *except, int mask);
+extern int feraiseexcept(int mask);
+extern int feholdexcept(fend_t *env);
+extern int fetestexcept(int mask);
 /* rounding mode */
-int fegetround(void);
-int fesetround(int mode);
+extern int fegetround(void);
+extern int fesetround(int mode);
 /* floating-point environment management */
-int fegetenv(fenv_t *env);
-int fesetenv(const fenv_t *env);
-int feupdateenv(const fenv_t *env);
+extern int fegetenv(fenv_t *env);
+extern int fesetenv(const fenv_t *env);
+extern int feupdateenv(const fenv_t *env);
 
 /* non-POSIX.1 functions */
-int fedisableexcept(int mask);
-int feenableexcept(int mask);
+extern int fedisableexcept(int mask);
+extern int feenableexcept(int mask);
 
 /* rounding modes */
 #if !defined(FE_TOWARDZERO)

@@ -1,12 +1,13 @@
-This library contains a mathematics library based on code from myself, MIT,
-FreeBSD, IBM, most likely Sun Microsystems, Microsoft corporation.
+This library contains a mathematics library based on code and documentation
+from myself, The Open Group, MIT, FreeBSD, IBM, most likely Sun Microsystems,
+AT&T, Microsoft Corporation and possibly other parties.
 
-FPUs are utilised in assembly where necessary, SIMD support is essential,
-the library aims to implement a mathematics interface based on vectors of
-data-parallel memory.
+FPUs are utilised in assembly where necessary, SIMD support is being implemented
+for x86-architectures, the library aims to implement a mathematics interface
+based on vectors of data-parallel memory and so forth.
 
-I want to extend personal thanks to everyone whose code I have had the wonderful
-chance to study. :)
+I want to extend personal thanks to everyone whose code and documentation I have
+had the wonderful chance to study. :)
 
 /* vendu */
 
