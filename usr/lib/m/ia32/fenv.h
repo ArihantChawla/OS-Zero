@@ -160,8 +160,8 @@ fesetround(int mode)
     __fldcw(ctrl);
     if (__sse_online()) {
         __i387stmxcsr(&mxcsr);
-        mxcsr &= ~(_ROUND_MASK << _SSE_ROUND_SHIFT);
-        mxcsr |= __round << _SSE_ROUND_SHIFT;
+        mxcsr &= ~(__FE_ROUND_MASK << __SSE_ROUND_SHIFT);
+        mxcsr |= __round << __SSE_ROUND_SHIFT;
         __sseldmxcsr(mxcsr);
     }
     
@@ -223,6 +223,64 @@ fegetexcept(void)
     
     return 0;
 }
+
+#if defined(USEBSD) && (USEBSD)
+
+int
+fedisableexcept(int mask)
+{
+    int mxcsr;
+    int ctrl;
+    int oldmask;
+ 
+    mask &= FE_ALL_EXCEPT;
+    __i387fnstcw(&ctrl);
+    if (__sse_online()) {
+        __ssestmxcsr(&mxcsr);
+    } else {
+        mxcsr = 0;
+    }
+    oldmask = ~(ctrl | mxcsr >> __SSE_EMASK_SHIFT) & FE_ALL_EXCEPT;
+    if (mask) {
+        ctrl |= mask;
+        __fldcw(ctrl);
+        if (__sse_online()) {
+            mxcsr |= mask << __SSE_EMASK_SHIFT;
+            __sseldmxcsr(mxcsr);
+        }
+    }
+
+    return oldmask;
+}
+
+int
+feenableexcept(int mask)
+{
+    int mxcsr;
+    int ctrl;
+    int oldmask;
+ 
+    mask &= FE_ALL_EXCEPT;
+    __fnstcw(&ctrl);
+    if (__HAS_SSE()) {
+        __i387stmxcsr(&mxcsr);
+    } else {
+        mxcsr = 0;
+    }
+    oldmask = ~(ctrl | ((mxcsr >> __SSE_EMASK_SHIFT) & FE_ALL_EXCEPT));
+    if (mask) {
+        ctrl &= ~mask;
+        __i387fldcw(control);
+        if (__HAS__SSE()) {
+            mxcsr &= ~(mask << __SSE_EMASK_SHIFT);
+            __SSEldmxcsr(mxcsr);
+        }
+    }
+
+    return oldmask;
+}
+
+#endif /* USEBSD */
 
 #endif /* __IA32_FENV_H__ */
 
