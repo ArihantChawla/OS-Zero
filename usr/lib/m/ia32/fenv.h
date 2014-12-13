@@ -34,8 +34,8 @@ typedef struct {
 static __inline__ int
 feclearexcept(int mask)
 {
-    fenv_t env;
-    int    mxcsr;
+    fenv_t   env;
+    uint32_t mxcsr;
     
     if (mask & FE_ALL_EXCEPT) {
         __i387fnclex();
@@ -45,7 +45,7 @@ feclearexcept(int mask)
         __i387fldenv(env);
     }
     if (__sse_online()) {
-        __ssestmxcsr(&mxcsr);
+        __ssesetmxcsr(env, &mxcsr);
         mxcsr &= ~mask;
         __sseldmxcsr(mxcsr);
     }
@@ -56,12 +56,12 @@ feclearexcept(int mask)
 static __inline__ int
 fegetexcept(fexcept_t *except, int mask)
 {
-    int mxcsr;
-    int status;
+    uint32_t mxcsr;
+    int      status;
 
     __i387fnstsw(&status);
     if (__sse_online()) {
-        __ssestmxcsr(&mxcsr);
+        __ssesetmxcsr(&mxcsr);
     } else {
         mxcsr = 0;
     }
@@ -73,12 +73,12 @@ fegetexcept(fexcept_t *except, int mask)
 static __inline__ int
 fegetexceptflag(fexcept_t *except, int mask)
 {
-    int mxcsr;
+    uint32_t mxcsr;
     int status;
     
     __i387fnstsw(&status);
     if (__sse_online()) {
-        __ssestmxcsr(&mxcsr);
+        __ssesetmxcsr(&mxcsr);
     } else {
         mxcsr = 0;
     }
@@ -90,12 +90,12 @@ fegetexceptflag(fexcept_t *except, int mask)
 static __inline__ int
 fetestexcept(int mask)
 {
-    int mxcsr;
+    uint32_t mxcsr;
     int status;
 
     __i387fnstsw(&status);
     if (__sse_online()) {
-        __ssestmxcsr(&mxcsr);
+        __ssesetmxcsr(&mxcsr);
     } else {
         mxcsr = 0;
     }
@@ -119,7 +119,7 @@ fegetround(void)
 static __inline__ int
 fesetround(int mode)
 {
-    int mxcsr;
+    uint32_t mxcsr;
     int ctrl;
 
     if (mode & ~__FE_ROUND_MASK) {
@@ -133,7 +133,7 @@ fesetround(int mode)
     __i387fldcw(ctrl);
     
     if (__sse_online()) {
-        __ssestmxcsr(&mxcsr);
+        __ssesetmxcsr(&mxcsr);
         mxcsr &= ~(_ROUND_MASK << _SSE_ROUND_SHIFT);
         mxcsr |= mode << _SSE_ROUND_SHIFT;
         __sseldmxcsr(mxcsr);
@@ -149,7 +149,7 @@ fesetenv(const fenv_t *env)
     int    mxcsr;
         
     mxcsr = __fegetmxcsr(env);
-    __fesetmxcsr(env, ~0);
+    __ssesetmxcsr(env, ~0);
     __i387fldenv(env);
     if (__sse_online()) {
         __sseldmxcsr(mxcsr);
@@ -175,12 +175,12 @@ fegetexcept(void)
 int
 feholdexcept(fenv_t *env)
 {
-    int mxcsr;
+    uint32_t mxcsr;
     
     __i387fnstenv(env);
     __i387fnclex();
     if (__sse_online()) {
-        __ssestmxcsr(&mxcsr);
+        __ssesetmxcsr(&mxcsr);
         __ssesetmxcsr(*env, mxcsr);
         mxcsr &= ~FE_ALL_EXCEPT;
         mxcsr |= FE_ALL_EXCEPT << _SSE_EMASK_SHIFT;

@@ -11,6 +11,7 @@
 #include <ia32/fenv.h>
 #endif
 
+/* exception handling */
 int feclearexcept(int mask);
 int fedisableexcept(int mask);
 int fegetexcept(fexcept_t *except, int mask);

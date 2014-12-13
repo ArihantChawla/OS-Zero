@@ -16,7 +16,9 @@
  *  2 - evaluate all operations and constants to the range and precision of
  *      long double
  */
+#if !defined(FLT_EVAL_METHOD)
 #define FLT_EVAL_METHOD     2
+#endif
 
 #define FLT_MIN             (1.17549435082228750797E-38F)
 #define FLT_MAX             (3.40282346638528859812E+38F)
