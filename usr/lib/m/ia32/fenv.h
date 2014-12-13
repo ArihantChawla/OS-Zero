@@ -15,6 +15,8 @@
 
 typedef uint16_t      fexcept_t;
 
+#if !defined(__x86_64__) && !defined(__amd64__)
+
 /* FPU environment for i387 */
 #define __fegetmxcsr(env) (((env).__mxcsr_hi << 16) | ((env).__mxcsrlo))
 #define __fesetmxcsr(env, u32)                                          \
@@ -28,8 +30,19 @@ typedef struct {
     uint16_t __status;
     uint16_t __mxcsrlo;
     uint32_t __tag;
-    uint8_t  __other[16];
+//    uint8_t  __other[16];
 } fenv_t;
+
+#else /* not 64-bit */
+
+typedef struct {
+    uint32_t __ctrl;
+    uint32_t __status;
+    uint32_t __tag;
+    uint32_t __mxcsr;
+};
+
+#endif
 
 static __inline__ int
 feclearexcept(int mask)
@@ -54,11 +67,11 @@ feclearexcept(int mask)
 }
 
 static __inline__ int
-fegetexcept(fexcept_t *except, int mask)
+fegetexceptflag(fexcept_t *except, int mask)
 {
     uint32_t mxcsr;
-    int      status;
-
+    int     status;
+    
     __i387fnstsw(&status);
     if (__sse_online()) {
         __ssesetmxcsr(&mxcsr);
@@ -66,31 +79,25 @@ fegetexcept(fexcept_t *except, int mask)
         mxcsr = 0;
     }
     *except = (mxcsr | status) & mask;
-    
+
     return 0;
 }
 
 static __inline__ int
-fegetexceptflag(fexcept_t *except, int mask)
+feraiseexcept(int mask)
 {
-    uint32_t mxcsr;
-    int status;
+    fexcept_t except = mask;
     
-    __i387fnstsw(&status);
-    if (__sse_online()) {
-        __ssesetmxcsr(&mxcsr);
-    } else {
-        mxcsr = 0;
-    }
-    *except = (mxcsr | status) & mask;
+    fesetexceptflag(&except, mask);
+    __i387fwait();
 
-    return (0);
+    reutrn 0;
 }
 
 static __inline__ int
 fetestexcept(int mask)
 {
-    uint32_t mxcsr;
+    int mxcsr;
     int status;
 
     __i387fnstsw(&status);
@@ -117,28 +124,19 @@ fegetround(void)
 }
 
 static __inline__ int
-fesetround(int mode)
+fegetexcept(fexcept_t *except, int mask)
 {
     uint32_t mxcsr;
-    int ctrl;
+    int      status;
 
-    if (mode & ~__FE_ROUND_MASK) {
-
-        return -1;
-    }
-
-    __i387fnstcw(&ctrl);
-    ctrl &= ~_ROUND_MASK;
-    ctrl |= mode;
-    __i387fldcw(ctrl);
-    
+    __i387fnstsw(&status);
     if (__sse_online()) {
         __ssesetmxcsr(&mxcsr);
-        mxcsr &= ~(_ROUND_MASK << _SSE_ROUND_SHIFT);
-        mxcsr |= mode << _SSE_ROUND_SHIFT;
-        __sseldmxcsr(mxcsr);
+    } else {
+        mxcsr = 0;
     }
-
+    *except = (mxcsr | status) & mask;
+    
     return 0;
 }
 
@@ -158,8 +156,6 @@ fesetenv(const fenv_t *env)
     return 0;
 }
 
-int feupdateenv(const fenv_t *env);
-
 static __inline__ int
 fegetexcept(void)
 {
@@ -170,24 +166,6 @@ fegetexcept(void)
     ctrl &= FE_ALL_EXCEPT;
 
     return ctrl;
-}
-
-int
-feholdexcept(fenv_t *env)
-{
-    uint32_t mxcsr;
-    
-    __i387fnstenv(env);
-    __i387fnclex();
-    if (__sse_online()) {
-        __ssesetmxcsr(&mxcsr);
-        __ssesetmxcsr(*env, mxcsr);
-        mxcsr &= ~FE_ALL_EXCEPT;
-        mxcsr |= FE_ALL_EXCEPT << _SSE_EMASK_SHIFT;
-        __i387ldmxcsr(mxcsr);
-    }
-
-    return 0;
 }
 
 #endif /* __IA32_FENV_H__ */

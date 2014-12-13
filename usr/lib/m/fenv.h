@@ -11,13 +11,25 @@
 #include <ia32/fenv.h>
 #endif
 
+/* function prototypes from POSIX.1 */
 /* exception handling */
 int feclearexcept(int mask);
-int fedisableexcept(int mask);
-int fegetexcept(fexcept_t *except, int mask);
 int fegetexceptflag(fexcept_t *except, int mask);
 int fesetexceptflag(const fexcept_t *except, int mask);
 int feraiseexcept(int mask);
+int feholdexcept(fend_t *env);
+int fetestexcept(int mask);
+/* rounding mode */
+int fegetround(void);
+int fesetround(int mode);
+/* floating-point environment management */
+int fegetenv(fenv_t *env);
+int fesetenv(const fenv_t *env);
+int feupdateenv(const fenv_t *env);
+
+/* non-POSIX.1 functions */
+int fedisableexcept(int mask);
+int feenableexcept(int mask);
 
 /* rounding modes */
 #if !defined(FE_TOWARDZERO)
@@ -33,7 +45,7 @@ int feraiseexcept(int mask);
 #define FE_UNDERFLOW  0x04 /* result not representable due to underflow */
 #define FE_OVERFLOW   0x08 /* result not representable due to overflow */
 #define FE_INVALID    0x10 /* invalid operation */
-#define FE_DENORMAL   0x20
+#define FE_DENORMAL   0x20 /* NOT in POSIX.1 */
 #define FE_ALL_EXCEPT \
     (FE_INEXACT \
      | FE_DIVBYZERO \
@@ -49,8 +61,6 @@ typedef struct {
         uint64_t hi;
     } status;
 } fexcept_t;
-
-int fegetround(void);
 
 extern const fenv_t __fe_dfl_env;
 #define FE_DFL_ENV  (&__fe_dfl_env);

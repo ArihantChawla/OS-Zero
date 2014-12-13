@@ -1,5 +1,5 @@
-#ifndef __M_MATH_H__
-#define __M_MATH_H__
+#ifndef __MATH_H__
+#define __MATH_H__
 
 #include <float.h>
 
@@ -14,5 +14,5 @@ typedef long double float_t;
 typedef long double double_t;
 #endif
 
-#endif /* __M_MATH_H__ */
+#endif /* __MATH_H__ */
 
