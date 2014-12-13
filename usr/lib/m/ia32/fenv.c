@@ -2,13 +2,42 @@
 #include <fenv.h>
 #include <zero/cdecl.h>
 
+#if defined(__x86_64__) || defined(__amd64__)
+const fenvt_t __fe_dfl_env
+= {
+    {
+        0x1272, /* __ctrl */
+        0x0000, /* __status */
+        0xffffffff, /* __tag */
+        {
+            0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00,
+            0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0xff, 0xff
+        } /* __other */
+    },
+    0x00001f80 /* TODO: is this correct for __mxcsr? :) */
+};
+#else
+const fenvt_t __fe_dfl_env
+= {
+    0x1272, /* __ctrl */
+    0x0000, /* __mxcsrhi */
+    0x0000, /* __status */
+    0x1f80, /* __mxcsrlo */
+    0xffffffff, /* __tag */
+    {
+        0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00,
+        0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0xff, 0xff
+    } /* __other */
+};
+#endif
+
 int
 fesetexceptflag(const fexcept_t *except, int mask)
 {
     fenv_t env;
     int    mxcsr;
     
-    __fnstenv(&env);
+    __i387fnstenv(&env);
     env.__status &= ~mask;
     env.__status |= *except & mask;
     __i387fldenv(env);

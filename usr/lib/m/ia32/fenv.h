@@ -154,10 +154,10 @@ fesetround(int mode)
 
         return -1;
     }
-    __fnstcw(&ctrl);
+    __i387fnstcw(&ctrl);
     ctrl &= ~__FE_ROUND_MASK;
     ctrl |= mode;
-    __fldcw(ctrl);
+    __i387fldcw(ctrl);
     if (__sse_online()) {
         __i387stmxcsr(&mxcsr);
         mxcsr &= ~(__FE_ROUND_MASK << __SSE_ROUND_SHIFT);
@@ -240,12 +240,12 @@ fedisableexcept(int mask)
     } else {
         mxcsr = 0;
     }
-    oldmask = ~(ctrl | mxcsr >> __SSE_EMASK_SHIFT) & FE_ALL_EXCEPT;
+    oldmask = ~(ctrl | mxcsr >> __SSE_EXCEPT_SHIFT) & FE_ALL_EXCEPT;
     if (mask) {
         ctrl |= mask;
-        __fldcw(ctrl);
+        __i387fldcw(ctrl);
         if (__sse_online()) {
-            mxcsr |= mask << __SSE_EMASK_SHIFT;
+            mxcsr |= mask << __SSE_EXCEPT_SHIFT;
             __sseldmxcsr(mxcsr);
         }
     }
@@ -261,19 +261,19 @@ feenableexcept(int mask)
     int oldmask;
  
     mask &= FE_ALL_EXCEPT;
-    __fnstcw(&ctrl);
-    if (__HAS_SSE()) {
-        __i387stmxcsr(&mxcsr);
+    __i387fnstcw(&ctrl);
+    if (__sse_online()) {
+        __ssestmxcsr(&mxcsr);
     } else {
         mxcsr = 0;
     }
-    oldmask = ~(ctrl | ((mxcsr >> __SSE_EMASK_SHIFT) & FE_ALL_EXCEPT));
+    oldmask = ~(ctrl | ((mxcsr >> __SSE_EXCEPT_SHIFT) & FE_ALL_EXCEPT));
     if (mask) {
         ctrl &= ~mask;
-        __i387fldcw(control);
-        if (__HAS__SSE()) {
-            mxcsr &= ~(mask << __SSE_EMASK_SHIFT);
-            __SSEldmxcsr(mxcsr);
+        __i387fldcw(ctrl);
+        if (__sse_online()) {
+            mxcsr &= ~(mask << __SSE_EXCEPT_SHIFT);
+            __sseldmxcsr(mxcsr);
         }
     }
 

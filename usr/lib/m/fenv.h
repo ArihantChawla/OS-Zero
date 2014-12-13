@@ -45,6 +45,7 @@ extern int fesetenv(const fenv_t *env);
 extern int feupdateenv(const fenv_t *env);
 
 #if defined(USEBSD) && (USEBSD)
+/* FIXME: implement these */
 extern int fedisableexcept(int mask);
 extern int feenableexcept(int mask);
 #endif
