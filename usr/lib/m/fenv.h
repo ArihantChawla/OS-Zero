@@ -58,8 +58,8 @@ extern int feenableexcept(int mask);
 #define FE_DOWNWARD   3
 #endif /* !defined(FE_TOWARDZERO) */
 
-extern const fenv_t __fe_dfl_env;
-#define FE_DFL_ENV  (&__fe_dfl_env);
+#extern const fenv_t  __fe_dfl_env;
+#define FE_DFL_ENV    (&__fe_dfl_env);
 
 #endif /* __FENV_H__ */
 
