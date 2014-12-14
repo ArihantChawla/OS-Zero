@@ -1,5 +1,5 @@
-#ifndef __M_IA32_FPU_H__
-#define __M_IA32_FPU_H__
+#ifndef __IA32_FPU_H__
+#define __IA32_FPU_H__
 
 #define __i387fldcw(cw)    __asm__ __volatile__ ("fldcw %0" : : "m" (cw))
 #define __i387fldenv(env)  __asm__ __volatile__ ("fldenv %0" : : "m" (env))
@@ -15,5 +15,5 @@
 #define __sseldmxcsr(csr)  __asm__ __volatile__ ("ldmxcsr %0" : : "m" (csr))
 #define __ssestmxcsr(csr)  __asm__ __volatile__ ("stmxcsr %0" : "=m" (*(csr)))
 
-#endif /* __M_IA32_FPU_H__ */
+#endif /* __IA32_FPU_H__ */
 

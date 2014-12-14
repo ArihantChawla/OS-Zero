@@ -4,8 +4,15 @@
 #define __SSE_ROUND_SHIFT  3
 #define __SSE_EXCEPT_SHIFT 7
 
-extern int __sse_supported;
-extern int __sse_probe(void);
+typedef struct {
+    struct {
+        uint32_t __ctrl;
+        uint32_t __status;
+        uint32_t __tag;
+        uint8_t __other[16];
+    } __x87;
+    uint32_t __mxcsr;
+} fenv_t;
 
 static __inline__ int
 feclearexcept(int mask)
@@ -47,8 +54,7 @@ fetestexcept(int mask)
     
     __ssestmxcsr(&mxcsr);
     __i387fnstsw(&status);
-    status |= mxcsr;
-    status &= mask;
+    status = mxcsr & mask;
     
     return status;
 }

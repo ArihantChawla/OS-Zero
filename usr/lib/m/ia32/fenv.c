@@ -1,3 +1,4 @@
+#include <features.h>
 #include <stdint.h>
 #include <fenv.h>
 #include <zero/cdecl.h>
@@ -44,7 +45,7 @@ fesetexceptflag(const fexcept_t *except, int mask)
     if (__sse_online()) {
         __ssestmxcsr(&mxcsr);
         mxcsr &= ~mask;
-        mxcsr |= *mask & excepts;
+        mxcsr |= *except & mask;
         __sseldmxcsr(mxcsr);
     }
     
@@ -62,7 +63,7 @@ feholdexcept(fenv_t *env)
         __ssesetmxcsr(&mxcsr);
         __ssesetmxcsr(*env, mxcsr);
         mxcsr &= ~FE_ALL_EXCEPT;
-        mxcsr |= FE_ALL_EXCEPT << _SSE_EMASK_SHIFT;
+        mxcsr |= FE_ALL_EXCEPT << __SSE_EXCEPT_SHIFT;
         __i387ldmxcsr(mxcsr);
     }
 
@@ -136,6 +137,7 @@ fesetenv(const fenv_t *env)
 
     return 0;
 }
+
 int
 feupdateenv(const fenv_t *env)
 {
@@ -156,12 +158,14 @@ feupdateenv(const fenv_t *env)
 
 /* non-POSIX.1 functions */
 
+#if defined(USEBSD) && (USEBSD)
+
 int
 fedisableexcept(int mask)
 {
     int mxcsr;
-    int oldmask;
     int control;
+    int oldmask;
     
     mask &= FE_ALL_EXCEPT;
     __i387fnstcw(&control);
@@ -184,10 +188,9 @@ fedisableexcept(int mask)
 int
 feenableexcept(int mask)
 {
-    int oldmask;
     int mxcsr;
-    int status;
     int ctrl;
+    int oldmask;
 
     mask &= FE_ALL_EXCEPT;
     __i387fnstsw(&__control;);
@@ -196,8 +199,7 @@ feenableexcept(int mask)
     } else {
         __mxcsr = 0;
     }
-    mxcsr >>= __SSE_EXCEPT_SHIFT;
-    oldmask = ~(ctrl | mxcsr) & FE_ALL_EXCEPT;
+    oldmask = ~(ctrl | (mxcsr >> __SSE_EXCEPT_SHIFT)) & FE_ALL_EXCEPT;
     ctrl &= ~mask;
     __i387fldcw(ctlr);
     if (__sse_online()) {
@@ -207,4 +209,6 @@ feenableexcept(int mask)
 
     return oldmask;
 }
+
+#endif
 
