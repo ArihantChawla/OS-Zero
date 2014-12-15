@@ -418,27 +418,23 @@ ceilpow2_64(uint64_t u)
     } while (0)
 #endif
 
-/* internal macros. */
-#define _ftoi32(f)     (*((int32_t *)&(f)))
-#define _ftou32(f)     (*((uint32_t *)&(f)))
-#define _dtoi64(d)     (*((int64_t *)&(d)))
-#define _dtou64(d)     (*((uint64_t *)&(d)))
-/* FIXME: little-endian. */
-#define _dtohi32(d)    (*(((uint32_t *)&(d)) + 1))
-
 /*
  * IEEE 32-bit
  * 0..22  - mantissa
  * 23..30 - exponent
  * 31     - sign
  */
-/* convert elements of float to integer. */
-#define fgetmant(f)       (_ftou32(f) & 0x007fffff)
-#define fgetexp(f)        ((_ftou32(f) >> 23) & 0xff)
-#define fgetsign(f)       (_ftou32(f) >> 31)
-#define fsetmant(f, mant) (_ftou32(f) |= (mant) & 0x007fffff)
-#define fsetexp(f, exp)   (_ftou32(f) |= ((exp) & 0xff) << 23)
-#define fsetsign(f)       (_ftou32(f) |= 0x80000000)
+union __ieee754f { uint32_t u32; float f; };
+
+#define fgetmant(f)       (((union __ieee754f *)&(f))->u32 & 0x007fffff)
+#define fgetexp(f)        ((((union __ieee754f *)&(f))->u32 & 0x7ff00000) >> 23)
+#define fgetsign(f)       (((union __ieee754f *)&(f))->u32 & 0x80000000)
+#define fsetmant(f, mant) (((union __ieee754f *)&(f))->u32 |= (mant))
+#define fsetexp(f, exp)   (((union __ieee754f *)&(f))->u32 |= (exp) << 23)
+#define fsetsign(f, sign)                                               \
+    ((sign)                                                             \
+     ? (((union __ieee754f *)&(f))->u32 |= 0x80000000)                  \
+     : (((union __ieee754f *)&(f))->u32 &= 0x7fffffff))
 
 /*
  * IEEE 64-bit
@@ -446,16 +442,17 @@ ceilpow2_64(uint64_t u)
  * 52..62 - exponent
  * 63     - sign
  */
-/* convert elements of double to integer. */
-#define dgetmant(d)       (_dtou64(d) & UINT64_C(0x000fffffffffffff))
-#define dgetexp(d)        ((_dtohi32(d) >> 20) & 0x7ff)
-#define dgetsign(d)       (_dtohi32(d) >> 31)
-#define dsetmant(d, mant)                                               \
-    (*((uint64_t *)&(d)) |= (uint64_t)(mant) | UINT64_C(0x000fffffffffffff))
-#define dsetexp(d, exp)                                                 \
-    (*((uint64_t *)&(d)) |= (((uint64_t)((exp) & 0x7ff)) << 52))
-#define dsetsign(d)                                                     \
-    (*((uint64_t *)&(d)) |= UINT64_C(0x8000000000000000))
+union __ieee754d { uint64_t u64; double d; };
+
+#define dgetmant(d)       (((union __ieee754d *)&(d))->u64 & UINT64_C(0x000fffffffffffff))
+#define dgetexp(d)        ((((union __ieee754d *)&(d))->u64 & UINT64_C(0x7ff0000000000000)) >> 52)
+#define dgetsign(d)       (((union __ieee754d *)&(d))->u64 & UINT64_C(0x8000000000000000))
+#define dsetmant(d, mant) (((union __ieee754d *)&(d))->u64 |= (mant))
+#define dsetexp(d, exp)   (((union __ieee754d *)&(d))->u64 |= (uint64_t)(exp) << 52)
+#define dsetsign(d, sign)                                               \
+    ((sign)                                                             \
+     ? (((union __ieee754d *)&(d))->u64 |= UINT64_C(0x8000000000000000)) \
+     : (((union __ieee754d *)&(d))->u64 &= UINT64_C(0x7fffffffffffffff)))
 
 /*
  * IEEE 80-bit
@@ -468,7 +465,12 @@ ceilpow2_64(uint64_t u)
 #define ldgetsign(ld)       (*((uint32_t *)&ld + 3) & 0x8000)
 #define ldsetmant(ld, mant) (*((uint64_t *)&ld) = (mant))
 #define ldsetexp(ld, exp)   (*((uint32_t *)&ld + 2) |= (exp) & 0x7fff)
-#define ldsetsign(ld)       (*((uint32_t *)&ld + 3) |= 0x80000000)
+#define ldsetsign(ld, sign)                                             \
+    ((sign)                                                             \
+     ? (*((uint32_t *)&ld + 3) |= 0x8000)                               \
+     : (*((uint32_t *)&ld + 3) &= 0x7fff))
+
+#if 0
 /* sign bit 0x8000000000000000. */
 #define ifabs(d)                                                        \
     (_dtou64(d) & UINT64_C(0x7fffffffffffffff))
@@ -477,22 +479,23 @@ ceilpow2_64(uint64_t u)
 /* sign bit 0x80000000. */
 #define ifabsf(f)                                                       \
     (_ftou32(f) & 0x7fffffff)
+#endif
 
 /* TODO: IEEE 128-bit */
 
 /* get different-size NaNs */
 #define mknan(d)                                                        \
-    (dsetexp(d, 0x7ff), dsetmant(d, 0x000fffffffffffff), (d))
+    (dsetexp(d, 0x7ff), dsetmant(d, UINT64_C(0x000fffffffffffff)))
 #define mksnan(d)                                                       \
-    (dsetsign(d), dsetexp(d, 0x7ff), dsetmant(d, 0x000fffffffffffff), (d))
+    (dsetsign(d, 1), dsetexp(d, 0x7ff), dsetmant(d, UINT64_C(0x000fffffffffffff)))
 #define mknanf(f)                                                       \
-    (fsetexp(f, 0x7ff), fsetmant(f, 0x007fffff), (f))
+    (fsetexp(f, 0x7ff), fsetmant(f, 0x007fffff))
 #define mksnanf(f)                                                      \
-    (fsetsign(f), fsetexp(f, 0x7ff), fsetmant(f, 0x007fffff), (f))
+    (fsetsign(f, 1), fsetexp(f, 0x7ff), fsetmant(f, 0x007fffff))
 #define mknanl(ld)                                                      \
-    (ldsetexp(ld, 0x7fff), ldsetmant(ld, 0xffffffffffffffff), (ld))
+    (ldsetexp(ld, 0x7fff), ldsetmant(ld, UINT64_C(0xffffffffffffffff)))
 #define mksnanl(ld)                                                     \
-    (ldsetsign(ld), ldsetexp(ld, 0x7fff), ldsetmant(ld, 0xffffffffffffffff), (ld))
+    (ldsetsign(ld, 1), ldsetexp(ld, 0x7fff), ldsetmant(ld, UINT64_C(0xffffffffffffffff)))
 
 /* TODO: test the stuff below. */
 

@@ -1,8 +1,96 @@
+#include <stdint.h>
+#include <float.h>
 #include <fenv.h>
 #include <errno.h>
 #include <math.h>
 #include <ia32/math.h>
 #include <zero/trix.h>
+
+/* bit masks for IEEE-754 64-bit double */
+#define __DBL_SIGNBIT  UINT64_C(0x8000000000000000)
+#define __DBL_MASK     UINT64_C(0x7fffffffffffffff)
+#define __DBL_EXPBITS  UINT64_C(0x7ff0000000000000)
+#define __DBL_MANTBITS UINT64_C(0x000fffffffffffff)
+/* bit masks for IEEE-754 32-bit float */
+#define __FLT_SIGNBIT  0x80000000U
+#define __FLT_MASK     0x7fffffffU
+#define __FLT_EXPBITS  0x7f800000U
+#define __FLT_MANTBITS 0x007fffffU
+
+int __fpclassify(double x)
+{
+    union { double d; uint64_t u64; } u = { x };
+    int   exp = (uint32_t)((u.u64 & __DBL_MASK) >> 52);
+
+    if (!exp) {
+        if (u.u64 & __DBL_MANTBITS) {
+
+            return FP_SUBNORMAL;
+        }
+
+        return FP_ZERO;
+    }
+    if (exp == 0x7ff) {
+        if (u.u64 & __DBL_MANTBITS) {
+
+            return FP_NAN;
+        }
+
+        return FP_INFINITE;
+    }
+
+    return FP_NORMAL;
+}
+
+int __fpclassifyf(float x)
+{
+    union { float d; uint64_t u32; } u = { x };
+    int   exp = (u.u32 & __FLT_MASK) >> 23;
+
+    if (!exp) {
+        if (u.u32 & __FLT_MANTBITS) {
+
+            return FP_SUBNORMAL;
+        }
+
+        return FP_ZERO;
+    }
+    if (exp == 0xff) {
+        if (u.u32 & __FLT_MANTBITS) {
+
+            return FP_NAN;
+        }
+
+        return FP_INFINITE;
+    }
+
+    return FP_NORMAL;
+}
+
+int __fpclassifyl(long double x)
+{
+    uint64_t mant = ldgetmant(x);
+    int      exp = ldgetexp(x);
+
+    if (!exp) {
+        if (mant) {
+
+            return FP_SUBNORMAL;
+        }
+
+        return FP_ZERO;
+    }
+    if (exp == 0xff) {
+        if (mant) {
+
+            return FP_NAN;
+        }
+
+        return FP_INFINITE;
+    }
+
+    return FP_NORMAL;
+}
 
 /* TODO: lots of work to be done here...
  * - initialise FPU environment; set rounding mode etc.
@@ -18,7 +106,7 @@ sqrt(double x)
     double retval = 0.0;
 
     if (x < 0) {
-        retval = mknan(x);
+        mknan(retval);
     } else if (isnan(x) || fpclassify(x) == FP_ZERO) {
         retval = x;
     } else if (!dgetsign(x) && fpclassify(x) == FP_INFINITE) {
@@ -27,9 +115,9 @@ sqrt(double x)
         errno = EDOM;
         feraiseexcept(FE_INVALID);
         if (dgetsign(x)) {
-            retval = mksnan(x);
+            mksnan(retval);
         } else {
-            retval = mknan(x);
+            mknan(retval);
         }
     } else {
         __fpusqrt(x, retval);
@@ -53,9 +141,9 @@ sin(double x)
         errno = EDOM;
         feraiseexcept(FE_INVALID);
         if (dgetsign(x)) {
-            retval = mksnan(x);
+            mksnan(retval);
         } else {
-            retval = mknan(x);
+            mknan(retval);
         }
     } else {
         __fpusin(x, retval);
@@ -95,9 +183,9 @@ tan(double x)
         errno = EDOM;
         feraiseexcept(FE_INVALID);
         if (dgetsign(x)) {
-            retval = mksnan(x);
+            mksnan(retval);
         } else {
-            retval = mknan(x);
+            mknan(retval);
         }
     } else {
         __fputan(x, retval);

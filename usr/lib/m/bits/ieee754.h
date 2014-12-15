@@ -29,6 +29,12 @@
       : (((sizeof(x) == sizeof(float))                                  \
           ? __fpclassifyf(x)                                            \
           : __fpclassifyl(x)))))
+#define isfinite(x)                                                     \
+    (((sizeof(x) == sizeof(double))                                     \
+      ? __isfinite(x)                                                   \
+      : (((sizeof(x) == sizeof(float))                                  \
+          ? __isfinitef(x)                                              \
+          : __isfinitel(x)))))
 
 #endif /* __BITS_IEEE754_H__ */
 

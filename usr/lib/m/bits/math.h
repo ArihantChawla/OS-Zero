@@ -1,8 +1,6 @@
 #ifndef __BITS_MATH_H__
 #define __BITS_MATH_H__
 
-#include <endian.h>
-
 #define HUGE_VAL    0x7ff0000000000000.0
 #define HUGE_VALF   0x7f800000F
 #define HUGE_VALL   HUGE_VAL
