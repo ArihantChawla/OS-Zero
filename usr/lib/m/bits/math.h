@@ -8,8 +8,8 @@
 #define NAN         0x7fc00000f
 
 #define INFINITY    HUGE_VALF
-#define FP_ILOGB0   (-2147483647)
-#define FP_ILOGBNAN 2147483647
+#define FP_ILOGB0   0x80000001
+#define FP_ILOGBNAN 0x7fffffff
 
 /* isnanl() is defined in a per-architecture header such as <x86-64/math.h> */
 #define isnan(x)                                                        \
