@@ -17,11 +17,11 @@ typedef uint16_t      fexcept_t;
 #if !defined(__x86_64__) && !defined(__amd64__)
 
 /* FPU environment for i387 */
-#define __fegetmxcsr(env) (((env).__mxcsr_hi << 16) | ((env).__mxcsrlo))
+#define __fegetmxcsr(env) (((env).__mxcsrhi << 16) | ((env).__mxcsrlo))
 #define __fesetmxcsr(env, u32)                                          \
     do {                                                                \
-        (env).__mxcsr_hi = (uint32_t)(x) >> 16;                         \
-        (env).__mxcsr_lo = (uint16_t)(x);                               \
+        (env).__mxcsrhi = (uint32_t)(u32) >> 16;                        \
+        (env).__mxcsrlo = (uint16_t)(u32);                              \
     } while (0)
 typedef struct {
     uint16_t __ctrl;
@@ -117,7 +117,7 @@ fesetround(int mode)
     int mxcsr;
     int ctrl;
     
-    if (__round & ~__FE_ROUND_MASK) {
+    if (mode & ~__FE_ROUND_MASK) {
 
         return -1;
     }
@@ -128,7 +128,7 @@ fesetround(int mode)
     if (__sse_online()) {
         __ssestmxcsr(&mxcsr);
         mxcsr &= ~(__FE_ROUND_MASK << __SSE_ROUND_SHIFT);
-        mxcsr |= __round << __SSE_ROUND_SHIFT;
+        mxcsr |= mode << __SSE_ROUND_SHIFT;
         __sseldmxcsr(mxcsr);
     }
     
@@ -138,17 +138,17 @@ fesetround(int mode)
 static __inline__ int
 fesetenv(const fenv_t *env)
 {
-    fenv_t env = *env;
+    fenv_t fenv = *env;
     int    mxcsr;
         
-    mxcsr = __fegetmxcsr(env);
-    __fesetmxcsr(env, 0xffffffff);
+    mxcsr = __fegetmxcsr(fenv);
+    __fesetmxcsr(fenv, 0xffffffff);
     /* 
      * restoring tag word from saved environment clobbers i387 register stack;
      * the ABI allows function calls to do that, but we're inline so we need
      * to take care and use __i387fldenvx()
      */
-    __i387fldenvx(env);
+    __i387fldenvx(fenv);
     if (__sse_online()) {
         __sseldmxcsr(mxcsr);
     }

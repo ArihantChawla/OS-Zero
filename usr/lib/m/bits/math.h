@@ -13,7 +13,7 @@
 
 /* POSIX.1-2004 */
 
-#define MAXFLOAT
+#define MAXFLOAT         (3.40282346638528860e+38f)
 
 #define MATH_ERRNO       1
 #define MATH_ERREXCEPT   2

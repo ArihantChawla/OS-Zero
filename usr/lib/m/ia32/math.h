@@ -96,7 +96,7 @@
     __asm__ __volatile__ ("fstpt %0\n"                                  \
                           "fwait\n"                                     \
                           : "=m" (*sin));
-#endif
+#endif /* _GNU_SOURCE */
 
 #endif /* __IA32_MATH_H__ */
 

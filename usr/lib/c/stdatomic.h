@@ -10,7 +10,7 @@
 typedef long                 atomic_flag;
 
 /* atomic types */
-typedef _Bool                atomic_pool;
+typedef _Bool                atomic_bool;
 typedef char                 atomic_char;
 typedef signed char          atomic_schar;
 typedef unsigned char        atomic_uchar;

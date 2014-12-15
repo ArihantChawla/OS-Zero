@@ -1,9 +1,6 @@
 #ifndef __X86_64_FENV_H__
 #define __X86_64_FENV_H__
 
-#define __SSE_ROUND_SHIFT  3
-#define __SSE_EXCEPT_SHIFT 7
-
 #define __fegetmxcsr(env)      ((env).__mxcsr)
 #define __fesetmxcsr(env, u32) ((env).__mxcsr = (u32))
 typedef struct {

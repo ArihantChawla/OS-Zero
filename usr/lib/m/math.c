@@ -96,7 +96,7 @@ int __fpclassifyl(long double x)
  * - initialise FPU environment; set rounding mode etc.
  */
 
-__inline__ double
+double
 #if (MATHTEST)
 zsqrt(double x)
 #else
@@ -126,7 +126,7 @@ sqrt(double x)
     return retval;
 }
 
-__inline__ double
+double
 #if (MATHTEST)
 zsin(double x)
 #else
@@ -152,7 +152,7 @@ sin(double x)
     return retval;
 }
 
-__inline__ double
+double
 #if (MATHTEST)
 zcos(double x)
 #else
@@ -167,7 +167,7 @@ cos(double x)
     return retval;
 }
 
-__inline__ double
+double
 #if (MATHTEST)
 ztan(double x)
 #else
@@ -198,7 +198,7 @@ tan(double x)
 }
 
 /* FIXME: atan() doesn't work yet */
-__inline__ double
+double
 #if (MATHTEST)
 zatan(double x)
 #else
@@ -225,7 +225,7 @@ atan(double x)
 #if ((_BSD_SOURCE) || (_SVID_SOURCE) || _XOPEN_SOURCE >= 600            \
     || (_ISOC99_SOURCE) || _POSIX_C_SOURCE >= 200112L)
 
-__inline__ float
+float
 /* FIXME: sqrtf doesn't work yet */
 #if (MATHTEST)
 zsqrtf(float x)
@@ -258,7 +258,7 @@ sqrtf(float x)
     return retval;
 }
 
-__inline__ float
+float
 #if (MATHTEST)
 zsinf(float x)
 #else
@@ -272,7 +272,7 @@ sinf(float x)
     return retval;
 }
 
-__inline__ float
+float
 #if (MATHTEST)
 zcosf(float x)
 #else
@@ -286,8 +286,7 @@ cosf(float x)
     return retval;
 }
 
-#if 0 /* BROKEN */
-__inline__ float
+float
 #if (MATHTEST)
 ztanf(float x)
 #else
@@ -329,10 +328,9 @@ tanf(float x)
 
     return retval;
 }
-#endif /* 0 */
 
 /* TODO: sqrtl() doesn't work yet */
-__inline__ long double
+long double
 #if (MATHTEST)
 zsqrtl(long double x)
 #else
@@ -364,7 +362,7 @@ sqrtl(long double x)
     return retval;
 }
 
-__inline__ long double
+long double
 #if (MATHTEST)
 zsinl(long double x)
 #else
@@ -378,7 +376,7 @@ sinl(long double x)
     return retval;
 }
 
-__inline__ long double
+long double
 #if (MATHTEST)
 zcosl(long double x)
 #else
@@ -393,8 +391,7 @@ cosl(long double x)
 }
 
 /* TODO: tanl() doesn't work yet */
-#if 0
-__inline__ long double
+long double
 #if (MATHTEST)
 ztanl(long double x)
 #else
@@ -423,7 +420,6 @@ tanl(long double x)
 
     return retval;
 }
-#endif
 
 #endif
 
@@ -510,7 +506,6 @@ main(int argc,
 
             exit(1);
         }
-#if 0
         sincos(d, &sin1, &cos1);
         zsincos(d, &sin2, &cos2);
         if (sin1 != sin2 || cos1 != cos2) {
@@ -519,7 +514,6 @@ main(int argc,
 
             exit(1);
         }
-#endif
         d1 = sin(d);
         d2 = zsin(d);
         if (d2 != d1 && (fpclassify(d1) != fpclassify(d2))) {
@@ -541,7 +535,6 @@ main(int argc,
             
             return 1;
         }
-#if 0
         d1 = atan(d);
         d2 = zatan(d);
         if (d2 != d1 && (fpclassify(d1) != fpclassify(d2))) {
@@ -549,11 +542,9 @@ main(int argc,
             
             return 1;
         }
-#endif
     }
 
     for ( ld = -100.0 ; ld < 100.0 ; ld += 1.0 ) {
-#if 0
         ld1 = sqrtl(ld);
         ld2 = zsqrtl(ld);
         if (ld1 != ld2) {
@@ -561,7 +552,6 @@ main(int argc,
 
             exit(1);
         }
-#endif
         sincosl(ld, &sinld1, &cosld1);
         zsincosl(ld, &sinld2, &cosld2);
         if ((sinld1 != sinld2 || cosld1 != cosld2)
@@ -593,7 +583,6 @@ main(int argc,
             fprintf(stderr, "COSLD(%Le) == %Le\n", ld, ld2);
 #endif
         }
-#if 0
         ld1 = tanl(ld);
         ld2 = ztanl(ld);
         if (ld2 != ld1 && (fpclassify(ld1) != fpclassify(ld2))) {
@@ -605,11 +594,9 @@ main(int argc,
             fprintf(stderr, "TANF(%Le) == %Le\n", ld, ld2);
 #endif
         }
-#endif
     }
 
     for ( f = -100.0 ; f < 100.0 ; f += 1.0 ) {
-#if 0
         f1 = sqrtf(f);
         f2 = zsqrtf(f);
         if (f1 != f2) {
@@ -617,7 +604,6 @@ main(int argc,
 
             exit(1);
         }
-#endif
         sincosf(f, &sinf1, &cosf1);
         zsincosf(f, &sinf2, &cosf2);
         if (sinf1 != sinf2 || cosf1 != cosf2) {
@@ -648,7 +634,6 @@ main(int argc,
             fprintf(stderr, "COS(%e) == %e\n", f, f2);
 #endif
         }
-#if 0
         f1 = tanf(f);
         f2 = ztanf(f);
         if (f2 != f1) {
@@ -660,7 +645,6 @@ main(int argc,
             fprintf(stderr, "TANF(%e) == %e\n", f, f2);
 #endif
         }
-#endif
     }
 
     return 0;
