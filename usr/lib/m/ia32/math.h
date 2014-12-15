@@ -4,10 +4,14 @@
 #include <x86-64/math.h>
 
 /* IEEE 80-bit floating point format */
-#if !defined(isnanl)
-#define isnanl(x)                                                       \
+#if !defined(__isnanl)
+#define __isnanl(x)                                                     \
     (*(uint64_t *)&(x) == UINT64_C(0xffffffffffffffff)                  \
      && (((uint32_t *)&(x)[2] & 0x7fff) == 0x7fff))
+#define __isinfl(x)                                                     \
+    (!ldgetmantl(x) && ((*(uint32_t)&(x)[2] & 0x7fff) == 0x7fff))
+#define __issignanl(x)                                                  \
+    (!(*(uint64_t *)&(x) & UINT64_C(0x8000000000000000)))
 #endif
 
 #define __fpusqrt(x, ret)                                               \
