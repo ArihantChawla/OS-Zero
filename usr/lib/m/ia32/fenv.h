@@ -112,30 +112,6 @@ fetestexcept(int mask)
 }
 
 static __inline__ int
-fesetround(int mode)
-{
-    int mxcsr;
-    int ctrl;
-    
-    if (mode & ~__FE_ROUND_MASK) {
-
-        return -1;
-    }
-    __i387fnstcw(&ctrl);
-    ctrl &= ~__FE_ROUND_MASK;
-    ctrl |= mode;
-    __i387fldcw(ctrl);
-    if (__sse_online()) {
-        __ssestmxcsr(&mxcsr);
-        mxcsr &= ~(__FE_ROUND_MASK << __SSE_ROUND_SHIFT);
-        mxcsr |= mode << __SSE_ROUND_SHIFT;
-        __sseldmxcsr(mxcsr);
-    }
-    
-    return (0);
-}
-
-static __inline__ int
 fesetenv(const fenv_t *env)
 {
     fenv_t fenv = *env;

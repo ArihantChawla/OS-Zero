@@ -342,7 +342,7 @@ sqrtl(long double x)
     if (isnan(x) || fpclassify(x) == FP_ZERO) {
         retval = x;
     } else if (!dgetsign(x) && fpclassify(x) == FP_INFINITE) {
-        retval = fsetexp(retval, 0x7fff);
+        retval = fsetexp(retval, 0xff);
     } else if (x < -0.0) {
         errno = EDOM;
         feraiseexcept(FE_INVALID);
@@ -404,6 +404,7 @@ tanl(long double x)
     if (isnan(x) || fpclassify(x) == FP_ZERO) {
         retval = x;
     } else if (fpclassify(x) == FP_INFINITE) {
+        retval = 0.0;
         errno = EDOM;
         feraiseexcept(FE_INVALID);
     } else {
@@ -497,6 +498,7 @@ main(int argc,
     long double cosld1;
     long double cosld2;
 
+    fesetenv(FE_DFL_ENV);
     fprintf(stderr, "sin 0 == %f\n", sin(0));
     for ( d = -RADMAX ; d < RADMAX ; d += 0.125 ) {
         d1 = sqrt(d);

@@ -91,14 +91,14 @@ fesetround(int mode)
     }
 
     __i387fnstcw(&ctrl);
-    ctrl &= ~_ROUND_MASK;
+    ctrl &= ~__FE_ROUND_MASK;
     ctrl |= mode;
     __i387fldcw(ctrl);
     
     if (__sse_online()) {
         __ssestmxcsr(&mxcsr);
-        mxcsr &= ~(_ROUND_MASK << _SSE_ROUND_SHIFT);
-        mxcsr |= mode << _SSE_ROUND_SHIFT;
+        mxcsr &= ~(__FE_ROUND_MASK << __SSE_ROUND_SHIFT);
+        mxcsr |= mode << __SSE_ROUND_SHIFT;
         __sseldmxcsr(mxcsr);
     }
 
