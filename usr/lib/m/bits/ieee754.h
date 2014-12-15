@@ -3,6 +3,8 @@
 #ifndef __BITS_IEEE754_H__
 #define __BITS_IEEE754_H__
 
+#include <stdint.h>
+
 /* characteristics of float */
 #define FLT_DIG         6
 #define FLT_MANT_DIG    24
