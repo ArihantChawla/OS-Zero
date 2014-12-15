@@ -14,6 +14,7 @@
 
 #include <stdint.h>
 #include <limits.h>
+#include <endian.h>
 #include <zero/param.h>
 #include <zero/mtx.h>
 #include <zero/asm.h>
@@ -435,6 +436,10 @@ union __ieee754f { uint32_t u32; float f; };
     ((sign)                                                             \
      ? (((union __ieee754f *)&(f))->u32 |= 0x80000000)                  \
      : (((union __ieee754f *)&(f))->u32 &= 0x7fffffff))
+#define fsetnan(f)                                                      \
+    (*(uint32_t *)&(f) = 0x7fffffffU)
+#define fsetsnan(f)                                                     \
+    (*(uint32_t *)&(f) = 0xffffffffU)
 
 /*
  * IEEE 64-bit
@@ -453,6 +458,10 @@ union __ieee754d { uint64_t u64; double d; };
     ((sign)                                                             \
      ? (((union __ieee754d *)&(d))->u64 |= UINT64_C(0x8000000000000000)) \
      : (((union __ieee754d *)&(d))->u64 &= UINT64_C(0x7fffffffffffffff)))
+#define dsetnan(d)                                                      \
+    (*(uint64_t *)&(d) = UINT64_C(0x7fffffffffffffff))
+#define dsetsnan(d)                                                     \
+    (*(uint64_t *)&(d) = UINT64_C(0xffffffffffffffff))
 
 /*
  * IEEE 80-bit
@@ -469,6 +478,41 @@ union __ieee754d { uint64_t u64; double d; };
     ((sign)                                                             \
      ? (*((uint32_t *)&ld + 3) |= 0x8000)                               \
      : (*((uint32_t *)&ld + 3) &= 0x7fff))
+#if (__BYTE_ORDER == __LITTLE_ENDIAN)
+#define ldsetnan(ld)                                                    \
+    do {                                                                \
+        uint32_t *__u32p = (uint32_t *)&(ld);                           \
+                                                                        \
+        __u32p[0] = 0xffffffffU;                                        \
+        __u32p[1] = 0xffffffffU;                                        \
+        __u32p[3] = 0x7fffU;                                            \
+    } while (0)
+#define ldsetsnan(ld)                                                   \
+    do {                                                                \
+        uint32_t *__u32p = (uint32_t *)&(ld);                           \
+                                                                        \
+        __u32p[0] = 0xffffffffU;                                        \
+        __u32p[1] = 0xffffffffU;                                        \
+        __u32p[2] = 0xffffU;                                            \
+    } while (0)
+#elif (__BYTE_ORDER == __LITTLE_ENDIAN)
+#define ldsetnan(ld)                                                    \
+    do {                                                                \
+        uint32_t *__u32p = (uint32_t *)&(ld);                           \
+                                                                        \
+        __u32p[0] = 0x7fffU;                                            \
+        __u32p[1] = 0xffffffffU;                                        \
+        __u32p[2] = 0xffffffffU;                                        \
+    } while (0)
+#define ldsetsnan(ld)                                                   \
+    do {                                                                \
+        uint32_t *__u32p = (uint32_t *)&(ld);                           \
+                                                                        \
+        __u32p[0] = 0xffffU;                                            \
+        __u32p[1] = 0xffffffffU;                                        \
+        __u32p[2] = 0xffffffffU;                                        \
+    } while (0)
+#endif
 
 #if 0
 /* sign bit 0x8000000000000000. */
@@ -479,23 +523,9 @@ union __ieee754d { uint64_t u64; double d; };
 /* sign bit 0x80000000. */
 #define ifabsf(f)                                                       \
     (_ftou32(f) & 0x7fffffff)
-#endif
+#endif /* 0 */
 
 /* TODO: IEEE 128-bit */
-
-/* get different-size NaNs */
-#define mknan(d)                                                        \
-    (dsetexp(d, 0x7ff), dsetmant(d, UINT64_C(0x000fffffffffffff)))
-#define mksnan(d)                                                       \
-    (dsetsign(d, 1), dsetexp(d, 0x7ff), dsetmant(d, UINT64_C(0x000fffffffffffff)))
-#define mknanf(f)                                                       \
-    (fsetexp(f, 0x7ff), fsetmant(f, 0x007fffff))
-#define mksnanf(f)                                                      \
-    (fsetsign(f, 1), fsetexp(f, 0x7ff), fsetmant(f, 0x007fffff))
-#define mknanl(ld)                                                      \
-    (ldsetexp(ld, 0x7fff), ldsetmant(ld, UINT64_C(0xffffffffffffffff)))
-#define mksnanl(ld)                                                     \
-    (ldsetsign(ld, 1), ldsetexp(ld, 0x7fff), ldsetmant(ld, UINT64_C(0xffffffffffffffff)))
 
 /* TODO: test the stuff below. */
 

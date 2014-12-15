@@ -106,7 +106,7 @@ sqrt(double x)
     double retval = 0.0;
 
     if (x < 0) {
-        mknan(retval);
+        dsetnan(retval);
     } else if (isnan(x) || fpclassify(x) == FP_ZERO) {
         retval = x;
     } else if (!dgetsign(x) && fpclassify(x) == FP_INFINITE) {
@@ -115,9 +115,9 @@ sqrt(double x)
         errno = EDOM;
         feraiseexcept(FE_INVALID);
         if (dgetsign(x)) {
-            mksnan(retval);
+            dsetsnan(retval);
         } else {
-            mknan(retval);
+            dsetnan(retval);
         }
     } else {
         __fpusqrt(x, retval);
@@ -141,9 +141,9 @@ sin(double x)
         errno = EDOM;
         feraiseexcept(FE_INVALID);
         if (dgetsign(x)) {
-            mksnan(retval);
+            dsetsnan(retval);
         } else {
-            mknan(retval);
+            dsetnan(retval);
         }
     } else {
         __fpusin(x, retval);
@@ -183,9 +183,9 @@ tan(double x)
         errno = EDOM;
         feraiseexcept(FE_INVALID);
         if (dgetsign(x)) {
-            mksnan(retval);
+            dsetsnan(retval);
         } else {
-            mknan(retval);
+            dsetnan(retval);
         }
     } else {
         __fputan(x, retval);
@@ -243,9 +243,9 @@ sqrtf(float x)
         errno = EDOM;
         feraiseexcept(FE_INVALID);
         if (dgetsign(x)) {
-            retval = mksnanf(x);
+            retval = fsetsnan(x);
         } else {
-            retval = mknanf(x);
+            retval = fsetnan(x);
         }
     } else {
         __asm__ __volatile__ ("flds %0\n" : : "m" (x));
@@ -349,9 +349,9 @@ sqrtl(long double x)
         errno = EDOM;
         feraiseexcept(FE_INVALID);
         if (dgetsign(x)) {
-            retval = mksnanl(x);
+            ldsetnan(retval);
         } else {
-            retval = mknanl(x);
+            ldsetnan(retval);
         }
     } else {
         __asm__ __volatile__ ("fldt %0\n" : : "m" (x));
