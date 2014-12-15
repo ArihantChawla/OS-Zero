@@ -154,19 +154,19 @@ int
 fedisableexcept(int mask)
 {
     int mxcsr;
-    int control;
+    int ctrl;
     int oldmask;
     
     mask &= FE_ALL_EXCEPT;
-    __i387fnstcw(&control);
+    __i387fnstcw(&ctrl);
     if (__sse_online()) {
         __ssestmxcsr(&mxcsr);
     } else {
         mxcsr = 0;
     }
-    oldmask = ~(control | (mxcsr >> __SSE_EXCEPT_SHIFT)) & FE_ALL_EXCEPT;
-    control |= mask;
-    __i387fldcw(control);
+    oldmask = ~(ctrl | (mxcsr >> __SSE_EXCEPT_SHIFT)) & FE_ALL_EXCEPT;
+    ctrl |= mask;
+    __i387fldcw(ctrl);
     if (__sse_online()) {
         mxcsr |= mask << __SSE_EXCEPT_SHIFT;
         __sseldmxcsr(mxcsr);
