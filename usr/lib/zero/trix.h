@@ -425,6 +425,7 @@ ceilpow2_64(uint64_t u)
 #define _dtou64(d)     (*((uint64_t *)&(d)))
 /* FIXME: little-endian. */
 #define _dtohi32(d)    (*(((uint32_t *)&(d)) + 1))
+
 /*
  * IEEE 32-bit
  * 0..22  - mantissa
@@ -438,6 +439,7 @@ ceilpow2_64(uint64_t u)
 #define fsetmant(f, mant) (_ftou32(f) |= (mant) & 0x007fffff)
 #define fsetexp(f, exp)   (_ftou32(f) |= ((exp) & 0xff) << 23)
 #define fsetsign(f)       (_ftou32(f) |= 0x80000000)
+
 /*
  * IEEE 64-bit
  * 0..51  - mantissa
@@ -467,7 +469,6 @@ ceilpow2_64(uint64_t u)
 #define ldsetmant(ld, mant) (*((uint64_t *)&ld) = (mant))
 #define ldsetexp(ld, exp)   (*((uint32_t *)&ld + 2) |= (exp) & 0x7fff)
 #define ldsetsign(ld)       (*((uint32_t *)&ld + 3) |= 0x80000000)
-
 /* sign bit 0x8000000000000000. */
 #define ifabs(d)                                                        \
     (_dtou64(d) & UINT64_C(0x7fffffffffffffff))
@@ -476,6 +477,22 @@ ceilpow2_64(uint64_t u)
 /* sign bit 0x80000000. */
 #define ifabsf(f)                                                       \
     (_ftou32(f) & 0x7fffffff)
+
+/* TODO: IEEE 128-bit */
+
+/* get different-size NaNs */
+#define getnan(d)                                                       \
+    (dsetexp(d, 0x7ff), dsetmant(d, 0x000fffffffffffff), (d))
+#define getsnan(d) \
+    (dsetsign(d), dsetexp(d, 0x7ff), dsetmant(d, 0x000fffffffffffff), (d))
+#define getnanf(f)                                                      \
+    (fsetexp(f, 0x7ff), fsetmant(f, 0x007fffff), (f))
+#define getsnanf(f)                                                     \
+    (fsetsign(f), fsetexp(f, 0x7ff), fsetmant(f, 0x007fffff), (f))
+#define getnanl(ld)                                                      \
+    (ldsetexp(ld, 0x7fff), ldsetmant(ld, 0xffffffffffffffff), (ld))
+#define getsnanl(ld) \
+    (ldsetsign(ld), ldsetexp(ld, 0x7fff), ldsetmant(ld, 0xffffffffffffffff), (ld))
 
 /* TODO: test the stuff below. */
 

@@ -239,5 +239,11 @@ extern long double remainderl(long double, long double);
 extern long double rintl(long double);
 extern long double scalbl(long double, long double);
 
+#if defined(_GNU_SOURCE)
+void sincos(double x, double *sin, double *cos);
+void sincosf(float x, float *sin, float *cos);
+void sincosl(long double x, long double *sin, long double *cos);
+#endif
+
 #endif /* __MATH_H__ */
 

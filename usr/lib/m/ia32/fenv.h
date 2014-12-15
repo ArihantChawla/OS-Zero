@@ -2,6 +2,8 @@
 #define __IA32_FENV_H__
 
 #include <stdint.h>
+#include <ia32/i387.h>
+#include <ia32/sse.h>
 
 typedef uint16_t      fexcept_t;
 

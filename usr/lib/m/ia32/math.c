@@ -5,8 +5,6 @@
 #include <fenv.h>
 #include <errno.h>
 #include <math.h>
-#include "math.h"
-#include <zero/trix.h>
 
 /* TODO: lots of work to be done here...
  * - initialise FPU environment; set rounding mode etc.

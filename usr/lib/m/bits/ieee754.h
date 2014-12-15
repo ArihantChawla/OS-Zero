@@ -23,5 +23,12 @@
 
 /* LDBL-macros are defined in architecture header files, e.g. <ia32/float.h> */
 
+#define fpclassify(x)                                                   \
+    (((sizeof(x) == sizeof(double))                                     \
+      ? __fpclassify(x)                                                 \
+      : (((sizeof(x) == sizeof(float))                                  \
+          ? __fpclassifyf(x)                                            \
+          : __fpclassifyl(x)))))
+
 #endif /* __BITS_IEEE754_H__ */
 

@@ -1,7 +1,8 @@
 #ifndef __IA32_FLOAT_H__
 #define __IA32_FLOAT_H__
 
-#include <ia32/fpu.h>
+//#include <ia32/i387.h>
+//
 #if defined(__x86_64__) || defined(__amd64__)
 #include <x86-64/float.h>
 #endif
