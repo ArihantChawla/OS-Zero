@@ -179,6 +179,8 @@ tan(double x)
 
     if (isnan(x)) {
         retval = x;
+    } else if (fpclassify(x) == FP_ZERO) {
+        fsetnan(retval);
     } else if (fpclassify(x) == FP_INFINITE) {
         errno = EDOM;
         feraiseexcept(FE_INVALID);
@@ -433,7 +435,9 @@ void
 sincos(double x, double *sin, double *cos)
 #endif
 {
-    __fpusincos(x, sin, cos);
+    __fpusin(x, sin);
+    __fpucos(x, cos);
+//    __fpusincos(x, sin, cos);
 
     return;
 }
@@ -499,7 +503,7 @@ main(int argc,
     long double cosld2;
 
     fesetenv(FE_DFL_ENV);
-    fprintf(stderr, "sin 0 == %f\n", sin(0));
+    fprintf(stderr, "sin 0 == %e\n", sin(0));
     for ( d = -RADMAX ; d < RADMAX ; d += 0.125 ) {
         d1 = sqrt(d);
         d2 = zsqrt(d);
@@ -511,7 +515,7 @@ main(int argc,
         sincos(d, &sin1, &cos1);
         zsincos(d, &sin2, &cos2);
         if (sin1 != sin2 || cos1 != cos2) {
-            fprintf(stderr, "SINCOS failure (%f/%f/%f) -> (%f/%f/%f)\n",
+            fprintf(stderr, "SINCOS failure (%e/%e/%e) -> (%e/%e/%e)\n",
                 d, sin1, cos1, d, sin2, cos2);
 
             exit(1);
@@ -602,14 +606,14 @@ main(int argc,
         f1 = sqrtf(f);
         f2 = zsqrtf(f);
         if (f1 != f2) {
-            fprintf(stderr, "SQRTF(%f) failure(%f/%f)\n", f, f2, f1);
+            fprintf(stderr, "SQRTF(%e) failure(%e/%e)\n", f, f2, f1);
 
             exit(1);
         }
         sincosf(f, &sinf1, &cosf1);
         zsincosf(f, &sinf2, &cosf2);
         if (sinf1 != sinf2 || cosf1 != cosf2) {
-            fprintf(stderr, "SINCOSF failure (%f/%f/%f) -> (%f/%f/%f)\n",
+            fprintf(stderr, "SINCOSF failure (%e/%e/%e) -> (%e/%e/%e)\n",
                 f, sinf1, cosf1, f, sinf2, cosf2);
 
             exit(1);
