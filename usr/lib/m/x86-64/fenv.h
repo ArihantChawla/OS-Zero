@@ -4,6 +4,8 @@
 #define __SSE_ROUND_SHIFT  3
 #define __SSE_EXCEPT_SHIFT 7
 
+#define __fegetmxcsr(env)      ((env).__mxcsr)
+#define __fesetmxcsr(env, u32) ((env).__mxcsr = (u32))
 typedef struct {
     struct {
         uint32_t __ctrl;
@@ -13,6 +15,8 @@ typedef struct {
     } __x87;
     uint32_t __mxcsr;
 } fenv_t;
+
+#if defined(__x86_64__) || defined(__amd64__)
 
 static __inline__ int
 feclearexcept(int mask)
@@ -96,6 +100,8 @@ fesetenv(const fenv_t *env)
 
     return 0;
 }
+
+#endif
 
 #endif /* __X864_64_FENV_H__ */
 

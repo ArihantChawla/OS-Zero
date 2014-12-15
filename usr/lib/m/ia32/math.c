@@ -1,10 +1,7 @@
-#if (MATHTEST)
-#include <stdio.h>
-#include <stdlib.h>
-#endif
 #include <fenv.h>
 #include <errno.h>
 #include <math.h>
+#include <zero/trix.h>
 
 /* TODO: lots of work to be done here...
  * - initialise FPU environment; set rounding mode etc.
@@ -439,6 +436,11 @@ sincosl(long double x, long double *sin, long double *cos)
 #endif
 
 #if (MATHTEST)
+
+#include <stdio.h>
+#include <stdlib.h>
+#include <float.h>
+
 #define RADMAX (512 * 1024)
 int
 main(int argc,
@@ -630,5 +632,6 @@ main(int argc,
 
     return 0;
 }
+
 #endif /* MATHTEST */
 
