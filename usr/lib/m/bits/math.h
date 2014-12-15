@@ -11,5 +11,11 @@
 #define FP_ILOGB0   (-2147483647)
 #define FP_ILOGBNAN 2147483647
 
+#define isnan(x)                                                        \
+    ((*(uint64_t *)&(x) & UINT64_C(0x7fffffffffffffff))                 \
+     == UINT64_C(0x7fffffffffffffff))
+#define isnanf(x)                                                       \
+    ((*(uint32_t *)&(x) & 0x7fffffff) == 0x7fffffff)
+
 #endif /* __BITS_MATH_H__ */
 

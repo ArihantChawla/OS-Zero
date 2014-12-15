@@ -5,6 +5,7 @@
 #include <float.h>
 #include <bits/ieee754.h>
 #include <bits/math.h>
+#include <ia32/math.h>
 
 #if (FLT_EVAL_METHOD == 0)
 typedef float       float_t;
@@ -131,7 +132,7 @@ extern double      lgamma(double);
 extern double      y0(double);
 extern double      y1(double);
 extern double      yn(int, double);
-extern int         isnan(double);
+//extern int         isnan(double);
 extern double      acosh(double);
 extern double      asinh(double);
 extern double      atanh(double);
@@ -178,7 +179,7 @@ extern float       lgammaf(float);
 extern float       y0f(float);
 extern float       y1f(float);
 extern float       ynf(int, float);
-extern int         isnanf(float);
+//extern int         isnanf(float);
 extern float       acoshf(float);
 extern float       asinhf(float);
 extern float       atanhf(float);
@@ -225,7 +226,7 @@ extern long double lgammal(long double);
 extern long double y0l(long double);
 extern long double y1l(long double);
 extern long double ynl(int, long double);
-extern int         isnanl(long double);
+//extern int         isnanl(long double);
 extern long double acoshl(long double);
 extern long double asinhl(long double);
 extern long double atanhl(long double);

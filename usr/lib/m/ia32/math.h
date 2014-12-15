@@ -1,6 +1,15 @@
 #ifndef __IA32_MATH_H__
 #define __IA32_MATH_H__
 
+#include <x86-64/math.h>
+
+/* IEEE 80-bit floating point format */
+#if !defined(isnanl)
+#define isnanl(x)                                                       \
+    (*(uint64_t *)&(x) == UINT64_C(0xffffffffffffffff)                  \
+     && (((uint32_t *)&(x)[2] & 0x7fff) == 0x7fff))
+#endif
+
 #define __fpusqrt(x, ret)                                               \
     __asm__ __volatile__ ("fldl %0\n" : : "m" (x));                     \
     __asm__ __volatile__ ("fsqrt\n");                                   \
