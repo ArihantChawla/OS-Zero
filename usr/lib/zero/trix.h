@@ -481,17 +481,17 @@ ceilpow2_64(uint64_t u)
 /* TODO: IEEE 128-bit */
 
 /* get different-size NaNs */
-#define getnan(d)                                                       \
+#define mknan(d)                                                        \
     (dsetexp(d, 0x7ff), dsetmant(d, 0x000fffffffffffff), (d))
-#define getsnan(d) \
+#define mksnan(d)                                                       \
     (dsetsign(d), dsetexp(d, 0x7ff), dsetmant(d, 0x000fffffffffffff), (d))
-#define getnanf(f)                                                      \
+#define mknanf(f)                                                       \
     (fsetexp(f, 0x7ff), fsetmant(f, 0x007fffff), (f))
-#define getsnanf(f)                                                     \
+#define mksnanf(f)                                                      \
     (fsetsign(f), fsetexp(f, 0x7ff), fsetmant(f, 0x007fffff), (f))
-#define getnanl(ld)                                                      \
+#define mknanl(ld)                                                      \
     (ldsetexp(ld, 0x7fff), ldsetmant(ld, 0xffffffffffffffff), (ld))
-#define getsnanl(ld) \
+#define mksnanl(ld)                                                     \
     (ldsetsign(ld), ldsetexp(ld, 0x7fff), ldsetmant(ld, 0xffffffffffffffff), (ld))
 
 /* TODO: test the stuff below. */

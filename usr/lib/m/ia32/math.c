@@ -1,6 +1,7 @@
 #include <fenv.h>
 #include <errno.h>
 #include <math.h>
+#include <ia32/math.h>
 #include <zero/trix.h>
 
 /* TODO: lots of work to be done here...
@@ -17,7 +18,7 @@ sqrt(double x)
     double retval = 0.0;
 
     if (x < 0) {
-        retval = getnan(x);
+        retval = mknan(x);
     } else if (isnan(x) || fpclassify(x) == FP_ZERO) {
         retval = x;
     } else if (!dgetsign(x) && fpclassify(x) == FP_INFINITE) {
@@ -26,16 +27,12 @@ sqrt(double x)
         errno = EDOM;
         feraiseexcept(FE_INVALID);
         if (dgetsign(x)) {
-            retval = getsnan(x);
+            retval = mksnan(x);
         } else {
-            retval = getnan(x);
+            retval = mknan(x);
         }
     } else {
-        __asm__ __volatile__ ("fldl %0\n" : : "m" (x));
-        __asm__ __volatile__ ("fsqrt\n");
-        __asm__ __volatile__ ("fstpl %0\n"
-                              "fwait\n"
-                              : "=m" (retval));
+        __fpusqrt(x, retval);
     }
         
     return retval;
@@ -56,16 +53,12 @@ sin(double x)
         errno = EDOM;
         feraiseexcept(FE_INVALID);
         if (dgetsign(x)) {
-            retval = getsnan(x);
+            retval = mksnan(x);
         } else {
-            retval = getnan(x);
+            retval = mknan(x);
         }
     } else {
-        __asm__ __volatile__ ("fldl %0\n" : : "m" (x));
-        __asm__ __volatile__ ("fsin\n");
-        __asm__ __volatile__ ("fstpl %0\n"
-                              "fwait\n"
-                              : "=m" (retval));
+        __fpusin(x, retval);
     }
         
     return retval;
@@ -80,11 +73,8 @@ cos(double x)
 {
     double retval;
 
-    __asm__ __volatile__ ("fldl %0\n" : : "m" (x));
-    __asm__ __volatile__ ("fcos\n");
-    __asm__ __volatile__ ("fstpl %0\n"
-                          "fwait\n"
-                          : "=m" (retval));
+    /* TODO: error handling */
+    __fpucos(x, retval);
 
     return retval;
 }
@@ -105,17 +95,12 @@ tan(double x)
         errno = EDOM;
         feraiseexcept(FE_INVALID);
         if (dgetsign(x)) {
-            retval = getsnan(x);
+            retval = mksnan(x);
         } else {
-            retval = getnan(x);
+            retval = mknan(x);
         }
     } else {
-        __asm__ __volatile__ ("fldl %0\n" : : "m" (x));
-        __asm__ __volatile__ ("fptan\n");
-        __asm__ __volatile__ ("fstpl %0\n" : "=m" (tmp));
-        __asm__ __volatile__ ("fstpl %0\n"
-                              "fwait\n"
-                              : "=m" (retval));
+        __fputan(x, retval);
         if (dgetsign(retval) && isnan(retval)) {
             retval = 0.0;
         }
@@ -143,11 +128,7 @@ atan(double x)
             retval = M_PI * 0.5;
         }
     } else {
-        __asm__ __volatile__ ("fldl %0\n" : : "m" (x));
-        __asm__ __volatile__ ("fpatan\n");
-        __asm__ __volatile__ ("fstpl %0\n"
-                              "fwait\n"
-                              : "=m" (retval));
+        __fpuatan(x, retval);
     }
 
     return retval;
@@ -174,9 +155,9 @@ sqrtf(float x)
         errno = EDOM;
         feraiseexcept(FE_INVALID);
         if (dgetsign(x)) {
-            retval = getsnanf(x);
+            retval = mksnanf(x);
         } else {
-            retval = getnanf(x);
+            retval = mknanf(x);
         }
     } else {
         __asm__ __volatile__ ("flds %0\n" : : "m" (x));
@@ -198,11 +179,7 @@ sinf(float x)
 {
     float retval;
 
-    __asm__ __volatile__ ("flds %0\n" : : "m" (x));
-    __asm__ __volatile__ ("fsin\n");
-    __asm__ __volatile__ ("fstps %0\n"
-                          "fwait\n"
-                          : "=m" (retval));
+    __fpusinf(x, retval);
 
     return retval;
 }
@@ -216,11 +193,8 @@ cosf(float x)
 {
     float retval;
 
-    __asm__ __volatile__ ("flds %0\n" : : "m" (x));
-    __asm__ __volatile__ ("fcos\n");
-    __asm__ __volatile__ ("fstps %0\n"
-                          "fwait\n"
-                          : "=m" (retval));
+    __fpucosf(x, retval);
+
     return retval;
 }
 
@@ -287,9 +261,9 @@ sqrtl(long double x)
         errno = EDOM;
         feraiseexcept(FE_INVALID);
         if (dgetsign(x)) {
-            retval = getsnanl(x);
+            retval = mksnanl(x);
         } else {
-            retval = getnanl(x);
+            retval = mknanl(x);
         }
     } else {
         __asm__ __volatile__ ("fldt %0\n" : : "m" (x));
@@ -311,11 +285,7 @@ sinl(long double x)
 {
     long double retval;
 
-    __asm__ __volatile__ ("fldt %0\n" : : "m" (x));
-    __asm__ __volatile__ ("fsin\n");
-    __asm__ __volatile__ ("fstpt %0\n"
-                          "fwait\n"
-                          : "=m" (retval));
+    __fpusinl(x, retval);
 
     return retval;
 }
@@ -329,11 +299,7 @@ cosl(long double x)
 {
     long double retval;
 
-    __asm__ __volatile__ ("fldt %0\n" : : "m" (x));
-    __asm__ __volatile__ ("fcos\n");
-    __asm__ __volatile__ ("fstpt %0\n"
-                          "fwait\n"
-                          : "=m" (retval));
+    __fpucosl(x, retval);
 
     return retval;
 }
@@ -382,14 +348,7 @@ void
 sincos(double x, double *sin, double *cos)
 #endif
 {
-    __asm__ __volatile__ ("fldl %0\n" : : "m" (x));
-    __asm__ __volatile__ ("fsincos\n");
-    __asm__ __volatile__ ("fstpl %0\n"
-                          "fwait\n"
-                          : "=m" (*cos));
-    __asm__ __volatile__ ("fstpl %0\n"
-                          "fwait\n"
-                          : "=m" (*sin));
+    __fpusincos(x, sin, cos);
 
     return;
 }
@@ -402,14 +361,7 @@ void
 sincosf(float x, float *sin, float *cos)
 #endif
 {
-    __asm__ __volatile__ ("flds %0\n" : : "m" (x));
-    __asm__ __volatile__ ("fsincos\n");
-    __asm__ __volatile__ ("fstps %0\n"
-                          "fwait\n"
-                          : "=m" (*cos));
-    __asm__ __volatile__ ("fstps %0\n"
-                          "fwait\n"
-                          : "=m" (*sin));
+    __fpusincosf(x, sin, cos);
 
     return;
 }
@@ -422,14 +374,7 @@ void
 sincosl(long double x, long double *sin, long double *cos)
 #endif
 {
-    __asm__ __volatile__ ("fldt %0\n" : : "m" (x));
-    __asm__ __volatile__ ("fsincos\n");
-    __asm__ __volatile__ ("fstpt %0\n"
-                          "fwait\n"
-                          : "=m" (*cos));
-    __asm__ __volatile__ ("fstpt %0\n"
-                          "fwait\n"
-                          : "=m" (*sin));
+    __fpusincosl(x, sin, cos);
 
     return;
 }
