@@ -11,6 +11,7 @@
 #define FP_ILOGB0   (-2147483647)
 #define FP_ILOGBNAN 2147483647
 
+/* isnanl() is defined in a per-architecture header such as <x86-64/math.h> */
 #define isnan(x)                                                        \
     ((*(uint64_t *)&(x) & UINT64_C(0x7fffffffffffffff))                 \
      == UINT64_C(0x7fffffffffffffff))
