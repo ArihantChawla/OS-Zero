@@ -18,9 +18,22 @@
  */
 #define CHAR_BIT      8
 #if (__GNUC__)
-#define CHAR_MAX      0xff
-#define CHAR_MIN      (-0x7f - 1)
+#if defined(__arm__)
+#define CHAR_MAX      UCHAR_MAX
+#define CHAR_MIN      0
+#else /* !defined(__arm__) */
+#define CHAR_MAX      SCHAR_MAX
+#define CHAR_MIN      SCHAR_MIN
+#endif /* __arm__ */
+#elif defined(_MSC_VER)
+#if defined(_CHAR_UNSIGNED)
+#define CHAR_MAX      UCHAR_MAX
+#define CHAR_MIN      0
+#else
+#define CHAR_MAX      SCHAR_MAX
+#define CHAR_MIN      SCHAR_MIN
 #endif
+#endif /* __GNUC__ */
 #define SCHAR_MAX     0x7f
 #define SCHAR_MIN     (-0x7f - 1)
 #define UCHAR_MAX     0xffU

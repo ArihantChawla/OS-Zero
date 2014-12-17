@@ -5,7 +5,7 @@
 
 #include <stdint.h>
 
-/* characteristics of float */
+/* characteristics of [32-bit] single precision type float */
 #define FLT_DIG         6
 #define FLT_MANT_DIG    24
 #define FLT_MIN_EXP     (-125)
@@ -13,8 +13,13 @@
 #define FLT_MIN_10_EXP  (-37)
 #define FLT_MAX_10_EXP  38
 #define FLT_DECIMAL_DIG 9
+/* unsigned [integer] bit masks for IEEE-754 32-bit float */
+#define __FLT_SIGNBIT   0x80000000U
+#define __FLT_MASK      0x7fffffffU
+#define __FLT_EXPBITS   0x7f800000U
+#define __FLT_MANTBITS  0x007fffffU
 
-/* characteristics of double */
+/* characteristics of [64-bit] double precision type double */
 #define DBL_DIG         15
 #define DBL_MANT_DIG    53
 #define DBL_MIN_EXP     (-1021)
@@ -22,6 +27,11 @@
 #define DBL_MIN_10_EXP  (-307)
 #define DBL_MAX_10_EXP  308
 #define DBL_DECIMAL_DIG 17
+/* unsigned [integer] bit masks for IEEE-754 64-bit double */
+#define __DBL_SIGNBIT   UINT64_C(0x8000000000000000)
+#define __DBL_MASK      UINT64_C(0x7fffffffffffffff)
+#define __DBL_EXPBITS   UINT64_C(0x7ff0000000000000)
+#define __DBL_MANTBITS  UINT64_C(0x000fffffffffffff)
 
 /* LDBL-macros are defined in architecture header files, e.g. <ia32/float.h> */
 

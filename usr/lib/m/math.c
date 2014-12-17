@@ -6,17 +6,6 @@
 #include <ia32/math.h>
 #include <zero/trix.h>
 
-/* bit masks for IEEE-754 64-bit double */
-#define __DBL_SIGNBIT  UINT64_C(0x8000000000000000)
-#define __DBL_MASK     UINT64_C(0x7fffffffffffffff)
-#define __DBL_EXPBITS  UINT64_C(0x7ff0000000000000)
-#define __DBL_MANTBITS UINT64_C(0x000fffffffffffff)
-/* bit masks for IEEE-754 32-bit float */
-#define __FLT_SIGNBIT  0x80000000U
-#define __FLT_MASK     0x7fffffffU
-#define __FLT_EXPBITS  0x7f800000U
-#define __FLT_MANTBITS 0x007fffffU
-
 int __fpclassify(double x)
 {
     union { double d; uint64_t u64; } u = { x };
