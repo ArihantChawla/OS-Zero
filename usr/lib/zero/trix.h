@@ -485,7 +485,7 @@ union __ieee754d { uint64_t u64; double d; };
                                                                         \
         __u32p[0] = 0xffffffffU;                                        \
         __u32p[1] = 0xffffffffU;                                        \
-        __u32p[3] = 0x7fffU;                                            \
+        __u32p[2] = 0x7fffU;                                            \
     } while (0)
 #define ldsetsnan(ld)                                                   \
     do {                                                                \

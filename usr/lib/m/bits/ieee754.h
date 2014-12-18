@@ -48,20 +48,28 @@
  */
 /* NOTE: isinf(), isnan(), finite() are from BSD */
 #define __isinf(x)                                                      \
-    (!dgetmant(x)                                                       \
-     && ((*(uint64_t *)&(x) & UINT64_C(0x7ff0000000000000))             \
-         == UINT64_C(0x7ff0000000000000)))
+    ((((*(uint64_t *)&(x)) & __DBL_EXPBITS) == __DBL_EXPBITS)           \
+     && (!(*(uint64_t *)&(x)) & __DBL_MANTBITS))
 #define __isinff(x)                                                     \
-    (!fgetmant(x) && ((*(uint32_t *)&(x) & 0x7ff00000) == 0x7ff00000))
+    ((((*(uint32_t *)&(x)) & __FLT_EXPBITS) == __FLT_EXPBITS)           \
+     && (!(*(uint32_t *)&(x)) & __FLT_MANTBITS))
 #define __isnan(x)                                                      \
-    ((*(uint64_t *)&(x) & UINT64_C(0x7fffffffffffffff))                 \
-     == UINT64_C(0x7fffffffffffffff))
+    ((((*(uint64_t *)&(x)) & __DBL_EXPBITS) == __DBL_EXPBITS)           \
+     && ((*(uint64_t *)&(x)) & UINT64_C(0x000fffffffffffff)))
 #define __isnanf(x)                                                     \
-    ((*(uint32_t *)&(x) & 0x7fffffff) == 0x7fffffff)
-#define __issignan(x)                                                   \
-    (!(*(uint64_t *)&(x) & UINT64_C & UINT64_C(0x0008000000000000)))
-#define __issignanf(x)                                                  \
-    (!(*(uint32_t *)&(x) & 0x00400000))
+    ((((*(uint32_t *)&(x)) & __FLT_EXPBITS) == __FLT_EXPBITS)           \
+     && ((*(uint32_t *)&(x)) & __FLT_MANTBITS))
+#define __issignaling(x)                                                \
+    (__isnan(x) && !((*(uint64_t *)&(x)) & UINT64_C(0x0008000000000000)))
+#define __issignalingf(x)                                               \
+    (__isnanf(x) && !((*(uint32_t *)&(x)) & 0x00400000))
+
+#define __isfinite(x)                                                   \
+    (!__isinf(x))
+#define __isfinitef(x)                                                  \
+    (!__isinff(x))
+#define __isfinitel(x)                                                  \
+    (!__isinfl(x))
 
 #define isfinite(x)                                                     \
     (((sizeof(x) == sizeof(double))                                     \
@@ -77,10 +85,10 @@
           : (__fpclassifyl(x) == FP_NORMAL)))))
 #define issignaling(x)                                                  \
     (((sizeof(x) == sizeof(double))                                     \
-      ? (__isnan(x) && __issignan(x))                                   \
+      ? (__issignaling(x))                                              \
       : (((sizeof(x) == sizeof(float))                                  \
-          ? (__isnanf(x) & __issignanf(x))                              \
-          (__isnanl(x) && __issignanl(x))))))
+          ? (__issignalingf(x))                                         \
+          : (__issignalingl(x))))))
 
 #if defined(USEBSD) && (USEBSD)
 #define isinf(x)   __isinf(x)
@@ -89,6 +97,7 @@
 #define isnan(x)   __isnan(x)
 #define isnanf(x)  __isnanf(x)
 #define isnanl(x)  __isnanl(x)
+/* finite() returns 1 for INFINITY or NaN */
 #define finite(x)  (!__isinf(x))
 #define finitef(x) (!__isinff(x))
 #define finitel(x) (!__isinfl(x))

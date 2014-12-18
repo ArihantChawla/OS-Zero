@@ -3,16 +3,28 @@
 
 #include <x86-64/math.h>
 
+/* unsigned [integer] bit masks for IEEE-754 80-bit long double */
+#if !defined(__LDBL_SIGNBIT)
+#define __LDBL_SIGNBIT  0x00008000
+#define __LDBL_EXPBITS  0x00007fff
+#define __LDBL_MANTBITS UINT64_C(0xffffffffffffffff)
+#endif
+
 /* IEEE 80-bit floating point format */
 #if !defined(__isnanl)
-#define __isnanl(x)                                                     \
-    (*(uint64_t *)&(x) == UINT64_C(0xffffffffffffffff)                  \
-     && (((uint32_t *)&(x)[2] & 0x7fff) == 0x7fff))
 #define __isinfl(x)                                                     \
-    (!ldgetmantl(x) && ((*(uint32_t)&(x)[2] & 0x7fff) == 0x7fff))
-#define __issignanl(x)                                                  \
-    (!(*(uint64_t *)&(x) & UINT64_C(0x8000000000000000)))
+    ((((*(uint32_t *)&(x)[2]) & __LDBL_EXPBITS) == __LDBL_EXPBITS)      \
+     && (!(*(uint64_t *)&(x))))
+#define __isnanl(x)                                                     \
+    ((((*(uint64_t *)&(x)[2]) & __LDBL_EXPBITS) == __LDBL_EXPBITS)      \
+     && (*(uint64_t *)&(x)))
+#define __issignalingl(x)                                               \
+    (__isnanl(x) && !((*(uint64_t *)&(x)) & UINT64_C(0x8000000000000000)))
 #endif
+/*
+ * i387 assembly operations
+ * - assume default rounding mode; no messing around with it
+ */
 
 #define __fpusqrt(x, ret)                                               \
     __asm__ __volatile__ ("fldl %0\n" : : "m" (x));                     \

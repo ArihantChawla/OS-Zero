@@ -1,5 +1,6 @@
 /*
  * implementation of sqrt() for the i387 as written by R on stackoverflow.com :)
+ * - added some speedup hacks // vendu
  */
 
  .globl	__fpusqrt
@@ -20,11 +21,6 @@
     subl %eax,(%esp)
     fstp %st(0)
     fldt (%esp)
-#if 0
-1:  add $12,%esp
-    fstpl 4(%esp)
-    fldl 4(%esp)
-#endif
 1:
     fstpl -8(%esp)
     fldl -8(%esp)
