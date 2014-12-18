@@ -5,25 +5,27 @@
 
  .globl	__fpusqrt
 
+/* FIXME: make sure the stack adjustments etc. are correct */
  __fpusqrt:
-    fldl 4(%esp)
-    fsqrt
-    fstsw %ax
-    subl $12,%esp
-    fld %st(0)
-    fstpt (%esp)
-    movl (%esp),%ecx
-    andl $0x7ff,%ecx
-    cmpl $0x400,%ecx
-    jnz 1f
-    andl $0x200,%eax
-    subl $0x100,%eax
-    subl %eax,(%esp)
-    fstp %st(0)
-    fldt (%esp)
+    fldl 4(%esp)        // load argument to top of FPU stack
+    sqrt                // compute square root
+    fstsw %ax           // store FPU status-word in %ax
+    subl $12,%esp       // sp -= 12;
+    fldl %st(0)         // load result high word into %st(0)
+    fstpt (%esp)        // push square root to argument memory
+    movl (%esp),%ecx    // move high word of result to %ecx
+    movl (%esp), %edx   // move high word of result to %edx
+    andl $0x7ff,%ecx    // reshi &= 0x7ff;
+    cmpl $0x400,%ecx    // (reshi == 0x400)
+    jnz 1f              //  ? goto 1
+    andl $0x200,%eax    //  : fpusw &= 0x200
+    subl $0x100,%eax    //    fpusw -= 0x100
+    subl %eax, %edx     //    reshi -= fpusw
+    fstp %st(0)         //    push %st(0)
+    fldt (%esp)         //    load res into %st(0)
 1:
-    fstpl -8(%esp)
-    fldl -8(%esp)
-    addl $12, %esp
+    fstpl -8(%esp)      // push %st(0) to result
+    fldl -8(%esp)       // reload %st(0) (return value?)
+    addl $12, %esp      // sp += 12;
     ret
 
