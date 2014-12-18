@@ -1,6 +1,6 @@
 /*
  * implementation of sqrt() for the i387 as written by R on stackoverflow.com :)
- * - added some speedup hacks // vendu
+ * - added some speedup hacks and comments // vendu
  */
 
  .globl	__fpusqrt
