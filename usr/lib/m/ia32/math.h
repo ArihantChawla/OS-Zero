@@ -16,8 +16,8 @@
     ((((*(uint32_t *)&(x)[2]) & __LDBL_EXPBITS) == __LDBL_EXPBITS)      \
      && (!(*(uint64_t *)&(x))))
 #define __isnanl(x)                                                     \
-    ((((*(uint64_t *)&(x)[2]) & __LDBL_EXPBITS) == __LDBL_EXPBITS)      \
-     && (*(uint64_t *)&(x)))
+    ((((((uint32_t *)&(x))[2]) & __LDBL_EXPBITS) == __LDBL_EXPBITS)     \
+     && ((uint64_t *)&(x)))
 #define __issignalingl(x)                                               \
     (__isnanl(x) && !((*(uint64_t *)&(x)) & UINT64_C(0x8000000000000000)))
 #endif

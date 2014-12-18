@@ -83,6 +83,12 @@
       : (((sizeof(x) == sizeof(float))                                  \
           ? ( __fpclassifyf(x) == FP_NORMAL)                            \
           : (__fpclassifyl(x) == FP_NORMAL)))))
+#define isnan(x)                                                        \
+    (((sizeof(x) == sizeof(double))                                     \
+      ? (__isnan(x))                                                    \
+      : (((sizeof(x) == sizeof(float))                                  \
+          ? (__isnan(x))                                                \
+          : (__isnanl(x))))))
 #define issignaling(x)                                                  \
     (((sizeof(x) == sizeof(double))                                     \
       ? (__issignaling(x))                                              \
@@ -94,9 +100,11 @@
 #define isinf(x)   __isinf(x)
 #define isinff(x)  __isinff(x)
 #define isinfl(x)  __isinfl(x)
+#if !defined(isnan)
 #define isnan(x)   __isnan(x)
 #define isnanf(x)  __isnanf(x)
 #define isnanl(x)  __isnanl(x)
+#endif
 /* finite() returns non-zero for INFINITY or NaN */
 #define finite(x)  (__isinf(x) || isnan(x))
 #define finitef(x) (__isinff(x) || __isnanf(x))

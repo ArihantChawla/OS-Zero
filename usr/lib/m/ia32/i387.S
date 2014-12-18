@@ -8,10 +8,10 @@
 /* FIXME: make sure the stack adjustments etc. are correct */
  __fpusqrt:
     fldl 4(%esp)        // load argument to top of FPU stack
-    sqrt                // compute square root
+    fsqrt               // compute square root
     fstsw %ax           // store FPU status-word in %ax
     subl $12,%esp       // sp -= 12;
-    fldl %st(0)         // load result high word into %st(0)
+    fldl (%esp)         // load result high word into %st(0)
     fstpt (%esp)        // push square root to argument memory
     movl (%esp),%ecx    // move high word of result to %ecx
     movl (%esp), %edx   // move high word of result to %edx
