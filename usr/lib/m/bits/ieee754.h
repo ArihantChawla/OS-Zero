@@ -97,7 +97,7 @@
 #define isnan(x)   __isnan(x)
 #define isnanf(x)  __isnanf(x)
 #define isnanl(x)  __isnanl(x)
-/* finite() returns 1 for INFINITY or NaN */
+/* finite() returns non-zero for INFINITY or NaN */
 #define finite(x)  (__isinf(x) || isnan(x))
 #define finitef(x) (__isinff(x) || __isnanf(x))
 #define finitel(x) (__isinfl(x) || __isnanl(x))
