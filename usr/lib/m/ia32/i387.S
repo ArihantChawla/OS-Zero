@@ -7,7 +7,7 @@
 
 /* FIXME: make sure the stack adjustments etc. are correct */
  __fpusqrt:
-    fldl 4(%esp)        // load argument to top of FPU stack
+    fldl 4(%esp)        // load 64-bit argument to top of FPU stack
     fsqrt               // compute square root
     fstsw %ax           // store FPU status-word in %ax
     subl $12,%esp       // sp -= 12;
@@ -24,8 +24,8 @@
     fstp %st(0)         //    push %st(0)
     fldt (%esp)         //    load res into %st(0)
 1:
-    fstpl -8(%esp)      // push %st(0) to result
-    fldl -8(%esp)       // reload %st(0) (return value?)
+    fstpl 16(%esp)      // push %st(0) to result
+    fldl 16(%esp)       // reload %st(0) (return value?)
     addl $12, %esp      // sp += 12;
     ret
 

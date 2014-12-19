@@ -94,7 +94,7 @@ sqrt(double x)
 {
     double retval = 0.0;
 
-    if (x < 0) {
+    if (x < 0.0) {
         dsetnan(retval);
     } else if (isnan(x) || fpclassify(x) == FP_ZERO) {
         retval = x;
@@ -464,7 +464,7 @@ sincosl(long double x, long double *sin, long double *cos)
 #include <stdlib.h>
 #include <float.h>
 
-#define RADMAX (512 * 1024)
+#define RADMAX (1024 * 1024)
 int
 main(int argc,
      char *argv[])
@@ -490,8 +490,11 @@ main(int argc,
     long double sinld2;
     long double cosld1;
     long double cosld2;
+    fenv_t      fenv;
 
+    fegetenv(&fenv);
     fesetenv(FE_DFL_ENV);
+    fegetenv(&fenv);
     fprintf(stderr, "sin 0 == %e\n", sin(0));
     for ( d = -RADMAX ; d < RADMAX ; d += 0.125 ) {
         d1 = sqrt(d);
@@ -501,6 +504,7 @@ main(int argc,
 
             exit(1);
         }
+#if 0
         sincos(d, &sin1, &cos1);
         zsincos(d, &sin2, &cos2);
         if (sin1 != sin2 || cos1 != cos2) {
@@ -509,6 +513,7 @@ main(int argc,
 
             exit(1);
         }
+#endif
         d1 = sin(d);
         d2 = zsin(d);
         if (d2 != d1 && (fpclassify(d1) != fpclassify(d2))) {
@@ -547,6 +552,7 @@ main(int argc,
 
             exit(1);
         }
+#if 0
         sincosl(ld, &sinld1, &cosld1);
         zsincosl(ld, &sinld2, &cosld2);
         if ((sinld1 != sinld2 || cosld1 != cosld2)
@@ -556,6 +562,7 @@ main(int argc,
 
             exit(1);
         }
+#endif
         ld1 = sinl(ld);
         ld2 = zsinl(ld);
         if (ld2 != ld1 && (fpclassify(ld1) != fpclassify(ld2))) {
@@ -599,6 +606,7 @@ main(int argc,
 
             exit(1);
         }
+#if 0
         sincosf(f, &sinf1, &cosf1);
         zsincosf(f, &sinf2, &cosf2);
         if (sinf1 != sinf2 || cosf1 != cosf2) {
@@ -607,6 +615,7 @@ main(int argc,
 
             exit(1);
         }
+#endif
         f1 = sinf(f);
         f2 = zsinf(f);
         if (f2 != f1) {

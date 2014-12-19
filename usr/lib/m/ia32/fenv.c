@@ -9,7 +9,7 @@
 const fenv_t __fe_dfl_env
 = {
     {
-        0x1272, /* __ctrl */
+        0x037f, /* __ctrl */
         0x0000, /* __status */
         0xffffffff, /* __tag */
         {
@@ -22,7 +22,7 @@ const fenv_t __fe_dfl_env
 #else
 const fenv_t __fe_dfl_env
 = {
-    0x1272, /* __ctrl */
+    0x037f, /* __ctrl */
     0x0000, /* __mxcsrhi */
     0x0000, /* __status */
     0x1f80, /* __mxcsrlo */
