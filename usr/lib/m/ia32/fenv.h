@@ -5,7 +5,7 @@
 #include <ia32/i387.h>
 #include <ia32/sse.h>
 
-typedef uint16_t      fexcept_t;
+typedef int           fexcept_t;
 
 #define FE_TONEAREST  0x0000
 #define FE_TOWARDZERO 0x0400
