@@ -21,6 +21,15 @@
 #define __issignalingl(x)                                               \
     (__isnanl(x) && !((*(uint64_t *)&(x)) & UINT64_C(0x8000000000000000)))
 #endif
+
+#if !defined(__x86_64__) && !defined(__amd64__)
+
+#if defined(__FPU_FAST_MATH__)
+#define __fwait()
+#else
+#define __fwait() "fwait\n"
+#endif
+
 /*
  * i387 assembly operations
  * - assume default rounding mode; no messing around with it
@@ -30,59 +39,59 @@
     __asm__ __volatile__ ("fldl %0\n" : : "m" (x));                     \
     __asm__ __volatile__ ("fsqrt\n");                                   \
     __asm__ __volatile__ ("fstpl %0\n"                                  \
-                          "fwait\n"                                     \
+                          __fwait()                                     \
                           : "=m" (ret))
 
 #define __fpusin(x, ret)                                                \
     __asm__ __volatile__ ("fldl %0\n" : : "m" (x));                     \
     __asm__ __volatile__ ("fsin\n");                                    \
     __asm__ __volatile__ ("fstpl %0\n"                                  \
-                          "fwait\n"                                     \
+                          __fwait()                                     \
                           : "=m" (ret))
 #define __fpucos(x, ret)                                                \
     __asm__ __volatile__ ("fldl %0\n" : : "m" (x));                     \
     __asm__ __volatile__ ("fcos\n");                                    \
     __asm__ __volatile__ ("fstpl %0\n"                                  \
-                          "fwait\n"                                     \
+                          __fwait()                                     \
                           : "=m" (ret))
 #define __fputan(x, ret)                                                \
     __asm__ __volatile__ ("fldl %0\n" : : "m" (x));                     \
     __asm__ __volatile__ ("fptan\n");                                   \
     __asm__ __volatile__ ("fstpl %0\n" : "=m" (tmp));                   \
     __asm__ __volatile__ ("fstpl %0\n"                                  \
-                          "fwait\n"                                     \
+                          __fwait()                                     \
                           : "=m" (ret))
 #define __fpuatan(x, ret)                                               \
     __asm__ __volatile__ ("fldl %0\n" : : "m" (x));                     \
     __asm__ __volatile__ ("fpatan\n");                                  \
     __asm__ __volatile__ ("fstpl %0\n"                                  \
-                          "fwait\n"                                     \
+                          __fwait()                                     \
                           : "=m" (ret))
 
 #define __fpusinf(x, ret)                                               \
     __asm__ __volatile__ ("flds %0\n" : : "m" (x));                     \
     __asm__ __volatile__ ("fsin\n");                                    \
     __asm__ __volatile__ ("fstps %0\n"                                  \
-                          "fwait\n"                                     \
+                          __fwait()                                     \
                           : "=m" (ret))
 #define __fpucosf(x, ret)                                              \
     __asm__ __volatile__ ("flds %0\n" : : "m" (x));                     \
     __asm__ __volatile__ ("fcos\n");                                    \
     __asm__ __volatile__ ("fstps %0\n"                                  \
-                          "fwait\n"                                     \
+                          __fwait()                                     \
                           : "=m" (ret))
 
 #define __fpusinl(x, ret)                                               \
     __asm__ __volatile__ ("fldt %0\n" : : "m" (x));                     \
     __asm__ __volatile__ ("fsin\n");                                    \
     __asm__ __volatile__ ("fstpt %0\n"                                  \
-                          "fwait\n"                                     \
+                          __fwait()                                     \
                           : "=m" (ret));
 #define __fpucosl(x, ret)                                               \
     __asm__ __volatile__ ("fldt %0\n" : : "m" (x));                     \
     __asm__ __volatile__ ("fcos\n");                                    \
     __asm__ __volatile__ ("fstpt %0\n"                                  \
-                          "fwait\n"                                     \
+                          __fwait()                                     \
                           : "=m" (ret))
 
 #if defined(_GNU_SOURCE)
@@ -90,30 +99,32 @@
     __asm__ __volatile__ ("fldl %0\n" : : "m" (x));                     \
     __asm__ __volatile__ ("fsincos\n");                                 \
     __asm__ __volatile__ ("fstpl %0\n"                                  \
-                          "fwait\n"                                     \
+                          __fwait()                                     \
                           : "=m" (*cos));                               \
     __asm__ __volatile__ ("fstpl %0\n"                                  \
-                          "fwait\n"                                     \
+                          __fwait()                                     \
                           : "=m" (*sin))
 #define __fpusincosf(x, sin, cos)                                       \
     __asm__ __volatile__ ("flds %0\n" : : "m" (x));                     \
     __asm__ __volatile__ ("fsincos\n");                                 \
     __asm__ __volatile__ ("fstps %0\n"                                  \
-                          "fwait\n"                                     \
+                          __fwait()                                     \
                           : "=m" (*cos));                               \
     __asm__ __volatile__ ("fstps %0\n"                                  \
-                          "fwait\n"                                     \
+                          __fwait()                                     \
                           : "=m" (*sin))
 #define __fpusincosl(x, sin, cos)                                       \
     __asm__ __volatile__ ("fldt %0\n" : : "m" (x));                     \
     __asm__ __volatile__ ("fsincos\n");                                 \
     __asm__ __volatile__ ("fstpt %0\n"                                  \
-                          "fwait\n"                                     \
+                          __fwait()                                     \
                           : "=m" (*cos));                               \
     __asm__ __volatile__ ("fstpt %0\n"                                  \
-                          "fwait\n"                                     \
+                          __fwait()                                     \
                           : "=m" (*sin));
 #endif /* _GNU_SOURCE */
+
+#endif /* not 64-bit */
 
 #endif /* __IA32_MATH_H__ */
 

@@ -1,3 +1,5 @@
+#define __FPU_FAST_MATH__ 1
+
 #include <stdint.h>
 #include <float.h>
 #include <fenv.h>
@@ -202,9 +204,9 @@ atan(double x)
         retval = x;
     } else if (fpclassify(x) == FP_INFINITE) {
         if (dgetsign(x)) {
-            retval = -M_PI * 0.5;
+            retval = -M_PI_2;
         } else {
-            retval = M_PI * 0.5;
+            retval = M_PI_2;
         }
     } else {
         __fpuatan(x, retval);
@@ -292,9 +294,9 @@ tanf(float x)
         retval = x;
     } else if (fpclassify(x) == FP_INFINITE) {
         if (dgetsign(x)) {
-            retval = -M_PI * 0.5;
+            retval = -M_PI_2;
         } else {
-            retval = M_PI * 0.5;
+            retval = M_PI_2;
         }
     } else {
         __asm__ __volatile__ ("fstcw %0\n"
