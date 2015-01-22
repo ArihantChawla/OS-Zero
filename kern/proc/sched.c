@@ -2,10 +2,10 @@
 #include <zero/param.h>
 #include <zero/types.h>
 #include <zero/mtx.h>
-#include <kern/proc/sched.h>
+#include <kern/proc/thr.h>
 #include <kern/unit/x86/asm.h>
 
-volatile FASTCALL struct m_tcb *(*schedpickthr)(void);
+extern FASTCALL struct thr *(*schedpickthr)(void);
 
 void
 schedinit(void)
@@ -17,6 +17,14 @@ schedinit(void)
 #endif
 
     return;
+}
+
+void
+schedyield(void)
+{
+    struct thr *thr = schedpickthr();
+
+    thrjmp(thr);
 }
 
 void
@@ -36,3 +44,4 @@ schedloop(void)
     /* NOTREACHED */
     return;
 }
+

@@ -19,7 +19,8 @@
 #define ZEROMTXCONTVAL 2
 
 #include <zero/asm.h>
-#if (__KERNEL__) && (__MTKERNEL__)
+//#if (__KERNEL__) && (__MTKERNEL__)
+#if (__KERNEL__)
 #include <kern/proc/sched.h>
 #elif (PTHREAD)
 /* on some Linux setups, the pthread library declares no prototype */
@@ -67,7 +68,7 @@ mtxlk2(volatile long *lp, long val)
 #if defined(__linux__) && !(__KERNEL__)
             sched_yield();
 #elif (__KERNEL__)
-            schedpickthr();
+            schedyield();
 #elif (PTHREAD)
             pthread_yield();
 #endif

@@ -1,6 +1,8 @@
 #ifndef __KERN_SIGNAL_H__
 #define __KERN_SIGNAL_H__
 
+typedef void signalhandler_t(int sig);
+
 /* constants. */
 
 #define SIGCLD       0x00    /* UNSUPPORTED - System V, NOT SIGCHLD semantics */

@@ -15,7 +15,7 @@ extern long      trapsigmap[TRAPNCPU];
 signalhandler_t *ksigfunctab[NSIG];
 
 void
-killproc(struct proc *proc)
+killproc(volatile struct proc *proc)
 {
     ;
 }
@@ -26,9 +26,9 @@ FASTCALL
 void
 sigfunc(unsigned long pid, uint32_t trap, long err)
 {
-    struct proc     *proc = k_curproc;
-    long             sig = trapsigmap[trap];
-    signalhandler_t *func;
+    volatile struct proc *proc = k_curproc;
+    long                  sig = trapsigmap[trap];
+    signalhandler_t      *func;
 
 //    kprintf("trap 0x%lx -> signal 0x%lx\n", trap, sig);
     if (trap == TRAPUD) {

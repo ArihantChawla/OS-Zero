@@ -4,13 +4,13 @@
  * Copyright Tuomo Petteri Venäläinen 2014
  */
 
-#define MALLOCDEBUG      0
+#define MALLOCDEBUG      1
 #define MALLOCFREEMDIR   0  // under construction
 #define MALLOCSTKNDX     0
 #define MALLOCFREEMAP    0  // use free block bitmaps
 #define MALLOCHACKS      0  // enable experimental features
-#define MALLOCBUFMAP     0  // buffer mapped slabs to global pool
-#define MALLOCVARSIZEBUF 0  // use variable-size slabs; FIXME
+#define MALLOCBUFMAP     1  // buffer mapped slabs to global pool
+#define MALLOCVARSIZEBUF 1  // use variable-size slabs; FIXME
 #define MALLOCHASH       0
 #define MALLOCNHASHBIT   20
 #define MALLOCNHASH      (1UL << MALLOCNHASHBIT)
@@ -59,11 +59,13 @@
  *        ----
  *        - process heap segment
  *          - sbrk() interface; needs global lock
+ *          - mostly for small size allocations
  *
  *        map
  *        ---
  *        - process map segment
  *          - mmap() interface; thread-safe
+ *          - returns readily zeroed memory
  *
  *        headers
  *        -------
@@ -71,7 +73,7 @@
  *          - pointer stacks
  *          - table to map allocation pointers to magazine pointers
  *            - may differ because of alignments etc.
- *          - optionally, a bitmap to denote unallocated slices in magazines
+ *          - optionally, a bitmap to denote allocated slices in magazines
  */
 
  /*
@@ -123,14 +125,14 @@
 
 //#define MALLOCNARN     (2 * get_nprocs_conf())
 //#define MALLOCNARN     (2 * sysconf(_SC_NPROCESSORS_CONF))
-#define MALLOCNARN           16
+#define MALLOCNARN           4
 #if (MALLOCVARSIZEBUF)
 #define MALLOCSLABLOG2       18
 #define MALLOCSMALLSLABLOG2  16
 #define MALLOCTINYSLABLOG2   13
 #define MALLOCTEENYSLABLOG2  10
 #else
-#define MALLOCSLABLOG2       17
+#define MALLOCSLABLOG2       19
 #endif
 #if (MALLOCVARSIZEBUF) || (MALLOCBUFMAP)
 #define MALLOCSMALLMAPLOG2   21
@@ -151,10 +153,10 @@
 #if (MALLOCBUFMAP)
 #define magnbufmaplog2(bktid)                                           \
     (((bktid) <= MALLOCSMALLMAPLOG2)                                    \
-     ? 2                                                                \
+     ? 4                                                                \
      : (((bktid) <= MALLOCMIDSIZEMAPLOG2)                               \
-        ? 1                                                             \
-        : 0))
+        ? 3                                                             \
+        : 2))
 #define magnbufmap(bktid)                                               \
     (1UL << magnbufmaplog2(bktid))
 #endif /* MALLOCBUFMAP */
@@ -701,7 +703,7 @@ freearn(void *arg)
     struct mag *mag;
     struct mag *head;
     long        bktid;
-#if (MALLOCBUFMAP)
+#if (MALLOCBUFMAP) && 0
     long        n = 0;
 #endif
     
@@ -712,20 +714,20 @@ freearn(void *arg)
             mtxlk(&arn->magtab[bktid].lk);
             head = arn->magtab[bktid].head;
             if (head) {
-#if (MALLOCBUFMAP)
+#if (MALLOCBUFMAP) && 0
                 n = 1;
 #endif
                 mag = head;
                 mag->adr = (void *)((uintptr_t)mag->adr | MAGGLOB);
                 while (mag->next) {
-#if (MALLOCBUFMAP)
+#if (MALLOCBUFMAP) && 0
                     n++;
 #endif
                     mag = mag->next;
                     mag->adr = (void *)((uintptr_t)mag->adr | MAGGLOB);
                 }
                 mtxlk(&g_malloc.magtab[bktid].lk);
-#if (MALLOCBUFMAP)
+#if (MALLOCBUFMAP) && 0
                 g_malloc.magtab[bktid].n += n;
 #endif
                 mag->next = g_malloc.magtab[bktid].head;
@@ -1199,9 +1201,9 @@ _free(void *ptr)
 #endif
         if (freemap) {
 #if (MALLOCBUFMAP)
-            if ((uintptr_t)mag->adr & MAGMAP) {
+//            if ((uintptr_t)mag->adr & MAGMAP) {
                 mtxlk(&g_malloc.freetab[bktid].lk);
-//                if (g_malloc.freetab[bktid].n < magnbufmap(bktid)) {
+                if (g_malloc.freetab[bktid].n < magnbufmap(bktid)) {
                     mag->prev = NULL;
                     mag->next = g_malloc.freetab[bktid].head;
                     if (mag->next) {
@@ -1209,10 +1211,10 @@ _free(void *ptr)
                     }
                     g_malloc.freetab[bktid].head = mag;
                     g_malloc.freetab[bktid].n++;
-//                    freemap = 0;
-//                }
+                    freemap = 0;
+                }
                 mtxunlk(&g_malloc.freetab[bktid].lk);
-            }
+//            }
             if (freemap) {
                 mtxunlk(&g_malloc.freetab[bktid].lk);
                 /* unmap slab */
@@ -1243,16 +1245,13 @@ _free(void *ptr)
             mtxunlk(&arn->hdrtab[bktid].lk);
 #endif
         }
-#if (MALLOCBUFMAP)
-//        mtxunlk(&arn->magtab[bktid].lk);
-#endif
     }
     
     return;
 }
 
 void *
-    malloc(size_t size)
+malloc(size_t size)
 {
     void   *ptr;
 
@@ -1316,6 +1315,9 @@ _realloc(void *ptr,
     if ((rel) && (ptr)) {
         _free(ptr);
     }
+#if (MALLOCDEBUG)
+    assert(retptr != NULL);
+#endif
 
     return retptr;
 }

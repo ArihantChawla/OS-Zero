@@ -1,5 +1,5 @@
-#ifndef __KERN_THR_H__
-#define __KERN_THR_H__
+#ifndef __KERN_PROC_THR_H__
+#define __KERN_PROC_THR_H__
 
 #include <kern/conf.h>
 #include <stddef.h>
@@ -21,13 +21,13 @@
 //extern struct m_cpuinfo cpuinfo;
 
 #if (ZEROSCHED)
-volatile FASTCALL struct m_tcb * thrpick(void);
+extern FASTCALL struct thr * thrpick(void);
 #endif
-ASMLINK void                     thrsave(struct thr *thr, long retadr, long fp);
-FASTCALL void                    thrjmp(struct thr *thr);
+ASMLINK void                 thrsave(struct thr *thr, long retadr, long fp);
+FASTCALL void                thrjmp(struct thr *thr);
 
 #define __KERNEL__ 1
-#include <zero/mtx.h>
+//#include <zero/mtx.h>
 
 struct thrq {
     volatile long  lk;
@@ -99,5 +99,5 @@ struct thr {
     int            errno;               // system call error code
 };
 
-#endif /* __KERN_THR_H__ */
+#endif /* __KERN_PROC_THR_H__ */
 

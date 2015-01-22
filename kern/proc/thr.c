@@ -2,12 +2,14 @@
 #include <sys/io.h>
 #include <zero/cdecl.h>
 #include <zero/param.h>
+#include <zero/mtx.h>
 #include <zero/trix.h>
+#include <zero/randmt32.h>
 #include <zero/asm.h>
 #include <kern/conf.h>
 #include <kern/util.h>
 #include <kern/obj.h>
-#include <kern/proc/thr.h>
+#include <kern/proc/sched.h>
 #include <kern/mem.h>
 #include <kern/unit/x86/cpu.h>
 #include <kern/unit/x86/trap.h>
@@ -65,6 +67,7 @@ thradjprio(struct thr *thr)
 {
     long class = thr->class;
     long prio = thr->prio;
+    long nice = thr->nice;
 
     if (class == THRINTR) {
         /* thr->prio is IRQ ID */
@@ -73,7 +76,10 @@ thradjprio(struct thr *thr)
         /* wrap around back to 0 at THRNPRIO / 2 */
         prio++;
         prio &= (THRNPRIO >> 1) - 1;
-        prio = (THRNPRIO * class) + (THRNPRIO >> 1) + prio + thr->nice;
+//        prio = (THRNPRIO * class) + (THRNPRIO >> 1) + prio + thr->nice;
+        prio += (THRNPRIO * class)
+            + (randmt32() % ((THRNPRIO >> 1) - nice))
+            + nice;
         prio = min(THRNPRIO * THRNCLASS - 1, prio);
     }
     thr->prio = prio;
@@ -283,9 +289,8 @@ thrwakeup(uintptr_t wchan)
 }
 
 /* switch threads */
-volatile
 FASTCALL
-struct m_tcb *
+struct thr *
 thrpick(void)
 {
     struct thr  *thr = k_curthr;
@@ -320,14 +325,15 @@ thrpick(void)
                 }
                 thrq->head = thr->next;
                 mtxunlk(&thrq->lk);
-                return &thr->m_tcb;
+
+                return thr;
             } else {
                 mtxunlk(&thrq->lk);
             }
         }
     }
     if (thr) {
-        return &thr->m_tcb;
+        return thr;
     } else {
 
         return NULL;

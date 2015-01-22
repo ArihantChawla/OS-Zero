@@ -34,7 +34,7 @@
 #endif
 //#include <kern/unit/x86/asm.h>
 
-extern void cpuinit(struct m_cpu *cpu);
+extern void cpuinit(volatile struct m_cpu *cpu);
 extern long bufinit(void);
 
 #if (HPET)

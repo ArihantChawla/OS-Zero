@@ -23,7 +23,7 @@ void * malloc(size_t size);
 void * calloc(size_t n, size_t size);
 void * realloc(void *ptr, size_t size);
 void   free(void *ptr);
-#if (_ISOC11_SOURCE)
+#if defined(_ISOC11_SOURCE)
 void * aligned_alloc(size_t align, size_t size);
 #endif
 
@@ -123,7 +123,7 @@ int                  unlockpt(int fd);
 int                  unsetenv(const char *name);
 size_t               wcstombs(char *dest, const wchar_t *src, size_t n);
 int                  wctomb(char *src, wchar_t wc);
-#if (_ISO_C11_SOURCE)
+#if defined(_ISO_C11_SOURCE)
 /* TODO: quick_exit(), at_quick_exit() */
 #endif
 
