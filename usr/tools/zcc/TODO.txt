@@ -8,8 +8,8 @@ Zero C Compiler Ideas
 
 compiler pipeline
 -----------------
+- zcctokenize(); tokenizer
 - zccpreproc(); preprocessor
-- zcctokenise(); tokeniser
 - zcclex(); lexer
 - zccopt(); optimiser
 - zcclink(); linker
