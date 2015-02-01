@@ -1,0 +1,48 @@
+Zero MMIX
+---------
+
+Brief
+-----
+- software-based implementation of Knuth's MMIX RISC computer
+- bytecode interpreter ("virtual machine")
+- assembly language interface (zas)
+- calculator programmable in MMIX assembly and later on, C and other languages
+  - stack based RPN
+
+Development Tools
+-----------------
+- graphical debugger and other software development tools
+  - machine level frontend (assembly)
+    - stack
+      - stack pointer
+      - frame pointer
+      - caller stack information
+      - interrupt events
+    - intermixed source code and disassembly
+    - register contents
+  - source level frontend (c)
+    - stack
+      - stack pointer
+      - frame pointer
+      - function parameters
+      - variables and their bindings to registers
+      - decimal, hexadecimal, octal and binary display modes
+
+Multimedia
+-----------
+- graphics with framebuffer
+- audio mixer
+
+I/O Interface
+-------------
+- <zmmix/io.h>
+  - ioperm()
+  - open()
+  - close()
+  - read()
+  - write()
+  - seek()
+  - ioctl()
+  - I/O ports
+    - STDIN, STDOUT, STDERR
+ 

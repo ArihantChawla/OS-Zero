@@ -1,0 +1,17 @@
+Zero MMIX
+---------
+- implement Knuth's MMIX architecture in software (virtual machine)
+- utilise the zas assembler
+- experiment with graphical development tools
+  - tag functions/lines with breakpoints and profiler events (start, stop)
+  - allow signal breakpoints
+  - stack-based RPN calculator frontend
+    - refactor zpc
+  - debugger
+    - stack
+      - caller and callee frames
+      - resolve addresses to symbols
+      - backtrace/unwind
+      - register/variable contents (hex, dec, oct, bin display modes)
+  - profiler
+    - measure execution times in microseconds (gettimeofday()) and clock cycles
