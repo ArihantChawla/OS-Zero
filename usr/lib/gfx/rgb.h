@@ -22,10 +22,10 @@
 #define RGBBLUEOFS  0
 
 struct argb32 {
-    uint8_t bval;
-    uint8_t gval;
-    uint8_t rval;
-    uint8_t aval;
+    uint8_t blue;
+    uint8_t green;
+    uint8_t red;
+    uint8_t alpha;
 } PACK();
 
 #elif (__BYTE_ORDER == __BIG_ENDIAN)
@@ -36,10 +36,10 @@ struct argb32 {
 #define RGBBLUEOFS  24
 
 struct argb32 {
-    uint8_t aval;
-    uint8_t rval;
-    uint8_t gval;
-    uint8_t bval;
+    uint8_t alpha;
+    uint8_t red;
+    uint8_t green;
+    uint8_t blue;
 } PACK();
 
 #endif
@@ -49,21 +49,21 @@ typedef int16_t rgb555_t;
 typedef int16_t rgb565_t;
 
 /* pix is 32-bit word */
-#define gfxalphaval(pix) ((pix) >> RGBALPHAOFS)		 // alpha component
-#define gfxredval(pix)   (((pix) >> RGBREDOFS) & 0xff)	 // red component
-#define gfxgreenval(pix) (((pix) >> RGBGREENOFS) & 0xff) // green component
-#define gfxblueval(pix)  (((pix) >> RGBBLUEOFS) & 0xff)	 // blue component
+#define gfxgetalpha(pix) ((pix) >> RGBALPHAOFS)		 // alpha component
+#define gfxgetred(pix)   (((pix) >> RGBREDOFS) & 0xff)	 // red component
+#define gfxgetgreen(pix) (((pix) >> RGBGREENOFS) & 0xff) // green component
+#define gfxgetblue(pix)  (((pix) >> RGBBLUEOFS) & 0xff)	 // blue component
 
 /* pointer version; faster byte-fetches from memory */
-#define gfxalphaval_p(p) (((struct argb32 *)(p))->aval)
-#define gfxredval_p(p)   (((struct argb32 *)(p))->rval)
-#define gfxgreenval_p(p) (((struct argb32 *)(p))->gval)
-#define gfxblueval_p(p)  (((struct argb32 *)(p))->bval)
+#define gfxgetalpha_p(p) (((struct argb32 *)(p))->alpha)
+#define gfxgetred_p(p)   (((struct argb32 *)(p))->red)
+#define gfxgetgreen_p(p) (((struct argb32 *)(p))->green)
+#define gfxgetblue_p(p)  (((struct argb32 *)(p))->blue)
 
 /* approximation for c / 0xff */
 #define gfxdiv255(c)                                                    \
     ((((c) << 8) + (c) + 256) >> 16)
-/* simple division per 256 by bitshift */
+/* simple division by 256 by bitshift */
 #define gfxdiv256(c)                                                    \
     ((c) >> 8)
 #define gfxalphablendc(src, dest, a)                                    \
@@ -82,10 +82,10 @@ typedef int16_t rgb565_t;
 #define gfxmkpix_p(dest, a, r, g, b)                                    \
     ((dest) = gfxmkpix(a, r, g, b))
 #define gfxsetpix_p(p, a, r, g, b)                                      \
-    (((struct argb32 *)(p))->aval = (a),                                \
-     ((struct argb32 *)(p))->rval = (r),                                \
-     ((struct argb32 *)(p))->gval = (g),                                \
-     ((struct argb32 *)(p))->bval = (b))
+    (((struct argb32 *)(p))->alpha = (a),                               \
+     ((struct argb32 *)(p))->red = (r),                                 \
+     ((struct argb32 *)(p))->green = (g),                               \
+     ((struct argb32 *)(p))->blue = (b))
 
 #if (__BYTE_ORDER == __LITTLE_ENDIAN)
 #define RGB_ARGB32_RED_SHIFT       16
@@ -150,9 +150,9 @@ typedef int16_t rgb565_t;
         struct argb32 *_src = (struct argb32 *)&_pix;                   \
         struct argb32 *_dest = (struct argb32 *)p;                      \
                                                                         \
-        _dest->rval = gfxredval_p(_src);                                \
-        _dest->gval = gfxgreenval_p(_src);                              \
-        _dest->bval = gfxblueval_p(_src);                               \
+        _dest->red = gfxredval_p(_src);                                 \
+        _dest->green = gfxgreenval_p(_src);                             \
+        _dest->blue = gfxblueval_p(_src);                               \
     } while (0)
 
 #if (__BYTE_ORDER == __LITTLE_ENDIAN)
