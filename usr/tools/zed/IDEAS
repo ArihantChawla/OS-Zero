@@ -1,0 +1,40 @@
+- buttons always visible
+  - save, paste, copy, cut, close, find, indent, navigate
+
+Emacs-like commands
+-------------------
+C-a		go to beginning of line
+C-e		go to end of line
+M-<		go to beginning of file
+M->		go to end of file
+C-x C-c		exit
+C-x C-s		save
+C-x i or TAB	insert
+C-x C-f		open file
+C-x b		switch between files/buffers
+
+Operation modes
+---------------
+- c_mode
+- asm_mode
+- latex_mode
+- makefile_mode
+- calc_mode
+  - zero programmer's calculator
+  - mmix assembly programming support (maybe in at&t syntax, though)
+
+C-programming support
+---------------------
+- per-mode hooks for different events
+  - file_read
+  - file_indent
+  - file_commit
+  - file_make
+- auto-indent
+  - zero-mode (.c/.h, .s/.S) as default
+  - offsets for different tokens such as 4 for '{' and -4 for '}'
+    - blkofs (current block offset), parofs (current parenthesis offset)
+      - indent to the max offset + baseofs
+- syntax highlights
+  - use zcc tokeniser to implement syntax visualisation
+
