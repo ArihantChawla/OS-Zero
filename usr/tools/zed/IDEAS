@@ -3,15 +3,19 @@
 
 Emacs-like commands
 -------------------
-C-a		go to beginning of line
-C-e		go to end of line
-M-<		go to beginning of file
-M->		go to end of file
-C-x C-c		exit
-C-x C-s		save
-C-x i or TAB	insert
-C-x C-f		open file
-C-x b		switch between files/buffers
+C-a			go to beginning of line
+C-e			go to end of line
+M-<			go to beginning of file
+M->			go to end of file
+C-x C-c			exit
+C-x C-s			save
+C-x i or TAB		insert
+C-x C-f			open file
+C-x b			switch between files/buffers
+M-x c-mode		switch to C mode
+M-x asm-mode		switch to assembly mode
+M-x latex-mode		switch to LaTeX mode
+M-x makefile-mode	switch to Makefile mode
 
 Operation modes
 ---------------
