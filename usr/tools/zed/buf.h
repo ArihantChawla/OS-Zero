@@ -12,11 +12,13 @@ struct zedbuf {
 #if (_REENTRANT)
     volatile long   lk;
 #endif
-    struct zedfile *file;
+    long            mode;       // per-buffer editor mode
+    struct zedfile *file;       // buffer file
     size_t          nb;         // size of data-buffer
     void           *data;       // buffer
     struct zedbuf  *prev;       // previous on list
     struct zedbuf  *next;       // next on list
+    long            charset;    // character set ID
     long            ctype;      // ASCII, 8BIT, UTF-8, UCS-2, UTF-16, UCS-4
     size_t          nrow;       // number of buffer rows
     size_t          ncol;       // number of buffer columns

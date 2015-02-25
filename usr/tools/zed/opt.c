@@ -1,5 +1,5 @@
 int
-zedparseopts(struct zedopt *opt, int argc, char *argv[])
+zedinitopt(struct zed *zed, int argc, char *argv[])
 {
     int i = 1;
 
