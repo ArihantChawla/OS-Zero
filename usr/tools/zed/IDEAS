@@ -28,17 +28,23 @@ Operation modes
 - asm_mode
 - latex_mode
 - makefile_mode
-- calc_mode
-  - zero programmer's calculator
-  - mmix assembly programming support (maybe in at&t syntax, though)
+- calc_mode; zero programmer's calculator
+  - support for C operators with different word sizes
+  - decimal, hexadecimal, octal, and binary display modes
+  - support for IEEE 754 floating point values; 32-bit float and 64-bit double
+  - MMIX assembly programming support (maybe in AT&T syntax, though)
 
 C-programming support
 ---------------------
-- per-mode hooks for different events
+- common hooks
   - file_read
+  - file_write
+- per-mode hooks for different events
+  - file_tokenize
+  - file_lex
   - file_indent
   - file_commit
-  - file_make
+  - file_assemble
 - auto-indent
   - zero-mode (.c/.h, .s/.S) as default
   - offsets for different tokens such as 4 for '{' and -4 for '}'
@@ -51,3 +57,4 @@ Editor objects
 --------------
 - file
 - buf
+
