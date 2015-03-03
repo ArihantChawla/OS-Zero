@@ -4,14 +4,26 @@
 #include <stddef.h>
 #include <string.h>
 
+/* non-structure typedefs */
+
+typedef long optflg;
+
+/* structures */
+
 #define OPT_VERBOSE (1L << 0)
 struct styleopt {
-    long       flg;      // boolean option bits
+    optflg     flg;      // boolean option bits
     size_t     nfile;    // # of file names in fnametab
     char     **fnametab; // table of file name strings
 };
 
-struct styleopt styleopt;
+/* global declarations */
+
+struct {
+    struct styleopt opt;
+} g_style;
+
+/* function declarations */
 
 int
 stylegetopt(struct styleopt *opt, int argc, char *argv[])
@@ -40,7 +52,7 @@ int
 main(int argc, char *argv)
 {
     if (argc) {
-        stylegetopt(&styleopt, argc, argv);
+        stylegetopt(&g_style.opt, argc, argv);
 	}
 }
 
