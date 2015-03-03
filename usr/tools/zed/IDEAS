@@ -10,7 +10,7 @@ zed - Zero Editor
   - automatic indentation
     - basicofs - 4
     - caseofs  - 4
-    - 
+    -
 
 - buttons always visible
   - save, paste, copy, cut, close, find, indent, navigate

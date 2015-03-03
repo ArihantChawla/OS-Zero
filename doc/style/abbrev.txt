@@ -1,13 +1,25 @@
+/* zero style abbreviations for words/terms */
+
 adr		- address
 atr		- attribute(s)
 blk		- block
 buf		- buffer
+cons    - console
+dest    - destination
+drv     - drive(r)
+eth     - ethernet
 func	- function
+io      - input/output
+lim     - limit
 mach	- machine
 mag		- magazine (memory management)
+max     - maximum
+mem     - memory
 mgr		- manager
+min     - minimum
 mod		- module, modulus
 ndx		- index
+num     - number
 ofs		- offset
 pix		- pixel
 pkg		- package
@@ -17,6 +29,7 @@ proc	- process
 ptr		- pointer
 rect	- rectangle
 sig		- signal
+src     - source
 stk		- stack
 tab		- table, array
 thr		- thread
