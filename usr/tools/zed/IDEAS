@@ -1,3 +1,17 @@
+zed - Zero Editor
+-----------------
+- programmer's editor; later on, possibly with advanced IDE features
+  - integration of / modes for different code and related files
+    - files for GNU build tools such as
+      - Makefile.am
+      - configure.ac
+      - m4 routines
+- c-mode
+  - automatic indentation
+    - basicofs - 4
+    - caseofs  - 4
+    - 
+
 - buttons always visible
   - save, paste, copy, cut, close, find, indent, navigate
 
