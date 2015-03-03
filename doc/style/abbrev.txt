@@ -1,0 +1,24 @@
+adr		- address
+atr		- attribute(s)
+blk		- block
+buf		- buffer
+func	- function
+mach	- machine
+mag		- magazine (memory management)
+mgr		- manager
+mod		- module, modulus
+ndx		- index
+ofs		- offset
+pix		- pixel
+pkg		- package
+pnt		- point
+pos		- position
+proc	- process
+ptr		- pointer
+rect	- rectangle
+sig		- signal
+stk		- stack
+tab		- table, array
+thr		- thread
+val		- value
+
