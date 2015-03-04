@@ -2,6 +2,7 @@
 
 adr		- address
 atr		- attribute(s)
+bin     - binary
 blk		- block
 btn     - button
 buf		- buffer
@@ -14,6 +15,7 @@ conf    - configuration
 cons    - console
 conv    - convert, conversion
 ctrl    - control(ler)
+dec     - decimal [number]
 desc    - descriptor
 dest    - destination
 dfl     - default
@@ -24,8 +26,11 @@ exec    - execute
 fmt     - format
 frm     - frame
 func	- function
+hex     - hexadecimal
+init    - initialise, initialisation
 io      - input/output
 kbd     - keyboard
+lang    - language
 len     - length
 lim     - limit
 mach	- machine
@@ -40,6 +45,7 @@ ndx		- index
 net     - network
 nic     - network interface card
 num     - number
+oct     - octal
 ofs		- offset
 par     - parallel
 pix		- pixel
@@ -47,6 +53,7 @@ pkg		- package
 pnt		- point
 pos		- position
 proc	- process
+prog    - program
 ptr		- pointer
 rect	- rectangle
 ser     - serial
