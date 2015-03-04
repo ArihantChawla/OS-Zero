@@ -1,11 +1,11 @@
 /* zero style abbreviations for words/terms */
 
-adr		- address
-atr		- attribute(s)
+adr     - address
+atr     - attribute(s)
 bin     - binary
-blk		- block
+blk     - block
 btn     - button
-buf		- buffer
+buf     - buffer
 cap     - capability
 ch      - character
 chk     - check
@@ -19,13 +19,14 @@ dec     - decimal [number]
 desc    - descriptor
 dest    - destination
 dfl     - default
+doc     - document
 drv     - drive(r)
 eth     - ethernet
 ev      - event
 exec    - execute
 fmt     - format
 frm     - frame
-func	- function
+func    - function
 hex     - hexadecimal
 init    - initialise, initialisation
 io      - input/output
@@ -33,38 +34,38 @@ kbd     - keyboard
 lang    - language
 len     - length
 lim     - limit
-mach	- machine
-mag		- magazine (memory management)
+mach    - machine
+mag     - magazine (memory management)
 max     - maximum
 mem     - memory
-mgr		- manager
+mgr     - manager
 min     - minimum
-mod		- module, modulus
+mod     - module, modulus
 mtx     - mutex (mutual exclusion lock)
-ndx		- index
+ndx     - index
 net     - network
 nic     - network interface card
 num     - number
 oct     - octal
-ofs		- offset
+ofs     - offset
 par     - parallel
-pix		- pixel
-pkg		- package
-pnt		- point
-pos		- position
-proc	- process
+pix     - pixel
+pkg     - package
+pnt     - point
+pos     - position
+proc    - process
 prog    - program
-ptr		- pointer
-rect	- rectangle
+ptr     - pointer
+rect    - rectangle
 ser     - serial
-sig		- signal
+sig     - signal
 src     - source
-stk		- stack
+stk     - stack
 str     - string
 sys     - system
-tab		- table, array
-thr		- thread
-val		- value
+tab     - table, array
+thr     - thread
+val     - value
 var     - variable
 win     - window
 
