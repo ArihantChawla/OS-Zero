@@ -2,7 +2,7 @@ zed - Zero Editor
 -----------------
 - programmer's editor; later on, possibly with advanced IDE features
   - integration of / modes for different code and related files
-    - files for GNU build tools such as
+    - files and templates for GNU build tools such as
       - Makefile.am
       - configure.ac
       - m4 routines

@@ -10,6 +10,7 @@ drv     - drive(r)
 eth     - ethernet
 func	- function
 io      - input/output
+len     - length
 lim     - limit
 mach	- machine
 mag		- magazine (memory management)
@@ -21,6 +22,7 @@ mod		- module, modulus
 ndx		- index
 num     - number
 ofs		- offset
+par     - parallel
 pix		- pixel
 pkg		- package
 pnt		- point
@@ -28,9 +30,11 @@ pos		- position
 proc	- process
 ptr		- pointer
 rect	- rectangle
+ser     - serial
 sig		- signal
 src     - source
 stk		- stack
+str     - string
 tab		- table, array
 thr		- thread
 val		- value
