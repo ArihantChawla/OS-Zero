@@ -3,13 +3,29 @@
 adr		- address
 atr		- attribute(s)
 blk		- block
+btn     - button
 buf		- buffer
+cap     - capability
+ch      - character
+chk     - check
+chr     - character
+cnt     - count
+conf    - configuration
 cons    - console
+conv    - convert, conversion
+ctrl    - control(ler)
+desc    - descriptor
 dest    - destination
+dfl     - default
 drv     - drive(r)
 eth     - ethernet
+ev      - event
+exec    - execute
+fmt     - format
+frm     - frame
 func	- function
 io      - input/output
+kbd     - keyboard
 len     - length
 lim     - limit
 mach	- machine
@@ -19,7 +35,10 @@ mem     - memory
 mgr		- manager
 min     - minimum
 mod		- module, modulus
+mtx     - mutex (mutual exclusion lock)
 ndx		- index
+net     - network
+nic     - network interface card
 num     - number
 ofs		- offset
 par     - parallel
@@ -35,7 +54,10 @@ sig		- signal
 src     - source
 stk		- stack
 str     - string
+sys     - system
 tab		- table, array
 thr		- thread
 val		- value
+var     - variable
+win     - window
 
