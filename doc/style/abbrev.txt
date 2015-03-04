@@ -34,6 +34,7 @@ kbd     - keyboard
 lang    - language
 len     - length
 lim     - limit
+lk      - lock
 mach    - machine
 mag     - magazine (memory management)
 max     - maximum
