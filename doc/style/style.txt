@@ -1,4 +1,19 @@
+Welcome to read an early version of a style guide for the Zero project! :)
+
 /* zero style abbreviations for words/terms and terminology */
+
+indentation etc.
+---------------
+- see style.c for example code :)
+
+naming identifiers
+------------------
+- constant [macro] values in all upper case, e.g. TRAPPF
+- function names should contain verbs
+  - module name + verb + possible object
+    - e.g. meminit(), vminitzone()
+- n-prefix for number of items
+  - e.g. nfile - number of files, nbyte - number of bytes
 
 type sizes
 ----------
@@ -7,7 +22,10 @@ word	- 16-bit
 long    - 32-bit
 quad	- 64-bit
 
+abbreviations
+-------------
 adr     - address
+arg	- argument
 atr     - attribute(s)
 bin     - binary
 blk     - block
@@ -65,6 +83,7 @@ nic     - network interface card
 num     - number, ID
 oct     - octal
 ofs     - offset
+op	- operation
 par     - parallel
 perm	- permissions
 pg	- page
@@ -77,6 +96,7 @@ prog    - program
 prot	- protection
 ptr     - pointer
 rect    - rectangle
+ret	- return [value]
 ser     - serial
 sig     - signal
 src     - source
