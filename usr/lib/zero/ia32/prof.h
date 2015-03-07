@@ -1,6 +1,10 @@
 #ifndef __ZERO_IA32_PROF_H__
 #define __ZERO_IA32_PROF_H__
 
+#if defined(__cplusplus)
+extern "C" {
+#endif
+
 /*
  * THANKS
  * ------
@@ -42,7 +46,7 @@ union _tickval {
         _cnt = __rdpmc();                                               \
         tp->u64 = _cnt;                                                 \
     } while (0)
-#else
+#else /* !defined(_MSC_VER) */
 /* read TSC (time stamp counter) */
 #define _rdtsc(tp)                                                      \
     __asm__("rdtsc\n"                                                   \
@@ -65,6 +69,10 @@ _rdpmc(union _tickval *tp, int id)
             : "eax", "edx");
 
     return (tp->u64);
+}
+#endif
+
+#if defined(__cplusplus)
 }
 #endif
 
