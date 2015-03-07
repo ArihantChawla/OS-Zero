@@ -14,10 +14,17 @@ extern "C" {
 
 #include <stdint.h>
 
+#if defined(_MSC_VER)
+union _tickval {
+    unsigned __int64 u64;
+    uint32_t u32v[2];
+};
+#else
 union _tickval {
     uint64_t u64;
     uint32_t u32v[2];
 };
+#endif
 
 #if defined(_MSC_VER)
 #define _rdtsc(tp)                                                      \
@@ -25,14 +32,14 @@ union _tickval {
         unsigned __int64 _cnt;                                          \
                                                                         \
         _cnt = __rdtsc();                                               \
-        tp->u64 = (uint64_t)_cnt;                                       \
+        tp->u64 = _cnt;                                                 \
     } while (0)
 #define _rdpmc(tp)                                                      \
     do {                                                                \
         unsigned __int64 _cnt;                                          \
                                                                         \
         _cnt = __rdpmc();                                               \
-        tp->u64 = (uint64_t)_cnt;                                       \
+        tp->u64 = _cnt;                                                 \
     } while (0)
 #else /* !defined(_MSC_VER) */
 /* read TSC (time stamp counter) */
