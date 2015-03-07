@@ -21,10 +21,13 @@ objects/identifiers
 - function names should contain verbs
   - module name + verb + possible object
     - e.g. meminit(), vminitzone()
+- object sizes are usually represented as number of bytes
 - n-prefix for number of items
   - e.g. nfile - number of files, nbyte - number of bytes
 - data structure names should consist of object name + structure "type";
   - e.g. ptrtab, symhash
+  - structure and union members may have shorter names
+    - e.g. stk (stack), tab (table/array)
 
 type sizes
 ----------
@@ -113,6 +116,7 @@ sig     - signal
 src     - source
 stk     - stack
 str     - string
+sym	- symbol
 sys     - system
 tab     - table, array
 thr     - thread
