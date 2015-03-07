@@ -6,8 +6,13 @@ indentation etc.
 ---------------
 - see style.c for example code :)
 
-identifiers
------------
+general conventions
+-------------------
+- assembly files are to be written in AT&T syntax... ;)
+
+objects/identifiers
+-------------------
+- volatile-qualifier should be used for cross-thread variables such as mutexes
 - static-qualifier is good for locally visible values
   - may let the compiler do more aggressive optimisations
 - global entities can be wrapped into a single per-program structure
