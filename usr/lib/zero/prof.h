@@ -62,7 +62,15 @@ extern "C" {
 #define profclkdiff(id)                                                 \
     tvcmp(&__tv##id[0], &__tv##id[1])
 
-#if defined(_MSC_VER)
+#if defined(_MSC_VER) && defined(__cplusplus)
+#define PROFDECLOS(id)                                                  \
+    LARGE_INTEGER __li##id[2]
+#define profstartos(id)                                                 \
+    QueryPerformanceCounter(&__li##id[0]
+#define profstopos(id)
+    QueryPerformanceCounter(&__li##id[1])
+#define profosdiff(id)                                                  \
+    (__li##id[1] - __li##id[0])
 #else
 #define PROFDECLOS(id)                                                  \
     struct timespec __ts##id[2]
