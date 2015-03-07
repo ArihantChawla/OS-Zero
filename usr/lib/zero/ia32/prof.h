@@ -1,6 +1,13 @@
 #ifndef __ZERO_IA32_PROF_H__
 #define __ZERO_IA32_PROF_H__
 
+/*
+ * THANKS
+ * ------
+ * Thomas 'tommycannady' Cannady for help with testing the MSVC versions of
+ * the macros... :)
+ */ 
+
 #include <stdint.h>
 
 union _tickval {
@@ -26,14 +33,14 @@ union _tickval {
         unsigned __int64 _cnt;                                          \
                                                                         \
         _cnt = __rdtsc();                                               \
-        tp->u64 = _cnt;
+        tp->u64 = _cnt;                                                 \
     } while (0)
 #define _rdpmc(tp)                                                      \
     do {                                                                \
         unsigned __int64 _cnt;                                          \
                                                                         \
         _cnt = __rdpmc();                                               \
-        tp->u64 = _cnt;
+        tp->u64 = _cnt;                                                 \
     } while (0)
 #else
 /* read TSC (time stamp counter) */
