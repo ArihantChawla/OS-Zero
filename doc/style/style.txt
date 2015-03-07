@@ -6,14 +6,20 @@ indentation etc.
 ---------------
 - see style.c for example code :)
 
-naming identifiers
-------------------
+identifiers
+-----------
+- static-qualifier is good for locally visible values
+  - may let the compiler do more aggressive optimisations
+- global entities can be wrapped into a single per-program structure
+  - e.g. struct g_malloc; use g_-prefix (global)
 - constant [macro] values in all upper case, e.g. TRAPPF
 - function names should contain verbs
   - module name + verb + possible object
     - e.g. meminit(), vminitzone()
 - n-prefix for number of items
   - e.g. nfile - number of files, nbyte - number of bytes
+- data structure names should consist of object name + structure "type";
+  - e.g. ptrtab, symhash
 
 type sizes
 ----------
