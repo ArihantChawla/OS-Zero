@@ -20,6 +20,15 @@ union _tickval {
 #define proftickdiff(id)                                                \
     (__tv##id[1].u64 - __tv##id[0].u64)
 
+#if defined(_MSC_VER)
+#define _rdtsc(tp)                                                      \
+    do {                                                                \
+        unsigned __int64 _cnt;                                          \
+                                                                        \
+        _cnt = __rdtsc();                                               \
+        tp->u64 = _cnt;
+    } while (0)
+#else
 /* read TSC (time stamp counter) */
 #define _rdtsc(tp)                                                      \
     __asm__("rdtsc\n"                                                   \
@@ -43,6 +52,7 @@ _rdpmc(union _tickval *tp, int id)
     
     return (tp->u64);
 }
+#endif
 
 #endif /* __ZERO_IA32_PROF_H__ */
 
