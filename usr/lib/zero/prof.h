@@ -34,15 +34,20 @@
   } while (FALSE)
 
 #define PROFDECLCLK(id)                                                 \
-    struct timeval _tv##id[2]
+    struct timeval __tv##id[2]
+#if 0
 #define profinitclk(id)                                                 \
-    memset(&_tv##id, 0, sizeof(_tv##id))
+    memset(&__tv##id, 0, sizeof(__tv##id))
+#endif
+#define profinitclk(id)                                                 \
+    (__tv##id[0] = __tv##id[1] = { { 0, 0 }, { 0, 0 }}
+    __
 #define profstartclk(id)                                                \
-    gettimeofday(&_tv##id[0], NULL)
+    gettimeofday(&__tv##id[0], NULL)
 #define profstopclk(id)                                                 \
-    gettimeofday(&_tv##id[1], NULL)
+    gettimeofday(&__tv##id[1], NULL)
 #define profclkdiff(id)                                                 \
-    tvcmp(&_tv##id[0], &_tv##id[1])
+    tvcmp(&__tv##id[0], &_tv##id[1])
 
 #endif /* __ZERO_PROF_H__ */
 

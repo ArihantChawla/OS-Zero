@@ -17,7 +17,7 @@ union _tickval {
 
 #define PROFDECLTICK(id)                                                \
     union _tickval __tv##id[2]
-#define profclrtick(id)                                                 \
+#define profinittick(id)                                                \
     (__tv##id[0].u64 = __tv##id[1].u64 = UINT64_C(0))
 //    memset(&__tv##id, 0, sizeof(__tv##id))
 #define profstarttick(id)                                               \
@@ -56,14 +56,14 @@ union _tickval {
 static __inline__ uint64_t
 _rdpmc(union _tickval *tp, int id)
 {
-    __asm__("movl %0, %%ecx\n"                                          \
-            "rdpmc\n"                                                   \
-            "mov %%eax, %1\n"                                           \
+    __asm__("movl %0, %%ecx\n"
+            "rdpmc\n"
+            "mov %%eax, %1\n"
             "mov %%edx, %2"
             : "=rm" (tp->u32v[0]), "=rm" (tp->u32v[1])
             : "rm" (id)
             : "eax", "edx");
-    
+
     return (tp->u64);
 }
 #endif

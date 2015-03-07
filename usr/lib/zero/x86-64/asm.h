@@ -13,19 +13,8 @@
 #define m_cmpswapb(p, want, val) m_cmpxchgb(p, want, val)
 #define m_scanlo1bit(l)          m_bsfq(l)
 #define m_scanhi1bit(l)          m_bsrq(l)
-#if 0
 #define m_getretadr(r)                                                  \
-    __asm__ __volatile__ ("movl 8(%%rbp), %0\n" : "=rm" (r))
-#endif
-static __inline__ void *
-m_getretadr(void)
-{
-    void *ptr;
-
-    __asm__ __volatile__ ("movq 8(%%rbp), %0\n" : "=a" (ptr));
-
-    return ptr;
-}
+    (__asm__ __volatile__ ("movl 8(%%rbp), %0\n" : "=rm" (r)), (r))
 
 static __inline__ long
 m_xchgq(volatile long *p,
@@ -35,7 +24,7 @@ m_xchgq(volatile long *p,
                           : "=a" (val)
                           : "m" (*(p))
                           : "memory");
-
+    
     return val;
 }
 
