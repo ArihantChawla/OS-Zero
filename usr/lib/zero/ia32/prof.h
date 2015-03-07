@@ -28,6 +28,13 @@ union _tickval {
         _cnt = __rdtsc();                                               \
         tp->u64 = _cnt;
     } while (0)
+#define _rdpmc(tp)                                                      \
+    do {                                                                \
+        unsigned __int64 _cnt;                                          \
+                                                                        \
+        _cnt = __rdpmc();                                               \
+        tp->u64 = _cnt;
+    } while (0)
 #else
 /* read TSC (time stamp counter) */
 #define _rdtsc(tp)                                                      \
