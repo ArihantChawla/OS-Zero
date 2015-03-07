@@ -1,21 +1,21 @@
- /*
+/*
  * Zero Malloc Revision 2
  *
  * - an unstable alpha version of a new malloc for Zero.
  *
- * Copyright Tuomo Petteri Venäläinen 2014
+ * Copyright (C) Tuomo Petteri Venäläinen 2014
  */
 
 #define MALLOCDIAG       0
-#define MALLOCDEBUG      1
+#define MALLOCDEBUG      0
 #define MALLOCFREEMDIR   0  // under construction
-#define MALLOCSTKNDX     1
+#define MALLOCSTKNDX     0
 #define MALLOCFREEMAP    0  // use free block bitmaps
 #define MALLOCHACKS      0  // enable experimental features
 #define MALLOCBUFMAP     0  // buffer mapped slabs to global pool
 #define MALLOCVARSIZEBUF 0  // use variable-size slabs; FIXME
 #define MALLOCHASH       0
-#define MALLOCNHASHBIT   22
+#define MALLOCNHASHBIT   24
 #define MALLOCNHASH      (1UL << MALLOCNHASHBIT)
 
 /*
@@ -146,7 +146,11 @@
 #define MALLOCMINLOG2        CLSIZELOG2
 #define MALLOCNBKT           PTRBITS
 #if (MALLOCSTKNDX)
+#if (MALLOCSLABLOG2 - MALLOCMINLOG2 <= 16)
+#define MAGPTRNDX            uint16_t
+#else
 #define MAGPTRNDX            uint32_t
+#endif
 #endif
 
 /*
@@ -186,7 +190,7 @@
 #define magnblklog2(bktid)                                              \
     (magnbytelog2(bktid) - (bktid))
 #else
-#define magnbytelog2(bktid) (bktid)
+#define magnbytelog2(bktid) max((bktid), MALLOCSLABLOG2)
 #define magnblklog2(bktid)                                              \
     (((bktid) <= MALLOCSLABLOG2)                                        \
      ? (MALLOCSLABLOG2 - (bktid))                                       \
@@ -225,7 +229,7 @@ struct mag {
     uint8_t      data[EMPTY];
 };
 
-#if (MALLOCDEBUG)
+#if (MALLOCDEBUG) || (MALLOCDIAG)
 void
 magprint(struct mag *mag)
 {
@@ -234,6 +238,11 @@ magprint(struct mag *mag)
     fprintf(stderr, "\tcur\t%ld\n", mag->cur);
     fprintf(stderr, "\tmax\t%ld\n", mag->max);
     fprintf(stderr, "\tbktid\t%ld\n", mag->bktid);
+#if (MALLOCFREEMAP)
+    fprintf(stderr, "\tfreemap\t%p\n", mag->freemap);
+#endif
+    fprintf(stderr, "\tstk\t%p\n", mag->stk);
+    fprintf(stderr, "\tptrtab\t%p\n", mag->ptrtab);
 
     return;
 }
@@ -290,6 +299,7 @@ struct malloc {
     struct hashitem  *hashbuf;
 #endif
     struct arn      **arntab;           // arena structures
+    volatile long    *mlktab;
     void            **mdir;             // allocation header lookup structure
     MUTEX             initlk;           // initialization lock
     MUTEX             heaplk;           // lock for sbrk()
@@ -322,7 +332,7 @@ void  (*__after_morecore_hook)(void);
 
 #if (MALLOCFREEMAP)
 #define magptrndx(mag, ptr)                                             \
-    (((uintptr_t)ptr - (uintptr_t)mag->adr) >> mag->bktid)
+    (((uintptr_t)ptr - ((uintptr_t)mag->adr & ~BLKFLGMASK)) >> mag->bktid)
 #endif
 #if (MALLOCSTKNDX)
 #if (MALLOCFREEMAP)
@@ -476,8 +486,10 @@ mallocdiag(void)
                             
                                 exit(1);
                         }
+#if 0
                     } else if (cnt) {
                         fprintf(stderr, "%ld items on partial list\n", cnt);
+#endif
                     }
                     if (mag->cur >= mag->max) {
                         fprintf(stderr, "mag->cur >= mag->max on partial list\n");
@@ -584,7 +596,7 @@ static void
 setmag(void *ptr,
        struct mag *mag)
 {
-    unsigned long    key = hashq128(&vptr, sizeof(void *), MALLOCNHASHBIT);
+    unsigned long    key = hashq128(ptr, sizeof(void *), MALLOCNHASHBIT);
     struct hashitem *prev = NULL;
     struct hashitem *item;
 
@@ -659,13 +671,11 @@ setmag(void *ptr,
 #endif
     void           **pptr;
 #if (MALLOCFREEMDIR)
-    struct magitem **item;
-#endif
-#if (MALLOCFREEMDIR)
     void            *tab[3] = { NULL, NULL, NULL };
     long             nref;
 #endif
-    
+
+    mtxlk(&g_malloc.mlktab[l1]);
     ptr1 = g_malloc.mdir[l1];
     if (!ptr1) {
 #if (MALLOCFREEMDIR)
@@ -742,8 +752,15 @@ setmag(void *ptr,
         }
 #endif
     }
+#if (MALLOCFREEMDIR)
+    ptr1 = &((struct magitem *)ptr2)[l3];
+    ptr1->mag = mag;
+    ptr1->nref++;
+#else
     ptr1 = &((struct mag **)ptr2)[l3];
     *ptr1 = mag;
+#endif
+    mtxunlk(&g_malloc.mlktab[l1]);
     
     return;
 }
@@ -899,11 +916,12 @@ mallinit(void)
         mtxinit(&g_malloc.magtab[bktid].lk);
     }
     mtxlk(&g_malloc.heaplk);
-    ofs = PAGESIZE - ((long)growheap(0) & (PAGESIZE - 1));
+    ofs = (1UL << MALLOCSLABLOG2) - ((long)growheap(0) & (PAGESIZE - 1));
     if (ofs != PAGESIZE) {
         growheap(ofs);
     }
     mtxunlk(&g_malloc.heaplk);
+    g_malloc.mlktab = mapanon(g_malloc.zerofd, MDIRNL1KEY * sizeof(long));
     g_malloc.mdir = mapanon(g_malloc.zerofd, MDIRNL1KEY * sizeof(void *));
 #if defined(_GNU_SOURCE) && (GNUMALLOCHOOKS)
     if (__malloc_initialize_hook) {
@@ -1218,7 +1236,7 @@ _malloc(size_t size,
     assert(ptr != NULL);
 #endif
 #if (MALLOCDIAG)
-    fprintf(stderr, "DIAG in _malloc()\n");
+//    fprintf(stderr, "DIAG in _malloc()\n");
     mallocdiag();
 #endif
     
@@ -1356,7 +1374,7 @@ _free(void *ptr)
         }
     }
 #if (MALLOCDIAG)
-    fprintf(stderr, "DIAG in _free()\n");
+//    fprintf(stderr, "DIAG in _free()\n");
     mallocdiag();
 #endif
     

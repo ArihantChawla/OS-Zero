@@ -1,4 +1,11 @@
-/* zero style abbreviations for words/terms */
+/* zero style abbreviations for words/terms and terminology */
+
+type sizes
+----------
+byte	- 8-bit
+word	- 16-bit
+long    - 32-bit
+quad	- 64-bit
 
 adr     - address
 atr     - attribute(s)
@@ -18,23 +25,31 @@ ctrl    - control(ler)
 dec     - decimal [number]
 desc    - descriptor
 dest    - destination
+dbl	- double, floating point value (of type double)
 dfl     - default
 doc     - document
 drv     - drive(r)
 eth     - ethernet
 ev      - event
 exec    - execute
+fd	- floppy drive, file descriptor
+flg	- flag
+flt	- fault, floating point value (of type float)
 fmt     - format
 frm     - frame
 func    - function
+hd	- hard drive
 hex     - hexadecimal
 init    - initialise, initialisation
 io      - input/output
+ipc	- inter-process communications
+irq	- interrupt request
 kbd     - keyboard
 lang    - language
 len     - length
 lim     - limit
 lk      - lock
+lpt	- line printer
 mach    - machine
 mag     - magazine (memory management)
 max     - maximum
@@ -42,20 +57,24 @@ mem     - memory
 mgr     - manager
 min     - minimum
 mod     - module, modulus
+msk	- mask
 mtx     - mutex (mutual exclusion lock)
 ndx     - index
 net     - network
 nic     - network interface card
-num     - number
+num     - number, ID
 oct     - octal
 ofs     - offset
 par     - parallel
+perm	- permissions
+pg	- page
 pix     - pixel
 pkg     - package
 pnt     - point
 pos     - position
 proc    - process
 prog    - program
+prot	- protection
 ptr     - pointer
 rect    - rectangle
 ser     - serial
@@ -66,6 +85,8 @@ str     - string
 sys     - system
 tab     - table, array
 thr     - thread
+tmr	- timer
+trap	- trap; interrupt, exception, trap, abort, fault, ...
 val     - value
 var     - variable
 win     - window
