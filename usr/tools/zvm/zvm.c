@@ -258,7 +258,7 @@ zvmmain(int argc, char *argv[])
     zvminitopt();
     zvminit();
 #if (!ZVMVIRTMEM)
-    assert(zvm.physmem == NULL);
+    assert(zvm.physmem != NULL);
     memset(zvm.physmem, 0, ZASTEXTBASE);
 #endif
 #if (ZASPROF)
