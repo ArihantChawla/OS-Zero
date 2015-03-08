@@ -3,12 +3,12 @@
  *
  * - an unstable alpha version of a new malloc for Zero.
  *
- * Copyright (C) Tuomo Petteri Venäläinen 2014
+ * Copyright (C) Tuomo Petteri Venäläinen 2014-2015
  */
 
 #define MALLOCNOSBRK     0
 #define MALLOCDIAG       0
-#define MALLOCDEBUG      0
+#define MALLOCDEBUG      1
 #define MALLOCFREEMDIR   0  // under construction
 #define MALLOCSTKNDX     0
 #define MALLOCFREEMAP    0  // use free block bitmaps
@@ -139,7 +139,7 @@
 #define MALLOCTINYSLABLOG2   13
 #define MALLOCTEENYSLABLOG2  10
 #else
-#define MALLOCSLABLOG2       18
+#define MALLOCSLABLOG2       22
 #endif
 #if (MALLOCVARSIZEBUF) || (MALLOCBUFMAP)
 #define MALLOCSMALLMAPLOG2   23
@@ -1121,8 +1121,7 @@ _malloc(size_t size,
                     mtxunlk(&arn->hdrtab[bktid].lk);
                     mag->prev = NULL;
                     mag->next = NULL;
-                }
-                if (!mag) {
+                } else {
                     mtxlk(&g_malloc.hdrtab[bktid].lk);
                     mag = g_malloc.hdrtab[bktid].head;
                     if (mag) {
@@ -1177,84 +1176,83 @@ _malloc(size_t size,
                         mag->freemap = (uint8_t *)&mag->stk[(1UL << (magnblklog2(bktid) + 1))];
 #endif
                     }
-                    ptr = SBRK_FAILED;
+                }
+                ptr = SBRK_FAILED;
 #if (!MALLOCNOSBRK)
-                    if (bktid <= MALLOCSLABLOG2) {
-                        /* try to allocate slab from heap */
-                        mtxlk(&g_malloc.heaplk);
-                        ptr = growheap(magnbyte(bktid));
-                        mtxunlk(&g_malloc.heaplk);
-                    }
+                if (bktid <= MALLOCSLABLOG2) {
+                    /* try to allocate slab from heap */
+                    mtxlk(&g_malloc.heaplk);
+                    ptr = growheap(magnbyte(bktid));
+                    mtxunlk(&g_malloc.heaplk);
+                }
 #endif
-                    if (ptr == SBRK_FAILED) {
-                        /* try to map slab */
-                        ptr = mapanon(g_malloc.zerofd, magnbyte(bktid));
-                        if (ptr == MAP_FAILED) {
-                            unmapanon(mag, MALLOCMAGSIZE);
-                            if (!magembedstk(bktid)) {
-                                unmapanon(stk, magnbytetab(bktid));
-                            }
-                            
-                            return NULL;
+                if (ptr == SBRK_FAILED) {
+                    /* try to map slab */
+                    ptr = mapanon(g_malloc.zerofd, magnbyte(bktid));
+                    if (ptr == MAP_FAILED) {
+                        unmapanon(mag, MALLOCMAGSIZE);
+                        if (!magembedstk(bktid)) {
+                            unmapanon(stk, magnbytetab(bktid));
                         }
-                        mag->adr = (void *)((uintptr_t)ptr | MAGMAP);
+                        
+                        return NULL;
+                        }
+                    mag->adr = (void *)((uintptr_t)ptr | MAGMAP);
 //                        mapped = 1;
-                    } else {
-                        mag->adr = ptr;
-                    }
+                } else {
+                    mag->adr = ptr;
+                }
 #if (MALLOCDEBUG)
-                    assert(mag->adr != NULL);
+                assert(mag->adr != NULL);
 #endif
-                    ptrval = ptr;
-                    /* initialise magazine header */
-                    lim = 1UL << magnblklog2(bktid);
+                ptrval = ptr;
+                /* initialise magazine header */
+                lim = 1UL << magnblklog2(bktid);
 #if 0
-                    if (mapped) {
+                if (mapped) {
                         mag->adr = (void *)((uintptr_t)ptr | MAGMAP);
-                    } else {
-                        mag->adr = ptr;
-                    }
+                } else {
+                    mag->adr = ptr;
+                }
 #endif
-                    mag->cur = 1;
-                    mag->lim = lim;
-                    mag->arnid = arnid;
-                    mag->bktid = bktid;
-                    mag->prev = NULL;
-                    mag->next = NULL;
-                    stk = mag->stk;
-                    tab = mag->ptrtab;
-                    /* initialise allocation stack */
-                    incr = 1UL << bktid;
-                    for (n = 0 ; n < lim ; n++) {
+                mag->cur = 1;
+                mag->lim = lim;
+                mag->arnid = arnid;
+                mag->bktid = bktid;
+                mag->prev = NULL;
+                mag->next = NULL;
+                stk = mag->stk;
+                tab = mag->ptrtab;
+                /* initialise allocation stack */
+                incr = 1UL << bktid;
+                for (n = 0 ; n < lim ; n++) {
 #if (MALLOCSTKNDX)
-                        stk[n] = (MAGPTRNDX)n;
-                        tab[n] = (MAGPTRNDX)0;
+                    stk[n] = (MAGPTRNDX)n;
+                    tab[n] = (MAGPTRNDX)0;
 #elif (MALLOCHACKS)
-                        stk[n] = (uintptr_t)ptr;
-                        tab[n] = (uintptr_t)0;
+                    stk[n] = (uintptr_t)ptr;
+                    tab[n] = (uintptr_t)0;
 #else
-                        stk[n] = ptr;
-                        tab[n] = NULL;
+                    stk[n] = ptr;
+                    tab[n] = NULL;
 #endif
-                        ptr += incr;
-                    }
-                    if (gtpow2(lim, 1)) {
-                        /* queue slab with an active allocation */
-                        mtxlk(&arn->magtab[bktid].lk);
-                        mag->next = arn->magtab[bktid].head;
-                        if (mag->next) {
-                            mag->next->prev = mag;
+                    ptr += incr;
+                }
+                if (gtpow2(lim, 1)) {
+                    /* queue slab with an active allocation */
+                    mtxlk(&arn->magtab[bktid].lk);
+                    mag->next = arn->magtab[bktid].head;
+                    if (mag->next) {
+                        mag->next->prev = mag;
                         }
-                        arn->magtab[bktid].head = mag;
-                        mtxunlk(&arn->magtab[bktid].lk);
-                    }
+                    arn->magtab[bktid].head = mag;
+                    mtxunlk(&arn->magtab[bktid].lk);
                 }
             }
         }
     }
     ptr = clrptr(ptrval);
     if (ptr) {
-        /* TODO: unlock magtab earlier */
         if ((zero) && (((uintptr_t)ptrval & BLKDIRTY))) {
             memset(ptr, 0, 1UL << (bktid));
         }
@@ -1282,6 +1280,7 @@ _malloc(size_t size,
     if (!ptr) {
         magprint(mag);
     }
+    assert(mag->adr != NULL);
     assert(mag != NULL);
     assert(ptr != NULL);
 #endif

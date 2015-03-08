@@ -42,12 +42,14 @@ adr     - address
 alu	- arithmetic-logical unit
 apu	- application processor unit
 arg	- argument
+asm	- assembly, assemble(r)
 atr     - attribute(s)
 bin     - binary
 blk     - block
 bsp	- board support package
 btn     - button
 buf     - buffer
+calc	- calculator
 cap     - capability
 ch      - character
 chk     - check
@@ -67,9 +69,11 @@ decr	- decrement
 dfl     - default
 diff	- difference
 div	- division
+dlg	- dialog
 doc     - document
 drv     - drive(r)
 dsp	- digital signal processor
+eta	- estimated time of arrival
 eth     - ethernet
 ev      - event
 exec    - execute
@@ -80,6 +84,7 @@ fmt     - format
 fp	- frame pointer
 fpu	- floating point unit
 frm     - frame
+fs	- file system
 func    - function
 gpu	- graphics processing unit
 gui	- graphical user interface
@@ -96,11 +101,14 @@ ip6	- internet protocol version 6
 ipc	- inter-process communications
 irq	- interrupt request
 kbd     - keyboard
+kern	- kernel
 lang    - language
 len     - length
 lex	- lexical analysis/analyser
 lim     - limit
+lin	- linear
 lk      - lock
+log	- logarithm
 lpt	- line printer
 mach    - machine
 mag     - magazine (memory management)
@@ -138,6 +146,7 @@ rect    - rectangle
 reg	- register
 ret	- return [value]
 rtn	- routine
+sched	- schedule, scheduler
 ser     - serial
 sig     - signal
 sim	- simulation, simulator
@@ -152,13 +161,20 @@ tcp	- transfer control protocol
 tcp4	- transfer control protocol version 4
 tcp6	- transfer control protocol version 6
 thr     - thread
+tm	- time
 tmr	- timer
 tok	- token
 trap	- trap; interrupt, exception, trap, abort, fault, ...
+ts	- time specification (e.g. struct timespec)
+tv	- time value (e.g. struct timeval)
+tz	- time zone
 ui	- user interface
+usr	- user
 val     - value
 var     - variable
 vec	- vector
+vfs	- virtual file system
+virt	- virtual
 vis	- visualisation
 win     - window
 xfrm	- transform
