@@ -49,6 +49,7 @@ cap     - capability
 ch      - character
 chk     - check
 chr     - character
+cmp	- compare
 cnt     - count
 conf    - configuration
 cons    - console
@@ -59,6 +60,7 @@ desc    - descriptor
 dest    - destination
 dbl	- double, floating point value (of type double)
 dfl     - default
+diff	- difference
 doc     - document
 drv     - drive(r)
 eth     - ethernet
@@ -72,18 +74,22 @@ frm     - frame
 func    - function
 hd	- hard drive
 hex     - hexadecimal
+in	- input, e.g. inbuf
 init    - initialise, initialisation
+intr	- interrupt
 io      - input/output
 ipc	- inter-process communications
 irq	- interrupt request
 kbd     - keyboard
 lang    - language
 len     - length
+lex	- lexical analysis/analyser
 lim     - limit
 lk      - lock
 lpt	- line printer
 mach    - machine
 mag     - magazine (memory management)
+man	- manual
 max     - maximum
 mem     - memory
 mgr     - manager
@@ -98,6 +104,7 @@ num     - number, ID
 oct     - octal
 ofs     - offset
 op	- operation
+out	- output, e.g. outbuf
 par     - parallel
 perm	- permissions
 pg	- page
@@ -113,6 +120,7 @@ rect    - rectangle
 ret	- return [value]
 ser     - serial
 sig     - signal
+sim	- simulation, simulator
 src     - source
 stk     - stack
 str     - string
@@ -121,8 +129,11 @@ sys     - system
 tab     - table, array
 thr     - thread
 tmr	- timer
+tok	- token
 trap	- trap; interrupt, exception, trap, abort, fault, ...
 val     - value
 var     - variable
+vis	- visualisation
 win     - window
+xfrm	- transform
 
