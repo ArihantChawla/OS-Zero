@@ -72,12 +72,16 @@ flt	- fault, floating point value (of type float)
 fmt     - format
 frm     - frame
 func    - function
+gui	- graphical user interface
 hd	- hard drive
 hex     - hexadecimal
 in	- input, e.g. inbuf
 init    - initialise, initialisation
 intr	- interrupt
 io      - input/output
+ip	- internet protocol
+ip4	- internet protocol version 4
+ip6	- internet protocol version 6
 ipc	- inter-process communications
 irq	- interrupt request
 kbd     - keyboard
@@ -127,10 +131,14 @@ str     - string
 sym	- symbol
 sys     - system
 tab     - table, array
+tcp	- transfer control protocol
+tcp4	- transfer control protocol version 4
+tcp6	- transfer control protocol version 6
 thr     - thread
 tmr	- timer
 tok	- token
 trap	- trap; interrupt, exception, trap, abort, fault, ...
+ui	- user interface
 val     - value
 var     - variable
 vis	- visualisation
