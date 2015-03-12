@@ -15,6 +15,8 @@ objects/identifiers
 - volatile-qualifier should be used for cross-thread variables such as mutexes
 - static-qualifier is good for locally visible values
   - may let the compiler do more aggressive optimisations
+  - static names can be shorter;
+    not necessarily styleindent(), but perhaps indent() instead
 - global entities can be wrapped into a single per-program structure
   - e.g. struct g_malloc; use g_-prefix (global)
 - constant [macro] values in all upper case, e.g. TRAPPF
@@ -31,10 +33,11 @@ objects/identifiers
 
 type sizes
 ----------
-byte	- 8-bit
-word	- 16-bit
-long    - 32-bit
-quad	- 64-bit
+- X86-like terminology
+  - byte   - 8-bit
+  - word   - 16-bit
+  - long   - 32-bit
+  - quad   - 64-bit
 
 abbreviations
 -------------
@@ -44,6 +47,7 @@ apu	- application processor unit
 arg	- argument
 asm	- assembly, assemble(r)
 atr     - attribute(s)
+aud	- audio
 bin     - binary
 blk     - block
 bsp	- board support package
@@ -86,6 +90,7 @@ fpu	- floating point unit
 frm     - frame
 fs	- file system
 func    - function
+gfx	- graphics
 gpu	- graphics processing unit
 gui	- graphical user interface
 hd	- hard drive
@@ -147,6 +152,7 @@ reg	- register
 ret	- return [value]
 rtn	- routine
 sched	- schedule, scheduler
+scn	- scene
 ser     - serial
 sig     - signal
 sim	- simulation, simulator
@@ -174,6 +180,7 @@ val     - value
 var     - variable
 vec	- vector
 vfs	- virtual file system
+vid	- video
 virt	- virtual
 vis	- visualisation
 win     - window

@@ -12,9 +12,9 @@ typedef long optflg;
 
 #define OPT_VERBOSE (1L << 0)
 struct styleopt {
-    optflg     flg;      // boolean option bits
-    size_t     nfile;    // # of file names in fnametab
-    char     **fnametab; // table of file name strings
+    optflg   flg;      // boolean option bits
+    size_t   nfile;    // # of file names in fnametab
+    char   **fnametab; // table of file name strings
 };
 
 /* global declarations */
