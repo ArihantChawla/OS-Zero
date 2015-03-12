@@ -12,6 +12,8 @@ general conventions
 
 objects/identifiers
 -------------------
+- object and such names should be brief
+  - global names should be longer
 - volatile-qualifier should be used for cross-thread variables such as mutexes
 - static-qualifier is good for locally visible values
   - may let the compiler do more aggressive optimisations
@@ -77,6 +79,7 @@ dlg	- dialog
 doc     - document
 drv     - drive(r)
 dsp	- digital signal processor
+emu	- emulator
 eta	- estimated time of arrival
 eth     - ethernet
 ev      - event
@@ -124,6 +127,7 @@ mgr     - manager
 min     - minimum
 mmu	- memory management unit
 mod     - module, modulus
+mp	- multiprocessor
 msk	- mask
 mtx     - mutex (mutual exclusion lock)
 mul	- multiplication
@@ -147,9 +151,11 @@ proc    - process
 prog    - program
 prot	- protection
 ptr     - pointer
+rand	- random
 rect    - rectangle
 reg	- register
 ret	- return [value]
+rnd	- round (e.g. rndup, rnddown)
 rtn	- routine
 sched	- schedule, scheduler
 scn	- scene
@@ -160,18 +166,21 @@ sp	- stack pointer
 src     - source
 stk     - stack
 str     - string
+strm	- stream
 sym	- symbol
 sys     - system
 tab     - table, array
 tcp	- transfer control protocol
 tcp4	- transfer control protocol version 4
 tcp6	- transfer control protocol version 6
+term	- terminal
 thr     - thread
 tm	- time
 tmr	- timer
 tok	- token
 trap	- trap; interrupt, exception, trap, abort, fault, ...
 ts	- time specification (e.g. struct timespec)
+tty	- [pseudo] teletype
 tv	- time value (e.g. struct timeval)
 tz	- time zone
 ui	- user interface
