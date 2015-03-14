@@ -2,7 +2,7 @@
 #include <stdio.h>
 #include <string.h>
 #include <stdint.h>
-#if !(ZVMVIRTMEM)
+#if !(ZVMVIRTMEM) || (ZASDEBUG)
 #include <assert.h>
 #endif
 #if (ZVMXORG)
@@ -27,8 +27,8 @@ extern struct zastoken *zastokenqueue;
 extern unsigned long    zasinputread;
 extern zasmemadr_t      _startadr;
 
-zvmopfunc_t  *zvmfunctab[ZVMNOP] ALIGNED(PAGESIZE);
-struct zvm    zvm;
+zvmopfunc_t            *zvmfunctab[ZVMNOP] ALIGNED(PAGESIZE);
+struct zvm              zvm;
 
 void
 zvminitasmop(uint8_t unit, uint8_t inst, uint8_t *str, uint8_t narg,
@@ -137,11 +137,16 @@ zvminit(void)
     size_t memsize;
     
     memsize = zvminitmem();
+    if (!memsize) {
+        fprintf(stderr, "zvm: FAILED to allocate machine memory\n");
+
+        exit(1);
+    }
     zvminitasm();
 #if (!ZVMVIRTMEM)
     zvm.sp = memsize;
 #endif
-    zvm.pc = ZASTEXTBASE;
+    zvm.pc = ZVMTEXTBASE;
     zvminitio();
 #if (ZVMEFL) || (ZVMXORG) || (ZVMXCB)
     zvminitui();
@@ -168,7 +173,7 @@ zvmloop(zasmemadr_t _startadr)
 #if (ZVMTRACE)
     fprintf(stderr, "memory\n");
     fprintf(stderr, "------\n");
-    for (i = ZASTEXTBASE ; i < ZASTEXTBASE + 256 ; i++) {
+    for (i = ZVMTEXTBASE ; i < ZVMTEXTBASE + 256 ; i++) {
         fprintf(stderr, "%02x ", (int8_t)(zvmgetmemt(i, int8_t)) & 0xff);
     }
     fprintf(stderr, "\n");
@@ -221,7 +226,7 @@ zvmloop(zasmemadr_t _startadr)
 #if (ZVMTRACE)
     fprintf(stderr, "memory\n");
     fprintf(stderr, "------\n");
-    for (i = ZASTEXTBASE ; i < ZASTEXTBASE + 256 ; i++) {
+    for (i = ZVMTEXTBASE ; i < ZVMTEXTBASE + 256 ; i++) {
         fprintf(stderr, "%02x ", (int8_t)(zvmgetmemt(i, int8_t)) & 0xff);
     }
     fprintf(stderr, "\n");
@@ -244,7 +249,7 @@ int
 zvmmain(int argc, char *argv[])
 {
     long        l;
-    zasmemadr_t adr = ZASTEXTBASE;
+    zasmemadr_t adr = ZVMTEXTBASE;
 #if (ZASPROF)
     PROFDECLCLK(clk);
 #endif
@@ -258,8 +263,12 @@ zvmmain(int argc, char *argv[])
     zvminitopt();
     zvminit();
 #if (!ZVMVIRTMEM)
+#if (ZVMDEBUG)
     assert(zvm.physmem != NULL);
-    memset(zvm.physmem, 0, ZASTEXTBASE);
+#endif
+    if (ZVMTEXTBASE) {
+        memset(zvm.physmem, 0, ZVMTEXTBASE);
+    }
 #endif
 #if (ZASPROF)
     profstartclk(clk);
@@ -275,7 +284,7 @@ zvmmain(int argc, char *argv[])
         } else {
             zasinputread = 1;
             adr = zastranslate(adr);
-            zasresolve(ZASTEXTBASE);
+            zasresolve(ZVMTEXTBASE);
             zasremovesyms();
 #if (ZASPROF)
             profstopclk(clk);

@@ -58,24 +58,24 @@ struct zvm {
 } ALIGNED(CLSIZE);
 
 /* external declarations */
-extern struct zasop  zvminsttab[ZVMNOP];
-extern struct zasop *zvmoptab[ZVMNOP];
-extern const char   *zvmopnametab[ZVMNOP];
-extern const char   *zvmopnargtab[ZVMNOP];
-extern struct zvm    zvm;
+struct zasop  zvminsttab[ZVMNOP];
+struct zasop *zvmoptab[ZVMNOP];
+const char   *zvmopnametab[ZVMNOP];
+const char   *zvmopnargtab[ZVMNOP];
+struct zvm    zvm;
 
 /* function prototypes */
-extern void              zvminit(void);
-extern void              zvminitopt(void);
-extern size_t            zvminitmem(void);
-extern void              zvminitio(void);
-extern long              asmaddop(const uint8_t *str, struct zasop *op);
-extern struct zasop    * zvmfindasm(const uint8_t *str);
-extern struct zastoken * zasprocinst(struct zastoken *token, zasmemadr_t adr,
+void              zvminit(void);
+void              zvminitopt(void);
+size_t            zvminitmem(void);
+void              zvminitio(void);
+long              asmaddop(const uint8_t *str, struct zasop *op);
+struct zasop    * zvmfindasm(const uint8_t *str);
+struct zastoken * zasprocinst(struct zastoken *token, zasmemadr_t adr,
                                      zasmemadr_t *retadr);
-extern int8_t            zvmsigbus(zasmemadr_t adr, long size);
-extern int8_t            zvmsigsegv(zasmemadr_t adr, long reason);
-extern void              asmprintop(struct zvmopcode *op);
+int8_t            zvmsigbus(zasmemadr_t adr, long size);
+int8_t            zvmsigsegv(zasmemadr_t adr, long reason);
+void              asmprintop(struct zvmopcode *op);
 
 #endif /* __ZVM_ZVM_H__ */
 

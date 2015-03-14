@@ -2,6 +2,7 @@
 #include <stddef.h>
 #include <stdlib.h>
 #include <stdint.h>
+#include <assert.h>
 #include <zvm/zvm.h>
 #include <zvm/mem.h>
 
@@ -32,6 +33,7 @@ zvminitmem(void)
         ptr = malloc(len);
     }
 #endif
+    assert(ptr != NULL);
     zvm.physmem = ptr;
     zvm.memsize = len;
 

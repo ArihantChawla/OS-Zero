@@ -3,7 +3,9 @@
 #ifndef __ZAS_CONF_H__
 #define __ZAS_CONF_H__
 
+#if !defined(ZASZEROHASH) && !ZASZEROHASH
 #define ZASZEROHASH 1
+#endif
 
 /* virtual machine selection */
 #ifndef ZVM

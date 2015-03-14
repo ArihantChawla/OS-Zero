@@ -1,6 +1,8 @@
 #ifndef __ZAS_IO_H__
 #define __ZAS_IO_H__
 
+void zasinitbuf(void);
+
 #define ZASBUFSIZE 131072
 
 /* zero assembler I/O facilities */

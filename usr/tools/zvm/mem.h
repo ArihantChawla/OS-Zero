@@ -9,7 +9,7 @@
 
 #if (ZVMVIRTMEM)
 
-#define ZASTEXTBASE     (2 * ZVMPAGESIZE)
+#define ZVMTEXTBASE     (2 * ZVMPAGESIZE)
 #define ZASNPAGE        (1UL << ZVMADRBITS - PAGESIZELOG2)
 #if (ZAS32BIT)
 #define ZVMADRBITS      32
@@ -26,7 +26,7 @@
 #else /* !ZVMVIRTMEM */
 
 #define ZVMPAGESIZE     PAGESIZE
-#define ZASTEXTBASE     (2 * ZVMPAGESIZE)
+#define ZVMTEXTBASE     (2 * ZVMPAGESIZE)
 #define ZVMMEMSIZE      (32U * 1024U * 1024U)
 
 #endif

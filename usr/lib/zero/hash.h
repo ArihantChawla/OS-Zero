@@ -1,3 +1,4 @@
+#include <stddef.h>
 #include <stdlib.h>
 #if defined(_REENTRANT)
 #include <zero/mtx.h>

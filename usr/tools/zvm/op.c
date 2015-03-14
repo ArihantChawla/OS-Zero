@@ -700,7 +700,7 @@ zvmopreset(struct zvmopcode *op)
     zvm.msw = 0;
     zvm.fp = 0;
     zvm.sp = zvm.memsize;
-    zvm.pc = ZASTEXTBASE;
+    zvm.pc = ZVMTEXTBASE;
     for (l = 0 ; l < ZASNREG ; l++) {
         *dptr++ = 0;
     }

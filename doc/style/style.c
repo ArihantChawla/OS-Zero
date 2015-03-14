@@ -28,7 +28,7 @@ struct {
 int
 stylegetopt(struct styleopt *opt, int argc, char *argv[])
 {
-    /* automatic variables and structures, one per line */
+    /* local variables and structures, one per line */
     struct stat  statbuf;
     char        *str = argv[1];
     int          ndx = 1;

@@ -14,6 +14,10 @@ objects/identifiers
 -------------------
 - object and such names should be brief
   - global names should be longer
+  - for example, number of bytes could be
+    - numbytes (global)
+    - nbyte (function argument)
+    - nb (function-internal variable)
 - volatile-qualifier should be used for cross-thread variables such as mutexes
 - static-qualifier is good for locally visible values
   - may let the compiler do more aggressive optimisations
@@ -41,15 +45,32 @@ type sizes
   - long   - 32-bit
   - quad   - 64-bit
 
+prefixes
+--------
+
+- these prefixes should be used with a following underscore, e.g. t_stkitem
+- g	- global (e.g. g_malloc for gathering together malloc's globals)
+- m	- machine (dependent/specific)
+- t	- type (_t-postfix is reserved)
+
+- these prefixes don't use underscores
+- k	- kernel; e.g. kbzero() to differentiate from bzero()
+- n	- number of something; e.g. nb for number of bytes
+- u	- user; e.g. usavectx()
+
 abbreviations
 -------------
 adr     - address
+alg	- algebraic
+algo	- algorithm
 alu	- arithmetic-logical unit
 apu	- application processor unit
 arg	- argument
+arith	- arithmetic
 asm	- assembly, assemble(r)
 atr     - attribute(s)
 aud	- audio
+auto	- automatic
 bin     - binary
 blk     - block
 bsp	- board support package
@@ -57,16 +78,17 @@ btn     - button
 buf     - buffer
 calc	- calculator
 cap     - capability
-ch      - character
+ch      - character (data)
 chk     - check
-chr     - character
+chr     - character (like a monster or player in a game)
 cmp	- compare
 cnt     - count
 conf    - configuration
 cons    - console
 conv    - convert, conversion
 cpu	- central processing unit
-ctrl    - control(ler)
+ctrl    - control, controller
+ctx	- context
 dec     - decimal [number]
 desc    - descriptor
 dest    - destination
@@ -82,6 +104,7 @@ dsp	- digital signal processor
 emu	- emulator
 eta	- estimated time of arrival
 eth     - ethernet
+eq	- equal, equation
 ev      - event
 exec    - execute
 fd	- floppy drive, file descriptor
@@ -96,11 +119,17 @@ func    - function
 gfx	- graphics
 gpu	- graphics processing unit
 gui	- graphical user interface
+hash	- hash table, associative array; also a verb
 hd	- hard drive
+hdr	- header
 hex     - hexadecimal
+i18	- internalisation
+id	- identification; typically numerical ID (see also num)
+img	- image
 in	- input, e.g. inbuf
 incr	- increment
 init    - initialise, initialisation
+intl	- international
 intr	- interrupt
 io      - input/output
 ip	- internet protocol
@@ -110,12 +139,14 @@ ipc	- inter-process communications
 irq	- interrupt request
 kbd     - keyboard
 kern	- kernel
+l12n	- localisation
 lang    - language
 len     - length
 lex	- lexical analysis/analyser
 lim     - limit
 lin	- linear
 lk      - lock
+loc	- locale
 log	- logarithm
 lpt	- line printer
 mach    - machine
@@ -134,7 +165,9 @@ mul	- multiplication
 ndx     - index
 net     - network
 nic     - network interface card
+nod	- node
 num     - number, ID
+obj	- object
 oct     - octal
 ofs     - offset
 op	- operation
@@ -143,18 +176,23 @@ par     - parallel
 pc	- personal computer, program counter (i.e. instruction pointer)
 perm	- permissions
 pg	- page
+phys	- physical (e.g. physadr)
 pix     - pixel
 pkg     - package
+plr	- player
 pnt     - point
 pos     - position
 proc    - process
 prog    - program
 prot	- protection
 ptr     - pointer
+pty	- pseudo teletype
 rand	- random
 rect    - rectangle
 reg	- register
+rem	- remainder
 ret	- return [value]
+rev	- reverse
 rnd	- round (e.g. rndup, rnddown)
 rtn	- routine
 sched	- schedule, scheduler
@@ -175,12 +213,13 @@ tcp4	- transfer control protocol version 4
 tcp6	- transfer control protocol version 6
 term	- terminal
 thr     - thread
+tls	- thread-local storage
 tm	- time
 tmr	- timer
 tok	- token
 trap	- trap; interrupt, exception, trap, abort, fault, ...
 ts	- time specification (e.g. struct timespec)
-tty	- [pseudo] teletype
+tty	- teletype device
 tv	- time value (e.g. struct timeval)
 tz	- time zone
 ui	- user interface
@@ -192,6 +231,8 @@ vfs	- virtual file system
 vid	- video
 virt	- virtual
 vis	- visualisation
+vm	- virtual machine/architecture
+vtx	- vertex
 win     - window
 xfrm	- transform
 

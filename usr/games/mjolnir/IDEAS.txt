@@ -53,11 +53,13 @@ scroll		| ?		| spells and other scrolls
 ring		| =		| ring
 whip		| /		| whip
 armor		| ]		| suit or armor
+mirror		| [		| mirror on a wall
 chain		| c		| chain
 chest		| C		| chest; may find treasury in them
 sub-machine gun | g		| close-range combat
 honey		| h		| from beehives after killing the queen
 knife		| k		| knife, dagger, gurkha, ...
+kaleidoscope	| K		| kaleidoscope
 lockpick	| l		| thieves are naturally best at using these
 laser		| L		| laser gun
 mace		| m		| may be Mjolnir

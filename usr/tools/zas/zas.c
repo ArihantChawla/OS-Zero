@@ -60,7 +60,9 @@ static struct zastoken * zasprocorg(struct zastoken *, zasmemadr_t, zasmemadr_t 
 static struct zastoken * zasprocalign(struct zastoken *, zasmemadr_t, zasmemadr_t *);
 static struct zastoken * zasprocasciz(struct zastoken *, zasmemadr_t, zasmemadr_t *);
 
+#if 0
 static struct zasop     *zasophash[ZASNHASH] ALIGNED(PAGESIZE);
+#endif
 static struct zassymrec *zassymhash[ZASNHASH];
 static struct zasval    *zasvalhash[ZASNHASH];
 static struct zaslabel  *zasglobhash[ZASNHASH];
@@ -567,9 +569,7 @@ zasgetindex(uint8_t *str, zasword_t *retndx, uint8_t **retptr)
     zasuword_t reg = 0xff;
     zasword_t  val = 0;
     zasword_t  ndx = 0;
-#if (ZASNEWHACKS)
     zasword_t  size = 0;
-#endif
     long       neg = 0;
 
 #if (ZASDEBUG)
