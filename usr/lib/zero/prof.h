@@ -6,7 +6,7 @@ extern "C" {
 #endif
 
 #include <stdint.h>
-#if !defined(_MSC_VER)
+#if defined(_MSC_VER)
 #define __inline__ inline
 #include <time.h>
 #endif
