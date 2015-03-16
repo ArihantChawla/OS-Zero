@@ -7,6 +7,7 @@ extern "C" {
 
 #include <stdint.h>
 #if !defined(_MSC_VER)
+#define __inline__ inline
 #include <time.h>
 #endif
 #include <sys/time.h>
