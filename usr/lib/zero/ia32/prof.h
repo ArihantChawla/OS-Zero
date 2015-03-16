@@ -14,17 +14,10 @@ extern "C" {
 
 #include <stdint.h>
 
-#if defined(_MSC_VER) && 0
-union _tickval {
-    unsigned __int64 u64;
-    uint32_t         u32v[2];
-};
-#else
 union _tickval {
     uint64_t u64;
     uint32_t u32v[2];
 };
-#endif
 
 #if defined(_MSC_VER)
 #define _rdtsc(tp)                                                      \
