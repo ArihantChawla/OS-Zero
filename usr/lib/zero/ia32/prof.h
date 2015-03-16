@@ -14,7 +14,7 @@ extern "C" {
 
 #include <stdint.h>
 
-#if defined(_MSC_VER)
+#if defined(_MSC_VER) && 0
 union _tickval {
     unsigned __int64 u64;
     uint32_t         u32v[2];
