@@ -51,6 +51,7 @@
 /* Microsoft */
 #if defined(_MSC_VER)
 #define ALIGNED(a)  __declspec(align((a)))
+#define __inline__  inline
 #endif
 
 #endif /* __GNUC__ */
