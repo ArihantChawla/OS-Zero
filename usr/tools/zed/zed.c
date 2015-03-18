@@ -21,7 +21,7 @@ zedinitbuf(size_t nbuf)
 int
 main(int argc, char *argv[])
 {
-    zedinitopt(
+    zedinitopt(&zed, argc, argv);
     zedinit(argc, argv);
 }
 

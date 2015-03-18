@@ -55,8 +55,7 @@ extern "C" {
 #define PROFDECLCLK(id)                                                 \
     struct timeval __tv##id[2]
 #define profinitclk(id)                                                 \
-    (__tv##id[0] = __tv##id[1] = { { 0, 0 }, { 0, 0 }}
-    __
+    memset(&__tv##id, 0, sizeof(__tv##id))
 #define profstartclk(id)                                                \
     gettimeofday(&__tv##id[0], NULL)
 #define profstopclk(id)                                                 \

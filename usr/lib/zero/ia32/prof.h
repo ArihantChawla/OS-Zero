@@ -8,8 +8,8 @@ extern "C" {
 /*
  * THANKS
  * ------
- * Thomas 'tommycannady' Cannady for help with testing the MSVC versions of
- * the macros... :)
+ * Thomas 'tommycannady' Cannady for help with testing and fixing the MSVC
+ * versions of the macros... :)
  */ 
 
 #include <stdint.h>
@@ -27,9 +27,9 @@ union _tickval {
 struct _tickval {
     union {
         uint64_t u64;
-        uint32_t u32[2];
+        uint32_t u32v[2];
     } u;
-}
+};
     
 #if defined(_MSC_VER)
 #define _rdtsc(tp)                                                      \
@@ -54,8 +54,8 @@ struct _tickval {
             "movl %%edx, %1\n"                                          \
             : "=m" ((tp)->u.u32v[0]), "=m" ((tp)->u.u32v[1])            \
             :                                                           \
-            : "eax", "edx");
-    
+            : "eax", "edx")
+
 /* read performance monitor counter */
 static __inline__ uint64_t
 _rdpmc(struct _tickval *tp, int id)

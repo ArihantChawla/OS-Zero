@@ -543,7 +543,7 @@ strtok(char *str1,
 void *
 memset(void *ptr,
        int ch,
-       size_t n)
+       size_t nb)
 {
     unsigned long *ulptr1;
     unsigned long *ulptr2;
@@ -556,12 +556,12 @@ memset(void *ptr,
     size_t         val;
     unsigned long  u8;
 
-    if (!n) {
+    if (!nb) {
 
         return ptr;
     }
 
-    nleft = n;
+    nleft = nb;
     u8ptr = ptr;
     val = sizeof(unsigned long);
     u8 = (unsigned long)ch;
@@ -592,7 +592,7 @@ memset(void *ptr,
             cnt = val - cnt;
         }
         while (cnt--) {
-            *ulptr++ = ul;
+            *ulptr1++ = ul;
         }
         val = PAGESIZELOG2;
         cnt = nleft >> PAGESIZELOG2;

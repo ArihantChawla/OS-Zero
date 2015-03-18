@@ -10,7 +10,21 @@ zed - Zero Editor
   - automatic indentation
     - basicofs - 4
     - caseofs  - 4
-    -
+    - parloc   - row, column
+    - curofs   - X
+    - use space-only for indentation
+  - ISO 8859-1 character set as per the C standards
+  - syntax highlights
+    - comments in grey
+    - strings in magenta
+    - local variable names in green
+    - global variables and aggregates in red
+    - macro names in yellow
+    - function names in cyan
+    - C keywords
+      - types (including aggregates) in blue
+  - scope aware auto-completion of identifiers (using ctags?)
+  - possibly some sort of source code navigation
 
 - buttons always visible
   - save, paste, copy, cut, close, find, indent, navigate

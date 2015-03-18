@@ -128,6 +128,7 @@ id	- identification; typically numerical ID (see also num)
 img	- image
 in	- input, e.g. inbuf
 incr	- increment
+info	- information
 init    - initialise, initialisation
 intl	- international
 intr	- interrupt
