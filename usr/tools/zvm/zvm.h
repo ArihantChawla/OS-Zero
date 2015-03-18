@@ -58,11 +58,11 @@ struct zvm {
 } ALIGNED(CLSIZE);
 
 /* external declarations */
-struct zasop  zvminsttab[ZVMNOP];
-struct zasop *zvmoptab[ZVMNOP];
-const char   *zvmopnametab[ZVMNOP];
-const char   *zvmopnargtab[ZVMNOP];
-struct zvm    zvm;
+extern struct zasop  zvminsttab[ZVMNOP];
+extern struct zasop *zvmoptab[ZVMNOP];
+extern const char   *zvmopnametab[ZVMNOP];
+extern const char   *zvmopnargtab[ZVMNOP];
+extern struct zvm    zvm;
 
 /* function prototypes */
 void              zvminit(void);

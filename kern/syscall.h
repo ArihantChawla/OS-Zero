@@ -24,6 +24,7 @@ extern void ksyscall(void);
  * - commands to query system status
  * - commands to query and set system attributes
  *   - page size, stack size, cacheline size, ...
+ *   - # of cores, word size
  */
 
 /*
@@ -177,7 +178,7 @@ extern void ksyscall(void);
 
 /* cmd */
 #define SYSCTL_HALT     0x01U  // halt() and reboot()
-#define SYSCTL_SYSINFO  0x02U  // sysconf()
+#define SYSCTL_SYSINFO  0x02U  // sysconf(); pagesize, clsize, ...
 #define SYSCTL_SYSCONF  0x03U  // configure system behavior */
 #define SYSCTL_SYSSTAT  0x03U  // query system statistics; getrusage()
 #define SYSCTL_TIME     0x04U
@@ -244,12 +245,17 @@ struct sysatexit {
 #define PROC_MAPBUF        0x13
 /* pctl() parm attributes */
 /* PROC_GETLIM, PROC_SETLIM */
-#define PROC_STKSIZE       0x01	   // query process stack size
-#define PROC_KERNSTKSIZE   0x03    // query process kernel stack size
-#define PROC_DESCTABSIZE   0x02    // query process descriptor table size
+#define PROC_STKSIZE       0x01	   // process stack size
+#define PROC_KERNSTKSIZE   0x02    // process kernel stack size
+#define PROC_DESCTABSIZE   0x03    // process descriptor table size
 /* PROC_MAPBUF */
 #define PROC_KBDBUF        0x01
 #define PROC_MOUSEBUF      0x02
+
+struct proclim {
+    unsigned long soft;
+    unsigned long hard;
+};
 
 #if 0
 /* pctl() parameters */

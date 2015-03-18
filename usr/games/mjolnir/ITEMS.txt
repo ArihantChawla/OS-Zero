@@ -22,7 +22,7 @@ X - altar
 
 ! - potion
 ----------
-- booze, herb
+- booze, herb, etc.
 
 ? - scroll
 ----------
@@ -49,4 +49,15 @@ X - altar
 T - teleport
 ------------
 - teleports player to another location
+
+[ - mirror
+----------
+- vampires don't show in mirrors
+- some mirrors may be used to enter hidden parts of the dungeon
+
+c - crystal ball
+----------------
+- crystal ball may reveal parts of the plot by showing what's happening
+  elsewhere
+  - sometimes crystal balls may show future incidents
 

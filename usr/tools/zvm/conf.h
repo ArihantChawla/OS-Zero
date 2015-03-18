@@ -10,7 +10,7 @@
  * ZVMXCB    - use X C Bindings window port - HAZARD: not implemented yet 
  */
 #ifndef ZVMEFL
-#define ZVMEFL     1
+#define ZVMEFL     0
 #endif
 #ifndef ZVMXORG
 #define ZVMXORG    0

@@ -98,6 +98,7 @@ zombie		| Z		| zombies; living dead; always evil, attack all
 
 Special Items
 -------------
+Crystal ball    | o		| may show things happening elsewhere
 Demon Whip	| /		| weapon against different forms of undead
 Jatimatic	| J		| sub-machine gun for close range combat
 Mjolnir		| M		| the hammer of Thor

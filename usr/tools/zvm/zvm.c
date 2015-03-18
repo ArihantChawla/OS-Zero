@@ -34,7 +34,7 @@ void
 zvminitasmop(uint8_t unit, uint8_t inst, uint8_t *str, uint8_t narg,
              zvmopfunc_t *func)
 {
-    long          id = (unit << 4) | inst;
+    uint8_t       id = (unit << 4) | inst;
     struct zasop *op = &zvminsttab[id];
     
     op->name = str;
@@ -181,7 +181,7 @@ zvmloop(zasmemadr_t _startadr)
     fprintf(stderr, "---------\n");
     fprintf(stderr, "---------\n");
     for (i = 0 ; i < ZASNREG ; i++) {
-        fprintf(stderr, "r%d:\t0x%x\n", i, zvm.regs[i]);
+        fprintf(stderr, "r%d:\t0x%lx\n", i, (long)zvm.regs[i]);
     }
 #endif
     zvm.shutdown = 0;
@@ -233,7 +233,7 @@ zvmloop(zasmemadr_t _startadr)
     fprintf(stderr, "registers\n");
     fprintf(stderr, "---------\n");
     for (i = 0 ; i < ZASNREG ; i++) {
-        fprintf(stderr, "r%d:\t0x%x\n", i, zvm.regs[i]);
+        fprintf(stderr, "r%d:\t0x%lx\n", i, (long)zvm.regs[i]);
     }
 #endif
 #if (ZVMXORG) || (ZVMXCB)

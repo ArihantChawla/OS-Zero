@@ -1,8 +1,8 @@
-#define ZPPDEBUG      1
-#define ZCCPROF       1
+#define ZPPDEBUG      0
+#define ZCCPROF       0
 #define ZCCDEBUG      0
 #define ZCCPRINT      1
-#define ZPPTOKENCNT   1
+#define ZPPTOKENCNT   0
 
 #define ZCC_C99_TYPES 1
 #define ZCCLINELEN    65536

@@ -73,7 +73,7 @@ struct zasop {
     uint32_t      flg;
 #endif
     struct zasop *next;
-#if (ZVM)
+#if (ZVM) && (ZVMMULTITAB)
     struct zasop *tab;
 #endif
 };

@@ -79,10 +79,19 @@ C-programming support
     - blkofs (current block offset), parofs (current parenthesis offset)
       - indent to the max offset + baseofs
 - syntax highlights
-  - use zcc tokeniser to implement syntax visualisation
+  - use zcc tokeniser to implement syntax highlights/visualisation
 
 Editor objects
 --------------
 - file
 - buf
+- mode
 
+Source Code Navigation
+----------------------
+- menus;
+  - scope menu; click to go to definitions
+    - mapping of [some] variables to registers
+    - local variables
+    - global variables
+    - functions

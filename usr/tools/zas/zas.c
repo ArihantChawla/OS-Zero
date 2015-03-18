@@ -114,8 +114,8 @@ zasprinttoken(struct zastoken *token)
 {
     switch (token->type) {
         case ZASTOKENVALUE:
-            fprintf(stderr, "value 0x%08x (size == %d)\n",
-                    token->data.value.val, token->data.value.size);
+            fprintf(stderr, "value 0x%08lx (size == %ld)\n",
+                    (unsigned long) token->data.value.val, (unsigned long)token->data.value.size);
             
             break;
         case ZASTOKENLABEL:

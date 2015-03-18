@@ -6,21 +6,7 @@
 #include <zvm/zvm.h>
 #include <zvm/mem.h>
 
-#if (ZVMVIRTMEM) && (ZAS32BIT)
-size_t
-zvminitmem(void)
-{
-    void *ptr = calloc(ZVMNPAGE, sizeof(uint32_t)); 
-
-    if (!ptr) {
-
-        return 0;
-    }
-    zvm.pagetab = ptr;
-
-    return ZVMNPAGE * ZVMPAGESIZE;
-}
-#else
+#if (!ZVMVIRTMEM)
 size_t
 zvminitmem(void)
 {
@@ -39,6 +25,21 @@ zvminitmem(void)
 
     return len;
 }
+#else
+#if (ZAS32BIT)
+size_t
+zvminitmem(void)
+{
+    void *ptr = calloc(ZVMNPAGE, sizeof(uint32_t)); 
+
+    if (!ptr) {
+
+        return 0;
+    }
+    zvm.pagetab = ptr;
+
+    return ZVMNPAGE * ZVMPAGESIZE;
+}
 #endif
 
 #if (ZVMADRBITS == 32)
@@ -56,5 +57,7 @@ memmappage(uint32_t adr)
 
     return ptr;
 }
+#endif
+
 #endif
 
