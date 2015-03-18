@@ -181,7 +181,7 @@ extern void ksyscall(void);
 #define SYSCTL_SYSINFO  0x02U  // sysconf(); pagesize, clsize, ...
 #define SYSCTL_SYSCONF  0x03U  // configure system behavior */
 #define SYSCTL_SYSSTAT  0x03U  // query system statistics; getrusage()
-#define SYSCTL_TIME     0x04U
+#define SYSCTL_TIME     0x04U  // system clock access
 
 /* parm */
 /* flg value for SYSCTL_HALT */
@@ -190,13 +190,16 @@ extern void ksyscall(void);
 #define SYSCTL_DTABSIZE 0x01U   // query process descriptor table size; getdtablesize()
 #define SYSCTL_STKSIZE  0x02U   // query process stack size; getstksize()
 #define SYSCTL_RAMSIZE  0x03U   // query system memory size; getramsize()
-#define SYSCTL_NPROC    0x04U   // query or set maximum number of processes on system
-#define SYSCTL_NTHR     0x05U   // query or set maximum number of threads on system
+#define SYSCTL_VMEMSIZE 0x04U   // query virtual memory size; getvirtsize()
+#define SYSCTL_NPROC    0x05U   // query or set maximum number of processes on system
+#define SYSCTL_NTHR     0x06U   // query or set maximum number of threads on system
 /* SYSCTL_SYSSTAT */
 #define SYSCTL_UPTIME   0x01U   // query system uptime
 /* SYSCTL_TIME */
 #define SYSCTL_GETTIME  0x01U   // query system time
 #define SYSCTL_SETTIME  0x02U   // set system time
+#define SYSCTL_GETTZ    0x03U   // get timezone
+#define SYSCTL_SETTZ    0x04U    // set timezone
 
 /* exit() parm flags */
 #define EXIT_DUMPACCT   0x01U   // dump system information at process exit
@@ -215,7 +218,7 @@ struct sysatexit {
 
 /* thread interface */
 
-/* TODO: move MTX, SEM, and COND operations under IPC */
+/* TODO: MTX, SEM, and COND operations under IPC */
 
 /* throp() commands */
 #define THR_NEW             1      // pthread_create()
@@ -232,25 +235,28 @@ struct sysatexit {
 /* pctl() commands */
 #define PROC_GETPID        0x01    // getpid()
 #define PROC_GETPGRP       0x02    // getpgrp()
-#define PROC_WAIT          0x03    // wait()
-#define PROC_USLEEP        0x04    // usleep()
-#define PROC_NANOSLEEP     0x05    // nanosleep()
-#define PROC_SETSCHED      0x07    // nice(), ...
+#define PROC_SETSID        0x03    // setsid()
+#define PROC_WAIT          0x04    // wait()
+#define PROC_USLEEP        0x05    // usleep()
+#define PROC_NANOSLEEP     0x06    // nanosleep()
+#define PROC_SETSCHED      0x07    // nice(), scheduler classes, ...
 #define PROC_STAT          0x08    // getrusage()
 #define PROC_GETLIM        0x09    // getrlimit(), getstksize(), getdtablesize()
-#define PROC_SETLIM        0x09    // setrlimit()
-#define PROC_ATEXIT        0x10    // atexit(), on_exit()
-#define PROC_SETPERM       0x11    // umask()
-#define PROC_GETPERM       0x12    // chmod(), fchmodat()
-#define PROC_MAPBUF        0x13
+#define PROC_SETLIM        0x0a    // setrlimit()
+#define PROC_ATEXIT        0x0b    // atexit(), on_exit()
+#define PROC_SETTMR        0x0c    // set timer up; interval, one-shot, alarm
+#define PROC_SETPERM       0x0d    // umask()
+#define PROC_GETPERM       0x0e    // chmod(), fchmodat()
+#define PROC_MAPBUF        0x0f
 /* pctl() parm attributes */
 /* PROC_GETLIM, PROC_SETLIM */
-#define PROC_STKSIZE       0x01	   // process stack size
-#define PROC_KERNSTKSIZE   0x02    // process kernel stack size
-#define PROC_DESCTABSIZE   0x03    // process descriptor table size
+#define PROC_NTHR          0x01    // max # of threads for process
+#define PROC_STKSIZE       0x02	   // process stack size
+#define PROC_KERNSTKSIZE   0x03    // process kernel stack size
+#define PROC_DESCTABSIZE   0x04    // process descriptor table size
 /* PROC_MAPBUF */
-#define PROC_KBDBUF        0x01
-#define PROC_MOUSEBUF      0x02
+#define PROC_KBDBUF        0x01    // keyboard input buffer
+#define PROC_MOUSEBUF      0x02    // mouse input buffer
 
 struct proclim {
     unsigned long soft;
