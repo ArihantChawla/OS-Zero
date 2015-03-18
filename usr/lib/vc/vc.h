@@ -3,6 +3,8 @@
 #ifndef __VC_VC_H__
 #define __VC_VC_H__
 
+#include <stdint.h>
+
 #define VCOPNOP   0x00          // no operation done
 #define VCOPADD   0x01          // dest += src
 #define VCOPSUB   0x02          // dest -= src
@@ -42,6 +44,17 @@
 #define VCOPSINH  0x24
 #define VCOPCOSH  0x25
 #define VCOPTANH  0x26
+
+struct vcop {
+    uint_fast8_t  instr;        // instruction opcode
+#if (VCWORDBITS == 64)
+    uint_fast64_t arg1;         // first argument
+    uint_fast64_t arg2;         // second argument
+#elif (VCWORDBITS == 32)
+    uint_fast32_t arg1;         // first argument
+    uint_fast32_t arg2;         // second argument
+#endif
+};
 
 #endif /* __VC_VC_H__ */
 

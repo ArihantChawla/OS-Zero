@@ -4,7 +4,7 @@ for compilers and such development tools to communicate code in.
 The library encapsulates computations commonly taken care of by modern
 microprocessors; the approach is RISC-like, i.e. splitting the 
 computations to small parts; e.g. for an optimiser, the code should be
-relatively easy to tune for less data-dependencies and otherwise fast
+relatively easy to tune for fewer data-dependencies and otherwise fast
 ways for execution.
 
 

@@ -19,10 +19,12 @@ static struct zcctoken *typehash[NTYPEHASH];
 #if (NEWHASH)
 struct hashstr *qualhash[NSTRHASH];
 struct hashstr *preprochash[NSTRHASH];
+struct hashstr *tunehash[NSTRHASH];
 struct hashstr *atrhash[NSTRHASH];
 #else
 struct hashstr qualhash[NSTRTABLVL];
 struct hashstr preprochash[NSTRTABLVL];
+struct hashstr tunehash[NSTRTABLVL];
 struct hashstr atrhash[NSTRTABLVL];
 #endif
 

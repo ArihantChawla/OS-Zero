@@ -22,10 +22,10 @@
 #define ZCC_WARN_ERROR   0x00000004U
 
 /* compiler optimisation flags */
-#define ZCC_OPT_NONE     0x00000000U
-#define ZCC_OPT_ALIGN    0x00000001U
-#define ZCC_OPT_UNROLL   0x00000002U
-#define ZCC_OPT_INLINE   0x00000004U
+#define ZCC_TUNE_NONE    0x00000000U
+#define ZCC_TUNE_ALIGN   0x00000001U
+#define ZCC_TUNE_UNROLL  0x00000002U
+#define ZCC_TUNE_INLINE  0x00000004U
 
 /* compiler attribute flags */
 #define ZCC_ATR_PACKED   0x01

@@ -1,3 +1,9 @@
+/*
+ * this code was inspired by
+ *
+ * https://www.sgi.com/tech/stl/ropeimpl.html
+ */
+
 #ifndef __ZERO_ROPE_H__
 #define __ZERO_ROPE_H__
 

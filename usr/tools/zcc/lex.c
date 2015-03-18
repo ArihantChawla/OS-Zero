@@ -22,6 +22,7 @@
 #if (NEWHASH)
 extern struct hashstr *qualhash[];
 extern struct hashstr *preprochash[];
+extern struct hashstr *tunehash[];
 extern struct hashstr *atrhash[];
 #else
 extern struct hashstr qualhash[];
@@ -43,6 +44,7 @@ extern long zccfindid(struct hashstr *tab, char *str);
 #define zccistypedef(cp) (!strncmp(cp, "typedef", 7))
 #define zccisstruct(cp)  (!strncmp(cp, "struct", 6))
 #define zccisunion(cp)   (!strncmp(cp, "union", 5))
+#define zccisinline(cp)  (!strncmp(cp, "__inline__", 10))
 #define zccisatr(cp)     (!strncmp(cp, "__attribute__", 13))
 #define zccispreproc(cp) (*str == '#')
 #define zccqualid(cp)    zccfindid(qualhash, cp)
@@ -230,6 +232,8 @@ zccinithash(void)
     zccaddid(preprochash, "if", ZPP_IF_DIR);
     zccaddid(preprochash, "define", ZPP_DEFINE_DIR);
     zccaddid(preprochash, "undef", ZPP_UNDEF_DIR);
+    /* optimiser options */
+    zccaddid(tunehash, "__inline__", ZCC_TUNE_INLINE);
     /* compiler attributes */
     zccaddid(atrhash, "packed", ZCC_ATR_PACKED);
     zccaddid(atrhash, "aligned", ZCC_ATR_ALIGNED);
@@ -260,7 +264,7 @@ zccinit(int argc,
                 
                 exit(0);
             } else if (!strcmp(str, "-O")) {
-                zccoptflags |= ZCC_OPT_ALIGN;
+                zccoptflags |= ZCC_TUNE_ALIGN;
             }
         } else {
 
@@ -638,6 +642,9 @@ zccgettoken(char *str, char **retstr, int curfile)
     tok->data = 0;
     if ((type = toktab[(int)(*str)])) {
         tok->type = type;
+        tok->str = malloc(2);
+        tok->str[0] = *str;
+        tok->str[1] = '\0';
         str++;
     } else if (*str == '"') {
         str++;
@@ -925,7 +932,11 @@ zccreadfile(char *name, int curfile, int doinclude)
                 tok = malloc(sizeof(struct zpptoken));
                 tok->type = ZPP_NEWLINE_TOKEN;
                 tok->parm = ZCC_NONE;
-                tok->str = NULL;
+//                tok->str = NULL;
+                tok->str = malloc(3);
+                tok->str[0] = '\\';
+                tok->str[1] = 'n';
+                tok->str[2] = '\0';
                 tok->data = 0;
 #if (ZCCSTAT)
                 tokcnttab[ZPP_NEWLINE_TOKEN]++;
