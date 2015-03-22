@@ -2,6 +2,10 @@
  * 32-bit implementation of the Mersenne Twister MT19937 algorithm
  */
 
+#if !defined(RANDMT32TEST)
+#define RANDMT32TEST 0
+#endif
+
 /*
  * REFERENCE: https://en.wikipedia.org/wiki/Mersenne_twister
  */

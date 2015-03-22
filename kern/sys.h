@@ -5,11 +5,11 @@
 
 /* vals is indexed with _SC-macros from <unistd.h> */
 struct sysconf {
-	long val[NSYSCONF];
+    long vals[NSYSCONF];
 };
 
 struct sys {
-	struct sysconf conf;
+    struct sysconf conf;
 };
 
 #endif /* __KERN_SYS_H__ */

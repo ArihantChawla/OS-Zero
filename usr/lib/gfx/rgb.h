@@ -123,24 +123,24 @@ typedef int16_t rgb565_t;
     (u)
 
 #define gfxtorgb555(u)                                                  \
-    (gfxtoc(gfxredval(u),                                               \
+    (gfxtoc(gfxgetred(u),                                               \
             RGB_RGB555_RED_MASK,                                        \
             RGB_RGB555_RED_SHIFT)                                       \
-     | gfxtoc(gfxgreenval(u),                                           \
+     | gfxtoc(gfxgetgreen(u),                                           \
               RGB_RGB555_GREEN_MASK,                                    \
               RGB_RGB555_GREEN_SHIFT)                                   \
-     | gfxtoc(gfxblueval(u),                                            \
+     | gfxtoc(gfxgetblue(u),                                            \
               RGB_RGB555_BLUE_MASK,                                     \
               RGB_RGB555_BLUE_SHIFT))
 
 #define gfxtorgb565(u)                                                  \
-    (gfxtoc(gfxredval(u),                                               \
+    (gfxtoc(gfxgetred(u),                                               \
             RGB_RGB565_RED_MASK,                                        \
             RGB_RGB565_RED_SHIFT)                                       \
-     | gfxtoc(gfxgreenval(u),                                           \
+     | gfxtoc(gfxgetgreen(u),                                           \
               RGB_RGB565_GREEN_MASK,                                    \
               RGB_RGB565_GREEN_SHIFT)                                   \
-     | gfxtoc(gfxblueval(u),                                            \
+     | gfxtoc(gfxgetblue(u),                                            \
               RGB_RGB565_BLUE_MASK,                                     \
               RGB_RGB565_BLUE_SHIFT))
 
@@ -150,21 +150,21 @@ typedef int16_t rgb565_t;
         struct argb32 *_src = (struct argb32 *)&_pix;                   \
         struct argb32 *_dest = (struct argb32 *)p;                      \
                                                                         \
-        _dest->red = gfxredval_p(_src);                                 \
-        _dest->green = gfxgreenval_p(_src);                             \
-        _dest->blue = gfxblueval_p(_src);                               \
+        _dest->red = gfxgetred_p(_src);                                 \
+        _dest->green = gfxgetgreen_p(_src);                             \
+        _dest->blue = gfxgetblue_p(_src);                               \
     } while (0)
 
 #if (__BYTE_ORDER == __LITTLE_ENDIAN)
 #define gfxsetrgb888(u, p)                                              \
-    (((uint8_t *)(p))[2] = gfxredval(u),                                \
-     ((uint8_t *)(p))[1] = gfxgreenval(u),                              \
-     ((uint8_t *)(p))[0] = gfxblueval(u))
+    (((uint8_t *)(p))[2] = gfxgetred(u),                                \
+     ((uint8_t *)(p))[1] = gfxgetgreen(u),                              \
+     ((uint8_t *)(p))[0] = gfxgetblue(u))
 #else
 #define gfxsetrgb888(u, p)                                              \
-    (((uint8_t *)(p))[0] = gfxredval(u),                                \
-     ((uint8_t *)(p))[1] = gfxgreenval(u),                              \
-     ((uint8_t *)(p))[2] = gfxblueval(u))
+    (((uint8_t *)(p))[0] = gfxgetred(u),                                \
+     ((uint8_t *)(p))[1] = gfxgetgreen(u),                              \
+     ((uint8_t *)(p))[2] = gfxgetblue(u))
 #endif
 #define gfxtoc(u, m, s)                                                 \
     ((s) > 0 ? (((u) >> (s)) & (m)) : (((u) << -(s)) & (m)))

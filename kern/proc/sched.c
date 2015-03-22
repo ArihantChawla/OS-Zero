@@ -5,7 +5,7 @@
 #include <kern/proc/thr.h>
 #include <kern/unit/x86/asm.h>
 
-extern FASTCALL struct thr *(*schedpickthr)(void);
+FASTCALL struct thr *(*schedpickthr)(void);
 
 void
 schedinit(void)

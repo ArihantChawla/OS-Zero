@@ -186,6 +186,7 @@ extern void ksyscall(void);
 /* parm */
 /* flg value for SYSCTL_HALT */
 #define SYSCTL_REBOOT   0x01U   // reboot()
+#define SYSCTL_HIBER    0x02U   // hibernate, i.e. save software state
 /* SYSCTL_SYSINFO */
 #define SYSCTL_DTABSIZE 0x01U   // query process descriptor table size; getdtablesize()
 #define SYSCTL_STKSIZE  0x02U   // query process stack size; getstksize()
@@ -195,11 +196,12 @@ extern void ksyscall(void);
 #define SYSCTL_NTHR     0x06U   // query or set maximum number of threads on system
 /* SYSCTL_SYSSTAT */
 #define SYSCTL_UPTIME   0x01U   // query system uptime
+#define SYSCTL_LOAD     0x02U   // query load averages
 /* SYSCTL_TIME */
 #define SYSCTL_GETTIME  0x01U   // query system time
 #define SYSCTL_SETTIME  0x02U   // set system time
-#define SYSCTL_GETTZ    0x03U   // get timezone
-#define SYSCTL_SETTZ    0x04U    // set timezone
+#define SYSCTL_GETTZONE 0x03U   // get timezone
+#define SYSCTL_SETTZONE 0x04U   // set timezone
 
 /* exit() parm flags */
 #define EXIT_DUMPACCT   0x01U   // dump system information at process exit
@@ -228,7 +230,7 @@ struct sysatexit {
 #define THR_CLEANUP         5      // cleanup; pop and execute handlers etc.
 #define THR_KEYOP           6      // create, delete
 #define THR_SYSOP           7      // atfork, sigmask, sched, scope
-#define THR_STKOP           8      // stack; addr, size, guardsize
+#define THR_STKOP           8      // stack; adr, size, guardsize
 #define THR_RTOP            9      // realtime thread settings
 #define THR_SETATR         10      // set other attributes
 
@@ -247,7 +249,7 @@ struct sysatexit {
 #define PROC_SETTMR        0x0c    // set timer up; interval, one-shot, alarm
 #define PROC_SETPERM       0x0d    // umask()
 #define PROC_GETPERM       0x0e    // chmod(), fchmodat()
-#define PROC_MAPBUF        0x0f
+#define PROC_MAPBUF        0x0f    // mapbuf()
 /* pctl() parm attributes */
 /* PROC_GETLIM, PROC_SETLIM */
 #define PROC_NTHR          0x01    // max # of threads for process
@@ -258,6 +260,7 @@ struct sysatexit {
 #define PROC_KBDBUF        0x01    // keyboard input buffer
 #define PROC_MOUSEBUF      0x02    // mouse input buffer
 
+/* argument structure for pctl() with PROC_GETLIM and PROC_SETLIM */
 struct proclim {
     unsigned long soft;
     unsigned long hard;
@@ -346,7 +349,7 @@ struct syswait {
 
 struct sysmemreg {
     struct perm  perm;		// permission structure
-    void        *base;		// base address of region
+    void        *adr;		// base address of region
     size_t       ofs;		// offset into region (for locks and such)
     size_t       len;		// length
 };

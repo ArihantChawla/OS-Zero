@@ -2,6 +2,9 @@
 #include <stdint.h>
 #include <zero/randlfg2.h>
 #include <zero/randmt32.h>
+#if defined(__KERNEL__) && (__KERNEL__)
+#include <kern/mem.h>
+#endif
 
 #define RAND_J 9739
 #define RAND_K 23209
@@ -22,7 +25,11 @@ randlfg2(void)
     int i;
 
     if (!randinit) {
+#if defined(__KERNEL__) && (__KERNEL__)
+        randbuf = kmalloc(RAND_N * sizeof(int));
+#else
         randbuf = malloc(RAND_N * sizeof(int));
+#endif
         if (randbuf) {
             srandmt32(1);
             for (i = 0 ; i < RAND_N ; i++) {

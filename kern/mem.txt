@@ -1,8 +1,8 @@
 Zero Memory Interface
 ---------------------
 
-Zero sports a modern, magazine-based memory allocator. This document describes
-the memory interface for kernel programmers.
+Zero sports a modern, magazine-based slab memory allocator. This document
+describes the memory interface for kernel programmers.
 
 Macros
 ------
@@ -28,9 +28,8 @@ void *kcalloc(unsigned long nb);
 --------------------------------
 
 kcalloc() works like kmalloc() with the difference that it clears the block by
-setting it to zero as well as maps the memory to a physical region [of RAM].
-The return value is a [virtual] pointer to the new block or NULL in case of
-error.
+setting it to zero as well as maps the memory to a physical region [of RAM]. The
+return value is a [virtual] pointer to the new block or NULL in case of error.
 
 void *kcwalloc(unsigned long nb);
 ---------------------------------
