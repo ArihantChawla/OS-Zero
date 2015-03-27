@@ -10,3 +10,5 @@ core.*
 vgcore.*
 # VIM swap files
 *.swp
+# ctags files
+TAGS
