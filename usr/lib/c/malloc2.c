@@ -868,10 +868,13 @@ freearn(void *arg)
             mtxlk(&arn->hdrtab[bktid].lk);
             head = arn->hdrtab[bktid].head;
             if (head) {
+                mag = arn->hdrtab[bktid].tail;
+#if 0
                 mag = head;
                 while (mag->next) {
                     mag = mag->next;
                 }
+#endif
                 mtxlk(&g_malloc.hdrtab[bktid].lk);
                 mag->next = g_malloc.hdrtab[bktid].head;
                 if (mag->next) {
@@ -1196,7 +1199,7 @@ _malloc(size_t size,
                         }
                         
                         return NULL;
-                        }
+                    }
                     mag->adr = (void *)((uintptr_t)ptr | MAGMAP);
 //                        mapped = 1;
                 } else {
@@ -1208,13 +1211,6 @@ _malloc(size_t size,
                 ptrval = ptr;
                 /* initialise magazine header */
                 lim = 1UL << magnblklog2(bktid);
-#if 0
-                if (mapped) {
-                        mag->adr = (void *)((uintptr_t)ptr | MAGMAP);
-                } else {
-                    mag->adr = ptr;
-                }
-#endif
                 mag->cur = 1;
                 mag->lim = lim;
                 mag->arnid = arnid;
@@ -1244,7 +1240,7 @@ _malloc(size_t size,
                     mag->next = arn->magtab[bktid].head;
                     if (mag->next) {
                         mag->next->prev = mag;
-                        }
+                    }
                     arn->magtab[bktid].head = mag;
                     mtxunlk(&arn->magtab[bktid].lk);
                 }
