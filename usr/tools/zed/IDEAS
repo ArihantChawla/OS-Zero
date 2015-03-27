@@ -63,8 +63,8 @@ Operation modes
   - MMIX assembly programming support (maybe in AT&T syntax, though)
 - debug_mode
   - commands
-    - p		- print (print <"fmt"> val1 val2 ...)
-    - i		- info (e.g. reg, var)
+    - pr	- print <"fmt"> <*adr|var|%reg>, ...
+    - in	- info <*adr|var|%reg|()func|#thr>
       		- i reg	<spec>	  - print specified registers
 		- i var <list>	  - print variables and their register-bindings
 		VAR	ADR	    	  VAL
@@ -72,11 +72,13 @@ Operation modes
 		i	EDX	  	  0x00c0ffee
 		stk[0]	0xff00bbaa	  0xbad0c0de
 		
-    - b		- backtrace of execution
-    - c		- core dump (given range of virtual memory)
-    - d		- disassemble, e.g. d <adr1> <adr2>
-    - l		- load; l <adr|var|%reg>
-    - s		- store; l <adr|var|%reg> <adr|var|%reg>
+    - bt	- backtrace; bt n
+    - cd	- core dump (given range of virtual memory)
+    - da	- disassemble, e.g. d <adr1> <adr2>
+    - ld	- load; l <*adr|var|%reg>
+    - st	- store; l <*adr|var|%reg> <*adr|var|%reg>
+    - ps	- push <%reg>; hardware-stack push from register
+    - po	- pop <%reg>; hardware-stack pop into register
 
 C-programming support
 ---------------------
