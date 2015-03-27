@@ -4,6 +4,8 @@ commands
     	- list is <*adr|var|%reg>, ..., <*adr|var|%reg>
 - in	- in <cmd> <*adr|var|%reg|()func|#thr>
     	- i reg	<list>	  - print specified registers
+- bp	- bp <*adr|func>; set breakpoint
+- mt	- mb <adr>; set memory trap
 - bt	- backtrace; bt n
 - cd	- core dump (given range of virtual memory)
 - da	- disassemble, e.g. d <adr1> <adr2>
