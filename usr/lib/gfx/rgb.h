@@ -13,6 +13,7 @@
 
 #define RGBBLACK  0x00000000
 #define RGBWHITE  0x00ffffff
+#define RGBGREEN  0x0000bf00
 
 #if (__BYTE_ORDER == __LITTLE_ENDIAN)
 

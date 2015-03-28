@@ -205,6 +205,7 @@ vbeputpix(argb32_t pix, int x, int y)
 void
 vbedrawchar(unsigned char c, int x, int y, argb32_t fg, argb32_t bg)
 {
+    long      lim = vbefonth;
     long      cy;
     long      incr = vbescreen.w * (vbescreen.nbpp >> 3);
 //    uint8_t *glyph = (uint8_t *)vgafontbuf + ((int)c * vbefonth);
@@ -212,8 +213,7 @@ vbedrawchar(unsigned char c, int x, int y, argb32_t fg, argb32_t bg)
     uint8_t  *ptr = vbepixadr(x, y);
     uint16_t  mask;
     
-
-    for (cy = 0 ; cy < vbefonth ; cy++) {
+    for (cy = 0 ; cy < lim ; cy++) {
         mask = *glyph;
 #if 0
         if (mask & 0x80) {
@@ -251,14 +251,14 @@ vbedrawchar(unsigned char c, int x, int y, argb32_t fg, argb32_t bg)
 void
 vbedrawcharbg(unsigned char c, int x, int y, argb32_t fg, argb32_t bg)
 {
+    long      lim = vbefonth;
     long      cy;
     long      incr = vbescreen.w * (vbescreen.nbpp >> 3);
     uint16_t *glyph = (uint16_t *)vgafontbuf + (int)c * vbefonth;
     uint8_t  *ptr = vbepixadr(x, y);
     uint16_t  mask;
     
-
-    for (cy = 0 ; cy < vbefonth ; cy++) {
+    for (cy = 0 ; cy < lim ; cy++) {
         mask = *glyph;
         if (mask & 0x40) {
             gfxsetrgb888(fg, ptr);
@@ -376,60 +376,6 @@ vbedrawcharbg(unsigned char c, int x, int y, argb32_t fg, argb32_t bg)
 
 #endif
 
-/* output string on the current console */
-void
-vbeputs(char *str)
-{
-    struct cons *cons;
-//    uint16_t    *ptr;
-    int          col;
-    int          row;
-    int          w;
-    int          h;
-    uint8_t      ch;
-//    uint8_t    atr;
-
-    cons = &constab[conscur];
-    col = cons->col;
-    row = cons->row;
-    w = cons->ncol;
-    h = cons->nrow;
-//    atr = cons->chatr;
-    while (*str) {
-//        ptr = cons->buf + row * w + col;
-        ch = *str;
-        if (ch == '\n') {
-            if (row == h) {
-                row = 0;
-            } else {
-                row++;
-            }
-            col = 0;
-        } else {
-            if (col == w) {
-                col = 0;
-                if (row == h) {
-                    row = 0;
-                } else {
-                    row++;
-                }
-            }
-#if (NEWFONT)
-            vbedrawcharbg(ch, col * vbefontw, row * vbefonth,
-                          cons->fg, cons->bg);
-#else
-            vbedrawchar(ch, col << 3, row << 3, cons->fg, cons->bg);
-#endif
-            col++;
-        }
-        str++;
-        cons->col = col;
-        cons->row = row;
-    }
-
-    return;
-}
-
 /* output string on a given console */
 void
 vbeputs2(struct cons *cons, char *str)
@@ -456,13 +402,21 @@ vbeputs2(struct cons *cons, char *str)
             }
             x = 0;
         } else {
+#if (NEWFONT)
+#if (PLASMA)
+            vbedrawcharbg(ch, x * vbefontw, row * vbefonth, cons->fg, cons->bg);
+#else
+            vbedrawchar(ch, x * vbefontw, row * vbefonth, cons->fg, cons->bg);
+#endif
+#else
+            vbedrawchar(ch, x << 3, row << 3, cons->fg, cons->bg);
+#endif
             if (++x == w) {
                 x = 0;
                 if (++row == h) {
                     row = 0;
                 }
             }
-            vbedrawchar(ch, x << 3, row << 3, cons->fg, cons->bg);
         }
         str++;
         cons->col = x;
@@ -472,96 +426,38 @@ vbeputs2(struct cons *cons, char *str)
     return;
 }
 
+/* output string on the current console */
+void
+vbeputs(char *str)
+{
+    vbeputs2(&constab[conscur], str);
+
+    return;
+}
+
 void
 vbeputchar(int ch)
 {
     struct cons *cons;
+    long         row;
+    long         col;
 //    uint16_t    *ptr;
 
     cons = &constab[conscur];
-    vbedrawchar(ch, (cons->col << 3), (cons->row << 3), cons->fg, cons->bg);
-
-    return;
-}
-
-#if 0
-/* draw character without background (transparent) */
-void
-vbedrawcharfg(unsigned char c, int x, int y, argb32_t fg, argb32_t bg)
-{
-    int      _cy;
-    int      _yofs;
-    uint8_t *_gp = (uint8_t *)vgafontbuf + ((int)c << 4);
-    uint8_t  _g;
-
-    for (_cy = 0 ; _cy < VGAGLYPHH >> 1; _cy++) {
-        _g = *_gp;
-        _yofs = y + _cy;
-        if (_g & 0x01) {
-            vbeputpix(fg, x + 7, _yofs);
-        }
-        if (_g & 0x02) {
-            vbeputpix(fg, x + 6, _yofs);
-        }
-        if (_g & 0x04) {
-            vbeputpix(fg, x + 5, _yofs);
-        }
-        if (_g & 0x08) {
-            vbeputpix(fg, x + 4, _yofs);
-        }
-        if (_g & 0x10) {
-            vbeputpix(fg, x + 3, _yofs);
-        }
-        if (_g & 0x20) {
-            vbeputpix(fg, x + 2, _yofs);
-        }
-        if (_g & 0x40) {
-            vbeputpix(fg, x + 1, _yofs);
-        }
-        if (_g & 0x80) {
-            vbeputpix(fg, x + 0, _yofs);
-        }
-        _gp++;
-    }
-
-    return;
-}
+    row = cons->row;
+    col = cons->col;
+#if (NEWFONT)
+#if (PLASMA)
+    vbedrawcharbg(ch, col * vbefontw, row * vbefonth, cons->fg, cons->bg);
+#else
+    vbedrawchar(ch, col * vbefontw, row * vbefonth, cons->fg, cons->bg);
 #endif
-        
-#if 0
-long
-vbeinit(void)
-{
-//    struct vbemode *mode = (struct vbemode *)hdr->vbemodeinfo;
-    long            bpp = (mode) ? mode->npixbit : 0;
-    long            retval;
+#else
+    vbedrawchar(ch, col << 3, row << 3, cons->fg, cons->bg);
+#endif
 
-    retval = (hdr->flags & GRUBVBE);
-    if (retval) {
-        kprintf("framebuffer @ %x\n", mode->fbadr);
-        vbe2screen.fbuf = (void *)mode->fbadr;
-        vbe2screen.w = mode->xres;
-        vbe2screen.h = mode->yres;
-        vbe2screen.nbpp = bpp;
-        vbe2screen.fmt = ((bpp == 24)
-                           ? GFXRGB888
-                           : ((bpp == 16)
-                              ? GFXRGB565
-                              : GFXRGB555));
-        /* map VBE framebuffer */
-        vmmapseg((uint32_t *)&_pagetab,
-                 (uint32_t)vbe2screen.fbuf,
-                 (uint32_t)vbe2screen.fbuf,
-                 (uint32_t)vbe2screen.fbuf
-                 + ((bpp == 24)
-                    ? mode->xres * mode->yres * 3
-                    : mode->xres * mode->yres * 2),
-                 PAGEPRES | PAGEWRITE);
-    }
-
-    return retval;
+    return;
 }
-#endif /* 0 */
-
+        
 #endif /* VBE */
 

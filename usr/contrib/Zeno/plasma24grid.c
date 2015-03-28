@@ -44,6 +44,8 @@ void plasmasync(void);
 #endif
 
 #if (__KERNEL__)
+extern long vbefontw;
+extern long vbefonth;
 #define malloc(sz) kmalloc(sz)
 #endif
 
@@ -396,7 +398,7 @@ void drawPlasma(SDL_Surface *surface)
             *(intermediateB + x + ypos) = colour;
 
         }
-        if (y % 7) {
+        if (y % vbefonth) {
             for (x = 0; x < OUT_WIDTH; x++) {
                 int srcpos;
                 uint32_t colour;
@@ -407,7 +409,7 @@ void drawPlasma(SDL_Surface *surface)
 #endif
                 
 
-                if (x % 7) {
+                if (x % vbefontw) {
                     // copy to row y
                     srcpos = OFFSET_MAG + x
                                 + ypos - (offsetTable[p1_sinposx>>7]>>1);
