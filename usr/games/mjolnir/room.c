@@ -427,7 +427,7 @@ mjolgendng(struct mjolgame *game)
 
         exit(1);
     }
-    mjolsrand(1);
+    mjolsrand(~1);
     for (lvl = 0 ; lvl < nlvl ; lvl++) {
         game->lvl = lvl;
         roomtab = mjolinitrooms(game, &nroom);

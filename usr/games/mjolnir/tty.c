@@ -86,7 +86,7 @@ mjolmkscrtty(struct mjolgame *game)
 #if (MJOL_VT)
 #elif (MJOL_CURSES)
     /* create main window */
-    win = newwin(0, 0, 0, 0);
+    win = newwin(game->height, game->width, 0, 0);
     if (!win) {
         mjolclosetty();
         fprintf(stderr, "window creation failure\n");
@@ -94,8 +94,18 @@ mjolmkscrtty(struct mjolgame *game)
         exit(1);
     }
     data->mainwin = win;
+    touchwin(win);
+    /* create game window */
+    win = derwin(data->mainwin, game->height - 2, game->width, 0, 1);
+    if (!win) {
+        mjolclosetty();
+        fprintf(stderr, "window creation failure\n");
+        
+        exit(1);
+    }
+    data->gamewin = win;
     /* create message window */
-    win = subwin(data->mainwin, 1, 0, 0, 0);
+    win = derwin(data->mainwin, 1, game->width, 0, 0);
     if (!win) {
         mjolclosetty();
         fprintf(stderr, "window creation failure\n");
@@ -104,7 +114,7 @@ mjolmkscrtty(struct mjolgame *game)
     }
     data->msgwin = win;
     /* create status window */
-    win = subwin(data->mainwin, 1, 0, game->height - 1, 0);
+    win = derwin(data->mainwin, 1, game->width, 0, game->height - 1);
     if (!win) {
         mjolclosetty();
         fprintf(stderr, "window creation failure\n");
@@ -112,15 +122,6 @@ mjolmkscrtty(struct mjolgame *game)
         exit(1);
     }
     data->statwin = win;
-    /* create game window */
-    win = subwin(data->mainwin, game->height - 2, 0, 1, 0);
-    if (!win) {
-        mjolclosetty();
-        fprintf(stderr, "window creation failure\n");
-        
-        exit(1);
-    }
-    data->gamewin = win;
 #endif
     game->scr = calloc(1, sizeof(struct mjolscr));
     if (game->scr) {
