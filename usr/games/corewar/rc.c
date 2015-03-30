@@ -201,7 +201,7 @@ rcgetop(char *str)
                     }
                     if (sign) {
                         instr->aflg |= CWSIGNBIT;
-                        val = CWNCORE - val;
+                        val = CWCORESIZE - val;
                     }
                     instr->a = val;
                 }
@@ -248,7 +248,7 @@ rcgetop(char *str)
                 }
                 if (sign) {
                     instr->bflg |= CWSIGNBIT;
-                    val = CWNCORE - val;
+                    val = CWCORESIZE - val;
                 }
                 instr->b = val;
             }
@@ -356,7 +356,7 @@ rcxlate(FILE *fp, long pid, long base, long *baseret, long *limret)
                         ret = pc;
                     }
                     pc++;
-                    pc %= CWNCORE;
+                    pc %= CWCORESIZE;
                 } else {
                     fprintf(stderr, "invalid instruction: %s\n", linebuf);
 

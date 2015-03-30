@@ -1,6 +1,6 @@
 #include <stdio.h>
 #include <stdlib.h>
-#include <limits.h>
+//#include <limits.h>
 #include <mjolnir/conf.h>
 #if (MJOL_USE_ZERO_RANDMT32)
 #include <zero/randmt32.h>
@@ -8,10 +8,10 @@
 #include <zero/trix.h>
 #include <mjolnir/mjol.h>
 
-unsigned char mjolcanmovetomap[256 / CHAR_BIT];
-unsigned char mjolcanpickupmap[256 / CHAR_BIT];
-unsigned char mjolcanwearmap[256 / CHAR_BIT];
-unsigned char mjolcanwieldmap[256 / CHAR_BIT];
+uint8_t mjolcanmovetomap[256];
+uint8_t mjolcanpickupmap[256];
+uint8_t mjolcanwearmap[256];
+uint8_t mjolcanwieldmap[256];
 
 /* initialise bitmap for objects you can move on top of */
 void

@@ -424,9 +424,9 @@ void drawPlasma(SDL_Surface *surface)
                     gfxsetrgb888(colour, dest + x * 3);
 #else
                     colour = SDL_MapRGB(surface->format,
-                                    intermediateG[srcpos],
-                                    intermediateR[srcpos],
-                                    intermediateB[srcpos]);
+                                        intermediateG[srcpos],
+                                        intermediateR[srcpos],
+                                        intermediateB[srcpos]);
                     *(dest + x) = colour;
 #endif
                 }

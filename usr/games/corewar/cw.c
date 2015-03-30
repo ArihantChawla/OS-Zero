@@ -58,7 +58,7 @@ cwdisasm(struct cwinstr *op, FILE *fp)
                 fprintf(fp, "%c", ch);
             }
             if (op->aflg & CWSIGNBIT) {
-                fprintf(fp, "%d", op->a - CWNCORE);
+                fprintf(fp, "%d", op->a - CWCORESIZE);
             } else {
                 fprintf(fp, "%d", op->a);
             }
@@ -77,7 +77,7 @@ cwdisasm(struct cwinstr *op, FILE *fp)
                 fprintf(fp, "\t");
         }
         if (op->bflg & CWSIGNBIT) {
-            fprintf(fp, "%d\n", op->b - CWNCORE);
+            fprintf(fp, "%d\n", op->b - CWCORESIZE);
         } else {
             fprintf(stderr, "%d\n", op->b);
         }
@@ -98,7 +98,7 @@ cwgetargs(struct cwinstr *op, long pc, long *argp1, long *argp2)
         arg1 = (op)->a;
     } else {
         tmp = (pc) + (op)->a;
-        tmp %= CWNCORE;
+        tmp %= CWCORESIZE;
         if ((op)->aflg & (CWINDIRBIT | CWPREDECBIT)) {
             struct cwinstr *ptr;
             
@@ -114,12 +114,12 @@ cwgetargs(struct cwinstr *op, long pc, long *argp1, long *argp2)
             arg1 = tmp;
         }
     }
-    arg1 %= CWNCORE;
+    arg1 %= CWCORESIZE;
     if ((op)->bflg & CWIMMBIT) {
         arg2 = (op)->b;
     } else {
         tmp = (pc) + (op)->b;
-        tmp %= CWNCORE;
+        tmp %= CWCORESIZE;
         if ((op)->bflg & (CWINDIRBIT | CWPREDECBIT)) {
             struct cwinstr *ptr;
             
@@ -135,7 +135,7 @@ cwgetargs(struct cwinstr *op, long pc, long *argp1, long *argp2)
             arg2 = tmp;
         }
     }
-    arg2 %= CWNCORE;
+    arg2 %= CWCORESIZE;
     *argp1 = arg1;
     *argp2 = arg2;
 
@@ -182,7 +182,7 @@ cwmovop(long pid, long pc)
         cwmars.optab[arg2] = cwmars.optab[arg1];
     }
     pc++;
-    pc %= CWNCORE;
+    pc %= CWCORESIZE;
     
     return pc;
 }
@@ -206,7 +206,7 @@ cwaddop(long pid, long pc)
             b = cwmars.optab[arg2].b;
         }
         b += a;
-        b %= CWNCORE;
+        b %= CWCORESIZE;
         if (op->bflg & CWIMMBIT) {
             op->bflg &= ~CWSIGNBIT;
             op->b = b;
@@ -218,20 +218,20 @@ cwaddop(long pid, long pc)
         a = arg1;
         b = arg2;
         b += a;
-        b %= CWNCORE;
+        b %= CWCORESIZE;
         op->b = b;
     } else {
         a = cwmars.optab[arg1].a;
         b = cwmars.optab[arg1].b;
         a += cwmars.optab[arg2].a;
         b += cwmars.optab[arg2].b;
-        a %= CWNCORE;
-        b %= CWNCORE;
+        a %= CWCORESIZE;
+        b %= CWCORESIZE;
         cwmars.optab[arg2].a = a;
         cwmars.optab[arg2].b = b;
     }
     pc++;
-    pc %= CWNCORE;
+    pc %= CWCORESIZE;
     
     return pc;
 }
@@ -252,7 +252,7 @@ cwsubop(long pid, long pc)
         b = cwmars.optab[arg2].b;
         b -= a;
         if (b < 0) {
-            b += CWNCORE;
+            b += CWCORESIZE;
         }
         cwmars.optab[arg2].b = b;
     } else {
@@ -261,16 +261,16 @@ cwsubop(long pid, long pc)
         a -= cwmars.optab[arg2].a;
         b -= cwmars.optab[arg2].b;
         if (a < 0) {
-            a += CWNCORE;
+            a += CWCORESIZE;
         }
         if (b < 0) {
-            b += CWNCORE;
+            b += CWCORESIZE;
         }
         cwmars.optab[arg2].a = a;
         cwmars.optab[arg2].b = b;
     }
     pc++;
-    pc %= CWNCORE;
+    pc %= CWCORESIZE;
     
     return pc;
 }
@@ -312,7 +312,7 @@ cwjmzop(long pid, long pc)
         cwmars.runqtab[pid][cnt - 1] = pc;
     } else {
         pc++;
-        pc %= CWNCORE;
+        pc %= CWCORESIZE;
     }
     
     return pc;
@@ -336,7 +336,7 @@ cwjmnop(long pid, long pc)
         cwmars.runqtab[pid][cnt - 1] = pc;
     } else {
         pc++;
-        pc %= CWNCORE;
+        pc %= CWCORESIZE;
     }
     
     return pc;
@@ -366,7 +366,7 @@ cwcmpop(long pid, long pc)
         }
     }
     pc++;
-    pc %= CWNCORE;
+    pc %= CWCORESIZE;
     
     return pc;
 }
@@ -390,7 +390,7 @@ cwsltop(long pid, long pc)
         pc++;
     }
     pc++;
-    pc %= CWNCORE;
+    pc %= CWCORESIZE;
     
     return pc;
 }
@@ -410,14 +410,14 @@ cwdjnop(long pid, long pc)
         b = cwmars.optab[arg1].b;
         b--;
         if (b < 0) {
-            b += CWNCORE;
+            b += CWCORESIZE;
         }
         cwmars.optab[arg1].b = b;
     } else {
         b = cwmars.optab[arg2].b;
         b--;
         if (b < 0) {
-            b += CWNCORE;
+            b += CWCORESIZE;
         }
         cwmars.optab[arg2].b = b;
     }
@@ -442,7 +442,7 @@ cwsplop(long pid, long pc)
     
     cwgetargs(op, pc, &arg1, &arg2);
     pc++;
-    pc %= CWNCORE;
+    pc %= CWCORESIZE;
     cnt = cwmars.proccnt[pid];
     cur = cwmars.curproc[pid];
 #if 0
@@ -616,7 +616,7 @@ cwinit(void)
 #endif
     cwinitop();
     rcinitop();
-    cwmars.optab = calloc(CWNCORE, sizeof(struct cwinstr));
+    cwmars.optab = calloc(CWCORESIZE, sizeof(struct cwinstr));
     if (!cwmars.optab) {
         fprintf(stderr, "failed to allocate core\n");
         
@@ -649,9 +649,9 @@ main(int argc, char *argv[])
     }
     cwinit();
 #if (CWRANDMT32)
-    base = randmt32() % CWNCORE;
+    base = randmt32() % CWCORESIZE;
 #else
-    base = rand() % CWNCORE;
+    base = rand() % CWCORESIZE;
 #endif
     fp = fopen(argv[1], "r");
     if (!fp) {
@@ -667,9 +667,9 @@ main(int argc, char *argv[])
     }
     fclose(fp);
 #if (CWRANDMT32)
-    base = randmt32() % CWNCORE;
+    base = randmt32() % CWCORESIZE;
 #else
-    base = rand() % CWNCORE;
+    base = rand() % CWCORESIZE;
 #endif
     fp = fopen(argv[2], "r");
     if (!fp) {

@@ -61,7 +61,7 @@
 #define RANDMT32MASK3      0xefc60000UL
 
 static unsigned long randbuf32[RANDMT32NBUFITEM] ALIGNED(PAGESIZE);
-static volatile long randlkbuf[RANDMT32NBUFITEM];
+//static volatile long randlkbuf[RANDMT32NBUFITEM];
 static unsigned long randndx = RANDMT32NBUFITEM + 1;
 static volatile long randmtx;
 

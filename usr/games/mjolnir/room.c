@@ -438,6 +438,9 @@ mjolgendng(struct mjolgame *game)
         }
         nroomtab[lvl] = nroom;
         lvltab[lvl] = roomtab;
+#if (MJOLDEBUG)
+        mjolprintlvl(roomtab);
+#endif
     }
     game->lvl = 0;
     game->nroomtab = nroomtab;

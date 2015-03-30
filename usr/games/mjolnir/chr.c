@@ -3,7 +3,7 @@
 #include <zero/cdecl.h>
 #include <zero/param.h>
 #include <zero/trix.h>
-//#include <mjolnir/conf.h>
+#include <mjolnir/conf.h>
 #include <mjolnir/mjol.h>
 #include <mjolnir/scr.h>
 
@@ -135,36 +135,28 @@ mjoldoturn(struct mjolgame *game, struct mjolchr *chr)
 #if (MJOL_CURSES)
                 if (dir == KEY_UP || dir == MJOL_CMD_MOVE_UP) {
                     printmsg("UP");
-#if 0
                     if (y) {
                         y--;
                     }
-#endif
                 } else if (dir == KEY_DOWN || dir == MJOL_CMD_MOVE_DOWN) {
                     printmsg("DOWN");
-#if 0
-                    if (y < game->lvl->height - 1) {
+                    if (y < game->height - 1) {
                         y++;
                     }
-#endif
                 } else if (dir == KEY_LEFT || dir == MJOL_CMD_MOVE_LEFT) {
                     printmsg("LEFT");
-#if 0
                     if (x) {
                         x--;
                     }
-#endif
                 } else if (dir == KEY_RIGHT || dir == MJOL_CMD_MOVE_RIGHT) {
                     printmsg("RIGHT");
-#if 0
-                    if (x < game->lvl->width - 1) {
+                    if (x < game->width - 1) {
                         x++;
                     }
-#endif
                 } else {
                     printmsg("%lx\n", dir);
                 }
-//                dest = game->objtab[lvl][x][y];
+                dest = game->objtab[lvl][x][y];
                 func = mjolcmdfunctab[cmd][dir];
 #endif
             }

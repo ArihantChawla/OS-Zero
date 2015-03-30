@@ -99,7 +99,7 @@ diff	- difference
 div	- division
 dlg	- dialog
 doc     - document
-drv     - drive(r)
+drv     - drive, driver
 dsp	- digital signal processor
 emu	- emulator
 eta	- estimated time of arrival

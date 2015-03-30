@@ -25,18 +25,18 @@ extern struct mjolchr  *chaseq;
 #define mjolsetdir(ch)  setbit(mjolcmdhasdirmap, ch)
 #define mjolhasarg(ch)  bitset(mjolcmdhasargmap, ch)
 #define mjolsetarg(ch)  setbit(mjolcmdhasargmap, ch)
-extern uint8_t          mjolcmdismovemap[32];
-extern uint8_t          mjolcmdhasdirmap[32];
-extern uint8_t          mjolcmdhasargmap[32];
+extern uint8_t          mjolcmdismovemap[256];
+extern uint8_t          mjolcmdhasdirmap[256];
+extern uint8_t          mjolcmdhasargmap[256];
 
 #define mjolcanmoveto(type) bitset(mjolcanmovetomap, type)
 #define mjolcanpickup(type) bitset(mjolcanpickupmap, type)
 #define mjolcanwear(type)   bitset(mjolcanwearmap, type)
 #define mjolcanwield(type)  bitset(mjolcanwieldmap, type)
-extern uint8_t          mjolcanmovetomap[32];
-extern uint8_t          mjolcanpickupmap[32];
-extern uint8_t          mjolcanwearmap[32];
-extern uint8_t          mjolcanwieldmap[32];
+extern uint8_t          mjolcanmovetomap[256];
+extern uint8_t          mjolcanpickupmap[256];
+extern uint8_t          mjolcanwearmap[256];
+extern uint8_t          mjolcanwieldmap[256];
 
 #define MJOL_DEF_NICK   "johndoe"
 #define MJOL_LEN_NICK   16

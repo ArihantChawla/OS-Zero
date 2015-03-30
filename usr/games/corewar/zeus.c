@@ -80,7 +80,7 @@ zeusdisasm(long pc, int *lenret)
                 }
             }
             if (op->aflg & CWSIGNBIT) {
-                ret = snprintf(str, len, "%d,", op->a - CWNCORE);
+                ret = snprintf(str, len, "%d,", op->a - CWCORESIZE);
                 if (ret < 0) {
                     free(ptr);
                     
@@ -123,7 +123,7 @@ zeusdisasm(long pc, int *lenret)
             str += ret;
         }
         if (op->bflg & CWSIGNBIT) {
-            ret = snprintf(str, len, "%d", op->b - CWNCORE);
+            ret = snprintf(str, len, "%d", op->b - CWCORESIZE);
             if (ret < 0) {
                 free(ptr);
                 
@@ -163,7 +163,7 @@ zeusshowmem(void)
     long            pc;
     int             dummy;
 
-    for (pc = 0 ; pc < CWNCORE ; pc++) {
+    for (pc = 0 ; pc < CWCORESIZE ; pc++) {
         op = &cwmars.optab[pc];
         if (*(uint64_t *)op) {
             fprintf(stderr, "%ld\t", pc);
