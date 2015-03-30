@@ -86,8 +86,6 @@ mjolmkscrtty(struct mjolgame *game)
 #if (MJOL_VT)
 #elif (MJOL_CURSES)
     /* create main window */
-    fprintf(stderr, "MAIN: %ldx%ld @ (%ld, %ld)\n",
-            game->width, game->height, 0, 0);
     win = newwin(game->height, game->width, 0, 0);
     if (!win) {
         mjolclosetty();
@@ -98,8 +96,6 @@ mjolmkscrtty(struct mjolgame *game)
     data->mainwin = win;
     touchwin(win);
     /* create game window */
-    fprintf(stderr, "GAME: %ldx%ld @ (%ld, %ld)\n",
-            game->width, game->height - 2, 0, 1);
     win = derwin(data->mainwin, game->height - 2, game->width, 1, 0);
     if (!win) {
         mjolclosetty();
@@ -109,8 +105,6 @@ mjolmkscrtty(struct mjolgame *game)
     }
     data->gamewin = win;
     /* create message window */
-    fprintf(stderr, "MSG: %ldx%ld @ (%ld, %ld)\n",
-            game->width, 1, 0, 0);
     win = derwin(data->mainwin, 1, game->width, 0, 0);
     if (!win) {
         mjolclosetty();
@@ -120,8 +114,6 @@ mjolmkscrtty(struct mjolgame *game)
     }
     data->msgwin = win;
     /* create status window */
-    fprintf(stderr, "STAT: %ldx%ld @ (%ld, %ld)\n",
-            game->width, 1, 0, game->height - 1);
     win = derwin(data->mainwin, 1, game->width, game->height - 1, 0);
     if (!win) {
         mjolclosetty();

@@ -11,7 +11,7 @@
 #define MJOL_ROOM_MIN_WIDTH  8
 #define MJOL_ROOM_MIN_HEIGHT 6
 #define MJOL_MIN_ROOMS       4
-#define MJOL_MAX_ROOMS       8
+#define MJOL_MAX_ROOMS       16
 
 extern struct mjolobj * mjolmkcorridor(void);
 extern struct mjolobj * mjolmkdoor(void);
@@ -31,7 +31,7 @@ mjolmkroom(struct mjolroom *room)
     x = min(x, room->width >> 2);
     y = mjolrand() % room->height;
     y = max(y, room->height - MJOL_ROOM_MIN_HEIGHT);
-    y = min(x, room->height >> 2);
+    y = min(y, room->height >> 2);
     room->x += x;
     room->y += y;
     w = MJOL_ROOM_MIN_WIDTH
@@ -212,6 +212,11 @@ mjolconnrooms(struct mjolgame *game,
             x = src->x;
             y = dest->y + dest->height - max(mjolrand() % val, 1);
             objtab[y][x] = mjolmkdoor();
+            while (val--) {
+                if (objtab[val][x]) {
+                    objtab[val][x] = mjolmkcorridor();
+                }
+            }
         } else {
             /* draw vertical line */
             lim = dest->y + max(mjolrand() % dest->height - dest->y, 1);

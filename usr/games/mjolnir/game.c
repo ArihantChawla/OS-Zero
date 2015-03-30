@@ -119,9 +119,9 @@ mjolinit(struct mjolgame *game, int argc, char *argv[])
     objtab = calloc(game->nlvl, sizeof(struct mjolobj ***));
     chrtab = calloc(game->nlvl, sizeof(struct mjolchr ***));
 #if 0
-    for (x = 0 ; x < game->width ; x++) {
-        objtab[x] = calloc(game->height, sizeof(struct mjolobj *));
-        if (!objtab[x]) {
+    for (y = 0 ; y < game->height ; y++) {
+        objtab[y] = calloc(game->width, sizeof(struct mjolobj *));
+        if (!objtab[y]) {
             fprintf(stderr, "memory allocation failure\n");
             
             exit(1);
