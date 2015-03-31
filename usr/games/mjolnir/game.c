@@ -145,6 +145,16 @@ mjolinit(struct mjolgame *game, int argc, char *argv[])
     mjolinitobj();
     mjolinitcmd();
     mjolgendng(game);
+#if (MJOLDEBUG) && 0
+    mjolclosetty();
+#if 0
+    for (lvl = 0 ; lvl < game->nlvl ; lvl++) {
+        mjolprintlvl(game, lvl);
+    }
+#endif
+    mjolprintlvl(game, 0);
+    sleep(5);
+#endif
     
     return;
 }
@@ -152,6 +162,11 @@ mjolinit(struct mjolgame *game, int argc, char *argv[])
 void
 mjolgameloop(struct mjolgame *game)
 {
+#if (MJOLDEBUG)
+    mjolprintlvl(game, 0);
+
+    exit(1);
+#endif
     do {
         mjolplayer->hp -= mjoldoturn(game, mjolplayer);
         mjolplayer->hp -= mjolchaseall(game);

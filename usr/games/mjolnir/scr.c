@@ -39,7 +39,7 @@ mjolopenscr(struct mjolgame *game)
     if (func) {
         func(game);
     } else {
-        fprintf(stderr, "no initiialiser for screen type\n");
+        fprintf(stderr, "no initialiser for screen type\n");
 
         exit(1);
     }

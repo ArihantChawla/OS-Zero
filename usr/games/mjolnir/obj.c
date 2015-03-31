@@ -123,6 +123,37 @@ mjolinitobj(void)
     mjolinitcanwield();
 }
 
+#if (MJOLDEBUG)
+struct mjolobj *
+mjolmkfloor(long id)
+#else
+struct mjolobj *
+mjolmkfloor(void)
+#endif
+{
+    struct mjolobj *obj = calloc(1, sizeof(struct mjolobj));
+//    long            l = mjolrand() & 0x0f;
+
+    if (!obj) {
+        fprintf(stderr, "memory allocation failure\n");
+
+        exit(1);
+    }
+#if (MJOLDEBUG)
+    obj->data.type = id - '0';
+#else
+    obj->data.type = MJOL_OBJ_FLOOR;
+#endif
+#if 0
+    if (!l) {
+        /* 1/16 chance of a hidden door */
+        obj->data.flg |= MJOL_OBJ_HIDDEN;
+    }
+#endif
+
+    return obj;
+}
+
 struct mjolobj *
 mjolmkcorridor(void)
 {

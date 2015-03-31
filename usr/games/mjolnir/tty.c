@@ -38,6 +38,7 @@ mjolmovetotty(int x, int y)
     printf("%s", esc);
     printf("%d:%dH", y, x);
 #elif (MJOL_CURSES)
+    /* TODO */
 #endif
 }
 

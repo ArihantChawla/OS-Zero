@@ -98,10 +98,12 @@ mjolinitcmd(void)
     mjolcmdmovefunctab[MJOL_CMD_MOVE_DOWN] = mjolmovedown;
     mjolcmdmovefunctab[MJOL_CMD_MOVE_UP] = mjolmoveup;
     mjolcmdmovefunctab[MJOL_CMD_MOVE_RIGHT] = mjolmoveright;
+#if (MJOL_CURSES)
     mjolcmdmovefunctab[MJOL_CMD_LEFT] = mjolmoveleft;
     mjolcmdmovefunctab[MJOL_CMD_DOWN] = mjolmovedown;
     mjolcmdmovefunctab[MJOL_CMD_UP] = mjolmoveup;
     mjolcmdmovefunctab[MJOL_CMD_RIGHT] = mjolmoveright;
+#endif
     mjolcmdmovefunctab[MJOL_CMD_MOVE_UPLEFT] = mjolmoveupleft;
     mjolcmdmovefunctab[MJOL_CMD_MOVE_UPRIGHT] = mjolmoveupright;
     mjolcmdmovefunctab[MJOL_CMD_MOVE_DOWNLEFT] = mjolmovedownleft;
@@ -110,10 +112,12 @@ mjolinitcmd(void)
     mjolsetmove(MJOL_CMD_MOVE_DOWN);
     mjolsetmove(MJOL_CMD_MOVE_UP);
     mjolsetmove(MJOL_CMD_MOVE_RIGHT);
+#if (MJOL_CURSES)
     mjolsetmove(MJOL_CMD_LEFT);
     mjolsetmove(MJOL_CMD_DOWN);
     mjolsetmove(MJOL_CMD_UP);
     mjolsetmove(MJOL_CMD_RIGHT);
+#endif
     mjolsetmove(MJOL_CMD_MOVE_UPLEFT);
     mjolsetmove(MJOL_CMD_MOVE_UPRIGHT);
     mjolsetmove(MJOL_CMD_MOVE_DOWNLEFT);

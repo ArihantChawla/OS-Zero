@@ -132,23 +132,38 @@ mjoldoturn(struct mjolgame *game, struct mjolchr *chr)
                 do {
                     dir = getkbd();
                 } while (dir > 0xff);
+                if (
 #if (MJOL_CURSES)
-                if (dir == KEY_UP || dir == MJOL_CMD_MOVE_UP) {
+                    dir == KEY_UP ||
+#endif
+                    dir == MJOL_CMD_MOVE_UP) {
                     printmsg("UP");
                     if (y) {
                         y--;
                     }
-                } else if (dir == KEY_DOWN || dir == MJOL_CMD_MOVE_DOWN) {
+                } else if (
+#if (MJOL_CURSES)
+                    dir == KEY_DOWN ||
+#endif
+                    dir == MJOL_CMD_MOVE_DOWN) {
                     printmsg("DOWN");
                     if (y < game->height - 1) {
                         y++;
                     }
-                } else if (dir == KEY_LEFT || dir == MJOL_CMD_MOVE_LEFT) {
+                } else if (
+#if (MJOL_CURSES)
+                    dir == KEY_LEFT ||
+#endif
+                    dir == MJOL_CMD_MOVE_LEFT) {
                     printmsg("LEFT");
                     if (x) {
                         x--;
                     }
-                } else if (dir == KEY_RIGHT || dir == MJOL_CMD_MOVE_RIGHT) {
+                } else if (
+#if (MJOL_CURSES)
+                    dir == KEY_RIGHT ||
+#endif
+                    dir == MJOL_CMD_MOVE_RIGHT) {
                     printmsg("RIGHT");
                     if (x < game->width - 1) {
                         x++;
@@ -158,7 +173,6 @@ mjoldoturn(struct mjolgame *game, struct mjolchr *chr)
                 }
                 dest = game->objtab[lvl][x][y];
                 func = mjolcmdfunctab[cmd][dir];
-#endif
             }
             if (mjolhasarg(cmd)) {
                 printmsg("Which item?");

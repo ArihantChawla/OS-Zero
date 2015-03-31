@@ -41,7 +41,7 @@ extern uint8_t          mjolcanwieldmap[256];
 #define MJOL_DEF_NICK   "johndoe"
 #define MJOL_LEN_NICK   16
 
-#define MJOL_DEF_NLVL   64
+#define MJOL_DEF_NLVL   1
 #define MJOL_DEF_WIDTH  80
 #define MJOL_DEF_HEIGHT 24
 
@@ -130,10 +130,12 @@ extern uint8_t          mjolcanwieldmap[256];
 #define MJOL_CMD_MOVE_UPRIGHT     'u'
 #define MJOL_CMD_MOVE_DOWNLEFT    'b'
 #define MJOL_CMD_MOVE_DOWNRIGHT   'n'
+#if (MJOL_CURSES)
 #define MJOL_CMD_LEFT             (KEY_LEFT)
 #define MJOL_CMD_DOWN             (KEY_DOWN)
 #define MJOL_CMD_UP               (KEY_UP)
 #define MJOL_CMD_RIGHT            (KEY_RIGHT)
+#endif
 #define MJOL_CMD_RUN_LEFT         'H'
 #define MJOL_CMD_RUN_DOWN         'J'
 #define MJOL_CMD_RUN_UP           'K'
@@ -278,6 +280,9 @@ struct mjolobj {
 };
 
 struct mjolroom {
+#if (MJOLDEBUG)
+    long             id;
+#endif
     long             x;
     long             y;
     long             width;
