@@ -16,6 +16,7 @@ mjolprintroom(struct mjolroom *room)
     fprintf(stderr, "ROOM %p\n", room);
     fprintf(stderr, "X == %ld, Y == %ld, W == %ld, H == %ld\n",
             room->x, room->y, room->width, room->height);
+#if 0
     if (room->left) {
         fprintf(stderr, "LEFT %p: ", room);
         mjolprintroom(room->left);
@@ -24,7 +25,7 @@ mjolprintroom(struct mjolroom *room)
         fprintf(stderr, "RIGHT %p: ", room);
         mjolprintroom(room->right);
     }
-    fprintf(stderr, "\n");
+#endif
 
     return;
 }
