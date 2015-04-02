@@ -15,6 +15,7 @@
 #if (MJOL_CURSES)
 #include <curses.h>
 #endif
+#include <mjolnir/obj.h>
 
 extern struct mjolgame *mjolgame;
 extern struct mjolchr  *chaseq;

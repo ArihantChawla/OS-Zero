@@ -10,7 +10,7 @@
 //#define MJOL_ROOM_MIN_DIM    4
 #define MJOL_ROOM_MIN_WIDTH  8
 #define MJOL_ROOM_MIN_HEIGHT 6
-#define MJOL_MIN_ROOMS       4
+#define MJOL_MIN_ROOMS       8
 #define MJOL_MAX_ROOMS       16
 
 extern struct mjolobj * mjolmkcorridor(void);
@@ -29,12 +29,12 @@ mjolmkroom(struct mjolroom *room)
     long              lim1;
     long              lim2;
 
-    x = mjolrand() % room->width;
-    x = max(x, room->width + MJOL_ROOM_MIN_WIDTH);
-    x = min(x, room->width >> 2);
-    y = mjolrand() % room->height;
-    y = max(y, room->height - MJOL_ROOM_MIN_HEIGHT);
-    y = min(y, room->height >> 2);
+    x = mjolrand() % max(room->width - MJOL_ROOM_MIN_WIDTH, 1);
+//    x = max(x, room->width + MJOL_ROOM_MIN_WIDTH);
+//    x = min(x, room->width >> 2);
+    y = mjolrand() % max(room->height - MJOL_ROOM_MIN_HEIGHT, 1);
+//    y = max(y, room->height - MJOL_ROOM_MIN_HEIGHT);
+//    y = min(y, room->height >> 2);
     room->x += x;
     room->y += y;
     w = MJOL_ROOM_MIN_WIDTH
@@ -51,7 +51,6 @@ mjolmkroom(struct mjolroom *room)
     }
     /* draw bottom wall */
     y = room->y + h;
-    lim1 = room->x + w;
     for (x = room->x ; x < lim1 ; x++) {
         objtab[y][x] = mjolmkcorridor();
     }
@@ -67,15 +66,11 @@ mjolmkroom(struct mjolroom *room)
     for (y = room->y ; y < lim1 ; y++) {
         objtab[y][x] = mjolmkcorridor();
     }
-    lim1 = room->x + room->width - 1;
-    lim2 = room->y + room->height - 1;
-    for (y = room->y + 1 ; y < lim2 ; y++) {
-        for (x = room->x + 1 ; x < lim1 ; x++) {
-#if (MJOLDEBUG)
-            objtab[y][x] = mjolmkfloor(room->id);
-#else
+    lim1 = room->x + w - 1;
+    lim2 = room->y + h - 1;
+    for (y = room->y + 1 ; y < lim1 ; y++) {
+        for (x = room->x + 1 ; x < lim2 ; x++) {
             objtab[y][x] = mjolmkfloor();
-#endif
         }
     }
 
@@ -91,11 +86,13 @@ mjolconnrooms(struct mjolgame *game,
     long              y;
     long              lim;
     long              val;
-
+    long              delta;
+    
     if (dest->y + dest->height < src->y) {
         /* dest is above src */
-        if (dest->x + dest->width <= src->x) {
-            /* topleft */
+        delta = src->x - dest->x - dest->width;
+        if (delta <= 0) {
+            /* topleft, not adjacent */
             lim = dest->x + max(mjolrand() % dest->width, 1);
             x = src->x;
             y = src->y + max(mjolrand() % src->height, 1);
@@ -112,135 +109,33 @@ mjolconnrooms(struct mjolgame *game,
                 }
             }
             objtab[y][x] = mjolmkdoor();
-        } else if (dest->x >= src->x + src->width) {
-            /* topright */
-            lim = dest->x + max(mjolrand() % dest->width, 1);
-            x = src->x + max(mjolrand() % src->height, 1);
+        } else if (delta) {
+            /* top, adjacent */
+            lim = dest->x + max(mjolrand() % delta, 1);
+            x = src->x + max(mjolrand() % delta, 1);
             y = src->y + src->height;
             objtab[y][x] = mjolmkdoor();
-            while (++x < lim) {
-                if (!objtab[y][x]) {
-                    objtab[y][x] = mjolmkcorridor();
-                }
-            }
-            lim = dest->y + dest->height;
             while (--y > lim) {
                 if (!objtab[y][x]) {
                     objtab[y][x] = mjolmkcorridor();
                 }
             }
             objtab[y][x] = mjolmkdoor();
-        } else {
-            /* dest is above src */
-            val = dest->x + dest->width - src->x;
-            if (val > 1) {
-                /* adjacent, draw straight vertical line */
-                lim = dest->x - dest->width;
-                x = dest->x + max(mjolrand() % dest->width, 1);
-                y = src->y;
-                objtab[y][x] = mjolmkdoor();
-                while (++y < lim) {
-                    objtab[y][x] = mjolmkcorridor();
-                }
-                objtab[y][x] = mjolmkdoor();
-            } else {
-                /* draw horizontal line */
-                lim = dest->x + max(mjolrand() % dest->width, 1);
-                x = src->x + max(mjolrand() % src->width, 1);
-                y = src->y;
-                objtab[y][x] = mjolmkdoor();
-                y++;
-                while (x-- > lim) {
-                    if (!objtab[y][x]) {
-                        objtab[y][x] = mjolmkcorridor();
-                    }
-                }
-            }
-            /* draw vertical line */
-            lim = dest->y + dest->height;
-            while (y-- > lim) {
-                if (!objtab[y][x]) {
-                    objtab[y][x] = mjolmkcorridor();
-                }
-            }
-            objtab[y][x] = mjolmkdoor();
-        }
-    } else if (dest->x + dest->width <= src->x) {
-        /* dest is to the left of src */
-        if (dest->y >= src->y + src->height) {
-            /* bottomleft */
+        } else if (dest->x >= src->x + src->width) {
+            /* topright, not adjacent */
             lim = dest->x + max(mjolrand() % dest->width, 1);
-            x = src->x;
-            y = src->y + max(mjolrand() % src->height, 1);
-            objtab[y][x] = mjolmkdoor();
-            while (x-- > lim) {
-                if (!objtab[y][x]) {
-                    objtab[y][x] = mjolmkcorridor();
-                }
-            }
-            lim = dest->y;
-            while (y++ < lim) {
-                if (!objtab[y][x]) {
-                    objtab[y][x] = mjolmkcorridor();
-                }
-            }
-            objtab[y][x] = mjolmkdoor();
-        } else {
-            /* left */
-            val = dest->y + dest->height - src->y;
-            if (val > 1) {
-                /* adjacent, draw straight horizontal line */
-                x = src->x;
-                y = dest->y + dest->height - max(mjolrand() % val, 1);
-                objtab[y][x] = mjolmkdoor();
-            } else {
-                /* draw vertical line */
-                lim = dest->y + max(mjolrand() % dest->height, 1);
-                x = src->x + max(mjolrand() % src->width, 1);
-                y = src->y;
-                objtab[y][x] = mjolmkdoor();
-                while (y++ < lim) {
-                    if (!objtab[y][x]) {
-                        objtab[y][x] = mjolmkcorridor();
-                    }
-                }
-            }
-            /* draw horizontal line */
-            lim = dest->x + dest->width;
-            while (x-- > lim) {
-                if (!objtab[y][x]) {
-                    objtab[y][x] = mjolmkcorridor();
-                }
-            }
-            objtab[y][x] = mjolmkdoor();
-        }
-    } else if (dest->y > src->y + src->height) {
-        /* dest is below src */
-        if (src->x < dest->x + dest->width) {
-            /* bottomright */
-            lim = dest->x + max(mjolrand() % dest->width, 1);
-            x = src->x + src->width;
-            y = src->y + max(mjolrand() % src->height, 1);
-            objtab[y][x] = mjolmkdoor();
-            while (++x < lim) {
-                if (!objtab[y][x]) {
-                    objtab[y][x] = mjolmkcorridor();
-                }
-            }
-            lim = dest->y;
-            while (++y < lim) {
-                if (!objtab[y][x]) { 
-                    objtab[y][x] = mjolmkcorridor();
-                }
-            }
-            objtab[y][x] = mjolmkdoor();
-        } else {
-            /* below, draw straight vertical line */
-            lim = dest->y;
+            /* draw vertical line up */
             x = src->x + max(mjolrand() % src->width, 1);
             y = src->y + src->height;
             objtab[y][x] = mjolmkdoor();
-            while (y++ < lim) {
+            while (--y < lim) {
+                if (!objtab[y][x]) {
+                    objtab[y][x] = mjolmkcorridor();
+                }
+            }
+            /* draw horizontal line right */
+            lim = dest->x;
+            while (--x > lim) {
                 if (!objtab[y][x]) {
                     objtab[y][x] = mjolmkcorridor();
                 }
@@ -248,38 +143,35 @@ mjolconnrooms(struct mjolgame *game,
             objtab[y][x] = mjolmkdoor();
         }
     } else {
-        /* dest is to the right of src */
-        val = dest->y + dest->height - src->y;
+        /* dest is above src */
+        val = src->x - dest->x - dest->width;
         if (val > 1) {
-            /* adjacent, draw straight horizontal line */
-            x = src->x + src->width;
-            y = dest->y + dest->height - max(mjolrand() % val, 1);
+            /* adjacent, draw straight vertical line */
+            lim = dest->y;
+            x = dest->x + max(mjolrand() % dest->width, 1);
+            y = src->y;
             objtab[y][x] = mjolmkdoor();
-            lim = dest->x;
-            while (++x < lim) {
-                if (objtab[y][x]) {
-                    objtab[y][x] = mjolmkcorridor();
-                }
+            while (++y < lim) {
+                objtab[y][x] = mjolmkcorridor();
             }
             objtab[y][x] = mjolmkdoor();
         } else {
-            /* draw vertical line */
-            lim = dest->y + max(mjolrand() % dest->height, 1);
-            x = src->x + src->width;
-            y = src->y + max(mjolrand() % src->height, 1);
-            val = y;
+            /* draw horizontal line */
+            lim = dest->x + max(mjolrand() % dest->width, 1);
+            x = src->x + max(mjolrand() % src->width, 1);
+            y = src->y;
             objtab[y][x] = mjolmkdoor();
-            while (val--) {
-                if (!objtab[val][x]) {
-                    objtab[val][x] = mjolmkcorridor();
+            while (--x > lim) {
+                if (!objtab[y][x]) {
+                    objtab[y][x] = mjolmkcorridor();
                 }
             }
-        }
-        /* draw horizontal line */
-        lim = dest->x;
-        while (x++ < lim) {
-            if (!objtab[y][x]) {
-                objtab[y][x] = mjolmkcorridor();
+            /* draw vertical line */
+            lim = dest->y + dest->height;
+            while (--y > lim) {
+                if (!objtab[y][x]) {
+                    objtab[y][x] = mjolmkcorridor();
+                }
             }
         }
         objtab[y][x] = mjolmkdoor();
@@ -352,6 +244,10 @@ mjolsplitroom(struct mjolroom *room)
 
         exit(1);
     }
+    ret->x = room->x;
+    ret->y = room->y;
+    ret->width = room->width;
+    ret->height = room->height;
     if (dir == MJOL_DIR_HORIZONTAL) {
         pos = MJOL_ROOM_MIN_WIDTH + (mjolrand() % room->width);
         pos = min(pos, room->width >> 1);
@@ -364,6 +260,13 @@ mjolsplitroom(struct mjolroom *room)
         }
         ret->left->x = room->x;
         ret->left->y = room->y;
+        ret->left->width = pos;
+        ret->left->height = room->height;
+        ret->right->x = pos;
+        ret->right->y = room->y;
+        ret->right->width = room->width - pos;
+        ret->right->height = room->height;
+#if 0
         ret->left->width = MJOL_ROOM_MIN_WIDTH + (mjolrand() % max(pos - MJOL_ROOM_MIN_WIDTH, 1));
 //        ret->left->height = room->height;
         ret->left->height = MJOL_ROOM_MIN_HEIGHT + (mjolrand() % max(room->height - MJOL_ROOM_MIN_HEIGHT, 1));
@@ -372,6 +275,7 @@ mjolsplitroom(struct mjolroom *room)
 //        ret->right->width = room->width - pos;
         ret->right->width = MJOL_ROOM_MIN_WIDTH + (mjolrand() % max(room->width - pos - MJOL_ROOM_MIN_WIDTH, 1));
         ret->right->height = MJOL_ROOM_MIN_HEIGHT + (mjolrand() % max(room->height - MJOL_ROOM_MIN_HEIGHT, 1));
+#endif
     } else {
         pos = MJOL_ROOM_MIN_HEIGHT + (mjolrand() % room->height);
         pos = min(pos, room->height >> 1);
@@ -384,12 +288,20 @@ mjolsplitroom(struct mjolroom *room)
         }
         ret->left->x = room->x;
         ret->left->y = room->y;
+        ret->left->width = room->width;
+        ret->left->height = pos;
+        ret->right->x = room->x;
+        ret->right->y = pos;
+        ret->right->width = room->width;
+        ret->right->height = room->height - pos;
+#if 0
         ret->left->width = MJOL_ROOM_MIN_WIDTH + (mjolrand() % max(room->width - MJOL_ROOM_MIN_WIDTH, 1));
         ret->left->height = MJOL_ROOM_MIN_HEIGHT + (mjolrand() % max(room->height - pos - MJOL_ROOM_MIN_HEIGHT, 1));
         ret->right->x = room->x;
         ret->right->y = pos;
         ret->right->width = MJOL_ROOM_MIN_WIDTH + (mjolrand() % max(room->width - MJOL_ROOM_MIN_WIDTH, 1));
         ret->right->height = MJOL_ROOM_MIN_HEIGHT + (mjolrand() % max(room->height - pos - MJOL_ROOM_MIN_HEIGHT, 1));
+#endif
     }
 
     return ret;
@@ -398,23 +310,28 @@ mjolsplitroom(struct mjolroom *room)
 struct mjolroom **
 mjolinitrooms(struct mjolgame *game, long *nroom)
 {
-    struct mjolroom  *tab[MJOL_MAX_ROOMS << 1];
+    struct mjolroom  *tab[MJOL_MAX_ROOMS * MJOL_MAX_ROOMS];
     struct mjolroom  *item = calloc(1, sizeof(struct mjolroom));
-#if (MJOLDEBUG)
-    long              n = 4;
-#else
+#if 0
     long              n = MJOL_MIN_ROOMS + (mjolrand()
                                             % (MJOL_MAX_ROOMS
                                                - MJOL_MIN_ROOMS));
 #endif
+    long              n = 6;
     struct mjolroom **ret = calloc(n, sizeof(struct mjolroom *));
-    long              ndx = 0;
+//    long              ndx = 0;
     long              val = 0;
+    long              lim;
+    long              ndx;
     long              l;
     long              m;
 
+#if (MJOLDEBUG)
+    memset(tab, 0, MJOL_MAX_ROOMS * MJOL_MAX_ROOMS * sizeof(struct mjolroom *));
+    fprintf(stderr, "generating %ld rooms\n", n);
+#endif
     l = n;
-    n++;
+//    n++;
     if (!ret || !item) {
         fprintf(stderr, "memory allocation failure\n");
 
@@ -426,59 +343,120 @@ mjolinitrooms(struct mjolgame *game, long *nroom)
     item->width = game->width;
     item->height = game->height;
     item = mjolsplitroom(item);
+#if (MJOLDEBUG)
+    fprintf(stderr, "SPLIT ");
+    mjolprintroom(item);
+#endif
     *nroom = n;
     tab[0] = item;
     tab[1] = item->left;
     mjolmkroom(item->left);
+#if (MJOLDEBUG)
+    fprintf(stderr, "MAKE ");
+    mjolprintroom(item->left);
+#endif
     if (l) {
         tab[2] = item->right;
         mjolmkroom(item->right);
+#if (MJOLDEBUG)
+        fprintf(stderr, "MAKE ");
+        mjolprintroom(item->right);
+#endif
         mjolconnrooms(game, item->left, item->right);
 #if (MJOLDEBUG)
-        mjolprintlvl(game, game->lvl);
+//        mjolprintlvl(game, game->lvl);
         sleep(1);
 #endif
         if (l > 1) {
             val = l;
-            ndx = l << 1;
-            for (n = 2 ; n <= l ; n++) {
-                m = n << 1;
-                item = mjolsplitroom(tab[n - 1]);
+            m = 2;
+            for (ndx = 2 ; ndx < l ; ndx++) {
+                fprintf(stderr, "%ld -> %ld, %ld\n", ndx - 1, m - 1, m);
+                item = mjolsplitroom(tab[ndx - 1]);
+#if (MJOLDEBUG)
+                fprintf(stderr, "SPLIT ");
+                mjolprintroom(item);
+#endif
                 tab[m - 1] = item->left;
                 mjolmkroom(item->left);
+#if (MJOLDEBUG)
+                fprintf(stderr, "MAKE ");
+                mjolprintroom(item->left);
+#endif
 #if (MJOLDEBUG)
                 item->left->id = m - 1;
 #endif
                 tab[m] = item->right;
                 mjolmkroom(item->right);
 #if (MJOLDEBUG)
+                fprintf(stderr, "MAKE ");
+                mjolprintroom(item->right);
+#endif
+#if (MJOLDEBUG)
                 item->left->id = m;
 #endif
                 mjolconnrooms(game, item->left, item->right);
 #if (MJOLDEBUG)
-                mjolprintlvl(game, game->lvl);
-                sleep(1);
+//                mjolprintlvl(game, game->lvl);
+//                sleep(1);
 #endif
+                m <<= 1;
             }
         } else {
             val = 1;
-            ndx = 2;
+            lim = 2;
         }
     } else {
         val = 1;
-        ndx = 1;
+        lim = 1;
     }
     /* build room table */
+    lim = l;
+    m = 2;
+    for (ndx = 0 ; ndx < lim ; ndx++) {
+        ret[ndx] = tab[m - 1];
+#if (MJOLDEBUG)
+        mjolprintroom(ret[ndx - 1]);
+#endif
+        ndx++;
+        if (ndx < lim) {
+            ret[ndx] = tab[m];
+        }
+#if (MJOLDEBUG)
+        mjolprintroom(ret[ndx]);
+#endif
+        m <<= 1;
+    }
+#if 0
+    m = l * l;
+    while (l) {
+        l--;
+        fprintf(stderr, "%ld -> %ld: ", m, l);
+        ret[l] = tab[m];
+        mjolprintroom(ret[l]);
+        if (l) {
+            l--;
+            fprintf(stderr, "%ld -> %ld: ", m - 1, l);
+            ret[l] = tab[m - 1];
+            mjolprintroom(ret[l]);
+            m >>= 1;
+        }
+    }
+#endif
+#if (MJOLDEBUG)
+    mjolprintlvl(game, game->lvl);
+#endif
+#if 0
     l = 0;
-    while (ndx >= val) {
+    while (ndx-- > val) {
         ret[l] = tab[ndx];
         l++;
-        ndx--;
     }
 #if 0
     while (ndx-- >= 0) {
         free(tab[ndx]);
     }
+#endif
 #endif
 
     return ret;
@@ -499,7 +477,8 @@ mjolgendng(struct mjolgame *game)
 
         exit(1);
     }
-    mjolsrand(~1);
+//    mjolsrand(time(NULL));
+    mjolsrand(~0L);
     for (lvl = 0 ; lvl < nlvl ; lvl++) {
         game->lvl = lvl;
         roomtab = mjolinitrooms(game, &nroom);

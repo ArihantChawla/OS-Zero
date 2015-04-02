@@ -152,8 +152,8 @@ mjolinit(struct mjolgame *game, int argc, char *argv[])
         mjolprintlvl(game, lvl);
     }
 #endif
-    mjolprintlvl(game, 0);
-    sleep(5);
+//    mjolprintlvl(game, 0);
+//    sleep(5);
 #endif
     
     return;
@@ -163,7 +163,7 @@ void
 mjolgameloop(struct mjolgame *game)
 {
 #if (MJOLDEBUG)
-    mjolprintlvl(game, 0);
+//    mjolprintlvl(game, 0);
 
     exit(1);
 #endif
