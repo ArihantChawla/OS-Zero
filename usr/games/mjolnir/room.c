@@ -257,7 +257,7 @@ mjolsplitroom(struct mjolroom *room)
       //        pos = min(pos, room->width >> 1);
 #if 0
         pos = mjolrand() % room->width;
-        pos = max(pos, room->width - MJOL_ROOM_MIN_WIDTH);
+        pos = max(pos, room->width - MJOL_ROOM_MIN_WIDTH - 2);
 #endif
         pos = room->width >> 1;
 //        pos = room->width >> 1;
@@ -282,7 +282,7 @@ mjolsplitroom(struct mjolroom *room)
     } else {
 #if 0
         pos = mjolrand() % room->height;
-        pos = max(pos, room->height - MJOL_ROOM_MIN_HEIGHT);
+        pos = max(pos, room->height - MJOL_ROOM_MIN_HEIGHT - 2);
 #endif
         pos = room->height >> 1;
 //        pos = max(pos, MJOL_ROOM_MIN_HEIGHT);
@@ -307,6 +307,113 @@ mjolsplitroom(struct mjolroom *room)
 
     return;
 }
+
+#if 0
+struct mjolroom **
+mjolinitrooms(struct mjolgame *game, long *nret)
+{
+//    struct mjolroom  *tree = calloc(1, sizeof(struct mjolroom));
+//    struct mjolroom  *tab[MJOL_MAX_ROOMS << 1];
+    struct mjolroom  *room = calloc(1, sizeof(struct mjolroom));
+    long              n = MJOL_MIN_ROOMS + (mjolrand()
+                                            % (MJOL_MAX_ROOMS
+                                               - MJOL_MIN_ROOMS));
+#if 0
+    long              n = 5;
+#endif
+//    struct mjolroom **ret = calloc(n, sizeof(struct mjolroom *));
+    long              num = 0;
+    long              max;
+    long              lim;
+    long              ndx;
+#if (MJOL_HASH)
+    long              val;
+#endif
+//    long              min;
+//    long              max;
+    struct mjolroom **ret = calloc(n, sizeof(struct mjolroom *));
+    struct mjolroom **stk = calloc((n << 1) + 2, sizeof(struct mjolroom **));
+    struct mjolroom **tab = calloc(n << 1, sizeof(struct mjolroom **));
+    long              ndx1;
+    long              ndx2;
+
+    if (!ret || !stk || !tab || !room) {
+        fprintf(stderr, "memory allocation failure\n");
+
+        exit(1);
+    }
+    fprintf(stderr, "generating %ld rooms\n", n);
+    /* split the dungeon */
+    room->x = 0;
+    room->y = 0;
+    room->width = game->width;
+    room->height = game->height;
+    room->dir = mjolrand() & 0x01;
+    mjolsplitroom(room);
+    num = 2;
+    stk[1] = room->left;
+    stk[2] = room->right;
+    lim = (n << 1) + 2;
+    ndx = 1;
+    ndx1 = 2;
+    ndx2 = 3;
+    max = 2; // ndx2 - ndx;
+//    while (max < n) {
+    while (ndx2 <= lim) {
+        long two = 2;
+
+        fprintf(stderr, "SPLIT: MAX == %ld, NDX == %ld, NDX1 == %ld, NDX2 == %ld\n", max, ndx, ndx1, ndx2);
+        room = stk[ndx];
+        mjolsplitroom(room);
+        stk[ndx1] = room->left;
+        stk[ndx2] = room->right;
+        num++;
+        ndx++;
+        max++;
+        ndx1 += two;
+        ndx2 += two;
+    }
+    *nret = n;
+    num = 0;
+    max = ndx2 - 2;
+//    while (ndx <= max) {
+    while (num < n) {
+        fprintf(stderr, "NDX == %ld, MAX == %ld, NUM == %ld\n", ndx, max, num);
+        room = stk[ndx];
+        mjolmkroom(room);
+        tab[num] = room;
+        num++;
+        ndx++;
+    }
+#if 0
+    max = ndx2 - 2;
+    lim = max - ndx + 1;
+    while (--n) {
+        val = mjolrand();
+//        num = ndx + (hashq128(&val, sizeof(long), 8 * sizeof(uint32_t)) % lim);
+        num = ndx + (val % lim);
+        fprintf(stderr, "NUM == %ld (MAX == %ld, NDX == %ld, LIM == %ld\n",
+                num, max, ndx, lim);
+        room = stk[num];
+        lim--;
+        if (num != max) {
+            stk[num] = stk[max];
+        }
+        ret[n] = room;
+        mjolmkroom(room);
+        max--;
+    }
+    fprintf(stderr, "NUM == %ld (MAX == %ld, NDX == %ld, LIM == %ld\n",
+            num, max, ndx, lim);
+    room = stk[max];
+    ret[n] = room;
+    mjolmkroom(room);
+#endif
+    mjolprintlvl(game, game->lvl);
+
+    return ret;
+}
+#endif
 
 struct mjolroom **
 mjolinitrooms(struct mjolgame *game, long *nret)
@@ -352,7 +459,7 @@ mjolinitrooms(struct mjolgame *game, long *nret)
     num = 2;
     stk[1] = room->left;
     stk[2] = room->right;
-    lim = (n << 1) - 1;
+//    lim = (n << 1);
 //    lim = (n << 1) + 2;
     ndx = 1;
     ndx1 = 2;
