@@ -11,13 +11,12 @@
 #include <zero/trix.h>
 #include <mjolnir/mjol.h>
 
-//#define MJOL_ROOM_MIN_DIM    4
-#define MJOL_ROOM_MIN_WIDTH  4
-#define MJOL_ROOM_MIN_HEIGHT 4
-#define MJOL_ROOM_MAX_WIDTH  8
-#define MJOL_ROOM_MAX_HEIGHT 8
-#define MJOL_MIN_ROOMS       2
-#define MJOL_MAX_ROOMS       8
+#define MJOL_ROOM_MIN_WIDTH  8
+#define MJOL_ROOM_MIN_HEIGHT 6
+#define MJOL_ROOM_MAX_WIDTH  16
+#define MJOL_ROOM_MAX_HEIGHT 12
+#define MJOL_MIN_ROOMS       4
+#define MJOL_MAX_ROOMS       12
 
 extern struct mjolobj * mjolmkcorridor(void);
 extern struct mjolobj * mjolmkdoor(void);
@@ -34,29 +33,28 @@ mjolmkroom(struct mjolroom *room)
     long              h;
     long              lim1;
 
-    x = mjolrand() % max(room->width - MJOL_ROOM_MIN_WIDTH - 2, 1);
+    x = mjolrand() % (room->width >> 1);
+    x = min(x, room->width - MJOL_ROOM_MIN_WIDTH - 2);
     x = max(x, 1);
-    x = min(x, room->width >> 1);
-    y = mjolrand() % max(room->height - MJOL_ROOM_MIN_HEIGHT - 2, 1);
+    y = mjolrand() % (room->height >> 1);
+    y = min(y, room->height - MJOL_ROOM_MIN_HEIGHT - 2);
     y = max(y, 1);
-//    y = max(y, room->height - MJOL_ROOM_MIN_HEIGHT);
-    y = min(y, room->height >> 1);
+#if 0
+    x = mjolrand() % max(room->width - MJOL_ROOM_MIN_WIDTH - 1, 1);
+    x = max(x, 1);
+    y = mjolrand() % max(room->height - MJOL_ROOM_MIN_HEIGHT - 1, 1);
+    y = max(y, 1);
+#endif
+    w = MJOL_ROOM_MIN_WIDTH + (mjolrand() % (room->width >> 1));
+    w = max(w, MJOL_ROOM_MIN_WIDTH);
+    w = min(w, room->width - x - 2);
+    w = min(w, MJOL_ROOM_MAX_WIDTH);
+    h = MJOL_ROOM_MIN_HEIGHT + (mjolrand() % (room->height >> 1));
+    h = max(h, MJOL_ROOM_MIN_HEIGHT);
+    h = min(h, room->height - y - 2);
+    h = min(h, MJOL_ROOM_MAX_HEIGHT);
     room->x += x;
     room->y += y;
-#if 0
-    w = MJOL_ROOM_MIN_WIDTH
-        + (mjolrand() % max(room->width - x - MJOL_ROOM_MIN_WIDTH - 2, 1));
-#endif
-    w = room->width - x;
-    w = min(w, MJOL_ROOM_MAX_WIDTH);
-//    w = max(w, MJOL_ROOM_MIN_WIDTH);
-#if 0
-    h = MJOL_ROOM_MIN_HEIGHT
-        + (mjolrand() % max(room->height - y - MJOL_ROOM_MIN_HEIGHT - 2, 1));
-#endif
-    h = room->height - y;
-    h = min(h, MJOL_ROOM_MAX_HEIGHT);
-//    h = max(h, MJOL_ROOM_MIN_HEIGHT);
     room->width = w;
     room->height = h;
     /* draw top wall */
@@ -274,7 +272,7 @@ mjolsplitroom(struct mjolroom *room)
         room->left->width = pos;
         room->left->height = room->height;
         room->left->dir = MJOL_DIR_HORIZONTAL;
-        room->right->x = pos;
+        room->right->x = room->x + pos;
         room->right->y = room->y;
         room->right->width = room->width - pos;
         room->right->height = room->height;
@@ -299,7 +297,7 @@ mjolsplitroom(struct mjolroom *room)
         room->left->height = pos;
         room->left->dir = MJOL_DIR_VERTICAL;
         room->right->x = room->x;
-        room->right->y = pos;
+        room->right->y = room->y + pos;
         room->right->width = room->width;
         room->right->height = room->height - pos;
         room->right->dir = MJOL_DIR_VERTICAL;
@@ -318,9 +316,6 @@ mjolinitrooms(struct mjolgame *game, long *nret)
     long              n = MJOL_MIN_ROOMS + (mjolrand()
                                             % (MJOL_MAX_ROOMS
                                                - MJOL_MIN_ROOMS));
-#if 0
-    long              n = 5;
-#endif
 //    struct mjolroom **ret = calloc(n, sizeof(struct mjolroom *));
     long              num = 0;
     long              max;
@@ -332,12 +327,12 @@ mjolinitrooms(struct mjolgame *game, long *nret)
 //    long              min;
 //    long              max;
     struct mjolroom **ret = calloc(n, sizeof(struct mjolroom *));
-    struct mjolroom **stk = calloc((n << 1) + 2, sizeof(struct mjolroom **));
+    struct mjolroom **stk;
     struct mjolroom **tab = calloc(n << 1, sizeof(struct mjolroom **));
     long              ndx1;
     long              ndx2;
 
-    if (!ret || !stk || !tab || !room) {
+    if (!ret || !tab || !room) {
         fprintf(stderr, "memory allocation failure\n");
 
         exit(1);
@@ -359,7 +354,7 @@ mjolinitrooms(struct mjolgame *game, long *nret)
     ndx2 = 3;
     max = 2; // ndx2 - ndx;
 //    while (max < n) {
-    while (ndx2 <= lim) {
+    while (ndx1 < lim) {
         long two = 2;
 
         fprintf(stderr, "SPLIT: MAX == %ld, NDX == %ld, NDX1 == %ld, NDX2 == %ld\n", max, ndx, ndx1, ndx2);
@@ -377,7 +372,7 @@ mjolinitrooms(struct mjolgame *game, long *nret)
     num = 0;
     max = ndx2 - 2;
 //    while (ndx <= max) {
-    while (num < n) {
+    while (num <= n) {
         fprintf(stderr, "NDX == %ld, MAX == %ld, NUM == %ld\n", ndx, max, num);
         room = stk[ndx];
         mjolmkroom(room);
@@ -423,27 +418,27 @@ mjolinitrooms(struct mjolgame *game, long *nret)
     struct mjolroom  *room = calloc(1, sizeof(struct mjolroom));
     long              n = MJOL_MIN_ROOMS + (mjolrand()
                                             % (MJOL_MAX_ROOMS
-                                               - MJOL_MIN_ROOMS));
-#if 0
-    long              n = 5;
-#endif
+                                               - MJOL_MIN_ROOMS
+                                               + 1));
 //    struct mjolroom **ret = calloc(n, sizeof(struct mjolroom *));
-    long              num = 0;
+    long              num;
+//    long              lim = n + (n & 0x01);
+    long              lim = (n << 1) + 2;
+#if 0
     long              max;
-    long              lim;
+#endif
     long              ndx;
 #if (MJOL_HASH)
     long              val;
 #endif
 //    long              min;
 //    long              max;
-    struct mjolroom **ret = calloc(n, sizeof(struct mjolroom *));
-    struct mjolroom **stk = calloc((n << 1) + 2, sizeof(struct mjolroom **));
-    struct mjolroom **tab = calloc(n << 1, sizeof(struct mjolroom **));
+    struct mjolroom **tab = calloc(n, sizeof(struct mjolroom *));
+    struct mjolroom **stk = calloc((lim << 1) + 2, sizeof(struct mjolroom *));
     long              ndx1;
     long              ndx2;
 
-    if (!ret || !stk || !tab || !room) {
+    if (!tab || !stk || !room) {
         fprintf(stderr, "memory allocation failure\n");
 
         exit(1);
@@ -456,67 +451,39 @@ mjolinitrooms(struct mjolgame *game, long *nret)
     room->height = game->height;
     room->dir = mjolrand() & 0x01;
     mjolsplitroom(room);
-    num = 2;
-    stk[1] = room->left;
-    stk[2] = room->right;
+//    num = 2;
+    stk[0] = room->left;
+    stk[1] = room->right;
 //    lim = (n << 1);
 //    lim = (n << 1) + 2;
-    ndx = 1;
-    ndx1 = 2;
-    ndx2 = 3;
-    max = 2; // ndx2 - ndx;
-    while (max <= n) {
-        long two = 2;
-
-        fprintf(stderr, "SPLIT: MAX == %ld, NDX == %ld, NDX1 == %ld, NDX2 == %ld\n", max, ndx, ndx1, ndx2);
+    num = 2;
+    ndx = 0;
+    ndx1 = 0;
+    ndx2 = 1;
+    while (num < n) {
+        ndx1 += 2;
+        ndx2 += 2;
+        fprintf(stderr, "#1: %ld -> %ld, %ld\n", ndx, ndx1, ndx2);
         room = stk[ndx];
         mjolsplitroom(room);
         stk[ndx1] = room->left;
         stk[ndx2] = room->right;
         num++;
         ndx++;
-        max++;
-        ndx1 += two;
-        ndx2 += two;
     }
-    *nret = n;
     num = 0;
-    max = ndx2 - 2;
-    while (ndx <= max) {
-        fprintf(stderr, "NDX == %ld, MAX == %ld, NUM == %ld\n", ndx, max, num);
+    while (num < n) {
+        fprintf(stderr, "#2(%p): %ld -> %ld\n", room, ndx, num);
         room = stk[ndx];
         mjolmkroom(room);
         tab[num] = room;
         num++;
         ndx++;
     }
-#if 0
-    max = ndx2 - 2;
-    lim = max - ndx + 1;
-    while (--n) {
-        val = mjolrand();
-//        num = ndx + (hashq128(&val, sizeof(long), 8 * sizeof(uint32_t)) % lim);
-        num = ndx + (val % lim);
-        fprintf(stderr, "NUM == %ld (MAX == %ld, NDX == %ld, LIM == %ld\n",
-                num, max, ndx, lim);
-        room = stk[num];
-        lim--;
-        if (num != max) {
-            stk[num] = stk[max];
-        }
-        ret[n] = room;
-        mjolmkroom(room);
-        max--;
-    }
-    fprintf(stderr, "NUM == %ld (MAX == %ld, NDX == %ld, LIM == %ld\n",
-            num, max, ndx, lim);
-    room = stk[max];
-    ret[n] = room;
-    mjolmkroom(room);
-#endif
+    *nret = n;
     mjolprintlvl(game, game->lvl);
 
-    return ret;
+    return tab;
 }
 
 void
