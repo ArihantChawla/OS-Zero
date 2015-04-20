@@ -16,11 +16,11 @@
 #define MJOL_ROOM_MAX_WIDTH  16
 #define MJOL_ROOM_MAX_HEIGHT 12
 #define MJOL_MIN_ROOMS       4
-#define MJOL_MAX_ROOMS       12
+#define MJOL_MAX_ROOMS       8
 
 extern struct mjolobj * mjolmkcorridor(void);
 extern struct mjolobj * mjolmkdoor(void);
-extern struct mjolobj * mjolmkhorwall(void);
+extern struct mjolobj * mjolmkhorizwall(void);
 extern struct mjolobj * mjolmkvertwall(void);
 
 void
@@ -33,10 +33,10 @@ mjolmkroom(struct mjolroom *room)
     long              h;
     long              lim1;
 
-    x = mjolrand() % (room->width >> 1);
+    x = mjolrand() % (room->width >> 2);
     x = min(x, room->width - MJOL_ROOM_MIN_WIDTH - 2);
     x = max(x, 1);
-    y = mjolrand() % (room->height >> 1);
+    y = mjolrand() % (room->height >> 2);
     y = min(y, room->height - MJOL_ROOM_MIN_HEIGHT - 2);
     y = max(y, 1);
 #if 0
@@ -61,25 +61,25 @@ mjolmkroom(struct mjolroom *room)
     y = room->y;
     lim1 = room->x + w;
     for (x = room->x ; x < lim1 ; x++) {
-        objtab[y][x] = mjolmkcorridor();
+        objtab[y][x] = mjolmkhorizwall();
     }
     /* draw bottom wall */
     y = room->y + h - 1;
     lim1 = room->x + w;
     for (x = room->x ; x < lim1 ; x++) {
-        objtab[y][x] = mjolmkcorridor();
+        objtab[y][x] = mjolmkhorizwall();
     }
     /* draw left wall */
     x = room->x;
     lim1 = room->y + h - 1;
-    for (y = room->y ; y < lim1 ; y++) {
-        objtab[y][x] = mjolmkcorridor();
+    for (y = room->y + 1 ; y < lim1 ; y++) {
+        objtab[y][x] = mjolmkvertwall();
     }
     /* draw right wall */
     x = room->x + w - 1;
     lim1 = room->y + h - 1;
-    for (y = room->y ; y < lim1 ; y++) {
-        objtab[y][x] = mjolmkcorridor();
+    for (y = room->y + 1 ; y < lim1 ; y++) {
+        objtab[y][x] = mjolmkvertwall();
     }
     
     return;
@@ -202,7 +202,7 @@ mjolinitroom(struct mjolgame *game, struct mjolroom *room)
     lim = x + room->width;
     while (x < lim) {
         if (!objtab[y][x]) {
-            objtab[y][x] = mjolmkhorwall();
+            objtab[y][x] = mjolmkhorizwall();
         }
         x++;
     }
@@ -212,7 +212,7 @@ mjolinitroom(struct mjolgame *game, struct mjolroom *room)
     lim = x + room->width;
     while (x < lim) {
         if (!objtab[y][x]) {
-            objtab[y][x] = mjolmkhorwall();
+            objtab[y][x] = mjolmkhorizwall();
         }
         x++;
     }

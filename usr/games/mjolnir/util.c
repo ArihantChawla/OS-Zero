@@ -45,11 +45,7 @@ mjolprintlvl(struct mjolgame *game, long lvl)
         for (x = 0 ; x < game->width ; x++) {
             obj = tab[y][x];
             if (obj) {
-#if (MJOLDEBUG)
-                fprintf(stderr, "%c", 'Z' - (char)obj->data.type);
-#else
                 mjolprintobj(obj);
-#endif
             } else {
                 fprintf(stderr, "%c", '.');
             }

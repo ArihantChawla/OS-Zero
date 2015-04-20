@@ -208,7 +208,7 @@ mjolmkdoor(void)
 }
 
 struct mjolobj *
-mjolmkhorwall(void)
+mjolmkhorizwall(void)
 {
     struct mjolobj *obj = calloc(1, sizeof(struct mjolobj));
 
