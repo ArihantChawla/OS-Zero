@@ -6,7 +6,7 @@
 #define MJOL_TTY               1
 #define MJOL_X11               0
 #define MJOL_USE_COLORS        1
-#define MJOL_USE_ZERO_RANDMT32 0
+#define MJOL_USE_ZERO_RANDMT32 1
 #if (MJOL_TTY)
 #define MJOL_VT                1
 #define MJOL_CURSES            0
@@ -16,7 +16,7 @@
 
 #if (MJOL_USE_ZERO_RANDMT32)
 #define mjolsrand(seed) srandmt32(seed)
-#define mjolrand()      randmt32()
+#define mjolrand()      (randmt32() & 0x7fffffff)
 #else
 #define mjolsrand(seed) srand(seed)
 #define mjolrand()      (rand() & 0x7fffffff)

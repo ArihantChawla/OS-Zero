@@ -145,6 +145,27 @@ mjolmkfloor(void)
     return obj;
 }
 
+#if (MJOLDEBUG)
+struct mjolobj *
+mjolmkcorridor(long id)
+{
+    struct mjolobj *obj = calloc(1, sizeof(struct mjolobj));
+    long            l = mjolrand() & 0x0f;
+
+    if (!obj) {
+        fprintf(stderr, "memory allocation failure\n");
+
+        exit(1);
+    }
+    obj->data.type = id;
+    if (!l) {
+        /* 1/16 chance of a hidden door */
+        obj->data.flg |= MJOL_OBJ_HIDDEN;
+    }
+
+    return obj;
+}
+#else
 struct mjolobj *
 mjolmkcorridor(void)
 {
@@ -164,6 +185,7 @@ mjolmkcorridor(void)
 
     return obj;
 }
+#endif
 
 struct mjolobj *
 mjolmkdoor(void)

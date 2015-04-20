@@ -13,7 +13,7 @@ mjolprintobj(struct mjolobj *obj)
 void
 mjolprintroom(struct mjolroom *room)
 {
-    fprintf(stderr, "ROOM %p\n", room);
+//    fprintf(stderr, "ROOM %p\n", room);
     fprintf(stderr, "X == %ld, Y == %ld, W == %ld, H == %ld\n",
             room->x, room->y, room->width, room->height);
 #if 0
@@ -37,15 +37,21 @@ mjolprintlvl(struct mjolgame *game, long lvl)
     struct mjolobj   *obj;
     long              y;
     long              x;
+    long              id;
 
     fprintf(stderr, "LVL #%ld:\n", lvl);
+    id = 0;
     for (y = 0 ; y < game->height ; y++) {
         for (x = 0 ; x < game->width ; x++) {
             obj = tab[y][x];
             if (obj) {
+#if (MJOLDEBUG)
+                fprintf(stderr, "%c", 'Z' - (char)obj->data.type);
+#else
                 mjolprintobj(obj);
+#endif
             } else {
-                fprintf(stderr, ".");
+                fprintf(stderr, "%c", '.');
             }
         }
         fprintf(stderr, "\n");
