@@ -1,5 +1,6 @@
 #include <stddef.h>
 #include <stdlib.h>
+#include <stdint.h>
 #if defined(_REENTRANT)
 #include <zero/mtx.h>
 #define hashlk(lp)   mtxlk(lp)

@@ -15,7 +15,7 @@
 #if (MJOL_CURSES)
 #include <curses.h>
 #endif
-#include <mjolnir/obj.h>
+//#include <mjolnir/obj.h>
 
 extern struct mjolgame *mjolgame;
 extern struct mjolchr  *chaseq;
@@ -288,6 +288,7 @@ struct mjolroom {
     long             y;
     long             width;
     long             height;
+    long             dir;
     struct mjolroom *left;
     struct mjolroom *right;
 };

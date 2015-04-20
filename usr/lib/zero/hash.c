@@ -11,16 +11,20 @@
 #include <string.h>
 #include <stdint.h>
 
+#if defined(__amd64__) || defined(__x86_64__)
 #define bswapq128(r)                                                   \
     __asm__ __volatile__ ("bswapq %0"                                  \
                           : "+r" (r)                                   \
-                          :                                            \
                           :)
-#define mulq128( a, d, r)                                               \
+#define mulq128(a, d, r)                                                \
     __asm__ __volatile__ ("mulq %2"                                     \
                           : "+a" (a), "=d" (d)                          \
-                          : "r" (r)                                     \
-                          :)
+                          : "r" (r))
+#else
+#include <byteswap.h>
+#define bswapq128(r) bswap_64(r)
+#define mulq128(a, d, r) ((d) = (a) * (r))
+#endif
 
 uint64_t
 hashq128(const void *ptr,
