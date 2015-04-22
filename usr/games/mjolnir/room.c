@@ -93,99 +93,228 @@ mjolconnrooms(struct mjolgame *game,
     long              x;
     long              y;
     long              lim;
-    long              val;
     long              delta;
-    
-    if (dest->y + dest->height < src->y) {
-        /* dest is above src */
-        delta = src->x - dest->x - dest->width;
-        if (delta <= 0) {
-            /* topleft, not adjacent */
-            lim = dest->x + max(mjolrand() % dest->width, 1);
-            x = src->x;
-            y = src->y + max(mjolrand() % src->height, 1);
-            objtab[y][x] = mjolmkdoor();
-            while (--x > lim) {
-                if (!objtab[y][x]) {
-                    objtab[y][x] = mjolmkcorridor();
+    long              val;
+
+    if (src->y < dest->y) {
+        /* top of src is above dest */
+        if (src->x < dest->x) {
+            /* left of src is to the left of dest */
+            if (dest->x < src->x + src->width - 2) {
+                /* src has horizontal items adjacent with dest */
+                delta = src->x + src->width - dest->x - 1;
+                lim = dest->y;
+                val = mjolrand() % delta;
+                x = dest->x + max(val, 1);
+                y = src->y + src->height - 1;
+                /* draw vertical line */
+                fprintf(stderr, "DELTA == %ld, X == %ld, Y == %ld, LIM == %ld\n",
+                        delta, x, y, lim);
+                fprintf(stderr, "SRC: ");
+                mjolprintroom(src);
+                fprintf(stderr, "DEST: ");
+                mjolprintroom(dest);
+                free(objtab[y][x]);
+                objtab[y][x] = mjolmkdoor();
+                while (++y < lim) {
+                    if (!objtab[y][x]) {
+                        objtab[y][x] = mjolmkcorridor();
+                    }
+                }
+                free(objtab[y][x]);
+                objtab[y][x] = mjolmkdoor();
+            } else {
+                /* src is completely to the left of dest */
+                if (dest->y < src->y + src->height - 2) {
+                    /* src has vertical items adjacent with dest */
+                    delta = src->y + src->height - dest->y - 1;
+                    lim = dest->x;
+                    val = mjolrand() % delta;
+                    x = src->x + src->width - 1;
+                    y = dest->y + max(val, 1);
+                    /* draw horizontal line */
+                    fprintf(stderr, "DELTA == %ld, X == %ld, Y == %ld, LIM == %ld\n",
+                            delta, x, y, lim);
+                    fprintf(stderr, "SRC: ");
+                    mjolprintroom(src);
+                    fprintf(stderr, "DEST: ");
+                    mjolprintroom(dest);
+                    free(objtab[y][x]);
+                    objtab[y][x] = mjolmkdoor();
+                    while (++x < lim) {
+                        if (!objtab[y][x]) {
+                            objtab[y][x] = mjolmkcorridor();
+                        }
+                    }
+                    free(objtab[y][x]);
+                    objtab[y][x] = mjolmkdoor();
+                } else {
+                    /* src is completely above and to the left of dest */
+                    val = mjolrand() % (dest->height - 1);
+                    lim = dest->y + max(val, 2);
+                    val = mjolrand() % (src->width - 1);
+                    x = src->x + max(val, 1);
+                    y = src->y + src->height - 1;
+                    /* draw vertical line */
+                    free(objtab[y][x]);
+                    objtab[y][x] = mjolmkdoor();
+                    while (++y < lim) {
+                        if (!objtab[y][x]) {
+                            objtab[y][x] = mjolmkcorridor();
+                        }
+                    }
+                    if (!objtab[y][x]) {
+                        objtab[y][x] = mjolmkcorridor();
+                    }
+                    /* draw horizontal line */
+                    lim = dest->x;
+                    while (++x < lim) {
+                        if (!objtab[y][x]) {
+                            objtab[y][x] = mjolmkcorridor();
+                        }
+                    }
+                    free(objtab[y][x]);
+                    objtab[y][x] = mjolmkdoor();
                 }
             }
-            lim = dest->y + dest->height;
-            while (--y > lim) {
-                if (!objtab[y][x]) {
-                    objtab[y][x] = mjolmkcorridor();
-                }
-            }
-            objtab[y][x] = mjolmkdoor();
-        } else if (delta) {
-            /* top, adjacent */
-            lim = dest->x + max(mjolrand() % delta, 1);
-            x = src->x + max(mjolrand() % delta, 1);
-            y = src->y + src->height;
-            objtab[y][x] = mjolmkdoor();
-            while (--y > lim) {
-                if (!objtab[y][x]) {
-                    objtab[y][x] = mjolmkcorridor();
-                }
-            }
-            objtab[y][x] = mjolmkdoor();
-        } else if (dest->x >= src->x + src->width) {
-            /* topright, not adjacent */
-            lim = dest->x + max(mjolrand() % dest->width, 1);
-            /* draw vertical line up */
-            x = src->x + max(mjolrand() % src->width, 1);
-            y = src->y + src->height;
-            objtab[y][x] = mjolmkdoor();
-            while (--y < lim) {
-                if (!objtab[y][x]) {
-                    objtab[y][x] = mjolmkcorridor();
-                }
-            }
-            /* draw horizontal line right */
-            lim = dest->x;
-            while (--x > lim) {
-                if (!objtab[y][x]) {
-                    objtab[y][x] = mjolmkcorridor();
-                }
-            }
-            objtab[y][x] = mjolmkdoor();
-        }
-    } else {
-        /* dest is above src */
-        val = src->x - dest->x - dest->width;
-        if (val > 1) {
-            /* adjacent, draw straight vertical line */
+        } else if (src->x < dest->x + dest->width - 2) {
+            /* src has horizontal items adjacent with dest */
+            delta = dest->x + dest->width - src->x - 1;
             lim = dest->y;
-            x = dest->x + max(mjolrand() % dest->width, 1);
-            y = src->y;
+            val = mjolrand() % delta;
+            x = src->x + max(val, 1);
+            y = src->y + src->height - 1;
+            /* draw vertical line */
+            fprintf(stderr, "DELTA == %ld, X == %ld, Y == %ld, LIM == %ld\n",
+                    delta, x, y, lim);
+            fprintf(stderr, "SRC: ");
+            mjolprintroom(src);
+            fprintf(stderr, "DEST: ");
+            mjolprintroom(dest);
+            free(objtab[y][x]);
             objtab[y][x] = mjolmkdoor();
             while (++y < lim) {
-                objtab[y][x] = mjolmkcorridor();
+                if (!objtab[y][x]) {
+                    objtab[y][x] = mjolmkcorridor();
+                }
             }
+            free(objtab[y][x]);
             objtab[y][x] = mjolmkdoor();
         } else {
-            /* draw horizontal line */
-            lim = dest->x + max(mjolrand() % dest->width, 1);
-            x = src->x + max(mjolrand() % src->width, 1);
-            y = src->y;
-            objtab[y][x] = mjolmkdoor();
-            while (--x > lim) {
-                if (!objtab[y][x]) {
-                    objtab[y][x] = mjolmkcorridor();
+            /* src is completely to the right of dest */
+            if (dest->y < src->y + src->height - 1) {
+                /* src has vertical items adjacent with dest */
+                delta = src->y + src->height - dest->y - 1;
+                lim = src->x;
+                val = mjolrand() % delta;
+                x = dest->x + dest->width - 1;
+                y = dest->y + max(val, 1);
+                /* draw horizontal line */
+                free(objtab[y][x]);
+                objtab[y][x] = mjolmkdoor();
+                while (++x < lim) {
+                    if (!objtab[y][x]) {
+                        objtab[y][x] = mjolmkcorridor();
+                    }
                 }
-            }
-            /* draw vertical line */
-            lim = dest->y + dest->height;
-            while (--y > lim) {
-                if (!objtab[y][x]) {
-                    objtab[y][x] = mjolmkcorridor();
+                free(objtab[y][x]);
+                objtab[y][x] = mjolmkdoor();
+            } else {
+                /* src is completely above and to the right of dest */
+                val = mjolrand() % (dest->height - 1);
+                lim = dest->y + max(val, 2);
+                x = src->x + max(val, 1);
+                y = src->y + src->height - 1;
+                /* draw vertical line */
+                fprintf(stderr, "DELTA == %ld, X == %ld, Y == %ld, LIM == %ld\n",
+                        delta, x, y, lim);
+                fprintf(stderr, "SRC: ");
+                mjolprintroom(src);
+                fprintf(stderr, "DEST: ");
+                mjolprintroom(dest);
+                free(objtab[y][x]);
+                objtab[y][x] = mjolmkdoor();
+                while (++y < lim) {
+                    if (!objtab[y][x]) {
+                        objtab[y][x] = mjolmkcorridor();
+                    }
                 }
+                /* draw horizontal line */
+                lim = x;
+                x = dest->x + dest->width - 1;
+                while (++x < lim) {
+                    if (!objtab[y][x]) {
+                        objtab[y][x] = mjolmkcorridor();
+                    }
+                }
+                free(objtab[y][x]);
+                objtab[y][x] = mjolmkcorridor();
             }
         }
-        objtab[y][x] = mjolmkdoor();
+    } else if (src->y < dest->y + dest->height - 2) {
+        /* top of src is below top of dest */
+        /* src has vertical items adjacent with dest */
+        if (src->x < dest->x) {
+            /* src is to the left of dest */
+            delta = min(dest->y + dest->height - src->y - 1, src->height - 1);
+            lim = dest->x;
+            x = src->x + src->width - 1;
+            val = mjolrand() % delta;
+            y = src->y + max(val, 1);
+            /* draw horizontal line */
+            fprintf(stderr, "DELTA == %ld, X == %ld, Y == %ld, LIM == %ld\n",
+                    delta, x, y, lim);
+            fprintf(stderr, "SRC: ");
+            mjolprintroom(src);
+            fprintf(stderr, "DEST: ");
+            mjolprintroom(dest);
+            free(objtab[y][x]);
+            objtab[y][x] = mjolmkdoor();
+            while (++x < lim) {
+                if (!objtab[y][x]) {
+                    objtab[y][x] = mjolmkcorridor();
+                }
+            }
+            free(objtab[y][x]);
+            objtab[y][x] = mjolmkdoor();
+        } else {
+            /* src is to the right of dest */
+            delta = min(dest->y + dest->height - src->y, src->height - 1);
+            lim = src->x;
+            val = mjolrand() % delta;
+            x = dest->x + dest->width - 1;
+            y = src->y + max(val, 1);
+            /* draw horizontal line */
+            free(objtab[y][x]);
+            objtab[y][x] = mjolmkdoor();
+            while (++x < lim) {
+                if (!objtab[y][x]) {
+                    objtab[y][x] = mjolmkcorridor();
+                }
+                }
+            free(objtab[y][x]);
+                objtab[y][x] = mjolmkdoor();
+        }
+    } else {
+        /* src is completely below dest */
+        if (src->x < dest->x) {
+            /* left of src is to the left of dest */
+            if (dest->x < src->x + src->width) {
+                /* src has horizontal items adjacent with dest */
+            } else {
+                /* src is completely to the left of dest */
+            }
+        } else if (src->x < dest->x + dest->width - 2) {
+            /* src has horizontal items adjacent with dest */
+            if (src->x + src->width < dest->x + dest->width - 2) {
+                /* src is completely adjacent with dest */
+            } else {
+                /* right of src is to the right of right of dest */
+            }
+        } else {
+            /* src is completely to the right of dest */
+        }
     }
-
-    return;
 }
 
 void
@@ -313,6 +442,9 @@ mjolinitrooms(struct mjolgame *game, long *nret)
 //    struct mjolroom  *tree = calloc(1, sizeof(struct mjolroom));
 //    struct mjolroom  *tab[MJOL_MAX_ROOMS << 1];
     struct mjolroom  *room = calloc(1, sizeof(struct mjolroom));
+#if 0
+    long              n = 2;
+#endif
     long              n = MJOL_MIN_ROOMS + (mjolrand()
                                             % (MJOL_MAX_ROOMS
                                                - MJOL_MIN_ROOMS));
@@ -415,11 +547,15 @@ mjolinitrooms(struct mjolgame *game, long *nret)
 {
 //    struct mjolroom  *tree = calloc(1, sizeof(struct mjolroom));
 //    struct mjolroom  *tab[MJOL_MAX_ROOMS << 1];
-    struct mjolroom  *room = calloc(1, sizeof(struct mjolroom));
+    struct mjolroom  *room1 = calloc(1, sizeof(struct mjolroom));
+    struct mjolroom  *room2;
+    long              n = 2;
+#if 0
     long              n = MJOL_MIN_ROOMS + (mjolrand()
                                             % (MJOL_MAX_ROOMS
                                                - MJOL_MIN_ROOMS
                                                + 1));
+#endif
 //    struct mjolroom **ret = calloc(n, sizeof(struct mjolroom *));
     long              num;
 //    long              lim = n + (n & 0x01);
@@ -438,22 +574,22 @@ mjolinitrooms(struct mjolgame *game, long *nret)
     long              ndx1;
     long              ndx2;
 
-    if (!tab || !stk || !room) {
+    if (!tab || !stk || !room1) {
         fprintf(stderr, "memory allocation failure\n");
 
         exit(1);
     }
     fprintf(stderr, "generating %ld rooms\n", n);
     /* split the dungeon */
-    room->x = 0;
-    room->y = 0;
-    room->width = game->width;
-    room->height = game->height;
-    room->dir = mjolrand() & 0x01;
-    mjolsplitroom(room);
+    room1->x = 0;
+    room1->y = 0;
+    room1->width = game->width;
+    room1->height = game->height;
+    room1->dir = mjolrand() & 0x01;
+    mjolsplitroom(room1);
 //    num = 2;
-    stk[0] = room->left;
-    stk[1] = room->right;
+    stk[0] = room1->left;
+    stk[1] = room1->right;
 //    lim = (n << 1);
 //    lim = (n << 1) + 2;
     num = 2;
@@ -464,21 +600,28 @@ mjolinitrooms(struct mjolgame *game, long *nret)
         ndx1 += 2;
         ndx2 += 2;
         fprintf(stderr, "#1: %ld -> %ld, %ld\n", ndx, ndx1, ndx2);
-        room = stk[ndx];
-        mjolsplitroom(room);
-        stk[ndx1] = room->left;
-        stk[ndx2] = room->right;
+        room1 = stk[ndx];
+        mjolsplitroom(room1);
+        stk[ndx1] = room1->left;
+        stk[ndx2] = room1->right;
         num++;
         ndx++;
     }
-    num = 0;
+    room1 = stk[ndx];
+    tab[0] = room1;
+    mjolmkroom(room1);
+    fprintf(stderr, "#(%p): %ld -> %ld\n", room1, ndx, num);
+    num = 1;
+    ndx++;
     while (num < n) {
-        fprintf(stderr, "#2(%p): %ld -> %ld\n", room, ndx, num);
-        room = stk[ndx];
-        mjolmkroom(room);
-        tab[num] = room;
+        room2 = stk[ndx];
+        fprintf(stderr, "#2(%p): %ld -> %ld\n", room2, ndx, num);
+        mjolmkroom(room2);
+        mjolconnrooms(game, room1, room2);
+        tab[num] = room2;
         num++;
         ndx++;
+        room1 = room2;
     }
     *nret = n;
     mjolprintlvl(game, game->lvl);
