@@ -280,17 +280,19 @@ struct mjolobj {
     struct mjolobj     *next;
 };
 
+#define MJOL_DIR_VERTICAL    0x00000001
+#define MJOL_ROOM_CONNECTED  0x00000002
 struct mjolroom {
-#if (MJOLDEBUG)
-    long             id;
+#if (MJOL_ROOM_IDS)
+    int              id;
 #endif
     long             x;
     long             y;
     long             width;
     long             height;
-    long             dir;
-    struct mjolroom *left;
-    struct mjolroom *right;
+    long             flg;
+    struct mjolroom *part1;
+    struct mjolroom *part2;
 };
 
 struct mjollvl {
