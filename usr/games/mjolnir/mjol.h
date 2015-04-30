@@ -286,11 +286,13 @@ struct mjolroom {
 #if (MJOL_ROOM_IDS)
     int              id;
 #endif
+    long             lvl;
     long             x;
     long             y;
     long             width;
     long             height;
     long             flg;
+    long             treelvl;
     struct mjolroom *part1;
     struct mjolroom *part2;
 };

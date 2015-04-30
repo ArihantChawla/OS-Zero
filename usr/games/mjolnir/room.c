@@ -15,8 +15,8 @@
 #define MJOL_ROOM_MIN_HEIGHT 6
 #define MJOL_ROOM_MAX_WIDTH  16
 #define MJOL_ROOM_MAX_HEIGHT 12
-#define MJOL_MIN_ROOMS       4
-#define MJOL_MAX_ROOMS       8
+#define MJOL_MIN_ROOMS       2
+#define MJOL_MAX_ROOMS       6
 
 extern struct mjolobj * mjolmkcorridor(void);
 extern struct mjolobj * mjolmkdoor(void);
@@ -55,6 +55,9 @@ mjolmkid(struct mjolroom *room)
 
         exit(1);
     }
+#if 0
+    obj->data.type = roomidtab[room->treelvl];
+#endif
     obj->data.type = room->id;
 
     return obj;
@@ -99,7 +102,7 @@ mjolmkroom(struct mjolroom *room)
     /* draw top wall */
     y = room->y;
     lim1 = room->x + w;
-#if (MJOL_ROOM_IDS)
+#if (MJOL_ROOM_IDS) && 0
     for (x = room->x ; x < lim1 ; x++) {
         objtab[y][x] = mjolmkid(room);
     }
@@ -212,6 +215,12 @@ mjolconnrooms(struct mjolgame *game,
                     while (++y < lim) {
                         if (!objtab[y][x]) {
                             objtab[y][x] = mjolmkcorridor();
+                        } else if (objtab[y][x]->data.type == MJOL_OBJ_VERTICAL_WALL
+                                   || objtab[y][x]->data.type == MJOL_OBJ_HORIZONTAL_WALL) {
+                            free(objtab[y][x]);
+                            objtab[y][x] = mjolmkdoor();
+
+                            return;
                         }
                     }
                     if (!objtab[y][x]) {
@@ -276,6 +285,12 @@ mjolconnrooms(struct mjolgame *game,
                 while (++y < lim) {
                     if (!objtab[y][x]) {
                         objtab[y][x] = mjolmkcorridor();
+                    } else if (objtab[y][x]->data.type == MJOL_OBJ_VERTICAL_WALL
+                               || objtab[y][x]->data.type == MJOL_OBJ_HORIZONTAL_WALL) {
+                        free(objtab[y][x]);
+                        objtab[y][x] = mjolmkdoor();
+                        
+                        return;
                     }
                 }
                 /* draw horizontal line */
@@ -360,6 +375,12 @@ mjolconnrooms(struct mjolgame *game,
                 while (++x < lim) {
                     if (!objtab[y][x]) {
                         objtab[y][x] = mjolmkcorridor();
+                    } else if (objtab[y][x]->data.type == MJOL_OBJ_VERTICAL_WALL
+                               || objtab[y][x]->data.type == MJOL_OBJ_HORIZONTAL_WALL) {
+                        free(objtab[y][x]);
+                        objtab[y][x] = mjolmkdoor();
+                        
+                        return;
                     }
                 }
                 if (!objtab[y][x]) {
@@ -404,6 +425,12 @@ mjolconnrooms(struct mjolgame *game,
             while (++y < lim) {
                 if (!objtab[y][x]) {
                     objtab[y][x] = mjolmkcorridor();
+                } else if (objtab[y][x]->data.type == MJOL_OBJ_VERTICAL_WALL
+                           || objtab[y][x]->data.type == MJOL_OBJ_HORIZONTAL_WALL) {
+                    free(objtab[y][x]);
+                    objtab[y][x] = mjolmkdoor();
+                    
+                    return;
                 }
             }
             free(objtab[y][x]);
@@ -419,8 +446,8 @@ mjolconnrooms(struct mjolgame *game,
             objtab[y][x] = mjolmkdoor();
         }
     }
-    src->flg |= MJOL_ROOM_CONNECTED;
-//    dest->flg |= MJOL_ROOM_CONNECTED;
+//    src->flg |= MJOL_ROOM_CONNECTED;
+    dest->flg |= MJOL_ROOM_CONNECTED;
 
     return;
 }
@@ -557,10 +584,9 @@ mjolinitrooms(struct mjolgame *game, long *nret)
     long              num;
 //    long              lim = n + (n & 0x01);
     long              lim = (n << 1) + 2;
-#if 0
-    long              max;
-#endif
     long              ndx;
+    long              cnt;
+    long              lvl;
 #if (MJOL_HASH)
     long              val;
 #endif
@@ -587,25 +613,39 @@ mjolinitrooms(struct mjolgame *game, long *nret)
 //    num = 2;
     stk[0] = room1->part1;
     stk[1] = room1->part2;
+    room1->part1->treelvl = 1;
+    room1->part2->treelvl = 1;
 //    lim = (n << 1);
 //    lim = (n << 1) + 2;
     num = 2;
     ndx = 0;
     ndx1 = 0;
     ndx2 = 1;
+    cnt = 2;
+    lvl = 2;
     while (num < n) {
         ndx1 += 2;
         ndx2 += 2;
-        fprintf(stderr, "#1: %ld -> %ld, %ld\n", ndx, ndx1, ndx2);
+        fprintf(stderr, "#1: %ld -> %ld, %ld (%ld)\n", ndx, ndx1, ndx2, lvl);
         room1 = stk[ndx];
         mjolsplitroom(room1);
         stk[ndx1] = room1->part1;
         stk[ndx2] = room1->part2;
+        room1->part1->treelvl = lvl;
+        room1->part2->treelvl = lvl;
         num++;
+#if 0
+        if (powerof2(cnt)) {
+            mjolconnrooms(game, room1->part1, room1->part2);
+            lvl++;
+        }
+#endif
+        cnt += 2;
         ndx++;
     }
     room1 = stk[ndx];
 #if (MJOL_ROOM_IDS)
+//    room1->id = roomidtab[room1->treelvl];
     room1->id = roomidtab[ndx];
 #endif
     tab[0] = room1;
@@ -617,27 +657,18 @@ mjolinitrooms(struct mjolgame *game, long *nret)
         room2 = stk[ndx];
 #if (MJOL_ROOM_IDS)
         room2->id = roomidtab[ndx];
+//        room2->id = roomidtab[ndx];
 #endif
         mjolmkroom(room2);
-#if 0
-        if (!(room1->flg & MJOL_ROOM_CONNECTED)) {
+        tab[num] = room2;
+        if (room1->treelvl == room2->treelvl) {
+            fprintf(stderr, "CONN: %ld, %ld\n", ndx - 1, ndx);
             mjolconnrooms(game, room1, room2);
         }
-#endif
-        tab[num] = room2;
         num++;
         ndx++;
         room1 = room2;
     }
-#if 0
-    room1 = tab[0];
-    for (num = 1 ; num < n ; num++) {
-        room2 = tab[num];
-        fprintf(stderr, "connecting %ld and %ld\n", num - 1, num);
-        mjolconnrooms(game, room1, room2);
-        room1 = room2;
-    }
-#endif
     *nret = n;
     mjolprintlvl(game, game->lvl);
 
