@@ -285,6 +285,7 @@ struct mjolobj {
 struct mjolroom {
 #if (MJOL_ROOM_IDS)
     int              id;
+    int              lvlid;
 #endif
     long             lvl;
     long             x;
@@ -295,6 +296,7 @@ struct mjolroom {
     long             treelvl;
     struct mjolroom *part1;
     struct mjolroom *part2;
+    struct mjolroom *next;
 };
 
 struct mjollvl {

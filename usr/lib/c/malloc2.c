@@ -6,14 +6,17 @@
  * Copyright (C) Tuomo Petteri Venäläinen 2014-2015
  */
 
+#define MALLOCDEBUGHOOKS 0
+#define MALLOCSTEALMAG   0
+#define MALLOCNEWHACKS   1
+
 #define MALLOCNOSBRK     0
 #define MALLOCDIAG       0
-#define MALLOCDEBUG      1
 #define MALLOCFREEMDIR   0  // under construction
 #define MALLOCSTKNDX     0
 #define MALLOCFREEMAP    0  // use free block bitmaps
 #define MALLOCHACKS      0  // enable experimental features
-#define MALLOCBUFMAP     0  // buffer mapped slabs to global pool
+#define MALLOCBUFMAP     1  // buffer mapped slabs to global pool
 #define MALLOCVARSIZEBUF 0  // use variable-size slabs; FIXME
 #define MALLOCHASH       0
 #define MALLOCNHASHBIT   24
@@ -105,7 +108,7 @@
 
 //#include <sys/sysinfo.h>
 
-#define ZEROMTX 1
+#define ZEROMTX 0
 #if defined(PTHREAD) && (PTHREAD)
 #include <pthread.h>
 #if (!ZEROMTX)
@@ -132,21 +135,39 @@
 //#include <sys/sysinfo.h>
 //#define MALLOCNARN     (4 * get_nprocs_conf())
 //#define MALLOCNARN     (2 * sysconf(_SC_NPROCESSORS_CONF))
-#define MALLOCNARN           2
-#if (MALLOCVARSIZEBUF)
-#define MALLOCSLABLOG2       19
+#define MALLOCNARN           4
+#if (MALLOCNEWHACKS)
+#define MALLOCSUPERSLABLOG2  20
+#define MALLOCSLABLOG2       18
+#define MALLOCMIDSLABLOG2    12
+#define MALLOCBIGSLABLOG2    16
+#define MALLOCSMALLMAPLOG2   22
+#define MALLOCMIDMAPLOG2     24
+#define MALLOCBIGMAPLOG2     26
+#elif (MALLOCVARSIZEBUF)
+#define MALLOCSLABLOG2       18
 #define MALLOCSMALLSLABLOG2  16
 #define MALLOCTINYSLABLOG2   13
 #define MALLOCTEENYSLABLOG2  10
+#elif (MALLOCNOSBRK)
+#define MALLOCSLABLOG2       16
 #else
-#define MALLOCSLABLOG2       22
+#define MALLOCSLABLOG2       18
+#if 0
+#define MALLOCMIDLOG2        18
+#define MALLOCSMALLLOG2      15
+#define MALLOCSMALLMAPLOG2   22
+#define MALLOCMIDMAPLOG2     24
+#define MALLOCBIGMAPLOG2     26
 #endif
-#if (MALLOCVARSIZEBUF) || (MALLOCBUFMAP)
+#endif
+#if (MALLOCVARSIZEBUF) || (MALLOCBUFMAP) && !(MALLOCNEWHACKS) && 0
 #define MALLOCSMALLMAPLOG2   23
-#define MALLOCMIDSIZEMAPLOG2 24
+#define MALLOCMIDMAPLOG2 24
 #define MALLOCBIGMAPLOG2     25
 #endif
 #define MALLOCMINSIZE        (1UL << MALLOCMINLOG2)
+//#define MALLOCMINLOG2        CLSIZELOG2
 #define MALLOCMINLOG2        CLSIZELOG2
 #define MALLOCNBKT           PTRBITS
 #if (MALLOCSTKNDX)
@@ -164,14 +185,37 @@
 #if (MALLOCBUFMAP)
 #define magnbufmaplog2(bktid)                                           \
     (((bktid) <= MALLOCSMALLMAPLOG2)                                    \
-     ? 4                                                                \
-     : (((bktid) <= MALLOCMIDSIZEMAPLOG2)                               \
-        ? 3                                                             \
-        : 2))
+     ? 3                                                                \
+     : (((bktid) <= MALLOCMIDMAPLOG2)                                   \
+        ? 2                                                             \
+        : 1))
 #define magnbufmap(bktid)                                               \
     (1UL << magnbufmaplog2(bktid))
 #endif /* MALLOCBUFMAP */
-#if (MALLOCSTKNDX)
+#if (MALLOCNEWHACKS)
+#if 0
+#define magnbytelog2(bktid)                                             \
+    ((nbytelog2tab[(bktid)]) ? (nbytelog2tab[(bktid)]) : max(bktid, MALLOCSLABLOG2))
+#define setnbytelog2(bktid, val)                                        \
+    (nbytelog2tab[(bktid)] = (val))
+#endif
+#define magnbytelog2(bktid)                                             \
+    (((bktid) < MALLOCMIDSLABLOG2 - 2)                                  \
+     ? MALLOCMIDSLABLOG2                                                \
+     : (((bktid) < MALLOCBIGSLABLOG2 - 2)                               \
+        ? MALLOCBIGSLABLOG2                                             \
+        : (((bktid) < MALLOCSLABLOG2 - 2)                               \
+           ? MALLOCSLABLOG2                                             \
+           : (((bktid) < MALLOCSMALLMAPLOG2 - 2)                        \
+              ? MALLOCSMALLMAPLOG2                                      \
+              : (((bktid) < MALLOCMIDMAPLOG2 - 2)                       \
+                 ? MALLOCMIDMAPLOG2                                     \
+                 : (((bktid) <= MALLOCBIGMAPLOG2)                       \
+                    ? MALLOCBIGMAPLOG2                                  \
+                    : (bktid)))))))
+#define magnblklog2(bktid)                                              \
+    (magnbytelog2(bktid) - (bktid))
+#elif (MALLOCSTKNDX)
 #define magnbytelog2(bktid)                                             \
     (1UL << (bktid))
 #define magnblklog2(bktid)                                              \
@@ -187,14 +231,26 @@
            ? MALLOCSMALLSLABLOG2                                        \
            : MALLOCSLABLOG2))                                           \
      : (((bktid) <= MALLOCSMALLMAPLOG2)                                 \
-        ? MALLOCMIDSIZEMAPLOG2                                          \
-        : (((bktid) <= MALLOCMIDSIZEMAPLOG2)                            \
+        ? MALLOCMIDMAPLOG2                                              \
+        : (((bktid) <= MALLOCMIDMAPLOG2)                                \
            ? MALLOCBIGMAPLOG2                                           \
            : (bktid))))
 #define magnblklog2(bktid)                                              \
     (magnbytelog2(bktid) - (bktid))
 #else
 #define magnbytelog2(bktid) max((bktid), MALLOCSLABLOG2)
+#if 0
+#define magnbytelog2(bktid)                                             \
+    (((bktid) < MALLOCSMALLLOG2 - 2)                                    \
+     ? MALLOCSMALLLOG2                                                  \
+     : (((bktid) < MALLOCMIDLOG2 - 2)                                   \
+        ? MALLOCMIDLOG2                                                 \
+        : (((bktid) < MALLOCSLABLOG2 - 2)                               \
+           ? MALLOCSLABLOG2                                             \
+           : (((bktid) < MALLOCMIDMAPLOG2 - 2)                          \
+              ? MALLOCMIDMAPLOG2                                        \
+              : (bktid)))))
+#endif /* 0 */
 #define magnblklog2(bktid)                                              \
     (((bktid) <= MALLOCSLABLOG2)                                        \
      ? (MALLOCSLABLOG2 - (bktid))                                       \
@@ -204,10 +260,10 @@
 #define MAGMAP         0x01
 #define MAGGLOB        0x02
 #define MAGFLGMASK     (MAGMAP | MAGGLOB)
-#define MALLOCMAGSIZE  (8 * PAGESIZE)
+#define MALLOCHDRSIZE  (8 * PAGESIZE)
 /* magazines for larger/fewer allocations embed the tables in the structure */
 #define magembedstk(bktid) \
-    (magnbytetab(bktid) <= MALLOCMAGSIZE - offsetof(struct mag, data))
+    (magnbytetab(bktid) <= MALLOCHDRSIZE - offsetof(struct mag, data))
 /* magazine header structure */
 struct mag {
     void        *adr;
@@ -296,6 +352,7 @@ struct arn {
 struct malloc {
     struct maglist    magtab[MALLOCNBKT]; // partially allocated magazines
     struct maglist    hdrtab[MALLOCNBKT];
+    struct maglist    hdrbuf[MALLOCNBKT];
     struct maglist    freetab[MALLOCNBKT]; // totally unallocated magazines
 #if (MALLOCHASH)
     struct hashlist  *hashtab;
@@ -313,18 +370,67 @@ struct malloc {
     int               zerofd;           // file descriptor for mmap()
 };
 
-static struct malloc g_malloc ALIGNED(PAGESIZE);
+static struct malloc  g_malloc ALIGNED(PAGESIZE);
+unsigned long         nbytelog2tab[MALLOCNBKT] ALIGNED(CLSIZE);
+#if (MALLOCNEWHACKS)
+unsigned long         _nbytelog2tab[MALLOCNBKT];
+#if 0
+= {
+    0, /* 1b */
+    0, /* 2b */
+    0, /* 4b */
+    0, /* 8b */
+    0, /* 16b */
+    MALLOCMIDSLABLOG2, /* 32b */
+    MALLOCMIDSLABLOG2, /* 64b */
+    MALLOCMIDSLABLOG2, /* 128b */
+    MALLOCMIDSLABLOG2, /* 256b */
+    MALLOCMIDSLABLOG2, /* 512b */
+    MALLOCMIDSLABLOG2, /* 1k */
+    MALLOCMIDSLABLOG2, /* 2k */
+    MALLOCBIGSLABLOG2, /* 4k */
+    MALLOCBIGSLABLOG2, /* 8k */
+    MALLOCBIGSLABLOG2, /* 16k */
+    MALLOCSLABLOG2, /* 32k */
+    MALLOCSLABLOG2, /* 64k */
+    MALLOCSLABLOG2, /* 128k */
+    MALLOCSLABLOG2, /* 256k */
+    MALLOCSLABLOG2, /* 512k */
+    MALLOCSMALLMAPLOG2, /* 1m */
+    MALLOCMIDMAPLOG2, /* 2m */
+    MALLOCMIDMAPLOG2, /* 4m */
+    MALLOCBIGMAPLOG2,    /* 8m */
+    MALLOCBIGMAPLOG2,    /* 16m */
+    0
+};
+#endif
+#endif /* MALLOCNEWHACKS */
 __thread long        _arnid = -1;
 MUTEX                _arnlk;
 long                 curarn;
+#if (MALLOCSTAT)
+long long            nheapbyte;
+long long            nmapbyte;
+long long            ntabbyte;
+#endif
 
-#if defined(_GNU_SOURCE) && (GNUMALLOCHOOKS)
+#if defined(_GNU_SOURCE) && (GNUMALLOCHOOKS) && !defined(__GLIBC__)
 void *(*__malloc_hook)(size_t size, const void *caller);
 void *(*__realloc_hook)(void *ptr, size_t size, const void *caller);
 void *(*__memalign_hook)(size_t align, size_t size, const void *caller);
 void  (*__free_hook)(void *ptr, const void *caller);
 void *(*__malloc_initialize_hook)(void);
 void  (*__after_morecore_hook)(void);
+#endif
+
+#if (MALLOCSTAT)
+void
+mallocstat(void)
+{
+    fprintf(stderr, "HEAP: %lld\n", nheapbyte);
+    fprintf(stderr, "MAP: %lld\n", nmapbyte);
+    fprintf(stderr, "TAB: %lld\n", ntabbyte);
+}
 #endif
 
 /* allocation pointer flag bits */
@@ -346,18 +452,16 @@ void  (*__after_morecore_hook)(void);
 #define magnbytetab(bktid)                                              \
     ((1UL << (magnblklog2(bktid) + 1)) * sizeof(MAGPTRNDX))
 #endif /* MALLOCFREEMAP */
-#elif (MALLOCHACKS)
-#if (MALLOCFREEMAP)
+#elif (MALLOCFREEMAP)
 #define magnbytetab(bktid)                                             \
     ((1UL << (magnblklog2((bktid) + 1))) * sizeof(MAGPTRNDX)           \
      + rounduppow2((1UL << magnblklog2(bktid)) / CHAR_BIT, PAGESIZE))
 #else
 #define magnbytetab(bktid) ((1UL << (magnblklog2(bktid) + 1)) * sizeof(void *))
 #endif
-#else
-#define magnbytetab(bktid) ((1UL << (magnblklog2(bktid) + 1)) * sizeof(void *))
-#endif
-#if (MALLOCVARSIZEBUF)
+#if (MALLOCNEWHACKS)
+#define magnbyte(bktid) (1UL << magnbytelog2(bktid))
+#elif (MALLOCVARSIZEBUF)
 #define magnbyte(bktid) (1UL << magnbytelog2(bktid))
 #else
 #define magnbyte(bktid) (1UL << ((bktid) + magnblklog2(bktid)))
@@ -391,21 +495,101 @@ void  (*__after_morecore_hook)(void);
     (((void **)(mag)->ptrtab)[magptrid(mag, ptr)])
 #endif /* MALLOCSTKNDX */
 
-#define mdirl1ndx(ptr) (((uintptr_t)ptr >> MDIRL1NDX) & ((1 << MDIRNL1BIT) - 1))
-#define mdirl2ndx(ptr) (((uintptr_t)ptr >> MDIRL2NDX) & ((1 << MDIRNL2BIT) - 1))
-#define mdirl3ndx(ptr) (((uintptr_t)ptr >> MDIRL3NDX) & ((1 << MDIRNL3BIT) - 1))
+#define mdirl1ndx(ptr) (((uintptr_t)ptr >> MDIRL1NDX) & ((1UL << MDIRNL1BIT) - 1))
+#define mdirl2ndx(ptr) (((uintptr_t)ptr >> MDIRL2NDX) & ((1UL << MDIRNL2BIT) - 1))
+#define mdirl3ndx(ptr) (((uintptr_t)ptr >> MDIRL3NDX) & ((1UL << MDIRNL3BIT) - 1))
+#define mdirl4ndx(ptr) (((uintptr_t)ptr >> MDIRL4NDX) & ((1UL << MDIRNL4BIT) - 1))
 
 #if (PTRBITS == 32)
+#elif (MALLOC4LEVELTAB)
+#define MDIRNL1BIT     12
+#define MDIRNL2BIT     12
+#define MDIRNL3BIT     12
+//#define MDIRNL4BIT     (ADRBITS - MDIRNL1BIT - MDIRNL2BIT - MDIRNL3BIT - MALLOCMINLOG2)
+#define MDIRNL4BIT     (PTRBITS - MDIRNL1BIT - MDIRNL2BIT - MDIRNL3BIT - MALLOCMINLOG2)
+#define MDIRNL1KEY     (1UL << MDIRNL1BIT)
+#define MDIRNL2KEY     (1UL << MDIRNL2BIT)
+#define MDIRNL3KEY     (1UL << MDIRNL3BIT)
+#define MDIRNL4KEY     (1UL << MDIRNL4BIT)
+#define MDIRL1NDX      (MDIRL2NDX + MDIRNL2BIT)
+#define MDIRL2NDX      (MDIRL3NDX + MDIRNL3BIT)
+#define MDIRL3NDX      (MDIRL4NDX + MDIRNL4BIT)
+#define MDIRL4NDX      MALLOCMINLOG2
 #else /* PTRBITS != 32 */
-#define MDIRNL1BIT     16
+#define MDIRNL1BIT     12
 #define MDIRNL2BIT     16
-#define MDIRNL3BIT     (PTRBITS - MDIRNL1BIT - MDIRNL2BIT - MALLOCMINLOG2)
+#define MDIRNL3BIT     (ADRBITS - MDIRNL1BIT - MDIRNL2BIT - MALLOCMINLOG2)
 #define MDIRNL1KEY     (1UL << MDIRNL1BIT)
 #define MDIRNL2KEY     (1UL << MDIRNL2BIT)
 #define MDIRNL3KEY     (1UL << MDIRNL3BIT)
 #define MDIRL1NDX      (MDIRL2NDX + MDIRNL2BIT)
 #define MDIRL2NDX      (MDIRL3NDX + MDIRNL3BIT)
 #define MDIRL3NDX      MALLOCMINLOG2
+#endif
+
+#if (MALLOCSIG)
+void
+mallquit(int sig)
+{
+    fprintf(stderr, "QUIT (%d)\n", sig);
+#if (MALLOCSTAT)
+    mallocstat();
+#endif
+
+    exit(sig);
+}
+#endif
+
+#if (MALLOCDEBUGHOOKS)
+
+void
+mallocinithook(void)
+{
+    fprintf(stderr, "MALLOC_INIT\n");
+
+    return;
+}
+
+void *
+mallochook(size_t size, const void *caller)
+{
+    fprintf(stderr, "MALLOC: %p (%ld)\n", caller, (long)size);
+
+    return NULL;
+}
+
+void *
+reallochook(void *ptr, size_t size, const void *caller)
+{
+    fprintf(stderr, "REALLOC: %p: %p (%ld)\n", caller, size, ptr);
+
+    return NULL;
+}
+
+void
+freehook(void *ptr, const void *caller)
+{
+    fprintf(stderr, "FREE: %p\n", ptr);
+
+    return;
+}
+
+void
+morecorehook(void *ptr, const void *caller)
+{
+    fprintf(stderr, "HEAP: %p\n", sbrk(0));
+
+    return;
+}
+
+void *
+memalignhook(size_t align, size_t size, const void *caller)
+{
+    fprintf(stderr, "MEMALIGN: %p: %p (%ld)\n", caller, align, size);
+
+    return;
+}
+
 #endif
 
 #if (MALLOCDIAG)
@@ -550,6 +734,107 @@ blkbktid(size_t size)
     return bktid;
 }
 
+static __inline__ void
+magsetstk(struct mag *mag)
+{
+    long bktid = mag->bktid;
+#if (MALLOCSTKNDX)
+    MAGPTRNDX   *stk = NULL;
+    MAGPTRNDX   *tab;
+#elif (MALLOCHACKS)
+    uintptr_t   *stk = NULL;
+    uintptr_t   *tab = NULL;
+#else
+    void       **stk = NULL;
+    void       **tab = NULL;
+#endif
+    
+    if (magembedstk(bktid)) {
+        /* use magazine header's data-field for allocation stack */
+#if (MALLOCSTKNDX)
+        mag->stk = (MAGPTRNDX *)mag->data;
+        mag->ptrtab = &mag->stk[1UL << magnblklog2(bktid)];
+#elif (MALLOCHACKS)
+        mag->stk = (uintptr_t *)mag->data;
+        mag->ptrtab = (uintptr_t *)&mag->stk[1UL << magnblklog2(bktid)];
+#else
+        mag->stk = (void **)mag->data;
+        mag->ptrtab = &mag->stk[1UL << magnblklog2(bktid)];
+#endif
+#if (MALLOCFREEMAP)
+        mag->freemap = (uint8_t *)&mag->stk[(1UL << (magnblklog2(bktid) + 1))];
+#endif
+//                        stk = mag->stk;
+    } else {
+        /* map new allocation stack */
+        stk = mapanon(g_malloc.zerofd, magnbytetab(bktid));
+        if (stk == MAP_FAILED) {
+            unmapanon(mag, MALLOCHDRSIZE);
+#if (MALLOCSTAT)
+            mallocstat();
+#endif
+#if defined(ENOMEM)
+            errno = ENOMEM;
+#endif
+            
+            exit(1);
+        }
+#if (MALLOCSTKNDX)
+        mag->stk = (MAGPTRNDX *)stk;
+        mag->ptrtab = &stk[1UL << magnblklog2(bktid)];
+#else
+        mag->stk = stk;
+        mag->ptrtab = &stk[1UL << magnblklog2(bktid)];
+#endif
+#if (MALLOCFREEMAP)
+        mag->freemap = (uint8_t *)&mag->stk[(1UL << (magnblklog2(bktid) + 1))];
+#endif
+    }
+
+    return;
+}
+    
+static __inline__ struct mag *
+maggethdr(long bktid)
+{
+    struct mag *ret = MAP_FAILED;
+    struct mag *mag;
+    long        ndx;
+    uint8_t    *ptr;
+
+    mtxlk(&g_malloc.hdrtab[bktid].lk);
+    mag = g_malloc.hdrbuf[bktid].head;
+    if (!mag) {
+        ret = mapanon(g_malloc.zerofd, 16 * MALLOCHDRSIZE);
+        if (ret == MAP_FAILED) {
+
+            return ret;
+        }
+        ptr = (uint8_t *)ret;
+        magsetstk(ret);
+        ndx = 16;
+        while (--ndx) {
+            ptr += MALLOCHDRSIZE;
+            mag = (struct mag *)ptr;
+            magsetstk(mag);
+            mag->next = g_malloc.hdrtab[bktid].head;
+            if (mag->next) {
+                mag->next->prev = mag;
+            }
+            g_malloc.hdrtab[bktid].head = mag;
+        }
+    } else {
+        if (mag->next) {
+            mag->next->prev = NULL;
+        }
+        g_malloc.hdrtab[bktid].head = mag->next;
+        ret = mag;
+    }
+    mtxunlk(&g_malloc.hdrtab[bktid].lk);
+
+    return ret;
+}
+
 #if (MALLOCHASH)
 
 static struct hashitem *
@@ -634,6 +919,102 @@ setmag(void *ptr,
 
 #elif (PTRBITS > 32)
 
+#if (MALLOC4LEVELTAB)
+
+static struct mag *
+findmag(void *ptr)
+{
+    uintptr_t   l1 = mdirl1ndx(ptr);
+    uintptr_t   l2 = mdirl2ndx(ptr);
+    uintptr_t   l3 = mdirl3ndx(ptr);
+    uintptr_t   l4 = mdirl4ndx(ptr);
+    void       *ptr1;
+    void       *ptr2;
+    struct mag *mag = NULL;
+
+    ptr1 = g_malloc.mdir[l1];
+    if (ptr1) {
+        ptr2 = ((void **)ptr1)[l2];
+        if (ptr2) {
+            ptr1 = ((void **)ptr2)[l3];
+            if (ptr1) {
+                mag = ((struct mag **)ptr1)[l4];
+            }
+        }
+    }
+
+    return mag;
+}
+
+static void
+setmag(void *ptr,
+       struct mag *mag)
+{
+    uintptr_t        l1 = mdirl1ndx(ptr);
+    uintptr_t        l2 = mdirl2ndx(ptr);
+    uintptr_t        l3 = mdirl3ndx(ptr);
+    uintptr_t        l4 = mdirl4ndx(ptr);
+    struct mag     **ptr1;
+    struct mag     **ptr2;
+    void           **pptr;
+
+    mtxlk(&g_malloc.mlktab[l1]);
+    ptr1 = g_malloc.mdir[l1];
+    if (!ptr1) {
+        g_malloc.mdir[l1] = ptr1 = mapanon(g_malloc.zerofd,
+                                           MDIRNL2KEY * sizeof(void *));
+        if (ptr1 == MAP_FAILED) {
+#ifdef ENOMEM
+            errno = ENOMEM;
+#endif
+            
+            exit(1);
+        }
+#if (MALLOCSTAT)
+        ntabbyte += MDIRNL2KEY * sizeof(void *);
+#endif
+    }
+    pptr = (void **)ptr1;
+    ptr2 = pptr[l2];
+    if (!ptr2) {
+        pptr[l2] = ptr2 = mapanon(g_malloc.zerofd,
+                                  MDIRNL3KEY * sizeof(void *));
+        if (ptr2 == MAP_FAILED) {
+#ifdef ENOMEM
+            errno = ENOMEM;
+#endif
+            
+            exit(1);
+        }
+#if (MALLOCSTAT)
+        ntabbyte += MDIRNL3KEY * sizeof(void *);
+#endif
+    }
+    pptr = (void **)ptr2;
+    ptr1 = pptr[l3];
+    if (!ptr1) {
+        pptr[l3] = ptr1 = mapanon(g_malloc.zerofd,
+                                  MDIRNL4KEY * sizeof(void *));
+        if (ptr2 == MAP_FAILED) {
+#ifdef ENOMEM
+            errno = ENOMEM;
+#endif
+            
+            exit(1);
+        }
+#if (MALLOCSTAT)
+        ntabbyte += MDIRNL3KEY * sizeof(void *);
+#endif
+    }
+    ptr2 = &((struct mag **)ptr1)[l4];
+    *ptr2 = mag;
+    mtxunlk(&g_malloc.mlktab[l1]);
+    
+    return;
+}
+
+#else
+
 static struct mag *
 findmag(void *ptr)
 {
@@ -703,6 +1084,9 @@ setmag(void *ptr,
             ptr1->nref++;
 #endif
         }
+#if (MALLOCSTAT)
+        ntabbyte += MDIRNL2KEY * sizeof(void *);
+#endif
 #if (MALLOCFREEMDIR)
     } else if (!mag) {
         nref = --ptr1->nref;
@@ -735,7 +1119,7 @@ setmag(void *ptr,
         }
 #else /* !MALLOCFREEMDIR */
         pptr[l2] = ptr2 = mapanon(g_malloc.zerofd,
-                                  MDIRNL3KEY * sizeof(struct mag *));
+                                  MDIRNL3KEY * sizeof(void *));
 #endif /* MALLOCFREEMDIR */
         if (ptr2 == MAP_FAILED) {
 #ifdef ENOMEM
@@ -744,6 +1128,9 @@ setmag(void *ptr,
             
             exit(1);
         }
+#if (MALLOCSTAT)
+        ntabbyte += MDIRNL3KEY * sizeof(void *);
+#endif
 #if (MALLOCFREEMDIR)
     } else if (!mag) {
         nref = --ptr1->nref;
@@ -768,6 +1155,8 @@ setmag(void *ptr,
     return;
 }
 
+#endif /* MALLOC4LEVELTAB */
+
 #endif /* MALLOCHASH */
 
 static void
@@ -778,19 +1167,20 @@ prefork(void)
     long        bktid;
 
     mtxlk(&g_malloc.initlk);
+    mtxlk(&_arnlk);
     mtxlk(&g_malloc.heaplk);
     for (arnid = 0 ; arnid < MALLOCNARN ; arnid++) {
         arn = g_malloc.arntab[arnid];
         mtxlk(&arn->nreflk);
         for (bktid = 0 ; bktid < MALLOCNBKT ; bktid++) {
-            mtxlk(&arn->magtab[bktid].lk);
             mtxlk(&arn->hdrtab[bktid].lk);
+            mtxlk(&arn->magtab[bktid].lk);
         }
     }
     for (bktid = 0 ; bktid < MALLOCNBKT ; bktid++) {
         mtxlk(&g_malloc.magtab[bktid].lk);
-        mtxlk(&g_malloc.hdrtab[bktid].lk);
         mtxlk(&g_malloc.freetab[bktid].lk);
+        mtxlk(&g_malloc.hdrtab[bktid].lk);
     }
     
     return;
@@ -804,19 +1194,20 @@ postfork(void)
     long        bktid;
 
     for (bktid = 0 ; bktid < MALLOCNBKT ; bktid++) {
-        mtxunlk(&g_malloc.freetab[bktid].lk);
         mtxunlk(&g_malloc.hdrtab[bktid].lk);
+        mtxunlk(&g_malloc.freetab[bktid].lk);
         mtxunlk(&g_malloc.magtab[bktid].lk);
     }
     for (arnid = 0 ; arnid < MALLOCNARN ; arnid++) {
         arn = g_malloc.arntab[arnid];
         for (bktid = 0 ; bktid < MALLOCNBKT ; bktid++) {
-            mtxunlk(&arn->hdrtab[bktid].lk);
             mtxunlk(&arn->magtab[bktid].lk);
+            mtxunlk(&arn->hdrtab[bktid].lk);
         }
         mtxunlk(&arn->nreflk);
     }
     mtxunlk(&g_malloc.heaplk);
+    mtxunlk(&_arnlk);
     mtxunlk(&g_malloc.initlk);
     
     return;
@@ -829,7 +1220,7 @@ freearn(void *arg)
     struct mag *mag;
     struct mag *head;
     long        bktid;
-#if (MALLOCBUFMAP) && 0
+#if (MALLOCBUFMAP)
     long        n = 0;
 #endif
     
@@ -840,20 +1231,20 @@ freearn(void *arg)
             mtxlk(&arn->magtab[bktid].lk);
             head = arn->magtab[bktid].head;
             if (head) {
-#if (MALLOCBUFMAP) && 0
+#if (MALLOCBUFMAP)
                 n = 1;
 #endif
                 mag = head;
                 mag->adr = (void *)((uintptr_t)mag->adr | MAGGLOB);
                 while (mag->next) {
-#if (MALLOCBUFMAP) && 0
+#if (MALLOCBUFMAP)
                     n++;
 #endif
                     mag = mag->next;
                     mag->adr = (void *)((uintptr_t)mag->adr | MAGGLOB);
                 }
                 mtxlk(&g_malloc.magtab[bktid].lk);
-#if (MALLOCBUFMAP) && 0
+#if (MALLOCBUFMAP)
                 g_malloc.magtab[bktid].n += n;
 #endif
                 mag->next = g_malloc.magtab[bktid].head;
@@ -868,13 +1259,10 @@ freearn(void *arg)
             mtxlk(&arn->hdrtab[bktid].lk);
             head = arn->hdrtab[bktid].head;
             if (head) {
-                mag = arn->hdrtab[bktid].tail;
-#if 0
                 mag = head;
                 while (mag->next) {
                     mag = mag->next;
                 }
-#endif
                 mtxlk(&g_malloc.hdrtab[bktid].lk);
                 mag->next = g_malloc.hdrtab[bktid].head;
                 if (mag->next) {
@@ -901,6 +1289,9 @@ mallinit(void)
     long        ofs;
 #endif
     uint8_t    *ptr;
+#if (MALLOCNEWHACKS)
+    long        bkt;
+#endif
 
     mtxlk(&g_malloc.initlk);
     if (g_malloc.flags & MALLOCINIT) {
@@ -908,6 +1299,20 @@ mallinit(void)
         
         return;
     }
+#if (MALLOCNEWHACKS) && 0
+    for (bkt = 0 ; bkt < MALLOCNBKT ; bkt++) {
+        setnbytelog2(bkt, _nbytelog2tab[bkt]);
+    }
+#endif
+#if (MALLOCSIG)
+    signal(SIGQUIT, mallquit);
+    signal(SIGINT, mallquit);
+    signal(SIGSEGV, mallquit);
+    signal(SIGABRT, mallquit);
+#endif
+#if (MALLOCSTAT)
+    atexit(mallocstat);
+#endif
 #if (MMAP_DEV_ZERO)
     g_malloc.zerofd = open("/dev/zero", O_RDWR);
 #endif
@@ -952,6 +1357,13 @@ mallinit(void)
 #endif /* !MALLOCNOSBRK */
     g_malloc.mlktab = mapanon(g_malloc.zerofd, MDIRNL1KEY * sizeof(long));
     g_malloc.mdir = mapanon(g_malloc.zerofd, MDIRNL1KEY * sizeof(void *));
+#if (GNUMALLOCHOOKS) && (MALLOCDEBUGHOOKS)
+    __malloc_initialize_hook = mallocinithook;
+    __realloc_hook = reallochook;
+    __free_hook = freehook;
+    __after_morecore_hook = morecorehook;
+    __memalign_hook = memalignhook;
+#endif
 #if defined(_GNU_SOURCE) && (GNUMALLOCHOOKS)
     if (__malloc_initialize_hook) {
         __malloc_initialize_hook();
@@ -975,7 +1387,7 @@ _malloc(size_t size,
     uint8_t     *ptr;
     uint8_t     *ptrval = NULL;
 #if (MALLOCSTKNDX)
-    MAGPTRNDX   *stk;
+    MAGPTRNDX   *stk = NULL;
     MAGPTRNDX   *tab;
 #elif (MALLOCHACKS)
     uintptr_t   *stk = NULL;
@@ -991,6 +1403,10 @@ _malloc(size_t size,
     long         lim;
     long         n;
     size_t       incr;
+#if (MALLOCSTEALMAG)
+    long         id;
+#endif
+    long         stolen = 0;
     
     if (!(g_malloc.flags & MALLOCINIT)) {
         mallinit();
@@ -1012,9 +1428,10 @@ _malloc(size_t size,
 #else
         ptrval = mag->stk[mag->cur++];
 #endif
-#if (MALLOCDEBUG)
+#if (MALLOCDEBUG) && 0
         if (mag->cur > mag->lim) {
             fprintf(stderr, "mag->cur: %ld\n", mag->cur);
+            magprint(mag);
         }
         assert(mag->cur <= mag->lim);
 #endif
@@ -1125,6 +1542,7 @@ _malloc(size_t size,
                     mag->prev = NULL;
                     mag->next = NULL;
                 } else {
+                    mtxunlk(&arn->hdrtab[bktid].lk);
                     mtxlk(&g_malloc.hdrtab[bktid].lk);
                     mag = g_malloc.hdrtab[bktid].head;
                     if (mag) {
@@ -1137,112 +1555,157 @@ _malloc(size_t size,
                     }
                     mtxunlk(&g_malloc.hdrtab[bktid].lk);
                 }
+#if (MALLOCSTEALMAG)
                 if (!mag) {
+                    for (id = 0 ; id < MALLOCNARN ; id++) {
+                        struct arn *curarn;
+                            
+                        if (id != arnid) {
+                            curarn = g_malloc.arntab[arnid];
+                            if (curarn) {
+                                mtxlk(&curarn->magtab[bktid].lk);
+                                mag = curarn->magtab[bktid].head;
+                                if (mag) {
+                                    if (mag->next) {
+                                        mag->next->prev = NULL;
+                                    }
+                                    curarn->magtab[bktid].head = mag->next;
+                                    mtxunlk(&curarn->magtab[bktid].lk);
+                                    mag->arnid = id;
+                                    stolen = 1;
+                                    
+                                    break;
+                                }
+                                mtxunlk(&curarn->magtab[bktid].lk);
+                            }
+                        }
+                    }
+                }
+                if ((mag) && (stolen)) {
+#if (MALLOCSTKNDX)
+                    ptrval = magndx2ptr(mag, mag->stk[mag->cur]);
+                    mag->cur++;
+#elif (MALLOCHACKS)
+                    ptrval = (void *)mag->stk[mag->cur++];
+#else
+                    ptrval = mag->stk[mag->cur++];
+#endif
+                    mtxlk(&arn->magtab[bktid].lk);
+                    if (mag->cur < mag->lim) {
+                        mag->prev = NULL;
+                        mag->next = arn->magtab[bktid].head;
+                        if (mag->next) {
+                            mag->next->prev = mag;
+                        }
+                        arn->magtab[bktid].head = mag;
+                    } else {
+                        mag->prev = NULL;
+                        mag->next = NULL;
+                    }
+                    mtxunlk(&arn->magtab[bktid].lk);
+//                    stk = mag->stk;
+                }
+#endif /* MALLOCSTEALMAG */
+                if (
+#if (MALLOCSTEALMAG)
+                    !stolen
+#else
+                    !mag
+#endif
+                    ) {
                     mtxunlk(&arn->hdrtab[bktid].lk);
                     /* map new magazine header */
-                    mag = mapanon(g_malloc.zerofd, MALLOCMAGSIZE);
+//                    mag = mapanon(g_malloc.zerofd, MALLOCHDRSIZE);
+                    mag = maggethdr(bktid);
                     if (mag == MAP_FAILED) {
+#if (MALLOCSTAT)
+                        mallocstat();
+#endif
+#if defined(ENOMEM)
+                        errno = ENOMEM;
+#endif
                         
                         return NULL;
                     }
-                    if (magembedstk(bktid)) {
-                        /* use magazine header's data-field for allocation stack */
-#if (MALLOCSTKNDX)
-                        mag->stk = (MAGPTRNDX *)mag->data;
-                        mag->ptrtab = &mag->stk[1UL << magnblklog2(bktid)];
-#elif (MALLOCHACKS)
-                        mag->stk = (uintptr_t *)mag->data;
-                        mag->ptrtab = (uintptr_t *)&mag->stk[1UL << magnblklog2(bktid)];
-#else
-                        mag->stk = (void **)mag->data;
-                        mag->ptrtab = &mag->stk[1UL << magnblklog2(bktid)];
+                    magsetstk(mag);
+                }
+                if (!stolen) {
+                    ptr = SBRK_FAILED;
+#if (!MALLOCNOSBRK)
+                    if (bktid <= MALLOCSLABLOG2) {
+                        /* try to allocate slab from heap */
+                        mtxlk(&g_malloc.heaplk);
+                        ptr = growheap(magnbyte(bktid));
+                        mtxunlk(&g_malloc.heaplk);
+                    }
 #endif
-#if (MALLOCFREEMAP)
-                        mag->freemap = (uint8_t *)&mag->stk[(1UL << (magnblklog2(bktid) + 1))];
+                    if (ptr == SBRK_FAILED) {
+                        /* try to map slab */
+                        ptr = mapanon(g_malloc.zerofd, magnbyte(bktid));
+                        if (ptr == MAP_FAILED) {
+                            unmapanon(mag, MALLOCHDRSIZE);
+                            if (!magembedstk(bktid)) {
+                                unmapanon(stk, magnbytetab(bktid));
+                            }
+#if (MALLOCSTAT)
+                            mallocstat();
 #endif
-                    } else {
-                        /* map new allocation stack */
-                        stk = mapanon(g_malloc.zerofd, magnbytetab(bktid));
-                        if (stk == MAP_FAILED) {
-                            unmapanon(mag, MALLOCMAGSIZE);
+#if defined(ENOMEM)
+                            errno = ENOMEM;
+#endif
                             
                             return NULL;
                         }
-#if (MALLOCSTKNDX)
-                        mag->stk = (MAGPTRNDX *)stk;
-                        mag->ptrtab = &stk[1UL << magnblklog2(bktid)];
-#else
-                        mag->stk = stk;
-                        mag->ptrtab = &stk[1UL << magnblklog2(bktid)];
+#if (MALLOCSTAT)
+                        nmapbyte += magnbyte(bktid);
 #endif
-#if (MALLOCFREEMAP)
-                        mag->freemap = (uint8_t *)&mag->stk[(1UL << (magnblklog2(bktid) + 1))];
-#endif
-                    }
-                }
-                ptr = SBRK_FAILED;
-#if (!MALLOCNOSBRK)
-                if (bktid <= MALLOCSLABLOG2) {
-                    /* try to allocate slab from heap */
-                    mtxlk(&g_malloc.heaplk);
-                    ptr = growheap(magnbyte(bktid));
-                    mtxunlk(&g_malloc.heaplk);
-                }
-#endif
-                if (ptr == SBRK_FAILED) {
-                    /* try to map slab */
-                    ptr = mapanon(g_malloc.zerofd, magnbyte(bktid));
-                    if (ptr == MAP_FAILED) {
-                        unmapanon(mag, MALLOCMAGSIZE);
-                        if (!magembedstk(bktid)) {
-                            unmapanon(stk, magnbytetab(bktid));
-                        }
-                        
-                        return NULL;
-                    }
-                    mag->adr = (void *)((uintptr_t)ptr | MAGMAP);
+                        mag->adr = (void *)((uintptr_t)ptr | MAGMAP);
 //                        mapped = 1;
-                } else {
-                    mag->adr = ptr;
-                }
-#if (MALLOCDEBUG)
-                assert(mag->adr != NULL);
+                    } else {
+#if (MALLOCSTAT)
+                        nheapbyte += magnbyte(bktid);
 #endif
-                ptrval = ptr;
-                /* initialise magazine header */
-                lim = 1UL << magnblklog2(bktid);
-                mag->cur = 1;
-                mag->lim = lim;
-                mag->arnid = arnid;
-                mag->bktid = bktid;
-                mag->prev = NULL;
-                mag->next = NULL;
-                stk = mag->stk;
-                tab = mag->ptrtab;
-                /* initialise allocation stack */
-                incr = 1UL << bktid;
-                for (n = 0 ; n < lim ; n++) {
-#if (MALLOCSTKNDX)
-                    stk[n] = (MAGPTRNDX)n;
-                    tab[n] = (MAGPTRNDX)0;
-#elif (MALLOCHACKS)
-                    stk[n] = (uintptr_t)ptr;
-                    tab[n] = (uintptr_t)0;
-#else
-                    stk[n] = ptr;
-                    tab[n] = NULL;
-#endif
-                    ptr += incr;
-                }
-                if (gtpow2(lim, 1)) {
-                    /* queue slab with an active allocation */
-                    mtxlk(&arn->magtab[bktid].lk);
-                    mag->next = arn->magtab[bktid].head;
-                    if (mag->next) {
-                        mag->next->prev = mag;
+                        mag->adr = ptr;
                     }
-                    arn->magtab[bktid].head = mag;
-                    mtxunlk(&arn->magtab[bktid].lk);
+#if (MALLOCDEBUG)
+                    assert(mag->adr != NULL);
+#endif
+                    ptrval = ptr;
+                    /* initialise magazine header */
+                    lim = 1UL << magnblklog2(bktid);
+                    mag->cur = 1;
+                    mag->lim = lim;
+                    mag->arnid = arnid;
+                    mag->bktid = bktid;
+                    mag->prev = NULL;
+                    mag->next = NULL;
+                    stk = mag->stk;
+                    tab = mag->ptrtab;
+                    /* initialise allocation stack */
+                    incr = 1UL << bktid;
+                    for (n = 0 ; n < lim ; n++) {
+#if (MALLOCSTKNDX)
+                        stk[n] = (MAGPTRNDX)n;
+                        tab[n] = (MAGPTRNDX)0;
+#elif (MALLOCHACKS)
+                        stk[n] = (uintptr_t)ptr;
+                        tab[n] = (uintptr_t)0;
+#else
+                        stk[n] = ptr;
+                        tab[n] = NULL;
+#endif
+                        ptr += incr;
+                    }
+                    if (gtpow2(lim, 1)) {
+                        /* queue slab with an active allocation */
+                        mtxlk(&arn->magtab[bktid].lk);
+                        mag->next = arn->magtab[bktid].head;
+                        if (mag->next) {
+                            mag->next->prev = mag;
+                        }
+                        arn->magtab[bktid].head = mag;
+                        mtxunlk(&arn->magtab[bktid].lk);
+                    }
                 }
             }
         }
@@ -1265,7 +1728,7 @@ _malloc(size_t size,
         }
         setbit(mag->freemap, magptrndx(mag, ptr));
 #endif
-        /* add magazine to lookup structure using retptr as key */
+        /* add magazine to lookup structure using ptr as key */
         setmag(ptr, mag);
 #if defined(ENOMEM)
     } else {
@@ -1274,7 +1737,15 @@ _malloc(size_t size,
     }
 #if (MALLOCDEBUG)
     if (!ptr) {
+#if (MALLOCSTAT)
+        mallocstat();
+#endif
+#if defined(ENOMEM)
+        errno = ENOMEM;
+#endif
         magprint(mag);
+
+        abort();
     }
     assert(mag->adr != NULL);
     assert(mag != NULL);
@@ -1458,6 +1929,7 @@ void *
     void *ptr = _malloc(sz, 0, 1);
 
     if (!sz) {
+        
         return NULL;
     }
 #if (MALLOCDEBUG)
@@ -1476,14 +1948,15 @@ _realloc(void *ptr,
     long        sz = max(size, MALLOCMINSIZE);
     struct mag *mag = (ptr) ? findmag(ptr) : NULL;
     long        bktid = blkbktid(sz);
-    uintptr_t   bsz = (mag) ? 1UL << bktid : 0;
+    long        csz = (mag) ? 1UL << mag->bktid : 0;
 
     if (!ptr) {
-        retptr = _malloc(size, 0, 0);
-    } else if ((mag) && mag->bktid != bktid) {
-        retptr = _malloc(size, 0, 0);
+        retptr = _malloc(sz, 0, 0);
+    } else if ((mag) && mag->bktid < bktid) {
+        csz = min(csz, size);
+        retptr = _malloc(sz, 0, 0);
         if (retptr) {
-            memcpy(retptr, ptr, min(sz, bsz));
+            memcpy(retptr, ptr, csz);
             _free(ptr);
             ptr = NULL;
         }
@@ -1494,6 +1967,14 @@ _realloc(void *ptr,
 #if (MALLOCDEBUG)
     assert(retptr != NULL);
 #endif
+    if (!retptr) {
+#if defined(ENOMEM)
+        errno = ENOMEM;
+#endif
+#if (MALLOCSTAT)
+        mallocstat();
+#endif
+    }
 
     return retptr;
 }
@@ -1590,7 +2071,7 @@ posix_memalign(void **ret,
         __memalign_hook(align, size, (const void *)caller);
     }
 #endif
-    if (!powerof2(align) || (size & (sizeof(void *) - 1))) {
+    if (!powerof2(align) || (align & (sizeof(void *) - 1))) {
         errno = EINVAL;
     } else {
         ptr = _malloc(size, aln, 0);
