@@ -14,7 +14,7 @@
 
 /* PLEASE DO NOT EDIT BELOW */
 
-#define MJOL_ROOM_IDS          1
+#define MJOL_ROOM_IDS          0
 #define MJOL_HASH              0
 #if (MJOL_USE_ZERO_RANDMT32)
 #define mjolsrand(seed) srandmt32(seed)

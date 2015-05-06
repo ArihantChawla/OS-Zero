@@ -34,7 +34,7 @@ zeustogglesel(struct zeusx11 *x11, XEvent *event)
     y /= 5;
     pc = y * (x11->w / 5) + x;
     if (!zeussel.bmap) {
-        zeussel.bmap = calloc(CWNCORE >> 3, sizeof(uint8_t));
+        zeussel.bmap = calloc(CWCORESIZE >> 3, sizeof(uint8_t));
     }
     if (!zeussel.bmap) {
         fprintf(stderr, "memory allocation failure\n");
@@ -61,7 +61,7 @@ zeusaddsel(struct zeusx11 *x11, XEvent *event)
     y /= 5;
     pc = y * (x11->w / 5) + x;
     if (!zeussel.bmap) {
-        zeussel.bmap = calloc(CWNCORE >> 3, sizeof(uint8_t));
+        zeussel.bmap = calloc(CWCORESIZE >> 3, sizeof(uint8_t));
     }
     if (!zeussel.bmap) {
         fprintf(stderr, "memory allocation failure\n");
@@ -141,7 +141,7 @@ void
 zeusclear(struct zeusx11 *x11, XEvent *event)
 {
     if (zeussel.bmap) {
-        memset(zeussel.bmap, 0, CWNCORE >> 3);
+        memset(zeussel.bmap, 0, CWCORESIZE >> 3);
     }
     zeussel.last = -1;
     zeusdrawsim(x11);
@@ -909,11 +909,11 @@ zeusprintdb(struct zeusx11 *x11, int simx, int simy)
                     str, slen);        
     }
     pc++;
-    pc %= CWNCORE;
+    pc %= CWCORESIZE;
     for (i = 0 ; i < 15 ; i++) {
         zeusprintop(x11, pc, x11->dbwin, 0, (i + 2) * x11->fontasc);
         pc++;
-        pc %= CWNCORE;
+        pc %= CWCORESIZE;
     }
 
     return;
@@ -1103,7 +1103,7 @@ zeusdrawsim(struct zeusx11 *x11)
 {
     long pc;
 
-    for (pc = 0 ; pc < CWNCORE ; pc++) {
+    for (pc = 0 ; pc < CWCORESIZE ; pc++) {
         zeusdrawsimop(x11, pc);
     }
     XCopyArea(x11->disp, x11->pixbuf, x11->simwin,

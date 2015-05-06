@@ -292,11 +292,22 @@ struct mjolroom {
     long             y;
     long             width;
     long             height;
+#if (MJOLHACKS)
+    long             roomx;
+    long             roomy;
+    long             roomw;
+    long             roomh;
+#endif
     long             flg;
+    struct mjolroom *parent;
+#if 0
     long             treelvl;
+#endif
     struct mjolroom *part1;
     struct mjolroom *part2;
+#if 0
     struct mjolroom *next;
+#endif
 };
 
 struct mjollvl {

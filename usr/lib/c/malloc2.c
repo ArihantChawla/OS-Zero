@@ -16,7 +16,7 @@
 #define MALLOCSTKNDX     0
 #define MALLOCFREEMAP    0  // use free block bitmaps
 #define MALLOCHACKS      0  // enable experimental features
-#define MALLOCBUFMAP     1  // buffer mapped slabs to global pool
+#define MALLOCBUFMAP     0  // buffer mapped slabs to global pool
 #define MALLOCVARSIZEBUF 0  // use variable-size slabs; FIXME
 #define MALLOCHASH       0
 #define MALLOCNHASHBIT   24
@@ -83,12 +83,12 @@
  *          - optionally, a bitmap to denote allocated slices in magazines
  */
 
- /*
-  * TODO
-  * ----
-  * - free inactive subtables from mdir
-  * - fix MALLOCVARSIZEBUF
-  */
+/*
+ * TODO
+ * ----
+ * - free inactive subtables from mdir
+ * - fix MALLOCVARSIZEBUF
+ */
 
 #define GNUMALLOCHOOKS 1
 
@@ -137,6 +137,25 @@
 //#define MALLOCNARN     (2 * sysconf(_SC_NPROCESSORS_CONF))
 #define MALLOCNARN           4
 #if (MALLOCNEWHACKS)
+#if 0
+#define MALLOCSUPERSLABLOG2  20
+#define MALLOCSLABLOG2       18
+#define MALLOCSMALLSLABLOG2  12
+#define MALLOCMIDSLABLOG2    14
+#define MALLOCBIGSLABLOG2    16
+#define MALLOCSMALLMAPLOG2   24
+#define MALLOCMIDMAPLOG2     25
+#define MALLOCBIGMAPLOG2     26
+#endif
+#define MALLOCSUPERSLABLOG2  22
+#define MALLOCSLABLOG2       20
+#define MALLOCSMALLSLABLOG2  12
+#define MALLOCMIDSLABLOG2    14
+#define MALLOCBIGSLABLOG2    18
+#define MALLOCSMALLMAPLOG2   23
+#define MALLOCMIDMAPLOG2     24
+#define MALLOCBIGMAPLOG2     26
+#if 0
 #define MALLOCSUPERSLABLOG2  20
 #define MALLOCSLABLOG2       18
 #define MALLOCMIDSLABLOG2    12
@@ -144,6 +163,7 @@
 #define MALLOCSMALLMAPLOG2   22
 #define MALLOCMIDMAPLOG2     24
 #define MALLOCBIGMAPLOG2     26
+#endif
 #elif (MALLOCVARSIZEBUF)
 #define MALLOCSLABLOG2       18
 #define MALLOCSMALLSLABLOG2  16
@@ -193,26 +213,25 @@
     (1UL << magnbufmaplog2(bktid))
 #endif /* MALLOCBUFMAP */
 #if (MALLOCNEWHACKS)
+#define magnbytelog2(bktid)                                             \
+    (((bktid) < MALLOCSMALLSLABLOG2 - 1)                                \
+     ? MALLOCBIGSLABLOG2                                                \
+     : (((bktid) < MALLOCMIDSLABLOG2 - 1)                               \
+        ? MALLOCMIDSLABLOG2                                             \
+        : (((bktid) < MALLOCBIGSLABLOG2 - 1)                            \
+           ? MALLOCBIGSLABLOG2                                          \
+           : (((bktid) < MALLOCSLABLOG2 - 1)                            \
+              ? MALLOCSLABLOG2                                          \
+              : (((bktid) < MALLOCSMALLMAPLOG2 - 1)                     \
+                 ? MALLOCSMALLMAPLOG2                                   \
+                 : (((bktid) < MALLOCMIDMAPLOG2 - 1)                    \
+                     ? MALLOCMIDMAPLOG2                                 \
+                     : (((bktid) <= MALLOCBIGMAPLOG2)                   \
+                        ? MALLOCBIGMAPLOG2                              \
+                        : (bktid))))))))
 #if 0
-#define magnbytelog2(bktid)                                             \
-    ((nbytelog2tab[(bktid)]) ? (nbytelog2tab[(bktid)]) : max(bktid, MALLOCSLABLOG2))
-#define setnbytelog2(bktid, val)                                        \
-    (nbytelog2tab[(bktid)] = (val))
+#define magnbytelog2(bktid) max(MALLOCSLABLOG2, (bktid))
 #endif
-#define magnbytelog2(bktid)                                             \
-    (((bktid) < MALLOCMIDSLABLOG2 - 2)                                  \
-     ? MALLOCMIDSLABLOG2                                                \
-     : (((bktid) < MALLOCBIGSLABLOG2 - 2)                               \
-        ? MALLOCBIGSLABLOG2                                             \
-        : (((bktid) < MALLOCSLABLOG2 - 2)                               \
-           ? MALLOCSLABLOG2                                             \
-           : (((bktid) < MALLOCSMALLMAPLOG2 - 2)                        \
-              ? MALLOCSMALLMAPLOG2                                      \
-              : (((bktid) < MALLOCMIDMAPLOG2 - 2)                       \
-                 ? MALLOCMIDMAPLOG2                                     \
-                 : (((bktid) <= MALLOCBIGMAPLOG2)                       \
-                    ? MALLOCBIGMAPLOG2                                  \
-                    : (bktid)))))))
 #define magnblklog2(bktid)                                              \
     (magnbytelog2(bktid) - (bktid))
 #elif (MALLOCSTKNDX)
@@ -239,18 +258,6 @@
     (magnbytelog2(bktid) - (bktid))
 #else
 #define magnbytelog2(bktid) max((bktid), MALLOCSLABLOG2)
-#if 0
-#define magnbytelog2(bktid)                                             \
-    (((bktid) < MALLOCSMALLLOG2 - 2)                                    \
-     ? MALLOCSMALLLOG2                                                  \
-     : (((bktid) < MALLOCMIDLOG2 - 2)                                   \
-        ? MALLOCMIDLOG2                                                 \
-        : (((bktid) < MALLOCSLABLOG2 - 2)                               \
-           ? MALLOCSLABLOG2                                             \
-           : (((bktid) < MALLOCMIDMAPLOG2 - 2)                          \
-              ? MALLOCMIDMAPLOG2                                        \
-              : (bktid)))))
-#endif /* 0 */
 #define magnblklog2(bktid)                                              \
     (((bktid) <= MALLOCSLABLOG2)                                        \
      ? (MALLOCSLABLOG2 - (bktid))                                       \
@@ -262,7 +269,9 @@
 #define MAGFLGMASK     (MAGMAP | MAGGLOB)
 #define MALLOCHDRSIZE  (8 * PAGESIZE)
 /* magazines for larger/fewer allocations embed the tables in the structure */
-#define magembedstk(bktid) \
+#define magembedstk(bktid)                                              \
+    (magnbytetab(bktid) <= MALLOCHDRSIZE - offsetof(struct mag, data))
+#define magembedtab(bktid)                                              \
     (magnbytetab(bktid) <= MALLOCHDRSIZE - offsetof(struct mag, data))
 /* magazine header structure */
 struct mag {
@@ -347,13 +356,21 @@ struct arn {
     MUTEX          nreflk;              // lock for updating nref
 };
 
+struct mallopt {
+    int action;
+    int mmapmax;
+    int mmaplog2;
+};
+
 /* malloc global structure */
 #define MALLOCINIT 0x00000001L
 struct malloc {
     struct maglist    magtab[MALLOCNBKT]; // partially allocated magazines
     struct maglist    hdrtab[MALLOCNBKT];
-    struct maglist    hdrbuf[MALLOCNBKT];
     struct maglist    freetab[MALLOCNBKT]; // totally unallocated magazines
+    struct maglist    hdrbuf[MALLOCNBKT];
+    struct maglist    stkbuf[MALLOCNBKT];
+    struct mallopt    mallopt;
 #if (MALLOCHASH)
     struct hashlist  *hashtab;
     struct hashitem  *hashbuf;
@@ -371,40 +388,6 @@ struct malloc {
 };
 
 static struct malloc  g_malloc ALIGNED(PAGESIZE);
-unsigned long         nbytelog2tab[MALLOCNBKT] ALIGNED(CLSIZE);
-#if (MALLOCNEWHACKS)
-unsigned long         _nbytelog2tab[MALLOCNBKT];
-#if 0
-= {
-    0, /* 1b */
-    0, /* 2b */
-    0, /* 4b */
-    0, /* 8b */
-    0, /* 16b */
-    MALLOCMIDSLABLOG2, /* 32b */
-    MALLOCMIDSLABLOG2, /* 64b */
-    MALLOCMIDSLABLOG2, /* 128b */
-    MALLOCMIDSLABLOG2, /* 256b */
-    MALLOCMIDSLABLOG2, /* 512b */
-    MALLOCMIDSLABLOG2, /* 1k */
-    MALLOCMIDSLABLOG2, /* 2k */
-    MALLOCBIGSLABLOG2, /* 4k */
-    MALLOCBIGSLABLOG2, /* 8k */
-    MALLOCBIGSLABLOG2, /* 16k */
-    MALLOCSLABLOG2, /* 32k */
-    MALLOCSLABLOG2, /* 64k */
-    MALLOCSLABLOG2, /* 128k */
-    MALLOCSLABLOG2, /* 256k */
-    MALLOCSLABLOG2, /* 512k */
-    MALLOCSMALLMAPLOG2, /* 1m */
-    MALLOCMIDMAPLOG2, /* 2m */
-    MALLOCMIDMAPLOG2, /* 4m */
-    MALLOCBIGMAPLOG2,    /* 8m */
-    MALLOCBIGMAPLOG2,    /* 16m */
-    0
-};
-#endif
-#endif /* MALLOCNEWHACKS */
 __thread long        _arnid = -1;
 MUTEX                _arnlk;
 long                 curarn;
@@ -452,9 +435,9 @@ mallocstat(void)
 #define magnbytetab(bktid)                                              \
     ((1UL << (magnblklog2(bktid) + 1)) * sizeof(MAGPTRNDX))
 #endif /* MALLOCFREEMAP */
-#elif (MALLOCFREEMAP)
-#define magnbytetab(bktid)                                             \
-    ((1UL << (magnblklog2((bktid) + 1))) * sizeof(MAGPTRNDX)           \
+#elif (MALLOCFREEMAP) /* !MALLOCSTKNDX */
+#define magnbytetab(bktid)                                              \
+    ((1UL << (magnblklog2((bktid) + 1))) * sizeof(MAGPTRNDX)            \
      + rounduppow2((1UL << magnblklog2(bktid)) / CHAR_BIT, PAGESIZE))
 #else
 #define magnbytetab(bktid) ((1UL << (magnblklog2(bktid) + 1)) * sizeof(void *))
@@ -479,9 +462,9 @@ mallocstat(void)
 #define magputptr(mag, ptr1, ptr2)                                      \
     ((mag)->ptrtab[magptr2ndx(mag, ptr1)] = magptr2ndx(mag, ptr2))
 #define magptr2ndx(mag, ptr)                                            \
-    ((MAGPTRNDX)(((uintptr_t)ptr \
-        - ((uintptr_t)(mag)->adr & ~(MAGFLGMASK))) \
-     >> (bktid)))
+    ((MAGPTRNDX)(((uintptr_t)ptr                                        \
+                  - ((uintptr_t)(mag)->adr & ~(MAGFLGMASK)))            \
+                 >> (bktid)))
 #define magndx2ptr(mag, ndx)                                            \
     ((void *)((uintptr_t)(mag)->adr &~MAGFLGMASK) + ((ndx) << (mag)->bktid))
 #define maggetptr(mag, ptr)                                             \
@@ -518,7 +501,7 @@ mallocstat(void)
 #else /* PTRBITS != 32 */
 #define MDIRNL1BIT     12
 #define MDIRNL2BIT     16
-#define MDIRNL3BIT     (ADRBITS - MDIRNL1BIT - MDIRNL2BIT - MALLOCMINLOG2)
+#define MDIRNL3BIT     (PTRBITS - MDIRNL1BIT - MDIRNL2BIT - MALLOCMINLOG2)
 #define MDIRNL1KEY     (1UL << MDIRNL1BIT)
 #define MDIRNL2KEY     (1UL << MDIRNL2BIT)
 #define MDIRNL3KEY     (1UL << MDIRNL3BIT)
@@ -528,16 +511,16 @@ mallocstat(void)
 #endif
 
 #if (MALLOCSIG)
-void
-mallquit(int sig)
-{
-    fprintf(stderr, "QUIT (%d)\n", sig);
+    void
+    mallquit(int sig)
+    {
+        fprintf(stderr, "QUIT (%d)\n", sig);
 #if (MALLOCSTAT)
-    mallocstat();
+        mallocstat();
 #endif
 
-    exit(sig);
-}
+        exit(sig);
+    }
 #endif
 
 #if (MALLOCDEBUGHOOKS)
@@ -671,7 +654,7 @@ mallocdiag(void)
                             fprintf(stderr, "mag->prev != mag on partial list\n");
                             magprint(mag);
                             
-                                exit(1);
+                            exit(1);
                         }
 #if 0
                     } else if (cnt) {
@@ -724,13 +707,13 @@ blkbktid(size_t size)
 {
     unsigned long bktid = PTRBITS;
     unsigned long nlz;
-
+    
     nlz = lzerol(size);
     bktid -= nlz;
     if (powerof2(size)) {
         bktid--;
     }
-
+    
     return bktid;
 }
 
@@ -749,7 +732,7 @@ magsetstk(struct mag *mag)
     void       **tab = NULL;
 #endif
     
-    if (magembedstk(bktid)) {
+    if (magembedtab(bktid)) {
         /* use magazine header's data-field for allocation stack */
 #if (MALLOCSTKNDX)
         mag->stk = (MAGPTRNDX *)mag->data;
@@ -790,10 +773,10 @@ magsetstk(struct mag *mag)
         mag->freemap = (uint8_t *)&mag->stk[(1UL << (magnblklog2(bktid) + 1))];
 #endif
     }
-
+    
     return;
 }
-    
+
 static __inline__ struct mag *
 maggethdr(long bktid)
 {
@@ -1377,6 +1360,37 @@ mallinit(void)
     return;
 }
 
+int
+mallopt(int parm, int val)
+{
+    long num;
+    
+    switch (parm) {
+        case M_CHECK_ACTION:
+            g_malloc.mallopt.action |= val & 0x07;
+            
+            break;
+        case M_MMAP_MAX:
+            g_malloc.mallopt.mmapmax = val;
+
+            break;
+        case M_MMAP_THRESHOLD:
+            num = sizeof(long) - tzerol(val);
+            if (powerof2(val)) {
+                num++;
+            }
+            g_malloc.mallopt.mmaplog2 = num;
+
+            break;
+        default:
+            fprintf(stderr, "MALLOPT: invalid parm %d\n", parm);
+
+            break;
+    }
+
+    return;
+}
+
 void *
 _malloc(size_t size,
         size_t align,
@@ -1923,7 +1937,7 @@ malloc(size_t size)
 }
 
 void *
-    calloc(size_t n, size_t size)
+calloc(size_t n, size_t size)
 {
     size_t sz = max(n * size, MALLOCMINSIZE);
     void *ptr = _malloc(sz, 0, 1);
@@ -2091,8 +2105,8 @@ posix_memalign(void **ret,
 /* STD: UNIX */
 
 #if ((_BSD_SOURCE)                                                      \
-    || (_XOPEN_SOURCE >= 500 || ((_XOPEN_SOURCE) && (_XOPEN_SOURCE_EXTENDED))) \
-    && !(_POSIX_C_SOURCE >= 200112L || _XOPEN_SOURCE >= 600))
+     || (_XOPEN_SOURCE >= 500 || ((_XOPEN_SOURCE) && (_XOPEN_SOURCE_EXTENDED))) \
+     && !(_POSIX_C_SOURCE >= 200112L || _XOPEN_SOURCE >= 600))
 void *
 valloc(size_t size)
 {
