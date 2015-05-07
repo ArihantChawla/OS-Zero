@@ -11,6 +11,8 @@
 #include <zero/trix.h>
 #include <mjolnir/mjol.h>
 
+#define MJOLTEST             1
+
 #define MJOL_ROOM_MIN_WIDTH  8
 #define MJOL_ROOM_MIN_HEIGHT 6
 #define MJOL_ROOM_MAX_WIDTH  16
@@ -164,11 +166,14 @@ mjolconnrooms(struct mjolgame *game,
 
     if (src->y < dest->y) {
         /* top of src is above dest */
-        if (src->x < dest->x) {
+        if (src->x <= dest->x) {
             /* left of src is to the left of dest */
-            if (dest->x < src->x + src->width - 2) {
+            if (dest->x <= src->x + src->width - 2) {
                 /* src has horizontal items adjacent with dest */
                 delta = src->x + src->width - dest->x - 1;
+#if (MJOLTEST)
+                delta = min(delta, dest->width - 1);
+#endif
                 lim = dest->y;
                 val = mjolrand() % delta;
                 x = dest->x + max(val, 1);
@@ -188,6 +193,9 @@ mjolconnrooms(struct mjolgame *game,
                 if (dest->y < src->y + src->height - 2) {
                     /* src has vertical items adjacent with dest */
                     delta = src->y + src->height - dest->y - 1;
+#if (MJOLTEST)
+                    delta = min(delta, dest->height - 1);
+#endif
                     lim = dest->x;
                     val = mjolrand() % delta;
                     x = src->x + src->width - 1;
@@ -243,9 +251,12 @@ mjolconnrooms(struct mjolgame *game,
                     objtab[y][x] = mjolmkdoor();
                 }
             }
-        } else if (src->x < dest->x + dest->width - 2) {
+        } else if (src->x <= dest->x + dest->width - 2) {
             /* src has horizontal items adjacent with dest */
             delta = dest->x + dest->width - src->x - 1;
+#if (MJOLTEST)
+            delta = min(delta, src->width - 1);
+#endif
             lim = dest->y;
             val = mjolrand() % delta;
             x = src->x + max(val, 1);
@@ -265,6 +276,9 @@ mjolconnrooms(struct mjolgame *game,
             if (dest->y < src->y + src->height - 1) {
                 /* src has vertical items adjacent with dest */
                 delta = src->y + src->height - dest->y - 1;
+#if (MJOLTEST)
+                delta = min(delta, dest->height - 1);
+#endif
                 lim = src->x;
                 val = mjolrand() % delta;
                 x = dest->x + dest->width - 1;
@@ -317,12 +331,15 @@ mjolconnrooms(struct mjolgame *game,
                 objtab[y][x] = mjolmkcorridor();
             }
         }
-    } else if (src->y < dest->y + dest->height - 2) {
+    } else if (src->y <= dest->y + dest->height - 2) {
         /* top of src is below top of dest */
         /* src has vertical items adjacent with dest */
         if (src->x < dest->x) {
             /* src is to the left of dest */
             delta = min(dest->y + dest->height - src->y - 1, src->height - 1);
+#if (MJOLTEST)
+            delta = min(delta, src->height - 1);
+#endif
             lim = dest->x;
             x = src->x + src->width - 1;
             val = mjolrand() % delta;
@@ -362,7 +379,11 @@ mjolconnrooms(struct mjolgame *game,
             if (dest->x < src->x + src->width - 2) {
                 /* src has horizontal items adjacent with dest */
                 delta = src->x + src->width - dest->x - 1;
-                lim = dest->y + dest->height - 1;
+#if (MJOLTEST)
+                delta = min(delta, dest->width - 1);
+#endif
+//                lim = dest->y + dest->height - 1;
+                lim = src->y;
                 val = mjolrand() % delta;
                 x = dest->x + max(val, 1);
                 y = dest->y + dest->height - 1;
@@ -415,9 +436,12 @@ mjolconnrooms(struct mjolgame *game,
                     }
                 }
             }
-        } else if (src->x < dest->x + dest->width - 2) {
+        } else if (src->x <= dest->x + dest->width - 2) {
             /* src has horizontal items adjacent with dest */
             delta = dest->x + dest->width - src->x - 1;
+#if (MJOLTEST)
+            delta = min(delta, src->width - 1);
+#endif
             lim = src->y;
             val = mjolrand() % delta;
             x = src->x + max(val, 1);
@@ -599,7 +623,7 @@ mjolinitrooms(struct mjolgame *game, long *nret)
     struct mjolroom  *room2;
     struct mjolroom  *roomstk[8];
 //    long              nlvl = 1 + (mjolrand() % 0x02);
-    long              nlvl = 3;
+    long              nlvl = 4;
     struct mjolroom **ret = calloc(1 << nlvl, sizeof(struct mjolroom *));
     long              num;
 //    long              lim = n + (n & 0x01);
