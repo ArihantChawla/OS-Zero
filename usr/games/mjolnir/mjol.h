@@ -299,15 +299,10 @@ struct mjolroom {
     long             roomh;
 #endif
     long             flg;
-    struct mjolroom *parent;
-#if 0
-    long             treelvl;
-#endif
+//    struct mjolroom *parent;
     struct mjolroom *part1;
     struct mjolroom *part2;
-#if 0
     struct mjolroom *next;
-#endif
 };
 
 struct mjollvl {

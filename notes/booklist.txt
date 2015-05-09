@@ -33,6 +33,7 @@ brian kernighan & dennis ritchie
       	       - the c programming language, second edition
 mark j. kilgard
 		- opengl programming for the x window system
+donald knuth	- the art of computer programming boxed set 1-4a
 andre lamothe  - black art of 3d game programming
 john r levine  - linkers and loaders
 john lions     - lions' commentary on unix 6th edition with source code
