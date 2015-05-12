@@ -116,6 +116,7 @@ fpu	- floating point unit
 frm     - frame
 fs	- file system
 func    - function
+gen	- generate, generator, generation
 gfx	- graphics
 gpu	- graphics processing unit
 gui	- graphical user interface
@@ -150,6 +151,7 @@ lk      - lock
 loc	- locale
 log	- logarithm
 lpt	- line printer
+lvl	- level
 mach    - machine
 mag     - magazine (memory management)
 man	- manual
