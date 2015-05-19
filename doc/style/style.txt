@@ -77,15 +77,19 @@ bsp	- board support package
 btn     - button
 buf     - buffer
 calc	- calculator
+cand	- candidate
 cap     - capability
 ch      - character (data)
 chk     - check
 chr     - character (like a monster or player in a game)
 cmp	- compare
 cnt     - count
+cond	- conditional
 conf    - configuration
+conn	- connection
 cons    - console
 conv    - convert, conversion
+cor	- corridor
 cpu	- central processing unit
 ctrl    - control, controller
 ctx	- context
@@ -165,6 +169,7 @@ mp	- multiprocessor
 msk	- mask
 mtx     - mutex (mutual exclusion lock)
 mul	- multiplication
+nbor	- neighbor
 ndx     - index
 net     - network
 nic     - network interface card
@@ -177,6 +182,7 @@ op	- operation
 out	- output, e.g. outbuf
 par     - parallel
 pc	- personal computer, program counter (i.e. instruction pointer)
+pct	- percent, percentage
 perm	- permissions
 pg	- page
 phys	- physical (e.g. physadr)
@@ -185,6 +191,7 @@ pkg     - package
 plr	- player
 pnt     - point
 pos     - position
+prob    - probability
 proc    - process
 prog    - program
 prot	- protection
