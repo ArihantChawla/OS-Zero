@@ -4,6 +4,7 @@
 #define DNG_OBJMAPS 1
 
 #include <dungeon/conf.h>
+#include <dungeon/api.h>
 #if (DNG_RANDMT32)
 #include <zero/randmt32.h>
 #else
@@ -49,33 +50,6 @@ typedef void          dngobjfunc(long, long);
 
 /* value for uninitialised dungeon cells */
 #define DNG_NOCAVE    -1
-
-struct cellcaveparm {
-    long rndval;        // random value
-    long niter;         // # of times to visit cells
-    long size;          // current # of cells in dungeon
-    long minsize;       // minimum # of cells in dungeon
-    long maxsize;       // maximum # of cells in dungeon
-    long minrmsize;     // minimum room size
-    long maxrmsize;     // maximum room size
-    long closeprob;     // probability of closing a cell in %
-    long nlimnbor;      // cells with <= this neighbors get closed
-    long nrmnbor;       // cells with >= this empty neighbors get closed
-    long nfillnbor;     // empty cells with >= this neighbors get opened
-};
-
-struct cellcorparm {
-    long breakout;      // maximum # of tries to connect caves
-    long spacing;       // minimum distance from a closed cell
-    long minlen;        // minimum corridor length
-    long maxlen;        // maximum corridor length
-    long maxturn;       // maximum number of turns
-};
-
-struct cellgenparm {
-    struct cellcaveparm caveparm;
-    struct cellcorparm  corparm;
-};
 
 struct cellcoord {
     long xval;          // X-coordinate

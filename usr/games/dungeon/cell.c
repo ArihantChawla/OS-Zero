@@ -76,6 +76,37 @@ static struct cellcoord dngdirofstab[DNG_NDIR]
     { 1, 1 }    // DNG_SOUTHEAST
 };
 
+struct cellgenparm genparm;
+
+void
+cellsetgenparm(struct celldng *dng, struct cellgenparm *parm)
+{
+    struct dngcaveparm *caveparm;
+    struct dngcorparm  *corparm;
+    
+    if (!parm) {
+        parm = &genparm;
+    }
+    /* set cave parameters */
+    parm->caveparm.rndval = dngrand();
+    parm->caveparm.niter = 50000;
+    parm->caveparm.minsize = 16;
+    parm->caveparm.maxsize = 500;
+    parm->caveparm.closeprob = 45;
+    parm->caveparm.nlimnbor = 4;
+    parm->caveparm.nrmnbor = 3;
+    parm->caveparm.nfillnbor = 4;
+    /* set corridor parameters */
+    parm->corparm.breakout = 100000;
+    parm->corparm.spacing = 2;
+    parm->corparm.minlen = 2;
+    parm->corparm.maxlen = 5;
+    parm->corparm.maxturn = 10;
+    parm->flg |= CELL_GENPARM_INIT;
+
+    return;
+}
+
 /* initialise dungeon generator */
 void
 cellinitdng(struct celldng *dng, long ncave, long width, long height)
@@ -133,21 +164,9 @@ cellinitdng(struct celldng *dng, long ncave, long width, long height)
     dng->ncave = ncave;
     dng->ncavemax = ncavemax;
     dng->cavetab = cavetab;
-    /* set cave parameters */
-    dng->caveparm.rndval = dngrand();
-    dng->caveparm.niter = 50000;
-    dng->caveparm.minsize = 16;
-    dng->caveparm.maxsize = 500;
-    dng->caveparm.closeprob = 45;
-    dng->caveparm.nlimnbor = 4;
-    dng->caveparm.nrmnbor = 3;
-    dng->caveparm.nfillnbor = 4;
-    /* set corridor parameters */
-    dng->corparm.breakout = 100000;
-    dng->corparm.spacing = 2;
-    dng->corparm.minlen = 2;
-    dng->corparm.maxlen = 5;
-    dng->corparm.maxturn = 10;
+    if (!(dng->genparm.flg & CELL_GENPARM_INIT)) {
+        cellsetgenparm(dng, NULL);
+    }
 
     return;
 }
