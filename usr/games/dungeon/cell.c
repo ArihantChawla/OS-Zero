@@ -339,6 +339,8 @@ dngbuildcave(struct celldng *dng, long caveid)
     char             *map;
     long              w = dng->width;
     long              h = dng->height;
+    long              min = dng->genparm.caveparm.minsize;
+    long              max = dng->genparm.caveparm.maxsize;
     long              x;
     long              y;
     long              id;
@@ -357,8 +359,7 @@ dngbuildcave(struct celldng *dng, long caveid)
                 && (dnggetcaveid(dng, x, y) == DNG_NOCAVE)) {
                 dngfindcave(dng, caveid, x, y);
                 n = cave->size;
-                if (n <= dng->genparm.caveparm.minsize
-                    || n > dng->genparm.caveparm.maxsize) {
+                if (n <= min || n > max) {
                     dngrmcave(dng, caveid);
                 } else {
                     id = dng->ncave;
