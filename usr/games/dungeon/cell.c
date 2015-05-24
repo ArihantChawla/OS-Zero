@@ -1,7 +1,10 @@
+#include <dungeon/conf.h>
 #include <stdlib.h>
 #include <stdio.h>
 #include <limits.h>
+#if (DNG_RANDMT32)
 #include <zero/randmt32.h>
+#endif
 #include <zero/trix.h>
 #include <dungeon/cell.h>
 
@@ -34,9 +37,9 @@ static struct cellcor * dngtrycor(struct celldng *dng, long caveid,
 #define dngrevdir(dir) (dngrevdirtab[(dir)])
 #define dngmovedir(x, y, dir)                                           \
     ((x) += dngdirofstab[(dir)].xval, (y) += dngdirofstab[(dir)].yval)
-#define dngsetcellid(dng, x, y, cid)                                    \
+#define dngsetcaveid(dng, x, y, cid)                                    \
     ((dng)->caveidtab[(dng)->height * (y) + (x)] = (cid))
-#define dnggetcellid(dng, x, y)                                         \
+#define dnggetcaveid(dng, x, y)                                         \
     ((dng)->caveidtab[(dng)->height * (y) + (x)])
 
 static long dngdirtab[DNG_NDIR]
@@ -88,7 +91,7 @@ cellinitdng(struct celldng *dng, long ncave, long width, long height)
     long              ndx;
     long              lim;
 
-    srandmt32(~0L);
+    dngsrand(~0L);
     if (!cavetab) {
         fprintf(stderr, "CELL: failed to allocate cave table\n");
 
@@ -99,10 +102,12 @@ cellinitdng(struct celldng *dng, long ncave, long width, long height)
 
         exit(1);
     }
+    /* set cell owner-IDs (caves) to uninitialised */
     for (ndx = 0 ; ndx < num ; ndx++) {
         idtab[num] = DNG_NOCAVE;
     }
     dng->caveidtab = idtab;
+    /* allocate cave structures */
     for (ndx = 0 ; ndx < ncave ; ndx++) {
         cave = calloc(1, sizeof(struct cellcave));
         map = calloc(width * height / CHAR_BIT, sizeof(char));
@@ -119,6 +124,7 @@ cellinitdng(struct celldng *dng, long ncave, long width, long height)
         }
         cavetab[ndx] = cave;
     }
+    /* initialise dungeon structure */
     dng->width = width;
     dng->height = height;
     dng->map = map;
@@ -127,13 +133,13 @@ cellinitdng(struct celldng *dng, long ncave, long width, long height)
     dng->ncave = ncave;
     dng->ncavemax = ncavemax;
     dng->cavetab = cavetab;
-    dng->caveparm.rndval = randmt32();
-    dng->caveparm.niter = 50000;
     /* set cave parameters */
+    dng->caveparm.rndval = dngrand();
+    dng->caveparm.niter = 50000;
     dng->caveparm.minsize = 16;
     dng->caveparm.maxsize = 500;
     dng->caveparm.closeprob = 45;
-    dng->caveparm.ninvnbor = 4;
+    dng->caveparm.nlimnbor = 4;
     dng->caveparm.nrmnbor = 3;
     dng->caveparm.nfillnbor = 4;
     /* set corridor parameters */
@@ -146,6 +152,7 @@ cellinitdng(struct celldng *dng, long ncave, long width, long height)
     return;
 }
 
+/* API function for building a dungeon */
 long
 cellbuilddng(struct celldng *dng, long nlvl)
 {
@@ -161,7 +168,7 @@ cellbuilddng(struct celldng *dng, long nlvl)
     return nlvl;
 }
 
-/* count surrounding neighbors of the cell at (x, y) */
+/* count surrounding populated neighbors of the cell at (x, y) */
 static long
 dngcountnbors1(struct celldng *dng, long caveid, long x, long y, long lim)
 {
@@ -185,6 +192,7 @@ dngcountnbors1(struct celldng *dng, long caveid, long x, long y, long lim)
     return cnt;
 }
 
+/* count surrounding empty neighbors of the cell at (x, y) */
 static long
 dngcountnbors0(struct celldng *dng, long caveid, long x, long y, long lim)
 {
@@ -208,6 +216,7 @@ dngcountnbors0(struct celldng *dng, long caveid, long x, long y, long lim)
     return cnt;
 }
 
+/* generate a cave */
 static void
 dnggencave(struct celldng *dng, long caveid)
 {
@@ -222,7 +231,7 @@ dnggencave(struct celldng *dng, long caveid)
     long             y;
     long             lim;
 
-    /* initialise map bitmap */
+    /* initialise cell-bitmap */
     for (ndx = 0; ndx < n ; ndx++) {
         if (dngprobpct() < closeprob) {
             /* close a cell (set bit to 1) */
@@ -234,10 +243,10 @@ dnggencave(struct celldng *dng, long caveid)
      * neighbors close it, otherwise open it
      */ 
     n = dng->caveparm.niter;
-    lim = dng->caveparm.ninvnbor;
+    lim = dng->caveparm.nlimnbor;
     for (ndx = 0 ; ndx < n ; ndx++) {
-        x = randmt32() % w;
-        y = randmt32() % h;
+        x = dngrand() % w;
+        y = dngrand() % h;
         if (dngcountnbors1(dng, caveid, x, y, DNG_NDIR) > lim) {
             setbit(map, y * w + x);
         } else {
@@ -295,7 +304,7 @@ dngfindcave(struct celldng *dng, long caveid, long x, long y)
         dngmovedir(x1, y1, dir);
         if (!dnggetcellbit(dng, x, y)) {
             dngsetcellbit(dng, x, y);
-            dngsetcellid(dng, x, y, caveid);
+            dngsetcaveid(dng, x, y, caveid);
             cave->size++;
             dngfindcave(dng, caveid, x1, y1);
         }
@@ -326,7 +335,7 @@ dngbuildcave(struct celldng *dng, long caveid)
     for (y = 0 ; y < h ; y++) {
         for (x = 0 ; x < w ; x++) {
             if (dnggetcellbit(dng, x, y)
-                && (dnggetcellid(dng, x, y) == DNG_NOCAVE)) {
+                && (dnggetcaveid(dng, x, y) == DNG_NOCAVE)) {
                 dngfindcave(dng, caveid, x, y);
                 n = cave->size;
                 if (n <= dng->caveparm.minsize
@@ -404,7 +413,7 @@ dngconncaves(struct celldng *dng)
     long               lim;
     long               brkcnt;
     
-    cave = dng->cavetab[randmt32() % ncave];
+    cave = dng->cavetab[dngrand() % ncave];
     w = dng->width;
     h = dng->height;
     conntab[nconn] = cave;
@@ -412,12 +421,12 @@ dngconncaves(struct celldng *dng)
     do {
         id = cave->id;
         if (!ncor) {
-            ndx = randmt32() % nconn;
+            ndx = dngrand() % nconn;
             cave = conntab[ndx];
             id = cave->id;
             dngfindedge(dng, id, &corx, &cory, &dir);
         } else if (dngprobpct() > 50) {
-            ndx = randmt32() % nconn;
+            ndx = dngrand() % nconn;
             cave = conntab[ndx];
             id = cave->id;
             dngfindedge(dng, id, &corx, &cory, &dir);
@@ -436,7 +445,7 @@ dngconncaves(struct celldng *dng)
                     x1 = 0;
                     y1 = 0;
                 }
-                if (dnggetcellid(dng, x1, y1) == ndx) {
+                if (dnggetcaveid(dng, x1, y1) == ndx) {
                     if (!cave || id != ndx) {
                         num = ndx + 1;
                         coord1 = &cor->pnttab[ndx];
@@ -500,10 +509,10 @@ dngturncor(long dir)
     long ret;
 
     if (dir == DNG_NODIR) {
-        ret = dngdirtab[randmt32() % DNG_NDIR];
+        ret = dngdirtab[dngrand() % DNG_NDIR];
     } else {
         do {
-            ret = dngdirtab[randmt32() % DNG_NDIR];
+            ret = dngdirtab[dngrand() % DNG_NDIR];
         } while (ret == dngrevdir(dir));
     }
 
@@ -516,10 +525,10 @@ dngturncor2(long dir)
     long ret;
 
     if (dir == DNG_NODIR) {
-        ret = dngdirtab[randmt32() % DNG_NDIR];
+        ret = dngdirtab[dngrand() % DNG_NDIR];
     } else {
         do {
-            ret = dngdirtab[randmt32() % DNG_NDIR];
+            ret = dngdirtab[dngrand() % DNG_NDIR];
         } while (ret == dngrevdir(dir) || ret == dir);
     }
 
@@ -538,8 +547,8 @@ dngfindedge(struct celldng *dng, long caveid, long *retx, long *rety,
     long             y;
 
     do {
-        x = randmt32() % w;
-        y = randmt32() % h;
+        x = dngrand() % w;
+        y = dngrand() % h;
         dir = dngturncor(dir);
         do {
             dngmovedir(x, y, dir);
@@ -582,7 +591,7 @@ dngfindcoredge(struct celldng *dng, long caveid,
 
     do {
         if (ncor) {
-            ndx = randmt32() % ncor;
+            ndx = dngrand() % ncor;
         }
         cor = cortab[ndx];
         for (ndx = 0 ; ndx < DNG_NDIR ; ndx++) {
@@ -596,7 +605,7 @@ dngfindcoredge(struct celldng *dng, long caveid,
             }
         }
     } while (!ndir);
-    ndx = randmt32() % ndir;
+    ndx = dngrand() % ndir;
     *retdir = dir;
     *retx = x;
     *rety = y;
@@ -679,7 +688,7 @@ dngtrycor(struct celldng *dng, long caveid,
                              ncormax * sizeof(struct cellcoord));
             coord = &pnttab[npnt];
         }
-        len = min + (randmt32() % (max - min + 1));
+        len = min + (dngrand() % (max - min + 1));
         while (len) {
             len--;
             corx = x + dngdirofstab[dir].xval;
