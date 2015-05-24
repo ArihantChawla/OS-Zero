@@ -165,7 +165,7 @@ cellinitdng(struct celldng *dng, long ncave, long width, long height)
     dng->ncavemax = ncavemax;
     dng->cavetab = cavetab;
     if (!(dng->genparm.flg & CELL_GENPARM_INIT)) {
-        cellsetgenparm(dng, NULL);
+        cellsetgenparm(dng, &genparm);
     }
 
     return;
@@ -243,7 +243,7 @@ dnggencave(struct celldng *dng, long caveid)
     long             w = dng->width;
     long             h = dng->height;
     char            *map = calloc(h, w / CHAR_BIT);
-    long             closeprob = dng->caveparm.closeprob;
+    long             closeprob = dng->genparm.caveparm.closeprob;
     long             ndx;
     long             n = w * h;
     long             x;
@@ -261,8 +261,8 @@ dnggencave(struct celldng *dng, long caveid)
      * iterate over the map, picking cells at random; if the cell has > lim
      * neighbors close it, otherwise open it
      */ 
-    n = dng->caveparm.niter;
-    lim = dng->caveparm.nlimnbor;
+    n = dng->genparm.caveparm.niter;
+    lim = dng->genparm.caveparm.nlimnbor;
     for (ndx = 0 ; ndx < n ; ndx++) {
         x = dngrand() % w;
         y = dngrand() % h;
@@ -276,7 +276,7 @@ dnggencave(struct celldng *dng, long caveid)
      * smooth cave edges and single blocks by removing cells with
      * >= lim empty neighbors
      */
-    lim = dng->caveparm.nrmnbor;
+    lim = dng->genparm.caveparm.nrmnbor;
     for (n = 0 ; n < 5 ; n++) {
         for (y = 0 ; y < h ; y++) {
             for (x = 0 ; x < w ; x++) {
@@ -288,7 +288,7 @@ dnggencave(struct celldng *dng, long caveid)
         }
     }
     /* fill in empty cells with at least lim neighbors to get rid of holes */
-    lim = dng->caveparm.nfillnbor;
+    lim = dng->genparm.caveparm.nfillnbor;
     for (y = 0 ; y < h ; y++) {
         for (x = 0 ; x < w ; x++) {
             if (!dnggetcellbit(dng, x, y)
@@ -357,8 +357,8 @@ dngbuildcave(struct celldng *dng, long caveid)
                 && (dnggetcaveid(dng, x, y) == DNG_NOCAVE)) {
                 dngfindcave(dng, caveid, x, y);
                 n = cave->size;
-                if (n <= dng->caveparm.minsize
-                    || n > dng->caveparm.maxsize) {
+                if (n <= dng->genparm.caveparm.minsize
+                    || n > dng->genparm.caveparm.maxsize) {
                     dngrmcave(dng, caveid);
                 } else {
                     id = dng->ncave;
@@ -505,7 +505,7 @@ dngconncaves(struct celldng *dng)
                 }
             }
         }
-        lim = dng->corparm.breakout;
+        lim = dng->genparm.corparm.breakout;
         brkcnt++;
         if (brkcnt >= lim) {
             free(cor);
@@ -638,7 +638,7 @@ dngchkcorpnt(struct celldng *dng, long caveid, long x, long y, long dir)
     struct cellcave *cave = dng->cavetab[caveid];
     long             xofs = dngdirofstab[dir].xval;
     long             yofs = dngdirofstab[dir].yval;
-    long             space = dng->corparm.spacing;
+    long             space = dng->genparm.corparm.spacing;
     long             w = dng->width;
     long             h = dng->height;
     long             x1;
@@ -673,9 +673,9 @@ dngtrycor(struct celldng *dng, long caveid,
 {
     struct cellcave  *cave = dng->cavetab[caveid];
     long              ncor = dng->ncor;
-    long              min = dng->corparm.minlen;
-    long              max = dng->corparm.maxlen;
-    long              nturn = dng->corparm.maxturn;
+    long              min = dng->genparm.corparm.minlen;
+    long              max = dng->genparm.corparm.maxlen;
+    long              nturn = dng->genparm.corparm.maxturn;
     struct cellcor   *cor = calloc(1, sizeof(struct cellcor));
     long              ncormax = dng->ncormax;
     long              npnt;

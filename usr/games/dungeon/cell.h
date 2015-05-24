@@ -83,8 +83,11 @@ struct celldng {
     long                  ncormax;      // maximum # of (allocated) corridors
     struct cellcor      **cortab;       // corridor structures
     long                 *caveidtab;    // map of cell-owner caves
+    struct cellgenparm    genparm;
+#if 0
     struct cellcaveparm   caveparm;
     struct cellcorparm    corparm;
+#endif
 };
 
 void cellinitdng(struct celldng *dng, long ncave, long width, long height);
