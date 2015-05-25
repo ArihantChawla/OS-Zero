@@ -12,6 +12,8 @@ cellinitparm(struct cellgenparm *parm)
     parm->caveparm.minsize = 64 * 36;
     parm->caveparm.maxsize = 256 * 144;
     parm->corparm.brkout = 1024 * 768;
+
+    return;
 }
 
 static void

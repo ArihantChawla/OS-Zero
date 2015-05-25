@@ -8,6 +8,7 @@
 #include <zero/trix.h>
 #include <dungeon/cell.h>
 
+/* internal function prototypes */
 static long dngcountnbors1(struct celldng *dng, long caveid,
                            long x, long y, long lim);
 static long dngcountnbors0(struct celldng *dng, long caveid,
@@ -42,6 +43,7 @@ static struct cellcor * dngtrycor(struct celldng *dng, long caveid,
 #define dnggetcaveid(dng, x, y)                                         \
     ((dng)->caveidtab[(dng)->height * (y) + (x)])
 
+/* lookup tables */
 static long dngdirtab[DNG_NDIR]
 = {
     DNG_NORTH,
@@ -76,6 +78,7 @@ static struct cellcoord dngdirofstab[DNG_NDIR]
     { 1, 1 }    // DNG_SOUTHEAST
 };
 
+/* global generator parameters */
 static struct cellgenparm *genparm;
 
 void
@@ -170,7 +173,7 @@ cellinitdng(struct celldng *dng, long ncave, long width, long height)
     dng->ncave = ncave;
     dng->ncavemax = ncavemax;
     dng->cavetab = cavetab;
-    cellsetgenparm(dng, genparm);
+    cellsetgenparm(dng, NULL);
 
     return;
 }

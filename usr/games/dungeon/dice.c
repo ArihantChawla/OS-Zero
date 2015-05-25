@@ -99,7 +99,7 @@ dicerolld20(struct diced20 *dicebuf)
 int
 main(int argc, char *argv[])
 {
-    struct diced20 dicebuf = { 0, 0, 0, 0, 0, 0 };
+    struct diced20 dicebuf = { 1, 1, 1, 1, 1, 1 };
     int            retval = 0;
 
     diceinit(0);
