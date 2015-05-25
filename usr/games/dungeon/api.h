@@ -18,7 +18,7 @@ struct cellcaveparm {
 
 /* user-settable corridor parameter structure */
 struct cellcorparm {
-    long breakout;      // maximum # of tries to connect caves
+    long brkout;        // maximum # of tries to connect caves
     long spacing;       // minimum distance from a closed cell
     long minlen;        // minimum corridor length
     long maxlen;        // maximum corridor length

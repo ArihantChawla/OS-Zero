@@ -76,28 +76,34 @@ static struct cellcoord dngdirofstab[DNG_NDIR]
     { 1, 1 }    // DNG_SOUTHEAST
 };
 
-struct cellgenparm genparm;
+static struct cellgenparm *genparm;
 
 void
-cellsetgenparm(struct celldng *dng, struct cellgenparm *parm)
+cellsetdefparm(struct cellgenparm *parm)
 {
-    struct dngcaveparm *caveparm;
-    struct dngcorparm  *corparm;
-    
-    if (!parm) {
-        parm = &genparm;
-    }
-    /* set cave parameters */
     parm->caveparm.rndval = dngrand();
     parm->caveparm.niter = 50000;
-    parm->caveparm.minsize = 16;
-    parm->caveparm.maxsize = 500;
     parm->caveparm.closeprob = 45;
     parm->caveparm.nlimnbor = 4;
     parm->caveparm.nrmnbor = 3;
     parm->caveparm.nfillnbor = 4;
+    genparm = parm;
+}
+
+void
+cellsetgenparm(struct celldng *dng, struct cellgenparm *parm)
+{
+    if (!parm) {
+        /* invoke global default configuration if one not supplied */
+        parm = genparm;
+    }
+    /* set cave parameters */
+#if 0
+    parm->caveparm.minsize = 16;
+    parm->caveparm.maxsize = 500;
+#endif
     /* set corridor parameters */
-    parm->corparm.breakout = 100000;
+    parm->corparm.brkout = 100000;
     parm->corparm.spacing = 2;
     parm->corparm.minlen = 2;
     parm->corparm.maxlen = 5;
@@ -164,9 +170,7 @@ cellinitdng(struct celldng *dng, long ncave, long width, long height)
     dng->ncave = ncave;
     dng->ncavemax = ncavemax;
     dng->cavetab = cavetab;
-    if (!(dng->genparm.flg & CELL_GENPARM_INIT)) {
-        cellsetgenparm(dng, &genparm);
-    }
+    cellsetgenparm(dng, genparm);
 
     return;
 }
@@ -243,7 +247,7 @@ dnggencave(struct celldng *dng, long caveid)
     long             w = dng->width;
     long             h = dng->height;
     char            *map = calloc(h, w / CHAR_BIT);
-    long             closeprob = dng->genparm.caveparm.closeprob;
+    long             closeprob = genparm->caveparm.closeprob;
     long             ndx;
     long             n = w * h;
     long             x;
@@ -261,8 +265,8 @@ dnggencave(struct celldng *dng, long caveid)
      * iterate over the map, picking cells at random; if the cell has > lim
      * neighbors close it, otherwise open it
      */ 
-    n = dng->genparm.caveparm.niter;
-    lim = dng->genparm.caveparm.nlimnbor;
+    n = genparm->caveparm.niter;
+    lim = genparm->caveparm.nlimnbor;
     for (ndx = 0 ; ndx < n ; ndx++) {
         x = dngrand() % w;
         y = dngrand() % h;
@@ -276,7 +280,7 @@ dnggencave(struct celldng *dng, long caveid)
      * smooth cave edges and single blocks by removing cells with
      * >= lim empty neighbors
      */
-    lim = dng->genparm.caveparm.nrmnbor;
+    lim = genparm->caveparm.nrmnbor;
     for (n = 0 ; n < 5 ; n++) {
         for (y = 0 ; y < h ; y++) {
             for (x = 0 ; x < w ; x++) {
@@ -288,7 +292,7 @@ dnggencave(struct celldng *dng, long caveid)
         }
     }
     /* fill in empty cells with at least lim neighbors to get rid of holes */
-    lim = dng->genparm.caveparm.nfillnbor;
+    lim = genparm->caveparm.nfillnbor;
     for (y = 0 ; y < h ; y++) {
         for (x = 0 ; x < w ; x++) {
             if (!dnggetcellbit(dng, x, y)
@@ -339,8 +343,8 @@ dngbuildcave(struct celldng *dng, long caveid)
     char             *map;
     long              w = dng->width;
     long              h = dng->height;
-    long              min = dng->genparm.caveparm.minsize;
-    long              max = dng->genparm.caveparm.maxsize;
+    long              min = genparm->caveparm.minsize;
+    long              max = genparm->caveparm.maxsize;
     long              x;
     long              y;
     long              id;
@@ -506,7 +510,7 @@ dngconncaves(struct celldng *dng)
                 }
             }
         }
-        lim = dng->genparm.corparm.breakout;
+        lim = genparm->corparm.brkout;
         brkcnt++;
         if (brkcnt >= lim) {
             free(cor);
@@ -639,7 +643,7 @@ dngchkcorpnt(struct celldng *dng, long caveid, long x, long y, long dir)
     struct cellcave *cave = dng->cavetab[caveid];
     long             xofs = dngdirofstab[dir].xval;
     long             yofs = dngdirofstab[dir].yval;
-    long             space = dng->genparm.corparm.spacing;
+    long             space = genparm->corparm.spacing;
     long             w = dng->width;
     long             h = dng->height;
     long             x1;
@@ -674,9 +678,9 @@ dngtrycor(struct celldng *dng, long caveid,
 {
     struct cellcave  *cave = dng->cavetab[caveid];
     long              ncor = dng->ncor;
-    long              min = dng->genparm.corparm.minlen;
-    long              max = dng->genparm.corparm.maxlen;
-    long              nturn = dng->genparm.corparm.maxturn;
+    long              min = genparm->corparm.minlen;
+    long              max = genparm->corparm.maxlen;
+    long              nturn = genparm->corparm.maxturn;
     struct cellcor   *cor = calloc(1, sizeof(struct cellcor));
     long              ncormax = dng->ncormax;
     long              npnt;
