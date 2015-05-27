@@ -138,32 +138,61 @@ cellinitx11gc(struct cellx11 *x11)
 void
 celldrawx11win(XEvent *ev)
 {
-    struct cellcave *cave;
-    void            *map;
-    long             id;
-    long              y;
+    struct cellcor   *cor;
+    struct cellcoord *coord;
+    void             *map;
+    long              n;
+    long              id;
+    long              lim1;
+    long              lim2;
     long              x;
+    long              y;
     long              w = testdng->width;
+    long              x1;
+    long              y1;
 
-    for (id = 0 ; id < testdng->ncave ; id++) {
-        cave = testdng->cavetab[id];
-        map = cave->map;
-        for (y = 0 ; y < 768 / 8 ; y++) {
-            for (x = 0 ; x < 1024 / 8 ; x++) {
-                if (bitset(map, y * w + x)) {
-#if 0
-                    XDrawPoint(cellx11.disp,
+    map = testdng->map;
+#if (DNG_PIXELCELLS)
+    lim1 = 768;
+    lim2 = 1024;
+#else
+    lim1 = 768 / 8;
+    lim2 = 1024 / 8;
+#endif
+    for (y = 0 ; y < lim1 ; y++) {
+        for (x = 0 ; x < lim2 ; x++) {
+            if (bitset(map, y * w + x)) {
+#if (DNG_PIXELCELLS)
+                XDrawPoint(cellx11.disp,
+                           cellx11.mainwin,
+                           cellx11.cavegc,
+                           x, y);
+#else
+                XDrawRectangle(cellx11.disp,
                                cellx11.mainwin,
                                cellx11.cavegc,
-                               x, y);
+                               x * 8, y * 8,
+                               7, 7);
 #endif
-                    XDrawRectangle(cellx11.disp,
-                                   cellx11.mainwin,
-                                   cellx11.cavegc,
-                                   x * 8, y * 8,
-                                   8, 8);
-                }
             }
+        }
+    }
+    /* draw corridors */
+    n = testdng->ncor;
+    while (n) {
+        n--;
+        cor = testdng->cortab[n];
+        lim1 = cor->ncell;
+        coord = cor->celltab;
+        for (id = 0 ; id < lim1 ; id++) {
+            x1 = coord->xval;
+            y1 = coord->xval;
+            XDrawRectangle(cellx11.disp,
+                           cellx11.mainwin,
+                           cellx11.corgc,
+                           x1 * 8, y1 * 8,
+                           7, 7);
+            coord++;
         }
     }
 

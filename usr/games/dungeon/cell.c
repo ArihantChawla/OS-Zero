@@ -9,39 +9,42 @@
 #include <dungeon/cell.h>
 
 /* internal function prototypes */
-static long dngcountnbors1(struct celldng *dng, long caveid,
-                           long x, long y, long lim);
-static long dngcountnbors0(struct celldng *dng, long caveid,
-                           long x, long y, long lim);
-static void dnggencave(struct celldng *dng, long caveid);
-static void dngfindcave(struct celldng *dng, long caveid, long x, long y);
-static void dngbuildcave(struct celldng *dng, long caveid);
+static long dngcountnbors1(struct celldng *dng, long x, long y, long lim);
+static long dngcountnbors0(struct celldng *dng, long x, long y, long lim);
+static void dnggencaves(struct celldng *dng);
+static long dngfindcave(struct celldng *dng, long caveid, long x, long y,
+                        long *sizeret);
+static void dngbuildcaves(struct celldng *dng);
 static void dngrmcave(struct celldng *dng, long caveid);
 static long dngconncaves(struct celldng *dng);
 static long dngturncor(long dir);
 static long dngturncor2(long dir);
 static void dngfindedge(struct celldng *dng, long caveid,
                         long *retx, long *rety, long *retdir);
-static void dngfindcoredge(struct celldng *dng, long caveid,
+static void dngfindcoredge(struct celldng *dng,
                            long *retx, long *rety, long *retdir);
-static long dngchkcorpnt(struct celldng *dng, long caveid,
-                         long x, long y, long dir);
-static struct cellcor * dngtrycor(struct celldng *dng, long caveid,
+static long dngchkcorcell(struct celldng *dng,
+                          long x, long y, long dir);
+static struct cellcor * dngtrycor(struct celldng *dng,
                                   long x, long y, long dir,
                                   long backtrack);
 
 /* macros */
-#define dnggetcavebit(dng, cave, x, y)                                  \
-    (bitset((cave)->map, (y) * (dng)->width + (x)))
-#define dngsetcavebit(dng, cave, x, y)                                  \
-    (setbit((cave)->map, y * (dng)->height + x))
+#define dngiscell(x, y, w, h)                                           \
+    ((x) >= 0 && (x) < (w) && (y) >= 0 && (y) < h)
+#define dnggetcellbit(dng, x, y)                                        \
+    (bitset((dng)->map, (y) * (dng)->width + (x)))
+#define dngsetcellbit(dng, x, y)                                        \
+    (setbit((dng)->map, (y) * (dng)->width + x))
+#define dngclrcellbit(dng, x, y)                                        \
+    (clrbit((dng)->map, (y) * (dng)->width + x))
 #define dngrevdir(dir) (dngrevdirtab[(dir)])
 #define dngmovedir(x, y, dir)                                           \
     ((x) += dngdirofstab[(dir)].xval, (y) += dngdirofstab[(dir)].yval)
 #define dngsetcaveid(dng, x, y, cid)                                    \
-    ((dng)->caveidtab[(dng)->height * (y) + (x)] = (cid))
+    ((dng)->caveidtab[(y) * (dng)->width + (x)] = (cid))
 #define dnggetcaveid(dng, x, y)                                         \
-    ((dng)->caveidtab[(dng)->height * (y) + (x)])
+    ((dng)->caveidtab[(y) * (dng)->width + (x)])
 
 /* lookup tables */
 static long dngdirtab[DNG_NDIR]
@@ -86,11 +89,21 @@ cellsetdefparm(struct cellgenparm *parm)
 {
     parm->caveparm.rndval = dngrand();
 //    parm->caveparm.niter = 50000;
-    parm->caveparm.niter = 1000;
+#if (DNG_PIXELCELLS)
+    parm->caveparm.niter = 5000000;
+#else
+//    parm->caveparm.niter = 2500;
+    parm->caveparm.niter = 25000;
+#endif
 //    parm->caveparm.closeprob = 45;
     parm->caveparm.closeprob = 45;
+#if 0
     parm->caveparm.nlimnbor = 4;
     parm->caveparm.nrmnbor = 3;
+    parm->caveparm.nfillnbor = 4;
+#endif
+    parm->caveparm.nlimnbor = 3;
+    parm->caveparm.nrmnbor = 5;
     parm->caveparm.nfillnbor = 4;
     genparm = parm;
 }
@@ -113,7 +126,10 @@ cellsetgenparm(struct celldng *dng, struct cellgenparm *parm)
     parm->corparm.brkout = 100000;
     parm->corparm.spacing = 2;
     parm->corparm.minlen = 2;
+#if 0
     parm->corparm.maxlen = 5;
+#endif
+    parm->corparm.maxlen = 8;
     parm->corparm.maxturn = 10;
     parm->flg |= CELL_GENPARM_INIT;
 
@@ -122,20 +138,23 @@ cellsetgenparm(struct celldng *dng, struct cellgenparm *parm)
 
 /* initialise dungeon generator */
 void
-cellinitdng(struct celldng *dng, long ncave, long width, long height)
+cellinitdng(struct celldng *dng, long width, long height)
 {
     long              num = width * height;
     long              ncavemax = 16;
     long              ncormax = 16;
+    char             *map = calloc(width * height / CHAR_BIT, sizeof(char));
     struct cellcave **cavetab = calloc(ncavemax, sizeof(struct cellcave *));
     long             *idtab = malloc(num * sizeof(long));
     struct cellcor  **cortab;
     struct cellcave  *cave;
-    char             *map;
     long              ndx;
-    long              lim;
 
-    dngsrand(~0L);
+    if (!map) {
+        fprintf(stderr, "CELL: failed to allocate cave bitmap\n");
+        
+        exit(1);
+    }
     if (!cavetab) {
         fprintf(stderr, "CELL: failed to allocate cave table\n");
 
@@ -146,31 +165,15 @@ cellinitdng(struct celldng *dng, long ncave, long width, long height)
 
         exit(1);
     }
+    /* set random seed */
+//    dngsrand(~0L);
+    dngsrand(0x55555555L);
     /* set cell owner-IDs (caves) to uninitialised */
     for (ndx = 0 ; ndx < num ; ndx++) {
-        idtab[num] = DNG_NOCAVE;
+        idtab[ndx] = DNG_NOCAVE;
     }
+    dng->map = map;
     dng->caveidtab = idtab;
-    /* allocate cave structures */
-    for (ndx = 0 ; ndx < ncave ; ndx++) {
-        cave = calloc(1, sizeof(struct cellcave));
-        map = calloc(width * height / CHAR_BIT, sizeof(char));
-        if (!map) {
-            fprintf(stderr, "CELL: failed to allocate cave bitmap\n");
-            
-            exit(1);
-        }
-        cave->map = map;
-        cortab = calloc(ncormax, sizeof(struct cellcor *));
-        if (!cortab) {
-            fprintf(stderr, "CELL: failed to allocate corridor table\n");
-            
-            exit(1);
-        }
-        cave->ncormax = ncormax;
-        cave->cortab = cortab;
-        cavetab[ndx] = cave;
-    }
     /* initialise dungeon structure */
     dng->width = width;
     dng->height = height;
@@ -179,7 +182,6 @@ cellinitdng(struct celldng *dng, long ncave, long width, long height)
     dng->ncormax = ncormax;
     dng->cortab = cortab;
 #endif
-    dng->ncave = ncave;
     dng->ncavemax = ncavemax;
     dng->cavetab = cavetab;
     cellsetgenparm(dng, NULL);
@@ -188,40 +190,37 @@ cellinitdng(struct celldng *dng, long ncave, long width, long height)
 }
 
 /* API function for building a dungeon */
-long
-cellbuilddng(struct celldng *dng, long nlvl)
+void
+cellbuilddng(struct celldng *dng)
 {
-    long id;
-    
-    for (id = 0 ; id < nlvl ; id++) {
-        dnggencave(dng, id);
-        dngbuildcave(dng, id);
-    }
-    dng->ncave = nlvl;
+    dnggencaves(dng);
+    dngbuildcaves(dng);
     dngconncaves(dng);
 
-    return nlvl;
+    return;
 }
 
 /* count surrounding populated neighbors of the cell at (x, y) */
 static long
-dngcountnbors1(struct celldng *dng, long caveid, long x, long y, long lim)
+dngcountnbors1(struct celldng *dng, long x, long y, long lim)
 {
-    struct cellcave  *cave = dng->cavetab[caveid];
     long              cnt = 0;
-    struct cellcoord *pnt;
+    struct cellcoord *cell;
     long              dir;
+    long              w = dng->width;
+    long              h = dng->height;
     long              x1;
     long              y1;
 
-    pnt = dngdirofstab;
+    cell = dngdirofstab;
     for (dir = 0 ; dir < lim ; dir++) {
-        x1 = x + pnt->xval;
-        y1 = y + pnt->yval;
-        if (dnggetcavebit(dng, cave, x1, y1)) {
+        x1 = x + cell->xval;
+        y1 = y + cell->yval;
+        if (dngiscell(x1, y1, w, h)
+            && dnggetcellbit(dng, x1, y1)) {
             cnt++;
         }
-        pnt++;
+        cell++;
     }
 
     return cnt;
@@ -229,23 +228,25 @@ dngcountnbors1(struct celldng *dng, long caveid, long x, long y, long lim)
 
 /* count surrounding empty neighbors of the cell at (x, y) */
 static long
-dngcountnbors0(struct celldng *dng, long caveid, long x, long y, long lim)
+dngcountnbors0(struct celldng *dng, long x, long y, long lim)
 {
-    struct cellcave  *cave = dng->cavetab[caveid];
     long              cnt = 0;
-    struct cellcoord *pnt;
+    struct cellcoord *cell;
     long              dir;
+    long              w = dng->width;
+    long              h = dng->height;
     long              x1;
     long              y1;
 
-    pnt = dngdirofstab;
+    cell = dngdirofstab;
     for (dir = 0 ; dir < lim ; dir++) {
-        x1 = x + pnt->xval;
-        y1 = y + pnt->yval;
-        if (!dnggetcavebit(dng, cave, x1, y1)) {
+        x1 = x + cell->xval;
+        y1 = y + cell->yval;
+        if (dngiscell(x1, y1, w, h)
+            && !dnggetcellbit(dng, x1, y1)) {
             cnt++;
         }
-        pnt++;
+        cell++;
     }
 
     return cnt;
@@ -253,13 +254,13 @@ dngcountnbors0(struct celldng *dng, long caveid, long x, long y, long lim)
 
 /* generate a cave */
 static void
-dnggencave(struct celldng *dng, long caveid)
+dnggencaves(struct celldng *dng)
 {
-    struct cellcave *cave = dng->cavetab[caveid];
+    struct cellcave *cave;
     long             w = dng->width;
     long             h = dng->height;
 //    char            *map = calloc(h, w / CHAR_BIT);
-    char            *map = cave->map;
+    char            *map = dng->map;
     long             closeprob = genparm->caveparm.closeprob;
     long             ndx;
     long             n = w * h;
@@ -283,22 +284,35 @@ dnggencave(struct celldng *dng, long caveid)
     for (ndx = 0 ; ndx < n ; ndx++) {
         x = dngrand() % w;
         y = dngrand() % h;
-        if (dngcountnbors1(dng, caveid, x, y, DNG_NDIR) > lim) {
+        if (dngcountnbors1(dng, x, y, DNG_NDIR) > lim) {
             setbit(map, y * w + x);
         } else {
             clrbit(map, y * w + x);
         }
     }
+#if 0
+    for (y = 0 ; y < h ; y++) {
+        for (x = 0 ; x < w ; x++) {
+            if (dngcountnbors1(dng, x, y, DNG_NDIR) > lim) {
+                setbit(map, y * w + x);
+            } else {
+                clrbit(map, y * w + x);
+            }
+        }
+    }
+#endif
     /*
      * smooth cave edges and single blocks by removing cells with
      * >= lim empty neighbors
      */
     lim = genparm->caveparm.nrmnbor;
-    for (n = 0 ; n < 5 ; n++) {
+//    for (ndx = 0 ; ndx < dng->ncave ; ndx++) {
+    for (ndx = 0 ; ndx < 5 ; ndx++) {
+        cave = dng->cavetab[ndx];
         for (y = 0 ; y < h ; y++) {
             for (x = 0 ; x < w ; x++) {
-                if (dnggetcavebit(dng, cave, x, y)
-                    && dngcountnbors0(dng, caveid, x, y, DNG_NDIR2) >= lim) {
+                if (dnggetcellbit(dng, x, y)
+                    && dngcountnbors0(dng, x, y, DNG_NDIR2) >= lim) {
                     clrbit(map, y * w + x);
                 }
             }
@@ -308,13 +322,12 @@ dnggencave(struct celldng *dng, long caveid)
     lim = genparm->caveparm.nfillnbor;
     for (y = 0 ; y < h ; y++) {
         for (x = 0 ; x < w ; x++) {
-            if (!dnggetcavebit(dng, cave, x, y)
-                && dngcountnbors1(dng, caveid, x, y, DNG_NDIR2) >= lim) {
+            if (!dnggetcellbit(dng, x, y)
+                && dngcountnbors1(dng, x, y, DNG_NDIR2) >= lim) {
                 setbit(map, y * w + x);
             }
         }
     }
-    dng->cavetab[caveid] = cave;
 
     return;
 }
@@ -323,36 +336,90 @@ dnggencave(struct celldng *dng, long caveid)
  * locate all caves within a map
  * NOTE: this function calls itself recursively
  */
-static void
-dngfindcave(struct celldng *dng, long caveid, long x, long y)
+static long
+dngfindcave(struct celldng *dng, long caveid, long x, long y, long *sizeret)
 {
-    struct cellcave *cave = dng->cavetab[caveid];
-    long             dir = DNG_NODIR;
-    long             x1;
-    long             y1;
-    long             ndx;
-    long             lim;
+    long              ret;
+    struct cellcave  *cave;
+    long              dir = DNG_NODIR;
+    long              id = (caveid >= 0) ? caveid : dng->ncave;
+    long              ncavemax = dng->ncavemax;
+    long              recur = 1;
+    long              w = dng->width;
+    long              h = dng->height;
+    long              ncellmax = 16;
+    struct cellcoord *celltab = calloc(ncellmax, sizeof(struct cellcoord));
+    long              x1;
+    long              y1;
+    long              ndx;
+    long              lim;
 
+    if (caveid == DNG_NOCAVE) {
+        cave = calloc(1, sizeof(struct cellcave));
+        if (!cave) {
+            fprintf(stderr, "CELL: failed to allocate cave\n");
+
+            exit(1);
+        }
+        cave->celltab = celltab;
+        if (id == ncavemax) {
+            ncavemax <<= 1;
+            dng->cavetab = realloc(dng->cavetab,
+                                   ncavemax * sizeof(struct cellcave **));
+            if (!dng->cavetab) {
+                fprintf(stderr, "CELL: failed to allocate cave table\n");
+
+                exit(1);
+            }
+            dng->ncavemax = ncavemax;
+        }
+        dng->cavetab[id] = cave;
+//        dng->ncave = id + 1;
+        recur = 0;
+    }
     lim = DNG_NDIR2;
     for (ndx =  0 ; ndx < lim ; ndx++) {
         x1 = x;
         y1 = y;
         dngmovedir(x1, y1, dir);
-        if (!dnggetcavebit(dng, cave, x, y)) {
-            dngsetcavebit(dng, cave, x, y);
-            dngsetcaveid(dng, x, y, caveid);
-            cave->size++;
-            dngfindcave(dng, caveid, x1, y1);
+        if (dngiscell(x1, y1, w, h)
+            && !dnggetcellbit(dng, x1, y1)) {
+            cave = dng->cavetab[id];
+            dngsetcellbit(dng, x1, y1);
+            dngsetcaveid(dng, x1, y1, id);
+            if (cave->ncell == ncellmax) {
+                ncellmax <<= 1;
+                celltab = realloc(cave->celltab,
+                                  ncellmax * sizeof(struct cellcoord));
+                if (!celltab) {
+                    fprintf(stderr, "CELL: failed to reallocate cell table\n");
+
+                    exit(1);
+                }
+                cave->celltab = celltab;
+            }
+            cave->celltab[cave->ncell].xval = x1;
+            cave->celltab[cave->ncell].yval = y1;
+            cave->ncell++;
+            dngfindcave(dng, id, x1, y1, NULL);
+        }
+    }
+    if (recur) {
+        ret = DNG_NOCAVE;
+    } else {
+        dng->ncave = id + 1;
+        ret = id;
+        if (sizeret) {
+            *sizeret = cave->ncell;
         }
     }
 
-    return;
+    return ret;
 }
 
 static void
-dngbuildcave(struct celldng *dng, long caveid)
+dngbuildcaves(struct celldng *dng)
 {
-    struct cellcave  *cave = dng->cavetab[caveid];
     char             *map;
     long              w = dng->width;
     long              h = dng->height;
@@ -360,44 +427,19 @@ dngbuildcave(struct celldng *dng, long caveid)
     long              max = genparm->caveparm.maxsize;
     long              x;
     long              y;
-    long              id;
+    long              id = DNG_NOCAVE;
+    long              ncell;
     long              ndx;
     long              lim;
-    long              n;
 
-    if (!cave) {
-        fprintf(stderr, "CELL: failed to allocate cave\n");
-        
-        exit(1);
-    }
     for (y = 0 ; y < h ; y++) {
         for (x = 0 ; x < w ; x++) {
-            if (dnggetcavebit(dng, cave, x, y)
+            if (dnggetcellbit(dng, x, y)
                 && (dnggetcaveid(dng, x, y) == DNG_NOCAVE)) {
-                dngsetcaveid(dng, x, y, caveid);
-                dngfindcave(dng, caveid, x, y);
-                n = cave->size;
-                if (n <= min || n > max) {
-                    dngrmcave(dng, caveid);
-                } else {
-                    id = dng->ncave;
-                    lim = dng->ncavemax;
-                    cave->id = id;
-                    if (id == lim) {
-                        lim <<= 1;
-                        dng->cavetab = realloc(dng->cavetab,
-                                               lim * sizeof(struct cellcave *));
-                        if (!dng->cavetab) {
-                            fprintf(stderr,
-                                    "CELL: failed to reallocate cave table\n");
-
-                            exit(1);
-                        }
-                        dng->ncavemax = lim;
-                    }
-                    dng->cavetab[id] = cave;
-                    id++;
-                    dng->ncave = id;
+//                dngsetcaveid(dng, x, y, id);
+                id = dngfindcave(dng, DNG_NOCAVE, x, y, &ncell);
+                if ((ncell <= min || ncell > max) && id != DNG_NOCAVE) {
+                    dngrmcave(dng, id);
                 }
             }
         }
@@ -409,24 +451,35 @@ dngbuildcave(struct celldng *dng, long caveid)
 static void
 dngrmcave(struct celldng *dng, long caveid)
 {
-    struct cellcave *cave = dng->cavetab[caveid];
-    long             w = dng->width;
-//    char            *map = cave->map;
-    long             ndx1;
-    long             ndx2;
-    long             lim1;
-    long             lim2;
+    struct cellcave  *cave = dng->cavetab[caveid];
+    char             *map = dng->map;
+    struct cellcoord *cell;
+    long              x;
+    long              y;
+    long              w = dng->width;
+    long              h = dng->height;
+    long              ndx1;
+    long              ndx2;
+    long              id;
+    long              lim;
 
-    lim1 = dng->height;
-    lim2 = w;
+    lim = cave->ncell;
+    cell = cave->celltab;
+    for (ndx1 = 0 ; ndx1 < lim ; ndx1++) {
+        x = cell->xval;
+        y = cell->yval;
+        dngclrcellbit(dng, x, y);
+        dngsetcaveid(dng, x, y, DNG_NOCAVE);
+    }
 #if 0
-    for (ndx1 = 0 ; ndx1 < lim1 ; ndx1++) {
-        for (ndx2 = 0 ; ndx1 < lim2 ; ndx1++) {
-            clrbit(map, ndx1 * w + ndx2);
-        }        
+    for (ndx1 = 0 ; ndx1 < h ; ndx1++) {
+        for (ndx2 = 0 ; ndx2 < w ; ndx2++) {
+            if (dnggetcaveid(dng, ndx2, ndx1)) {
+                dngsetcaveid(dng, ndx2, ndx1, DNG_NOCAVE);
+            }
+        }
     }
 #endif
-//    free(map);
     ndx1 = caveid;
     for (ndx2 = ndx1 + 1 ; ndx2 < dng->ncave - 1; ndx2++) {
         dng->cavetab[ndx1] = dng->cavetab[ndx2];
@@ -455,7 +508,7 @@ dngconncaves(struct celldng *dng)
     struct cellcoord  *coord2;
     struct cellcave  **conntab = calloc(ncave, sizeof(struct cellcave *));
     struct cellcave   *cave;
-    long               id;
+    long               id = 0;
     long               x;
     long               y;
     long               x1;
@@ -463,59 +516,48 @@ dngconncaves(struct celldng *dng)
     long               num;
     long               ndx;
     long               lim;
+    long               ncell;
     long               brkcnt;
-    
-    cave = dng->cavetab[dngrand() % ncave];
+
+    if (ncave) {
+        id = dngrand() % ncave;
+    }
+    cave = dng->cavetab[id];
     w = dng->width;
     h = dng->height;
     conntab[nconn] = cave;
     nconn++;
+    lim = genparm->corparm.brkout;
+    brkcnt = 0;
     do {
-        id = cave->id;
         if (!ncor) {
             ndx = dngrand() % nconn;
             cave = conntab[ndx];
             id = cave->id;
             dngfindedge(dng, id, &corx, &cory, &dir);
         } else if (dngprobpct() > 50) {
-            ndx = dngrand() % nconn;
             cave = conntab[ndx];
             id = cave->id;
             dngfindedge(dng, id, &corx, &cory, &dir);
         } else {
             cave = NULL;
-            dngfindcoredge(dng, id, &corx, &cory, &dir);
+            dngfindcoredge(dng, &corx, &cory, &dir);
         }
-        cor = dngtrycor(dng, id, corx, cory, dir, 0);
+        cor = dngtrycor(dng, corx, cory, dir, 0);
         if (cor) {
             for (ndx = 0 ; ndx < ncave ; ndx++) {
                 cave = dng->cavetab[ndx];
-                if ((cave) && (ncor)) {
-                    x1 = cor->pnttab[ncor - 1].xval;
-                    y1 = cor->pnttab[ncor - 1].yval;
-                } else {
-                    x1 = 0;
-                    y1 = 0;
-                }
+                ncell = cor->ncell;
+                x1 = cor->celltab[ncell - 1].xval;
+                y1 = cor->celltab[ncell - 1].yval;
                 if (dnggetcaveid(dng, x1, y1) == ndx) {
                     if (!cave || id != ndx) {
-                        num = ndx + 1;
-                        coord1 = &cor->pnttab[ndx];
-                        coord2 = &cor->pnttab[num];
-                        while (num < ncor) {
+                        ncell--;
+                        coord1 = cor->celltab;
+                        for (num = 0 ; num < ncell ; num++) {
                             x1 = coord1->xval;
                             y1 = coord1->yval;
-                            coord1 = coord2 - 1;
-                            coord1->xval = x1;
-                            coord1->yval = y1;
-                            num++;
-                            coord2++;
-                        }
-                        coord1 = cor->pnttab;
-                        for (num = 0 ; num < ncor ; num++) {
-                            x1 = coord1->xval;
-                            y1 = coord1->yval;
-                            dngsetcavebit(dng, cave, x1, y1);
+                            dngsetcellbit(dng, x1, y1);
                             coord1++;
                         }
                         if (nconn == nconnmax) {
@@ -538,14 +580,13 @@ dngconncaves(struct celldng *dng)
                 }
             }
         }
-        lim = genparm->corparm.brkout;
         brkcnt++;
         if (brkcnt >= lim) {
-            free(cor);
+//            free(cor);
 
             return 0;
         }
-    } while (ncave > 0);
+    } while (ncave);
     /* FIXME: move connected caves to caves */
     free(dng->cavetab);
     dng->ncave = nconn;
@@ -560,13 +601,9 @@ dngturncor(long dir)
 {
     long ret;
 
-    if (dir == DNG_NODIR) {
+    do {
         ret = dngdirtab[dngrand() % DNG_NDIR];
-    } else {
-        do {
-            ret = dngdirtab[dngrand() % DNG_NDIR];
-        } while (ret == dngrevdir(dir));
-    }
+    } while (ret == dngrevdir(dir));
 
     return ret;
 }
@@ -576,22 +613,61 @@ dngturncor2(long dir)
 {
     long ret;
 
-    if (dir == DNG_NODIR) {
+    do {
         ret = dngdirtab[dngrand() % DNG_NDIR];
-    } else {
-        do {
-            ret = dngdirtab[dngrand() % DNG_NDIR];
-        } while (ret == dngrevdir(dir) || ret == dir);
-    }
+    } while (ret == dngrevdir(dir) || ret == dir);
 
     return ret;
 }
 
 static void
-dngfindedge(struct celldng *dng, long caveid, long *retx, long *rety,
+dngfindedge(struct celldng *dng, long caveid,
+            long *retx, long *rety, long *retdir)
+{
+    struct cellcave  *cave = dng->cavetab[caveid];
+    struct cellcoord *cell;
+    long              w = dng->width;
+    long              h = dng->height;
+    long              x1;
+    long              y1;
+    long              x2;
+    long              y2;
+    long              dir = *retdir;
+    long              ndx;
+
+    if (cave->ncell) {
+        do {
+            ndx = dngrand() % cave->ncell;
+            cell = &cave->celltab[ndx];
+            x1 = cell->xval;
+            y1 = cell->yval;
+            x2 = x1;
+            x2 = y1;
+            dir = dngturncor(dir);
+            do {
+                dngmovedir(x2, y2, dir);
+                if (!dngiscell(x2, y2, w, h)) {
+                    
+                    break;
+                } else if (!dnggetcellbit(dng, x2, y2)) {
+                    *retx = x1;
+                    *rety = y1;
+                    *retdir = dir;
+                    
+                    return;
+                }
+            } while (1);
+        } while (1);
+    }
+
+    return;
+}
+
+#if 0
+static void
+dngfindedge(struct celldng *dng, long *retx, long *rety,
             long *retdir)
 {
-    struct cellcave *cave = dng->cavetab[caveid];
     long             w = dng->width;
     long             h = dng->height;
     long             x;
@@ -604,10 +680,10 @@ dngfindedge(struct celldng *dng, long caveid, long *retx, long *rety,
         dir = dngturncor(dir);
         do {
             dngmovedir(x, y, dir);
-            if (x < 0 || x >= w || y < 0 || y >= h) {
+            if (!dngiscell(x, y, w, h)) {
 
                 break;
-            } else if (!dnggetcavebit(dng, cave, x, y)) {
+            } else if (!dnggetcellbit(dng, x, y)) {
                 *retx = x;
                 *rety = y;
                 *retdir = dir;
@@ -619,16 +695,15 @@ dngfindedge(struct celldng *dng, long caveid, long *retx, long *rety,
 
     return;
 }
+#endif
 
 static void
-dngfindcoredge(struct celldng *dng, long caveid,
+dngfindcoredge(struct celldng *dng,
                long *retx, long *rety, long *retdir)
 {
-    struct cellcave   *cave = dng->cavetab[caveid];
     long               ndir = 0;
-    long               dirtab[DNG_NDIR];
-    long               ncor = cave->ncor;
-    struct cellcor   **cortab = cave->cortab;;
+    long               ncor = dng->ncor;
+    struct cellcor   **cortab = dng->cortab;;
     struct cellcor    *cor;
     struct cellcoord  *ofs;
     long               x = *retx;
@@ -639,6 +714,7 @@ dngfindcoredge(struct celldng *dng, long caveid,
     long               x1;
     long               y1;
     long               ndx;
+    long               dirstk[DNG_NDIR];
 
     do {
         if (ncor) {
@@ -648,16 +724,17 @@ dngfindcoredge(struct celldng *dng, long caveid,
         for (ndx = 0 ; ndx < DNG_NDIR ; ndx++) {
             ofs = &dngdirofstab[ndx];
             x1 = x + ofs->xval;
-            y1 += y + ofs->yval;
-            if (x1 >= 0 && x1 < w && y1 >= 0 && y1 <= h
-                && dnggetcavebit(dng, cave, x1, y1)) {
+            y1 = y + ofs->yval;
+            if (dngiscell(x1, y1, w, h)
+                && !dnggetcellbit(dng, x1, y1)) {
                 dir = dngdirtab[ndx];
+                dirstk[ndir] = dir;
                 ndir++;
             }
         }
     } while (!ndir);
     ndx = dngrand() % ndir;
-    *retdir = dir;
+    *retdir = dirstk[ndx];
     *retx = x;
     *rety = y;
 
@@ -665,9 +742,8 @@ dngfindcoredge(struct celldng *dng, long caveid,
 }
 
 static long
-dngchkcorpnt(struct celldng *dng, long caveid, long x, long y, long dir)
+dngchkcorcell(struct celldng *dng, long x, long y, long dir)
 {
-    struct cellcave *cave = dng->cavetab[caveid];
     long             xofs = dngdirofstab[dir].xval;
     long             yofs = dngdirofstab[dir].yval;
     long             space = genparm->corparm.spacing;
@@ -680,15 +756,15 @@ dngchkcorpnt(struct celldng *dng, long caveid, long x, long y, long dir)
     for (ofs = -space ; ofs <= space ; ofs++) {
         if (xofs == 0) {
             x1 = x + space;
-            if (x1 >= 0 && x1 < w && y >= 0 && y < h
-                && dnggetcavebit(dng, cave, x1, y)) {
+            if (dngiscell(x1, y, w, h)
+                && dnggetcellbit(dng, x1, y)) {
 
                 return 0;
             }
         } else if (yofs == 0) {
             y1 = y + space;
-            if (x >= 0 && x < w && y1 >= 0 && y1 < h
-                && dnggetcavebit(dng, cave, x, y1)) {
+            if (dngiscell(x, y1, w, h)
+                && dnggetcellbit(dng, x, y1)) {
 
                 return 0;
             }
@@ -699,20 +775,19 @@ dngchkcorpnt(struct celldng *dng, long caveid, long x, long y, long dir)
 }
 
 static struct cellcor *
-dngtrycor(struct celldng *dng, long caveid,
+dngtrycor(struct celldng *dng,
           long x, long y,
           long dir, long backtrack)
 {
-    struct cellcave  *cave = dng->cavetab[caveid];
     long              min = genparm->corparm.minlen;
     long              max = genparm->corparm.maxlen;
     long              nturn = genparm->corparm.maxturn;
     struct cellcor   *cor = calloc(1, sizeof(struct cellcor));
-    long              ncor = cave->ncor;
-    long              ncormax = cave->ncormax;
-    long              npnt;
-    long              npntmax;
-    struct cellcoord *pnttab;
+    long              ncor = dng->ncor;
+    long              ncormax = dng->ncormax;
+    long              ncell;
+    long              ncellmax;
+    struct cellcoord *celltab;
     struct cellcoord *coord;
     long              w = dng->width;
     long              h = dng->height;
@@ -720,45 +795,74 @@ dngtrycor(struct celldng *dng, long caveid,
     long              cory;
     long              len;
 
-    npntmax = 16;
-    pnttab = calloc(npntmax, sizeof(struct cellcoord));
-    if (!pnttab) {
+    if (!cor) {
+        fprintf(stderr, "CELL: failed to allocate corridor\n");
+
+        exit(1);
+    }
+    ncellmax = 16;
+    celltab = calloc(ncellmax, sizeof(struct cellcoord));
+    if (!celltab) {
         fprintf(stderr, "CELL: failed to allocate corridor point table\n");
 
         exit(1);
     }
-    coord = pnttab;
+    coord = celltab;
     coord->xval = x;
     coord->yval = y;
-    npnt = 1;
+    ncell = 1;
     coord++;
-    while (nturn) {
-        if (npnt == ncormax) {
-            ncormax <<= 1;
-            pnttab = realloc(pnttab,
-                             ncormax * sizeof(struct cellcoord));
-            coord = &pnttab[npnt];
+    corx = x;
+    cory = y;
+    while (nturn >= 0) {
+#if 0
+        if (ncell == ncellmax) {
+            ncellmax <<= 1;
+            celltab = realloc(celltab,
+                              ncellmax * sizeof(struct cellcoord));
+            if (!celltab) {
+                fprintf(stderr, "CELL: failed to allocate corridor point table\n");
+
+                exit(1);
+            }
+            coord = &celltab[ncell];
         }
+#endif
         len = min + (dngrand() % (max - min + 1));
         while (len) {
             len--;
             corx = x + dngdirofstab[dir].xval;
             cory = y + dngdirofstab[dir].yval;
-            if (corx >= 0 && corx < w && cory >= 0 && cory < h
-                && dnggetcavebit(dng, cave, corx, cory)) {
-                cor->n = npnt;
-                cor->pnttab = pnttab;
-                coord->xval = corx;
-                coord->yval = cory;
+            if (dngiscell(corx, cory, w, h)
+                && dnggetcellbit(dng, corx, cory)) {
+                cor->ncell = ncell;
+                cor->celltab = celltab;
 
                 return cor;
-            } else if (!(corx >= 0 && corx < w && cory >= 0 && cory < h)
-                       || !dngchkcorpnt(dng, caveid, corx, corx, dir)) {
+            } else if (!dngiscell(corx, cory, w, h)
+                       || !dngchkcorcell(dng, corx, corx, dir)) {
                 free(cor);
-                free(pnttab);
+                free(celltab);
 
                 return NULL;
             }
+            if (ncell == ncellmax) {
+                ncellmax <<= 1;
+                celltab = realloc(celltab,
+                                  ncellmax * sizeof(struct cellcoord));
+                if (!celltab) {
+                    fprintf(stderr, "CELL: failed to allocate corridor point table\n");
+                    
+                    exit(1);
+                }
+                coord = &celltab[ncell];
+            }
+            coord->xval = corx;
+            coord->yval = cory;
+            x = corx;
+            y = cory;
+            ncell++;
+            coord++;
         }
         nturn--;
         if (nturn > 1) {
@@ -768,25 +872,23 @@ dngtrycor(struct celldng *dng, long caveid,
                 dir = dngturncor2(dir);
             }
         }
-        npnt++;
-        coord++;
     }
-    cor->n = npnt;
-    cor->pnttab = pnttab;
+    cor->ncell = ncell;
+    cor->celltab = celltab;
     if (ncor == ncormax) {
         ncormax <<= 1;
-        cave->cortab = realloc(cave->cortab,
-                               ncormax * sizeof(struct cellcor));
-        if (!cave->cortab) {
+        dng->cortab = realloc(dng->cortab,
+                              ncormax * sizeof(struct cellcor));
+        if (!dng->cortab) {
             fprintf(stderr, "CELL: failed to reallocate corridor table\n");
             
             exit(1);
         }
-        cave->ncormax = ncormax;
+        dng->ncormax = ncormax;
     }
-    cave->cortab[ncor] = cor;
+    dng->cortab[ncor] = cor;
     ncor++;
-    cave->ncor = ncor;
+    dng->ncor = ncor;
 
     return cor;
 }

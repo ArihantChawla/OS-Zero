@@ -1,4 +1,5 @@
 #include <stdlib.h>
+#include <dungeon/conf.h>
 #include <dungeon/api.h>
 #include <dungeon/cell.h>
 
@@ -13,8 +14,8 @@ cellinitparm(struct cellgenparm *parm)
     parm->caveparm.minsize = 64 * 36;
     parm->caveparm.maxsize = 256 * 144;
 #endif
-    parm->caveparm.minsize = 4096;
-    parm->caveparm.maxsize = 16384;
+    parm->caveparm.minsize = 16;
+    parm->caveparm.maxsize = 512;
 //    parm->corparm.brkout = 1024 * 768;
 //    parm->corparm.brkout = 10000;
 
@@ -36,8 +37,12 @@ int
 main(int argc, char *argv[])
 {
     cellinitparm(&genparm);
-    cellinitdng(&celldng, 16, 1024 / 8, 768 / 8);
-    cellbuilddng(&celldng, 1);
+#if (DNG_PIXELCELLS)
+    cellinitdng(&celldng, 1024, 768);
+#else
+    cellinitdng(&celldng, 1024 / 8, 768 / 8);
+#endif
+    cellbuilddng(&celldng);
 //    cellplotdng(&celldng);
     cellx11loop(&celldng);
 

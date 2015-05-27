@@ -55,7 +55,7 @@ dngprobpct(void)
 //#define DNG_CENTER    8
 
 /* value for uninitialised dungeon cells */
-#define DNG_NOCAVE    -1
+#define DNG_NOCAVE    -1L
 
 struct cellcoord {
     long xval;          // X-coordinate
@@ -63,18 +63,14 @@ struct cellcoord {
 };
 
 struct cellcor {
-    long              n;        // number of cells in corridor
-    long              nmax;     // number of allocated pnttab entries
-    struct cellcoord *pnttab;   // table of points (X,Y-coordinate pairs)
+    long              ncell;     // number of cells in corridor
+    struct cellcoord *celltab;   // table of points (X,Y-coordinate pairs)
 };
 
 struct cellcave {
-    long             id;
-    long             size;
-    char            *map;
-    long             ncor;      // # of corridors
-    long             ncormax;   // maximum # of (allocated) corridors
-    struct cellcor **cortab;    // corridor structures
+    long              id;
+    long              ncell;
+    struct cellcoord *celltab;
 };
 
 /* user-settable cave parameter structure */
@@ -112,26 +108,29 @@ struct cellgenparm {
 
 struct cellgenparm;
 struct celldng {
-    long                  width;        // dungeon width
-    long                  height;       // dungeon height
-#if 0
-    char                 *map;          // dungeon cell-bitmap
-#endif
+    long              width;            // dungeon width
+    long              height;           // dungeon height
+    char             *map;              // dungeon cell-bitmap
 #if (DNG_OBJMAP)
-    dngobjfunc           *cellfunc;
-    dngobjfunc           *corfunc;
-    dngobj               *objmap;
+    dngobjfunc       *cellfunc;
+    dngobjfunc       *corfunc;
+    dngobj           *objmap;
 #endif
-    long                  ncave;        // # of caves
-    long                  ncavemax;     // maximum # of (allocated) caves
-    struct cellcave     **cavetab;      // cave structures
-    long                 *caveidtab;    // map of cell-owner caves
+    long              ncave;            // # of caves
+    long              ncavemax;         // maximum # of (allocated) caves
+    struct cellcave **cavetab;          // cave structures
+    long             *caveidtab;        // map of cell-owner caves
+    long              ncor;             // # of corridors
+    long              ncormax;          // maximum # of (allocated) corridors
+    struct cellcor  **cortab;           // corridor structures
+#if 0
     struct cellgenparm    genparm;
+#endif
 };
 
 void cellsetdefparm(struct cellgenparm *parm);
-void cellinitdng(struct celldng *dng, long ncave, long width, long height);
-long cellbuilddng(struct celldng *dng, long nlvl);
+void cellinitdng(struct celldng *dng, long width, long height);
+void cellbuilddng(struct celldng *dng);
 
 #endif /* __DUNGEON_CELL_H__ */
 
