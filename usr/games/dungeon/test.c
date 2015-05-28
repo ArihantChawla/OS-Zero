@@ -11,11 +11,12 @@ cellinitparm(struct cellgenparm *parm)
 {
     cellsetdefparm(parm);
 #if 0
-    parm->caveparm.minsize = 64 * 36;
-    parm->caveparm.maxsize = 256 * 144;
+    parm->caveparm.minsize = 64;
+    parm->caveparm.maxsize = 1024;
 #endif
     parm->caveparm.minsize = 16;
-    parm->caveparm.maxsize = 512;
+    parm->caveparm.maxsize = 1024;
+    
 //    parm->corparm.brkout = 1024 * 768;
 //    parm->corparm.brkout = 10000;
 

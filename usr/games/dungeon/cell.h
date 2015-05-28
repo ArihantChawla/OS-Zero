@@ -52,7 +52,6 @@ dngprobpct(void)
 #define DNG_SOUTHWEST  6
 #define DNG_SOUTHEAST  7
 #define DNG_NDIR       8
-//#define DNG_CENTER    8
 
 /* value for uninitialised dungeon cells */
 #define DNG_NOCAVE    -1L
@@ -64,12 +63,14 @@ struct cellcoord {
 
 struct cellcor {
     long              ncell;     // number of cells in corridor
+    long              ncellmax;
     struct cellcoord *celltab;   // table of points (X,Y-coordinate pairs)
 };
 
 struct cellcave {
     long              id;
     long              ncell;
+    long              ncellmax;
     struct cellcoord *celltab;
 };
 
@@ -112,8 +113,8 @@ struct celldng {
     long              height;           // dungeon height
     char             *map;              // dungeon cell-bitmap
 #if (DNG_OBJMAP)
-    dngobjfunc       *cellfunc;
-    dngobjfunc       *corfunc;
+    dngobjfunc       *mkobj;
+    dngobjfunc       *mkcor;
     dngobj           *objmap;
 #endif
     long              ncave;            // # of caves
@@ -123,9 +124,6 @@ struct celldng {
     long              ncor;             // # of corridors
     long              ncormax;          // maximum # of (allocated) corridors
     struct cellcor  **cortab;           // corridor structures
-#if 0
-    struct cellgenparm    genparm;
-#endif
 };
 
 void cellsetdefparm(struct cellgenparm *parm);

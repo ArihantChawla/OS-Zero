@@ -18,7 +18,7 @@ static void dngbuildcaves(struct celldng *dng);
 static void dngrmcave(struct celldng *dng, long caveid);
 static long dngconncaves(struct celldng *dng);
 static long dngturncor(long dir);
-static long dngturncor2(long dir);
+static long dngturncor2(long dir1, long dir2);
 static void dngfindedge(struct celldng *dng, long caveid,
                         long *retx, long *rety, long *retdir);
 static void dngfindcoredge(struct celldng *dng,
@@ -90,10 +90,11 @@ cellsetdefparm(struct cellgenparm *parm)
     parm->caveparm.rndval = dngrand();
 //    parm->caveparm.niter = 50000;
 #if (DNG_PIXELCELLS)
-    parm->caveparm.niter = 5000000;
+    parm->caveparm.niter = 500000;
 #else
 //    parm->caveparm.niter = 2500;
-    parm->caveparm.niter = 25000;
+//    parm->caveparm.niter = 2000;
+    parm->caveparm.niter = 2500;
 #endif
 //    parm->caveparm.closeprob = 45;
     parm->caveparm.closeprob = 45;
@@ -102,9 +103,10 @@ cellsetdefparm(struct cellgenparm *parm)
     parm->caveparm.nrmnbor = 3;
     parm->caveparm.nfillnbor = 4;
 #endif
-    parm->caveparm.nlimnbor = 3;
-    parm->caveparm.nrmnbor = 5;
-    parm->caveparm.nfillnbor = 4;
+    parm->caveparm.nlimnbor = 4;
+    parm->caveparm.nrmnbor = 3;
+//    parm->caveparm.nfillnbor = 2;
+    parm->caveparm.nfillnbor = 2;
     genparm = parm;
 }
 
@@ -123,14 +125,15 @@ cellsetgenparm(struct celldng *dng, struct cellgenparm *parm)
     parm->caveparm.maxsize = 500;
 #endif
     /* set corridor parameters */
-    parm->corparm.brkout = 100000;
+//    parm->corparm.brkout = 100000;
+    parm->corparm.brkout = 100000;    
     parm->corparm.spacing = 2;
     parm->corparm.minlen = 2;
-#if 0
     parm->corparm.maxlen = 5;
+#if 0
+    parm->corparm.maxlen = 16;
 #endif
-    parm->corparm.maxlen = 8;
-    parm->corparm.maxturn = 10;
+    parm->corparm.maxturn = 8;
     parm->flg |= CELL_GENPARM_INIT;
 
     return;
@@ -146,7 +149,7 @@ cellinitdng(struct celldng *dng, long width, long height)
     char             *map = calloc(width * height / CHAR_BIT, sizeof(char));
     struct cellcave **cavetab = calloc(ncavemax, sizeof(struct cellcave *));
     long             *idtab = malloc(num * sizeof(long));
-    struct cellcor  **cortab;
+    struct cellcor  **cortab = calloc(ncormax, sizeof(struct cellcor *));
     struct cellcave  *cave;
     long              ndx;
 
@@ -178,10 +181,8 @@ cellinitdng(struct celldng *dng, long width, long height)
     dng->width = width;
     dng->height = height;
 //    dng->map = map;
-#if 0
     dng->ncormax = ncormax;
     dng->cortab = cortab;
-#endif
     dng->ncavemax = ncavemax;
     dng->cavetab = cavetab;
     cellsetgenparm(dng, NULL);
@@ -340,20 +341,29 @@ static long
 dngfindcave(struct celldng *dng, long caveid, long x, long y, long *sizeret)
 {
     long              ret;
-    struct cellcave  *cave;
     long              dir = DNG_NODIR;
-    long              id = (caveid >= 0) ? caveid : dng->ncave;
+    long              id = (caveid != DNG_NOCAVE) ? caveid : dng->ncave;
+    struct cellcave  *cave = (caveid != DNG_NOCAVE) ? dng->cavetab[caveid] : NULL;
     long              ncavemax = dng->ncavemax;
     long              recur = 1;
     long              w = dng->width;
     long              h = dng->height;
-    long              ncellmax = 16;
-    struct cellcoord *celltab = calloc(ncellmax, sizeof(struct cellcoord));
+    long              ncellmax = (cave) ? cave->ncellmax : 16;
+    struct cellcoord *celltab;
     long              x1;
     long              y1;
     long              ndx;
     long              lim;
 
+#if 0
+    if (!celltab) {
+        celltab = calloc(ncellmax, sizeof(struct cellcoord));
+        if (cave) {
+            cave->ncellmax = ncellmax;
+            cave->celltab = celltab;
+        }
+    }
+#endif
     if (caveid == DNG_NOCAVE) {
         cave = calloc(1, sizeof(struct cellcave));
         if (!cave) {
@@ -361,6 +371,13 @@ dngfindcave(struct celldng *dng, long caveid, long x, long y, long *sizeret)
 
             exit(1);
         }
+        celltab = calloc(ncellmax, sizeof(struct cellcoord));
+        if (!celltab) {
+            fprintf(stderr, "CELL: failed to allocate cell table\n");
+
+            exit(1);
+        }
+        cave->ncellmax = ncellmax;
         cave->celltab = celltab;
         if (id == ncavemax) {
             ncavemax <<= 1;
@@ -378,25 +395,29 @@ dngfindcave(struct celldng *dng, long caveid, long x, long y, long *sizeret)
         recur = 0;
     }
     lim = DNG_NDIR2;
+    cave = dng->cavetab[id];
+    celltab = cave->celltab;
     for (ndx =  0 ; ndx < lim ; ndx++) {
         x1 = x;
         y1 = y;
+        dir = dngdirtab[ndx];
         dngmovedir(x1, y1, dir);
         if (dngiscell(x1, y1, w, h)
-            && !dnggetcellbit(dng, x1, y1)) {
-            cave = dng->cavetab[id];
+            && dnggetcellbit(dng, x1, y1)
+            && dnggetcaveid(dng, x1, y1) == DNG_NOCAVE) {
+//            && !dnggetcellbit(dng, x1, y1)) {
             dngsetcellbit(dng, x1, y1);
             dngsetcaveid(dng, x1, y1, id);
             if (cave->ncell == ncellmax) {
                 ncellmax <<= 1;
-                celltab = realloc(cave->celltab,
-                                  ncellmax * sizeof(struct cellcoord));
-                if (!celltab) {
+                cave->celltab = realloc(cave->celltab,
+                                        ncellmax * sizeof(struct cellcoord));
+                if (!cave->celltab) {
                     fprintf(stderr, "CELL: failed to reallocate cell table\n");
 
                     exit(1);
                 }
-                cave->celltab = celltab;
+                cave->ncellmax = ncellmax;
             }
             cave->celltab[cave->ncell].xval = x1;
             cave->celltab[cave->ncell].yval = y1;
@@ -404,14 +425,15 @@ dngfindcave(struct celldng *dng, long caveid, long x, long y, long *sizeret)
             dngfindcave(dng, id, x1, y1, NULL);
         }
     }
-    if (recur) {
-        ret = DNG_NOCAVE;
-    } else {
-        dng->ncave = id + 1;
-        ret = id;
+    ret = id;
+    if (!recur) {
+        ret = id++;
         if (sizeret) {
             *sizeret = cave->ncell;
         }
+        dng->ncave = id;
+    } else {
+        ret = DNG_NOCAVE;
     }
 
     return ret;
@@ -470,6 +492,7 @@ dngrmcave(struct celldng *dng, long caveid)
         y = cell->yval;
         dngclrcellbit(dng, x, y);
         dngsetcaveid(dng, x, y, DNG_NOCAVE);
+        cell++;
     }
 #if 0
     for (ndx1 = 0 ; ndx1 < h ; ndx1++) {
@@ -498,19 +521,20 @@ dngconncaves(struct celldng *dng)
     long               h;
     long               ncave = dng->ncave;
     long               ncor = 0;
-    long               corx = 0;
-    long               cory = 0;
+    long               ncormax = dng->ncormax;
     long               dir = DNG_NODIR;
     struct cellcor    *cor;
     long               nconn = 0;
     long               nconnmax = ncave;
     struct cellcoord  *coord1;
     struct cellcoord  *coord2;
-    struct cellcave  **conntab = calloc(ncave, sizeof(struct cellcave *));
+    struct cellcave  **conntab = calloc(nconnmax, sizeof(struct cellcave *));
     struct cellcave   *cave;
     long               id = 0;
     long               x;
     long               y;
+    long               corx;
+    long               cory;
     long               x1;
     long               y1;
     long               num;
@@ -530,12 +554,9 @@ dngconncaves(struct celldng *dng)
     lim = genparm->corparm.brkout;
     brkcnt = 0;
     do {
-        if (!ncor) {
+        if (!ncor
+            || dngprobpct() > 50) {
             ndx = dngrand() % nconn;
-            cave = conntab[ndx];
-            id = cave->id;
-            dngfindedge(dng, id, &corx, &cory, &dir);
-        } else if (dngprobpct() > 50) {
             cave = conntab[ndx];
             id = cave->id;
             dngfindedge(dng, id, &corx, &cory, &dir);
@@ -552,18 +573,20 @@ dngconncaves(struct celldng *dng)
                 y1 = cor->celltab[ncell - 1].yval;
                 if (dnggetcaveid(dng, x1, y1) == ndx) {
                     if (!cave || id != ndx) {
-                        ncell--;
                         coord1 = cor->celltab;
+//                        ncell--;
                         for (num = 0 ; num < ncell ; num++) {
                             x1 = coord1->xval;
                             y1 = coord1->yval;
                             dngsetcellbit(dng, x1, y1);
                             coord1++;
                         }
+                        ncell--;
+                        cor->ncell = ncell;
                         if (nconn == nconnmax) {
                             nconnmax <<= 1;
                             conntab = realloc(conntab,
-                                              nconnmax * sizeof(struct cave *));
+                                              nconnmax * sizeof(struct cellcave *));
                             if (!conntab) {
                                 fprintf(stderr,
                                         "CELL: failed to allocate connection table\n");
@@ -574,7 +597,7 @@ dngconncaves(struct celldng *dng)
                         conntab[nconn] = cave;
                         ncave--;
                         nconn++;
-
+                        
                         break;
                     }
                 }
@@ -592,6 +615,7 @@ dngconncaves(struct celldng *dng)
     dng->ncave = nconn;
     dng->ncavemax = nconnmax;
     dng->cavetab = conntab;
+    dng->ncor = ncor;
 
     return 1;
 }
@@ -609,13 +633,13 @@ dngturncor(long dir)
 }
 
 static long
-dngturncor2(long dir)
+dngturncor2(long dir1, long dir2)
 {
     long ret;
 
     do {
         ret = dngdirtab[dngrand() % DNG_NDIR];
-    } while (ret == dngrevdir(dir) || ret == dir);
+    } while (ret == dngrevdir(dir1) || ret == dir2);
 
     return ret;
 }
@@ -630,8 +654,6 @@ dngfindedge(struct celldng *dng, long caveid,
     long              h = dng->height;
     long              x1;
     long              y1;
-    long              x2;
-    long              y2;
     long              dir = *retdir;
     long              ndx;
 
@@ -641,15 +663,13 @@ dngfindedge(struct celldng *dng, long caveid,
             cell = &cave->celltab[ndx];
             x1 = cell->xval;
             y1 = cell->yval;
-            x2 = x1;
-            x2 = y1;
             dir = dngturncor(dir);
             do {
-                dngmovedir(x2, y2, dir);
-                if (!dngiscell(x2, y2, w, h)) {
+                dngmovedir(x1, y1, dir);
+                if (!dngiscell(x1, y1, w, h)) {
                     
                     break;
-                } else if (!dnggetcellbit(dng, x2, y2)) {
+                } else if (!dnggetcellbit(dng, x1, y1)) {
                     *retx = x1;
                     *rety = y1;
                     *retdir = dir;
@@ -701,7 +721,6 @@ static void
 dngfindcoredge(struct celldng *dng,
                long *retx, long *rety, long *retdir)
 {
-    long               ndir = 0;
     long               ncor = dng->ncor;
     struct cellcor   **cortab = dng->cortab;;
     struct cellcor    *cor;
@@ -714,6 +733,7 @@ dngfindcoredge(struct celldng *dng,
     long               x1;
     long               y1;
     long               ndx;
+    long               ndir = 0;
     long               dirstk[DNG_NDIR];
 
     do {
@@ -785,12 +805,13 @@ dngtrycor(struct celldng *dng,
     struct cellcor   *cor = calloc(1, sizeof(struct cellcor));
     long              ncor = dng->ncor;
     long              ncormax = dng->ncormax;
-    long              ncell;
+    long              ncell = 0;
     long              ncellmax;
     struct cellcoord *celltab;
     struct cellcoord *coord;
     long              w = dng->width;
     long              h = dng->height;
+    long              dir1;
     long              corx;
     long              cory;
     long              len;
@@ -800,6 +821,7 @@ dngtrycor(struct celldng *dng,
 
         exit(1);
     }
+    dir1 = dir;
     ncellmax = 16;
     celltab = calloc(ncellmax, sizeof(struct cellcoord));
     if (!celltab) {
@@ -807,36 +829,46 @@ dngtrycor(struct celldng *dng,
 
         exit(1);
     }
+    cor->ncellmax = ncellmax;
+    cor->celltab = celltab;
     coord = celltab;
+#if 0
     coord->xval = x;
     coord->yval = y;
     ncell = 1;
     coord++;
+#endif
     corx = x;
     cory = y;
     while (nturn >= 0) {
-#if 0
-        if (ncell == ncellmax) {
-            ncellmax <<= 1;
-            celltab = realloc(celltab,
-                              ncellmax * sizeof(struct cellcoord));
-            if (!celltab) {
-                fprintf(stderr, "CELL: failed to allocate corridor point table\n");
-
-                exit(1);
-            }
-            coord = &celltab[ncell];
-        }
-#endif
         len = min + (dngrand() % (max - min + 1));
         while (len) {
             len--;
+#if 0
             corx = x + dngdirofstab[dir].xval;
             cory = y + dngdirofstab[dir].yval;
+#endif
+            corx += dngdirofstab[dir].xval;
+            cory += dngdirofstab[dir].yval;
             if (dngiscell(corx, cory, w, h)
                 && dnggetcellbit(dng, corx, cory)) {
+                if (ncell == ncellmax) {
+                    ncellmax <<= 1;
+                    celltab = realloc(cor->celltab,
+                                      ncellmax * sizeof(struct cellcor));
+                    if (!celltab) {
+                        fprintf(stderr, "CELL: failed to reallocate corridor cell table\n");
+                        
+                        exit(1);
+                    }
+                    cor->ncellmax = ncellmax;
+                    cor->celltab = celltab;
+                    coord = &celltab[ncell];
+                }
+                coord->xval = corx;
+                coord->yval = cory;
+                ncell++;
                 cor->ncell = ncell;
-                cor->celltab = celltab;
 
                 return cor;
             } else if (!dngiscell(corx, cory, w, h)
@@ -851,10 +883,11 @@ dngtrycor(struct celldng *dng,
                 celltab = realloc(celltab,
                                   ncellmax * sizeof(struct cellcoord));
                 if (!celltab) {
-                    fprintf(stderr, "CELL: failed to allocate corridor point table\n");
+                    fprintf(stderr, "CELL: failed to reallocate corridor point table\n");
                     
                     exit(1);
                 }
+                cor->celltab = celltab;
                 coord = &celltab[ncell];
             }
             coord->xval = corx;
@@ -869,7 +902,7 @@ dngtrycor(struct celldng *dng,
             if (backtrack) {
                 dir = dngturncor(dir);
             } else {
-                dir = dngturncor2(dir);
+                dir = dngturncor2(dir, dir1);
             }
         }
     }

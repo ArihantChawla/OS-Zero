@@ -177,6 +177,7 @@ celldrawx11win(XEvent *ev)
             }
         }
     }
+#if 0
     /* draw corridors */
     n = testdng->ncor;
     while (n) {
@@ -195,7 +196,8 @@ celldrawx11win(XEvent *ev)
             coord++;
         }
     }
-
+#endif
+    
     return;
 }
 
