@@ -6,8 +6,8 @@
 #endif
 #include <stddef.h>
 #include <stdlib.h>
+#include <limits.h>
 #include <zero/trix.h>
-#include <dungeon/dng.h>
 #include <mjolnir/conf.h>
 #if (MJOL_USE_ZERO_RANDMT32)
 #include <zero/randmt32.h>
@@ -15,7 +15,9 @@
 #if (MJOL_CURSES)
 #include <curses.h>
 #endif
-//#include <mjolnir/obj.h>
+#include <dungeon/dng.h>
+#include <mjolnir/obj.h>
+#include <mjolnir/chr.h>
 
 extern struct mjolgame *mjolgame;
 extern struct mjolchr  *chaseq;
@@ -34,10 +36,10 @@ extern uint8_t          mjolcmdhasargmap[256];
 #define mjolcanpickup(type) bitset(mjolcanpickupmap, type)
 #define mjolcanwear(type)   bitset(mjolcanwearmap, type)
 #define mjolcanwield(type)  bitset(mjolcanwieldmap, type)
-extern uint8_t          mjolcanmovetomap[256];
-extern uint8_t          mjolcanpickupmap[256];
-extern uint8_t          mjolcanwearmap[256];
-extern uint8_t          mjolcanwieldmap[256];
+extern uint8_t          mjolcanmovetomap[256 / CHAR_BIT];
+extern uint8_t          mjolcanpickupmap[256 / CHAR_BIT];
+extern uint8_t          mjolcanwearmap[256 / CHAR_BIT];
+extern uint8_t          mjolcanwieldmap[256 / CHAR_BIT];
 
 #define MJOL_DEF_NICK   "johndoe"
 #define MJOL_LEN_NICK   16
@@ -45,76 +47,6 @@ extern uint8_t          mjolcanwieldmap[256];
 #define MJOL_DEF_NLVL   1
 #define MJOL_DEF_WIDTH  80
 #define MJOL_DEF_HEIGHT 24
-
-/* objects */
-#define MJOL_OBJ_FLOOR            '.'
-#define MJOL_OBJ_CORRIDOR         '#'
-#define MJOL_OBJ_HORIZONTAL_WALL  '-'
-#define MJOL_OBJ_VERTICAL_WALL    '|'
-#define MJOL_OBJ_DOOR             '+'
-#define MJOL_OBJ_FOOD             '%'
-#define MJOL_OBJ_WATER            '~'
-#define MJOL_OBJ_FOUNTAIN         '{'
-#define MJOL_OBJ_GOLD             '$'
-#define MJOL_OBJ_SILVER_BULLET    'S'
-#define MJOL_OBJ_POTION           '!'
-#define MJOL_OBJ_PLANT            '*'
-#define MJOL_OBJ_PUNCHCARD        '='
-#define MJOL_OBJ_TAPE             '8'
-#define MJOL_OBJ_STAIR_DOWN       '<'
-#define MJOL_OBJ_STAIR_UP         '>'
-#define MJOL_OBJ_STATUE           '&'
-#define MJOL_OBJ_TRAP             '^'
-#define MJOL_OBJ_WAND             '\\'
-#define MJOL_OBJ_SCROLL           '?'
-#define MJOL_OBJ_RING             '='
-#define MJOL_OBJ_WHIP             '/'
-#define MJOL_OBJ_ARMOR            ']'
-#define MJOL_OBJ_CHAIN            'c'
-#define MJOL_OBJ_CHEST            'C'
-#define MJOL_OBJ_SUBMACHINE_GUN   'g'
-#define MJOL_OBJ_HONEY            'h'
-#define MJOL_OBJ_KNIFE            'k'
-#define MJOL_OBJ_LOCKPICK         'l'
-#define MJOL_OBJ_LASER            'L'
-#define MJOL_OBJ_MACE             'm'
-#define MJOL_OBJ_MAINFRAME        'M'
-#define MJOL_OBJ_PIPE             'p'
-#define MJOL_OBJ_PISTOL           'P'
-#define MJOL_OBJ_SWORD            's'
-#define MJOL_OBJ_TELEPORT         't'
-#define MJOL_OBJ_WELL             'w'
-#define MJOL_OBJ_CROSS            'x'
-#define MJOL_OBJ_ALTAR            'X'
-
-/* characters */
-#define MJOL_CHAR_PLAYER          '@'
-#define MJOL_CHAR_ANT             'a'
-#define MJOL_CHAR_ALIEN           'A'
-#define MJOL_CHAR_BEE             'b'
-#define MJOL_CHAR_BEE_QUEEN       'B'
-#define MJOL_CHAR_DOG             'd'
-#define MJOL_CHAR_DEITY           'D'
-#define MJOL_CHAR_GHOUL           'G'
-#define MJOL_CHAR_HUMAN           'H'
-#define MJOL_CHAR_ORACLE          'O'
-#define MJOL_OBJ_JATIMATIC        'J'
-#define MJOL_CHAR_REMNANTS        'R'
-#define MJOL_CHAR_UNICORN         'u'
-#define MJOL_CHAR_THOR            'T'
-#define MJOL_CHAR_VAMPIRE         'v'
-#define MJOL_CHAR_DRACULA         'V'
-#define MJOL_CHAR_WOLF            'w'
-#define MJOL_CHAR_ZOMBIE          'Z'
-
-/* special items */
-#define MJOL_ITEM_DEMON_WHIP      1
-#define MJOL_ITEM_JATIMATIC       2
-#define MJOL_ITEM_MJOLNIR         3
-#define MJOL_ITEM_PLEIGNIR        4
-#define MJOL_ITME_STORMBRINGER    5
-#define MJOL_ITEM_EXCALIBUR       6
-#define MJOL_ITEM_HOLY_CROSS      7
 
 /* commands */
 #define ESC                       '\033'
@@ -212,72 +144,6 @@ struct mjolgame {
     long                width;          // width of level in cells
     long                height;         // height of level
     long                nobj;           // # of objects
-};
-
-struct mjolobjfunc {
-    char  *str;
-    long (*hit)(void *, void *);
-    long (*def)(void *, void *);
-    long (*pick)(void *, void *);
-};
-
-#if 0
-/* event handler function prototype */
-typedef void mjolfunc_t(struct dnggame *game,
-                        struct dngobj *src, struct dngobj *dest);
-#endif
-
-/* character flags */
-#define MJOL_CHR_NO_PICK   0x00000001U // do not pick object up automatically
-#define MJOL_CHR_BLIND     0x00000020U // character is blind
-#define MJOL_CHR_LEVITATES 0x00000040U // character is levitating
-/* speed values */
-
-#define MJOL_CHR_FAST      2           // character is moving faster
-#define MJOL_CHR_NORMAL    1           // normal speed
-#define MJOL_CHR_FROZEN    0           // character can't move
-#define MJOL_CHR_SLOW      (-1)        // slow speed
-struct mjolchr {
-    struct dngobj      data;            // common character data
-    struct mjolobjfunc func;
-    /* Rogue [visible] attributes */
-    long               hp;              // current hitpoints
-    long               maxhp;           // max hitpoints
-    long               gold;            // current gold
-    long               str;             // current strength
-    long               maxstr;          // max strength
-    long               arm;             // armor strength
-    long               exp;             // experience
-    long               lvl;             // level
-    long               aln;             // alignment; CHAOTIC, NEUTRAL, LAWFUL
-    /* mjolnir [hidden] attributes */
-    long               pwr;
-    long               dex;             // dexterity
-    long               lock;            // lock-pick skill
-    long               intl;            // intelligence
-    long               def;             // defense
-    long               speed;           // FAST, NORMAL, FROZEN, SLOW
-    unsigned long      turn;            // next turn ID
-    unsigned long      nturn;           // # of turns used
-};
-
-/* data.flg values */
-#define MJOL_OBJ_HIDDEN  0x00000001
-/* bless values */
-#define MJOL_OBJ_BLESSED 1
-#define MJOL_OBJ_NEUTRAL 0
-#define MJOL_OBJ_CURSED  (-1)
-struct mjolobj {
-#if (MJOL_VT) || (MJOL_CURSES)
-    int                 id;
-#endif
-    struct dngobj       data;           // common object data
-    struct mjolobjfunc  func;
-    long                weight;         // weight of object
-    long                bless;          // BLESSED, NEUTRAL, CURSED
-    long                parm;           // e.g. +1 or -1 for armor
-    struct mjolobj     *prev;
-    struct mjolobj     *next;
 };
 
 #define MJOL_DIR_VERTICAL    0x00000001

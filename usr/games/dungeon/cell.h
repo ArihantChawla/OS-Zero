@@ -1,9 +1,12 @@
 #ifndef __DUNGEON_CELL_H__
 #define __DUNGEON_CELL_H__
 
+/* REFERENCE: http://www.evilscience.co.uk/a-c-algorithm-to-build-roguelike-cave-systems-part-1/ */
+
 #define DNG_OBJMAPS 1
 
 #include <dungeon/conf.h>
+#include <dungeon/dng.h>
 #if (DNG_RANDMT32)
 #include <zero/randmt32.h>
 #else
@@ -11,12 +14,10 @@
 #endif
 #include <zero/trix.h>
 
-#if (DNG_OBJMAPS)
-typedef unsigned char dngobj;
-typedef void          dngobjfunc(long, long);
+#if (DNG_MJOLNIR)
+#include <mjolnir/mjol.h>
+#include <mjolnir/obj.h>
 #endif
-
-/* REFERENCE: http://www.evilscience.co.uk/a-c-algorithm-to-build-roguelike-cave-systems-part-1/ */
 
 #define DNG_WIDTH     80
 #define DNG_HEIGHT    24
@@ -24,10 +25,10 @@ typedef void          dngobjfunc(long, long);
 /* define pseudo-random number interface */
 #if (DNG_RANDMT32)
 #define dngsrand(val) srandmt32(val)
-#define dngrand()     (randmt32() & 0x7fffffffU)
+#define dngrand()     (randmt32() & 0x7fffffff)
 #else
 #define dngsrand(val) srand()
-#define dngrand()     (rand() & 0x7fffffffU)
+#define dngrand()     (rand() & 0x7fffffff)
 #endif
 
 /* macro to calculate percentual probabilities */
@@ -67,8 +68,10 @@ struct cellcor {
     struct cellcoord *celltab;   // table of points (X,Y-coordinate pairs)
 };
 
+#define DNG_CAVE_CONNECTED 0x00000001
 struct cellcave {
     long              id;
+    long              flg;
     long              ncell;
     long              ncellmax;
     struct cellcoord *celltab;
@@ -112,11 +115,9 @@ struct celldng {
     long              width;            // dungeon width
     long              height;           // dungeon height
     char             *map;              // dungeon cell-bitmap
-#if (DNG_OBJMAP)
-    dngobjfunc       *mkobj;
-    dngobjfunc       *mkcor;
-    dngobj           *objmap;
-#endif
+#if (DNG_MJOLNIR)
+    struct mjolobj  **objmap;
+#endif 
     long              ncave;            // # of caves
     long              ncavemax;         // maximum # of (allocated) caves
     struct cellcave **cavetab;          // cave structures
@@ -129,6 +130,30 @@ struct celldng {
 void cellsetdefparm(struct cellgenparm *parm);
 void cellinitdng(struct celldng *dng, long width, long height);
 void cellbuilddng(struct celldng *dng);
+
+#if (DNG_MJOLNIR)
+static __inline__ void
+dngpushobj(struct celldng *dng, struct mjolobj *obj, long x, long y)
+{
+    if (obj) {
+        obj->next = dng->objmap[y * dng->width + x];
+        dng->objmap[y * dng->width + x] = obj;
+    }
+
+    return;
+}
+static __inline__ struct mjolobj *
+dngpopobj(struct celldng *dng, long x, long y)
+{
+    struct mjolobj *obj = dng->objmap[y * dng->width + x];
+
+    if (obj) {
+        dng->objmap[y * dng->width + x] = obj->next;
+    }
+
+    return obj;
+}
+#endif /* DNG_MJOLNIR */
 
 #endif /* __DUNGEON_CELL_H__ */
 

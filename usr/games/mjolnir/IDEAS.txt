@@ -173,3 +173,24 @@ u		| use an object with another one
 0		| turn off
 1		| turn on
 
+Gameplay
+--------
+
+- console commands (invoke console with M-x)
+  - use
+  - bite
+  - buy
+  - eat
+  - drink
+  - walk
+  - talk
+  - look
+  - open
+  - close
+  - unlock (use key)
+  - lock   (void)
+- scrolls
+  - teleport, leviation, identify, ice bolt, lightning
+- weapons
+  - longbow
+  - submachine gun (special item Jatimatic)

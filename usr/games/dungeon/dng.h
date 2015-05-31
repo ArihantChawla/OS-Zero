@@ -1,6 +1,8 @@
 #ifndef __DUNGEON_DNG_H__
 #define __DUNGEON_DNG_H__
 
+#include <dungeon/conf.h>
+//#include <dungeon/cell.h>
 #include <stddef.h>
 
 /* data structures */

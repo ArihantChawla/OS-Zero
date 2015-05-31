@@ -24,6 +24,7 @@ main(int argc, char *argv[])
     signal(SIGQUIT, mjolquitsig);
     signal(SIGTERM, mjolquitsig);
     mjolinit(&game, argc, argv);
+    dnginitobjmjol();
     mjolgameloop(&game);
 
     /* NOTREACHED */
