@@ -47,6 +47,7 @@ extern void mpstart(void);
 extern void idtinit(uint64_t *idt);
 extern void vbeinit(void);
 extern void vbeinitscr(void);
+extern void vbeprintinfo(void);
 #endif
 #if (SMBIOS)
 extern void smbiosinit(void);
@@ -124,6 +125,9 @@ kmain(struct mboothdr *hdr, unsigned long pmemsz)
     /* set kernel I/O permission bitmap to all 1-bits */
     kmemset(&kerniomap, 0xff, sizeof(kerniomap));
     /* INITIALIZE CONSOLES AND SCREEN */
+#if (VBE)
+    vbeinitscr();
+#endif
 #if (VBE) && (NEWFONT)
     consinit(768 / vbefontw, 1024 / vbefonth);
 #elif (VBE)
@@ -148,6 +152,9 @@ kmain(struct mboothdr *hdr, unsigned long pmemsz)
 #endif
 #if (VBE) && (PLASMA)
     plasmaloop();
+#endif
+#if (VBE)
+    vbeprintinfo();
 #endif
     logoprint();
 //    vminitphys((uintptr_t)&_ebss, pmemsz - (unsigned long)&_ebss);

@@ -145,6 +145,7 @@ struct vbemode {
 
 /* VBE screen information */
 struct vbescreen {
+    long            fbufsize;
     void           *fbuf;
     void           *dbuf;
     long            w;
@@ -154,6 +155,7 @@ struct vbescreen {
     struct vbemode *mode;
 };
 
+#define vbefbadr() (vbescreen.fbuf)
 #define vbepixadr(x, y)                                                 \
     ((uint8_t *)vbescreen.fbuf + ((y) * vbescreen.w + (x)) * 3)
 

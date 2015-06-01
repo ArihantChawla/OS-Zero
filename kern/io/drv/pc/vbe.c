@@ -107,7 +107,18 @@ void
 vbeinitscr(void)
 {
     struct vbemode  *mode = (void *)VBEMODEADR;
+    long             npix = vbescreen.mode->xres * vbescreen.mode->yres;
 
+    if (vbescreen.nbpp == 32) {
+        vbescreen.fbufsize = npix << 2;
+    } else if (vbescreen.nbpp == 24) {
+        vbescreen.fbufsize = npix + (npix << 1);
+    } else if (vbescreen.nbpp == 15
+               || vbescreen.nbpp == 16) {
+        vbescreen.fbufsize = npix << 1;
+    } else if (vbescreen.nbpp == 8) {
+        vbescreen.fbufsize = npix;
+    }
     vbescreen.fbuf = (void *)mode->fbadr;
     vbescreen.w = mode->xres;
     vbescreen.h = mode->yres;
@@ -161,6 +172,8 @@ vbeprintinfo(void)
     uint16_t       *modeptr = (uint16_t *)VBEPTR(info->modelst);
 
 //    kmemcpy(&vbectlinfo, (void *)0xa000, sizeof(struct vbeinfo));
+    kprintf("VBE FB: %ld kilobytes @ 0x%p\n",
+            vbescreen.fbufsize >> 10, vbescreen.fbuf);
     kprintf("VBE OEM: %s\n", VBEPTR(*((uint32_t *)info->oem)));
     modeptr = (uint16_t *)VBEPTR(vbectlinfo.modelst);
     kprintf("VBE modes:");
