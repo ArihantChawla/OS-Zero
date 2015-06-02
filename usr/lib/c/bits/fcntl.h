@@ -118,15 +118,15 @@
 
 struct flock {
     short   l_type;     // F_RDLCK, F_WRLCK, F_UNLCK
-    short   l_whence;
+    short   l_whence;   // SEEK_SET, SEEK_CUR, SEEK_END
 #if (_FILE_OFFSET_BITS == 64)
-    off_t   l_start;
-    off_t   l_len;
-#else
+    off_t   l_start;    // relative offset in bytes
+    off_t   l_len;      // size; if 0 then until EOF
+#elif 0
     off64_t l_start;
     off64_t l_len;
 #endif
-    pid_t   l_pid;
+    pid_t   l_pid;      // process ID of the lock-holder (returned with F_GETLK)
 };
 
 #if (_LARGEFILE64_SOURCE)

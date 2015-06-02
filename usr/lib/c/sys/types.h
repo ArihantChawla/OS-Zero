@@ -2,11 +2,10 @@
 #define __SYS_TYPES_H__
 
 #include <features.h>
-#include <stdint.h>
 #include <stddef.h>
+#include <stdint.h>
 #include <limits.h>
 #include <sys/types.h>
-//#include <time.h>
 #if (_BSD_SOURCE)
 #include <endian.h>
 //#include <sys/select.h>
@@ -32,8 +31,8 @@ typedef unsigned short  ushort;
 typedef unsigned long   ulong;
 #if 0
 typedef int64_t         blkcnt_t;
-typedef int64_t         clock_t;
 #endif
+typedef int64_t         clock_t;
 typedef long            blksize_t;
 typedef long            blksize_cnt;
 typedef short           cnt_t;
@@ -86,7 +85,6 @@ typedef uint64_t        u_offset_t;
 typedef uint64_t        len_t;
 typedef int64_t         diskaddr_t;
 typedef unsigned long   fsid_t;
-//typedef int64_t        time_t;
 
 /* virtual memory related types */
 typedef uintptr_t       pfn_t;          // page frame #
@@ -132,7 +130,7 @@ struct fdset {
 typedef struct fdset fd_set;
 
 /* FIXME: this file should #include <time.h> (?) :) */
-//#include <time.h>
+#include <time.h>
 #if (_BSD_SOURCE)
 #include <sys/param.h>
 #endif

@@ -30,6 +30,11 @@ extern int   _daylight;
 #define CLK_TCK        CLOCKS_PER_SEC
 #endif
 
+#if 0
+typedef long time_t;
+typedef long clock_t;
+#endif
+
 #if (_POSIX_SOURCE) || (_XOPEN_SOURCE)
 struct tm {
     int         tm_sec;		    // seconds [0, 60]

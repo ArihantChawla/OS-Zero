@@ -1,0 +1,6 @@
+- rex is a simple regular expression matcher based on the book Beautiful Code
+- zas is an assembler designed for use with virtual architectures
+  - need to fix zvm support
+- zvm is the latest one of my virtual architecture projects
+- zpc (zero programmer's calculator) is an early stack-based calculator
+

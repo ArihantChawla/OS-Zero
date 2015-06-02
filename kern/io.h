@@ -2,7 +2,6 @@
 #define __KERN_IO_H__
 
 #include <stdint.h>
-#include <fcntl.h>
 #include <sys/types.h>
 
 #if 0

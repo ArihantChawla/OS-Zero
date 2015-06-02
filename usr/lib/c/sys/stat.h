@@ -3,7 +3,6 @@
 
 #include <features.h>
 #include <sys/types.h>
-#include <time.h>
 
 #define __S_IFMT   0xff000000
 #define __S_IFDIR  0x01000000
