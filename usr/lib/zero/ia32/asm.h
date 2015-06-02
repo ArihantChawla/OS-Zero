@@ -12,7 +12,7 @@
 #define m_scanlo1bit(l)          m_bsfl(l)
 #define m_scanhi1bit(l)          m_bsrl(l)
 #define m_getretadr(r)                                                  \
-    __asm__ __volatile__ ("movl 4(%%ebp), %0\n" : "=r" (r))
+    __asm__ __volatile__ ("movl 4(%%ebp), %0\n" : "=rm" (r))
 
 /*
  * atomic fetch and add

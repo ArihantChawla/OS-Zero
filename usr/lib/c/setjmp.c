@@ -26,6 +26,8 @@
 
 #endif /* _POSIX_SOURCE */
 
+/* TODO: optimise some of these with the noreturn attribute */
+
 ASMLINK
 int
 setjmp(jmp_buf env)
@@ -38,7 +40,7 @@ setjmp(jmp_buf env)
     return 0;
 }
 
-ASMLINK NORET
+ASMLINK
 void
 longjmp(jmp_buf env,
         int val)
@@ -60,7 +62,7 @@ _setjmp(jmp_buf env)
     return 0;
 }
 
-ASMLINK NORET
+ASMLINK
 void
 _longjmp(jmp_buf env,
          int val)
@@ -83,7 +85,7 @@ sigsetjmp(sigjmp_buf env, int savesigs)
     }
 }
 
-ASMLINK NORET
+ASMLINK
 void
 siglongjmp(sigjmp_buf env, int val)
 {

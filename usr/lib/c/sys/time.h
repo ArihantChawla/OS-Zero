@@ -59,6 +59,8 @@ extern int getitimer(itimer_which_t, struct itimerval *val);
 extern int setitimer(itimer_which_t, const struct itimerval *__restrict newval,
                      struct itimerval *__restrict oldval);
 extern int utimes(const char *file, const struct timeval tv[2]);
+extern int utimensat(int fd, const char *file, const struct timespec times[2],
+                     int flg);
 #if (_BSD_SOURCE)
 extern int lutimes(const char *file, const struct timeval tv[2]);
 extern int futimes(int fd, const struct timeval tv[2]);

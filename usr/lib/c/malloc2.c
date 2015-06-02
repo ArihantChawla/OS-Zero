@@ -108,7 +108,7 @@
 
 //#include <sys/sysinfo.h>
 
-#define ZEROMTX 0
+#define ZEROMTX 1
 #if defined(PTHREAD) && (PTHREAD)
 #include <pthread.h>
 #if (!ZEROMTX)
@@ -1363,15 +1363,18 @@ mallinit(void)
 int
 mallopt(int parm, int val)
 {
+    int  ret = 0;
     long num;
     
     switch (parm) {
         case M_CHECK_ACTION:
             g_malloc.mallopt.action |= val & 0x07;
+            ret = 1;
             
             break;
         case M_MMAP_MAX:
             g_malloc.mallopt.mmapmax = val;
+            ret = 1;
 
             break;
         case M_MMAP_THRESHOLD:
@@ -1379,16 +1382,18 @@ mallopt(int parm, int val)
             if (powerof2(val)) {
                 num++;
             }
+            ret = 1;
             g_malloc.mallopt.mmaplog2 = num;
 
             break;
         default:
             fprintf(stderr, "MALLOPT: invalid parm %d\n", parm);
+            ret = 0;
 
             break;
     }
 
-    return;
+    return ret;
 }
 
 void *
@@ -1922,9 +1927,9 @@ malloc(size_t size)
     }
 #if defined(_GNU_SOURCE) && (GNUMALLOCHOOKS)
     if (__malloc_hook) {
-        void *caller;
+        void *caller = NULL;
 
-        caller = m_getretadr();
+//        m_getretadr(caller);
         __malloc_hook(size, (const void *)caller);;
     }
 #endif
@@ -2001,9 +2006,9 @@ realloc(void *ptr,
 
 #if defined(_GNU_SOURCE) && (GNUMALLOCHOOKS)
     if (__realloc_hook) {
-        void *caller;
+        void *caller = NULL;
 
-        caller = m_getretadr();
+//        m_getretadr(caller);
         __realloc_hook(ptr, size, (const void *)caller);
     }
 #endif
@@ -2024,9 +2029,9 @@ free(void *ptr)
 {
 #if (_BNU_SOURCE)
     if (__free_hook) {
-        void *caller;
+        void *caller = NULL;
 
-        caller = m_getretadr();
+//        m_getretadr(caller);
         __free_hook(ptr, (const void *)caller);
     }
 #endif
@@ -2047,9 +2052,9 @@ aligned_alloc(size_t align,
 
 #if defined(_GNU_SOURCE) && (GNUMALLOCHOOKS)
     if (__memalign_hook) {
-        void *caller;
+        void *caller = NULL;
         
-        caller = m_getretadr();
+//        m_getretadr(caller);
         __memalign_hook(align, size, (const void *)caller);
     }
 #endif
@@ -2079,9 +2084,9 @@ posix_memalign(void **ret,
 
 #if defined(_GNU_SOURCE) && (GNUMALLOCHOOKS)
     if (__memalign_hook) {
-        void *caller;
+        void *caller = NULL;
         
-        caller = m_getretadr();
+//        m_getretadr(caller);
         __memalign_hook(align, size, (const void *)caller);
     }
 #endif
@@ -2114,9 +2119,9 @@ valloc(size_t size)
 
 #if defined(_GNU_SOURCE) && (GNUMALLOCHOOKS)
     if (__memalign_hook) {
-        void *caller;
+        void *caller = NULL;
         
-        caller = m_getretadr();
+//        m_getretadr(caller);
         __memalign_hook(PAGESIZE, size, (const void *)caller);
     }
 #endif
@@ -2138,9 +2143,9 @@ memalign(size_t align,
 
 #if defined(_GNU_SOURCE) && (GNUMALLOCHOOKS)
     if (__memalign_hook) {
-        void *caller;
+        void *caller = NULL;
         
-        caller = m_getretadr();
+//        m_getretadr(caller);
         __memalign_hook(align, size, (const void *)caller);
     }
 #endif

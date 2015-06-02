@@ -27,7 +27,7 @@
                           : "r" (r))
 #else
 #include <byteswap.h>
-#define bswapq128(r)     bswap_64(r)
+#define bswapq128(r)     ((r) = bswap_64(r))
 #define mulq128(a, d, r) ((d) = (a) * (r))
 #endif
 

@@ -20,6 +20,7 @@ typedef long socklen_t;
 //typedef int64_t time_t;
 //typedef int32_t blksize_t;
 //typedef int64_t blkcnt_t;
+#if 0 /* moved to <bits/fcntl.h> */
 /* argument bits for access() and friends */
 #define R_OK 4  // check for read permission
 #define W_OK 2  // check for write permission
@@ -31,6 +32,7 @@ typedef long socklen_t;
 #define L_INCR SEEK_CUR // offset relative to current
 #define L_XTND SEEK_END // offset relative to end of file
 #endif
+#endif /* 0 - moved */
 /* name arguments for sysconf() */
 /* POSIX.1 values */
 #define _SC_OS_VERSION       0x00000000

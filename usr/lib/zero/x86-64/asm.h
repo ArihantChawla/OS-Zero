@@ -14,7 +14,8 @@
 #define m_scanlo1bit(l)          m_bsfq(l)
 #define m_scanhi1bit(l)          m_bsrq(l)
 #define m_getretadr(r)                                                  \
-    (__asm__ __volatile__ ("movl 8(%%rbp), %0\n" : "=rm" (r)), (r))
+    __asm__ __volatile__ ("movl 8(%%rbp), %0\n" : "=r" (r))
+
 
 static __inline__ long
 m_xchgq(volatile long *p,

@@ -5,6 +5,7 @@
 #include <stddef.h>
 #include <stdio.h>
 #include <stdint.h>
+#include <fcntl.h>
 #include <sys/types.h>
 #include <zero/param.h>
 #if (USEPOSIX2) && 0 /* TODO: getopt.h */
@@ -259,12 +260,6 @@ extern int            getdtablesize(void);
 #define STDIN_FILENO  0
 #define STDOUT_FILENO 1
 #define STDERR_FILENO 2
-
-/* argument values for access() */
-#define R_OK          0x04
-#define W_OK          0x02
-#define X_OK          0x01
-#define F_OK          0x00
 
 #endif /* __UNISTD_H__ */
 
