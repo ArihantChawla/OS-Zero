@@ -1,7 +1,7 @@
 /* libzero hash routines */
 
 /*
- * This stuff is based on Chris Anderson's C-conversion of the code described
+ * hashq128() is based on Chris Anderson's C-conversion of the code described
  * at http://locklessinc.com/articles/fast_hash/
  * The full original source is at http://www.eetbeetee.org/h.c
  */
