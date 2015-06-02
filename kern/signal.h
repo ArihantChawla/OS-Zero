@@ -5,6 +5,7 @@ typedef void signalhandler_t(int sig);
 
 /* constants. */
 
+#define SIGNONE      0x00
 #define SIGCLD       0x00    /* UNSUPPORTED - System V, NOT SIGCHLD semantics */
 #define SIGEMT       0x00    /* UNSUPPORTED */
 #define SIGHUP       0x01    /* POSIX */

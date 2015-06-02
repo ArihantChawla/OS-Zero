@@ -53,5 +53,27 @@
  * _POSIX_THREADS indicates pthread support
  */
 
+/* NOTE: see posixopts(7) for fixing the mess below... =) */
+/*
+ * true indicates the following functions are present
+ * - posix_fadvise()
+ * - posix_fallocate()
+ * - posix_memalign()
+ * - posix_madvise()
+ */
+#define _POSIX_ADVISORY_INFO   0
+/*
+ * the header <aio.h> is present together with the following functions
+ * - aio_cancel()
+ * - aio_error()
+ * - aio_fsync()
+ * - aio_read()
+ * - aio_return()
+ * - aio_suspend()
+ * - aio_write()
+ * - lio_listio()
+ */
+#define _POSIX_ASYNCHRONOUS_IO 0
+
 #endif /* __FEATURES_H__ */
 

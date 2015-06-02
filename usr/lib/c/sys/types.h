@@ -48,7 +48,6 @@ typedef dev_t           minor_t;
 //typedef uint32_t        fsfilcnt_t;     // filesystem file count
 typedef uint32_t        uid_t;
 typedef uint32_t        gid_t;          // group ID
-//typedef long            id_t;
 typedef long            key_t;          // IPC key
 typedef unsigned long   mode_t;         // permissions
 typedef int32_t         nlink_t;        // link count
@@ -76,7 +75,7 @@ typedef int64_t         blkcnt64_t;
 typedef uint64_t        fsblkcnt64_t;
 typedef uint64_t        fsfilcnt64_t;
 #endif
-typedef long            id_t;
+typedef uintptr_t       id_t;
 typedef long            ssize_t;
 typedef unsigned long   useconds_t;
 typedef long            suseconds_t;
@@ -101,6 +100,9 @@ typedef void           *bufcall_id_t;   // opaque handle from bufcall()
 
 typedef id_t            taskid_t;
 typedef id_t            projid_t;
+
+typedef id_t            ctid_t;
+typedef id_t            zoneid_t;
 
 /* POSIX threads */
 #if 0

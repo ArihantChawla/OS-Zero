@@ -3,7 +3,10 @@
 
 #include <features.h>
 #include <stdint.h>
-//#include <sys/siginfo.h>
+#include <sys/types.h>
+#if (PTHREAD)
+#include <pthread.h>
+#endif
 #if (_ZERO_SOURCE)
 #include <kern/signal.h>
 #endif
@@ -101,10 +104,12 @@ typedef struct {
     int           si_signo;
     int           si_code;
     int           si_errno;
+    int           si_status;
+    void         *si_addr;
     pid_t         si_pid;
     uid_t         si_uid;
-    void         *si_addr;
-    int           si_status;
+    ctid_t        si_ctid;
+    zoneid_t      si_zoneid;
     long          si_band;
     union sigval  si_value;
 } siginfo_t;

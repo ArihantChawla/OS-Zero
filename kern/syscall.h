@@ -178,8 +178,8 @@ extern void ksyscall(void);
 
 /* cmd */
 #define SYSCTL_HALT     0x01U  // halt() and reboot()
-#define SYSCTL_SYSINFO  0x02U  // sysconf(); pagesize, clsize, ...
-#define SYSCTL_SYSCONF  0x03U  // configure system behavior */
+#define SYSCTL_SYSINFO  0x02U  // sysinfos(); pagesize, clsize, ...
+#define SYSCTL_SYSCONF  0x03U  // sysconf(); probe system parameters
 #define SYSCTL_SYSSTAT  0x03U  // query system statistics; getrusage()
 #define SYSCTL_TIME     0x04U  // system clock access
 

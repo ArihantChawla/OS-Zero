@@ -36,6 +36,11 @@ extern __sighandler_t sysv_signal(int sig, __sighandler_t func);
 extern __sighandler_t bsd_signal(int sig, __sighandler_t func);
 #endif
 
+#if (_BSD_SOURCE) || (USEXOPENEXT)
+extern void psiginfo(const siginfo_t *info, const char *msg);
+void        psignal(int sig, const char *message);
+#endif
+
 #if (_POSIX_SOURCE)
 /*
  * send signal sig to process or group described by pid
@@ -58,7 +63,7 @@ extern int raise(int sig);
 extern __sighandler_t ssignal(int sig, __sighandler_t func);
 extern int            gsignal(int sig);
 #endif /* USESVID */
-extern void           psignal(int sig);
+//extern void           psignal(int sig);
 #if (FAVORBSD)
 /* set mask to blocked signals, wait for signal, restore the mask */
 extern int            sigpause(int mask);
@@ -75,13 +80,13 @@ extern int            sigpause(int sig) __asm__ ("__xpg_sigpause\n");
 
 //typedef __sighandler_t sig_t;
 /* none of these functions should be used any longer */
-#define sigmask(sig)   (1L << (sig))
+#define    sigmask(sig)   (1L << (sig))
 /* block signals in mask, return old mask */
-extern int             sigblock(int mask); 
+extern int sigblock(int mask); 
 /* set mask of blocked signals, return old mask */
-extern int             sigsetmask(int mask);
+extern int sigsetmask(int mask);
 /* return current signal mask */
-extern int             siggetmask(void);
+extern int siggetmask(void);
 
 struct sigvec {
     void (*sv_handler)(int);
@@ -90,12 +95,6 @@ struct sigvec {
 };
 
 int sigvec(int sig, const struct sigvec *vec, struct sigvec *oldvec);
-#if 0
-int sigmask(int sig);
-int sigblock(int mask);
-int sigsetmask(int mask);
-int siggetmask(void);
-#endif
 
 #define SV_INTERRUPT 0x00000001
 #define SV_RESETHAND 0x00000002

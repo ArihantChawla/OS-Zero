@@ -224,8 +224,7 @@ extern int            fsync(int fd);
 #if (_BSD_SOURCE) || (USEXOPENEXT)
 extern long           gethostid(void);
 extern void           sync(void);
-//extern int getpagesize(void);
-#define               getpagesize() PAGESIZE
+extern int            getpagesize(void);
 #endif
 extern int            truncate(const char *file, off_t len);
 #if (_BSD_SOURCE) || (USEXOPENEXT) || (USEXOPEN2K)
