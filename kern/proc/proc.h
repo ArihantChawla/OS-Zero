@@ -16,6 +16,19 @@
  * - initialise interrupt management
  * - initialise memory management
  * - acquire and initialise process and thread structures
+ * - initialize [framebuffer] graphics
+ * - initialize event interface
+ * - initialize page daemon
+ * - initialize [block I/O] buffer management
+ * - execute init
+ *
+ * init
+ * ----
+ * - system startup
+ *   - services; httpd, sshd, etc.
+ *
+ * user world
+ * ----------
  * - allocate descriptor table
  *  - initialise <stdio.h> facilities
  * - stdin, stdout, stderr
@@ -53,6 +66,13 @@
 #if !defined(__arm__)
 #include <kern/unit/x86/cpu.h>
 #endif
+
+/* system-assigned process IDs */
+#define PROCKERN  0	// main kernel; context switches, system calls, ...
+#define PROCINIT  1	// init process
+#define PROCEVD   2     // event daemon; receive and dispatch events
+#define PROCPAGED 3	// page daemon; page replacement; aging, LRU-queue
+#define PROCBUFD  4	// buffer daemon; flush dirty buffers to disk
 
 long procinit(long id);
 long procgetpid(void);

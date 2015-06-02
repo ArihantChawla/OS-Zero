@@ -32,7 +32,8 @@ zeustogglesel(struct zeusx11 *x11, XEvent *event)
 
     x /= 5;
     y /= 5;
-    pc = y * (x11->w / 5) + x;
+//    pc = y * (x11->w / 5) + x;
+    pc = y * (x11->simw / 5) + x;    
     if (!zeussel.bmap) {
         zeussel.bmap = calloc(CWCORESIZE >> 3, sizeof(uint8_t));
     }
@@ -59,7 +60,8 @@ zeusaddsel(struct zeusx11 *x11, XEvent *event)
 
     x /= 5;
     y /= 5;
-    pc = y * (x11->w / 5) + x;
+//    pc = y * (x11->w / 5) + x;
+    pc = y * (x11->simw / 5) + x;    
     if (!zeussel.bmap) {
         zeussel.bmap = calloc(CWCORESIZE >> 3, sizeof(uint8_t));
     }
@@ -342,9 +344,7 @@ zeusinitx11win(struct zeusx11 *x11)
     int                  winw = max((ZEUSTEXTNCOL + ZEUSDBNCOL) * x11->fontw,
                                     ZEUSSIMNCOL * 5);
 #if (ZEUSIMLIB2)
-    int                  winh = ZEUSBUTTONH + ZEUSDBNROW * x11->fonth + ZEUSSIMNROW * 5;
-#else
-    int                  winh = ZEUSDBNROW * x11->fonth + ZEUSSIMNROW * 5;
+    int                  winh = ZEUSBUTTONH + ZEUSSIMNROW * 5;
 #endif
     int                  x = 0;
     int                  y = 0;
@@ -376,7 +376,7 @@ zeusinitx11win(struct zeusx11 *x11)
 #if (ZEUSIMLIB2)
     win = XCreateWindow(x11->disp,
                         parent,
-                        0, x11->simh,
+                        x11->simw, x11->dbh,
                         ZEUSNBUTTON * ZEUSBUTTONW, ZEUSBUTTONH,
                         0,
                         x11->depth,
@@ -415,7 +415,9 @@ zeusinitx11win(struct zeusx11 *x11)
     x11->simwin = win;
     y = x11->simh;
 #if (ZEUSIMLIB2)
-    y += ZEUSBUTTONH;
+//    y += ZEUSBUTTONH;
+    y = 0;
+    x += winw;
 #endif
 
     winw = ZEUSDBNCOL * x11->fontw;
@@ -759,8 +761,8 @@ zeusinitx11buf(struct zeusx11 *x11)
 {
     Pixmap pmap = XCreatePixmap(x11->disp,
                                 x11->simwin,
-                                x11->w,
-                                x11->h,
+                                x11->simw,
+                                x11->simh,
                                 x11->depth);
 
     if (!pmap) {
@@ -771,7 +773,7 @@ zeusinitx11buf(struct zeusx11 *x11)
     XFillRectangle(x11->disp, pmap,
                    x11->bggc,
                    0, 0,
-                   x11->w, x11->h);
+                   x11->simw, x11->simh);
     x11->pixbuf = pmap;
 
     return;
@@ -819,9 +821,11 @@ zeusinitx11(struct zeusx11 *info)
     zeusaddx11button(info, 0, "RUN", zeusrun);
     zeusaddx11button(info, 1, "STOP", zeusstop);
     zeusaddx11button(info, 2, "STEP", zeusstep);
+#if 0
     zeusaddx11button(info, 3, "FENCE", zeusfence);
     zeusaddx11button(info, 4, "CLEAR", zeusclear);
     zeusaddx11button(info, 4, "EXIT", zeusexit);
+#endif
     zeussel.last = -1;
 #endif
 
@@ -878,7 +882,8 @@ zeusprintdb(struct zeusx11 *x11, int simx, int simy)
 
     simx /= 5;
     simy /= 5;
-    pc = simy * (x11->w / 5) + simx;
+//    pc = simy * (x11->w / 5) + simx;
+    pc = simy * (x11->simw / 5) + simx;
     XFillRectangle(x11->disp, x11->dbwin,
                    x11->bggc,
                    0, 0,

@@ -5,17 +5,21 @@
 #include <kern/conf.h>
 #include <kern/perm.h>
 
+#if (!BUFMULTITAB)
+#define BUFNHASHBIT 16
+#define BUFNHASH    (1UL << BUFNHASHBIT)
+#endif
+
 /*
  * 64-bit off_t
  * 48 significant off_t bits for buffers
- * 2^16-byte buffer size
+ * 2^16-byte i.e. 64KB default buffer size optimized for TCP/IP v4 and disks
  */
 
-/* buffer size */
 #define BUFSIZE     (1UL << BUFSIZELOG2)
 #define BUFSIZELOG2 16
 /* size of buffer cache */
-#define BUFNBYTE    (NMEGBUF * 1024 * 1024)
+#define BUFNBYTE    (BUFNMEG * 1024 * 1024)
 /* max # of cached blocks */
 #define BUFNBLK     (BUFNBYTE >> BUFSIZELOG2)
 #define BUFNIDBIT   48

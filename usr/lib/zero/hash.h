@@ -105,4 +105,4 @@
         *(rpp) = _item;                                                 \
     } while (FALSE)
 
-uint64_t hashq128(const void *ptr, size_t len, size_t keylen);
+uint64_t hashq128(const void *ptr, size_t len, size_t nkeybit);

@@ -6,6 +6,11 @@
  * The full original source is at http://www.eetbeetee.org/h.c
  */
 
+#if (__KERNEL__)
+#undef HASHTEST
+#define HASHTEST 0
+#endif
+
 #include <stdio.h>
 #include <stdlib.h>
 #include <string.h>
@@ -22,14 +27,14 @@
                           : "r" (r))
 #else
 #include <byteswap.h>
-#define bswapq128(r) bswap_64(r)
+#define bswapq128(r)     bswap_64(r)
 #define mulq128(a, d, r) ((d) = (a) * (r))
 #endif
 
 uint64_t
 hashq128(const void *ptr,
          size_t len,
-         size_t keylen)
+         size_t nkeybit)
 {
     register uint64_t r8 = 0x1591aefa5e7e5a17ULL;
     register uint64_t r9 = 0x2bb6863566c4e761ULL;
@@ -71,11 +76,11 @@ hashq128(const void *ptr,
     rcx = (rcx * r9) + rdx;
     rax ^= rcx;
     
-    if (keylen < 32) {
+    if (nkeybit < 32) {
         rcx = rax >> 32;
         rax ^= rcx;
     }
-    rax &= (1UL << keylen) - 1;
+    rax &= (1UL << nkeybit) - 1;
     
     return rax;
 }

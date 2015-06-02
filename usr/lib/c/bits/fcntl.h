@@ -166,5 +166,19 @@ struct flock64 {
 #define SPLICE_F_GIFT               8
 #endif
 
+#define SEEK_SET                    0
+#define SEEK_CUR                    1
+#define SEEK_END                    2
+#if (USEGNU)
+#define SEEK_DATA                   3
+#define SEEK_HOLE                   4
+#endif
+
+#if (USEBSD)
+#define L_SET                       SEEK_SET
+#define L_INCR                      SEEK_CUR
+#define L_XTND                      SEEK_END
+#endif
+
 #endif /* __BITS_FCNTL_H__ */
 

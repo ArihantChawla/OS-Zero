@@ -23,8 +23,12 @@
 #define ZEUSTEXTNROW        16
 #define ZEUSDBNCOL          80
 #define ZEUSDBNROW          16
+#if 0
 #define ZEUSSIMNCOL         200
 #define ZEUSSIMNROW         40
+#endif
+#define ZEUSSIMNCOL         40
+#define ZEUSSIMNROW         200
 #define ZEUSBUTTONW         64
 #define ZEUSBUTTONH         48
 

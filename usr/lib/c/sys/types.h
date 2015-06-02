@@ -59,7 +59,7 @@ typedef uint32_t        ino_t;          // inode number
 typedef int32_t         blkcnt_t;
 typedef uint32_t        fsblkcnt_t;
 typedef uint32_t        fsfilcnt;
-#elif (_FILE_OFFSET_BITS == 64)
+#else
 typedef int64_t         off_t;          // 64-bit file offset
 typedef uint64_t        ino_t;
 typedef int64_t         blkcnt_t;

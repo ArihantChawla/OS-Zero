@@ -44,6 +44,9 @@ extern int            faccessat(int fd, const char *name, int type, int flg);
 #endif
 #if (_FILE_OFFSET_BITS == 64)
 #define               llseek(fd, ofs, whence) lseek(fd, ofs, whence)
+#else
+#define               llseek(fd, ofs, whence)                           \
+    _llseek(fd, (ofs) >> 32, ofs & 0xffffffff, NULL, whence)
 #endif
 extern off_t          lseek(int fd, off_t ofs, int whence);
 extern ssize_t        read(int fd, void *buf, size_t count);
@@ -251,6 +254,17 @@ extern char         * ctermid(char *str);
 #if (_XOPEN_SOURCE_EXTENDED)
 extern int            getdtablesize(void);
 #endif
+
+/* standard descriptor names */
+#define STDIN_FILENO  0
+#define STDOUT_FILENO 1
+#define STDERR_FILENO 2
+
+/* argument values for access() */
+#define R_OK          0x04
+#define W_OK          0x02
+#define X_OK          0x01
+#define F_OK          0x00
 
 #endif /* __UNISTD_H__ */
 

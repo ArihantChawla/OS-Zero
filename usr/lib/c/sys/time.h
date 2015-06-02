@@ -43,9 +43,10 @@ extern int gettimeofday(struct timeval *__restrict tv,
 extern int settimeofday(const struct timeval *tv, const struct timezone *tz);
 extern int adjtime(const struct timeval *delta, struct timeval *olddelta);
 #endif
-#define ITIMER_REAL    0
-#define ITIMER_VIRTUAL 1
-#define ITIMER_PROF    2
+
+#define ITIMER_REAL    0        // invoke SIGALRM on expiration
+#define ITIMER_VIRTUAL 1        // invoke SIGVTALRM on expiration
+#define ITIMER_PROF    2        // invoke SIGPROF on expiration
 
 struct itimerval {
     struct timeval it_interval;

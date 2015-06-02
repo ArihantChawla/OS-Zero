@@ -18,6 +18,9 @@
 #include <zero/param.h>
 #include <zero/mtx.h>
 #include <zero/trix.h>
+#if (!BUFMULTITAB)
+#include <zero/hash.c>
+#endif
 #include <kern/util.h>
 #include <kern/mem.h>
 #include <kern/conf.h>
@@ -51,7 +54,11 @@
     ((bufzone) ? ((uint8_t *)ptr - (uint8_t *)bufzone) >> BUFSIZELOG2 : NULL)
 
 static struct bufblk   bufhdrtab[BUFNBLK] ALIGNED(PAGESIZE);
+#if (BUFMULTITAB)
 static void           *buftab[BUFNDEV] ALIGNED(PAGESIZE);
+#else
+static void           *bufhash[BUFNDEV][BUFNHASH];
+#endif
 static volatile long   buflktab[BUFNDEV] ALIGNED(PAGESIZE);
 static struct bufblkq  buffreelist;
 static struct bufblkq  buflruq;
@@ -65,24 +72,38 @@ bufinit(void)
 {
     long           retval = 0;
     uint8_t       *u8ptr;
+    void          *ptr = NULL;
     struct bufblk *blk;
     long           n;
+    long           sz;
 
-    kprintf("allocating %ld bytes of buffer cache\n", BUFNBYTE);
-    bufzone = memalloc(BUFNBYTE, PAGEWIRED);
-    if (bufzone) {
+    sz = BUFNBYTE;
+    kprintf("allocating %ld bytes of buffer cache - ", BUFNBYTE);
+    do {
+        ptr = memalloc(sz, PAGEWIRED);
+        sz >>= 1;
+    } while ((sz) && !ptr);
+    if (!ptr) {
+        kprintf("failed to allocate buffer cache\n");
+
+        return 0;
+    }
+    kprintf("%p\n", ptr);
+    if (ptr) {
         /* allocate buffer cache */
-        kbzero(bufzone, BUFNBYTE);
+        kbzero(ptr, BUFNBYTE);
         /* initialise buffer headers */
         n = BUFNBLK;
         blk = &bufhdrtab[n - 1];
-        u8ptr = bufzone;
+        u8ptr = ptr;
+        u8ptr += BUFNBYTE;
         while (n--) {
+            u8ptr -= BUFSIZE;
             blk->data = u8ptr;
             bufpushfree(blk);
-            u8ptr += BUFSIZE;
             blk--;
         }
+        bufzone = ptr;
         bufnbyte = BUFNBYTE;
         retval = 1;
     }
@@ -143,6 +164,57 @@ bufalloc(void)
  * block ID bits 28..37 -> 10-bit block table #2 index
  * block ID bits 16..27 -> 12-bit block table #3 index
  */
+
+#if (!BUFMULTITAB)
+
+void
+bufaddblk(struct bufblk *blk)
+{
+    struct bufblk *buf;
+    int64_t        key = hashq128(&blk->num, sizeof(int64_t), BUFNHASHBIT);
+    long           dkey = blk->dev & BUFDEVMASK;
+
+    mtxlk(&buflktab[dkey]);
+    buf = bufhash[dkey][key];
+    if (buf) {
+        buf->tabprev = blk;
+    }
+    bufhash[dkey][key] = blk;
+    mtxunlk(&buflktab[dkey]);
+
+    return;
+}
+
+/* look buffer up from buffer cache */
+struct bufblk *
+buffindblk(dev_t dev, off_t num, long rel)
+{
+    int64_t        key = hashq128(&num, sizeof(int64_t), BUFNHASHBIT);
+    long           dkey = dev & BUFDEVMASK;
+    struct bufblk *blk = NULL;
+
+    mtxlk(&buflktab[dkey]);
+    blk = bufhash[dkey][key];
+    while ((blk) && blk->num != num) {
+        blk = blk->tabnext;
+    }
+    if ((blk) && (rel)) {
+        /* remove block from buffer hash chain */
+        if (blk->tabprev) {
+            blk->tabprev->tabnext = blk->tabnext;
+        } else {
+            bufhash[dkey][key] = blk->tabnext;
+        }
+        if (blk->tabnext) {
+            blk->tabnext->tabprev = blk->tabprev;
+        }
+    }
+    mtxunlk(&buflktab[dkey]);
+
+    return blk;
+}
+
+#else /* BUFMULTITAB */
 
 /* add block to buffer cache */
 void
@@ -314,6 +386,8 @@ buffindblk(dev_t dev, off_t num, long rel)
 
     return blk;
 }
+
+#endif
 
 void
 bufrel(long dev, int64_t num, long flush)

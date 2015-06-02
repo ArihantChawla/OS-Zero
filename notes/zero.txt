@@ -1,4 +1,11 @@
 /*
+ * SCHED
+ * -----
+ * - scheduler ideas
+ * - boost interactivity score when application gets input focus
+ */
+
+/*
  * IDEAS
  * -----
  * - use event timers to schedule short-lived tasks such as audio and video
@@ -17,12 +24,6 @@
 
 /* processor interface */
 
-/* system-assigned process IDs */
-#define PROCKERN  0	// main kernel; context switches, system calls, ...
-#define PROCINIT  1	// init process
-#define PROCPAGED 2	// page daemon; page replacement; aging, LRU-queue
-#define PROCBUFD  3	// buffer daemon; flush dirty buffers to disk
-
 /* memory interface */
 
 void *brk(intptr_t ofs);
@@ -34,20 +35,39 @@ struct heap {
    uintptr_t  brk;
 };
 
-#define BUFWIRED     0x01	// map physical memory permanently
-#define BUFSINGLE    0x02	// one user and one kernel thread at a time
-#define BUFDEV       0x04	// device I/O buffer
-#define BUFNET       0x08	// network I/O buffer
-#define BUFFILE      0x10	// file I/O buffer
-#define BUFSEQ       0x20	// sequential buffer
-#define BUFSYNC      0x40	// synchronous I/O
-#define BUFREADAHEAD 0x80	// use read-ahead buffering
-
+/* I/O buffer flags */
+#define BUFWIRED     0x00000001	// map physical memory permanently
+#define BUFSINGLE    0x00000002	// one user and one kernel thread at a time
+#define BUFBLK       0x00000004 // block-based I/O (raw/character if not set)
+#define BUFDEV       0x00000008	// device I/O buffer
+#define BUFNET       0x00000010	// network I/O buffer
+#define BUFFILE      0x00000020	// file I/O buffer
+#define BUFSEQ       0x00000040	// sequential buffer
+#define BUFSYNC      0x00000080	// synchronous I/O
+#define BUFREADAHEAD 0x00000100	// use read-ahead buffering
 struct iobuf {
-    long    fd;
-    long    perm;
-    long    flg;
-    off_t   pos;
-    size_t  sz;
-    void   *data;
+    off_t         pos;        // current position/offset
+    size_t        sz;         // buffer size in bytes
+    long          fd;         // system descriptor
+    long          perm;       // I/O permissions
+    long          flg;        // buffer flags
+    long          cksum;      // IP4- or other checksum
+    void         *data;       // buffer data block
+    struct iobuf *next;
 };
+
+/* struct ioparm flag-bits (flg-field) */
+#define IOSEQBIT  0x01          // do sequential I/O; don't keep old buffers
+#define IOSYNCBIT 0x02          // do synchronous I/O
+#define IOBUFBIT  0x04          // enable read-ahead buffering
+struct ioparm {
+    long   flg;                 // I/O-modes and such flags
+    long   perm;                // permission bits
+    size_t bufsz;               // read-ahead buffer size in bytes
+};
+
+struct iodesc {
+    long id;                    // descriptor [numerical] ID
+    struct ioparm *parm;
+};
+
