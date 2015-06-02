@@ -21,7 +21,7 @@ typedef long socklen_t;
 //typedef int32_t blksize_t;
 //typedef int64_t blkcnt_t;
 
-/* name arguments for sysconf() */
+/* name-arguments for sysconf() */
 /* POSIX.1 values */
 #define _SC_OS_VERSION       0x00000000 // OS [kernel] version
 #define _SC_VERSION          0x00000001 // POSIX version
@@ -56,13 +56,13 @@ typedef long socklen_t;
 #define _SC_AVPHYS_PAGES     0x0000001b // # of available physical pages
 #define _SC_NPROCESSORS_CONF 0x0000001c // # of processors configured
 #define _SC_NPROCESSORS_ONLN 0x0000001d // # of processors currently online
-#define NSYSCONF             0x0000001e
+#define NSYSCONF             0x0000001e // 1 bigger than any name-value
 #if (USEXOPENEXT) && !defined(F_LOCK)
 /* these macros also appear in <fcntl.h> - keep the files consistent */
-#define F_ULOCK 0
-#define F_LOCK  1
-#define F_TLOCK 2
-#define F_TEST  3
+#define F_ULOCK 0       // unlock section of a file
+#define F_LOCK  1       // lock section
+#define F_TLOCK 2       // try lock
+#define F_TEST  3       // test lock
 #endif
 #if defined(_GNU_SOURCE)
 #define TEMP_FAILURE_RETRY(expr)                                        \

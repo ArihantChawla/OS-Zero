@@ -255,6 +255,11 @@ extern char         * ctermid(char *str);
 extern int            getdtablesize(void);
 #endif
 
+#if (_ZERO_SOURCE)
+/* determine cacheline size [in bytes] */
+extern int            getclsize(void);
+#endif
+
 /* standard descriptor names */
 #define STDIN_FILENO  0
 #define STDOUT_FILENO 1

@@ -16,7 +16,7 @@
 #define MALLOCSTKNDX     0
 #define MALLOCFREEMAP    0  // use free block bitmaps
 #define MALLOCHACKS      0  // enable experimental features
-#define MALLOCBUFMAP     0  // buffer mapped slabs to global pool
+#define MALLOCBUFMAP     1  // buffer mapped slabs to global pool
 #define MALLOCVARSIZEBUF 0  // use variable-size slabs; FIXME
 #define MALLOCHASH       0
 #define MALLOCNHASHBIT   24

@@ -4,7 +4,7 @@
 #include <features.h>
 #include <sys/types.h>
 
-#define O_ACCMODE   0003
+#define O_ACCMODE   03
 #define O_RDONLY    00
 #define O_WRONLY    01
 #define O_RDWR      02
@@ -16,21 +16,21 @@
 #define O_NONBLOCK  04000
 #define O_NDELAY    O_NONBLOCK
 #define O_SYNC      010000
-#define O_FSYNC     O_SYNC
+#define O_DSYNC     O_SYNC
 #define O_ASYNC     020000
 #if defined(_GNU_SOURCE)
 #define O_DIRECT    040000
-#define O_DIRECTORY 0200000
-#define O_NOFOLLOW  0400000
-#define O_NOATIME   01000000
+#define O_DIRECTORY 080000
+#define O_NOFOLLOW  100000
+#define O_NOATIME   200000
+#define O_LARGEFILE 400000
 #endif
 #if (USEPOSIX199309) || (USEUNIX98)
 #define O_DSYNC     O_SYNC  // synchronise data
 #define O_RSYNC     O_SYNC  // synchronise read operations
 #endif
-#define O_LARGEFILE 0100000
 
-/* cmd arguments for fcntl() */
+/* cmd-arguments for fcntl() */
 #define F_DUPFD     0
 #define F_GETFD     1
 #define F_SETFD     2
@@ -59,15 +59,17 @@
 #define F_GETLEASE  1025
 #define F_NOTIFY    1026
 #endif
+/* open() etc. */
 #define FD_CLOEXEC  0x01
 /* lockf() */
-#define F_RDLCK     0
-#define F_WRLCK     1
-#define F_UNLCK     2
+#define F_UNLCK     0
+#define F_RDLCK     1
+#define F_WRLCK     2
 /* old BSD flock() */
 #define F_EXLCK     4
 #define F_SHLCK     8
 #if (_BSD_SOURCE)
+/* op-arguments for flock() */
 #define LOCK_SH     1
 #define LOCK_EX     2
 #define LOCK_NB     4
@@ -115,7 +117,7 @@
 #endif
 
 struct flock {
-    short   l_type;
+    short   l_type;     // F_RDLCK, F_WRLCK, F_UNLCK
     short   l_whence;
 #if (_FILE_OFFSET_BITS == 64)
     off_t   l_start;
