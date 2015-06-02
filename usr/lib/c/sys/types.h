@@ -31,8 +31,8 @@ typedef unsigned short  ushort;
 typedef unsigned long   ulong;
 #if 0
 typedef int64_t         blkcnt_t;
-#endif
 typedef int64_t         clock_t;
+#endif
 typedef long            blksize_t;
 typedef long            blksize_cnt;
 typedef short           cnt_t;
