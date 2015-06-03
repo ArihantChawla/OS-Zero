@@ -154,7 +154,7 @@ extern int            getresgid(gid_t *rgid, gid_t *egid, gid_t *sgid);
 extern int            setresuid(uid_t ruid, uid_t euid, uid_t suid);
 extern int            setresgid(gid_t gid, gid_t egid, gid_t sgid);
 #endif
-extern pid_t          fork(void);
+//extern pid_t          fork(void);
 #if (_BSD_SOURCE) || (USEXOPENEXT)
 /*
  * - don't clone address space; execute in that of the parent

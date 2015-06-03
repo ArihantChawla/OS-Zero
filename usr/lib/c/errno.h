@@ -1,6 +1,12 @@
 #ifndef __ERRNO_H__
 #define __ERRNO_H__
 
+#if defined(__GLIBC__)
+
+extern int errno;
+
+#else
+
 #include <features.h>
 
 #if !(__KERNEL__)
@@ -10,6 +16,8 @@ extern __thread int errno;
 extern int          errno;
 #endif
 #endif
+
+#endif /* __GLIBC__ */
 
 #define ENOSYS       1  // function not implemented
 #define EINTR        2  // interrupted system call

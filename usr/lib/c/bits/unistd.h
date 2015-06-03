@@ -51,12 +51,23 @@ typedef long socklen_t;
 #define _SC2_FORT_DEV        0x00000017
 #define _SC_2_LOCALEDEF      0x00000018
 #define _SC2_SW_DEV          0x00000019
-/* possibly non-standard values */
-#define _SC_PHYS_PAGES       0x0000001a // # of pages of physical memory
-#define _SC_AVPHYS_PAGES     0x0000001b // # of available physical pages
-#define _SC_NPROCESSORS_CONF 0x0000001c // # of processors configured
-#define _SC_NPROCESSORS_ONLN 0x0000001d // # of processors currently online
-#define NSYSCONF             0x0000001e // 1 bigger than any name-value
+/* non-standard values */
+/* Unix/Linux extensions */
+#define _SC_PHYS_PAGES       -1 // # of pages of physical memory
+#define _SC_AVPHYS_PAGES     -2 // # of available physical pages
+#define _SC_NPROCESSORS_CONF -3 // # of processors configured
+#define _SC_NPROCESSORS_ONLN -4 // # of processors currently online
+/* Zero extensions */
+#define _SC_CACHELINESIZE    -5 // size of cacheline in bytes
+#define _SC_L1INSTSIZE       -6 // L1 cache size in bytes
+#define _SC_L1DATASIZE       -7 // L1 cache size in bytes
+#define _SC_L1INSTNWAY       -8 // L1 cache parameter
+#define _SC_L1DATANWAY       -9 // L1 cache parameter
+#define _SC_L2SIZE           -10 // L2 cache size in bytes
+#define _SC_L2NWAY           -11 // L2 cache parameter
+#define _SC_BUFSIZE          -12 // buffer cache size
+#define MINSYSCONF           (-12)
+#define NSYSCONF             (26 - MINSYSCONF) // 1 bigger than any name-value
 #if (USEXOPENEXT) && !defined(F_LOCK)
 /* these macros also appear in <fcntl.h> - keep the files consistent */
 #define F_ULOCK 0       // unlock section of a file

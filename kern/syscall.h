@@ -194,6 +194,16 @@ extern void ksyscall(void);
 #define SYSCTL_VMEMSIZE 0x04U   // query virtual memory size; getvirtsize()
 #define SYSCTL_NPROC    0x05U   // query or set maximum number of processes on system
 #define SYSCTL_NTHR     0x06U   // query or set maximum number of threads on system
+/* SYSCTL_SYSCONF */
+/* POSIX-functionality */
+#define SYSCTL_PAGES    0x01U
+#define SYSCTL_AVPAGES  0x02U
+#define SYSCTL_NPROC    0x03U
+#define SYSCTL_NPROCON  0x04U
+/* Zero extensions */
+#define SYSCTL_L1SIZE   0x05U   // L1 cache size
+#define SYSCTL_L2SIZE   0x06U   // L2 cache size
+#define SYSCTL_BUFSIZE  0x07U   // buffer cache size for block I/O
 /* SYSCTL_SYSSTAT */
 #define SYSCTL_UPTIME   0x01U   // query system uptime
 #define SYSCTL_LOAD     0x02U   // query load averages
@@ -214,8 +224,8 @@ extern void ksyscall(void);
 #define FORK_COW        0x02U   // copy on write optimisations
 
 struct sysatexit {
-	void             (*func)(void);
-	struct sysatexit  *next;
+    void             (*func)(void);
+    struct sysatexit  *next;
 };
 
 /* thread interface */

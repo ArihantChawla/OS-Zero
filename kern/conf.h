@@ -1,6 +1,8 @@
 #ifndef __KERN_CONF_H__
 #define __KERN_CONF_H__
 
+#define ZERO_VERSION 0x00000001
+
 #define NEWFONT     1
 #if !defined(BUFNMEG)
 #define BUFNMEG     128

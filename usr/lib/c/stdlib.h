@@ -86,7 +86,7 @@ ldiv_t               ldiv(long numer, long denom);
 long long            llabs(long long val);
 lldiv_t              lldiv(long long numer, long long denom);
 long                 lrand48(void);
-in                   mbsinit(const mbstate_t *state);
+//int                  mbsinit(const mbstate_t *state);
 int                  mblen(const char *str, size_t n);
 size_t               mbstowcs(wchar_t *dest, const char *src, size_t n);
 int                  mbtowc(wchar_t *dest, const char *str, size_t n);
