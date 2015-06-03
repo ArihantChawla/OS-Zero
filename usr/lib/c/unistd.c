@@ -2,6 +2,8 @@
 #include <zero/cdecl.h>
 #include <zero/param.h>
 
+#if (!_POSIX_SOURCE)
+
 int
 getpagesize(void)
 {
@@ -15,4 +17,6 @@ getpagesize(void)
 
     return retval;
 }
+
+#endif /* !_POSIX_SOURCE */
 

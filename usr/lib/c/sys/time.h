@@ -9,6 +9,23 @@
 #ifndef CLK_TCK
 #define CLK_TCK        CLOCKS_PER_SEC
 #endif
+
+struct timeval {
+    time_t      tv_sec;
+    suseconds_t tv_usec;
+};
+
+/* support for getitimer() and setitimer() */
+
+#define ITIMER_REAL    0        // invoke SIGALRM on expiration
+#define ITIMER_VIRTUAL 1        // invoke SIGVTALRM on expiration
+#define ITIMER_PROF    2        // invoke SIGPROF on expiration
+
+struct itimerval {
+    struct timeval it_interval;
+    struct timeval it_value;
+};
+
 #if (_GNU_SOURCE)
 #define TIMEVAL_TO_TIMESPEC(tv, ts)                                     \
     do {                                                                \
@@ -21,21 +38,16 @@
         (tv)->tv_usec = (ts)->tv_nsec / 1000;                           \
     } while (0)
 #endif
-#if (_BSD_SOURCE)
+#if (_BSD_SOURCE) && (FAVORBSD)
 /* obsolete structure that should never be used */
 struct timezone {
-	int tz_minuteswest;	// minutes west of GMT
-	int tz_dsttime;		// nonzero if DST is ever in effect
+    int tz_minuteswest;         // minutes west of GMT
+    int tz_dsttime;		// nonzero if DST is ever in effect
 };
 typedef struct timezone *__restrict timezone_ptr_t;
 #else
 typedef void *__restrict timezone_ptr_t;
 #endif
-
-struct timeval {
-    time_t      tv_sec;
-    suseconds_t tv_usec;
-};
 
 extern int gettimeofday(struct timeval *__restrict tv,
                         timezone_ptr_t tz);
@@ -43,15 +55,6 @@ extern int gettimeofday(struct timeval *__restrict tv,
 extern int settimeofday(const struct timeval *tv, const struct timezone *tz);
 extern int adjtime(const struct timeval *delta, struct timeval *olddelta);
 #endif
-
-#define ITIMER_REAL    0        // invoke SIGALRM on expiration
-#define ITIMER_VIRTUAL 1        // invoke SIGVTALRM on expiration
-#define ITIMER_PROF    2        // invoke SIGPROF on expiration
-
-struct itimerval {
-    struct timeval it_interval;
-    struct timeval it_value;
-};
 
 typedef int itimer_which_t;
 

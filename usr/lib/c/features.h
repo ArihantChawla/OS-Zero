@@ -2,7 +2,7 @@
 #define __FEATURES_H__
 
 #define _REENTRANT             1        // enable re-entrant thread-safe code
-#define _THREAD_SAFE           1        // thread safety
+#define _THREAD_SAFE           1        // thread safety on some systems
 #define USEXOPEN2K             1
 #define USEXOPEN2K8            1
 #define USEXOPENEXT            1

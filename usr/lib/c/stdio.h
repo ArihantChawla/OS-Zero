@@ -5,9 +5,9 @@
 #include <stddef.h>
 #include <limits.h>
 #include <stdint.h>
-#include <stdarg.h>
 #if (_XOPEN_SOURCE) || (__STDC__)
 #if defined(__GNUC__)
+#include <stdarg.h>
 typedef __gnuc_va_list __stdio_va_list;
 #endif
 #endif

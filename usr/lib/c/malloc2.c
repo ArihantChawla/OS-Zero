@@ -6,6 +6,12 @@
  * Copyright (C) Tuomo Petteri Venäläinen 2014-2015
  */
 
+/*
+ * TODO
+ * ----
+ * - fix mallinfo() to return proper information
+ */
+
 #define MALLOCDEBUGHOOKS 0
 #define MALLOCSTEALMAG   0
 #define MALLOCNEWHACKS   1
@@ -357,6 +363,7 @@ struct arn {
     MUTEX          nreflk;              // lock for updating nref
 };
 
+#define MALLOPT_PERTURB_BIT 0x00000001
 struct mallopt {
     int action;
     int flg;
@@ -373,7 +380,6 @@ struct malloc {
     struct maglist    freetab[MALLOCNBKT]; // totally unallocated magazines
     struct maglist    hdrbuf[MALLOCNBKT];
     struct maglist    stkbuf[MALLOCNBKT];
-    struct mallopt    mallopt;
 #if (MALLOCHASH)
     struct hashlist  *hashtab;
     struct hashitem  *hashbuf;
@@ -388,6 +394,8 @@ struct malloc {
     long              narn;             // number of arenas in action
     long              flags;            // allocator flags
     int               zerofd;           // file descriptor for mmap()
+    struct mallopt    mallopt;          // mallopt() interface
+    struct mallinfo   mallinfo;         // mallinfo() interface
 };
 
 static struct malloc  g_malloc ALIGNED(PAGESIZE);
@@ -1441,6 +1449,12 @@ malloc_info(int opt, FILE *fp)
     return retval;
 }
 
+struct mallinfo
+mallinfo(void)
+{
+    return g_malloc.mallinfo;
+}
+
 void *
 _malloc(size_t size,
         size_t align,
@@ -1778,7 +1792,7 @@ _malloc(size_t size,
     if (ptr) {
         if ((zero) && (((uintptr_t)ptrval & BLKDIRTY))) {
             memset(ptr, 0, 1UL << bktid);
-        } else if (g_malloc.mallopt.flg & MALLOPT_PERTURB) {
+        } else if (g_malloc.mallopt.flg & MALLOPT_PERTURB_BIT) {
             int perturb = g_malloc.mallopt.perturb;
 
             perturb = (~perturb) & 0xff;
@@ -1858,7 +1872,7 @@ _free(void *ptr)
         clrbit(mag->freemap, magptrndx(mag, ptr));
 #endif
         ptr = maggetptr(mag, ptr);
-        if (g_malloc.mallopt.flg & MALLOPT_PERTURB) {
+        if (g_malloc.mallopt.flg & MALLOPT_PERTURB_BIT) {
             int perturb = g_malloc.mallopt.perturb;
 
             perturb &= 0xff;

@@ -83,6 +83,8 @@ sigsetjmp(sigjmp_buf env, int savesigs)
         _savesigmask(&(env->sigmask));
         env->havesigs = 1;
     }
+
+    return 0;
 }
 
 ASMLINK
@@ -93,6 +95,8 @@ siglongjmp(sigjmp_buf env, int val)
         _loadsigmask(&(env->sigmask));
     }
     __longjmp(env, val);
+
+    /* NOTREACHED */
 }
 
 #endif

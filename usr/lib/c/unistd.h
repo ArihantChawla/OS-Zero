@@ -224,7 +224,17 @@ extern int            fsync(int fd);
 #if (_BSD_SOURCE) || (USEXOPENEXT)
 extern long           gethostid(void);
 extern void           sync(void);
+#if (_POSIX_SOURCE)
+#if defined(_SC_PAGESIZE)
+#define getpagesize() sysconf(_SC_PAGESIZE)
+#elif defined(_SC_PAGE_SIZE)
+#define getpagesize() sysconf(_SC_PAGE_SIZE)
+#else
 extern int            getpagesize(void);
+#endif
+#else /* !_POSIX_SOURCE */
+extern int            getpagesize(void);
+#endif
 #endif
 extern int            truncate(const char *file, off_t len);
 #if (_BSD_SOURCE) || (USEXOPENEXT) || (USEXOPEN2K)

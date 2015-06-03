@@ -9,6 +9,7 @@ indentation etc.
 general conventions
 -------------------
 - assembly files are to be written in AT&T syntax... ;)
+- FIXME, TODO, NOTREACHED, WONTFIX, README, REFERENCE
 
 objects/identifiers
 -------------------

@@ -7,19 +7,11 @@
 #include <stdio.h>
 #endif
 
-#if 0
-void * malloc(size_t size);
-void * calloc(size_t n, size_t size);
-void * realloc(void *ptr, size_t size);
-void   free(void *ptr);
-void * valloc(size_t size);
-void * memalign(size_t align, size_t size);
-void * pvalloc(size_t size);
-void   cfree(void *ptr);
-#endif
+extern void * memalign(size_t align, size_t size);
+extern void * pvalloc(size_t size);
+extern void   cfree(void *ptr);
 
-extern int malloc_info(int opt, FILE *fp);
-
+extern int    malloc_info(int opt, FILE *fp);
 
 /* TODO: implement SVID2/XPG mallinfo */
 
@@ -36,11 +28,11 @@ struct mallinfo {
     int keepcost;       // top-most, releasable space (malloc_trim())
 };
 
-extern struct mallinfo mallinfo;
+extern struct mallinfo mallinfo(void);
 
 /* mallopt() options */
 #define M_MXFAST           1
-#define M_NBLKS            2
+#define M_NLBLKS           2
 #define M_GRAIN            3
 #define M_KEEP             4
 #define M_TRIM_THRESHOLD  -1
@@ -52,12 +44,12 @@ extern struct mallinfo mallinfo;
 #define M_ARENA_TEST      -7
 #define M_ARENA_MAX       -8
 
-extern int     mallopt(int parm, int val);
-extern int     malloc_trim(size_t pad);
-extern size_t  malloc_usable_size(void *ptr);
-extern void    malloc_stats(void);
-extern void   *malloc_get_state(void);
-extern int     malloc_set_state(void *ptr);
+extern int      mallopt(int parm, int val);
+extern int      malloc_trim(size_t pad);
+extern size_t   malloc_usable_size(void *ptr);
+extern void     malloc_stats(void);
+extern void   * malloc_get_state(void);
+extern int      malloc_set_state(void *ptr);
 
 #if defined(_GNU_SOURCE) && (GNUMALLOCHOOKS)
 extern void *(*__malloc_hook)(size_t size, const void *caller);
