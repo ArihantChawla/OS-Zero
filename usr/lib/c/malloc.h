@@ -13,7 +13,7 @@ extern void   cfree(void *ptr);
 
 extern int    malloc_info(int opt, FILE *fp);
 
-/* TODO: implement SVID2/XPG mallinfo */
+/* TODO: implement SVID2/XPG mallinfo; might need long-fields... */
 
 struct mallinfo {
     int arena;		// non-mmapped space allocated from system

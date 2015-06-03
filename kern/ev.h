@@ -6,29 +6,54 @@
 #include <zero/param.h>
 #include <gfx/rgb.h>
 
+/* API */
+/* TODO: implement ring-buffers for event queues */
+/* - wired to physical memory permanently */
+/* - event queue is mapped to both kernel and user space to avoid data copies */
+/* - register to listen to ev with flg parameters */
+/*   - evreg returns pointer to dual-mapped event queue (page) */
+void * evreg(long mask, long flg);
+/* read next event from queue */
+long   evpeek(struct zevent *ev, long mask);
+/*
+ * NOTE: the flg-bit values below are guaranteed not to overlap with event
+ * masks
+ */
+/*
+'* flg-value bits for evget() and evput()
+ * --------------------------------------
+ * - EVGET, EVPUT: flush queue unless flg has the EVNOFLUSH-bit set
+ * - EVGET:        remove from queue unless flg has the EVNOREMOVE-bit set
+ */
+#define EVNOFLUSH         0x01  // check queue; do not flush connection
+#define EVNOREMOVE        0x02  // do not remove event from queue
+/* flg-argument bits for evsync() */
+#define EV_SYNC           0x00000001L   // otherwise asynchronous
+#define EV_TOSS_USERINPUT 0x00000002L   // discard pending user input
+
+#define evpeek(ev, flg)   evget((ev), ((flg) | EVNOREMOVE))
+void    evget(struct zevent *ev, long flg);
+long    evput(struct zevent *ev, long flg);
+void    evsync(struct zdeck *deck, long flg);
+
 /*
  * NOTES
  * -----
- * - event ID of 0 (zero) is reserved for errors and other protocol messages
+ * - event ID of 0 is protocol messages, event ID 1 for protocol errors
  */
 
 /* events internal for event and reply management */
 #define EVPROTOMSG        0x00
-
-/* kernel events */
-
+#define EVERRMSG          0x01
 /* system events */
-#define EVSHUTDOWN        0x01  // system is being shut down
-#define EVMOUNT           0x02  // new filesystem has been mounted
-#define EVUNMOUNT         0x03  // filesystem has been unmounted
-
+/* EVSHUTDOWN is delivered no matter what events have been selected */
+#define EVSHUTDOWN        0x02  // system is being shut down or rebooted
 /* hardware/driver events */
-#define EVLOAD            0x01  // kernel module loaded
-#define EVUNLOAD          0x02  // kernel module unloaded
-#define EVPLUG            0x03  // new device plugged
-#define EVUNPLUG          0x04  // device unplugged
-
-#define NSYSEV            0x08  // # of system-space event types
+#define EVLOAD            0x03  // kernel module loaded
+#define EVUNLOAD          0x04  // kernel module unloaded
+#define EVPLUG            0x05  // new device plugged
+#define EVUNPLUG          0x06  // device unplugged
+#define NSYSEV            0x07  // # of system-space event types
 
 /* userland events */
 
@@ -45,10 +70,14 @@
 /* IPC events */
 #define EVIPCMASK         ((1UL << EVCMD) | (1UL << EVMSG) | (1UL << EVDATA))
 /* filesystem events */
-#define EVFSMASK          ((EVFSCREATMASK                               \
+#define EVFSMASK          ((EVFSMOUNTMASK                               \
+                            | EVFSUNMOUNTMASK                           \
+                            | EVFSCREATMASK                             \
                             | EVFSUNLINKMASK                            \
                             | EVFSMKDIRMASK                             \
                             | EVFSRMDIRMASK))
+#define EVFSMOUNTMASK     (1UL << EVFSMOUNT)
+#define EVFSUNMOUNTMASK   (1UL << EVFSUNMOUNT)
 #define EVFSCREATMASK     (1UL << EVFSCREAT)
 #define EVFSUNLINKMASK    (1UL << EVFSUNLINK)
 #define EVFSMKDIRMASK     (1UL << EVFSMKDIR)
@@ -68,12 +97,13 @@
 #define EVCMD             0x07  // RPC commands
 #define EVDATA            0x08  // data transfer
 /* filesystem events */
-#define EVFSCREAT         0x09  // file creation event
-#define EVFSUNLINK        0x0a  // file unlink event
-#define EVFSMKDIR         0x0b  // add directory
-#define EVFSRMDIR         0x0c  // remove directory
-
-#define NUSREV            0x0d  // # of user-space event types
+#define EVFSMOUNT         0x09
+#define EVFSUNMOUNT       0x0a
+#define EVFSCREAT         0x0b  // file creation event
+#define EVFSUNLINK        0x0c  // file unlink event
+#define EVFSMKDIR         0x0d  // add directory
+#define EVFSRMDIR         0x0e  // remove directory
+#define NUSREV            0x0f  // # of user-space event types
 
 /* queue events */
 #define EVQUEUE           0x01
@@ -246,31 +276,6 @@ struct zdeck {
     argb32_t  *drawbuf;         // double/draw buffer
     argb32_t  *scrbuf;          // [hardware] screen buffer
 };
-
-#if 0 /* THE STUFF BELOW MAY CHANGE */
-
-/* API */
-/* TODO: implement ring-buffers for event queues */
-/* - wired to physical memory permanently */
-/* - event queue is mapped to both kernel and user space to avoid data copies */
-/* - register to listen to ev with flg parameters */
-/*   - evreg returns pointer to dual-mapped event queue (page) */
-void * evreg(long mask, long flg);
-/* flg-value bits for evpeek(), evget(), ... */
-/* check current queue; don't flush the connection */
-#define EVNOFLUSH       0x01
-/* do not remove event from queue */
-#define EVNOREMOVE      0x02
-/* read next event from queue */
-long   evpeek(struct zevent *ev, long mask);
-/* flg-value bits for evget() */
-/* flush queue unless flg has the EVNOFLUSH-bit set */
-/* remove from queue unless flg has the NOREMOVE-bit set */
-void   evget(struct zevent *ev, long flg);
-#define EV_SYNC 0x00000001L     // otherwise asynchronous
-void   evsync(struct zdeck *deck, long flg);
-
-#endif /* 0 */
 
 #endif /* __KERN_EV_H__ */
 
