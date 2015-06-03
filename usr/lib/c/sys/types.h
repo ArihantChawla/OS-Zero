@@ -108,27 +108,6 @@ typedef uintptr_t       pthread_t;
 typedef uintptr_t       pthread_key_t;
 #endif
 
-#if (_POSIX_SOURCE)
-#define FD_SETSIZE _POSIX_FD_SETSIZE
-#else
-#define FD_SETSIZE NPROCFD
-#endif
-
-typedef long       fd_mask;
-#define NFDBITS    (sizeof(fd_mask) * NBBY)
-
-#define FD_SET(fd, set)    setbit(set.fd_bits, fd)
-#define FD_CLR(fd, set)    clrbit(set.fd_bits, fd)
-#define FD_ISSET(fd, set)  bitset(set.fd_bits, fd)
-#define FD_ZERO(set)       bzero(set.fd_bits, 0, FD_SETSIZE >> 3)
-/* BSD macro? */
-#define FD_COPY(dest, src) bcopy(dest, src, sizeof(*(dest)))
-
-struct fdset {
-    fd_mask fd_bits[FD_SETSIZE >> (LONGSIZELOG2 + 3)];
-};
-typedef struct fdset fd_set;
-
 /* FIXME: this file should #include <time.h> (?) :) */
 #include <time.h>
 #if (_BSD_SOURCE)

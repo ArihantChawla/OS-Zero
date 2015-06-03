@@ -5,10 +5,10 @@
 #include <stdint.h>
 #include <signal.h>
 #include <unistd.h>
-//#include <sys/select.h>
-//#include <sys/ipc.h>
-//#include <sys/stat.h>
-//#include <sys/shm.h>
+#include <sys/select.h>
+#include <sys/ipc.h>
+#include <sys/stat.h>
+#include <sys/shm.h>
 #include <zero/cdecl.h>
 #include <zero/param.h>
 #include <kern/perm.h>
@@ -223,16 +223,17 @@ struct sysatexit {
 /* TODO: MTX, SEM, and COND operations under IPC */
 
 /* throp() commands */
-#define THR_NEW             1      // pthread_create()
-#define THR_JOIN            2      // pthread_join()
-#define THR_DETACH          3      // pthread_detach()
-#define THR_EXIT            4      // pthread_exit()
-#define THR_CLEANUP         5      // cleanup; pop and execute handlers etc.
-#define THR_KEYOP           6      // create, delete
-#define THR_SYSOP           7      // atfork, sigmask, sched, scope
-#define THR_STKOP           8      // stack; adr, size, guardsize
-#define THR_RTOP            9      // realtime thread settings
-#define THR_SETATR         10      // set other attributes
+#define THR_YIELD           1
+#define THR_NEW             2      // pthread_create()
+#define THR_JOIN            3      // pthread_join()
+#define THR_DETACH          4      // pthread_detach()
+#define THR_EXIT            5      // pthread_exit()
+#define THR_CLEANUP         6      // cleanup; pop and execute handlers etc.
+#define THR_KEYOP           7      // create, delete
+#define THR_SYSOP           8      // atfork, sigmask, sched, scope
+#define THR_STKOP           9      // stack; adr, size, guardsize
+#define THR_RTOP           10      // realtime thread settings
+#define THR_SETATR         11      // set other attributes
 
 /* pctl() commands */
 #define PROC_GETPID        0x01    // getpid()

@@ -2,7 +2,8 @@
 #define __TIME_H__
 
 #include <features.h>
-//#include <stddef.h>
+#include <stddef.h>
+//#include <signal.h>
 #include <sys/types.h>
 //#include <unistd.h>
 #include <zero/trix.h>
@@ -20,6 +21,8 @@ extern char *__tzname[2];
 extern long  __timezone;
 extern int   _daylight;
 
+#include <bits/signal.h>
+
 #if (_ZERO_SOURCE)
 //#include <kern/proc/thr.h>
 #define CLOCKS_PER_SEC 1000000
@@ -30,10 +33,14 @@ extern int   _daylight;
 #define CLK_TCK        CLOCKS_PER_SEC
 #endif
 
-#if 0
-typedef long time_t;
-typedef long clock_t;
-#endif
+#define CLOCK_MONOTONIC          0
+#define CLOCK_PROCESS_CPUTIME_ID 1
+#define CLOCK_REALTIME           2
+#define CLOCK_THREAD_CPUTIME_ID  3
+
+#define TIMER_ABSTIME            0x00000001
+
+extern int getdate_err;
 
 #if (_POSIX_SOURCE) || (_XOPEN_SOURCE)
 struct tm {
@@ -126,10 +133,8 @@ extern int    clock_nanosleep(clockid_t clk, int flg,
                               struct timespec *left);
 extern int    clock_getcpuclockid(pid_t pid, clockid_t *clk);
 #endif
-#if 0 /* TODO: struct sigevent */
 extern int    timer_create(clockid_t clk, struct sigevent *__restrict sigev,
                            timer_t *__restrict tmr);
-#endif
 extern int    timer_delete(timer_t tmr);
 extern int    timer_settime(timer_t tmr, int flg,
                             const struct itimerspec *__restrict val,

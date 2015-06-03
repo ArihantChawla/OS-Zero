@@ -4,7 +4,6 @@
 #include <features.h>
 #include <time.h>
 #include <sys/types.h>
-#include <sys/select.h>
 
 #ifndef CLK_TCK
 #define CLK_TCK        CLOCKS_PER_SEC
@@ -51,7 +50,7 @@ typedef void *__restrict timezone_ptr_t;
 
 extern int gettimeofday(struct timeval *__restrict tv,
                         timezone_ptr_t tz);
-#if (_BSD_SOURCE)
+#if (_BSD_SOURCE) && (FAVORBSD)
 extern int settimeofday(const struct timeval *tv, const struct timezone *tz);
 extern int adjtime(const struct timeval *delta, struct timeval *olddelta);
 #endif
@@ -98,6 +97,8 @@ extern int futimesat(int fd, const char *file, const struct timeval tv[2]);
         }                                                               \
     } while (0)
 #endif /* _BSD_SOURCE */
+
+#include <sys/select.h>
 
 #endif /* __SYS_TIME_H__ */
 
