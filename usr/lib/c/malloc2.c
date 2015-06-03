@@ -100,6 +100,7 @@
 #include <stdlib.h>
 #include <string.h>
 #include <stdint.h>
+#include <stdio.h>
 #include <errno.h>
 #include <malloc.h>
 #if (MALLOCFREEMAP)
@@ -358,6 +359,8 @@ struct arn {
 
 struct mallopt {
     int action;
+    int flg;
+    int perturb;
     int mmapmax;
     int mmaplog2;
 };
@@ -1360,6 +1363,10 @@ mallinit(void)
     return;
 }
 
+/*
+ * M_MMAP_MAX       - maximum # of allocation requests serviced simultaneously
+ * M_MMAP_THRESHOLD - minimum size for mmap()
+ */
 int
 mallopt(int parm, int val)
 {
@@ -1367,14 +1374,28 @@ mallopt(int parm, int val)
     long num;
     
     switch (parm) {
-        case M_CHECK_ACTION:
-            g_malloc.mallopt.action |= val & 0x07;
-            ret = 1;
-            
+        case M_MXFAST:
+            fprintf(stderr, "mallopt: M_MXFAST not supported\n");
+
             break;
-        case M_MMAP_MAX:
-            g_malloc.mallopt.mmapmax = val;
-            ret = 1;
+        case M_NLBLKS:
+            fprintf(stderr, "mallopt: M_NLBLKS not supported\n");
+
+            break;
+        case M_GRAIN:
+            fprintf(stderr, "mallopt: M_GRAIN not supported\n");
+
+            break;
+        case M_KEEP:
+            fprintf(stderr, "mallopt: M_KEEP not supported\n");
+
+            break;
+        case M_TRIM_THRESHOLD:
+            fprintf(stderr, "mallopt: M_TRIM_THRESHOLD not supported\n");
+
+            break;
+        case M_TOP_PAD:
+            fprintf(stderr, "mallopt: M_TOP_PAD not supported\n");
 
             break;
         case M_MMAP_THRESHOLD:
@@ -1386,14 +1407,38 @@ mallopt(int parm, int val)
             g_malloc.mallopt.mmaplog2 = num;
 
             break;
+        case M_MMAP_MAX:
+            g_malloc.mallopt.mmapmax = val;
+            ret = 1;
+
+            break;
+        case M_CHECK_ACTION:
+            g_malloc.mallopt.action |= val & 0x07;
+            ret = 1;
+            
+            break;
+        case M_PERTURB:
+            g_malloc.mallopt.flg |= MALLOPT_PERTURB_BIT;
+            g_malloc.mallopt.perturb = val;
+
+            break;
         default:
             fprintf(stderr, "MALLOPT: invalid parm %d\n", parm);
-            ret = 0;
 
             break;
     }
 
     return ret;
+}
+
+int
+malloc_info(int opt, FILE *fp)
+{
+    int retval = -1;
+
+    fprintf(stderr, "malloc_info not implemented\n");
+
+    return retval;
 }
 
 void *
@@ -1732,7 +1777,12 @@ _malloc(size_t size,
     ptr = clrptr(ptrval);
     if (ptr) {
         if ((zero) && (((uintptr_t)ptrval & BLKDIRTY))) {
-            memset(ptr, 0, 1UL << (bktid));
+            memset(ptr, 0, 1UL << bktid);
+        } else if (g_malloc.mallopt.flg & MALLOPT_PERTURB) {
+            int perturb = g_malloc.mallopt.perturb;
+
+            perturb = (~perturb) & 0xff;
+            memset(ptr, perturb, 1UL << bktid);
         }
         if ((align) && ((uintptr_t)ptr & (align - 1))) {
             ptr = ptralign(ptr, align);
@@ -1808,6 +1858,12 @@ _free(void *ptr)
         clrbit(mag->freemap, magptrndx(mag, ptr));
 #endif
         ptr = maggetptr(mag, ptr);
+        if (g_malloc.mallopt.flg & MALLOPT_PERTURB) {
+            int perturb = g_malloc.mallopt.perturb;
+
+            perturb &= 0xff;
+            memset(ptr, perturb, 1UL << bktid);
+        }
 //        arn = g_malloc.arntab[arnid];
         lim = mag->lim;
         bktid = mag->bktid;

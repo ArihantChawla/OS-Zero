@@ -1,8 +1,13 @@
 #ifndef __MALLOC_H__
 #define __MALLOC_H__
 
+#include <features.h>
 #include <stddef.h>
+#if (_GNU_SOURCE)
+#include <stdio.h>
+#endif
 
+#if 0
 void * malloc(size_t size);
 void * calloc(size_t n, size_t size);
 void * realloc(void *ptr, size_t size);
@@ -11,21 +16,24 @@ void * valloc(size_t size);
 void * memalign(size_t align, size_t size);
 void * pvalloc(size_t size);
 void   cfree(void *ptr);
+#endif
+
+extern int malloc_info(int opt, FILE *fp);
 
 
 /* TODO: implement SVID2/XPG mallinfo */
 
 struct mallinfo {
-	int arena;		// non-mmapped space allocated from system
-	int ordblks;	// number of free chunks
-	int smblks;		// number of fastbin blocks
-	int hblks;		// number of mmapped regions
-	int hblkhd;		// space in mmapped register
-	int usmblks;	// maximum total allocated space
-	int fsmblks;	// space available in freed fastbin blocks
-	int uordblks;	// total allocated space
-	int fordblks;	// total free space
-	int keepcost;	// top-most, releasable space (malloc_trim())
+    int arena;		// non-mmapped space allocated from system
+    int ordblks;	// number of free chunks
+    int smblks;		// number of fastbin blocks
+    int hblks;		// number of mmapped regions
+    int hblkhd;		// space in mmapped register
+    int usmblks;	// maximum total allocated space
+    int fsmblks;	// space available in freed fastbin blocks
+    int uordblks;	// total allocated space
+    int fordblks;       // total free space
+    int keepcost;       // top-most, releasable space (malloc_trim())
 };
 
 extern struct mallinfo mallinfo;
