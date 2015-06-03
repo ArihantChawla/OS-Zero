@@ -4,13 +4,9 @@
 #include <features.h>
 #include <stddef.h>
 #include <stdint.h>
+#include <stdio.h>
 
 struct               tm;
-
-#if (_ISOC11_SOURCE) && 0 /* FIXME: do these belong here? =) */
-typedef uint16_t     char16_t;
-typedef uint32_t     char32_t;
-#endif
 
 #define WCHAR_MIN    0
 #if (WCHARSIZE == 4)
@@ -27,6 +23,10 @@ typedef uint32_t     char32_t;
 #define WCHARNBIT    8
 #endif /* WCHARSIZE */
 #define WCHARMASK    ((1 << WCHARNBIT) - 1)
+
+#if (_GNU_SOURCE) || (_XOPEN_SOURCE >= 700 || _POSIX_C_SOURCE >= 200809L)
+FILE *open_wmemstream(wchar_t **ptr, size_t *sizeptr);
+#endif
 
 #endif /* __WCHAR_H__ */
 

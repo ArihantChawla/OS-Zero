@@ -9,7 +9,7 @@
 #define __STDC_UTF_32__ 1
 
 typedef uint16_t char16_t;
-typedef uint32_t  char32_t;
+typedef uint32_t char32_t;
 
 size_t mbrtoc16(char16_t *__restrict ptr16,
                 const char *__restrict str,

@@ -16,24 +16,23 @@ typedef __gnuc_va_list __stdio_va_list;
 #include <kern/io.h>
 #include <kern/io/buf.h>
 
+#include <bits/stdio.h>
+
 #if defined(__GLIBC__)
 typedef struct _IO_FILE FILE;
 #else
-typedef struct file   FILE;
+typedef struct file     FILE;
 #endif
+
+extern FILE *stdin;
+extern FILE *stdout;
+extern FILE *stderr;
+
 typedef off_t         fpos_t;
 #if (_FILE_OFFSET_BITS == 64)
 typedef off_t         fpos64_t;
 #else
 typedef int64_t       fpos64_t;
-#endif
-extern FILE          *stdin;
-extern FILE          *stdout;
-extern FILE          *stderr;
-#if defined(__STDC__) && 0
-#define stdin
-#define stdout
-#define stderr
 #endif
 
 #define EOF           (-1)
@@ -77,13 +76,11 @@ extern int   fflush_unlocked(FILE *stream);
 extern FILE *fdopen(int fd, const char *mode);
 #endif
 
-#if (_GNU_SOURCE)
+#if (_GNU_SOURCE) || (_XOPEN_SOURCE >= 700 || _POSIX_C_SOURCE >= 200809L)
 /* GNU operations */
-#if 0
 extern FILE *fopencookie(void *__restrict cookie, const char *__restrict mode,
-                         _IO_cookie_io_functions_t iofuncs);
-#endif
-extern FILE *fmemopen(void *str, size_t len, const char *mode);
+                         cookie_io_functions_t iofuncs);
+extern FILE *fmemopen(void *buf, size_t len, const char *mode);
 extern FILE *open_memstream(char **ptr, size_t *size);
 extern int   fcloseall(void);
 #endif
@@ -237,7 +234,7 @@ extern char *cuserid(char *buf);
 #endif
 
 /* lock operations */
-#if (_POSIX_SOURCE)
+#if (_POSIX_SOURCE) || (_XOPEN_SOURCE) || (_BSD_SOURCE) || (_SVID_SOURCE)
 extern void flockfile(FILE *stream);
 extern int ftrylockfile(FILE *stream);
 extern void funlockfile(FILE *stream);

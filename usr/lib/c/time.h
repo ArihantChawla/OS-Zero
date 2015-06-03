@@ -4,7 +4,7 @@
 #include <features.h>
 //#include <stddef.h>
 #include <sys/types.h>
-#include <unistd.h>
+//#include <unistd.h>
 #include <zero/trix.h>
 #if (_ZERO_SOURCE)
 #include <kern/conf.h>

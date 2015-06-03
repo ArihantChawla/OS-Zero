@@ -11,6 +11,8 @@
 #endif
 
 struct file {
+    long       lkcnt;
+    pid_t      owner;
     off_t      ofs;
     uintptr_t  desc;
     char      *path;
