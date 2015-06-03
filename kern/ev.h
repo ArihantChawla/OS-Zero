@@ -4,6 +4,7 @@
 #include <stdint.h>
 #include <zero/cdecl.h>
 #include <zero/param.h>
+#include <gfx/rgb.h>
 
 /*
  * NOTES
@@ -11,21 +12,27 @@
  * - event ID of 0 (zero) is reserved for errors and other protocol messages
  */
 
+/* events internal for event and reply management */
+#define EVPROTOMSG        0x00
+
 /* kernel events */
 
 /* system events */
-#define EVSHUTDOWN        0x01
-#define EVMOUNT           0x02
-#define EVUNMOUNT         0x03
+#define EVSHUTDOWN        0x01  // system is being shut down
+#define EVMOUNT           0x02  // new filesystem has been mounted
+#define EVUNMOUNT         0x03  // filesystem has been unmounted
 
 /* hardware/driver events */
-#define EVLOAD            0x01
-#define EVPLUG            0x02
-#define EVUNPLUG          0x03
+#define EVLOAD            0x01  // kernel module loaded
+#define EVUNLOAD          0x02  // kernel module unloaded
+#define EVPLUG            0x03  // new device plugged
+#define EVUNPLUG          0x04  // device unplugged
+
+#define NSYSEV            0x08  // # of system-space event types
 
 /* userland events */
 
-/* masks for choosing events */
+/* masks for choosing events to listen */
 
 /* user input events */
 #define EVKEYMASK         (EVKEYDOWNMASK | EVKEYUPMASK)
@@ -50,21 +57,23 @@
 /* event IDs */
 
 /* keyboard events */
-#define EVKEYDOWN         0x01   // keyboard key down event
-#define EVKEYUP           0x02   // keyboard key up event
+#define EVKEYDOWN         0x01  // keyboard key down event
+#define EVKEYUP           0x02  // keyboard key up event
 /* pointer events */
-#define EVBUTTONDOWN      0x03   // mouse/pointer button down event
-#define EVBUTTONUP        0x04   // mouse/pointer button up event
-#define EVPNTMOTION       0x05
+#define EVBUTTONDOWN      0x03  // mouse/pointer button down event
+#define EVBUTTONUP        0x04  // mouse/pointer button up event
+#define EVPNTMOTION       0x05  // pointer motion reported
 /* IPC events */
-#define EVMSG             0x06   // message events such as errors
-#define EVCMD             0x07   // RPC commands
-#define EVDATA            0x08   // data transfer
+#define EVMSG             0x06  // custom protocol messages
+#define EVCMD             0x07  // RPC commands
+#define EVDATA            0x08  // data transfer
 /* filesystem events */
-#define EVFSCREAT         0x09   // file creation event
-#define EVFSUNLINK        0x0a   // file unlink event
-#define EVFSMKDIR         0x0b   // add directory
-#define EVFSRMDIR         0x0c   // remove directory
+#define EVFSCREAT         0x09  // file creation event
+#define EVFSUNLINK        0x0a  // file unlink event
+#define EVFSMKDIR         0x0b  // add directory
+#define EVFSRMDIR         0x0c  // remove directory
+
+#define NUSREV            0x0d  // # of user-space event types
 
 /* queue events */
 #define EVQUEUE           0x01
@@ -111,7 +120,7 @@
 /* keyboard event size in octets */
 #define kbdevsize(ev)     (((ev)->sym & EVKBDSTATE) ? 12 : 8)
 struct evkbd {
-    uint64_t scan;
+    uint64_t code;      // keyboard scan-code or something similar
     uint32_t mask;      // modifier flags in high bits, buttons in low
 //    uint64_t state;
 } PACK();
@@ -162,10 +171,39 @@ struct evcmd {
  * -------------
  * - reply will be 32-bit object ID or 0 on failure
  */
+/* flg-field bits */
+#define EVDATA_BIGENDIAN  0x00000001U   // big-endian vs. little-endian words
+#define EVDATA_MESSAGE    0x00000002U   // otherwise error
+/* fmt-field formats */
+#define EVDATA_ASCII      0x00000001U
+#define EVDATA_ISO8859_1  0x00000002U
+#define EVDATA_ISO8859_2  0x00000003U
+#define EVDATA_ISO8859_3  0x00000004U
+#define EVDATA_ISO8859_4  0x00000005U
+#define EVDATA_ISO8859_5  0x00000006U
+#define EVDATA_ISO8859_6  0x00000007U
+#define EVDATA_ISO8859_7  0x00000008U
+#define EVDATA_ISO8859_8  0x00000009U
+#define EVDATA_ISO8859_9  0x0000000aU
+#define EVDATA_ISO8859_10 0x0000000bU
+#define EVDATA_ISO8859_11 0x0000000cU
+#define EVDATA_ISO8859_12 0x0000000dU
+#define EVDATA_ISO8859_13 0x0000000eU
+#define EVDATA_ISO8859_14 0x0000000fU
+#define EVDATA_ISO8859_15 0x00000010U
+#define EVDATA_ISO8859_16 0x00000011U
+#define EVDATA_UTF_8      0x00000012U
+#define EVDATA_UTF_16     0x00000013U
+#define EVDATA_UCS_16     0x00000014U
+#define EVDATA_UCS_32     0x00000015U
+#define EVDATA_BINARY_8   0x00000016U
+#define EVDATA_BINARY_16  0x00000017U
+#define EVDATA_BINARY_32  0x00000018U
+#define EVDATA_BINARY_64  0x00000019U
 struct evdata {
     uint32_t flg;                       // data/flags such as BIGENDIAN
     uint32_t fmt;                       // data format
-    uint32_t nbyte;                     // data-word size in bytes
+    uint32_t wsize;                     // data-word size in bytes
     uint32_t nitem;                     // number of items to follow
     uint8_t  data[EMPTY];               // data message
 } PACK();
@@ -176,10 +214,18 @@ struct evfs {
     uint32_t dev;                       // device ID
 } PACK();
 
+struct evhdr {
+    uint32_t type;                      // event type such as KEYUP
+    uint32_t timestamp;                 // timestamp (server uptime)
+};
+
+#define evgettype(ev)    ((ev)->hdr.type)
+#define evsettype(ev, t) ((ev)->hdr.type = (t))
+#define evgettime(ev)    ((ev)->hdr.timestamp)
+#define evsettime(ev, t) ((ev)->hdr.timestamp = (t))
 /* event structure */
 struct zevent {
-    uint32_t type;                      // event type such as EVhey KEYUP
-    uint32_t timestamp;                 // timestamp of server uptime
+    struct evhdr hdr;
     union {
         /* actual event message */
         struct evkbd  kbd;
@@ -191,6 +237,16 @@ struct zevent {
     } msg;
 } PACK();
 
+/* structure for functionlality similiar to X and such desktop/screen servers */
+struct zdeck {
+    /* screen ID (similar to Display */
+    uintptr_t  scrid;           // screen structure kernel address
+    /* graphics parameters */
+    uintptr_t  gfxbase;         // framebuffer address numerical value
+    argb32_t  *drawbuf;         // double/draw buffer
+    argb32_t  *scrbuf;          // [hardware] screen buffer
+};
+
 #if 0 /* THE STUFF BELOW MAY CHANGE */
 
 /* API */
@@ -200,15 +256,19 @@ struct zevent {
 /* - register to listen to ev with flg parameters */
 /*   - evreg returns pointer to dual-mapped event queue (page) */
 void * evreg(long mask, long flg);
-long   evpeek(struct zevent *ev, long mask);
+/* flg-value bits for evpeek(), evget(), ... */
 /* check current queue; don't flush the connection */
 #define EVNOFLUSH       0x01
 /* do not remove event from queue */
 #define EVNOREMOVE      0x02
 /* read next event from queue */
+long   evpeek(struct zevent *ev, long mask);
+/* flg-value bits for evget() */
 /* flush queue unless flg has the EVNOFLUSH-bit set */
 /* remove from queue unless flg has the NOREMOVE-bit set */
 void   evget(struct zevent *ev, long flg);
+#define EV_SYNC 0x00000001L     // otherwise asynchronous
+void   evsync(struct zdeck *deck, long flg);
 
 #endif /* 0 */
 

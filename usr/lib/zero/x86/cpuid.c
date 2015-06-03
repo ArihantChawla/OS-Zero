@@ -6,6 +6,16 @@
  * -vendu
  */
 
+#if defined(__KERNEL__) && (__KERNEL__)
+#define __printf kprintf
+#define __strcmp kstrcmp
+#else
+#include <stdio.h>
+#include <string.h>
+#define __printf printf
+#define __strcmp strcmp
+#endif
+
 /* TODO: fix this stuff to run on SMP (per-CPU m_cpuinfo structures) */
 
 /*
@@ -151,27 +161,27 @@ cpuid_print_cache_info_intel(uint8_t id)
     if (info->size) {
         switch (info->type) {
             case M_CPUIDINSTRTLB:
-                printf("itlb: %ldK pages, %ld-way, %ld entries\n",
+                __printf("itlb: %ldK pages, %ld-way, %ld entries\n",
                        (long)info->size / 1024, (long)info->nway, (long)info->xsize);
                 
                 break;
             case M_CPUIDDATATLB:
-                printf("dtlb: %ldK pages, %ld-way, %ld entries\n",
+                __printf("dtlb: %ldK pages, %ld-way, %ld entries\n",
                        (long)info->size / 1024, (long)info->nway, (long)info->xsize);
                 
                 break;
             case M_CPUIDINSTRCACHE:
-                printf("icache: %ldK, %ld-way, %ld-byte line\n",
+                __printf("icache: %ldK, %ld-way, %ld-byte line\n",
                        (long)info->size / 1024, (long)info->nway, (long)info->xsize);
                 
                 break;
             case M_CPUIDDATACACHE:
-                printf("dcache: %ldK, %ld-way, %ld-byte line\n",
+                __printf("dcache: %ldK, %ld-way, %ld-byte line\n",
                        (long)info->size / 1024, (long)info->nway, (long)info->xsize);
                 
                 break;
             case M_CPUIDUNICACHE:
-                printf("ucache: %ldK, %ld-way, %ld-byte line\n",
+                __printf("ucache: %ldK, %ld-way, %ld-byte line\n",
                        (long)info->size / 1024, (long)info->nway, (long)info->xsize);
                 
                 break;
@@ -184,23 +194,23 @@ cpuid_print_cache_info_intel(uint8_t id)
 static void
 cpuid_print_l1_info_amd(struct m_cpuid *cpuid)
 {
-    printf("dtlb: 4K pages, %ld-way, %ld entries\n",
+    __printf("dtlb: 4K pages, %ld-way, %ld entries\n",
            (long)cpuid->ebx >> 24, ((long)cpuid->ecx >> 16) & 0xff);
-    printf("dtlb: 2M pages, %ld-way, %ld entries\n",
+    __printf("dtlb: 2M pages, %ld-way, %ld entries\n",
            (long)cpuid->eax >> 24, (long)cpuid->eax & 0xff);
-    printf("dtlb: 4M pages, %ld-way, %ld entries\n",
+    __printf("dtlb: 4M pages, %ld-way, %ld entries\n",
            (long)cpuid->eax >> 24, ((long)cpuid->eax & 0xff) >> 1);
 
-    printf("itlb: 4K pages, %ld-way, %ld entries\n",
+    __printf("itlb: 4K pages, %ld-way, %ld entries\n",
            ((long)cpuid->ebx >> 8) & 0xff, (long)cpuid->edx & 0xff);
-    printf("itlb: 2M pages, %ld-way, %ld entries\n",
+    __printf("itlb: 2M pages, %ld-way, %ld entries\n",
            ((long)cpuid->eax >> 8) & 0xff, (long)cpuid->eax & 0xff);
-    printf("itlb: 4M pages, %ld-way, %ld entries\n",
+    __printf("itlb: 4M pages, %ld-way, %ld entries\n",
            ((long)cpuid->eax >> 8) & 0xff, ((long)cpuid->eax & 0xff) >> 1);
 
-    printf("dcache: %ldK, %ld-way, %ld-byte line\n",
+    __printf("dcache: %ldK, %ld-way, %ld-byte line\n",
            (long)cpuid->ecx >> 24, ((long)cpuid->ecx >> 16) & 0xff, (long)cpuid->ecx & 0xff);
-    printf("icache: %ldK, %ld-way, %ld-byte line\n",
+    __printf("icache: %ldK, %ld-way, %ld-byte line\n",
            (long)cpuid->edx >> 24, ((long)cpuid->edx >> 16) & 0xff, (long)cpuid->edx & 0xff);
 
     return;
@@ -209,21 +219,21 @@ cpuid_print_l1_info_amd(struct m_cpuid *cpuid)
 static void
 cpuid_print_l2_info_amd(struct m_cpuid *cpuid)
 {
-    printf("l2: %ldK, %ld-way, %ld-byte line\n",
+    __printf("l2: %ldK, %ld-way, %ld-byte line\n",
            (long)cpuid->ecx >> 16, ((long)cpuid->ecx >> 12) & 0x0f, (long)cpuid->ecx & 0xff);
 
-    printf("l2dtlb: 4K, %ld-way,  %ld entries\n",
+    __printf("l2dtlb: 4K, %ld-way,  %ld entries\n",
            (long)cpuid->ebx >> 28, ((long)cpuid->ebx >> 16) & 0x0fff);
-    printf("l2dtlb: 2M, %ld-way,  %ld entries\n",
+    __printf("l2dtlb: 2M, %ld-way,  %ld entries\n",
            (long)cpuid->eax >> 28, ((long)cpuid->eax >> 16) & 0x0fff);
-    printf("l2dtlb: 4M, %ld-way,  %ld entries\n",
+    __printf("l2dtlb: 4M, %ld-way,  %ld entries\n",
            (long)cpuid->eax >> 28, (((long)cpuid->eax >> 16) & 0x0fff) >> 1);
 
-    printf("l2itlb: 4K, %ld-way,  %ld entries\n",
+    __printf("l2itlb: 4K, %ld-way,  %ld entries\n",
            ((long)cpuid->ebx >> 12) & 0x0f, (long)cpuid->ebx & 0x0fff);
-    printf("l2itlb: 2M, %ld-way,  %ld entries\n",
+    __printf("l2itlb: 2M, %ld-way,  %ld entries\n",
            ((long)cpuid->eax >> 12) & 0x0f, (long)cpuid->eax & 0x0fff);
-    printf("l2itlb: 4M, %ld-way,  %ld entries\n",
+    __printf("l2itlb: 4M, %ld-way,  %ld entries\n",
            ((long)cpuid->eax >> 12) & 0x0f, ((long)cpuid->eax & 0x0fff) >> 1);
 
     return;
@@ -374,7 +384,7 @@ cpuprobe(struct m_cpuinfo *cpuinfo)
     struct m_cacheinfo  *cbuf;
 
     cpuidgetvendor(&vbuf);
-    if (!strcmp((const char *)vbuf.str, _vendortab[CPUIDINTEL])) {
+    if (!__strcmp((const char *)vbuf.str, _vendortab[CPUIDINTEL])) {
         cpuidinitci_intel();
         cpuidgetci_intel(&buf);
         cbuf = &cpuidcacheinfo[M_CPUIDINSTRCACHE];
@@ -393,7 +403,7 @@ cpuprobe(struct m_cpuinfo *cpuinfo)
         cpuinfo->l2.size = cbuf->size;
         cpuinfo->l2.clsz = cbuf->xsize;
         cpuinfo->l2.nway = cbuf->nway;
-    } else if (!strcmp((const char *)vbuf.str, _vendortab[CPUIDAMD])) {
+    } else if (!__strcmp((const char *)vbuf.str, _vendortab[CPUIDAMD])) {
         cpuidgetl1_amd(&buf);
         cpuinfo->l1i.size = buf.edx >> 14;
         cpuinfo->l1i.clsz = buf.edx & 0xff;
@@ -430,15 +440,15 @@ cpuprintinfo(void)
 #endif
     
     cpuidgetvendor(&vbuf);
-    printf("CPU: vendor: %s\n", vbuf.str);
-    if (!strcmp((const char *)vbuf.str, _vendortab[CPUIDINTEL])) {
+    __printf("CPU: vendor: %s\n", vbuf.str);
+    if (!__strcmp((const char *)vbuf.str, _vendortab[CPUIDINTEL])) {
         cpuidinitci_intel();
         cpuidgetci_intel(&buf);
         cpuid_print_cache_info_intel(buf.eax);
         cpuid_print_cache_info_intel(buf.ebx);
         cpuid_print_cache_info_intel(buf.ecx);
         cpuid_print_cache_info_intel(buf.edx);
-    } else if (!strcmp((const char *)vbuf.str, _vendortab[CPUIDAMD])) {
+    } else if (!__strcmp((const char *)vbuf.str, _vendortab[CPUIDAMD])) {
         cpuidgetl1_amd(&buf);
         cpuid_print_l1_info_amd(&buf);
         cpuidgetl2_amd(&buf);
@@ -447,83 +457,83 @@ cpuprintinfo(void)
     /* stepping, model, family, type, ext_model, ext_family */
     cpuidgetinfo(&buf);
 #if 0
-    printf("cpu info:\n");
-    printf("\tstepping: %u\n", cpuidstepping(&buf));
-    printf("\tmodel: %u\n", cpuidmodel(&buf));
-    printf("\tfamily: %u\n", cpuidfamily(&buf));
-    printf("\ttype: %u\n", cpuidtype(&buf));
-    printf("\text_model: %u\n", cpuidextmodel(&buf));
-    printf("\text_family: %u\n", cpuidextfamily(&buf));
+    __printf("cpu info:\n");
+    __printf("\tstepping: %u\n", cpuidstepping(&buf));
+    __printf("\tmodel: %u\n", cpuidmodel(&buf));
+    __printf("\tfamily: %u\n", cpuidfamily(&buf));
+    __printf("\ttype: %u\n", cpuidtype(&buf));
+    __printf("\text_model: %u\n", cpuidextmodel(&buf));
+    __printf("\text_family: %u\n", cpuidextfamily(&buf));
 #endif
     
-    printf("CPU: features:");
+    __printf("CPU: features:");
     if (cpuidhaspse(&buf)) {
-        printf(" pse");
+        __printf(" pse");
     }
     if (cpuidhastsc(&buf)) {
-        printf(" tsc");
+        __printf(" tsc");
     }
     if (cpuidhassep(&buf)) {
-        printf(" sep");
+        __printf(" sep");
     }
     if (cpuidhaspge(&buf)) {
-        printf(" pge");
+        __printf(" pge");
     }
     if (cpuidhasmmx(&buf)) {
-        printf(" mmx");
+        __printf(" mmx");
     }
     if (cpuidhasclfl(&buf)) {
-        printf(" clfl");
+        __printf(" clfl");
     }
     if (cpuidhasfxsr(&buf)) {
-        printf(" fxsr");
+        __printf(" fxsr");
     }
     if (cpuidhassse(&buf)) {
-        printf(" sse");
+        __printf(" sse");
     }
     if (cpuidhassse2(&buf)) {
-        printf(" sse2");
+        __printf(" sse2");
     }
     if (cpuidhassse3(&buf)) {
-        printf(" sse3");
+        __printf(" sse3");
     }
-//    printf("\n");
+//    __printf("\n");
     
     cpuidgetexti(&buf);
-//    printf("amd features: ");
+//    __printf("amd features: ");
     if (cpuidhasamd_mmx(&buf)) {
-        printf(" mmx");
+        __printf(" mmx");
     }
     if (cpuidhas3dnow(&buf)) {
-        printf(" 3dnow");
+        __printf(" 3dnow");
     }
     if (cpuidhas3dnow2(&buf)) {
-        printf(" 3dnow2");
+        __printf(" 3dnow2");
     }
-    printf("\n");
+    __printf("\n");
     
 #if defined(__ZEROKERNEL__)
     cpuidgetmodes(&mbuf);
-    printf("cpu modes:");
+    __printf("cpu modes:");
     if (cpuidhaspwt(&mbuf)) {
-        printf(" pwt");
+        __printf(" pwt");
     }
     if (cpuidhaspcd(&mbuf)) {
-        printf(" pcd");
+        __printf(" pcd");
     }
     if (cpuidhasrdtsc(&mbuf)) {
-        printf(" rdtsc");
+        __printf(" rdtsc");
     }
     if (cpuidhaspse(&mbuf)) {
-        printf(" pse");
+        __printf(" pse");
     }
     if (cpuidhaspge(&mbuf)) {
-        printf(" pge");
+        __printf(" pge");
     }
     if (cpuidhasrdpmc(&mbuf)) {
-        printf(" rdpmc");
+        __printf(" rdpmc");
     }
-    printf("\n");
+    __printf("\n");
 #endif /* 0 */
  
     return;

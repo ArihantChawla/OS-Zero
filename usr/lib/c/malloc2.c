@@ -740,7 +740,7 @@ magsetstk(struct mag *mag)
     uintptr_t   *tab = NULL;
 #else
     void       **stk = NULL;
-    void       **tab = NULL;
+//    void       **tab = NULL;
 #endif
     
     if (magembedtab(bktid)) {
@@ -1283,7 +1283,7 @@ mallinit(void)
     long        ofs;
 #endif
     uint8_t    *ptr;
-#if (MALLOCNEWHACKS)
+#if (MALLOCNEWHACKS) && 0
     long        bkt;
 #endif
 

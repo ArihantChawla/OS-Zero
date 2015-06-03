@@ -1,6 +1,10 @@
 #ifndef __BITS_SIGNAL_H__
 #define __BITS_SIGNAL_H__
 
+#if !defined(PTHREAD) || defined(__KERNEL__)
+#define PTHREAD 0
+#endif
+
 #include <features.h>
 #include <stdint.h>
 #include <sys/types.h>

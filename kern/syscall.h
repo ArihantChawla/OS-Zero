@@ -198,8 +198,8 @@ extern void ksyscall(void);
 /* POSIX-functionality */
 #define SYSCTL_PAGES    0x01U
 #define SYSCTL_AVPAGES  0x02U
-#define SYSCTL_NPROC    0x03U
-#define SYSCTL_NPROCON  0x04U
+#define SYSCTL_NUMPROC  0x03U
+#define SYSCTL_PROCON   0x04U
 /* Zero extensions */
 #define SYSCTL_L1SIZE   0x05U   // L1 cache size
 #define SYSCTL_L2SIZE   0x06U   // L2 cache size
