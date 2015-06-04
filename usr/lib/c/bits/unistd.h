@@ -78,12 +78,12 @@ typedef long socklen_t;
 #if defined(_GNU_SOURCE)
 #define TEMP_FAILURE_RETRY(expr)                                        \
     (__extension__                                                      \
-     ((long _res;                                                       \
-       do {                                                             \
-           _res = (long)(expr);                                         \
-       } while (_res == -1L && errno == EINTR);                         \
-       _res;                                                            \
-         )))
+     ({ long _res;                                                      \
+         do {                                                           \
+             _res = (long)(expr);                                       \
+         } while (_res == -1L && errno == EINTR);                       \
+         _res;                                                          \
+     }))
 #endif
 
 #endif /* __BITS_UNISTD_H__ */
