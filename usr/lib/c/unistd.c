@@ -49,6 +49,19 @@ long sysconftab[NSYSCONF]
 volatile long sysconfbits;
 volatile long sysconflk;
 
+#define _sysconfneedupd(name)                                           \
+    ((name) <= _SC_PHYS_PAGES && (name) >= _SC_NPROCESSORS_ONLN)
+void
+sysconfupd(void)
+{
+    long *ptr = sysconftab + NNEGSYSCONF;
+    
+    ptr[_SC_NPROCESSORS_ONLN] = get_nprocs();
+    ptr[_SC_NPROCESSORS_CONF] = get_nprocs_conf();
+    ptr[_SC_AVPHYS_PAGES] = get_avphys_pages();
+    ptr[_SC_PHYS_PAGES] = get_phys_pages();
+}
+
 static void
 sysconfinit(long *tab)
 {
@@ -57,6 +70,7 @@ sysconfinit(long *tab)
 
     mtxlk(&sysconflk);
     if (!(sysconfbits & SYSCONF_CPUPROBE)) {
+        /* probe persistent values */
         cpuprobe(&cpuinfo);
         ptr[_SC_L2NWAY] = cpuinfo.l2.nway;
         ptr[_SC_L2SIZE] = cpuinfo.l2.size;
@@ -72,29 +86,11 @@ sysconfinit(long *tab)
 
         return;
     }
-#if 0
-    ptr[_SC_NPROCESSORS_ONLN] = get_nprocs();
-    ptr[_SC_NPROCESSORS_CONF] = get_nprocs_conf();
-    ptr[_SC_AVPHYS_PAGES] = get_avphys_pages();
-    ptr[_SC_PHYS_PAGES] = get_phys_pages();
-#endif
+    sysconfupd();
     sysconfbits |= SYSCONF_INIT;
     mtxunlk(&sysconflk);
 
     return;
-}
-
-#define _sysconfneedupd(name)                                           \
-    ((name) <= _SC_PHYS_PAGES && (name) >= _SC_NPROCESSORS_ONLN)
-void
-sysconfupd(void)
-{
-    long *ptr = sysconftab + NNEGSYSCONF;
-    
-    ptr[_SC_NPROCESSORS_ONLN] = get_nprocs();
-    ptr[_SC_NPROCESSORS_CONF] = get_nprocs_conf();
-    ptr[_SC_AVPHYS_PAGES] = get_avphys_pages();
-    ptr[_SC_PHYS_PAGES] = get_phys_pages();
 }
 
 long
