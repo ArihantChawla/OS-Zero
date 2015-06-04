@@ -61,17 +61,17 @@ typedef long socklen_t;
 #endif
 /* Zero extensions */
 #if defined(_ZERO_SOURCE) && (_ZERO_SOURCE)
-#define _SC_CACHELINESIZE    -5 // size of cacheline in bytes
-#define _SC_L1INSTSIZE       -6 // L1 cache size in bytes
-#define _SC_L1DATASIZE       -7 // L1 cache size in bytes
-#define _SC_L1INSTNWAY       -8 // L1 cache parameter
-#define _SC_L1DATANWAY       -9 // L1 cache parameter
-#define _SC_L2SIZE           -10 // L2 cache size in bytes
-#define _SC_L2NWAY           -11 // L2 cache parameter
-#define _SC_BLKSIZE          -12 // buffer block size
+#define _SC_CACHELINESIZE    (-5) // size of [memory] cacheline in bytes
+#define _SC_L1INSTSIZE       (-6) // L1 cache size in bytes
+#define _SC_L1DATASIZE       (-7) // L1 cache size in bytes
+#define _SC_L1INSTNWAY       (-8) // L1 cache parameter
+#define _SC_L1DATANWAY       (-9) // L1 cache parameter
+#define _SC_L2SIZE           (-10) // L2 cache size in bytes
+#define _SC_L2NWAY           (-11) // L2 cache parameter
+#define _SC_BLKSIZE          (-12) // buffer block size
 #endif
-#define MINSYSCONF           (-12)
-#define NSYSCONF             (26 - MINSYSCONF) // 1 bigger than any name-value
+#define NNEGSYSCONF          (12)
+#define NSYSCONF             (26 + NNEGSYSCONF) // 1 bigger than any name-value
 #if (USEXOPENEXT) && !defined(F_LOCK)
 /* these macros also appear in <fcntl.h> - keep the files consistent */
 #define F_ULOCK 0       // unlock section of a file

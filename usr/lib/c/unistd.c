@@ -53,7 +53,7 @@ static void
 sysconfinit(long *tab)
 {
     struct m_cpuinfo  cpuinfo;
-    long             *ptr = tab - MINSYSCONF;
+    long             *ptr = tab + NNEGSYSCONF;
 
     mtxlk(&sysconflk);
     if (!(sysconfbits & SYSCONF_CPUPROBE)) {
@@ -72,26 +72,44 @@ sysconfinit(long *tab)
 
         return;
     }
+#if 0
     ptr[_SC_NPROCESSORS_ONLN] = get_nprocs();
     ptr[_SC_NPROCESSORS_CONF] = get_nprocs_conf();
     ptr[_SC_AVPHYS_PAGES] = get_avphys_pages();
     ptr[_SC_PHYS_PAGES] = get_phys_pages();
+#endif
     sysconfbits |= SYSCONF_INIT;
     mtxunlk(&sysconflk);
 
     return;
 }
 
+#define _sysconfneedupd(name)                                           \
+    ((name) <= _SC_PHYS_PAGES && (name) >= _SC_NPROCESSORS_ONLN)
+void
+sysconfupd(void)
+{
+    long *ptr = sysconftab + NNEGSYSCONF;
+    
+    ptr[_SC_NPROCESSORS_ONLN] = get_nprocs();
+    ptr[_SC_NPROCESSORS_CONF] = get_nprocs_conf();
+    ptr[_SC_AVPHYS_PAGES] = get_avphys_pages();
+    ptr[_SC_PHYS_PAGES] = get_phys_pages();
+}
+
 long
 sysconf(int name)
 {
-    long *ptr = sysconftab - MINSYSCONF;
+    long *ptr = sysconftab + NNEGSYSCONF;
     long  retval = -1;
 
     if (!(sysconfbits & SYSCONF_INIT)) {
         sysconfinit(sysconftab);
     }
-    if (name < MINSYSCONF || name > NSYSCONF + MINSYSCONF) {
+    if (_sysconfneedupd(name)) {
+        sysconfupd();
+    }
+    if (name < -NNEGSYSCONF || name > NSYSCONF - NNEGSYSCONF) {
         errno = EINVAL;
     } else {
         retval = ptr[name];
@@ -130,11 +148,11 @@ getpagesize(void)
 int
 main(int argc, char *argv[])
 {
-    fprintf(stderr, "PAGESIZE: %ld\n", getpagesize());
-    fprintf(stderr, "BLKSIZE: %ldK\n", sysconf(_SC_BLKSIZE) >> 10);
-    fprintf(stderr, "CLSIZE: %ld\n", sysconf(_SC_CACHELINESIZE));
-    fprintf(stderr, "PHYS: %ld\n", sysconf(_SC_PHYS_PAGES));
-    fprintf(stderr, "AVPHYS: %ld\n", sysconf(_SC_AVPHYS_PAGES));
+    fprintf(stderr, "PAGESIZE\t%ld\n", getpagesize());
+    fprintf(stderr, "BLKSIZE\t\t%ldK\n", sysconf(_SC_BLKSIZE) >> 10);
+    fprintf(stderr, "CLSIZE\t\t%ld\n", sysconf(_SC_CACHELINESIZE));
+    fprintf(stderr, "PAGES\t\t%ld\n", sysconf(_SC_PHYS_PAGES));
+    fprintf(stderr, "AVPAGES\t\t%ld\n", sysconf(_SC_AVPHYS_PAGES));
 
     exit(0);
 }

@@ -224,14 +224,16 @@ extern int            fsync(int fd);
 #if (_BSD_SOURCE) || (USEXOPENEXT)
 extern long           gethostid(void);
 extern void           sync(void);
-#if (_POSIX_SOURCE)
+#if defined(PAGESIZE) && (PAGESIZE)
+#define getpagesize() PAGESIZE
+#elif (_POSIX_SOURCE)
 #if defined(_SC_PAGESIZE)
 #define getpagesize() sysconf(_SC_PAGESIZE)
 #elif defined(_SC_PAGE_SIZE)
 #define getpagesize() sysconf(_SC_PAGE_SIZE)
 #else
 extern int            getpagesize(void);
-#endif
+#endif /* PAGESIZE */
 #else /* !_POSIX_SOURCE */
 extern int            getpagesize(void);
 #endif
