@@ -65,7 +65,7 @@ typedef long socklen_t;
 #define _SC_L1DATANWAY       -9 // L1 cache parameter
 #define _SC_L2SIZE           -10 // L2 cache size in bytes
 #define _SC_L2NWAY           -11 // L2 cache parameter
-#define _SC_BUFSIZE          -12 // buffer cache size
+#define _SC_BLKSIZE          -12 // buffer block size
 #define MINSYSCONF           (-12)
 #define NSYSCONF             (26 - MINSYSCONF) // 1 bigger than any name-value
 #if (USEXOPENEXT) && !defined(F_LOCK)

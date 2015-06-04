@@ -7,6 +7,7 @@
 #include <zero/cdecl.h>
 #include <zero/param.h>
 #include <zero/mtx.h>
+#include <kern/io/buf.h>
 #include <kern/unit/x86/cpu.h>
 #if (TEST)
 #include <stdio.h>
@@ -18,7 +19,7 @@
 
 long sysconftab[NSYSCONF]
 = {
-    BUFNMEG * 1024 * 1024,      /* _SC_BUFSIZE */
+    BUFSIZE,                    /* _SC_BLKSIZE */
     0,                          /* _SC_L2NWAY */
     0,                          /* _SC_L2SIZE */
     0,                          /* _SC_L1NDATAWAY */
@@ -71,8 +72,10 @@ sysconfinit(long *tab)
 
         return;
     }
-    ptr[_SC_NPROCESSORS_CONF] = get_nprocs_conf();
     ptr[_SC_NPROCESSORS_ONLN] = get_nprocs();
+    ptr[_SC_NPROCESSORS_CONF] = get_nprocs_conf();
+    ptr[_SC_AVPHYS_PAGES] = get_avphys_pages();
+    ptr[_SC_PHYS_PAGES] = get_phys_pages();
     sysconfbits |= SYSCONF_INIT;
     mtxunlk(&sysconflk);
 
@@ -128,8 +131,10 @@ int
 main(int argc, char *argv[])
 {
     fprintf(stderr, "PAGESIZE: %ld\n", getpagesize());
-    fprintf(stderr, "BUFSIZE: %ld\n", sysconf(_SC_BUFSIZE));
+    fprintf(stderr, "BLKSIZE: %ldK\n", sysconf(_SC_BLKSIZE) >> 10);
     fprintf(stderr, "CLSIZE: %ld\n", sysconf(_SC_CACHELINESIZE));
+    fprintf(stderr, "PHYS: %ld\n", sysconf(_SC_PHYS_PAGES));
+    fprintf(stderr, "AVPHYS: %ld\n", sysconf(_SC_AVPHYS_PAGES));
 
     exit(0);
 }
