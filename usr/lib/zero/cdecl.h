@@ -41,6 +41,7 @@
 
 /* declare function with no return (e.g., longjmp()) */
 #define NORET       __attribute__ ((__noreturn__))
+#define PURE        __attribute__ ((__pure__))
 
 #define likely(x)   __builtin_expect((x), 1)
 #define unlikely(x) __builtin_expect((x), 0)

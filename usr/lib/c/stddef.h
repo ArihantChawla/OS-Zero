@@ -9,7 +9,11 @@
 #define NULL           ((void *)0L)
 #endif
 
+#if defined(_MSC_VER) && defined (_WIN64)
+typedef long long      ptrdiff_t;
+#else
 typedef long           ptrdiff_t;
+#endif
 typedef unsigned long  size_t;
 
 #if defined(__STDC_ISO_10646__) || defined(_ZERO_SOURCE)
