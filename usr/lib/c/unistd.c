@@ -51,15 +51,33 @@ volatile long sysconflk;
 
 #define _sysconfneedupd(name)                                           \
     ((name) <= _SC_PHYS_PAGES && (name) >= _SC_NPROCESSORS_ONLN)
-void
-sysconfupd(void)
+
+long
+sysconfupd(int name)
 {
     long *ptr = sysconftab + NNEGSYSCONF;
+    long  ret = -1;
     
-    ptr[_SC_NPROCESSORS_ONLN] = get_nprocs();
-    ptr[_SC_NPROCESSORS_CONF] = get_nprocs_conf();
-    ptr[_SC_AVPHYS_PAGES] = get_avphys_pages();
-    ptr[_SC_PHYS_PAGES] = get_phys_pages();
+    switch (name) {
+        case _SC_NPROCESSORS_ONLN:
+            ret = ptr[_SC_NPROCESSORS_ONLN] = get_nprocs();
+
+            break;
+        case _SC_NPROCESSORS_CONF:
+            ret = ptr[_SC_NPROCESSORS_CONF] = get_nprocs_conf();
+
+            break;
+        case _SC_AVPHYS_PAGES:
+            ret = ptr[_SC_AVPHYS_PAGES] = get_avphys_pages();
+
+            break;
+        case _SC_PHYS_PAGES:
+            ret = ptr[_SC_PHYS_PAGES] = get_phys_pages();
+
+            break;
+    }
+
+    return ret; 
 }
 
 static void
@@ -86,7 +104,7 @@ sysconfinit(long *tab)
 
         return;
     }
-    sysconfupd();
+//    sysconfupd();
     sysconfbits |= SYSCONF_INIT;
     mtxunlk(&sysconflk);
 
@@ -103,7 +121,7 @@ sysconf(int name)
         sysconfinit(sysconftab);
     }
     if (_sysconfneedupd(name)) {
-        sysconfupd();
+        retval = sysconfupd(name);
     }
     if (name < -NNEGSYSCONF || name > NSYSCONF - NNEGSYSCONF) {
         errno = EINVAL;

@@ -12,9 +12,11 @@ typedef __gnuc_va_list __stdio_va_list;
 #endif
 #endif
 #include <sys/types.h>
+#if (_ZERO_SOURCE)
 #include <zero/param.h>
 #include <kern/io.h>
 #include <kern/io/buf.h>
+#endif
 
 #include <bits/stdio.h>
 
