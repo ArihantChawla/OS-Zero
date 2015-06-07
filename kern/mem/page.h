@@ -7,11 +7,15 @@
 #define __KERNEL__ 1
 #include <zero/mtx.h>
 
+#include <kern/time.h>
 #if defined(__x86_64__) || defined(__amd64__)                           \
     || defined(__i386__) || defined(__i486__)                           \
     || defined(__i586__) || defined(__i686__)
 #include <kern/unit/x86/cpu.h>
 #endif
+
+#define PAGE_NODEV (-1)
+#define PAGE_NOOFS (-1)
 
 /* page ID */
 #define pagenum(adr)  ((adr) >> PAGESIZELOG2)
@@ -40,6 +44,10 @@ struct page {
 //    uintptr_t     xptr;
     struct page   *prev;
     struct page   *next;
+    ktime_t        tmstmp;
+    dev_t          dev;
+    off_t          ofs;
+    long           flg;
 };
 
 struct pageq {

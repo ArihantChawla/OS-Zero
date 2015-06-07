@@ -335,6 +335,7 @@ thrpick(void)
         }
     }
     if (thr) {
+
         return thr;
     } else {
 

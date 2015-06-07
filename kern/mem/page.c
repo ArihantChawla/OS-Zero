@@ -9,6 +9,7 @@
 #include <zero/trix.h>
 #include <kern/util.h>
 #include <kern/mem.h>
+#include <kern/time.h>
 #include <kern/mem/page.h>
 #include <kern/unit/ia32/vm.h>
 
@@ -113,10 +114,15 @@ pagealloc(void)
     pagepop(&vmphysq, &pg);
 //    mtxunlk(&vmphysq.lk);
     if (!pg) {
+        ktime_t tmstmp = kcurtime();
+        
         for (l = 0 ; l < LONGSIZE * CHAR_BIT ; l++) {
             qp = &vmlrutab[l];
 //            mtxlk(&qp->lk);
-            if (!pageinset(pg)) {
+            if (pageinset(pg) && tmstmp - pg->tmstmp < 5 * KTIME_SECOND) {
+
+                continue;
+            } else if (!pageinset(pg)) {
                 pagedeq(qp, &pg);
 //            mtxunlk(&qp->lk);
                 if (pg) {
@@ -131,6 +137,11 @@ pagealloc(void)
 //            mtxunlk(&qp->lk);
             }
         }
+    }
+    if (pg) {
+        pg->tmstmp = kcurtime();
+        pg->dev = PAGE_NODEV;
+        pg->ofs = PAGE_NOOFS;
     }
 
     return pg;
