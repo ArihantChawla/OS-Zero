@@ -4,6 +4,7 @@
 #include <kern/conf.h>
 #include <stdint.h>
 //#include <zero/cdecl.h>
+#include <sys/types.h>
 #include <zero/param.h>
 #include <zero/types.h>
 #include <kern/types.h>
@@ -34,12 +35,14 @@ extern struct m_cpu *k_curcpu    __asm__ ("%gs:0");
 extern struct proc  *k_curproc   __asm__ ("%gs:4");
 extern struct thr   *k_curthr    __asm__ ("%gs:8");
 extern pde_t        *k_curpdir   __asm__ ("%gs:12");
+extern pid_t        *k_curpid    __asm__ ("%gs:16");
 //extern pde_t        *k_cursigvec __asm__ ("%gs:16");
 #elif (PTRBITS == 64)
 extern struct m_cpu *k_curcpu    __asm__ ("%gs:0");
 extern struct proc  *k_curproc   __asm__ ("%gs:8");
 extern struct thr   *k_curthr    __asm__ ("%gs:16");
 extern uint64_t     *k_curpml4   __asm__ ("%gs:24");
+extern pid_t        *k_curpid    __asm__ ("%gs:32");
 //extern pde_t        *k_cursigvec __asm__ ("%gs:32");
 #endif
 
@@ -49,13 +52,14 @@ struct m_cpu {
     struct m_cpu     *cpu;
     struct proc      *proc;
     struct thr       *thr;
-    struct m_cpuinfo *info;
 #if (PTRBITS == 32)
     pde_t             pdir;
 #elif (PTRBITS == 64)
     uint64_t          pml4;
 #endif
+    pid_t             curpid;
     volatile long     started;
+    struct m_cpuinfo *info;
 //    signalhandler_t  *sigvec;
     /* end of cpu local variables */
     long              id;

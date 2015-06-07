@@ -3,6 +3,7 @@
 #include <stdio.h>
 #endif
 #include <limits.h>
+#include <sys/types.h>
 #include <zero/param.h>
 #include <zero/cdecl.h>
 #include <zero/trix.h>
@@ -11,11 +12,16 @@
 #include <kern/mem/page.h>
 #include <kern/unit/ia32/vm.h>
 
+#define pageinset(pg)    (vmsetmap[pagenum((pg)->adr)])
+#define pageset(pg)      (vmsetmap[pagenum((pg)->adr)] = k_curpid)
+
 extern struct page       vmphystab[NPAGEPHYS];
 extern struct pageq      vmlrutab[1UL << (LONGSIZELOG2 + 3)];
 extern struct vmpagestat vmpagestat;
 extern struct pageq      vmphysq;
 extern struct pageq      vmshmq;
+static volatile long     vmsetlk;
+static pid_t             vmsetmap[NPAGEPHYS];
 
 void
 pageinitzone(uintptr_t base,
@@ -24,7 +30,7 @@ pageinitzone(uintptr_t base,
 {
     struct page   *pg = &vmphystab[pagenum(base)];
     uintptr_t      adr = rounduppow2(base, PAGESIZE);
-    unsigned long  n  = (nb - adr) >> PAGESIZELOG2;
+    unsigned long  n  = max(1, (nb - adr) >> PAGESIZELOG2);
 
     adr += n << PAGESIZELOG2;
     pg += n;
@@ -94,7 +100,10 @@ pagevalloc(void)
     return NULL;
 }
 
-/* TODO: evict pages from LRU if none free / low water */
+/*
+ * TODO: evict pages from LRU if none free / low water
+ * - skip pages currently in someone's working set
+ */
 struct page *
 pagealloc(void)
 {
@@ -110,18 +119,20 @@ pagealloc(void)
         for (l = 0 ; l < LONGSIZE * CHAR_BIT ; l++) {
             qp = &vmlrutab[l];
 //            mtxlk(&qp->lk);
-            pagedeq(qp, &pg);
+            if (!pageinset(pg)) {
+                pagedeq(qp, &pg);
 //            mtxunlk(&qp->lk);
-            if (pg) {
-                pg->nflt++;
-
-                return pg;
-            }
-            qid = pagegetqid(pg);
-            qp = &vmlrutab[qid];
+                if (pg) {
+                    pg->nflt++;
+                    
+                    return pg;
+                }
+                qid = pagegetqid(pg);
+                qp = &vmlrutab[qid];
 //            mtxlk(&qp->lk);
-            pagepush(qp, pg);
+                pagepush(qp, pg);
 //            mtxunlk(&qp->lk);
+            }
         }
     }
 

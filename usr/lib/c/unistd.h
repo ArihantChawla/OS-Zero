@@ -44,8 +44,13 @@ extern int            eaccess(const char *name, int type);
 extern int            faccessat(int fd, const char *name, int type, int flg);
 #endif
 #if (_FILE_OFFSET_BITS == 64)
+#if defined(_WIN64)
+/* WIN64 has 32-bit longs, so needs a real llseek() */
+extern long long      llseek(int fd, off_t ofs, int whence);
+#elif defined(__x86_64__) || defined(__amd64__) || defined(__alpha__)
 #define               llseek(fd, ofs, whence) lseek(fd, ofs, whence)
-#else
+#endif
+#else /* _FILE_OFFSET_BITS != 64 */
 #define               llseek(fd, ofs, whence)                           \
     _llseek(fd, (ofs) >> 32, ofs & 0xffffffff, NULL, whence)
 #endif
@@ -238,6 +243,15 @@ extern int            getpagesize(void);
 extern int            getpagesize(void);
 #endif
 #endif
+#if (_ZERO_SOURCE)
+#if defined(CLSIZE) && (CLSIZE)
+#define getclsize()   CLSIZE
+#elif defined(_SC_CACHELINESIZE)
+#define getclsize()   sysconf(_SC_CACHELINESIZE)
+#else
+#warning getclsize() not defined in <unistd.h>
+#endif
+#endif
 extern int            truncate(const char *file, off_t len);
 #if (_BSD_SOURCE) || (USEXOPENEXT) || (USEXOPEN2K)
 extern int            ftruncate(int fd, off_t len);
@@ -265,11 +279,6 @@ extern char         * ctermid(char *str);
 
 #if (_XOPEN_SOURCE_EXTENDED)
 extern int            getdtablesize(void);
-#endif
-
-#if (_ZERO_SOURCE)
-/* determine cacheline size [in bytes] */
-extern int            getclsize(void);
 #endif
 
 /* standard descriptor names */

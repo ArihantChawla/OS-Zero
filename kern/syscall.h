@@ -178,7 +178,7 @@ extern void ksyscall(void);
 
 /* cmd */
 #define SYSCTL_HALT     0x01U  // halt() and reboot()
-#define SYSCTL_SYSINFO  0x02U  // sysinfos(); pagesize, clsize, ...
+#define SYSCTL_SYSINFO  0x02U  // sysinfo()
 #define SYSCTL_SYSCONF  0x03U  // sysconf(); probe system parameters
 #define SYSCTL_SYSSTAT  0x03U  // query system statistics; getrusage()
 #define SYSCTL_TIME     0x04U  // system clock access
@@ -201,9 +201,11 @@ extern void ksyscall(void);
 #define SYSCTL_NUMPROC  0x03U
 #define SYSCTL_PROCON   0x04U
 /* Zero extensions */
+#define SYSCTL_BLKSIZE  0x05U   // buffer cache size for block I/O (BUFSIZE)
+#if 0 /* user-space */
 #define SYSCTL_L1SIZE   0x05U   // L1 cache size
 #define SYSCTL_L2SIZE   0x06U   // L2 cache size
-#define SYSCTL_BUFSIZE  0x07U   // buffer cache size for block I/O
+#endif
 /* SYSCTL_SYSSTAT */
 #define SYSCTL_UPTIME   0x01U   // query system uptime
 #define SYSCTL_LOAD     0x02U   // query load averages
