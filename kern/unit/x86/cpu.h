@@ -35,14 +35,14 @@ extern struct m_cpu *k_curcpu    __asm__ ("%gs:0");
 extern struct proc  *k_curproc   __asm__ ("%gs:4");
 extern struct thr   *k_curthr    __asm__ ("%gs:8");
 extern pde_t        *k_curpdir   __asm__ ("%gs:12");
-extern pid_t        *k_curpid    __asm__ ("%gs:16");
+extern pid_t         k_curpid    __asm__ ("%gs:16");
 //extern pde_t        *k_cursigvec __asm__ ("%gs:16");
 #elif (PTRBITS == 64)
 extern struct m_cpu *k_curcpu    __asm__ ("%gs:0");
 extern struct proc  *k_curproc   __asm__ ("%gs:8");
 extern struct thr   *k_curthr    __asm__ ("%gs:16");
 extern uint64_t     *k_curpml4   __asm__ ("%gs:24");
-extern pid_t        *k_curpid    __asm__ ("%gs:32");
+extern pid_t         k_curpid    __asm__ ("%gs:32");
 //extern pde_t        *k_cursigvec __asm__ ("%gs:32");
 #endif
 

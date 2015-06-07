@@ -7,12 +7,24 @@
 #define __KERNEL__ 1
 #include <zero/mtx.h>
 
-#define pagenum(adr)       ((adr) >> PAGESIZELOG2)
+#if defined(__x86_64__) || defined(__amd64__)                           \
+    || defined(__i386__) || defined(__i486__)                           \
+    || defined(__i586__) || defined(__i686__)
+#include <kern/unit/x86/cpu.h>
+#endif
+
+/* page ID */
+#define pagenum(adr)  ((adr) >> PAGESIZELOG2)
 //#define swapblknum(sp, pg) ((pg) - (sp)->pgtab)
 #if 0
 #define pageadr(pg, pt)                                                 \
     ((!(pg)) ? NULL : ((void *)(((pg) - (pt)) << PAGESIZELOG2)))
 #endif
+
+/* working sets */
+#define pageinset(pg) (vmsetmap[pagenum((pg)->adr)])
+#define pageset(pg)   (vmsetmap[pagenum((pg)->adr)] = k_curpid)
+extern pid_t          vmsetmap[NPAGEPHYS];
 
 #if 0
 struct upage {

@@ -12,16 +12,13 @@
 #include <kern/mem/page.h>
 #include <kern/unit/ia32/vm.h>
 
-#define pageinset(pg)    (vmsetmap[pagenum((pg)->adr)])
-#define pageset(pg)      (vmsetmap[pagenum((pg)->adr)] = k_curpid)
-
 extern struct page       vmphystab[NPAGEPHYS];
 extern struct pageq      vmlrutab[1UL << (LONGSIZELOG2 + 3)];
 extern struct vmpagestat vmpagestat;
 extern struct pageq      vmphysq;
 extern struct pageq      vmshmq;
 static volatile long     vmsetlk;
-static pid_t             vmsetmap[NPAGEPHYS];
+pid_t                    vmsetmap[NPAGEPHYS];
 
 void
 pageinitzone(uintptr_t base,

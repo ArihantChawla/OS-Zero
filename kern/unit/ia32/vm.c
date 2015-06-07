@@ -241,7 +241,7 @@ vmpagefault(unsigned long pid, uint32_t adr, uint32_t flags)
     uint32_t      *pte = (uint32_t *)&_pagetab + vmpagenum(adr);
     uint32_t       flg = *pte & (PFFLGMASK | PAGESYSFLAGS);
     uint32_t       page = *pte;
-    struct page   *pg;
+    struct page   *pg = NULL;
 //    unsigned long  qid;
 
     if (!(page & ~(PFFLGMASK | PAGESYSFLAGS))) {
@@ -275,6 +275,9 @@ vmpagefault(unsigned long pid, uint32_t adr, uint32_t flags)
             pagepush(&vmlrutab[qid], pg);
         }
 #endif
+    }
+    if (pg) {
+        pageset(pg);
     }
 
     return;
