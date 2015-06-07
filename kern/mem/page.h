@@ -38,6 +38,8 @@ struct upage {
 };
 #endif
 
+#define PAGEWIREBIT 0x00000001
+#define PAGEBUFBIT  0x00000002
 struct page {
     uintptr_t      adr;
     unsigned long  nflt;

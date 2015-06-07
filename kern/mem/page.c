@@ -119,7 +119,7 @@ pagealloc(void)
         for (l = 0 ; l < LONGSIZE * CHAR_BIT ; l++) {
             qp = &vmlrutab[l];
 //            mtxlk(&qp->lk);
-            if (pageinset(pg) && tmstmp - pg->tmstmp < 5 * KTIME_SECOND) {
+            if (pageinset(pg) && tmstmp - pg->tmstmp < 10 * KTIME_SECOND) {
 
                 continue;
             } else if (!pageinset(pg)) {
