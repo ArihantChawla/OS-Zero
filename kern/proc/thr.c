@@ -9,6 +9,7 @@
 #include <kern/conf.h>
 #include <kern/util.h>
 #include <kern/obj.h>
+#include <kern/proc/proc.h>
 #include <kern/proc/sched.h>
 #include <kern/mem.h>
 #include <kern/unit/x86/cpu.h>
@@ -53,6 +54,7 @@ thrjmp(struct thr *thr)
     }
     k_curthr = thr;
     k_curproc = thr->proc;
+    k_curpid = k_curproc->pid;
     m_tcbjmp(&thr->m_tcb);
 
     /* NOTREACHED */
