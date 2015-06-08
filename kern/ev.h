@@ -4,6 +4,7 @@
 #include <stdint.h>
 #include <zero/cdecl.h>
 #include <zero/param.h>
+#include <zero/deck.h>
 #include <gfx/rgb.h>
 
 /* keyboard events */
@@ -192,7 +193,7 @@ long   evpeek(struct zevent *ev, long mask);
 #define evpeek(ev, flg)   evget((ev), ((flg) | EVNOREMOVE))
 void    evget(struct zevent *ev, long flg);
 long    evput(struct zevent *ev, long flg);
-void    evsync(struct zdeck *deck, long flg);
+void    evsync(struct deck *deck, long flg);
 
 /*
  * NOTES

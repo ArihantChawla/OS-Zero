@@ -137,7 +137,7 @@ struct deckmsgev {
 #define DECK_DATA_WAV192KLE24 16
 #define DECK_DATA_WAV192KLE32 17
 #define DECK_DATA_MIDI        18
-#define 
+
 /* DECK_DATA_IN and DECK_DATA_OUT event structure */
 struct deckdataev {
     struct deckanyev hdr;

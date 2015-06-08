@@ -1,8 +1,10 @@
 #include <features.h>
+#include <stdio.h>
 #include <unistd.h>
 #include <zero/deck.h>
 #if (_ZERO_SOURCE)
 #include <kern/syscall.h>
+#endif
 
 void *
 deckgetfbadr(long depth, long width, long height)
@@ -29,6 +31,10 @@ deckgetfbadr(long depth, long width, long height)
             pixsize = 4;
 
             break;
+        default:
+            fprintf(stderr, "DECK: unknown framebuffer depth\n");
+
+            exit(1);
     }
 
 #if (_ZERO_SOURCE)
