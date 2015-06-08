@@ -15,6 +15,15 @@
 
 extern void ksyscall(void);
 
+#if (LONGSIZE == 4)
+typedef long long sysreg_t;
+#elif defined(__x86_64__) || defined(__amd64__)                         \
+    || defined(_WIN32) || defined(__i386__)
+typedef long      sysreg_t;
+#else
+#error sysreg_t not defined in <kern/syscall.h>
+#endif
+
 /*
  * TODO
  * ----
@@ -35,34 +44,34 @@ extern void ksyscall(void);
  *
  * process interface
  * -----------------
- * long sys_sysctl(long cmd, long parm, void *arg);
+ * sysreg_t sys_sysctl(sysreg_t cmd, sysreg_t parm, void *arg);
  * - perform system control actions
- * long sys_exit(long val, long flg);
+ * sysreg_t sys_exit(sysreg_t val, sysreg_t flg);
  * - exit process normally
  * void sys_abort(void);
  * - exit problem abnormally
- * long sys_fork(long flg);
+ * sysreg_t sys_fork(sysreg_t flg);
  * - create new process by cloning current one
- * long sys_exec(char *path, long parm, void *arg);
+ * sysreg_t sys_exec(char *path, sysreg_t parm, void *arg);
  * - execute program image
- * long sys_throp(long cmd, long parm, void *arg);
+ * sysreg_t sys_throp(sysreg_t cmd, sysreg_t parm, void *arg);
  * - perform thread control operations
- * long sys_pctl(long cmd, long parm, void *arg);
+ * sysreg_t sys_pctl(sysreg_t cmd, sysreg_t parm, void *arg);
  * - perform process control operations
- * long sys_sigop(long cmd, long parm, void *arg);
+ * sysreg_t sys_sigop(sysreg_t cmd, sysreg_t parm, void *arg);
  * - perform signal actions
  *
  * memory interface
  * ----------------
- * long  sys_brk(void *adr);
+ * sysreg_t  sys_brk(void *adr);
  * - set top of heap to adr
- * void *sys_map(long desc, long flg, struct sysmemarg *arg);
+ * void *sys_map(sysreg_t desc, sysreg_t flg, struct sysmemarg *arg);
  * - map file or anonymous memory
- * long  sys_umap(void *adr, size_t size);
+ * sysreg_t  sys_umap(void *adr, size_t size);
  * - unmap file or anonymous memory
- * long  sys_mhint(void *adr, long flg, struct sysmemarg *arg);
+ * sysreg_t  sys_mhint(void *adr, sysreg_t flg, struct sysmemarg *arg);
  * - hint kernel about memory region use characteristics
- * long  sys_mctl(void *adr, long flg, struct sysmemarg *arg);
+ * sysreg_t  sys_mctl(void *adr, sysreg_t flg, struct sysmemarg *arg);
  * - memory control operations; locks, permissions, etc.
  *
  * IPC
@@ -72,38 +81,38 @@ extern void ksyscall(void);
  *
  * shared memory
  * -------------
- * uintptr_t  sys_shmget(long key, size_t size, long flg);
+ * uintptr_t  sys_shmget(sysreg_t key, size_t size, sysreg_t flg);
  * - look up shared memory segment associated with key or create a new one with key IPC_PRIVATE
- * void      *sys_shmat(uintptr_t id, void *adr, long flg);
+ * void      *sys_shmat(uintptr_t id, void *adr, sysreg_t flg);
  * - map shared memory segment to virtual address space of calling process; specifying adr is not
  *   guaranteed to succeed
- * long       sys_shmdt(void *adr);
+ * sysreg_t       sys_shmdt(void *adr);
  * - unmap shared memory segment from virtual address space of calling process
- * long       sys_shmctl(uintptr_t id, long cmd, void *arg);
+ * sysreg_t       sys_shmctl(uintptr_t id, sysreg_t cmd, void *arg);
  * - perform shared memory control actions
  *
  * semaphores
  * ----------
- * uintptr_t sys_mksem(long cnt);
+ * uintptr_t sys_mksem(sysreg_t cnt);
  * - allocate semaphore and initialise it with value cnt
  * void      sys_rmsem(uintptr_t id);
  * - deallocate semaphore
- * long      sys_semup(uintptr_t sem, long n);
+ * sysreg_t      sys_semup(uintptr_t sem, sysreg_t n);
  * - increase semaphore value by n
- * long      sys_semdown(uintptr_t sem, long n);
+ * sysreg_t      sys_semdown(uintptr_t sem, sysreg_t n);
  * - attempt to decrease semaphore value by n
  *
  * read-write locks
  * ----------------
  * FIXME
  * -----
- * uintptr_t sys_rwlkinit(long desc, long flg, struct objreg *arg);
+ * uintptr_t sys_rwlkinit(sysreg_t desc, sysreg_t flg, struct objreg *arg);
  * - allocate and initialise read-write lock
- * void      sys_rwlkrm(long desc, long flg);
+ * void      sys_rwlkrm(sysreg_t desc, sysreg_t flg);
  * - deallocate read-write lock
- * uintptr_t    sys_rdlock(long desc, long flg, struct objreg *arg);
+ * uintptr_t    sys_rdlock(sysreg_t desc, sysreg_t flg, struct objreg *arg);
  * - acquire read-lock of object desc
- * uintptr_t sys_wrlock(long desc, long flg, struct objreg *arg);
+ * uintptr_t sys_wrlock(sysreg_t desc, sysreg_t flg, struct objreg *arg);
  * - acquire write-lock on object describe
  * void      sys_unlock(uintptr_t lk);
  * - unlock a read-write lock
@@ -112,9 +121,9 @@ extern void ksyscall(void);
  * --------------
  * FIXME (sys_mqpeek()?)
  * -----
- * uintptr_t sys_mqinit(long mq, long nprio, size_t qsize);
- * long      sys_mqsend(long mq, long prio, struct msg *arg);
- * long      sys_mqregv(long mq, long prio, struct msg *arg);
+ * uintptr_t sys_mqinit(sysreg_t mq, sysreg_t nprio, size_t qsize);
+ * sysreg_t      sys_mqsend(sysreg_t mq, sysreg_t prio, struct msg *arg);
+ * sysreg_t      sys_mqregv(sysreg_t mq, sysreg_t prio, struct msg *arg);
  *
  * events
  * ------
@@ -122,40 +131,40 @@ extern void ksyscall(void);
  *
  * I/O interface
  * -------------
- * long sys_mnt(char *path1, char *path2, void *arg);
+ * sysreg_t sys_mnt(char *path1, char *path2, void *arg);
  * - mount filesystem path2 to mountpoint path1
- * long sys_umnt(char *path, long flg);
+ * sysreg_t sys_umnt(char *path, sysreg_t flg);
  * - unmount filesystem mounted to path§
- * long sys_readdir(long desc, struct dirent *dirent, long cnt);
+ * sysreg_t sys_readdir(sysreg_t desc, struct dirent *dirent, sysreg_t cnt);
  * - read directory contents
- * long sys_open(char *path, long flg, long mode);
+ * sysreg_t sys_open(char *path, sysreg_t flg, sysreg_t mode);
  * - open file path for operations as selected in mode§
- * long sys_trunc(char *path, off_t len);
+ * sysreg_t sys_trunc(char *path, off_t len);
  * - truncate file path to length len; toss contents behind len
- * long sys_close(long desc);
+ * sysreg_t sys_close(sysreg_t desc);
  * - close file refered to by desc
- * long sys_read(long desc, void *buf, size_t len);
+ * sysreg_t sys_read(sysreg_t desc, void *buf, size_t len);
  * - read next maximum of len data bytes from file desc into buf
- * long sys_readv(long desc, long narg, void *arg);
+ * sysreg_t sys_readv(sysreg_t desc, sysreg_t narg, void *arg);
  * - read from several files into a buffer described by arg
- * long sys_write(long desc, void *buf, size_t len);
+ * sysreg_t sys_write(sysreg_t desc, void *buf, size_t len);
  * - attempt to write len data bytes from memory pointed to by buf to file desc
- * long sys_writev(long desc, long narg, void *arg);
+ * sysreg_t sys_writev(sysreg_t desc, sysreg_t narg, void *arg);
  * - write into file desc from several buffers described by arg
- * long sys_seek(long desc, off_t ofs, long whence);
+ * sysreg_t sys_seek(sysreg_t desc, off_t ofs, sysreg_t whence);
  * - set seek position of file desc
- * long sys_falloc(long desc, long parm, size_t len);
+ * sysreg_t sys_falloc(sysreg_t desc, sysreg_t parm, size_t len);
  * - attempt to preallocate len bytes of device space for file desc
- * long sys_stat(char *path, struct stat *buf, long flg);
+ * sysreg_t sys_stat(char *path, struct stat *buf, sysreg_t flg);
  * - query file attributes
- * long sys_fhint(long desc, long flg, struct objreg *arg);
+ * sysreg_t sys_fhint(sysreg_t desc, sysreg_t flg, struct objreg *arg);
  * - hint kernel of file usage patterns
- * long sys_ioctl(long desc, long cmd, void *arg);
+ * sysreg_t sys_ioctl(sysreg_t desc, sysreg_t cmd, void *arg);
  * - perform device-dependent I/O operations
- * long sys_fctl(long desc, long cmd, void *arg);
+ * sysreg_t sys_fctl(sysreg_t desc, sysreg_t cmd, void *arg);
  * - perform file control operations
- * long sys_poll(struct pollfd *fds, long nfd, long timeout);
- * long sys_select(long nfds, struct select *arg);
+ * sysreg_t sys_poll(struct pollfd *fds, sysreg_t nfd, sysreg_t timeout);
+ * sysreg_t sys_select(sysreg_t nfds, struct select *arg);
  */
 
 /*
@@ -440,11 +449,11 @@ struct sysmq {
 /* IDEAS: IO_DIRECT */
 
 struct sysop {
-    long    arg1;
-    long    arg2;
-    long    arg3;
+    sysreg_t arg1;
+    sysreg_t arg2;
+    sysreg_t arg3;
 #if (LONGSIZE == 4)
-    int64_t arg64;
+    int64_t  arg64;
 #endif    
 };
 

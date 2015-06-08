@@ -9,14 +9,15 @@
 #include <errno.h>
 #include <zero/param.h>
 #include <zero/cdecl.h>
+#include <kern/syscall.h>
 
-#if defined(_WIN64)
+#if (LONGSIZE == 4) || defined(__x86_64__) || defined(__amd64__)
 
 ASMLINK
-long long
-_syscall(long num, long arg1, long arg2, long arg3)
+sysreg_t
+_syscall(sysreg_t num, sysreg_t arg1, sysreg_t arg2, sysreg_t arg3)
 {
-    long retval;
+    sysreg_t retval;
 
     retval = -1;
     __asm__ __volatile__ ("movq %3, %%rax\n"
@@ -40,37 +41,7 @@ _syscall(long num, long arg1, long arg2, long arg3)
     return retval;
 }
 
-#elif defined(__x86_64__) || defined(__amd64__)
-
-ASMLINK
-long
-_syscall(long num, long arg1, long arg2, long arg3)
-{
-    long retval;
-
-    retval = -1;
-    __asm__ __volatile__ ("movq %3, %%rax\n"
-                          "movq %4, %%rbx\n"
-                          "movq %5, %%rcx\n"
-                          "movq %6, %%rdx\n"
-                          "int $0x80\n"
-                          "jc 1f\n"
-                          "movq %%rax, %0\n"
-                          "jmp 2f\n"
-                          "1:\n"
-                          "movq %%rax, %1\n"
-                          "cmpq %2, %%rax\n"
-                          "jne 2f\n"
-                          "movq %%rbx, %%rax\n"
-                          "2:\n"
-                          : "=a" (retval), "=m" (errno)
-                          : "i" (EINTR),
-                            "rm" (num), "rm" (arg1), "rm" (arg2), "rm" (arg3));
-
-    return retval;
-}
-
-#elif defined(_WIN32) || defined(__i386__) && !defined(__x86_64__) && !defined(__amd64__)
+#elif defined(_WIN32) || defined(__i386__)
 
 /*
  * prepare for a system call and do it
@@ -80,10 +51,10 @@ _syscall(long num, long arg1, long arg2, long arg3)
  * - EDX/RDX is used for 3rd system call argument
  */
 ASMLINK
-long
-_syscall(long num, long arg1, long arg2, long arg3)
+sysreg_t
+_syscall(sysreg_t num, sysreg_t arg1, sysreg_t arg2, sysreg_t arg3)
 {
-    long retval;
+    sysreg_t retval;
 
     retval = -1;
     __asm__ __volatile__ ("movl %3, %%eax\n"
