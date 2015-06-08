@@ -20,49 +20,55 @@ typedef long           socklen_t;
 typedef unsigned short sa_family_t;
 
 struct sockaddr {
-	sa_family_t sa_family;		// address family
+    sa_family_t sa_family;	// address family
 #if defined(EMPTY)
-	char        sa_data[EMPTY]; // actual address
+    char        sa_data[EMPTY]; // actual address
 #endif
 };
 
 #if (USEBSD)
 struct osockaddr {
-	unsigned short sa_family;
-	unsigned char  sa_data[14];
+    unsigned short sa_family;
+    unsigned char  sa_data[14];
 };
 #endif
 
 #if (USEGNU)
 struct ucred {
-	pid_t pid;
-	uid_t uid;
-	gid_t gid;
+    pid_t pid;
+    uid_t uid;
+    gid_t gid;
 };
 #endif
 
+struct sockaddr_storage {
+    sa_family_t ss_family;
+    char        _pad[CLSIZE - LONGSIZE];
+    /* FIXME */
+} ALIGNED(CLSIZE);
+
 struct msghdr {
-	void         *msg_name;		// optional address
-	socklen_t     msg_namelen;	// address length
-	struct iovec *msg_iov;		// scatter-gather I/O structures
-	int           msg_iovlen;	// number of scatter-gather I/O structures
-	void         *msg_control;	// ancillary data
-	socklen_t     msg_controllen; // ancillary data size
-	int           msg_flags;    // flags
+    void         *msg_name;	// optional address
+    socklen_t     msg_namelen;	// address length
+    struct iovec *msg_iov;	// scatter-gather I/O structures
+    int           msg_iovlen;	// number of scatter-gather I/O structures
+    void         *msg_control;	// ancillary data
+    socklen_t     msg_controllen; // ancillary data size
+    int           msg_flags;    // flags
 };
 
 struct cmsghdr {
-	socklen_t      cmsg_len;
-	int            cmsg_level;
-	int            cmsg_type;
+    socklen_t      cmsg_len;
+    int            cmsg_level;
+    int            cmsg_type;
 #if defined(EMPTY)
-	unsigned char  cmsg_data[EMPTY];
+    unsigned char  cmsg_data[EMPTY];
 #endif
 };
 
 struct linger {
-	int l_onoff;	// on/off
-	int l_linger;	// linger time in seconds
+    int l_onoff;	// on/off
+    int l_linger;	// linger time in seconds
 };
 
 extern int     accept(int sock, struct sockadr *adr, socklen_t *adrlen);
