@@ -27,6 +27,21 @@
 #define DECK_EVENT_DATAOUT          22
 #define DECK_EVENT_OPERATION        23
 
+struct deckfb {
+    void *base;         // framebuffer base address
+    void *drawbuf;      // double-buffer for drawing
+    void *scrbuf;       // screen buffer
+};
+
+#define DECK_GFX_LFB 0
+/* structure for functionality similar to X and such desktop/screen servers */
+struct deck {
+    /* screen ID (similar to Display */
+    uintptr_t  scrid;   // screen structure kernel address
+    long       gfxtype; // graphics interface such as DECK_GFX_LFB
+    void      *gfx;     // graphics interface
+};
+
 struct deckanyev {
     uint32_t type;
     uint32_t window;
@@ -135,6 +150,7 @@ struct deckdataev {
 #define DECK_SRV    0
 #define DECK_AUDSRV 1
 #define DECK_VIDSRV 2
+
 /* op (operation) member values */
 #define DECK_OP_DRAW     0
 #define DECK_OP_RPCQUERY 1
@@ -143,7 +159,7 @@ struct deckdataev {
 /* OPDRAW and OPRPC event structure */
 struct deckopev {
     struct deckanyev hdr;       // common event members
-    uint32_t         srv;       // service number; 0 for deck
+    uint32_t         srv;       // service number
     uint32_t         op;        // operation
     uint32_t         len;       // number of data bytes
     uint8_t          data[EMPTY];

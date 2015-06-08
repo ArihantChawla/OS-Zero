@@ -164,16 +164,6 @@ struct zevent {
     } msg;
 } PACK();
 
-/* structure for functionlality similiar to X and such desktop/screen servers */
-struct zdeck {
-    /* screen ID (similar to Display */
-    uintptr_t  scrid;           // screen structure kernel address
-    /* graphics parameters */
-    uintptr_t  gfxbase;         // framebuffer address numerical value
-    argb32_t  *drawbuf;         // double/draw buffer
-    argb32_t  *scrbuf;          // [hardware] screen buffer
-};
-
 /* API */
 /* TODO: implement ring-buffers for event queues */
 /* - wired to physical memory permanently */
