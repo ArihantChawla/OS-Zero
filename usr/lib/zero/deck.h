@@ -28,9 +28,12 @@
 #define DECK_EVENT_OPERATION        23
 
 struct deckfb {
-    void *base;         // framebuffer base address
-    void *drawbuf;      // double-buffer for drawing
-    void *scrbuf;       // screen buffer
+    uint32_t  depth;
+    uint32_t  width;
+    uint32_t  height;
+    void     *base;         // framebuffer base address
+    void     *drawbuf;      // double-buffer for drawing
+    void     *scrbuf;       // screen buffer
 };
 
 #define DECK_GFX_LFB 0

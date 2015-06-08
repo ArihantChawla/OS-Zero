@@ -16,6 +16,12 @@
 #define PERMSETUID 0x00001000
 #define PERMRAWIO  0x00002000   // permit to do raw device I/O operations
 
+#define setperm(perm, usr, grp, flg)                                    \
+    do {                                                                \
+        (perm)->uid = (usr);                                            \
+        (perm)->gid = (grp);                                            \
+        (perm)->flg = (flg);                                            \
+    } while (0)
 /* TODO */
 #if 0 /* FIXME */
 #define permread(usr, grp, perm)                                        \
@@ -35,7 +41,7 @@
 struct perm {
     long uid;   // user ID
     long gid;   // group ID
-    long mask;  // access bitmask
+    long flg;   // access bits
 };
 
 #endif /* __KERN_PERM_H__ */

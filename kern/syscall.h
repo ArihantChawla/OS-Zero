@@ -270,6 +270,7 @@ struct sysatexit {
 #define PROC_KERNSTKSIZE   0x03    // process kernel stack size
 #define PROC_DESCTABSIZE   0x04    // process descriptor table size
 /* PROC_MAPBUF */
+#define PROC_LFBUF         0x00
 #define PROC_KBDBUF        0x01    // keyboard input buffer
 #define PROC_MOUSEBUF      0x02    // mouse input buffer
 
@@ -369,7 +370,7 @@ struct sysmemreg {
 
 struct sysmemarg {
     long             cmd;	// memory command
-	struct sysmemreg reg;
+    struct sysmemreg reg;
 };
 
 /*
