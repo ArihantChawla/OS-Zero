@@ -4,24 +4,113 @@
 #include <features.h>
 #include <stdint.h>
 
-//typedef int32_t uid_t;
 /* types (hopefully) not declared yet... :) */
-#if (_BSD_SOURCE) || (_XOPEN_SOURCE)
+#if (_BSD_SOURCE) || (_XOPEN_SOURCE) && !defined(__SOCKLEN_T_DEFINED)
 /* TODO: check what this type is for and what it should be :) */
 typedef long socklen_t;
+#define __SOCKLEN_T_DEFINED 1
 #endif
-/* system types - TODO: figure out which headers to drop some of these into */
-//typedef int32_t dev_t;
-//typedef int32_t ino_t;
-//typedef int32_t mode_t;
-//typedef int32_t nlink_t;
-//typedef int32_t gid_t;
-//typedef int64_t off_t;
-//typedef int64_t time_t;
-//typedef int32_t blksize_t;
-//typedef int64_t blkcnt_t;
 
 /* name-arguments for sysconf() */
+/*
+ * TODO: POSIX.1-2004
+ * ------------------
+ * NOTE: POSIX.2-stuff is not included yet
+ *
+ * AIO_LISTIO_MAX
+ * AIO_MAX
+ * AIO_PRIODELTA_MAX
+ * ATEXIT_MAX
+ * DELAYTIMER_MAX
+ * IOV_MAX
+ * NGROUPS_MAX
+ * _SC_GETR_R_SIZE_MAX  // maximum buffer size for getgrgid_r(), getgrnam_r()
+ * _C_GETPW_R_SIZE_MAX  // maximum buffer size for getpwuid_r(), getpwnam_r()
+ * MQ_OPEN_MAX
+ * MQ_PRIO_MAX
+ * _POSIX_ADVISORY_INFO
+ * _POSIX_BARRIERS
+ * _POSIX_ASYNCHRONOUS_IO
+ * _POSIX_CLOCK_SELECTION
+ * _POSIX_CPUTIME
+ * _POSIX_FSYNC
+ * _POSIX_IPV6
+ * _POSIX_JOB_CONTROL
+ * _POSIX_MAPPED_FILES
+ * _POSIX_MEMLOCK
+ * _POSIX_MEMLOCK_RANGE
+ * _POSIX_MEMORY_PROTECTION
+ * _POSIX_MESSAGE_PASSING
+ * _POSIX_MONOTONIC_CLOCK
+ * _POSIX_PRIORITIZED_IO
+ * _POSIX_PRIORITY_SCHEDULING
+ * _POSIX_RAW_SOCKETS
+ * _POSIX_READER_WRITER_LOCKS
+ * _POSIX_REALTIME_SIGNALS
+ * _POSIX_REGEXP
+ * _POSIX_SAVED_IDS
+ *_POSIX_SEMAPHORES
+ * _POSIX_SHARED_MEMORY_OBJECTS
+ * _POSIX_SHELL
+ * _POSIX_SPAWN
+ * _POSIX_SPIN_LOCKS
+ * _POSIX_SPORADIC_SERVER
+ * _POSIX_SS_REPL_MAX
+ * _POSIX_SYNCHRONIZED_IO
+ * _POSIX_THREAD_ATTR_STACKADDR
+ * _POSIX_THREAD_ATTR_STACKSIZE
+ * _POSIX_THREAD_CPUTIME
+ * _POSIX_THREAD_PRIO_INHERIT
+ * _POSIX_THREAD_PRIO_PROTECT
+ * _POSIX_THREAD_PRIORITY_SCHEDULING
+ * _POSIX_THREAD_PROCESS_SHARED
+ * _POSIX_THREAD_SAFE_FUNCTIONS
+ * _POSIX_THREAD_SPORADIC_SERVER
+ * _POSIX_THREADS
+ * _POSIX_TIMEOUTS
+ * _POSIX_TIMERS
+ * _POSIX_TRACE
+ * _POSIX_TRACE_EVENT_FILTER
+ * _POSIX_TRACE_EVENT_NAME_MAX
+ * _POSIX_TRACE_INHERIT
+ * _POSIX_TRACE_LOG
+ * _POSIX_TRACE_NAME_MAX
+ * _POSIX_TRACE_SYS_MAX
+ * _POSIX_TRACE_USER_EVENT_MAX
+ * _POSIX_TYPED_MEMORY_OBJECTS
+ * _POSIX_VERSION
+ * _POSIX_V6_ILP32_OFF32
+ * _POSIX_V6_ILP32_OFFBIG
+ * _POSIX_V6_LP64_OFF64
+ * _POSIX_V6_LPBIG_OFFBIG
+ * _POSIX2_C_BIND
+ * _SC_2_C_BIND
+ * _POSIX2_CHAR_TERM
+ * PTHREAD_DESTRUCTOR_ITERATIONS
+ * PTHREAD_KEYS_MAX
+ * {PTHREAD_STACK_MIN}
+ * {PTHREAD_THREADS_MAX}
+ * {RTSIG_MAX}
+ * {SEM_NSEMS_MAX}
+ * {SEM_VALUE_MAX}
+ * {SIGQUEUE_MAX}
+ * {STREAM_MAX}
+ * {TIMER_MAX}
+ * _XBS5_ILP32_OFF32 (LEGACY)
+ * _SC_XBS5_ILP32_OFF32 (LEGACY)
+ * _XBS5_ILP32_OFFBIG (LEGACY)
+ * _XBS5_LP64_OFF64 (LEGACY)
+ * _XBS5_LPBIG_OFFBIG (LEGACY)
+ * _XOPEN_CRYPT
+ * _XOPEN_ENH_I18N
+ * _XOPEN_LEGACY
+ * _XOPEN_REALTIME
+ * _XOPEN_REALTIME_THREADS
+ * _XOPEN_SHM
+ * _XOPEN_STREAMS
+ * _XOPEN_UNIX
+ * _XOPEN_VERSION
+ */
 /* POSIX.1 values */
 #define _SC_OS_VERSION       0x00000000 // OS [kernel] version
 #define _SC_VERSION          0x00000001 // POSIX version

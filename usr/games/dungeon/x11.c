@@ -141,6 +141,7 @@ celldrawx11win(XEvent *ev)
     struct cellcor   *cor;
     struct cellcoord *coord;
     void             *map;
+    void             *cormap;
     long              n;
     long              id;
     long              lim1;
@@ -173,6 +174,22 @@ celldrawx11win(XEvent *ev)
                                cellx11.cavegc,
                                x * 8, y * 8,
                                7, 7);
+#endif
+                fprintf(stderr, "#");
+#if 0
+            } else if (bitset(cormap, y * w + x)) {
+#if (DNG_PIXELCELLS)
+                XDrawPoint(cellx11.disp,
+                           cellx11.mainwin,
+                           cellx11.corgc,
+                           x, y);
+#else
+                XDrawRectangle(cellx11.disp,
+                               cellx11.mainwin,
+                               cellx11.corgc,
+                               x * 8, y * 8,
+                               7, 7);
+#endif
 #endif
             }
         }

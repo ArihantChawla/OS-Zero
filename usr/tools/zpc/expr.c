@@ -1066,6 +1066,8 @@ zpctokenize(const char *str)
     return queue;
 };
 
+#if 0
+
 /*
  * Dijkstra's shunting yard algorithm
  * - turns infix-format expressions into RPN queues
@@ -1277,3 +1279,4 @@ zpceval(struct zpctoken *srcqueue)
     return queue;
 }
 
+#endif /* 0 */

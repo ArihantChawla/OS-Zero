@@ -13,7 +13,10 @@
 #include <zero/cdecl.h>
 #include <bits/sys/socket.h>
 
+#if !defined(__SOCKLEN_T_DEFINED)
 typedef long           socklen_t;
+#define __SOCKLEN_T_DEFINED 1
+#endif
 typedef unsigned short sa_family_t;
 
 struct sockaddr {

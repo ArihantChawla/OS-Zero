@@ -25,10 +25,10 @@ int64_t mul64(struct zpctoken *arg1, struct zpctoken *arg2);
 int64_t div64(struct zpctoken *arg1, struct zpctoken *arg2);
 int64_t mod64(struct zpctoken *arg1, struct zpctoken *arg2);
 
-double fadd64(double arg1, double arg2);
-double fsub64(double arg1, double arg2);
-double fmul64(double arg1, double arg2);
-double fdiv64(double arg1, double arg2);
+double  fadd64(double arg1, double arg2);
+double  fsub64(double arg1, double arg2);
+double  fmul64(double arg1, double arg2);
+double  fdiv64(double arg1, double arg2);
 
 typedef int64_t zpczerofunc_t(int64_t, int64_t, int64_t);
 

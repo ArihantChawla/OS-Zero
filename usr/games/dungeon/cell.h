@@ -115,6 +115,7 @@ struct celldng {
     long              width;            // dungeon width
     long              height;           // dungeon height
     char             *map;              // dungeon cell-bitmap
+    char             *cormap;           // dungeon corridor-bitmap
 #if (DNG_MJOLNIR)
     struct mjolobj  **objmap;
 #endif 

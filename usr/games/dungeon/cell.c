@@ -37,6 +37,12 @@ static struct cellcor * dngtrycor(struct celldng *dng,
     (setbit((dng)->map, (y) * (dng)->width + x))
 #define dngclrcellbit(dng, x, y)                                        \
     (clrbit((dng)->map, (y) * (dng)->width + x))
+#define dnggetcorbit(dng, x, y)                                         \
+    (bitset((dng)->cormap, (y) * (dng)->width + (x)))
+#define dngsetcorbit(dng, x, y)                                         \
+    (setbit((dng)->cormap, (y) * (dng)->width + x))
+#define dngclrcorbit(dng, x, y)                                         \
+    (clrbit((dng)->cormap, (y) * (dng)->width + x))
 #define dngrevdir(dir) (dngrevdirtab[(dir)])
 #define dngmovedir(x, y, dir)                                           \
     ((x) += dngdirofstab[(dir)].xval, (y) += dngdirofstab[(dir)].yval)
@@ -146,6 +152,7 @@ cellinitdng(struct celldng *dng, long width, long height)
     long              ncavemax = 16;
     long              ncormax = 16;
     char             *map = calloc(num / CHAR_BIT, sizeof(char));
+    char             *cormap = calloc(num / CHAR_BIT, sizeof(char));
     struct cellcave **cavetab = calloc(ncavemax, sizeof(struct cellcave *));
     long             *idtab = malloc(num * sizeof(long));
     struct cellcor  **cortab = calloc(ncormax, sizeof(struct cellcor *));
@@ -154,6 +161,11 @@ cellinitdng(struct celldng *dng, long width, long height)
 
     if (!map) {
         fprintf(stderr, "CELL: failed to allocate cave bitmap\n");
+        
+        exit(1);
+    }
+    if (!cormap) {
+        fprintf(stderr, "CELL: failed to allocate corridor bitmap\n");
         
         exit(1);
     }
@@ -175,6 +187,7 @@ cellinitdng(struct celldng *dng, long width, long height)
         idtab[ndx] = DNG_NOCAVE;
     }
     dng->map = map;
+    dng->cormap = map;
     dng->caveidtab = idtab;
     /* initialise dungeon structure */
     dng->width = width;
@@ -584,14 +597,15 @@ dngconncaves(struct celldng *dng)
                 ncell = cor->ncell;
                 x1 = cor->celltab[ncell - 1].xval;
                 y1 = cor->celltab[ncell - 1].yval;
-                if (dnggetcaveid(dng, x1, y1) == ndx) {
+                if (dnggetcaveid(dng, x1, y1) != ndx) {
                     if (!cave || id != ndx) {
                         coord1 = cor->celltab;
 //                        ncell--;
                         for (num = 0 ; num < ncell ; num++) {
                             x1 = coord1->xval;
                             y1 = coord1->yval;
-                            dngsetcellbit(dng, x1, y1);
+//                           dngsetcellbit(dng, x1, y1);
+//                            dngsetcorbit(dng, x1, y1);
                             coord1++;
                         }
 #if 0
@@ -610,6 +624,7 @@ dngconncaves(struct celldng *dng)
                             }
                         }
                         conntab[nconn] = cave;
+                        nconn++;
                         cave->flg |= DNG_CAVE_CONNECTED;
                         dngrmcave(dng, ndx, 0);
 //                        free(dng->cavetab);
@@ -618,7 +633,7 @@ dngconncaves(struct celldng *dng)
 //                        dng->cavetab = conntab;
 //                        dng->ncor = ncor;
                         ncave--;
-                        nconn++;
+                        dng->ncave = ncave;
                         
                         break;
                     }
