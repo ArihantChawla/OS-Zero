@@ -7,8 +7,8 @@
 #if (_ZERO_SOURCE)
 
 #include <errno.h>
-#include <zero/param.h>
 #include <zero/cdecl.h>
+#include <zero/param.h>
 #include <kern/syscall.h>
 
 #if (LONGSIZE == 4) || defined(__x86_64__) || defined(__amd64__)

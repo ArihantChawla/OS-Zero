@@ -38,7 +38,7 @@ deckgetfbadr(long depth, long width, long height)
     }
 
 #if (_ZERO_SOURCE)
-    setperm(&memreg.perm, getuid(), getgid(), PERMUWRITE);
+    setperm(&memreg.perm, getuid(), getgid(), PERM_UW);
     memreg.adr = NULL;
     memreg.ofs = 0;
     memreg.len = pixsize * width * height;

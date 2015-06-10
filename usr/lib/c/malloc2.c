@@ -12,7 +12,8 @@
  * - fix mallinfo() to return proper information
  */
 
-#define MALLOCEXPERIMENT 1
+#define MALLOCNEWSLABS 1
+#define MALLOCEXPERIMENT 0
 
 #define MALLOCDEBUGHOOKS 0
 #define MALLOCSTEALMAG   0
@@ -144,8 +145,29 @@
 //#include <sys/sysinfo.h>
 //#define MALLOCNARN     (4 * get_nprocs_conf())
 //#define MALLOCNARN     (2 * sysconf(_SC_NPROCESSORS_CONF))
-#define MALLOCNARN           4
-#if (MALLOCEXPERIMENT)
+#define MALLOCNARN           16
+#if (MALLOCNEWSLABS)
+//#define MALLOCSUPERSLABLOG2  22
+#define MALLOCSLABLOG2       22
+//#define MALLOCSMALLSLABLOG2  12
+//#define MALLOCMIDSLABLOG2    15
+//#define MALLOCBIGSLABLOG2    18
+#define MALLOCSMALLSLABLOG2  12
+#define MALLOCMIDSLABLOG2    16
+#define MALLOCSMALLMAPLOG2   23
+#define MALLOCMIDMAPLOG2     25
+#define MALLOCBIGMAPLOG2     27
+#if 0
+#define MALLOCSUPERSLABLOG2  20
+#define MALLOCSLABLOG2       18
+#define MALLOCSMALLSLABLOG2  10
+#define MALLOCMIDSLABLOG2    13
+#define MALLOCBIGSLABLOG2    16
+#define MALLOCSMALLMAPLOG2   22
+#define MALLOCMIDMAPLOG2     24
+#define MALLOCBIGMAPLOG2     26
+#endif
+#elif (MALLOCEXPERIMENT)
 #define MALLOCSUPERSLABLOG2  20
 #define MALLOCSLABLOG2       17
 #define MALLOCSMALLSLABLOG2  10
@@ -165,7 +187,6 @@
 #define MALLOCBIGMAPLOG2     25
 #endif
 #elif (MALLOCNEWHACKS)
-#if 0
 #define MALLOCSUPERSLABLOG2  20
 #define MALLOCSLABLOG2       18
 #define MALLOCSMALLSLABLOG2  12
@@ -174,7 +195,7 @@
 #define MALLOCSMALLMAPLOG2   24
 #define MALLOCMIDMAPLOG2     25
 #define MALLOCBIGMAPLOG2     26
-#endif
+#if 0
 #define MALLOCSUPERSLABLOG2  22
 #define MALLOCSLABLOG2       20
 #define MALLOCSMALLSLABLOG2  12
@@ -183,6 +204,7 @@
 #define MALLOCSMALLMAPLOG2   23
 #define MALLOCMIDMAPLOG2     24
 #define MALLOCBIGMAPLOG2     26
+#endif
 #if 0
 #define MALLOCSUPERSLABLOG2  20
 #define MALLOCSLABLOG2       18
@@ -193,10 +215,14 @@
 #define MALLOCBIGMAPLOG2     26
 #endif
 #elif (MALLOCVARSIZEBUF)
+#define MALLOCSUPERSLABLOG2  22
 #define MALLOCSLABLOG2       18
-#define MALLOCSMALLSLABLOG2  16
-#define MALLOCTINYSLABLOG2   13
-#define MALLOCTEENYSLABLOG2  10
+#define MALLOCSMALLSLABLOG2  10
+#define MALLOCMIDSLABLOG2    13
+#define MALLOCBIGSLABLOG2    16
+#define MALLOCSMALLMAPLOG2   20
+#define MALLOCMIDMAPLOG2     22
+#define MALLOCBIGMAPLOG2     24
 #elif (MALLOCNOSBRK)
 #define MALLOCSLABLOG2       16
 #else
@@ -209,9 +235,9 @@
 #define MALLOCBIGMAPLOG2     26
 #endif
 #endif
-#if ((MALLOCVARSIZEBUF) || (MALLOCBUFMAP)) && !(MALLOCNEWHACKS) && 0
+#if (MALLOCBUFMAP) && !(MALLOCNEWHACKS) && 0
 #define MALLOCSMALLMAPLOG2   23
-#define MALLOCMIDMAPLOG2 24
+#define MALLOCMIDMAPLOG2     24
 #define MALLOCBIGMAPLOG2     25
 #endif
 #define MALLOCMINSIZE        (1UL << MALLOCMINLOG2)
@@ -233,14 +259,41 @@
 #if (MALLOCBUFMAP)
 #define magnbufmaplog2(bktid)                                           \
     (((bktid) <= MALLOCSMALLMAPLOG2)                                    \
-     ? 3                                                                \
+     ? 4                                                                \
      : (((bktid) <= MALLOCMIDMAPLOG2)                                   \
-        ? 2                                                             \
-        : 1))
+        ? 3                                                             \
+        : 2))
 #define magnbufmap(bktid)                                               \
     (1UL << magnbufmaplog2(bktid))
 #endif /* MALLOCBUFMAP */
-#if (MALLOCEXPERIMENT)
+#if (MALLOCNEWSLABS)
+#define magnbytelog2(bktid)                                             \
+    (((bktid) <= MALLOCSMALLSLABLOG2)                                   \
+     ? MALLOCMIDSLABLOG2                                                \
+     : (((bktid) <= MALLOCSLABLOG2)                                     \
+        ? MALLOCSLABLOG2                                                \
+        : (((bktid) <= MALLOCSMALLMAPLOG2)                              \
+           ? MALLOCMIDMAPLOG2                                           \
+           : (((bktid) <= MALLOCMIDMAPLOG2)                             \
+              ? MALLOCBIGMAPLOG2                                        \
+              : (bktid)))))
+#if 0
+#define magnbytelog2(bktid)                                             \
+    (((bktid) <= MALLOCSUPERSLABLOG2)                                   \
+     ? (((bktid) <= MALLOCSMALLSLABLOG2)                                \
+        ? MALLOCMIDSLABLOG2                                             \
+        : (((bktid) <= MALLOCBIGSLABLOG2)                               \
+           ? MALLOCSLABLOG2                                             \
+           : MALLOCSUPERSLABLOG2))                                      \
+     : (((bktid) <= MALLOCSMALLMAPLOG2)                                 \
+        ? MALLOCMIDMAPLOG2                                              \
+        : (((bktid) <= MALLOCMIDMAPLOG2)                                \
+           ? MALLOCBIGMAPLOG2                                           \
+           : (bktid))))
+#endif
+#define magnblklog2(bktid)                                              \
+    (magnbytelog2(bktid) - (bktid))
+#elif (MALLOCEXPERIMENT)
 #define magnbytelog2(bktid)                                             \
     (((bktid) <= MALLOCSUPERSLABLOG2)                                   \
      ? (((bktid) <= MALLOCSMALLSLABLOG2)                                \
@@ -287,11 +340,11 @@
 #elif (MALLOCVARSIZEBUF)
 #define magnbytelog2(bktid)                                             \
     (((bktid) <= MALLOCSLABLOG2)                                        \
-     ? (((bktid) <= MALLOCTEENYSLABLOG2)                                \
-        ? MALLOCTINYSLABLOG2                                            \
-        : (((bktid) <= MALLOCTINYSLABLOG2)                              \
-           ? MALLOCSMALLSLABLOG2                                        \
-           : MALLOCSLABLOG2))                                           \
+     ? (((bktid) <= MALLOCSMALLSLABLOG2)                                \
+        ? MALLOCMIDSLABLOG2                                             \
+        : (((bktid) <= MALLOCMIDSLABLOG2)                               \
+           ? MALLOCBIGSLABLOG2                                          \
+           : min(2, MALLOCSUPERSLABLOG2- (bktid))))                     \
      : (((bktid) <= MALLOCSMALLMAPLOG2)                                 \
         ? MALLOCMIDMAPLOG2                                              \
         : (((bktid) <= MALLOCMIDMAPLOG2)                                \
@@ -652,6 +705,14 @@ mallocdiag(void)
                 exit(1);
 #endif
             }
+            if (mag->next) {
+                if (mag->next->prev != mag) {
+                    fprintf(stderr, "mag->prev INVALID on free list\n");
+                    magprint(mag);
+
+                    exit(1);
+                }
+            }
             if (mag->cur) {
                 fprintf(stderr, "mag->cur NON-ZERO on free list\n");
                 magprint(mag);
@@ -683,6 +744,14 @@ mallocdiag(void)
                         magprint(mag);
                         
                         exit(1);
+                    }
+                    if (mag->next) {
+                        if (mag->next->prev != mag) {
+                            fprintf(stderr, "mag->prev INVALID on partial list\n");
+                            magprint(mag);
+                            
+                            exit(1);
+                        }
                     }
                     if (!mag->cur) {
                         fprintf(stderr, "mag->cur == 0 on partial list\n");

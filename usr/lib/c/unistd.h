@@ -37,55 +37,68 @@ extern char **__environ;
 extern char **environ;
 #endif
 
-extern int            access(const char *name, int type);
+/* check given access permissions */
+extern int            access(const char *path, int type);
 #if defined(_GNU_SOURCE)
-extern int            euidaccess(const char *name, int type);
-extern int            eaccess(const char *name, int type);
-extern int            faccessat(int fd, const char *name, int type, int flg);
+/* check given access permissions using effective UID and GID */
+extern int            euidaccess(const char *path, int type);
+#define eaccess       euidaccess
+/* check access at path relative to fd */
+extern int            faccessat(int fd, const char *path, int type, int flg);
 #endif
-#if (_FILE_OFFSET_BITS == 64)
-#if defined(_WIN64)
-/* WIN64 has 32-bit longs, so needs a real llseek() */
-extern long long      llseek(int fd, off_t ofs, int whence);
-#elif defined(__x86_64__) || defined(__amd64__) || defined(__alpha__)
-#define               llseek(fd, ofs, whence) lseek(fd, ofs, whence)
-#endif
-#else /* _FILE_OFFSET_BITS != 64 */
-#define               llseek(fd, ofs, whence)                           \
-    _llseek(fd, (ofs) >> 32, ofs & 0xffffffff, NULL, whence)
-#endif
+/* file operations */
+/* lseek(), llseek() */
 extern off_t          lseek(int fd, off_t ofs, int whence);
+/* read(), write(), close() */
 extern ssize_t        read(int fd, void *buf, size_t count);
 extern ssize_t        write(int fd, void *buf, size_t count);
 extern int            close(int fd);
 #if (USEUNIX98)
+/* like read() and write(), but with offset arguments */
 extern ssize_t        pread(int fd, void *buf, size_t len, off_t ofs);
 extern ssize_t        pwrite(int fd, const void *buf, size_t len, off_t ofs);
 #endif
+/* pipe/LIFO I/O channel */
 extern int            pipe(int fd[2]);
+/* trigger SIGALRM in [at least] nsec seconds */
 extern unsigned int   alarm(unsigned int nsec);
+/* sleep for [at least] nsec seconds */
 extern unsigned int   sleep(unsigned int nsec);
 #if (_BSD_SOURCE) || (USEXOPENEXT)
+/* trigger SIGALRM in [at least] value microseconds, then every interval */
 extern useconds_t     ualarm(useconds_t value, useconds_t interval);
+/* sleep for [at least] nusec microseconds */
 extern int            usleep(useconds_t nusec);
 #endif
+/* sleep until signal-terminated or signal handler invoked */
 extern int            pause(void);
-extern int            chown(const char *name, uid_t uid, gid_t gid);
+/* change owner and group of file, possibly via a symlink */
+extern int            chown(const char *path, uid_t uid, gid_t gid);
 #if (_BSD_SOURCE) || (USEXOPENEXT)
+/* change owner and group of file refered to by fd */
 extern int            fchown(int fd, uid_t uid, gid_t gid);
-extern int            lchown(const char *name, uid_t uid, gid_t gid);
+/* change onwer credentials of a symlink */
+extern int            lchown(const char *path, uid_t uid, gid_t gid);
 #endif
 #if defined(_GNU_SOURCE)
-extern int            fchownat(int fd, const char *name, uid_t uid, gid_t gid);
+/* change owner credentials of file at path relative to fd */
+extern int            fchownat(int fd, const char *path, uid_t uid, gid_t gid);
 #endif
 #if (_BSD_SOURCE) || (USEXOPENEXT)
+/* change current working directory that refered to by fd */
 extern int            fchdir(int fd);
 #endif
+/* query current working directory */
 extern char         * getcwd(char *buf, size_t len);
 #if (_BSD_SOURCE) || (USEXOPENEXT)
+/* DEPRECATED; buf should be at least PATH_MAX bytes; allocate if NULL */
 extern char         * getwd(char *buf);
 #endif
 #if defined(_GNU_SOURCE)
+/*
+ * get current working directory; malloc() buffer of proper length;
+ * return PWD
+*/
 extern char         * get_current_dir_name(void);
 #endif
 extern int            dup(int fd);
@@ -187,9 +200,9 @@ extern int            symlinkat(const char *from, int fd, const char *to);
 extern ssize_t        readlinkat(int fd, const char *__restrict path,
                                  char *__restrict buf, size_t len);
 #endif
-extern int            unlink(const char *name);
+extern int            unlink(const char *path);
 #if defined(_GNU_SOURCE)
-extern int            unlinkat(int fd, const char *name, int flg);
+extern int            unlinkat(int fd, const char *path, int flg);
 #endif
 extern int            rmdir(const char *path);
 extern pid_t          tcgetpgrp(int fd);
@@ -205,7 +218,7 @@ extern int            setlogin(const char *name);
 extern int            gethostname(char *name, size_t len);
 #endif
 #if (_BSD_SOURCE) || ((_XOPEN_SOURCE) && !defined(USEUNIX98))
-extern int            sethostnmae(const char *name, size_t len);
+extern int            sethostname(const char *name, size_t len);
 extern int            sethostid(long id);
 extern int            getdomainname(const char *name, size_t len);
 extern int            setdomainname(const char *name, size_t len);

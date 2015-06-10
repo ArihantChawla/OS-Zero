@@ -24,6 +24,8 @@ typedef long      sysreg_t;
 #error sysreg_t not defined in <kern/syscall.h>
 #endif
 
+#define SYS_NODESC (-1)
+
 /*
  * TODO
  * ----
@@ -32,8 +34,6 @@ typedef long      sysreg_t;
  * - commands to access system clock
  * - commands to query system status
  * - commands to query and set system attributes
- *   - page size, stack size, cacheline size, ...
- *   - # of cores, word size
  */
 
 /*
