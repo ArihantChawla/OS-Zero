@@ -21,7 +21,7 @@ pitinit(void)
     uint64_t *idt = kernidt;
 
     kprintf("initialising timer interrupt to %d Hz\n", HZ);
-    trapsetintgate(&idt[trapirqid(IRQTMR)], irqtmr, TRAPUSER);
+    trapsetintrgate(&idt[trapirqid(IRQTMR)], irqtmr, TRAPUSER);
     /* initialise timer */
     outb(PITCMD, PITCTRL);
     pitsethz(HZ, PITCHAN0);
@@ -57,7 +57,7 @@ pitsleep(long msec)
     outb(~0x01, PICMASK1);
     outb(~0x00, PICMASK2);
     irqvec[IRQTMR] = NULL;
-//    trapsetintgate(&idt[trapirqid(IRQTMR)], irqtmr0, TRAPUSER);
+//    trapsetintrgate(&idt[trapirqid(IRQTMR)], irqtmr0, TRAPUSER);
     outb(PITDUALBYTE | PITONESHOT, PITCTRL);
     pitsethz(hz, PITCHAN0);
     k_waitint();

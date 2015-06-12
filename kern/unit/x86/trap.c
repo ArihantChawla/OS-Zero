@@ -82,39 +82,39 @@ long                   trapsigmap[TRAPNCPU]
 void
 trapinitidt(uint64_t *idt)
 {
-    trapsetintgate(&idt[TRAPDE], trapde, TRAPSYS);
-    trapsetintgate(&idt[TRAPDB], trapdb, TRAPSYS);
-    trapsetintgate(&idt[TRAPNMI], trapnmi, TRAPSYS);
-    trapsetintgate(&idt[TRAPBP], trapbp, TRAPSYS);
-    trapsetintgate(&idt[TRAPOF], trapof, TRAPSYS);
-    trapsetintgate(&idt[TRAPBR], trapbr, TRAPSYS);
-    trapsetintgate(&idt[TRAPUD], trapud, TRAPSYS);
-    trapsetintgate(&idt[TRAPNM], trapnm, TRAPSYS);
-    trapsetintgate(&idt[TRAPDF], trapdf, TRAPSYS);
-    trapsetintgate(&idt[TRAPTS], trapts, TRAPSYS);
-    trapsetintgate(&idt[TRAPNP], trapnp, TRAPSYS);
-    trapsetintgate(&idt[TRAPSS], trapss, TRAPSYS);
-    trapsetintgate(&idt[TRAPGP], trapgp, TRAPSYS);
-    trapsetintgate(&idt[TRAPPF], trappf, TRAPSYS);
-    trapsetintgate(&idt[TRAPMF], trapmf, TRAPSYS);
-    trapsetintgate(&idt[TRAPAC], trapac, TRAPSYS);
-    trapsetintgate(&idt[TRAPMC], trapmc, TRAPSYS);
-    trapsetintgate(&idt[TRAPXF], trapxf, TRAPSYS);
+    trapsetintrgate(&idt[TRAPDE], trapde, TRAPSYS);
+    trapsetintrgate(&idt[TRAPDB], trapdb, TRAPSYS);
+    trapsetintrgate(&idt[TRAPNMI], trapnmi, TRAPSYS);
+    trapsetintrgate(&idt[TRAPBP], trapbp, TRAPSYS);
+    trapsetintrgate(&idt[TRAPOF], trapof, TRAPSYS);
+    trapsetintrgate(&idt[TRAPBR], trapbr, TRAPSYS);
+    trapsetintrgate(&idt[TRAPUD], trapud, TRAPSYS);
+    trapsetintrgate(&idt[TRAPNM], trapnm, TRAPSYS);
+    trapsetintrgate(&idt[TRAPDF], trapdf, TRAPSYS);
+    trapsetintrgate(&idt[TRAPTS], trapts, TRAPSYS);
+    trapsetintrgate(&idt[TRAPNP], trapnp, TRAPSYS);
+    trapsetintrgate(&idt[TRAPSS], trapss, TRAPSYS);
+    trapsetintrgate(&idt[TRAPGP], trapgp, TRAPSYS);
+    trapsetintrgate(&idt[TRAPPF], trappf, TRAPSYS);
+    trapsetintrgate(&idt[TRAPMF], trapmf, TRAPSYS);
+    trapsetintrgate(&idt[TRAPAC], trapac, TRAPSYS);
+    trapsetintrgate(&idt[TRAPMC], trapmc, TRAPSYS);
+    trapsetintrgate(&idt[TRAPXF], trapxf, TRAPSYS);
     /* system call trap */
-    trapsetintgate(&idt[TRAPSYSCALL], ksyscall, TRAPUSER);
+    trapsetintrgate(&idt[TRAPSYSCALL], ksyscall, TRAPUSER);
     /* IRQs */
-    trapsetintgate(&idt[trapirqid(IRQTMR)], irqtmr0, TRAPUSER);
-    trapsetintgate(&idt[trapirqid(IRQKBD)], irqkbd, TRAPUSER);
-    trapsetintgate(&idt[trapirqid(IRQMOUSE)], irqmouse, TRAPUSER);
+    trapsetintrgate(&idt[trapirqid(IRQTMR)], irqtmr0, TRAPUSER);
+    trapsetintrgate(&idt[trapirqid(IRQKBD)], irqkbd, TRAPUSER);
+    trapsetintrgate(&idt[trapirqid(IRQMOUSE)], irqmouse, TRAPUSER);
 #if (SMP)
-    trapsetintgate(&idt[trapirqid(IRQERROR)], irqerror, TRAPUSER);
+    trapsetintrgate(&idt[trapirqid(IRQERROR)], irqerror, TRAPUSER);
 #endif
 #if (APIC)
-    trapsetintgate(&idt[trapirqid(IRQAPICTMR)], irqtmr, TRAPUSER);
-    trapsetintgate(&idt[trapirqid(IRQSPURIOUS)], irqspurious, TRAPUSER);
+    trapsetintrgate(&idt[trapirqid(IRQAPICTMR)], irqtmr, TRAPUSER);
+    trapsetintrgate(&idt[trapirqid(IRQSPURIOUS)], irqspurious, TRAPUSER);
 #endif
 #if 0
-    trapsetintgate(&idt[TRAPV86MODE], trapv86, TRAPUSER);
+    trapsetintrgate(&idt[TRAPV86MODE], trapv86, TRAPUSER);
 #endif
     /* initialize interrupts */
     idtptr.lim = NINTR * sizeof(uint64_t) - 1;

@@ -25,6 +25,7 @@ typedef long      sysreg_t;
 #endif
 
 #define SYS_NODESC (-1)
+#define SYS_NOARG  (-1)
 
 /*
  * TODO
@@ -225,6 +226,7 @@ typedef long      sysreg_t;
 #define SYSCTL_SETTZONE 0x04U   // set timezone
 
 /* exit() parm flags */
+#define EXIT_DEF        0x00U
 #define EXIT_DUMPACCT   0x01U   // dump system information at process exit
 
 /* abort() parm flags */
@@ -233,11 +235,6 @@ typedef long      sysreg_t;
 /* fork() parm flags */
 #define FORK_VFORK      0x01U   // vfork() semantics; share address space with parent
 #define FORK_COW        0x02U   // copy on write optimisations
-
-struct sysatexit {
-    void             (*func)(void);
-    struct sysatexit  *next;
-};
 
 /* thread interface */
 

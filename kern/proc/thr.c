@@ -4,7 +4,7 @@
 #include <zero/param.h>
 #include <zero/mtx.h>
 #include <zero/trix.h>
-#include <zero/randlfg2.h>
+//#include <zero/randlfg2.h>
 #include <zero/asm.h>
 #include <kern/conf.h>
 #include <kern/util.h>
@@ -80,7 +80,7 @@ thradjprio(struct thr *thr)
         prio &= (THRNPRIO >> 1) - 1;
 //        prio = (THRNPRIO * class) + (THRNPRIO >> 1) + prio + thr->nice;
         prio += (THRNPRIO * class)
-            + (randlfg2() & ((THRNPRIO >> 1) - 1))
+//            + (randlfg2() & ((THRNPRIO >> 1) - 1))
             + nice;
         prio = min(THRNPRIO * THRNCLASS - 1, prio);
     }

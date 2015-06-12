@@ -71,12 +71,14 @@ extern int   rename(const char *file, const char *newname);
 extern FILE *fopen(const char *__restrict name, const char *__restrict mode);
 extern FILE *freopen(const char *__restrict name, const char *__restrict mode,
                      FILE *__restrict stream);
-extern int   fclose(FILE *stream);
-extern int   fflush(FILE *stream);
-extern int   fflush_unlocked(FILE *stream);
 #if (_POSIX_SOURCE)
 extern FILE *fdopen(int fd, const char *mode);
 #endif
+
+/* stream operations for <stdio.h> */
+extern int   fclose(FILE *stream);
+extern int   fflush(FILE *stream);
+extern int   fflush_unlocked(FILE *stream);
 
 #if (_GNU_SOURCE) || (_XOPEN_SOURCE >= 700 || _POSIX_C_SOURCE >= 200809L)
 /* GNU operations */

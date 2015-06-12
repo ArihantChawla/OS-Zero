@@ -36,9 +36,7 @@ seginit(long id)
                SEGCODE);
     segsetdesc(&gdt[DATASEG], 0, NPAGEMAX - 1,
                SEGDATA);
-#if 0
-    segsetdesc(&gdt[TSSSEG], &tsstab[id], sizeof(struct m_tss), SEGTSS);
-#endif
+//    segsetdesc(&gdt[TSSSEG], &tsstab[id], sizeof(struct m_tss), SEGTSS);
     segsetdesc(&gdt[UTEXTSEG], 0, NPAGEMAX - 1, SEGCODE | SEGUSER);
     segsetdesc(&gdt[UDATASEG], 0, NPAGEMAX - 1, SEGDATA | SEGUSER);
     /* per-CPU data segment */

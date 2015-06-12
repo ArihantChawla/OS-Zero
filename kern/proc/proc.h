@@ -2,6 +2,7 @@
 #define __KERN_PROC_H__
 
 #include <stddef.h>
+#include <limits.h>
 #include <signal.h>
 #include <stdint.h>
 #include <sys/types.h>

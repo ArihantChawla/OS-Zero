@@ -53,7 +53,7 @@ struct m_cpu {
     struct proc      *proc;
     struct thr       *thr;
 #if (PTRBITS == 32)
-    pde_t             pdir;
+    uint32_t          pdir;
 #elif (PTRBITS == 64)
     uint64_t          pml4;
 #endif

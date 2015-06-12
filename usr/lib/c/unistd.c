@@ -22,8 +22,8 @@ long sysconftab[NSYSCONF]
     BUFSIZE,                    /* _SC_BLKSIZE */
     0,                          /* _SC_L2NWAY */
     0,                          /* _SC_L2SIZE */
-    0,                          /* _SC_L1NDATAWAY */
-    0,                          /* _SC_L1NINSTWAY */
+    0,                          /* _SC_L1NWAYDATA */
+    0,                          /* _SC_L1NWAYINST */
     0,                          /* _SC_L1INSTSIZE */
     0,                          /* _SC_L1DATASIZE */
     0,                          /* _SC_CACHELINESIZE */

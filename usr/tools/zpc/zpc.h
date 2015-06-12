@@ -224,6 +224,12 @@ struct zpcstkitem {
     struct zpcstkitem *next;
 };
 
+struct zpctokenqueue {
+    volatile long    lk;
+    struct zpctoken *head;
+    struct zpctoken *tail;
+};
+
 void              exprinit(void);
 void              zpcconvbinuint64(uint64_t val, char *str, size_t len);
 void              zpcconvbinint64(int64_t val, char *str, size_t len);

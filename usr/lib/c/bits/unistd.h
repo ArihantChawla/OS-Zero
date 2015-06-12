@@ -5,7 +5,7 @@
 #include <stdint.h>
 
 /* types (hopefully) not declared yet... :) */
-#if (_BSD_SOURCE) || (_XOPEN_SOURCE) && !defined(__SOCKLEN_T_DEFINED)
+#if ((_BSD_SOURCE) || (_XOPEN_SOURCE)) && !defined(__SOCKLEN_T_DEFINED)
 /* TODO: check what this type is for and what it should be :) */
 typedef long socklen_t;
 #define __SOCKLEN_T_DEFINED 1
@@ -49,7 +49,7 @@ typedef long socklen_t;
  * _POSIX_REALTIME_SIGNALS
  * _POSIX_REGEXP
  * _POSIX_SAVED_IDS
- *_POSIX_SEMAPHORES
+ * _POSIX_SEMAPHORES
  * _POSIX_SHARED_MEMORY_OBJECTS
  * _POSIX_SHELL
  * _POSIX_SPAWN
@@ -88,14 +88,14 @@ typedef long socklen_t;
  * _POSIX2_CHAR_TERM
  * PTHREAD_DESTRUCTOR_ITERATIONS
  * PTHREAD_KEYS_MAX
- * {PTHREAD_STACK_MIN}
- * {PTHREAD_THREADS_MAX}
- * {RTSIG_MAX}
- * {SEM_NSEMS_MAX}
- * {SEM_VALUE_MAX}
- * {SIGQUEUE_MAX}
- * {STREAM_MAX}
- * {TIMER_MAX}
+ * PTHREAD_STACK_MIN
+ * PTHREAD_THREADS_MAX
+ * RTSIG_MAX
+ * SEM_NSEMS_MAX
+ * SEM_VALUE_MAX
+ * SIGQUEUE_MAX
+ * STREAM_MAX
+ * TIMER_MAX
  * _XBS5_ILP32_OFF32 (LEGACY)
  * _SC_XBS5_ILP32_OFF32 (LEGACY)
  * _XBS5_ILP32_OFFBIG (LEGACY)
@@ -153,21 +153,23 @@ typedef long socklen_t;
 #define _SC_CACHELINESIZE    (-5) // size of [memory] cacheline in bytes
 #define _SC_L1INSTSIZE       (-6) // L1 cache size in bytes
 #define _SC_L1DATASIZE       (-7) // L1 cache size in bytes
-#define _SC_L1INSTNWAY       (-8) // L1 cache parameter
-#define _SC_L1DATANWAY       (-9) // L1 cache parameter
+#define _SC_L1NWAYINST       (-8) // L1 cache parameter
+#define _SC_L1NWAYDATA       (-9) // L1 cache parameter
 #define _SC_L2SIZE           (-10) // L2 cache size in bytes
 #define _SC_L2NWAY           (-11) // L2 cache parameter
 #define _SC_BLKSIZE          (-12) // buffer block size
 #endif
 #define NNEGSYSCONF          (12)
 #define NSYSCONF             (26 + NNEGSYSCONF) // 1 bigger than any name-value
+
 #if (USEXOPENEXT) && !defined(F_LOCK)
 /* these macros also appear in <fcntl.h> - keep the files consistent */
-#define F_ULOCK 0       // unlock section of a file
+#define F_ULOCK 0       // unlock section of file
 #define F_LOCK  1       // lock section
 #define F_TLOCK 2       // try lock
 #define F_TEST  3       // test lock
 #endif
+
 #if defined(_GNU_SOURCE)
 #define TEMP_FAILURE_RETRY(expr)                                        \
     (__extension__                                                      \

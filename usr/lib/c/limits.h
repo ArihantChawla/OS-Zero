@@ -91,6 +91,7 @@
  * POSIX values.
  */
 #define ARG_MAX        65536 	 // # of arg and env bytes to exec functions
+#define ATEXIT_MAX     32
 #define CHILD_MAX      256       // # of processes per real user ID
 #define HOST_NAME_MAX  255
 #define LINK_MAX       127       // # of links per file

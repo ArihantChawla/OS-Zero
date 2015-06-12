@@ -76,7 +76,7 @@ apicinittmr(void)
         apic = apicprobe();
         mpapic = apic;
     }
-    trapsetintgate(&kernidt[trapirqid(IRQTMR)], irqtmrcnt, TRAPUSER);
+    trapsetintrgate(&kernidt[trapirqid(IRQTMR)], irqtmrcnt, TRAPUSER);
     /* initialise APIC */
     apicwrite(0xffffffff, APICDFR);
     apicwrite((apicread(APICLDR) & 0x00ffffff) | 1, APICLDR);
@@ -112,7 +112,7 @@ apicinittmr(void)
     kprintf("APIC interrupt frequency: %ld MHz\n", freq / 1000000);
     tmrcnt = freq / HZ / 16;
 
-    trapsetintgate(&kernidt[trapirqid(IRQTMR)], irqtmr, TRAPUSER);
+    trapsetintrgate(&kernidt[trapirqid(IRQTMR)], irqtmr, TRAPUSER);
 
     tmrcnt = max(tmrcnt, 16);
 #if !(NEWTMR)

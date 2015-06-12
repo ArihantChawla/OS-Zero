@@ -12,7 +12,9 @@
 #include <getopt.h>
 #endif
 
+#if !defined(__GLIBC__)
 #include <bits/unistd.h>
+#endif
 
 #if (_POSIX_SOURCE)
 #define _POSIX_VERSION  _POSIX_C_SOURCE

@@ -136,9 +136,11 @@ kmain(struct mboothdr *hdr, unsigned long pmemsz)
 #if (VBE)
     vbeinitscr();
 #endif
+#if 0
     k_curproc = &proctab[0];
     k_curcpu = &cputab[0];
     cpuinit(k_curcpu);
+#endif
 
     /* TODO: use memory map from GRUB? */
     meminit(vmlinkadr(&_ebssvirt), pmemsz);
@@ -236,6 +238,9 @@ kmain(struct mboothdr *hdr, unsigned long pmemsz)
 #else
     pitinit();
 #endif
+    k_curproc = &proctab[0];
+    k_curcpu = &cputab[0];
+    cpuinit(k_curcpu);
     schedloop();
 
     /* NOTREACHED */

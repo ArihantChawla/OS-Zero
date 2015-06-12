@@ -12,7 +12,8 @@
  * - fix mallinfo() to return proper information
  */
 
-#define MALLOCNEWSLABS 1
+#define MALLOCNARN       8
+#define MALLOCNEWSLABS   1
 #define MALLOCEXPERIMENT 0
 
 #define MALLOCDEBUGHOOKS 0
@@ -116,6 +117,14 @@
 #include <limits.h>
 #endif
 
+#if 0
+#if (_GNU_SOURCE)
+#include <sys/sysinfo.h>
+#elif (_POSIX_SOURCE)
+#include <unistd.h>
+#endif
+#endif
+
 //#include <sys/sysinfo.h>
 
 #define ZEROMTX 1
@@ -145,15 +154,21 @@
 //#include <sys/sysinfo.h>
 //#define MALLOCNARN     (4 * get_nprocs_conf())
 //#define MALLOCNARN     (2 * sysconf(_SC_NPROCESSORS_CONF))
-#define MALLOCNARN           16
+//#define MALLOCNARN           16
+
+#if 0
+#define MALLOCSLABLOG2       18
+#define MALLOCSMALLSLABLOG2  13
+#define MALLOCMIDSLABLOG2    15
+#define MALLOCSMALLMAPLOG2   20
+#define MALLOCMIDMAPLOG2     22
+#define MALLOCBIGMAPLOG2     24
+#endif
 #if (MALLOCNEWSLABS)
-//#define MALLOCSUPERSLABLOG2  22
 #define MALLOCSLABLOG2       22
-//#define MALLOCSMALLSLABLOG2  12
-//#define MALLOCMIDSLABLOG2    15
-//#define MALLOCBIGSLABLOG2    18
 #define MALLOCSMALLSLABLOG2  12
-#define MALLOCMIDSLABLOG2    16
+#define MALLOCMIDSLABLOG2    14
+#define MALLOCBIGSLABLOG2    18
 #define MALLOCSMALLMAPLOG2   23
 #define MALLOCMIDMAPLOG2     25
 #define MALLOCBIGMAPLOG2     27
@@ -270,10 +285,10 @@
 #define magnbytelog2(bktid)                                             \
     (((bktid) <= MALLOCSMALLSLABLOG2)                                   \
      ? MALLOCMIDSLABLOG2                                                \
-     : (((bktid) <= MALLOCSLABLOG2)                                     \
-        ? MALLOCSLABLOG2                                                \
-        : (((bktid) <= MALLOCSMALLMAPLOG2)                              \
-           ? MALLOCMIDMAPLOG2                                           \
+     : (((bktid) <= MALLOCMIDSLABLOG2)                                  \
+        ? MALLOCBIGSLABLOG2                                             \
+        : (((bktid) <= MALLOCSLABLOG2)                                  \
+           ? max(2, MALLOCSLABLOG2 - (bktid))                           \
            : (((bktid) <= MALLOCMIDMAPLOG2)                             \
               ? MALLOCBIGMAPLOG2                                        \
               : (bktid)))))
@@ -723,7 +738,7 @@ mallocdiag(void)
         }
         mtxunlk(&g_malloc.freetab[bktid].lk);
     }
-    for (arnid = 0 ; arnid < MALLOCNARN ; arnid++) {
+    for (arnid = 0 ; arnid < g_malloc.narn ; arnid++) {
         arn = g_malloc.arntab[arnid];
         if (arn) {
             for (bktid = 0 ; bktid < MALLOCNBKT ; bktid++) {
@@ -800,7 +815,7 @@ long
 thrarnid(void)
 {
     struct arn *arn;
-    
+
     if (_arnid >= 0) {
 
         return _arnid;
@@ -810,7 +825,7 @@ thrarnid(void)
     arn = g_malloc.arntab[_arnid];
     mtxlk(&arn->nreflk);
     arn->nref++;
-    curarn &= (MALLOCNARN - 1);
+    curarn &= (g_malloc.narn - 1);
     pthread_setspecific(g_malloc.arnkey, g_malloc.arntab[_arnid]);
     mtxunlk(&arn->nreflk);
     mtxunlk(&_arnlk);
@@ -1268,7 +1283,7 @@ prefork(void)
     mtxlk(&g_malloc.initlk);
     mtxlk(&_arnlk);
     mtxlk(&g_malloc.heaplk);
-    for (arnid = 0 ; arnid < MALLOCNARN ; arnid++) {
+    for (arnid = 0 ; arnid < g_malloc.narn ; arnid++) {
         arn = g_malloc.arntab[arnid];
         mtxlk(&arn->nreflk);
         for (bktid = 0 ; bktid < MALLOCNBKT ; bktid++) {
@@ -1297,7 +1312,7 @@ postfork(void)
         mtxunlk(&g_malloc.freetab[bktid].lk);
         mtxunlk(&g_malloc.magtab[bktid].lk);
     }
-    for (arnid = 0 ; arnid < MALLOCNARN ; arnid++) {
+    for (arnid = 0 ; arnid < g_malloc.narn ; arnid++) {
         arn = g_malloc.arntab[arnid];
         for (bktid = 0 ; bktid < MALLOCNBKT ; bktid++) {
             mtxunlk(&arn->magtab[bktid].lk);
@@ -1419,10 +1434,25 @@ mallinit(void)
     g_malloc.hashtab = mapanon(g_malloc.zerofd,
                                MALLOCNHASH * sizeof(struct hashlist));
 #endif
+//    narn = MALLOCNARN;
+//    narn = MALLOCNARN;
     narn = MALLOCNARN;
+#if 0
+#if (_GNU_SOURCE)
+    narn = 4 * get_nprocs_conf();
+#elif (_POSIX_SOURCE)
+    narn = 4 * sysconf(_SC_NPROCESSORS_CONF);
+#endif
+#endif
     g_malloc.arntab = mapanon(g_malloc.zerofd,
                               narn * sizeof(struct arn **));
+    g_malloc.narn = narn;
     ptr = mapanon(g_malloc.zerofd, narn * MALLOCARNSIZE);
+    if (ptr == MAP_FAILED) {
+        errno = ENOMEM;
+
+        exit(1);
+    }
     arnid = narn;
     while (arnid--) {
         g_malloc.arntab[arnid] = (struct arn *)ptr;
@@ -1440,7 +1470,6 @@ mallinit(void)
         }
         mtxinit(&g_malloc.hdrtab[bktid].lk);
     }
-    g_malloc.narn = narn;
     bktid = MALLOCNBKT;
     while (bktid--) {
         mtxinit(&g_malloc.freetab[bktid].lk);
@@ -1740,7 +1769,7 @@ _malloc(size_t size,
                 }
 #if (MALLOCSTEALMAG)
                 if (!mag) {
-                    for (id = 0 ; id < MALLOCNARN ; id++) {
+                    for (id = 0 ; id < g_malloc.narn ; id++) {
                         struct arn *curarn;
                             
                         if (id != arnid) {

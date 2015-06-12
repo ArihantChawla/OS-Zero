@@ -11,6 +11,7 @@
 #include <X11/Xlib.h>
 #include <X11/keysymdef.h>
 #include <X11/Xutil.h>
+#include <Imlib2.h>
 #include <zpc/conf.h>
 #include <zpc/zpc.h>
 #include <zpc/op.h>

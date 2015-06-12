@@ -7,6 +7,10 @@
 #include <stdint.h>
 #include <zero/cdecl.h>
 
+#if (__GLIBC__)
+typedef struct __dirstream DIR;
+#endif
+
 struct dirent *readdir(DIR *dirp);
 
 struct dirent {

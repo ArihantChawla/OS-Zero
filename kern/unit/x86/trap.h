@@ -15,7 +15,7 @@
 
 #if !defined(__x86_64__) && !defined(__amd64__)
 /* func is routine; ring is TRAPUSER or TRAPSYS */
-#define trapsetintgate(p64, func, ring)                                 \
+#define trapsetintrgate(p64, func, ring)                                \
     do {                                                                \
         uint64_t _func = (uint32_t)(func);                              \
                                                                         \
