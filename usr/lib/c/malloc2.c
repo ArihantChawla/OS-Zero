@@ -166,8 +166,9 @@
 #endif
 #if (MALLOCNEWSLABS)
 #define MALLOCSLABLOG2       22
-#define MALLOCSMALLSLABLOG2  12
-#define MALLOCMIDSLABLOG2    14
+#define MALLOCTINYSLABLOG2   10
+#define MALLOCSMALLSLABLOG2  13
+#define MALLOCMIDSLABLOG2    15
 #define MALLOCBIGSLABLOG2    18
 #define MALLOCSMALLMAPLOG2   23
 #define MALLOCMIDMAPLOG2     25
@@ -283,15 +284,17 @@
 #endif /* MALLOCBUFMAP */
 #if (MALLOCNEWSLABS)
 #define magnbytelog2(bktid)                                             \
-    (((bktid) <= MALLOCSMALLSLABLOG2)                                   \
-     ? MALLOCMIDSLABLOG2                                                \
-     : (((bktid) <= MALLOCMIDSLABLOG2)                                  \
-        ? MALLOCBIGSLABLOG2                                             \
-        : (((bktid) <= MALLOCSLABLOG2)                                  \
-           ? max(2, MALLOCSLABLOG2 - (bktid))                           \
-           : (((bktid) <= MALLOCMIDMAPLOG2)                             \
-              ? MALLOCBIGMAPLOG2                                        \
-              : (bktid)))))
+    (((bktid) <= MALLOCTINYSLABLOG2)                                    \
+     ? MALLOCSMALLSLABLOG2                                              \
+     : (((bktid) <= MALLOCSMALLSLABLOG2)                                \
+        ? MALLOCMIDSLABLOG2                                             \
+        : (((bktid) <= MALLOCMIDSLABLOG2)                               \
+           ? MALLOCBIGSLABLOG2                                          \
+           : (((bktid) <= MALLOCSLABLOG2)                               \
+              ? (MALLOCSLABLOG2 + max(2, MALLOCSLABLOG2 - (bktid)))     \
+              : (((bktid) <= MALLOCMIDMAPLOG2)                          \
+                 ? MALLOCBIGMAPLOG2                                     \
+                 : (bktid))))))
 #if 0
 #define magnbytelog2(bktid)                                             \
     (((bktid) <= MALLOCSUPERSLABLOG2)                                   \
