@@ -22,10 +22,16 @@ struct zeusx11win {
 struct zeusx11 {
     Display               *disp;
     Pixmap                 pixbuf;
+    Window                 parentwin;
+    int                    x;
+    int                    y;
+    int                    w;
+    int                    h;
     Window                 mainwin;
     Window                 simwin;
     Window                 buttonwin;
-    Window                 dbwin;
+    Window                 db1win;
+    Window                 db2win;
     Window                 tipwin;
     int                    simw;
     int                    simh;
@@ -50,8 +56,6 @@ struct zeusx11 {
     Colormap               colormap;
     Visual                *visual;
     int                    screen;
-    int                    w;
-    int                    h;
     Window               **buttons;
 };
 

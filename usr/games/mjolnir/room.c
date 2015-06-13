@@ -67,6 +67,8 @@ mjolmkid(struct mjolroom *room)
 
 #endif
 
+#if 0
+
 void
 mjolmkroom(struct mjolroom *room)
 {
@@ -886,6 +888,8 @@ mjolinitrooms(struct mjolgame *game, long *nret)
 
     return ret;
 }
+
+#endif /* 0 */
 
 void
 mjolgendng(struct mjolgame *game)

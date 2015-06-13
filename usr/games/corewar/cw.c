@@ -1,9 +1,12 @@
 /* REFERENCE:  http://corewar.co.uk/cwg.txt */
 /* REFERENCE: http://seblog.cs.uni-kassel.de/fileadmin/se/courses/SE1/WS0708/redcode-icws-88-2.pdf */
 
+#define CWPIDMAP 1
+
 #include <stdio.h>
 #include <stdlib.h>
 #include <string.h>
+#include <limits.h>
 #include <stdint.h>
 #include <time.h>
 #include <zero/param.h>
@@ -149,11 +152,7 @@ cwdatop(long pid, long pc)
 #if (ZEUS)
     zeusdrawsim(&cwmars.zeusx11);
 #endif
-    if (pid) {
-        fprintf(stderr, "program #1 won\n");
-    } else {
-        fprintf(stderr, "program #2 won\n");
-    }
+    fprintf(stderr, "program %s won\n", cwmars.prog1name);
 #if (ZEUS)
     sleep(5);
 #endif
@@ -616,6 +615,9 @@ cwinit(void)
 #endif
     cwinitop();
     rcinitop();
+#if (CWPIDMAP)
+    cwmars.pidmap = calloc(CWCORESIZE / CHAR_BIT, sizeof(char));
+#endif
     cwmars.optab = calloc(CWCORESIZE, sizeof(struct cwinstr));
     if (!cwmars.optab) {
         fprintf(stderr, "failed to allocate core\n");
@@ -697,6 +699,8 @@ main(int argc, char *argv[])
 #else
     cwmars.curpid = rand() & 0x01;
 #endif
+    cwmars.prog1name = argv[1];
+    cwmars.prog2name = argv[2];
 #if (ZEUS)
     zeusdrawsim(&cwmars.zeusx11);
     while (1) {

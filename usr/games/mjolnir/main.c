@@ -7,6 +7,8 @@
 #include <mjolnir/conf.h>
 #include <dungeon/dng.h>
 #include <mjolnir/mjol.h>
+#include <corewar/cw.h>
+#include <corewar/zeus.h>
 
 extern void             mjolquitsig(int sig);
 extern struct mjolchr * mjolmkplayer(void);

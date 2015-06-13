@@ -354,7 +354,14 @@ rcxlate(FILE *fp, long pid, long base, long *baseret, long *limret)
                     if (ret < 0 && op->op != CWOPDAT) {
                         /* execution starts at first non-DAT instruction */
                         ret = pc;
+                    } 
+#if (CWPIDMAP)
+                    if (pid) {
+                        setbit(cwmars.pidmap, pc);
+                    } else {
+                        clrbit(cwmars.pidmap, pc);
                     }
+#endif
                     pc++;
                     pc %= CWCORESIZE;
                 } else {

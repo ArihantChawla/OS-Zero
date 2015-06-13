@@ -1,6 +1,8 @@
 #include <stdlib.h>
 #include <stdio.h>
 
+#define DNG_TEXTCELLS 1
+
 #include <X11/X.h>
 #include <X11/Xlib.h>
 #include <X11/keysymdef.h>
@@ -22,6 +24,10 @@ struct cellx11 {
     int                    screen;
     int                    w;
     int                    h;
+    XFontStruct           *font;
+    int                    fontw;
+    int                    fonth;
+    int                    fontasc;
 };
 
 static struct cellx11  cellx11;
@@ -81,6 +87,26 @@ cellinitx11win(struct cellx11 *x11)
     x11->w = 1024;
     x11->h = 768;
     XMapRaised(x11->disp, win);
+
+    return;
+}
+
+void
+cellinitx11font(struct cellx11 *x11)
+{
+    XFontStruct *font;
+
+    font = XLoadQueryFont(x11->disp, "fixed");
+    if (font) {
+        x11->font = font;
+        x11->fontw = font->max_bounds.width;
+        x11->fonth = font->ascent + font->descent;
+        x11->fontasc = font->ascent;
+    } else {
+        fprintf(stderr, "failed to load font\n");
+
+        exit(1);
+    }
 
     return;
 }
@@ -163,7 +189,15 @@ celldrawx11win(XEvent *ev)
     for (y = 0 ; y < lim1 ; y++) {
         for (x = 0 ; x < lim2 ; x++) {
             if (bitset(map, y * w + x)) {
-#if (DNG_PIXELCELLS)
+#if (DNG_TEXTCELLS)
+                XDrawString(cellx11.disp,
+                            cellx11.mainwin,
+                            cellx11.cavegc,
+                            x * 8,
+                            y * 8,
+                            ".",
+                            1);
+#elif (DNG_PIXELCELLS)
                 XDrawPoint(cellx11.disp,
                            cellx11.mainwin,
                            cellx11.cavegc,
@@ -175,10 +209,17 @@ celldrawx11win(XEvent *ev)
                                x * 8, y * 8,
                                7, 7);
 #endif
-                fprintf(stderr, "#");
-#if 0
+//                fprintf(stderr, "#");
             } else if (bitset(cormap, y * w + x)) {
-#if (DNG_PIXELCELLS)
+#if (DNG_TEXTCELLS)
+                XDrawString(cellx11.disp,
+                            cellx11.mainwin,
+                            cellx11.cavegc,
+                            x * 8,
+                            y * 8,
+                            "#",
+                            1);
+#elif (DNG_PIXELCELLS)
                 XDrawPoint(cellx11.disp,
                            cellx11.mainwin,
                            cellx11.corgc,
@@ -189,7 +230,6 @@ celldrawx11win(XEvent *ev)
                                cellx11.corgc,
                                x * 8, y * 8,
                                7, 7);
-#endif
 #endif
             }
         }

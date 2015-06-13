@@ -66,9 +66,12 @@ struct cwmars {
     long             nturn[2];                  // number of turns available
     long             running;                   // flag to indicate if running
     long             curpid;                    // current program ID
+    char            *prog1name;                 // program one path
+    char            *prog2name;                 // program two path
 #if (ZEUSWINX11)
     struct zeusx11   zeusx11;                   // X11 GUI structure
 #endif
+    char            *pidmap;
     struct cwinstr  *optab;                     // operation lookup structure
     char           **opnames;                   // operation mnemonic table
 };

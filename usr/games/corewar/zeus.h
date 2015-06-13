@@ -21,14 +21,14 @@
 #endif /* ZEUSWINX11 */
 #define ZEUSTEXTNCOL        80
 #define ZEUSTEXTNROW        16
-#define ZEUSDBNCOL          80
+#define ZEUSDBNCOL          40
 #define ZEUSDBNROW          16
 #if 0
-#define ZEUSSIMNCOL         200
-#define ZEUSSIMNROW         40
+#define ZEUSSIMNCOL         160
+#define ZEUSSIMNROW         50
 #endif
-#define ZEUSSIMNCOL         40
-#define ZEUSSIMNROW         200
+#define ZEUSSIMNCOL         160
+#define ZEUSSIMNROW         50
 #define ZEUSBUTTONW         64
 #define ZEUSBUTTONH         48
 

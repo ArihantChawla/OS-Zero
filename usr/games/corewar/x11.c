@@ -340,14 +340,20 @@ zeusinitx11win(struct zeusx11 *x11)
 {
     XSetWindowAttributes atr = { 0 };
     Window               win;
-    Window               parent = RootWindow(x11->disp, x11->screen);
+    Window               parent = (x11->parentwin != None
+                                   ? x11->parentwin
+                                   : RootWindow(x11->disp, x11->screen));
+#if 0
     int                  winw = max((ZEUSTEXTNCOL + ZEUSDBNCOL) * x11->fontw,
                                     ZEUSSIMNCOL * 5);
 #if (ZEUSIMLIB2)
-    int                  winh = ZEUSBUTTONH + ZEUSSIMNROW * 5;
+    int                  winh = ZEUSBUTTONH + ZEUSSIMNROW * 5 + ZEUSDBNROW * x11->fontw;
 #endif
-    int                  x = 0;
-    int                  y = 0;
+#endif
+    int                  winw = ZEUSSIMNCOL * 5 + ZEUSBUTTONW;
+    int                  winh = ZEUSSIMNROW * 5 + ZEUSDBNROW * x11->fonth;
+    int                  x = x11->x;
+    int                  y = x11->y;
 
     atr.background_pixel = BlackPixel(x11->disp, x11->screen);
     win = XCreateWindow(x11->disp,
@@ -375,9 +381,10 @@ zeusinitx11win(struct zeusx11 *x11)
 
 #if (ZEUSIMLIB2)
     win = XCreateWindow(x11->disp,
-                        parent,
-                        x11->simw, x11->dbh,
-                        ZEUSNBUTTON * ZEUSBUTTONW, ZEUSBUTTONH,
+                        x11->mainwin,
+//                        x11->simw, x11->dbh,
+                        x11->simw, y,                        
+                        ZEUSBUTTONW, ZEUSNBUTTON * ZEUSBUTTONH,
                         0,
                         x11->depth,
                         InputOutput,
@@ -398,7 +405,7 @@ zeusinitx11win(struct zeusx11 *x11)
     winw = ZEUSSIMNCOL * 5;
     winh = ZEUSSIMNROW * 5;
     win = XCreateWindow(x11->disp,
-                        parent,
+                        x11->mainwin,
                         x, y,
                         winw, winh,
                         0,
@@ -416,14 +423,14 @@ zeusinitx11win(struct zeusx11 *x11)
     y = x11->simh;
 #if (ZEUSIMLIB2)
 //    y += ZEUSBUTTONH;
-    y = 0;
-    x += winw;
+//    x += winw;
+    x = 0;
 #endif
 
     winw = ZEUSDBNCOL * x11->fontw;
     winh = ZEUSDBNROW * x11->fonth;
     win = XCreateWindow(x11->disp,
-                        parent,
+                        x11->mainwin,
                         x, y,
                         winw, winh,
                         0,
@@ -437,9 +444,25 @@ zeusinitx11win(struct zeusx11 *x11)
 
         exit(1);
     }
-    x11->dbwin = win;
+    x11->db1win = win;
     x11->dbw = winw;
     x11->dbh = winh;
+    win = XCreateWindow(x11->disp,
+                        x11->mainwin,
+                        x + winw, y,
+                        winw, winh,
+                        0,
+                        x11->depth,
+                        InputOutput,
+                        x11->visual,
+                        CWBackPixel,
+                        &atr);
+    if (!win) {
+        fprintf(stderr, "failed to create debug window\n");
+
+        exit(1);
+    }
+    x11->db2win = win;
 
     return;
 }
@@ -718,7 +741,8 @@ zeusaddx11button(struct zeusx11 *x11, int id, char *str,
     atr.background_pixel = BlackPixel(x11->disp, x11->screen);
     win = XCreateWindow(x11->disp,
                         parent,
-                        id * ZEUSBUTTONW, 0,
+//                        id * ZEUSBUTTONW, 0,
+                        0, id * ZEUSBUTTONH,                        
                         ZEUSBUTTONW, ZEUSBUTTONH,
                         0,
                         x11->depth,
@@ -759,10 +783,17 @@ zeusinitx11buttons(struct zeusx11 *x11)
 void
 zeusinitx11buf(struct zeusx11 *x11)
 {
+#if 0
     Pixmap pmap = XCreatePixmap(x11->disp,
                                 x11->simwin,
                                 x11->simw,
                                 x11->simh,
+                                x11->depth);
+#endif
+    Pixmap pmap = XCreatePixmap(x11->disp,
+                                x11->mainwin,
+                                x11->w,
+                                x11->h,
                                 x11->depth);
 
     if (!pmap) {
@@ -773,7 +804,7 @@ zeusinitx11buf(struct zeusx11 *x11)
     XFillRectangle(x11->disp, pmap,
                    x11->bggc,
                    0, 0,
-                   x11->simw, x11->simh);
+                   x11->w, x11->h);
     x11->pixbuf = pmap;
 
     return;
@@ -817,15 +848,14 @@ zeusinitx11(struct zeusx11 *info)
                  | ExposureMask);
 //        XMapRaised(disp, info->tipwin);
     XMapRaised(disp, info->simwin);
-    XMapRaised(disp, info->dbwin);
+    XMapRaised(disp, info->db1win);
+    XMapRaised(disp, info->db2win);
     zeusaddx11button(info, 0, "RUN", zeusrun);
     zeusaddx11button(info, 1, "STOP", zeusstop);
     zeusaddx11button(info, 2, "STEP", zeusstep);
-#if 0
-    zeusaddx11button(info, 3, "FENCE", zeusfence);
-    zeusaddx11button(info, 4, "CLEAR", zeusclear);
-    zeusaddx11button(info, 4, "EXIT", zeusexit);
-#endif
+    zeusaddx11button(info, 3, "LOAD", zeusstep);
+    zeusaddx11button(info, 4, "EDIT", zeusstep);
+    zeusaddx11button(info, 5, "SAVE", zeusstep);
     zeussel.last = -1;
 #endif
 
@@ -833,34 +863,39 @@ zeusinitx11(struct zeusx11 *info)
 }
 
 int
-zeusprintop(struct zeusx11 *x11, long pc, Window win, int x, int y)
+zeusprintop(struct zeusx11 *x11, long pc, int x, int y)
 {
     struct cwinstr *op = &cwmars.optab[pc];
+    long            pid = bitset(cwmars.pidmap, pc);
+    Window          win = (pid) ? x11->db2win : x11->db1win;
     char           *str;
     int             len;
 
     str = zeusdisasm(pc, &len);
     if (str) {
+        if (pid) {
+            
+        }
         if (op->op == CWOPDAT) {
             if (!*((uint64_t *)op)) {
-                XDrawString(x11->disp, x11->dbwin, x11->datgc,
+                XDrawString(x11->disp, win, x11->datgc,
                             x, y,
                             str, len);
             } else if (op->pid) {
-                XDrawString(x11->disp, x11->dbwin, x11->prog2datgc,
+                XDrawString(x11->disp, win, x11->prog2datgc,
                             x, y,
                             str, len);
             } else {
-                XDrawString(x11->disp, x11->dbwin, x11->prog1datgc,
+                XDrawString(x11->disp, win, x11->prog1datgc,
                             x, y,
                             str, len);
             }
         } else if (op->pid) {
-            XDrawString(x11->disp, x11->dbwin, x11->prog2gc,
+            XDrawString(x11->disp, win, x11->prog2gc,
                         x, y,
                         str, len);        
         } else {
-            XDrawString(x11->disp, x11->dbwin, x11->prog1gc,
+            XDrawString(x11->disp, win, x11->prog1gc,
                         x, y,
                         str, len);        
         }
@@ -876,6 +911,8 @@ zeusprintdb(struct zeusx11 *x11, int simx, int simy)
     struct cwinstr *op;
     char           *str = " <";
     int             slen = strlen(str);
+    long            pid;
+    Window          win;
     long            pc;
     int             len;
     int             i;
@@ -884,39 +921,45 @@ zeusprintdb(struct zeusx11 *x11, int simx, int simy)
     simy /= 5;
 //    pc = simy * (x11->w / 5) + simx;
     pc = simy * (x11->simw / 5) + simx;
-    XFillRectangle(x11->disp, x11->dbwin,
+    pid = bitset(cwmars.pidmap, pc);
+    if (pid) {
+        win = x11->db2win;
+    } else {
+        win = x11->db1win;
+    }
+    XFillRectangle(x11->disp, win,
                    x11->bggc,
                    0, 0,
                    x11->dbw, x11->dbh);
-    len = zeusprintop(x11, pc, x11->dbwin, 0, x11->fontasc);
+    len = zeusprintop(x11, pc, 0, x11->fontasc);
     op = &cwmars.optab[pc];
     if (op->op == CWOPDAT) {
         if (!*((uint64_t *)op)) {
-            XDrawString(x11->disp, x11->dbwin, x11->datgc,
+            XDrawString(x11->disp, win, x11->datgc,
                         len * x11->fontw, x11->fontasc,
                         str, slen);
         } else if (op->pid) {
-            XDrawString(x11->disp, x11->dbwin, x11->prog2datgc,
+            XDrawString(x11->disp, win, x11->prog2datgc,
                         len * x11->fontw, x11->fontasc,
                         str, slen);
         } else {
-            XDrawString(x11->disp, x11->dbwin, x11->prog1datgc,
+            XDrawString(x11->disp, win, x11->prog1datgc,
                         len * x11->fontw, x11->fontasc,
                         str, slen);
         }
     } else if (op->pid) {
-        XDrawString(x11->disp, x11->dbwin, x11->prog2gc,
+        XDrawString(x11->disp, win, x11->prog2gc,
                     len * x11->fontw, x11->fontasc,
                     str, slen);        
     } else {
-        XDrawString(x11->disp, x11->dbwin, x11->prog1gc,
+        XDrawString(x11->disp, win, x11->prog1gc,
                     len * x11->fontw, x11->fontasc,
                     str, slen);        
     }
     pc++;
     pc %= CWCORESIZE;
     for (i = 0 ; i < 15 ; i++) {
-        zeusprintop(x11, pc, x11->dbwin, 0, (i + 2) * x11->fontasc);
+        zeusprintop(x11, pc, 0, (i + 2) * x11->fontasc);
         pc++;
         pc %= CWCORESIZE;
     }
@@ -962,11 +1005,11 @@ zeusprocev(struct zeusx11 *x11)
         switch (ev.type) {
 #if (ZEUSHOVERTOOLTIP)
             case MotionNotify:
-                zeusprintdb(x11, ev.xmotion.x, ev.xmotion.y);
+                zeusprintdb(x11, x11->ev.xmotion.x, ev.xmotion.y);
 
                 break;
             case EnterNotify:
-                zeusprintdb(x11, ev.xcrossing.x, ev.xcrossing.y);
+                zeusprintdb(x11, xev.xcrossing.x, ev.xcrossing.y);
 
                 break;
             case LeaveNotify:
@@ -1018,7 +1061,7 @@ zeusprocev(struct zeusx11 *x11)
                 break;
         }
 #endif
-    } else if (win == x11->dbwin) {
+    } else if (win == x11->db1win || win == x11->db2win) {
         ;
 #if (ZEUSIMLIB2)
     } else if (id < ZEUSNBUTTON) {
