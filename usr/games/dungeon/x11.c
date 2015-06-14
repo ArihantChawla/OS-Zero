@@ -179,6 +179,7 @@ celldrawx11win(XEvent *ev)
     long              y1;
 
     map = testdng->map;
+    cormap = testdng->cormap;
 #if (DNG_PIXELCELLS)
     lim1 = 768;
     lim2 = 1024;
