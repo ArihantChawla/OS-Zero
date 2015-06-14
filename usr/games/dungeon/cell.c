@@ -141,7 +141,7 @@ cellsetgenparm(struct celldng *dng, struct cellgenparm *parm)
     /* set corridor parameters */
 //    parm->corparm.brkout = 100000;
 //    parm->corparm.brkout = 100000;
-    parm->corparm.brkout = 1000000;    
+    parm->corparm.brkout = 100000;    
     parm->corparm.spacing = 5;
     parm->corparm.minlen = 2;
 #if 0
@@ -634,7 +634,7 @@ dngconncaves(struct celldng *dng)
                         ncave--;
                         dng->ncave = ncave;
                     }
-                    
+
                     break;
                 }
             }
