@@ -68,10 +68,11 @@ struct cellcor {
     struct cellcoord *celltab;   // table of points (X,Y-coordinate pairs)
 };
 
-#define DNG_CAVE_CONNECTED 0x00000001
 struct cellcave {
     long              id;
     long              flg;
+    long              connid;
+    long              nconn;
     long              ncell;
     long              ncellmax;
     struct cellcoord *celltab;

@@ -119,7 +119,6 @@ cellsetdefparm(struct cellgenparm *parm)
 #endif
     parm->caveparm.nlimnbor = 4;
     parm->caveparm.nrmnbor = 3;
-//    parm->caveparm.nfillnbor = 2;
     parm->caveparm.nfillnbor = 2;
     genparm = parm;
 }
@@ -141,13 +140,13 @@ cellsetgenparm(struct celldng *dng, struct cellgenparm *parm)
     /* set corridor parameters */
 //    parm->corparm.brkout = 100000;
 //    parm->corparm.brkout = 100000;
-    parm->corparm.brkout = 100000;    
+    parm->corparm.brkout = 1000000;    
     parm->corparm.spacing = 5;
     parm->corparm.minlen = 2;
 #if 0
     parm->corparm.maxlen = 5;
 #endif
-    parm->corparm.maxlen = 8;
+    parm->corparm.maxlen = 12;
     parm->corparm.maxturn = 8;
     parm->flg |= CELL_GENPARM_INIT;
 
@@ -591,8 +590,17 @@ dngconncaves(struct celldng *dng)
     do {
         if (!ncor
             || dngprobpct() > 50) {
+            for (ndx = 0 ; ndx < nconn ; ndx++) {
+                cave = conntab[ndx];
+                if (cave->nconn < 3) {
+
+                    break;
+                }
+            }
+#if 0
             ndx = dngrand() % nconn;
             cave = conntab[ndx];
+#endif
             id = cave->id;
             dngfindedge(dng, id, &corx, &cory, &dir);
         } else {
@@ -610,7 +618,7 @@ dngconncaves(struct celldng *dng)
                 y1 = cor->celltab[ncell - 1].yval;
                 if (dngiscell(x1, y1, w, h)) {
                     id = dnggetcaveid(dng, x1, y1);
-                    if (id != DNG_NOCAVE && id != ndx) {
+                    if (id != ndx) {
                         coord1 = cor->celltab;
 //                        ncell--;
                         for (num = 0 ; num < ncell ; num++) {
@@ -637,7 +645,7 @@ dngconncaves(struct celldng *dng)
                         }
                         conntab[nconn] = cave;
                         nconn++;
-                        cave->flg |= DNG_CAVE_CONNECTED;
+//                        cave->flg |= DNG_CAVE_CONNECTED;
                         dngrmcave(dng, ndx, 0);
 //                        free(dng->cavetab);
 //                        dng->ncave = nconn;
@@ -646,9 +654,9 @@ dngconncaves(struct celldng *dng)
 //                        dng->ncor = ncor;
                         ncave--;
                         dng->ncave = ncave;
-                        
-                        break;
                     }
+                    
+                    break;
                 }
             }
         }
@@ -694,6 +702,7 @@ dngturncornorev(long dir1, long dir2)
     return ret;
 }
 #endif
+
 static long
 dngturncor(long dir)
 {
