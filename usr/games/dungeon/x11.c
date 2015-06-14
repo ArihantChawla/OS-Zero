@@ -164,19 +164,13 @@ cellinitx11gc(struct cellx11 *x11)
 void
 celldrawx11win(XEvent *ev)
 {
-    struct cellcor   *cor;
-    struct cellcoord *coord;
     void             *map;
     void             *cormap;
-    long              n;
-    long              id;
     long              lim1;
     long              lim2;
     long              x;
     long              y;
     long              w = testdng->width;
-    long              x1;
-    long              y1;
 
     map = testdng->map;
     cormap = testdng->cormap;

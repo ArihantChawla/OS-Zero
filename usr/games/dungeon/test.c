@@ -41,11 +41,13 @@ cellplotdng(struct celldng *dng)
 int
 main(int argc, char *argv[])
 {
+#if 0
     FILE *fp;
     long  base;
     long  lim;
     long  pc1;
     long  pc2;
+#endif
 
     cellinitparm(&genparm);
 #if (DNG_PIXELCELLS)
