@@ -8,31 +8,9 @@
 #include <zpc/op.h>
 #include <zas/zas.h>
 
-#define TOKENSTRLEN 128
-
-#define todec(c)    zpcdectab[(int)(c)]
-#define tohex(c)    zpchextab[(int)(c)]
-#define tooct(c)    zpcocttab[(int)(c)]
-#define todecflt(c) zpcdecflttab[(int)(c)]
-#define tohexflt(c) zpchexflttab[(int)(c)]
-#define tooctflt(c) zpcoctflttab[(int)(c)]
-#define todecdbl(c) zpcdecdbltab[(int)(c)]
-#define tohexdbl(c) zpchexdbltab[(int)(c)]
-#define tooctdbl(c) zpcoctdbltab[(int)(c)]
-#define tobin(c)    ((c) == '0' ? 0 : 1)
-#define tobinflt(c) ((c) == '0' ? 0.0f : 1.0f)
-#define tobindbl(c) ((c) == '0' ? 0.0 : 1.0)
-#define isbdigit(c) ((c) == '0' || (c) == '1')
-#define isodigit(c) ((c) >= '0' && (c) <= '7')
-
 //extern struct zasopinfo zpcopinfotab[ZPCNASMOP + 1];
 extern long             zpcradix;
 
-#define OPERRTOL  0x80000000
-#define zpccopprec(tp)                                                 \
-    (zpcopprectab[(tp)->type] & ~OPERRTOL)
-#define zpccopisrtol(tp)                                               \
-    (zpcopprectab[(tp)->type] & OPERRTOL)
 static uint8_t   zpcdectab[256];
 static uint8_t   zpchextab[256];
 static uint8_t   zpcocttab[256];
@@ -43,9 +21,9 @@ static double    zpcdecdbltab[256];
 static double    zpchexdbltab[256];
 static double    zpcoctdbltab[256];
 uint8_t          zpcoperchartab[256];
-static long      zpcopprectab[ZPCNOPER];
-static long      zpcopnargtab[ZPCNOPER];
-static zpcop_t  *zpcevaltab[ZPCNOPER];
+long             zpcopprectab[ZPCNOPER];
+long             zpcopnargtab[ZPCNOPER];
+zpcop_t          *zpcevaltab[ZPCNOPER];
 struct zpctoken *zpcoperstk;
 struct zpctoken *zpcoperstktop;
 struct zpctoken *zpctokenqueue;
@@ -1066,8 +1044,6 @@ zpctokenize(const char *str)
     return queue;
 };
 
-#if 0
-
 /*
  * Dijkstra's shunting yard algorithm
  * - turns infix-format expressions into RPN queues
@@ -1279,4 +1255,3 @@ zpceval(struct zpctoken *srcqueue)
     return queue;
 }
 
-#endif /* 0 */

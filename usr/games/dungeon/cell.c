@@ -597,46 +597,44 @@ dngconncaves(struct celldng *dng)
                 y1 = cor->celltab[ncell - 1].yval;
                 if (dngiscell(x1, y1, w, h)) {
                     id = dnggetcaveid(dng, x1, y1);
-                    if (id != DNG_NOCAVE && id != ndx) {
-                        coord1 = cor->celltab;
+                    coord1 = cor->celltab;
 //                        ncell--;
-                        for (num = 0 ; num < ncell ; num++) {
-                            x1 = coord1->xval;
-                            y1 = coord1->yval;
+                    for (num = 0 ; num < ncell ; num++) {
+                        x1 = coord1->xval;
+                        y1 = coord1->yval;
 //                           dngsetcellbit(dng, x1, y1);
-                            dngsetcorbit(dng, x1, y1);
-                            coord1++;
-                        }
+                        dngsetcorbit(dng, x1, y1);
+                        coord1++;
+                    }
 #if 0
-                        ncell--;
-                        cor->ncell = ncell;
+                    ncell--;
+                    cor->ncell = ncell;
 #endif
-                        if (nconn == nconnmax) {
-                            nconnmax <<= 1;
-                            conntab = realloc(conntab,
-                                              nconnmax * sizeof(struct cellcave *));
-                            if (!conntab) {
-                                fprintf(stderr,
-                                        "CELL: failed to allocate connection table\n");
-                                
-                                exit(1);
-                            }
+                    if (nconn == nconnmax) {
+                        nconnmax <<= 1;
+                        conntab = realloc(conntab,
+                                          nconnmax * sizeof(struct cellcave *));
+                        if (!conntab) {
+                            fprintf(stderr,
+                                    "CELL: failed to allocate connection table\n");
+                            
+                            exit(1);
                         }
-                        conntab[nconn] = cave;
-                        nconn++;
+                    }
+                    conntab[nconn] = cave;
+                    nconn++;
 //                        cave->flg |= DNG_CAVE_CONNECTED;
-                        dngrmcave(dng, ndx, 0);
+                    dngrmcave(dng, ndx, 0);
 //                        free(dng->cavetab);
 //                        dng->ncave = nconn;
 //                        dng->ncavemax = nconnmax;
 //                        dng->cavetab = conntab;
 //                        dng->ncor = ncor;
-                        ncave--;
-                        dng->ncave = ncave;
-                    }
-
-                    break;
+                    ncave--;
+                    dng->ncave = ncave;
                 }
+                
+                break;
             }
         }
         brkcnt++;
@@ -786,10 +784,15 @@ static long
 dngfindcoredge(struct celldng *dng,
                long *retx, long *rety, long *retdir)
 {
+    struct cellcor    *cor;
     long               ncor = dng->ncor;
     struct cellcoord  *ofs;
+#if 0
     long               x = *retx;
     long               y = *rety;
+#endif
+    long               x;
+    long               y;
     long               dir = *retdir;
     long               w = dng->width;
     long               h = dng->height;
@@ -797,6 +800,7 @@ dngfindcoredge(struct celldng *dng,
     long               x1;
     long               y1;
     long               ndx;
+    long               val;
     long               ndir = 0;
     long               dirstk[DNG_NDIR];
 
@@ -804,6 +808,10 @@ dngfindcoredge(struct celldng *dng,
         if (ncor) {
             ndx = dngrand() % ncor;
         }
+        cor = dng->cortab[ndx];
+        val = dngrand() % cor->ncell;
+        x = cor->celltab[val].xval;
+        y = cor->celltab[val].yval;
         for (ndx = 0 ; ndx < DNG_NDIR ; ndx++) {
             ofs = &dngdirofstab[ndx];
             x1 = x + ofs->xval;

@@ -102,6 +102,29 @@
 #define ZPCBUTTONUTIL  0x04
 #define ZPCBUTTONDEBUG 0x05
 
+#define TOKENSTRLEN 128
+
+#define todec(c)    zpcdectab[(int)(c)]
+#define tohex(c)    zpchextab[(int)(c)]
+#define tooct(c)    zpcocttab[(int)(c)]
+#define todecflt(c) zpcdecflttab[(int)(c)]
+#define tohexflt(c) zpchexflttab[(int)(c)]
+#define tooctflt(c) zpcoctflttab[(int)(c)]
+#define todecdbl(c) zpcdecdbltab[(int)(c)]
+#define tohexdbl(c) zpchexdbltab[(int)(c)]
+#define tooctdbl(c) zpcoctdbltab[(int)(c)]
+#define tobin(c)    ((c) == '0' ? 0 : 1)
+#define tobinflt(c) ((c) == '0' ? 0.0f : 1.0f)
+#define tobindbl(c) ((c) == '0' ? 0.0 : 1.0)
+#define isbdigit(c) ((c) == '0' || (c) == '1')
+#define isodigit(c) ((c) >= '0' && (c) <= '7')
+
+#define OPERRTOL  0x80000000
+#define zpccopprec(tp)                                                 \
+    (zpcopprectab[(tp)->type] & ~OPERRTOL)
+#define zpccopisrtol(tp)                                               \
+    (zpcopprectab[(tp)->type] & OPERRTOL)
+
 //typedef void zpcophandler_t(struct zpcopcode *);
 //typedef void zpchookfunc_t(struct zpcopcode *);
 typedef void zpcaction_t(void);
@@ -326,6 +349,13 @@ struct zpctoken * zpceval(struct zpctoken *srcqueue);
         }                                                               \
         (tok)->len = strlen((tok)->str);                                \
     } while (0)
+
+#include <zpc/op.h>
+
+extern long     zpcradix;
+extern long     zpcopprectab[ZPCNOPER];
+extern long     zpcopnargtab[ZPCNOPER];
+extern zpcop_t *zpcevaltab[ZPCNOPER];
 
 #endif /* __ZPC_ZPC_H__ */
 

@@ -308,9 +308,11 @@ zvmmain(int argc, char *argv[])
     exit(0);
 }
 
+#if 0
 int
 main(int argc, char *argv[])
 {
     exit(zvmmain(argc, argv));
 }
+#endif
 
