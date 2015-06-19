@@ -952,6 +952,11 @@ dngtrycor(struct celldng *dng,
                         
                         return NULL;
                     }
+                } else if (id == caveid) {
+                    free(cor);
+                    free(celltab);
+                    
+                    return NULL;
                 } else if (!dngiscell(corx, cory, w, h)
                            || !dngchkcorcell(dng, corx, corx, dir)) {
                     free(cor);

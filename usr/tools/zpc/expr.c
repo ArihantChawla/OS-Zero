@@ -23,7 +23,7 @@ static double    zpcoctdbltab[256];
 uint8_t          zpcoperchartab[256];
 long             zpcopprectab[ZPCNOPER];
 long             zpcopnargtab[ZPCNOPER];
-zpcop_t          *zpcevaltab[ZPCNOPER];
+zpcop_t         *zpcevaltab[ZPCNOPER];
 struct zpctoken *zpcoperstk;
 struct zpctoken *zpcoperstktop;
 struct zpctoken *zpctokenqueue;
@@ -263,6 +263,7 @@ zpcqueuetoken(struct zpctoken *token,
     return;
 }
 
+#if 0
 static __inline__ void
 zpcpushtoken(struct zpctoken *token, struct zpctoken **stack)
 {
@@ -289,6 +290,7 @@ zpcpoptoken(struct zpctoken **stack)
 
     return token;
 }
+#endif
 
 #if 0
 void
@@ -1044,6 +1046,7 @@ zpctokenize(const char *str)
     return queue;
 };
 
+#if 0
 /*
  * Dijkstra's shunting yard algorithm
  * - turns infix-format expressions into RPN queues
@@ -1254,4 +1257,5 @@ zpceval(struct zpctoken *srcqueue)
 
     return queue;
 }
+#endif /* 0 */
 

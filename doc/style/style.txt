@@ -199,6 +199,7 @@ prot	- protection
 ptr     - pointer
 pty	- pseudo teletype
 rand	- random
+rdx	- radix (base)
 rect    - rectangle
 reg	- register
 rem	- remainder

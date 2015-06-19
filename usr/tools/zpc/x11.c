@@ -763,8 +763,8 @@ zpcevaltop(void)
     struct zpcstkitem *item = zpcinputitem;
 
     if (item->scur == item->str) {
-        zpcregstk[0] = zpcparse(zpcregstk[0]);
-        zpcregstk[0] = zpceval(zpcregstk[0]);
+        zpcregstk[0] = shuntparse(zpcregstk[0]);
+        zpcregstk[0] = shunteval(zpcregstk[0]);
         x11drawdisp();
     }
 

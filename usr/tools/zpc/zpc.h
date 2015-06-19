@@ -9,6 +9,125 @@
 #include <zero/cdecl.h>
 //#include <zpc/asm.h>
 
+struct zpcv64v8 {
+    uint8_t vec[8];
+} PACK();
+
+struct zpcv64v16 {
+    uint16_t vec[4];
+} PACK();
+
+struct zpcv64v32 {
+    uint32_t vec[2];
+} PACK();
+
+union zpcv64 {
+    struct zpcv64v8  v8;
+    struct zpcv64v16 v16;
+    struct zpcv64v32 v32;
+} vec;
+
+union zpcui64 {
+    int64_t  i64;
+    uint64_t u64;
+};
+
+struct zpcvector {
+    long              type;
+    long              ndim;
+    struct zpctoken **toktab;
+};
+
+struct zpccomplex {
+    long              type;
+    long              rsign;
+    long              isign;
+    union {
+        union zpcui64 ui64;
+        float         f32;
+        double        f64;
+    } real;
+    union {
+        union zpcui64 ui64;
+        float         f32;
+        double        f64;
+    } img;
+};
+
+#define zpcisoperchar(c)                                                \
+    (zpcoperchartab[(int)(c)])
+#define zpcwordsize(tp)                                                 \
+    ((tp)->param & PARAMSIZEMASK)
+struct zpctoken {
+    long                   type;
+    char                  *str;
+    long                   slen;
+    long                   len;
+    long                   param;
+    long                   radix;
+    long                   sign;
+    long                   flags;
+    union {
+        union zpcv64       v64;
+        union zpcui64      ui64;
+        float              f32;
+        double             f64;
+        struct zpcvector   vector;
+        struct zpccomplex  complex;
+//        struct zpcv128     v128;
+    } data;
+    struct zpctoken       *prev;
+    struct zpctoken       *next;
+};
+
+#define shuntradix       zpcradix
+#define SHUNT_TOKEN      struct zpctoken
+#define SHUNT_INT64      ZPCINT64
+#define SHUNT_UINT64     ZPCUINT64
+#define SHUNT_RESULT     int64_t
+#define SHUNT_OP         zpcop_t
+#define SHUNT_NARGTAB    zpcopnargtab
+#define SHUNT_EVALTAB    zpcevaltab
+#define SHUNT_LEFTPAREN  ZPCLEFTPAREN
+#define SHUNT_RIGHTPAREN ZPCRIGHTPAREN
+#define shuntprintstr(tok, val, rdx)                                    \
+    zpcprintstr64(tok, val, rdx)
+#define shuntisrtol(tok) zpccopisrtol(tok)
+#define shuntprec(tok)   zpccopprec(tok)
+#define shuntisvalue(tok)                                                \
+    ((tok) && (tok)->type >= ZPCINT64 && (tok)->type <= ZPCCOMPLEX)
+#define shuntisfunc(tok)                                                 \
+    ((tok) && (tok)->type == ZPCFUNC)
+#define shuntissep(tok)                                                  \
+    ((tok) && (tok)->type == ZPCSEP)
+#define shuntisoper(tok)                                                 \
+    ((tok) && ((tok)->type >= ZPCNOT && (tok)->type <= ZPCASSIGN))
+#define shuntqueue(tok, queue, tail)                                    \
+    zpcqueuetoken(tok, queue, tail)
+#define shuntpush(tok, stk)                                             \
+    do {                                                                \
+        if (tok) {                                                      \
+            (tok)->prev = NULL;                                         \
+            (tok)->next = *(stk);                                       \
+            *(stk) = (tok);                                             \
+        }                                                               \
+    } while (0)
+static __inline__ SHUNT_TOKEN *
+shuntpop(SHUNT_TOKEN **stack)
+{
+    SHUNT_TOKEN *_token;
+
+    if (stack) {
+        _token = *stack;
+        if (_token) {
+            *stack = _token->next;
+        }
+    }
+
+    return _token;
+}
+#include <zero/shunt.h>
+
 #define ZPCTEXTBASE 8192
 
 #define SMALLBUTTONS 1
@@ -120,10 +239,10 @@
 #define isodigit(c) ((c) >= '0' && (c) <= '7')
 
 #define OPERRTOL  0x80000000
-#define zpccopprec(tp)                                                 \
-    (zpcopprectab[(tp)->type] & ~OPERRTOL)
-#define zpccopisrtol(tp)                                               \
-    (zpcopprectab[(tp)->type] & OPERRTOL)
+#define zpccopprec(tok)                                                 \
+    (zpcopprectab[(tok)->type] & ~OPERRTOL)
+#define zpccopisrtol(tok)                                               \
+    (zpcopprectab[(tok)->type] & OPERRTOL)
 
 //typedef void zpcophandler_t(struct zpcopcode *);
 //typedef void zpchookfunc_t(struct zpcopcode *);
@@ -136,51 +255,6 @@ typedef union {
     double  dval;
 } zpcword_t;
 
-struct zpcv64v8 {
-    uint8_t vec[8];
-} PACK();
-
-struct zpcv64v16 {
-    uint16_t vec[4];
-} PACK();
-
-struct zpcv64v32 {
-    uint32_t vec[2];
-} PACK();
-
-union zpcv64 {
-    struct zpcv64v8  v8;
-    struct zpcv64v16 v16;
-    struct zpcv64v32 v32;
-} vec;
-
-union zpcui64 {
-    int64_t  i64;
-    uint64_t u64;
-};
-
-struct zpcvector {
-    long              type;
-    long              ndim;
-    struct zpctoken **toktab;
-};
-
-struct zpccomplex {
-    long              type;
-    long              rsign;
-    long              isign;
-    union {
-        union zpcui64 ui64;
-        float         f32;
-        double        f64;
-    } real;
-    union {
-        union zpcui64 ui64;
-        float         f32;
-        double        f64;
-    } img;
-};
-
 /* sign values */
 #define ZPCUNSIGNED     0x01
 #define ZPCUSERUNSIGNED 0x02
@@ -191,40 +265,16 @@ struct zpccomplex {
 #define ZPCOVERFLOW     0x02
 #define ZPCUNDERFLOW    0x04
 #define ZPCSIGN         0x08
-#define zpcisoper(tp)                                                   \
-    ((tp) && ((tp)->type >= ZPCNOT && (tp)->type <= ZPCASSIGN))
-#define zpcisoperchar(c)                                                \
-    (zpcoperchartab[(int)(c)])
+#if 0
 #define zpcisvalue(tp)                                                  \
     ((tp) && (tp)->type >= ZPCINT64 && (tp)->type <= ZPCCOMPLEX)
 #define zpcisfunc(tp)                                                   \
     ((tp) && (tp)->type == ZPCFUNC)
 #define zpcissep(tp)                                                    \
     ((tp) && (tp)->type == ZPCSEP)
-#define zpcwordsize(tp)                                                 \
-    ((tp)->param & PARAMSIZEMASK)
-struct zpctoken {
-    long                   type;
-    char                  *str;
-    long                   slen;
-    long                   len;
-    long                   param;
-    long                   radix;
-    long                   sign;
-    long                   flags;
-    union {
-        union zpcv64       v64;
-        union zpcui64      ui64;
-        float              f32;
-        double             f64;
-        struct zpcvector   vector;
-        struct zpccomplex  complex;
-//        struct zpcv128     v128;
-    } data;
-    struct zpctoken       *prev;
-    struct zpctoken       *next;
-};
-
+#define zpcisoper(tp)                                                   \
+    ((tp) && ((tp)->type >= ZPCNOT && (tp)->type <= ZPCASSIGN))
+#endif
 /* item data types */
 #define ZPCUINT  0x01
 #define ZPCINT   0x02
