@@ -37,6 +37,8 @@ objects/identifiers
   - e.g. ptrtab, symhash
   - structure and union members may have shorter names
     - e.g. stk (stack), tab (table/array)
+- it is good to put all per-module globals into a single global structure, e.g.
+  struct g_malloc g_malloc
 
 type sizes
 ----------
