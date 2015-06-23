@@ -1,0 +1,4 @@
+- implement ELF-linker/loader
+  - hack process memory map and GNU linker script(s) for zero
+    - text, rodata, data, bss, stack, map
+
