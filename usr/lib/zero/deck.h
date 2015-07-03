@@ -40,9 +40,9 @@ struct deckfb {
 /* structure for functionality similar to X and such desktop/screen servers */
 struct deck {
     /* screen ID (similar to Display */
-    uintptr_t  scrid;   // screen structure kernel address
-    long       gfxtype; // graphics interface such as DECK_GFX_LFB
-    void      *gfx;     // graphics interface
+    uint32_t  scrid;    // screen structure kernel address
+    long      gfxtype;  // graphics interface such as DECK_GFX_LFB
+    void     *gfx;      // graphics interface
 };
 
 struct deckanyev {

@@ -24,33 +24,27 @@
  */
 /* flag-bits in scan member */
 #define EVKBDRELEASE      UINT64_C(0x8000000000000000)
-#if 0
-#define EVKBDSTATE        UINT64_C(0x4000000000000000)
-#endif
 /* state-bits for modifier keys */
-#if 0
-#define EVKBDSHIFT        0x80000000
-#define EVKBDCAPSLK       0x40000000
-#define EVKBDCTRL         0x20000000
-#define EVKBDMETA         0x10000000
-#define EVKBDCOMPOSE      0x08000000
-#define EVKBDALT          0x04000000
-#define EVKBDALTGR        0x02000000
-#define EVKBDSCRLOCK      0x01000000
-#define EVNUMLOCK         0x00800000
+#define EVKBDSHIFT        UINT64_C(0x4000000000000000)
+#define EVKBDCAPSLK       UINT64_C(0x2000000000000000)
+#define EVKBDCTRL         UINT64_C(0x1000000000000000)
+#define EVKBDMETA         UINT64_C(0x0800000000000000)
+#define EVKBDCOMPOSE      UINT64_C(0x0400000000000000)
+#define EVKBDALT          UINT64_C(0x0200000000000000)
+#define EVKBDALTGR        UINT64_C(0x0100000000000000)
+#define EVKBDSCRLOCK      UINT64_C(0x0080000000000000)
+#define EVNUMLOCK         UINT64_C(0x0040000000000000)
 #define EVKBDNMODBIT      32
 #define EVNBUTTON         (64 - EVKBNMODBIT)
-#define kbdevhasstate(ev) ((ev)->scan & EVKBDSTATE)
-#endif
-#define kbdupevent(ev)    ((ev)->scan & EVKBDRELEASE)
+#define kbdevhasstate(ev) ((ev)->code & EVKBDSTATE)
+#define kbdupevent(ev)    ((ev)->code & EVKBDRELEASE)
 #define kbdbutton(ev, b)  ((ev)->state & (1L << (b)))
 #define kbdmod(ev, mod)   ((ev)->state & (mod))
 /* keyboard event size in octets */
 #define kbdevsize(ev)     (((ev)->sym & EVKBDSTATE) ? 12 : 8)
 struct evkbd {
     uint64_t code;      // keyboard scan-code or something similar
-    uint32_t mask;      // modifier flags in high bits, buttons in low
-//    uint64_t state;
+    uint64_t mask;      // modifier flags in high bits, buttons in low
 } PACK();
 
 /* pointer such as mouse device events */
@@ -75,7 +69,6 @@ struct evpnt {
 struct evmsg {
     uint32_t nbyte;                     // number of octets
     uint32_t mq;                        // message queue ID
-    uint32_t prio;                      // queue priority
     uint8_t  data[EMPTY];               // message data
 } PACK();
 
@@ -91,7 +84,7 @@ struct evcmd {
     uint32_t cmd;                       // RPC command
     uint32_t src;                       // source object
     uint32_t dest;                      // destination object
-    uint8_t  flg;                       // ASYNC, ...
+    uint32_t flg;                       // ASYNC, ...
 } PACK();
 
 /*
@@ -103,6 +96,7 @@ struct evcmd {
 #define EVDATA_BIGENDIAN  0x00000001U   // big-endian vs. little-endian words
 #define EVDATA_MESSAGE    0x00000002U   // otherwise error
 /* fmt-field formats */
+#define EVDATA_BINARY     0x00000000U
 #define EVDATA_ASCII      0x00000001U
 #define EVDATA_ISO8859_1  0x00000002U
 #define EVDATA_ISO8859_2  0x00000003U
@@ -124,10 +118,6 @@ struct evcmd {
 #define EVDATA_UTF_16     0x00000013U
 #define EVDATA_UCS_16     0x00000014U
 #define EVDATA_UCS_32     0x00000015U
-#define EVDATA_BINARY_8   0x00000016U
-#define EVDATA_BINARY_16  0x00000017U
-#define EVDATA_BINARY_32  0x00000018U
-#define EVDATA_BINARY_64  0x00000019U
 struct evdata {
     uint32_t flg;                       // data/flags such as BIGENDIAN
     uint32_t fmt;                       // data format
@@ -140,17 +130,18 @@ struct evdata {
 struct evfs {
     uint64_t node;                      // node (file, directory) ID
     uint32_t dev;                       // device ID
+    uint32_t flg;                       // event flags
 } PACK();
-
-struct evhdr {
-    uint32_t type;                      // event type such as KEYUP
-    uint32_t timestamp;                 // timestamp (server uptime)
-};
 
 #define evgettype(ev)    ((ev)->hdr.type)
 #define evsettype(ev, t) ((ev)->hdr.type = (t))
 #define evgettime(ev)    ((ev)->hdr.timestamp)
 #define evsettime(ev, t) ((ev)->hdr.timestamp = (t))
+struct evhdr {
+    uint64_t timestamp;                 // timestamp
+    uint32_t type;                      // event type such as KEYUP, FSCREAT
+};
+
 /* event structure */
 struct zevent {
     struct evhdr hdr;
@@ -270,3 +261,4 @@ void    evsync(struct deck *deck, long flg);
 
 #endif /* __KERN_EV_H__ */
 
+ 

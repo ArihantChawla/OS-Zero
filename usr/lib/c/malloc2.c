@@ -12,13 +12,14 @@
  * - fix mallinfo() to return proper information
  */
 
-#define MALLOCNARN       8
+#define MALLOCNOPTRTAB   0
+#define MALLOCNARN       4
 #define MALLOCNEWSLABS   1
 #define MALLOCEXPERIMENT 0
 
 #define MALLOCDEBUGHOOKS 0
 #define MALLOCSTEALMAG   0
-#define MALLOCNEWHACKS   1
+#define MALLOCNEWHACKS   0
 
 #define MALLOCNOSBRK     0
 #define MALLOCDIAG       0
@@ -159,9 +160,9 @@
 #if 0
 #if (MALLOCNEWSLABS)
 #define MALLOCSLABLOG2       22
-#define MALLOCTINYSLABLOG2   10
-#define MALLOCSMALLSLABLOG2  13
-#define MALLOCMIDSLABLOG2    15
+#define MALLOCTINYSLABLOG2   8
+#define MALLOCSMALLSLABLOG2  12
+#define MALLOCMIDSLABLOG2    14
 #define MALLOCBIGSLABLOG2    18
 #define MALLOCSMALLMAPLOG2   23
 #define MALLOCMIDMAPLOG2     25
@@ -181,12 +182,12 @@
 #if (MALLOCNEWSLABS)
 #define MALLOCSLABLOG2       20
 #define MALLOCTINYSLABLOG2   8
-#define MALLOCSMALLSLABLOG2  12
-#define MALLOCMIDSLABLOG2    15
-#define MALLOCBIGSLABLOG2    18
-#define MALLOCSMALLMAPLOG2   23
-#define MALLOCMIDMAPLOG2     25
-#define MALLOCBIGMAPLOG2     27
+#define MALLOCSMALLSLABLOG2  10
+#define MALLOCMIDSLABLOG2    13
+#define MALLOCBIGSLABLOG2    17
+#define MALLOCSMALLMAPLOG2   22
+#define MALLOCMIDMAPLOG2     24
+#define MALLOCBIGMAPLOG2     26
 #elif (MALLOCEXPERIMENT)
 #define MALLOCSUPERSLABLOG2  20
 #define MALLOCSLABLOG2       17
@@ -385,10 +386,13 @@
 #define MAGMAP         0x01
 #define MAGGLOB        0x02
 #define MAGFLGMASK     (MAGMAP | MAGGLOB)
-#define MALLOCHDRSIZE  (8 * PAGESIZE)
+#define MALLOCHDRSIZE  (4 * PAGESIZE)
+//#define MALLOCHDRSIZE  PAGESIZE
 /* magazines for larger/fewer allocations embed the tables in the structure */
+#if 0
 #define magembedstk(bktid)                                              \
     (magnbytetab(bktid) <= MALLOCHDRSIZE - offsetof(struct mag, data))
+#endif
 #define magembedtab(bktid)                                              \
     (magnbytetab(bktid) <= MALLOCHDRSIZE - offsetof(struct mag, data))
 /* magazine header structure */
@@ -555,14 +559,16 @@ mallocstat(void)
      + rounduppow2((1UL << magnblklog2(bktid)) / CHAR_BIT, PAGESIZE))
 #else /* !MALLOCFREEMAP */
 #define magnbytetab(bktid)                                              \
-    ((1UL << (magnblklog2(bktid) + 1)) * sizeof(MAGPTRNDX))
+    ((1UL << (magnblklog2(bktid) + 2)) * sizeof(MAGPTRNDX))
 #endif /* MALLOCFREEMAP */
 #elif (MALLOCFREEMAP) /* !MALLOCSTKNDX */
 #define magnbytetab(bktid)                                              \
     ((1UL << (magnblklog2((bktid) + 1))) * sizeof(MAGPTRNDX)            \
      + rounduppow2((1UL << magnblklog2(bktid)) / CHAR_BIT, PAGESIZE))
+#elif (MALLOCNOPTRTAB)
+#define magnbytetab(bktid)   ((1UL << magnblklog2(bktid)) * sizeof(void *))
 #else
-#define magnbytetab(bktid) ((1UL << (magnblklog2(bktid) + 1)) * sizeof(void *))
+#define magnbytetab(bktid)   ((1UL << (magnblklog2(bktid) + 1)) * sizeof(void *))
 #endif
 #if (MALLOCNEWHACKS)
 #define magnbyte(bktid) (1UL << magnbytelog2(bktid))
@@ -1863,7 +1869,7 @@ _malloc(size_t size,
                         ptr = mapanon(g_malloc.zerofd, magnbyte(bktid));
                         if (ptr == MAP_FAILED) {
                             unmapanon(mag, MALLOCHDRSIZE);
-                            if (!magembedstk(bktid)) {
+                            if (!magembedtab(bktid)) {
                                 unmapanon(stk, magnbytetab(bktid));
                             }
 #if (MALLOCSTAT)
@@ -2012,7 +2018,9 @@ _free(void *ptr)
         }
         clrbit(mag->freemap, magptrndx(mag, ptr));
 #endif
+#if (!MALLOCNOPTRTAB)
         ptr = maggetptr(mag, ptr);
+#endif
         if (g_malloc.mallopt.flg & MALLOPT_PERTURB_BIT) {
             int perturb = g_malloc.mallopt.perturb;
 

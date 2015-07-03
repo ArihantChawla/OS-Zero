@@ -13,6 +13,7 @@
 #if defined(__GNUC__)
 #define __func__   __FUNCTION__
 #else
+#warn define __func__ in <zero/cdecl.h>
 #endif
 #endif
 
