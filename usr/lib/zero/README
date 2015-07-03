@@ -1,5 +1,5 @@
 Zero is a multi-purpose utility library for both the Zero kernel as well as
-user-land applications. Support has been worked on several different pseudo-
+user-land applications. Support has been worked on for several different pseudo-
 random number generators, some "generic" data structures such as linked lists
 and hash tables, exposing compiler and system features such as alignment,
 packing of aggregates, page and cacheline sizes, and so forth.
