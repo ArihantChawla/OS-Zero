@@ -2,6 +2,7 @@
 #include <stdio.h>
 #endif
 #include <stdint.h>
+#include <zero/trix.h>
 
 #define RANDMT64NSTATE     312
 #define RANDMT64NSTATEHALF 156
@@ -17,6 +18,15 @@ static uint64_t randmt64state[RANDMT64NSTATE];
  */
 static uint64_t randmt64magic[2] = { UINT64_C(0), RANDMT64MATRIX };
 static long     randmt64curndx = RANDMT64NSTATE + 1;
+#if (RANDMT64TEST)
+static uint64_t randmt64key[4]
+= {
+    UINT64_C(0x12345),
+    UINT64_C(0x23456),
+    UINT64_C(0x34567),
+    UINT64_C(0x45678)
+};
+#endif
 
 void
 srandmt64(uint64_t seed)
@@ -33,6 +43,54 @@ srandmt64(uint64_t seed)
         tmp = val;
     }
     randmt64curndx = ndx;
+
+    return;
+}
+
+void
+srandmt64tab(uint64_t *key, uint64_t keylen)
+{
+    uint64_t l = 1;
+    uint64_t m = 0;
+    uint64_t ndx;
+    uint64_t val;
+    uint64_t tmp;
+
+    srandmt64(UINT64_C(19650218));
+    ndx = max(keylen, RANDMT64NSTATE);
+    tmp = randmt64state[0];
+    for ( ; (ndx) ; ndx--) {
+        val = randmt64state[l];
+        val ^= UINT64_C(3935559000370003845) * (tmp ^ (tmp >> 62));
+        val += key[m] + m;
+        randmt64state[l] = val;
+        m++;
+        l++;
+        if (m >= keylen) {
+            m = 0;
+        }
+        if (l >= RANDMT64NSTATE) {
+            val = randmt64state[RANDMT64NSTATE - 1];
+            randmt64state[0] = val;
+            l = 1;
+        }
+        tmp = val;
+    }
+    tmp = randmt64state[l - 1];
+    for (ndx = RANDMT64NSTATE - 1 ; (ndx) ; ndx--) {
+        val = randmt64state[l];
+        val ^= UINT64_C(2862933555777941757) * (tmp ^ (tmp >> 62));
+        val -= l;
+        randmt64state[l] = val;
+        l++;
+        if (l >= RANDMT64NSTATE) {
+            val = randmt64state[RANDMT64NSTATE - 1];
+            randmt64state[0] = val;
+            l = 1;
+        }
+        tmp = val;
+    }
+    randmt64state[0] = UINT64_C(1) << 63;
 
     return;
 }
@@ -120,6 +178,8 @@ main(void)
     fprintf(stderr, "%lu microseconds\n", profclkdiff(clk));
 #else
 //    srandmt64(UINT64_C(0x5555555555555555));
+    fprintf(stderr, "BAH: %ld\n", (long)sizeof(randmt64key));
+    srandmt64tab(randmt64key, sizeof(randmt64key) / sizeof(uint64_t));
     for (i = 0; i < 65536; i++) {
         printf("%llx\n", (unsigned long long)randmt64());
     }
