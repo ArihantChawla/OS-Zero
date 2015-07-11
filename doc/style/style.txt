@@ -66,7 +66,9 @@ abbreviations
 adr     - address
 alg	- algebraic
 algo	- algorithm
+alloc	- allocate
 alu	- arithmetic-logical unit
+apnd	- append
 apu	- application processor unit
 arg	- argument
 arith	- arithmetic

@@ -30,5 +30,17 @@ struct zedbuf {
 #endif
 };
 
+struct zedrow {
+    size_t  size;
+    void   *data;
+};
+
+struct zedrowbuf {
+    size_t          ncol;
+    size_t          nrow;
+    size_t          nrowmax;
+    struct zedline *rows;
+};
+
 #endif /* __ZED_BUF_H__ */
 

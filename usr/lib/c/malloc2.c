@@ -18,7 +18,7 @@
 #define MALLOCEXPERIMENT 0
 
 #define MALLOCDEBUGHOOKS 0
-#define MALLOCSTEALMAG   1
+#define MALLOCSTEALMAG   0
 #define MALLOCNEWHACKS   0
 
 #define MALLOCNOSBRK     0
@@ -27,8 +27,8 @@
 #define MALLOCSTKNDX     0
 #define MALLOCFREEMAP    0  // use free block bitmaps
 #define MALLOCHACKS      0  // enable experimental features
-#define MALLOCBUFMAP     1  // buffer mapped slabs to global pool
-#define MALLOCVARSIZEBUF 1  // use variable-size slabs; FIXME
+#define MALLOCBUFMAP     0  // buffer mapped slabs to global pool
+#define MALLOCVARSIZEBUF 0  // use variable-size slabs; FIXME
 #define MALLOCHASH       0
 #define MALLOCNHASHBIT   24
 #define MALLOCNHASH      (1UL << MALLOCNHASHBIT)
@@ -180,14 +180,14 @@
 #define MALLOCBIGMAPLOG2     26
 #endif
 #if (MALLOCNEWSLABS)
-#define MALLOCSLABLOG2       20
+#define MALLOCSLABLOG2       18
 #define MALLOCTINYSLABLOG2   8
 #define MALLOCSMALLSLABLOG2  10
-#define MALLOCMIDSLABLOG2    13
-#define MALLOCBIGSLABLOG2    17
-#define MALLOCSMALLMAPLOG2   22
-#define MALLOCMIDMAPLOG2     24
-#define MALLOCBIGMAPLOG2     26
+#define MALLOCMIDSLABLOG2    12
+#define MALLOCBIGSLABLOG2    14
+#define MALLOCSMALLMAPLOG2   20
+#define MALLOCMIDMAPLOG2     22
+#define MALLOCBIGMAPLOG2     24
 #elif (MALLOCEXPERIMENT)
 #define MALLOCSUPERSLABLOG2  20
 #define MALLOCSLABLOG2       17
@@ -386,7 +386,8 @@
 #define MAGMAP         0x01
 #define MAGGLOB        0x02
 #define MAGFLGMASK     (MAGMAP | MAGGLOB)
-#define MALLOCHDRSIZE  (4 * PAGESIZE)
+//#define MALLOCHDRSIZE  (4 * PAGESIZE)
+#define MALLOCHDRSIZE  PAGESIZE
 //#define MALLOCHDRSIZE  PAGESIZE
 /* magazines for larger/fewer allocations embed the tables in the structure */
 #if 0
