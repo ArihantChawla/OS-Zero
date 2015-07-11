@@ -80,6 +80,10 @@ abs32(int a)
 #define _llabs(a)       zeroabs(a)
 #endif
 
+int       abs(int x);
+long      labs(long x);
+long long llabs(long long x);
+
 /* true if x is a power of two */
 #define powerof2(x)     (!((x) & ((x) - 1)))
 /* align a to boundary of (the power of two) b2. */

@@ -37,6 +37,9 @@
 
 /* posix standard header. */
 #include <unistd.h>
+#if !defined(_SC_OPEN_MAX)
+#include <sys/resource.h>
+#endif
 
 /* i/o headers. */
 #include <fcntl.h>
@@ -77,6 +80,26 @@
 #define growheap(ofs) sbrk(ofs)
 
 void * readfile(char *filename, size_t *sizeret);
+
+#if defined(_SC_OPEN_MAX)
+#define get_open_max() sysconf(_SC_OPEN_MAX)
+#elif defined(RLIMIT_NOFILE)
+static inline int
+get_open_max(void)
+{
+    struct rlimit rlimit;
+    int           retval = -1;
+
+    if (!getrlimit(RLIMIT_NOFILE, &rlimit)
+        && rlimit.rlim_cur != RLIM_INFINITY) {
+        retval = rlimit.rlim_cur;
+    }
+
+    return retval;
+}
+#else
+#define get_open_max() getdtablesize()
+#endif
 
 #endif /* __ZERO_UNIX_H__ */
 
