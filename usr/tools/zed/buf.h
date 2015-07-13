@@ -1,6 +1,15 @@
 #ifndef __ZED_BUF_H__
 #define __ZED_BUF_H__
 
+#include <stdint.h>
+#include <vt/color.h>
+#include <vt/vt.h>
+
+struct zedrow {
+    size_t  size;
+    void   *data;
+};
+
 /* values for charset- and chartype-fields */
 #define ZED_ASCII 0x00
 /* values for charset-field */
@@ -11,35 +20,26 @@
 #define ZED_UCS2  0x03
 #define ZED_UTF16 0x04
 #define ZED_UCS4  0x05
-struct zedbuf {
+struct zedrowbuf {
 #if (_REENTRANT)
     volatile long   lk;
 #endif
     long            mode;       // per-buffer editor mode
     struct zedfile *file;       // buffer file
-    size_t          nb;         // size of data-buffer
-    void           *data;       // buffer
     long            charset;    // character set ID such as ISO 8859-1
     long            chartype;   // ASCII, 8BIT, UTF-8, UCS-2, UTF-16, UCS-4
-    size_t          nrow;       // number of buffer rows
-    size_t          ncol;       // number of buffer columns
-    void           *ctab;       // character data; e.g., char **
-    void           *rend;       // character rendition data, e.g. zedrend **
+    size_t          nrow;       // # of rows
+    size_t          nrowmax;    // # of allocated rows
+    struct zedrow  *rows;       // row structures
+    void           *text;       // text data such as 8-bit ISO-8859
+    void           *rend;       // rendition attributes
+};
+
+struct zedbuf {
+    struct zedrowbuf *rowbufs;   // row buffer
 #if (ZEDZCPP)
-    void           *cppq;
+    void             *cppq;
 #endif
-};
-
-struct zedrow {
-    size_t  size;
-    void   *data;
-};
-
-struct zedrowbuf {
-    size_t          ncol;
-    size_t          nrow;
-    size_t          nrowmax;
-    struct zedline *rows;
 };
 
 #endif /* __ZED_BUF_H__ */

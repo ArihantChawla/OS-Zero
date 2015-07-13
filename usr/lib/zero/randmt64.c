@@ -31,7 +31,7 @@ static uint64_t randmt64state[RANDMT64NSTATE];
  */
 static uint64_t randmt64magic[2] = { UINT64_C(0), RANDMT64MATRIX };
 static long     randmt64curndx = RANDMT64NSTATE + 1;
-#if (RANDMT64TEST)
+#if (RANDMT64TEST) && 0
 static uint64_t randmt64key[4]
 = {
     UINT64_C(0x12345),
@@ -84,8 +84,8 @@ srandmt64tab(uint64_t *key, uint64_t keylen)
         }
         if (l >= RANDMT64NSTATE) {
             val = randmt64state[RANDMT64NSTATE - 1];
-            randmt64state[0] = val;
             l = 1;
+            randmt64state[0] = val;
         }
         tmp = val;
     }
@@ -98,8 +98,8 @@ srandmt64tab(uint64_t *key, uint64_t keylen)
         l++;
         if (l >= RANDMT64NSTATE) {
             val = randmt64state[RANDMT64NSTATE - 1];
-            randmt64state[0] = val;
             l = 1;
+            randmt64state[0] = val;
         }
         tmp = val;
     }
@@ -177,26 +177,11 @@ main(void)
     unsigned long *buf;
 #endif
 
-#if (RANDMT64PROF) && 0
-    buf = malloc(65536 * sizeof(unsigned long));
-    if (!buf) {
-        fprintf(stderr, "randmt64: cannot allocate buffer");
-
-        exit(1);
-    }
-    profstartclk(clk);
-    for (i = 0 ; i < 65536 ; i++) {
-        buf[i] = randmt64_r();
-    }
-    profstopclk(clk);
-    fprintf(stderr, "%lu microseconds\n", profclkdiff(clk));
-#else
 //    srandmt64(UINT64_C(0x5555555555555555));
-    srandmt64tab(randmt64key, sizeof(randmt64key) / sizeof(uint64_t));
+//    srandmt64tab(randmt64key, sizeof(randmt64key) / sizeof(uint64_t));
     for (i = 0; i < 65536; i++) {
         printf("%llx\n", (unsigned long long)randmt64());
     }
-#endif
 
     return 0;
 }

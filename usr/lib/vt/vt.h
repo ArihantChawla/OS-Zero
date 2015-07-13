@@ -1,11 +1,12 @@
 #ifndef __VT_VT_H__
 #define __VT_VT_H__
 
+#include <vt/conf.h>
+#include <vt/color.h>
 #include <stdint.h>
 #include <zero/cdecl.h>
 #include <zero/param.h>
 #include <zero/trix.h>
-#include <vt/conf.h>
 #include <ui/ui.h>
 #include <ui/text.h>
 
@@ -30,8 +31,9 @@
 #define VTANTIALIAS   0x02000000 // antialiased text (interpolation)
 #define VTDRAWBG      0x01000000 // draw text background
 #define VTDRAWFG      0x00800000 // draw text foreground
-#define VTFGMASK      0x000001ff // standard or 256-color xterm palette entry
-#define VTBGMASK      0x0003fe00 // standard or 256-color xterm palette entry
+#define VTXTERM256    0x00400000 // 256-color xterm mode
+#define VTFGMASK      0x000000ff // standard or 256-color xterm palette entry
+#define VTBGMASK      0x0000ff00 // standard or 256-color xterm palette entry
 #define VTFG256BIT    0x00000100 // foreground is xterm color
 #define VTBG256BIT    0x00020000 // foreground is xterm color
 

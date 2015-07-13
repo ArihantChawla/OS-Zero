@@ -38,6 +38,7 @@
 #include <zero/param.h>
 #include <zero/cdecl.h>
 #include <zero/mtx.h>
+#include <zero/trix.h>
 #if (RANDMT32TEST)
 #include <stdio.h>
 #if (RANDMT32PROF)
@@ -45,45 +46,105 @@
 #endif
 #endif
 
-#define RANDMT32NBUFITEM   624            // # of buffer values
-#define RANDMT32MAGIC      397
+#define RANDMT32NSTATE      624                 // # of buffer values
+#define RANDMT32MAGIC       397
 /* magic numbers */
-#define RANDMT32MULTIPLIER 0x6c078965UL
-#define RANDMT32MATRIX     0x9908b0dfUL
+#define RANDMT32MULTIPLIER1 1812433253UL
+#define RANDMT32MULTIPLIER2 1664525UL
+#define RANDMT32MULTIPLIER3 1566083941UL
+#define RANDMT32MATRIX      0x9908b0dfUL
+#define RANDMT32DEFSEED     5489UL
+#define RANDMT32TABSEED     19650218UL
 /* shift counts */
-#define RANDMT32SHIFT      30
-#define RANDMT32SHIFT1     11
-#define RANDMT32SHIFT2     7
-#define RANDMT32SHIFT3     15
-#define RANDMT32SHIFT4     18
+#define RANDMT32SHIFT       30
+#define RANDMT32SHIFT1      11
+#define RANDMT32SHIFT2      7
+#define RANDMT32SHIFT3      15
+#define RANDMT32SHIFT4      18
 /* bitmasks */
-#define RANDMT32MASK2      0x9d2c5680UL
-#define RANDMT32MASK3      0xefc60000UL
+#define RANDMT32MASK2       0x9d2c5680UL
+#define RANDMT32MASK3       0xefc60000UL
 
-static unsigned long randbuf32[RANDMT32NBUFITEM] ALIGNED(PAGESIZE);
-//static volatile long randlkbuf[RANDMT32NBUFITEM];
-static unsigned long randndx = RANDMT32NBUFITEM + 1;
-static volatile long randmtx;
+static unsigned long randmt32state[RANDMT32NSTATE] ALIGNED(PAGESIZE);
+//static volatile long randlkbuf[RANDMT32NSTATE];
+static unsigned long randmt32curndx = RANDMT32NSTATE + 1;
+#if (RANDMT32TEST)
+static unsigned long randmt32key[4]
+= {
+    0x123UL,
+    0x234UL,
+    0x345UL,
+    0x456UL
+};
+#endif
+static volatile long randmt32mtx;
 
 void
 srandmt32(unsigned long seed)
 {
     unsigned long val;
     unsigned long tmp;
-    long          l;
+    unsigned long ndx;
 
     tmp = seed & 0xffffffffUL;
-    randbuf32[0] = tmp;
-    val = RANDMT32MULTIPLIER * (tmp ^ (tmp >> RANDMT32SHIFT)) + 1;
-    val &= 0xffffffffUL;
-    randbuf32[1] = val;
-    for (l = 2 ; l < RANDMT32NBUFITEM ; l++) {
-        tmp = val;
-        val = RANDMT32MULTIPLIER * (tmp ^ (tmp >> RANDMT32SHIFT)) +  l;
+    randmt32state[0] = tmp;
+    for (ndx = 1 ; ndx < RANDMT32NSTATE ; ndx++) {
+        val = RANDMT32MULTIPLIER1 * (tmp ^ (tmp >> RANDMT32SHIFT)) +  ndx;
         val &= 0xffffffffUL;
-        randbuf32[l] = val;
+        randmt32state[ndx] = val;
+        tmp = val;
     }
-    randndx = l;
+    randmt32curndx = ndx;
+
+    return;
+}
+
+void
+srandmt32tab(unsigned long *key, unsigned long keylen)
+{
+    unsigned long l = 1;
+    unsigned long m = 0;
+    unsigned long ndx;
+    unsigned long tmp;
+    unsigned long val;
+
+    srandmt32(RANDMT32TABSEED);
+    ndx = max(keylen, RANDMT32NSTATE);
+    tmp = randmt32state[0];
+    for ( ; (ndx) ; ndx--) {
+        val = randmt32state[l];
+        val ^= RANDMT32MULTIPLIER2 * (tmp ^ (tmp >> RANDMT32SHIFT));
+        val += key[m] + m;
+        val &= 0xffffffffUL;
+        randmt32state[l] = val;
+        m++;
+        l++;
+        if (m >= keylen) {
+            m = 0;
+        }
+        if (l >= RANDMT32NSTATE) {
+            val = randmt32state[RANDMT32NSTATE - 1];
+            l = 1;
+            randmt32state[0] = val;
+        }
+        tmp = val;
+    }
+    tmp = randmt32state[l - 1];
+    for (ndx = RANDMT32NSTATE - 1 ; (ndx) ; ndx--) {
+        val = randmt32state[l];
+        val ^= RANDMT32MULTIPLIER3 * (tmp ^ (tmp >> RANDMT32SHIFT));
+        val -= l;
+        val &= 0xffffffffUL;
+        randmt32state[l] = val;
+        l++;
+        if (l >= RANDMT32NSTATE) {
+            val = randmt32state[RANDMT32NSTATE - 1];
+            l = 1;
+            randmt32state[0] = val;
+        }
+        tmp = val;
+    }
+    randmt32state[0] = 0x80000000UL;
 
     return;
 }
@@ -95,20 +156,20 @@ srandmt32_r(unsigned long seed)
     unsigned long tmp;
     long          l;
 
-    mtxlk(&randmtx);
+    mtxlk(&randmt32mtx);
     tmp = seed & 0xffffffffUL;
-    randbuf32[0] = tmp;
-    val = RANDMT32MULTIPLIER * (tmp ^ (tmp >> RANDMT32SHIFT)) + 1;
+    randmt32state[0] = tmp;
+    val = RANDMT32MULTIPLIER1 * (tmp ^ (tmp >> RANDMT32SHIFT)) + 1;
     val &= 0xffffffffUL;
-    randbuf32[1] = val;
-    for (l = 2 ; l < RANDMT32NBUFITEM ; l++) {
+    randmt32state[1] = val;
+    for (l = 2 ; l < RANDMT32NSTATE ; l++) {
         tmp = val;
-        val = RANDMT32MULTIPLIER * (tmp ^ (tmp >> RANDMT32SHIFT)) +  l;
+        val = RANDMT32MULTIPLIER1 * (tmp ^ (tmp >> RANDMT32SHIFT)) +  l;
         val &= 0xffffffffUL;
-        randbuf32[l] = val;
+        randmt32state[l] = val;
     }
-    randndx = l;
-    mtxunlk(&randmtx);
+    randmt32curndx = l;
+    mtxunlk(&randmt32mtx);
 
     return;
 }
@@ -117,38 +178,32 @@ void
 _randbuf32(void)
 {
     unsigned long mask[2] = { 0UL, RANDMT32MATRIX };
-    unsigned long x;
-    unsigned long val1;
+    unsigned long val;
     unsigned long tmp1;
     unsigned long tmp2;
     unsigned long tmp3;
     long          l;
 
-    if (randndx == RANDMT32NBUFITEM + 1) {
-        srandmt32(5489UL);
+    for (l = 0 ; l < RANDMT32NSTATE - RANDMT32MAGIC ; l++) {
+        tmp1 = randmt32state[l] & 0x80000000UL;
+        tmp2 = randmt32state[l + 1] & 0x7fffffffUL;
+        tmp3 = randmt32state[l + RANDMT32MAGIC];
+        val = tmp1 | tmp2;
+        randmt32state[l] = tmp3 ^ (val >> 1) ^ mask[val & 0x01UL];
     }
-    for (l = 0 ; l < RANDMT32NBUFITEM - RANDMT32MAGIC ; l++) {
-        val1 = l + 1;
-        tmp1 = randbuf32[l & 0x80000000UL];
-        tmp2 = randbuf32[val1] & 0x7fffffffUL;
-        tmp3 = randbuf32[l + RANDMT32MAGIC];
-        x = tmp1 | tmp2;
-        randbuf32[l] = tmp3 ^ (x >> 1) ^ mask[x & 0x01];
+    for ( ; l < RANDMT32NSTATE - 1 ; l++) {
+        tmp1 = randmt32state[l] & 0x80000000UL;
+        tmp2 = randmt32state[l + 1] & 0x7fffffffUL;
+        tmp3 = randmt32state[l + RANDMT32MAGIC - RANDMT32NSTATE];
+        val = tmp1 | tmp2;
+        randmt32state[l] = tmp3 ^ (val >> 1) ^ mask[val & 0x01];
     }
-    for ( ; l < RANDMT32NBUFITEM - 1 ; l++) {
-        val1 = l + 1;
-        tmp1 = randbuf32[l] & 0x80000000UL;
-        tmp2 = randbuf32[val1] & 0x7fffffffUL;
-        tmp3 = randbuf32[l + RANDMT32MAGIC - RANDMT32NBUFITEM];
-        x = tmp1 | tmp2;
-        randbuf32[l] = tmp3 ^ (x >> 1) ^ mask[x & 0x01];
-    }
-    tmp1 = randbuf32[RANDMT32NBUFITEM - 1] & 0x80000000UL;
-    tmp2 = (randbuf32[0] & 0x7fffffffUL);
-    tmp3 = randbuf32[RANDMT32MAGIC - 1];
-    x = tmp1 | tmp2;
-    randbuf32[RANDMT32NBUFITEM - 1] = tmp3 ^ (x >> 1) ^ RANDMT32MATRIX;
-    randndx = 0;
+    tmp1 = randmt32state[RANDMT32NSTATE - 1] & 0x80000000UL;
+    tmp2 = randmt32state[0] & 0x7fffffffUL;
+    tmp3 = randmt32state[RANDMT32MAGIC - 1];
+    val = tmp1 | tmp2;
+    randmt32state[RANDMT32NSTATE - 1] = tmp3 ^ (val >> 1) ^ mask[val & 0x01];
+    randmt32curndx = 0;
 
     return;
 }
@@ -158,38 +213,18 @@ randmt32(void)
 {
     unsigned long x;
 
-    if (randndx >= RANDMT32NBUFITEM) {
+    if (randmt32curndx >= RANDMT32NSTATE) {
+        if (randmt32curndx == RANDMT32NSTATE + 1) {
+            srandmt32(RANDMT32DEFSEED);
+        }
         _randbuf32();
     }
-    x = randbuf32[randndx];
+    x = randmt32state[randmt32curndx];
     x ^= x >> RANDMT32SHIFT1;
     x ^= (x << RANDMT32SHIFT2) & RANDMT32MASK2;
     x ^= (x << RANDMT32SHIFT3) & RANDMT32MASK3;
     x ^= x >> RANDMT32SHIFT4;
-    randndx++;
-
-    return x;
-}
-
-unsigned long
-randmt32_r(void)
-{
-    unsigned long x;
-    unsigned long ndx;
-
-    mtxlk(&randmtx);
-    ndx = randndx;
-    if (ndx >= RANDMT32NBUFITEM) {
-        _randbuf32();
-        ndx = randndx;
-    }
-    randndx++;
-    x = randbuf32[ndx];
-    mtxunlk(&randmtx);
-    x ^= x >> RANDMT32SHIFT1;
-    x ^= (x << RANDMT32SHIFT2) & RANDMT32MASK2;
-    x ^= (x << RANDMT32SHIFT3) & RANDMT32MASK3;
-    x ^= x >> RANDMT32SHIFT4;
+    randmt32curndx++;
 
     return x;
 }
@@ -204,26 +239,10 @@ main(void)
     unsigned long *buf;
 #endif
 
-#if (RANDMT32PROF)
-    buf = malloc(65536 * sizeof(unsigned long));
-    if (!buf) {
-        fprintf(stderr, "randmt32: cannot allocate buffer");
-
-        exit(1);
-    }
-    profstartclk(clk);
-    for (i = 0 ; i < 65536 ; i++) {
-        buf[i] = randmt32_r();
-    }
-    profstopclk(clk);
-    fprintf(stderr, "%lu microseconds\n", profclkdiff(clk));
-#else
-    printf("65536 outputs of randmt32()\n");
+    srandmt32tab(randmt32key, sizeof(randmt32key) / sizeof(unsigned long));
     for (i = 0; i < 65536; i++) {
-        printf("%8lx ", randmt32());
-        if ((i & 3) == 0x03) printf("\n");
+        printf("%lx\n", randmt32());
     }
-#endif
 
     return 0;
 }
