@@ -49,12 +49,14 @@
 #define RANDMT32NSTATE      624                 // # of buffer values
 #define RANDMT32MAGIC       397
 /* magic numbers */
+#define RANDMT32MATRIX      0x9908b0dfUL
+#define RANDMT32HIMASK      0x80000000UL
+#define RANDMT32LOMASK      0x7fffffffUL
+#define RANDMT32DEFSEED     5489UL
+#define RANDMT32TABSEED     19650218UL
 #define RANDMT32MULTIPLIER1 1812433253UL
 #define RANDMT32MULTIPLIER2 1664525UL
 #define RANDMT32MULTIPLIER3 1566083941UL
-#define RANDMT32MATRIX      0x9908b0dfUL
-#define RANDMT32DEFSEED     5489UL
-#define RANDMT32TABSEED     19650218UL
 /* shift counts */
 #define RANDMT32SHIFT       30
 #define RANDMT32SHIFT1      11
@@ -62,8 +64,8 @@
 #define RANDMT32SHIFT3      15
 #define RANDMT32SHIFT4      18
 /* bitmasks */
-#define RANDMT32MASK2       0x9d2c5680UL
-#define RANDMT32MASK3       0xefc60000UL
+#define RANDMT32MASK1       0x9d2c5680UL
+#define RANDMT32MASK2       0xefc60000UL
 
 static unsigned long randmt32state[RANDMT32NSTATE] ALIGNED(PAGESIZE);
 //static volatile long randlkbuf[RANDMT32NSTATE];
@@ -144,7 +146,7 @@ srandmt32tab(unsigned long *key, unsigned long keylen)
         }
         tmp = val;
     }
-    randmt32state[0] = 0x80000000UL;
+    randmt32state[0] = RANDMT32HIMASK;
 
     return;
 }
@@ -185,21 +187,21 @@ _randbuf32(void)
     long          l;
 
     for (l = 0 ; l < RANDMT32NSTATE - RANDMT32MAGIC ; l++) {
-        tmp1 = randmt32state[l] & 0x80000000UL;
-        tmp2 = randmt32state[l + 1] & 0x7fffffffUL;
+        tmp1 = randmt32state[l] & RANDMT32HIMASK;
+        tmp2 = randmt32state[l + 1] & RANDMT32LOMASK;
         tmp3 = randmt32state[l + RANDMT32MAGIC];
         val = tmp1 | tmp2;
         randmt32state[l] = tmp3 ^ (val >> 1) ^ mask[val & 0x01UL];
     }
     for ( ; l < RANDMT32NSTATE - 1 ; l++) {
-        tmp1 = randmt32state[l] & 0x80000000UL;
-        tmp2 = randmt32state[l + 1] & 0x7fffffffUL;
+        tmp1 = randmt32state[l] & RANDMT32HIMASK;
+        tmp2 = randmt32state[l + 1] & RANDMT32LOMASK;
         tmp3 = randmt32state[l + RANDMT32MAGIC - RANDMT32NSTATE];
         val = tmp1 | tmp2;
         randmt32state[l] = tmp3 ^ (val >> 1) ^ mask[val & 0x01];
     }
-    tmp1 = randmt32state[RANDMT32NSTATE - 1] & 0x80000000UL;
-    tmp2 = randmt32state[0] & 0x7fffffffUL;
+    tmp1 = randmt32state[RANDMT32NSTATE - 1] & RANDMT32HIMASK;
+    tmp2 = randmt32state[0] & RANDMT32LOMASK;
     tmp3 = randmt32state[RANDMT32MAGIC - 1];
     val = tmp1 | tmp2;
     randmt32state[RANDMT32NSTATE - 1] = tmp3 ^ (val >> 1) ^ mask[val & 0x01];
@@ -221,8 +223,8 @@ randmt32(void)
     }
     x = randmt32state[randmt32curndx];
     x ^= x >> RANDMT32SHIFT1;
-    x ^= (x << RANDMT32SHIFT2) & RANDMT32MASK2;
-    x ^= (x << RANDMT32SHIFT3) & RANDMT32MASK3;
+    x ^= (x << RANDMT32SHIFT2) & RANDMT32MASK1;
+    x ^= (x << RANDMT32SHIFT3) & RANDMT32MASK2;
     x ^= x >> RANDMT32SHIFT4;
     randmt32curndx++;
 

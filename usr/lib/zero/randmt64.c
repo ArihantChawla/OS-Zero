@@ -31,7 +31,7 @@ static uint64_t randmt64state[RANDMT64NSTATE];
  */
 static uint64_t randmt64magic[2] = { UINT64_C(0), RANDMT64MATRIX };
 static long     randmt64curndx = RANDMT64NSTATE + 1;
-#if (RANDMT64TEST) && 0
+#if (RANDMT64TEST)
 static uint64_t randmt64key[4]
 = {
     UINT64_C(0x12345),
@@ -121,7 +121,7 @@ _randbuf64(void)
         tmp2 = randmt64state[ndx + 1] & RANDMT64LOMASK;
         val = tmp1 | tmp2;
         tmp1 = randmt64state[ndx + RANDMT64NSTATEHALF];
-        tmp2 = randmt64magic[(int)(val & UINT64_C(1))];
+        tmp2 = randmt64magic[(int)(val & UINT64_C(0x01))];
         randmt64state[ndx] = tmp1 ^ (val >> 1) ^ tmp2;
     }
     for ( ; ndx < RANDMT64NSTATE - 1 ; ndx++) {
@@ -129,14 +129,14 @@ _randbuf64(void)
         tmp2 = randmt64state[ndx + 1] & RANDMT64LOMASK;
         val = tmp1 | tmp2;
         tmp1 = randmt64state[ndx - RANDMT64NSTATEHALF];
-        tmp2 = randmt64magic[(int)(val & UINT64_C(1))];
+        tmp2 = randmt64magic[(int)(val & UINT64_C(0x01))];
         randmt64state[ndx] = tmp1 ^ (val >> 1) ^ tmp2;
     }
     tmp1 = randmt64state[RANDMT64NSTATE - 1] & RANDMT64HIMASK;
     tmp2 = randmt64state[0] & RANDMT64LOMASK;
     val = tmp1 | tmp2;
     tmp1 = randmt64state[RANDMT64NSTATEHALF - 1];
-    tmp2 = randmt64magic[(int)(val & UINT64_C(1))];
+    tmp2 = randmt64magic[(int)(val & UINT64_C(0x01))];
     randmt64state[RANDMT64NSTATE - 1] = tmp1 ^ (val >> 1) ^ tmp2;
     randmt64curndx = 0;
 
@@ -178,7 +178,7 @@ main(void)
 #endif
 
 //    srandmt64(UINT64_C(0x5555555555555555));
-//    srandmt64tab(randmt64key, sizeof(randmt64key) / sizeof(uint64_t));
+    srandmt64tab(randmt64key, sizeof(randmt64key) / sizeof(uint64_t));
     for (i = 0; i < 65536; i++) {
         printf("%llx\n", (unsigned long long)randmt64());
     }
