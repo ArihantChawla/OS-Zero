@@ -31,8 +31,6 @@
  * - elimination of modulus calculations and in-loop branches by unrolling loops
  */
 
-#define RANDMTXFINEGRAINED 1
-
 #include <stdint.h>
 #include <stdlib.h>
 #include <zero/param.h>
@@ -50,8 +48,8 @@
 #define RANDMT32MAGIC       397
 /* magic numbers */
 #define RANDMT32MATRIX      0x9908b0dfUL
-#define RANDMT32HIMASK      0x80000000UL
-#define RANDMT32LOMASK      0x7fffffffUL
+#define RANDMT32HIMASK      0x80000000UL        // highest bit
+#define RANDMT32LOMASK      0x7fffffffUL        // low 31 bits
 #define RANDMT32DEFSEED     5489UL
 #define RANDMT32TABSEED     19650218UL
 #define RANDMT32MULTIPLIER1 1812433253UL
@@ -68,7 +66,7 @@
 #define RANDMT32MASK2       0xefc60000UL
 
 static unsigned long randmt32state[RANDMT32NSTATE] ALIGNED(PAGESIZE);
-//static volatile long randlkbuf[RANDMT32NSTATE];
+static unsigned long randmt32magic[2] = { 0UL, RANDMT32MATRIX };
 static unsigned long randmt32curndx = RANDMT32NSTATE + 1;
 #if (RANDMT32TEST)
 static unsigned long randmt32key[4]
@@ -152,34 +150,8 @@ srandmt32tab(unsigned long *key, unsigned long keylen)
 }
 
 void
-srandmt32_r(unsigned long seed)
-{
-    unsigned long val;
-    unsigned long tmp;
-    long          l;
-
-    mtxlk(&randmt32mtx);
-    tmp = seed & 0xffffffffUL;
-    randmt32state[0] = tmp;
-    val = RANDMT32MULTIPLIER1 * (tmp ^ (tmp >> RANDMT32SHIFT)) + 1;
-    val &= 0xffffffffUL;
-    randmt32state[1] = val;
-    for (l = 2 ; l < RANDMT32NSTATE ; l++) {
-        tmp = val;
-        val = RANDMT32MULTIPLIER1 * (tmp ^ (tmp >> RANDMT32SHIFT)) +  l;
-        val &= 0xffffffffUL;
-        randmt32state[l] = val;
-    }
-    randmt32curndx = l;
-    mtxunlk(&randmt32mtx);
-
-    return;
-}
-
-void
 _randbuf32(void)
 {
-    unsigned long mask[2] = { 0UL, RANDMT32MATRIX };
     unsigned long val;
     unsigned long tmp1;
     unsigned long tmp2;
@@ -191,20 +163,23 @@ _randbuf32(void)
         tmp2 = randmt32state[l + 1] & RANDMT32LOMASK;
         tmp3 = randmt32state[l + RANDMT32MAGIC];
         val = tmp1 | tmp2;
-        randmt32state[l] = tmp3 ^ (val >> 1) ^ mask[val & 0x01UL];
+        tmp1 = randmt32magic[val & 0x01UL];
+        randmt32state[l] = tmp3 ^ (val >> 1) ^ tmp1;
     }
     for ( ; l < RANDMT32NSTATE - 1 ; l++) {
         tmp1 = randmt32state[l] & RANDMT32HIMASK;
         tmp2 = randmt32state[l + 1] & RANDMT32LOMASK;
         tmp3 = randmt32state[l + RANDMT32MAGIC - RANDMT32NSTATE];
         val = tmp1 | tmp2;
-        randmt32state[l] = tmp3 ^ (val >> 1) ^ mask[val & 0x01];
+        tmp1 = randmt32magic[val & 0x01];
+        randmt32state[l] = tmp3 ^ (val >> 1) ^ tmp1;
     }
     tmp1 = randmt32state[RANDMT32NSTATE - 1] & RANDMT32HIMASK;
     tmp2 = randmt32state[0] & RANDMT32LOMASK;
     tmp3 = randmt32state[RANDMT32MAGIC - 1];
     val = tmp1 | tmp2;
-    randmt32state[RANDMT32NSTATE - 1] = tmp3 ^ (val >> 1) ^ mask[val & 0x01];
+    randmt32state[RANDMT32NSTATE - 1] = tmp3 ^ (val >> 1)
+        ^ randmt32magic[val & 0x01];
     randmt32curndx = 0;
 
     return;

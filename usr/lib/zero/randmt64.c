@@ -1,3 +1,11 @@
+/*
+ * 64-bit version of Mersenne Twister MT19937 algorithm
+ */
+
+#if !defined(RANDMT64TEST)
+#define RANDMT64TEST 0
+#endif
+
 #if (RANDMT64TEST)
 #include <stdio.h>
 #endif
@@ -5,7 +13,7 @@
 #include <zero/trix.h>
 
 #define RANDMT64NSTATE      312
-#define RANDMT64NSTATEHALF  156
+#define RANDMT64MAGIC       156
 #define RANDMT64MATRIX      UINT64_C(0xB5026F5AA96619E9)
 #define RANDMT64HIMASK      UINT64_C(0xFFFFFFFF80000000) /* high 33 bits */
 #define RANDMT64LOMASK      UINT64_C(0x000000007FFFFFFF) /* low 31 bits */
@@ -116,11 +124,11 @@ _randbuf64(void)
     uint64_t tmp1;
     uint64_t tmp2;
 
-    for (ndx = 0 ; ndx < RANDMT64NSTATEHALF ; ndx++) {
+    for (ndx = 0 ; ndx < RANDMT64MAGIC ; ndx++) {
         tmp1 = randmt64state[ndx] & RANDMT64HIMASK;
         tmp2 = randmt64state[ndx + 1] & RANDMT64LOMASK;
         val = tmp1 | tmp2;
-        tmp1 = randmt64state[ndx + RANDMT64NSTATEHALF];
+        tmp1 = randmt64state[ndx + RANDMT64MAGIC];
         tmp2 = randmt64magic[(int)(val & UINT64_C(0x01))];
         randmt64state[ndx] = tmp1 ^ (val >> 1) ^ tmp2;
     }
@@ -128,14 +136,14 @@ _randbuf64(void)
         tmp1 = randmt64state[ndx] & RANDMT64HIMASK;
         tmp2 = randmt64state[ndx + 1] & RANDMT64LOMASK;
         val = tmp1 | tmp2;
-        tmp1 = randmt64state[ndx - RANDMT64NSTATEHALF];
+        tmp1 = randmt64state[ndx - RANDMT64MAGIC];
         tmp2 = randmt64magic[(int)(val & UINT64_C(0x01))];
         randmt64state[ndx] = tmp1 ^ (val >> 1) ^ tmp2;
     }
     tmp1 = randmt64state[RANDMT64NSTATE - 1] & RANDMT64HIMASK;
     tmp2 = randmt64state[0] & RANDMT64LOMASK;
     val = tmp1 | tmp2;
-    tmp1 = randmt64state[RANDMT64NSTATEHALF - 1];
+    tmp1 = randmt64state[RANDMT64MAGIC - 1];
     tmp2 = randmt64magic[(int)(val & UINT64_C(0x01))];
     randmt64state[RANDMT64NSTATE - 1] = tmp1 ^ (val >> 1) ^ tmp2;
     randmt64curndx = 0;
