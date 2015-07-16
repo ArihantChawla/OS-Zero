@@ -20,9 +20,6 @@ static float     zpcoctflttab[256];
 static double    zpcdecdbltab[256];
 static double    zpchexdbltab[256];
 static double    zpcoctdbltab[256];
-uint8_t          zpcoperchartab[256];
-long             zpcopprectab[ZPCNOPER];
-long             zpcopnargtab[ZPCNOPER];
 zpcop_t         *zpcevaltab[ZPCNOPER];
 struct zpctoken *zpcoperstk;
 struct zpctoken *zpcoperstktop;
@@ -164,70 +161,24 @@ zpcinitconvtab(void)
 void
 zpcinitoptab(void)
 {
-    /* precedences */
-    zpcopprectab[ZPCNOT] = OPERRTOL | 8;
-    zpcopprectab[ZPCINC] = 8;
-    zpcopprectab[ZPCDEC] = 8;
-    zpcopprectab[ZPCSHR] = 7;
-    zpcopprectab[ZPCSHL] = 7;
-    zpcopprectab[ZPCAND] = 6;
-    zpcopprectab[ZPCXOR] = OPERRTOL | 5;
-    zpcopprectab[ZPCOR] = 4;
-    zpcopprectab[ZPCMUL] = 3;
-    zpcopprectab[ZPCDIV] = 3;
-    zpcopprectab[ZPCMOD] = 3;
-    zpcopprectab[ZPCADD] = OPERRTOL | 2;
-    zpcopprectab[ZPCSUB] = 2;
-    zpcopprectab[ZPCASSIGN] = 1;
-    /* # of arguments */
-    zpcopnargtab[ZPCNOT] = 1;
-    zpcopnargtab[ZPCINC] = 1;
-    zpcopnargtab[ZPCDEC] = 1;
-    zpcopnargtab[ZPCSHL] = 2;
-    zpcopnargtab[ZPCSHR] = 2;
-    zpcopnargtab[ZPCSHRA] = 2;
-    zpcopnargtab[ZPCAND] = 2;
-    zpcopnargtab[ZPCXOR] = 2;
-    zpcopnargtab[ZPCOR] = 2;
-    zpcopnargtab[ZPCMUL] = 2;
-    zpcopnargtab[ZPCDIV] = 2;
-    zpcopnargtab[ZPCMOD] = 2;
-    zpcopnargtab[ZPCADD] = 2;
-    zpcopnargtab[ZPCSUB] = 2;
+    shuntinitcop(shuntcopchartab, shuntcopprectab, shuntcopnargtab);
     /* evaluation functions */
-    zpcevaltab[ZPCNOT] = not64;
-    zpcevaltab[ZPCINC] = inc64;
-    zpcevaltab[ZPCDEC] = dec64;
-    zpcevaltab[ZPCSHL] = shl64;
-    zpcevaltab[ZPCSHR] = shr64;
+    zpcevaltab[SHUNTCNOT] = not64;
+    zpcevaltab[SHUNTCINC] = inc64;
+    zpcevaltab[SHUNTCDEC] = dec64;
+    zpcevaltab[SHUNTCSHL] = shl64;
+    zpcevaltab[SHUNTCSHR] = shr64;
+    zpcevaltab[SHUNTCAND] = and64;
+    zpcevaltab[SHUNTCXOR] = xor64;
+    zpcevaltab[SHUNTCOR] = or64;
+    zpcevaltab[SHUNTCMUL] = mul64;
+    zpcevaltab[SHUNTCDIV] = div64;
+    zpcevaltab[SHUNTCMOD] = mod64;
+    zpcevaltab[SHUNTCADD] = add64;
+    zpcevaltab[SHUNTCSUB] = sub64;
     zpcevaltab[ZPCSHRA] = shra64;
-    zpcevaltab[ZPCAND] = and64;
-    zpcevaltab[ZPCXOR] = xor64;
-    zpcevaltab[ZPCOR] = or64;
-    zpcevaltab[ZPCMUL] = mul64;
-    zpcevaltab[ZPCDIV] = div64;
-    zpcevaltab[ZPCMOD] = mod64;
-    zpcevaltab[ZPCADD] = add64;
-    zpcevaltab[ZPCSUB] = sub64;
 
     return;
-}
-
-void zpcinitop(void)
-{
-    /* lookup table */
-    zpcoperchartab['~'] = '~';
-    zpcoperchartab['&'] = '&';
-    zpcoperchartab['|'] = '|';
-    zpcoperchartab['^'] = '^';
-    zpcoperchartab['<'] = '<';
-    zpcoperchartab['>'] = '>';
-    zpcoperchartab['+'] = '+';
-    zpcoperchartab['-'] = '-';
-    zpcoperchartab['*'] = '*';
-    zpcoperchartab['/'] = '/';
-    zpcoperchartab['%'] = '%';
-    zpcoperchartab['='] = '=';
 }
 
 void
@@ -235,7 +186,7 @@ exprinit(void)
 {
     zpcinitconvtab();
     zpcinitoptab();
-    zpcinitop();
+//    zpcinitop();
 
     return;
 }
@@ -700,27 +651,27 @@ zpcgetoper(struct zpctoken *token, const char *str, char **retstr)
     token->slen = TOKENSTRLEN;
     if (*ptr == '!') {
         ptr++;
-        token->type = ZPCNOT;
+        token->type = SHUNTCNOT;
         token->str[0] = '!';
         token->str[1] = '\0';
     } else if (*ptr == '&') {
         ptr++;
-        token->type = ZPCAND;
+        token->type = SHUNTCAND;
         token->str[0] = '&';
         token->str[1] = '\0';
     } else if (*ptr == '|') {
         ptr++;
-        token->type = ZPCOR;
+        token->type = SHUNTCOR;
         token->str[0] = '|';
         token->str[1] = '\0';
     } else if (*ptr == '^') {
         ptr++;
-        token->type = ZPCXOR;
+        token->type = SHUNTCXOR;
         token->str[0] = '^';
         token->str[1] = '\0';
     } else if (*ptr == '<' && ptr[1] == '<') {
         ptr += 2;
-        token->type = ZPCSHL;
+        token->type = SHUNTCSHL;
         token->str[0] = token->str[1] = '<';
         token->str[2] = '\0';
     } else if (*ptr == '>' && ptr[1] == '>') {
@@ -731,57 +682,57 @@ zpcgetoper(struct zpctoken *token, const char *str, char **retstr)
             token->str[3] = '\0';
         } else {
             ptr += 2;
-            token->type = ZPCSHR;
+            token->type = SHUNTCSHR;
             token->str[0] = token->str[1] = '>';
             token->str[2] = '\0';
         }
     } else if (*ptr == '+') {
         if (ptr[1] == '+') {
-            token->type = ZPCINC;
+            token->type = SHUNTCINC;
             ptr += 2;
             token->str[0] = token->str[1] = '+';
             token->str[2] = '\0';
         } else {
-            token->type = ZPCADD;
+            token->type = SHUNTCADD;
             ptr++;
             token->str[0] = '+';
             token->str[1] = '\0';
         }
     } else if (*ptr == '-') {
         if (ptr[1] == '-') {
-            token->type = ZPCDEC;
+            token->type = SHUNTCDEC;
             ptr += 2;
             token->str[0] = token->str[1] = '-';
             token->str[2] = '\0';
         } else {
-            token->type = ZPCSUB;
+            token->type = SHUNTCSUB;
             ptr++;
             token->str[0] = '-';
             token->str[1] = '\0';
         }
     } else if (*ptr == '*') {
         ptr++;
-        token->type = ZPCMUL;
+        token->type = SHUNTCMUL;
         token->str[0] = '*';
         token->str[1] = '\0';
     } else if (*ptr == '/') {
         ptr++;
-        token->type = ZPCDIV;
+        token->type = SHUNTCDIV;
         token->str[0] = '/';
         token->str[1] = '\0';
     } else if (*ptr == '=') {
         ptr++;
-        token->type = ZPCASSIGN;
+        token->type = SHUNTCASSIGN;
         token->str[0] = '=';
         token->str[1] = '\0';
     } else if (*ptr == '%') {
         ptr++;
-        token->type = ZPCMOD;
+        token->type = SHUNTCMOD;
         token->str[0] = '%';
         token->str[1] = '\0';
     }
 //    token->param = zpcopinfotab[token->type].narg;
-    token->param = zpcopnargtab[token->type];
+    token->param = shuntcopnargtab[token->type];
     *retstr = (char *)ptr;
 }
 
@@ -936,7 +887,7 @@ zpcgettoken(const char *str, char **retstr)
         zpcgetvector(token, ptr, &ptr);
 //    } else if (*ptr == '(' && isxdigit(ptr[1])) {
 //        zpcgetcomplex(token, ptr, &ptr);
-    } else if (zpcisoperchar(*ptr)) {
+    } else if (shuntcisopchar(*ptr)) {
         zpcgetoper(token, ptr, &ptr);
     } else if (*ptr == '(') {
         token->type = ZPCLEFTPAREN;
@@ -1046,11 +997,11 @@ zpcparse(struct zpctoken *srcqueue)
         token3 = token1->next;
         memcpy(token, token1, sizeof(struct zpctoken));
         token = token1;
-        if (zpcisvalue(token)) {
+        if (shuntcisvalue(token)) {
             zpcqueuetoken(token, &queue, &tail);
-        } else if (zpcisfunc(token)) {
+        } else if (shuntcisfunc(token)) {
             zpcpushtoken(token, &stack);
-        } else if (zpcissep(token)) {
+        } else if (shuntcissep(token)) {
             token2 = stack;
             while ((token2) && token2->type != ZPCLEFTPAREN) {
                 token2 = zpcpoptoken(&stack);
@@ -1065,10 +1016,10 @@ zpcparse(struct zpctoken *srcqueue)
                 
                 return NULL;
             }
-        } else if (zpcisoper(token)) {
+        } else if (shuntcisop(token)) {
             token2 = stack;
             while (zpcisoper(token2)) {
-                if ((!zpccopisrtol(token)
+                if ((!shuntcisrtol(token)
                      && zpccopprec(token) <= zpccopprec(token2))
                     || zpccopprec(token) < zpccopprec(token2)) {
 //                    fprintf(stderr, "POP: %s (%s)\n", token2->str, token->str);
@@ -1101,7 +1052,7 @@ zpcparse(struct zpctoken *srcqueue)
                 
                 return NULL;
             }
-            if (zpcisfunc(stack)) {
+            if (shuntcisfunc(stack)) {
                 token2 = zpcpoptoken(&stack);
                 zpcqueuetoken(token2, &queue, &tail);
             }
@@ -1116,7 +1067,7 @@ zpcparse(struct zpctoken *srcqueue)
 #endif
     do {
         token1 = stack;
-        if (zpcisoper(token1)) {
+        if (shuntcisop(token1)) {
             token1 = zpcpoptoken(&stack);
             zpcqueuetoken(token1, &queue, &tail);
         } else if ((token1)
@@ -1148,9 +1099,9 @@ zpceval(struct zpctoken *srcqueue)
 
     while (token) {
         token2 = token->next;
-        if (zpcisvalue(token)) {
+        if (shuntcisvalue(token)) {
             zpcpushtoken(token, &stack);
-        } else if (zpcisoper(token)) {
+        } else if (shuntcisop(token)) {
             if (!token1) {
                 fprintf(stderr, "missing argument 1\n");
                 

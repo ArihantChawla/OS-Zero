@@ -711,7 +711,7 @@ keypress(void *arg, XEvent *event)
         stkenterinput();
     } else if (keysym <= 0xff) {
         ch = keysym;
-        if (item->str == item->scur && zpcisoperchar(ch)) {
+        if (item->str == item->scur && shuntcisopchar(ch)) {
             func = keypressfunctab[(int)ch];
             if (func) {
                 ;

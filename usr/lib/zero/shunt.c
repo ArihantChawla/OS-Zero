@@ -8,6 +8,61 @@
 #endif
 #include <zero/shunt.h>
 
+#if (SHUNTC)
+uint8_t shuntcopchartab[256];
+long    shuntcopprectab[SHUNTCNOP];
+long    shuntcopnargtab[SHUNTCNOP];
+#endif
+
+void
+shuntinitcop(uint8_t *chartab, long *prectab, long *nargtab)
+{
+    /* lookup table */
+    chartab['~'] = '~';
+    chartab['&'] = '&';
+    chartab['|'] = '|';
+    chartab['^'] = '^';
+    chartab['<'] = '<';
+    chartab['>'] = '>';
+    chartab['+'] = '+';
+    chartab['-'] = '-';
+    chartab['*'] = '*';
+    chartab['/'] = '/';
+    chartab['%'] = '%';
+    chartab['='] = '=';
+    /* precedences */
+    prectab[SHUNTCNOT] = SHUNTCRTOL | 8;
+    prectab[SHUNTCINC] = 8;
+    prectab[SHUNTCDEC] = 8;
+    prectab[SHUNTCSHL] = 7;
+    prectab[SHUNTCSHR] = 7;
+    prectab[SHUNTCAND] = 6;
+    prectab[SHUNTCXOR] = SHUNTCRTOL | 5;
+    prectab[SHUNTCOR] = 4;
+    prectab[SHUNTCMUL] = 3;
+    prectab[SHUNTCDIV] = 3;
+    prectab[SHUNTCMOD] = 3;
+    prectab[SHUNTCADD] = SHUNTCRTOL | 2;
+    prectab[SHUNTCSUB] = 2;
+    prectab[SHUNTCASSIGN] = 1;
+    /* # of arguments */
+    nargtab[SHUNTCNOT] = 1;
+    nargtab[SHUNTCINC] = 1;
+    nargtab[SHUNTCDEC] = 1;
+    nargtab[SHUNTCSHL] = 2;
+    nargtab[SHUNTCSHR] = 2;
+    nargtab[SHUNTCAND] = 2;
+    nargtab[SHUNTCXOR] = 2;
+    nargtab[SHUNTCOR] = 2;
+    nargtab[SHUNTCMUL] = 2;
+    nargtab[SHUNTCDIV] = 2;
+    nargtab[SHUNTCMOD] = 2;
+    nargtab[SHUNTCADD] = 2;
+    nargtab[SHUNTCSUB] = 2;
+
+    return;
+}
+
 /*
  * Dijkstra's shunting yard algorithm
  * - turns infix-format expressions into RPN queues
@@ -30,11 +85,11 @@ shuntparse(SHUNT_TOKEN *srcqueue)
         token3 = token1->next;
         memcpy(token, token1, sizeof(SHUNT_TOKEN));
         token = token1;
-        if (shuntisvalue(token)) {
+        if (shuntcisvalue(token)) {
             shuntqueue(token, &queue, &tail);
-        } else if (shuntisfunc(token)) {
+        } else if (shuntcisfunc(token)) {
             shuntpush(token, &stack);
-        } else if (shuntissep(token)) {
+        } else if (shuntcissep(token)) {
             token2 = stack;
             while ((token2) && token2->type != SHUNT_LEFTPAREN) {
                 token2 = shuntpop(&stack);
@@ -49,12 +104,12 @@ shuntparse(SHUNT_TOKEN *srcqueue)
                 
                 return NULL;
             }
-        } else if (shuntisoper(token)) {
+        } else if (shuntcisop(token)) {
             token2 = stack;
-            while (shuntisoper(token2)) {
-                if ((!shuntisrtol(token)
-                     && shuntprec(token) <= shuntprec(token2))
-                    || shuntprec(token) < shuntprec(token2)) {
+            while (shuntcisop(token2)) {
+                if ((!shuntcisrtol(token)
+                     && shuntcopprec(token) <= shuntcopprec(token2))
+                    || shuntcopprec(token) < shuntcopprec(token2)) {
 //                    fprintf(stderr, "POP: %s (%s)\n", token2->str, token->str);
                     token2 = shuntpop(&stack);
                     shuntqueue(token2, &queue, &tail);
@@ -85,7 +140,7 @@ shuntparse(SHUNT_TOKEN *srcqueue)
                 
                 return NULL;
             }
-            if (shuntisfunc(stack)) {
+            if (shuntcisfunc(stack)) {
                 token2 = shuntpop(&stack);
                 shuntqueue(token2, &queue, &tail);
             }
@@ -100,7 +155,7 @@ shuntparse(SHUNT_TOKEN *srcqueue)
 #endif
     do {
         token1 = stack;
-        if (shuntisoper(token1)) {
+        if (shuntcisop(token1)) {
             token1 = shuntpop(&stack);
             shuntqueue(token1, &queue, &tail);
         } else if ((token1)
@@ -132,9 +187,9 @@ shunteval(SHUNT_TOKEN *srcqueue)
 
     while (token) {
         token2 = token->next;
-        if (shuntisvalue(token)) {
+        if (shuntcisvalue(token)) {
             shuntpush(token, &stack);
-        } else if (shuntisoper(token)) {
+        } else if (shuntcisop(token)) {
             if (!token1) {
                 fprintf(stderr, "missing argument 1\n");
                 

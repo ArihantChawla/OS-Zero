@@ -54,8 +54,6 @@ struct zpccomplex {
     } img;
 };
 
-#define zpcisoperchar(c)                                                \
-    (zpcoperchartab[(int)(c)])
 #define zpcwordsize(tp)                                                 \
     ((tp)->param & PARAMSIZEMASK)
 struct zpctoken {
@@ -87,22 +85,22 @@ struct zpctoken {
 #define SHUNT_UINT64     ZPCUINT64
 #define SHUNT_RESULT     int64_t
 #define SHUNT_OP         zpcop_t
-#define SHUNT_NARGTAB    zpcopnargtab
+#define SHUNT_NARGTAB    shuntcopnargtab
 #define SHUNT_EVALTAB    zpcevaltab
 #define SHUNT_LEFTPAREN  ZPCLEFTPAREN
 #define SHUNT_RIGHTPAREN ZPCRIGHTPAREN
 #define shuntprintstr(tok, val, rdx)                                    \
     zpcprintstr64(tok, val, rdx)
-#define shuntisrtol(tok) zpccopisrtol(tok)
-#define shuntprec(tok)   zpccopprec(tok)
-#define shuntisvalue(tok)                                                \
+#define shuntcisrtol(tok) (shuntcopprec(tok) & SHUNTCRTOL)
+#define shuntcprec(tok)   (shuntcopprectab[(tok)->type])
+#define shuntcisvalue(tok)                                              \
     ((tok) && (tok)->type >= ZPCINT64 && (tok)->type <= ZPCCOMPLEX)
-#define shuntisfunc(tok)                                                 \
-    ((tok) && (tok)->type == ZPCFUNC)
-#define shuntissep(tok)                                                  \
-    ((tok) && (tok)->type == ZPCSEP)
-#define shuntisoper(tok)                                                 \
-    ((tok) && ((tok)->type >= ZPCNOT && (tok)->type <= ZPCASSIGN))
+#define shuntcisfunc(tok)                                               \
+    ((tok) && (tok)->type == SHUNTCFUNC)
+#define shuntcissep(tok)                                                \
+    ((tok) && (tok)->type == SHUNTCSEP)
+#define shuntcisop(tok)                                                 \
+    ((tok) && ((tok)->type >= SHUNTCNOT && (tok)->type <= SHUNTCASSIGN))
 #include <zero/shunt.h>
 #define zpcqueuetoken(tok, queue, tail)                                 \
     shuntqueue(tok, queue, tail)
@@ -142,54 +140,40 @@ struct zpctoken {
 #define ZPC_WINDOW_WIDTH        (ZPC_NCOLUMN * ZPC_BUTTON_WIDTH)
 #define ZPC_WINDOW_HEIGHT       (ZPC_NROW * ZPC_BUTTON_HEIGHT)
 
-#define ZPCNOT        0x01
-#define ZPCAND        0x02
-#define ZPCOR         0x03
-#define ZPCXOR        0x04
-#define ZPCSHR        0x05
-#define ZPCSHRA       0x06
-#define ZPCSHL        0x07
-#define ZPCROR        0x08
-#define ZPCROL        0x09
-#define ZPCINC        0x08
-#define ZPCDEC        0x09
-#define ZPCADD        0x0a
-#define ZPCSUB        0x0b
-#define ZPCMUL        0x0c
-#define ZPCDIV        0x0d
-#define ZPCMOD        0x0e
-#define ZPCBZ         0x0f
-#define ZPCBNZ        0x10
-#define ZPCBLT        0x11
-#define ZPCBLE        0x12
-#define ZPCBGT        0x13
-#define ZPCBGE        0x14
-#define ZPCMOV        0x15
-#define ZPCMOVD       0x16
-#define ZPCMOVB       0x17
-#define ZPCMOVW       0x18
-#define ZPCJMP        0x19
-#define ZPCCALL       0x20
-#define ZPCRET        0x22
-#define ZPCTRAP       0x23
-#define ZPCIRET       0x24
-#define ZPCTHR        0x25
-#define ZPCNASMOP     38
-#define ZPCASSIGN     0x26
-#define ZPCNOPER      39
-#define ZPCLEFTPAREN  0x40
-#define ZPCRIGHTPAREN 0x41
-#define ZPCFUNC       0x42
-#define ZPCSEP        0x44
-#define ZPCVAR        0x80
-#define ZPCINT64      0x81
-#define ZPCUINT64     0x82
-#define ZPCFLOAT      0x83
-#define ZPCDOUBLE     0x84
-#define ZPCSTRING     0x85
-#define ZPCVECTOR     0x86
-#define ZPCMATRIX     0x87
-#define ZPCCOMPLEX    0x88
+#define ZPCSHRA       (SHUNTCNOP + 0x00)
+#define ZPCROR        (SHUNTCNOP + 0x01)
+#define ZPCROL        (SHUNTCNOP + 0x02)
+#define ZPCBZ         (SHUNTCNOP + 0x03)
+#define ZPCBNZ        (SHUNTCNOP + 0x04)
+#define ZPCBLT        (SHUNTCNOP + 0x05)
+#define ZPCBLE        (SHUNTCNOP + 0x06)
+#define ZPCBGT        (SHUNTCNOP + 0x07)
+#define ZPCBGE        (SHUNTCNOP + 0x08)
+#define ZPCMOV        (SHUNTCNOP + 0x09)
+#define ZPCMOVD       (SHUNTCNOP + 0x0a)
+#define ZPCMOVB       (SHUNTCNOP + 0x0b)
+#define ZPCMOVW       (SHUNTCNOP + 0x0c)
+#define ZPCJMP        (SHUNTCNOP + 0x0d)
+#define ZPCCALL       (SHUNTCNOP + 0x0e)
+#define ZPCRET        (SHUNTCNOP + 0x0f)
+#define ZPCTRAP       (SHUNTCNOP + 0x10)
+#define ZPCIRET       (SHUNTCNOP + 0x11)
+#define ZPCTHR        (SHUNTCNOP + 0x12)
+#define ZPCNASMOP     (ZPCTHR + 1)
+#define ZPCNOPER      (ZPCTHR + 2)
+#define ZPCLEFTPAREN  (SHUNTCNOP + 0x13)
+#define ZPCRIGHTPAREN (SHUNTCNOP + 0x14)
+#define ZPCFUNC       (SHUNTCNOP + 0x15)
+#define ZPCSEP        (SHUNTCNOP + 0x16)
+#define ZPCVAR        (SHUNTCNOP + 0x17)
+#define ZPCINT64      (SHUNTCNOP + 0x18)
+#define ZPCUINT64     (SHUNTCNOP + 0x19)
+#define ZPCFLOAT      (SHUNTCNOP + 0x1a)
+#define ZPCDOUBLE     (SHUNTCNOP + 0x1b)
+#define ZPCSTRING     (SHUNTCNOP + 0x1c)
+#define ZPCVECTOR     (SHUNTCNOP + 0x1d)
+#define ZPCMATRIX     (SHUNTCNOP + 0x1e)
+#define ZPCCOMPLEX    (SHUNTCNOP + 0x1f)
 #define PARAMSIZEMASK 0xff
 #define PARAMFLOATBIT 0x40000000
 #define PARAMSIGNBIT  0x80000000
@@ -216,12 +200,6 @@ struct zpctoken {
 #define tobindbl(c) ((c) == '0' ? 0.0 : 1.0)
 #define isbdigit(c) ((c) == '0' || (c) == '1')
 #define isodigit(c) ((c) >= '0' && (c) <= '7')
-
-#define OPERRTOL  0x80000000
-#define zpccopprec(tok)                                                 \
-    (zpcopprectab[(tok)->type] & ~OPERRTOL)
-#define zpccopisrtol(tok)                                               \
-    (zpcopprectab[(tok)->type] & OPERRTOL)
 
 //typedef void zpcophandler_t(struct zpcopcode *);
 //typedef void zpchookfunc_t(struct zpcopcode *);
@@ -382,8 +360,10 @@ struct zpctoken * zpceval(struct zpctoken *srcqueue);
 #include <zpc/op.h>
 
 extern long     zpcradix;
-extern long     zpcopprectab[ZPCNOPER];
-extern long     zpcopnargtab[ZPCNOPER];
+#if 0
+extern long     zpcopprectab[SHUNTCNOP];
+extern long     zpcopnargtab[SHUNTCNOP];
+#endif
 extern zpcop_t *zpcevaltab[ZPCNOPER];
 
 #endif /* __ZPC_ZPC_H__ */
