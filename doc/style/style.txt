@@ -13,12 +13,22 @@ general conventions
 
 objects/identifiers
 -------------------
-- object and such names should be brief
-  - global names should be longer
+- object and other names should be brief
+  - global and function argument names should be longer
   - for example, number of bytes could be
-    - numbytes (global)
+    - modnumbytes (global, mod is the name of the code module/file)
     - nbyte (function argument)
     - nb (function-internal variable)
+    - nbyte, size or len; structure member
+  - another example
+    - modtokenstk (stack)
+    - stack
+    - stk
+    - stk
+  - and another example
+    - modwinattrib or modwinparam
+    - attrib, param
+    - atr, parm
 - volatile-qualifier should be used for cross-thread variables such as mutexes
 - static-qualifier is good for locally visible values
   - may let the compiler do more aggressive optimisations
@@ -186,6 +196,7 @@ ofs     - offset
 op	- operation
 out	- output, e.g. outbuf
 par     - parallel
+parm	- parameter(s)
 pc	- personal computer, program counter (i.e. instruction pointer)
 pct	- percent, percentage
 perm	- permissions

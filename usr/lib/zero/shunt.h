@@ -1,6 +1,15 @@
 #ifndef __ZERO_SHUNT_H__
 #define __ZERO_SHUNT_H__
 
+/*
+ * USAGE
+ * -----
+ * SHUNT_TOKEN is a structure with at least the following fields:
+ * - prev and next; pointers to previous and next queue item (structure)
+ * - type; C-language operation, function, separator, integral types, pointer
+ * - param; e.g. type wordsize
+ */
+
 #if (SHUNTC)
 /* C-language operations */
 #define SHUNTCNOT        0x01
@@ -19,13 +28,17 @@
 #define SHUNTCASSIGN     0x0e
 #define SHUNTCNOP        16
 #define SHUNTCRTOL       (1L << 31)
-#define SHUNTCFUNC       0x01
-#define SHUNTCSEP        0x02
-#define SHUNTCINT        0x03
+#define SHUNTCSEP        (SHUNTCNOP + 0x01)
+#define SHUNTCFUNC       (SHUNTCNOP + 0x02)
+#define SHUNTCINT        (SHUNTCNOP + 0x03)
+#define SHUNTCUINT       (SHUNTCNOP + 0x04)
+#define SHUNTCFLOAT      (SHUNTCNOP + 0x05)
+#define SHUNTCPTR        (SHUNTCNOP + 0x06)
+#define SHUNTCNTAB       (SHUNTCPTR + 1)
 /* global tables */
 extern uint8_t shuntcopchartab[256];
-extern long    shuntcopprectab[SHUNTCNOP];
-extern long    shuntcopnargtab[SHUNTCNOP];
+extern long    shuntcopprectab[SHUNTCNTAB];
+extern long    shuntcopnargtab[SHUNTCNTAB];
 #endif
 
 /*
@@ -38,6 +51,7 @@ SHUNT_TOKEN * shuntparse(SHUNT_TOKEN *srcqueue);
 SHUNT_TOKEN * shunteval(SHUNT_TOKEN *srcqueue);
 
 #if (SHUNTC)
+#define PARAMSIZEMASK 0xff
 #define shuntcisopchar(c)                                               \
     (shuntcopchartab[(int)(c)])
 #define shuntcopprec(tok)                                               \
@@ -45,7 +59,9 @@ SHUNT_TOKEN * shunteval(SHUNT_TOKEN *srcqueue);
 #define shuntcopisrtol(tok)                                             \
     (shuntcopprectab[(tok)->type] & SHUNTCRTOL)
 #define shuntcisvalue(tok)                                              \
-    ((tok) && (tok)->type == SHUNTCINT)
+    ((tok) && ((tok)->type == SHUNTCINT || (tok)->type == SHUNTCUINT))
+#define shuntcwordsize(tp)                                              \
+    ((tp)->param & PARAMSIZEMASK)
 #define shuntcisfunc(tok)                                               \
     ((tok) && (tok)->type == SHUNTCFUNC)
 #define shuntcissep(tok)                                                \
@@ -55,9 +71,10 @@ SHUNT_TOKEN * shunteval(SHUNT_TOKEN *srcqueue);
 #endif
 
 /* internal routines */
+
+/* token queue operations */
 static __inline__ void
-shuntqueue(SHUNT_TOKEN *token,
-           SHUNT_TOKEN **queue, SHUNT_TOKEN **tail)
+shuntqueue(SHUNT_TOKEN *token, SHUNT_TOKEN **queue, SHUNT_TOKEN **tail)
 {
     if (token) {
         token->next = NULL;
@@ -78,6 +95,8 @@ shuntqueue(SHUNT_TOKEN *token,
     return;
 }
 
+/* token stack operations */
+
 #define shuntpush(tok, stk)                                             \
     do {                                                                \
         if (tok) {                                                      \
@@ -89,7 +108,7 @@ shuntqueue(SHUNT_TOKEN *token,
 static __inline__ SHUNT_TOKEN *
 shuntpop(SHUNT_TOKEN **stack)
 {
-    SHUNT_TOKEN *_token;
+    SHUNT_TOKEN *_token = NULL;
 
     if (stack) {
         _token = *stack;

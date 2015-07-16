@@ -54,8 +54,6 @@ struct zpccomplex {
     } img;
 };
 
-#define zpcwordsize(tp)                                                 \
-    ((tp)->param & PARAMSIZEMASK)
 struct zpctoken {
     long                   type;
     char                  *str;
@@ -174,7 +172,6 @@ struct zpctoken {
 #define ZPCVECTOR     (SHUNTCNOP + 0x1d)
 #define ZPCMATRIX     (SHUNTCNOP + 0x1e)
 #define ZPCCOMPLEX    (SHUNTCNOP + 0x1f)
-#define PARAMSIZEMASK 0xff
 #define PARAMFLOATBIT 0x40000000
 #define PARAMSIGNBIT  0x80000000
 

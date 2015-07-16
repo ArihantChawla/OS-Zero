@@ -10,8 +10,8 @@
 
 #if (SHUNTC)
 uint8_t shuntcopchartab[256];
-long    shuntcopprectab[SHUNTCNOP];
-long    shuntcopnargtab[SHUNTCNOP];
+long    shuntcopprectab[SHUNTCNTAB];
+long    shuntcopnargtab[SHUNTCNTAB];
 #endif
 
 void
