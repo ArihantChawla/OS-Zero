@@ -80,8 +80,8 @@ struct zpctoken {
     struct zpctoken       *next;
 };
 
-//#define shuntradix       zpcradix
 /* configuration for shunting yard algorithm */
+#define shuntradix       zpcradix
 #define SHUNT_TOKEN      struct zpctoken
 #define SHUNT_INT64      ZPCINT64
 #define SHUNT_UINT64     ZPCUINT64
@@ -103,31 +103,9 @@ struct zpctoken {
     ((tok) && (tok)->type == ZPCSEP)
 #define shuntisoper(tok)                                                 \
     ((tok) && ((tok)->type >= ZPCNOT && (tok)->type <= ZPCASSIGN))
-#define shuntqueue(tok, queue, tail)                                    \
-    zpcqueuetoken(tok, queue, tail)
-#define shuntpush(tok, stk)                                             \
-    do {                                                                \
-        if (tok) {                                                      \
-            (tok)->prev = NULL;                                         \
-            (tok)->next = *(stk);                                       \
-            *(stk) = (tok);                                             \
-        }                                                               \
-    } while (0)
-static __inline__ SHUNT_TOKEN *
-shuntpop(SHUNT_TOKEN **stack)
-{
-    SHUNT_TOKEN *_token;
-
-    if (stack) {
-        _token = *stack;
-        if (_token) {
-            *stack = _token->next;
-        }
-    }
-
-    return _token;
-}
 #include <zero/shunt.h>
+#define zpcqueuetoken(tok, queue, tail)                                 \
+    shuntqueue(tok, queue, tail)
 
 #define ZPCTEXTBASE 8192
 
