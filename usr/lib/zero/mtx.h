@@ -10,6 +10,8 @@
  * :)
  */
 
+typedef volatile long zeromtx;
+
 #if (__KERNEL__)
 #undef PTHREAD
 #define PTHREAD        0

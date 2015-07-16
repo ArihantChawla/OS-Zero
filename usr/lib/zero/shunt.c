@@ -2,7 +2,7 @@
 #include <stdlib.h>
 #include <string.h>
 #include <zero/mtx.h>
-//#include <zero/shunt.h>
+#include <zero/shunt.h>
 #if (SHUNTZPC)
 #include <zpc/zpc.h>
 #include <zpc/op.h>

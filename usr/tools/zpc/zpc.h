@@ -80,7 +80,8 @@ struct zpctoken {
     struct zpctoken       *next;
 };
 
-#define shuntradix       zpcradix
+//#define shuntradix       zpcradix
+/* configuration for shunting yard algorithm */
 #define SHUNT_TOKEN      struct zpctoken
 #define SHUNT_INT64      ZPCINT64
 #define SHUNT_UINT64     ZPCUINT64

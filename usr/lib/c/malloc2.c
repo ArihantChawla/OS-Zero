@@ -12,12 +12,13 @@
  * - fix mallinfo() to return proper information
  */
 
-#define MALLOCSIG         1
-#define MALLOC4LEVELTAB  1
+#define MALLOCCONSTSLABS 0
+#define MALLOCSMALLSLABS 1
+#define MALLOCSIG        1
+#define MALLOC4LEVELTAB  0
 
 #define MALLOCNOPTRTAB   0
 #define MALLOCNARN       4
-#define MALLOCNEWSLABS   1
 #define MALLOCEXPERIMENT 0
 
 #define MALLOCDEBUGHOOKS 0
@@ -144,17 +145,48 @@
 #define MALLOCMINLOG2        CLSIZELOG2
 #define MALLOCNBKT           PTRBITS
 /* allocation sizes */
+#if (MALLOCCONSTSLABS)
+#define MALLOCSLABLOG2       18
+#elif (MALLOCSMALLSLABS)
+#define MALLOCSUPERSLABLOG2  19
+#define MALLOCSLABLOG2       17
+#define MALLOCTINYSLABLOG2   8
+#define MALLOCSMALLSLABLOG2  11
+#define MALLOCMIDSLABLOG2    13
+#define MALLOCBIGSLABLOG2    15
+#define MALLOCSMALLMAPLOG2   21
+#define MALLOCMIDMAPLOG2     23
+#define MALLOCBIGMAPLOG2     25
+#if 0
+#define MALLOCSUPERSLABLOG2  20
+#define MALLOCSLABLOG2       18
+#define MALLOCTINYSLABLOG2   8
+#define MALLOCSMALLSLABLOG2  12
+#define MALLOCMIDSLABLOG2    14
+#define MALLOCBIGSLABLOG2    17
+#define MALLOCSMALLMAPLOG2   21
+#define MALLOCMIDMAPLOG2     23
+#define MALLOCBIGMAPLOG2     25
+#endif
+#else
 #define MALLOCSUPERSLABLOG2  22
 #define MALLOCSLABLOG2       20
 #define MALLOCTINYSLABLOG2   8
-#define MALLOCSMALLSLABLOG2  12
-#define MALLOCMIDSLABLOG2    15
+#define MALLOCSMALLSLABLOG2  14
+#define MALLOCMIDSLABLOG2    16
 #define MALLOCBIGSLABLOG2    18
 #define MALLOCSMALLMAPLOG2   22
 #define MALLOCMIDMAPLOG2     24
 #define MALLOCBIGMAPLOG2     26
+#endif
 /* use non-pointers in allocation tables */
-#if (MALLOCSTKNDX)
+#if (MALLOCCONSTSLABS)
+#if (MALLOCSLABLOG2 - MALLOCMINLOG2 <= 16)
+#define MAGPTRNDX            uint16_t
+#else
+#define MAGPTRNDX            uint32_t
+#endif
+#elif (MALLOCSTKNDX)
 #if (MALLOCSUPERSLABLOG2 - MALLOCMINLOG2 <= 16)
 #define MAGPTRNDX            uint16_t
 #else
@@ -176,6 +208,12 @@
 #define magnbufmap(bktid)                                               \
     (1UL << magnbufmaplog2(bktid))
 #endif /* MALLOCBUFMAP */
+#if (MALLOCCONSTSLABS)
+#define magnbytelog2(bktid)                                             \
+    (((bktid) <= MALLOCSLABLOG2)                                        \
+     ? MALLOCSLABLOG2                                                   \
+     : (bktid))
+#else /* !MALLOCCONSTSLABS */
 #define magnbytelog2(bktid)                                             \
     (((bktid) <= MALLOCTINYSLABLOG2)                                    \
      ? MALLOCSMALLSLABLOG2                                              \
@@ -190,6 +228,7 @@
                  : (((bktid) <= MALLOCMIDMAPLOG2)                       \
                     ? MALLOCBIGMAPLOG2                                  \
                     : (bktid)))))))
+#endif
 #define magnblklog2(bktid)                                              \
     (magnbytelog2(bktid) - (bktid))
 
