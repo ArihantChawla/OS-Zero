@@ -29,7 +29,7 @@ FASTCALL void                thrjmp(struct thr *thr);
 #define __KERNEL__ 1
 //#include <zero/mtx.h>
 
-struct thrq {
+struct thrqueue {
     volatile long  lk;
     struct thr    *head;
     struct thr    *tail;

@@ -16,9 +16,9 @@
 #include <kern/unit/x86/trap.h>
 #include <kern/unit/ia32/thr.h>
 
-static struct thrwait thrwaittab[NLVL0THR] ALIGNED(PAGESIZE);
-static struct thrq    thrruntab[THRNCLASS * THRNPRIO];
-extern long           trappriotab[NINTR];
+static struct thrwait  thrwaittab[NLVL0THR] ALIGNED(PAGESIZE);
+static struct thrqueue thrruntab[THRNCLASS * THRNPRIO];
+extern long            trappriotab[NINTR];
 
 /* save thread context */
 ASMLINK
@@ -89,19 +89,19 @@ thradjprio(struct thr *thr)
     return prio;
 }
 
-/* TODO: use <zero/list.h> */
+/* TODO: use <zero/list.h>? */
 
 /* add thread to end of queue */
 void
-thrqueue(struct thr *thr, struct thrq *thrq)
+thrqueue(struct thr *thr, struct thrqueue *thrqueue)
 {
-    thr->prev = thrq->tail;
+    thr->prev = thrqueue->tail;
     if (thr->prev) {
         thr->prev->next = thr;
     } else {
-        thrq->head = thr;
+        thrqueue->head = thr;
     }
-    thrq->tail = thr;
+    thrqueue->tail = thr;
 
     return;
 }
@@ -211,17 +211,17 @@ thraddwait(struct thr *thr)
 void
 thrwakeup(uintptr_t wchan)
 {
-    struct thrwait *tab;
-    struct thrwait *ptr = NULL;
-    struct thrq    *thrq;
-    struct thr     *thr1;
-    struct thr     *thr2;
-    long            key0 = thrwaitkey0(wchan);
-    long            key1 = thrwaitkey1(wchan);
-    long            key2 = thrwaitkey2(wchan);
-    long            key3 = thrwaitkey3(wchan);
-//    long            n;
-    struct thrwait *ptab[4] = { NULL };
+    struct thrwait  *tab;
+    struct thrwait  *ptr = NULL;
+    struct thrqueue *thrq;
+    struct thr      *thr1;
+    struct thr      *thr2;
+    long             key0 = thrwaitkey0(wchan);
+    long             key1 = thrwaitkey1(wchan);
+    long             key2 = thrwaitkey2(wchan);
+    long             key3 = thrwaitkey3(wchan);
+//    long             n;
+    struct thrwait  *ptab[4] = { NULL };
 
     tab = &thrwaittab[key0];
     mtxlk(&tab->lk);
@@ -295,10 +295,10 @@ FASTCALL
 struct thr *
 thrpick(void)
 {
-    struct thr  *thr = k_curthr;
-    struct thrq *thrq;
-    long         prio;
-    long         state;
+    struct thr      *thr = k_curthr;
+    struct thrqueue *thrq;
+    long             prio;
+    long             state;
 
     if (thr) {
         prio = thradjprio(thr);
