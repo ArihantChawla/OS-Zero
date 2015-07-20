@@ -72,7 +72,7 @@ semup(zerosem *sem)
         listpop(&sem->queue, item);
         mtxunlk(&sem->lk);
 #if (__KERNEL__)
-        thrwakeup((uintptr_t)item);
+        thrwakeup((uintptr_t)sem);
 #endif
     } else {
         cnt++;
