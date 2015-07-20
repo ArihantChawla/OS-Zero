@@ -230,6 +230,7 @@ sim	- simulation, simulator
 sp	- stack pointer
 src     - source
 stk     - stack
+stmp	- stamp, e.g. tmstmp (timestamp)
 str     - string
 strm	- stream
 sym	- symbol

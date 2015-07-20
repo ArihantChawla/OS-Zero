@@ -24,7 +24,8 @@
 #endif
 #define NPROCFD     4096        // maximum number of descriptors per process
 #if !defined(NPAGEPHYS)
-#define NPAGEPHYS   (16ULL * 1024 * 1024) // maximum number of physical pages
+//#define NPAGEPHYS   (1ULL * 1024 * 1024) // maximum number of physical pages
+#define NPAGEPHYS   (512 * 1024) // maximum number of physical pages
 #endif
 #define NBPHYS      (NPAGEPHYS * PAGESIZE) // maximum amount of RAM
 
