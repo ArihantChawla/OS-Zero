@@ -45,8 +45,9 @@ semdown(zerosem *sem)
     cnt = sem->cnt;
     if (!cnt) {
 #if (__KERNEL__)
+        listqueue(&sem->queue, k_curthr);
         k_curthr->wchan = (uintptr_t)sem;
-        thraddwait(k_curthr);
+        thraddwait(k_curthr);#endif
 #endif
         mtxunlk(&sem->lk);
         m_waitint();
