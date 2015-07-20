@@ -2,6 +2,7 @@
 #define __ZERO_SEM_H__
 
 #include <stddef.h>
+#include <stdint.h>
 
 #include <kern/conf.h>
 #define ZEROSEMINITCNT NTHR
@@ -47,7 +48,7 @@ semdown(zerosem *sem)
 #if (__KERNEL__)
         listqueue(&sem->queue, k_curthr);
         k_curthr->wchan = (uintptr_t)sem;
-        thraddwait(k_curthr);#endif
+        thraddwait(k_curthr);
 #endif
         mtxunlk(&sem->lk);
         m_waitint();
