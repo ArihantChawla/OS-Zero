@@ -1,6 +1,8 @@
 #ifndef __MEM_MAG_H__
 #define __MEM_MAG_H__
 
+#include <stdint.h>
+
 #include <zero/param.h>
 #include <zero/mtx.h>
 
