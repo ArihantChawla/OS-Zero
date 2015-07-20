@@ -120,8 +120,9 @@ kmain(struct mboothdr *hdr, unsigned long pmemsz)
     /* FIXME: map possible device memory */
     vmmapseg((uint32_t *)&_pagetab, DEVMEMBASE, DEVMEMBASE, 0xffffffffU,
              PAGEPRES | PAGEWRITE | PAGENOCACHE);
+    schedinit();
     /* zero kernel BSS segment */
-    kbzero(&_bssvirt, (uint32_t)&_ebss - (uint32_t)&_bss);
+    kbzero(&_bssvirt, (uint32_t)&_ebssvirt - (uint32_t)&_bssvirt);
     /* set kernel I/O permission bitmap to all 1-bits */
     kmemset(&kerniomap, 0xff, sizeof(kerniomap));
     /* INITIALIZE CONSOLES AND SCREEN */
@@ -232,7 +233,6 @@ kmain(struct mboothdr *hdr, unsigned long pmemsz)
             (vmpagestat.nwired + vmpagestat.nmapped + vmpagestat.nbuf) << (PAGESIZELOG2 - 10),
             vmpagestat.nwired << (PAGESIZELOG2 - 10),
             vmpagestat.nphys << (PAGESIZELOG2 - 10));
-    schedinit();
 #if (APIC)
     apicstarttmr(tmrcnt);
 #else

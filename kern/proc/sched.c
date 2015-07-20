@@ -1,3 +1,4 @@
+#include <kern/conf.h>
 #include <zero/cdecl.h>
 #include <zero/param.h>
 #include <zero/types.h>
