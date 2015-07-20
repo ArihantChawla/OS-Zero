@@ -40,7 +40,7 @@ memalloc(unsigned long nb, long flg)
     void            *ptr = NULL;
     unsigned long    sz = max(MAGMIN, nb);
     unsigned long    slab = 0;
-    unsigned long    bkt;
+    unsigned long    bkt = memgetbkt(sz);
     struct maghdr   *mag;
     void            *bmap;
     uint8_t         *u8ptr;
@@ -49,7 +49,6 @@ memalloc(unsigned long nb, long flg)
     unsigned long    ndx;
     unsigned long    mlk = 0;
 
-    bkt = memgetbkt(sz);
     mtxlk(&lktab[bkt]);
     if (bkt >= SLABMINLOG2) {
 #if (MEMTEST)

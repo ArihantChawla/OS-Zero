@@ -9,6 +9,7 @@
 #if (__KERNEL__)
 #include <kern/proc/thr.h>
 
+#define ZEROSEMINITVAL { ZEROMTXINITVAL, ZEROSEMINITCNT, { NULL, NULL } }
 #define LISTQ_TYPE     struct thrqueue
 #define LIST_TYPE      struct thr
 #endif /* __KERNEL__ */
@@ -24,11 +25,19 @@ struct zerosem {
 
 typedef struct zerosem zerosem;
 
+static __inline__ zerosem *
+semalloc(void)
+{
+    zerosem *sem = kmalloc(sizeof(zerosem));
+
+    return sem;
+}
+
 static __inline__ void
 seminit(zerosem *sem)
 {
     void *null = NULL;
-    
+
     sem->lk = ZEROMTXINITVAL;
     sem->cnt = ZEROSEMINITCNT;
     sem->queue.head = null;
