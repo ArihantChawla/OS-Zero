@@ -274,7 +274,7 @@ zvmopcmp(struct zvmopcode *op)
     zasword_t    *dptr;
     zasword_t     src = zvmgetarg1(op, arg1t);
     zasword_t     dest = zvmgetarg2(op, arg1t, arg2t, dptr);
-    int64_t       res = dest - src;
+//    int64_t       res = dest - src;
 
     dest -= src;
     zvm.msw &= ~(ZVMZF | ZVMOF | ZVMCF);
@@ -504,9 +504,9 @@ zvmopbnc(struct zvmopcode *op)
 void
 zvmoppop(struct zvmopcode *op)
 {
-    uint_fast8_t  arg1t = ZVMARGREG;
-    zasword_t    *dptr;
-    zasword_t     src = zvmgetarg(op, arg1t, dptr);
+//    uint_fast8_t  arg1t = ZVMARGREG;
+    zasword_t    *dptr = (zasword_t *)&zvm.physmem[zvm.sp];
+//    zasword_t     src = zvmgetarg(op, arg1t, dptr);
     zasword_t     dest = *(zasword_t *)&zvm.physmem[zvm.sp];
 
     zvm.msw &= ~(ZVMZF | ZVMOF | ZVMCF);
@@ -520,12 +520,12 @@ void
 zvmoppush(struct zvmopcode *op)
 {
     uint_fast8_t  arg1t = ZVMARGREG;
-    zasword_t    *dptr;
+    zasword_t    *dptr = (zasword_t *)&zvm.physmem[zvm.sp];
     zasword_t     src = zvmgetarg1(op, arg1t);
 
     zvm.msw &= ~(ZVMZF | ZVMOF | ZVMCF);
     zvmsetzf(src);
-    *(zasword_t *)&zvm.physmem[zvm.sp] = src;
+    *dptr = src;
     zvm.sp -= sizeof(zasword_t);
     zvm.pc += op->size << 2;
 }
@@ -554,8 +554,8 @@ zvmopmovl(struct zvmopcode *op)
     uint_fast8_t  arg2t = op->arg2t;
     uint32_t     *dptr;
     uint32_t      src = zvmgetarg1mov(op, arg1t, arg2t);
-    uint32_t      dest = zvmgetarg2mov(op, arg1t, arg2t, dptr, uint32_t);
 
+    zvmgetarg2mov(op, arg1t, arg2t, dptr, uint32_t);
     *dptr = src;
     zvm.pc += op->size << 2;
 }
@@ -567,8 +567,8 @@ zvmopmovb(struct zvmopcode *op)
     uint_fast8_t  arg2t = op->arg2t;
     uint8_t      *dptr;
     uint8_t       src = zvmgetarg1mov(op, arg1t, arg2t);
-    uint8_t       dest = zvmgetarg2mov(op, arg1t, arg2t, dptr, uint8_t);
 
+    zvmgetarg2mov(op, arg1t, arg2t, dptr, uint8_t);
     *dptr = src;
     zvm.pc += op->size << 2;
 }
@@ -580,8 +580,8 @@ zvmopmovw(struct zvmopcode *op)
     uint_fast8_t  arg2t = op->arg2t;
     uint16_t     *dptr;
     uint16_t      src = zvmgetarg1mov(op, arg1t, arg2t);
-    uint16_t      dest = zvmgetarg2mov(op, arg1t, arg2t, dptr, uint16_t);
 
+    zvmgetarg2mov(op, arg1t, arg2t, dptr, uint16_t);
     *dptr = src;
     zvm.pc += op->size << 2;
 }

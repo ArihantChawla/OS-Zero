@@ -3,9 +3,9 @@
 #ifndef __ZVM_MEM_H__
 #define __ZVM_MEM_H__
 
+#include <zvm/conf.h>
 #include <zero/cdecl.h>
 #include <zero/param.h>
-#include <zvm/conf.h>
 
 #if (ZVMVIRTMEM)
 

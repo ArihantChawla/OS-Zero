@@ -33,7 +33,7 @@ SECTIONS {
     . = HICORE;
 
     /* identity-mapped low kernel segment */
-    .boot : AT(HICORE + SIZEOF(.hicore)) {
+    .boot : AT(HICORE) {
     	boot.o(.text)
     	boot.o(.data)
     	boot.o(.bss)
@@ -159,11 +159,13 @@ SECTIONS {
     /* bss segment; runtime-allocated, uninitialised data */
     .bss : AT(PAGETAB + SIZEOF(.ptab) + SIZEOF(.text) + SIZEOF(.data)) {
         _bss = _data + SIZEOF(.data);
+        _bss = LOADADDR(.bss);
 	_bssvirt = _etextvirt + SIZEOF(.data) + SIZEOF(.text);
 	*(.bss)
 	*(COMMON)
         _ebss = _bss + SIZEOF(.bss);
 	_ebssvirt = _bssvirt + SIZEOF(.bss);
+	_ebssphys = LOADADDR(.bss) + SIZEOF(.bss);
 	. = ALIGN(PAGESIZE);
     }
 

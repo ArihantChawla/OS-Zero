@@ -26,7 +26,6 @@ zvminitmem(void)
     return len;
 }
 #else
-#if (ZAS32BIT)
 size_t
 zvminitmem(void)
 {
@@ -40,7 +39,6 @@ zvminitmem(void)
 
     return ZVMNPAGE * ZVMPAGESIZE;
 }
-#endif
 
 #if (ZVMADRBITS == 32)
 void *

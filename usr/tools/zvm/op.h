@@ -126,8 +126,8 @@ void zvmophlt(struct zvmopcode *op);
 #endif
 
 #define zvmgetarg(op, arg1t, ptr)                                       \
-    (ptr = &zvm.regs[(op)->reg1],                                     \
-     ((arg1t) == ZVMARGREG)                                             \
+    (((ptr) = &zvm.regs[(op)->reg1],                                    \
+     ((arg1t) == ZVMARGREG))                                            \
      ? zvm.regs[(op)->reg1]                                             \
      : (op)->args[0])
 #define zvmgetarg1(op, arg1t)                                           \
@@ -135,8 +135,8 @@ void zvmophlt(struct zvmopcode *op);
      ? zvm.regs[(op)->reg1]                                             \
      : (op)->args[0])
 #define zvmgetarg2(op, arg1t, arg2t, ptr)                               \
-    (ptr = &zvm.regs[(op)->reg2],                                       \
-     ((arg2t) == ZVMARGREG)                                             \
+    (((ptr) = &zvm.regs[(op)->reg2],                                    \
+      ((arg2t) == ZVMARGREG))                                           \
      ? zvm.regs[op->reg2]                                               \
      : (((arg1t) == ZVMARGREG)                                          \
         ? (op)->args[0]                                                 \

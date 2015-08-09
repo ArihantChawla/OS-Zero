@@ -65,6 +65,7 @@ extern const char   *zvmopnargtab[ZVMNOP];
 extern struct zvm    zvm;
 
 /* function prototypes */
+int               zvmmain(int argc, char *argv[]);
 void              zvminit(void);
 void              zvminitopt(void);
 size_t            zvminitmem(void);
@@ -72,7 +73,7 @@ void              zvminitio(void);
 long              asmaddop(const uint8_t *str, struct zasop *op);
 struct zasop    * zvmfindasm(const uint8_t *str);
 struct zastoken * zasprocinst(struct zastoken *token, zasmemadr_t adr,
-                                     zasmemadr_t *retadr);
+                              zasmemadr_t *retadr);
 int8_t            zvmsigbus(zasmemadr_t adr, long size);
 int8_t            zvmsigsegv(zasmemadr_t adr, long reason);
 void              asmprintop(struct zvmopcode *op);

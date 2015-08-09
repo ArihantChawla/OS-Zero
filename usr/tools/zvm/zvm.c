@@ -259,14 +259,12 @@ zvmmain(int argc, char *argv[])
 
         exit(1);
     }
-    zasinit();
-    zvminitopt();
     zvminit();
+    zvminitopt();
+    zasinit();
 #if (!ZVMVIRTMEM)
-#if (ZVMDEBUG)
-    assert(zvm.physmem != NULL);
-#endif
     if (ZVMTEXTBASE) {
+        fprintf(stderr, "ZVMTEXTBASE == %ld\n", ZVMTEXTBASE);
         memset(zvm.physmem, 0, ZVMTEXTBASE);
     }
 #endif

@@ -26,6 +26,7 @@ extern char _etextvirt;
 extern char _datavirt;
 extern char _bssvirt;
 extern char _ebssvirt;
+extern char _ebssphys;
 extern long _kernsize;
 
 #endif /* !defined(__ASSEMBLY__) */
