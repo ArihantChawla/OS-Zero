@@ -149,7 +149,7 @@ vminit(void *pagetab)
            PAGEPRES | PAGEWRITE);
 
     /* identity-map 3.5G..4G */
-//    devmap(pagetab, DEVMEM, 512 * 1024 * 1024);
+//    devmap(pagetab, DEVMEMBASE, 512 * 1024 * 1024);
 
     /* initialize paging */
     pginit();

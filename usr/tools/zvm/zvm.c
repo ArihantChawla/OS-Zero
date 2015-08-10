@@ -262,6 +262,9 @@ zvmmain(int argc, char *argv[])
     zvminit();
     zvminitopt();
     zasinit();
+#if (ZVMEFL)
+    zvminitui();
+#endif
 #if (!ZVMVIRTMEM)
     if (ZVMTEXTBASE) {
         fprintf(stderr, "ZVMTEXTBASE == %ld\n", ZVMTEXTBASE);
@@ -297,9 +300,11 @@ zvmmain(int argc, char *argv[])
         exit(1);
     }
     fprintf(stderr, "START: %lx\n", (long)_startadr);
-    zvmloop(_startadr);
 #if (ZVMEFL)
-    sleep(5);
+    ecore_main_loop_begin();
+//    sleep(5);
+#else
+    zvmloop(_startadr);
 #endif
 
     /* NOTREACHED */

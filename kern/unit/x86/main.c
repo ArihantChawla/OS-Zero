@@ -118,8 +118,10 @@ kmain(struct mboothdr *hdr, unsigned long pmemsz)
     /* initialise virtual memory */
     vminit((uint32_t *)&_pagetab);
     /* FIXME: map possible device memory */
+#if 0
     vmmapseg((uint32_t *)&_pagetab, DEVMEMBASE, DEVMEMBASE, 0xffffffffU,
              PAGEPRES | PAGEWRITE | PAGENOCACHE);
+#endif
     schedinit();
     /* zero kernel BSS segment */
     kbzero(&_bssvirt, (uint32_t)&_ebssvirt - (uint32_t)&_bssvirt);
@@ -134,17 +136,13 @@ kmain(struct mboothdr *hdr, unsigned long pmemsz)
 #elif (VBE)
     consinit(768 >> 3, 1024 >> 3);
 #endif
-#if (VBE)
-    vbeinitscr();
-#endif
 #if 0
     k_curproc = &proctab[0];
     k_curcpu = &cputab[0];
     cpuinit(k_curcpu);
 #endif
-
     /* TODO: use memory map from GRUB? */
-    meminit(vmlinkadr(&_ebssvirt), pmemsz);
+    meminit((uintptr_t)&_ebss, pmemsz);
     vminitphys((uintptr_t)&_ebss, pmemsz - (unsigned long)&_ebss);
     tssinit(0);
 #if (SMBIOS)

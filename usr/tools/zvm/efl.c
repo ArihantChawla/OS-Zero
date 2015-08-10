@@ -4,6 +4,7 @@
 
 #if (ZVMEFL)
 
+#include <unistd.h>
 #include <Ecore.h>
 #include <Ecore_Evas.h>
 #include <Edje.h>
@@ -36,6 +37,20 @@ zvmonscrsync(void)
 }
 
 static void
+zvminiteflevas(Ecore_Evas *core)
+{
+    Evas        *evas;
+    
+    ecore_evas_title_set(core, "Zero Virtual Machine");
+    evas = ecore_evas_get(core);
+    zvmui.evas = evas;
+    ecore_evas_shaped_set(core, 0);
+    ecore_evas_show(core);
+
+    return;
+}
+
+static void
 zvminitefledje(void)
 {
     Evas_Object *edje;
@@ -56,18 +71,31 @@ zvminitefledje(void)
     return;
 }
 
-static void
-zvminiteflevas(Ecore_Evas *core)
+static
+Eina_Bool
+zvmreadstdin(void *data EINA_UNUSED, Ecore_Fd_Handler *handler EINA_UNUSED)
 {
-    Evas        *evas;
-    
-    ecore_evas_title_set(core, "Zero Virtual Machine");
-    evas = ecore_evas_get(core);
-    zvmui.evas = evas;
-    ecore_evas_shaped_set(core, 0);
-    ecore_evas_show(core);
+    Eina_List  *lst;
+    Ecore_Evas *core;
+    char        ch;
 
-    return;
+    scanf("%c", &ch);
+    if (ch == 'h') {
+        EINA_LIST_FOREACH(ecore_evas_ecore_evas_list_get(), lst, core)
+            ecore_evas_hide(core);
+    } else if (ch == 's') {
+        EINA_LIST_FOREACH(ecore_evas_ecore_evas_list_get(), lst, core)
+            ecore_evas_show(core);
+    }
+    
+    return ECORE_CALLBACK_RENEW;
+}
+
+void
+zvminitecore(void)
+{
+    ecore_main_fd_handler_add(STDIN_FILENO, ECORE_FD_READ, zvmreadstdin,
+                              NULL, NULL, NULL);
 }
 
 void
@@ -85,6 +113,7 @@ zvminitui(void)
     zvmui.core = core;
     zvminiteflevas(core);
     zvminitefledje();
+    zvminitecore();
 
     return;
 }

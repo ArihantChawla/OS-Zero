@@ -19,8 +19,7 @@ void  vmmapseg(uint32_t *pagetab, uint32_t virt, uint32_t phys, uint32_t lim,
 
 #define KERNVIRTBASE      0xc0000000U
 #define vmlinkadr(adr)    ((uint32_t)(adr) - KERNVIRTBASE)
-#define vmphysadr(adr)    (((uint32_t *)&_pagetab[vmpagenum(adr)]) & VMPGMASK)
-
+#define vmphysadr(adr)    ((uintptr_t)(((uint32_t *)&_pagetab)[vmpagenum(adr)]) & VMPGMASK)
 #define vmpagedirnum(adr) ((uint32_t)(adr) >> PDSHIFT)
 #define vmpagenum(adr)    ((uint32_t)(adr) >> PTSHIFT)
 #define vmpageofs(adr)    ((uint32_t)(adr) & (PAGESIZE - 1))

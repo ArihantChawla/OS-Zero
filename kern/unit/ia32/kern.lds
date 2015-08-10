@@ -159,7 +159,6 @@ SECTIONS {
     /* bss segment; runtime-allocated, uninitialised data */
     .bss : AT(PAGETAB + SIZEOF(.ptab) + SIZEOF(.text) + SIZEOF(.data)) {
         _bss = _data + SIZEOF(.data);
-        _bss = LOADADDR(.bss);
 	_bssvirt = _etextvirt + SIZEOF(.data) + SIZEOF(.text);
 	*(.bss)
 	*(COMMON)

@@ -12,6 +12,7 @@
  * - fix mallinfo() to return proper information
  */
 
+#define MALLOCDYNARN     0
 #define MALLOCCONSTSLABS 0
 #define MALLOCSMALLSLABS 1
 #define MALLOCSIG        1
@@ -638,6 +639,57 @@ mallocdiag(void)
 }
 #endif /* MALLOCDIAG */
 
+#if (MALLOCDYNARN)
+long
+thrarnid(void)
+{
+    struct arn **ptr;
+    struct arn  *arn;
+    long         narn;
+    long         n;
+
+    if (_arnid >= 0) {
+
+        return _arnid;
+    }
+    mtxlk(&_arnlk);
+    _arnid = curarn++;
+    narn = _arnid;
+    if (_arnid == g_malloc.narn) {
+        n = narn << 1;
+        ptr = mapanon(g_malloc.zerofd,
+                      n * sizeof(struct arn **));
+        if (ptr == MAP_FAILED) {
+            fprintf(stderr, "cannot allocate arena buffer\n");
+
+            exit(1);
+        }
+        memcpy(ptr, g_malloc.arntab, narn * sizeof(struct arn **));
+        ptr += _arnid;
+        arn = mapanon(g_malloc.zerofd, narn * sizeof(struct arn));
+        if (arn == MAP_FAILED) {
+            fprintf(stderr, "cannot allocate arena structures\n");
+
+            exit(1);
+        }
+        while (narn--) {
+            *ptr = arn;
+            ptr++;
+            arn++;
+        }
+        g_malloc.narn = n;
+    }
+    arn = g_malloc.arntab[_arnid];
+    mtxlk(&arn->nreflk);
+    arn->nref++;
+//    curarn &= (g_malloc.narn - 1);
+    pthread_setspecific(g_malloc.arnkey, g_malloc.arntab[_arnid]);
+    mtxunlk(&arn->nreflk);
+    mtxunlk(&_arnlk);
+
+    return _arnid;
+}
+#else
 long
 thrarnid(void)
 {
@@ -659,6 +711,7 @@ thrarnid(void)
 
     return _arnid;
 }
+#endif
 
 static __inline__ long
 blkbktid(size_t size)
