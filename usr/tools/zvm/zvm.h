@@ -7,13 +7,17 @@
 #include <zero/cdecl.h>
 #include <zas/zas.h>
 
+/* number of virtual machine integral registers */
 #define ZASNREG         16
 
-#define ZASREGINDEX     0x20
-#define ZASREGINDIR     0x10
+/* argument types for instructions */
 #define ZVMARGIMMED     0x00
 #define ZVMARGREG       0x01
 #define ZVMARGADR       0x02
+/* indexing flags for registers */
+#define ZASREGINDEX     0x80
+#define ZASREGINDIR     0x40
+/* mask of valid register IDs */
 #define ZASREGMASK      0x0f
 
 /* number of units and instructions */
@@ -26,6 +30,7 @@
 #define ZVMCF           0x04 // carry
 #define ZVMIF           0x08 // interrupt pending
 
+/* zvm instruction format */
 struct zvmopcode {
     unsigned int code  : 8; // (unit << 4) | inst
     unsigned int arg1t : 4; // argument #1 type
@@ -41,10 +46,11 @@ struct zvmopcode {
 
 typedef void zvmopfunc_t(struct zvmopcode *);
 
+/* zvm configuration and virtual machine structure */
 struct zvm {
     zasword_t       regs[ZASNREG]; // virtual registers
 #if !(ZVMVIRTMEM)
-    uint8_t        *physmem; // memory base address
+    char           *physmem; // memory base address
     size_t          memsize; // memory size in bytes
 #endif
     volatile long   shutdown; // shutdown flag
@@ -70,8 +76,8 @@ void              zvminit(void);
 void              zvminitopt(void);
 size_t            zvminitmem(void);
 void              zvminitio(void);
-long              asmaddop(const uint8_t *str, struct zasop *op);
-struct zasop    * zvmfindasm(const uint8_t *str);
+long              asmaddop(const char *str, struct zasop *op);
+struct zasop    * zvmfindasm(const char *str);
 struct zastoken * zasprocinst(struct zastoken *token, zasmemadr_t adr,
                               zasmemadr_t *retadr);
 int8_t            zvmsigbus(zasmemadr_t adr, long size);

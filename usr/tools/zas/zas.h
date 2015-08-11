@@ -60,17 +60,17 @@ typedef uint64_t  zassize_t;
 #define ZASNTOKEN      0x16
 
 struct zasopinfo {
-    const char       *name;
-    uint8_t           narg;
+    const char *name;
+    uint8_t     narg;
 };
 
 struct zasop {
-    uint8_t      *name;
-    uint8_t       code;
-    uint8_t       narg;
-    uint8_t       len;
+    const char *name;
+    uint8_t     code;
+    uint8_t     narg;
+    uint8_t     len;
 #if (WPMVEC)
-    uint32_t      flg;
+    uint32_t    flg;
 #endif
     struct zasop *next;
 #if (ZVM) && (ZVMMULTITAB)
@@ -79,7 +79,7 @@ struct zasop {
 };
 
 struct zaslabel {
-    uint8_t         *name;
+    char            *name;
     uintptr_t        adr;
     struct zaslabel *next;
 };
@@ -90,30 +90,30 @@ struct zasvalue {
 };
 
 struct zasinst {
-    uint8_t *name;
+    const char *name;
 #if (ZASDB)
-    uint8_t *data;
+    uint8_t    *data;
 #endif
-    uint8_t  op;
-    uint8_t  narg;
+    uint8_t     op;
+    uint8_t     narg;
 #if (WPMVEC)
-    uint8_t  flg;
+    uint8_t     flg;
 #endif
 };
 
 struct zassymrec {
     struct zassymrec *next;
-    uint8_t          *name;
+    char             *name;
     uintptr_t         adr;
 };
 
 struct zassym {
-    uint8_t    *name;
+    char       *name;
     zasuword_t  adr;
 };
 
 struct zasadr {
-    uint8_t   *name;
+    char      *name;
     uintptr_t  val;
 };
 
@@ -123,7 +123,7 @@ struct zasndx {
 };
 
 struct zasval {
-    uint8_t       *name;
+    char          *name;
     zasword_t      val;
     struct zasval *next;
 };
@@ -151,7 +151,7 @@ struct zastoken {
         struct zassym    sym;
         struct zasadr    adr;
         struct zasndx    ndx;
-        uint8_t         *str;
+        char            *str;
         uint8_t          ch;
         uint8_t          size;
         zasuword_t       reg;

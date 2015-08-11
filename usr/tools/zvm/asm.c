@@ -36,7 +36,7 @@ zvminitopt(void)
  * - the top level table is indexed with the first byte of mnemonic and so on
  */
 long
-asmaddop(const uint8_t *str, struct zasop *op)
+asmaddop(const char *str, struct zasop *op)
 {
     long           key = *str++;
     uint8_t        len = (key) ? 1 : 0;
@@ -57,7 +57,7 @@ asmaddop(const uint8_t *str, struct zasop *op)
 }
 
 struct zasop *
-asmfindop(const uint8_t *str)
+asmfindop(const char *str)
 {
     long          key = *str++;
     struct zasop *ptr = zvmoptab[key];
@@ -82,9 +82,9 @@ asmfindop(const uint8_t *str)
 #else
 
 long
-asmaddop(const uint8_t *str, struct zasop *op)
+asmaddop(const char *str, struct zasop *op)
 {
-//    uint8_t       *str = (uint8_t *)op->name;
+//    uint8_t       *str = op->name;
     unsigned long key = 0;
     long          len = 0;
 
@@ -245,7 +245,7 @@ asmprocinst(struct zastoken *token, zasmemadr_t adr, zasmemadr_t *retadr)
                 case ZASTOKENSYM:
                     op->arg1t = ZVMARGADR;
                     sym = malloc(sizeof(struct zassymrec));
-                    sym->name = (uint8_t *)strdup((char *)token1->data.sym.name);
+                    sym->name = strdup((char *)token1->data.sym.name);
                     sym->adr = (uintptr_t)&op->args[0];
                     zasqueuesym(sym);
                     len += sizeof(zasmemadr_t);
@@ -272,7 +272,7 @@ asmprocinst(struct zastoken *token, zasmemadr_t adr, zasmemadr_t *retadr)
                 case ZASTOKENADR:
                     op->arg1t = ZVMARGIMMED;
                     sym = malloc(sizeof(struct zassymrec));
-                    sym->name = (uint8_t *)strdup((char *)token1->data.sym.name);
+                    sym->name = strdup((char *)token1->data.sym.name);
                     sym->adr = (uintptr_t)&op->args[0];
                     zasqueuesym(sym);
                     len += sizeof(zasmemadr_t);
@@ -317,7 +317,7 @@ asmprocinst(struct zastoken *token, zasmemadr_t adr, zasmemadr_t *retadr)
                 case ZASTOKENSYM:
                     op->arg2t = ZVMARGADR;
                     sym = malloc(sizeof(struct zassymrec));
-                    sym->name = (uint8_t *)strdup((char *)token2->data.sym.name);
+                    sym->name = strdup((char *)token2->data.sym.name);
                     if (op->arg1t == ZVMARGREG) {
                         sym->adr = (uintptr_t)&op->args[0];
                     } else {
@@ -352,7 +352,7 @@ asmprocinst(struct zastoken *token, zasmemadr_t adr, zasmemadr_t *retadr)
                 case ZASTOKENADR:
                     op->arg2t = ZVMARGIMMED;
                     sym = malloc(sizeof(struct zassymrec));
-                    sym->name = (uint8_t *)strdup((char *)token2->data.sym.name);
+                    sym->name = strdup((char *)token2->data.sym.name);
                     if (op->arg1t == ZVMARGREG) {
                         sym->adr = (uintptr_t)&op->args[0];
                     } else {

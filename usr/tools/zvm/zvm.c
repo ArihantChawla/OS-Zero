@@ -31,7 +31,7 @@ zvmopfunc_t            *zvmfunctab[ZVMNOP] ALIGNED(PAGESIZE);
 struct zvm              zvm;
 
 void
-zvminitasmop(uint8_t unit, uint8_t inst, uint8_t *str, uint8_t narg,
+zvminitasmop(uint8_t unit, uint8_t inst, const char *str, uint8_t narg,
              zvmopfunc_t *func)
 {
     uint8_t       id = (unit << 4) | inst;
@@ -54,77 +54,77 @@ void
 zvminitasm(void)
 {
     /* logical operations */
-    zvminitasmop(ZVMOPLOGIC, ZVMOPNOT, (uint8_t *)"not", 1, zvmopnot);
-    zvminitasmop(ZVMOPLOGIC, ZVMOPAND, (uint8_t *)"and", 2, zvmopand);
-    zvminitasmop(ZVMOPLOGIC, ZVMOPOR, (uint8_t *)"or", 2, zvmopor);
-    zvminitasmop(ZVMOPLOGIC, ZVMOPXOR, (uint8_t *)"xor", 2, zvmopxor);
+    zvminitasmop(ZVMOPLOGIC, ZVMOPNOT, "not", 1, zvmopnot);
+    zvminitasmop(ZVMOPLOGIC, ZVMOPAND, "and", 2, zvmopand);
+    zvminitasmop(ZVMOPLOGIC, ZVMOPOR, "or", 2, zvmopor);
+    zvminitasmop(ZVMOPLOGIC, ZVMOPXOR, "xor", 2, zvmopxor);
     /* shift operations */
-    zvminitasmop(ZVMOPSHIFT, ZVMOPSHR, (uint8_t *)"shr", 2, zvmopshr);
-    zvminitasmop(ZVMOPSHIFT, ZVMOPSAR, (uint8_t *)"sar", 2, zvmopsar);
-    zvminitasmop(ZVMOPSHIFT, ZVMOPSHL, (uint8_t *)"shl", 2, zvmopshl);
-    zvminitasmop(ZVMOPSHIFT, ZVMOPROR, (uint8_t *)"ror", 2, zvmopror);
-    zvminitasmop(ZVMOPSHIFT, ZVMOPROL, (uint8_t *)"rol", 2, zvmoprol);
+    zvminitasmop(ZVMOPSHIFT, ZVMOPSHR, "shr", 2, zvmopshr);
+    zvminitasmop(ZVMOPSHIFT, ZVMOPSAR, "sar", 2, zvmopsar);
+    zvminitasmop(ZVMOPSHIFT, ZVMOPSHL, "shl", 2, zvmopshl);
+    zvminitasmop(ZVMOPSHIFT, ZVMOPROR, "ror", 2, zvmopror);
+    zvminitasmop(ZVMOPSHIFT, ZVMOPROL, "rol", 2, zvmoprol);
     /* arithmetic operations */
-    zvminitasmop(ZVMOPARITH, ZVMOPINC, (uint8_t *)"inc", 1, zvmopinc);
-    zvminitasmop(ZVMOPARITH, ZVMOPDEC, (uint8_t *)"dec", 1, zvmopdec);
-    zvminitasmop(ZVMOPARITH, ZVMOPADD, (uint8_t *)"add", 2, zvmopadd);
-    zvminitasmop(ZVMOPARITH, ZVMOPSUB, (uint8_t *)"sub", 2, zvmopsub);
-    zvminitasmop(ZVMOPARITH, ZVMOPCMP, (uint8_t *)"cmp", 2, zvmopcmp);
-    zvminitasmop(ZVMOPARITH, ZVMOPMUL, (uint8_t *)"mul", 2, zvmopmul);
-    zvminitasmop(ZVMOPARITH, ZVMOPDIV, (uint8_t *)"div", 2, zvmopdiv);
-    zvminitasmop(ZVMOPARITH, ZVMOPMOD, (uint8_t *)"mod", 2, zvmopmod);
+    zvminitasmop(ZVMOPARITH, ZVMOPINC, "inc", 1, zvmopinc);
+    zvminitasmop(ZVMOPARITH, ZVMOPDEC, "dec", 1, zvmopdec);
+    zvminitasmop(ZVMOPARITH, ZVMOPADD, "add", 2, zvmopadd);
+    zvminitasmop(ZVMOPARITH, ZVMOPSUB, "sub", 2, zvmopsub);
+    zvminitasmop(ZVMOPARITH, ZVMOPCMP, "cmp", 2, zvmopcmp);
+    zvminitasmop(ZVMOPARITH, ZVMOPMUL, "mul", 2, zvmopmul);
+    zvminitasmop(ZVMOPARITH, ZVMOPDIV, "div", 2, zvmopdiv);
+    zvminitasmop(ZVMOPARITH, ZVMOPMOD, "mod", 2, zvmopmod);
     /* branch operations */
-    zvminitasmop(ZVMOPBRANCH, ZVMOPJMP, (uint8_t *)"jmp", 1, zvmopjmp);
-    zvminitasmop(ZVMOPBRANCH, ZVMOPBZ, (uint8_t *)"bz", 1, zvmopbz);
-    zvminitasmop(ZVMOPBRANCH, ZVMOPBNZ, (uint8_t *)"bnz", 1, zvmopbnz);
-    zvminitasmop(ZVMOPBRANCH, ZVMOPBLT, (uint8_t *)"blt", 1, zvmopblt);
-    zvminitasmop(ZVMOPBRANCH, ZVMOPBLE, (uint8_t *)"ble", 1, zvmopble);
-    zvminitasmop(ZVMOPBRANCH, ZVMOPBGT, (uint8_t *)"bgt", 1, zvmopbgt);
-    zvminitasmop(ZVMOPBRANCH, ZVMOPBGE, (uint8_t *)"bge", 1, zvmopbge);
-    zvminitasmop(ZVMOPBRANCH, ZVMOPBO, (uint8_t *)"bo", 1, zvmopbo);
-    zvminitasmop(ZVMOPBRANCH, ZVMOPBNO, (uint8_t *)"bno", 1, zvmopbno);
-    zvminitasmop(ZVMOPBRANCH, ZVMOPBC, (uint8_t *)"bc", 1, zvmopbc);
-    zvminitasmop(ZVMOPBRANCH, ZVMOPBNC, (uint8_t *)"bnc", 1, zvmopbnc);
+    zvminitasmop(ZVMOPBRANCH, ZVMOPJMP, "jmp", 1, zvmopjmp);
+    zvminitasmop(ZVMOPBRANCH, ZVMOPBZ, "bz", 1, zvmopbz);
+    zvminitasmop(ZVMOPBRANCH, ZVMOPBNZ, "bnz", 1, zvmopbnz);
+    zvminitasmop(ZVMOPBRANCH, ZVMOPBLT, "blt", 1, zvmopblt);
+    zvminitasmop(ZVMOPBRANCH, ZVMOPBLE, "ble", 1, zvmopble);
+    zvminitasmop(ZVMOPBRANCH, ZVMOPBGT, "bgt", 1, zvmopbgt);
+    zvminitasmop(ZVMOPBRANCH, ZVMOPBGE, "bge", 1, zvmopbge);
+    zvminitasmop(ZVMOPBRANCH, ZVMOPBO, "bo", 1, zvmopbo);
+    zvminitasmop(ZVMOPBRANCH, ZVMOPBNO, "bno", 1, zvmopbno);
+    zvminitasmop(ZVMOPBRANCH, ZVMOPBC, "bc", 1, zvmopbc);
+    zvminitasmop(ZVMOPBRANCH, ZVMOPBNC, "bnc", 1, zvmopbnc);
     /* stack operations */
-    zvminitasmop(ZVMOPSTACK, ZVMOPPOP, (uint8_t *)"pop", 1, zvmoppop);
-    zvminitasmop(ZVMOPSTACK, ZVMOPPUSH, (uint8_t *)"push", 1, zvmoppush);
-    zvminitasmop(ZVMOPSTACK, ZVMOPPUSHA, (uint8_t *)"pusha", 0, zvmoppush);
+    zvminitasmop(ZVMOPSTACK, ZVMOPPOP, "pop", 1, zvmoppop);
+    zvminitasmop(ZVMOPSTACK, ZVMOPPUSH, "push", 1, zvmoppush);
+    zvminitasmop(ZVMOPSTACK, ZVMOPPUSHA, "pusha", 0, zvmoppush);
     /* load/store */
-    zvminitasmop(ZVMOPMOV, ZVMOPMOVL, (uint8_t *)"mov", 2, zvmopmovl);
-//    zvminitasmop(ZVMOPMOV, ZVMOPMOVL, (uint8_t *)"movl", 2, zvmopmovl);
-    zvminitasmop(ZVMOPMOV, ZVMOPMOVB, (uint8_t *)"movb", 2, zvmopmovb);
-    zvminitasmop(ZVMOPMOV, ZVMOPMOVW, (uint8_t *)"movw", 2, zvmopmovw);
+    zvminitasmop(ZVMOPMOV, ZVMOPMOVL, "mov", 2, zvmopmovl);
+//    zvminitasmop(ZVMOPMOV, ZVMOPMOVL, "movl", 2, zvmopmovl);
+    zvminitasmop(ZVMOPMOV, ZVMOPMOVB, "movb", 2, zvmopmovb);
+    zvminitasmop(ZVMOPMOV, ZVMOPMOVW, "movw", 2, zvmopmovw);
 #if (!ZAS32BIT)
-    zvminitasmop(ZVMOPMOV, ZVMOPMOVQ, (uint8_t *)"movq", 2, zvmopmovq);
+    zvminitasmop(ZVMOPMOV, ZVMOPMOVQ, "movq", 2, zvmopmovq);
 #endif
     /* function calls */
-    zvminitasmop(ZVMOPFUNC, ZVMOPCALL, (uint8_t *)"call", 1, zvmopcall);
-    zvminitasmop(ZVMOPFUNC, ZVMOPENTER, (uint8_t *)"enter", 1, zvmopenter);
-    zvminitasmop(ZVMOPFUNC, ZVMOPLEAVE, (uint8_t *)"leave", 1, zvmopleave);
-    zvminitasmop(ZVMOPFUNC, ZVMOPRET, (uint8_t *)"ret", 1, zvmopret);
+    zvminitasmop(ZVMOPFUNC, ZVMOPCALL, "call", 1, zvmopcall);
+    zvminitasmop(ZVMOPFUNC, ZVMOPENTER, "enter", 1, zvmopenter);
+    zvminitasmop(ZVMOPFUNC, ZVMOPLEAVE, "leave", 1, zvmopleave);
+    zvminitasmop(ZVMOPFUNC, ZVMOPRET, "ret", 1, zvmopret);
 #if 0
     /* thread interface */
-    zvminitasmop(ZVMOPFUNC, ZVMOPTHR, (uint8_t *)"thr", 1, zvmopthr);
+    zvminitasmop(ZVMOPFUNC, ZVMOPTHR, "thr", 1, zvmopthr);
 #endif
     /* machine status word */
-    zvminitasmop(ZVMOPMSW, ZVMOPLMSW, (uint8_t *)"lmsw", 1, zvmoplmsw);
-    zvminitasmop(ZVMOPMSW, ZVMOPSMSW, (uint8_t *)"smsw", 1, zvmopsmsw);
+    zvminitasmop(ZVMOPMSW, ZVMOPLMSW, "lmsw", 1, zvmoplmsw);
+    zvminitasmop(ZVMOPMSW, ZVMOPSMSW, "smsw", 1, zvmopsmsw);
     /* machine state */
-    zvminitasmop(ZVMOPMACH, ZVMOPRESET, (uint8_t *)"reset", 0, zvmopreset);
-    zvminitasmop(ZVMOPMACH, ZVMOPHLT, (uint8_t *)"hlt", 0, zvmophlt);
+    zvminitasmop(ZVMOPMACH, ZVMOPRESET, "reset", 0, zvmopreset);
+    zvminitasmop(ZVMOPMACH, ZVMOPHLT, "hlt", 0, zvmophlt);
 #if 0
     /* I/O operations */
-    zvminitasmop(ZVMOPIO, ZVMINB, (uint8_t *)"inb", 2, zvmopinb);
-    zvminitasmop(ZVMOPIO, ZVMINW, (uint8_t *)"inw", 2, zvmopinw);
-    zvminitasmop(ZVMOPIO, ZVMINL, (uint8_t *)"inl", 2, zvmopinl);
+    zvminitasmop(ZVMOPIO, ZVMINB, "inb", 2, zvmopinb);
+    zvminitasmop(ZVMOPIO, ZVMINW, "inw", 2, zvmopinw);
+    zvminitasmop(ZVMOPIO, ZVMINL, "inl", 2, zvmopinl);
 #if (!ZAS32BIT)
-    zvminitasmop(ZVMOPIO, ZVMINQ, (uint8_t *)"inq", 2, zvmopinq);
+    zvminitasmop(ZVMOPIO, ZVMINQ, "inq", 2, zvmopinq);
 #endif
-    zvminitasmop(ZVMOPIO, ZVMOUTB, (uint8_t *)"outb", 2, zvmopoutb);
-    zvminitasmop(ZVMOPIO, ZVMOUTW, (uint8_t *)"outw", 2, zvmopoutw);
-    zvminitasmop(ZVMOPIO, ZVMOUTL, (uint8_t *)"outl", 2, zvmopoutl);
+    zvminitasmop(ZVMOPIO, ZVMOUTB, "outb", 2, zvmopoutb);
+    zvminitasmop(ZVMOPIO, ZVMOUTW, "outw", 2, zvmopoutw);
+    zvminitasmop(ZVMOPIO, ZVMOUTL, "outl", 2, zvmopoutl);
 #if (!ZAS32BIT)
-    zvminitasmop(ZVMOPIO, ZVMOUTQ, (uint8_t *)"outq", 2, zvmopoutq);
+    zvminitasmop(ZVMOPIO, ZVMOUTQ, "outq", 2, zvmopoutq);
 #endif
 #endif /* 0 */
     

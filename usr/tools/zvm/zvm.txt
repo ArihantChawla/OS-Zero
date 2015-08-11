@@ -1,0 +1,8 @@
+Zvm is a project to develop a virtual machine also useful as a programmer's
+calculator. I plan on attempting to do ports for at least Symbian OS Series 60
+phones such as my newly-acquired Nokia E90 Communicator as well as 32-bit and
+64-bit X86 architectures.
+
+As a development project, the source code is often the best place to look for
+documentation, although other documentation is planned too.
+
