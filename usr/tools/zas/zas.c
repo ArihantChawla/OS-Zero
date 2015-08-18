@@ -60,10 +60,7 @@ static struct zastoken * zasprocorg(struct zastoken *, zasmemadr_t, zasmemadr_t 
 static struct zastoken * zasprocalign(struct zastoken *, zasmemadr_t, zasmemadr_t *);
 static struct zastoken * zasprocasciz(struct zastoken *, zasmemadr_t, zasmemadr_t *);
 
-#if 0
-static struct zasop     *zasophash[ZASNHASH] ALIGNED(PAGESIZE);
-#endif
-static struct zassymrec *zassymhash[ZASNHASH];
+static struct zassymrec *zassymhash[ZASNHASH] ALIGNED(PAGESIZE);
 static struct zasval    *zasvalhash[ZASNHASH];
 static struct zaslabel  *zasglobhash[ZASNHASH];
 #if (ZASDB)
