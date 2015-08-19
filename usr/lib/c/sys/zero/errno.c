@@ -4,7 +4,7 @@
 #include <pthread.h>
 #endif
 
-#if defined(__STDC_VERSION__) && (__STDC_VERSION >= 201112L)            \
+#if defined(__STDC_VERSION__) && (__STDC_VERSION__ >= 201112L)          \
     && !defined(__STDC_NO_THREADS__)
 static thread_local int __errno;
 #elif (PTHREAD)
