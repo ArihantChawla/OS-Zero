@@ -90,7 +90,7 @@ struct thr {
     long           id;
     /* scheduler parameters */
     long           nice;                // priority adjustment
-    long           class;               // thread class
+    long           sched;               // thread class
     long           prio;                // priority
 //    long           interact;
     long           runtime;             // run time

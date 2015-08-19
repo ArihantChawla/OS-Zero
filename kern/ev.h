@@ -23,28 +23,29 @@
  * be used as flags if need be
  */
 /* flag-bits in scan member */
-#define EVKBDRELEASE      UINT64_C(0x8000000000000000)
+#define EVKBDSTATE        0x80000000
+#define EVKBDRELEASE      0x40000000
 /* state-bits for modifier keys */
-#define EVKBDSHIFT        UINT64_C(0x4000000000000000)
-#define EVKBDCAPSLK       UINT64_C(0x2000000000000000)
-#define EVKBDCTRL         UINT64_C(0x1000000000000000)
-#define EVKBDMETA         UINT64_C(0x0800000000000000)
-#define EVKBDCOMPOSE      UINT64_C(0x0400000000000000)
-#define EVKBDALT          UINT64_C(0x0200000000000000)
-#define EVKBDALTGR        UINT64_C(0x0100000000000000)
-#define EVKBDSCRLOCK      UINT64_C(0x0080000000000000)
-#define EVNUMLOCK         UINT64_C(0x0040000000000000)
-#define EVKBDNMODBIT      32
-#define EVNBUTTON         (64 - EVKBNMODBIT)
+#define EVKBDSHIFT        0x80000000
+#define EVKBDCAPSLK       0x40000000
+#define EVKBDCTRL         0x20000000
+#define EVKBDMETA         0x10000000
+#define EVKBDCOMPOSE      0x08000000
+#define EVKBDALT          0x04000000
+#define EVKBDALTGR        0x02000000
+#define EVKBDSCRLOCK      0x01000000
+#define EVNUMLOCK         0x00800000
+#define EVKBDNMODBIT      16
+#define EVNBUTTON         (32 - EVKBNMODBIT)
 #define kbdevhasstate(ev) ((ev)->code & EVKBDSTATE)
 #define kbdupevent(ev)    ((ev)->code & EVKBDRELEASE)
 #define kbdbutton(ev, b)  ((ev)->state & (1L << (b)))
 #define kbdmod(ev, mod)   ((ev)->state & (mod))
 /* keyboard event size in octets */
-#define kbdevsize(ev)     (((ev)->sym & EVKBDSTATE) ? 12 : 8)
+#define kbdevsize(ev)     (((ev)->code & EVKBDSTATE) ? 8 : 4)
 struct evkbd {
-    uint64_t code;      // keyboard scan-code or something similar
-    uint64_t mask;      // modifier flags in high bits, buttons in low
+    uint32_t code;      // keyboard scan-code or something similar
+    uint32_t state;     // modifier flags in high bits, buttons in low
 } PACK();
 
 /* pointer such as mouse device events */
@@ -135,15 +136,15 @@ struct evfs {
 
 #define evgettype(ev)    ((ev)->hdr.type)
 #define evsettype(ev, t) ((ev)->hdr.type = (t))
-#define evgettime(ev)    ((ev)->hdr.timestamp)
-#define evsettime(ev, t) ((ev)->hdr.timestamp = (t))
+#define evgettime(ev)    ((ev)->hdr.tm)
+#define evsettime(ev, t) ((ev)->hdr.tm = (t))
 struct evhdr {
-    uint64_t timestamp;                 // timestamp
+    uint32_t tm;                        // timestamp
     uint32_t type;                      // event type such as KEYUP, FSCREAT
 };
 
 /* event structure */
-struct zevent {
+struct ev {
     struct evhdr hdr;
     union {
         /* actual event message */
@@ -164,7 +165,7 @@ struct zevent {
 /*   - evreg returns pointer to dual-mapped event queue (page) */
 void * evreg(long mask, long flg);
 /* read next event from queue */
-long   evpeek(struct zevent *ev, long mask);
+long   evpeek(struct ev *ev, long mask);
 /*
  * NOTE: the flg-bit values below are guaranteed not to overlap with event
  * masks
@@ -182,8 +183,8 @@ long   evpeek(struct zevent *ev, long mask);
 #define EV_TOSS_USERINPUT 0x00000002L   // discard pending user input
 
 #define evpeek(ev, flg)   evget((ev), ((flg) | EVNOREMOVE))
-void    evget(struct zevent *ev, long flg);
-long    evput(struct zevent *ev, long flg);
+void    evget(struct ev *ev, long flg);
+long    evput(struct ev *ev, long flg);
 void    evsync(struct deck *deck, long flg);
 
 /*

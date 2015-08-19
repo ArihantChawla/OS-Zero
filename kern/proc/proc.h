@@ -1,12 +1,6 @@
 #ifndef __KERN_PROC_H__
 #define __KERN_PROC_H__
 
-#include <stddef.h>
-#include <limits.h>
-#include <signal.h>
-#include <stdint.h>
-#include <sys/types.h>
-
 /*
  * process startup
  * ---------------
@@ -56,6 +50,10 @@
  */
 
 #define __KERNEL__ 1
+#include <stddef.h>
+#include <limits.h>
+#include <signal.h>
+#include <stdint.h>
 #include <sys/types.h>
 #include <zero/cdecl.h>
 #include <zero/param.h>
@@ -85,8 +83,12 @@ void procfreepid(long id);
 
 /* process */
 struct proc {
+    long              nice;
+    long              sched;
+    long              prio;
     struct thr       *thr;              // current running thread
     long              nthr;             // # of threads
+    struct thr      **thrtab;           // child threads
     /* round-robin queue */
 //    struct thrq       thrq;             // queue of ready threads
     /* page directory */
@@ -94,9 +96,8 @@ struct proc {
     /* stacks */
     uint8_t          *ustk;             // user-mode stack
     uint8_t          *kstk;             // kernel-mode stack
-    long              class;            // scheduler class
     /* memory attributes */
-    uint8_t          *brk;
+    uint8_t          *brk;              // current heap-top
     /* process credentials */
     pid_t             pid;              // process ID
     pid_t             parent;           // parent process
@@ -113,13 +114,15 @@ struct proc {
     sigset_t          sigmask;          // signal mask
     sigset_t          sigpend;          // pending signals
     signalhandler_t  *sigvec[NSIG];
+    /* current working directory */
+    char             *cwd;
     /* runtime arguments */
     long              argc;             // argument count
     char            **argv;             // argument vector
     char            **envp;             // environment strings
     /* memory management */
     struct slabhdr   *vmtab[PTRBITS];
-    /* keyboard buffer */
+    /* keyboard input buffer */
     void             *kbdbuf;
 #if 0
     /* event queue */

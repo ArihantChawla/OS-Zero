@@ -17,7 +17,7 @@
 #include <kern/unit/ia32/thr.h>
 
 static struct thrwait  thrwaittab[NLVL0THR] ALIGNED(PAGESIZE);
-static struct thrqueue thrruntab[THRNCLASS * THRNPRIO];
+static struct thrqueue thrruntab[THRNSCHED * THRNPRIO];
 extern long            trappriotab[NINTR];
 
 /* save thread context */
@@ -67,22 +67,22 @@ thrjmp(struct thr *thr)
 static __inline__ long
 thradjprio(struct thr *thr)
 {
-    long class = thr->class;
+    long sched = thr->sched;
     long prio = thr->prio;
     long nice = thr->nice;
 
-    if (class == THRINTR) {
+    if (sched == THRINTR) {
         /* thr->prio is IRQ ID */
         prio = trappriotab[thr->prio];
-    } else if (class != THRRT) {
+    } else if (sched != THRRT) {
         /* wrap around back to 0 at THRNPRIO / 2 */
         prio++;
         prio &= (THRNPRIO >> 1) - 1;
-//        prio = (THRNPRIO * class) + (THRNPRIO >> 1) + prio + thr->nice;
-        prio += (THRNPRIO * class)
+//        prio = (THRNPRIO * sched) + (THRNPRIO >> 1) + prio + thr->nice;
+        prio += (THRNPRIO * sched)
 //            + (randlfg2() & ((THRNPRIO >> 1) - 1))
             + nice;
-        prio = min(THRNPRIO * THRNCLASS - 1, prio);
+        prio = min(THRNPRIO * THRNSCHED - 1, prio);
     }
     thr->prio = prio;
 
@@ -314,7 +314,7 @@ thrpick(void)
     }
     thr = NULL;
     while (!thr) {
-        for (prio = 0 ; prio < THRNCLASS * THRNPRIO ; prio++) {
+        for (prio = 0 ; prio < THRNSCHED * THRNPRIO ; prio++) {
             thrq = &thrruntab[prio];
             mtxlk(&thrq->lk);
             thr = thrq->head;

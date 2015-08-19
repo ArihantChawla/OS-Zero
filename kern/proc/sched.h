@@ -22,7 +22,7 @@
 #define THRUSER      2  // user thread
 #define THRBATCH     3  // batch thread
 #define THRIDLE      4  // idle thread
-#define THRNCLASS    5
+#define THRNSCHED    5  // number of scheduler policies
 #define THRNPRIO     32 // # of priorities per class
 #define THRNPRIOLOG2 5
 

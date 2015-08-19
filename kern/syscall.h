@@ -5,6 +5,7 @@
 #include <stdint.h>
 #include <signal.h>
 #include <unistd.h>
+#include <fcntl.h>
 #include <sys/select.h>
 #include <sys/ipc.h>
 #include <sys/stat.h>
@@ -12,6 +13,8 @@
 #include <zero/cdecl.h>
 #include <zero/param.h>
 #include <kern/perm.h>
+#include <kern/mem.h>
+#include <kern/syscallnum.h>
 
 extern void ksyscall(void);
 
@@ -24,8 +27,8 @@ typedef long      sysreg_t;
 #error sysreg_t not defined in <kern/syscall.h>
 #endif
 
-#define SYS_NODESC (-1)
-#define SYS_NOARG  (-1)
+#define SYSNODESC (-1)
+#define SYSNOARG  (-1)
 
 /*
  * TODO
@@ -325,6 +328,12 @@ struct syswait {
 #define SIG_EXIT       0x01    // exit process on signal
 #define SIG_DUMP       0x02    // dump core on signal
 
+struct syssigarg {
+    pid_t  pid;
+    long   sig;
+    void  *func;
+};
+
 /* memory interface */
 
 /* sys_map() */
@@ -360,23 +369,15 @@ struct syswait {
 #define MEM_DODUMP        10
 /* sys_mctl() */
 /* cmd */
-#define MEM_SHARE         0x01          // umap()
+#define MEM_SHARE         0x01          // shmap()
 #define MEM_LOCK          0x02          // mlock(), mlockall()
 #define MEM_UNLOCK        0x03          // munlock(), munlockall()
 /* REFERENCE: <kern/perm.h> */
 #define MEM_GETPERM       0x04
 #define MEM_SETPERM       0x05
-
-struct sysmemreg {
-    struct perm  perm;		// permission structure
-    void        *adr;		// base address of region
-    size_t       ofs;		// offset into region (for locks and such)
-    size_t       len;		// length
-};
-
 struct sysmemarg {
-    long             cmd;	// memory command
-    struct sysmemreg reg;
+    long          cmd;  // memory command
+    struct memreg reg;
 };
 
 /*
@@ -446,18 +447,19 @@ struct sysmq {
 /* IDEAS: IO_DIRECT */
 
 struct sysop {
-    sysreg_t arg1;
-    sysreg_t arg2;
-    sysreg_t arg3;
+    long     num;               // system call ID
+    sysreg_t arg1;              // first argument
+    sysreg_t arg2;              // second argument
+    sysreg_t arg3;              // third argument
 #if (LONGSIZE == 4)
-    int64_t  arg64;
+    int64_t  arg64;             // 64-bit argument
 #endif    
 };
 
 struct sysioreg {
     struct perm perm;		// permission structure
-	off_t       ofs;
-	off_t       len;
+    off_t       ofs;
+    off_t       len;
 };
 
 #define SYS_IOCTL_IOPERM 0x01   // need CAP_SYS_RAWIO

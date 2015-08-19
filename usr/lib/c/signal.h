@@ -24,9 +24,10 @@
 #include <time.h>
 #endif
 
+extern void * signal(int sig, void (*func)(int));
 #if (_BSD_SOURCE)
 /* set handler for signal sig; returns old handler */
-extern __sighandler_t signal(int sig, __sighandler_t func);
+//extern __sighandler_t signal(int sig, __sighandler_t func);
 #endif
 extern __sighandler_t __sysv_signal(int sig, __sighandler_t func);
 #if (_GNU_SOURCE)

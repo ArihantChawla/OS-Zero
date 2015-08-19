@@ -4,12 +4,6 @@
 #include <stdint.h>
 #include <sys/types.h>
 
-#if 0
-#define SEEK_CUR        0x00
-#define SEEK_SET        0x01
-#define SEEK_END        0x02
-#endif
-
 struct file {
     long       lkcnt;
     pid_t      owner;
@@ -17,8 +11,7 @@ struct file {
     uintptr_t  desc;
     char      *path;
     long       flg;
-    long       errflg;
-    
+    long       err;
 };
 
 /* TODO: implement iogetc() */

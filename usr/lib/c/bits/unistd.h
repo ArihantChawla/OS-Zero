@@ -153,8 +153,8 @@ typedef long socklen_t;
 #define _SC_CACHELINESIZE    (-5) // size of [memory] cacheline in bytes
 #define _SC_L1INSTSIZE       (-6) // L1 cache size in bytes
 #define _SC_L1DATASIZE       (-7) // L1 cache size in bytes
-#define _SC_L1NWAYINST       (-8) // L1 cache parameter
-#define _SC_L1NWAYDATA       (-9) // L1 cache parameter
+#define _SC_L1INSTNWAY       (-8) // L1 cache parameter
+#define _SC_L1DATANWAY       (-9) // L1 cache parameter
 #define _SC_L2SIZE           (-10) // L2 cache size in bytes
 #define _SC_L2NWAY           (-11) // L2 cache parameter
 #define _SC_BLKSIZE          (-12) // buffer block size

@@ -27,7 +27,7 @@ procinit(long id)
         thr = &thrtab[0];
         thr->state = THRREADY;
         thr->nice = 0;
-        thr->class = THRUSER;
+        thr->sched = THRUSER;
         thr->prio = 0;
         proc->thr = thr;
         k_curthr = thr;
@@ -105,11 +105,11 @@ procgetdesc(struct proc *proc, long id)
 
 /* see <kern/proc.h> for definitions of scheduler classes */
 struct proc *
-newproc(int argc, char *argv[], char *envp[], int class)
+newproc(int argc, char *argv[], char *envp[], int sched)
 {
     struct proc *proc = kmalloc(sizeof(struct proc));
 
-    proc->class = class;
+    proc->sched = sched;
     proc->pid = taskgetpid();
     proc->parent = k_curproc->pid;
     proc->argc = argc;

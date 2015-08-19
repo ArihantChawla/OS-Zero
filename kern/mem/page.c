@@ -26,21 +26,21 @@ pageinitzone(uintptr_t base,
              struct pageq *zone,
              unsigned long nb)
 {
-    struct page   *pg = &vmphystab[pagenum(base)];
+    struct page   *page = &vmphystab[pagenum(base)];
     uintptr_t      adr = rounduppow2(base, PAGESIZE);
     unsigned long  n  = max(1, (nb - adr) >> PAGESIZELOG2);
 
     adr += n << PAGESIZELOG2;
-    pg += n;
+    page += n;
 //    mtxlk(&zone[0]->lk);
     vmpagestat.nphys = n;
     kprintf("initializing %ld (%lx) pages @ %p (%lx)\n",
             n, n, vmphystab, pagenum(base));
     while (n--) {
-        pg--;
-        pg->adr = adr;
-        pg->nflt = 0;
-        pagepush(zone, pg);
+        page--;
+        page->adr = adr;
+        page->nflt = 0;
+        pagepush(zone, page);
         adr -= PAGESIZE;
     }
 //    mtxunlk(&zone[0]->lk);
@@ -52,22 +52,22 @@ pageaddzone(uintptr_t base,
             unsigned long nb)
 {
     uintptr_t      adr = rounduppow2(base, PAGESIZE);
-    struct page   *pg = &vmphystab[pagenum(adr)];
+    struct page   *page = &vmphystab[pagenum(adr)];
     uint32_t      *pte = (uint32_t *)&_pagetab + vmpagenum(adr);
     unsigned long  n  = max(1, (nb - adr) >> PAGESIZELOG2);
 
     adr += n << PAGESIZELOG2;
-    pg += n;
+    page += n;
 //    mtxlk(&zone[0]->lk);
     vmpagestat.nphys = n;
     kprintf("reserving %ld (%lx) maps @ %p (%lx)\n",
             n, n, vmphystab, pagenum(base));
     while (n--) {
         if (!*pte) {
-            pg--;
-            pg->adr = adr;
-            pg->nflt = 0;
-            pagepush(zone, pg);
+            page--;
+            page->adr = adr;
+            page->nflt = 0;
+            pagepush(zone, page);
             adr -= PAGESIZE;
         }
         pte++;
@@ -87,12 +87,12 @@ pageinit(uintptr_t base, unsigned long nb)
 void *
 pagevalloc(void)
 {
-    struct page *pg;
+    struct page *page;
 
-    pagepop(&vmshmq, &pg);
-    if (pg) {
+    pagepop(&vmshmq, &page);
+    if (page) {
 
-        return (void *)pg->adr;
+        return (void *)page->adr;
     }
 
     return NULL;
@@ -105,60 +105,60 @@ pagevalloc(void)
 struct page *
 pagealloc(void)
 {
-    struct page  *pg = NULL;
+    struct page  *page = NULL;
     struct pageq *qp;
     long          qid;
     long          l;
 
 //    mtxlk(&vmphysq.lk);
-    pagepop(&vmphysq, &pg);
+    pagepop(&vmphysq, &page);
 //    mtxunlk(&vmphysq.lk);
-    if (!pg) {
-        ktime_t tmstmp = kcurtime();
+    if (!page) {
+        ktime_t maptm = kcurtime();
         
         for (l = 0 ; l < LONGSIZE * CHAR_BIT ; l++) {
             qp = &vmlrutab[l];
 //            mtxlk(&qp->lk);
-            if (pageinset(pg) && tmstmp - pg->tmstmp < 10 * KTIME_SECOND) {
+            if (pageinset(page) && maptm - page->maptm < 10 * KTIME_SECOND) {
 
                 continue;
-            } else if (!pageinset(pg)) {
-                pagedeq(qp, &pg);
+            } else if (!pageinset(page)) {
+                pagedeq(qp, &page);
 //            mtxunlk(&qp->lk);
-                if (pg) {
-                    pg->nflt++;
+                if (page) {
+                    page->nflt++;
                     
-                    return pg;
+                    return page;
                 }
-                qid = pagegetqid(pg);
+                qid = pagegetqid(page);
                 qp = &vmlrutab[qid];
 //            mtxlk(&qp->lk);
-                pagepush(qp, pg);
+                pagepush(qp, page);
 //            mtxunlk(&qp->lk);
             }
         }
     }
-    if (pg) {
-        pg->tmstmp = kcurtime();
-        pg->dev = PAGE_NODEV;
-        pg->ofs = PAGE_NOOFS;
+    if (page) {
+        page->maptm = kcurtime();
+        page->dev = PAGENODEV;
+        page->ofs = PAGENOOFS;
     }
 
-    return pg;
+    return page;
 }
 
 void
 pagefree(void *adr)
 {
     unsigned long  id;
-    struct page   *pg;
+    struct page   *page;
 
     vmflushtlb(adr);
     /* free physical page */
 //    mtxlk(&vmphysq.lk);
     id = (uintptr_t)adr >> PAGESIZELOG2;
-    pg = &vmphystab[id];
-    pagepush(&vmphysq, pg);
+    page = &vmphystab[id];
+    pagepush(&vmphysq, page);
 //    mtxunlk(&vmphysq.lk);
 
     return;
@@ -166,21 +166,21 @@ pagefree(void *adr)
 
 #if 0
 void
-pageinitdev(unsigned long id, unsigned long npg)
+pageinitdev(unsigned long id, unsigned long npage)
 {
     struct swapdev *dev = &_swapdevtab[id];
-    unsigned long   nb = npg * sizeof(swapoff_t);
-    struct page    *pg;
+    unsigned long   nb = npage * sizeof(swapoff_t);
+    struct page    *page;
     struct pageq   *pq = &dev->freeq;
 
-    dev->npg = npg;
-    dev->pgmap = kmalloc(nb);
-    bzero(dev->pgmap, nb);
-    pg = kmalloc(npg * sizeof(struct page));
-    dev->pgtab = pg;
-    while (npg--) {
-        pagepush(pq, pg);
-        pg++;
+    dev->npage = npage;
+    dev->pagemap = kmalloc(nb);
+    bzero(dev->pagemap, nb);
+    page = kmalloc(npage * sizeof(struct page));
+    dev->pagetab = page;
+    while (npage--) {
+        pagepush(pq, page);
+        page++;
     }
 
     return;
@@ -191,10 +191,10 @@ swapfree(uintptr_t adr)
 {
     struct swapdev *dev = &_swapdevtab[vmdevid(adr)];
     unsigned long   blk = swapblkid(adr);
-    struct page    *pg = dev->pgtab + blk;
+    struct page    *page = dev->pagetab + blk;
 
-    pagepush(&dev->freeq, pg);
-    dev->pgmap[blk] = 0;
+    pagepush(&dev->freeq, page);
+    dev->pagemap[blk] = 0;
 
     return;
 }
@@ -205,14 +205,14 @@ swapalloc(void)
     struct swapdev *dev = &_swapdevtab[0];
     struct swapdev *lim = &_swapdevtab[NSWAPDEV];
     unsigned long   ret = 0;
-    struct page    *pg;
+    struct page    *page;
     long            l;
 
     l = 0;
-    while (dev < lim && (dev->npg)) {
-        pagedeq(&dev->freeq, &pg);
-        if (pg) {
-            swapsetblk(ret, swapblknum(dev, pg));
+    while (dev < lim && (dev->npage)) {
+        pagedeq(&dev->freeq, &page);
+        if (page) {
+            swapsetblk(ret, swapblknum(dev, page));
             swapsetdev(ret, l);
 
             return ret;
@@ -233,14 +233,14 @@ swapwrite(unsigned long blk, unsigned long phys)
 void
 swapout(void)
 {
-    struct vmpage *pg = NULL;
+    struct vmpage *page = NULL;
     struct vmpage *hdrtab = curproc->vmhdrtab;
-    unsigned long  spg;
+    unsigned long  spage;
 
-    vmdeqpage(&pg);
-    if (pg) {
-        spg = swapalloc();
-        swapwrite(spg, vmpageadr(pg, hdrtab));
+    vmdeqpage(&page);
+    if (page) {
+        spage = swapalloc();
+        swapwrite(spage, vmpageadr(page, hdrtab));
     }
 
     return;

@@ -11,6 +11,7 @@
 typedef __gnuc_va_list __stdio_va_list;
 #endif
 #endif
+#include <fcntl.h>
 #include <sys/types.h>
 #if (_ZERO_SOURCE)
 #include <zero/param.h>
@@ -48,9 +49,6 @@ typedef int64_t       fpos64_t;
 #define L_ctermid     128
 #define L_cuserid     128
 #define L_tmpnam      PATH_MAX
-/* SEEK_CUR, SEEK_END, and SEEK_SET come from <kern/io.h> */
-//#define TMP_MAX      10000
-/* NULL is in <stddef.h> */
 #if (_XOPEN_SOURCE) || (USESVID)
 #define P_tmpdir      "/tmp"
 #endif

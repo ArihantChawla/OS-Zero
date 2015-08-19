@@ -7,6 +7,7 @@
 #define __KERNEL__ 1
 #include <zero/mtx.h>
 
+#include <kern/perm.h>
 #include <kern/time.h>
 #if defined(__x86_64__) || defined(__amd64__)                           \
     || defined(__i386__) || defined(__i486__)                           \
@@ -14,8 +15,8 @@
 #include <kern/unit/x86/cpu.h>
 #endif
 
-#define PAGE_NODEV (-1)
-#define PAGE_NOOFS (-1)
+#define PAGENODEV (-1)
+#define PAGENOOFS (-1)
 
 /* page ID */
 #define pagenum(adr)  ((adr) >> PAGESIZELOG2)
@@ -41,15 +42,16 @@ struct upage {
 #define PAGEWIREBIT 0x00000001
 #define PAGEBUFBIT  0x00000002
 struct page {
-    uintptr_t      adr;
-    unsigned long  nflt;
+    struct perm    perm;        // page permissions
+    long           flg;         // page flags
+    uintptr_t      adr;         // page address
+    unsigned long  nflt;        // # of page-fault exceptions triggered
 //    uintptr_t     xptr;
-    struct page   *prev;
-    struct page   *next;
-    ktime_t        tmstmp;
-    dev_t          dev;
-    off_t          ofs;
-    long           flg;
+    struct page   *prev;        // previous on queue
+    struct page   *next;        // next on queue
+    ktime_t        maptm;       // map timestamp
+    dev_t          dev;         // paging device
+    off_t          ofs;         // paging device offset
 };
 
 struct pageq {
