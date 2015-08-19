@@ -18,7 +18,7 @@ static pthread_once_t   __once = PTHREAD_ONCE_INIT;
 static int              __errno;
 #endif
 
-#if ((!defined(__STDC_VERSION__) || (__STDC_VERSION < 201112L)          \
+#if ((!defined(__STDC_VERSION__) || (__STDC_VERSION__ < 201112L)        \
       || defined(__STDC_NO_THREADS__))                                  \
      && !defined(__GNUC__))
 
