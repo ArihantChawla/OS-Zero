@@ -2,22 +2,11 @@
 #define __ERRNO_H__
 
 #if defined(__GLIBC__)
-
 extern int errno;
-
 #else
-
-#include <features.h>
-
-#if !(__KERNEL__)
-#if (PTHREAD)
-extern __thread int errno;
-#else
-extern int          errno;
+extern int *errnoloc(void);
+#define errno (*errnoloc())
 #endif
-#endif
-
-#endif /* __GLIBC__ */
 
 #define ENOSYS       1  // function not implemented
 #define EINTR        2  // interrupted system call
