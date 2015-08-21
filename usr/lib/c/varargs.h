@@ -1,6 +1,8 @@
 #ifndef __VARARGS_H__
 #define __VARARGS_H__
 
+#if (!__KERNEL__)
+
 /* implementation of old-style Unix <varargs.h> using later <stdarg.h> */
 
 #include <stdarg.h>
@@ -17,8 +19,10 @@
 #undef va_arg
 #define _va_argsiz(l)                                                   \
     (((sizeof(l) + sizeof(int) - 1) / sizeof(int)) * sizeof(int))
-#define va_arg(v, l)  ((v) = (v) + _va_argsiz(l),                        \
+#define va_arg(v, l)  ((v) = (v) + _va_argsiz(l),                       \
                        *((l *)(void *)((v) - _va_argsiz(l))))
+
+#endif /* !__KERNEL__ */
 
 #endif /* __VARARGS_H__ */
 

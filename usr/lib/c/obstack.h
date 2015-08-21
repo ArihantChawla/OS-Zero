@@ -1,6 +1,8 @@
 #ifndef __OBSTACK_H__
 #define __OBSTACK_H__
 
+#if (!__KERNEL__)
+
 #include <stddef.h>
 #include <string.h>
 #include <zero/cdecl.h>
@@ -278,6 +280,8 @@ extern int  obstack_exit_failure;
       : (__obstack_free) (h, (h)->temp.tempint + (char *) (h)->chunk)))
 
 #endif /* __GNUC__ */
+
+#endif /* !__KERNEL__ */
 
 #endif /* __OBSTACK_H__*/
 

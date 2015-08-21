@@ -53,35 +53,36 @@ union wait {
 #define w_stopval            w_S.w_Stopval;
 #define w_stopsig            w_S.w_Stopsig;
 union wait {
-	int w_status; // used in syscall
-	/* terminated process status */
-	struct {
+    int w_status; // used in syscall
+    /* terminated process status */
+    struct {
 #if (BYTE_ORDER == LITTLE_ENDIAN)
-		unsigned w_Termsig  : 7;
-		unsigned w_Coredump : 1;
-		unsigned w_Retcode  : 8;
-		unsigned w_Filler   : 16;
+        unsigned w_Termsig  : 7;
+        unsigned w_Coredump : 1;
+        unsigned w_Retcode  : 8;
+        unsigned w_Filler   : 16;
 #elif (BYTE_ORDER == BIG_ENDIAN)
-		unsigned w_Filler   : 16;
-		unsigned w_Retcode  : 8;
-		unsigned w_Coredump : 1;
-		unsigned w_Termsig  : 7;
+        unsigned w_Filler   : 16;
+        unsigned w_Retcode  : 8;
+        unsigned w_Coredump : 1;
+        unsigned w_Termsig  : 7;
 #endif
-	} w_T;
-	struct {
+    } w_T;
+    struct {
 #if (BYTE_ORDER == LITTLE_ENDIAN)
-		unsigned w_Stopaval : 8;
-		unsigned w_Stopsig  : 8;
-		unsigned w_Filler   : 16;
+        unsigned w_Stopaval : 8;
+        unsigned w_Stopsig  : 8;
+        unsigned w_Filler   : 16;
 #elif (BYTE_ORDER == BIG_ENDIAN)
-		unsigned w_Filler   : 16;
-		unsigned w_Stopsig  : 8;
-		unsigned w_Stopval  : 8;
+        unsigned w_Filler   : 16;
+        unsigned w_Stopsig  : 8;
+        unsigned w_Stopval  : 8;
 #endif
-	} w_S;
+    } w_S;
 };
 
 #if !(__KERNEL__)
+
 extern pid_t wait(_WAITSTATUS statret);
 extern pid_t waitpid(pid_t pid, _WAITSTATUS statret, int opts);
 #if (USESVID) || (USEXOPEN)
@@ -99,6 +100,7 @@ extern pid_t wait3(_WAITSTATUS statret, int opts, struct rusage *rusage);
 extern pid_t wait4(pid_t pid, _WAITSTATUS statret, int ops,
 	               struct rusage *rusage);
 #endif /* USEBSD */
+
 #endif /* !__KERNEL__ */
 
 #endif /* __SYS_WAIT_H__ */

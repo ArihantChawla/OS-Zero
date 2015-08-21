@@ -28,7 +28,9 @@ struct ipc_perm {
 	unsigned long  res3[2];
 };
 
+#if (!__KERNEL__)
 extern key_t ftok(const char *path, int proj);
+#endif
 
 #endif /* __SYS_IPC_H__ */
 

@@ -1,6 +1,8 @@
 #ifndef __STRING_H__
 #define __STRING_H__
 
+#if (!__KERNEL__)
+
 #include <stddef.h>
 
 void * memcpy(void *dest, void *src, size_t n);
@@ -25,6 +27,8 @@ char * strtok(char *str1, const char *str2);
 void * memset(void *ptr, int ch, size_t n);
 char * strerror(int errnum);
 size_t strlen(const char *str);
+
+#endif /* !__KERNEL__ */
 
 #endif /* __STRING_H__ */
 

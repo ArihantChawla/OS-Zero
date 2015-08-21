@@ -48,6 +48,8 @@ typedef struct timezone *__restrict timezone_ptr_t;
 typedef void *__restrict timezone_ptr_t;
 #endif
 
+#if (!__KERNEL__)
+
 extern int gettimeofday(struct timeval *__restrict tv,
                         timezone_ptr_t tz);
 #if (_BSD_SOURCE) && (FAVORBSD)
@@ -70,6 +72,8 @@ extern int futimes(int fd, const struct timeval tv[2]);
 #if (_GNU_SOURCE)
 extern int futimesat(int fd, const char *file, const struct timeval tv[2]);
 #endif
+
+#endif /* !__KERNEL__ */
 
 #if (_BSD_SOURCE)
 #define    timerisset(tv) ((tv)->tv_sec || (tv)->tv_usec)

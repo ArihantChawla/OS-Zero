@@ -1,6 +1,8 @@
 #ifndef __FCNTL_H__
 #define __FCNTL_H__
 
+#if (!__KERNEL__)
+
 #include <features.h>
 #include <sys/types.h>
 #if (_XOPEN_SOURCE)
@@ -39,6 +41,8 @@ extern int     tee(int infd, int outfd, size_t len, unsigned int flags);
 #if defined(_GNU_SOURCE)
 extern int     openat(int fd, const char *file, int flg);
 #endif
+
+#endif /* !__KERNEL__ */
 
 #endif /* __FCNTL_H__ */
 

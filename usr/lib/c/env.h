@@ -1,6 +1,8 @@
 #ifndef __ENV_H__
 #define __ENV_H__
 
+#if (!__KERNEL__)
+
 #include <features.h>
 #include <unistd.h>
 
@@ -16,6 +18,8 @@ extern int   setenv(const char *name, const char *value, int replace);
 extern void  unsetenv(const char *name);
 #endif
 extern int   clearenv(void);
+
+#endif /* !__KERNEL__ */
 
 #endif /* __ENV_H__ */
 

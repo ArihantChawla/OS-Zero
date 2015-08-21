@@ -6,18 +6,19 @@
 
 #if defined(__STDC_VERSION__) && (__STDC_VERSION__ >= 201112L)          \
     && !defined(__STDC_NO_THREADS__)
-static thread_local int __errno;
+#include <threads.h>
+static _Thread_local int __errno;
 #elif (PTHREAD)
 #if defined(__GNUC__)
-static __thread int     __errno;
+static __thread int      __errno;
 #else
-static pthread_key_t    __key;
-static pthread_once_t   __once = PTHREAD_ONCE_INIT;
-#endif
+static pthread_key_t     __key;
+static pthread_once_t    __once = PTHREAD_ONCE_INIT;
+#endif /* __GNUC__ */
 #elif defined(_WIN32) || defined(_WIN64)
-__declspec(thread) int  __errno;
+__declspec(thread) int   __errno;
 #else
-static int              __errno;
+static int               __errno;
 #endif
 
 #if ((!defined(__STDC_VERSION__) || (__STDC_VERSION__ < 201112L)        \

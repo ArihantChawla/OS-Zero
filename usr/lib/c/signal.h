@@ -24,6 +24,8 @@
 #include <time.h>
 #endif
 
+#if (!__KERNEL__)
+
 extern void * signal(int sig, void (*func)(int));
 #if (_BSD_SOURCE)
 /* set handler for signal sig; returns old handler */
@@ -89,21 +91,28 @@ extern int sigsetmask(int mask);
 /* return current signal mask */
 extern int siggetmask(void);
 
+#endif /* !__KERNEL__ */
+
 struct sigvec {
     void (*sv_handler)(int);
     int    sv_mask;
     int    sv_flags;
 };
 
+#if (!__KERNEL__)
+
 int sigvec(int sig, const struct sigvec *vec, struct sigvec *oldvec);
 
 #define SV_INTERRUPT 0x00000001
 #define SV_RESETHAND 0x00000002
 #define SV_ONSTACK   0x00000004
-
 // extern int sigreturn(struct sigcontext *scp);
 
+#endif /* !__KERNEL__ */
+
 #endif /* BSD_SOURCE */
+
+#if (!__KERNEL__)
 
 #if (_POSIX_SOURCE)
 
@@ -132,6 +141,8 @@ extern const char *__const _sys_siglist[_NSIG];
 extern const char *__const sys_siglist[_NSIG];
 #endif
 
+#endif /* !__KERNEL__ */
+
 #if (_BSD_SOURCE) || (USEXOPENEXT)
 
 struct sigstack {
@@ -154,6 +165,8 @@ struct sigaltstack {
 };
 
 #endif /* _BSD_SOURCE || USEXOPENEXT */
+
+#if (!__KERNEL__)
 
 /*
  * if intr is nonzero, make signal sig interrupt system calls (causing them
@@ -181,7 +194,9 @@ extern int            sigignore(int sig);
 extern __sighandler_t sigset(int sig, __sighandler_t func);
 #endif /* USEXOPENEXT */
 
-//int sigprocmask(int how, const sigset_t *set, sigset_t *oset);
+int sigprocmask(int how, const sigset_t *set, sigset_t *oset);
+
+#endif /* !__KERNEL__ */
 
 #endif /* __SIGNAL_H__ */
 

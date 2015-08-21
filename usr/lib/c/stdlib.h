@@ -17,6 +17,14 @@ typedef struct { int quot; int rem; }             div_t;
 typedef struct { long quot; long rem; }           ldiv_t;
 typedef struct { long long quot; long long rem; } lldiv_t;
 
+/* pseudo-random numbers */
+#if (_ZERO_SOURCE)
+/* FIXME: should this be UINT32_MAX? */
+#define RAND_MAX INT32_MAX
+#endif
+
+#if (!__KERNEL__)
+
 /* process termination */
 void   abort(void);
 void   exit(int status);
@@ -54,11 +62,6 @@ void * bsearch(const void *key, const void *base,
 void   qsort(void *const base, size_t nitems, size_t size,
              int (*cmp)(const void *, const void *));
 
-/* pseudo-random numbers */
-#if (_ZERO_SOURCE)
-/* FIXME: should this be UINT32_MAX? */
-#define RAND_MAX INT32_MAX
-#endif
 int                  rand(void);
 int                  rand_r(unsigned *seedptr);
 void                 srand(unsigned seed);
@@ -147,6 +150,8 @@ float                strtof(const char *nptr, char **endptr);
 long double          strtold(const char *nptr, char **endptr);
 
 int                  system(const char *cmd);
+
+#endif /* !__KERNEL__ */
 
 #endif /* __STDLIB_H__ */
 

@@ -21,12 +21,16 @@
 #define getemajor(dev)       emajor(dev)
 #define geteminor(dev)       eminor(dev)
 
+#if (!__KERNEL__)
+
 #if (_GNU_SOURCE)
-extern unsigned int gnu_dev_major(unsigned long long dev);
-extern unsigned int gnu_dev_minor(unsigned long long dev);
+extern unsigned int       gnu_dev_major(unsigned long long dev);
+extern unsigned int       gnu_dev_minor(unsigned long long dev);
 extern unsigned long long gnu_dev_makedev(unsigned int major,
                                           unsigned int minor);
 #endif /* _GNU_SOURCE */
+
+#endif /* !__KERNEL__ */
 
 #define ISP2(x)               (!(((x) & ((x) - 1))))
 #define P2ALIGN(x, aln)       ((x) & ~(aln))

@@ -53,6 +53,8 @@ typedef int64_t       fpos64_t;
 #define P_tmpdir      "/tmp"
 #endif
 
+#if (!__KERNEL__)
+
 /* buffering */
 extern void  setbuf(FILE *__restrict stream, char *__restrict buf);
 extern int   setvbuf(FILE *__restrict stream, char **__restrict ptr,
@@ -258,6 +260,8 @@ extern ssize_t getdelim(char **__restrict ptr, size_t *__restrict n,
 extern ssize_t readline(char **__restrict ptr, size_t *__restrict n,
                         FILE *__restrict stream);
 #endif
+
+#endif /* !__KERNEL__ */
 
 #endif /* __STDIO_H__ */
 

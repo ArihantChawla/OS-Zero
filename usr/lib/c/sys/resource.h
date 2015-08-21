@@ -56,6 +56,8 @@ struct rusage {
     long           ru_nivcsw;   /* involuntary context switches */
 };
 
+#if (!__KERNEL__)
+
 /* resource usage statistics */
 extern int getrusage(int who, struct rusage *rusage);
 /* nice value routines */
@@ -64,6 +66,8 @@ extern int setpriority(int which, id_t who, int prio);
 /* resource limit routines */
 extern int getrlimit(int which, struct rlimit *lim);
 extern int setrlimit(int which, const struct rlimit *lim);
+
+#endif /* !__KERNEL__ */
 
 #endif /* __SYS_RESOURCE_H__ */
 

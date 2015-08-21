@@ -71,6 +71,8 @@ struct linger {
     int l_linger;	// linger time in seconds
 };
 
+#if (!__KERNEL__)
+
 extern int     accept(int sock, struct sockadr *adr, socklen_t *adrlen);
 extern int     bind(int sock, const struct sockadr *adr, socklen_t adrlen);
 extern int     connect(int sock, const struct sockadr *adr, socklen_t adrlen);
@@ -95,6 +97,8 @@ extern int     socketpair(int domain, int type, int proto, int sockvec[2]);
 /* determine wheter socket is at an out-of-band mark */
 extern int     sockatmark(int fd);
 #endif
+
+#endif /* !__KERNEL__ */
 
 #endif /* __SYS_SOCKET_H__ */
 

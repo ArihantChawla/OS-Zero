@@ -11,7 +11,11 @@ struct pollfd {
 
 typedef long nfds_t;
 
+#if (!__KERNEL__)
+
 int poll(struct pollfd fds[], nfds_t nfds, int timeout);
+
+#endif /* !__KERNEL__ */
 
 #endif /* POSIX */
 

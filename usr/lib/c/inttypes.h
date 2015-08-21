@@ -232,15 +232,17 @@
 
 #if (LONGSIZE == 8)
 typedef struct {
-	long quot;
-	long rem;
+    long quot;
+    long rem;
 } imaxdiv_t;
 #else
 typedef struct {
-	long long quot;
-	long long rem;
+    long long quot;
+    long long rem;
 };
 #endif
+
+#if (!__KERNEL__)
 
 extern intmax_t imaxabs(intmax_t n);
 extern imaxdiv_t imaxdiv(intmax_t numer, intmax_t denom);
@@ -256,6 +258,8 @@ extern intmax_t wcstoimax(const wchar_t *__restrict nptr,
 extern uintmax_t wcstoumax(const wchar_t *__restrict nptr,
                            wchar_t **__restrict endptr,
 						   int base);
+
+#endif /* !__KERNEL__ */
 
 #endif /* __INTTYPES_H__ */
 

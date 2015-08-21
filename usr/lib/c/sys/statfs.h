@@ -40,12 +40,16 @@ struct statfs64 {
 	long         f_spare[5];
 };
 
+#if (!__KERNEL__)
+
 #if defined(_LARGEFILE64_SOURCE)
 #define statfs  statfs64
 #define fstatfs fstatfs64
 #endif
 extern int statfs(const char *file, struct statfs *buf);
 extern int fstatfs(int fd, struct statfs *buf);
+
+#endif /* !__KERNEL__ */
 
 #endif /* __SYS_STATFS_H__ */
 

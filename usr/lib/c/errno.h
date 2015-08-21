@@ -82,7 +82,7 @@ extern int * errnoloc(void);
 #define EMLINK       65 // too many links
 #define EPIPE        66 // broken pipe
 
-#define NERRNO       25 // 1 bigger than any errno value */
+#define NERRNO       67 // 1 bigger than any errno value */
 
 #endif /* __ERRNO_H__ */
 

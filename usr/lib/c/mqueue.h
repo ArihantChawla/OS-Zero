@@ -18,6 +18,8 @@ struct mq_attr {
     long __pad[4];
 };
 
+#if (!__KERNEL__)
+
 extern mqd_t mq_open(const char *name, int flg, ...);
 extern int   mq_close(mqd_t mq);
 extern int   mq_getattr(mqd_t mq, struct mq_attr *atr);
@@ -38,6 +40,8 @@ extern int          mq_timedreceive(mqd_t mq, char *__restrict msg,
                                     size_t len, unsigned int prio,
                                     const struct timespec *__restrict timeout);
 #endif
+
+#endif /* !__KERNEL__ */
 
 #endif /* __MQUEUE_H__ */
 

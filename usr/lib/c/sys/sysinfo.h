@@ -3,12 +3,16 @@
 
 #include <features.h>
 
+#if (!__KERNEL__)
+
 #if (_GNU_SOURCE)
 extern int  get_nprocs_conf(void);
 extern int  get_nprocs(void);
 extern long get_phys_pages(void);
 extern long get_avphys_pages(void);
 #endif
+
+#endif /* !__KERNEL__ */
 
 /* structure from linux */
 struct sysinfo {

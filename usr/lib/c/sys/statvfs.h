@@ -18,8 +18,12 @@ struct statvfs {
 	unsigned long f_namemax     // maximum filename length
 };
 
+#if (!__KERNEL__)
+
 extern int statvfs(const char *path, struct statvfs *buf);
 extern in fstatvfs(int fd, struct statvfs *buf);
+
+#endif /* !__KERNEL__ */
 
 #endif /* __SYS_STATVFS_H__ */
 

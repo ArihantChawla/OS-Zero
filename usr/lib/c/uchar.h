@@ -11,6 +11,8 @@
 typedef uint16_t char16_t;
 typedef uint32_t char32_t;
 
+#if (!__KERNEL__)
+
 size_t mbrtoc16(char16_t *__restrict ptr16,
                 const char *__restrict str,
                 size_t n,
@@ -25,6 +27,8 @@ size_t mbrtoc32 (char32_t *__restrict ptr32,
 size_t c32rtomb (char *__restrict str,
 		 char32_t c32,
 		 mbstate_t *__restrict state);
+
+#endif /* !__KERNEL__ */
 
 #endif /* __UCHAR_H__ */
 

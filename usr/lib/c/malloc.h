@@ -1,6 +1,8 @@
 #ifndef __MALLOC_H__
 #define __MALLOC_H__
 
+#if (!__KERNEL__)
+
 #include <features.h>
 #include <stddef.h>
 #if (_GNU_SOURCE)
@@ -59,6 +61,8 @@ extern void  (*__free_hook)(void *ptr, const void *caller);
 extern void *(*__malloc_initialize_hook)(void);
 extern void  (*__after_morecore_hook)(void);
 #endif
+
+#endif /* !__KERNEL__ */
 
 #endif /* __MALLOC_H__ */
 

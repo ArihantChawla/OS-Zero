@@ -24,6 +24,8 @@ struct               tm;
 #endif /* WCHARSIZE */
 #define WCHARMASK    ((1 << WCHARNBIT) - 1)
 
+#if (!__KERNEL__)
+
 #if (_GNU_SOURCE) || (_XOPEN_SOURCE >= 700 || _POSIX_C_SOURCE >= 200809L)
 FILE *open_wmemstream(wchar_t **ptr, size_t *sizeptr);
 #endif
@@ -133,6 +135,8 @@ extern wchar_t   * wmemmove(wchar_t *, const wchar_t *, size_t);
 extern wchar_t   * wmemset(wchar_t *, wchar_t, size_t);
 extern int         wprintf(const wchar_t *__restrict, ...);
 extern int         wscanf(const wchar_t *__restrict, ...);
+
+#endif /* !__KERNEL__ */
 
 #endif /* __WCHAR_H__ */
 

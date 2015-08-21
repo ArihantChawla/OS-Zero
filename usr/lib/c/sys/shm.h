@@ -36,39 +36,43 @@ struct shmid_ds {
     struct ipc_perm shm_perm;	// permission structure
     size_t          shm_segsz;	// segment size in bytes
     time_t          shm_atime;	// time of last shmat()
-	unsigned long   res1;
-	time_t          shm_dtime;	// time of last shmdt()
-	unsigned long   res2;
-	time_t          shm_ctime;	// time of last shmctl() change
-	unsigned long   res3;
-	pid_t           shm_cpid;	// creator process ID
-	pid_t           shm_lpid;	// last shmop process ID
-	shmatt_t        shm_nattch;	// # of current attaches
-	unsigned long   res4[2];
+    unsigned long   res1;
+    time_t          shm_dtime;	// time of last shmdt()
+    unsigned long   res2;
+    time_t          shm_ctime;	// time of last shmctl() change
+    unsigned long   res3;
+    pid_t           shm_cpid;	// creator process ID
+    pid_t           shm_lpid;	// last shmop process ID
+    shmatt_t        shm_nattch;	// # of current attaches
+    unsigned long   res4[2];
 };
 
 struct shminfo {
-	unsigned long shmmax;
-	unsigned long shmmin;
-	unsigned long shmmni;
-	unsigned long shmseg;
-	unsigned long shmall;
-	unsigned long res[4];
+    unsigned long shmmax;
+    unsigned long shmmin;
+    unsigned long shmmni;
+    unsigned long shmseg;
+    unsigned long shmall;
+    unsigned long res[4];
 };
 
 struct shm_info {
-	int           used_ids;
-	unsigned long shm_tot;
-	unsigned long shm_rss;
-	unsigned long shm_swp;
-	unsigned long swap_attempts;
-	unsigned long swap_successes;
+    int           used_ids;
+    unsigned long shm_tot;
+    unsigned long shm_rss;
+    unsigned long shm_swp;
+    unsigned long swap_attempts;
+    unsigned long swap_successes;
 };
+
+#if (!__KERNEL__)
 
 extern int shmctl(int shm, int cmd, struct shmid_ds *buf);
 extern int shmget(key_t key, size_t size, int shmflg);
 extern void *shmat(int shm, const void *adr, int shmflg);
 extern int shmdt(const void *adr);
+
+#endif /* !__KERNEL__ */
 
 #endif /* __SYS_SHM_H__ */
 

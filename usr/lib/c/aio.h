@@ -42,6 +42,8 @@ struct aioinit {
 };
 #endif
 
+#if (!__KERNEL__)
+
 #if (USEGNU)
 extern void aioinit(const struct aioinit *init);
 #endif
@@ -56,6 +58,8 @@ extern int     aio_read(struct aiocb *aiocb);
 extern int     aio_write(struct aiocb *aiocb);
 extern int     lio_listio(int mode, struct aiocb *const list[],
                           int nent, struct sigevent *__restrict sigev);
+
+#endif /* !__KERNEL__ */
 
 #endif /* __AIO_H__ */
 
