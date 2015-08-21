@@ -1,14 +1,15 @@
 #ifndef __ZERO_EV_H__
 #define __ZERO_EV_H__
 
+#include <stddef.h>
 #include <stdint.h>
 #include <zero/cdecl.h>
 #include <zero/param.h>
 #include <zero/deck.h>
 #include <gfx/rgb.h>
 
-#define EVNODEIDSIZE 64
 #define EVWORDSIZE   32
+#define EVNODEIDSIZE 64
 
 /* keyboard events */
 
@@ -42,6 +43,7 @@
 #define EVNBUTTON         (EVWORDSIZE - EVKBNMODBIT)
 #define kbdevhasstate(ev) ((ev)->code & EVKBDSTATE)
 #define kbdupevent(ev)    ((ev)->code & EVKBDRELEASE)
+#define kbddownevent(ev)  (!kbdupevent(ev))
 #define kbdbutton(ev, b)  ((ev)->state & (1L << (b)))
 #define kbdmod(ev, mod)   ((ev)->state & (mod))
 /* keyboard event size in octets */
@@ -71,12 +73,12 @@ struct evpnt {
  * --------------
  * - reply is 32-bit object ID or 0 on failure
  */
-#define evmsgsize(ev) (ev->nbyte + 2 * sizeof(uint32_t))
 struct evmsg {
     uint32_t nbyte;                     // number of octets
     uint32_t mq;                        // message queue ID
     uint8_t  data[EMPTY];               // message data
 } PACK();
+#define evmsgsize(ev) (ev->nbyte + offsetof(struct evmsg, data)
 
 /* command packet */
 /*
@@ -86,12 +88,12 @@ struct evmsg {
  * - can be done asynchronously with no reply checks
  */
 /* flg-field bits */
-#define EVCMDASYNC 0x01U
+#define EVCMDSYNC 0x01U
 struct evcmd {
     uint32_t cmd;                       // RPC command
-    uint32_t src;                       // source object
-    uint32_t dest;                      // destination object
-    uint32_t flg;                       // EVCMDASYNC, ...
+    uint32_t src;                       // source object ID
+    uint32_t dest;                      // destination object ID
+    uint32_t flg;                       // EVCMDSYNC, ...
 } PACK();
 
 /*
@@ -211,7 +213,7 @@ void    evsync(struct deck *deck, long flg);
 
 /* events internal for event and reply management */
 #define EVPROTOMSG        0x00
-#define EVERRMSG          0x01
+#define EVERRORMSG        0x01
 /* system events */
 /* EVSHUTDOWN is delivered no matter what events have been selected */
 #define EVSHUTDOWN        0x02  // system is being shut down or rebooted
