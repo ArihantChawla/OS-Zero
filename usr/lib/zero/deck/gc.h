@@ -25,12 +25,22 @@
 #define DECK_GC_NAND       16
 struct deckgc {
     uint32_t screen;    // screen ID
-    uint32_t flg;       // flag-bits
     uint32_t font;      // font ID
     uint32_t func;      // raster-operation
     uint32_t mask;      // plane-mask
     uint32_t fgpix;     // foreground pixel value
     uint32_t bgpix;     // background pixel value
+};
+
+/* flg-field bits */
+#define DECK_GC_FONT  0x00000001
+#define DECK_GC_FUNC  0x00000002
+#define DECK_GC_MASK  0x00000004
+#define DECK_GC_FGPIX 0x00000008
+#define DECK_GC_BGPIX 0x00000010
+struct deckgcatr {
+    uint32_t      flg;
+    struct deckgc vals;
 };
 
 /* raster operation macros */
