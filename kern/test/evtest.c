@@ -2,7 +2,7 @@
 #include <stdlib.h>
 #include <stdio.h>
 #endif
-#include <kern/ev.h>
+#include <zero/ev.h>
 #include <zero/cdecl.h>
 #include <zero/param.h>
 #if (EVPROF)

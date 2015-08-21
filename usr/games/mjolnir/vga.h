@@ -5,8 +5,8 @@
 
 #if (MJOL_VGA_TEXT)
 
-#include <kern/ev.h>
 #include <kern/io/drv/pc/vga.h>
+#include <zero/ev.h>
 
 #define mjolscrmove(scr, x, y) ((scr)->x = (x), (scr)->y = (y))
 struct mjolvgascreen {

@@ -1,11 +1,14 @@
-#ifndef __KERN_EV_H__
-#define __KERN_EV_H__
+#ifndef __ZERO_EV_H__
+#define __ZERO_EV_H__
 
 #include <stdint.h>
 #include <zero/cdecl.h>
 #include <zero/param.h>
 #include <zero/deck.h>
 #include <gfx/rgb.h>
+
+#define EV_NODE_ID_SIZE 64
+#define EV_WORD_SIZE    32
 
 /* keyboard events */
 
@@ -22,7 +25,7 @@
  * Unicode specifies 0x10ffff as maximum value, leaving us with 11 high bits to
  * be used as flags if need be
  */
-/* flag-bits in scan member */
+/* flag-bits in code-member */
 #define EVKBDSTATE        0x80000000
 #define EVKBDRELEASE      0x40000000
 /* state-bits for modifier keys */
@@ -36,7 +39,7 @@
 #define EVKBDSCRLOCK      0x01000000
 #define EVNUMLOCK         0x00800000
 #define EVKBDNMODBIT      16
-#define EVNBUTTON         (32 - EVKBNMODBIT)
+#define EVNBUTTON         (EVWORDSIZE - EVKBNMODBIT)
 #define kbdevhasstate(ev) ((ev)->code & EVKBDSTATE)
 #define kbdupevent(ev)    ((ev)->code & EVKBDRELEASE)
 #define kbdbutton(ev, b)  ((ev)->state & (1L << (b)))
@@ -45,6 +48,7 @@
 #define kbdevsize(ev)     (((ev)->code & EVKBDSTATE) ? 8 : 4)
 struct evkbd {
     uint32_t code;      // keyboard scan-code or something similar
+    /* state may not be present in protocol packets */
     uint32_t state;     // modifier flags in high bits, buttons in low
 } PACK();
 
@@ -67,6 +71,7 @@ struct evpnt {
  * --------------
  * - reply is 32-bit object ID or 0 on failure
  */
+#define evmsgsize(ev) (ev->nbyte + 2 * sizeof(uint32_t))
 struct evmsg {
     uint32_t nbyte;                     // number of octets
     uint32_t mq;                        // message queue ID
@@ -80,12 +85,13 @@ struct evmsg {
  * - reply is 0 on success, 32-bit error ID on failure
  * - can be done asynchronously with no reply checks
  */
+/* flg-field bits */
 #define EVCMDASYNC 0x01U
 struct evcmd {
     uint32_t cmd;                       // RPC command
     uint32_t src;                       // source object
     uint32_t dest;                      // destination object
-    uint32_t flg;                       // ASYNC, ...
+    uint32_t flg;                       // EVCMDASYNC, ...
 } PACK();
 
 /*
@@ -93,9 +99,15 @@ struct evcmd {
  * -------------
  * - reply will be 32-bit object ID or 0 on failure
  */
+/*
+ * FIXME
+ * -----
+ * - endianess should [probably] be determined at connection time
+ *   - use server/native endianess
+ */
 /* flg-field bits */
-#define EVDATA_BIGENDIAN  0x00000001U   // big-endian vs. little-endian words
-#define EVDATA_MESSAGE    0x00000002U   // otherwise error
+#define EVDATA_MESSAGE    0x00000001U   // error event if bit not set
+#define EVDATA_BIGENDIAN  0x80000000U   // big-endian vs. little-endian words
 /* fmt-field formats */
 #define EVDATA_BINARY     0x00000000U
 #define EVDATA_ASCII      0x00000001U
@@ -120,7 +132,7 @@ struct evcmd {
 #define EVDATA_UCS_16     0x00000014U
 #define EVDATA_UCS_32     0x00000015U
 struct evdata {
-    uint32_t flg;                       // data/flags such as BIGENDIAN
+    uint32_t flg;                       // flag-bits
     uint32_t fmt;                       // data format
     uint32_t wsize;                     // data-word size in bytes
     uint32_t nitem;                     // number of items to follow
@@ -139,8 +151,8 @@ struct evfs {
 #define evgettime(ev)    ((ev)->hdr.tm)
 #define evsettime(ev, t) ((ev)->hdr.tm = (t))
 struct evhdr {
-    uint32_t tm;                        // timestamp
     uint32_t type;                      // event type such as KEYUP, FSCREAT
+    uint32_t tm;                        // timestamp
 };
 
 /* event structure */
@@ -260,6 +272,6 @@ void    evsync(struct deck *deck, long flg);
 #define EVQUEUE           0x01
 #define EVDEQUEUE         0x02
 
-#endif /* __KERN_EV_H__ */
+#endif /* __ZERO_EV_H__ */
 
  
