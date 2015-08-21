@@ -7,8 +7,8 @@
 #include <zero/deck.h>
 #include <gfx/rgb.h>
 
-#define EV_NODE_ID_SIZE 64
-#define EV_WORD_SIZE    32
+#define EVNODEIDSIZE 64
+#define EVWORDSIZE   32
 
 /* keyboard events */
 
@@ -106,31 +106,31 @@ struct evcmd {
  *   - use server/native endianess
  */
 /* flg-field bits */
-#define EVDATA_MESSAGE    0x00000001U   // error event if bit not set
-#define EVDATA_BIGENDIAN  0x80000000U   // big-endian vs. little-endian words
+#define EVDATAMESSAGE   0x00000001U     // error event if bit not set
+#define EVDATABIGENDIAN 0x80000000U     // big-endian vs. little-endian words
 /* fmt-field formats */
-#define EVDATA_BINARY     0x00000000U
-#define EVDATA_ASCII      0x00000001U
-#define EVDATA_ISO8859_1  0x00000002U
-#define EVDATA_ISO8859_2  0x00000003U
-#define EVDATA_ISO8859_3  0x00000004U
-#define EVDATA_ISO8859_4  0x00000005U
-#define EVDATA_ISO8859_5  0x00000006U
-#define EVDATA_ISO8859_6  0x00000007U
-#define EVDATA_ISO8859_7  0x00000008U
-#define EVDATA_ISO8859_8  0x00000009U
-#define EVDATA_ISO8859_9  0x0000000aU
-#define EVDATA_ISO8859_10 0x0000000bU
-#define EVDATA_ISO8859_11 0x0000000cU
-#define EVDATA_ISO8859_12 0x0000000dU
-#define EVDATA_ISO8859_13 0x0000000eU
-#define EVDATA_ISO8859_14 0x0000000fU
-#define EVDATA_ISO8859_15 0x00000010U
-#define EVDATA_ISO8859_16 0x00000011U
-#define EVDATA_UTF_8      0x00000012U
-#define EVDATA_UTF_16     0x00000013U
-#define EVDATA_UCS_16     0x00000014U
-#define EVDATA_UCS_32     0x00000015U
+#define EVDATABINARY    0x00000000U
+#define EVDATAASCII     0x00000001U
+#define EVDATAISO88591  0x00000002U
+#define EVDATAISO88592  0x00000003U
+#define EVDATAISO88593  0x00000004U
+#define EVDATAISO88594  0x00000005U
+#define EVDATAISO88595  0x00000006U
+#define EVDATAISO88596  0x00000007U
+#define EVDATAISO88597  0x00000008U
+#define EVDATAISO88598  0x00000009U
+#define EVDATAISO88599  0x0000000aU
+#define EVDATAISO885910 0x0000000bU
+#define EVDATAISO885911 0x0000000cU
+#define EVDATAISO885912 0x0000000dU
+#define EVDATAISO885913 0x0000000eU
+#define EVDATAISO885914 0x0000000fU
+#define EVDATAISO885915 0x00000010U
+#define EVDATAISO885916 0x00000011U
+#define EVDATAUTF8      0x00000012U
+#define EVDATAUTF16     0x00000013U
+#define EVDATAUCS16     0x00000014U
+#define EVDATAUCS32     0x00000015U
 struct evdata {
     uint32_t flg;                       // flag-bits
     uint32_t fmt;                       // data format
@@ -169,6 +169,8 @@ struct ev {
     } msg;
 } PACK();
 
+#if (!__KERNEL__)
+
 /* API */
 /* TODO: implement ring-buffers for event queues */
 /* - wired to physical memory permanently */
@@ -191,13 +193,15 @@ long   evpeek(struct ev *ev, long mask);
 #define EVNOFLUSH         0x01  // check queue; do not flush connection
 #define EVNOREMOVE        0x02  // do not remove event from queue
 /* flg-argument bits for evsync() */
-#define EV_SYNC           0x00000001L   // otherwise asynchronous
-#define EV_TOSS_USERINPUT 0x00000002L   // discard pending user input
+#define EVSYNC            0x00000001L   // otherwise asynchronous
+#define EVTOSS_USERINPUT  0x00000002L   // discard pending user input
 
 #define evpeek(ev, flg)   evget((ev), ((flg) | EVNOREMOVE))
 void    evget(struct ev *ev, long flg);
 long    evput(struct ev *ev, long flg);
 void    evsync(struct deck *deck, long flg);
+
+#endif /* !__KERNEL__ */
 
 /*
  * NOTES

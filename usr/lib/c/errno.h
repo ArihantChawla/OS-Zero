@@ -5,6 +5,9 @@
 #if defined(__GLIBC__)
 extern int errno;
 #else
+#if defined(__GNUC__)
+__attribute__ ((const))
+#endif /* __GNUC__ */
 extern int * errnoloc(void);
 #define errno (*errnoloc())
 #endif
@@ -15,7 +18,7 @@ extern int * errnoloc(void);
 #define ENOMEM       3  // out of memory
 #define EAGAIN       4  // try again
 #if (_BSD_SOURCE)
-#define EWOULDBLOCK  EAGAIN // synomous with EAGAIN
+#define EWOULDBLOCK  EAGAIN // synonymous with EAGAIN
 #endif
 #define EACCES       5  // permission denied
 #define EIO          6  // I/O error
