@@ -12,9 +12,10 @@
 #include <sys/shm.h>
 #include <zero/cdecl.h>
 #include <zero/param.h>
+#include <kern/syscallnum.h>
 #include <kern/perm.h>
 #include <kern/mem.h>
-#include <kern/syscallnum.h>
+#include <kern/obj.h>
 
 /* TODO
  * ----
@@ -29,7 +30,7 @@
  *   - parm - bitmask
  *     - PROFLOG
  *     - PROFSUMMARY
- *     - PROFNANO (nanoseconds, if 0 then microseconds)
+ *     - PROFHIRES (nanoseconds, if 0 then microseconds)
  * - sysreg_t sys_trace(sysreg_t cmd, sysreg_t pid, sysreg_t parm);
  *   - cmd
  *     - one of TRACEON, TRACEOFF
@@ -80,8 +81,8 @@ typedef long      sysreg_t;
 #error sysreg_t not defined in <kern/syscall.h>
 #endif
 
-#define SYSNODESC (-1)
-#define SYSNOARG  (-1)
+#define SYS_NODESC (-1)
+#define SYS_NOARG  (-1)
 
 /*
  * TODO
@@ -133,8 +134,8 @@ typedef long      sysreg_t;
  *
  * IPC
  * ---
- * key_t sys_ipcmkkey(void *arg);
- * key_t sys_ipcrmkey(key_t key);
+ * key_t sys_mkipckey(void *arg);
+ * key_t sys_rmipckey(key_t key);
  *
  * shared memory
  * -------------
@@ -243,11 +244,22 @@ typedef long      sysreg_t;
 /* sys_sysctl */
 
 /* cmd */
-#define SYSCTL_HALT     0x01U  // halt() and reboot()
-#define SYSCTL_SYSINFO  0x02U  // sysinfo()
-#define SYSCTL_SYSCONF  0x03U  // sysconf(); probe system parameters
-#define SYSCTL_SYSSTAT  0x03U  // query system statistics; getrusage()
-#define SYSCTL_TIME     0x04U  // system clock access
+#define SYSCTL_HALT     0x01U   // halt() and reboot()
+#define SYSCTL_SYSINFO  0x02U   // sysinfo()
+#define SYSCTL_SYSCONF  0x03U   // sysconf(); probe system parameters
+#define SYSCTL_SYSSTAT  0x03U   // query system statistics; getrusage()
+#define SYSCTL_TIME     0x04U   // system clock access
+#define SYSCTL_PROF     0x05U   // profile system execution
+#define SYSCTL_TRACE    0x06U   // trace system execution
+#define SYSCTL_CHROOT   0x07U   // change process root directory
+#define SYSCTL_JAIL     0x08U   // set jail parameters
+
+/* SYSCTL_TRACE */
+#define SYSCTL_TRACEON  0x00U
+#define SYSCTL_TRACEOFF 0x01U
+/* SYSCTL_PROF */
+#define SYSCTL_PROFON  0x00U
+#define SYSCTL_PROFOFF 0x01U
 
 /* parm */
 /* flg value for SYSCTL_HALT */
@@ -291,6 +303,24 @@ typedef long      sysreg_t;
 /* fork() parm flags */
 #define FORK_VFORK      0x01U   // vfork() semantics; share address space with parent
 #define FORK_COW        0x02U   // copy on write optimisations
+
+struct sysprofarg {
+    long state;
+    long pid;
+    long parm;
+};
+
+struct systracearg {
+    long state;
+    long pid;
+    long parm;
+};
+
+struct sysioperm {
+    long      cmd;
+    long      pid;
+    uintptr_t parm;
+};
 
 /* thread interface */
 
@@ -337,7 +367,7 @@ typedef long      sysreg_t;
 #define PROC_MOUSEBUF      0x02    // mouse input buffer
 
 /* argument structure for pctl() with PROC_GETLIM and PROC_SETLIM */
-struct proclim {
+struct sysproclim {
     unsigned long soft;
     unsigned long hard;
 };
@@ -462,7 +492,7 @@ struct sysrwlock {
 	long val;   						// value; may be negative
 };
 
-struct msg {
+struct sysmsg {
     uintptr_t   qid;				    // queue ID
     long        prio;					// private
     long        len;					// size of data field in bytes
@@ -515,18 +545,16 @@ struct sysioreg {
     off_t       len;
 };
 
-#if 0 /* TO BE IMPLEMENTED using sys_ioperm() */
 #define SYS_IOCTL_IOPERM 0x01   // need CAP_SYS_RAWIO
 
 /* ioctl() */
-struct ioctl {
+struct sysioctl {
 //	long            cmd;	// command to be executed
     long            parm;	// command parameters such as flag-bits
     struct sysioreg reg;
 };
-#endif
 
-struct select {
+struct sysselect {
     fd_set          *readset;
     fd_set          *writeset;
     fd_set          *errorset;

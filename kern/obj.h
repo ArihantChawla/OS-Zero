@@ -11,7 +11,7 @@
 
 /* object region */
 struct objreg {
-    struct perm   perm;                 // memory permissions
+    struct perm   perm;                 // object permissions
     off_t         ofs;                  // region offset
     uintptr_t     base;                 // base address
     unsigned long size;                 // size in bytes

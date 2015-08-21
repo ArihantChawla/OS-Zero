@@ -1,12 +1,14 @@
 #ifndef __ERRNO_H__
 #define __ERRNO_H__
 
+#if (!__KERNEL__)
 #if defined(__GLIBC__)
 extern int errno;
 #else
-extern int *errnoloc(void);
+extern int * errnoloc(void);
 #define errno (*errnoloc())
 #endif
+#endif /* !__KERNEL__ */
 
 #define ENOSYS       1  // function not implemented
 #define EINTR        2  // interrupted system call

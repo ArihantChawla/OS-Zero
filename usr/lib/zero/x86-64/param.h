@@ -1,6 +1,9 @@
 #ifndef __ZERO_X86_64_PARAM_H__
 #define __ZERO_X86_64_PARAM_H__
 
+/* # of I/O ports */
+#define NIOPORT      65536
+
 /* FIXME: Windows uses 32-bit long on x86-64 */
 #define CHARSIZE     1
 #define SHORTSIZE    2

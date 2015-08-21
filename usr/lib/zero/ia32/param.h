@@ -1,6 +1,9 @@
 #ifndef __ZERO_IA32_PARAM_H__
 #define __ZERO_IA32_PARAM_H__
 
+/* # of I/O ports */
+#define NIOPORT      65536
+
 #define CHARSIZE     1
 #define SHORTSIZE    2
 #define INTSIZE      4

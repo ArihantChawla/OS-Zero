@@ -2,33 +2,48 @@
 #define __SYS_IO_H__
 
 #include <features.h>
+#include <errno.h>
 #if (_ZERO_SOURCE)
+#include <zero/param.h>
+#if 0
 #include <kern/syscall.h>
 #include <kern/syscallnum.h>
+#endif
+#include <sys/zero/syscall.h>
 #endif
 
 #define _IODELAY()  "outb %%al, $0x80\n"
 #define iodelay() __asm__ __volatile__ ("outb %al, $0x80\n");
 
-#if (_ZERO_SOURCE)
+#if (_ZERO_SOURCE) && (!__KERNEL__)
 extern ASMLINK long _syscall(long num, long arg1, long arg2, long arg3);
 #endif
 
 #if (_ZERO_SOURCE)
 
+#if (!__KERNEL__)
 static __inline__ int
 ioperm(unsigned long from, unsigned long num, int val)
 {
-    struct ioctl buf;
-    int          retval;
-    
+    struct sysioctl buf;
+    int             retval;
+
+    if (from > NIOPORT || (from + num > NIOPORT)) {
+        errno = EINVAL;
+
+        return -1;
+    }
     buf.parm = val;
     buf.reg.ofs = from;
     buf.reg.len = num;
-    retval = (int)_syscall(SYS_IOCTL, -1, SYS_IOCTL_IOPERM, (long)&buf);
+    retval = (int)_syscall(SYS_IOCTL, SYS_IOCTL_IOPERM, SYS_NOARG, (long)&buf);
+    if (retval < 0) {
+        errno = EPERM;
+    }
 
     return retval;
 }
+#endif /* !__KERNEL__ */
 
 #endif /* _ZERO_SOURCE */
 

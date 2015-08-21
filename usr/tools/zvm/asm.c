@@ -111,7 +111,7 @@ asmfindop(uint8_t *name)
     while ((*str) && isalpha(*str)) {
         key += *str++;
     }
-    key &= (ZASNHASH - 1);
+    key &= (ZASNHASHddddddddddddddddddddddddddddddddddddddddddddddddd - 1);
     op = zvmophash[key];
     while ((op) && strncmp((char *)op->name, (char *)name, op->len)) {
         op = op->next;
