@@ -5,6 +5,8 @@
 
 #include <zero/trix.h>
 
+extern void zasinitalign(void);
+
 #define zasalign(adr, x)                                                \
     (!((x) & (sizeof(x) - 1))                                           \
      ? (adr)                                                            \

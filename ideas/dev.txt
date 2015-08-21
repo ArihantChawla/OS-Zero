@@ -1,0 +1,22 @@
+- zas assembler
+- zld link-loader
+- zcc c compiler (?)
+- zdb debugger
+- libzero support library (used by both the kernel and user-land)
+- zprof profiler
+- zresmon resource monitor
+- zterm terminal emulator
+- znews [usenet] news reader
+- zql database interface
+- zrc revision control interface
+- zsysconf system configurator
+
+build toolchain phases
+----------------------
+- comp; compiler
+- zvec; zero vectoriser
+  - interim vector-code format to leverage SIMD etc.
+- zas; zero assembler (runs in concert with zopt optimiser)
+- ld; dynamic link-loader
+- obj; machine code
+

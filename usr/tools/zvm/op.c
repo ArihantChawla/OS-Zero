@@ -18,11 +18,11 @@ zvmopnot(struct zvmopcode *op)
     zasword_t    *dptr;
     zasword_t     dest = zvmgetarg(op, arg1t, dptr);
 
-    zvm.msw &= ~(ZVMZF | ZVMOF | ZVMCF);
+    zvm.cregs[ZVMMSWCREG] &= ~(ZVMZF | ZVMOF | ZVMCF);
     dest = ~dest;
     zvmsetzf(dest);
     *dptr = dest;
-    zvm.pc += op->size << 2;
+    zvm.cregs[ZVMPCCREG] += op->size << 2;
 
     return;
 }
@@ -36,11 +36,11 @@ zvmopand(struct zvmopcode *op)
     zasword_t     src = zvmgetarg1(op, arg1t);
     zasword_t     dest = zvmgetarg2(op, arg1t, arg2t, dptr);
 
-    zvm.msw &= ~(ZVMZF | ZVMOF | ZVMCF);
+    zvm.cregs[ZVMMSWCREG] &= ~(ZVMZF | ZVMOF | ZVMCF);
     dest &= src;
     zvmsetzf(dest);
     *dptr = dest;
-    zvm.pc += op->size << 2;
+    zvm.cregs[ZVMPCCREG] += op->size << 2;
 
     return;
 }
@@ -54,11 +54,11 @@ zvmopor(struct zvmopcode *op)
     zasword_t     src = zvmgetarg1(op, arg1t);
     zasword_t     dest = zvmgetarg2(op, arg1t, arg2t, dptr);
 
-    zvm.msw &= ~(ZVMZF | ZVMOF | ZVMCF);
+    zvm.cregs[ZVMMSWCREG] &= ~(ZVMZF | ZVMOF | ZVMCF);
     dest |= src;
     zvmsetzf(dest);
     *dptr = dest;
-    zvm.pc += op->size << 2;
+    zvm.cregs[ZVMPCCREG] += op->size << 2;
 
     return;
 }
@@ -72,11 +72,11 @@ zvmopxor(struct zvmopcode *op)
     zasword_t     src = zvmgetarg1(op, arg1t);
     zasword_t     dest = zvmgetarg2(op, arg1t, arg2t, dptr);
 
-    zvm.msw &= ~(ZVMZF | ZVMOF | ZVMCF);
+    zvm.cregs[ZVMMSWCREG] &= ~(ZVMZF | ZVMOF | ZVMCF);
     dest ^= src;
     zvmsetzf(dest);
     *dptr = dest;
-    zvm.pc += op->size << 2;
+    zvm.cregs[ZVMPCCREG] += op->size << 2;
 
     return;
 }
@@ -91,12 +91,12 @@ zvmopshr(struct zvmopcode *op)
     zasword_t     dest = zvmgetarg2(op, arg1t, arg2t, dptr);
     zasword_t     sign = ~((zasword_t)0) >> src;
 
-    zvm.msw &= ~(ZVMZF | ZVMOF | ZVMCF);
+    zvm.cregs[ZVMMSWCREG] &= ~(ZVMZF | ZVMOF | ZVMCF);
     dest >>= src;
     dest &= sign;
     zvmsetzf(dest);
     *dptr = dest;
-    zvm.pc += op->size << 2;
+    zvm.cregs[ZVMPCCREG] += op->size << 2;
 
     return;
 }
@@ -111,13 +111,13 @@ zvmopsar(struct zvmopcode *op)
     zasword_t     dest = zvmgetarg2(op, arg1t, arg2t, dptr);
     zasword_t     sign = (zasword_t)dest >> (CHAR_BIT * sizeof(zasword_t) - 1);
 
-    zvm.msw &= ~(ZVMZF | ZVMOF | ZVMCF);
+    zvm.cregs[ZVMMSWCREG] &= ~(ZVMZF | ZVMOF | ZVMCF);
     sign = -sign << (CHAR_BIT * sizeof(zasword_t) - src);
     dest >>= src;
     dest |= sign;
     zvmsetzf(dest);
     *dptr = dest;
-    zvm.pc += op->size << 2;
+    zvm.cregs[ZVMPCCREG] += op->size << 2;
 
     return;
 }
@@ -131,11 +131,11 @@ zvmopshl(struct zvmopcode *op)
     zasword_t     src = zvmgetarg1(op, arg1t);
     zasword_t     dest = zvmgetarg2(op, arg1t, arg2t, dptr);
 
-    zvm.msw &= ~(ZVMZF | ZVMOF | ZVMCF);
+    zvm.cregs[ZVMMSWCREG] &= ~(ZVMZF | ZVMOF | ZVMCF);
     dest <<= src;
     zvmsetzf(dest);
     *dptr = dest;
-    zvm.pc += op->size << 2;
+    zvm.cregs[ZVMPCCREG] += op->size << 2;
 
     return;
 }
@@ -155,13 +155,13 @@ zvmopror(struct zvmopcode *op)
     bits <<= CHAR_BIT * sizeof(zasword_t) - src;
     dest >>= src;
     dest |= bits;
-    zvm.msw &= ~(ZVMZF | ZVMOF | ZVMCF);
+    zvm.cregs[ZVMMSWCREG] &= ~(ZVMZF | ZVMOF | ZVMCF);
     zvmsetzf(dest);
     if (cf) {
-        zvm.msw |= ZVMCF;
+        zvm.cregs[ZVMMSWCREG] |= ZVMCF;
     }
     *dptr = dest;
-    zvm.pc += op->size << 2;
+    zvm.cregs[ZVMPCCREG] += op->size << 2;
 
     return;
 }
@@ -181,13 +181,13 @@ zvmoprol(struct zvmopcode *op)
     bits >>= CHAR_BIT * sizeof(zasword_t) - src;
     dest <<= src;
     dest |= bits;
-    zvm.msw &= ~(ZVMZF | ZVMOF | ZVMCF);
+    zvm.cregs[ZVMMSWCREG] &= ~(ZVMZF | ZVMOF | ZVMCF);
     zvmsetzf(dest);
     if (cf) {
-        zvm.msw |= ZVMCF;
+        zvm.cregs[ZVMMSWCREG] |= ZVMCF;
     }
     *dptr = dest;
-    zvm.pc += op->size << 2;
+    zvm.cregs[ZVMPCCREG] += op->size << 2;
 
     return;
 }
@@ -200,13 +200,13 @@ zvmopinc(struct zvmopcode *op)
     zasword_t     dest = zvmgetarg(op, arg1t, dptr);
 
     dest++;
-    zvm.msw &= ~(ZVMZF | ZVMOF | ZVMCF);
+    zvm.cregs[ZVMMSWCREG] &= ~(ZVMZF | ZVMOF | ZVMCF);
     zvmsetzf(dest);
     if (!dest) {
-        zvm.msw |= ZVMOF;
+        zvm.cregs[ZVMMSWCREG] |= ZVMOF;
     }
     *dptr = dest;
-    zvm.pc += op->size << 2;
+    zvm.cregs[ZVMPCCREG] += op->size << 2;
 
     return;
 }
@@ -219,10 +219,10 @@ zvmopdec(struct zvmopcode *op)
     zasword_t     dest = zvmgetarg(op, arg1t, dptr);
 
     dest--;
-    zvm.msw &= ~(ZVMZF | ZVMOF | ZVMCF);
+    zvm.cregs[ZVMMSWCREG] &= ~(ZVMZF | ZVMOF | ZVMCF);
     zvmsetzf(dest);
     *dptr = dest;
-    zvm.pc += op->size << 2;
+    zvm.cregs[ZVMPCCREG] += op->size << 2;
 
     return;
 }
@@ -237,13 +237,13 @@ zvmopadd(struct zvmopcode *op)
     zasword_t     dest = zvmgetarg2(op, arg1t, arg2t, dptr);
     zasword_t     res = src + dest;
 
-    zvm.msw &= ~(ZVMZF | ZVMOF | ZVMCF);
+    zvm.cregs[ZVMMSWCREG] &= ~(ZVMZF | ZVMOF | ZVMCF);
     zvmsetzf(res);
     if (res < dest) {
-        zvm.msw |= ZVMOF;
+        zvm.cregs[ZVMMSWCREG] |= ZVMOF;
     }
     *dptr = res;
-    zvm.pc += op->size << 2;
+    zvm.cregs[ZVMPCCREG] += op->size << 2;
 
     return;
 }
@@ -258,10 +258,10 @@ zvmopsub(struct zvmopcode *op)
     zasword_t     dest = zvmgetarg2(op, arg1t, arg2t, dptr);
 
     dest -= src;
-    zvm.msw &= ~(ZVMZF | ZVMOF | ZVMCF);
+    zvm.cregs[ZVMMSWCREG] &= ~(ZVMZF | ZVMOF | ZVMCF);
     zvmsetzf(dest);
     *dptr = dest;
-    zvm.pc += op->size << 2;
+    zvm.cregs[ZVMPCCREG] += op->size << 2;
 
     return;
 }
@@ -277,13 +277,13 @@ zvmopcmp(struct zvmopcode *op)
 //    int64_t       res = dest - src;
 
     dest -= src;
-    zvm.msw &= ~(ZVMZF | ZVMOF | ZVMCF);
+    zvm.cregs[ZVMMSWCREG] &= ~(ZVMZF | ZVMOF | ZVMCF);
     zvmsetzf(dest);
     if (src > dest) {
-        zvm.msw |= ZVMOF;
+        zvm.cregs[ZVMMSWCREG] |= ZVMOF;
     }
     *dptr = dest;
-    zvm.pc += op->size << 2;
+    zvm.cregs[ZVMPCCREG] += op->size << 2;
 
     return;
 }
@@ -299,17 +299,17 @@ zvmopmul(struct zvmopcode *op)
     int64_t       res = dest * src;
 
     dest *= src;
-    zvm.msw &= ~(ZVMZF | ZVMOF | ZVMCF);
+    zvm.cregs[ZVMMSWCREG] &= ~(ZVMZF | ZVMOF | ZVMCF);
     zvmsetzf(dest);
-#if (ZAS32BIT)
+#if (ZVM32BIT)
     if (res & INT64_C(0xffffffff00000000)) {
-        zvm.msw |= ZVMOF;
+        zvm.cregs[ZVMMSWCREG] |= ZVMOF;
     }
 #else
 #error fix integer overflow detection in zvmopmul
 #endif
     *dptr = dest;
-    zvm.pc += op->size << 2;
+    zvm.cregs[ZVMPCCREG] += op->size << 2;
 
     return;
 }
@@ -324,13 +324,13 @@ zvmopdiv(struct zvmopcode *op)
     zasword_t     dest = zvmgetarg2(op, arg1t, arg2t, dptr);
 
     dest /= src;
-    zvm.msw &= ~(ZVMZF | ZVMOF | ZVMCF);
+    zvm.cregs[ZVMMSWCREG] &= ~(ZVMZF | ZVMOF | ZVMCF);
     zvmsetzf(dest);
     if (src > dest) {
-        zvm.msw |= ZVMOF;
+        zvm.cregs[ZVMMSWCREG] |= ZVMOF;
     }
     *dptr = dest;
-    zvm.pc += op->size << 2;
+    zvm.cregs[ZVMPCCREG] += op->size << 2;
 
     return;
 }
@@ -349,13 +349,13 @@ zvmopmod(struct zvmopcode *op)
     } else {
         dest %= src;
     }
-    zvm.msw &= ~(ZVMZF | ZVMOF | ZVMCF);
+    zvm.cregs[ZVMMSWCREG] &= ~(ZVMZF | ZVMOF | ZVMCF);
     zvmsetzf(dest);
     if (src > dest) {
-        zvm.msw |= ZVMOF;
+        zvm.cregs[ZVMMSWCREG] |= ZVMOF;
     }
     *dptr = dest;
-    zvm.pc += op->size << 2;
+    zvm.cregs[ZVMPCCREG] += op->size << 2;
 
     return;
 }
@@ -366,7 +366,7 @@ zvmopjmp(struct zvmopcode *op)
     uint_fast8_t arg1t = op->arg1t;
     zasword_t    dest = zvmgetarg1(op, arg1t);
 
-    zvm.pc = dest;
+    zvm.cregs[ZVMPCCREG] = dest;
 
     return;
 }
@@ -377,10 +377,10 @@ zvmopbz(struct zvmopcode *op)
     uint_fast8_t arg1t = op->arg1t;
     zasword_t    dest = zvmgetarg1(op, arg1t);
 
-    if (zvm.msw & ZVMZF) {
-        zvm.pc = dest;
+    if (zvm.cregs[ZVMMSWCREG] & ZVMZF) {
+        zvm.cregs[ZVMPCCREG] = dest;
     } else {
-        zvm.pc += op->size << 2;
+        zvm.cregs[ZVMPCCREG] += op->size << 2;
     }
 }
 
@@ -390,10 +390,10 @@ zvmopbnz(struct zvmopcode *op)
     uint_fast8_t arg1t = op->arg1t;
     zasword_t    dest = zvmgetarg1(op, arg1t);
 
-    if (!(zvm.msw & ZVMZF)) {
-        zvm.pc = dest;
+    if (!(zvm.cregs[ZVMMSWCREG] & ZVMZF)) {
+        zvm.cregs[ZVMPCCREG] = dest;
     } else {
-        zvm.pc += op->size << 2;
+        zvm.cregs[ZVMPCCREG] += op->size << 2;
     }
 }
 
@@ -403,10 +403,10 @@ zvmopblt(struct zvmopcode *op)
     uint_fast8_t arg1t = op->arg1t;
     zasword_t    dest = zvmgetarg1(op, arg1t);
 
-    if (!(zvm.msw & ZVMOF)) {
-        zvm.pc = dest;
+    if (!(zvm.cregs[ZVMMSWCREG] & ZVMOF)) {
+        zvm.cregs[ZVMPCCREG] = dest;
     } else {
-        zvm.pc += op->size << 2;
+        zvm.cregs[ZVMPCCREG] += op->size << 2;
     }
 }
 
@@ -416,10 +416,10 @@ zvmopble(struct zvmopcode *op)
     uint_fast8_t arg1t = op->arg1t;
     zasword_t    dest = zvmgetarg1(op, arg1t);
 
-    if (!(zvm.msw & ZVMOF) || !(zvm.msw & ZVMZF)) {
-        zvm.pc = dest;
+    if (!(zvm.cregs[ZVMMSWCREG] & ZVMOF) || !(zvm.cregs[ZVMMSWCREG] & ZVMZF)) {
+        zvm.cregs[ZVMPCCREG] = dest;
     } else {
-        zvm.pc += op->size << 2;
+        zvm.cregs[ZVMPCCREG] += op->size << 2;
     }
 }
 
@@ -429,10 +429,10 @@ zvmopbgt(struct zvmopcode *op)
     uint_fast8_t arg1t = op->arg1t;
     zasword_t    dest = zvmgetarg1(op, arg1t);
 
-    if (zvm.msw & ZVMOF) {
-        zvm.pc = dest;
+    if (zvm.cregs[ZVMMSWCREG] & ZVMOF) {
+        zvm.cregs[ZVMPCCREG] = dest;
     } else {
-        zvm.pc += op->size << 2;
+        zvm.cregs[ZVMPCCREG] += op->size << 2;
     }
 }
 
@@ -442,10 +442,10 @@ zvmopbge(struct zvmopcode *op)
     uint_fast8_t arg1t = op->arg1t;
     zasword_t    dest = zvmgetarg1(op, arg1t);
 
-    if ((zvm.msw & ZVMOF) || (zvm.msw & ZVMZF)) {
-        zvm.pc = dest;
+    if ((zvm.cregs[ZVMMSWCREG] & ZVMOF) || (zvm.cregs[ZVMMSWCREG] & ZVMZF)) {
+        zvm.cregs[ZVMPCCREG] = dest;
     } else {
-        zvm.pc += op->size << 2;
+        zvm.cregs[ZVMPCCREG] += op->size << 2;
     }
 }
 
@@ -455,10 +455,10 @@ zvmopbo(struct zvmopcode *op)
     uint_fast8_t arg1t = op->arg1t;
     zasword_t    dest = zvmgetarg1(op, arg1t);
 
-    if (zvm.msw & ZVMOF) {
-        zvm.pc = dest;
+    if (zvm.cregs[ZVMMSWCREG] & ZVMOF) {
+        zvm.cregs[ZVMPCCREG] = dest;
     } else {
-        zvm.pc += op->size << 2;
+        zvm.cregs[ZVMPCCREG] += op->size << 2;
     }
 }
 
@@ -468,10 +468,10 @@ zvmopbno(struct zvmopcode *op)
     uint_fast8_t arg1t = op->arg1t;
     zasword_t    dest = zvmgetarg1(op, arg1t);
 
-    if (!(zvm.msw & ZVMOF)) {
-        zvm.pc = dest;
+    if (!(zvm.cregs[ZVMMSWCREG] & ZVMOF)) {
+        zvm.cregs[ZVMPCCREG] = dest;
     } else {
-        zvm.pc += op->size << 2;
+        zvm.cregs[ZVMPCCREG] += op->size << 2;
     }
 }
 
@@ -481,10 +481,10 @@ zvmopbc(struct zvmopcode *op)
     uint_fast8_t arg1t = op->arg1t;
     zasword_t    dest = zvmgetarg1(op, arg1t);
 
-    if (zvm.msw & ZVMCF) {
-        zvm.pc = dest;
+    if (zvm.cregs[ZVMMSWCREG] & ZVMCF) {
+        zvm.cregs[ZVMPCCREG] = dest;
     } else {
-        zvm.pc += op->size << 2;
+        zvm.cregs[ZVMPCCREG] += op->size << 2;
     }
 }
 
@@ -494,10 +494,10 @@ zvmopbnc(struct zvmopcode *op)
     uint_fast8_t arg1t = op->arg1t;
     zasword_t    dest = zvmgetarg1(op, arg1t);
 
-    if (!(zvm.msw & ZVMCF)) {
-        zvm.pc = dest;
+    if (!(zvm.cregs[ZVMMSWCREG] & ZVMCF)) {
+        zvm.cregs[ZVMPCCREG] = dest;
     } else {
-        zvm.pc += op->size << 2;
+        zvm.cregs[ZVMPCCREG] += op->size << 2;
     }
 }
 
@@ -505,46 +505,46 @@ void
 zvmoppop(struct zvmopcode *op)
 {
 //    uint_fast8_t  arg1t = ZVMARGREG;
-    zasword_t    *dptr = (zasword_t *)&zvm.physmem[zvm.sp];
+    zasword_t    *dptr = (zasword_t *)&zvm.physmem[zvm.cregs[ZVMSPCREG]];
 //    zasword_t     src = zvmgetarg(op, arg1t, dptr);
-    zasword_t     dest = *(zasword_t *)&zvm.physmem[zvm.sp];
+    zasword_t     dest = *(zasword_t *)&zvm.physmem[zvm.cregs[ZVMSPCREG]];
 
-    zvm.msw &= ~(ZVMZF | ZVMOF | ZVMCF);
-    zvm.sp -= sizeof(zasword_t);
+    zvm.cregs[ZVMMSWCREG] &= ~(ZVMZF | ZVMOF | ZVMCF);
+    zvm.cregs[ZVMSPCREG] -= sizeof(zasword_t);
     zvmsetzf(dest);
     *dptr = dest;
-    zvm.pc += op->size << 2;
+    zvm.cregs[ZVMPCCREG] += op->size << 2;
 }
 
 void
 zvmoppush(struct zvmopcode *op)
 {
     uint_fast8_t  arg1t = ZVMARGREG;
-    zasword_t    *dptr = (zasword_t *)&zvm.physmem[zvm.sp];
+    zasword_t    *dptr = (zasword_t *)&zvm.physmem[zvm.cregs[ZVMSPCREG]];
     zasword_t     src = zvmgetarg1(op, arg1t);
 
-    zvm.msw &= ~(ZVMZF | ZVMOF | ZVMCF);
+    zvm.cregs[ZVMMSWCREG] &= ~(ZVMZF | ZVMOF | ZVMCF);
     zvmsetzf(src);
     *dptr = src;
-    zvm.sp -= sizeof(zasword_t);
-    zvm.pc += op->size << 2;
+    zvm.cregs[ZVMSPCREG] -= sizeof(zasword_t);
+    zvm.cregs[ZVMPCCREG] += op->size << 2;
 }
 
 void
 zvmoppusha(struct zvmopcode *op)
 {
     zasword_t  src;
-    zasword_t *dptr = (zasword_t *)&zvm.physmem[zvm.sp];
+    zasword_t *dptr = (zasword_t *)&zvm.physmem[zvm.cregs[ZVMSPCREG]];
     long       l;
 
-    zvm.msw &= ~(ZVMZF | ZVMOF | ZVMCF);
-    for (l = 0 ; l < ZASNREG ; l++) {
+    zvm.cregs[ZVMMSWCREG] &= ~(ZVMZF | ZVMOF | ZVMCF);
+    for (l = 0 ; l < ZVMNREG ; l++) {
         src = zvm.regs[l];
         *dptr = src;
         dptr++;
     }
-    zvm.sp -= ZASNREG * sizeof(zasword_t);
-    zvm.pc += op->size << 2;
+    zvm.cregs[ZVMSPCREG] -= ZVMNREG * sizeof(zasword_t);
+    zvm.cregs[ZVMPCCREG] += op->size << 2;
 }
 
 void
@@ -557,7 +557,7 @@ zvmopmovl(struct zvmopcode *op)
 
     zvmgetarg2mov(op, arg1t, arg2t, dptr, uint32_t);
     *dptr = src;
-    zvm.pc += op->size << 2;
+    zvm.cregs[ZVMPCCREG] += op->size << 2;
 }
 
 void
@@ -570,7 +570,7 @@ zvmopmovb(struct zvmopcode *op)
 
     zvmgetarg2mov(op, arg1t, arg2t, dptr, uint8_t);
     *dptr = src;
-    zvm.pc += op->size << 2;
+    zvm.cregs[ZVMPCCREG] += op->size << 2;
 }
 
 void
@@ -583,10 +583,10 @@ zvmopmovw(struct zvmopcode *op)
 
     zvmgetarg2mov(op, arg1t, arg2t, dptr, uint16_t);
     *dptr = src;
-    zvm.pc += op->size << 2;
+    zvm.cregs[ZVMPCCREG] += op->size << 2;
 }
 
-#if (!ZAS32BIT)
+#if (!ZVM32BIT)
 void
 zvmopmovq(struct zvmopcode *op)
 {
@@ -597,7 +597,7 @@ zvmopmovq(struct zvmopcode *op)
     uint64_t      dest = zvmgetarg2mov(op, arg1t, arg2t, dptr, uint64_t);
 
     *dptr = src;
-    zvm.pc += op->size << 2;
+    zvm.cregs[ZVMPCCREG] += op->size << 2;
 }
 #endif
 
@@ -605,20 +605,20 @@ void
 zvmopcall(struct zvmopcode *op)
 {
     uint_fast8_t arg1t = op->arg1t;
-    zasword_t   *dptr = (zasword_t *)&zvm.physmem[zvm.sp];
+    zasword_t   *dptr = (zasword_t *)&zvm.physmem[zvm.cregs[ZVMSPCREG]];
     zasword_t    dest = zvmgetarg1(op, arg1t);
     zasword_t    src;
     long         l;
     
-    zvm.msw &= ~(ZVMZF | ZVMOF | ZVMCF);
-    for (l = 0 ; l < ZASNREG ; l++) {
+    zvm.cregs[ZVMMSWCREG] &= ~(ZVMZF | ZVMOF | ZVMCF);
+    for (l = 0 ; l < ZVMNREG ; l++) {
         src = zvm.regs[l];
         *dptr = src;
         dptr++;
     }
-    zvm.fp = zvm.sp - ZASNREG * sizeof(zasword_t);
-    zvm.sp = zvm.fp;
-    zvm.pc = dest;
+    zvm.cregs[ZVMFPCREG] = zvm.cregs[ZVMSPCREG] - ZVMNREG * sizeof(zasword_t);
+    zvm.cregs[ZVMSPCREG] = zvm.cregs[ZVMFPCREG];
+    zvm.cregs[ZVMPCCREG] = dest;
 
     return;
 }
@@ -627,12 +627,12 @@ void
 zvmopenter(struct zvmopcode *op)
 {
     uint_fast8_t  arg1t = op->arg1t;
-    zasword_t    *dptr = (zasword_t *)&zvm.physmem[zvm.sp] - sizeof(zasword_t);
+    zasword_t    *dptr = (zasword_t *)&zvm.physmem[zvm.cregs[ZVMSPCREG]] - sizeof(zasword_t);
     uint_fast8_t  ofs = zvmgetarg1(op, arg1t);
 
-    *dptr = zvm.fp;
-    zvm.sp -= ofs + sizeof(zasword_t);
-    zvm.pc += op->size << 2;
+    *dptr = zvm.cregs[ZVMFPCREG];
+    zvm.cregs[ZVMSPCREG] -= ofs + sizeof(zasword_t);
+    zvm.cregs[ZVMPCCREG] += op->size << 2;
 
     return;
 }
@@ -640,11 +640,11 @@ zvmopenter(struct zvmopcode *op)
 void
 zvmopleave(struct zvmopcode *op)
 {
-    zasword_t fp = *(zasword_t *)&zvm.physmem[zvm.fp];
+    zasword_t fp = *(zasword_t *)&zvm.physmem[zvm.cregs[ZVMFPCREG]];
 
-    zvm.fp = fp;
-    zvm.sp = fp - sizeof(zasword_t);
-    zvm.pc += op->size << 2;
+    zvm.cregs[ZVMFPCREG] = fp;
+    zvm.cregs[ZVMSPCREG] = fp - sizeof(zasword_t);
+    zvm.cregs[ZVMPCCREG] += op->size << 2;
 
     return;
 }
@@ -652,18 +652,18 @@ zvmopleave(struct zvmopcode *op)
 void
 zvmopret(struct zvmopcode *op)
 {
-    zasword_t *fptr = (zasword_t *)&zvm.physmem[zvm.fp];
+    zasword_t *fptr = (zasword_t *)&zvm.physmem[zvm.cregs[ZVMFPCREG]];
     zasword_t  fp = *fptr--;
     zasword_t  pc = *fptr--;
     zasword_t *sptr = fptr;
     long       l;
 
-    for (l = 0 ; l < ZASNREG ; l++) {
+    for (l = 0 ; l < ZVMNREG ; l++) {
         zvm.regs[l] = *sptr--;
     }
-    zvm.fp = fp;
-    zvm.sp = fp;
-    zvm.pc = pc;
+    zvm.cregs[ZVMFPCREG] = fp;
+    zvm.cregs[ZVMSPCREG] = fp;
+    zvm.cregs[ZVMPCCREG] = pc;
 
     return;
 }
@@ -675,8 +675,8 @@ zvmoplmsw(struct zvmopcode *op)
     zasword_t    *dptr;
 
     zvmgetarg(op, arg1t, dptr);
-    *dptr = zvm.msw;
-    zvm.pc += op->size << 2;
+    *dptr = zvm.cregs[ZVMMSWCREG];
+    zvm.cregs[ZVMPCCREG] += op->size << 2;
 }
 
 void zvmopsmsw(struct zvmopcode *op)
@@ -685,8 +685,8 @@ void zvmopsmsw(struct zvmopcode *op)
     zasword_t    *sptr;
 
     zvmgetarg(op, arg1t, sptr);
-    zvm.msw = *sptr;
-    zvm.pc += op->size << 2;
+    zvm.cregs[ZVMMSWCREG] = *sptr;
+    zvm.cregs[ZVMPCCREG] += op->size << 2;
 
     return;
 }
@@ -697,11 +697,11 @@ zvmopreset(struct zvmopcode *op)
     zasword_t *dptr = zvm.regs;
     long       l;
 
-    zvm.msw = 0;
-    zvm.fp = 0;
-    zvm.sp = zvm.memsize;
-    zvm.pc = ZVMTEXTBASE;
-    for (l = 0 ; l < ZASNREG ; l++) {
+    zvm.cregs[ZVMMSWCREG] = 0;
+    zvm.cregs[ZVMFPCREG] = 0;
+    zvm.cregs[ZVMSPCREG] = zvm.memsize;
+    zvm.cregs[ZVMPCCREG] = ZVMTEXTBASE;
+    for (l = 0 ; l < ZVMNREG ; l++) {
         *dptr++ = 0;
     }
 

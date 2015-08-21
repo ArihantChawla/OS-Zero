@@ -1,0 +1,10 @@
+zed editor
+----------
+- dynamic modules for configuration (in c first)
+- c-mode (hilite, indent)
+- asm-mode (hilite, indent)
+- sh-mode (hilite, indent)
+- emacs-keybindings
+- vi-mode
+- calc-mode (zpc)
+

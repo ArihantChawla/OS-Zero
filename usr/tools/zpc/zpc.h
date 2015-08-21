@@ -87,8 +87,10 @@ struct zpctoken {
 #define SHUNT_EVALTAB    zpcevaltab
 #define SHUNT_LEFTPAREN  ZPCLEFTPAREN
 #define SHUNT_RIGHTPAREN ZPCRIGHTPAREN
+#if 0
 #define shuntprintstr(tok, val, rdx)                                    \
     zpcprintstr64(tok, val, rdx)
+#endif
 #define shuntcisrtol(tok) (shuntcopprec(tok) & SHUNTCRTOL)
 #define shuntcprec(tok)   (shuntcopprectab[(tok)->type])
 #define shuntcisvalue(tok)                                              \

@@ -24,11 +24,11 @@
 #define ZVMVIRTMEM 0
 #endif
 
-#ifndef ZAS32BIT
-#define ZAS32BIT   1
+#ifndef ZVM32BIT
+#define ZVM32BIT   1
 #endif
-#ifndef ZASALIGN
-#define ZASALIGN   1
+#ifndef ZVMALIGN
+#define ZVMALIGN   1
 #endif
 
 #endif /* __ZVM_CONF_H__ */

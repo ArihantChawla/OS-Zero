@@ -35,7 +35,7 @@ void zvmoppusha(struct zvmopcode *op);
 void zvmopmovl(struct zvmopcode *op);
 void zvmopmovb(struct zvmopcode *op);
 void zvmopmovw(struct zvmopcode *op);
-#if (!ZAS32BIT)
+#if (!ZVM32BIT)
 void zvmopmovq(struct zvmopcode *op);
 #endif
 void zvmopcall(struct zvmopcode *op);
@@ -115,13 +115,13 @@ void zvmophlt(struct zvmopcode *op);
 #define ZVMINB      0x01
 #define ZVMINW      0x02
 #define ZVMINL      0x03
-#if (!ZAS32BIT)
+#if (!ZVM32BIT)
 #define ZVMINQ      0x04
 #endif
 #define ZVMOUTB     0x05
 #define ZVMOUTW     0x06
 #define ZVMOUTL     0x07
-#if (!ZAS32BIT)
+#if (!ZVM32BIT)
 #define ZVMOUTQ     0x08
 #endif
 
@@ -143,34 +143,34 @@ void zvmophlt(struct zvmopcode *op);
         : (op)->args[1]))
 #define zvmgetarg1mov(op, arg1t, arg2t)                                 \
     (((arg1t) == ZVMARGREG)                                             \
-     ? (((op)->reg1 & ZASREGINDEX)                                      \
-        ? zvmgetmemt(zvm.regs[(op)->reg1 & ZASREGMASK] + op->args[0],   \
+     ? (((op)->reg1 & ZVMREGINDEX)                                      \
+        ? zvmgetmemt(zvm.regs[(op)->reg1 & ZVMREGMASK] + op->args[0],   \
                      zasword_t)                                         \
-        : (((op)->reg1 & ZASREGINDIR)                                   \
-           ? zvmgetmemt(zvm.regs[(op)->reg1 & ZASREGMASK], zasword_t)   \
-           : zvm.regs[(op)->reg1 & ZASREGMASK]))                        \
+        : (((op)->reg1 & ZVMREGINDIR)                                   \
+           ? zvmgetmemt(zvm.regs[(op)->reg1 & ZVMREGMASK], zasword_t)   \
+           : zvm.regs[(op)->reg1 & ZVMREGMASK]))                        \
      : (((arg1t) == ZVMARGADR)                                          \
         ? *(zasword_t *)zvmadrtoptr((op)->args[0])                      \
         : (op)->args[0]))
 #define zvmgetarg2mov(op, arg1t, arg2t, ptr, t)                         \
     (((arg1t) == ZVMARGREG)                                             \
      ? (((arg2t) == ZVMARGREG)                                          \
-        ? (((op)->reg2 & ZASREGINDEX)                                   \
-           ? (ptr = (t *)zvmadrtoptr(zvm.regs[(op)->reg2 & ZASREGMASK] + (op)->args[0]), \
+        ? (((op)->reg2 & ZVMREGINDEX)                                   \
+           ? (ptr = (t *)zvmadrtoptr(zvm.regs[(op)->reg2 & ZVMREGMASK] + (op)->args[0]), \
               *(ptr))                                                   \
-           : (((op)->reg2 & ZASREGINDIR)                                \
-              ? (ptr = (t *)zvmadrtoptr(zvm.regs[(op)->reg2 & ZASREGMASK]), \
+           : (((op)->reg2 & ZVMREGINDIR)                                \
+              ? (ptr = (t *)zvmadrtoptr(zvm.regs[(op)->reg2 & ZVMREGMASK]), \
                  *(ptr))                                                \
               : (ptr = (t *)&zvm.regs[(op)->reg2],                      \
                  *(ptr))))                                              \
         : (ptr = (t *)zvmadrtoptr((op)->args[0]),                       \
            *(ptr)))                                                     \
      : (((arg2t) == ZVMARGREG)                                          \
-        ? (((op)->reg2 & ZASREGINDEX)                                   \
-           ? (ptr = (t *)zvmadrtoptr(zvm.regs[(op)->reg2 & ZASREGMASK] + (op)->args[1]), \
+        ? (((op)->reg2 & ZVMREGINDEX)                                   \
+           ? (ptr = (t *)zvmadrtoptr(zvm.regs[(op)->reg2 & ZVMREGMASK] + (op)->args[1]), \
               *(ptr))                                                   \
-           : (((op)->reg2 & ZASREGINDIR)                                \
-              ? (ptr = (t *)zvmadrtoptr(zvm.regs[(op)->reg2 & ZASREGMASK]), \
+           : (((op)->reg2 & ZVMREGINDIR)                                \
+              ? (ptr = (t *)zvmadrtoptr(zvm.regs[(op)->reg2 & ZVMREGMASK]), \
                  *(ptr))                                                \
               : (ptr = (t *)&zvm.regs[(op)->reg2],                      \
                  *(ptr))))                                              \
@@ -197,7 +197,9 @@ void zvmophlt(struct zvmopcode *op);
                  *(ptr))))))))
 #endif
 #define zvmsetzf(val)                                                   \
-    (!(val) ? (zvm.msw |= ZVMZF) : (zvm.msw &= ~ZVMZF))
+    (!(val) \
+     ? (zvm.cregs[ZVMMSWCREG] |= ZVMZF) \
+     : (zvm.cregs[ZVMMSWCREG] &= ~ZVMZF))
 
 #endif /* __ZVM_OP_H__ */
 

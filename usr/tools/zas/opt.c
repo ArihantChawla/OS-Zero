@@ -3,6 +3,9 @@
 #include <zas/conf.h>
 #include <zas/zas.h>
 #include <zas/opt.h>
+#if (ZVM)
+#include <zvm/asm.h>
+#endif
 
 #if (ZASALIGN)
 extern zasmemadr_t zastokalntab[ZASNTOKEN];

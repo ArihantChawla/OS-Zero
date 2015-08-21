@@ -16,6 +16,59 @@
 #include <kern/mem.h>
 #include <kern/syscallnum.h>
 
+/* TODO
+ * ----
+ * - sysreg_t sys_prof(sysreg_t cmd, sysreg_t pid, sysreg_t parm);
+ *   - cmd
+ *     - one of PROFON, PROFOFF
+ *   - pid:
+ *     - -1 - all processes (of system if not root)
+ *     - -X - process group of X;
+ *     - 0  - the kernel [subsystems]
+ *     - X (posivite) - process X
+ *   - parm - bitmask
+ *     - PROFLOG
+ *     - PROFSUMMARY
+ *     - PROFNANO (nanoseconds, if 0 then microseconds)
+ * - sysreg_t sys_trace(sysreg_t cmd, sysreg_t pid, sysreg_t parm);
+ *   - cmd
+ *     - one of TRACEON, TRACEOFF
+ *   - pid
+ *     - as for sys_prof()
+ *   - parm - bitmask
+ *     - TRACELOG
+ *     - TRACESUMMARY
+ *     - TRACETRAP
+ *     - TRACEMEM
+ *     - TRACEIO
+ * - sysreg_t sys_chroot(char *path);
+ * - sysreg_t sys_jailctl(sysreg_t cmd, sysreg_t pid, void *parm);
+ *   - cmd
+ *     - JAILON, JAILOFF, ...
+ *   - pid
+ *     - -1 - all processes (of user if not root)
+ *     - -X - process group of X
+ *     - 0 - self (+ children)
+ *     - +X - process ID X
+ *   - parm; see struct jailparm below
+ * - sysreg_t sys_ioperm(sysreg_t cmd, sysreg_t pid, uintptr_t parm);
+ *   - cmd - IOENABLE, IODISABLE, IOCHK, IOSETMAP, IOMAP, IOUNMAP
+ *   - pid - as for sys_jailctl()
+ *   - parm
+ *     - IOENABLE, IODISABLE, IOCHKPERM: parm is port number
+ *     - IOSETMAP: parm is I/O-permission bitmap for ports
+ *     - IOMAP, IOUNMAP: parm is memory-mapped device I/O address
+ */
+
+#if 0
+struct jailparm {
+    /* memory attributes */
+    size_t heapsize;
+    size_t mapsize;
+    size_t virtsize;
+};
+#endif
+
 extern void ksyscall(void);
 
 #if (LONGSIZE == 4)
@@ -462,6 +515,7 @@ struct sysioreg {
     off_t       len;
 };
 
+#if 0 /* TO BE IMPLEMENTED using sys_ioperm() */
 #define SYS_IOCTL_IOPERM 0x01   // need CAP_SYS_RAWIO
 
 /* ioctl() */
@@ -470,6 +524,7 @@ struct ioctl {
     long            parm;	// command parameters such as flag-bits
     struct sysioreg reg;
 };
+#endif
 
 struct select {
     fd_set          *readset;

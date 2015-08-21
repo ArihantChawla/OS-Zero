@@ -1,0 +1,13 @@
+zero inter-process communications
+---------------------------------
+- ev
+  - events
+- sig
+  - asynchronous notifications (signals)
+- shm
+  - shared memory; POSIX and SysV interfaces
+- mq
+  - message queues; POSIX and SysV interfaces
+- net
+  - networking (e.g. tcp4, ip4, tcp6, ip6)
+

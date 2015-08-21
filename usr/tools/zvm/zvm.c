@@ -19,6 +19,9 @@
 #include <zvm/zvm.h>
 #include <zvm/op.h>
 #include <zvm/mem.h>
+#if (ZVMEFL)
+#include <zvm/efl.h>
+#endif
 #if (ZVMXCB)
 #include <zvm/xcb.h>
 #endif
@@ -94,7 +97,7 @@ zvminitasm(void)
 //    zvminitasmop(ZVMOPMOV, ZVMOPMOVL, "movl", 2, zvmopmovl);
     zvminitasmop(ZVMOPMOV, ZVMOPMOVB, "movb", 2, zvmopmovb);
     zvminitasmop(ZVMOPMOV, ZVMOPMOVW, "movw", 2, zvmopmovw);
-#if (!ZAS32BIT)
+#if (!ZVM32BIT)
     zvminitasmop(ZVMOPMOV, ZVMOPMOVQ, "movq", 2, zvmopmovq);
 #endif
     /* function calls */
@@ -117,13 +120,13 @@ zvminitasm(void)
     zvminitasmop(ZVMOPIO, ZVMINB, "inb", 2, zvmopinb);
     zvminitasmop(ZVMOPIO, ZVMINW, "inw", 2, zvmopinw);
     zvminitasmop(ZVMOPIO, ZVMINL, "inl", 2, zvmopinl);
-#if (!ZAS32BIT)
+#if (!ZVM32BIT)
     zvminitasmop(ZVMOPIO, ZVMINQ, "inq", 2, zvmopinq);
 #endif
     zvminitasmop(ZVMOPIO, ZVMOUTB, "outb", 2, zvmopoutb);
     zvminitasmop(ZVMOPIO, ZVMOUTW, "outw", 2, zvmopoutw);
     zvminitasmop(ZVMOPIO, ZVMOUTL, "outl", 2, zvmopoutl);
-#if (!ZAS32BIT)
+#if (!ZVM32BIT)
     zvminitasmop(ZVMOPIO, ZVMOUTQ, "outq", 2, zvmopoutq);
 #endif
 #endif /* 0 */
@@ -144,9 +147,9 @@ zvminit(void)
     }
     zvminitasm();
 #if (!ZVMVIRTMEM)
-    zvm.sp = memsize;
+    zvm.cregs[ZVMSPCREG] = memsize;
 #endif
-    zvm.pc = ZVMTEXTBASE;
+    zvm.cregs[ZVMPCCREG] = ZVMTEXTBASE;
     zvminitio();
 #if (ZVMEFL) || (ZVMXORG) || (ZVMXCB)
     zvminitui();
@@ -180,33 +183,33 @@ zvmloop(zasmemadr_t _startadr)
     fprintf(stderr, "registers\n");
     fprintf(stderr, "---------\n");
     fprintf(stderr, "---------\n");
-    for (i = 0 ; i < ZASNREG ; i++) {
+    for (i = 0 ; i < ZVMNREG ; i++) {
         fprintf(stderr, "r%d:\t0x%lx\n", i, (long)zvm.regs[i]);
     }
 #endif
     zvm.shutdown = 0;
-    zvm.pc = _startadr;
+    zvm.cregs[ZVMPCCREG] = _startadr;
 //    memcpy(&zvm.cpustat, cpustat, sizeof(struct zvmcpustate));
 //    free(cpustat);
     while (!zvm.shutdown) {
 #if (ZVMXCB)
         xcbdoevent();
 #endif
-//        op = (struct zvmopcode *)&zvm.physmem[zvm.pc];
-        op = (struct zvmopcode *)&zvm.physmem[zvm.pc];
+//        op = (struct zvmopcode *)&zvm.physmem[zvm.cregs[ZVMPCCREG]];
+        op = (struct zvmopcode *)&zvm.physmem[zvm.cregs[ZVMPCCREG]];
         if (op->code == ZVMOPNOP) {
-            zvm.pc += sizeof(struct zvmopcode);
+            zvm.cregs[ZVMPCCREG] += sizeof(struct zvmopcode);
         } else {
-//            zvm.cpustat.pc = rounduppow2(zvm.pc, sizeof(zasword_t));
-//            op = (struct zvmopcode *)&zvm.physmem[zvm.pc];
-//            op = &zvm.physmem[zvm.pc];
+//            zvm.cpustat.pc = rounduppow2(zvm.cregs[ZVMPCCREG], sizeof(zasword_t));
+//            op = (struct zvmopcode *)&zvm.physmem[zvm.cregs[ZVMPCCREG]];
+//            op = &zvm.physmem[zvm.cregs[ZVMPCCREG]];
             func = zvmfunctab[op->code];
 #if (ZVMTRACE)
             asmprintop(op);
 #endif
             if (func) {
 #if (ZVMDB)
-                line = zasfindline(zvm.pc);
+                line = zasfindline(zvm.cregs[ZVMPCCREG]);
                 if (line) {
                     fprintf(stderr, "%s:%ld:\t%s\n", line->file, line->num, line->data);
                 }
@@ -214,7 +217,7 @@ zvmloop(zasmemadr_t _startadr)
                 func(op);
             } else {
                 fprintf(stderr, "illegal instruction, PC == %lx\n",
-                        (long)zvm.pc);
+                        (long)zvm.cregs[ZVMPCCREG]);
 #if (ZVM)
 //                asmprintop(op);
 #endif
@@ -232,7 +235,7 @@ zvmloop(zasmemadr_t _startadr)
     fprintf(stderr, "\n");
     fprintf(stderr, "registers\n");
     fprintf(stderr, "---------\n");
-    for (i = 0 ; i < ZASNREG ; i++) {
+    for (i = 0 ; i < ZVMNREG ; i++) {
         fprintf(stderr, "r%d:\t0x%lx\n", i, (long)zvm.regs[i]);
     }
 #endif
@@ -250,7 +253,7 @@ zvmmain(int argc, char *argv[])
 {
     long        l;
     zasmemadr_t adr = ZVMTEXTBASE;
-#if (ZASPROF)
+#if (ZVMPROF)
     PROFDECLCLK(clk);
 #endif
 
@@ -271,7 +274,7 @@ zvmmain(int argc, char *argv[])
         memset(zvm.physmem, 0, ZVMTEXTBASE);
     }
 #endif
-#if (ZASPROF)
+#if (ZVMPROF)
     profstartclk(clk);
 #endif
     for (l = 1 ; l < argc ; l++) {
@@ -287,7 +290,7 @@ zvmmain(int argc, char *argv[])
             adr = zastranslate(adr);
             zasresolve(ZVMTEXTBASE);
             zasremovesyms();
-#if (ZASPROF)
+#if (ZVMPROF)
             profstopclk(clk);
             fprintf(stderr, "%ld microseconds to process %s\n",
                     profclkdiff(clk), argv[l]);

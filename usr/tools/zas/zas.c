@@ -27,6 +27,7 @@
 #if (ZVM)
 #include <zvm/zvm.h>
 #include <zvm/mem.h>
+#include <zvm/asm.h>
 #elif (WPM)
 #include <wpm/wpm.h>
 #endif

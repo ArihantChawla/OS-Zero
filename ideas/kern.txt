@@ -1,0 +1,27 @@
+zero kernel
+-----------
+
+TODO: alu, fpu, gpu
+
+kernel modules
+--------------
+- seg - memory segmentation
+- trap - interrupts
+- tmr - timers
+- prof - profiling interface
+- proc - processes
+- thr - threads
+- page - page daemon
+- buf - [block I/O] buffer cache
+- dev - devices (drivers etc.)
+- fs - filesystems
+- inet - internetworking
+
+thread priorities
+-----------------
+- kbd - keyboard input
+- pnt - pointer (e.g. mouse) input
+- aud - audio
+- vid - video
+... io, aio (asynchronous io)
+

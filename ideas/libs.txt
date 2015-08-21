@@ -1,0 +1,7 @@
+zero libraries
+--------------
+- libzero - support library for the kernel as well as userland programs
+- libc - c language standard library  (ISO C, POSIX, ...)
+- libm - c language standard math library
+- libvec - vector math library (to leverage SIMD etc.)
+- libvt - virtual terminal interface library (consoles, terminal emulators)

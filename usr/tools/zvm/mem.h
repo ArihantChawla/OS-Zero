@@ -10,8 +10,8 @@
 #if (ZVMVIRTMEM)
 
 #define ZVMTEXTBASE     (2 * ZVMPAGESIZE)
-#define ZASNPAGE        (1UL << ZVMADRBITS - PAGESIZELOG2)
-#if (ZAS32BIT)
+#define ZVMNPAGE        (1UL << ZVMADRBITS - PAGESIZELOG2)
+#if (ZVM32BIT)
 #define ZVMADRBITS      32
 #else
 #define ZVMADRBITS      ADRBITS

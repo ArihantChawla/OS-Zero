@@ -14,6 +14,8 @@ static __thread int     __errno;
 static pthread_key_t    __key;
 static pthread_once_t   __once = PTHREAD_ONCE_INIT;
 #endif
+#elif defined(_WIN32) || defined(_WIN64)
+__declspec(thread) int  __errno;
 #else
 static int              __errno;
 #endif

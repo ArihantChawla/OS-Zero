@@ -1,0 +1,11 @@
+zero syncronisation methods
+---------------------------
+- mtx
+  - mutex (binary semaphore)
+- sem
+  - semaphores
+- rwlk
+  - read-write locks
+- cond
+  - condition variables
+

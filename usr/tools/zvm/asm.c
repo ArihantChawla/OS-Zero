@@ -22,7 +22,7 @@ struct zasop *zvmophash[ZASNHASH];
 void
 zvminitopt(void)
 {
-#if (ZASALIGN)
+#if (ZVMALIGN)
     zasinitalign();
 #endif
 
@@ -128,13 +128,13 @@ asmgetreg(uint8_t *str, zasword_t *retsize, uint8_t **retptr)
     zasuword_t reg = 0;
     zasword_t  size = 0;
     
-#if (ZASDEBUG)
+#if (ZVMDEBUG)
     fprintf(stderr, "getreg: %s\n", str);
 #endif
-#if (ZASNEWHACKS)
+#if (ZVMNEWHACKS)
     if (*str == 'r') {
         str++;
-#if (ZAS32BIT)
+#if (ZVM32BIT)
         size = 4;
 #else
         size = 8;
@@ -148,7 +148,7 @@ asmgetreg(uint8_t *str, zasword_t *retsize, uint8_t **retptr)
     } else if (*str == 'l') {
         str++;
         size = 4;
-#if (!ZAS32BIT)
+#if (!ZVM32BIT)
     } else if (*str == 'q') {
         str++;
         size = 8;
@@ -214,7 +214,7 @@ asmprocinst(struct zastoken *token, zasmemadr_t adr, zasmemadr_t *retadr)
         adr++;
     }
 #endif
-#if (ZASDB)
+#if (ZVMDB)
     zasaddline(adr, token->data.inst.data, token->file, token->line);
 #endif
     op = (struct zvmopcode *)&zvm.physmem[adr];

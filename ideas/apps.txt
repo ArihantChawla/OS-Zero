@@ -1,0 +1,30 @@
+ideas for application programs
+------------------------------
+- zed editor
+- zvm virtual machine
+- zpc (zero programmer's calculator); interface for zvm
+- zdoc document reader
+  - reader for man and info pages etc. documents
+- zclk clock
+  - timezone
+  - alarms
+- zcal calendar
+  - alerts
+  - notes
+- znb notebook
+  - popup alerts
+- zmail email interface
+- zim instant messenger
+- zchat chat client
+  - irc
+- zpim (personal information manager)
+  - adrbook
+- zorg organiser
+  - todo lists, documentation, ...
+- zmc media center
+  - images
+  - audio
+  - video
+- zsysinfo
+  - show system information
+

@@ -18,10 +18,12 @@
 #define ZEN 0
 #endif
 
+#if 0
 /* assembler features */
 #undef ZASALIGN
 /* align instructions and data on virtual machine word boundaries */
 #define ZASALIGN 1
+#endif
 
 /*
  * choose input file buffering scheme

@@ -1,0 +1,10 @@
+zero gaming :)
+--------------
+- TODO: hack the system to run ScummVM (http://www.scummvm.org)
+- zcw
+  - implementation of Core Wars
+- TODO: port rogue
+- TODO: port hack
+- TODO: port bsdgames
+- TODO: port nethack
+
