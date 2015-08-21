@@ -1,7 +1,7 @@
-#ifndef __GFX_ALPHA_H__
-#define __GFX_ALPHA_H__
+#ifndef __ZERO_GFX_ALPHA_H__
+#define __ZERO_GFX_ALPHA_H__
 
-#include <gfx/rgb.h>
+#include <zero/gfx/rgb.h>
 
 #define __INTEL_MMX__ 1
 #if (__INTEL_MMX__)
@@ -269,5 +269,5 @@
         (dest) = _val1;                                                 \
     } while (0)
         
-#endif /* __GFX_ALPHA_H__ */
+#endif /* __ZERO_GFX_ALPHA_H__ */
 

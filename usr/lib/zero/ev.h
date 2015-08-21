@@ -109,7 +109,7 @@ struct evcmd {
  */
 /* flg-field bits */
 #define EVDATAMESSAGE   0x00000001U     // error event if bit not set
-#define EVDATABIGENDIAN 0x80000000U     // big-endian vs. little-endian words
+//#define EVDATABIGENDIAN 0x80000000U     // big-endian vs. little-endian words
 /* fmt-field formats */
 #define EVDATABINARY    0x00000000U
 #define EVDATAASCII     0x00000001U
@@ -192,15 +192,15 @@ long   evpeek(struct ev *ev, long mask);
  * - EVGET, EVPUT: flush queue unless flg has the EVNOFLUSH-bit set
  * - EVGET:        remove from queue unless flg has the EVNOREMOVE-bit set
  */
-#define EVNOFLUSH         0x01  // check queue; do not flush connection
-#define EVNOREMOVE        0x02  // do not remove event from queue
+#define EVNOFLUSH    0x01               // check queue; do not flush connection
+#define EVNOREMOVE   0x02               // do not remove event from queue
 /* flg-argument bits for evsync() */
-#define EVSYNC            0x00000001L   // otherwise asynchronous
-#define EVTOSS_USERINPUT  0x00000002L   // discard pending user input
+#define EVSYNC       0x00000001L        // asynchronous if not set
+#define EVTOSSINPUT  0x00000002L        // discard pending user input
 
-#define evpeek(ev, flg)   evget((ev), ((flg) | EVNOREMOVE))
-void    evget(struct ev *ev, long flg);
-long    evput(struct ev *ev, long flg);
+#define evpeek(deck, ev, flg) evget((deck), (ev), (flg) | EVNOREMOVE)
+void    evget(struct deck *deck, struct ev *ev, long flg);
+long    evput(struct deck *deck, struct ev *ev, long flg);
 void    evsync(struct deck *deck, long flg);
 
 #endif /* !__KERNEL__ */
@@ -208,10 +208,10 @@ void    evsync(struct deck *deck, long flg);
 /*
  * NOTES
  * -----
- * - event ID of 0 is protocol messages, event ID 1 for protocol errors
+ * - response event ID of 0 is protocol messages, event ID 1 for protocol errors
  */
 
-/* events internal for event and reply management */
+/* events internal for event and response management */
 #define EVPROTOMSG        0x00
 #define EVERRORMSG        0x01
 /* system events */
@@ -255,19 +255,19 @@ void    evsync(struct deck *deck, long flg);
 /* event IDs */
 
 /* keyboard events */
-#define EVKEYDOWN         0x01  // keyboard key down event
-#define EVKEYUP           0x02  // keyboard key up event
+#define EVKEYDOWN         0x01  // keyboard press event
+#define EVKEYUP           0x02  // keyboard release event
 /* pointer events */
-#define EVBUTTONDOWN      0x03  // mouse/pointer button down event
-#define EVBUTTONUP        0x04  // mouse/pointer button up event
+#define EVBUTTONDOWN      0x03  // mouse/pointer button press event
+#define EVBUTTONUP        0x04  // mouse/pointer button release event
 #define EVPNTMOTION       0x05  // pointer motion reported
 /* IPC events */
 #define EVMSG             0x06  // custom protocol messages
 #define EVCMD             0x07  // RPC commands
 #define EVDATA            0x08  // data transfer
 /* filesystem events */
-#define EVFSMOUNT         0x09
-#define EVFSUNMOUNT       0x0a
+#define EVFSMOUNT         0x09  // filesystem mount event
+#define EVFSUNMOUNT       0x0a  // filesystem unmount event
 #define EVFSCREAT         0x0b  // file creation event
 #define EVFSUNLINK        0x0c  // file unlink event
 #define EVFSMKDIR         0x0d  // add directory

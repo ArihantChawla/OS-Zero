@@ -2,7 +2,7 @@
 #include <stddef.h>
 #include <zero/param.h>
 #include <zero/cdecl.h>
-#include <gfx/rgb.h>
+#include <zero/gfx/rgb.h>
 #include <kern/conf.h>
 #include <kern/util.h>
 #include <kern/io/drv/chr/cons.h>

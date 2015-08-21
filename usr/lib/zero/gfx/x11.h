@@ -1,5 +1,5 @@
-#ifndef __GFX_X11_H__
-#define __GFX_X11_H__
+#ifndef __ZERO_GFX_X11_H__
+#define __ZERO_GFX_X11_H__
 
 #define USE_SHM 0
 
@@ -25,5 +25,5 @@
 #include <X11/keysym.h>
 #include <Imlib2.h>
 
-#endif /* __GFX_X11_H__ */
+#endif /* __ZERO_GFX_X11_H__ */
 

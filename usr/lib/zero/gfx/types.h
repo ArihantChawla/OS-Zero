@@ -1,10 +1,10 @@
-#ifndef __GFX_TYPES_H__
-#define __GFX_TYPES_H__
+#ifndef __ZERO_GFX_TYPES_H__
+#define __ZERO_GFX_TYPES_H__
 
 #include <zero/param.h>
 #include <zero/cdecl.h>
-#include <gfx/x11.h>
-#include <gfx/rgb.h>
+#include <zero/gfx/x11.h>
+#include <zero/gfx/rgb.h>
 
 #if 0
 struct gfximg {
@@ -33,5 +33,5 @@ struct gfximg {
     Pixmap           mask;
 };
 
-#endif /* __GFX_TYPES_H__ */
+#endif /* __ZERO_GFX_TYPES_H__ */
 
