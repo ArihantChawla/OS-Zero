@@ -47,28 +47,28 @@ struct deckgcatr {
 /*
  * EXAMPLES
  * --------
- * *dest = __deckpixop(copy, src, dest);
- * *dest = __deckmaskop(copy, src, dest, mask);
+ * *dest = deckpixop(copy, src, dest);
+ * *dest = deckmaskop(copy, src, dest, mask);
  */
-#define __deckpixop(op, s, d)  (__deck##op##pix(s, d))
-#define __deckmaskop(op, s, d, m)                                       \
+#define deckpixop(op, s, d)     (__deck##op##pix(s, d))
+#define deckmaskop(op, s, d, m)                                         \
     ((__deckpixop(op, (s), (d)) & (m)) | ((d) & ~(m)))
-#define __deckcopypix(s, d)    (*(s))
-#define __deckcopyinvpix(s, d) (~(*(s)))
-#define __deckclearpix(s, d)   ((uint32_t)0)
-#define __decksetpix(s, d)     (~((uint32_t)0))
-#define __decknoppix(s, d)     ((void)0)
-#define __deckinvpix(s, d)     (~(*(d)))
-#define __deckandpix(s, d)     ((*(s)) & (*(d)))
-#define __deckandrevpix(s, d)  ((*(s)) & ~(*(d)))
-#define __deckandinvpix(s, d)  (~(*(s)) & (*(d)))
-#define __deckorpix(s, d)      ((*(s)) | (*(d)))
-#define __deckorinvpix(s, d)   (~(*(s)) | (*(d)))
-#define __deckorrevpix(s, d)   ((*(s)) | ~(*(d)))
-#define __deckxorpix(s, d)     ((*(s)) ^ (*(d)))
-#define __decknorpix(s, d)     (~(*(s)) & ~(*(d)))
-#define __deckeqpix(s, d)      (~(*(s)) ^ (*(d)))
-#define __decknandpix(s, d)    (~(*(s)) & (*(d)))
+#define __deckcopypix(s, d)     (*(s))
+#define __deckcopyinvpix(s, d)  (~(*(s)))
+#define __deckclearpix(s, d)    ((uint32_t)0)
+#define __decksetpix(s, d)      (~((uint32_t)0))
+#define __decknoppix(s, d)      ((void)0)
+#define __deckinvpix(s, d)      (~(*(d)))
+#define __deckandpix(s, d)      ((*(s)) & (*(d)))
+#define __deckandrevpix(s, d)   ((*(s)) & ~(*(d)))
+#define __deckandinvpix(s, d)   (~(*(s)) & (*(d)))
+#define __deckorpix(s, d)       ((*(s)) | (*(d)))
+#define __deckorinvpix(s, d)    (~(*(s)) | (*(d)))
+#define __deckorrevpix(s, d)    ((*(s)) | ~(*(d)))
+#define __deckxorpix(s, d)      ((*(s)) ^ (*(d)))
+#define __decknorpix(s, d)      (~(*(s)) & ~(*(d)))
+#define __deckeqpix(s, d)       (~(*(s)) ^ (*(d)))
+#define __decknandpix(s, d)     (~(*(s)) & (*(d)))
 
 #endif /* __ZERO_DECK_GC_H__ */
 
