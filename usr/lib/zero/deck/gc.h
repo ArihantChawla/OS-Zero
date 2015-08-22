@@ -50,7 +50,7 @@ struct deckgcatr {
  * *dest = __deckpixop(copy, src, dest);
  * *dest = __deckmaskop(copy, src, dest, mask);
  */
-#define __deckpixop(op, s, d)  (__deck##f##pix(s, d))
+#define __deckpixop(op, s, d)  (__deck##op##pix(s, d))
 #define __deckmaskop(op, s, d, m)                                       \
     ((__deckpixop(op, (s), (d)) & (m)) | ((d) & ~(m)))
 #define __deckcopypix(s, d)    (*(s))
