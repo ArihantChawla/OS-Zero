@@ -3,8 +3,8 @@
 
 #include <stdint.h>
 #include <endian.h>
-#include <zero/param.h>
 #include <zero/cdecl.h>
+#include <zero/param.h>
 
 #define RGBARGB32 0
 #define RGBRGB888 1
