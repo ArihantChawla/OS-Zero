@@ -1,13 +1,14 @@
 #include <features.h>
+#include <stdlib.h>
 #include <stdio.h>
-#include <unistd.h>
-#include <zero/deck.h>
+//#include <unistd.h>
+//#include <zero/deck.h>
 #if (_ZERO_SOURCE)
 #include <kern/syscall.h>
 #endif
 
 void *
-deckgetfbadr(long depth, long width, long height)
+deckmaplfb(long depth, long width, long height)
 {
     void             *lfb;
     struct sysmemreg  memreg;
@@ -37,7 +38,8 @@ deckgetfbadr(long depth, long width, long height)
             exit(1);
     }
 
-#if (_ZERO_SOURCE)
+    /* FIXME: fix the stuff below */
+#if (_ZERO_SOURCE) && 0
     setperm(&memreg.perm, getuid(), getgid(), PERM_UW);
     memreg.adr = NULL;
     memreg.ofs = 0;
