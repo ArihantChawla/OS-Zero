@@ -2,7 +2,6 @@
 #define __IO_DRV_CHR_CONS_H__
 
 #include <stdint.h>
-
 #include <gfx/rgb.h>
 
 #define CONSNTEXTROW 4096

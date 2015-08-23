@@ -1,9 +1,0 @@
-.define BZERO  0
-.define PZERO  1
-.define PALLOC 2
-.define PFREE  3
-.define FOPEN  4
-.define FCLOSE 5
-.define FREAD  6
-.define FWRITE 7
-.define FSEEK  8
