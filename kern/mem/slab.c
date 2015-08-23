@@ -14,6 +14,8 @@
 #define kbzero bzero
 #endif
 
+#define SLABMUTEX 0
+
 extern unsigned long  npagefree;
 extern struct memzone magvirtzone;
 
@@ -38,7 +40,9 @@ slabdiag(struct memzone *zone)
 
     mtxlk(&slablk);
     for (bkt = 0 ; bkt < PTRBITS ; bkt++) {
+#if (SLABMUTEX)
         if (mtxtrylk(&zone->lktab[bkt])) {
+#endif
             hdr1 = zone->tab[bkt];
             if (hdr1) {
                 if (slabgetprev(hdr1, zone)) {
@@ -78,8 +82,10 @@ slabdiag(struct memzone *zone)
                     hdr2 = slabgetnext(hdr2, zone);
                 }
             }
+#if (SLABMUTEX)
             mtxunlk(&zone->lktab[bkt]);
         }
+#endif
     }
     mtxunlk(&slablk);
 
@@ -165,7 +171,8 @@ slabcomb(struct memzone *zone, struct slabhdr *hdr)
     struct slabhdr **slabtab = (struct slabhdr **)zone->tab;
     struct slabhdr  *hdrtab = zone->hdrtab;
     unsigned long    nhdr = zone->nhdr;
-    unsigned long    bkt1 = slabgetbkt(hdr);
+    unsigned long    bkt = slabgetbkt(hdr);
+    unsigned long    bkt1 = bkt;
     unsigned long    bkt2 = bkt1;
     unsigned long    ret  = 0;
     long             prev = 1;
@@ -181,6 +188,11 @@ slabcomb(struct memzone *zone, struct slabhdr *hdr)
         next ^= next;
         if (hdr - (struct slabhdr *)hdrtab >= ofs) {
             hdr1 = hdr - ofs;
+#if (SLABMUTEX)
+            if (bkt1 != bkt) {
+                mtxlk(&zone->lktab[bkt1]);
+            }
+#endif
             bkt2 = slabgetbkt(hdr1);
             if (bkt2 == bkt1 && slabisfree(hdr1)) {
                 prev = 1;
@@ -198,6 +210,11 @@ slabcomb(struct memzone *zone, struct slabhdr *hdr)
                 } else {
                     slabtab[bkt1] = NULL;
                 }
+#if (SLABMUTEX)
+                if (bkt1 != bkt) {
+                    mtxunlk(&zone->lktab[bkt1]);
+                }
+#endif
                 slabclrinfo(hdr);
                 slabsetbkt(hdr, 0);
                 bkt2++;
@@ -208,11 +225,20 @@ slabcomb(struct memzone *zone, struct slabhdr *hdr)
                 hdr = hdr1;
                 bkt1 = bkt2;
                 ofs <<= 1;
+#if (SLABMUTEX)
+            } else if (bkt1 != bkt) {
+                mtxunlk(&zone->lktab[bkt1]);
+#endif
             }
         }
         hdr1 = hdr;
         if (hdr1 + ofs < (struct slabhdr *)hdrtab + nhdr) {
             hdr2 = hdr1 + ofs;
+#if (SLABMUTEX)
+            if (bkt1 != bkt) {
+                mtxlk(&zone->lktab[bkt1]);
+            }
+#endif
             bkt2 = slabgetbkt(hdr2);
             if (bkt2 == bkt1 && slabisfree(hdr2)) {
                 next = 1;
@@ -230,6 +256,11 @@ slabcomb(struct memzone *zone, struct slabhdr *hdr)
                 } else {
                     slabtab[bkt1] = NULL;
                 }
+#if (SLABMUTEX)
+                if (bkt1 != bkt) {
+                    mtxunlk(&zone->lktab[bkt1]);
+                }
+#endif
                 slabclrinfo(hdr2);
                 slabsetbkt(hdr2, 0);
                 bkt2++;
@@ -239,6 +270,10 @@ slabcomb(struct memzone *zone, struct slabhdr *hdr)
                 slabsetfree(hdr1);
                 bkt1 = bkt2;
                 ofs <<= 1;
+#if (SLABMUTEX)
+            } else if (bkt1 != bkt) {
+                mtxunlk(&zone->lktab[bkt1]);
+#endif
             }
         }
         hdr = hdr1;
@@ -260,10 +295,10 @@ slabcomb(struct memzone *zone, struct slabhdr *hdr)
 }
 
 /*
- * split slab into smaller ones to satisfy allocation request.
- * split of N to M gives us one free slab in each of M to N-1 and one to
- * allocate in M.
- * caller has locked the bucket dest.
+ * - split slab into smaller ones to satisfy allocation request
+ * - split of N to M gives us one free slab in each of M to N-1 and one to
+ *   allocate in M
+ * - caller has locked the bucket dest
  */    
 void
 slabsplit(struct memzone *zone, struct slabhdr *hdr, unsigned long dest)
@@ -276,6 +311,11 @@ slabsplit(struct memzone *zone, struct slabhdr *hdr, unsigned long dest)
 
     while (--bkt >= dest) {
         sz >>= 1;
+#if (SLABMUTEX)
+        if (bkt != dest) {
+            mtxlk(&zone->lktab[bkt]);
+        }
+#endif
         hdr1 = slabgethdr(ptr, zone);
         slabclrinfo(hdr1);
         slabclrlink(hdr1);
@@ -286,6 +326,11 @@ slabsplit(struct memzone *zone, struct slabhdr *hdr, unsigned long dest)
         }
         slabsetnext(hdr1, slabtab[bkt], zone);
         slabtab[bkt] = hdr1;
+#if (SLABMUTEX)
+        if (bkt != dest) {
+            mtxunlk(&zone->lktab[bkt]);
+        }
+#endif
         ptr += sz;
     }
     hdr1 = slabgethdr(ptr, zone);
@@ -319,10 +364,21 @@ slaballoc(struct memzone *zone, unsigned long nb, unsigned long flg)
     struct slabhdr  *hdr2;
 
     mtxlk(&slablk);
+#if (SLABMUTEX)
+    mtxlk(&zone->lktab[bkt1]);
+#endif
     hdr1 = slabtab[bkt1];
     if (!hdr1) {
         while (!hdr1 && ++bkt2 < PTRBITS) {
+#if (SLABMUTEX)
+            mtxlk(&zone->lktab[bkt2]);
+#endif
             hdr1 = slabtab[bkt2];
+#if (SLABMUTEX)
+            if (!hdr1) {
+                mtxunlk(&zone->lktab[bkt2]);
+            }
+#endif
         }
         if (hdr1) {
             hdr2 = slabgetnext(hdr1, zone);
@@ -330,6 +386,9 @@ slaballoc(struct memzone *zone, unsigned long nb, unsigned long flg)
                 slabclrprev(hdr2);
             }
             slabtab[bkt2] = hdr2;
+#if (SLABMUTEX)
+            mtxunlk(&zone->lktab[bkt2]);
+#endif
             slabsplit(zone, hdr1, bkt1);
             hdr1 = slabtab[bkt1];
         }
@@ -340,10 +399,17 @@ slaballoc(struct memzone *zone, unsigned long nb, unsigned long flg)
             slabclrprev(hdr2);
         }
         slabtab[bkt1] = hdr2;
+#if (SLABMUTEX)
+        mtxunlk(&zone->lktab[bkt1]);
+#endif
         slabclrfree(hdr1);
         slabclrlink(hdr1);
         slabsetflg(hdr1, flg);
         ptr = slabgetadr(hdr1, zone);
+#if (SLABMUTEX)
+    } else {
+        mtxunlk(&zone->lktab[bkt1]);
+#endif
     }
     mtxunlk(&slablk);
 #if (MEMTEST)
@@ -363,10 +429,13 @@ slabfree(struct memzone *zone, void *ptr)
     struct slabhdr  *hdr1 = slabgethdr(ptr, zone);
     unsigned long    bkt = slabgetbkt(hdr1);
 
+    mtxlk(&slablk);
 #if (!MEMTEST)
     vmfreephys(ptr, 1UL << bkt);
 #endif
-    mtxlk(&slablk);
+#if (SLABMUTEX)
+    mtxlk(&zone->lktab[bkt]);
+#endif
     slabsetfree(hdr1);
     if (!slabcomb(zone, hdr1)) {
         slabclrlink(hdr1);
@@ -376,6 +445,9 @@ slabfree(struct memzone *zone, void *ptr)
         slabsetnext(hdr1, slabtab[bkt], zone);
         slabtab[bkt] = hdr1;
     }
+#if (SLABMUTEX)
+    mtxunlk(&zone->lktab[bkt]);
+#endif
     mtxunlk(&slablk);
 #if (MEMTEST)
     slabdiag(zone);

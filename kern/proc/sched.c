@@ -20,12 +20,27 @@ schedinit(void)
     return;
 }
 
+#if 0
 void
 schedyield(void)
 {
     struct thr *thr = schedpickthr();
-
+    
     thrjmp(thr);
+}
+#endif
+
+void
+schedyield(void)
+{
+    struct thr *thr;
+
+    if (schedpickthr) {
+        thr = schedpickthr();
+        thrjmp(thr);
+    }
+
+    return;
 }
 
 void

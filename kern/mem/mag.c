@@ -51,12 +51,10 @@ memalloc(unsigned long nb, long flg)
     mtxlk(&lktab[bkt]);
     if (bkt >= SLABMINLOG2) {
         ptr = slaballoc(slabzone, sz, flg);
-#if (!MEMTEST)
-        ptr = vmmapvirt((uint32_t *)&_pagetab,
-                        slaballoc(slabzone, sz, flg),
-                        sz, flg);
-#endif
         if (ptr) {
+#if (!MEMTEST)
+            ptr = vmmapvirt((uint32_t *)&_pagetab, ptr, sz, flg);
+#endif
             slab++;
             mag = maggethdr(ptr, magzone);
             mtxlk(&mag->lk);
@@ -82,13 +80,11 @@ memalloc(unsigned long nb, long flg)
             }
         } else {
             ptr = slaballoc(slabzone, SLABMIN, flg);
-#if (!MEMTEST)
-            ptr = vmmapvirt((uint32_t *)&_pagetab,
-                            slaballoc(slabzone, SLABMIN, flg),
-                            SLABMIN, flg);
-#endif
-            u8ptr = ptr;
             if (ptr) {
+#if (!MEMTEST)
+                ptr = vmmapvirt((uint32_t *)&_pagetab, ptr, SLABMIN, flg);
+#endif
+                u8ptr = ptr;
                 slab++;
                 sz = 1UL << bkt;
                 n = 1UL << (SLABMINLOG2 - bkt);
