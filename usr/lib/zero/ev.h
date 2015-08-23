@@ -5,8 +5,8 @@
 #include <stdint.h>
 #include <zero/cdecl.h>
 #include <zero/param.h>
-#include <zero/deck.h>
-#include <gfx/rgb.h>
+#include <zero/deck/deck.h>
+#include <zero/gfx/rgb.h>
 
 #define EVWORDSIZE   32
 #define EVNODEIDSIZE 64

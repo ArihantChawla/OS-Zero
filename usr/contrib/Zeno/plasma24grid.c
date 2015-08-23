@@ -35,7 +35,7 @@ void plasmasync(void);
 #include <time.h>
 #endif
 #if (__KERNEL__)
-#include <gfx/rgb.h>
+#include <zero/gfx/rgb.h>
 #include <kern/mem.h>
 #include <kern/io/drv/pc/vbe.h>
 #include <kern/unit/x86/asm.h>
@@ -140,7 +140,7 @@ plasmainit(void)
 #if (PLASMADOUBLEBUF)
     plasmabuf = kcalloc(INTER_WIDTH * INTER_HEIGHT * 3 * sizeof(uint8_t));
 #endif
-    vbeclrscr(RGBBLACK);
+    vbeclrscr(RGB_BLACK);
     __asm__ __volatile__ ("finit\n");
     init();
 
@@ -283,7 +283,7 @@ cleanup(void)
     kfree(intermediateR);
     kfree(intermediateG);
     kfree(intermediateB);
-    vbeclrscr(RGBBLACK);
+    vbeclrscr(RGB_BLACK);
 }
 #else
 void cleanup(void)
@@ -403,9 +403,9 @@ void drawPlasma(SDL_Surface *surface)
                 int srcpos;
                 uint32_t colour;
 #if (__KERNEL__)
-                argb32_t r;
-                argb32_t g;
-                argb32_t b;
+                gfxargb32_t r;
+                gfxargb32_t g;
+                gfxargb32_t b;
 #endif
                 
 

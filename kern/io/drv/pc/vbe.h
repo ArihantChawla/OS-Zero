@@ -5,12 +5,12 @@
 
 #include <zero/param.h>
 #include <zero/cdecl.h>
-#include <gfx/rgb.h>
+#include <zero/gfx/rgb.h>
 #include <kern/unit/ia32/boot.h>
 
 void vbeinitcons(int w, int h);
-void vbeclrscr(uint32_t pix);
-void vbedrawchar(unsigned char c, int x, int y, argb32_t fg, argb32_t bg);
+void vbeclrscr(gfxargb32_t pix);
+void vbedrawchar(unsigned char c, int x, int y, gfxargb32_t fg, gfxargb32_t bg);
 
 #define VBEINFOADR       0xa000
 #define VBEMODEADR       0xb000

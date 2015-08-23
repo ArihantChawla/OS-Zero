@@ -3,7 +3,7 @@
 
 #include <stdint.h>
 
-#include <gfx/rgb.h>
+#include <zero/gfx/rgb.h>
 
 #define CONSNTEXTROW 4096
 
@@ -17,8 +17,8 @@ typedef void consputcharfunc(int ch);
 struct cons {
     consputsfunc    *puts;      // function to draw a string
     consputcharfunc *putchar;   // function to draw a character
-    argb32_t         fg;        // foreground pixel value
-    argb32_t         bg;        // background pixel value
+    gfxargb32_t      fg;        // foreground pixel value
+    gfxargb32_t      bg;        // background pixel value
     void            *buf;       // draw buffer (text or framebuffer)
     long             col;       // current column
     long             row;       // current row

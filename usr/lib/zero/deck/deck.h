@@ -1,7 +1,7 @@
 #ifndef __ZERO_DECK_DECK_H__
 #define __ZERO_DECK_DECK_H__
 
-#include <deck/conf.h>
+#include <zero/deck/conf.h>
 #include <stdint.h>
 #include <endian.h>
 #include <zero/ev.h>

@@ -79,7 +79,7 @@ typedef int16_t gfxrgb565_t;
     (((a) << RGB_ALPHA_OFS)                                             \
      | ((r) << RGB_RED_OFS)                                             \
      | ((g) << RGB_GREEN_OFS)                                           \
-     | ((b) << RGB_BLUEOFS))
+     | ((b) << RGB_BLUE_OFS))
 #define gfxmkpix_p(dest, a, r, g, b)                                    \
     ((dest) = gfxmkpix(a, r, g, b))
 #define gfxsetpix_p(p, a, r, g, b)                                      \
