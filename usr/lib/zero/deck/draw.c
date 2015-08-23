@@ -12,10 +12,10 @@
 __inline__ void
 deckdrawpoint(struct deckimg *img,
               long x, long y,
-              argb32_t pixel)
+              gfxargb32_t pixel)
 {
-    argb32_t      *dest;
-    argb32_t      *destptr;
+    gfxargb32_t   *dest;
+    gfxargb32_t   *destptr;
     unsigned long  destw;
 
     dest = img->data;
@@ -38,10 +38,10 @@ void
 deckdrawline(struct deckimg *img,
              long x1, long y1,
              long x2, long y2,
-             argb32_t pixel)
+             gfxargb32_t pixel)
 {
-    argb32_t      *dest;
-    argb32_t      *destptr;
+    gfxargb32_t   *dest;
+    gfxargb32_t   *destptr;
     float          slope;
     unsigned long  destw;
     long           x;
@@ -162,7 +162,7 @@ deckdrawtriangle(struct deckimg *img,
                  long x1, long y1,
                  long x2, long y2,
                  long x3, long y3,
-                 argb32_t pixel)
+                 gfxargb32_t pixel)
 {
     deckdrawline(img, x1, y1, x2, y2, pixel);
     deckdrawline(img, x1, y1, x3, y3, pixel);
@@ -173,7 +173,7 @@ void
 deckdrawrectangle(struct deckimg *img,
                   long x1, long y1,
                   long x2, long y2,
-                  argb32_t pixel)
+                  gfxargb32_t pixel)
 {
     deckdrawline(img, x1, y1, x2, y1, pixel);
     deckdrawline(img, x1, y1, x1, y2, pixel);
@@ -187,10 +187,10 @@ void
 deckfillrectangle(struct deckimg *img,
                   long x1, long y1,
                   long x2, long y2,
-                  argb32_t pixel)
+                  gfxargb32_t pixel)
 {
-    argb32_t      *dest;
-    argb32_t      *destptr;
+    gfxargb32_t   *dest;
+    gfxargb32_t   *destptr;
     unsigned long  destw;
     long           x;
     long           y;
@@ -222,10 +222,10 @@ void
 deckdrawcircle(struct deckimg *img,
                long x1, long y1,
                unsigned long r,
-               argb32_t pixel)
+               gfxargb32_t pixel)
 {
-    argb32_t      *dest;
-    argb32_t      *destptr;
+    gfxargb32_t   *dest;
+    gfxargb32_t   *destptr;
     unsigned long  destw;
     unsigned long  r2;
     long           x;
