@@ -28,7 +28,7 @@ pageinitzone(uintptr_t base,
 {
     struct page   *page = &vmphystab[pagenum(base)];
     uintptr_t      adr = rounduppow2(base, PAGESIZE);
-    unsigned long  n  = max(1, (nb - adr) >> PAGESIZELOG2);
+    unsigned long  n  = (nb - adr) >> PAGESIZELOG2;
 
     adr += n << PAGESIZELOG2;
     page += n;
@@ -54,7 +54,7 @@ pageaddzone(uintptr_t base,
     uintptr_t      adr = rounduppow2(base, PAGESIZE);
     struct page   *page = &vmphystab[pagenum(adr)];
     uint32_t      *pte = (uint32_t *)&_pagetab + vmpagenum(adr);
-    unsigned long  n  = max(1, (nb - adr) >> PAGESIZELOG2);
+    unsigned long  n  = (nb - adr) >> PAGESIZELOG2;
 
     adr += n << PAGESIZELOG2;
     page += n;
@@ -78,7 +78,7 @@ pageaddzone(uintptr_t base,
 void
 pageinit(uintptr_t base, unsigned long nb)
 {
-    pageinitzone(base, &vmphysq, max(nb, DEVMEMBASE));
+    pageinitzone(base, &vmphysq, min(nb, DEVMEMBASE));
 
     return;
 }

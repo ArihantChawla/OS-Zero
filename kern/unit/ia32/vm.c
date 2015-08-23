@@ -5,12 +5,12 @@
 
 #define PAGEDEV 0
 
+#include <kern/conf.h>
 #include <stddef.h>
 #include <stdint.h>
 #include <zero/trix.h>
 #include <zero/cdecl.h>
 #include <zero/param.h>
-#include <kern/conf.h>
 //#include <kern/io/dev.h>
 #include <kern/util.h>
 //#include <kern/proc/task.h>
@@ -54,8 +54,8 @@ void
 vmmapseg(uint32_t *pagetab, uint32_t virt, uint32_t phys, uint32_t lim,
          uint32_t flg)
 {
-    uint32_t  *pte;
-    long       n;
+    uint32_t *pte;
+    long      n;
 
     n = rounduppow2(lim - virt, PAGESIZE) >> PAGESIZELOG2;
     pte = pagetab + vmpagenum(virt);
@@ -78,11 +78,13 @@ vmmapseg(uint32_t *pagetab, uint32_t virt, uint32_t phys, uint32_t lim,
  * - initialise paging
  */
 void
-vminit(void *pagetab)
+vminit(void *pagetab, unsigned long nbphys)
 {
     uint32_t *pde;
     uint32_t  adr;
     long      n;
+
+    /* PHYSICAL MEMORY */
 
     /* initialize page directory index page */
     pde = kernpagedir;
@@ -128,16 +130,26 @@ vminit(void *pagetab)
              (uint32_t)&_eboot,
              PAGEPRES | PAGEWRITE);
 
-    /* map kernel DMA buffers */
+    /* identity-map kernel DMA buffers */
     vmmapseg(pagetab, (uint32_t)&_dmabuf, DMABUFBASE,
              (uint32_t)&_dmabuf + DMABUFSIZE,
              PAGEPRES | PAGEWRITE | PAGENOCACHE | PAGEWIRED);
 
-    /* identity map page tables */
+    /* identity-map page tables */
     vmmapseg(pagetab, (uint32_t)pagetab, (uint32_t)pagetab,
              (uint32_t)pagetab + PAGETABSIZE,
              PAGEPRES | PAGEWRITE | PAGEWIRED);
 
+#if 0
+    /* identity map free RAM */
+    vmmapseg(pagetab, (uint32_t)&_epagetab, (uint32_t)&_epagetab,
+             lim,
+             PAGEWRITE);
+#endif
+//    kbzero(&_epagetab, lim - (uint32_t)&_epagetab);
+
+    /* VIRTUAL MEMORY */
+    
     /* map kernel text/read-only segments */
     vmmapseg(pagetab, (uint32_t)&_text, vmlinkadr((uint32_t)&_textvirt),
              (uint32_t)&_etextvirt,
@@ -158,8 +170,10 @@ vminit(void *pagetab)
 }
 
 void
-vminitphys(uintptr_t base, unsigned long nb)
+vminitphys(uintptr_t base, unsigned long nbphys)
 {
+    unsigned long nb = min(nbphys, KERNVIRTBASE);
+    
     /* initialise physical memory manager */
     pageinit(base, nb);
 
@@ -169,9 +183,9 @@ vminitphys(uintptr_t base, unsigned long nb)
 void *
 vmmapvirt(uint32_t *pagetab, void *virt, uint32_t size, uint32_t flg)
 {
-    uint32_t    adr;
-    uint32_t   *pte;
-    long        n;
+    uint32_t  adr;
+    uint32_t *pte;
+    long      n;
 
     adr = (uint32_t)virt & PFPAGEMASK;
     n = rounduppow2(size, PAGESIZE) >> PAGESIZELOG2;
@@ -188,9 +202,9 @@ void
 vmfreephys(void *virt, uint32_t size)
 {
 //    struct vmbuf *buf;
-    uint32_t      adr;
-    uint32_t     *pte;
-    long          n;
+    uint32_t  adr;
+    uint32_t *pte;
+    long      n;
 //    long          nref;
 //    struct page  *pg;
 
@@ -238,10 +252,10 @@ FASTCALL
 void
 vmpagefault(unsigned long pid, uint32_t adr, uint32_t flags)
 {
-    uint32_t      *pte = (uint32_t *)&_pagetab + vmpagenum(adr);
-    uint32_t       flg = *pte & (PFFLGMASK | PAGESYSFLAGS);
-    uint32_t       page = *pte;
-    struct page   *pg = NULL;
+    uint32_t    *pte = (uint32_t *)&_pagetab + vmpagenum(adr);
+    uint32_t     flg = *pte & (PFFLGMASK | PAGESYSFLAGS);
+    uint32_t     page = *pte;
+    struct page *pg = NULL;
 //    unsigned long  qid;
 
     if (!(page & ~(PFFLGMASK | PAGESYSFLAGS))) {
@@ -308,7 +322,7 @@ vmpagein(uint32_t adr)
 void
 vmpagefree(uint32_t adr)
 {
-    
+    ;
 }
 #endif /* 0 */
 

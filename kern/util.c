@@ -6,6 +6,7 @@
 #include <zero/trix.h>
 #include <kern/io/drv/chr/cons.h>
 #include <kern/io/drv/pc/vga.h>
+#include <kern/unit/x86/asm.h>
 
 #define MAXPRINTFSTR 2048
 
@@ -747,6 +748,6 @@ kbfindzerol(unsigned long *bmap, long ofs, long nbit)
 void
 kpanic(void)
 {
-    ;
+    k_halt();
 }
 

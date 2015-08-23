@@ -116,9 +116,9 @@ kmain(struct mboothdr *hdr, unsigned long pmemsz)
     /* initialise interrupt management */
     trapinit();
     /* initialise virtual memory */
-    vminit((uint32_t *)&_pagetab);
-    /* FIXME: map possible device memory */
+    vminit((uint32_t *)&_pagetab, pmemsz);
 #if 0
+    /* FIXME: map possible device memory */
     vmmapseg((uint32_t *)&_pagetab, DEVMEMBASE, DEVMEMBASE, 0xffffffffU,
              PAGEPRES | PAGEWRITE | PAGENOCACHE);
 #endif
@@ -142,9 +142,14 @@ kmain(struct mboothdr *hdr, unsigned long pmemsz)
     cpuinit(k_curcpu);
 #endif
     /* TODO: use memory map from GRUB? */
-    meminit((uintptr_t)&_ebss, pmemsz);
-    vminitphys((uintptr_t)&_ebss, pmemsz - (unsigned long)&_ebss);
+    vminitphys((uintptr_t)&_epagetab, pmemsz);
+    meminit(pmemsz);
     tssinit(0);
+#if (VBE) && (NEWFONT)
+//    consinit(768 / vbefontw, 1024 / vbefonth);
+#elif (VBE)
+    consinit(768 >> 3, 1024 >> 3);
+#endif
 #if (SMBIOS)
     smbiosinit();
 #endif

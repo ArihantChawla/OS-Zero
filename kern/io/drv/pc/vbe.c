@@ -11,6 +11,7 @@
 #endif
 #include <gfx/rgb.h>
 
+#include <kern/mem.h>
 #include <kern/util.h>
 #include <kern/io/drv/chr/cons.h>
 #include <kern/io/drv/pc/vga.h>
@@ -106,8 +107,8 @@ vbeinit(void)
 void
 vbeinitscr(void)
 {
-    struct vbemode  *mode = (void *)VBEMODEADR;
-    long             npix = vbescreen.mode->xres * vbescreen.mode->yres;
+    struct vbemode *mode = (void *)VBEMODEADR;
+    long            npix = vbescreen.mode->xres * vbescreen.mode->yres;
 
     if (vbescreen.nbpp == 32) {
         vbescreen.fbufsize = npix << 2;
@@ -141,11 +142,16 @@ vbeinitscr(void)
 void
 vbeinitcons(int w, int h)
 {
-    struct cons *cons = constab;
-    long         l;
+    struct cons  *cons = constab;
+    conschar_t  **buf;
+    void         *ptr;
+    long          bufsz = CONSNTEXTROW * sizeof(conschar_t *);
+    long          rowsz = (w + 1) * sizeof(conschar_t);
+    long          l;
+    long          row;
+    long          n = 0;
 
     for (l = 0 ; l < NCONS ; l++) {
-//        kbzero(ptr, PAGESIZE);
         cons->puts = vbeputs;
         cons->putchar = vbeputchar;
         cons->fg = GFX_WHITE;
@@ -155,9 +161,30 @@ vbeinitcons(int w, int h)
         cons->row = 0;
         cons->ncol = w;
         cons->nrow = h;
-//        cons->chatr = vgasetfg(0, VGAWHITE);
-        cons->ntextrow = 0;
+        cons->ntextrow = CONSNTEXTROW;
+#if 0
         /* TODO: allocate scrollback buffer */
+        buf = kcalloc(bufsz);
+        if (!buf) {
+            kprintf("CONS: failed to allocate console row buffer\n");
+            
+            kpanic();
+        }
+        n++;
+        cons->textbuf = buf;
+        for (row = 0 ; row < CONSNTEXTROW ; row++) {
+            /* allocate NUL-terminated row */
+            ptr = kcalloc(rowsz);
+            if (!ptr) {
+                kprintf("CONS %l: failed to allocate console row %l (%l)\n",
+                        l, row, n);
+                
+                kpanic();
+            }
+            n++;
+            buf[row] = ptr;
+        }
+#endif
         cons++;
     }
     conscur = 0;

@@ -1,4 +1,5 @@
 #include <stddef.h>
+#include <stdint.h>
 #include <zero/param.h>
 #include <zero/trix.h>
 #include <kern/util.h>
@@ -30,18 +31,19 @@ unsigned long
 slabinitzone(struct memzone *zone, unsigned long base, unsigned long nb)
 {
     unsigned long adr = base;
-    unsigned long sz = (nb & (SLABMIN - 1)) ? rounduppow2(nb, SLABMIN) : nb;
-    unsigned long nmag = sz >> SLABMINLOG2;
-    unsigned long nslab = nmag;
+    unsigned long sz = (nb & (SLABMIN - 1)) ? rounddownpow2(nb, SLABMIN) : nb;
+    unsigned long nslab = sz >> PAGESIZELOG2;
+    unsigned long hdrsz;
 
+    hdrsz = nslab * (sizeof(struct maghdr) + sizeof(struct slabhdr));
+    kbzero((void *)adr, hdrsz);
     zone->nhdr = nslab;
-    kbzero((void *)adr, nmag * sizeof(struct maghdr) + nslab * sizeof(struct slabhdr));
-    magvirtzone.nhdr = nmag;
+    magvirtzone.nhdr = nslab;
     magvirtzone.hdrtab = (void *)adr;
-    zone->hdrtab = (struct slabhdr *)(adr + nmag * sizeof(struct maghdr));
-    adr += nmag * sizeof(struct maghdr) + nslab * sizeof(struct slabhdr);
-    if (adr & (PAGESIZE - 1)) {
-        adr = rounduppow2(adr, PAGESIZE);
+    zone->hdrtab = (struct slabhdr *)(adr + nslab * sizeof(struct maghdr));
+    adr += nslab * sizeof(struct maghdr) + nslab * sizeof(struct slabhdr);
+    if (adr & (SLABMIN - 1)) {
+        adr = rounduppow2(adr, SLABMIN);
     }
 
     return adr;
@@ -51,11 +53,11 @@ void
 slabinit(struct memzone *virtzone, unsigned long base, unsigned long nbphys)
 {
     struct slabhdr **slabtab = (struct slabhdr **)virtzone->tab;
-    unsigned long    adr = ((base & (SLABMIN - 1))
-                            ? rounduppow2(base, SLABMIN)
+    unsigned long    adr = ((base & (PAGESIZE - 1))
+                            ? rounduppow2(base, PAGESIZE)
                             : base);
     unsigned long    bkt = PTRBITS - 1;
-    unsigned long    ul = 1UL << bkt;
+    unsigned long    sz = 1UL << bkt;
     struct slabhdr  *hdr;
 
     adr = slabinitzone(virtzone, adr, nbphys);
@@ -67,18 +69,18 @@ slabinit(struct memzone *virtzone, unsigned long base, unsigned long nbphys)
     }
     kprintf("%ld kilobytes kernel virtual memory free @ 0x%lx\n", nbphys >> 10, adr);
     while ((nbphys) && bkt >= SLABMINLOG2) {
-        if (nbphys & ul) {
+        if (nbphys & sz) {
             hdr = slabgethdr(adr, virtzone);
             slabclrnfo(hdr);
             slabsetbkt(hdr, bkt);
             slabsetfree(hdr);
             slabclrlink(hdr);
             slabtab[bkt] = hdr;
-            nbphys -= 1UL << bkt;
-            adr += 1UL << bkt;
+            nbphys -= sz;
+            adr += sz;
         }
         bkt--;
-        ul >>= 1;
+        sz >>= 1;
     }
 
     return;
@@ -199,12 +201,14 @@ slabsplit(struct memzone *zone, struct slabhdr *hdr, unsigned long dest)
     struct slabhdr  *hdr1;
     unsigned long    sz = 1UL << bkt;
 
+#if 0
     hdr1 = slabgetnext(hdr, zone);
     if (hdr1) {
         slabclrprev(hdr1);
 //        slabsetnext(hdr1, slabtab[bkt], zone);
     }
     slabtab[bkt] = hdr1;
+#endif
     while (--bkt >= dest) {
         sz >>= 1;
         hdr1 = slabgethdr(ptr, zone);
@@ -252,6 +256,11 @@ slaballoc(struct memzone *zone, unsigned long nb, unsigned long flg)
         while (!hdr1 && ++bkt2 < PTRBITS) {
             hdr1 = slabtab[bkt2];
             if (hdr1) {
+                hdr2 = slabgetnext(hdr1, zone);
+                if (hdr2) {
+                    slabclrprev(hdr2);
+                }
+                slabtab[bkt2] = hdr2;
                 slabsplit(zone, hdr1, bkt1);
                 hdr1 = slabtab[bkt1];
             }

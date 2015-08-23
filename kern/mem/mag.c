@@ -83,21 +83,28 @@ memalloc(unsigned long nb, long flg)
                 magtab[bkt] = mag->next;
             }
         } else {
+#if (MEMTEST)
             ptr = u8ptr = slaballoc(slabzone, SLABMIN, flg);
+#else
+            ptr = vmmapvirt((uint32_t *)&_pagetab,
+                            slaballoc(slabzone, SLABMIN, flg),
+                            SLABMIN, flg);
+#endif
             if (ptr) {
+                slab++;
                 sz = 1UL << bkt;
-                n = 1UL << max(SLABMINLOG2 - bkt, 0);
+                n = 1UL << (SLABMINLOG2 - bkt);
                 mag = maggethdr(ptr, magzone);
                 mtxlk(&mag->lk);
                 mlk++;
                 mag->base = (uintptr_t)ptr;
                 mag->n = n;
+                mag->ndx = 1;
                 mag->bkt = bkt;
                 for (l = 1 ; l < n ; l++) {
                     u8ptr += sz;
                     mag->ptab[l] = u8ptr;
                 }
-                mag->ndx = 1;
                 mag->prev = NULL;
                 if (magtab[bkt]) {
                     magtab[bkt]->prev = mag;
@@ -124,6 +131,9 @@ memalloc(unsigned long nb, long flg)
         if (!slab && (flg & MEMZERO)) {
             kbzero(ptr, 1UL << bkt);
         }
+    }
+    if (!ptr) {
+        kpanic();
     }
     if (mlk) {
         mtxunlk(&mag->lk);

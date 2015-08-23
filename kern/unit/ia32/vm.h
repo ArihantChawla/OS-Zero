@@ -11,7 +11,7 @@
 #endif
 #include <zero/mtx.h>
 
-void  vminitphys(uintptr_t base, unsigned long nb);
+void  vminitphys(uintptr_t base, unsigned long nbphys);
 void *vmmapvirt(uint32_t *pagetab, void *virt, uint32_t size, uint32_t flags);
 void  vmfreephys(void *virt, uint32_t size);
 void  vmmapseg(uint32_t *pagetab, uint32_t virt, uint32_t phys, uint32_t lim,

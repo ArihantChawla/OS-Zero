@@ -12,20 +12,20 @@
 #include <kern/mem/slab.h>
 #include <kern/unit/ia32/vm.h>
 
-#define NTHR   16
-#define NALLOC 256
+#define MEMTESTNTHR   16
+#define MEMTESTNALLOC 256
 
 unsigned long  vmnphyspages;
 
 //uint32_t       pagetab[NPDE][NPTE] ALIGNED(PAGESIZE);
 #if 0
-uintptr_t      alloctab[NTHR][NALLOC];
+uintptr_t      alloctab[MEMTESTNTHR][MEMTESTNALLOC];
 #endif
 #if 0
-void          *ptrtab[NTHR * NALLOC];
+void          *ptrtab[MEMTESTNTHR * MEMTESTNALLOC];
 #endif
-volatile long  lktab[NTHR * NALLOC];
-pthread_t      thrtab[NTHR];
+volatile long  lktab[MEMTESTNTHR * MEMTESTNALLOC];
+pthread_t      thrtab[MEMTESTNTHR];
 
 extern struct memzone slabvirtzone;
 extern struct memzone magvirtzone;
@@ -216,10 +216,10 @@ void *
 test(void *dummy)
 {
     long   l;
-    void **ptrtab = calloc(NALLOC, sizeof(void *));
+    void **ptrtab = calloc(MEMTESTNALLOC, sizeof(void *));
 
     for ( ; ; ) {
-        for (l = 0 ; l < NALLOC ; l++) {
+        for (l = 0 ; l < MEMTESTNALLOC ; l++) {
             ptrtab[l] = memalloc(rand() & (8 * SLABMIN - 1), MEMZERO);
 #if (MEMPRINT)
             if (!ptrtab[l]) {
@@ -227,7 +227,7 @@ test(void *dummy)
             }
 #endif
         }
-        l = NALLOC;
+        l = MEMTESTNALLOC;
         while (l--) {
             if (ptrtab[l]) {
                 kfree((void *)ptrtab[l]);
@@ -245,7 +245,7 @@ test(void *dummy)
 int
 main(int argc, char *argv[])
 {
-    long  n = NTHR;
+    long  n = MEMTESTNTHR;
     void *base = memalign(SLABMIN, 1024 * 1024 * 1024);
 
     printf("PTRBITS == %d\n", PTRBITS);

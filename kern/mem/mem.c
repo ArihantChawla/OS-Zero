@@ -1,5 +1,7 @@
+#include <kern/conf.h>
 #include <stdint.h>
 #include <zero/param.h>
+#include <zero/trix.h>
 #include <kern/mem/mem.h>
 #include <kern/mem/slab.h>
 #if defined(__i386__) && !defined(__x86_64__) && !defined(__amd64__)
@@ -13,17 +15,14 @@
 extern struct memzone slabvirtzone;
 
 void
-meminit(uintptr_t base, unsigned long nbphys)
+meminit(unsigned long nbphys)
 {
+    unsigned long lim = min(nbphys, KERNVIRTBASE);
+
 #if (defined(__i386__) && !defined(__x86_64__) && !defined(__amd64__))  \
     || defined(__arm__)
-//    slabinit((unsigned long)&_ebss, (char *)KERNVIRTBASE - &_ebss);
-#if 0
-    slabinit(&slabvirtzone, (unsigned long)&_ebss,
-             KERNVIRTBASE - (uintptr_t)&_ebss);
-#endif
-    slabinit(&slabvirtzone, (unsigned long)&_ebss,
-             (uintptr_t)&_ebssvirt - KERNVIRTBASE);
+    slabinit(&slabvirtzone, (unsigned long)&_epagetab,
+             lim - (unsigned long)&_epagetab);
 #elif defined(__x86_64__) || defined(__amd64__)
 #error implement x86-64 memory management
 #endif

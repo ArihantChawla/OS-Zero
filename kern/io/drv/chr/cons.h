@@ -23,8 +23,8 @@ struct cons {
     long             row;       // current row
     long             ncol;      // # of columns
     long             nrow;      // # of rows
-//    long             w;         // width in pixels
-//    long             h;         // height in pixels
+//    long           w;         // width in pixels
+//    long           h;         // height in pixels
     long             chatr;     // text attributes such as color
     long             ntextrow;  // number of buffer lines
     void            *textbuf;   // text buffers

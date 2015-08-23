@@ -73,6 +73,9 @@ SECTIONS {
 	seg.o(.text)
 	seg.o(.data)
 	seg.o(.bss)
+	mem.o(.text)
+	mem.o(.data)
+	mem.o(.bss)
 	vm.o(.text)
 	vm.o(.data)
 	vm.o(.bss)
@@ -94,8 +97,6 @@ SECTIONS {
 	tcb.o(.text)
 	tcb.o(.data)
 	tcb.o(.bss)
-
-
 
     	hpet.o(.text)
     	hpet.o(.data)

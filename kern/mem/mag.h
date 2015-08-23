@@ -2,15 +2,14 @@
 #define __MEM_MAG_H__
 
 #include <stdint.h>
-
 #include <zero/param.h>
 #include <zero/mtx.h>
-
 //#include <kern/task.h>
 #include <kern/mem/slab.h>
 
 #define MAGMIN     (1UL << MAGMINLOG2)
-#define MAGMINLOG2 PAGESIZELOG2
+//#define MAGMINLOG2 PAGESIZELOG2
+#define MAGMINLOG2 CLSIZELOG2
 //#define MAGMINLOG2 CLSIZELOG2
 
 #define magpop(mp)         ((mp)->ptab[((mp)->ndx)++])
