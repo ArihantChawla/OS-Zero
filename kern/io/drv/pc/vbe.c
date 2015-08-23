@@ -148,8 +148,8 @@ vbeinitcons(int w, int h)
 //        kbzero(ptr, PAGESIZE);
         cons->puts = vbeputs;
         cons->putchar = vbeputchar;
-        cons->fg = RGB_WHITE;
-        cons->bg = RGB_BLACK;
+        cons->fg = GFX_WHITE;
+        cons->bg = GFX_BLACK;
         cons->buf = vbescreen.fbuf;
         cons->col = 0;
         cons->row = 0;

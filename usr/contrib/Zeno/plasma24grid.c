@@ -140,7 +140,7 @@ plasmainit(void)
 #if (PLASMADOUBLEBUF)
     plasmabuf = kcalloc(INTER_WIDTH * INTER_HEIGHT * 3 * sizeof(uint8_t));
 #endif
-    vbeclrscr(RGB_BLACK);
+    vbeclrscr(GFX_BLACK);
     __asm__ __volatile__ ("finit\n");
     init();
 
@@ -283,7 +283,7 @@ cleanup(void)
     kfree(intermediateR);
     kfree(intermediateG);
     kfree(intermediateB);
-    vbeclrscr(RGB_BLACK);
+    vbeclrscr(GFX_BLACK);
 }
 #else
 void cleanup(void)
