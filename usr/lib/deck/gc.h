@@ -1,8 +1,8 @@
-#ifndef __ZERO_DECK_GC_H__
-#define __ZERO_DECK_GC_H__
+#ifndef __DECK_GC_H__
+#define __DECK_GC_H__
 
 #include <stdint.h>
-#include <zero/gfx/rgb.h>
+#include <gfx/rgb.h>
 
 /* graphics context structure */
 /* flg-field bits */
@@ -45,5 +45,5 @@ struct deckgcatr {
     struct deckgc vals; // attribute values
 };
 
-#endif /* __ZERO_DECK_GC_H__ */
+#endif /* __DECK_GC_H__ */
 

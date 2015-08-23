@@ -1,5 +1,5 @@
-#ifndef __ZERO_DECK_LFB_H__
-#define __ZERO_DECK_LFB_H__
+#ifndef __DECK_LFB_H__
+#define __DECK_LFB_H__
 
 #include <stdint.h>
 
@@ -18,5 +18,5 @@ struct decklfb {
     void     *scrbuf;   // screen buffer
 };
 
-#endif /* __ZERO_DECK_LFB_H__ */
+#endif /* __DECK_LFB_H__ */
 

@@ -1,12 +1,12 @@
-#ifndef __ZERO_GFX_TYPES_H__
-#define __ZERO_GFX_TYPES_H__
+#ifndef __GFX_TYPES_H__
+#define __GFX_TYPES_H__
 
 /* FIXME: make X11 optional */
 
 #include <zero/param.h>
 #include <zero/cdecl.h>
-#include <zero/gfx/x11.h>
-#include <zero/gfx/rgb.h>
+#include <gfx/x11.h>
+#include <gfx/rgb.h>
 
 #if 0
 struct gfximg {
@@ -35,5 +35,5 @@ struct gfximg_x11 {
     Pixmap           mask;
 };
 
-#endif /* __ZERO_GFX_TYPES_H__ */
+#endif /* __GFX_TYPES_H__ */
 

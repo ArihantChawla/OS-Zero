@@ -1,12 +1,12 @@
-#ifndef __ZERO_DECK_DECK_H__
-#define __ZERO_DECK_DECK_H__
+#ifndef __DECK_DECK_H__
+#define __DECK_DECK_H__
 
-#include <zero/deck/conf.h>
+#include <deck/conf.h>
 #include <stdint.h>
 #include <endian.h>
 #include <zero/ev.h>
 #if (DECK_GFX_LFB)
-#include <zero/deck/lfb.h>
+#include <deck/lfb.h>
 #endif
 
 /* endian-field values; byte-order */
@@ -27,5 +27,5 @@ struct deck {
     void     *gfx;      // graphics interface
 };
 
-#endif /* __ZERO_DECK_DECK_H__ */
+#endif /* __DECK_DECK_H__ */
 

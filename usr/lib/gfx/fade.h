@@ -1,7 +1,7 @@
-#ifndef __ZERO_GFX_FADE_H__
-#define __ZERO_GFX_FADE_H__
+#ifndef __GFX_FADE_H__
+#define __GFX_FADE_H__
 
-#include <zero/gfx/rgb.h>
+#include <gfx/rgb.h>
 
 /* basic version */
 
@@ -87,5 +87,5 @@
         (dest) = gfxmkpix(0, _rval, _gval, _bval);                      \
     } while (0)
 
-#endif /* __ZERO_GFX_FADE_H__ */
+#endif /* __GFX_FADE_H__ */
 

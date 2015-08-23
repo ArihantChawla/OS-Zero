@@ -3,7 +3,7 @@
 
 #include <stdint.h>
 
-#include <zero/gfx/rgb.h>
+#include <gfx/rgb.h>
 
 #define CONSNTEXTROW 4096
 

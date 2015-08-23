@@ -9,7 +9,7 @@
 #if (NEWFONT)
 #include <zero/trix.h>
 #endif
-#include <zero/gfx/rgb.h>
+#include <gfx/rgb.h>
 
 #include <kern/util.h>
 #include <kern/io/drv/chr/cons.h>

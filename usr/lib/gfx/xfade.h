@@ -1,9 +1,9 @@
-#ifndef __ZERO_GFX_XFADE_H__
-#define __ZERO_GFX_XFADE_H__
+#ifndef __GFX_XFADE_H__
+#define __GFX_XFADE_H__
 
 #include <stdint.h>
-#include <zero/gfx/rgb.h>
-#include <zero/gfx/alpha.h>
+#include <gfx/rgb.h>
+#include <gfx/alpha.h>
 
 #if 0
 #define gfxxfade1(src1, src2, dest, val)                                \
@@ -48,5 +48,5 @@
         gfxalphablend_nodiv(src2, dest, (val));                         \
     } while (0)
 
-#endif /* __ZERO_GFX_XFADE_H__ */
+#endif /* __GFX_XFADE_H__ */
 

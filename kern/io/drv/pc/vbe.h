@@ -5,7 +5,7 @@
 
 #include <zero/param.h>
 #include <zero/cdecl.h>
-#include <zero/gfx/rgb.h>
+#include <gfx/rgb.h>
 #include <kern/unit/ia32/boot.h>
 
 void vbeinitcons(int w, int h);

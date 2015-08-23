@@ -1,5 +1,5 @@
-#ifndef __ZERO_GFX_RGB_H__
-#define __ZERO_GFX_RGB_H__
+#ifndef __GFX_RGB_H__
+#define __GFX_RGB_H__
 
 #include <stdint.h>
 #include <endian.h>
@@ -176,5 +176,5 @@ typedef int16_t gfxrgb565_t;
 #define gfxtoc(pix, m, s)                                               \
     ((s) > 0 ? (((pix) >> (s)) & (m)) : (((pix) << -(s)) & (m)))
 
-#endif /* __ZERO_GFX_RGB_H__ */
+#endif /* __GFX_RGB_H__ */
 

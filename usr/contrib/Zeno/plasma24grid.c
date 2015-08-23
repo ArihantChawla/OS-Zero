@@ -35,7 +35,7 @@ void plasmasync(void);
 #include <time.h>
 #endif
 #if (__KERNEL__)
-#include <zero/gfx/rgb.h>
+#include <gfx/rgb.h>
 #include <kern/mem.h>
 #include <kern/io/drv/pc/vbe.h>
 #include <kern/unit/x86/asm.h>
