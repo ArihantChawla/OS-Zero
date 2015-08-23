@@ -1,6 +1,8 @@
 #ifndef __ZERO_GFX_TYPES_H__
 #define __ZERO_GFX_TYPES_H__
 
+/* FIXME: make X11 optional */
+
 #include <zero/param.h>
 #include <zero/cdecl.h>
 #include <zero/gfx/x11.h>
@@ -15,10 +17,10 @@ struct gfximg {
 } PACK();
 #endif
 
-struct gfximg {
+struct gfximg_x11 {
     char            *fname;
-    argb32_t        *data;
-    argb32_t        *maskdata;
+    gfxargb32_t     *data;
+    gfxargb32_t     *maskdata;
     unsigned long    w;
     unsigned long    h;
     Imlib_Image     *imlib2;

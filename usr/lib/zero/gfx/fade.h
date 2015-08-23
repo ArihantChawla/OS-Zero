@@ -10,29 +10,32 @@
 
 #define gfxfadein1(src, dest, val)                                      \
     do {                                                                \
-        argb32_t _rval;                                                 \
-        argb32_t _gval;                                                 \
-        argb32_t _bval;                                                 \
-        float    _ftor;                                                 \
+        gfxargb32_t _rval;                                              \
+        gfxargb32_t _gval;                                              \
+        gfxargb32_t _bval;                                              \
+        float       _ftor;                                              \
                                                                         \
         _ftor = (float)val / 0xff;                                      \
-        _rval = (argb32_t)(_ftor * gfxredval(src) + _ftor * gfxredval(dest)); \
-        _gval = (argb32_t)(_ftor * gfxgreenval(src) + _ftor * gfxgreenval(dest)); \
-        _bval = (argb32_t)(_ftor * gfxblueval(src) + _ftor * gfxblueval(dest)); \
+        _rval = (gfxargb32_t)(_ftor * gfxredval(src)                    \
+                              + _ftor * gfxredval(dest));               \
+        _gval = (gfxargb32_t)(_ftor * gfxgreenval(src)                  \
+                              + _ftor * gfxgreenval(dest));             \
+        _bval = (gfxargb32_t)(_ftor * gfxblueval(src)                   \
+                              + _ftor * gfxblueval(dest));              \
         gfxmkpix_p(dest, 0, _rval, _gval, _bval);                       \
     } while (0)
 
 #define gfxfadeout1(src, dest, val)                                     \
     do {                                                                \
-        argb32_t _rval;                                                 \
-        argb32_t _gval;                                                 \
-        argb32_t _bval;                                                 \
-        float    _ftor;                                                 \
+        gfxargb32_t _rval;                                              \
+        gfxargb32_t _gval;                                              \
+        gfxargb32_t _bval;                                              \
+        float       _ftor;                                              \
                                                                         \
         _ftor = (float)(0xff - val) / 0xff;                             \
-        _rval = (argb32_t)(_ftor * gfxredval(src));                     \
-        _gval = (argb32_t)(_ftor * gfxgreenval(src));                   \
-        _bval = (argb32_t)(_ftor * gfxblueval(src));                    \
+        _rval = (gfxargb32_t)(_ftor * gfxredval(src));                  \
+        _gval = (gfxargb32_t)(_ftor * gfxgreenval(src));                \
+        _bval = (gfxargb32_t)(_ftor * gfxblueval(src));                 \
         gfxmkpix_p(dest, 0, _rval, _gval, _bval);                       \
     } while (0)
 
@@ -46,7 +49,8 @@
 
 #define gfxinitfade1(u8p64k)                                            \
     do {                                                                \
-        long  _l, _m;                                                   \
+        long  _l;                                                       \
+        long  _m;                                                       \
         float _f;                                                       \
                                                                         \
         for (_l = 0 ; _l <= 0xff ; _l++) {                              \
@@ -59,9 +63,9 @@
 
 #define gfxfadein2(src, dest, val, tab)                                 \
     do {                                                                \
-        argb32_t _rval;                                                 \
-        argb32_t _gval;                                                 \
-        argb32_t _bval;                                                 \
+        gfxargb32_t _rval;                                              \
+        gfxargb32_t _gval;                                              \
+        gfxargb32_t _bval;                                              \
                                                                         \
         _rval = (tab)[val][gfxredval(src)];                             \
         _gval = (tab)[val][gfxgreenval(src)];                           \
@@ -71,10 +75,10 @@
 
 #define gfxfadeout2(src, dest, val, tab)                                \
     do {                                                                \
-        argb32_t _val;                                                  \
-        argb32_t _rval;                                                 \
-        argb32_t _gval;                                                 \
-        argb32_t _bval;                                                 \
+        gfxargb32_t _val;                                               \
+        gfxargb32_t _rval;                                              \
+        gfxargb32_t _gval;                                              \
+        gfxargb32_t _bval;                                              \
                                                                         \
         _val = 0xff - val;                                              \
         _rval = (tab)[_val][gfxredval(src)];                            \
