@@ -6,10 +6,10 @@
 #include <zero/cdecl.h>
 #include <zero/param.h>
 
-#define RGB_ARGB32 0
-#define RGB_RGB888 1
-#define RGB_RGB555 2
-#define RGB_RGB565 3
+#define RGB_ARGB32 1
+#define RGB_RGB888 2
+#define RGB_RGB555 3
+#define RGB_RGB565 4
 
 #define RGB_BLACK  0x00000000
 #define RGB_WHITE  0x00ffffff

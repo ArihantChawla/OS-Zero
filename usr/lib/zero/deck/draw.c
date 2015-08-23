@@ -12,7 +12,7 @@
 __inline__ void
 deckdrawpoint(struct deckimg *img,
               long x, long y,
-              gfxargb32_t pixel)
+              gfxargb32_t pix)
 {
     gfxargb32_t   *dest;
     gfxargb32_t   *destptr;
@@ -21,7 +21,7 @@ deckdrawpoint(struct deckimg *img,
     dest = img->data;
     destw = img->w;
     destptr = dest + y * destw + x;
-    *destptr = pixel;
+    *destptr = pix;
 
     return;
 }
@@ -38,7 +38,7 @@ void
 deckdrawline(struct deckimg *img,
              long x1, long y1,
              long x2, long y2,
-             gfxargb32_t pixel)
+             gfxargb32_t pix)
 {
     gfxargb32_t   *dest;
     gfxargb32_t   *destptr;
@@ -67,7 +67,7 @@ deckdrawline(struct deckimg *img,
                     destptr = dest + y * destw + x;
                     ymax = y1 + (long)(xpos * slope);
                     while (y <= ymax) {
-                        *destptr = pixel;
+                        *destptr = pix;
                         destptr += destw;
                         y++;
                     }
@@ -78,7 +78,7 @@ deckdrawline(struct deckimg *img,
                     ymax = y1 + (long)(xpos * slope);
                     destptr = dest + y * destw + x;
                     while (y >= ymax) {
-                        *destptr = pixel;
+                        *destptr = pix;
                         destptr += destw;
                         y--;
                     }
@@ -92,7 +92,7 @@ deckdrawline(struct deckimg *img,
                     ymax = y1 + (long)(xpos * slope);
                     destptr = dest + y * destw + x;
                     while (y <= ymax) {
-                        *destptr = pixel;
+                        *destptr = pix;
                         destptr += destw;
                         y++;
                     }
@@ -103,7 +103,7 @@ deckdrawline(struct deckimg *img,
                     ymax = y1 + (long)(xpos * slope);
                     destptr = dest + y * destw + x;
                     while (y >= ymax) {
-                        *destptr = pixel;
+                        *destptr = pix;
                         destptr += destw;
                         y--;
                     }
@@ -116,14 +116,14 @@ deckdrawline(struct deckimg *img,
             xmax = x2;
             destptr = dest + y1 * destw + x1;
             for (x = x1 ; x <= xmax ; x++) {
-                *destptr = pixel;
+                *destptr = pix;
                 destptr++;
             }
         } else {
             xmax = x1;
             destptr = dest + y1 * destw + x1;
             for (x = x2 ; x <= xmax ; x++) {
-                *destptr = pixel;
+                *destptr = pix;
                 destptr++;
             }
         }
@@ -132,14 +132,14 @@ deckdrawline(struct deckimg *img,
             ymax = y2;
             destptr = dest + y1 * destw + x1;
             for (y = y1 ; y <= ymax ; y++) {
-                *destptr = pixel;
+                *destptr = pix;
                 destptr += destw;
             }
         } else {
             ymax = y1;
             destptr = dest + y2 * destw + x1;
             for (y = y2 ; y <= ymax ; y++) {
-                *destptr = pixel;
+                *destptr = pix;
                 destptr += destw;
             }
         }
@@ -162,23 +162,23 @@ deckdrawtriangle(struct deckimg *img,
                  long x1, long y1,
                  long x2, long y2,
                  long x3, long y3,
-                 gfxargb32_t pixel)
+                 gfxargb32_t pix)
 {
-    deckdrawline(img, x1, y1, x2, y2, pixel);
-    deckdrawline(img, x1, y1, x3, y3, pixel);
-    deckdrawline(img, x2, y2, x3, y3, pixel);
+    deckdrawline(img, x1, y1, x2, y2, pix);
+    deckdrawline(img, x1, y1, x3, y3, pix);
+    deckdrawline(img, x2, y2, x3, y3, pix);
 }
 
 void
 deckdrawrectangle(struct deckimg *img,
                   long x1, long y1,
                   long x2, long y2,
-                  gfxargb32_t pixel)
+                  gfxargb32_t pix)
 {
-    deckdrawline(img, x1, y1, x2, y1, pixel);
-    deckdrawline(img, x1, y1, x1, y2, pixel);
-    deckdrawline(img, x1, y2, x2, y2, pixel);
-    deckdrawline(img, x2, y1, x2, y2, pixel);
+    deckdrawline(img, x1, y1, x2, y1, pix);
+    deckdrawline(img, x1, y1, x1, y2, pix);
+    deckdrawline(img, x1, y2, x2, y2, pix);
+    deckdrawline(img, x2, y1, x2, y2, pix);
     
     return;
 }
@@ -187,7 +187,7 @@ void
 deckfillrectangle(struct deckimg *img,
                   long x1, long y1,
                   long x2, long y2,
-                  gfxargb32_t pixel)
+                  gfxargb32_t pix)
 {
     gfxargb32_t   *dest;
     gfxargb32_t   *destptr;
@@ -210,7 +210,7 @@ deckfillrectangle(struct deckimg *img,
     for (y = ymin ; y <= ymax ; y++) {
         destptr = dest + y * destw + xmin;
         for (x = xmin ; x <= xmax ; x++) {
-            *destptr = pixel;
+            *destptr = pix;
             destptr++;
         }
     }
@@ -222,7 +222,7 @@ void
 deckdrawcircle(struct deckimg *img,
                long x1, long y1,
                unsigned long r,
-               gfxargb32_t pixel)
+               gfxargb32_t pix)
 {
     gfxargb32_t   *dest;
     gfxargb32_t   *destptr;
@@ -245,12 +245,12 @@ deckdrawcircle(struct deckimg *img,
         fprintf(stderr, "XVAL: %d, XPOS: %d\n", xval, xpos);
         for (x = -xval ; x <= -xpos ; x++) {
             destptr = dest + (y1 - yval) * destw + x1 + x;
-            *destptr = pixel;
+            *destptr = pix;
         }
         for (x = xpos ; x <= xval ; x++) {
             fprintf(stderr, "X: %d\n", x);
             destptr = dest + (y1 - yval) * destw + x1 + x;
-            *destptr = pixel;
+            *destptr = pix;
         }
         xpos = xval;
     }
@@ -260,12 +260,12 @@ deckdrawcircle(struct deckimg *img,
         fprintf(stderr, "XVAL: %d, XPOS: %d\n", xval, xpos);
         for (x = -xval ; x <= -xpos ; x++) {
             destptr = dest + (y1 - yval) * destw + x1 + x;
-            *destptr = pixel;
+            *destptr = pix;
         }
         for (x = xpos ; x <= xval ; x++) {
             fprintf(stderr, "X: %d\n", x);
             destptr = dest + (y1 - yval) * destw + x1 + x;
-            *destptr = pixel;
+            *destptr = pix;
         }
         xpos = xval;
     }
