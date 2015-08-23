@@ -32,16 +32,20 @@ slabinitzone(struct memzone *zone, unsigned long base, unsigned long nb)
 {
     unsigned long adr = base;
     unsigned long sz = (nb & (SLABMIN - 1)) ? rounddownpow2(nb, SLABMIN) : nb;
-    unsigned long nslab = sz >> PAGESIZELOG2;
+    unsigned long nslab = sz >> SLABMINLOG2;
     unsigned long hdrsz;
 
-    hdrsz = nslab * (sizeof(struct maghdr) + sizeof(struct slabhdr));
-    kbzero((void *)adr, hdrsz);
+    hdrsz = nslab * sizeof(struct maghdr);
     zone->nhdr = nslab;
     magvirtzone.nhdr = nslab;
+    kbzero((void *)adr, hdrsz);
     magvirtzone.hdrtab = (void *)adr;
-    zone->hdrtab = (struct slabhdr *)(adr + nslab * sizeof(struct maghdr));
-    adr += nslab * sizeof(struct maghdr) + nslab * sizeof(struct slabhdr);
+    adr += nslab * sizeof(struct maghdr);
+    hdrsz = nslab * sizeof(struct slabhdr);
+    adr = rounduppow2(adr, PAGESIZE);
+    zone->hdrtab = (void *)adr;
+    kbzero((void *)adr, hdrsz);
+    adr += nslab * sizeof(struct slabhdr);
     if (adr & (SLABMIN - 1)) {
         adr = rounduppow2(adr, SLABMIN);
     }
@@ -53,8 +57,8 @@ void
 slabinit(struct memzone *virtzone, unsigned long base, unsigned long nbphys)
 {
     struct slabhdr **slabtab = (struct slabhdr **)virtzone->tab;
-    unsigned long    adr = ((base & (PAGESIZE - 1))
-                            ? rounduppow2(base, PAGESIZE)
+    unsigned long    adr = ((base & (MAGMIN - 1))
+                            ? rounduppow2(base, MAGMIN)
                             : base);
     unsigned long    bkt = PTRBITS - 1;
     unsigned long    sz = 1UL << bkt;
@@ -63,18 +67,18 @@ slabinit(struct memzone *virtzone, unsigned long base, unsigned long nbphys)
     adr = slabinitzone(virtzone, adr, nbphys);
     virtzone->base = adr;
     magvirtzone.base = adr;
-    if (base != adr) {
+    if (adr != base) {
         nbphys -= adr - base;
-        nbphys = rounddownpow2(nbphys, PAGESIZELOG2);
+        nbphys = rounddownpow2(nbphys, MAGMINLOG2);
     }
     kprintf("%ld kilobytes kernel virtual memory free @ 0x%lx\n", nbphys >> 10, adr);
     while ((nbphys) && bkt >= SLABMINLOG2) {
         if (nbphys & sz) {
             hdr = slabgethdr(adr, virtzone);
-            slabclrnfo(hdr);
+//            slabclrnfo(hdr);
             slabsetbkt(hdr, bkt);
             slabsetfree(hdr);
-            slabclrlink(hdr);
+//            slabclrlink(hdr);
             slabtab[bkt] = hdr;
             nbphys -= sz;
             adr += sz;
@@ -255,15 +259,15 @@ slaballoc(struct memzone *zone, unsigned long nb, unsigned long flg)
     if (!hdr1) {
         while (!hdr1 && ++bkt2 < PTRBITS) {
             hdr1 = slabtab[bkt2];
-            if (hdr1) {
-                hdr2 = slabgetnext(hdr1, zone);
-                if (hdr2) {
-                    slabclrprev(hdr2);
-                }
-                slabtab[bkt2] = hdr2;
-                slabsplit(zone, hdr1, bkt1);
-                hdr1 = slabtab[bkt1];
+        }
+        if (hdr1) {
+            hdr2 = slabgetnext(hdr1, zone);
+            if (hdr2) {
+                slabclrprev(hdr2);
             }
+            slabtab[bkt2] = hdr2;
+            slabsplit(zone, hdr1, bkt1);
+            hdr1 = slabtab[bkt1];
         }
     }
     if (hdr1) {

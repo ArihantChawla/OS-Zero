@@ -44,16 +44,14 @@ memalloc(unsigned long nb, long flg)
     struct maghdr   *mag;
     void            *bmap;
     uint8_t         *u8ptr;
-    unsigned long    l;
-    unsigned long    n;
     unsigned long    ndx;
+    unsigned long    n;
     unsigned long    mlk = 0;
 
     mtxlk(&lktab[bkt]);
     if (bkt >= SLABMINLOG2) {
-#if (MEMTEST)
         ptr = slaballoc(slabzone, sz, flg);
-#else
+#if (!MEMTEST)
         ptr = vmmapvirt((uint32_t *)&_pagetab,
                         slaballoc(slabzone, sz, flg),
                         sz, flg);
@@ -83,13 +81,13 @@ memalloc(unsigned long nb, long flg)
                 magtab[bkt] = mag->next;
             }
         } else {
-#if (MEMTEST)
-            ptr = u8ptr = slaballoc(slabzone, SLABMIN, flg);
-#else
-            ptr = u8ptr = vmmapvirt((uint32_t *)&_pagetab,
-                                    slaballoc(slabzone, SLABMIN, flg),
-                                    SLABMIN, flg);
+            ptr = slaballoc(slabzone, SLABMIN, flg);
+#if (!MEMTEST)
+            ptr = vmmapvirt((uint32_t *)&_pagetab,
+                            slaballoc(slabzone, SLABMIN, flg),
+                            SLABMIN, flg);
 #endif
+            u8ptr = ptr;
             if (ptr) {
                 slab++;
                 sz = 1UL << bkt;
@@ -101,9 +99,9 @@ memalloc(unsigned long nb, long flg)
                 mag->n = n;
                 mag->ndx = 1;
                 mag->bkt = bkt;
-                for (l = 1 ; l < n ; l++) {
+                for (ndx = 1 ; ndx < n ; ndx++) {
                     u8ptr += sz;
-                    mag->ptab[l] = u8ptr;
+                    mag->ptab[ndx] = u8ptr;
                 }
                 mag->prev = NULL;
                 if (magtab[bkt]) {
@@ -191,7 +189,7 @@ kfree(void *ptr)
         }
         slabfree(slabzone, ptr);
         freed = 1;
-    } else if (mag->ndx == mag->n) {
+    } else if (mag->ndx == mag->n - 1) {
         mag->prev = NULL;
         if (magtab[bkt]) {
             magtab[bkt]->prev = mag;
