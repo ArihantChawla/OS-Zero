@@ -173,7 +173,7 @@ typedef int16_t gfxrgb565_t;
 
 #endif /* __BYTE_ORDER */
 
-#define gfxtoc(u, m, s)                                                 \
+#define gfxtoc(pix, m, s)                                               \
     ((s) > 0 ? (((pix) >> (s)) & (m)) : (((pix) << -(s)) & (m)))
 
 #endif /* __ZERO_GFX_RGB_H__ */
