@@ -110,7 +110,7 @@ magdiag(void)
 void
 slabprint(struct slabhdr *hdr)
 {
-    printf("NFO: %lx\n", hdr->nfo);
+    printf("INFO: %lx\n", hdr->info);
     printf("BKT: %lu\n", slabgetbkt(hdr));
 
     return;
@@ -246,13 +246,13 @@ int
 main(int argc, char *argv[])
 {
     long  n = MEMTESTNTHR;
-    void *base = memalign(SLABMIN, 1024 * 1024 * 1024);
+    void *base = memalign(SLABMIN, 256 * 1024 * 1024);
 
     printf("PTRBITS == %d\n", PTRBITS);
     printf("MEMPID == %d\n", MEMPID);
     printf("MALLOC: %p\n", base);
-    bzero(base, 1024 * 1024 * 1024);
-    slabinit(&slabvirtzone, (unsigned long)base, 1024 * 1024 * 1024);
+    bzero(base, 256 * 1024 * 1024);
+    slabinit(&slabvirtzone, (unsigned long)base, 256 * 1024 * 1024);
     slabprintall();
     while (n--) {
         pthread_create(&thrtab[n], NULL, test, NULL);

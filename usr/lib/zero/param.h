@@ -16,8 +16,8 @@
  */
 #if defined(__x86_64__) || defined(__amd64__)
 #include <zero/x86-64/param.h>
-#elif defined(__i386__) || defined(__i486__) \
-    || defined(__i586__) || defined(__i686__)
+#elif (defined(__i386__) || defined(__i486__)                           \
+       || defined(__i586__) || defined(__i686__))
 #include <zero/ia32/param.h>
 #elif defined(__arm__)
 #include <zero/arm/param.h>
