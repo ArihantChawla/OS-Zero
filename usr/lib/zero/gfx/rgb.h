@@ -12,7 +12,7 @@
 #define RGB_RGB565 4
 
 #define RGB_BLACK  0x00000000
-#define RGB_WHITE  0x00ffffff
+#define RGB_WHITE  0xffffffff
 #define RGB_GREEN  0x0000bf00
 
 #if (__BYTE_ORDER == __LITTLE_ENDIAN)
@@ -43,7 +43,7 @@ struct gfxargb32 {
     uint8_t blue;
 } PACK();
 
-#endif
+#endif /* __BYTE_ORDER */
 
 typedef int32_t gfxargb32_t;
 typedef int16_t gfxrgb555_t;
@@ -56,10 +56,10 @@ typedef int16_t gfxrgb565_t;
 #define gfxgetblue(pix)  (((pix) >> RGB_BLUE_OFS) & 0xff)  // blue component
 
 /* pointer version; faster byte-fetches from memory */
-#define gfxgetalpha_p(p) (((struct gfxargb32 *)(p))->alpha)
-#define gfxgetred_p(p)   (((struct gfxargb32 *)(p))->red)
-#define gfxgetgreen_p(p) (((struct gfxargb32 *)(p))->green)
-#define gfxgetblue_p(p)  (((struct gfxargb32 *)(p))->blue)
+#define gfxgetalpha_p(ptr) (((struct gfxargb32 *)(ptr))->alpha)
+#define gfxgetred_p(ptr)   (((struct gfxargb32 *)(ptr))->red)
+#define gfxgetgreen_p(ptr) (((struct gfxargb32 *)(ptr))->green)
+#define gfxgetblue_p(ptr)  (((struct gfxargb32 *)(ptr))->blue)
 
 /* approximation for c / 0xff */
 #define gfxdiv255(c)                                                    \
@@ -83,12 +83,13 @@ typedef int16_t gfxrgb565_t;
 #define gfxmkpix_p(dest, a, r, g, b)                                    \
     ((dest) = gfxmkpix(a, r, g, b))
 #define gfxsetpix_p(p, a, r, g, b)                                      \
-    (((struct gfxargb32 *)(p))->alpha = (a),                            \
-     ((struct gfxargb32 *)(p))->red = (r),                              \
-     ((struct gfxargb32 *)(p))->green = (g),                            \
-     ((struct gfxargb32 *)(p))->blue = (b))
+    (((struct gfxargb32 *)(ptr))->alpha = (a),                          \
+     ((struct gfxargb32 *)(ptr))->red = (r),                            \
+     ((struct gfxargb32 *)(ptr))->green = (g),                          \
+     ((struct gfxargb32 *)(ptr))->blue = (b))
 
 #if (__BYTE_ORDER == __LITTLE_ENDIAN)
+
 #define RGB_ARGB32_RED_SHIFT       16
 #define RGB_ARGB32_GREEN_SHIFT     8
 #define RGB_ARGB32_BLUE_SHIFT      0
@@ -99,6 +100,7 @@ typedef int16_t gfxrgb565_t;
 #define RGB_RGB888_RED_OFS         0
 #define RGB_RGB888_GREEN_OFS       1
 #define RGB_RGB888_BLUE_OFS        2
+
 #endif
 
 #define RGB_RGB555_RED_MASK        0x00007c00
@@ -119,35 +121,34 @@ typedef int16_t gfxrgb565_t;
 #define RGB_RGB565_GREEN_SHIFT     3
 #define RGB_RGB565_BLUE_SHIFT     -3
 
-#define gfxtopix(dst, u) (gfxto##dst(u))
-#define gfxtoargb32(u)                                                  \
-    (u)
+#define gfxtopix(dst, pix) (gfxto##dst(pix))
+#define gfxtoargb32(pix)   (pix)
 
-#define gfxtorgb555(u)                                                  \
-    (gfxtoc(gfxgetred(u),                                               \
+#define gfxtorgb555(pix)                                                \
+    (gfxtoc(gfxgetred(pix),                                             \
             RGB_RGB555_RED_MASK,                                        \
             RGB_RGB555_RED_SHIFT)                                       \
-     | gfxtoc(gfxgetgreen(u),                                           \
+     | gfxtoc(gfxgetgreen(pix),                                         \
               RGB_RGB555_GREEN_MASK,                                    \
               RGB_RGB555_GREEN_SHIFT)                                   \
-     | gfxtoc(gfxgetblue(u),                                            \
+     | gfxtoc(gfxgetblue(pix),                                          \
               RGB_RGB555_BLUE_MASK,                                     \
               RGB_RGB555_BLUE_SHIFT))
 
-#define gfxtorgb565(u)                                                  \
-    (gfxtoc(gfxgetred(u),                                               \
+#define gfxtorgb565(pix)                                                \
+    (gfxtoc(gfxgetred(pix),                                             \
             RGB_RGB565_RED_MASK,                                        \
             RGB_RGB565_RED_SHIFT)                                       \
-     | gfxtoc(gfxgetgreen(u),                                           \
+     | gfxtoc(gfxgetgreen(pix),                                         \
               RGB_RGB565_GREEN_MASK,                                    \
               RGB_RGB565_GREEN_SHIFT)                                   \
-     | gfxtoc(gfxgetblue(u),                                            \
+     | gfxtoc(gfxgetblue(pix),                                          \
               RGB_RGB565_BLUE_MASK,                                     \
               RGB_RGB565_BLUE_SHIFT))
 
-#define gfxsetrgb888_p(u, p)                                            \
+#define gfxsetrgb888_p(pix, ptr)                                        \
     do {                                                                \
-        gfxargb32_t       _pix = (u);                                   \
+        gfxargb32_t       _pix = (pix);                                 \
         struct gfxargb32 *_src = (struct gfxargb32 *)&_pix;             \
         struct gfxargb32 *_dest = (struct gfxargb32 *)p;                \
                                                                         \
@@ -157,18 +158,23 @@ typedef int16_t gfxrgb565_t;
     } while (0)
 
 #if (__BYTE_ORDER == __LITTLE_ENDIAN)
-#define gfxsetrgb888(u, p)                                              \
-    (((uint8_t *)(p))[2] = gfxgetred(u),                                \
-     ((uint8_t *)(p))[1] = gfxgetgreen(u),                              \
-     ((uint8_t *)(p))[0] = gfxgetblue(u))
-#else
-#define gfxsetrgb888(u, p)                                              \
-    (((uint8_t *)(p))[0] = gfxgetred(u),                                \
-     ((uint8_t *)(p))[1] = gfxgetgreen(u),                              \
-     ((uint8_t *)(p))[2] = gfxgetblue(u))
-#endif
+
+#define gfxsetrgb888(pix, ptr)                                          \
+    (((uint8_t *)(ptr))[2] = gfxgetred(pix),                            \
+     ((uint8_t *)(ptr))[1] = gfxgetgreen(pix),                          \
+     ((uint8_t *)(ptr))[0] = gfxgetblue(pix))
+
+#elif (__BYTE_ORDER == __BIG_ENDIAN)
+
+#define gfxsetrgb888(pix, ptr)                                          \
+    (((uint8_t *)(ptr))[0] = gfxgetred(pix),                            \
+     ((uint8_t *)(ptr))[1] = gfxgetgreen(pix),                          \
+     ((uint8_t *)(ptr))[2] = gfxgetblue(pix))
+
+#endif /* __BYTE_ORDER */
+
 #define gfxtoc(u, m, s)                                                 \
-    ((s) > 0 ? (((u) >> (s)) & (m)) : (((u) << -(s)) & (m)))
+    ((s) > 0 ? (((pix) >> (s)) & (m)) : (((pix) << -(s)) & (m)))
 
 #endif /* __ZERO_GFX_RGB_H__ */
 
