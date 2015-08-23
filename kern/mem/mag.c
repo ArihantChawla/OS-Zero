@@ -86,9 +86,9 @@ memalloc(unsigned long nb, long flg)
 #if (MEMTEST)
             ptr = u8ptr = slaballoc(slabzone, SLABMIN, flg);
 #else
-            ptr = vmmapvirt((uint32_t *)&_pagetab,
-                            slaballoc(slabzone, SLABMIN, flg),
-                            SLABMIN, flg);
+            ptr = u8ptr = vmmapvirt((uint32_t *)&_pagetab,
+                                    slaballoc(slabzone, SLABMIN, flg),
+                                    SLABMIN, flg);
 #endif
             if (ptr) {
                 slab++;

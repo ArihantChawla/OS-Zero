@@ -42,8 +42,8 @@ memcalcbkt(unsigned long size)
     if (size) {
         nlz = lzerol(size);
         bkt -= nlz;
-        if (!powerof2(size)) {
-            bkt++;
+        if (powerof2(size)) {
+            bkt--;
         }
     }
 
