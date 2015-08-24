@@ -1,0 +1,7 @@
+Welcome to Zero Vectorised Mathematics Library.
+
+Hhe library aims to implement a mathematics interface based on vectors of
+data-parallel memory.
+
+SIMD support is being implemented for X86 architectures.
+
