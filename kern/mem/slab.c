@@ -195,10 +195,10 @@ slabcomb(struct memzone *zone, struct slabhdr *hdr)
 #endif
             bkt2 = slabgetbkt(hdr1);
             if (bkt2 == bkt1 && slabisfree(hdr1)) {
-                prev = 1;
+                prev++;
                 ret++;
-                hdr3 = slabgetprev(hdr1, zone);
-                hdr4 = slabgetnext(hdr1, zone);
+                hdr3 = slabgetprev(hdr, zone);
+                hdr4 = slabgetnext(hdr, zone);
                 if ((hdr3) && (hdr4)) {
                     slabsetnext(hdr3, hdr4, zone);
                     slabsetprev(hdr4, hdr3, zone);
@@ -216,14 +216,16 @@ slabcomb(struct memzone *zone, struct slabhdr *hdr)
                 }
 #endif
                 slabclrinfo(hdr);
-                slabsetbkt(hdr, 0);
-                bkt2++;
+                slabclrlink(hdr);
+//                bkt2++;
+#if 0
                 slabclrinfo(hdr1);
                 slabclrlink(hdr1);
                 slabsetbkt(hdr1, bkt2);
                 slabsetfree(hdr1);
                 hdr = hdr1;
-                bkt1 = bkt2;
+#endif
+                bkt1++;
                 ofs <<= 1;
 #if (SLABMUTEX)
             } else if (bkt1 != bkt) {
@@ -241,7 +243,7 @@ slabcomb(struct memzone *zone, struct slabhdr *hdr)
 #endif
             bkt2 = slabgetbkt(hdr2);
             if (bkt2 == bkt1 && slabisfree(hdr2)) {
-                next = 1;
+                next++;
                 ret++;
                 hdr3 = slabgetprev(hdr2, zone);
                 hdr4 = slabgetnext(hdr2, zone);
@@ -262,7 +264,7 @@ slabcomb(struct memzone *zone, struct slabhdr *hdr)
                 }
 #endif
                 slabclrinfo(hdr2);
-                slabsetbkt(hdr2, 0);
+                slabclrlink(hdr2);
                 bkt2++;
                 slabclrinfo(hdr1);
                 slabclrlink(hdr1);

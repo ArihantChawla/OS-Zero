@@ -1,0 +1,20 @@
+Basics of Assembly Programming
+------------------------------
+
+AT & T Assembly Crash Course
+----------------------------
+
+Common Instructions
+-------------------
+
+Memory Interface
+----------------
+
+I/O Devices
+-----------
+
+
+
+CPU Environment
+---------------
+
