@@ -33,65 +33,65 @@ struct hashstr atrhash[NSTRTABLVL];
  * Characters for identifier names have codes 0x00..0x3f
  * Other characters are [currently] marked invalid
  */
-#define CHVALINVAL 0xffff
+#define CH_INVAL 0xffff
 static uint16_t chvaltab[256] =
 {
     /* ASCII values */
 
     /* 0x00..0x07 */
-    CHVALINVAL, // NUL
-    CHVALINVAL, // SOH
-    CHVALINVAL, // STX
-    CHVALINVAL, // ETX
-    CHVALINVAL, // EOT
-    CHVALINVAL, // ENQ
-    CHVALINVAL, // ACK
-    CHVALINVAL, // BEL
+    CH_INVAL, // NUL
+    CH_INVAL, // SOH
+    CH_INVAL, // STX
+    CH_INVAL, // ETX
+    CH_INVAL, // EOT
+    CH_INVAL, // ENQ
+    CH_INVAL, // ACK
+    CH_INVAL, // BEL
     /* 0x08..0x0f */
-    CHVALINVAL, // BS
-    CHVALINVAL, // HT
-    CHVALINVAL, // LF
-    CHVALINVAL, // VT
-    CHVALINVAL, // FF
-    CHVALINVAL, // CR
-    CHVALINVAL, // SO
-    CHVALINVAL, // SI
+    CH_INVAL, // BS
+    CH_INVAL, // HT
+    CH_INVAL, // LF
+    CH_INVAL, // VT
+    CH_INVAL, // FF
+    CH_INVAL, // CR
+    CH_INVAL, // SO
+    CH_INVAL, // SI
     /* 0x10..0x17 */
-    CHVALINVAL, // DLE
-    CHVALINVAL, // DC1
-    CHVALINVAL, // DC2
-    CHVALINVAL, // DC3
-    CHVALINVAL, // DC4
-    CHVALINVAL, // NAK
-    CHVALINVAL, // SYN
-    CHVALINVAL, // ETB
+    CH_INVAL, // DLE
+    CH_INVAL, // DC1
+    CH_INVAL, // DC2
+    CH_INVAL, // DC3
+    CH_INVAL, // DC4
+    CH_INVAL, // NAK
+    CH_INVAL, // SYN
+    CH_INVAL, // ETB
     /* 0x18..0x1f */
-    CHVALINVAL, // CAN
-    CHVALINVAL, // EM
-    CHVALINVAL, // SUB
-    CHVALINVAL, // ESC
-    CHVALINVAL, // FS
-    CHVALINVAL, // GS
-    CHVALINVAL, // RS
-    CHVALINVAL, // US
+    CH_INVAL, // CAN
+    CH_INVAL, // EM
+    CH_INVAL, // SUB
+    CH_INVAL, // ESC
+    CH_INVAL, // FS
+    CH_INVAL, // GS
+    CH_INVAL, // RS
+    CH_INVAL, // US
     /* 0x20..0x27 */
-    CHVALINVAL, // SPACE
-    CHVALINVAL, // !
-    CHVALINVAL, // "
-    CHVALINVAL, // #
-    CHVALINVAL, // $
-    CHVALINVAL, // %
-    CHVALINVAL, // &
-    CHVALINVAL, // '
+    CH_INVAL, // SPACE
+    CH_INVAL, // !
+    CH_INVAL, // "
+    CH_INVAL, // #
+    CH_INVAL, // $
+    CH_INVAL, // %
+    CH_INVAL, // &
+    CH_INVAL, // '
     /* 0x28..0x2f */
-    CHVALINVAL, // (
-    CHVALINVAL, // )
-    CHVALINVAL, // *
-    CHVALINVAL, // +
-    CHVALINVAL, // ,
-    CHVALINVAL, // -
-    CHVALINVAL, // .
-    CHVALINVAL, // /
+    CH_INVAL, // (
+    CH_INVAL, // )
+    CH_INVAL, // *
+    CH_INVAL, // +
+    CH_INVAL, // ,
+    CH_INVAL, // -
+    CH_INVAL, // .
+    CH_INVAL, // /
     /* 0x30..0x37 */
     0x00,       // 0
     0x01,       // 1
@@ -104,12 +104,12 @@ static uint16_t chvaltab[256] =
     /* 0x38..0x3f */
     0x08,       // 8
     0x09,       // 9
-    CHVALINVAL, // :
-    CHVALINVAL, // ;
-    CHVALINVAL, // <
-    CHVALINVAL, // =
-    CHVALINVAL, // >
-    CHVALINVAL, // ?
+    CH_INVAL, // :
+    CH_INVAL, // ;
+    CH_INVAL, // <
+    CH_INVAL, // =
+    CH_INVAL, // >
+    CH_INVAL, // ?
     /* 0x40..0x47 */
     0x0a,       // @
     0x0b,       // A
@@ -141,13 +141,13 @@ static uint16_t chvaltab[256] =
     0x22,       // X
     0x23,       // Y
     0x24,       // Z
-    CHVALINVAL, // [
-    CHVALINVAL, // '\'
-    CHVALINVAL, // ]
-    CHVALINVAL, // ^
+    CH_INVAL, // [
+    CH_INVAL, // '\'
+    CH_INVAL, // ]
+    CH_INVAL, // ^
     0x25,       // _
     /* 0x60..0x67 */
-    CHVALINVAL, // `
+    CH_INVAL, // `
     0x26,       // a
     0x27,       // b
     0x28,       // c
@@ -177,157 +177,157 @@ static uint16_t chvaltab[256] =
     0x3d,       // x
     0x3e,       // y
     0x3f,       // z
-    CHVALINVAL, // {
-    CHVALINVAL, // |
-    CHVALINVAL, // }
-    CHVALINVAL, // ~
-    CHVALINVAL, // DEL
+    CH_INVAL, // {
+    CH_INVAL, // |
+    CH_INVAL, // }
+    CH_INVAL, // ~
+    CH_INVAL, // DEL
 
     /* high 8-bit half (invalid in identifier names) */
 
-    CHVALINVAL,
-    CHVALINVAL,
-    CHVALINVAL,
-    CHVALINVAL,
-    CHVALINVAL,
-    CHVALINVAL,
-    CHVALINVAL,
-    CHVALINVAL,
+    CH_INVAL,
+    CH_INVAL,
+    CH_INVAL,
+    CH_INVAL,
+    CH_INVAL,
+    CH_INVAL,
+    CH_INVAL,
+    CH_INVAL,
 
-    CHVALINVAL,
-    CHVALINVAL,
-    CHVALINVAL,
-    CHVALINVAL,
-    CHVALINVAL,
-    CHVALINVAL,
-    CHVALINVAL,
-    CHVALINVAL,
+    CH_INVAL,
+    CH_INVAL,
+    CH_INVAL,
+    CH_INVAL,
+    CH_INVAL,
+    CH_INVAL,
+    CH_INVAL,
+    CH_INVAL,
 
-    CHVALINVAL,
-    CHVALINVAL,
-    CHVALINVAL,
-    CHVALINVAL,
-    CHVALINVAL,
-    CHVALINVAL,
-    CHVALINVAL,
-    CHVALINVAL,
+    CH_INVAL,
+    CH_INVAL,
+    CH_INVAL,
+    CH_INVAL,
+    CH_INVAL,
+    CH_INVAL,
+    CH_INVAL,
+    CH_INVAL,
 
-    CHVALINVAL,
-    CHVALINVAL,
-    CHVALINVAL,
-    CHVALINVAL,
-    CHVALINVAL,
-    CHVALINVAL,
-    CHVALINVAL,
-    CHVALINVAL,
+    CH_INVAL,
+    CH_INVAL,
+    CH_INVAL,
+    CH_INVAL,
+    CH_INVAL,
+    CH_INVAL,
+    CH_INVAL,
+    CH_INVAL,
 
-    CHVALINVAL,
-    CHVALINVAL,
-    CHVALINVAL,
-    CHVALINVAL,
-    CHVALINVAL,
-    CHVALINVAL,
-    CHVALINVAL,
-    CHVALINVAL,
+    CH_INVAL,
+    CH_INVAL,
+    CH_INVAL,
+    CH_INVAL,
+    CH_INVAL,
+    CH_INVAL,
+    CH_INVAL,
+    CH_INVAL,
 
-    CHVALINVAL,
-    CHVALINVAL,
-    CHVALINVAL,
-    CHVALINVAL,
-    CHVALINVAL,
-    CHVALINVAL,
-    CHVALINVAL,
-    CHVALINVAL,
+    CH_INVAL,
+    CH_INVAL,
+    CH_INVAL,
+    CH_INVAL,
+    CH_INVAL,
+    CH_INVAL,
+    CH_INVAL,
+    CH_INVAL,
 
-    CHVALINVAL,
-    CHVALINVAL,
-    CHVALINVAL,
-    CHVALINVAL,
-    CHVALINVAL,
-    CHVALINVAL,
-    CHVALINVAL,
-    CHVALINVAL,
+    CH_INVAL,
+    CH_INVAL,
+    CH_INVAL,
+    CH_INVAL,
+    CH_INVAL,
+    CH_INVAL,
+    CH_INVAL,
+    CH_INVAL,
 
-    CHVALINVAL,
-    CHVALINVAL,
-    CHVALINVAL,
-    CHVALINVAL,
-    CHVALINVAL,
-    CHVALINVAL,
-    CHVALINVAL,
-    CHVALINVAL,
+    CH_INVAL,
+    CH_INVAL,
+    CH_INVAL,
+    CH_INVAL,
+    CH_INVAL,
+    CH_INVAL,
+    CH_INVAL,
+    CH_INVAL,
 
-    CHVALINVAL,
-    CHVALINVAL,
-    CHVALINVAL,
-    CHVALINVAL,
-    CHVALINVAL,
-    CHVALINVAL,
-    CHVALINVAL,
-    CHVALINVAL,
+    CH_INVAL,
+    CH_INVAL,
+    CH_INVAL,
+    CH_INVAL,
+    CH_INVAL,
+    CH_INVAL,
+    CH_INVAL,
+    CH_INVAL,
 
-    CHVALINVAL,
-    CHVALINVAL,
-    CHVALINVAL,
-    CHVALINVAL,
-    CHVALINVAL,
-    CHVALINVAL,
-    CHVALINVAL,
-    CHVALINVAL,
+    CH_INVAL,
+    CH_INVAL,
+    CH_INVAL,
+    CH_INVAL,
+    CH_INVAL,
+    CH_INVAL,
+    CH_INVAL,
+    CH_INVAL,
 
-    CHVALINVAL,
-    CHVALINVAL,
-    CHVALINVAL,
-    CHVALINVAL,
-    CHVALINVAL,
-    CHVALINVAL,
-    CHVALINVAL,
-    CHVALINVAL,
+    CH_INVAL,
+    CH_INVAL,
+    CH_INVAL,
+    CH_INVAL,
+    CH_INVAL,
+    CH_INVAL,
+    CH_INVAL,
+    CH_INVAL,
 
-    CHVALINVAL,
-    CHVALINVAL,
-    CHVALINVAL,
-    CHVALINVAL,
-    CHVALINVAL,
-    CHVALINVAL,
-    CHVALINVAL,
-    CHVALINVAL,
+    CH_INVAL,
+    CH_INVAL,
+    CH_INVAL,
+    CH_INVAL,
+    CH_INVAL,
+    CH_INVAL,
+    CH_INVAL,
+    CH_INVAL,
 
-    CHVALINVAL,
-    CHVALINVAL,
-    CHVALINVAL,
-    CHVALINVAL,
-    CHVALINVAL,
-    CHVALINVAL,
-    CHVALINVAL,
-    CHVALINVAL,
+    CH_INVAL,
+    CH_INVAL,
+    CH_INVAL,
+    CH_INVAL,
+    CH_INVAL,
+    CH_INVAL,
+    CH_INVAL,
+    CH_INVAL,
 
-    CHVALINVAL,
-    CHVALINVAL,
-    CHVALINVAL,
-    CHVALINVAL,
-    CHVALINVAL,
-    CHVALINVAL,
-    CHVALINVAL,
-    CHVALINVAL,
+    CH_INVAL,
+    CH_INVAL,
+    CH_INVAL,
+    CH_INVAL,
+    CH_INVAL,
+    CH_INVAL,
+    CH_INVAL,
+    CH_INVAL,
 
-    CHVALINVAL,
-    CHVALINVAL,
-    CHVALINVAL,
-    CHVALINVAL,
-    CHVALINVAL,
-    CHVALINVAL,
-    CHVALINVAL,
-    CHVALINVAL,
+    CH_INVAL,
+    CH_INVAL,
+    CH_INVAL,
+    CH_INVAL,
+    CH_INVAL,
+    CH_INVAL,
+    CH_INVAL,
+    CH_INVAL,
 
-    CHVALINVAL,
-    CHVALINVAL,
-    CHVALINVAL,
-    CHVALINVAL,
-    CHVALINVAL,
-    CHVALINVAL,
-    CHVALINVAL,
-    CHVALINVAL,
+    CH_INVAL,
+    CH_INVAL,
+    CH_INVAL,
+    CH_INVAL,
+    CH_INVAL,
+    CH_INVAL,
+    CH_INVAL,
+    CH_INVAL,
 };
 
 /* calculate hash value for symbol name */
