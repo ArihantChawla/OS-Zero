@@ -1,6 +1,7 @@
 #include <stdio.h>
 #include <stdlib.h>
 #include <zcc/zcc.h>
+#include <zcc/tune.h>
 #if (ZCCPROF)
 #include <zero/prof.h>
 #endif

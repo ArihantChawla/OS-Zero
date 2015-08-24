@@ -40,7 +40,7 @@ extern void zccaddid(struct hashstr *tab, char *str, long val);
 extern long zccfindid(struct hashstr *tab, char *str);
 #endif
 
-#define zccisoper(cp)    (opertab[(int)(*(cp))])
+#define zccisoper(cp)    (optab[(int)(*(cp))])
 #define zccistypedef(cp) (!strncmp(cp, "typedef", 7))
 #define zccisstruct(cp)  (!strncmp(cp, "struct", 6))
 #define zccisunion(cp)   (!strncmp(cp, "union", 5))
@@ -67,7 +67,7 @@ extern long zccfindid(struct hashstr *tab, char *str);
     } while (0)
 
 static char    linebuf[NLINEBUF] ALIGNED(PAGESIZE);
-static uint8_t opertab[256];
+static uint8_t optab[256];
 static uint8_t toktab[256];
 #if (ZCCSTAT)
 unsigned long  tokcnttab[256];
@@ -177,21 +177,21 @@ zccusage(void)
 }
 
 static void
-zccinitopertab(void)
+zccinitoptab(void)
 {
-    opertab['!'] = '!';
-    opertab['~'] = '~';
-    opertab['&'] = '&';
-    opertab['|'] = '|';
-    opertab['^'] = '^';
-    opertab['<'] = '<';
-    opertab['>'] = '>';
-    opertab['+'] = '+';
-    opertab['-'] = '-';
-//    opertab['*'] = '*';
-    opertab['/'] = '/';
-    opertab['%'] = '%';
-    opertab['='] = '=';
+    optab['!'] = '!';
+    optab['~'] = '~';
+    optab['&'] = '&';
+    optab['|'] = '|';
+    optab['^'] = '^';
+    optab['<'] = '<';
+    optab['>'] = '>';
+    optab['+'] = '+';
+    optab['-'] = '-';
+//    optab['*'] = '*';
+    optab['/'] = '/';
+    optab['%'] = '%';
+    optab['='] = '=';
 }
 
 static void
@@ -253,7 +253,7 @@ zccinit(int argc,
 
         return 0;
     }
-    zccinitopertab();
+    zccinitoptab();
     zccinittoktab();
     zccinithash();
     for (l = 1 ; l < argc ; l++) {

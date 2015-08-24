@@ -21,12 +21,6 @@
 #define ZCC_WARN_UNDEF   0x00000002U
 #define ZCC_WARN_ERROR   0x00000004U
 
-/* compiler optimisation flags */
-#define ZCC_TUNE_NONE    0x00000000U
-#define ZCC_TUNE_ALIGN   0x00000001U
-#define ZCC_TUNE_UNROLL  0x00000002U
-#define ZCC_TUNE_INLINE  0x00000004U
-
 /* compiler attribute flags */
 #define ZCC_ATR_PACKED   0x01
 #define ZCC_ATR_ALIGNED  0x02
