@@ -102,20 +102,22 @@ slabinitzone(struct memzone *zone, unsigned long base, unsigned long nb)
     unsigned long nslab = sz >> SLABMINLOG2;
     unsigned long hdrsz;
 
+    /* configure magazine headers */
     hdrsz = nslab * sizeof(struct maghdr);
     zone->nhdr = nslab;
-    kprintf("SLAB: reserved room for %ld headers\n", nslab);
+    kprintf("SLAB: reserved %ld bytes for %ld headers\n", sz, nslab);
     magvirtzone.nhdr = nslab;
     magvirtzone.hdrtab = (void *)adr;
     kbzero((void *)adr, hdrsz);
     adr += hdrsz;
 #if 0
+    /* configure slab headers */
     hdrsz = nslab * sizeof(struct slabhdr);
     adr = rounduppow2(adr, PAGESIZE);
     zone->hdrtab = (void *)adr;
     kbzero((void *)adr, hdrsz);
     adr += hdrsz;
-#endif    
+#endif
     if (adr & (SLABMIN - 1)) {
         adr = rounduppow2(adr, SLABMIN);
     }

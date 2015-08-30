@@ -1,6 +1,7 @@
 #ifndef __ZED_BUF_H__
 #define __ZED_BUF_H__
 
+#include <stddef.h>
 #include <stdint.h>
 #include <vt/color.h>
 #include <vt/vt.h>
@@ -33,10 +34,6 @@ struct zedrowbuf {
     struct zedrow  *rows;       // row structures
     void           *text;       // text data such as 8-bit ISO-8859
     void           *rend;       // rendition attributes
-};
-
-struct zedbuf {
-    struct zedrowbuf *rowbufs;   // row buffer
 #if (ZEDZCPP)
     void             *cppq;
 #endif
