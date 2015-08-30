@@ -3,6 +3,13 @@ Mjolnir
 
 This document contains ideas for a Rogue-like adventure game.
 
+ams
+---
+- dragons
+- leprechauns
+- trolls
+- wizards
+
 Introduction
 ------------
 
