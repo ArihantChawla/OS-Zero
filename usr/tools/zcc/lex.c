@@ -12,6 +12,7 @@
 #include <zero/param.h>
 #include <zero/cdecl.h>
 #include <zcc/zcc.h>
+#include <zcc/tune.h>
 
 #define ZCC_FILE_ERROR (-1)
 

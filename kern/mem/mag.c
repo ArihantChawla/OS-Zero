@@ -59,6 +59,15 @@ memalloc(unsigned long nb, long flg)
             mag = maggethdr(ptr, magzone);
             mtxlk(&mag->lk);
             mlk++;
+#if 0
+#if ((SLABMINLOG2 - MAGMINLOG2) < (LONGSIZELOG2 + 3))
+            mag->bmap = 0;
+            bmap = &mag->bmap;
+#else
+            bmap = mag->bmap;
+            kbzero(bmap, 1UL << (SLABMINLOG2 - MAGMINLOG2 - 3));
+#endif
+#endif
             mag->base = (uintptr_t)ptr;
             mag->n = 1;
             mag->ndx = 1;
@@ -83,6 +92,15 @@ memalloc(unsigned long nb, long flg)
             if (ptr) {
 #if (!MEMTEST)
                 ptr = vmmapvirt((uint32_t *)&_pagetab, ptr, SLABMIN, flg);
+#endif
+#if 0
+#if ((SLABMINLOG2 - MAGMINLOG2) < (LONGSIZELOG2 + 3))
+                mag->bmap = 0;
+                bmap = &mag->bmap;
+#else
+                bmap = mag->bmap;
+                kbzero(bmap, 1UL << (SLABMINLOG2 - MAGMINLOG2 - 3));
+#endif
 #endif
                 u8ptr = ptr;
                 slab++;

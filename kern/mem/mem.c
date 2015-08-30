@@ -17,10 +17,18 @@ extern struct memzone slabvirtzone;
 void
 meminit(unsigned long nbphys)
 {
-    unsigned long lim = min(nbphys, KERNVIRTBASE);
+    unsigned long lim = max(nbphys, KERNVIRTBASE);
 
 #if (defined(__i386__) && !defined(__x86_64__) && !defined(__amd64__))  \
     || defined(__arm__)
+#if 0
+    vmmapseg((uint32_t)&_pagetab, (uint32_t)&_epagetab, (uint32_t)&_epagetab,
+             lim,
+             PAGEWRITE);
+#endif
+    vmmapvirt((void *)&_pagetab, (void *)&_epagetab,
+              lim - (uint32_t)&_epagetab,
+              PAGEWRITE);
     slabinit(&slabvirtzone, (unsigned long)&_epagetab,
              lim - (unsigned long)&_epagetab);
 #elif defined(__x86_64__) || defined(__amd64__)

@@ -142,6 +142,7 @@ kmain(struct mboothdr *hdr, unsigned long pmemsz)
     cpuinit(k_curcpu);
 #endif
     /* TODO: use memory map from GRUB? */
+//    vminitphys((uintptr_t)&_epagetab, pmemsz);
     vminitphys((uintptr_t)&_epagetab, pmemsz);
     meminit(pmemsz);
     tssinit(0);

@@ -140,12 +140,10 @@ vminit(void *pagetab, unsigned long nbphys)
              (uint32_t)pagetab + PAGETABSIZE,
              PAGEPRES | PAGEWRITE | PAGEWIRED);
 
-#if 0
     /* identity map free RAM */
     vmmapseg(pagetab, (uint32_t)&_epagetab, (uint32_t)&_epagetab,
-             lim,
+             KERNVIRTBASE,
              PAGEWRITE);
-#endif
 //    kbzero(&_epagetab, lim - (uint32_t)&_epagetab);
 
     /* VIRTUAL MEMORY */

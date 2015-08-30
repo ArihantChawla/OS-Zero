@@ -49,7 +49,7 @@
 /* keyboard event size in octets */
 #define kbdevsize(ev)     (((ev)->code & EVKBDSTATE) ? 8 : 4)
 struct evkbd {
-    uint32_t code;      // keyboard scan-code or something similar
+    uint64_t code;      // keyboard scan-code or something similar
     /* state may not be present in protocol packets */
     uint32_t state;     // modifier flags in high bits, buttons in low
 } PACK();
