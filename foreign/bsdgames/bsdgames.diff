@@ -1,0 +1,205 @@
+diff -ur boggle/boggle/bog.c boggle/boggle/bog.c
+--- bsd-games/boggle/boggle/bog.c	2015-08-31 17:29:16.853335336 +0300
++++ boggle/boggle/bog.c	2015-08-31 17:14:33.066334477 +0300
+@@ -336,7 +336,7 @@
+ 	}
+ 
+ 	while (1) {
+-		if (getline(buf) == NULL) {
++            if (bog_getline(buf) == NULL) {
+ 			if (feof(stdin))
+ 				clearerr(stdin);
+ 			break;
+diff -ur boggle/boggle/extern.h boggle/boggle/extern.h
+--- bsd-games/ boggle/boggle/extern.h	2015-08-31 17:29:16.853335336 +0300
++++ boggle/boggle/extern.h	2015-08-31 17:14:18.942782727 +0300
+@@ -43,7 +43,7 @@
+ long	 dictseek(FILE *, long, int);
+ void	 findword(void);
+ void	 flushin(FILE *);
+-char	*getline(char *);
++char    *bog_getline(char *);
+ void	 getword(char *);
+ int	 help(void);
+ int	 inputch(void);
+diff -ur boggle/boggle/mach.c boggle/boggle/mach.c
+--- bsd-games/boggle/boggle/mach.c	2015-08-31 17:29:16.853335336 +0300
++++ boggle/boggle/mach.c	2015-08-31 17:13:39.518839713 +0300
+@@ -168,7 +168,7 @@
+  * - doesn't accept words longer than MAXWORDLEN or containing caps
+  */
+ char *
+-getline(q)
++bog_getline(q)
+ 	char *q;
+ {
+ 	int ch, done;
+diff -ur cribbage/cribbage.h cribbage/cribbage.h
+--- bsd-games/cribbage/cribbage.h	2015-08-31 17:29:16.856668721 +0300
++++ cribbage/cribbage.h	2015-08-31 17:14:57.366710276 +0300
+@@ -77,7 +77,7 @@
+ int	 fifteens(const CARD [], int);
+ void	 game(void);
+ void	 gamescore(void);
+-char	*getline(void);
++char	*crib_getline(void);
+ int	 getuchar(void);
+ int	 incard(CARD *);
+ int	 infrom(const CARD [], int, const char *);
+diff -ur cribbage/crib.c cribbage/crib.c
+--- bsd-games/cribbage/crib.c	2015-08-31 17:29:16.856668721 +0300
++++ cribbage/crib.c	2015-08-31 17:15:44.964113023 +0300
+@@ -221,7 +221,7 @@
+ 			if (!rflag) {			/* player cuts deck */
+ 				msg(quiet ? "Cut for crib? " :
+ 			    "Cut to see whose crib it is -- low card wins? ");
+-				getline();
++				crib_getline();
+ 			}
+ 			i = (rand() >> 4) % CARDS;	/* random cut */
+ 			do {	/* comp cuts deck */
+@@ -397,7 +397,7 @@
+ 		if (!rflag) {	/* random cut */
+ 			msg(quiet ? "Cut the deck? " :
+ 		    "How many cards down do you wish to cut the deck? ");
+-			getline();
++			crib_getline();
+ 		}
+ 		i = (rand() >> 4) % (CARDS - pos);
+ 		turnover = deck[i + pos];
+diff -ur cribbage/io.c cribbage/io.c
+--- bsd-games/cribbage/io.c	2015-08-31 17:29:16.860002106 +0300
++++ cribbage/io.c	2015-08-31 17:16:04.074408559 +0300
+@@ -245,7 +245,7 @@
+ 
+ 	retval = FALSE;
+ 	rnk = sut = EMPTY;
+-	if (!(line = getline()))
++	if (!(line = crib_getline()))
+ 		goto gotit;
+ 	p = p1 = line;
+ 	while (*p1 != ' ' && *p1 != '\0')
+@@ -346,7 +346,7 @@
+ 
+ 	for (sum = 0;;) {
+ 		msg(prompt);
+-		if (!(p = getline()) || *p == '\0') {
++		if (!(p = crib_getline()) || *p == '\0') {
+ 			msg(quiet ? "Not a number" :
+ 			    "That doesn't look like a number");
+ 			continue;
+@@ -528,12 +528,12 @@
+ }
+ 
+ /*
+- * getline:
++ * crib_getline:
+  *      Reads the next line up to '\n' or EOF.  Multiple spaces are
+  *	compressed to one space; a space is inserted before a ','
+  */
+ char *
+-getline()
++crib_getline()
+ {
+ 	char *sp;
+ 	int c, oy, ox;
+diff -ur dm/utmpentry.c dm/utmpentry.c
+--- bsd-games/dm/utmpentry.c	2015-08-31 17:29:16.863335490 +0300
++++ dm/utmpentry.c	2015-08-31 17:25:50.666813384 +0300
+@@ -1,5 +1,7 @@
+ /*	$NetBSD: utmpentry.c,v 1.5 2004/10/22 15:50:47 christos Exp $	*/
+ 
++#undef SUPPORT_UTMPX
++
+ /*-
+  * Copyright (c) 2002 The NetBSD Foundation, Inc.
+  * All rights reserved.
+diff -ur gomoku/bdisp.c gomoku/bdisp.c
+--- bsd-games/gomoku/bdisp.c	2015-08-31 17:29:16.946670113 +0300
++++ gomoku/bdisp.c	2015-08-31 17:26:42.104275517 +0300
+@@ -241,7 +241,7 @@
+ }
+ 
+ int
+-getline(buf, size)
++moku_getline(buf, size)
+ 	char *buf;
+ 	int size;
+ {
+diff -ur gomoku/gomoku.h gomoku/gomoku.h
+--- bsd-games/gomoku/gomoku.h	2015-08-31 17:29:16.946670113 +0300
++++ gomoku/gomoku.h	2015-08-31 17:26:24.430668866 +0300
+@@ -263,7 +263,7 @@
+ 
+ void	bdinit(struct spotstr *);
+ void	init_overlap(void);
+-int	getline(char *, int);
++int	moku_getline(char *, int);
+ void	ask(const char *);
+ void	dislog(const char *);
+ void	bdump(FILE *);
+diff -ur gomoku/main.c gomoku/main.c
+--- bsd-games/gomoku/main.c	2015-08-31 17:29:16.950003497 +0300
++++ gomoku/main.c	2015-08-31 17:26:57.387845207 +0300
+@@ -155,7 +155,7 @@
+ 		if (inputfp == NULL && test == 0) {
+ 			for (;;) {
+ 				ask("black or white? ");
+-				getline(buf, sizeof(buf));
++				moku_getline(buf, sizeof(buf));
+ 				if (buf[0] == 'b' || buf[0] == 'B') {
+ 					color = BLACK;
+ 					break;
+@@ -172,7 +172,7 @@
+ 		}
+ 	} else {
+ 		setbuf(stdout, 0);
+-		getline(buf, sizeof(buf));
++		moku_getline(buf, sizeof(buf));
+ 		if (strcmp(buf, "black") == 0)
+ 			color = BLACK;
+ 		else if (strcmp(buf, "white") == 0)
+@@ -244,7 +244,7 @@
+ 		getinput:
+ 			if (interactive)
+ 				ask("move? ");
+-			if (!getline(buf, sizeof(buf))) {
++			if (!moku_getline(buf, sizeof(buf))) {
+ 				curmove = RESIGN;
+ 				break;
+ 			}
+@@ -256,7 +256,7 @@
+ 					FILE *fp;
+ 
+ 					ask("save file name? ");
+-					(void)getline(buf, sizeof(buf));
++					(void)moku_getline(buf, sizeof(buf));
+ 					if ((fp = fopen(buf, "w")) == NULL) {
+ 						glog("cannot create save file");
+ 						goto getinput;
+@@ -309,14 +309,14 @@
+ 		if (i != RESIGN) {
+ 		replay:
+ 			ask("replay? ");
+-			if (getline(buf, sizeof(buf)) &&
++			if (moku_getline(buf, sizeof(buf)) &&
+ 			    (buf[0] == 'y' || buf[0] == 'Y'))
+ 				goto again;
+ 			if (strcmp(buf, "save") == 0) {
+ 				FILE *fp;
+ 
+ 				ask("save file name? ");
+-				(void)getline(buf, sizeof(buf));
++				(void)moku_getline(buf, sizeof(buf));
+ 				if ((fp = fopen(buf, "w")) == NULL) {
+ 					glog("cannot create save file");
+ 					goto replay;
+@@ -367,7 +367,7 @@
+ 		quit();
+ top:
+ 	ask("cmd? ");
+-	if (!getline(fmtbuf, sizeof(fmtbuf)))
++	if (!moku_getline(fmtbuf, sizeof(fmtbuf)))
+ 		quit();
+ 	switch (*fmtbuf) {
+ 	case '\0':

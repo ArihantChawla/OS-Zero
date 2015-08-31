@@ -1,0 +1,99 @@
+NOTE: you need to create the directory /usr/local/share/dict/words before-hand:
+
+mkdir -p /usr/local/share/dict/words
+
+The following are my answers for the configure build script:
+
+Installation prefix [] /usr/local
+Games not to build [] dab
+Games to build [adventure arithmetic atc backgammon banner battlestar bcd boggle caesar canfield countmail cribbage dm factor fish fortune gomoku hack hangman hunt mille monop morse number phantasia pig pom ppt primes quiz rain random robots rogue sail snake tetris trek wargames worm worms wtf wump] 
+Games directory [/usr/games] /usr/local/games
+Daemon directory [/usr/games] /usr/local/games
+Non-game binary directory [/usr/bin] /usr/local/bin
+Use dm and hide games [n] 
+Directory for hidden games [/usr/lib/games/dm] /usr/local/lib/games/dm
+Section 6 manpage directory [/usr/share/man/man6] /usr/local/man/man6      
+Section 8 manpage directory [/usr/share/man/man8] /usr/local/man/man8
+Section 5 manpage directory [/usr/share/man/man5] /usr/local/man/man5
+Directory for miscellaneous documentation [/usr/share/doc/bsd-games] /usr/local/share/doc/bsd-games
+share/doc/bsd-games
+Library directory for constant data
+        (architecture independent) [/usr/share/games] /usr/local/share/games
+Library directory for variable data [/var/games] /usr/local/var/games
+Set owners/groups on installed files [y] 
+Binary owner [root] 
+Binary group [root] 
+Binary permissions [0755] 2755 
+Game with scorefile owner [root] 
+Game with scorefile group [root] games
+Game with scorefile permissions [0755] 0664
+Daemon owner [root] 
+Daemon group [root] games
+Daemon permissions [0755] 
+Directory for hidden games owner [root] 
+Directory for hidden games group [games]   
+Directory for hidden games permissions [0750] 
+dm owner [root] 
+dm group [games] games
+dm permissions [2755] 
+Manpage owner [root] 
+Manpage group [root] 
+Manpage permissions [0644] 
+Constant data owner [root] 
+Constant data group [root] 
+Constant data permissions [0644] 
+Variable data owner [root] 
+Variable data group [root]      
+Variable data permissions [0644] 
+Permissions on variable data that should not be world readable [0640] 
+Use .so or symlinks for manpages [.so] 
+Gzip manpages [y]
+C compiler [gcc] 
+C++ compiler [g++] 
+Optimize flags [-g -O2]
+C compiler warning flags [-Wall -W -Wstrict-prototypes -Wmissing-prototypes -Wpointer-arith -Wcast-align -Wcast-qual -Wwrite-strings] 
+C++ compiler warning flags [-Wall -W -Wpointer-arith -Wcast-align -Wcast-qual -Wwrite-strings] 
+Ncurses library [-lncurses] 
+Ncurses includes [] 
+Use libcrypto [y] 
+OpenSSL includes [] 
+OpenSSL libcrypto library [-lcrypto] 
+Other CFLAGS [] 
+Other LDFLAGS [] 
+Base libraries [] 
+Yacc program [bison -y] 
+Lex program [flex] 
+Lex library [-lfl] 
+Pager [/usr/bin/less] 
+Install offensive fortunes [n] y
+Directory for sail temporary files [/usr/local/var/games/sail]
+Sail directory permissions [0750] 0770
+Directory for atc static data [/usr/local/share/games/atc]
+Score file for atc [/usr/local/var/games/atc_score]
+Dictionary for boggle (CHECK ANSWER) [/usr/share/dict/words] /usr/local/share/dict/words
+Directory for boggle static data [/usr/local/share/games/boggle]
+Score file for canfield [/usr/local/var/games/cfscores]
+File for cribbage instructions [/usr/local/share/games/cribbage.instr]
+Score file for cribbage [/usr/local/var/games/criblog]
+Configuration file for dm [/etc/dm.conf] /usr/local/etc/dm.conf
+File to disable games playing [/etc/nogames] /usr/local/etc/nogames
+Log file for dm [/usr/local/var/games/games.log]
+File for fish instructions [/usr/local/share/games/fish.instr]
+Directory for fortune files [/usr/local/share/games/fortune]
+Directory for hack variable data [/usr/local/var/games/hack]
+Hack directory owner [root] root
+Hack directory group [root] games
+Hack directory permissions [0755] 0775
+Words file for hangman (CHECK ANSWER) [/usr/share/dict/words] /usr/local/share/dict/words
+File for monop cards [/usr/local/share/games/monop-cards.pck]
+Directory for phantasia variable data [/usr/local/var/games/phantasia]
+Directory for quiz static data [/usr/local/share/games/quiz]
+Score file for robots [/usr/local/var/games/robots_roll]
+Score file for rogue [/usr/local/var/games/rogue.scores]
+Score file for sail [/usr/local/var/games/saillog]
+Score file for snake [/usr/local/var/games/snake.log]
+Raw score file for snake [/usr/local/var/games/snakerawscores]
+Score file for tetris [/usr/local/var/games/tetris-bsd.scores]
+Acronym database for wtf [/usr/share/misc/acronyms] /usr/local/share/misc/acronyms
+File for wump info [/usr/local/share/games/wump.info]
+

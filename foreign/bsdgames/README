@@ -1,0 +1,13 @@
+This directory exists for fetching the BSD Games package from github and
+building it.
+
+./build.sh, when executed, will try to check if you're on Linux or another
+system and fetch the Linux or BSD version of the package accordingly.
+
+The Linux configure script will ask you for certain directories, file owners,
+permissions and such. It's highly recommended that you use /usr/local instead
+of toplevel directories such as /etc, /var, and /usr/* not to mess up your
+distribution configuration.
+
+For my answers for the Linux build system, see the file LINUX.txt.
+
