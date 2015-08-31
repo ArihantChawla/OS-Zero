@@ -2,6 +2,7 @@
 /* hack.pri.c - version 1.0.3 */
 
 #include "hack.h"
+#include "extern.h"
 #include <stdio.h>
 xchar scrlx, scrhx, scrly, scrhy;	/* corners of new area on screen */
 

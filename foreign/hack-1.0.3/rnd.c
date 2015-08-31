@@ -1,5 +1,7 @@
 /* rnd.c - version 1.0.2 */
 
+#include "extern.h"
+
 #define RND(x)	((rand()>>3) % x)
 
 rn1(x,y)

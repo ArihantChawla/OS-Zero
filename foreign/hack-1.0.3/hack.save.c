@@ -2,6 +2,7 @@
 /* hack.save.c - version 1.0.3 */
 
 #include "hack.h"
+#include "extern.h"
 extern char genocided[60];	/* defined in Decl.c */
 extern char fut_geno[60];	/* idem */
 #include <signal.h>

@@ -3,6 +3,7 @@
 
 #include <stdio.h>
 #include "hack.h"
+#include "extern.h"
 
 extern char plname[];
 

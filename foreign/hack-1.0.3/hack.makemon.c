@@ -2,6 +2,7 @@
 /* hack.makemon.c - version 1.0.2 */
 
 #include	"hack.h"
+#include        "extern.h"
 extern char fut_geno[];
 extern char *index();
 extern struct obj *mkobj_at();
@@ -17,10 +18,11 @@ struct monst zeromonst;
  */
 struct monst *
 makemon(ptr,x,y)
-register struct permonst *ptr;
+register const struct permonst *ptr;
+register int x, y;
 {
 	register struct monst *mtmp;
-	register tmp, ct;
+	register int tmp, ct;
 	boolean anything = (!ptr);
 
 	if(x != 0 || y != 0) if(m_at(x,y)) return((struct monst *) 0);
@@ -50,7 +52,7 @@ gotmon:
 	mtmp->nmon = fmon;
 	fmon = mtmp;
 	mtmp->m_id = flags.ident++;
-	mtmp->data = ptr;
+	mtmp->data = (struct permonst *)ptr;
 	mtmp->mxlth = ptr->pxlth;
 	if(ptr->mlet == 'D') mtmp->mhpmax = mtmp->mhp = 80;
 	else if(!ptr->mlevel) mtmp->mhpmax = mtmp->mhp = rnd(4);
@@ -92,7 +94,7 @@ gotmon:
 #endif /* NOWORM */
 
 	if(anything) if(ptr->mlet == 'O' || ptr->mlet == 'k') {
-		coord enexto();
+//		coord enexto();
 		coord mm;
 		register int cnt = rnd(10);
 		mm.x = x;
@@ -147,7 +149,9 @@ foofull:
 	return( foo[rn2(tfoo-foo)] );
 }
 
+int
 goodpos(x,y)	/* used only in mnexto and rloc */
+        register int x,y;
 {
 	return(
 	! (x < 1 || x > COLNO-2 || y < 1 || y > ROWNO-2 ||
@@ -157,10 +161,11 @@ goodpos(x,y)	/* used only in mnexto and rloc */
  ));
 }
 
+void
 rloc(mtmp)
 struct monst *mtmp;
 {
-	register tx,ty;
+	register int tx,ty;
 	register char ch = mtmp->data->mlet;
 
 #ifndef NOWORM

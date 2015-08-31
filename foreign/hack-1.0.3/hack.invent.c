@@ -2,22 +2,25 @@
 /* hack.invent.c - version 1.0.3 */
 
 #include	"hack.h"
+#include        "extern.h"
 #include	<stdio.h>
+#include	<stdlib.h>
 extern struct obj *splitobj();
 extern struct obj zeroobj;
 extern char morc;
 extern char quitchars[];
-//char *xprname();
+char *xprname();
 
 #ifndef NOWORM
 #include	"def.wseg.h"
 extern struct wseg *wsegs[32];
-#endif NOWORM
+#endif /* NOWORM */
 
 #define	NOINVSYM	'#'
 
 static int lastinvnr = 51;	/* 0 ... 51 */
 //static
+void
 assigninvlet(otmp)
 register struct obj *otmp;
 {
@@ -92,6 +95,7 @@ register struct obj *obj;
 	return(obj);
 }
 
+void
 useup(obj)
 register struct obj *obj;
 {
@@ -105,6 +109,7 @@ register struct obj *obj;
 	}
 }
 
+void
 freeinv(obj)
 register struct obj *obj;
 {
@@ -120,6 +125,7 @@ register struct obj *obj;
 }
 
 /* destroy object in fobj chain (if unpaid, it remains on the bill) */
+void
 delobj(obj) register struct obj *obj; {
 	freeobj(obj);
 	unpobj(obj);
@@ -127,6 +133,7 @@ delobj(obj) register struct obj *obj; {
 }
 
 /* unlink obj from chain starting with fobj */
+void
 freeobj(obj) register struct obj *obj; {
 	register struct obj *otmp;
 
@@ -139,6 +146,7 @@ freeobj(obj) register struct obj *obj; {
 }
 
 /* Note: freegold throws away its argument! */
+void
 freegold(gold) register struct gold *gold; {
 	register struct gold *gtmp;
 
@@ -151,6 +159,7 @@ freegold(gold) register struct gold *gold; {
 	free((char *) gold);
 }
 
+void
 deltrap(trap)
 register struct trap *trap;
 {
@@ -169,12 +178,12 @@ struct wseg *m_atseg;
 
 struct monst *
 m_at(x,y)
-register x,y;
+register int x,y;
 {
 	register struct monst *mtmp;
 #ifndef NOWORM
 	register struct wseg *wtmp;
-#endif NOWORM
+#endif /* NOWORM */
 
 	m_atseg = 0;
 	for(mtmp = fmon; mtmp; mtmp = mtmp->nmon){
@@ -188,14 +197,14 @@ register x,y;
 			return(mtmp);
 		    }
 		}
-#endif NOWORM
+#endif /* NOWORM */
 	}
 	return(0);
 }
 
 struct obj *
 o_at(x,y)
-register x,y;
+register int x,y;
 {
 	register struct obj *otmp;
 
@@ -206,7 +215,7 @@ register x,y;
 
 struct obj *
 sobj_at(n,x,y)
-register n,x,y;
+register int n,x,y;
 {
 	register struct obj *otmp;
 
@@ -216,6 +225,7 @@ register n,x,y;
 	return(0);
 }
 
+int
 carried(obj) register struct obj *obj; {
 register struct obj *otmp;
 	for(otmp = invent; otmp; otmp = otmp->nobj)
@@ -223,6 +233,7 @@ register struct obj *otmp;
 	return(0);
 }
 
+int
 carrying(type)
 register int type;
 {
@@ -245,7 +256,7 @@ o_on(id, objchn) unsigned int id; register struct obj *objchn; {
 
 struct trap *
 t_at(x,y)
-register x,y;
+register int x,y;
 {
 	register struct trap *trap = ftrap;
 	while(trap) {
@@ -257,7 +268,7 @@ register x,y;
 
 struct gold *
 g_at(x,y)
-register x,y;
+register int x,y;
 {
 	register struct gold *gold = fgold;
 	while(gold) {
@@ -291,7 +302,7 @@ register long q;
  */
 struct obj *
 getobj(let,word)
-register char *let,*word;
+register const char *let,*word;
 {
 	register struct obj *otmp;
 	register char ilet,ilet1,ilet2;
@@ -433,14 +444,16 @@ register char *let,*word;
 	return(otmp);
 }
 
+int
 ckunpaid(otmp) register struct obj *otmp; {
 	return( otmp->unpaid );
 }
 
 /* interactive version of getobj - used for Drop and Identify */
 /* return the number of times fn was called successfully */
+int
 ggetobj(word, fn, max)
-char *word;
+const char *word;
 int (*fn)(),  max;
 {
 char buf[BUFSZ];
@@ -514,6 +527,7 @@ xchar allowgold = (u.ugold && !strcmp(word, "drop")) ? 1 : 0;	/* BAH */
  * If allflag then no questions are asked. Max gives the max nr of
  * objects to be treated. Return the number of objects treated.
  */
+int
 askchain(objchn, olets, allflag, fn, ckfn, max)
 struct obj *objchn;
 register char *olets;
@@ -555,6 +569,7 @@ ret:
 	return(cnt);
 }
 
+char
 obj_to_let(obj)	/* should of course only be called for things in invent */
 register struct obj *obj;
 {
@@ -569,6 +584,7 @@ register struct obj *obj;
 	return(otmp ? ilet : NOINVSYM);
 }
 
+void
 prinv(obj)
 register struct obj *obj;
 {
@@ -576,6 +592,7 @@ register struct obj *obj;
 }
 
 //static char *
+char *
 xprname(obj,let)
 register struct obj *obj;
 register char let;
@@ -588,6 +605,7 @@ register char let;
 	return(li);
 }
 
+int
 ddoinv()
 {
 	doinv((char *) 0);
@@ -596,6 +614,7 @@ ddoinv()
 
 /* called with 0 or "": all objects in inventory */
 /* otherwise: all objects with (serial) letter in lets */
+void
 doinv(lets)
 register char *lets;
 {
@@ -625,6 +644,7 @@ register char *lets;
 	cornline(2, any);
 }
 
+int
 dotypeinv ()				/* free after Robert Viduya */
 /* Changed to one type only, so he doesnt have to type cr */
 {
@@ -697,6 +717,7 @@ dotypeinv ()				/* free after Robert Viduya */
 }
 
 /* look at what is here */
+int
 dolook() {
     register struct obj *otmp, *otmp0;
     register struct gold *gold;
@@ -754,6 +775,7 @@ dolook() {
     return(!!Blind);
 }
 
+void
 stackobj(obj) register struct obj *obj; {
 register struct obj *otmp = fobj;
 	for(otmp = fobj; otmp; otmp = otmp->nobj) if(otmp != obj)
@@ -763,7 +785,8 @@ register struct obj *otmp = fobj;
 }
 
 /* merge obj with otmp and delete obj if types agree */
-merged(otmp,obj,lose) register struct obj *otmp, *obj; {
+int
+merged(otmp,obj,lose) register struct obj *otmp, *obj; register int lose; {
 	if(obj->otyp == otmp->otyp &&
 	  obj->unpaid == otmp->unpaid &&
 	  obj->spe == otmp->spe &&
@@ -789,6 +812,7 @@ extern int (*occupation)();
 extern char *occtxt;
 static long goldcounted;
 
+int
 countgold(){
 	if((goldcounted += 100*(u.ulevel + 1)) >= u.ugold) {
 		long eps = 0;
@@ -800,6 +824,7 @@ countgold(){
 	return(1);		/* continue */
 }
 
+int
 doprgold(){
 	if(!u.ugold)
 		pline("You do not carry any gold.");
@@ -816,12 +841,14 @@ doprgold(){
 
 /* --- end of gold counting section --- */
 
+int
 doprwep(){
 	if(!uwep) pline("You are empty handed.");
 	else prinv(uwep);
 	return(0);
 }
 
+int
 doprarm(){
 	if(!uarm && !uarmg && !uarms && !uarmh)
 		pline("You are not wearing any armor.");
@@ -840,6 +867,7 @@ doprarm(){
 	return(0);
 }
 
+int
 doprring(){
 	if(!uleft && !uright)
 		pline("You are not wearing any rings.");
@@ -855,6 +883,7 @@ doprring(){
 	return(0);
 }
 
+int
 digit(c) char c; {
 	return(c >= '0' && c <= '9');
 }

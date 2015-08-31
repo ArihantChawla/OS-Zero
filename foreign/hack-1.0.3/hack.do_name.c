@@ -2,12 +2,14 @@
 /* hack.do_name.c - version 1.0.3 */
 
 #include "hack.h"
+#include "extern.h"
 #include <stdio.h>
+#include <stdlib.h>
 extern char plname[];
 
 coord
-getpos(force,goal) int force; char *goal; {
-register cx,cy,i,c;
+getpos(force,goal) int force; const char *goal; {
+register int cx,cy,i,c;
 extern char sdir[];		/* defined in hack.c */
 extern schar xdir[], ydir[];	/* idem */
 extern char *visctrl();		/* see below */
@@ -44,6 +46,7 @@ coord cc;
 	return(cc);
 }
 
+int
 do_mname(){
 char buf[BUFSZ];
 coord cc;
@@ -96,9 +99,10 @@ extern char *lmonnam();
  * when there might be pointers around in unknown places. For now: only
  * when  obj  is in the inventory.
  */
+void
 do_oname(obj) register struct obj *obj; {
 register struct obj *otmp, *otmp2;
-register lth;
+register int lth;
 char buf[BUFSZ];
 	pline("What do you want to name %s? ", doname(obj));
 	getlin(buf);
@@ -133,6 +137,7 @@ char buf[BUFSZ];
 	free((char *) obj);	/* let us hope nobody else saved a pointer */
 }
 
+int
 ddocall()
 {
 	register struct obj *obj;
@@ -152,6 +157,7 @@ ddocall()
 	return(0);
 }
 
+void
 docall(obj)
 register struct obj *obj;
 {
@@ -241,7 +247,7 @@ register char *bp = monnam(mtmp);
 char *
 amonnam(mtmp,adj)
 register struct monst *mtmp;
-register char *adj;
+register const char *adj;
 {
 	register char *bp = monnam(mtmp);
 	static char buf[BUFSZ];		/* %% */
@@ -254,7 +260,7 @@ register char *adj;
 char *
 Amonnam(mtmp, adj)
 register struct monst *mtmp;
-register char *adj;
+register const char *adj;
 {
 	register char *bp = amonnam(mtmp,adj);
 

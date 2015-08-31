@@ -1,7 +1,11 @@
 /* Copyright (c) Stichting Mathematisch Centrum, Amsterdam, 1985. */
 /* hack.bones.c - version 1.0.3 */
 
+#include <unistd.h>
+#include <sys/stat.h>
+#include <fcntl.h>
 #include "hack.h"
+#include "extern.h"
 extern char plname[PL_NSIZ];
 extern long somegold();
 extern struct monst *makemon();
@@ -10,8 +14,9 @@ extern struct permonst pm_ghost;
 char bones[] = "bones_xx";
 
 /* save bones and possessions of a deceased adventurer */
+void
 savebones(){
-register fd;
+register int fd;
 register struct obj *otmp;
 register struct trap *ttmp;
 register struct monst *mtmp;
@@ -72,8 +77,9 @@ register struct monst *mtmp;
 	(void) close(fd);
 }
 
+int
 getbones(){
-register fd,x,y,ok;
+register int fd,x,y,ok;
 	if(rn2(3)) return(0);	/* only once in three times do we find bones */
 	bones[6] = '0' + dlevel/10;
 	bones[7] = '0' + dlevel%10;
@@ -86,7 +92,7 @@ register fd,x,y,ok;
 	(void) close(fd);
 #ifdef WIZARD
 	if(!wizard)	/* duvel!frans: don't remove bones while debugging */
-#endif WiZARD
+#endif /* WIZARD */
 	    if(unlink(bones) < 0){
 		pline("Cannot unlink %s .", bones);
 		return(0);

@@ -1,12 +1,14 @@
 /* Copyright (c) Stichting Mathematisch Centrum, Amsterdam, 1985. */
 /* hack.zap.c - version 1.0.3 */
 
+#include <stdlib.h>
 #include "hack.h"
+#include "extern.h"
 
 extern struct obj *mkobj_at();
 extern struct monst *makemon(), *mkmon_at(), youmonst;
 struct monst *bhit();
-char *exclam();
+//char *exclam();
 
 char *fl[]= {
 	"magic missile",
@@ -18,6 +20,7 @@ char *fl[]= {
 
 /* Routines for IMMEDIATE wands. */
 /* bhitm: monster mtmp was hit by the effect of wand otmp */
+void
 bhitm(mtmp, otmp)
 register struct monst *mtmp;
 register struct obj *otmp;
@@ -62,12 +65,13 @@ register struct obj *otmp;
 	case WAN_PROBING:
 		mstatusline(mtmp);
 		break;
-#endif WAN_PROBING
+#endif /* WAN_PROBING */
 	default:
 		impossible("What an interesting wand (%u)", otmp->otyp);
 	}
 }
 
+int
 bhito(obj, otmp)	/* object obj was hit by the effect of wand otmp */
 register struct obj *obj, *otmp;	/* returns TRUE if sth was done */
 {
@@ -109,7 +113,7 @@ register struct obj *obj, *otmp;	/* returns TRUE if sth was done */
 	case WAN_SPEED_MONSTER:
 #ifdef WAN_PROBING
 	case WAN_PROBING:
-#endif WAN_PROBING
+#endif /* WAN_PROBING */
 		res = FALSE;
 		break;
 	default:
@@ -118,6 +122,7 @@ register struct obj *obj, *otmp;	/* returns TRUE if sth was done */
 	return(res);
 }
 
+int
 dozap()
 {
 	register struct obj *obj;
@@ -258,7 +263,7 @@ dozap()
 	return(1);
 }
 
-char *
+const char *
 exclam(force)
 register int force;
 {
@@ -268,17 +273,19 @@ register int force;
 	return( (force < 0) ? "?" : (force <= 4) ? "." : "!" );
 }
 
+void
 hit(str,mtmp,force)
-register char *str;
+register const char *str;
 register struct monst *mtmp;
-register char *force;		/* usually either "." or "!" */
+register const char *force;	/* usually either "." or "!" */
 {
 	if(!cansee(mtmp->mx,mtmp->my)) pline("The %s hits it.", str);
 	else pline("The %s hits %s%s", str, monnam(mtmp), force);
 }
 
+void
 miss(str,mtmp)
-register char *str;
+register const char *str;
 register struct monst *mtmp;
 {
 	if(!cansee(mtmp->mx,mtmp->my)) pline("The %s misses it.",str);
@@ -297,7 +304,8 @@ struct monst *
 bhit(ddx,ddy,range,sym,fhitm,fhito,obj)
 register int ddx,ddy,range;		/* direction and range */
 char sym;				/* symbol displayed on path */
-int (*fhitm)(), (*fhito)();		/* fns called when mon/obj hit */
+void (*fhitm)();                        /* fns called when mon/obj hit */
+int (*fhito)();
 struct obj *obj;			/* 2nd arg to fhitm/fhito */
 {
 	register struct monst *mtmp;
@@ -339,7 +347,9 @@ struct obj *obj;			/* 2nd arg to fhitm/fhito */
 }
 
 struct monst *
-boomhit(dx,dy) {
+boomhit(dx,dy)
+register int dx, dy;
+{
 	register int i, ct;
 	register struct monst *mtmp;
 	char sym = ')';
@@ -385,7 +395,7 @@ boomhit(dx,dy) {
 }
 
 char
-dirlet(dx,dy) register dx,dy; {
+dirlet(dx,dy) register int dx,dy; {
 	return
 		(dx == dy) ? '\\' : (dx && dy) ? '/' : dx ? '-' : '|';
 }
@@ -393,6 +403,7 @@ dirlet(dx,dy) register dx,dy; {
 /* type == -1: monster spitting fire at you */
 /* type == -1,-2,-3: bolts sent out by wizard */
 /* called with dx = dy = 0 with vertical bolts */
+void
 buzz(type,sx,sy,dx,dy)
 register int type;
 register xchar sx,sy;
@@ -540,9 +551,10 @@ register int dx,dy;
 	Tmp_at(-1,-1);
 }
 
+int
 zhit(mon,type)			/* returns damage to mon */
 register struct monst *mon;
-register type;
+register int type;
 {
 	register int tmp = 0;
 
@@ -576,6 +588,7 @@ register type;
 #define	CORPSE_I_TO_C(otyp)	(char) ((otyp >= DEAD_ACID_BLOB)\
 		     ?  'a' + (otyp - DEAD_ACID_BLOB)\
 		     :	'@' + (otyp - DEAD_HUMAN))
+int
 revive(obj)
 register struct obj *obj;
 {
@@ -591,10 +604,11 @@ register struct obj *obj;
 	return(!!mtmp);		/* TRUE if some monster created */
 }
 
+void
 rloco(obj)
 register struct obj *obj;
 {
-	register tx,ty,otx,oty;
+	register int tx,ty,otx,oty;
 
 	otx = obj->ox;
 	oty = obj->oy;
@@ -608,6 +622,7 @@ register struct obj *obj;
 		newsym(otx,oty);
 }
 
+void
 fracture_rock(obj)	/* fractured by pick-axe or wand of striking */
 register struct obj *obj;			   /* no texts here! */
 {
@@ -620,6 +635,7 @@ register struct obj *obj;			   /* no texts here! */
 		prl(obj->ox,obj->oy);
 }
 
+void
 burn_scrolls()
 {
 	register struct obj *obj, *obj2;

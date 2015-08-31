@@ -6,14 +6,17 @@
    contact the outside world. */
 
 #include	<stdio.h>
+#include	<stdlib.h>
 #include	<signal.h>
 #include "hack.h"
+#include "extern.h"
 extern int CO, LI;	/* usually COLNO and ROWNO+2 */
 extern char *CD;
 extern char quitchars[];
 extern char *getenv(), *getlogin();
-int done1();
+//int done1();
 
+int
 dowhatis()
 {
 	FILE *fp;
@@ -58,17 +61,20 @@ dowhatis()
 /* make the paging of a file interruptible */
 static int got_intrup;
 
-intruph(){
+void
+intruph(int sig){
 	got_intrup++;
 }
 
 /* simple pager, also used from dohelp() */
+void
 page_more(fp,strip)
 FILE *fp;
 int strip;	/* nr of chars to be stripped from each line (0 or 1) */
 {
 	register char *bufr, *ep;
-	int (*prevsig)() = signal(SIGINT, intruph);
+//	int (*prevsig)() = signal(SIGINT, intruph);
+	sigfunc *prevsig = signal(SIGINT, intruph);
 
 	set_pager(0);
 	bufr = (char *) alloc((unsigned) CO);
@@ -93,11 +99,13 @@ ret:
 static boolean whole_screen = TRUE;
 #define	PAGMIN	12	/* minimum # of lines for page below level map */
 
+void
 set_whole_screen() {	/* called in termcap as soon as LI is known */
 	whole_screen = (LI-ROWNO-2 <= PAGMIN || !CD);
 }
 
 #ifdef NEWS
+int
 readnews() {
 	register int ret;
 
@@ -106,8 +114,9 @@ readnews() {
 	set_whole_screen();
 	return(ret);		/* report whether we did docrt() */
 }
-#endif NEWS
+#endif /* NEWS */
 
+void
 set_pager(mode)
 register int mode;	/* 0: open  1: wait+close  2: close */
 {
@@ -138,8 +147,9 @@ register int mode;	/* 0: open  1: wait+close  2: close */
 	}
 }
 
+int
 page_line(s)		/* returns 1 if we should quit */
-register char *s;
+register const char *s;
 {
 	extern char morc;
 
@@ -176,9 +186,10 @@ register char *s;
  *	cornline(3, 0)		: cleanup
  */
 
+void
 cornline(mode, text)
 int mode;
-char *text;
+const char *text;
 {
 	static struct line {
 		struct line *next_line;
@@ -273,6 +284,7 @@ cleanup:
 	}
 }
 
+int
 dohelp()
 {
 	char c;
@@ -285,8 +297,9 @@ dohelp()
 	return(0);
 }
 
+int
 page_file(fnam, silent)	/* return: 0 - cannot open fnam; 1 - otherwise */
-register char *fnam;
+register const char *fnam;
 boolean silent;
 {
 #ifdef DEF_PAGER			/* this implies that UNIX is defined */
@@ -336,6 +349,7 @@ boolean silent;
 
 #ifdef UNIX
 #ifdef SHELL
+int
 dosh(){
 register char *str;
 	if(child(0)) {
@@ -369,6 +383,7 @@ union wait {		/* used only for the cast  (union wait *) 0  */
 #endif BSD
 #endif NOWAITINCLUDE
 
+int
 child(wt) {
 register int f = fork();
 	if(f == 0){		/* child */

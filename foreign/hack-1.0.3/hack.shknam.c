@@ -2,6 +2,7 @@
 /* hack.shknam.c - version 1.0.2 */
 
 #include "hack.h"
+#include "extern.h"
 
 char *shkliquors[] = {
 	/* Ukraine */

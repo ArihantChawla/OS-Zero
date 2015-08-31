@@ -9,6 +9,7 @@
    from lint
 */
 #include <stdio.h>
+#include "extern.h"
 long *
 alloc(n) unsigned n; {
 long dummy = ftell(stderr);

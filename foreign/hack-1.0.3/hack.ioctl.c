@@ -73,7 +73,7 @@
  */
 #include <termios.h>
 #include "hack.h"
-//#include "extern.h"
+#include "extern.h"
 struct termios  termios;
 
 void

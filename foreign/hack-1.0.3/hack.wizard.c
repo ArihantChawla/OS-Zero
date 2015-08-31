@@ -4,6 +4,7 @@
 /* wizard code - inspired by rogue code from Merlyn Leroy (digi-g!brian) */
 
 #include "hack.h"
+#include "extern.h"
 extern struct permonst pm_wizard;
 extern struct monst *makemon();
 

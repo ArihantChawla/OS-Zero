@@ -2,6 +2,7 @@
 /* hack.steal.c - version 1.0.3 */
 
 #include "hack.h"
+#include "extern.h"
 
 long		/* actually returns something that fits in an int */
 somegold(){

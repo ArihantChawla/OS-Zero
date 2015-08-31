@@ -2,11 +2,13 @@
 /* hack.potion.c - version 1.0.3 */
 
 #include "hack.h"
-extern int float_down();
+#include "extern.h"
+//extern int float_down();
 extern char *nomovemsg;
 extern struct monst youmonst;
 extern struct monst *makemon();
 
+int
 dodrink() {
 	register struct obj *otmp,*objs;
 	register struct monst *mtmp;
@@ -166,7 +168,7 @@ dodrink() {
 		else
 			nothing++;
 		Levitation += rnd(100);
-		u.uprops[PROP(RIN_LEVITATION)].p_tofn = float_down;
+		u.uprops[PROP(RIN_LEVITATION)].p_tofn = (int (*)())float_down;
 		break;
 	default:
 		impossible("What a funny potion! (%u)", otmp->otyp);
@@ -188,9 +190,10 @@ use_it:
 	return(1);
 }
 
+void
 pluslvl()
 {
-	register num;
+	register int num;
 
 	pline("You feel more experienced.");
 	num = rnd(10);
@@ -205,9 +208,10 @@ pluslvl()
 	flags.botl = 1;
 }
 
+void
 strange_feeling(obj,txt)
 register struct obj *obj;
-register char *txt;
+register const char *txt;
 {
 	if(flags.beginner)
 	    pline("You have a strange feeling for a moment, then it passes.");
@@ -222,6 +226,7 @@ char *bottlenames[] = {
 	"bottle", "phial", "flagon", "carafe", "flask", "jar", "vial"
 };
 
+void
 potionhit(mon, obj)
 register struct monst *mon;
 register struct obj *obj;
@@ -294,6 +299,7 @@ register struct obj *obj;
 	obfree(obj, Null(obj));
 }
 
+void
 potionbreathe(obj)
 register struct obj *obj;
 {
@@ -353,6 +359,7 @@ register struct obj *obj;
  * -- If the flask is small, can one dip a large object? Does it magically
  * --   become a jug? Etc.
  */
+int
 dodip(){
 	register struct obj *potion, *obj;
 
@@ -371,6 +378,7 @@ dodip(){
 	return(1);
 }
 
+void
 ghost_from_bottle(){
 	extern struct permonst pm_ghost;
 	register struct monst *mtmp;

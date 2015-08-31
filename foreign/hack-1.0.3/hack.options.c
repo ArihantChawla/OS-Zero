@@ -3,6 +3,7 @@
 
 #include "config.h"
 #include "hack.h"
+#include "extern.h"
 extern char *eos();
 
 initoptions()

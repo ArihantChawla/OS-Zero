@@ -2,6 +2,7 @@
 /* hack.shk.c - version 1.0.3 */
 
 #include "hack.h"
+#include "extern.h"
 #ifdef QUEST
 int shlevel = 0;
 struct monst *shopkeeper = 0;

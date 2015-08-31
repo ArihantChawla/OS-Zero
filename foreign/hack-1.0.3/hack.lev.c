@@ -2,8 +2,12 @@
 /* hack.lev.c - version 1.0.3 */
 
 #include "hack.h"
+#include "extern.h"
 #include "def.mkroom.h"
 #include <stdio.h>
+#include <stdlib.h>
+#include <unistd.h>
+
 extern struct monst *restmonchn();
 extern struct obj *restobjchn();
 extern struct obj *billobjs;
@@ -17,18 +21,19 @@ extern char nul[];
 #include	"def.wseg.h"
 extern struct wseg *wsegs[32], *wheads[32];
 extern long wgrowtime[32];
-#endif NOWORM
+#endif /* NOWORM */
 
 boolean level_exists[MAXLEVEL+1];
 
+void
 savelev(fd,lev)
 int fd;
 xchar lev;
 {
 #ifndef NOWORM
 	register struct wseg *wtmp, *wtmp2;
-	register tmp;
-#endif NOWORM
+	register int tmp;
+#endif /* NOWORM */
 
 	if(fd < 0) panic("Save on bad file!");	/* impossible */
 	if(lev >= 0 && lev <= MAXLEVEL)
@@ -52,7 +57,7 @@ xchar lev;
 #ifndef QUEST
 	bwrite(fd,(char *) rooms,sizeof(rooms));
 	bwrite(fd,(char *) doors,sizeof(doors));
-#endif QUEST
+#endif /* QUEST */
 	fgold = 0;
 	ftrap = 0;
 	fmon = 0;
@@ -67,12 +72,13 @@ xchar lev;
  wsegs[tmp] = 0;
 	}
 	bwrite(fd,(char *) wgrowtime,sizeof(wgrowtime));
-#endif NOWORM
+#endif /* NOWORM */
 }
 
+void
 bwrite(fd,loc,num)
-register fd;
-register char *loc;
+register int fd;
+register const void *loc;
 register unsigned num;
 {
 /* lint wants the 3rd arg of write to be an int; lint -p an unsigned */
@@ -80,8 +86,9 @@ register unsigned num;
 		panic("cannot write %u bytes to file #%d", num, fd);
 }
 
+void
 saveobjchn(fd,otmp)
-register fd;
+register int fd;
 register struct obj *otmp;
 {
 	register struct obj *otmp2;
@@ -99,8 +106,9 @@ register struct obj *otmp;
  bwrite(fd, (char *) &minusone, sizeof(int));
 }
 
+void
 savemonchn(fd,mtmp)
-register fd;
+register int fd;
 register struct monst *mtmp;
 {
 	register struct monst *mtmp2;
@@ -122,8 +130,9 @@ register struct monst *mtmp;
  bwrite(fd, (char *) &minusone, sizeof(int));
 }
 
+void
 savegoldchn(fd,gold)
-register fd;
+register int fd;
 register struct gold *gold;
 {
 	register struct gold *gold2;
@@ -136,8 +145,9 @@ register struct gold *gold;
  bwrite(fd, nul, sizeof(struct gold));
 }
 
+void
 savetrapchn(fd,trap)
-register fd;
+register int fd;
 register struct trap *trap;
 {
 	register struct trap *trap2;
@@ -150,6 +160,7 @@ register struct trap *trap;
  bwrite(fd, nul, sizeof(struct trap));
 }
 
+void
 getlev(fd,pid,lev)
 int fd,pid;
 xchar lev;
@@ -158,8 +169,8 @@ xchar lev;
 	register struct trap *trap;
 #ifndef NOWORM
 	register struct wseg *wtmp;
-#endif NOWORM
-	register tmp;
+#endif /* NOWORM */
+	register int tmp;
 	long omoves;
 	int hpid;
 	xchar dlvl;
@@ -238,7 +249,7 @@ xchar lev;
 #ifndef QUEST
 	mread(fd, (char *)rooms, sizeof(rooms));
 	mread(fd, (char *)doors, sizeof(doors));
-#endif QUEST
+#endif /* QUEST */
 #ifndef NOWORM
 	mread(fd, (char *)wsegs, sizeof(wsegs));
 	for(tmp = 1; tmp < 32; tmp++) if(wsegs[tmp]){
@@ -251,11 +262,12 @@ xchar lev;
 		}
 	}
 	mread(fd, (char *)wgrowtime, sizeof(wgrowtime));
-#endif NOWORM
+#endif /* NOWORM */
 }
 
+void
 mread(fd, buf, len)
-register fd;
+register int fd;
 register char *buf;
 register unsigned len;
 {
@@ -273,6 +285,7 @@ register unsigned len;
 	}
 }
 
+void
 mklev()
 {
 	extern boolean in_mklev;

@@ -2,7 +2,9 @@
 /* hack.mkshop.c - version 1.0.3 */
 
 #ifndef QUEST
+#include <stdlib.h>
 #include "hack.h"
+#include "extern.h"
 #include "def.mkroom.h"
 #include "def.eshk.h"
 #define	ESHK	((struct eshk *)(&(shk->mextra[0])))
@@ -12,6 +14,7 @@ extern int nroom;
 extern char shtypes[];	/* = "=/)%?!["; 8 types: 7 specialized, 1 mixed */
 schar shprobs[] = { 3,3,5,5,10,10,14,50 };	/* their probabilities */
 
+void
 mkshop(){
 register struct mkroom *sroom;
 register int sh,sx,sy,i = -1;
@@ -133,6 +136,7 @@ gottype:
 	}
 }
 
+void
 mkzoo(type)
 int type;
 {
@@ -141,7 +145,7 @@ int type;
 	register int sh,sx,sy,i;
 	int goldlim = 500 * dlevel;
 	int moct = 0;
-	struct permonst *morguemon();
+//	const struct permonst *morguemon();
 
 	i = nroom;
 	for(sroom = &rooms[rn2(nroom)]; ; sroom++) {
@@ -192,7 +196,7 @@ int type;
 	}
 }
 
-struct permonst *
+const struct permonst *
 morguemon()
 {
 	extern struct permonst pm_ghost;
@@ -203,6 +207,7 @@ morguemon()
 	return((i < 40) ? PM_GHOST : (i < 60) ? PM_WRAITH : PM_ZOMBIE);
 }
 
+void
 mkswamp()	/* Michiel Huisjes & Fred de Wilde */
 {
 	register struct mkroom *sroom;
@@ -231,10 +236,11 @@ mkswamp()	/* Michiel Huisjes & Fred de Wilde */
 	}
 }
 
+int
 nexttodoor(sx,sy)
-register sx,sy;
+register int sx,sy;
 {
-	register dx,dy;
+	register int dx,dy;
 	register struct rm *lev;
 	for(dx = -1; dx <= 1; dx++) for(dy = -1; dy <= 1; dy++)
 		if((lev = &levl[sx+dx][sy+dy])->typ == DOOR ||
@@ -243,6 +249,7 @@ register sx,sy;
 	return(0);
 }
 
+int
 has_dnstairs(sroom)
 register struct mkroom *sroom;
 {
@@ -250,6 +257,7 @@ register struct mkroom *sroom;
 		   sroom->ly <= ydnstair && ydnstair <= sroom->hy);
 }
 
+int
 has_upstairs(sroom)
 register struct mkroom *sroom;
 {
@@ -257,6 +265,7 @@ register struct mkroom *sroom;
 		   sroom->ly <= yupstair && yupstair <= sroom->hy);
 }
 
+int
 isbig(sroom)
 register struct mkroom *sroom;
 {
@@ -264,10 +273,14 @@ register struct mkroom *sroom;
 	return( area > 20 );
 }
 
-dist2(x0,y0,x1,y1){
+int
+dist2(x0,y0,x1,y1)
+register int x0, y0, x1, y1;
+{
 	return((x0-x1)*(x0-x1) + (y0-y1)*(y0-y1));
 }
 
+int
 sq(a) int a; {
 	return(a*a);
 }

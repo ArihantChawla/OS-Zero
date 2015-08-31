@@ -4,6 +4,7 @@
    arnold@ucsf-cgl, wcs@bo95b, cbcephus!pds and others. */
 
 #include	"hack.h"
+#include        "extern.h"
 #include	<stdio.h>
 #include        <stdlib.h>
 

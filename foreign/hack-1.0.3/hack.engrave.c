@@ -1,7 +1,9 @@
 /* Copyright (c) Stichting Mathematisch Centrum, Amsterdam, 1985. */
 /* hack.engrave.c - version 1.0.3 */
 
+#include        <stdlib.h>
 #include	"hack.h"
+#include        "extern.h"
 
 extern char *nomovemsg;
 extern char nul[];
@@ -29,7 +31,8 @@ register struct engr *ep = head_engr;
 	return((struct engr *) 0);
 }
 
-sengr_at(s,x,y) register char *s; register xchar x,y; {
+int
+sengr_at(s,x,y) register const char *s; register xchar x,y; {
 register struct engr *ep = engr_at(x,y);
 register char *t;
 register int n;
@@ -47,6 +50,7 @@ register int n;
 	return(0);
 }
 
+void
 u_wipe_engr(cnt)
 register int cnt;
 {
@@ -54,6 +58,7 @@ register int cnt;
 		wipe_engr_at(u.ux, u.uy, cnt);
 }
 
+void
 wipe_engr_at(x,y,cnt) register xchar x,y,cnt; {
 register struct engr *ep = engr_at(x,y);
 register int lth,pos;
@@ -79,6 +84,7 @@ char ch;
 	}
 }
 
+void
 read_engr_at(x,y) register int x,y; {
 register struct engr *ep = engr_at(x,y);
 	if(ep && ep->engr_txt[0]) {
@@ -99,9 +105,10 @@ register struct engr *ep = engr_at(x,y);
 	}
 }
 
+void
 make_engr_at(x,y,s)
 register int x,y;
-register char *s;
+register const char *s;
 {
 	register struct engr *ep;
 
@@ -120,6 +127,7 @@ register char *s;
 	ep->engr_lth = strlen(s) + 1;
 }
 
+int
 doengrave(){
 register int len;
 register char *sp;
@@ -257,6 +265,7 @@ register struct obj *otmp;
 	return(1);
 }
 
+void
 save_engravings(fd) int fd; {
 register struct engr *ep = head_engr;
 	while(ep) {
@@ -272,6 +281,7 @@ register struct engr *ep = head_engr;
 	head_engr = 0;
 }
 
+void
 rest_engravings(fd) int fd; {
 register struct engr *ep;
 unsigned lth;
@@ -287,6 +297,7 @@ unsigned lth;
 	}
 }
 
+void
 del_engr(ep) register struct engr *ep; {
 register struct engr *ept;
 	if(ep == head_engr)

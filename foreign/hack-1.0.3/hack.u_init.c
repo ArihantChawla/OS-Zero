@@ -2,6 +2,7 @@
 /* hack.u_init.c - version 1.0.3 */
 
 #include "hack.h"
+#include "extern.h"
 #include <stdio.h>
 #include <signal.h>
 #define Strcpy	(void) strcpy

@@ -2,6 +2,7 @@
 /* hack.mkobj.c - version 1.0.3 */
 
 #include "hack.h"
+#include "extern.h"
 
 char mkobjstr[] = "))[[!!!!????%%%%/=**))[[!!!!????%%%%/=**(%";
 struct obj *mkobj(), *mksobj();

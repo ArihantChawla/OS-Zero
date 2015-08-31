@@ -2,6 +2,7 @@
 /* hack.dog.c - version 1.0.3 */
 
 #include	"hack.h"
+#include        "extern.h"
 #include	"hack.mfndpos.h"
 extern struct monst *makemon();
 #include "def.edog.h"
@@ -14,13 +15,14 @@ struct permonst dog =
 struct permonst la_dog =
 	{ "large dog", 'd',6,15,4,2,4,sizeof(struct edog) };
 
-
+void
 makedog(){
 register struct monst *mtmp = makemon(&li_dog,u.ux,u.uy);
 	if(!mtmp) return; /* dogs were genocided */
 	initedog(mtmp);
 }
 
+void
 initedog(mtmp) register struct monst *mtmp; {
 	mtmp->mtame = mtmp->mpeaceful = 1;
 	EDOG(mtmp)->hungrytime = 1000 + moves;
@@ -36,6 +38,7 @@ struct monst *mydogs = 0;
 struct monst *fallen_down = 0;	/* monsters that fell through a trapdoor */
 	/* they will appear on the next level @ goes to, even if he goes up! */
 
+void
 losedogs(){
 register struct monst *mtmp;
 	while(mtmp = mydogs){
@@ -52,6 +55,7 @@ register struct monst *mtmp;
 	}
 }
 
+void
 keepdogs(){
 register struct monst *mtmp;
 	for(mtmp = fmon; mtmp; mtmp = mtmp->nmon)
@@ -66,6 +70,7 @@ register struct monst *mtmp;
 	}
 }
 
+void
 fall_down(mtmp) register struct monst *mtmp; {
 	relmon(mtmp);
 	mtmp->nmon = fallen_down;
@@ -82,6 +87,7 @@ fall_down(mtmp) register struct monst *mtmp; {
 #define	APPORT	4
 #define	POISON	5
 #define	UNDEF	6
+int
 dogfood(obj) register struct obj *obj; {
 	switch(obj->olet) {
 	case FOOD_SYM:
@@ -104,7 +110,8 @@ dogfood(obj) register struct obj *obj; {
 }
 
 /* return 0 (no move), 1 (move) or 2 (dead) */
-dog_move(mtmp, after) register struct monst *mtmp; {
+int
+dog_move(mtmp, after) register struct monst *mtmp; register int after; {
 register int nx,ny,omx,omy,appr,nearer,j;
 int udist,chi,i,whappr;
 register struct monst *mtmp2;
@@ -181,7 +188,7 @@ int info[9];
 	gtyp = UNDEF;	/* no goal as yet */
 #ifdef LINT
 	gx = gy = 0;	/* suppress 'used before set' message */
-#endif LINT
+#endif /* LINT */
 	for(obj = fobj; obj; obj = obj->nobj) {
 		otyp = dogfood(obj);
 		if(otyp > gtyp || otyp == UNDEF) continue;
@@ -227,7 +234,7 @@ int info[9];
 				gx = u.ux;
 				gy = u.uy;
 			}
-#endif QUEST
+#endif /* QUEST */
 		}
 		appr = (udist >= 9) ? 1 : (mtmp->mflee) ? -1 : 0;
 		if(after && udist <= 4 && gx == u.ux && gy == u.uy)
@@ -364,6 +371,7 @@ newdogpos:
 }
 
 /* return roomnumber or -1 */
+int
 inroom(x,y) xchar x,y; {
 #ifndef QUEST
 	register struct mkroom *croom = &rooms[0];
@@ -373,10 +381,11 @@ inroom(x,y) xchar x,y; {
 			return(croom - rooms);
 		croom++;
 	}
-#endif QUEST
+#endif /* QUEST */
 	return(-1);	/* not in room or on door */
 }
 
+int
 tamedog(mtmp, obj)
 register struct monst *mtmp;
 register struct obj *obj;
@@ -392,7 +401,7 @@ register struct obj *obj;
 	if(mtmp->mtame || mtmp->mfroz ||
 #ifndef NOWORM
 		mtmp->wormno ||
-#endif NOWORM
+#endif /* NOWORM */
 		mtmp->isshk || mtmp->isgd || index(" &@12", mtmp->data->mlet))
 		return(0); /* no tame long worms? */
 	if(obj) {

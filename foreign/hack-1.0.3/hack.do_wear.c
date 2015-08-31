@@ -2,15 +2,18 @@
 /* hack.do_wear.c - version 1.0.3 */
 
 #include "hack.h"
+#include "extern.h"
 #include <stdio.h>
 extern char *nomovemsg;
 extern char quitchars[];
 extern char *Doname();
 
+void
 off_msg(otmp) register struct obj *otmp; {
 	pline("You were wearing %s.", doname(otmp));
 }
 
+int
 doremarm() {
 	register struct obj *otmp;
 	if(!uarm && !uarmh && !uarms && !uarmg) {
@@ -35,6 +38,7 @@ doremarm() {
 	return(1);
 }
 
+int
 doremring() {
 	if(!uleft && !uright){
 		pline("Not wearing any ring.");
@@ -65,9 +69,10 @@ doremring() {
 	/* NOTREACHED */
 #ifdef lint
 	return(0);
-#endif lint
+#endif /* lint */
 }
 
+int
 dorr(otmp) register struct obj *otmp; {
 	if(cursed(otmp)) return(0);
 	ringoff(otmp);
@@ -75,6 +80,7 @@ dorr(otmp) register struct obj *otmp; {
 	return(1);
 }
 
+int
 cursed(otmp) register struct obj *otmp; {
 	if(otmp->cursed){
 		pline("You can't. It appears to be cursed.");
@@ -83,6 +89,7 @@ cursed(otmp) register struct obj *otmp; {
 	return(0);
 }
 
+int
 armoroff(otmp) register struct obj *otmp; {
 register int delay = -objects[otmp->otyp].oc_delay;
 	if(cursed(otmp)) return(0);
@@ -105,6 +112,7 @@ register int delay = -objects[otmp->otyp].oc_delay;
 	return(1);
 }
 
+int
 doweararm() {
 	register struct obj *otmp;
 	register int delay;
@@ -164,6 +172,7 @@ doweararm() {
 	return(1);
 }
 
+int
 dowearring() {
 	register struct obj *otmp;
 	long mask = 0;
@@ -233,6 +242,7 @@ dowearring() {
 	return(1);
 }
 
+void
 ringoff(obj)
 register struct obj *obj;
 {
@@ -269,6 +279,7 @@ register long mask;
 	}
 }
 
+void
 find_ac(){
 register int uac = 10;
 	if(uarm) uac -= ARM_BONUS(uarm);
@@ -284,6 +295,7 @@ register int uac = 10;
 	}
 }
 
+void
 glibr(){
 register struct obj *otmp;
 int xfl = 0;
@@ -319,6 +331,7 @@ register struct obj *otmph = uarm;
 	return(otmph);
 }
 
+void
 corrode_armor(){
 register struct obj *otmph = some_armor();
 	if(otmph){

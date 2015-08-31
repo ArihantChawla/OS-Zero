@@ -2,6 +2,7 @@
 /* hack.vault.c - version 1.0.2 */
 
 #include	"hack.h"
+#include        "extern.h"
 #ifdef QUEST
 setgd(/* mtmp */) /* struct monst *mtmp; */ {}
 gd_move() { return(2); }

@@ -15,6 +15,7 @@
 #include <stdio.h>
 #include <errno.h>
 #include "hack.h"	/* mainly for index() which depends on BSD */
+#include "extern.h"
 
 #include	<sys/types.h>		/* for time_t and stat */
 #include	<sys/stat.h>

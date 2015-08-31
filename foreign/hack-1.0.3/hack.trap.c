@@ -2,6 +2,7 @@
 /* hack.trap.c - version 1.0.3 */
 
 #include	"hack.h"
+#include        "extern.h"
 
 extern struct monst *makemon();
 

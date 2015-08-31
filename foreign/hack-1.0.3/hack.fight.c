@@ -2,14 +2,16 @@
 /* hack.fight.c - version 1.0.3 */
 
 #include	"hack.h"
+#include        "extern.h"
 extern struct permonst li_dog, dog, la_dog;
-extern char *exclam(), *xname();
+//extern const char *exclam(), *xname();
 extern struct obj *mkobj_at();
 
 static boolean far_noise;
 static long noisetime;
 
 /* hitmm returns 0 (miss), 1 (hit), or 2 (kill) */
+int
 hitmm(magr,mdef) register struct monst *magr,*mdef; {
 register struct permonst *pa = magr->data, *pd = mdef->data;
 int hit;
@@ -66,6 +68,7 @@ boolean vis;
 	return(hit);
 }
 
+void
 /* drop (perhaps) a cadaver and remove monster */
 mondied(mdef) register struct monst *mdef; {
 register struct permonst *pd = mdef->data;
@@ -81,6 +84,7 @@ register struct permonst *pd = mdef->data;
 }
 
 /* drop a rock and remove monster */
+void
 monstone(mdef) register struct monst *mdef; {
 	extern char mlarge[];
 	if(index(mlarge, mdef->data->mlet))
@@ -94,7 +98,7 @@ monstone(mdef) register struct monst *mdef; {
 	mondead(mdef);
 }
 		
-
+int
 fightm(mtmp) register struct monst *mtmp; {
 register struct monst *mon;
 	for(mon = fmon; mon; mon = mon->nmon) if(mon != mtmp) {
@@ -106,9 +110,10 @@ register struct monst *mon;
 }
 
 /* u is hit by sth, but not a monster */
+int
 thitu(tlev,dam,name)
-register tlev,dam;
-register char *name;
+register int tlev,dam;
+register const char *name;
 {
 char buf[BUFSZ];
 	setan(name,buf);
@@ -130,9 +135,9 @@ boolean
 hmon(mon,obj,thrown)	/* return TRUE if mon still alive */
 register struct monst *mon;
 register struct obj *obj;
-register thrown;
+register int thrown;
 {
-	register tmp;
+	register int tmp;
 	boolean hittxt = FALSE;
 
 	if(!obj){
@@ -247,6 +252,7 @@ register thrown;
 
 /* try to attack; return FALSE if monster evaded */
 /* u.dx and u.dy must be set */
+int
 attack(mtmp)
 register struct monst *mtmp;
 {
@@ -333,7 +339,7 @@ register struct monst *mtmp;
 			if(mtmp->wormno)
 				cutworm(mtmp, u.ux+u.dx, u.uy+u.dy,
 					uwep ? uwep->otyp : 0);
-#endif NOWORM
+#endif /* NOWORM */
 		}
 		if(mdat->mlet == 'a') {
 			if(rn2(2)) {

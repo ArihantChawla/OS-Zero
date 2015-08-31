@@ -2,11 +2,12 @@
 /* hack.c - version 1.0.3 */
 
 #include "hack.h"
+#include "extern.h"
 #include <stdio.h>
 
-extern char news0();
+//extern char news0();
 extern char *nomovemsg;
-extern char *exclam();
+//extern char *exclam();
 extern struct obj *addinv();
 extern boolean hmon();
 
@@ -15,8 +16,9 @@ extern boolean hmon();
 	2. when teleporting
 	3. when walking out of a lit room
  */
-unsee() {
-	register x,y;
+void
+unsee(void) {
+	register int x,y;
 	register struct rm *lev;
 
 /*
@@ -29,7 +31,7 @@ unsee() {
 	if(seehx){
 		seehx = 0;
 	} else
-#endif QUEST
+#endif /* QUEST */
 	for(x = u.ux-1; x < u.ux+2; x++)
 	  for(y = u.uy-1; y < u.uy+2; y++) {
 		if(!isok(x, y)) continue;
@@ -50,9 +52,10 @@ unsee() {
 	in hack.do.c:  seeoff(1) - go up or down the stairs
 	in hack.trap.c:seeoff(1) - fall through trapdoor
  */
-seeoff(mode)	/* 1 to redo @, 0 to leave them */
+void
+seeoff(int mode)	/* 1 to redo @, 0 to leave them */
 {	/* 1 means misc movement, 0 means blindness */
-	register x,y;
+	register int x,y;
 	register struct rm *lev;
 
 	if(u.udispl && mode){
@@ -63,7 +66,7 @@ seeoff(mode)	/* 1 to redo @, 0 to leave them */
 	if(seehx) {
 		seehx = 0;
 	} else
-#endif QUEST
+#endif /* QUEST */
 	if(!mode) {
 		for(x = u.ux-1; x < u.ux+2; x++)
 			for(y = u.uy-1; y < u.uy+2; y++) {
@@ -75,7 +78,8 @@ seeoff(mode)	/* 1 to redo @, 0 to leave them */
 	}
 }
 
-domove()
+void
+domove(void)
 {
 	xchar oldx,oldy;
 	register struct monst *mtmp;
@@ -296,7 +300,7 @@ domove()
 			}
  nose1(oldx-u.dx,oldy-u.dy);
 		}
- #endif QUEST
+#endif /* QUEST */
 	} else {
  pru();
 	}
@@ -306,6 +310,7 @@ domove()
 	if(!Blind) read_engr_at(u.ux,u.uy);
 }
 
+void
 movobj(obj, ox, oy)
 register struct obj *obj;
 register int ox, oy;
@@ -319,6 +324,7 @@ register int ox, oy;
 	obj->oy = oy;
 }
 
+int
 dopickup(){
 	if(!g_at(u.ux,u.uy) && !o_at(u.ux,u.uy)) {
 		pline("There is nothing here to pick up.");
@@ -332,7 +338,8 @@ dopickup(){
 	return(1);
 }
 
-pickup(all)
+void
+pickup(int all)
 {
 	register struct gold *gold;
 	register struct obj *obj, *obj2;
@@ -457,26 +464,27 @@ pickup(all)
 		prinv(obj);
 		  obj->quan = mergquan;
 		}
-  }
+            }
 	}
 }
 
 /* stop running if we see something interesting */
 /* turn around a corner if that is the only way we can proceed */
 /* do not turn left or right twice */
-lookaround(){
-register x,y,i,x0,y0,m0,i0 = 9;
+void
+lookaround(void){
+register int x,y,i,x0,y0,m0,i0 = 9;
 register int corrct = 0, noturn = 0;
 register struct monst *mtmp;
 #ifdef lint
 	/* suppress "used before set" message */
 	x0 = y0 = 0;
-#endif lint
+#endif /* lint */
 	if(Blind || flags.run == 0) return;
 	if(flags.run == 1 && levl[u.ux][u.uy].typ == ROOM) return;
 #ifdef QUEST
 	if(u.ux0 == u.ux+u.dx && u.uy0 == u.uy+u.dy) goto stop;
-#endif QUEST
+#endif /* QUEST */
 	for(x = u.ux-1; x <= u.ux+1; x++) for(y = u.uy-1; y <= u.uy+1; y++){
 		if(x == u.ux && y == u.uy) continue;
 		if(!levl[x][y].typ) continue;
@@ -526,7 +534,7 @@ register struct monst *mtmp;
 	}
 #ifdef QUEST
 	if(corrct > 0 && (flags.run == 4 || flags.run == 5)) goto stop;
-#endif QUEST
+#endif /* QUEST */
 	if(corrct > 1 && flags.run == 2) goto stop;
 	if((flags.run == 1 || flags.run == 3) && !noturn && !m0 && i0 &&
 		(corrct == 1 || (corrct == 2 && i0 == 1))) {
@@ -559,6 +567,7 @@ register struct monst *mtmp;
 
 /* something like lookaround, but we are not running */
 /* react only to monsters that might hit us */
+int
 monster_nearby() {
 register int x,y;
 register struct monst *mtmp;
@@ -575,6 +584,7 @@ register struct monst *mtmp;
 }
 
 #ifdef QUEST
+int
 cansee(x,y) xchar x,y; {
 register int dx,dy,adx,ady,sdx,sdy,dmax,d;
 	if(Blind) return(0);
@@ -615,6 +625,7 @@ rroom(x,y) register int x,y; {
 
 #else
 
+int
 cansee(x,y) xchar x,y; {
 	if(Blind || u.uswallow) return(0);
 	if(dist(x,y) < 3) return(1);
@@ -622,16 +633,18 @@ cansee(x,y) xchar x,y; {
 		y <= seehy) return(1);
 	return(0);
 }
-#endif QUEST
+#endif /* QUEST */
 
+int
 sgn(a) register int a; {
 	return((a > 0) ? 1 : (a == 0) ? 0 : -1);
 }
 
 #ifdef QUEST
-setsee()
+void
+setsee(void)
 {
-	register x,y;
+	register int x,y;
 
 	if(Blind) {
 		pru();
@@ -646,9 +659,10 @@ setsee()
 
 #else
 
-setsee()
+void
+setsee(void)
 {
-	register x,y;
+	register int x,y;
 
 	if(Blind) {
 		pru();
@@ -677,16 +691,18 @@ setsee()
 	    if(seehx == u.ux) for(y = u.uy-1; y <= u.uy+1; y++) prl(seehx+1,y);
 	}
 }
-#endif QUEST
+#endif /* QUEST */
 
+void
 nomul(nval)
-register nval;
+register int nval;
 {
 	if(multi < 0) return;
 	multi = nval;
 	flags.mv = flags.run = 0;
 }
 
+int
 abon()
 {
 	if(u.ustr == 3) return(-3);
@@ -698,6 +714,7 @@ abon()
 	else return(3);
 }
 
+int
 dbon()
 {
 	if(u.ustr < 6) return(-1);
@@ -710,8 +727,9 @@ dbon()
 	else return(6);
 }
 
+void
 losestr(num)	/* may kill you; cause may be poison or monster like 'A' */
-register num;
+register int num;
 {
 	u.ustr -= num;
 	while(u.ustr < 3) {
@@ -722,22 +740,24 @@ register num;
 	flags.botl = 1;
 }
 
+void
 losehp(n,knam)
-register n;
-register char *knam;
+register int n;
+register const char *knam;
 {
 	u.uhp -= n;
 	if(u.uhp > u.uhpmax)
 		u.uhpmax = u.uhp;	/* perhaps n was negative */
 	flags.botl = 1;
 	if(u.uhp < 1) {
-		killer = knam;	/* the thing that killed you */
+                killer = (char *)knam;	/* the thing that killed you */
 		done("died");
 	}
 }
 
+void
 losehp_m(n,mtmp)
-register n;
+register int n;
 register struct monst *mtmp;
 {
 	u.uhp -= n;
@@ -746,9 +766,10 @@ register struct monst *mtmp;
 		done_in_by(mtmp);
 }
 
-losexp()	/* hit by V or W */
+void
+losexp(void)	/* hit by V or W */
 {
-	register num;
+	register int num;
 	extern long newuexp();
 
 	if(u.ulevel > 1)
@@ -762,6 +783,7 @@ losexp()	/* hit by V or W */
 	flags.botl = 1;
 }
 
+int
 inv_weight(){
 register struct obj *otmp = invent;
 register int wt = (u.ugold + 500)/1000;
@@ -781,6 +803,7 @@ register int carrcap;
 	return(wt - carrcap);
 }
 
+int
 inv_cnt(){
 register struct obj *otmp = invent;
 register int ct = 0;

@@ -4,6 +4,7 @@
 #include <stdio.h>
 #include <termcap.h>
 #include "config.h"	/* for ROWNO and COLNO */
+#include "extern.h"
 #include "def.flag.h"	/* for flags.nonull */
 extern char *tgetstr(), *tgoto(), *getenv();
 extern long *alloc();

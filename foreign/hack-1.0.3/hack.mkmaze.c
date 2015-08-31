@@ -2,6 +2,7 @@
 /* hack.mkmaze.c - version 1.0.2 */
 
 #include "hack.h"
+#include "extern.h"
 #include "def.mkroom.h"		/* not really used */
 extern struct monst *makemon();
 extern struct permonst pm_wizard;

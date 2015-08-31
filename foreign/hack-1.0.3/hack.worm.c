@@ -2,6 +2,7 @@
 /* hack.worm.c - version 1.0.2 */
 
 #include "hack.h"
+#include "extern.h"
 #ifndef NOWORM
 #include "def.wseg.h"
 

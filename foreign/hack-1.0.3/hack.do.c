@@ -3,7 +3,14 @@
 
 /* Contains code for 'd', 'D' (drop), '>', '<' (up, down) and 't' (throw) */
 
+#include <stdlib.h>
+#include <unistd.h>
+#include <sys/stat.h>
+#include <fcntl.h>
 #include "hack.h"
+#include "extern.h"
+
+int drop(struct obj *obj);
 
 extern struct obj *splitobj(), *addinv();
 extern boolean hmon();
@@ -12,11 +19,13 @@ extern struct monst youmonst;
 extern char *Doname();
 extern char *nomovemsg;
 
+int
 dodrop() {
 	return(drop(getobj("0$#", "drop")));
 }
 
 //static
+int
 drop(obj) register struct obj *obj; {
 	if(!obj) return(0);
 	if(obj->olet == '$') {		/* pseudo object */
@@ -50,6 +59,7 @@ drop(obj) register struct obj *obj; {
 }
 
 /* Called in several places - should not produce texts */
+void
 dropx(obj)
 register struct obj *obj;
 {
@@ -57,6 +67,7 @@ register struct obj *obj;
 	dropy(obj);
 }
 
+void
 dropy(obj)
 register struct obj *obj;
 {
@@ -72,10 +83,12 @@ register struct obj *obj;
 }
 
 /* drop several things */
+int
 doddrop() {
 	return(ggetobj("drop", drop, 0));
 }
 
+int
 dodown()
 {
 	if(u.ux != xdnstair || u.uy != ydnstair) {
@@ -95,6 +108,7 @@ dodown()
 	return(1);
 }
 
+int
 doup()
 {
 	if(u.ux != xupstair || u.uy != yupstair) {
@@ -114,11 +128,12 @@ doup()
 	return(1);
 }
 
+void
 goto_level(newlevel, at_stairs)
 register int newlevel;
 register boolean at_stairs;
 {
-	register fd;
+	register int fd;
 	register boolean up = (newlevel < dlevel);
 
 	if(newlevel <= 0) done("escaped");    /* in fact < 0 is impossible */
@@ -235,10 +250,12 @@ register boolean at_stairs;
 	read_engr_at(u.ux,u.uy);
 }
 
+int
 donull() {
 	return(1);	/* Do nothing, but let other things happen */
 }
 
+int
 dopray() {
 	nomovemsg = "You finished your prayer.";
 	nomul(-3);
@@ -246,11 +263,12 @@ dopray() {
 }
 
 struct monst *bhit(), *boomhit();
+int
 dothrow()
 {
 	register struct obj *obj;
 	register struct monst *mon;
-	register tmp;
+	register int tmp;
 
 	obj = getobj("#)", "throw");   /* it is also possible to throw food */
 				       /* (or jewels, or iron balls ... ) */
@@ -321,8 +339,7 @@ dothrow()
 		mon = bhit(u.dx, u.dy, (obj->otyp == ICE_BOX) ? 1 :
 			(!Punished || obj != uball) ? 8 : !u.ustuck ? 5 : 1,
 			obj->olet,
-			(int (*)()) 0, (int (*)()) 0, obj);
-	}
+			NULL, NULL, obj);                     	}
 	if(mon) {
 		/* awake monster if sleeping */
 		wakeup(mon);
@@ -344,7 +361,7 @@ dothrow()
 				  /* mon still alive */
 #ifndef NOWORM
 				  cutworm(mon,bhitpos.x,bhitpos.y,obj->otyp);
-#endif NOWORM
+#endif /* NOWORM */
 				} else mon = 0;
 				/* weapons thrown disappear sometimes */
 				if(obj->otyp < BOOMERANG && rn2(3)) {
@@ -355,7 +372,7 @@ dothrow()
 			} else miss(objects[obj->otyp].oc_name, mon);
 		} else if(obj->otyp == HEAVY_IRON_BALL) {
 			tmp = -1+u.ulevel+mon->data->ac+abon();
-			if(!Punished || obj != uball) tmp += 2;
+                        if(!Punished || obj != uball) tmp += 2;
 			if(u.utrap) tmp -= 2;
 			if(u.uswallow || tmp >= rnd(20)) {
 				if(hmon(mon,obj,1) == FALSE)
@@ -452,6 +469,7 @@ register struct obj *otmp;
 	return(otmp);
 }
 
+void
 more_experienced(exp,rexp)
 register int exp, rexp;
 {
@@ -464,6 +482,7 @@ register int exp, rexp;
 		flags.beginner = 0;
 }
 
+void
 set_wounded_legs(side, timex)
 register long side;
 register int timex;
@@ -474,6 +493,7 @@ register int timex;
 		Wounded_legs |= side;
 }
 
+void
 heal_legs()
 {
 	if(Wounded_legs) {

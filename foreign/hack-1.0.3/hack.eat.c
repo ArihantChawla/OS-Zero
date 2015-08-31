@@ -2,6 +2,7 @@
 /* hack.eat.c - version 1.0.3 */
 
 #include	"hack.h"
+#include        "extern.h"
 char POISONOUS[] = "ADKSVabhks";
 extern char *nomovemsg;
 extern int (*afternmv)();

@@ -2,6 +2,7 @@
 /* hack.timeout.c - version 1.0.3 */
 
 #include	"hack.h"
+#include        "extern.h"
 
 timeout(){
 register struct prop *upp;

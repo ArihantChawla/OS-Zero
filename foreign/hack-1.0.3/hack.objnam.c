@@ -1,7 +1,9 @@
 /* Copyright (c) Stichting Mathematisch Centrum, Amsterdam, 1985. */
 /* hack.objnam.c - version 1.0.2 */
 
+#include        <stdlib.h>
 #include	"hack.h"
+#include        "extern.h"
 #define Sprintf (void) sprintf
 #define Strcat  (void) strcat
 #define	Strcpy	(void) strcpy
@@ -288,8 +290,10 @@ register char *bp = xname(obj);
 }
 
 /* used only in hack.fight.c (thitu) */
+void
 setan(str,buf)
-register char *str,*buf;
+register const char *str;
+register char *buf;
 {
 	if(index(vowels,*str))
 		Sprintf(buf, "an %s", str);
@@ -298,7 +302,7 @@ register char *str,*buf;
 }
 
 char *
-aobjnam(otmp,verb) register struct obj *otmp; register char *verb; {
+aobjnam(otmp,verb) register struct obj *otmp; register const char *verb; {
 register char *bp = xname(otmp);
 char prefix[PREFIX];
 	if(otmp->quan != 1) {

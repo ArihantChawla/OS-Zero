@@ -2,6 +2,7 @@
 /* hack.worn.c - version 1.0.2 */
 
 #include "hack.h"
+#include "extern.h"
 
 struct worn {
 	long w_mask;

@@ -3,6 +3,7 @@
 
 #include	<stdio.h>
 #include	"hack.h"		/* for RUMORFILE and BSD (index) */
+#include        "extern.h"
 #define	CHARSZ	8			/* number of bits in a char */
 extern long *alloc();
 extern char *index();

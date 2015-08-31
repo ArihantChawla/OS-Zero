@@ -2,15 +2,20 @@
 /* hack.end.c - version 1.0.3 */
 
 #include "hack.h"
+#include "extern.h"
 #include <stdio.h>
+#include <stdlib.h>
 #include <signal.h>
+#include <unistd.h>
 #define	Sprintf	(void) sprintf
 extern char plname[], pl_character[];
-extern char *itoa(), *ordin(), *eos();
+//extern char *itoa(), *ordin(), *eos();
+extern char *itoa(), *eos();
 
 xchar maxdlevel = 1;
 
-done1()
+void
+done1(int sig)
 {
 	(void) signal(SIGINT,SIG_IGN);
 	pline("Really quit?");
@@ -19,7 +24,7 @@ done1()
 		clrlin();
 		(void) fflush(stdout);
 		if(multi > 0) nomul(0);
-		return(0);
+		return;
 	}
 	done("quit");
 	/* NOTREACHED */
@@ -28,18 +33,21 @@ done1()
 int done_stopprint;
 int done_hup;
 
-done_intr(){
+void
+done_intr(int sig){
 	done_stopprint++;
 	(void) signal(SIGINT, SIG_IGN);
 	(void) signal(SIGQUIT, SIG_IGN);
 }
 
-done_hangup(){
+void
+done_hangup(int sig){
 	done_hup++;
 	(void) signal(SIGHUP, SIG_IGN);
-	done_intr();
+	done_intr(sig);
 }
 
+void
 done_in_by(mtmp) register struct monst *mtmp; {
 static char buf[BUFSZ];
 	pline("You die ...");
@@ -60,8 +68,9 @@ static char buf[BUFSZ];
 /* called with arg "died", "drowned", "escaped", "quit", "choked", "panicked",
    "burned", "starved" or "tricked" */
 /* Be careful not to call panic from here! */
+void
 done(st1)
-register char *st1;
+register const char *st1;
 {
 
 #ifdef WIZARD
@@ -75,7 +84,7 @@ register char *st1;
 		flags.botl = 1;
 		return;
 	}
-#endif WIZARD
+#endif /* WIZARD */
 	(void) signal(SIGINT, done_intr);
 	(void) signal(SIGQUIT, done_intr);
 	(void) signal(SIGHUP, done_hangup);
@@ -87,19 +96,19 @@ register char *st1;
 	if(*st1 == 'd' && st1[1] == 'r') killer = "drowning"; else
 	if(*st1 == 'p') killer = "panic"; else
 	if(*st1 == 't') killer = "trickery"; else
-	if(!index("bcd", *st1)) killer = st1;
+        if(!index("bcd", *st1)) killer = (char *)st1;
 	paybill();
 	clearlocks();
 	if(flags.toplin == 1) more();
 	if(index("bcds", *st1)){
 #ifdef WIZARD
 	    if(!wizard)
-#endif WIZARD
+#endif /* WIZARD */
 		savebones();
 		if(!flags.notombstone)
 			outrip();
 	}
-	if(*st1 == 'c') killer = st1;		/* after outrip() */
+	if(*st1 == 'c') killer = (char *)st1;	/* after outrip() */
 	settty((char *) 0);	/* does a clear_screen() */
 	if(!done_stopprint)
 		printf("Goodbye %s %s...\n\n", pl_character, plname);
@@ -122,7 +131,7 @@ register char *st1;
 		register unsigned worthlessct = 0;
 		boolean has_amulet = FALSE;
 
-		killer = st1;
+		killer = (char *)st1;
 		keepdogs();
 		mtmp = mydogs;
 		if(mtmp) {
@@ -186,7 +195,7 @@ register char *st1;
 	}
 #ifdef WIZARD
 	if(!wizard)
-#endif WIZARD
+#endif /* WIZARD */
 		topten();
 	if(done_stopprint) printf("\n\n");
 	exit(0);
@@ -211,6 +220,7 @@ struct toptenentry {
 	char date[7];		/* yymmdd */
 } *tt_head;
 
+void
 topten(){
 	int uid = getuid();
 	int rank, rank0 = -1, rank1 = 0;
@@ -220,7 +230,7 @@ topten(){
 	char *reclock = "record_lock";
 	int sleepct = 300;
 	FILE *rfile;
-	register flg = 0;
+	register int flg = 0;
 	extern char *getdate();
 #define	HUP	if(!done_hup)
 	while(link(recfile, reclock) == -1) {
@@ -289,7 +299,7 @@ topten(){
 	     t1->uid == t0->uid &&
 #else
 	     strncmp(t1->name, t0->name, NAMSZ) == 0 &&
-#endif PERS_IS_UID
+#endif /* PERS_IS_UID */
 	     t1->plchar == t0->plchar && --occ_cnt <= 0){
 		if(rank0 < 0){
 			rank0 = 0;
@@ -344,7 +354,7 @@ topten(){
 				  t1->uid != t0->uid ))
 #else
 				  strncmp(t1->name, t0->name, NAMSZ)))
-#endif PERS_IS_UID
+#endif /* PERS_IS_UID */
 	  	continue;
 	  if(rank == rank0-flags.end_around &&
 	     rank0 > flags.end_top+flags.end_around+1 &&
@@ -368,6 +378,7 @@ unlock:
 	(void) unlink(reclock);
 }
 
+void
 outheader() {
 char linebuf[BUFSZ];
 register char *bp;
@@ -380,7 +391,8 @@ register char *bp;
 
 /* so>0: standout line; so=0: ordinary line; so<0: no output, return lth */
 int
-outentry(rank,t1,so) register struct toptenentry *t1; {
+outentry(rank,t1,so) register int rank; register struct toptenentry *t1;
+                     register int so; {
 boolean quit = FALSE, killed = FALSE, starv = FALSE;
 char linebuf[BUFSZ];
 	linebuf[0] = 0;
@@ -454,15 +466,16 @@ static char buf[12];
 	return(buf);
 }
 
-char *
+const char *
 ordin(n) int n; {
 register int d = n%10;
 	return((d==0 || d>3 || n/10==1) ? "th" : (d==1) ? "st" :
 		(d==2) ? "nd" : "rd");
 }
 
+void
 clearlocks(){
-register x;
+register int x;
 	(void) signal(SIGHUP,SIG_IGN);
 	for(x = maxdlevel; x >= 0; x--) {
 		glo(x);
@@ -477,7 +490,7 @@ hangup()
 	clearlocks();
 	exit(1);
 }
-#endif NOSAVEONHANGUP
+#endif /* NOSAVEONHANGUP */
 
 char *
 eos(s)
@@ -488,7 +501,8 @@ register char *s;
 }
 
 /* it is the callers responsibility to check that there is room for c */
-charcat(s,c) register char *s, c; {
+void
+charcat(s,c) register char *s; register int c; {
 	while(*s) s++;
 	*s++ = c;
 	*s = 0;
@@ -499,6 +513,7 @@ charcat(s,c) register char *s, c; {
  * requested. Otherwise, find scores for the current player (and list them
  * if argc == -1).
  */
+void
 prscore(argc,argv) int argc; char **argv; {
 	extern char *hname;
 	char **players;
@@ -507,19 +522,19 @@ prscore(argc,argv) int argc; char **argv; {
 	register struct toptenentry *t1, *t2;
 	char *recfile = RECORD;
 	FILE *rfile;
-	register flg = 0;
+	register int flg = 0;
 	register int i;
 #ifdef nonsense
 	long total_score = 0L;
 	char totchars[10];
 	int totcharct = 0;
-#endif nonsense
+#endif /* nonsense */
 	int outflg = (argc >= -1);
 #ifdef PERS_IS_UID
 	int uid = -1;
 #else
 	char *player0;
-#endif PERS_IS_UID
+#endif /* PERS_IS_UID */
 
 	if(!(rfile = fopen(recfile,"r"))){
 		puts("Cannot open record file!");
@@ -545,7 +560,7 @@ prscore(argc,argv) int argc; char **argv; {
 			player0 = "hackplayer";
 		playerct = 1;
 		players = &player0;
-#endif PERS_IS_UID
+#endif /* PERS_IS_UID */
 	} else {
 		playerct = --argc;
 		players = ++argv;
@@ -565,7 +580,7 @@ prscore(argc,argv) int argc; char **argv; {
 	  if(!playerct && t1->uid == uid)
 		flg++;
 	  else
-#endif PERS_IS_UID
+#endif /* PERS_IS_UID */
 	  for(i = 0; i < playerct; i++){
 		if(strcmp(players[i], "all") == 0 ||
 		   strncmp(t1->name, players[i], NAMSZ) == 0 ||
@@ -600,7 +615,7 @@ prscore(argc,argv) int argc; char **argv; {
 		if(!playerct && t1->uid == uid)
 			goto outwithit;
 		else
-#endif PERS_IS_UID
+#endif /* PERS_IS_UID */
 		for(i = 0; i < playerct; i++){
 			if(strcmp(players[i], "all") == 0 ||
 			   strncmp(t1->name, players[i], NAMSZ) == 0 ||
@@ -615,7 +630,7 @@ prscore(argc,argv) int argc; char **argv; {
 				total_score += t1->points;
 				if(totcharct < sizeof(totchars)-1)
 				    totchars[totcharct++] = t1->plchar;
-#endif nonsense
+#endif /* nonsense */
 				break;
 			}
 		}
@@ -635,5 +650,5 @@ prscore(argc,argv) int argc; char **argv; {
 		if(!pl_character[0]) pl_character[0] = "CFKSTWX"[i];
 		break;
 	}
-#endif nonsense
+#endif /* nonsense */
 }

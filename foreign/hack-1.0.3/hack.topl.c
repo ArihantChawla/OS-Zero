@@ -2,6 +2,7 @@
 /* hack.topl.c - version 1.0.2 */
 
 #include "hack.h"
+#include "extern.h"
 #include <stdio.h>
 extern char *eos();
 extern int CO;

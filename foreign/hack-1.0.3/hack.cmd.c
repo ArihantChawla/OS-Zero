@@ -2,20 +2,23 @@
 /* hack.cmd.c - version 1.0.3 */
 
 #include	"hack.h"
+#include        "extern.h"
 #include	"def.func_tab.h"
 
+#if 0
 int doredraw(),doredotopl(),dodrop(),dodrink(),doread(),dosearch(),dopickup(),
 doversion(),doweararm(),dowearring(),doremarm(),doremring(),dopay(),doapply(),
 dosave(),dowield(),ddoinv(),dozap(),ddocall(),dowhatis(),doengrave(),dotele(),
 dohelp(),doeat(),doddrop(),do_mname(),doidtrap(),doprwep(),doprarm(),
 doprring(),doprgold(),dodiscovered(),dotypeinv(),dolook(),doset(),
 doup(), dodown(), done1(), donull(), dothrow(), doextcmd(), dodip(), dopray();
+#endif
 #ifdef SHELL
 int dosh();
-#endif SHELL
+#endif /* SHELL */
 #ifdef SUSPEND
 int dosuspend();
-#endif SUSPEND
+#endif /* SUSPEND */
 
 struct func_tab cmdlist[]={
 	'\020', doredotopl,
@@ -23,7 +26,7 @@ struct func_tab cmdlist[]={
 	'\024', dotele,
 #ifdef SUSPEND
 	'\032', dosuspend,
-#endif SUSPEND
+#endif /* SUSPEND */
 	'a', doapply,
 /*	'A' : UNUSED */
 /*	'b', 'B' : go sw */
@@ -44,7 +47,7 @@ struct func_tab cmdlist[]={
 	'p', dopay,
 	'P', dowearring,
 	'q', dodrink,
-	'Q', done1,
+	'Q', (f_func *)done1,
 	'r', doread,
 	'R', doremring,
 	's', dosearch,
@@ -66,7 +69,7 @@ struct func_tab cmdlist[]={
 	'?', dohelp,
 #ifdef SHELL
 	'!', dosh,
-#endif SHELL
+#endif /* SHELL */
 	'.', donull,
 	' ', donull,
 	',', dopickup,
@@ -89,12 +92,13 @@ struct ext_func_tab extcmdlist[] = {
 
 extern char *parse(), lowc(), unctrl(), quitchars[];
 
+void
 rhack(cmd)
-register char *cmd;
+register const char *cmd;
 {
 	register struct func_tab *tlist = cmdlist;
 	boolean firsttime = FALSE;
-	register res;
+	register int res;
 
 	if(!cmd) {
 		firsttime = TRUE;
@@ -126,7 +130,7 @@ register char *cmd;
 			u.ux0 = u.ux + u.dx;
 			u.uy0 = u.uy + u.dy;
 		}
-#endif QUEST
+#endif /* QUEST */
 		domove();
 		return;
 	}
@@ -155,7 +159,7 @@ register char *cmd;
 		if(cmd[2] == '-') flags.run += 1;
 		goto rush;
 	}
-#endif QUEST
+#endif /* QUEST */
 	while(tlist->f_char) {
 		if(*cmd == tlist->f_char){
 			res = (*(tlist->f_funct))();
@@ -183,6 +187,7 @@ register char *cmd;
  multi = flags.move = 0;
 }
 
+int
 doextcmd()	/* here after # - now read a full-word command */
 {
 	char buf[BUFSZ];
@@ -222,6 +227,7 @@ schar xdir[10] = { -1,-1, 0, 1, 1, 1, 0,-1, 0, 0 };
 schar ydir[10] = {  0,-1,-1,-1, 0, 1, 1, 1, 0, 0 };
 schar zdir[10] = {  0, 0, 0, 0, 0, 0, 0, 0, 1,-1 };
 
+int
 movecmd(sym)	/* also sets u.dz, but returns false for <> */
 char sym;
 {
@@ -235,6 +241,7 @@ char sym;
 	return(!u.dz);
 }
 
+int
 getdir(s)
 boolean s;
 {
@@ -252,9 +259,10 @@ boolean s;
 	return(1);
 }
 
+void
 confdir()
 {
-	register x = rn2(8);
+	register int x = rn2(8);
 	u.dx = xdir[x];
 	u.dy = ydir[x];
 }
@@ -293,9 +301,10 @@ isroom(x,y)  register x,y; {		/* what about POOL? */
 	return(isok(x,y) && (levl[x][y].typ == ROOM ||
 				(levl[x][y].typ >= LDOOR && flags.run >= 6)));
 }
-#endif QUEST
+#endif /* QUEST */
 
-isok(x,y) register x,y; {
+int
+isok(x,y) register int x,y; {
 	/* x corresponds to curx, so x==1 is the first column. Ach. %% */
 	return(x >= 1 && x <= COLNO-1 && y >= 0 && y <= ROWNO-1);
 }

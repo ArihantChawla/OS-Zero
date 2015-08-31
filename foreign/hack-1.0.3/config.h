@@ -131,4 +131,11 @@ typedef	xchar	boolean;		/* 0 or 1 */
 
 #define	SIZE(x)	(int)(sizeof(x) / sizeof(x[0]))
 
+typedef struct {
+	xchar x,y;
+} coord;
+
+typedef void sigfunc(int);
+typedef int f_func(int);
+
 #endif /* CONFIG */

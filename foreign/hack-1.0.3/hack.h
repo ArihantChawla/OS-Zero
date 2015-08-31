@@ -16,9 +16,11 @@
 
 #include	"def.objclass.h"
 
+#if 0
 typedef struct {
 	xchar x,y;
 } coord;
+#endif
 
 #include	"def.monst.h"	/* uses coord */
 #include	"def.gold.h"
