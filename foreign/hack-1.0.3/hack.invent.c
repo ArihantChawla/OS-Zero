@@ -7,7 +7,7 @@ extern struct obj *splitobj();
 extern struct obj zeroobj;
 extern char morc;
 extern char quitchars[];
-char *xprname();
+//char *xprname();
 
 #ifndef NOWORM
 #include	"def.wseg.h"
@@ -17,7 +17,7 @@ extern struct wseg *wsegs[32];
 #define	NOINVSYM	'#'
 
 static int lastinvnr = 51;	/* 0 ... 51 */
-static
+//static
 assigninvlet(otmp)
 register struct obj *otmp;
 {
@@ -575,7 +575,7 @@ register struct obj *obj;
 	pline(xprname(obj, obj_to_let(obj)));
 }
 
-static char *
+//static char *
 xprname(obj,let)
 register struct obj *obj;
 register char let;

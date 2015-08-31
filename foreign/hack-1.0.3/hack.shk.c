@@ -22,7 +22,7 @@ shk_move(){ return(0); }
 replshk(mtmp,mtmp2) struct monst *mtmp, *mtmp2; {}
 char *shkname(){ return(""); }
 
-#else QUEST
+#else /* QUEST */
 #include	"hack.mfndpos.h"
 #include	"def.mkroom.h"
 #include	"def.eshk.h"
@@ -91,7 +91,7 @@ register struct monst *mtmp, *mtmp2;
 	}
 }
 
-static
+//static
 setpaid(){	/* caller has checked that shopkeeper exists */
 		/* either we paid or left the shop or he just died */
 register struct obj *obj;
@@ -115,7 +115,7 @@ register struct monst *mtmp;
  ESHK(shopkeeper)->billct = 0;
 }
 
-static
+//static
 addupbill(){	/* delivers result in total */
 		/* caller has checked that shopkeeper exists */
 register ct = ESHK(shopkeeper)->billct;
@@ -133,10 +133,11 @@ register roomno = inroom(u.ux,u.uy);
 	/* Did we just leave a shop? */
 	if(u.uinshop &&
 	    (u.uinshop != roomno + 1 || shlevel != dlevel || !shopkeeper)) {
-		u.uinshop = 0;
 		if(shopkeeper) {
 		    if(ESHK(shopkeeper)->billct) {
-			pline("Somehow you escaped the shop without paying!");
+			if(inroom(shopkeeper->mx, shopkeeper->my) 
+			    == u.uinshop - 1)	/* ab@unido */
+			    pline("Somehow you escaped the shop without paying!");
 			addupbill();
 			pline("You stole for a total worth of %ld zorkmids.",
 				total);
@@ -149,6 +150,7 @@ register roomno = inroom(u.ux,u.uy);
 		    shopkeeper = 0;
 		    shlevel = 0;
 		}
+		u.uinshop = 0;
 	}
 
 	/* Did we just enter a zoo of some kind? */
@@ -183,8 +185,6 @@ register roomno = inroom(u.ux,u.uy);
 		findshk(roomno);
 	    if(!shopkeeper) {
 		rooms[roomno].rtype = 0;
-		u.uinshop = 0;
-	    } else if(inroom(shopkeeper->mx, shopkeeper->my) != roomno) {
 		u.uinshop = 0;
 	    } else if(!u.uinshop){
 		if(!ESHK(shopkeeper)->visitct ||
@@ -222,7 +222,7 @@ register roomno = inroom(u.ux,u.uy);
  return(u.uinshop);
 }
 
-static
+//static
 findshk(roomno)
 register roomno;
 {
@@ -245,7 +245,8 @@ register struct monst *mtmp;
 	bill = (struct bill_x *) -1000;	/* dump core when referenced */
 }
 
-static struct bill_x *
+//static
+struct bill_x *
 onbill(obj) register struct obj *obj; {
 register struct bill_x *bp;
 	if(!shopkeeper) return(0);
@@ -285,7 +286,7 @@ register struct bill_x *bpm;
  free((char *) obj);
 }
 
-static
+//static
 pay(tmp,shkp)
 long tmp;
 register struct monst *shkp;
@@ -418,7 +419,7 @@ int pass, tmp;
 /* return 1 if paid successfully */
 /*        0 if not enough money */
 /*       -1 if object could not be found (but was paid) */
-static
+//static
 dopayobj(bp) register struct bill_x *bp; {
 register struct obj *obj;
 long ltmp;
@@ -682,7 +683,7 @@ quit:
 	return(0);
 }
 
-static
+//static
 getprice(obj) register struct obj *obj; {
 register int tmp, ac;
 	switch(obj->olet){
@@ -703,7 +704,7 @@ register int tmp, ac;
 #ifdef MAIL
 		if(obj->otyp == SCR_MAIL)
 			tmp = rnd(5);
-#endif MAIL
+#endif /* MAIL */
 		break;
 	case POTION_SYM:
 		tmp = 10*rnd(50);
@@ -739,7 +740,7 @@ register int tmp, ac;
  return(tmp);
 }
 
-static
+//static
 realhunger(){	/* not completely foolproof */
 register tmp = u.uhunger;
 register struct obj *otmp = invent;
@@ -892,7 +893,7 @@ register struct monst *shkp;
 #ifdef STUPID
 		    /* cater for stupid compilers */
 		    register int zz;
-#endif STUPID
+#endif /* STUPID */
 		    if(uondoor && (ib = sobj_at(ICE_BOX, nx, ny))) {
 			nix = nx; niy = ny; chi = i; break;
 		    }
@@ -903,7 +904,7 @@ register struct monst *shkp;
 			(appr && (zz = GDIST(nix,niy)) && zz > GDIST(nx,ny))
 #else
 			(appr && GDIST(nx,ny) < GDIST(nix,niy))
-#endif STUPID
+#endif /* STUPID */
 			) {
 			    nix = nx;
 			    niy = ny;
@@ -932,7 +933,7 @@ register struct monst *shkp;
 	}
  return(0);
 }
-#endif QUEST
+#endif /* QUEST */
 
 online(x,y) {
 	return(x==u.ux || y==u.uy ||

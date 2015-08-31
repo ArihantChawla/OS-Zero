@@ -2,6 +2,7 @@
 /* hack.Decl.c - version 1.0.3 */
 
 #include	"hack.h"
+#include        "hack.onames.h"
 char nul[40];			/* contains zeros */
 char plname[PL_NSIZ];		/* player name */
 char lock[PL_NSIZ+4] = "1lock";	/* long enough for login name .99 */
@@ -13,7 +14,7 @@ struct rm levl[COLNO][ROWNO];	/* level map */
 #include "def.mkroom.h"
 struct mkroom rooms[MAXNROFROOMS+1];
 coord doors[DOORMAX];
-#endif QUEST
+#endif /* QUEST */
 struct monst *fmon = 0;
 struct trap *ftrap = 0;
 struct gold *fgold = 0;

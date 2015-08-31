@@ -16,7 +16,7 @@ dodrop() {
 	return(drop(getobj("0$#", "drop")));
 }
 
-static
+//static
 drop(obj) register struct obj *obj; {
 	if(!obj) return(0);
 	if(obj->olet == '$') {		/* pseudo object */

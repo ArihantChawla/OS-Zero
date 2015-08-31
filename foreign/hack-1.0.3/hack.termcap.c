@@ -2,6 +2,7 @@
 /* hack.termcap.c - version 1.0.3 */
 
 #include <stdio.h>
+#include <termcap.h>
 #include "config.h"	/* for ROWNO and COLNO */
 #include "def.flag.h"	/* for flags.nonull */
 extern char *tgetstr(), *tgoto(), *getenv();
@@ -9,13 +10,14 @@ extern long *alloc();
 
 #ifndef lint
 extern			/* it is defined in libtermlib (libtermcap) */
-#endif lint
+#endif /* lint */
 	short ospeed;		/* terminal baudrate; used by tputs */
 static char tbuf[512];
-static char *HO, *CL, *CE, *UP, *CM, *ND, *XD, *BC, *SO, *SE, *TI, *TE;
+//static char *HO, *CL, *CE, *UP, *CM, *ND, *XD, *BC, *SO, *SE, *TI, *TE;
+static char *HO, *CL, *CE, *CM, *ND, *XD, *SO, *SE, *TI, *TE;
 static char *VS, *VE;
 static int SG;
-static char PC = '\0';
+//static char PC = '\0';
 char *CD;		/* tested in pri.c: docorner() */
 int CO, LI;		/* used in pri.c and whatis.c */
 

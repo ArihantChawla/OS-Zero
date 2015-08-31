@@ -1,6 +1,7 @@
 /* Copyright (c) Stichting Mathematisch Centrum, Amsterdam, 1985. */
 /* makedefs.c - version 1.0.2 */
 
+#include <stdlib.h>
 /* construct definitions of object constants */
 #define	DEF_FILE	"def.objects.h"
 #define	LINSZ	1000
@@ -9,6 +10,7 @@
 int fd;
 char string[STRSZ];
 
+int
 main(){
 register int index = 0;
 register int propct = 0;
@@ -40,7 +42,8 @@ register char *sp;
 			printf("#define	%s	%d\n", string, index);
 		index++;
 	}
-	printf("\n#define	CORPSE	DEAD_HUMAN\n");
+
+        printf("\n#define	CORPSE	DEAD_HUMAN\n");
 	printf("#define	LAST_GEM	(JADE+1)\n");
 	printf("#define	LAST_RING	%d\n", propct);
 	printf("#define	NROFOBJECTS	%d\n", index-1);
@@ -101,6 +104,7 @@ loop:
  goto loop;
 }
 
+int
 getentry(){
 int inbraces = 0, inparens = 0, stringseen = 0, commaseen = 0;
 int prefix = 0;

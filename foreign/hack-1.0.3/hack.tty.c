@@ -5,6 +5,7 @@
 
 #include	"hack.h"
 #include	<stdio.h>
+#include        <stdlib.h>
 
 /*
  * The distinctions here are not BSD - rest but rather USG - rest, as
@@ -14,7 +15,7 @@
 #define	V7
 #else
 #define USG
-#endif BSD
+#endif /* BSD */
 
 /*
  * Some systems may have getchar() return EOF for various reasons, and
@@ -22,7 +23,7 @@
  */
 #ifndef BSD
 #define	NR_OF_EOFS	20
-#endif BSD
+#endif /* BSD */
 
 
 #ifdef USG
@@ -57,7 +58,7 @@
 #define GTTY(x)		(gtty(0, x))
 #define STTY(x)		(stty(0, x))
 
-#endif USG
+#endif /* USG */
 
 extern short ospeed;
 static char erase_char, kill_char;
@@ -124,7 +125,7 @@ register int change = 0;
 		/* be satisfied with one character; no timeout */
 		curttyb.c_cc[VMIN] = 1;		/* was VEOF */
 		curttyb.c_cc[VTIME] = 0;	/* was VEOL */
-#endif USG
+#endif /* USG */
 		change++;
 	}
 	if(change){
@@ -237,7 +238,7 @@ register int c;
 char *
 parse()
 {
-	static char inline[COLNO];
+	static char cols[COLNO];
 	register foo;
 
 	flags.move = 1;
@@ -246,23 +247,23 @@ parse()
 		multi = 10*multi+foo-'0';
 	if(multi) {
 		multi--;
-		save_cm = inline;
+		save_cm = cols;
 	}
-	inline[0] = foo;
-	inline[1] = 0;
+	cols[0] = foo;
+	cols[1] = 0;
 	if(foo == 'f' || foo == 'F'){
-		inline[1] = getchar();
+		cols[1] = getchar();
 #ifdef QUEST
-		if(inline[1] == foo) inline[2] = getchar(); else
-#endif QUEST
-		inline[2] = 0;
+		if(cols[1] == foo) cols[2] = getchar(); else
+#endif /* QUEST */
+		cols[2] = 0;
 	}
 	if(foo == 'm' || foo == 'M'){
-		inline[1] = getchar();
-		inline[2] = 0;
+		cols[1] = getchar();
+		cols[2] = 0;
 	}
 	clrlin();
-	return(inline);
+	return(cols);
 }
 
 char
@@ -287,7 +288,7 @@ readchar() {
 	}
 #else
 		end_of_input();
-#endif NR_OF_EOFS
+#endif /* NR_OF_EOFS */
 	if(flags.toplin == 1)
 		flags.toplin = 2;
 	return((char) sym);

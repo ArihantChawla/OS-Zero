@@ -60,7 +60,7 @@ doapply() {
 }
 
 /* ARGSUSED */
-static
+//static
 use_camera(obj) /* register */ struct obj *obj; {
 register struct monst *mtmp;
 	if(!getdir(1)){		/* ask: in what direction? */
@@ -104,10 +104,10 @@ register struct monst *mtmp;
 	}
 }
 
-static
+//static
 struct obj *current_ice_box;	/* a local variable of use_ice_box, to be
 				used by its local procedures in/ck_ice_box */
-static
+//static
 in_ice_box(obj) register struct obj *obj; {
 	if(obj == current_ice_box ||
 		(Punished && (obj == uball || obj == uchain))){
@@ -138,12 +138,12 @@ in_ice_box(obj) register struct obj *obj; {
 	return(1);
 }
 
-static
+//static
 ck_ice_box(obj) register struct obj *obj; {
 	return(obj->o_cnt_id == current_ice_box->o_id);
 }
 
-static
+//static
 out_ice_box(obj) register struct obj *obj; {
 register struct obj *otmp;
 	if(obj == fcobj) fcobj = fcobj->nobj;
@@ -157,7 +157,7 @@ register struct obj *otmp;
 	(void) addinv(obj);
 }
 
-static
+//static
 use_ice_box(obj) register struct obj *obj; {
 register int cnt = 0;
 register struct obj *otmp;
@@ -180,7 +180,7 @@ register struct obj *otmp;
 		flags.move = multi = 0;
 }
 
-static
+//static
 struct monst *
 bchit(ddx,ddy,range,sym) register int ddx,ddy,range; char sym; {
 	register struct monst *mtmp = (struct monst *) 0;
@@ -204,7 +204,7 @@ bchit(ddx,ddy,range,sym) register int ddx,ddy,range; char sym; {
 }
 
 /* ARGSUSED */
-static
+//static
 use_whistle(obj) struct obj *obj; {
 register struct monst *mtmp = fmon;
 	pline("You produce a high whistling sound.");
@@ -220,7 +220,7 @@ register struct monst *mtmp = fmon;
 }
 
 /* ARGSUSED */
-static
+//static
 use_magic_whistle(obj) struct obj *obj; {
 register struct monst *mtmp = fmon;
 	pline("You produce a strange whistling sound.");
@@ -235,7 +235,7 @@ static uchar dig_level;
 static coord dig_pos;
 static boolean dig_down;
 
-static
+//static
 dig() {
 	register struct rm *lev;
 	register dpx = dig_pos.x, dpy = dig_pos.y;
@@ -337,7 +337,7 @@ dighole()
 	}
 }
 
-static
+//static
 use_pick_axe(obj)
 struct obj *obj;
 {

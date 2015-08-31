@@ -1,7 +1,9 @@
 # Hack or Quest Makefile.
 
 # on some systems the termcap library is in -ltermcap
-TERMLIB = -ltermlib
+#TERMLIB = -ltermlib
+#TERMLIB = -ltermcap
+TERMLIB = -lcurses
 
 
 # make hack
@@ -55,7 +57,8 @@ HOBJ = hack.Decl.o hack.apply.o hack.bones.o hack.o hack.cmd.o hack.do.o\
 
 $(GAME):	$(HOBJ) Makefile
 	@echo "Loading ..."
-	@ld -X -o $(GAME) /lib/crt0.o $(HOBJ) $(TERMLIB) -lc
+#	@ld -X -o $(GAME) /lib/crt0.o $(HOBJ) $(TERMLIB) -lc
+	@ld -X -o $(GAME) $(HOBJ) $(TERMLIB) -lc
 
 all:	$(GAME) lint
 	@echo "Done."
@@ -65,7 +68,7 @@ makedefs:	makedefs.c
 
 
 hack.onames.h:	makedefs def.objects.h
-	makedefs > hack.onames.h
+	./makedefs > hack.onames.h
 
 lint:
 # lint cannot have -p here because (i) capitals are meaningful:
@@ -133,7 +136,7 @@ depend:
 
 # DO NOT DELETE THIS LINE
 
-hack.Decl.o:  hack.h def.mkroom.h
+hack.Decl.o:  hack.onames.h hack.h def.mkroom.h
 hack.apply.o:  hack.h def.edog.h def.mkroom.h
 hack.bones.o:  hack.h
 hack.o:  hack.h

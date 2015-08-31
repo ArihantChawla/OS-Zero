@@ -9,7 +9,7 @@
 #define	gamename	"quest"
 #else
 #define	gamename	"hack"
-#endif QUEST
+#endif /* QUEST */
 
 extern char *getlogin(), *getenv();
 extern char plname[PL_NSIZ], pl_character[PL_CSIZ];
@@ -25,7 +25,7 @@ int hackpid;				/* current pid */
 int locknum;				/* max num of players */
 #ifdef DEF_PAGER
 char *catmore;				/* default pager */
-#endif DEF_PAGER
+#endif /* DEF_PAGER */
 char SAVEF[PL_NSIZ + 11] = "save/";	/* save/99999player */
 char *hname;		/* name of the game (argv[0] of call) */
 char obuf[BUFSIZ];	/* BUFSIZ is defined in stdio.h */
@@ -33,6 +33,7 @@ char obuf[BUFSIZ];	/* BUFSIZ is defined in stdio.h */
 extern char *nomovemsg;
 extern long wailmsg;
 
+int
 main(argc,argv)
 int argc;
 char *argv[];
@@ -40,7 +41,7 @@ char *argv[];
 	register int fd;
 #ifdef CHDIR
 	register char *dir;
-#endif CHDIR
+#endif /* CHDIR */
 
 	hname = argv[0];
 	hackpid = getpid();
@@ -68,7 +69,7 @@ char *argv[];
 		if(!*dir)
 		    error("Flag -d must be followed by a directory name.");
 	}
-#endif CHDIR
+#endif /* CHDIR */
 
 	/*
 	 * Who am i? Algorithm: 1. Use name as specified in HACKOPTIONS
@@ -99,7 +100,7 @@ char *argv[];
 	if(argc > 1 && !strncmp(argv[1], "-s", 2)) {
 #ifdef CHDIR
 		chdirx(dir,0);
-#endif CHDIR
+#endif /* CHDIR */
 		prscore(argc, argv);
 		exit(0);
 	}
@@ -128,7 +129,7 @@ char *argv[];
 	 */
 #ifdef CHDIR
 	chdirx(dir,1);
-#endif CHDIR
+#endif /* CHDIR */
 
 	/*
 	 * Process options.
@@ -144,12 +145,12 @@ char *argv[];
 			else
 				printf("Sorry.\n");
 			break;
-#endif WIZARD
+#endif /* WIZARD */
 #ifdef NEWS
 		case 'n':
 			flags.nonews = TRUE;
 			break;
-#endif NEWS
+#endif /* NEWS */
 		case 'u':
 			if(argv[0][2])
 			  (void) strncpy(plname, argv[0]+2, sizeof(plname)-1);
@@ -174,17 +175,17 @@ char *argv[];
 #ifdef MAX_NR_OF_PLAYERS
 	if(!locknum || locknum > MAX_NR_OF_PLAYERS)
 		locknum = MAX_NR_OF_PLAYERS;
-#endif MAX_NR_OF_PLAYERS
+#endif /* MAX_NR_OF_PLAYERS */
 #ifdef DEF_PAGER
 	if(!(catmore = getenv("HACKPAGER")) && !(catmore = getenv("PAGER")))
 		catmore = DEF_PAGER;
-#endif DEF_PAGER
+#endif /* DEF_PAGER */
 #ifdef MAIL
 	getmailstatus();
-#endif MAIL
+#endif /* MAIL */
 #ifdef WIZARD
 	if(wizard) (void) strcpy(plname, "wizard"); else
-#endif WIZARD
+#endif /* WIZARD */
 	if(!*plname || !strncmp(plname, "player", 4)
 		    || !strncmp(plname, "games", 4))
 		askname();
@@ -193,7 +194,7 @@ char *argv[];
 				/* accepts any suffix */
 #ifdef WIZARD
 	if(!wizard) {
-#endif WIZARD
+#endif /* WIZARD */
 		/*
 		 * check for multiple games under the same name
 		 * (if !locknum) or check max nr of players (otherwise)
@@ -215,9 +216,10 @@ char *argv[];
 				}
 			}
 		if(sfoo = getenv("GENOCIDED")){
+                        extern char genocided[], fut_geno[];
 			if(*sfoo == '!'){
 				extern struct permonst mons[CMNUM+2];
-				extern char genocided[], fut_geno[];
+//				extern char genocided[], fut_geno[];
 				register struct permonst *pm = mons;
 				register char *gp = genocided;
 
@@ -232,7 +234,7 @@ char *argv[];
 			(void) strcpy(fut_geno, genocided);
 		}
 	}
-#endif WIZARD
+#endif /* WIZARD */
 	setftty();
 	(void) sprintf(SAVEF, "save/%d%s", getuid(), plname);
 	regularize(SAVEF+5);		/* avoid . or / in name */
@@ -270,7 +272,7 @@ not_recovered:
 #ifdef NEWS
 		if(flags.nonews || !readnews())
 			/* after reading news we did docrt() already */
-#endif NEWS
+#endif /* NEWS */
 			docrt();
 
 		/* give welcome message before pickup messages */
@@ -351,7 +353,7 @@ not_recovered:
 		find_ac();
 #ifndef QUEST
 		if(!flags.mv || Blind)
-#endif QUEST
+#endif /* QUEST */
 		{
 			seeobjs();
 			seemons();
@@ -372,7 +374,7 @@ not_recovered:
 		if(multi > 0) {
 #ifdef QUEST
 			if(flags.run >= 4) finddir();
-#endif QUEST
+#endif /* QUEST */
 			lookaround();
 			if(!multi) {	/* lookaround may clear multi */
 				flags.move = 0;
@@ -389,7 +391,7 @@ not_recovered:
 		} else if(multi == 0) {
 #ifdef MAIL
 			ckmailstatus();
-#endif MAIL
+#endif /* MAIL */
 			rhack((char *) 0);
 		}
 		if(multi && multi%7 == 0)
@@ -442,7 +444,7 @@ register char *s;
 }
 
 #ifdef CHDIR
-static
+//static
 chdirx(dir, wr)
 char *dir;
 boolean wr;
@@ -452,17 +454,17 @@ boolean wr;
 	if(dir					/* User specified directory? */
 #ifdef HACKDIR
 	       && strcmp(dir, HACKDIR)		/* and not the default? */
-#endif HACKDIR
+#endif /* HACKDIR */
 		) {
 		(void) setuid(getuid());		/* Ron Wessels */
 		(void) setgid(getgid());
 	}
-#endif SECURE
+#endif /* SECURE */
 
 #ifdef HACKDIR
 	if(dir == NULL)
 		dir = HACKDIR;
-#endif HACKDIR
+#endif /* HACKDIR */
 
 	if(dir && chdir(dir) < 0) {
 		perror(dir);
@@ -484,7 +486,7 @@ boolean wr;
 		(void) close(fd);
 	}
 }
-#endif CHDIR
+#endif /* CHDIR */
 
 stop_occupation()
 {
