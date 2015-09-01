@@ -23,6 +23,9 @@
 #define ALIGNED(a)  __attribute__ ((__aligned__(a)))
 /* pack aggregate fields and table items */
 #define PACK()      __attribute__ ((__packed__))
+/* ALWAYS inline the function */
+#define INLINE      __inline__ __attribute__ ((always_inline))
+#define WEAK        __attribute__ ((weak))
 /*
  * AMD64 passes first six arguments in rdi, rsi, rdx, rcx, r8, and r9; the rest
  * are pushed to stack in reverse order
@@ -44,17 +47,18 @@
 #define NORET       __attribute__ ((__noreturn__))
 #define PURE        __attribute__ ((__pure__))
 
-#define likely(x)   __builtin_expect((x), 1)
-#define unlikely(x) __builtin_expect((x), 0)
-#define isconst(x)  __builtin_constant_p(x)
+#define isimmed(x)  (__builtin_constant_p(x))
+#define likely(x)   (__builtin_expect(!!(x), 1))
+#define unlikely(x) (__builtin_expect(!!(x), 0))
+#define isconst(x)  (__builtin_constant_p(x))
 
-#else /* !defined(__GNUC__) */
-
+#elif defined(_MSC_VER) /* !defined(__GNUC__) */
+    
 /* Microsoft */
-#if defined(_MSC_VER)
 #define ALIGNED(a)  __declspec(align((a)))
 #define __inline__  inline
-#endif
+#define PACK()
+#define INLINE      __forceinline
 
 #endif /* __GNUC__ */
 

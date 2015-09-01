@@ -1,6 +1,12 @@
 #ifndef __ZERO_SPINWT_H__
 #define __ZERO_SPINWT_H__
 
+/*
+ * NOTES
+ * -----
+ * - initialise spin-wait locks with spininit() from <zero/spin.h>
+ */
+
 #include <zero/asm.h>
 #include <zero/spin.h>
 
@@ -9,7 +15,7 @@
  * - return non-zero on success, zero if already locked
  */
 static __inline__ void
-spinwttrylk(volatile long *sp, long val)
+spinwttrylk(volatile long *sp, long val, long niter)
 {
     volatile long res = val;
 

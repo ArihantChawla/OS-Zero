@@ -16,7 +16,11 @@
 #define MALLOCDYNARN     0
 
 #define MALLOCTRACE      1
+#if defined(NVALGRIND)
+#define MALLOCVALGRIND   0
+#else
 #define MALLOCVALGRIND   1
+#endif
 #define MALLOCSMALLSLABS 1
 #define MALLOCSIG        1
 #define MALLOC4LEVELTAB  0
@@ -256,10 +260,14 @@
         }                                                               \
     } while (0)
 #else /* !MALLOCVALGRIND */
+#define VALGRINDCREATEPOOL(pool, sz, z)
+#define VALGRINDDESTROYPOOL(pool)
+#define VALGRINDPOOLFREE(pool, adr)
+#define VALGRINDPOOLALLOC(pool, adr, sz)
 #define VALGRINDGROW(adr, sz)
 #define VALGRINDMAP(adr, sz, z)
 #define VALGRINDUNMAP(adr)
-#define VALGRIND_ALLOC(adr, sz, z)
+#define VALGRINDALLOC(adr, sz, z)
 #define VALGRINDFREE(adr)
 #endif
 
@@ -584,7 +592,7 @@ mallochook(size_t size, const void *caller)
     fprintf(stderr, "MALLOC: %p (%ld)\n", caller, (long)size);
     fflush(stderr);
 
-    return NULL;
+    return;
 }
 
 void
@@ -593,7 +601,7 @@ reallochook(void *ptr, size_t size, const void *caller)
     fprintf(stderr, "REALLOC: %p: %p (%ld)\n", caller, size, ptr);
     fflush(stderr);
 
-    return NULL;
+    return;
 }
 
 void

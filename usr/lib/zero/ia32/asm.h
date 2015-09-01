@@ -1,14 +1,12 @@
 #ifndef __ZERO_IA32_ASM_H__
 #define __ZERO_IA32_ASM_H__
 
-#include <zero/types.h>
+//#include <zero/types.h>
+#include <zero/x86/asm.h>
 
 /* API declarations */
-#define m_membar()               __asm__ __volatile__ ("" : : : "memory")
-#define m_waitint()              __asm__ __volatile__ ("pause\n")
 #define m_fetadd(p, val)         m_xaddl(p, val)
 #define m_cmpswap(p, want, val)  m_cmpxchgl(p, want, val)
-#define m_cmpswapb(p, want, val) m_cmpxchgb(p, want, val)
 #define m_scanlo1bit(l)          m_bsfl(l)
 #define m_scanhi1bit(l)          m_bsrl(l)
 #if defined(__GNUC__)
@@ -48,34 +46,14 @@ m_xaddl(volatile long *p,
 }
 
 static __inline__ long
-m_xchgl(volatile long *adr, long val)
+m_xchgl(volatile long *p, long val)
 {
     volatile long res;
 
     __asm__ __volatile__ ("lock xchgl %0, %2\n"
-                          : "+m" (*adr), "=a" (res)
+                          : "+m" (*p), "=a" (res)
                           : "r" (val)
                           : "cc");
-
-    return res;
-}
-
-/*
- * atomic compare and exchange byte
- * - if *p == want, let *p = val
- * - return original *p
- */
-static __inline__ uint8_t
-m_cmpxchgb(volatile long *p,
-           long want,
-           long val)
-{
-    volatile long res;
-
-    __asm__ __volatile__("lock cmpxchgb %b1, %2\n"
-                         : "=a" (res)
-                         : "q" (val), "m" (*(p)), "0" (want)
-                         : "memory");
 
     return res;
 }

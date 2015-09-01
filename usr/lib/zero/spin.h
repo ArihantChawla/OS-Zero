@@ -3,6 +3,8 @@
 
 #include <zero/asm.h>
 
+typedef volatile long zerospin;
+
 #define SPININITVAL 0L
 
 #define spininit(sp) (*(sp) = SPININITVAL)

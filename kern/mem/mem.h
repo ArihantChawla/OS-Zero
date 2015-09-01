@@ -2,6 +2,8 @@
 #define __MEM_MEM_H__
 
 #include <stdint.h>
+#include <zero/cdecl.h>
+#include <zero/param.h>
 #include <zero/trix.h>
 
 /* allocation flags */
@@ -54,7 +56,7 @@ memcalcbkt(unsigned long size)
 #if (MEM_CONST_SIZE_TRICK)
 #if (PTRBITS <= 32)
 #define memfastbkt(sz)                                                  \
-    ((!__builtin_constant_p(sz)                                         \
+    ((!isimmed(sz)                                                      \
       ? memcalcbkt(sz)                                                  \
       : (((sz) <= MAGMIN)                                               \
          ? MAGMINLOG2                                                   \
@@ -117,7 +119,7 @@ memcalcbkt(unsigned long size)
                                                                                               : 0xff))))))))))))))))))))))))))))))))
 #else
 #define memfastbkt(sz)                                                  \
-    ((!__builtin_constant_p(sz)                                         \
+    ((!isimmed(sz)                                                      \
       ? memcalcbkt(sz)                                                  \
       : (((sz) <= MAGMIN)                                               \
          ? MAGMINLOG2                                                   \

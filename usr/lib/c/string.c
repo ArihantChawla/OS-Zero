@@ -5,11 +5,11 @@
 #include <zero/trix.h>
 #include <bits/string.h>
 
-static char *_curtok;
+extern uint8_t stringcolltab_c_en_US[0];
 
-volatile uint8_t *colltabptr = &stringcolltab_c_en_US[0];
-
-const volatile uint8_t *localecolltab;
+static struct _string  _string;
+static const  uint8_t *colltabptr = &stringcolltab_c_en_US[0];
+static const  uint8_t *localecolltab;
 
 #define NLANG 2
 
@@ -505,7 +505,7 @@ char *
 strtok(char *str1,
        const char *str2)
 {
-    char   *cptr = _curtok;
+    char   *cptr = _string.curtok;
     char   *retptr = NULL;
     size_t  nspn;
     
@@ -519,9 +519,9 @@ strtok(char *str1,
         nspn = strcspn(cptr, str2);
         cptr += nspn;
         *cptr = '\0';
-        _curtok = ++cptr;
+        _string.curtok = ++cptr;
         if (!*cptr) {
-            _curtok = NULL;
+            _string.curtok = NULL;
         }
         if (!retptr) {
             retptr = cptr;
@@ -530,7 +530,7 @@ strtok(char *str1,
             if (*cptr) {
                 *cptr = '\0';
             } else {
-                _curtok = NULL;
+                _string.curtok = NULL;
             }
         }
     }

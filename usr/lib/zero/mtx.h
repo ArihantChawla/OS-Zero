@@ -44,7 +44,6 @@ mtxtrylk2(volatile long *lp, long val)
     volatile long res;
 
     res = m_cmpswap(lp, ZEROMTXINITVAL, val);
-
 #if (ZERONEWMTX)
     if (res == ZEROMTXINITVAL) {
 
@@ -54,7 +53,7 @@ mtxtrylk2(volatile long *lp, long val)
         return 0;
     }
 #else
-    return (res == ZEROMTXINITVAL);
+    return (res != ZEROMTXINITVAL);
 #endif
 }
 #define mtxtrylk(lp) mtxtrylk2((volatile long *)(lp), ZEROMTXLKVAL)
@@ -88,9 +87,9 @@ mtxunlk2(volatile long *lp, long val)
 {
     volatile long res;
     
-    m_membar();
 //    *lp = ZEROMTXINITVAL;
     res = m_cmpswap(lp, ZEROMTXLKVAL, ZEROMTXINITVAL);
+    m_membar();
 
     return (res == ZEROMTXLKVAL);
 }
@@ -98,8 +97,8 @@ mtxunlk2(volatile long *lp, long val)
 static __inline__ void
 mtxunlk2(volatile long *lp, long val)
 {
-    m_membar();
     *lp = ZEROMTXINITVAL;
+    m_membar();
 
     return;
 }

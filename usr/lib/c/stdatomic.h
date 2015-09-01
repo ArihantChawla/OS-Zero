@@ -6,30 +6,66 @@
 
 #undef __STDC_NO_ATOMICS__
 
-/* lock-free type */
-typedef long                 atomic_flag;
+#include <stdbool.h>
+#if defined(__x86_64__) || defined(__amd64__)
+#include <x86-64/stdatomic.h>
+#elif (defined(__i386__) || defined(__i486__)                           \
+       || defined(__i586__) || defined(__i686__))
+#include <ia32/stdatomic.h>
+#elif defined(__arm__)
+#include <arm/stdatomic.h>
+#endif
 
 /* atomic types */
-typedef _Bool                atomic_bool;
-typedef char                 atomic_char;
-typedef signed char          atomic_schar;
-typedef unsigned char        atomic_uchar;
-typedef short                atomic_short;
-typedef unsigned short       atomic_ushort;
-typedef int                  atomic_int;
-typedef unsigned int         atomic_uint;
-typedef long                 atomic_long;
-typedef unsigned long        atomic_ulong;
-typedef long long            atomic_llong;
-typedef unsigned long long   atomic_ullong;
-typedef float                atomic_float;
-typedef double               atomic_double;
-typedef long double          atomic_ldouble;
+typedef volatile _Bool                atomic_bool;
+typedef volatile char                 atomic_char;
+typedef volatile signed char          atomic_schar;
+typedef volatile unsigned char        atomic_uchar;
+typedef volatile short                atomic_short;
+typedef volatile unsigned short       atomic_ushort;
+typedef volatile int                  atomic_int;
+typedef volatile unsigned int         atomic_uint;
+typedef volatile long                 atomic_long;
+typedef volatile unsigned long        atomic_ulong;
+typedef volatile long long            atomic_llong;
+typedef volatile unsigned long long   atomic_ullong;
+typedef volatile float                atomic_float;
+typedef volatile double               atomic_double;
+typedef volatile long double          atomic_ldouble;
 #if !defined(__STDC_NO_COMPLEX__)
-typedef float _Complex       atomic_cfloat;
-typedef double _Complex      atomic_cdouble;
-typedef long double _Complex atomic_cldouble;
+typedef volatile float _Complex       atomic_cfloat;
+typedef volatile double _Complex      atomic_cdouble;
+typedef volatile long double _Complex atomic_cldouble;
 #endif
+
+/* see http://en.cppreference.com/w/c/atomic/memory_order */
+enum memory_order {
+    memory_order_relaxed,
+    memory_order_consume,
+    memory_order_acquire,
+    memory_order_release,
+    memory_order_acq_rel,
+    memory_order_seq_cst
+};
+typedef enum memory_order memory_order;
+
+/* lock-free structure type */
+
+#define ATOMIC_FLAG_INIT     { 0L }
+#define ATOMIC_VAR_INIT(val) { (val) }
+
+typedef struct {
+    long __flg;
+} atomic_flag;
+
+bool atomic_flag_test_and_set(volatile atomic_flag *obj);
+bool atomic_flag_test_and_set_explicit(volatile atomic_flag *obj,
+                                       memory_order order);
+bool atomic_flag_test_and_set_explicit(volatile atomic_flag *obj,
+                                       memory_order order,
+                                       memory_order scope);
+
+/* TODO: type kill_dependency(type)? */
 
 #endif /* __STDATOMIC_H__ */
 
