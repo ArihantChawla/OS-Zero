@@ -1,6 +1,6 @@
 #include <stdint.h>
 
-uint8_t stringcolltab_c_en_US[256]
+const uint8_t stringcolltab_c_en_US[256]
 = {
     0x0,
     0x33,
@@ -260,7 +260,7 @@ uint8_t stringcolltab_c_en_US[256]
     0xeb
 };
 
-uint8_t stringcolltab_iso8859_1_en_US[256]
+const uint8_t stringcolltab_iso8859_1_en_US[256]
 = {
     0x0,
     0x33,
@@ -520,7 +520,7 @@ uint8_t stringcolltab_iso8859_1_en_US[256]
     0xeb
 };
 
-uint8_t stringcolltab_iso8859_2_en_US[256]
+const uint8_t stringcolltab_iso8859_2_en_US[256]
 = {
     0x0,
     0x33,
@@ -780,7 +780,7 @@ uint8_t stringcolltab_iso8859_2_en_US[256]
     0xeb
 };
 
-uint8_t stringcolltab_iso8859_3_en_US[256]
+const uint8_t stringcolltab_iso8859_3_en_US[256]
 = {
     0x0,
     0x33,
@@ -1040,7 +1040,7 @@ uint8_t stringcolltab_iso8859_3_en_US[256]
     0xeb
 };
 
-uint8_t stringcolltab_iso8859_4_en_US[256]
+const uint8_t stringcolltab_iso8859_4_en_US[256]
 = {
     0x0,
     0x33,
@@ -1300,7 +1300,7 @@ uint8_t stringcolltab_iso8859_4_en_US[256]
     0xeb
 };
 
-uint8_t stringcolltab_iso8859_5_en_US[256]
+const uint8_t stringcolltab_iso8859_5_en_US[256]
 = {
     0x0,
     0x33,
@@ -1560,7 +1560,7 @@ uint8_t stringcolltab_iso8859_5_en_US[256]
     0xeb
 };
 
-uint8_t stringcolltab_iso8859_6_en_US[256]
+const uint8_t stringcolltab_iso8859_6_en_US[256]
 = {
     0x0,
     0x33,
@@ -1820,7 +1820,7 @@ uint8_t stringcolltab_iso8859_6_en_US[256]
     0xeb
 };
 
-uint8_t stringcolltab_iso8859_7_en_US[256]
+const uint8_t stringcolltab_iso8859_7_en_US[256]
 = {
     0x0,
     0x33,
@@ -2080,7 +2080,7 @@ uint8_t stringcolltab_iso8859_7_en_US[256]
     0xeb
 };
 
-uint8_t stringcolltab_iso8859_8_en_US[256]
+const uint8_t stringcolltab_iso8859_8_en_US[256]
 = {
     0x0,
     0x33,
@@ -2340,7 +2340,7 @@ uint8_t stringcolltab_iso8859_8_en_US[256]
     0xeb
 };
 
-uint8_t stringcolltab_iso8859_9_en_US[256]
+const uint8_t stringcolltab_iso8859_9_en_US[256]
 = {
     0x0,
     0x33,
@@ -2600,7 +2600,7 @@ uint8_t stringcolltab_iso8859_9_en_US[256]
     0xeb
 };
 
-uint8_t stringcolltab_iso8859_10_en_US[256]
+const uint8_t stringcolltab_iso8859_10_en_US[256]
 = {
     0x0,
     0x33,
@@ -2860,7 +2860,7 @@ uint8_t stringcolltab_iso8859_10_en_US[256]
     0xeb
 };
 
-uint8_t stringcolltab_iso8859_11_en_US[256]
+const uint8_t stringcolltab_iso8859_11_en_US[256]
 = {
     0x0,
     0x33,
@@ -3120,7 +3120,7 @@ uint8_t stringcolltab_iso8859_11_en_US[256]
     0xeb
 };
 
-uint8_t stringcolltab_iso8859_12_en_US[256]
+const uint8_t stringcolltab_iso8859_12_en_US[256]
 = {
     0x0,
     0x33,
@@ -3380,7 +3380,7 @@ uint8_t stringcolltab_iso8859_12_en_US[256]
     0xeb
 };
 
-uint8_t stringcolltab_iso8859_13_en_US[256]
+const uint8_t stringcolltab_iso8859_13_en_US[256]
 = {
     0x0,
     0x33,
@@ -3640,7 +3640,7 @@ uint8_t stringcolltab_iso8859_13_en_US[256]
     0xeb
 };
 
-uint8_t stringcolltab_iso8859_14_en_US[256]
+const uint8_t stringcolltab_iso8859_14_en_US[256]
 = {
     0x0,
     0x33,
@@ -3900,7 +3900,7 @@ uint8_t stringcolltab_iso8859_14_en_US[256]
     0xeb
 };
 
-uint8_t stringcolltab_iso8859_15_en_US[256]
+const uint8_t stringcolltab_iso8859_15_en_US[256]
 = {
     0x0,
     0x33,
@@ -4160,7 +4160,7 @@ uint8_t stringcolltab_iso8859_15_en_US[256]
     0xeb
 };
 
-uint8_t stringcolltab_iso8859_16_en_US[256]
+const uint8_t stringcolltab_iso8859_16_en_US[256]
 = {
     0x0,
     0x33,
