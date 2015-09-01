@@ -10,12 +10,6 @@ lkmapinit(long n, zerolkmap *lkmap)
     void      *map = lkmap;
     void      *bits;
 
-    if (own) {
-        if (!mtxtrylk(&lkmap->lk)) {
-
-            return 0;
-        }
-    }
     if (!map) {
         map = malloc(sizeof(zerolkmap));
         if (!map) {
