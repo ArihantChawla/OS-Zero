@@ -28,7 +28,7 @@ typedef struct zerosem zerosem;
 static __inline__ zerosem *
 semalloc(void)
 {
-    zerosem *sem = kmalloc(sizeof(zerosem));
+    zerosem *sem = malloc(sizeof(zerosem));
 
     return sem;
 }

@@ -11,9 +11,12 @@
  * ----
  * - fix mallinfo() to return proper information
  */
-
-#define MALLOCDYNARN     0
+#define MALLOCSTKNDX     0
 #define MALLOCCONSTSLABS 0
+#define MALLOCDYNARN     0
+
+#define MALLOCTRACE      1
+#define MALLOCVALGRIND   1
 #define MALLOCSMALLSLABS 1
 #define MALLOCSIG        1
 #define MALLOC4LEVELTAB  0
@@ -21,15 +24,15 @@
 #define MALLOCNOPTRTAB   0
 #define MALLOCNARN       4
 #define MALLOCEXPERIMENT 0
+#define MALLOCNBUFHDR    16
 
-#define MALLOCDEBUGHOOKS 0
+#define ZMALLOCDEBUGHOOKS 1
 #define MALLOCSTEALMAG   0
 #define MALLOCNEWHACKS   0
 
 #define MALLOCNOSBRK     0
-#define MALLOCDIAG       1
+#define MALLOCDIAG       0
 #define MALLOCFREEMDIR   0  // under construction
-#define MALLOCSTKNDX     0
 #define MALLOCFREEMAP    0  // use free block bitmaps
 #define MALLOCHACKS      0  // enable experimental features
 #define MALLOCBUFMAP     0  // buffer mapped slabs to global pool
@@ -103,7 +106,7 @@
  * - fix MALLOCVARSIZEBUF
  */
 
-#define GNUMALLOCHOOKS 1
+#define ZMALLOCHOOKS 1
 
 #if (MALLOCDEBUG) && 0
 #include <assert.h>
@@ -140,6 +143,16 @@
 #include <zero/param.h>
 #include <zero/unix.h>
 #include <zero/trix.h>
+#if defined(__GLIBC__) && (MALLOCTRACE)
+#include <execinfo.h>
+#endif
+#if (ZMALLOCDEBUGHOOKS)
+#include <zero/asm.h>
+#endif
+
+#if (MALLOCVALGRIND)
+#include <valgrind/valgrind.h>
+#endif
 
 /* invariant parameters */
 #define MALLOCMINSIZE        (1UL << MALLOCMINLOG2)
@@ -188,13 +201,66 @@
 #else
 #define MAGPTRNDX            uint32_t
 #endif
-#else
+#else /* !MALLOCCONSTSLABS */
 #if (MALLOCSUPERSLABLOG2 - MALLOCMINLOG2 <= 16)
 #define MAGPTRNDX            uint16_t
 #else
 #define MAGPTRNDX            uint32_t
 #endif
 #endif
+#endif
+
+#if (MALLOCVALGRIND) && !defined(NVALGRIND)
+#define VALGRINDCREATEPOOL(pool, sz, z)                                 \
+    do {                                                                \
+        ; /* VALGRIND_CREATE_MEMPOOL((pool), 0, (sz)); */               \
+    } while (0)
+#define VALGRINDDESTROYPOOL(pool);                                      \
+    do {                                                                \
+        ; /* VALGRIND_DESTROY_MEMPOOL((pool)); */                       \
+    } while (0)
+#define VALGRINDPOOLFREE(pool, adr)                                     \
+    do {                                                                \
+        ; /* VALGRIND_MEMPOOL_FREE((pool), (adr)); */                   \
+    } while (0)
+#define VALGRINDPOOLALLOC(pool, adr, sz)                                \
+    do {                                                                \
+        ; /* VALGRIND_MEMPOOL_ALLOC((pool), (adr), (sz)); */            \
+    } while (0)
+#define VALGRINDGROW(adr, sz)                                           \
+    do {                                                                \
+        if (sz > 0) {                                                   \
+            VALGRIND_MALLOCLIKE_BLOCK((adr), (sz), 0, 0);               \
+        } else if (sz < 0) {                                            \
+            VALGRIND_FREELIKE_BLOCK((adr), 0);                          \
+        }                                                               \
+    } while (0)
+#define VALGRINDMAP(adr, sz, z)                                         \
+    do {                                                                \
+        VALGRIND_MALLOCLIKE_BLOCK((adr), (sz), 0, 0);                   \
+    } while (0)
+#define VALGRINDUNMAP(adr)                                              \
+    do {                                                                \
+        VALGRIND_FREELIKE_BLOCK((adr), 0);                              \
+    } while (0)
+#define VALGRINDALLOC(adr, sz, z)                                       \
+    do {                                                                \
+        if (RUNNING_ON_VALGRIND) {                                      \
+            VALGRIND_MALLOCLIKE_BLOCK((adr), (sz), 0, (z));             \
+        }                                                               \
+    } while (0)
+#define VALGRINDFREE(adr)                                               \
+    do {                                                                \
+        if (RUNNING_ON_VALGRIND) {                                      \
+            VALGRIND_FREELIKE_BLOCK((adr), 0);                          \
+        }                                                               \
+    } while (0)
+#else /* !MALLOCVALGRIND */
+#define VALGRINDGROW(adr, sz)
+#define VALGRINDMAP(adr, sz, z)
+#define VALGRINDUNMAP(adr)
+#define VALGRIND_ALLOC(adr, sz, z)
+#define VALGRINDFREE(adr)
 #endif
 
 /*
@@ -281,6 +347,7 @@ magprint(struct mag *mag)
 #endif
     fprintf(stderr, "\tstk\t%p\n", mag->stk);
     fprintf(stderr, "\tptrtab\t%p\n", mag->ptrtab);
+    fflush(stderr);
 
     return;
 }
@@ -341,6 +408,10 @@ struct malloc {
     struct mallinfo   mallinfo;         // mallinfo() interface
 };
 
+#if defined(__GLIBC__) && (MALLOCTRACE)
+#define MALLOCNTRACEFUNC 64
+void *tracebuf[MALLOCNTRACEFUNC];
+#endif
 static struct malloc  g_malloc ALIGNED(PAGESIZE);
 __thread long        _arnid = -1;
 MUTEX                _arnlk;
@@ -358,15 +429,30 @@ void *(*__memalign_hook)(size_t align, size_t size, const void *caller);
 void  (*__free_hook)(void *ptr, const void *caller);
 void *(*__malloc_initialize_hook)(void);
 void  (*__after_morecore_hook)(void);
+#elif defined(_ZERO_SOURCE) && (ZMALLOCHOOKS)
+void (*__zmalloc_hook)(size_t size, const void *caller);
+void (*__zrealloc_hook)(void *ptr, size_t size, const void *caller);
+void (*__zmemalign_hook)(size_t align, size_t size, const void *caller);
+void (*__zfree_hook)(void *ptr, const void *caller);
+void (*__zmalloc_initialize_hook)(void);
+void (*__zafter_morecore_hook)(void);
 #endif
 
 #if (MALLOCSTAT)
 void
 mallocstat(void)
 {
-    fprintf(stderr, "HEAP: %lld\n", nheapbyte);
-    fprintf(stderr, "MAP: %lld\n", nmapbyte);
-    fprintf(stderr, "TAB: %lld\n", ntabbyte);
+#if defined(__GLIBC__) && (MALLOCTRACE)
+    backtrace_symbols_fd(tracebuf, MALLOCNTRACEFUNC, STDERR_FILENO);
+#else
+    fprintf(stderr, "HEAP: %lld KB\tMAP: %lld KB\tTAB: %lld KB\n",
+            nheapbyte >> 10,
+            nmapbyte >> 10,
+            ntabbyte >> 10);
+    fflush(stderr);
+#endif
+
+    return;
 }
 #endif
 
@@ -413,7 +499,9 @@ mallocstat(void)
      : (sz) + (aln))
 
 #if (MALLOCSTKNDX)
-#define magputptr2ndx(mag, ptr1, ptr2)                                  \
+#define magptrid(mag, ptr)                                              \
+    (((uintptr_t)(ptr) - ((uintptr_t)(mag)->adr & ~MAGFLGMASK)) >> (mag)->bktid)
+#define magputptr(mag, ptr1, ptr2)                                      \
     ((mag)->ptrtab[magptr2ndx(mag, ptr1)] = magptrid(mag, ptr2))
 #define magptr2ndx(mag, ptr)                                            \
     ((MAGPTRNDX)(((uintptr_t)ptr                                        \
@@ -471,34 +559,39 @@ mallquit(int sig)
     fprintf(stderr, "QUIT (%d)\n", sig);
 #if (MALLOCSTAT)
     mallocstat();
+#else
+    fflush(stderr);
 #endif
     
     exit(sig);
 }
 #endif
 
-#if (MALLOCDEBUGHOOKS)
+#if (ZMALLOCDEBUGHOOKS) && (ZMALLOCHOOKS)
 
 void
 mallocinithook(void)
 {
     fprintf(stderr, "MALLOC_INIT\n");
+    fflush(stderr);
 
     return;
 }
 
-void *
+void
 mallochook(size_t size, const void *caller)
 {
     fprintf(stderr, "MALLOC: %p (%ld)\n", caller, (long)size);
+    fflush(stderr);
 
     return NULL;
 }
 
-void *
+void
 reallochook(void *ptr, size_t size, const void *caller)
 {
     fprintf(stderr, "REALLOC: %p: %p (%ld)\n", caller, size, ptr);
+    fflush(stderr);
 
     return NULL;
 }
@@ -507,22 +600,25 @@ void
 freehook(void *ptr, const void *caller)
 {
     fprintf(stderr, "FREE: %p\n", ptr);
+    fflush(stderr);
 
     return;
 }
 
 void
-morecorehook(void *ptr, const void *caller)
+morecorehook(void)
 {
     fprintf(stderr, "HEAP: %p\n", sbrk(0));
+    fflush(stderr);
 
     return;
 }
 
-void *
+void
 memalignhook(size_t align, size_t size, const void *caller)
 {
     fprintf(stderr, "MEMALIGN: %p: %p (%ld)\n", caller, align, size);
+    fflush(stderr);
 
     return;
 }
@@ -643,6 +739,7 @@ mallocdiag(void)
 long
 thrarnid(void)
 {
+    uint8_t     *u8ptr;
     struct arn **ptr;
     struct arn  *arn;
     long         narn;
@@ -656,26 +753,34 @@ thrarnid(void)
     _arnid = curarn++;
     narn = _arnid;
     if (_arnid == g_malloc.narn) {
+        /* allocate two times the number of arenas currenly in use */
         n = narn << 1;
-        ptr = mapanon(g_malloc.zerofd,
-                      n * sizeof(struct arn **));
+        ptr = mapanon(g_malloc.zerofd, n * sizeof(struct arn **));
         if (ptr == MAP_FAILED) {
             fprintf(stderr, "cannot allocate arena buffer\n");
 
             exit(1);
         }
+        VALGRINDMAP(ptr, n * sizeof(struct arn **), 1);
+        /* copy arena information to the newly allocate block */
         memcpy(ptr, g_malloc.arntab, narn * sizeof(struct arn **));
+        /* free ealier arena information */
+        unmapanon(g_malloc.arntab, narn * sizeof(struct arn **));
+        VALGRINDUNMAP(g_malloc.arntab);
         ptr += _arnid;
-        arn = mapanon(g_malloc.zerofd, narn * sizeof(struct arn));
-        if (arn == MAP_FAILED) {
+        /* allocate more arenas */
+        u8ptr = mapanon(g_malloc.zerofd, narn * MALLOCARNSIZE);
+        if (u8ptr == MAP_FAILED) {
             fprintf(stderr, "cannot allocate arena structures\n");
 
             exit(1);
         }
+        VALGRINDMAP(u8ptr, narn * MALLOCARNSIZE, 1);
+        /* point to new arenas */
         while (narn--) {
-            *ptr = arn;
+            *ptr = (struct arn *)u8ptr;
             ptr++;
-            arn++;
+            u8ptr += MALLOCARNSIZE;
         }
         g_malloc.narn = n;
     }
@@ -734,7 +839,6 @@ magsetstk(struct mag *mag)
     long bktid = mag->bktid;
 #if (MALLOCSTKNDX)
     MAGPTRNDX   *stk = NULL;
-    MAGPTRNDX   *tab;
 #elif (MALLOCHACKS)
     uintptr_t   *stk = NULL;
     uintptr_t   *tab = NULL;
@@ -754,7 +858,11 @@ magsetstk(struct mag *mag)
         /* map new allocation stack */
         stk = mapanon(g_malloc.zerofd, magnbytetab(bktid));
         if (stk == MAP_FAILED) {
+            VALGRINDDESTROYPOOL((uintptr_t)mag->adr & ~MAGFLGMASK);
+#if 0
             unmapanon(mag, magnbytehdr(bktid));
+            VALGRINDUNMAP(mag);
+#endif
 #if (MALLOCSTAT)
             mallocstat();
 #endif
@@ -764,6 +872,7 @@ magsetstk(struct mag *mag)
             
             exit(1);
         }
+        VALGRINDMAP(stk, magnbytetab(bktid), 1);
 #if (MALLOCSTKNDX)
         mag->stk = (MAGPTRNDX *)stk;
 #else
@@ -790,12 +899,13 @@ maggethdr(long bktid)
     mag = g_malloc.hdrbuf[bktid].head;
     if (!mag) {
         if (magembedtab(bktid)) {
-            ret = mapanon(g_malloc.zerofd, 16 * MALLOCHDRSIZE);
+            ret = mapanon(g_malloc.zerofd, MALLOCNBUFHDR * MALLOCHDRSIZE);
             if (ret == MAP_FAILED) {
                 mtxunlk(&g_malloc.hdrtab[bktid].lk);
                 
                 return ret;
             }
+            VALGRINDMAP(ret, MALLOCNBUFHDR * MALLOCHDRSIZE, 1);
             ret->bktid = bktid;
             magsetstk(ret);
             ptr = (uint8_t *)ret;
@@ -814,6 +924,7 @@ maggethdr(long bktid)
         } else {
             ret = mapanon(g_malloc.zerofd, magnbytehdr(bktid));
             if (ret != MAP_FAILED) {
+                VALGRINDMAP(ret, magnbytehdr(bktid), 1);
                 ret->bktid = bktid;
                 magsetstk(ret);
             }
@@ -883,6 +994,7 @@ setmag(void *ptr,
             
             exit(1);
         }
+        VALGRINDMAP(ptr1, MDIRNL2KEY * sizeof(void *), 1);
 #if (MALLOCSTAT)
         ntabbyte += MDIRNL2KEY * sizeof(void *);
 #endif
@@ -899,6 +1011,7 @@ setmag(void *ptr,
             
             exit(1);
         }
+        VALGRINDMAP(ptr2, MDIRNL3KEY * sizeof(void *), 1);
 #if (MALLOCSTAT)
         ntabbyte += MDIRNL3KEY * sizeof(void *);
 #endif
@@ -915,8 +1028,9 @@ setmag(void *ptr,
             
             exit(1);
         }
+        VALGRINDMAP(ptr1, MDIRNL4KEY * sizeof(void *), 1);
 #if (MALLOCSTAT)
-        ntabbyte += MDIRNL3KEY * sizeof(void *);
+        ntabbyte += MDIRNL4KEY * sizeof(void *);
 #endif
     }
     ptr2 = &((struct mag **)ptr1)[l4];
@@ -997,6 +1111,11 @@ setmag(void *ptr,
             ptr1->nref++;
 #endif
         }
+#if (MALLOCFREEMDIR)
+        VALGRINDMAP(ptr1, MDIRNL2KEY * sizeof(struct magitem), 1);
+#else
+        VALGRINDMAP(ptr1, MDIRNL2KEY * sizeof(void *), 1);
+#endif
 #if (MALLOCSTAT)
         ntabbyte += MDIRNL2KEY * sizeof(void *);
 #endif
@@ -1023,16 +1142,19 @@ setmag(void *ptr,
             if (ptr1) {
                 unmapanon(ptr1,
                           MDIRNL2KEY * sizeof(struct magitem));
+                VALGRINDUNMAP(ptr1);
                 
                 return;
             }
         } else {
             pptr[l2] = ptr2 = mapanon(g_malloc.zerofd,
                                       MDIRNL3KEY * sizeof(struct magitem));
+            VALGRINDMAP(ptr2, MDIRNL3KEY * sizeof(struct magitem), 1);
         }
 #else /* !MALLOCFREEMDIR */
         pptr[l2] = ptr2 = mapanon(g_malloc.zerofd,
                                   MDIRNL3KEY * sizeof(void *));
+        VALGRINDMAP(ptr2, MDIRNL3KEY * sizeof(void *), 1);
 #endif /* MALLOCFREEMDIR */
         if (ptr2 == MAP_FAILED) {
 #ifdef ENOMEM
@@ -1199,6 +1321,7 @@ freearn(void *arg)
 static void
 mallinit(void)
 {
+    void       *heap;
     long        narn;
     long        arnid;
     long        bktid;
@@ -1236,6 +1359,7 @@ mallinit(void)
     narn = MALLOCNARN;
     g_malloc.arntab = mapanon(g_malloc.zerofd,
                               narn * sizeof(struct arn **));
+    VALGRINDMAP(g_malloc.arntab, narn * sizeof(struct arn **), 1);
     g_malloc.narn = narn;
     ptr = mapanon(g_malloc.zerofd, narn * MALLOCARNSIZE);
     if (ptr == MAP_FAILED) {
@@ -1243,6 +1367,7 @@ mallinit(void)
 
         exit(1);
     }
+    VALGRINDMAP(ptr, narn * MALLOCARNSIZE, 1);
     arnid = narn;
     while (arnid--) {
         g_malloc.arntab[arnid] = (struct arn *)ptr;
@@ -1250,11 +1375,14 @@ mallinit(void)
     }
 #if (ARNREFCNT)
     g_malloc.arnreftab = mapanon(_mapfd, NARN * sizeof(unsigned long));
+    VALGRINDMAP(g_malloc.arnreftab, NARN * sizeof(unsigned long), 1);
     g_malloc.arnreflktab = mapanon(_mapfd, NARN * sizeof(MUTEX));
+    VALGRINDMAP(g_malloc.arnreflktab, NARN * sizeof(MUTEX), 1);
 #endif
     arnid = narn;
     while (arnid--) {
         for (bktid = 0 ; bktid < MALLOCNBKT ; bktid++) {
+            mtxinit(&g_malloc.arntab[arnid]->nreflk);
             mtxinit(&g_malloc.arntab[arnid]->magtab[bktid].lk);
             mtxinit(&g_malloc.arntab[arnid]->hdrtab[bktid].lk);
         }
@@ -1267,24 +1395,21 @@ mallinit(void)
     }
 #if (!MALLOCNOSBRK)
     mtxlk(&g_malloc.heaplk);
-    ofs = (1UL << MALLOCSLABLOG2) - ((long)growheap(0) & (PAGESIZE - 1));
+    heap = growheap(0);
+    ofs = (1UL << MALLOCSLABLOG2) - ((long)heap & (PAGESIZE - 1));
     if (ofs != PAGESIZE) {
         growheap(ofs);
+        VALGRINDGROW(heap, ofs);
     }
     mtxunlk(&g_malloc.heaplk);
 #endif /* !MALLOCNOSBRK */
     g_malloc.mlktab = mapanon(g_malloc.zerofd, MDIRNL1KEY * sizeof(long));
+    VALGRINDMAP(g_malloc.mlktab, MDIRNL1KEY * sizeof(long), 1);
     g_malloc.mdir = mapanon(g_malloc.zerofd, MDIRNL1KEY * sizeof(void *));
-#if (GNUMALLOCHOOKS) && (MALLOCDEBUGHOOKS)
-    __malloc_initialize_hook = mallocinithook;
-    __realloc_hook = reallochook;
-    __free_hook = freehook;
-    __after_morecore_hook = morecorehook;
-    __memalign_hook = memalignhook;
-#endif
-#if defined(_GNU_SOURCE) && (GNUMALLOCHOOKS)
-    if (__malloc_initialize_hook) {
-        __malloc_initialize_hook();
+    VALGRINDMAP(g_malloc.mdir, MDIRNL1KEY * sizeof(void *), 1);
+#if defined(_ZERO_SOURCE) && (ZMALLOCHOOKS)
+    if (__zmalloc_initialize_hook) {
+        __zmalloc_initialize_hook();
     }
 #endif
     pthread_key_create(&g_malloc.arnkey, freearn);
@@ -1409,7 +1534,10 @@ _malloc(size_t size,
     long         id;
 #endif
     long         stolen = 0;
-    
+
+#if (MALLOCTRACE)
+    fprintf(stderr, "_malloc(%ld, %ld, %ld): ", (long)size, (long)align, zero);
+#endif
     if (!(g_malloc.flags & MALLOCINIT)) {
         mallinit();
     }
@@ -1637,6 +1765,10 @@ _malloc(size_t size,
                         /* try to allocate slab from heap */
                         mtxlk(&g_malloc.heaplk);
                         ptr = growheap(magnbyte(bktid));
+                        if (ptr != SBRK_FAILED) {
+                            VALGRINDGROW(ptr, magnbyte(bktid));
+                            VALGRINDCREATEPOOL(ptr, magnbyte(bktid), 0);
+                        }
                         mtxunlk(&g_malloc.heaplk);
                     }
 #endif
@@ -1646,8 +1778,19 @@ _malloc(size_t size,
                         if (ptr == MAP_FAILED) {
                             if (!magembedtab(bktid)) {
                                 unmapanon(stk, magnbytetab(bktid));
+                                VALGRINDUNMAP(stk);
                             }
+                            mtxlk(&g_malloc.hdrtab[bktid].lk);
+                            mag->next = g_malloc.hdrtab[bktid].head;
+                            if (mag->next) {
+                                mag->next->prev = mag;
+                            }
+                            g_malloc.hdrtab[bktid].head = mag;
+                            mtxunlk(&g_malloc.hdrtab[bktid].lk);
+#if 0
                             unmapanon(mag, magnbytehdr(bktid));
+                            VALGRINDUNMAP(mag);
+#endif
 #if (MALLOCSTAT)
                             mallocstat();
 #endif
@@ -1657,6 +1800,7 @@ _malloc(size_t size,
                             
                             return NULL;
                         }
+//                        VALGRINDMAP(ptr, magnbyte(bktid), 1);
 #if (MALLOCSTAT)
                         nmapbyte += magnbyte(bktid);
 #endif
@@ -1729,6 +1873,7 @@ _malloc(size_t size,
 #if (MALLOCFREEMAP)
         if (bitset(mag->freemap, magptrndx(mag, ptr))) {
             fprintf(stderr, "trying to reallocate block");
+            fflush(stderr);
             
             abort();
         }
@@ -1753,6 +1898,9 @@ _malloc(size_t size,
 
         abort();
     }
+#endif
+    VALGRINDPOOLALLOC(mag->adr, ptr, size);
+#if (MALLOCDEBUG) && 0
     assert(mag->adr != NULL);
     assert(mag != NULL);
     assert(ptr != NULL);
@@ -1778,6 +1926,7 @@ _free(void *ptr)
     
     mag = findmag(ptr);
     if (mag) {
+        VALGRINDPOOLFREE(mag->adr, ptr);
         setmag(ptr, NULL);
         arnid = mag->arnid;
         bktid = mag->bktid;
@@ -1876,6 +2025,8 @@ _free(void *ptr)
                 mtxunlk(&g_malloc.freetab[bktid].lk);
                 /* unmap slab */
                 unmapanon(adr, magnbyte(bktid));
+                VALGRIND_DESTROY_MEMPOOL(adr);
+                VALGRINDUNMAP(adr);
                 mag->adr = NULL;
                 mag->prev = NULL;
                 /* add magazine header to header cache */
@@ -1890,6 +2041,7 @@ _free(void *ptr)
 #else
             /* unmap slab */
             unmapanon(adr, magnbyte(bktid));
+            VALGRINDUNMAP(adr);
             mag->adr = NULL;
             mag->prev = NULL;
             /* add magazine header to header cache */
@@ -1911,48 +2063,7 @@ _free(void *ptr)
     return;
 }
 
-void *
-malloc(size_t size)
-{
-    void   *ptr;
-
-    if (!size) {
-        
-        return NULL;
-    }
-#if defined(_GNU_SOURCE) && (GNUMALLOCHOOKS)
-    if (__malloc_hook) {
-        void *caller = NULL;
-
-//        m_getretadr(caller);
-        __malloc_hook(size, (const void *)caller);;
-    }
-#endif
-    ptr = _malloc(size, 0, 0);
-#if (MALLOCDEBUG) && 0
-    assert(ptr != NULL);
-#endif
-
-    return ptr;
-}
-
-void *
-calloc(size_t n, size_t size)
-{
-    size_t sz = max(n * size, MALLOCMINSIZE);
-    void *ptr = _malloc(sz, 0, 1);
-
-    if (!sz) {
-        
-        return NULL;
-    }
-#if (MALLOCDEBUG) && 0
-    assert(ptr != NULL);
-#endif
-
-    return ptr;
-}
-
+/* internal function for realloc() and reallocf() */
 void *
 _realloc(void *ptr,
          size_t size,
@@ -1975,7 +2086,7 @@ _realloc(void *ptr,
             ptr = NULL;
         }
     }
-    if ((rel) && (ptr)) {
+    if ((rel) && (retptr != ptr) && (ptr)) {
         _free(ptr);
     }
 #if (MALLOCDEBUG) && 0
@@ -1993,24 +2104,118 @@ _realloc(void *ptr,
     return retptr;
 }
 
+/* API FUNCTIONS */
+
+void *
+malloc(size_t size)
+{
+    void   *ptr;
+
+    if (!size) {
+        
+        return NULL;
+    }
+#if (ZMALLOCDEBUGHOOKS)
+    {
+        void *caller;
+
+#if (MALLOCSTAT)
+        mallocstat();
+#endif
+        m_getretadr(&caller);
+        mallochook(size, caller);
+    }
+#elif defined(_ZERO_SOURCE) && (ZMALLOCHOOKS)
+    if (__zmalloc_hook) {
+        void *caller = NULL;
+
+        m_getretadr(&caller);
+        __zmalloc_hook(size, (const void *)caller);;
+    }
+#endif
+    ptr = _malloc(size, 0, 0);
+    if (ptr) {
+        VALGRINDALLOC(ptr, size, 0);
+    }
+#if (MALLOCDEBUG) && 0
+    assert(ptr != NULL);
+#endif
+
+    return ptr;
+}
+
+void *
+calloc(size_t n, size_t size)
+{
+    size_t sz = max(n * size, MALLOCMINSIZE);
+    void *ptr;
+
+    if (!n || !size) {
+        
+        return NULL;
+    }
+#if (ZMALLOCDEBUGHOOKS)
+    {
+        void *caller;
+
+#if (MALLOCSTAT)
+        mallocstat();
+#endif
+        m_getretadr(&caller);
+        mallochook(size, caller);
+    }
+#elif defined(_ZERO_SOURCE) && (ZMALLOCHOOKS)
+    if (__zmalloc_hook) {
+        void *caller = NULL;
+
+        m_getretadr(&caller);
+        __zmalloc_hook(size, (const void *)caller);;
+    }
+#endif
+    ptr = _malloc(sz, 0, 1);
+    if (ptr) {
+        VALGRINDALLOC(ptr, sz, 1);
+    }
+#if (MALLOCDEBUG) && 0
+    assert(ptr != NULL);
+#endif
+
+    return ptr;
+}
+
 void *
 realloc(void *ptr,
         size_t size)
 {
     void *retptr = NULL;
 
-#if defined(_GNU_SOURCE) && (GNUMALLOCHOOKS)
-    if (__realloc_hook) {
+#if (ZMALLOCDEBUGHOOKS)
+    {
+        void *caller;
+
+#if (MALLOCSTAT)
+        mallocstat();
+#endif
+        m_getretadr(&caller);
+        reallochook(ptr, size, caller);
+    }
+#elif defined(_ZERO_SOURCE) && (ZMALLOCHOOKS)
+    if (__zrealloc_hook) {
         void *caller = NULL;
 
-//        m_getretadr(caller);
-        __realloc_hook(ptr, size, (const void *)caller);
+        m_getretadr(&caller);
+        __zrealloc_hook(ptr, size, (const void *)caller);
     }
 #endif
     if (!size && (ptr)) {
         _free(ptr);
+        VALGRINDFREE(ptr);
     } else {
         retptr = _realloc(ptr, size, 0);
+        if (retptr) {
+            VALGRINDFREE(ptr);
+            VALGRINDALLOC(retptr, size, 0);
+        }
     }
 #if (MALLOCDEBUG) && 0
     assert(retptr != NULL);
@@ -2022,16 +2227,27 @@ realloc(void *ptr,
 void
 free(void *ptr)
 {
-#if (_BNU_SOURCE)
-    if (__free_hook) {
+#if (ZMALLOCDEBUGHOOKS)
+    {
+        void *caller;
+
+#if (MALLOCSTAT)
+        mallocstat();
+#endif
+        m_getretadr(&caller);
+        freehook(ptr, caller);
+    }
+#elif defined(_ZERO_SOURCE) && (ZMALLOCHOOKS)
+    if (__zfree_hook) {
         void *caller = NULL;
 
-//        m_getretadr(caller);
-        __free_hook(ptr, (const void *)caller);
+        m_getretadr(&caller);
+        __zfree_hook(ptr, (const void *)caller);
     }
 #endif
     if (ptr) {
         _free(ptr);
+        VALGRINDFREE(ptr);
     }
 
     return;
@@ -2045,18 +2261,31 @@ aligned_alloc(size_t align,
     void   *ptr = NULL;
     size_t  aln = max(align, MALLOCMINSIZE);
 
-#if defined(_GNU_SOURCE) && (GNUMALLOCHOOKS)
-    if (__memalign_hook) {
+#if (ZMALLOCDEBUGHOOKS)
+    {
+        void *caller;
+
+#if (MALLOCSTAT)
+        mallocstat();
+#endif
+        m_getretadr(&caller);
+        memalignhook(align, size, caller);
+    }
+#elif defined(_ZERO_SOURCE) && (ZMALLOCHOOKS)
+    if (__zmemalign_hook) {
         void *caller = NULL;
         
-//        m_getretadr(caller);
-        __memalign_hook(align, size, (const void *)caller);
+        m_getretadr(&caller);
+        __zmemalign_hook(align, size, (const void *)caller);
     }
 #endif
     if (!powerof2(aln) || (size & (aln - 1))) {
         errno = EINVAL;
     } else {
         ptr = _malloc(size, aln, 0);
+    }
+    if (ptr) {
+        VALGRINDALLOC(ptr, size, 0);
     }
 #if (MALLOCDEBUG) && 0
     assert(ptr != NULL);
@@ -2077,12 +2306,22 @@ posix_memalign(void **ret,
     size_t  aln = max(align, MALLOCMINSIZE);
     int     retval = -1;
 
-#if defined(_GNU_SOURCE) && (GNUMALLOCHOOKS)
-    if (__memalign_hook) {
+#if (ZMALLOCDEBUGHOOKS)
+    {
+        void *caller;
+
+#if (MALLOCSTAT)
+        mallocstat();
+#endif
+        m_getretadr(&caller);
+        memalignhook(align, size, caller);
+    }
+#elif defined(_ZERO_SOURCE) && (ZMALLOCHOOKS)
+    if (__zmemalign_hook) {
         void *caller = NULL;
         
-//        m_getretadr(caller);
-        __memalign_hook(align, size, (const void *)caller);
+        m_getretadr(&caller);
+        __zmemalign_hook(align, size, (const void *)caller);
     }
 #endif
     if (!powerof2(align) || (align & (sizeof(void *) - 1))) {
@@ -2092,6 +2331,9 @@ posix_memalign(void **ret,
         if (ptr) {
             retval = 0;
         }
+    }
+    if (ptr) {
+        VALGRINDALLOC(ptr, size, 0);
     }
 #if (MALLOCDEBUG) && 0
     assert(ptr != NULL);
@@ -2112,15 +2354,28 @@ valloc(size_t size)
 {
     void *ptr;
 
-#if defined(_GNU_SOURCE) && (GNUMALLOCHOOKS)
-    if (__memalign_hook) {
+#if (ZMALLOCDEBUGHOOKS)
+    {
+        void *caller;
+
+#if (MALLOCSTAT)
+        mallocstat();
+#endif
+        m_getretadr(&caller);
+        memalignhook(PAGESIZE, size, caller);
+    }
+#elif defined(_ZERO_SOURCE) && (ZMALLOCHOOKS)
+    if (__zmemalign_hook) {
         void *caller = NULL;
         
-//        m_getretadr(caller);
-        __memalign_hook(PAGESIZE, size, (const void *)caller);
+        m_getretadr(&caller);
+        __zmemalign_hook(PAGESIZE, size, (const void *)caller);
     }
 #endif
     ptr = _malloc(size, PAGESIZE, 0);
+    if (ptr) {
+        VALGRINDALLOC(ptr, size, 0);
+    }
 #if (MALLOCDEBUG) && 0
     assert(ptr != NULL);
 #endif
@@ -2136,18 +2391,31 @@ memalign(size_t align,
     void   *ptr = NULL;
     size_t  aln = max(align, MALLOCMINSIZE);
 
-#if defined(_GNU_SOURCE) && (GNUMALLOCHOOKS)
-    if (__memalign_hook) {
+#if (ZMALLOCDEBUGHOOKS)
+    {
+        void *caller;
+
+#if (MALLOCSTAT)
+        mallocstat();
+#endif
+        m_getretadr(&caller);
+        memalignhook(align, size, caller);
+    }
+#elif defined(_ZERO_SOURCE) && (ZMALLOCHOOKS)
+    if (__zmemalign_hook) {
         void *caller = NULL;
         
-//        m_getretadr(caller);
-        __memalign_hook(align, size, (const void *)caller);
+        m_getretadr(&caller);
+        __zmemalign_hook(align, size, (const void *)caller);
     }
 #endif
     if (!powerof2(align)) {
         errno = EINVAL;
     } else {
         ptr = _malloc(size, aln, 0);
+    }
+    if (ptr) {
+        VALGRINDALLOC(ptr, size, 0);
     }
 #if (MALLOCDEBUG) && 0
     assert(ptr != NULL);
@@ -2161,8 +2429,40 @@ void *
 reallocf(void *ptr,
          size_t size)
 {
-    void *retptr = _realloc(ptr, size, 1);
+    void *retptr;
 
+#if (ZMALLOCDEBUGHOOKS)
+    {
+        void *caller;
+
+#if (MALLOCSTAT)
+        mallocstat();
+#endif
+        m_getretadr(&caller);
+        reallochook(ptr, size, caller);
+    }
+#elif defined(_ZERO_SOURCE) && (ZMALLOCHOOKS)
+    if (__zrealloc_hook) {
+        void *caller = NULL;
+
+        m_getretadr(&caller);
+        __zrealloc_hook(ptr, size, (const void *)caller);
+    }
+#endif
+    if (ptr) {
+        retptr = _realloc(ptr, size, 1);
+    } else if (size) {
+        retptr = _malloc(size, 0, 0);
+    } else {
+
+        return NULL;
+    }
+    if (ptr) {
+        VALGRINDFREE(ptr);
+    }
+    if (retptr) {
+        VALGRINDALLOC(retptr, size, 0);
+    }
 #if (MALLOCDEBUG) && 0
     assert(retptr != NULL);
 #endif
@@ -2178,6 +2478,27 @@ pvalloc(size_t size)
     size_t  sz = rounduppow2(size, PAGESIZE);
     void   *ptr = _malloc(sz, PAGESIZE, 0);
 
+#if (ZMALLOCDEBUGHOOKS)
+    {
+        void *caller;
+
+#if (MALLOCSTAT)
+        mallocstat();
+#endif
+        m_getretadr(&caller);
+        memalignhook(PAGESIZE, sz, caller);
+    }
+#elif defined(_ZERO_SOURCE) && (ZMALLOCHOOKS)
+    if (__zmemalign_hook) {
+        void *caller = NULL;
+        
+        m_getretadr(&caller);
+        __zmemalign_hook(PAGESIZE, size, (const void *)caller);
+    }
+#endif
+    if (ptr) {
+        VALGRINDALLOC(ptr, size, 0);
+    }
 #if (MALLOCDEBUG) && 0
     assert(ptr != NULL);
 #endif
@@ -2191,6 +2512,7 @@ cfree(void *ptr)
 {
     if (ptr) {
         _free(ptr);
+        VALGRINDFREE(ptr);
     }
 
     return;

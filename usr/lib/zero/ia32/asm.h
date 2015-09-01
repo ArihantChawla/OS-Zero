@@ -11,8 +11,24 @@
 #define m_cmpswapb(p, want, val) m_cmpxchgb(p, want, val)
 #define m_scanlo1bit(l)          m_bsfl(l)
 #define m_scanhi1bit(l)          m_bsrl(l)
-#define m_getretadr(r)                                                  \
-    __asm__ __volatile__ ("movl 4(%%ebp), %0\n" : "=rm" (r))
+#if defined(__GNUC__)
+#define m_setretadr(pp)                                                 \
+    (*(pp) = (void *)__builtin_frob_return_address(__builtin_return_address(0)))
+#define m_getretadr(pp)                                                 \
+    (*(pp) = (void *)__builtin_extract_return_address(__builtin_return_address(0)))
+#define m_getfrmadr(pp)                                                 \
+    (*(pp) = (void *)__builtin_frame_address(0))
+#else /* !defined(__GNUC__ */
+static __inline__ void
+m_getretadr(void **pp) {
+    void *_ptr;
+    
+    __asm__ __volatile__ ("movl 4(%%ebp), %0\n" : "=rm" (_ptr));
+    *pp = _ptr;
+
+    return;
+}
+#endif
 
 /*
  * atomic fetch and add

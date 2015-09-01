@@ -7,7 +7,8 @@
  * m_waitint()  	- pause until interrupt received
  * m_cmpswap()  	- atomic compare and swap operation
  * m_fetadd()   	- atomic fetch and add
- * m_getretadr()        - get return address from stack frame
+ * m_getretadr(pp)      - get return address of current function to *(pp)
+ * m_setretadr(pp)      - store return address of current function to *(pp)
  */
 #if defined(__x86_64__) || defined(__amd64__)
 #include <zero/x86-64/asm.h>
