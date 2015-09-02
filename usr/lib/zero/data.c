@@ -27,6 +27,12 @@ main(int argc, char *argv[])
     int          i;
     struct list *lp;
 
+    if (argc > 1) {
+        fprintf(stderr, "ACK! I don't need your damned arguments! :)\n");
+        for (i = 0 ; i < argc ; i++) {
+            fprintf(stderr, "%s\n", argv[i]);
+        }
+    }
     /* pop test */
     for (i = 0 ; i < 64 ; i++) {
         ltab[i].key = i;

@@ -8,6 +8,7 @@
 #include <unistd.h>
 #include <sys/stat.h>
 #include <fcntl.h>
+#include <zero/unix.h>
 
 /* initialize 'daemon mode' for server processes */
 int

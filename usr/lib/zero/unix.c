@@ -1,4 +1,5 @@
 #include <stdlib.h>
+#include <stdio.h>
 #include <errno.h>
 #include <sys/types.h>
 #include <sys/stat.h>
@@ -8,6 +9,8 @@
 #if !defined(EAGAIN)
 #define EAGAIN EWOULDBLOCK
 #endif
+
+/* TODO: zmapfile() */
 
 /*
  * read a whole file into memory
@@ -21,8 +24,8 @@ zreadfile(char *filename, size_t *sizeret)
 {
     void        *buf = NULL;
     struct stat  statbuf;
-    ssize_t      nread;
     size_t       nleft;
+    ssize_t      res;
     int          fd;
 
     if (sizeret) {
@@ -41,14 +44,13 @@ zreadfile(char *filename, size_t *sizeret)
 
         return NULL;
     }
-    nread = 0;
     nleft = statbuf.st_size;
     if (nleft) {
         buf = malloc(nleft);
         if (buf) {
             while (nleft) {
-                nread = read(fd, buf, nleft);
-                if (nread < 0) {
+                res = read(fd, buf, nleft);
+                if (res < 0) {
                     if (errno == EINTR) {
                         
                         continue;
@@ -58,15 +60,15 @@ zreadfile(char *filename, size_t *sizeret)
                         return NULL;
                     }
                 } else {
-                    nleft -= nread;
+                    nleft -= res;
                 }
-            }
-            if (sizeret) {
-                *sizeret = statbuf.st_size;
             }
         }
     }
     close(fd);
+    if (sizeret) {
+        *sizeret = statbuf.st_size;
+    }
 
     return buf;
 }
@@ -77,38 +79,43 @@ zreadfile(char *filename, size_t *sizeret)
  * - return 0 on success, -1 on failure
  */
 int
-zwritefile(char *filename, void *buf, size_t nb)
+zwritefile(char *filename, void *buf, size_t nb, size_t *sizeret)
 {
-    ssize_t nwritten;
     size_t  nleft;
+    ssize_t res;
     int     fd;
 
-    fd = open(filename, O_WRONLY);
+    fd = open(filename, O_WRONLY | O_TRUNC);
     if (fd < 0) {
+        fprintf(stderr, "failed to create %s\n", filename);
 
         return -1;
     }
-    nwritten = 0;
     nleft = nb;
-    if ((buf) && (nleft)) {
-        while (nleft) {
-            nwritten = write(fd, buf, nleft);
-            if (nwritten < 0) {
-                if (errno == EINTR) {
-                    
-                    continue;
+    if (nleft) {
+        buf = malloc(nleft);
+        if (buf) {
+            while (nleft) {
+                res = write(fd, buf, nleft);
+                if (res < 0) {
+                    if (errno == EINTR) {
+                        
+                        continue;
+                    } else {
+                        free(buf);
+                        
+                        return -1;
+                    }
                 } else {
-                    close(fd);
-                    unlink(filename);
-                    
-                    return -1;
+                    nleft -= res;
                 }
-            } else {
-                nleft -= nwritten;
             }
         }
     }
     close(fd);
+    if (sizeret) {
+        *sizeret = nb;
+    }
 
     return 0;
 }
@@ -117,28 +124,28 @@ zwritefile(char *filename, void *buf, size_t nb)
 ssize_t
 zread(int fd, void *buf, size_t nb)
 {
-    ssize_t len;
-    ssize_t nread;
+    size_t  len;
+    ssize_t res;
 
     len = 0;
     while (nb) {
-	    errno = 0;
-	    nread = read(fd, buf, nb);
-	    if (nread <= 0) {
-	        if (errno == EINTR) {
-
-		        continue;
-	        } else if (len == 0) {
-
-		        return -1;
-	        } else {
-
-	            return len;
-	        }
+        errno = 0;
+        res = read(fd, buf, nb);
+        if (res <= 0) {
+            if (errno == EINTR) {
+                
+                continue;
+            } else if (len == 0) {
+                
+                return -1;
+            } else {
+                
+                return len;
+            }
         }
-	    nb -= nread;
-	    len += nread;
-	    buf += nread;
+        nb -= res;
+        len += res;
+        buf += res;
     }
 
     return len;
@@ -148,28 +155,28 @@ zread(int fd, void *buf, size_t nb)
 ssize_t
 zreadnb(int fd, void *buf, size_t nb)
 {
-    ssize_t len;
-    ssize_t nread;
+    size_t  len;
+    ssize_t res;
 
     len = 0;
     while (nb) {
-	    errno = 0;
-	    nread = read(fd, buf, nb);
-	    if (nread <= 0) {
-	        if (errno == EINTR) {
-
-		        continue;
-	        } else if (errno == EAGAIN) {
-
-		        return len;
-	        } else {
-
-	            return -1;
+        errno = 0;
+        res = read(fd, buf, nb);
+        if (res <= 0) {
+            if (errno == EINTR) {
+                
+                continue;
+            } else if (errno == EAGAIN) {
+                
+                return len;
+            } else {
+                
+                return -1;
             }
         }
-	    nb -= nread;
-	    len += nread;
-	    buf += nread;
+        nb -= res;
+        len += res;
+        buf += res;
     }
 
     return len;
@@ -179,25 +186,25 @@ zreadnb(int fd, void *buf, size_t nb)
 ssize_t
 zwrite(int fd, void *buf, size_t nb)
 {
-    ssize_t len;
-    ssize_t nwritten;
+    size_t  len;
+    ssize_t res;
 
     len = 0;
     while (nb) {
-	    errno = 0;
-	    nwritten = write(fd, buf, nb);
-	    if (nwritten <= 0) {
-	        if (errno == EINTR) {
-
-		        continue;
-	        } else {
-
+        errno = 0;
+        res = write(fd, buf, nb);
+        if (res <= 0) {
+            if (errno == EINTR) {
+                
+                continue;
+            } else {
+                
                 return len;
             }
         }
-	    buf += nwritten;
-	    nb -= nwritten;
-	    len += nwritten;
+        nb -= res;
+        len += res;
+        buf += res;
     }
 
     return len;
@@ -207,28 +214,28 @@ zwrite(int fd, void *buf, size_t nb)
 ssize_t
 zwritenb(int fd, void *buf, size_t nb)
 {
-    ssize_t len;
-    ssize_t nwritten;
+    size_t  len;
+    ssize_t res;
 
     len = 0;
     while (nb) {
         errno = 0;
-	    nwritten = write(fd, buf, nb);
-	    if (nwritten <= 0) {
-	        if (errno == EINTR) {
-
-		        continue;
-	        } else if (errno == EAGAIN) {
-
-		        return len;
+        res = write(fd, buf, nb);
+        if (res <= 0) {
+            if (errno == EINTR) {
+                
+                continue;
+            } else if (errno == EAGAIN) {
+                
+                return len;
             } else {
-
+                
                 return -1;
             }
-	    }
-    	buf += nwritten;
-	    nb -= nwritten;
-	    len += nwritten;
+        }
+        nb -= res;
+        len += res;
+    	buf += res;
     }
 
     return len;

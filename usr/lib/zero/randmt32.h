@@ -7,7 +7,7 @@
 
 #include <stdint.h>
 
-#define RANDMT32_MAX 0xffffffff
+#define RANDMT32_MAX UINT32_MAX
 
 void          srandmt32(unsigned long seed);
 unsigned long randmt32(void);

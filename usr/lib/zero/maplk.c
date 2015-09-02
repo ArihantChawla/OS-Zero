@@ -7,7 +7,7 @@ zeromaplk *
 maplkinit(zeromaplk *maplk, long n)
 {
     uintptr_t  own;
-    void      *map;
+    zeromaplk *map;
     void      *bits;
 
     if (maplk) {
@@ -24,17 +24,18 @@ maplkinit(zeromaplk *maplk, long n)
         }
         own = 1;
         map->mtx = ZEROMTXINITVAL;
-        mtxlk(&map->mtx);
         maplk = map;
+        mtxlk(&maplk->mtx);
     }
-    map = calloc(n, sizeof(long) / CHAR_BIT);
-    if (!map && (own)) {
+    bits = calloc(n, sizeof(long) / CHAR_BIT);
+    if (!bits && (own)) {
+        mtxunlk(&maplk->mtx);
         free(maplk);
 
         return NULL;
     }
-    maplk->n = n;
-    maplk->bits = map;
+    maplk->nbit = n;
+    maplk->bits = bits;
     mtxunlk(&maplk->bits);
 
     return maplk;

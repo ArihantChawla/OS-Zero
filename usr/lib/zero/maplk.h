@@ -17,7 +17,7 @@ typedef struct {
     volatile long *bits;
 } zeromaplk;
 
-long maplkinit(zeromaplk *maplk, long n);
+zeromaplk * maplkinit(zeromaplk *maplk, long n);
 
 static __inline__ long
 maplktrybit(zeromaplk *maplk, long ndx)
@@ -29,11 +29,11 @@ maplktrybit(zeromaplk *maplk, long ndx)
     long ret;
 
     mtxlk(&maplk->mtx);
-    val = m_cmpsetbit(maplk->bits[word], bit);
+    val = m_cmpsetbit(&maplk->bits[word], bit);
     mtxunlk(&maplk->mtx);
     ret = !val;
 
-    return;
+    return ret;
 }
 
 static __inline__ void
@@ -41,12 +41,12 @@ maplkbit(zeromaplk *maplk, long ndx)
 {
     long word = ndx >> LONGSIZELOG2;
     long id = word & (LONGSIZE * CHAR_BIT - 1);
-    long bit = 1L << id;
     long val = 0L;
+    long bit = 1L << id;
 
     do {
         mtxlk(&maplk->mtx);
-        val = m_cmpsetbit(maplk->bits[word], bit);
+        val = m_cmpsetbit(&maplk->bits[word], bit);
         mtxunlk(&maplk->mtx);
     } while (val);
 
