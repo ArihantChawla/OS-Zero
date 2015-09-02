@@ -127,7 +127,7 @@ shunteval(SHUNT_TOKEN *tokq)
     SHUNT_TOKEN  *arg2;
     SHUNT_INT     dest;
     SHUNT_OP     *func;
-    long          radix;
+    uint_fast8_t  radix;
 
     while (tok) {
         tok2 = tok->next;
@@ -208,7 +208,7 @@ shunteval(SHUNT_TOKEN *tokq)
                         radix = SHUNT_RADIX;
                     }
                     tok1->radix = radix;
-                    fprintf(stderr, "RADIX: %ld\n", radix);
+                    fprintf(stderr, "RADIX: %ld\n", (long)radix);
 #if (SHUNTC)
                     shuntprintstr(tok1, tok1->data.ui64, radix);
 #endif
@@ -226,15 +226,19 @@ void
 shuntconvtobin(SHUNT_UINT val, char *str, size_t len)
 {
     long       l;
+#if (SHUNT_INTSIZE == 64)
     SHUNT_UINT mask = UINT64_C(1) << 63;
+#elif (SHUNT_INTSIZE == 32)
+    SHUNT_UINT mask = UINT32_C(1) << 31;
+#endif
 
-    if (len < 67) {
-        fprintf(stderr, "not enough size for 64 bits\n");
+    if (len < SHUNT_INTSIZE + 3) {
+        fprintf(stderr, "not enough size for %d bits\n", SHUNT_INTSIZE);
 
         return;
     }
     sprintf(str, "0b");
-    for (l = 2 ; l < 66 ; l++) {
+    for (l = 2 ; l < SHUNT_INTSIZE + 2 ; l++) {
         snprintf(&str[l], len, "%c", (val & mask) ? '1' : '0');
         mask >>= 1;
     }

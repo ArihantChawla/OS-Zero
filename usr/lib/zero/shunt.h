@@ -61,6 +61,7 @@ shuntqueue(SHUNT_TOKEN *token, SHUNT_TOKEN **queue, SHUNT_TOKEN **tail)
             *(stk) = (tok);                                             \
         }                                                               \
     } while (0)
+
 static __inline__ SHUNT_TOKEN *
 shuntpop(SHUNT_TOKEN **stack)
 {
