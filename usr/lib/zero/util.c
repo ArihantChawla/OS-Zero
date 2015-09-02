@@ -1,3 +1,6 @@
+#define USE_GETRLIMIT 0
+#define USE_SYSCONF   1
+
 #if (USE_GETRLIMIT)
 #include <sys/resource.h>
 #else

@@ -5,7 +5,13 @@
 #include <zero/shuntc.h>
 #endif
 
-extern void shuntconvtobin(SHUNT_UINT val, char *str, size_t len);
+extern void shuntprintbin(SHUNT_UINT val, char *str, size_t len);
+
+#define SHUNT_BIN      2
+#define SHUNT_OCT      8
+#define SHUNT_DEC      10
+#define SHUNT_HEX      16
+#define SHUNT_UNSIGNED SHUNTCUNSIGNED
 
 /*
  * USAGE
@@ -13,7 +19,7 @@ extern void shuntconvtobin(SHUNT_UINT val, char *str, size_t len);
  * SHUNT_TOKEN is a structure with at least the following fields:
  * - prev and next; pointers to previous and next queue item (structure)
  * - type; C-language operation, function, separator, integral types, pointer
- * - param; e.g. type wordsize
+ * - parm; e.g. type wordsize
  */
 
 /*
@@ -76,40 +82,52 @@ shuntpop(SHUNT_TOKEN **stack)
     return _token;
 }
 
-#define shuntprintstr(tok, val, rad)                                    \
+#define shuntprintstr(tok, val, radix)                                  \
     do {                                                                \
-        switch (rad) {                                                  \
-            case 2:                                                     \
-                shuntconvtobin((val), (tok)->str, (tok)->slen);         \
+        long _len = 0;                                                  \
                                                                         \
-                break;                                                  \
-            case 8:                                                     \
-                snprintf((tok)->str, (tok)->slen, "0%llo", (long long)(val)); \
-                                                                        \
-                break;                                                  \
-            case 10:                                                    \
-            default:                                                    \
-                if ((tok)->type == SHUNT_INT64) {                       \
-                    snprintf((tok)->str, (tok)->slen, "%lld", (long long)(val)); \
-                } else {                                                \
-                    snprintf((tok)->str, (tok)->slen, "%llu", (unsigned long long)(val)); \
+        switch (radix) {                                                \
+            case SHUNT_BIN:                                             \
+                if (tok->slen >= SHUNT_INTSIZE + 4) {                   \
+                    shuntprintbin((val), (tok)->str, (tok)->slen);      \
+                    _len = SHUNT_INTSIZE;                               \
                 }                                                       \
                                                                         \
                 break;                                                  \
-            case 16:                                                    \
-                if (val <= 0xff) {                                      \
-                    sprintf((tok)->str, "0x%02llx", (long long)(val));  \
-                } else if (val <= 0xffff) {                             \
-                    sprintf((tok)->str, "0x%04llx", (long long)(val));  \
-                } else if (val <= 0xffffffff) {                         \
-                    sprintf((tok)->str, "0x%08llx", (long long)(val));  \
+            case SHUNT_OCT:                                             \
+                _len = snprintf((tok)->str, (tok)->slen, "0%llo", \
+                                (long long)(val));                      \
+                                                                        \
+                break;                                                  \
+            case SHUNT_DEC:                                             \
+            default:                                                    \
+                if ((tok)->type == SHUNT_INT64) {                       \
+                    _len = snprintf((tok)->str, (tok)->slen, "%lld",    \
+                                    (long long)(val));                  \
                 } else {                                                \
-                    sprintf((tok)->str, "0x%016llx", (long long)(val)); \
+                    _len = snprintf((tok)->str, (tok)->slen, "%llu",    \
+                                    (unsigned long long)(val));         \
+                }                                                       \
+                                                                        \
+                break;                                                  \
+            case SHUNT_HEX:                                             \
+                if (val <= 0xffU) {                                     \
+                    _len = sprintf((tok)->str, "0x%02llx",              \
+                                   (long long)(val));                   \
+                } else if (val <= 0xffffU) {                            \
+                    _len = sprintf((tok)->str, "0x%04llx",              \
+                                   (long long)(val));                   \
+                } else if (val <= 0xffffffffU) {                        \
+                    _len = sprintf((tok)->str, "0x%08llx",              \
+                            (long long)(val));                          \
+                } else {                                                \
+                    _len = sprintf((tok)->str, "0x%016llx",             \
+                                   (long long)(val));                   \
                 }                                                       \
                                                                         \
                 break;                                                  \
         }                                                               \
-        (tok)->len = strlen((tok)->str);                                \
+        (tok)->len = _len;                                              \
     } while (0)
 
 #endif /* __ZERO_SHUNT_H__ */

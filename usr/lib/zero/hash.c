@@ -6,8 +6,12 @@
  * The full original source is at http://www.eetbeetee.org/h.c
  */
 
-#if (__KERNEL__)
+#if defined(__KERNEL__)
 #undef HASHTEST
+#define HASHTEST 0
+#elif defined(HASHTEST)
+#define HASHTEST 1
+#else
 #define HASHTEST 0
 #endif
 

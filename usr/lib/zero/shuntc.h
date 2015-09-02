@@ -19,21 +19,30 @@
 #define SHUNT_RIGHTPAREN SHUNTCRIGHTPAREN
 
 struct shuntctoken {
-    long  type;
-    char *str;
-    long  slen;
-    long  len;
-    long  parm;
-    long  radix;
-    long  sign;
-    long  flg;
+    uint_fast8_t  type;         // token type
+    char         *str;          // string presentation of value
+    uint_fast8_t  slen;         // length of string buffer in characters
+    uint_fast8_t  len;          // length of string in characters
+    uint_fast8_t  parm;         // e.g. type size in bytes/octets - 1
+    uint_fast8_t  radix;        // string presentation, e.g. SHUNT_HEX
+//    uint_fast8_t  sign;         // sign-bit
+    uint_fast8_t  flg;          // token flags, e.g. SHUNTCZERO
+    /* value union */
     union {
-        int64_t     i64;
-        uint64_t    ui64;
-        float       f;
-        double      d;
-        long double ld;
+        int8_t       i8;
+        uint8_t      ui8;
+        int16_t      i16;
+        uint16_t     ui16;
+        int32_t      i32;
+        uint32_t     ui32;
+        int64_t      i64;
+        uint64_t     ui64;
+        float        f;
+        double       d;
+        long double  ld;
+        void        *ptr;
     } data;
+    /* previous and next in queue/list */
     struct shuntctoken *prev;
     struct shuntctoken *next;
 };
@@ -55,8 +64,8 @@ extern uint_fast8_t  shuntcradix;
     (shuntcopprectab[(tok)->type] & SHUNTCRTOL)
 #define shuntcisvalue(tok)                                              \
     ((tok) && ((tok)->type == SHUNTCINT || (tok)->type == SHUNTCUINT))
-#define shuntcwordsize(tok)                                             \
-    ((tok)->parm & SHUNTCPARMSIZEMASK)
+#define shuntctypesize(tok)                                             \
+    (((tok)->parm & SHUNTCPARMSIZEMASK) + 1)
 #define shuntcisfunc(tok)                                               \
     ((tok) && (tok)->type == SHUNTCFUNC)
 #define shuntcissep(tok)                                                \

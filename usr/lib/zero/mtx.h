@@ -12,7 +12,7 @@
 
 typedef volatile long zeromtx;
 
-#if (__KERNEL__)
+#if defined(__KERNEL__)
 #undef PTHREAD
 #define PTHREAD        0
 #endif
@@ -23,14 +23,14 @@ typedef volatile long zeromtx;
 #endif
 
 #include <zero/asm.h>
-//#if (__KERNEL__) && (__MTKERNEL__)
-#if (__KERNEL__)
+//#if defined(__KERNEL__) && (__MTKERNEL__)
+#if defined(__KERNEL__)
 #include <kern/proc/sched.h>
 #elif (PTHREAD)
 /* on some Linux setups, the pthread library declares no prototype */
 extern int pthread_yield(void);
 #endif
-#if defined(__linux__) && !(__KERNEL__)
+#if defined(__linux__) && !defined(__KERNEL__)
 #include <sched.h>
 #endif
 
@@ -64,9 +64,9 @@ mtxlk2(volatile long *lp, long val)
     do {
         res = m_cmpswap(lp, ZEROMTXINITVAL, val);
         if (res) {
-#if defined(__linux__) && !(__KERNEL__)
+#if defined(__linux__) && !defined(__KERNEL__)
             sched_yield();
-#elif (__KERNEL__)
+#elif defined(__KERNEL__)
             schedyield();
 #elif (PTHREAD)
             pthread_yield();

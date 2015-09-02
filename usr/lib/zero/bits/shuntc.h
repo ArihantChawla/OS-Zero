@@ -5,6 +5,8 @@
 
 #define SHUNTCINTSIZE    64
 
+/* token types */
+
 /* C integer operations */
 #define SHUNTCILL        0                      // illegal/unitialised operation
 #define SHUNTCNOT        1                      // logical NOT
@@ -48,6 +50,17 @@
 #define SHUNTCLAST       SHUNTCMATRIX           // # of last defined token type
 #define SHUNTCNTAB       (SHUNTCLAST + 1)       // # of items in tables
 #define SHUNTCRTOL       (1U << 7)              // left-to-right precedence
+
+/* token sign */
+
+#define SHUNTCUNSIGNED   0
+#define SHUNTCSIGNED     1
+
+/* token flags */
+
+#define SHUNTCZERO       (1 << 0)
+#define SHUNTCUNDERFLOW  (1 << 1)
+#define SHUNTCOVERFLOW   (1 << 2)
 
 #endif /* __ZERO_BITS_SHUNTC_H__ */
 

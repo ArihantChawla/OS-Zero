@@ -4,7 +4,7 @@
 #include <stdlib.h>
 #include <zero/mtx.h>
 #include <zero/trix.h>
-#if (__KERNEL__)
+#if defined(__KERNEL__)
 #include <limits.h>
 #include <zero/param.h>
 #endif

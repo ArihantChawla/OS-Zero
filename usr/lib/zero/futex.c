@@ -1,4 +1,4 @@
-#if (ZEROFUTEX)
+#if defined(ZEROFUTEX)
 
 /*
  * TODO

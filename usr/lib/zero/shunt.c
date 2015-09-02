@@ -54,7 +54,6 @@ shuntparse(SHUNT_TOKEN *tokq)
                 if ((!shuntcisrtol(tok)
                      && shuntcopprec(tok) <= shuntcopprec(tok2))
                     || shuntcopprec(tok) < shuntcopprec(tok2)) {
-//                    fprintf(stderr, "POP: %s (%s)\n", tok2->str, tok->str);
                     tok2 = shuntpop(&stack);
                     shuntqueue(tok2, &q, &tail);
                     tok2 = stack;
@@ -63,7 +62,6 @@ shuntparse(SHUNT_TOKEN *tokq)
                     break;
                 }
             }
-//            fprintf(stderr, "PUSH: %s\n", tok->str);
             shuntpush(tok, &stack);
         } else if (tok->type == SHUNT_LEFTPAREN) {
             shuntpush(tok, &stack);
@@ -91,12 +89,6 @@ shuntparse(SHUNT_TOKEN *tokq)
         }
         tok1 = tok3;
     }
-#if 0
-    fprintf(stderr, "QUEUE: ");
-    zpcprintqueue(q);
-    fprintf(stderr, "STACK: ");
-    zpcprintqueue(stack);
-#endif
     do {
         tok1 = stack;
         if (shuntcisop(tok1)) {
@@ -149,15 +141,14 @@ shunteval(SHUNT_TOKEN *tokq)
                 }
             }
             arg1 = tok1;
-#if (SHUNTZPC)
-            fprintf(stderr, "ARGS:\n");
+#if (SHUNTC) && 0
             if (arg1) {
-                zpcprinttok(arg1);
+                shuntcprinttok(arg1);
             }
             if (arg2) {
-                zpcprinttok(arg2);
+                shuntcprinttok(arg2);
             }
-#endif /* SHUNTZPC */
+#endif /* SHUNTC */
             switch (SHUNT_NARGTAB[tok->type]) {
                 case 2:
                     if (!arg2) {
@@ -178,26 +169,29 @@ shunteval(SHUNT_TOKEN *tokq)
             if (func) {
                 if (arg2) {
                     dest = func(arg2, arg1);
-                    if (arg1->radix == 16 || arg2->radix == 16) {
-                        tok1->radix = 16;
-                    } else if (arg1->radix == 8 || arg2->radix == 8) {
-                        tok1->radix = 8;
-                    } else if (arg1->radix == 2 || arg2->radix == 2) {
-                        tok1->radix = 2;
+                    if (arg1->radix == SHUNT_HEX
+                        || arg2->radix == SHUNT_HEX) {
+                        tok1->radix = SHUNT_HEX;
+                    } else if (arg1->radix == SHUNT_OCT
+                               || arg2->radix == SHUNT_OCT) {
+                        tok1->radix = SHUNT_OCT;
+                    } else if (arg1->radix == SHUNT_BIN
+                               || arg2->radix == SHUNT_BIN) {
+                        tok1->radix = SHUNT_BIN;
                     } else {
-                        tok1->radix = 10;
+                        tok1->radix = SHUNT_DEC;
                     }
-#if (SMARTTYPES)
+#if defined(SHUNTSMARTTYPES)
                     tok1->type = arg1->type;
-                    tok1->flags = arg1->flags;
+                    tok1->flg = arg1->flg;
                     tok1->sign = arg1->sign;
 #endif
                 } else if (arg1) {
                     dest = func(arg1, arg2);
                     tok1->radix = arg1->radix;
-#if (SMARTTYPES)
+#if defined(SHUNTSMARTTYPES)
                     tok1->type = arg2->type;
-                    tok1->flags = arg2->flags;
+                    tok1->flg = arg2->flg;
                     tok1->sign = arg2->sign;
 #endif
                 }
@@ -208,7 +202,6 @@ shunteval(SHUNT_TOKEN *tokq)
                         radix = SHUNT_RADIX;
                     }
                     tok1->radix = radix;
-                    fprintf(stderr, "RADIX: %ld\n", (long)radix);
 #if (SHUNTC)
                     shuntprintstr(tok1, tok1->data.ui64, radix);
 #endif
@@ -223,7 +216,7 @@ shunteval(SHUNT_TOKEN *tokq)
 }
 
 void
-shuntconvtobin(SHUNT_UINT val, char *str, size_t len)
+shuntprintbin(SHUNT_UINT val, char *str, size_t len)
 {
     long       l;
 #if (SHUNT_INTSIZE == 64)
@@ -232,14 +225,14 @@ shuntconvtobin(SHUNT_UINT val, char *str, size_t len)
     SHUNT_UINT mask = UINT32_C(1) << 31;
 #endif
 
-    if (len < SHUNT_INTSIZE + 3) {
-        fprintf(stderr, "not enough size for %d bits\n", SHUNT_INTSIZE);
+    if (len < SHUNT_INTSIZE + 4) {
+        fprintf(stderr, "not enough room for %d bits\n", SHUNT_INTSIZE);
 
         return;
     }
     sprintf(str, "0b");
     for (l = 2 ; l < SHUNT_INTSIZE + 2 ; l++) {
-        snprintf(&str[l], len, "%c", (val & mask) ? '1' : '0');
+        sprintf(&str[l], "%c", (val & mask) ? '1' : '0');
         mask >>= 1;
     }
     str[l] = '\0';

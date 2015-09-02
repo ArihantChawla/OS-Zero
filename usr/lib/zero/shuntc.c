@@ -148,19 +148,19 @@ shuntcinc64(struct shuntctoken *arg1, struct shuntctoken *dummy)
     SHUNT_INT src = arg1->data.i64;
 
     (void)*dummy;
-#if (SMARTTYPES)
-    arg1->flags = 0;
+#if defined(SHUNTSMARTTYPES)
+    arg1->flg = 0;
     if (src < SHUNT_INTMAX) {
         src++;
     } else if (arg1->type == SHUNT_INT64) {
         if (arg1->type == SHUNT_USERSIGNED) {
-            arg1->flags |= SHUNT_OVERFLOW;
+            arg1->flg |= SHUNTCOVERFLOW;
             src++;
         } else {
             src++;
             if (!src) {
                 if (!src) {
-                    arg1->flags |= SHUNTCZERO;
+                    arg1->flg |= SHUNTCZERO;
                 }
             } else if (src > SHUNT_INTMAX) {
                 arg1->type = SHUNT_UINT64;
@@ -169,7 +169,7 @@ shuntcinc64(struct shuntctoken *arg1, struct shuntctoken *dummy)
         }
     } else if (arg1->type == SHUNT_UINT64) {
         if (src == USHUNT_INTMAX) {
-            arg1->flags |= SHUNT_OVERFLOW;
+            arg1->flg |= SHUNTCOVERFLOW;
         }
         src++;
     }
@@ -186,15 +186,15 @@ shuntcdec64(struct shuntctoken *arg1, struct shuntctoken *dummy)
     SHUNT_INT src = arg1->data.i64;
 
     (void)*dummy;
-#if (SMARTTYPES)
-    arg1->flags = 0;
+#if defined(SHUNTSMARTTYPES)
+    arg1->flg = 0;
     if (src == INT64_MIN) {
         if (arg1->type == SHUNT_INT64) {
-            arg1->flags |= SHUNTCUNDERFLOW;
+            arg1->flg |= SHUNTCUNDERFLOW;
         }
     } else if (arg1->type == SHUNT_UINT64) {
         if (!src) {
-            arg1->flags |= SHUNTCUNDERFLOW;
+            arg1->flg |= SHUNTCUNDERFLOW;
         }
     }
     src--;
