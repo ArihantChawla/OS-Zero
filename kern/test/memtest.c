@@ -206,7 +206,7 @@ diag(void)
                 hdr1 = hdr2;
             }
         }
-        mtxlk(&lktab[bkt]);
+        mtxunlk(&lktab[bkt]);
         n++;
         printf("%lu \n", n);
     }

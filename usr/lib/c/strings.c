@@ -15,13 +15,19 @@ bzero(void *ptr, size_t nb)
     long    zw = 0;
     long   *lptr;
     long    n;
+    long    cnt;
     long    nleft;
+    size_t  val;
 
-    n = sizeof(long) - (nb & (sizeof(long) - 1));
-    nleft = nb & ~(sizeof(long) - 1);
+    val = sizeof(long);
+    n = (uintptr_t)bptr & (val - 1);
+    if (n) {
+        cnt = val - n;
+    }
+    nleft -= n;
     while (n--) {
         /* set unaligned leading bytes */
-        *bptr = zb;
+        *bptr++ = zb;
     }
     lptr = (long *)bptr;
     n = nleft >> (3 + LONGSIZELOG2 - 1);

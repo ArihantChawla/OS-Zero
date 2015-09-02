@@ -60,7 +60,7 @@ kbzero(void *adr, size_t len)
 
     if (len > (1UL << (LONGSIZELOG2 + 3))) {
         /* zero non-cacheline-aligned head long-word by long-word */
-        nleft = ((uintptr_t)adr) & ((1UL << (LONGSIZELOG2 + 3)) - 1);
+        nleft = ((uintptr_t)adr) & ((1UL << LONGSIZELOG2) - 1);
         if (nleft) {
             nleft = (1UL << (LONGSIZELOG2 + 3)) - nleft;
             nleft >>= LONGSIZELOG2;
@@ -69,15 +69,14 @@ kbzero(void *adr, size_t len)
                 *ptr++ = val;
             }
         }
-        nleft = len & ~((1UL << (LONGSIZELOG2 + 3)) - 1);
+        nleft = len & ~((1UL << LONGSIZELOG2) - 1);
     }
     next = ptr;
     if (len >= (1UL << (LONGSIZELOG2 + 3))) {
         nleft = len & ((1UL << (LONGSIZELOG2 + 3)) - 1);
         len >>= LONGSIZELOG2 + 3;
         /* zero aligned cachelines */
-        while (len) {
-            len--;
+        while (len--) {
             ptr[0] = val;
             ptr[1] = val;
             ptr[2] = val;

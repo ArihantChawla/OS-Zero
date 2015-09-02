@@ -10,11 +10,13 @@
 #if (MEMTEST)
 #include <stdio.h>
 #include <string.h>
+#if (__KERNEL__)
 #define kprintf printf
+#endif
 #define kbzero bzero
 #endif
 
-#define MEMDIAG   0
+#define MEMDIAG   1
 #define SLABMUTEX 0
 
 extern unsigned long  npagefree;
@@ -30,7 +32,7 @@ static volatile long  slablk;
  *   free regions are kept as big as possible.
  */
 
-#if (MEMTEST) || (MEMDIAG)
+#if (__KERNEL__ && (MEMDIAG))
 void
 slabdiag(struct memzone *zone)
 {
@@ -47,15 +49,19 @@ slabdiag(struct memzone *zone)
             hdr1 = zone->tab[bkt];
             if (hdr1) {
                 if (slabgetprev(hdr1, zone)) {
+#if (__KERNEL__)
                     kprintf(stderr, "DIAG: non-NULL prev on head of list %ld\n",
                             bkt);
+#endif
                     slabprint(hdr1);
                     
                     *null = *hdr1;
                 }
                 if (slabgetbkt(hdr1) != bkt) {
+#if (__KERNEL__)
                     kprintf(stderr, "DIAG: invalid bucket ID on head of list %ld\n",
                             bkt);
+#endif
                     slabprint(hdr1);
                     
                     
@@ -64,16 +70,20 @@ slabdiag(struct memzone *zone)
                 hdr2 = slabgetnext(hdr1, zone);
                 while (hdr2) {
                     if (slabgetprev(hdr2, zone) != hdr1) {
+#if (__KERNEL__)
                         kprintf(stderr, "DIAG: invalid prev on list %ld\n",
                                 bkt);
+#endif
                         slabprint(hdr1);
                         
                         
                         *null = *hdr1;
                     }
                     if (slabgetbkt(hdr2) != bkt) {
+#if (__KERNEL__)
                         kprintf(stderr, "DIAG: invalid bucket ID on list %ld\n",
                                 bkt);
+#endif
                         slabprint(hdr1);
                         
                         
@@ -105,23 +115,23 @@ slabinitzone(struct memzone *zone, unsigned long base, unsigned long nb)
     /* configure magazine headers */
     hdrsz = nslab * sizeof(struct maghdr);
     zone->nhdr = nslab;
+#if (__KERNEL__)
     kprintf("SLAB: reserved %ld bytes for %ld headers\n", sz, nslab);
+#endif
     magvirtzone.nhdr = nslab;
     magvirtzone.hdrtab = (void *)adr;
     kbzero((void *)adr, hdrsz);
     adr += hdrsz;
-#if 0
     /* configure slab headers */
     hdrsz = nslab * sizeof(struct slabhdr);
     adr = rounduppow2(adr, PAGESIZE);
     zone->hdrtab = (void *)adr;
     kbzero((void *)adr, hdrsz);
     adr += hdrsz;
-#endif
     if (adr & (SLABMIN - 1)) {
         adr = rounduppow2(adr, SLABMIN);
     }
-#if (MEMTEST) || (MEMDIAG)
+#if (__KERNEL__ && (MEMDIAG))
     slabdiag(zone);
 #endif
 
@@ -146,14 +156,17 @@ slabinit(struct memzone *virtzone, unsigned long base, unsigned long nbphys)
         nbphys -= adr - base;
         nbphys = rounddownpow2(nbphys, SLABMIN);
     }
-    kprintf("%ld kilobytes kernel virtual memory free @ 0x%lx\n", nbphys >> 10, adr);
+#if (__KERNEL__)
+    kprintf("%ld kilobytes kernel virtual memory free @ 0x%lx\n",
+            nbphys >> 10, adr);
+#endif
     while ((nbphys) && bkt >= SLABMINLOG2) {
         if (nbphys & sz) {
             hdr = slabgethdr(adr, virtzone);
             slabclrinfo(hdr);
+            slabclrlink(hdr);
             slabsetbkt(hdr, bkt);
             slabsetfree(hdr);
-            slabclrlink(hdr);
             slabtab[bkt] = hdr;
             nbphys -= sz;
             adr += sz;
@@ -161,7 +174,7 @@ slabinit(struct memzone *virtzone, unsigned long base, unsigned long nbphys)
         bkt--;
         sz >>= 1;
     }
-#if (MEMTEST) || (MEMDIAG)
+#if (__KERNEL__ && (MEMDIAG))
     slabdiag(virtzone);
 #endif
 
@@ -189,6 +202,7 @@ slabcomb(struct memzone *zone, struct slabhdr *hdr)
     struct slabhdr  *hdr3;
     struct slabhdr  *hdr4;
 
+    hdr1 = hdr;
     while ((prev) || (next)) {
         prev ^= prev;
         next ^= next;
@@ -203,8 +217,8 @@ slabcomb(struct memzone *zone, struct slabhdr *hdr)
             if (bkt2 == bkt1 && slabisfree(hdr1)) {
                 prev++;
                 ret++;
-                hdr3 = slabgetprev(hdr, zone);
-                hdr4 = slabgetnext(hdr, zone);
+                hdr3 = slabgetprev(hdr1, zone);
+                hdr4 = slabgetnext(hdr1, zone);
                 if ((hdr3) && (hdr4)) {
                     slabsetnext(hdr3, hdr4, zone);
                     slabsetprev(hdr4, hdr3, zone);
@@ -224,22 +238,18 @@ slabcomb(struct memzone *zone, struct slabhdr *hdr)
                 slabclrinfo(hdr);
                 slabclrlink(hdr);
 //                bkt2++;
-#if 0
-                slabclrinfo(hdr1);
-                slabclrlink(hdr1);
-                slabsetbkt(hdr1, bkt2);
-                slabsetfree(hdr1);
-                hdr = hdr1;
-#endif
                 bkt1++;
                 ofs <<= 1;
 #if (SLABMUTEX)
             } else if (bkt1 != bkt) {
                 mtxunlk(&zone->lktab[bkt1]);
+                hdr1 = NULL;
 #endif
             }
         }
-        hdr1 = hdr;
+        if (!hdr1) {
+            hdr1 = hdr;
+        }
         if (hdr1 + ofs < (struct slabhdr *)hdrtab + nhdr) {
             hdr2 = hdr1 + ofs;
 #if (SLABMUTEX)
@@ -282,20 +292,25 @@ slabcomb(struct memzone *zone, struct slabhdr *hdr)
             } else if (bkt1 != bkt) {
                 mtxunlk(&zone->lktab[bkt1]);
 #endif
+                hdr1 = NULL;
             }
         }
-        hdr = hdr1;
+        if (hdr1) {
+            hdr = hdr1;
+        }
     }
     if (ret) {
-        slabsetfree(hdr);
+        slabclrinfo(hdr);
         slabclrlink(hdr);
+        slabsetbkt(hdr, bkt1);
+        slabsetfree(hdr);
         if (slabtab[bkt1]) {
             slabsetprev(slabtab[bkt1], hdr, zone);
             slabsetnext(hdr, slabtab[bkt1], zone);
         }
         slabtab[bkt1] = hdr;
     }
-#if (MEMTEST) || (MEMDIAG)
+#if (__KERNEL__ && (MEMDIAG))
     slabdiag(zone);
 #endif
 
@@ -337,7 +352,7 @@ slabsplit(struct memzone *zone, struct slabhdr *hdr, unsigned long dest)
         }
         slabsetnext(hdr1, slabtab[bkt], zone);
         slabtab[bkt] = hdr1;
-#if (SLABMUTEX)
+#if (SLABMUTEX) && 0
         if (bkt != dest) {
             mtxunlk(&zone->lktab[bkt]);
         }
@@ -345,6 +360,7 @@ slabsplit(struct memzone *zone, struct slabhdr *hdr, unsigned long dest)
     }
 //    hdr1 = slabgethdr(ptr, zone);
     slabclrinfo(hdr);
+    slabclrlink(hdr);
     slabsetbkt(hdr, dest);
     slabsetfree(hdr);
     if (slabtab[dest]) {
@@ -352,7 +368,7 @@ slabsplit(struct memzone *zone, struct slabhdr *hdr, unsigned long dest)
         slabsetnext(hdr, slabtab[dest], zone);
     }
     slabtab[dest] = hdr;
-#if (MEMTEST) || (MEMDIAG)
+#if (__KERNEL__ && (MEMDIAG))
     slabdiag(zone);
 #endif
         
@@ -419,7 +435,7 @@ slaballoc(struct memzone *zone, unsigned long nb, unsigned long flg)
 #endif
     }
     mtxunlk(&slablk);
-#if (MEMTEST) || (MEMDIAG)
+#if (__KERNEL__ && (MEMDIAG))
     slabdiag(zone);
 #endif
 
@@ -456,7 +472,7 @@ slabfree(struct memzone *zone, void *ptr)
     mtxunlk(&zone->lktab[bkt]);
 #endif
     mtxunlk(&slablk);
-#if (MEMTEST) || (MEMDIAG)
+#if (__KERNEL__ && (MEMDIAG))
     slabdiag(zone);
 #endif
 

@@ -14,11 +14,8 @@ main(int argc, char *argv[])
     long  tm;
     
     PROFDECLCLK(clk);
-    ptr = malloc(4 * PAGESIZE);
+    ptr = calloc(4 * PAGESIZE);
     memset(ptr, 0xff, 4 * PAGESIZE);
-#if 0
-    memset((uint8_t *)ptr + 2 * PAGESIZE, 0xff, PAGESIZE);
-#endif
     profinitclk(clk);
     profstartclk(clk);
     memset((uint8_t *)ptr + PAGESIZE, 0, PAGESIZE);

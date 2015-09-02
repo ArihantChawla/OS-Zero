@@ -533,59 +533,60 @@ memset(void *ptr,
     unsigned long *ulptr1;
     unsigned long *ulptr2;
     uint8_t       *u8ptr;
-    long           l;
-    size_t         cnt;
-    size_t         n;
-    size_t         nleft;
     unsigned long  ul;
-    size_t         val;
-    unsigned long  u8;
+    long           val;
+    size_t         nleft;
+    size_t         n;
+    size_t         cnt;
+    size_t         tmp;
+    uint8_t        u8;
 
     if (!nb) {
 
         return ptr;
     }
-
     nleft = nb;
     u8ptr = ptr;
+    tmp = sizeof(unsigned long) - 1;
     val = sizeof(unsigned long);
-    u8 = (unsigned long)ch;
-    if (nleft >= (val << 3)) {
-        cnt = (uintptr_t)u8ptr & (val - 1);
-        if (cnt) {
-            cnt = val - cnt;
-            nleft -= cnt;
-            while (cnt--) {
+    u8 = (uint8_t)ch;
+    if (nleft >= (val << 4)) {
+        n = (uintptr_t)u8ptr & tmp;
+        if (n) {
+            n = val - n;
+            nleft -= n;
+            while (n--) {
                 *u8ptr++ = u8;
             }
         }
         ul = ch;
-        ulptr1 = (unsigned long *)u8ptr;
+        tmp = CLSIZE - 1;
         ul |= (ch << 8);
-        val = LONGSIZELOG2 + 3;
+        ulptr1 = (unsigned long *)u8ptr;
         ul |= (ul << 16);
-        cnt = nleft >> ++val;
+        val = CLSIZE;
 #if (LONGSIZE == 8)
         ul |= (ul << 32);
 #endif
-        nleft -= cnt << val;
-        val = 8;
-        val = sizeof(unsigned long);
-        cnt = 0;
-        n = (uintptr_t)ulptr1 & (PAGESIZE - 1);
+        n = (uintptr_t)ulptr1 & tmp;
         if (n) {
-            cnt = val - cnt;
+            n = val - n;
+            n >>= LONGSIZELOG2;
+            n = min(n, nleft >> LONGSIZELOG2);
+            if (n) {
+                nleft -= n << LONGSIZELOG2;;
+                while (n--) {
+                    *ulptr1++ = ul;
+                }
+            }
         }
-        while (cnt--) {
-            *ulptr1++ = ul;
-        }
-        val = PAGESIZELOG2;
-        cnt = nleft >> PAGESIZELOG2;
-        nleft -= cnt << val;
-        n = PAGESIZE >> (LONGSIZELOG2 + 3);
-        while (cnt--) {
-            ulptr2 = ulptr1 + (PAGESIZE >> (LONGSIZELOG2 + 1));
-            for ( l = 0 ; l < n ; n++) {
+        val = 8;
+        n = nleft >> PAGESIZELOG2;
+        nleft -= n << val;
+        while (n--) {
+            cnt = PAGESIZE >> (LONGSIZELOG2 + 1);
+            ulptr2 = ulptr1 + cnt;
+            while (cnt--) {
                 ulptr1[0] = ul;
                 ulptr2[0] = ul;
                 ulptr1[1] = ul;
@@ -604,12 +605,12 @@ memset(void *ptr,
                 ulptr2[7] = ul;
                 ulptr1 += val;
                 ulptr2 += val;
+                ulptr1 = ulptr2;
             }
-            ulptr1 = ulptr2;
         }
         val = LONGSIZELOG2;
-        cnt = nleft >> val;
-        nleft -= cnt << val;
+        n = nleft >> val;
+        nleft -= n << val;
         while (cnt--) {
             *ulptr1++ = ul;
         }
@@ -632,22 +633,21 @@ memset(void *ptr,
 {
     unsigned long *ulptr;
     uint8_t       *u8ptr;
+    unsigned long  ul;
     size_t         cnt;
     size_t         nleft;
-    unsigned long  ul;
     size_t         val;
-    unsigned long  u8;
+    uint8_t        u8;
 
     if (!n) {
 
         return ptr;
     }
-
     nleft = n;
     u8ptr = ptr;
     val = sizeof(unsigned long);
-    u8 = (unsigned long)ch;
-    if (nleft >= (val << 3)) {
+    u8 = (uint8_t)ch;
+    if (nleft >= (val << 5)) {
         cnt = (uintptr_t)u8ptr & (val - 1);
         if (cnt) {
             cnt = val - cnt;
@@ -656,27 +656,30 @@ memset(void *ptr,
                 *u8ptr++ = u8;
             }
         }
-        ul = ch;
+        u8 = (uint8_t)ch;
+        ul = u8;
         ulptr = (unsigned long *)u8ptr;
-        ul |= (ch << 8);
+        ul |= (ul << 8);
         val = LONGSIZELOG2 + 3;
         ul |= (ul << 16);
         cnt = nleft >> val;
 #if (LONGSIZE == 8)
         ul |= (ul << 32);
 #endif
-        nleft -= cnt << val;
-        val = 8;
-        while (cnt--) {
-            ulptr[0] = ul;
-            ulptr[1] = ul;
-            ulptr[2] = ul;
-            ulptr[3] = ul;
-            ulptr[4] = ul;
-            ulptr[5] = ul;
-            ulptr[6] = ul;
-            ulptr[7] = ul;
-            ulptr += val;
+        if (cnt) {
+            nleft -= cnt << val;
+            val = 8;
+            while (cnt--) {
+                ulptr[0] = ul;
+                ulptr[1] = ul;
+                ulptr[2] = ul;
+                ulptr[3] = ul;
+                ulptr[4] = ul;
+                ulptr[5] = ul;
+                ulptr[6] = ul;
+                ulptr[7] = ul;
+                ulptr += val;
+            }
         }
         u8ptr = (uint8_t *)ulptr;
     }
