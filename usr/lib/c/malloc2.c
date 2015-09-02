@@ -12,37 +12,37 @@
  * - fix mallinfo() to return proper information
  */
 #undef MALLOCSTAT
-#define MALLOCSTAT       0
-#define MALLOCSTKNDX     0
-#define MALLOCCONSTSLABS 0
-#define MALLOCDYNARN     0
+#define MALLOCSTAT        1
+#define MALLOCSTKNDX      0
+#define MALLOCCONSTSLABS  0
+#define MALLOCDYNARN      0
 
-#define MALLOCTRACE      0
+#define MALLOCTRACE       1
 #if defined(NVALGRIND)
-#define MALLOCVALGRIND   0
+#define MALLOCVALGRIND    0
 #else
-#define MALLOCVALGRIND   1
+#define MALLOCVALGRIND    1
 #endif
-#define MALLOCSMALLSLABS 1
-#define MALLOCSIG        1
-#define MALLOC4LEVELTAB  1
+#define MALLOCSMALLSLABS  0
+#define MALLOCSIG         1
+#define MALLOC4LEVELTAB   1
 
-#define MALLOCNOPTRTAB   0
-#define MALLOCNARN       4
-#define MALLOCEXPERIMENT 0
-#define MALLOCNBUFHDR    16
+#define MALLOCNOPTRTAB    0
+#define MALLOCNARN        4
+#define MALLOCEXPERIMENT  0
+#define MALLOCNBUFHDR     16
 
-#define ZMALLOCDEBUGHOOKS 0
-#define MALLOCSTEALMAG   0
-#define MALLOCNEWHACKS   0
+#define ZMALLOCDEBUGHOOKS 1
+#define MALLOCSTEALMAG    0
+#define MALLOCNEWHACKS    0
 
-#define MALLOCNOSBRK     0  // do NOT use sbrk()/heap, just mmap()
-#define MALLOCDIAG       0  // run [heavy] internal diagnostics for debugging
-#define MALLOCFREEMDIR   0  // under construction
-#define MALLOCFREEMAP    0  // use free block bitmaps
-#define MALLOCHACKS      0  // enable experimental features
-#define MALLOCBUFMAP     0  // buffer mapped slabs to global pool
-#define MALLOCVARSIZEBUF 0  // use variable-size slabs; FIXME
+#define MALLOCNOSBRK      0 // do NOT use sbrk()/heap, just mmap()
+#define MALLOCDIAG        0 // run [heavy] internal diagnostics for debugging
+#define MALLOCFREEMDIR    0 // under construction
+#define MALLOCFREEMAP     0 // use free block bitmaps
+#define MALLOCHACKS       0 // enable experimental features
+#define MALLOCBUFMAP      0 // buffer mapped slabs to global pool
+#define MALLOCVARSIZEBUF  0 // use variable-size slabs; FIXME
 
 /*
  * THANKS
@@ -385,7 +385,7 @@ struct malloc {
 };
 
 #if defined(__GLIBC__) && (MALLOCTRACE)
-#define MALLOCNTRACEFUNC 64
+#define MALLOCNTRACEFUNC 1024
 void *tracebuf[MALLOCNTRACEFUNC];
 #endif
 static struct malloc  g_malloc ALIGNED(PAGESIZE);
@@ -398,20 +398,20 @@ long long            nmapbyte;
 long long            ntabbyte;
 #endif
 
-#if defined(_GNU_SOURCE) && (GNUMALLOCHOOKS) && !defined(__GLIBC__)
-void *(*__malloc_hook)(size_t size, const void *caller);
-void *(*__realloc_hook)(void *ptr, size_t size, const void *caller);
-void *(*__memalign_hook)(size_t align, size_t size, const void *caller);
-void  (*__free_hook)(void *ptr, const void *caller);
-void *(*__malloc_initialize_hook)(void);
-void  (*__after_morecore_hook)(void);
-#elif defined(_ZERO_SOURCE) && (ZMALLOCHOOKS)
+#if (ZMALLOCDEBUGHOOKS) || (defined(_ZERO_SOURCE) && (ZMALLOCHOOKS))
 void (*__zmalloc_hook)(size_t size, const void *caller);
 void (*__zrealloc_hook)(void *ptr, size_t size, const void *caller);
 void (*__zmemalign_hook)(size_t align, size_t size, const void *caller);
 void (*__zfree_hook)(void *ptr, const void *caller);
 void (*__zmalloc_initialize_hook)(void);
 void (*__zafter_morecore_hook)(void);
+#elif defined(_GNU_SOURCE) && (GNUMALLOCHOOKS) && !defined(__GLIBC__)
+void *(*__malloc_hook)(size_t size, const void *caller);
+void *(*__realloc_hook)(void *ptr, size_t size, const void *caller);
+void *(*__memalign_hook)(size_t align, size_t size, const void *caller);
+void  (*__free_hook)(void *ptr, const void *caller);
+void *(*__malloc_initialize_hook)(void);
+void  (*__after_morecore_hook)(void);
 #endif
 
 #if (MALLOCSTAT)
@@ -719,6 +719,7 @@ thrarnid(void)
     struct arn  *arn;
     long         narn;
     long         n;
+    long         ndx;
     int          val;
 
     if (_arnid >= 0) {
@@ -726,9 +727,9 @@ thrarnid(void)
         return _arnid;
     }
     mtxlk(&_arnlk);
-    _arnid = curarn++;
+    _arnid = ++curarn;
     narn = _arnid;
-    if (_arnid == g_malloc.narn) {
+    if (narn == g_malloc.narn) {
         /* allocate two times the number of arenas currenly in use */
         n = narn << 1;
         ptr = mapanon(g_malloc.zerofd, n * sizeof(struct arn **));
@@ -746,13 +747,26 @@ thrarnid(void)
 
             abort();
         }
-        ptr += _arnid;
-        /* allocate more arenas */
-        u8ptr = mapanon(g_malloc.zerofd, narn * MALLOCARNSIZE);
+        g_malloc.arntab = ptr;
+        /* allocate 2 times the number of arenas currently in use */
+        u8ptr = mapanon(g_malloc.zerofd, n * MALLOCARNSIZE);
         if (u8ptr == MAP_FAILED) {
-            fprintf(stderr, "cannot allocate arena structures\n");
+            fprintf(stderr, "cannot allocate arenas\n");
 
             exit(1);
+        }
+        /* copy arenas */
+        for (ndx = 0 ; ndx < narn ; ndx++) {
+            memcpy(u8ptr, *ptr, MALLOCARNSIZE);
+            val = unmapanon(*ptr, MALLOCARNSIZE);
+            if (val < 0) {
+                fprintf(stderr, "cannot unmap arena\n");
+
+                abort();
+            }
+            *ptr = (struct arn *)u8ptr;
+            ptr++;
+            u8ptr += MALLOCARNSIZE;
         }
         /* point to new arenas */
         while (narn--) {
@@ -1359,7 +1373,11 @@ mallinit(void)
 #endif /* !MALLOCNOSBRK */
     g_malloc.mlktab = mapanon(g_malloc.zerofd, MDIRNL1KEY * sizeof(long));
     g_malloc.mdir = mapanon(g_malloc.zerofd, MDIRNL1KEY * sizeof(void *));
-#if defined(_ZERO_SOURCE) && (ZMALLOCHOOKS)
+#if (ZMALLOCDEBUGHOOKS) && (ZMALLOCHOOKS)
+    if (__zmalloc_initialize_hook) {
+        __zmalloc_initialize_hook();
+    }
+#elif defined(_ZERO_SOURCE) && (ZMALLOCHOOKS)
     if (__zmalloc_initialize_hook) {
         __zmalloc_initialize_hook();
     }
@@ -1488,7 +1506,7 @@ _malloc(size_t size,
     long         stolen = 0;
     int          val;
 
-#if (MALLOCTRACE)
+#if (MALLOCTRACE) && 0
     fprintf(stderr, "_malloc(%ld, %ld, %ld): ", (long)size, (long)align, zero);
 #endif
     if (!(g_malloc.flags & MALLOCINIT)) {
@@ -2079,17 +2097,7 @@ malloc(size_t size)
         
         return NULL;
     }
-#if (ZMALLOCDEBUGHOOKS)
-    {
-        void *caller;
-
-#if (MALLOCSTAT)
-        mallocstat();
-#endif
-        m_getretadr(&caller);
-        mallochook(size, caller);
-    }
-#elif defined(_ZERO_SOURCE) && (ZMALLOCHOOKS)
+#if (ZMALLOCDEBUGHOOKS) || (defined(_ZERO_SOURCE) && (ZMALLOCHOOKS))
     if (__zmalloc_hook) {
         void *caller = NULL;
 
@@ -2118,17 +2126,7 @@ calloc(size_t n, size_t size)
         
         return NULL;
     }
-#if (ZMALLOCDEBUGHOOKS)
-    {
-        void *caller;
-
-#if (MALLOCSTAT)
-        mallocstat();
-#endif
-        m_getretadr(&caller);
-        mallochook(size, caller);
-    }
-#elif defined(_ZERO_SOURCE) && (ZMALLOCHOOKS)
+#if (ZEROMALLOCDEBUGHOOKS) || (defined(_ZERO_SOURCE) && (ZMALLOCHOOKS))
     if (__zmalloc_hook) {
         void *caller = NULL;
 
@@ -2153,17 +2151,7 @@ realloc(void *ptr,
 {
     void *retptr = NULL;
 
-#if (ZMALLOCDEBUGHOOKS)
-    {
-        void *caller;
-
-#if (MALLOCSTAT)
-        mallocstat();
-#endif
-        m_getretadr(&caller);
-        reallochook(ptr, size, caller);
-    }
-#elif defined(_ZERO_SOURCE) && (ZMALLOCHOOKS)
+#if (ZEROMALLOCDEBUGHOOKS) || (defined(_ZERO_SOURCE) && (ZMALLOCHOOKS))
     if (__zrealloc_hook) {
         void *caller = NULL;
 
@@ -2194,17 +2182,7 @@ realloc(void *ptr,
 void
 free(void *ptr)
 {
-#if (ZMALLOCDEBUGHOOKS)
-    {
-        void *caller;
-
-#if (MALLOCSTAT)
-        mallocstat();
-#endif
-        m_getretadr(&caller);
-        freehook(ptr, caller);
-    }
-#elif defined(_ZERO_SOURCE) && (ZMALLOCHOOKS)
+#if (ZEROMALLOCDEBUGHOOKS) || (defined(_ZERO_SOURCE) && (ZMALLOCHOOKS))
     if (__zfree_hook) {
         void *caller = NULL;
 
@@ -2228,17 +2206,7 @@ aligned_alloc(size_t align,
     void   *ptr = NULL;
     size_t  aln = max(align, MALLOCMINSIZE);
 
-#if (ZMALLOCDEBUGHOOKS)
-    {
-        void *caller;
-
-#if (MALLOCSTAT)
-        mallocstat();
-#endif
-        m_getretadr(&caller);
-        memalignhook(align, size, caller);
-    }
-#elif defined(_ZERO_SOURCE) && (ZMALLOCHOOKS)
+#if (ZEROMALLOCDEBUGHOOKS) || (defined(_ZERO_SOURCE) && (ZMALLOCHOOKS))
     if (__zmemalign_hook) {
         void *caller = NULL;
         
@@ -2260,10 +2228,10 @@ aligned_alloc(size_t align,
 
     return ptr;
 }
-
 #endif
 
 #if (_POSIX_C_SOURCE >= 200112L || _XOPEN_SOURCE >= 600)
+
 int
 posix_memalign(void **ret,
                size_t align,
@@ -2273,17 +2241,7 @@ posix_memalign(void **ret,
     size_t  aln = max(align, MALLOCMINSIZE);
     int     retval = -1;
 
-#if (ZMALLOCDEBUGHOOKS)
-    {
-        void *caller;
-
-#if (MALLOCSTAT)
-        mallocstat();
-#endif
-        m_getretadr(&caller);
-        memalignhook(align, size, caller);
-    }
-#elif defined(_ZERO_SOURCE) && (ZMALLOCHOOKS)
+#if (ZEROMALLOCDEBUGHOOKS) || (defined(_ZERO_SOURCE) && (ZMALLOCHOOKS))
     if (__zmemalign_hook) {
         void *caller = NULL;
         
@@ -2321,17 +2279,7 @@ valloc(size_t size)
 {
     void *ptr;
 
-#if (ZMALLOCDEBUGHOOKS)
-    {
-        void *caller;
-
-#if (MALLOCSTAT)
-        mallocstat();
-#endif
-        m_getretadr(&caller);
-        memalignhook(PAGESIZE, size, caller);
-    }
-#elif defined(_ZERO_SOURCE) && (ZMALLOCHOOKS)
+#if (ZEROMALLOCDEBUGHOOKS) || (defined(_ZERO_SOURCE) && (ZMALLOCHOOKS))
     if (__zmemalign_hook) {
         void *caller = NULL;
         
@@ -2358,17 +2306,7 @@ memalign(size_t align,
     void   *ptr = NULL;
     size_t  aln = max(align, MALLOCMINSIZE);
 
-#if (ZMALLOCDEBUGHOOKS)
-    {
-        void *caller;
-
-#if (MALLOCSTAT)
-        mallocstat();
-#endif
-        m_getretadr(&caller);
-        memalignhook(align, size, caller);
-    }
-#elif defined(_ZERO_SOURCE) && (ZMALLOCHOOKS)
+#if (ZEROMALLOCDEBUGHOOKS) || (defined(_ZERO_SOURCE) && (ZMALLOCHOOKS))
     if (__zmemalign_hook) {
         void *caller = NULL;
         
@@ -2398,17 +2336,7 @@ reallocf(void *ptr,
 {
     void *retptr;
 
-#if (ZMALLOCDEBUGHOOKS)
-    {
-        void *caller;
-
-#if (MALLOCSTAT)
-        mallocstat();
-#endif
-        m_getretadr(&caller);
-        reallochook(ptr, size, caller);
-    }
-#elif defined(_ZERO_SOURCE) && (ZMALLOCHOOKS)
+#if (ZEROMALLOCDEBUGHOOKS) || (defined(_ZERO_SOURCE) && (ZMALLOCHOOKS))
     if (__zrealloc_hook) {
         void *caller = NULL;
 
@@ -2445,17 +2373,7 @@ pvalloc(size_t size)
     size_t  sz = rounduppow2(size, PAGESIZE);
     void   *ptr = _malloc(sz, PAGESIZE, 0);
 
-#if (ZMALLOCDEBUGHOOKS)
-    {
-        void *caller;
-
-#if (MALLOCSTAT)
-        mallocstat();
-#endif
-        m_getretadr(&caller);
-        memalignhook(PAGESIZE, sz, caller);
-    }
-#elif defined(_ZERO_SOURCE) && (ZMALLOCHOOKS)
+#if (ZEROMALLOCDEBUGHOOKS) || (defined(_ZERO_SOURCE) && (ZMALLOCHOOKS))
     if (__zmemalign_hook) {
         void *caller = NULL;
         
