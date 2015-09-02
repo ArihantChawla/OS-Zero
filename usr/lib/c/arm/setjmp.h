@@ -30,7 +30,7 @@ struct _jmpbuf {
 #if (_POSIX_C_SOURCE) || (_XOPEN_SOURCE)
     int      havesigs;
 #endif
-} PACK();
+};
 
 #define __setjmp(env)                                                   \
     __asm__ __volatile__ ("mov r0, %0\n" : : "r" (env));                \
@@ -78,7 +78,7 @@ struct _jmpbuf {
     int32_t sp;
     int32_t lr;
 //    sigset_t sigmask;
-} PACK();
+};
 
 #define __setjmp(env)                                                   \
     __asm__ __volatile__ ("movs r0, %0\n"                               \

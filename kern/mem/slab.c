@@ -16,7 +16,7 @@
 #define kbzero bzero
 #endif
 
-#define MEMDIAG   1
+#define MEMDIAG   0
 #define SLABMUTEX 0
 
 extern unsigned long  npagefree;
@@ -32,7 +32,7 @@ static volatile long  slablk;
  *   free regions are kept as big as possible.
  */
 
-#if (__KERNEL__ && (MEMDIAG))
+#if !(__KERNEL__) && (MEMDIAG)
 void
 slabdiag(struct memzone *zone)
 {
@@ -50,7 +50,7 @@ slabdiag(struct memzone *zone)
             if (hdr1) {
                 if (slabgetprev(hdr1, zone)) {
 #if (__KERNEL__)
-                    kprintf(stderr, "DIAG: non-NULL prev on head of list %ld\n",
+                    fprintf(stderr, "DIAG: non-NULL prev on head of list %ld\n",
                             bkt);
 #endif
                     slabprint(hdr1);
@@ -59,7 +59,7 @@ slabdiag(struct memzone *zone)
                 }
                 if (slabgetbkt(hdr1) != bkt) {
 #if (__KERNEL__)
-                    kprintf(stderr, "DIAG: invalid bucket ID on head of list %ld\n",
+                    fprintf(stderr, "DIAG: invalid bucket ID on head of list %ld\n",
                             bkt);
 #endif
                     slabprint(hdr1);
@@ -71,7 +71,7 @@ slabdiag(struct memzone *zone)
                 while (hdr2) {
                     if (slabgetprev(hdr2, zone) != hdr1) {
 #if (__KERNEL__)
-                        kprintf(stderr, "DIAG: invalid prev on list %ld\n",
+                        fprintf(stderr, "DIAG: invalid prev on list %ld\n",
                                 bkt);
 #endif
                         slabprint(hdr1);
@@ -81,7 +81,7 @@ slabdiag(struct memzone *zone)
                     }
                     if (slabgetbkt(hdr2) != bkt) {
 #if (__KERNEL__)
-                        kprintf(stderr, "DIAG: invalid bucket ID on list %ld\n",
+                        fprintf(stderr, "DIAG: invalid bucket ID on list %ld\n",
                                 bkt);
 #endif
                         slabprint(hdr1);

@@ -28,7 +28,7 @@ struct cons {
     long             chatr;     // text attributes such as color
     long             ntextrow;  // number of buffer lines
     void            *textbuf;   // text buffers
-} PACK();
+};
 
 extern struct cons constab[NCONS];
 extern long        conscur;

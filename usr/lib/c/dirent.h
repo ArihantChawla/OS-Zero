@@ -19,7 +19,7 @@ struct dirent {
     uint16_t d_reclen;
     uint8_t  d_type;
     uint8_t  d_name[NAMEMAX + 1];
-} PACK();
+};
 
 #endif /* __DIRENT_H__ */
 

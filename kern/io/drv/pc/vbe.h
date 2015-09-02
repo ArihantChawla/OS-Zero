@@ -74,7 +74,7 @@ struct vbeinfo {
     /* scratch area */
     uint8_t   oemdata[256];     // OEM strings
 #endif
-} PACK();
+};
 
 /* function 0x01 - return VBE mode information */
 
@@ -141,7 +141,7 @@ struct vbemode {
     uint32_t   offscrofs;
     uint16_t   nkboffscr;
 //    uint8_t    res2[206];
-} PACK();
+};
 
 /* VBE screen information */
 struct vbescreen {

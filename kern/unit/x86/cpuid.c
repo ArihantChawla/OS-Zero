@@ -76,12 +76,12 @@ struct m_cpuid {
     int32_t ebx;
     int32_t ecx;
     int32_t edx;
-} PACK();
+};
 
 union m_cpuidvendor {
     int32_t       wtab[4];
     unsigned char str[16];
-} PACK();
+};
 
 #define M_CPUIDINSTRTLB   0x00
 #define M_CPUIDDATATLB    0x01
@@ -93,7 +93,7 @@ struct m_cacheinfo {
     int32_t size;
     int32_t nway;
     int32_t xsize;
-} PACK();
+};
 
 /* vendor strings. */
 /* vendor strings. */

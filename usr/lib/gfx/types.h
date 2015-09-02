@@ -14,7 +14,7 @@ struct gfximg {
     long  w;
     long  h;
     void *data;
-} PACK();
+};
 #endif
 
 struct gfximg_x11 {

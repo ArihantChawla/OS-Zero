@@ -49,7 +49,7 @@ struct zvmopcode {
     unsigned int pad   : 32;
 #endif
     zasword_t    args[EMPTY]; // optional arguments
-} PACK();
+};
 
 typedef void zvmopfunc_t(struct zvmopcode *);
 

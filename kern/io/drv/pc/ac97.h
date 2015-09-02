@@ -99,7 +99,7 @@
 struct ac97bufdesc {
     uint32_t adr;       // ptr, bit 0 is zero (16-bit aligned)
     uint32_t info;      // flags, length
-} PACK();
+};
 
 struct ac97drv {
     struct ac97bufdesc inbuftab[AC97NBUF];

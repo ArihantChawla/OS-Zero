@@ -84,14 +84,14 @@ struct calinst1 {
     unsigned res:  3;
     unsigned arg1: 3;
     unsigned arg2: 3;
-} PACKED();
+};
 
 /* 2. 1-parcel instruction with combined j and k fields */
 struct calinst2 {
     unsigned op:   7;
     unsigned res:  3;
     unsigned arg:  6;
-} PACKED();
+};
 
 /* 2-parcel instruction with combined j, k, and m fields */
 struct calinst3 {

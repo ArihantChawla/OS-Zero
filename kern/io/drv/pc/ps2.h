@@ -46,7 +46,7 @@ struct mousestate {
     uint32_t ymax;
     uint32_t zmax;
     int32_t shift;
-} PACK();
+};
 
 #if 0
 struct ps2drv {

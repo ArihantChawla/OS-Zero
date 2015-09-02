@@ -12,7 +12,7 @@ struct textrend {
     unsigned bgcolor : 9;       // standard or 256-color xterm palette entry
     unsigned pad     : 7;       // extra room for later flags
     unsigned atr     : 7;       // specified text attributes
-} PACK();
+};
 
 struct uitextbuf {
     long              nrow;     // # of buffer rows

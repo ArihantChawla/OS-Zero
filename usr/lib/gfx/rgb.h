@@ -27,7 +27,7 @@ struct gfxargb32 {
     uint8_t green;
     uint8_t red;
     uint8_t alpha;
-} PACK();
+};
 
 #elif (__BYTE_ORDER == __BIG_ENDIAN)
 
@@ -41,7 +41,7 @@ struct gfxargb32 {
     uint8_t red;
     uint8_t green;
     uint8_t blue;
-} PACK();
+};
 
 #endif /* __BYTE_ORDER */
 

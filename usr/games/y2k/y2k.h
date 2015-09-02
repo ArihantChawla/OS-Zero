@@ -202,7 +202,7 @@ struct plr {
     long run;
     long leap;
     long stab[STATNVAL];
-} PACK();
+};
 
 #define MACHPAD   0
 #define MACHSTD   1

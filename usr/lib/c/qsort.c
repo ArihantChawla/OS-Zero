@@ -90,7 +90,6 @@ qsort(void *const base, size_t nitems, size_t size,
 
         return;
     }
-
     _stkpush(NULL, NULL, stktop);
     if (nitems > maxthres) {
 	lo = base;

@@ -13,7 +13,7 @@
  */
 #undef MALLOCSTAT
 #define MALLOCSTAT        0
-#define MALLOCSTKNDX      0
+#define MALLOCSTKNDX      1
 #define MALLOCCONSTSLABS  0
 #define MALLOCDYNARN      0
 
@@ -149,8 +149,8 @@
 #include <zero/param.h>
 #include <zero/unix.h>
 #include <zero/trix.h>
-#if defined(__GLIBC__) && (MALLOCTRACE)
-#include <execinfo.h>
+#if defined(__GLIBC__)
+#include <zero/gnu.h>
 #endif
 #if (ZMALLOCDEBUGHOOKS)
 #include <zero/asm.h>
@@ -373,10 +373,6 @@ struct malloc {
     struct mallinfo   mallinfo;         // mallinfo() interface
 };
 
-#if defined(__GLIBC__) && (MALLOCTRACE)
-#define MALLOCNTRACEFUNC 16
-void *tracebuf[MALLOCNTRACEFUNC];
-#endif
 static struct malloc  g_malloc ALIGNED(PAGESIZE);
 __thread long        _arnid = -1;
 MUTEX                _arnlk;
@@ -403,19 +399,18 @@ void *(*__malloc_initialize_hook)(void);
 void  (*__after_morecore_hook)(void);
 #endif
 
+#if defined(__GLIBC__) && (MALLOCTRACE)
+#endif
+
 #if (MALLOCSTAT)
 void
 mallocstat(void)
 {
-#if defined(__GLIBC__) && (MALLOCTRACE)
-    backtrace_symbols_fd(tracebuf, MALLOCNTRACEFUNC, STDERR_FILENO);
-#else
     fprintf(stderr, "HEAP: %lld KB\tMAP: %lld KB\tTAB: %lld KB\n",
             nheapbyte >> 10,
             nmapbyte >> 10,
             ntabbyte >> 10);
     fflush(stderr);
-#endif
 
     return;
 }
@@ -496,10 +491,10 @@ mallocstat(void)
 #define MDIRNL2BIT     12
 #define MDIRNL3BIT     12
 #define MDIRNL4BIT     (PTRBITS - MDIRNL1BIT - MDIRNL2BIT - MDIRNL3BIT - MALLOCMINLOG2)
-#define MDIRNL1KEY     (1UL << MDIRNL1BIT)
-#define MDIRNL2KEY     (1UL << MDIRNL2BIT)
-#define MDIRNL3KEY     (1UL << MDIRNL3BIT)
-#define MDIRNL4KEY     (1UL << MDIRNL4BIT)
+#define MDIRNL1KEY     (1L << MDIRNL1BIT)
+#define MDIRNL2KEY     (1L << MDIRNL2BIT)
+#define MDIRNL3KEY     (1L << MDIRNL3BIT)
+#define MDIRNL4KEY     (1L << MDIRNL4BIT)
 #define MDIRL1NDX      (MDIRL2NDX + MDIRNL2BIT)
 #define MDIRL2NDX      (MDIRL3NDX + MDIRNL3BIT)
 #define MDIRL3NDX      (MDIRL4NDX + MDIRNL4BIT)
@@ -523,8 +518,6 @@ mallquit(int sig)
     fprintf(stderr, "QUIT (%d)\n", sig);
 #if (MALLOCSTAT)
     mallocstat();
-#elif defined(__GLIBC__) && (MALLOCTRACE)
-    backtrace_symbols_fd(tracebuf, MALLOCNTRACEFUNC, STDERR_FILENO);
 #else
     fflush(stderr);
 #endif
@@ -1474,36 +1467,33 @@ _malloc(size_t size,
         size_t align,
         long zero)
 {
-    struct arn  *arn;
-    struct mag  *mag;
-    uint8_t     *ptr;
-    uint8_t     *ptrval = NULL;
+    struct arn     *arn;
+    struct mag     *mag;
+    uint8_t        *ptr;
+    uint8_t        *ptrval = NULL;
 #if (MALLOCSTKNDX)
-    MAGPTRNDX   *stk = NULL;
-    MAGPTRNDX   *tab;
+    MAGPTRNDX      *stk = NULL;
+    MAGPTRNDX      *tab;
 #elif (MALLOCHACKS)
-    uintptr_t   *stk = NULL;
-    uintptr_t   *tab = NULL;
+    uintptr_t      *stk = NULL;
+    uintptr_t      *tab = NULL;
 #else
-    void       **stk = NULL;
-    void       **tab = NULL;
+    void          **stk = NULL;
+    void          **tab = NULL;
 #endif
-    long         arnid;
-    long         sz = max(blkalignsz(size, align), MALLOCMINSIZE);
-    long         bktid = blkbktid(sz);
+    long            arnid;
+    unsigned long   sz = max(blkalignsz(size, align), MALLOCMINSIZE);
+    long            bktid = blkbktid(sz);
 //    long         mapped = 0;
-    long         lim;
-    long         n;
-    size_t       incr;
+    long            lim;
+    long            n;
+    size_t          incr;
 #if (MALLOCSTEALMAG)
-    long         id;
+    long            id;
 #endif
-    long         stolen = 0;
-    int          val;
+    long            stolen = 0;
+    int             val;
 
-#if (MALLOCTRACE) && 0
-    fprintf(stderr, "_malloc(%ld, %ld, %ld): ", (long)size, (long)align, zero);
-#endif
     if (!(g_malloc.flags & MALLOCINIT)) {
         mallinit();
     }
@@ -1655,7 +1645,7 @@ _malloc(size_t size,
                 if (!mag) {
                     for (id = 0 ; id < g_malloc.narn ; id++) {
                         struct arn *curarn;
-                            
+                        
                         if (id != arnid) {
                             curarn = g_malloc.arntab[arnid];
                             if (curarn) {
@@ -1731,10 +1721,10 @@ _malloc(size_t size,
                         /* try to allocate slab from heap */
                         mtxlk(&g_malloc.heaplk);
                         {
-                            long heap = (long)sbrk(0);
-                            long ofs = 1UL << PAGESIZELOG2;
+                            void *heap = sbrk(0);
+                            long  ofs = 1UL << PAGESIZELOG2;
                             
-                            ofs -= heap & (PAGESIZE - 1);
+                            ofs -= (uintptr_t)heap & (PAGESIZE - 1);
                             if (ofs != PAGESIZE) {
                                 growheap(ofs);
                             }
@@ -1752,7 +1742,7 @@ _malloc(size_t size,
                                 if (val < 0) {
                                     fprintf(stderr,
                                             "cannot unmap magazine stack\n");
-
+                                    
                                     abort();
                                 }
                             }
@@ -2050,11 +2040,11 @@ _realloc(void *ptr,
          size_t size,
          long rel)
 {
-    void       *retptr = ptr;
-    long        sz = max(size, MALLOCMINSIZE);
-    struct mag *mag = (ptr) ? findmag(ptr) : NULL;
-    long        bktid = blkbktid(sz);
-    long        csz = (mag) ? 1UL << mag->bktid : 0;
+    void          *retptr = ptr;
+    unsigned long  sz = max(size, MALLOCMINSIZE);
+    struct mag    *mag = (ptr) ? findmag(ptr) : NULL;
+    long           bktid = blkbktid(sz);
+    unsigned long  csz = (mag) ? 1UL << mag->bktid : 0;
 
     if (!ptr) {
         retptr = _malloc(sz, 0, 0);
@@ -2107,6 +2097,10 @@ malloc(size_t size)
     ptr = _malloc(size, 0, 0);
     if (ptr) {
         VALGRINDALLOC(ptr, size, 0);
+#if (MALLOCTRACE)
+    } else {
+        trace_fd();
+#endif /* MALLOCTRACE */
     }
 #if (MALLOCDEBUG) && 0
     assert(ptr != NULL);

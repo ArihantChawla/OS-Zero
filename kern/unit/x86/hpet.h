@@ -133,7 +133,7 @@ struct hpet {
     uint8_t  hpetnum;           // sequence number; 0 = 1st table, ...
     uint16_t mintick;           // main counter minimum tick in periodic mode
     uint8_t  protoematr;
-} PACK();
+};
 #endif /* 0 */
 
 #define hpetrevid(hpet)                                                 \

@@ -22,7 +22,7 @@ typedef argb32_t zedrend32;
 struct zedrendpix {
     zedrend32 pix;      // 32-bit ARGB-pixel
     int32_t   data;     // 32-bit Unicode character
-} PACK();
+};
 typedef struct zedrendpix zedrendpix;
 
 #endif /* __ZED_REND_H__ */

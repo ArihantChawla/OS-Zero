@@ -22,13 +22,13 @@ struct _jmpbuf {
 #if (_POSIX_C_SOURCE) || (_XOPEN_SOURCE)
     long     havesigs;
 #endif
-} PACK();
+};
 
 struct _jmpframe {
     int32_t ebp;
     int32_t eip;
     uint8_t args[EMPTY];
-} PACK();
+};
 
 /*
  * callee-save registers: ebx, edi, esi, ebp, ds, es, ss.

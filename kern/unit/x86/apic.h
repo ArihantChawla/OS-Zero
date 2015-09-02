@@ -98,7 +98,7 @@ struct lvtreg {
     unsigned mask      : 1;
     unsigned res2      : 15;
     uint32_t res3[3];
-} PACK();
+};
 
 /* TODO: pad this to fill a page */
 struct apic {
@@ -227,7 +227,7 @@ struct apic {
         uint32_t   res45[3];
     } divconf;
     uint32_t       res46[4];
-} PACK();
+};
 
 static __inline__ volatile uint32_t
 apicread(uint32_t reg)

@@ -6,6 +6,7 @@
 //#include <signal.h>
 #include <zero/cdecl.h>
 #include <zero/param.h>
+#include <zero/x86/types.h>
 
 /* C call frame - 8 bytes */
 struct m_stkframe {
@@ -14,12 +15,6 @@ struct m_stkframe {
     int32_t pc;         // return address
     /* call parameters on stack go here in 'reverse order' */
 };
-
-/* far pointer structure */
-struct m_farptr {
-    uint16_t lim;
-    uint32_t adr;
-} PACK();
 
 /* return stack for IRET - 20 bytes */
 struct m_trapframe {
@@ -31,7 +26,7 @@ struct m_trapframe {
     int32_t uesp;	// user stack pointer
     int16_t uss;	// user stack segment selector
     int16_t pad2;	// pad to 32-bit boundary
-} PACK();
+};
 
 /* general purpose registers - 32 bytes */
 struct m_pusha {
@@ -43,7 +38,7 @@ struct m_pusha {
     int32_t edx;
     int32_t ecx;
     int32_t eax;
-} PACK();
+};
 
 /* task state segment */
 struct m_tss {
@@ -74,8 +69,10 @@ struct m_tss {
     uint16_t ldt, _ldthi;
     uint16_t trace;
     uint16_t iomapofs;
+    long     hasiomap;          // indicates presence of an 8K iomap field
+    uint8_t  iomap[EMPTY] ALIGNED(PAGESIZE);
 //    uint8_t  iomap[8192] ALIGNED(CLSIZE);
-} PACK();
+};
 
 /* data segment registers - 16 bytes */
 struct m_segregs {
@@ -83,7 +80,7 @@ struct m_segregs {
     int32_t es;         // data segment
     int32_t fs;         // buffer cache segment
 //    int32_t gs;         // per-CPU data segment
-} PACK();
+};
 
 /* thread control block */
 #define TCBFCTXSIZE 512
@@ -93,7 +90,7 @@ struct m_tcb {
     struct m_segregs   segregs;                 // @ 532 bytes
     int32_t            pdbr;                    // @ 544 bytes
     struct m_pusha     genregs;                 // @ 548 bytes
-} PACK() ALIGNED(PAGESIZE);
+} ALIGNED(PAGESIZE);
 
 #endif /* __ZERO_IA32_TYPES_H__ */
 

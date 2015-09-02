@@ -278,7 +278,7 @@ struct vec {
 struct vec32 {
     int32_t i1;
     int32_t i2;
-} PACKED();
+};
 
 struct vecsegdes {
     size_t  nseg;

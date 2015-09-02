@@ -22,7 +22,7 @@ struct smbioshdr {
     uint32_t tabphysadr;
     uint16_t ninfo;
     uint8_t  smbiosrev;
-} PACK();
+};
 
 struct smbiosdrv {
     long   ninfo;

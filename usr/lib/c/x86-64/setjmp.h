@@ -31,13 +31,13 @@ struct _jmpbuf {
 #if (_POSIX_C_SOURCE) || (_XOPEN_SOURCE)
     long     havesigs;
 #endif
-} PACK();
+};
 
 struct _jmpframe {
     int64_t rbp;
     int64_t rip;
     uint8_t args[EMPTY];
-} PACK();
+};
 
 /*
  * callee-save registers: rbp, rbx, r12...r15

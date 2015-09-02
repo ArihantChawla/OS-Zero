@@ -8,21 +8,16 @@
 #   define EMPTY   0
 #endif
 
-/* __FUNCTION__ for non-C99 compilers */
-#if !defined(__STDC_VERSION__) || (__STDC_VERSION__ < 199901L)
-#if defined(__GNUC__)
-#define __func__   __FUNCTION__
-#else
-#warn define __func__ in <zero/cdecl.h>
-#endif
+/* __func__ for non-C99 compilers; MSVC should do this, probably =) */
+#if !defined(__STDC_VERSION__) || (__STDC_VERSION__ < 199901L) \
+    && (defined(__GNUC__) || defined(_MSC_VER) || defined(_WIN32))
+#define __func__ __FUNCTION__
 #endif
 
 #if defined(__GNUC__)
 
 /* align variables, aggregates, and tables to boundary of a */
 #define ALIGNED(a)  __attribute__ ((__aligned__(a)))
-/* pack aggregate fields and table items */
-#define PACK()      __attribute__ ((__packed__))
 /* ALWAYS inline the function */
 #define INLINE      __inline__ __attribute__ ((always_inline))
 #define WEAK        __attribute__ ((weak))
@@ -55,10 +50,11 @@
 #elif defined(_MSC_VER) /* !defined(__GNUC__) */
     
 /* Microsoft */
-#define ALIGNED(a)  __declspec(align((a)))
-#define __inline__  inline
-#define PACK()
-#define INLINE      __forceinline
+#define ALIGNED(a)   __declspec(align((a)))
+#define __inline__   inline
+#define INLINE       __forceinline
+
+#define ASMLINK      __cdecl
 
 #endif /* __GNUC__ */
 

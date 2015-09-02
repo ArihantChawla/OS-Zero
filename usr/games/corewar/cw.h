@@ -53,7 +53,7 @@ struct cwinstr {
     unsigned pid  : 8;          // process ID
     unsigned a    : 16;         // operand #1
     unsigned b    : 16;         // operand #2
-} PACK();
+};
 
 typedef long cwinstrfunc(long, long);
 

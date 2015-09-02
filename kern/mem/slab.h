@@ -14,7 +14,7 @@ struct slabhdr {
     struct slabhdr *prev;
     struct slabhdr *next;
 #endif
-} PACK();
+};
 
 #define slabnum(ptr, zone)                                              \
     (((uintptr_t)(ptr) - ((zone)->base)) >> SLABMINLOG2)

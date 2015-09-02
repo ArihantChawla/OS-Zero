@@ -123,7 +123,7 @@ struct pcihdr00 {
     uint8_t  intrpin;
     uint8_t  mingrant;
     uint8_t  maxlat;
-} PACK();
+};
 
 struct pcihdr01 {
     uint16_t vendor;
@@ -158,14 +158,14 @@ struct pcihdr01 {
     uint8_t  intrline;
     uint8_t  intrpin;
     uint16_t bridgectl;
-} PACK();
+};
 
 /* TODO: implement header 02 (pci-to-cardbus bridge) */
 
 struct pcihdrtype {
     unsigned type : 7;
     unsigned mf   : 1;
-} PACK();
+};
 
 struct pcibist {
     unsigned cmplcode  : 4;
@@ -187,7 +187,7 @@ struct pcicmd {
     unsigned fastbtobenab : 1;
     unsigned intrdisab    : 1;
     unsigned res2         : 1;
-} PACK();
+};
 
 struct pcistatus {
     unsigned res1      : 3;
@@ -203,20 +203,20 @@ struct pcistatus {
     unsigned mastabort : 1;
     unsigned syserr    : 1;
     unsigned parityerr : 1;
-} PACK();
+};
 
 struct pcibaseadr {
     unsigned zero     : 1;
     unsigned type     : 2;
     unsigned prefetch : 1;
     unsigned adr      :28;
-} PACK();
+};
 
 struct pciiobaseadr {
     unsigned one : 1;
     unsigned res : 1;
     unsigned adr : 30;
-} PACK();
+};
 
 struct pcidrv {
     long type;

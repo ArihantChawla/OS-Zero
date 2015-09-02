@@ -28,18 +28,18 @@ struct iso9660stime {
     uint8_t min;
     uint8_t sec;
     int8_t  gmtofs;
-} PACK();
+};
 
 struct iso9660ltime {
     int8_t year[4];
-    int8_t month[2]
+    int8_t month[2];
     int8_t day[2];
     int8_t hour[2];
     int8_t min[2];
     int8_t sec[2];
     int8_t hsec[2];
     int8_t gmtofs;
-} PACK();
+};
 
 #define ISO9660IDLEN1     32
 #define ISO9660IDLEN2     128
@@ -80,7 +80,7 @@ struct iso9660privol {
     uint8_t             unused4;
     uint8_t             appdata[ISO9660APPDATALEN];
     uint8_t             unused5[653];
-} PACK();
+};
 
 struct iso9660suppvol {
     uint8_t             type;
@@ -116,7 +116,7 @@ struct iso9660suppvol {
     uint8_t             unused4;
     uint8_t             appdata[ISO9660APPDATALEN];
     uint8_t             unused5[653];
-} PACK();
+};
 
 #define ISO9660DIRNAMELEN 38
 struct iso9660dir {
@@ -131,7 +131,7 @@ struct iso9660dir {
     uint32_t            seqnum;
     uint8_t             namelen;
     uint8_t             name[ISO9660DIRNAMELEN];
-} PACK();
+};
 
 /* BIG-endian! */
 #define ISO9660STATFILE 1

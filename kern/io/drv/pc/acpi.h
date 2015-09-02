@@ -8,6 +8,8 @@
 
 #define ACPIRSDPTRSIG UINT64_C(0x2052545020445352) // "RSD PTR "
 
+/* FIXME: does this really need to be packed? */
+#include <zero/pack.h>
 struct acpidesc {
     char     sig[8];
     uint8_t  chksum;
@@ -18,10 +20,11 @@ struct acpidesc {
     uint64_t extsysdesc;
     uint64_t extchksum;
     uint8_t  res[3];
-} PACK();
+};
+#include <zero/nopack.h>
 
 struct acpitab {
-    char sig[4];
+    char     sig[4];
     uint32_t len;
     uint8_t  rev;
     uint8_t  chksum;
@@ -30,7 +33,7 @@ struct acpitab {
     uint32_t oemrev;
     uint32_t creatorid;
     uint32_t creatorrev;
-} PACK();
+};
 
 #endif /* __KERN_IO_DRV_PC_ACPI_H__ */
 

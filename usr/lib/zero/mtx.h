@@ -93,6 +93,7 @@ mtxunlk2(volatile long *lp, long val)
 static __inline__ void
 mtxunlk2(volatile long *lp, long val)
 {
+    (void)val;
     *lp = ZEROMTXINITVAL;
     m_membar();
 

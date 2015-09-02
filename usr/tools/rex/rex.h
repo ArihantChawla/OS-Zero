@@ -29,8 +29,8 @@ struct rex {
     struct rex *next;
     uint8_t     type;           // BEGIN, END, DOT, SET, STAR, CHAR
     uint8_t     n;              // 0 for any number of matches
-    uint8_t     pad[6];
-} PACK();
+    uint8_t     _pad[8];
+};
 
 #endif
 

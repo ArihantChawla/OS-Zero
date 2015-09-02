@@ -52,7 +52,8 @@ struct evkbd {
     uint64_t code;      // keyboard scan-code or something similar
     /* state may not be present in protocol packets */
     uint32_t state;     // modifier flags in high bits, buttons in low
-} PACK();
+    int32_t  _pad;
+};
 
 /* pointer such as mouse device events */
 
@@ -64,7 +65,8 @@ struct evpnt {
     int32_t  x;                         // screen X coordinate
     int32_t  y;                         // screen Y coordinate
     int32_t  z;                         // screen Z coordinate
-} PACK();
+    int32_t  _pad;
+};
 
 /* IPC events */
 
@@ -77,7 +79,7 @@ struct evmsg {
     uint32_t nbyte;                     // number of octets
     uint32_t mq;                        // message queue ID
     uint8_t  data[EMPTY];               // message data
-} PACK();
+};
 #define evmsgsize(ev) (ev->nbyte + offsetof(struct evmsg, data)
 
 /* command packet */
@@ -94,7 +96,7 @@ struct evcmd {
     uint32_t src;                       // source object ID
     uint32_t dest;                      // destination object ID
     uint32_t flg;                       // EVCMDSYNC, ...
-} PACK();
+};
 
 /*
  * data transfer
@@ -139,19 +141,20 @@ struct evdata {
     uint32_t wsize;                     // data-word size in bytes
     uint32_t nitem;                     // number of items to follow
     uint8_t  data[EMPTY];               // data message
-} PACK();
+};
 
 /* file system events; EVFSCREAT, EVFSUNLINK, EVFSMKDIR, EVFSRMDIR */
 struct evfs {
     uint64_t node;                      // node (file, directory) ID
     uint32_t dev;                       // device ID
     uint32_t flg;                       // event flags
-} PACK();
+};
 
 #define evgettype(ev)    ((ev)->hdr.type)
 #define evsettype(ev, t) ((ev)->hdr.type = (t))
 #define evgettime(ev)    ((ev)->hdr.tm)
 #define evsettime(ev, t) ((ev)->hdr.tm = (t))
+/* FIXME: tm may need to be 64-bit */
 struct evhdr {
     uint32_t type;                      // event type such as KEYUP, FSCREAT
     uint32_t tm;                        // timestamp
@@ -169,7 +172,7 @@ struct ev {
         struct evdata data;
         struct evfs   fs;
     } msg;
-} PACK();
+};
 
 #if (!__KERNEL__)
 
@@ -280,4 +283,3 @@ void    evsync(struct deck *deck, long flg);
 
 #endif /* __ZERO_EV_H__ */
 
- 

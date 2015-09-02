@@ -13,7 +13,7 @@ struct realregs {
     int16_t dx;
     int16_t cx;
     int16_t ax;
-} PACK();
+};
 
 #endif /* __UNIT_IA32_REAL_H__ */
 

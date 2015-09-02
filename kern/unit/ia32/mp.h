@@ -36,7 +36,7 @@ struct mp {
     unsigned char  type;                // MP system config type
     unsigned char  intmode;
     unsigned char  res[3];
-} PACK();
+};
 
 /* table entry types */
 #define MPCPU    0x00                   // processor
@@ -58,7 +58,7 @@ struct mpconf {
     uint16_t       xlen;                // extended table length
     unsigned char  xchksum;             // extended table checksum
     unsigned char  res;
-} PACK();
+};
 
 /* flags */
 #define MPCPUBOOT 0x02
@@ -70,7 +70,7 @@ struct mpcpu {
     unsigned char signature[4];         // CPU signature
     uint32_t      featflg;              // feature flags from CPUID
     unsigned char res[8];
-} PACK();
+};
 
 struct mpioapic {
     unsigned char  type;                // entry type (2)
@@ -78,7 +78,7 @@ struct mpioapic {
     unsigned char  apicver;             // I/O APIC version
     unsigned char  flags;               // I/O APIC flags
     uint32_t      *adr;                 // I/O APIC address
-} PACK();
+};
 
 static __inline__ long
 mpcpunum(void)

@@ -79,8 +79,7 @@
          fd,                                                            \
          0)
 #endif
-#define unmapanon(ptr, size)                                            \
-    munmap(ptr, size)
+#define unmapanon(ptr, size) munmap(ptr, size)
 
 #define growheap(ofs) sbrk(ofs)
 
