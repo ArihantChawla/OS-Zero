@@ -2,66 +2,10 @@
 #include <stdlib.h>
 #include <string.h>
 #include <zero/mtx.h>
-#if (SHUNTZPC)
-#include <zpc/zpc.h>
-#include <zpc/op.h>
+#if (SHUNTC)
+#include <zero/shuntc.h>
 #endif
 #include <zero/shunt.h>
-
-#if (SHUNTC)
-uint8_t shuntcopchartab[256];
-long    shuntcopprectab[SHUNTCNTAB];
-long    shuntcopnargtab[SHUNTCNTAB];
-#endif
-
-void
-shuntinitcop(uint8_t *chartab, long *prectab, long *nargtab)
-{
-    /* lookup table */
-    chartab['~'] = '~';
-    chartab['&'] = '&';
-    chartab['|'] = '|';
-    chartab['^'] = '^';
-    chartab['<'] = '<';
-    chartab['>'] = '>';
-    chartab['+'] = '+';
-    chartab['-'] = '-';
-    chartab['*'] = '*';
-    chartab['/'] = '/';
-    chartab['%'] = '%';
-    chartab['='] = '=';
-    /* precedences */
-    prectab[SHUNTCNOT] = SHUNTCRTOL | 8;
-    prectab[SHUNTCINC] = 8;
-    prectab[SHUNTCDEC] = 8;
-    prectab[SHUNTCSHL] = 7;
-    prectab[SHUNTCSHR] = 7;
-    prectab[SHUNTCAND] = 6;
-    prectab[SHUNTCXOR] = SHUNTCRTOL | 5;
-    prectab[SHUNTCOR] = 4;
-    prectab[SHUNTCMUL] = 3;
-    prectab[SHUNTCDIV] = 3;
-    prectab[SHUNTCMOD] = 3;
-    prectab[SHUNTCADD] = SHUNTCRTOL | 2;
-    prectab[SHUNTCSUB] = 2;
-    prectab[SHUNTCASSIGN] = 1;
-    /* # of arguments */
-    nargtab[SHUNTCNOT] = 1;
-    nargtab[SHUNTCINC] = 1;
-    nargtab[SHUNTCDEC] = 1;
-    nargtab[SHUNTCSHL] = 2;
-    nargtab[SHUNTCSHR] = 2;
-    nargtab[SHUNTCAND] = 2;
-    nargtab[SHUNTCXOR] = 2;
-    nargtab[SHUNTCOR] = 2;
-    nargtab[SHUNTCMUL] = 2;
-    nargtab[SHUNTCDIV] = 2;
-    nargtab[SHUNTCMOD] = 2;
-    nargtab[SHUNTCADD] = 2;
-    nargtab[SHUNTCSUB] = 2;
-
-    return;
-}
 
 /*
  * Dijkstra's shunting yard algorithm
@@ -69,134 +13,134 @@ shuntinitcop(uint8_t *chartab, long *prectab, long *nargtab)
  * - https://en.wikipedia.org/wiki/Shunting-yard_algorithm
  */
 SHUNT_TOKEN *
-shuntparse(SHUNT_TOKEN *srcqueue)
+shuntparse(SHUNT_TOKEN *tokq)
 {
-    SHUNT_TOKEN *token;
-    SHUNT_TOKEN *token1 = srcqueue;
-    SHUNT_TOKEN *token2 = NULL;
-    SHUNT_TOKEN *token3 = NULL;
-    SHUNT_TOKEN *queue = NULL;
+    SHUNT_TOKEN *tok;
+    SHUNT_TOKEN *tok1 = tokq;
+    SHUNT_TOKEN *tok2 = NULL;
+    SHUNT_TOKEN *tok3 = NULL;
+    SHUNT_TOKEN *q = NULL;
     SHUNT_TOKEN *tail = NULL;
     SHUNT_TOKEN *stack = NULL;
 
-    while (token1) {
-//        zpcprinttoken(token1);
-        token = malloc(sizeof(SHUNT_TOKEN));
-        token3 = token1->next;
-        memcpy(token, token1, sizeof(SHUNT_TOKEN));
-        token = token1;
-        if (shuntcisvalue(token)) {
-            shuntqueue(token, &queue, &tail);
-        } else if (shuntcisfunc(token)) {
-            shuntpush(token, &stack);
-        } else if (shuntcissep(token)) {
-            token2 = stack;
-            while ((token2) && token2->type != SHUNT_LEFTPAREN) {
-                token2 = shuntpop(&stack);
-                shuntqueue(token2, &queue, &tail);
-                token2 = shuntpop(&stack);
+    while (tok1) {
+//        zpcprinttok(tok1);
+        tok = malloc(sizeof(SHUNT_TOKEN));
+        tok3 = tok1->next;
+        memcpy(tok, tok1, sizeof(SHUNT_TOKEN));
+        tok = tok1;
+        if (shuntcisvalue(tok)) {
+            shuntqueue(tok, &q, &tail);
+        } else if (shuntcisfunc(tok)) {
+            shuntpush(tok, &stack);
+        } else if (shuntcissep(tok)) {
+            tok2 = stack;
+            while ((tok2) && tok2->type != SHUNT_LEFTPAREN) {
+                tok2 = shuntpop(&stack);
+                shuntqueue(tok2, &q, &tail);
+                tok2 = shuntpop(&stack);
             }
-            if ((token2) && token2->type == SHUNT_LEFTPAREN) {
+            if ((tok2) && tok2->type == SHUNT_LEFTPAREN) {
                 
                 continue;
             } else {
-                fprintf(stderr, "mismatched parentheses: %s\n", token2->str);
+                fprintf(stderr, "mismatched parentheses: %s\n", tok2->str);
                 
                 return NULL;
             }
-        } else if (shuntcisop(token)) {
-            token2 = stack;
-            while (shuntcisop(token2)) {
-                if ((!shuntcisrtol(token)
-                     && shuntcopprec(token) <= shuntcopprec(token2))
-                    || shuntcopprec(token) < shuntcopprec(token2)) {
-//                    fprintf(stderr, "POP: %s (%s)\n", token2->str, token->str);
-                    token2 = shuntpop(&stack);
-                    shuntqueue(token2, &queue, &tail);
-                    token2 = stack;
+        } else if (shuntcisop(tok)) {
+            tok2 = stack;
+            while (shuntcisop(tok2)) {
+                if ((!shuntcisrtol(tok)
+                     && shuntcopprec(tok) <= shuntcopprec(tok2))
+                    || shuntcopprec(tok) < shuntcopprec(tok2)) {
+//                    fprintf(stderr, "POP: %s (%s)\n", tok2->str, tok->str);
+                    tok2 = shuntpop(&stack);
+                    shuntqueue(tok2, &q, &tail);
+                    tok2 = stack;
                 } else {
 
                     break;
                 }
             }
-//            fprintf(stderr, "PUSH: %s\n", token->str);
-            shuntpush(token, &stack);
-        } else if (token->type == SHUNT_LEFTPAREN) {
-            shuntpush(token, &stack);
-        } else if (token->type == SHUNT_RIGHTPAREN) {
-            token2 = stack;
-            while ((token2) && token2->type != SHUNT_LEFTPAREN) {
-                token2 = shuntpop(&stack);
-                shuntqueue(token2, &queue, &tail);
-                token2 = stack;
+//            fprintf(stderr, "PUSH: %s\n", tok->str);
+            shuntpush(tok, &stack);
+        } else if (tok->type == SHUNT_LEFTPAREN) {
+            shuntpush(tok, &stack);
+        } else if (tok->type == SHUNT_RIGHTPAREN) {
+            tok2 = stack;
+            while ((tok2) && tok2->type != SHUNT_LEFTPAREN) {
+                tok2 = shuntpop(&stack);
+                shuntqueue(tok2, &q, &tail);
+                tok2 = stack;
             }
-            if ((token2) && token2->type == SHUNT_LEFTPAREN) {
-                token2 = shuntpop(&stack);
+            if ((tok2) && tok2->type == SHUNT_LEFTPAREN) {
+                tok2 = shuntpop(&stack);
             } else {
-                if (token2) {
+                if (tok2) {
                     fprintf(stderr, "mismatched parentheses: %s\n",
-                            token2->str);
+                            tok2->str);
                 }
                 
                 return NULL;
             }
             if (shuntcisfunc(stack)) {
-                token2 = shuntpop(&stack);
-                shuntqueue(token2, &queue, &tail);
+                tok2 = shuntpop(&stack);
+                shuntqueue(tok2, &q, &tail);
             }
         }
-        token1 = token3;
+        tok1 = tok3;
     }
 #if 0
     fprintf(stderr, "QUEUE: ");
-    zpcprintqueue(queue);
+    zpcprintqueue(q);
     fprintf(stderr, "STACK: ");
     zpcprintqueue(stack);
 #endif
     do {
-        token1 = stack;
-        if (shuntcisop(token1)) {
-            token1 = shuntpop(&stack);
-            shuntqueue(token1, &queue, &tail);
-        } else if ((token1)
-                   && (token1->type == SHUNT_LEFTPAREN
-                       || token1->type == SHUNT_RIGHTPAREN)) {
-            fprintf(stderr, "mismatched parentheses: %s\n", token1->str);
+        tok1 = stack;
+        if (shuntcisop(tok1)) {
+            tok1 = shuntpop(&stack);
+            shuntqueue(tok1, &q, &tail);
+        } else if ((tok1)
+                   && (tok1->type == SHUNT_LEFTPAREN
+                       || tok1->type == SHUNT_RIGHTPAREN)) {
+            fprintf(stderr, "mismatched parentheses: %s\n", tok1->str);
 
             return NULL;
         }
     } while (stack);
 
-    return queue;
+    return q;
 }
 
 SHUNT_TOKEN *
-shunteval(SHUNT_TOKEN *srcqueue)
+shunteval(SHUNT_TOKEN *tokq)
 {
-    SHUNT_TOKEN  *token = srcqueue;
-    SHUNT_TOKEN  *queue = NULL;
+    SHUNT_TOKEN  *tok = tokq;
+    SHUNT_TOKEN  *q = NULL;
     SHUNT_TOKEN  *tail = NULL;
     SHUNT_TOKEN  *stack = NULL;
-    SHUNT_TOKEN  *token1 = token;
-    SHUNT_TOKEN  *token2;
+    SHUNT_TOKEN  *tok1 = tok;
+    SHUNT_TOKEN  *tok2;
     SHUNT_TOKEN  *arg1;
     SHUNT_TOKEN  *arg2;
-    SHUNT_RESULT  dest;
+    SHUNT_INT     dest;
     SHUNT_OP     *func;
     long          radix;
 
-    while (token) {
-        token2 = token->next;
-        if (shuntcisvalue(token)) {
-            shuntpush(token, &stack);
-        } else if (shuntcisop(token)) {
-            if (!token1) {
+    while (tok) {
+        tok2 = tok->next;
+        if (shuntcisvalue(tok)) {
+            shuntpush(tok, &stack);
+        } else if (shuntcisop(tok)) {
+            if (!tok1) {
                 fprintf(stderr, "missing argument 1\n");
                 
                 return NULL;
             }
             arg2 = NULL;
-            if (SHUNT_NARGTAB[token->type] == 2) {
+            if (SHUNT_NARGTAB[tok->type] == 2) {
                 arg2 = shuntpop(&stack);
                 if (!arg2) {
                     fprintf(stderr, "missing argument 2\n");
@@ -204,17 +148,17 @@ shunteval(SHUNT_TOKEN *srcqueue)
                     return NULL;
                 }
             }
-            arg1 = token1;
+            arg1 = tok1;
 #if (SHUNTZPC)
             fprintf(stderr, "ARGS:\n");
             if (arg1) {
-                zpcprinttoken(arg1);
+                zpcprinttok(arg1);
             }
             if (arg2) {
-                zpcprinttoken(arg2);
+                zpcprinttok(arg2);
             }
 #endif /* SHUNTZPC */
-            switch (SHUNT_NARGTAB[token->type]) {
+            switch (SHUNT_NARGTAB[tok->type]) {
                 case 2:
                     if (!arg2) {
                         fprintf(stderr, "invalid argument 2\n");
@@ -230,49 +174,72 @@ shunteval(SHUNT_TOKEN *srcqueue)
 
                     break;
             }
-            func = SHUNT_EVALTAB[token->type];
+            func = SHUNT_EVALTAB[tok->type];
             if (func) {
                 if (arg2) {
                     dest = func(arg2, arg1);
                     if (arg1->radix == 16 || arg2->radix == 16) {
-                        token1->radix = 16;
+                        tok1->radix = 16;
                     } else if (arg1->radix == 8 || arg2->radix == 8) {
-                        token1->radix = 8;
+                        tok1->radix = 8;
                     } else if (arg1->radix == 2 || arg2->radix == 2) {
-                        token1->radix = 2;
+                        tok1->radix = 2;
                     } else {
-                        token1->radix = 10;
+                        tok1->radix = 10;
                     }
 #if (SMARTTYPES)
-                    token1->type = arg1->type;
-                    token1->flags = arg1->flags;
-                    token1->sign = arg1->sign;
+                    tok1->type = arg1->type;
+                    tok1->flags = arg1->flags;
+                    tok1->sign = arg1->sign;
 #endif
                 } else if (arg1) {
                     dest = func(arg1, arg2);
-                    token1->radix = arg1->radix;
+                    tok1->radix = arg1->radix;
 #if (SMARTTYPES)
-                    token1->type = arg2->type;
-                    token1->flags = arg2->flags;
-                    token1->sign = arg2->sign;
+                    tok1->type = arg2->type;
+                    tok1->flags = arg2->flags;
+                    tok1->sign = arg2->sign;
 #endif
                 }
-                token1->data.ui64.i64 = dest;
+                tok1->data.i64 = dest;
                 if (arg1->type == SHUNT_INT64 || arg1->type == SHUNT_UINT64) {
-                    radix = token1->radix;
+                    radix = tok1->radix;
                     if (!radix) {
-                        radix = shuntradix;
+                        radix = SHUNT_RADIX;
                     }
-                    token1->radix = radix;
+                    tok1->radix = radix;
                     fprintf(stderr, "RADIX: %ld\n", radix);
-                    shuntprintstr(token1, token1->data.ui64.u64, radix);
+#if (SHUNTC)
+                    shuntprintstr(tok1, tok1->data.ui64, radix);
+#endif
                 }
             }
         }
-        token = token2;
+        tok = tok2;
     }
-    shuntqueue(token1, &queue, &tail);
+    shuntqueue(tok1, &q, &tail);
 
-    return queue;
+    return q;
+}
+
+void
+shuntconvtobin(SHUNT_UINT val, char *str, size_t len)
+{
+    long       l;
+    SHUNT_UINT mask = UINT64_C(1) << 63;
+
+    if (len < 67) {
+        fprintf(stderr, "not enough size for 64 bits\n");
+
+        return;
+    }
+    sprintf(str, "0b");
+    for (l = 2 ; l < 66 ; l++) {
+        snprintf(&str[l], len, "%c", (val & mask) ? '1' : '0');
+        mask >>= 1;
+    }
+    str[l] = '\0';
+
+    return;
 }
 

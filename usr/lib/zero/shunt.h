@@ -1,6 +1,13 @@
 #ifndef __ZERO_SHUNT_H__
 #define __ZERO_SHUNT_H__
 
+#if (SHUNTC)
+#include <zero/shuntc.h>
+#include <zero/bits/shuntc.h>
+#endif
+
+extern void shuntconvtobin(SHUNT_UINT val, char *str, size_t len);
+
 /*
  * USAGE
  * -----
@@ -10,65 +17,14 @@
  * - param; e.g. type wordsize
  */
 
-#if (SHUNTC)
-/* C-language operations */
-#define SHUNTCNOT        0x01
-#define SHUNTCINC        0x02
-#define SHUNTCDEC        0x03
-#define SHUNTCSHL        0x04
-#define SHUNTCSHR        0x05
-#define SHUNTCAND        0x06
-#define SHUNTCXOR        0x07
-#define SHUNTCOR         0x08
-#define SHUNTCMUL        0x09
-#define SHUNTCDIV        0x0a
-#define SHUNTCMOD        0x0b
-#define SHUNTCADD        0x0c
-#define SHUNTCSUB        0x0d
-#define SHUNTCASSIGN     0x0e
-#define SHUNTCNOP        16
-#define SHUNTCRTOL       (1L << 31)
-#define SHUNTCSEP        (SHUNTCNOP + 0x01)
-#define SHUNTCFUNC       (SHUNTCNOP + 0x02)
-#define SHUNTCINT        (SHUNTCNOP + 0x03)
-#define SHUNTCUINT       (SHUNTCNOP + 0x04)
-#define SHUNTCFLOAT      (SHUNTCNOP + 0x05)
-#define SHUNTCPTR        (SHUNTCNOP + 0x06)
-#define SHUNTCNTAB       (SHUNTCPTR + 1)
-/* global tables */
-extern uint8_t shuntcopchartab[256];
-extern long    shuntcopprectab[SHUNTCNTAB];
-extern long    shuntcopnargtab[SHUNTCNTAB];
-#endif
-
 /*
  * We assume the following have been defined:
  * SHUNT_TOKEN          - a queue item with prev and next members
  */
 
 /* API function prototypes */
-SHUNT_TOKEN * shuntparse(SHUNT_TOKEN *srcqueue);
-SHUNT_TOKEN * shunteval(SHUNT_TOKEN *srcqueue);
-
-#if (SHUNTC)
-#define PARAMSIZEMASK 0xff
-#define shuntcisopchar(c)                                               \
-    (shuntcopchartab[(int)(c)])
-#define shuntcopprec(tok)                                               \
-    (shuntcopprectab[(tok)->type] & ~SHUNTCRTOL)
-#define shuntcopisrtol(tok)                                             \
-    (shuntcopprectab[(tok)->type] & SHUNTCRTOL)
-#define shuntcisvalue(tok)                                              \
-    ((tok) && ((tok)->type == SHUNTCINT || (tok)->type == SHUNTCUINT))
-#define shuntcwordsize(tp)                                              \
-    ((tp)->param & PARAMSIZEMASK)
-#define shuntcisfunc(tok)                                               \
-    ((tok) && (tok)->type == SHUNTCFUNC)
-#define shuntcissep(tok)                                                \
-    ((tok) && (tok)->type == SHUNTCSEP)
-#define shuntcisop(tok)                                                 \
-    ((tok) && ((tok)->type >= SHUNTCNOT && (tok)->type <= SHUNTCASSIGN))
-#endif
+SHUNT_TOKEN * shuntparse(SHUNT_TOKEN *tokq);
+SHUNT_TOKEN * shunteval(SHUNT_TOKEN *tokq);
 
 /* internal routines */
 
@@ -119,6 +75,42 @@ shuntpop(SHUNT_TOKEN **stack)
 
     return _token;
 }
+
+#define shuntprintstr(tok, val, rad)                                    \
+    do {                                                                \
+        switch (rad) {                                                  \
+            case 2:                                                     \
+                shuntconvtobin((val), (tok)->str, (tok)->slen);         \
+                                                                        \
+                break;                                                  \
+            case 8:                                                     \
+                snprintf((tok)->str, (tok)->slen, "0%llo", (long long)(val)); \
+                                                                        \
+                break;                                                  \
+            case 10:                                                    \
+            default:                                                    \
+                if ((tok)->type == SHUNT_INT64) {                       \
+                    snprintf((tok)->str, (tok)->slen, "%lld", (long long)(val)); \
+                } else {                                                \
+                    snprintf((tok)->str, (tok)->slen, "%llu", (unsigned long long)(val)); \
+                }                                                       \
+                                                                        \
+                break;                                                  \
+            case 16:                                                    \
+                if (val <= 0xff) {                                      \
+                    sprintf((tok)->str, "0x%02llx", (long long)(val));  \
+                } else if (val <= 0xffff) {                             \
+                    sprintf((tok)->str, "0x%04llx", (long long)(val));  \
+                } else if (val <= 0xffffffff) {                         \
+                    sprintf((tok)->str, "0x%08llx", (long long)(val));  \
+                } else {                                                \
+                    sprintf((tok)->str, "0x%016llx", (long long)(val)); \
+                }                                                       \
+                                                                        \
+                break;                                                  \
+        }                                                               \
+        (tok)->len = strlen((tok)->str);                                \
+    } while (0)
 
 #endif /* __ZERO_SHUNT_H__ */
 
