@@ -4,7 +4,7 @@
 #include <zero/maplk.h>
 
 zeromaplk *
-maplkinit(long n, zeromaplk *maplk)
+maplkinit(zeromaplk *maplk, long n)
 {
     uintptr_t  own;
     void      *map;

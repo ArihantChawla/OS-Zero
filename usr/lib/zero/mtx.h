@@ -16,9 +16,11 @@ typedef volatile long zeromtx;
 #undef PTHREAD
 #define PTHREAD        0
 #endif
-#define ZEROMTXINITVAL 0
-#define ZEROMTXLKVAL   1
-#define ZEROMTXCONTVAL 2
+#define ZEROMTXINITVAL 0L
+#define ZEROMTXLKVAL   1L
+#if (ZERONEWMTX)
+#define ZEROMTXCONTVAL 2L
+#endif
 
 #include <zero/asm.h>
 //#if (__KERNEL__) && (__MTKERNEL__)
@@ -38,34 +40,30 @@ extern int pthread_yield(void);
  * try to acquire mutex lock
  * - return non-zero on success, zero if already locked
  */
+#define mtxtrylk(lp) mtxtrylk2((volatile long *)(lp), ZEROMTXLKVAL)
+#define mtxlk(lp) mtxlk2((volatile long *)(lp), ZEROMTXLKVAL)
+#define mtxunlk(lp) mtxunlk2((volatile long *)(lp), ZEROMTXLKVAL)
+
 static __inline__ long
 mtxtrylk2(volatile long *lp, long val)
 {
     volatile long res;
+    long          ret;
 
     res = m_cmpswap(lp, ZEROMTXINITVAL, val);
-#if (ZERONEWMTX)
-    if (res == ZEROMTXINITVAL) {
+    ret = !res;
 
-        return ZEROMTXLKVAL;
-    } else {
-
-        return 0;
-    }
-#else
-    return (res != ZEROMTXINITVAL);
-#endif
+    return ret;
 }
-#define mtxtrylk(lp) mtxtrylk2((volatile long *)(lp), ZEROMTXLKVAL)
 
-static __inline__ long
+static __inline__ void
 mtxlk2(volatile long *lp, long val)
 {
     volatile long res = val;
     
     do {
         res = m_cmpswap(lp, ZEROMTXINITVAL, val);
-        if (res != ZEROMTXINITVAL) {
+        if (res) {
 #if defined(__linux__) && !(__KERNEL__)
             sched_yield();
 #elif (__KERNEL__)
@@ -75,23 +73,21 @@ mtxlk2(volatile long *lp, long val)
 #endif
         }
         /* TODO: should I activate m_waitint() here? :) */
-    } while (res != ZEROMTXINITVAL);
+    } while (res);
 
-    return ZEROMTXLKVAL;
+    return;
 }
-#define mtxlk(lp) mtxlk2((volatile long *)(lp), ZEROMTXLKVAL)
 
 #if (ZERONEWMTX)
-static __inline__ long
+static __inline__ void
 mtxunlk2(volatile long *lp, long val)
 {
     volatile long res;
     
-//    *lp = ZEROMTXINITVAL;
     res = m_cmpswap(lp, ZEROMTXLKVAL, ZEROMTXINITVAL);
     m_membar();
 
-    return (res == ZEROMTXLKVAL);
+    return;
 }
 #else
 static __inline__ void
@@ -103,7 +99,6 @@ mtxunlk2(volatile long *lp, long val)
     return;
 }
 #endif
-#define mtxunlk(lp) mtxunlk2((volatile long *)(lp), ZEROMTXLKVAL)
 
 #endif /* __ZERO_MTX_H__ */
 

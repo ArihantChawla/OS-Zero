@@ -4,7 +4,7 @@
  */
 
 #undef assert
-#if defined(__STDC_VERSION__) && (__STDC_VERSION >= 201112L)
+#if defined(__STDC_VERSION__) && (__STDC_VERSION__ >= 201112L)
 undef  static_assert
 #endif
 
@@ -27,7 +27,7 @@ undef  static_assert
                 __LINE__),                                              \
         abort()))
 
-#if defined(__STDC_VERSION__) && (__STDC_VERSION >= 201112L)
+#if defined(__STDC_VERSION__) && (__STDC_VERSION__ >= 201112L)
 #define static_assert _Static_assert
 #endif
 

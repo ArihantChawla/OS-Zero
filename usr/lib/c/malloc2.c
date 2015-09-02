@@ -15,7 +15,7 @@
 #define MALLOCCONSTSLABS 0
 #define MALLOCDYNARN     0
 
-#define MALLOCTRACE      1
+#define MALLOCTRACE      0
 #if defined(NVALGRIND)
 #define MALLOCVALGRIND   0
 #else

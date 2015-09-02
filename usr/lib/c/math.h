@@ -7,6 +7,8 @@
 #include <bits/math.h>
 #include <ia32/math.h>
 
+#if defined(__STDC_VERSION__) && (__STDC_VERSION__ > 201112L)
+
 #if (FLT_EVAL_METHOD == 0)
 typedef float       float_t;
 typedef double      double_t;
@@ -43,7 +45,7 @@ typedef long double double_t;
 #define PLOSS     6
 
 /* return this large value instead of infinity */
-#define HUGE      (3.40282347e+38F)
+#define HUGE      (3.40282347e+38f)
 
 struct exception {
     int     type;
@@ -58,7 +60,7 @@ extern int matherr(struct exception *exc);
 #else /* !USESVID */
 
 #if defined(USEXOPEN) && (USEXOPEN)
-#define MAXFLOAT (3.40282347e+38F)
+#define MAXFLOAT (3.40282347e+38f)
 #endif
 
 #endif /* USESVID */
