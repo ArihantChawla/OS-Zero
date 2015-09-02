@@ -39,7 +39,7 @@ get_open_max(void)
 
 #else
 
-/* query maximum number of open files using sysdtablesize() */
+/* query maximum number of open files using getdtablesize() */
 int
 get_open_max(void)
 {
