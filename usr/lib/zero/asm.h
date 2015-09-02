@@ -35,5 +35,14 @@
 #include <zero/ppc/asm.h>
 #endif
 
+#if defined(__GNUC__)
+#define m_setretadr(p)                                                  \
+    ((p) = (void *)__builtin_frob_return_address(__builtin_return_address(1)))
+#define m_getretadr(p)                                                  \
+    ((p) = (void *)__builtin_extract_return_addr(__builtin_return_address(1)))
+#define m_getfrmadr(p)                                                  \
+    ((p) = (void *)__builtin_frame_address(1))
+#endif
+
 #endif /* __ZERO_ASM_H__ */
 

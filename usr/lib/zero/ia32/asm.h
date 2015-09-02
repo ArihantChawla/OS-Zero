@@ -9,14 +9,7 @@
 #define m_cmpswap(p, want, val)  m_cmpxchgl(p, want, val)
 #define m_scanlo1bit(l)          m_bsfl(l)
 #define m_scanhi1bit(l)          m_bsrl(l)
-#if defined(__GNUC__)
-#define m_setretadr(pp)                                                 \
-    (*(pp) = (void *)__builtin_frob_return_address(__builtin_return_address(0)))
-#define m_getretadr(pp)                                                 \
-    (*(pp) = (void *)__builtin_extract_return_address(__builtin_return_address(0)))
-#define m_getfrmadr(pp)                                                 \
-    (*(pp) = (void *)__builtin_frame_address(0))
-#else /* !defined(__GNUC__ */
+#if !defined(__GNUC__)
 static __inline__ void
 m_getretadr(void **pp) {
     void *_ptr;

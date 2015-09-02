@@ -12,7 +12,7 @@
  * - fix mallinfo() to return proper information
  */
 #undef MALLOCSTAT
-#define MALLOCSTAT        1
+#define MALLOCSTAT        0
 #define MALLOCSTKNDX      0
 #define MALLOCCONSTSLABS  0
 #define MALLOCDYNARN      0
@@ -32,7 +32,7 @@
 #define MALLOCEXPERIMENT  0
 #define MALLOCNBUFHDR     16
 
-#define ZMALLOCDEBUGHOOKS 1
+#define ZMALLOCDEBUGHOOKS 0
 #define MALLOCSTEALMAG    0
 #define MALLOCNEWHACKS    0
 
@@ -182,17 +182,6 @@
 #define MALLOCSMALLMAPLOG2   21
 #define MALLOCMIDMAPLOG2     23
 #define MALLOCBIGMAPLOG2     25
-#if 0
-#define MALLOCSUPERSLABLOG2  20
-#define MALLOCSLABLOG2       18
-#define MALLOCTINYSLABLOG2   8
-#define MALLOCSMALLSLABLOG2  12
-#define MALLOCMIDSLABLOG2    14
-#define MALLOCBIGSLABLOG2    17
-#define MALLOCSMALLMAPLOG2   21
-#define MALLOCMIDMAPLOG2     23
-#define MALLOCBIGMAPLOG2     25
-#endif
 #else
 #define MALLOCSUPERSLABLOG2  22
 #define MALLOCSLABLOG2       20
@@ -385,7 +374,7 @@ struct malloc {
 };
 
 #if defined(__GLIBC__) && (MALLOCTRACE)
-#define MALLOCNTRACEFUNC 1024
+#define MALLOCNTRACEFUNC 16
 void *tracebuf[MALLOCNTRACEFUNC];
 #endif
 static struct malloc  g_malloc ALIGNED(PAGESIZE);
@@ -470,7 +459,7 @@ mallocstat(void)
      ? ptr                                                              \
      : ((void *)rounduppow2((uintptr_t)ptr, align)))
 #define blkalignsz(sz, aln)                                             \
-    (((aln) <= MALLOCMINSIZE)                                           \
+    (((aln) <= PAGESIZE)                                                \
      ? max(sz, aln)                                                     \
      : (sz) + (aln))
 
@@ -534,6 +523,8 @@ mallquit(int sig)
     fprintf(stderr, "QUIT (%d)\n", sig);
 #if (MALLOCSTAT)
     mallocstat();
+#elif defined(__GLIBC__) && (MALLOCTRACE)
+    backtrace_symbols_fd(tracebuf, MALLOCNTRACEFUNC, STDERR_FILENO);
 #else
     fflush(stderr);
 #endif
@@ -565,7 +556,7 @@ mallochook(size_t size, const void *caller)
 void
 reallochook(void *ptr, size_t size, const void *caller)
 {
-    fprintf(stderr, "REALLOC: %p: %p (%ld)\n", caller, size, ptr);
+    fprintf(stderr, "REALLOC: %p: %p (%ld)\n", caller, ptr, size);
     fflush(stderr);
 
     return;
@@ -592,7 +583,7 @@ morecorehook(void)
 void
 memalignhook(size_t align, size_t size, const void *caller)
 {
-    fprintf(stderr, "MEMALIGN: %p: %p (%ld)\n", caller, align, size);
+    fprintf(stderr, "MEMALIGN: %p: %ld (%ld)\n", caller, align, size);
     fflush(stderr);
 
     return;
@@ -1312,6 +1303,14 @@ mallinit(void)
         
         return;
     }
+#if (ZMALLOCDEBUGHOOKS) && defined(_ZERO_SOURCE) && (ZMALLOCHOOKS)
+    __zmalloc_hook = mallochook;
+    __zrealloc_hook = reallochook;
+    __zmemalign_hook = memalignhook;
+    __zfree_hook = freehook;
+    __zmalloc_initialize_hook = mallocinithook;
+    __zafter_morecore_hook = morecorehook;
+#endif
 #if (MALLOCNEWHACKS) && 0
     for (bkt = 0 ; bkt < MALLOCNBKT ; bkt++) {
         setnbytelog2(bkt, _nbytelog2tab[bkt]);
@@ -1373,11 +1372,7 @@ mallinit(void)
 #endif /* !MALLOCNOSBRK */
     g_malloc.mlktab = mapanon(g_malloc.zerofd, MDIRNL1KEY * sizeof(long));
     g_malloc.mdir = mapanon(g_malloc.zerofd, MDIRNL1KEY * sizeof(void *));
-#if (ZMALLOCDEBUGHOOKS) && (ZMALLOCHOOKS)
-    if (__zmalloc_initialize_hook) {
-        __zmalloc_initialize_hook();
-    }
-#elif defined(_ZERO_SOURCE) && (ZMALLOCHOOKS)
+#if (ZMALLOCDEBUGHOOKS) || (defined(_ZERO_SOURCE) && (ZMALLOCHOOKS))
     if (__zmalloc_initialize_hook) {
         __zmalloc_initialize_hook();
     }
@@ -1899,7 +1894,11 @@ _free(void *ptr)
     long        bktid;
     long        freemap = 0;
     int         val;
-    
+
+    if (!ptr) {
+
+        return;
+    }
     mag = findmag(ptr);
     if (mag) {
         setmag(ptr, NULL);
@@ -2101,7 +2100,7 @@ malloc(size_t size)
     if (__zmalloc_hook) {
         void *caller = NULL;
 
-        m_getretadr(&caller);
+        m_getretadr(caller);
         __zmalloc_hook(size, (const void *)caller);;
     }
 #endif
@@ -2130,7 +2129,7 @@ calloc(size_t n, size_t size)
     if (__zmalloc_hook) {
         void *caller = NULL;
 
-        m_getretadr(&caller);
+        m_getretadr(caller);
         __zmalloc_hook(size, (const void *)caller);;
     }
 #endif
@@ -2155,7 +2154,7 @@ realloc(void *ptr,
     if (__zrealloc_hook) {
         void *caller = NULL;
 
-        m_getretadr(&caller);
+        m_getretadr(caller);
         __zrealloc_hook(ptr, size, (const void *)caller);
     }
 #endif
@@ -2186,7 +2185,7 @@ free(void *ptr)
     if (__zfree_hook) {
         void *caller = NULL;
 
-        m_getretadr(&caller);
+        m_getretadr(caller);
         __zfree_hook(ptr, (const void *)caller);
     }
 #endif
@@ -2210,7 +2209,7 @@ aligned_alloc(size_t align,
     if (__zmemalign_hook) {
         void *caller = NULL;
         
-        m_getretadr(&caller);
+        m_getretadr(caller);
         __zmemalign_hook(align, size, (const void *)caller);
     }
 #endif
@@ -2245,7 +2244,7 @@ posix_memalign(void **ret,
     if (__zmemalign_hook) {
         void *caller = NULL;
         
-        m_getretadr(&caller);
+        m_getretadr(caller);
         __zmemalign_hook(align, size, (const void *)caller);
     }
 #endif
@@ -2283,7 +2282,7 @@ valloc(size_t size)
     if (__zmemalign_hook) {
         void *caller = NULL;
         
-        m_getretadr(&caller);
+        m_getretadr(caller);
         __zmemalign_hook(PAGESIZE, size, (const void *)caller);
     }
 #endif
@@ -2310,7 +2309,7 @@ memalign(size_t align,
     if (__zmemalign_hook) {
         void *caller = NULL;
         
-        m_getretadr(&caller);
+        m_getretadr(caller);
         __zmemalign_hook(align, size, (const void *)caller);
     }
 #endif
@@ -2340,7 +2339,7 @@ reallocf(void *ptr,
     if (__zrealloc_hook) {
         void *caller = NULL;
 
-        m_getretadr(&caller);
+        m_getretadr(caller);
         __zrealloc_hook(ptr, size, (const void *)caller);
     }
 #endif
@@ -2377,7 +2376,7 @@ pvalloc(size_t size)
     if (__zmemalign_hook) {
         void *caller = NULL;
         
-        m_getretadr(&caller);
+        m_getretadr(caller);
         __zmemalign_hook(PAGESIZE, size, (const void *)caller);
     }
 #endif
