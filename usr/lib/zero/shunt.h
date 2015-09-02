@@ -3,7 +3,6 @@
 
 #if (SHUNTC)
 #include <zero/shuntc.h>
-#include <zero/bits/shuntc.h>
 #endif
 
 extern void shuntconvtobin(SHUNT_UINT val, char *str, size_t len);
