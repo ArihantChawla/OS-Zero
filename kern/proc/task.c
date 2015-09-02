@@ -47,15 +47,16 @@ taskfreepid(long id)
 void
 taskinitpids(void)
 {
-    int         i;
+    int         id = PROCNPREDEF;
     struct pid *pid;
 
     mtxlk(&pidlk);
-    pid = &pidtab[0];
+    pid = &pidtab[id];
+    pid->id = id;
     pidq.head = pidq.tail = pid;
-    for (i = 1 ; i < NTHR ; i++) {
-        pid = &pidtab[i];
-        pid->id = i;
+    for (id = 1 ; id < NTHR ; id++) {
+        pid = &pidtab[id];
+        pid->id = id;
         pid->prev = pidq.tail;
         pidq.tail->next = pid;
         pidq.tail = pid;

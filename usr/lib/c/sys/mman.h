@@ -52,7 +52,7 @@ int   mlockall(int flg);
 int   munlockall(void);
 int   mprotect(void *adr, size_t len, int prot);
 void *mmap(void *adr, size_t len, int prot, int flg, int fd, off_t ofs);
-void  munmap(void *adr, size_t len);
+int   munmap(void *adr, size_t len);
 int   msync(void *adr, size_t len, int flg);
 #if (_BSD_SOURCE)
 int   madvise(void *adr, size_t len, int advice);

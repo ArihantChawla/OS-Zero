@@ -1,24 +1,30 @@
-These notes are based on the book
+notes on Unix-like operating systems
+------------------------------------
 
-      The Design of the UNIX Operating System.
+Unix-likes are typically relatively simple (to a point :P) systems.
 
-----8<----
+system environment
+------------------
 
-	1.5.2 Processor Execution Levels
-	--------------------------------
+processor execution levels
+--------------------------
 
-	highest priority	machine errors
-				clock
-				disk
-				network devices
-				terminals
-				software interrupts
+the operations below are listed starting from the highest priority.
 
-	2.2.2.2 Process states
-	----------------------
+- machine errors
+- clock
+- disk devices
+- network devices
+- terminals
+- software interrupts
 
-	1. executing in user mode
-	2. executing in kernel mode
-	3. not executing, but ready to run
-	4. sleeping
+a process can have exactly one of these states at any given moment.
+
+- being created (TASK_CREATE)
+- executing in user mode (TASK_USER)
+- executing in kernel mode (TASK_KERNEL)
+- not executing, but ready to run (TASK_READY)
+- waiting/sleeping (TASK_WAIT)
+- stopped (TASK_STOP)
+- zombie (TASK_ZOMBIE); terminated, but exit status hasn't been fetched yet
 

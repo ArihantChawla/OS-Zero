@@ -1,8 +1,10 @@
 #ifndef __KERN_OBJ_H__
 #define __KERN_OBJ_H__
 
+#if 0
 #include <stdint.h>
 #include <signal.h>
+#endif
 #include <sys/types.h>
 #include <kern/types.h>
 #include <kern/perm.h>

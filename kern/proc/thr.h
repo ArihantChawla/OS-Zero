@@ -64,14 +64,6 @@ struct thrwait {
 #endif
 
 /* thread */
-/* states */
-#define THRNONE   0x00                 // undefined
-#define THRINIT   0x01                 // being initialised
-#define THRRUN    0x02                 // running
-#define THRREADY  0x03                 // ready to run
-#define THRWAIT   0x04                 // waiting on system descriptor
-#define THRSTOP   0x05                 // stopped
-#define THRZOMBIE 0x06                 // finished but not waited for
 struct thr {
     /* thread control block */
     struct m_tcb   m_tcb;               // context

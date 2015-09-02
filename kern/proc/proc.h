@@ -67,19 +67,32 @@
 #endif
 
 /* system-assigned process IDs */
-#define PROCKERN  0	// main kernel; context switches, system calls, ...
-#define PROCINIT  1	// init process
-#define PROCEVD   2     // event daemon; receive and dispatch events
-#define PROCPAGED 3	// page daemon; page replacement; aging, LRU-queue
-#define PROCBUFD  4	// buffer daemon; flush dirty buffers to disk
+#define PROCKERN     0 // main kernel; context switches, system calls, ...
+#define PROCINIT     1 // init process; the mother of all processes
+#define PROCEVD      2 // event daemon; receive and dispatch events
+#define PROCPAGED    3 // page daemon; page replacement; aging, LRU-queue
+#define PROCBUFD     4 // buffer daemon; flush dirty buffers to disk
+#define PROCIDLE     5 // idle process; zeroes memory etc.
+#define PROCNPREDEF  6
 
 long procinit(long id);
 long procgetpid(void);
 void procfreepid(long id);
 
+/* process states */
+#define TASK_CREATE  0
+#define TASK_USER    1
+#define TASK_KERNEL  2
+#define TASK_READY   3
+#define TASK_WAIT    4
+#define TASK_STOP    5
+#define TASK_ZOMBIE  6
+#define TASK_NSTATE  7
+
+
 /* descriptor table size */
 #define OBJNDESC     (1 << OBJNDESCLOG2)
-#define OBJNDESCLOG2 16
+#define OBJNDESCLOG2 20
 
 /* process */
 struct proc {

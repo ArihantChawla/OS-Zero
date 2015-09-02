@@ -13,16 +13,16 @@ bzero(void *ptr, size_t nb)
     int8_t *bptr = ptr;
     int8_t  zb = 0;
     long    zw = 0;
+    long    nleft = nb;
+    long    n = 0;
     long   *lptr;
-    long    n;
     long    cnt;
-    long    nleft;
     size_t  val;
 
-    val = sizeof(long);
-    n = (uintptr_t)bptr & (val - 1);
-    if (n) {
-        cnt = val - n;
+    cnt = sizeof(long);
+    val = (uintptr_t)bptr & (val - 1);
+    if (val) {
+        n = cnt - val;
     }
     nleft -= n;
     while (n--) {

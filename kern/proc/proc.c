@@ -25,9 +25,9 @@ procinit(long id)
         k_curproc = proc;
         /* process ID will be zero */
         thr = &thrtab[0];
-        thr->state = THRREADY;
+        thr->state = TASK_READY;
         thr->nice = 0;
-        thr->sched = THRUSER;
+        thr->sched = TASK_KERNEL;
         thr->prio = 0;
         proc->thr = thr;
         k_curthr = thr;
@@ -89,7 +89,7 @@ procinit(long id)
             return -1;
         }
 #endif
-        thr->state = THRREADY;
+        thr->state = TASK_READY;
     }
 
     return 0;

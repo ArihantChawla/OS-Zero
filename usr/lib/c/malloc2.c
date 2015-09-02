@@ -123,10 +123,13 @@
 #include <string.h>
 #include <stdint.h>
 #include <stdio.h>
-#include <errno.h>
-#include <malloc.h>
 #if (MALLOCFREEMAP)
 #include <limits.h>
+#endif
+#include <errno.h>
+#include <malloc.h>
+#if (GNUTRACE) && (MALLOCTRACE)
+#include <execinfo.h>
 #endif
 
 #define ZEROMTX 1
@@ -149,7 +152,7 @@
 #include <zero/param.h>
 #include <zero/unix.h>
 #include <zero/trix.h>
-#if defined(__GLIBC__)
+#if (GNUTRACE) && (MALLOCTRACE)
 #include <zero/gnu.h>
 #endif
 #if (ZMALLOCDEBUGHOOKS)
@@ -397,9 +400,6 @@ void *(*__memalign_hook)(size_t align, size_t size, const void *caller);
 void  (*__free_hook)(void *ptr, const void *caller);
 void *(*__malloc_initialize_hook)(void);
 void  (*__after_morecore_hook)(void);
-#endif
-
-#if defined(__GLIBC__) && (MALLOCTRACE)
 #endif
 
 #if (MALLOCSTAT)
@@ -2097,9 +2097,9 @@ malloc(size_t size)
     ptr = _malloc(size, 0, 0);
     if (ptr) {
         VALGRINDALLOC(ptr, size, 0);
-#if (MALLOCTRACE)
+#if (MALLOCTRACE) && defined(GNUTRACE)
     } else {
-        trace_fd();
+        trace_fd(STDERR_FILENO);
 #endif /* MALLOCTRACE */
     }
 #if (MALLOCDEBUG) && 0
