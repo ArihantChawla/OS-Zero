@@ -16,6 +16,11 @@
 #include <bits/unistd.h>
 #endif
 
+extern char *optarg;
+extern int   optind;
+extern int   opterr;
+extern int   optopt;
+
 #if (_POSIX_SOURCE)
 #define _POSIX_VERSION  _POSIX_C_SOURCE
 #endif

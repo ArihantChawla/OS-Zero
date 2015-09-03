@@ -6,17 +6,21 @@
 #include <zero/param.h>
 
 #if !defined(NULL)
-#define NULL           ((void *)0L)
+#define NULL               ((void *)0L)
 #endif
 
 #if defined(_MSC_VER) && defined(_WIN64)
-typedef long long      ptrdiff_t;
+typedef long long          ptrdiff_t;
 #else
-typedef long           ptrdiff_t;
+typedef long               ptrdiff_t;
 #endif
-#if !defined(size_t_defined)
-typedef unsigned long  size_t;
-#define size_t_defined 1
+#if !defined(__size_t_defined)
+#if defined(_MSC_VER)
+typedef unsigned long long size_t;
+#else
+typedef unsigned long      size_t;
+#endif
+#define __size_t_defined 1
 #endif
 
 #if defined(__STDC_ISO_10646__) || defined(_ZERO_SOURCE)

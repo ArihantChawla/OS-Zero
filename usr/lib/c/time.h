@@ -17,15 +17,17 @@ extern long  timezone;
 #if (_POSIX_SOURCE)
 extern char *tzname[2];
 #endif
+#if 0
 extern char *__tzname[2];
 extern long  __timezone;
-extern int   _daylight;
+extern int   __daylight;
+#endif
 
 #include <bits/signal.h>
 
 #if (_ZERO_SOURCE)
 //#include <kern/proc/thr.h>
-#define CLOCKS_PER_SEC 1000000
+#define CLOCKS_PER_SEC 1000000  // for microsecond resolution
 #else
 #error CLOCKS_PER_SEC undefined
 #endif
@@ -38,7 +40,7 @@ extern int   _daylight;
 #define CLOCK_REALTIME           2
 #define CLOCK_THREAD_CPUTIME_ID  3
 
-#define TIMER_ABSTIME            0x00000001
+#define TIMER_ABSTIME            (1 << 0)
 
 #if !defined(__KERNEL__)
 

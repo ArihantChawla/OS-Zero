@@ -48,7 +48,7 @@ typedef dev_t           minor_t;
 typedef uint32_t        uid_t;
 typedef uint32_t        gid_t;          // group ID
 typedef long            key_t;          // IPC key
-typedef unsigned long   mode_t;         // permissions
+typedef unsigned long   mode_t;         // file attributes
 typedef int32_t         nlink_t;        // link count
 typedef int64_t         loff_t;
 #if (_FILE_OFFSET_BITS == 32)
@@ -75,7 +75,11 @@ typedef uint64_t        fsblkcnt64_t;
 typedef uint64_t        fsfilcnt64_t;
 #endif
 typedef uintptr_t       id_t;
+#if defined(_MSC_VER)
+typedef long long       ssize_t;
+#else
 typedef long            ssize_t;
+#endif
 typedef unsigned long   useconds_t;
 typedef long            suseconds_t;
 typedef long            time_t;
@@ -103,10 +107,11 @@ typedef id_t            ctid_t;
 typedef id_t            zoneid_t;
 
 /* POSIX threads */
-#if 0
-typedef uintptr_t       pthread_t;
-typedef uintptr_t       pthread_key_t;
-#endif
+/*
+ * TODO
+ * ----
+ * - http://pubs.opengroup.org/onlinepubs/009696699/basedefs/sys/types.h.html
+ */
 
 /* FIXME: this file should #include <time.h> (?) :) */
 #include <time.h>

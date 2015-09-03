@@ -446,18 +446,8 @@ cwsplop(long pid, long pc)
     pc %= CWCORESIZE;
     cnt = cwmars.proccnt[pid];
     cur = cwmars.curproc[pid];
-#if 0
-    for (ndx = cur ; ndx < cnt ; ndx++) {
-        cwmars.runqtab[pid][ndx] = cwmars.runqtab[pid][ndx + 1];
-    }
-#endif
     cwmars.runqtab[pid][cur] = pc;
     if (cnt < CWNPROC) {
-#if 0
-        for (ndx = cur + 1 ; ndx < cnt ; ndx++) {
-            cwmars.runqtab[pid][ndx] = cwmars.runqtab[pid][ndx + 1];
-        }
-#endif
         cwmars.runqtab[pid][cnt] = arg2;
         cnt++;
         cwmars.proccnt[pid] = cnt;

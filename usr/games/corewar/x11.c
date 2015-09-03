@@ -134,11 +134,13 @@ zeusstep(struct zeusx11 *x11, XEvent *event)
     return;
 }
 
+#if 0
 void
 zeusfence(struct zeusx11 *x11, XEvent *event)
 {
     ;
 }
+#endif
 
 void
 zeusclear(struct zeusx11 *x11, XEvent *event)
@@ -344,13 +346,6 @@ zeusinitx11win(struct zeusx11 *x11)
     Window               parent = (x11->parentwin != None
                                    ? x11->parentwin
                                    : RootWindow(x11->disp, x11->screen));
-#if 0
-    int                  winw = max((ZEUSTEXTNCOL + ZEUSDBNCOL) * x11->fontw,
-                                    ZEUSSIMNCOL * 5);
-#if defined(ZEUSIMLIB2)
-    int                  winh = ZEUSBUTTONH + ZEUSSIMNROW * 5 + ZEUSDBNROW * x11->fontw;
-#endif
-#endif
     int                  winw = ZEUSSIMNCOL * 5 + ZEUSBUTTONW;
     int                  winh = ZEUSSIMNROW * 5 + ZEUSDBNROW * x11->fonth;
     int                  x = x11->x;
@@ -784,13 +779,6 @@ zeusinitx11buttons(struct zeusx11 *x11)
 void
 zeusinitx11buf(struct zeusx11 *x11)
 {
-#if 0
-    Pixmap pmap = XCreatePixmap(x11->disp,
-                                x11->simwin,
-                                x11->simw,
-                                x11->simh,
-                                x11->depth);
-#endif
     Pixmap pmap = XCreatePixmap(x11->disp,
                                 x11->mainwin,
                                 x11->w,
