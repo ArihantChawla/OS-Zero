@@ -27,7 +27,7 @@ void
 sigfunc(unsigned long pid, uint32_t trap, long err)
 {
     volatile struct proc *proc = k_curproc;
-    long                  sig = trapsigmap[trap];
+    unsigned long         sig = trapsigmap[trap];
     signalhandler_t      *func;
 
 //    kprintf("trap 0x%lx -> signal 0x%lx\n", trap, sig);

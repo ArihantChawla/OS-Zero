@@ -78,7 +78,7 @@ vmmapseg(uint32_t *pagetab, uint32_t virt, uint32_t phys, uint32_t lim,
  * - initialise paging
  */
 void
-vminit(void *pagetab, unsigned long nbphys)
+vminit(void *pagetab)
 {
     uint32_t *pde;
     uint32_t  adr;

@@ -13,9 +13,7 @@
 int
 get_open_max(void)
 {
-    int retval;
-
-    retval = sysconf(_SC_OPEN_MAX);
+    int retval = sysconf(_SC_OPEN_MAX);
 
     return retval;
 }
@@ -29,7 +27,7 @@ get_open_max(void)
     int           retval = -1;
     struct rlimit rlimit;
 
-    if (getrlimit(RLIMIT_NOFILE, &rlimit) == 0
+    if (!getrlimit(RLIMIT_NOFILE, &rlimit)
         && rlimit.rlimit_cur != RLIM_INFINITY) {
         retval = rlimit.rlim_cur;
     }
@@ -43,9 +41,7 @@ get_open_max(void)
 int
 get_open_max(void)
 {
-    int retval;
-
-    retval = getdtablesize();
+    int retval = getdtablesize();
 
     return retval;
 }

@@ -1,5 +1,6 @@
 #include <limits.h>
 #include <zero/mtx.h>
+#include <kern/proc/proc.h>
 #include <kern/proc/task.h>
 
 static struct pid    pidtab[NTHR] ALIGNED(PAGESIZE);

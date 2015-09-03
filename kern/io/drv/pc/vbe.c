@@ -42,7 +42,7 @@ struct vbescreen      vbescreen;
 static struct vbeinfo vbectlinfo;
 
 void
-vbeint10(struct realregs *regs)
+vbeint10(void)
 {
     static int first = 1;
 
@@ -78,7 +78,7 @@ vbeinit(void)
     info->sig[1] = 'B';
     info->sig[2] = 'E';
     info->sig[3] = '2';
-    vbeint10(regs);
+    vbeint10();
     if (regs->ax != VBESUPPORTED) {
 
         return;
@@ -87,7 +87,7 @@ vbeinit(void)
     regs->ax = VBEGETMODEINFO;
     regs->cx = VBEDEFMODE;
     regs->di = VBEMODEADR;
-    vbeint10(regs);
+    vbeint10();
     if (regs->ax != VBESUPPORTED) {
 
         return;
@@ -95,7 +95,7 @@ vbeinit(void)
     kbzero(regs, sizeof(struct realregs));
     regs->ax = VBESETMODE;
     regs->bx = VBEDEFMODE | VBELINFBBIT;
-    vbeint10(regs);
+    vbeint10();
     if (regs->ax != VBESUPPORTED) {
 
         return;

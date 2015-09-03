@@ -33,18 +33,18 @@ uint_fast16_t
 ip4chksum16(const uint8_t *buf, size_t size)
 {
     uint32_t sum = 0;
-    int            i;
+    size_t   ndx;
     
     /* Accumulate checksum */
-    for (i = 0; i < size - 1; i += 2) {
-        uint16_t word16 = *(uint16_t *)&buf[i];
+    for (ndx = 0; ndx < size - 1; ndx += 2) {
+        uint16_t word16 = *(uint16_t *)&buf[ndx];
 
         sum += word16;
     }
     
     /* Handle odd-sized case */
     if (size & 1) {
-        uint16_t word16 = (uint8_t)buf[i];
+        uint16_t word16 = (uint8_t)buf[ndx];
 
         sum += word16;
     }

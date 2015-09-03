@@ -45,11 +45,10 @@
 
 typedef volatile long    sig_atomic_t;
 #if (SIG32BIT)
-struct _sigset {
-    uint32_t norm;
-    uint32_t rt;
-};
-typedef struct _sigset   sigset_t;
+typedef struct {
+    long norm;
+    long rt;
+}                        sigset_t;
 #elif (LONGSIZE == 8)
 typedef long             sigset_t;
 #else

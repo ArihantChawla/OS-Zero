@@ -344,12 +344,12 @@ kstrncpy(char *dest, char *src, long len)
 static long
 _ltoxn(long val, char *buf, unsigned long len)
 {
-    uint8_t u8;
-    long    l;
-    long    m;
-    long    n;
-    long    incr = 4;
-    long    sign = 0;
+    uint8_t       u8;
+    unsigned long l;
+    unsigned long m;
+    unsigned long n;
+    long          incr = 4;
+    long          sign = 0;
 
     if (val < 0) {
         sign = 1;
@@ -383,10 +383,10 @@ _ltoxn(long val, char *buf, unsigned long len)
 static long
 _ltodn(long val, char *buf, unsigned long len)
 {
-    uint8_t u8;
-    long    l;
-    long    n;
-    long    sign = 0;
+    uint8_t       u8;
+    unsigned long l;
+    unsigned long n;
+    long          sign = 0;
 
     if (val < 0) {
         sign = 1;
@@ -420,11 +420,11 @@ _ltodn(long val, char *buf, unsigned long len)
 static long
 _ultoxn(unsigned long uval, char *buf, unsigned long len)
 {
-    uint8_t u8;
-    long    l;
-    long    m;
-    long    n;
-    long    incr = 4;
+    uint8_t       u8;
+    unsigned long l;
+    unsigned long m;
+    unsigned long n;
+    long          incr = 4;
 
     buf[len - 1] = '\0';
     m = len - 2;
@@ -451,9 +451,9 @@ _ultoxn(unsigned long uval, char *buf, unsigned long len)
 static long
 _ultodn(unsigned long uval, char *buf, unsigned long len)
 {
-    uint8_t u8;
-    long    l;
-    long    n;
+    uint8_t       u8;
+    unsigned long l;
+    unsigned long n;
 
     buf[len - 1] = '\0';
     l = len - 2;

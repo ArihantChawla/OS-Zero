@@ -196,7 +196,7 @@ slabcomb(struct memzone *zone, struct slabhdr *hdr)
     unsigned long    ret  = 0;
     long             prev = 1;
     long             next = 1;
-    unsigned long    ofs = 1UL << (bkt1 - SLABMINLOG2);
+    long             ofs = 1UL << (bkt1 - SLABMINLOG2);
     struct slabhdr  *hdr1;
     struct slabhdr  *hdr2;
     struct slabhdr  *hdr3;

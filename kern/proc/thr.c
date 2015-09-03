@@ -303,12 +303,12 @@ thrpick(void)
     if (thr) {
         prio = thradjprio(thr);
         state = thr->state;
-        if (state == THRREADY) {
+        if (state == TASK_READY) {
             thrq = &thrruntab[prio];
             mtxlk(&thrq->lk);
             thrqueue(thr, thrq);
             mtxunlk(&thrq->lk);
-        } else if (state == THRWAIT) {
+        } else if (state == TASK_WAIT) {
             thraddwait(thr);
         }
     }

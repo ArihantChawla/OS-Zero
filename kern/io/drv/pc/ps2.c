@@ -140,16 +140,16 @@ ps2initmouse(void)
 void
 ps2mouseintr(void)
 {
-    uint32_t val;
-    int32_t  xmov;
-    int32_t  ymov;
-    int32_t  zmov;
-    int32_t  xtra;
-    int32_t  shift;
-    int32_t  tmp;
-    uint8_t  mask;
-    uint8_t  state;
-    uint8_t  u8;
+    int32_t val;
+    int32_t xmov;
+    int32_t ymov;
+    int32_t zmov;
+    int32_t xtra;
+    int32_t shift;
+    int32_t tmp;
+    uint8_t mask;
+    uint8_t state;
+    uint8_t u8;
 
     ps2readmouse(mask);
     ps2readmouse(u8);

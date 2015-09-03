@@ -116,7 +116,7 @@ kmain(struct mboothdr *hdr, unsigned long pmemsz)
     /* initialise interrupt management */
     trapinit();
     /* initialise virtual memory */
-    vminit((uint32_t *)&_pagetab, pmemsz);
+    vminit((uint32_t *)&_pagetab);
 #if 0
     /* FIXME: map possible device memory */
     vmmapseg((uint32_t *)&_pagetab, DEVMEMBASE, DEVMEMBASE, 0xffffffffU,
