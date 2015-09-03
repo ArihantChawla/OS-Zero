@@ -40,7 +40,7 @@ extern int   _daylight;
 
 #define TIMER_ABSTIME            0x00000001
 
-#if (!__KERNEL__)
+#if !defined(__KERNEL__)
 
 extern int getdate_err;
 
@@ -79,7 +79,7 @@ struct itimerspec {
     struct timespec it_value;           // timer expiration
 };
 
-#if (!__KERNEL__)
+#if !defined(__KERNEL__)
 
 extern clock_t clock(void);
 extern time_t  time(time_t *tmr);
@@ -166,7 +166,7 @@ extern struct tm *getdate_r(const char *__restrict str,
                             struct tm *__restrict res);
 #endif
 
-#endif /* !__KERNEL__ */
+#endif /* !defined(__KERNEL__) */
 
 #endif /* __TIME_H__ */
 

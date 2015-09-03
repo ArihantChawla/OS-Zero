@@ -1,9 +1,11 @@
 #ifndef __COREWAR_X11_H__
 #define __COREWAR_X11_H__
 
-#if (ZEUSWINX11)
+#include <corewar/conf.h>
 
-#if (ZEUSIMLIB2)
+#if defined(ZEUSWINX11)
+
+#if defined(ZEUSIMLIB2)
 #include <Imlib2.h>
 #endif
 
@@ -32,7 +34,9 @@ struct zeusx11 {
     Window                 buttonwin;
     Window                 db1win;
     Window                 db2win;
+#if defined(ZEUSHOVERTOOLTIP)
     Window                 tipwin;
+#endif
     int                    simw;
     int                    simh;
     int                    textw;
@@ -57,6 +61,10 @@ struct zeusx11 {
     Visual                *visual;
     int                    screen;
     Window               **buttons;
+#if defined(ZEUSHOVERTOOLTIP)
+    char                  *tipstr;
+    int                    tiplen;
+#endif
 };
 
 typedef void zeusx11buttonfunc(struct zeusx11 *, XEvent *);

@@ -1,7 +1,7 @@
 #ifndef __FCNTL_H__
 #define __FCNTL_H__
 
-#if (!__KERNEL__)
+#if !defined(__KERNEL__)
 
 #include <features.h>
 #include <sys/types.h>
@@ -42,7 +42,7 @@ extern int     tee(int infd, int outfd, size_t len, unsigned int flags);
 extern int     openat(int fd, const char *file, int flg);
 #endif
 
-#endif /* !__KERNEL__ */
+#endif /* !defined(__KERNEL__) */
 
 #endif /* __FCNTL_H__ */
 

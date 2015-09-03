@@ -34,7 +34,7 @@
 #define _XOPEN_LEGACY   1
 #endif
 
-#if (!__KERNEL__)
+#if !defined(__KERNEL__)
 
 extern char **__environ;
 #if defined(_GNU_SOURCE)
@@ -298,7 +298,7 @@ extern char         * ctermid(char *str);
 extern int            getdtablesize(void);
 #endif
 
-#endif /* !__KERNEL__ */
+#endif /* !defined(__KERNEL__) */
 
 /* standard descriptor names */
 #define STDIN_FILENO  0

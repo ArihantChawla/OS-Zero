@@ -130,13 +130,13 @@ qsort(void *const base, size_t nitems, size_t size,
 		    break;
 		}
 	    } while (l <= r);
-	    if ((r - lo) <= maxthres) {
-		if ((hi - l) <= maxthres) {
+	    if ((size_t)(r - lo) <= maxthres) {
+		if ((size_t)(hi - l) <= maxthres) {
 		    _stkpop(lo, hi, stktop);
 		} else {
 		    lo = l;
 		}
-	    } else if ((hi - l) <= maxthres) {
+	    } else if ((size_t)(hi - l) <= maxthres) {
 		hi = r;
 	    } else if ((r - lo) > (hi - l)) {
 		_stkpush(lo, r, stktop);

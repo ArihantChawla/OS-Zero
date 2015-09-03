@@ -9,7 +9,7 @@
 #include <zero/mtx.h>
 #include <kern/io/buf.h>
 #include <kern/unit/x86/cpu.h>
-#if (TEST)
+#if defined(TESTUNISTD)
 #include <stdio.h>
 #include <stdlib.h>
 #endif
@@ -158,7 +158,7 @@ getpagesize(void)
 
 #endif /* !_POSIX_SOURCE */
 
-#if (TEST)
+#if defined(TESTUNISTD)
 int
 main(int argc, char *argv[])
 {

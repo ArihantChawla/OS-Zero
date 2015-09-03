@@ -20,7 +20,6 @@ schedinit(void)
     return;
 }
 
-#if 0
 void
 schedyield(void)
 {
@@ -28,8 +27,8 @@ schedyield(void)
     
     thrjmp(thr);
 }
-#endif
 
+#if 0
 void
 schedyield(void)
 {
@@ -42,6 +41,7 @@ schedyield(void)
 
     return;
 }
+#endif
 
 void
 schedloop(void)

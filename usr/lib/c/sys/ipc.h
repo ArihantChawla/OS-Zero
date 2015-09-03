@@ -16,19 +16,19 @@
 
 #define IPC_PRIVATE ((key_t)0)
 struct ipc_perm {
-	key_t          key;
-	uid_t          uid;
-	gid_t          gid;
-	uid_t          cuid;
-	gid_t          cgid;
-	unsigned short mode;
-	unsigned short res1;
-	unsigned short _seq;
-	unsigned short res2;
-	unsigned long  res3[2];
+    key_t          key;
+    uid_t          uid;
+    gid_t          gid;
+    uid_t          cuid;
+    gid_t          cgid;
+    unsigned short mode;
+    unsigned short _res1;
+    unsigned short _seq;
+    unsigned short _res2;
+    unsigned long  _res3[2];
 };
 
-#if (!__KERNEL__)
+#if !defined(__KERNEL__)
 extern key_t ftok(const char *path, int proj);
 #endif
 

@@ -12,14 +12,14 @@ typedef struct ucontext {
 //    mcontext_t       uc_mcontext;
 } ucontext_t;
 
-#if (!__KERNEL__)
+#if !defined(__KERNEL__)
 
 int  getcontext(ucontext_t *uc);
 int  setcontext(const ucontext_t *uc);
 void makecontext(ucontext_t *uc, void (*func)(), int argc, ...);
 int  swapcontext(ucontext_t *olduc, const ucontext_t *uc);
 
-#endif /* !__KERNEL__ */
+#endif /* !defined(__KERNEL__) */
 
 #endif /* __UCONTEXT_H__ */
 

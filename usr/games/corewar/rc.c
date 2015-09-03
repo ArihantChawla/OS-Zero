@@ -1,8 +1,9 @@
+#include <corewar/conf.h>
 #include <stdio.h>
 #include <stdlib.h>
 #include <stdint.h>
 #include <ctype.h>
-
+#include <zero/trix.h>
 #include <corewar/cw.h>
 
 extern struct cwmars  cwmars;

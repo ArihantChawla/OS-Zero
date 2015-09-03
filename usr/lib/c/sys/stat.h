@@ -67,7 +67,7 @@ struct stat {
     time_t    st_ctime;         // last status change time
 };
 
-#if (!__KERNEL__)
+#if !defined(__KERNEL__)
 
 extern int stat(const char *path, struct stat *buf);
 extern int fstat(int fd, struct stat *buf);
@@ -83,7 +83,7 @@ extern int lstat(const char *path, struct stat *buf);
 extern int isfdtype(int fd, int type);
 #endif
 
-#endif /* !__KERNEL__ */
+#endif /* !defined(__KERNEL__) */
 
 #endif /* __SYS_STAT_H__ */
 

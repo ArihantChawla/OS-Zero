@@ -1,7 +1,7 @@
 #ifndef __ERRNO_H__
 #define __ERRNO_H__
 
-#if (!__KERNEL__)
+#if !defined(__KERNEL__)
 #if defined(__GLIBC__)
 extern int errno;
 #else
@@ -11,13 +11,13 @@ __attribute__ ((const))
 extern int * errnoloc(void);
 #define errno (*errnoloc())
 #endif
-#endif /* !__KERNEL__ */
+#endif /* !defined(__KERNEL__) */
 
 #define ENOSYS       1  // function not implemented
 #define EINTR        2  // interrupted system call
 #define ENOMEM       3  // out of memory
 #define EAGAIN       4  // try again
-#if (_BSD_SOURCE)
+#if defined(_BSD_SOURCE)
 #define EWOULDBLOCK  EAGAIN // synonymous with EAGAIN
 #endif
 #define EACCES       5  // permission denied

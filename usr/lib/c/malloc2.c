@@ -114,7 +114,7 @@
 
 #define ZMALLOCHOOKS 1
 
-#if (MALLOCDEBUG) && 0
+#if defined(MALLOCDEBUG) && 0
 #include <assert.h>
 #endif
 #include <features.h>
@@ -393,7 +393,7 @@ void (*__zmemalign_hook)(size_t align, size_t size, const void *caller);
 void (*__zfree_hook)(void *ptr, const void *caller);
 void (*__zmalloc_initialize_hook)(void);
 void (*__zafter_morecore_hook)(void);
-#elif defined(_GNU_SOURCE) && (GNUMALLOCHOOKS) && !defined(__GLIBC__)
+#elif defined(_GNU_SOURCE) && defined(GNUMALLOCHOOKS) && !defined(__GLIBC__)
 void *(*__malloc_hook)(size_t size, const void *caller);
 void *(*__realloc_hook)(void *ptr, size_t size, const void *caller);
 void *(*__memalign_hook)(size_t align, size_t size, const void *caller);

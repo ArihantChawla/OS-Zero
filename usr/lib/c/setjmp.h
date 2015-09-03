@@ -1,7 +1,7 @@
 #ifndef __SETJMP_H__
 #define __SETJMP_H__
 
-#if (!__KERNEL__)
+#if !defined(__KERNEL__)
 
 #include <zero/cdecl.h>
 #if defined(__x86_64__) || defined(__amd64__)
@@ -25,7 +25,7 @@ ASMLINK extern void longjmp(jmp_buf env, int val);
 ASMLINK extern int  _setjmp(jmp_buf env);
 ASMLINK extern void _longjmp(jmp_buf env, int val);
 
-#endif /* !__KERNEL__ */
+#endif /* !defined(__KERNEL__) */
 
 #endif /* __SETJMP_H__ */
 

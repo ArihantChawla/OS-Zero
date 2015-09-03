@@ -44,7 +44,7 @@
 typedef int error_t;
 #endif
 
-#if (!__KERNEL__)
+#if !defined(__KERNEL__)
 
 int   mlock(const void *adr, size_t len);
 int   munlock(const void *adr, size_t len);
@@ -71,7 +71,7 @@ int   remap_file_pages(void *adr, size_t len,
 int   shm_open(const char *name, int flg, mode_t mode);
 int   shm_unlink(const char *name);
 
-#endif /* !__KERNEL__ */
+#endif /* !defined(__KERNEL__) */
 
 #if (USEXOPEN2K)
 struct posix_typed_mem_info {

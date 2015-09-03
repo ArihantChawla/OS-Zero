@@ -15,15 +15,14 @@ typedef union pthread_attr_t
 } pthread_attr_t;
 #endif /* defined(linux) */
 
-#if (!__KERNEL__)
+#if !defined(__KERNEL__)
 
 extern int pthread_key_create(pthread_key_t *key, void (*destructor)(void *));
 extern int pthread_atfork(void (*prepare)(void),
                           void (*parent)(void), void (*child)(void));
-
 extern int pthread_setspecific(pthread_key_t key, const void *val);
 
-#endif /* !__KERNEL__ */
+#endif /* !defined(__KERNEL__) */
 
 #endif /* (PTHREAD) */
 

@@ -1,10 +1,10 @@
 #ifndef __COREWAR_CW_H__
 #define __COREWAR_CW_H__
 
+#include <corewar/conf.h>
 #include <zero/param.h>
 #include <zero/cdecl.h>
-
-#if (ZEUS)
+#if defined(ZEUS)
 #include <corewar/zeus.h>
 #endif
 
@@ -68,7 +68,7 @@ struct cwmars {
     long             curpid;                    // current program ID
     char            *prog1name;                 // program one path
     char            *prog2name;                 // program two path
-#if (ZEUSWINX11)
+#if defined(ZEUSWINX11)
     struct zeusx11   zeusx11;                   // X11 GUI structure
 #endif
     char            *pidmap;

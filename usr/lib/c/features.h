@@ -18,6 +18,7 @@
 #define FAVORBSD               0        // favor old school BSD interfaces
 #define USESVID                1
 #define USEGNU                 1
+#define USEOLDBSD              0
 
 /* feature macro list */
 #define _ISOC11_SOURCE         1        // ISO 9899-2011

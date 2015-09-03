@@ -9,7 +9,7 @@
 #define major(dev)           ((dev_t)(((dev) >> NBITSMINOR) & MAXMAJ))
 #define makedev(maj, min)    ((dev_t)(((dev) << NBITSMINOR) | ((min) & MAXMIN)))
 #define makedevice(maj, min) ((dev_t)((maj) << NBITSMINOR) | ((min) & MAXMIN))
-#if (__KERNEL__)
+#if defined(__KERNEL__)
 #define bmajor(dev)          major(dev)
 #define getminor(dev)        minor(dev)
 #define getmajor(dev)        major(dev)
@@ -21,7 +21,7 @@
 #define getemajor(dev)       emajor(dev)
 #define geteminor(dev)       eminor(dev)
 
-#if (!__KERNEL__)
+#if !defined(__KERNEL__)
 
 #if (_GNU_SOURCE)
 extern unsigned int       gnu_dev_major(unsigned long long dev);
@@ -30,7 +30,7 @@ extern unsigned long long gnu_dev_makedev(unsigned int major,
                                           unsigned int minor);
 #endif /* _GNU_SOURCE */
 
-#endif /* !__KERNEL__ */
+#endif /* !defined(__KERNEL__) */
 
 #define ISP2(x)               (!(((x) & ((x) - 1))))
 #define P2ALIGN(x, aln)       ((x) & ~(aln))

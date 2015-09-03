@@ -1,7 +1,7 @@
 #ifndef __STRING_H__
 #define __STRING_H__
 
-#if (!__KERNEL__)
+#if !defined(__KERNEL__)
 
 #include <stddef.h>
 
@@ -28,7 +28,7 @@ void * memset(void *ptr, int ch, size_t n);
 char * strerror(int errnum);
 size_t strlen(const char *str);
 
-#endif /* !__KERNEL__ */
+#endif /* !defined(__KERNEL__) */
 
 #endif /* __STRING_H__ */
 

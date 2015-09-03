@@ -1,3 +1,4 @@
+#include <corewar/conf.h>
 #include <stdlib.h>
 #include <string.h>
 #include <unistd.h>
@@ -5,14 +6,14 @@
 #include <corewar/cw.h>
 #include <corewar/rc.h>
 #include <corewar/zeus.h>
-#if (ZEUSWINX11)
+#if defined(ZEUSWINX11)
 #include <X11/X.h>
 #include <X11/Xlib.h>
 #include <X11/keysymdef.h>
 #include <X11/Xutil.h>
 #include <corewar/x11.h>
 #endif
-#if (ZEUSIMLIB2)
+#if defined(ZEUSIMLIB2)
 #include <Imlib2.h>
 #endif
 
@@ -346,7 +347,7 @@ zeusinitx11win(struct zeusx11 *x11)
 #if 0
     int                  winw = max((ZEUSTEXTNCOL + ZEUSDBNCOL) * x11->fontw,
                                     ZEUSSIMNCOL * 5);
-#if (ZEUSIMLIB2)
+#if defined(ZEUSIMLIB2)
     int                  winh = ZEUSBUTTONH + ZEUSSIMNROW * 5 + ZEUSDBNROW * x11->fontw;
 #endif
 #endif
@@ -379,7 +380,7 @@ zeusinitx11win(struct zeusx11 *x11)
     x11->simw = ZEUSSIMNCOL * 5;
     x11->simh = ZEUSSIMNROW * 5;
 
-#if (ZEUSIMLIB2)
+#if defined(ZEUSIMLIB2)
     win = XCreateWindow(x11->disp,
                         x11->mainwin,
 //                        x11->simw, x11->dbh,
@@ -397,7 +398,7 @@ zeusinitx11win(struct zeusx11 *x11)
         exit(1);
     }
     x11->buttonwin = win;
-#if (ZEUSDEBUG)
+#if defined(ZEUSDEBUG)
     XSelectInput(x11->buttonwin, ExporuseMask);
 #endif
 #endif
@@ -421,7 +422,7 @@ zeusinitx11win(struct zeusx11 *x11)
     }
     x11->simwin = win;
     y = x11->simh;
-#if (ZEUSIMLIB2)
+#if defined(ZEUSIMLIB2)
 //    y += ZEUSBUTTONH;
 //    x += winw;
     x = 0;
@@ -664,7 +665,7 @@ zeusinitx11gc(struct zeusx11 *x11)
     return;
 }
 
-#if (ZEUSIMLIB2)
+#if defined(ZEUSIMLIB2)
 
 void
 zeusinitimlib2(struct zeusx11 *x11)
@@ -729,7 +730,7 @@ zeusaddx11button(struct zeusx11 *x11, int id, char *str,
     XSetWindowAttributes atr = { 0 };
 
     if (!id) {
-#if (ZEUSIMLIB2)
+#if defined(ZEUSIMLIB2)
         zeusloadx11buttonimgs(x11);
 #endif
         zeusx11buttons.funcs.enter = zeusenterx11button;
@@ -772,7 +773,7 @@ zeusaddx11button(struct zeusx11 *x11, int id, char *str,
     return;
 }
 
-#if (ZEUSIMLIB2)
+#if defined(ZEUSIMLIB2)
 void
 zeusinitx11buttons(struct zeusx11 *x11)
 {
@@ -822,6 +823,7 @@ zeusinitx11(struct zeusx11 *info)
         
         exit(1);
     }
+    XSynchronize(disp, 1);
     info->disp = disp;
     info->screen = DefaultScreen(disp);
     info->colormap = DefaultColormap(disp, info->screen);
@@ -831,7 +833,7 @@ zeusinitx11(struct zeusx11 *info)
     zeusinitx11win(info);
     zeusinitx11title(info);
     zeusinitx11gc(info);
-#if (ZEUSIMLIB2)
+#if defined(ZEUSIMLIB2)
     zeusinitimlib2(info);
     zeusinitx11buttons(info);
     XMapRaised(disp, info->mainwin);
@@ -842,7 +844,7 @@ zeusinitx11(struct zeusx11 *info)
                  | ButtonPressMask
                  | EnterWindowMask
                  | LeaveWindowMask
-#if (ZEUSHOVERTOOLTIP)
+#if defined(ZEUSHOVERTOOLTIP)
                  | PointerMotionMask
 #endif
                  | ExposureMask);
@@ -976,10 +978,10 @@ zeusprocev(struct zeusx11 *x11)
 
     XNextEvent(x11->disp, &ev);
     win = ev.xany.window;
-#if (ZEUSIMLIB2)
+#if defined(ZEUSIMLIB2)
     id = zeusfindbutton(win);
 #endif
-#if (ZEUSDEBUG)
+#if defined(ZEUSDEBUG)
     if (win == x11->buttonwin) {
         switch (ev.type) {
             case Expose:
@@ -1003,13 +1005,13 @@ zeusprocev(struct zeusx11 *x11)
             }
     } else if (win == x11->simwin) {
         switch (ev.type) {
-#if (ZEUSHOVERTOOLTIP)
+#if defined(ZEUSHOVERTOOLTIP)
             case MotionNotify:
-                zeusprintdb(x11, x11->ev.xmotion.x, ev.xmotion.y);
+                zeusprintdb(x11, ev.xmotion.x, ev.xmotion.y);
 
                 break;
             case EnterNotify:
-                zeusprintdb(x11, xev.xcrossing.x, ev.xcrossing.y);
+                zeusprintdb(x11, ev.xcrossing.x, ev.xcrossing.y);
 
                 break;
             case LeaveNotify:
@@ -1045,7 +1047,7 @@ zeusprocev(struct zeusx11 *x11)
                 
                 break;
         }
-#if (ZEUSHOVERTOOLTIP)
+#if defined(ZEUSHOVERTOOLTIP)
     } else if (win == x11->tipwin) {
         switch (ev.type) {
             case Expose:
@@ -1063,7 +1065,7 @@ zeusprocev(struct zeusx11 *x11)
 #endif
     } else if (win == x11->db1win || win == x11->db2win) {
         ;
-#if (ZEUSIMLIB2)
+#if defined(ZEUSIMLIB2)
     } else if (id < ZEUSNBUTTON) {
         switch (ev.type) {
             case Expose:

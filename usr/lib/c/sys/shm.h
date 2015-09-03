@@ -65,14 +65,14 @@ struct shm_info {
     unsigned long swap_successes;
 };
 
-#if (!__KERNEL__)
+#if !defined(__KERNEL__)
 
 extern int shmctl(int shm, int cmd, struct shmid_ds *buf);
 extern int shmget(key_t key, size_t size, int shmflg);
 extern void *shmat(int shm, const void *adr, int shmflg);
 extern int shmdt(const void *adr);
 
-#endif /* !__KERNEL__ */
+#endif /* !defined(__KERNEL__) */
 
 #endif /* __SYS_SHM_H__ */
 

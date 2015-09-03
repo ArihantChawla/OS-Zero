@@ -171,7 +171,7 @@ apicinitcpu(long id)
     cpu->id = id;
     /* enable local APIC; set spurious interrupt vector */
     apicwrite(APICSWENABLE | IRQSPURIOUS, APICSPURIOUS);
-    /* nitialise timer, mask interrupts */
+    /* initialise timer, mask interrupts */
     apicwrite(APICBASEDIV, APICTMRDIVCONF);
 //    apicwrite(APICPERIODIC | IRQAPICTMR, APICTMR);
     apicwrite(IRQAPICTMR, APICTMR);

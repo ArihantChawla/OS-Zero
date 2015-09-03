@@ -1,7 +1,7 @@
 #ifndef __MALLOC_H__
 #define __MALLOC_H__
 
-#if (!__KERNEL__)
+#if !defined(__KERNEL__)
 
 #include <features.h>
 #include <stddef.h>
@@ -53,7 +53,7 @@ extern void     malloc_stats(void);
 extern void   * malloc_get_state(void);
 extern int      malloc_set_state(void *ptr);
 
-#if defined(_GNU_SOURCE) && (GNUMALLOCHOOKS)
+#if defined(_GNU_SOURCE) && defined(GNUMALLOCHOOKS)
 extern void *(*__malloc_hook)(size_t size, const void *caller);
 extern void *(*__realloc_hook)(void *ptr, size_t size, const void *caller);
 extern void *(*__memalign_hook)(size_t align, size_t size, const void *caller);
@@ -62,7 +62,7 @@ extern void *(*__malloc_initialize_hook)(void);
 extern void  (*__after_morecore_hook)(void);
 #endif
 
-#endif /* !__KERNEL__ */
+#endif /* !defined(__KERNEL__) */
 
 #endif /* __MALLOC_H__ */
 

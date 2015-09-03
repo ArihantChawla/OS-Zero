@@ -19,11 +19,11 @@ typedef struct { long long quot; long long rem; } lldiv_t;
 
 /* pseudo-random numbers */
 #if (_ZERO_SOURCE)
-/* FIXME: should this be UINT32_MAX? */
+/* FIXME: should this be UINT32_MAX? use a PRNG from libzero? :) */
 #define RAND_MAX INT32_MAX
 #endif
 
-#if (!__KERNEL__)
+#if !defined(__KERNEL__)
 
 /* process termination */
 void   abort(void);
@@ -151,7 +151,7 @@ long double          strtold(const char *nptr, char **endptr);
 
 int                  system(const char *cmd);
 
-#endif /* !__KERNEL__ */
+#endif /* !defined(__KERNEL__) */
 
 #endif /* __STDLIB_H__ */
 

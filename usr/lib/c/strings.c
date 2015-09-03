@@ -20,7 +20,7 @@ bzero(void *ptr, size_t nb)
     size_t  val;
 
     cnt = sizeof(long);
-    val = (uintptr_t)bptr & (val - 1);
+    val = (uintptr_t)bptr & (cnt - 1);
     if (val) {
         n = cnt - val;
     }

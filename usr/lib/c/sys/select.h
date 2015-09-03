@@ -35,7 +35,7 @@ typedef struct fd_set fd_set;
 /* FIXME: BSD macro? */
 #define FD_COPY(src, dest) memcpy(dest, src, sizeof(struct fdset))
 
-#if (!__KERNEL__)
+#if !defined(__KERNEL__)
 
 extern int select(int nfd,
                   fd_set *__restrict readfds,
@@ -51,7 +51,7 @@ extern int pselect(int nfd,
                    const sigset_t *__restrict sigmask);
 #endif
 
-#endif /* !__KERNEL__ */
+#endif /* !defined(__KERNEL__) */
 
 #endif /* __SYS_SELECT_H__ */
 

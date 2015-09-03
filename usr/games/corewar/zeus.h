@@ -1,7 +1,8 @@
 #ifndef __COREWAR_ZEUS_H__
 #define __COREWAR_ZEUS_H__
 
-#if (ZEUSWINX11)
+#include <corewar/conf.h>
+#if defined(ZEUSWINX11)
 #include <X11/X.h>
 #include <X11/Xlib.h>
 #include <X11/keysymdef.h>
@@ -10,7 +11,7 @@
 #include <corewar/x11.h>
 #endif
 
-#if (ZEUSWINX11)
+#if defined(ZEUSWINX11)
 #define ZEUSBUTTONTEXTCOLOR "orange"
 //#define ZEUSDATCOLOR        "magenta"
 #define ZEUSDATCOLOR        "blue"
@@ -23,10 +24,6 @@
 #define ZEUSTEXTNROW        16
 #define ZEUSDBNCOL          40
 #define ZEUSDBNROW          16
-#if 0
-#define ZEUSSIMNCOL         160
-#define ZEUSSIMNROW         50
-#endif
 #define ZEUSSIMNCOL         160
 #define ZEUSSIMNROW         50
 #define ZEUSBUTTONW         64

@@ -81,7 +81,7 @@ union wait {
     } w_S;
 };
 
-#if !(__KERNEL__)
+#if !defined(__KERNEL__)
 
 extern pid_t wait(_WAITSTATUS statret);
 extern pid_t waitpid(pid_t pid, _WAITSTATUS statret, int opts);
@@ -101,7 +101,7 @@ extern pid_t wait4(pid_t pid, _WAITSTATUS statret, int ops,
 	               struct rusage *rusage);
 #endif /* USEBSD */
 
-#endif /* !__KERNEL__ */
+#endif /* !defined(__KERNEL__) */
 
 #endif /* __SYS_WAIT_H__ */
 

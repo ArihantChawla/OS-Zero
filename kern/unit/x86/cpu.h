@@ -28,7 +28,7 @@ struct m_cpuinfo {
 
 void cpuprobe(struct m_cpuinfo *cpuinfo);
 
-#if (__KERNEL__)
+#if defined(__KERNEL__)
 
 #if (PTRBITS == 32)
 extern struct m_cpu *k_curcpu    __asm__ ("%gs:0");
@@ -70,7 +70,7 @@ struct m_cpu {
     struct m_tss      utss;
 };
 
-#endif /* __KERNEL__ */
+#endif /* defined(__KERNEL__) */
 
 #endif /* __KERN_UNIT_X86_CPU_H__ */
 

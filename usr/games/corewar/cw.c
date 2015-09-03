@@ -1,8 +1,7 @@
 /* REFERENCE:  http://corewar.co.uk/cwg.txt */
 /* REFERENCE: http://seblog.cs.uni-kassel.de/fileadmin/se/courses/SE1/WS0708/redcode-icws-88-2.pdf */
 
-#define CWPIDMAP 1
-
+#include <corewar/conf.h>
 #include <stdio.h>
 #include <stdlib.h>
 #include <string.h>
@@ -11,13 +10,12 @@
 #include <time.h>
 #include <zero/param.h>
 #include <zero/cdecl.h>
-#if (CWRANDMT32)
+#if defined(CWRANDMT32)
 #include <zero/randmt32.h>
 #endif
-
 #include <corewar/cw.h>
 #include <corewar/rc.h>
-#if (ZEUS)
+#if defined(ZEUS)
 #include <unistd.h>
 #include <corewar/zeus.h>
 #endif
@@ -149,11 +147,15 @@ cwgetargs(struct cwinstr *op, long pc, long *argp1, long *argp2)
 long
 cwdatop(long pid, long pc)
 {
-#if (ZEUS)
+#if defined(ZEUS)
     zeusdrawsim(&cwmars.zeusx11);
 #endif
-    fprintf(stderr, "program %s won\n", cwmars.prog1name);
-#if (ZEUS)
+    if (!pid) {
+        fprintf(stderr, "program #2 (%s) won (%ld)\n", cwmars.prog2name, pc);
+    } else {
+        fprintf(stderr, "program #1 (%s) won (%ld)\n", cwmars.prog1name, pc);
+    }
+#if defined(ZEUS)
     sleep(5);
 #endif
     exit(0);
@@ -503,11 +505,11 @@ cwexec(long pid)
     long            cnt;
     long            pc;
     long            l;
-#if (ZEUS)
+#if defined(ZEUS)
     static long     ref = 0;
 #endif
 
-#if (ZEUS)
+#if defined(ZEUS)
     while (XEventsQueued(cwmars.zeusx11.disp, QueuedAfterFlush)) {
         zeusprocev(&cwmars.zeusx11);
     }
@@ -515,20 +517,20 @@ cwexec(long pid)
     cur = cwmars.curproc[pid];
     pc = cwmars.runqtab[pid][cur];
     op = &cwmars.optab[pc];
-#if (ZEUS) && 0
+#if defined(ZEUS) && 0
     fprintf(stderr, "%ld\t%ld\t", pid, pc);
     cwdisasm(op, stderr);
 #endif
     if (!(*((uint64_t *)op))) {
-#if (ZEUS)
+#if defined(ZEUS)
         zeusdrawsim(&cwmars.zeusx11);
 #endif
-        if (pid == 0) {
-            fprintf(stderr, "program #2 won (%ld)\n", pc);
+        if (!pid) {
+            fprintf(stderr, "program #2 (%s) won (%ld)\n", cwmars.prog2name, pc);
         } else {
-            fprintf(stderr, "program #1 won (%ld)\n", pc);
+            fprintf(stderr, "program #1 (%s) won (%ld)\n", cwmars.prog2name, pc);
         }
-#if (ZEUS)
+#if defined(ZEUS)
         sleep(5);
 #endif
         
@@ -543,15 +545,15 @@ cwexec(long pid)
                 cwmars.runqtab[pid][l] = cwmars.runqtab[pid][l + 1];
             }
         } else {
-#if (ZEUS)
+#if defined(ZEUS)
             zeusdrawsim(&cwmars.zeusx11);
 #endif
-            if (!pid) {
-                fprintf(stderr, "program #2 won\n");
-            } else {
-                fprintf(stderr, "program #1 won\n");
-            }
-#if (ZEUS)
+        if (!pid) {
+            fprintf(stderr, "program #2 (%s) won (%ld)\n", cwmars.prog2name, pc);
+        } else {
+            fprintf(stderr, "program #1 (%s) won (%ld)\n", cwmars.prog2name, pc);
+        }
+#if defined(ZEUS)
             sleep(5);
 #endif
             
@@ -568,7 +570,7 @@ cwexec(long pid)
         cur = 0;
     }
     cwmars.curproc[pid] = cur;
-#if (ZEUS)
+#if defined(ZEUS)
     ref++;
     if (!cwmars.running || ref == 32) {
         zeusdrawsim(&cwmars.zeusx11);
@@ -592,7 +594,7 @@ cwloop(void)
         cwmars.curpid = pid;
     }
     fprintf(stderr, "TIE\n");
-#if (ZEUS)
+#if defined(ZEUS)
     sleep(5);
 #endif
     
@@ -608,14 +610,14 @@ cwinit(void)
                      | ((time(NULL) & 0xff) << 8)
                      | (time(NULL) & 0xff));
 
-#if (CWRANDMT32)
+#if defined(CWRANDMT32)
     srandmt32(seed32);
 #else
     srand(time(&seed32));
 #endif
     cwinitop();
     rcinitop();
-#if (CWPIDMAP)
+#if defined(CWPIDMAP)
     cwmars.pidmap = calloc(CWCORESIZE / CHAR_BIT, sizeof(char));
 #endif
     cwmars.optab = calloc(CWCORESIZE, sizeof(struct cwinstr));
@@ -637,10 +639,10 @@ main(int argc, char *argv[])
     long  pc1;
     long  pc2;
 
-#if (ZEUS)
-#if (ZEUSWINX11)
+#if defined(ZEUS)
+#if defined(ZEUSWINX11)
     zeusinitx11(&cwmars.zeusx11);
-#elif (ZEUSWINEFL)
+#elif defined(ZEUSWINEFL)
     zeusinitefl(&cwmars.zeusefl);
 #endif
 #endif
@@ -650,7 +652,7 @@ main(int argc, char *argv[])
         exit(1);
     }
     cwinit();
-#if (CWRANDMT32)
+#if defined(CWRANDMT32)
     base = randmt32() % CWCORESIZE;
 #else
     base = rand() % CWCORESIZE;
@@ -668,7 +670,7 @@ main(int argc, char *argv[])
         exit(1);
     }
     fclose(fp);
-#if (CWRANDMT32)
+#if defined(CWRANDMT32)
     base = randmt32() % CWCORESIZE;
 #else
     base = rand() % CWCORESIZE;
@@ -694,14 +696,14 @@ main(int argc, char *argv[])
     cwmars.nturn[1] = CWNTURN;
     cwmars.runqtab[0][0] = pc1;
     cwmars.runqtab[1][0] = pc2;
-#if (CWRANDMT32)
+#if defined(CWRANDMT32)
     cwmars.curpid = randmt32() & 0x01;
 #else
     cwmars.curpid = rand() & 0x01;
 #endif
     cwmars.prog1name = argv[1];
     cwmars.prog2name = argv[2];
-#if (ZEUS)
+#if defined(ZEUS)
     zeusdrawsim(&cwmars.zeusx11);
     while (1) {
         zeusprocev(&cwmars.zeusx11);
