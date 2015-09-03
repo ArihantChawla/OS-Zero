@@ -84,7 +84,7 @@ mtxunlk(volatile long *lp)
 }
 
 /* initializer for non-dynamic attributes */
-#define ZEROMTXATRDEFVAL    { 0L, NULL, 0, PAGESIZE }
+#define ZEROMTXATRDEFVAL     { 0L, NULL, 0, PAGESIZE }
 /* flags for attribute flg-field */
 #define ZEROMTX_RECURSIVE    (1L << 0)
 #define ZEROMTX_DETACHED     (1L << 1)
@@ -95,7 +95,7 @@ mtxunlk(volatile long *lp)
 #define ZEROMTXATRNOTDYNAMIC 1
 typedef struct {
     /* feature flags */
-    volatile long    flg;       // flag-bits
+    volatile long flg;  // flag-bits
 } zeromtxatr;
 
 /* initializer for non-dynamic mutexes */
