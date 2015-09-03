@@ -108,26 +108,38 @@ unsigned long
 slabinitzone(struct memzone *zone, unsigned long base, unsigned long nb)
 {
     unsigned long adr = base;
-    unsigned long sz = (nb & (SLABMIN - 1)) ? rounddownpow2(nb, SLABMIN) : nb;
+//    unsigned long sz = (nb & (SLABMIN - 1)) ? rounddownpow2(nb, SLABMIN) : nb;
+    unsigned long sz = nb;
+    unsigned long ofs = base & (SLABMIN - 1);
     unsigned long nslab = sz >> SLABMINLOG2;
     unsigned long hdrsz;
 
+    if (ofs) {
+        adr += SLABMIN - ofs;
+        sz -= adr - base;
+    }
     /* configure magazine headers */
     hdrsz = nslab * sizeof(struct maghdr);
+    hdrsz = rounduppow2(hdrsz, PAGESIZE);
     zone->nhdr = nslab;
 #if (__KERNEL__)
-    kprintf("SLAB: reserved %ld bytes for %ld headers\n", sz, nslab);
+    kprintf("SLAB: reserved %lu bytes for %lu magazine headers\n", hdrsz, nslab);
 #endif
     magvirtzone.nhdr = nslab;
     magvirtzone.hdrtab = (void *)adr;
     kbzero((void *)adr, hdrsz);
     adr += hdrsz;
+#if 0
     /* configure slab headers */
     hdrsz = nslab * sizeof(struct slabhdr);
+#if (__KERNEL__)
+    kprintf("SLAB: reserved %lu bytes for %lu slab headers\n", hdrsz, nslab);
+#endif
     adr = rounduppow2(adr, PAGESIZE);
     zone->hdrtab = (void *)adr;
     kbzero((void *)adr, hdrsz);
     adr += hdrsz;
+#endif
     if (adr & (SLABMIN - 1)) {
         adr = rounduppow2(adr, SLABMIN);
     }
