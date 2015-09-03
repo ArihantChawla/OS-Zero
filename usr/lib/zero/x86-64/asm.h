@@ -4,11 +4,11 @@
 #include <zero/x86/asm.h>
 
 /* API declarations */
-#define m_xchg(p, val)           m_xchgq(p, val)
-#define m_fetadd(p, val)         m_xaddq(p, val)
-#define m_cmpswap(p, want, val)  m_cmpxchgq(p, want, val)
-#define m_scanlo1bit(l)          m_bsfq(l)
-#define m_scanhi1bit(l)          m_bsrq(l)
+#define m_xchg(p, val)          m_xchgq(p, val)
+#define m_fetchadd(p, val)      m_xaddq(p, val)
+#define m_cmpswap(p, want, val) m_cmpxchgq(p, want, val)
+#define m_scanlo1bit(l)         m_bsfq(l)
+#define m_scanhi1bit(l)         m_bsrq(l)
 #if !defined(__GNUC__)
 static __inline__ void
 m_getretadr(void **pp) {
@@ -19,8 +19,40 @@ m_getretadr(void **pp) {
 
     return;
 }
+
+static __inline__ void
+m_getfrmadr(void **pp)
+{
+    void *_ptr;
+
+    __asm__ __volatile__ ("movq %%rbp, %0\n" : "=rm" (_ptr));
+    *pp = _ptr;
+
+    return;
+}
 #endif
 
+static __inline__ void
+m_loadretadr(void *frm, void **pp)
+{
+    void *_ptr;
+
+    __asm__ __volatile__ ("movq 8(%1), %0\n" : "=rm" (_ptr) : "r" (frm));
+    *pp = _ptr;
+
+    return;
+}
+
+static __inline__ void
+m_getclrfrmadr(void **pp)
+{
+    void *_ptr;
+
+    __asm__ __volatile__ ("movq *%%rbp, %0\n" : "=rm" (_ptr));
+    *pp = _ptr;
+
+    return;
+}
 
 static __inline__ long
 m_xchgq(volatile long *p,
@@ -56,7 +88,7 @@ m_xaddq(volatile long *p,
  * - if *p == want, let *p = val
  * - return original *p
  */
-static __inline__ char
+static __inline__ long
 m_cmpxchgq(volatile long *p,
            long want,
            long val)

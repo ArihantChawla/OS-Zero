@@ -13,7 +13,7 @@
  */
 #undef MALLOCSTAT
 #define MALLOCSTAT        0
-#define MALLOCSTKNDX      1
+#define MALLOCSTKNDX      0
 #define MALLOCCONSTSLABS  0
 #define MALLOCDYNARN      0
 

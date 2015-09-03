@@ -13,7 +13,7 @@
 #define m_scanlo1bit(l)          _BitScanForward(&(l), (l)))
 #define m_scanhi1bit(l)          _BitScanReverse(&(l), (l)))
 #define m_getretadr(pp)          (*(pp) = _ReturnAddress())
-#define m_setretadr(pp)          (*(pp) = m_getretadr())
+#define m_setretadr(pp)          (*(pp) = _ReturnAddress())
 
 #endif /* __ZERO_MSC_WIN32_H__ */
 

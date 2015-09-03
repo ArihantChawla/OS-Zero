@@ -33,14 +33,6 @@
 #define POSIX_TRACE_UNTIL_FULL         (UINT64_C(1) << 25)
 #define POSIX_TRACE_WOPID_EVENTS       (UINT64_C(1) << 26)
 
-typedef struct {
-    uint64_t flg;
-}                trace_attr_t;
-typedef uint64_t trace_id_t;
-typedef uint64_t trace_event_id_t;
-typedef uint64_t trace_id_t;
-typedef uint64_t trace_event_set_t;
-
 struct posix_trace_event_info {
     struct timespec   posix_timestamp;
     pthread_t         posix_thread_id;

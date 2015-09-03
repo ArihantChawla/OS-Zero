@@ -7,7 +7,7 @@
 #include <execinfo.h>
 #include <zero/cdecl.h>
 
-#define GNUNTRACEFUNC 32
+#define GNUTRACEMAX 32  // max # of function calls to backtrace
 
 #define trace()      trace3(__func__, __FILE__, __LINE__)
 #define trace_fd(fd) trace_fd4(__func__, __FILE__, __LINE__, (fd))
@@ -16,12 +16,13 @@
 static __inline__ void
 trace3(const char *func, char *file, int line)
 {
-    void    *buf[GNUNTRACEFUNC];
+    void    *buf[GNUTRACEMAX];
     size_t   n;
     char   **names;
     size_t   ndx;
 
-    n = backtrace(buf, GNUNTRACEFUNC);
+    fprintf(stderr, "TRACE invoked: %s() @ %s : %d\n", func, file, line);
+    n = backtrace(buf, GNUTRACEMAX);
     names = backtrace_symbols(buf, n);
     for (ndx = 0 ; ndx < n ; ndx++) {
         fprintf(stderr, "%p : %s\n", buf[ndx], names[ndx]);
@@ -35,10 +36,11 @@ trace3(const char *func, char *file, int line)
 static __inline__ void
 trace_fd4(const char *func, char *file, int line, int fd)
 {
-    void   *buf[GNUNTRACEFUNC];
+    void   *buf[GNUTRACEMAX];
     size_t  n;
 
-    n = backtrace(buf, GNUNTRACEFUNC);
+    fprintf(stderr, "TRACE invoked: %s() @ %s : %d\n", func, file, line);
+    n = backtrace(buf, GNUTRACEMAX);
     backtrace_symbols_fd(buf, n, fd);
 
     return;

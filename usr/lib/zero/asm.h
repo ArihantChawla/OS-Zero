@@ -41,7 +41,7 @@
 #define m_getretadr(p)                                                  \
     ((p) = (void *)__builtin_extract_return_addr(__builtin_return_address(1)))
 #define m_getfrmadr(p)                                                  \
-    ((p) = (void *)__builtin_frame_address(1))
+    ((p) = (void *)__builtin_frame_address(0))
 #endif
 
 #endif /* __ZERO_ASM_H__ */

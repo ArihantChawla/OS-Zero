@@ -47,20 +47,20 @@ typedef dev_t           minor_t;
 //typedef uint32_t        fsfilcnt_t;     // filesystem file count
 typedef uint32_t        uid_t;
 typedef uint32_t        gid_t;          // group ID
-typedef long            key_t;          // IPC key
+typedef uintptr_t       key_t;          // IPC key
 typedef unsigned long   mode_t;         // file attributes
 typedef int32_t         nlink_t;        // link count
 typedef int64_t         loff_t;
 #if (_FILE_OFFSET_BITS == 32)
 typedef int32_t         off_t;          // 32-bit file offset
-typedef uint32_t        ino_t;          // inode number
 typedef int32_t         blkcnt_t;
+typedef uint32_t        ino_t;          // inode number
 typedef uint32_t        fsblkcnt_t;
 typedef uint32_t        fsfilcnt;
 #else
 typedef int64_t         off_t;          // 64-bit file offset
-typedef uint64_t        ino_t;
 typedef int64_t         blkcnt_t;
+typedef uint64_t        ino_t;
 typedef uint64_t        fsblkcnt_t;
 typedef uint64_t        fsfilcnt_t;
 #endif
@@ -105,6 +105,15 @@ typedef id_t            projid_t;
 
 typedef id_t            ctid_t;
 typedef id_t            zoneid_t;
+
+/* FIXME: <trace.h> stuff */
+typedef struct {
+    uint64_t flg;
+}                trace_attr_t;
+typedef uint64_t trace_id_t;
+typedef uint64_t trace_event_id_t;
+typedef uint64_t trace_id_t;
+typedef uint64_t trace_event_set_t;
 
 /* POSIX threads */
 /*

@@ -23,7 +23,7 @@ maplkinit(zeromaplk *maplk, long n)
             return NULL;
         }
         own = 1;
-        map->mtx = ZEROMTXINITVAL;
+        map->mtx = MTXINITVAL;
         maplk = map;
         mtxlk(&maplk->mtx);
     }
@@ -36,7 +36,7 @@ maplkinit(zeromaplk *maplk, long n)
     }
     maplk->nbit = n;
     maplk->bits = bits;
-    mtxunlk(&maplk->bits);
+    mtxunlk(&maplk->mtx);
 
     return maplk;
 }

@@ -1,32 +1,31 @@
 #ifndef __ZERO_MTX_H__
 #define __ZERO_MTX_H__
 
-#if !defined(ZERONEWMTX)
-#define ZERONEWMTX 0
-#endif
+#include <stddef.h>
+#include <zero/param.h>
+#include <zero/asm.h>
+#include <zero/bits/mtx.h>
 
 /*
  * Special thanks to Matthew 'kinetik' Gregan for help with the mutex code.
  * :)
  */
 
-typedef volatile long zeromtx;
-
 #if defined(__KERNEL__)
 #undef PTHREAD
 #define PTHREAD        0
 #endif
-#define ZEROMTXINITVAL 0L
-#define ZEROMTXLKVAL   1L
-#if (ZERONEWMTX)
-#define ZEROMTXCONTVAL 2L
+#define MTXINITVAL 0
+#define MTXLKVAL   1
+#if defined(ZERONEWMTX)
+#define MTXCONTVAL 2
 #endif
 
 #include <zero/asm.h>
 //#if defined(__KERNEL__) && (__MTKERNEL__)
 #if defined(__KERNEL__)
 #include <kern/proc/sched.h>
-#elif (PTHREAD)
+#elif defined(PTHREAD)
 /* on some Linux setups, the pthread library declares no prototype */
 extern int pthread_yield(void);
 #endif
@@ -34,72 +33,86 @@ extern int pthread_yield(void);
 #include <sched.h>
 #endif
 
-#define mtxinit(lp) (*(lp) = ZEROMTXINITVAL)
+#define mtxinit(lp) (*(lp) = MTXINITVAL)
 
 /*
  * try to acquire mutex lock
  * - return non-zero on success, zero if already locked
  */
-#define mtxtrylk(lp) mtxtrylk2((volatile long *)(lp), ZEROMTXLKVAL)
-#define mtxlk(lp) mtxlk2((volatile long *)(lp), ZEROMTXLKVAL)
-#define mtxunlk(lp) mtxunlk2((volatile long *)(lp), ZEROMTXLKVAL)
-
 static __inline__ long
-mtxtrylk2(volatile long *lp, long val)
+mtxtrylk(volatile long *lp)
 {
     volatile long res;
     long          ret;
 
-    res = m_cmpswap(lp, ZEROMTXINITVAL, val);
+    res = m_cmpswap(lp, MTXINITVAL, MTXLKVAL);
     ret = !res;
 
     return ret;
 }
 
+/*
+ * acquire mutex lock
+ * - allow other threads to run when blocking
+ */
 static __inline__ void
-mtxlk2(volatile long *lp, long val)
+mtxlk(volatile long *lp)
 {
-    volatile long res = val;
+    volatile long res;
     
     do {
-        res = m_cmpswap(lp, ZEROMTXINITVAL, val);
+        res = m_cmpswap(lp, MTXINITVAL, MTXLKVAL);
         if (res) {
-#if defined(__linux__) && !defined(__KERNEL__)
-            sched_yield();
-#elif defined(__KERNEL__)
-            schedyield();
-#elif (PTHREAD)
-            pthread_yield();
-#endif
+            mtxyield();
         }
-        /* TODO: should I activate m_waitint() here? :) */
     } while (res);
 
     return;
 }
 
-#if (ZERONEWMTX)
+/*
+ * unlock mutex
+ * - must use full memory barrier to guarantee proper write-ordering
+ */
 static __inline__ void
-mtxunlk2(volatile long *lp, long val)
+mtxunlk(volatile long *lp)
 {
-    volatile long res;
-    
-    res = m_cmpswap(lp, ZEROMTXLKVAL, ZEROMTXINITVAL);
+    *lp = MTXINITVAL;
     m_membar();
 
     return;
 }
-#else
-static __inline__ void
-mtxunlk2(volatile long *lp, long val)
-{
-    (void)val;
-    *lp = ZEROMTXINITVAL;
-    m_membar();
 
-    return;
-}
-#endif
+/* initializer for non-dynamic attributes */
+#define ZEROMTXATRDEFVAL    { 0L, NULL, 0, PAGESIZE }
+/* flags for attribute flg-field */
+#define ZEROMTX_RECURSIVE    (1L << 0)
+#define ZEROMTX_DETACHED     (1L << 1)
+/* private flg-bits */
+#define __ZEROMTXATR_DYNAMIC (1L << 30)
+#define __ZEROMTXATR_INIT    (1L << 31)
+/* error codes */
+#define ZEROMTXATRNOTDYNAMIC 1
+typedef struct {
+    /* feature flags */
+    volatile long    flg;       // flag-bits
+    /* stack attributes */
+    volatile void   *stkadr;    // stack base address
+    volatile size_t *stksize;   // stack pointer
+    volatile size_t  guardsize; // stack guard size
+} zeromtxatr;
+
+/* initializer for non-dynamic mutexes */
+#define ZEROMTXINITVAL { MTXINITVAL, ZEROMTXFREE, 0, 0, ZEROMTXATRDEFVAL }
+/* thr for unlocked mutexes */
+#define ZEROMTXFREE    0
+typedef struct {
+    volatile long lk;
+    volatile long val;  // owner for recursive mutexes, 0 if unlocked
+    volatile long cnt;  // access counter
+    volatile long rec;  // recursion counter
+    zeromtxatr    atr;
+} zeromtx;
 
 #endif /* __ZERO_MTX_H__ */
 

@@ -1,7 +1,7 @@
 #include <stdint.h>
 #include <zero/shuntc.h>
 
-/* C integral conversion tables */
+/* C character conversion tables */
 static uint_fast8_t  shuntcdectab[256];
 static uint_fast8_t  shuntchextab[256];
 static uint_fast8_t  shuntcocttab[256];
@@ -21,9 +21,9 @@ shuntcop_t          *shuntcevaltab[SHUNTCNTAB];
 struct shuntcparser {
     struct shuntctoken  *operstk;
     struct shuntctoken  *operstktop;
-    struct shuntctoken  *tokenhead;
+    struct shuntctoken  *tokenqueue;
     struct shuntctoken  *tokentail;
-    struct shuntctoken  *parsehead;
+    struct shuntctoken  *parsequeue;
     struct shuntctoken  *parsetail;
 }                    shuntcparser;
 /* currently displayed radix */

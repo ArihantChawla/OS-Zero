@@ -46,52 +46,5 @@ seminit(zerosem *sem)
     return;
 }
 
-static __inline__ void
-semdown(zerosem *sem)
-{
-    volatile long cnt;
-    
-    mtxlk(&sem->lk);
-    cnt = sem->cnt;
-    if (!cnt) {
-#if (__KERNEL__)
-        listqueue(&sem->queue, k_curthr);
-        k_curthr->wchan = (uintptr_t)sem;
-        thraddwait(k_curthr);
-#endif
-        mtxunlk(&sem->lk);
-        m_waitint();
-    } else {
-        cnt--;
-        sem->cnt = cnt;
-        mtxunlk(&sem->lk);
-    }
-
-    return;
-}
-
-static __inline__ void
-semup(zerosem *sem)
-{
-    LIST_TYPE     *item;
-    volatile long  cnt;
-    
-    mtxlk(&sem->lk);
-    cnt = sem->cnt;
-    if (sem->queue.head) {
-        listpop(&sem->queue, item);
-        mtxunlk(&sem->lk);
-#if (__KERNEL__)
-        thrwakeup((uintptr_t)sem);
-#endif
-    } else {
-        cnt++;
-        sem->cnt = cnt;
-        mtxunlk(&sem->lk);
-    }
-
-    return;
-}
-
 #endif /* __ZERO_SEM_H__ */
 

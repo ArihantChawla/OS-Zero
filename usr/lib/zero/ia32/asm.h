@@ -1,14 +1,14 @@
 #ifndef __ZERO_IA32_ASM_H__
 #define __ZERO_IA32_ASM_H__
 
-//#include <zero/types.h>
 #include <zero/x86/asm.h>
 
 /* API declarations */
-#define m_fetadd(p, val)         m_xaddl(p, val)
-#define m_cmpswap(p, want, val)  m_cmpxchgl(p, want, val)
-#define m_scanlo1bit(l)          m_bsfl(l)
-#define m_scanhi1bit(l)          m_bsrl(l)
+#define m_xchg(p, val)          m_xchgl(p, val)
+#define m_fetadd(p, val)        m_xaddl(p, val)
+#define m_cmpswap(p, want, val) m_cmpxchgl(p, want, val)
+#define m_scanlo1bit(l)         m_bsfl(l)
+#define m_scanhi1bit(l)         m_bsrl(l)
 #if !defined(__GNUC__)
 static __inline__ void
 m_getretadr(void **pp) {
@@ -19,7 +19,40 @@ m_getretadr(void **pp) {
 
     return;
 }
+
+static __inline__ void
+m_getfrmadr(void **pp)
+{
+    void *_ptr;
+
+    __asm__ __volatile__ ("movl %%ebp, %0\n" : "=rm" (_ptr));
+    *pp = _ptr;
+
+    return;
+}
 #endif
+
+static __inline__ void
+m_loadretadr(void *frm, void **pp)
+{
+    void *_ptr;
+
+    __asm__ __volatile__ ("movl 4(%1), %0\n" : "=rm" (_ptr) : "r" (frm));
+    *pp = _ptr;
+
+    return;
+}
+
+static __inline__ void
+m_getclrfrmadr(void **pp)
+{
+    void *_ptr;
+
+    __asm__ __volatile__ ("movl *%%ebp, %0\n" : "=rm" (_ptr));
+    *pp = _ptr;
+
+    return;
+}
 
 /*
  * atomic fetch and add
