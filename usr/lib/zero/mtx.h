@@ -96,10 +96,6 @@ mtxunlk(volatile long *lp)
 typedef struct {
     /* feature flags */
     volatile long    flg;       // flag-bits
-    /* stack attributes */
-    volatile void   *stkadr;    // stack base address
-    volatile size_t *stksize;   // stack pointer
-    volatile size_t  guardsize; // stack guard size
 } zeromtxatr;
 
 /* initializer for non-dynamic mutexes */
