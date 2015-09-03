@@ -2,9 +2,9 @@
 #define __ZERO_MTX_H__
 
 #include <stddef.h>
+#include <zero/thr.h>
 #include <zero/param.h>
 #include <zero/asm.h>
-#include <zero/bits/mtx.h>
 
 /*
  * Special thanks to Matthew 'kinetik' Gregan for help with the mutex code.
@@ -63,7 +63,7 @@ mtxlk(volatile long *lp)
     do {
         res = m_cmpswap(lp, MTXINITVAL, MTXLKVAL);
         if (res) {
-            mtxyield();
+            thryield();
         }
     } while (res);
 
@@ -94,18 +94,18 @@ mtxunlk(volatile long *lp)
 /* error codes */
 #define ZEROMTXATR_NOTDYNAMIC 1
 typedef struct {
-    volatile long flg;  // feature flag-bits
+    long flg;           // feature flag-bits
 } zeromtxatr;
 
 /* initializer for non-dynamic mutexes */
-#define ZEROMTXINITVAL { MTXINITVAL, ZEROMTXFREE, 0, 0, ZEROMTXATRDEFVAL }
+#define ZEROMTX_INITVAL { MTXINITVAL, ZEROMTXFREE, 0, 0, ZEROMTXATRDEFVAL }
 /* thr for unlocked mutexes */
-#define ZEROMTXFREE    0
+#define ZEROMTX_FREE    0
 typedef struct {
     volatile long lk;
     volatile long val;  // owner for recursive mutexes, 0 if unlocked
     volatile long cnt;  // access counter
-    volatile long rec;  // recursion counter
+    volatile long rec;  // recursion depth
     zeromtxatr    atr;
 } zeromtx;
 
