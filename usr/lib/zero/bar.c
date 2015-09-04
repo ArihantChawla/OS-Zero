@@ -83,6 +83,8 @@ barfreepool(zerobarpool *pool)
         }
         syswait(&pool->nref, nref);
     } while (1);
+
+    return;
 }
 
 long
