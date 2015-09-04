@@ -1,10 +1,12 @@
 #ifndef __ZERO_MTX_H__
 #define __ZERO_MTX_H__
 
+#if defined(ZEROMTX)
+
 #include <stddef.h>
-#include <zero/thr.h>
 #include <zero/param.h>
 #include <zero/asm.h>
+#include <zero/thr.h>
 
 /*
  * Special thanks to Matthew 'kinetik' Gregan for help with the mutex code.
@@ -34,6 +36,7 @@ extern int pthread_yield(void);
 #endif
 
 #define mtxinit(lp) (*(lp) = MTXINITVAL)
+#define mtxfree(lp) /* no-op */
 
 /*
  * try to acquire mutex lock
@@ -108,6 +111,23 @@ typedef struct {
     volatile long rec;  // recursion depth
     zeromtxatr    atr;
 } zeromtx;
+
+#elif defined(PTHREAD)
+
+#include <stddef.h>
+#include <pthread.h>
+
+#define MTXINITVAL PTHREAD_MUTEX_INITIALIZER
+
+typedef pthread_mutex_t zeromtx;
+
+#define mtxinit(mp)  pthread_mutex_init(mp, NULL)
+#define mtxfree(mp)  pthread_mutex_destroy(mp)
+#define mtxtrylk(mp) pthread_mutex_trylock(mp)
+#define mtxlk(mp)    pthread_mutex_lock(mp)
+#define mtxunlk(mp)  pthread_mutex_unlock(mp)
+
+#endif /* defined(ZEROMTX) */
 
 #endif /* __ZERO_MTX_H__ */
 

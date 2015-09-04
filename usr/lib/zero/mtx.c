@@ -1,8 +1,10 @@
+/* REFERENCE: http://preshing.com/20120305/implementing-a-recursive-mutex/ */
+#if defined(ZEROMTX)
+
 #include <stdlib.h>
-#include <zero/thr.h>
-#include <zero/mtx.h>
 #include <zero/asm.h>
 #include <zero/thr.h>
+#include <zero/mtx.h>
 
 zeromtxatr *
 zeroallocmtxatr(void)
@@ -82,7 +84,8 @@ zerolkmtx(zeromtx *mtx)
     } else {
         /* recursive mutex */
         thr = thrid();
-        if (m_atominc(&mtx->cnt)) {
+        res = m_fetchadd(&mtx->cnt, 1);
+        if (res) {
             if (mtx->val != thr) {
                 do {
                     res = mtxtrylk(&mtx->lk);
@@ -116,7 +119,7 @@ zerounlkmtx(zeromtx *mtx)
             if (!mtx->rec) {
                 mtx->val = ZEROMTX_FREE;
             }
-            res = m_atomdec(&mtx->cnt);
+            res = m_fetchadd(&mtx->cnt, -1);
             if (res > 1) {
                 if (!mtx->rec) {
                     mtxunlk(&mtx->lk);
@@ -127,4 +130,6 @@ zerounlkmtx(zeromtx *mtx)
 
     return;
 }
+
+#endif /* defined(ZEROMTX) */
 

@@ -3,12 +3,16 @@
 
 #include <zero/x86/asm.h>
 
-/* API declarations */
-#define m_xchg(p, val)          m_xchgl(p, val)
-#define m_fetadd(p, val)        m_xaddl(p, val)
-#define m_cmpswap(p, want, val) m_cmpxchgl(p, want, val)
-#define m_scanlo1bit(l)         m_bsfl(l)
-#define m_scanhi1bit(l)         m_bsrl(l)
+#define m_atominc(p)            m_atominc32(p)
+#define m_atomdec(p)            m_atomdec32(p)
+#define m_xchg(p, val)          m_xchg32(p, val)
+#define m_fetchadd(p, val)      m_xadd32(p, val)
+#define m_cmpswap(p, want, val) m_cmpxchg32(p, want, val)
+#define m_cmpsetbit(p, ndx)     m_cmpsetbit32(p, ndx)
+#define m_cmpclrbit(p, ndx)     m_cmpclrbit32(p, ndx)
+#define m_scanlo1bit(l)         m_bsf32(l)
+#define m_scanhi1bit(l)         m_bsr32(l)
+
 #if !defined(__GNUC__)
 static __inline__ void
 m_getretadr(void **pp) {
@@ -30,10 +34,11 @@ m_getfrmadr(void **pp)
 
     return;
 }
-#endif
+#endif /* !defined(__GNUC__) */
 
 static __inline__ void
-m_loadretadr(void *frm, void **pp)
+m_loadretadr(void *frm,
+             void **pp)
 {
     void *_ptr;
 
@@ -60,8 +65,8 @@ m_getclrfrmadr(void **pp)
  * - return original *p
  */
 static __inline__ long
-m_xaddl(volatile long *p,
-        long val)
+m_xadd32(volatile long *p,
+         long val)
 {
     __asm__ __volatile__ ("lock xaddl %%eax, %2\n"
                           : "=a" (val)
@@ -72,7 +77,8 @@ m_xaddl(volatile long *p,
 }
 
 static __inline__ long
-m_xchgl(volatile long *p, long val)
+m_xchg32(volatile long *p,
+         long val)
 {
     volatile long res;
 
@@ -90,9 +96,9 @@ m_xchgl(volatile long *p, long val)
  * - return original *p
  */
 static __inline__ long
-m_cmpxchgl(volatile long *p,
-           long want,
-           long val)
+m_cmpxchg32(volatile long *p,
+            long want,
+            long val)
 {
     volatile long res;
     
@@ -105,7 +111,7 @@ m_cmpxchgl(volatile long *p,
 }
 
 static __inline__ unsigned long
-m_bsfl(unsigned long val)
+m_bsf32(unsigned long val)
 {
     unsigned long ret;
 
@@ -115,7 +121,7 @@ m_bsfl(unsigned long val)
 }
 
 static __inline__ unsigned long
-m_bsrl(unsigned long val)
+m_bsr32(unsigned long val)
 {
     unsigned long ret;
 

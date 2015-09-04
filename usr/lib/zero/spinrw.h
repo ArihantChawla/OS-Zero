@@ -36,15 +36,15 @@ static __inline__ void
 spinrwlkrd(volatile long *sp)
 {
     volatile long old;
-    volatile long new;
+    volatile long val;
 
     do {
         while (*sp & SPINRWWRBIT) {
             thryield();
         }
         old = *sp & SPINRWCNTMASK;
-        new = old + 1;
-        if (m_cmpswap(sp, old, new) == old) {
+        val = old + 1;
+        if (m_cmpswap(sp, old, val) == old) {
 
             return;
         }
@@ -56,7 +56,7 @@ spinrwlkrd(volatile long *sp)
 static __inline__ void
 spinrwunlkrd(volatile long *sp)
 {
-    m_atominc(sp);
+    m_atominc(*sp);
 
     return;
 }
@@ -65,16 +65,16 @@ static __inline__ void
 spinrwlkwr(volatile long *sp)
 {
     volatile long old;
-    volatile long new;
+    volatile long val;
 
     do {
         while (*sp & SPINRWWRBIT) {
             thryield();
         }
         old = *sp & SPINRWCNTMASK;
-        new = old | SPINRWWRBIT;
+        val = old | SPINRWWRBIT;
 
-        if (m_cmpswap(sp, old, new) == old) {
+        if (m_cmpswap(sp, old, val) == old) {
             while (*sp & SPINRWCNTMASK) {
                 thryield();
             }

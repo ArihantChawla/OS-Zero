@@ -1,3 +1,5 @@
+#if 0
+
 #include <stdio.h>
 #include <stdlib.h>
 #include <zero/mtx.h>
@@ -92,3 +94,4 @@ main(int argc, char *argv[])
     exit(0);
 }
 
+#endif

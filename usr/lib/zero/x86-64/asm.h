@@ -3,12 +3,16 @@
 
 #include <zero/x86/asm.h>
 
-/* API declarations */
-#define m_xchg(p, val)          m_xchgq(p, val)
-#define m_fetchadd(p, val)      m_xaddq(p, val)
-#define m_cmpswap(p, want, val) m_cmpxchgq(p, want, val)
-#define m_scanlo1bit(l)         m_bsfq(l)
-#define m_scanhi1bit(l)         m_bsrq(l)
+#define m_atominc(p)            m_atominc64(p)
+#define m_atomdec(p)            m_atomdec64(p)
+#define m_xchg(p, val)          m_xchg64(p, val)
+#define m_fetchadd(p, val)      m_xadd64(p, val)
+#define m_cmpswap(p, want, val) m_cmpxchg64(p, want, val)
+#define m_cmpsetbit(p, ndx)     m_cmpsetbit64(p, ndx)
+#define m_cmpclrbit(p, ndx)     m_cmpclrbit64(p, ndx)
+#define m_scanlo1bit(l)         m_bsf64(l)
+#define m_scanhi1bit(l)         m_bsr64(l)
+
 #if !defined(__GNUC__)
 static __inline__ void
 m_getretadr(void **pp) {
@@ -30,7 +34,7 @@ m_getfrmadr(void **pp)
 
     return;
 }
-#endif
+#endif /* !defined(__GNUC__) */
 
 static __inline__ void
 m_loadretadr(void *frm, void **pp)
@@ -54,9 +58,25 @@ m_getclrfrmadr(void **pp)
     return;
 }
 
+/* atomic increment operation */
+static __inline__ void
+m_atominc64(volatile long *p)
+{
+    __asm__ __volatile__ ("lock incq %0\n"
+                          : "+m" (*(p)));
+}
+
+/* atomic decrement operation */
+static __inline__ void
+m_atomdec64(volatile long *p)
+{
+    __asm__ __volatile__ ("lock decq %0\n"
+                          : "+m" (*(p)));
+}
+
 static __inline__ long
-m_xchgq(volatile long *p,
-        long val)
+m_xchg64(volatile long *p,
+         long val)
 {
     __asm__ __volatile__ ("lock xchgq %%rax, %q1\n"
                           : "=a" (val)
@@ -72,8 +92,8 @@ m_xchgq(volatile long *p,
  * - return original *p
  */
 static __inline__ long
-m_xaddq(volatile long *p,
-        long val)
+m_xadd64(volatile long *p,
+         long val)
 {
     __asm__ __volatile__ ("lock xaddq %%rax, %q2\n"
                           : "=a" (val)
@@ -89,7 +109,7 @@ m_xaddq(volatile long *p,
  * - return original *p
  */
 static __inline__ long
-m_cmpxchgq(volatile long *p,
+m_cmpxchg64(volatile long *p,
            long want,
            long val)
 {
@@ -103,8 +123,42 @@ m_cmpxchgq(volatile long *p,
     return res;
 }
 
+/* atomic set bit operation */
+static __inline__ long
+m_cmpsetbit64(volatile long *p, long ndx)
+{
+    volatile long val = 0;
+
+    __asm__ __volatile__ ("lock btsq %c2, %0\n"
+                          "jnc 1f\n"
+                          "movq $0x01, %1\n"
+                          "1:\n"
+                          : "=m" (*(p)), "=r" (val)
+                          : "r" (ndx)
+                          : "memory");
+
+    return val;
+}
+
+/* atomic clear bit operation */
+static __inline__ long
+m_cmpclrbit64(volatile long *p, long ndx)
+{
+    volatile long val = 0;
+
+    __asm__ __volatile__ ("lock btrq %c2, %0\n"
+                          "jnc 1f\n"
+                          "movq $0x01, %1\n"
+                          "1:\n"
+                          : "=m" (*(p)), "=r" (val)
+                          : "r" (ndx)
+                          : "memory");
+
+    return val;
+}
+
 static __inline__ unsigned long
-m_bsfq(unsigned long val)
+m_bsf64(unsigned long val)
 {
     unsigned long ret;
 
@@ -114,7 +168,7 @@ m_bsfq(unsigned long val)
 }
 
 static __inline__ unsigned long
-m_bsrq(unsigned long val)
+m_bsr64(unsigned long val)
 {
     unsigned long ret;
 

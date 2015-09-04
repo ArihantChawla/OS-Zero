@@ -11,7 +11,7 @@ maplkinit(zeromaplk *maplk, long n)
     void      *bits;
 
     if (maplk) {
-        if (!mtxtrylk(&maplk->mtx)) {
+        if (!mtxtrylk(&maplk->lk)) {
 
             return maplk;
         }
@@ -23,20 +23,21 @@ maplkinit(zeromaplk *maplk, long n)
             return NULL;
         }
         own = 1;
-        map->mtx = MTXINITVAL;
+//        map->lk = MTXINITVAL;
+        mtxinit(&map->lk);
         maplk = map;
-        mtxlk(&maplk->mtx);
+        mtxlk(&maplk->lk);
     }
     bits = calloc(n, sizeof(long) / CHAR_BIT);
     if (!bits && (own)) {
-        mtxunlk(&maplk->mtx);
+        mtxunlk(&maplk->lk);
         free(maplk);
 
         return NULL;
     }
     maplk->nbit = n;
     maplk->bits = bits;
-    mtxunlk(&maplk->mtx);
+    mtxunlk(&maplk->lk);
 
     return maplk;
 }

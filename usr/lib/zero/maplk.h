@@ -2,6 +2,7 @@
 #define __ZERO_MAPLK_H__
 
 #include <stdlib.h>
+#include <zero/asm.h>
 #include <zero/mtx.h>
 #include <zero/trix.h>
 #if defined(__KERNEL__)
@@ -12,7 +13,10 @@
 #define ZEROMAPLKINIT { ZEROMTXINITVAL, 0, NULL }
 
 typedef struct {
-    volatile long  mtx;
+#if defined(ZEROMTX)
+    volatile long  lk;
+#endif
+    zeromtx        lk;
     long           nbit;
     volatile long *bits;
 } zeromaplk;
@@ -28,9 +32,9 @@ maplktrybit(zeromaplk *maplk, long ndx)
     long bit = 1L << id;
     long ret;
 
-    mtxlk(&maplk->mtx);
+    mtxlk(&maplk->lk);
     val = m_cmpsetbit(&maplk->bits[word], bit);
-    mtxunlk(&maplk->mtx);
+    mtxunlk(&maplk->lk);
     ret = !val;
 
     return ret;
@@ -45,9 +49,9 @@ maplkbit(zeromaplk *maplk, long ndx)
     long bit = 1L << id;
 
     do {
-        mtxlk(&maplk->mtx);
+        mtxlk(&maplk->lk);
         val = m_cmpsetbit(&maplk->bits[word], bit);
-        mtxunlk(&maplk->mtx);
+        mtxunlk(&maplk->lk);
     } while (val);
 
     return;
@@ -62,11 +66,11 @@ mapunlkbit(zeromaplk *maplk, long ndx)
     long mask = ~bit;
     long tmp;
 
-    mtxlk(&maplk->mtx);
+    mtxlk(&maplk->lk);
     tmp = maplk->bits[word];
     tmp &= mask;
     maplk->bits[word] = tmp;
-    mtxunlk(&maplk->mtx);
+    mtxunlk(&maplk->lk);
 
     return;
 }
