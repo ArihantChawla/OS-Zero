@@ -64,7 +64,7 @@ barinitpool(zerobarpool *pool, unsigned long cnt)
     pool->seq = 0;
     pool->cnt = 0;
     pool->nref = 1;
-    pool->num = --cnt;
+    pool->num = cnt;
 
     return;
 }
@@ -73,7 +73,6 @@ void
 barfreepool(zerobarpool *pool)
 {
     m_fetchadd32(&pool->nref, -1);
-
     do {
         volatile long nref = m_atomread(pool->nref);
 
@@ -117,6 +116,10 @@ barwaitpool(zerobarpool *pool)
         /* we were too slow, so wait for barrier to be released */
         syswait(&pool->seq, seq);
     } while (1);
+    if (m_fetchadd(&pool->nref, -1) == 1) {
+        /* last one to wake up, wake destroying thread */
+        syswait(&pool->nref, 1);
+    }
 
     return ret;
 }
