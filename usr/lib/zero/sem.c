@@ -8,8 +8,6 @@
 long
 semwait(zerosem *sem)
 {
-    long done = 0;
-    
     do {
 #if defined(PTHREAD)
         while (!pthread_mutex_trylock(&sem->lk)) {
@@ -27,7 +25,8 @@ semwait(zerosem *sem)
 #elif defined(ZEROMTX)
             sem->lk = MTXINITVAL;
 #endif
-            done++;
+
+            return 0;
         } else {
 #if defined(PTHREAD)
             pthread_mutex_unlock(&sem->lk);
@@ -36,7 +35,7 @@ semwait(zerosem *sem)
 #endif
             thryield();
         }
-    } while (!done);
+    } while (1);
 
     return 0;
 }
@@ -44,8 +43,6 @@ semwait(zerosem *sem)
 long
 semtrywait(zerosem *sem)
 {
-    long done = 0;
-    
     do {
 #if defined(PTHREAD)
         while (!pthread_mutex_trylock(&sem->lk)) {
@@ -63,7 +60,8 @@ semtrywait(zerosem *sem)
 #elif defined(ZEROMTX)
             sem->lk = MTXINITVAL;
 #endif
-            done++;
+
+            return 0;
         } else {
 #if defined(PTHREAD)
             pthread_mutex_unlock(&sem->lk);
@@ -74,7 +72,7 @@ semtrywait(zerosem *sem)
 
             return -1;
         }
-    } while (!done);
+    } while (1);
 
     return 0;
 }
@@ -82,8 +80,6 @@ semtrywait(zerosem *sem)
 long
 sempost(zerosem *sem)
 {
-    long done = 0;
-    
     do {
 #if defined(PTHREAD)
         while (!pthread_mutex_trylock(&sem->lk)) {
@@ -108,7 +104,8 @@ sempost(zerosem *sem)
 #elif defined(ZEROMTX)
             sem->lk = MTXINITVAL;
 #endif
-            done++;
+
+            return 0;
         } else {
 #if defined(EOVERFLOW)
             errno = EOVERFLOW;
@@ -116,7 +113,7 @@ sempost(zerosem *sem)
             
             return -1;
         }
-    } while (!done);
+    } while (1);
 
     return 0;
 }

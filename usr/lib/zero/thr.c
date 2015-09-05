@@ -44,7 +44,7 @@ thrwakeall1(zerothrqueue *queue)
 
     do {
         listdequeue(queue, &thr);
-    } while (thr);
+    } while (!m_atomread(thr->sleep));
 
     return;
 }
@@ -56,3 +56,4 @@ condwait(zerocond *cond)
     ;
 }
 #endif
+
