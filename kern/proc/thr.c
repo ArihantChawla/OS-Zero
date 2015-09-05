@@ -1,4 +1,5 @@
 #include <stddef.h>
+#include <stdint.h>
 #include <sys/io.h>
 #include <zero/cdecl.h>
 #include <zero/param.h>
@@ -17,7 +18,8 @@
 #include <kern/unit/ia32/thr.h>
 
 static struct thrwait  thrwaittab[NLVL0THR] ALIGNED(PAGESIZE);
-static struct thrqueue thrruntab[THRNSCHED * THRNPRIO];
+static struct thrqueue thrruntab[THR_NCLASS * THR_NCLASSPRIO];
+static struct thrqueue thrrtqueue;
 extern long            trappriotab[NINTR];
 
 /* save thread context */
@@ -71,20 +73,33 @@ thradjprio(struct thr *thr)
     long prio = thr->prio;
     long nice = thr->nice;
 
-    if (sched == THRINTR) {
+    if (sched == THR_RT) {
+
+        return prio;
+    } else if (sched == THR_INTR) {
         /* thr->prio is IRQ ID */
         prio = trappriotab[thr->prio];
-    } else if (sched != THRRT) {
-        /* wrap around back to 0 at THRNPRIO / 2 */
+    } else {
+        /* wrap around back to 0 at THR_NCLASSPRIO / 2 */
         prio++;
-        prio &= (THRNPRIO >> 1) - 1;
-//        prio = (THRNPRIO * sched) + (THRNPRIO >> 1) + prio + thr->nice;
-        prio += (THRNPRIO * sched)
-//            + (randlfg2() & ((THRNPRIO >> 1) - 1))
+        prio &= (THR_NCLASSPRIO >> 1) - 1;
+//        prio = (THR_NCLASSPRIO * sched) + (THR_NCLASSPRIO >> 1) + prio + thr->nice;
+        prio += (THR_NCLASSPRIO * sched)
+//            + (randlfg2() & ((THR_NCLASSPRIO >> 1) - 1))
             + nice;
-        prio = min(THRNPRIO * THRNSCHED - 1, prio);
+        prio = min(THR_NCLASSPRIO * THR_NCLASS - 1, prio);
     }
     thr->prio = prio;
+
+    return prio;
+}
+
+static __inline__ long
+thrwakeprio(struct thr *thr)
+{
+    long sched = thr->sched;
+    long nice = thr->nice;
+    long prio = sched * THR_NCLASSPRIO;
 
     return prio;
 }
@@ -110,9 +125,10 @@ thrqueue(struct thr *thr, struct thrqueue *thrqueue)
 long
 thraddwait(struct thr *thr)
 {
+    struct thr     *head;
     struct thrwait *tab;
     struct thrwait *ptr = NULL;
-    long            wchan = thr->wchan;
+    uintptr_t       wchan = thr->wchan;
     long            ret = -1;
     long            fail = 0;    
     uint64_t        key0;
@@ -199,6 +215,7 @@ thraddwait(struct thr *thr)
         if (thr->next) {
             thr->next->prev = thr;
         }
+        thr->next = tab->ptr;
         tab->ptr = thr;
         ret ^= ret;
     }
@@ -220,6 +237,7 @@ thrwakeup(uintptr_t wchan)
     long             key1 = thrwaitkey1(wchan);
     long             key2 = thrwaitkey2(wchan);
     long             key3 = thrwaitkey3(wchan);
+    long             prio;
 //    long             n;
     struct thrwait  *ptab[4] = { NULL };
 
@@ -250,13 +268,12 @@ thrwakeup(uintptr_t wchan)
             ptr->ptr = thr2;
             mtxunlk(&thrq->lk);
         }
-#if 0
         while (thr1) {
+            prio = thrwakeprio(thr1);
             thr2 = thr1->next;
-            thrqueue(thr1, &thrruntab[thr1->prio]);
+            thrqueue(thr1, &thrruntab[prio]);
             thr1 = thr2;
         }
-#endif
         /* TODO: free tables if possible */
         ptr = ptab[0];
         if (ptr) {
@@ -297,13 +314,20 @@ thrpick(void)
 {
     struct thr      *thr = k_curthr;
     struct thrqueue *thrq;
+    long             sched;
     long             prio;
     long             state;
 
     if (thr) {
-        prio = thradjprio(thr);
+        sched = thr->sched;
         state = thr->state;
-        if (state == TASK_READY) {
+        if (sched == THR_RT && state == TASK_READY) {
+            thrq = thrrtqueue;
+            mtxlk(&thrq->lk);
+            thrqueue(thr, thrq);
+            mtxunlk(&thrq->lk);
+        } else if (state == TASK_READY) {
+            prio = thradjprio(thr);
             thrq = &thrruntab[prio];
             mtxlk(&thrq->lk);
             thrqueue(thr, thrq);
@@ -314,7 +338,7 @@ thrpick(void)
     }
     thr = NULL;
     while (!thr) {
-        for (prio = 0 ; prio < THRNSCHED * THRNPRIO ; prio++) {
+        for (prio = 0 ; prio < THR_NCLASS * THR_NCLASSPRIO ; prio++) {
             thrq = &thrruntab[prio];
             mtxlk(&thrq->lk);
             thr = thrq->head;
@@ -334,13 +358,8 @@ thrpick(void)
             }
         }
     }
-    if (thr) {
 
-        return thr;
-    } else {
-
-        return NULL;
-    }
+    return thr;
 }
 
 #endif /* ZEROSCHED */

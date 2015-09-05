@@ -12,6 +12,12 @@
 #if !defined(LISTNEXT)
 #define LISTNEXT     next
 #endif
+#if !defined(LIST_QUEUE)
+#define LIST_QUEUE()
+#endif
+#if !defined(LIST_DEQUEUE)
+#define LIST_DEQUEUE()
+#endif
 
 /*
  * Assumptions
@@ -23,6 +29,8 @@
 
 /* #define LIST_TYPE  */
 /* #define LIST_QTYPE */
+
+#define listnotempty(queue) (queue->head)
 
 /* get item from the head of queue */
 #define listpop(queue, retpp)                                           \
@@ -41,6 +49,7 @@
             (queue)->tail = NULL;                                       \
         }                                                               \
         (queue)->head = _item2;                                         \
+        LIST_DEQUEUE(_item1);                                           \
         listunlk(&(queue)->lk);                                         \
         *(retpp) = _item1;                                              \
     } while (0)
@@ -61,11 +70,12 @@
         }                                                               \
         (item)->LISTNEXT = _item;                                       \
         (queue)->head = item;                                           \
+        LIST_QUEUE(item);                                               \
         listunlk(&(queue)->lk);                                         \
     } while (0)
 
 /* get item from the tail of queue */
-#define listdeq(queue, retpp)                                           \
+#define listdequeue(queue, retpp)                                       \
     do {                                                                \
         LIST_TYPE *_item1;                                              \
         LIST_TYPE *_item2;                                              \
@@ -82,6 +92,7 @@
                 (queue)->tail = _item2;                                 \
             }                                                           \
         }                                                               \
+        LIST_DEQUEUE(_item1);                                           \
         listunlk(&(queue)->lk);                                         \
         *(retpp) = _item1;                                              \
     } while (0)
@@ -101,6 +112,7 @@
             (item)->LISTPREV = NULL;                                    \
             (queue)->head = (item);                                     \
         }                                                               \
+        LIST_QUEUE(item);                                               \
         mtxunlk(&(queue)->lk);                                          \
     } while (0)
 
@@ -126,7 +138,7 @@
         if (_tmp) {                                                     \
             _tmp->prev = (item)->LISTPREV;                              \
         } else {                                                        \
-            _tmp = (item)->LISTPREV;                                        \
+            _tmp = (item)->LISTPREV;                                    \
             if (_tmp) {                                                 \
                 _tmp->LISTNEXT = NULL;                                  \
             } else {                                                    \
@@ -134,6 +146,7 @@
             }                                                           \
             (queue)->tail = _tmp;                                       \
         }                                                               \
+        LIST_DEQUEUE(item);                                             \
         listunlk(&(queue)->lk);                                         \
     } while (0)
 

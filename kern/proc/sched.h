@@ -1,5 +1,5 @@
-#ifndef __KERN_SCHED_H__
-#define __KERN_SCHED_H__
+#ifndef __KERN_PROC_SCHED_H__
+#define __KERN_PROC_SCHED_H__
 
 #include <kern/conf.h>
 #include <zero/types.h>
@@ -14,17 +14,18 @@
  * - idle
  */
 
-#define HZ           250
+#define HZ                 250
 
 /* thread scheduler classes */
-#define THRINTR      0  // interrupt thread (keyboard, mouse, etc.)
-#define THRRT        1  // real-time thread
-#define THRUSER      2  // user thread
-#define THRBATCH     3  // batch thread
-#define THRIDLE      4  // idle thread
-#define THRNSCHED    5  // number of scheduler policies
-#define THRNPRIO     32 // # of priorities per class
-#define THRNPRIOLOG2 5
+#define THR_INTR           0  // interrupt thread (keyboard, mouse, etc.)
+#define THR_RT             1  // real-time thread
+#define THR_USER           2  // user thread
+#define THR_BATCH          3  // batch thread
+#define THR_IDLE           4  // idle thread
+#define THR_NCLASS         5  // number of scheduler policies
+/* # of priorities per class */
+#define THR_NCLASSPRIO     (1 << THR_NCLASSPRIOLOG2)
+#define THR_NCLASSPRIOLOG2 5
 
 #include <kern/proc/thr.h>
 
@@ -34,11 +35,11 @@ extern void schedinit(void);
 
 #if (ZEROSCHED)
 struct thrprioq {
-    long        lk;
-    struct thr *head;
-    struct thr *tail;
+    volatile long  lk;
+    struct thr    *head;
+    struct thr    *tail;
 };
 #endif
 
-#endif /* __KERN_SCHED_H__ */
+#endif /* __KERN_PROC_SCHED_H__ */
 

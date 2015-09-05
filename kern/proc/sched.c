@@ -28,21 +28,6 @@ schedyield(void)
     thrjmp(thr);
 }
 
-#if 0
-void
-schedyield(void)
-{
-    struct thr *thr;
-
-    if (schedpickthr) {
-        thr = schedpickthr();
-        thrjmp(thr);
-    }
-
-    return;
-}
-#endif
-
 void
 schedloop(void)
 {

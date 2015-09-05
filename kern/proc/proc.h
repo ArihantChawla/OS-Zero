@@ -1,5 +1,5 @@
-#ifndef __KERN_PROC_H__
-#define __KERN_PROC_H__
+#ifndef __KERN_PROC_PROC_H__
+#define __KERN_PROC_PROC_H__
 
 /*
  * process startup
@@ -143,5 +143,5 @@ struct proc {
 #endif
 } ALIGNED(PAGESIZE);
 
-#endif /* __KERN_PROC_H__ */
+#endif /* __KERN_PROC_PROC_H__ */
 

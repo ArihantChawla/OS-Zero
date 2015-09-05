@@ -13,9 +13,6 @@
 #define ZEROMAPLKINIT { ZEROMTXINITVAL, 0, NULL }
 
 typedef struct {
-#if defined(ZEROMTX)
-    volatile long  lk;
-#endif
     zeromtx        lk;
     long           nbit;
     volatile long *bits;

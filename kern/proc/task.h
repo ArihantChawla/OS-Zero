@@ -1,5 +1,5 @@
-#ifndef __KERN_TASK_H__
-#define __KERN_TASK_H__
+#ifndef __KERN_PROC_TASK_H__
+#define __KERN_PROC_TASK_H__
 
 long taskgetpid(void);
 void taskfreepid(long id);
@@ -23,5 +23,5 @@ struct pidq {
     struct pid *tail;
 };
 
-#endif /* __KERN_TASK_H__ */
+#endif /* __KERN_PROC_TASK_H__ */
 

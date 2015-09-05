@@ -6,7 +6,6 @@
 #include <stddef.h>
 #include <zero/param.h>
 #include <zero/asm.h>
-#include <zero/thr.h>
 
 /*
  * Special thanks to Matthew 'kinetik' Gregan for help with the mutex code.
@@ -15,12 +14,7 @@
 
 #if defined(__KERNEL__)
 #undef PTHREAD
-#define PTHREAD        0
-#endif
-#define MTXINITVAL 0
-#define MTXLKVAL   1
-#if defined(ZERONEWMTX)
-#define MTXCONTVAL 2
+#define PTHREAD    0
 #endif
 
 #include <zero/asm.h>
@@ -33,6 +27,26 @@ extern int pthread_yield(void);
 #endif
 #if defined(__linux__) && !defined(__KERNEL__)
 #include <sched.h>
+#endif
+
+#if defined(PTHREAD)
+#include <pthread.h>
+#endif
+
+#if defined(ZEROMTX) && !defined(PTHREAD)
+typedef volatile long   zeromtx;
+#elif defined(PTHREAD)
+typedef pthread_mutex_t zeromtx;
+#endif
+
+#if defined(ZEROMTX) && !defined(PTHREAD)
+
+#include <zero/thr.h>
+
+#define MTXINITVAL 0
+#define MTXLKVAL   1
+#if defined(ZERONEWMTX)
+#define MTXCONTVAL 2
 #endif
 
 #define mtxinit(lp) (*(lp) = MTXINITVAL)
@@ -86,6 +100,14 @@ mtxunlk(volatile long *lp)
     return;
 }
 
+#elif defined(PTHREAD) /* !defined(ZEROMTX) */
+
+typedef pthread_mutex_t zeromtx;
+
+#endif
+
+#if defined(ZEROMTX) && !defined(PTHREAD)
+
 /* initializer for non-dynamic attributes */
 #define ZEROMTXATR_DEFVAL     { 0L }
 /* flags for attribute flg-field */
@@ -115,17 +137,19 @@ typedef struct {
 #elif defined(PTHREAD)
 
 #include <stddef.h>
-#include <pthread.h>
 
 #define MTXINITVAL PTHREAD_MUTEX_INITIALIZER
 
-typedef pthread_mutex_t zeromtx;
+typedef pthread_mutexattr_t zeromtxatr;
+typedef pthread_mutex_t     zeromtx;
 
 #define mtxinit(mp)  pthread_mutex_init(mp, NULL)
 #define mtxfree(mp)  pthread_mutex_destroy(mp)
 #define mtxtrylk(mp) pthread_mutex_trylock(mp)
 #define mtxlk(mp)    pthread_mutex_lock(mp)
 #define mtxunlk(mp)  pthread_mutex_unlock(mp)
+
+#endif
 
 #endif /* defined(ZEROMTX) */
 

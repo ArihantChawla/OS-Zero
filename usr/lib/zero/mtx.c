@@ -1,5 +1,5 @@
 /* REFERENCE: http://preshing.com/20120305/implementing-a-recursive-mutex/ */
-#if defined(ZEROMTX)
+#if defined(ZEROMTX) && !defined(PTHREAD)
 
 #include <stdlib.h>
 #include <zero/asm.h>
@@ -131,5 +131,5 @@ zerounlkmtx(zeromtx *mtx)
     return;
 }
 
-#endif /* defined(ZEROMTX) */
+#endif /* defined(ZEROMTX) && !defined(PTHREAD) */
 

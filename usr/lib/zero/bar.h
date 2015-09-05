@@ -14,11 +14,7 @@
 #define BARSERIALTHR (-1L)
 
 typedef struct {
-#if defined(ZEROMTX)
-    volatile long lk;
-#elif defined(PTHREAD)
     zeromtx       lk;
-#endif
     unsigned long num;
     unsigned long cnt;
     zerocond      cond;

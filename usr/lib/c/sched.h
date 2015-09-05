@@ -3,6 +3,8 @@
 
 #if !defined(__KERNEL__)
 
+#include <bits/sched.h>
+
 extern int sched_yield(void);
 
 #endif /* !defined(__KERNEL__) */
