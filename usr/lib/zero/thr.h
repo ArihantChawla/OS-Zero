@@ -1,6 +1,8 @@
 #ifndef __ZERO_THR_H__
 #define __ZERO_THR_H__
 
+#define ZEROTHR 1
+
 #include <stddef.h>
 #include <stdint.h>
 #if defined(PTHREAD) && !defined(ZEROTHR)
@@ -24,14 +26,16 @@
 #define thryield() /* FIXME */
 #endif
 
-#if defined(PTHREAD) && !defined(ZEROTHR)
+#if defined(PTHREAD)
 
-typedef pthread_t      zerothr;
+typedef pthread_t      zerothrid;
 typedef pthread_attr_t zerothratr;
 
 #elif defined(ZEROTHR)
 
 #include <sched.h>
+
+typedef uintptr_t      zerothrid;
 
 #define ZEROTHRATR_INIT         (1 << 0)        // attributes initialised
 #define ZEROTHRATR_DETACHED     (1 << 1)        // detach thread
@@ -54,7 +58,7 @@ typedef struct {
 #define ZEROTHR_ASLEEP 1
 #define ZEROTHR_AWAKE  0
 typedef struct __zerothr {
-    uintptr_t         id;
+    zerothrid         id;
     long              sleep;
     zerothratr       *atr;
     struct __zerothr *prev;

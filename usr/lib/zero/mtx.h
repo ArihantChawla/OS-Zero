@@ -130,7 +130,7 @@ typedef struct {
     volatile long cnt;  // access counter
     volatile long rec;  // recursion depth
     zeromtxatr    atr;
-} zeromtx;
+} zeromtxrec;
 
 #elif defined(PTHREAD)
 
