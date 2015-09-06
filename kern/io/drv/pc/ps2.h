@@ -36,8 +36,8 @@
 #define PS2MOUSE_WHEEL     0x01 /* scroll wheel flag. */
 #define PS2MOUSE_WHEEL5BTN 0x02 /* 5-button flag. */
 #define PS2MOUSE_WHEELMASK 0x03 /* intellimouse mask. */
-struct mousestate {
-    uint16_t flags;
+struct ps2mousestate {
+    uint16_t flg;
     uint16_t state;
     uint32_t x;
     uint32_t y;
@@ -75,8 +75,8 @@ struct ps2drv {
 #endif
 
 struct ps2drv {
-    struct ringbuf    *buf;
-    struct mousestate  mousestate;
+    struct ringbuf       *buf;
+    struct ps2mousestate  mousestate;
 };
 
 #endif /* __KERN_IO_DRV_PC_PS2_H__ */

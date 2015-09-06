@@ -7,6 +7,7 @@
  * { == curly brace   < == angle bracket   [ == bracket   ( == parentheses
  */
 
+#include <stddef.h>
 #include <stdint.h>
 #include <limits.h>
 #include <sys/io.h>
@@ -36,7 +37,8 @@ extern void *irqvec[];
 void ps2kbdintr(void);
 void ps2mouseintr(void);
 
-static struct ps2drv ps2drv ALIGNED(PAGESIZE);
+unsigned char kbdbuf[PAGESIZE / CHAR_BIT] ALIGNED(PAGESIZE);
+static struct ps2drv ps2drv;
 
 #define ps2readkbd(u8)                                                  \
     __asm__ ("inb %w1, %b0\n" : "=a" (u8) : "i" (PS2KBD_PORT))
@@ -44,8 +46,6 @@ static struct ps2drv ps2drv ALIGNED(PAGESIZE);
     __asm__ ("outb %b0, %w1\n" : : "a" (u8), "i" (PS2KBD_PORT))
 #define ps2readmouse(u8)                                                \
     __asm__("inb %w1, %b0" : "=a" (u8) : "i" (PS2MOUSE_INPORT))
-
-unsigned char kbdbuf[PAGESIZE / CHAR_BIT] ALIGNED(PAGESIZE);
 
 void
 ps2initkbd(void)
@@ -155,18 +155,17 @@ ps2mouseintr(void)
     xmov = u8;
     ps2readmouse(u8);
     ymov = u8;
-
-    val = ps2drv.mousestate.flags;
+    val = ps2drv.mousestate.flg;
     zmov = 0;
-    val &= PS2MOUSE_WHEELMASK;                     /* scroll-wheel?. */
-    state = mask & PS2MOUSE_3BTNMASK;               /* button 1, 2 & 3 states. */
+    val &= PS2MOUSE_WHEELMASK;          /* scroll-wheel?. */
+    state = mask & PS2MOUSE_3BTNMASK;   /* button 1, 2 & 3 states. */
     if (val) {
         /* mouse with scroll-wheel, extra (4th) data byte. */
         ps2readmouse(u8);
         xtra = u8;
-        val &= PS2MOUSE_WHEEL5BTN;                /* 5-button?. */
-        zmov = xtra & PS2MOUSE_ZMASK;              /* z-axis movement. */
-        tmp = xtra & PS2MOUSE_ZSIGN;              /* extract sign bit. */
+        val &= PS2MOUSE_WHEEL5BTN;      /* 5-button?. */
+        zmov = xtra & PS2MOUSE_ZMASK;   /* z-axis movement. */
+        tmp = xtra & PS2MOUSE_ZSIGN;    /* extract sign bit. */
         if (val) {
             state |= (xtra >> 1) & PS2MOUSE_XBTNMASK; /* button 4 & 5 states. */
         }
@@ -175,9 +174,7 @@ ps2mouseintr(void)
         }
     }
     ps2drv.mousestate.state = state;
-
-    shift = ps2drv.mousestate.shift;               /* scale (speed) value. */
-
+    shift = ps2drv.mousestate.shift;    /* scale (speed) value. */
     val = ps2drv.mousestate.x;
     tmp = mask & PS2MOUSE_XOVERFLOW;
     if (tmp) {
@@ -197,7 +194,6 @@ ps2mouseintr(void)
         tmp = ps2drv.mousestate.xmax;
         ps2drv.mousestate.x = (val < tmp - val) ? (val + xmov) : tmp;
     }
-
     val = ps2drv.mousestate.y;
     tmp = mask & PS2MOUSE_YOVERFLOW;
     if (tmp) {
@@ -217,7 +213,6 @@ ps2mouseintr(void)
         tmp = ps2drv.mousestate.ymax;
         ps2drv.mousestate.y = (val < tmp - val) ? (val + ymov) : tmp;
     }
-
     if (zmov) {
         val = ps2drv.mousestate.z;
         if (zmov < 0) {
