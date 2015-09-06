@@ -20,13 +20,9 @@ thrsleep1(zerothrqueue *queue)
         queue = &thrsleepqueue;
     }
     listpush(queue, thr);
-    do {
-        if (!m_atomread(thr->sleep)) {
-
-            return;
-        }
+    while (m_atomread(thr->sleep)) {
         thryield();
-    } while (1);
+    }
              
     return;
 }
