@@ -3,6 +3,7 @@
 
 #include <stdint.h>
 
+#include <zero/param.h>
 #include <zero/trix.h>
 #define __KERNEL__ 1
 #include <zero/mtx.h>
@@ -46,26 +47,26 @@ struct page {
     long           flg;         // page flags
     uintptr_t      adr;         // page address
     unsigned long  nflt;        // # of page-fault exceptions triggered
-//    uintptr_t     xptr;
     struct page   *prev;        // previous on queue
     struct page   *next;        // next on queue
-    ktime_t        maptm;       // map timestamp
+//    ktime_t        maptm;       // map timestamp
     dev_t          dev;         // paging device
     off_t          ofs;         // paging device offset
 };
 
 struct pageq {
-    long         lk;
-    struct page *head;
-    struct page *tail;
+    volatile long  lk;
+    struct page   *head;
+    struct page   *tail;
 };
 
 typedef int64_t swapoff_t;
 
+#define PAGEDEVMASK        ((UINT64_C(1) << PAGESIZELOG2) - 1)
 #define swapsetblk(u, blk) ((u) |= (blk) << PAGESIZELOG2)
-#define swapsetdev(u, dev) ((u) |= (dev) << 3)
+#define swapsetdev(u, dev) ((u) |= (dev))
 #define swapblkid(adr)     ((adr) >> PAGESIZELOG2)
-#define swapdevid(adr)     (((adr) & PFDEVMASK) >> 3)
+#define swapdevid(adr)     ((adr) & PAGEDEVMASK)
 struct swapdev {
     swapoff_t     npg;
     swapoff_t    *pgmap;
@@ -73,6 +74,7 @@ struct swapdev {
     struct pageq  freeq;
 };
 
+#define LIST_NOLOCK 1
 #define LIST_TYPE  struct page
 #define LIST_QTYPE struct pageq
 #include <zero/list.h>

@@ -19,8 +19,8 @@
 #define PERMSETUID 0x00001000
 /* zero permissions */
 #define PERMWIRE   0x80000000   // permission to wire memory
-#define PERMSHMAP  0x40000000   // permission to share-map memory
-#define PERMRAWIO  0x20000000   // permission to do raw device I/O operations
+#define PERMSHM    0x40000000   // permission to share memory
+//#define PERMRAWIO  0x20000000   // permission to do raw device I/O operations
 
 #define setperm(perm, usr, grp, flg)                                    \
     ((perm)->uid = (usr), (perm)->gid = (grp), (perm)->flg = (flg))

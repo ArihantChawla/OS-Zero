@@ -100,46 +100,48 @@ pagevalloc(void)
 
 /*
  * TODO: evict pages from LRU if none free / low water
- * - skip pages currently in someone's working set
  */
 struct page *
 pagealloc(void)
 {
     struct page  *page = NULL;
     struct pageq *qp;
+    long          found = 0;
     long          qid;
     long          l;
 
-//    mtxlk(&vmphysq.lk);
     pagepop(&vmphysq, &page);
-//    mtxunlk(&vmphysq.lk);
     if (!page) {
-        ktime_t maptm = kcurtime();
-        
-        for (l = 0 ; l < LONGSIZE * CHAR_BIT ; l++) {
-            qp = &vmlrutab[l];
-//            mtxlk(&qp->lk);
-            if (pageinset(page) && maptm - page->maptm < 10 * KTIME_SECOND) {
+        do {
+            for (l = 0 ; l < LONGSIZE * CHAR_BIT ; l++) {
+                qp = &vmlrutab[l];
+                mtxlk(&qp->lk);
+                page = qp->tail;
+                while (page) {
+                    if (!pageinset(page)) {
+                        pagedeq(qp, &page);
+                        if (page) {
+                            found++;
+                            page->nflt++;
+                            pageaddset(page);
+                            qid = pagegetqid(page);
+                            qp = &vmlrutab[qid];
+                            pagepush(qp, page);
 
-                continue;
-            } else if (!pageinset(page)) {
-                pagedeq(qp, &page);
-//            mtxunlk(&qp->lk);
-                if (page) {
-                    page->nflt++;
-                    
-                    return page;
+                            break;
+                        }
+                    }
+                    page = page->prev;
                 }
-                qid = pagegetqid(page);
-                qp = &vmlrutab[qid];
-//            mtxlk(&qp->lk);
-                pagepush(qp, page);
-//            mtxunlk(&qp->lk);
+                mtxunlk(&qp->lk);
+                if (found) {
+
+                    break;
+                }
             }
-        }
+        } while (!found);
     }
     if (page) {
-        page->maptm = kcurtime();
         page->dev = PAGENODEV;
         page->ofs = PAGENOOFS;
     }
@@ -169,14 +171,15 @@ void
 pageinitdev(unsigned long id, unsigned long npage)
 {
     struct swapdev *dev = &_swapdevtab[id];
-    unsigned long   nb = npage * sizeof(swapoff_t);
+    unsigned long   nbmap = npage * sizeof(swapoff_t);
+    unsigned long   nbhdr = npage * sizeof(struct page);
     struct page    *page;
     struct pageq   *pq = &dev->freeq;
 
     dev->npage = npage;
-    dev->pagemap = kmalloc(nb);
-    bzero(dev->pagemap, nb);
-    page = kmalloc(npage * sizeof(struct page));
+    dev->pagemap = kmalloc(nbmap);
+    kbzero(dev->pagemap, nbmap);
+    page = kmalloc(nbhdr);
     dev->pagetab = page;
     while (npage--) {
         pagepush(pq, page);
@@ -206,19 +209,19 @@ swapalloc(void)
     struct swapdev *lim = &_swapdevtab[NSWAPDEV];
     unsigned long   ret = 0;
     struct page    *page;
-    long            l;
+    long            ndx;
 
-    l = 0;
+    ndx = 0;
     while (dev < lim && (dev->npage)) {
         pagedeq(&dev->freeq, &page);
         if (page) {
             swapsetblk(ret, swapblknum(dev, page));
-            swapsetdev(ret, l);
+            swapsetdev(ret, ndx);
 
             return ret;
         }
         dev++;
-        l++;
+        ndx++;
     }
 
     return ret;

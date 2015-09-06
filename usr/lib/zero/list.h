@@ -1,10 +1,10 @@
-#if defined(_REENTRANT)
+#if defined(LISTNOLOCK) || !defined(_REENTRANT)
+#define listlk(lp)
+#define listunlk(lp)
+#else
 #include <zero/mtx.h>
 #define listlk(lp)   mtxlk(lp)
 #define listunlk(lp) mtxunlk(lp)
-#else
-#define listlk(lp)
-#define listunlk(lp)
 #endif
 #if !defined(LISTPREV)
 #define LISTPREV     prev

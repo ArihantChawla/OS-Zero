@@ -86,9 +86,9 @@ ps2kbdflush(uint64_t keycode, int32_t keyval)
 void
 ps2kbdaddkey(uint64_t keycode)
 {
-    mtxlk(ps2drv.buf->lk);
+    mtxlk(&ps2drv.buf->lk);
     ringput(ps2drv.buf, keycode);
-    mtxunlk(ps2drv.buf->lk);
+    mtxunlk(&ps2drv.buf->lk);
 }
 
 /* keyboard interrupt handler. */
