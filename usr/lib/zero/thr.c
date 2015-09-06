@@ -1,3 +1,4 @@
+#include <zero/cdecl.h>
 #include <zero/asm.h>
 #include <zero/thr.h>
 #include <zero/cond.h>
@@ -8,7 +9,7 @@
 #include <zero/list.h>
 
 static zerothrqueue thrsleepqueue;
-__thread zerothr    thrself;
+THREADLOCAL zerothr thrself;
 
 void
 thrsleep1(zerothrqueue *queue)

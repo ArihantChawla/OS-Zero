@@ -10,11 +10,11 @@
 
 /* __func__ for non-C99 compilers; MSVC should do this, probably =) */
 #if !defined(__STDC_VERSION__) || (__STDC_VERSION__ < 199901L) \
-    && (defined(__GNUC__) || defined(_MSC_VER) || defined(_WIN32))
+    && (defined(__GNUC__) || defined(_MSC_VER))
 #define __func__ __FUNCTION__
 #endif
 
-#if defined(__GNUC__)
+#if defined(__GNUC__) || defined(__clang__)
 
 /* align variables, aggregates, and tables to boundary of a */
 #define ALIGNED(a)  __attribute__ ((__aligned__(a)))
@@ -47,6 +47,8 @@
 #define unlikely(x) (__builtin_expect(!!(x), 0))
 #define isconst(x)  (__builtin_constant_p(x))
 
+#define THREADLOCAL __thread
+
 #elif defined(_MSC_VER) /* !defined(__GNUC__) */
     
 /* Microsoft */
@@ -55,6 +57,8 @@
 #define INLINE       __forceinline
 
 #define ASMLINK      __cdecl
+
+#define THREADLOCAL  __declspec(thread)
 
 #endif /* __GNUC__ */
 

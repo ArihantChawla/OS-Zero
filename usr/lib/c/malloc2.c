@@ -371,13 +371,13 @@ struct malloc {
 };
 
 static struct malloc  g_malloc ALIGNED(PAGESIZE);
-__thread long        _arnid = -1;
-MUTEX                _arnlk;
-long                 curarn;
+THREADLOCAL long _arnid = -1;
+MUTEX            _arnlk;
+long             curarn;
 #if (MALLOCSTAT)
-long long            nheapbyte;
-long long            nmapbyte;
-long long            ntabbyte;
+long long        nheapbyte;
+long long        nmapbyte;
+long long        ntabbyte;
 #endif
 
 #if (ZMALLOCDEBUGHOOKS) || (defined(_ZERO_SOURCE) && (ZMALLOCHOOKS))
