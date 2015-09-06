@@ -10,22 +10,22 @@ struct exitcmd {
     struct exitcmd *next;
 };
 
-struct stdlib {
-    zeromtx         exitlk;
+struct exit {
+    zeromtx         lk;
     size_t          natexit;
     struct exitcmd *atexitq;
     size_t          non_exit;
     struct exitcmd *on_exitq;
 };
 
-static struct stdlib g_stdlib;
+static struct exit g_exit;
 
 int
 atexit(void (*func)(void))
 {
     struct exitcmd *item;
 
-    mtxlk(&g_stdlib.exitlk);
+    mtxlk(&g_exit.lk);
     item = malloc(sizeof(struct exitcmd));
     if (!item) {
         fprintf(stderr, "ATEXIT: failed to allocate item\n");
@@ -34,9 +34,9 @@ atexit(void (*func)(void))
     }
     item->func = func;
     item->arg = NULL;
-    item->next = g_stdlib.atexitq;
-    g_stdlib.atexitq = item;
-    mtxunlk(&g_stdlib.exitlk);
+    item->next = g_exit.atexitq;
+    g_exit.atexitq = item;
+    mtxunlk(&g_exit.lk);
 
     return 0;
 }
@@ -46,7 +46,7 @@ on_exit(void (*func)(int, void *), void *arg)
 {
     struct exitcmd *item;
 
-    mtxlk(&g_stdlib.exitlk);
+    mtxlk(&g_exit.lk);
     item = malloc(sizeof(struct exitcmd));
     if (!item) {
         fprintf(stderr, "ON_EXIT: failed to allocate item\n");
@@ -55,9 +55,9 @@ on_exit(void (*func)(int, void *), void *arg)
     }
     item->func = func;
     item->arg = arg;
-    item->next = g_stdlib.on_exitq;
-    g_stdlib.on_exitq = item;
-    mtxunlk(&g_stdlib.exitlk);
+    item->next = g_exit.on_exitq;
+    g_exit.on_exitq = item;
+    mtxunlk(&g_exit.lk);
 
     return 0;
 }
@@ -68,14 +68,14 @@ __on_exit(int status)
     struct exitcmd  *item;
     void           (*func)(int, void *);
 
-    mtxlk(&g_stdlib.exitlk);
-    item = g_stdlib.on_exitq;
+    mtxlk(&g_exit.lk);
+    item = g_exit.on_exitq;
     while (item) {
         func = item->func;
         func(status, item->arg);
         item = item->next;
     }
-    mtxunlk(&g_stdlib.exitlk);
+    mtxunlk(&g_exit.lk);
 }
 
 void
@@ -84,14 +84,14 @@ __atexit(void)
     struct exitcmd  *item;
     void           (*func)(void);
 
-    mtxlk(&g_stdlib.exitlk);
-    item = g_stdlib.atexitq;
+    mtxlk(&g_exit.lk);
+    item = g_exit.atexitq;
     while (item) {
         func = item->func;
         func();
         item = item->next;
     }
-    mtxunlk(&g_stdlib.exitlk);
+    mtxunlk(&g_exit.lk);
 }
 
 void
