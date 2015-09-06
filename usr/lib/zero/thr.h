@@ -54,7 +54,7 @@ typedef struct {
 
 #endif
 
-#define ZEROTHR_NOID   (~(uintptr_t)0)
+#define ZEROTHR_NOID   (~(zerothrid)0)
 #define ZEROTHR_ASLEEP 1
 #define ZEROTHR_AWAKE  0
 typedef struct __zerothr {

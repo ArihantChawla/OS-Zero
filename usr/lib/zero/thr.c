@@ -26,7 +26,7 @@ thrsleep1(zerothrqueue *queue)
             return;
         }
         thryield();
-    } while (m_atomread(thr->sleep));
+    } while (1);
              
     return;
 }
@@ -54,7 +54,7 @@ thrwakeall1(zerothrqueue *queue)
     }
     do {
         listdequeue(queue, &thr);
-    } while (!m_atomread(thr->sleep));
+    } while (thr);
 
     return;
 }
