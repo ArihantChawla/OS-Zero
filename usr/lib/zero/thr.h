@@ -1,6 +1,7 @@
 #ifndef __ZERO_THR_H__
 #define __ZERO_THR_H__
 
+#include <stddef.h>
 #include <stdint.h>
 #if defined(PTHREAD) && !defined(ZEROTHR)
 #include <pthread.h>
@@ -30,7 +31,6 @@ typedef pthread_attr_t zerothratr;
 
 #elif defined(ZEROTHR)
 
-#include <stddef.h>
 #include <sched.h>
 
 #define ZEROTHRATR_INIT         (1 << 0)        // attributes initialised
@@ -67,11 +67,9 @@ typedef struct {
     zerothr *tail;
 } zerothrqueue;
 
-extern zerothrqueue thrsleepqueue;
-
-#define thrsleep()   thrsleep1(&thrsleepqueue)
-#define thrwake()    thrwake1(&thrsleepqueue)
-#define thrwakeall() thrwakeall1(&thrsleepqueue)
+#define thrsleep()   thrsleep1(NULL)
+#define thrwake()    thrwake1(NULL)
+#define thrwakeall() thrwakeall1(NULL)
 
 #endif /* __ZERO_THR_H__ */
 

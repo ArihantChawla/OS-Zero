@@ -7,14 +7,17 @@
 #define LIST_DEQUEUE(thr) ((thr)->sleep = ZEROTHR_AWAKE)
 #include <zero/list.h>
 
-zerothrqueue     thrsleepqueue;
-__thread zerothr thrself;
+static zerothrqueue thrsleepqueue;
+__thread zerothr    thrself;
 
 void
 thrsleep1(zerothrqueue *queue)
 {
     zerothr *thr = &thrself;
-    
+
+    if (!queue) {
+        queue = &thrsleepqueue;
+    }
     listpush(queue, thr);
     do {
         if (!m_atomread(thr->sleep)) {
@@ -32,6 +35,9 @@ thrwake1(zerothrqueue *queue)
 {
     zerothr *thr = NULL;
 
+    if (!queue) {
+        queue = &thrsleepqueue;
+    }
     listdequeue(queue, &thr);
 
     return;
@@ -42,6 +48,9 @@ thrwakeall1(zerothrqueue *queue)
 {
     zerothr *thr = NULL;
 
+    if (!queue) {
+        queue = &thrsleepqueue;
+    }
     do {
         listdequeue(queue, &thr);
     } while (!m_atomread(thr->sleep));

@@ -134,7 +134,6 @@
 
 #define ZEROMTX 1
 #if defined(ZEROMTX)
-//#define MUTEX volatile long
 #define MUTEX zeromtx
 #include <zero/mtx.h>
 #elif (PTHREAD)
