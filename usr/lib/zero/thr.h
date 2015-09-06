@@ -65,13 +65,19 @@ typedef struct __zerothr {
     struct __zerothr *next;
 } zerothr;
 
+#define ZEROTHRQUEUE_INITIALIZER { MTXINITVAL, NULL, NULL }
 typedef struct {
     zeromtx  lk;
     zerothr *head;
     zerothr *tail;
 } zerothrqueue;
 
-#define thrsleep()   thrsleep1(NULL)
+extern void thrwait1(zerothrqueue *queue);
+extern long thrsleep2(zerothrqueue *queue, const struct timespec *absts);
+extern void thrwake1(zerothrqueue *queue);
+extern void thrwakeall1(zerothrqueue *queue);
+
+#define thrwait()    thrwait1(NULL)
 #define thrwake()    thrwake1(NULL)
 #define thrwakeall() thrwakeall1(NULL)
 

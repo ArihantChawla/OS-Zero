@@ -14,7 +14,7 @@ barfree(zerobar *bar)
         condwait(&bar->cond, &bar->lk);
     }
     mtxunlk(&bar->lk);
-    condfree(&bar->cond);
+//    condfree(&bar->cond);
 }
 
 void
@@ -39,7 +39,7 @@ barwait(zerobar *bar)
     bar->num++;
     if (bar->num == bar->cnt) {
         bar->num += BARFLAGBIT - 1;
-        condbcast(&bar->cond);
+        condbroadcast(&bar->cond);
         mtxunlk(&bar->lk);
 
         return BARSERIALTHR;
@@ -49,7 +49,7 @@ barwait(zerobar *bar)
         }
         bar->num--;
         if (bar->num == BARFLAGBIT) {
-            condbcast(&bar->cond);
+            condbroadcast(&bar->cond);
         }
         mtxunlk(&bar->lk);
 

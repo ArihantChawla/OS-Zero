@@ -13,10 +13,13 @@
 #define LISTNEXT     next
 #endif
 #if !defined(LIST_QUEUE)
-#define LIST_QUEUE()
+#define LIST_QUEUE(dummy)
 #endif
 #if !defined(LIST_DEQUEUE)
-#define LIST_DEQUEUE()
+#define LIST_DEQUEUE(dummy)
+#endif
+#if !defined(LIST_RM_COND)
+#define LIST_RM_COND(dummy)
 #endif
 
 /*
@@ -122,31 +125,33 @@
         LIST_TYPE *_tmp;                                                \
                                                                         \
         listlk(&(queue)->lk);                                           \
-        _tmp = (item)->LISTPREV;                                        \
-        if (_tmp) {                                                     \
-            _tmp->LISTNEXT = (item)->LISTNEXT;                                  \
-        } else {                                                        \
-            _tmp = (item)->LISTNEXT;                                    \
-            if (_tmp) {                                                 \
-                _tmp->LISTPREV = (item)->LISTPREV;                      \
-            } else {                                                    \
-                (queue)->tail = NULL;                                   \
-            }                                                           \
-            (queue)->head = _tmp;                                       \
-        }                                                               \
-        _tmp = (item)->LISTNEXT;                                        \
-        if (_tmp) {                                                     \
-            _tmp->prev = (item)->LISTPREV;                              \
-        } else {                                                        \
+        if (LIST_RM_COND(item)) {                                       \
             _tmp = (item)->LISTPREV;                                    \
             if (_tmp) {                                                 \
-                _tmp->LISTNEXT = NULL;                                  \
+                _tmp->LISTNEXT = (item)->LISTNEXT;                      \
             } else {                                                    \
-                (queue)->head = NULL;                                   \
+                _tmp = (item)->LISTNEXT;                                \
+                if (_tmp) {                                             \
+                    _tmp->LISTPREV = (item)->LISTPREV;                  \
+                } else {                                                \
+                    (queue)->tail = NULL;                               \
+                }                                                       \
+                (queue)->head = _tmp;                                   \
             }                                                           \
-            (queue)->tail = _tmp;                                       \
+            _tmp = (item)->LISTNEXT;                                    \
+            if (_tmp) {                                                 \
+                _tmp->prev = (item)->LISTPREV;                          \
+            } else {                                                    \
+                _tmp = (item)->LISTPREV;                                \
+                if (_tmp) {                                             \
+                    _tmp->LISTNEXT = NULL;                              \
+                } else {                                                \
+                    (queue)->head = NULL;                               \
+                }                                                       \
+                (queue)->tail = _tmp;                                   \
+            }                                                           \
+            LIST_DEQUEUE(item);                                         \
         }                                                               \
-        LIST_DEQUEUE(item);                                             \
         listunlk(&(queue)->lk);                                         \
     } while (0)
 

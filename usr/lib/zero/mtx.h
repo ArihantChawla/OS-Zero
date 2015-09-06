@@ -12,7 +12,6 @@
 
 #if defined(__KERNEL__)
 #undef PTHREAD
-#define PTHREAD    0
 #endif
 
 #include <zero/asm.h>
@@ -98,9 +97,18 @@ mtxunlk(volatile long *lp)
     return;
 }
 
+#define zerotrylkmtx(mp) mtxtrylk(&mp->lk)
+#define zerolkmtx(mp)    mtxlk(&mp->lk)
+#define zerounlkmtx(mp)  mtxunlk(&mp->lk)
+
 #elif defined(PTHREAD) /* !defined(ZEROMTX) */
 
+#define MTXINITVAL PTHREAD_MUTEX_INITIALIZER
 typedef pthread_mutex_t zeromtx;
+
+#define zerotrylkmtx(mp) pthread_mutex_trylock(mp)
+#define zerolkmtx(mp)    pthread_mutex_lock(mp)
+#define zerounlkmtx(mp)  pthread_mutex_unlock(mp)
 
 #endif
 

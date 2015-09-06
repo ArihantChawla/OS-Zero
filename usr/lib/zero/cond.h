@@ -1,15 +1,15 @@
 #ifndef __ZERO_COND_H__
 #define __ZERO_COND_H__
 
-#if defined(ZEROMTX)
 #include <zero/mtx.h>
-#elif defined(PTHREAD)
+#include <zero/thr.h>
+#if defined(PTHREAD)
 #include <stddef.h>
 #include <time.h>
 #include <pthread.h>
 #endif
 
-#if defined(PTHREAD)
+#if defined(PTHREAD) && !defined(ZEROCOND)
 
 typedef pthread_cond_t zerocond;
 
@@ -20,7 +20,22 @@ typedef pthread_cond_t zerocond;
 #define condbcast(cp)              pthread_cond_broadcast(cp)
 #define condfree(cp)               pthread_cond_destroy(cp)
 
-#endif /* defined(PTHREAD) */
+#elif defined(ZEROCOND)
+
+#define ZEROCOND_INITIALIZER { ZEROTHRQUEUE_INITIALIZER }
+typedef struct {
+    zerothrqueue queue;
+} zerocond;
+
+#endif
+
+void condinit(zerocond *cond);
+long condwait(zerocond *cond, zeromtx *mtx);
+long condwaitabstime(zerocond *cond, zeromtx *mtx,
+                     const struct timespec *absts);
+long condsignal(zerocond *cond);
+long condsignal2(zerocond *cond, long nthr);
+long condbroadcast(zerocond *cond);
 
 #endif /* __ZERO_COND_H__ */
 

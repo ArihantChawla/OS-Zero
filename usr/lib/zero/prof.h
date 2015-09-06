@@ -38,17 +38,17 @@ extern "C" {
 
 #define tvaddconst(tv, u)                                               \
   do {                                                                  \
-      unsigned long _ms = 1000000;                                      \
+      unsigned long _us = 1000000;                                      \
                                                                         \
-      (tv)->tv_sec += (u) / _ms;                                        \
-      (tv)->tv_usec += (u) % _ms;                                       \
+      (tv)->tv_sec += (u) / _us;                                        \
+      (tv)->tv_usec += (u) % _us;                                       \
                                                                         \
-      if ((tv)->tv_usec >= _ms) {                                       \
+      if ((tv)->tv_usec >= _us) {                                       \
           (tv)->tv_sec++;                                               \
-          (tv)->tv_usec -= _ms;                                         \
+          (tv)->tv_usec -= _us;                                         \
       } else if ((tv)->tv_usec < 0) {                                   \
           (tv)->tv_sec--;                                               \
-          (tv)->tv_usec += _ms;                                         \
+          (tv)->tv_usec += _us;                                         \
       }                                                                 \
   } while (FALSE)
 
