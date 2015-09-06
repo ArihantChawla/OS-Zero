@@ -133,20 +133,15 @@
 #endif
 
 #define ZEROMTX 1
-#if defined(PTHREAD) && (PTHREAD)
-#include <pthread.h>
-#if (!ZEROMTX)
+#if defined(ZEROMTX)
+//#define MUTEX volatile long
+#define MUTEX zeromtx
+#include <zero/mtx.h>
+#elif (PTHREAD)
 #define MUTEX pthread_mutex_t
 #define mtxinit(mp) pthread_mutex_init(mp, NULL)
 #define mtxlk(mp) pthread_mutex_lock(mp)
 #define mtxunlk(mp) pthread_mutex_unlock(mp)
-#endif /* !ZEROMTX */
-#endif
-#if defined(ZEROMTX) && (ZEROMTX)
-#define MUTEX volatile long
-#include <zero/mtx.h>
-#elif (PTHREAD)
-#define MUTEX pthread_mutex_t
 #endif
 #include <zero/cdecl.h>
 #include <zero/param.h>

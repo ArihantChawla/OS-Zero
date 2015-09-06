@@ -1,8 +1,6 @@
 #ifndef __ZERO_MTX_H__
 #define __ZERO_MTX_H__
 
-#if defined(ZEROMTX)
-
 #include <stddef.h>
 #include <zero/param.h>
 #include <zero/asm.h>
@@ -150,8 +148,6 @@ typedef pthread_mutex_t     zeromtx;
 #define mtxunlk(mp)  pthread_mutex_unlock(mp)
 
 #endif
-
-#endif /* defined(ZEROMTX) */
 
 #endif /* __ZERO_MTX_H__ */
 

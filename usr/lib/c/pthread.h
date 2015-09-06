@@ -6,6 +6,13 @@
 #define __PTHREAD_H__
 
 #if defined(linux)
+#include <bits/pthreadtypes.h>
+
+int pthread_mutex_lock(pthread_mutex_t *mutex);
+int pthread_mutex_trylock(pthread_mutex_t *mutex);
+int pthread_mutex_unlock(pthread_mutex_t *mutex);
+
+#if 0
 #define __SIZEOF_PTHREAD_ATTR_T 56
 typedef unsigned int pthread_key_t;
 typedef union pthread_attr_t
@@ -13,6 +20,7 @@ typedef union pthread_attr_t
     char __size[__SIZEOF_PTHREAD_ATTR_T];
     long __align;
 } pthread_attr_t;
+#endif
 #endif /* defined(linux) */
 
 #if !defined(__KERNEL__)

@@ -4,7 +4,7 @@
 #include <features.h>
 
 #if !defined(size_t_defined)
-typedef unsigned long size_t
+typedef unsigned long size_t;
 #define size_t_defined 1
 #endif
 
