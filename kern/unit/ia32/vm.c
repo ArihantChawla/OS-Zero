@@ -289,7 +289,7 @@ vmpagefault(unsigned long pid, uint32_t adr, uint32_t flags)
 #endif
     }
     if (pg) {
-        pageset(pg);
+        pageaddset(pg);
     }
 
     return;

@@ -1,5 +1,5 @@
-#ifndef __PAGE_H__
-#define __PAGE_H__
+#ifndef __MEM_PAGE_H__
+#define __MEM_PAGE_H__
 
 #include <stdint.h>
 
@@ -27,9 +27,9 @@
 #endif
 
 /* working sets */
-#define pageinset(pg) (vmsetmap[pagenum((pg)->adr)])
-#define pageset(pg)   (vmsetmap[pagenum((pg)->adr)] = k_curpid)
-extern pid_t          vmsetmap[NPAGEPHYS];
+#define pageinset(pg)  (vmsetmap[pagenum((pg)->adr)])
+#define pageaddset(pg) (vmsetmap[pagenum((pg)->adr)] = k_curpid)
+extern pid_t           vmsetmap[NPAGEPHYS];
 
 #if 0
 struct upage {
@@ -82,15 +82,15 @@ struct swapdev {
 #define pagedeq(pq, rpp) listdequeue(pq, rpp)
 #define pagerm(pq, pg)   listrm(pq, pg)
 
-void         pageinitzone(uintptr_t base, struct pageq *zone, unsigned long nb);
-void         pageaddzone(uintptr_t base, struct pageq *zone, unsigned long nb);
-void         pageinit(uintptr_t base, unsigned long nb);
-struct page *pagealloc(void);
-void         pagefree(void *adr);
+void          pageinitzone(uintptr_t base, struct pageq *zone, unsigned long nb);
+void          pageaddzone(uintptr_t base, struct pageq *zone, unsigned long nb);
+void          pageinit(uintptr_t base, unsigned long nb);
+struct page * pagealloc(void);
+void          pagefree(void *adr);
 #if 0
-void         pagefree(void *adr);
-void         swapfree(uintptr_t adr);
+void          pagefree(void *adr);
+void          swapfree(uintptr_t adr);
 #endif
 
-#endif /* __PAGE_H__ */
+#endif /* __MEM_PAGE_H__ */
 
