@@ -60,7 +60,7 @@ VALLOC(size_t n)
 /* RING_INVAL   - invalid/non-present item value */
 
 struct ringbuf {
-    volatile long  lk;
+    zeromtx        lk;
     volatile long  init;
     long           n;
     RING_ITEM     *base;

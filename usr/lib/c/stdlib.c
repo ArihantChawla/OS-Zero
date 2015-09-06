@@ -1,26 +1,42 @@
+#include <stddef.h>
 #include <stdlib.h>
-#include <bits/stdlib.h>
+#include <stdio.h>
 #include <zero/mtx.h>
+#include <sys/zero/syscall.h>
 
-static volatile long   _atexitlk;
-static struct _atexit *_atexit;
-static volatile long   _onexitlk;
-static struct _onexit *_onexit;
+struct exitcmd {
+    void           *func;
+    void           *arg;
+    struct exitcmd *next;
+};
+
+struct stdlib {
+    zeromtx         exitlk;
+    size_t          natexit;
+    struct exitcmd *atexitq;
+    size_t          non_exit;
+    struct exitcmd *on_exitq;
+};
+
+static struct stdlib g_stdlib;
 
 int
 atexit(void (*func)(void))
 {
-    struct _atexit *item = malloc(sizeof(struct _atexit));
+    struct exitcmd *item;
 
+    mtxlk(&g_stdlib.exitlk);
+    item = malloc(sizeof(struct exitcmd));
     if (!item) {
+        fprintf(stderr, "ATEXIT: failed to allocate item\n");
 
-        return -1;
+        exit(1);
     }
-    item->func;
-    mtxlk(&_atexitlk);
-    item->next = _atexit;
-    _atexit = item;
-    mtxunlk(&_atexitlk);
+    item->func = func;
+    item->arg = NULL;
+    item->next = g_stdlib.atexitq;
+    g_stdlib.atexitq = item;
+    mtxunlk(&g_stdlib.exitlk);
 
     return 0;
 }
@@ -28,24 +44,54 @@ atexit(void (*func)(void))
 int
 on_exit(void (*func)(int, void *), void *arg)
 {
-    struct _onexit *item = malloc(sizeof(struct _onexit));
+    struct exitcmd *item;
 
+    mtxlk(&g_stdlib.exitlk);
+    item = malloc(sizeof(struct exitcmd));
     if (!item) {
+        fprintf(stderr, "ON_EXIT: failed to allocate item\n");
 
-        return -1;
+        exit(1);
     }
     item->func = func;
     item->arg = arg;
-    mtxlk(&_onexitlk);
-    item->next = _onexit;
-    _onexit = item;
-    mtxlk(&_onexitlk);
+    item->next = g_stdlib.on_exitq;
+    g_stdlib.on_exitq = item;
+    mtxunlk(&g_stdlib.exitlk);
+
+    return 0;
+}
+
+void
+__on_exit(int status)
+{
+    struct exitcmd  *item;
+    void           (*func)(int, void *);
+
+    mtxlk(&g_stdlib.exitlk);
+    item = g_stdlib.on_exitq;
+    while (item) {
+        func = item->func;
+        func(status, item->arg);
+        item = item->next;
+    }
+    mtxunlk(&g_stdlib.exitlk);
 }
 
 void
 __atexit(void)
 {
-    
+    struct exitcmd  *item;
+    void           (*func)(void);
+
+    mtxlk(&g_stdlib.exitlk);
+    item = g_stdlib.atexitq;
+    while (item) {
+        func = item->func;
+        func();
+        item = item->next;
+    }
+    mtxunlk(&g_stdlib.exitlk);
 }
 
 void
@@ -56,5 +102,12 @@ __exit(int status, long flg)
         fflush(stdout);
         fflush(stderr);
     }
+    /*
+     * NOTE: descriptors are closed, children inherited by init,
+     * parent sent SIGCHLD
+     */
+    _syscall(SYS_EXIT, SYS_NOARG, status, SYS_NOARG);
+
+    /* NOTREACHED */
 }
 

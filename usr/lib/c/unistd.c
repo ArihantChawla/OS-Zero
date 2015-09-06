@@ -47,7 +47,7 @@ long sysconftab[NSYSCONF]
     TZNAME_MAX                  /* _SC_TZNAME_MAX */
 };
 volatile long sysconfbits;
-volatile long sysconflk;
+zeromtx       sysconflk;
 
 #define _sysconfneedupd(name)                                           \
     ((name) <= _SC_PHYS_PAGES && (name) >= _SC_NPROCESSORS_ONLN)

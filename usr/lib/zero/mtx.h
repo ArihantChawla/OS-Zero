@@ -97,9 +97,9 @@ mtxunlk(volatile long *lp)
     return;
 }
 
-#define zerotrylkmtx(mp) mtxtrylk(&mp->lk)
-#define zerolkmtx(mp)    mtxlk(&mp->lk)
-#define zerounlkmtx(mp)  mtxunlk(&mp->lk)
+#define zerotrylkmtx(mp) mtxtrylk(mp)
+#define zerolkmtx(mp)    mtxlk(mp)
+#define zerounlkmtx(mp)  mtxunlk(mp)
 
 #elif defined(PTHREAD) /* !defined(ZEROMTX) */
 
