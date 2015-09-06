@@ -4,6 +4,10 @@
 #include <zero/mtx.h>
 #include <sys/zero/syscall.h>
 
+#define EXIT_NOFUNC  (1 << 0)
+#define EXIT_NOFLUSH (1 << 1)
+#define EXIT_IMMED   (EXIT_NOFUNC | EXIT_NOFLUSH)
+
 struct exitcmd {
     void           *func;
     void           *arg;
@@ -71,15 +75,18 @@ __on_exit(int status)
     mtxlk(&g_exit.lk);
     item = g_exit.on_exitq;
     while (item) {
+        g_exit.on_exitq = item->next;
+        mtxunlk(&g_exit.lk);
         func = item->func;
         func(status, item->arg);
-        item = item->next;
+        mtxlk(&g_exit.lk);
+        item = g_exit.on_exitq;
     }
     mtxunlk(&g_exit.lk);
 }
 
 void
-__atexit(void)
+__atexit(int status)
 {
     struct exitcmd  *item;
     void           (*func)(void);
@@ -87,9 +94,12 @@ __atexit(void)
     mtxlk(&g_exit.lk);
     item = g_exit.atexitq;
     while (item) {
+        g_exit.atexitq = item->next;
+        mtxunlk(&g_exit.lk);
         func = item->func;
-        func();
-        item = item->next;
+        func(status, item->arg);
+        mtxlk(&g_exit.lk);
+        item = g_exit.on_exitq;
     }
     mtxunlk(&g_exit.lk);
 }
@@ -97,7 +107,10 @@ __atexit(void)
 void
 __exit(int status, long flg)
 {
-    __atexit();
+    if (!(flg & EXIT_NOFUNC)) {
+        __atexit();
+        __on_exit(status);
+    }
     if (!(flg & EXIT_NOFLUSH)) {
         fflush(stdout);
         fflush(stderr);
@@ -111,3 +124,14 @@ __exit(int status, long flg)
     /* NOTREACHED */
 }
 
+void
+_exit(int status)
+{
+    __exit(status, EXIT_IMMED);
+}
+
+void
+_Exit(int status)
+{
+    __exit(status, EXIT_IMMED);
+}
