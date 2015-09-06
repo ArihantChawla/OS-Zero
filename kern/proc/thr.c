@@ -322,7 +322,7 @@ thrpick(void)
         sched = thr->sched;
         state = thr->state;
         if (sched == THR_RT && state == TASK_READY) {
-            thrq = thrrtqueue;
+            thrq = &thrrtqueue;
             mtxlk(&thrq->lk);
             thrqueue(thr, thrq);
             mtxunlk(&thrq->lk);

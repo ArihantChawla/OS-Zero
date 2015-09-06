@@ -5,12 +5,12 @@
 
 #include <stddef.h>
 #include <stdint.h>
-#if defined(PTHREAD) && !defined(ZEROTHR)
+#if !defined(__KERNEL__) && (defined(PTHREAD) && !defined(ZEROTHR))
 #include <pthread.h>
 #endif
 #include <zero/mtx.h>
 
-#if defined(PTHREAD)
+#if defined(PTHREAD) && !defined(__KERNEL__)
 #define thrid() ((uintptr_t)pthread_self())
 #endif
 
@@ -26,7 +26,9 @@
 #define thryield() /* FIXME */
 #endif
 
-#if defined(PTHREAD)
+#if defined(__KERNEL__)
+
+#elif defined(PTHREAD)
 
 typedef pthread_t      zerothrid;
 typedef pthread_attr_t zerothratr;
@@ -54,6 +56,8 @@ typedef struct {
 
 #endif
 
+#if !defined(__KERNEL__)
+
 #define ZEROTHR_NOID   (~(zerothrid)0)
 #define ZEROTHR_ASLEEP 1
 #define ZEROTHR_AWAKE  0
@@ -80,6 +84,8 @@ extern void thrwakeall1(zerothrqueue *queue);
 #define thrwait()    thrwait1(NULL)
 #define thrwake()    thrwake1(NULL)
 #define thrwakeall() thrwakeall1(NULL)
+
+#endif /* !defined(__KERNEL__) */
 
 #endif /* __ZERO_THR_H__ */
 

@@ -59,23 +59,6 @@ m_getclrfrmadr(void **pp)
     return;
 }
 
-/*
- * atomic fetch and add
- * - let *p = *p + val
- * - return original *p
- */
-static __inline__ long
-m_xadd32(volatile long *p,
-         long val)
-{
-    __asm__ __volatile__ ("lock xaddl %%eax, %2\n"
-                          : "=a" (val)
-                          : "a" (val), "m" (*(p))
-                          : "memory");
-
-    return val;
-}
-
 static __inline__ long
 m_xchg32(volatile long *p,
          long val)

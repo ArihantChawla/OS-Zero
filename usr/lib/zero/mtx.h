@@ -26,17 +26,17 @@ extern int pthread_yield(void);
 #include <sched.h>
 #endif
 
-#if defined(PTHREAD)
+#if defined(PTHREAD) && !defined(__KERNEL__)
 #include <pthread.h>
 #endif
 
-#if defined(ZEROMTX) && !defined(PTHREAD)
+#if defined(__KERNEL__) || (defined(ZEROMTX) && (!defined(PTHREAD)))
 typedef volatile long   zeromtx;
 #elif defined(PTHREAD)
 typedef pthread_mutex_t zeromtx;
 #endif
 
-#if defined(ZEROMTX) && !defined(PTHREAD)
+#if defined(__KERNEL__) || (defined(ZEROMTX) && (!defined(PTHREAD)))
 
 #include <zero/thr.h>
 
@@ -112,7 +112,7 @@ typedef pthread_mutex_t zeromtx;
 
 #endif
 
-#if defined(ZEROMTX) && !defined(PTHREAD)
+#if defined(__KERNEL__) || (defined(ZEROMTX) && !defined(PTHREAD))
 
 /* initializer for non-dynamic attributes */
 #define ZEROMTXATR_DEFVAL     { 0L }

@@ -46,7 +46,7 @@
 #define bufqlru(blk)                                                    \
     listpush(&buflruq, blk)
 #define bufdeqlru(blk)                                                  \
-    listdeq(&buflruq, blk)
+    listdequeue(&buflruq, blk)
 #define bufdeq(blk)                                                     \
     listrm(buflruq, blk)
 

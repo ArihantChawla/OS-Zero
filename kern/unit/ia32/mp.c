@@ -239,7 +239,7 @@ mpmain(struct m_cpu *cpu)
 //    gdtinit();
     seginit(cpu->id);
     idtset();
-    m_xchgl(&cpu->started, 1L);
+    m_xchg(&cpu->started, 1L);
     /* TODO: initialise HPET; enable [rerouted] interrupts */
 #if (HPET)
     hpetinit();

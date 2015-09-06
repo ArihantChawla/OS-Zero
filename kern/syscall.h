@@ -72,14 +72,7 @@ struct jailparm {
 
 extern void ksyscall(void);
 
-#if (LONGSIZE == 4)
-typedef long long sysreg_t;
-#elif defined(__x86_64__) || defined(__amd64__)                         \
-    || defined(_WIN32) || defined(__i386__)
-typedef long      sysreg_t;
-#else
-#error sysreg_t not defined in <kern/syscall.h>
-#endif
+typedef intptr_t sysreg_t;
 
 #define SYS_NODESC (-1)
 #define SYS_NOARG  (-1)

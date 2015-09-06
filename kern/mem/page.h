@@ -79,7 +79,7 @@ struct swapdev {
 #define pagegetqid(pg)   (tzerol(pg->nflt))
 #define pagepop(pq, rpp) listpop(pq, rpp)
 #define pagepush(pq, pg) listpush(pq, pg)
-#define pagedeq(pq, rpp) listdeq(pq, rpp)
+#define pagedeq(pq, rpp) listdequeue(pq, rpp)
 #define pagerm(pq, pg)   listrm(pq, pg)
 
 void         pageinitzone(uintptr_t base, struct pageq *zone, unsigned long nb);
