@@ -8,6 +8,7 @@
  */
 
 #include <stdint.h>
+#include <limits.h>
 #include <sys/io.h>
 #include <sys/zero/ps2.h>
 
@@ -38,13 +39,13 @@ void ps2mouseintr(void);
 static struct ps2drv ps2drv ALIGNED(PAGESIZE);
 
 #define ps2readkbd(u8)                                                  \
-    __asm__ ("inb %w1, %b0\n" : "=a" (u8) : "Nd" (PS2KBD_PORT))
+    __asm__ ("inb %w1, %b0\n" : "=a" (u8) : "i" (PS2KBD_PORT))
 #define ps2sendkbd(u8)                                                  \
-    __asm__ ("outb %b0, %w1\n" : : "a" (u8), "Nd" (PS2KBD_PORT))
+    __asm__ ("outb %b0, %w1\n" : : "a" (u8), "i" (PS2KBD_PORT))
 #define ps2readmouse(u8)                                                \
     __asm__("inb %w1, %b0" : "=a" (u8) : "i" (PS2MOUSE_INPORT))
 
-struct ringbuf kbdbuf ALIGNED(PAGESIZE);
+unsigned char kbdbuf[PAGESIZE / CHAR_BIT] ALIGNED(PAGESIZE);
 
 void
 ps2initkbd(void)
@@ -52,7 +53,7 @@ ps2initkbd(void)
     uint8_t u8;
 
     ringinit(&kbdbuf,
-             kbdbuf.data,
+             kbdbuf + offsetof(struct ringbuf, data),
              (PAGESIZE - offsetof(struct ringbuf, data)) / sizeof(RING_ITEM));
     ps2drv.buf = &kbdbuf;
     /* enable keyboard */
@@ -69,8 +70,6 @@ ps2initkbd(void)
     do {
         ps2readkbd(u8);
     } while (u8 != PS2KBD_ACK);
-//    ps2initkbd_us();
-//    kprintf("PS/2 keyboard with US keymap initialized\n");
     irqvec[IRQKBD] = ps2kbdintr;
     kprintf("PS/2 keyboard interrupt enabled\n");
 

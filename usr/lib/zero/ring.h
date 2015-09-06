@@ -10,6 +10,7 @@
 #include <zero/cdecl.h>
 #include <zero/param.h>
 #include <zero/mtx.h>
+#if !defined(__KERNEL__)
 #if !defined(MALLOC) || !defined(FREE)
 #include <stdlib.h>
 #endif
@@ -25,7 +26,9 @@
 #if !defined(MEMCPY)
 #define MEMCPY(dest, src, n) memcpy(dest, src, n)
 #endif
-#if (RINGSHAREBUF)
+#endif /* !defined(__KERNEL__) */
+
+#if (RINGSHAREBUF) && !defined(__KERNEL__)
 #if defined(_ISOC11_SOURCE) && (_ISOC11_SOURCE)
 #defined VALLOC(n)           aligned_alloc(PAGESIZE, n)
 #elif (((defined(_BSD_SOURCE) && (_BSD_SOURCE))                         \
@@ -51,7 +54,7 @@ VALLOC(size_t n)
 #else
 #define VALLOC(n)            memalign(PAGESIZE, n)
 #endif
-#endif /* RINGSHAREBUF */
+#endif /* RINGSHAREBUF && !__KERNEL__ */
 
 /* MALLOC       - function used to allocate data buffer */
 /* FREE         - function used to free buffers */
@@ -68,12 +71,11 @@ struct ringbuf {
     RING_ITEM     *inptr;
     RING_ITEM     *outptr;
     long           pad;
+    /* data buffer */
 #if (RINGSHAREBUF)
     uint8_t       *data;
 #else
-    /* data buffer */
-//    uint8_t        data[PAGESIZE - 8 * sizeof(int64_t)];
-    uint8_t        data[PAGESIZE - CHAR_BIT * (4 * sizeof(long) + 4 * sizeof(void *))];
+    uint8_t        data[EMPTY];
 #endif
 } ALIGNED(PAGESIZE);
 
@@ -82,12 +84,14 @@ struct ringbuf {
  * - if base == NULL, allocate the data buffer
  */
 static __inline__ long
-ringinit(struct ringbuf *buf, void *base, long n)
+ringinit(void *ptr, void *base, long n)
 {
-    long retval = 0;
+    struct ringbuf *buf = ptr; 
+    long            retval = 0;
 
     mtxlk(&buf->lk);
     if (buf->init) {
+        mtxunlk(&buf->lk);
 
         return 1;
     }
@@ -104,7 +108,7 @@ ringinit(struct ringbuf *buf, void *base, long n)
         retval++;
     }
     if (base) {
-        buf->init = 0;
+        buf->init = 1;
         buf->n = n;
         buf->base = base;
         buf->lim = (RING_ITEM *)((uint8_t *)base + n * sizeof(RING_ITEM));
