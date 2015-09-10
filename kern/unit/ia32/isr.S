@@ -52,8 +52,8 @@
 .globl	irqerror, irqspurious, mpspurint, irqtmrcnt
 #endif
 
-.extern	sigfunc, tmrsyncscr, schedpickthr, vmpagefault, kbdtrap, mousetrap
-.extern	thrsave, thrjmp
+.extern	sigfunc, tmrsyncscr, schedpicktask, vmpagefault, kbdtrap, mousetrap
+.extern	tasksave, taskjmp
 #if (APIC)
 .extern	mpapic
 #endif
@@ -450,31 +450,31 @@ irqtmr:
 	pushl	%ecx
 	/* store stack pointer */
 	movl	%esp, %ebp
-	/* load [per-CPU] thread structure address */
+	/* load [per-CPU] task structure address */
 	movl	%gs:8, %ecx
 	leal	580(%ecx), %esp
 	/* load %ebx original value */
 	movl	(%ebp), %ecx
-	/* push general purpose registers into thread control block */
+	/* push general purpose registers into task control block */
 	pushal
 	/* restore frame pointer */
 	leal	4(%ebp), %esp
 	popl	%ebp
-	/* arguments for thrsave */
+	/* arguments for tasksave */
 	movl	(%esp), %edx		// return address
-	movl	%gs:8, %eax		// thread structure address
+	movl	%gs:8, %eax		// task structure address
 	/* push 3rd argument (frame pointer) */
 	pushl	%ebp
 	/* push 2nd argument (return address) */
 	pushl	%edx
-	/* push 1st argument (thread structure address) */
+	/* push 1st argument (task structure address) */
 	pushl	%eax
-	call	thrsave
-	/* schedpickthr() returns thread ID in eax */
-	movl	schedpickthr, %ebx
+	call	tasksave
+	/* schedpicktask() returns task ID in eax */
+	movl	schedpicktask, %ebx
 	call	*%ebx
-	/* thread ID argument in eax */
-	call	thrjmp
+	/* task ID argument in eax */
+	call	taskjmp
 
 irqkbd:
 	_trapenter

@@ -6,31 +6,32 @@
 #include <kern/mem.h>
 #include <zero/param.h>
 #include <kern/proc/proc.h>
+#include <kern/io/desc.h>
 #include <kern/unit/x86/cpu.h>
 #include <kern/unit/ia32/boot.h>
 #include <kern/unit/ia32/vm.h>
 
 struct proc proctab[NPROC] ALIGNED(PAGESIZE);
-struct thr  thrtab[NTHR] ALIGNED(PAGESIZE);
+struct task tasktab[NTASK] ALIGNED(PAGESIZE);
 
 long
 procinit(long id)
 {
     struct proc *proc = &proctab[id];
-    struct thr  *thr;
+    struct task *task;
     void        *ptr;
 
     if (!id) {
         /* bootstrap */
         k_curproc = proc;
         /* process ID will be zero */
-        thr = &thrtab[0];
-        thr->state = TASK_READY;
-        thr->nice = 0;
-        thr->sched = TASK_KERNEL;
-        thr->prio = 0;
-        proc->thr = thr;
-        k_curthr = thr;
+        task = &tasktab[0];
+        task->state = TASKREADY;
+        task->nice = 0;
+        task->sched = TASKKERNEL;
+        task->prio = 0;
+//        proc->task = task;
+        k_curtask = task;
     }
     if (proc) {
         /* initialise page directory */
@@ -47,28 +48,28 @@ procinit(long id)
         ptr = kmalloc(KERNSTKSIZE);
         if (ptr) {
             kbzero(ptr, KERNSTKSIZE);
-            proc->kstk = ptr;
+            proc->task.kstk = ptr;
         }
-        ptr = kmalloc(THRSTKSIZE);
+        ptr = kmalloc(PROCSTKSIZE);
         if (ptr) {
-            kbzero(ptr, THRSTKSIZE);
-            proc->ustk = ptr;
+            kbzero(ptr, PROCSTKSIZE);
+            proc->task.ustk = ptr;
         } else {
             kfree(proc->pdir);
-            kfree(proc->kstk);
+            kfree(proc->task.kstk);
             kfree(proc);
 
             return -1;
         }
         /* initialise descriptor table */
-        ptr = kmalloc(OBJNDESC * sizeof(desc_t));
+        ptr = kmalloc(TASKNIODESC * sizeof(struct iodesc));
         if (ptr) {
-            kbzero(ptr, OBJNDESC * sizeof(desc_t));
+            kbzero(ptr, TASKNIODESC * sizeof(struct iodesc));
             proc->dtab = ptr;
         } else {
             kfree(proc->pdir);
-            kfree(proc->ustk);
-            kfree(proc->kstk);
+            kfree(proc->task.ustk);
+            kfree(proc->task.kstk);
             kfree(proc);
 
             return -1;
@@ -81,24 +82,24 @@ procinit(long id)
             proc->vmhdrtab = ptr;
         } else {
             kfree(proc->pdir);
-            kfree(proc->ustk);
-            kfree(proc->kstk);
+            kfree(proc->task.ustk);
+            kfree(proc->task.kstk);
             kfree(proc->dtab);
             kfree(proc);
 
             return -1;
         }
 #endif
-        thr->state = TASK_READY;
+        task->state = TASKREADY;
     }
 
     return 0;
 }
 
-desc_t
+struct iodesc *
 procgetdesc(struct proc *proc, long id)
 {
-    desc_t ret = proc->dtab[id];
+    struct iodesc *ret = &proc->dtab[id];
 
     return ret;
 }
@@ -109,9 +110,9 @@ newproc(int argc, char *argv[], char *envp[], int sched)
 {
     struct proc *proc = kmalloc(sizeof(struct proc));
 
-    proc->sched = sched;
-    proc->pid = taskgetpid();
-    proc->parent = k_curproc->pid;
+    proc->task.sched = sched;
+    proc->task.id = taskgetid();
+    proc->task.parent = k_curproc;
     proc->argc = argc;
     proc->argv = argv;
     proc->envp = envp;

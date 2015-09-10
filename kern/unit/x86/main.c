@@ -10,7 +10,7 @@
 #include <kern/proc/sched.h>
 #include <kern/mem/page.h>
 #include <kern/io/drv/chr/cons.h>
-//#include <kern/thr.h>
+//#include <kern/task.h>
 #include <kern/io/drv/pc/dma.h>
 #include <kern/io/drv/pc/vga.h>
 #if (ACPI)
@@ -226,7 +226,7 @@ kmain(struct mboothdr *hdr, unsigned long pmemsz)
 //    machinit();
     /* execution environment */
     procinit(0);
-    k_curthr = k_curproc->thr;
+    k_curtask = &k_curproc->task;
 //    sysinit();
     kprintf("DMA buffers (%ul x %ul kilobytes) @ 0x%p\n",
             DMANCHAN, DMACHANBUFSIZE >> 10, DMABUFBASE);

@@ -1,5 +1,5 @@
-#ifndef __MEM_SLAB_H__
-#define __MEM_SLAB_H__
+#ifndef __KERN_MEM_SLAB_H__
+#define __KERN_MEM_SLAB_H__
 
 #include <stdint.h>
 #include <zero/cdecl.h>
@@ -58,5 +58,5 @@ void   slabinit(struct memzone *virtzone,
 void * slaballoc(struct memzone *zone, unsigned long nb, unsigned long flg);
 void   slabfree(struct memzone *zone, void *ptr);
 
-#endif /* __MEM_SLAB_H__ */
+#endif /* __KERN_MEM_SLAB_H__ */
 

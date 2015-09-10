@@ -15,8 +15,10 @@
 #define SMP         0           // enable multiprocessor support; FIXME:  broken
 #define EVHZ        1000        // event timer frequency
 #define ZEROSCHED   1           // default scheduler
-#define NPROC       1024        // maximum number of running processes
-#define NTHR        4096        // maximum number of running threads
+#define NPROC       1024        // maximum number of running processes on system
+#define NTASK       4096        // maximum number of running tasks on system
+#define TASKNIODESC 16384       // maximum number of descriptors per process
+#define PROCSTKSIZE (1024 * 1024)
 #if (SMP)
 #define NCPU        8
 #else
@@ -35,6 +37,7 @@
 
 /* NOTE: it's not recommended to edit anything below unless you develop Zero */
 
+#define LOCORE      0
 #define NCONS       8
 
 #define BUFMULTITAB 0
@@ -52,6 +55,7 @@
 #define HPET        1           // high precision event timer support
 #define PS2DRV      1           // enable PS/2 mouse and keyboard drivers
 #define KBDUS       1           // PS/2 keyboard with US keymap
+#define PS2KBDSET2  1
 #define VBE         1           // VBE2 graphics driver
 #define VGAGFX      0           // VGA graphics driver
 #define SB16        0           // Soundblaster 16 audio driver

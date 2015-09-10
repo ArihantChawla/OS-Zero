@@ -1,5 +1,5 @@
-#ifndef __MEM_PAGE_H__
-#define __MEM_PAGE_H__
+#ifndef __KERN_MEM_PAGE_H__
+#define __KERN_MEM_PAGE_H__
 
 #include <stdint.h>
 
@@ -94,5 +94,5 @@ void          pagefree(void *adr);
 void          swapfree(uintptr_t adr);
 #endif
 
-#endif /* __MEM_PAGE_H__ */
+#endif /* __KERN_MEM_PAGE_H__ */
 

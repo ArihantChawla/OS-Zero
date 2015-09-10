@@ -8,8 +8,8 @@ extern int errno;
 #if defined(__GNUC__)
 __attribute__ ((const))
 #endif /* __GNUC__ */
-extern int * errnoloc(void);
-#define errno (*errnoloc())
+extern int * __errnoloc(void);
+#define errno (*__errnoloc())
 #endif
 #endif /* !defined(__KERNEL__) */
 

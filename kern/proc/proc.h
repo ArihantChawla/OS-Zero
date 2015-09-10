@@ -67,53 +67,30 @@
 #endif
 
 /* system-assigned process IDs */
-#define PROCKERN     0 // main kernel; context switches, system calls, ...
-#define PROCINIT     1 // init process; the mother of all processes
-#define PROCEVD      2 // event daemon; receive and dispatch events
-#define PROCPAGED    3 // page daemon; page replacement; aging, LRU-queue
-#define PROCBUFD     4 // buffer daemon; flush dirty buffers to disk
-#define PROCIDLE     5 // idle process; zeroes memory etc.
-#define PROCNPREDEF  6
+#define TASKKERN     0 // main kernel; context switches, system calls, ...
+#define TASKINIT     1 // init process; the mother of all processes
+#define TASKEVD      2 // event daemon; receive and dispatch events
+#define TASKPAGED    3 // page daemon; page replacement; aging, LRU-queue
+#define TASKBUFD     4 // buffer daemon; flush dirty buffers to disk
+#define TASKIDLE     5 // idle process; zeroes memory etc.
+#define TASKNPREDEF  6
 
 long procinit(long id);
 long procgetpid(void);
 void procfreepid(long id);
 
-/* process states */
-#define TASK_CREATE  0
-#define TASK_USER    1
-#define TASK_KERNEL  2
-#define TASK_READY   3
-#define TASK_WAIT    4
-#define TASK_STOP    5
-#define TASK_ZOMBIE  6
-#define TASK_NSTATE  7
-
-
-/* descriptor table size */
-#define OBJNDESC     (1 << OBJNDESCLOG2)
-#define OBJNDESCLOG2 20
-
 /* process */
 struct proc {
-    long              nice;
-    long              sched;
-    long              prio;
-    struct thr       *thr;              // current running thread
+    struct task       task;
     long              nthr;             // # of threads
-    struct thr      **thrtab;           // child threads
+    struct task     **thrtab;           // child threads
     /* round-robin queue */
 //    struct thrq       thrq;             // queue of ready threads
-    /* page directory */
-    pde_t            *pdir;             // page directory address
-    /* stacks */
-    uint8_t          *ustk;             // user-mode stack
-    uint8_t          *kstk;             // kernel-mode stack
     /* memory attributes */
+    pde_t            *pdir;             // page directory address
     uint8_t          *brk;              // current heap-top
     /* process credentials */
     pid_t             pid;              // process ID
-    pid_t             parent;           // parent process
     uid_t             ruid;             // real user ID
     gid_t             rgid;             // real group ID
     uid_t             euid;             // effective user ID
@@ -122,11 +99,12 @@ struct proc {
     mode_t            umask;
     /* descriptor tables */
     size_t            ndtab;		// number of entries in descriptor table
-    uintptr_t        *dtab;		// descriptor table
+    struct iodesc    *dtab;             // descriptor table
     /* signal state */
     sigset_t          sigmask;          // signal mask
     sigset_t          sigpend;          // pending signals
     signalhandler_t  *sigvec[NSIG];
+    struct siginfo   *sigqueue[NSIG];   // info structures for pending signals
     /* current working directory */
     char             *cwd;
     /* runtime arguments */

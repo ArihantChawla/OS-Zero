@@ -23,7 +23,7 @@
 #define FREE          NOP
 #define MEMCPY        NOP3
 #define RING_ITEM     uint64_t
-#define RING_INVAL    UINT64_C(0)
+#define RING_INVAL    PS2KBD_NOSYM
 #include <zero/ring.h>
 
 #include <kern/util.h>
@@ -45,7 +45,17 @@ static struct ps2drv ps2drv;
 #define ps2sendkbd(u8)                                                  \
     __asm__ ("outb %b0, %w1\n" : : "a" (u8), "i" (PS2KBD_PORT))
 #define ps2readmouse(u8)                                                \
-    __asm__("inb %w1, %b0" : "=a" (u8) : "i" (PS2MOUSE_INPORT))
+    __asm__("inb %w1, %b0\n" : "=a" (u8) : "i" (PS2MOUSE_INPORT))
+
+#define ps2resetkbd()                                                   \
+    do {                                                                \
+        uint8_t _u8 = 0xffU;                                            \
+                                                                        \
+        ps2sendkbd(PS2KBD_RESET);                                       \
+        do {                                                            \
+            ps2readkbd(_u8);                                            \
+        } while (_u8);                                                  \
+    } while (0)
 
 void
 ps2initkbd(void)
@@ -61,12 +71,12 @@ ps2initkbd(void)
     do {
         ps2readkbd(u8);
     } while (u8 != PS2KBD_ACK);
-    /* choose scancode set 1 */
+    /* choose scancode set 2 */
     ps2sendkbd(PS2KBD_SETSCAN);
     do {
         ps2readkbd(u8);
     } while (u8 != PS2KBD_ACK);
-    ps2sendkbd(0x01);
+    ps2sendkbd(0x02);
     do {
         ps2readkbd(u8);
     } while (u8 != PS2KBD_ACK);
@@ -85,11 +95,15 @@ ps2kbdflush(uint64_t keycode, int32_t keyval)
 void
 ps2kbdaddkey(uint64_t keycode)
 {
-    mtxlk(&ps2drv.buf->lk);
     ringput(ps2drv.buf, keycode);
-    mtxunlk(&ps2drv.buf->lk);
 }
 
+/*
+ * FIXME
+ * -----
+ * - shift case follows some break codes with 0xe0 0x12 (start 0xe0 0xf0 0x12)
+ * - numlock case follows some break codes with xe0 0xf0 0x12 (start 0xe0 0x12)
+ */
 /* keyboard interrupt handler. */
 void
 ps2kbdintr(void)
@@ -99,28 +113,62 @@ ps2kbdintr(void)
     
     ps2readkbd(u8);
     keycode = u8;
-    if (u8 == PS2KBD_PAUSE_BYTE1) {
-        /* pause/break. */
-        ps2readkbd(u8); /* 0x1d */
-        keycode |= UINT64_C(0x1d) << 8;
-        ps2readkbd(u8); /* 0x45 */
-        keycode |= UINT64_C(0x45) << 16;
-        ps2readkbd(u8); /* 0xe1 */
-        keycode |= UINT64_C(0xe1) << 24;
-        ps2readkbd(u8); /* 0x9d */
-        keycode |= UINT64_C(0x9d) << 32;
-        ps2readkbd(u8); /* 0xc5 */
-        keycode |= UINT64_C(0xc5) << 40;
-    } else if (u8 & PS2KBD_PREFIX_BYTE) {
+    if (u8 == PS2KBD_PREFIX_BYTE) {
         /* 0xe0-prefixed. */
-        ps2readkbd(u8); /* 0xe0 */
-        keycode |= UINT64_C(0xe0) << 8;
-        if (u8 == PS2KBD_PRINT_BYTE2
-            || u8 == PS2KBD_CTRLPAUSE_BYTE2
-            || u8 == PS2KBD_UP_BYTE) {
+        ps2readkbd(u8);
+        keycode |= (uint64_t)(u8) << 8;
+        if (u8 == PS2KBD_UP_BYTE) {
+            /* 0xf0 */
             ps2readkbd(u8);
             keycode |= (uint64_t)u8 << 16;
+            if (u8 == PS2KBD_SHIFT_CASE_BYTE3) {
+                /* 0x12 */
+                ps2readkbd(u8);
+                keycode |= (uint64_t)u8 << 24;
+            } else if (u8 == PS2KBD_PRINT_BYTE3) {
+                /* 0xe0 */
+                keycode |= UINT64_C(0xe0) << 24;
+                ps2readkbd(u8); /* 0xf0 */
+                keycode |= UINT64_C(0xf0) << 32;
+                ps2readkbd(u8); /* 0x12 */
+                keycode |= UINT64_C(0x12) << 40;
+            }
+        } else if (u8 == PS2KBD_NUM_CASE_BYTE2) {
+            ps2readkbd(u8);
+            keycode |= (uint64_t)u8 << 16;
+            if (u8 == PS2KBD_PRINT_BYTE3) {
+                /* 0xe0 */
+                ps2readkbd(u8); /* 0x7c */
+                keycode |= UINT64_C(0x7c);
+            }
         }
+    } else if (u8 == PS2KBD_UP_BYTE) {
+        /* 0xf0 */
+        ps2readkbd(u8);
+        keycode |= (uint64_t)u8 << 8;
+        if (u8 == PS2KBD_PAUSE_UP_BYTE2) {
+            ps2readkbd(u8); /* 0xf0 */
+            keycode |= UINT64_C(0xf0) << 16;
+            ps2readkbd(u8); /* 0x77 */
+            keycode |= UINT64_C(0x77) << 24;
+        }
+    } else if (u8 == PS2KBD_PAUSE_BYTE1) {
+        /* 0xe1 */
+        /* pause/break. */
+        ps2readkbd(u8); /* 0x14 */
+        keycode |= UINT64_C(0x14) << 8;
+        ps2readkbd(u8); /* 0x77 */
+        keycode |= UINT64_C(0x77) << 16;
+        ps2readkbd(u8); /* 0xe1 */
+        keycode |= UINT64_C(0xe1) << 24;
+        ps2readkbd(u8); /* 0xf0 */
+        keycode |= UINT64_C(0xf0) << 32;
+        ps2readkbd(u8); /* 0x14 */
+        keycode |= UINT64_C(0x14) << 40;
+        ps2readkbd(u8); /* 0xf0 */
+        keycode |= UINT64_C(0xe1) << 48;
+        ps2readkbd(u8); /* 0x77 */
+        keycode |= UINT64_C(0x77) << 56;
     }
     ps2kbdaddkey(keycode);
 

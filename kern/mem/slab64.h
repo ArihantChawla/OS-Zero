@@ -1,5 +1,5 @@
-#ifndef __MEM_SLAB64_H__
-#define __MEM_SLAB64_H__
+#ifndef __KERN_MEM_SLAB64_H__
+#define __KERN_MEM_SLAB64_H__
 
 #include <zero/param.h>
 #include <zero/mtx.h>
@@ -22,5 +22,5 @@
 #define slabsetnext(hp, hdr, zone)                                      \
     ((hp)->next = (hdr))
 
-#endif /* __MEM_SLAB64_H__ */
+#endif /* __KERN_MEM_SLAB64_H__ */
 

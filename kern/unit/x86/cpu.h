@@ -31,27 +31,27 @@ void cpuprobe(struct m_cpuinfo *cpuinfo);
 #if defined(__KERNEL__)
 
 #if (PTRBITS == 32)
-extern struct m_cpu *k_curcpu    __asm__ ("%gs:0");
-extern struct proc  *k_curproc   __asm__ ("%gs:4");
-extern struct thr   *k_curthr    __asm__ ("%gs:8");
-extern pde_t        *k_curpdir   __asm__ ("%gs:12");
-extern pid_t         k_curpid    __asm__ ("%gs:16");
+extern struct m_cpu * k_curcpu  __asm__ ("%gs:0");
+extern struct proc  * k_curproc __asm__ ("%gs:4");
+extern struct task  * k_curtask __asm__ ("%gs:8");
+extern pde_t        * k_curpdir __asm__ ("%gs:12");
+extern pid_t          k_curpid  __asm__ ("%gs:16");
 //extern pde_t        *k_cursigvec __asm__ ("%gs:16");
 #elif (PTRBITS == 64)
-extern struct m_cpu *k_curcpu    __asm__ ("%gs:0");
-extern struct proc  *k_curproc   __asm__ ("%gs:8");
-extern struct thr   *k_curthr    __asm__ ("%gs:16");
-extern uint64_t     *k_curpml4   __asm__ ("%gs:24");
-extern pid_t         k_curpid    __asm__ ("%gs:32");
+extern struct m_cpu * k_curcpu  __asm__ ("%gs:0");
+extern struct proc  * k_curproc __asm__ ("%gs:8");
+extern struct task  * k_curtask __asm__ ("%gs:16");
+extern uint64_t     * k_curpml4 __asm__ ("%gs:24");
+extern pid_t          k_curpid  __asm__ ("%gs:32");
 //extern pde_t        *k_cursigvec __asm__ ("%gs:32");
 #endif
 
-#define NCPUWORD     6 /* cpu, proc, thr, info, pdir/pml4, started */
+#define NCPUWORD     6 /* cpu, proc, task, info, pdir/pml4, started */
 struct m_cpu {
     /* cpu-local variables */
     struct m_cpu     *cpu;
     struct proc      *proc;
-    struct thr       *thr;
+    struct task      *task;
 #if (PTRBITS == 32)
     uint32_t          pdir;
 #elif (PTRBITS == 64)

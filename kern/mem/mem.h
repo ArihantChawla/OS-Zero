@@ -1,5 +1,5 @@
-#ifndef __MEM_MEM_H__
-#define __MEM_MEM_H__
+#ifndef __KERN_MEM_MEM_H__
+#define __KERN_MEM_MEM_H__
 
 #include <stdint.h>
 #include <zero/cdecl.h>
@@ -247,5 +247,5 @@ memcalcbkt(unsigned long size)
 #endif
 #endif
 
-#endif /* __MEM_MEM_H__ */
+#endif /* __KERN_MEM_MEM_H__ */
 

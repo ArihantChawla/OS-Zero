@@ -153,10 +153,10 @@ kbdinitmap_us(void)
 
     kbdsetcode(PS2KBD_KEYPADEND);
     kbdsetcode(PS2KBD_KEYPADDOWN);
-    kbdsetcode(PS2KBD_KEYPADPGDN);
+    kbdsetcode(PS2KBD_KEYPADPAGEDOWN);
 
     kbdsetcode(PS2KBD_KEYPADINS);
-    kbdsetcode(PS2KBD_KEYPADDEL);
+    kbdsetcode(PS2KBD_KEYPADDELETE);
 
     kbdsetcode(PS2KBD_SYSRQ);
 
@@ -172,14 +172,14 @@ kbdinitmap_us(void)
     kbdsetcode(PS2KBD_CTRLBREAK);
     kbdsetcode(PS2KBD_HOME);
     kbdsetcode(PS2KBD_UP);
-    kbdsetcode(PS2KBD_PGUP);
+    kbdsetcode(PS2KBD_PAGEUP);
     kbdsetcode(PS2KBD_LEFT);
     kbdsetcode(PS2KBD_RIGHT);
     kbdsetcode(PS2KBD_END);
     kbdsetcode(PS2KBD_DOWN);
-    kbdsetcode(PS2KBD_PGDN);
+    kbdsetcode(PS2KBD_PAGEDOWN);
     kbdsetcode(PS2KBD_INS);
-    kbdsetcode(PS2KBD_DEL);
+    kbdsetcode(PS2KBD_DELETE);
 
     /* acpi codes. */
     kbdsetcode(PS2KBD_POWER);

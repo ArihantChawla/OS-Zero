@@ -91,9 +91,9 @@ SECTIONS {
 	mp.o(.data)
 	mp.o(.bss)
 
-	thr.o(.text)
-	thr.o(.data)
-	thr.o(.bss)
+	task.o(.text)
+	task.o(.data)
+	task.o(.bss)
 	tcb.o(.text)
 	tcb.o(.data)
 	tcb.o(.bss)

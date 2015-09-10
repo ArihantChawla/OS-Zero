@@ -3,16 +3,16 @@
 #include <zero/param.h>
 #include <zero/types.h>
 #include <zero/mtx.h>
-#include <kern/proc/thr.h>
+#include <kern/proc/task.h>
 #include <kern/unit/x86/asm.h>
 
-FASTCALL struct thr *(*schedpickthr)(void);
+FASTCALL struct task *(*schedpicktask)(void);
 
 void
 schedinit(void)
 {
 #if (ZEROSCHED)
-    schedpickthr = thrpick;
+    schedpicktask = taskpick;
 #else
 #error define supported scheduler such as ZEROSCHED
 #endif
@@ -23,9 +23,9 @@ schedinit(void)
 void
 schedyield(void)
 {
-    struct thr *thr = schedpickthr();
+    struct task *task = schedpicktask();
     
-    thrjmp(thr);
+    taskjmp(task);
 }
 
 void

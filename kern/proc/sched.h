@@ -4,7 +4,7 @@
 #include <kern/conf.h>
 #include <zero/types.h>
 /*
- * thread scheduler
+ * task scheduler
  * ----------------
  * - 256 priorities
  * - deadline
@@ -16,28 +16,32 @@
 
 #define HZ                 250
 
-/* thread scheduler classes */
-#define THR_INTR           0  // interrupt thread (keyboard, mouse, etc.)
-#define THR_RT             1  // real-time thread
-#define THR_USER           2  // user thread
-#define THR_BATCH          3  // batch thread
-#define THR_IDLE           4  // idle thread
-#define THR_NCLASS         5  // number of scheduler policies
+/* task scheduler classes */
+#define SCHEDRT           (-1L)
+#define SCHEDFIXED        (-2L)
+#define SCHEDSYS          0
+#define SCHEDUSER         1
+#define SCHEDBATCH        2
+#define SCHEDIDLE         3
+#define SCHEDNCLASS       4
+#define SCHEDNPRIO        32
 /* # of priorities per class */
-#define THR_NCLASSPRIO     (1 << THR_NCLASSPRIOLOG2)
-#define THR_NCLASSPRIOLOG2 5
+#if 0
+#define TASK_NCLASSPRIO     (1 << TASK_NCLASSPRIOLOG2)
+#define TASK_NCLASSPRIOLOG2 5
+#endif
 
-#include <kern/proc/thr.h>
+#include <kern/proc/task.h>
 
-//extern volatile FASTCALL struct m_tcb * (*schedpickthr)(void);
+//extern volatile FASTCALL struct m_tcb * (*schedpicktask)(void);
 extern void schedyield(void);
 extern void schedinit(void);
 
 #if (ZEROSCHED)
-struct thrprioq {
+struct taskprioq {
     volatile long  lk;
-    struct thr    *head;
-    struct thr    *tail;
+    struct task   *head;
+    struct task   *tail;
 };
 #endif
 

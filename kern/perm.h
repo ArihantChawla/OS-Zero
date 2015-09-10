@@ -46,6 +46,7 @@ struct perm {
     long uid;   // user ID
     long gid;   // group ID
     long flg;   // access bits
+    /* TODO: ACLs */
 };
 
 #endif /* __KERN_PERM_H__ */

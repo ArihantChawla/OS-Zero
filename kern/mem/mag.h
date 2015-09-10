@@ -1,5 +1,5 @@
-#ifndef __MEM_MAG_H__
-#define __MEM_MAG_H__
+#ifndef __KERN_MEM_MAG_H__
+#define __KERN_MEM_MAG_H__
 
 #include <stdint.h>
 #include <zero/param.h>
@@ -43,5 +43,5 @@ struct maghdr {
      ? NULL                                                             \
      : (struct maghdr *)((zone)->hdrtab) + magblknum(ptr, zone))
 
-#endif /* __MEM_MAG_H__ */
+#endif /* __KERN_MEM_MAG_H__ */
 

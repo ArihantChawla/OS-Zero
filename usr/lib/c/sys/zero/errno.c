@@ -26,7 +26,7 @@ static int               __errno;
      && !defined(__GNUC__))
 
 static void
-errnoinit(void)
+__errnoinit(void)
 {
     pthread_key_create(&__key, free);
 
@@ -34,11 +34,11 @@ errnoinit(void)
 }
 
 int *
-errnoloc(void)
+__errnoloc(void)
 {
     int *ptr = NULL;
 
-    pthread_once(&__once, errnoinit);
+    pthread_once(&__once, __errnoinit);
     ptr = pthread_get_specific(__key);
     if (!ptr) {
         ptr = malloc(sizeof(int));
@@ -51,7 +51,7 @@ errnoloc(void)
 #else
 
 int *
-errnoloc(void)
+__errnoloc(void)
 {
     int *ptr = &__errno;
 

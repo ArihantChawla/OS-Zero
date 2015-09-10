@@ -9,8 +9,8 @@
 #include <kern/unit/ia32/vm.h>
 #include <kern/unit/ia32/boot.h>
 
-extern uint8_t      kerniomap[8192];
-extern uint64_t     kerngdt[NTHR][NGDT];
+extern uint8_t  kerniomap[8192];
+extern uint64_t kerngdt[NTASK][NGDT];
 //extern struct m_tss _kerntss[NCPU];
 
 //extern void _tssinit(long);
@@ -29,8 +29,8 @@ tssinit(long id)
     tss = &tsstab[id];
     __asm__ __volatile__ ("movl %%cr3, %0" : "=r" (pdbr));
     tss->ss0 = tss->ss1 = tss->ss2 = DATASEL;
-    tss->esp0 = tss->esp1 = tss->esp2 = (uint32_t)kwalloc(THRSTKSIZE);
-//    kbzero((void *)tss->esp0, THRSTKSIZE);
+    tss->esp0 = tss->esp1 = tss->esp2 = (uint32_t)kwalloc(PROCSTKSIZE);
+//    kbzero((void *)tss->esp0, TASKSTKSIZE);
     tss->cr3 = pdbr;
     tss->iomapofs = (uint16_t)((uint8_t *)kerniomap - (uint8_t *)tss);
     gdt = &kerngdt[id][0];
