@@ -16,8 +16,9 @@
 #define SCM_SECURITY    3
 
 #define SOCK_DGRAM      1
-#define SOCK_STREAM     2
+#define SOCK_RAW        2
 #define SOCK_SEQPACKET  3
+#define SOCK_STREAM     4
 
 /* name-ergument for set/getsockopt() */
 #define SO_ACCEPTCONN   1
@@ -38,6 +39,8 @@
 #define SO_PASSCRED     16
 #define SO_PEERCRED     17
 #define SO_TYPE         18
+
+#define SOMAXCONN       128     // max bakclog queue length for listen()
 
 /* for msg_flags field in struct msghdr */
 #define MSG_CTRUNC           0x00000001 // control data truncated

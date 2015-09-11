@@ -11,6 +11,9 @@
 //#include <sys/select.h>
 #include <sys/sysmacros.h>
 #endif
+#if !defined(_POSIX_SOURCE) && (USEBSD) && !defined(NFDBITS)
+#include <kern/conf.h>
+#endif
 
 typedef long            register_t;
 typedef uint8_t         u_int8_t;
@@ -135,6 +138,44 @@ typedef uint64_t trace_event_set_t;
 #define PFN_INVALID     ((pfn_t)-1)
 
 #define NODEV           ((dev_t)-1L)
+
+#if (USEBSD) && !defined(NFDBITS)
+
+#if (_POSIX_SOURCE)
+#define FD_SETSIZE _POSIX_FD_SETSIZE
+#else
+#define FD_SETSIZE NPROCFD
+#endif
+
+typedef long       fd_mask;
+#define NFDBITS    (sizeof(fd_mask) * CHAR_BIT)
+
+struct fd_set {
+#if (USEXOPEN)
+    fd_mask fds_bits[FD_SETSIZE / NFDBITS];
+#else
+    fd_mask __fds_bits[FD_SETSIZE / NFDBITS];
+#endif
+};
+typedef struct fd_set fd_set;
+
+#define FD_SET(fd, set)    setbit(set->fd_bits, fd)
+#define FD_CLR(fd, set)    clrbit(set->fd_bits, fd)
+#define FD_ISSET(fd, set)  bitset(set->fd_bits, fd)
+#define FD_ZERO(set)       memset(set->fd_bits, 0, FD_SETSIZE / CHAR_BIT)
+#if (USEBSD)
+#define FD_COPY(src, dest) memcpy(dest, src, sizeof(fd_set))
+#endif
+
+#endif /* !defined(NFDBITS) */
+
+#if (USEBSD) && !defined(__struct_timeval_defined)
+#define __struct_timeval_defined 1
+struct timeval {
+    time_t      tv_sec;
+    suseconds_t tv_usec;
+};
+#endif
 
 #endif /* __SYS_TYPES_H__ */
 

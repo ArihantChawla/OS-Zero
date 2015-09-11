@@ -9,10 +9,13 @@
 #define CLK_TCK        CLOCKS_PER_SEC
 #endif
 
+#if !defined(__struct_timeval_defined)
+#define __struct_timeval_defined 1
 struct timeval {
     time_t      tv_sec;
     suseconds_t tv_usec;
 };
+#endif
 
 /* support for getitimer() and setitimer() */
 

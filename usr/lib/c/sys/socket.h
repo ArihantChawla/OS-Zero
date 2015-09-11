@@ -26,11 +26,28 @@ struct sockaddr {
 #endif
 };
 
+/* control information in raw sockets */
+struct sockproto {
+    sa_family_t    sp_family;
+    unsigned short sp_protocol;
+};
+
 #if (USEBSD)
+
 struct osockaddr {
     unsigned short sa_family;
     unsigned char  sa_data[14];
 };
+
+struct omsghdr {
+    caddr_t       msg_name;
+    int           msg_namelen;
+    struct iovec *msg_iov;
+    int           msg_iovlen;
+    caddr_t       msg_accrights;
+    int           msg_accrightslen;
+};
+
 #endif
 
 #if (USEGNU)
@@ -42,9 +59,8 @@ struct ucred {
 #endif
 
 struct sockaddr_storage {
-    sa_family_t ss_family;
-    char        _pad[CLSIZE - LONGSIZE];
-    /* FIXME */
+    sa_family_t   ss_family;
+    unsigned char _pad[CLSIZE - sizeof(sa_family_t)];
 } ALIGNED(CLSIZE);
 
 struct msghdr {
