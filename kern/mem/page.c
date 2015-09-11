@@ -8,7 +8,7 @@
 #include <zero/cdecl.h>
 #include <zero/trix.h>
 #include <kern/util.h>
-#include <kern/mem.h>
+#include <kern/malloc.h>
 #include <kern/time.h>
 #include <kern/mem/page.h>
 #include <kern/unit/ia32/vm.h>

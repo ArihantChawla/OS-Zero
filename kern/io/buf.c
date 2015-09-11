@@ -22,7 +22,7 @@
 #include <zero/hash.c>
 #endif
 #include <kern/util.h>
-#include <kern/mem.h>
+#include <kern/malloc.h>
 #include <kern/conf.h>
 #include <kern/io/buf.h>
 #if defined(__x86_64__) || defined(__amd64__)

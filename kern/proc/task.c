@@ -14,7 +14,7 @@
 #include <kern/proc/proc.h>
 #include <kern/proc/task.h>
 #include <kern/proc/sched.h>
-#include <kern/mem.h>
+#include <kern/malloc.h>
 #include <kern/unit/x86/cpu.h>
 #include <kern/unit/x86/trap.h>
 #include <kern/unit/ia32/task.h>

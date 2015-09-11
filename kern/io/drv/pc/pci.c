@@ -10,7 +10,7 @@
 //#define LISTQ_TYPE struct pcidevlist
 //#include <zero/list.h>
 
-#include <kern/mem.h>
+#include <kern/malloc.h>
 #include <kern/util.h>
 #include <kern/io/drv/pc/pci.h>
 

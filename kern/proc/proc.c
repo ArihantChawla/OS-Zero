@@ -3,10 +3,10 @@
 #include <kern/conf.h>
 #include <kern/util.h>
 #include <kern/obj.h>
-#include <kern/mem.h>
+#include <kern/malloc.h>
 #include <zero/param.h>
 #include <kern/proc/proc.h>
-#include <kern/io/desc.h>
+#include <kern/obj.h>
 #include <kern/unit/x86/cpu.h>
 #include <kern/unit/ia32/boot.h>
 #include <kern/unit/ia32/vm.h>
@@ -62,9 +62,9 @@ procinit(long id)
             return -1;
         }
         /* initialise descriptor table */
-        ptr = kmalloc(TASKNIODESC * sizeof(struct iodesc));
+        ptr = kmalloc(TASKNDESC * sizeof(struct desc));
         if (ptr) {
-            kbzero(ptr, TASKNIODESC * sizeof(struct iodesc));
+            kbzero(ptr, TASKNDESC * sizeof(struct desc));
             proc->dtab = ptr;
         } else {
             kfree(proc->pdir);
@@ -96,10 +96,10 @@ procinit(long id)
     return 0;
 }
 
-struct iodesc *
+struct desc *
 procgetdesc(struct proc *proc, long id)
 {
-    struct iodesc *ret = &proc->dtab[id];
+    struct desc *ret = &proc->dtab[id];
 
     return ret;
 }

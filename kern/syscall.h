@@ -14,7 +14,7 @@
 #include <zero/param.h>
 #include <kern/syscallnum.h>
 #include <kern/perm.h>
-#include <kern/mem.h>
+#include <kern/mem/obj.h>
 #include <kern/obj.h>
 
 /* TODO

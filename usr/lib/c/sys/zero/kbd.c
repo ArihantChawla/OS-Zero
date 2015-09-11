@@ -24,6 +24,7 @@ extern ASMLINK long _syscall(long num, long arg1, long arg2, long arg3);
 #define ismodkey(val)                                                   \
     (((val) & 0x80000000) && ((val) & 0xfffffff0) == 0xfffffff0)
 #endif
+#if 0
 #define kbdsetcode(name)                                                \
     (((((name) >> 8) & 0xff) == PS2KBD_UP_BYTE)                         \
      ? (ps2keymap.tabup[(name >> 16) & 0xff] = name##_SYM | PS2KBD_UP_BIT) \
@@ -32,10 +33,12 @@ extern ASMLINK long _syscall(long num, long arg1, long arg2, long arg3);
            ps2keymap.tabup[(name >> 8) & 0xff] = name##_SYM | PS2KBD_UP_BIT) \
         : (ps2keymap.tab1b[name & 0xff] = name##_SYM,                   \
            ps2keymap.tabup[name & 0xff] = name##_SYM | PS2KBD_UP_BIT)))
+#endif
 
 static struct ps2keymap ps2keymap ALIGNED(PAGESIZE);
 static struct ringbuf   kbdbuf ALIGNED(PAGESIZE);
 
+#if 0
 void
 kbdinitmap_us(void)
 {
@@ -191,7 +194,9 @@ kbdinitmap_us(void)
 
     return;
 }
+#endif
 
+#if 0
 void
 kbdinit(void)
 {
@@ -204,6 +209,7 @@ kbdinit(void)
      */
     kbdinitmap_us();
 }
+#endif
 
 #endif /* _ZERO_SOURCE */
 

@@ -1,50 +1,26 @@
 #ifndef __KERN_OBJ_H__
 #define __KERN_OBJ_H__
 
-#if 0
-#include <stdint.h>
-#include <signal.h>
-#endif
-#include <sys/types.h>
-#include <kern/types.h>
 #include <kern/perm.h>
 
-/* File-Like Object Interface */
-
-/* object region */
-struct objreg {
-    struct perm   perm;                 // object permissions
-    off_t         ofs;                  // region offset
-    uintptr_t     base;                 // base address
-    unsigned long size;                 // size in bytes
-    unsigned long flg;                  // flags
-};
-
-struct semq {
-    struct semthr *head;
-    struct semthr *tail;
-};
-
-struct semthr {
-    long        id;
-    struct sem *next;
-};
-
-struct sem {
-    long        lk; // access lock
-    long        val; // counter value
-    struct semq q; // queue of waiting threads
-};
-
-/* I/O node */
-struct node {
-    struct perm   perm; 		// node permissions
-    unsigned long type; 		// file, dir, pipe, mq, shm, sock
-    desc_t        desc; 		// system descriptor
-    unsigned long flg;  		// NODESEEKBIT, NODEMAPBIT, etc.
-    unsigned long nref; 		// reference count
-    off_t         pos;                  // seek position
-    /* TODO: interface function pointers */
+/* type values */
+#define OBJNOTYPE 0
+#define OBJCDEV   1
+#define OBJBDEV   2
+#define OBJFILE   3
+#define OBJDIR    4
+#define OBJSOCK   5
+#define OBJMQ     6
+#define OBJSEM    7
+#define OBJSHM    8
+#define OBJLFB    9
+/* flg values */
+struct desc {
+    long         type;  /* CDEV, BDEV, FILE, DIR, SOCK, MQ, SEM, SHM, LFB */
+    long         flg;   /* type-specific flags */
+    long         nref;  /* reference count */
+    struct perm  perm;  /* permission structure */
+    void        *atr;   /* type-specific attributes */
 };
 
 #endif /* __KERN_OBJ_H__ */

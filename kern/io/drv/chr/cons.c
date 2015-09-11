@@ -4,7 +4,7 @@
 #include <kern/conf.h>
 #include <zero/cdecl.h>
 #include <zero/param.h>
-#include <kern/mem.h>
+#include <kern/malloc.h>
 #include <kern/io/drv/chr/cons.h>
 #if (VBE)
 #include <kern/io/drv/pc/vbe.h>

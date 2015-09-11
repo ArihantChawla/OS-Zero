@@ -60,7 +60,6 @@
 #include <zero/types.h>
 #include <kern/types.h>
 #include <kern/syscall.h>
-#include <kern/mem.h>
 #include <kern/proc/task.h>
 #if !defined(__arm__)
 #include <kern/unit/x86/cpu.h>
@@ -99,7 +98,7 @@ struct proc {
     mode_t            umask;
     /* descriptor tables */
     size_t            ndtab;		// number of entries in descriptor table
-    struct iodesc    *dtab;             // descriptor table
+    struct desc      *dtab;             // descriptor table
     /* signal state */
     sigset_t          sigmask;          // signal mask
     sigset_t          sigpend;          // pending signals

@@ -5,7 +5,7 @@
 #include <zero/mtx.h>
 
 #define ZEROSEM_MAXVAL ULONG_MAX
-typedef struct {
+typedef struct sem {
     zeromtx       lk;
     unsigned long val;
 } zerosem;

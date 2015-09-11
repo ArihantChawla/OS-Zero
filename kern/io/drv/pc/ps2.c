@@ -65,7 +65,7 @@ ps2initkbd(void)
     ringinit(&kbdbuf,
              kbdbuf + offsetof(struct ringbuf, data),
              (PAGESIZE - offsetof(struct ringbuf, data)) / sizeof(RING_ITEM));
-    ps2drv.buf = &kbdbuf;
+    ps2drv.buf = (struct ringbuf *)&kbdbuf;
     /* enable keyboard */
     ps2sendkbd(PS2KBD_ENABLE);
     do {

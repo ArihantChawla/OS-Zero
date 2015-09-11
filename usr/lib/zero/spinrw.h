@@ -26,7 +26,7 @@
 #define ZEROSPINRW_FREE      (-1L)
 #define ZEROSPINRWREC_DEFVAL { ZEROSPININITVAL, ZEROSPINRW_FREE, 0 }
 /* structure for recursive locks */
-typedef struct {
+typedef struct spinrw {
     volatile long lk;   // lock value
     long          thr;  // writer thread ID
     long          rec;  // recursion depth

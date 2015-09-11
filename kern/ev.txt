@@ -1,0 +1,52 @@
+Zero Event Interface
+--------------------
+
+Zero shall use different forms of IPC (Inter-Process Communications) to dispatch
+and receive events between the kernel and user spaces.
+
+Protocol Messages
+-----------------
+
+EVPROTOMSG
+----------
+- event protocol messages for event management
+- cannot be selected by any event mask
+- aid with implementing desktop/screen servers :)
+
+System Events
+-------------
+
+EVSHUTDOWN
+----------
+- delivered when system is shut down
+  - wait a while, deliver SIGTERM
+  - wait another while, deliver SIGKILL
+
+EVMOUNT
+-------
+- delivered when a filesystem is mounted
+  - update directory views of filemanagers and such applications
+
+EVUNMOUNT
+---------
+- delivered when a filesystem is unmounted
+  - update directory views of filemanagers and such applications
+
+[Hardware] Driver Events
+------------------------
+
+EVLOAD
+------
+- loading of a kernel module complete
+
+EVUNLOAD
+--------
+- unloading of a kernel module complete
+
+EVPLUG
+------
+- new peripheral device plugged to the system
+
+EVUNPLUG
+--------
+- device removed from the system

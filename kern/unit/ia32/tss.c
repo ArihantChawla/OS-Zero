@@ -2,7 +2,7 @@
 #include <kern/util.h>
 //#include <mach/mach.h>
 #include <zero/param.h>
-#include <kern/mem.h>
+#include <kern/malloc.h>
 #include <kern/proc/task.h>
 #include <kern/unit/x86/cpu.h>
 #include <kern/unit/ia32/seg.h>

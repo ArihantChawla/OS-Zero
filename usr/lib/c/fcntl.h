@@ -10,7 +10,7 @@
 #endif
 #include <sys/uio.h>
 #if (_XOPEN_SOURCE)
-#include <kern/io.h>
+//#include <kern/io.h>
 #endif
 #include <bits/fcntl.h>
 

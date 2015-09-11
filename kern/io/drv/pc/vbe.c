@@ -11,7 +11,7 @@
 #endif
 #include <gfx/rgb.h>
 
-#include <kern/mem.h>
+#include <kern/malloc.h>
 #include <kern/util.h>
 #include <kern/io/drv/chr/cons.h>
 #include <kern/io/drv/pc/vga.h>

@@ -5,7 +5,7 @@
 #include <zero/cdecl.h>
 
 #include <kern/util.h>
-#include <kern/mem.h>
+#include <kern/malloc.h>
 #include <kern/io/drv/pc/pci.h>
 #include <kern/io/drv/pc/ac97.h>
 #include <kern/unit/x86/asm.h>
