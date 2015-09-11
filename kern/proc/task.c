@@ -22,7 +22,7 @@
 
 static struct taskwait  taskwaittab[NLVL0TASK] ALIGNED(PAGESIZE);
 static struct taskqueue taskruntab[SCHEDNCLASS * SCHEDNPRIO];
-static struct taskqueue taskrtqueue;
+//static struct taskqueue taskrtqueue;
 //extern long             trappriotab[NINTR];
 static struct taskid    taskidtab[NTASK] ALIGNED(PAGESIZE);
 static struct taskidq   taskidq;
@@ -111,6 +111,22 @@ taskwakeprio(struct task *task)
 }
 
 /* TODO: use <zero/list.h>? */
+
+/* add task to beginning of queue */
+void
+taskpush(struct task *task, struct taskqueue *taskqueue)
+{
+    task->prev = NULL;
+    task->next = taskqueue.head;
+    if (task->next) {
+        task->next->prev = task;
+    } else {
+        taskqueue->tail = task;
+    }
+    taskqueue.head = task;
+
+    return;
+}
 
 /* add task to end of queue */
 void
@@ -328,10 +344,21 @@ taskpick(void)
         sched = task->sched;
         state = task->state;
         if (sched == SCHEDRT && state == TASKREADY) {
-            taskq = &taskrtqueue;
-            mtxlk(&taskq->lk);
-            taskqueue(task, taskq);
-            mtxunlk(&taskq->lk);
+            prio = task->prio;
+            if (prio < 0) {
+                /* SCHED_FIFO */
+                prio = -prio;
+                taskq = &taskruntab[prio];
+                mtxlk(&taskq->lk);
+                taskpush(task, taskq);
+                mtxunlk(&taskq->lk);
+            } else {
+                /* SCHED_RR */
+                taskq = &taskruntab[prio];
+                mtxlk(&taskq->lk);
+                taskqueue(task, taskq);
+                mtxunlk(&taskq->lk);
+            }
         } else if (state == TASKREADY) {
             prio = taskadjprio(task);
             taskq = &taskruntab[prio];

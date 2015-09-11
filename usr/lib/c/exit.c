@@ -86,7 +86,7 @@ __on_exit(int status)
 }
 
 void
-__atexit(int status)
+__atexit(void)
 {
     struct exitcmd  *item;
     void           (*func)(void);
@@ -97,7 +97,7 @@ __atexit(int status)
         g_exit.atexitq = item->next;
         mtxunlk(&g_exit.lk);
         func = item->func;
-        func(status, item->arg);
+        func();
         mtxlk(&g_exit.lk);
         item = g_exit.on_exitq;
     }

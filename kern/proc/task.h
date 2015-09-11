@@ -9,8 +9,10 @@
 #include <kern/list.h>
 #include <kern/syscall.h>
 #include <kern/unit/x86/cpu.h>
-#if defined(__x86_64__)
-#include <kern/unit/x86-64/asm.h>
+#if (defined(__i386__) || defined(__i486__)                             \
+     || defined(__i586__) || defined(__i686__)                          \
+     && (!defined(__x86_64__) && !defined(__amd64__)))
+#include <kern/unit/ia32/asm.h>
 #elif defined(__i386__)
 #include <kern/unit/ia32/task.h>
 #elif defined(__arm__)
@@ -45,7 +47,7 @@ struct task {
     /* thread control block */
     struct m_tcb   m_tcb;               // context
     /* scheduler parameters */
-    long           prio;                // priority
+    long           prio;                // priority; < 0 for SCHEDFIFO
     long           nice;                // priority adjustment
     long           sched;               // thread class
     /* linkage */

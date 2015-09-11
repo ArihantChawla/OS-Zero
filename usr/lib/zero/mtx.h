@@ -32,7 +32,7 @@ extern int pthread_yield(void);
 
 #if defined(__KERNEL__) || (defined(ZEROMTX) && (!defined(PTHREAD)))
 typedef volatile long   zeromtx;
-#elif defined(PTHREAD)
+#elif defined(PTHREAD) && !defined(ZEROPTHREAD)
 typedef pthread_mutex_t zeromtx;
 #endif
 
@@ -101,7 +101,7 @@ mtxunlk(volatile long *lp)
 #define zerolkmtx(mp)    mtxlk(mp)
 #define zerounlkmtx(mp)  mtxunlk(mp)
 
-#elif defined(PTHREAD) /* !defined(ZEROMTX) */
+#elif defined(PTHREAD) && !defined(ZEROPTHREAD)
 
 #define MTXINITVAL PTHREAD_MUTEX_INITIALIZER
 typedef pthread_mutex_t zeromtx;
@@ -111,8 +111,6 @@ typedef pthread_mutex_t zeromtx;
 #define zerounlkmtx(mp)  pthread_mutex_unlock(mp)
 
 #endif
-
-#if defined(__KERNEL__) || (defined(ZEROMTX) && !defined(PTHREAD))
 
 /* initializer for non-dynamic attributes */
 #define ZEROMTXATR_DEFVAL     { 0L }
@@ -124,7 +122,7 @@ typedef pthread_mutex_t zeromtx;
 #define __ZEROMTXATR_INIT     (1L << 31)
 /* error codes */
 #define ZEROMTXATR_NOTDYNAMIC 1
-typedef struct {
+typedef struct mtxatr {
     long flg;           // feature flag-bits
 } zeromtxatr;
 
@@ -132,28 +130,33 @@ typedef struct {
 #define ZEROMTX_INITVAL { MTXINITVAL, ZEROMTXFREE, 0, 0, ZEROMTXATRDEFVAL }
 /* thr for unlocked mutexes */
 #define ZEROMTX_FREE    0
-typedef struct {
+typedef struct mtxrec {
     volatile long lk;
     volatile long val;  // owner for recursive mutexes, 0 if unlocked
     volatile long cnt;  // access counter
     volatile long rec;  // recursion depth
+#if !defined(ZEROPTHREAD)
     zeromtxatr    atr;
+#endif
 } zeromtxrec;
 
-#elif defined(PTHREAD)
+#if defined(PTHREAD)
+
+#include <pthread.h>
+
+#if !defined(ZEROPTHREAD)
 
 #include <stddef.h>
 
 #define MTXINITVAL PTHREAD_MUTEX_INITIALIZER
-
-typedef pthread_mutexattr_t zeromtxatr;
-typedef pthread_mutex_t     zeromtx;
 
 #define mtxinit(mp)  pthread_mutex_init(mp, NULL)
 #define mtxfree(mp)  pthread_mutex_destroy(mp)
 #define mtxtrylk(mp) pthread_mutex_trylock(mp)
 #define mtxlk(mp)    pthread_mutex_lock(mp)
 #define mtxunlk(mp)  pthread_mutex_unlock(mp)
+
+#endif
 
 #endif
 

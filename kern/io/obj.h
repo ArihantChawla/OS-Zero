@@ -5,32 +5,33 @@
 #include <sys/types.h>
 #include <sys/uio.h>
 #include <zero/spinrw.h>
+#include <kern/macros.h>
 #include <kern/obj.h>
 #include <kern/list.h>
 #include <kern/sparse.h>
 #include <kern/io/vfs.h>
 
 struct iocdev {
-    long               major;
-    long               minor;
-    char              *path;
-    struct iodevfuncs *funcs;
+    long             major;
+    long             minor;
+    char            *path;
+    struct iodevops *ops;
 };
 
 struct iobdev {
-    long               major;
-    long               minor;
-    char              *path;
-    struct iodevfuncs *funcs;
+    long             major;
+    long             minor;
+    char            *path;
+    struct iodevops *ops;
 };
 
 struct fileops {
     struct mod  *mod;
     long       (*open)(struct desc *, struct file *);
-    long       (*lock)(struct desc *, ...); /* FIXME */
+    long       (*lock)(struct desc *, long op, struct filelock *); /* FIXME */
     loff_t     (*seek)(struct desc *, loff_t, long);
-    ssize_t    (*read)(struct desc *, void *, size_t, loff_t *);
-    ssize_t    (*write)(struct desc *, const void *, size_t, loff_t *);
+    ssize_t    (*read)(struct desc *, __user void *, size_t, loff_t *);
+    ssize_t    (*write)(struct desc *, const void __user *, size_t, loff_t *);
     ssize_t    (*readv)(struct desc *, const struct iovec *, size_t, loff_t *);
     ssize_t    (*writev)(struct desc *, const struct iovec *, size_t, loff_t *);
     long       (*close)(struct desc *, struct file *);

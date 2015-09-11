@@ -49,7 +49,7 @@ m_loadretadr(void *frm,
 }
 
 static __inline__ void
-m_getclrfrmadr(void **pp)
+m_getretfrmadr(void **pp)
 {
     void *_ptr;
 

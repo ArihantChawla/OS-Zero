@@ -81,7 +81,7 @@ struct supblkops {
 };
 
 struct inodeops {
-    
+    ;
 };
 
 #endif /* __KERN_VFS_H__ */
