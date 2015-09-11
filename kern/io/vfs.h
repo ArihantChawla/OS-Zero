@@ -2,6 +2,9 @@
 #define __KERN_VFS_H__
 
 #include <kern/list.h>
+#include <kern/io/dc.h>
+
+#define VFS_NNESTLINK 8
 
 #define VFSDEVNULL 0x00         // /dev/null
 #define VFSDEVZERO 0x01         // /dev/zero
@@ -25,6 +28,60 @@ struct vfsmnt {
     struct vfsmnt *share;
     struct vfsmnt *slave;
     struct vfsmnt *slavelist;
+};
+
+struct openintent {
+    long         flg;
+    long         creatmode;
+    struct file *file;
+};
+
+struct vfspath {
+    struct vfsmount *mnt;
+    struct dcent    *dcent;
+};
+
+struct inodedata {
+    struct vfspath  path;
+    struct dcstr    last;
+    struct vfspath  root;
+    struct inode   *inode;
+    long            flg;
+    long            seq;
+    long            lasttype;
+    long            depth;
+    char           *names[FS_NNESTLINK];
+    union {
+        struct openintent open;
+    } intent;
+};
+
+struct supblkops {
+    struct inode (*ialloc)(struct supblk *);
+    void         (*ifree)(struct inode *);
+    void         (*idirty)(struct inode *, long);
+    long         (*iwrite)(struct inode *, long); // long sync
+    void         (*iclear)(struct inode *);
+    void         (*idrop)(struct inode *); // LOCK
+    void         (*idel)(struct inode *);
+    void         (*sbput)(struct sd *); // LOCK
+    long         (*fssync)(struct supblk *sb, long); // long wait
+    long         (*fsfreeze)(struct supblk *sb);
+    long         (*fsunfreeze)(struct supblk *sb);
+    long         (*fsstat)(struct dcent *, struct fsstat *);
+    long         (*fsremnt)(struct supblk *, long *, char *); // LOCK
+    void         (*umntbegin)(struct supblk *sb);
+    long         (*showopts)(struct seqfile *, struct dcent *);
+    ssize_t      (*qtaread)(struct supblk *, long, char *,
+                            size_t, loff_t);
+    ssize_t      (*qtawrite)(struct supblk *, long, const char *,
+                             size_t, loff_t);
+    ssize_t      (*cntmemobj)(struct supblk *sb, long);
+    void         (*freememobj)(struct supblk *sb, long);
+};
+
+struct inodeops {
+    
 };
 
 #endif /* __KERN_VFS_H__ */

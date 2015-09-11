@@ -59,6 +59,7 @@
 #include <zero/param.h>
 #include <zero/types.h>
 #include <kern/types.h>
+#include <kern/cred.h>
 #include <kern/syscall.h>
 #include <kern/proc/task.h>
 #if !defined(__arm__)
@@ -89,11 +90,8 @@ struct proc {
     pde_t            *pdir;             // page directory address
     uint8_t          *brk;              // current heap-top
     /* process credentials */
-    pid_t             pid;              // process ID
-    uid_t             ruid;             // real user ID
-    gid_t             rgid;             // real group ID
-    uid_t             euid;             // effective user ID
-    gid_t             egid;             // effective group ID
+    struct cred      *cred;
+    struct cred      *realcred;
     /* current permission mask */
     mode_t            umask;
     /* descriptor tables */

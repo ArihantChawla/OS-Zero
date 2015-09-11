@@ -6,6 +6,7 @@
 #include <zero/cdecl.h>
 #include <zero/param.h>
 #include <zero/types.h>
+#include <kern/list.h>
 #include <kern/syscall.h>
 #include <kern/unit/x86/cpu.h>
 #if defined(__x86_64__)
@@ -124,6 +125,20 @@ struct taskid {
 struct taskidq {
     struct taskid *head;
     struct taskid *tail;
+};
+
+#define PIDSPEC_PID  0
+#define PIDSPEC_TGID 1
+#define PIDSPEC_PGID 2
+#define PIDSPEC_SID  3
+#define PIDSPEC_MAX  4
+
+struct pid {
+    long             num;
+    volatile long    cnt;
+    struct task     *task;
+    struct listhead  list;
+    struct listhead  hash;
 };
 
 #endif /* __KERN_PROC_TASK_H__ */

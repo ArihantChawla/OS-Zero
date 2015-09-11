@@ -6,50 +6,6 @@
 #include <zero/spinrw.h>
 #include <kern/io/obj.h>
 
-#define FS_NNESTLINK 8
-
-struct openintent {
-    long         flg;
-    long         creatmode;
-    struct file *file;
-};
-
-struct dcstr {
-    uint32_t             hash;
-    uint32_t             len;
-    const unsigned char *name;
-};
-
-struct vfspath {
-    struct vfsmount *mnt;
-    struct dcent    *dcent;
-};
-
-struct inodedata {
-    struct vfspath  path;
-    struct dcstr    last;
-    struct vfspath  root;
-    struct inode   *inode;
-    long            flg;
-    long            seq;
-    long            lasttype;
-    long            depth;
-    char           *names[FS_NNESTLINK];
-    union {
-        struct openintent open;
-    } intent;
-};
-
-struct dcops {
-    long (*isvalid)(struct dcent *ent, struct inodedata *);
-    long (*hash)(struct dcent *, struct dcstr *);
-    long (*cmp)(struct dcent *, struct dcstr *, struct dcstr *); // LOCK
-    long (*del)(struct dcent *);
-    void (*free)(struct dcent *);
-    void (*iput)(struct dcent *, struct inode *);
-    char *(*name)(struct dcent *, char *, long);
-};
-
 /* type */
 #define FSVFS 0
 /* flg-values */
@@ -70,34 +26,6 @@ struct fs {
     volatile long    imtx;
     volatile long    imtxdir;
     struct sem       iallocsem;
-};
-
-struct supblkops {
-    struct inode (*ialloc)(struct supblk *);
-    void         (*ifree)(struct inode *);
-    void         (*idirty)(struct inode *, long);
-    long         (*iwrite)(struct inode *, long); // long sync
-    void         (*iclear)(struct inode *);
-    void         (*idrop)(struct inode *); // LOCK
-    void         (*idel)(struct inode *);
-    void         (*sbput)(struct sd *); // LOCK
-    long         (*fssync)(struct supblk *sb, long); // long wait
-    long         (*fsfreeze)(struct supblk *sb);
-    long         (*fsunfreeze)(struct supblk *sb);
-    long         (*fsstat)(struct dcent *, struct fsstat *);
-    long         (*fsremnt)(struct supblk *, long *, char *); // LOCK
-    void         (*umntbegin)(struct supblk *sb);
-    long         (*showopts)(struct seqfile *, struct dcent *);
-    ssize_t      (*qtaread)(struct supblk *, long, char *,
-                            size_t, loff_t);
-    ssize_t      (*qtawrite)(struct supblk *, long, const char *,
-                             size_t, loff_t);
-    ssize_t      (*cntmemobj)(struct supblk *sb, long);
-    void         (*freememobj)(struct supblk *sb, long);
-};
-
-struct inodeops {
-    
 };
 
 #endif /* __KERN_IO_FS_H__ */
