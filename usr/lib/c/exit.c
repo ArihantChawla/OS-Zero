@@ -15,7 +15,7 @@ struct exitcmd {
 };
 
 struct exit {
-    zeromtx         lk;
+    volatile long   lk;
     size_t          natexit;
     struct exitcmd *atexitq;
     size_t          non_exit;

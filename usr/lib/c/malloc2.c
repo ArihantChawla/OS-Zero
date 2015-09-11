@@ -30,7 +30,7 @@
 #define MALLOC4LEVELTAB   1
 
 #define MALLOCNOPTRTAB    0
-#define MALLOCNARN        4
+#define MALLOCNARN        16
 #define MALLOCEXPERIMENT  0
 #define MALLOCNBUFHDR     16
 
@@ -125,6 +125,7 @@
 #include <string.h>
 #include <stdint.h>
 #include <stdio.h>
+#include <pthread.h>
 #if (MALLOCFREEMAP)
 #include <limits.h>
 #endif
@@ -134,7 +135,7 @@
 #include <execinfo.h>
 #endif
 
-#define ZEROMTX 1
+#define ZEROMTX 0
 #if defined(ZEROMTX)
 #undef PTHREAD
 #define MUTEX volatile long
@@ -142,7 +143,7 @@
 #elif (PTHREAD)
 #define MUTEX pthread_mutex_t
 #define mtxinit(mp) pthread_mutex_init(mp, NULL)
-#define mtxlk(mp) pthread_mutex_lock(mp)
+#define mtxlk(mp)   pthread_mutex_lock(mp)
 #define mtxunlk(mp) pthread_mutex_unlock(mp)
 #endif
 #include <zero/cdecl.h>
@@ -371,8 +372,6 @@ struct malloc {
 #endif
     MUTEX             initlk;           // initialization lock
     MUTEX             heaplk;           // lock for sbrk()
-    /* FIXME: should this key be per-thread? */
-    pthread_key_t     arnkey;           // for reclaiming arenas to global pool
     long              narn;             // number of arenas in action
     long              flags;            // allocator flags
     int               zerofd;           // file descriptor for mmap()
@@ -381,6 +380,7 @@ struct malloc {
 };
 
 static struct malloc g_malloc ALIGNED(PAGESIZE);
+THREADLOCAL          pthread_key_t _thrkey;
 THREADLOCAL long     _arnid = -1;
 MUTEX                _arnlk;
 long                 curarn;
@@ -698,6 +698,72 @@ mallocdiag(void)
 }
 #endif /* MALLOCDIAG */
 
+static void
+freearn(void *arg)
+{
+    struct arn *arn = arg;
+    struct mag *mag;
+    struct mag *head;
+    long        bktid;
+#if (MALLOCBUFMAP)
+    long        n = 0;
+#endif
+    
+    mtxlk(&arn->nreflk);
+    arn->nref--;
+    if (!arn->nref) {
+        for (bktid = 0 ; bktid < MALLOCNBKT ; bktid++) {
+            mtxlk(&arn->magtab[bktid].lk);
+            head = arn->magtab[bktid].head;
+            if (head) {
+#if (MALLOCBUFMAP)
+                n = 1;
+#endif
+                mag = head;
+                mag->adr = (void *)((uintptr_t)mag->adr | MAGGLOB);
+                while (mag->next) {
+#if (MALLOCBUFMAP)
+                    n++;
+#endif
+                    mag = mag->next;
+                    mag->adr = (void *)((uintptr_t)mag->adr | MAGGLOB);
+                }
+                mtxlk(&g_malloc.magtab[bktid].lk);
+#if (MALLOCBUFMAP)
+                g_malloc.magtab[bktid].n += n;
+#endif
+                mag->next = g_malloc.magtab[bktid].head;
+                if (mag->next) {
+                    mag->next->prev = mag;
+                }
+                g_malloc.magtab[bktid].head = head;
+                mtxunlk(&g_malloc.magtab[bktid].lk);
+            }
+            arn->magtab[bktid].head = NULL;
+            mtxunlk(&arn->magtab[bktid].lk);
+            mtxlk(&arn->hdrtab[bktid].lk);
+            head = arn->hdrtab[bktid].head;
+            if (head) {
+                mag = head;
+                while (mag->next) {
+                    mag = mag->next;
+                }
+                mtxlk(&g_malloc.hdrtab[bktid].lk);
+                mag->next = g_malloc.hdrtab[bktid].head;
+                if (mag->next) {
+                    mag->next->prev = mag;
+                }
+                g_malloc.hdrtab[bktid].head = head;
+                mtxunlk(&g_malloc.hdrtab[bktid].lk);
+            }
+            mtxunlk(&arn->hdrtab[bktid].lk);
+        }
+    }
+    mtxunlk(&arn->nreflk);
+    
+    return;
+}
+
 #if (MALLOCDYNARN)
 long
 thrarnid(void)
@@ -768,7 +834,8 @@ thrarnid(void)
     mtxlk(&arn->nreflk);
     arn->nref++;
 //    curarn &= (g_malloc.narn - 1);
-    pthread_setspecific(g_malloc.arnkey, g_malloc.arntab[_arnid]);
+    pthread_key_create(&_thrkey, freearn);
+    pthread_setspecific(_thrkey, arn);
     mtxunlk(&arn->nreflk);
     mtxunlk(&_arnlk);
 
@@ -790,7 +857,8 @@ thrarnid(void)
     mtxlk(&arn->nreflk);
     arn->nref++;
     curarn &= (g_malloc.narn - 1);
-    pthread_setspecific(g_malloc.arnkey, g_malloc.arntab[_arnid]);
+    pthread_key_create(&_thrkey, freearn);
+    pthread_setspecific(_thrkey, arn);
     mtxunlk(&arn->nreflk);
     mtxunlk(&_arnlk);
 
@@ -1403,72 +1471,6 @@ postfork(void)
 }
 
 static void
-freearn(void *arg)
-{
-    struct arn *arn = arg;
-    struct mag *mag;
-    struct mag *head;
-    long        bktid;
-#if (MALLOCBUFMAP)
-    long        n = 0;
-#endif
-    
-    mtxlk(&arn->nreflk);
-    arn->nref--;
-    if (!arn->nref) {
-        for (bktid = 0 ; bktid < MALLOCNBKT ; bktid++) {
-            mtxlk(&arn->magtab[bktid].lk);
-            head = arn->magtab[bktid].head;
-            if (head) {
-#if (MALLOCBUFMAP)
-                n = 1;
-#endif
-                mag = head;
-                mag->adr = (void *)((uintptr_t)mag->adr | MAGGLOB);
-                while (mag->next) {
-#if (MALLOCBUFMAP)
-                    n++;
-#endif
-                    mag = mag->next;
-                    mag->adr = (void *)((uintptr_t)mag->adr | MAGGLOB);
-                }
-                mtxlk(&g_malloc.magtab[bktid].lk);
-#if (MALLOCBUFMAP)
-                g_malloc.magtab[bktid].n += n;
-#endif
-                mag->next = g_malloc.magtab[bktid].head;
-                if (mag->next) {
-                    mag->next->prev = mag;
-                }
-                g_malloc.magtab[bktid].head = head;
-                mtxunlk(&g_malloc.magtab[bktid].lk);
-            }
-            arn->magtab[bktid].head = NULL;
-            mtxunlk(&arn->magtab[bktid].lk);
-            mtxlk(&arn->hdrtab[bktid].lk);
-            head = arn->hdrtab[bktid].head;
-            if (head) {
-                mag = head;
-                while (mag->next) {
-                    mag = mag->next;
-                }
-                mtxlk(&g_malloc.hdrtab[bktid].lk);
-                mag->next = g_malloc.hdrtab[bktid].head;
-                if (mag->next) {
-                    mag->next->prev = mag;
-                }
-                g_malloc.hdrtab[bktid].head = head;
-                mtxunlk(&g_malloc.hdrtab[bktid].lk);
-            }
-            mtxunlk(&arn->hdrtab[bktid].lk);
-        }
-    }
-    mtxunlk(&arn->nreflk);
-    
-    return;
-}
-
-static void
 mallinit(void)
 {
     void       *heap;
@@ -1565,7 +1567,6 @@ mallinit(void)
         __zmalloc_initialize_hook();
     }
 #endif
-    pthread_key_create(&g_malloc.arnkey, freearn);
     pthread_atfork(prefork, postfork, postfork);
     g_malloc.flags |= MALLOCINIT;
     mtxunlk(&g_malloc.initlk);

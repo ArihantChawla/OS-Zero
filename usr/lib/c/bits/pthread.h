@@ -2,8 +2,34 @@
 #define __BITS_PTHREAD_H__
 
 #include <features.h>
+#undef ZEROTHR
+#undef ZEROMTX
+#define ZEROTHR 1
+#define ZEROMTX 1
+#include <zero/thr.h>
 #include <zero/mtx.h>
 #include <sched.h>
+
+#define PTHREAD_STACK_MIN        16384
+
+typedef uintptr_t     pthread_t;
+typedef struct thratr pthread_attr_t;
+
+struct __pthread {
+    struct thratr     atr;
+    struct __pthread *prev;
+    struct __pthread *next;
+};
+
+typedef uintptr_t pthread_key_t;
+struct __pthread_key {
+    pthread_key_t          key;
+    void                 (*destroy)(void *);
+    void                  *val;
+    unsigned long          hash;
+    struct __pthread_key  *prev;
+    struct __pthread_key  *next;
+};
 
 /* prioceil values */
 #define __PTHREAD_PRIOCEIL_MIN   

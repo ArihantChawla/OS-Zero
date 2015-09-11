@@ -4,108 +4,112 @@
 #include <features.h>
 #include <sys/types.h>
 
-#define O_ACCMODE   03
-#define O_RDONLY    00
-#define O_WRONLY    01
-#define O_RDWR      02
-#define O_CREAT     0100
-#define O_EXCL      0200
-#define O_NOCTTY    0400
-#define O_TRUNC     01000
-#define O_APPEND    02000
-#define O_NONBLOCK  04000
-#define O_NDELAY    O_NONBLOCK
-#define O_SYNC      010000
-#define O_DSYNC     O_SYNC
-#define O_ASYNC     020000
+#define O_ACCMODE        000003
+#define O_RDONLY         000000
+#define O_WRONLY         000001
+#define O_RDWR           000002
+#define O_CREAT          000100
+#define O_EXCL           000200
+#define O_NOCTTY         000400
+#define O_TRUNC          001000
+#define O_APPEND         002000
+#define O_NONBLOCK       004000
+#define O_NDELAY         O_NONBLOCK
+#define O_SYNC           010000
+#define O_DSYNC          O_SYNC
+#define O_ASYNC          020000
 #if defined(_GNU_SOURCE)
-#define O_DIRECT    040000
-#define O_DIRECTORY 080000
-#define O_NOFOLLOW  100000
-#define O_NOATIME   200000
-#define O_LARGEFILE 400000
+#define O_DIRECT         040000
+#define O_DIRECTORY      080000
+#define O_NOFOLLOW       100000
+#define O_NOATIME        200000
+#define O_LARGEFILE      400000
 #endif
 #if (USEPOSIX199309) || (USEUNIX98)
-#define O_DSYNC     O_SYNC  // synchronise data
-#define O_RSYNC     O_SYNC  // synchronise read operations
+#define O_DSYNC          O_SYNC // synchronise data
+#define O_RSYNC          O_SYNC // synchronise read operations
 #endif
 
+/* descriptor flags */
+#define FD_CLOEXEC       (1 << 0) // argument for F_SETFD
+/* FD_GETFD may return these in addition to FD_CLOEXEC */
+#define FD_MANDATORYLOCK (1 << 1)
+#define FD_ADVISORYLOCK  (1 << 2)
+#define FD_DIRECTORY     (1 << 3)
 /* cmd-arguments for fcntl() */
-#define F_DUPFD     0
-#define F_GETFD     1
-#define F_SETFD     2
-#define F_GETFL     3
-#define F_SETFL     4
+#define F_DUPFD          0
+#define F_GETFD          1
+#define F_SETFD          2
+#define F_GETFL          3
+#define F_SETFL          4
 #if (_FILE_OFFSET_BITS == 64)
-#define F_GETLK     5
-#define F_SETLK     6
-#define F_SETLKW    7
+#define F_GETLK          5
+#define F_SETLK          6
+#define F_SETLKW         7
 #else
-#define F_GETLK     F_GETLK64
-#define F_SETLK     F_SETLK64
-#define F_SETLKW    F_SETLKW64
+#define F_GETLK          F_GETLK64
+#define F_SETLK          F_SETLK64
+#define F_SETLKW         F_SETLKW64
 #endif
-#define F_GETLK64   12
-#define F_SETLK64   13
-#define F_SETLKW64  14
+#define F_GETLK64        12
+#define F_SETLK64        13
+#define F_SETLKW64       14
 #if (_BSD_SOURCE) || (USEUNIX98)
-#define F_SETOWN    8
-#define F_GETOWN    9
+#define F_SETOWN         8
+#define F_GETOWN         9
 #endif
 #if defined(_GNU_SOURCE)
-#define F_SETSIG    10
-#define F_GETSIG    11
-#define F_SETLEASE  1024
-#define F_GETLEASE  1025
-#define F_NOTIFY    1026
+#define F_SETSIG         10
+#define F_GETSIG         11
+#define F_SETLEASE       1024
+#define F_GETLEASE       1025
+#define F_NOTIFY         1026
 #endif
-/* open() etc. */
-#define FD_CLOEXEC  0x01
 /* lockf() */
-#define F_UNLCK     0
-#define F_RDLCK     1
-#define F_WRLCK     2
+#define F_UNLCK          0
+#define F_RDLCK          1
+#define F_WRLCK          2
 /* old BSD flock() */
-#define F_EXLCK     4
-#define F_SHLCK     8
+#define F_EXLCK          4
+#define F_SHLCK          8
 #if (_BSD_SOURCE)
 /* op-arguments for flock() */
-#define LOCK_SH     1
-#define LOCK_EX     2
-#define LOCK_NB     4
-#define LOCK_UN     8
+#define LOCK_SH          1
+#define LOCK_EX          2
+#define LOCK_NB          4
+#define LOCK_UN          8
 #endif
 #if defined(_GNU_SOURCE)
-#define LOCK_MAND   0x00000020
-#define LOCK_READ   0x00000040
-#define LOCK_WRITE  0x00000080
-#define LOCK_RW     (LOCK_READ | LOCK_WRITE)
+#define LOCK_MAND        0x00000020
+#define LOCK_READ        0x00000040
+#define LOCK_WRITE       0x00000080
+#define LOCK_RW          (LOCK_READ | LOCK_WRITE)
 #endif
 
 #if defined(_GNU_SOURCE)
-#define DN_ACCESS    0x00000001
-#define DN_MODIFY    0x00000002
-#define DN_CREATE    0x00000004
-#define DN_DELETE    0x00000008
-#define DN_RENAME    0x00000010
-#define DN_ATTRIB    0x00000020
-#define DN_MULTISHOT 0x80000000
+#define DN_ACCESS        0x00000001
+#define DN_MODIFY        0x00000002
+#define DN_CREATE        0x00000004
+#define DN_DELETE        0x00000008
+#define DN_RENAME        0x00000010
+#define DN_ATTRIB        0x00000020
+#define DN_MULTISHOT     0x80000000
 #endif
 
 /* these constants are in <unistd.h> as well */
 #if !defined(R_OK)
-#define R_OK 4 // check for read permission
-#define W_OK 2 // check for write permission
-#define X_OK 1 // check for execute permission
-#define F_OK 0 // check for existence
+#define R_OK             4 // check for read permission
+#define W_OK             2 // check for write permission
+#define X_OK             1 // check for execute permission
+#define F_OK             0 // check for existence
 #endif
 
 #if !defined(F_LOCK) && (USEXOPENEXT) && !(_POSIX_SOURCE)
 /* these constants also appear in <unistd.h> */
-#define F_ULOCK 0
-#define F_LOCK  1
-#define F_TLOCK 2
-#define F_TEST  3
+#define F_ULOCK          0
+#define F_LOCK           1
+#define F_TLOCK          2
+#define F_TEST           3
 #endif
 
 #if defined(_GNU_SOURCE)
@@ -116,6 +120,7 @@
 #define AT_EACCESS          0x200
 #endif
 
+/* if l_start == 0 && l_len == 0 && l_whence == SEEK_SET, lock whole file */
 struct flock {
     short   l_type;     // F_RDLCK, F_WRLCK, F_UNLCK
     short   l_whence;   // SEEK_SET, SEEK_CUR, SEEK_END

@@ -4,6 +4,7 @@
 #include <stddef.h>
 #include <zero/param.h>
 #include <zero/asm.h>
+#include <zero/thr.h>
 
 /*
  * Special thanks to Matthew 'kinetik' Gregan for help with the mutex code.
@@ -26,19 +27,15 @@ extern int pthread_yield(void);
 #include <sched.h>
 #endif
 
-#if defined(PTHREAD) && !defined(__KERNEL__)
-#include <pthread.h>
-#endif
-
-#if defined(__KERNEL__) || (defined(ZEROMTX) && (!defined(PTHREAD)))
+#if defined(__KERNEL__) || (!defined(ZEROMTX) && !defined(ZEROPTHREAD))
 typedef volatile long   zeromtx;
-#elif defined(PTHREAD) && !defined(ZEROPTHREAD)
+#elif defined(PTHREAD) || defined(ZEROPTHREAD)
 typedef pthread_mutex_t zeromtx;
 #endif
 
-#if defined(__KERNEL__) || (defined(ZEROMTX) && (!defined(PTHREAD)))
+#if !defined(__KERNEL__) && ((defined(ZEROMTX) || defined(ZEROPTHREAD)))
 
-#include <zero/thr.h>
+//#include <zero/thr.h>
 
 #define MTXINITVAL 0
 #define MTXLKVAL   1
@@ -104,7 +101,7 @@ mtxunlk(volatile long *lp)
 #elif defined(PTHREAD) && !defined(ZEROPTHREAD)
 
 #define MTXINITVAL PTHREAD_MUTEX_INITIALIZER
-typedef pthread_mutex_t zeromtx;
+typedef volatile long    zeromtx;
 
 #define zerotrylkmtx(mp) pthread_mutex_trylock(mp)
 #define zerolkmtx(mp)    pthread_mutex_lock(mp)
@@ -135,16 +132,10 @@ typedef struct mtxrec {
     volatile long val;  // owner for recursive mutexes, 0 if unlocked
     volatile long cnt;  // access counter
     volatile long rec;  // recursion depth
-#if !defined(ZEROPTHREAD)
     zeromtxatr    atr;
-#endif
 } zeromtxrec;
 
-#if defined(PTHREAD)
-
-#include <pthread.h>
-
-#if !defined(ZEROPTHREAD)
+#if defined(PTHREAD) || defined(ZEROPTHREAD)
 
 #include <stddef.h>
 
@@ -155,8 +146,6 @@ typedef struct mtxrec {
 #define mtxtrylk(mp) pthread_mutex_trylock(mp)
 #define mtxlk(mp)    pthread_mutex_lock(mp)
 #define mtxunlk(mp)  pthread_mutex_unlock(mp)
-
-#endif
 
 #endif
 

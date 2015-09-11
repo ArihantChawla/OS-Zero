@@ -1,13 +1,11 @@
-#include <features.h>
+#if !defined(__KERNEL__)
 
-#if (PTHREAD)
-
-#if defined(ZEROPTHREAD) && !(ZEROPTHREAD)
-#undef ZEROPTHREAD
-#endif
+#if defined(PTHREAD) || defined(ZEROPTHREAD)
 
 #ifndef __PTHREAD_H__
 #define __PTHREAD_H__
+
+#include <features.h>
 
 #if defined(linux) && !defined(ZEROPTHREAD)
 #include <bits/pthreadtypes.h>
@@ -18,23 +16,25 @@ int pthread_mutex_unlock(pthread_mutex_t *mutex);
 
 #endif /* defined(linux) */
 
-#if (ZEROPTHREAD)
+#if defined(ZEROPTHREAD)
 
+#if 0
+#include <zero/thr.h>
+#include <zero/mtx.h>
+#endif
 #include <bits/pthread.h>
 /* mutexes */
 
 #endif
-
-#if !defined(__KERNEL__)
 
 extern int pthread_key_create(pthread_key_t *key, void (*destructor)(void *));
 extern int pthread_atfork(void (*prepare)(void),
                           void (*parent)(void), void (*child)(void));
 extern int pthread_setspecific(pthread_key_t key, const void *val);
 
-#endif /* !defined(__KERNEL__) */
-
-#endif /* (PTHREAD) */
-
 #endif /* __PTHREAD_H__ */
+
+#endif /* defined(PTHREAD) || defined(ZEROPTHREAD) */
+
+#endif /* !defined(__KERNEL__) */
 
