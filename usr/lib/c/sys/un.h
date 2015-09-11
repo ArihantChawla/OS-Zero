@@ -8,13 +8,14 @@
 #endif
 
 struct sockaddr_un {
-	sa_family_t sun_family;
-	char        sun_path[108];
+    sa_family_t sun_family;     // AF_UNIX
+    char        sun_path[108];
 };
 
 #if (_UNIX_SOURCE)
-#define SUN_LEN(ptr) \
-    (offsetof(struct sockaddr_un, sun_path) + strlen((ptr)->sun_path))
+#define SUN_LEN(ptr)                                                    \
+    (offsetof(struct sockaddr_un, sun_path)                             \
+     + strnlen(ptr->sun_path, sizeof(ptr->sun_path)))
 #endif
 
 #endif /* __SYS_UN_H__ */

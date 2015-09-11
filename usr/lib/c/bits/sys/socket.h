@@ -4,9 +4,7 @@
 #define __BITS_SYS_SOCKET_H__
 
 #include <stddef.h>
-#include <stdint.h>
 #include <zero/cdecl.h>
-#include <zero/trix.h>
 
 /* cmsg_level argument in struct cmsghdr; level argument for set/getsockopt() */
 #define SOL_SOCKET      1
@@ -83,26 +81,27 @@
 #define SHUT_WR        2 // disable further send operations
 #define SHUT_RDWR      3 // disable further receive and send operations
 
+#define CMSG_ALIGN(sz) (((sz) + sizeof(long) - 1) & ~(sizeof(long)))
+
 #if defined(EMPTY)
-#define CMSG_DATA(cmsg) ((void *)&(cmsg)->cmsg_data)
+#define CMSG_DATA(msg) ((void *)&(msg)->cmsg_data)
 #else
-#define CMSG_DATA(cmsg) ((unsigned char *)(cmsg) + CMSG_ALIGN(sizeof(struct cmsghdr)))
+#define CMSG_DATA(msg) ((unsigned char *)(msg) + CMSG_ALIGN(sizeof(struct cmsghdr)))
 #endif
-#define CMSG_FIRSTHDR(msg) \
+#define CMSG_FIRSTHDR(msg)                                              \
     (((msg)->msg_controllen) ? (msg)->msg_control : NULL)
-#define CMSG_NEXTHDR(msg, cmsg) \
-    ((cmsg) \
-     ? ((((uint8_t *)(cmsg) (cmsg)->cmsg_len)
-     		< (uint8_t *)(msg)->control + (msg)->controllen) \
-    	? (void *)((uint8_t *)(cmsg) + CMSG_ALIGN((cmsg)->cmsg_len)) \
-        : NULL) \	
-     : CMSG_FIRSTHDR(msg))
-#define CMSG_ALIGN(sz) \
-    rounduppow2(sz, sizeof(long))
-#define CMSG_LEN(sz) \
+#define CMSG_NXTHDR(msg, cmsg)                                          \
+    (((msg)->cmsg_len >= sizeof(struct cmsghdr))                        \
+     ? (((unsigned char *)(msg) + CMSG_ALIGN((msg)->cmsg_len)           \
+         < (unsigned char *)(msg)->msg_control + (msg)->controllen)     \
+        ? (struct cmsghdr *)((unsigned char *)(msg)                     \
+                             + CMSG_ALIGN((msg)->cmsg_len))             \
+        : NULL)                                                         \
+     : NULL)
+#define CMSG_LEN(sz)                                                    \
     (CMSG_ALIGN(sizeof(struct cmsghdr)) + (sz))
-#define CMSG_SPACE(sz) \
+#define CMSG_SPACE(sz)                                                  \
     (CMSG_ALIGN(sizeof(struct cmsghdr)) + CMSG_ALIGN(sz))
 
-#endif /* __BITS_SYS_SOCKET_H__
+#endif /* __BITS_SYS_SOCKET_H__ */
 
