@@ -11,9 +11,9 @@
 #include <kern/conf.h>
 #include <kern/util.h>
 #include <kern/obj.h>
+#include <kern/sched.h>
 #include <kern/proc/proc.h>
 #include <kern/proc/task.h>
-#include <kern/proc/sched.h>
 #include <kern/malloc.h>
 #include <kern/unit/x86/cpu.h>
 #include <kern/unit/x86/trap.h>
@@ -117,13 +117,13 @@ void
 taskpush(struct task *task, struct taskqueue *taskqueue)
 {
     task->prev = NULL;
-    task->next = taskqueue.head;
+    task->next = taskqueue->head;
     if (task->next) {
         task->next->prev = task;
     } else {
         taskqueue->tail = task;
     }
-    taskqueue.head = task;
+    taskqueue->head = task;
 
     return;
 }

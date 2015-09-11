@@ -1,9 +1,9 @@
+#ifndef __PTHREAD_H__
+#define __PTHREAD_H__
+
 #if !defined(__KERNEL__)
 
 #if defined(PTHREAD) || defined(ZEROPTHREAD)
-
-#ifndef __PTHREAD_H__
-#define __PTHREAD_H__
 
 #include <features.h>
 
@@ -32,9 +32,9 @@ extern int pthread_atfork(void (*prepare)(void),
                           void (*parent)(void), void (*child)(void));
 extern int pthread_setspecific(pthread_key_t key, const void *val);
 
-#endif /* __PTHREAD_H__ */
-
 #endif /* defined(PTHREAD) || defined(ZEROPTHREAD) */
 
 #endif /* !defined(__KERNEL__) */
+
+#endif /* __PTHREAD_H__ */
 

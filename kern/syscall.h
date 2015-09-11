@@ -445,7 +445,7 @@ struct syssigarg {
 #define MEM_DODUMP        10
 /* sys_mctl() */
 /* cmd */
-#define MEM_SHARE         0x01          // shmap()
+#define MEM_SHMAP         0x01          // shmap()
 #define MEM_LOCK          0x02          // mlock(), mlockall()
 #define MEM_UNLOCK        0x03          // munlock(), munlockall()
 /* REFERENCE: <kern/perm.h> */

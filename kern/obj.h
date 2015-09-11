@@ -2,25 +2,30 @@
 #define __KERN_OBJ_H__
 
 #include <kern/perm.h>
+#include <kern/lfb.h>
 
 /* type values */
-#define OBJNOTYPE 0
-#define OBJCDEV   1
-#define OBJBDEV   2
-#define OBJFILE   3
-#define OBJDIR    4
-#define OBJSOCK   5
-#define OBJMQ     6
-#define OBJSEM    7
-#define OBJSHM    8
-#define OBJLFB    9
+#define OBJ_NOTYPE 0
+#define OBJ_CDEV   1
+#define OBJ_BDEV   2
+#define OBJ_FILE   3
+#define OBJ_DIR    4
+#define OBJ_SOCK   5
+#define OBJ_MQ     6
+#define OBJ_SEM    7
+#define OBJ_SHM    8
+#define OBJ_LFB    9
 /* flg values */
+#define IO_NOBUF   (1 << 1)
+#define IO_CANSEEK (1 << 2)
+#define IO_DMA     (1 << 3)
+#define IO_MAPPED  (1 << 4)
 struct desc {
     long         type;  /* CDEV, BDEV, FILE, DIR, SOCK, MQ, SEM, SHM, LFB */
     long         flg;   /* type-specific flags */
     long         nref;  /* reference count */
     struct perm  perm;  /* permission structure */
-    void        *atr;   /* type-specific attributes */
+    void        *obj;   /* type-specific attributes */
 };
 
 #endif /* __KERN_OBJ_H__ */
