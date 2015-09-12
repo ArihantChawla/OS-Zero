@@ -36,6 +36,7 @@ int
 zeroinitmtxatr(zeromtxatr *atr)
 {
     long dynflg = atr->flg & __ZEROMTXATR_DYNAMIC;
+
     if (!atr) {
 
         return -1;

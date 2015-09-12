@@ -65,7 +65,7 @@ struct task {
 //    long           interact;
     long           runtime;             // run time
     /* system call context */
-    struct sysop   sysop;               // current system call
+    struct sysctx  sysctx;              // current system call
     int            errno;               // system call error code
 };
 

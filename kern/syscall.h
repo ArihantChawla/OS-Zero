@@ -476,30 +476,30 @@ typedef uintptr_t sysipc_t;             // IPC object descriptor
 #endif
 
 struct sysvkeyarg {
-	char *path;							// path name for an accessible file
-	int   proj;							// nonzero; the low 8 bits are used for generating a key
+	char *path;                     // path name for an accessible file
+	int   proj;		        // nonzero; the low 8 bits are used for generating a key
 };
 
 struct sysrwlock {
-    long lk;    						// access lock
-	long val;   						// value; may be negative
+    long lk;    			// access lock
+	long val;   			// value; may be negative
 };
 
 struct sysmsg {
-    uintptr_t   qid;				    // queue ID
-    long        prio;					// private
-    long        len;					// size of data field in bytes
+    uintptr_t   qid;			// queue ID
+    long        prio;			// private
+    long        len;			// size of data field in bytes
 	struct msg *prev;
 	struct msg *next;
-    uint8_t     data[EMPTY];			// message data§
+    uint8_t     data[EMPTY];		// message data§
 };
 
 struct sysmq {
-	long         lk;					// access mutex
-	struct perm  perm;					// message queue permission§
-    uintptr_t    id;					// system-wide queue ID
-	struct msg  *head;					// first item in queue for this priority
-	struct msg  *tail;					// last item in queue for this priority
+	long         lk;		// access mutex
+	struct perm  perm;		// message queue permission§
+    uintptr_t    id;			// system-wide queue ID
+	struct msg  *head;		// first item in queue for this priority
+	struct msg  *tail;		// last item in queue for this priority
 };
 
 /*
@@ -512,38 +512,49 @@ struct sysmq {
  */
 
 /* flg values for I/O operations in struct ioctl */
-#define IO_RAW        0x00000001      // character I/O mode; unbuffered bytestream
-#define IO_NORMAL     0x00000002      // "normal" I/O characteristics
-#define IO_SEQUENTIAL 0x00000004      // object is accessed sequentially
-#define IO_WILLNEED   0x00000008      // object should remain buffered
-#define IO_WONTNEED   0x00000010      // object needs not be buffered
-#define IO_NONBLOCK   0x00000020      // non-blocking I/O mode
-#define IO_SYNC       0x00000040      // synchronous I/O mode
-#define IO_NONBUF     0x00000080      // unbuffered I/O mode
+#define IO_RAW        0x00000001        // character I/O unbuffered bytestream
+#define IO_NORMAL     0x00000002        // "normal" I/O characteristics
+#define IO_SEQUENTIAL 0x00000004        // object is accessed sequentially
+#define IO_WILLNEED   0x00000008        // object should remain buffered
+#define IO_WONTNEED   0x00000010        // object needs not be buffered
+#define IO_NONBLOCK   0x00000020        // non-blocking I/O mode
+#define IO_SYNC       0x00000040        // synchronous I/O mode
+#define IO_NONBUF     0x00000080        // unbuffered I/O mode
 /* IDEAS: IO_DIRECT */
 
 struct sysop {
-    long     num;               // system call ID
-    sysreg_t arg1;              // first argument
-    sysreg_t arg2;              // second argument
-    sysreg_t arg3;              // third argument
+    long     num;                       // system call ID
+    sysreg_t arg1;                      // first argument
+    sysreg_t arg2;                      // second argument
+    sysreg_t arg3;                      // third argument
 #if (LONGSIZE == 4)
-    int64_t  arg64;             // 64-bit argument
+    int64_t  arg64;                     // 64-bit argument
 #endif    
 };
 
+/* structure for restarting interrupted system calls */
+struct sysctx {
+    long     num;       // current system call number
+    /* updated arguments for restart */
+    sysreg_t arg1;
+    sysreg_t arg2;
+    sysreg_t arg3;
+    sysreg_t ret;
+    int      errnum;    // error status (for errno)
+};
+
 struct sysioreg {
-    struct perm perm;		// permission structure
+    struct perm perm;		        // permission structure
     off_t       ofs;
     off_t       len;
 };
 
-#define SYS_IOCTL_IOPERM 0x01   // need CAP_SYS_RAWIO
+#define SYS_IOCTL_IOPERM 0x01           // need CAP_SYS_RAWIO
 
 /* ioctl() */
 struct sysioctl {
-//	long            cmd;	// command to be executed
-    long            parm;	// command parameters such as flag-bits
+//	long            cmd;            // command to be executed
+    long            parm;               // command parameters such as flag-bits
     struct sysioreg reg;
 };
 

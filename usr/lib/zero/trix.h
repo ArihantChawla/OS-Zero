@@ -572,16 +572,16 @@ union __ieee754d { uint64_t u64; double d; };
 static __inline__ unsigned long
 divu10(unsigned long x)
 {
-	unsigned long q, r;
-	
-	q = (x >> 1) + (x >> 2);
-	q = q + (q >> 4);
-	q = q + (q >> 8);
-	q = q + (q >> 16);
-	q = q >> 3;
-	r = x - q * 10;
-	
-	return q + ((r + 6) >> 4);
+    unsigned long q, r;
+
+    q = (x >> 1) + (x >> 2);
+    q = q + (q >> 4);
+    q = q + (q >> 8);
+    q = q + (q >> 16);
+    q = q >> 3;
+    r = x - q * 10;
+
+    return q + ((r + 6) >> 4);
 }
 
 static __inline__ unsigned long

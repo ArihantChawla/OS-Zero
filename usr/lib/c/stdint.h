@@ -36,10 +36,7 @@ typedef long               int64_t;
 typedef unsigned long      uint64_t;
 #endif
 
-#include <stddef.h>
-
 #if defined(__x86_64__) || defined(__amd64__) || defined(__i386__)
-
 /* fast types */
 typedef char               int_fast8_t;
 typedef unsigned char      uint_fast8_t;
@@ -56,6 +53,7 @@ typedef unsigned long      uint_fast64_t;
 #else
 #error declare fast types for the platform in <stdint.h>
 #endif
+
 /* least-width types */
 typedef char               int_least8_t;
 typedef unsigned char      uint_least8_t;
@@ -72,6 +70,7 @@ typedef unsigned long      uint_least64_t;
 #else
 #error declare least-width types for the platform in <stdint.h>
 #endif
+
 /* maximum-size integral types */
 #if defined(__STDC_VERSION__) && (__STDC_VERSION__ >= 199901L)
 typedef long long          intmax_t;
@@ -80,6 +79,7 @@ typedef unsigned long long uintmax_t;
 typedef long               intmax_t;
 typedef unsigned long      uintmax_t;
 #endif /* __STDC_VERSION__ */
+
 /* pointer integer types */
 #if (PTRBITS <= 32)
 typedef int32_t            intptr_t;
@@ -89,32 +89,34 @@ typedef int64_t            intptr_t;
 typedef uint64_t           uintptr_t;
 #endif
 
+#include <stddef.h>
+
 /* limits for explicit-size types */
-#define INT8_MIN        (-0x7f - 1)
-#define INT8_MAX        0x7f
-#define UINT8_MAX       0xff
-#define INT16_MIN       (-0x7fff - 1)
-#define INT16_MAX       0x7fff
-#define UINT16_MAX      0xffff
-#define INT32_MIN       (-0x7fffffff - 1)
-#define INT32_MAX       0x7fffffff
-#define UINT32_MAX      0xffffffff
-#define INT64_MIN       INT64_C(-0x7fffffffffffffff - 1)
-#define INT64_MAX       INT64_C(0x7fffffffffffffff)
-#define UINT64_MAX      UINT64_C(0xffffffffffffffff)
+#define INT8_MIN         (-0x7f - 1)
+#define INT8_MAX         0x7f
+#define UINT8_MAX        0xff
+#define INT16_MIN        (-0x7fff - 1)
+#define INT16_MAX        0x7fff
+#define UINT16_MAX       0xffff
+#define INT32_MIN        (-0x7fffffff - 1)
+#define INT32_MAX        0x7fffffff
+#define UINT32_MAX       0xffffffff
+#define INT64_MIN        INT64_C(-0x7fffffffffffffff - 1)
+#define INT64_MAX        INT64_C(0x7fffffffffffffff)
+#define UINT64_MAX       UINT64_C(0xffffffffffffffff)
 /* limits for fast types */
-#define INT_FAST8_MIN   (-0x7f - 1)
-#define INT_FAST8_MAX   0x7f
-#define UINT_FAST8_MAX  0xff
-#define INT_FAST16_MIN  (-0x7fff - 1)
-#define INT_FAST16_MAX  0x7fff
-#define UINT_FAST16_MAX 0xffff
-#define INT_FAST32_MIN  (-0x7fffffff - 1)
-#define INT_FAST32_MAX  0x7fffffff
-#define UINT_FAST32_MAX 0xffffffff
-#define INT_FAST64_MIN  INT64_C(-0x7fffffffffffffff - 1)
-#define INT_FAST64_MAX  INT64_C(0x7fffffffffffffff)
-#define UINT_FAST64_MAX UINT64_C(0xffffffffffffffff)
+#define INT_FAST8_MIN    (-0x7f - 1)
+#define INT_FAST8_MAX    0x7f
+#define UINT_FAST8_MAX   0xff
+#define INT_FAST16_MIN   (-0x7fff - 1)
+#define INT_FAST16_MAX   0x7fff
+#define UINT_FAST16_MAX  0xffff
+#define INT_FAST32_MIN   (-0x7fffffff - 1)
+#define INT_FAST32_MAX   0x7fffffff
+#define UINT_FAST32_MAX  0xffffffff
+#define INT_FAST64_MIN   INT64_C(-0x7fffffffffffffff - 1)
+#define INT_FAST64_MAX   INT64_C(0x7fffffffffffffff)
+#define UINT_FAST64_MAX  UINT64_C(0xffffffffffffffff)
 /* limits for least-size types */
 #define INT_LEAST8_MIN   (-0x7f - 1)
 #define INT_LEAST8_MAX   0x7f
