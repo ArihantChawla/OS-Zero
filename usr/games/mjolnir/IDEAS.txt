@@ -9,7 +9,10 @@ ams
 - leprechauns
 - trolls
 - wizards
-<ams> Classic cyberpunk characters were marginalized, alienated loners who lived on the edge of society in generally dystopic futures where daily life was impacted by rapid technological change, an ubiquitous datasphere of computerized information, and invasive modification of the human body. -- lawrence person
+<ams> Classic cyberpunk characters were marginalized, alienated loners who lived
+on the edge of society in generally dystopic futures where daily life was
+impacted by rapid technological change, an ubiquitous datasphere of computerized
+information, and invasive modification of the human body. -- lawrence person
 
 Introduction
 ------------

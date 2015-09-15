@@ -27,7 +27,7 @@
 #define dngsrand(val) srandmt32(val)
 #define dngrand()     (randmt32() & 0x7fffffff)
 #else
-#define dngsrand(val) srand()
+#define dngsrand(val) srand(val)
 #define dngrand()     (rand() & 0x7fffffff)
 #endif
 
@@ -68,27 +68,25 @@ struct cellcor {
     struct cellcoord *celltab;   // table of points (X,Y-coordinate pairs)
 };
 
+#define DNG_CAVE_CONNECTED (1 << 0)
 struct cellcave {
     long              id;
-    long              flg;
+//    long              flg;
     long              connid;
     long              nconn;
     long              ncell;
     long              ncellmax;
     struct cellcoord *celltab;
+    long              nconnmax;
+    unsigned char    *connmap;
 };
 
 /* user-settable cave parameter structure */
 struct cellcaveparm {
     long rndval;        // random value
     long niter;         // # of times to visit cells
-    long size;          // current # of cells in dungeon
-    long minsize;       // minimum # of cells in dungeon
-    long maxsize;       // maximum # of cells in dungeon
-#if 0
-    long minrmsize;     // minimum room size
-    long maxrmsize;     // maximum room size
-#endif
+    long minsize;       // minimum # of cells in cave
+    long maxsize;       // maximum # of cells in cave
     long closeprob;     // probability of closing a cell in %
     long nlimnbor;      // cells with <= this neighbors get closed
     long nrmnbor;       // cells with >= this empty neighbors get closed
@@ -124,6 +122,7 @@ struct celldng {
     long              ncavemax;         // maximum # of (allocated) caves
     struct cellcave **cavetab;          // cave structures
     long             *caveidtab;        // map of cell-owner caves
+    struct cellcave **conntab;          // connected cave structures
     long              ncor;             // # of corridors
     long              ncormax;          // maximum # of (allocated) corridors
     struct cellcor  **cortab;           // corridor structures

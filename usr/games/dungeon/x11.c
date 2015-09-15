@@ -8,7 +8,6 @@
 #include <X11/keysymdef.h>
 #include <X11/Xutil.h>
 #include <corewar/x11.h>
-
 #include <dungeon/cell.h>
 
 struct cellx11 {
