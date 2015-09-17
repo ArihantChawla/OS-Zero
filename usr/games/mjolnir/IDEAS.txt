@@ -3,6 +3,11 @@ Mjolnir
 
 This document contains ideas for a Rogue-like adventure game.
 
+<adsc> i think you could simulate reachability by letting agents travel your
+dungeons...make them search for the exit by traveling straight ahead and then
+turn randomly left or right when they hit a wall
+<adsc> the tiles least walked would then be the most remote, secret tiles
+
 ams
 ---
 - dragons
