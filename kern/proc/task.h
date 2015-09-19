@@ -6,7 +6,7 @@
 #include <zero/cdecl.h>
 #include <zero/param.h>
 #include <zero/types.h>
-#include <kern/list.h>
+#include <zero/list.h>
 #include <kern/syscall.h>
 #include <kern/unit/x86/cpu.h>
 #if (defined(__i386__) || defined(__i486__)                             \
@@ -139,8 +139,8 @@ struct pid {
     long             num;
     volatile long    cnt;
     struct task     *task;
-    struct listhead  list;
-    struct listhead  hash;
+    struct listitem  list;
+    struct listitem  hash;
 };
 
 #endif /* __KERN_PROC_TASK_H__ */

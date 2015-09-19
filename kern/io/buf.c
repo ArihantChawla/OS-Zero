@@ -34,21 +34,21 @@
 #endif
 #include <kern/mem/mag.h>
 
-#define LIST_TYPE  struct bufblk
-#define LIST_QTYPE struct bufblkq
-#define LISTPREV   listprev
-#define LISTNEXT   listnext
-#include <zero/list.h>
+#define HTLIST_TYPE  struct bufblk
+#define HTLIST_QTYPE struct bufblkq
+#define HTLISTPREV   listprev
+#define HTLISTNEXT   listnext
+#include <zero/htlist.h>
 #define bufpushfree(blk)                                                \
-    listpush(&buffreelist, blk)
+    htlistpush(&buffreelist, blk)
 #define bufpopfree(blk)                                                 \
-    listpop(&buffreelist, blk)
+    htlistpop(&buffreelist, blk)
 #define bufqlru(blk)                                                    \
-    listpush(&buflruq, blk)
+    htlistpush(&buflruq, blk)
 #define bufdeqlru(blk)                                                  \
-    listdequeue(&buflruq, blk)
+    htlistdequeue(&buflruq, blk)
 #define bufdeq(blk)                                                     \
-    listrm(buflruq, blk)
+    htlistrm(buflruq, blk)
 
 #define bufadrtoid(ptr)                                                 \
     ((bufzone) ? ((uint8_t *)ptr - (uint8_t *)bufzone) >> BUFSIZELOG2 : NULL)

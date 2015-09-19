@@ -74,15 +74,15 @@ struct swapdev {
     struct pageq  freeq;
 };
 
-#define LIST_NOLOCK 1
-#define LIST_TYPE  struct page
-#define LIST_QTYPE struct pageq
-#include <zero/list.h>
+#define HTLIST_NOLOCK 1
+#define HTLIST_TYPE  struct page
+#define HTLIST_QTYPE struct pageq
+#include <zero/htlist.h>
 #define pagegetqid(pg)   (tzerol(pg->nflt))
-#define pagepop(pq, rpp) listpop(pq, rpp)
-#define pagepush(pq, pg) listpush(pq, pg)
-#define pagedeq(pq, rpp) listdequeue(pq, rpp)
-#define pagerm(pq, pg)   listrm(pq, pg)
+#define pagepop(pq, rpp) htlistpop(pq, rpp)
+#define pagepush(pq, pg) htlistpush(pq, pg)
+#define pagedeq(pq, rpp) htlistdequeue(pq, rpp)
+#define pagerm(pq, pg)   htlistrm(pq, pg)
 
 void          pageinitzone(uintptr_t base, struct pageq *zone, unsigned long nb);
 void          pageaddzone(uintptr_t base, struct pageq *zone, unsigned long nb);

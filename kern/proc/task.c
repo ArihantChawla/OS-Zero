@@ -110,7 +110,7 @@ taskwakeprio(struct task *task)
     return prio;
 }
 
-/* TODO: use <zero/list.h>? */
+/* TODO: use <zero/htlist.h>? */
 
 /* add task to beginning of queue */
 void

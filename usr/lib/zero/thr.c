@@ -5,12 +5,12 @@
 #include <zero/thr.h>
 #include <zero/cond.h>
 #include <zero/prof.h>
-#define LIST_TYPE         zerothr
-#define LIST_QTYPE        zerothrqueue
-#define LIST_RM_COND(thr) ((thr)->sleep)
-#define LIST_QUEUE(thr)   ((thr)->sleep = ZEROTHR_ASLEEP)
-#define LIST_DEQUEUE(thr) ((thr)->sleep = ZEROTHR_AWAKE)
-#include <zero/list.h>
+#define HTLIST_TYPE         zerothr
+#define HTLIST_QTYPE        zerothrqueue
+#define HTLIST_RM_COND(thr) ((thr)->sleep)
+#define HTLIST_QUEUE(thr)   ((thr)->sleep = ZEROTHR_ASLEEP)
+#define HTLIST_DEQUEUE(thr) ((thr)->sleep = ZEROTHR_AWAKE)
+#include <zero/htlist.h>
 
 static zerothrqueue thrsleepqueue;
 THREADLOCAL zerothr thrself;
@@ -23,7 +23,7 @@ thrwait1(zerothrqueue *queue)
     if (!queue) {
         queue = &thrsleepqueue;
     }
-    listpush(queue, thr);
+    htlistpush(queue, thr);
     while (m_atomread(thr->sleep)) {
         thryield();
     }
@@ -45,7 +45,7 @@ thrsleep2(zerothrqueue *queue, const struct timespec *absts)
     if (!queue) {
         queue = &thrsleepqueue;
     }
-    listpush(queue, thr);
+    htlistpush(queue, thr);
 #if defined(USECLOCKNANOSLEEP)
     while (clock_nanosleep(CLOCK_MONOTONIC, TIMER_ABSTIME, absts, &tsrem)) {
         if (errno == EINTR) {
@@ -53,14 +53,14 @@ thrsleep2(zerothrqueue *queue, const struct timespec *absts)
             continue;
         } else {
             if (m_atomread(thr->sleep)) {
-                listrm(queue, thr);
+                htlistrm(queue, thr);
             }
             
             return -1;
         }
     }
     if (m_atomread(thr->sleep)) {
-        listrm(queue, thr);
+        htlistrm(queue, thr);
     }
 #else
     gettimeofday(&tvcur, NULL);
@@ -68,7 +68,7 @@ thrsleep2(zerothrqueue *queue, const struct timespec *absts)
     do {
         if (tvcmp(&tvout, &tvcur) > 0) {
             if (m_atomread(thr->sleep)) {
-                listrm(queue, thr);
+                htlistrm(queue, thr);
             }
             
             return 0;
@@ -89,7 +89,7 @@ thrwake1(zerothrqueue *queue)
     if (!queue) {
         queue = &thrsleepqueue;
     }
-    listdequeue(queue, &thr);
+    htlistdequeue(queue, &thr);
 
     return;
 }
@@ -103,7 +103,7 @@ thrwakeall1(zerothrqueue *queue)
         queue = &thrsleepqueue;
     }
     do {
-        listdequeue(queue, &thr);
+        htlistdequeue(queue, &thr);
     } while (thr);
 
     return;
