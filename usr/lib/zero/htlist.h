@@ -23,11 +23,11 @@
 #endif
 
 /*
- * Assumptions
+ * assumptions
  * -----------
- * - HTLIST_TYPE (struct/union) has members prev and next of HTLIST_TYPE
- * - HTLIST_QTYPE has members head and tail of HTLIST_TYPE
- * - if _REENTRANT is declared and non-zero, HTLIST_QTYPE has a volatile lk member
+ * - HTLIST_TYPE (struct/union) has members prev and next of HTLIST_TYPE *
+ * - HTLIST_QTYPE has members head and tail of HTLIST_TYPE *
+ * - if _REENTRANT is defined HTLIST_QTYPE has a volatile lk-member
  */
 
 /* #define HTLIST_TYPE  */

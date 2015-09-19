@@ -1,20 +1,16 @@
-#ifndef __ZERO_LIST_H__
-#define __ZERO_LIST_H__
+/*
+ * assumptions
+ * -----------
+ * - LIST_TYPE has items prev and next of LIST_TYPE *
+ */
 
 #include <stddef.h>
 #include <zero/cdecl.h>
 
-/* list stuff based on what I found in Linux */
-
-/* REFERENCE: http://lxr.free-electrons.com/source/include/linux/list.h */
-
-struct listitem {
-    struct listitem *prev;
-    struct listitem *next;
-};
+/* #define LIST_TYPE */
 
 /* initialise list */
-#define LIST(name) { &(name), &(name) }
+#define LISTINIT(name) { &(name), &(name) }
 #define listinit(item)                                                  \
     ((item)->next = (item), (item)->prev = (item))
 /* add item between prev and next */
@@ -62,7 +58,7 @@ struct listitem {
 /* rotate list to the left */
 #define listrotleft(item)                                               \
     do {                                                                \
-        struct listitem *_next;                                         \
+        LIST_TYPE *_next;                                               \
                                                                         \
         if (!listisempty(item)) {                                       \
             _next = (item)->next;                                       \
@@ -74,7 +70,7 @@ struct listitem {
     (listisempty(item) && (item)->next == (item)->prev)
 #define __listcutpos(list, item, entry)                                 \
     do {                                                                \
-        struct listitem *_next = (entry)->next;                         \
+        LIST_TYPE *_next = (entry)->next;                               \
                                                                         \
         (list)->next = (item)->next;                                    \
         (list)->next->prev = list;                                      \
@@ -98,8 +94,8 @@ struct listitem {
         } while (0)
 #define __listsplice(list, prev, next)                                  \
     do {                                                                \
-        struct listitem *_first = (list)->next;                         \
-        struct listitem *_last = (list)->prev;                          \
+        LIST_TYPE *_first = (list)->next;                               \
+        LIST_TYPE *_last = (list)->prev;                                \
                                                                         \
         _first->prev = prev;                                            \
         (prev)->next = _first;                                          \
@@ -223,6 +219,4 @@ struct listitem {
 /* reset stale list for safe loops */
 #define listsaferesetnext(pos, tmp, member)                             \
     (tmp = listnextentry(pos, member))
-
-#endif /* __ZERO_LIST_H__ */
 
