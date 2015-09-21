@@ -23,6 +23,7 @@
 #define LIST_TYPE struct task
 #include <zero/list.h>
 
+/* this should be a single (aligned) cacheline */
 struct tasklk {
     volatile long lk;
     uint8_t       pad[CLSIZE - sizeof(long)];
@@ -30,14 +31,14 @@ struct tasklk {
 
 static struct taskwait *taskwaittab[NLVL0TASK] ALIGNED(PAGESIZE);
 //static struct task taskruntab[SCHEDNCLASS * SCHEDNPRIO];
-static struct tasklk    taskrunmtxtab[SCHEDNCLASS * SCHEDNPRIO];
+static struct tasklk    taskrunmtxtab[SCHEDNCLASS * SCHEDNPRIO] ALIGNED(PAGESIZE);
 static struct task     *taskruntab[SCHEDNCLASS * SCHEDNPRIO];
 //static struct task taskrtqueue;
 //extern long             trappriotab[NINTR];
 static struct taskid   *taskidtab[NTASK] ALIGNED(PAGESIZE);
 static struct taskid   *taskidq;
-static volatile long    taskidlk;
-static volatile long    taskwaitlk;
+static struct tasklk    taskidmtx;
+static struct tasklk    taskwaitmtx;
 
 /* save taskead context */
 ASMLINK
@@ -192,7 +193,7 @@ taskaddwait(struct task *task)
     key2 = taskwaitkey2(wchan);
     key3 = taskwaitkey3(wchan);
     tab = &taskwaittab[key0];
-    mtxlk(&taskwaitlk);
+    mtxlk(&taskwaitmtx.lk);
     ptr = tab->ptr;
     if (!ptr) {
         ptr = kmalloc(NLVL0TASK * sizeof(struct taskwait));
@@ -269,7 +270,7 @@ taskaddwait(struct task *task)
         tab->ptr = task;
         ret ^= ret;
     }
-    mtxunlk(&taskwaitlk);
+    mtxunlk(&taskwaitmtx.lk);
     
     return ret;
 }
@@ -490,7 +491,7 @@ taskgetid(void)
     struct taskid *taskid;
     long           retval = -1;
 
-    mtxlk(&taskidlk);
+    mtxlk(&taskidmtx.lk);
     taskid = taskidq;
     if (taskid) {
         if (listissingular(taskidq)) {
@@ -502,7 +503,7 @@ taskgetid(void)
             retval = taskid->id;
         }
     }
-    mtxunlk(&taskidlk);
+    mtxunlk(&taskidmtx.lk);
 
     return retval;
 }
@@ -512,14 +513,14 @@ taskfreeid(long id)
 {
     struct taskid *taskid;
     
-    mtxlk(&taskidlk);
+    mtxlk(&taskidmtx.lk);
     taskid = taskidq;
     if (taskidq) {
         listaddbefore(taskid, taskidq);
     } else {
         listinit(taskid, taskidq);
     }
-    mtxunlk(&taskidlk);
+    mtxunlk(&taskidmtx.lk);
 }
 
 void
@@ -528,7 +529,7 @@ taskinitids(void)
     long           id = TASKNPREDEF;
     struct taskid *taskid;
 
-    mtxlk(&taskidlk);
+    mtxlk(&taskidmtx.lk);
     taskid = taskidq;
     taskid->id = id;
     listinit(taskid, taskidq);
@@ -537,7 +538,7 @@ taskinitids(void)
         taskid->id = id;
         listaddafter(taskid, taskidq);
     }
-    mtxunlk(&taskidlk);
+    mtxunlk(&taskidmtx.lk);
 
     return;
 }
