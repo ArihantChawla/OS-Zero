@@ -10,15 +10,14 @@
 /* #define LIST_TYPE */
 
 /* initialise list */
-#define LISTINIT(name) { &(name), &(name) }
-#define listinit(item)                                                  \
-    ((item)->next = (item), (item)->prev = (item))
+#define listinit(item, queue)                                           \
+    ((queue)->next = (item), (queue)->prev = (item))
 /* add item between prev and next */
-#define __listadd(item, prev, next)                                     \
-    ((next)->prev = (item),                                             \
-     (item)->next = next,                                               \
-     (item)->prev = (prev),                                             \
-     (prev)->next = (item))
+#define __listadd(item, item1, item2)                                   \
+    ((item2)->prev = (item),                                            \
+     (item)->next = (item2),                                            \
+     (item)->prev = (item1),                                            \
+     (item1)->next = (item))
 /* add item1 after item2 */
 #define listaddafter(item1, item2)                                      \
     __listadd(item1, item2, (item2)->next)
@@ -26,14 +25,14 @@
 #define listaddbefore(item1, item2)                                     \
     __listadd(item1, (item2)->prev, item2)
 /* remove item from between prev and next */
-#define listdelbetween(prev, next)                                      \
-    ((next)->prev = prev, (prev)->next = next)
+#define listdelbetween(item1, item2)                                    \
+    ((item2)->prev = item1, (item1)->next = item2)
 /* remove item */
 #define listdel(item)                                                   \
-    listdelbetween((item)->prev, (item)->next)
+    listdelbetween(item->prev, item->next)
 /* replace item1 with item2 */
 #define listreplace(item1, item2)                                       \
-    ((item2)->next = (item1)->next,                                     \
+    ((item2)->next = item1->next,                                       \
      (item2)->next->prev = (item2),                                     \
      (item2)->prev = (item1)->prev,                                     \
      (item2)->prev->next = (item2))
@@ -92,15 +91,15 @@
                 __listcutpos(list, item, entry);                        \
             }                                                           \
         } while (0)
-#define __listsplice(list, prev, next)                                  \
+#define __listsplice(list, item1, item2)                                \
     do {                                                                \
         LIST_TYPE *_first = (list)->next;                               \
         LIST_TYPE *_last = (list)->prev;                                \
                                                                         \
         _first->prev = prev;                                            \
-        (prev)->next = _first;                                          \
+        (item1)->next = _first;                                         \
         _last->next = next;                                             \
-        (next)->prev = _last;                                           \
+        (item2)->prev = _last;                                          \
     } while (0)
 /* join two lists by adding list after item */
 #define listsplice(list, item)                                          \

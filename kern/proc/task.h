@@ -124,11 +124,6 @@ struct taskid {
     struct taskid *next;
 };
 
-struct taskidq {
-    struct taskid *head;
-    struct taskid *tail;
-};
-
 #define PIDSPEC_PID  0
 #define PIDSPEC_TGID 1
 #define PIDSPEC_PGID 2
@@ -136,11 +131,11 @@ struct taskidq {
 #define PIDSPEC_MAX  4
 
 struct pid {
-    long             num;
-    volatile long    cnt;
-    struct task     *task;
-    struct listitem  list;
-    struct listitem  hash;
+    long           num;
+    volatile long  cnt;
+    struct task   *task;
+    struct pid    *list;
+    struct pid    *hash;
 };
 
 #endif /* __KERN_PROC_TASK_H__ */
