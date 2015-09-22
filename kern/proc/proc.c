@@ -6,6 +6,7 @@
 #include <kern/malloc.h>
 #include <zero/param.h>
 #include <kern/proc/proc.h>
+#include <kern/proc/task.h>
 #include <kern/obj.h>
 #include <kern/unit/x86/cpu.h>
 #include <kern/unit/ia32/boot.h>

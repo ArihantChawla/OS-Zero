@@ -13,12 +13,12 @@
 #define MEM_PHYS     (1 << 8)
 #define MEM_NOCACHE  (1 << 9)
 struct memreg {
-    struct perm  perm;  // permission structure
+    struct perm *perm;  // permission structure
     long         flg;   // flag-bits
     void        *adr;	// base address of region
     size_t       ofs;	// offset into region (for locks and such)
     size_t       len;	// length
 };
 
-#endif
+#endif /* __KERN_MEM_OBJ_H__ */
 

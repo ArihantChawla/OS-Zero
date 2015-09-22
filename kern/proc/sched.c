@@ -23,9 +23,14 @@ schedinit(void)
 void
 schedyield(void)
 {
-    struct task *task = schedpicktask();
-    
-    taskjmp(task);
+    struct task *curtask = k_curtask;
+    struct task *newtask;
+
+    newtask = schedpicktask();
+    taskjmp(newtask);
+
+    /* NOTREACHED */
+    return;
 }
 
 void

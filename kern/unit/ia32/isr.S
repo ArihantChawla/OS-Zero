@@ -52,7 +52,8 @@
 .globl	irqerror, irqspurious, mpspurint, irqtmrcnt
 #endif
 
-.extern	sigfunc, tmrsyncscr, schedpicktask, vmpagefault, kbdtrap, mousetrap
+.extern	sigfunc, tmrsyncscr, taskqueue, schedpicktask
+.extern vmpagefault, kbdtrap, mousetrap
 .extern	tasksave, taskjmp
 #if (APIC)
 .extern	mpapic
@@ -461,15 +462,22 @@ irqtmr:
 	leal	4(%ebp), %esp
 	popl	%ebp
 	/* arguments for tasksave */
+	movl	%ebp, %ecx		// frame pointer
 	movl	(%esp), %edx		// return address
 	movl	%gs:8, %eax		// task structure address
 	/* push 3rd argument (frame pointer) */
-	pushl	%ebp
+//	pushl	%ebp
 	/* push 2nd argument (return address) */
-	pushl	%edx
+//	pushl	%edx
 	/* push 1st argument (task structure address) */
-	pushl	%eax
+//	pushl	%eax
 	call	tasksave
+#if 0
+	/* second argument for taskqueue; the first is in %eax */
+	movl	$0x00000000, %edx
+//	popl	%eax
+	call	taskqueue
+#endif
 	/* schedpicktask() returns task ID in eax */
 	movl	schedpicktask, %ebx
 	call	*%ebx

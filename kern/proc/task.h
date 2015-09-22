@@ -26,7 +26,7 @@
 #if (ZEROSCHED)
 extern FASTCALL struct task * taskpick(void);
 #endif
-ASMLINK void                  tasksave(struct task *task, long retadr, long fp);
+FASTCALL void                 tasksave(struct task *task, long retadr, long fp);
 FASTCALL void                 taskjmp(struct task *task);
 
 #define __KERNEL__ 1
@@ -96,10 +96,15 @@ struct taskqueue {
     ((wc) & ((1UL << NLVLTASKLOG2) - 1))
 
 struct taskwait {
-    long             nref;
-    struct task     *ptr;
-    struct taskwait *prev;
-    struct taskwait *next;
+    long         nref;
+    struct task *tab;
+};
+
+struct taskwaitqueue {
+    long         nref;
+    struct task *task;
+    struct task *prev;
+    struct task *next;
 };
 
 #if 0

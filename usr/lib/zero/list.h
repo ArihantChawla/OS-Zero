@@ -10,8 +10,8 @@
 /* #define LIST_TYPE */
 
 /* initialise list */
-#define listinit(item, queue)                                           \
-    ((queue)->next = (item), (queue)->prev = (item))
+#define listinit(item)                                                  \
+    ((item)->next = (item), (item)->prev = (item))
 /* add item between prev and next */
 #define __listadd(item, item1, item2)                                   \
     ((item2)->prev = (item),                                            \

@@ -4,7 +4,7 @@
 #include <stdint.h>
 #include <zero/cdecl.h>
 
-typedef int64_t  evkeycode_t;
+typedef int32_t  evkeycode_t;
 
 #if (EVWORDSIZE == 32)
 typedef int32_t  evword_t;

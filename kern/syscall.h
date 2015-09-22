@@ -116,13 +116,13 @@ typedef intptr_t sysreg_t;
  * ----------------
  * sysreg_t  sys_brk(void *adr);
  * - set top of heap to adr
- * void *sys_map(sysreg_t desc, sysreg_t flg, struct sysmemarg *arg);
+ * void *sys_map(sysreg_t desc, sysreg_t flg, struct memreg *arg);
  * - map file or anonymous memory
  * sysreg_t  sys_umap(void *adr, size_t size);
  * - unmap file or anonymous memory
- * sysreg_t  sys_mhint(void *adr, sysreg_t flg, struct sysmemarg *arg);
+ * sysreg_t  sys_mhint(long cmd, sysreg_t flg, struct memreg *arg);
  * - hint kernel about memory region use characteristics
- * sysreg_t  sys_mctl(void *adr, sysreg_t flg, struct sysmemarg *arg);
+ * sysreg_t  sys_mctl(long cmd, sysreg_t flg, struct memreg *arg);
  * - memory control operations; locks, permissions, etc.
  *
  * IPC
@@ -451,10 +451,14 @@ struct syssigarg {
 /* REFERENCE: <kern/perm.h> */
 #define MEM_GETPERM       0x04
 #define MEM_SETPERM       0x05
+/* flg-argument bits for MEM_SHMAP */
+#define MEM_DUALMAP       0x00000001
+#if 0
 struct sysmemarg {
     long          cmd;  // memory command
     struct memreg reg;
 };
+#endif
 
 /*
  * Inter-Process Communications

@@ -126,7 +126,7 @@ slabinitzone(struct memzone *zone, unsigned long base, unsigned long nb)
 //    zone->hdrtab = (void *)adr;
     vmmapseg((uint32_t *)&_pagetab, adr, adr, adr + hdrsz,
              PAGEPRES | PAGEWRITE);
-    zone->hdrtab = adr;
+    zone->hdrtab = (void *)adr;
 //    kbzero((void *)adr, hdrsz);
     /* configure magazine headers */
     hdrsz = nslab * sizeof(struct maghdr);
