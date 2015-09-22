@@ -241,6 +241,7 @@ taskaddwait(struct task *task)
         fail = 1;
     }
     if (!fail) {
+        item->ptr = task;
         tab = ptab[0];
         if (tab) {
             tab->nref++;
