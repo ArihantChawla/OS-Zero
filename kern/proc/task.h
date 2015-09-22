@@ -96,9 +96,10 @@ struct taskqueue {
     ((wc) & ((1UL << NLVLTASKLOG2) - 1))
 
 struct taskwait {
-    volatile long  lk;
-    long           nref;
-    void          *ptr;
+    long             nref;
+    struct task     *ptr;
+    struct taskwait *prev;
+    struct taskwait *next;
 };
 
 #if 0

@@ -36,9 +36,9 @@ static struct task     *taskruntab[SCHEDNCLASS * SCHEDNPRIO];
 //static struct task taskrtqueue;
 //extern long             trappriotab[NINTR];
 static struct taskid   *taskidtab[NTASK] ALIGNED(PAGESIZE);
-static struct taskid   *taskidq;
-static struct tasklk    taskidmtx;
-static struct tasklk    taskwaitmtx;
+static struct taskid   *taskidqueue;
+static struct tasklk    taskidmtx ALIGNED(CLSIZE);
+static struct tasklk    taskwaitmtx ALIGNED(CLSIZE);
 
 /* save taskead context */
 ASMLINK
@@ -176,98 +176,84 @@ taskqueue(struct task *task, struct task *taskqueue)
 long
 taskaddwait(struct task *task)
 {
-    struct task     *head;
-    struct taskwait *tab;
-    struct taskwait *ptr = NULL;
-    uintptr_t        wchan = task->wchan;
-    long             ret = -1;
-    long             fail = 0;    
-    uint64_t         key0;
-    uint64_t         key1;
-    uint64_t         key2;
-    uint64_t         key3;
-    void            *ptab[TASKNKEY] = { NULL, NULL, NULL, NULL };
+    struct task      *head;
+    struct taskwait  *tab;
+    struct taskwait  *ptr = NULL;
+    struct taskwait **pptr;
+    struct taskwait  *item = NULL;
+    uintptr_t         wchan = task->wchan;
+    long              ret = -1;
+    long              fail = 0;    
+    uint64_t          key0;
+    uint64_t          key1;
+    uint64_t          key2;
+    uint64_t          key3;
+    void             *ptab[TASKNKEY - 1] = { NULL, NULL, NULL };
 
     key0 = taskwaitkey0(wchan);
     key1 = taskwaitkey1(wchan);
     key2 = taskwaitkey2(wchan);
     key3 = taskwaitkey3(wchan);
-    tab = &taskwaittab[key0];
+    ptr = taskwaittab[key0];
+    pptr = (struct taskwait **)ptr;
     mtxlk(&taskwaitmtx.lk);
-    ptr = tab->ptr;
     if (!ptr) {
-        ptr = kmalloc(NLVL0TASK * sizeof(struct taskwait));
+        ptr = kmalloc(NLVL1TASK * sizeof(struct taskwait));
         if (ptr) {
-            kbzero(ptr, NLVL0TASK * sizeof(struct taskwait));
+            kbzero(ptr, NLVL1TASK * sizeof(struct taskwait));
         }
         ptab[0] = ptr;
+        pptr = (struct taskwait **)ptr;
+        taskwaittab[key0] = ptr;
     }
     if (ptr) {
-        ptr = ptr[key0].ptr;
-        if (!ptr) {
-            ptr = kmalloc(NLVL1TASK * sizeof(struct taskwait));
-            if (ptr) {
-                kbzero(ptr, NLVL1TASK * sizeof(struct taskwait));
-            }
-            ptab[1] = ptr;
-        }
-    } else {
-        fail = 1;
-    }
-    if (ptr) {
-        ptr = ptr[key1].ptr;
+        ptr = pptr[key1];
         if (!ptr) {
             ptr = kmalloc(NLVL2TASK * sizeof(struct taskwait));
             if (ptr) {
                 kbzero(ptr, NLVL2TASK * sizeof(struct taskwait));
             }
-            ptab[2] = ptr;
+            ptab[1] = ptr;
+            pptr[key1] = ptr;
+            pptr = (struct taskwait **)ptr;
         }
     } else {
         fail = 1;
     }
     if (ptr) {
-        ptr = ptr[key2].ptr;
+        ptr = pptr[key2];
         if (!ptr) {
             ptr = kmalloc(NLVL3TASK * sizeof(struct taskwait));
             if (ptr) {
                 kbzero(ptr, NLVL3TASK * sizeof(struct taskwait));
             }
-            ptab[3] = ptr;
+            ptab[2] = ptr;
+            pptr[key2] = ptr;
+            pptr = (struct taskwait **)ptr;
         }
     } else {
         fail = 1;
     }
+    if (ptr) {
+        ptr = pptr[key3];
+        item = ptr;
+    } else {
+        fail = 1;
+    }
     if (!fail) {
-        if (ptab[0]) {
+        tab = ptab[0];
+        if (tab) {
             tab->nref++;
-            tab->ptr = ptab[0];
         }
-        tab = tab->ptr;
-        if (ptab[1]) {
-            tab[key0].nref++;
-            tab[key0].ptr = ptab[1];
+        tab = ptab[1];
+        if (tab) {
+            tab->nref++;
         }
-        tab = tab[key0].ptr;
+        tab = ptab[2];
         if (ptab[2]) {
-            tab[key1].nref++;
-            tab[key1].ptr = ptab[2];
+            tab->nref++;
         }
-        tab = tab[key1].ptr;
-        if (ptab[3]) {
-            tab[key2].nref++;
-            tab[key2].ptr = ptab[3];
-        }
-        tab = tab[key2].ptr;
-        tab = &tab[key3];
-        tab->nref++;
-        task->prev = NULL;
-        task->next = tab->ptr;
-        if (task->next) {
-            task->next->prev = task;
-        }
-        task->next = tab->ptr;
-        tab->ptr = task;
+        listaddafter(item, tab->prev);
         ret ^= ret;
     }
     mtxunlk(&taskwaitmtx.lk);
@@ -281,7 +267,7 @@ taskwakeup(uintptr_t wchan)
 {
     struct taskwait  *tab;
     struct taskwait  *ptr = NULL;
-    struct task *taskq;
+    struct task      *taskq;
     struct task      *task1;
     struct task      *task2;
     long              key0 = taskwaitkey0(wchan);
@@ -290,71 +276,67 @@ taskwakeup(uintptr_t wchan)
     long              key3 = taskwaitkey3(wchan);
     long              prio;
 //    long             n;
-    struct taskwait  *ptab[4] = { NULL };
+    struct taskwait **pptr;
+    struct taskwait  *ptab[TASKNKEY - 1] = { NULL, NULL, NULL };
 
-    tab = &taskwaittab[key0];
-    mtxlk(&tab->lk);
-    ptr = tab;
+    tab = taskwaittab[key0];
+    mtxlk(&taskwaitmtx.lk);
     if (ptr) {
-        ptab[0] = ptr;
-        ptr = ((void **)ptr->ptr)[key0];
-        if (ptr) {
-            ptab[1] = ptr;
-            ptr = ((void **)ptr->ptr)[key1];
-            if (ptr) {
-                ptab[2] = ptr;
-                ptr = ((void **)ptr->ptr)[key2];
-                if (ptr) {
-                    ptab[3] = ptr;
-                    ptr = ((void **)ptr->ptr)[key3];
+        ptab[0] = tab;
+        tab = ((void **)tab)[key0];
+        if (tab) {
+            ptab[1] = tab;
+            tab = ((void **)tab)[key1];
+            if (tab) {
+                ptab[2] = tab;
+                tab = ((void **)tab)[key2];
+                if (tab) {
+                    tab = ((void **)tab)[key3];
                 }
             }
         }
-        task1 = ptr->ptr;
+        task1 = tab->ptr;
         if (task1) {
-            mtxlk(&taskrunmtxtab[task1->prio]);
+            prio = task1->prio;
+            mtxlk(&taskrunmtxtab[prio].lk);
             taskqueue(task1, taskruntab[prio]);
-            mtxunlk(&taskrunmtxtab[task1->prio]);
+            mtxunlk(&taskrunmtxtab[prio].lk);
         }
         while (task1) {
             prio = taskwakeprio(task1);
             task2 = task1->next;
             mtxlk(&taskrunmtxtab[prio].lk);
-            taskqueue(task1, &taskruntab[prio]);
+            taskqueue(task1, taskruntab[prio]);
             mtxunlk(&taskrunmtxtab[prio].lk);
             task1 = task2;
         }
         /* TODO: free tables if possible */
-        ptr = ptab[0];
-        if (ptr) {
-            if (!--ptr->nref) {
-                kfree(ptr->ptr);
-                ptr->ptr = NULL;
+        tab = ptab[0];
+        if (tab) {
+            if (!--tab->nref) {
+                pptr = &taskwaittab[key0];
+                kfree(tab);
+                *pptr = NULL;
             }
-            ptr = ptab[1];
-            if (ptr) {
-                if (!--ptr->nref) {
-                    kfree(ptr->ptr);
-                    ptr->ptr = NULL;
+            tab = ptab[1];
+            if (tab) {
+                if (!--tab->nref) {
+                    pptr = &pptr[key1];
+                    kfree(tab);
+                    *pptr = NULL;
                 }
-                ptr = ptab[2];
-                if (ptr) {
-                    if (!--ptr->nref) {
-                        kfree(ptr->ptr);
-                        ptr->ptr = NULL;
-                    }
-                    ptr = ptab[3];
-                    if (ptr) {
-                        if (!--ptr->nref) {
-                            kfree(ptr->ptr);
-                            ptr->ptr = NULL;
-                        }
+                tab = ptab[2];
+                if (tab) {
+                    if (!--tab->nref) {
+                        pptr = &pptr[key2];
+                        kfree(tab);
+                        *pptr = NULL;
                     }
                 }
             }
         }
     }
-    mtxunlk(&tab->lk);
+    mtxunlk(&taskwaitmtx.lk);
 }
 
 #if 0
@@ -378,20 +360,20 @@ taskpick(void)
             if (prio < 0) {
                 /* SCHED_FIFO */
                 prio = -prio;
-                taskq = &taskruntab[prio];
+                taskq = taskruntab[prio];
                 mtxlk(&taskrunmtxtab[prio].lk);
                 taskpush(task, taskq);
                 mtxunlk(&taskrunmtxtab[prio].lk);
             } else {
                 /* SCHED_RR */
-                taskq = &taskruntab[prio];
+                taskq = taskruntab[prio];
                 mtxlk(&taskrunmtxtab[prio].lk);
                 taskqueue(task, taskq);
                 mtxunlk(&taskrunmtxtab[prio].lk);
             }
         } else if (state == TASKREADY) {
             prio = taskadjprio(task);
-            taskq = &taskruntab[prio];
+            taskq = taskruntab[prio];
             mtxlk(&taskrunmtxtab[prio].lk);
             taskqueue(task, taskq);
             mtxunlk(&taskrunmtxtab[prio].lk);
@@ -402,7 +384,7 @@ taskpick(void)
     task = NULL;
     while (!task) {
         for (prio = 0 ; prio < SCHEDNCLASS * SCHEDNPRIO ; prio++) {
-            taskq = &taskruntab[prio];
+            taskq = taskruntab[prio];
             mtxlk(&taskrunmtxtab[prio].lk);
             task = taskq->head;
             task->prev = NULL;
@@ -451,14 +433,14 @@ taskpick(void)
                 mtxunlk(&taskrunmtxtab[prio].lk);
             } else {
                 /* SCHED_RR */
-                taskq = &taskruntab[prio];
+                taskq = taskruntab[prio];
                 mtxlk(&taskrunmtxtab[prio].lk);
                 taskqueue(task, taskq);
                 mtxunlk(&taskrunmtxtab[prio].lk);
             }
         } else if (state == TASKREADY) {
             prio = taskadjprio(task);
-            taskq = &taskruntab[prio];
+            taskq = taskruntab[prio];
             mtxlk(&taskrunmtxtab[prio].lk);
             taskqueue(task, taskq);
             mtxunlk(&taskrunmtxtab[prio].lk);
@@ -471,7 +453,7 @@ taskpick(void)
     while (!task) {
         for (prio = 0 ; prio < SCHEDNCLASS * SCHEDNPRIO ; prio++) {
             mtxlk(&taskrunmtxtab[prio].lk);
-            taskq = &taskruntab[prio];
+            taskq = taskruntab[prio];
             if (taskq) {
                 task = taskpop(taskq);
 
@@ -485,6 +467,30 @@ taskpick(void)
     return task;
 }
 
+/* get/remove task ID from beginning of queue */
+struct taskid *
+taskpopid(struct taskid *taskqueue)
+{
+    struct taskid *taskid;
+
+    taskid = taskidqueue;
+    if (taskidqueue) {
+        if (!listisempty(taskidqueue)) {
+            if (listissingular(taskidqueue)) {
+                taskidqueue->prev = NULL;
+                taskidqueue->next = NULL;
+            } else {
+                taskidqueue->prev->next = taskidqueue->next;
+                taskidqueue->next->prev = taskidqueue->prev;
+            }
+        } else {
+            taskid = NULL;
+        }
+    }
+
+    return taskid;
+}
+
 long
 taskgetid(void)
 {
@@ -492,14 +498,14 @@ taskgetid(void)
     long           retval = -1;
 
     mtxlk(&taskidmtx.lk);
-    taskid = taskidq;
+    taskid = taskidqueue;
     if (taskid) {
-        if (listissingular(taskidq)) {
-            taskid = taskidq;
-            taskidq->prev = NULL;
-            taskidq->next = NULL;
+        if (listissingular(taskidqueue)) {
+            taskid = taskidqueue;
+            taskidqueue->prev = NULL;
+            taskidqueue->next = NULL;
         } else {
-            taskid = taskpop(taskidq);
+            taskid = taskpopid(taskidqueue);
             retval = taskid->id;
         }
     }
@@ -514,11 +520,11 @@ taskfreeid(long id)
     struct taskid *taskid;
     
     mtxlk(&taskidmtx.lk);
-    taskid = taskidq;
-    if (taskidq) {
-        listaddbefore(taskid, taskidq);
+    taskid = taskidqueue;
+    if (taskidqueue) {
+        listaddbefore(taskid, taskidqueue);
     } else {
-        listinit(taskid, taskidq);
+        listinit(taskid, taskidqueue);
     }
     mtxunlk(&taskidmtx.lk);
 }
@@ -530,13 +536,13 @@ taskinitids(void)
     struct taskid *taskid;
 
     mtxlk(&taskidmtx.lk);
-    taskid = taskidq;
+    taskid = taskidqueue;
     taskid->id = id;
-    listinit(taskid, taskidq);
+    listinit(taskid, taskidqueue);
     for (id = 1 ; id < NTASK ; id++) {
-        taskid = &taskidtab[id];
+        taskid = taskidtab[id];
         taskid->id = id;
-        listaddafter(taskid, taskidq);
+        listaddafter(taskid, taskidqueue);
     }
     mtxunlk(&taskidmtx.lk);
 
