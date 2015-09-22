@@ -243,6 +243,7 @@ taskaddwait(struct task *task)
         tab->nref++;
         tab = ptab[2];
         tab->nref++;
+        tab = &tab[key3];
         listaddafter(item, tab->prev);
         ret ^= ret;
     }
