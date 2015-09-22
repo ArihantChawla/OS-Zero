@@ -234,13 +234,8 @@ taskaddwait(struct task *task)
     } else {
         fail = 1;
     }
-    if (ptr) {
-        ptr = pptr[key3];
-        item = ptr;
-    } else {
-        fail = 1;
-    }
     if (!fail) {
+        item = &ptr[key3];
         item->ptr = task;
         tab = ptab[0];
         tab->nref++;
