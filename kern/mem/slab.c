@@ -46,7 +46,7 @@ slabdiag(struct memzone *zone)
 #if (SLABMUTEX)
         if (mtxtrylk(&zone->lktab[bkt])) {
 #endif
-            hdr1 = zone->tab[bkt];
+            hdr1 = (struct slabhdr **)zone->tab[bkt];
             if (hdr1) {
                 if (slabgetprev(hdr1, zone)) {
 #if (__KERNEL__)
@@ -111,38 +111,36 @@ slabinitzone(struct memzone *zone, unsigned long base, unsigned long nb)
 //    unsigned long sz = (nb & (SLABMIN - 1)) ? rounddownpow2(nb, SLABMIN) : nb;
     unsigned long sz = nb;
     unsigned long ofs = base & (SLABMIN - 1);
-    unsigned long nslab = sz >> SLABMINLOG2;
+    unsigned long nslab;
     unsigned long hdrsz;
 
     if (ofs) {
         adr += SLABMIN - ofs;
         sz -= adr - base;
     }
+    nslab = sz >> SLABMINLOG2;
+    /* configure slab headers */
+    hdrsz = nslab * sizeof(struct slabhdr);
+    hdrsz = rounduppow2(hdrsz, PAGESIZE);
+    zone->nhdr = nslab;
+//    zone->hdrtab = (void *)adr;
+    vmmapseg((uint32_t *)&_pagetab, adr, adr, adr + hdrsz,
+             PAGEPRES | PAGEWRITE);
+    zone->hdrtab = adr;
+//    kbzero((void *)adr, hdrsz);
     /* configure magazine headers */
     hdrsz = nslab * sizeof(struct maghdr);
     hdrsz = rounduppow2(hdrsz, PAGESIZE);
-    zone->nhdr = nslab;
+    adr += hdrsz;
 #if (__KERNEL__)
-    kprintf("SLAB: reserved %lu bytes for %lu magazine headers\n", hdrsz, nslab);
+    kprintf("MAG: reserved %lu bytes for %lu magazine headers\n", hdrsz, nslab);
 #endif
     magvirtzone.nhdr = nslab;
+    vmmapseg((uint32_t *)&_pagetab, adr, adr, adr + hdrsz,
+             PAGEPRES | PAGEWRITE);
     magvirtzone.hdrtab = (void *)adr;
-    kbzero((void *)adr, hdrsz);
+//    kbzero((void *)adr, hdrsz);
     adr += hdrsz;
-#if 0
-    /* configure slab headers */
-    hdrsz = nslab * sizeof(struct slabhdr);
-#if (__KERNEL__)
-    kprintf("SLAB: reserved %lu bytes for %lu slab headers\n", hdrsz, nslab);
-#endif
-    adr = rounduppow2(adr, PAGESIZE);
-    zone->hdrtab = (void *)adr;
-    kbzero((void *)adr, hdrsz);
-    adr += hdrsz;
-#endif
-    if (adr & (SLABMIN - 1)) {
-        adr = rounduppow2(adr, SLABMIN);
-    }
 #if (__KERNEL__ && (MEMDIAG))
     slabdiag(zone);
 #endif
@@ -164,10 +162,10 @@ slabinit(struct memzone *virtzone, unsigned long base, unsigned long nbphys)
     adr = slabinitzone(virtzone, adr, nbphys);
     virtzone->base = adr;
     magvirtzone.base = adr;
-    if (adr != base) {
-        nbphys -= adr - base;
-        nbphys = rounddownpow2(nbphys, SLABMIN);
-    }
+    nbphys -= adr - base;
+    nbphys = rounddownpow2(nbphys, SLABMIN);
+    vmmapseg((uint32_t *)&_pagetab, adr, adr, adr + nbphys,
+             PAGEWRITE);
 #if (__KERNEL__)
     kprintf("%ld kilobytes kernel virtual memory free @ 0x%lx\n",
             nbphys >> 10, adr);
@@ -180,7 +178,7 @@ slabinit(struct memzone *virtzone, unsigned long base, unsigned long nbphys)
             slabsetbkt(hdr, bkt);
             slabsetfree(hdr);
             slabtab[bkt] = hdr;
-            nbphys -= sz;
+            nbphys &= ~sz;
             adr += sz;
         }
         bkt--;
@@ -344,7 +342,6 @@ slabsplit(struct memzone *zone, struct slabhdr *hdr, unsigned long dest)
     struct slabhdr  *hdr1;
     unsigned long    sz = 1UL << bkt;
 
-    slabclrinfo(hdr);
     ptr += 1UL << dest;
     while (--bkt >= dest) {
         sz >>= 1;
@@ -361,8 +358,8 @@ slabsplit(struct memzone *zone, struct slabhdr *hdr, unsigned long dest)
         slabsetfree(hdr1);
         if (slabtab[bkt]) {
             slabsetprev(slabtab[bkt], hdr1, zone);
+            slabsetnext(hdr1, slabtab[bkt], zone);
         }
-        slabsetnext(hdr1, slabtab[bkt], zone);
         slabtab[bkt] = hdr1;
 #if (SLABMUTEX) && 0
         if (bkt != dest) {
@@ -394,7 +391,7 @@ void *
 slaballoc(struct memzone *zone, unsigned long nb, unsigned long flg)
 {
     struct slabhdr **slabtab = (struct slabhdr **)zone->tab;
-    unsigned long    bkt1 = max(SLABMINLOG2, memgetbkt(nb));
+    unsigned long    bkt1 = memgetbkt(nb);
     unsigned long    bkt2 = bkt1;
     uint8_t         *ptr = NULL;
     struct slabhdr  *hdr1;

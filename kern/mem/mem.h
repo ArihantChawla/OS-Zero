@@ -29,11 +29,11 @@
 #endif
 
 struct memzone {
-    void          *tab[PTRBITS];
-    volatile long  lktab[PTRBITS];
-    unsigned long  base;
-    unsigned long  nhdr;
-    void          *hdrtab;
+    void           *tab[PTRBITS];
+    volatile long   lktab[PTRBITS];
+    unsigned long   base;
+    unsigned long   nhdr;
+    void           *hdrtab;
 };
 
 static __inline__ unsigned long

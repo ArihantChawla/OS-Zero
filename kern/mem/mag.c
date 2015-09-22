@@ -36,7 +36,7 @@ memalloc(unsigned long nb, long flg)
     struct memzone  *slabzone = &slabvirtzone;
     struct memzone  *magzone = &magvirtzone;
     volatile long   *lktab = magzone->lktab;
-    struct maghdr  **magtab = (struct maghdr **)(magzone->tab);
+    struct maghdr  **magtab = (struct maghdr **)magzone->tab;
     void            *ptr = NULL;
     unsigned long    sz = max(MAGMIN, nb);
     unsigned long    slab = 0;
@@ -57,10 +57,10 @@ memalloc(unsigned long nb, long flg)
 #endif
             slab++;
             mag = maggethdr(ptr, magzone);
-            mtxlk(&mag->lk);
-            mlk++;
+//            mtxlk(&mag->lk);
+//            mlk++;
 #if ((SLABMINLOG2 - MAGMINLOG2) < (LONGSIZELOG2 + 3))
-            mag->bmap = 0;
+            mag->bmap = 0L;
             bmap = &mag->bmap;
 #else
             bmap = mag->bmap;
@@ -76,8 +76,8 @@ memalloc(unsigned long nb, long flg)
     } else {
         mag = magtab[bkt];
         if (mag) {
-            mtxlk(&mag->lk);
-            mlk++;
+//            mtxlk(&mag->lk);
+//            mlk++;
             ptr = magpop(mag);
             if (magempty(mag)) {
                 if (mag->next) {
@@ -86,7 +86,8 @@ memalloc(unsigned long nb, long flg)
                 magtab[bkt] = mag->next;
             }
         } else {
-            ptr = slaballoc(slabzone, SLABMIN, flg);
+//            ptr = slaballoc(slabzone, SLABMIN, flg);
+            ptr = slaballoc(slabzone, sz, flg);
             if (ptr) {
 #if (!MEMTEST)
                 ptr = vmmapvirt((uint32_t *)&_pagetab, ptr, SLABMIN, flg);
@@ -105,7 +106,7 @@ memalloc(unsigned long nb, long flg)
                 sz = 1UL << bkt;
                 n = 1UL << (SLABMINLOG2 - bkt);
                 mag = maggethdr(ptr, magzone);
-                mtxlk(&mag->lk);
+//                mtxlk(&mag->lk);
                 mlk++;
                 mag->base = (uintptr_t)ptr;
                 mag->n = n;
@@ -146,7 +147,7 @@ memalloc(unsigned long nb, long flg)
         kpanic();
     }
     if (mlk) {
-        mtxunlk(&mag->lk);
+//        mtxunlk(&mag->lk);
     }
     mtxunlk(&lktab[bkt]);
 
@@ -176,7 +177,7 @@ kfree(void *ptr)
         return;
     }
     mtxlk(&lktab[bkt]);
-    mtxlk(&mag->lk);
+//    mtxlk(&mag->lk);
     ndx = ((uintptr_t)ptr - mag->base) >> bkt;
     if (!bitset(bmap, ndx)) {
         kprintf("invalid free: %p (%ld/%ld)\n",
@@ -213,7 +214,7 @@ kfree(void *ptr)
     if (freed) {
         mag->base = 0;
     }
-    mtxunlk(&mag->lk);
+//    mtxunlk(&mag->lk);
     mtxunlk(&lktab[bkt]);
 
     return;
