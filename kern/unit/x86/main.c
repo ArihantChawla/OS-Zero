@@ -122,7 +122,7 @@ kmain(struct mboothdr *hdr, unsigned long pmemsz)
     vmmapseg((uint32_t *)&_pagetab, DEVMEMBASE, DEVMEMBASE, 0xffffffffU,
              PAGEPRES | PAGEWRITE | PAGENOCACHE);
 #endif
-    schedinit();
+//    schedinit();
     /* zero kernel BSS segment */
     kbzero(&_bssvirt, (uint32_t)&_ebssvirt - (uint32_t)&_bssvirt);
     /* set kernel I/O permission bitmap to all 1-bits */
@@ -237,14 +237,15 @@ kmain(struct mboothdr *hdr, unsigned long pmemsz)
             (vmpagestat.nwired + vmpagestat.nmapped + vmpagestat.nbuf) << (PAGESIZELOG2 - 10),
             vmpagestat.nwired << (PAGESIZELOG2 - 10),
             vmpagestat.nphys << (PAGESIZELOG2 - 10));
+    k_curproc = &proctab[0];
+    k_curcpu = &cputab[0];
+    cpuinit(k_curcpu);
+    schedinit();
 #if (APIC)
     apicstarttmr(tmrcnt);
 #else
     pitinit();
 #endif
-    k_curproc = &proctab[0];
-    k_curcpu = &cputab[0];
-    cpuinit(k_curcpu);
     schedloop();
 
     /* NOTREACHED */
