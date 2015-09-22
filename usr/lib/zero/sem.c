@@ -1,9 +1,11 @@
 #include <errno.h>
+#include <pthread.h>
 #include <zero/asm.h>
 #define ZEROMTX 1
+#define ZEROPTHREAD 1
 #include <zero/mtx.h>
 #include <zero/sem.h>
-#include <zero/thr.h>
+//#include <zero/thr.h>
 
 long
 semwait(zerosem *sem)

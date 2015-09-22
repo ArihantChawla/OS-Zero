@@ -135,7 +135,7 @@ typedef struct mtxrec {
     zeromtxatr    atr;
 } zeromtxrec;
 
-#if !defined(__KERNEL__) && defined(PTHREAD) && defined(ZEROPTHREAD)
+#if 0 && !defined(__KERNEL__) && defined(PTHREAD) && defined(ZEROPTHREAD)
 
 #include <stddef.h>
 

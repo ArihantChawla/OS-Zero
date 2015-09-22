@@ -3,7 +3,6 @@
 
 #include <stddef.h>
 #include <stdint.h>
-#include <zero/mtx.h>
 
 #if defined(PTHREAD) && !defined(__KERNEL__)
 #define thrid() ((uintptr_t)pthread_self())
@@ -15,11 +14,13 @@
 #define thryield() sched_yield();
 #elif defined(__KERNEL__)
 #define thryield() schedyield();
-#elif defined(PTHREAD) && !defined(ZEROTHR)
+#elif defined(PTHREAD) || defined(ZEROPTHREAD)
 #define thryield() pthread_yield();
-#elif defined(ZEROTHR)
-#define thryield() /* FIXME */
+//#elif defined(ZEROTHR)
+//#define thryield() /* FIXME */
 #endif
+
+#include <zero/mtx.h>
 
 #if !defined(__KERNEL__)
 
@@ -39,7 +40,7 @@ typedef uintptr_t zerothrid;
 #define ZEROTHRATR_SCOPE         (1 << 7)        
 #define ZEROTHRATR_STKATR        (1 << 8)       // stack address and size
 #define ZEROTHRATR_GUARDSIZE     (1 << 9)       // stack guard size
-typedef struct thratr {
+typedef struct __zerothratr {
     long                flg;
     void               *ncpu;
     void               *cpuset;
@@ -52,7 +53,7 @@ typedef struct thratr {
 #define ZEROTHR_NOID   (~(zerothrid)0)
 #define ZEROTHR_ASLEEP 1
 #define ZEROTHR_AWAKE  0
-typedef struct thr {
+typedef struct __zerothr {
     zerothrid         id;
     long              sleep;
     zerothratr       *atr;
