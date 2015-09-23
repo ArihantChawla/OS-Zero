@@ -6,8 +6,13 @@
 #if defined(_POSIX_SOURCE)
 
 #if (!SIG32BIT)
+#if (PTHREAD)
+#define _savesigmask(sp) pthread_sigmask(SIG_BLOCK, NULL, sp)
+#define _loadsigmask(sp) pthread_sigmask(SIG_SETMASK, sp, NULL)
+#else
 #define _savesigmask(sp) sigprocmask(SIG_BLOCK, NULL, sp)
 #define _loadsigmask(sp) sigprocmask(SIG_SETMASK, sp, NULL)
+#endif
 #else
 #define _savesigmask(sp)
 #define _loadsigmask(sp)

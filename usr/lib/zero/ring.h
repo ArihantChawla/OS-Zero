@@ -14,6 +14,7 @@
 #endif
 #include <zero/cdecl.h>
 #include <zero/param.h>
+#define ZEROMTX 1
 #include <zero/mtx.h>
 #include <zero/trix.h>
 #if !defined(__KERNEL__)
