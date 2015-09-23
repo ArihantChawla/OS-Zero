@@ -574,7 +574,7 @@ taskpick(void)
 
 /* get/remove task ID from beginning of queue */
 struct taskid *
-taskpopid(struct taskid *taskqueue)
+taskpopid(struct taskid *taskidqueue)
 {
     struct taskid *taskid;
 

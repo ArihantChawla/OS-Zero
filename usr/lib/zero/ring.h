@@ -7,7 +7,7 @@
 
 #include <stdint.h>
 #include <limits.h>
-#if (RINGSHAREBUF)
+#if defined(_ZERO_SOURCE) && (RINGSHAREBUF)
 #include <sys/syscall.h>
 #include <sys/zero/syscall.h>
 #include <kern/mem/obj.h>

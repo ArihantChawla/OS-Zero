@@ -3,6 +3,9 @@
 
 #include <kern/conf.h>
 
+extern void schedyield(void);
+extern void schedinit(void);
+
 /*
  * task scheduler
  * ----------------

@@ -7,6 +7,7 @@
 #include <zero/trix.h>
 #include <kern/util.h>
 #include <kern/unit/x86/asm.h>
+#include <kern/unit/x86/cpu.h>
 #include <kern/unit/x86/trap.h>
 #include <kern/unit/x86/apic.h>
 #include <kern/unit/ia32/link.h>

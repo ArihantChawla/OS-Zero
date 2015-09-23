@@ -6,8 +6,8 @@
 #include <zero/trix.h>
 #include <kern/util.h>
 #include <kern/obj.h>
+#include <kern/sched.h>
 #include <kern/proc/proc.h>
-#include <kern/proc/sched.h>
 #include <kern/mem/page.h>
 #include <kern/io/drv/chr/cons.h>
 //#include <kern/task.h>
