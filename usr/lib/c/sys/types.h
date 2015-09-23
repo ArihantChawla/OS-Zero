@@ -86,7 +86,7 @@ typedef long            ssize_t;
 #endif
 typedef unsigned long   useconds_t;
 typedef long            suseconds_t;
-typedef long            time_t;
+typedef int64_t         time_t;
 typedef long            timer_t;
 typedef int64_t         offset_t;
 typedef uint64_t        u_offset_t;

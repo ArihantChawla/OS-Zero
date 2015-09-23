@@ -12,26 +12,26 @@
 #include <kern/unit/ia32/boot.h>
 #include <kern/unit/ia32/vm.h>
 
-struct proc proctab[NPROC] ALIGNED(PAGESIZE);
-struct task tasktab[NTASK] ALIGNED(PAGESIZE);
+struct proc proctab[NTASK] ALIGNED(PAGESIZE);
+//struct task tasktab[NTASK] ALIGNED(PAGESIZE);
 
 long
 procinit(long id)
 {
-    struct proc *proc = &proctab[id];
-    struct task *task;
-    void        *ptr;
+    long           taskid = (id == PROCKERN) ? id : taskgetid();
+    struct proc   *proc = &proctab[taskid];
+    struct task   *task;
+    void          *ptr;
 
-    if (!id) {
+    if (taskid == PROCKERN) {
         /* bootstrap */
+        task = &proc->task;
+        task->parent = proc;
         k_curproc = proc;
-        /* process ID will be zero */
-        task = &tasktab[0];
         task->state = TASKREADY;
         task->nice = 0;
         task->sched = SCHEDSYS;
         task->prio = 0;
-//        proc->task = task;
         k_curtask = task;
     }
     if (proc) {
@@ -107,13 +107,13 @@ procgetdesc(struct proc *proc, long id)
 
 /* see <kern/proc.h> for definitions of scheduler classes */
 struct proc *
-newproc(int argc, char *argv[], char *envp[], int sched)
+newproc(int argc, char *argv[], char *envp[], long sched)
 {
     struct proc *proc = kmalloc(sizeof(struct proc));
 
     proc->task.sched = sched;
     proc->task.id = taskgetid();
-    proc->task.parent = k_curproc;
+    proc->task.parent = proc;
     proc->argc = argc;
     proc->argv = argv;
     proc->envp = envp;

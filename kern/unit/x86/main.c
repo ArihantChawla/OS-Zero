@@ -136,11 +136,6 @@ kmain(struct mboothdr *hdr, unsigned long pmemsz)
 #elif (VBE)
     consinit(768 >> 3, 1024 >> 3);
 #endif
-#if 0
-    k_curproc = &proctab[0];
-    k_curcpu = &cputab[0];
-    cpuinit(k_curcpu);
-#endif
     /* TODO: use memory map from GRUB? */
 //    vminitphys((uintptr_t)&_epagetab, pmemsz);
     vminitphys((uintptr_t)&_epagetab, pmemsz);
@@ -225,8 +220,8 @@ kmain(struct mboothdr *hdr, unsigned long pmemsz)
 //    tssinit(0);
 //    machinit();
     /* execution environment */
-    procinit(0);
-    k_curtask = &k_curproc->task;
+    procinit(PROCKERN);
+//    k_curtask = &k_curproc->task;
 //    sysinit();
     kprintf("DMA buffers (%ul x %ul kilobytes) @ 0x%p\n",
             DMANCHAN, DMACHANBUFSIZE >> 10, DMABUFBASE);
@@ -237,7 +232,6 @@ kmain(struct mboothdr *hdr, unsigned long pmemsz)
             (vmpagestat.nwired + vmpagestat.nmapped + vmpagestat.nbuf) << (PAGESIZELOG2 - 10),
             vmpagestat.nwired << (PAGESIZELOG2 - 10),
             vmpagestat.nphys << (PAGESIZELOG2 - 10));
-    k_curproc = &proctab[0];
     k_curcpu = &cputab[0];
     cpuinit(k_curcpu);
     schedinit();

@@ -3,6 +3,7 @@
 
 #include <kern/conf.h>
 #include <stddef.h>
+#include <sys/types.h>
 #include <zero/cdecl.h>
 #include <zero/param.h>
 #include <zero/types.h>
@@ -24,9 +25,13 @@
 //extern struct m_cpuinfo cpuinfo;
 
 #if (ZEROSCHED)
-extern FASTCALL struct task * taskpick(void);
+extern FASTCALL struct task * taskpick(struct task *task,
+                                       unsigned long retadr,
+                                       unsigned long fp);
 #endif
-FASTCALL void                 tasksave(struct task *task, long retadr, long fp);
+FASTCALL void                 tasksave(struct task *task,
+                                       unsigned long retadr,
+                                       unsigned long fp);
 FASTCALL void                 taskjmp(struct task *task);
 
 #define __KERNEL__ 1
@@ -34,39 +39,39 @@ FASTCALL void                 taskjmp(struct task *task);
 
 /* process states */
 #define TASKNEW     0
-#define TASKSYSTEM  1
-#define TASKREADY   2
-#define TASKWAIT    3
-#define TASKSLEEP   4
-#define TASKSTOPPED 5
-#define TASKZOMBIE  6
-#define TASKNSTATE  7
+#define TASKREADY   1
+#define TASKWAIT    2
+#define TASKSLEEP   3
+#define TASKSTOPPED 4
+#define TASKZOMBIE  5
+#define TASKNSTATE  6
 
 /* process or thread attributes */
 struct task {
     /* thread control block */
-    struct m_tcb   m_tcb;               // context
+    struct m_tcb     m_tcb;             // context
     /* scheduler parameters */
-    long           prio;                // priority; < 0 for SCHEDFIFO realtime
-    long           nice;                // priority adjustment
-    long           sched;               // thread scheduler class
+    long             id;                // task ID
+    long             prio;              // priority; < 0 for SCHEDFIFO realtime
+    long             nice;              // priority adjustment
+    long             sched;             // thread scheduler class
     /* linkage */
-    struct proc   *parent;              // parent/owner process
-    struct task   *prev;                // previous in queue
-    struct task   *next;                // next in queue
+    struct proc     *parent;            // parent/owner process
+    struct task     *prev;              // previous in queue
+    struct task     *next;              // next in queue
     /* state */
-    long           state;               // thread state
+    long             state;             // thread state
     /* wait channel */
-    uintptr_t      wchan;               // wait channel
-    long           id;                  // process or thread id
+    uintptr_t        wchan;             // wait channel
+    time_t           waketm;            // wakeup time for sleeping tasks
     /* stacks */
-    uint8_t       *ustk;                // user-mode stack
-    uint8_t       *kstk;                // kernel-mode stack
+    uint8_t         *ustk;              // user-mode stack
+    uint8_t         *kstk;              // kernel-mode stack
 //    long           interact;
-    long           runtime;             // run time
+    long             runtime;           // run time
     /* system call context */
-    struct sysctx  sysctx;              // current system call
-    int            errno;               // system call error code
+    struct sysctx    sysctx;            // current system call
+    int              errno;             // system call error code
 };
 
 #if (PTRSIZE == 8)

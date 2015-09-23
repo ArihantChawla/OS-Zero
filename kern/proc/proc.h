@@ -73,7 +73,7 @@
 #define PROCPAGED    3 // page daemon; page replacement; aging, LRU-queue
 #define PROCBUFD     4 // buffer daemon; flush dirty buffers to disk
 #define PROCIDLE     5 // idle process; zeroes memory etc.
-#define PROCNPREDEF  6
+#define TASKNPREDEF  6
 
 long procinit(long id);
 long procgetpid(void);
