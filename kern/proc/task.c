@@ -39,6 +39,74 @@ static struct taskid   *taskidtab[NTASK] ALIGNED(PAGESIZE);
 static struct taskid   *taskidqueue;
 static struct tasklk    taskidmtx ALIGNED(CLSIZE);
 static struct tasklk    taskwaitmtx ALIGNED(CLSIZE);
+static long             tasknicetab[64]
+= {
+    -25,
+    -24,
+    -24,
+    -23,
+    -22,
+    -21,
+    -20,
+    -20,
+    -19,
+    -18,
+    -17,
+    -16,
+    -15,
+    -14,
+    -13,
+    -13,
+    -12,
+    -11,
+    -10,
+    -9,
+    -9,
+    -8,
+    -7,
+    -6,
+    -5,
+    -5,
+    -4,
+    -3,
+    -2,
+    -1,
+    -1,
+    0,
+    0,
+    1,
+    2,
+    2,
+    3,
+    4,
+    5,
+    6,
+    6,
+    7,
+    8,
+    9,
+    10,
+    10,
+    11,
+    12,
+    13,
+    14,
+    14,
+    15,
+    15,
+    16,
+    16,
+    17,
+    18,
+    19,
+    20,
+    20,
+    21,
+    22,
+    23,
+    24
+};
+static long            *taskniceptr = &tasknicetab[32];
 
 /* save taskead context */
 FASTCALL
@@ -82,6 +150,19 @@ taskjmp(struct task *task)
 }
 
 #if (ZEROSCHED)
+
+static __inline__ long
+tasksetnice(struct task *task, long val)
+{
+    long nice;
+    
+    val = max(-20, val);
+    val = min(19, val);
+    nice = taskniceptr[val];
+    task->nice = nice;
+
+    return nice;
+}
 
 /* adjust task priority */
 static __inline__ long

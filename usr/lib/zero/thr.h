@@ -32,22 +32,24 @@ typedef uintptr_t zerothrid;
 
 #define ZEROTHRATR_INIT          (1 << 0)       // attributes initialised
 #define ZEROTHRATR_DETACHED      (1 << 1)       // detach thread
-#define ZEROTHRATR_AFFINITY      (1 << 2)       // affinity configuration
-#define ZEROTHRATR_INHERITSCHED  (1 << 3)       // inherit scheduler parameters
-#define ZEROTHRATR_EXPLICITSCHED (1 << 4)
-#define ZEROTHRATR_SCHED_PARAM   (1 << 5)       // scheduler parameters
-#define ZEROTHRATR_SCHEDPOLICY   (1 << 6)       // scheduler policy
-#define ZEROTHRATR_SCOPE         (1 << 7)        
-#define ZEROTHRATR_STKATR        (1 << 8)       // stack address and size
-#define ZEROTHRATR_GUARDSIZE     (1 << 9)       // stack guard size
+#define ZEROTHRATR_INHERITSCHED  (1 << 2)       // inherit scheduler parameters
+#define ZEROTHRATR_EXPLICITSCHED (1 << 3)       // specify scheduler parameters
+#define ZEROTHRATR_SCHED_PARAM   (1 << 4)       // scheduler parameters
+#define ZEROTHRATR_SCHEDPOLICY   (1 << 5)       // scheduler policy
+#define ZEROTHRATR_SCOPE         (1 << 6)       // scheduling scope
+#define ZEROTHRATR_STKATR        (1 << 7)       // stack address and size
+#define ZEROTHRATR_GUARDSIZE     (1 << 8)       // stack guard size
+#define ZEROTHRATR_AFFINITY      (1 << 9)       // affinity configuration
 typedef struct __zerothratr {
     long                flg;
-    void               *ncpu;
-    void               *cpuset;
     struct sched_param  schedparm;
     void               *stkadr;
     size_t              stksize;
     size_t              guardsize;
+#if defined(_GNU_SOURCE)
+    size_t              ncpu;
+    void               *cpuset;
+#endif
 } zerothratr;
 
 #define ZEROTHR_NOID   (~(zerothrid)0)

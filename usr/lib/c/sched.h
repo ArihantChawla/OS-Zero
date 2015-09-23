@@ -9,5 +9,7 @@ extern int sched_yield(void);
 
 #endif /* !defined(__KERNEL__) */
 
+#define CPU_SETSIZE __CPU_SETSIZE
+
 #endif /* __SCHED_H__ */
 

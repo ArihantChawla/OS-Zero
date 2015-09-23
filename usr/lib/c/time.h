@@ -25,6 +25,10 @@ extern int   __daylight;
 
 #include <bits/signal.h>
 
+#if !defined(NULL)
+#define NULL               ((void *)0L)
+#endif
+
 #if (_ZERO_SOURCE)
 //#include <kern/proc/thr.h>
 #define CLOCKS_PER_SEC 1000000  // for microsecond resolution
