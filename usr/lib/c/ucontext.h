@@ -1,23 +1,15 @@
 #ifndef __UCONTEXT_H__
 #define __UCONTEXT_H__
 
-#include <signal.h>
-
-/* FIXME: implement mcontext_t for Zero Somewhere(TM) :) */
-
-typedef struct ucontext {
-    struct ucontext *uc_link;
-    sigset_t         uc_sigmask;
-    stack_t          uc_stack;
-//    mcontext_t       uc_mcontext;
-} ucontext_t;
-
 #if !defined(__KERNEL__)
+
+#include <signal.h>
+#include <bits/ucontext.h>
 
 int  getcontext(ucontext_t *uc);
 int  setcontext(const ucontext_t *uc);
 void makecontext(ucontext_t *uc, void (*func)(), int argc, ...);
-int  swapcontext(ucontext_t *olduc, const ucontext_t *uc);
+int  swapcontext(ucontext_t *restrict olduc, const ucontext_t *restrict uc);
 
 #endif /* !defined(__KERNEL__) */
 

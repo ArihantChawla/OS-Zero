@@ -33,12 +33,12 @@ FASTCALL void                 taskjmp(struct task *task);
 //#include <zero/mtx.h>
 
 /* process states */
-#define TASKCREATE  0
-#define TASKUSER    1
-#define TASKKERNEL  2
-#define TASKREADY   3
-#define TASKWAIT    4
-#define TASKSTOP    5
+#define TASKNEW     0
+#define TASKSYSTEM  1
+#define TASKREADY   2
+#define TASKWAIT    3
+#define TASKSLEEP   4
+#define TASKSTOPPED 5
 #define TASKZOMBIE  6
 #define TASKNSTATE  7
 
@@ -47,9 +47,9 @@ struct task {
     /* thread control block */
     struct m_tcb   m_tcb;               // context
     /* scheduler parameters */
-    long           prio;                // priority; < 0 for SCHEDFIFO
+    long           prio;                // priority; < 0 for SCHEDFIFO realtime
     long           nice;                // priority adjustment
-    long           sched;               // thread class
+    long           sched;               // thread scheduler class
     /* linkage */
     struct proc   *parent;              // parent/owner process
     struct task   *prev;                // previous in queue
@@ -69,15 +69,9 @@ struct task {
     int            errno;               // system call error code
 };
 
-struct taskqueue {
-    volatile long  lk;
-    struct task   *head;
-    struct task   *tail;
-};
-
-#if (LONGSIZE == 8)
+#if (PTRSIZE == 8)
 #define NLVLTASKLOG2 16
-#elif (LONGSIZE == 4)
+#elif (PTRSIZE == 4)
 #define NLVLTASKLOG2 8
 #endif
 #define NLVL0TASK    (1 << NLVLTASKLOG2)

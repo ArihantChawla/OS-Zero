@@ -8,11 +8,12 @@
 #define CHARSIZE     1
 #define SHORTSIZE    2
 #define INTSIZE      4
-#if defined(_WIN32) || defined(__WIN32) || defined(__WIN32__) \
-    || defined(__CYGWIN__) || defined(__CYGWIN32__) \
-    || defined(WIN64) || defined(_WIN64) \
-	|| defined(__WIN64) || defined(__WIN64__) \
-	|| defined(__MINGW32__) || defined(__MINGW64__)
+#if defined(_MSC_VER)                                                   \
+    ||defined(_WIN32) || defined(__WIN32) || defined(__WIN32__)         \
+    || defined(__CYGWIN__) || defined(__CYGWIN32__)                     \
+    || defined(WIN64) || defined(_WIN64)                                \
+    || defined(__WIN64) || defined(__WIN64__)                           \
+    || defined(__MINGW32__) || defined(__MINGW64__)
 #define LONGSIZE     4
 #define LONGSIZELOG2 2
 #else

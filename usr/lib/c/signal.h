@@ -8,6 +8,7 @@
 #endif
 
 #include <features.h>
+#include <stddef.h>
 #include <sys/types.h>
 #include <zero/param.h>
 #include <unistd.h>
@@ -15,7 +16,7 @@
 #if (_ZERO_SOURCE)
 #include <kern/signal.h>
 #endif
-#if (PTHREAD)
+#if (USEPOSIX199506) || (_XOPEN_SOURCE >= 500) && 0
 #include <pthread.h>
 #endif
 #include <bits/signal.h>
@@ -48,9 +49,15 @@ void        psignal(int sig, const char *message);
 /*
  * send signal sig to process or group described by pid
  * - if pid is zero, send sig to all processes in the current one's process group
- * - if pid < -1, send sig to all prccesses in the process group -pid
+ * - if pid < -1, send sig to all processes in the process group -pid
  */
 extern int kill(pid_t pid, int sig);
+
+#if (USEPOSIX199506) || (_XOPEN_SOURCE >= 500) && 0
+int pthread_kill(pthread_t thr, int sig);
+int pthread_sigmask(int how, const sigset_t *set, sigset_t *oldset);
+#endif
+
 #endif /* _POSIX_SOURCE */
 
 #if (_BSD_SOURCE) || (USEXOPENEXT)
@@ -117,28 +124,28 @@ int sigvec(int sig, const struct sigvec *vec, struct sigvec *oldvec);
 #if (_POSIX_SOURCE)
 
 /* get and/or change set of blocked signals */
-extern int sigprocmask(int how, const sigset_t *__restrict set,
-                       sigset_t *__restrict oldset);
+extern int sigprocmask(int how, const sigset_t *restrict set,
+                       sigset_t *restrict oldset);
 /* change blocked signals to set, wait for a signal, restore the set */
 extern int sigsuspend(const sigset_t *set);
-extern int sigaction(int sig, const struct sigaction *__restrict act,
-                     struct sigaction *__restrict oldact);
+extern int sigaction(int sig, const struct sigaction *restrict act,
+                     struct sigaction *restrict oldact);
 extern int sigpending(sigset_t *set);
-extern int sigwait(const sigset_t *set, int *__restrict sig);
+extern int sigwait(const sigset_t *set, int *restrict sig);
 #if (USEPOSIX199309)
-extern int sigwaitinfo(const sigset_t *__restrict set,
-                       siginfo_t *__restrict info);
-extern int sigtimedwait(const sigset_t *__restrict set,
-                        siginfo_t *__restrict info,
-                        const struct timespec *__restrict timeout);
+extern int sigwaitinfo(const sigset_t *restrict set,
+                       siginfo_t *restrict info);
+extern int sigtimedwait(const sigset_t *restrict set,
+                        siginfo_t *restrict info,
+                        const struct timespec *restrict timeout);
 extern int sigqueue(pid_t pid, int sig, const union sigval val);
 #endif /* USEPOSIX199309 */
 
 #endif /* _POSIX_SOURCE */
 
 #if (_BSD_SOURCE)
-extern const char *__const _sys_siglist[_NSIG];
-extern const char *__const sys_siglist[_NSIG];
+extern const char *const _sys_siglist[_NSIG];
+extern const char *const sys_siglist[_NSIG];
 #endif
 
 #endif /* !defined(__KERNEL__) */
@@ -146,14 +153,14 @@ extern const char *__const sys_siglist[_NSIG];
 #if (_BSD_SOURCE) || (USEXOPENEXT)
 
 struct sigstack {
-    char *ss_sp;
-    int   ss_onstack;
+    char   *ss_sp;
+    int     ss_onstack;
 };
 
 typedef struct {
-  char *ss_sp;
-  int   ss_size;
-  int   ss_flags;
+  char   *ss_sp;
+  size_t  ss_size;
+  int     ss_flags;
 } stack_t;
 
 #else /* !(_BSD_SOURCE | USEXOPENEXT) */
@@ -177,7 +184,8 @@ extern int siginterrupt(int sig, int intr);
 
 #if (_BSD_SOURCE) || (USEXOPENEXT)
 extern int sigstack(struct sigstack *stk, struct sigstack *oldstk);
-extern int sigaltstack(const stack_t *stk, const stack_t *oldstk);
+extern int sigaltstack(const stack_t *restrict stk,
+                       stack_t *restrict oldstk);
 #else
 extern int sigaltstack(const struct sigaltstack *stk,
                        struct sigaltstack *oldstk);

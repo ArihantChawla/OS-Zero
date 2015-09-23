@@ -69,6 +69,7 @@ typedef uint64_t        fsfilcnt_t;
 #endif
 #if !defined(__pid_t_defined)
 typedef long            pid_t;          // process ID
+#define __pid_t_defined
 #endif
 #if defined(_LARGEFILE64_SOURCE)
 typedef int64_t         off64_t;

@@ -6,7 +6,16 @@
  * Copyright (C) Tuomo Petteri Venäläinen 2014-2015
  */
 
+#if !defined(MALLOCDEBUG)
+#define MALLOCDEBUG       0
+#endif
+#if !defined(GNUTRACE)
+#define GNUTRACE          0
+#endif
+
+#define ARNREFCNT         0
 #define ARNFINDMAG        0
+#define MALLOCSMALLADR    1
 
 /*
  * TODO
@@ -115,6 +124,9 @@
  */
 
 #define ZMALLOCHOOKS 1
+#if !defined(ZMALLOCDEBUGHOOKS)
+#define ZMALLOCDEBUGHOOKS 0
+#endif
 
 #if defined(MALLOCDEBUG) && 0
 #include <assert.h>
@@ -372,6 +384,7 @@ struct malloc {
 #endif
     MUTEX             initlk;           // initialization lock
     MUTEX             heaplk;           // lock for sbrk()
+    long              curarn;
     long              narn;             // number of arenas in action
     long              flags;            // allocator flags
     int               zerofd;           // file descriptor for mmap()
@@ -383,7 +396,7 @@ static struct malloc g_malloc ALIGNED(PAGESIZE);
 THREADLOCAL          pthread_key_t _thrkey;
 THREADLOCAL long     _arnid = -1;
 MUTEX                _arnlk;
-long                 curarn;
+//long                 curarn;
 #if (MALLOCSTAT)
 long long            nheapbyte;
 long long            nmapbyte;
@@ -490,11 +503,21 @@ mallocstat(void)
 #define mdirl4ndx(ptr) (((uintptr_t)ptr >> MDIRL4NDX) & ((1UL << MDIRNL4BIT) - 1))
 
 #if (PTRBITS == 32)
+#define MDIRNL1BIT     10
+#define MDIRNL2BIT     10
+#define MDIRNL3BIT     (PTRBITS - MDIRNL1BIT - MDIRNL2BIT - MALLOCMINLOG2)
+#define MDIRNL1KEY     (1L << MDIRNL1BIT)
+#define MDIRNL2KEY     (1L << MDIRNL2BIT)
+#define MDIRNL3KEY     (1L << MDIRNL3BIT)
 #elif (MALLOC4LEVELTAB)
 #define MDIRNL1BIT     12
 #define MDIRNL2BIT     12
 #define MDIRNL3BIT     12
+#if (MALLOCSMALLADR)
+#define MDIRNL4BIT     (ADRBITS - MDIRNL1BIT - MDIRNL2BIT - MDIRNL3BIT - MALLOCMINLOG2)
+#else
 #define MDIRNL4BIT     (PTRBITS - MDIRNL1BIT - MDIRNL2BIT - MDIRNL3BIT - MALLOCMINLOG2)
+#endif
 #define MDIRNL1KEY     (1L << MDIRNL1BIT)
 #define MDIRNL2KEY     (1L << MDIRNL2BIT)
 #define MDIRNL3KEY     (1L << MDIRNL3BIT)
@@ -506,7 +529,11 @@ mallocstat(void)
 #else /* PTRBITS != 32 && !MALLOC4LEVELTAB */
 #define MDIRNL1BIT     12
 #define MDIRNL2BIT     16
+#if (MALLOCSMALLADR)
+#define MDIRNL3BIT     (ADRBITS - MDIRNL1BIT - MDIRNL2BIT - MALLOCMINLOG2)
+#else
 #define MDIRNL3BIT     (PTRBITS - MDIRNL1BIT - MDIRNL2BIT - MALLOCMINLOG2)
+#endif
 #define MDIRNL1KEY     (1UL << MDIRNL1BIT)
 #define MDIRNL2KEY     (1UL << MDIRNL2BIT)
 #define MDIRNL3KEY     (1UL << MDIRNL3BIT)
@@ -781,7 +808,7 @@ thrarnid(void)
         return _arnid;
     }
     mtxlk(&_arnlk);
-    _arnid = ++curarn;
+    _arnid = ++g_malloc.curarn;
     narn = _arnid;
     if (narn == g_malloc.narn) {
         /* allocate two times the number of arenas currenly in use */
@@ -833,7 +860,7 @@ thrarnid(void)
     arn = g_malloc.arntab[_arnid];
     mtxlk(&arn->nreflk);
     arn->nref++;
-//    curarn &= (g_malloc.narn - 1);
+//    g_malloc.curarn &= (g_malloc.narn - 1);
     pthread_key_create(&_thrkey, freearn);
     pthread_setspecific(_thrkey, arn);
     mtxunlk(&arn->nreflk);
@@ -852,11 +879,11 @@ thrarnid(void)
         return _arnid;
     }
     mtxlk(&_arnlk);
-    _arnid = curarn++;
+    _arnid = g_malloc.curarn++;
     arn = g_malloc.arntab[_arnid];
     mtxlk(&arn->nreflk);
     arn->nref++;
-    curarn &= (g_malloc.narn - 1);
+    g_malloc.curarn &= (g_malloc.narn - 1);
     pthread_key_create(&_thrkey, freearn);
     pthread_setspecific(_thrkey, arn);
     mtxunlk(&arn->nreflk);
@@ -2331,7 +2358,7 @@ calloc(size_t n, size_t size)
         
         return NULL;
     }
-#if (ZEROMALLOCDEBUGHOOKS) || (defined(_ZERO_SOURCE) && (ZMALLOCHOOKS))
+#if (ZMALLOCDEBUGHOOKS) || (defined(_ZERO_SOURCE) && (ZMALLOCHOOKS))
     if (__zmalloc_hook) {
         void *caller = NULL;
 
@@ -2356,7 +2383,7 @@ realloc(void *ptr,
 {
     void *retptr = NULL;
 
-#if (ZEROMALLOCDEBUGHOOKS) || (defined(_ZERO_SOURCE) && (ZMALLOCHOOKS))
+#if (ZMALLOCDEBUGHOOKS) || (defined(_ZERO_SOURCE) && (ZMALLOCHOOKS))
     if (__zrealloc_hook) {
         void *caller = NULL;
 
@@ -2387,7 +2414,7 @@ realloc(void *ptr,
 void
 free(void *ptr)
 {
-#if (ZEROMALLOCDEBUGHOOKS) || (defined(_ZERO_SOURCE) && (ZMALLOCHOOKS))
+#if (ZMALLOCDEBUGHOOKS) || (defined(_ZERO_SOURCE) && (ZMALLOCHOOKS))
     if (__zfree_hook) {
         void *caller = NULL;
 
@@ -2411,7 +2438,7 @@ aligned_alloc(size_t align,
     void   *ptr = NULL;
     size_t  aln = max(align, MALLOCMINSIZE);
 
-#if (ZEROMALLOCDEBUGHOOKS) || (defined(_ZERO_SOURCE) && (ZMALLOCHOOKS))
+#if (ZMALLOCDEBUGHOOKS) || (defined(_ZERO_SOURCE) && (ZMALLOCHOOKS))
     if (__zmemalign_hook) {
         void *caller = NULL;
         
@@ -2446,7 +2473,7 @@ posix_memalign(void **ret,
     size_t  aln = max(align, MALLOCMINSIZE);
     int     retval = -1;
 
-#if (ZEROMALLOCDEBUGHOOKS) || (defined(_ZERO_SOURCE) && (ZMALLOCHOOKS))
+#if (ZMALLOCDEBUGHOOKS) || (defined(_ZERO_SOURCE) && (ZMALLOCHOOKS))
     if (__zmemalign_hook) {
         void *caller = NULL;
         
@@ -2484,7 +2511,7 @@ valloc(size_t size)
 {
     void *ptr;
 
-#if (ZEROMALLOCDEBUGHOOKS) || (defined(_ZERO_SOURCE) && (ZMALLOCHOOKS))
+#if (ZMALLOCDEBUGHOOKS) || (defined(_ZERO_SOURCE) && (ZMALLOCHOOKS))
     if (__zmemalign_hook) {
         void *caller = NULL;
         
@@ -2511,7 +2538,7 @@ memalign(size_t align,
     void   *ptr = NULL;
     size_t  aln = max(align, MALLOCMINSIZE);
 
-#if (ZEROMALLOCDEBUGHOOKS) || (defined(_ZERO_SOURCE) && (ZMALLOCHOOKS))
+#if (ZMALLOCDEBUGHOOKS) || (defined(_ZERO_SOURCE) && (ZMALLOCHOOKS))
     if (__zmemalign_hook) {
         void *caller = NULL;
         
@@ -2541,7 +2568,7 @@ reallocf(void *ptr,
 {
     void *retptr;
 
-#if (ZEROMALLOCDEBUGHOOKS) || (defined(_ZERO_SOURCE) && (ZMALLOCHOOKS))
+#if (ZMALLOCDEBUGHOOKS) || (defined(_ZERO_SOURCE) && (ZMALLOCHOOKS))
     if (__zrealloc_hook) {
         void *caller = NULL;
 
@@ -2578,7 +2605,7 @@ pvalloc(size_t size)
     size_t  sz = rounduppow2(size, PAGESIZE);
     void   *ptr = _malloc(sz, PAGESIZE, 0);
 
-#if (ZEROMALLOCDEBUGHOOKS) || (defined(_ZERO_SOURCE) && (ZMALLOCHOOKS))
+#if (ZMALLOCDEBUGHOOKS) || (defined(_ZERO_SOURCE) && (ZMALLOCHOOKS))
     if (__zmemalign_hook) {
         void *caller = NULL;
         

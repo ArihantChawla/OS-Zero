@@ -67,13 +67,13 @@
 #endif
 
 /* system-assigned process IDs */
-#define TASKKERN     0 // main kernel; context switches, system calls, ...
-#define TASKINIT     1 // init process; the mother of all processes
-#define TASKEVD      2 // event daemon; receive and dispatch events
-#define TASKPAGED    3 // page daemon; page replacement; aging, LRU-queue
-#define TASKBUFD     4 // buffer daemon; flush dirty buffers to disk
-#define TASKIDLE     5 // idle process; zeroes memory etc.
-#define TASKNPREDEF  6
+#define PROCKERN     0 // main kernel; context switches, system calls, ...
+#define PROCINIT     1 // init process; the mother of all processes
+#define PROCEVD      2 // event daemon; receive and dispatch events
+#define PROCPAGED    3 // page daemon; page replacement; aging, LRU-queue
+#define PROCBUFD     4 // buffer daemon; flush dirty buffers to disk
+#define PROCIDLE     5 // idle process; zeroes memory etc.
+#define PROCNPREDEF  6
 
 long procinit(long id);
 long procgetpid(void);

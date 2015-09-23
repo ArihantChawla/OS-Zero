@@ -1,10 +1,19 @@
 #include <features.h>
-#include <signal.h>
 #include <setjmp.h>
+#include <signal.h>
 #include <zero/cdecl.h>
 
-/* TODO: what version of POSIX? */
-#if (_POSIX_SOURCE)
+#if defined(_POSIX_SOURCE)
+
+#if (!SIG32BIT)
+#define _savesigmask(sp) sigprocmask(SIG_BLOCK, NULL, sp)
+#define _loadsigmask(sp) sigprocmask(SIG_SETMASK, sp, NULL)
+#else
+#define _savesigmask(sp)
+#define _loadsigmask(sp)
+#endif
+
+#elif defined(_BSD_SOURCE)
 
 #if (SIG32BIT)
 #define _savesigmask(sp) ((sp)->norm = sigblock(0))
@@ -14,7 +23,7 @@
 #define _loadsigmask(sp) (sigsetmask(*(sp)))
 #endif
 
-#elif (_BSD_SOURCE)
+#else
 
 #if (SIG32BIT)
 #define _savesigmask(sp) ((sp)->norm = siggetmask())
@@ -24,9 +33,7 @@
 #define _loadsigmask(sp) (sigsetmask(*(sp)))
 #endif
 
-#endif /* _POSIX_SOURCE */
-
-/* TODO: optimise some of these with the noreturn attribute */
+#endif /* defined(_POSIX_SOURCE) */
 
 ASMLINK
 int
@@ -41,6 +48,7 @@ setjmp(jmp_buf env)
 }
 
 ASMLINK
+NORET
 void
 longjmp(jmp_buf env,
         int val)
@@ -63,6 +71,7 @@ _setjmp(jmp_buf env)
 }
 
 ASMLINK
+NORET
 void
 _longjmp(jmp_buf env,
          int val)
@@ -72,13 +81,14 @@ _longjmp(jmp_buf env,
     /* NOTREACHED */
 }
 
-#if (_POSIX_C_SOURCE) || (_XOPEN_SOURCE)
+#if defined(_POSIX_C_SOURCE) || defined(_XOPEN_SOURCE)
 
 ASMLINK
 int
 sigsetjmp(sigjmp_buf env, int savesigs)
 {
     __setjmp(env);
+
     if (savesigs) {
         _savesigmask(&(env->sigmask));
         env->havesigs = 1;
@@ -88,6 +98,7 @@ sigsetjmp(sigjmp_buf env, int savesigs)
 }
 
 ASMLINK
+NORET
 void
 siglongjmp(sigjmp_buf env, int val)
 {

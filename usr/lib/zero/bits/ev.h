@@ -27,7 +27,7 @@ typedef int64_t  evnodeid_t;
  */
 
 /* flag bits for type-field */
-#define EVISSYS           0x80000000
+#define EVSYS             0x80000000
 /* events internal for event and response management */
 #define EVPROTOMSG        0
 #define EVERRORMSG        1

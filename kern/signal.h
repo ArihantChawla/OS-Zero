@@ -1,3 +1,9 @@
+/*
+ * REFERENCE
+ * ---------
+ * http://pubs.opengroup.org/onlinepubs/009695399/basedefs/signal.h.html
+ */
+
 #ifndef __KERN_SIGNAL_H__
 #define __KERN_SIGNAL_H__
 

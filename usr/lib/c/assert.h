@@ -5,7 +5,7 @@
 
 #undef assert
 #if defined(__STDC_VERSION__) && (__STDC_VERSION__ >= 201112L)
-undef  static_assert
+#undef  static_assert
 #endif
 
 #ifdef NDEBUG

@@ -29,7 +29,7 @@ procinit(long id)
         task = &tasktab[0];
         task->state = TASKREADY;
         task->nice = 0;
-        task->sched = TASKKERNEL;
+        task->sched = SCHEDSYS;
         task->prio = 0;
 //        proc->task = task;
         k_curtask = task;

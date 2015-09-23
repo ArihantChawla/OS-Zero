@@ -11,37 +11,8 @@
 #include <zero/param.h>
 #include <sys/zero/syscall.h>
 
-#if (LONGSIZE == 4) || defined(__x86_64__) || defined(__amd64__)
-
-ASMLINK
-sysreg_t
-_syscall(sysreg_t num, sysreg_t arg1, sysreg_t arg2, sysreg_t arg3)
-{
-    sysreg_t retval;
-
-    retval = -1;
-    __asm__ __volatile__ ("movq %3, %%rax\n"
-                          "movq %4, %%rbx\n"
-                          "movq %5, %%rcx\n"
-                          "movq %6, %%rdx\n"
-                          "int $0x80\n"
-                          "jc 1f\n"
-                          "movq %%rax, %0\n"
-                          "jmp 2f\n"
-                          "1:\n"
-                          "movq %%rax, %1\n"
-                          "cmpq %2, %%rax\n"
-                          "jne 2f\n"
-                          "movq %%rbx, %%rax\n"
-                          "2:\n"
-                          : "=a" (retval), "=m" (errno)
-                          : "i" (EINTR),
-                            "rm" (num), "rm" (arg1), "rm" (arg2), "rm" (arg3));
-
-    return retval;
-}
-
-#elif defined(_WIN32) || defined(__i386__)
+#if defined(_WIN32) || (defined(__i386__)                               \
+                        && !defined(__x86_64) && !defined(__amd64))
 
 /*
  * prepare for a system call and do it
@@ -70,6 +41,36 @@ _syscall(sysreg_t num, sysreg_t arg1, sysreg_t arg2, sysreg_t arg3)
                           "cmpl %2, %%eax\n"
                           "jne 2f\n"
                           "movl %%ebx, %%eax\n"
+                          "2:\n"
+                          : "=a" (retval), "=m" (errno)
+                          : "i" (EINTR),
+                            "rm" (num), "rm" (arg1), "rm" (arg2), "rm" (arg3));
+
+    return retval;
+}
+
+#elif (LONGSIZE == 4) || defined(__x86_64__) || defined(__amd64__)
+
+ASMLINK
+sysreg_t
+_syscall(sysreg_t num, sysreg_t arg1, sysreg_t arg2, sysreg_t arg3)
+{
+    sysreg_t retval;
+
+    retval = -1;
+    __asm__ __volatile__ ("movq %3, %%rax\n"
+                          "movq %4, %%rbx\n"
+                          "movq %5, %%rcx\n"
+                          "movq %6, %%rdx\n"
+                          "int $0x80\n"
+                          "jc 1f\n"
+                          "movq %%rax, %0\n"
+                          "jmp 2f\n"
+                          "1:\n"
+                          "movq %%rax, %1\n"
+                          "cmpq %2, %%rax\n"
+                          "jne 2f\n"
+                          "movq %%rbx, %%rax\n"
                           "2:\n"
                           : "=a" (retval), "=m" (errno)
                           : "i" (EINTR),

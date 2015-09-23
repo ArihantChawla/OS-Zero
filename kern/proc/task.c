@@ -172,23 +172,13 @@ taskadjprio(struct task *task)
     long nice = task->nice;
     long sched = task->sched;
 
-    if (sched == SCHEDRT) {
-
-        return prio;
-    } else if (sched == SCHEDFIXED) {
-        /* TODO */
-        ;
-    } else {
-        /* wrap around back to 0 at SCHEDNPRIO / 2 */
-        prio++;
-        prio &= (SCHEDNPRIO >> 1) - 1;
-//        prio = (SCHEDNPRIO * sched) + (SCHEDNPRIO >> 1) + prio + task->nice;
-        prio += (SCHEDNPRIO * sched)
-//            + (randlfg2() & ((SCHEDNPRIO >> 1) - 1))
-            + nice;
-        prio = min(SCHEDNPRIO * SCHEDNCLASS - 1, prio);
-    }
+    /* wrap around back to 0 at SCHEDNPRIO */
+    prio++;
+    prio &= SCHEDNPRIO - 1;
     task->prio = prio;
+    prio += SCHEDNPRIO * sched + nice;
+    prio = min(SCHEDNPRIO * SCHEDNCLASS - 1, prio);
+    prio = max(prio, 0);
 
     return prio;
 }
@@ -443,8 +433,6 @@ taskwakeup(uintptr_t wchan)
     mtxunlk(&taskwaitmtx.lk);
 }
 
-#if 0
-
 /* switch tasks */
 FASTCALL
 struct task *
@@ -452,15 +440,12 @@ taskpick(void)
 {
     struct task  *task = k_curtask;
     struct task **taskqptr;
-    long          prio;
-    long          sched;
-    long          state;
+    long          prio = task->prio;
+    long          sched = task->sched;
+    long          state = task->state;
 
-    if (task) {
-        sched = task->sched;
-        state = task->state;
-        if (sched == SCHEDRT && state == TASKREADY) {
-            prio = task->prio;
+    if (state == TASKREADY) {
+        if (sched == SCHEDRT) {
             if (prio < 0) {
                 /* SCHED_FIFO */
                 prio = -prio;
@@ -475,84 +460,17 @@ taskpick(void)
                 taskqueue(task, taskqptr);
                 mtxunlk(&taskrunmtxtab[prio].lk);
             }
-        } else if (state == TASKREADY) {
-            prio = taskadjprio(task);
+        } else {
+            if (sched != SCHEDFIXED) {
+                prio = taskadjprio(task);
+            }
             taskqptr = &taskruntab[prio];
             mtxlk(&taskrunmtxtab[prio].lk);
             taskqueue(task, taskqptr);
             mtxunlk(&taskrunmtxtab[prio].lk);
-        } else if (state == TASKWAIT) {
-            taskaddwait(task);
         }
-    }
-    task = NULL;
-    while (!task) {
-        for (prio = 0 ; prio < SCHEDNCLASS * SCHEDNPRIO ; prio++) {
-            taskqptr = &taskruntab[prio];
-            mtxlk(&taskrunmtxtab[prio].lk);
-            task = taskqptr->head;
-            task->prev = NULL;
-            if (task) {
-                if (task->next) {
-                    task->next->prev = NULL;
-                } else {
-                    taskqptr->tail = NULL;
-                }
-                taskqptr->head = task->next;
-                mtxunlk(&taskrunmtxtab[prio].lk);
-
-                return task;
-            } else {
-                mtxunlk(&taskrunmtxtab[prio].lk);
-            }
-        }
-    }
-
-    return task;
-}
-
-#endif /* 0 */
-
-/* switch tasks */
-FASTCALL
-struct task *
-taskpick(void)
-{
-    struct task  *task = k_curtask;
-    struct task **taskqptr;
-    long          prio;
-    long          sched;
-    long          state;
-
-    if (task) {
-        sched = task->sched;
-        state = task->state;
-        if (sched == SCHEDRT && state == TASKREADY) {
-            prio = task->prio;
-            if (prio < 0) {
-                /* SCHED_FIFO */
-                prio = -prio;
-                taskqptr = &taskruntab[prio];
-                mtxlk(&taskrunmtxtab[prio].lk);
-                taskpush(task, taskqptr);
-                mtxunlk(&taskrunmtxtab[prio].lk);
-            } else {
-                /* SCHED_RR */
-                taskqptr = &taskruntab[prio];
-                mtxlk(&taskrunmtxtab[prio].lk);
-                taskqueue(task, taskqptr);
-                mtxunlk(&taskrunmtxtab[prio].lk);
-            }
-        } else if (state == TASKREADY) {
-            prio = taskadjprio(task);
-            taskqptr = &taskruntab[prio];
-            mtxlk(&taskrunmtxtab[prio].lk);
-            taskqueue(task, taskqptr);
-            mtxunlk(&taskrunmtxtab[prio].lk);
-
-        } else if (state == TASKWAIT) {
-            taskaddwait(task);
-        }
+    } else if (state == TASKWAIT) {
+        taskaddwait(task);
     }
     task = NULL;
     while (!task) {
@@ -638,7 +556,7 @@ taskfreeid(long id)
 void
 taskinitids(void)
 {
-    long           id = TASKNPREDEF;
+    long           id = PROCNPREDEF;
     struct taskid *taskid;
 
     mtxlk(&taskidmtx.lk);

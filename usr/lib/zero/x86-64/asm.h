@@ -1,6 +1,7 @@
 #ifndef __ZERO_X86_64_ASM_H__
 #define __ZERO_X86_64_ASM_H__
 
+#include <zero/cdecl.h>
 #include <zero/x86/asm.h>
 
 #define m_atominc(p)            m_atominc64(p)
@@ -14,7 +15,7 @@
 #define m_scanhi1bit(l)         m_bsr64(l)
 
 #if !defined(__GNUC__)
-static __inline__ void
+static INLINE void
 m_getretadr(void **pp) {
     void *_ptr;
     
@@ -24,7 +25,7 @@ m_getretadr(void **pp) {
     return;
 }
 
-static __inline__ void
+static INLINE void
 m_getfrmadr(void **pp)
 {
     void *_ptr;
@@ -36,7 +37,7 @@ m_getfrmadr(void **pp)
 }
 #endif /* !defined(__GNUC__) */
 
-static __inline__ void
+static INLINE void
 m_loadretadr(void *frm, void **pp)
 {
     void *_ptr;
@@ -47,7 +48,7 @@ m_loadretadr(void *frm, void **pp)
     return;
 }
 
-static __inline__ void
+static INLINE void
 m_getretfrmadr(void **pp)
 {
     void *_ptr;

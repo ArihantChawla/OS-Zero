@@ -23,9 +23,9 @@ extern void schedinit(void);
 
 /* task scheduler classes */
 //#define SCHEDRT           (-1L)
-#define SCHEDRT           (-1L)
-#define SCHEDFIXED        (-2L) // SYNC, INPUT, AUDIO, VIDEO
-#define SCHEDDEADLINE     (-3L)
+#define SCHEDFIXED        (-1L) // SYNC, INPUT, AUDIO, VIDEO
+#define SCHEDRT           (-2L) // realtime tasks
+#define SCHEDDEADLINE     (-3L) // deadline tasks
 #define SCHEDSYS          0     // system tasks
 #define SCHEDUSER         1     // user tasks
 #define SCHEDBATCH        2     // batch tasks

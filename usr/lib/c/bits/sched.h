@@ -70,7 +70,7 @@ typedef struct {
 #define CPU_FREE(set)         free(set)
 
 #define CPU_ZERO_S(sz, set)       memset(set, 0, sz)
-#define CPU_SET(cpu, sz, set)     setbit(set->__bitmap, cpu)
+#define CPU_SET_S(cpu, sz, set)   setbit(set->__bitmap, cpu)
 #define CPU_CLR_S(cpu, sz, set)   clrbit(set->__bitmap, cpu)
 #define CPU_ISSET_S(cpu, sz, set) bitset(set->__bitmap, cpu)
 #define CPU_COUNT_S(sz, set)      __sched_count_cpus(set, __CPU_SETNCHAR)
