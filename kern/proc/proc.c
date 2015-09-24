@@ -13,19 +13,20 @@
 #include <kern/unit/ia32/vm.h>
 
 struct proc proctab[NTASK] ALIGNED(PAGESIZE);
-//struct task tasktab[NTASK] ALIGNED(PAGESIZE);
+struct task tasktab[NTASK] ALIGNED(PAGESIZE);
 
 long
 procinit(long id)
 {
-    long           taskid = (id == PROCKERN) ? id : taskgetid();
+    long           taskid = (id < TASKNPREDEF) ? id : taskgetid();
     struct proc   *proc = &proctab[taskid];
-    struct task   *task;
+    struct task   *task = &tasktab[taskid];
     void          *ptr;
 
     if (taskid == PROCKERN) {
         /* bootstrap */
-        task = &proc->task;
+//        task = &proc->task;
+        proc->task = task;
         task->parent = proc;
         k_curproc = proc;
         task->state = TASKREADY;
@@ -49,15 +50,15 @@ procinit(long id)
         ptr = kmalloc(KERNSTKSIZE);
         if (ptr) {
             kbzero(ptr, KERNSTKSIZE);
-            proc->task.kstk = ptr;
+            proc->task->kstk = ptr;
         }
         ptr = kmalloc(PROCSTKSIZE);
         if (ptr) {
             kbzero(ptr, PROCSTKSIZE);
-            proc->task.ustk = ptr;
+            proc->task->ustk = ptr;
         } else {
             kfree(proc->pdir);
-            kfree(proc->task.kstk);
+            kfree(proc->task->kstk);
             kfree(proc);
 
             return -1;
@@ -69,8 +70,8 @@ procinit(long id)
             proc->dtab = ptr;
         } else {
             kfree(proc->pdir);
-            kfree(proc->task.ustk);
-            kfree(proc->task.kstk);
+            kfree(proc->task->ustk);
+            kfree(proc->task->kstk);
             kfree(proc);
 
             return -1;
@@ -83,8 +84,8 @@ procinit(long id)
             proc->vmhdrtab = ptr;
         } else {
             kfree(proc->pdir);
-            kfree(proc->task.ustk);
-            kfree(proc->task.kstk);
+            kfree(proc->task->ustk);
+            kfree(proc->task->kstk);
             kfree(proc->dtab);
             kfree(proc);
 
@@ -109,11 +110,14 @@ procgetdesc(struct proc *proc, long id)
 struct proc *
 newproc(int argc, char *argv[], char *envp[], long sched)
 {
-    struct proc *proc = kmalloc(sizeof(struct proc));
+    long         taskid = taskgetid();
+    struct proc *proc = &proctab[taskid];
+    struct task *task = &tasktab[taskid];
 
-    proc->task.sched = sched;
-    proc->task.id = taskgetid();
-    proc->task.parent = proc;
+    task->id = taskid;
+    task->sched = sched;
+    task->parent = proc;
+    proc->task = task;
     proc->argc = argc;
     proc->argv = argv;
     proc->envp = envp;

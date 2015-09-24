@@ -81,7 +81,7 @@ void procfreepid(long id);
 
 /* process */
 struct proc {
-    struct task       task;
+    struct task      *task;
     long              nthr;             // # of threads
     struct task     **thrtab;           // child threads
     /* round-robin queue */
