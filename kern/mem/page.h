@@ -32,18 +32,10 @@
 #define pageaddset(pg) (vmsetmap[pagenum((pg)->adr)] = k_curpid)
 extern pid_t           vmsetmap[NPAGEPHYS];
 
-#if 0
-struct upage {
-//    struct perm *perm;
-    struct page *prev;
-    struct page *next;
-};
-#endif
-
 #define PAGEWIREBIT 0x00000001
 #define PAGEBUFBIT  0x00000002
 struct page {
-    struct perm    perm;        // page permissions
+    struct perm   *perm;        // page permissions
     long           flg;         // page flags
     uintptr_t      adr;         // page address
     unsigned long  nflt;        // # of page-fault exceptions triggered
@@ -54,12 +46,6 @@ struct page {
     off_t          ofs;         // paging device offset
 };
 
-struct pageq {
-    volatile long  lk;
-    struct page   *head;
-    struct page   *tail;
-};
-
 typedef int64_t swapoff_t;
 
 #define PAGEDEVMASK        ((UINT64_C(1) << PAGESIZELOG2) - 1)
@@ -68,24 +54,30 @@ typedef int64_t swapoff_t;
 #define swapblkid(adr)     ((adr) >> PAGESIZELOG2)
 #define swapdevid(adr)     ((adr) & PAGEDEVMASK)
 struct swapdev {
-    swapoff_t     npg;
-    swapoff_t    *pgmap;
-    struct page  *pgtab;
-    struct pageq  freeq;
+    swapoff_t    npg;
+    swapoff_t   *pgmap;
+    struct page *pgtab;
+    struct page *freeq;
 };
 
+#if 0
 #define HTLIST_NOLOCK 1
 #define HTLIST_TYPE  struct page
 #define HTLIST_QTYPE struct pageq
 #include <zero/htlist.h>
+#endif
+#define QUEUE_TYPE struct page
+#include <zero/queue.h>
 #define pagegetqid(pg)   (tzerol(pg->nflt))
-#define pagepop(pq, rpp) htlistpop(pq, rpp)
-#define pagepush(pq, pg) htlistpush(pq, pg)
-#define pagedeq(pq, rpp) htlistdequeue(pq, rpp)
-#define pagerm(pq, pg)   htlistrm(pq, pg)
+#define pagepop(pq)      queuepop(pq)
+#define pagepush(pg, pq) queuepush(pg, pq)
+#define pagedequeue(pq)  queuegetlast(pq)
+#define pagerm(pg, pq)   queuermitem(pg, pq)
 
-void          pageinitzone(uintptr_t base, struct pageq *zone, unsigned long nb);
-void          pageaddzone(uintptr_t base, struct pageq *zone, unsigned long nb);
+void          pageinitzone(uintptr_t base, struct page **zone,
+                           unsigned long nb);
+void          pageaddzone(uintptr_t base, struct page **zone,
+                          unsigned long nb);
 void          pageinit(uintptr_t base, unsigned long nb);
 struct page * pagealloc(void);
 void          pagefree(void *adr);

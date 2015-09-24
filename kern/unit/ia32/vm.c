@@ -27,22 +27,23 @@
 
 extern void pginit(void);
 
-extern uint32_t      kernpagedir[NPTE];
-struct page          vmphystab[NPAGEPHYS] ALIGNED(PAGESIZE);
-struct pageq         vmlrutab[1UL << (LONGSIZELOG2 + 3)];
+extern uint32_t       kernpagedir[NPTE];
+struct page           vmphystab[NPAGEPHYS] ALIGNED(PAGESIZE);
+volatile long         vmlrulktab[1UL << (LONGSIZELOG2 + 3)];
+struct page          *vmlrutab[1UL << (LONGSIZELOG2 + 3)];
 
 //static struct vmpage  vmpagetab[NPAGEMAX] ALIGNED(PAGESIZE);
 #if (PAGEDEV)
-static struct dev    vmdevtab[NPAGEDEV];
-static volatile long vmdevlktab[NPAGEDEV];
+static struct dev     vmdevtab[NPAGEDEV];
+static volatile long  vmdevlktab[NPAGEDEV];
 #endif
 #if 0
 static struct vmbuf  vmbuftab[1L << (PTRBITS - BUFSIZELOG2)];
 struct vmbufq        vmbufq;
 #endif
-struct pageq         vmphysq;
-struct pageq         vmshmq;
-struct vmpagestat    vmpagestat;
+struct page          *vmphysq;
+struct page          *vmshmq;
+struct vmpagestat     vmpagestat;
 
 /*
  * 32-bit page directory is flat 4-megabyte table of page-tables.
@@ -272,7 +273,7 @@ vmpagefault(unsigned long pid, uint32_t adr, uint32_t flags)
                 vmpagestat.nmapped++;
                 pg->nflt = 1;
                 if (!(page & PAGEWIRED)) {
-                    pagepush(&vmlrutab[0], pg);
+                    pagepush(pg, &vmlrutab[0]);
                 }
             }
             *pte = page | flg | PAGEPRES;
@@ -284,7 +285,7 @@ vmpagefault(unsigned long pid, uint32_t adr, uint32_t flags)
         if (pg) {
             pg->nflt++;
             qid = pagegetqid(pg);
-            pagepush(&vmlrutab[qid], pg);
+            pagepush(pg, &vmlrutab[qid]);
         }
 #endif
     }
