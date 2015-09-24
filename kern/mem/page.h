@@ -60,19 +60,12 @@ struct swapdev {
     struct page *freeq;
 };
 
-#if 0
-#define HTLIST_NOLOCK 1
-#define HTLIST_TYPE  struct page
-#define HTLIST_QTYPE struct pageq
-#include <zero/htlist.h>
-#endif
 #define QUEUE_TYPE struct page
 #include <zero/queue.h>
-#define pagegetqid(pg)   (tzerol(pg->nflt))
+#define pagegetqid(pg)   (lzerol(pg->nflt))
 #define pagepop(pq)      queuepop(pq)
 #define pagepush(pg, pq) queuepush(pg, pq)
 #define pagedequeue(pq)  queuegetlast(pq)
-#define pagerm(pg, pq)   queuermitem(pg, pq)
 
 void          pageinitzone(uintptr_t base, struct page **zone,
                            unsigned long nb);
