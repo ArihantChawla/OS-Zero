@@ -1,4 +1,5 @@
 #include <stddef.h>
+#include <stdint.h>
 #include <signal.h>
 #include <kern/conf.h>
 #include <kern/util.h>
@@ -18,10 +19,12 @@ struct task tasktab[NTASK] ALIGNED(PAGESIZE);
 long
 procinit(long id)
 {
-    long           taskid = (id < TASKNPREDEF) ? id : taskgetid();
-    struct proc   *proc = &proctab[taskid];
-    struct task   *task = &tasktab[taskid];
-    void          *ptr;
+    long            taskid = (id < TASKNPREDEF) ? id : taskgetid();
+    struct proc    *proc = &proctab[taskid];
+    struct task    *task = &tasktab[taskid];
+    struct taskstk *stk;
+    void           *ptr;
+    uint8_t        *u8ptr;
 
     if (taskid == PROCKERN) {
         /* bootstrap */
@@ -47,16 +50,28 @@ procinit(long id)
         }
         ptr = kmalloc(KERNSTKSIZE);
         if (ptr) {
+            u8ptr = ptr;
+            stk = &task->kstk;
+            u8ptr += KERNSTKSIZE;
             kbzero(ptr, KERNSTKSIZE);
-            proc->task->kstk = ptr;
+            stk->top = u8ptr;
+            stk->sp = u8ptr;
+            stk->base = ptr;
+            stk->size = KERNSTKSIZE;
         }
-        ptr = kmalloc(PROCSTKSIZE);
+        ptr = kmalloc(TASKSTKSIZE);
         if (ptr) {
-            kbzero(ptr, PROCSTKSIZE);
-            proc->task->ustk = ptr;
+            u8ptr = ptr;
+            stk = &task->ustk;
+            u8ptr += KERNSTKSIZE;
+            kbzero(ptr, TASKSTKSIZE);
+            stk->top = u8ptr;
+            stk->sp = u8ptr;
+            stk->base = ptr;
+            stk->size = TASKSTKSIZE;
         } else {
             kfree(proc->pdir);
-            kfree(proc->task->kstk);
+            kfree(task->kstk.base);
             kfree(proc);
 
             return -1;
@@ -68,8 +83,8 @@ procinit(long id)
             proc->dtab = ptr;
         } else {
             kfree(proc->pdir);
-            kfree(proc->task->ustk);
-            kfree(proc->task->kstk);
+            kfree(task->ustk.base);
+            kfree(task->kstk.base);
             kfree(proc);
 
             return -1;
@@ -82,8 +97,8 @@ procinit(long id)
             proc->vmhdrtab = ptr;
         } else {
             kfree(proc->pdir);
-            kfree(proc->task->ustk);
-            kfree(proc->task->kstk);
+            kfree(task->ustk.base);
+            kfree(task->kstk.base);
             kfree(proc->dtab);
             kfree(proc);
 

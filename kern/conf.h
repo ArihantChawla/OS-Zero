@@ -18,7 +18,7 @@
 #define NPROC       1024        // maximum number of running processes on system
 #define NTASK       4096        // maximum number of running tasks on system
 #define TASKNDESC   16384       // maximum number of descriptors per process
-#define PROCSTKSIZE (1024 * 1024)
+#define TASKSTKSIZE (1024 * 1024)
 #if (SMP)
 #define NCPU        8
 #else

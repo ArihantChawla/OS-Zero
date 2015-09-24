@@ -46,6 +46,13 @@ FASTCALL void                 taskjmp(struct task *task);
 #define TASKZOMBIE  5
 #define TASKNSTATE  6
 
+struct taskstk {
+    uint8_t *top;
+    void    *sp;
+    void    *base;
+    size_t   size;
+};
+
 /* process or thread attributes */
 struct task {
     /* thread control block */
@@ -65,8 +72,13 @@ struct task {
     uintptr_t        wchan;             // wait channel
     time_t           waketm;            // wakeup time for sleeping tasks
     /* stacks */
+    struct taskstk   ustk;
+    struct taskstk   kstk;
+    struct taskstk   altstk;
+#if 0
     uint8_t         *ustk;              // user-mode stack
     uint8_t         *kstk;              // kernel-mode stack
+#endif
 //    long           interact;
     long             runtime;           // run time
     /* system call context */

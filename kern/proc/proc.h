@@ -79,6 +79,20 @@ long procinit(long id);
 long procgetpid(void);
 void procfreepid(long id);
 
+struct procmem {
+    void   *trapvec;
+    size_t  trapvecsize;
+    void   *text;
+    size_t  textsize;
+    void   *rodata;
+    size_t  rodatasize;
+    void   *data;
+    size_t  datasize;
+    void   *bss;
+    size_t  heapsize;
+    void   *brk;
+};
+
 /* process */
 struct proc {
     struct task      *task;
