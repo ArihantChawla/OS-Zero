@@ -182,7 +182,7 @@ vmmapvirt(uint32_t *pagetab, void *virt, uint32_t size, uint32_t flg)
     uint32_t *pte;
     long      n;
 
-    adr = (uint32_t)virt & PFLTPAGEMASK;
+    adr = (uint32_t)virt & PAGEFLTPAGEMASK;
     n = rounduppow2(size, PAGESIZE) >> PAGESIZELOG2;
     pte = pagetab + vmpagenum(virt);
     while (n--) {
@@ -207,7 +207,7 @@ vmfreephys(void *virt, uint32_t size)
     pte = (uint32_t *)((uint8_t *)&_pagetab + vmpagenum(virt));
     while (n--) {
         adr = *pte;
-        adr &= PFLTPAGEMASK;
+        adr &= PAGEFLTPAGEMASK;
         if (!adr) {
 
             continue;
@@ -240,12 +240,12 @@ void
 vmpagefault(unsigned long pid, uint32_t adr, uint32_t flags)
 {
     uint32_t    *pte = (uint32_t *)&_pagetab + vmpagenum(adr);
-    uint32_t     flg = *pte & (PFLTFLGMASK | PAGESYSFLAGS);
+    uint32_t     flg = *pte & (PAGEFLTFLGMASK | PAGESYSFLAGS);
     uint32_t     page = *pte;
     struct page *pg = NULL;
 //    unsigned long  qid;
 
-    if (!(page & ~(PFLTFLGMASK | PAGESYSFLAGS))) {
+    if (!(page & ~(PAGEFLTFLGMASK | PAGESYSFLAGS))) {
         pg = pagealloc();
         if (pg) {
             mtxlk(&pg->lk);

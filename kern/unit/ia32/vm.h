@@ -2,6 +2,7 @@
 #define __UNIT_IA32_VM_H__
 
 #include <stdint.h>
+#include <zero/param.h>
 //#include <kern/buf.h>
 
 #include <kern/unit/ia32/link.h>
@@ -39,19 +40,19 @@ vmflushtlb(void *adr)
 }
 
 /* physical memory limit; leave high areas for devices */
-#define DEVMEMBASE      0xe0000000                      // 3.5 G
+#define DEVMEMBASE      0xe0000000      // 3.5 G
 
 /* virtual memory parameters */
-#define NPAGEMAX        (NPDE * NPTE)                   // # of virtual pages
-#define NPDE            1024                            // per directory
-#define NPTE            1024                            // per table
-//#define PAGETAB         0x00700000U                     // physical address
+#define NPAGEMAX        (NPDE * NPTE)   // # of virtual pages
+#define NPDE            1024            // per directory
+#define NPTE            1024            // per table
+//#define PAGETAB         0x00700000U   // physical address
 #define PAGETABSIZE     (NPDE * NPTE * sizeof(uint32_t))
 #define PDSHIFT         22
 #define PTSHIFT         12
-#define VMPDMASK        0xffc00000                      // top 10 bits
-#define VMPTMASK        0x003ff000                      // bits 12..21
-#define VMPGMASK        0xfffff000U                     // page frame; 22 bits
+#define VMPDMASK        0xffc00000      // top 10 bits
+#define VMPTMASK        0x003ff000      // bits 12..21
+#define VMPGMASK        0xfffff000U     // page frame; 22 bits
 
 /* page structure setup */
 
@@ -59,35 +60,35 @@ vmflushtlb(void *adr)
  * page flags
  */
 /* standard IA-32 flags */
-#define PAGEPRES     0x00000001U	// present
-#define PAGEWRITE    0x00000002U	// writeable
-#define PAGEUSER     0x00000004U	// user-accessible
-#define PAGENOCACHE  0x00000010U        // disable caching
-#define PAGEREF      0x00000020U	// has been referenced
-#define PAGEDIRTY    0x00000040U	// has been written to
-#define PAGESUPER    0x00000080U	// 4M page
-#define PAGEGLOBAL   0x00000100U	// global
-#define PAGESYS1     0x00000200U	// reserved for system
-#define PAGESYS2     0x00000400U	// reserved for system
-#define PAGESYS3     0x00000800U	// reserved for system
+#define PAGEPRES        0x00000001U	// present
+#define PAGEWRITE       0x00000002U	// writeable
+#define PAGEUSER        0x00000004U	// user-accessible
+#define PAGENOCACHE     0x00000010U     // disable caching
+#define PAGEREF         0x00000020U	// has been referenced
+#define PAGEDIRTY       0x00000040U	// has been written to
+#define PAGESUPER       0x00000080U	// 4M page
+#define PAGEGLOBAL      0x00000100U	// global
+#define PAGESYS1        0x00000200U	// reserved for system
+#define PAGESYS2        0x00000400U	// reserved for system
+#define PAGESYS3        0x00000800U	// reserved for system
 /* custom flags */
-#define PAGESWAPPED  PAGESYS1           // swapped out
-#define PAGEBUF      PAGESYS2           // buffer cache
-#define PAGEWIRED    PAGESYS3           // wired
+#define PAGESWAPPED     PAGESYS1        // swapped out
+#define PAGEBUF         PAGESYS2        // buffer cache
+#define PAGEWIRED       PAGESYS3        // wired
 #define PAGESYSFLAGS (PAGESWAPPED | PAGEBUF | PAGEWIRED)
 
 /* page fault management */
 
 /* page fault exception */
 #define NPAGEDEV     16
-//#define pfltdev(adr)  (((adr) & PFLTDEVMASK) >> 3)
-#define pfltadr(adr) ((adr) & PFLTPAGEMASK)
-#define PFLTPRES     0x00000001U	// page is present
-#define PFLTWRITE    0x00000002U	// write fault
-#define PFLTUSER     0x00000004U	// user fault
-#define PFLTFLGMASK  0x00000007U
-#define PFLTADRMASK  0xfffffff8U
-#define PFLTPAGEMASK 0xfffff000U
+//#define pfltdev(adr)  (((adr) & PAGEFLTDEVMASK) >> 3)
+#define pagefltadr(adr) ((adr) & PAGEFLTPAGEMASK)
+#define PAGEFLTPRES     0x00000001U	// page is present
+#define PAGEFLTWRITE    0x00000002U	// write fault
+#define PAGEFLTUSER     0x00000004U	// user fault
+#define PAGEFLTFLGMASK  0x00000007U
+#define PAGEFLTADRMASK  0xfffffff8U
+#define PAGEFLTPAGEMASK 0xfffff000U
 
 struct vmpagestat {
     unsigned long nphys;

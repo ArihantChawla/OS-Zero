@@ -229,7 +229,7 @@ struct apic {
     uint32_t       res46[4];
 };
 
-static __inline__ volatile uint32_t
+static __inline__ uint32_t
 apicread(uint32_t reg)
 {
     volatile uint32_t ret = mpapic[reg >> 2];
