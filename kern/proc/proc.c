@@ -113,7 +113,6 @@ newproc(int argc, char *argv[], char *envp[], long sched)
     struct task *task = &tasktab[taskid];
 
     task->state = TASKNEW;
-    task->id = taskid;
     task->sched = sched;
     task->parent = proc;
     proc->task = task;
