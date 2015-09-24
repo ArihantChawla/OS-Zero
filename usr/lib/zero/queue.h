@@ -62,6 +62,7 @@ queueappend(QUEUE_TYPE *item, QUEUE_TYPE **queue)
     return;
 }
 
+/* get/remove item from end of queue */
 static __inline__ QUEUE_TYPE *
 queuegetlast(QUEUE_TYPE **queue)
 {
@@ -82,6 +83,7 @@ queuegetlast(QUEUE_TYPE **queue)
     return item;
 }
 
+/* remove item from queue */
 static __inline__ void
 queuermitem(QUEUE_TYPE *item, QUEUE_TYPE **queue)
 {

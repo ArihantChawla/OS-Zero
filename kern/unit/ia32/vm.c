@@ -37,10 +37,6 @@ struct page          *vmlrutab[1UL << (LONGSIZELOG2 + 3)];
 static struct dev     vmdevtab[NPAGEDEV];
 static volatile long  vmdevlktab[NPAGEDEV];
 #endif
-#if 0
-static struct vmbuf  vmbuftab[1L << (PTRBITS - BUFSIZELOG2)];
-struct vmbufq        vmbufq;
-#endif
 struct page          *vmphysq;
 struct page          *vmshmq;
 struct vmpagestat     vmpagestat;
@@ -186,7 +182,7 @@ vmmapvirt(uint32_t *pagetab, void *virt, uint32_t size, uint32_t flg)
     uint32_t *pte;
     long      n;
 
-    adr = (uint32_t)virt & PFPAGEMASK;
+    adr = (uint32_t)virt & PFLTPAGEMASK;
     n = rounduppow2(size, PAGESIZE) >> PAGESIZELOG2;
     pte = pagetab + vmpagenum(virt);
     while (n--) {
@@ -211,21 +207,13 @@ vmfreephys(void *virt, uint32_t size)
     pte = (uint32_t *)((uint8_t *)&_pagetab + vmpagenum(virt));
     while (n--) {
         adr = *pte;
-        adr &= PFPAGEMASK;
+        adr &= PFLTPAGEMASK;
         if (!adr) {
 
             continue;
         }
-        if (*pte & PAGEBUF) {
-#if 0
-            buf = &vmbuftab[vmbufid(adr)];
-            nref = vmgetbufnref(buf);
-            vmsetbufnref(buf, --nref);
-            if (!nref) {
-                vmrmbuf(adr);
-            }
-#endif
-        } else if (*pte & PAGESWAPPED) {
+        
+        if (*pte & PAGESWAPPED) {
 //            swapfree(adr);
         } else if (!(*pte & PAGEWIRED)) {
 #if 0
@@ -252,22 +240,15 @@ void
 vmpagefault(unsigned long pid, uint32_t adr, uint32_t flags)
 {
     uint32_t    *pte = (uint32_t *)&_pagetab + vmpagenum(adr);
-    uint32_t     flg = *pte & (PFFLGMASK | PAGESYSFLAGS);
+    uint32_t     flg = *pte & (PFLTFLGMASK | PAGESYSFLAGS);
     uint32_t     page = *pte;
     struct page *pg = NULL;
 //    unsigned long  qid;
 
-    if (!(page & ~(PFFLGMASK | PAGESYSFLAGS))) {
+    if (!(page & ~(PFLTFLGMASK | PAGESYSFLAGS))) {
         pg = pagealloc();
         if (pg) {
-            if (flg & PAGEBUF) {
-#if 0
-                vmpagestat.nbuf++;
-                if (vmisbufadr(adr)) {
-                    vmaddbuf(adr);
-                }
-#endif
-            } else if (flg & PAGEWIRED) {
+            if (flg & PAGEWIRED) {
                 vmpagestat.nwired++;
             } else {
                 vmpagestat.nmapped++;

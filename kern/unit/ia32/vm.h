@@ -80,14 +80,14 @@ vmflushtlb(void *adr)
 
 /* page fault exception */
 #define NPAGEDEV     16
-//#define pfdev(adr)  (((adr) & PFDEVMASK) >> 3)
-#define pfadr(adr)   ((adr) & PFPAGEMASK)
-#define PFPRES       0x00000001U	// page is present
-#define PFWRITE      0x00000002U	// write fault
-#define PFUSER       0x00000004U	// user fault
-#define PFFLGMASK    0x00000007U
-#define PFADRMASK    0xfffffff8U
-#define PFPAGEMASK   0xfffff000U
+//#define pfltdev(adr)  (((adr) & PFLTDEVMASK) >> 3)
+#define pfltadr(adr) ((adr) & PFLTPAGEMASK)
+#define PFLTPRES     0x00000001U	// page is present
+#define PFLTWRITE    0x00000002U	// write fault
+#define PFLTUSER     0x00000004U	// user fault
+#define PFLTFLGMASK  0x00000007U
+#define PFLTADRMASK  0xfffffff8U
+#define PFLTPAGEMASK 0xfffff000U
 
 struct vmpagestat {
     unsigned long nphys;
@@ -95,105 +95,6 @@ struct vmpagestat {
     unsigned long nbuf;
     unsigned long nwired;
 };
-
-#define VMBUFNREFMASK 0x07
-#define vmsetbufnref(bp, npg)                                           \
-    ((bp)->prev = (void *)((uint32_t)((bp)->prev)                       \
-                           | (((npg) & VMBUFNREFMASK) << 4)),           \
-     (bp)->next = (void *)((uint32_t)((bp)->next)                       \
-                           | (((npg) >> 4) & VMBUFNREFMASK)))
-#define vmgetbufnref(bp)                                                \
-    (((uint32_t)((bp)->prev) & VMBUFNREFMASK)                           \
-     | (((uint32_t)((bp)->next) & VMBUFNREFMASK) << 4))
-#define vmgetprevbuf(bp)                                                \
-    ((void *)((uint32_t)((bp)->prev) & ~VMBUFNREFMASK))
-#define vmgetnextbuf(bp)                                                \
-    ((void *)((uint32_t)((bp)->next) & ~VMBUFNREFMASK))
-struct vmbuf {
-    struct vmbuf *prev;
-    struct vmbuf *next;
-};
-
-struct vmbufq {
-    long           lk;
-    struct vmbuf *head;
-    struct vmbuf *tail;
-};
-
-#define vmaddbuf(adr)                                                   \
-    do {                                                                \
-        struct vmbufq *_bufq = &vmbufq;                                 \
-        struct vmbuf  *_hdrtab = vmbuftab;                              \
-        struct vmbuf  *_buf = &_hdrtab[vmbufid(adr)];                   \
-        struct vmbuf  *_head;                                           \
-                                                                        \
-        _buf->prev = NULL;                                              \
-        mtxlk(&vmbufq.lk);                                              \
-        _head = _bufq->head;                                            \
-        _buf->next = _head;                                             \
-        if (_head) {                                                    \
-            _head->prev = _buf;                                         \
-        } else {                                                        \
-            _bufq->tail = _buf;                                         \
-        }                                                               \
-        _bufq->head = _buf;                                             \
-        mtxunlk(&vmbufq.lk);                                            \
-    } while (0)
-
-#define vmrmbuf(adr)                                                    \
-    do {                                                                \
-        struct vmbufq *_bufq = &vmbufq;                                 \
-        struct vmbuf  *_hdrtab = vmbuftab;                              \
-        struct vmbuf  *_buf = &_hdrtab[vmbufid(adr)];                   \
-        struct vmbuf  *_tmp;                                            \
-                                                                        \
-        mtxlk(&vmbufq.lk);                                              \
-        _tmp = _buf->prev;                                              \
-        if (_tmp) {                                                     \
-            _tmp->next = _buf->next;                                    \
-        } else {                                                        \
-            _tmp = _buf->next;                                          \
-            _bufq->head = _tmp;                                         \
-            if (_tmp) {                                                 \
-                _tmp->prev = _buf->prev;                                \
-            } else {                                                    \
-                _bufq->tail = _tmp;                                     \
-            }                                                           \
-            _bufq->head = _tmp;                                         \
-        }                                                               \
-        _tmp = _buf->next;                                              \
-        if (_tmp) {                                                     \
-            _tmp->prev = _buf->prev;                                    \
-        } else {                                                        \
-            _tmp = _buf->prev;                                          \
-            _bufq->tail = _tmp;                                         \
-            if (_tmp) {                                                 \
-                _tmp->next = NULL;                                      \
-            } else {                                                    \
-                _bufq->head = _bufq->tail = _tmp;                       \
-            }                                                           \
-        }                                                               \
-        mtxunlk(&vmbufq.lk);                                            \
-    } while (0)
-
-#define vmdeqpage(rpp)                                                  \
-    do {                                                                \
-        struct vmpageq *_pageq = &curproc->pagelruq;                    \
-        struct vmpage  *_tail;                                          \
-                                                                        \
-        vmlklruq(_pageq);                                               \
-        _tail = _pageq->tail;                                           \
-        if (_tail) {                                                    \
-            if (_tail->prev) {                                          \
-                _tail->prev->next = NULL;                               \
-            } else {                                                    \
-                _pageq->head = NULL;                                    \
-            }                                                           \
-            _pageq->tail = _tail->prev;                                 \
-        }                                                               \
-        *(rpp) = _tail;                                                 \
-        vmunlklruq(_pageq);                                             \
-    } while (0)
 
 #endif /* __UNIT_IA32_VM_H__ */
 

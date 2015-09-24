@@ -79,7 +79,8 @@ long procinit(long id);
 long procgetpid(void);
 void procfreepid(long id);
 
-struct procmem {
+/* process segments other than the stacks */
+struct procmeminfo {
     void   *trapvec;
     size_t  trapvecsize;
     void   *text;
@@ -95,40 +96,41 @@ struct procmem {
 
 /* process */
 struct proc {
-    struct task      *task;
-    long              nthr;             // # of threads
-    struct task     **thrtab;           // child threads
+    struct task         *task;
+    long                 nthr;          // # of threads
+    struct task        **thrtab;        // child threads
     /* round-robin queue */
-//    struct thrq       thrq;             // queue of ready threads
+//    struct thrq       thrq;           // queue of ready threads
     /* memory attributes */
-    pde_t            *pdir;             // page directory address
-    uint8_t          *brk;              // current heap-top
+    pde_t               *pdir;          // page directory address
+    uint8_t             *brk;           // current heap-top
     /* process credentials */
-    struct cred      *cred;
-    struct cred      *realcred;
+    struct cred         *cred;
+    struct cred         *realcred;
     /* current permission mask */
-    mode_t            umask;
+    mode_t               umask;
     /* descriptor tables */
-    size_t            ndtab;		// number of entries in descriptor table
-    struct desc      *dtab;             // descriptor table
+    size_t               ndtab;		// number of entries in descriptor table
+    struct desc         *dtab;          // descriptor table
     /* signal state */
-    sigset_t          sigmask;          // signal mask
-    sigset_t          sigpend;          // pending signals
-    signalhandler_t  *sigvec[NSIG];
-    struct siginfo   *sigqueue[NSIG];   // info structures for pending signals
+    sigset_t             sigmask;       // signal mask
+    sigset_t             sigpend;       // pending signals
+    signalhandler_t     *sigvec[NSIG];
+    struct siginfo      *sigqueue[NSIG]; // info structures for pending signals
     /* current working directory */
-    char             *cwd;
+    char                *cwd;
     /* runtime arguments */
-    long              argc;             // argument count
-    char            **argv;             // argument vector
-    char            **envp;             // environment strings
+    long                 argc;          // argument count
+    char               **argv;          // argument vector
+    char               **envp;          // environment strings
     /* memory management */
-    struct slabhdr   *vmtab[PTRBITS];
+    struct slabhdr      *vmtab[PTRBITS];
+    struct procmeminfo  *meminfo;
     /* keyboard input buffer */
-    void             *kbdbuf;
+    void                *kbdbuf;
 #if 0
     /* event queue */
-    struct ev        *evq;
+    struct ev           *evq;
 #endif
 } ALIGNED(PAGESIZE);
 

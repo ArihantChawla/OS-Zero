@@ -17,6 +17,7 @@ extern struct page        vmphystab[NPAGEPHYS];
 extern volatile long      vmlrulktab[1UL << (LONGSIZELOG2 + 3)];
 extern struct page       *vmlrutab[1UL << (LONGSIZELOG2 + 3)];
 extern struct vmpagestat  vmpagestat;
+volatile long             vmphysqlk;
 extern struct page       *vmphysq;
 extern struct page       *vmshmq;
 static volatile long      vmsetlk;
@@ -33,7 +34,6 @@ pageinitzone(uintptr_t base,
 
     adr += n << PAGESIZELOG2;
     page += n;
-//    mtxlk(&zone[0]->lk);
     vmpagestat.nphys = n;
     kprintf("initializing %ld (%lx) pages @ %p (%lx)\n",
             n, n, vmphystab, pagenum(base));
@@ -44,7 +44,6 @@ pageinitzone(uintptr_t base,
         pagepush(page, zone);
         adr -= PAGESIZE;
     }
-//    mtxunlk(&zone[0]->lk);
 }
 
 void
@@ -59,7 +58,6 @@ pageaddzone(uintptr_t base,
 
     adr += n << PAGESIZELOG2;
     page += n;
-//    mtxlk(&zone[0]->lk);
     vmpagestat.nphys = n;
     kprintf("reserving %ld (%lx) maps @ %p (%lx)\n",
             n, n, vmphystab, pagenum(base));
@@ -73,13 +71,14 @@ pageaddzone(uintptr_t base,
         }
         pte++;
     }
-//    mtxunlk(&zone[0]->lk);
 }
 
 void
 pageinit(uintptr_t base, unsigned long nb)
 {
+    mtxlk(&vmphysqlk);
     pageinitzone(base, &vmphysq, min(nb, DEVMEMBASE));
+    mtxunlk(&vmphysqlk);
 
     return;
 }
@@ -118,9 +117,9 @@ pagealloc(void)
                 queue = &vmlrutab[q];
                 mtxlk(&vmlrulktab[q]);
                 while (*queue) {
-                    if (!pageinset(page)) {
-                        page = pagedequeue(queue);
-                        if (page) {
+                    page = pagedequeue(queue);
+                    if (page) {
+                        if (!pageinset(page)) {
                             found++;
                             page->nflt++;
                             pageaddset(page);
@@ -128,7 +127,7 @@ pagealloc(void)
                             queue = &vmlrutab[qid];
                             pagepush(page, queue);
                         }
-
+                        
                         break;
                     }
                 }
@@ -154,13 +153,13 @@ pagefree(void *adr)
     unsigned long  id;
     struct page   *page;
 
-    vmflushtlb(adr);
     /* free physical page */
-//    mtxlk(&vmphysq.lk);
+    mtxlk(&vmphysqlk);
     id = (uintptr_t)adr >> PAGESIZELOG2;
     page = &vmphystab[id];
+    vmflushtlb(adr);
     pagepush(page, &vmphysq);
-//    mtxunlk(&vmphysq.lk);
+    mtxunlk(&vmphysqlk);
 
     return;
 }

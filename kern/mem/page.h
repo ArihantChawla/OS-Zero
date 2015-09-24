@@ -32,16 +32,18 @@
 #define pageaddset(pg) (vmsetmap[pagenum((pg)->adr)] = k_curpid)
 extern pid_t           vmsetmap[NPAGEPHYS];
 
+#if 0
 #define PAGEWIREBIT 0x00000001
 #define PAGEBUFBIT  0x00000002
+#endif
 struct page {
-    struct perm   *perm;        // page permissions
-    long           flg;         // page flags
+//    struct perm   *perm;        // page permissions
+//    long           flg;         // page flags
+    volatile long  nref;
     uintptr_t      adr;         // page address
     unsigned long  nflt;        // # of page-fault exceptions triggered
     struct page   *prev;        // previous on queue
     struct page   *next;        // next on queue
-//    ktime_t        maptm;       // map timestamp
     dev_t          dev;         // paging device
     off_t          ofs;         // paging device offset
 };
@@ -62,10 +64,11 @@ struct swapdev {
 
 #define QUEUE_TYPE struct page
 #include <zero/queue.h>
-#define pagegetqid(pg)   (lzerol(pg->nflt))
+#define pagegetqid(pg)   (sizeof(long) * CHAR_BIT - lzerol(pg->nflt))
 #define pagepop(pq)      queuepop(pq)
 #define pagepush(pg, pq) queuepush(pg, pq)
 #define pagedequeue(pq)  queuegetlast(pq)
+#define pagerm(pg, pq)   queuermitem(pg, pq)
 
 void          pageinitzone(uintptr_t base, struct page **zone,
                            unsigned long nb);

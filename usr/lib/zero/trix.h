@@ -320,7 +320,7 @@ long long llabs(long long x);
 #if defined(__GNUC__)
 //#define tzero32(u) (__builtin_ctz(u))
 #define tzerol(u)  (!(u)                                                \
-                    ? (sizeof(unsigned long) * CHAR_BIT - 1)            \
+                    ? (LONGSIZE * CHAR_BIT - 1)                         \
                     : (__builtin_ctzl(u)))
 #elif defined(__i386__) || defined(__x86_64__) || defined(__amd64__)
 #define tzerol(u)  (m_scanlo1bit(u))
@@ -349,7 +349,7 @@ tzerol(unsigned long ul)
 /* count number of leading (high) zero-bits in long-word */
 #if defined(__GNUC__)
 #define lzerol(u) (!(u)                                                 \
-                   ? (sizeof(unsigned long) * CHAR_BIT - 1)             \
+                   ? (LONGSIZE * CHAR_BIT - 1)                          \
                    : (__builtin_clzl(u)))
 #elif defined(__i386__) || defined(__x86_64__) || defined(__amd64__)
 #define lzerol(u) ((1UL << (LONGSIZELOG2 + 3)) - m_scanhi1bit(u))
