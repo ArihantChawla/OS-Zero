@@ -25,7 +25,6 @@ procinit(long id)
 
     if (taskid == PROCKERN) {
         /* bootstrap */
-//        task = &proc->task;
         proc->task = task;
         task->parent = proc;
         k_curproc = proc;
@@ -37,7 +36,6 @@ procinit(long id)
     }
     if (proc) {
         /* initialise page directory */
-//        kbzero(proc, sizeof(struct proc));
         ptr = kmalloc(NPDE * sizeof(pde_t));
         if (ptr) {
             kbzero(ptr, NPDE * sizeof(pde_t));
@@ -114,6 +112,7 @@ newproc(int argc, char *argv[], char *envp[], long sched)
     struct proc *proc = &proctab[taskid];
     struct task *task = &tasktab[taskid];
 
+    task->state = TASKNEW;
     task->id = taskid;
     task->sched = sched;
     task->parent = proc;
