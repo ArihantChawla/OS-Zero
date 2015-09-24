@@ -248,15 +248,20 @@ vmpagefault(unsigned long pid, uint32_t adr, uint32_t flags)
     if (!(page & ~(PFLTFLGMASK | PAGESYSFLAGS))) {
         pg = pagealloc();
         if (pg) {
+            mtxlk(&pg->lk);
+            pg->nref++;
             if (flg & PAGEWIRED) {
                 vmpagestat.nwired++;
             } else {
                 vmpagestat.nmapped++;
                 pg->nflt = 1;
                 if (!(page & PAGEWIRED)) {
+                    mtxlk(&vmlrulktab[0]);
                     pagepush(pg, &vmlrutab[0]);
+                    mtxunlk(&vmlrulktab[0]);
                 }
             }
+            mtxunlk(&pg->lk);
             *pte = page | flg | PAGEPRES;
         }
 #if (PAGEDEV)
@@ -264,15 +269,21 @@ vmpagefault(unsigned long pid, uint32_t adr, uint32_t flags)
         // pageout();
         pg = vmpagein(page);
         if (pg) {
+            mtxlk(&pg->lk);
             pg->nflt++;
             qid = pagegetqid(pg);
+            mtxlk(&vmlrulktab[qid]);
             pagepush(pg, &vmlrutab[qid]);
+            mtxunlk(&vmlrulktab[qid]);
+            mtxunlk(&pg->lk);
         }
 #endif
     }
+#if 0
     if (pg) {
         pageaddset(pg);
     }
+#endif
 
     return;
 }

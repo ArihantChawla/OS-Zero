@@ -1,3 +1,4 @@
+#include <kern/conf.h>
 #include <stdint.h>
 #define __KERNEL__ 1
 #include <signal.h>

@@ -28,9 +28,14 @@
 #endif
 
 /* working sets */
+#if 0
 #define pageinset(pg)  (vmsetmap[pagenum((pg)->adr)])
 #define pageaddset(pg) (vmsetmap[pagenum((pg)->adr)] = k_curpid)
 extern pid_t           vmsetmap[NPAGEPHYS];
+#endif
+#define pageinset(pg)  bitset(vmsetbitmap, pagenum((pg)->adr))
+#define pageaddset(pg) setbit(vmsetbitmap, pagenum((pg)->adr))
+#define pageclrset(pg) clrbit(vmsetbitmap, pagenum((pg)->adr))
 
 #if 0
 #define PAGEWIREBIT 0x00000001
@@ -39,6 +44,7 @@ extern pid_t           vmsetmap[NPAGEPHYS];
 struct page {
 //    struct perm   *perm;        // page permissions
 //    long           flg;         // page flags
+    volatile long  lk;
     volatile long  nref;
     uintptr_t      adr;         // page address
     unsigned long  nflt;        // # of page-fault exceptions triggered
@@ -64,7 +70,7 @@ struct swapdev {
 
 #define QUEUE_TYPE struct page
 #include <zero/queue.h>
-#define pagegetqid(pg)   (sizeof(long) * CHAR_BIT - lzerol(pg->nflt))
+#define pagegetqid(pg)   max(LONGSIZE * CHAR_BIT - 1, lzerol(pg->nflt))
 #define pagepop(pq)      queuepop(pq)
 #define pagepush(pg, pq) queuepush(pg, pq)
 #define pagedequeue(pq)  queuegetlast(pq)

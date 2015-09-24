@@ -66,7 +66,7 @@ trapde:
 	movl	%esp, %ebp
 
 #if (FASTINTR)
-	movl	$TRAPDE, %ebx
+	movl	$TRAPDE, %edx
 	xorl	%eax, %eax
 #else
 	pushl	%ecx
@@ -85,7 +85,7 @@ trapdb:
 	movl	%esp, %ebp
 
 #if (FASTINTR)
-	movl	$TRAPDB, %ebx
+	movl	$TRAPDB, %edx
 	xorl	%eax, %eax
 #else
 	pushl	%ecx
@@ -104,7 +104,7 @@ trapnmi:
 	movl	%esp, %ebp
 
 #if (FASTINTR)
-	movl	$TRAPNMI, %ebx
+	movl	$TRAPNMI, %edx
 	xorl	%eax, %eax
 #else
 	pushl	%ecx
@@ -123,7 +123,7 @@ trapbp:
 	movl	%esp, %ebp
 
 #if (FASTINTR)
-	movl	$TRAPBP, %ebx
+	movl	$TRAPBP, %edx
 	xorl	%eax, %eax
 #else
 	pushl	%ecx
@@ -142,7 +142,7 @@ trapof:
 	movl	%esp, %ebp
 
 #if (FASTINTR)
-	movl	$TRAPOF, %ebx
+	movl	$TRAPOF, %edx
 	xorl	%eax, %eax
 #else
 	pushl	%ecx
@@ -161,7 +161,7 @@ trapbr:
 	movl	%esp, %ebp
 
 #if (FASTINTR)
-	movl	$TRAPBR, %ebx
+	movl	$TRAPBR, %edx
 	xorl	%eax, %eax
 #else
 	pushl	%ecx
@@ -180,7 +180,7 @@ trapud:
 	movl	%esp, %ebp
 
 #if (FASTINTR)
-	movl	$TRAPUD, %ebx
+	movl	$TRAPUD, %edx
 	xorl	%eax, %eax
 #else
 	pushl	%ecx
@@ -199,7 +199,7 @@ trapnm:
 	movl	%esp, %ebp
 
 #if (FASTINTR)
-	movl	$TRAPNM, %ebx
+	movl	$TRAPNM, %edx
 	xorl	%eax, %eax
 #else
 	pushl	%ecx
@@ -218,7 +218,7 @@ trapdf:
 	movl	%esp, %ebp
 
 #if (FASTINTR)
-	movl	$TRAPDF, %ebx
+	movl	$TRAPDF, %edx
 	xorl	%eax, %eax
 #else
 	pushl	%ecx
@@ -237,7 +237,7 @@ trapts:
 	movl	%esp, %ebp
 
 #if (FASTINTR)
-	movl	$TRAPTS, %ebx
+	movl	$TRAPTS, %edx
 	xorl	%eax, %eax
 #else
 	pushl	%ecx
@@ -255,7 +255,7 @@ trapnp:
 	movl	%esp, %ebp
 
 #if (FASTINTR)
-	movl	$TRAPNP, %ebx
+	movl	$TRAPNP, %edx
 	xorl	%eax, %eax
 #else
 	pushl	%ecx
@@ -274,7 +274,7 @@ trapss:
 	movl	%esp, %ebp
 
 #if (FASTINTR)
-	movl	$TRAPSS, %ebx
+	movl	$TRAPSS, %edx
 	xorl	%eax, %eax
 #else
 	pushl	%ecx
@@ -293,7 +293,7 @@ trapgp:
 	movl	%esp, %ebp
 
 #if (FASTINTR)
-	movl	$TRAPGP, %ebx
+	movl	$TRAPGP, %edx
 	xorl	%eax, %eax
 #else
 	pushl	%ecx
@@ -315,7 +315,7 @@ trappf:
 #if (FASTINTR)
 	/* error code is in %ecx */
 	movl	%cr2, %edx		// fault address
-	xorl	%eax, %eax		// FIXME: PID
+	xorl	%gs:16, %eax		// FIXME: PID
 #else
 	movl	%cr2, %edx		// linear address
 	pushl	%ecx			// error code
@@ -334,7 +334,7 @@ trapmf:
 	movl	%esp, %ebp
 
 #if (FASTINTR)
-	movl	$TRAPMF, %ebx
+	movl	$TRAPMF, %edx
 	xorl	%eax, %eax
 #else
 	pushl	%ecx
@@ -353,7 +353,7 @@ trapac:
 	movl	%esp, %ebp
 
 #if (FASTINTR)
-	movl	$TRAPAC, %ebx
+	movl	$TRAPAC, %edx
 	xorl	%eax, %eax
 #else
 	pushl	%ecx
@@ -372,7 +372,7 @@ trapmc:
 	movl	%esp, %ebp
 
 #if (FASTINTR)
-	movl	$TRAPMC, %ebx
+	movl	$TRAPMC, %edx
 	xorl	%eax, %eax
 #else
 	pushl	%ecx
@@ -391,7 +391,7 @@ trapxf:
 	movl	%esp, %ebp
 
 #if (FASTINTR)
-	movl	$TRAPXF, %ebx
+	movl	$TRAPXF, %edx
 	xorl	%eax, %eax
 #else
 	pushl	%ecx
