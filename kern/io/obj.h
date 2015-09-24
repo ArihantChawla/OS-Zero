@@ -11,20 +11,6 @@
 #include <kern/sparse.h>
 #include <kern/io/vfs.h>
 
-struct iocdev {
-    long             major;
-    long             minor;
-    char            *path;
-    struct iodevops *ops;
-};
-
-struct iobdev {
-    long             major;
-    long             minor;
-    char            *path;
-    struct iodevops *ops;
-};
-
 struct fileops {
     struct mod  *mod;
     long       (*open)(struct desc *, struct file *);

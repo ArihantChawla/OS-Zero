@@ -48,7 +48,7 @@ struct _tickval {
     } while (0)
 #else /* !defined(_MSC_VER) */
 static __inline__ uint64_t
-_rdtsc(tp)
+_rdtsc(struct _tickval *tp)
 {
     __asm__("rdtsc\n"
             "movl %%eax, %0\n"
@@ -57,7 +57,7 @@ _rdtsc(tp)
             :
             : "eax", "edx");
 
-    return tp->u.u64v;
+    return tp->u.u64;
 }
 #if 0
 /* read TSC (time stamp counter) */

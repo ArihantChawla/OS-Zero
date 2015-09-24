@@ -618,10 +618,10 @@ divu1000(unsigned long x)
     unsigned long r;
     unsigned long t;
 
-    t = (n >> 7) + (n >> 8) + (n >> 12);
-    q = (n >> 1) + t + (n >> 15) + (t >> 11) + (t >> 14);
+    t = (x >> 7) + (x >> 8) + (x >> 12);
+    q = (x >> 1) + t + (x >> 15) + (t >> 11) + (t >> 14);
     q = q >> 9;
-    r = n - q * 1000;
+    r = x - q * 1000;
 
     return q + ((r + 24) >> 10);
 }
