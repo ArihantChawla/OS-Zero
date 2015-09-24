@@ -31,7 +31,7 @@ extern int   __daylight;
 
 #if (_ZERO_SOURCE)
 //#include <kern/proc/thr.h>
-#define CLOCKS_PER_SEC 1000000  // for microsecond resolution
+#define CLOCKS_PER_SEC 1000000000       // for nanosecond resolution
 #else
 #error CLOCKS_PER_SEC undefined
 #endif
@@ -39,10 +39,16 @@ extern int   __daylight;
 #define CLK_TCK        CLOCKS_PER_SEC
 #endif
 
-#define CLOCK_MONOTONIC          0
-#define CLOCK_PROCESS_CPUTIME_ID 1
-#define CLOCK_REALTIME           2
-#define CLOCK_THREAD_CPUTIME_ID  3
+#define CLOCK_MONOTONIC          0      // monotonic time
+#define CLOCK_PROCESS_CPUTIME_ID 1      // pre-process CPU-time clock
+#define CLOCK_REALTIME           2      // system-wide wall-clock time
+#define CLOCK_THREAD_CPUTIME_ID  3      // thread-specific CPU-time clock
+#if defined(__linux__)
+#define CLOCK_BOOTTIME           4
+#define CLOCK_MONOTONIC_RAW      5
+#define CLOCK_MONOTONIC_COARSE   6      // faster, less precise monotonic time
+#define CLOCK_REALTIME_COARSE    7      // faster, less precise wall-clock
+#endif
 
 #define TIMER_ABSTIME            (1 << 0)
 
@@ -91,36 +97,36 @@ extern clock_t clock(void);
 extern time_t  time(time_t *tmr);
 extern double  difftime(time_t time1, time_t time2);
 extern time_t  mktime(struct tm *tm);
-extern size_t  strftime(char *__restrict buf, size_t len,
-                       const char *__restrict fmt,
-                       const struct tm *__restrict tm);
+extern size_t  strftime(char *restrict buf, size_t len,
+                       const char *restrict fmt,
+                       const struct tm *restrict tm);
 #if (_XOPEN_SOURCE)
-extern char *strptime(const char *__restrict str, const char *__restrict fmt,
+extern char *strptime(const char *restrict str, const char *restrict fmt,
                       struct tm *tm);
 #endif
 #if defined(_GNU_SOURCE) && 0 /* TODO: <xlocale.h> */
 #include <xlocale.h>
-extern size_t strftime_1(char *__restrict buf, size_t len,
-                         const char *__restrict fmt,
-                         const struct tm *__restrict tm, locale_t loc);
-extern char   strptime_1(const char *__restrict str, const char *__restrict fmt,
+extern size_t strftime_1(char *restrict buf, size_t len,
+                         const char *restrict fmt,
+                         const struct tm *restrict tm, locale_t loc);
+extern char   strptime_1(const char *restrict str, const char *restrict fmt,
                          struct tm *tp, locale_t loc);
 #endif
 extern struct tm *gmtime(const time_t *tmr);
 extern struct tm *localtime(const time_t *tmr);
 #if (_POSIX_SOURCE)
-extern struct tm *gmtime_r(const time_t *__restrict tmr,
-                           struct tm *__restrict tm);
-extern struct tm *localtime_r(const time_t *__restrict tmr,
-                              struct tm *__restrict tm);
+extern struct tm *gmtime_r(const time_t *restrict tmr,
+                           struct tm *restrict tm);
+extern struct tm *localtime_r(const time_t *restrict tmr,
+                              struct tm *restrict tm);
 #endif
 extern char *asctime(const struct tm *tm);
 extern char *ctime(const time_t *tmr);
 #if (_POSIX_SOURCE)
 extern char *asctime_r(const struct tm *tm,
-                       char *__restrict buf);
+                       char *restrict buf);
 extern char *ctime_r(const time_t *tmr,
-                     char **__restrict buf);
+                     char **restrict buf);
 #endif
 #if (_POSIX_SOURCE)
 extern void tzset(void);
@@ -145,12 +151,12 @@ extern int    clock_nanosleep(clockid_t clk, int flg,
                               struct timespec *left);
 extern int    clock_getcpuclockid(pid_t pid, clockid_t *clk);
 #endif
-extern int    timer_create(clockid_t clk, struct sigevent *__restrict sigev,
-                           timer_t *__restrict tmr);
+extern int    timer_create(clockid_t clk, struct sigevent *restrict sigev,
+                           timer_t *restrict tmr);
 extern int    timer_delete(timer_t tmr);
 extern int    timer_settime(timer_t tmr, int flg,
-                            const struct itimerspec *__restrict val,
-                            struct itimerspec *__restrict *save);
+                            const struct itimerspec *restrict val,
+                            struct itimerspec *restrict *save);
 extern int    timer_gettime(timer_t tmr, struct itimerspec *val);
 extern int    timer_getoverrun(timer_t tmr);
 #endif
@@ -168,8 +174,8 @@ extern int getdate_err;
 extern struct tm *getdate(const char *str);
 #endif
 #if defined(_GNU_SOURCE)
-extern struct tm *getdate_r(const char *__restrict str,
-                            struct tm *__restrict res);
+extern struct tm *getdate_r(const char *restrict str,
+                            struct tm *restrict res);
 #endif
 
 #endif /* !defined(__KERNEL__) */

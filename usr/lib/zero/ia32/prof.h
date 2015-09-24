@@ -47,6 +47,19 @@ struct _tickval {
         tp->u.u64 = _cnt;                                               \
     } while (0)
 #else /* !defined(_MSC_VER) */
+static __inline__ uint64_t
+_rdtsc(tp)
+{
+    __asm__("rdtsc\n"
+            "movl %%eax, %0\n"
+            "movl %%edx, %1\n"
+            : "=m" ((tp)->u.u32v[0]), "=m" ((tp)->u.u32v[1])
+            :
+            : "eax", "edx");
+
+    return tp->u.u64v;
+}
+#if 0
 /* read TSC (time stamp counter) */
 #define _rdtsc(tp)                                                      \
     __asm__("rdtsc\n"                                                   \
@@ -55,6 +68,7 @@ struct _tickval {
             : "=m" ((tp)->u.u32v[0]), "=m" ((tp)->u.u32v[1])            \
             :                                                           \
             : "eax", "edx")
+#endif
 
 /* read performance monitor counter */
 static __inline__ uint64_t

@@ -2,12 +2,11 @@
 #define __KERN_TIME_H__
 
 #include <stdint.h>
+#include <sys/types.h>
 
-#define KTIME_SECOND 1000000    // microsecond resolution
+#define TIME_SECOND 1000000000    // nanosecond resolution
 
-typedef int64_t ktime_t;
-
-ktime_t kcurtime(void);
+time_t kcurtime(void);
 
 #endif /* __KERN_TIME_H__ */
 

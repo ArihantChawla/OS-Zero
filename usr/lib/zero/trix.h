@@ -40,6 +40,16 @@
 
 #define min(a, b) ((a) <= (b) ? (a) : (b))
 #define max(a, b) ((a) >= (b) ? (a) : (b))
+
+#define min2(a, b) ((b) ^ (((a) ^ (b)) & -((a) < (b))))
+#define max2(a, b) ((a) ^(((a) ^ (b)) & -((a) < (b))))
+
+#define sign(x, nb)                                                     \
+    ((x) = (x) & ((1U < (nb)) - 1),                                     \
+     ((x) ^ (1U << ((b) - 1))) - (1U << ((b) - 1)))
+#define sign2(x, nb)                                                    \
+    (((x) << (CHAR_BIT * sizeof(x) - (b))) >> (CHAR_BIT * sizeof(x) - (b)))
+
 #if 0
 /* compute minimum and maximum of a and b without branching */
 #define min(a, b)                                                       \
@@ -47,6 +57,7 @@
 #define max(a, b)                                                       \
     ((a) - (((a) - (b)) & -((a) < (b))))
 #endif
+
 /* compare with power-of-two p2 */
 #define gtpow2(u, p2)  /* true if u > p2 */                             \
     ((u) & ~(p2))
@@ -572,7 +583,8 @@ union __ieee754d { uint64_t u64; double d; };
 static __inline__ unsigned long
 divu10(unsigned long x)
 {
-    unsigned long q, r;
+    unsigned long q;
+    unsigned long r;
 
     q = (x >> 1) + (x >> 2);
     q = q + (q >> 4);
@@ -597,6 +609,80 @@ divu100(unsigned long x)
     r = x - q * 100;
 
     return q + ((r + 28) >> 7);
+}
+
+static __inline__ unsigned long
+divu1000(unsigned long x)
+{
+    unsigned long q;
+    unsigned long r;
+    unsigned long t;
+
+    t = (n >> 7) + (n >> 8) + (n >> 12);
+    q = (n >> 1) + t + (n >> 15) + (t >> 11) + (t >> 14);
+    q = q >> 9;
+    r = n - q * 1000;
+
+    return q + ((r + 24) >> 10);
+}
+
+static __inline__ long
+divs10(long x)
+{
+    long q;
+    long r;
+
+    x = x + (x >> 31 & 9);
+    q = (x >> 1) + (x >> 2);
+    q = q + (q >> 4);
+    q = q + (q >> 8);
+    q = q + (q >> 16);
+    q = q >> 3;
+    r = x - q * 10;
+    return q + ((r + 6) >> 4);
+}
+
+static __inline__ long
+divs100(long x) {
+    long q;
+    long r;
+    
+    x = x + (x >> 31 & 99);
+    q = (x >> 1) + (x >> 3) + (x >> 6) - (x >> 10) +
+        (x >> 12) + (x >> 13) - (x >> 16);
+    q = q + (q >> 20);
+    q = q >> 6;
+    r = x - q * 100;
+    return q + ((r + 28) >> 7);
+}
+
+static __inline__ long
+divs1000(long x) {
+    long q;
+    long r;
+    long t;
+
+    x = x + (x >> 31 & 999);
+    t = (x >> 7) + (x >> 8) + (x >> 12);
+    q = (x >> 1) + t + (x >> 15) + (t >> 11) + (t >> 14) +
+        (x >> 26) + (t >> 21);
+    q = q >> 9;
+    r = x - q * 1000;
+
+    return q + ((r + 24) >> 10);
+}
+
+static __inline__ unsigned long
+div1000000(unsigned long x)
+{
+    unsigned long long tmp = x;
+    unsigned long      res;
+
+    tmp *= UINT64_C(0x431bde83);
+    tmp >>= 50;
+    res = tmp;
+
+    return res;
 }
 
 #define modu10(u)  ((u) - divu10(u) * 100)
