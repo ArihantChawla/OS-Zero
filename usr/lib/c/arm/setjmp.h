@@ -96,30 +96,26 @@ struct _jmpbuf {
 
 typedef struct _jmpbuf jmp_buf[1];
 
-static INLINE int
-__setjmp(jmp_buf env)
-{
-    __asm__ __volatile__ ("movs r0, %0\n"
-                          "stmfa r0, { r4-r10, fp, sp, lr }\n"
-                          "movs r0, #0\n"
-                          :
-                          : "r" (env));
+#define m_setjmp(env)                                                   \
+    do {                                                                \
+        __asm__ __volatile__ ("movs r0, %0\n"                           \
+                              "stmfa r0, { r4-r10, fp, sp, lr }\n"      \
+                              "movs r0, #0\n"                           \
+                              :                                         \
+                              : "r" (env));                             \
+    } while (0)
 
-    return 0;
-}
+#define m_longjmp(env, val)                                             \
+    do {                                                                \
+        __asm__ __volatile__ ("movs r0, %0\n"                           \
+                              "movs r1, %1\n"                           \
+                              "ldmfa r0, { r4-r10, fp, sp, lr }\n"      \
+                              "movs r0, r1\n"                           \
+                              "moveq r0, #1\n"                          \
+                              "bx lr\n"                                 \
+                              :                                         \
+                              : "r" (env), "r" (val));                  \
+    } while (0)
 
-static INLINE void
-__longjmp(jmp_buf env, int val) NORET
-{
-    __asm__ __volatile__ ("movs r0, %0\n"
-                          "movs r1, %1\n"
-                          "ldmfa r0, { r4-r10, fp, sp, lr }\n"
-                          "movs r0, r1\n"
-                          "moveq r0, #1\n"
-                          "bx lr\n"
-                          :
-                          : "r" (env), "r" (val));
-}
-    
 #endif /* __ARM_SETJMP_H__ */
 

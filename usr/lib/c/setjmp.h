@@ -21,15 +21,15 @@ typedef struct _jmpbuf sigjmp_buf[1];
 
 /* ISO C prototypes. */
 ASMLINK int  setjmp(jmp_buf env);
-ASMLINK NORET void longjmp(jmp_buf env, int val);
+ASMLINK void longjmp(jmp_buf env, int val);
 
 /* Unix prototypes. */
 ASMLINK int  _setjmp(jmp_buf env);
-ASMLINK NORET void _longjmp(jmp_buf env, int val);
+ASMLINK void _longjmp(jmp_buf env, int val);
 
 #if defined(_POSIX_C_SOURCE) || defined(_XOPEN_SOURCE)
-ASMLINK int sigsetjmp(sigjmp_buf env, int savesigs);
-ASMLINK NORET void siglongjmp(sigjmp_buf env, int val);
+ASMLINK int  sigsetjmp(sigjmp_buf env, int savesigs);
+ASMLINK void siglongjmp(sigjmp_buf env, int val);
 #endif
 
 #endif /* !defined(__KERNEL__) */

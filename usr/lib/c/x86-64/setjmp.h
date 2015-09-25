@@ -41,5 +41,67 @@ struct _jmpframe {
     uint8_t args[EMPTY];
 };
 
+/*
+ * callee-save registers: rbp, rbx, r12...r15
+ */
+#define m_setjmp(env)                                                   \
+    do {                                                                \
+        __asm__ __volatile__ ("movq %0, %%rax\n"                        \
+                              "movq %%rbx, %c1(%%rax)\n"                \
+                              "movq %%r12, %c2(%%rax)\n"                \
+                              "movq %%r13, %c3(%%rax)\n"                \
+                              "movq %%r14, %c4(%%rax)\n"                \
+                              "movq %%r15, %c5(%%rax)\n"                \
+                              "movq %c6(%%rbp), %%rdx\n"                \
+                              "movq %%rdx, %c7(%%rax)\n"                \
+                              "movq %c8(%%rbp), %%rcx\n"                \
+                              "movq %%rcx, %c9(%%rax)\n"                \
+                              "leaq %c10(%%rbp), %%rdx\n"               \
+                              "movq %%rdx, %c11(%%rax)\n"               \
+                              :                                         \
+                              : "m" (env),                              \
+                                "i" (offsetof(struct _jmpbuf, rbx)),    \
+                                "i" (offsetof(struct _jmpbuf, r12)),    \
+                                "i" (offsetof(struct _jmpbuf, r13)),    \
+                                "i" (offsetof(struct _jmpbuf, r14)),    \
+                                "i" (offsetof(struct _jmpbuf, r15)),    \
+                                "i" (offsetof(struct _jmpframe, rbp)),  \
+                                "i" (offsetof(struct _jmpbuf, rbp)),    \
+                                "i" (offsetof(struct _jmpframe, rip)),  \
+                                "i" (offsetof(struct _jmpbuf, rip)),    \
+                                "i" (offsetof(struct _jmpframe, args)), \
+                                "i" (offsetof(struct _jmpbuf, rsp))     \
+                              : "rax", "rcx", "rdx");                   \
+    } while (0)
+
+#define m_longjmp(env, val)                                             \
+    do {                                                                \
+        __asm__ __volatile__ ("movq %0, %%rcx\n"                        \
+                              "movq %1, %%rax\n"                        \
+                              "movq %c2(%%rcx), %%rbx\n"                \
+                              "movq %c3(%%rcx), %%r12\n"                \
+                              "movq %c4(%%rcx), %%r13\n"                \
+                              "movq %c5(%%rcx), %%r14\n"                \
+                              "movq %c6(%%rcx), %%r15\n"                \
+                              "movq %c7(%%rcx), %%rbp\n"                \
+                              "movq %c8(%%rcx), %%rsp\n"                \
+                              "movq %c9(%%rcx), %%rdx\n"                \
+                              "jmpq *%%rdx\n"                           \
+                              :                                         \
+                              : "m" (env),                              \
+                                "m" (val),                              \
+                                "i" (offsetof(struct _jmpbuf, rbx)),    \
+                                "i" (offsetof(struct _jmpbuf, r12)),    \
+                                "i" (offsetof(struct _jmpbuf, r13)),    \
+                                "i" (offsetof(struct _jmpbuf, r14)),    \
+                                "i" (offsetof(struct _jmpbuf, r15)),    \
+                                "i" (offsetof(struct _jmpbuf, rbp)),    \
+                                "i" (offsetof(struct _jmpbuf, rsp)),    \
+                                "i" (offsetof(struct _jmpbuf, rip))     \
+                              : "rax", "rbx", "rcx", "rdx",             \
+                                "r12", "r13", "r14", "r15",             \
+                                "rsp");                                 \
+    } while (0)
+
 #endif /* __X86_64_SETJMP_H__ */
 
