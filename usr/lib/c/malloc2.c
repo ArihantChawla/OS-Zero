@@ -1534,6 +1534,10 @@ mallinfo(void)
 }
 
 void *
+#if defined(__GNUC__)
+__attribute__ ((alloc_size(1)))
+__attribute__ ((alloc_align(2)))
+#endif
 _malloc(size_t size,
         size_t align,
         long zero)
@@ -2109,6 +2113,9 @@ _free(void *ptr)
 
 /* internal function for realloc() and reallocf() */
 void *
+#if defined(__GNUC__)
+__attribute__ ((alloc_size(2)))
+#endif
 _realloc(void *ptr,
          size_t size,
          long rel)
