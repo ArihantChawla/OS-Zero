@@ -45,6 +45,7 @@ _start2:
 	/* set kernel stack up */
 	movl	$KERNSTKTOP, %esp
 	movl	%esp, %ebp
+	pushl	$0			// store longmode argument for kmain
 	pushl	%ebx			// store boot-header address
 	call	_chkcpuid
 	cmp	$0, %eax
@@ -52,9 +53,9 @@ _start2:
 	call	_chklongmode
 	cmp	$0, %eax
 	je	_protmode
-	/* we have long mode around */
+	movl	$1, 4(%esp)
 _protmode:	
-	call	kinit	// call kinit()
+	call	kmain			// call kinit()
 
 /* check for presence of CPUID by trying to flip bit 21 in %eflags */
 _chkcpuid:	
@@ -82,6 +83,8 @@ _nolongmode:
 	movl	$0, %eax
 	ret
 
+.data
+	
 .align	NBPG
 
 #if !(LOCORE)

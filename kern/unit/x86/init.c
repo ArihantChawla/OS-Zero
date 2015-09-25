@@ -11,22 +11,23 @@
 extern void trapinit(void);
 extern void kmain(struct mboothdr *hdr, unsigned long pmemsz);
 
-ASMLINK
+ASMLINK NORETURN
 void
-kinit(struct mboothdr *boothdr)
+kinit(struct mboothdr *boothdr, unsigned long longmode)
 {
     unsigned long    pmemsz;
 
 //    __asm__ __volatile__ ("cli\n");
     /* determine amount of RAM */
-    /* boot.S leaves the multiboot header address in %ebx */
-//    __asm__ __volatile__ ("movl %%ebx, %0\n" : "=rm" (boothdr));
     pmemsz = grubmemsz(boothdr);
     /* bootstrap kernel */
 #if (!VBE)
-    trapinit();                         // interrupt management
+    trapinitprot();                         // interrupt management
 #endif
 //    __asm__ __volatile__ ("sti\n");
     kmain(boothdr, pmemsz);
+
+    /* NOTREACHED */
+    for ( ; ; ) { ; }
 }
 
