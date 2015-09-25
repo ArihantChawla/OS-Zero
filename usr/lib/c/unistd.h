@@ -56,6 +56,7 @@ extern int            euidaccess(const char *path, int type);
 #if defined(_GNU_SOURCE) || defined(_ATFILE_SOURCE)
 /* check access at path relative to fd */
 extern int            faccessat(int fd, const char *path, int type, int flg);
+#endif
 /* file operations */
 /* lseek(), llseek() */
 extern off_t          lseek(int fd, off_t ofs, int whence);

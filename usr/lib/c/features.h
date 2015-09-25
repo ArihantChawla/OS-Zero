@@ -23,6 +23,7 @@
 #endif
 #if defined(_XOPEN_SOURCE) && (_XOPEN_SOURCE >= 500)
 #define _XOPEN_SOURCE_EXTENDED 1        // activate X/Open extensions
+#endif
 #if defined(_POSIX_C_SOURCE)
 #define _POSIX_SOURCE          1        // old macro for POSIX features
 #endif

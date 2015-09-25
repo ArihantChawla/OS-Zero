@@ -1,4 +1,5 @@
 #include <kern/conf.h>
+#include <kern/version.h>
 #include <errno.h>
 #include <features.h>
 #include <limits.h>
@@ -6,6 +7,7 @@
 #include <sys/sysinfo.h>
 #include <zero/cdecl.h>
 #include <zero/param.h>
+#define ZEROMTX 1
 #include <zero/mtx.h>
 #include <kern/io/buf.h>
 #include <kern/unit/x86/cpu.h>
@@ -31,7 +33,7 @@ long sysconftab[NSYSCONF]
     0,                          /* _SC_NPROCESSORS_CONF */
     0,                          /* _SC_AVPHYS_PAGES */
     0,                          /* _SC_PHYS_PAGES */
-    ZERO_VERSION,               /* _SC_OS_VERSION */ // origin for indexing
+    _ZERO_VERSION,              /* _SC_OS_VERSION */ // origin for indexing
     _POSIX_C_SOURCE,            /* _SC_VERSION */
     ARG_MAX,                    /* _SC_ARG_MAX */
     CHILD_MAX,                  /* _SC_CHILD_MAX */

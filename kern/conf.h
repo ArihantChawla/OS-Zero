@@ -3,8 +3,6 @@
 
 #define FASTINTR    1
 
-#define ZERO_VERSION 0x00000001
-
 #define NEWFONT     1
 #if !defined(BUFNMEG)
 #define BUFNMEG     64

@@ -29,7 +29,7 @@ struct tasklk {
     uint8_t       pad[CLSIZE - sizeof(long)];
 };
 
-static volatile long    taskwaitmtxtab[NLVL0TASK] ALIGNED(PAGESIZE);
+static struct tasklk    taskwaitmtxtab[NLVL0TASK] ALIGNED(PAGESIZE);
 static struct tasktab  *taskwaittab[NLVL0TASK];
 static struct taskid    taskidtab[NTASK];
 static struct task     *taskstoppedtab[NTASK];
@@ -430,7 +430,7 @@ taskunwait(uintptr_t wchan)
     void              *ptab[TASKNKEY - 1] = { NULL, NULL, NULL };
 
     tab = taskwaittab[key0];
-    mtxlk(&taskwaitmtx.lk);
+    mtxlk(&taskwaitmtxtab[key0].lk);
     if (ptr) {
         tab->nref--;
         ptab[0] = tab;
@@ -501,7 +501,7 @@ taskunwait(uintptr_t wchan)
             }
         }
     }
-    mtxunlk(&taskwaitmtx.lk);
+    mtxunlk(&taskwaitmtxtab[key0].lk);
 }
 
 void

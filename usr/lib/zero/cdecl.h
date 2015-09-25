@@ -20,6 +20,7 @@
 #define ALIGNED(a)  __attribute__ ((__aligned__(a)))
 /* ALWAYS inline the function */
 #define INLINE      __inline__ __attribute__ ((always_inline))
+#define NOINLINE    __attribute__((noinline))
 #define WEAK        __attribute__ ((weak))
 /*
  * AMD64 passes first six arguments in rdi, rsi, rdx, rcx, r8, and r9; the rest
@@ -54,6 +55,7 @@
 #define ALIGNED(a)   __declspec(align((a)))
 #define __inline__   inline
 #define INLINE       __forceinline
+#define NOINLINE     __declspec(noinline)
 
 #define ASMLINK      __cdecl
 

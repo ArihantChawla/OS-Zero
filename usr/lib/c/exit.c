@@ -1,6 +1,7 @@
 #include <stddef.h>
 #include <stdlib.h>
 #include <stdio.h>
+#define ZEROMTX 1
 #include <zero/mtx.h>
 #include <sys/zero/syscall.h>
 
