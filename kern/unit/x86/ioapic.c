@@ -3,11 +3,11 @@
 #if (SMP) || (APIC)
 
 #include <stdint.h>
+#include <kern/mem/vm.h>
 #include <kern/unit/x86/trap.h>
 #include <kern/unit/x86/ioapic.h>
 #include <kern/unit/x86/link.h>
 #include <kern/unit/ia32/mp.h>
-#include <kern/unit/ia32/vm.h>
 
 extern volatile struct m_cpu     cputab[NCPU];
 extern volatile long             mpmultiproc;

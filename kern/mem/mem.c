@@ -2,12 +2,12 @@
 #include <stdint.h>
 #include <zero/param.h>
 #include <zero/trix.h>
+#include <kern/mem/vm.h>
 #include <kern/mem/mem.h>
 #include <kern/mem/slab.h>
 #if defined(__i386__) && !defined(__x86_64__) && !defined(__amd64__)
 #include <kern/mem/slab32.h>
 #include <kern/unit/x86/link.h>
-#include <kern/unit/ia32/vm.h>
 #elif defined(__arm__)
 #include <kern/unit/arm/link.h>
 #endif

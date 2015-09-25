@@ -48,7 +48,7 @@
     ((x) = (x) & ((1U < (nb)) - 1),                                     \
      ((x) ^ (1U << ((b) - 1))) - (1U << ((b) - 1)))
 #define sign2(x, nb)                                                    \
-    (((x) << (CHAR_BIT * sizeof(x) - (b))) >> (CHAR_BIT * sizeof(x) - (b)))
+    (((x) << (CHAR_BIT * sizeof(x) - (nb))) >> (CHAR_BIT * sizeof(x) - (nb)))
 
 #if 0
 /* compute minimum and maximum of a and b without branching */
@@ -551,9 +551,13 @@ union __ieee754d { uint64_t u64; double d; };
 /* (a < b) ? v1 : v2; */
 #define condltset(a, b, v1, v2)                                         \
     (((((a) - (b)) >> (CHAR_BIT * sizeof(a) - 1)) & ((v1) ^ (v2))) ^ (v2))
-
 /* c - conditional, f - flag, u - word */
 #define condflgset(c, f, u) ((u) ^ ((-(u) ^ (u)) & (f)))
+
+#define condsetbits(val, mask, cond)                                    \
+    ((val) ^= (-(cond) ^ (val)) & (mask))
+#define condsetbits2(val, mask, cond)                                   \
+    ((val) = ((val) & ~(mask)) | (-(cond) & (mask)))
 
 #define satu8(x)                                                        \
     ((x) <= 0xff ? (x) : 0xff)

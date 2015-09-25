@@ -7,11 +7,11 @@
 #include <zero/param.h>
 #include <zero/trix.h>
 #include <kern/util.h>
+#include <kern/mem/vm.h>
 #include <kern/mem/mem.h>
 #include <kern/mem/mag.h>
 #if defined(__i386__)
 #include <kern/unit/x86/link.h>
-#include <kern/unit/ia32/vm.h>
 #endif
 #if defined(__x86_64__) || defined(__amd64__)
 #include <kern/mem/slab64.h>

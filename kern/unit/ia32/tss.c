@@ -3,11 +3,11 @@
 //#include <mach/mach.h>
 #include <zero/param.h>
 #include <kern/malloc.h>
+#include <kern/mem/vm.h>
 #include <kern/proc/task.h>
 #include <kern/unit/x86/boot.h>
 #include <kern/unit/x86/cpu.h>
 #include <kern/unit/ia32/seg.h>
-#include <kern/unit/ia32/vm.h>
 
 extern uint8_t  kerniomap[8192];
 extern uint64_t kerngdt[NTASK][NGDT];

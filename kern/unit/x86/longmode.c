@@ -1,3 +1,5 @@
+#if defined(__x86_64__) || defined(__amd64__)
+
 #include <kern/conf.h>
 #include <stdint.h>
 #include <zero/cdecl.h>
@@ -8,7 +10,6 @@
 #include <kern/obj.h>
 #include <kern/sched.h>
 #include <kern/proc/proc.h>
-#include <kern/mem/vm.h>
 #include <kern/mem/page.h>
 #include <kern/io/drv/chr/cons.h>
 //#include <kern/task.h>
@@ -23,8 +24,9 @@
 #include <kern/unit/x86/pit.h>
 #include <kern/unit/x86/kern.h>
 #include <kern/unit/x86/link.h>
+#include <kern/unit/x86-64/vm.h>
 #if (SMP) || (APIC)
-#include <kern/unit/ia32/mp.h>
+//#include <kern/unit/x86-64/mp.h>
 #endif
 #if (VBE)
 #include <kern/unit/x86/trap.h>
@@ -70,7 +72,7 @@ extern void acpiinit(void);
 extern void sb16init(void);
 #endif
 #if (APIC)
-extern void apicinit(void);
+uint32_t    apicinitcpu(long id);
 extern void apicstarttmr(uint32_t tmrcnt);
 #endif
 extern void schedloop(void);
@@ -98,7 +100,7 @@ extern volatile uint32_t        *mpapic;
 #endif
 
 void
-kinitprot(unsigned long pmemsz)
+kinitlong(unsigned long pmemsz)
 {
 #if (NEWTMR)
     uint32_t tmrcnt = 0;
@@ -109,7 +111,7 @@ kinitprot(unsigned long pmemsz)
     trapinitprot();
 #endif
     /* initialise virtual memory */
-    vminit((uint32_t *)&_pagetab);
+    vminitlong((uint64_t *)kernpagemapl4tab);
 #if 0
     /* FIXME: map possible device memory */
     vmmapseg((uint32_t *)&_pagetab, DEVMEMBASE, DEVMEMBASE, 0xffffffffU,
@@ -183,7 +185,7 @@ kinitprot(unsigned long pmemsz)
 #if (SMP) || (APIC)
 //#if (SMP)
     /* multiprocessor initialisation */
-    mpinit();
+//    mpinit();
 //#endif
     if (mpncpu == 1) {
         kprintf("found %ld processor\n", mpncpu);
@@ -237,3 +239,6 @@ kinitprot(unsigned long pmemsz)
 
     /* NOTREACHED */
 }
+
+#endif /* __x86_64__ || __amd64__ */
+

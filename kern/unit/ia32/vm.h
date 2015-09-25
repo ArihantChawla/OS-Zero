@@ -4,13 +4,13 @@
 #include <stdint.h>
 #include <zero/param.h>
 //#include <kern/buf.h>
-
 #include <kern/unit/x86/link.h>
-
 #if !defined(__KERNEL__)
 #define __KERNEL__ 1
 #endif
 #include <zero/mtx.h>
+
+extern long kernlongmode;
 
 void  vminitphys(uintptr_t base, unsigned long nbphys);
 void *vmmapvirt(uint32_t *pagetab, void *virt, uint32_t size, uint32_t flags);

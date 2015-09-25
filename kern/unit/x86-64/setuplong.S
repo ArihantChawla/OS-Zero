@@ -1,9 +1,11 @@
+#define __ASSEMBLER__ 1
+#include <kern/unit/x86-64/boot.h>
+#include <kern/unit/x86-64/vm.h>
 /*
  * enable long mode
  */
 
-.globl	longmode
-.extern kernpmaplvl4
+.extern kernpagemapl4tab
 
 .text	32
 
@@ -16,21 +18,11 @@
 	 * - set EFERLME-bit at EFERADR
 	 * - enable paging
 	 */
-longmode:
-	movl	%cr4, %eax
+pginitlong:
+	movl	$kernpagemapl4tab, %edi
 	orl	$CR4PAE, %eax
 	movl	%eax, %cr4
-	movl	$kernpmaplvl4, %cr3
-	movl	EFERADR, %eax
-	orl	$EFERLME, %eax
+	movl	%edi, %cr3
+	movl	$(EFERADR | EFELME), %eax
 	movl	%eax, EFERADR
-	ljmp	$TEXTSEL, $kmain
-
-idtset:
-	lidt (idtptr)
-	ret
-
-idtptr:
-	.short	0x0000
-	.long	0x00000000
-	
+	movl	%cr4, %eax

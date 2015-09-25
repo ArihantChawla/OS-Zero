@@ -24,6 +24,8 @@ _start2:
 	call	_chkcpuid
 	cmp	$0, %eax
 	je	_protmode
+	/* we have long mode */
+	call	pginitlong
 
 .align NBPG
 

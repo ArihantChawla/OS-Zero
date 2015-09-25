@@ -12,7 +12,7 @@ _MBCHKSUM    = MBCHKSUM
 #if !(LOCORE)
 .globl	kernidt
 #endif
-.globl	kerngdt, kernpagedir, kerniomap
+.globl	kerngdt, kernpagedir, kerniomap, kernpagetab4
 .extern	kinit
 	
 .text	32
@@ -95,24 +95,24 @@ kernidt:
 kernpagedir:
 	.space	NBPG
 
-/* 64-bit memory management */
-
-/* page-map level-4 table */
-kernpml4t:
-	.space	NBPG
-/* page directory pointer table */
-kernpdpt:
-	.space	NBPG
-/* page directory table */
-kernpdt:
-	.space	NBPG
-/* page table */
-kernpt:
-	.space	NBPG
-	
 /* kernel I/O protection bitmap */
 kerniomap:
 	.space	8192
+
+/* 64-bit memory management */
+
+/* page-map level-4 table */
+kernpagetab4:	
+	.space	NBPG
+/* page directory pointer table */
+kernpagetab3:	
+	.space	NBPG
+/* page directory table */
+kernpagetab2:	
+	.space	NBPG
+/* page table */
+kernpagetab1:
+	.space	NBPG
 #endif
 
 /* per-CPU GDTs; kernel segment descriptor tables */

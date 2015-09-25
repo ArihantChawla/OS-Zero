@@ -5,10 +5,10 @@
 #include <gfx/rgb.h>
 #include <kern/conf.h>
 #include <kern/util.h>
+#include <kern/mem/vm.h>
 #include <kern/io/drv/chr/cons.h>
 #include <kern/io/drv/pc/vga.h>
 #include <kern/unit/x86/link.h>
-#include <kern/unit/ia32/vm.h>
 
 #if (VBE)
 

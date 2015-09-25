@@ -10,8 +10,8 @@
 #include <kern/util.h>
 #include <kern/malloc.h>
 #include <kern/time.h>
+#include <kern/mem/vm.h>
 #include <kern/mem/page.h>
-#include <kern/unit/ia32/vm.h>
 
 extern struct page        vmphystab[NPAGEPHYS];
 extern volatile long      vmlrulktab[1UL << (LONGSIZELOG2 + 3)];

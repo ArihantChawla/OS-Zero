@@ -5,11 +5,11 @@
 #include <zero/trix.h>
 
 #include <kern/io/drv/pc/acpi.h>
+#include <kern/mem/vm.h>
 #if defined(__x86_64__) || defined(__amd64__)
 #error implement virtual memory for 64-bit x86
 #else
 #include <kern/unit/ia32/link.h>
-#include <kern/unit/ia32/vm.h>
 #endif
 
 ACPI_STATUS

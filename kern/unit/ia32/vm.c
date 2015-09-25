@@ -13,6 +13,7 @@
 #include <zero/param.h>
 //#include <kern/io/dev.h>
 #include <kern/util.h>
+#include <kern/mem/vm.h>
 //#include <kern/proc/task.h>
 #include <kern/mem/page.h>
 // #include <kern/io/buf.h>
@@ -21,7 +22,6 @@
 #if (SMP)
 #include <kern/unit/ia32/mp.h>
 #endif
-#include <kern/unit/ia32/vm.h>
 
 #define HICORE (1024 * 1024)
 
@@ -49,7 +49,7 @@ struct vmpagestat     vmpagestat;
  */
 void
 vmmapseg(uint32_t *pagetab, uint32_t virt, uint32_t phys, uint32_t lim,
-         uint32_t flg)
+             uint32_t flg)
 {
     uint32_t *pte;
     long      n;

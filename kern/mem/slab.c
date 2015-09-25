@@ -6,7 +6,7 @@
 #include <kern/mem/mem.h>
 #include <kern/mem/mag.h>
 #include <kern/mem/slab.h>
-#include <kern/unit/ia32/vm.h>
+#include <kern/mem/vm.h>
 #if (MEMTEST)
 #include <stdio.h>
 #include <string.h>

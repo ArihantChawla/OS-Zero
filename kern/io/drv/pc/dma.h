@@ -3,7 +3,7 @@
 
 #include <stdint.h>
 #include <sys/io.h>
-#include <kern/unit/ia32/vm.h>
+#include <kern/mem/vm.h>
 
 long dmagetchan(long is16bit);
 long dmatakechan(unsigned long chan);

@@ -8,8 +8,8 @@
 
 #include <kern/util.h>
 #include <kern/tmr.h>
-#include <kern/unit/ia32/vm.h>
 #include <kern/malloc.h>
+#include <kern/mem/vm.h>
 //#include <kern/prio.h>
 //#include <kern/thr.h>
 #include <kern/io/drv/pc/dma.h>

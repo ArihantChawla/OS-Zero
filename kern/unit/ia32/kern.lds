@@ -1,15 +1,19 @@
 /*
  * load low kernel at 1M physical
  * DMA buffers (8 * 128K) at 4M physical
+ * locate high kernel at 3G virtual
  */
 
+MPENTRY		= 0x9f000;
 HICORE		= 1M;
 DMABUF		= 8M;
 DMABUFSIZE	= 8M;
+PAGETAB		= 16M;
 PAGESIZE	= 4K;
-VIRTBASE	= -16M;
+PAGETABSIZE	= 4M;
+VIRTBASE	= 0xc0000000;
 
-OUTPUT_FORMAT("elf64-x86-64")
+OUTPUT_FORMAT("elf32-i386")
 
 ENTRY(_start)
 
@@ -76,9 +80,6 @@ SECTIONS {
 	vm.o(.text)
 	vm.o(.data)
 	vm.o(.bss)
-	vmlong.o(.text)
-	vmlong.o(.data)
-	vmlong.o(.bss)
 
 	util.o(.text)
 	util.o(.data)
@@ -122,6 +123,15 @@ SECTIONS {
 	_dmabuf = .;
 	. += DMABUFSIZE;
 	_edmabuf = .;
+    }
+
+    . = PAGETAB;
+
+    /* identity-mapped set of page tables */
+    .ptab : AT(PAGETAB) {
+        _pagetab = .;
+  	. += PAGETABSIZE;
+	_epagetab = .;
     }
 
     . = VIRTBASE;

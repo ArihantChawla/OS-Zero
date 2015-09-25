@@ -1,3 +1,5 @@
+#if !defined(__x86_64__) && !defined(__amd64__)
+
 #include <kern/conf.h>
 
 #if (SMP) || (APIC)
@@ -10,6 +12,7 @@
 #include <zero/types.h>
 #include <kern/util.h>
 #include <kern/malloc.h>
+#include <kern/mem/vm.h>
 #include <kern/unit/x86/boot.h>
 #include <kern/unit/x86/asm.h>
 #include <kern/unit/x86/cpu.h>
@@ -17,7 +20,6 @@
 #include <kern/unit/x86/link.h>
 #include <kern/unit/ia32/seg.h>
 #include <kern/unit/ia32/mp.h>
-#include <kern/unit/ia32/vm.h>
 
 #if (HPET)
 extern void hpetinit(void);
@@ -34,7 +36,7 @@ extern void tssinit(long id);
 extern uint32_t *kernpagedir[NPDE];
 
 extern void      gdtinit(void);
-extern void      pginit(void);
+//extern void      pginitprot(void);
 extern void      trapinitidt(void);
 #if (IOAPIC)
 extern void      ioapicinit(long id);
@@ -305,3 +307,4 @@ mpspurint(void)
 
 #endif /* SMP || APIC */
 
+#endif /* !__x86_64__ && !__amd64__ */

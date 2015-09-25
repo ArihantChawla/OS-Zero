@@ -5,8 +5,8 @@
 #include <stddef.h>
 #include <stdint.h>
 #include <kern/util.h>
+#include <kern/mem/vm.h>
 #include <kern/unit/x86/hpet.h>
-#include <kern/unit/ia32/vm.h>
 
 static struct hpetdrv hpetdrv;
 
