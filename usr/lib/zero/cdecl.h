@@ -28,7 +28,7 @@
  *
  * IA-32 can pass up to 3 register arguments in eax, edx, and ecx
  */
-#define REGPARM(n)  __attribute__ ((regparm(n)))
+#define REGPARM(n)  __attribute__ ((__regparm__(n)))
 #if defined(__x86_64__) || defined(__amd64__) || defined(__arm__)
 #define FASTCALL    /* at least 3 arguments passed in registers by default */
 #elif defined(__i386__) || defined(__i486__) || defined(__i586__) \
@@ -40,7 +40,7 @@
 #define ASMLINK     REGPARM(0)
 
 /* declare function with no return (e.g., longjmp()) */
-#define NORET       __attribute__ ((__noreturn__))
+#define NORETURN    __attribute__ ((__noreturn__))
 #define PURE        __attribute__ ((__pure__))
 
 #define likely(x)   (__builtin_expect(!!(x), 1))

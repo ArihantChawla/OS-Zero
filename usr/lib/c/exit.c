@@ -1,6 +1,7 @@
 #include <stddef.h>
 #include <stdlib.h>
 #include <stdio.h>
+#include <zero/cdecl.h>
 #define ZEROMTX 1
 #include <zero/mtx.h>
 #include <sys/zero/syscall.h>
@@ -105,6 +106,7 @@ __atexit(void)
     mtxunlk(&g_exit.lk);
 }
 
+NORETURN
 void
 __exit(int status, long flg)
 {
@@ -121,18 +123,27 @@ __exit(int status, long flg)
      * parent sent SIGCHLD
      */
     _syscall(SYS_EXIT, SYS_NOARG, status, SYS_NOARG);
+    for ( ; ; ) { ; }
 
     /* NOTREACHED */
 }
 
+NORETURN
 void
 _exit(int status)
 {
     __exit(status, EXIT_IMMED);
+    for ( ; ; ) { ; }
+
+    /* NOTREACHED */
 }
 
+NORETURN
 void
 _Exit(int status)
 {
     __exit(status, EXIT_IMMED);
+    for ( ; ; ) { ; }
+
+    /* NOTREACHED */
 }

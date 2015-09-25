@@ -55,7 +55,7 @@ setjmp(jmp_buf env)
     return 0;
 }
 
-ASMLINK NORET
+ASMLINK NORETURN
 void
 longjmp(jmp_buf env, int val)
 {
@@ -80,7 +80,7 @@ _setjmp(jmp_buf env)
     return 0;
 }
 
-ASMLINK NORET
+ASMLINK NORETURN
 void
 _longjmp(jmp_buf env,
          int val)
@@ -110,7 +110,7 @@ sigsetjmp(sigjmp_buf env, int savesigs)
     return 0;
 }
 
-ASMLINK NORET
+ASMLINK NORETURN
 void
 siglongjmp(sigjmp_buf env, int val)
 {

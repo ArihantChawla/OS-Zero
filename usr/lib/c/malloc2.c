@@ -2117,6 +2117,7 @@ _free(void *ptr)
 void *
 #if defined(__GNUC__)
 __attribute__ ((alloc_size(2)))
+__attribute__ ((assume_aligned(MALLOCMINSIZE)))
 #endif
 _realloc(void *ptr,
          size_t size,
@@ -2160,6 +2161,11 @@ _realloc(void *ptr,
 /* API FUNCTIONS */
 
 void *
+#if defined(__GNUC__)
+__attribute__ ((alloc_size(1)))
+__attribute__ ((assume_aligned(MALLOCMINSIZE)))
+__attribute__ ((malloc))
+#endif
 malloc(size_t size)
 {
     void   *ptr;
@@ -2192,6 +2198,11 @@ malloc(size_t size)
 }
 
 void *
+#if defined(__GNUC__)
+__attribute__ ((alloc_size(1, 2)))
+__attribute__ ((assume_aligned(MALLOCMINSIZE)))
+__attribute__ ((malloc))
+#endif
 calloc(size_t n, size_t size)
 {
     size_t sz = max(n * size, MALLOCMINSIZE);
@@ -2221,6 +2232,10 @@ calloc(size_t n, size_t size)
 }
 
 void *
+#if defined(__GNUC__)
+__attribute__ ((alloc_size(2)))
+__attribute__ ((assume_aligned(MALLOCMINSIZE)))
+#endif
 realloc(void *ptr,
         size_t size)
 {
@@ -2275,6 +2290,12 @@ free(void *ptr)
 
 #if (_ISOC11_SOURCE)
 void *
+#if defined(__GNUC__)
+__attribute__ ((alloc_size(2)))
+__attribute__ ((alloc_align(1)))
+__attribute__ ((assume_aligned(MALLOCMINSIZE)))
+__attribute__ ((malloc))
+#endif
 aligned_alloc(size_t align,
               size_t size)
 {
@@ -2308,6 +2329,11 @@ aligned_alloc(size_t align,
 #if (_POSIX_C_SOURCE >= 200112L || _XOPEN_SOURCE >= 600)
 
 int
+#if defined(__GNUC__)
+__attribute__ ((alloc_size(3)))
+__attribute__ ((alloc_align(2)))
+__attribute__ ((assume_aligned(MALLOCMINSIZE)))
+#endif
 posix_memalign(void **ret,
                size_t align,
                size_t size)
@@ -2350,6 +2376,11 @@ posix_memalign(void **ret,
      || (_XOPEN_SOURCE >= 500 || ((_XOPEN_SOURCE) && (_XOPEN_SOURCE_EXTENDED))) \
      && !(_POSIX_C_SOURCE >= 200112L || _XOPEN_SOURCE >= 600))
 void *
+#if defined(__GNUC__)
+__attribute__ ((alloc_size(1)))
+__attribute__ ((assume_aligned(PAGESIZE)))
+__attribute__ ((malloc))
+#endif
 valloc(size_t size)
 {
     void *ptr;
@@ -2375,6 +2406,12 @@ valloc(size_t size)
 #endif
 
 void *
+#if defined(__GNUC__)
+__attribute__ ((alloc_align(1)))
+__attribute__ ((alloc_size(2)))
+__attribute__ ((assume_aligned(MALLOCMINSIZE)))
+__attribute__ ((malloc))
+#endif
 memalign(size_t align,
          size_t size)
 {
@@ -2406,6 +2443,10 @@ memalign(size_t align,
 
 #if (_BSD_SOURCE)
 void *
+#if defined(__GNUC__)
+__attribute__ ((alloc_size(2)))
+__attribute__ ((assume_aligned(MALLOCMINSIZE)))
+#endif
 reallocf(void *ptr,
          size_t size)
 {
@@ -2443,6 +2484,11 @@ reallocf(void *ptr,
 
 #if defined(_GNU_SOURCE)
 void *
+#if defined(__GNUC__)
+__attribute__ ((alloc_size(1)))
+__attribute__ ((assume_aligned(PAGESIZE)))
+__attribute__ ((malloc))
+#endif
 pvalloc(size_t size)
 {
     size_t  sz = rounduppow2(size, PAGESIZE);
