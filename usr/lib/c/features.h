@@ -5,7 +5,8 @@
 #define _THREAD_SAFE           1        // thread safety on some systems
 
 #define USEXOPEN               (defined(_XOPEN_SOURCE))
-#define USEXOPEN2K             1
+#define USEXOPEN2K             (defined(_XOPEN_SOURCE)                  \
+                                && (_XOPEN_SOURCE == 500))
 #define USEXOPEN2K8            1
 #define USEXOPENEXT            (defined(_XOPEN_SOURCE_EXTENDED))
 #define USEUNIX98              1
@@ -32,10 +33,18 @@
 #define _FILE_OFFSET_BITS      64       // enable 64-bit off_t
 #define _LARGEFILE_SOURCE      1        // enable 64-bit file-related types
 #define _LARGEFILE64_SOURCE    1        // enable 64-bit file-related types
-#define _POSIX_SOURCE          1        // enable POSIX features
-#define _POSIX_C_SOURCE        200112L	// POSIX version
-#define _XOPEN_SOURCE          600      // XOPEN version
+#define _XOPEN_SOURCE          700      // XOPEN version
 #define _XOPEN_SOURCE_EXTENDED 1        // activate X/Open extensions
+#if defined(_XOPEN_SOURCE) && (_XOPEN_SOURCE == 700)
+#define _POSIX_C_SOURCE        200809L	// POSIX version
+#elif defined(_XOPEN_SOURCE) && (_XOPEN_SOURCE == 600)
+#define _POSIX_C_SOURCE        200112L
+#elif defined(_XOPEN_SOURCE) && (_XOPEN_SOURCE == 500)
+#define _POSIX_C_SOURCE        199506L
+#endif
+#if defined(_POSIX_C_SOURCE)
+#define _POSIX_SOURCE          1        // old macro for POSIX features
+#endif
 #define _SVID_SOURCE           1
 #define _GNU_SOURCE            1        // enable GNU extensions
 #define _BSD_SOURCE            1        // enable BSD features
