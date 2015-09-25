@@ -3,22 +3,28 @@
 
 #define _REENTRANT             1        // enable re-entrant thread-safe code
 #define _THREAD_SAFE           1        // thread safety on some systems
-#define USEXOPEN               1
+
+#define USEXOPEN               (defined(_XOPEN_SOURCE))
 #define USEXOPEN2K             1
 #define USEXOPEN2K8            1
-#define USEXOPENEXT            1
+#define USEXOPENEXT            (defined(_XOPEN_SOURCE_EXTENDED))
 #define USEUNIX98              1
-#define USEPOSIX               1
-#define USEPOSIX2              1
-#define USEPOSIX199309         1
-#define USEPOSIX199506         1        // thread extensions in POSIX.1-1995
+#define USEPOSIX               (defined(_POSIX_SOURCE))
+#define USEPOSIX2              (defined(_POSIX_SOURCE) && (_POSIX_SOURCE > 1))
+#define USEPOSIX199309         (defined(_POSIX_C_SOURCE)                \
+                                && (_POSIX_C_SOURCE >= 199309L))
+/* thread extensions in POSIX.1-1995 */
+#define USEPOSIX199506         (defined(_POSIX_C_SOURCE)                \
+                                && (_POSIX_C_SOURCE >= 199506L))
 #define USEPOSIX200112         (defined(_POSIX_SOURCE)                  \
                                 && _POSIX_C_SOURCE >= 200112L)
-#define USEBSD                 1
-#define FAVORBSD               0        // favor old school BSD interfaces
-#define USESVID                1
-#define USEGNU                 1
-#define USEOLDBSD              0
+
+#define USEBSD                 (defined(_BSD_SOURCE))
+/* favor old school BSD interfaces */
+#define FAVORBSD               (defined(_BSD_SOURCE) && defined(_FAVOR_BSD))
+#define USESVID                (defined(_SVID_SOURCE))
+#define USEGNU                 (defined(_GNU_SOURCE))
+#define USEOLDBSD              FAVORBSD
 
 /* feature macro list */
 #define _ISOC11_SOURCE         1        // ISO 9899-2011
@@ -30,8 +36,10 @@
 #define _POSIX_C_SOURCE        200112L	// POSIX version
 #define _XOPEN_SOURCE          600      // XOPEN version
 #define _XOPEN_SOURCE_EXTENDED 1        // activate X/Open extensions
+#define _SVID_SOURCE           1
 #define _GNU_SOURCE            1        // enable GNU extensions
 #define _BSD_SOURCE            1        // enable BSD features
+#undef  _FAVOR_BSD
 #define _ZERO_SOURCE           1        // enable Zero features; version number
 #define _UNIX_SOURCE           1        // enable Unix features
 #define _MSDOS_SOURCE          1        // enable [some] MS-DOS style C features

@@ -48,11 +48,10 @@
 
 #define MALLOCNOSBRK      0 // do NOT use sbrk()/heap, just mmap()
 #define MALLOCDIAG        0 // run [heavy] internal diagnostics for debugging
-#define MALLOCFREEMDIR    1 // under construction
+#define MALLOCFREEMDIR    0 // under construction
 #define MALLOCFREEMAP     0 // use free block bitmaps
 #define MALLOCHACKS       0 // enable experimental features
 #define MALLOCBUFMAP      0 // buffer mapped slabs to global pool
-#define MALLOCVARSIZEBUF  0 // use variable-size slabs; FIXME
 
 /*
  * THANKS
@@ -119,7 +118,6 @@
  * TODO
  * ----
  * - free inactive subtables from mdir
- * - fix MALLOCVARSIZEBUF
  */
 
 #define ZMALLOCHOOKS 1
@@ -146,7 +144,7 @@
 #include <execinfo.h>
 #endif
 
-#define ZEROMTX 0
+#define ZEROMTX 1
 #if defined(ZEROMTX)
 #undef PTHREAD
 #define MUTEX volatile long
@@ -442,9 +440,15 @@ mallocstat(void)
     ((1UL << (magnblklog2(bktid) + 1)) * sizeof(MAGPTRNDX))
 #endif /* MALLOCFREEMAP */
 #elif (MALLOCFREEMAP) /* !MALLOCSTKNDX */
+#if (MALLOCSTKNDX)
 #define magnbytetab(bktid)                                              \
     ((1UL << (magnblklog2((bktid) + 1))) * sizeof(MAGPTRNDX)            \
      + rounduppow2((1UL << magnblklog2(bktid)) / CHAR_BIT, PAGESIZE))
+#else
+#define magnbytetab(bktid)                                              \
+    ((1UL << (magnblklog2((bktid) + 1))) * sizeof(void *)               \
+     + rounduppow2((1UL << magnblklog2(bktid)) / CHAR_BIT, PAGESIZE))
+#endif
 #elif (MALLOCNOPTRTAB)
 #define magnbytetab(bktid)   ((1UL << magnblklog2(bktid)) * sizeof(void *))
 #else
@@ -1515,7 +1519,10 @@ malloc_info(int opt, FILE *fp)
 {
     int retval = -1;
 
-    fprintf(stderr, "malloc_info not implemented\n");
+    if (opt) {
+        fprintf(fp, "malloc_info: opt-argument non-zero\n");
+    }
+    fprintf(fp, "malloc_info not implemented\n");
 
     return retval;
 }
@@ -1881,6 +1888,10 @@ _malloc(size_t size,
     }
     ptr = clrptr(ptrval);
     if (ptr) {
+#if (MALLOCFREEMAP)
+        void *tmp = ptr;
+#endif
+        
         if ((zero) && (((uintptr_t)ptrval & BLKDIRTY))) {
             memset(ptr, 0, 1UL << bktid);
         } else if (g_malloc.mallopt.flg & MALLOPT_PERTURB_BIT) {
@@ -1895,13 +1906,13 @@ _malloc(size_t size,
         /* store unaligned source pointer */
         magputptr(mag, ptr, clrptr(ptrval));
 #if (MALLOCFREEMAP)
-        if (bitset(mag->freemap, magptrndx(mag, ptr))) {
+        if (bitset(mag->freemap, magptrndx(mag, tmp))) {
             fprintf(stderr, "trying to reallocate block");
             fflush(stderr);
             
             abort();
         }
-        setbit(mag->freemap, magptrndx(mag, ptr));
+        setbit(mag->freemap, magptrndx(mag, tmp));
 #endif
         /* add magazine to lookup structure using ptr as key */
         setmag(ptr, mag);
