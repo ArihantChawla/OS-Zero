@@ -60,13 +60,14 @@ struct _jmpframe {
                                 "i" (offsetof(struct _jmpbuf, esp))     \
                               : "eax", "ecx", "edx");                   \
     } while (0)
+
 #define m_longjmp(env, val)                                             \
     do {                                                                \
         __asm__ __volatile__ ("movl %0, %%ecx\n"                        \
                               "movl %1, %%eax\n"                        \
-                              "cmp $0, %eax\n"                          \
+                              "cmpl $0, %%eax\n"                        \
                               "jne 0f\n"                                \
-                              "movl $1, %eax\n"                         \
+                              "movl $1, %%eax\n"                        \
                               "0:\n"                                    \
                               "movl %c2(%%ecx), %%ebx"                  \
                               "movl %c3(%%ecx), %%esi"                  \
@@ -74,7 +75,7 @@ struct _jmpframe {
                               "movl %c5(%%ecx), %%ebp"                  \
                               "movl %c6(%%ecx), %%esp"                  \
                               "movl %c7(%%ecx), %%edx"                  \
-                              "jmpl *%edx\n"                            \
+                              "jmpl *%%edx\n"                           \
                               :                                         \
                               : "m" (env),                              \
                                 "m" (val),                              \

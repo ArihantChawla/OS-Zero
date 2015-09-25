@@ -61,7 +61,7 @@
 
 #define THREADLOCAL __declspec(thread)
 
-#endif /* __GNUC__ */
+#endif /* __GNUC__ || __clang__ || _MSC_VER */
 
 #endif /* __ZERO_CDECL_H__ */
 

@@ -15,15 +15,12 @@
 #include <pthread.h>
 #include <sched.h>
 #include <sys/time.h>
+#include <zero/cdecl.h>
 
 #define ONCE_FLAG_INIT         PTHREAD_ONCE_INIT
 #define TSS_DTOR_ITERATIONS    PTHREAD_DESTRUCTOR_ITERATIONS
 
-#if defined(__GNUC__)  || defined(__clang__)
-#define _Thread_local          __thread
-#elif defined(_MSC_VER)
-#define _Thread_local          __declspec(thread)
-#endif
+#define _Thread_local          THREADLOCAL
 /** c++11 name */
 #define thread_local           _Thread_local
 

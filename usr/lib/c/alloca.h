@@ -7,6 +7,8 @@
 
 #if defined(__GNUC__)
 #define alloca(size) __builtin_alloca(size)
+#elif defined(_MSC_VER)
+#define alloca(size) _alloca(size)
 #else
 void * alloca(size_t size);
 #endif

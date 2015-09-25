@@ -174,9 +174,9 @@
 #define MALLOCMINSIZE        (1UL << MALLOCMINLOG2)
 //#define MALLOCMINLOG2        CLSIZELOG2
 #if (PTRSIZE == 4)
-#define MALLOCMINLOG2        2
-#elif (PTRSIZE == 8)
 #define MALLOCMINLOG2        3
+#elif (PTRSIZE == 8)
+#define MALLOCMINLOG2        4
 #endif
 #define MALLOCNBKT           PTRBITS
 /* allocation sizes */

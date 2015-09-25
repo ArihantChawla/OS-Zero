@@ -78,6 +78,10 @@ struct _jmpframe {
     do {                                                                \
         __asm__ __volatile__ ("movq %0, %%rcx\n"                        \
                               "movq %1, %%rax\n"                        \
+                              "cmpq $0, %%rax\n"                        \
+                              "jne 0f\n"                                \
+                              "movq $1, %%rax\n"                        \
+                              "0:\n"                                    \
                               "movq %c2(%%rcx), %%rbx\n"                \
                               "movq %c3(%%rcx), %%r12\n"                \
                               "movq %c4(%%rcx), %%r13\n"                \

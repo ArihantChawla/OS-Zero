@@ -1,4 +1,5 @@
 #include <features.h>
+#include <stddef.h>
 #include <setjmp.h>
 #include <signal.h>
 #include <zero/cdecl.h>
@@ -66,7 +67,7 @@ ASMLINK
 int
 _setjmp(jmp_buf env)
 {
-    __setjmp(env);
+    m_setjmp(env);
 
     return 0;
 }
@@ -76,7 +77,7 @@ void
 _longjmp(jmp_buf env,
          int val)
 {
-    __longjmp(env, val);
+    m_longjmp(env, val);
 
     /* NOTREACHED */
 }
@@ -87,7 +88,7 @@ ASMLINK
 int
 sigsetjmp(sigjmp_buf env, int savesigs)
 {
-    __setjmp(env);
+    m_setjmp(env);
 
     if (savesigs) {
         _savesigmask(&(env->sigmask));
@@ -104,7 +105,7 @@ siglongjmp(sigjmp_buf env, int val)
     if (env->havesigs) {
         _loadsigmask(&(env->sigmask));
     }
-    __longjmp(env, val);
+    m_longjmp(env, val);
 
     /* NOTREACHED */
 }

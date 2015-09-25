@@ -1,3 +1,5 @@
+#if 0
+
 #include <stdarg.h>
 #include <stdint.h>
 #include <ucontext.h>
@@ -35,7 +37,7 @@ struct {
 
 static volatile long cpuidinit;
 
-void
+int
 getcontext(ucontext_t *uc)
 {
     uint8_t *fctx = uc->fctx;
@@ -57,11 +59,11 @@ getcontext(ucontext_t *uc)
     uc->__argc = 0;
     m_getcontext(&uc->uc_mcontext);
 
-    return;
+    return 0;
 }
 
 void
-makecontext(ucontext_t *uc, foid (*func)(), int argc, ..)
+makecontext(ucontext_t *uc, void (*func)(), int argc, ..)
 {
     va_list   va;
     long      ofs = argc * sizeof(long);
@@ -112,3 +114,4 @@ setcontext(const ucontext_t *uc)
 
 #endif
 
+#endif /* 0 */
