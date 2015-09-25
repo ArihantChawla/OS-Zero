@@ -1,4 +1,4 @@
-#define __ASSEMBLY__ 1
+#define __ASSEMBLER__ 1
 #include <kern/unit/ia32/boot.h>
 
 .globl	_start, start

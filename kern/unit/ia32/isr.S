@@ -1,4 +1,4 @@
-#define __ASSEMBLY__ 1
+#define __ASSEMBLER__ 1
 #include <kern/conf.h>
 #include <kern/unit/x86/trap.h>
 #include <kern/unit/ia32/boot.h>

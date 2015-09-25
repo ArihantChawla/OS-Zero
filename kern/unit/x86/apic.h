@@ -5,7 +5,7 @@
 
 #if (SMP) || (APIC)
 
-#if !defined(__ASSEMBLY__)
+#if !defined(__ASSEMBLER__)
 
 #include <stdint.h>
 #include <zero/param.h>
@@ -22,7 +22,7 @@ void     kusleep(unsigned long nusec);
 
 #define apiceoi()        apicwrite(0, APICEOI)
 
-#endif /* !defined(__ASSEMBLY__) */
+#endif /* !defined(__ASSEMBLER__) */
 
 #define APICBASE         0xfee00000
 #define APICMSR          0x1b
@@ -81,7 +81,7 @@ void     kusleep(unsigned long nusec);
 #define APICBUTSELF      0x00080000
 #define APICALL          0x000c0000
 
-#if !defined(__ASSEMBLY__)
+#if !defined(__ASSEMBLER__)
 
 struct lvtreg {
     unsigned vec : 8;
@@ -254,7 +254,7 @@ apicsendirq(uint32_t hi, uint32_t lo, long nusec)
     __asm__ __volatile__ ("popfl\n");
 }
 
-#endif /* !defined(__ASSEMBLY__) */
+#endif /* !defined(__ASSEMBLER__) */
 
 #endif /* SMP || APIC */
 

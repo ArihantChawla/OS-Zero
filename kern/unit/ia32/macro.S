@@ -1,5 +1,5 @@
+#define __ASSEMBLER__ 1
 #include <kern/conf.h>
-#define __ASSEMBLY__ 1
 #if (APIC)
 #include <kern/unit/x86/apic.h>
 #endif

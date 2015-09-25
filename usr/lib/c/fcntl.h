@@ -38,7 +38,7 @@ extern int     splice(int infd, off64_t inofs, int outfd, off64_t outofs,
 extern int     tee(int infd, int outfd, size_t len, unsigned int flags);
 #endif
 
-#if defined(_GNU_SOURCE)
+#if defined(_GNU_SOURCE) || defined(_ATFILE_SOURCE)
 extern int     openat(int fd, const char *file, int flg);
 #endif
 

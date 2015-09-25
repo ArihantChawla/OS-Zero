@@ -15,11 +15,11 @@
  * 0x9dff8	- processor kernel stack address
  */
 
+#define __ASSEMBLER__ 1
 #include <kern/conf.h>
 
 #if (SMP)
 
-#define __ASSEMBLY__ 1
 #include <kern/unit/ia32/boot.h>
 #include <kern/unit/ia32/mp.h>
 

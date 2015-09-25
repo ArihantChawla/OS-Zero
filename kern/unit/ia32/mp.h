@@ -12,7 +12,7 @@
 //#define MPGDT       0x9e000
 #define MPSTKSIZE   8192
 
-#if !defined(__ASSEMBLY__)
+#if !defined(__ASSEMBLER__)
 
 #include <stdint.h>
 #include <zero/cdecl.h>
@@ -96,7 +96,7 @@ mpcpunum(void)
     return ret;
 }
 
-#endif /* !defined(__ASSEMBLY__) */
+#endif /* !defined(__ASSEMBLER__) */
 
 #endif /* SMP */
 

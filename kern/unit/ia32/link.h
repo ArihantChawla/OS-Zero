@@ -1,7 +1,7 @@
 #ifndef __KERN_UNIT_IA32_LINK_H__
 #define __KERN_UNIT_IA32_LINK_H__
 
-#if !defined(__ASSEMBLY__)
+#if !defined(__ASSEMBLER__)
 
 #include <stdint.h>
 #include <kern/conf.h>
@@ -29,7 +29,7 @@ extern char _ebssvirt;
 extern char _ebssphys;
 extern long _kernsize;
 
-#endif /* !defined(__ASSEMBLY__) */
+#endif /* !defined(__ASSEMBLER__) */
 
 #define KVIRTBASE 0xc0000000U
 #define KPHYSBASE 0x00100000U

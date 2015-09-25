@@ -3,7 +3,7 @@
 
 #include <kern/conf.h>
 
-#if !defined(__ASSEMBLY__)
+#if !defined(__ASSEMBLER__)
 #include <stdint.h>
 #include <zero/asm.h>
 #include <zero/types.h>
@@ -12,7 +12,7 @@
 
 #define NINTR 256
 
-#if !defined(__ASSEMBLY__)
+#if !defined(__ASSEMBLER__)
 
 #if !defined(__x86_64__) && !defined(__amd64__)
 /* func is routine; ring is TRAPUSER or TRAPSYS */
@@ -80,7 +80,7 @@ m_lidt(struct m_farptr *fp)
      | (1U << TRAPXF))
 #define TRAPBITS ((1U << TRAPBP) | (1U << TRAPOF))
 
-#endif /* __ASSEMBLY__ */
+#endif /* __ASSEMBLER__ */
 
 /*
  * fault: %eip points to fault instruction

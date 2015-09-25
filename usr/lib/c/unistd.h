@@ -21,7 +21,7 @@ extern int   optind;
 extern int   opterr;
 extern int   optopt;
 
-#if (_POSIX_SOURCE)
+#if defined(_POSIX_SOURCE)
 #define _POSIX_VERSION  _POSIX_C_SOURCE
 #endif
 #if (USEXOPEN2K)
@@ -52,9 +52,10 @@ extern int            access(const char *path, int type);
 /* check given access permissions using effective UID and GID */
 extern int            euidaccess(const char *path, int type);
 #define eaccess       euidaccess
+#endif
+#if defined(_GNU_SOURCE) || defined(_ATFILE_SOURCE)
 /* check access at path relative to fd */
 extern int            faccessat(int fd, const char *path, int type, int flg);
-#endif
 /* file operations */
 /* lseek(), llseek() */
 extern off_t          lseek(int fd, off_t ofs, int whence);
@@ -73,7 +74,7 @@ extern int            pipe(int fd[2]);
 extern unsigned int   alarm(unsigned int nsec);
 /* sleep for [at least] nsec seconds */
 extern unsigned int   sleep(unsigned int nsec);
-#if (_BSD_SOURCE) || (USEXOPENEXT)
+#if defined(_BSD_SOURCE) || (USEXOPENEXT)
 /* trigger SIGALRM in [at least] value microseconds, then every interval */
 extern useconds_t     ualarm(useconds_t value, useconds_t interval);
 /* sleep for [at least] nusec microseconds */
@@ -83,23 +84,23 @@ extern int            usleep(useconds_t nusec);
 extern int            pause(void);
 /* change owner and group of file, possibly via a symlink */
 extern int            chown(const char *path, uid_t uid, gid_t gid);
-#if (_BSD_SOURCE) || (USEXOPENEXT)
+#if defined(_BSD_SOURCE) || (USEXOPENEXT)
 /* change owner and group of file refered to by fd */
 extern int            fchown(int fd, uid_t uid, gid_t gid);
 /* change onwer credentials of a symlink */
 extern int            lchown(const char *path, uid_t uid, gid_t gid);
 #endif
-#if defined(_GNU_SOURCE)
+#if defined(_GNU_SOURCE) || defined(_ATFILE_SOURCE)
 /* change owner credentials of file at path relative to fd */
 extern int            fchownat(int fd, const char *path, uid_t uid, gid_t gid);
 #endif
-#if (_BSD_SOURCE) || (USEXOPENEXT)
+#if defined(_BSD_SOURCE) || (USEXOPENEXT)
 /* change current working directory that refered to by fd */
 extern int            fchdir(int fd);
 #endif
 /* query current working directory */
 extern char         * getcwd(char *buf, size_t len);
-#if (_BSD_SOURCE) || (USEXOPENEXT)
+#if defined(_BSD_SOURCE) || (USEXOPENEXT)
 /* DEPRECATED; buf should be at least PATH_MAX bytes; allocate if NULL */
 extern char         * getwd(char *buf);
 #endif
@@ -121,7 +122,7 @@ extern int            execv(const char *path, char *const argv[]);
 extern int            execle(const char *path, const char *arg, ...);
 extern int            execvp(const char *file, char *const argv[]);
 extern int            execlp(const char *file, const char *arg, ...);
-#if (_XOPEN_SOURCE)
+#if defined(_XOPEN_SOURCE)
 extern int            nice(int incr);
 #endif
 extern void           _exit(int status);
@@ -162,17 +163,17 @@ extern int            getgroups(int len, gid_t list[]);
 extern int            group_member(gid_t gid);
 #endif
 extern int            setuid(uid_t uid);
-#if (_BSD_SOURCE) || (USEXOPENEXT)
+#if defined(_BSD_SOURCE) || (USEXOPENEXT)
 extern int            setreuid(uid_t ruid, uid_t euid);
 #endif
-#if (_BSD_SOURCE) || (USEXOPEN2K)
+#if defined(_BSD_SOURCE) || (USEXOPEN2K)
 extern int            seteuid(uid_t uid);
 #endif
 extern int            setgid(gid_t gid);
-#if (_BSD_SOURCE) || (USEXOPENEXT)
+#if defined(_BSD_SOURCE) || (USEXOPENEXT)
 extern int            setregid(gid_t rgid, gid_t egid);
 #endif
-#if (_BSD_SOURCE) || (USEXOPEN2K)
+#if defined(_BSD_SOURCE) || (USEXOPEN2K)
 extern int            setegid(gid_t gid);
 #endif
 #if defined(_GNU_SOURCE)
@@ -182,7 +183,7 @@ extern int            setresuid(uid_t ruid, uid_t euid, uid_t suid);
 extern int            setresgid(gid_t gid, gid_t egid, gid_t sgid);
 #endif
 //extern pid_t          fork(void);
-#if (_BSD_SOURCE) || (USEXOPENEXT)
+#if defined(_BSD_SOURCE) || (USEXOPENEXT)
 /*
  * - don't clone address space; execute in that of the parent
  * - suspend calling process until exit() or execve()
@@ -191,42 +192,42 @@ extern pid_t          vfork(void);
 #endif
 extern char         * ttyname(int fd);
 extern int            ttyname_r(int fd, char *buf, size_t len);
-#if (_BSD_SOURCE) || ((USEXOPENEXT) && !(USEUNIX98))
+#if defined(_BSD_SOURCE) || ((USEXOPENEXT) && !(USEUNIX98))
 extern int            ttyslot(void);
 #endif
 extern int            link(const char *from, const char *to);
-#if defined(_GNU_SOURCE)
+#if defined(_GNU_SOURCE) || defined(_ATFILE_SOURCE)
 extern int            linkat(int fd, const char *from, int newfd,
                              const char *to, int flg);
 #endif
-#if (_BSD_SOURCE) || defined(USEXOPENEXT) || (USEXOPEN2K)
+#if defined(_BSD_SOURCE) || defined(USEXOPENEXT) || (USEXOPEN2K)
 extern int            symlink(const char *from, const char *to);
 extern ssize_t        readlink(const char *__restrict path, char *__restrict buf,
                                size_t len);
 #endif
-#if defined(_GNU_SOURCE)
+#if defined(_GNU_SOURCE) || defined(_ATFILE_SOURCE)
 extern int            symlinkat(const char *from, int fd, const char *to);
 extern ssize_t        readlinkat(int fd, const char *__restrict path,
                                  char *__restrict buf, size_t len);
 #endif
 extern int            unlink(const char *path);
-#if defined(_GNU_SOURCE)
+#if defined(_GNU_SOURCE) || defined(_ATFILE_SOURCE)
 extern int            unlinkat(int fd, const char *path, int flg);
 #endif
 extern int            rmdir(const char *path);
 extern pid_t          tcgetpgrp(int fd);
 extern int            tcsetpgrp(int fd, pid_t pgrp);
 extern char          *getlogin(void);
-#if (_REENTRANT) || (USEPOSIX199506)
+#if defined(_REENTRANT) || (USEPOSIX199506)
 extern int            getlogin_r(char *name, size_t len);
 #endif
-#if (_BSD_SOURCE)
+#if defined(_BSD_SOURCE)
 extern int            setlogin(const char *name);
 #endif
-#if (_BSD_SOURCE) || (USEUNIX98)
+#if defined(_BSD_SOURCE) || (USEUNIX98)
 extern int            gethostname(char *name, size_t len);
 #endif
-#if (_BSD_SOURCE) || ((_XOPEN_SOURCE) && !defined(USEUNIX98))
+#if defined(_BSD_SOURCE) || ((_XOPEN_SOURCE) && !defined(USEUNIX98))
 extern int            sethostname(const char *name, size_t len);
 extern int            sethostid(long id);
 extern int            getdomainname(const char *name, size_t len);
@@ -241,14 +242,14 @@ extern void           endusershell(void);
 extern void           setusershell(void);
 extern int            daemon(int nochdir, int noclose);
 #endif
-#if (_BSD_SOURCE) || ((_XOPEN_SOURCE) && !(USEXOPEN2K))
+#if defined(_BSD_SOURCE) || ((_XOPEN_SOURCE) && !(USEXOPEN2K))
 extern int            chroot(const char *path);
 extern char         * getpass(const char *prompt);
 #endif
-#if (_BSD_SOURCE) || (_XOPEN_SOURCE)
+#if defined(_BSD_SOURCE) || (_XOPEN_SOURCE)
 extern int            fsync(int fd);
 #endif
-#if (_BSD_SOURCE) || (USEXOPENEXT)
+#if defined(_BSD_SOURCE) || (USEXOPENEXT)
 extern long           gethostid(void);
 extern void           sync(void);
 #if defined(PAGESIZE) && (PAGESIZE)
@@ -265,7 +266,7 @@ extern int            getpagesize(void);
 extern int            getpagesize(void);
 #endif
 #endif
-#if (_ZERO_SOURCE)
+#if defined(_ZERO_SOURCE)
 #if defined(CLSIZE) && (CLSIZE)
 #define getclsize()   CLSIZE
 #elif defined(_SC_CACHELINESIZE)
@@ -275,7 +276,7 @@ extern int            getpagesize(void);
 #endif
 #endif
 extern int            truncate(const char *file, off_t len);
-#if (_BSD_SOURCE) || (USEXOPENEXT) || (USEXOPEN2K)
+#if defined(_BSD_SOURCE) || (USEXOPENEXT) || (USEXOPEN2K)
 extern int            ftruncate(int fd, off_t len);
 #endif
 #if (USEXOPENEXT)
@@ -288,18 +289,18 @@ extern int            lockf(int fd, int cmd, off_t len);
 extern int            fdatasync(int fd);
 #endif
 
-#if (_XOPEN_SOURCE)
+#if defined(_XOPEN_SOURCE)
 extern char         * crypt(const char *key, const char *salt);
 extern void           encrypt(char *blk, int flg);
 extern void           swab(const void *__restrict from, void *__restrict to,
                            ssize_t n);
 #endif
 
-#if (_XOPEN_SOURCE)
+#if defined(_XOPEN_SOURCE)
 extern char         * ctermid(char *str);
 #endif
 
-#if (_XOPEN_SOURCE_EXTENDED)
+#if defined(_XOPEN_SOURCE_EXTENDED)
 extern int            getdtablesize(void);
 #endif
 

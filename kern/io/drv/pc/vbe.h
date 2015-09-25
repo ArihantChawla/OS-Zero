@@ -33,7 +33,7 @@ void vbedrawchar(unsigned char c, int x, int y, gfxargb32_t fg, gfxargb32_t bg);
 #define VBEGETMODEINFO   0x4f01 // get mode information
 #define VBESETMODE       0x4f02 // set graphics mode
 
-#if !defined(__ASSEMBLY__)
+#if !defined(__ASSEMBLER__)
 
 /* sig */
 #define VBESIG           { 'V', 'E', 'S', 'A' }
@@ -171,7 +171,7 @@ struct vbescreen {
 
 extern struct vbescreen vbescreen;
         
-#endif /* !defined(__ASSEMBLY__) */
+#endif /* !defined(__ASSEMBLER__) */
 
 #endif /* __KERN_IO_DRV_PC_VBE_H__ */
 

@@ -1,8 +1,8 @@
+#define __ASSEMBLER__ 1
 #include <kern/conf.h>
 
 #if (VBE)
 
-#define __ASSEMBLY__ 1
 #include <kern/unit/ia32/boot.h>
 
 .globl	realstart, realend, realint10

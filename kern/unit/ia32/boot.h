@@ -1,7 +1,7 @@
 #ifndef __UNIT_IA32_BOOT_H__
 #define __UNIT_IA32_BOOT_H__
 
-#if !defined(__ASSEMBLY__)
+#if !defined(__ASSEMBLER__)
 #include <stdint.h>
 #endif
 #include <kern/conf.h>
@@ -9,7 +9,7 @@
 #define APICBASE   0xfee00000
 #define APICEOIADR (APICBASE + 0xb0)
 
-#if !defined(__ASSEMBLY__)
+#if !defined(__ASSEMBLER__)
 /* RAM-size in bytes */
 #define grubmemsz(hdr) ((1024 + (hdr)->himem) << 10)
 #endif
@@ -34,7 +34,7 @@
 #define GRUBAPM  (1 << 10)    /* apmtab */
 #define GRUBVBE  (1 << 11)    /* VBE video extensions */
 
-#if !defined(__ASSEMBLY__)
+#if !defined(__ASSEMBLER__)
 /* header structure to use in C code */
 struct mboothdr {
     uint32_t flags;
@@ -105,7 +105,7 @@ struct mboothdr {
 #define CR0WP        0x00010000
 #define CR0PG        0x80000000
 
-#if defined(__ASSEMBLY__)
+#if defined(__ASSEMBLER__)
 #define SEG_EXEC     0x8
 //#define SEG_GROWDOWN 0x4
 #define SEG_CONFORM  0x4
