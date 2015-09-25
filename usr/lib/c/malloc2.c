@@ -14,7 +14,7 @@
 #endif
 
 #define ARNREFCNT         0
-#define MALLOCSMALLADR    1
+#define MALLOCSMALLADR    0
 
 /*
  * TODO
