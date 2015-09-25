@@ -68,7 +68,7 @@ longjmp(jmp_buf env, int val)
     for ( ; ; ) { ; };
 }
 
-ASMLINK
+ASMLINK NOINLINE
 int
 #if defined(__GNUC__)
 __attribute__ ((returns_twice))
@@ -93,7 +93,7 @@ _longjmp(jmp_buf env,
 
 #if defined(_POSIX_C_SOURCE) || defined(_XOPEN_SOURCE)
 
-ASMLINK
+ASMLINK NOINLINE
 int
 #if defined(__GNUC__)
 __attribute__ ((returns_twice))
