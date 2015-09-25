@@ -6,9 +6,9 @@
 #include <zero/param.h>
 #include <zero/types.h>
 //#include <kern/syscall.h>
+#include <kern/unit/x86/boot.h>
 #include <kern/unit/x86/asm.h>
 #include <kern/unit/x86/trap.h>
-#include <kern/unit/ia32/boot.h>
 
 extern void ksyscall(void);
 

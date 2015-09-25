@@ -5,7 +5,7 @@
 #include <stdint.h>
 #include <kern/unit/ia32/mp.h>
 #else
-#include <kern/unit/ia32/boot.h>
+#include <kern/unit/x86/boot.h>
 #endif
 
 extern void cpuprintinfo(void);

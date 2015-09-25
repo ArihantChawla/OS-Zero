@@ -3,7 +3,7 @@
 
 #if (VBE)
 
-#include <kern/unit/ia32/boot.h>
+#include <kern/unit/x86/boot.h>
 
 .globl	realstart, realend, realint10
 .extern	idtptr

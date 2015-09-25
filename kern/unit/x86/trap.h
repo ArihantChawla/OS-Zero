@@ -8,7 +8,7 @@
 #include <zero/asm.h>
 #include <zero/types.h>
 #endif
-#include <kern/unit/ia32/boot.h>
+#include <kern/unit/x86/boot.h>
 
 #define NINTR 256
 

@@ -16,12 +16,12 @@
 #if (ACPI)
 #include <kern/io/drv/pc/acpi.h>
 #endif
+#include <kern/unit/x86/boot.h>
 #include <kern/unit/x86/cpu.h>
 #include <kern/unit/x86/pic.h>
 #include <kern/unit/x86/pit.h>
 #include <kern/unit/ia32/kern.h>
 #include <kern/unit/ia32/link.h>
-#include <kern/unit/ia32/boot.h>
 #include <kern/unit/ia32/vm.h>
 #if (SMP) || (APIC)
 #include <kern/unit/ia32/mp.h>

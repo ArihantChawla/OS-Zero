@@ -9,8 +9,8 @@
 #include <kern/proc/proc.h>
 #include <kern/proc/task.h>
 #include <kern/obj.h>
+#include <kern/unit/x86/boot.h>
 #include <kern/unit/x86/cpu.h>
-#include <kern/unit/ia32/boot.h>
 #include <kern/unit/ia32/vm.h>
 
 struct proc proctab[NTASK] ALIGNED(PAGESIZE);

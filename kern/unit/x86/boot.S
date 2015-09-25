@@ -1,6 +1,6 @@
 #define __ASSEMBLER__ 1
 #include <kern/conf.h>
-#include <kern/unit/ia32/boot.h>
+#include <kern/unit/x86/boot.h>
 
 /* GRUB support */
 _MBMAGIC     = MBMAGIC

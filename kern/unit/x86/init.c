@@ -4,8 +4,8 @@
 #include <zero/param.h>
 //#include <kern/proc.h>
 #include <kern/util.h>
+#include <kern/unit/x86/boot.h>
 #include <kern/unit/x86/trap.h>
-#include <kern/unit/ia32/boot.h>
 #include <kern/unit/ia32/vm.h>
 
 extern void trapinit(void);

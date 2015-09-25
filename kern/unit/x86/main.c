@@ -22,11 +22,7 @@ kmain(struct mboothdr *boothdr, unsigned long longmode)
     /* initialise VBE graphics subsystem */
     vbeinit();
 #endif
-    if (longmode) {
-//        kinitlong();
-    } else {
-        kinitprot(pmemsz);
-    }
+    kinitprot(pmemsz);
     
     /* NOTREACHED */
     return;

@@ -6,7 +6,7 @@
 #include <zero/param.h>
 #include <zero/cdecl.h>
 #include <gfx/rgb.h>
-#include <kern/unit/ia32/boot.h>
+#include <kern/unit/x86/boot.h>
 
 void vbeinitcons(int w, int h);
 void vbeclrscr(gfxargb32_t pix);

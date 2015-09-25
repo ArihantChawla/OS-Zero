@@ -10,11 +10,11 @@
 #include <zero/types.h>
 #include <kern/util.h>
 #include <kern/malloc.h>
+#include <kern/unit/x86/boot.h>
 #include <kern/unit/x86/asm.h>
 #include <kern/unit/x86/cpu.h>
 #include <kern/unit/x86/apic.h>
 #include <kern/unit/ia32/link.h>
-#include <kern/unit/ia32/boot.h>
 #include <kern/unit/ia32/seg.h>
 #include <kern/unit/ia32/mp.h>
 #include <kern/unit/ia32/vm.h>
