@@ -15,14 +15,10 @@
 
 extern volatile uint32_t *mpapic;
 
-#if (NEWTMR)
 uint32_t apicinitcpu(long id);
-#else
-void apicinitcpu(long id);
-#endif
-void ioapicinit(long id);
-void apicstart(uint8_t id, uint32_t adr);
-void kusleep(unsigned long nusec);
+void     ioapicinit(long id);
+void     apicstart(uint8_t id, uint32_t adr);
+void     kusleep(unsigned long nusec);
 
 #define apiceoi()        apicwrite(0, APICEOI)
 

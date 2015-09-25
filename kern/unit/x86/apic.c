@@ -37,7 +37,7 @@ kusleep(unsigned long nusec)
 uint32_t *
 apicprobe(void)
 {
-    long adr = k_readmsr(APICMSR);
+    unsigned long adr = k_readmsr(APICMSR);
 
     adr &= 0xfffff000;
     kprintf("local APIC @ %lx\n", adr);
@@ -60,14 +60,9 @@ apicstarttmr(uint32_t tmrcnt)
     return;
 }
 
-#if (NEWTMR)
 uint32_t
-#else
-void
-#endif
 apicinittmr(void)
 {
-//    struct apic *apic = apicprobe();
     volatile uint32_t *apic = mpapic;
     uint32_t           freq;
     uint32_t           tmrcnt;
@@ -81,12 +76,6 @@ apicinittmr(void)
     /* initialise APIC */
     apicwrite(0xffffffff, APICDFR);
     apicwrite((apicread(APICLDR) & 0x00ffffff) | 1, APICLDR);
-#if 0
-    apicwrite(APICMASKED, APICTMR);
-//    apicwrite(APICNMI, APICPERFINTR);
-    apicwrite(APICMASKED, APICLINTR0);
-    apicwrite(APICMASKED, APICLINTR1);
-#endif
     /* enable APIC */
     apicwrite((uint32_t)apic | APICGLOBENABLE, APICSPURIOUS);
     apicwrite(APICSWENABLE | (uint32_t)apic, APICSPURIOUS);
@@ -107,44 +96,21 @@ apicinittmr(void)
     tmp8 = inb(PITCTRL2) & 0xfe;
     outb(tmp8, PITCTRL2);
     outb(tmp8 | 1, PITCTRL2);
-
-//    freq = (0xffffffff - apicread(APICTMRCURCNT) + 1) * 16 * 100;
-    freq = (0xffffffff - apicread(APICTMRCURCNT) + 1) * 16 * 100;
-    kprintf("APIC interrupt frequency: %ld MHz\n", freq / 1000000);
-    tmrcnt = freq / HZ / 16;
-
+    freq = ((0xffffffff - apicread(APICTMRCURCNT) + 1) * 100) << 4;
+    kprintf("APIC interrupt frequency: %ld MHz\n", div1000000(freq));    
+    tmrcnt = (freq / HZ) >> 4;
     trapsetintrgate(&kernidt[trapirqid(IRQTMR)], irqtmr, TRAPUSER);
-
     tmrcnt = max(tmrcnt, 16);
-#if !(NEWTMR)
-    /*
-     * timer counts down at bus frequency from APICTMRINITCNT and issues
-     * the interrupt IRQAPICTMR
-     */
-    apicwrite(tmrcnt, APICTMRINITCNT);
-    apicwrite(0x03, APICTMRDIVCONF);
-    apicwrite(IRQAPICTMR | APICPERIODIC, APICTMR);
-
-    return;
-#else
 
     return tmrcnt;
-#endif
 }
 
-#if (NEWTMR)
 uint32_t
-#else
-void
-#endif
 apicinitcpu(long id)
 {
-//    uint64_t              *idt = kernidt;
     static long            first = 1;
     volatile struct m_cpu *cpu = &cputab[id];
-#if (NEWTMR)
     uint32_t               tmrcnt;
-#endif
 
     if (!mpapic) {
         mpapic = (volatile uint32_t *)apicprobe();
@@ -174,7 +140,6 @@ apicinitcpu(long id)
     apicwrite(APICSWENABLE | IRQSPURIOUS, APICSPURIOUS);
     /* initialise timer, mask interrupts */
     apicwrite(APICBASEDIV, APICTMRDIVCONF);
-//    apicwrite(APICPERIODIC | IRQAPICTMR, APICTMR);
     apicwrite(IRQAPICTMR, APICTMR);
     apicwrite(10000000, APICTMRINITCNT);
     apicwrite(APICMASKED, APICTMR);
@@ -199,17 +164,9 @@ apicinitcpu(long id)
             ;
         }
     }
-#if (!NEWTMR)
-    apicinittmr();
-    /* enable APIC (but not CPU) interrupts */
-//    apicwrite(0, APICTASKPRIO);
-
-    return;
-#else
     tmrcnt = apicinittmr();
 
     return tmrcnt;
-#endif
 }
 
 void
@@ -221,7 +178,6 @@ apicstart(uint8_t id, uint32_t adr)
     outb(0x0a, RTCBASE + 1);
     warmreset[0] = 0;
     warmreset[1] = adr >> 4;
-
     /* INIT IPI */
     apicsendirq(id << 24, APICINIT | APICLEVEL | APICASSERT, 200);
     while (apicread(APICINTRLO) & APICDELIVS) {
