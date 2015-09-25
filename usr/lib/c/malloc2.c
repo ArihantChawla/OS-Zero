@@ -1537,6 +1537,8 @@ void *
 #if defined(__GNUC__)
 __attribute__ ((alloc_size(1)))
 __attribute__ ((alloc_align(2)))
+__attribute__ ((assume_aligned(MALLOCMINSIZE)))
+__attribute__ ((malloc))
 #endif
 _malloc(size_t size,
         size_t align,

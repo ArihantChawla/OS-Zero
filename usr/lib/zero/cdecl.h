@@ -37,7 +37,7 @@
 #endif
 
 /* pass all arguments on stack for assembly-linkage */
-#define ASMLINK     __attribute__ ((__regparm__(0)))
+#define ASMLINK     REGPARM(0)
 
 /* declare function with no return (e.g., longjmp()) */
 #define NORET       __attribute__ ((__noreturn__))

@@ -2,7 +2,6 @@
 #include <stddef.h>
 #include <setjmp.h>
 #include <signal.h>
-#include <zero/cdecl.h>
 
 #if defined(_POSIX_SOURCE)
 
@@ -43,6 +42,9 @@
 
 ASMLINK NOINLINE
 int
+#if defined(__GNUC__)
+__attribute__ ((returns_twice))
+#endif
 setjmp(jmp_buf env)
 {
     m_setjmp(env);
@@ -53,7 +55,7 @@ setjmp(jmp_buf env)
     return 0;
 }
 
-ASMLINK
+ASMLINK NORET
 void
 longjmp(jmp_buf env, int val)
 {
@@ -61,10 +63,16 @@ longjmp(jmp_buf env, int val)
     _loadsigmask(&(env->sigmask));
 #endif
     m_longjmp(env, val);
+
+    /* NOTREACHED */
+    for ( ; ; ) { ; };
 }
 
 ASMLINK
 int
+#if defined(__GNUC__)
+__attribute__ ((returns_twice))
+#endif
 _setjmp(jmp_buf env)
 {
     m_setjmp(env);
@@ -72,7 +80,7 @@ _setjmp(jmp_buf env)
     return 0;
 }
 
-ASMLINK
+ASMLINK NORET
 void
 _longjmp(jmp_buf env,
          int val)
@@ -80,12 +88,16 @@ _longjmp(jmp_buf env,
     m_longjmp(env, val);
 
     /* NOTREACHED */
+    for ( ; ; ) { ; };
 }
 
 #if defined(_POSIX_C_SOURCE) || defined(_XOPEN_SOURCE)
 
 ASMLINK
 int
+#if defined(__GNUC__)
+__attribute__ ((returns_twice))
+#endif
 sigsetjmp(sigjmp_buf env, int savesigs)
 {
     m_setjmp(env);
@@ -98,7 +110,7 @@ sigsetjmp(sigjmp_buf env, int savesigs)
     return 0;
 }
 
-ASMLINK
+ASMLINK NORET
 void
 siglongjmp(sigjmp_buf env, int val)
 {
@@ -108,6 +120,7 @@ siglongjmp(sigjmp_buf env, int val)
     m_longjmp(env, val);
 
     /* NOTREACHED */
+    for ( ; ; ) { ; };
 }
 
 #endif
