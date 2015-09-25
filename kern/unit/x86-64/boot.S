@@ -20,7 +20,10 @@ mboothdr:
 _start2:
 	movl	$KERNSTKTOP, %esp
 	movl	%esp, %ebp
-	call	kinit
+	//	call	kinit
+	call	_chkcpuid
+	cmp	$0, %eax
+	je	_protmode
 
 .align NBPG
 

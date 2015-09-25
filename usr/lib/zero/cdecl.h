@@ -56,8 +56,11 @@
 #define __inline__  inline
 #define INLINE      __forceinline
 #define NOINLINE    __declspec(noinline)
+#define NOALIAS     __declspec(noalias)
 
 #define ASMLINK     __cdecl
+
+#define NORETURN    __declspec(noreturn)
 
 #define THREADLOCAL __declspec(thread)
 

@@ -1,5 +1,5 @@
 #! /bin/sh
 
-gcc -mcmodel=kernel -m64 -ffreestanding -nostdlib -mno-red-zone
+gcc -O -fno-omit-frame-pointer -Wall -Wextra -Wundef -mcmodel=kernel -m64 -ffreestanding -nostdlib
 ld -nostdlib -nodefaultlibs -T kern.lds -o zero
 

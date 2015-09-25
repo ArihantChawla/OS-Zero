@@ -1,0 +1,20 @@
+ia32
+----
+
+- FASTCALL: 3 argument registers; EAX, EDX, and ECX
+- callee-save registers: EBX, EDI, ESI, EBP, DS, ES, SS
+- return value in EAX, EDX
+
+x86-64
+------
+
+- 6 argument registers; RDI, RSI, RDX, RCX, R8, R9
+- callee-save registers: RBP, RBX, R12, R13, R14, R15
+- return value in RAX, RDX
+
+arm
+---
+
+- 4 argument registers; R0, R1, R2, R3
+- callee-save registers: R4, R5, R6, R7, R8, R9, R10, FP, SP, LR
+- return value in R0, R1

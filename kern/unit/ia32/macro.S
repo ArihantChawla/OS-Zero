@@ -14,27 +14,39 @@ _APICEOI	= 0x00000000
 
 .macro	_trapenter
 	pushal
-//	pushl	%ds
-//	pushl	%es
-//	pushl	%fs
+#if 0
+	pushl	%ds
+	pushl	%es
+	pushl	%fs
+	pushl	%ss
+#endif
 .endm
 .macro	_trapleave
-//	popl	%fs
-//	popl	%es
-//	popl	%ds
+#if 0
+	popl	%ss
+	popl	%fs
+	popl	%es
+	popl	%ds
+#endif
 	popal
 .endm
 .macro	_trapentererr
 	pushal
 	movl	32(%esp), %ecx	// move error code to %ecx
-//	pushl	%ds
-//	pushl	%es
-//	pushl	%fs
+#if 0
+	pushl	%ds
+	pushl	%es
+	pushl	%fs
+	pushl	%ss
+#endif
 .endm
 .macro	_trapleaveerr
-//	popl	%fs
-//	popl	%es
-//	popl	%ds
+#if 0
+	popl	%ss
+	popl	%fs
+	popl	%es
+	popl	%ds
+#endif
 	popal
 	addl	$4, %esp	// skip error code
 .endm

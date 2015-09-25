@@ -96,6 +96,9 @@ struct _jmpbuf {
 
 typedef struct _jmpbuf jmp_buf[1];
 
+/*
+ * callee-save registers: r4...r10, fp, sp, lr
+ */
 #define m_setjmp(env)                                                   \
     do {                                                                \
         __asm__ __volatile__ ("movs r0, %0\n"                           \

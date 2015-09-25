@@ -1,17 +1,17 @@
 #include <stddef.h>
 #include <stdlib.h>
 #include <stdint.h>
+#include <zero/cdecl.h>
 #include <zero/param.h>
 #include <zero/trix.h>
 #include <bits/string.h>
 
 extern const uint8_t stringcolltab_c_en_US[256];
 
-static struct _string   _string;
-static const  uint8_t *colltab = stringcolltab_c_en_US;
-static const  uint8_t *localecolltab = stringcolltab_c_en_US;
-
-const unsigned char   *collnametab[STRINGNLANG]
+static THREADLOCAL struct _string  _string;
+static const  uint8_t             *colltab = stringcolltab_c_en_US;
+static const  uint8_t             *localecolltab = stringcolltab_c_en_US;
+const unsigned char               *collnametab[STRINGNLANG]
 = {
     (unsigned char *)"en_US"
 };

@@ -311,10 +311,10 @@ taskaddwait(struct task *task)
             if (ptr) {
                 kbzero(ptr, NLVL2TASK * sizeof(struct tasktab));
             }
-            ptab[1] = ptr;
-            pptr[key1] = ptr;
-            pptr = ptr;
         }
+        ptab[1] = ptr;
+        pptr[key1] = ptr;
+        pptr = ptr;
     } else {
         fail = 1;
     }
@@ -327,6 +327,8 @@ taskaddwait(struct task *task)
             } 
             ptab[2] = qptr;
             pptr[key2] = qptr;
+        } else {
+            qptr = pptr[key2];
         }
     } else {
         fail = 1;
