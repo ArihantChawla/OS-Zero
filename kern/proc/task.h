@@ -106,14 +106,16 @@ struct task {
 #define taskwaitkey3(wc)                                                \
     ((wc) & ((1UL << NLVLTASKLOG2) - 1))
 
-struct taskwait {
+struct tasktab {
     long         nref;
     struct task *tab;
 };
 
-struct taskwaitqueue {
+struct taskqueue {
+#if 0
     long         nref;
     struct task *task;
+#endif
     struct task *prev;
     struct task *next;
 };

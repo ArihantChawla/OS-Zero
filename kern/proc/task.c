@@ -29,7 +29,8 @@ struct tasklk {
     uint8_t       pad[CLSIZE - sizeof(long)];
 };
 
-static struct taskwait *taskwaittab[NLVL0TASK] ALIGNED(PAGESIZE);
+static volatile long    taskwaitmtxtab[NLVL0TASK] ALIGNED(PAGESIZE);
+static struct tasktab  *taskwaittab[NLVL0TASK];
 static struct taskid    taskidtab[NTASK];
 static struct task     *taskstoppedtab[NTASK];
 static struct task     *taskzombietab[NTASK];
@@ -123,7 +124,7 @@ taskfunc_t             *taskfunctab[TASKNSTATE]
     taskaddzombie
 };
 static long            *taskniceptr = &tasknicetab[32];
-static struct tasklk    taskwaitmtx ALIGNED(CLSIZE);
+//static struct tasklk    taskwaitmtx ALIGNED(CLSIZE);
 static struct tasklk    taskidmtx ALIGNED(CLSIZE);
 static struct taskid   *taskidqueue;
 static struct task     *tasksleepqueue;
@@ -274,18 +275,18 @@ taskqueue(struct task *task, struct task **taskqueue)
 void
 taskaddwait(struct task *task)
 {
-    struct taskwait       *tab;
-    void                  *ptr = NULL;
-    void                 **pptr;
-    struct taskwaitqueue  *qptr;
-    struct taskwaitqueue  *queue = NULL;
-    uintptr_t              wchan = task->wchan;
-    long                   fail = 0;    
-    long                   key0;
-    long                   key1;
-    long                   key2;
-    long                   key3;
-    void                  *ptab[TASKNKEY - 1] = { NULL, NULL, NULL };
+    struct tasktab    *tab;
+    void              *ptr = NULL;
+    void             **pptr;
+    struct taskqueue  *qptr;
+    struct taskqueue  *queue = NULL;
+    uintptr_t          wchan = task->wchan;
+    long               fail = 0;    
+    long               key0;
+    long               key1;
+    long               key2;
+    long               key3;
+    void              *ptab[TASKNKEY - 1] = { NULL, NULL, NULL };
 
     key0 = taskwaitkey0(wchan);
     key1 = taskwaitkey1(wchan);
@@ -293,11 +294,11 @@ taskaddwait(struct task *task)
     key3 = taskwaitkey3(wchan);
     ptr = taskwaittab[key0];
     pptr = ptr;
-    mtxlk(&taskwaitmtx.lk);
+    mtxlk(&taskwaitmtxtab[key0].lk);
     if (!ptr) {
-        ptr = kmalloc(NLVL1TASK * sizeof(struct taskwait));
+        ptr = kmalloc(NLVL1TASK * sizeof(struct tasktab));
         if (ptr) {
-            kbzero(ptr, NLVL1TASK * sizeof(struct taskwait));
+            kbzero(ptr, NLVL1TASK * sizeof(struct tasktab));
         }
         ptab[0] = ptr;
         pptr = ptr;
@@ -306,9 +307,9 @@ taskaddwait(struct task *task)
     if (ptr) {
         ptr = pptr[key1];
         if (!ptr) {
-            ptr = kmalloc(NLVL2TASK * sizeof(struct taskwait));
+            ptr = kmalloc(NLVL2TASK * sizeof(struct tasktab));
             if (ptr) {
-                kbzero(ptr, NLVL2TASK * sizeof(struct taskwait));
+                kbzero(ptr, NLVL2TASK * sizeof(struct tasktab));
             }
             ptab[1] = ptr;
             pptr[key1] = ptr;
@@ -320,9 +321,9 @@ taskaddwait(struct task *task)
     if (ptr) {
         ptr = pptr[key2];
         if (!ptr) {
-            qptr = kmalloc(NLVL3TASK * sizeof(struct taskwaitqueue));
+            qptr = kmalloc(NLVL3TASK * sizeof(struct taskqueue));
             if (qptr) {
-                kbzero(qptr, NLVL3TASK * sizeof(struct taskwaitqueue));
+                kbzero(qptr, NLVL3TASK * sizeof(struct taskqueue));
             } 
             ptab[2] = qptr;
             pptr[key2] = qptr;
@@ -332,8 +333,11 @@ taskaddwait(struct task *task)
     }
     if (!fail) {
         queue = &qptr[key3];
+#if 0
         queue->nref++;
         queue->task = task;
+#endif
+        task->prev = NULL;
         task->next = queue->next;
         if (task->next) {
             task->next->prev = task;
@@ -348,7 +352,7 @@ taskaddwait(struct task *task)
         tab = ptab[2];
         tab->nref++;
     }
-    mtxunlk(&taskwaitmtx.lk);
+    mtxunlk(&taskwaitmtxtab[key0].lk);
     
     return;
 }
@@ -411,19 +415,19 @@ taskaddzombie(struct task *task)
 void
 taskunwait(uintptr_t wchan)
 {
-    struct taskwait       *tab;
-    void                  *ptr = NULL;
-    struct taskwaitqueue  *queue;
-    struct task          **taskqptr;
-    struct task           *task1;
-    struct task           *task2;
-    long                   key0 = taskwaitkey0(wchan);
-    long                   key1 = taskwaitkey1(wchan);
-    long                   key2 = taskwaitkey2(wchan);
-    long                   key3 = taskwaitkey3(wchan);
-    long                   prio;
-    void                 **pptr;
-    void                  *ptab[TASKNKEY - 1] = { NULL, NULL, NULL };
+    struct tasktab    *tab;
+    void              *ptr = NULL;
+    struct taskqueue  *queue;
+    struct task      **taskqptr;
+    struct task       *task1;
+    struct task       *task2;
+    long               key0 = taskwaitkey0(wchan);
+    long               key1 = taskwaitkey1(wchan);
+    long               key2 = taskwaitkey2(wchan);
+    long               key3 = taskwaitkey3(wchan);
+    long               prio;
+    void             **pptr;
+    void              *ptab[TASKNKEY - 1] = { NULL, NULL, NULL };
 
     tab = taskwaittab[key0];
     mtxlk(&taskwaitmtx.lk);
@@ -443,17 +447,13 @@ taskunwait(uintptr_t wchan)
                     tab->nref--;
                     queue = ((void **)tab)[key3];
                 }
+#if 0
                 if (queue) {
                     queue->nref--;
-                }
-#if 0
-                if (tab) {
-                    tab = ((void **)tab)[key3];
                 }
 #endif
             }
         }
-//        task1 = tab->ptr;
         task1 = queue->next;
         if (task1) {
             if (task1->next) {
@@ -478,21 +478,21 @@ taskunwait(uintptr_t wchan)
         /* TODO: free tables if possible */
         tab = ptab[0];
         if (tab) {
-            if (!--tab->nref) {
+            if (!tab->nref) {
                 pptr = (void **)&taskwaittab[key0];
                 kfree(tab);
                 *pptr = NULL;
             }
             tab = ptab[1];
             if (tab) {
-                if (!--tab->nref) {
+                if (!tab->nref) {
                     pptr = &pptr[key1];
                     kfree(tab);
                     *pptr = NULL;
                 }
                 tab = ptab[2];
                 if (tab) {
-                    if (!--tab->nref) {
+                    if (!tab->nref) {
                         pptr = &pptr[key2];
                         kfree(tab);
                         *pptr = NULL;
