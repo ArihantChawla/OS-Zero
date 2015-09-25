@@ -4,6 +4,10 @@
 #include <stdint.h>
 #include <zero/cdecl.h>
 
+#if (EVTIMESIZE == 64)
+typedef uint64_t evtime_t;
+#endif
+
 typedef int32_t  evkeycode_t;
 
 #if (EVWORDSIZE == 32)

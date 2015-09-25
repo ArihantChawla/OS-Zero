@@ -12,6 +12,7 @@
 #include <gfx/rgb.h>
 
 #define EVWORDSIZE   32
+#define EVTIMESIZE   64
 #define EVNODEIDSIZE 64
 
 #include <zero/bits/ev.h>
@@ -22,8 +23,8 @@
 #define evsettime(ev, t) ((ev)->hdr.tm = (t))
 /* FIXME: tm may need to be 64-bit */
 struct evhdr {
+    evtime_t  tm;               // timestamp
     evuword_t type;             // event type such as KEYUP, FSCREAT
-    evuword_t tm;               // timestamp
 };
 
 /* event structure */
