@@ -19,9 +19,9 @@
 /* align variables, aggregates, and tables to boundary of a */
 #define ALIGNED(a)  __attribute__ ((__aligned__(a)))
 /* ALWAYS inline the function */
-#define INLINE      __inline__ __attribute__ ((always_inline))
-#define NOINLINE    __attribute__((noinline))
-#define WEAK        __attribute__ ((weak))
+#define INLINE      __inline__ __attribute__ ((__always_inline__))
+#define NOINLINE    __attribute__((__noinline__))
+#define WEAK        __attribute__ ((__weak__))
 /*
  * AMD64 passes first six arguments in rdi, rsi, rdx, rcx, r8, and r9; the rest
  * are pushed to stack in reverse order
@@ -52,14 +52,14 @@
 #elif defined(_MSC_VER) /* !defined(__GNUC__) */
     
 /* Microsoft */
-#define ALIGNED(a)   __declspec(align((a)))
-#define __inline__   inline
-#define INLINE       __forceinline
-#define NOINLINE     __declspec(noinline)
+#define ALIGNED(a)  __declspec(align((a)))
+#define __inline__  inline
+#define INLINE      __forceinline
+#define NOINLINE    __declspec(noinline)
 
-#define ASMLINK      __cdecl
+#define ASMLINK     __cdecl
 
-#define THREADLOCAL  __declspec(thread)
+#define THREADLOCAL __declspec(thread)
 
 #endif /* __GNUC__ */
 
