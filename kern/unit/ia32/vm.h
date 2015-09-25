@@ -5,7 +5,7 @@
 #include <zero/param.h>
 //#include <kern/buf.h>
 
-#include <kern/unit/ia32/link.h>
+#include <kern/unit/x86/link.h>
 
 #if !defined(__KERNEL__)
 #define __KERNEL__ 1

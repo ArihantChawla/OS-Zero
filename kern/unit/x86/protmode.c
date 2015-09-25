@@ -20,8 +20,8 @@
 #include <kern/unit/x86/cpu.h>
 #include <kern/unit/x86/pic.h>
 #include <kern/unit/x86/pit.h>
-#include <kern/unit/ia32/kern.h>
-#include <kern/unit/ia32/link.h>
+#include <kern/unit/x86/kern.h>
+#include <kern/unit/x86/link.h>
 #include <kern/unit/ia32/vm.h>
 #if (SMP) || (APIC)
 #include <kern/unit/ia32/mp.h>

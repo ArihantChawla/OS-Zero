@@ -1,5 +1,5 @@
-#ifndef __UNIT_IA32_BOOT_H__
-#define __UNIT_IA32_BOOT_H__
+#ifndef __UNIT_X86_BOOT_H__
+#define __UNIT_X86_BOOT_H__
 
 #if !defined(__ASSEMBLER__)
 #include <stdint.h>
@@ -121,5 +121,5 @@ struct mboothdr {
         (0xc0 | (((lim) >> 28) & 0xf)), (((base) >> 24) & 0xff)
 #endif
 
-#endif /* __UNIT_IA32_BOOT_H__ */
+#endif /* __UNIT_X86_BOOT_H__ */
 

@@ -11,7 +11,7 @@
 #include <zero/param.h>
 #include <zero/cdecl.h>
 #include <kern/unit/x86/pit.h>
-#include <kern/unit/ia32/link.h>
+#include <kern/unit/x86/link.h>
 
 extern volatile uint32_t *mpapic;
 

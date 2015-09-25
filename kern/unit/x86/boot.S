@@ -45,7 +45,7 @@ _start2:
 	/* set kernel stack up */
 	movl	$KERNSTKTOP, %esp
 	movl	%esp, %ebp
-	pushl	$0			// store longmode argument for kmain
+	pushl	$0			// store longmode argument for kmain()
 	pushl	%ebx			// store boot-header address
 	call	_chkcpuid
 	cmp	$0, %eax
@@ -53,9 +53,9 @@ _start2:
 	call	_chklongmode
 	cmp	$0, %eax
 	je	_protmode
-	movl	$1, 4(%esp)
+	movl	$1, 4(%esp)		// longmode argument for kmain()
 _protmode:	
-	call	kmain			// call kinit()
+	call	kmain			// call kmain()
 
 /* check for presence of CPUID by trying to flip bit 21 in %eflags */
 _chkcpuid:	
@@ -83,7 +83,7 @@ _nolongmode:
 	movl	$0, %eax
 	ret
 
-.data
+.bss
 	
 .align	NBPG
 
@@ -94,6 +94,22 @@ kernidt:
 /* page directory index page */
 kernpagedir:
 	.space	NBPG
+
+/* 64-bit memory management */
+
+/* page-map level-4 table */
+kernpml4t:
+	.space	NBPG
+/* page directory pointer table */
+kernpdpt:
+	.space	NBPG
+/* page directory table */
+kernpdt:
+	.space	NBPG
+/* page table */
+kernpt:
+	.space	NBPG
+	
 /* kernel I/O protection bitmap */
 kerniomap:
 	.space	8192

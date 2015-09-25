@@ -10,7 +10,7 @@
 #include <kern/unit/x86/cpu.h>
 #include <kern/unit/x86/trap.h>
 #include <kern/unit/x86/apic.h>
-#include <kern/unit/ia32/link.h>
+#include <kern/unit/x86/link.h>
 #include <kern/unit/ia32/vm.h>
 
 extern void                    irqtmr(void);
