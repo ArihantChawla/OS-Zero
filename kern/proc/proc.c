@@ -19,27 +19,28 @@ struct task tasktab[NTASK] ALIGNED(PAGESIZE);
 long
 procinit(long id)
 {
-    long            taskid = (id < TASKNPREDEF) ? id : taskgetid();
+    long            taskid = ((id < TASKNPREDEF && (id >= 0))
+                              ? id
+                              : taskgetid());
     struct proc    *proc = &proctab[taskid];
     struct task    *task = &tasktab[taskid];
     struct taskstk *stk;
     void           *ptr;
     uint8_t        *u8ptr;
 
-    if (taskid == PROCKERN) {
+    if (taskid < TASKNPREDEF) {
         /* bootstrap */
         proc->task = task;
         task->parent = proc;
-        k_curproc = proc;
         task->state = TASKREADY;
         task->nice = 0;
         task->sched = SCHEDSYS;
-        task->prio = 0;
+        task->prio = id;
+        k_curproc = proc;
         k_curtask = task;
     }
     if (proc) {
-        if (taskid == PROCKERN) {
-        } else {
+        if (taskid >= TASKNPREDEF) {
             /* initialise page directory */
             ptr = kmalloc(NPDE * sizeof(pde_t));
             if (ptr) {
@@ -94,9 +95,9 @@ procinit(long id)
         }
 #if 0
         /* initialise VM structures */
-        ptr = kmalloc(VMNHDR * sizeof(struct vmpage));
+        ptr = kmalloc(VMNPAGE * sizeof(struct vmpage));
         if (ptr) {
-            kbzero(ptr, VMNHDR * sizeof(struct vmpage));
+            kbzero(ptr, VMNPAGE * sizeof(struct vmpage));
             proc->vmhdrtab = ptr;
         } else {
             kfree(proc->pdir);

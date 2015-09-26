@@ -12,11 +12,6 @@
 
 .align	32
 
-	/* ASMLINK void m_tcbsave(struct m_tcb *tcb); */
-	/* NOTE: caller (timer interrupt handler) has already done PUSHA */
-
-.align	32
-
 	/* FASTCALL void m_tcbjmp(struct m_tcb *tcb); */
 
 m_tcbjmp:

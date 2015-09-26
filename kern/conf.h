@@ -27,12 +27,9 @@
 #else
 #define NCPU        1
 #endif
+/* maximum number of physical pages */
+#define NPAGEPHYS   (1L << (PTRBITS - PAGESIZELOG2))
 #define NPROCFD     4096        // maximum number of descriptors per process
-#if !defined(NPAGEPHYS)
-//#define NPAGEPHYS   (1ULL * 1024 * 1024) // maximum number of physical pages
-#define NPAGEPHYS   (512 * 1024UL) // maximum number of physical pages
-#endif
-#define NBPHYS      (NPAGEPHYS * PAGESIZE) // maximum amount of RAM
 
 #define GFXWIDTH    1024        // horizontal screen resolution
 #define GFXHEIGHT   768         // vertical screen resolution
@@ -48,7 +45,7 @@
 #define BOCHS       1
 #define DEVEL       0           // debugging
 
-#define PLASMA      0
+#define PLASMA      1
 
 /* planned drivers */
 #define PCI         1           // PCI bus driver
