@@ -24,7 +24,7 @@
 #include <string.h>
 #define kprintf printf
 #define kbzero bzero
-#define kpanic() abort()
+#define panic(x) abort()
 #endif
 
 extern struct memzone slabvirtzone;
@@ -136,7 +136,7 @@ memalloc(unsigned long nb, long flg)
             kprintf("duplicate allocation %p (%ld/%ld)\n",
                     ptr, ndx, mag->n);
 
-            kpanic();
+            panic(-1);
         }
         setbit(bmap, ndx);
         if (!slab && (flg & MEMZERO)) {
@@ -144,7 +144,7 @@ memalloc(unsigned long nb, long flg)
         }
     }
     if (!ptr) {
-        kpanic();
+        panic(-1);
     }
     if (mlk) {
 //        mtxunlk(&mag->lk);
@@ -183,7 +183,7 @@ kfree(void *ptr)
         kprintf("invalid free: %p (%ld/%ld)\n",
                 ptr, ndx, mag->n);
 
-        kpanic();
+        panic(-1);
     }
     magpush(mag, ptr);
     if (magfull(mag)) {

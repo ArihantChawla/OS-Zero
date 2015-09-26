@@ -110,7 +110,7 @@ trapinitidt(uint64_t *idt)
     trapsetintrgate(&idt[trapirqid(IRQERROR)], irqerror, TRAPUSER);
 #endif
 #if (APIC)
-    trapsetintrgate(&idt[trapirqid(IRQAPICTMR)], irqtmr, TRAPSYS);
+    trapsetintrgate(&idt[trapirqid(IRQAPICTMR)], irqtmr, TRAPUSER);
     trapsetintrgate(&idt[trapirqid(IRQSPURIOUS)], irqspurious, TRAPUSER);
 #endif
 #if 0

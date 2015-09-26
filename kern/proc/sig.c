@@ -25,12 +25,15 @@ killproc(volatile struct proc *proc)
 FASTCALL
 #endif
 void
-sigfunc(unsigned long pid, uint32_t trap, long err)
+sigfunc(unsigned long pid, int32_t trap, long err)
 {
     volatile struct proc *proc = k_curproc;
-    unsigned long         sig = trapsigmap[trap];
+    long                  sig = trapsigmap[trap];
     signalhandler_t      *func;
 
+    if (pid > TASKNPREDEF) {
+        panic(trap);
+    }
 //    kprintf("trap 0x%lx -> signal 0x%lx\n", trap, sig);
     if (trap == TRAPUD) {
 //        kprintf("PANIC: #UD (0x%lx)\n", errcode);

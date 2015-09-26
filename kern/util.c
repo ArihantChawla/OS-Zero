@@ -745,8 +745,11 @@ kbfindzerol(unsigned long *bmap, long ofs, long nbit)
 #endif
 
 void
-kpanic(void)
+panic(long trap)
 {
+    if (trap >= 0) {
+        kprintf("KERNEL CAUGHT TRAP %ld\n", trap);
+    }
     k_halt();
 }
 
