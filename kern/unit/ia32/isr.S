@@ -465,7 +465,7 @@ irqtmr:
 _getsysstk:
 	movl	%ebp, %ebx
 	movl	%ss, %edi
-	addl	$20, %ebx
+	addl	$12, %ebx
 //	movl	%ebx, 8(%esp)		// patch stack pointer
 _havestk:	
 	movl	%eax, 28(%esp)		// patch %eax
