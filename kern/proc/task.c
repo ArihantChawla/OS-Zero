@@ -129,6 +129,7 @@ static struct tasklk    taskidmtx ALIGNED(CLSIZE);
 static struct taskid   *taskidqueue;
 static struct task     *tasksleepqueue;
 
+#if 0
 /* save task context */
 FASTCALL
 void
@@ -144,6 +145,7 @@ tasksave(struct task *task)
 
     return;
 }
+#endif
 
 /* run task */
 FASTCALL
@@ -152,11 +154,13 @@ taskjmp(struct task *task)
 {
     uint8_t *fctx = task->m_tcb.fctx;
 
+#if 0
     if (k_curcpu->info->flags & CPUHASFXSR) {
         __asm__ __volatile__ ("fxrstor (%0)\n" : : "r" (fctx));
     } else {
         __asm__ __volatile__ ("frstor (%0)\n" : : "r" (fctx));
     }
+#endif
     k_curtask = task;
     k_curproc = task->proc;
     k_curpid = task->id;
@@ -532,23 +536,31 @@ taskpick(struct task *curtask)
     taskfunc_t   *func = taskfunctab[state];
 
     if (curtask) {
-        tasksave(curtask);
+//        tasksave(curtask);
         func(curtask);
     }
-    while (!task) {
+    do {
         for (prio = 0 ; prio < SCHEDNCLASS * SCHEDNPRIO ; prio++) {
             mtxlk(&taskrunmtxtab[prio].lk);
             taskqptr = &taskruntab[prio];
             if (*taskqptr) {
                 task = taskpop(taskqptr);
                 mtxunlk(&taskrunmtxtab[prio].lk);
+                if (task) {
+                    k_curtask = task;
+                    k_curproc = task->proc;
+                    k_curpid = task->id;
 
-                return task;
+                    return task;
+                }
             }
             mtxunlk(&taskrunmtxtab[prio].lk);
         }
         m_waitint();
-    }
+    } while (!task);
+    k_curtask = task;
+    k_curproc = task->proc;
+    k_curpid = task->id;
 
     return task;
 }

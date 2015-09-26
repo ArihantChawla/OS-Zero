@@ -6,7 +6,10 @@
 #include <kern/proc/task.h>
 #include <kern/unit/x86/asm.h>
 
-FASTCALL struct task *(*schedpicktask)(struct task *);
+FASTCALL struct task * (*schedpicktask)(struct task *);
+#if (ZEROSCHED)
+FASTCALL struct task *   taskpick(struct task *task);
+#endif
 
 void
 schedinit(void)
@@ -20,17 +23,16 @@ schedinit(void)
     return;
 }
 
+NORETURN
 void
 schedyield(void)
 {
-//    struct task *task = k_curtask;
-    struct task *newtask;
+    struct task *task = k_curtask;
 
-    newtask = schedpicktask(NULL);
-    taskjmp(newtask);
+    schedpicktask(task);
 
     /* NOTREACHED */
-    return;
+    for ( ; ; ) { ; }
 }
 
 void

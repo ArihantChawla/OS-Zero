@@ -85,14 +85,13 @@ struct m_segregs {
 /* thread control block */
 #define TCBFCTXSIZE 512
 struct m_tcb {
-    uint8_t           fctx[TCBFCTXSIZE];       // @ 0
-    struct m_jmpframe iret;                    // @ 512 bytes
-    struct m_segregs  segregs;                 // @ 532 bytes
-    int32_t           pdbr;                    // @ 548 bytes
-    struct m_genregs  genregs;                 // @ 554 bytes
+    uint8_t           fctx[TCBFCTXSIZE];        // 512 bytes @ 0
+    int32_t           fxsave;                   // 4 bytes @ 512
+    int32_t           pdbr;                     // 4 bytes @ 516
+    struct m_segregs  segregs;                  // 16 bytes @ 520
+    struct m_genregs  genregs;                  // 32 bytes @ 536
+    struct m_jmpframe iret;                     // 20 bytes @ 568
 };
 
 #endif /* __ZERO_IA32_TYPES_H__ */
-
-
 

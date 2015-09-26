@@ -12,27 +12,36 @@
 
 .align	32
 
-	/* FASTCALL void m_tcbjmp(struct m_tcb *tcb); */
+	/* FASTCALL NORETURN void m_tcbjmp(struct m_tcb *tcb); */
 
 m_tcbjmp:
 	/* adjust %esp to tcb->segregs */
-	leal	532(%eax), %esp
+	movl	512(%eax), %ebx
+	leal	516(%eax), %esp
+	cmpl	$0, %ebx
+	je	_frstor
+	fxrstor	(%eax)
+	jmp	_fpudone
+_frstor:
+	frstor	(%eax)
+_fpudone:
+	fwait
+	/* restore page directory page register */
+	popl	%ebx
+	movl	%ebx, %cr3
+	/* load address of tcb->segregs into %esp */
 	popl	%ds
 	popl	%es
 	popl	%fs
 	popl	%gs
-	/* load address of tcb->pdbr into %esp */
-	/* restore page directory page register */
-	popl	%eax
-	movl	%eax, %cr3
 	/* pop general purpose registers */
 	popal
-	/* adjust %esp to tcb->iret */ 
-	subl	$72, %esp
 #if (APIC)
 	_apiceoi
 #else
 	_piteoi1
 #endif
+	movl	%gs:8, %esp
+	addl	$568, %esp
 	iret
 

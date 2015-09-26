@@ -52,9 +52,8 @@
 .globl	irqerror, irqspurious, mpspurint, irqtmrcnt
 #endif
 
-.extern	sigfunc, tmrsyncscr, taskqueue, schedpicktask
+.extern	sigfunc, tmrsyncscr, schedpicktask
 .extern vmpagefault, kbdtrap, mousetrap
-.extern	tasksave, taskjmp
 #if (APIC)
 .extern	mpapic
 #endif
@@ -445,58 +444,60 @@ _tmr0fin:
 	iret
 	
 irqtmr:
+	pushl	%ebp
 	/* store stack pointer */
 	movl	%esp, %ebp
 	/* store %eax */
 	pushl	%eax
 	/* load [per-CPU] task structure address */
 	movl	%gs:8, %eax
-	leal	584(%eax), %esp
+	leal	568(%eax), %esp
 	/* save general purpose registers into task control block */
 	pushal
-	movl	4(%ebp), %edx		// pushed %cs
+	movl	-20(%esp), %ebx		// fxsave-flag
+	cmpl	$0, %ebx
+	jne	_fxsave
+	fnsave	(%eax)
+	jmp	_fpudone
+_fxsave:	
+	fxsave	(%eax)
+_fpudone:
+	fwait
+	pushl	%gs
+	pushl	%fs
+	pushl	%es
+	pushl	%ds
+	movl	8(%ebp), %edx		// pushed %cs
 	movl	-4(%ebp), %eax		// stored %eax
 	movl	%cr3, %ecx
 	cmpl	$UTEXTSEL, %edx
 	jne	_getsysstk
-	movl	12(%ebp), %ebx		// stored stack pointer
-	movl	16(%ebp), %edi		// stored %ss
+	movl	16(%ebp), %ebx		// stored stack pointer
+	movl	20(%ebp), %edi		// stored %ss
+	addl	$24, %ebx
 	jmp	_havestk
 _getsysstk:
 	movl	%ebp, %ebx
 	movl	%ss, %edi
-	addl	$12, %ebx
-//	movl	%ebx, 8(%esp)		// patch stack pointer
+	addl	$16, %ebx
 _havestk:	
-	movl	%eax, 28(%esp)		// patch %eax
-	movl	%edi, -24(%esp)		// store %ss
-	movl	%edx, -36(%esp)		// store %cs
+	movl	4(%ebp), %esi		// return address
 	movl	%ecx, -4(%esp)		// page directory base register
-	movl	%ebx, 12(%esp)		// patch frame pointer
-	movl	%ds, %edi
-	movl	%es, %esi
-	movl	%fs, %ecx
-	movl	%gs, %eax
-	movl	%edi, -20(%esp)
-	movl	%esi, -16(%esp)
-	movl	%ecx, -12(%esp)
-	movl	%eax, -8(%esp)
-	/* address of caller frame pointer */
-//	subl	$40, %esp
-	subl	$40, %esp
-	movl	(%ebp), %eax		// return address
-	movl	8(%ebp), %ecx		// pushed flags register
-	movl	%eax, (%esp)		// store return address
-	movl	%ecx, 8(%esp)		// store flags register before interrupt
-	movl	%ebx, 12(%esp)		// store caller stack pointer
+	movl	%eax, 44(%esp)		// patch %eax
+	movl	%edi, 64(%esp)		// store %ss
+	movl	%ebx, 24(%esp)		// patch stack pointer
+	movl	%edx, 52(%esp)		// store %cs
+	movl	%ebx, 28(%esp)		// patch frame pointer
+	movl	12(%ebp), %edi		// pushed flags register
+	movl	%ebx, 60(%esp)		// store caller stack pointer for iret
+	movl	%esi, 48(%esp)		// store return address
+	movl	%edi, 56(%esp)		// store flags register before interrupt
 	/* argument for schedpicktask */
 	movl	%gs:8, %eax		// task structure address
-//	movl	%ebp, %esp		// restore stack pointer
-	/* schedpicktask() returns task ID in eax */
 	movl	schedpicktask, %ebx
+	movl	%ebp, %esp
 	call	*%ebx
-	/* task ID argument in eax */
-	call	taskjmp
+	call	m_tcbjmp
 
 irqkbd:
 	_trapenter

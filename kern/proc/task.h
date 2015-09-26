@@ -24,12 +24,6 @@
 
 //extern struct m_cpuinfo cpuinfo;
 
-#if (ZEROSCHED)
-FASTCALL struct task * taskpick(struct task *task);
-#endif
-FASTCALL void          tasksave(struct task *task);
-FASTCALL void          taskjmp(struct task *task);
-
 #define __KERNEL__ 1
 //#include <zero/mtx.h>
 
