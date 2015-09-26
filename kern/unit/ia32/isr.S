@@ -485,13 +485,17 @@ _havestk:
 	movl	%ecx, -4(%esp)		// page directory base register
 	movl	%eax, 44(%esp)		// patch %eax
 	movl	%edi, 64(%esp)		// store %ss
+#if 0
 	movl	%ebx, 24(%esp)		// patch stack pointer
+#endif
+	leal	48(%esp), %eax
 	movl	%edx, 52(%esp)		// store %cs
 	movl	%ebx, 28(%esp)		// patch frame pointer
 	movl	12(%ebp), %edi		// pushed flags register
 	movl	%ebx, 60(%esp)		// store caller stack pointer for iret
 	movl	%esi, 48(%esp)		// store return address
 	movl	%edi, 56(%esp)		// store flags register before interrupt
+	movl	%eax, 24(%esp)		// patch stack pointer
 	/* argument for schedpicktask */
 	movl	%gs:8, %eax		// task structure address
 	movl	schedpicktask, %ebx

@@ -36,12 +36,14 @@ _fpudone:
 	popl	%gs
 	/* pop general purpose registers */
 	popal
+#if 0
+	movl	%gs:8, %esp
+	addl	$568, %esp
+#endif
 #if (APIC)
 	_apiceoi
 #else
 	_piteoi1
 #endif
-	movl	%gs:8, %esp
-	addl	$568, %esp
 	iret
 
