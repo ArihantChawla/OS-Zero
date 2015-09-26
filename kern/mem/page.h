@@ -42,16 +42,14 @@ extern pid_t           vmsetmap[NPAGEPHYS];
 #define PAGEBUFBIT  0x00000002
 #endif
 struct page {
-//    struct perm   *perm;        // page permissions
-//    long           flg;         // page flags
-    volatile long  lk;
-    volatile long  nref;
+    volatile long  lk;          // mutual exclusion lock
+    long           nref;        // reference count
+    long           flg;         // page flags
+    long           pid;         // owner process ID
     uintptr_t      adr;         // page address
     unsigned long  nflt;        // # of page-fault exceptions triggered
     struct page   *prev;        // previous on queue
     struct page   *next;        // next on queue
-    dev_t          dev;         // paging device
-    off_t          ofs;         // paging device offset
 };
 
 typedef int64_t swapoff_t;

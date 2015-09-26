@@ -17,7 +17,7 @@ struct m_stkframe {
 };
 
 /* return stack for IRET - 20 bytes */
-struct m_trapframe {
+struct m_jmpframe {
     int32_t eip;	// old instruction pointer
     int16_t cs;		// code segment selector
     int16_t pad1;	// pad to 32-bit boundary
@@ -29,7 +29,7 @@ struct m_trapframe {
 };
 
 /* general purpose registers - 32 bytes */
-struct m_pusha {
+struct m_genregs {
     int32_t edi;
     int32_t esi;
     int32_t esp;
@@ -78,19 +78,21 @@ struct m_tss {
 struct m_segregs {
     int32_t ds;         // data segment
     int32_t es;         // data segment
-    int32_t fs;         // buffer cache segment
-//    int32_t gs;         // per-CPU data segment
+    int32_t fs;         // thread-local storage
+    int32_t gs;         // kernel per-CPU segment
 };
 
 /* thread control block */
 #define TCBFCTXSIZE 512
 struct m_tcb {
-    uint8_t            fctx[TCBFCTXSIZE];       // @ 0
-    struct m_trapframe iret;                    // @ 512 bytes
-    struct m_segregs   segregs;                 // @ 532 bytes
-    int32_t            pdbr;                    // @ 544 bytes
-    struct m_pusha     genregs;                 // @ 548 bytes
+    uint8_t           fctx[TCBFCTXSIZE];       // @ 0
+    struct m_jmpframe iret;                    // @ 512 bytes
+    struct m_segregs  segregs;                 // @ 532 bytes
+    int32_t           pdbr;                    // @ 548 bytes
+    struct m_genregs  genregs;                 // @ 554 bytes
 };
 
 #endif /* __ZERO_IA32_TYPES_H__ */
+
+
 

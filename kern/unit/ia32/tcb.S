@@ -20,6 +20,7 @@ m_tcbjmp:
 	popl	%ds
 	popl	%es
 	popl	%fs
+	popl	%gs
 	/* load address of tcb->pdbr into %esp */
 	/* restore page directory page register */
 	popl	%eax
@@ -27,7 +28,7 @@ m_tcbjmp:
 	/* pop general purpose registers */
 	popal
 	/* adjust %esp to tcb->iret */ 
-	subl	$68, %esp
+	subl	$72, %esp
 #if (APIC)
 	_apiceoi
 #else

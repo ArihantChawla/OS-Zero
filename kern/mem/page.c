@@ -78,7 +78,7 @@ void
 pageinit(uintptr_t base, unsigned long nb)
 {
     mtxlk(&vmphysqlk);
-    pageinitzone(base, &vmphysq, min(nb, DEVMEMBASE));
+    pageinitzone(base, &vmphysq, min(nb, KERNVIRTBASE - NCPU * KERNSTKSIZE));
     mtxunlk(&vmphysqlk);
 
     return;
@@ -143,10 +143,6 @@ pagealloc(void)
             }
         } while (!found);
     }
-    if (page) {
-        page->dev = PAGENODEV;
-        page->ofs = PAGENOOFS;
-    }
 
     return page;
 }
@@ -159,11 +155,10 @@ pagefree(void *adr)
 
     /* free physical page */
     mtxlk(&vmphysqlk);
-    id = (uintptr_t)adr >> PAGESIZELOG2;
+    id = vmpagenum(adr);
     page = &vmphystab[id];
     mtxlk(&page->lk);
-    if (--page->nref <= 0) {
-        page->nref = 0;
+    if (!--page->nref) {
         vmflushtlb(adr);
         pagepush(page, &vmphysq);
     }

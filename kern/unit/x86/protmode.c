@@ -78,7 +78,7 @@ extern void schedloop(void);
 extern uint8_t                   kerniomap[8192] ALIGNED(PAGESIZE);
 extern uint8_t                   kernsysstktab[NCPU * KERNSTKSIZE];
 extern uint8_t                   kernusrstktab[NCPU * KERNSTKSIZE];
-extern struct proc               proctab[NPROC];
+extern struct proc               proctab[NTASK];
 extern struct m_cpu              cputab[NCPU];
 #if (VBE)
 extern uint64_t                  kernidt[NINTR];
@@ -98,34 +98,6 @@ extern struct pageq              vmshmq;
 #if (SMP) || (APIC)
 extern volatile uint32_t        *mpapic;
 #endif
-
-static INLINE int32_t
-m_getsp(void)
-{
-    int32_t sp;
-
-    __asm__ __volatile__ ("movl %%esp, %0\n"
-                          : "=r" (sp));
-
-    return sp;
-}
-
-NOINLINE void
-kinitusr(long id, int32_t sp)
-{
-    struct m_trapframe  iretfrm;
-    struct m_trapframe *ptr = &iretfrm;
-
-    iretfrm.eip = (uint32_t)m_getretadr();
-    iretfrm.cs = UTEXTSEL;
-    iretfrm.eflags = 0x3200;
-    iretfrm.uesp = sp;
-    iretfrm.uss = UDATASEL;
-    __asm__ __volatile__ ("movl %0, %%esp\n"
-                          "iret\n"
-                          :
-                          : "r" (ptr));
-}
 
 void
 kinitprot(unsigned long pmemsz)
@@ -267,7 +239,6 @@ kinitprot(unsigned long pmemsz)
     k_curcpu = &cputab[0];
     cpuinit(k_curcpu);
     schedinit();
-//    kinitusr(0, m_getsp());
 #if (APIC)
     apicstarttmr(tmrcnt);
 #else

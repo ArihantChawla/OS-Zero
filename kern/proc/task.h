@@ -59,7 +59,7 @@ struct task {
     long             nice;              // priority adjustment
     long             sched;             // thread scheduler class
     /* linkage */
-    struct proc     *parent;            // parent/owner process
+    struct proc     *proc;              // parent/owner process
     struct task     *prev;              // previous in queue
     struct task     *next;              // next in queue
     /* state */
@@ -108,10 +108,6 @@ struct tasktab {
 };
 
 struct taskqueue {
-#if 0
-    long         nref;
-    struct task *task;
-#endif
     struct task *prev;
     struct task *next;
 };
@@ -125,12 +121,7 @@ struct taskqueue {
 long taskgetid(void);
 void taskfreeid(long id);
 
-#define KERNPID 0
-#define INITPID 1
-#define MEMPID  2
-#define GPUPID  3
-
-#define THRSTKSIZE  (512 * 1024)
+#define THRSTKSIZE  (64 * 1024)
 
 struct taskid {
     volatile long  lk;

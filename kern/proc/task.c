@@ -158,7 +158,7 @@ taskjmp(struct task *task)
         __asm__ __volatile__ ("frstor (%0)\n" : : "r" (fctx));
     }
     k_curtask = task;
-    k_curproc = task->parent;
+    k_curproc = task->proc;
     k_curpid = task->id;
     m_tcbjmp(&task->m_tcb);
 

@@ -97,7 +97,7 @@ struct procmeminfo {
 /* process */
 struct proc {
     struct task         *task;
-    long                 nthr;          // # of threads
+    long                 nthr;          // # of child threads
     struct task        **thrtab;        // child threads
     /* round-robin queue */
 //    struct thrq       thrq;           // queue of ready threads
