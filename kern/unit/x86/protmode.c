@@ -220,6 +220,8 @@ kinitprot(unsigned long pmemsz)
 #endif
     /* CPU interface */
     taskinit();
+    k_curcpu = &cputab[0];
+    cpuinit(k_curcpu);
 //    tssinit(0);
 //    machinit();
     /* execution environment */
@@ -236,8 +238,6 @@ kinitprot(unsigned long pmemsz)
              << (PAGESIZELOG2 - 10)),
             vmpagestat.nwired << (PAGESIZELOG2 - 10),
             vmpagestat.nphys << (PAGESIZELOG2 - 10));
-    k_curcpu = &cputab[0];
-    cpuinit(k_curcpu);
     schedinit();
 #if (APIC)
     apicstarttmr(tmrcnt);

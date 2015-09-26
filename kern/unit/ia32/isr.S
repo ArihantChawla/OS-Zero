@@ -454,7 +454,7 @@ irqtmr:
 	leal	568(%eax), %esp
 	/* save general purpose registers into task control block */
 	pushal
-	movl	-20(%esp), %ebx		// fxsave-flag
+	movl	-24(%esp), %ebx		// fxsave-flag
 	cmpl	$0, %ebx
 	jne	_fxsave
 	fnsave	(%eax)

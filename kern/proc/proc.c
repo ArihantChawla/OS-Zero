@@ -31,6 +31,11 @@ procinit(long id)
 
     if (taskid < TASKNPREDEF) {
         /* bootstrap */
+        if (k_curcpu->info->flags & CPUHASFXSR) {
+            task->m_tcb.fxsave = 1;
+        } else {
+            task->m_tcb.fxsave = 0;
+        }
         proc->task = task;
         task->proc = proc;
         task->state = TASKREADY;

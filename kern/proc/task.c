@@ -547,20 +547,24 @@ taskpick(struct task *curtask)
                 task = taskpop(taskqptr);
                 mtxunlk(&taskrunmtxtab[prio].lk);
                 if (task) {
-                    k_curtask = task;
-                    k_curproc = task->proc;
-                    k_curpid = task->id;
 
-                    return task;
+                    break;
                 }
             }
             mtxunlk(&taskrunmtxtab[prio].lk);
         }
-        m_waitint();
+        if (!task) {
+            m_waitint();
+        }
     } while (!task);
     k_curtask = task;
     k_curproc = task->proc;
     k_curpid = task->id;
+    if (k_curcpu->info->flags & CPUHASFXSR) {
+        task->m_tcb.fxsave = 1;
+    } else {
+        task->m_tcb.fxsave = 0;
+    }
 
     return task;
 }
