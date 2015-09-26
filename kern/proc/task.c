@@ -132,7 +132,7 @@ static struct task     *tasksleepqueue;
 /* save task context */
 FASTCALL
 void
-tasksave(struct task *task, unsigned long retadr, unsigned long fp)
+tasksave(struct task *task)
 {
     uint8_t *fctx = task->m_tcb.fctx;
 
@@ -141,10 +141,6 @@ tasksave(struct task *task, unsigned long retadr, unsigned long fp)
     } else {
         __asm__ __volatile__ ("fnsave (%0)\n" : : "r" (fctx));
     }
-    m_tcbsave(&task->m_tcb);
-    task->m_tcb.iret.eip = retadr;
-    task->m_tcb.iret.uesp = fp - sizeof(struct m_trapframe);
-    task->m_tcb.genregs.ebp = fp;
 
     return;
 }
@@ -167,7 +163,6 @@ taskjmp(struct task *task)
     m_tcbjmp(&task->m_tcb);
 
     /* NOTREACHED */
-    return;
 }
 
 #if (ZEROSCHED)
@@ -545,20 +540,19 @@ taskqueueready(struct task *task)
 /* switch tasks */
 FASTCALL
 struct task *
-taskpick(struct task *task, unsigned long retadr, unsigned long fp)
+taskpick(struct task *curtask)
 {
-//    struct task  *task = k_curtask;
+    struct task  *task = NULL;
     struct task **taskqptr;
-    long          prio = task->prio;
-    long          sched = task->sched;
-    long          state = task->state;
+    long          prio = curtask->prio;
+    long          sched = curtask->sched;
+    long          state = curtask->state;
     taskfunc_t   *func = taskfunctab[state];
 
-    if ((task) && (retadr) && (fp)) {
-        tasksave(task, retadr, fp);
-        func(task);
+    if (curtask) {
+        tasksave(curtask);
+        func(curtask);
     }
-    task = NULL;
     while (!task) {
         for (prio = 0 ; prio < SCHEDNCLASS * SCHEDNPRIO ; prio++) {
             mtxlk(&taskrunmtxtab[prio].lk);

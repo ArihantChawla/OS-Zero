@@ -3,17 +3,18 @@
 #include <kern/unit/x86/boot.h>
 
 /* GRUB support */
-_MBMAGIC     = MBMAGIC
-_MBFLAGS     = MBFLAGS
-_MBCHKSUM    = MBCHKSUM
+_MBMAGIC	= MBMAGIC
+_MBFLAGS	= MBFLAGS
+_MBCHKSUM	= MBCHKSUM
 
 /* globals */
 .globl	_start, start
 #if !(LOCORE)
 .globl	kernidt
 #endif
-.globl	kerngdt, kernpagedir, kerniomap, kernpagetab4
-.extern	kinit
+.globl	kerngdt, kernpagedir, kerniomap, kernpagetab4, kerntsstab
+.globl	kernsysstktab, kernusrstktab
+.extern	kmain
 	
 .text	32
 
@@ -43,7 +44,7 @@ mboothdr:
 	/* kernel startup */
 _start2:
 	/* set kernel stack up */
-	movl	$KERNSTKTOP, %esp
+	movl	$BOOTSTKTOP, %esp
 	movl	%esp, %ebp
 	pushl	$0			// store longmode argument for kmain()
 	pushl	%ebx			// store boot-header address
@@ -83,7 +84,7 @@ _nolongmode:
 	movl	$0, %eax
 	ret
 
-.bss
+.data
 	
 .align	NBPG
 
@@ -94,10 +95,6 @@ kernidt:
 /* page directory index page */
 kernpagedir:
 	.space	NBPG
-
-/* kernel I/O protection bitmap */
-kerniomap:
-	.space	8192
 
 /* 64-bit memory management */
 
@@ -130,6 +127,22 @@ kerngdt:
 #else
 kerngdt:
 	.space	(8 * NGDT)
+
+/* kernel TSS structures */
+kerntsstab:
+	.space	(NCPU * TSSLEN)
+	
+	.align	NBPG
+
+/* kernel I/O protection bitmap */
+kerniomap:
+	.space	8192
+
+/* kernel stacks */
+kernsysstktab:
+	.space	(NCPU * KERNSTKSIZE)
+kernusrstktab:
+	.space	(NCPU * KERNSTKSIZE)
 
 #endif /* SMP */
 	

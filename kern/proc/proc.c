@@ -38,56 +38,59 @@ procinit(long id)
         k_curtask = task;
     }
     if (proc) {
-        /* initialise page directory */
-        ptr = kmalloc(NPDE * sizeof(pde_t));
-        if (ptr) {
-            kbzero(ptr, NPDE * sizeof(pde_t));
-            proc->pdir = ptr;
+        if (taskid == PROCKERN) {
         } else {
-            kfree(proc);
-
-            return -1;
-        }
-        ptr = kmalloc(KERNSTKSIZE);
-        if (ptr) {
-            u8ptr = ptr;
-            stk = &task->kstk;
-            u8ptr += KERNSTKSIZE;
-            kbzero(ptr, KERNSTKSIZE);
-            stk->top = u8ptr;
-            stk->sp = u8ptr;
-            stk->base = ptr;
-            stk->size = KERNSTKSIZE;
-        }
-        ptr = kmalloc(TASKSTKSIZE);
-        if (ptr) {
-            u8ptr = ptr;
-            stk = &task->ustk;
-            u8ptr += KERNSTKSIZE;
-            kbzero(ptr, TASKSTKSIZE);
-            stk->top = u8ptr;
-            stk->sp = u8ptr;
-            stk->base = ptr;
-            stk->size = TASKSTKSIZE;
-        } else {
-            kfree(proc->pdir);
-            kfree(task->kstk.base);
-            kfree(proc);
-
-            return -1;
-        }
-        /* initialise descriptor table */
-        ptr = kmalloc(TASKNDESC * sizeof(struct desc));
-        if (ptr) {
-            kbzero(ptr, TASKNDESC * sizeof(struct desc));
-            proc->dtab = ptr;
-        } else {
-            kfree(proc->pdir);
-            kfree(task->ustk.base);
-            kfree(task->kstk.base);
-            kfree(proc);
-
-            return -1;
+            /* initialise page directory */
+            ptr = kmalloc(NPDE * sizeof(pde_t));
+            if (ptr) {
+                kbzero(ptr, NPDE * sizeof(pde_t));
+                proc->pdir = ptr;
+            } else {
+                kfree(proc);
+                
+                return -1;
+            }
+            ptr = kmalloc(KERNSTKSIZE);
+            if (ptr) {
+                u8ptr = ptr;
+                stk = &task->kstk;
+                u8ptr += KERNSTKSIZE;
+                kbzero(ptr, KERNSTKSIZE);
+                stk->top = u8ptr;
+                stk->sp = u8ptr;
+                stk->base = ptr;
+                stk->size = KERNSTKSIZE;
+            }
+            ptr = kmalloc(TASKSTKSIZE);
+            if (ptr) {
+                u8ptr = ptr;
+                stk = &task->ustk;
+                u8ptr += KERNSTKSIZE;
+                kbzero(ptr, TASKSTKSIZE);
+                stk->top = u8ptr;
+                stk->sp = u8ptr;
+                stk->base = ptr;
+                stk->size = TASKSTKSIZE;
+            } else {
+                kfree(proc->pdir);
+                kfree(task->kstk.base);
+                kfree(proc);
+                
+                return -1;
+            }
+            /* initialise descriptor table */
+            ptr = kmalloc(TASKNDESC * sizeof(struct desc));
+            if (ptr) {
+                kbzero(ptr, TASKNDESC * sizeof(struct desc));
+                proc->dtab = ptr;
+            } else {
+                kfree(proc->pdir);
+                kfree(task->ustk.base);
+                kfree(task->kstk.base);
+                kfree(proc);
+                
+                return -1;
+            }
         }
 #if 0
         /* initialise VM structures */

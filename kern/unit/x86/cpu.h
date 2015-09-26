@@ -57,17 +57,18 @@ struct m_cpu {
 #elif (PTRBITS == 64)
     uint64_t          pml4;
 #endif
-    pid_t             curpid;
+    long              pid;
+    /* end of cpu local variables */
     volatile long     started;
     struct m_cpuinfo *info;
-//    signalhandler_t  *sigvec;
-    /* end of cpu local variables */
     long              id;
     struct m_tcb     *schedtcb;
     uint8_t          *kstk;
     uint64_t         *gdt;
+#if !defined(__x86_64__) && !defined(__amd64__)
     struct m_tss      ktss;
     struct m_tss      utss;
+#endif
 };
 
 #endif /* defined(__KERNEL__) */

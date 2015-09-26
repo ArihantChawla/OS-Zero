@@ -1,6 +1,8 @@
 #ifndef __KERN_CONF_H__
 #define __KERN_CONF_H__
 
+#include <zero/param.h>
+
 #define FASTINTR    1
 
 #define NEWFONT     1
@@ -19,6 +21,7 @@
 #define NTASK       4096        // maximum number of running tasks on system
 #define TASKNDESC   16384       // maximum number of descriptors per process
 #define TASKSTKSIZE (1024 * 1024)
+#define KERNSTKSIZE (4 * PAGESIZE)
 #if (SMP)
 #define NCPU        8
 #else

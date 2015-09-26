@@ -69,8 +69,8 @@ struct m_tss {
     uint16_t ldt, _ldthi;
     uint16_t trace;
     uint16_t iomapofs;
-    long     hasiomap;          // indicates presence of an 8K iomap field
-    uint8_t  iomap[EMPTY] ALIGNED(PAGESIZE);
+//    long     hasiomap;          // indicates presence of an 8K iomap field
+//    uint8_t  iomap[EMPTY] ALIGNED(PAGESIZE);
 //    uint8_t  iomap[8192] ALIGNED(CLSIZE);
 };
 
@@ -90,7 +90,7 @@ struct m_tcb {
     struct m_segregs   segregs;                 // @ 532 bytes
     int32_t            pdbr;                    // @ 544 bytes
     struct m_pusha     genregs;                 // @ 548 bytes
-} ALIGNED(PAGESIZE);
+};
 
 #endif /* __ZERO_IA32_TYPES_H__ */
 

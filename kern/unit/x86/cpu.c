@@ -1,5 +1,6 @@
 #include <kern/conf.h>
 #include <zero/param.h>
+#include <kern/mem/vm.h>
 #include <kern/unit/x86/cpu.h>
 #if (SMP)
 #include <stdint.h>
@@ -16,13 +17,13 @@ struct m_cpuinfo      cpuinfotab[NCPU];
 void
 cpuinit(struct m_cpu *cpu)
 {
-    long core = cpu->id;
+    long id = cpu->id;
 #if (SMP)
-    void *kstk = (uint8_t *)MPENTRYSTK - core * MPSTKSIZE;
+    void *kstk = (uint8_t *)MPENTRYSTK - id * MPSTKSIZE;
 #else
-    void *kstk = (void *)KERNSTKTOP;
+    void *kstk = (void *)(KERNVIRTBASE - id * KERNSTKSIZE);
 #endif
-    struct m_cpuinfo *info = &cpuinfotab[core];
+    struct m_cpuinfo *info = &cpuinfotab[id];
 
 //    cpu->cpu = cpu;
     cpu->kstk = kstk;

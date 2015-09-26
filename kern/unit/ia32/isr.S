@@ -447,24 +447,41 @@ _tmr0fin:
 irqtmr:
 	/* store frame pointer */
 	pushl	%ebp
-	/* store %ecx */
-	pushl	%ecx
 	/* store stack pointer */
 	movl	%esp, %ebp
+	/* store %eax */
+	pushl	%eax
 	/* load [per-CPU] task structure address */
-	movl	%gs:8, %ecx
-	leal	580(%ecx), %esp
-	/* load %ebx original value */
-	movl	(%ebp), %ecx
-	/* push general purpose registers into task control block */
+	movl	%gs:8, %eax
+	leal	580(%eax), %esp
+	/* save general purpose registers into task control block */
 	pushal
-	/* restore frame pointer */
-	leal	4(%ebp), %esp
-	popl	%ebp
-	/* arguments for schedpicktask */
-	movl	%ebp, %ecx		// frame pointer
-	movl	(%esp), %edx		// return address
+	movl	-4(%ebp), %eax		// stored %eax
+	movl	%cr3, %ecx
+	movl	16(%ebp), %ebx		// stored stack pointer
+	movl	%eax, 28(%esp)		// patch %eax
+	movl	%ecx, -4(%esp)		// page directory base register
+	movl	%ebx, 12(%esp)		// patch frame pointer
+	movl	%ds, %edi
+	movl	%es, %esi
+	movl	%fs, %ecx
+	movl	%edi, -16(%esp)
+	movl	%esi, -12(%esp)
+	movl	%ecx, -8(%esp)
+	/* address of caller frame pointer */
+	movl	4(%ebp), %edx		// return address
+	subl	$36, %esp
+	movl	8(%ebp), %esi		// pushed %cs
+	movl	12(%ebp), %ecx		// pushed flags register
+	movl	%ss, %edi
+	movl	%edx, (%esp)		// store return address
+	movl	%esi, 4(%esp)		// store %cs
+	movl	%ecx, 8(%esp)		// store flags register before interrupt
+	movl	%ebx, 12(%esp)		// store caller stack pointer
+	movl	%edi, 16(%esp)		// store %ss
+	/* argument for schedpicktask */
 	movl	%gs:8, %eax		// task structure address
+	movl	%ebp, %esp		// restore stack pointer
 	/* schedpicktask() returns task ID in eax */
 	movl	schedpicktask, %ebx
 	call	*%ebx

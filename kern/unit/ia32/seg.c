@@ -40,7 +40,7 @@ seginit(long id)
     segsetdesc(&gdt[UTEXTSEG], 0, NPAGEMAX - 1, SEGCODE | SEGUSER);
     segsetdesc(&gdt[UDATASEG], 0, NPAGEMAX - 1, SEGDATA | SEGUSER);
     /* per-CPU data segment */
-    segsetdesc(&gdt[CPUSEG], &cpu->cpu, 6 * sizeof(void *),
+    segsetdesc(&gdt[CPUSEG], &cpu->cpu, 4 * sizeof(void *) + sizeof(long),
                SEGCPU);
 #if (VBE)
     gdt[REALCODESEG] = UINT64_C(0x00009a000000ffff);
@@ -50,8 +50,6 @@ seginit(long id)
     gdtptr.lim = NGDT * sizeof(uint64_t) - 1;
     gdtptr.adr = (uint32_t)gdt;
     gdtinit();
-//    __asm__ __volatile__ ("movw %0, %%ax\n" : : "i" (CPUSEL));
-//    __asm__ __volatile__ ("movw %ax, %gs\n");
 
     return;
 }

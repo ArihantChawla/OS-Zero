@@ -76,6 +76,8 @@ extern void apicstarttmr(uint32_t tmrcnt);
 extern void schedloop(void);
 
 extern uint8_t                   kerniomap[8192] ALIGNED(PAGESIZE);
+extern uint8_t                   kernsysstktab[NCPU * KERNSTKSIZE];
+extern uint8_t                   kernusrstktab[NCPU * KERNSTKSIZE];
 extern struct proc               proctab[NPROC];
 extern struct m_cpu              cputab[NCPU];
 #if (VBE)
@@ -97,24 +99,45 @@ extern struct pageq              vmshmq;
 extern volatile uint32_t        *mpapic;
 #endif
 
+static INLINE int32_t
+m_getsp(void)
+{
+    int32_t sp;
+
+    __asm__ __volatile__ ("movl %%esp, %0\n"
+                          : "=r" (sp));
+
+    return sp;
+}
+
+NOINLINE void
+kinitusr(long id, int32_t sp)
+{
+    struct m_trapframe  iretfrm;
+    struct m_trapframe *ptr = &iretfrm;
+
+    iretfrm.eip = (uint32_t)m_getretadr();
+    iretfrm.cs = UTEXTSEL;
+    iretfrm.eflags = 0x3200;
+    iretfrm.uesp = sp;
+    iretfrm.uss = UDATASEL;
+    __asm__ __volatile__ ("movl %0, %%esp\n"
+                          "iret\n"
+                          :
+                          : "r" (ptr));
+}
+
 void
 kinitprot(unsigned long pmemsz)
 {
 #if (NEWTMR)
     uint32_t tmrcnt = 0;
 #endif
+    uint32_t lim = min(pmemsz, KERNVIRTBASE - NCPU * KERNSTKSIZE);
+    uint32_t sp = (uint32_t)kernusrstktab + NCPU * KERNSTKSIZE;
 
-/* initialise interrupt management */
-#if (VBE)
-    trapinitprot();
-#endif
     /* initialise virtual memory */
     vminit((uint32_t *)&_pagetab);
-#if 0
-    /* FIXME: map possible device memory */
-    vmmapseg((uint32_t *)&_pagetab, DEVMEMBASE, DEVMEMBASE, 0xffffffffU,
-             PAGEPRES | PAGEWRITE | PAGENOCACHE);
-#endif
 //    schedinit();
     /* zero kernel BSS segment */
     kbzero(&_bssvirt, (uint32_t)&_ebssvirt - (uint32_t)&_bssvirt);
@@ -131,8 +154,23 @@ kinitprot(unsigned long pmemsz)
 #endif
     /* TODO: use memory map from GRUB? */
 //    vminitphys((uintptr_t)&_epagetab, pmemsz);
-    vminitphys((uintptr_t)&_epagetab, pmemsz);
-    meminit(pmemsz);
+    vminitphys((uintptr_t)&_epagetab, lim);
+    meminit(min(pmemsz, lim));
+    vmmapseg((uint32_t *)&_pagetab,
+             (uint32_t)kernsysstktab,
+             (uint32_t)kernsysstktab,
+             (uint32_t)kernsysstktab + NCPU * KERNSTKSIZE,
+             PAGEPRES | PAGEWRITE | PAGENOCACHE);
+    vmmapseg((uint32_t *)&_pagetab,
+             (uint32_t)kernusrstktab,
+             (uint32_t)kernusrstktab,
+             (uint32_t)kernusrstktab + NCPU * KERNSTKSIZE,
+             PAGEPRES | PAGEWRITE | PAGENOCACHE);
+#if 0
+    /* FIXME: map possible device memory */
+    vmmapseg((uint32_t *)&_pagetab, DEVMEMBASE, DEVMEMBASE, 0xffffffffU,
+             PAGEPRES | PAGEWRITE | PAGENOCACHE);
+#endif
     tssinit(0);
 #if (VBE) && (NEWFONT)
 //    consinit(768 / vbefontw, 1024 / vbefonth);
@@ -156,7 +194,7 @@ kinitprot(unsigned long pmemsz)
     /* HID devices */
 #if (PCI)
     /* initialise PCI bus driver */
-    pciinit();
+//    pciinit();
 #endif
 #if (ATA)
     /* initialise ATA driver */
@@ -222,18 +260,25 @@ kinitprot(unsigned long pmemsz)
 //    kprintf("%ld kilobytes physical memory\n", pmemsz >> 10);
     kprintf("%ld kilobytes kernel memory\n", (uint32_t)&_ebss >> 10);
     kprintf("%ld kilobytes allocated physical memory (%ld wired, %ld total)\n",
-            (vmpagestat.nwired + vmpagestat.nmapped + vmpagestat.nbuf) << (PAGESIZELOG2 - 10),
+            ((vmpagestat.nwired + vmpagestat.nmapped + vmpagestat.nbuf)
+             << (PAGESIZELOG2 - 10)),
             vmpagestat.nwired << (PAGESIZELOG2 - 10),
             vmpagestat.nphys << (PAGESIZELOG2 - 10));
     k_curcpu = &cputab[0];
     cpuinit(k_curcpu);
     schedinit();
+//    kinitusr(0, m_getsp());
 #if (APIC)
     apicstarttmr(tmrcnt);
 #else
     pitinit();
 #endif
+    __asm__ __volatile__ ("movl %0, %%esp\n"
+                          "movl %0, %%ebp\n"
+                          :
+                          : "r" (sp));
     schedloop();
 
     /* NOTREACHED */
 }
+

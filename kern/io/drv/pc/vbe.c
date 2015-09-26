@@ -47,7 +47,7 @@ vbeint10(void)
     static int first = 1;
 
     if (first) {
-        kmemcpy((void *)KERNREALBASE,
+        kmemcpy((void *)BOOTREALBASE,
                 &realstart,
                 (unsigned long)&realend - (unsigned long)&realstart);
         first = 0;
@@ -67,7 +67,7 @@ vbeint10(void)
 void
 vbeinit(void)
 {
-    struct realregs *regs = (void *)(KERNREALSTK - sizeof(struct realregs));
+    struct realregs *regs = (void *)(BOOTREALSTK - sizeof(struct realregs));
     struct vbeinfo  *info = (void *)VBEINFOADR;
 
     kbzero(regs, sizeof(struct realregs));

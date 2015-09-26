@@ -51,6 +51,17 @@ _APICEOI	= 0x00000000
 	addl	$4, %esp	// skip error code
 .endm
 
+.macro	_saveregs
+	movl	%edi, (%eax)
+	movl	%esi, 4(%eax)
+	movl	%esp, 8(%eax)
+	movl	%ebp, 12(%eax)
+	movl	%ebx, 16(%eax)
+	movl	%edx, 20(%eax)
+	movl	%ecx, 24(%eax)
+	movl	%eax, 28(%eax)
+.endm
+
 #if (APIC)
 .macro	_apiceoi
 	/* send APIC EOI (end of interrupt) */

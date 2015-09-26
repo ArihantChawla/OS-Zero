@@ -16,5 +16,35 @@ struct m_stkframe {
     /* call parameters on stack go here in 'reverse order' */
 };
 
+/* general purpose registers - 32 bytes */
+struct m_genregs {
+    int64_t rdi;
+    int64_t rsi;
+    int64_t rsp;
+    int64_t rbp;
+    int64_t rbx;
+    int64_t rdx;
+    int64_t rcx;
+    int64_t rax;
+    int64_t r15;
+    int64_t r14;
+    int64_t r13;
+    int64_t r12;
+    int64_t r11;
+    int64_t r10;
+    int64_t r9;
+    int64_t r8;
+};
+
+/* thread control block */
+#define TCBFCTXSIZE 512
+struct m_tcb {
+    uint8_t            fctx[TCBFCTXSIZE];
+//    struct m_trapframe iret;
+//    struct m_segregs   segregs;
+    int64_t            pdbr;
+    struct m_genregs   genregs;
+};
+
 #endif /* __ZERO_X86_64_TYPES_H__ */
 

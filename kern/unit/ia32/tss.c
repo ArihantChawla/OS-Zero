@@ -9,13 +9,14 @@
 #include <kern/unit/x86/cpu.h>
 #include <kern/unit/ia32/seg.h>
 
+extern uint8_t  kerntsstab[NCPU * TSSLEN];
 extern uint8_t  kerniomap[8192];
 extern uint64_t kerngdt[NTASK][NGDT];
+extern uint8_t  kernsysstktab[NCPU * KERNSTKSIZE];
+extern uint8_t  kernusrstktab[NCPU * KERNSTKSIZE];
 //extern struct m_tss _kerntss[NCPU];
 
 //extern void _tssinit(long);
-
-struct m_tss tsstab[NCPU];
 
 void
 tssinit(long id)
@@ -26,11 +27,11 @@ tssinit(long id)
     uint32_t      pdbr;
 
 //    tss = cpu->ktss = (struct m_tss *)(MPTSSBASE + 4 * PAGESIZE * core);
-    tss = &tsstab[id];
+//    tss = &tsstab[id];
+    tss = (struct m_tss *)(kerntsstab + id * TSSLEN);
     __asm__ __volatile__ ("movl %%cr3, %0" : "=r" (pdbr));
     tss->ss0 = tss->ss1 = tss->ss2 = DATASEL;
-    tss->esp0 = tss->esp1 = tss->esp2 = (uint32_t)kwalloc(TASKSTKSIZE);
-//    kbzero((void *)tss->esp0, TASKSTKSIZE);
+    tss->esp0 = (uint32_t)kernsysstktab + (NCPU - id) * KERNSTKSIZE;
     tss->cr3 = pdbr;
     tss->iomapofs = (uint16_t)((uint8_t *)kerniomap - (uint8_t *)tss);
     gdt = &kerngdt[id][0];

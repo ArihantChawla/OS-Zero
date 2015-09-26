@@ -25,14 +25,10 @@
 //extern struct m_cpuinfo cpuinfo;
 
 #if (ZEROSCHED)
-extern FASTCALL struct task * taskpick(struct task *task,
-                                       unsigned long retadr,
-                                       unsigned long fp);
+FASTCALL struct task * taskpick(struct task *task);
 #endif
-FASTCALL void                 tasksave(struct task *task,
-                                       unsigned long retadr,
-                                       unsigned long fp);
-FASTCALL void                 taskjmp(struct task *task);
+FASTCALL void          tasksave(struct task *task);
+FASTCALL void          taskjmp(struct task *task);
 
 #define __KERNEL__ 1
 //#include <zero/mtx.h>

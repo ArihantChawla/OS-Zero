@@ -23,7 +23,7 @@ realint10:
 	pushal					// push general registers
 	movl	%esp, _espsave			// store stack pointer
 	cld
-	ljmpl	$REALCODESEL, $KERNREALBASE	// jump to realstart
+	ljmpl	$REALCODESEL, $BOOTREALBASE	// jump to realstart
 
 .align	4
 
@@ -32,7 +32,7 @@ realint10:
 	/* drop back to 16-bit real mode */
 realstart:
 	/* set IDT up at zero */
-	lidtl	(_realidtptr - realstart + KERNREALBASE)
+	lidtl	(_realidtptr - realstart + BOOTREALBASE)
 	/* set up 16-bit segments */
 	movw	$REALDATASEL, %ax
 	movw	%ax, %ds
@@ -45,7 +45,7 @@ realstart:
 	and	$(~CR0PE), %eax
 	mov	%eax, %cr0
 	/* jump to real mode code */
-	ljmpl	$0x0000, $(_real16 - realstart + KERNREALBASE)
+	ljmpl	$0x0000, $(_real16 - realstart + BOOTREALBASE)
 
 .align	4
 
@@ -58,20 +58,20 @@ _real16:
 	mov	%ax, %fs
 	mov	%ax, %gs
 	mov	%ax, %ss
-	movw	$(KERNREALSTK - 16), %sp
+	movw	$(BOOTREALSTK - 16), %sp
 	/* load real mode IDT */
-	movw	$0x3ff, _realidtptr - realstart + KERNREALBASE
-	lidtl	(_realidtptr - realstart + KERNREALBASE)
+	movw	$0x3ff, _realidtptr - realstart + BOOTREALBASE
+	lidtl	(_realidtptr - realstart + BOOTREALBASE)
 	popa
 	sti
 	int	$0x10
 	cli
 	pusha
-	lgdtl	(_realgdtptr - realstart + KERNREALBASE)
+	lgdtl	(_realgdtptr - realstart + BOOTREALBASE)
 	mov	%cr0, %eax
 	orl	$(CR0PE), %eax
 	mov	%eax, %cr0
-	ljmpl	$0x08, $(_protmode - realstart + KERNREALBASE)
+	ljmpl	$0x08, $(_protmode - realstart + BOOTREALBASE)
 
 .align	4
 
@@ -94,7 +94,7 @@ _protmode:
 	/* leave */
 	movl	%ebp, %esp
 	popl	%ebp
-	ljmpl	$TEXTSEL, $(_protret - realstart + KERNREALBASE)
+	ljmpl	$TEXTSEL, $(_protret - realstart + BOOTREALBASE)
 _protret:
 	lidtl	(idtptr)
 	sti
@@ -115,7 +115,7 @@ _realgdt:
 
 _realgdtptr:
 	.short	_realgdtptr - _realgdt - 1
-	.long	_realgdt - realstart + KERNREALBASE
+	.long	_realgdt - realstart + BOOTREALBASE
 
 .align	4
 	
