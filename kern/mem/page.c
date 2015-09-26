@@ -13,7 +13,7 @@
 #include <kern/mem/vm.h>
 #include <kern/mem/page.h>
 
-extern struct page        vmphystab[NPAGEPHYS];
+extern struct page        vmphystab[NPAGEMAX];
 extern volatile long      vmlrulktab[1UL << (LONGSIZELOG2 + 3)];
 extern struct page       *vmlrutab[1UL << (LONGSIZELOG2 + 3)];
 extern struct vmpagestat  vmpagestat;
@@ -21,8 +21,8 @@ volatile long             vmphysqlk;
 extern struct page       *vmphysq;
 extern struct page       *vmshmq;
 static volatile long      vmsetlk;
-//pid_t                     vmsetmap[NPAGEPHYS];
-unsigned char             vmsetbitmap[NPAGEPHYS / CHAR_BIT];
+//pid_t                     vmsetmap[NPAGEMAX];
+unsigned char             vmsetbitmap[NPAGEMAX / CHAR_BIT];
 
 void
 pageinitzone(uintptr_t base,

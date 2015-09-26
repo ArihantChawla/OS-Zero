@@ -28,7 +28,7 @@
 extern void pginit(void);
 
 extern uint32_t       kernpagedir[NPTE];
-struct page           vmphystab[NPAGEPHYS] ALIGNED(PAGESIZE);
+struct page           vmphystab[NPAGEMAX] ALIGNED(PAGESIZE);
 volatile long         vmlrulktab[1UL << (LONGSIZELOG2 + 3)];
 struct page          *vmlrutab[1UL << (LONGSIZELOG2 + 3)];
 

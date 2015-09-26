@@ -43,7 +43,7 @@ vmflushtlb(void *adr)
 #define DEVMEMBASE      0xe0000000      // 3.5 G
 
 /* virtual memory parameters */
-#define NPAGEMAX        (NPDE * NPTE)   // # of virtual pages
+//#define NPAGEMAX        (NPDE * NPTE)   // # of virtual pages
 #define NPDE            1024            // per directory
 #define NPTE            1024            // per table
 //#define PAGETAB         0x00700000U   // physical address

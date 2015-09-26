@@ -425,57 +425,56 @@ taskunwait(uintptr_t wchan)
 
     tab = taskwaittab[key0];
     mtxlk(&taskwaitmtxtab[key0].lk);
-    if (ptr) {
-        tab->nref--;
+    if (tab) {
         ptab[0] = tab;
-        pptab[0] = &taskwaittab[key0];
+        pptab[0] = (void **)&taskwaittab[key0];
         tab = ((void **)tab)[key1];
         if (tab) {
-            tab->nref--;
             ptab[1] = tab;
-            pptab[1] = &tab[key0];
+            pptab[1] = (void **)&tab[key0];
             tab = ((void **)tab)[key2];
             if (tab) {
-                tab->nref--;
                 ptab[2] = tab;
-                pptab[2] = &tab[key2];
+                pptab[2] = (void **)&tab[key2];
                 queue = ((void **)tab)[key3];
-            }
-        }
-        task1 = queue->next;
-        while (task1) {
-            if (task1->next) {
-                task1->next->prev = NULL;
-            }
-            queue->next = task1->next;
-            task2 = task1->next;
-            prio = taskwakeprio(task1);
-            mtxlk(&taskrunmtxtab[prio].lk);
-            taskqptr = &taskruntab[prio];
-            taskqueue(task1, taskqptr);
-            mtxunlk(&taskrunmtxtab[prio].lk);
-            task1 = task2;
-        }
-        tab = ptab[0];
-        if (tab) {
-            if (!tab->nref) {
-                pptr = pptab[0];
-                kfree(tab);
-                *pptr = NULL;
-            }
-            tab = ptab[1];
-            if (tab) {
-                if (!tab->nref) {
-                    pptr = pptab[1];
-                    kfree(tab);
-                    *pptr = NULL;
-                }
-                tab = ptab[2];
-                if (tab) {
-                    if (!tab->nref) {
-                        pptr = pptab[2];
-                        kfree(tab);
-                        *pptr = NULL;
+                if (queue) {
+                    task1 = queue->next;
+                    while (task1) {
+                        if (task1->next) {
+                            task1->next->prev = NULL;
+                        }
+                        queue->next = task1->next;
+                        task2 = task1->next;
+                        prio = taskwakeprio(task1);
+                        mtxlk(&taskrunmtxtab[prio].lk);
+                        taskqptr = &taskruntab[prio];
+                        taskqueue(task1, taskqptr);
+                        mtxunlk(&taskrunmtxtab[prio].lk);
+                        task1 = task2;
+                    }
+                    tab = ptab[2];
+                    if (tab) {
+                        if (!--tab->nref) {
+                            pptr = pptab[2];
+                            kfree(tab);
+                            *pptr = NULL;
+                        }
+                        tab = ptab[1];
+                        if (tab) {
+                            if (!--tab->nref) {
+                                pptr = pptab[1];
+                                kfree(tab);
+                                *pptr = NULL;
+                            }
+                            tab = ptab[0];
+                            if (tab) {
+                                if (!--tab->nref) {
+                                    pptr = pptab[0];
+                                    kfree(tab);
+                                    *pptr = NULL;
+                                }
+                            }
+                        }
                     }
                 }
             }

@@ -28,7 +28,7 @@
 #define NCPU        1
 #endif
 /* maximum number of physical pages */
-#define NPAGEPHYS   (1L << (PTRBITS - PAGESIZELOG2))
+#define NPAGEMAX    (1L << (PTRBITS - PAGESIZELOG2))
 #define NPROCFD     4096        // maximum number of descriptors per process
 
 #define GFXWIDTH    1024        // horizontal screen resolution
