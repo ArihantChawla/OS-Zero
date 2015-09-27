@@ -114,11 +114,8 @@ struct proc {
     /* descriptor tables */
     size_t               ndesctab;	// number of entries in descriptor table
     struct desc         *desctab;       // descriptor table
-    /* signal state */
-    sigset_t             sigmask;       // signal mask
-    sigset_t             sigpend;       // pending signals
+    /* signal dispositions */
     signalhandler_t     *sigvec[NSIG];
-    struct siginfo      *sigqueue[NSIG]; // info structures for pending signals
     /* current working directory */
     char                *cwd;
     /* runtime arguments */

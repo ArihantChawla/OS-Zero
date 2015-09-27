@@ -11,9 +11,10 @@
 #include <kern/unit/x86/cpu.h>
 #endif
 
-extern long      trapsigmap[TRAPNCPU];
+extern struct task  tasktab[NTASK];
+extern long         trapsigmap[TRAPNCPU];
 
-signalhandler_t *ksigfunctab[NSIG];
+signalhandler_t    *sigfunctab[NSIG];
 
 void
 killproc(volatile struct proc *proc)
@@ -27,8 +28,9 @@ FASTCALL
 void
 sigfunc(unsigned long pid, int32_t trap, long err)
 {
-    volatile struct proc *proc = k_curproc;
+    volatile struct task *task = &tasktab[pid];
     long                  sig = trapsigmap[trap];
+    volatile struct proc *proc = task->proc;
     signalhandler_t      *func;
 
     if (pid > TASKNPREDEF) {
@@ -42,13 +44,13 @@ sigfunc(unsigned long pid, int32_t trap, long err)
     } else if (sig == SIGKILL) {
 //        kprintf("trap 0x%lx -> signal 0x%lx\n", trap, sig);
         killproc(proc);
-    } else if ((sig) && sigismember(&proc->sigmask, sig)) {
+    } else if ((sig) && sigismember(&task->sigmask, sig)) {
 //        kprintf("trap 0x%lx -> signal 0x%lx\n", trap, sig);
         func = proc->sigvec[sig];
         if (func) {
             func(sig);
         } else {
-            func = ksigfunctab[sig];
+            func = sigfunctab[sig];
             if (func) {
                 func(sig);
             }

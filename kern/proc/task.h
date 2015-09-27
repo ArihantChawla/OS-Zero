@@ -45,35 +45,32 @@ struct taskstk {
 
 /* process or thread attributes */
 struct task {
-    /* thread control block */
-    struct m_tcb     m_tcb;             // context
+    /* thread control block - KEEP THIS FIRST in the structure */
+    struct m_tcb     m_tcb;             // context (thread control block)
     /* scheduler parameters */
-    long             id;                // task ID
     long             prio;              // priority; < 0 for SCHEDFIFO realtime
     long             nice;              // priority adjustment
     long             sched;             // thread scheduler class
+    long             state;             // thread state
     /* linkage */
     struct proc     *proc;              // parent/owner process
     struct task     *prev;              // previous in queue
     struct task     *next;              // next in queue
-    /* state */
-    long             state;             // thread state
-    /* wait channel */
     uintptr_t        wchan;             // wait channel
     time_t           waketm;            // wakeup time for sleeping tasks
-    /* stacks */
-    struct taskstk   ustk;
-    struct taskstk   kstk;
-    struct taskstk   altstk;
-#if 0
-    uint8_t         *ustk;              // user-mode stack
-    uint8_t         *kstk;              // kernel-mode stack
-#endif
-//    long           interact;
+    long             id;                // task ID
     long             runtime;           // run time
     /* system call context */
     struct sysctx    sysctx;            // current system call
-    int              errno;             // system call error code
+    /* signal state */
+    sigset_t         sigmask;           // signal mask
+    sigset_t         sigpend;           // pending signals
+    struct siginfo  *sigqueue[NSIG];    // info structures for pending signals
+    /* stack information */
+    struct taskstk   ustk;              // user-mode stack
+    struct taskstk   kstk;              // system-mode stack
+    struct taskstk   altstk;            // alternative [signal] stack
+//    long           interact;
 };
 
 #if (PTRSIZE == 8)

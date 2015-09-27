@@ -15,7 +15,7 @@
 #include <kern/unit/x86/cpu.h>
 
 struct proc proctab[NTASK] ALIGNED(PAGESIZE);
-struct task tasktab[NTASK] ALIGNED(PAGESIZE);
+struct task tasktab[NTASK];
 
 long
 procinit(long id)
