@@ -80,7 +80,7 @@ long procgetpid(void);
 void procfreepid(long id);
 
 /* process segments other than the stacks */
-struct procmeminfo {
+struct procseginfo {
     void   *trapvec;
     size_t  trapvecsize;
     void   *text;
@@ -103,28 +103,29 @@ struct proc {
 //    struct thrq       thrq;           // queue of ready threads
     /* memory attributes */
     pde_t               *pdetab;        // page directory address
-    size_t               npagetab;      // # of allocated page structures
-    struct virtpage     *pagetab;
+//    size_t               npagetab;      // # of allocated page structures
+//    struct virtpage     *pagetab;
+    struct physpage     *pagelru;       // LRU-queue for in-core physical pages
     uint8_t             *brk;           // current heap-top
+    struct procseginfo  *seginfo;       // process segment information
     /* process credentials */
     struct cred         *cred;
     struct cred         *realcred;
-    /* current permission mask */
-    mode_t               umask;
     /* descriptor tables */
     size_t               ndesctab;	// number of entries in descriptor table
     struct desc         *desctab;       // descriptor table
-    /* signal dispositions */
-    signalhandler_t     *sigvec[NSIG];
     /* current working directory */
     char                *cwd;
+    /* current permission mask */
+    mode_t               umask;
+    /* signal dispositions */
+    signalhandler_t     *sigvec[NSIG];
     /* runtime arguments */
     long                 argc;          // argument count
     char               **argv;          // argument vector
     char               **envp;          // environment strings
     /* memory management */
     struct slabhdr      *vmtab[PTRBITS];
-    struct procmeminfo  *meminfo;
     /* keyboard input buffer */
     void                *kbdbuf;
 #if 0

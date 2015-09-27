@@ -99,6 +99,7 @@ procinit(long id)
                 
                 return -1;
             }
+#if 0
             /* initialise VM structures */
             ptr = kmalloc(NPAGEMAX * sizeof(struct userpage));
             if (ptr) {
@@ -114,6 +115,7 @@ procinit(long id)
                 
                 return -1;
             }
+#endif
             task->state = TASKREADY;
         }
     }
