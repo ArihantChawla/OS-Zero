@@ -443,6 +443,18 @@ _tmr0fin:
 	iret
 
 	/* 32-bit x86 context switch */
+	/*
+	 * top of stack after interrupt
+	 *
+	 * ss		- user-stack segment selector
+	 * esp		- userland stack pointer
+	 * eflags
+	 * cs
+	 * eip		<- ESP
+	 *
+	 * NOTE: ss  and esp are only pushed if the interrupt happened
+	 * in user-mode, i.e. there's a privilege transition to system-mode
+	 */
 irqtmr:
 	pushl	%ebp			// push frame pointer
 	movl	%esp, %ebp		// store stack pointer
@@ -476,9 +488,9 @@ _fpudone:
 	jmp	_havestk
 _getsysstk:
 	/* construct stack information */
-	movl	%ebp, %ebx
-	movl	%ss, %edi
-	addl	$16, %ebx
+	movl	%ebp, %ebx		// get frame pointer
+	movl	%ss, %edi		// get %ss
+	addl	$16, %ebx		// adjust for past the trap frame
 _havestk:	
 	movl	4(%ebp), %esi		// pushed return address
 	movl	%ecx, -4(%esp)		// store page directory base register
@@ -500,7 +512,7 @@ _havestk:
 	movl	schedpicktask, %ebx	// get scheduler-specific function
 	movl	%ebp, %esp		// restore stack pointer
 	call	*%ebx			// call scheduler function (taskpick)
-	/* schedpicktask leaves the address of the task/context in %eax */
+	/* schedpicktask returns the address of the task/context in %eax */
 	call	m_tcbjmp		// launch next thread
 
 irqkbd:

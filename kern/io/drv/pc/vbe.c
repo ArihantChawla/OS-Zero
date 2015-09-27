@@ -9,8 +9,11 @@
 #if (NEWFONT)
 #include <zero/trix.h>
 #endif
+#if (REENTRANTGDTINIT)
+#include <zero/cdecl.h>
+#include <zero/x86/types.h>
+#endif
 #include <gfx/rgb.h>
-
 #include <kern/malloc.h>
 #include <kern/util.h>
 #include <kern/mem/vm.h>
@@ -22,7 +25,17 @@
 #include <kern/unit/ia32/real.h>
 
 extern void realint10(void);
+#if (REENTRANTGDTINIT)
+extern struct m_farptr realgdtptr;
+#if (SMP)
+extern uint64_t        kerngdt[NCPU][NGDT];
+#else
+extern uint64_t        kerngdt[NGDT];
+#endif
+extern FASTCALL void gdtinit(struct m_farptr *farptr);
+#else
 extern void gdtinit(void);
+#endif
 
 extern void *vgafontbuf;
 #if (NEWFONT)
@@ -44,8 +57,11 @@ static struct vbeinfo vbectlinfo;
 void
 vbeint10(void)
 {
-    static int first = 1;
-
+    static int       first = 1;
+#if (REENTRANTGDTINIT)
+    uint64_t        *gdt;
+    struct m_farptr *farptr;
+#endif
     if (first) {
         kmemcpy((void *)BOOTREALBASE,
                 &realstart,
@@ -53,7 +69,19 @@ vbeint10(void)
         first = 0;
     }
     realint10();
+#if (REENTRANTGDTINIT)
+#if (SMP)
+    gdt = &kerngdt[id][0];
+#else
+    gdt = kerngdt;
+#endif
+    farptr = &realgdtptr;
+    farptr->lim = NGDT * sizeof(uint64_t) - 1;
+    farptr->adr = (uint32_t)gdt;
+    gdtinit(farptr);
+#else
     gdtinit();
+#endif
 
     return;
 }

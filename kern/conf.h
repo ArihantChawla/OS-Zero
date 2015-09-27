@@ -3,6 +3,8 @@
 
 #include <zero/param.h>
 
+#define REENTRANTGDTINIT 1
+
 #define FASTINTR    1
 
 #define NEWFONT     1

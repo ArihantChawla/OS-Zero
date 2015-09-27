@@ -2,7 +2,13 @@
 #include <kern/conf.h>
 #include <kern/unit/x86/boot.h>
 
-.globl	gdtinit, pginit, idtset, gdtptr, idtptr
+.globl	gdtinit, pginit, idtset, idtptr
+#if (REENTRANTGDTINIT)
+.globl	realgdtptr	
+.globl	gdtptrtab
+#else
+.globl	gdtptr
+#endif
 .extern	kernpagedir
 
 .text	32
@@ -19,7 +25,11 @@ gdtinit:
 #if (NEWCLI)
 	cli
 #endif
+#if (REENTRANTGDTINIT)
+	lgdt	(%eax)
+#else
 	lgdt	(gdtptr)
+#endif
 	movw	$DATASEL, %ax
 	movw	%ax, %ds
 	movw	%ax, %es
@@ -54,9 +64,19 @@ idtset:
 	lidt	(idtptr)
 	ret
 
+.align	8
+	
+#if (REENTRANTGDTINIT)
+realgdtptr:
+	.short	0x0000
+	.long	0x00000000
+gdtptrtab:
+	.space	8 * NCPU
+#else
 gdtptr:
 	.short	0x0000
 	.long	0x00000000
+#endif
 idtptr:
 	.short	0x0000
 	.long	0x00000000

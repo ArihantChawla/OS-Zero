@@ -1,3 +1,4 @@
+#include <kern/conf.h>
 #include <stdint.h>
 #include <zero/cdecl.h>
 #include <zero/param.h>
@@ -9,7 +10,11 @@
 #include <kern/unit/x86/cpu.h>
 #include <kern/unit/ia32/seg.h>
 
+#if (REENTRANTGDTINIT)
+extern FASTCALL void gdtinit(struct m_farptr *farptr);
+#else
 extern void gdtinit(void);
+#endif
 
 #if (SMP)
 extern uint64_t        kerngdt[NCPU][NGDT];
@@ -18,13 +23,23 @@ extern uint64_t        kerngdt[NGDT];
 #endif
 //extern struct m_tss    tsstab[NTHR];
 extern struct m_cpu    cputab[NCPU];
+#if (REENTRANTGDTINIT)
+extern struct m_farptr gdtptrtab[NCPU];
+#else
 extern struct m_farptr gdtptr;
+#endif
 
 ASMLINK void
 seginit(long id)
 {
     struct m_cpu    *cpu = &cputab[id];
     uint64_t        *gdt;
+#if (REENTRANTGDTINIT)
+    struct m_farptr *farptr = &gdtptrtab[id];
+#else
+    struct m_farptr *farptr = &gdtptr;
+#endif
+    
 
     /* set descriptors */
 #if (SMP)
@@ -47,9 +62,9 @@ seginit(long id)
     gdt[REALDATASEG] = UINT64_C(0x000092000000ffff);
 #endif
     /* initialize segmentation */
-    gdtptr.lim = NGDT * sizeof(uint64_t) - 1;
-    gdtptr.adr = (uint32_t)gdt;
-    gdtinit();
+    farptr->lim = NGDT * sizeof(uint64_t) - 1;
+    farptr->adr = (uint32_t)gdt;
+    gdtinit(farptr);
 
     return;
 }
