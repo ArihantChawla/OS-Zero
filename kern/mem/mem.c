@@ -26,7 +26,7 @@ meminit(unsigned long nbphys)
              lim,
              PAGEWRITE);
 #endif
-    vmmapvirt((void *)&_pagetab, (void *)&_epagetab,
+    vminitvirt(&_pagetab, &_epagetab,
               lim - (uint32_t)&_epagetab,
               PAGEWRITE);
     slabinit(&slabvirtzone, (unsigned long)&_epagetab,

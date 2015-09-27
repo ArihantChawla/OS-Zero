@@ -12,11 +12,11 @@
 
 extern long kernlongmode;
 
-void  vminitphys(uintptr_t base, unsigned long nbphys);
-void *vmmapvirt(uint32_t *pagetab, void *virt, uint32_t size, uint32_t flags);
-void  vmfreephys(void *virt, uint32_t size);
-void  vmmapseg(uint32_t *pagetab, uint32_t virt, uint32_t phys, uint32_t lim,
-               uint32_t flg);
+void vminitphys(uintptr_t base, unsigned long nbphys);
+void vminitvirt(void *pagetab, void *virt, uint32_t size, uint32_t flags);
+void vmfreephys(void *virt, uint32_t size);
+void vmmapseg(void *pagetab, uint32_t virt, uint32_t phys, uint32_t lim,
+              uint32_t flg);
 
 #define KERNVIRTBASE      0xc0000000U
 #define vmlinkadr(adr)    ((uint32_t)(adr) - KERNVIRTBASE)
@@ -52,7 +52,7 @@ vmflushtlb(void *adr)
 #define PTSHIFT         12
 #define VMPDMASK        0xffc00000      // top 10 bits
 #define VMPTMASK        0x003ff000      // bits 12..21
-#define VMPGMASK        0xfffff000U     // page frame; 22 bits
+#define VMPAGEMASK      0xfffff000U     // page frame; 22 bits
 
 /* page structure setup */
 

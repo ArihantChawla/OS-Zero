@@ -33,7 +33,7 @@ extern void tssinit(long id);
 /* MP table signature */
 #define MPSIG 0x5f504d5f        // "_MP_"
 
-extern uint32_t *kernpagedir[NPDE];
+extern pde_t    *kernpagedir[NPDE];
 
 extern void      gdtinit(void);
 //extern void      pginitprot(void);

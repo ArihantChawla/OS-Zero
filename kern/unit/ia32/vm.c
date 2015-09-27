@@ -28,7 +28,7 @@
 
 extern void pginit(void);
 
-extern uint32_t       kernpagedir[NPTE];
+extern pde_t          kernpagedir[NPDE];
 struct physpage       vmphystab[NPAGEMAX] ALIGNED(PAGESIZE);
 volatile long         vmlrulktab[1UL << (LONGSIZELOG2 + 3)];
 struct physpage      *vmlrutab[1UL << (LONGSIZELOG2 + 3)];
@@ -49,14 +49,14 @@ struct vmpagestat     vmpagestat;
  *     vmphysadr = pagetab[vmpagenum(virt)]; // physical address
  */
 void
-vmmapseg(uint32_t *pagetab, uint32_t virt, uint32_t phys, uint32_t lim,
-             uint32_t flg)
+vmmapseg(void *pagetab, uint32_t virt, uint32_t phys, uint32_t lim,
+         uint32_t flg)
 {
-    uint32_t *pte;
-    long      n;
+    pte_t *pte;
+    long   n;
 
     n = rounduppow2(lim - virt, PAGESIZE) >> PAGESIZELOG2;
-    pte = pagetab + vmpagenum(virt);
+    pte = (pte_t *)pagetab + vmpagenum(virt);
     while (n--) {
         *pte = phys | flg;
         phys += PAGESIZE;
@@ -78,7 +78,8 @@ vmmapseg(uint32_t *pagetab, uint32_t virt, uint32_t phys, uint32_t lim,
 void
 vminit(void *pagetab)
 {
-    uint32_t *pde;
+    pde_t    *pde;
+    pte_t    *pte;
     uint32_t  adr;
     long      n;
 
@@ -176,22 +177,21 @@ vminitphys(uintptr_t base, unsigned long nbphys)
     return;
 }
 
-void *
-vmmapvirt(uint32_t *pagetab, void *virt, uint32_t size, uint32_t flg)
+void
+vminitvirt(void *pagetab, void *virt, uint32_t size, uint32_t flg)
 {
-    uint32_t  adr;
-    uint32_t *pte;
-    long      n;
+    void  *adr;
+    pte_t *pte;
+    long   n;
 
-    adr = (uint32_t)virt & PAGEFLTPAGEMASK;
     n = rounduppow2(size, PAGESIZE) >> PAGESIZELOG2;
-    pte = pagetab + vmpagenum(virt);
+    pte = (pte_t *)pagetab + vmpagenum(virt);
     while (n--) {
         *pte = PAGEWRITE | flg;
         pte++;
     }
-    
-    return (void *)adr;
+
+    return;
 }
 
 void
@@ -199,16 +199,16 @@ vmfreephys(void *virt, uint32_t size)
 {
 //    struct vmbuf *buf;
     uint32_t  adr;
-    uint32_t *pte;
+    pte_t    *pte;
     long      n;
 //    long          nref;
 //    struct physpage  *pg;
 
     n = rounduppow2(size, PAGESIZE) >> PAGESIZELOG2;
-    pte = (uint32_t *)((uint8_t *)&_pagetab + vmpagenum(virt));
+    pte = (pte_t *)&_pagetab + vmpagenum(virt);
     while (n--) {
-        adr = *pte;
-        adr &= PAGEFLTPAGEMASK;
+        adr = (uint32_t)*pte;
+        adr &= VMPAGEMASK;
         if (!adr) {
 
             continue;
@@ -240,50 +240,49 @@ FASTCALL
 void
 vmpagefault(unsigned long pid, uint32_t adr, uint32_t flags)
 {
-    uint32_t        *pte = (uint32_t *)&_pagetab + vmpagenum(adr);
-    uint32_t         flg = *pte & (PAGEFLTFLGMASK | PAGESYSFLAGS);
-    uint32_t         page = *pte;
-    struct physpage *pg = NULL;
+    pte_t           *pte = (pte_t *)&_pagetab + vmpagenum(adr);
+    uint32_t         flg = (uint32_t)*pte & (PAGEFLTFLGMASK | PAGESYSFLAGS);
+    struct physpage *page = NULL;
     unsigned long    qid;
 
-    if (!(page & ~(PAGEFLTFLGMASK | PAGESYSFLAGS))) {
-        pg = pageallocphys();
-        if (pg) {
-            mtxlk(&pg->lk);
-            pg->nref++;
+    if (!(adr & ~(PAGEFLTADRMASK | PAGESYSFLAGS))) {
+        page = pageallocphys();
+        if (page) {
+            mtxlk(&page->lk);
+            page->nref++;
             if (flg & PAGEWIRED) {
                 vmpagestat.nwired++;
             } else {
                 vmpagestat.nmapped++;
-                pg->nflt++;
-                if (!(page & PAGEWIRED)) {
-                    qid = pagegetqid(pg);
+                page->nflt++;
+                if (!(adr & PAGEWIRED)) {
+                    qid = pagegetqid(page);
                     mtxlk(&vmlrulktab[qid]);
-                    pagepush(pg, &vmlrutab[qid]);
+                    pagepush(page, &vmlrutab[qid]);
                     mtxunlk(&vmlrulktab[qid]);
                 }
             }
-            mtxunlk(&pg->lk);
-            *pte = page | flg | PAGEPRES;
+            mtxunlk(&page->lk);
+            *pte = adr | flg | PAGEPRES;
         }
 #if (PAGEDEV)
     } else if (!(page & PAGEPRES)) {
         // pageout();
-        pg = vmpagein(page);
-        if (pg) {
-            mtxlk(&pg->lk);
-            pg->nflt++;
-            qid = pagegetqid(pg);
+        page = vmpagein(page);
+        if (page) {
+            mtxlk(&page->lk);
+            page->nflt++;
+            qid = pagegetqid(page);
             mtxlk(&vmlrulktab[qid]);
-            pagepush(pg, &vmlrutab[qid]);
+            pagepush(page, &vmlrutab[qid]);
             mtxunlk(&vmlrulktab[qid]);
-            mtxunlk(&pg->lk);
+            mtxunlk(&page->lk);
         }
 #endif
     }
 #if 0
-    if (pg) {
-        pageaddset(pg);
+    if (page) {
+        pageaddset(page);
     }
 #endif
 
@@ -300,14 +299,14 @@ vmseekdev(uint32_t dev, uint64_t ofs)
 uint32_t
 vmpagein(uint32_t adr)
 {
-    uint32_t         pgid = vmpagenum(adr);
-    uint32_t         blk = vmblkid(pgid);
-    struct physpage *pg = pagefind(adr);
+    uint32_t         pageid = vmpagenum(adr);
+    uint32_t         blk = vmblkid(pageid);
+    struct physpage *page = pagefind(adr);
     void            *data;
 
     mtxlk(&vmdevlktab[dev], MEMPID);
     vmseekdev(dev, blk * PAGESIZE);
-    pg->nflt++;
+    page->nflt++;
 //    data = pageread(dev, PAGESIZE);
     mtxunlk(&vmdevlktab[pagedev], MEMPID);
 }
