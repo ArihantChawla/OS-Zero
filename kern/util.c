@@ -1,5 +1,6 @@
 #include <stdint.h>
-#include <stddef.h>
+//#include <stddef.h>
+#include <limits.h>
 #include <stdarg.h>
 #include <zero/cdecl.h>
 #include <zero/param.h>
@@ -49,7 +50,7 @@ const char _ltoxtab[]
 
 /* assumes longword-aligned blocks with sizes of long-word multiples */
 void
-kbzero(void *adr, size_t len)
+kbzero(void *adr, unsigned long len)
 {
     long *next;
     long *ptr = adr;
@@ -107,7 +108,7 @@ kbzero(void *adr, size_t len)
 
 /* assumes longword-aligned blocks with sizes of long-word multiples */
 void
-kmemset(void *adr, int byte, size_t len)
+kmemset(void *adr, int byte, unsigned long len)
 {
     long *next;
     long *ptr = adr;
@@ -171,15 +172,15 @@ kmemset(void *adr, int byte, size_t len)
 }
 
 void
-kmemcpy(void *dest, void *src, unsigned long len)
+kmemcpy(void *dest, const void *src, unsigned long len)
 {
     unsigned long  nleft = len;
     long          *dptr = dest;
-    long          *sptr = src;
+    const long    *sptr = src;
     char          *dcptr;
-    char          *scptr;
     long          *dnext;
-    long          *snext;
+    const char    *scptr;
+    const long    *snext;
     long           incr;
 #if (CACHEPREWARM) && !defined(__GNUC__)
     long    tmp;
@@ -327,10 +328,10 @@ kstrcmp(const char *str1,
     return retval;
 }
 
-long
-kstrncpy(char *dest, char *src, long len)
+unsigned long
+kstrncpy(char *dest, char *src, unsigned long len)
 {
-    long nb = 0;
+    unsigned long nb = 0;
 
     while ((*src) && len--) {
         *dest++ = *src++;
@@ -341,7 +342,7 @@ kstrncpy(char *dest, char *src, long len)
     return nb;
 }
 
-static long
+static unsigned long
 _ltoxn(long val, char *buf, unsigned long len)
 {
     uint8_t       u8;
@@ -380,7 +381,7 @@ _ltoxn(long val, char *buf, unsigned long len)
     return m;
 }
 
-static long
+static unsigned long
 _ltodn(long val, char *buf, unsigned long len)
 {
     uint8_t       u8;
@@ -417,7 +418,7 @@ _ltodn(long val, char *buf, unsigned long len)
     return l;
 }
 
-static long
+static unsigned long
 _ultoxn(unsigned long uval, char *buf, unsigned long len)
 {
     uint8_t       u8;
@@ -448,7 +449,7 @@ _ultoxn(unsigned long uval, char *buf, unsigned long len)
     return m;
 }
 
-static long
+static unsigned long
 _ultodn(unsigned long uval, char *buf, unsigned long len)
 {
     uint8_t       u8;
@@ -692,55 +693,59 @@ kprintf(char *fmt, ...)
  * return -1 if not found, offset otherwise
  */
 long
-kbfindzerol(unsigned long *bmap, long ofs, long nbit)
+kbfindzerol(long *bmap, long ofs, long nbit)
 {
-    long cnt = ofs & ((1UL << (LONGSIZELOG2 + 3)) - 1);
-    long ndx = ofs >> (LONGSIZELOG2 + 3);
-    long val;
-    
+    long *ptr;
+    long  cnt = ofs & ((1UL << (LONGSIZELOG2 + 3)) - 1);
+    long  ndx = ofs >> (LONGSIZELOG2 + 3);
+    long  val;
+    long  ones = ~0L;
+    long  bit = 1;
+
+    ptr = bmap + (ofs / CHAR_BIT / sizeof(long));
     nbit -= ofs;
     if (nbit > 0) {
-        val = bmap[ndx];
+        val = *ptr;
         val >>= cnt;
-        if (val) {
-            if (~val) {
-                while (val & 0x01) {
+        ptr++;
+        if (val != ones) {
+            while (val & bit) {
+                val >>= 1;
+                ofs++;
+            }
+            if (ofs < nbit) {
+                
+                return ofs;
+            } else {
+                
+                return -1;
+            }
+        }
+        while (ofs < nbit) {
+            val = *ptr;
+            if (!val) {
+                
+                return ofs;
+            } else if (val != ones) {
+                while (val & bit) {
                     val >>= 1;
                     ofs++;
                 }
-            } else {
-                ndx++;
-                nbit -= ofs + cnt;
-                ofs += (1L << (LONGSIZELOG2 + 3)) - cnt;
-                while (nbit) {
-                    val = bmap[ndx];
-                    if (!val) {
-                        
-                        break;
-                    } else if (~val) {
-                        while (val & 0x01) {
-                            val >>= 1;
-                            ofs++;
-                        }
-
-                        break;
-                    } else {
-                        val = 1L << (LONGSIZELOG2 + 3);
-                        ndx++;
-                        nbit -= val;
-                        ofs += val;
-                    }
+                if (ofs < nbit) {
+                    
+                    return ofs;
+                } else {
+                    
+                    return -1;
                 }
+            } else {
+                ofs += sizeof(long) * CHAR_BIT;
+                ptr++;
             }
         }
-        if (nbit <= 0 || ofs >= nbit) {
-            ofs = -1;
-        }
-    } else {
-        ofs = -1;
     }
     
-    return ofs;
+    return -1;
 }
 #endif
 

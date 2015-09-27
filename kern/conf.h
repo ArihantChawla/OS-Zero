@@ -45,11 +45,11 @@
 #define BOCHS       1
 #define DEVEL       0           // debugging
 
-#define PLASMA      0
+#define PLASMA      1
 
 /* planned drivers */
 #define PCI         1           // PCI bus driver
-#define ATA         0           // ATA/ATAPI/SATA/SATAPI
+#define ATA         1           // ATA/ATAPI/SATA/SATAPI
 #define ACPI        1           // ACPI
 #define ACPICA      0           // ACPICA
 #define HPET        1           // high precision event timer support
@@ -58,7 +58,7 @@
 #define PS2KBDSET2  1
 #define VBE         1           // VBE2 graphics driver
 #define VGAGFX      0           // VGA graphics driver
-#define SB16        0           // Soundblaster 16 audio driver
+#define SB16        1           // Soundblaster 16 audio driver
 #define AC97        0           // AC97 audio drivers
 #define ENS1370     0           // Ensoniq 1370 audio driver
 

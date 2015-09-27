@@ -13,31 +13,34 @@
 #include <kern/mem/vm.h>
 #include <kern/mem/page.h>
 
-extern struct page        vmphystab[NPAGEMAX];
+extern struct physpage    vmphystab[NPAGEMAX];
 extern volatile long      vmlrulktab[1UL << (LONGSIZELOG2 + 3)];
-extern struct page       *vmlrutab[1UL << (LONGSIZELOG2 + 3)];
+extern struct physpage   *vmlrutab[1UL << (LONGSIZELOG2 + 3)];
 extern struct vmpagestat  vmpagestat;
 volatile long             vmphysqlk;
-extern struct page       *vmphysq;
-extern struct page       *vmshmq;
+extern struct physpage   *vmphysq;
+extern struct physpage   *vmshmq;
 static volatile long      vmsetlk;
 //pid_t                     vmsetmap[NPAGEMAX];
 unsigned char             vmsetbitmap[NPAGEMAX / CHAR_BIT];
 
-void
-pageinitzone(uintptr_t base,
-             struct page **zone,
-             unsigned long nb)
+unsigned long
+pageinitphyszone(uintptr_t base,
+                 struct physpage **zone,
+                 unsigned long nb)
 {
-    struct page   *page = &vmphystab[pagenum(base)];
-    uintptr_t      adr = rounduppow2(base, PAGESIZE);
-    unsigned long  n  = (nb - adr) >> PAGESIZELOG2;
+    struct physpage *page = &vmphystab[pagenum(base)];
+    uintptr_t        adr = rounduppow2(base, PAGESIZE);
+    unsigned long    n = rounduppow2(nb - adr, PAGESIZE) >> PAGESIZELOG2;
+    unsigned long    size = n * PAGESIZE;
 
     adr += n << PAGESIZELOG2;
     page += n;
     vmpagestat.nphys = n;
-    kprintf("initializing %ld (%lx) pages @ %p (%lx)\n",
-            n, n, vmphystab, pagenum(base));
+    kprintf("initializing %ld (%lx) pages @ %p (%lu, %lu)\n",
+            n, n, vmphystab, pagenum(base), n,
+            adr,
+            adr + size);
     while (n--) {
         page--;
         page->adr = adr;
@@ -45,17 +48,20 @@ pageinitzone(uintptr_t base,
         pagepush(page, zone);
         adr -= PAGESIZE;
     }
+
+    return size;
 }
 
-void
-pageaddzone(uintptr_t base,
-            struct page **zone,
-            unsigned long nb)
+unsigned long
+pageaddphyszone(uintptr_t base,
+                struct physpage **zone,
+                unsigned long nb)
 {
-    uintptr_t      adr = rounduppow2(base, PAGESIZE);
-    struct page   *page = &vmphystab[pagenum(adr)];
-    uint32_t      *pte = (uint32_t *)&_pagetab + vmpagenum(adr);
-    unsigned long  n  = (nb - adr) >> PAGESIZELOG2;
+    uintptr_t        adr = rounduppow2(base, PAGESIZE);
+    struct physpage *page = &vmphystab[pagenum(adr)];
+    uint32_t        *pte = (uint32_t *)&_pagetab + vmpagenum(adr);
+    unsigned long    n  = rounduppow2(nb - adr, PAGESIZE) >> PAGESIZELOG2;
+    unsigned long    size = n * PAGESIZE;
 
     adr += n << PAGESIZELOG2;
     page += n;
@@ -72,23 +78,28 @@ pageaddzone(uintptr_t base,
         }
         pte++;
     }
+
+    return size;
 }
 
-void
-pageinit(uintptr_t base, unsigned long nb)
+unsigned long
+pageinitphys(uintptr_t base, unsigned long nb)
 {
+    unsigned long size;
+    
     mtxlk(&vmphysqlk);
-    pageinitzone(base, &vmphysq, min(nb, KERNVIRTBASE - NCPU * KERNSTKSIZE));
+    size = pageinitphyszone(base, &vmphysq,
+                            min(nb, KERNVIRTBASE - NCPU * KERNSTKSIZE));
     mtxunlk(&vmphysqlk);
 
-    return;
+    return size;
 }
 
 /* allocate identity-mapped frame */
 void *
 pagevalloc(void)
 {
-    struct page *page;
+    struct physpage *page;
 
     page = pagepop(&vmshmq);
     if (page) {
@@ -102,14 +113,14 @@ pagevalloc(void)
 /*
  * TODO: evict pages from LRU if none free / low water
  */
-struct page *
-pagealloc(void)
+struct physpage *
+pageallocphys(void)
 {
-    struct page  *page = NULL;
-    struct page **queue;
-    long          found = 0;
-    long          qid;
-    long          q;
+    struct physpage  *page = NULL;
+    struct physpage **queue;
+    long              found = 0;
+    long              qid;
+    long              q;
 
     mtxlk(&vmphysqlk);
     page = pagepop(&vmphysq);
@@ -148,10 +159,10 @@ pagealloc(void)
 }
 
 void
-pagefree(void *adr)
+pagefreephys(void *adr)
 {
-    unsigned long  id;
-    struct page   *page;
+    unsigned long    id;
+    struct physpage *page;
 
     /* free physical page */
     mtxlk(&vmphysqlk);
@@ -172,11 +183,11 @@ pagefree(void *adr)
 void
 pageinitdev(unsigned long id, unsigned long npage)
 {
-    struct swapdev *dev = &_swapdevtab[id];
-    unsigned long   nbmap = npage * sizeof(swapoff_t);
-    unsigned long   nbhdr = npage * sizeof(struct page);
-    struct page    *page;
-    struct page    *pq = dev->freeq;
+    struct swapdev  *dev = &_swapdevtab[id];
+    unsigned long    nbmap = npage * sizeof(swapoff_t);
+    unsigned long    nbhdr = npage * sizeof(struct physpage);
+    struct physpage *page;
+    struct physpage *pq = dev->freeq;
 
     dev->npage = npage;
     dev->pagemap = kmalloc(nbmap);
@@ -194,9 +205,9 @@ pageinitdev(unsigned long id, unsigned long npage)
 void
 swapfree(uintptr_t adr)
 {
-    struct swapdev *dev = &_swapdevtab[vmdevid(adr)];
-    unsigned long   blk = swapblkid(adr);
-    struct page    *page = dev->pagetab + blk;
+    struct swapdev  *dev = &_swapdevtab[vmdevid(adr)];
+    unsigned long    blk = swapblkid(adr);
+    struct physpage *page = dev->pagetab + blk;
 
     pagepush(page, &dev->freeq);
     dev->pagemap[blk] = 0;
@@ -207,11 +218,11 @@ swapfree(uintptr_t adr)
 unsigned long
 swapalloc(void)
 {
-    struct swapdev *dev = &_swapdevtab[0];
-    struct swapdev *lim = &_swapdevtab[NSWAPDEV];
-    unsigned long   ret = 0;
-    struct page    *page;
-    long            ndx;
+    struct swapdev  *dev = &_swapdevtab[0];
+    struct swapdev  *lim = &_swapdevtab[NSWAPDEV];
+    unsigned long    ret = 0;
+    struct physpage *page;
+    long             ndx;
 
     ndx = 0;
     while (dev < lim && (dev->npage)) {

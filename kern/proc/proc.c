@@ -51,7 +51,7 @@ procinit(long id)
             ptr = kmalloc(NPDE * sizeof(pde_t));
             if (ptr) {
                 kbzero(ptr, NPDE * sizeof(pde_t));
-                proc->pdir = ptr;
+                proc->pdetab = ptr;
             } else {
                 kfree(proc);
                 
@@ -79,7 +79,7 @@ procinit(long id)
                 stk->base = ptr;
                 stk->size = TASKSTKSIZE;
             } else {
-                kfree(proc->pdir);
+                kfree(proc->pdetab);
                 kfree(task->kstk.base);
                 kfree(proc);
                 
@@ -89,31 +89,31 @@ procinit(long id)
             ptr = kmalloc(TASKNDESC * sizeof(struct desc));
             if (ptr) {
                 kbzero(ptr, TASKNDESC * sizeof(struct desc));
-                proc->dtab = ptr;
+                proc->desctab = ptr;
+                proc->ndesctab = TASKNDESC;
             } else {
-                kfree(proc->pdir);
+                kfree(proc->pdetab);
                 kfree(task->ustk.base);
                 kfree(task->kstk.base);
                 kfree(proc);
                 
                 return -1;
             }
-#if 0
             /* initialise VM structures */
-            ptr = kmalloc(NPAGEMAX * sizeof(struct page));
+            ptr = kmalloc(NPAGEMAX * sizeof(struct userpage));
             if (ptr) {
-                kbzero(ptr, NPAGEMAX * sizeof(struct page));
-                proc->vmhdrtab = ptr;
+                kbzero(ptr, NPAGEMAX * sizeof(struct userpage));
+                proc->pagetab = ptr;
+                proc->npagetab = NPAGEMAX;
             } else {
-                kfree(proc->pdir);
+                kfree(proc->pdetab);
                 kfree(task->ustk.base);
                 kfree(task->kstk.base);
-                kfree(proc->dtab);
+                kfree(proc->desctab);
                 kfree(proc);
                 
                 return -1;
             }
-#endif
             task->state = TASKREADY;
         }
     }
@@ -124,7 +124,7 @@ procinit(long id)
 struct desc *
 procgetdesc(struct proc *proc, long id)
 {
-    struct desc *ret = &proc->dtab[id];
+    struct desc *ret = &proc->desctab[id];
 
     return ret;
 }

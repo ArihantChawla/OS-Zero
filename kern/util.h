@@ -6,10 +6,10 @@
 
 void kbzero(void *adr, unsigned long len);
 void kmemset(void *adr, int byte, unsigned long len);
-void kmemcpy(void *dest, void *src, unsigned long len);
+void kmemcpy(void *dest, const void *src, unsigned long len);
 int  kmemcmp(const void *ptr1, const void *ptr2, unsigned long nb);
 int  kstrcmp(const char *str1, const char *str2);
-long kstrncpy(char *dest, char *src, long len);
+long kstrncpy(char *dest, const char *src, unsigned long len);
 void kprintf(char *fmt, ...);
 void panic(long trap);
 

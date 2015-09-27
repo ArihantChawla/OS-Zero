@@ -63,6 +63,9 @@ extern void pciinit(void);
 #if (ATA)
 extern void atainit(void);
 #endif
+#if (AC97)
+extern long ac97init(void);
+#endif
 #if (ACPI)
 extern void acpiinit(void);
 #endif
@@ -166,7 +169,7 @@ kinitprot(unsigned long pmemsz)
     /* HID devices */
 #if (PCI)
     /* initialise PCI bus driver */
-//    pciinit();
+    pciinit();
 #endif
 #if (ATA)
     /* initialise ATA driver */
@@ -175,6 +178,10 @@ kinitprot(unsigned long pmemsz)
 #if (SB16)
     /* initialise Soundblaster 16 driver */
     sb16init();
+#endif
+#if (AC97)
+    /* initialise AC97 audio driver */
+    ac97init();
 #endif
 #if (ACPI)
     /* initialise ACPI subsystem */

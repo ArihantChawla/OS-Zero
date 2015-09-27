@@ -415,7 +415,6 @@ irqtmrcnt:
 	 * simple interface to let the PIT do sleep() and such actions early in
 	 * the bootstrap process
 	 */
-	/* dummy interrupt handler */
 irqtmr0:
 	/* push general purpose registers */
 	pushal
@@ -442,66 +441,66 @@ _tmr0fin:
 	sti
 	/* return */
 	iret
-	
+
+	/* 32-bit x86 context switch */
 irqtmr:
-	pushl	%ebp
-	/* store stack pointer */
-	movl	%esp, %ebp
-	/* store %eax */
-	pushl	%eax
-	/* load [per-CPU] task structure address */
-	movl	%gs:8, %eax
-	leal	568(%eax), %esp
-	/* save general purpose registers into task control block */
-	pushal
-	movl	-24(%esp), %ebx		// fxsave-flag
+	pushl	%ebp			// push frame pointer
+	movl	%esp, %ebp		// store stack pointer
+	pushl	%eax			// back %eax up
+	movl	%gs:8, %eax		// per-cpu current task
+	leal	568(%eax), %esp		// adjust sp for m_tcb.genregs
+	pushal				// push general-purpose registers
+	movl	-24(%esp), %ebx		// fetch fxsave-flag
 	cmpl	$0, %ebx
-	jne	_fxsave
-	fnsave	(%eax)
+	jne	_fxsave			// use FXSAVE if non-zero
+	fnsave	(%eax)			// use FNSAVE if zero
 	jmp	_fpudone
 _fxsave:	
 	fxsave	(%eax)
 _fpudone:
 	fwait
-	pushl	%gs
-	pushl	%fs
-	pushl	%es
-	pushl	%ds
-	movl	8(%ebp), %edx		// pushed %cs
-	movl	-4(%ebp), %eax		// stored %eax
-	movl	%cr3, %ecx
-	cmpl	$UTEXTSEL, %edx
-	jne	_getsysstk
-	movl	16(%ebp), %ebx		// stored stack pointer
-	movl	20(%ebp), %edi		// stored %ss
-	addl	$24, %ebx
+	/* push segment registers */
+	pushl	%gs			// kernel thread-local storage
+	pushl	%fs			// user thread-local storage
+	pushl	%es			// buffer segment? something... :)
+	pushl	%ds			// data segment
+	movl	8(%ebp), %edx		// fetch pushed %cs
+	movl	-4(%ebp), %eax		// retrieve %eax
+	movl	%cr3, %ecx		// store %cr3 (page directory address)
+	cmpl	$UTEXTSEL, %edx		// did we come from userland?
+	jne	_getsysstk		// stack-info was built if not
+	movl	16(%ebp), %ebx		// fetch stored stack pointer
+	movl	20(%ebp), %edi		// fetch stored %ss
+	addl	$24, %ebx		// adjust for past the trap frame
 	jmp	_havestk
 _getsysstk:
+	/* construct stack information */
 	movl	%ebp, %ebx
 	movl	%ss, %edi
 	addl	$16, %ebx
 _havestk:	
-	movl	4(%ebp), %esi		// return address
-	movl	%ecx, -4(%esp)		// page directory base register
-	movl	%eax, 44(%esp)		// patch %eax
-	movl	%edi, 64(%esp)		// store %ss
+	movl	4(%ebp), %esi		// pushed return address
+	movl	%ecx, -4(%esp)		// store page directory base register
+	movl	%eax, 44(%esp)		// patch %eax in m_tcb.genregs
+	movl	%edi, 64(%esp)		// store %ss in m_tcb.iret
 #if 0
 	movl	%ebx, 24(%esp)		// patch stack pointer
 #endif
-	leal	48(%esp), %eax
-	movl	%edx, 52(%esp)		// store %cs
-	movl	%ebx, 28(%esp)		// patch frame pointer
-	movl	12(%ebp), %edi		// pushed flags register
+	leal	48(%esp), %eax		// store m_tcb.iret address
+	movl	%edx, 52(%esp)		// store %cs in m_tcb.iret
+	movl	%ebx, 28(%esp)		// patch frame pointer in m_tcb.genregs
+	movl	12(%ebp), %edi		// fetch pushed flags register
 	movl	%ebx, 60(%esp)		// store caller stack pointer for iret
-	movl	%esi, 48(%esp)		// store return address
-	movl	%edi, 56(%esp)		// store flags register before interrupt
-	movl	%eax, 24(%esp)		// patch stack pointer
-	/* argument for schedpicktask */
-	movl	%gs:8, %eax		// task structure address
-	movl	schedpicktask, %ebx
-	movl	%ebp, %esp
-	call	*%ebx
-	call	m_tcbjmp
+	movl	%esi, 48(%esp)		// store return address for iret
+	movl	%edi, 56(%esp)		// store pre-interrupt flags for iret
+	movl	%eax, 24(%esp)		// patch stack pointer in m_tcb.genregs
+	/* schedule next thread */
+	movl	%gs:8, %eax		// task structure address argument
+	movl	schedpicktask, %ebx	// get scheduler-specific function
+	movl	%ebp, %esp		// restore stack pointer
+	call	*%ebx			// call scheduler function (taskpick)
+	/* schedpicktask leaves the address of the task/context in %eax */
+	call	m_tcbjmp		// launch next thread
 
 irqkbd:
 	_trapenter

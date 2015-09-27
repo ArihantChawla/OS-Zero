@@ -102,7 +102,9 @@ struct proc {
     /* round-robin queue */
 //    struct thrq       thrq;           // queue of ready threads
     /* memory attributes */
-    pde_t               *pdir;          // page directory address
+    pde_t               *pdetab;        // page directory address
+    size_t               npagetab;      // # of allocated page structures
+    struct virtpage     *pagetab;
     uint8_t             *brk;           // current heap-top
     /* process credentials */
     struct cred         *cred;
@@ -110,8 +112,8 @@ struct proc {
     /* current permission mask */
     mode_t               umask;
     /* descriptor tables */
-    size_t               ndtab;		// number of entries in descriptor table
-    struct desc         *dtab;          // descriptor table
+    size_t               ndesctab;	// number of entries in descriptor table
+    struct desc         *desctab;       // descriptor table
     /* signal state */
     sigset_t             sigmask;       // signal mask
     sigset_t             sigpend;       // pending signals

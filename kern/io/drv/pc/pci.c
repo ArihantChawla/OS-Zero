@@ -49,17 +49,19 @@ pciregdrv(uint16_t vendor, uint16_t devid,
     struct pcidrvent *ptr = pcidrvtab[vendor];
     struct pcidrvent *drv;
 
-    if (!ptr) {
-        ptr = kmalloc(65536 * sizeof(struct pcidrvent));
-        if (ptr) {
-            kbzero(ptr, 65536 * sizeof(struct pcidrvent));
-            pcidrvtab[vendor] = ptr;
+    if (initfunc) {
+        if (!ptr) {
+            ptr = kmalloc(65536 * sizeof(struct pcidrvent));
+            if (ptr) {
+                kbzero(ptr, 65536 * sizeof(struct pcidrvent));
+                pcidrvtab[vendor] = ptr;
+            }
         }
-    }
-    if (ptr) {
-        drv = &ptr[devid];
-        drv->init = initfunc;
-        drv->str = str;
+        if (ptr) {
+            drv = &ptr[devid];
+            drv->init = initfunc;
+            drv->str = str;
+        }
     }
 
     return;

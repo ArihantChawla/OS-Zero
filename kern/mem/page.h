@@ -22,10 +22,8 @@
 /* page ID */
 #define pagenum(adr)  ((adr) >> PAGESIZELOG2)
 //#define swapblknum(sp, pg) ((pg) - (sp)->pgtab)
-#if 0
 #define pageadr(pg, pt)                                                 \
     ((!(pg)) ? NULL : ((void *)(((pg) - (pt)) << PAGESIZELOG2)))
-#endif
 
 /* working sets */
 #if 0
@@ -37,19 +35,26 @@ extern pid_t           vmsetmap[NPAGEPHYS];
 #define pageaddset(pg) setbit(vmsetbitmap, pagenum((pg)->adr))
 #define pageclrset(pg) clrbit(vmsetbitmap, pagenum((pg)->adr))
 
+struct userpage {
+    uintptr_t        adr;
+    unsigned long    nflt;
+    struct userpage *prev;
+    struct userpage *next;
+};
+
 #if 0
 #define PAGEWIREBIT 0x00000001
 #define PAGEBUFBIT  0x00000002
 #endif
-struct page {
-    volatile long  lk;          // mutual exclusion lock
-    long           nref;        // reference count
-    long           flg;         // page flags
-    long           pid;         // owner process ID
-    uintptr_t      adr;         // page address
-    unsigned long  nflt;        // # of page-fault exceptions triggered
-    struct page   *prev;        // previous on queue
-    struct page   *next;        // next on queue
+struct physpage {
+    volatile long    lk;        // mutual exclusion lock
+    long             nref;      // reference count
+    long             flg;       // page flags
+    long             pid;       // owner process ID
+    uintptr_t        adr;       // page address
+    unsigned long    nflt;      // # of page-fault exceptions triggered
+    struct physpage *prev;      // previous on queue
+    struct physpage *next;      // next on queue
 };
 
 typedef int64_t swapoff_t;
@@ -60,13 +65,13 @@ typedef int64_t swapoff_t;
 #define swapblkid(adr)     ((adr) >> PAGESIZELOG2)
 #define swapdevid(adr)     ((adr) & PAGEDEVMASK)
 struct swapdev {
-    swapoff_t    npg;
-    swapoff_t   *pgmap;
-    struct page *pgtab;
-    struct page *freeq;
+    swapoff_t        npg;
+    swapoff_t       *pgmap;
+    struct physpage *pgtab;
+    struct physpage *freeq;
 };
 
-#define QUEUE_TYPE struct page
+#define QUEUE_TYPE struct physpage
 #include <zero/queue.h>
 #define pagegetqid(pg)   max(LONGSIZE * CHAR_BIT - 1, lzerol(pg->nflt))
 #define pagepop(pq)      queuepop(pq)
@@ -74,16 +79,16 @@ struct swapdev {
 #define pagedequeue(pq)  queuegetlast(pq)
 #define pagerm(pg, pq)   queuermitem(pg, pq)
 
-void          pageinitzone(uintptr_t base, struct page **zone,
+unsigned long pageinitphyszone(uintptr_t base, struct physpage **zone,
                            unsigned long nb);
-void          pageaddzone(uintptr_t base, struct page **zone,
-                          unsigned long nb);
-void          pageinit(uintptr_t base, unsigned long nb);
-struct page * pagealloc(void);
-void          pagefree(void *adr);
+unsigned long pageaddphyszone(uintptr_t base, struct physpage **zone,
+                             unsigned long nb);
+unsigned long pageinitphys(uintptr_t base, unsigned long nb);
+struct physpage * pageallocphys(void);
+void              pagefreephys(void *adr);
 #if 0
-void          pagefree(void *adr);
-void          swapfree(uintptr_t adr);
+void              pagefree(void *adr);
+void              swapfree(uintptr_t adr);
 #endif
 
 #endif /* __KERN_MEM_PAGE_H__ */
