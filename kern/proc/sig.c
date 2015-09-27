@@ -33,7 +33,7 @@ sigfunc(unsigned long pid, int32_t trap, long err)
     volatile struct proc *proc = task->proc;
     signalhandler_t      *func;
 
-    if (pid > TASKNPREDEF) {
+    if (pid < TASKNPREDEF) {
         panic(trap);
     }
 //    kprintf("trap 0x%lx -> signal 0x%lx\n", trap, sig);
