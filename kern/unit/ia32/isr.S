@@ -467,9 +467,9 @@ _fpudone:
 	pushl	%ds			// data segment
 	movl	8(%ebp), %edx		// fetch pushed %cs
 	movl	-4(%ebp), %eax		// retrieve %eax
-	movl	%cr3, %ecx		// store %cr3 (page directory address)
+	movl	%cr3, %ecx		// get %cr3 (page directory address)
 	cmpl	$UTEXTSEL, %edx		// did we come from userland?
-	jne	_getsysstk		// stack-info was built if not
+	jne	_getsysstk		// stack-info was not pushed if not
 	movl	16(%ebp), %ebx		// fetch stored stack pointer
 	movl	20(%ebp), %edi		// fetch stored %ss
 	addl	$24, %ebx		// adjust for past the trap frame
