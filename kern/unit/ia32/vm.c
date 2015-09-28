@@ -96,7 +96,7 @@ vminit(void *pagetab)
     }
 
     /* map page directory index page */
-    pde = pagetab + vmpagenum(kernpagedir);
+    pde = (pde_t *)pagetab + vmpagenum(kernpagedir);
     adr = (uint32_t)&kernpagedir;
     *pde = adr | PAGEPRES | PAGEWRITE;
 

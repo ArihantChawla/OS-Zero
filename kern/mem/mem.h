@@ -52,7 +52,7 @@ struct memzone {
 static __inline__ unsigned long
 memcalcbkt(unsigned long size)
 {
-    unsigned long bkt = 1UL << (LONGSIZELOG2 + 3);
+    unsigned long bkt = PTRBITS;
     unsigned long nlz;
 
     if (size) {

@@ -45,7 +45,7 @@ struct maghdr {
 #define maggethdr(ptr, zone)                                            \
     (!(ptr)                                                             \
      ? NULL                                                             \
-     : (struct maghdr *)((zone)->hdrtab) + magblknum(ptr, zone))
+     : (struct maghdr *)(zone)->hdrtab + magblknum(ptr, zone))
 
 #endif /* __KERN_MEM_MAG_H__ */
 

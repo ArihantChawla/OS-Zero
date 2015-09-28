@@ -3,6 +3,7 @@
 #if (MEMTEST)
 #include <stdlib.h>
 #endif
+#include <errno.h>
 #include <zero/cdecl.h>
 #include <zero/param.h>
 #include <zero/trix.h>
@@ -44,7 +45,7 @@ memalloc(unsigned long nb, long flg)
     unsigned long    slab = 0;
     unsigned long    bkt = memgetbkt(sz);
     struct maghdr   *mag;
-    void            *bmap;
+//    void            *bmap;
     uint8_t         *u8ptr;
     unsigned long    ndx;
     unsigned long    n;
@@ -162,7 +163,7 @@ memalloc(unsigned long nb, long flg)
             kprintf("duplicate allocation %p (%ld/%ld)\n",
                     ptr, ndx, mag->n);
 
-            panic(-1);
+            panic(-EINVAL);
         }
         setbit(bmap, ndx);
 #endif
@@ -171,7 +172,7 @@ memalloc(unsigned long nb, long flg)
         }
     }
     if (!ptr) {
-        panic(-1);
+        panic(-ENOMEM);
     }
 #if 0
     if (mlk) {
@@ -229,7 +230,7 @@ kfree(void *ptr)
         kprintf("invalid free: %p (%ld/%ld)\n",
                 ptr, ndx, mag->n);
 
-        panic(-1);
+        panic(-EINVAL);
     }
 #endif
     magpush(mag, ptr);
