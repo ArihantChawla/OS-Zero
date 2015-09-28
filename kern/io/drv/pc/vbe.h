@@ -150,6 +150,7 @@ struct vbescreen {
     void           *dbuf;
     long            w;
     long            h;
+    long            pixsize;
     long            nbpp;
     long            fmt;
     struct vbemode *mode;
@@ -157,7 +158,7 @@ struct vbescreen {
 
 #define vbefbadr() (vbescreen.fbuf)
 #define vbepixadr(x, y)                                                 \
-    ((uint8_t *)vbescreen.fbuf + ((y) * vbescreen.w + (x)) * 3)
+    ((uint8_t *)vbescreen.fbuf + ((y) * vbescreen.w + (x)) * vbescreen.pixsize)
 
 /* TODO: currently hardwired for RGB888 */
 #if 0

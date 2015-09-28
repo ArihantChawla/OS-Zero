@@ -55,7 +55,7 @@ extern void smbiosinit(void);
 extern void ps2init(void);
 #endif
 #if (PLASMA)
-extern void plasmaloop(void);
+extern void plasmaloop(long nsec);
 #endif
 #if (PCI)
 extern void pciinit(void);
@@ -158,8 +158,8 @@ kinitprot(unsigned long pmemsz)
 #if (PS2DRV)
     ps2init();
 #endif
-#if (VBE) && (PLASMA)
-    plasmaloop();
+#if (VBE) && (PLASMA) && (!PLASMAFOREVER)
+    plasmaloop(4);
 #endif
 #if (VBE)
     vbeprintinfo();
@@ -255,7 +255,11 @@ kinitprot(unsigned long pmemsz)
                           "movl %0, %%ebp\n"
                           :
                           : "r" (sp));
+#if (PLASMAFOREVER)
+    plasmaloop(-1);
+#else
     schedloop();
+#endif
 
     /* NOTREACHED */
 }

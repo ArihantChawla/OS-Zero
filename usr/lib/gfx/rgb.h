@@ -150,7 +150,7 @@ typedef int16_t gfxrgb565_t;
     do {                                                                \
         gfxargb32_t       _pix = (pix);                                 \
         struct gfxargb32 *_src = (struct gfxargb32 *)&_pix;             \
-        struct gfxargb32 *_dest = (struct gfxargb32 *)p;                \
+        struct gfxargb32 *_dest = (struct gfxargb32 *)(ptr);            \
                                                                         \
         _dest->red = gfxgetred_p(_src);                                 \
         _dest->green = gfxgetgreen_p(_src);                             \

@@ -148,19 +148,30 @@ plasmainit(void)
 }
 
 void
-plasmaloop(void)
+plasmaloop(long nsec)
 {
     static long ndx = 0;
-    long nfrm = PLASMAFPS * 5;
+    long        nfrm = PLASMAFPS * nsec;
 
     plasmainit();
-    for (ndx = 0 ; ndx < nfrm ; ndx++) {
-        plasmadraw();
+    if (nfrm < 0) {
+        for ( ; ; ) {
+            plasmadraw();
 #if (PLASMADOUBLEBUF)
-        plasmasync();
+            plasmasync();
 #endif
 //        pitsleep((1000 / 2) / PLASMAFPS, NULL);
 //        k_waitint();
+        }
+    } else {
+        for (ndx = 0 ; ndx < nfrm ; ndx++) {
+            plasmadraw();
+#if (PLASMADOUBLEBUF)
+            plasmasync();
+#endif
+//        pitsleep((1000 / 2) / PLASMAFPS, NULL);
+//        k_waitint();
+        }
     }
 #if (__KERNEL__) && (PLASMADOUBLEBUF)
     kfree(plasmabuf);

@@ -3,6 +3,7 @@
 
 #include <zero/param.h>
 
+#define PLASMAFOREVER    0
 #define REENTRANTGDTINIT 1
 
 #define FASTINTR    1
@@ -47,7 +48,7 @@
 #define BOCHS       1
 #define DEVEL       0           // debugging
 
-#define PLASMA      0
+#define PLASMA      1
 
 /* planned drivers */
 #define PCI         1           // PCI bus driver

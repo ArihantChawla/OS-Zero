@@ -5,12 +5,11 @@
 #define VBEDEFMODE 0x118        // 1024x768 24-bit
 
 #include <stdint.h>
-
+#include <zero/cdecl.h>
 #if (NEWFONT)
 #include <zero/trix.h>
 #endif
 #if (REENTRANTGDTINIT)
-#include <zero/cdecl.h>
 #include <zero/x86/types.h>
 #endif
 #include <gfx/rgb.h>
@@ -136,32 +135,34 @@ void
 vbeinitscr(void)
 {
     struct vbemode *mode = (void *)VBEMODEADR;
-    long            npix = vbescreen.mode->xres * vbescreen.mode->yres;
+    long            npix;
 
+    vbescreen.mode = mode;
+    vbescreen.nbpp = mode->npixbit;
+    npix = mode->xres * mode->yres;
     if (vbescreen.nbpp == 32) {
+        vbescreen.pixsize = 4;
         vbescreen.fbufsize = npix << 2;
     } else if (vbescreen.nbpp == 24) {
+        vbescreen.pixsize = 3;
         vbescreen.fbufsize = npix + (npix << 1);
     } else if (vbescreen.nbpp == 15
                || vbescreen.nbpp == 16) {
+        vbescreen.pixsize = 2;
         vbescreen.fbufsize = npix << 1;
     } else if (vbescreen.nbpp == 8) {
+        vbescreen.pixsize = 2;
         vbescreen.fbufsize = npix;
     }
     vbescreen.fbuf = (void *)mode->fbadr;
     vbescreen.w = mode->xres;
     vbescreen.h = mode->yres;
-    vbescreen.nbpp = mode->npixbit;
 // TODO: set vbescreen->fmt
-    vbescreen.mode = mode;
     /* identity-map VBE framebuffer */
-    vmmapseg((uint32_t *)&_pagetab,
+    vmmapseg(&_pagetab,
              (uint32_t)vbescreen.fbuf,
              (uint32_t)vbescreen.fbuf,
-             (uint32_t)vbescreen.fbuf
-             + ((vbescreen.nbpp == 24)
-                ? vbescreen.mode->xres * vbescreen.mode->yres * 3
-                : vbescreen.mode->xres * vbescreen.mode->yres * 2),
+             (uint32_t)vbescreen.fbuf + vbescreen.fbufsize,
              PAGEPRES | PAGEWRITE | PAGENOCACHE | PAGEWIRED);
 
     return;
@@ -253,27 +254,38 @@ vbeprintinfo(void)
     return;
 }
 
-void
-vbeclrscr(gfxargb32_t pix)
-{
-    long x;
-    long y;
-
-    for (x = 0 ; x < vbescreen.w ; x++) {
-        for (y = 0 ; y < vbescreen.h ; y++) {
-            vbeputpix(pix, x, y);
-        }
-    }
-
-    return;
-}
-
-void
+INLINE void
 vbeputpix(gfxargb32_t pix, int x, int y)
 {
     uint8_t *ptr = vbepixadr(x, y);
 
     gfxsetrgb888(pix, ptr);
+
+    return;
+}
+
+INLINE void
+vbeputpix_p(void *ptr, gfxargb32_t pix, int x, int y)
+{
+    gfxsetrgb888(pix, ptr);
+
+    return;
+}
+
+void
+vbeclrscr(gfxargb32_t pix)
+{
+//    uint8_t *ptr = vbepixadr(0, 0);
+    long     incr = vbescreen.pixsize;
+    long     x;
+    long     y;
+
+    for (x = 0 ; x < vbescreen.w ; x++) {
+        for (y = 0 ; y < vbescreen.h ; y++) {
+            vbeputpix(pix, x, y);
+//            ptr + incr;
+        }
+    }
 
     return;
 }
