@@ -17,17 +17,21 @@
 #define magempty(mp)       ((mp)->ndx == (mp)->n)
 #define magfull(mp)        (!(mp)->ndx)
 struct maghdr {
+#if 0
     volatile long  lk;
+#endif
     uintptr_t      base;
     volatile long  n;
     volatile long  ndx;
     volatile long  bkt;
     struct maghdr *prev;
     struct maghdr *next;
+#if 0
 #if (SLABMINLOG2 - MAGMINLOG2 < (LONGSIZELOG2 + 3))
     unsigned long  bmap;
 #else
     uint8_t        bmap[1UL << (SLABMINLOG2 - MAGMINLOG2 - 3)];
+#endif
 #endif
     void          *ptab[1UL << (SLABMINLOG2 - MAGMINLOG2)];
 };
