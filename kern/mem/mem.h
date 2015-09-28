@@ -33,7 +33,7 @@
 struct memhdr {
     volatile long  lk;
     void          *list;
-    long           pad[CLSIZE - LONGSIZE - PTRSIZE];
+    uint8_t        pad[CLSIZE - LONGSIZE - PTRSIZE];
 };
 #endif
 
