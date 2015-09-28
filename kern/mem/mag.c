@@ -41,7 +41,7 @@ memalloc(unsigned long nb, long flg)
     struct maghdr  **magtab = (struct maghdr **)magzone->tab;
 #endif
     void            *ptr = NULL;
-    unsigned long    sz = max(MAGMIN, nb);
+    uintptr_t        sz = max(MAGMIN, nb);
     unsigned long    slab = 0;
     unsigned long    bkt = memgetbkt(sz);
     struct maghdr   *mag;
@@ -123,8 +123,8 @@ memalloc(unsigned long nb, long flg)
 #endif
                 u8ptr = ptr;
                 slab++;
-                sz = 1UL << bkt;
-                n = 1UL << (SLABMINLOG2 - bkt);
+                sz = (uintptr_t)1 << bkt;
+                n = (uintptr_t)1 << (SLABMINLOG2 - bkt);
                 mag = maggethdr(ptr, magzone);
 //                mtxlk(&mag->lk);
 //                mlk++;
@@ -208,7 +208,6 @@ kfree(void *ptr)
 #endif
     unsigned long    bkt = (mag) ? mag->bkt : 0;
     unsigned long    ndx;
-    unsigned long    freed = 0;
 #if (MEM_AVOID_CACHELINE_SHARE)
     struct memhdr   *hdr = &magzone->tab[bkt];
     struct maghdr   *list = hdr->list;
@@ -257,7 +256,7 @@ kfree(void *ptr)
             }
         }
         slabfree(slabzone, ptr);
-        freed = 1;
+        mag->base = 0;
     } else if (mag->ndx == mag->n - 1) {
         mag->prev = NULL;
 #if (MEM_AVOID_CACHELINE_SHARE)
@@ -277,9 +276,6 @@ kfree(void *ptr)
 #if 0
     clrbit(bmap, ndx);
 #endif
-    if (freed) {
-        mag->base = 0;
-    }
 //    mtxunlk(&mag->lk);
 #if (MEM_AVOID_CACHELINE_SHARE)
     mtxunlk(&hdr->lk);
