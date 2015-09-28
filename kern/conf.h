@@ -14,9 +14,6 @@
 #endif
 
 #define HZ          250         // scheduler timer frequency
-#define IOAPIC      0
-#define SMBIOS      1
-#define APIC        1           // local [per-CPU] APIC support
 #define SMP         0           // enable multiprocessor support; FIXME:  broken
 #define EVHZ        1000        // event timer frequency
 #define ZEROSCHED   1           // default scheduler
@@ -30,15 +27,18 @@
 #else
 #define NCPU        1
 #endif
-/* maximum number of physical pages */
-#define NPAGEMAX    (1L << (PTRBITS - PAGESIZELOG2))
 #define NPROCFD     4096        // maximum number of descriptors per process
+
+/* NOTE: it's not recommended to edit anything below unless you develop Zero */
 
 #define GFXWIDTH    1024        // horizontal screen resolution
 #define GFXHEIGHT   768         // vertical screen resolution
 #define GFXDEPTH    24          // bits per pixel
 
-/* NOTE: it's not recommended to edit anything below unless you develop Zero */
+/* maximum number of physical pages */
+#if (PTRBITS == 32)
+#define NPAGEMAX    (1L << (PTRBITS - PAGESIZELOG2))
+#endif
 
 #define LOCORE      0
 #define NCONS       8
@@ -50,7 +50,10 @@
 
 #define PLASMA      1
 
-/* planned drivers */
+/* planned and developed drivers */
+#define IOAPIC      0           // enable I/O APIC support
+#define SMBIOS      1           // SMBIOS (system management) support
+#define APIC        1           // local [per-CPU] APIC support
 #define PCI         1           // PCI bus driver
 #define ATA         1           // ATA/ATAPI/SATA/SATAPI
 #define ACPI        1           // ACPI

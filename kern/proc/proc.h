@@ -102,17 +102,18 @@ struct proc {
     /* round-robin queue */
 //    struct thrq       thrq;           // queue of ready threads
     /* memory attributes */
-    pde_t               *pdetab;        // page directory address
-//    size_t               npagetab;      // # of allocated page structures
+    pde_t               *pagedir;       // page directory address
+//    size_t               npagetab;    // # of allocated page structures
 //    struct virtpage     *pagetab;
     struct physpage     *pagelru;       // LRU-queue for in-core physical pages
     uint8_t             *brk;           // current heap-top
     struct procseginfo  *seginfo;       // process segment information
     /* process credentials */
-    struct cred         *cred;
-    struct cred         *realcred;
+    struct cred         *cred;          // effective credentials
+    struct cred         *realcred;      // real credentials
+    struct cred         *savecred;      // saved credentials
     /* descriptor tables */
-    size_t               ndesctab;	// number of entries in descriptor table
+    size_t               ndesctab;      // number of entries in descriptor table
     struct desc         *desctab;       // descriptor table
     /* current working directory */
     char                *cwd;

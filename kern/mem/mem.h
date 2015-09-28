@@ -44,7 +44,7 @@ struct memzone {
     volatile long  lktab[PTRBITS];
     void          *tab[PTRBITS];
 #endif
-    unsigned long  base;
+    uintptr_t      base;
     unsigned long  nhdr;
     void          *hdrtab;
 };
