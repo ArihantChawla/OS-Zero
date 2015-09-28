@@ -53,7 +53,7 @@ const char _ltoxtab[]
 #include <kern/util.h>
 #endif
 
-/* assumes longword-aligned blocks with sizes of long-word multiples */
+/* assumes longword-aligned blocks */
 void
 kbzero(void *adr, uintptr_t len)
 {
@@ -61,51 +61,52 @@ kbzero(void *adr, uintptr_t len)
     long      *ptr = adr;
     long      *next;
     char      *cptr;
+    uintptr_t  mask = ((uintptr_t)1 << (LONGSIZELOG2 + 3)) - 1;
     long       val = 0;
     long       incr = 8;
-    uintptr_t  mask = (uintptr_t)1 << (LONGSIZELOG2 - 1);
-    uintptr_t  n = (uintptr_t)adr & mask;
+    uintptr_t  n = (uintptr_t)adr & (mask);
 
-    if (n) {
+    if (len >= 2 * CLSIZE) {
+        nleft -= n;
 #if (KBZERODEBUG)
-        len -= n << LONGSIZELOG2;
-        kprintf("KBZERO: %ld words (%ld)\n", n, nleft & mask);
+        len -= n;
+        kprintf("KBZERO: %ld words (%ld)\n", n, nleft);
 #endif
-        /* zero non-cacheline-aligned head long-word by long-word */
+        /* zero non-8-word-aligned head long-word by long-word */
         n >>= LONGSIZELOG2;
         while (n--) {
             *ptr++ = val;
         }
-    }
-    mask = ((uintptr_t)1 << (LONGSIZELOG2 + 3)) - 1;
-    n = nleft & ~mask;
-    next = ptr;
-    nleft &= mask;
-    if (n) {
+        n = nleft & ~mask;
+        next = ptr;
+        if (n) {
+            nleft -= n;
+            n >>= LONGSIZELOG2 + 3;
 #if (KBZERODEBUG)
-        len -= n;
-        kprintf("KBZERO: %ld cachelines (%ld)\n",
-                n >> (LONGSIZELOG2 + 3), nleft);
+            len -= n;
+            kprintf("KBZERO: %ld cachelines (%ld)\n",
+                    n >> (LONGSIZELOG2 + 3), nleft);
 #endif
-        n >>= LONGSIZELOG2 + 3;
-        /* zero aligned cachelines */
-        while (n--) {
-            ptr[0] = val;
-            ptr[1] = val;
-            ptr[2] = val;
-            ptr[3] = val;
-            next += incr;
-            ptr[4] = val;
-            ptr[5] = val;
-            ptr[6] = val;
-            ptr[7] = val;
-            ptr = next;
+            /* zero aligned cachelines */
+            while (n--) {
+                ptr[0] = val;
+                ptr[1] = val;
+                ptr[2] = val;
+                ptr[3] = val;
+                next += incr;
+                ptr[4] = val;
+                ptr[5] = val;
+                ptr[6] = val;
+                ptr[7] = val;
+                ptr = next;
+            }
         }
     }
-    mask = ((uintptr_t)1 << (LONGSIZELOG2)) - 1;
+    mask = ~((uintptr_t)1 << LONGSIZELOG2) - 1;
     if (nleft) {
-        n = nleft >> LONGSIZELOG2;
-        nleft &= mask;
+        n = nleft & mask;
+        nleft -= n;
+        n >>= LONGSIZELOG2;
 #if (KBZERODEBUG)
         len -= n << LONGSIZELOG2;
         kprintf("KBZERO: %ld words (%ld)\n", n, nleft);

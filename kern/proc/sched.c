@@ -46,7 +46,7 @@ schedloop(void)
         outb(0x00, PICMASK2);
 #endif
         /* wait for interrupt */
-        k_waitint();
+//        k_waitint();
     } while (1);
 
     /* NOTREACHED */
