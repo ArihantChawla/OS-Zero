@@ -35,6 +35,7 @@
 extern void trapinitprot(void);
 #endif
 extern void cpuinit(volatile struct m_cpu *cpu);
+extern long sysinit(long id);
 extern long bufinit(void);
 
 #if (HPET)
@@ -234,7 +235,7 @@ kinitprot(unsigned long pmemsz)
     /* execution environment */
     procinit(PROCKERN);
 //    k_curtask = &k_curproc->task;
-//    sysinit();
+    sysinit(0);
     kprintf("DMA buffers (%ul x %ul kilobytes) @ 0x%p\n",
             DMANCHAN, DMACHANBUFSIZE >> 10, DMABUFBASE);
     kprintf("VM page tables @ 0x%p\n", (unsigned long)&_pagetab);

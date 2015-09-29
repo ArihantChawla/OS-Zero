@@ -112,55 +112,58 @@ typedef long socklen_t;
  * _XOPEN_VERSION
  */
 /* POSIX.1 values */
-#define _SC_OS_VERSION       0x00000000 // OS [kernel] version
-#define _SC_VERSION          0x00000001 // POSIX version
-#define _SC_ARG_MAX          0x00000002 // minimum of _POSIX_ARG_MAX
-#define _SC_CHILD_MAX        0x00000003 // minimum of _POSIX_CHILD_MAX
-#define _SC_HOST_NAME_MAX    0x00000004 // minimum of _POSIX_LOGIN_NAME_MAX
-#define _SC_LOGIN_NAME_MAX   0x00000005 // # of bytes in login name
-#define _SC_CLK_TCK          0x00000006 // # of ticks per second
-#define _SC_OPEN_MAX         0x00000007 // # of open files
-#define _SC_PAGESIZE         0x00000008 // page size in bytes
-#define _SC_PAGE_SIZE        _SC_PAGESIZE // synonymous with _SC_PAGESIZE
-#define _SC_RE_DUP_MAX       0x00000009 // regexec(), regcomp()
-#define _SC_STREAM_MAX       0x0000000a // FOPEN_MAX
-#define _SC_SYMLOOP_MAX      0x0000000b // max # of symlinks in pathnames
-#define _SC_TTY_NAME_MAX     0x0000000c // # of bytes in a terminal device name
-#define _SC_TZNAME_MAX       0x0000000d // # of bytes in timezone name
+#define _SC_OS_VERSION       0  // OS [kernel] version
+#define _SC_VERSION          1  // POSIX version
+#define _SC_ARG_MAX          2  // minimum of _POSIX_ARG_MAX
+#define _SC_CHILD_MAX        3  // minimum of _POSIX_CHILD_MAX
+#define _SC_HOST_NAME_MAX    4  // minimum of _POSIX_LOGIN_NAME_MAX
+#define _SC_LOGIN_NAME_MAX   5  // # of bytes in login name
+#define _SC_CLK_TCK          6  // # of ticks per second
+#define _SC_OPEN_MAX         7  // # of open files
+#define _SC_PAGE_SIZE        8  // page size in bytes
+#define _SC_PAGESIZE         _SC_PAGESIZE // synonymous with _SC_PAGESIZE
+#define _SC_RE_DUP_MAX       9  // regexec(), regcomp()
+#define _SC_STREAM_MAX       10 // FOPEN_MAX
+#define _SC_SYMLOOP_MAX      11 // max # of symlinks in pathnames
+#define _SC_TTY_NAME_MAX     12 // # of bytes in a terminal device name
+#define _SC_TZNAME_MAX       13 // # of bytes in timezone name
 /* POSIX.2 values */
-#define _SC_BC_BASE_MAX      0x0000000e
-#define _SC_BC_DIM_MAX       0x0000000f
-#define _SC_BC_SCALE_MAX     0x00000010
-#define _SC_BC_STRING_MAX    0x00000011
-#define _SC_COLL_WEIGHTS_MAX 0x00000012
-#define _SC_EXPR_NEST_MAX    0x00000013
-#define _SC_LINE_MAX         0x00000014
-#define _SC_2_VERSION        0x00000015
-#define _SC_2_C_DEV          0x00000016
-#define _SC2_FORT_DEV        0x00000017
-#define _SC_2_LOCALEDEF      0x00000018
-#define _SC2_SW_DEV          0x00000019
+#define _SC_BC_BASE_MAX      14
+#define _SC_BC_DIM_MAX       15
+#define _SC_BC_SCALE_MAX     16
+#define _SC_BC_STRING_MAX    17
+#define _SC_COLL_WEIGHTS_MAX 18
+#define _SC_EXPR_NEST_MAX    19
+#define _SC_LINE_MAX         20
+#define _SC_2_VERSION        21
+#define _SC_2_C_DEV          22
+#define _SC2_FORT_DEV        23
+#define _SC_2_LOCALEDEF      24
+#define _SC2_SW_DEV          25
+#define MAXSYSCONF           25
 /* non-standard values */
 /* Unix/Linux extensions */
 #if defined(_GNU_SOURCE) && (_GNU_SOURCE)
-#define _SC_PHYS_PAGES       -1 // # of pages of physical memory
-#define _SC_AVPHYS_PAGES     -2 // # of available physical pages
-#define _SC_NPROCESSORS_CONF -3 // # of processors configured
-#define _SC_NPROCESSORS_ONLN -4 // # of processors currently online
+#define _SC_PHYS_PAGES       -1         // # of pages of physical memory
+#define _SC_AVPHYS_PAGES     -2         // # of available physical pages
+#define _SC_NPROCESSORS_CONF -3         // # of processors configured
+#define _SC_NPROCESSORS_ONLN -4         // # of processors currently online
 #endif
 /* Zero extensions */
 #if defined(_ZERO_SOURCE) && (_ZERO_SOURCE)
-#define _SC_CACHELINESIZE    (-5) // size of [memory] cacheline in bytes
-#define _SC_L1INSTSIZE       (-6) // L1 cache size in bytes
-#define _SC_L1DATASIZE       (-7) // L1 cache size in bytes
-#define _SC_L1INSTNWAY       (-8) // L1 cache parameter
-#define _SC_L1DATANWAY       (-9) // L1 cache parameter
-#define _SC_L2SIZE           (-10) // L2 cache size in bytes
-#define _SC_L2NWAY           (-11) // L2 cache parameter
-#define _SC_BLKSIZE          (-12) // buffer block size
+#define _SC_CACHELINE_SIZE   (-5)       // size of [memory] cacheline in bytes
+#define _SC_NTLB             (-6)       // size of [memory] cacheline in bytes
+#define _SC_L1_INST_SIZE     (-7)       // L1 cache size in bytes
+#define _SC_L1_INST_NWAY     (-8)       // L1 cache parameter
+#define _SC_L1_DATA_SIZE     (-9)       // L1 cache size in bytes
+#define _SC_L1_DATA_NWAY     (-10)      // L1 cache parameter
+#define _SC_L2_SIZE          (-11)      // L2 cache size in bytes
+#define _SC_L2_NWAY          (-12)      // L2 cache parameter
+#define _SC_BUF_BLK_SIZE     (-13)      // buffer block size
+#define MINSYSCONF           (-13)
 #endif
-#define NNEGSYSCONF          (12)
-#define NSYSCONF             (26 + NNEGSYSCONF) // 1 bigger than any name-value
+//#define NNEGSYSCONF          (-MINSYSCONF)
+#define NSYSCONF             (26 - MINSYSCONF) // 1 bigger than any name-value
 
 #if (USEXOPENEXT) && !defined(F_LOCK)
 /* these macros also appear in <fcntl.h> - keep the files consistent */

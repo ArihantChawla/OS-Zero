@@ -16,18 +16,6 @@ struct m_stkframe {
     /* call parameters on stack go here in 'reverse order' */
 };
 
-/* return stack for IRET - 20 bytes */
-struct m_jmpframe {
-    int32_t eip;	// old instruction pointer
-    int16_t cs;		// code segment selector
-    int16_t pad1;	// pad to 32-bit boundary
-    int32_t eflags;	// machine status word
-    /* present in case of privilege transition */
-    int32_t uesp;	// user stack pointer
-    int16_t uss;	// user stack segment selector
-    int16_t pad2;	// pad to 32-bit boundary
-};
-
 /* general purpose registers - 32 bytes */
 struct m_genregs {
     int32_t edi;
@@ -38,6 +26,26 @@ struct m_genregs {
     int32_t edx;
     int32_t ecx;
     int32_t eax;
+};
+
+/* segment registers */
+struct m_segregs {
+    int32_t ds;         // data segment
+    int32_t es;         // data segment
+    int32_t fs;         // thread-local storage
+    int32_t gs;         // kernel per-CPU segment
+};
+
+/* return stack for IRET - 20 bytes */
+struct m_jmpframe {
+    int32_t eip;	// old instruction pointer
+    int16_t cs;		// code segment selector
+    int16_t pad1;	// pad to 32-bit boundary
+    int32_t eflags;	// machine status word
+    /* present in case of privilege transition */
+    int32_t uesp;	// user stack pointer
+    int16_t uss;	// user stack segment selector
+    int16_t pad2;	// pad to 32-bit boundary
 };
 
 /* task state segment */
@@ -75,17 +83,10 @@ struct m_tss {
 };
 
 /* data segment registers - 16 bytes */
-struct m_segregs {
-    int32_t ds;         // data segment
-    int32_t es;         // data segment
-    int32_t fs;         // thread-local storage
-    int32_t gs;         // kernel per-CPU segment
-};
-
 /* thread control block */
-#define TCBFCTXSIZE 512
+#define M_TCBFCTXSIZE 512
 struct m_tcb {
-    uint8_t           fctx[TCBFCTXSIZE];        // 512 bytes @ 0
+    uint8_t           fctx[M_TCBFCTXSIZE];      // 512 bytes @ 0
     int32_t           fxsave;                   // 4 bytes @ 512
     int32_t           pdbr;                     // 4 bytes @ 516
     struct m_segregs  segregs;                  // 16 bytes @ 520

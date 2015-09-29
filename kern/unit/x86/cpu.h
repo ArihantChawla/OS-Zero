@@ -12,6 +12,15 @@
 #define CPUHASFXSR 0x00000001
 #define CPUHASAPIC 0x00000002
 
+#define cpugetclsize(cpu)  ((cpu)->l1i.clsz)
+#define cpugetntlb(cpu)    ((cpu)->l1i.ntlb)
+#define cpugetl1isize(cpu) ((cpu)->l1i.size)
+#define cpugetl1inway(cpu) ((cpu)->l1i.nway)
+#define cpugetl1dsize(cpu) ((cpu)->l1d.size)
+#define cpugetl1dnway(cpu) ((cpu)->l1d.nway)
+#define cpugetl2size(cpu)  ((cpu)->l2.size)
+#define cpugetl2nway(cpu)  ((cpu)->l2.nway)
+
 struct m_cpucache {
     uint32_t size;
     uint32_t clsz;

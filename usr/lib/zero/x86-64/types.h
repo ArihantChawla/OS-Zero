@@ -36,14 +36,26 @@ struct m_genregs {
     int64_t r8;
 };
 
+struct m_segregs {
+    int32_t ds;         // data segment
+    int32_t es;         // data segment
+    int32_t fs;         // thread-local storage
+    int32_t gs;         // kernel per-CPU segment
+};
+
+struct m_jmpframe {
+};
+
 /* thread control block */
-#define TCBFCTXSIZE 512
+#define M_TCBFCTXSIZE 512
 struct m_tcb {
-    uint8_t            fctx[TCBFCTXSIZE];
-//    struct m_trapframe iret;
-//    struct m_segregs   segregs;
+    uint8_t            fctx[M_TCBFCTXSIZE];
+    int64_t            fxsave;
     int64_t            pdbr;
+//    struct m_trapframe iret;
+    struct m_segregs   segregs;
     struct m_genregs   genregs;
+    struct m_jmpframe  iret;
 };
 
 #endif /* __ZERO_X86_64_TYPES_H__ */

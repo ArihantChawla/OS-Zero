@@ -2,6 +2,7 @@
 #include <stdint.h>
 #include <zero/asm.h>
 #include <sys/io.h>
+#include <zero/trix.h>
 #include <kern/conf.h>
 #include <kern/util.h>
 #include <kern/unit/x86/asm.h>
@@ -33,7 +34,7 @@ pitinit(void)
 void
 pitsleep(long msec)
 {
-    long n = 1000L * msec;
+    unsigned long n = 1000L * msec;
 
     while (n--) {
 //        iodelay();
@@ -49,9 +50,10 @@ pitsleep(long msec)
  * only to be used before the APIC timers and scheduler are enabled
  */
 void
-pitsleep(long msec)
+pitsleep(unsigned long msec)
 {
-    long       hz = 1000L / msec;
+    unsigned long hz = max(1, divu1000(msec));
+    unsigned long tmp = 1000L/msec;
 
     /* enable timer interrupt, disable other interrupts */
     outb(~0x01, PICMASK1);

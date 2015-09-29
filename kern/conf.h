@@ -39,6 +39,7 @@
 #if (PTRBITS == 32)
 #define NPAGEMAX    (1L << (PTRBITS - PAGESIZELOG2))
 #endif
+#define NPAGEPHYS   (1L << (PTRBITS - PAGESIZELOG2))
 
 #define LOCORE      0
 #define NCONS       8
@@ -48,7 +49,7 @@
 #define BOCHS       1
 #define DEVEL       0           // debugging
 
-#define PLASMA      1
+#define PLASMA      0
 
 /* planned and developed drivers */
 #define IOAPIC      0           // enable I/O APIC support

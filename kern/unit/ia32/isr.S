@@ -501,7 +501,8 @@ _havestk:
 #endif
 	leal	48(%esp), %eax		// store m_tcb.iret address
 	movl	%edx, 52(%esp)		// store %cs in m_tcb.iret
-	movl	%ebx, 28(%esp)		// patch frame pointer in m_tcb.genregs
+//	movl	%ebx, 28(%esp)		// patch frame pointer in m_tcb.genregs
+	movl	%ebp, 28(%esp)		// patch frame pointer in m_tcb.genregs
 	movl	12(%ebp), %edi		// fetch pushed flags register
 	movl	%ebx, 60(%esp)		// store caller stack pointer for iret
 	movl	%esi, 48(%esp)		// store return address for iret

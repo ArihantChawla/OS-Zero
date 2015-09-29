@@ -647,6 +647,7 @@ divs10(long x)
     q = q + (q >> 16);
     q = q >> 3;
     r = x - q * 10;
+
     return q + ((r + 6) >> 4);
 }
 
