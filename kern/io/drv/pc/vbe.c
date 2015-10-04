@@ -232,7 +232,7 @@ vbeprintinfo(void)
     kprintf("VBE FB: %ld kilobytes @ 0x%p - 0x%p\n",
             vbescreen.fbufsize >> 10, vbescreen.fbuf,
             (void *)((uint8_t *)vbescreen.fbuf + vbescreen.fbufsize - 1));
-    kprintf("VBE OEM: %s\n", VBEPTR(*((uint32_t *)info->oem)));
+    kprintf("VBE OEM: %s\n", (void *)VBEPTR(&info->oem));
     modeptr = (uint16_t *)VBEPTR(vbectlinfo.modelst);
     kprintf("VBE modes:");
 //    cnt = 0;

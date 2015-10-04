@@ -34,7 +34,10 @@ _fpudone:
 	popl	%es
 	popl	%fs
 	popl	%gs
-	/* pop general purpose registers */
+	/*
+	 * pop general purpose registers
+	 * - stack pointer points to m_tcb->iret
+	 */
 	popal
 #if 0
 	movl	%gs:8, %esp
@@ -45,5 +48,5 @@ _fpudone:
 #else
 	_piteoi1
 #endif
-	iret
+	iretl
 

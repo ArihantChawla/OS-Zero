@@ -8,7 +8,7 @@
 #if 0
 ASMLINK void  m_tcbsave(struct m_tcb *tcb);
 #endif
-FASTCALL void m_tcbjmp(struct m_tcb *tcb);
+FASTCALL NORETURN void m_tcbjmp(struct m_tcb *tcb);
 
 #endif /* __KERN_UNIT_IA32_TASK_H__ */
 

@@ -77,7 +77,7 @@ trapde:
 	movl	%ebp, %esp
 	_trapleave
 	sti
-	iret
+	iretl
 
 trapdb:
 	_trapenter
@@ -96,7 +96,7 @@ trapdb:
 	movl	%ebp, %esp
 	_trapleave
 	sti
-	iret
+	iretl
 
 trapnmi:
 	_trapenter
@@ -115,7 +115,7 @@ trapnmi:
 	movl	%ebp, %esp
 	_trapleave
 	sti
-	iret
+	iretl
 
 trapbp:
 	_trapenter
@@ -134,7 +134,7 @@ trapbp:
 	movl	%ebp, %esp
 	_trapleave
 	sti
-	iret
+	iretl
 
 trapof:
 	_trapenter
@@ -153,7 +153,7 @@ trapof:
 	movl	%ebp, %esp
 	_trapleave
 	sti
-	iret
+	iretl
 
 trapbr:
 	_trapenter
@@ -172,7 +172,7 @@ trapbr:
 	movl	%ebp, %esp
 	_trapleave
 	sti
-	iret
+	iretl
 
 trapud:
 	_trapenter
@@ -191,7 +191,7 @@ trapud:
 	movl	%ebp, %esp
 	_trapleave
 	sti
-	iret
+	iretl
 
 trapnm:
 	_trapenter
@@ -210,7 +210,7 @@ trapnm:
 	movl	%ebp, %esp
 	_trapleave
 	sti
-	iret
+	iretl
 
 trapdf:
 	_trapentererr
@@ -229,7 +229,7 @@ trapdf:
 	movl	%ebp, %esp
 	_trapleaveerr
 	sti
-	iret
+	iretl
 
 trapts:
 	_trapentererr
@@ -248,7 +248,7 @@ trapts:
 	movl	%ebp, %esp
 	_trapleaveerr
 	sti
-	iret
+	iretl
 trapnp:
 	_trapentererr
 	movl	%esp, %ebp
@@ -266,7 +266,7 @@ trapnp:
 	movl	%ebp, %esp
 	_trapleaveerr
 	sti
-	iret
+	iretl
 
 trapss:
 	_trapentererr
@@ -285,7 +285,7 @@ trapss:
 	movl	%ebp, %esp
 	_trapleaveerr
 	sti
-	iret
+	iretl
 
 trapgp:
 	_trapentererr
@@ -305,7 +305,7 @@ _gpfin:
 	movl	%ebp, %esp
 	_trapleaveerr
 	sti
-	iret
+	iretl
 
 trappf:
 	_trapentererr
@@ -326,7 +326,7 @@ trappf:
 	movl	%ebp, %esp
 	_trapleaveerr
 	sti
-	iret
+	iretl
 
 trapmf:
 	_trapenter
@@ -345,7 +345,7 @@ trapmf:
 	movl	%ebp, %esp
 	_trapleaveerr
 	sti
-	iret
+	iretl
 
 trapac:
 	_trapenter
@@ -364,7 +364,7 @@ trapac:
 	movl	%ebp, %esp
 	_trapleaveerr
 	sti
-	iret
+	iretl
 
 trapmc:
 	_trapenter
@@ -383,7 +383,7 @@ trapmc:
 	movl	%ebp, %esp
 	_trapleave
 	sti
-	iret
+	iretl
 
 trapxf:
 	_trapenter
@@ -402,13 +402,13 @@ trapxf:
 	movl	%ebp, %esp
 	_trapleave
 	sti
-	iret
+	iretl
 
 #if (APIC)
 	/* dummy interrupt handler for probing APIC frequency */
 irqtmrcnt:
 	_apiceoi
-	iret
+	iretl
 #endif
 
 	/*
@@ -440,7 +440,8 @@ _tmr0fin:
 	/* re-enable interrupts */
 	sti
 	/* return */
-	iret
+	iretl
+
 
 	/* 32-bit x86 context switch */
 	/*
@@ -451,10 +452,14 @@ _tmr0fin:
 	 * eflags
 	 * cs
 	 * eip		<- ESP
+	 * - prologue
+	 * ebp
+	 * eax
+	 * ebx		<- EBX
 	 *
 	 * NOTE: ss  and esp are only pushed if the interrupt happened
 	 * in user-mode, i.e. there's a privilege transition to system-mode
-	 */
+ 	 */
 irqtmr:
 	pushl	%ebp			// push frame pointer
 	movl	%esp, %ebp		// store stack pointer
@@ -482,32 +487,32 @@ _fpudone:
 	movl	%cr3, %ecx		// get %cr3 (page directory address)
 	cmpl	$UTEXTSEL, %edx		// did we come from userland?
 	jne	_getsysstk		// stack-info was not pushed if not
-	movl	16(%ebp), %ebx		// fetch stored stack pointer
+	movl	(%ebp), %ebx		// fetch stored stack pointer
 	movl	20(%ebp), %edi		// fetch stored %ss
-	addl	$24, %ebx		// adjust for past the trap frame
+//	addl	$4, %ebx		// adjust for past the trap frame
 	jmp	_havestk
 _getsysstk:
 	/* construct stack information */
-	movl	%ebp, %ebx		// get frame pointer
+	movl	(%ebp), %ebx		// get copied frame pointer
 	movl	%ss, %edi		// get %ss
-	addl	$16, %ebx		// adjust for past the trap frame
+//	addl	$4, %ebx		// adjust for past the trap frame
 _havestk:	
 	movl	4(%ebp), %esi		// pushed return address
 	movl	%ecx, -4(%esp)		// store page directory base register
 	movl	%eax, 44(%esp)		// patch %eax in m_tcb.genregs
 	movl	%edi, 64(%esp)		// store %ss in m_tcb.iret
-#if 0
-	movl	%ebx, 24(%esp)		// patch stack pointer
-#endif
-	leal	48(%esp), %eax		// store m_tcb.iret address
+//	movl	%ebx, 24(%esp)		// patch stack pointer
+//	movl	(%ebp), %ecx		// pushed frame pointer
+	leal	-48(%esp), %eax		// store m_tcb.iret address
 	movl	%edx, 52(%esp)		// store %cs in m_tcb.iret
 //	movl	%ebx, 28(%esp)		// patch frame pointer in m_tcb.genregs
-	movl	%ebp, 28(%esp)		// patch frame pointer in m_tcb.genregs
 	movl	12(%ebp), %edi		// fetch pushed flags register
+//	movl	%ebx, 60(%esp)		// store caller stack pointer for iret
+	movl	%ebx, 28(%esp)		// patch frame pointer in m_tcb.genregs
 	movl	%ebx, 60(%esp)		// store caller stack pointer for iret
 	movl	%esi, 48(%esp)		// store return address for iret
 	movl	%edi, 56(%esp)		// store pre-interrupt flags for iret
-	movl	%eax, 24(%esp)		// patch stack pointer in m_tcb.genregs
+	movl	%eax, 24(%esp)		// iret stack pointer in m_tcb.genregs
 	/* schedule next thread */
 	movl	%gs:8, %eax		// task structure address argument
 	movl	schedpicktask, %ebx	// get scheduler-specific function
@@ -534,12 +539,11 @@ _irqkbddone:
 	movl	%ebp, %esp
 	_trapleave
 	sti
-	iret
+	iretl
 
 irq3:
 	_trapenter
 	movl	%esp, %ebp
-
 #if (APIC)
 	_apiceoi
 #else
@@ -549,7 +553,7 @@ irq3:
 	movl	%ebp, %esp
 	_trapleave
 	sti
-	iret
+	iretl
 
 irq4:
 	_trapenter
@@ -564,7 +568,7 @@ irq4:
 	movl	%ebp, %esp
 	_trapleave
 	sti
-	iret
+	iretl
 
 irq5:
 	_trapenter
@@ -584,7 +588,7 @@ _irq5done:
 	movl	%ebp, %esp
 	_trapleave
 	sti
-	iret
+	iretl
 
 irqmouse:
 	_trapenter
@@ -605,13 +609,13 @@ _irqmousedone:
 	movl	%ebp, %esp
 	_trapleave
 	sti
-	iret
+	iretl
 
 #if (SMP) || (APIC)
 
 irqerror:
 	sti
-	iret
+	iretl
 
 irqspurious:
 	_trapenter
@@ -622,7 +626,7 @@ irqspurious:
 	movl	%ebp, %esp
 	_trapleave
 	sti
-	iret
+	iretl
 
 #endif /* SMP || APIC */
 

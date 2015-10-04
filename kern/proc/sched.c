@@ -35,6 +35,7 @@ schedyield(void)
     for ( ; ; ) { ; }
 }
 
+NOINLINE
 void
 schedloop(void)
 {

@@ -10,6 +10,7 @@
 #endif
 
 extern void cpuprintinfo(void);
+extern uint8_t  kernusrstktab[NCPU * KERNSTKSIZE];
 
 volatile struct m_cpu cputab[NCPU] ALIGNED(PAGESIZE);
 struct m_cpuinfo      cpuinfotab[NCPU];
@@ -21,7 +22,8 @@ cpuinit(struct m_cpu *cpu)
 #if (SMP)
     void *kstk = (uint8_t *)MPENTRYSTK - id * MPSTKSIZE;
 #else
-    void *kstk = (void *)(KERNVIRTBASE - id * KERNSTKSIZE);
+//    void *kstk = (void *)(KERNVIRTBASE - id * KERNSTKSIZE);
+    void *kstk = kernusrstktab + (id + 1) * KERNSTKSIZE;
 #endif
     struct m_cpuinfo *info = &cpuinfotab[id];
 

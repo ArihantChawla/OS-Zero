@@ -110,7 +110,7 @@ kinitprot(unsigned long pmemsz)
     uint32_t tmrcnt = 0;
 #endif
     uint32_t lim = min(pmemsz, KERNVIRTBASE - NCPU * KERNSTKSIZE);
-    uint32_t sp = (uint32_t)kernusrstktab + NCPU * KERNSTKSIZE;
+    uint32_t sp = (uint32_t)kernusrstktab + KERNSTKSIZE;
 
     /* initialise virtual memory */
     vminit((uint32_t *)&_pagetab);
@@ -253,7 +253,8 @@ kinitprot(unsigned long pmemsz)
     pitinit();
 #endif
     __asm__ __volatile__ ("movl %0, %%esp\n"
-                          "movl %0, %%ebp\n"
+                          "pushl $0\n"
+                          "movl %%esp, %%ebp\n"
                           :
                           : "r" (sp));
 #if (PLASMAFOREVER)

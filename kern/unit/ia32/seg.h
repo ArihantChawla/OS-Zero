@@ -28,6 +28,7 @@
 /* convenience macros */
 #define SEGCODE     (SEGNORM | SEGDEFBITS | SEGEXEC)
 #define SEGDATA     (SEGNORM | SEGDEFBITS | SEGWRITE)
+#define SEGSTK      (SEGNORM | SEGDEFBITS | SEGWRITE | SEGDOWN)
 #define SEGCPU      (SEGNORM | SEGWRITE | SEGPRES)
 /* acs field */
 #define SEGBUSY     UINT64_C(0x0000010000000000)

@@ -31,12 +31,14 @@ gdtinit:
 	lgdt	(gdtptr)
 #endif
 	movw	$DATASEL, %ax
+	movw	$CPUSEL, %bx
+//	movw	$STKSEL, %bx
 	movw	%ax, %ds
 	movw	%ax, %es
 	movw	%ax, %fs
+//	movw	%bx, %ss
 	movw	%ax, %ss
-	movw	$CPUSEL, %ax
-	movw	%ax, %gs
+	movw	%bx, %gs
 	ljmp	$TEXTSEL, $_gdtret
 _gdtret:
 #if !(NEWCLI)
