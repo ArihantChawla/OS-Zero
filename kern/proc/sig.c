@@ -2,6 +2,7 @@
 #include <stdint.h>
 #define __KERNEL__ 1
 #include <signal.h>
+#include <zero/cdecl.h>
 #include <zero/types.h>
 #include <kern/util.h>
 //#include <kern/obj.h>
@@ -14,7 +15,7 @@
 extern struct task  tasktab[NTASK];
 extern long         trapsigmap[TRAPNCPU];
 
-signalhandler_t    *sigfunctab[NSIG];
+signalhandler_t    *sigfunctab[NSIG] ALIGNED(PAGESIZE);
 
 void
 killproc(volatile struct proc *proc)

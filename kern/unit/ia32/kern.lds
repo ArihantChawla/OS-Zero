@@ -99,6 +99,9 @@ SECTIONS {
 	tcb.o(.text)
 	tcb.o(.data)
 	tcb.o(.bss)
+	sched.o(.text)
+	sched.o(.data)
+	sched.o(.bss)
 
     	hpet.o(.text)
     	hpet.o(.data)

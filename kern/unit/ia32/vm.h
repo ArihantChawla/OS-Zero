@@ -13,7 +13,7 @@
 extern long kernlongmode;
 
 void vminitphys(uintptr_t base, unsigned long nbphys);
-void vminitvirt(void *pagetab, void *virt, uint32_t size, uint32_t flags);
+void vminitvirt(void *pagetab, void *virt, uint32_t size, uint32_t flg);
 void vmfreephys(void *virt, uint32_t size);
 void vmmapseg(void *pagetab, uint32_t virt, uint32_t phys, uint32_t lim,
               uint32_t flg);

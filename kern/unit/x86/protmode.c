@@ -77,6 +77,7 @@ extern void sb16init(void);
 extern void apicinit(void);
 extern void apicstarttmr(uint32_t tmrcnt);
 #endif
+extern FASTCALL void m_jmpusr(long id, void *func);
 extern void schedloop(void);
 
 extern uint8_t                   kerniomap[8192] ALIGNED(PAGESIZE);
@@ -110,7 +111,7 @@ kinitprot(unsigned long pmemsz)
     uint32_t tmrcnt = 0;
 #endif
     uint32_t lim = min(pmemsz, KERNVIRTBASE - NCPU * KERNSTKSIZE);
-    uint32_t sp = (uint32_t)kernusrstktab + KERNSTKSIZE;
+    uint32_t sp = (uint32_t)kernsysstktab + KERNSTKSIZE;
 
     /* initialise virtual memory */
     vminit((uint32_t *)&_pagetab);
@@ -132,16 +133,6 @@ kinitprot(unsigned long pmemsz)
 //    vminitphys((uintptr_t)&_epagetab, pmemsz);
     vminitphys((uintptr_t)&_epagetab, lim);
     meminit(min(pmemsz, lim));
-    vmmapseg((uint32_t *)&_pagetab,
-             (uint32_t)kernsysstktab,
-             (uint32_t)kernsysstktab,
-             (uint32_t)kernsysstktab + NCPU * KERNSTKSIZE,
-             PAGEPRES | PAGEWRITE | PAGENOCACHE);
-    vmmapseg((uint32_t *)&_pagetab,
-             (uint32_t)kernusrstktab,
-             (uint32_t)kernusrstktab,
-             (uint32_t)kernusrstktab + NCPU * KERNSTKSIZE,
-             PAGEPRES | PAGEWRITE | PAGENOCACHE);
 #if 0
     /* FIXME: map possible device memory */
     vmmapseg((uint32_t *)&_pagetab, DEVMEMBASE, DEVMEMBASE, 0xffffffffU,
@@ -260,7 +251,8 @@ kinitprot(unsigned long pmemsz)
 #if (PLASMAFOREVER)
     plasmaloop(-1);
 #else
-    schedloop();
+//    schedloop();
+    m_jmpusr(0, schedloop);
 #endif
 
     /* NOTREACHED */

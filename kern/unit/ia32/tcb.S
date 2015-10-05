@@ -43,10 +43,5 @@ _fpudone:
 	movl	%gs:8, %esp
 	addl	$568, %esp
 #endif
-#if (APIC)
-	_apiceoi
-#else
-	_piteoi1
-#endif
 	iretl
 

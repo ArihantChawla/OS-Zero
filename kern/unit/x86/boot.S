@@ -96,6 +96,8 @@ kernidt:
 kernpagedir:
 	.space	NBPG
 
+#if defined(__x86_64__) || defined (__amd64__)
+	
 /* 64-bit memory management */
 
 /* page-map level-4 table */
@@ -110,7 +112,9 @@ kernpagetab2:
 /* page table */
 kernpagetab1:
 	.space	NBPG
-#endif
+
+#endif /* 64-bit */
+#endif /* !LOCORE */
 
 /* per-CPU GDTs; kernel segment descriptor tables */
 .align	4096

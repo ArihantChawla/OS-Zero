@@ -8,6 +8,7 @@
 #include <kern/io/drv/chr/cons.h>
 #include <kern/io/drv/pc/vga.h>
 #include <kern/unit/x86/asm.h>
+#include <kern/unit/x86/trap.h>
 
 #define MAXPRINTFSTR 2048
 
@@ -27,6 +28,30 @@
  * - do not initialize stack variables at top of functions; do it explicitly in
  *   code to avoid stack problems, at least for linker constants
  */
+
+const char *trapnametab[TRAPNCPU] ALIGNED(PAGESIZE)
+= {
+    "DE",
+    "DB",
+    "NMI",
+    "BP",
+    "OF",
+    "BR",
+    "UD",
+    "NM",
+    "DF",
+    NULL,
+    "TS",
+    "NP",
+    "SS",
+    "GP",
+    "PF",
+    NULL,
+    "MF",
+    "AC",
+    "MC",
+    "XF"
+};
 
 const char _ltoxtab[]
 = {
@@ -48,7 +73,7 @@ const char _ltoxtab[]
     'f',
 };
 
-#define KBZERODEBUG 1
+#define KBZERODEBUG 0
 #if (KBZERODEBUG)
 #include <kern/util.h>
 #endif
@@ -777,8 +802,13 @@ kbfindzerol(long *bmap, long ofs, long nbit)
 void
 panic(long trap)
 {
+    const char *name = trapnametab[trap];
     if (trap >= 0) {
-        kprintf("KERNEL CAUGHT TRAP %ld\n", trap);
+        if (name) {
+            kprintf("KERNEL CAUGHT TRAP %ld (%s)\n", trap, name);
+        } else {
+            kprintf("KERNEL CAUGHT RESERVED TRAP %ld\n", trap, name);
+        }
     }
     k_halt();
 }
