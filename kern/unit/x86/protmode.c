@@ -77,7 +77,9 @@ extern void sb16init(void);
 extern void apicinit(void);
 extern void apicstarttmr(uint32_t tmrcnt);
 #endif
+#if (USERMODE)
 extern FASTCALL void m_jmpusr(long id, void *func);
+#endif
 extern void schedloop(void);
 
 extern uint8_t                   kerniomap[8192] ALIGNED(PAGESIZE);
@@ -250,9 +252,10 @@ kinitprot(unsigned long pmemsz)
                           : "r" (sp));
 #if (PLASMAFOREVER)
     plasmaloop(-1);
-#else
-//    schedloop();
+#elif (USERMODE)
     m_jmpusr(0, schedloop);
+#else    
+    schedloop();
 #endif
 
     /* NOTREACHED */
