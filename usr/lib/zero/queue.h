@@ -120,9 +120,6 @@ queuepush(QUEUE_ITEM_TYPE *item, QUEUE_TYPE **queue)
 
     list = (*queue)->next;
     if (list) {
-        if (queueissingular(queue)) {
-            (*queue)->prev = item;
-        }
         item->prev = (*queue)->prev;
         item->prev->next = item;
         list->prev = item;
@@ -166,9 +163,6 @@ queueappend(QUEUE_ITEM_TYPE *item, QUEUE_TYPE **queue)
 
     list = (*queue)->prev;
     if (list) {
-        if (queueissingular(queue)) {
-            (*queue)->next = item;
-        }
         item->prev = list;
         list->next = item;
         item->next = (*queue)->next;
