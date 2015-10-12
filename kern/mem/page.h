@@ -71,7 +71,9 @@ struct swapdev {
     struct physpage *freeq;
 };
 
-#define QUEUE_TYPE struct physpage
+#define QUEUE_SINGLE_TYPE
+//#define QUEUE_ITEM_TYPE struct physpage
+#define QUEUE_TYPE      struct physpage
 #include <zero/queue.h>
 #define pagegetqid(pg)   max(LONGSIZE * CHAR_BIT - 1, lzerol(pg->nflt))
 #define pagepop(pq)      queuepop(pq)

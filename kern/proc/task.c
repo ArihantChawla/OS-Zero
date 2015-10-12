@@ -20,29 +20,17 @@
 #include <kern/unit/ia32/task.h>
 #include <zero/mtx.h>
 
-#define LIST_TYPE struct task
-#include <zero/list.h>
-
 void taskqueueready(struct task *task);
 void taskaddwait(struct task *task);
 void taskaddsleep(struct task *task);
 void taskaddstopped(struct task *task);
 void taskaddzombie(struct task *task);
 
-/* this should be a single (aligned) cacheline */
-struct tasklk {
-    volatile long lk;
-    uint8_t       pad[CLSIZE - sizeof(long)];
-};
-
-static struct tasklk    taskwaitmtxtab[NLVL0TASK] ALIGNED(PAGESIZE);
-static struct tasktab  *taskwaittab[NLVL0TASK];
-static struct taskid    taskidtab[NTASK];
-static struct task     *taskstoppedtab[NTASK];
-static struct task     *taskzombietab[NTASK];
+struct taskqueue         taskrunqueuetab[SCHEDNFIXED + SCHEDNPRIOCLASS * SCHEDNPRIO] ALIGNED(PAGESIZE);
+static struct tasktabl0  taskwaittab[NLVL0TASK];
+static struct task      *taskstoppedtab[NTASK];
+static struct task      *taskzombietab[NTASK];
 //static struct task taskruntab[SCHEDNPRIOCLASS * SCHEDNPRIO];
-static struct tasklk    taskrunmtxtab[SCHEDNFIXED + SCHEDNPRIOCLASS * SCHEDNPRIO] ALIGNED(PAGESIZE);
-static struct task     *taskruntab[SCHEDNFIXED + SCHEDNPRIOCLASS * SCHEDNPRIO];
 //static struct task taskrtqueue;
 //extern long             trappriotab[NINTR];
 static long tasknicetab[64]
@@ -112,10 +100,10 @@ static long tasknicetab[64]
     46,
     48
 };
-static struct task     *taskrtqueue;
-
+static struct taskqueue  taskrtqueue;
+static struct task      *tasksleepqueue;
 typedef void taskfunc_t(struct task *);
-taskfunc_t             *taskfunctab[TASKNSTATE]
+taskfunc_t              *taskfunctab[TASKNSTATE]
 = {
     NULL,               // TASKNEW
     taskqueueready,
@@ -124,11 +112,7 @@ taskfunc_t             *taskfunctab[TASKNSTATE]
     taskaddstopped,
     taskaddzombie
 };
-static long            *taskniceptr = &tasknicetab[32];
-//static struct tasklk    taskwaitmtx ALIGNED(CLSIZE);
-static struct tasklk    taskidmtx ALIGNED(CLSIZE);
-static struct taskid   *taskidqueue;
-static struct task     *tasksleepqueue;
+static long             *taskniceptr = &tasknicetab[32];
 
 #if 0
 /* save task context */
@@ -224,17 +208,18 @@ taskwakeprio(struct task *task)
     return prio;
 }
 
+#if 0
 /* add task to beginning of queue */
 void
-taskpush(struct task *task, struct task **taskqueue)
+taskpush(struct task *task, struct taskqueue **taskqueue)
 {
-    struct task *queue = *taskqueue;
+    struct taskqueue *queue = *taskqueue;
 
     if (queue) {
         queue->prev->next = task;
         task->prev = queue->prev;
         task->next = queue;
-        queue->prev = task;
+        queue-> = task;
     } else {
         listinit(task);
         *taskqueue = task;
@@ -245,15 +230,16 @@ taskpush(struct task *task, struct task **taskqueue)
 
 /* get/remove task from beginning of queue */
 struct task *
-taskpop(struct task **taskqueue)
+taskpop(struct taskqueue **taskqueue)
 {
-    struct task *task = *taskqueue;
+    struct taskqueue *queue = *taskqueue;
+    struct task      *task;
 
-    if (task) {
-        if (!listissingular(task)) {
-            task->prev->next = task->next;
-            task->next->prev = task->prev;
-            *taskqueue = task->next;
+    if (queue) {
+        if (!listissingular(queue)) {
+            queue->prev->next = queue->next->next;
+            queue->next->prev = queue->prev;
+            *taskqueue = queue->next;
         } else {
             *taskqueue = NULL;
         }
@@ -264,7 +250,7 @@ taskpop(struct task **taskqueue)
 
 /* add task to end of queue */
 void
-taskqueue(struct task *task, struct task **taskqueue)
+taskqueue(struct task *task, struct taskqueue **taskqueue)
 {
     struct task *queue = *taskqueue;
 
@@ -280,17 +266,101 @@ taskqueue(struct task *task, struct task **taskqueue)
 
     return;
 }
+#endif
+
+#undef QUEUE_SINGLE_TYPE
+#define QUEUE_ITEM_TYPE struct task
+#define QUEUE_TYPE      struct taskqueue
+#include <zero/queue.h>
+
+void
+taskqueueready(struct task *task)
+{
+    long              sched = task->sched;
+    long              prio = task->prio;
+    long              state = task->state;
+    struct taskqueue *queue;
+    
+    if (sched == SCHEDRT) {
+        queue = &taskrtqueue;
+        mtxlk(&queue->lk);
+        if (prio < 0) {
+            /* SCHED_FIFO */
+            queuepush(task, &queue);
+        } else {
+            /* SCHED_RR */
+            queueappend(task, &queue);
+        }
+        mtxunlk(&queue->lk);
+    } else {
+        if (sched != SCHEDFIXED) {
+            prio = taskadjprio(task);
+        }
+        mtxlk(&taskrunqueuetab[prio].lk);
+        queue = &taskrunqueuetab[prio];
+        queueappend(task, &queue);
+        mtxunlk(&taskrunqueuetab[prio].lk);
+    }
+
+    return;
+}
+
+/* switch tasks */
+FASTCALL
+void
+taskpick(struct task *curtask)
+{
+    struct task      *task = NULL;
+    struct taskqueue *queue;
+    long              sched = curtask->sched;
+    long              prio = curtask->prio;
+    long              state = curtask->state;
+    taskfunc_t       *func = taskfunctab[state];
+
+    if (curtask) {
+//        tasksave(curtask);
+        func(curtask);
+    }
+    do {
+        for (prio = 0 ;
+             prio < SCHEDNFIXED + SCHEDNPRIOCLASS * SCHEDNPRIO ;
+             prio++) {
+            queue = &taskrunqueuetab[prio];
+            mtxlk(&queue->lk);
+            task = queuepop(&queue);
+            mtxunlk(&taskrunqueuetab[prio].lk);
+            if (task) {
+                
+                break;
+            }
+        }
+        if (!task) {
+            m_waitint();
+        }
+    } while (!task);
+    k_curtask = task;
+    k_curproc = task->proc;
+    k_curpid = task->id;
+    if (k_curcpu->info->flags & CPUHASFXSR) {
+        task->m_tcb.fxsave = 1;
+    } else {
+        task->m_tcb.fxsave = 0;
+    }
+    m_tcbjmp(&task->m_tcb);
+
+    return;
+}
 
 /* add task to wait queue */
 void
 taskaddwait(struct task *task)
 {
+    struct tasktabl0  *l0tab;
     struct tasktab    *tab;
     void              *ptr = NULL;
     void             **pptr;
-    struct taskqueue  *qptr;
-    struct taskqueue  *queue = NULL;
-    uintptr_t          wchan = task->wchan;
+    struct taskqueue  *queue;
+    uintptr_t          wtchan = task->wtchan;
     long               fail = 0;    
     long               key0;
     long               key1;
@@ -298,13 +368,14 @@ taskaddwait(struct task *task)
     long               key3;
     void              *ptab[TASKNKEY - 1] = { NULL, NULL, NULL };
 
-    key0 = taskwaitkey0(wchan);
-    key1 = taskwaitkey1(wchan);
-    key2 = taskwaitkey2(wchan);
-    key3 = taskwaitkey3(wchan);
-    ptr = taskwaittab[key0];
+    key0 = taskwaitkey0(wtchan);
+    key1 = taskwaitkey1(wtchan);
+    key2 = taskwaitkey2(wtchan);
+    key3 = taskwaitkey3(wtchan);
+    ptr = &taskwaittab[key0];
+    l0tab = ptr;
     pptr = ptr;
-    mtxlk(&taskwaitmtxtab[key0].lk);
+    mtxlk(&l0tab->lk);
     if (!ptr) {
         ptr = kmalloc(NLVL1TASK * sizeof(struct tasktab));
         if (ptr) {
@@ -312,7 +383,6 @@ taskaddwait(struct task *task)
         }
         ptab[0] = ptr;
         pptr = ptr;
-        taskwaittab[key0] = ptr;
     }
     if (ptr) {
         ptr = pptr[key1];
@@ -331,26 +401,21 @@ taskaddwait(struct task *task)
     if (ptr) {
         ptr = pptr[key2];
         if (!ptr) {
-            qptr = kmalloc(NLVL3TASK * sizeof(struct taskqueue));
-            if (qptr) {
-                kbzero(qptr, NLVL3TASK * sizeof(struct taskqueue));
+            queue = kmalloc(NLVL3TASK * sizeof(struct taskqueue));
+            if (queue) {
+                kbzero(queue, NLVL3TASK * sizeof(struct taskqueue));
             } 
-            ptab[2] = qptr;
-            pptr[key2] = qptr;
+            ptab[2] = queue;
+            pptr[key2] = queue;
         } else {
-            qptr = pptr[key2];
+            queue = pptr[key2];
         }
     } else {
         fail = 1;
     }
     if (!fail) {
-        queue = &qptr[key3];
-        task->prev = NULL;
-        task->next = queue->next;
-        if (task->next) {
-            task->next->prev = task;
-        }
-        queue->next = task;
+        queue = &queue[key3];
+        queueappend(task, &queue);
         tab = ptab[0];
         tab->nref++;
         tab->tab = ptab[1];
@@ -360,9 +425,89 @@ taskaddwait(struct task *task)
         tab = ptab[2];
         tab->nref++;
     }
-    mtxunlk(&taskwaitmtxtab[key0].lk);
+    mtxunlk(&l0tab->lk);
     
     return;
+}
+
+/* move a task from wait queue to ready queue */
+void
+taskunwait(uintptr_t wtchan)
+{
+    struct tasktabl0  *l0tab;
+    struct tasktab    *tab;
+    void              *ptr = NULL;
+    struct taskqueue  *queue;
+    struct taskqueue  *runqueue;
+    struct task       *task1;
+    struct task       *task2;
+    long               key0 = taskwaitkey0(wtchan);
+    long               key1 = taskwaitkey1(wtchan);
+    long               key2 = taskwaitkey2(wtchan);
+    long               key3 = taskwaitkey3(wtchan);
+    long               prio;
+    void             **pptr;
+    void              *ptab[TASKNKEY - 1] = { NULL, NULL, NULL };
+    void             **pptab[TASKNKEY - 1] = { NULL, NULL, NULL };
+
+    l0tab = &taskwaittab[key0];
+    mtxlk(&l0tab->lk);
+    if (l0tab) {
+        ptab[0] = l0tab;
+        pptab[0] = (void **)&taskwaittab[key0];
+        tab = ((void **)l0tab)[key1];
+        if (tab) {
+            ptab[1] = tab;
+            pptab[1] = (void **)&tab[key0];
+            tab = ((void **)tab)[key2];
+            if (tab) {
+                ptab[2] = tab;
+                pptab[2] = (void **)&tab[key2];
+                queue = ((void **)tab)[key3];
+                if (queue) {
+                    task1 = queue->next;
+                    while (task1) {
+                        if (task1->next) {
+                            task1->next->prev = NULL;
+                        }
+                        queue->next = task1->next;
+                        task2 = task1->next;
+                        prio = taskwakeprio(task1);
+                        runqueue = &taskrunqueuetab[prio];
+                        mtxlk(&runqueue->lk);
+                        queueappend(task1, &runqueue);
+                        mtxunlk(&runqueue->lk);
+                        task1 = task2;
+                    }
+                    tab = ptab[2];
+                    if (tab) {
+                        if (!--tab->nref) {
+                            pptr = pptab[2];
+                            kfree(tab);
+                            *pptr = NULL;
+                        }
+                        tab = ptab[1];
+                        if (tab) {
+                            if (!--tab->nref) {
+                                pptr = pptab[1];
+                                kfree(tab);
+                                *pptr = NULL;
+                            }
+                            tab = ptab[0];
+                            if (tab) {
+                                if (!--tab->nref) {
+                                    pptr = pptab[0];
+                                    kfree(tab);
+                                    *pptr = NULL;
+                                }
+                            }
+                        }
+                    }
+                }
+            }
+        }
+    }
+    mtxunlk(&l0tab->lk);
 }
 
 void
@@ -415,254 +560,6 @@ taskaddzombie(struct task *task)
     long id = task->id;
 
     taskzombietab[id] = task;
-
-    return;
-}
-
-/* move a task from wait queue to ready queue */
-void
-taskunwait(uintptr_t wchan)
-{
-    struct tasktab    *tab;
-    void              *ptr = NULL;
-    struct taskqueue  *queue;
-    struct task      **taskqptr;
-    struct task       *task1;
-    struct task       *task2;
-    long               key0 = taskwaitkey0(wchan);
-    long               key1 = taskwaitkey1(wchan);
-    long               key2 = taskwaitkey2(wchan);
-    long               key3 = taskwaitkey3(wchan);
-    long               prio;
-    void             **pptr;
-    void              *ptab[TASKNKEY - 1] = { NULL, NULL, NULL };
-    void             **pptab[TASKNKEY - 1] = { NULL, NULL, NULL };
-
-    tab = taskwaittab[key0];
-    mtxlk(&taskwaitmtxtab[key0].lk);
-    if (tab) {
-        ptab[0] = tab;
-        pptab[0] = (void **)&taskwaittab[key0];
-        tab = ((void **)tab)[key1];
-        if (tab) {
-            ptab[1] = tab;
-            pptab[1] = (void **)&tab[key0];
-            tab = ((void **)tab)[key2];
-            if (tab) {
-                ptab[2] = tab;
-                pptab[2] = (void **)&tab[key2];
-                queue = ((void **)tab)[key3];
-                if (queue) {
-                    task1 = queue->next;
-                    while (task1) {
-                        if (task1->next) {
-                            task1->next->prev = NULL;
-                        }
-                        queue->next = task1->next;
-                        task2 = task1->next;
-                        prio = taskwakeprio(task1);
-                        mtxlk(&taskrunmtxtab[prio].lk);
-                        taskqptr = &taskruntab[prio];
-                        taskqueue(task1, taskqptr);
-                        mtxunlk(&taskrunmtxtab[prio].lk);
-                        task1 = task2;
-                    }
-                    tab = ptab[2];
-                    if (tab) {
-                        if (!--tab->nref) {
-                            pptr = pptab[2];
-                            kfree(tab);
-                            *pptr = NULL;
-                        }
-                        tab = ptab[1];
-                        if (tab) {
-                            if (!--tab->nref) {
-                                pptr = pptab[1];
-                                kfree(tab);
-                                *pptr = NULL;
-                            }
-                            tab = ptab[0];
-                            if (tab) {
-                                if (!--tab->nref) {
-                                    pptr = pptab[0];
-                                    kfree(tab);
-                                    *pptr = NULL;
-                                }
-                            }
-                        }
-                    }
-                }
-            }
-        }
-    }
-    mtxunlk(&taskwaitmtxtab[key0].lk);
-}
-
-void
-taskqueueready(struct task *task)
-{
-    long          sched = task->sched;
-    long          prio = task->prio;
-    long          state = task->state;
-    struct task **taskqptr;
-    
-    if (sched == SCHEDRT) {
-        if (prio < 0) {
-            /* SCHED_FIFO */
-//            prio = -prio;
-            mtxlk(&taskrunmtxtab[prio].lk);
-//            taskqptr = &taskruntab[prio];
-            taskqptr = &taskrtqueue;            
-            taskpush(task, taskqptr);
-            mtxunlk(&taskrunmtxtab[prio].lk);
-        } else {
-            /* SCHED_RR */
-            mtxlk(&taskrunmtxtab[prio].lk);
-//            taskqptr = &taskruntab[prio];
-            taskqptr = &taskrtqueue;
-            taskqueue(task, taskqptr);
-            mtxunlk(&taskrunmtxtab[prio].lk);
-        }
-    } else {
-        if (sched != SCHEDFIXED) {
-            prio = taskadjprio(task);
-        }
-        mtxlk(&taskrunmtxtab[prio].lk);
-        taskqptr = &taskruntab[prio];
-        taskqueue(task, taskqptr);
-        mtxunlk(&taskrunmtxtab[prio].lk);
-    }
-
-    return;
-}
-
-/* switch tasks */
-FASTCALL
-void
-taskpick(struct task *curtask)
-{
-    struct task  *task = NULL;
-    struct task **taskqptr;
-    long          sched = curtask->sched;
-    long          prio = curtask->prio;
-    long          state = curtask->state;
-    taskfunc_t   *func = taskfunctab[state];
-
-    if (curtask) {
-//        tasksave(curtask);
-        func(curtask);
-    }
-    do {
-        for (prio = 0 ;
-             prio < SCHEDNFIXED + SCHEDNPRIOCLASS * SCHEDNPRIO ;
-             prio++) {
-            mtxlk(&taskrunmtxtab[prio].lk);
-            taskqptr = &taskruntab[prio];
-            if (*taskqptr) {
-                task = taskpop(taskqptr);
-                mtxunlk(&taskrunmtxtab[prio].lk);
-                if (task) {
-
-                    break;
-                }
-            }
-            mtxunlk(&taskrunmtxtab[prio].lk);
-        }
-        if (!task) {
-            m_waitint();
-        }
-    } while (!task);
-    k_curtask = task;
-    k_curproc = task->proc;
-    k_curpid = task->id;
-    if (k_curcpu->info->flags & CPUHASFXSR) {
-        task->m_tcb.fxsave = 1;
-    } else {
-        task->m_tcb.fxsave = 0;
-    }
-    m_tcbjmp(&task->m_tcb);
-
-    return;
-}
-
-/* get/remove task ID from beginning of queue */
-struct taskid *
-taskpopid(struct taskid **queue)
-{
-    struct taskid *taskid;
-
-    taskid = *queue;
-    if (taskid) {
-        if (!listissingular(taskid)) {
-            taskid->prev->next = taskid->next;
-            taskid->next->prev = taskid->prev;
-            *queue = taskid->next;
-        } else {
-            *queue = NULL;
-        }
-    }
-
-    return taskid;
-}
-
-void
-taskpushid(struct taskid *taskid, struct taskid **queue)
-{
-    struct taskid *idqueue = *queue;
-    
-    if (idqueue) {
-        taskid->next = idqueue;
-        taskid->prev = idqueue->prev;
-        idqueue->prev = taskid;
-    } else {
-        listinit(taskid);
-    }
-    *queue = taskid;
-
-    return;
-}
-
-long
-taskgetid(void)
-{
-    struct taskid *taskid;
-    long           retval = -1;
-
-    mtxlk(&taskidmtx.lk);
-    taskid = taskpopid(&taskidqueue);
-    if (taskid) {
-        retval = taskid->id;
-    }
-    mtxunlk(&taskidmtx.lk);
-
-    return retval;
-}
-
-void
-taskfreeid(long id)
-{
-    struct taskid *taskid = &taskidtab[id];
-    
-    mtxlk(&taskidmtx.lk);
-    taskpushid(taskid, &taskidqueue);
-    mtxunlk(&taskidmtx.lk);
-
-    return;
-}
-
-void
-taskinitids(void)
-{
-    long           id;
-    struct taskid *taskid;
-
-    mtxlk(&taskidmtx.lk);
-    for (id = NTASK - 1 ; id >= TASKNPREDEF ; id--) {
-        taskid = &taskidtab[id];
-        taskid->id = id;
-        taskpushid(taskid, &taskidqueue);
-    }
-    mtxunlk(&taskidmtx.lk);
 
     return;
 }

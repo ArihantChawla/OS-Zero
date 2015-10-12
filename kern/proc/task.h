@@ -56,7 +56,7 @@ struct task {
     struct proc     *proc;              // parent/owner process
     struct task     *prev;              // previous in queue
     struct task     *next;              // next in queue
-    uintptr_t        wchan;             // wait channel
+    uintptr_t        wtchan;            // wait channel
     time_t           waketm;            // wakeup time for sleeping tasks
     long             id;                // task ID
     long             runtime;           // run time
@@ -93,14 +93,24 @@ struct task {
 #define taskwaitkey3(wc)                                                \
     ((wc) & ((1UL << NLVLTASKLOG2) - 1))
 
-struct tasktab {
-    long         nref;
-    struct task *tab;
+struct tasktabl0 {
+    volatile long   lk;
+    long            nref;
+    struct tasktab *tab;
+    uint8_t         pad[CLSIZE - 2 * sizeof(long) - sizeof(struct task *)];
 };
 
+struct tasktab {
+    long           nref;
+    struct task   *tab;
+};
+
+/* this should be a single (aligned) cacheline */
 struct taskqueue {
-    struct task *prev;
-    struct task *next;
+    volatile long  lk;
+    struct task   *prev;
+    struct task   *next;
+    uint8_t        pad[CLSIZE - sizeof(long) - 2 * sizeof(struct task *)];
 };
 
 #if 0
@@ -119,6 +129,7 @@ struct taskid {
     long           id;
     struct taskid *prev;
     struct taskid *next;
+    uint8_t        pad[CLSIZE - 2 * sizeof(long) - 2 * sizeof(struct taskid *)];
 };
 
 #define PIDSPEC_PID  0
