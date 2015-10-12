@@ -25,6 +25,9 @@
 #define pageadr(pg, pt)                                                 \
     ((!(pg)) ? NULL : ((void *)(((pg) - (pt)) << PAGESIZELOG2)))
 
+/* index into table of LRU-queues */
+#define pagecalcqid(pg)   max(LONGSIZE * CHAR_BIT - 1, lzerol(pg->nflt))
+
 /* working sets */
 #if 0
 #define pageinset(pg)  (vmsetmap[pagenum((pg)->adr)])
@@ -72,20 +75,14 @@ struct swapdev {
 };
 
 #define QUEUE_SINGLE_TYPE
-//#define QUEUE_ITEM_TYPE struct physpage
 #define QUEUE_TYPE      struct physpage
 #include <zero/queue.h>
-#define pagegetqid(pg)   max(LONGSIZE * CHAR_BIT - 1, lzerol(pg->nflt))
-#define pagepop(pq)      queuepop(pq)
-#define pagepush(pg, pq) queuepush(pg, pq)
-#define pagedequeue(pq)  queuegetlast(pq)
-#define pagerm(pg, pq)   queuermitem(pg, pq)
 
-unsigned long pageinitphyszone(uintptr_t base, struct physpage **zone,
-                           unsigned long nb);
-unsigned long pageaddphyszone(uintptr_t base, struct physpage **zone,
-                             unsigned long nb);
-unsigned long pageinitphys(uintptr_t base, unsigned long nb);
+unsigned long     pageinitphyszone(uintptr_t base, struct physpage **zone,
+                                   unsigned long nb);
+unsigned long     pageaddphyszone(uintptr_t base, struct physpage **zone,
+                                  unsigned long nb);
+unsigned long     pageinitphys(uintptr_t base, unsigned long nb);
 struct physpage * pageallocphys(void);
 void              pagefreephys(void *adr);
 #if 0

@@ -278,9 +278,9 @@ vmpagefault(unsigned long pid, uint32_t adr, uint32_t flags)
                 vmpagestat.nmapped++;
                 page->nflt++;
                 if (!(adr & PAGEWIRED)) {
-                    qid = pagegetqid(page);
+                    qid = pagecalcqid(page);
                     mtxlk(&vmlrulktab[qid]);
-                    pagepush(page, &vmlrutab[qid]);
+                    queuepush(page, &vmlrutab[qid]);
                     mtxunlk(&vmlrulktab[qid]);
                 }
             }
@@ -294,9 +294,9 @@ vmpagefault(unsigned long pid, uint32_t adr, uint32_t flags)
         if (page) {
             mtxlk(&page->lk);
             page->nflt++;
-            qid = pagegetqid(page);
+            qid = pagecalcqid(page);
             mtxlk(&vmlrulktab[qid]);
-            pagepush(page, &vmlrutab[qid]);
+            queuepush(page, &vmlrutab[qid]);
             mtxunlk(&vmlrulktab[qid]);
             mtxunlk(&page->lk);
         }

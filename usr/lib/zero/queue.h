@@ -2,9 +2,6 @@
 
 #undef queueinit
 #undef queueissingular
-#if !defined(QUEUE_PREFIX)
-#define QUEUE_PREFIX
-#endif
 
 #if defined(QUEUE_SINGLE_TYPE)
 
@@ -113,7 +110,7 @@ queuermitem(QUEUE_TYPE *item, QUEUE_TYPE **queue)
 
 #define queueinit(item, queue)                                          \
     ((*queue)->next = (item), (*queue)->prev = (item))
-#define queueissingular(list)  ((list)->next == (list)->prev)
+#define queueissingular(queue)  ((*queue)->next == (*queue)->prev)
 
 /* add item to beginning of queue */
 static __inline__ void
@@ -121,15 +118,20 @@ queuepush(QUEUE_ITEM_TYPE *item, QUEUE_TYPE **queue)
 {
     QUEUE_ITEM_TYPE *list;
 
-    if (*queue) {
-        list = (*queue)->next;
-        if (list) {
-            list->prev = item;
-            item->prev = (*queue)->prev;
-            (*queue)->next = item;
-        } else {
-            queueinit(item, queue);
+    list = (*queue)->next;
+    if (list) {
+        if (queueissingular(queue)) {
+            (*queue)->prev = item;
         }
+        item->prev = (*queue)->prev;
+        item->prev->next = item;
+        list->prev = item;
+        item->next = list;
+        (*queue)->next = item;
+    } else {
+        queueinit(item, queue);
+        (*queue)->prev = item;
+        (*queue)->next = item;
     }
 
     return;
@@ -141,15 +143,15 @@ queuepop(QUEUE_TYPE **queue)
 {
     QUEUE_ITEM_TYPE *item = NULL;
 
-    if (*queue) {
-        item = (*queue)->next;
-        if (item) {
-            if (!queueissingular(item)) {
-                (*queue)->prev->next = item->next;
-                (*queue)->next = item->next;
-            } else {
-                *queue = NULL;
-            }
+    item = (*queue)->next;
+    if (item) {
+        if (!queueissingular(queue)) {
+            (*queue)->prev->next = item->next;
+            item->next->prev = (*queue)->prev;
+            (*queue)->next = item->next;
+        } else {
+            (*queue)->prev = NULL;
+            (*queue)->next = NULL;
         }
     }
 
@@ -162,17 +164,20 @@ queueappend(QUEUE_ITEM_TYPE *item, QUEUE_TYPE **queue)
 {
     QUEUE_ITEM_TYPE *list;
 
-    if (*queue) {
-        list = (*queue)->prev;
-        if (list) {
-            item->prev = list;
-            list->next = item;
-            (*queue)->prev = item;
-        } else {
-            queueinit(item, queue);
+    list = (*queue)->prev;
+    if (list) {
+        if (queueissingular(queue)) {
+            (*queue)->next = item;
         }
+        item->prev = list;
+        list->next = item;
+        item->next = (*queue)->next;
+        item->next->prev = item;
+        (*queue)->prev = item;
     } else {
         queueinit(item, queue);
+        (*queue)->prev = item;
+        (*queue)->next = item;
     }
 
     return;
@@ -184,13 +189,14 @@ queuegetlast(QUEUE_TYPE **queue)
 {
     QUEUE_ITEM_TYPE *item = NULL;
 
-    if (*queue) {
-        item = (*queue)->prev;
-        if (!queueissingular(item)) {
+    item = (*queue)->prev;
+    if (item) {
+        if (!queueissingular(queue)) {
             item->prev->next = item->next;
             item->next->prev = item->prev;
         } else {
-            *queue = NULL;
+            (*queue)->prev = NULL;
+            (*queue)->next = NULL;
         }
     }
 
@@ -202,15 +208,18 @@ static __inline__ void
 queuermitem(QUEUE_ITEM_TYPE *item, QUEUE_TYPE **queue)
 {
     QUEUE_ITEM_TYPE *list = (*queue)->next;
-    
-    if (!queueissingular(list)) {
-        item->prev->next = item->next;
-        item->next->prev = item->prev;
-        if (item == list) {
-            list = item->next;
+
+    if (list) {
+        if (!queueissingular(queue)) {
+            item->prev->next = item->next;
+            item->next->prev = item->prev;
+            if (item == list) {
+                list = item->next;
+            }
+        } else {
+            (*queue)->prev = NULL;
+            (*queue)->next = NULL;
         }
-    } else {
-        *queue = NULL;
     }
 
     return;
