@@ -114,24 +114,6 @@ taskfunc_t              *taskfunctab[TASKNSTATE]
 };
 static long             *taskniceptr = &tasknicetab[32];
 
-#if 0
-/* save task context */
-FASTCALL
-void
-tasksave(struct task *task)
-{
-    uint8_t *fctx = task->m_tcb.fctx;
-
-    if (k_curcpu->info->flags & CPUHASFXSR) {
-        __asm__ __volatile__ ("fxsave (%0)\n" : : "r" (fctx));
-    } else {
-        __asm__ __volatile__ ("fnsave (%0)\n" : : "r" (fctx));
-    }
-
-    return;
-}
-#endif
-
 /* run task */
 FASTCALL
 void
@@ -139,16 +121,23 @@ taskjmp(struct task *task)
 {
     uint8_t *fctx = task->m_tcb.fctx;
 
-#if 0
+//#if 0
     if (k_curcpu->info->flags & CPUHASFXSR) {
         __asm__ __volatile__ ("fxrstor (%0)\n" : : "r" (fctx));
     } else {
         __asm__ __volatile__ ("frstor (%0)\n" : : "r" (fctx));
     }
-#endif
+//#endif
     k_curtask = task;
     k_curproc = task->proc;
     k_curpid = task->id;
+#if 0
+    if (k_curcpu->info->flags & CPUHASFXSR) {
+        task->m_tcb.fxsave = 1;
+    } else {
+        task->m_tcb.fxsave = 0;
+    }
+#endif
     m_tcbjmp(&task->m_tcb);
 
     /* NOTREACHED */
@@ -318,7 +307,6 @@ taskpick(struct task *curtask)
     taskfunc_t       *func = taskfunctab[state];
 
     if (curtask) {
-//        tasksave(curtask);
         func(curtask);
     }
     do {
@@ -338,15 +326,7 @@ taskpick(struct task *curtask)
             m_waitint();
         }
     } while (!task);
-    k_curtask = task;
-    k_curproc = task->proc;
-    k_curpid = task->id;
-    if (k_curcpu->info->flags & CPUHASFXSR) {
-        task->m_tcb.fxsave = 1;
-    } else {
-        task->m_tcb.fxsave = 0;
-    }
-    m_tcbjmp(&task->m_tcb);
+    taskjmp(task);
 
     return;
 }

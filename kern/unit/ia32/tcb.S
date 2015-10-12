@@ -16,17 +16,17 @@
 
 m_tcbjmp:
 	/* fetch fxsave-word */
-	movl	512(%eax), %ebx
-	/* adjust %esp to tcb->segregs */
+//	movl	512(%eax), %ebx
+	/* adjust %esp to tcb->pdbr */
 	leal	516(%eax), %esp
-	cmpl	$0, %ebx
-	je	_frstor
-	fxrstor	(%eax)
-	jmp	_fpudone
-_frstor:
-	frstor	(%eax)
-_fpudone:
-	fwait
+//	cmpl	$0, %ebx
+//	je	_frstor
+//	fxrstor	(%eax)
+//	jmp	_fpudone
+//_frstor:
+//	frstor	(%eax)
+//_fpudone:
+//	fwait
 	/* restore page directory page register */
 	popl	%ebx
 	movl	%ebx, %cr3

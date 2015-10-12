@@ -3,7 +3,7 @@
 
 #include <zero/param.h>
 
-#define USERMODE         0
+#define USERMODE         1
 #define PLASMAFOREVER    0
 #define REENTRANTGDTINIT 1
 
