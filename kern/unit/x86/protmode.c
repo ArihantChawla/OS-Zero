@@ -113,7 +113,7 @@ kinitprot(unsigned long pmemsz)
     uint32_t tmrcnt = 0;
 #endif
     uint32_t lim = min(pmemsz, KERNVIRTBASE - NCPU * KERNSTKSIZE);
-    uint32_t sp = (uint32_t)kernsysstktab + KERNSTKSIZE;
+    uint32_t sp = (uint32_t)kernusrstktab + KERNSTKSIZE;
 
     /* initialise virtual memory */
     vminit((uint32_t *)&_pagetab);

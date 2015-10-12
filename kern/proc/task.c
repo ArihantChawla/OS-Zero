@@ -538,7 +538,7 @@ taskqueueready(struct task *task)
 
 /* switch tasks */
 FASTCALL
-struct task *
+void
 taskpick(struct task *curtask)
 {
     struct task  *task = NULL;
@@ -580,8 +580,9 @@ taskpick(struct task *curtask)
     } else {
         task->m_tcb.fxsave = 0;
     }
+    m_tcbjmp(&task->m_tcb);
 
-    return task;
+    return;
 }
 
 /* get/remove task ID from beginning of queue */

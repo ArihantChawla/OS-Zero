@@ -452,11 +452,9 @@ _tmr0fin:
 	 * esp		- userland stack pointer
 	 * eflags
 	 * cs
-	 * eip		<- ESP
-	 * - prologue
-	 * ebp
+	 * eip
+	 * ebp		<- EBP
 	 * eax
-	 * ebx		<- EBX
 	 *
 	 * NOTE: ss  and esp are only pushed if the interrupt happened
 	 * in user-mode, i.e. there's a privilege transition to system-mode
@@ -490,13 +488,13 @@ _fpudone:
 	jne	_getsysstk		// stack-info was not pushed if not
 	movl	(%ebp), %ebx		// fetch stored stack pointer
 	movl	20(%ebp), %edi		// fetch stored %ss
-//	addl	$4, %ebx		// adjust for past the trap frame
+//	addl	$8, %ebx		// adjust for past the caller frame
 	jmp	_havestk
 _getsysstk:
 	/* construct stack information */
 	movl	(%ebp), %ebx		// get copied frame pointer
 	movl	%ss, %edi		// get %ss
-//	addl	$4, %ebx		// adjust for past the trap frame
+//	addl	$8, %ebx		// adjust for past the caller frame
 _havestk:	
 	movl	4(%ebp), %esi		// pushed return address
 	movl	%ecx, -4(%esp)		// store page directory base register
@@ -515,17 +513,19 @@ _havestk:
 	movl	%edi, 56(%esp)		// store pre-interrupt flags for iret
 	movl	%eax, 24(%esp)		// iret stack pointer in m_tcb.genregs
 	/* schedule next thread */
-	movl	%gs:8, %eax		// task structure address argument
-	movl	schedpicktask, %ebx	// get scheduler-specific function
-	movl	%ebp, %esp		// restore stack pointer
-	call	*%ebx			// call scheduler function (taskpick)
-	/* schedpicktask returns the address of the task/context in %eax */
 #if (APIC)
 	_apiceoi
 #else
 	_piteoi1
 #endif
-	call	m_tcbjmp		// launch next thread
+	movl	%gs:8, %eax		// task structure address argument
+	movl	schedpicktask, %ebx	// get scheduler-specific function
+	movl	%ebp, %esp		// restore stack pointer
+	call	*%ebx			// call scheduler function (taskpick)
+#if 0
+	/* schedpicktask returns the address of the task/context in %eax */
+	call	m_tcbjmp
+#endif
 
 irqkbd:
 	_trapenter

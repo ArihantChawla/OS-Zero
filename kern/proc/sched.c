@@ -6,9 +6,9 @@
 #include <kern/proc/task.h>
 #include <kern/unit/x86/asm.h>
 
-FASTCALL struct task * (*schedpicktask)(struct task *);
+FASTCALL void (*schedpicktask)(struct task *);
 #if (ZEROSCHED)
-FASTCALL struct task *   taskpick(struct task *task);
+FASTCALL void   taskpick(struct task *task);
 #endif
 
 void
@@ -47,7 +47,7 @@ schedloop(void)
         outb(0x00, PICMASK2);
 #endif
         /* wait for interrupt */
-//        k_waitint();
+        k_waitint();
     } while (1);
 
     /* NOTREACHED */
