@@ -15,8 +15,9 @@
 	/* FASTCALL NORETURN void m_tcbjmp(struct m_tcb *tcb); */
 
 m_tcbjmp:
-	/* adjust %esp to tcb->segregs */
+	/* fetch fxsave-word */
 	movl	512(%eax), %ebx
+	/* adjust %esp to tcb->segregs */
 	leal	516(%eax), %esp
 	cmpl	$0, %ebx
 	je	_frstor

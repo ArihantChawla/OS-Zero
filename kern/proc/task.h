@@ -48,9 +48,9 @@ struct task {
     /* thread control block - KEEP THIS FIRST in the structure */
     struct m_tcb     m_tcb;             // context (thread control block)
     /* scheduler parameters */
+    long             sched;             // thread scheduler class
     long             prio;              // priority; < 0 for SCHEDFIFO realtime
     long             nice;              // priority adjustment
-    long             sched;             // thread scheduler class
     long             state;             // thread state
     /* linkage */
     struct proc     *proc;              // parent/owner process

@@ -23,6 +23,12 @@
 #define LIST_TYPE struct task
 #include <zero/list.h>
 
+void taskqueueready(struct task *task);
+void taskaddwait(struct task *task);
+void taskaddsleep(struct task *task);
+void taskaddstopped(struct task *task);
+void taskaddzombie(struct task *task);
+
 /* this should be a single (aligned) cacheline */
 struct tasklk {
     volatile long lk;
@@ -34,84 +40,79 @@ static struct tasktab  *taskwaittab[NLVL0TASK];
 static struct taskid    taskidtab[NTASK];
 static struct task     *taskstoppedtab[NTASK];
 static struct task     *taskzombietab[NTASK];
-//static struct task taskruntab[SCHEDNCLASS * SCHEDNPRIO];
-static struct tasklk    taskrunmtxtab[SCHEDNCLASS * SCHEDNPRIO] ALIGNED(PAGESIZE);
-static struct task     *taskruntab[SCHEDNCLASS * SCHEDNPRIO];
+//static struct task taskruntab[SCHEDNPRIOCLASS * SCHEDNPRIO];
+static struct tasklk    taskrunmtxtab[SCHEDNFIXED + SCHEDNPRIOCLASS * SCHEDNPRIO] ALIGNED(PAGESIZE);
+static struct task     *taskruntab[SCHEDNFIXED + SCHEDNPRIOCLASS * SCHEDNPRIO];
 //static struct task taskrtqueue;
 //extern long             trappriotab[NINTR];
-static long             tasknicetab[64]
+static long tasknicetab[64]
 = {
+    -51,
+    -49,
+    -48,
+    -46,
+    -44,
+    -43,
+    -41,
+    -40,
+    -38,
+    -36,
+    -35,
+    -33,
+    -31,
+    -29,
+    -28,
+    -26,
     -25,
-    -24,
-    -24,
     -23,
-    -22,
     -21,
     -20,
-    -20,
-    -19,
     -18,
     -17,
-    -16,
     -15,
-    -14,
-    -13,
     -13,
     -12,
-    -11,
     -10,
     -9,
-    -9,
-    -8,
     -7,
-    -6,
-    -5,
     -5,
     -4,
-    -3,
     -2,
     -1,
-    -1,
     0,
-    0,
-    1,
-    2,
     2,
     3,
-    4,
     5,
     6,
-    6,
-    7,
     8,
-    9,
-    10,
     10,
     11,
-    12,
     13,
     14,
-    14,
-    15,
-    15,
     16,
-    16,
-    17,
     18,
     19,
-    20,
-    20,
     21,
     22,
-    23,
-    24
+    24,
+    26,
+    27,
+    29,
+    30,
+    30,
+    32,
+    33,
+    35,
+    36,
+    38,
+    40,
+    41,
+    43,
+    44,
+    46,
+    48
 };
-
-void taskqueueready(struct task *task);
-void taskaddwait(struct task *task);
-void taskaddsleep(struct task *task);
-void taskaddstopped(struct task *task);
-void taskaddzombie(struct task *task);
+static struct task     *taskrtqueue;
 
 typedef void taskfunc_t(struct task *);
 taskfunc_t             *taskfunctab[TASKNSTATE]
@@ -188,17 +189,25 @@ tasksetnice(struct task *task, long val)
 static __inline__ long
 taskadjprio(struct task *task)
 {
+    long sched = task->sched;
     long prio = task->prio;
     long nice = task->nice;
-    long sched = task->sched;
 
     /* wrap around back to 0 at SCHEDNPRIO */
     prio++;
-    prio &= SCHEDNPRIO - 1;
-    task->prio = prio;
-    prio += SCHEDNPRIO * sched + nice;
-    prio = min(SCHEDNPRIO * SCHEDNCLASS - 1, prio);
-    prio = max(prio, 0);
+    if (sched == SCHEDRESPONSIVE) {
+        if (prio == SCHEDNPRIO) {
+            task->sched = SCHEDNORMAL;
+            task->prio = 0;
+        }
+        prio += SCHEDNFIXED;
+    } else {
+        prio &= SCHEDNPRIO - 1;
+        task->prio = prio;
+        prio += SCHEDNFIXED + SCHEDNPRIO * sched + nice;
+        prio = min(SCHEDNFIXED + SCHEDNPRIOCLASS * SCHEDNPRIO - 1, prio);
+        prio = max(prio, SCHEDNFIXED);
+    }
 
     return prio;
 }
@@ -206,9 +215,11 @@ taskadjprio(struct task *task)
 static __inline__ long
 taskwakeprio(struct task *task)
 {
-    long nice = task->nice;
     long sched = task->sched;
-    long prio = sched * SCHEDNPRIO;
+    long nice = task->nice;
+    long prio = ((sched == SCHEDFIXED)
+                 ? task->prio
+                 : SCHEDNFIXED + sched * SCHEDNPRIO);
 
     return prio;
 }
@@ -490,23 +501,25 @@ taskunwait(uintptr_t wchan)
 void
 taskqueueready(struct task *task)
 {
-    long          prio = task->prio;
     long          sched = task->sched;
+    long          prio = task->prio;
     long          state = task->state;
     struct task **taskqptr;
-
+    
     if (sched == SCHEDRT) {
         if (prio < 0) {
             /* SCHED_FIFO */
-            prio = -prio;
+//            prio = -prio;
             mtxlk(&taskrunmtxtab[prio].lk);
-            taskqptr = &taskruntab[prio];
+//            taskqptr = &taskruntab[prio];
+            taskqptr = &taskrtqueue;            
             taskpush(task, taskqptr);
             mtxunlk(&taskrunmtxtab[prio].lk);
         } else {
             /* SCHED_RR */
             mtxlk(&taskrunmtxtab[prio].lk);
-            taskqptr = &taskruntab[prio];
+//            taskqptr = &taskruntab[prio];
+            taskqptr = &taskrtqueue;
             taskqueue(task, taskqptr);
             mtxunlk(&taskrunmtxtab[prio].lk);
         }
@@ -530,8 +543,8 @@ taskpick(struct task *curtask)
 {
     struct task  *task = NULL;
     struct task **taskqptr;
-    long          prio = curtask->prio;
     long          sched = curtask->sched;
+    long          prio = curtask->prio;
     long          state = curtask->state;
     taskfunc_t   *func = taskfunctab[state];
 
@@ -540,7 +553,9 @@ taskpick(struct task *curtask)
         func(curtask);
     }
     do {
-        for (prio = 0 ; prio < SCHEDNCLASS * SCHEDNPRIO ; prio++) {
+        for (prio = 0 ;
+             prio < SCHEDNFIXED + SCHEDNPRIOCLASS * SCHEDNPRIO ;
+             prio++) {
             mtxlk(&taskrunmtxtab[prio].lk);
             taskqptr = &taskruntab[prio];
             if (*taskqptr) {

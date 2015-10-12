@@ -41,6 +41,7 @@
 
 /* declare function with no return (e.g., longjmp()) */
 #define NORETURN    __attribute__ ((__noreturn__))
+#define INTERRUPT   __attribute__ ((__interrupt__)) __attribute__ ((__no_caller_aved_registers__))
 #define PURE        __attribute__ ((__pure__))
 
 #define likely(x)   (__builtin_expect(!!(x), 1))
