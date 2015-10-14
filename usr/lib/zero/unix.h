@@ -81,6 +81,8 @@
 #endif
 #define unmapanon(ptr, size) munmap(ptr, size)
 
+extern void * sbrk(intptr_t delta);
+
 #define growheap(ofs) sbrk(ofs)
 
 void * readfile(char *filename, size_t *sizeret);
