@@ -62,9 +62,8 @@
 #include <kern/cred.h>
 #include <kern/syscall.h>
 #include <kern/proc/task.h>
-#if !defined(__arm__)
 #include <kern/unit/x86/cpu.h>
-#endif
+#include <kern/unit/x86/vm.h>
 
 /* system-assigned process IDs */
 #define PROCKERN     0 // main kernel; context switches, system calls, ...
@@ -96,18 +95,18 @@ struct procseginfo {
 
 /* process */
 struct proc {
+    /* process and thread management */
     struct task         *task;
+    struct task         *thrqueue;
     long                 nthr;          // # of child threads
     struct task        **thrtab;        // child threads
-    /* round-robin queue */
-//    struct thrq       thrq;           // queue of ready threads
-    /* memory attributes */
-    pde_t               *pagedir;       // page directory address
-//    size_t               npagetab;    // # of allocated page structures
-//    struct virtpage     *pagetab;
-    struct physpage     *pagelru;       // LRU-queue for in-core physical pages
+    /* memory management */
+    struct vmpagemap     vmpagemap;
     uint8_t             *brk;           // current heap-top
     struct procseginfo  *seginfo;       // process segment information
+    /* WORDSIZE * CHAR_BIT LRU-queues */
+    struct physpage    **pagelru;       // in-core physical pages
+    struct slabhdr     **vmslabtab;     // PTRBITS queues of slabs
     /* process credentials */
     struct cred         *cred;          // effective credentials
     struct cred         *realcred;      // real credentials
@@ -125,8 +124,6 @@ struct proc {
     long                 argc;          // argument count
     char               **argv;          // argument vector
     char               **envp;          // environment strings
-    /* memory management */
-    struct slabhdr      *vmtab[PTRBITS];
     /* keyboard input buffer */
     void                *kbdbuf;
 #if 0

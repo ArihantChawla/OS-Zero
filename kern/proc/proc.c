@@ -51,7 +51,7 @@ procinit(long id)
             ptr = kmalloc(NPDE * sizeof(pde_t));
             if (ptr) {
                 kbzero(ptr, NPDE * sizeof(pde_t));
-                proc->pagedir = ptr;
+                proc->vmpagemap.dir = ptr;
             } else {
                 kfree(proc);
                 
@@ -79,7 +79,7 @@ procinit(long id)
                 stk->base = ptr;
                 stk->size = TASKSTKSIZE;
             } else {
-                kfree(proc->pagedir);
+                kfree(proc->vmpagemap.dir);
                 kfree(task->kstk.base);
                 kfree(proc);
                 
@@ -92,7 +92,7 @@ procinit(long id)
                 proc->desctab = ptr;
                 proc->ndesctab = TASKNDESC;
             } else {
-                kfree(proc->pagedir);
+                kfree(proc->vmpagemap.dir);
                 kfree(task->ustk.base);
                 kfree(task->kstk.base);
                 kfree(proc);
@@ -107,7 +107,7 @@ procinit(long id)
                 proc->pagetab = ptr;
                 proc->npagetab = NPAGEMAX;
             } else {
-                kfree(proc->pagedir);
+                kfree(proc->vmpagemap.dir);
                 kfree(task->ustk.base);
                 kfree(task->kstk.base);
                 kfree(proc->desctab);

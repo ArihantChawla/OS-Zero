@@ -4,7 +4,7 @@
 /* # of I/O ports */
 #define NIOPORT      65536
 
-/* FIXME: Windows uses 32-bit long on x86-64 */
+#define WORDSIZE     8
 #define CHARSIZE     1
 #define SHORTSIZE    2
 #define INTSIZE      4

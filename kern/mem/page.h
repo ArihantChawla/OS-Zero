@@ -26,7 +26,7 @@
     ((!(pg)) ? NULL : ((void *)(((pg) - (pt)) << PAGESIZELOG2)))
 
 /* index into table of LRU-queues */
-#define pagecalcqid(pg)   max(LONGSIZE * CHAR_BIT - 1, lzerol(pg->nflt))
+#define pagecalcqid(pg)   max(WORDSIZE * CHAR_BIT - 1, lzerol(pg->nflt))
 
 /* working sets */
 #if 0
@@ -38,17 +38,15 @@ extern pid_t           vmsetmap[NPAGEPHYS];
 #define pageaddset(pg) setbit(vmsetbitmap, pagenum((pg)->adr))
 #define pageclrset(pg) clrbit(vmsetbitmap, pagenum((pg)->adr))
 
-struct userpage {
-    uintptr_t        adr;
-    unsigned long    nflt;
-    struct userpage *prev;
-    struct userpage *next;
-};
-
-#if 0
 #define PAGEWIREBIT 0x00000001
 #define PAGEBUFBIT  0x00000002
-#endif
+struct virtpage {
+    uintptr_t        adr;
+    unsigned long    flg;
+    struct virtpage *prev;
+    struct virtpage *next;
+};
+
 struct physpage {
     volatile long    lk;        // mutual exclusion lock
     long             nref;      // reference count

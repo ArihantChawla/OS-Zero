@@ -4,6 +4,7 @@
 /* # of I/O ports */
 #define NIOPORT      65536
 
+#define WORDSIZE     4
 #define CHARSIZE     1
 #define SHORTSIZE    2
 #define INTSIZE      4

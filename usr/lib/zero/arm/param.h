@@ -1,8 +1,7 @@
 #ifndef __ZERO_ARM_PARAM_H__
 #define __ZERO_ARM_PARAM_H__
 
-#define ZEROARM      1
-
+#define WORDSIZE     4
 #define CHARSIZE     1
 #define SHORTSIZE    2
 #define INTSIZE      4

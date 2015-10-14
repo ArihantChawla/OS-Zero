@@ -3,12 +3,13 @@
 
 #include <stdint.h>
 #include <zero/param.h>
-//#include <kern/buf.h>
-#include <kern/unit/x86/link.h>
 #if !defined(__KERNEL__)
 #define __KERNEL__ 1
 #endif
 #include <zero/mtx.h>
+//#include <kern/buf.h>
+#include <kern/unit/x86/link.h>
+#include <kern/unit/ia32/types.h>
 
 extern long kernlongmode;
 
@@ -89,6 +90,15 @@ vmflushtlb(void *adr)
 #define PAGEFLTFLGMASK  0x00000007U
 #define PAGEFLTADRMASK  0xfffffff8U
 #define PAGEFLTPAGEMASK 0xfffff000U
+
+struct vmpagemap {
+    pde_t           *dir;       // page directory address
+    pte_t           *tab;       // flat page-table of NPDE * NPTE entries
+#if 0
+    size_t           nvmtab;
+    struct virtpage *vmtab;
+#endif
+};
 
 struct vmpagestat {
     unsigned long nphys;
