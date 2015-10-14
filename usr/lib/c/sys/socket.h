@@ -11,7 +11,7 @@
 #include <sys/types.h>
 #endif
 #include <zero/cdecl.h>
-#include <bits/sys/socket.h>
+#include <sys/bits/socket.h>
 
 #if !defined(__SOCKLEN_T_DEFINED)
 typedef long           socklen_t;

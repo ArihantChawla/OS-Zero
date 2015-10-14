@@ -1,6 +1,7 @@
 #ifndef __SYS_WAIT_H__
 #define __SYS_WAIT_H__
 
+#include <features.h>
 #include <signal.h>
 #include <sys/types.h>
 #include <sys/resource.h>
@@ -24,7 +25,7 @@
 #if !defined(_POSIX_SOURCE)
 #define _WAITINT(w)          (*(int *)&(w))
 union wait {
-	int status;
+    int status;
 };
 #else /* defined(_POSIX_SOURCE) */
 #define _WAITSTATUS          int *

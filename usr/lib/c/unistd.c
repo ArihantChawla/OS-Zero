@@ -22,13 +22,13 @@
 long sysconftab[NSYSCONF]
 = {
     BUFSIZE,                    /* _SC_BLKSIZE */
-    0,                          /* _SC_L2NWAY */
-    0,                          /* _SC_L2SIZE */
+    0,                          /* _SC_L2_NWAY */
+    0,                          /* _SC_L2_SIZE */
     0,                          /* _SC_L1NWAYDATA */
     0,                          /* _SC_L1NWAYINST */
     0,                          /* _SC_L1INSTSIZE */
     0,                          /* _SC_L1DATASIZE */
-    0,                          /* _SC_CACHELINESIZE */
+    0,                          /* _SC_CACHELINE_SIZE */
     0,                          /* _SC_NPROCESSORS_ONLN */
     0,                          /* _SC_NPROCESSORS_CONF */
     0,                          /* _SC_AVPHYS_PAGES */
@@ -57,7 +57,7 @@ zeromtx       sysconflk;
 long
 sysconfupd(int name)
 {
-    long *ptr = sysconftab + NNEGSYSCONF;
+    long *ptr = sysconftab - MINSYSCONF;
     long  ret = -1;
     
     switch (name) {
@@ -86,19 +86,19 @@ static void
 sysconfinit(long *tab)
 {
     struct m_cpuinfo  cpuinfo;
-    long             *ptr = tab + NNEGSYSCONF;
+    long             *ptr = tab - MINSYSCONF;
 
     mtxlk(&sysconflk);
     if (!(sysconfbits & SYSCONF_CPUPROBE)) {
         /* probe persistent values */
         cpuprobe(&cpuinfo);
-        ptr[_SC_L2NWAY] = cpuinfo.l2.nway;
-        ptr[_SC_L2SIZE] = cpuinfo.l2.size;
-        ptr[_SC_L1DATANWAY] = cpuinfo.l1d.nway;
-        ptr[_SC_L1INSTNWAY] = cpuinfo.l1i.nway;
-        ptr[_SC_L1DATASIZE] = cpuinfo.l1d.size;
-        ptr[_SC_L1INSTSIZE] = cpuinfo.l1i.size;
-        ptr[_SC_CACHELINESIZE] = cpuinfo.l2.clsz;
+        ptr[_SC_L2_NWAY] = cpuinfo.l2.nway;
+        ptr[_SC_L2_SIZE] = cpuinfo.l2.size;
+        ptr[_SC_L1_DATA_NWAY] = cpuinfo.l1d.nway;
+        ptr[_SC_L1_INST_NWAY] = cpuinfo.l1i.nway;
+        ptr[_SC_L1_DATA_SIZE] = cpuinfo.l1d.size;
+        ptr[_SC_L1_INST_SIZE] = cpuinfo.l1i.size;
+        ptr[_SC_CACHELINE_SIZE] = cpuinfo.l2.clsz;
         sysconfbits |= SYSCONF_CPUPROBE;
     }
     if (sysconfbits & SYSCONF_INIT) {
@@ -116,7 +116,7 @@ sysconfinit(long *tab)
 long
 sysconf(int name)
 {
-    long *ptr = sysconftab + NNEGSYSCONF;
+    long *ptr = sysconftab - MINSYSCONF;
     long  retval = -1;
 
     if (!(sysconfbits & SYSCONF_INIT)) {
@@ -125,7 +125,7 @@ sysconf(int name)
     if (_sysconfneedupd(name)) {
         retval = sysconfupd(name);
     }
-    if (name < -NNEGSYSCONF || name > NSYSCONF - NNEGSYSCONF) {
+    if (name < MINSYSCONF || name > NSYSCONF + MINSYSCONF) {
         errno = EINVAL;
     } else {
         retval = ptr[name];
@@ -166,7 +166,7 @@ main(int argc, char *argv[])
 {
     fprintf(stderr, "PAGESIZE\t%ld\n", getpagesize());
     fprintf(stderr, "BLKSIZE\t\t%ldK\n", sysconf(_SC_BLKSIZE) >> 10);
-    fprintf(stderr, "CLSIZE\t\t%ld\n", sysconf(_SC_CACHELINESIZE));
+    fprintf(stderr, "CLSIZE\t\t%ld\n", sysconf(_SC_CACHELINE_SIZE));
     fprintf(stderr, "PAGES\t\t%ld\n", sysconf(_SC_PHYS_PAGES));
     fprintf(stderr, "AVPAGES\t\t%ld\n", sysconf(_SC_AVPHYS_PAGES));
 

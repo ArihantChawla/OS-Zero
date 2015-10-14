@@ -28,7 +28,8 @@ extern void schedinit(void);
 #define SCHEDRESPONSIVE   0     // system tasks
 #define SCHEDNORMAL       1     // user tasks
 #define SCHEDBATCH        2     // batch tasks
-#define SCHEDNPRIOCLASS   3     // # of scheduler classes
+#define SCHEDIDLE         3     // idle tasks
+#define SCHEDNPRIOCLASS   4     // # of scheduler classes
 #define SCHEDNPRIO        64    // # of priorities per class
 /* fixed priorities */
 #define SCHEDHID          0

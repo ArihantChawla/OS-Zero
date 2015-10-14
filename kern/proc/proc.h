@@ -93,7 +93,20 @@ struct procseginfo {
     void   *brk;
 };
 
-/* process */
+/* process structure */
+/*
+ * termination status (status-member)
+ * ----------------------------------
+ * - exit status byte in low 8 bits
+ * - termination signal in second-lowest 8 bits
+ * - stop signal in third-lowest 8 bits
+ * - flags in high bits
+ */
+#define procexitstatus(proc) ((proc)->status & 0xff)
+#define procexitsig(proc)    (((proc)->status >> 8) & 0xff)
+#define procstopsig(proc)    (((proc)->status >> 16) & 0xff)
+#define PROCEXITED           (1 << 31)
+#define PROCSIGNALED         (1 << 30)
 struct proc {
     /* process and thread management */
     struct task         *task;
@@ -126,6 +139,7 @@ struct proc {
     char               **envp;          // environment strings
     /* keyboard input buffer */
     void                *kbdbuf;
+    long                 status;        // termination status
 #if 0
     /* event queue */
     struct ev           *evq;
