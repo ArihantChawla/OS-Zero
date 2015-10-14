@@ -6,6 +6,8 @@
  * Copyright (C) Tuomo Petteri Venäläinen 2014-2015
  */
 
+#define GNUMALLOC         0     // replace GNU malloc by using hooks
+
 #if defined(__BIGGEST_ALIGNMENT__)
 #define MALLOCALIGNMENT   __BIGGEST_ALIGNMENT__
 #endif
@@ -52,7 +54,7 @@
 #define MALLOCSTEALMAG    0
 #define MALLOCNEWHACKS    0
 
-#define MALLOCNOSBRK      0 // do NOT use sbrk()/heap, just mmap()
+#define MALLOCNOSBRK      1 // do NOT use sbrk()/heap, just mmap()
 #define MALLOCDIAG        0 // run [heavy] internal diagnostics for debugging
 #define MALLOCFREEMDIR    0 // under construction
 #define MALLOCFREEMAP     0 // use free block bitmaps
@@ -456,13 +458,21 @@ long long            nmapbyte;
 long long            ntabbyte;
 #endif
 
-#if (ZMALLOCDEBUGHOOKS) || (defined(_ZERO_SOURCE) && (ZMALLOCHOOKS))
+#if (ZMALLOCDEBUGHOOKS) || (defined(_ZERO_SOURCE) && (ZMALLOCHOOKS)) && 0
 void (*__zmalloc_hook)(size_t size, const void *caller);
 void (*__zrealloc_hook)(void *ptr, size_t size, const void *caller);
 void (*__zmemalign_hook)(size_t align, size_t size, const void *caller);
 void (*__zfree_hook)(void *ptr, const void *caller);
 void (*__zmalloc_initialize_hook)(void);
 void (*__zafter_morecore_hook)(void);
+#endif
+#if defined(GNUMALLOC) && 0
+extern void *(*__malloc_hook)(size_t size, const void *caller);
+extern void *(*__realloc_hook)(void *ptr, size_t size, const void *caller);
+extern void *(*__memalign_hook)(size_t align, size_t size, const void *caller);
+extern void  (*__free_hook)(void *ptr, const void *caller);
+extern void *(*__malloc_initialize_hook)(void);
+extern void  (*__after_morecore_hook)(void);
 #elif defined(_GNU_SOURCE) && defined(GNUMALLOCHOOKS) && !defined(__GLIBC__)
 void *(*__malloc_hook)(size_t size, const void *caller);
 void *(*__realloc_hook)(void *ptr, size_t size, const void *caller);
@@ -616,7 +626,7 @@ mallquit(int sig)
 }
 #endif
 
-#if (ZMALLOCDEBUGHOOKS) && (ZMALLOCHOOKS)
+#if (ZMALLOCDEBUGHOOKS) && (ZMALLOCHOOKS) && 0
 
 void
 mallocinithook(void)
@@ -1505,14 +1515,55 @@ postfork(void)
     return;
 }
 
+#if defined(GNUMALLOC)
+
+void * zero_malloc(size_t size);
+void * zero_realloc(void *ptr, size_t size);
+void * zero_memalign(size_t align, size_t size);
+void   zero_free(void *ptr);
+
+void *
+gnu_malloc_hook(size_t size, const void *caller)
+{
+    void *adr = zero_malloc(size);
+
+    return adr;
+}
+
+void *
+gnu_realloc_hook(void *ptr, size_t size, const void *caller)
+{
+    void *adr = zero_realloc(ptr, size);
+
+    return adr;
+}
+
+void *
+gnu_memalign_hook(size_t align, size_t size)
+{
+    void *adr = zero_memalign(align, size);
+
+    return adr;
+}
+
+void
+gnu_free_hook(void *ptr)
+{
+    zero_free(ptr);
+
+    return;
+}
+
+#endif /* GNUMALLOC */
+
 static void
 mallinit(void)
 {
-    void       *heap;
     long        narn;
     long        arnid;
     long        bktid;
 #if (!MALLOCNOSBRK)
+    void       *heap;
     long        ofs;
 #endif
     uint8_t    *ptr;
@@ -1526,7 +1577,12 @@ mallinit(void)
         
         return;
     }
-#if (ZMALLOCDEBUGHOOKS) && defined(_ZERO_SOURCE) && (ZMALLOCHOOKS)
+#if defined(GNUMALLOC)
+    __malloc_hook = gnu_malloc_hook;
+    __realloc_hook = gnu_realloc_hook;
+    __memalign_hook = gnu_memalign_hook;
+    __free_hook = gnu_free_hook;
+#elif (ZMALLOCDEBUGHOOKS) && defined(_ZERO_SOURCE) && (ZMALLOCHOOKS) && 0
     __zmalloc_hook = mallochook;
     __zrealloc_hook = reallochook;
     __zmemalign_hook = memalignhook;
@@ -1609,7 +1665,7 @@ mallinit(void)
 #endif /* !MALLOCNOSBRK */
     g_malloc.mlktab = mapanon(g_malloc.zerofd, MDIRNL1KEY * sizeof(long));
     g_malloc.mdir = mapanon(g_malloc.zerofd, MDIRNL1KEY * sizeof(void *));
-#if (ZMALLOCDEBUGHOOKS) || (defined(_ZERO_SOURCE) && (ZMALLOCHOOKS))
+#if (ZMALLOCDEBUGHOOKS) || (defined(_ZERO_SOURCE) && (ZMALLOCHOOKS)) && 0
     if (__zmalloc_initialize_hook) {
         __zmalloc_initialize_hook();
     }
@@ -2550,7 +2606,11 @@ __attribute__ ((alloc_size(1)))
 __attribute__ ((assume_aligned(MALLOCMINSIZE)))
 __attribute__ ((malloc))
 #endif
+#if defined(GNUMALLOC)
+zero_malloc(size_t size)
+#else
 malloc(size_t size)
+#endif
 {
     void   *ptr = NULL;
 
@@ -2561,12 +2621,14 @@ malloc(size_t size)
         
         return ptr;
     }
-#if (ZMALLOCDEBUGHOOKS) || (defined(_ZERO_SOURCE) && (ZMALLOCHOOKS))
+#if (ZMALLOCDEBUGHOOKS) || (defined(_ZERO_SOURCE) && (ZMALLOCHOOKS)) && 0
     if (__zmalloc_hook) {
         void *caller = NULL;
 
         m_getretadr(caller);
-        __zmalloc_hook(size, (const void *)caller);;
+        ptr = __zmalloc_hook(size, (const void *)caller);
+
+        return ptr;
     }
 #endif
     ptr = _malloc(size, 0, 0);
@@ -2590,7 +2652,11 @@ __attribute__ ((alloc_size(1, 2)))
 __attribute__ ((assume_aligned(MALLOCMINSIZE)))
 __attribute__ ((malloc))
 #endif
+#if defined(GNUMALLOC)
+zero_calloc(size_t n, size_t size)
+#else
 calloc(size_t n, size_t size)
+#endif
 {
     size_t sz = max(n * size, MALLOCMINSIZE);
     void *ptr = NULL;
@@ -2602,12 +2668,14 @@ calloc(size_t n, size_t size)
         
         return ptr;
     }
-#if (ZMALLOCDEBUGHOOKS) || (defined(_ZERO_SOURCE) && (ZMALLOCHOOKS))
+#if (ZMALLOCDEBUGHOOKS) || (defined(_ZERO_SOURCE) && (ZMALLOCHOOKS)) && 0
     if (__zmalloc_hook) {
         void *caller = NULL;
 
         m_getretadr(caller);
-        __zmalloc_hook(size, (const void *)caller);;
+        ptr = __zmalloc_hook(size, (const void *)caller);
+
+        return ptr;
     }
 #endif
     ptr = _malloc(sz, 0, 1);
@@ -2626,17 +2694,24 @@ void *
 __attribute__ ((alloc_size(2)))
 __attribute__ ((assume_aligned(MALLOCMINSIZE)))
 #endif
+#if defined(GNUMALLOC)
+zero_realloc(void *ptr,
+             size_t size)
+#else
 realloc(void *ptr,
         size_t size)
+#endif
 {
     void *retptr = NULL;
 
-#if (ZMALLOCDEBUGHOOKS) || (defined(_ZERO_SOURCE) && (ZMALLOCHOOKS))
+#if (ZMALLOCDEBUGHOOKS) || (defined(_ZERO_SOURCE) && (ZMALLOCHOOKS)) && 0
     if (__zrealloc_hook) {
         void *caller = NULL;
 
         m_getretadr(caller);
-        __zrealloc_hook(ptr, size, (const void *)caller);
+        ptr = __zrealloc_hook(ptr, size, (const void *)caller);
+
+        return ptr;
     }
 #endif
     if (!size && (ptr)) {
@@ -2660,14 +2735,20 @@ realloc(void *ptr,
 }
 
 void
+#if defined(GNUMALLOC)
+zero_free(void *ptr)
+#else
 free(void *ptr)
+#endif
 {
-#if (ZMALLOCDEBUGHOOKS) || (defined(_ZERO_SOURCE) && (ZMALLOCHOOKS))
+#if (ZMALLOCDEBUGHOOKS) || (defined(_ZERO_SOURCE) && (ZMALLOCHOOKS)) && 0
     if (__zfree_hook) {
         void *caller = NULL;
 
         m_getretadr(caller);
         __zfree_hook(ptr, (const void *)caller);
+
+        return;
     }
 #endif
     if (ptr) {
@@ -2692,12 +2773,14 @@ aligned_alloc(size_t align,
     void   *ptr = NULL;
     size_t  aln = max(align, MALLOCMINSIZE);
 
-#if (ZMALLOCDEBUGHOOKS) || (defined(_ZERO_SOURCE) && (ZMALLOCHOOKS))
+#if (ZMALLOCDEBUGHOOKS) || (defined(_ZERO_SOURCE) && (ZMALLOCHOOKS)) && 0
     if (__zmemalign_hook) {
         void *caller = NULL;
         
         m_getretadr(caller);
-        __zmemalign_hook(align, size, (const void *)caller);
+        ptr = __zmemalign_hook(align, size, (const void *)caller);
+
+        return ptr
     }
 #endif
     if (!powerof2(aln) || (size & (aln - 1))) {
@@ -2732,12 +2815,14 @@ posix_memalign(void **ret,
     size_t  aln = max(align, MALLOCMINSIZE);
     int     retval = -1;
 
-#if (ZMALLOCDEBUGHOOKS) || (defined(_ZERO_SOURCE) && (ZMALLOCHOOKS))
+#if (ZMALLOCDEBUGHOOKS) || (defined(_ZERO_SOURCE) && (ZMALLOCHOOKS)) && 0
     if (__zmemalign_hook) {
         void *caller = NULL;
         
         m_getretadr(caller);
-        __zmemalign_hook(align, size, (const void *)caller);
+        ptr = __zmemalign_hook(align, size, (const void *)caller);
+
+        return ptr
     }
 #endif
     if (!powerof2(align) || (align & (sizeof(void *) - 1))) {
@@ -2775,12 +2860,14 @@ valloc(size_t size)
 {
     void *ptr;
 
-#if (ZMALLOCDEBUGHOOKS) || (defined(_ZERO_SOURCE) && (ZMALLOCHOOKS))
+#if (ZMALLOCDEBUGHOOKS) || (defined(_ZERO_SOURCE) && (ZMALLOCHOOKS)) && 0
     if (__zmemalign_hook) {
         void *caller = NULL;
         
         m_getretadr(caller);
-        __zmemalign_hook(PAGESIZE, size, (const void *)caller);
+        ptr = __zmemalign_hook(PAGESIZE, size, (const void *)caller);
+
+        return ptr
     }
 #endif
     ptr = _malloc(size, PAGESIZE, 0);
@@ -2802,18 +2889,25 @@ __attribute__ ((alloc_size(2)))
 __attribute__ ((assume_aligned(MALLOCMINSIZE)))
 __attribute__ ((malloc))
 #endif
+#if defined(GNUMALLOC)
+zero_memalign(size_t align,
+              size_t size)
+#else
 memalign(size_t align,
          size_t size)
+#endif
 {
     void   *ptr = NULL;
     size_t  aln = max(align, MALLOCMINSIZE);
 
-#if (ZMALLOCDEBUGHOOKS) || (defined(_ZERO_SOURCE) && (ZMALLOCHOOKS))
+#if (ZMALLOCDEBUGHOOKS) || (defined(_ZERO_SOURCE) && (ZMALLOCHOOKS)) && 0
     if (__zmemalign_hook) {
         void *caller = NULL;
         
         m_getretadr(caller);
-        __zmemalign_hook(align, size, (const void *)caller);
+        ptr = __zmemalign_hook(align, size, (const void *)caller);
+
+        return ptr;
     }
 #endif
     if (!powerof2(align)) {
@@ -2842,12 +2936,14 @@ reallocf(void *ptr,
 {
     void *retptr;
 
-#if (ZMALLOCDEBUGHOOKS) || (defined(_ZERO_SOURCE) && (ZMALLOCHOOKS))
+#if (ZMALLOCDEBUGHOOKS) || (defined(_ZERO_SOURCE) && (ZMALLOCHOOKS)) && 0
     if (__zrealloc_hook) {
         void *caller = NULL;
 
         m_getretadr(caller);
-        __zrealloc_hook(ptr, size, (const void *)caller);
+        ptr = __zrealloc_hook(ptr, size, (const void *)caller);
+
+        return ptr;
     }
 #endif
     if (ptr) {
@@ -2884,12 +2980,14 @@ pvalloc(size_t size)
     size_t  sz = rounduppow2(size, PAGESIZE);
     void   *ptr = _malloc(sz, PAGESIZE, 0);
 
-#if (ZMALLOCDEBUGHOOKS) || (defined(_ZERO_SOURCE) && (ZMALLOCHOOKS))
+#if (ZMALLOCDEBUGHOOKS) || (defined(_ZERO_SOURCE) && (ZMALLOCHOOKS)) && 0
     if (__zmemalign_hook) {
         void *caller = NULL;
         
         m_getretadr(caller);
-        __zmemalign_hook(PAGESIZE, size, (const void *)caller);
+        ptr = __zmemalign_hook(PAGESIZE, size, (const void *)caller);
+
+        return ptr;
     }
 #endif
     if (ptr) {
@@ -2918,12 +3016,14 @@ _aligned_malloc(size_t size,
     void   *ptr = NULL;
     size_t  aln = max(align, MALLOCMINSIZE);
 
-#if (ZMALLOCDEBUGHOOKS) || (defined(_ZERO_SOURCE) && (ZMALLOCHOOKS))
+#if (ZMALLOCDEBUGHOOKS) || (defined(_ZERO_SOURCE) && (ZMALLOCHOOKS)) && 0
     if (__zmemalign_hook) {
         void *caller = NULL;
         
         m_getretadr(caller);
-        __zmemalign_hook(align, size, (const void *)caller);
+        ptr = __zmemalign_hook(align, size, (const void *)caller);
+
+        return ptr;
     }
 #endif
     if (!powerof2(align)) {
@@ -2944,12 +3044,14 @@ _aligned_malloc(size_t size,
 void
 _aligned_free(void *ptr)
 {
-#if (ZMALLOCDEBUGHOOKS) || (defined(_ZERO_SOURCE) && (ZMALLOCHOOKS))
+#if (ZMALLOCDEBUGHOOKS) || (defined(_ZERO_SOURCE) && (ZMALLOCHOOKS)) && 0
     if (__zfree_hook) {
         void *caller = NULL;
 
         m_getretadr(caller);
         __zfree_hook(ptr, (const void *)caller);
+
+        return;
     }
 #endif
     if (ptr) {
@@ -2977,12 +3079,14 @@ _mm_malloc(int size,
     void   *ptr = NULL;
     size_t  aln = max(align, MALLOCMINSIZE);
 
-#if (ZMALLOCDEBUGHOOKS) || (defined(_ZERO_SOURCE) && (ZMALLOCHOOKS))
+#if (ZMALLOCDEBUGHOOKS) || (defined(_ZERO_SOURCE) && (ZMALLOCHOOKS)) && 0
     if (__zmemalign_hook) {
         void *caller = NULL;
         
         m_getretadr(caller);
-        __zmemalign_hook(align, size, (const void *)caller);
+        ptr = __zmemalign_hook(align, size, (const void *)caller);
+
+        return ptr;
     }
 #endif
     if (!powerof2(align)) {
@@ -3003,12 +3107,14 @@ _mm_malloc(int size,
 void
 _mm_free(void *ptr)
 {
-#if (ZMALLOCDEBUGHOOKS) || (defined(_ZERO_SOURCE) && (ZMALLOCHOOKS))
+#if (ZMALLOCDEBUGHOOKS) || (defined(_ZERO_SOURCE) && (ZMALLOCHOOKS)) && 0
     if (__zfree_hook) {
         void *caller = NULL;
 
         m_getretadr(caller);
         __zfree_hook(ptr, (const void *)caller);
+
+        return;
     }
 #endif
     if (ptr) {
