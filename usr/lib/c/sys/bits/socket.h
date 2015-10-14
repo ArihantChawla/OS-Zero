@@ -1,7 +1,7 @@
 /* zero c library socket network programming interface */
 
-#ifndef __BITS_SYS_SOCKET_H__
-#define __BITS_SYS_SOCKET_H__
+#ifndef __SYS_BITS_SOCKET_H__
+#define __SYS_BITS_SOCKET_H__
 
 #include <stddef.h>
 #include <zero/cdecl.h>
@@ -106,5 +106,5 @@
 #define CMSG_SPACE(sz)                                                  \
     (CMSG_ALIGN(sizeof(struct cmsghdr)) + CMSG_ALIGN(sz))
 
-#endif /* __BITS_SYS_SOCKET_H__ */
+#endif /* __SYS_BITS_SOCKET_H__ */
 
