@@ -32,7 +32,7 @@
 #undef MALLOCSTAT
 #define MALLOCSTAT        0
 #define MALLOCSTKNDX      0
-#define MALLOCCONSTSLABS  0
+#define MALLOCCONSTSLABS  1
 #define MALLOCDYNARN      0
 
 #define MALLOCTRACE       1
