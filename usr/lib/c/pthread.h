@@ -9,11 +9,6 @@
 
 #if defined(linux) && !defined(ZEROPTHREAD)
 #include <bits/pthreadtypes.h>
-
-int pthread_mutex_lock(pthread_mutex_t *mutex);
-int pthread_mutex_trylock(pthread_mutex_t *mutex);
-int pthread_mutex_unlock(pthread_mutex_t *mutex);
-
 #endif /* defined(linux) */
 
 #if defined(ZEROPTHREAD)
@@ -25,12 +20,28 @@ int pthread_mutex_unlock(pthread_mutex_t *mutex);
 #include <bits/pthread.h>
 /* mutexes */
 
-#endif
+/* spin locks */
+int pthread_spin_destroy(pthread_spinlock_t *spin);
+int pthread_spin_init(pthread_spinlock_t *spin, int pshared);
+int pthread_spin_lock(pthread_spinlock_t *spin);
+int pthread_spin_trylock(pthread_spinlock_t *spin);
+int pthread_spin_unlock(pthread_spinlock_t *spin);
 
-extern int pthread_key_create(pthread_key_t *key, void (*destructor)(void *));
-extern int pthread_atfork(void (*prepare)(void),
-                          void (*parent)(void), void (*child)(void));
-extern int pthread_setspecific(pthread_key_t key, const void *val);
+/* mutex locks */
+int pthread_mutex_init(pthread_mutex_t *restrict mutex,
+                       const pthread_mutexattr_t *restrict atr);
+int pthread_mutex_destroy(pthread_mutex_t *mutex);
+int pthread_mutex_lock(pthread_mutex_t *mutex);
+int pthread_mutex_trylock(pthread_mutex_t *mutex);
+int pthread_mutex_unlock(pthread_mutex_t *mutex);
+
+/* miscellaneous routines */
+int pthread_key_create(pthread_key_t *key, void (*destructor)(void *));
+int pthread_atfork(void (*prepare)(void),
+                   void (*parent)(void), void (*child)(void));
+int pthread_setspecific(pthread_key_t key, const void *val);
+
+#endif /* defined(ZEROPTHREAD) */
 
 #endif /* defined(PTHREAD) || defined(ZEROPTHREAD) */
 

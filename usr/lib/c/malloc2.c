@@ -6,7 +6,8 @@
  * Copyright (C) Tuomo Petteri Venäläinen 2014-2015
  */
 
-#define GNUMALLOC         0     // replace GNU malloc by using hooks
+/* use zero malloc on a GNU system such as a Linux distribution */
+#define GNUMALLOC 1
 
 #if defined(__BIGGEST_ALIGNMENT__)
 #define MALLOCALIGNMENT   __BIGGEST_ALIGNMENT__
@@ -3077,7 +3078,7 @@ _mm_malloc(int size,
            int align)
 {
     void   *ptr = NULL;
-    size_t  aln = max(align, MALLOCMINSIZE);
+    size_t  aln = max((unsigned long)align, MALLOCMINSIZE);
 
 #if (ZMALLOCDEBUGHOOKS) || (defined(_ZERO_SOURCE) && (ZMALLOCHOOKS)) && 0
     if (__zmemalign_hook) {
