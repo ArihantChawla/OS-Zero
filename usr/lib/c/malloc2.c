@@ -32,9 +32,10 @@
  */
 #undef MALLOCSTAT
 #define MALLOCSTAT        0
-#define MALLOCSTKNDX      0
+#define MALLOCSTKNDX      1
 #define MALLOCCONSTSLABS  1
 #define MALLOCDYNARN      0
+#define MALLOCGETNPROCS   1
 
 #define MALLOCTRACE       1
 #if defined(NVALGRIND)
@@ -151,6 +152,9 @@
 #include <malloc.h>
 #if (GNUTRACE) && (MALLOCTRACE)
 #include <execinfo.h>
+#endif
+#if (MALLOCGETNPROCS)
+#include <sys/sysinfo.h>
 #endif
 
 #define ZEROMTX 1
@@ -1574,7 +1578,11 @@ mallinit(void)
 #if (MMAP_DEV_ZERO)
     g_malloc.zerofd = open("/dev/zero", O_RDWR);
 #endif
+#if (MALLOCGETNPROCS)
+    narn = 2 * get_nprocs_conf();
+#else
     narn = MALLOCNARN;
+#endif
     g_malloc.arntab = mapanon(g_malloc.zerofd,
                               narn * sizeof(struct arn **));
     g_malloc.narn = narn;
