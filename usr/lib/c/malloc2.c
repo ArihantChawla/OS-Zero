@@ -1,7 +1,7 @@
 /*
  * Zero Malloc Revision 2
  *
- * - an unstable alpha version of a new malloc for Zero.
+ * - a beta version of a new malloc for Zero.
  *
  * Copyright (C) Tuomo Petteri Venäläinen 2014-2015
  */
@@ -58,7 +58,7 @@
 #define MALLOCNOSBRK      1 // do NOT use sbrk()/heap, just mmap()
 #define MALLOCDIAG        0 // run [heavy] internal diagnostics for debugging
 #define MALLOCFREEMDIR    0 // under construction
-#define MALLOCFREEMAP     0 // use free block bitmaps
+#define MALLOCFREEMAP     1 // use free block bitmaps
 #define MALLOCHACKS       0 // enable experimental features
 #define MALLOCBUFMAP      0 // buffer mapped slabs to global pool
 
@@ -129,7 +129,7 @@
  * - free inactive subtables from mdir
  */
 
-#define ZMALLOCHOOKS 1
+#define ZMALLOCHOOKS 0
 #if !defined(ZMALLOCDEBUGHOOKS)
 #define ZMALLOCDEBUGHOOKS 0
 #endif
@@ -194,6 +194,10 @@
 /* allocation sizes */
 #if (MALLOCCONSTSLABS)
 #define MALLOCSLABLOG2       20
+#if (MALLOCBUFMAP)
+#define MALLOCSMALLMAPLOG2   22
+#define MALLOCMIDMAPLOG2     24
+#endif
 #elif (MALLOCSMALLSLABS)
 #define MALLOCSUPERSLABLOG2  19
 #define MALLOCSLABLOG2       17
@@ -293,12 +297,21 @@
  * 1 << bktid bytes
  */
 #if (MALLOCBUFMAP)
+#if (MALLOCCONSTSLABS)
+#define magnbufmaplog2(bktid)                                           \
+    (((bktid) <= MALLOCSMALLMAPLOG2)                                    \
+     ? 3                                                                \
+     : (((bktid) <= MALLOCMIDMAPLOG2)                                   \
+        ? 2                                                             \
+        : 1))
+#else
 #define magnbufmaplog2(bktid)                                           \
     (((bktid) <= MALLOCSMALLMAPLOG2)                                    \
      ? 4                                                                \
      : (((bktid) <= MALLOCMIDMAPLOG2)                                   \
         ? 3                                                             \
         : 2))
+#endif
 #define magnbufmap(bktid)                                               \
     (1UL << magnbufmaplog2(bktid))
 #endif /* MALLOCBUFMAP */
@@ -382,7 +395,12 @@ magprint(struct mag *mag)
 struct bkt {
     volatile long  lk;
     struct mag    *mag;
+#if (MALLOCBUFMAP)
+    unsigned long  n;
+    uint8_t        _pad[CLSIZE - 2 * sizeof(long) - sizeof(struct mag *)];
+#else
     uint8_t        _pad[CLSIZE - sizeof(long) - sizeof(struct mag *)];
+#endif
 };
 #endif
 
@@ -459,28 +477,37 @@ long long            nmapbyte;
 long long            ntabbyte;
 #endif
 
-#if (ZMALLOCDEBUGHOOKS) || (defined(_ZERO_SOURCE) && (ZMALLOCHOOKS)) && 0
-void (*__zmalloc_hook)(size_t size, const void *caller);
-void (*__zrealloc_hook)(void *ptr, size_t size, const void *caller);
-void (*__zmemalign_hook)(size_t align, size_t size, const void *caller);
-void (*__zfree_hook)(void *ptr, const void *caller);
-void (*__zmalloc_initialize_hook)(void);
-void (*__zafter_morecore_hook)(void);
+#if !defined(__MALLOC_HOOK_VOLATILE)
+#define MALLOC_HOOK_MAYBE_VOLATILE /**/
+#else
+#define MALLOC_HOOK_MAYBE_VOLATILE __MALLOC_HOOK_VOLATILE
 #endif
-#if defined(GNUMALLOC) && 0
-extern void *(*__malloc_hook)(size_t size, const void *caller);
-extern void *(*__realloc_hook)(void *ptr, size_t size, const void *caller);
-extern void *(*__memalign_hook)(size_t align, size_t size, const void *caller);
-extern void  (*__free_hook)(void *ptr, const void *caller);
-extern void *(*__malloc_initialize_hook)(void);
-extern void  (*__after_morecore_hook)(void);
+#if defined(GNUMALLOC)
+extern void *(* MALLOC_HOOK_MAYBE_VOLATILE __malloc_hook)(size_t size,
+                                                          const void *caller);
+extern void *(* MALLOC_HOOK_MAYBE_VOLATILE __realloc_hook)(void *ptr,
+                                                           size_t size,
+                                                           const void *caller);
+extern void *(* MALLOC_HOOK_MAYBE_VOLATILE __memalign_hook)(size_t align,
+                                                            size_t size,
+                                                            const void *caller);
+extern void  (* MALLOC_HOOK_MAYBE_VOLATILE __free_hook)(void *ptr,
+                                                        const void *caller);
+extern void  (* MALLOC_HOOK_MAYBE_VOLATILE __malloc_initialize_hook)(void);
+extern void  (* MALLOC_HOOK_MAYBE_VOLATILE __after_morecore_hook)(void);
 #elif defined(_GNU_SOURCE) && defined(GNUMALLOCHOOKS) && !defined(__GLIBC__)
-void *(*__malloc_hook)(size_t size, const void *caller);
-void *(*__realloc_hook)(void *ptr, size_t size, const void *caller);
-void *(*__memalign_hook)(size_t align, size_t size, const void *caller);
-void  (*__free_hook)(void *ptr, const void *caller);
-void *(*__malloc_initialize_hook)(void);
-void  (*__after_morecore_hook)(void);
+void  (* MALLOC_HOOK_MAYBE_VOLATILE __malloc_initialize_hook)(void);
+void  (* MALLOC_HOOK_MAYBE_VOLATILE __after_morecore_hook)(void);
+void *(* MALLOC_HOOK_MAYBE_VOLATILE __malloc_hook)(size_t size,
+                                                   const void *caller);
+void *(* MALLOC_HOOK_MAYBE_VOLATILE __realloc_hook)(void *ptr,
+                                                    size_t size,
+                                                    const void *caller);
+void *(* MALLOC_HOOK_MAYBE_VOLATILE __memalign_hook)(size_t align,
+                                                     size_t size,
+                                                     const void *caller);
+void  (* MALLOC_HOOK_MAYBE_VOLATILE __free_hook)(void *ptr,
+                                                 const void *caller);
 #endif
 
 #if (MALLOCSTAT)
@@ -625,64 +652,6 @@ mallquit(int sig)
     
     exit(sig);
 }
-#endif
-
-#if (ZMALLOCDEBUGHOOKS) && (ZMALLOCHOOKS) && 0
-
-void
-mallocinithook(void)
-{
-    fprintf(stderr, "MALLOC_INIT\n");
-    fflush(stderr);
-
-    return;
-}
-
-void
-mallochook(size_t size, const void *caller)
-{
-    fprintf(stderr, "MALLOC: %p (%ld)\n", caller, (long)size);
-    fflush(stderr);
-
-    return;
-}
-
-void
-reallochook(void *ptr, size_t size, const void *caller)
-{
-    fprintf(stderr, "REALLOC: %p: %p (%ld)\n", caller, ptr, size);
-    fflush(stderr);
-
-    return;
-}
-
-void
-freehook(void *ptr, const void *caller)
-{
-    fprintf(stderr, "FREE: %p\n", ptr);
-    fflush(stderr);
-
-    return;
-}
-
-void
-morecorehook(void)
-{
-    fprintf(stderr, "HEAP: %p\n", sbrk(0));
-    fflush(stderr);
-
-    return;
-}
-
-void
-memalignhook(size_t align, size_t size, const void *caller)
-{
-    fprintf(stderr, "MEMALIGN: %p: %ld (%ld)\n", caller, align, size);
-    fflush(stderr);
-
-    return;
-}
-
 #endif
 
 #if (MALLOCDIAG)
@@ -843,7 +812,11 @@ freearn(void *arg)
 #if (MALLOCSTRUCTBKT)
                 mtxlk(&g_malloc.magbkt[bktid].lk);
 #if (MALLOCBUFMAP)
+#if (MALLOCSTRUCTBKT)
+                g_malloc.magbkt[bktid].n += n;
+#else
                 g_malloc.magtab[bktid].n += n;
+#endif
 #endif
                 mag->next = g_malloc.magbkt[bktid].mag;
 #else
@@ -1523,7 +1496,7 @@ void * zero_realloc(void *ptr, size_t size);
 void * zero_memalign(size_t align, size_t size);
 void   zero_free(void *ptr);
 
-void *
+static void *
 gnu_malloc_hook(size_t size, const void *caller)
 {
     void *adr = zero_malloc(size);
@@ -1531,7 +1504,7 @@ gnu_malloc_hook(size_t size, const void *caller)
     return adr;
 }
 
-void *
+static void *
 gnu_realloc_hook(void *ptr, size_t size, const void *caller)
 {
     void *adr = zero_realloc(ptr, size);
@@ -1539,7 +1512,7 @@ gnu_realloc_hook(void *ptr, size_t size, const void *caller)
     return adr;
 }
 
-void *
+static void *
 gnu_memalign_hook(size_t align, size_t size)
 {
     void *adr = zero_memalign(align, size);
@@ -1547,7 +1520,7 @@ gnu_memalign_hook(size_t align, size_t size)
     return adr;
 }
 
-void
+static void
 gnu_free_hook(void *ptr)
 {
     zero_free(ptr);
@@ -1583,13 +1556,6 @@ mallinit(void)
     __realloc_hook = gnu_realloc_hook;
     __memalign_hook = gnu_memalign_hook;
     __free_hook = gnu_free_hook;
-#elif (ZMALLOCDEBUGHOOKS) && defined(_ZERO_SOURCE) && (ZMALLOCHOOKS) && 0
-    __zmalloc_hook = mallochook;
-    __zrealloc_hook = reallochook;
-    __zmemalign_hook = memalignhook;
-    __zfree_hook = freehook;
-    __zmalloc_initialize_hook = mallocinithook;
-    __zafter_morecore_hook = morecorehook;
 #endif
 #if (MALLOCNEWHACKS) && 0
     for (bkt = 0 ; bkt < MALLOCNBKT ; bkt++) {
@@ -2084,11 +2050,19 @@ _malloc(size_t size,
 #endif
                     if (mag->cur < mag->lim) {
                         mag->prev = NULL;
+#if (MALLOCSTRUCTBKT)
+                        mag->next = arn->magbkt[bktid].mag;
+#else
                         mag->next = arn->magtab[bktid];
+#endif
                         if (mag->next) {
                             mag->next->prev = mag;
                         }
+#if (MALLOCSTRUCTBKT)
+                        arn->magbkt[bktid].mag = mag;
+#else
                         arn->magtab[bktid] = mag;
+#endif
                     } else {
                         mag->prev = NULL;
                         mag->next = NULL;
@@ -2464,6 +2438,17 @@ _free(void *ptr)
 #else
                 mtxlk(&g_malloc.freelktab[bktid]);
 #endif
+#if (MALLOCSTRUCTBKT)
+                if (g_malloc.freebkt[bktid].n < magnbufmap(bktid)) {
+                    mag->prev = NULL;
+                    mag->next = g_malloc.freebkt[bktid].mag;
+                    if (mag->next) {
+                        mag->next->prev = mag;
+                    }
+                    g_malloc.freebkt[bktid].mag = mag;
+                    freemap = 0;
+                }
+#else
                 if (g_malloc.freetab[bktid].n < magnbufmap(bktid)) {
                     mag->prev = NULL;
                     mag->next = g_malloc.freetab[bktid];
@@ -2473,6 +2458,7 @@ _free(void *ptr)
                     g_malloc.freetab[bktid] = mag;
                     freemap = 0;
                 }
+#endif
 #if (MALLOCSTRUCTBKT)
                 mtxunlk(&g_malloc.freebkt[bktid].lk);
 #else
