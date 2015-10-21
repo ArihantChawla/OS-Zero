@@ -1,27 +1,31 @@
 #include <stddef.h>
+#include <stdio.h>
 #include <zed/zed.h>
+#include <zed/file.h>
 
-static struct zed zed;
+struct zed zed;
 
 void
 zedinitbuf(size_t nbuf)
 {
-    struct zedbuf *buftab = calloc(nbuf, sizeof(struct zedbuf));
+    struct zedfile *filetab = calloc(nbuf, sizeof(struct zedfile));
 
-    if (!buftab) {
+    if (!filetab) {
         fprintf(stderr, "ZED: failed to allocate buftab\n");
 
         exit(1);
     }
-    zed.curbuf = -1;
-    zed.nbuf = nbuf;
-    zed.buftab = buftab;
+    zed.curfile = -1;
+    zed.nfile = nbuf;
+    zed.filetab = filetab;
 }
 
 int
 main(int argc, char *argv[])
 {
-    zedinitopt(&zed, argc, argv);
-    zedinit(argc, argv);
+    zedgetopt(&zed, argc, argv);
+    zedinitbuf(1);
+
+    exit(1);
 }
 

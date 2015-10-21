@@ -1,5 +1,12 @@
+#include <stddef.h>
+#include <stdlib.h>
+#include <stdio.h>
 #include <limits.h>
 #include <zed/conf.h>
+#include <zed/zed.h>
+#include <zed/file.h>
+
+extern struct zed zed;
 
 /*
  * read file into a buffer; return pointer to buffer;
@@ -49,7 +56,7 @@ zedinitfile(char *filename)
 {
     int             fd1;
     int             fd2;
-    struct zedfile *file = calloc(1, sizeof(struct zedbuf));
+    struct zedfile *file = calloc(1, sizeof(struct zedfile));
     void           *buf;
     void           *mptr;
     char           *tmpname;
@@ -60,15 +67,15 @@ zedinitfile(char *filename)
         nfile = zed.nfile;
         if (zed.curfile == nfile - 1) {
             nfile <<= 1;
-            mptr = realloc(zed.ftab, nfile * sizeof(struct zedfile));
+            mptr = realloc(zed.filetab, nfile * sizeof(struct zedfile));
             if (!mptr) {
-                free(zed.ftab);
+                free(zed.filetab);
                 fprintf(stderr, "out of memory\n");
 
                 exit(1);
             }
-            zed.ftab = mptr;
-            memset(zed.ftab + zed.nfile,
+            zed.filetab = mptr;
+            memset(zed.filetab + zed.nfile,
                    0,
                    zed.nfile * sizeof(struct zedfile *));
             zed.nfile = nfile;

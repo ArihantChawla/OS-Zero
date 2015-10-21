@@ -5,10 +5,10 @@
 #include <zed/buf.h>
 
 struct zed {
-    long           curbuf;
-    size_t         nbuf;
-    struct zedbuf *buftab;
-    struct zedopt *opt;
+    long            curfile;
+    size_t          nfile;
+    struct zedfile *filetab;
+    struct zedopt  *opt;
 };
 
 #endif /* __ZED_ZED_H__ */
