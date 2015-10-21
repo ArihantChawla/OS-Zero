@@ -3,6 +3,8 @@
 #include <stdio.h>
 #endif
 #include <stdlib.h>
+#include <signal.h>
+#include <unistd.h>
 #include <zero/cdecl.h>
 #include <zero/param.h>
 #include <zero/trix.h>
@@ -15,6 +17,145 @@
 int32_t  vtxtermcolortab[256] ALIGNED(PAGESIZE) = VT_XTERM_COLORMAP;
 char    *vtkeystrtab[128] ALIGNED(CLSIZE);
 int32_t  vtdefcolortab[16] ALIGNED(CLSIZE) = VT_DEFAULT_COLORMAP;
+
+void
+vtsetsigs(void)
+{
+//    signal(SIGHUP, termexitsig);
+    signal(SIGINT, SIG_DFL);
+    signal(SIGQUIT, SIG_DFL);
+    signal(SIGCHLD, SIG_DFL);
+    signal(SIGSEGV, SIG_DFL);
+    signal(SIGBUS, SIG_DFL);
+    signal(SIGABRT, SIG_DFL);
+    signal(SIGFPE, SIG_DFL);
+    signal(SIGILL, SIG_DFL);
+#if defined(SIGSYS)
+    signal(SIGSYS, SIG_DFL);
+#endif
+    signal(SIGALRM, SIG_DFL);
+    signal(SIGTSTP, SIG_DFL);
+    signal(SIGTTIN, SIG_IGN);
+    signal(SIGTTOU, SIG_IGN);
+    signal(SIGCHLD, SIG_DFL);
+
+    return;
+};
+
+#if (TERMXORG)
+void
+vtinitconn(struct vt *vt)
+{
+    struct uienv_xorg *env = vt->ui.env;
+
+    vt->connfd = ConnectionNumber(env->display);
+
+    return;
+}
+
+long
+vtinitscr(struct vt *vt, long n)
+{
+    return 0;
+}
+
+long
+vtinitwin(struct vt *vt)
+{
+    return 0;
+}
+
+void
+vtmapwin(struct vt *vt)
+{
+    return;
+}
+
+void
+vtsyncwin(struct vt *vt)
+{
+    struct uienv_xorg *env = vt->ui.env;
+
+    XSync(env->display, False);
+}
+
+void
+vtfreescr(struct vt *vt)
+{
+    return;
+}
+#endif
+
+struct vt *
+vtrun(struct vt *vt)
+{
+    char         *path;
+    struct vtbuf *buf;
+//    pid_t        pid;
+
+    if (!vt) {
+        vt = malloc(sizeof(struct vt));
+    }
+//    vt-> = vt;
+    /* set signals up */
+    vtsetsigs();
+    /*
+     * set input field separator for shell to TAB for old shells that don't
+     * reset it. This is for security reasons to prevent users from setting
+     * IFS to make system() execute a different program.
+     */
+    putenv("IFS= \t");
+    /* export terminal type */
+    putenv("TERM=vt100");
+    /* allocate buffer */
+    buf = calloc(1, sizeof(struct vtbuf));
+    if (!buf) {
+        vtfree(vt);
+        fprintf(stderr, "out of memory\n");
+
+        exit(1);
+    }
+    vt->buf = buf;
+    /* allocate and read path */
+    path = malloc(PATH_MAX);
+    if (!path) {
+        vtfree(vt);
+        fprintf(stderr, "out of memory\n");
+
+        exit(1);
+    }
+    if (!getcwd(path, PATH_MAX)) {
+        vtfree(vt);
+        free(path);
+        fprintf(stderr, "out of memory\n");
+
+        exit(1);
+    }
+    vt->path = path;
+    /* initialise desktop connection */
+    vtinitconn(vt);
+    /* initialise terminal screens */
+    if (!vtinitscr(vt, TERMNSCREEN)) {
+        vtfree(vt);
+        free(path);
+
+        exit(1);
+    }
+    /* initialise terminal windows */
+    if (!vtinitwin(vt)) {
+        vtfree(vt);
+        free(path);
+        vtfreescr(vt);
+
+        exit(1);
+    }
+    /* map terminal windows */
+    vtmapwin(vt);
+    /* synchronize desktop */
+    vtsyncwin(vt);
+
+    return vt;
+}
 
 void
 vtfreecolors(struct vt *vt)

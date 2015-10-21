@@ -7,41 +7,43 @@
 
 #define ZEDDEFNROW 128
 
-struct zedrow *
+struct zedrowbuf *
 zedallocrow(struct zedrowbuf *rowbuf, size_t size)
 {
     ;
 }
 
 /* append row to buffer */
-struct zedrow *
+struct zedrowbuf *
 zedapndrow(struct zedrowbuf *rowbuf, size_t size, void *data)
 {
-    size_t         nrow;
-    void          *ptr;
-    struct zedrow *row;
+    size_t            nrow;
+    void             *ptr;
+    struct zedrowbuf *row;
 
-    nrow = rowbuf.nrow;
+    nrow = rowbuf->nrow;
     if (!nrow) {
         ptr = malloc(ZEDDEFNROW * sizeof(struct zedrowbuf));
-        rowbuf.nrowmax = ZEDDEFNROW;
-        rowbuf.rows = ptr;
+        rowbuf->nrowmax = ZEDDEFNROW;
+        rowbuf->rowtab = ptr;
     }
-    row = &rowbuf.rows[nrow];
+    row = &rowbuf->rowtab[nrow];
+#if 0
     row->size = size;
     row->data = data;
+#endif
     nrow++;
-    rowbuf.nrow = nrow;
-    if (nrow == rowbuf.nrowmax) {
+    rowbuf->nrow = nrow;
+    if (nrow == rowbuf->nrowmax) {
         nrow <<= 1;
-        ptr = realloc(rowbuf.rows, nrow * sizeof(struct zedrowbuf));
+        ptr = realloc(rowbuf->rowtab, nrow * sizeof(struct zedrowbuf));
         if (!ptr) {
             fprintf(stderr, "failed to reallocate row buffer\n");
 
             return NULL;
         }
-        rowbuf.nrowmax = nrow;
-        rowbuf.rows = ptr;
+        rowbuf->nrowmax = nrow;
+        rowbuf->rowtab = ptr;
     }
 
     return row;

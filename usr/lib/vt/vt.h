@@ -7,6 +7,7 @@
 #include <zero/cdecl.h>
 #include <zero/param.h>
 #include <zero/trix.h>
+#include <vt/term.h>
 #include <ui/ui.h>
 #include <ui/text.h>
 
@@ -114,18 +115,40 @@ struct vtsavecurs {
     long col;
 };
 
-struct vt;
-typedef void vtescfunc_t(struct vt *, long, long *);
-struct vtesctabs {
-    uint8_t      escmap[32];
-    uint8_t      csimap[32];
-    uint8_t      hashmap[32];
-    vtescfunc_t *escfunctab[256];
-    vtescfunc_t *csifunctab[256];
-    vtescfunc_t *hashfunctab[256];
+typedef ssize_t __termiofunc(int fd, void *buf, size_t nbyte);
+typedef int     __termioop(int fd, long cmd, void *buf);
+/* values for the flg member */
+#define VTBUFDIRTY (1 << 0)     // terminal buffer has not been synchronized
+#define VTBUFREAD  (1 << 1)     // terminal buffer has pending read operations
+#define VTBUFWRITE (1 << 2)     // terminal buffer has pending write operations
+struct vtbuf {
+    volatile long     lk;       // mutex
+    long              flg;      // VTBUFDIRTY, VTBUFREAD, VTBUFWRITE
+    struct termiobuf *rdqueue;  // read queue buffer structure
+    struct termiobuf *wrqueue;  // write queue buffer structure
+    __termiofunc     *chop;     // getch() (read()) or putch() (write())
+    fd_set           *wrfdset;  // write fd_set for select()
+    fd_set           *errfdset; // error fd_set for select()
+    fd_set           *rdfdset;  // read fd_set for select()
+    struct timeval    timeout;  // possible timeout for select()
+};
+
+struct vtscreen {
+    struct vt     *vttab;       // basic virtual terminal attributes (NVTSCREEN)
+    int           *fdtab;       // TERMNSCREENFDS file descriptors
+    struct vtbuf   buf;         // virtual terminal buffer structure
+    size_t         nrow;        // # of rows in rowtab
+    size_t         nscrrow;     // # of rows in scrtab
+    struct vtrow **rowtab;      // current I/O buffer
+    struct vtrow **scrtab;      // current screen rendition
 };
 
 struct vt {
+    struct vtbuf      *buf;
+    char              *path;
+#if (TERMXORG)
+    int                connfd;          // X connection file descriptor
+#endif
     struct vtatr       atr;             // terminal attributes
     struct vtstate     state;           // terminal status
 #if (__KERNEL__)
@@ -140,6 +163,16 @@ struct vt {
     struct vtcolormap  colormap;        // terminal colormaps
     struct vtesctabs  *esctabs;         // escape sequence interface
     struct vtsavecurs  savecurs;        // saved cursor and attributes
+};
+
+typedef void vtescfunc_t(struct vt *, long, long *);
+struct vtesctabs {
+    uint8_t      escmap[32];
+    uint8_t      csimap[32];
+    uint8_t      hashmap[32];
+    vtescfunc_t *escfunctab[256];
+    vtescfunc_t *csifunctab[256];
+    vtescfunc_t *hashfunctab[256];
 };
 
 #define vtisesccmd(vt, c)       bitset((vt)->esctabs->escmap, c)
@@ -163,12 +196,13 @@ struct vt {
 extern struct vtesctabs  vtesctabs;
 extern char             *vtkeystrtab[128];
 
-void vtgetopt(struct vt *vt, int argc, char *argv[]);
+struct vt * vtrun(struct vt *vt);
+void        vtgetopt(struct vt *vt, int argc, char *argv[]);
 struct vt * vtinit(struct vt *vt, int argc, char *argv[]);
-void vtinitesc(struct vt *vt);
-void vtfree(struct vt *vt);
-long vtinitbuf(struct vt *vt);
-void vtfreebuf(struct vt *vt);
+void        vtinitesc(struct vt *vt);
+void        vtfree(struct vt *vt);
+long        vtinitbuf(struct vt *vt);
+void        vtfreebuf(struct vt *vt);
 
 #endif /* __VT_VT_H__ */
 

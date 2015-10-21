@@ -1,4 +1,4 @@
 #! /bin/sh
 
-gcc -I../../lib -O -o zed buf.c ../../lib/zero/file.c
+gcc -I.. -I../../lib -O -o zed buf.c ../../lib/zero/file.c
 
