@@ -60,10 +60,10 @@ struct physlruqueue {
 
 struct physpage {
     volatile long    lk;        // mutual exclusion lock
-    long             nref;      // reference count
-    long             flg;       // page flags
-    long             pid;       // owner process ID
+    uintptr_t        nref;      // reference count
+    uintptr_t        pid;       // owner process ID
     uintptr_t        adr;       // page address
+    struct perm     *perm;      // permissions
     uintptr_t        nflt;      // # of page-fault exceptions triggered
     struct physpage *prev;      // previous on queue
     struct physpage *next;      // next on queue

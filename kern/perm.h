@@ -43,10 +43,10 @@
 #define permrawio(perm)           ((perm)->flg & PERM_RAWIO)
 
 struct perm {
-    long uid;   // user ID
-    long gid;   // group ID
-    long flg;   // access bits
-    /* TODO: ACLs */
+    long        uid;    // user ID
+    long        gid;    // group ID
+    long        flg;    // access bits
+    struct acl *acl;    // access-control [object] list
 };
 
 #endif /* __KERN_PERM_H__ */

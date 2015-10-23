@@ -258,6 +258,8 @@ taskqueue(struct task *task, struct taskqueue **taskqueue)
 #endif
 
 #undef QUEUE_SINGLE_TYPE
+#undef QUEUE_ITEM_TYPE
+#undef QUEUE_TYPE
 #define QUEUE_ITEM_TYPE struct task
 #define QUEUE_TYPE      struct taskqueue
 #include <zero/queue.h>

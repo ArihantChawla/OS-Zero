@@ -94,10 +94,6 @@ vmflushtlb(void *adr)
 struct vmpagemap {
     pde_t           *dir;       // page directory address
     pte_t           *tab;       // flat page-table of NPDE * NPTE entries
-#if 0
-    size_t           nvmtab;
-    struct virtpage *vmtab;
-#endif
 };
 
 struct vmpagestat {

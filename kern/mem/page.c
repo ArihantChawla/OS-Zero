@@ -19,9 +19,9 @@ extern struct physpage      vmphystab[NPAGEMAX];
 //extern volatile long      vmlrulktab[PTRBITS];
 extern struct physlruqueue  vmlrutab[PTRBITS];
 extern struct vmpagestat    vmpagestat;
-extern volatile long        vmphysqlk;
-extern struct physpage     *vmphysq;
-extern struct physpage     *vmshmq;
+extern volatile long        vmphyslk;
+extern struct physpage     *vmphysqueue;
+extern struct physpage     *vmshmqueue;
 #if 0
 static volatile long        vmsetlk;
 //pid_t                     vmsetmap[NPAGEMAX];
@@ -91,10 +91,10 @@ pageinitphys(uintptr_t base, unsigned long nb)
 {
     unsigned long size;
     
-    mtxlk(&vmphysqlk);
-    size = pageinitphyszone(base, &vmphysq,
+    mtxlk(&vmphyslk);
+    size = pageinitphyszone(base, &vmphysqueue,
                             min(nb, KERNVIRTBASE - NCPU * KERNSTKSIZE));
-    mtxunlk(&vmphysqlk);
+    mtxunlk(&vmphyslk);
 
     return size;
 }
@@ -105,7 +105,7 @@ pagevalloc(void)
 {
     struct physpage *page;
 
-    page = queuepop(&vmshmq);
+    page = queuepop(&vmshmqueue);
     if (page) {
 
         return (void *)page->adr;
@@ -126,9 +126,9 @@ pageallocphys(void)
     long              qid;
     long              q;
 
-    mtxlk(&vmphysqlk);
-    page = queuepop(&vmphysq);
-    mtxunlk(&vmphysqlk);
+    mtxlk(&vmphyslk);
+    page = queuepop(&vmphysqueue);
+    mtxunlk(&vmphyslk);
     if (!page) {
         do {
             for (q = 0 ; q < LONGSIZE * CHAR_BIT ; q++) {
@@ -169,16 +169,16 @@ pagefreephys(void *adr)
     struct physpage *page;
 
     /* free physical page */
-    mtxlk(&vmphysqlk);
+    mtxlk(&vmphyslk);
     id = vmpagenum(adr);
     page = &vmphystab[id];
     mtxlk(&page->lk);
     if (!--page->nref) {
         vmflushtlb(adr);
-        queuepush(page, &vmphysq);
+        queuepush(page, &vmphysqueue);
     }
     mtxunlk(&page->lk);
-    mtxunlk(&vmphysqlk);
+    mtxunlk(&vmphyslk);
 
     return;
 }

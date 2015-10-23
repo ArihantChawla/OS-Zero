@@ -43,9 +43,9 @@ struct physlruqueue   vmlrutab[PTRBITS];
 static struct dev     vmdevtab[NPAGEDEV];
 static volatile long  vmdevlktab[NPAGEDEV];
 #endif
-volatile long         vmphysqlk;
-struct physpage      *vmphysq;
-struct physpage      *vmshmq;
+volatile long         vmphyslk;
+struct physpage      *vmphysqueue;
+struct physpage      *vmshmqueue;
 struct vmpagestat     vmpagestat;
 
 /*
@@ -298,9 +298,9 @@ vmpagefault(unsigned long pid, uint32_t adr, uint32_t flags)
             mtxlk(&page->lk);
             page->nflt++;
             qid = pagecalcqid(page);
-            mtxlk(&vmlrulktab[qid]);
-            queuepush(page, &vmlrutab[qid]);
-            mtxunlk(&vmlrulktab[qid]);
+            mtxlk(&vmlrutab[qid].lk);
+            queuepush(page, &vmlrutab[qid].list);
+            mtxunlk(&vmlrutab[qid].lk);
             mtxunlk(&page->lk);
         }
 #endif

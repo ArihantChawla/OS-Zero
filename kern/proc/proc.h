@@ -61,18 +61,10 @@
 #include <kern/types.h>
 #include <kern/cred.h>
 #include <kern/syscall.h>
+#include <kern/proc/kern.h>
 #include <kern/proc/task.h>
 #include <kern/unit/x86/cpu.h>
 #include <kern/unit/x86/vm.h>
-
-/* system-assigned process IDs */
-#define PROCKERN     0 // main kernel; context switches, system calls, ...
-#define PROCINIT     1 // init process; the mother of all processes
-#define PROCEVD      2 // event daemon; receive and dispatch events
-#define PROCPAGED    3 // page daemon; page replacement; aging, LRU-queue
-#define PROCBUFD     4 // buffer daemon; flush dirty buffers to disk
-#define PROCIDLE     5 // idle process; zeroes memory etc.
-#define TASKNPREDEF  6
 
 long procinit(long id);
 long procgetpid(void);
@@ -111,15 +103,14 @@ struct proc {
     /* process and thread management */
     struct task         *task;
     struct task         *thrqueue;
-    long                 nthr;          // # of child threads
+    long                 nthr;          // # of entries in thrtab
     struct task        **thrtab;        // child threads
     /* memory management */
-    struct vmpagemap     vmpagemap;
-    uint8_t             *brk;           // current heap-top
-    struct procseginfo  *seginfo;       // process segment information
-    /* WORDSIZE * CHAR_BIT LRU-queues */
-    struct physpage    **pagelru;       // in-core physical pages
+    struct maghdr      **vmmagtab;      // PTRBITS queues of mags
     struct slabhdr     **vmslabtab;     // PTRBITS queues of slabs
+    uint8_t             *brk;           // current heap-top
+    struct vmpagemap     vmpagemap;
+    struct procseginfo  *seginfo;       // process segment information
     /* process credentials */
     struct cred         *cred;          // effective credentials
     struct cred         *realcred;      // real credentials
@@ -131,6 +122,11 @@ struct proc {
     char                *cwd;
     /* current permission mask */
     mode_t               umask;
+    /* linkage */
+    long                 ppid;          // parent process-ID
+    long                 pgrp;          // process-group ID (leader)
+    struct proc         *prev;
+    struct proc         *next;
     /* signal dispositions */
     signalhandler_t     *sigvec[NSIG];
     /* runtime arguments */
@@ -139,7 +135,7 @@ struct proc {
     char               **envp;          // environment strings
     /* keyboard input buffer */
     void                *kbdbuf;
-    long                 status;        // termination status
+    long                 status;        // termination status for wait() etc.
 #if 0
     /* event queue */
     struct ev           *evq;
