@@ -197,8 +197,8 @@
 #if (MALLOCCONSTSLABS)
 #define MALLOCSLABLOG2       20
 #if (MALLOCBUFMAP)
-#define MALLOCSMALLMAPLOG2   22
-#define MALLOCMIDMAPLOG2     24
+#define MALLOCSMALLMAPLOG2   21
+#define MALLOCMIDMAPLOG2     23
 #endif
 #elif (MALLOCSMALLSLABS)
 #define MALLOCSUPERSLABLOG2  19
@@ -290,6 +290,12 @@
         }                                                               \
     } while (0)
 #else /* !MALLOCVALGRIND */
+#define VALGRINMKPOOL(adr, z)
+#define VALGRINDMARKPOOL(adr, sz)
+#define VALGRINDRMPOOL(adr)
+#define VALGRINDMKSUPER(adr)
+#define VALGRINDPOOLALLOC(pool, adr, sz)
+#define VALGRINDPOOLFREE(pool, adr)
 #define VALGRINDALLOC(adr, sz, z)
 #define VALGRINDFREELIKE(adr)
 #endif
@@ -300,12 +306,15 @@
  */
 #if (MALLOCBUFMAP)
 #if (MALLOCCONSTSLABS)
+#define magnbufmaplog2 0
+#if 0
 #define magnbufmaplog2(bktid)                                           \
     (((bktid) <= MALLOCSMALLMAPLOG2)                                    \
      ? 3                                                                \
      : (((bktid) <= MALLOCMIDMAPLOG2)                                   \
         ? 2                                                             \
         : 1))
+#endif
 #else
 #define magnbufmaplog2(bktid)                                           \
     (((bktid) <= MALLOCSMALLMAPLOG2)                                    \

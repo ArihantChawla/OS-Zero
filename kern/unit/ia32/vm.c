@@ -32,15 +32,18 @@ extern void pginit(void);
 extern uint8_t        kernsysstktab[NCPU * KERNSTKSIZE];
 extern uint8_t        kernusrstktab[NCPU * KERNSTKSIZE];
 extern pde_t          kernpagedir[NPDE];
+#if (VMFLATPHYSTAB)
 struct physpage       vmphystab[NPAGEMAX] ALIGNED(PAGESIZE);
-volatile long         vmlrulktab[1UL << (LONGSIZELOG2 + 3)];
-struct physpage      *vmlrutab[1UL << (LONGSIZELOG2 + 3)];
+#endif
+volatile long         vmlrulktab[PTRBITS];
+struct physpage      *vmlrutab[PTRBITS];
 
 //static struct vmpage  vmpagetab[NPAGEMAX] ALIGNED(PAGESIZE);
 #if (PAGEDEV)
 static struct dev     vmdevtab[NPAGEDEV];
 static volatile long  vmdevlktab[NPAGEDEV];
 #endif
+volatile long         vmphysqlk;
 struct physpage      *vmphysq;
 struct physpage      *vmshmq;
 struct vmpagestat     vmpagestat;

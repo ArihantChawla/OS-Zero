@@ -4,8 +4,8 @@
 #endif
 #include <limits.h>
 #include <sys/types.h>
-#include <zero/param.h>
 #include <zero/cdecl.h>
+#include <zero/param.h>
 #include <zero/trix.h>
 #include <kern/util.h>
 #include <kern/malloc.h>
@@ -13,16 +13,20 @@
 #include <kern/mem/vm.h>
 #include <kern/mem/page.h>
 
-extern struct physpage    vmphystab[NPAGEMAX];
-extern volatile long      vmlrulktab[1UL << (LONGSIZELOG2 + 3)];
-extern struct physpage   *vmlrutab[1UL << (LONGSIZELOG2 + 3)];
-extern struct vmpagestat  vmpagestat;
-volatile long             vmphysqlk;
-extern struct physpage   *vmphysq;
-extern struct physpage   *vmshmq;
-static volatile long      vmsetlk;
+#if (VMFLATPHYSTAB)
+extern struct physpage      vmphystab[NPAGEMAX];
+#endif
+//extern volatile long      vmlrulktab[PTRBITS];
+extern struct physlruqueue  vmlrutab[PTRBITS];
+extern struct vmpagestat    vmpagestat;
+extern volatile long        vmphysqlk;
+extern struct physpage     *vmphysq;
+extern struct physpage     *vmshmq;
+#if 0
+static volatile long        vmsetlk;
 //pid_t                     vmsetmap[NPAGEMAX];
-unsigned char             vmsetbitmap[NPAGEMAX / CHAR_BIT];
+unsigned char               vmsetbitmap[NPAGEMAX / CHAR_BIT];
+#endif
 
 unsigned long
 pageinitphyszone(uintptr_t base,
@@ -128,25 +132,25 @@ pageallocphys(void)
     if (!page) {
         do {
             for (q = 0 ; q < LONGSIZE * CHAR_BIT ; q++) {
-                mtxlk(&vmlrulktab[q]);
-                queue = &vmlrutab[q];
+                mtxlk(&vmlrutab[q].lk);
+                queue = &vmlrutab[q].queue;
                 page = queuegetlast(queue);
                 if (page) {
                     found++;
                     page->nflt++;
                     qid = pagecalcqid(page);
                     if (qid != q) {
-                        mtxlk(&vmlrulktab[qid]);
+                        mtxlk(&vmlrutab[q].lk);
                     }
-                    queue = &vmlrutab[qid];
+                    queue = &vmlrutab[qid].queue;
                     queuepush(page, queue);
                     if (qid != q) {
-                        mtxunlk(&vmlrulktab[qid]);
+                        mtxunlk(&vmlrutab[qid].lk);
                     }
                     
                     break;
                 }
-                mtxunlk(&vmlrulktab[q]);
+                mtxunlk(&vmlrutab[q].lk);
             }
             if (found) {
                 

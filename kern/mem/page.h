@@ -41,10 +41,19 @@ extern pid_t           vmsetmap[NPAGEPHYS];
 #define PAGEWIREBIT 0x00000001
 #define PAGEBUFBIT  0x00000002
 struct virtpage {
-    uintptr_t        adr;
+    void      *adr;     // virtual or physical address
+    uintptr_t  link;    // prev XOR next
+#if 0
     unsigned long    flg;
     struct virtpage *prev;
     struct virtpage *next;
+#endif
+};
+
+struct physlruqueue {
+    volatile long    lk;
+    struct physpage *queue;
+    uint8_t          _pad[CLSIZE - sizeof(long) - sizeof(void *)];
 };
 
 struct physpage {
