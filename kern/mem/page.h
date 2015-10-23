@@ -26,7 +26,7 @@
     ((!(pg)) ? NULL : ((void *)(((pg) - (pt)) << PAGESIZELOG2)))
 
 /* index into table of LRU-queues */
-#define pagecalcqid(pg)   max(WORDSIZE * CHAR_BIT - 1, lzerol(pg->nflt))
+#define pagecalcqid(pg)   max(PTRBITS - 1, lzerol(pg->nflt))
 
 /* working sets */
 #if 0
@@ -38,6 +38,7 @@ extern pid_t           vmsetmap[NPAGEPHYS];
 #define pageaddset(pg) setbit(vmsetbitmap, pagenum((pg)->adr))
 #define pageclrset(pg) clrbit(vmsetbitmap, pagenum((pg)->adr))
 
+#if 0
 #define PAGEWIREBIT 0x00000001
 #define PAGEBUFBIT  0x00000002
 struct virtpage {
@@ -49,10 +50,11 @@ struct virtpage {
     struct virtpage *next;
 #endif
 };
+#endif
 
 struct physlruqueue {
     volatile long    lk;
-    struct physpage *queue;
+    struct physpage *list;
     uint8_t          _pad[CLSIZE - sizeof(long) - sizeof(void *)];
 };
 
@@ -62,7 +64,7 @@ struct physpage {
     long             flg;       // page flags
     long             pid;       // owner process ID
     uintptr_t        adr;       // page address
-    unsigned long    nflt;      // # of page-fault exceptions triggered
+    uintptr_t        nflt;      // # of page-fault exceptions triggered
     struct physpage *prev;      // previous on queue
     struct physpage *next;      // next on queue
 };

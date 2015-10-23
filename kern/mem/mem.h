@@ -21,7 +21,7 @@
 #define MEMFLGBITS (MEMFREE | MEMZERO | MEMWIRE)
 #define MEMNFLGBIT 4
 
-#define MEM_AVOID_CACHELINE_SHARE  1
+//#define MEM_AVOID_CACHELINE_SHARE  1
 #define MEM_CONST_SIZE_TRICK 1
 #if (MEM_CONST_SIZE_TRICK)
 #define memgetbkt(sz) memfastbkt(sz)
@@ -29,21 +29,14 @@
 #define memgetbkt(sz) memcalcbkt(sz)
 #endif
 
-#if (MEM_AVOID_CACHELINE_SHARE)
 struct memhdr {
     volatile long  lk;
     void          *list;
-    uint8_t        pad[CLSIZE - LONGSIZE - PTRSIZE];
+    uint8_t        pad[CLSIZE - sizeof(long) - sizeof(void *)];
 };
-#endif
 
 struct memzone {
-#if (MEM_AVOID_CACHELINE_SHARE)
     struct memhdr  tab[PTRBITS];
-#else
-    volatile long  lktab[PTRBITS];
-    void          *tab[PTRBITS];
-#endif
     uintptr_t      base;
     unsigned long  nhdr;
     void          *hdrtab;

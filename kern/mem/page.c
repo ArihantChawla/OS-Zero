@@ -133,7 +133,7 @@ pageallocphys(void)
         do {
             for (q = 0 ; q < LONGSIZE * CHAR_BIT ; q++) {
                 mtxlk(&vmlrutab[q].lk);
-                queue = &vmlrutab[q].queue;
+                queue = &vmlrutab[q].list;
                 page = queuegetlast(queue);
                 if (page) {
                     found++;
@@ -142,7 +142,7 @@ pageallocphys(void)
                     if (qid != q) {
                         mtxlk(&vmlrutab[q].lk);
                     }
-                    queue = &vmlrutab[qid].queue;
+                    queue = &vmlrutab[qid].list;
                     queuepush(page, queue);
                     if (qid != q) {
                         mtxunlk(&vmlrutab[qid].lk);

@@ -36,10 +36,6 @@ memalloc(unsigned long nb, long flg)
 {
     struct memzone  *slabzone = &slabvirtzone;
     struct memzone  *magzone = &magvirtzone;
-#if (!MEM_AVOID_CACHELINE_SHARE)
-    volatile long   *lktab = magzone->lktab;
-    struct maghdr  **magtab = (struct maghdr **)magzone->tab;
-#endif
     void            *ptr = NULL;
     uintptr_t        sz = max(MAGMIN, nb);
     unsigned long    slab = 0;
@@ -49,16 +45,10 @@ memalloc(unsigned long nb, long flg)
     uint8_t         *u8ptr;
     unsigned long    ndx;
     unsigned long    n;
-#if (MEM_AVOID_CACHELINE_SHARE)
     struct memhdr   *hdr = &magzone->tab[bkt];
-#endif
 //    unsigned long    mlk = 0;
 
-#if (MEM_AVOID_CACHELINE_SHARE)
     mtxlk(&hdr->lk);
-#else
-    mtxlk(&lktab[bkt]);
-#endif
     if (bkt >= SLABMINLOG2) {
         ptr = slaballoc(slabzone, sz, flg);
         if (ptr) {
@@ -86,11 +76,7 @@ memalloc(unsigned long nb, long flg)
             mag->next = NULL;
         }
     } else {
-#if (MEM_AVOID_CACHELINE_SHARE)
         mag = hdr->list;
-#else
-        mag = magtab[bkt];
-#endif
         if (mag) {
 //            mtxlk(&mag->lk);
 //            mlk++;
@@ -99,11 +85,7 @@ memalloc(unsigned long nb, long flg)
                 if (mag->next) {
                     mag->next->prev = NULL;
                 }
-#if (MEM_AVOID_CACHELINE_SHARE)
                 hdr->list = mag->next;
-#else
-                magtab[bkt] = mag->next;
-#endif
             }
         } else {
 //            ptr = slaballoc(slabzone, SLABMIN, flg);
@@ -137,17 +119,7 @@ memalloc(unsigned long nb, long flg)
                     mag->ptab[ndx] = u8ptr;
                 }
                 mag->prev = NULL;
-#if (MEM_AVOID_CACHELINE_SHARE)
                 hdr->list = mag;
-#else
-#if 0
-                if (magtab[bkt]) {
-                    magtab[bkt]->prev = mag;
-                }
-#endif
-                mag->next = magtab[bkt];
-                magtab[bkt] = mag;
-#endif
             }
         }
     }
@@ -179,11 +151,7 @@ memalloc(unsigned long nb, long flg)
 //        mtxunlk(&mag->lk);
     }
 #endif
-#if (MEM_AVOID_CACHELINE_SHARE)
     mtxunlk(&hdr->lk);
-#else
-    mtxunlk(&lktab[bkt]);
-#endif
 
     return ptr;
 }
@@ -194,10 +162,6 @@ kfree(void *ptr)
 {
     struct memzone  *slabzone = &slabvirtzone;
     struct memzone  *magzone = &magvirtzone;
-#if (!MEM_AVOID_CACHELINE_SHARE)
-    volatile long   *lktab = magzone->lktab;
-    struct maghdr  **magtab = (struct maghdr **)magzone->tab;
-#endif
     struct maghdr   *mag = maggethdr(ptr, magzone);
 #if 0
 #if ((SLABMINLOG2 - MAGMINLOG2) < (LONGSIZELOG2 + 3))
@@ -208,20 +172,14 @@ kfree(void *ptr)
 #endif
     unsigned long    bkt = (mag) ? mag->bkt : 0;
     unsigned long    ndx;
-#if (MEM_AVOID_CACHELINE_SHARE)
     struct memhdr   *hdr = &magzone->tab[bkt];
     struct maghdr   *list = hdr->list;
-#endif
 
     if (!ptr || !mag) {
 
         return;
     }
-#if (MEM_AVOID_CACHELINE_SHARE)
     mtxlk(&hdr->lk);
-#else
-    mtxlk(&lktab[bkt]);
-#endif
 //    mtxlk(&mag->lk);
     ndx = ((uintptr_t)ptr - mag->base) >> bkt;
 #if 0
@@ -242,46 +200,26 @@ kfree(void *ptr)
                 mag->prev->next = NULL;
             } else if (mag->next) {
                 mag->next->prev = NULL;
-#if (MEM_AVOID_CACHELINE_SHARE)
                 hdr->list = mag->next;
-#else
-                magtab[bkt] = mag->next;
-#endif
             } else {
-#if (MEM_AVOID_CACHELINE_SHARE)
                 hdr->list = NULL;
-#else
-                magtab[bkt] = NULL;
-#endif
             }
         }
         slabfree(slabzone, ptr);
         mag->base = 0;
     } else if (mag->ndx == mag->n - 1) {
         mag->prev = NULL;
-#if (MEM_AVOID_CACHELINE_SHARE)
         if (list) {
             list->prev = mag;
         }
         mag->next = list;
         hdr->list = mag;
-#else
-        if (magtab[bkt]) {
-            magtab[bkt]->prev = mag;
-        }
-        mag->next = magtab[bkt];
-        magtab[bkt] = mag;
-#endif
     }
 #if 0
     clrbit(bmap, ndx);
 #endif
 //    mtxunlk(&mag->lk);
-#if (MEM_AVOID_CACHELINE_SHARE)
     mtxunlk(&hdr->lk);
-#else
-    mtxunlk(&lktab[bkt]);
-#endif
 
     return;
 }

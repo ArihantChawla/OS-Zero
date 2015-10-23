@@ -35,8 +35,8 @@ extern pde_t          kernpagedir[NPDE];
 #if (VMFLATPHYSTAB)
 struct physpage       vmphystab[NPAGEMAX] ALIGNED(PAGESIZE);
 #endif
-volatile long         vmlrulktab[PTRBITS];
-struct physpage      *vmlrutab[PTRBITS];
+//volatile long         vmlrulktab[PTRBITS];
+struct physlruqueue   vmlrutab[PTRBITS];
 
 //static struct vmpage  vmpagetab[NPAGEMAX] ALIGNED(PAGESIZE);
 #if (PAGEDEV)
@@ -282,9 +282,9 @@ vmpagefault(unsigned long pid, uint32_t adr, uint32_t flags)
                 page->nflt++;
                 if (!(adr & PAGEWIRED)) {
                     qid = pagecalcqid(page);
-                    mtxlk(&vmlrulktab[qid]);
-                    queuepush(page, &vmlrutab[qid]);
-                    mtxunlk(&vmlrulktab[qid]);
+                    mtxlk(&vmlrutab[qid].lk);
+                    queuepush(page, &vmlrutab[qid].list);
+                    mtxunlk(&vmlrutab[qid].lk);
                 }
             }
             mtxunlk(&page->lk);
