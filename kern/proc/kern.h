@@ -12,6 +12,10 @@
 #define PROCIDLE     5  // idle process; zeroes memory etc.
 #define TASKNPREDEF  6
 
+/*
+ * init.c
+ * - init process; traditional SysV-style, runlevels
+ */
 struct idletask {
     struct physpage *zeroqueue;
     struct proc     *termqueue;
