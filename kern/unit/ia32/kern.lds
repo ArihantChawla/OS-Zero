@@ -115,6 +115,9 @@ SECTIONS {
 	ata.o(.text)
 	ata.o(.data)
 	ata.o(.bss)
+	ac97.o(.text)
+	ac97.o(.data)
+	ac97.o(.bss)
         _eboot = .;
 	. = ALIGN(PAGESIZE);
     }
