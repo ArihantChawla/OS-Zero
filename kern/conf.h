@@ -51,14 +51,14 @@
 #define BOCHS       1
 #define DEVEL       0           // debugging
 
-#define PLASMA      0
+#define PLASMA      1
 
 /* planned and developed drivers */
 #define IOAPIC      0           // enable I/O APIC support
 #define SMBIOS      1           // SMBIOS (system management) support
 #define APIC        1           // local [per-CPU] APIC support
 #define PCI         1           // PCI bus driver
-#define ATA         1           // ATA/ATAPI/SATA/SATAPI
+#define ATA         0           // ATA/ATAPI/SATA/SATAPI
 #define ACPI        1           // ACPI
 #define ACPICA      0           // ACPICA
 #define HPET        1           // high precision event timer support

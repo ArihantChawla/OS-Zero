@@ -50,6 +50,8 @@ pciregdrv(uint16_t vendor, uint16_t devid,
     struct pcidrvent *drv;
 
     if (initfunc) {
+        kprintf("PCI: allocating %lx IDs (%lx)\n",
+                65536 * sizeof(struct pcidrvent), vendor);
         if (!ptr) {
             ptr = kmalloc(65536 * sizeof(struct pcidrvent));
             if (ptr) {
@@ -58,6 +60,7 @@ pciregdrv(uint16_t vendor, uint16_t devid,
             }
         }
         if (ptr) {
+            kprintf("PCI: allocating ID %lx\n", devid);
             drv = &ptr[devid];
             drv->init = initfunc;
             drv->str = str;

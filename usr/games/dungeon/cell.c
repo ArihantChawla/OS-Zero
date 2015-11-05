@@ -348,13 +348,15 @@ dngfindcave(struct celldng *dng, long caveid, long x, long y)
     long              w = dng->width;
     long              h = dng->height;
     long              ncellmax = (cave) ? cave->ncellmax : 16;
-    struct cellcoord *celltab;
+    struct cellcoord *celltab = NULL;
+    void             *ptr;
     long              x1;
     long              y1;
     long              ndx;
     long              lim;
 
-    if (caveid == DNG_NOCAVE) {
+    if (!cave) {
+        fprintf(stderr, "BAH\n");
         cave = calloc(1, sizeof(struct cellcave));
         if (!cave) {
             fprintf(stderr, "CELL: failed to allocate cave\n");
@@ -371,18 +373,19 @@ dngfindcave(struct celldng *dng, long caveid, long x, long y)
         cave->celltab = celltab;
         if (dng->ncave == ncavemax) {
             ncavemax <<= 1;
-            dng->cavetab = realloc(dng->cavetab,
-                                   ncavemax * sizeof(struct cellcave **));
-            if (!dng->cavetab) {
+            ptr = realloc(dng->cavetab,
+                          ncavemax * sizeof(struct cellcave **));
+            if (!ptr) {
                 fprintf(stderr, "CELL: failed to allocate cave table\n");
-
+                
                 exit(1);
             }
+            dng->cavetab = ptr;
             dng->ncavemax = ncavemax;
         }
         dng->cavetab[id] = cave;
-//        dng->ncave++;
-//        dng->ncave = id + 1;
+        dng->ncave++;
+        dng->ncave = id + 1;
         recur = 0;
     }
     lim = DNG_NDIR2;
@@ -401,19 +404,23 @@ dngfindcave(struct celldng *dng, long caveid, long x, long y)
             dngsetcaveid(dng, x1, y1, id);
             if (cave->ncell == ncellmax) {
                 ncellmax <<= 1;
-                cave->celltab = realloc(cave->celltab,
-                                        ncellmax * sizeof(struct cellcoord));
-                if (!cave->celltab) {
+                ptr = realloc(celltab,
+                              ncellmax * sizeof(struct cellcoord));
+                if (!ptr) {
                     fprintf(stderr, "CELL: failed to reallocate cell table\n");
 
                     exit(1);
                 }
+                celltab = ptr;
+                cave->celltab = ptr;
                 cave->ncellmax = ncellmax;
             }
             cave->celltab[cave->ncell].xval = x1;
             cave->celltab[cave->ncell].yval = y1;
             cave->ncell++;
-            dngfindcave(dng, id, x1, y1);
+            if (id != DNG_NOCAVE) {
+                dngfindcave(dng, id, x1, y1);
+            }
         }
     }
     ret = id;
@@ -514,7 +521,7 @@ dngconncaves(struct celldng *dng)
     struct cellcave  **conntab = calloc(nconnmax, sizeof(struct cellcave *));
     struct cellcave   *cave;
     struct cellcave   *dest;
-    long               id = 0;
+    long               id;
     long               corx;
     long               cory;
     long               x1;

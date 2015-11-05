@@ -6,6 +6,9 @@
  * Copyright (C) Tuomo Petteri Venäläinen 2014-2015
  */
 
+#define GNUTRACE 0
+#define MALLOCTRACE 0
+
 /* use zero malloc on a GNU system such as a Linux distribution */
 #define GNUMALLOC 1
 
@@ -2686,7 +2689,7 @@ malloc(size_t size)
 //        VALGRINDALLOC(ptr, size, 0);
 #if (MALLOCTRACE) && defined(GNUTRACE)
     } else {
-        trace_fd(STDERR_FILENO);
+//        trace_fd(STDERR_FILENO);
 #endif /* MALLOCTRACE */
     }
 #if (MALLOCDEBUG) && 0

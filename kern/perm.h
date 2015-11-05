@@ -5,18 +5,18 @@
 #define PERM_READ   0x00000001
 #define PERM_WRITE  0x00000002
 #define PERM_EXEC   0x00000004
-#define PERM_OX     0x00000001
-#define PERM_OW     0x00000002
-#define PERM_OR     0x00000004
-#define PERM_GX     0x00000008
-#define PERM_GW     0x00000010
-#define PERM_GR     0x00000020
-#define PERM_UX     0x00000040
-#define PERM_UW     0x00000080
-#define PERM_UR     0x00000100
-#define PERM_STICKY 0x00000400
-#define PERM_SETGID 0x00000800
-#define PERM_SETUID 0x00001000
+#define PERM_OX     0x00000010
+#define PERM_OW     0x00000020
+#define PERM_OR     0x00000040
+#define PERM_GX     0x00000080
+#define PERM_GW     0x00000100
+#define PERM_GR     0x00000200
+#define PERM_UX     0x00000400
+#define PERM_UW     0x00000800
+#define PERM_UR     0x00001000
+#define PERM_STICKY 0x00004000
+#define PERM_SETGID 0x00008000
+#define PERM_SETUID 0x00010000
 /* zero permissions */
 #define PERM_WIRE   0x80000000   // permission to wire memory
 #define PERM_SHM    0x40000000   // permission to share memory

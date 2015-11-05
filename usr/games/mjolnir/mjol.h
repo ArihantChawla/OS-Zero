@@ -238,10 +238,11 @@ mjolrmchase(struct mjolchr *data)
     return;
 }
 
-typedef long             mjolcmdfunc(struct mjolchr *src,
-                                     struct mjolobj *dest);
-typedef struct mjolobj * mjolcmdmovefunc(struct mjolgame *game,
-                                         struct mjolchr *chr);
+typedef struct mjolobj  * mjolcmdfunc(struct mjolchr *chr,
+                                      struct mjolobj *dest);
+typedef struct mjolobj  * mjolcmdmovefunc(struct mjolgame *game,
+                                          struct mjolchr *chr);
+//extern struct mjolroom ** mjolinitrooms(struct mjolgame *game, long *nroom);
 
 #endif /* __MJOLNIR_MJOL_H__ */
 

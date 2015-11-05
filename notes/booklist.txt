@@ -8,13 +8,21 @@ gregory r. andrews
                - foundations of multithreaded, parallel, and distributed
 	         programming
 maurice bach   - the design of the unix operating system
+judy bishop    - data abstraction in programming languages
 rick booth     - inner loops
 richard boulanger, victor lazzarini and max mathews
 	       - the audio programming book
 henry arnold bradford
 		- logic and boolean algebra
+thomas h. cormen, charles e. leiserson, ronald l. rivest
+       	  	- introduction to algorithms
 john h. crawford & patrick p. kelsinger
      	       - programming the 80386
+leigh edwards, richard barker, and the Staff of EMCC Software Ltd.
+      	       - developing series 60 applications
+	       	 - a guide for symbian os c++ developers
+joel fan, eric ries, clian tenitchi
+     	       - black art of java game programming
 neal ford      - the productive programmer
 simson l. garfinkel
 		- the unix-haters handbook: the best of unix-haters on-line
@@ -22,7 +30,10 @@ simson l. garfinkel
 ronald l. graham, donald e. knuth, oren patashnik
 		- concrete mathematics: a foundation for computer science
 		  (2nd edition)
-randall hyde   - write great code volume one - understanding the machine
+david gries	- the science of programming
+jeri r. hanly, elliot b. koffman with joan c. horvath
+		- program design for engineers
+randall hyde  	- write great code volume one - understanding the machine
 kai hwang, faye a. briggs
 		- computer architecture and parallel processing
 richard johnsonbaugh & martin kalin
@@ -38,11 +49,16 @@ andre lamothe  - black art of 3d game programming
 john r levine  - linkers and loaders
 john lions     - lions' commentary on unix 6th edition with source code
 clive maxfield - the definitive guide to how computers do math
+      	       - bebop to the boolean boogie, 3rd edition
+	       	 - an unconventional guide to electronics
 marshall kirk mckusick & george v. neville-neil
 	       - the design and implementation of the freebsd operating system
 daniel mitchell
                - basicsynth
+suely oliveira & david stewart
+      	       - writing scientific software - a guide to good style
 steve pate     - unix filesystems: evolution, design, and implementation
+j. r. parker   - practical computer vision using c
 john r. pierce - an introduction to information theory;
      	       	 symbols, signals, and noise
 stephen prata  - c primer plus, sixth edition

@@ -9,7 +9,7 @@
 #define MJOL_USE_ZERO_RANDMT32 1
 #if (MJOL_TTY)
 #define MJOL_VT                1
-#define MJOL_CURSES            0
+#define MJOL_CURSES            1
 #endif
 
 /* PLEASE DO NOT EDIT BELOW */

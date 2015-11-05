@@ -1,7 +1,7 @@
 #include <mjolnir/conf.h>
 #include <mjolnir/mjol.h>
 
-#if (MJOLNIR_VGA_TEXT) && (__ZERO__)
+#if (MJOL_VGA_TEXT) && (__ZERO__)
 
 static struct evkbdqchar *kbdevq;
 
@@ -28,5 +28,5 @@ mjolgetch(void)
     return ch;
 }
 
-#endif /* (MJOLNIR_VGA_TEXT) && (__ZERO__) */
+#endif /* (MJOL_VGA_TEXT) && (__ZERO__) */
 

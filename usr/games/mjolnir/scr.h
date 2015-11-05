@@ -14,7 +14,7 @@
 #endif
 #if (MJOL_X11)
 #define MJOL_USE_IMLIB2
-#include <mjolnir/x11.h>
+//#include <mjolnir/x11.h>
 #endif
 
 struct mjolscr {

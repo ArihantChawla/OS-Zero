@@ -132,7 +132,7 @@ mjolinitobj(void)
 }
 
 struct mjolobj *
-mjolmkfloor(long flg, void *data)
+mjolmkfloor(void)
 {
     struct mjolobj *obj = calloc(1, sizeof(struct mjolobj));
 //    long            l = mjolrand() & 0x0f;
@@ -154,7 +154,7 @@ mjolmkfloor(long flg, void *data)
 }
 
 struct mjolobj *
-mjolmkcorridor(long flg, void *data)
+mjolmkcorridor(void)
 {
     struct mjolobj *obj = calloc(1, sizeof(struct mjolobj));
     long            l = mjolrand() & 0x0f;
@@ -174,7 +174,7 @@ mjolmkcorridor(long flg, void *data)
 }
 
 struct mjolobj *
-mjolmkdoor(long flg, void *data)
+mjolmkdoor(void)
 {
     struct mjolobj *obj = calloc(1, sizeof(struct mjolobj));
     long            l = mjolrand() & 0x0f;
@@ -194,7 +194,7 @@ mjolmkdoor(long flg, void *data)
 }
 
 struct mjolobj *
-mjolmkhorizwall(long flg, void *data)
+mjolmkhorizwall(void)
 {
     struct mjolobj *obj = calloc(1, sizeof(struct mjolobj));
 
@@ -209,7 +209,7 @@ mjolmkhorizwall(long flg, void *data)
 }
 
 struct mjolobj *
-mjolmkvertwall(long flg, void *data)
+mjolmkvertwall(void)
 {
     struct mjolobj *obj = calloc(1, sizeof(struct mjolobj));
 
@@ -224,7 +224,7 @@ mjolmkvertwall(long flg, void *data)
 }
 
 struct mjolobj *
-mjolmkstair(long flg, void *data)
+mjolmkstair(void)
 {
     struct mjolobj *obj = calloc(1, sizeof(struct mjolobj));
     long            l = mjolrand() & 0x0f;

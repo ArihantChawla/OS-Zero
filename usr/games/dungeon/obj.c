@@ -1,3 +1,4 @@
+#include <mjolnir/conf.h>
 #include <string.h>
 #include <dungeon/conf.h>
 #include <dungeon/cell.h>
