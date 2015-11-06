@@ -1,5 +1,5 @@
 #include <stdint.h>
-//#include <stddef.h>
+#include <stddef.h>
 #include <limits.h>
 #include <stdarg.h>
 #include <zero/cdecl.h>
@@ -9,6 +9,10 @@
 #include <kern/io/drv/pc/vga.h>
 #include <kern/unit/x86/asm.h>
 #include <kern/unit/x86/trap.h>
+
+#if (FOO)
+#include <stdio.h>
+#endif
 
 #define MAXPRINTFSTR 2048
 
@@ -28,6 +32,11 @@
  * - do not initialize stack variables at top of functions; do it explicitly in
  *   code to avoid stack problems, at least for linker constants
  */
+
+#if defined(__KERNEL__) && (__KERNEL__)
+extern struct cons constab[NCONS] ALIGNED(PAGESIZE);
+extern long        conscur;
+#endif
 
 const char *trapnametab[TRAPNCPU] ALIGNED(PAGESIZE)
 = {
@@ -545,6 +554,8 @@ _strtok(void *ptr, int ch)
     return u8ptr;
 }
 
+#if defined(__KERNEL__) && (__KERNEL__)
+
 /*
  * %x, %c, %h, %d, %ld, %uc, %uh, %ud, %ul, %lx, %x, %p
  */
@@ -737,13 +748,14 @@ kprintf(char *fmt, ...)
     return;
 }
 
-#if 0
+#endif /* defined(__KERNEL__) && (__KERNEL__) */
+
 /*
  * scan bitmap for first zero-bit past ofs
  * return -1 if not found, offset otherwise
  */
 long
-kbfindzerol(long *bmap, long ofs, long nbit)
+bfindzerol(long *bmap, long ofs, long nbit)
 {
     long *ptr;
     long  cnt = ofs & (((uintptr_t)1 << (LONGSIZELOG2 + 3)) - 1);
@@ -752,23 +764,27 @@ kbfindzerol(long *bmap, long ofs, long nbit)
     long  ones = ~0L;
     long  bit = 1;
 
-    ptr = bmap + (ofs / CHAR_BIT / sizeof(long));
+    ptr = bmap + ndx;
     nbit -= ofs;
     if (nbit > 0) {
-        val = *ptr;
-        val >>= cnt;
-        ptr++;
-        if (val != ones) {
-            while (val & bit) {
-                val >>= 1;
-                ofs++;
-            }
-            if (ofs < nbit) {
-                
-                return ofs;
+        if (cnt) {
+            val = *ptr;
+            val >>= cnt;
+            ptr++;
+            if (val != ones) {
+                while (val & bit) {
+                    val >>= 1;
+                    ofs++;
+                }
+                if (ofs < nbit) {
+                    
+                    return ofs;
+                } else {
+                    
+                    return -1;
+                }
             } else {
-                
-                return -1;
+                ofs += CHAR_BIT * sizeof(long) - cnt;
             }
         }
         while (ofs < nbit) {
@@ -789,7 +805,7 @@ kbfindzerol(long *bmap, long ofs, long nbit)
                     return -1;
                 }
             } else {
-                ofs += sizeof(long) * CHAR_BIT;
+                ofs += CHAR_BIT * sizeof(long);
                 ptr++;
             }
         }
@@ -797,7 +813,8 @@ kbfindzerol(long *bmap, long ofs, long nbit)
     
     return -1;
 }
-#endif
+
+#if defined(__KERNEL__) && (__KERNEL__)
 
 void
 panic(long trap)
@@ -812,4 +829,6 @@ panic(long trap)
     }
     k_halt();
 }
+
+#endif /* defined(__KERNEL__) && (__KERNEL__) */
 

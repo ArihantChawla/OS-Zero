@@ -1,6 +1,7 @@
 #ifndef __IO_DRV_CHR_CONS_H__
 #define __IO_DRV_CHR_CONS_H__
 
+#include <kern/conf.h>
 #include <stdint.h>
 #include <gfx/rgb.h>
 

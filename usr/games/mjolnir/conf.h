@@ -4,7 +4,7 @@
 #define MJOL_ENGLISH_LANGUAGE  1
 #define MJOL_VGA_TEXT          0
 #define MJOL_TTY               1
-#define MJOL_X11               0
+#define MJOL_X11               1
 #define MJOL_USE_COLORS        1
 #define MJOL_USE_ZERO_RANDMT32 1
 #if (MJOL_TTY)
