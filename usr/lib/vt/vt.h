@@ -151,13 +151,12 @@ struct vt {
 #endif
     struct vtatr       atr;             // terminal attributes
     struct vtstate     state;           // terminal status
-#if (__KERNEL__)
+#if defined(__KERNEL__) && (__KERNEL__)
     struct vtdevbuf    devbuf;          // input and output buffers
 #else
     struct vtiobuf     iobuf;
 #endif
     struct uitextbuf   textbuf;         // text and rendition buffers
-    struct uitextbuf   scrbuf;          // current screen contents
     struct ui          ui;              // user interface
     struct uifont      font;            // default font
     struct vtcolormap  colormap;        // terminal colormaps

@@ -4,42 +4,50 @@
 #include <stdint.h>
 #include <kern/perm.h>
 
-#define FS0NAMELEN  256
-#define FS0INODELEN 512
+#define FS0DEFBLKSIZE  32768
+#define FS0DEFFRAGSIZE 4096
+
+#define FS0NAMELEN     256
+#define FS0INODELEN    512
 
 /*
  * NOTES
  * -----
+ * - inodes are fixed-size of 512 bytes
  * - for meta-blocks, id == meta - ofs == type
  * - for device-blocks, ofs == (((major) << 32) | (minor))
  */
 /* type-member values */
 #define FSMETANODE 0
-#define FSINODE    1
-#define FSMOUNT    2
-#define FSCDEV     3
-#define FSBDEV     4
+#define FSBLKGROUP 1
+#define FSINODE    2
+#define FSMOUNTPNT 3
+#define FSCHRDEV   4
+#define FSBLKDEV   5
 /* flag-bits for flg */
 #define INODENOBUF 0x80000000
 struct fs0inode {
     unsigned char name[FS0NAMELEN];     // 256 bytes @ 0        - name
+    /* 32-bit fields */
     uint32_t      type;                 // 4 bytes @ 256        - node type
     uint32_t      num;                  // 4 bytes @ 260        - inode number
     uint32_t      uid;                  // 4 bytes @ 264        - user ID
     uint32_t      gid;                  // 4 bytes @ 268        - group ID
     uint32_t      flg;                  // 4 bytes @ 272        - perms & bits
-    uint32_t      meta;                 // 4 bytes @ 280        - meta-node ID
-    uint64_t      nblk;                 // 8 bytes @ 288        - # of blocks
-    uint64_t      size;                 // 8 bytes @ 296        - size in bytes
-    uint64_t      ofs;                  // 8 bytes @ 304        - in-node offset
-    uint64_t      ctime;                // 8 bytes @ 312        - creation time
-    uint64_t      mtime;                // 8 bytes @ 320        - mod time
-    uint64_t      atime;                // 8 bytes @ 328        - access time
-    uint32_t      grp;                  // 4 bytes @ 336        - fs block-group
-    uint32_t      indir1;               // 4 bytes @ 340        - indir-block #1
-    uint32_t      indir2;               // 4 bytes @ 344        - indir-block #2
-    uint32_t      indir3;               // 4 bytes @ 348        - indir-block #3
-    uint32_t      _reserved[8];         // 32 bytes @ 352       - improvements
+    uint32_t      meta;                 // 4 bytes @ 276        - meta-node ID
+    /* 64-bit fields */
+    uint64_t      nblk;                 // 8 bytes @ 280        - # of blocks
+    uint64_t      size;                 // 8 bytes @ 288        - size in bytes
+    uint64_t      ofs;                  // 8 bytes @ 296        - in-node offset
+    uint64_t      ctime;                // 8 bytes @ 304        - creation time
+    uint64_t      mtime;                // 8 bytes @ 312        - mod time
+    uint64_t      atime;                // 8 bytes @ 320        - access time
+    /* 32-bit fields */
+    uint32_t      grp;                  // 4 bytes @ 328        - fs block-group
+    uint32_t      indir1;               // 4 bytes @ 332        - indir-block #1
+    uint32_t      indir2;               // 4 bytes @ 336        - indir-block #2
+    uint32_t      indir3;               // 4 bytes @ 340        - indir-block #3
+    uint32_t      _reserved[11];         // 44 bytes @ 340       - improvements
     uint32_t      dir[32];              // 128 bytes @ 384      - direct-blocks
 };
 
@@ -55,7 +63,7 @@ struct fs0 {
     uint32_t blksize;   // block-size
     uint32_t fragsize;  // fragment-size
     uint32_t readsize;  // read-ahead buffering
-    uint32_t bmapofs;   // free-bitmap on-device offset
+    uint32_t writesize; // write-buffer size (speculative allocation)
     uint64_t dev;       // physical device such as disk ID
     uint64_t nblk;      // number of blocks on FS
 };

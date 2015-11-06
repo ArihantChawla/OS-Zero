@@ -124,13 +124,14 @@ zwritefile(char *filename, void *buf, size_t nb, size_t *sizeret)
 ssize_t
 zread(int fd, void *buf, size_t nb)
 {
-    size_t  len;
-    ssize_t res;
+    char    *cptr = buf;
+    size_t   len;
+    ssize_t  res;
 
     len = 0;
     while (nb) {
         errno = 0;
-        res = read(fd, buf, nb);
+        res = read(fd, cptr, nb);
         if (res <= 0) {
             if (errno == EINTR) {
                 
@@ -145,7 +146,7 @@ zread(int fd, void *buf, size_t nb)
         }
         nb -= res;
         len += res;
-        buf += res;
+        cptr += res;
     }
 
     return len;
@@ -155,13 +156,14 @@ zread(int fd, void *buf, size_t nb)
 ssize_t
 zreadnb(int fd, void *buf, size_t nb)
 {
-    size_t  len;
-    ssize_t res;
+    char    *cptr = buf;
+    size_t   len;
+    ssize_t  res;
 
     len = 0;
     while (nb) {
         errno = 0;
-        res = read(fd, buf, nb);
+        res = read(fd, cptr, nb);
         if (res <= 0) {
             if (errno == EINTR) {
                 
@@ -176,7 +178,7 @@ zreadnb(int fd, void *buf, size_t nb)
         }
         nb -= res;
         len += res;
-        buf += res;
+        cptr += res;
     }
 
     return len;
@@ -186,13 +188,14 @@ zreadnb(int fd, void *buf, size_t nb)
 ssize_t
 zwrite(int fd, void *buf, size_t nb)
 {
-    size_t  len;
-    ssize_t res;
+    char    *cptr = buf;
+    size_t   len;
+    ssize_t  res;
 
     len = 0;
     while (nb) {
         errno = 0;
-        res = write(fd, buf, nb);
+        res = write(fd, cptr, nb);
         if (res <= 0) {
             if (errno == EINTR) {
                 
@@ -204,7 +207,7 @@ zwrite(int fd, void *buf, size_t nb)
         }
         nb -= res;
         len += res;
-        buf += res;
+        cptr += res;
     }
 
     return len;
@@ -214,13 +217,14 @@ zwrite(int fd, void *buf, size_t nb)
 ssize_t
 zwritenb(int fd, void *buf, size_t nb)
 {
-    size_t  len;
-    ssize_t res;
+    char    *cptr = buf;
+    size_t   len;
+    ssize_t  res;
 
     len = 0;
     while (nb) {
         errno = 0;
-        res = write(fd, buf, nb);
+        res = write(fd, cptr, nb);
         if (res <= 0) {
             if (errno == EINTR) {
                 
@@ -235,7 +239,7 @@ zwritenb(int fd, void *buf, size_t nb)
         }
         nb -= res;
         len += res;
-    	buf += res;
+    	cptr += res;
     }
 
     return len;

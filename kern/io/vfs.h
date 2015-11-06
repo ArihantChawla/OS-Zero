@@ -15,19 +15,19 @@
 #define VFSIPCMQ   0x06         // /ipc/mq/<mqid>; on-disk message queue
 
 struct vfsmnt {
-    long           flg;
-    char          *devname;
-    struct vfsmnt *hash;
-    struct vfsmnt *parent;
-    struct dcent  *dcent;
-    struct dcent  *root;
-    struct supblk *sb;
-    struct vfsmnt *childlist;
-    struct vfsmnt *mntlist;
-    struct vfsmnt *expire;
-    struct vfsmnt *share;
-    struct vfsmnt *slave;
-    struct vfsmnt *slavelist;
+    long              flg;
+    char             *devname;
+    struct vfsmnt    *hash;
+    struct vfsmnt    *parent;
+    struct dcent     *dcent;
+    struct dcent     *root;
+    struct vfssupblk *sb;
+    struct vfsmnt    *childlist;
+    struct vfsmnt    *mntlist;
+    struct vfsmnt    *expire;
+    struct vfsmnt    *share;
+    struct vfsmnt    *slave;
+    struct vfsmnt    *slavelist;
 };
 
 struct openintent {
@@ -41,11 +41,11 @@ struct vfspath {
     struct dcent    *dcent;
 };
 
-struct inodedata {
+struct vnodedata {
     struct vfspath  path;
     struct dcstr    last;
     struct vfspath  root;
-    struct inode   *inode;
+    struct vnode   *inode;
     long            flg;
     long            seq;
     long            lasttype;
@@ -56,31 +56,31 @@ struct inodedata {
     } intent;
 };
 
-struct supblkops {
-    struct inode (*ialloc)(struct supblk *);
-    void         (*ifree)(struct inode *);
-    void         (*idirty)(struct inode *, long);
-    long         (*iwrite)(struct inode *, long); // long sync
-    void         (*iclear)(struct inode *);
-    void         (*idrop)(struct inode *); // LOCK
-    void         (*idel)(struct inode *);
+struct vfssupblkops {
+    struct vnode (*ialloc)(struct vfssupblk *);
+    void         (*ifree)(struct vnode *);
+    void         (*idirty)(struct vnode *, long);
+    long         (*iwrite)(struct vnode *, long); // long sync
+    void         (*iclear)(struct vnode *);
+    void         (*idrop)(struct vnode *); // LOCK
+    void         (*idel)(struct vnode *);
     void         (*sbput)(struct sd *); // LOCK
-    long         (*fssync)(struct supblk *sb, long); // long wait
-    long         (*fsfreeze)(struct supblk *sb);
-    long         (*fsunfreeze)(struct supblk *sb);
+    long         (*fssync)(struct vfssupblk *sb, long); // long wait
+    long         (*fsfreeze)(struct vfssupblk *sb);
+    long         (*fsunfreeze)(struct vfssupblk *sb);
     long         (*fsstat)(struct dcent *, struct fsstat *);
-    long         (*fsremnt)(struct supblk *, long *, char *); // LOCK
-    void         (*umntbegin)(struct supblk *sb);
+    long         (*fsremnt)(struct vfssupblk *, long *, char *); // LOCK
+    void         (*umntbegin)(struct vfssupblk *sb);
     long         (*showopts)(struct seqfile *, struct dcent *);
-    ssize_t      (*qtaread)(struct supblk *, long, char *,
+    ssize_t      (*qtaread)(struct vfssupblk *, long, char *,
                             size_t, loff_t);
-    ssize_t      (*qtawrite)(struct supblk *, long, const char *,
+    ssize_t      (*qtawrite)(struct vfssupblk *, long, const char *,
                              size_t, loff_t);
-    ssize_t      (*cntmemobj)(struct supblk *sb, long);
-    void         (*freememobj)(struct supblk *sb, long);
+    ssize_t      (*cntmemobj)(struct vfssupblk *sb, long);
+    void         (*freememobj)(struct vfssupblk *sb, long);
 };
 
-struct inodeops {
+struct vnodeops {
     ;
 };
 

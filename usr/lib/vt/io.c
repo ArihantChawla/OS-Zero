@@ -1,5 +1,5 @@
 #include <stddef.h>
-#if !(__KERNEL__)
+#if !defined(__KERNEL__) || !(__KERNEL__)
 #include <stdlib.h>
 #include <vt/term.h>
 #endif
@@ -11,7 +11,7 @@
 #define MALLOC(x) malloc(x)
 #endif
 
-#if (__KERNEL__)
+#if defined(__KERNEL__) && (__KERNEL__)
 
 long
 vtinitbuf(struct vt *vt)

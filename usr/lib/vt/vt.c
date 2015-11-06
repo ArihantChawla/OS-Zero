@@ -199,7 +199,6 @@ vtfree(struct vt *vt)
         vt->state.tabmap = NULL;
     }
     uifreetextbuf(&vt->textbuf);
-    uifreetextbuf(&vt->scrbuf);
     vtfreecolors(vt);
     vtfreefonts(vt);
 

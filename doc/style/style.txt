@@ -213,6 +213,8 @@ prog    - program
 prot	- protection
 ptr     - pointer
 pty	- pseudo teletype
+q	- queue
+qta	- quota
 rand	- random
 rdx	- radix (base)
 rect    - rectangle

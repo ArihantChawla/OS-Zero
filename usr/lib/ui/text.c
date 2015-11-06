@@ -1,4 +1,4 @@
-#if !(__KERNEL__)
+#if !defined(__KERNEL__) || !(__KERNEL__)
 #include <stdlib.h>
 #endif
 #include <ui/ui.h>
@@ -19,10 +19,11 @@
 void
 uifreetextbuf(struct uitextbuf *buf)
 {
-    TEXT_T          **data = buf->data;
-    struct textrend **rend = buf->rend;
-    long              nrow = buf->nrow;
-    long              n;
+    TEXT_T     **data = buf->scrdata;
+    TEXTREND_T **rend = buf->scrrend;
+    long         nrow = buf->nrow;
+    long         nbufrow = buf->nbufrow;
+    long         n;
 
     if (data) {
         for (n = 0 ; n < nrow ; n++) {
@@ -40,30 +41,52 @@ uifreetextbuf(struct uitextbuf *buf)
         }
         FREE(rend);
     }
+    data = buf->data;
+    if (data) {
+        for (n = 0 ; n < nbufrow ; n++) {
+            if (data[n]) {
+                FREE(data[n]);
+            }
+        }
+        FREE(data);
+    }
+    rend = buf->rend;
+    if (rend) {
+        for (n = 0 ; n < nbufrow ; n++) {
+            if (rend[n]) {
+                FREE(rend[n]);
+            }
+        }
+        FREE(rend);
+    }
+
+    return;
 }
 
 long
-uiinittextbuf(struct uitextbuf *buf, long nrow, long ncol)
+uiinittextbuf(struct uitextbuf *buf, long nrow, long ncol, long nbufrow)
 {
-    long              ndx;
-    TEXT_T          **data;
-    struct textrend **rend;
-    TEXT_T          *dptr;
-    struct textrend  *rptr;
+    long         ndx;
+    TEXT_T     **data;
+    TEXTREND_T **rend;
+    TEXT_T      *dptr;
+    TEXTREND_T  *rptr;
 
     data = MALLOC(nrow * sizeof(TEXT_T *));
     if (!data) {
 
         return 0;
     }
-    rend = MALLOC(nrow * sizeof(struct textrend *));
+    rend = MALLOC(nrow * sizeof(TEXTREND_T *));
     if (!rend) {
         uifreetextbuf(buf);
         
         return 0;
     }
-    buf->data = data;
-    buf->rend = rend;
+    buf->nrow = nrow;
+    buf->ncol = ncol;
+    buf->scrdata = data;
+    buf->scrrend = rend;
     for (ndx = 0 ; ndx < nrow ; ndx++) {
         dptr = CALLOC(ncol, sizeof(TEXT_T));
         if (!dptr) {
@@ -72,7 +95,7 @@ uiinittextbuf(struct uitextbuf *buf, long nrow, long ncol)
             return 0;
         }
         data[ndx] = dptr;
-        rptr = CALLOC(ncol, sizeof(struct textrend));
+        rptr = CALLOC(ncol, sizeof(TEXTREND_T));
         if (!rptr) {
             uifreetextbuf(buf);
 
@@ -80,7 +103,24 @@ uiinittextbuf(struct uitextbuf *buf, long nrow, long ncol)
         }
         rend[ndx] = rptr;
     }
-    buf->nrow = nrow;
+    if (!nbufrow) {
+        nbufrow = UITEXTDEFBUFNROW;
+    }
+    data = CALLOC(nbufrow, sizeof(TEXT_T *));
+    if (!data) {
+        uifreetextbuf(buf);
+        
+        return 0;
+    }
+    rend = CALLOC(nbufrow, sizeof(TEXTREND_T *));
+    if (!data) {
+        uifreetextbuf(buf);
+        
+        return 0;
+    }
+    buf->nbufrow = nbufrow;
+    buf->data = data;
+    buf->rend = rend;
 
     return 1;
 }

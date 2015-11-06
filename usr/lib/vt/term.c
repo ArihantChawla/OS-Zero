@@ -17,9 +17,9 @@ vtprintinfo(struct vt *vt)
     fprintf(stderr, "VT: %ld rows x %ld columns\n",
             vt->state.nrow, vt->state.ncol);
     fprintf(stderr, "VT: %ld buffer rows\n",
-            vt->textbuf.nrow);
+            vt->textbuf.nbufrow);
     fprintf(stderr, "VT: %ld screen rows\n",
-            vt->scrbuf.nrow);
+            vt->textbuf.nrow);
     fprintf(stderr, "VT: font %s (%ldx%ld)\n",
             vt->font.name, vt->font.boxw, vt->font.boxh);
 
@@ -34,6 +34,7 @@ main(int argc, char *argv[])
 //    struct vt *vt;
     long       nrow;
     long       ncol;
+//    long       nbufrow;
 
     memset(&vt, 0, sizeof(struct vt));
     vtgetopt(&vt, argc, argv);
@@ -42,26 +43,23 @@ main(int argc, char *argv[])
 
         exit(1);
     }
-    nrow = vt.textbuf.nrow;
-    if (!nrow) {
-        nrow = VTDEFBUFNROW;
+#if 0
+    nbufrow = vt.textbuf.nrow;
+    if (!nbufrow) {
+        nbufnrow = VTDEFBUFNROW;
     }
+#endif
     ncol = vt.state.ncol;
     if (!ncol) {
         ncol = VTDEFNCOL;
         vt.state.ncol = ncol;
-    }
-    if (!uiinittextbuf(&vt.textbuf, nrow, ncol)) {
-        vtfree(&vt);
-
-        exit(1);
     }
     nrow = vt.state.nrow;
     if (!nrow) {
         nrow = VTDEFNROW;
         vt.state.nrow = nrow;
     }
-    if (!uiinittextbuf(&vt.scrbuf, nrow, ncol)) {
+    if (!uiinittextbuf(&vt.textbuf, nrow, ncol, 0)) {
         vtfree(&vt);
 
         exit(1);
@@ -71,7 +69,7 @@ main(int argc, char *argv[])
     vt.state.nrow = 24;
     vt.state.ncol = 80;
     vt.textbuf.nrow = VTDEFBUFNROW;
-    vt.scrbuf.nrow = 24;
+    vt.textbuf.nrow = 24;
 #endif
     vt.state.w = vt.state.ncol * vt.font.boxw;
     vt.state.h = vt.state.nrow * vt.font.boxh;

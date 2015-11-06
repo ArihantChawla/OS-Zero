@@ -1,3 +1,13 @@
 ISO 9660
 --------
 - support for Joliet and Rockridge filename extensions
+
+unix filesystem
+---------------
+
+		kernel structures					disk
+		-----------------				    |	----
+								    |
+descriptor	-> open file entry	-> vnode	-> inode    |	-> inode
+		   	     		   		     |-----------> data
+							            |

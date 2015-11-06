@@ -305,7 +305,7 @@ vterasedir(struct vt *vt, long narg, long *argtab)
     return;
 }
 
-#if (VTPRINT)
+#if defined(VTPRINT) && (VTPRINT)
 void
 vtprint(struct vt *vt, long narg, long *argtab)
 {
@@ -398,7 +398,7 @@ vtinitesc(struct vt *vt)
     vtsetcsifunc(vt, 'g', vtclrtab);
     vtsetcsifunc(vt, 'J', vterasedir);
     vtsetcsifunc(vt, 'K', vteraseline);
-#if (VTPRINT)
+#if defined(VTPRINT) && (VTPRINT)
     vtsetcsifunc(vt, 'i'; vtprint);
 #endif
     vtsetcsifunc(vt, 'm', vtsetatr);

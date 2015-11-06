@@ -194,7 +194,7 @@ uimkwin_xorg(struct ui *ui,
     return win;
 }
 
-#if (UITESTXORG)
+#if defined(UITESTXORG) && (UITESTXORG)
 
 #include <stdio.h>
 

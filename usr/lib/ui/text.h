@@ -13,16 +13,20 @@ struct textrend {
     unsigned pad     : 7;       // extra room for later flags
     unsigned atr     : 7;       // specified text attributes
 };
+typedef struct textrend TEXTREND_T;
 
 struct uitextbuf {
     long              nrow;     // # of buffer rows
-//    long            ncol;     // # of colums in buffer rows
+    long              ncol;     // # of colums in rows
+    TEXT_T          **scrdata;  // on-screen data
+    struct textrend **scrrend;  // on-screen text attributes
+    long              nbufrow;  // # of buffer rows
     TEXT_T          **data;     // Unicode text data
     struct textrend **rend;     // rendition attribute data
 };
 
 void uifreetextbuf(struct uitextbuf *buf);
-long uiinittextbuf(struct uitextbuf *buf, long nrow, long ncol);
+long uiinittextbuf(struct uitextbuf *buf, long nrow, long ncol, long nbufrow);
 
 #endif /* __UI_TEXT_H__ */
 
