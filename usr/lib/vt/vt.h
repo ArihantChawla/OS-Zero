@@ -128,8 +128,8 @@ struct vtbuf {
     struct termiobuf *wrqueue;  // write queue buffer structure
     __termiofunc     *chop;     // getch() (read()) or putch() (write())
     fd_set           *wrfdset;  // write fd_set for select()
-    fd_set           *errfdset; // error fd_set for select()
     fd_set           *rdfdset;  // read fd_set for select()
+    fd_set           *errfdset; // error fd_set for select()
     struct timeval    timeout;  // possible timeout for select()
 };
 

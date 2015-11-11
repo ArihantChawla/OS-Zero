@@ -13,6 +13,7 @@ rick booth     - inner loops
 richard boulanger, victor lazzarini and max mathews
 	       - the audio programming book
 henry arnold bradford
+timothy budd	- an introduction to object-oriented programming
 		- logic and boolean algebra
 thomas h. cormen, charles e. leiserson, ronald l. rivest
        	  	- introduction to algorithms
@@ -24,6 +25,8 @@ leigh edwards, richard barker, and the Staff of EMCC Software Ltd.
 joel fan, eric ries, clian tenitchi
      	       - black art of java game programming
 neal ford      - the productive programmer
+david fox, roman verhovsek
+		- micro jave game development
 simson l. garfinkel
 		- the unix-haters handbook: the best of unix-haters on-line
 		  mailing reveals why unix must die
@@ -44,9 +47,18 @@ brian kernighan & dennis ritchie
       	       - the c programming language, second edition
 mark j. kilgard
 		- opengl programming for the x window system
+jeffrey h kingston
+		- algorithms and data structures - design, correctness, analysis
+jonathan knudsen
+		- kicking butt with midp and msa
 donald knuth	- the art of computer programming boxed set 1-4a
 andre lamothe  - black art of 3d game programming
+john levine    - programming for graphics files in c and c++
 john r levine  - linkers and loaders
+bill lewis, daniel j berg
+		- multithreaded programming with pthreads
+sing li and jonathan knudsen
+		- beginning j2me platform - from novice to professional
 john lions     - lions' commentary on unix 6th edition with source code
 clive maxfield - the definitive guide to how computers do math
       	       - bebop to the boolean boogie, 3rd edition
@@ -55,6 +67,8 @@ marshall kirk mckusick & george v. neville-neil
 	       - the design and implementation of the freebsd operating system
 daniel mitchell
                - basicsynth
+mitnick, simon
+		- the art of deception
 suely oliveira & david stewart
       	       - writing scientific software - a guide to good style
 steve pate     - unix filesystems: evolution, design, and implementation
@@ -64,6 +78,9 @@ john r. pierce - an introduction to information theory;
 stephen prata  - c primer plus, sixth edition
 curt schimmel  - unix systems for modern architectures
      	         - symmetric multiprocessing and caching for kernel programmers
+david r stibitz and jules a larrives
+		- mathematics and computers
 richard w stevens
 	       - advanced programming in the unix environment
-
+henry s warren jr.
+		- hacker's delight, first edition

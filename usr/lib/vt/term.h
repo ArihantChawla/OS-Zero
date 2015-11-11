@@ -8,10 +8,11 @@
 #include <zero/param.h>
 #include <sys/select.h>
 
-#define TERMINPUTFD    STDIN_FILENO
-#define TERMOUTPUTFD   STDOUT_FILENO
-#define TERMERRORFD    STDERR_FILENO
-#define TERMNSTDFD     3
+#define TERMINPUTFD    0
+#define TERMOUTPUTFD   1
+#define TERMERRORFD    2
+#define TERMTTYFD      3
+#define TERMNFD        4
 
 #define TERMINBUFSIZE  (8 * PAGESIZE)
 #define TERMOUTBUFSIZE (8 * PAGESIZE)

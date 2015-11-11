@@ -34,7 +34,7 @@
  */
 #undef MALLOCSTAT
 #define MALLOCSTAT        0
-#define MALLOCSTKNDX      1
+#define MALLOCSTKNDX      0
 #define MALLOCCONSTSLABS  1
 #define MALLOCDYNARN      0
 #define MALLOCGETNPROCS   1
@@ -596,7 +596,7 @@ mallocstat(void)
                   - ((uintptr_t)(mag)->adr & ~MAGFLGMASK))              \
                  >> (bktid)))
 #define magndx2ptr(mag, ndx)                                            \
-    ((void *)((uintptr_t)(mag)->adr & ~MAGFLGMASK) + ((ndx) << (mag)->bktid))
+    ((void *)(((uintptr_t)(mag)->adr & ~MAGFLGMASK) + ((ndx) << (mag)->bktid)))
 #define maggetptr(mag, ptr)                                             \
     (magndx2ptr(mag, magptr2ndx(mag, ptr)))
 #else /* !MALLOCSTKNDX */
