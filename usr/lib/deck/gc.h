@@ -1,12 +1,10 @@
 #ifndef __DECK_GC_H__
 #define __DECK_GC_H__
 
-#include <stdint.h>
+#include <deck/conf.h>
 #include <gfx/rgb.h>
 
 /* graphics context structure */
-/* flg-field bits */
-#define DECK_GC_DRAW_BG    0x00000001U
 /* func values */
 #define DECK_GC_COPY       1
 #define DECK_GC_COPYINVERT 2
@@ -25,23 +23,26 @@
 #define DECK_GC_EQ         15
 #define DECK_GC_NAND       16
 struct deckgc {
-    uint32_t    screen; // screen ID
-    uint32_t    font;   // font ID
-    uint32_t    func;   // raster-operation
-    gfxargb32_t mask;   // plane-mask to choose bits from source pixel
-    gfxargb32_t fgpix;  // foreground pixel value
-    gfxargb32_t bgpix;  // background pixel value
+    deckuword_t screen; // screen ID
+    deckuword_t font;   // font ID
+    deckuword_t charset; // character set for drawing text
+    deckuword_t func;   // raster-operation
+    deckpix_t   mask;   // plane-mask to choose bits from source pixel
+    deckpix_t   fgpix;  // foreground pixel value
+    deckpix_t   bgpix;  // background pixel value
+    deckpix_t   _pad;
 };
 
 /* graphics context attributes for creating and changing GCs */
 /* flg-field bits */
-#define DECK_GC_FONT  0x00000001U
-#define DECK_GC_FUNC  0x00000002U
-#define DECK_GC_MASK  0x00000004U
-#define DECK_GC_FGPIX 0x00000008U
-#define DECK_GC_BGPIX 0x00000010U
+#define DECK_GC_FONT    (1U << 0)
+#define DECK_GC_FUNC    (1U << 1)
+#define DECK_GC_CHARSET (1U << 2)
+#define DECK_GC_MASK    (1U << 3)
+#define DECK_GC_FGPIX   (1U << 4)
+#define DECK_GC_BGPIX   (1U << 5)
 struct deckgcatr {
-    uint32_t      flg;  // bits to choose fields from vals
+    deckuword_t   flg;  // bits to choose fields from vals
     struct deckgc vals; // attribute values
 };
 

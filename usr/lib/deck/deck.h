@@ -4,7 +4,10 @@
 #include <deck/conf.h>
 #include <stdint.h>
 #include <endian.h>
+#include <sys/socket.h>
+#include <zero/ring.h>
 #include <zero/ev.h>
+
 #if (DECK_GFX_LFB)
 #include <deck/lfb.h>
 #endif
@@ -20,11 +23,12 @@
 
 /* structure for functionality similar to X and such desktop/screen servers */
 struct deck {
-    uint32_t  screen;   // screen ID
-    long      endian;   // desktop-machine word endianess
-    long      conntype; // connection type
-    long      gfxtype;  // graphics interface such as DECK_GFX_LFB
-    void     *gfx;      // graphics interface
+    deckuword_t              screen; // screen ID
+    deckuword_t              endian; // desktop-machine word endianess
+    deckuword_t              conntype; // connection type
+    deckuword_t              gfxtype; // graphics interface such as DECK_GFX_LFB
+    struct sockaddr_storage  sockaddr; // remote connection address
+    void                    *gfx; // graphics interface
 };
 
 #endif /* __DECK_DECK_H__ */

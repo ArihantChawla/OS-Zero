@@ -8,8 +8,8 @@
 #include <limits.h>
 #include <stdint.h>
 #include <time.h>
-#include <zero/param.h>
 #include <zero/cdecl.h>
+#include <zero/param.h>
 #if defined(CWRANDMT32)
 #include <zero/randmt32.h>
 #endif
@@ -88,7 +88,7 @@ cwdisasm(struct cwinstr *op, FILE *fp)
 }
 
 /* read instruction operands */
-void
+static void
 cwgetargs(struct cwinstr *op, long pc, long *argp1, long *argp2)
 {
     long arg1 = 0;
@@ -144,8 +144,8 @@ cwgetargs(struct cwinstr *op, long pc, long *argp1, long *argp2)
 }
 
 /* instruction handler for DAT */
-long
-cwdatop(long pid, long pc)
+static long
+cwdatop(UNUSED long pid, long pc)
 {
 #if defined(ZEUS)
     zeusdrawsim(&cwmars.zeusx11);
@@ -165,8 +165,8 @@ cwdatop(long pid, long pc)
 }
 
 /* instruction handler for MOV */
-long
-cwmovop(long pid, long pc)
+static long
+cwmovop(UNUSED long pid, long pc)
 {
     struct cwinstr *op = &cwmars.optab[pc];
     long            arg1;
@@ -189,8 +189,8 @@ cwmovop(long pid, long pc)
 }
 
 /* instruction handler for ADD */
-long
-cwaddop(long pid, long pc)
+static long
+cwaddop(UNUSED long pid, long pc)
 {
     struct cwinstr *op = &cwmars.optab[pc];
     long            arg1;
@@ -238,8 +238,8 @@ cwaddop(long pid, long pc)
 }
 
 /* instruction handler for SUB */
-long
-cwsubop(long pid, long pc)
+static long
+cwsubop(UNUSED long pid, long pc)
 {
     struct cwinstr *op = &cwmars.optab[pc];
     long            arg1;
@@ -277,8 +277,8 @@ cwsubop(long pid, long pc)
 }
 
 /* instruction handler for JMP */
-long
-cwjmpop(long pid, long pc)
+static long
+cwjmpop(UNUSED long pid, long pc)
 {
     struct cwinstr *op = &cwmars.optab[pc];
     long            cnt;
@@ -296,8 +296,8 @@ cwjmpop(long pid, long pc)
 }
 
 /* instruction handler for JMZ */
-long
-cwjmzop(long pid, long pc)
+static long
+cwjmzop(UNUSED long pid, long pc)
 {
     struct cwinstr *op = &cwmars.optab[pc];
     long            cnt;
@@ -320,8 +320,8 @@ cwjmzop(long pid, long pc)
 }
 
 /* instruction handler for JMN */
-long
-cwjmnop(long pid, long pc)
+static long
+cwjmnop(UNUSED long pid, long pc)
 {
     struct cwinstr *op = &cwmars.optab[pc];
     long            cnt;
@@ -344,8 +344,8 @@ cwjmnop(long pid, long pc)
 }
 
 /* instruction handler for CMP */
-long
-cwcmpop(long pid, long pc)
+static long
+cwcmpop(UNUSED long pid, long pc)
 {
     struct cwinstr *op = &cwmars.optab[pc];
     long            arg1;
@@ -373,8 +373,8 @@ cwcmpop(long pid, long pc)
 }
 
 /* instruction handler for SLT */
-long
-cwsltop(long pid, long pc)
+static long
+cwsltop(UNUSED long pid, long pc)
 {
     struct cwinstr *op = &cwmars.optab[pc];
     long            arg1;
@@ -397,8 +397,8 @@ cwsltop(long pid, long pc)
 }
 
 /* instruction handler for DJN */
-long
-cwdjnop(long pid, long pc)
+static long
+cwdjnop(UNUSED long pid, long pc)
 {
     struct cwinstr *op = &cwmars.optab[pc];
     long            cnt;
@@ -432,8 +432,8 @@ cwdjnop(long pid, long pc)
 }
 
 /* instruction handler for SPL */
-long
-cwsplop(long pid, long pc)
+static long
+cwsplop(UNUSED long pid, long pc)
 {
     struct cwinstr *op = &cwmars.optab[pc];
     long            cnt;
@@ -457,7 +457,7 @@ cwsplop(long pid, long pc)
 }
 
 /* initialise instruction handling */
-void
+static void
 cwinitop(void)
 {
     cwmars.opnames = cwopnametab;
@@ -592,7 +592,7 @@ cwloop(void)
 }
 
 /* initialise virtual machine */
-void
+static void
 cwinit(void)
 {
     time_t seed32 = (((time(NULL) & 0xff) << 24)

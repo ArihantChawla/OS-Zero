@@ -23,6 +23,7 @@
 #define NOINLINE     __attribute__((__noinline__))
 #define WEAK         __attribute__ ((__weak__))
 #define WEAKALIAS(n) __attribute__ ((weak, alias(#n)))
+#define UNUSED       __attribute__ ((unused))
 /*
  * AMD64 passes first six arguments in rdi, rsi, rdx, rcx, r8, and r9; the rest
  * are pushed to stack in reverse order
@@ -67,6 +68,10 @@
 #define THREADLOCAL  __declspec(thread)
 
 #endif /* __GNUC__ || __clang__ || _MSC_VER */
+
+#if !defined(UNUSED)
+#define UNUSED
+#endif
 
 #endif /* __ZERO_CDECL_H__ */
 

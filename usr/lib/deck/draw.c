@@ -1,3 +1,4 @@
+#include <zero/trix.h>
 #include <zero/gfx/rgb.h>
 
 /*
@@ -202,10 +203,10 @@ deckfillrectangle(struct deckimg *img,
     
     dest = img->data;
     destw = img->w;
-    xmin = MIN(x1, x2);
-    ymin = MIN(y1, y2);
-    xmax = MAX(x1, x2);
-    ymax = MAX(y1, y2);
+    xmin = min2(x1, x2);
+    ymin = min2(y1, y2);
+    xmax = max2(x1, x2);
+    ymax = max2(y1, y2);
     xpitch = destw - xmax - xmin;
     for (y = ymin ; y <= ymax ; y++) {
         destptr = dest + y * destw + xmin;

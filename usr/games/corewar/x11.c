@@ -2,6 +2,8 @@
 #include <stdlib.h>
 #include <string.h>
 #include <unistd.h>
+#include <zero/cdecl.h>
+#include <zero/param.h>
 #include <zero/trix.h>
 #include <corewar/cw.h>
 #include <corewar/rc.h>
@@ -25,7 +27,7 @@ struct zeusx11buttons zeusx11buttons;
 void zeusdrawsimop(struct zeusx11 *x11, long pc);
 
 void
-zeustogglesel(struct zeusx11 *x11, XEvent *event)
+zeustogglesel(UNUSED struct zeusx11 *x11, UNUSED XEvent *event)
 {
     int  x = event->xbutton.x;
     int  y = event->xbutton.y;
@@ -52,11 +54,11 @@ zeustogglesel(struct zeusx11 *x11, XEvent *event)
 }
 
 void
-zeusaddsel(struct zeusx11 *x11, XEvent *event)
+zeusaddsel(UNUSED struct zeusx11 *x11, UNUSED XEvent *event)
 {
     int  x = event->xbutton.x;
     int  y = event->xbutton.y;
-    int  lim;
+    long lim;
     long pc;
 
     x /= 5;
@@ -87,7 +89,7 @@ zeusaddsel(struct zeusx11 *x11, XEvent *event)
 }
 
 void
-zeusrun(struct zeusx11 *x11, XEvent *event)
+zeusrun(UNUSED struct zeusx11 *x11, UNUSED XEvent *event)
 {
     long pid = cwmars.curpid;
 
@@ -110,13 +112,13 @@ zeusrun(struct zeusx11 *x11, XEvent *event)
 }
 
 void
-zeusstop(struct zeusx11 *x11, XEvent *event)
+zeusstop(UNUSED struct zeusx11 *x11, UNUSED XEvent *event)
 {
     cwmars.running = 0;
 }
 
 void
-zeusstep(struct zeusx11 *x11, XEvent *event)
+zeusstep(UNUSED struct zeusx11 *x11, UNUSED XEvent *event)
 {
     long pid = cwmars.curpid;
 
@@ -136,14 +138,14 @@ zeusstep(struct zeusx11 *x11, XEvent *event)
 
 #if 0
 void
-zeusfence(struct zeusx11 *x11, XEvent *event)
+zeusfence(UNUSED struct zeusx11 *x11, UNUSED XEvent *event)
 {
     ;
 }
 #endif
 
 void
-zeusclear(struct zeusx11 *x11, XEvent *event)
+zeusclear(UNUSED struct zeusx11 *x11, UNUSED XEvent *event)
 {
     if (zeussel.bmap) {
         memset(zeussel.bmap, 0, CWCORESIZE >> 3);
@@ -153,7 +155,7 @@ zeusclear(struct zeusx11 *x11, XEvent *event)
 }
 
 void
-zeusexit(struct zeusx11 *x11, XEvent *event)
+zeusexit(UNUSED struct zeusx11 *x11, UNUSED XEvent *event)
 {
     exit(0);
 }
@@ -190,7 +192,7 @@ zeusbuttonstring(Window win, int *lenret)
 }
 
 void
-zeusenterx11button(struct zeusx11 *x11, XEvent *event)
+zeusenterx11button(UNUSED struct zeusx11 *x11, UNUSED XEvent *event)
 {
     Window  win = event->xany.window;
     int     len;
@@ -214,7 +216,7 @@ zeusenterx11button(struct zeusx11 *x11, XEvent *event)
 }
 
 void
-zeusleavex11button(struct zeusx11 *x11, XEvent *event)
+zeusleavex11button(UNUSED struct zeusx11 *x11, UNUSED XEvent *event)
 {
     Window  win = event->xany.window;
     int     len;
@@ -238,7 +240,7 @@ zeusleavex11button(struct zeusx11 *x11, XEvent *event)
 }
 
 void
-zeusclickx11button(struct zeusx11 *x11, XEvent *event)
+zeusclickx11button(UNUSED struct zeusx11 *x11, UNUSED XEvent *event)
 {
     Window             win = event->xany.window;
     int                id = zeusfindbutton(win);
@@ -267,7 +269,7 @@ zeusclickx11button(struct zeusx11 *x11, XEvent *event)
 }
 
 void
-zeusreleasex11button(struct zeusx11 *x11, XEvent *event)
+zeusreleasex11button(UNUSED struct zeusx11 *x11, UNUSED XEvent *event)
 {
     Window          win = event->xany.window;
     int             len;
@@ -292,7 +294,7 @@ zeusreleasex11button(struct zeusx11 *x11, XEvent *event)
 }
 
 void
-zeusexposex11button(struct zeusx11 *x11, XEvent *event)
+zeusexposex11button(UNUSED struct zeusx11 *x11, UNUSED XEvent *event)
 {
     Window  win = event->xany.window;
     int     len;
@@ -674,7 +676,7 @@ zeusinitimlib2(struct zeusx11 *x11)
 }
 
 void
-zeusloadx11buttonimgs(struct zeusx11 *x11)
+zeusloadx11buttonimgs(UNUSED struct zeusx11 *x11)
 {
     Imlib_Image *img;
 
