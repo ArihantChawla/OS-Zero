@@ -35,7 +35,7 @@
 #define FASTCALL    /* at least 3 arguments passed in registers by default */
 #elif defined(__i386__) || defined(__i486__) || defined(__i586__) \
      || defined(__i686__)
-#define FASTCALL    REGPARM(3)
+#define FASTCALL     REGPARM(3)
 #endif
 
 /* pass all arguments on stack for assembly-linkage */
@@ -52,7 +52,7 @@
 
 #define THREADLOCAL  __thread
 
-#elif defined(_MSC_VER) /* !defined(__GNUC__) */
+#elif defined(_MSC_VER) /* !defined(__GNUC__) && !defined(__clang__) */
     
 /* Microsoft */
 #define ALIGNED(a)   __declspec(align((a)))
