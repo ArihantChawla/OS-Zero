@@ -5,8 +5,7 @@
 #include <stdint.h>
 #include <endian.h>
 #include <sys/socket.h>
-#include <zero/ring.h>
-#include <zero/ev.h>
+//#include <zero/ev.h>
 
 #if (DECK_GFX_LFB)
 #include <deck/lfb.h>

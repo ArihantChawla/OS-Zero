@@ -8,7 +8,7 @@
 #include <zero/cdecl.h>
 #include <zero/param.h>
 #endif
-#include <deck/deck.h>
+//#include <deck/deck.h>
 #include <gfx/rgb.h>
 
 #define EVWORDSIZE   32
@@ -78,7 +78,19 @@ void    evget(struct deck *deck, struct ev *ev, long flg);
 long    evput(struct deck *deck, struct ev *ev, long flg);
 void    evsync(struct deck *deck, long flg);
 
+#define RING_ITEM struct ev
+#define RING_INVAL NULL
+#define MALLOC(sz) malloc(sz)
+
+#else
+
+#define RING_ITEM struct ev
+#define RING_INVAL NULL
+#define MALLOC(sz) kmalloc(sz)
+
 #endif /* !__KERNEL__ */
+
+#include <zero/ring.h>
 
 #endif /* __ZERO_EV_H__ */
 

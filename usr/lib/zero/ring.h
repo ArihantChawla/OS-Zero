@@ -5,6 +5,7 @@
 #define RINGSHAREBUF 0
 #endif
 
+#include <features.h>
 #include <stdint.h>
 #include <limits.h>
 #if defined(_ZERO_SOURCE) && (RINGSHAREBUF)
