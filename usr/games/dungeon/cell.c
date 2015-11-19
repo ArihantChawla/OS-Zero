@@ -544,6 +544,7 @@ dngconncaves(struct celldng *dng)
     cave = dng->cavetab[id];
     w = dng->width;
     h = dng->height;
+    cave->id = nconn;
     conntab[nconn] = cave;
     nconn++;
     lim = genparm->corparm.brkout;
@@ -560,6 +561,7 @@ dngconncaves(struct celldng *dng)
             cave = NULL;
             id = dngfindcoredge(dng, &corx, &cory, &dir);
         }
+        fprintf(stderr, "TRYCOR: %ld\n", id);
         cor = dngtrycor(dng, id, corx, cory, dir, 0);
         if (cor) {
 //            ncave = dng->ncave;
@@ -599,6 +601,7 @@ dngconncaves(struct celldng *dng)
                                 exit(1);
                             }
                         }
+                        cave->id = nconn;
                         conntab[nconn] = cave;
                         nconn++;
                         dngrmcave(dng, ndx, 0);
@@ -620,6 +623,7 @@ dngconncaves(struct celldng *dng)
                                     exit(1);
                                 }
                             }
+                            cave->id = nconn;
                             conntab[nconn] = dest;
                             nconn++;
                             dngrmcave(dng, ndx, 0);

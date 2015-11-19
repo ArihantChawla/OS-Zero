@@ -1,0 +1,31 @@
+Zero Markup Language
+--------------------
+
+- combine documentation and program code with each other in flexible, useful
+  ways
+- embed markup tags inside code comments
+
+Documentation and Code Structure
+--------------------------------
+
+- do basic code analysis at documentation build time
+  - c language
+    - source files
+    - symbols and their attributes
+      - global scope
+      	- [global] variables
+	- labels
+	- functions
+      - block scope
+      	- automatic variables
+	- static variables
+	- labels
+   - machine state
+     - processors
+       - registers
+     - memory
+       - page tables
+       - segments and offsets
+     - I/O
+       - port permission bitmap
+
