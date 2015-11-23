@@ -246,7 +246,7 @@ mpmain(struct m_cpu *cpu)
 #if (HPET)
     hpetinit();
 #endif
-    apicinitcpu(cpu->id);
+    apicinit(cpu->id);
 #if (IOAPIC)
     ioapicinit(cpu->id);
 #endif
@@ -280,10 +280,8 @@ mpstart(void)
         }
         kprintf("starting CPU %ld @ 0x%lx\n", cpu->id, MPENTRY);
         cpuinit((struct m_cpu *)cpu);
-#if 0
-        apicinit();
+        apicinit(cpu->id);
         ioapicinit(cpu->id);
-#endif
         *--mpentrystk = (uint32_t)cpu;
         *--mpentrystk = MPENTRYSTK - cpu->id * MPSTKSIZE;
         *--mpentrystk = (uint32_t)&kernpagedir;

@@ -22,9 +22,11 @@ kmain(struct mboothdr *boothdr, unsigned long longmode)
     /* determine amount of RAM */
     pmemsz = grubmemsz(boothdr);
     /* bootstrap kernel */
+#if 0
 #if (!VBE)
     /* initialize interrupt handling */
     trapinitprot();
+#endif
 #endif
     /* INITIALISE BASE HARDWARE */
     /* initialise memory segmentation */
@@ -32,8 +34,9 @@ kmain(struct mboothdr *boothdr, unsigned long longmode)
 #if (VBE)
     /* initialise VBE graphics subsystem */
     vbeinit();
-    trapinitprot();
+//    trapinitprot();
 #endif
+    trapinitprot();
     kinitprot(pmemsz);
     
     /* NOTREACHED */

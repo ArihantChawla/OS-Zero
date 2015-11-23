@@ -74,9 +74,10 @@ extern void acpiinit(void);
 extern void sb16init(void);
 #endif
 #if (APIC)
-extern void apicinit(void);
+extern uint32_t apicinit(long cpuid);
 extern void apicstarttmr(uint32_t tmrcnt);
 #endif
+extern void taskinitenv(void);
 #if (USERMODE)
 extern FASTCALL void m_jmpusr(long id, void *func);
 #endif
@@ -141,10 +142,12 @@ kinitprot(unsigned long pmemsz)
              PAGEPRES | PAGEWRITE | PAGENOCACHE);
 #endif
     tssinit(0);
+#if 0
 #if (VBE) && (NEWFONT)
 //    consinit(768 / vbefontw, 1024 / vbefonth);
 #elif (VBE)
     consinit(768 >> 3, 1024 >> 3);
+#endif
 #endif
 #if (SMBIOS)
     smbiosinit();
@@ -206,9 +209,9 @@ kinitprot(unsigned long pmemsz)
     hpetinit();
 #endif
 #if (NEWTMR)
-    tmrcnt = apicinitcpu(0);
+    tmrcnt = apicinit(0);
 #else
-    apicinitcpu(0);
+    apicinit(0);
 #endif
 #if (IOAPIC)
     ioapicinit(0);
@@ -220,7 +223,7 @@ kinitprot(unsigned long pmemsz)
     }
 #endif
     /* CPU interface */
-    taskinit();
+    taskinitenv();
     k_curcpu = &cputab[0];
     cpuinit(k_curcpu);
 //    tssinit(0);

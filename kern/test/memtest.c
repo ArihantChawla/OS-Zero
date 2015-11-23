@@ -6,7 +6,7 @@
 #include <pthread.h>
 #include <zero/cdecl.h>
 #include <zero/param.h>
-#include <kern/mem.h>
+#include <kern/malloc.h>
 #include <kern/mem/mem.h>
 #include <kern/mem/mag.h>
 #include <kern/mem/slab.h>
@@ -249,7 +249,7 @@ main(int argc, char *argv[])
     void *base = memalign(SLABMIN, 256 * 1024 * 1024);
 
     printf("PTRBITS == %d\n", PTRBITS);
-    printf("MEMPID == %d\n", MEMPID);
+//    printf("MEMPID == %d\n", MEMPID);
     printf("MALLOC: %p\n", base);
     bzero(base, 256 * 1024 * 1024);
     slabinit(&slabvirtzone, (unsigned long)base, 256 * 1024 * 1024);

@@ -15,7 +15,7 @@
 
 extern volatile uint32_t *mpapic;
 
-uint32_t apicinitcpu(long id);
+uint32_t apicinit(long cpuid);
 void     ioapicinit(long id);
 void     apicstart(uint8_t id, uint32_t adr);
 void     kusleep(unsigned long nusec);
@@ -27,10 +27,6 @@ void     kusleep(unsigned long nusec);
 #define APICBASE         0xfee00000
 #define APICMSR          0x1b
 #define APICGLOBENABLE   0x00000800
-
-/* initialisation */
-#define RTCBASE          0x70
-#define BIOSWRV          0x467          // warm reset vector
 
 /* registers */
 #define APICID           0x0020

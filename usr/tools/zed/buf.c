@@ -7,7 +7,7 @@
 
 #define ZEDDEFNROW 128
 
-struct zedrowbuf *
+struct zedrow *
 zedallocrow(struct zedrowbuf *rowbuf, size_t size)
 {
     ;
@@ -15,7 +15,7 @@ zedallocrow(struct zedrowbuf *rowbuf, size_t size)
 
 /* append row to buffer */
 struct zedrowbuf *
-zedapndrow(struct zedrowbuf *rowbuf, size_t size, void *data)
+zedappendrow(struct zedrowbuf *rowbuf, size_t size, void *data)
 {
     size_t            nrow;
     void             *ptr;

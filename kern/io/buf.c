@@ -7,7 +7,7 @@
 /*
  * events
  * ------
- * bufqlru()
+ * bufqueuelru()
  */
 
 /* TODO: implement per-device buffers */
@@ -34,7 +34,7 @@
 #include <kern/mem/mag.h>
 
 #define HTLIST_TYPE  struct bufblk
-#define HTLIST_QTYPE struct bufblkq
+#define HTLIST_QTYPE struct bufblkqueue
 #define HTLISTPREV   listprev
 #define HTLISTNEXT   listnext
 #include <zero/htlist.h>
@@ -42,28 +42,26 @@
     htlistpush(&buffreelist, blk)
 #define bufpopfree(blk)                                                 \
     htlistpop(&buffreelist, blk)
-#define bufqlru(blk)                                                    \
-    htlistpush(&buflruq, blk)
-#define bufdeqlru(blk)                                                  \
-    htlistdequeue(&buflruq, blk)
-#define bufdeq(blk)                                                     \
-    htlistrm(buflruq, blk)
+#define bufqueuelru(blk)                                                \
+    htlistpush(&buflruqueue, blk)
+#define bufdequeuelru(blk)                                              \
+    htlistdequeue(&buflruqueue, blk)
 
 #define bufadrtoid(ptr)                                                 \
     ((bufzone) ? ((uint8_t *)ptr - (uint8_t *)bufzone) >> BUFSIZELOG2 : NULL)
 
-static struct bufblk   bufhdrtab[BUFNBLK] ALIGNED(PAGESIZE);
+static struct bufblk       bufhdrtab[BUFNBLK] ALIGNED(PAGESIZE);
 #if (BUFMULTITAB)
-static void           *buftab[BUFNDEV] ALIGNED(PAGESIZE);
+static void               *buftab[BUFNDEV] ALIGNED(PAGESIZE);
 #else
-static void           *bufhash[BUFNDEV][BUFNHASH];
+static void               *bufhash[BUFNDEV][BUFNHASH];
 #endif
-static volatile long   buflktab[BUFNDEV] ALIGNED(PAGESIZE);
-static struct bufblkq  buffreelist;
-static struct bufblkq  buflruq;
-static volatile long   bufzonelk;
-static void           *bufzone;
-static long            bufnbyte;
+static volatile long       buflktab[BUFNDEV] ALIGNED(PAGESIZE);
+static struct bufblkqueue  buffreelist;
+static struct bufblkqueue  buflruqueue;
+static volatile long       bufzonelk;
+static void               *bufzone;
+static long                bufnbyte;
 
 /* initialise buffer cache; called at boot time */
 long
@@ -77,7 +75,6 @@ bufinit(void)
     long           sz;
 
     sz = BUFNBYTE;
-    kprintf("allocating %ld bytes of buffer cache - ", BUFNBYTE);
     do {
         ptr = memalloc(sz, PAGEWIRED);
         sz >>= 1;
@@ -87,15 +84,17 @@ bufinit(void)
 
         return 0;
     }
-    kprintf("%p\n", ptr);
+    kprintf("allocated %ld bytes of buffer cache - %p", sz, ptr);
     if (ptr) {
         /* allocate buffer cache */
-        kbzero(ptr, BUFNBYTE);
+        kbzero(ptr, sz);
         /* initialise buffer headers */
-        n = BUFNBLK;
+//        n = BUFNBLK;
+        n = sz >> BUFSIZELOG2;
         blk = &bufhdrtab[n - 1];
         u8ptr = ptr;
-        u8ptr += BUFNBYTE;
+//        u8ptr += BUFNBYTE;
+        u8ptr +=  sz;
         while (n--) {
             u8ptr -= BUFSIZE;
             blk->data = u8ptr;
@@ -103,7 +102,8 @@ bufinit(void)
             blk--;
         }
         bufzone = ptr;
-        bufnbyte = BUFNBYTE;
+//        bufnbyte = BUFNBYTE;
+        bufnbyte = sz;
         retval = 1;
     }
 
@@ -124,9 +124,11 @@ bufevict(void)
     struct bufblk *blk = NULL;
 
     do {
-        bufdeqlru(&blk);
+        mtxlk(&buflruqueue.lk);
+        bufdequeuelru(&blk);
+        mtxunlk(&buflruqueue.lk);
         if (!blk) {
-            /* TODO: wait for bufqlru() */
+            /* TODO: wait for bufqueuelru() */
         } else {
             if (blk->status & BUFMUSTWRITE) {
                 bufwrite(blk);
@@ -306,7 +308,7 @@ bufaddblk(struct bufblk *blk)
     }
     mtxunlk(&buflktab[dkey]);
     if (!fail) {
-        bufqlru(blk);
+        bufqueuelru(blk);
     }
     
     return;
@@ -399,7 +401,9 @@ bufrel(long dev, int64_t num, long flush)
             bufwrite(blk);
         }
 #endif
+        mtxlk(&buffreelist.lk);
         bufpushfree(blk);
+        mtxunlk(&buffreelist.lk);
     }
 
     return;

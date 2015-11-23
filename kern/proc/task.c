@@ -20,6 +20,8 @@
 #include <kern/unit/ia32/task.h>
 #include <zero/mtx.h>
 
+extern void taskinitids(void);
+
 void taskqueueready(struct task *task);
 void taskaddwait(struct task *task);
 void taskaddsleep(struct task *task);
@@ -547,7 +549,7 @@ taskaddzombie(struct task *task)
 }
 
 void
-taskinit(void)
+taskinitenv(void)
 {
     taskinitids();
 

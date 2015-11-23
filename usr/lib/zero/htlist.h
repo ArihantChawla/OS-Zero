@@ -1,11 +1,3 @@
-#if defined(HTLISTNOLOCK) || !defined(_REENTRANT)
-#define htlistlk(lp)
-#define htlistunlk(lp)
-#else
-#include <zero/mtx.h>
-#define htlistlk(lp)   mtxlk(lp)
-#define htlistunlk(lp) mtxunlk(lp)
-#endif
 #if !defined(HTLISTPREV)
 #define HTLISTPREV     prev
 #endif
@@ -19,7 +11,7 @@
 #define HTLIST_DEQUEUE(dummy)
 #endif
 #if !defined(HTLIST_RM_COND)
-#define HTLIST_RM_COND(dummy)
+#define HTLIST_RM_COND(dummy) 1
 #endif
 
 /*
@@ -41,19 +33,17 @@
         HTLIST_TYPE *_item1;                                            \
         HTLIST_TYPE *_item2 = NULL;                                     \
                                                                         \
-        htlistlk(&(queue)->lk);                                         \
         _item1 = (queue)->head;                                         \
         if (_item1) {                                                   \
             _item2 = _item1->HTLISTNEXT;                                \
+            if (_item2) {                                               \
+                _item2->HTLISTPREV = NULL;                              \
+            } else {                                                    \
+                (queue)->tail = NULL;                                   \
+            }                                                           \
+            (queue)->head = _item2;                                     \
+            HTLIST_DEQUEUE(_item1);                                     \
         }                                                               \
-        if (_item2) {                                                   \
-            _item2->HTLISTPREV = NULL;                                  \
-        } else {                                                        \
-            (queue)->tail = NULL;                                       \
-        }                                                               \
-        (queue)->head = _item2;                                         \
-        HTLIST_DEQUEUE(_item1);                                         \
-        htlistunlk(&(queue)->lk);                                       \
         *(retpp) = _item1;                                              \
     } while (0)
 
@@ -63,18 +53,15 @@
         HTLIST_TYPE *_item;                                             \
                                                                         \
         (item)->HTLISTPREV = NULL;                                      \
-        htlistlk(&(queue)->lk);                                         \
         _item = (queue)->head;                                          \
         if (_item) {                                                    \
             (_item)->HTLISTPREV = (item);                               \
         } else {                                                        \
-            (queue)->head = (item);                                     \
             (queue)->tail = (item);                                     \
         }                                                               \
         (item)->HTLISTNEXT = _item;                                     \
         (queue)->head = item;                                           \
         HTLIST_QUEUE(item);                                             \
-        htlistunlk(&(queue)->lk);                                       \
     } while (0)
 
 /* get item from the tail of queue */
@@ -83,7 +70,6 @@
         HTLIST_TYPE *_item1;                                            \
         HTLIST_TYPE *_item2;                                            \
                                                                         \
-        htlistlk(&(queue)->lk);                                         \
         _item1 = (queue)->tail;                                         \
         if (_item1) {                                                   \
             _item2 = _item1->HTLISTPREV;                                \
@@ -94,9 +80,8 @@
                 _item2->HTLISTNEXT = NULL;                              \
                 (queue)->tail = _item2;                                 \
             }                                                           \
+            HTLIST_DEQUEUE(_item1);                                     \
         }                                                               \
-        HTLIST_DEQUEUE(_item1);                                         \
-        htlistunlk(&(queue)->lk);                                       \
         *(retpp) = _item1;                                              \
     } while (0)
 
@@ -106,7 +91,6 @@
         htlist_TYPE *_tail;                                             \
                                                                         \
         (item)->HTLISTNEXT = NULL;                                      \
-        mtxlk(&(queue)->lk);                                            \
         _tail  = (queue)->tail;                                         \
         (item)->HTLISTPREV = _tail;                                     \
         if (_tail) {                                                    \
@@ -116,7 +100,6 @@
             (queue)->head = (item);                                     \
         }                                                               \
         HTLIST_QUEUE(item);                                             \
-        mtxunlk(&(queue)->lk);                                          \
     } while (0)
 
 /* remove item from queue */
@@ -124,7 +107,6 @@
     do {                                                                \
         HTLIST_TYPE *_tmp;                                              \
                                                                         \
-        htlistlk(&(queue)->lk);                                         \
         if (HTLIST_RM_COND(item)) {                                     \
             _tmp = (item)->HTLISTPREV;                                  \
             if (_tmp) {                                                 \
@@ -152,6 +134,5 @@
             }                                                           \
             HTLIST_DEQUEUE(item);                                       \
         }                                                               \
-        htlistunlk(&(queue)->lk);                                       \
     } while (0)
 

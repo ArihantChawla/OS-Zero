@@ -87,6 +87,16 @@ const char _ltoxtab[]
 #include <kern/util.h>
 #endif
 
+void
+kbzero(void *adr, uintptr_t len)
+{
+    uint8_t *u8ptr = adr;
+
+    while (len--) {
+        *u8ptr = 0;
+    }
+}
+#if 0
 /* assumes longword-aligned blocks */
 void
 kbzero(void *adr, uintptr_t len)
@@ -164,6 +174,7 @@ kbzero(void *adr, uintptr_t len)
 
     return;
 }
+#endif
 
 /* assumes longword-aligned blocks with sizes of long-word multiples */
 void

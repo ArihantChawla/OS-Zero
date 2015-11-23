@@ -38,7 +38,7 @@ sb16ackint(void)
 }
 #endif
 
-void
+long
 sb16setup(void)
 {
     uint8_t u8val;
@@ -77,7 +77,6 @@ sb16setup(void)
 
             break;
     }
-    dmatakechan(sb16drv.dma8);
     switch (u8val & 0xf0) {
         case SB16DMA5BIT:
             sb16drv.dma16 = 5;
@@ -92,6 +91,11 @@ sb16setup(void)
 
             break;
     }
+    if (!sb16drv.dma16) {
+
+        return 0;
+    }
+    dmatakechan(sb16drv.dma8);
     dmatakechan(sb16drv.dma16);
     kprintf("SB16 @ 0x%x, IRQ %d, DMA %d (8-bit), DMA %d (16-bit)\n",
             SB16BASE, sb16drv.irq, sb16drv.dma8, sb16drv.dma16);
@@ -118,7 +122,7 @@ sb16setup(void)
     /* initialize interrupt management */
     irqvec[sb16drv.irq] = sb16intr;
 
-    return;
+    return 1;
 }
 
 void
@@ -131,7 +135,10 @@ sb16init(void)
     /* sleep for SB16RESETMS milliseconds, then trigger sb16setup() */
     /* usleep(SB16RESETMS * 1000); */
     pitsleep(SB16RESETMS);
-    sb16setup();
+    if (!sb16setup()) {
+
+        return;
+    }
     /* initialise and zero wired buffers */
 #if 0
     sb16drv.inbuf8 = kwalloc(SB16DATA8BUFSIZE);

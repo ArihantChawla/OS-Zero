@@ -1,0 +1,49 @@
+Bootstrap; kern/unit/x86/boot.S
+-------------------------------
+
+- entry point is _start
+- boot stack top is at 512K
+- if support for longmode is detected, pass non-zero longmode argument to
+  kmain()
+- invoke kmain
+
+Kernel Initialization; kern/unit/x86/main.c
+-------------------------------------------
+
+- determine amount of physical memory (grubmemsz())
+  - FIXME: use GRUB memory map?
+- initialize segmentation (seginit())
+- initialize VBE graphics mode (vbeinit())
+- initialize protected mode interrupt management (trapinitprot())
+- initialize protected mode (kinitprot())
+
+Protected Mode Initialization; kern/unit/x86/protmode.c
+-------------------------------------------------------
+
+- initialize 32-bit virtual memory (vminit())
+- zero kernel BSS segment
+- set VBE graphics mode up (store parameters) (vbeinitscr())
+- initialize console data structures (consinit())
+- initialize physical memory management (vminitphys())
+- initialize high-level virtual memory management (meminit())
+- initialize kernel TSS (tssinit())
+- probe for and initialize SMBIOS (smbiosinit())
+- initialize PS/2 mouse and keyboard driver (ps2init())
+- run plasma animation (plasmaloop())
+- initialize PCI bus driver (pciinit())
+- initialize ATA/SATA disk drivers (atainit())
+- initialize sound card drivers
+- initialize ACPI driver (acpiinit())
+- allocate and initialize [fixed-size] block I/O buffer cache (bufinit())
+- probe for and initialize SMP (mpinit())
+- initialize HPET timers (hpetinit())
+- initialize APIC timers (apicinit())
+- initialize I/O APIC (ioapicinit())
+- if SMP-system detected, start application CPUs (FIXME: broken)
+- initialize task environment (taskinitenv())
+
+- threads and processes
+- memory
+  - segments
+  - virtual memory
+- I/O

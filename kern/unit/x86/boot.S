@@ -1,5 +1,6 @@
 #define __ASSEMBLER__ 1
 #include <kern/conf.h>
+#include <kern/unit/x86/bios.h>
 #include <kern/unit/x86/boot.h>
 
 /* GRUB support */
@@ -22,6 +23,7 @@ _MBCHKSUM	= MBCHKSUM
 _start:
 start:
 	cli		// disable interrupts
+	movw	$BIOSWARMREBOOT, BIOSREBOOTMODE
 	jmp	_start2	// flush CPU pipeline
 
 .align	4
@@ -49,8 +51,6 @@ _start2:
 	pushl	$0			// store longmode argument for kmain()
 	pushl	%ebx			// store boot-header address
 	call	_chkcpuid
-	cmp	$0, %eax
-	je	_protmode
 	call	_chklongmode
 	cmp	$0, %eax
 	je	_protmode
@@ -96,7 +96,7 @@ kernidt:
 kernpagedir:
 	.space	NBPG
 
-#if defined(__x86_64__) || defined (__amd64__)
+#if defined(__x86_64__) || defined(__amd64__)
 	
 /* 64-bit memory management */
 

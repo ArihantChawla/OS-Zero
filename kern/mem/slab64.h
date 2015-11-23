@@ -4,7 +4,7 @@
 #include <zero/param.h>
 #include <zero/mtx.h>
 #include <zero/trix.h>
-#include <kern/proc/task.h>
+//#include <kern/proc/task.h>
 #include <kern/mem/mem.h>
 
 #define slabgetprev(hp, zone)                                           \

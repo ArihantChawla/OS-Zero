@@ -68,11 +68,11 @@ struct bufblk {
     struct bufblk *listnext;    // next block on free list or LRU
 };
 
-struct bufblkq {
+struct bufblkqueue {
     volatile long  lk;
     struct bufblk *head;
     struct bufblk *tail;
-    long           pad;
+    uint8_t        _pad[CLSIZE - sizeof(long) - 2 * sizeof(void *)];
 };
 
 long            bufinit(void);

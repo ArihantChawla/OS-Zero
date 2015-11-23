@@ -7,6 +7,7 @@
 #include <zero/trix.h>
 #include <kern/util.h>
 #include <kern/mem/vm.h>
+#include <kern/unit/x86/bios.h>
 #include <kern/unit/x86/asm.h>
 #include <kern/unit/x86/cpu.h>
 #include <kern/unit/x86/trap.h>
@@ -106,10 +107,10 @@ apicinittmr(void)
 }
 
 uint32_t
-apicinitcpu(long id)
+apicinit(long cpuid)
 {
     static long            first = 1;
-    volatile struct m_cpu *cpu = &cputab[id];
+    volatile struct m_cpu *cpu = &cputab[cpuid];
     uint32_t               tmrcnt;
 
     if (!mpapic) {
@@ -135,7 +136,7 @@ apicinitcpu(long id)
         irqvec[IRQERROR] = irqerror;
         irqvec[IRQSPURIOUS] = irqspurious;
     }
-    cpu->id = id;
+    cpu->id = cpuid;
     /* enable local APIC; set spurious interrupt vector */
     apicwrite(APICSWENABLE | IRQSPURIOUS, APICSPURIOUS);
     /* initialise timer, mask interrupts */

@@ -5,6 +5,10 @@
 #include <zero/mtx.h>
 #include <kern/proc/task.h>
 #include <kern/unit/x86/asm.h>
+#if (!APIC)
+#include <sys/io.h>
+#include <kern/unit/x86/pic.h>
+#endif
 
 FASTCALL void (*schedpicktask)(struct task *);
 #if (ZEROSCHED)
