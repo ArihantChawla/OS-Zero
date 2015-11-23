@@ -7,43 +7,58 @@ Bootstrap; kern/unit/x86/boot.S
   kmain()
 - invoke kmain
 
+Data Segment
+------------
+
+kernidt		- interrupt vector
+kernpagedir	- page directory
+kerngdt		- global descriptor table (GDT)
+
+64-bit kernel
+-------------
+
+kernpagetab1	- page table structures
+...
+kernpagetab4
+
+32-bit Kernel Setup; kern/unit/ia32/setup.S
+-------------------------------------------
+
+gdtinit()	- initialize GDT
+pginit()	- initialize paging
+
 Kernel Initialization; kern/unit/x86/main.c
 -------------------------------------------
 
-- determine amount of physical memory (grubmemsz())
+grubmemsz()	- determine amount of physical memory
   - FIXME: use GRUB memory map?
-- initialize segmentation (seginit())
-- initialize VBE graphics mode (vbeinit())
-- initialize protected mode interrupt management (trapinitprot())
-- initialize protected mode (kinitprot())
+seginit()	- initialize segmentation
+vbeinit()	- initialize VBE graphics mode
+trapinitprot()	- initialize protected mode interrupt management
+kinitprot()	- initialize protected mode
 
 Protected Mode Initialization; kern/unit/x86/protmode.c
 -------------------------------------------------------
 
-- initialize 32-bit virtual memory (vminit())
-- zero kernel BSS segment
-- set VBE graphics mode up (store parameters) (vbeinitscr())
-- initialize console data structures (consinit())
-- initialize physical memory management (vminitphys())
-- initialize high-level virtual memory management (meminit())
-- initialize kernel TSS (tssinit())
-- probe for and initialize SMBIOS (smbiosinit())
-- initialize PS/2 mouse and keyboard driver (ps2init())
-- run plasma animation (plasmaloop())
-- initialize PCI bus driver (pciinit())
-- initialize ATA/SATA disk drivers (atainit())
-- initialize sound card drivers
-- initialize ACPI driver (acpiinit())
-- allocate and initialize [fixed-size] block I/O buffer cache (bufinit())
-- probe for and initialize SMP (mpinit())
-- initialize HPET timers (hpetinit())
-- initialize APIC timers (apicinit())
-- initialize I/O APIC (ioapicinit())
-- if SMP-system detected, start application CPUs (FIXME: broken)
-- initialize task environment (taskinitenv())
+vminit()	- initialize 32-bit virtual memory
+kbzero()	- zero kernel BSS segment
+vbeinitscr()	- set VBE graphics mode up (probe/store parameters)
+consinit()	- initialize console data structures
+vminitphys()	- initialize physical memory management
+meminit()	- initialize high-level virtual memory management
+tssinit()	- initialize kernel TSS
+smbiosinit()	- probe for and initialize SMBIOS
+ps2init()	- initialize PS/2 mouse and keyboard driver
+plasmaloop()	- run plasma animation
+pciinit()	- initialize PCI bus driver
+atainit()	- initialize ATA/SATA disk drivers
+sb16init()	- initialize Soundblaster 16 driver
+acpiinit()	- initialize ACPI driver
+bufinit()	- allocate and initialize [fixed-size] block I/O buffer cache
+mpinit()	- probe for and initialize SMP
+hpetinit()	- initialize HPET timers
+apicinit()	- initialize APIC [timers]
+ioapicinit()	- initialize I/O APIC
+mpstart()	- if SMP-system detected, start application CPUs (FIXME: broken)
+taskinitenv()	- initialize task environment
 
-- threads and processes
-- memory
-  - segments
-  - virtual memory
-- I/O
