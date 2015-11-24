@@ -1,14 +1,19 @@
-Bootstrap; kern/unit/x86/boot.S
+BOOTSTRAP; kern/unit/x86/boot.S
 -------------------------------
 
-- entry point is _start
-- boot stack top is at 512K
+Symbols
+-------
+_start		- entry point
+
+_start
+------
+- set boot stack up at 512K
 - if support for longmode is detected, pass non-zero longmode argument to
   kmain()
-- invoke kmain
+- invoke kmain()
 
-Data Segment
-------------
+Global Data
+-----------
 
 kernidt		- interrupt vector
 kernpagedir	- page directory
@@ -21,13 +26,13 @@ kernpagetab1	- page table structures
 ...
 kernpagetab4
 
-32-bit Kernel Setup; kern/unit/ia32/setup.S
+32-BIT KERNEL SETUP; kern/unit/ia32/setup.S
 -------------------------------------------
 
 gdtinit()	- initialize GDT
 pginit()	- initialize paging
 
-Kernel Initialization; kern/unit/x86/main.c
+KERNEL INITIALIZATION; kern/unit/x86/main.c
 -------------------------------------------
 
 grubmemsz()	- determine amount of physical memory
@@ -37,7 +42,7 @@ vbeinit()	- initialize VBE graphics mode
 trapinitprot()	- initialize protected mode interrupt management
 kinitprot()	- initialize protected mode
 
-Protected Mode Initialization; kern/unit/x86/protmode.c
+PROTECTED MODE INITIALIZATION; kern/unit/x86/protmode.c
 -------------------------------------------------------
 
 vminit()	- initialize 32-bit virtual memory
