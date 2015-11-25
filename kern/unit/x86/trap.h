@@ -130,6 +130,7 @@ m_lidt(struct m_farptr *fp)
 #define IRQ14    0x2e
 #define IRQ15    0x2f
 #define TRAPMASK 0xff
+#define TRAPNONE 0xff
 
 /* irq numbers */
 #define IRQTMR      0   // timer

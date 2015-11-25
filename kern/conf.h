@@ -4,7 +4,7 @@
 #include <zero/param.h>
 
 #define VMFLATPHYSTAB    1
-#define USERMODE         1
+#define USERMODE         0
 #define PLASMAFOREVER    0
 #define REENTRANTGDTINIT 1
 
@@ -54,9 +54,9 @@
 #define PLASMA      0
 
 /* planned and developed drivers */
-#define IOAPIC      0           // enable I/O APIC support
+#define IOAPIC      1           // enable I/O APIC support
 #define SMBIOS      1           // SMBIOS (system management) support
-#define APIC        0           // local [per-CPU] APIC support
+#define APIC        1           // local [per-CPU] APIC support
 #define PCI         1           // PCI bus driver
 #define ATA         0           // ATA/ATAPI/SATA/SATAPI
 #define ACPI        0           // ACPI

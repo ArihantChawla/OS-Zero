@@ -33,12 +33,12 @@ mboothdr:
 .long	_MBMAGIC
 .long	_MBFLAGS
 .long	_MBCHKSUM
-.long	0	// header_addr
-.long	0	// load_addr
-.long	0	// load_end_addr
-.long	0	// bss_end_addr
-.long	0	// entry_addr
-.long	0	// video mode type (linear)
+.long	0		// header_addr
+.long	0		// load_addr
+.long	0		// load_end_addr
+.long	0		// bss_end_addr
+.long	0		// entry_addr
+.long	0		// video mode type (linear)
 .long	GFXWIDTH	// video width
 .long	GFXHEIGHT	// video height
 .long	GFXDEPTH	// video depth

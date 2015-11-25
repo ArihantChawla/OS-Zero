@@ -87,16 +87,6 @@ const char _ltoxtab[]
 #include <kern/util.h>
 #endif
 
-void
-kbzero(void *adr, uintptr_t len)
-{
-    uint8_t *u8ptr = adr;
-
-    while (len--) {
-        *u8ptr = 0;
-    }
-}
-#if 0
 /* assumes longword-aligned blocks */
 void
 kbzero(void *adr, uintptr_t len)
@@ -174,7 +164,6 @@ kbzero(void *adr, uintptr_t len)
 
     return;
 }
-#endif
 
 /* assumes longword-aligned blocks with sizes of long-word multiples */
 void
@@ -828,14 +817,16 @@ bfindzerol(long *bmap, long ofs, long nbit)
 #if defined(__KERNEL__) && (__KERNEL__)
 
 void
-panic(long trap)
+panic(unsigned long pid, int32_t trap, long err)
 {
     const char *name = trapnametab[trap];
     if (trap >= 0) {
         if (name) {
-            kprintf("KERNEL CAUGHT TRAP %ld (%s)\n", trap, name);
+            kprintf("PROC %lu CAUGHT TRAP %ld (%s): %lx\n",
+                    pid, trap, name, err);
         } else {
-            kprintf("KERNEL CAUGHT RESERVED TRAP %ld\n", trap, name);
+            kprintf("PROC %lu CAUGHT RESERVED TRAP %ld (%s)\n",
+                    pid, trap, name);
         }
     }
     k_halt();

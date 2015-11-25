@@ -123,7 +123,8 @@ struct proc {
     /* current permission mask */
     mode_t               umask;
     /* linkage */
-    long                 ppid;          // parent process-ID
+    long                 pid;           // process ID
+    long                 ppid;          // parent process ID
     long                 pgrp;          // process-group ID (leader)
     struct proc         *prev;
     struct proc         *next;

@@ -35,7 +35,7 @@ sigfunc(unsigned long pid, int32_t trap, long err)
     signalhandler_t      *func;
 
     if (pid < TASKNPREDEF) {
-        panic(trap);
+        panic(pid, trap, err);
     }
 //    kprintf("trap 0x%lx -> signal 0x%lx\n", trap, sig);
     if (trap == TRAPUD) {

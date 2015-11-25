@@ -178,6 +178,8 @@ trapud:
 	_trapenter
 	movl	%esp, %ebp
 
+	movl	8(%esp), %eax	// old ESP
+	movl	(%eax), %ecx	// stored EIP
 #if (FASTINTR)
 	movl	$TRAPUD, %edx
 	xorl	%eax, %eax

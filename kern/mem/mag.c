@@ -8,11 +8,14 @@
 #include <zero/param.h>
 #include <zero/trix.h>
 #include <kern/util.h>
+#include <kern/proc/proc.h>
 #include <kern/mem/vm.h>
 #include <kern/mem/mem.h>
 #include <kern/mem/mag.h>
 #if defined(__i386__)
 #include <kern/unit/x86/link.h>
+#include <kern/unit/x86/trap.h>
+#include <kern/unit/x86/cpu.h>
 #endif
 #if defined(__x86_64__) || defined(__amd64__)
 #include <kern/mem/slab64.h>
@@ -25,7 +28,7 @@
 #include <string.h>
 #define kprintf printf
 #define kbzero bzero
-#define panic(x) abort()
+#define panic(pid, trap, err) abort()
 #endif
 
 extern struct memzone slabvirtzone;
@@ -135,7 +138,7 @@ memalloc(unsigned long nb, long flg)
             kprintf("duplicate allocation %p (%ld/%ld)\n",
                     ptr, ndx, mag->n);
 
-            panic(-EINVAL);
+            panic(k_curproc->pid, TRAPNONE, -EINVAL);
         }
         setbit(bmap, ndx);
 #endif
@@ -144,7 +147,7 @@ memalloc(unsigned long nb, long flg)
         }
     }
     if (!ptr) {
-        panic(-ENOMEM);
+        panic(k_curproc->pid, TRAPNONE, -ENOMEM);
     }
 #if 0
     if (mlk) {
@@ -187,7 +190,7 @@ kfree(void *ptr)
         kprintf("invalid free: %p (%ld/%ld)\n",
                 ptr, ndx, mag->n);
 
-        panic(-EINVAL);
+        panic(k_curproc->pid, TRAPNONE, -EINVAL);
     }
 #endif
     magpush(mag, ptr);

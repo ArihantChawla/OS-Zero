@@ -11,6 +11,7 @@
 #include <kern/unit/x86/asm.h>
 #include <kern/unit/x86/cpu.h>
 #include <kern/unit/x86/trap.h>
+#include <kern/unit/x86/pit.h>
 #include <kern/unit/x86/apic.h>
 #include <kern/unit/x86/link.h>
 
@@ -98,7 +99,8 @@ apicinittmr(void)
     outb(tmp8, PITCTRL2);
     outb(tmp8 | 1, PITCTRL2);
     freq = ((0xffffffff - apicread(APICTMRCURCNT) + 1) * 100) << 4;
-    kprintf("APIC interrupt frequency: %ld MHz\n", div1000000(freq));    
+//    kprintf("APIC interrupt frequency: %ld MHz\n", div1000000(freq));
+    kprintf("APIC interrupt frequency: %ld MHz\n", freq / 1000000);
     tmrcnt = (freq / HZ) >> 4;
     trapsetintrgate(&kernidt[trapirqid(IRQTMR)], irqtmr, TRAPUSER);
     tmrcnt = max(tmrcnt, 16);

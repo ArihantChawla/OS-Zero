@@ -46,6 +46,7 @@ procinit(long id)
         k_curtask = task;
     }
     if (proc) {
+        proc->pid = id;
         if (taskid >= TASKNPREDEF) {
             /* initialise page directory */
             ptr = kmalloc(NPDE * sizeof(pde_t));

@@ -1,16 +1,16 @@
 BOOTSTRAP; kern/unit/x86/boot.S
 -------------------------------
 
-Symbols
--------
-_start		- entry point
-
 _start
 ------
 - set boot stack up at 512K
 - if support for longmode is detected, pass non-zero longmode argument to
   kmain()
 - invoke kmain()
+
+Global Symbols
+--------------
+_start		- entry point
 
 Global Data
 -----------
@@ -35,6 +35,8 @@ pginit()	- initialize paging
 KERNEL INITIALIZATION; kern/unit/x86/main.c
 -------------------------------------------
 
+kmain()
+-------
 grubmemsz()	- determine amount of physical memory
   - FIXME: use GRUB memory map?
 seginit()	- initialize segmentation
@@ -45,6 +47,8 @@ kinitprot()	- initialize protected mode
 PROTECTED MODE INITIALIZATION; kern/unit/x86/protmode.c
 -------------------------------------------------------
 
+kinitprot()
+-----------
 vminit()	- initialize 32-bit virtual memory
 kbzero()	- zero kernel BSS segment
 vbeinitscr()	- set VBE graphics mode up (probe/store parameters)
