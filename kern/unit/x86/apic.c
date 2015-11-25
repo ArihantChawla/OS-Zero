@@ -25,6 +25,7 @@ extern void                   *irqvec[];
 extern volatile struct m_cpu   cputab[NCPU];
 extern volatile uint32_t      *mpapic;
 extern volatile struct m_cpu  *mpbootcpu;
+static uint32_t                apictmrcnt;
 
 /* TODO: fix this kludge */
 void
@@ -48,13 +49,13 @@ apicprobe(void)
 }
 
 void
-apicstarttmr(uint32_t tmrcnt)
+apicstarttmr(void)
 {
     /*
      * timer counts down at bus frequency from APICTMRINITCNT and issues
      * the interrupt IRQAPICTMR
      */
-    apicwrite(tmrcnt, APICTMRINITCNT);
+    apicwrite(apictmrcnt, APICTMRINITCNT);
     apicwrite(0x03, APICTMRDIVCONF);
     apicwrite(IRQAPICTMR | APICPERIODIC, APICTMR);
     apicwrite(0, APICTASKPRIO);
@@ -62,7 +63,7 @@ apicstarttmr(uint32_t tmrcnt)
     return;
 }
 
-uint32_t
+void
 apicinittmr(void)
 {
     volatile uint32_t *apic = mpapic;
@@ -84,8 +85,17 @@ apicinittmr(void)
     apicwrite(IRQAPICTMR, APICTMR);
     apicwrite(0x03, APICTMRDIVCONF);
     /* initialise PIT channel 2 in one-shot mode */
-    outb((inb(PITCTRL2) & 0xfd) | PITONESHOT, PITCTRL2);
-    outb(0xb2, PITCTRL);
+//    outb((inb(PITCTRL2) & 0xfd) | PITONESHOT, PITCTRL2);
+
+//    outb(PITCMD | PITONESHOT, PITCTRL);
+//    pitsethz(100, PITCHAN0);
+
+    tmp8 = inb(PITCTRL2) & 0xfd;
+    tmp8 |= PITONESHOT;
+    outb(tmp8, PITCTRL2);
+    
+//    outb(0xb2, PITCTRL);
+//    outb(PITCMD | PITONESHOT, PITCTRL2);
     apicwrite(0, APICTASKPRIO);
     pitsethz(100, PITCHAN2);
     /* wait until PIT  counter reaches zero */
@@ -104,11 +114,12 @@ apicinittmr(void)
     tmrcnt = (freq / HZ) >> 4;
     trapsetintrgate(&kernidt[trapirqid(IRQTMR)], irqtmr, TRAPUSER);
     tmrcnt = max(tmrcnt, 16);
-
-    return tmrcnt;
+    apictmrcnt = tmrcnt;
+    
+    return;
 }
 
-uint32_t
+void
 apicinit(long cpuid)
 {
     static long            first = 1;
@@ -118,11 +129,11 @@ apicinit(long cpuid)
     if (!mpapic) {
         mpapic = (volatile uint32_t *)apicprobe();
 
-        return 0;
+        return;
     }
     if (!mpapic) {
 
-        return 0;
+        return;
     }
 
     if (first) {
@@ -167,9 +178,9 @@ apicinit(long cpuid)
             ;
         }
     }
-    tmrcnt = apicinittmr();
+    apicinittmr();
 
-    return tmrcnt;
+    return;
 }
 
 void

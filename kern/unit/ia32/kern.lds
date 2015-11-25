@@ -103,6 +103,9 @@ SECTIONS {
 	sched.o(.data)
 	sched.o(.bss)
 
+    	apic.o(.text)
+    	apic.o(.data)
+    	apic.o(.bss)
     	hpet.o(.text)
     	hpet.o(.data)
     	hpet.o(.bss)

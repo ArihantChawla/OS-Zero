@@ -74,8 +74,8 @@ extern void acpiinit(void);
 extern void sb16init(void);
 #endif
 #if (APIC)
-extern uint32_t apicinit(long cpuid);
-extern void apicstarttmr(uint32_t tmrcnt);
+extern void apicinit(long cpuid);
+extern void apicstarttmr(void);
 #endif
 extern void taskinitenv(void);
 #if (USERMODE)
@@ -110,9 +110,6 @@ extern volatile uint32_t        *mpapic;
 void
 kinitprot(unsigned long pmemsz)
 {
-#if (NEWTMR)
-    uint32_t tmrcnt = 0;
-#endif
     uint32_t lim = min(pmemsz, KERNVIRTBASE - NCPU * KERNSTKSIZE);
     uint32_t sp = (uint32_t)kernsysstktab + NCPU * KERNSTKSIZE;
 
@@ -136,6 +133,11 @@ kinitprot(unsigned long pmemsz)
 //    vminitphys((uintptr_t)&_epagetab, pmemsz);
     vminitphys((uintptr_t)&_epagetab, lim);
     meminit(min(pmemsz, lim));
+    __asm__ __volatile__ ("movl %0, %%esp\n"
+                          "pushl $0\n"
+                          "movl %%esp, %%ebp\n"
+                          :
+                          : "r" (sp));
 #if 0
     /* FIXME: map possible device memory */
     vmmapseg((uint32_t *)&_pagetab, DEVMEMBASE, DEVMEMBASE, 0xffffffffU,
@@ -208,11 +210,7 @@ kinitprot(unsigned long pmemsz)
     /* initialise high precision event timers */
     hpetinit();
 #endif
-#if (NEWTMR)
-    tmrcnt = apicinit(0);
-#else
     apicinit(0);
-#endif
 #if (IOAPIC)
     ioapicinit(0);
 #endif
@@ -244,15 +242,10 @@ kinitprot(unsigned long pmemsz)
             vmpagestat.nphys << (PAGESIZELOG2 - 10));
     schedinit();
 #if (APIC)
-    apicstarttmr(tmrcnt);
+    apicstarttmr();
 #else
     pitinit();
 #endif
-    __asm__ __volatile__ ("movl %0, %%esp\n"
-                          "pushl $0\n"
-                          "movl %%esp, %%ebp\n"
-                          :
-                          : "r" (sp));
 #if (PLASMAFOREVER)
     plasmaloop(-1);
 #elif (USERMODE)
