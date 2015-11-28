@@ -501,7 +501,6 @@ _getsysstk:
 	/* construct stack information */
 	movl	(%ebp), %ebx		// get after-interrupt frame pointer
 	movl	(%ebp), %esi
-//	movl	%ss, %edi		// get %ss
 	movl	$DATASEL, %edi
 	addl	$4, %ebx		// adjust to caller stack pointer
 	addl	$8, %esi		// adjust to caller frame pointer
@@ -515,7 +514,6 @@ _havestk:
 	movl	%edi, 64(%esp)		// store %ss in m_tcb.iret
 	addl	$12, %ebx		// adjust stack pointer past trap frame
 	movl	(%ebp), %ecx		// pushed frame pointer
-//	movl	%ebx, 60(%esp)		// store caller stack pointer for iret
 	movl	%edx, 52(%esp)		// store %cs in m_tcb.iret
 	movl	12(%ebp), %edi		// fetch pushed flags register
 	movl	%esi, 48(%esp)		// store return address for iret
@@ -523,10 +521,8 @@ _havestk:
 	/* schedule next thread */
 	movl	%gs:8, %eax		// task structure address argument
 	movl	schedpicktask, %ebx	// get scheduler-specific function
-//	movl	%ebp, %esp		// restore stack pointer
 	leal	4(%ebp), %esp		// restore stack pointer
-	pushl	%eax		// store copy of task pointer
-//	pushl	%eax
+	pushl	%eax			// store copy of task pointer
 	call	*%ebx			// call scheduler function (taskpick)
 	popl	%ecx
 	cmpl	%eax, %ecx		// did we reschedule the same task?
