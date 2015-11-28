@@ -16,17 +16,16 @@
 
 m_tcbjmp:
 	/* fetch fxsave-word */
-//	movl	512(%eax), %ebx
+	movl	512(%eax), %ebx
 	/* adjust %esp to tcb->pdbr */
 	leal	516(%eax), %esp
-//	cmpl	$0, %ebx
-//	je	_frstor
-//	fxrstor	(%eax)
-//	jmp	_fpudone
-//_frstor:
-//	frstor	(%eax)
-//_fpudone:
-//	fwait
+	cmpl	$0, %ebx
+	je	_frstor
+	fxrstor	(%eax)
+	jmp	_fpudone
+_frstor:
+	frstor	(%eax)
+_fpudone:
 	/* restore page directory page register */
 	popl	%ebx
 	movl	%ebx, %cr3
@@ -35,14 +34,23 @@ m_tcbjmp:
 	popl	%es
 	popl	%fs
 	popl	%gs
+	fwait
 	/*
 	 * pop general purpose registers
 	 * - stack pointer points to m_tcb->iret
 	 */
+
+	movl	%eax, %gs:8		// k_curtask
+	movl	528(%eax), %ebx		// k_curproc
+	movl	548(%eax), %ecx		// k_curpid
+	movl	%ebx, %gs:4
+	movl	%ecx, %gs:16
+	
 	popal
-#if 0
-	movl	%gs:8, %esp
-	addl	$568, %esp
+#if (APIC)
+	_apiceoi
+#else
+	_piteoi1
 #endif
 	iretl
 

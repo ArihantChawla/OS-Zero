@@ -116,9 +116,11 @@ queuermitem(QUEUE_TYPE *item, QUEUE_TYPE **queue)
 static __inline__ void
 queuepush(QUEUE_ITEM_TYPE *item, QUEUE_TYPE **queue)
 {
-    QUEUE_ITEM_TYPE *list;
+    QUEUE_ITEM_TYPE *list = NULL;
 
-    list = (*queue)->next;
+    if (*queue) {
+        list = (*queue)->next;
+    }
     if (list) {
         item->prev = (*queue)->prev;
         item->prev->next = item;
@@ -140,7 +142,9 @@ queuepop(QUEUE_TYPE **queue)
 {
     QUEUE_ITEM_TYPE *item = NULL;
 
-    item = (*queue)->next;
+    if (*queue) {
+        item = (*queue)->next;
+    }
     if (item) {
         if (!queueissingular(queue)) {
             (*queue)->prev->next = item->next;
@@ -159,9 +163,11 @@ queuepop(QUEUE_TYPE **queue)
 static __inline__ void
 queueappend(QUEUE_ITEM_TYPE *item, QUEUE_TYPE **queue)
 {
-    QUEUE_ITEM_TYPE *list;
+    QUEUE_ITEM_TYPE *list = NULL;
 
-    list = (*queue)->prev;
+    if (*queue) {
+        list = (*queue)->prev;
+    }
     if (list) {
         item->prev = list;
         list->next = item;
@@ -183,7 +189,9 @@ queuegetlast(QUEUE_TYPE **queue)
 {
     QUEUE_ITEM_TYPE *item = NULL;
 
-    item = (*queue)->prev;
+    if (*queue) {
+        item = (*queue)->prev;
+    }
     if (item) {
         if (!queueissingular(queue)) {
             item->prev->next = item->next;

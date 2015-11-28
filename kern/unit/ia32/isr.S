@@ -448,6 +448,9 @@ _tmr0fin:
 
 	/* 32-bit x86 context switch */
 	/*
+	 * registers after interrupt
+	 *
+	 * ebp		- old ESP _and_ EBP
 	 * top of stack after interrupt
 	 *
 	 * ss		- user-stack segment selector
@@ -477,7 +480,7 @@ irqtmr:
 _fxsave:	
 	fxsave	(%eax)
 _fpudone:
-	fwait
+	//
 	/* push segment registers */
 	pushl	%gs			// kernel thread-local storage
 	pushl	%fs			// user thread-local storage
@@ -488,46 +491,54 @@ _fpudone:
 	movl	%cr3, %ecx		// get %cr3 (page directory address)
 	cmpl	$UTEXTSEL, %edx		// did we come from userland?
 	jne	_getsysstk		// stack-info was not pushed if not
-	movl	(%ebp), %ebx		// fetch stored stack pointer
-	movl	20(%ebp), %edi		// fetch stored %ss
-//	addl	$8, %ebx		// adjust for past the caller frame
+	movl	(%ebp), %ebx		// fetch stored frame pointer
+	movl	16(%ebp), %edi		// fetch stored stack pointer
+	movl	$UDATASEL, %esi
+	movl	%ebx, 28(%esp)		// patch frame pointer in m_tcb.genregs
+	movl	%esi, 60(%esp)		// caller stack pointer in m_tcb.iret
 	jmp	_havestk
 _getsysstk:
 	/* construct stack information */
-	movl	(%ebp), %ebx		// get copied frame pointer
-	movl	%ss, %edi		// get %ss
-//	addl	$8, %ebx		// adjust for past the caller frame
+	movl	(%ebp), %ebx		// get after-interrupt frame pointer
+	movl	(%ebp), %esi
+//	movl	%ss, %edi		// get %ss
+	movl	$DATASEL, %edi
+	addl	$4, %ebx		// adjust to caller stack pointer
+	addl	$8, %esi		// adjust to caller frame pointer
+	movl	%ebx, 60(%esp)		// caller stack pointer in m_tcb.genregs
+	movl	%esi, 28(%esp)		// patch frame pointer in m_tcb.genregs
 _havestk:	
+	fwait	
 	movl	4(%ebp), %esi		// pushed return address
 	movl	%ecx, -4(%esp)		// store page directory base register
 	movl	%eax, 44(%esp)		// patch %eax in m_tcb.genregs
 	movl	%edi, 64(%esp)		// store %ss in m_tcb.iret
-//	movl	%ebx, 24(%esp)		// patch stack pointer
-//	movl	(%ebp), %ecx		// pushed frame pointer
-	leal	-48(%esp), %eax		// store m_tcb.iret address
-	movl	%edx, 52(%esp)		// store %cs in m_tcb.iret
-//	movl	%ebx, 28(%esp)		// patch frame pointer in m_tcb.genregs
-	movl	12(%ebp), %edi		// fetch pushed flags register
+	addl	$12, %ebx		// adjust stack pointer past trap frame
+	movl	(%ebp), %ecx		// pushed frame pointer
 //	movl	%ebx, 60(%esp)		// store caller stack pointer for iret
-	movl	%ebx, 28(%esp)		// patch frame pointer in m_tcb.genregs
-	movl	%ebx, 60(%esp)		// store caller stack pointer for iret
+	movl	%edx, 52(%esp)		// store %cs in m_tcb.iret
+	movl	12(%ebp), %edi		// fetch pushed flags register
 	movl	%esi, 48(%esp)		// store return address for iret
 	movl	%edi, 56(%esp)		// store pre-interrupt flags for iret
-	movl	%eax, 24(%esp)		// iret stack pointer in m_tcb.genregs
 	/* schedule next thread */
+	movl	%gs:8, %eax		// task structure address argument
+	movl	schedpicktask, %ebx	// get scheduler-specific function
+//	movl	%ebp, %esp		// restore stack pointer
+	leal	4(%ebp), %esp		// restore stack pointer
+	pushl	%eax		// store copy of task pointer
+//	pushl	%eax
+	call	*%ebx			// call scheduler function (taskpick)
+	popl	%ecx
+	cmpl	%eax, %ecx		// did we reschedule the same task?
+	jne	_swtch			// if not, branch to _swtch
 #if (APIC)
 	_apiceoi
 #else
 	_piteoi1
 #endif
-	movl	%gs:8, %eax		// task structure address argument
-	movl	schedpicktask, %ebx	// get scheduler-specific function
-	movl	%ebp, %esp		// restore stack pointer
-	call	*%ebx			// call scheduler function (taskpick)
-#if 0
-	/* schedpicktask returns the address of the task/context in %eax */
+	iretl				// continue the same task
+_swtch:
 	call	m_tcbjmp
-#endif
 
 irqkbd:
 	_trapenter

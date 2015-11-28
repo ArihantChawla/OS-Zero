@@ -133,24 +133,19 @@ kinitprot(unsigned long pmemsz)
 //    vminitphys((uintptr_t)&_epagetab, pmemsz);
     vminitphys((uintptr_t)&_epagetab, lim);
     meminit(min(pmemsz, lim));
+#if 0
     __asm__ __volatile__ ("movl %0, %%esp\n"
                           "pushl $0\n"
                           "movl %%esp, %%ebp\n"
                           :
                           : "r" (sp));
+#endif
 #if 0
     /* FIXME: map possible device memory */
     vmmapseg((uint32_t *)&_pagetab, DEVMEMBASE, DEVMEMBASE, 0xffffffffU,
              PAGEPRES | PAGEWRITE | PAGENOCACHE);
 #endif
     tssinit(0);
-#if 0
-#if (VBE) && (NEWFONT)
-//    consinit(768 / vbefontw, 1024 / vbefonth);
-#elif (VBE)
-    consinit(768 >> 3, 1024 >> 3);
-#endif
-#endif
 #if (SMBIOS)
     smbiosinit();
 #endif
@@ -245,6 +240,13 @@ kinitprot(unsigned long pmemsz)
     apicstarttmr();
 #else
     pitinit();
+#endif
+#if 0
+    __asm__ __volatile__ ("movl %0, %%esp\n"
+                          "pushl $0\n"
+                          "movl %%esp, %%ebp\n"
+                          :
+                          : "r" (sp));
 #endif
 #if (PLASMAFOREVER)
     plasmaloop(-1);

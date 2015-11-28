@@ -116,34 +116,30 @@ taskfunc_t              *taskfunctab[TASKNSTATE]
 };
 static long             *taskniceptr = &tasknicetab[32];
 
+#if 0
 /* run task */
 FASTCALL
 void
 taskjmp(struct task *task)
 {
-    uint8_t *fctx = task->m_tcb.fctx;
+    uint8_t *fctx;
 
-//#if 0
-    if (k_curcpu->info->flags & CPUHASFXSR) {
-        __asm__ __volatile__ ("fxrstor (%0)\n" : : "r" (fctx));
-    } else {
-        __asm__ __volatile__ ("frstor (%0)\n" : : "r" (fctx));
+    if (task != k_curtask) {
+        fctx = task->m_tcb.fctx;
+        if (k_curcpu->info->flags & CPUHASFXSR) {
+            __asm__ __volatile__ ("fxrstor (%0)\n" : : "r" (fctx));
+        } else {
+            __asm__ __volatile__ ("frstor (%0)\n" : : "r" (fctx));
+        }
     }
-//#endif
     k_curtask = task;
     k_curproc = task->proc;
     k_curpid = task->id;
-#if 0
-    if (k_curcpu->info->flags & CPUHASFXSR) {
-        task->m_tcb.fxsave = 1;
-    } else {
-        task->m_tcb.fxsave = 0;
-    }
-#endif
     m_tcbjmp(&task->m_tcb);
 
     /* NOTREACHED */
 }
+#endif
 
 #if (ZEROSCHED)
 
@@ -199,66 +195,6 @@ taskwakeprio(struct task *task)
     return prio;
 }
 
-#if 0
-/* add task to beginning of queue */
-void
-taskpush(struct task *task, struct taskqueue **taskqueue)
-{
-    struct taskqueue *queue = *taskqueue;
-
-    if (queue) {
-        queue->prev->next = task;
-        task->prev = queue->prev;
-        task->next = queue;
-        queue-> = task;
-    } else {
-        listinit(task);
-        *taskqueue = task;
-    }
-
-    return;
-}
-
-/* get/remove task from beginning of queue */
-struct task *
-taskpop(struct taskqueue **taskqueue)
-{
-    struct taskqueue *queue = *taskqueue;
-    struct task      *task;
-
-    if (queue) {
-        if (!listissingular(queue)) {
-            queue->prev->next = queue->next->next;
-            queue->next->prev = queue->prev;
-            *taskqueue = queue->next;
-        } else {
-            *taskqueue = NULL;
-        }
-    }
-
-    return task;
-}
-
-/* add task to end of queue */
-void
-taskqueue(struct task *task, struct taskqueue **taskqueue)
-{
-    struct task *queue = *taskqueue;
-
-    if (queue) {
-        queue->prev->next = task;
-        task->prev = queue->prev;
-        task->next = queue;
-        queue->prev = task;
-    } else {
-        listinit(task);
-        *taskqueue = task;
-    }
-
-    return;
-}
-#endif
-
 #undef QUEUE_SINGLE_TYPE
 #undef QUEUE_ITEM_TYPE
 #undef QUEUE_TYPE
@@ -300,7 +236,7 @@ taskqueueready(struct task *task)
 
 /* switch tasks */
 FASTCALL
-void
+struct task *
 taskpick(struct task *curtask)
 {
     struct task      *task = NULL;
@@ -327,12 +263,13 @@ taskpick(struct task *curtask)
             }
         }
         if (!task) {
+            k_enabintr();
             m_waitint();
         }
     } while (!task);
-    taskjmp(task);
+//    taskjmp(task);
 
-    return;
+    return task;
 }
 
 /* add task to wait queue */

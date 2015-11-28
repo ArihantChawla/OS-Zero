@@ -93,6 +93,10 @@ SECTIONS {
 	mp.o(.data)
 	mp.o(.bss)
 
+	proc.o(.text)
+	proc.o(.data)
+	proc.o(.bss)
+
 	task.o(.text)
 	task.o(.data)
 	task.o(.bss)

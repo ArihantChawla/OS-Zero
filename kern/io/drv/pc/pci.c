@@ -6,10 +6,6 @@
 #include <stddef.h>
 #include <sys/io.h>
 
-//#define HTLIST_TYPE  struct pcidev
-//#define HTLISTQ_TYPE struct pcidevhtlist
-//#include <zero/htlist.h>
-
 #include <kern/malloc.h>
 #include <kern/util.h>
 #include <kern/io/drv/pc/pci.h>
@@ -18,10 +14,8 @@
 extern void ac97init(struct pcidev *);
 #endif
 
-//static void    *pcidrvtab[4096] ALIGNED(PAGESIZE);
 static struct pcidrvent *pcidrvtab[65536] ALIGNED(PAGESIZE);
 struct pcidev            pcidevtab[PCINDEV];
-//struct pcidevhtlist pcidevhtlist;
 struct pcidrv            pcidrv;
 #if 0
 long                     pcitype;
@@ -563,7 +557,6 @@ pciinit(void)
                         dev->id = devid;
                         dev->bus = bus;
                         dev->slot = slot;
-//                        htlistqueue(&pcidevhtlist, &pcidevtab[ndev]);
                         ndev++;
                     }
                 }

@@ -45,8 +45,8 @@
         void *_tmp = NULL;                                              \
                                                                         \
         blk->status = 0;                                                \
-        blk->listprev = _tmp;                                           \
-        blk->listnext = _tmp;                                           \
+        blk->prev = _tmp;                                               \
+        blk->next = _tmp;                                               \
         blk->tabprev = _tmp;                                            \
         blk->tabnext = _tmp;                                            \
     } while (0)
@@ -62,17 +62,16 @@ struct bufblk {
     long           nb;          // # of bytes
     long           nref;        // # of items in subtables
     void          *data;        // in-core block data (kernel virtual address)
+    struct bufblk *prev;        // previous block on free list or LRU
+    struct bufblk *next;        // next block on free list or LRU
     struct bufblk *tabprev;     // previous block on hash chain
     struct bufblk *tabnext;     // next block on hash chain
-    struct bufblk *listprev;    // previous block on free list or LRU
-    struct bufblk *listnext;    // next block on free list or LRU
 };
 
 struct bufblkqueue {
     volatile long  lk;
     struct bufblk *head;
-    struct bufblk *tail;
-    uint8_t        _pad[CLSIZE - sizeof(long) - 2 * sizeof(void *)];
+    uint8_t        _pad[CLSIZE - sizeof(long) - sizeof(void *)];
 };
 
 long            bufinit(void);

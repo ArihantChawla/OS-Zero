@@ -10,10 +10,6 @@
 #include <kern/unit/x86/asm.h>
 #include <kern/unit/x86/trap.h>
 
-#if (FOO)
-#include <stdio.h>
-#endif
-
 #define MAXPRINTFSTR 2048
 
 #define isprintascii(c) ((c) >= 0x20 && (c) < 0x7f)

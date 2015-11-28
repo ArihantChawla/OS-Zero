@@ -33,19 +33,9 @@
 #endif
 #include <kern/mem/mag.h>
 
-#define HTLIST_TYPE  struct bufblk
-#define HTLIST_QTYPE struct bufblkqueue
-#define HTLISTPREV   listprev
-#define HTLISTNEXT   listnext
-#include <zero/htlist.h>
-#define bufpushfree(blk)                                                \
-    htlistpush(&buffreelist, blk)
-#define bufpopfree(blk)                                                 \
-    htlistpop(&buffreelist, blk)
-#define bufqueuelru(blk)                                                \
-    htlistpush(&buflruqueue, blk)
-#define bufdequeuelru(blk)                                              \
-    htlistdequeue(&buflruqueue, blk)
+#define QUEUE_ITEM_TYPE struct bufblk
+#define QUEUE_TYPE      struct bufblk
+#include <zero/queue.h>
 
 #define bufadrtoid(ptr)                                                 \
     ((bufzone) ? ((uint8_t *)ptr - (uint8_t *)bufzone) >> BUFSIZELOG2 : NULL)
@@ -84,25 +74,22 @@ bufinit(void)
 
         return 0;
     }
-    kprintf("allocated %ld bytes of buffer cache - %p", sz, ptr);
+    kprintf("allocated %ld kilobytes of buffer cache\n", sz >> 10);
     if (ptr) {
         /* allocate buffer cache */
         kbzero(ptr, sz);
         /* initialise buffer headers */
-//        n = BUFNBLK;
         n = sz >> BUFSIZELOG2;
         blk = &bufhdrtab[n - 1];
         u8ptr = ptr;
-//        u8ptr += BUFNBYTE;
         u8ptr +=  sz;
         while (n--) {
             u8ptr -= BUFSIZE;
             blk->data = u8ptr;
-            bufpushfree(blk);
+            queuepush(blk, &buffreelist.head);
             blk--;
         }
         bufzone = ptr;
-//        bufnbyte = BUFNBYTE;
         bufnbyte = sz;
         retval = 1;
     }
@@ -125,10 +112,10 @@ bufevict(void)
 
     do {
         mtxlk(&buflruqueue.lk);
-        bufdequeuelru(&blk);
+        blk = queuepop(&buflruqueue.head);
         mtxunlk(&buflruqueue.lk);
         if (!blk) {
-            /* TODO: wait for bufqueuelru() */
+            /* TODO: wait for queuepop(&buflruqueue.head) */
         } else {
             if (blk->status & BUFMUSTWRITE) {
                 bufwrite(blk);
@@ -147,7 +134,7 @@ bufalloc(void)
     struct bufblk *blk = NULL;
 
     mtxlk(&buffreelist.lk);
-    bufpopfree(&blk);
+    blk = queuepop(&buffreelist.head);
     mtxunlk(&buffreelist.lk);
     if (!blk) {
         blk = bufevict();
@@ -308,7 +295,7 @@ bufaddblk(struct bufblk *blk)
     }
     mtxunlk(&buflktab[dkey]);
     if (!fail) {
-        bufqueuelru(blk);
+        queueappend(blk, &buflruqueue.head);
     }
     
     return;
@@ -402,7 +389,7 @@ bufrel(long dev, int64_t num, long flush)
         }
 #endif
         mtxlk(&buffreelist.lk);
-        bufpushfree(blk);
+        queuepush(blk, &buffreelist.head);
         mtxunlk(&buffreelist.lk);
     }
 

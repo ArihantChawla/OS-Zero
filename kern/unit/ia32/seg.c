@@ -51,8 +51,6 @@ seginit(long id)
                SEGCODE);
     segsetdesc(&gdt[DATASEG], 0, NPAGEMAX - 1,
                SEGDATA);
-//    segsetdesc(&gdt[STKSGEG], 0, NPAGEMAX - 1);
-//    segsetdesc(&gdt[TSSSEG], &tsstab[id], sizeof(struct m_tss), SEGTSS);
     segsetdesc(&gdt[UTEXTSEG], 0, NPAGEMAX - 1,
                SEGCODE | SEGUSER);
     segsetdesc(&gdt[UDATASEG], 0, NPAGEMAX - 1,
