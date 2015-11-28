@@ -531,15 +531,15 @@ _havestk:
 	popl	%ecx
 	cmpl	%eax, %ecx		// did we reschedule the same task?
 	jne	_swtch			// if not, branch to _swtch
+	/* continue the same task */
+	leal	536(%eax), %esp
+	popal
 #if (APIC)
 	_apiceoi
 #else
 	_piteoi1
 #endif
-//	movl	%esp, 576(%eax)
-	leal	536(%eax), %esp
-	popal
-	iretl				// continue the same task
+	iretl
 _swtch:
 	call	m_tcbjmp
 
