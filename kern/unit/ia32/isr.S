@@ -445,14 +445,14 @@ _tmr0fin:
 	/* return */
 	iretl
 
-
 	/* 32-bit x86 context switch */
 	/*
 	 * registers after interrupt
-	 *
+	 * -------------------------
 	 * ebp		- old ESP _and_ EBP
-	 * top of stack after interrupt
 	 *
+	 * top of stack after interrupt
+	 * ----------------------------
 	 * ss		- user-stack segment selector
 	 * esp		- userland stack pointer
 	 * eflags
@@ -461,7 +461,7 @@ _tmr0fin:
 	 * ebp		<- EBP
 	 * eax
 	 *
-	 * NOTE: ss  and esp are only pushed if the interrupt happened
+	 * NOTE: ss and esp are only pushed if the interrupt happened
 	 * in user-mode, i.e. there's a privilege transition to system-mode
  	 */
 irqtmr:
@@ -504,8 +504,8 @@ _getsysstk:
 	movl	$DATASEL, %edi
 	addl	$4, %ebx		// adjust to caller stack pointer
 	addl	$8, %esi		// adjust to caller frame pointer
-	movl	%ebx, 60(%esp)		// caller stack pointer in m_tcb.genregs
-	movl	%esi, 28(%esp)		// patch frame pointer in m_tcb.iret
+	movl	%ebx, 60(%esp)		// caller stack pointer in m_tcb.iret
+	movl	%esi, 28(%esp)		// patch frame pointer in m_tcb.genregs
 _havestk:	
 	fwait	
 	movl	4(%ebp), %esi		// pushed return address
