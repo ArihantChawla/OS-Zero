@@ -45,11 +45,13 @@ schedloop(void)
 {
     /* scheduler loop; interrupted by timer [and other] interrupts */
     do {
+        int foo = 0x12345678;
         /* enable all interrupts */
 #if !(APIC)
         outb(0x00, PICMASK1);
         outb(0x00, PICMASK2);
 #endif
+        kprintf("FOO: %lx\n", foo);
         /* wait for interrupt */
         k_waitint();
     } while (1);

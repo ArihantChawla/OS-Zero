@@ -506,7 +506,7 @@ _getsysstk:
 	addl	$4, %ebx		// adjust to caller stack pointer
 	addl	$8, %esi		// adjust to caller frame pointer
 	movl	%ebx, 60(%esp)		// caller stack pointer in m_tcb.genregs
-	movl	%esi, 28(%esp)		// patch frame pointer in m_tcb.genregs
+	movl	%esi, 28(%esp)		// patch frame pointer in m_tcb.iret
 _havestk:	
 	fwait	
 	movl	4(%ebp), %esi		// pushed return address
@@ -536,6 +536,9 @@ _havestk:
 #else
 	_piteoi1
 #endif
+//	movl	%esp, 576(%eax)
+	leal	536(%eax), %esp
+	popal
 	iretl				// continue the same task
 _swtch:
 	call	m_tcbjmp
