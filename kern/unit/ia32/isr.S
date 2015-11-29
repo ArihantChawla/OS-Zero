@@ -531,6 +531,7 @@ _havestk:
 	leal	536(%eax), %esp
 	popal
 	leal	4(%ebp), %esp		// restore stack pointer
+	addl	$16, %ebp		// adjust frame pointer
 #if (APIC)
 	_apiceoi
 #else

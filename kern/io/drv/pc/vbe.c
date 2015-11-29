@@ -265,7 +265,7 @@ vbeputpix(gfxargb32_t pix, int x, int y)
 }
 
 INLINE void
-vbeputpix_p(void *ptr, gfxargb32_t pix, int x, int y)
+vbeputpix_p(void *ptr, gfxargb32_t pix)
 {
     gfxsetrgb888(pix, ptr);
 
@@ -283,6 +283,7 @@ vbeclrscr(gfxargb32_t pix)
     for (x = 0 ; x < vbescreen.w ; x++) {
         for (y = 0 ; y < vbescreen.h ; y++) {
             vbeputpix(pix, x, y);
+//            vbeputpix_p(ptr, pix);
 //            ptr + incr;
         }
     }
