@@ -110,8 +110,9 @@ extern volatile uint32_t        *mpapic;
 void
 kinitprot(unsigned long pmemsz)
 {
-    uint32_t lim = min(pmemsz, KERNVIRTBASE - NCPU * KERNSTKSIZE);
-    uint32_t sp = (uint32_t)kernsysstktab + NCPU * KERNSTKSIZE;
+    uint32_t lim = min(pmemsz, KERNVIRTBASE);
+//    uint32_t sp = (uint32_t)kernsysstktab + NCPU * KERNSTKSIZE;
+    uint32_t sp = (uint32_t)kernsysstktab + KERNSTKSIZE;
 
     /* initialise virtual memory */
     vminit((uint32_t *)&_pagetab);
@@ -133,13 +134,11 @@ kinitprot(unsigned long pmemsz)
 //    vminitphys((uintptr_t)&_epagetab, pmemsz);
     vminitphys((uintptr_t)&_epagetab, lim);
     meminit(min(pmemsz, lim));
-#if 0
     __asm__ __volatile__ ("movl %0, %%esp\n"
                           "pushl $0\n"
                           "movl %%esp, %%ebp\n"
                           :
                           : "r" (sp));
-#endif
 #if 0
     /* FIXME: map possible device memory */
     vmmapseg((uint32_t *)&_pagetab, DEVMEMBASE, DEVMEMBASE, 0xffffffffU,
@@ -240,13 +239,6 @@ kinitprot(unsigned long pmemsz)
     apicstarttmr();
 #else
     pitinit();
-#endif
-#if 0
-    __asm__ __volatile__ ("movl %0, %%esp\n"
-                          "pushl $0\n"
-                          "movl %%esp, %%ebp\n"
-                          :
-                          : "r" (sp));
 #endif
 #if (PLASMAFOREVER)
     plasmaloop(-1);

@@ -27,13 +27,21 @@ schedinit(void)
     return;
 }
 
-NORETURN
 void
 schedyield(void)
 {
-    struct task *task = k_curtask;
+    struct task *oldtask = k_curtask;
+    struct task *task = NULL;
 
-    schedpicktask(task);
+    do {
+        schedpicktask(oldtask);
+    } while (!task);
+    if (task != oldtask) {
+        m_tcbjmp(task);
+    } else {
+
+        return;
+    }
 
     /* NOTREACHED */
     for ( ; ; ) { ; }
@@ -43,15 +51,14 @@ NOINLINE
 void
 schedloop(void)
 {
-    /* scheduler loop; interrupted by timer [and other] interrupts */
+    /* test scheduler loop; interrupted by timer [and other] interrupts */
     do {
-        int foo = 0x12345678;
         /* enable all interrupts */
 #if !(APIC)
         outb(0x00, PICMASK1);
         outb(0x00, PICMASK2);
 #endif
-        kprintf("FOO: %lx\n", foo);
+//        kprintregs();
         /* wait for interrupt */
         k_waitint();
     } while (1);

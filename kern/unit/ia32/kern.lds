@@ -84,6 +84,9 @@ SECTIONS {
 	util.o(.text)
 	util.o(.data)
 	util.o(.bss)
+	debug.o(.text)
+	debug.o(.data)
+	debug.o(.bss)
 /*
 	mpentry.o(.text)
 	mpentry.o(.data)
@@ -97,9 +100,11 @@ SECTIONS {
 	proc.o(.data)
 	proc.o(.bss)
 
+/*
 	task.o(.text)
 	task.o(.data)
 	task.o(.bss)
+*/
 	tcb.o(.text)
 	tcb.o(.data)
 	tcb.o(.bss)

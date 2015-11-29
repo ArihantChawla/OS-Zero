@@ -31,7 +31,7 @@ tssinit(long id)
     tss = (struct m_tss *)(kerntsstab + id * TSSLEN);
     __asm__ __volatile__ ("movl %%cr3, %0" : "=r" (pdbr));
     tss->ss0 = tss->ss1 = tss->ss2 = DATASEL;
-    tss->esp0 = (uint32_t)kernsysstktab + (NCPU - id) * KERNSTKSIZE;
+    tss->esp0 = (uint32_t)kernsysstktab + (id + 1) * KERNSTKSIZE;
     tss->cr3 = pdbr;
     tss->iomapofs = (uint16_t)((uint8_t *)kerniomap - (uint8_t *)tss);
     gdt = &kerngdt[id][0];
