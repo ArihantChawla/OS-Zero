@@ -32,6 +32,7 @@ extern void pginit(void);
 extern uint8_t        kernsysstktab[NCPU * KERNSTKSIZE];
 extern uint8_t        kernusrstktab[NCPU * KERNSTKSIZE];
 extern pde_t          kernpagedir[NPDE];
+extern pde_t          usrpagedir[NPDE];
 #if (VMFLATPHYSTAB)
 struct physpage       vmphystab[NPAGEMAX] ALIGNED(PAGESIZE);
 #endif
@@ -104,7 +105,7 @@ vminit(void *pagetab)
     /* map page directory index page */
     pde = (pde_t *)pagetab + vmpagenum(kernpagedir);
     adr = (uint32_t)&kernpagedir;
-    *pde = adr | PAGEPRES | PAGEWRITE;
+    *pde = adr | PAGEUSER | PAGEPRES | PAGEWRITE;
 
     /* zero page tables */
     kbzero(pagetab, PAGETABSIZE);
@@ -112,17 +113,16 @@ vminit(void *pagetab)
     /* zero stacks */
     kbzero(kernsysstktab, NCPU * KERNSTKSIZE);
     kbzero(kernusrstktab, NCPU * KERNSTKSIZE);
-    /* map stacks */
+    /* map kernel-mode stacks */
     vmmapseg(pagetab,
              (uint32_t)kernsysstktab, (uint32_t)kernsysstktab,
              (uint32_t)kernsysstktab + NCPU * KERNSTKSIZE,
-             PAGEPRES | PAGEWRITE);
-#if 0
+             PAGEUSER | PAGEPRES | PAGEWRITE);
+    /* map user-mode stacks */
     vmmapseg(pagetab,
              (uint32_t)kernusrstktab, (uint32_t)kernusrstktab,
              (uint32_t)kernusrstktab + NCPU * KERNSTKSIZE,
              PAGEUSER | PAGEPRES | PAGEWRITE);
-#endif
 
 #if defined(__x86_64__) || defined(__amd64__)
     /* zero page structures */
@@ -158,6 +158,12 @@ vminit(void *pagetab)
     vmmapseg(pagetab, (uint32_t)&_epagetab, (uint32_t)&_epagetab,
              KERNVIRTBASE - (uint32_t)&_epagetab,
              PAGEWRITE);
+#if 0
+    /* identity map free RAM */
+    vmmapseg(pagetab, (uint32_t)&_epagetab, (uint32_t)&_epagetab,
+             KERNVIRTBASE - (uint32_t)&_epagetab,
+             PAGEWRITE);
+#endif
 //    kbzero(&_epagetab, lim - (uint32_t)&_epagetab);
 
     /* VIRTUAL MEMORY */
@@ -175,6 +181,7 @@ vminit(void *pagetab)
     /* identity-map 3.5G..4G */
 // devmap(pagetab, DEVMEMBASE, 512 * 1024 * 1024);
 
+#if 0
     /* map kernel- and user-mode per-CPU stacks */
     vmmapseg((uint32_t *)&_pagetab,
              (uint32_t)kernsysstktab,
@@ -186,6 +193,11 @@ vminit(void *pagetab)
              (uint32_t)kernusrstktab,
              (uint32_t)kernusrstktab + NCPU * KERNSTKSIZE,
              PAGEPRES | PAGEWRITE | PAGENOCACHE);
+#endif
+
+    vmmapseg(pagetab, (uint32_t)&_usr, vmlinkadr((uint32_t)&_usrvirt),
+             (uint32_t)&_eusrvirt,
+             PAGEUSER | PAGEPRES);
 
     /* initialize paging */
     pginit();
@@ -293,7 +305,7 @@ vmpagefault(unsigned long pid, uint32_t adr, uint32_t flags)
             *pte = adr | flg | PAGEPRES;
         }
 #if (PAGEDEV)
-    } else if (!(page & AGEPRES)) {
+    } else if (!(page & PAGEPRES)) {
         // pageout();
         page = vmpagein(page);
         if (page) {

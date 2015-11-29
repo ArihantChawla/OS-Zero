@@ -31,6 +31,10 @@ meminit(unsigned long nbphys)
               PAGEWRITE);
     slabinit(&slabvirtzone, (unsigned long)&_epagetab,
              lim - (unsigned long)&_epagetab);
+#if 0
+    slabinit(&slabvirtzone, (unsigned long)&_epagetab,
+             lim - (unsigned long)&_epagetab);
+#endif
 #elif defined(__x86_64__) || defined(__amd64__)
 #error implement x86-64 memory management
 #endif

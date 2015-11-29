@@ -4,9 +4,9 @@
 
 _KERNSTKSIZE = KERNSTKSIZE
 
-.extern schedloop, kernusrstktab
+.extern schedloop
 
-.globl	m_jmpusr
+.globl	m_jmpusr, usrpagedir, kernusrstktab
 
 /* void m_jmpusr(long id, void *func);
  * - cpu ID in %eax

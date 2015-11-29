@@ -1,0 +1,86 @@
+TASKS
+-----
+
+The term task is used with regard to both processes and threads; every process
+has at least one task bound to it. Tasks, also known as threads, have their own
+context of execution (register contents) as well as resources shared between
+all tasks within the process (such as memory map and I/O objects).
+
+Threads
+-------
+
+A thread, represented by a task structure, can be thought of as a context of
+execution sharing resources with other threads of the parent process. All
+threads have their individual register context; contents of general-purpose
+registers on X86 architectures, for example.
+
+Threads of a given process share the [virtual] address space, I/O objects (named
+by descriptors), and other things related to the process. FIXME: list what's
+shared in more detail... =)
+
+Processes
+---------
+
+A process is a collection of one or more threads. These threads each have their
+own execution context. For the purpose of this document, I'll take a look at
+how the machine-dependent parts of these contexts are defined for the IA-32
+platform further on in this document.
+
+There exist a few predefined tasks (with fixed task IDs) on the system.
+These include process #0 (the kernel) as well as process #1 (init). For the
+current list of such tasks, consult <kern/kern.h>.
+
+Process Groups
+--------------
+
+Processes can be collected into groups with a single process declared as the
+group leader.
+
+THREAD SCHEDULER
+----------------
+
+Zero's default scheduler is based on priority queues. However, instead of old-
+fashioned interactivity scores, I'm going to pull some tricks to facilitate fast
+response to user interaction (in practice, keyboard and mouse/pointer device
+interrupts).
+
+The default setting of HZ (250) gives us timeslices of 4 milliseconds; I will
+try to handle tasks listening to user input smaller slices of time on _every_
+such interrupt; these minislices could be, for example, 1 millisecond in the
+hopes of letting the listeners process the device events during that time. This
+way, you wouldn't need to do unforgiven things such as type blindly and/or
+otherwise wait to see the results of your interaction with the machine.
+
+With the advent of multimedia (audio and video) use of our computers, we'll have
+more interesting things to deal with. Things such as audio-recording depend on
+buffering and processing their data immediately, so any kind of interruption of
+that is out of question. Therefore, I'll experiment with giving a few well-known
+such tasks very high priority over anything else on the system - even over
+processes and threads owned by the system.
+
+Context Switches
+----------------
+
+A context switch, i.e. switching a processor unit's thread of execution, may
+occur on timer interrupts (usually HZ times a second, by default HZ == 250) or
+as a result of some thread calling sched_yield() to let another thread to run.
+
+Timer Interrupts; irqtmr()
+--------------------------
+
+sched_yield()
+-------------
+
+The C library function sched_yield() is used to pre-empt the current thread and
+let the kernel pick the next one to run. This is a good idea, for example, when
+acquiring a lock such as a mutex (mutual exclusion) fails. It would not be a
+good idea to do something like busy-loop; it's better to let another thread
+marked runnable an opportunity to run instead.
+
+struct m_tcb; Task Control Block
+--------------------------------
+
+The task control block structure is declared in <kern/proc/proc.h>. Such a
+block is defined for every process running on the system as well as threads
+other than the "main" one of the processes.
+

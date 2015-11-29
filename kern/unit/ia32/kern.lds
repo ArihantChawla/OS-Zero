@@ -11,6 +11,7 @@ DMABUFSIZE	= 8M;
 PAGETAB		= 16M;
 PAGESIZE	= 4K;
 PAGETABSIZE	= 4M;
+UPAGETAB	= 20M;
 VIRTBASE	= 0xc0000000;
 
 OUTPUT_FORMAT("elf32-i386")
@@ -77,6 +78,11 @@ SECTIONS {
 	mem.o(.text)
 	mem.o(.data)
 	mem.o(.bss)
+
+	page.o(.text)
+	page.o(.data)
+	page.o(.bss)
+
 	vm.o(.text)
 	vm.o(.data)
 	vm.o(.bss)
@@ -146,20 +152,22 @@ SECTIONS {
     . = PAGETAB;
 
     /* identity-mapped set of page tables */
-    .ptab : AT(PAGETAB) {
+    .pgtab : AT(PAGETAB) {
         _pagetab = .;
   	. += PAGETABSIZE;
 	_epagetab = .;
     }
+
+/*    . = UPAGETAB; */
 
     . = VIRTBASE;
 
     /* sections mapped by virtual addresses */
 
     /* read-only segment; code and some data */
-    .text : AT(PAGETAB + SIZEOF(.ptab)) {
+    .text : AT(PAGETAB + SIZEOF(.pgtab)) {
         _text = .;
-	_textvirt = PAGETAB + SIZEOF(.ptab);
+	_textvirt = PAGETAB + SIZEOF(.pgtab);
 	*(.text*)
 	*(.rodata*)
 	*(.rodata.*)
@@ -170,7 +178,7 @@ SECTIONS {
     }
  
     /* read-write data segment; initialised global structures */
-    .data : AT(PAGETAB + SIZEOF(.ptab) + SIZEOF(.text)) {
+    .data : AT(PAGETAB + SIZEOF(.pgtab) + SIZEOF(.text)) {
     	_data = _etext;
 	_datavirt = _etextvirt;
 	*(.data)
@@ -178,17 +186,34 @@ SECTIONS {
     }
 
     /* bss segment; runtime-allocated, uninitialised data */
-    .bss : AT(PAGETAB + SIZEOF(.ptab) + SIZEOF(.text) + SIZEOF(.data)) {
+    .bss : AT(PAGETAB + SIZEOF(.pgtab) + SIZEOF(.text) + SIZEOF(.data)) {
         _bss = _data + SIZEOF(.data);
 	_bssvirt = _etextvirt + SIZEOF(.data) + SIZEOF(.text);
 	*(.bss)
 	*(COMMON)
         _ebss = _bss + SIZEOF(.bss);
 	_ebssvirt = _bssvirt + SIZEOF(.bss);
-	_ebssphys = LOADADDR(.bss) + SIZEOF(.bss);
+/*	_ebssphys = LOADADDR(.bss) + SIZEOF(.bss); */
 	. = ALIGN(PAGESIZE);
     }
 
-    _kernsize = PAGETAB + PAGETABSIZE + SIZEOF(.text) + SIZEOF(.data) + SIZEOF(.bss);
+    .usr : AT(PAGETAB + SIZEOF(.pgtab) + SIZEOF(.text) + SIZEOF(.data)
+    	    + SIZEOF(.bss)) {
+        _usr = _bss + SIZEOF(.bss);
+	_usrvirt = _ebssvirt + SIZEOF(.bss);
+	usr.o(.text)
+	_eusr = _usr + SIZEOF(.usr);
+	_eusrvirt = _usrvirt + SIZEOF(.usr);
+	. = ALIGN(PAGESIZE);
+    }
+
+    _kernsize = PAGETAB + PAGETABSIZE + SIZEOF(.text) + SIZEOF(.data)
+    	      + SIZEOF(.bss)
+	      + SIZEOF(.usr);
+/*
+    _kernsize = PAGETAB + PAGETABSIZE + SIZEOF(.text) + SIZEOF(.data)
+    	      + SIZEOF(.bss);
+*/
+
 }
 

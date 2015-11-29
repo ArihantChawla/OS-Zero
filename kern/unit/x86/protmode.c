@@ -131,8 +131,8 @@ kinitprot(unsigned long pmemsz)
     consinit(768 >> 3, 1024 >> 3);
 #endif
     /* TODO: use memory map from GRUB? */
-//    vminitphys((uintptr_t)&_epagetab, pmemsz);
-    vminitphys((uintptr_t)&_epagetab, lim);
+//    vminitphys((uintptr_t)&_epagetab, lim);
+    vminitphys((uintptr_t)&_epagetab, lim);    
     meminit(min(pmemsz, lim));
     __asm__ __volatile__ ("movl %0, %%esp\n"
                           "pushl $0\n"
