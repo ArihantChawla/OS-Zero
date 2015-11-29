@@ -530,6 +530,7 @@ _havestk:
 	/* continue the same task */
 	leal	536(%eax), %esp
 	popal
+	leal	4(%ebp), %esp		// restore stack pointer
 #if (APIC)
 	_apiceoi
 #else
@@ -538,7 +539,7 @@ _havestk:
 	iretl
 _swtch:
 	call	m_tcbjmp
-
+	
 irqkbd:
 	_trapenter
 	movl	%esp, %ebp

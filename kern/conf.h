@@ -4,7 +4,7 @@
 #include <zero/param.h>
 
 #define VMFLATPHYSTAB    1
-#define USERMODE         1
+#define USERMODE         0
 #define PLASMAFOREVER    0
 #define REENTRANTGDTINIT 1
 
