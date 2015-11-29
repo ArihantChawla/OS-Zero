@@ -14,6 +14,7 @@ _KERNSTKSIZE = KERNSTKSIZE
 m_jmpusr:
 	pushl	%ebp
 	movl	%ebp, %esp
+	incl	%eax
 	movl	$kernusrstktab, %esi
 //	pushl	%eax
 	pushl	%edx

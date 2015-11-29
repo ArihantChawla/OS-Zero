@@ -104,7 +104,7 @@ vminit(void *pagetab)
     /* map page directory index page */
     pde = (pde_t *)pagetab + vmpagenum(kernpagedir);
     adr = (uint32_t)&kernpagedir;
-    *pde = adr | PAGEUSER | PAGEPRES | PAGEWRITE;
+    *pde = adr | PAGEPRES | PAGEWRITE;
 
     /* zero page tables */
     kbzero(pagetab, PAGETABSIZE);
@@ -116,11 +116,13 @@ vminit(void *pagetab)
     vmmapseg(pagetab,
              (uint32_t)kernsysstktab, (uint32_t)kernsysstktab,
              (uint32_t)kernsysstktab + NCPU * KERNSTKSIZE,
-             PAGEUSER | PAGEPRES | PAGEWRITE);
+             PAGEPRES | PAGEWRITE);
+#if 0
     vmmapseg(pagetab,
              (uint32_t)kernusrstktab, (uint32_t)kernusrstktab,
              (uint32_t)kernusrstktab + NCPU * KERNSTKSIZE,
              PAGEUSER | PAGEPRES | PAGEWRITE);
+#endif
 
 #if defined(__x86_64__) || defined(__amd64__)
     /* zero page structures */
@@ -130,17 +132,17 @@ vminit(void *pagetab)
     /* identity-map 0..1M */
     vmmapseg(pagetab, 0, 0,
              HICORE,
-             PAGEUSER | PAGEPRES | PAGEWRITE | PAGENOCACHE | PAGEWIRED);
+             PAGEPRES | PAGEWRITE | PAGENOCACHE | PAGEWIRED);
 #if (SMP)
     vmmapseg(pagetab, (uint32_t)MPENTRY, (uint32_t)MPENTRY,
              (uint32_t)&mpend - (uint32_t)&mpentry + MPENTRY,
-             PAGEUSER | PAGEPRES);
+             PAGEPRES);
 #endif
 
     /* identity-map kernel low-half boot segment */
     vmmapseg(pagetab, HICORE, HICORE,
              (uint32_t)&_eboot,
-             PAGEUSER | PAGEPRES | PAGEWRITE);
+             PAGEPRES | PAGEWRITE);
     
     /* identity-map kernel DMA buffers */
     vmmapseg(pagetab, (uint32_t)&_dmabuf, DMABUFBASE,
@@ -150,7 +152,7 @@ vminit(void *pagetab)
     /* identity-map page tables */
     vmmapseg(pagetab, (uint32_t)pagetab, (uint32_t)pagetab,
              (uint32_t)pagetab + PAGETABSIZE,
-             PAGEUSER | PAGEPRES | PAGEWRITE | PAGEWIRED);
+             PAGEPRES | PAGEWRITE | PAGEWIRED);
 
     /* identity map free RAM */
     vmmapseg(pagetab, (uint32_t)&_epagetab, (uint32_t)&_epagetab,
@@ -163,12 +165,12 @@ vminit(void *pagetab)
     /* map kernel text/read-only segments */
     vmmapseg(pagetab, (uint32_t)&_text, vmlinkadr((uint32_t)&_textvirt),
              (uint32_t)&_etextvirt,
-             PAGEUSER | PAGEPRES);
+             PAGEPRES);
 
     /* map kernel DATA and BSS segments */
     vmmapseg(pagetab, (uint32_t)&_data, vmlinkadr((uint32_t)&_datavirt),
              (uint32_t)&_ebssvirt,
-             PAGEUSER | PAGEPRES | PAGEWRITE);
+             PAGEPRES | PAGEWRITE);
 
     /* identity-map 3.5G..4G */
 // devmap(pagetab, DEVMEMBASE, 512 * 1024 * 1024);
@@ -288,7 +290,7 @@ vmpagefault(unsigned long pid, uint32_t adr, uint32_t flags)
                 }
             }
             mtxunlk(&page->lk);
-            *pte = adr | flg | PAGEUSER | PAGEPRES;
+            *pte = adr | flg | PAGEPRES;
         }
 #if (PAGEDEV)
     } else if (!(page & AGEPRES)) {
