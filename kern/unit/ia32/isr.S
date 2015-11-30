@@ -472,7 +472,7 @@ irqtmr:
 	leal	568(%eax), %esp		// adjust sp for m_tcb.genregs
 	pushal				// push general-purpose registers
 	/* store FPU context */
-	movl	-24(%ebp), %ebx		// fetch fxsave-flag
+	movl	-24(%esp), %ebx		// fetch fxsave-flag
 	cmpl	$0, %ebx
 	jne	_fxsave			// use FXSAVE if non-zero
 	fnsave	(%eax)			// use FNSAVE if zero

@@ -51,7 +51,7 @@
 #define BOCHS       1
 #define DEVEL       0           // debugging
 
-#define PLASMA      1
+#define PLASMA      0
 
 /* planned and developed drivers */
 #define IOAPIC      1           // enable I/O APIC support

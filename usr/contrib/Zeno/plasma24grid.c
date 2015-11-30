@@ -138,10 +138,12 @@ plasmainit(void)
 {
     plasmafb = vbescreen.fbuf;
 #if (PLASMADOUBLEBUF)
-    plasmabuf = kcalloc(INTER_WIDTH * INTER_HEIGHT * 3 * sizeof(uint8_t));
+    plasmabuf = kcalloc(INTER_WIDTH * INTER_HEIGHT
+                        * vbescreen.pixsize * sizeof(uint8_t));
 #endif
     vbeclrscr(GFX_BLACK);
-    __asm__ __volatile__ ("finit\n");
+    __asm__ __volatile__ ("finit\n"
+                          "fwait\n");
     init();
 
     return;
@@ -291,9 +293,11 @@ bool init(void)
 void
 cleanup(void)
 {
+#if 0
     kfree(intermediateR);
     kfree(intermediateG);
     kfree(intermediateB);
+#endif
     vbeclrscr(GFX_BLACK);
 }
 #else
