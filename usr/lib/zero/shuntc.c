@@ -1,35 +1,36 @@
 #include <stdint.h>
+#include <zero/cdecl.h>
 #include <zero/shuntc.h>
 
 /* C character conversion tables */
-static uint_fast8_t  shuntcdectab[256];
-static uint_fast8_t  shuntchextab[256];
-static uint_fast8_t  shuntcocttab[256];
+static long             shuntcdectab[256];
+static long             shuntchextab[256];
+static long             shuntcocttab[256];
 /* C floating-point conversion tables */
-static float         shuntcdecflttab[256];
-static float         shuntchexflttab[256];
-static float         shuntcoctflttab[256];
-static double        shuntcdecdbltab[256];
-static double        shuntchexdbltab[256];
-static double        shuntcoctdbltab[256];
+static float            shuntcdecflttab[256];
+static float            shuntchexflttab[256];
+static float            shuntcoctflttab[256];
+static double           shuntcdecdbltab[256];
+static double           shuntchexdbltab[256];
+static double           shuntcoctdbltab[256];
 /* C operation lookup tables (globally visible) */
-uint_fast8_t         shuntcopchartab[256];
-uint_fast8_t         shuntcopprectab[SHUNTCNTAB];
-uint_fast8_t         shuntcopnargtab[SHUNTCNTAB];
-shuntcop_t          *shuntcevaltab[SHUNTCNTAB];
+long                    shuntcopchartab[256];
+long                    shuntcopprectab[SHUNTCNTAB];
+long                    shuntcopnargtab[SHUNTCNTAB];
+shuntcop_t             *shuntcevaltab[SHUNTCNTAB];
 /* stacks and queues for parsing and evaluating expressions */
 struct shuntcparser {
-    struct shuntctoken  *operstk;
-    struct shuntctoken  *operstktop;
-    struct shuntctoken  *tokenqueue;
-    struct shuntctoken  *tokentail;
-    struct shuntctoken  *parsequeue;
-    struct shuntctoken  *parsetail;
-}                    shuntcparser;
+    struct shuntctoken *operstk;
+    struct shuntctoken *operstktop;
+    struct shuntctoken *tokenqueue;
+    struct shuntctoken *tokentail;
+    struct shuntctoken *parsequeue;
+    struct shuntctoken *parsetail;
+}                       shuntcparser;
 /* currently displayed radix */
-uint_fast8_t         shuntcradix;
+long                    shuntcradix;
 
-SHUNT_INT
+PURE SHUNT_INT
 shuntcnot64(struct shuntctoken *arg1, struct shuntctoken *dummy)
 {
     SHUNT_INT src = arg1->data.i64;
@@ -41,7 +42,7 @@ shuntcnot64(struct shuntctoken *arg1, struct shuntctoken *dummy)
     return res;
 }
 
-SHUNT_INT
+PURE SHUNT_INT
 shuntcand64(struct shuntctoken *arg1, struct shuntctoken *arg2)
 {
     SHUNT_INT src = arg1->data.i64;
@@ -52,7 +53,7 @@ shuntcand64(struct shuntctoken *arg1, struct shuntctoken *arg2)
     return res;
 }
 
-SHUNT_INT
+PURE SHUNT_INT
 shuntcor64(struct shuntctoken *arg1, struct shuntctoken *arg2)
 {
     SHUNT_INT src = arg1->data.i64;
@@ -63,7 +64,7 @@ shuntcor64(struct shuntctoken *arg1, struct shuntctoken *arg2)
     return res;
 }
 
-SHUNT_INT
+PURE SHUNT_INT
 shuntcxor64(struct shuntctoken *arg1, struct shuntctoken *arg2)
 {
     SHUNT_INT src = arg1->data.i64;
@@ -74,23 +75,23 @@ shuntcxor64(struct shuntctoken *arg1, struct shuntctoken *arg2)
     return res;
 }
 
-SHUNT_INT
+PURE SHUNT_INT
 shuntcshl64(struct shuntctoken *arg1, struct shuntctoken *arg2)
 {
-    SHUNT_INT  cnt = arg1->data.i64;
-    SHUNT_UINT res = arg2->data.ui64;
+    SHUNT_INT cnt = arg1->data.i64;
+    SHUNT_INT res = arg2->data.i64;
 
     res <<= cnt;
 
     return res;
 }
 
-SHUNT_INT
-shuntcshra64(struct shuntctoken *arg1, struct shuntctoken *arg2)
+PURE SHUNT_INT
+shuntcsar64(struct shuntctoken *arg1, struct shuntctoken *arg2)
 {
-    SHUNT_INT  cnt = arg1->data.i64;
-    SHUNT_UINT res = arg2->data.ui64;
-    SHUNT_UINT sign = res & UINT64_C(0x8000000000000000);
+    SHUNT_INT cnt = arg1->data.i64;
+    SHUNT_INT res = arg2->data.i64;
+    SHUNT_INT sign = res & UINT64_C(0x8000000000000000);
 
     sign = (sign & UINT64_C(0xffffffffffffffff)) << (64 - cnt);
     res >>= cnt;
@@ -99,12 +100,12 @@ shuntcshra64(struct shuntctoken *arg1, struct shuntctoken *arg2)
     return res;
 }
 
-SHUNT_INT
+PURE SHUNT_INT
 shuntcshr64(struct shuntctoken *arg1, struct shuntctoken *arg2)
 {
-    SHUNT_INT  cnt = arg1->data.i64;
-    SHUNT_UINT res = arg2->data.ui64;
-    SHUNT_UINT mask = UINT64_C(0xffffffffffffffff) >> cnt;
+    SHUNT_INT cnt = arg1->data.i64;
+    SHUNT_INT res = arg2->data.i64;
+    SHUNT_INT mask = UINT64_C(0xffffffffffffffff) >> cnt;
 
     res >>= cnt;
     res &= mask;
@@ -112,13 +113,13 @@ shuntcshr64(struct shuntctoken *arg1, struct shuntctoken *arg2)
     return res;
 }
 
-SHUNT_INT
+PURE SHUNT_INT
 shuntcror64(struct shuntctoken *arg1, struct shuntctoken *arg2)
 {
-    SHUNT_INT  cnt = arg1->data.i64;
-    SHUNT_UINT res = arg2->data.ui64;
-    SHUNT_UINT mask = UINT64_C(0xffffffffffffffff) >> (64 - cnt);
-    SHUNT_INT  bits = res & mask;
+    SHUNT_INT cnt = arg1->data.i64;
+    SHUNT_INT res = arg2->data.i64;
+    SHUNT_INT mask = UINT64_C(0xffffffffffffffff) >> (64 - cnt);
+    SHUNT_INT bits = res & mask;
 
     bits <<= 64 - cnt;
     res >>= cnt;
@@ -127,13 +128,13 @@ shuntcror64(struct shuntctoken *arg1, struct shuntctoken *arg2)
     return res;
 }
 
-SHUNT_INT
+PURE SHUNT_INT
 shuntcrol64(struct shuntctoken *arg1, struct shuntctoken *arg2)
 {
-    SHUNT_INT  cnt = arg1->data.i64;
-    SHUNT_UINT res = arg2->data.ui64;
-    SHUNT_UINT mask = UINT64_C(0xffffffffffffffff) << (64 - cnt);
-    SHUNT_UINT bits = res & mask;
+    SHUNT_INT cnt = arg1->data.i64;
+    SHUNT_INT res = arg2->data.ui64;
+    SHUNT_INT mask = UINT64_C(0xffffffffffffffff) << (64 - cnt);
+    SHUNT_INT bits = res & mask;
 
     bits >>= 64 - cnt;
     res <<= cnt;
@@ -142,7 +143,7 @@ shuntcrol64(struct shuntctoken *arg1, struct shuntctoken *arg2)
     return res;
 }
 
-SHUNT_INT
+PURE SHUNT_INT
 shuntcinc64(struct shuntctoken *arg1, struct shuntctoken *dummy)
 {
     SHUNT_INT src = arg1->data.i64;
@@ -180,7 +181,7 @@ shuntcinc64(struct shuntctoken *arg1, struct shuntctoken *dummy)
     return src;
 }
 
-SHUNT_INT
+PURE SHUNT_INT
 shuntcdec64(struct shuntctoken *arg1, struct shuntctoken *dummy)
 {
     SHUNT_INT src = arg1->data.i64;
@@ -205,7 +206,7 @@ shuntcdec64(struct shuntctoken *arg1, struct shuntctoken *dummy)
     return src;
 }
 
-SHUNT_INT
+PURE SHUNT_INT
 shuntcadd64(struct shuntctoken *arg1, struct shuntctoken *arg2)
 {
     SHUNT_INT src = arg1->data.i64;
@@ -216,7 +217,7 @@ shuntcadd64(struct shuntctoken *arg1, struct shuntctoken *arg2)
     return res;
 }
 
-SHUNT_INT
+PURE SHUNT_INT
 shuntcsub64(struct shuntctoken *arg1, struct shuntctoken *arg2)
 {
     SHUNT_INT src = arg1->data.i64;
@@ -227,7 +228,7 @@ shuntcsub64(struct shuntctoken *arg1, struct shuntctoken *arg2)
     return res;
 }
 
-SHUNT_INT
+PURE SHUNT_INT
 shuntcmul64(struct shuntctoken *arg1, struct shuntctoken *arg2)
 {
     SHUNT_INT src = arg1->data.i64;
@@ -238,7 +239,7 @@ shuntcmul64(struct shuntctoken *arg1, struct shuntctoken *arg2)
     return res;
 }
 
-SHUNT_INT
+PURE SHUNT_INT
 shuntcdiv64(struct shuntctoken *arg1, struct shuntctoken *arg2)
 {
     SHUNT_INT src = arg1->data.i64;
@@ -249,7 +250,7 @@ shuntcdiv64(struct shuntctoken *arg1, struct shuntctoken *arg2)
     return res;
 }
 
-SHUNT_INT
+PURE SHUNT_INT
 shuntcmod64(struct shuntctoken *arg1, struct shuntctoken *arg2)
 {
     SHUNT_INT src = arg1->data.i64;
@@ -260,7 +261,7 @@ shuntcmod64(struct shuntctoken *arg1, struct shuntctoken *arg2)
     return res;
 }
 
-void
+CONST void
 shuntcinitconvtab(void)
 {
     /* integral tables */
@@ -391,7 +392,7 @@ shuntcinitconvtab(void)
 }
 
 void
-shuntcinitop(uint_fast8_t *chartab, uint_fast8_t *prectab, uint_fast8_t *nargtab)
+shuntcinitop(long *chartab, long *prectab, long *nargtab)
 {
     /* lookup table */
     chartab['~'] = '~';
@@ -457,7 +458,7 @@ shuntcinitoptab(void)
     shuntcevaltab[SHUNTCMOD] = shuntcmod64;
     shuntcevaltab[SHUNTCADD] = shuntcadd64;
     shuntcevaltab[SHUNTCSUB] = shuntcsub64;
-    shuntcevaltab[SHUNTCSHRA] = shuntcshra64;
+    shuntcevaltab[SHUNTCSAR] = shuntcsar64;
 
     return;
 }

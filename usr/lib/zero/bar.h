@@ -23,14 +23,14 @@ typedef struct {
 typedef struct {
     volatile long                   lk;
     volatile long                   nref;
-    unsigned long                   num;
+    long                            num;
     union {
         struct {
             volatile unsigned int   seq;
             volatile unsigned int   cnt;
-        };
+        } vals;
         volatile unsigned long long rst;
-    };
+    } cnt;
 } zerobarpool;
 
 #endif /* __ZERO_BAR_H__ */

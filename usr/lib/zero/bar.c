@@ -58,11 +58,11 @@ barwait(zerobar *bar)
 }
 
 void
-barinitpool(zerobarpool *pool, unsigned long cnt)
+barinitpool(zerobarpool *pool, long cnt)
 {
     cnt--;
-    pool->seq = 0;
-    pool->cnt = 0;
+    pool->cnt.vals.seq = 0;
+    pool->cnt.vals.cnt = 0;
     pool->nref = 1;
     pool->num = cnt;
 
@@ -92,29 +92,29 @@ barwaitpool(zerobarpool *pool)
     long ret;
 
     do {
-        unsigned long seq = m_atomread(pool->seq);
-        unsigned long cnt = m_fetchadd32(&pool->cnt, 1);
+        unsigned long seq = m_atomread(pool->cnt.vals.seq);
+        long          cnt = m_fetchadd32(&pool->cnt.vals.cnt, 1);
 
         if (cnt < pool->num) {
-            while (m_atomread(pool->seq) == seq) {
-                syswait(&pool->seq, seq);
+            while (m_atomread(pool->cnt.vals.seq) == seq) {
+                syswait(&pool->cnt.vals.seq, seq);
             }
             ret = 0;
 
             break;
         }
         if (cnt == pool->num) {
-            /* zero pool->cnt, increment pool->seq */
+            /* zero pool->cnt.vals.cnt, increment pool->cnt.vals.seq */
             m_membar();
-            pool->rst = pool->seq + 1;
+            pool->cnt.rst = pool->cnt.vals.seq + 1;
             m_membar();
-            syswake(&pool->seq);
+            syswake(&pool->cnt.vals.seq);
             ret = BARSERIALTHR;
 
             break;
         }
         /* we were too slow, so wait for barrier to be released */
-        syswait(&pool->seq, seq);
+        syswait(&pool->cnt.vals.seq, seq);
     } while (1);
     if (m_fetchadd(&pool->nref, -1) == 1) {
         /* last one to wake up, wake destroying thread */

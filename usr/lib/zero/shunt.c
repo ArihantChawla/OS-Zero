@@ -13,13 +13,13 @@
  * - https://en.wikipedia.org/wiki/Shunting-yard_algorithm
  */
 SHUNT_TOKEN *
-shuntparse(SHUNT_TOKEN *tokq)
+shuntparse(SHUNT_TOKEN *tokqueue)
 {
     SHUNT_TOKEN *tok;
-    SHUNT_TOKEN *tok1 = tokq;
+    SHUNT_TOKEN *tok1 = tokqueue;
     SHUNT_TOKEN *tok2 = NULL;
     SHUNT_TOKEN *tok3 = NULL;
-    SHUNT_TOKEN *q = NULL;
+    SHUNT_TOKEN *queue = NULL;
     SHUNT_TOKEN *tail = NULL;
     SHUNT_TOKEN *stack = NULL;
 
@@ -30,14 +30,14 @@ shuntparse(SHUNT_TOKEN *tokq)
         memcpy(tok, tok1, sizeof(SHUNT_TOKEN));
         tok = tok1;
         if (shuntcisvalue(tok)) {
-            shuntqueue(tok, &q, &tail);
+            shuntqueue(tok, &queue, &tail);
         } else if (shuntcisfunc(tok)) {
             shuntpush(tok, &stack);
         } else if (shuntcissep(tok)) {
             tok2 = stack;
             while ((tok2) && tok2->type != SHUNT_LEFTPAREN) {
                 tok2 = shuntpop(&stack);
-                shuntqueue(tok2, &q, &tail);
+                shuntqueue(tok2, &queue, &tail);
                 tok2 = shuntpop(&stack);
             }
             if ((tok2) && tok2->type == SHUNT_LEFTPAREN) {
@@ -55,7 +55,7 @@ shuntparse(SHUNT_TOKEN *tokq)
                      && shuntcopprec(tok) <= shuntcopprec(tok2))
                     || shuntcopprec(tok) < shuntcopprec(tok2)) {
                     tok2 = shuntpop(&stack);
-                    shuntqueue(tok2, &q, &tail);
+                    shuntqueue(tok2, &queue, &tail);
                     tok2 = stack;
                 } else {
 
@@ -69,7 +69,7 @@ shuntparse(SHUNT_TOKEN *tokq)
             tok2 = stack;
             while ((tok2) && tok2->type != SHUNT_LEFTPAREN) {
                 tok2 = shuntpop(&stack);
-                shuntqueue(tok2, &q, &tail);
+                shuntqueue(tok2, &queue, &tail);
                 tok2 = stack;
             }
             if ((tok2) && tok2->type == SHUNT_LEFTPAREN) {
@@ -84,7 +84,7 @@ shuntparse(SHUNT_TOKEN *tokq)
             }
             if (shuntcisfunc(stack)) {
                 tok2 = shuntpop(&stack);
-                shuntqueue(tok2, &q, &tail);
+                shuntqueue(tok2, &queue, &tail);
             }
         }
         tok1 = tok3;
@@ -93,7 +93,7 @@ shuntparse(SHUNT_TOKEN *tokq)
         tok1 = stack;
         if (shuntcisop(tok1)) {
             tok1 = shuntpop(&stack);
-            shuntqueue(tok1, &q, &tail);
+            shuntqueue(tok1, &queue, &tail);
         } else if ((tok1)
                    && (tok1->type == SHUNT_LEFTPAREN
                        || tok1->type == SHUNT_RIGHTPAREN)) {
@@ -103,23 +103,23 @@ shuntparse(SHUNT_TOKEN *tokq)
         }
     } while (stack);
 
-    return q;
+    return queue;
 }
 
 SHUNT_TOKEN *
-shunteval(SHUNT_TOKEN *tokq)
+shunteval(SHUNT_TOKEN *tokqueue)
 {
-    SHUNT_TOKEN  *tok = tokq;
-    SHUNT_TOKEN  *q = NULL;
-    SHUNT_TOKEN  *tail = NULL;
-    SHUNT_TOKEN  *stack = NULL;
-    SHUNT_TOKEN  *tok1 = tok;
-    SHUNT_TOKEN  *tok2;
-    SHUNT_TOKEN  *arg1;
-    SHUNT_TOKEN  *arg2;
-    SHUNT_INT     dest;
-    SHUNT_OP     *func;
-    uint_fast8_t  radix;
+    SHUNT_TOKEN *tok = tokqueue;
+    SHUNT_TOKEN *queue = NULL;
+    SHUNT_TOKEN *tail = NULL;
+    SHUNT_TOKEN *stack = NULL;
+    SHUNT_TOKEN *tok1 = tok;
+    SHUNT_TOKEN *tok2;
+    SHUNT_TOKEN *arg1;
+    SHUNT_TOKEN *arg2;
+    SHUNT_INT    dest;
+    SHUNT_OP    *func;
+    long         radix;
 
     while (tok) {
         tok2 = tok->next;
@@ -162,8 +162,10 @@ shunteval(SHUNT_TOKEN *tokq)
 
                         return NULL;
                     }
+                default:
+                    fprintf(stderr, "invalid number of arguments\n");
 
-                    break;
+                    return NULL;
             }
             func = SHUNT_EVALTAB[tok->type];
             if (func) {
@@ -210,13 +212,13 @@ shunteval(SHUNT_TOKEN *tokq)
         }
         tok = tok2;
     }
-    shuntqueue(tok1, &q, &tail);
+    shuntqueue(tok1, &queue, &tail);
 
-    return q;
+    return queue;
 }
 
 void
-shuntprintbin(SHUNT_UINT val, char *str, size_t len)
+shuntprintbin(SHUNT_UINT val, char *str, long len)
 {
     long       l;
 #if (SHUNT_INTSIZE == 64)

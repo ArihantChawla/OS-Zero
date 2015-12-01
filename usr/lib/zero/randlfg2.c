@@ -1,7 +1,7 @@
 #include <stdlib.h>
 #include <stdint.h>
 #include <zero/randlfg2.h>
-#include <zero/randmt32.h>
+//#include <zero/randmt32.h>
 #if defined(__KERNEL__) && (__KERNEL__)
 #include <kern/mem.h>
 #endif
@@ -31,9 +31,9 @@ randlfg2(void)
         randbuf = malloc(RAND_N * sizeof(int));
 #endif
         if (randbuf) {
-            srandmt32(1);
+            srand(1);
             for (i = 0 ; i < RAND_N ; i++) {
-                randbuf[i] = randmt32();
+                randbuf[i] = rand();
             }
             randinit = 1;
         }

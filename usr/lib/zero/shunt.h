@@ -5,7 +5,7 @@
 #include <zero/shuntc.h>
 #endif
 
-extern void shuntprintbin(SHUNT_UINT val, char *str, size_t len);
+extern void shuntprintbin(SHUNT_UINT val, char *str, long len);
 
 #define SHUNT_BIN      2
 #define SHUNT_OCT      8
@@ -95,17 +95,17 @@ shuntpop(SHUNT_TOKEN **stack)
                                                                         \
                 break;                                                  \
             case SHUNT_OCT:                                             \
-                _len = snprintf((tok)->str, (tok)->slen, "0%llo", \
+                _len = snprintf((tok)->str, (size_t)(tok)->slen, "0%llo", \
                                 (long long)(val));                      \
                                                                         \
                 break;                                                  \
             case SHUNT_DEC:                                             \
             default:                                                    \
                 if ((tok)->type == SHUNT_INT64) {                       \
-                    _len = snprintf((tok)->str, (tok)->slen, "%lld",    \
+                    _len = snprintf((tok)->str, (size_t)(tok)->slen, "%lld", \
                                     (long long)(val));                  \
                 } else {                                                \
-                    _len = snprintf((tok)->str, (tok)->slen, "%llu",    \
+                    _len = snprintf((tok)->str, (size_t)(tok)->slen, "%llu", \
                                     (unsigned long long)(val));         \
                 }                                                       \
                                                                         \

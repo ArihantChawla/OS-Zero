@@ -22,7 +22,7 @@
 #define SHUNTCMUL        11                     // integer multiplication
 #define SHUNTCDIV        12                     // integer division
 #define SHUNTCMOD        13                     // integer modulus
-#define SHUNTCSHRA       14                     // shift right arithmetic
+#define SHUNTCSAR        14                     // shift right arithmetic
 /* assignment */
 #define SHUNTCASSIGN     15                     // assignment
 #define SHUNTCNINTOP     16                     // # of integer operations

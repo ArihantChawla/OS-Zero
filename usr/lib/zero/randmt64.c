@@ -42,10 +42,10 @@ static uint64_t randmt64state[RANDMT64NSTATE] ALIGNED(PAGESIZE);
  * randmt64curndx == RANDMT64NSTATE + 1 means that
  * randmt64state[RANDMT64NSTATE] is uninitialised
  */
-static uint64_t randmt64magic[2] = { UINT64_C(0), RANDMT64MATRIX };
-static long     randmt64curndx = RANDMT64NSTATE + 1;
+static uint64_t      randmt64magic[2] = { UINT64_C(0), RANDMT64MATRIX };
+static unsigned long randmt64curndx = RANDMT64NSTATE + 1;
 #if (RANDMT64TEST)
-static uint64_t randmt64key[4]
+static uint64_t      randmt64key[4]
 = {
     UINT64_C(0x12345),
     UINT64_C(0x23456),
@@ -54,10 +54,10 @@ static uint64_t randmt64key[4]
 };
 #endif
 #if defined(_REENTRANT)
-pthread_mutex_t     randmt64initmtx = PTHREAD_MUTEX_INITIALIZER;
-pthread_mutex_t     randmt64mtx;
-pthread_mutexattr_t randmt64mtxatr;
-volatile long       randmt64init;
+pthread_mutex_t      randmt64initmtx = PTHREAD_MUTEX_INITIALIZER;
+pthread_mutex_t      randmt64mtx;
+pthread_mutexattr_t  randmt64mtxatr;
+volatile long        randmt64init;
 #endif
 
 void
@@ -84,9 +84,9 @@ _randmt64init(pthread_mutex_t *mtx, pthread_mutexattr_t *atr)
 void
 srandmt64(uint64_t seed)
 {
-    uint64_t val;
-    long     ndx;
-    uint64_t tmp;
+    uint64_t      val;
+    unsigned long ndx;
+    uint64_t      tmp;
     
     if (!randmt64init) {
         _randmt64mtxinit(&randmt64initmtx, &randmt64mtx,
@@ -198,8 +198,8 @@ _randmt64buf(void)
 uint64_t
 randmt64(void)
 {
-    uint64_t val;
-    long     cur;
+    uint64_t      val;
+    unsigned long cur;
 
     if (!randmt64init) {
         _randmt64mtxinit(&randmt64initmtx, &randmt64mtx,

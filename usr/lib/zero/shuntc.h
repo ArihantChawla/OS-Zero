@@ -2,6 +2,7 @@
 #define __ZERO_SHUNTC_H__
 
 #include <stdint.h>
+#include <zero/param.h>
 #include <zero/bits/shuntc.h>
 
 #define SHUNT_NOPER      SHUNTCNOPER
@@ -19,41 +20,41 @@
 #define SHUNT_RIGHTPAREN SHUNTCRIGHTPAREN
 
 struct shuntctoken {
-    uint_fast8_t  type;         // token type
-    char         *str;          // string presentation of value
-    uint_fast8_t  slen;         // length of string buffer in characters
-    uint_fast8_t  len;          // length of string in characters
-    uint_fast8_t  parm;         // e.g. type size in bytes/octets - 1
-    uint_fast8_t  radix;        // string presentation, e.g. SHUNT_HEX
-//    uint_fast8_t  sign;         // sign-bit
-    uint_fast8_t  flg;          // token flags, e.g. SHUNTCZERO
-    /* value union */
-    union {
-        int8_t       i8;
-        uint8_t      ui8;
-        int16_t      i16;
-        uint16_t     ui16;
-        int32_t      i32;
-        uint32_t     ui32;
-        int64_t      i64;
-        uint64_t     ui64;
-        float        f;
-        double       d;
-        long double  ld;
-        void        *ptr;
-    } data;
+    long                type;   // token type
+    char               *str;    // string presentation of value
+    long                slen;   // length of string buffer in characters
+    long                len;    // length of string in characters
+    long                parm;   // e.g. type size in bytes/octets - 1
+    long                radix;  // string presentation, e.g. SHUNT_HEX
+//    long  sign;         // sign-bit
+    long                flg;    // token flags, e.g. SHUNTCZERO
     /* previous and next in queue/list */
     struct shuntctoken *prev;
     struct shuntctoken *next;
+    /* value union */
+    union {
+        int8_t          i8;
+        uint8_t         ui8;
+        int16_t         i16;
+        uint16_t        ui16;
+        int32_t         i32;
+        uint32_t        ui32;
+        int64_t         i64;
+        uint64_t        ui64;
+        float           f;
+        double          d;
+        long double     ld;
+        void           *ptr;
+    } data;
 };
 
 typedef SHUNT_INT shuntcop_t(struct shuntctoken *, struct shuntctoken *);
 
-extern uint_fast8_t  shuntcopchartab[256];
-extern uint_fast8_t  shuntcopprectab[SHUNTCNTAB];
-extern uint_fast8_t  shuntcopnargtab[SHUNTCNTAB];
+extern long          shuntcopchartab[256];
+extern long          shuntcopprectab[SHUNTCNTAB];
+extern long          shuntcopnargtab[SHUNTCNTAB];
 extern shuntcop_t   *shuntcevaltab[SHUNTCNTAB];
-extern uint_fast8_t  shuntcradix;
+extern long          shuntcradix;
 
 #define SHUNTCPARMSIZEMASK 0xff
 #define shuntcisopchar(c)                                               \
@@ -78,7 +79,7 @@ SHUNT_INT shuntcand64(struct shuntctoken *arg1, struct shuntctoken *arg2);
 SHUNT_INT shuntcor64(struct shuntctoken *arg1, struct shuntctoken *arg2);
 SHUNT_INT shuntcxor64(struct shuntctoken *arg1, struct shuntctoken *arg2);
 SHUNT_INT shuntcshl64(struct shuntctoken *arg1, struct shuntctoken *arg2);
-SHUNT_INT shuntcshra64(struct shuntctoken *arg1, struct shuntctoken *arg2);
+SHUNT_INT shuntcsar64(struct shuntctoken *arg1, struct shuntctoken *arg2);
 SHUNT_INT shuntcshr64(struct shuntctoken *arg1, struct shuntctoken *arg2);
 SHUNT_INT shuntcror64(struct shuntctoken *arg1, struct shuntctoken *arg2);
 SHUNT_INT shuntcrol64(struct shuntctoken *arg1, struct shuntctoken *arg2);

@@ -81,14 +81,14 @@
 #endif
 #define unmapanon(ptr, size) munmap(ptr, size)
 
-extern void * sbrk(intptr_t delta);
+//extern void * sbrk(intptr_t delta);
 
 #define growheap(ofs) sbrk(ofs)
 
 void * readfile(char *filename, size_t *sizeret);
 
 #if defined(_SC_OPEN_MAX)
-#define get_open_max() sysconf(_SC_OPEN_MAX)
+#define get_open_max() (int)sysconf(_SC_OPEN_MAX)
 #elif defined(RLIMIT_NOFILE)
 static inline int
 get_open_max(void)

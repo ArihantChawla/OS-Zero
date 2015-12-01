@@ -67,7 +67,7 @@
 #define swap(a, b)     ((a) ^= (b), (b) ^= (a), (a) ^= (b))
 #define swap32(a, b)                                                    \
     do {                                                                \
-        int32_t _tmp = a;                                               \
+        uint32_t _tmp = a;                                              \
                                                                         \
         a = b;                                                          \
         b = _tmp;                                                       \
@@ -91,9 +91,11 @@ abs32(int a)
 #define _llabs(a)       zeroabs(a)
 #endif
 
+#if 0
 int       abs(int x);
 long      labs(long x);
 long long llabs(long long x);
+#endif
 
 /* true if x is a power of two */
 #define powerof2(x)     (!((x) & ((x) - 1)))
@@ -325,22 +327,22 @@ long long llabs(long long x);
 #elif defined(__i386__) || defined(__x86_64__) || defined(__amd64__)
 #define tzerol(u)  (m_scanlo1bit(u))
 #elif (LONGSIZE == 4)
-static __inline__ unsigned long
-tzerol(unsigned long ul)
+static __inline__ long
+tzerol(long l)
 {
-    unsigned long ret = 0;
+    long ret = 0;
 
-    tzero32(ul, ret);
+    tzero32(l, ret);
 
     return ret;
 }
 #elif (LONGSIZE == 8)
-static __inline__ unsigned long
-tzerol(unsigned long ul)
+static __inline__ long
+tzerol(long l)
 {
-    unsigned long ret = 0;
+    long ret = 0;
 
-    tzero64(ul, ret);
+    tzero64(l, ret);
 
     return ret;
 }
@@ -354,22 +356,22 @@ tzerol(unsigned long ul)
 #elif defined(__i386__) || defined(__x86_64__) || defined(__amd64__)
 #define lzerol(u) ((1UL << (LONGSIZELOG2 + 3)) - m_scanhi1bit(u))
 #elif (LONGSIZE == 4)
-static __inline__ unsigned long
-lzerol(unsigned long ul)
+static __inline__ long
+lzerol(long l)
 {
-    unsigned long ret = 0;
+    long ret = 0;
 
-    lzero32(ul, ret);
+    lzero32(l, ret);
 
     return ret;
 }
 #elif (LONGSIZE == 8)
-static __inline__ unsigned long
-lzerol(unsigned long ul)
+static __inline__ long
+lzerol(long l)
 {
-    unsigned long ret = 0;
+    long ret = 0;
 
-    lzero64(ul, ret);
+    lzero64(l, ret);
 
     return ret;
 }
@@ -382,7 +384,7 @@ lzerol(unsigned long ul)
 static __inline__ unsigned long
 ceilpow2l(unsigned long u)
 {
-    unsigned long tmp = tzerol(u);
+    long          tmp = tzerol(u);
     unsigned long ret;
 
     if (!powerof2(u)) {
@@ -396,7 +398,7 @@ ceilpow2l(unsigned long u)
 static __inline__ uint64_t
 ceilpow2_64(uint64_t u)
 {
-    uint64_t tmp = tzerol(u);
+    long     tmp = tzerol(u);
     uint64_t ret;
 
     if (!powerof2(u)) {

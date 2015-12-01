@@ -1,3 +1,4 @@
+#include <stdlib.h>
 #include <zero/trix.h>
 #include <zero/cdecl.h>
 #include <zero/param.h>

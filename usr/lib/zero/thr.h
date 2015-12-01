@@ -42,7 +42,6 @@ typedef uintptr_t zerothrid;
 #define ZEROTHRATR_AFFINITY      (1 << 9)       // affinity configuration
 typedef struct __zerothratr {
     long                flg;
-    struct sched_param  schedparm;
     void               *stkadr;
     size_t              stksize;
     size_t              guardsize;
@@ -50,6 +49,7 @@ typedef struct __zerothratr {
     size_t              ncpu;
     void               *cpuset;
 #endif
+    struct sched_param  schedparm;
 } zerothratr;
 
 #define ZEROTHR_NOID   (~(zerothrid)0)

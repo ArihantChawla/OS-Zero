@@ -1,7 +1,7 @@
 #include <stdlib.h>
 #include <stdint.h>
 #include <zero/randlfg.h>
-#include <zero/randmt32.h>
+//#include <zero/randmt32.h>
 
 /* REFERENCE: http://arxiv.org/abs/cond-mat/9710104 */
 
@@ -29,9 +29,9 @@ randlfg(void)
     if (!randinit) {
         randbuf = malloc(RAND_N * sizeof(int));
         if (randbuf) {
-            srandmt32(1);
+            srand(1);
             for (i = 0 ; i < RAND_N ; i++) {
-                randbuf[i] = randmt32();
+                randbuf[i] = rand();
             }
             randinit = 1;
         }

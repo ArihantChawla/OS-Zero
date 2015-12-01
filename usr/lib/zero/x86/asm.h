@@ -41,7 +41,7 @@ m_xadd32(volatile long *p,
 {
     volatile int *_ptr = (volatile int *)p;
     
-    __asm__ __volatile__ ("lock xaddq %%rax, %q2\n"
+    __asm__ __volatile__ ("lock xaddq %%rax, %2\n"
                           : "=a" (val)
                           : "a" (val), "m" (*(_ptr))
                           : "memory");
@@ -66,7 +66,7 @@ m_cmpxchg8(volatile long *p,
                           : "q" (val), "m" (*(p)), "0" (want)
                           : "memory");
 
-    return res;
+    return (char)res;
 }
 
 #endif /* __ZERO_X86_ASM_H__ */

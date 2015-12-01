@@ -14,11 +14,11 @@
 
 typedef struct {
     zeromtx        lk;
-    long           nbit;
+    unsigned long  nbit;
     volatile long *bits;
 } zeromaplk;
 
-zeromaplk * maplkinit(zeromaplk *maplk, long n);
+zeromaplk * maplkinit(zeromaplk *maplk, unsigned long n);
 
 static __inline__ long
 maplktrybit(zeromaplk *maplk, long ndx)
