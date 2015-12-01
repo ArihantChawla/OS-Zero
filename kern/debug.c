@@ -26,14 +26,14 @@ kprintregs(void)
                             "=m" (esp), "=m" (ebp), "=m" (esi), "=m" (edi));
     kprintf("general-purpose registers\n");
     kprintf("-------------------------\n");
-    kprintf("eax\t%lx\n", eax);
-    kprintf("ecx\t%lx\n", ecx);
-    kprintf("edx\t%lx\n", edx);
-    kprintf("ebx\t%lx\n", ebx);
-    kprintf("esp\t%lx\n", esp);
-    kprintf("ebp\t%lx\n", ebp);
-    kprintf("esi\t%lx\n", esi);
-    kprintf("edi\t%lx\n", edi);
+    kprintf("eax\t0x%lx\n", eax);
+    kprintf("ecx\t0x%lx\n", ecx);
+    kprintf("edx\t0x%lx\n", edx);
+    kprintf("ebx\t0x%lx\n", ebx);
+    kprintf("esp\t0x%lx\n", esp);
+    kprintf("ebp\t0x%lx\n", ebp);
+    kprintf("esi\t0x%lx\n", esi);
+    kprintf("edi\t0x%lx\n", edi);
 
     return;
 }
@@ -43,14 +43,14 @@ kprintgenregs(struct m_genregs *genregs)
 {
     kprintf("general-purpose registers\n");
     kprintf("-------------------------\n");
-    kprintf("eax\t%lx\n", genregs-> eax);
-    kprintf("ecx\t%lx\n", genregs-> ecx);
-    kprintf("edx\t%lx\n", genregs-> edx);
-    kprintf("ebx\t%lx\n", genregs-> ebx);
-    kprintf("esp\t%lx\n", genregs-> esp);
-    kprintf("ebp\t%lx\n", genregs-> ebp);
-    kprintf("esi\t%lx\n", genregs-> esi);
-    kprintf("edi\t%lx\n", genregs-> edi);
+    kprintf("eax\t0x%lx\n", genregs-> eax);
+    kprintf("ecx\t0x%lx\n", genregs-> ecx);
+    kprintf("edx\t0x%lx\n", genregs-> edx);
+    kprintf("ebx\t0x%lx\n", genregs-> ebx);
+    kprintf("esp\t0x%lx\n", genregs-> esp);
+    kprintf("ebp\t0x%lx\n", genregs-> ebp);
+    kprintf("esi\t0x%lx\n", genregs-> esi);
+    kprintf("edi\t0x%lx\n", genregs-> edi);
 
     return;
 }
@@ -60,10 +60,10 @@ kprintsegregs(struct m_segregs *segregs)
 {
     kprintf("segment registers\n");
     kprintf("-----------------\n");
-    kprintf("ds\t%lx\n", segregs->ds);
-    kprintf("es\t%lx\n", segregs->es);
-    kprintf("fs\t%lx\n", segregs->fs);
-    kprintf("gs\t%lx\n", segregs->gs);
+    kprintf("ds\t0x%lx\n", segregs->ds);
+    kprintf("es\t0x%lx\n", segregs->es);
+    kprintf("fs\t0x%lx\n", segregs->fs);
+    kprintf("gs\t0x%lx\n", segregs->gs);
 }
 
 void
@@ -71,11 +71,11 @@ kprintjmpframe(struct m_jmpframe *jmpframe, long havestk)
 {
     kprintf("jump/stack frame\n");
     kprintf("----------------\n");
-    kprintf("eip\t%lx\n", jmpframe->eip);
+    kprintf("eip\t0x%lx\n", jmpframe->eip);
     kprintf("cs\t%hx\n", jmpframe->cs);
-    kprintf("eflags\t%lx\n", jmpframe->eflags);
+    kprintf("eflags\t0x%lx\n", jmpframe->eflags);
     if (havestk) {
-        kprintf("uesp\t%lx\n", jmpframe->uesp);
+        kprintf("uesp\t0x%lx\n", jmpframe->uesp);
         kprintf("uss\t%hx\n", jmpframe->uss);
     }
 }
@@ -83,6 +83,12 @@ kprintjmpframe(struct m_jmpframe *jmpframe, long havestk)
 void
 kprinttcb(struct m_tcb *m_tcb, long flg)
 {
-    
+    kprintf("flg\t%lx\n", m_tcb->flg);
+    kprintf("pdbr\t%lx\n", m_tcb->pdbr);
+    kprintgenregs(&m_tcb->segregs);
+    kprintsegregs(&m_tcb->segregs);
+    kprintjmpframe(&m_tcb.iret);
+
+    return;
 }
 

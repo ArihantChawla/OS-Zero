@@ -302,6 +302,7 @@ trapss:
 	sti
 	iretl
 
+	/* error-code is segment selector or zero */
 trapgp:
 	_trapentererr
 	movl	%esp, %ebp

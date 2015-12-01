@@ -1,0 +1,40 @@
+BUTTONS
+-------
+
+BASE
+----
+- click: toggle between decimal, hexadecimal, octal, and binary
+- menu: N/A
+
+MODES
+-----
+
+ASM
+---
+- show registers, stack, and disassembly
+- commands: peek, poke, break, trace, run, cont
+
+C
+-
+- show registers/variables, stack, function
+
+COMMANDS
+--------
+~	NOT
+++	INC
+--	DEC
+>>>	SAR
+>>	SHR
+<<	SHL
+|	OR
+&	AND
+^	XOR
++	ADD
+-	SUB
+*	MUL
+/	DIV
+%	MOD
+
+CALC
+----
+
