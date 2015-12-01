@@ -13,6 +13,7 @@
 #include <kern/obj.h>
 #include <kern/unit/x86/boot.h>
 #include <kern/unit/x86/cpu.h>
+#include <kern/unit/ia32/tcb.h>
 
 struct proc proctab[NTASK] ALIGNED(PAGESIZE);
 struct task tasktab[NTASK];
@@ -31,10 +32,9 @@ procinit(long id)
 
     if (taskid < TASKNPREDEF) {
         /* bootstrap */
+        task->m_tcb.flg = 0;
         if (k_curcpu->info->flags & CPUHASFXSR) {
-            task->m_tcb.fxsave = 1;
-        } else {
-            task->m_tcb.fxsave = 0;
+            task->m_tcb.flg = M_TCBFXSAVE;
         }
         proc->task = task;
         task->proc = proc;

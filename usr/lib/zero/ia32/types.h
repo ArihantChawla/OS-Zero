@@ -87,7 +87,7 @@ struct m_tss {
 #define M_TCBFCTXSIZE 512
 struct m_tcb {
     uint8_t           fctx[M_TCBFCTXSIZE];      // 512 bytes @ 0
-    int32_t           fxsave;                   // 4 bytes @ 512
+    int32_t           flg;                      // 4 bytes @ 512
     int32_t           pdbr;                     // 4 bytes @ 516
     struct m_segregs  segregs;                  // 16 bytes @ 520
     struct m_genregs  genregs;                  // 32 bytes @ 536

@@ -117,7 +117,7 @@ vminit(void *pagetab)
     vmmapseg(pagetab,
              (uint32_t)kernsysstktab, (uint32_t)kernsysstktab,
              (uint32_t)kernsysstktab + NCPU * KERNSTKSIZE,
-             PAGEUSER | PAGEPRES | PAGEWRITE);
+             PAGEPRES | PAGEWRITE);
     /* map user-mode stacks */
     vmmapseg(pagetab,
              (uint32_t)kernusrstktab, (uint32_t)kernusrstktab,

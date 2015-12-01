@@ -114,6 +114,7 @@ SECTIONS {
 	tcb.o(.text)
 	tcb.o(.data)
 	tcb.o(.bss)
+
 	sched.o(.text)
 	sched.o(.data)
 	sched.o(.bss)
@@ -168,6 +169,7 @@ SECTIONS {
     .text : AT(PAGETAB + SIZEOF(.pgtab)) {
         _text = .;
 	_textvirt = PAGETAB + SIZEOF(.pgtab);
+	*(EXCLUDE_FILE(*usr.o *test.o).text*)
 	*(.text*)
 	*(.rodata*)
 	*(.rodata.*)
@@ -202,6 +204,7 @@ SECTIONS {
         _usr = _bss + SIZEOF(.bss);
 	_usrvirt = _ebssvirt + SIZEOF(.bss);
 	usr.o(.text)
+	test.o(.text)
 	_eusr = _usr + SIZEOF(.usr);
 	_eusrvirt = _usrvirt + SIZEOF(.usr);
 	. = ALIGN(PAGESIZE);

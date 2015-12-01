@@ -3,6 +3,7 @@
 #include <kern/unit/x86/boot.h>
 #include <kern/unit/x86/trap.h>
 #include <kern/unit/ia32/macro.S>
+#include <kern/unit/ia32/tcb.h>
 
 /*
  * NOTE: we use interrupt gates, which automatically disable further
@@ -72,6 +73,7 @@ trapde:
 	pushl	$TRAPDE
 	pushl	$0x00000000
 #endif
+	pushl	%esp			// ctx-argument for sigfunc
 	call	sigfunc
 
 	movl	%ebp, %esp
@@ -91,6 +93,7 @@ trapdb:
 	pushl	$TRAPDB
 	pushl	$0x00000000
 #endif
+	pushl	%esp			// ctx-argument for sigfunc
 	call	sigfunc
 
 	movl	%ebp, %esp
@@ -110,6 +113,7 @@ trapnmi:
 	pushl	$TRAPNMI
 	pushl	$0x00000000
 #endif
+	pushl	%esp			// ctx-argument for sigfunc
 	call	sigfunc
 
 	movl	%ebp, %esp
@@ -129,6 +133,7 @@ trapbp:
 	pushl	$TRAPBP
 	pushl	$0x00000000
 #endif
+	pushl	%esp			// ctx-argument for sigfunc
 	call	sigfunc
 
 	movl	%ebp, %esp
@@ -148,6 +153,7 @@ trapof:
 	pushl	$TRAPOF
 	pushl	$0x00000000
 #endif
+	pushl	%esp			// ctx-argument for sigfunc
 	call	sigfunc
 
 	movl	%ebp, %esp
@@ -167,6 +173,7 @@ trapbr:
 	pushl	$TRAPBR
 	pushl	$0x00000000
 #endif
+	pushl	%esp			// ctx-argument for sigfunc
 	call	sigfunc
 
 	movl	%ebp, %esp
@@ -188,6 +195,7 @@ trapud:
 	pushl	$TRAPUD
 	pushl	$0x00000000
 #endif
+	pushl	%esp			// ctx-argument for sigfunc
 	call	sigfunc
 
 	movl	%ebp, %esp
@@ -207,6 +215,7 @@ trapnm:
 	pushl	$TRAPNM
 	pushl	$0x00000000
 #endif
+	pushl	%esp			// ctx-argument for sigfunc
 	call	sigfunc
 
 	movl	%ebp, %esp
@@ -226,6 +235,7 @@ trapdf:
 	pushl	$TRAPDF
 	pushl	$0x00000000
 #endif
+	pushl	%esp			// ctx-argument for sigfunc
 	call	sigfunc
 
 	movl	%ebp, %esp
@@ -245,6 +255,7 @@ trapts:
 	pushl	$TRAPTS
 	pushl	$0x00000000
 #endif
+	pushl	%esp			// ctx-argument for sigfunc
 	call	sigfunc
 
 	movl	%ebp, %esp
@@ -263,6 +274,7 @@ trapnp:
 	pushl	$TRAPNP
 	pushl	$0x00000000
 #endif
+	pushl	%esp			// ctx-argument for sigfunc
 	call	sigfunc
 
 	movl	%ebp, %esp
@@ -282,6 +294,7 @@ trapss:
 	pushl	$TRAPSS
 	pushl	$0x00000000
 #endif
+	pushl	%esp			// ctx-argument for sigfunc
 	call	sigfunc
 
 	movl	%ebp, %esp
@@ -294,13 +307,16 @@ trapgp:
 	movl	%esp, %ebp
 
 #if (FASTINTR)
+	/* error code is in %ecx */
 	movl	$TRAPGP, %edx
 	xorl	%eax, %eax
 #else
 	pushl	%ecx
 	pushl	$TRAPGP
 	pushl	$0x00000000
+	pushl	%eax
 #endif
+	pushl	%esp			// ctx-argument for sigfunc
 	call	sigfunc
 
 _gpfin:	
@@ -342,6 +358,7 @@ trapmf:
 	pushl	$TRAPMF
 	pushl	$0x00000000
 #endif
+	pushl	%esp			// ctx-argument for sigfunc
 	call	sigfunc
 
 	movl	%ebp, %esp
@@ -361,6 +378,7 @@ trapac:
 	pushl	$TRAPAC
 	pushl	$0x00000000
 #endif
+	pushl	%esp			// ctx-argument for sigfunc
 	call	sigfunc
 
 	movl	%ebp, %esp
@@ -380,6 +398,7 @@ trapmc:
 	pushl	$TRAPMC
 	pushl	$0x00000000
 #endif
+	pushl	%esp			// ctx-argument for sigfunc
 	call	sigfunc
 
 	movl	%ebp, %esp
@@ -399,6 +418,7 @@ trapxf:
 	pushl	$TRAPXF
 	pushl	$0x00000000
 #endif
+	pushl	%esp			// ctx-argument for sigfunc
 	call	sigfunc
 
 	movl	%ebp, %esp
@@ -473,6 +493,7 @@ irqtmr:
 	pushal				// push general-purpose registers
 	/* store FPU context */
 	movl	-24(%esp), %ebx		// fetch fxsave-flag
+	andl	$M_TCBFXSAVE, %ebx
 	cmpl	$0, %ebx
 	jne	_fxsave			// use FXSAVE if non-zero
 	fnsave	(%eax)			// use FNSAVE if zero

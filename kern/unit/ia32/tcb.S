@@ -3,6 +3,7 @@
 #include <kern/unit/x86/boot.h>
 #include <kern/unit/x86/trap.h>
 #include <kern/unit/ia32/macro.S>
+#include <kern/unit/ia32/tcb.h>
 
 	/* TODO: privilege transition(?), per-cpu segment (%gs), tss/ltr */
 
@@ -19,6 +20,7 @@ m_tcbjmp:
 	movl	512(%eax), %ebx
 	/* adjust %esp to tcb->pdbr */
 	leal	516(%eax), %esp
+	andl	$M_TCBFXSAVE, %ebx
 	cmpl	$0, %ebx
 	je	_frstor
 	fxrstor	(%eax)

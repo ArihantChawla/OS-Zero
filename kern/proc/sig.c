@@ -16,6 +16,7 @@ extern struct task  tasktab[NTASK];
 extern long         trapsigmap[TRAPNCPU];
 
 signalhandler_t    *sigfunctab[NSIG] ALIGNED(PAGESIZE);
+long                traperrbits = TRAPERRBITS;
 
 void
 killproc(volatile struct proc *proc)
@@ -27,7 +28,7 @@ killproc(volatile struct proc *proc)
 FASTCALL
 #endif
 void
-sigfunc(unsigned long pid, int32_t trap, long err)
+sigfunc(unsigned long pid, int32_t trap, long err, void *ctx)
 {
     volatile struct task *task = &tasktab[pid];
     long                  sig = trapsigmap[trap];

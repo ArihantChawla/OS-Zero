@@ -9,6 +9,7 @@
 #include <sys/io.h>
 #include <kern/unit/x86/pic.h>
 #endif
+#include <kern/unit/ia32/task.h>
 
 FASTCALL void (*schedpicktask)(struct task *);
 #if (ZEROSCHED)
@@ -37,7 +38,7 @@ schedyield(void)
         schedpicktask(oldtask);
     } while (!task);
     if (task != oldtask) {
-        m_tcbjmp(task);
+        m_tcbjmp(&task->m_tcb);
     } else {
 
         return;
@@ -45,25 +46,5 @@ schedyield(void)
 
     /* NOTREACHED */
     for ( ; ; ) { ; }
-}
-
-NOINLINE
-void
-schedloop(void)
-{
-    /* test scheduler loop; interrupted by timer [and other] interrupts */
-    do {
-        /* enable all interrupts */
-#if !(APIC)
-        outb(0x00, PICMASK1);
-        outb(0x00, PICMASK2);
-#endif
-//        kprintregs();
-        /* wait for interrupt */
-        k_waitint();
-    } while (1);
-
-    /* NOTREACHED */
-    return;
 }
 
