@@ -8,6 +8,8 @@ _KERNSTKSIZE = KERNSTKSIZE
 
 .globl	m_jmpusr, usrpagedir, kernusrstktab
 
+.text	32
+
 /* void m_jmpusr(long id, void *func);
  * - cpu ID in %eax
  * - function pointer in %edx */
