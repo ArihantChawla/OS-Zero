@@ -116,7 +116,6 @@ typedef struct {
 }                trace_attr_t;
 typedef uint64_t trace_id_t;
 typedef uint64_t trace_event_id_t;
-typedef uint64_t trace_id_t;
 typedef uint64_t trace_event_set_t;
 
 /* POSIX threads */

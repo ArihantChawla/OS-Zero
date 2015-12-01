@@ -39,7 +39,6 @@
 #define MALLOCDYNARN      0
 #define MALLOCGETNPROCS   1
 
-#define MALLOCTRACE       1
 #if defined(NVALGRIND)
 #define MALLOCVALGRIND    0
 #else

@@ -50,7 +50,7 @@ typedef pthread_mutex_t zeromtx;
  * try to acquire mutex lock
  * - return non-zero on success, zero if already locked
  */
-static __inline__ long
+static INLINE long
 mtxtrylk(volatile long *lp)
 {
     volatile long res;
@@ -66,7 +66,7 @@ mtxtrylk(volatile long *lp)
  * acquire mutex lock
  * - allow other threads to run when blocking
  */
-static __inline__ void
+static INLINE void
 mtxlk(volatile long *lp)
 {
     volatile long res;
@@ -85,7 +85,7 @@ mtxlk(volatile long *lp)
  * unlock mutex
  * - must use full memory barrier to guarantee proper write-ordering
  */
-static __inline__ void
+static INLINE void
 mtxunlk(volatile long *lp)
 {
     *lp = MTXINITVAL;

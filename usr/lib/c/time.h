@@ -52,12 +52,6 @@ extern int   __daylight;
 
 #define TIMER_ABSTIME            (1 << 0)
 
-#if !defined(__KERNEL__)
-
-extern int getdate_err;
-
-#endif /* !__KERNEL__ */
-
 #if (_POSIX_SOURCE) || (_XOPEN_SOURCE)
 struct tm {
     int         tm_sec;		// seconds [0, 60]
@@ -69,6 +63,7 @@ struct tm {
     int         tm_wday;        // day of week [0, 6] (sunday == 0)
     int         tm_yday;        // day of year [0, 365]
     int         tm_isdst;       // daylight savings flag (-1/0/1)
+    int         _pad;
 #if (_BSD_SOURCE)
     long        tm_gmtoff;	// seconds east (forward) of UTC/GMT
     const char *tm_zone;	// timezone abbreviation

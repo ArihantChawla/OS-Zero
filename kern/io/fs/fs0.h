@@ -18,12 +18,14 @@
  * - for device-blocks, ofs == (((major) << 32) | (minor))
  */
 /* type-member values */
-#define FSMETANODE 0
-#define FSBLKGROUP 1
-#define FSINODE    2
-#define FSMOUNTPNT 3
-#define FSCHRDEV   4
-#define FSBLKDEV   5
+#define FSNODE     0    // file-like objects
+#define FSDIR      1    // directory
+#define FSMETANODE 2    // metadata
+#define FSBLKGROUP 3    // block-group
+#define FSINODE    4    // file/node allocation info
+#define FSMOUNTPNT 5    // mountpoint
+#define FSCHRDEV   6    // character special
+#define FSBLKDEV   7    // block special
 /* flag-bits for flg */
 #define INODENOBUF 0x80000000
 struct fs0inode {
@@ -52,10 +54,11 @@ struct fs0inode {
 };
 
 /* FS flag-bits in flg */
-#define FSDIRTY  0x80000000
-#define FSCHECK  0x40000000
-#define FSRDONLY 0x20000000
-struct fs0 {
+#define FSDIRTY    0x80000000
+#define FSCHECK    0x40000000
+#define FSRDONLY   0x20000000
+#define FSSMOUNTED 0x10000000
+struct fs0supblk {
     uint32_t ver;       // filesystem version
     uint32_t uid;       // mount owner ID
     uint32_t gid;       // mount group ID

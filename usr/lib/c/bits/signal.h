@@ -20,6 +20,7 @@
 #define _sigvalid(sig)  ((sig) && (!((sig) & ~SIGMASK)))
 #define _sigrt(sig)     ((sig) && (!((sig) & ~SIGRTMASK)))
 #define _signorm(sig)   ((sig) && (!((sig) & SIGRTMASK)))
+#define _SIGFORCEBITS   ((UINT64_C(1) << SIGKILL) | (UINT64_C(1) << SIGSTOP))
 
 #if defined(__x86_64__) || defined(__amd64__) || defined(___alpha__)
 #define SIG32BIT 0
@@ -61,23 +62,26 @@ typedef long             pid_t;          // process ID
 #endif
 typedef void           (*__sighandler_t)(int);
 //typedef __sighandler_t   sighandler_t;
-#if (_GNU_SOURCE)
-typedef void             sighandler_t(int);
-#endif
 
-#if (_BSD_SOURCE)
-typedef void           (*sig_t)(int);
+#if (_BSD_SOURCE) || (_GNU_SOURCE)
+typedef __sighandler_t sig_t;
+#endif
+#if (_GNU_SOURCE)
+typedef __sighandler_t sighandler_t;
 #endif
 
 /* sigaction() definitions */ 
 #define SA_NOCLDSTOP SIG_NOCLDSTOP
 #define SA_NOCLDWAIT SIG_NOCLDWAIT
 #define SA_NODEFER   SIG_NODEFER
+#define SA_NOMASK    SA_NODEFER
 #define SA_RESETHAND SIG_RESETHAND
+#define SA_ONESHOT   SA_RESETHAND
 #define SA_SIGINFO   SIG_SIGINFO
 /* non-POSIX */
 #define SA_ONSTACK   SIG_ONSTACK
 #define SA_RESTART   SIG_RESTART
+#define SA_INTERRUPT SIG_FASTINTR
 
 #define MINSIGSTKSZ  PAGESIZE
 #define SIGSTKSZ     (4 * PAGESIZE)
@@ -93,8 +97,8 @@ typedef void           (*sig_t)(int);
 #endif
 
 union sigval {
-    int   sival_int;
     void *sival_ptr;
+    int   sival_int;
 };
 
 /* values for sigev_notify */
@@ -165,10 +169,10 @@ typedef struct {
     int           si_signo;
     int           si_code;
     int           si_errno;
+    int           si_status;    // exit value or signal
     pid_t         si_pid;       // SIGCHLD
     uid_t         si_uid;       // real user ID of signal sender process
     void         *si_addr;      // SIGILL, SIGFPE, SIGSEGV, SIGBUS
-    int           si_status;    // exit value or signal
     long          si_band;      // band event for POLL_IN, POLL_OUT, POLL_MSG
     union sigval  si_value;
     ctid_t        si_ctid;
@@ -215,9 +219,7 @@ struct sigaction {
       : (_signorm(sig)                                                  \
          ? (((sp)->norm >> (sig)) & 0x01)                               \
          : (((sp)->rt >> (sig - SIGRTMIN)) & 0x01))))
-#if (_GNU_SOURCE)
-#define sigisemptyset(sp) (!(sp)->norm | !(sp)->rt)
-#endif
+#define __sigisemptyset(sp) (!(sp)->norm | !(sp)->rt)
 
 #else /* !SIG32BIT */
 
@@ -243,12 +245,16 @@ struct sigaction {
          ? 1                                                            \
          : 0)))
 #if (_GNU_SOURCE)
-#define sigisemptyset(sp) (!*(sp))
+#define __sigisemptyset(sp) (!*(sp))
 #endif
 
 #endif /* SIG32BIT */
 
 #endif /* _POSIX_SOURCE */
+
+#if (_GNU_SOURCE)
+#define sigisemptyset(sp) __sigisemptyset(sp)
+#endif
 
 #if (_POSIX_SOURCE)
 

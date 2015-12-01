@@ -85,9 +85,9 @@ kprinttcb(struct m_tcb *m_tcb, long flg)
 {
     kprintf("flg\t%lx\n", m_tcb->flg);
     kprintf("pdbr\t%lx\n", m_tcb->pdbr);
-    kprintgenregs(&m_tcb->segregs);
+    kprintgenregs(&m_tcb->genregs);
     kprintsegregs(&m_tcb->segregs);
-    kprintjmpframe(&m_tcb.iret);
+    kprintjmpframe(&m_tcb->iret, 1);
 
     return;
 }

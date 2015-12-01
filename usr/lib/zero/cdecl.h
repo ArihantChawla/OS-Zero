@@ -14,10 +14,17 @@
 #define __func__ __FUNCTION__
 #endif
 
+#if defined(__STDC_VERSION__) && (__STDC_VERSION__ >= 201112L) && 0
+#include <stdalign.h>
+#define ALIGNED(x)  alignas(x)
+#if !defined(__STDC_NO_THREADS__)
+#include <threads.h>
+#define THREADLOCAL _Thread_local
+#endif
+#endif
+
 #if defined(__GNUC__) || defined(__clang__)
 
-/* align variables, aggregates, and tables to boundary of a */
-#define ALIGNED(a)   __attribute__ ((__aligned__(a)))
 /* ALWAYS inline the function */
 #define INLINE       __inline__ __attribute__ ((__always_inline__))
 #define NOINLINE     __attribute__((__noinline__))
@@ -51,8 +58,6 @@
 #define unlikely(x)  (__builtin_expect(!!(x), 0))
 #define isconst(x)   (__builtin_constant_p(x))
 
-#define THREADLOCAL  __thread
-
 #elif defined(_MSC_VER) /* !defined(__GNUC__) && !defined(__clang__) */
     
 /* Microsoft */
@@ -72,6 +77,14 @@
 
 #if !defined(UNUSED)
 #define UNUSED
+#endif
+#if !defined(ALIGNED)
+/* align variables, aggregates, and tables to boundary of a */
+#define ALIGNED(a)   __attribute__ ((__aligned__(a)))
+#endif
+#if !defined(THREADLOCAL)
+/* declare thread-local data */
+#define THREADLOCAL  __thread
 #endif
 
 #endif /* __ZERO_CDECL_H__ */

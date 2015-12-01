@@ -47,6 +47,7 @@ _APICEOI	= 0x00000000
 	popl	%es
 	popl	%ds
 #endif
+	/* TODO: check to see if we need to schedule another thread */
 	popal
 	addl	$4, %esp	// skip error code
 .endm

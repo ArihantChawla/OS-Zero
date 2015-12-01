@@ -30,16 +30,16 @@
 #define __SCHED_FIXED_PRIORITY (1 << 1) // SYNC, INPUT, AUDIO, VIDEO
 #define __SCHED_PROC_SCOPE     (1 << 2) // otherwise, system scope
 struct sched_param {
-    int  sched_priority;
+    int             sched_priority;
 #if defined(_POSIX_SPORADIC_SERVER) || defined(_POSIX_THREAD_SPORADIC_SERVER)
-    int  sched_ss_low_priority;
+    int             sched_ss_low_priority;
     struct timespec sched_ss_repl_period;
     struct timespec sched_ss_init_budget;
-    int    sched_ss_max_repl;
+    int             sched_ss_max_repl;
 #endif /* SPORADIC */
-    long __policy;
-    long __nice;
-    long __flg;
+    long            __policy;
+    long            __nice;
+    long            __flg;
 };
 
 #if defined(_GNU_SOURCE)

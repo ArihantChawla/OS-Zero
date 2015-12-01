@@ -9,7 +9,7 @@
 
 typedef void signalhandler_t(int sig);
 
-/* constants. */
+/* constants; signal names */
 
 #define SIGNONE      0x00
 #define SIGCLD       0x00    /* UNSUPPORTED - System V, NOT SIGCHLD semantics */

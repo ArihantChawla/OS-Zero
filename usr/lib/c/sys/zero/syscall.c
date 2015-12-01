@@ -15,11 +15,21 @@
                         && !defined(__x86_64) && !defined(__amd64))
 
 /*
- * prepare for a system call and do it
- * - EAX/RAX is used for system call number
- * - EBX/RBX is used for 1st system call argument
- * - EcX/RCX is used for 2nd system call argument
- * - EDX/RDX is used for 3rd system call argument
+ * system entry
+ * ------------
+ * - EAX is used for system call number
+ * - EBX is used for 1st system call argument
+ * - EcX is used for 2nd system call argument
+ * - EDX is used for 3rd system call argument
+ * LATER
+ * -----
+ * - ESI is used for 4th system call argument
+ * - EDI is used for 5th system call argument
+ * - EBP is used for 6th system call argument
+ * after system call
+ * -----------------
+ * - %eax contains return value or errno if CF is not set in EFLAGS
+ *   - otherwise, %eax contains errno
  */
 ASMLINK
 sysreg_t
@@ -27,54 +37,47 @@ _syscall(sysreg_t num, sysreg_t arg1, sysreg_t arg2, sysreg_t arg3)
 {
     sysreg_t retval;
 
-    retval = -1;
-    __asm__ __volatile__ ("movl %3, %%eax\n"
-                          "movl %4, %%ebx\n"
-                          "movl %5, %%ecx\n"
-                          "movl %6, %%edx\n"
-                          "int $0x80\n"
-                          "jc 1f\n"
-                          "movl %%eax, %0\n"
-                          "jmp 2f\n"
+    __asm__ __volatile__ ("movl %2, %%eax\n"    // load system call number
+                          "movl %3, %%ebx\n"    // load system call arguments
+                          "movl %4, %%ecx\n"
+                          "movl %5, %%edx\n"
+                          "int $0x80\n"         // generate trap
+                          "jnc 1f\n"            // return if carry clear
+                          "movl %eax, %1\n"     // store errno from EAX
+                          "movl $-1, %0"        // set return value to -1
                           "1:\n"
-                          "movl %%eax, %1\n"
-                          "cmpl %2, %%eax\n"
-                          "jne 2f\n"
-                          "movl %%ebx, %%eax\n"
-                          "2:\n"
                           : "=a" (retval), "=m" (errno)
-                          : "i" (EINTR),
-                            "rm" (num), "rm" (arg1), "rm" (arg2), "rm" (arg3));
+                          : "rm" (num), "rm" (arg1), "rm" (arg2), "rm" (arg3)
+                          : "eax", "ebx", "ecx", "edx", "memory")
 
     return retval;
 }
 
 #elif (LONGSIZE == 4) || defined(__x86_64__) || defined(__amd64__)
 
+/*
+ * system entry
+ * ------------
+ * - RAX is used for system call number
+ * - RDI is used for 1st system call argument
+ * - RSI is used for 2nd system call argument
+ * - RDX is used for 3rd system call argument
+ * LATER
+ * -----
+ * - R10 is used for 4th system call argument
+ * - R8 is used for 5th system call argument
+ * - R9 is used for 6th system call argument
+ * after system call
+ * -----------------
+ * - %eax contains return value or errno if CF is not set in EFLAGS
+ *   - otherwise, %eax contains errno
+ */
+
 ASMLINK
 sysreg_t
 _syscall(sysreg_t num, sysreg_t arg1, sysreg_t arg2, sysreg_t arg3)
 {
     sysreg_t retval;
-
-    retval = -1;
-    __asm__ __volatile__ ("movq %3, %%rax\n"
-                          "movq %4, %%rbx\n"
-                          "movq %5, %%rcx\n"
-                          "movq %6, %%rdx\n"
-                          "int $0x80\n"
-                          "jc 1f\n"
-                          "movq %%rax, %0\n"
-                          "jmp 2f\n"
-                          "1:\n"
-                          "movq %%rax, %1\n"
-                          "cmpq %2, %%rax\n"
-                          "jne 2f\n"
-                          "movq %%rbx, %%rax\n"
-                          "2:\n"
-                          : "=a" (retval), "=m" (errno)
-                          : "i" (EINTR),
-                            "rm" (num), "rm" (arg1), "rm" (arg2), "rm" (arg3));
 
     return retval;
 }

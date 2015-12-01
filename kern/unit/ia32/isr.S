@@ -61,6 +61,8 @@
 
 .text	32
 
+.align	16
+
 trapde:
 	_trapenter
 	movl	%esp, %ebp
@@ -80,6 +82,8 @@ trapde:
 	_trapleave
 	sti
 	iretl
+
+.align	16
 
 trapdb:
 	_trapenter
@@ -101,6 +105,8 @@ trapdb:
 	sti
 	iretl
 
+.align	16
+
 trapnmi:
 	_trapenter
 	movl	%esp, %ebp
@@ -120,6 +126,8 @@ trapnmi:
 	_trapleave
 	sti
 	iretl
+
+.align	16
 
 trapbp:
 	_trapenter
@@ -141,6 +149,8 @@ trapbp:
 	sti
 	iretl
 
+.align	16
+
 trapof:
 	_trapenter
 	movl	%esp, %ebp
@@ -161,6 +171,8 @@ trapof:
 	sti
 	iretl
 
+.align	16
+
 trapbr:
 	_trapenter
 	movl	%esp, %ebp
@@ -180,6 +192,8 @@ trapbr:
 	_trapleave
 	sti
 	iretl
+
+.align	16
 
 trapud:
 	_trapenter
@@ -203,6 +217,8 @@ trapud:
 	sti
 	iretl
 
+.align	16
+
 trapnm:
 	_trapenter
 	movl	%esp, %ebp
@@ -222,6 +238,8 @@ trapnm:
 	_trapleave
 	sti
 	iretl
+
+.align	16
 
 trapdf:
 	_trapentererr
@@ -243,6 +261,8 @@ trapdf:
 	sti
 	iretl
 
+.align	16
+
 trapts:
 	_trapentererr
 	movl	%esp, %ebp
@@ -262,6 +282,9 @@ trapts:
 	_trapleaveerr
 	sti
 	iretl
+
+.align	16
+
 trapnp:
 	_trapentererr
 	movl	%esp, %ebp
@@ -282,6 +305,8 @@ trapnp:
 	sti
 	iretl
 
+.align	16
+
 trapss:
 	_trapentererr
 	movl	%esp, %ebp
@@ -301,6 +326,8 @@ trapss:
 	_trapleaveerr
 	sti
 	iretl
+
+.align	16
 
 	/* error-code is segment selector or zero */
 trapgp:
@@ -326,6 +353,8 @@ _gpfin:
 	sti
 	iretl
 
+.align	16
+
 trappf:
 	_trapentererr
 	movl	%esp, %ebp
@@ -347,6 +376,8 @@ trappf:
 	sti
 	iretl
 
+.align	16
+
 trapmf:
 	_trapenter
 	movl	%esp, %ebp
@@ -366,6 +397,8 @@ trapmf:
 	_trapleaveerr
 	sti
 	iretl
+
+.align	16
 
 trapac:
 	_trapenter
@@ -387,6 +420,8 @@ trapac:
 	sti
 	iretl
 
+.align	16
+
 trapmc:
 	_trapenter
 	movl	%esp, %ebp
@@ -407,6 +442,8 @@ trapmc:
 	sti
 	iretl
 
+.align	16
+
 trapxf:
 	_trapenter
 	movl	%esp, %ebp
@@ -426,6 +463,8 @@ trapxf:
 	_trapleave
 	sti
 	iretl
+
+.align	16
 
 #if (APIC)
 	/* dummy interrupt handler for probing APIC frequency */
@@ -485,6 +524,9 @@ _tmr0fin:
 	 * NOTE: ss and esp are only pushed if the interrupt happened
 	 * in user-mode, i.e. there's a privilege transition to system-mode
  	 */
+
+.align	16
+
 irqtmr:
 	pushl	%ebp			// push frame pointer
 	movl	%esp, %ebp		// store stack pointer
@@ -563,6 +605,8 @@ _havestk:
 _swtch:
 	call	m_tcbjmp
 	
+.align	16
+
 irqkbd:
 	_trapenter
 	movl	%esp, %ebp
@@ -583,6 +627,8 @@ _irqkbddone:
 	sti
 	iretl
 
+.align	16
+
 irq3:
 	_trapenter
 	movl	%esp, %ebp
@@ -596,6 +642,8 @@ irq3:
 	_trapleave
 	sti
 	iretl
+
+.align	16
 
 irq4:
 	_trapenter
@@ -611,6 +659,8 @@ irq4:
 	_trapleave
 	sti
 	iretl
+
+.align	16
 
 irq5:
 	_trapenter
@@ -631,6 +681,8 @@ _irq5done:
 	_trapleave
 	sti
 	iretl
+
+.align	16
 
 irqmouse:
 	_trapenter
@@ -655,9 +707,13 @@ _irqmousedone:
 
 #if (SMP) || (APIC)
 
+.align	16
+
 irqerror:
 	sti
 	iretl
+
+.align	16
 
 irqspurious:
 	_trapenter

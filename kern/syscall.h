@@ -404,9 +404,21 @@ struct syswait {
 #define SIG_EXIT       0x01    // exit process on signal
 #define SIG_DUMP       0x02    // dump core on signal
 
+/* sigaction() definitions */ 
+#define SIG_NOCLDSTOP  0x00000001
+#define SIG_NOCLDWAIT  0x00000002
+#define SIG_NODEFER    0x00000004
+#define SIG_RESETHAND  0x00000008
+#define SIG_SIGINFO    0x00000010
+/* non-POSIX */
+#define SIG_ONSTACK    0x80000000
+#define SIG_RESTART    0x40000000
+#define SIG_FASTINTR   0x20000000
+
 struct syssigarg {
     pid_t  pid;
     long   sig;
+    long   flg;
     void  *func;
 };
 
@@ -543,8 +555,13 @@ struct sysctx {
     sysreg_t arg1;
     sysreg_t arg2;
     sysreg_t arg3;
+    sysreg_t arg4;
+    sysreg_t arg5;
+    sysreg_t arg6;
+#if 0
     sysreg_t ret;
     int      errnum;    // error status (for errno)
+#endif
 };
 
 struct sysioreg {

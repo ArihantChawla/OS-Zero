@@ -133,14 +133,13 @@ extern long           sysconf(int name);
 #if (USEPOSIX2)
 extern size_t         confstr(int name, char *buf, size_t len);
 #endif
-extern pid_t          getpid();
-extern pid_t          getppid();
+extern pid_t          getpid(void);
+extern pid_t          getppid(void);
 #if !(FAVORBSD)
-extern pid_t          getpgrp();
+extern pid_t          getpgrp(void);
 #else
 #define               getpgrp getpgid
 #endif
-extern pid_t          getpgid(pid_t pid);
 #if (USEXOPENEXT)
 extern pid_t          getpgid(pid_t pid);
 #endif

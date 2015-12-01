@@ -27,11 +27,8 @@
 
 #if !defined(__KERNEL__)
 
-extern void * signal(int sig, void (*func)(int));
-#if (_BSD_SOURCE)
 /* set handler for signal sig; returns old handler */
-//extern __sighandler_t signal(int sig, __sighandler_t func);
-#endif
+extern void (*signal(int sig, void (*func)(int)))(int);
 extern __sighandler_t __sysv_signal(int sig, __sighandler_t func);
 #if (_GNU_SOURCE)
 extern __sighandler_t sysv_signal(int sig, __sighandler_t func);
@@ -88,7 +85,6 @@ extern int            sigpause(int sig) __asm__ ("__xpg_sigpause\n");
 
 #if (_BSD_SOURCE)
 
-//typedef __sighandler_t sig_t;
 /* none of these functions should be used any longer */
 #define    sigmask(sig)   (1L << (sig))
 /* block signals in mask, return old mask */
@@ -201,8 +197,6 @@ extern int            sigrelse(int sig);
 extern int            sigignore(int sig);
 extern __sighandler_t sigset(int sig, __sighandler_t func);
 #endif /* USEXOPENEXT */
-
-int sigprocmask(int how, const sigset_t *set, sigset_t *oset);
 
 #endif /* !defined(__KERNEL__) */
 

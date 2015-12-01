@@ -51,7 +51,8 @@
 #define USEUNIX95              (defined(_XOPEN_SOURCE_EXTENDED))
 #define USEUNIX98              (defined(_XOPEN_SOURCE)                  \
                                 && (_XOPEN_SOURCE >= 500))
-#define USEPOSIX               (defined(_POSIX_SOURCE)                  \
+#define USEPOSIX               (_POSIX_C_SOURCE >= 1                    \
+                                || defined(_POSIX_SOURCE)               \
                                 || defined(_XOPEN_SOURCE))
 #define USEPOSIX2              ((defined(_POSIX_SOURCE)                 \
                                  && (_POSIX_SOURCE > 1))                \
