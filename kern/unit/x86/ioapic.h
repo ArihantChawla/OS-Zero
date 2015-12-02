@@ -3,6 +3,8 @@
 
 #include <stdint.h>
 
+void ioapicinit(long id);
+
 #define IOAPICID  0x00
 #define IOAPICVER 0x01
 #define IOAPICTAB 0x10

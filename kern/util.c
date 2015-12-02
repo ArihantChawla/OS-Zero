@@ -556,7 +556,7 @@ _strtok(void *ptr, int ch)
  * %x, %c, %h, %d, %ld, %uc, %uh, %ud, %ul, %lx, %x, %p
  */
 void
-kprintf(char *fmt, ...)
+kprintf(const char *fmt, ...)
 {
 //    char    *str = fmt;
     struct cons   *cons;
