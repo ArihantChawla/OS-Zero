@@ -2,13 +2,13 @@
 #define __ZERO_X86_ASM_H__
 
 /* memory barrier */
-#define m_membar()   __asm__ __volatile__ ("mfence\n" : : : "memory")
+#define m_membar()     __asm__ __volatile__ ("mfence\n" : : : "memory")
 /* memory read barrier */
-#define m_memrdbar() __asm__ __volatile__ ("lfence\n" : : : "memory")
+#define m_memrdbar()   __asm__ __volatile__ ("lfence\n" : : : "memory")
 /* memory write barrier */
-#define m_memwrbar() __asm__ __volatile__ ("sfence\n" : : : "memory")
+#define m_memwrbar()   __asm__ __volatile__ ("sfence\n" : : : "memory")
 /* wait for an interrupt */
-#define m_waitint()  __asm__ __volatile__ ("pause\n"  : : : "memory")
+#define m_waitint()    __asm__ __volatile__ ("pause\n"  : : : "memory")
 /* atomic fetch and add, 32-bit version */
 #define m_fetchadd32(p, val)     m_xadd32((volatile long *)(p), val)
 /* atomic compare and swap byte */

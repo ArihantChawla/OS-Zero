@@ -395,9 +395,9 @@ struct syswait {
 //#define SIG_DEFAULT (void *0)    0x01    // SIG_DFL
 //#define SIG_IGNORE  (void *)    0x02    // SIG_IGN
 /* SIG_SEND */
-#define SIG_SELF      -0x01    // raise()
-#define SIG_CLD       -0x02    // send to children
-#define SIG_GRP       -0x03    // send to group
+#define SIG_SELF      (-0x01)  // raise()
+#define SIG_CLD       (-0x02)  // send to children
+#define SIG_GRP       (-0x03)  // send to group
 #define SIG_PROPCLD    0x01    // propagate to child processes
 #define SIG_PROPGRP    0x02    // propagate to process group
 /* SIG_PAUSE */

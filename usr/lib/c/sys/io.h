@@ -8,13 +8,13 @@
 #endif
 
 #define __iodelay()  "outb %%al, $0x80\n"
-#define iodelay() __asm__ __volatile__ ("outb %al, $0x80\n");
+#define iodelay() __asm__ __volatile__ ("outb %al, $0x80\n")
 
 #if (_ZERO_SOURCE) && (!__KERNEL__)
 extern ASMLINK long _syscall(long num, long arg1, long arg2, long arg3);
 #endif
 
-#if defined(__i386__) || defined(__i486__) || defined(__i586__) \
+#if defined(__i386__) || defined(__i486__) || defined(__i586__)         \
     || defined(__i686__) || defined(__x86_64__) || defined(__amd64__)
 
 static __inline__ unsigned char

@@ -50,7 +50,8 @@
 
 /* declare function with no return (e.g., longjmp()) */
 #define NORETURN     __attribute__ ((__noreturn__))
-#define INTERRUPT    __attribute__ ((__interrupt__)) __attribute__ ((__no_caller_saved_registers__))
+#define INTERRUPT    __attribute__ ((__interrupt__))
+//#define INTERRUPTJMP INTERRUPT __attribute__ ((__no_caller_saved_registers__))
 #define PURE         __attribute__ ((__pure__))
 #define CONST        __attribute__ ((__const__))
 

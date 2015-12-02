@@ -59,12 +59,12 @@ _APICEOI	= 0x00000000
 .endm
 #endif /* APIC */
 
-.macro	_piteoi1
+.macro	_piceoi1
 	/* send EOI to PIC1 */
 	movb	$PICEOI, %al
 	outb	%al, $PIC1
 .endm
-.macro	_piteoi2
+.macro	_piceoi2
 	/* send EOI to PIC2 */
 	outb	%al, $PIC2
 .endm

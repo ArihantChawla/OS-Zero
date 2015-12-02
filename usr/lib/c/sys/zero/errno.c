@@ -5,11 +5,9 @@
 #endif
 #include <zero/cdecl.h>
 
-static THREADLOCAL int   __errno;
-
 #if (PTHREAD)
-static pthread_key_t     __key;
-static pthread_once_t    __once = PTHREAD_ONCE_INIT;
+static pthread_key_t   __key;
+static pthread_once_t  __once = PTHREAD_ONCE_INIT;
 #endif
 
 #if ((!defined(__STDC_VERSION__) || (__STDC_VERSION__ < 201112L)        \
@@ -40,6 +38,8 @@ __errnoloc(void)
 }
 
 #else
+
+static THREADLOCAL int __errno;
 
 int *
 __errnoloc(void)

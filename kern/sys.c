@@ -55,7 +55,7 @@ sysinit(long id)
     tab[_SC_L1_DATA_NWAY] = cpugetl1dnway(cpuinfo);;
     tab[_SC_L2_SIZE] = cpugetl2size(cpuinfo);;
     tab[_SC_L2_NWAY] = cpugetl2nway(cpuinfo);;
-    tab[_SC_BUF_BLK_SIZE];
+    tab[_SC_BUF_BLK_SIZE] = BUFSIZE;
     systab[id].conf.ptr = tab + MINSYSCONF;
 
     return;

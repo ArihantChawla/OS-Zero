@@ -496,7 +496,7 @@ irqtmr0:
 	movl	$0x00000000, 0(%eax)
 
 _tmr0fin:
-	_piteoi1
+	_piceoi1
 	movl	%ebp, %esp
 	/* pop general purpose registers */
 	popal
@@ -599,7 +599,7 @@ _havestk:
 #if (APIC)
 	_apiceoi
 #else
-	_piteoi1
+	_piceoi1
 #endif
 	iretl
 _swtch:
@@ -619,7 +619,7 @@ _irqkbddone:
 #if (APIC)
 	_apiceoi
 #else
-	_piteoi1
+	_piceoi1
 #endif
 	
 	movl	%ebp, %esp
@@ -635,7 +635,7 @@ irq3:
 #if (APIC)
 	_apiceoi
 #else
-	_piteoi1
+	_piceoi1
 #endif
 	
 	movl	%ebp, %esp
@@ -652,7 +652,7 @@ irq4:
 #if (APIC)
 	_apiceoi
 #else
-	_piteoi1
+	_piceoi1
 #endif
 	
 	movl	%ebp, %esp
@@ -674,7 +674,7 @@ _irq5done:
 #if (APIC)
 	_apiceoi
 #else
-	_piteoi1
+	_piceoi1
 #endif
 	
 	movl	%ebp, %esp
@@ -696,8 +696,8 @@ _irqmousedone:
 #if (APIC)
 	_apiceoi
 #else
-	_piteoi1
-	_piteoi2
+	_piceoi1
+	_piceoi2
 #endif
 	
 	movl	%ebp, %esp

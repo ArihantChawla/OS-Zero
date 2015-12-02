@@ -1,6 +1,10 @@
 #ifndef __UNIT_X86_PIC_H__
 #define __UNIT_X86_PIC_H__
 
+#if !defined(__ASSEMBLER__)
+#include <sys/io.h>
+#endif
+
 /* PIC registers */
 #define PICINIT  0x11
 #define PIC1     0x20
@@ -10,6 +14,9 @@
 
 /* PIC commands */
 #define PICEOI   0x20
+
+#define piceoi1() outb(PICEOI, PIC1)
+#define piceoi2() outb(PICEOI, PIC2)
 
 #endif /* __UNIT_X86_PIC_H__ */
 
