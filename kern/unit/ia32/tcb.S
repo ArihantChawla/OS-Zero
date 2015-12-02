@@ -20,8 +20,9 @@ m_tcbjmp:
 	movl	576(%eax), %ebx
 	/* adjust %esp to tcb->pdbr */
 	leal	580(%eax), %esp
-	andl	$M_TCBFXSAVE, %ebx
+	andl	$M_FPXMM, %ebx
 	cmpl	$0, %ebx
+	movl	%esp, %ecx
 	je	_frstor
 	fxrstor	(%eax)
 	jmp	_fpudone
@@ -39,8 +40,8 @@ _fpudone:
 	fwait
 	/* set up per-cpu variables */
 	movl	%eax, %gs:8		// k_curtask
-	movl	528(%eax), %ebx		// k_curproc
-	movl	548(%eax), %ecx		// k_curpid
+	movl	100(%eax), %ebx		// k_curproc
+	movl	120(%eax), %ecx		// k_curpid
 	movl	%ebx, %gs:4
 	movl	%ecx, %gs:16
 	/* pop general purpose registers */

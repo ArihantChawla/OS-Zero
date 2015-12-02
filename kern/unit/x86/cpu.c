@@ -19,16 +19,18 @@ void
 cpuinit(struct m_cpu *cpu)
 {
     long id = cpu->id;
+#if 0
 #if (SMP)
     void *kstk = (uint8_t *)MPENTRYSTK - id * MPSTKSIZE;
 #else
 //    void *kstk = (void *)(KERNVIRTBASE - id * KERNSTKSIZE);
     void *kstk = kernusrstktab + (id + 1) * KERNSTKSIZE;
 #endif
+#endif
     struct m_cpuinfo *info = &cpuinfotab[id];
 
-//    cpu->cpu = cpu;
-    cpu->kstk = kstk;
+    cpu->cpu = cpu;
+//    cpu->kstk = kstk;
     cpuprobe(info);
     cpu->info = info;
     cpuprintinfo();

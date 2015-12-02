@@ -126,7 +126,7 @@ taskjmp(struct task *task)
 
     if (task != k_curtask) {
         fctx = task->m_tcb.fctx;
-        if (k_curcpu->info->flags & CPUHASFXSR) {
+        if (k_cpuinfo->flags & CPUHASFXSR) {
             __asm__ __volatile__ ("fxrstor (%0)\n" : : "r" (fctx));
         } else {
             __asm__ __volatile__ ("frstor (%0)\n" : : "r" (fctx));

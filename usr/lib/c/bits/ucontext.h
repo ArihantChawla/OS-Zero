@@ -11,31 +11,18 @@
 #include <stdint.h>
 #include <zero/types.h>
 
-typedef struct __mcontext {
-    uint8_t             fctx[TCBFCTXSIZE];
-    void               *gregs;
-    void               *fpstate;
-    struct m_pusha      genregs; // general purpose registers saved by PUSHA
-    struct m_trapframe  iret;    // use IRET for jumping into contexts
-} mcontext_t;
 #define __mcontext_t_defined
 
-#elif defined(__x86_64__) || defined(__amd64__)
-
-#undef __mcontext_t_defined
-#warn "declare struct __mcontext for x86-64 in <ucontext.h>"
-
-#endif
-
 typedef struct __ucontext {
-#if defined(__mcontext_t_defined)
-    mcontext_t        uc_mcontext;
+    sigset_t            uc_sigmask;
+    mcontext_t          uc_mcontext;
+    struct __ucontext  *uc_link;
+    stack_t             uc_stack;
+#if 0
+    ASMLINK void      (*__func)(int, ...);
+    int                 __narg;
+    int                *__args;
 #endif
-    sigset_t          uc_sigmask;
-    stack_t           uc_stack;
-    struct ucontext  *uc_link;
-    ASMLINK void    (*__func)(int, ...);
-    int               __argc;
 } ucontext_t;
 
 #endif /* __BITS_UCONTEXT_H__ */

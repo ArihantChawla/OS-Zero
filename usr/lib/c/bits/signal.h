@@ -8,61 +8,76 @@
 
 #include <features.h>
 #include <stdint.h>
+#include <errno.h>
 #include <sys/types.h>
-#include <zero/param.h>
+//#include <zero/param.h>
+#include <zero/types.h>
 #if (PTHREAD)
 #include <pthread.h>
 #endif
 #if (_ZERO_SOURCE) && 0
 #include <kern/signal.h>
 #endif
+#if defined(__x86_64__) || defined(__amd64__)
+#include <x86-64/signal.h>
+#elif (defined(__i386__) || defined(__i486__)                           \
+       || defined(__i586__) || defined(__i686__))
+#include <ia32/signal.h>
+#elif defined(__arm__)
+#include <arm/signal.h>
+#endif
 
 /* internal. */
-#define _sigvalid(sig)  ((sig) && (!((sig) & ~_SIGMASK)))
-#define _sigrt(sig)     ((sig) && ((sig) & _SIGRTMASK))
-#define _signorm(sig)   ((sig) && (!((sig) & _SIGRTBIT)))
-#define _SIGFORCEBITS   ((UINT64_C(1) << SIGKILL) | (UINT64_C(1) << SIGSTOP))
+#define _sigvalid(sig) ((sig) && (!((sig) & ~_SIGMASK)))
+#define _sigrt(sig)    ((sig) && ((sig) & _SIGRTBIT))
+#define _signorm(sig)  ((sig) && (!((sig) & _SIGRTBIT)))
+#define _SIGNOCATCH    ((UINT64_C(1) << SIGKILL) | (UINT64_C(1) << SIGSTOP))
 
-#if defined(__x86_64__) || defined(__amd64__) || defined(___alpha__)
+#if (defined(__x86_64__) || defined(__amd64__) || defined(___alpha__)   \
+     || defined(__i386__) || defined(__i486__)                          \
+     || defined(__i586__) || defined(__i686__))
 #define SIG32BIT 0
 #else
 #define SIG32BIT 1
 #endif
 
-#define SIG_ERR      ((void (*)(int))(uintptr_t)(-1L))
-#define SIG_DFL      ((void (*)(int))(uintptr_t)(0L))
-#define SIG_IGN      ((void (*)(int))(uintptr_t)(1L))
-#define SIG_HOLD     ((void (*)(int))(uintptr_t)(2L))
+/* special values; standard ones */
+#define SIG_ERR      (__sighandler_t)-1)
+#define SIG_DFL      (__sighandler_t)0)
+#define SIG_IGN      (__sighandler_t)1)
+#define SIG_HOLD     (__sighandler_t)2)
+/* private values for signal actions */
+#define _SIG_TERM    (__sighandler_t)3)
+#define _SIG_CORE    (__sighandler_t)4)
+#define _SIG_STOP    (__sighandler_t)5)
+#define _SIG_CONT    (__sighandler_t)6)
 
-/* flags for sigprocmask() */
-#define SIG_BLOCK    1
-#define SIG_UNBLOCK  2
-#define SIG_SETMASK  3
+/* commands for sigprocmask() */
+#define SIG_BLOCK    0
+#define SIG_UNBLOCK  1
+#define SIG_SETMASK  2
 
-#define SIGNO_MASK  0x000000ff
-#define SIGDEFER    0x00000100
-#define SIGHOLD     0x00000200
-#define SIGRELSE    0x00000400
-#define SIGIGNORE   0x00000800
-#define SIGPAUSE    0x00001000
+#define SIGNO_MASK   0x000000ff
+#define SIGDEFER     0x00000100
+#define SIGHOLD      0x00000200
+#define SIGRELSE     0x00000400
+#define SIGIGNORE    0x00000800
+#define SIGPAUSE     0x00001000
 
-typedef volatile long    sig_atomic_t;
 #if (SIG32BIT)
 typedef struct {
-    long norm;
-    long rt;
-}                        sigset_t;
-#elif (LONGSIZE == 8)
-typedef long             sigset_t;
+    int32_t norm;
+    int32_t rt;
+} sigset_t;
 #else
-typedef long long        sigset_t;
+typedef int64_t sigset_t;
 #endif
 #if !defined(__pid_t_defined)
 typedef long             pid_t;          // process ID
 #define __pid_t_defined
 #endif
+
 typedef void           (*__sighandler_t)(int);
-//typedef __sighandler_t   sighandler_t;
 
 #if (USEBSD) && (!USEPOSIX)
 typedef void __bsdsig_t(int sig, int code, struct sigcontext *ctx, char *adr);
@@ -87,14 +102,6 @@ typedef __sighandler_t sighandler_t;
 #define SA_ONSTACK   SIG_ONSTACK
 #define SA_RESTART   SIG_RESTART
 #define SA_INTERRUPT SIG_FASTINTR
-#endif
-
-/* special values. */
-#if 0
-#define SIG_ERR      ((sighandler_t)-1L)
-#define SIG_DFL      ((sighandler_t)0L)
-#define SIG_IGN      ((sighandler_t)1L)
-#define SIG_HOLD     ((sighandler_t)2L)
 #endif
 
 #if (!_ZERO_SOURCE) && (USEPOSIX)
@@ -238,18 +245,8 @@ struct sigaltstack {
 #define sv_onstack   sv_flags           // compatibility name
 struct sigvec {
     void (*sv_handler)(int);            // signal disposition
-    int    sv_mask;                     // signals to block while executing
+    long   sv_mask;                     // signals to block while executing
     int    sv_flags;
-};
-
-struct sigcontext {
-    long	sc_onstack;     // sigstack state to restore
-    long	sc_mask;        // signal mask to restore
-    long	sc_sp;	        // sp to restore
-    long	sc_fp;	        // fp to restore
-    long	sc_ap;          // ap to restore
-    long	sc_pc;          // pc to restore
-    long	sc_ps;          // psl to restore
 };
 
 #endif /* USEBSD && !USEPOSIX */

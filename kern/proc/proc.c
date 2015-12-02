@@ -33,8 +33,8 @@ procinit(long id)
     if (taskid < TASKNPREDEF) {
         /* bootstrap */
         task->m_tcb.flg = 0;
-        if (k_curcpu->info->flags & CPUHASFXSR) {
-            task->m_tcb.flg = M_TCBFXSAVE;
+        if (k_cpuinfo->flags & CPUHASFXSR) {
+            task->m_tcb.flg = M_FPXMM;
         }
         proc->task = task;
         task->proc = proc;

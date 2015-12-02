@@ -145,7 +145,6 @@ kinitprot(unsigned long pmemsz)
 #if (VBE) && (PLASMA) && (!PLASMAFOREVER)
     plasmaloop(4);
 #endif
-    kprintf("%lu-byte fpu state\n", sizeof(struct fpstate));
     kprintf("%lu free physical pages @ 0x%p..0x%p\n",
             vmpagestat.nphys, vmpagestat.phys, vmpagestat.physend);
 #if 0

@@ -29,6 +29,7 @@ _APICEOI	= 0x00000000
 	popl	%ds
 #endif
 	popal
+	addl	$8, %esp	// trap number and [possibly fake] error code
 .endm
 .macro	_trapentererr
 	pushal

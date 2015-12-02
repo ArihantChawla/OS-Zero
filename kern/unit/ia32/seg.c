@@ -39,7 +39,6 @@ seginit(long id)
 #else
     struct m_farptr *farptr = &gdtptr;
 #endif
-    
 
     /* set descriptors */
 #if (SMP)
@@ -56,7 +55,7 @@ seginit(long id)
     segsetdesc(&gdt[UDATASEG], 0, NPAGEMAX - 1,
                SEGDATA | SEGUSER);
     /* per-CPU data segment */
-    segsetdesc(&gdt[CPUSEG], &cpu->cpu, 4 * sizeof(void *) + sizeof(long),
+    segsetdesc(&gdt[CPUSEG], &cpu->cpu, 4 * sizeof(void *) + 4 * sizeof(long),
                SEGCPU);
 #if (VBE)
     gdt[REALCODESEG] = UINT64_C(0x00009a000000ffff);

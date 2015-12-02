@@ -36,7 +36,6 @@ extern void tssinit(long id);
 extern pde_t    *kernpagedir[NPDE];
 
 extern void      gdtinit(void);
-//extern void      pginitprot(void);
 extern void      trapinitidt(void);
 #if (IOAPIC)
 extern void      ioapicinit(long id);
@@ -45,7 +44,6 @@ extern void      cpuinit(struct m_cpu *cpu);
 extern void      seginit(long id);
 extern void      idtset(void);
 
-//volatile struct m_cpu  mpcputab[NCPU] ALIGNED(PAGESIZE);
 extern volatile struct m_cpu  cputab[NCPU];
 volatile struct m_cpu        *mpbootcpu;
 volatile long                 mpmultiproc;
@@ -163,14 +161,11 @@ mpinit(void)
     uint8_t         *u8ptr;
     uint8_t         *lim;
 
-//    mpbootcpu = &mpcputab[0];
     conf = mpconf(&mp);
     if (!conf) {
 
         return;
     }
-//    cpuinit((struct m_cpu *)mpbootcpu);
-//    mpmultiproc = 1;
     mpapic = conf->apicadr;
     for (u8ptr = (uint8_t *)(conf + 1), lim = (uint8_t *)conf + conf->len ;
          u8ptr < lim ; ) {
@@ -238,10 +233,9 @@ ASMLINK
 void
 mpmain(struct m_cpu *cpu)
 {
-//    gdtinit();
     seginit(cpu->id);
     idtset();
-    m_xchg(&cpu->started, 1L);
+    m_xchg(&cpu->state, CPUSTARTED);
     /* TODO: initialise HPET; enable [rerouted] interrupts */
 #if (HPET)
     hpetinit();
@@ -251,21 +245,20 @@ mpmain(struct m_cpu *cpu)
     ioapicinit(cpu->id);
 #endif
     tssinit(cpu->id);
+#if 0
     while (1) {
         k_waitint();
     }
-#if 0
+#endif
     schedloop();
 
     /* NOTREACHED */
     for ( ; ; ) { ; }
-#endif
 }
 
 void
 mpstart(void)
 {
-//    volatile static int    first = 1;
     volatile struct m_cpu *cpu;
     volatile struct m_cpu *lim;
     uint32_t              *mpentrystk = (uint32_t *)MPENTRYSTK;
@@ -285,14 +278,14 @@ mpstart(void)
             continue;
         }
         kprintf("starting CPU %ld @ 0x%lx\n", cpu->id, MPENTRY);
-        cpuinit((struct m_cpu *)cpu);
+        cpuinit(cpu);
         apicinit(cpu->id);
         ioapicinit(cpu->id);
         *--mpentrystk = (uint32_t)cpu;
         *--mpentrystk = MPENTRYSTK - cpu->id * MPSTKSIZE;
         *--mpentrystk = (uint32_t)&kernpagedir;
         apicstart(cpu->id, MPENTRY);
-        while (!cpu->started) {
+        while (!cpu->state) {
             ;
         }
     }

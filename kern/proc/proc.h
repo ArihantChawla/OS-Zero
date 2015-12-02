@@ -129,7 +129,7 @@ struct proc {
     struct proc         *prev;
     struct proc         *next;
     /* signal dispositions */
-    signalhandler_t     *sigvec[NSIG];
+    __sighandler_t      *sigvec[NSIG];
     /* runtime arguments */
     long                 argc;          // argument count
     char               **argv;          // argument vector

@@ -1,6 +1,8 @@
 #ifndef __ZERO_X86_ASM_H__
 #define __ZERO_X86_ASM_H__
 
+#define frameisusr(tcb) ((tcb)->frame.cs == UTEXTSEL)
+
 /* memory barrier */
 #define m_membar()     __asm__ __volatile__ ("mfence\n" : : : "memory")
 /* memory read barrier */

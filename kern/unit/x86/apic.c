@@ -183,7 +183,7 @@ apicinit(long cpuid)
 }
 
 void
-apicstart(uint8_t id, uint32_t adr)
+apicstart(uint8_t cpuid, uint32_t adr)
 {
     uint16_t *warmreset = (uint16_t *)BIOSWRV;
 
@@ -192,16 +192,16 @@ apicstart(uint8_t id, uint32_t adr)
     warmreset[0] = 0;
     warmreset[1] = adr >> 4;
     /* INIT IPI */
-    apicsendirq(id << 24, APICINIT | APICLEVEL | APICASSERT, 200);
+    apicsendirq(cpuid << 24, APICINIT | APICLEVEL | APICASSERT, 200);
     while (apicread(APICINTRLO) & APICDELIVS) {
         ;
     }
-    apicsendirq(id << 24, APICINIT | APICLEVEL, 0);
+    apicsendirq(cpuid << 24, APICINIT | APICLEVEL, 0);
     while (apicread(APICINTRLO) & APICDELIVS) {
         ;
     }
-    apicsendirq(id << 24, APICASSERT | APICSTART | adr >> 12, 200);
-    apicsendirq(id << 24, APICASSERT | APICSTART | adr >> 12, 200);
+    apicsendirq(cpuid << 24, APICASSERT | APICSTART | adr >> 12, 200);
+    apicsendirq(cpuid << 24, APICASSERT | APICSTART | adr >> 12, 200);
 
     return;
 }

@@ -20,15 +20,15 @@ struct m_stkframe {
 struct m_genregs {
     int32_t edi;
     int32_t esi;
-    int32_t esp;
     int32_t ebp;
+    int32_t esp;
     int32_t ebx;
     int32_t edx;
     int32_t ecx;
     int32_t eax;
 };
 
-/* segment registers */
+/* data segment registers - 16 bytes */
 struct m_segregs {
     int32_t ds;         // data segment
     int32_t es;         // data segment
@@ -97,16 +97,13 @@ struct m_tss {
     uint16_t ldt, _ldthi;
     uint16_t trace;
     uint16_t iomapofs;
-//    long     hasiomap;          // indicates presence of an 8K iomap field
-//    uint8_t  iomap[EMPTY] ALIGNED(PAGESIZE);
+    long     hasiomap;          // indicates presence of an 8K iomap field
+    uint8_t  iomap[EMPTY] ALIGNED(PAGESIZE);
 //    uint8_t  iomap[8192] ALIGNED(CLSIZE);
 };
 
-/* data segment registers - 16 bytes */
 /* thread control block */
-#define M_TCBFCTXSIZE 512
 struct m_tcb {
-//    uint8_t           fctx[M_TCBFCTXSIZE];      // 512 bytes @ 0
     struct fpstate    fpstate;                  // 576 bytes @ 0
     int32_t           flg;                      //   4 bytes @ 576
     int32_t           pdbr;                     //   4 bytes @ 580

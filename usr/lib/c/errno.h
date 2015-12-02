@@ -5,8 +5,6 @@
 
 #if !defined(__ASSEMBLER__)
 
-#if !defined(__KERNEL__)
-
 #if defined(__GLIBC__)
 
 extern int errno;
@@ -21,8 +19,6 @@ extern int * __errnoloc(void);
 #define errno (*__errnoloc())
 
 #endif /* defined(__GLIBC__) */
-
-#endif /* !defined(__KERNEL__) */
 
 #endif /* !defined(__ASSEMBLER__) */
 

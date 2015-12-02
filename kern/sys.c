@@ -12,7 +12,7 @@ void
 sysinit(long id)
 {
     long             *tab = systab[id].conf.tab;
-    struct m_cpuinfo *cpuinfo = k_curcpu->info;
+    struct m_cpuinfo *cpuinfo = k_cpuinfo;
     
     tab[_SC_OS_VERSION] = _ZERO_VERSION;
     tab[_SC_VERSION] = _POSIX_VERSION;
@@ -65,7 +65,7 @@ sysinit(long id)
 long
 sysgetconf(int scval)
 {
-    long id = k_curcpu->id;
+    long id = k_cpuid;
     long retval;
     
     if (scval < MINSYSCONF || scval > MAXSYSCONF) {

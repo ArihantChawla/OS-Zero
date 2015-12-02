@@ -7,10 +7,6 @@
 #ifndef __KERN_SIGNAL_H__
 #define __KERN_SIGNAL_H__
 
-#include <bits/signal.h>
-
-typedef void signalhandler_t(int sig);
-
 /* constants; signal names */
 
 #define SIGNONE      0x00

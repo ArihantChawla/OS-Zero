@@ -13,7 +13,7 @@
 #include <unistd.h>
 #include <zero/param.h>
 #if (_ZERO_SOURCE)
-#include <kern/signal.h>
+//#include <kern/signal.h>
 #endif
 #if (USEPOSIX199506) || (_XOPEN_SOURCE >= 500) && 0
 #include <pthread.h>
@@ -134,7 +134,7 @@ extern int sigtimedwait(const sigset_t *restrict set,
 extern int sigqueue(pid_t pid, int sig, const union sigval val);
 #endif /* USEPOSIX199309 */
 
-#endif /* _POSIX_SOURCE */
+#endif /* USEPOSIX */
 
 #if (_BSD_SOURCE)
 extern const char *const _sys_siglist[_NSIG];

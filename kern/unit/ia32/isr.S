@@ -64,10 +64,15 @@
 .align	16
 
 trapde:
+	pushl	$0
+	pushl	$TRAPDE
 	_trapenter
 	movl	%esp, %ebp
 
 #if (FASTINTR)
+	movl	8(%esp), %ebx		// stack frame argument on stack
+	xorl	%ecx, %ecx		// zero third argument
+	pushl	%ebx			// push context/frame argument
 	movl	$TRAPDE, %edx
 	xorl	%eax, %eax
 #else
@@ -86,10 +91,15 @@ trapde:
 .align	16
 
 trapdb:
+	pushl	$0
+	pushl	$TRAPDB
 	_trapenter
 	movl	%esp, %ebp
 
 #if (FASTINTR)
+	movl	8(%esp), %ebx		// stack frame argument on stack
+	xorl	%ecx, %ecx		// zero third argument
+	pushl	%ebx			// push context/frame argument
 	movl	$TRAPDB, %edx
 	xorl	%eax, %eax
 #else
@@ -108,10 +118,15 @@ trapdb:
 .align	16
 
 trapnmi:
+	pushl	$0
+	pushl	$TRAPNMI
 	_trapenter
 	movl	%esp, %ebp
 
 #if (FASTINTR)
+	movl	8(%esp), %ebx		// stack frame argument on stack
+	xorl	%ecx, %ecx		// zero third argument
+	pushl	%ebx			// push context/frame argument
 	movl	$TRAPNMI, %edx
 	xorl	%eax, %eax
 #else
@@ -130,10 +145,15 @@ trapnmi:
 .align	16
 
 trapbp:
+	pushl	$0
+	pushl	$TRAPBP
 	_trapenter
 	movl	%esp, %ebp
 
 #if (FASTINTR)
+	movl	8(%esp), %ebx		// stack frame argument on stack
+	xorl	%ecx, %ecx		// zero third argument
+	pushl	%ebx			// push context/frame argument
 	movl	$TRAPBP, %edx
 	xorl	%eax, %eax
 #else
@@ -152,10 +172,15 @@ trapbp:
 .align	16
 
 trapof:
+	pushl	$0
+	pushl	$TRAPOF
 	_trapenter
 	movl	%esp, %ebp
 
 #if (FASTINTR)
+	movl	8(%esp), %ebx		// stack frame argument on stack
+	xorl	%ecx, %ecx		// zero third argument
+	pushl	%ebx			// push context/frame argument
 	movl	$TRAPOF, %edx
 	xorl	%eax, %eax
 #else
@@ -174,10 +199,15 @@ trapof:
 .align	16
 
 trapbr:
+	pushl	$0
+	pushl	$TRAPBR
 	_trapenter
 	movl	%esp, %ebp
 
 #if (FASTINTR)
+	movl	8(%esp), %ebx		// stack frame argument on stack
+	xorl	%ecx, %ecx		// zero third argument
+	pushl	%ebx			// push context/frame argument
 	movl	$TRAPBR, %edx
 	xorl	%eax, %eax
 #else
@@ -196,12 +226,15 @@ trapbr:
 .align	16
 
 trapud:
+	pushl	$0
+	pushl	$TRAPUD
 	_trapenter
 	movl	%esp, %ebp
 
 	movl	8(%esp), %eax	// old ESP
 	movl	(%eax), %ecx	// stored EIP
 #if (FASTINTR)
+	pushl	%eax
 	movl	$TRAPUD, %edx
 	xorl	%eax, %eax
 #else
@@ -220,10 +253,15 @@ trapud:
 .align	16
 
 trapnm:
+	pushl	$0
+	pushl	$TRAPNM
 	_trapenter
 	movl	%esp, %ebp
 
 #if (FASTINTR)
+	movl	8(%esp), %ebx		// stack frame argument on stack
+	xorl	%ecx, %ecx		// zero third argument
+	pushl	%ebx			// push context/frame argument
 	movl	$TRAPNM, %edx
 	xorl	%eax, %eax
 #else
@@ -242,10 +280,14 @@ trapnm:
 .align	16
 
 trapdf:
+	pushl	$TRAPDF
 	_trapentererr
 	movl	%esp, %ebp
 
 #if (FASTINTR)
+	movl	8(%esp), %ebx		// stack frame argument on stack
+	/* error code is in %ecx */
+	pushl	%ebx			// push context/frame argument
 	movl	$TRAPDF, %edx
 	xorl	%eax, %eax
 #else
@@ -257,17 +299,21 @@ trapdf:
 	call	sigfunc
 
 	movl	%ebp, %esp
-	_trapleaveerr
+	_trapleave
 	sti
 	iretl
 
 .align	16
 
 trapts:
+	pushl	$TRAPTS
 	_trapentererr
 	movl	%esp, %ebp
 
 #if (FASTINTR)
+	movl	8(%esp), %ebx		// stack frame argument on stack
+	/* error code is in %ecx */
+	pushl	%ebx			// push context/frame argument
 	movl	$TRAPTS, %edx
 	xorl	%eax, %eax
 #else
@@ -279,7 +325,7 @@ trapts:
 	call	sigfunc
 
 	movl	%ebp, %esp
-	_trapleaveerr
+	_trapleave
 	sti
 	iretl
 
@@ -287,10 +333,14 @@ trapts:
 
 	/* error code is segment selector index */
 trapnp:
+	pushl	$TRAPNP
 	_trapentererr
 	movl	%esp, %ebp
 
 #if (FASTINTR)
+	movl	8(%esp), %ebx		// stack frame argument on stack
+	/* error code is in %ecx */
+	pushl	%ebx			// push context/frame argument
 	movl	$TRAPNP, %edx
 	xorl	%eax, %eax
 #else
@@ -302,7 +352,7 @@ trapnp:
 	call	sigfunc
 
 	movl	%ebp, %esp
-	_trapleaveerr
+	_trapleave
 	sti
 	iretl
 
@@ -310,10 +360,14 @@ trapnp:
 
 	/* error code is segment selector index if not present, 0 otherwise */
 trapss:
+	pushl	$TRAPSS
 	_trapentererr
 	movl	%esp, %ebp
 
 #if (FASTINTR)
+	movl	8(%esp), %ebx		// stack frame argument on stack
+	/* error code is in %ecx */
+	pushl	%ebx			// push context/frame argument
 	movl	$TRAPSS, %edx
 	xorl	%eax, %eax
 #else
@@ -325,7 +379,7 @@ trapss:
 	call	sigfunc
 
 	movl	%ebp, %esp
-	_trapleaveerr
+	_trapleave
 	sti
 	iretl
 
@@ -333,11 +387,14 @@ trapss:
 
 	/* error-code is segment selector index if segment-related or 0 */
 trapgp:
+	pushl	$TRAPGP
 	_trapentererr
 	movl	%esp, %ebp
 
 #if (FASTINTR)
+	movl	8(%esp), %ebx		// stack frame argument on stack
 	/* error code is in %ecx */
+	pushl	%ebx
 	movl	$TRAPGP, %edx
 	xorl	%eax, %eax
 #else
@@ -351,7 +408,7 @@ trapgp:
 
 _gpfin:	
 	movl	%ebp, %esp
-	_trapleaveerr
+	_trapleave
 	sti
 	iretl
 
@@ -366,11 +423,14 @@ _gpfin:
 	 * - bit 4 set if caused by an instruction fetch
 	 */
 trappf:
+	pushl	$TRAPPF
 	_trapentererr
 	movl	%esp, %ebp
 
 #if (FASTINTR)
+	movl	8(%esp), %ebx		// stack frame argument on stack
 	/* error code is in %ecx */
+	pushl	%ebx
 	movl	%cr2, %edx		// fault address
 	xorl	%gs:16, %eax		// FIXME: PID
 #else
@@ -382,17 +442,22 @@ trappf:
 	call	vmpagefault
 
 	movl	%ebp, %esp
-	_trapleaveerr
+	_trapleave
 	sti
 	iretl
 
 .align	16
 
 trapmf:
+	pushl	$0
+	pushl	$TRAPMF
 	_trapenter
 	movl	%esp, %ebp
 
 #if (FASTINTR)
+	movl	8(%esp), %ebx		// stack frame argument on stack
+	xorl	%ecx, %ecx		// zero third argument
+	pushl	%ebx			// push context/frame argument
 	movl	$TRAPMF, %edx
 	xorl	%eax, %eax
 #else
@@ -404,17 +469,22 @@ trapmf:
 	call	sigfunc
 
 	movl	%ebp, %esp
-	_trapleaveerr
+	_trapleave
 	sti
 	iretl
 
 .align	16
 
 trapac:
+	pushl	$0
+	pushl	$TRAPAC
 	_trapenter
 	movl	%esp, %ebp
 
 #if (FASTINTR)
+	movl	8(%esp), %ebx		// stack frame argument on stack
+	xorl	%ecx, %ecx		// zero third argument
+	pushl	%ebx			// push context/frame argument
 	movl	$TRAPAC, %edx
 	xorl	%eax, %eax
 #else
@@ -426,17 +496,22 @@ trapac:
 	call	sigfunc
 
 	movl	%ebp, %esp
-	_trapleaveerr
+	_trapleave
 	sti
 	iretl
 
 .align	16
 
 trapmc:
+	pushl	$0
+	pushl	$TRAPMC
 	_trapenter
 	movl	%esp, %ebp
 
 #if (FASTINTR)
+	movl	8(%esp), %ebx		// stack frame argument on stack
+	xorl	%ecx, %ecx		// zero third argument
+	pushl	%ebx			// push context/frame argument
 	movl	$TRAPMC, %edx
 	xorl	%eax, %eax
 #else
@@ -455,10 +530,15 @@ trapmc:
 .align	16
 
 trapxf:
+	pushl	$0
+	pushl	$TRAPXF
 	_trapenter
 	movl	%esp, %ebp
 
 #if (FASTINTR)
+	movl	8(%esp), %ebx		// stack frame argument on stack
+	xorl	%ecx, %ecx		// zero third argument
+	pushl	%ebx			// push context/frame argument
 	movl	$TRAPXF, %edx
 	xorl	%eax, %eax
 #else
@@ -538,6 +618,8 @@ _tmr0fin:
 .align	16
 
 irqtmr:
+	pushl	$0
+	pushl	$IRQTMR
 	pushl	%ebp			// push frame pointer
 	movl	%esp, %ebp		// store stack pointer
 	pushl	%eax			// back %eax up
@@ -547,7 +629,7 @@ irqtmr:
 	pushal				// push general-purpose registers
 	/* store FPU context */
 	movl	-24(%esp), %ebx		// fetch fxsave-flag
-	andl	$M_TCBFXSAVE, %ebx
+	andl	$M_FPXMM, %ebx
 	cmpl	$0, %ebx
 	jne	_fxsave			// use FXSAVE if non-zero
 	fnsave	(%eax)			// use FNSAVE if zero
@@ -603,8 +685,9 @@ _havestk:
 	/* continue the same task */
 	leal	600(%eax), %esp
 	popal
-	leal	4(%ebp), %esp		// restore stack pointer
-	addl	$16, %ebp		// adjust frame pointer
+	leal	12(%ebp), %esp		// restore stack pointer
+//	addl	$16, %ebp		// adjust frame pointer
+	addl	$24, %ebp		// adjust frame pointer
 #if (APIC)
 	_apiceoi
 #else
@@ -617,6 +700,8 @@ _swtch:
 .align	16
 
 irqkbd:
+	pushl	$0
+	pushl	$IRQKBD
 	_trapenter
 	movl	%esp, %ebp
 
@@ -639,6 +724,8 @@ _irqkbddone:
 .align	16
 
 irq3:
+	pushl	$0
+	pushl	$IRQCOM2AND4
 	_trapenter
 	movl	%esp, %ebp
 #if (APIC)
@@ -655,6 +742,8 @@ irq3:
 .align	16
 
 irq4:
+	pushl	$0
+	pushl	$IRQCOM1AND3
 	_trapenter
 	movl	%esp, %ebp
 
@@ -672,6 +761,8 @@ irq4:
 .align	16
 
 irq5:
+	pushl	$0
+	pushl	$IRQLPT
 	_trapenter
 	movl	%esp, %ebp
 
@@ -694,6 +785,8 @@ _irq5done:
 .align	16
 
 irqmouse:
+	pushl	$0
+	pushl	$IRQMOUSE
 	_trapenter
 	movl	%esp, %ebp
 

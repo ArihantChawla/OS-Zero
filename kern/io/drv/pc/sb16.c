@@ -61,7 +61,7 @@ sb16setup(void)
             break;
         default:
 
-            return;
+            return 0;
     }
     /* probe DMA */
     outb(SB16CONFDMA, SB16MIXERADR);
@@ -81,7 +81,7 @@ sb16setup(void)
             break;
         default:
 
-            break;
+            return 0;
     }
     switch (u8val & 0xf0) {
         case SB16DMA5BIT:
@@ -98,11 +98,7 @@ sb16setup(void)
             break;
         default:
 
-            break;
-    }
-    if (!sb16drv.dma16) {
-
-        return 0;
+            return 0;
     }
     dmatakechan(sb16drv.dma8);
     dmatakechan(sb16drv.dma16);

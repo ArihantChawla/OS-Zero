@@ -55,7 +55,9 @@ struct m_tcb {
 //    struct m_trapframe iret;
     struct m_segregs   segregs;
     struct m_genregs   genregs;
-    struct m_jmpframe  iret;
+    int64_t            trapnum;
+    int64_t            err;
+    struct m_jmpframe  frame;
 };
 
 #endif /* __ZERO_X86_64_TYPES_H__ */

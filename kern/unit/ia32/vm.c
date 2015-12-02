@@ -278,7 +278,7 @@ vmfreephys(void *virt, uint32_t size)
 FASTCALL
 #endif
 void
-vmpagefault(unsigned long pid, uint32_t adr, uint32_t flags)
+vmpagefault(unsigned long pid, uint32_t adr, uint32_t flags, void *frame)
 {
     pte_t           *pte = (pte_t *)&_pagetab + vmpagenum(adr);
     uint32_t         flg = (uint32_t)*pte & (PAGEFLTFLGMASK | PAGESYSFLAGS);

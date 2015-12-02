@@ -22,6 +22,8 @@
 #include <kern/unit/ppc/asm.h>
 #endif
 
+#define __errnoloc() (&k_curtask->errnum)
+
 //extern struct m_cpuinfo cpuinfo;
 
 #define __KERNEL__ 1
@@ -46,30 +48,31 @@ struct taskstk {
 /* process or thread attributes */
 struct task {
     /* thread control block - KEEP THIS FIRST in the structure */
-    struct m_tcb     m_tcb;             // context (thread control block)
+    struct m_tcb    m_tcb;              // context (thread control block)
     /* scheduler parameters */
-    long             sched;             // thread scheduler class
-    long             prio;              // priority; < 0 for SCHEDFIFO realtime
-    long             nice;              // priority adjustment
-    long             state;             // thread state
+    long            sched;              // thread scheduler class
+    long            prio;               // priority; < 0 for SCHEDFIFO realtime
+    long            nice;               // priority adjustment
+    long            state;              // thread state
     /* linkage */
-    struct proc     *proc;              // parent/owner process
-    struct task     *prev;              // previous in queue
-    struct task     *next;              // next in queue
-    uintptr_t        wtchan;            // wait channel
-    time_t           waketm;            // wakeup time for sleeping tasks
-    long             id;                // task ID
-    long             runtime;           // run time
+    struct proc    *proc;               // parent/owner process
+    struct task    *prev;               // previous in queue
+    struct task    *next;               // next in queue
+    uintptr_t       wtchan;             // wait channel
+    time_t          waketm;             // wakeup time for sleeping tasks
+    long            id;                 // task ID
+    long            runtime;            // run time
     /* system call context */
-    struct sysctx    sysctx;            // current system call
+    struct sysctx   sysctx;             // current system call
     /* signal state */
-    sigset_t         sigmask;           // signal mask
-    sigset_t         sigpend;           // pending signals
-    struct siginfo  *sigqueue[NSIG];    // info structures for pending signals
+    sigset_t        sigmask;            // signal mask
+    sigset_t        sigpend;            // pending signals
+    struct siginfo *sigqueue[NSIG];     // info structures for pending signals
     /* stack information */
-    struct taskstk   ustk;              // user-mode stack
-    struct taskstk   kstk;              // system-mode stack
-    struct taskstk   altstk;            // alternative [signal] stack
+    struct taskstk  ustk;               // user-mode stack
+    struct taskstk  kstk;               // system-mode stack
+    struct taskstk  altstk;             // alternative [signal] stack
+    int             errnum;             // errno
 //    long           interact;
 };
 

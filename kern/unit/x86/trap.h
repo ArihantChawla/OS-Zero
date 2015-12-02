@@ -141,7 +141,7 @@ m_lidt(struct m_farptr *fp)
 #define IRQLPT      5   // parallel port
 #define IRQFD       6   // floppy disk drive
 #define IRQRTC      8   // real-time clock
-#define IRQMOUSE    12  // moused
+#define IRQMOUSE    12  // mouse
 #define IRQFPU      13  // floating point unit
 #define IRQIDE0     14  // IDE controller 1
 #define IRQIDE1     15  // IDE controller 2

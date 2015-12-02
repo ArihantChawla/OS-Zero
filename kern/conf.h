@@ -21,6 +21,7 @@
 #define ZEROSCHED   1           // default scheduler
 //#define NPROC       1024        // maximum number of running processes on system
 #define NTASK       4096        // maximum number of running tasks on system
+#define NPROCTASK   128
 #define TASKNDESC   16384       // maximum number of descriptors per process
 #define TASKSTKSIZE 1048576
 #define KERNSTKSIZE (4 * PAGESIZE)

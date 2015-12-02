@@ -2,13 +2,19 @@
 #include <stdint.h>
 #include <signal.h>
 #include <errno.h>
+#include <zero/cdecl.h>
+#include <zero/param.h>
+#if (_ZERO_SOURCE)
+#include <kern/conf.h>
 #include <sys/zero/syscall.h>
+#endif
 
 /* NOTE: SIG_DFL is 0 */
-THREADLOCAL    _sigfunctab[_NSIG] ALIGNED(CLSIZE) = { 0 };
-const uint64_t _sigforcebits = _SIGFORCEBITS;
+THREADLOCAL sigset_t  _sigmasktab[NPROCTASK];
+static __sighandler_t _sigfunctab[_NSIG] ALIGNED(CLSIZE) = { 0 };
+const uint64_t        _signocatchbits = _SIGNOCATCHBITS;
 
-#define _sigforced(sig) (_sigforcebits & (UINT64_C(1) << (sig)))
+#define _signocatch(sig) (_signocatchbits & (UINT64_C(1) << (sig)))
 
 #if (USEBSD) || (USEGNU)
 #undef SYSV_SIGNAL
@@ -19,7 +25,7 @@ const uint64_t _sigforcebits = _SIGFORCEBITS;
 int
 sigaction(int sig, const struct sigaction *act, struct sigaction *oldact)
 {
-    
+    ;
 }
 
 __sighandler_t
