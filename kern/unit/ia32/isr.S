@@ -542,7 +542,8 @@ irqtmr:
 	movl	%esp, %ebp		// store stack pointer
 	pushl	%eax			// back %eax up
 	movl	%gs:8, %eax		// per-cpu current task
-	leal	568(%eax), %esp		// adjust sp for pushing m_tcb.genregs
+//	leal	568(%eax), %esp		// adjust sp for pushing m_tcb.genregs
+	leal	632(%eax), %esp		// adjust sp for pushing m_tcb.genregs
 	pushal				// push general-purpose registers
 	/* store FPU context */
 	movl	-24(%esp), %ebx		// fetch fxsave-flag
@@ -600,7 +601,7 @@ _havestk:
 	cmpl	%eax, %ecx		// did we reschedule the same task?
 	jne	_swtch			// if not, branch to _swtch
 	/* continue the same task */
-	leal	536(%eax), %esp
+	leal	600(%eax), %esp
 	popal
 	leal	4(%ebp), %esp		// restore stack pointer
 	addl	$16, %ebp		// adjust frame pointer

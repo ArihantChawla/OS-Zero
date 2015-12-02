@@ -17,9 +17,9 @@
 
 m_tcbjmp:
 	/* fetch fxsave-word */
-	movl	512(%eax), %ebx
+	movl	576(%eax), %ebx
 	/* adjust %esp to tcb->pdbr */
-	leal	516(%eax), %esp
+	leal	580(%eax), %esp
 	andl	$M_TCBFXSAVE, %ebx
 	cmpl	$0, %ebx
 	je	_frstor
@@ -37,19 +37,16 @@ _fpudone:
 	popl	%fs
 	popl	%gs
 	fwait
-	/*
-	 * pop general purpose registers
-	 * - stack pointer points to m_tcb->iret
-	 */
-
+	/* set up per-cpu variables */
 	movl	%eax, %gs:8		// k_curtask
 	movl	528(%eax), %ebx		// k_curproc
 	movl	548(%eax), %ecx		// k_curpid
 	movl	%ebx, %gs:4
 	movl	%ecx, %gs:16
-	
+	/* pop general purpose registers */
 	popal
-	addl	$4, %esp
+	/* - stack pointer points to m_tcb->trapnum */
+	addl	$8, %esp
 #if (APIC)
 	_apiceoi
 #else

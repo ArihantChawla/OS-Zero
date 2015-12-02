@@ -106,14 +106,15 @@ struct m_tss {
 /* thread control block */
 #define M_TCBFCTXSIZE 512
 struct m_tcb {
-    uint8_t           fctx[M_TCBFCTXSIZE];      // 512 bytes @ 0
-    int32_t           flg;                      //   4 bytes @ 512
-    int32_t           pdbr;                     //   4 bytes @ 516
-    struct m_segregs  segregs;                  //  16 bytes @ 520
-    struct m_genregs  genregs;                  //  32 bytes @ 536
-    int32_t           trapnum;                  //   4 bytes @ 568
-    int32_t           err;                      //   4 bytes @ 572
-    struct m_jmpframe frame;                    //  24 bytes @ 576
+//    uint8_t           fctx[M_TCBFCTXSIZE];      // 512 bytes @ 0
+    struct fpstate    fpstate;                  // 576 bytes @ 0
+    int32_t           flg;                      //   4 bytes @ 576
+    int32_t           pdbr;                     //   4 bytes @ 580
+    struct m_segregs  segregs;                  //  16 bytes @ 584
+    struct m_genregs  genregs;                  //  32 bytes @ 600
+    int32_t           trapnum;                  //   4 bytes @ 632
+    int32_t           err;                      //   4 bytes @ 636
+    struct m_jmpframe frame;                    //  24 bytes @ 640
 };
 
 #endif /* __ZERO_IA32_TYPES_H__ */
