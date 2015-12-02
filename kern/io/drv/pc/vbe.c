@@ -42,7 +42,8 @@ long         vbefontw = 7;
 long         vbefonth = 13;
 #endif
 
-void vbeputpix(gfxargb32_t pix, int x, int row);
+//void vbeputpix(gfxargb32_t pix, int x, int row);
+void vbeputpix(gfxargb32_t pix, uint8_t *ptr);
 void vbeputs(char *str);
 void vbeputchar(int ch);
 void vbedrawchar(unsigned char c, int x, int y, gfxargb32_t fg, gfxargb32_t bg);
@@ -164,6 +165,7 @@ vbeinitscr(void)
              (uint32_t)vbescreen.fbuf,
              (uint32_t)vbescreen.fbuf + vbescreen.fbufsize,
              PAGEPRES | PAGEWRITE | PAGENOCACHE | PAGEWIRED);
+    vbeclrscr(GFX_BLACK);
 
     return;
 }
@@ -254,6 +256,7 @@ vbeprintinfo(void)
     return;
 }
 
+#if 0
 INLINE void
 vbeputpix(gfxargb32_t pix, int x, int y)
 {
@@ -263,34 +266,32 @@ vbeputpix(gfxargb32_t pix, int x, int y)
 
     return;
 }
+#endif
 
 INLINE void
-vbeputpix_p(void *ptr, gfxargb32_t pix)
+vbeputpix(gfxargb32_t pix, uint8_t *ptr)
 {
-    gfxsetrgb888_p(pix, ptr);
+    gfxsetrgb888(pix, ptr);
 
     return;
 }
 
-#if 0
 void
 vbeclrscr(gfxargb32_t pix)
 {
     uint8_t *ptr = vbepixadr(0, 0);
     long     incr = vbescreen.pixsize;
-    long     x;
-    long     y;
     long     n = vbescreen.w * vbescreen.h;
 
     while (n--) {
-        vbeputpix_p(ptr, pix);
+        vbeputpix(pix, ptr);
         ptr + incr;
     }
 
     return;
 }
-#endif
 
+#if 0
 void
 vbeclrscr(gfxargb32_t pix)
 {
@@ -309,6 +310,7 @@ vbeclrscr(gfxargb32_t pix)
 
     return;
 }
+#endif
 
 #if (NEWFONT)
 

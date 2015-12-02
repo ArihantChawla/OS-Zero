@@ -35,16 +35,16 @@ pageinitphyszone(uintptr_t base,
 {
     struct physpage *page = &vmphystab[pagenum(base)];
     uintptr_t        adr = rounduppow2(base, PAGESIZE);
-    unsigned long    n = rounduppow2(nb - adr, PAGESIZE) >> PAGESIZELOG2;
+    unsigned long    n = rounddownpow2(nb - adr, PAGESIZE) >> PAGESIZELOG2;
     unsigned long    size = n * PAGESIZE;
+    unsigned long    tmp = base - 1;
 
     adr += n << PAGESIZELOG2;
     page += n;
+    tmp += size;
     vmpagestat.nphys = n;
-    kprintf("initializing %ld (%lx) pages @ %p (%lu, %lu)\n",
-            n, n, vmphystab, pagenum(base), n,
-            adr,
-            adr + size);
+    vmpagestat.base = base;
+    vmpagestat.end = tmp;
     while (n--) {
         page--;
         page->adr = adr;

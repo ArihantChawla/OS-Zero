@@ -6,14 +6,15 @@
 #include <zero/cdecl.h>
 #include <zero/param.h>
 
-#define GFX_ARGB32 1
-#define GFX_RGB888 2
-#define GFX_RGB555 3
-#define GFX_RGB565 4
+#define GFX_ARGB32    1
+#define GFX_RGB888    2
+#define GFX_RGB555    3
+#define GFX_RGB565    4
 
-#define GFX_BLACK  0x00000000
-#define GFX_WHITE  0xffffffff
-#define GFX_GREEN  0x0000bf00
+#define GFX_BLACK     0x00000000
+#define GFX_WHITE     0xffffffff
+//#define GFX_GREEN     0x0000bf00
+#define GFX_NOALPHA   (-1)
 
 #if (__BYTE_ORDER == __LITTLE_ENDIAN)
 
@@ -146,7 +147,7 @@ typedef int16_t gfxrgb565_t;
               GFX_RGB565_BLUE_MASK,                                     \
               GFX_RGB565_BLUE_SHIFT))
 
-#define gfxsetrgb888_p(pix, ptr)                                        \
+#define gfxsetargb32_p(pix, ptr, aval)                                  \
     do {                                                                \
         gfxargb32_t       _pix = (pix);                                 \
         struct gfxargb32 *_src = (struct gfxargb32 *)&_pix;             \
@@ -155,6 +156,9 @@ typedef int16_t gfxrgb565_t;
         _dest->red = gfxgetred_p(_src);                                 \
         _dest->green = gfxgetgreen_p(_src);                             \
         _dest->blue = gfxgetblue_p(_src);                               \
+        if (alpha != GFX_NOALPHA) {                                     \
+            _dest->alpha = (aval);                                      \
+        }                                                               \
     } while (0)
 
 #if (__BYTE_ORDER == __LITTLE_ENDIAN)

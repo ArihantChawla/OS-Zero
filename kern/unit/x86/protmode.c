@@ -141,20 +141,22 @@ kinitprot(unsigned long pmemsz)
                           "movl %%esp, %%ebp\n"
                           :
                           : "r" (sp));
+    tssinit(0);
+#if (VBE) && (PLASMA) && (!PLASMAFOREVER)
+    plasmaloop(4);
+#endif
+    kprintf("initialized %ld pages @ 0x%lx..0x%lx\n",
+            vmpagestat.nphys, vmpagestat.base, vmpagestat.end);
 #if 0
     /* FIXME: map possible device memory */
     vmmapseg((uint32_t *)&_pagetab, DEVMEMBASE, DEVMEMBASE, 0xffffffffU,
              PAGEPRES | PAGEWRITE | PAGENOCACHE);
 #endif
-    tssinit(0);
 #if (SMBIOS)
     smbiosinit();
 #endif
 #if (PS2DRV) && 0
     ps2init();
-#endif
-#if (VBE) && (PLASMA) && (!PLASMAFOREVER)
-    plasmaloop(4);
 #endif
 #if (VBE)
     vbeprintinfo();

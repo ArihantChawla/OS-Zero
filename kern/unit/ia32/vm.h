@@ -97,6 +97,8 @@ struct vmpagemap {
 
 struct vmpagestat {
     unsigned long nphys;
+    unsigned long base;
+    unsigned long end;
     unsigned long nmapped;
     unsigned long nbuf;
     unsigned long nwired;

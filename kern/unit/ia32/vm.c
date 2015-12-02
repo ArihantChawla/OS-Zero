@@ -64,6 +64,7 @@ vmmapseg(void *pagetab, uint32_t virt, uint32_t phys, uint32_t lim,
 
     n = rounduppow2(lim - virt, PAGESIZE) >> PAGESIZELOG2;
     pte = (pte_t *)pagetab + vmpagenum(virt);
+    vmpagestat.nmapped += n;
     while (n--) {
         *pte = phys | flg;
         phys += PAGESIZE;

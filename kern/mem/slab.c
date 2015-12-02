@@ -126,7 +126,7 @@ slabinitzone(struct memzone *zone, unsigned long base, unsigned long nb)
     hdrsz = rounduppow2(hdrsz, PAGESIZE);
     adr += hdrsz;
 #if (__KERNEL__)
-    kprintf("MAG: reserved %lu bytes for %lu magazine headers\n", hdrsz, nslab);
+//    kprintf("MAG: reserved %lu bytes for %lu magazine headers\n", hdrsz, nslab);
 #endif
     magvirtzone.nhdr = nslab;
     vmmapseg((uint32_t *)&_pagetab, adr, adr, adr + hdrsz,
@@ -159,7 +159,7 @@ slabinit(struct memzone *virtzone, unsigned long base, unsigned long nbphys)
     nbphys = rounddownpow2(nbphys, SLABMIN);
     vmmapseg((uint32_t *)&_pagetab, adr, adr, adr + nbphys,
              PAGEWRITE);
-#if (__KERNEL__)
+#if (__KERNEL__) && 0
     kprintf("%ld kilobytes kernel virtual memory free @ 0x%lx\n",
             nbphys >> 10, adr);
 #endif
