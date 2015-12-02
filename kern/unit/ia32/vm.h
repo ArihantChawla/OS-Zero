@@ -30,8 +30,6 @@ void vmmapseg(void *pagetab, uint32_t virt, uint32_t phys, uint32_t lim,
 #define vmbufid(adr)      ((uint32_t)(adr) >> PAGESIZELOG2)
 #define vmisbufadr(adr)   (!((uint32_t)(adr) & (BUFSIZE - 1)))
 
-//#define vmpageadr(pg, pt) (((pg) - (pt)) << PAGESIZELOG2)
-
 /* internal macros */
 
 static __inline__ void
@@ -41,13 +39,12 @@ vmflushtlb(void *adr)
 }
 
 /* physical memory limit; leave high areas for devices */
-#define DEVMEMBASE      0xe0000000      // 3.5 G
+//#define DEVMEMBASE      0xe0000000      // 3.5 G
 
 /* virtual memory parameters */
 //#define NPAGEMAX        (NPDE * NPTE)   // # of virtual pages
 #define NPDE            1024            // per directory
 #define NPTE            1024            // per table
-//#define PAGETAB         0x00700000U   // physical address
 #define PAGETABSIZE     (NPDE * NPTE * sizeof(uint32_t))
 #define PDSHIFT         22
 #define PTSHIFT         12
@@ -87,13 +84,15 @@ vmflushtlb(void *adr)
 #define PAGEFLTPRES     0x00000001U	// page is present
 #define PAGEFLTWRITE    0x00000002U	// write fault
 #define PAGEFLTUSER     0x00000004U	// user fault
-#define PAGEFLTFLGMASK  0x00000007U
-#define PAGEFLTADRMASK  0xfffffff8U
+#define PAGEFLTRESBIT   0x00000008U     // 1 in reserved bit
+#define PAGEFLTINST     0x00000010U     // caused by instruction fetch
+#define PAGEFLTFLGMASK  0x0000001fU
+#define PAGEFLTADRMASK  0xffffffe0U
 #define PAGEFLTPAGEMASK 0xfffff000U
 
 struct vmpagemap {
-    pde_t           *dir;       // page directory address
-    pte_t           *tab;       // flat page-table of NPDE * NPTE entries
+    pde_t *dir; // page directory address
+    pte_t *tab; // flat page-table of NPDE * NPTE entries
 };
 
 struct vmpagestat {

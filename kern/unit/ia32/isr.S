@@ -285,6 +285,7 @@ trapts:
 
 .align	16
 
+	/* error code is segment selector index */
 trapnp:
 	_trapentererr
 	movl	%esp, %ebp
@@ -307,6 +308,7 @@ trapnp:
 
 .align	16
 
+	/* error code is segment selector index if not present, 0 otherwise */
 trapss:
 	_trapentererr
 	movl	%esp, %ebp
@@ -329,7 +331,7 @@ trapss:
 
 .align	16
 
-	/* error-code is segment selector or zero */
+	/* error-code is segment selector index if segment-related or 0 */
 trapgp:
 	_trapentererr
 	movl	%esp, %ebp
@@ -355,6 +357,14 @@ _gpfin:
 
 .align	16
 
+	/*
+	 * - cr2 has virtual fault address
+	 * - bit 0 of error 1 if protection violation, 0 if non-present page
+	 * - bit 1 of error 1 if write, 0 if read
+	 * - bit 2 of error 1 if CPL was 3
+	 * - bit 3 of error 1 if 1 present in a reserved field
+	 * - bit 4 set if caused by an instruction fetch
+	 */
 trappf:
 	_trapentererr
 	movl	%esp, %ebp

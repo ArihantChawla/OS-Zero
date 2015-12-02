@@ -106,7 +106,7 @@ m_lidt(struct m_farptr *fp)
 #define TRAPMF   0x10	// FPU error; fault + number
 #define TRAPAC   0x11	// alignment check; fault, error == 0
 #define TRAPMC   0x12	// machine check; abort
-#define TRAPXF   0x13	// SIMD exception; fault
+#define TRAPXF   0x13	// SIMD or floating-point exception; fault
 /* traps 0x14 through 0x1f are reserved */
 #define TRAPNCPU 0x20
 

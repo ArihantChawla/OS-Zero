@@ -39,32 +39,6 @@ signal(int sig, __sighandler_t func)
     return oldfunc;
 }
 
-#if 0
-__sighandler_t
-signal(int sig, __sighandler_t func)
-{
-    __sighandler_t    oldfunc;
-    sysreg_t          sysret;
-    struct syssigarg  arg;
-
-    if (!_sigvalid(sig)
-        || _sigforced(sig)) {
-
-        errno = EINVAL;
-    } else {
-        arg.pid = SIG_SELF;
-        arg.func = func;
-        sysret = _syscall(SYS_SIGOP, SIG_SETFUNC, sig, (sysreg_t)&arg);
-        if (sysret >= 0) {
-            oldfunc = _sigfunctab[sig];
-            _sigfunctab[sig] = (void *)sysret;
-        }
-    }
-
-    return oldfunc;
-}
-#endif
-
 __sighandler_t
 __sysv_signal(int sig, __sighandler_t func)
 {
