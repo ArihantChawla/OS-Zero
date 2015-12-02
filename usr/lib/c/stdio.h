@@ -2,6 +2,7 @@
 #define __STDIO_H__
 
 #include <features.h>
+#include <stdint.h>
 #include <stddef.h>
 #include <limits.h>
 #include <stdint.h>
@@ -16,7 +17,7 @@ typedef __gnuc_va_list __stdio_va_list;
 #if (_ZERO_SOURCE)
 #include <zero/param.h>
 //#include <kern/io.h>
-#include <kern/io/buf.h>
+//#include <kern/io/buf.h>
 #endif
 
 #include <bits/stdio.h>

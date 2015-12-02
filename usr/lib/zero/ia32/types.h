@@ -2,7 +2,7 @@
 #define __ZERO_IA32_TYPES_H__
 
 #include <stdint.h>
-#include <stdint.h>
+//#include <stdint.h>
 //#include <signal.h>
 #include <zero/cdecl.h>
 #include <zero/param.h>
@@ -38,6 +38,7 @@ struct m_segregs {
 
 /* return stack for IRET - 20 bytes */
 struct m_jmpframe {
+    int32_t err;        // possible trap error code
     int32_t eip;	// old instruction pointer
     int16_t cs;		// code segment selector
     int16_t pad1;	// pad to 32-bit boundary
@@ -91,7 +92,7 @@ struct m_tcb {
     int32_t           pdbr;                     // 4 bytes @ 516
     struct m_segregs  segregs;                  // 16 bytes @ 520
     struct m_genregs  genregs;                  // 32 bytes @ 536
-    struct m_jmpframe iret;                     // 20 bytes @ 568
+    struct m_jmpframe iret;                     // 24 bytes @ 568
 };
 
 #endif /* __ZERO_IA32_TYPES_H__ */

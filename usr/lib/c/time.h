@@ -23,7 +23,7 @@ extern long  __timezone;
 extern int   __daylight;
 #endif
 
-#include <bits/signal.h>
+//#include <bits/signal.h>
 
 #if !defined(NULL)
 #define NULL               ((void *)0L)

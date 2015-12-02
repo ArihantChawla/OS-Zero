@@ -7,6 +7,8 @@
 #ifndef __KERN_SIGNAL_H__
 #define __KERN_SIGNAL_H__
 
+#include <bits/signal.h>
+
 typedef void signalhandler_t(int sig);
 
 /* constants; signal names */
@@ -52,11 +54,19 @@ typedef void signalhandler_t(int sig);
 //#define SIGUNUSED    0x1f
 #define SIGRTMIN     0x20    /* minimum real-time signal */
 #define SIGRTMAX     0x3f    /* maximum real-time signal */
-#define SIGRTMASK    0x50    /* mask for real-time signal ID bits */
+#define _SIGRTBIT    0x20    /* bit set for all real-time signals */
 #define NSIG         64      /* # of signals */
 #define NRTSIG       32      /* # of real-time signals */
-#define SIGMASK      0x3f    /* mask for signal ID bits */
+#define _SIGMASK     0x3f    /* mask for signal ID bits */
 #define _NSIG        NSIG    /* alternative name */
+
+struct sigaction {
+    void     (*sa_handler)(int);
+    void     (*sa_sigaction)(int, siginfo_t *, void *); // sa_flags & SA_SIGINFO
+    void     (*sa_restorer)(void);
+    sigset_t  sa_mask;
+    int       sa_flags;
+};
 
 #endif /*  __KERN_SIGNAL_H__ */
 

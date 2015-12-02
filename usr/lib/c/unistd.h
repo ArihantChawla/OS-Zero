@@ -2,9 +2,9 @@
 #define __UNISTD_H__
 
 #include <features.h>
-#include <stddef.h>
+//#include <stddef.h>
 #include <stdio.h>
-#include <stdint.h>
+//#include <stdint.h>
 #include <fcntl.h>
 #include <sys/types.h>
 #include <zero/param.h>

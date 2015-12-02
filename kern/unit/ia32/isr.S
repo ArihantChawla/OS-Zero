@@ -542,7 +542,7 @@ irqtmr:
 	movl	%esp, %ebp		// store stack pointer
 	pushl	%eax			// back %eax up
 	movl	%gs:8, %eax		// per-cpu current task
-	leal	568(%eax), %esp		// adjust sp for m_tcb.genregs
+	leal	568(%eax), %esp		// adjust sp for pushing m_tcb.genregs
 	pushal				// push general-purpose registers
 	/* store FPU context */
 	movl	-24(%esp), %ebx		// fetch fxsave-flag
@@ -578,20 +578,20 @@ _getsysstk:
 	movl	$DATASEL, %edi
 	addl	$4, %ebx		// adjust to caller stack pointer
 	addl	$8, %esi		// adjust to caller frame pointer
-	movl	%ebx, 60(%esp)		// caller stack pointer in m_tcb.iret
+	movl	%ebx, 64(%esp)		// caller stack pointer in m_tcb.iret
 	movl	%esi, 28(%esp)		// patch frame pointer in m_tcb.genregs
 _havestk:	
 	fwait	
 	movl	4(%ebp), %esi		// pushed return address
 	movl	%ecx, -4(%esp)		// store page directory base register
 	movl	%eax, 44(%esp)		// patch %eax in m_tcb.genregs
-	movl	%edi, 64(%esp)		// store %ss in m_tcb.iret
+	movl	%edi, 68(%esp)		// store %ss in m_tcb.iret
 	addl	$12, %ebx		// adjust stack pointer past trap frame
 	movl	(%ebp), %ecx		// pushed frame pointer
-	movl	%edx, 52(%esp)		// store %cs in m_tcb.iret
+	movl	%edx, 56(%esp)		// store %cs in m_tcb.iret
 	movl	12(%ebp), %edi		// fetch pushed flags register
-	movl	%esi, 48(%esp)		// store return address for iret
-	movl	%edi, 56(%esp)		// store pre-interrupt flags for iret
+	movl	%esi, 52(%esp)		// store return address for iret
+	movl	%edi, 60(%esp)		// store pre-interrupt flags for iret
 	/* schedule next thread */
 	movl	%gs:8, %eax		// task structure address argument
 	movl	schedpicktask, %ebx	// get scheduler-specific function

@@ -6,12 +6,8 @@
 #define __LIMITS_H__
 
 #include <features.h>
-//#include <stdint.h>
+#include <stdint.h>
 #include <zero/param.h>
-#if (_ZERO_SOURCE)
-#include <kern/conf.h>
-#include <kern/signal.h>
-#endif
 
 /*
  * ISO limits.
@@ -111,8 +107,6 @@
 
 #endif /* POSIX */
 
-#define RTSIG_MAX      NRTSIG
-
 /*
  * Unix values
  */
@@ -124,13 +118,16 @@
  */
 #define SSIZE_MAX      LONG_MAX
 
-#if (_POSIX_SOURCE)
-#if (_ZERO_SOURCE)
-#define _POSIX_FD_SETSIZE NPROCFD
+#if !defined(NFDBITS)
+#define _POSIX_FD_SET_SIZE 32768
 #else
-#define _POSIX_FD_SETSIZE 32768
+#define _POSIX_FD_SET_SIZE NFDBITS
 #endif
-#endif /* _POSIX_SOURCE */
+
+#if (_ZERO_SOURCE)
+#include <signal.h>
+#endif
+#define RTSIG_MAX      NRTSIG
 
 #endif /* __LIMITS_H__ */
 

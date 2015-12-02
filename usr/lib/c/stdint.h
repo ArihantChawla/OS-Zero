@@ -1,7 +1,7 @@
 #ifndef __STDINT_H__
 #define __STDINT_H__
 
-#include <limits.h>
+//#include <limits.h>
 #include <zero/param.h>
 
 #define INT8_C(c)    c

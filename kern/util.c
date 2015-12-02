@@ -590,7 +590,7 @@ kprintf(const char *fmt, ...)
                 if (*arg) {
                     switch (*arg) {
                         case 's':
-                            cptr = (char *)va_arg(al, char *);
+                            cptr = va_arg(al, char *);
                             arg++;
                             if (cptr) {
                                 cons->puts(cptr);
@@ -629,7 +629,7 @@ kprintf(const char *fmt, ...)
                                     isdec = 1;
                                 }
                                 isuns = 1;
-                                uval = (unsigned long)va_arg(al, unsigned long);
+                                uval = va_arg(al, unsigned long);
                                 arg++;
                             } else {
                                 val = va_arg(al, long);
@@ -652,7 +652,7 @@ kprintf(const char *fmt, ...)
 //                            val = va_arg(al, int);
                             ishex = 1;
                             isuns = 1;
-                            uval = (unsigned int)va_arg(al, unsigned int);
+                            uval = va_arg(al, unsigned int);
                             arg++;
                             
                             break;
@@ -674,7 +674,7 @@ kprintf(const char *fmt, ...)
                                     case 'd':
                                         isdec = 1;
                                         uval = va_arg(al, unsigned int);
-                                        
+
                                         break;
                                     case 'l':
                                         isdec = 1;

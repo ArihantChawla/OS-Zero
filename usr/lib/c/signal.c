@@ -16,6 +16,12 @@ const uint64_t _sigforcebits = _SIGFORCEBITS;
 #define SYSV_SIGNAL
 #endif
 
+int
+sigaction(int sig, const struct sigaction *act, struct sigaction *oldact)
+{
+    
+}
+
 __sighandler_t
 signal(int sig, __sighandler_t func)
 {

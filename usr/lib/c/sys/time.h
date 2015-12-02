@@ -2,7 +2,6 @@
 #define __SYS_TIME_H__
 
 #include <features.h>
-#include <time.h>
 #include <sys/types.h>
 
 #ifndef CLK_TCK
@@ -105,6 +104,7 @@ extern int futimesat(int fd, const char *file, const struct timeval tv[2]);
     } while (0)
 #endif /* _BSD_SOURCE */
 
+#include <time.h>
 #include <sys/select.h>
 
 #endif /* __SYS_TIME_H__ */

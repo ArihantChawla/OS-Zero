@@ -2,13 +2,13 @@
 #define __SYS_TYPES_H__
 
 #include <features.h>
-#include <stddef.h>
 #include <stdint.h>
-#include <limits.h>
-#include <sys/types.h>
+#include <stddef.h>
+//#include <limits.h>
+//#include <sys/types.h>
 #if (_BSD_SOURCE)
 #include <endian.h>
-//#include <sys/select.h>
+#include <sys/select.h>
 #include <sys/sysmacros.h>
 #endif
 #if !defined(_POSIX_SOURCE) && (USEBSD) && !defined(NFDBITS)
@@ -139,13 +139,18 @@ typedef uint64_t trace_event_set_t;
 
 #define NODEV           ((dev_t)-1L)
 
+#if (_ZERO_SOURCE)
+#include <kern/conf.h>
+#endif
+#if defined(NPROCFD)
+#define FD_SETSIZE NPROCFD
+#elif (_POSIX_SOURCE)
+#define FD_SETSIZE _POSIX_FD_SETSIZE
+#endif
+
 #if (USEBSD) && !defined(NFDBITS)
 
-#if (_POSIX_SOURCE)
-#define FD_SETSIZE _POSIX_FD_SETSIZE
-#else
-#define FD_SETSIZE NPROCFD
-#endif
+#include <limits.h>
 
 typedef long       fd_mask;
 #define NFDBITS    (sizeof(fd_mask) * CHAR_BIT)

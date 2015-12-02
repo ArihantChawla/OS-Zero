@@ -9,16 +9,21 @@
      && !defined(__x86_64__) && !defined(__amd64__))
 
 #include <stdint.h>
-#include <zero/ia32/types.h>
+#include <zero/types.h>
 
 typedef struct __mcontext {
+    uint8_t             fctx[TCBFCTXSIZE];
     void               *gregs;
     void               *fpstate;
     struct m_pusha      genregs; // general purpose registers saved by PUSHA
     struct m_trapframe  iret;    // use IRET for jumping into contexts
-    uint8_t             fctx[TCBFCTXSIZE];
 } mcontext_t;
 #define __mcontext_t_defined
+
+#elif defined(__x86_64__) || defined(__amd64__)
+
+#undef __mcontext_t_defined
+#warn "declare struct __mcontext for x86-64 in <ucontext.h>"
 
 #endif
 

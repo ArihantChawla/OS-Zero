@@ -8,8 +8,7 @@
 #endif
 
 #include <features.h>
-#include <stddef.h>
-#include <sys/types.h>
+//#include <sys/types.h>
 #include <zero/param.h>
 #include <unistd.h>
 #include <zero/param.h>
@@ -85,8 +84,10 @@ extern int            sigpause(int sig) __asm__ ("__xpg_sigpause\n");
 
 #if (_BSD_SOURCE)
 
+#define BADSIG ((void (*)())-1)
+
 /* none of these functions should be used any longer */
-#define    sigmask(sig)   (1L << (sig))
+#define    sigmask(sig)   (1L << ((sig) - 1))
 /* block signals in mask, return old mask */
 extern int sigblock(int mask); 
 /* set mask of blocked signals, return old mask */
@@ -96,37 +97,33 @@ extern int siggetmask(void);
 
 #endif /* !defined(__KERNEL__) */
 
-struct sigvec {
-    void (*sv_handler)(int);
-    int    sv_mask;
-    int    sv_flags;
-};
-
 #if !defined(__KERNEL__)
 
+#if (USEBSD) && (!USEPOSIX)
 int sigvec(int sig, const struct sigvec *vec, struct sigvec *oldvec);
+#endif
 
-#define SV_INTERRUPT 0x00000001
-#define SV_RESETHAND 0x00000002
-#define SV_ONSTACK   0x00000004
 // extern int sigreturn(struct sigcontext *scp);
 
 #endif /* !defined(__KERNEL__) */
 
-#endif /* BSD_SOURCE */
+#endif /* _BSD_SOURCE */
 
 #if !defined(__KERNEL__)
 
-#if (_POSIX_SOURCE)
+#if (USEPOSIX)
 
 /* get and/or change set of blocked signals */
 extern int sigprocmask(int how, const sigset_t *restrict set,
                        sigset_t *restrict oldset);
 /* change blocked signals to set, wait for a signal, restore the set */
 extern int sigsuspend(const sigset_t *set);
+/* set or examine signal behavior */
 extern int sigaction(int sig, const struct sigaction *restrict act,
                      struct sigaction *restrict oldact);
+/* fetch pending blocked signals */
 extern int sigpending(sigset_t *set);
+/* wait for a signal in set */
 extern int sigwait(const sigset_t *set, int *restrict sig);
 #if (USEPOSIX199309)
 extern int sigwaitinfo(const sigset_t *restrict set,
@@ -145,29 +142,6 @@ extern const char *const sys_siglist[_NSIG];
 #endif
 
 #endif /* !defined(__KERNEL__) */
-
-#if (_BSD_SOURCE) || (USEXOPENEXT)
-
-struct sigstack {
-    char   *ss_sp;
-    int     ss_onstack;
-};
-
-typedef struct {
-  char   *ss_sp;
-  size_t  ss_size;
-  int     ss_flags;
-} stack_t;
-
-#else /* !(_BSD_SOURCE | USEXOPENEXT) */
-
-struct sigaltstack {
-    char *ss_base;
-    int   ss_len;
-    int   ss_onstack;
-};
-
-#endif /* _BSD_SOURCE || USEXOPENEXT */
 
 #if !defined(__KERNEL__)
 

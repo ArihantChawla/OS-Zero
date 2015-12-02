@@ -9,17 +9,18 @@
 #include <features.h>
 #include <stdint.h>
 #include <sys/types.h>
+#include <zero/param.h>
 #if (PTHREAD)
 #include <pthread.h>
 #endif
-#if (_ZERO_SOURCE)
+#if (_ZERO_SOURCE) && 0
 #include <kern/signal.h>
 #endif
 
 /* internal. */
-#define _sigvalid(sig)  ((sig) && (!((sig) & ~SIGMASK)))
-#define _sigrt(sig)     ((sig) && (!((sig) & ~SIGRTMASK)))
-#define _signorm(sig)   ((sig) && (!((sig) & SIGRTMASK)))
+#define _sigvalid(sig)  ((sig) && (!((sig) & ~_SIGMASK)))
+#define _sigrt(sig)     ((sig) && ((sig) & _SIGRTMASK))
+#define _signorm(sig)   ((sig) && (!((sig) & _SIGRTBIT)))
 #define _SIGFORCEBITS   ((UINT64_C(1) << SIGKILL) | (UINT64_C(1) << SIGSTOP))
 
 #if defined(__x86_64__) || defined(__amd64__) || defined(___alpha__)
@@ -63,6 +64,9 @@ typedef long             pid_t;          // process ID
 typedef void           (*__sighandler_t)(int);
 //typedef __sighandler_t   sighandler_t;
 
+#if (USEBSD) && (!USEPOSIX)
+typedef void __bsdsig_t(int sig, int code, struct sigcontext *ctx, char *adr);
+#endif
 #if (_BSD_SOURCE) || (_GNU_SOURCE)
 typedef __sighandler_t sig_t;
 #endif
@@ -79,14 +83,11 @@ typedef __sighandler_t sighandler_t;
 #define SA_ONESHOT   SA_RESETHAND
 #define SA_SIGINFO   SIG_SIGINFO
 /* non-POSIX */
+#if (!USEPOSIX)
 #define SA_ONSTACK   SIG_ONSTACK
 #define SA_RESTART   SIG_RESTART
 #define SA_INTERRUPT SIG_FASTINTR
-
-#define MINSIGSTKSZ  PAGESIZE
-#define SIGSTKSZ     (4 * PAGESIZE)
-#define SS_ONSTACK   0x00000001
-#define SS_DISABLE   0x00000002
+#endif
 
 /* special values. */
 #if 0
@@ -94,6 +95,16 @@ typedef __sighandler_t sighandler_t;
 #define SIG_DFL      ((sighandler_t)0L)
 #define SIG_IGN      ((sighandler_t)1L)
 #define SIG_HOLD     ((sighandler_t)2L)
+#endif
+
+#if (!_ZERO_SOURCE) && (USEPOSIX)
+struct sigaction {
+    void     (*sa_handler)(int);
+    void     (*sa_sigaction)(int, siginfo_t *, void *); // sa_flags & SA_SIGINFO
+    void     (*sa_restorer)(void);
+    sigset_t  sa_mask;
+    int       sa_flags;
+};
 #endif
 
 union sigval {
@@ -116,6 +127,7 @@ struct sigevent {
 };
 
 #if (_POSIX_SOURCE) && (USEPOSIX199309)
+
 /* si_code-member values */
 /* SIGILL */
 #define ILL_ILLOPC    1 // illegal opcode
@@ -178,15 +190,69 @@ typedef struct {
     ctid_t        si_ctid;
     zoneid_t      si_zoneid;
 } siginfo_t;
+
 #endif /* _POSIX_SOURCE && USEPOSIX199309 */
 
-struct sigaction {
-    void     (*sa_handler)(int);
-    void     (*sa_sigaction)(int, siginfo_t, void *); // sa_flags & SA_SIGINFO
-    void     (*sa_restorer)(void);
-    sigset_t  sa_mask;
-    int       sa_flags;
+#if (_BSD_SOURCE) || (USEXOPENEXT)
+
+struct sigstack {
+    char *ss_sp;
+    int   ss_onstack;
 };
+
+#define SIGSTKSZ     (4 * PAGESIZE)
+#define MINSIGSTKSZ  PAGESIZE
+/* ss_flags bits */
+#define SS_ONSTACK   0x00000001
+#define SS_DISABLE   0x00000002
+typedef struct {
+  void   *ss_sp;
+  size_t  ss_size;
+  int     ss_flags;
+} stack_t;
+
+#elif (FAVORBSD)
+
+struct sigaltstack {
+    void *ss_base;
+    int   ss_len;
+    int   ss_onstack;
+};
+
+#elif (!USEPOSIX)
+
+struct sigaltstack {
+    void   *ss_sp;
+    size_t  ss_size;
+    int     ss_flags;
+};
+
+#endif
+
+#if (USEBSD) && (!USEPOSIX)
+
+/* bits for sv_flags */
+#define SV_INTERRUPT SIG_RESTART        // opposite sense
+#define SV_RESETHAND SIG_RESETHAND
+#define SV_ONSTACK   SIG_ONSTACK
+#define sv_onstack   sv_flags           // compatibility name
+struct sigvec {
+    void (*sv_handler)(int);            // signal disposition
+    int    sv_mask;                     // signals to block while executing
+    int    sv_flags;
+};
+
+struct sigcontext {
+    long	sc_onstack;     // sigstack state to restore
+    long	sc_mask;        // signal mask to restore
+    long	sc_sp;	        // sp to restore
+    long	sc_fp;	        // fp to restore
+    long	sc_ap;          // ap to restore
+    long	sc_pc;          // pc to restore
+    long	sc_ps;          // psl to restore
+};
+
+#endif /* USEBSD && !USEPOSIX */
 
 #if (_POSIX_SOURCE)
 

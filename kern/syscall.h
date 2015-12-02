@@ -14,6 +14,7 @@
 #include <zero/param.h>
 #include <kern/syscallnum.h>
 #include <kern/perm.h>
+#include <kern/signal.h>
 #include <kern/mem/obj.h>
 #include <kern/obj.h>
 
@@ -350,14 +351,14 @@ struct sysioperm {
 #define PROC_MAPBUF        0x0f    // mapbuf()
 /* pctl() parm attributes */
 /* PROC_GETLIM, PROC_SETLIM */
-#define PROC_NTHR          0x01    // max # of threads for process
-#define PROC_STKSIZE       0x02	   // process stack size
-#define PROC_KERNSTKSIZE   0x03    // process kernel stack size
-#define PROC_DESCTABSIZE   0x04    // process descriptor table size
+#define PROC_NTHR          0x01 // max # of threads for process
+#define PROC_STKSIZE       0x02	// process stack size
+#define PROC_KERNSTKSIZE   0x03 // process kernel stack size
+#define PROC_DESCTABSIZE   0x04 // process descriptor table size
 /* PROC_MAPBUF */
 #define PROC_LFBUF         0x00
-#define PROC_KBDBUF        0x01    // keyboard input buffer
-#define PROC_MOUSEBUF      0x02    // mouse input buffer
+#define PROC_KBDBUF        0x01 // keyboard input buffer
+#define PROC_MOUSEBUF      0x02 // mouse input buffer
 
 /* argument structure for pctl() with PROC_GETLIM and PROC_SETLIM */
 struct sysproclim {
@@ -368,10 +369,10 @@ struct sysproclim {
 #if 0
 /* pctl() parameters */
 /* PROC_WAIT flags */
-#define PROC_WAITPID 0x01    // wait for pid
-#define PROC_WAITCLD 0x02    // wait for children in the group pid
-#define PROC_WAITGRP 0x04    // wait for children in the group of caller
-#define PROC_WAITANY 0x08    // wait for any child process
+#define PROC_WAITPID 0x01       // wait for pid
+#define PROC_WAITCLD 0x02       // wait for children in the group pid
+#define PROC_WAITGRP 0x04       // wait for children in the group of caller
+#define PROC_WAITANY 0x08       // wait for any child process
 #endif
 
 struct syswait {
@@ -383,27 +384,13 @@ struct syswait {
 /* signal interface */
 
 /* sigop() commands */
-#define SIG_WAIT      0x01    // pause()
-#define SIG_SETFUNC   0x02    // signal()/sigaction()
-#define SIG_DEFMASK   0x03    // sigsetmask()
-#define SIG_SEND      0x04    // raise() etc.
-#define SIG_SETSTK    0x05    // sigaltstack()
-#define SIG_SUSPEND   0x06    // sigsuspend(), sigpause()
-/* sigop() arguments */
-/* ----------------- */
-/* SIG_SETFUNC */
-//#define SIG_DEFAULT (void *0)    0x01    // SIG_DFL
-//#define SIG_IGNORE  (void *)    0x02    // SIG_IGN
-/* SIG_SEND */
-#define SIG_SELF      (-0x01)  // raise()
-#define SIG_CLD       (-0x02)  // send to children
-#define SIG_GRP       (-0x03)  // send to group
-#define SIG_PROPCLD    0x01    // propagate to child processes
-#define SIG_PROPGRP    0x02    // propagate to process group
-/* SIG_PAUSE */
-#define SIG_EXIT       0x01    // exit process on signal
-#define SIG_DUMP       0x02    // dump core on signal
-
+#define SIG_WAIT      0x01      // pause()
+#define SIG_SETFUNC   0x02      // signal()/sigaction()
+#define SIG_PROCMASK  0x03      // sigprocmask()
+#define SIG_SEND      0x04      // raise(), kill(), etc.
+#define SIG_SETSTK    0x05      // sigaltstack(), sigstack()
+#define SIG_SUSPEND   0x06      // sigsuspend(), sigpause()
+/* sigop() parm-argument bits */
 /* sigaction() definitions */ 
 #define SIG_NOCLDSTOP  0x00000001
 #define SIG_NOCLDWAIT  0x00000002
@@ -414,6 +401,16 @@ struct syswait {
 #define SIG_ONSTACK    0x80000000
 #define SIG_RESTART    0x40000000
 #define SIG_FASTINTR   0x20000000
+/* values for struct syssigarg */
+/* pid values */
+#define SIG_SELF       (-0x01)  // raise()
+#define SIG_CLD        (-0x02)  // send to children
+#define SIG_GRP        (-0x03)  // send to group
+#define SIG_PROPCHLD   0x01     // propagate to child processes
+#define SIG_PROPGRP    0x02     // propagate to process group
+/* SIG_PAUSE */
+#define SIG_EXIT       0x01     // exit process on signal
+#define SIG_DUMP       0x02     // dump core on signal
 
 struct syssigarg {
     pid_t  pid;

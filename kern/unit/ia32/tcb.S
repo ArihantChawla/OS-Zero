@@ -49,6 +49,7 @@ _fpudone:
 	movl	%ecx, %gs:16
 	
 	popal
+	addl	$4, %esp
 #if (APIC)
 	_apiceoi
 #else

@@ -4,6 +4,7 @@
 #include <zero/param.h>
 #include <kern/conf.h>
 #include <kern/sys.h>
+#include <kern/io/buf.h>
 
 static struct sys systab[NCPU] ALIGNED(PAGESIZE);
 

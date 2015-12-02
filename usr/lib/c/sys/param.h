@@ -1,7 +1,7 @@
 #ifndef __SYS_PARAM_H__
 #define __SYS_PARAM_H__
 
-#include <limits.h>
+//#include <limits.h>
 #include <zero/param.h>
 //#include <zero/trix.h>
 
@@ -11,7 +11,7 @@
 #define NGROUPS       NGROUPS_MAX
 #endif
 #define MAXSYMLINKS   16
-#define CANBSIZE     MAX_CANON
+#define CANBSIZE      MAX_CANON
 #define NCARGS        ARG_MAX
 #define MAXPATHLEN    PATH_MAX
 #define NOFILE        OPEN_MAX
