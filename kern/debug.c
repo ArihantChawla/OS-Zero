@@ -90,7 +90,7 @@ m_printtcb(struct m_tcb *m_tcb, long flg)
     kprintf("pdbr\t%lx\n", m_tcb->pdbr);
     m_printgenregs(&m_tcb->genregs);
     m_printsegregs(&m_tcb->segregs);
-    m_printjmpframe(&m_tcb->iret, flg & M_JMPFRAMESTK);
+    m_printjmpframe(&m_tcb->frame, flg & M_JMPFRAMESTK);
 
     return;
 }

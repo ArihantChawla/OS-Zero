@@ -36,9 +36,28 @@ struct m_segregs {
     int32_t gs;         // kernel per-CPU segment
 };
 
-/* return stack for IRET - 20 bytes */
+/* floating-point state */
+struct fpstate {
+    int32_t       _cw;
+    int32_t       _sw;
+    int32_t       _tag;
+    int32_t       _ipofs;
+    int32_t       _cs;
+    int32_t       _dataofs;
+    int32_t       _ds;
+    struct fpreg  _st[8];
+    int16_t       _status;
+    int16_t       _magic;
+    int32_t       _fxsrenv[6];
+    int32_t       _mxcsr;
+    int32_t       _res;
+    struct fpreg  _fxsrst[8];
+    struct xmmreg _xmm[8];
+    int32_t       _pad[56];
+};
+
+/* interrupt return frame for iret - 20 bytes */
 struct m_jmpframe {
-    int32_t err;        // possible trap error code
     int32_t eip;	// old instruction pointer
     int16_t cs;		// code segment selector
     int16_t pad1;	// pad to 32-bit boundary
@@ -88,11 +107,13 @@ struct m_tss {
 #define M_TCBFCTXSIZE 512
 struct m_tcb {
     uint8_t           fctx[M_TCBFCTXSIZE];      // 512 bytes @ 0
-    int32_t           flg;                      // 4 bytes @ 512
-    int32_t           pdbr;                     // 4 bytes @ 516
-    struct m_segregs  segregs;                  // 16 bytes @ 520
-    struct m_genregs  genregs;                  // 32 bytes @ 536
-    struct m_jmpframe iret;                     // 24 bytes @ 568
+    int32_t           flg;                      //   4 bytes @ 512
+    int32_t           pdbr;                     //   4 bytes @ 516
+    struct m_segregs  segregs;                  //  16 bytes @ 520
+    struct m_genregs  genregs;                  //  32 bytes @ 536
+    int32_t           trapnum;                  //   4 bytes @ 568
+    int32_t           err;                      //   4 bytes @ 572
+    struct m_jmpframe frame;                    //  24 bytes @ 576
 };
 
 #endif /* __ZERO_IA32_TYPES_H__ */

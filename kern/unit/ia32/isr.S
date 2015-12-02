@@ -567,31 +567,29 @@ _fpudone:
 	jne	_getsysstk		// stack-info was not pushed if not
 	movl	(%ebp), %ebx		// fetch stored frame pointer
 	movl	16(%ebp), %edi		// fetch stored stack pointer
-	movl	$UDATASEL, %esi
-	movl	%ebx, 28(%esp)		// patch frame pointer in m_tcb.genregs
-	movl	%esi, 60(%esp)		// caller stack pointer in m_tcb.iret
+	movl	$UDATASEL, %edx
 	jmp	_havestk
 _getsysstk:
 	/* construct stack information */
 	movl	(%ebp), %ebx		// get after-interrupt frame pointer
-	movl	(%ebp), %esi
-	movl	$DATASEL, %edi
-	addl	$4, %ebx		// adjust to caller stack pointer
-	addl	$8, %esi		// adjust to caller frame pointer
-	movl	%ebx, 64(%esp)		// caller stack pointer in m_tcb.iret
-	movl	%esi, 28(%esp)		// patch frame pointer in m_tcb.genregs
+	movl	(%ebp), %edi
+	movl	$DATASEL, %edx
+	addl	$8, %ebx		// adjust to caller frame pointer
+	addl	$4, %edi		// adjust to caller stack pointer
 _havestk:	
 	fwait	
 	movl	4(%ebp), %esi		// pushed return address
 	movl	%ecx, -4(%esp)		// store page directory base register
+	movl	%ebx, 28(%esp)		// caller frame pointer in m_tcb.genregs
+	movl	%edi, 68(%esp)		// patch stack pointer in m_tcb.frame
 	movl	%eax, 44(%esp)		// patch %eax in m_tcb.genregs
-	movl	%edi, 68(%esp)		// store %ss in m_tcb.iret
+	movl	%edx, 72(%esp)		// store %ss in m_tcb.frame
 	addl	$12, %ebx		// adjust stack pointer past trap frame
 	movl	(%ebp), %ecx		// pushed frame pointer
-	movl	%edx, 56(%esp)		// store %cs in m_tcb.iret
+	movl	%edx, 60(%esp)		// store %cs in m_tcb.frame
 	movl	12(%ebp), %edi		// fetch pushed flags register
-	movl	%esi, 52(%esp)		// store return address for iret
-	movl	%edi, 60(%esp)		// store pre-interrupt flags for iret
+	movl	%esi, 56(%esp)		// store return address for frame
+	movl	%edi, 64(%esp)		// store pre-interrupt flags for frame
 	/* schedule next thread */
 	movl	%gs:8, %eax		// task structure address argument
 	movl	schedpicktask, %ebx	// get scheduler-specific function
