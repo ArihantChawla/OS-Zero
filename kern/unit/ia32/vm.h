@@ -96,12 +96,15 @@ struct vmpagemap {
 };
 
 struct vmpagestat {
-    unsigned long nphys;
-    unsigned long base;
-    unsigned long end;
-    unsigned long nmapped;
-    unsigned long nbuf;
-    unsigned long nwired;
+    unsigned long  nphys;
+    unsigned long  nvirt;
+    unsigned long  nmap;
+    unsigned long  nbuf;
+    unsigned long  nwire;
+    void          *phys;
+    void          *physend;
+    void          *buf;
+    void          *bufend;
 };
 
 #endif /* __UNIT_IA32_VM_H__ */

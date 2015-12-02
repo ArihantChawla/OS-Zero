@@ -623,7 +623,11 @@ kprintf(const char *fmt, ...)
                                 isuns = 1;
                                 uval = (unsigned long)va_arg(al, void *);
                             } else if (arg[1] == 'x' || arg[1] == 'u') {
-                                ishex = 1;
+                                if (arg[1] == 'x') {
+                                    ishex = 1;
+                                } else {
+                                    isdec = 1;
+                                }
                                 isuns = 1;
                                 uval = (unsigned long)va_arg(al, unsigned long);
                                 arg++;

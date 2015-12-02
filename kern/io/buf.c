@@ -37,6 +37,8 @@
 #define QUEUE_TYPE      struct bufblk
 #include <zero/queue.h>
 
+extern struct vmpagestat   vmpagestat;
+
 #define bufadrtoid(ptr)                                                 \
     ((bufzone) ? ((uint8_t *)ptr - (uint8_t *)bufzone) >> BUFSIZELOG2 : NULL)
 
@@ -63,6 +65,7 @@ bufinit(void)
     struct bufblk *blk;
     long           n;
     long           sz;
+    long           end;
 
     sz = BUFNBYTE;
     do {
@@ -74,14 +77,16 @@ bufinit(void)
 
         return 0;
     }
-    kprintf("allocated %ld kilobytes of buffer cache\n", sz >> 10);
+    u8ptr = ptr;
+    vmpagestat.nbuf = sz >> PAGESIZELOG2;
+    vmpagestat.buf = ptr;
+    vmpagestat.bufend = u8ptr + sz;
     if (ptr) {
         /* allocate buffer cache */
         kbzero(ptr, sz);
         /* initialise buffer headers */
         n = sz >> BUFSIZELOG2;
         blk = &bufhdrtab[n - 1];
-        u8ptr = ptr;
         u8ptr +=  sz;
         while (n--) {
             u8ptr -= BUFSIZE;

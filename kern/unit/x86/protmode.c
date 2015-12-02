@@ -145,8 +145,8 @@ kinitprot(unsigned long pmemsz)
 #if (VBE) && (PLASMA) && (!PLASMAFOREVER)
     plasmaloop(4);
 #endif
-    kprintf("initialized %ld pages @ 0x%lx..0x%lx\n",
-            vmpagestat.nphys, vmpagestat.base, vmpagestat.end);
+    kprintf("%lu free physical pages @ 0x%p..0x%p\n",
+            vmpagestat.nphys, vmpagestat.phys, vmpagestat.physend);
 #if 0
     /* FIXME: map possible device memory */
     vmmapseg((uint32_t *)&_pagetab, DEVMEMBASE, DEVMEMBASE, 0xffffffffU,
@@ -192,6 +192,9 @@ kinitprot(unsigned long pmemsz)
             ;
         }
     }
+    kprintf("%lu kilobytes of buffer cache @ %p..%p\n",
+            vmpagestat.nbuf << (PAGESIZELOG2 - 10),
+            vmpagestat.buf, vmpagestat.bufend);
     /* allocate unused device regions (in 3.5G..4G) */
 //    pageaddzone(DEVMEMBASE, &vmshmq, 0xffffffffU - DEVMEMBASE + 1);
 #if (SMP) || (APIC)
@@ -234,9 +237,9 @@ kinitprot(unsigned long pmemsz)
 //    kprintf("%ld kilobytes physical memory\n", pmemsz >> 10);
     kprintf("%ld kilobytes kernel memory\n", (uint32_t)&_ebss >> 10);
     kprintf("%ld kilobytes allocated physical memory (%ld wired, %ld total)\n",
-            ((vmpagestat.nwired + vmpagestat.nmapped + vmpagestat.nbuf)
+            ((vmpagestat.nwire + vmpagestat.nmap + vmpagestat.nbuf)
              << (PAGESIZELOG2 - 10)),
-            vmpagestat.nwired << (PAGESIZELOG2 - 10),
+            vmpagestat.nwire << (PAGESIZELOG2 - 10),
             vmpagestat.nphys << (PAGESIZELOG2 - 10));
     schedinit();
 #if (PS2DRV)

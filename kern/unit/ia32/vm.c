@@ -64,7 +64,7 @@ vmmapseg(void *pagetab, uint32_t virt, uint32_t phys, uint32_t lim,
 
     n = rounduppow2(lim - virt, PAGESIZE) >> PAGESIZELOG2;
     pte = (pte_t *)pagetab + vmpagenum(virt);
-    vmpagestat.nmapped += n;
+    vmpagestat.nmap += n;
     while (n--) {
         *pte = phys | flg;
         phys += PAGESIZE;
@@ -261,10 +261,10 @@ vmfreephys(void *virt, uint32_t size)
             pg = pagefind(adr);
             pagerm(pg);
 #endif
-            vmpagestat.nmapped++;
+            vmpagestat.nmap--;
         } else {
 //                kprintf("UNWIRE\n");
-            vmpagestat.nwired++;
+            vmpagestat.nwire--;
         }
         pagefreephys((void *)adr);
         *pte = 0;
@@ -291,9 +291,9 @@ vmpagefault(unsigned long pid, uint32_t adr, uint32_t flags)
             mtxlk(&page->lk);
             page->nref++;
             if (flg & PAGEWIRED) {
-                vmpagestat.nwired++;
+                vmpagestat.nwire++;
             } else {
-                vmpagestat.nmapped++;
+                vmpagestat.nmap++;
                 page->nflt++;
                 if (!(adr & PAGEWIRED)) {
                     qid = pagecalcqid(page);
