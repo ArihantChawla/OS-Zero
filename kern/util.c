@@ -29,11 +29,6 @@
  *   code to avoid stack problems, at least for linker constants
  */
 
-#if defined(__KERNEL__) && (__KERNEL__)
-extern struct cons constab[NCONS] ALIGNED(PAGESIZE);
-extern long        conscur;
-#endif
-
 const char *trapnametab[TRAPNCPU] ALIGNED(PAGESIZE)
 = {
     "DE",

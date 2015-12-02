@@ -4,6 +4,7 @@
 #include <features.h>
 #include <errno.h>
 #if (_ZERO_SOURCE)
+/* TODO: ioperm() */
 #include <sys/zero/syscall.h>
 #endif
 

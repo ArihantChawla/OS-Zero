@@ -272,6 +272,7 @@ vbeputpix_p(void *ptr, gfxargb32_t pix)
     return;
 }
 
+#if 0
 void
 vbeclrscr(gfxargb32_t pix)
 {
@@ -288,8 +289,8 @@ vbeclrscr(gfxargb32_t pix)
 
     return;
 }
+#endif
 
-#if 0
 void
 vbeclrscr(gfxargb32_t pix)
 {
@@ -300,15 +301,14 @@ vbeclrscr(gfxargb32_t pix)
 
     for (x = 0 ; x < vbescreen.w ; x++) {
         for (y = 0 ; y < vbescreen.h ; y++) {
-            vbeputpix_p(ptr, pix);
+            vbeputpix(pix, x, y);
 //            vbeputpix_p(ptr, pix);
-            ptr + incr;
+//            ptr + incr;
         }
     }
 
     return;
 }
-#endif
 
 #if (NEWFONT)
 

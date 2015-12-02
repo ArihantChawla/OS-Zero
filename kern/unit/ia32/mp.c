@@ -251,15 +251,15 @@ mpmain(struct m_cpu *cpu)
     ioapicinit(cpu->id);
 #endif
     tssinit(cpu->id);
-#if 0
     while (1) {
         k_waitint();
     }
-#endif
+#if 0
     schedloop();
 
     /* NOTREACHED */
     for ( ; ; ) { ; }
+#endif
 }
 
 void

@@ -204,6 +204,20 @@ int main (void)
 
 bool init(void)
 {
+#if (!__KERNEL__)
+    SDL_Surface *tmpSurf;
+#endif
+    unsigned i;
+#if 0
+    const int max_colour = 255;
+    const int min_colour = 0;
+#endif
+    const long max_colour = 255;
+    const long min_colour = 0;
+    double step = (double)(max_colour - min_colour) / (PALETTE_SIZE / 2);
+    double tmp;
+    unsigned len = sizeof offsetTable / sizeof offsetTable[0];
+
     if (OUT_HEIGHT < OFFSET_MAG) {
 #if (!__KERNEL__)
         puts("Output screen/window size is too small.");
@@ -224,7 +238,6 @@ bool init(void)
 
 #ifndef NOLOGO
     // load logo
-    SDL_Surface *tmpSurf;
     tmpSurf = SDL_LoadBMP("./oszero.bmp");
     if (!tmpSurf) return false;
     if (tmpSurf->w > surface->w || tmpSurf->h > surface->h) {
@@ -256,18 +269,13 @@ bool init(void)
     if (!intermediateR) return false;
 #endif
 
-    unsigned i;
-
     // init palettes
 
-    const int max_colour = 255;
-    const int min_colour = 0;
-    double step = (double)(max_colour - min_colour) / (PALETTE_SIZE / 2);
-
     for (i = 0; i < PALETTE_SIZE / 2; i++) {
+        int b;
 
-        int b = min_colour + (int)ceil(i * step);
-
+        tmp = ceil(i * step);
+        b = min_colour + tmp;
         if (b > max_colour) b = max_colour;
 
         palette1[i] = b;
@@ -276,7 +284,6 @@ bool init(void)
     }
 
     // void init_offsetTable(void)
-    unsigned len = sizeof offsetTable / sizeof offsetTable[0];
     for (i = 0; i < len; i++) {
         offsetTable[i] = sin(DEG_TO_RAD((double)i / len * 360.0)) * OFFSET_MAG;
     }
@@ -373,6 +380,8 @@ void drawPlasma(SDL_Surface *surface)
     uint16_t    p3_sinposx;
     int         p3_palettePos = OFFSET_MAG;
         
+    unsigned ypos = 0;
+
 #if (__KERNEL__)
 #if (PLASMADOUBLEBUF)
     uint8_t *dest = plasmabuf;
@@ -386,8 +395,6 @@ void drawPlasma(SDL_Surface *surface)
     p1_sinposx = p1_sinpos_start_x;
     p2_sinposx = p2_sinpos_start_x;
     p3_sinposx = p3_sinpos_start_x;
-
-    unsigned ypos = 0;
 
     for (y = 0; y < INTER_HEIGHT; y++) {
 

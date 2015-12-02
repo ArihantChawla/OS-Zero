@@ -12,7 +12,7 @@
 
 extern uint64_t  kernidt[];
 extern void     *irqvec[];
-extern void      irqtmr0(void);
+//extern void      irqtmr0(void);
 extern void      irqtmr(void);
 //volatile long    irqtmrfired;
 

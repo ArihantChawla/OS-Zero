@@ -422,6 +422,9 @@ pcireadconf1(uint8_t busid, uint8_t slotid, uint8_t funcid,
             retval = inb(PCICONFADR1 + (regid & 0x03));
 
             break;
+        default:
+
+            break;
     }
 
     return retval;
@@ -443,6 +446,9 @@ pciwriteconf1(uint8_t busid, uint8_t slotid, uint8_t funcid,
             break;
         case 1:
             outb((uint8_t)val, PCICONFADR1 + (regid & 0x03));
+
+            break;
+        default:
 
             break;
     }
@@ -472,8 +478,13 @@ pcireadconf2(uint8_t busid, uint8_t slotid, uint8_t funcid,
                 retval = inb(pciconfadr2(slotid, regid));
 
                 break;
+            default:
+
+                break;
         }
-        outb(0, PCICONFADR1);
+        if (retval != ~0) {
+            outb(0, PCICONFADR1);
+        }
     }
 
     return retval;
@@ -483,24 +494,34 @@ void
 pciwriteconf2(uint8_t busid, uint8_t slotid, uint8_t funcid,
               uint16_t regid, uint8_t len, uint8_t val)
 {
+    int okay = 0;
+    
     if (!(slotid & 0x10)) {
         outb((uint8_t)(0xf0 | (funcid << 1)), PCICONFADR1);
         outb(busid, 0xcfa);
         switch (len) {
             case 4:
                 outl(val, pciconfadr2(slotid, regid));
+                okay = 1;
                 
                 break;
             case 2:
                 outw(val, pciconfadr2(slotid, regid));
+                okay = 1;
 
                 break;
             case 1:
                 outb(val, pciconfadr2(slotid, regid));
+                okay = 1;
 
                 break;
+            default:
+                
+                break;
         }
-        outb(0, PCICONFADR1);
+        if (okay) {
+            outb(0, PCICONFADR1);
+        }
     }
 
     return;

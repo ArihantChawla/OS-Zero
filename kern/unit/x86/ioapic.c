@@ -10,7 +10,6 @@
 #include <kern/unit/ia32/mp.h>
 
 extern volatile struct m_cpu     cputab[NCPU];
-extern volatile long             mpmultiproc;
 extern volatile struct m_cpu    *mpbootcpu;
 extern volatile struct mpioapic *mpioapic;
 volatile struct ioapic          *ioapic;

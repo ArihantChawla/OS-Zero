@@ -109,7 +109,7 @@ struct m_cacheinfo {
 #define CPUIDNSC       9
 #define CPUIDRISE      10
 
-static char *_vendortab[]
+static const char *_vendortab[]
 = {
     "AuthenticAMD",
     "GenuineIntel",
@@ -184,6 +184,10 @@ cpuid_print_cache_info_intel(uint8_t id)
                 __printf("ucache: %ldK, %ld-way, %ld-byte line\n",
                        (long)info->size / 1024, (long)info->nway, (long)info->xsize);
                 
+                break;
+            default:
+                __printf("failed to probe cache info\n");
+
                 break;
         }
     }
@@ -374,7 +378,7 @@ struct m_cpuidcregs {
 #endif /* 0 */
 
 void
-cpuprobe(struct m_cpuinfo *cpuinfo)
+cpuprobe(struct m_cpuinfo *info)
 {
     struct m_cpuid       buf;
     union  m_cpuidvendor vbuf;
@@ -388,43 +392,43 @@ cpuprobe(struct m_cpuinfo *cpuinfo)
         cpuidinitci_intel();
         cpuidgetci_intel(&buf);
         cbuf = &cpuidcacheinfo[M_CPUIDINSTRCACHE];
-        cpuinfo->l1i.size = cbuf->size;
-        cpuinfo->l1i.clsz = cbuf->xsize;
-        cpuinfo->l1i.nway = cbuf->nway;
+        info->l1i.size = cbuf->size;
+        info->l1i.clsz = cbuf->xsize;
+        info->l1i.nway = cbuf->nway;
         cbuf = &cpuidcacheinfo[M_CPUIDINSTRTLB];
-        cpuinfo->l1i.ntlb = cbuf->xsize;
+        info->l1i.ntlb = cbuf->xsize;
         cbuf = &cpuidcacheinfo[M_CPUIDDATACACHE];
-        cpuinfo->l1d.size = cbuf->size;
-        cpuinfo->l1d.clsz = cbuf->xsize;
-        cpuinfo->l1d.nway = cbuf->nway;
+        info->l1d.size = cbuf->size;
+        info->l1d.clsz = cbuf->xsize;
+        info->l1d.nway = cbuf->nway;
         cbuf = &cpuidcacheinfo[M_CPUIDDATATLB];
-        cpuinfo->l1i.ntlb = cbuf->xsize;
+        info->l1i.ntlb = cbuf->xsize;
         cbuf = &cpuidcacheinfo[M_CPUIDUNICACHE];
-        cpuinfo->l2.size = cbuf->size;
-        cpuinfo->l2.clsz = cbuf->xsize;
-        cpuinfo->l2.nway = cbuf->nway;
+        info->l2.size = cbuf->size;
+        info->l2.clsz = cbuf->xsize;
+        info->l2.nway = cbuf->nway;
     } else if (!__strcmp((const char *)vbuf.str, _vendortab[CPUIDAMD])) {
         cpuidgetl1_amd(&buf);
-        cpuinfo->l1i.size = buf.edx >> 14;
-        cpuinfo->l1i.clsz = buf.edx & 0xff;
-        cpuinfo->l1i.nway = (buf.edx >> 16) & 0xff ;
-        cpuinfo->l1i.ntlb = buf.ebx & 0xff;
-        cpuinfo->l1d.size = buf.ecx >> 14;
-        cpuinfo->l1d.clsz = buf.ecx & 0xff;
-        cpuinfo->l1d.nway = (buf.ecx >> 16) & 0xff ;
-        cpuinfo->l1d.ntlb = (buf.ebx >> 16) & 0xff;
+        info->l1i.size = buf.edx >> 14;
+        info->l1i.clsz = buf.edx & 0xff;
+        info->l1i.nway = (buf.edx >> 16) & 0xff ;
+        info->l1i.ntlb = buf.ebx & 0xff;
+        info->l1d.size = buf.ecx >> 14;
+        info->l1d.clsz = buf.ecx & 0xff;
+        info->l1d.nway = (buf.ecx >> 16) & 0xff ;
+        info->l1d.ntlb = (buf.ebx >> 16) & 0xff;
         cpuidgetl2_amd(&buf);
-        cpuinfo->l2.size = buf.ecx >> 6 & 0xffc00;
-        cpuinfo->l2.clsz = buf.ecx & 0xff;
-        cpuinfo->l2.nway = (buf.ebx >> 12) & 0x0f;
-        cpuinfo->l2.ntlb = buf.ebx & 0x0fff;
+        info->l2.size = buf.ecx >> 6 & 0xffc00;
+        info->l2.clsz = buf.ecx & 0xff;
+        info->l2.nway = (buf.ebx >> 12) & 0x0f;
+        info->l2.ntlb = buf.ebx & 0x0fff;
     }
     cpuidgetinfo(&buf);
     if (cpuidhasfxsr(&buf)) {
-        cpuinfo->flags |= CPUHASFXSR;
+        info->flags |= CPUHASFXSR;
     }
     if (cpuidhasapic(&buf)) {
-        cpuinfo->flags |= CPUHASAPIC;
+        info->flags |= CPUHASAPIC;
     }
 
     return;

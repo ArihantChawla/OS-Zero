@@ -25,6 +25,12 @@
 #include <kern/unit/x86/link.h>
 #if (SMP) || (APIC)
 #include <kern/unit/ia32/mp.h>
+#if (APIC)
+#include <kern/unit/x86/apic.h>
+#endif
+#endif
+#if (IOAPIC)
+#include <kern/unit/x86/ioapic.h>
 #endif
 #if (VBE)
 #include <kern/unit/x86/trap.h>
@@ -36,7 +42,7 @@ extern void trapinitprot(void);
 #endif
 extern void cpuinit(volatile struct m_cpu *cpu);
 extern long sysinit(long id);
-extern long bufinit(void);
+//extern long bufinit(void);
 
 #if (HPET)
 extern void hpetinit(void);
@@ -74,7 +80,7 @@ extern void acpiinit(void);
 extern void sb16init(void);
 #endif
 #if (APIC)
-extern void apicinit(long cpuid);
+//extern void apicinit(long cpuid);
 extern void apicstarttmr(void);
 #endif
 extern void taskinitenv(void);
@@ -94,7 +100,6 @@ extern long                      vbefontw;
 extern long                      vbefonth;
 #endif
 extern volatile long             mpncpu;
-extern volatile long             mpmultiproc;
 extern struct vmpagestat         vmpagestat;
 #if (SMP)
 #if (ACPI)
@@ -103,9 +108,6 @@ extern volatile struct acpidesc *acpidesc;
 #endif
 extern struct pageq              vmphysq;
 extern struct pageq              vmshmq;
-#if (SMP) || (APIC)
-extern volatile uint32_t        *mpapic;
-#endif
 
 void
 kinitprot(unsigned long pmemsz)
@@ -148,7 +150,7 @@ kinitprot(unsigned long pmemsz)
 #if (SMBIOS)
     smbiosinit();
 #endif
-#if (PS2DRV)
+#if (PS2DRV) && 0
     ps2init();
 #endif
 #if (VBE) && (PLASMA) && (!PLASMAFOREVER)
@@ -235,6 +237,9 @@ kinitprot(unsigned long pmemsz)
             vmpagestat.nwired << (PAGESIZELOG2 - 10),
             vmpagestat.nphys << (PAGESIZELOG2 - 10));
     schedinit();
+#if (PS2DRV)
+    ps2init();
+#endif
 #if (APIC)
     apicstarttmr();
 #else

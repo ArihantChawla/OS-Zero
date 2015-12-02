@@ -23,7 +23,6 @@ extern void                  (*mpspurint)(void);
 extern uint64_t                kernidt[NINTR];
 extern void                   *irqvec[];
 extern volatile struct m_cpu   cputab[NCPU];
-extern volatile uint32_t      *mpapic;
 extern volatile struct m_cpu  *mpbootcpu;
 static uint32_t                apictmrcnt;
 

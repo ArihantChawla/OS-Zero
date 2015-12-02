@@ -59,6 +59,9 @@ sb16setup(void)
             sb16drv.irq = 10;
 
             break;
+        default:
+
+            return;
     }
     /* probe DMA */
     outb(SB16CONFDMA, SB16MIXERADR);
@@ -76,6 +79,9 @@ sb16setup(void)
             sb16drv.dma8 = 3;
 
             break;
+        default:
+
+            break;
     }
     switch (u8val & 0xf0) {
         case SB16DMA5BIT:
@@ -88,6 +94,9 @@ sb16setup(void)
             break;
         case SB16DMA7BIT:
             sb16drv.dma16 = 7;
+
+            break;
+        default:
 
             break;
     }
@@ -317,6 +326,9 @@ sb16intr(void)
             break;
         case SB16MPU401BIT:
             reg = SB16MPU401STAT;
+
+            break;
+        default:
 
             break;
     }

@@ -10,7 +10,7 @@
 #include <kern/unit/x86/asm.h>
 #include <kern/unit/x86/trap.h>
 
-extern void ksyscall(void);
+//extern void ksyscall(void);
 
 extern void picinit(void);
 extern void idtset(void);

@@ -1,9 +1,10 @@
 #include <stdint.h>
 #include <zero/types.h>
 #include <kern/util.h>
+#include <kern/debug.h>
 
 void
-kprintregs(void)
+m_printregs(void)
 {
     int32_t eax;
     int32_t ecx;
@@ -39,7 +40,7 @@ kprintregs(void)
 }
 
 void
-kprintgenregs(struct m_genregs *genregs)
+m_printgenregs(struct m_genregs *genregs)
 {
     kprintf("general-purpose registers\n");
     kprintf("-------------------------\n");
@@ -56,7 +57,7 @@ kprintgenregs(struct m_genregs *genregs)
 }
 
 void
-kprintsegregs(struct m_segregs *segregs)
+m_printsegregs(struct m_segregs *segregs)
 {
     kprintf("segment registers\n");
     kprintf("-----------------\n");
@@ -67,7 +68,7 @@ kprintsegregs(struct m_segregs *segregs)
 }
 
 void
-kprintjmpframe(struct m_jmpframe *jmpframe, long havestk)
+m_printjmpframe(struct m_jmpframe *jmpframe, long havestk)
 {
     kprintf("jump/stack frame\n");
     kprintf("----------------\n");
@@ -78,16 +79,18 @@ kprintjmpframe(struct m_jmpframe *jmpframe, long havestk)
         kprintf("uesp\t0x%lx\n", jmpframe->uesp);
         kprintf("uss\t%hx\n", jmpframe->uss);
     }
+
+    return;
 }
 
 void
-kprinttcb(struct m_tcb *m_tcb, long flg)
+m_printtcb(struct m_tcb *m_tcb, long flg)
 {
     kprintf("flg\t%lx\n", m_tcb->flg);
     kprintf("pdbr\t%lx\n", m_tcb->pdbr);
-    kprintgenregs(&m_tcb->genregs);
-    kprintsegregs(&m_tcb->segregs);
-    kprintjmpframe(&m_tcb->iret, 1);
+    m_printgenregs(&m_tcb->genregs);
+    m_printsegregs(&m_tcb->segregs);
+    m_printjmpframe(&m_tcb->iret, flg & M_JMPFRAMESTK);
 
     return;
 }
