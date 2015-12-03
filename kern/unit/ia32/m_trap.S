@@ -2,8 +2,9 @@
 #include <kern/conf.h>
 #include <kern/unit/x86/boot.h>
 #include <kern/unit/x86/trap.h>
+#include <kern/unit/x86/bits/cpu.h>
 #include <kern/unit/ia32/macro.S>
-#include <kern/unit/ia32/tcb.h>
+#include <kern/unit/ia32/task.h>
 
 /*
  * NOTE: we use interrupt gates, which automatically disable further
@@ -428,7 +429,7 @@ trappf:
 	movl	%esp, %ebp
 
 #if (FASTINTR)
-	movl	8(%esp), %ebx		// stack frame argument on stack
+	leal	40(%esp), %ebx		// stack frame argument on stack
 	/* error code is in %ecx */
 	pushl	%ebx
 	movl	%cr2, %edx		// fault address
@@ -601,19 +602,101 @@ _tmr0fin:
 	 * -------------------------
 	 * ebp		- old ESP _and_ EBP
 	 *
-	 * top of stack after interrupt
-	 * ----------------------------
+	 * top of stack after prologue
+	 * ---------------------------
 	 * ss		- user-stack segment selector
 	 * esp		- userland stack pointer
 	 * eflags
 	 * cs
 	 * eip
 	 * ebp		<- EBP
-	 * eax
+	 * eax          <- ESP
 	 *
 	 * NOTE: ss and esp are only pushed if the interrupt happened
 	 * in user-mode, i.e. there's a privilege transition to system-mode
  	 */
+
+#if (NEWTCB)
+
+.align	16
+
+irqtmr:
+	pushl	%ebp			// push frame pointer
+	movl	%esp, %ebp		// store stack pointer
+	pushl	%eax			// back %eax up
+	movl	%gs:8, %eax		// per-cpu current task
+	leal	52(%eax), %esp		// adjust sp for pushing m_tcb.genregs
+	pushal				// push general-purpose registers
+	/* store FPU context */
+	/* %esp points to top of segregs */
+	movl	(%eax), %ebx		// fetch flg
+	leal	64(%esp), %ecx		// ECX = &task->fpctx
+	andl	$CPUHASFXSR, %ebx	// (flg & CPUHASFXSR) ?
+	cmpl	$0, %ebx		// if so, branch to _fxsave
+	jne	_fxsave			//
+	fnsave	(%ecx)			// use fnsave instead
+	jmp	_fpusaved
+_fxsave:	
+	fxsave	(%ecx)
+_fpusaved:
+	/* push segment registers */
+	pushl	%gs			// kernel thread-local storage
+	pushl	%fs			// user thread-local storage?
+	pushl	%es			// buffer segment? something... :)
+	pushl	%ds			// data segment
+	/* %esp points to m_task->tcb */
+	movl	8(%ebp), %edx		// EDX = pushed %cs
+	movl	(%ebp), %ebx		// EBX = stored frame pointer
+	movl	%cr3, %ecx		// ECX = %cr3 (PDBR)
+	cmpl	$UTEXTSEL, %edx		// check for user-mode interrupt
+	jne	_getsysstk		// stack-info was not pushed if not
+	movl	16(%ebp), %edi		// EDI = stored stack pointer
+	movl	$UDATASEL, %esi		// ESI = user data-segment selector
+	jmp	_havestk		// determined stack parameters
+_getsysstk:
+	/* construct stack information */
+	movl	%ebx, %edi		// EDI = stored frame pointer
+	movl	$DATASEL, %esi		// ESI = system stack/data selector
+	addl	$8, %ebx		// EBX = caller frame pointer
+	addl	$4, %edi		// adjust to call-time stack pointer
+_havestk:	
+	fwait
+	movl	%ecx, 48(%esp)		// task->pdbr = PDBR
+	movl	%esi, 76(%esp)		// task->frame.ss = SS
+	movl	%ebx, 28(%esp)		// task->regs.ebp = caller EBP
+	movl	%edx, 68(%esp)		// task->frame.cs = caller %cs
+	movl	-4(%ebp), %ecx		// ECX = pushed %eax
+	movl	4(%ebp), %esi		// ESI = pushed return address
+	movl	%edi, 76(%esp)		// patch stack pointer in m_tcb.frame
+	movl	%ecx, 44(%esp)		// patch %eax in m_tcb.genregs
+//	movl	(%ebp), %ebx		// EBX = pushed frame pointer
+	movl	12(%ebp), %edx		// EDX = pushed flags register
+	addl	$4, %ebx		// EBX points past trap frame
+	movl	%esi, 60(%esp)		// frame.eip = return address
+	movl	%edx, 68(%esp)		// frame->eflags = pre-interrupt value
+	/* schedule next thread */
+	movl	%gs:8, %eax		// task structure address
+	movl	schedpicktask, %ebx	// get scheduler-specific function
+	movl	%ebp, %esp		// restore stack pointer
+	pushl	%eax			// store copy of task pointer
+	call	*%ebx			// call scheduler function (taskpick)
+	popl	%ecx			// pop earlier task pointer
+	cmpl	%eax, %ecx		// did we reschedule the same task?
+	jne	_swtch			// if not, branch to _swtch
+	/* continue the same task */
+	leal	48(%eax), %esp
+	popal
+//	leal	12(%ebp), %esp		// restore stack pointer
+	addl	$16, %ebp		// adjust frame pointer
+#if (APIC)
+	_apiceoi
+#else
+	_piceoi1
+#endif
+	iretl
+_swtch:
+	call	m_taskjmp
+#else
 
 .align	16
 
@@ -629,14 +712,14 @@ irqtmr:
 	pushal				// push general-purpose registers
 	/* store FPU context */
 	movl	-24(%esp), %ebx		// fetch fxsave-flag
-	andl	$M_FPXMM, %ebx
+	andl	$CPUHASFXSR, %ebx
 	cmpl	$0, %ebx
 	jne	_fxsave			// use FXSAVE if non-zero
 	fnsave	(%eax)			// use FNSAVE if zero
-	jmp	_fpudone
+	jmp	_fpusaved
 _fxsave:	
 	fxsave	(%eax)
-_fpudone:
+_fpusaved:
 	//
 	/* push segment registers */
 	pushl	%gs			// kernel thread-local storage
@@ -695,7 +778,9 @@ _havestk:
 #endif
 	iretl
 _swtch:
-	call	m_tcbjmp
+	call	m_taskjmp
+
+#endif
 	
 .align	16
 

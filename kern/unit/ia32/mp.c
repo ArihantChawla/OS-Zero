@@ -8,6 +8,7 @@
 #include <sys/io.h>
 #include <zero/trix.h>
 #include <zero/asm.h>
+#include <zero/cdecl.h>
 #include <zero/param.h>
 #include <zero/types.h>
 #include <kern/util.h>
@@ -40,7 +41,7 @@ extern void      trapinitidt(void);
 #if (IOAPIC)
 extern void      ioapicinit(long id);
 #endif
-extern void      cpuinit(struct m_cpu *cpu);
+extern void      cpuinit(volatile struct m_cpu *cpu);
 extern void      seginit(long id);
 extern void      idtset(void);
 
@@ -229,7 +230,7 @@ mpinit(void)
     return;
 }
 
-ASMLINK
+ASMLINK NORETURN
 void
 mpmain(struct m_cpu *cpu)
 {

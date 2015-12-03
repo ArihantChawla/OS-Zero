@@ -124,7 +124,6 @@ vminit(void *pagetab)
              (uint32_t)kernusrstktab, (uint32_t)kernusrstktab,
              (uint32_t)kernusrstktab + NCPU * KERNSTKSIZE,
              PAGEUSER | PAGEPRES | PAGEWRITE);
-
 #if defined(__x86_64__) || defined(__amd64__)
     /* zero page structures */
     kbzero(kernpagetab4, 4 * PAGESIZE);

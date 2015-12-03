@@ -22,7 +22,7 @@
 #include <kern/unit/ppc/asm.h>
 #endif
 
-#define __errnoloc() (&k_curtask->errnum)
+//#define __errnoloc() (&k_curtask->errnum)
 
 //extern struct m_cpuinfo cpuinfo;
 
@@ -48,7 +48,7 @@ struct taskstk {
 /* process or thread attributes */
 struct task {
     /* thread control block - KEEP THIS FIRST in the structure */
-    struct m_tcb    m_tcb;              // context (thread control block)
+    struct m_task   m_task;             // machine-thread control block
     /* scheduler parameters */
     long            sched;              // thread scheduler class
     long            prio;               // priority; < 0 for SCHEDFIFO realtime
@@ -68,10 +68,12 @@ struct task {
     sigset_t        sigmask;            // signal mask
     sigset_t        sigpend;            // pending signals
     struct siginfo *sigqueue[NSIG];     // info structures for pending signals
+#if 0
     /* stack information */
     struct taskstk  ustk;               // user-mode stack
     struct taskstk  kstk;               // system-mode stack
     struct taskstk  altstk;             // alternative [signal] stack
+#endif
     int             errnum;             // errno
 //    long           interact;
 };

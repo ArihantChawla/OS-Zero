@@ -38,7 +38,7 @@ schedyield(void)
         schedpicktask(oldtask);
     } while (!task);
     if (task != oldtask) {
-        m_tcbjmp(&task->m_tcb);
+        m_taskjmp(&task->m_task);
     } else {
 
         return;

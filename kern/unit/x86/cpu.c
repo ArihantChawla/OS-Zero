@@ -16,7 +16,7 @@ volatile struct m_cpu cputab[NCPU] ALIGNED(PAGESIZE);
 struct m_cpuinfo      cpuinfotab[NCPU];
 
 void
-cpuinit(struct m_cpu *cpu)
+cpuinit(volatile struct m_cpu *cpu)
 {
     long id = cpu->id;
 #if 0

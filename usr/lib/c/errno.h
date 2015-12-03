@@ -3,7 +3,7 @@
 
 #include <bits/errno.h>
 
-#if !defined(__ASSEMBLER__)
+#if !defined(__ASSEMBLER__) && (!__KERNEL__)
 
 #if defined(__GLIBC__)
 
@@ -20,7 +20,7 @@ extern int * __errnoloc(void);
 
 #endif /* defined(__GLIBC__) */
 
-#endif /* !defined(__ASSEMBLER__) */
+#endif /* !defined(__ASSEMBLER__) && !__KERNEL__ */
 
 #endif /* __ERRNO_H__ */
 

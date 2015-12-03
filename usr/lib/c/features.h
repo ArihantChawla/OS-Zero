@@ -1,6 +1,10 @@
 #ifndef __FEATURES_H__
 #define __FEATURES_H__
 
+#if defined(__KERNEL__)
+#undef PTHREAD
+#endif
+
 #define _REENTRANT             1        // enable re-entrant thread-safe code
 #define _THREAD_SAFE           1        // thread safety on some systems
 

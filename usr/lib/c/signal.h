@@ -3,10 +3,6 @@
 
 /* TODO: sysconf(): _SC_SIGRT_MIN, _SC_SIGRT_MAX */
 
-#if !defined(PTHREAD) || defined(__KERNEL__)
-#define PTHREAD 0
-#endif
-
 #include <features.h>
 //#include <sys/types.h>
 #include <zero/param.h>

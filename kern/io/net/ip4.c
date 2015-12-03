@@ -2,7 +2,7 @@
 #define IP4TEST 0
 #endif
 
-#define IP4NPKT    16348
+#define IP4NPKT    16384
 #define IP4PKTSIZE 65536
 #include <stddef.h>
 #include <stdlib.h>
@@ -34,7 +34,8 @@ ip4chksum16(const uint8_t *buf, size_t size)
 {
     uint32_t sum = 0;
     size_t   ndx;
-    
+
+    size = min(size, IP4PKTSIZE);
     /* Accumulate checksum */
     for (ndx = 0; ndx < size - 1; ndx += 2) {
         uint16_t word16 = *(uint16_t *)&buf[ndx];
@@ -50,7 +51,7 @@ ip4chksum16(const uint8_t *buf, size_t size)
     }
     
     /* Fold to get the ones-complement result */
-    while (sum >> 16) sum = (sum & 0xffff)+(sum >> 16);
+    while (sum >> 16) sum = (sum & 0xffff) + (sum >> 16);
 
     /* Invert to get the negative in ones-complement arithmetic */
     return ~sum;
@@ -115,11 +116,15 @@ ip4chksum64(const uint8_t *buf, size_t size)
     tmp1 = sum;
     tmp2 = sum >> 32;
     tmp1 += tmp2;
-    if (tmp1 < tmp2) tmp1++;
+    if (tmp1 < tmp2) {
+        tmp1++;
+    }
     tmp3 = tmp1;
     tmp4 = tmp1 >> 16;
     tmp3 += tmp4;
-    if (tmp3 < tmp4) tmp3++;
+    if (tmp3 < tmp4) {
+        tmp3++;
+    }
     
     return ~tmp3;
 }
@@ -176,11 +181,15 @@ ip4chksum64_2(const uint8_t *buf, size_t size)
     tmp1 = sum;
     tmp2 = sum >> 32;
     tmp1 += tmp2;
-    if (tmp1 < tmp2) tmp1++;
+    if (tmp1 < tmp2) {
+        tmp1++;
+    }
     tmp3 = tmp1;
     tmp4 = tmp1 >> 16;
     tmp3 += tmp4;
-    if (tmp3 < tmp4) tmp3++;
+    if (tmp3 < tmp4) {
+        tmp3++;
+    }
     
     return ~tmp3;
 }

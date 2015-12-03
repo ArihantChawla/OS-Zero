@@ -1,0 +1,8 @@
+#ifndef __KERN_UNIT_X86_BITS_CPU_H__
+#define __KERN_UNIT_X86_BITS_CPU_H__
+
+#define CPUHASFXSR 0x00000001
+#define CPUHASAPIC 0x00000002
+
+#endif /* __KERN_UNIT_X86_BITS_CPU_H__ */
+

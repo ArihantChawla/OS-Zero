@@ -68,29 +68,29 @@ m_printsegregs(struct m_segregs *segregs)
 }
 
 void
-m_printjmpframe(struct m_jmpframe *jmpframe, long havestk)
+m_printtrapframe(struct m_trapframe *trapframe, long havestk)
 {
     kprintf("jump/stack frame\n");
     kprintf("----------------\n");
-    kprintf("eip\t0x%lx\n", jmpframe->eip);
-    kprintf("cs\t%hx\n", jmpframe->cs);
-    kprintf("eflags\t0x%lx\n", jmpframe->eflags);
+    kprintf("eip\t0x%lx\n", trapframe->eip);
+    kprintf("cs\t%hx\n", trapframe->cs);
+    kprintf("eflags\t0x%lx\n", trapframe->eflags);
     if (havestk) {
-        kprintf("uesp\t0x%lx\n", jmpframe->uesp);
-        kprintf("uss\t%hx\n", jmpframe->uss);
+        kprintf("uesp\t0x%lx\n", trapframe->uesp);
+        kprintf("uss\t%hx\n", trapframe->uss);
     }
 
     return;
 }
 
 void
-m_printtcb(struct m_tcb *m_tcb, long flg)
+m_printtask(struct m_task *task, long flg)
 {
-    kprintf("flg\t%lx\n", m_tcb->flg);
-    kprintf("pdbr\t%lx\n", m_tcb->pdbr);
-    m_printgenregs(&m_tcb->genregs);
-    m_printsegregs(&m_tcb->segregs);
-    m_printjmpframe(&m_tcb->frame, flg & M_JMPFRAMESTK);
+    kprintf("flg\t%lx\n", task->flg);
+    kprintf("pdbr\t%lx\n", task->tcb.pdbr);
+    m_printgenregs(&task->tcb.genregs);
+    m_printsegregs(&task->tcb.segregs);
+    m_printtrapframe(&task->tcb.trapframe, flg & M_TRAPFRAMESTK);
 
     return;
 }

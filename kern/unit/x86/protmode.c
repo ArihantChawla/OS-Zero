@@ -113,11 +113,11 @@ void
 kinitprot(unsigned long pmemsz)
 {
     uint32_t lim = min(pmemsz, KERNVIRTBASE);
-//    uint32_t sp = (uint32_t)kernsysstktab + NCPU * KERNSTKSIZE;
-    uint32_t sp = (uint32_t)kernsysstktab + KERNSTKSIZE;
+    uint32_t sp = (uint32_t)kernusrstktab + KERNSTKSIZE;
 
     /* initialise virtual memory */
     vminit((uint32_t *)&_pagetab);
+//    vminit((uint32_t *)&_pagetab);
 //    schedinit();
     /* zero kernel BSS segment */
     kbzero(&_bssvirt, (uint32_t)&_ebssvirt - (uint32_t)&_bssvirt);
@@ -134,17 +134,16 @@ kinitprot(unsigned long pmemsz)
 #endif
     /* TODO: use memory map from GRUB? */
 //    vminitphys((uintptr_t)&_epagetab, lim);
-    vminitphys((uintptr_t)&_epagetab, lim);    
+    vminitphys((uintptr_t)&_epagetab, lim);
     meminit(min(pmemsz, lim));
     __asm__ __volatile__ ("movl %0, %%esp\n"
-                          "pushl $0\n"
-                          "movl %%esp, %%ebp\n"
                           :
-                          : "r" (sp));
+                          : "rm" (sp));
     tssinit(0);
 #if (VBE) && (PLASMA) && (!PLASMAFOREVER)
     plasmaloop(4);
 #endif
+    m_printregs();
     kprintf("%lu free physical pages @ 0x%p..0x%p\n",
             vmpagestat.nphys, vmpagestat.phys, vmpagestat.physend);
 #if 0

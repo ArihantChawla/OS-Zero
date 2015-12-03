@@ -3,51 +3,53 @@
 #include <kern/unit/x86/boot.h>
 #include <kern/unit/x86/trap.h>
 #include <kern/unit/ia32/macro.S>
-#include <kern/unit/ia32/tcb.h>
+#include <kern/unit/ia32/task.h>
 
 	/* TODO: privilege transition(?), per-cpu segment (%gs), tss/ltr */
 
-.globl	m_tcbjmp
+.globl	m_taskjmp
 
 .text	32
 
 .align	32
 
-	/* FASTCALL NORETURN void m_tcbjmp(struct m_tcb *tcb); */
+	/* FASTCALL NORETURN void m_taskjmp(struct m_task *task); */
 
-m_tcbjmp:
+m_taskjmp:
 	/* fetch fxsave-word */
-	movl	576(%eax), %ebx
-	/* adjust %esp to tcb->pdbr */
-	leal	580(%eax), %esp
+	movl	(%eax), %ebx
+	/* adjust %esp to task->pdbr */
+	leal	4(%eax), %esp
 	andl	$M_FPXMM, %ebx
-	cmpl	$0, %ebx
+	leal	88(%eax), %edx
 	movl	%esp, %ecx
+	cmpl	$0, %ebx
 	je	_frstor
-	fxrstor	(%eax)
+	fxrstor	(%edx)
 	jmp	_fpudone
 _frstor:
-	frstor	(%eax)
+	frstor	(%edx)
 _fpudone:
-	/* restore page directory page register */
+	/* fetch page directory page register */
 	popl	%ebx
-	movl	%ebx, %cr3
-	/* load address of tcb->segregs into %esp */
+	/* load address of task->segregs into %esp */
 	popl	%ds
 	popl	%es
 	popl	%fs
 	popl	%gs
+	/* restore page directory page register */
+	movl	%ebx, %cr3
 	fwait
 	/* set up per-cpu variables */
 	movl	%eax, %gs:8		// k_curtask
-	movl	100(%eax), %ebx		// k_curproc
-	movl	120(%eax), %ecx		// k_curpid
+	movl	108(%eax), %ebx		// k_curproc
+	movl	128(%eax), %ecx		// k_curpid
 	movl	%ebx, %gs:4
 	movl	%ecx, %gs:16
 	/* pop general purpose registers */
 	popal
-	/* - stack pointer points to m_tcb->trapnum */
-	addl	$8, %esp
+	/* - stack pointer points to top of segregs */
+	addl	$48, %esp
 #if (APIC)
 	_apiceoi
 #else

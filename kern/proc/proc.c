@@ -13,7 +13,7 @@
 #include <kern/obj.h>
 #include <kern/unit/x86/boot.h>
 #include <kern/unit/x86/cpu.h>
-#include <kern/unit/ia32/tcb.h>
+#include <kern/unit/ia32/task.h>
 
 struct proc proctab[NTASK] ALIGNED(PAGESIZE);
 struct task tasktab[NTASK];
@@ -32,9 +32,9 @@ procinit(long id)
 
     if (taskid < TASKNPREDEF) {
         /* bootstrap */
-        task->m_tcb.flg = 0;
+        task->m_task.flg = 0;
         if (k_cpuinfo->flags & CPUHASFXSR) {
-            task->m_tcb.flg = M_FPXMM;
+            task->m_task.flg = M_FPXMM;
         }
         proc->task = task;
         task->proc = proc;
@@ -58,6 +58,7 @@ procinit(long id)
                 
                 return -1;
             }
+#if 0
             ptr = kmalloc(KERNSTKSIZE);
             if (ptr) {
                 u8ptr = ptr;
@@ -86,6 +87,7 @@ procinit(long id)
                 
                 return -1;
             }
+#endif
             /* initialise descriptor table */
             ptr = kmalloc(TASKNDESC * sizeof(struct desc));
             if (ptr) {
@@ -94,8 +96,10 @@ procinit(long id)
                 proc->ndesctab = TASKNDESC;
             } else {
                 kfree(proc->vmpagemap.dir);
+#if 0
                 kfree(task->ustk.base);
                 kfree(task->kstk.base);
+#endif
                 kfree(proc);
                 
                 return -1;
@@ -109,8 +113,10 @@ procinit(long id)
                 proc->npagetab = NPAGEMAX;
             } else {
                 kfree(proc->vmpagemap.dir);
+#if 0
                 kfree(task->ustk.base);
                 kfree(task->kstk.base);
+#endif
                 kfree(proc->desctab);
                 kfree(proc);
                 

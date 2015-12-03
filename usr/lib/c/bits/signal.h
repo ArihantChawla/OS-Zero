@@ -1,21 +1,19 @@
 #ifndef __BITS_SIGNAL_H__
 #define __BITS_SIGNAL_H__
 
-#undef PTHREAD
-#if !defined(PTHREAD) || defined(__KERNEL__)
-#define PTHREAD 0
-#endif
-
 #include <features.h>
 #include <stdint.h>
 #include <errno.h>
 #include <sys/types.h>
 //#include <zero/param.h>
+#if (USEBSD) && (!USEPOSIX)
+#include <ucontext.h>
 #include <zero/types.h>
-#if (PTHREAD)
+#endif
+#if defined(PTHREAD)
 #include <pthread.h>
 #endif
-#if (_ZERO_SOURCE) && 0
+#if defined(_ZERO_SOURCE) && 0
 #include <kern/signal.h>
 #endif
 #if defined(__x86_64__) || defined(__amd64__)
@@ -64,7 +62,7 @@
 #define SIGIGNORE    0x00000800
 #define SIGPAUSE     0x00001000
 
-#if (SIG32BIT)
+#if defined(SIG32BIT)
 typedef struct {
     int32_t norm;
     int32_t rt;
@@ -82,10 +80,10 @@ typedef void           (*__sighandler_t)(int);
 #if (USEBSD) && (!USEPOSIX)
 typedef void __bsdsig_t(int sig, int code, struct sigcontext *ctx, char *adr);
 #endif
-#if (_BSD_SOURCE) || (_GNU_SOURCE)
+#if defined(_BSD_SOURCE) || defined(_GNU_SOURCE)
 typedef __sighandler_t sig_t;
 #endif
-#if (_GNU_SOURCE)
+#if defined(_GNU_SOURCE)
 typedef __sighandler_t sighandler_t;
 #endif
 
@@ -128,12 +126,12 @@ struct sigevent {
     int              sigev_signo;
     union sigval     sigev_value;
     void           (*sigev_notify_function)(union sigval);
-#if (PTHREAD)
+#if defined(PTHREAD)
     pthread_attr_t  *sigev_notify_attributes;
 #endif
 };
 
-#if (_POSIX_SOURCE) && (USEPOSIX199309)
+#if defined(_POSIX_SOURCE) && (USEPOSIX199309)
 
 /* si_code-member values */
 /* SIGILL */
@@ -200,7 +198,7 @@ typedef struct {
 
 #endif /* _POSIX_SOURCE && USEPOSIX199309 */
 
-#if (_BSD_SOURCE) || (USEXOPENEXT)
+#if defined(_BSD_SOURCE) || defined(USEXOPENEXT)
 
 struct sigstack {
     char *ss_sp;
@@ -249,11 +247,17 @@ struct sigvec {
     int    sv_flags;
 };
 
+struct sigcontext {
+    int          sc_onstack;    // signal mask to restore
+    sigset_t     sc_mask;       // sigstack state to restore
+    struct m_tcb tcb;
+};
+
 #endif /* USEBSD && !USEPOSIX */
 
-#if (_POSIX_SOURCE)
+#if defined(_POSIX_SOURCE)
 
-#if (SIG32BIT)
+#if defined(SIG32BIT)
 
 //#define _sigptr(sp) ((struct sigset *)(sp))
 
@@ -264,21 +268,21 @@ struct sigvec {
     (((sp)->norm = (sp)->rt = ~UINT32_C(0)), 0)
 #define sigaddset(sp, sig)                                              \
     ((!_sigvalid(sig)                                                   \
-      ? (-1)                                                            \
+      ? (__seterrno(EINVAL), -1L)                                       \
       : (_signorm(sig)                                                  \
          ? ((sp)->norm |= (1UL << (sig)))                               \
          : ((sp)->rt |= (1UL << ((sig) - SIGRTMIN))))),                 \
      0)
 #define sigdelset(sp, sig)                                              \
     ((!_sigvalid(sig)                                                   \
-      ? (-1)                                                            \
+      ? (__seterrno(EINVAL), -1L)                                       \
       : (_signorm(sig)                                                  \
          ? ((sp)->norm &= ~(1UL << (sig)))                              \
          : ((sp)->rt &= ~(1UL << ((sig) - SIGRTMIN))))),                \
      0)
 #define sigismember(sp, sig)                                            \
     ((!_sigvalid(sig)                                                   \
-      ? (-1)                                                            \
+      ? (__seterrno(EINVAL), -1L)                                       \
       : (_signorm(sig)                                                  \
          ? (((sp)->norm >> (sig)) & 0x01)                               \
          : (((sp)->rt >> (sig - SIGRTMIN)) & 0x01))))
@@ -293,21 +297,21 @@ struct sigvec {
     (*(sp) = ~0L)
 #define sigaddset(sp, sig)                                              \
     ((!_sigvalid(sig)                                                   \
-      ? (errno = EINVAL, -1L)                                           \
+      ? (__seterrno(EINVAL), -1L)                                       \
       : ((sp) |= (1UL << (sig)),                                        \
          0)))
 #define sigdelset(sp, sig)                                              \
     ((!_sigvalid(sig)                                                   \
-      ? (errno = EINVAL, -1L)                                           \
+      ? (__seterrno(EINVAL), -1L)                                       \
       : ((sp) &= ~(1UL << (sig)),                                       \
          0)))
 #define sigismember(sp, sig)                                            \
     ((!_sigvalid(sig)                                                   \
-      ? (errno = EINVAL, -1)                                            \
+      ? (__seterrno(EINVAL), -1)                                        \
       : ((*(sp) & (1UL << (sig)))                                       \
          ? 1                                                            \
          : 0)))
-#if (_GNU_SOURCE)
+#if defined(_GNU_SOURCE)
 #define __sigisemptyset(sp) (!*(sp))
 #endif
 
@@ -315,11 +319,11 @@ struct sigvec {
 
 #endif /* _POSIX_SOURCE */
 
-#if (_GNU_SOURCE)
+#if defined(_GNU_SOURCE)
 #define sigisemptyset(sp) __sigisemptyset(sp)
 #endif
 
-#if (_POSIX_SOURCE)
+#if defined(_POSIX_SOURCE)
 
 #define MAXSIG      SIGRTMAX
 
@@ -330,7 +334,7 @@ struct sigvec {
 
 #endif /* _POSIX_SOURCE */
 
-#if (_BSD_SOURCE)
+#if defined(_BSD_SOURCE)
 #define BADSIG      SIG_ERR
 #endif
 

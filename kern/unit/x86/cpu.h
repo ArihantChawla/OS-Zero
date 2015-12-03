@@ -8,9 +8,7 @@
 #include <zero/param.h>
 #include <zero/types.h>
 #include <kern/types.h>
-
-#define CPUHASFXSR 0x00000001
-#define CPUHASAPIC 0x00000002
+#include <kern/unit/x86/bits/cpu.h>
 
 #define cpugetclsize(cpu)  ((cpu)->l1i.clsz)
 #define cpugetntlb(cpu)    ((cpu)->l1i.ntlb)

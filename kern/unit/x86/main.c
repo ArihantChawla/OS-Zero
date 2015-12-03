@@ -2,6 +2,11 @@
 #if (VBE)
 #include <kern/io/drv/pc/vbe.h>
 #endif
+#include <kern/unit/x86/asm.h>
+#include <kern/unit/x86/link.h>
+
+extern uint8_t kernusrstktab[NCPU * KERNSTKSIZE];
+
 extern void seginit(long id);
 #if (VBE)
 extern void vbeinit(void);
@@ -22,12 +27,6 @@ kmain(struct mboothdr *boothdr, unsigned long longmode)
     /* determine amount of RAM */
     pmemsz = grubmemsz(boothdr);
     /* bootstrap kernel */
-#if 0
-#if (!VBE)
-    /* initialize interrupt handling */
-    trapinitprot();
-#endif
-#endif
     /* INITIALISE BASE HARDWARE */
     /* initialise memory segmentation */
     seginit(0);
@@ -38,6 +37,9 @@ kmain(struct mboothdr *boothdr, unsigned long longmode)
 #endif
     trapinitprot();
     kinitprot(pmemsz);
+
+    /* kinitprot() should never return */
+    k_halt();
     
     /* NOTREACHED */
     return;
