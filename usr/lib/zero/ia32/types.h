@@ -28,21 +28,12 @@ struct m_genregs {
 };
 
 /* data segment registers - 16 bytes */
-#if (NEWTCB)
 struct m_segregs {
     int32_t gs;         // kernel per-CPU segment
     int32_t fs;         // thread-local storage
     int32_t es;         // data segment
     int32_t ds;         // data segment
 };
-#else
-struct m_segregs {
-    int32_t ds;         // kernel per-CPU segment
-    int32_t es;         // data segment
-    int32_t fs;         // thread-local storage
-    int32_t gs;         // data segment
-};
-#endif
 
 /* floating-point state */
 #define X86_FXSR_MAGIC 0x0000
@@ -116,7 +107,6 @@ struct m_tss {
 };
 
 /* thread control block */
-#if (NEWTCB)
 struct m_tcb {
     struct m_segregs    segregs;        // data-segment registers
     struct m_genregs    genregs;        // general-purpose registers
@@ -140,18 +130,6 @@ struct m_task {
     struct m_tcb     tcb;       // 80 bytes @ 4
     struct m_fpstate fpstate;   //  X bytes @ 84
 };
-#else
-struct m_tcb {
-    struct m_fpstate   fpstate;
-    int32_t            flg;
-    int32_t            pdbr;
-    struct m_segregs   segregs;
-    struct m_genregs   genregs;
-    int32_t            trapnum;
-    int32_t            err;
-    struct m_trapframe trapframe;
-};
-#endif
 
 #endif /* __ZERO_IA32_TYPES_H__ */
 

@@ -136,9 +136,6 @@ kinitprot(unsigned long pmemsz)
 //    vminitphys((uintptr_t)&_epagetab, lim);
     vminitphys((uintptr_t)&_epagetab, lim);
     meminit(min(pmemsz, lim));
-    __asm__ __volatile__ ("movl %0, %%esp\n"
-                          :
-                          : "rm" (sp));
     tssinit(0);
 #if (VBE) && (PLASMA) && (!PLASMAFOREVER)
     plasmaloop(4);
@@ -175,7 +172,7 @@ kinitprot(unsigned long pmemsz)
     /* initialise Soundblaster 16 driver */
     sb16init();
 #endif
-#if (AC97)
+#if (AC97) && 0
     /* initialise AC97 audio driver */
     ac97init();
 #endif
@@ -244,6 +241,9 @@ kinitprot(unsigned long pmemsz)
 #if (PS2DRV)
     ps2init();
 #endif
+    __asm__ __volatile__ ("movl %0, %%esp\n"
+                          :
+                          : "rm" (sp));
 #if (APIC)
     apicstarttmr();
 #else

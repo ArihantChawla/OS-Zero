@@ -609,14 +609,13 @@ _tmr0fin:
 	 * eflags
 	 * cs
 	 * eip
-	 * ebp		<- EBP
-	 * eax          <- ESP
+	 * ebp		<- EBP, ESP
+	 * eax
+	 * trap frame size
 	 *
 	 * NOTE: ss and esp are only pushed if the interrupt happened
 	 * in user-mode, i.e. there's a privilege transition to system-mode
  	 */
-
-#if (NEWTCB)
 
 .align	16
 
@@ -624,13 +623,15 @@ irqtmr:
 	pushl	%ebp			// push frame pointer
 	movl	%esp, %ebp		// store stack pointer
 	pushl	%eax			// back %eax up
+//	movl	(%ebp), %eax		// stored frame pointer
 	movl	%gs:8, %eax		// per-cpu current task
-	leal	52(%eax), %esp		// adjust sp for pushing m_tcb.genregs
+	// adjust sp for pushing m_tcb.genregs
+	leal	52(%eax), %esp
 	pushal				// push general-purpose registers
 	/* store FPU context */
 	/* %esp points to top of segregs */
 	movl	(%eax), %ebx		// fetch flg
-	leal	64(%esp), %ecx		// ECX = &task->fpctx
+	leal	64(%eax), %ecx		// ECX = &task->fpctx
 	andl	$CPUHASFXSR, %ebx	// (flg & CPUHASFXSR) ?
 	cmpl	$0, %ebx		// if so, branch to _fxsave
 	jne	_fxsave			//
@@ -650,127 +651,39 @@ _fpusaved:
 	movl	%cr3, %ecx		// ECX = %cr3 (PDBR)
 	cmpl	$UTEXTSEL, %edx		// check for user-mode interrupt
 	jne	_getsysstk		// stack-info was not pushed if not
-	movl	16(%ebp), %edi		// EDI = stored stack pointer
 	movl	$UDATASEL, %esi		// ESI = user data-segment selector
 	jmp	_havestk		// determined stack parameters
 _getsysstk:
 	/* construct stack information */
-	movl	%ebx, %edi		// EDI = stored frame pointer
 	movl	$DATASEL, %esi		// ESI = system stack/data selector
-	addl	$8, %ebx		// EBX = caller frame pointer
-	addl	$4, %edi		// adjust to call-time stack pointer
 _havestk:	
 	fwait
-	movl	%ecx, 48(%esp)		// task->pdbr = PDBR
-	movl	%esi, 76(%esp)		// task->frame.ss = SS
-	movl	%ebx, 28(%esp)		// task->regs.ebp = caller EBP
-	movl	%edx, 68(%esp)		// task->frame.cs = caller %cs
+	movl	%ecx, 52(%eax)		// task->pdbr = PDBR
+	movl	%edx, 68(%eax)		// task->frame.cs = caller %cs
+	movl	%esi, 80(%eax)		// task->frame.ss = SS
 	movl	-4(%ebp), %ecx		// ECX = pushed %eax
-	movl	4(%ebp), %esi		// ESI = pushed return address
-	movl	%edi, 76(%esp)		// patch stack pointer in m_tcb.frame
-	movl	%ecx, 44(%esp)		// patch %eax in m_tcb.genregs
-//	movl	(%ebp), %ebx		// EBX = pushed frame pointer
 	movl	12(%ebp), %edx		// EDX = pushed flags register
-	addl	$4, %ebx		// EBX points past trap frame
-	movl	%esi, 60(%esp)		// frame.eip = return address
-	movl	%edx, 68(%esp)		// frame->eflags = pre-interrupt value
+	movl	%ebx, 76(%eax)		// patch stack pointer in m_tcb.frame
+	movl	4(%ebp), %esi		// ESI = pushed return address
+	movl	%ecx, 48(%eax)		// patch %eax in m_tcb.genregs
+	movl	%edx, 72(%eax)		// frame->eflags = pre-interrupt value
+	movl	%esi, 64(%eax)		// frame.eip = return address
 	/* schedule next thread */
-	movl	%gs:8, %eax		// task structure address
-	movl	schedpicktask, %ebx	// get scheduler-specific function
-	movl	%ebp, %esp		// restore stack pointer
-	pushl	%eax			// store copy of task pointer
-	call	*%ebx			// call scheduler function (taskpick)
-	popl	%ecx			// pop earlier task pointer
-	cmpl	%eax, %ecx		// did we reschedule the same task?
-	jne	_swtch			// if not, branch to _swtch
-	/* continue the same task */
-	leal	48(%eax), %esp
-	popal
-//	leal	12(%ebp), %esp		// restore stack pointer
-	addl	$16, %ebp		// adjust frame pointer
-#if (APIC)
-	_apiceoi
-#else
-	_piceoi1
-#endif
-	iretl
-_swtch:
-	call	m_taskjmp
-#else
-
-.align	16
-
-irqtmr:
-	pushl	$0
-	pushl	$IRQTMR
-	pushl	%ebp			// push frame pointer
-	movl	%esp, %ebp		// store stack pointer
-	pushl	%eax			// back %eax up
-	movl	%gs:8, %eax		// per-cpu current task
-//	leal	568(%eax), %esp		// adjust sp for pushing m_tcb.genregs
-	leal	632(%eax), %esp		// adjust sp for pushing m_tcb.genregs
-	pushal				// push general-purpose registers
-	/* store FPU context */
-	movl	-24(%esp), %ebx		// fetch fxsave-flag
-	andl	$CPUHASFXSR, %ebx
-	cmpl	$0, %ebx
-	jne	_fxsave			// use FXSAVE if non-zero
-	fnsave	(%eax)			// use FNSAVE if zero
-	jmp	_fpusaved
-_fxsave:	
-	fxsave	(%eax)
-_fpusaved:
-	//
-	/* push segment registers */
-	pushl	%gs			// kernel thread-local storage
-	pushl	%fs			// user thread-local storage
-	pushl	%es			// buffer segment? something... :)
-	pushl	%ds			// data segment
-	movl	8(%ebp), %edx		// fetch pushed %cs
-	movl	-4(%ebp), %eax		// retrieve %eax
-	movl	%cr3, %ecx		// get %cr3 (page directory address)
-	cmpl	$UTEXTSEL, %edx		// did we come from userland?
-	jne	_getsysstk		// stack-info was not pushed if not
-	movl	(%ebp), %ebx		// fetch stored frame pointer
-	movl	16(%ebp), %edi		// fetch stored stack pointer
-	movl	$UDATASEL, %edx
-	jmp	_havestk
-_getsysstk:
-	/* construct stack information */
-	movl	(%ebp), %ebx		// get after-interrupt frame pointer
-	movl	(%ebp), %edi
-	movl	$DATASEL, %edx
-	addl	$8, %ebx		// adjust to caller frame pointer
-	addl	$4, %edi		// adjust to caller stack pointer
-_havestk:	
-	fwait	
-	movl	4(%ebp), %esi		// pushed return address
-	movl	%ecx, -4(%esp)		// store page directory base register
-	movl	%ebx, 28(%esp)		// caller frame pointer in m_tcb.genregs
-	movl	%edi, 68(%esp)		// patch stack pointer in m_tcb.frame
-	movl	%eax, 44(%esp)		// patch %eax in m_tcb.genregs
-	movl	%edx, 72(%esp)		// store %ss in m_tcb.frame
-	addl	$12, %ebx		// adjust stack pointer past trap frame
-	movl	(%ebp), %ecx		// pushed frame pointer
-	movl	%edx, 60(%esp)		// store %cs in m_tcb.frame
-	movl	12(%ebp), %edi		// fetch pushed flags register
-	movl	%esi, 56(%esp)		// store return address for frame
-	movl	%edi, 64(%esp)		// store pre-interrupt flags for frame
-	/* schedule next thread */
-	movl	%gs:8, %eax		// task structure address argument
-	movl	schedpicktask, %ebx	// get scheduler-specific function
+	//	movl	%gs:8, %eax		// task structure address
+	/* task structure address is still in %eax */
+	movl	%ebx, 28(%eax)		// task->genregs.ebp = pre-trap EBP
+	movl	schedpicktask, %ecx	// get scheduler-specific function
 	leal	4(%ebp), %esp		// restore stack pointer
 	pushl	%eax			// store copy of task pointer
-	call	*%ebx			// call scheduler function (taskpick)
-	popl	%ecx
-	cmpl	%eax, %ecx		// did we reschedule the same task?
+	call	*%ecx			// call scheduler function (taskpick)
+	popl	%edx			// pop earlier task pointer
+	cmpl	%eax, %edx		// did we reschedule the same task?
 	jne	_swtch			// if not, branch to _swtch
 	/* continue the same task */
-	leal	600(%eax), %esp
+	leal	20(%eax), %esp
 	popal
-	leal	12(%ebp), %esp		// restore stack pointer
-//	addl	$16, %ebp		// adjust frame pointer
-	addl	$24, %ebp		// adjust frame pointer
+	/* FIXME: trap frame size instead of -12 when privilege transition */
+	leal	-12(%ebp), %esp
 #if (APIC)
 	_apiceoi
 #else
@@ -779,8 +692,6 @@ _havestk:
 	iretl
 _swtch:
 	call	m_taskjmp
-
-#endif
 	
 .align	16
 

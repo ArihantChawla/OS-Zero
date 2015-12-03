@@ -1,8 +1,6 @@
 #ifndef __ZERO_X86_64_TYPES_H__
 #define __ZERO_X86_64_TYPES_H__
 
-/* TODO: structs and types here like in <zero/ia32/types.h> :) */
-
 #include <stdint.h>
 #include <signal.h>
 #include <zero/cdecl.h>
