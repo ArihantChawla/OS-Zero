@@ -3,13 +3,13 @@
 
 #include <features.h>
 #include <stddef.h>
-//#include <signal.h>
 #include <sys/types.h>
 //#include <unistd.h>
 #include <zero/trix.h>
 #if (_ZERO_SOURCE)
 #include <kern/conf.h>
 #endif
+#include <signal.h>
 #if (_XOPEN_SOURCE) || (USESVID)
 extern int   daylight;
 extern long  timezone;
@@ -146,6 +146,7 @@ extern int    clock_nanosleep(clockid_t clk, int flg,
                               struct timespec *left);
 extern int    clock_getcpuclockid(pid_t pid, clockid_t *clk);
 #endif
+struct sigevent;
 extern int    timer_create(clockid_t clk, struct sigevent *restrict sigev,
                            timer_t *restrict tmr);
 extern int    timer_delete(timer_t tmr);

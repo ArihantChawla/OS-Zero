@@ -3,7 +3,7 @@
 
 #include <bits/errno.h>
 
-#if !defined(__ASSEMBLER__) && (!__KERNEL__)
+#if !defined(__ASSEMBLER__) && (!defined(__KERNEL) || (!__KERNEL__))
 
 #if defined(__GLIBC__)
 

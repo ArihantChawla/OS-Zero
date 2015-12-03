@@ -13,9 +13,6 @@
 #if defined(PTHREAD)
 #include <pthread.h>
 #endif
-#if defined(_ZERO_SOURCE) && 0
-#include <kern/signal.h>
-#endif
 #if defined(__x86_64__) || defined(__amd64__)
 #include <x86-64/signal.h>
 #elif (defined(__i386__) || defined(__i486__)                           \
@@ -26,10 +23,10 @@
 #endif
 
 /* internal. */
-#define _sigvalid(sig) ((sig) && (!((sig) & ~_SIGMASK)))
-#define _sigrt(sig)    ((sig) && ((sig) & _SIGRTBIT))
-#define _signorm(sig)  ((sig) && (!((sig) & _SIGRTBIT)))
-#define _SIGNOCATCH    ((UINT64_C(1) << SIGKILL) | (UINT64_C(1) << SIGSTOP))
+#define _sigvalid(sig)  ((sig) && (!((sig) & ~_SIGMASK)))
+#define _sigrt(sig)     ((sig) && ((sig) & _SIGRTBIT))
+#define _signorm(sig)   ((sig) && (!((sig) & _SIGRTBIT)))
+#define _SIGNOCATCHBITS ((UINT64_C(1) << SIGKILL) | (UINT64_C(1) << SIGSTOP))
 
 #if (defined(__x86_64__) || defined(__amd64__) || defined(___alpha__)   \
      || defined(__i386__) || defined(__i486__)                          \
@@ -40,15 +37,15 @@
 #endif
 
 /* special values; standard ones */
-#define SIG_ERR      (__sighandler_t)-1)
-#define SIG_DFL      (__sighandler_t)0)
-#define SIG_IGN      (__sighandler_t)1)
-#define SIG_HOLD     (__sighandler_t)2)
+#define SIG_ERR      ((__sighandler_t)-1)
+#define SIG_DFL      ((__sighandler_t)0)
+#define SIG_IGN      ((__sighandler_t)1)
+#define SIG_HOLD     ((__sighandler_t)2)
 /* private values for signal actions */
-#define _SIG_TERM    (__sighandler_t)3)
-#define _SIG_CORE    (__sighandler_t)4)
-#define _SIG_STOP    (__sighandler_t)5)
-#define _SIG_CONT    (__sighandler_t)6)
+#define _SIG_TERM    ((__sighandler_t)3)
+#define _SIG_CORE    ((__sighandler_t)4)
+#define _SIG_STOP    ((__sighandler_t)5)
+#define _SIG_CONT    ((__sighandler_t)6)
 
 /* commands for sigprocmask() */
 #define SIG_BLOCK    0
@@ -96,20 +93,10 @@ typedef __sighandler_t sighandler_t;
 #define SA_ONESHOT   SA_RESETHAND
 #define SA_SIGINFO   SIG_SIGINFO
 /* non-POSIX */
-#if (!USEPOSIX)
+#if (!USEPOSIX) || (USEBSD) || (USEGNU)
 #define SA_ONSTACK   SIG_ONSTACK
 #define SA_RESTART   SIG_RESTART
 #define SA_INTERRUPT SIG_FASTINTR
-#endif
-
-#if (!_ZERO_SOURCE) && (USEPOSIX)
-struct sigaction {
-    void     (*sa_handler)(int);
-    void     (*sa_sigaction)(int, siginfo_t *, void *); // sa_flags & SA_SIGINFO
-    void     (*sa_restorer)(void);
-    sigset_t  sa_mask;
-    int       sa_flags;
-};
 #endif
 
 union sigval {
@@ -183,15 +170,15 @@ struct sigevent {
 #define SI_ASYNCIO    4 // asynchronous I/O request completed
 #define SI_MESGQ      5 // message arrived on empty message queue
 typedef struct {
-    int           si_signo;
-    int           si_code;
-    int           si_errno;
+    int           si_signo;     // signal number
+    int           si_code;      // signal code
+    int           si_errno;     // errno-value or zero
     int           si_status;    // exit value or signal
-    pid_t         si_pid;       // SIGCHLD
-    uid_t         si_uid;       // real user ID of signal sender process
+    pid_t         si_pid;       // sending process ID
+    uid_t         si_uid;       // real user ID of sending process
     void         *si_addr;      // SIGILL, SIGFPE, SIGSEGV, SIGBUS
-    long          si_band;      // band event for POLL_IN, POLL_OUT, POLL_MSG
-    union sigval  si_value;
+    long          si_band;      // band event for SIGPOLL
+    union sigval  si_value;     // signal value
     ctid_t        si_ctid;
     zoneid_t      si_zoneid;
 } siginfo_t;
@@ -201,8 +188,8 @@ typedef struct {
 #if defined(_BSD_SOURCE) || defined(USEXOPENEXT)
 
 struct sigstack {
-    char *ss_sp;
-    int   ss_onstack;
+    char *ss_sp;        // signal stack pointer
+    int   ss_onstack;   // non-zero when signal-stack in use
 };
 
 #define SIGSTKSZ     (4 * PAGESIZE)
@@ -211,9 +198,9 @@ struct sigstack {
 #define SS_ONSTACK   0x00000001
 #define SS_DISABLE   0x00000002
 typedef struct {
-  void   *ss_sp;
-  size_t  ss_size;
-  int     ss_flags;
+    void   *ss_sp;      // stack base or pointer
+    size_t  ss_size;    // stack size
+    int     ss_flags;   // flags
 } stack_t;
 
 #elif (FAVORBSD)
@@ -344,6 +331,21 @@ struct sigcontext {
 #define S_SIGSET    2
 #define S_SIGACTION 3
 #define S_NONE      4
+
+#if defined(_ZERO_SOURCE)
+#include <kern/signal.h>
+#endif
+
+#if (!_ZERO_SOURCE) && (USEPOSIX)
+struct sigaction {
+    void     (*sa_handler)(int);
+    /* POSIX: the third argument may be cast to ucontext_t */
+    void     (*sa_sigaction)(int, siginfo_t *, void *); // sa_flags & SA_SIGINFO
+    void     (*sa_restorer)(void);
+    sigset_t  sa_mask;
+    int       sa_flags;
+};
+#endif
 
 #endif /* __BITS_SIGNAL_H__ */
 

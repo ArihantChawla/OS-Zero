@@ -75,7 +75,7 @@
 
 #define NERRNO       67 // 1 bigger than any errno value */
 
-#if (__KERNEL__)
+#if defined(__KERNEL__) && (__KERNEL__)
 #define __seterrno(e) (e)
 #endif
 

@@ -127,19 +127,18 @@ struct m_tcb {
 };
 
 struct m_ctx {
-    int               onstk;            // non-zero if running on signal stack
-    sigset_t          oldmask;          // signal mask to restore
-    struct m_tcb      tcb;              // task control block (machine context)
-    int32_t           cr2;              // %cr2; page-fault virtual address
-    int               fpflg;
-    struct m_fpstate *fpptr;
-    struct m_fpstate  fpstate[EMPTY];
+    int               onstk;    // non-zero if on signal-stack
+    sigset_t          oldmask;  // signal mask to restore
+    struct m_tcb      tcb;      // task control block (machine context)
+    int32_t           cr2;      // page-fault virtual address
+    int               fpflg;    // <kern/unit/ia32/task.h>
+    struct m_fpstate  fpstate;  // FPU state
 };
 
 struct m_task {
     int32_t          flg;       //  4 bytes @ 0
     struct m_tcb     tcb;       // 80 bytes @ 4
-    struct m_fpstate fpctx;     //  X bytes @ 84
+    struct m_fpstate fpstate;   //  X bytes @ 84
 };
 #else
 struct m_tcb {

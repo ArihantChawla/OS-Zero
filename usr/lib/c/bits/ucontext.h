@@ -15,14 +15,14 @@
 
 typedef struct m_ctx mcontext_t;
 #define __mcontext_t_defined
-/* compatibility macros */
-#define mc_onstack onstk
 
 typedef struct __ucontext {
-    sigset_t          uc_sigmask;
-    mcontext_t        uc_mcontext;
-    struct __context *uc_link;
-    stack_t           uc_stack;
+    unsigned long      uc_flags;
+    struct __ucontext *uc_link;
+    sigset_t           uc_sigmask;
+    stack_t            uc_stack;
+    mcontext_t         uc_mcontext;
+    struct m_fpstate   _fpstate;
 } ucontext_t;
 
 #endif /* __BITS_UCONTEXT_H__ */

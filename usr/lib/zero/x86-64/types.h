@@ -52,7 +52,7 @@ struct m_fpxstate {
     union {
         int32_t         _res2[12];
         struct m_fpdata _swres;
-    };
+    } u;
 };
 
 struct m_fpxhdr {
@@ -86,21 +86,19 @@ struct m_trapframe {
 /* thread control block */
 struct m_tcb {
     struct m_genregs   genregs;
-    struct m_trapframe frame;
+    struct m_trapframe trapframe;
 };
 
 struct m_ctx {
-    int64_t               onstk;
-    sigset_t              oldmask;
-    struct m_tcb          tcb;
-    int64_t               err;
-    int64_t               trapnum;
-    int64_t               cr2;
-    union {
-        struct m_fpstate *state;
-        int64_t           statword;
-    } fp;
-    struct m_fpstate      fpstate[EMPTY];
+    int64_t               onstk;        // non-zero if on signal-stack
+    sigset_t              oldmask;      // signal mask to be restored
+    struct m_tcb          tcb;          // task control block (machine context)
+    int64_t               err;          // error code or zero
+    int64_t               trapnum;      // # of trap
+    int64_t               cr2;          // page-fault virtual address
+    int64_t               fpflg;        // FPU flags
+    int64_t               fpstatword;   // FPU status word
+    struct m_fpstate      fpstate;      // FPU state
 };
 
 #endif /* __ZERO_X86_64_TYPES_H__ */

@@ -20,6 +20,8 @@
 #include <bits/pthread.h>
 /* mutexes */
 
+#define PTHREAD_ONCE_INIT 0
+
 /* spin locks */
 int pthread_spin_destroy(pthread_spinlock_t *spin);
 int pthread_spin_init(pthread_spinlock_t *spin, int pshared);

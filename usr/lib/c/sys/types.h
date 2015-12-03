@@ -8,7 +8,7 @@
 //#include <sys/types.h>
 #if (_BSD_SOURCE)
 #include <endian.h>
-#include <sys/select.h>
+//#include <sys/select.h>
 #include <sys/sysmacros.h>
 #endif
 #if !defined(_POSIX_SOURCE) && (USEBSD) && !defined(NFDBITS)

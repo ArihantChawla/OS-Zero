@@ -401,6 +401,7 @@ struct syswait {
 #define SIG_ONSTACK    0x80000000
 #define SIG_RESTART    0x40000000
 #define SIG_FASTINTR   0x20000000
+#define SIG_NOSTACK    0x10000000
 /* values for struct syssigarg */
 /* pid values */
 #define SIG_SELF       (-0x01)  // raise()

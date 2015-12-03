@@ -8,7 +8,7 @@
 #define M_TCB_PDBR      (offsetof(struct m_tcb, pdbr))
 #define M_TCB_TRAPNUM   (offsetof(struct m_tcb, trapnum))
 #define M_TCB_ERR       (offsetof(struct m_tcb, err))
-#define M_TCB_TRAPFRAME (offsetof(struct m_tcb, trapnum))
+#define M_TCB_TRAPFRAME (offsetof(struct m_tcb, trapframe))
 
 #endif /* __KERN_UNIT_IA32_BITS_ASM_H__ */
 

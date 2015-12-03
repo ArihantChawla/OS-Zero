@@ -6,7 +6,7 @@
 #include <features.h>
 //#include <sys/types.h>
 #include <zero/param.h>
-#include <unistd.h>
+//#include <unistd.h>
 #include <zero/param.h>
 #if (_ZERO_SOURCE)
 //#include <kern/signal.h>
@@ -79,8 +79,6 @@ extern int            sigpause(int sig) __asm__ ("__xpg_sigpause\n");
 #endif
 
 #if (_BSD_SOURCE)
-
-#define BADSIG ((void (*)())-1)
 
 /* none of these functions should be used any longer */
 #define    sigmask(sig)   (1L << ((sig) - 1))

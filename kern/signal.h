@@ -9,7 +9,70 @@
 
 /* constants; signal names */
 
-#define SIGNONE      0x00
+/*
+ * from Open Group
+ * ---------------
+ * - the following signals are supported on all implementations
+ *
+ * signal       default action  description
+ * ------       --------------  -----------
+ * SIGABRT      2               process abort signal
+ * SIGALRM      1               alarm clock
+ * SIGFPE       2               erroneous arithmetic operation
+ * SIGHUP       1               hangup
+ * SIGILL       2               illegal instruction
+ * SIGINT       1               terminal interrupt signal
+ * SIGKILL 	1        	kill (cannot be caught or ignored).
+ * SIGPIPE 	1               write on a pipe with no one to read it.
+ * SIGQUIT 	2               terminal quit signal.
+ * SIGSEGV 	2               invalid memory reference.
+ * SIGTERM 	1               termination signal.
+ * SIGUSR1 	1               user-defined signal 1.
+ * SIGUSR2 	1               user-defined signal 2.
+ * SIGCHLD 	3               child process terminated or stopped.
+ * SIGCONT 	5               continue executing, if stopped.
+ * SIGSTOP 	4               stop executing (cannot be caught or ignored).
+ * SIGTSTP 	4               terminal stop signal.
+ * SIGTTIN 	4               background process attempting read.
+ * SIGTTOU 	4               background process attempting write.
+ * SIGBUS 	2               access to undefined portion of a memory object.
+ * SIGPOLL 	1               pollable event.
+ * SIGPROF 	1               profiling timer expired.
+ * SIGSYS 	2               bad system call.
+ * SIGTRAP 	2               trace/breakpoint trap.
+ * SIGURG 	3               high bandwidth data is available at a socket.
+ * SIGVTALRM 	1               virtual timer expired.
+ * SIGXCPU 	2               CPU time limit exceeded.
+ * SIGXFSZ 	2               file size limit exceeded.
+ *
+ * default actions
+ * ---------------
+ * 
+ * 1
+ *
+ * Abnormal termination of the process. The process is terminated with all the
+ * consequences of _exit() except that the status made available to wait() and
+ * waitpid() indicates abnormal termination by the specified signal. 
+ * 
+ * 2
+ *
+ * Abnormal termination of the process. Additionally, implementation-dependent
+ * abnormal termination actions, such as creation of a core file, may occur. 
+ *
+ * 3
+ *
+ * Ignore the signal. 
+ *
+ * 4
+ *
+ * Stop the process. 
+ *
+ * 5
+ *
+ * Continue the process, if it is stopped; otherwise ignore the signal. 
+ */
+
+#define SIGNONE      0x00    /* no signal */
 #define SIGCLD       0x00    /* UNSUPPORTED - System V, NOT SIGCHLD semantics */
 #define SIGEMT       0x00    /* UNSUPPORTED */
 #define SIGHUP       0x01    /* POSIX */
@@ -55,6 +118,7 @@
 #define NRTSIG       32      /* # of real-time signals */
 #define _SIGMASK     0x3f    /* mask for signal ID bits */
 #define _NSIG        NSIG    /* alternative name */
+#define RTSIG_MAX    NRTSIG
 
 struct sigaction {
     void     (*sa_handler)(int);
