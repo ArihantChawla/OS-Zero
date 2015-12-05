@@ -102,29 +102,31 @@ struct m_tss {
     uint16_t ldt, _ldthi;
     uint16_t trace;
     uint16_t iomapofs;
-    long     hasiomap;          // indicates presence of an 8K iomap field
+    long     iomapflg;  // indicates presence of an 8K iomap field
     uint8_t  iomap[EMPTY] ALIGNED(PAGESIZE);
 };
 
 /* thread control block */
 struct m_tcb {
-    struct m_segregs    segregs;        // data-segment registers
-    struct m_genregs    genregs;        // general-purpose registers
-    int32_t             pdbr;           // page-directory base register (%cr3)
-    int32_t             trapnum;        // # of trap
-    int32_t             err;            // error code for trap or zero
-    struct m_trapframe  trapframe;      // return frame for iret
-    int32_t             trapesp;
+    struct m_segregs   segregs;         // data-segment registers
+    struct m_genregs   genregs;         // general-purpose registers
+    int32_t            pdbr;            // page-directory base register (%cr3)
+    int32_t            trapnum;         // # of trap
+    int32_t            err;             // error code for trap or zero
+    struct m_trapframe trapframe;       // return frame for iret
+    int32_t            trapesp;         // stack-pointer for rescheduling
 };
 
+#if 0
 struct m_ctx {
-    int               onstk;    // non-zero if on signal-stack
-    sigset_t          oldmask;  // signal mask to restore
-    struct m_tcb      tcb;      // task control block (machine context)
-    int32_t           cr2;      // page-fault virtual address
-    int               fpflg;    // <kern/unit/ia32/task.h>
-    struct m_fpstate  fpstate;  // FPU state
+    int              onstk;     // non-zero if on signal-stack
+    sigset_t         oldmask;   // signal mask to restore
+    struct m_tcb     tcb;       // task control block (machine context)
+    int32_t          cr2;       // page-fault virtual address
+    int              fpflg;     // <kern/unit/ia32/task.h>
+    struct m_fpstate fpstate;   // FPU state
 };
+#endif
 
 struct m_task {
     int32_t          flg;       //  4 bytes @ 0

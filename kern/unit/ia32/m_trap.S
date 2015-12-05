@@ -622,7 +622,6 @@ irqtmr:
 	pushl	%ebp			// push frame pointer
 	movl	%esp, %ebp		// store stack pointer
 	pushl	%eax			// back %eax up
-//	movl	(%ebp), %eax		// stored frame pointer
 	movl	%gs:8, %eax		// per-cpu current task
 	// adjust sp for pushing m_tcb.genregs
 	leal	52(%eax), %esp

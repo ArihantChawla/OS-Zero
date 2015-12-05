@@ -14,40 +14,16 @@ _APICEOI	= 0x00000000
 
 .macro	_trapenter
 	pushal
-#if 0
-	pushl	%ds
-	pushl	%es
-	pushl	%fs
-	pushl	%ss
-#endif
 .endm
 .macro	_trapleave
-#if 0
-	popl	%ss
-	popl	%fs
-	popl	%es
-	popl	%ds
-#endif
 	popal
 	addl	$8, %esp	// trap number and [possibly fake] error code
 .endm
 .macro	_trapentererr
 	pushal
 	movl	32(%esp), %ecx	// move error code to %ecx
-#if 0
-	pushl	%ds
-	pushl	%es
-	pushl	%fs
-	pushl	%ss
-#endif
 .endm
 .macro	_trapleaveerr
-#if 0
-	popl	%ss
-	popl	%fs
-	popl	%es
-	popl	%ds
-#endif
 	/* TODO: check to see if we need to schedule another thread */
 	popal
 	addl	$4, %esp	// skip error code
