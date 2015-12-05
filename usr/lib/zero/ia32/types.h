@@ -128,8 +128,9 @@ struct m_ctx {
 
 struct m_task {
     int32_t          flg;       //  4 bytes @ 0
-    struct m_tcb     tcb;       // 80 bytes @ 4
-    struct m_fpstate fpstate;   //  X bytes @ 84
+    struct m_tcb     tcb;       // 84 bytes @ 4
+    int8_t           _res[40];  // 40 bytes @ 88, pad to cacheline-boundary
+    struct m_fpstate fpstate;   //  X bytes @ 128
 };
 
 #endif /* __ZERO_IA32_TYPES_H__ */

@@ -630,7 +630,7 @@ irqtmr:
 	/* store FPU context */
 	/* %esp points to top of segregs */
 	movl	(%eax), %ebx		// fetch flg
-	leal	64(%eax), %ecx		// ECX = &task->fpctx
+	leal	128(%eax), %ecx		// ECX = &task->fpstate
 	andl	$CPUHASFXSR, %ebx	// (flg & CPUHASFXSR) ?
 	cmpl	$0, %ebx		// if so, branch to _fxsave
 	jne	_fxsave			//
@@ -661,7 +661,6 @@ _havestk:
 	movl	%ecx, 52(%eax)		// task->pdbr = PDBR
 	movl	%edx, 68(%eax)		// task->frame.cs = caller %cs
 	movl	%esi, 80(%eax)		// task->frame.ss = SS
-//	movl	%edi, 84(%eax)		// m_tcb.trapesp = trap frame	
 	movl	-4(%ebp), %ecx		// ECX = pushed %eax
 	movl	12(%ebp), %edx		// EDX = pushed flags register
 	movl	%ebx, 76(%eax)		// patch stack pointer in m_tcb.frame

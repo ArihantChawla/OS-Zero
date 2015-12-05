@@ -34,7 +34,7 @@ procinit(long id)
         /* bootstrap */
         task->m_task.flg = 0;
         if (k_cpuinfo->flags & CPUHASFXSR) {
-            task->m_task.flg = M_FPXMM;
+            task->m_task.flg |= CPUHASFXSR;
         }
         proc->task = task;
         task->proc = proc;
