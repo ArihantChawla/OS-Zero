@@ -114,6 +114,7 @@ struct m_tcb {
     int32_t             trapnum;        // # of trap
     int32_t             err;            // error code for trap or zero
     struct m_trapframe  trapframe;      // return frame for iret
+    int32_t             trapesp;
 };
 
 struct m_ctx {

@@ -611,7 +611,6 @@ _tmr0fin:
 	 * eip
 	 * ebp		<- EBP, ESP
 	 * eax
-	 * trap frame size
 	 *
 	 * NOTE: ss and esp are only pushed if the interrupt happened
 	 * in user-mode, i.e. there's a privilege transition to system-mode
@@ -658,9 +657,11 @@ _getsysstk:
 	movl	$DATASEL, %esi		// ESI = system stack/data selector
 _havestk:	
 	fwait
+	leal	4(%ebp), %edi		// EDI = trap frame addr
 	movl	%ecx, 52(%eax)		// task->pdbr = PDBR
 	movl	%edx, 68(%eax)		// task->frame.cs = caller %cs
 	movl	%esi, 80(%eax)		// task->frame.ss = SS
+//	movl	%edi, 84(%eax)		// m_tcb.trapesp = trap frame	
 	movl	-4(%ebp), %ecx		// ECX = pushed %eax
 	movl	12(%ebp), %edx		// EDX = pushed flags register
 	movl	%ebx, 76(%eax)		// patch stack pointer in m_tcb.frame
@@ -668,6 +669,7 @@ _havestk:
 	movl	%ecx, 48(%eax)		// patch %eax in m_tcb.genregs
 	movl	%edx, 72(%eax)		// frame->eflags = pre-interrupt value
 	movl	%esi, 64(%eax)		// frame.eip = return address
+	movl	%edi, 84(%eax)		// m_tcb.trapesp = trap frame address
 	/* schedule next thread */
 	//	movl	%gs:8, %eax		// task structure address
 	/* task structure address is still in %eax */
@@ -682,8 +684,7 @@ _havestk:
 	/* continue the same task */
 	leal	20(%eax), %esp
 	popal
-	/* FIXME: trap frame size instead of -12 when privilege transition */
-	leal	-12(%ebp), %esp
+	movl	32(%esp), %esp		// ESP = m_tcb.trapesp
 #if (APIC)
 	_apiceoi
 #else
