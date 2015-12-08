@@ -10,9 +10,9 @@
 #endif
 
 /* NOTE: SIG_DFL is 0 */
-THREADLOCAL sigset_t  _sigmasktab[NPROCTASK];
-static __sighandler_t _sigfunctab[_NSIG] ALIGNED(CLSIZE) = { 0 };
-const uint64_t        _signocatchbits = _SIGNOCATCHBITS;
+THREADLOCAL static sigset_t _sigmasktab[NPROCTASK] ALIGNED(PAGESIZE);
+static __sighandler_t       _sigfunctab[_NSIG] = { 0 };
+static const uint64_t       _signocatchbits = _SIGNOCATCHBITS;
 
 #define _signocatch(sig) (_signocatchbits & (UINT64_C(1) << (sig)))
 
@@ -25,7 +25,14 @@ const uint64_t        _signocatchbits = _SIGNOCATCHBITS;
 int
 sigaction(int sig, const struct sigaction *act, struct sigaction *oldact)
 {
-    ;
+    if (!_sigvalid(sig)
+        || sig == SIGSTOP
+        || sig == SIGKILL) {
+        errno = EINVAL;
+
+        return -1;
+    }
+    /* FIXME: finish this function */
 }
 
 __sighandler_t
@@ -40,35 +47,17 @@ signal(int sig, __sighandler_t func)
     int              flg = SA_RESTART;
 #endif
 
-    sa.sa_handler = func;
-    if (sigemptyset(&sa.sa_mask) < 0
-        || sigaction(sig, &sa, &oldsa) < 0) {
-
-        return SIG_ERR;
-    }
-    oldfunc = oldsa.sa_handler;
-
-    return oldfunc;
-}
-
-__sighandler_t
-__sysv_signal(int sig, __sighandler_t func)
-{
-    struct sigaction sa;
-    struct sigaction oldsa;
-    __sighandler_t   oldfunc;
-
-    if (!_sigvalid(sig)) {
+    if (!_sigvalid(sig)
+        || sig == SIGSTOP
+        || sig == SIGKILL) {
         errno = EINVAL;
 
         return SIG_ERR;
     }
+    sigemptyset(&sa.sa_mask);
+    sigaddset(&sa.sa_mask, sig);
     sa.sa_handler = func;
-    if (sigemptyset(&sa.sa_mask) < 0) {
-
-        return SIG_ERR;
-    }
-    sa.sa_flags = SA_ONESHOT | SA_NOMASK | SA_INTERRUPT;
+    sa.sa_flags = flg;
     if (sigaction(sig, &sa, &oldsa) < 0) {
 
         return SIG_ERR;
@@ -78,35 +67,80 @@ __sysv_signal(int sig, __sighandler_t func)
     return oldfunc;
 }
 
-#if (USEBSD)
+#if defined(_GNU_SOURCE)
 
+/*
+ * unreliable semantics
+ * --------------------
+ * - disposition of sig is reset to the default
+ * - delivery of further instances of sig is not blocked
+ * - blocking system calls are not restarted
+ */
+sighandler_t
+sysv_signal(int sig, __sighandler_t func)
+{
+    struct sigaction sa;
+    struct sigaction oldsa;
+    __sighandler_t   oldfunc;
+    int              flg = SA_ONESHOT | SA_NOMASK | SA_INTERRUPT;
+
+    if (!_sigvalid(sig)
+        || sig == SIGSTOP
+        || sig == SIGKILL) {
+        errno = EINVAL;
+
+        return SIG_ERR;
+    }
+    sigemptyset(&sa.sa_mask);
+    sigaddset(&sa.sa_mask, sig);
+    sa.sa_handler = func;
+    sa.sa_flags = flg;
+    if (sigaction(sig, &sa, &oldsa) < 0) {
+
+        return SIG_ERR;
+    }
+    oldfunc = oldsa.sa_handler;
+
+    return oldfunc;
+}
+
+#endif /* defined(_GNU_SOURCE) */
+
+#if defined(_XOPEN_SOURCE) || (USEBSD)
+
+/*
+ * reliable semantics
+ * ------------------
+ * - disposition of sig is not reset to the default
+ * - delivery of further instances of sig is blocked
+ * - blocking system calls are restarted
+ */
 __sighandler_t
 bsd_signal(int sig, __sighandler_t func)
 {
     struct sigaction sa;
     struct sigaction oldsa;
-    sigset_t         set;
     __sighandler_t   oldfunc;
 
-    if (!_sigvalid(sig)) {
+    if (!_sigvalid(sig)
+        || sig == SIGSTOP
+        || sig == SIGKILL) {
+        errno = EINVAL;
 
-        return (__sighandler_t)SIG_IGN;
+        return SIG_ERR;
     }
-    if (sigemptyset(&set) < 0) {
-
-        return (__sighandler_t)SIG_IGN;
-    }
+    sigemptyset(&sa.sa_mask);
+    sigaddset(&sa.sa_mask, sig);
     sa.sa_handler = func;
-    sa.sa_mask = set;
     sa.sa_flags = 0;
     if (sigaction(sig, &sa, &oldsa) < 0) {
 
-        return (__sighandler_t)SIG_IGN;
+        return SIG_ERR;
     }
     oldfunc = oldsa.sa_handler;
 
     return oldfunc;
 }
 
-#endif
+#endif /* defined(_XOPEN_SOURCE) || (USEBSD) */
 

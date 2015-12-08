@@ -97,6 +97,7 @@ typedef __sighandler_t sighandler_t;
 #define SA_ONSTACK   SIG_ONSTACK
 #define SA_RESTART   SIG_RESTART
 #define SA_INTERRUPT SIG_FASTINTR
+#define SA_RESTORER  SIG_TRAMPOLINE
 #endif
 
 union sigval {
@@ -165,22 +166,36 @@ struct sigevent {
 #define POLL_HUP      6 // device disconnected
 /* any signal */
 #define SI_USER       1 // signal sent by kill()
-#define SI_QUEUE      2 // signal sent by sigqueue()
-#define SI_TIMER      3 // timer set by timer_settime() expired
-#define SI_ASYNCIO    4 // asynchronous I/O request completed
-#define SI_MESGQ      5 // message arrived on empty message queue
+#define SI_KERNEL     2 // sent by the kernel
+#define SI_QUEUE      3 // signal sent by sigqueue()
+#define SI_TIMER      4 // timer set by timer_settime() expired
+#define SI_ASYNCIO    5 // asynchronous I/O request completed
+#define SI_MESGQ      6 // message arrived on empty message queue
+/* linux has SI_SIGIO, SI_TKILL */
 typedef struct {
     int           si_signo;     // signal number
-    int           si_code;      // signal code
     int           si_errno;     // errno-value or zero
+    int           si_code;      // signal code
     int           si_status;    // exit value or signal
-    pid_t         si_pid;       // sending process ID
-    uid_t         si_uid;       // real user ID of sending process
+    int           si_trapno;    // hardware trap number
+    int           si_status;    // exit value or signal
+    int           si_int;       // POSIX.1b signal; sigqueue(), mq_notify()
+    int           si_overrun;   // timer overrun count; POSIX.1b timers
+    int           si_timerid;   // internal kernel timer ID; POSIX.1b timers
+    int           si_fd;        // file descriptor; SIGPOLL/SIGIO
+    long          si_syscall;   // system call number (int on linux)
+    /* kill() and sigqueue() cause si_pid and si_uid to be set */
+    pid_t         si_pid;       // sender process; kill(), sigqueue(),
+                                // mq_notify()
+    uid_t         si_uid;       // real user ID of sender process
+    void         *si_ptr;       // POSIX.1b signal; sigqueue(), mq_notify()
     void         *si_addr;      // SIGILL, SIGFPE, SIGSEGV, SIGBUS
-    long          si_band;      // band event for SIGPOLL
+    long          si_band;      // band event for SIGPOLL/SIGIO
     union sigval  si_value;     // signal value
     ctid_t        si_ctid;
     zoneid_t      si_zoneid;
+    clock_t       si_utime;     // user time consumed
+    clock_t       si_stime;     // system time consumed
 } siginfo_t;
 
 #endif /* _POSIX_SOURCE && USEPOSIX199309 */

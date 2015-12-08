@@ -397,6 +397,7 @@ struct syswait {
 #define SIG_NODEFER    0x00000004
 #define SIG_RESETHAND  0x00000008
 #define SIG_SIGINFO    0x00000010
+#define SIG_TRAMPOLINE 0x80000000
 /* non-POSIX */
 #define SIG_ONSTACK    0x80000000
 #define SIG_RESTART    0x40000000

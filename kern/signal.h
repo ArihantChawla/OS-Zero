@@ -7,8 +7,6 @@
 #ifndef __KERN_SIGNAL_H__
 #define __KERN_SIGNAL_H__
 
-/* constants; signal names */
-
 /*
  * from Open Group
  * ---------------
@@ -72,6 +70,8 @@
  * Continue the process, if it is stopped; otherwise ignore the signal. 
  */
 
+/* constants; signal names */
+
 #define SIGNONE      0x00    /* no signal */
 #define SIGCLD       0x00    /* UNSUPPORTED - System V, NOT SIGCHLD semantics */
 #define SIGEMT       0x00    /* UNSUPPORTED */
@@ -110,7 +110,6 @@
 #define SIGPWR       0x1e    /* System V */
 #define SIGINFO      SIGPWR
 #define SIGSYS       0x1f
-//#define SIGUNUSED    0x1f
 #define SIGRTMIN     0x20    /* minimum real-time signal */
 #define SIGRTMAX     0x3f    /* maximum real-time signal */
 #define _SIGRTBIT    0x20    /* bit set for all real-time signals */

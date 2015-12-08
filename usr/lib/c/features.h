@@ -28,17 +28,17 @@
 #if defined(_XOPEN_SOURCE) && (_XOPEN_SOURCE >= 500)
 #define _XOPEN_SOURCE_EXTENDED 1        // activate X/Open extensions
 #endif
-#if defined(_POSIX_C_SOURCE)
-#define _POSIX_SOURCE          1        // old macro for POSIX features
+#if defined(_POSIX_C_SOURCE)            // old macro for POSIX features
+#define _POSIX_SOURCE          1
 #endif
 #if defined(_POSIX_C_SOURCE) && (_POSIX_C_SOURCE >= 200809L)
-#define _ATFILE_SOURCE
+#define _ATFILE_SOURCE         1
 #endif
-#define _SVID_SOURCE           1
+#define _SVID_SOURCE           1        // System V features
 #define _GNU_SOURCE            1        // enable GNU extensions
 #define _DEFAULT_SOURCE        1
 #define _BSD_SOURCE            1        // enable BSD features
-#undef  _FAVOR_BSD
+#define _FAVOR_BSD             0        // favor old BSD features
 #define _ZERO_SOURCE           1        // enable Zero features; version number
 #define _UNIX_SOURCE           1        // enable Unix features
 #define _MSDOS_SOURCE          1        // enable [some] MS-DOS style C features
@@ -46,6 +46,65 @@
 #define _MSVC_SOURCE           1
 #define _INTEL_SOURCE          1
 
+#if (!_REENTRANT)
+#undef _REENTRANT
+#endif
+#if (!_THREAD_SAFE)
+#undef _THREAD_SAFE)
+#endif
+#if (!_ISOC11_SOURCE)
+#undef _ISOC11_SOURCE)
+#endif
+#if (!_ISOC99_SOURCE)
+#undef _ISOC99_SOURCE)
+#endif
+#if (!_LARGEFILE_SOURCE)
+#undef _LARGEFILE_SOURCE
+#endif
+#if (!_LARGEFILE64_SOURCE)
+#undef _LARGEFILE64_SOURCE
+#endif
+#if (!_XOPEN_SOURCE)
+#undef _XOPEN_SOURCE
+#endif
+#if (!_ATFILE_SOURCE)
+#undef _ATFILE_SOURCE
+#endif
+#if (!_SVID_SOURCE)
+#undef _SVID_SOURCE
+#endif
+#if (!_GNU_SOURCE)
+#undef _GNU_SOURCE
+#endif
+#if (!_DEFAULT_SOURCE)
+#undef _DEFAULT_SOURCE
+#endif
+#if (!_BSD_SOURCE)
+#undef _BSD_SOURCE
+#endif
+#if (!_FAVOR_BSD)
+#undef _FAVOR_BSD
+#endif
+#if (!_ZERO_SOURCE)
+#undef _ZERO_SOURCE
+#endif
+#if (!_UNIX_SOURCE)
+#undef _UNIX_SOURCE
+#endif
+#if (!_MSDOS_SOURCE)
+#undef _MSDOS_SOURCE
+#endif
+#if (!_QNX_SOURCE)
+#undef _QNX_SOURCE
+#endif
+#if (!_MSVC_SOURCE)
+#undef _MSVC_SOURCE
+#endif
+#if (!_INTEL_SOURCE)
+#undef _INTEL_SOURCE
+#endif
+
+/* POSIX- and X/Open-features */
 #define USEXOPEN               (defined(_XOPEN_SOURCE))
 #define USEXOPEN2K             (defined(_XOPEN_SOURCE)                  \
                                 && (_XOPEN_SOURCE >= 600))
@@ -69,6 +128,7 @@
 #define USEPOSIX200112         (defined(_POSIX_SOURCE)                  \
                                 && _POSIX_C_SOURCE >= 200112L)
 
+/* miscellaneous features */
 #define USEBSD                 (defined(_BSD_SOURCE))
 /* favor old school BSD interfaces */
 #define FAVORBSD               (defined(_BSD_SOURCE) && defined(_FAVOR_BSD))
