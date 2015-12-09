@@ -176,14 +176,13 @@ typedef struct {
     int           si_signo;     // signal number
     int           si_errno;     // errno-value or zero
     int           si_code;      // signal code
-    int           si_status;    // exit value or signal
     int           si_trapno;    // hardware trap number
     int           si_status;    // exit value or signal
     int           si_int;       // POSIX.1b signal; sigqueue(), mq_notify()
     int           si_overrun;   // timer overrun count; POSIX.1b timers
     int           si_timerid;   // internal kernel timer ID; POSIX.1b timers
     int           si_fd;        // file descriptor; SIGPOLL/SIGIO
-    long          si_syscall;   // system call number (int on linux)
+    int           si_syscall;   // system call number
     /* kill() and sigqueue() cause si_pid and si_uid to be set */
     pid_t         si_pid;       // sender process; kill(), sigqueue(),
                                 // mq_notify()

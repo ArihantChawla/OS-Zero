@@ -23,11 +23,13 @@ _APICEOI	= 0x00000000
 	pushal
 	movl	32(%esp), %ecx	// move error code to %ecx
 .endm
+#if 0
 .macro	_trapleaveerr
 	/* TODO: check to see if we need to schedule another thread */
 	popal
 	addl	$4, %esp	// skip error code
 .endm
+#endif
 
 #if (APIC)
 .macro	_apiceoi

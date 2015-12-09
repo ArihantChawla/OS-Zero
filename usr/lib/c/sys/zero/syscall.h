@@ -1,7 +1,7 @@
 #ifndef __SYS_ZERO_SYSCALL_H__
 #define __SYS_ZERO_SYSCALL_H__
 
-#include <zero/cdecl.h>
+#include <zero/cdefs.h>
 #include <zero/param.h>
 #include <kern/syscall.h>
 

@@ -15,7 +15,7 @@
 #if !defined(__ASSEMBLER__)
 
 #include <stdint.h>
-#include <zero/cdecl.h>
+#include <zero/cdefs.h>
 #include <zero/param.h>
 #include <kern/unit/x86/cpu.h>
 #include <kern/unit/x86/apic.h>

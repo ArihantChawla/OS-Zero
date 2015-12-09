@@ -1,4 +1,5 @@
-#include <zero/cdecl.h>
+#include <zero/cdefs.h>
+#include <zero/param.h>
 #include <zero/mtx.h>
 #include <kern/proc/proc.h>
 #include <kern/proc/task.h>

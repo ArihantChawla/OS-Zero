@@ -14,7 +14,7 @@
 
 #define __KERNEL__ 1
 #include <sys/types.h>
-#include <zero/cdecl.h>
+#include <zero/cdefs.h>
 #include <zero/param.h>
 #include <zero/mtx.h>
 #include <zero/trix.h>

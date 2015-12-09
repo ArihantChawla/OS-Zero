@@ -13,7 +13,7 @@
 #include <sys/zero/syscall.h>
 #include <kern/mem/obj.h>
 #endif
-#include <zero/cdecl.h>
+#include <zero/cdefs.h>
 #include <zero/param.h>
 #define ZEROMTX 1
 #include <zero/mtx.h>

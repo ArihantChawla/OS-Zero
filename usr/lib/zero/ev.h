@@ -5,7 +5,7 @@
 #include <stdint.h>
 #include <limits.h>
 #if 0
-#include <zero/cdecl.h>
+#include <zero/cdefs.h>
 #include <zero/param.h>
 #endif
 //#include <deck/deck.h>

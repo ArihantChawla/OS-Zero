@@ -7,7 +7,7 @@
 #if (_ZERO_SOURCE)
 
 #include <errno.h>
-#include <zero/cdecl.h>
+#include <zero/cdefs.h>
 #include <zero/param.h>
 #include <sys/zero/syscall.h>
 

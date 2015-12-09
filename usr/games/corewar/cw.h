@@ -2,8 +2,8 @@
 #define __COREWAR_CW_H__
 
 #include <corewar/conf.h>
+#include <zero/cdefs.h>
 #include <zero/param.h>
-#include <zero/cdecl.h>
 #if defined(ZEUS)
 #include <corewar/zeus.h>
 #endif

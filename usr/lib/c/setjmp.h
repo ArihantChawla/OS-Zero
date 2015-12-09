@@ -13,7 +13,7 @@
 #elif defined(__arm__)
 #include <arm/setjmp.h>
 #endif
-#include <zero/cdecl.h>
+#include <zero/cdefs.h>
 
 #if (_POSIX_C_SOURCE) || (_XOPEN_SOURCE)
 typedef struct _jmpbuf sigjmp_buf[1];

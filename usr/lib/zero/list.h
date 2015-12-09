@@ -5,7 +5,7 @@
  */
 
 #include <stddef.h>
-#include <zero/cdecl.h>
+#include <zero/cdefs.h>
 
 /* #define LIST_TYPE */
 

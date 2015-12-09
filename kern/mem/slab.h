@@ -2,7 +2,7 @@
 #define __KERN_MEM_SLAB_H__
 
 #include <stdint.h>
-#include <zero/cdecl.h>
+#include <zero/cdefs.h>
 #include <zero/param.h>
 #include <kern/mem/mem.h>
 

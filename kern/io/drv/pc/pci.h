@@ -2,8 +2,8 @@
 #define __KERN_IO_DRV_PC_PCI_H__
 
 #include <stdint.h>
+#include <zero/cdefs.h>
 #include <zero/param.h>
-#include <zero/cdecl.h>
 
 long     pciprobe(void);
 uint16_t pcireadconfw(uint8_t busid, uint8_t slotid,

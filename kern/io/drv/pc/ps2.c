@@ -12,9 +12,8 @@
 #include <limits.h>
 #include <sys/io.h>
 #include <sys/zero/ps2.h>
-
+#include <zero/cdefs.h>
 #include <zero/param.h>
-#include <zero/cdecl.h>
 #include <zero/mtx.h>
 //#define VAL(x)        (x)
 #define NOP(x)        ((void)0)

@@ -1,6 +1,6 @@
 #include <time.h>
 #include <sys/time.h>
-#include <zero/cdecl.h>
+#include <zero/cdefs.h>
 #include <zero/asm.h>
 #include <zero/thr.h>
 #include <zero/cond.h>

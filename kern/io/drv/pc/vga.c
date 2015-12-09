@@ -1,7 +1,7 @@
 #include <stdint.h>
 #include <stddef.h>
+#include <zero/cdefs.h>
 #include <zero/param.h>
-#include <zero/cdecl.h>
 #include <gfx/rgb.h>
 #include <kern/conf.h>
 #include <kern/util.h>

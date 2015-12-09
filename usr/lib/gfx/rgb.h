@@ -3,7 +3,7 @@
 
 #include <stdint.h>
 #include <endian.h>
-#include <zero/cdecl.h>
+#include <zero/cdefs.h>
 #include <zero/param.h>
 
 #define GFX_ARGB32    1

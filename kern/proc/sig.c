@@ -2,7 +2,8 @@
 #include <stdint.h>
 #define __KERNEL__ 1
 #include <signal.h>
-#include <zero/cdecl.h>
+#include <zero/cdefs.h>
+#include <zero/param.h>
 #include <zero/types.h>
 #include <kern/util.h>
 //#include <kern/obj.h>

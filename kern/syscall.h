@@ -10,7 +10,7 @@
 #include <sys/ipc.h>
 #include <sys/stat.h>
 #include <sys/shm.h>
-#include <zero/cdecl.h>
+#include <zero/cdefs.h>
 #include <zero/param.h>
 #include <kern/syscallnum.h>
 #include <kern/perm.h>

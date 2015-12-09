@@ -4,7 +4,7 @@
 #include <string.h>
 #include <unistd.h>
 #include <pthread.h>
-#include <zero/cdecl.h>
+#include <zero/cdefs.h>
 #include <zero/param.h>
 #include <kern/malloc.h>
 #include <kern/mem/mem.h>

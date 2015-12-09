@@ -32,8 +32,8 @@
 
 #include <stdint.h>
 
+#include <zero/cdefs.h>
 #include <zero/param.h>
-#include <zero/cdecl.h>
 #include <zero/types.h>
 
 #include <kern/util.h>

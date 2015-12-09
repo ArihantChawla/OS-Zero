@@ -1,5 +1,5 @@
 #include <sys/io.h>
-#include <zero/cdecl.h>
+#include <zero/cdefs.h>
 #include <kern/unit/x86/asm.h>
 
 NOINLINE

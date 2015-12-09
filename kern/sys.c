@@ -1,6 +1,6 @@
 #include <limits.h>
 #include <unistd.h>
-#include <zero/cdecl.h>
+#include <zero/cdefs.h>
 #include <zero/param.h>
 #include <kern/conf.h>
 #include <kern/sys.h>

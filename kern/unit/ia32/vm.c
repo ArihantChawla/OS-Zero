@@ -9,7 +9,7 @@
 #include <stddef.h>
 #include <stdint.h>
 #include <zero/trix.h>
-#include <zero/cdecl.h>
+#include <zero/cdefs.h>
 #include <zero/param.h>
 //#include <kern/io/dev.h>
 #include <kern/util.h>

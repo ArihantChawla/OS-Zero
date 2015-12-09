@@ -5,7 +5,7 @@
 #if (MJOL_USE_ZERO_RANDMT32)
 #include <zero/randmt32.h>
 #endif
-#include <zero/cdecl.h>
+#include <zero/cdefs.h>
 #include <zero/param.h>
 #include <zero/trix.h>
 #include <mjolnir/mjol.h>

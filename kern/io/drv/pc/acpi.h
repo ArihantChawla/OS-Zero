@@ -3,8 +3,8 @@
 
 #include <stdint.h>
 
+#include <zero/cdefs.h>
 #include <zero/param.h>
-#include <zero/cdecl.h>
 
 #define ACPIRSDPTRSIG UINT64_C(0x2052545020445352) // "RSD PTR "
 

@@ -3,7 +3,7 @@
 #include <stdio.h>
 #endif
 #include <zero/ev.h>
-#include <zero/cdecl.h>
+#include <zero/cdefs.h>
 #include <zero/param.h>
 #if (EVPROF)
 #include <zero/prof.h>

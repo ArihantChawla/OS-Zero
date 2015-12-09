@@ -1,7 +1,7 @@
 #ifndef __ZERO_X86_64_ASM_H__
 #define __ZERO_X86_64_ASM_H__
 
-#include <zero/cdecl.h>
+#include <zero/cdefs.h>
 #include <zero/x86/asm.h>
 
 #define m_atominc(p)            m_atominc64(p)

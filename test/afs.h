@@ -2,7 +2,7 @@
 #define __AFS_H__
 
 #include <kern/perm.h>
-#include <zero/cdecl.h>
+#include <zero/cdefs.h>
 
 #define AFSBLKSIZE 8192
 

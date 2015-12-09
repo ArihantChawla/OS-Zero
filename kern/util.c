@@ -2,7 +2,7 @@
 #include <stddef.h>
 #include <limits.h>
 #include <stdarg.h>
-#include <zero/cdecl.h>
+#include <zero/cdefs.h>
 #include <zero/param.h>
 #include <zero/trix.h>
 #include <kern/io/drv/chr/cons.h>

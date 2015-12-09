@@ -2,7 +2,7 @@
 #define __KERN_UNIT_X86_SMBIOS_H__
 
 #include <stdint.h>
-#include <zero/cdecl.h>
+#include <zero/cdefs.h>
 #include <zero/param.h>
 
 #define SMBIOSSIG 0x5f534d5fU   // "_SM_"

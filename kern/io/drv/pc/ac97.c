@@ -1,9 +1,9 @@
 #include <stdint.h>
 #include <sys/io.h>
 
+#include <zero/cdefs.h>
 #include <zero/param.h>
-#include <zero/cdecl.h>
-
+#include <zero/param.h>
 #include <kern/util.h>
 #include <kern/malloc.h>
 #include <kern/io/drv/pc/pci.h>

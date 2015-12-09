@@ -9,7 +9,7 @@
 
 #include <stdint.h>
 #include <zero/param.h>
-#include <zero/cdecl.h>
+#include <zero/cdefs.h>
 #include <kern/unit/x86/pit.h>
 #include <kern/unit/x86/link.h>
 

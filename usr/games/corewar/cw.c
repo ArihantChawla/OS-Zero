@@ -8,7 +8,7 @@
 #include <limits.h>
 #include <stdint.h>
 #include <time.h>
-#include <zero/cdecl.h>
+#include <zero/cdefs.h>
 #include <zero/param.h>
 #if defined(CWRANDMT32)
 #include <zero/randmt32.h>

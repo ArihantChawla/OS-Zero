@@ -1,7 +1,7 @@
 #ifndef __ZERO_IA32_ASM_H__
 #define __ZERO_IA32_ASM_H__
 
-#include <zero/cdecl.h>
+#include <zero/cdefs.h>
 #include <zero/x86/asm.h>
 
 #define m_atominc(p)            m_atominc32(p)

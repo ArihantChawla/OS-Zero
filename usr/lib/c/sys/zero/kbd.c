@@ -4,7 +4,7 @@
 
 #include <stdint.h>
 #include <zero/param.h>
-#include <zero/cdecl.h>
+#include <zero/cdefs.h>
 #define NOP(x)        ((void)0)
 #define NOP3(x, y, z) ((void)0)
 #define MALLOC(x)     ((void *)0)

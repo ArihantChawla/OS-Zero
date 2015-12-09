@@ -4,7 +4,7 @@
 #include <stdlib.h>
 #endif
 #include <errno.h>
-#include <zero/cdecl.h>
+#include <zero/cdefs.h>
 #include <zero/param.h>
 #include <zero/trix.h>
 #include <kern/util.h>

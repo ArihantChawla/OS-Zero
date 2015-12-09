@@ -2,7 +2,7 @@
 #include <stdint.h>
 #include <signal.h>
 #include <errno.h>
-#include <zero/cdecl.h>
+#include <zero/cdefs.h>
 #include <zero/param.h>
 #if (_ZERO_SOURCE)
 #include <kern/conf.h>
@@ -10,7 +10,7 @@
 #endif
 
 /* NOTE: SIG_DFL is 0 */
-THREADLOCAL static sigset_t _sigmasktab[NPROCTASK] ALIGNED(PAGESIZE);
+static THREADLOCAL sigset_t _sigmasktab[NPROCTASK] ALIGNED(PAGESIZE);
 static __sighandler_t       _sigfunctab[_NSIG] = { 0 };
 static const uint64_t       _signocatchbits = _SIGNOCATCHBITS;
 

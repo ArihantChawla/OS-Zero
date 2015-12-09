@@ -1,5 +1,5 @@
-#ifndef __ZERO_CDECL_H__
-#define __ZERO_CDECL_H__
+#ifndef __ZERO_CDEFS_H__
+#define __ZERO_CDEFS_H__
 
 /* size for 'empty' array (placeholder) */
 #if defined(__STDC_VERSION__) && (__STDC_VERSION__ >= 199901L)
@@ -88,5 +88,5 @@
 #define THREADLOCAL  __thread
 #endif
 
-#endif /* __ZERO_CDECL_H__ */
+#endif /* __ZERO_CDEFS_H__ */
 

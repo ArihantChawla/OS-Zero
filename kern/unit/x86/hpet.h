@@ -2,7 +2,7 @@
 #define __KERN_UNIT_X86_HPET_H__
 
 #include <stdint.h>
-#include <zero/cdecl.h>
+#include <zero/cdefs.h>
 #include <zero/param.h>
 
 /* base addresses */

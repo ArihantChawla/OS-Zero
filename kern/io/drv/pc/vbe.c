@@ -5,7 +5,7 @@
 #define VBEDEFMODE 0x118        // 1024x768 24-bit
 
 #include <stdint.h>
-#include <zero/cdecl.h>
+#include <zero/cdefs.h>
 #if (NEWFONT)
 #include <zero/trix.h>
 #endif

@@ -169,7 +169,7 @@
 #define mtxlk(mp)   pthread_mutex_lock(mp)
 #define mtxunlk(mp) pthread_mutex_unlock(mp)
 #endif
-#include <zero/cdecl.h>
+#include <zero/cdefs.h>
 #include <zero/param.h>
 #include <zero/unix.h>
 #include <zero/trix.h>

@@ -2,7 +2,7 @@
 
 #include <zero/trix.h>
 #include <kern/conf.h>
-#include <zero/cdecl.h>
+#include <zero/cdefs.h>
 #include <zero/param.h>
 #include <kern/malloc.h>
 #include <kern/io/drv/chr/cons.h>
