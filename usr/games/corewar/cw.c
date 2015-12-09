@@ -23,7 +23,7 @@
 extern long    rcnargtab[CWNOP];
 
 struct cwmars  cwmars ALIGNED(PAGESIZE);        // virtual machine structure
-char          *cwopnametab[CWNOP]               // instruction name table
+const char    *cwopnametab[CWNOP]               // instruction name table
 = {
     "DAT",
     "MOV",

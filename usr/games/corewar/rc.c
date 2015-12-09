@@ -26,7 +26,7 @@ long                  rcnargtab[CWNOP]  // per-instruction argument counts
 
 /* register supported operation */
 void
-rcaddop(char *name, long id)
+rcaddop(const char *name, long id)
 {
     void *ptr1;
     void *ptr2;

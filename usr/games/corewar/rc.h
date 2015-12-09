@@ -9,7 +9,7 @@ struct rcprog {
 };
 
 void rcinitop(void);
-void rcaddop(char *name, long id);
+void rcaddop(const char *name, long id);
 long rcxlate(FILE *fp, long pid, long base, long *baseret, long *sizeret);
 void rcdisasm(struct cwinstr *op, FILE *fp);
 

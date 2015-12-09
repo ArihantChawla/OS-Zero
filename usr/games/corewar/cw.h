@@ -73,7 +73,7 @@ struct cwmars {
 #endif
     char            *pidmap;
     struct cwinstr  *optab;                     // operation lookup structure
-    char           **opnames;                   // operation mnemonic table
+    const char     **opnames;                   // operation mnemonic table
 };
 
 void cwexec(long pid);

@@ -2,7 +2,7 @@
 #include <stdlib.h>
 #include <string.h>
 #include <unistd.h>
-#include <zero/cdecl.h>
+#include <zero/cdefs.h>
 #include <zero/param.h>
 #include <zero/trix.h>
 #include <corewar/cw.h>
@@ -72,12 +72,12 @@ zeusaddsel(UNUSED struct zeusx11 *x11, UNUSED XEvent *event)
         fprintf(stderr, "memory allocation failure\n");
     } else if (zeussel.last >= 0) {
         if (pc < zeussel.last) {
-            lim = zeussel.last;
+            lim = zeussel.last + 1;
         } else {
             lim = pc;
-            pc = zeussel.last;
+            pc = zeussel.last + 1;
         }
-        while (pc <= lim) {
+        while (pc < lim) {
             setbit(zeussel.bmap, pc);
             zeusdrawsimop(x11, pc);
             pc++;
@@ -469,9 +469,9 @@ void
 zeusinitx11title(struct zeusx11 *x11)
 {
     XTextProperty  prop;
-    char          *str = "Zero MARS";
+    const char    *str = "Zero MARS";
 
-    XStringListToTextProperty(&str, 1, &prop);
+    XStringListToTextProperty((char **)&str, 1, &prop);
     XSetWMName(x11->disp, x11->mainwin, &prop);
     XFree(prop.value);
 
@@ -719,7 +719,7 @@ zeusloadx11buttonimgs(UNUSED struct zeusx11 *x11)
 
 /* TODO: event selection */
 void
-zeusaddx11button(struct zeusx11 *x11, int id, char *str,
+zeusaddx11button(struct zeusx11 *x11, int id, const char *str,
                  zeusx11buttonfunc *func)
 {
     Window               parent = x11->buttonwin;
@@ -754,7 +754,7 @@ zeusaddx11button(struct zeusx11 *x11, int id, char *str,
         exit(1);
     }
     zeusx11buttons.wins[id] = win;
-    zeusx11buttons.strs[id] = str;
+    zeusx11buttons.strs[id] = (char *)str;
     zeusx11buttons.strlens[id] = strlen(str);
     zeusx11buttons.functab[id] = func;
     XSelectInput(x11->disp,
@@ -901,7 +901,7 @@ void
 zeusprintdb(struct zeusx11 *x11, int simx, int simy)
 {
     struct cwinstr *op;
-    char           *str = " <";
+    const char     *str = " <";
     int             slen = strlen(str);
     long            pid;
     Window          win;
@@ -1076,6 +1076,9 @@ zeusprocev(struct zeusx11 *x11)
                 break;
             case ButtonRelease:
                 zeusx11buttons.funcs.release(x11, &ev);
+
+                break;
+            default:
 
                 break;
         }
