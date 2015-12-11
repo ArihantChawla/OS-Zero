@@ -249,9 +249,8 @@ struct sigvec {
 };
 
 struct sigcontext {
-    int          sc_onstack;    // signal mask to restore
-    sigset_t     sc_mask;       // sigstack state to restore
-    struct m_tcb tcb;
+    sigset_t   sc_mask;         // sigstack state to restore
+    mcontext_t sc_mcontext;
 };
 
 #endif /* USEBSD && !USEPOSIX */
@@ -259,8 +258,6 @@ struct sigcontext {
 #if defined(_POSIX_SOURCE)
 
 #if defined(SIG32BIT)
-
-//#define _sigptr(sp) ((struct sigset *)(sp))
 
 /* POSIX */
 #define sigemptyset(sp)                                                 \

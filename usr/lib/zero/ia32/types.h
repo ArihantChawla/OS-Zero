@@ -114,7 +114,6 @@ struct m_tcb {
     int32_t            trapnum;         // # of trap
     int32_t            err;             // error code for trap or zero
     struct m_trapframe trapframe;       // return frame for iret
-    int32_t            trapesp;         // stack-pointer for rescheduling
 };
 
 #if 0
@@ -129,10 +128,11 @@ struct m_ctx {
 #endif
 
 struct m_task {
-    int32_t          flg;       //  4 bytes @ 0
-    struct m_tcb     tcb;       // 84 bytes @ 4
+    int32_t          flg;       //  4 bytes @ 0; task flags
+    struct m_tcb     tcb;       // 80 bytes @ 4; task control block
+    int32_t          trapesp;   //  4 bytes @ 84; stack-pointer for rescheduling
     int8_t           _res[40];  // 40 bytes @ 88, pad to cacheline-boundary
-    struct m_fpstate fpstate;   //  X bytes @ 128
+    struct m_fpstate fpstate;   //  X bytes @ 128; FPU state
 };
 
 #endif /* __ZERO_IA32_TYPES_H__ */

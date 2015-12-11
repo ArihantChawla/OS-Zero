@@ -16,12 +16,13 @@
 typedef struct m_ctx mcontext_t;
 #define __mcontext_t_defined
 
+/* keep the beginning of this struct so we can use sigcontext_t */
 typedef struct __ucontext {
+    sigset_t           uc_sigmask;
+    mcontext_t         uc_mcontext;
     unsigned long      uc_flags;
     struct __ucontext *uc_link;
-    sigset_t           uc_sigmask;
     stack_t            uc_stack;
-    mcontext_t         uc_mcontext;
     struct m_fpstate   _fpstate;
 } ucontext_t;
 

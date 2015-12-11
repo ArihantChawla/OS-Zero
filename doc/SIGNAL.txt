@@ -1,0 +1,14 @@
+unix-style signals
+------------------
+
+types and structures
+--------------------
+
+sig_atomic_t
+sigset_t
+struct sigaction
+struct sigcontext / ucontext_t
+struct siginfo
+stack_t / struct sigaltstack
+struct sigvec
+
