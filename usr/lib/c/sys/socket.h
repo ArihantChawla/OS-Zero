@@ -15,19 +15,19 @@
 #include <sys/bits/socket.h>
 
 #if !defined(__socklen_t_defined)
-typedef long     socklen_t;
+typedef uint16_t socklen_t;
 #define __socklen_t_defined 1
 #endif
 typedef uint16_t sa_family_t;
 
+extern const socklen_t sockaddrlentab[AF_NFAMILY];
+
+#define SOCK_MAXADDRLEN 256
 struct sockaddr {
-    sa_family_t        sa_family;	        // address family
-    uint8_t            _res[CLSIZE - sizeof(sa_family_t)];
-#if defined(EMPTY)
-    char               sa_data[EMPTY] ALIGNED(CLSIZE); // actual address
-#else
-    char               sa_data[1] ALIGNED(CLSIZE);
-#endif
+    sa_family_t        sa_family;                               // family
+    socklen_t          sa_len;                                  // address size
+    uint8_t            _res[CLSIZE - sizeof(sa_family_t) - sizeof(socklen_t)];
+    char               sa_data[SOCK_MAXADDRLEN] ALIGNED(CLSIZE); // address
 };
 
 /* control information in raw sockets */
@@ -62,10 +62,11 @@ struct ucred {
 };
 #endif
 
-#define SOCK_MAXADDRLEN 256
+#define SA_LEN(sa)      ((sa)->sa_len)
 struct sockaddr_storage {
     sa_family_t   ss_family;
-    uint8_t       _pad[CLSIZE - sizeof(sa_family_t)];
+    socklen_t     sa_len;
+    uint8_t       _res[CLSIZE - sizeof(sa_family_t) - sizeof(socklen_t)];
     unsigned char _data[SOCK_MAXADDRLEN];
 };
 
@@ -119,6 +120,20 @@ extern int     socketpair(int domain, int type, int proto, int sockvec[2]);
 /* determine wheter socket is at an out-of-band mark */
 extern int     sockatmark(int fd);
 #endif
+
+static __inline__ struct sockaddr *
+sockaddr_alloc(sa_family_t af)
+{
+    struct sockaddr *adr = NULL;
+    
+    if (_saisfamily(af)) {
+        adr = calloc(1, sizeof(struct sockaddr));
+        if (adr) {
+            adr->sa_family = af;
+            adr->sa_len = sockaddrlentab[af];
+        }
+    }
+}
 
 #endif /* !__KERNEL__ */
 

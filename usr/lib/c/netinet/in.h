@@ -6,15 +6,17 @@
 #include <zero/cdefs.h>
 #include <zero/param.h>
 
+#define __INADDRSZ          4
+#define __IN6ADDRSZ         16
+
 #define INET_ADDRSTRLEN     16
 #define INET6_ADDRSTRLEN    46
 
 #define IPPROTO_RAW         1
 #define IPPROTO_IP          2
 #define IPPROTO_ICMP        3
-#define IPPROTO_RAW         4
-#define IPPROTO_TCP         5
-#define IPPROTO_UDP         6
+#define IPPROTO_TCP         4
+#define IPPROTO_UDP         5
 
 #define IPV6_JOIN_GROUP     1
 #define IPV6_LEAVE_GROUP    2
@@ -31,6 +33,7 @@ struct in_addr {
 
 struct sockaddr_in {
     sa_family_t sin_family;
+    socklen_t   sin_len;
     in_port_t   sin_port;
 #if defined(EMPTY)
     char        sin_addr[EMPTY] ALIGNED(CLSIZE);
@@ -48,11 +51,12 @@ struct in6_addr {
 
 /* NOTE: sin6_port and sin6_addr are in network byte-order */
 struct sockaddr_in6 {
-    sa_family_t     sin6_family;    // AF_INET6
-    in_port_t       sin6_port;      // port #
-    uint32_t        sin6_flowinfo;  // traffic class and flow information
+    sa_family_t     sin6_family;        // AF_INET6
+    socklen_t       sin6_len;           // address size
+    in_port_t       sin6_port;          // port #
+    uint32_t        sin6_flowinfo;      // traffic class and flow information
+    uint32_t        sin6_scope_id;      // scope ID
     struct in6_addr sin6_addr ALIGNED(CLSIZE);
-    uint32_t        sin6_scope_id;
 };
 
 struct ipv6_mreq {
