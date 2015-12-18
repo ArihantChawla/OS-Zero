@@ -32,7 +32,7 @@
  * ----
  * - fix mallinfo() to return proper information
  */
-#undef MALLOCSTAT
+#undef  MALLOCSTAT
 #define MALLOCSTAT        0
 #define MALLOCSTKNDX      0
 #define MALLOCCONSTSLABS  1

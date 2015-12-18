@@ -4,7 +4,7 @@
 #define __SYS_BITS_SOCKET_H__
 
 #include <stddef.h>
-#include <zero/cdecl.h>
+#include <zero/cdefs.h>
 
 /* cmsg_level argument in struct cmsghdr; level argument for set/getsockopt() */
 #define SOL_SOCKET      1

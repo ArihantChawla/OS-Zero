@@ -246,18 +246,18 @@ typedef struct {
 
 extern intmax_t imaxabs(intmax_t n);
 extern imaxdiv_t imaxdiv(intmax_t numer, intmax_t denom);
-extern intmax_t strtoimax(const chat *__restrict nptr,
-	                      char **__restrict endptr,
-						  int base);
+extern intmax_t strtoimax(const char *__restrict nptr,
+                          char **__restrict endptr,
+                          int base);
 extern uintmax_t strtoumax(const char *__restrict nptr,
                            char **__restrict endptr,
-					       int base);
+                           int base);
 extern intmax_t wcstoimax(const wchar_t *__restrict nptr,
                           wchar_t **endptr,
-						  int base);
+                          int base);
 extern uintmax_t wcstoumax(const wchar_t *__restrict nptr,
                            wchar_t **__restrict endptr,
-						   int base);
+                           int base);
 
 #endif /* !__KERNEL__ */
 

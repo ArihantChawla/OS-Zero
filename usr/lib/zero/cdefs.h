@@ -25,8 +25,11 @@
 
 #if defined(__GNUC__) || defined(__clang__)
 
+/* align variables, aggregates, and tables to boundary of a */
+#define ALIGNED(a)   __attribute__ ((__aligned__(a)))
 /* ALWAYS inline the function */
 #define INLINE       __inline__ __attribute__ ((__always_inline__))
+/* do NOT inline the function */
 #define NOINLINE     __attribute__((__noinline__))
 #define WEAK         __attribute__ ((__weak__))
 #define WEAKALIAS(n) __attribute__ ((weak, alias(#n)))
@@ -78,10 +81,6 @@
 
 #if !defined(UNUSED)
 #define UNUSED
-#endif
-#if !defined(ALIGNED)
-/* align variables, aggregates, and tables to boundary of a */
-#define ALIGNED(a)   __attribute__ ((__aligned__(a)))
 #endif
 #if !defined(THREADLOCAL)
 /* declare thread-local data */

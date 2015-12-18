@@ -22,7 +22,7 @@ typedef uint16_t sa_family_t;
 
 struct sockaddr {
     sa_family_t        sa_family;	        // address family
-    uint8_t            _res[CLSIZE - sizeof(sa_family_)];
+    uint8_t            _res[CLSIZE - sizeof(sa_family_t)];
 #if defined(EMPTY)
     char               sa_data[EMPTY] ALIGNED(CLSIZE); // actual address
 #else
