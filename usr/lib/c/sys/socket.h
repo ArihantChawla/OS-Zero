@@ -62,10 +62,12 @@ struct ucred {
 };
 #endif
 
+#define SOCK_MAXADDRLEN 256
 struct sockaddr_storage {
     sa_family_t   ss_family;
-    unsigned char _pad[CLSIZE - sizeof(sa_family_t)];
-} ALIGNED(CLSIZE);
+    uint8_t       _pad[CLSIZE - sizeof(sa_family_t)];
+    unsigned char _data[SOCK_MAXADDRLEN];
+};
 
 struct msghdr {
     void         *msg_name;	// optional address

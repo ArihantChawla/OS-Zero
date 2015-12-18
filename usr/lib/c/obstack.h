@@ -13,7 +13,7 @@
 #define __BPTR_ALIGN(b, p, a) ((b) + (((p) - (b) + (a)) & ~(a)))
 #define __PTR_ALIGN(b, p, a)                                            \
     __BPTR_ALIGN(sizeof(PTR_INT_TYPE) < sizeof(void *) ? (b) : (char *)0, \
-                 (p), (a))
+                 
 
 extern void _obstack_newchunk(struct obstack *, int);
 extern int  _obstack_begin(struct obstack *, int, int,
