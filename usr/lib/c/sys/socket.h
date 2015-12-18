@@ -10,19 +10,23 @@
 #if (USEGNU)
 #include <sys/types.h>
 #endif
-#include <zero/cdecl.h>
+#include <zero/cdefs.h>
+#include <zero/param.h>
 #include <sys/bits/socket.h>
 
-#if !defined(__SOCKLEN_T_DEFINED)
-typedef long           socklen_t;
-#define __SOCKLEN_T_DEFINED 1
+#if !defined(__socklen_t_defined)
+typedef long     socklen_t;
+#define __socklen_t_defined 1
 #endif
-typedef unsigned short sa_family_t;
+typedef uint16_t sa_family_t;
 
 struct sockaddr {
-    sa_family_t sa_family;	// address family
+    sa_family_t        sa_family;	        // address family
+    uint8_t            _res[CLSIZE - sizeof(sa_family_)];
 #if defined(EMPTY)
-    char        sa_data[EMPTY]; // actual address
+    char               sa_data[EMPTY] ALIGNED(CLSIZE); // actual address
+#else
+    char               sa_data[1] ALIGNED(CLSIZE);
 #endif
 };
 

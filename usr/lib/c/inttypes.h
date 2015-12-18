@@ -10,10 +10,10 @@
 #if defined(__STDC_FORMAT_MACROS)
 
 #if (LONGSIZE == 8)
-#define __PRI64_PREFIX "l"
+#define __PRI64_PREFIX  "l"
 #define __PRIPTR_PREFIX "l"
 #else
-#define __PRI64_PREFIX "ll"
+#define __PRI64_PREFIX  "ll"
 #define __PRIPTR_PREFIX
 #endif
 
