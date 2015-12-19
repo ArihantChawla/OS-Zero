@@ -122,7 +122,7 @@ bufevict(void)
         if (!blk) {
             /* TODO: wait for queuepop(&buflruqueue.head) */
         } else {
-            if (blk->status & BUFMUSTWRITE) {
+            if (blk->data & BUFDIRTY) {
                 bufwrite(blk);
             }
             bufclr(blk);

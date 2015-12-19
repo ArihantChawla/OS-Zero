@@ -15,6 +15,7 @@
 #include <sys/bits/socket.h>
 
 #if defined(__KERNEL__)
+#include <kern/malloc.h>
 #define CALLOC(n, sz) kcalloc(n * sz)
 #define FREE(adr)     kfree(adr)
 #else
@@ -31,7 +32,7 @@ typedef uint16_t sa_family_t;
 
 extern const socklen_t sockaddrlentab[AF_NFAMILY];
 
-#define SOCK_MAXADDRLEN 256
+#define SOCK_MAXADDRLEN (256 - CLSIZE)
 struct sockaddr {
     sa_family_t        sa_family;                               // family
     socklen_t          sa_len;                                  // address size
@@ -137,11 +138,11 @@ sockaddr_alloc(sa_family_t af)
 {
     struct sockaddr *adr = NULL;
     
-    if (_saisfamily(af)) {
+    if (__saisfamily(af)) {
         adr = CALLOC(1, sizeof(struct sockaddr));
         if (adr) {
             adr->sa_family = af;
-            adr->sa_len = SOCK_MAXADDRLEN;
+            adr->sa_len = sockaddrlentab[af];
         }
     }
 
@@ -169,7 +170,7 @@ sockaddr_dup(const struct sockaddr *src)
     struct sockaddr *adr = CALLOC(1, sizeof(struct sockaddr));
 
     if (adr) {
-        adr->sa_len = SOCK_MAXADDRLEN;
+        adr->sa_len = sockaddrlentab[src->sa_family];
         memcpy(adr, src, offsetof(struct sockaddr, sa_data) + src->sa_len);
     }
 
@@ -206,7 +207,7 @@ sockaddr_addr(struct sockaddr *adr, socklen_t *retlen)
 {
     void *ret = NULL;
     
-    if (_saisfamily(adr->sa_family)) {
+    if (__saisfamily(adr->sa_family)) {
         *retlen = adr->sa_len;
         ret = adr->sa_data;
     }
@@ -219,7 +220,7 @@ sockaddr_const_addr(const struct sockaddr *adr, socklen_t *retlen)
 {
     const void *ret = NULL;
     
-    if (_saisfamily(adr->sa_family)) {
+    if (__saisfamily(adr->sa_family)) {
         *retlen = adr->sa_len;
         ret = adr->sa_data;
     }

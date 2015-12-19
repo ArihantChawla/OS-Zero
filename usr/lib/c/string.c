@@ -1,3 +1,4 @@
+#include <features.h>
 #include <stddef.h>
 #include <stdlib.h>
 #include <stdint.h>
@@ -709,4 +710,21 @@ strlen(const char *str)
     
     return len;
 }
+
+#if ((defined(_XOPEN_SOURCE) && (_XOPEN_SOURCE >= 700))                 \
+     || (defined(_POSIX_C_SOURCE) && (_POSIX_C_SOURCE >= 200809L)))
+
+size_t
+strnlen(const char *str, size_t maxlen)
+{
+    size_t len = 0;
+
+    while (str[0] && (maxlen--)) {
+        len++;
+    }
+
+    return len;
+}
+
+#endif
 

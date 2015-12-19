@@ -33,7 +33,7 @@ uint_fast16_t
 ip4chksum16(const uint8_t *buf, size_t size)
 {
     uint32_t sum = 0;
-    size_t   ndx;
+    uint16_t ndx;
 
     size = min(size, IP4PKTSIZE);
     /* Accumulate checksum */

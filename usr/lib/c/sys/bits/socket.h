@@ -73,7 +73,7 @@
 #define MSG_FASTOPEN         0x20000000 // send data in TCP SYN
 #define MSG_CMSG_CLOEXEC     0x40000000
 
-#define __saisfamily(af)     ((af) >= 0 && (af) < AF_NFAMILY)
+#define __saisfamily(af)     ((af) < AF_NFAMILY)
 /* address families - sa_family field of struct sockaddr */
 #define AF_UNSPEC      0 // unspecified
 #define AF_RAW         1 // raw socket

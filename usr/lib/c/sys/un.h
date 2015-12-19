@@ -3,13 +3,18 @@
 
 #include <stddef.h>
 #include <sys/socket.h>
+#include <zero/cdefs.h>
+#include <zero/param.h>
 #if (_UNIX_SOURCE)
 #include <string.h>
 #endif
 
+#define _SUN_PATH_SIZE (256 - CLSIZE)
 struct sockaddr_un {
     sa_family_t sun_family;     // AF_UNIX
-    char        sun_path[108];
+    socklen_t   sun_len;        // address size in bytes
+    uint8_t     _res[CLSIZE - sizeof(sa_family_t) - sizeof(socklen_t)];
+    char        sun_path[_SUN_PATH_SIZE] ALIGNED(CLSIZE);
 };
 
 #if (_UNIX_SOURCE)

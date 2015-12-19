@@ -1,5 +1,5 @@
-#ifndef __KERN_MEM_H__
-#define __KERN_MEM_H__
+#ifndef __KERN_MALLOC_H__
+#define __KERN_MALLOC_H__
 
 #include <zero/param.h>
 #include <kern/mem/mem.h>
@@ -13,5 +13,5 @@
 void    *memalloc(unsigned long nb, long flg);
 void     kfree(void *ptr);
 
-#endif /* __KERN_MEM_H__ */
+#endif /* __KERN_MALLOC_H__ */
 

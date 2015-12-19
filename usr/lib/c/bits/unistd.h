@@ -5,10 +5,10 @@
 #include <stdint.h>
 
 /* types (hopefully) not declared yet... :) */
-#if ((_BSD_SOURCE) || (_XOPEN_SOURCE)) && !defined(__SOCKLEN_T_DEFINED)
+#if ((_BSD_SOURCE) || (_XOPEN_SOURCE)) && !defined(__socklen_t_defined)
 /* TODO: check what this type is for and what it should be :) */
-typedef long socklen_t;
-#define __SOCKLEN_T_DEFINED 1
+typedef uint16_t socklen_t;
+#define __socklen_t_defined 1
 #endif
 
 /* name-arguments for sysconf() */

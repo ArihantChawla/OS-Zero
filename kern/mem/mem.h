@@ -1,7 +1,9 @@
 #ifndef __KERN_MEM_MEM_H__
 #define __KERN_MEM_MEM_H__
 
+#include <stddef.h>
 #include <stdint.h>
+//#include <net/if.h>
 #include <zero/cdefs.h>
 #include <zero/param.h>
 #include <zero/trix.h>
@@ -9,17 +11,21 @@
 
 /* allocation flags */
 #if 0
-#define MEMFREE    0x01L
-#define MEMWIRE    0x02L
-#define MEMZERO    0x04L
-#define MEMFLGBITS 0x07L
-#define MEMNFLGBIT 3
+#define MEMFREE     0x01L
+#define MEMWIRE     0x02L
+#define MEMZERO     0x04L
+#define MEMFLGBITS  0x07L
+#define MEMNFLGBIT  3
 #endif
-#define MEMFREE    0x00000001UL
-#define MEMZERO    0x00000002UL
-#define MEMWIRE    0x00000004UL
-#define MEMFLGBITS (MEMFREE | MEMZERO | MEMWIRE)
-#define MEMNFLGBIT 4
+#define MEMFREE     0x00000001UL
+#define MEMZERO     0x00000002UL
+#define MEMWIRE     0x00000004UL
+#define MEMFLGBITS  (MEMFREE | MEMZERO | MEMWIRE)
+#define MEMNFLGBIT  4
+
+#define MEMBUF_SIZE 256                 // membuf size
+#define MEMCL_SHIFT (PAGESIZELOG2 - 1)
+#define MEMCL_SIZE  (1 << MEMCL_SHIFT)  // cluster smaller than PAGESIZE
 
 //#define MEM_AVOID_CACHELINE_SHARE  1
 #define MEM_CONST_SIZE_TRICK 1
@@ -28,6 +34,54 @@
 #else
 #define memgetbkt(sz) memcalcbkt(sz)
 #endif
+
+/* membuf types */
+#define MEMBUF_FREE    0        // on free-list
+#define MEMBUF_EXT     1        // external storage mapped to mbuf
+#define MEMBUF_DATA    2        // dynamic allocation
+#define MEMBUF_PKTHDR  3        // packet header
+#define MEMBUF_SOCK    4        // socket structure
+#define MEMBUF_PCB     5        // protocol control block
+#define MEMBUF_RTAB    6        // routing tables
+#define MEMBUF_HTAB    7        // IMP host tables
+#define MEMBUF_ATAB    8        // address resolution tables
+#define MEMBUF_SONAME  9        // socket name
+#define MEMBUF_SOOPTS  10        // socket options
+#define MEMBUF_FTAB    11       // fragment reassembly header
+#define MEMBUF_RIGHTS  12       // access rights
+#define MEMBUF_IFADDR  13       // interface address
+#define MEMBUF_CONTROL 14       // extra-data protocol message
+#define MEMBUF_OOBDATA 15       // expedited data
+struct membuf {
+    void          *data;        // data address
+    size_t         size;        // # of bytes in membuf
+    long           type;        // type of data
+    long           flg;         // flags
+    struct membuf *prev;
+    struct membuf *next;        // next buffer in chain
+    struct membuf *nextpkt;     // next chain in queue/record
+    uint8_t        _res[CLSIZE - 4 * sizeof(void *) - 2 * sizeof(long)
+                        - sizeof(size_t)];
+};
+
+/* record/packet header in first membuf of chain; MEMBUF_PKTHDR is set */
+struct pkthdr {
+    struct ifnet  *rcvif;       // rcv interface
+    size_t         len;         // total packet length
+    void          *hdr;         // packet header
+    int            chksumflg;   // checksum flags
+    int            chksum;      // checksum data
+    struct membuf *aux;         // extra data buffer, e.g. IPSEC
+};
+
+struct memext {
+    void      *extbuf;
+    void     (*extfree)(void *, void *);
+    void      *extargs;
+    size_t     size;
+    uint64_t   refcnt;
+    long       type;
+};
 
 struct memhdr {
     volatile long  lk;

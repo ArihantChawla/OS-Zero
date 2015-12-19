@@ -60,8 +60,9 @@ struct ip_mreq_source {
     struct in_addr imr_sourceaddr;      // multicast source address
 };
 
-#define MCAST_EXCLUDE 0
-#define MCAST_INCLUDE 1
+#define MCAST_EXCLUDE 0                 // block sources on imsf_slist
+#define MCAST_INCLUDE 1                 // allow sources on imsf_slist
+/* allocation size for struct ip_msfilter with n imsf_slist entries */
 #define IP_MSFILTER_SIZE(n)                                             \
     (offsetof(struct ip_msfilter, imsf_slist) + (n) * sizeof(struct in_addr))
 struct ip_msfilter {
@@ -84,6 +85,7 @@ struct sockaddr_in6 {
     sa_family_t     sin6_family;        // AF_INET6
     socklen_t       sin6_len;           // address size
     in_port_t       sin6_port;          // port #
+    int8_t          _res[2];            // pad to 64-bit boundary
     uint32_t        sin6_flowinfo;      // traffic class and flow information
     uint32_t        sin6_scope_id;      // scope ID
     struct in6_addr sin6_addr ALIGNED(CLSIZE);
