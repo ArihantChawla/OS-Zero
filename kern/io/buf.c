@@ -85,11 +85,11 @@ bufinit(void)
         /* allocate buffer cache */
         kbzero(ptr, sz);
         /* initialise buffer headers */
-        n = sz >> BUFSIZELOG2;
+        n = sz >> BUFMINSIZELOG2;
         blk = &bufhdrtab[n - 1];
         u8ptr +=  sz;
         while (n--) {
-            u8ptr -= BUFSIZE;
+            u8ptr -= BUFMINSIZE;
             blk->data = u8ptr;
             queuepush(blk, &buffreelist.head);
             blk--;
