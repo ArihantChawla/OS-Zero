@@ -104,6 +104,7 @@
 #define PATH_MAX       4096      // # of bits in path including terminating NUL
 #define TZNAME_MAX     3         // # of bytes in timezone names
 #define TTY_NAME_MAX   9
+#define IOV_MAX        1024
 
 #endif /* POSIX */
 

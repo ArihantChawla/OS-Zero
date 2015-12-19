@@ -1,6 +1,7 @@
 #ifndef __ARPA_INET_H__
 #define __ARPA_INET_H__
 
+#include <endian.h>
 #include <byteswap.h>
 
 #if (__BYTE_ORDER == __LITTLE_ENDIAN)

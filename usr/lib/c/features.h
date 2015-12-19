@@ -45,6 +45,7 @@
 #define _QNX_SOURCE            1        // [possible] QNX features
 #define _MSVC_SOURCE           1
 #define _INTEL_SOURCE          1
+#define _MISC_SOURCE           1
 
 #if (!_REENTRANT)
 #undef _REENTRANT
@@ -102,6 +103,9 @@
 #endif
 #if (!_INTEL_SOURCE)
 #undef _INTEL_SOURCE
+#endif
+#if (!_MISC_SOURCE)
+#undef _MISC_SOURCE
 #endif
 
 /* POSIX- and X/Open-features */

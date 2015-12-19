@@ -14,6 +14,15 @@
 #include <zero/param.h>
 #include <sys/bits/socket.h>
 
+#if defined(__KERNEL__)
+#define CALLOC(n, sz) kcalloc(n * sz)
+#define FREE(adr)     kfree(adr)
+#else
+#include <stdlib.h>
+#define CALLOC(n, sz) calloc(n, sz)
+#define FREE(adr)     free(adr)
+#endif
+
 #if !defined(__socklen_t_defined)
 typedef uint16_t socklen_t;
 #define __socklen_t_defined 1
@@ -121,21 +130,103 @@ extern int     socketpair(int domain, int type, int proto, int sockvec[2]);
 extern int     sockatmark(int fd);
 #endif
 
+#endif /* !__KERNEL__ */
+
 static __inline__ struct sockaddr *
 sockaddr_alloc(sa_family_t af)
 {
     struct sockaddr *adr = NULL;
     
     if (_saisfamily(af)) {
-        adr = calloc(1, sizeof(struct sockaddr));
+        adr = CALLOC(1, sizeof(struct sockaddr));
         if (adr) {
             adr->sa_family = af;
-            adr->sa_len = sockaddrlentab[af];
+            adr->sa_len = SOCK_MAXADDRLEN;
         }
     }
+
+    return adr;
 }
 
-#endif /* !__KERNEL__ */
+static __inline__ struct sockaddr *
+sockaddr_copy(struct sockaddr *dest, const struct sockaddr *src)
+{
+    struct sockaddr *adr = NULL;
+    sa_family_t      af = dest->sa_family;
+    socklen_t        len = sizeof(struct sockaddr);
+
+    if (dest->sa_family == src->sa_family) {
+        memcpy(dest, src, len);
+        adr = dest;
+    }
+
+    return adr;
+}
+
+static __inline__ struct sockaddr *
+sockaddr_dup(const struct sockaddr *src)
+{
+    struct sockaddr *adr = CALLOC(1, sizeof(struct sockaddr));
+    socklen_t        len = src->sa_len;
+
+    if (adr) {
+        adr->sa_len = SOCK_MAXADDRLEN;
+        memcpy(adr, src, offsetof(struct sockaddr, sa_data) + src->sa_len);
+    }
+
+    return adr;
+}
+
+int
+sockaddr_cmp(const struct sockaddr *sa1, const struct sockaddr *sa2)
+{
+    sa_family_t af1 = sa1->sa_family;
+    sa_family_t af2 = sa2->sa_family;
+    socklen_t   len1 = sa1->sa_len;
+    socklen_t   len2 = sa2->sa_len;
+    int         res;
+
+    if (af1 != af2) {
+
+        return af1 - af2;
+    }
+    res = memcmp(sa1, sa2, min(len1, len2));
+    if (!res) {
+
+        return res;
+    }
+    res = len1 - len2;
+
+    return res;
+}
+
+#define sockaddr_free(struct sockaddr *sa) FREE(sa)
+
+static __inline__ void *
+sockaddr_addr(struct sockaddr *adr, socklen_t *retlen)
+{
+    void *ret = NULL;
+    
+    if (_saisfamily(adr->sa_family)) {
+        *retlen = adr->sa_len;
+        ret = adr->sa_data;
+    }
+
+    return ret;
+}
+
+const void *
+sockaddr_const_addr(const struct sockaddr *adr, socklen_t *retlen)
+{
+    const void *ret = NULL;
+    
+    if (_saisfamily(adr->sa_family)) {
+        *retlen = adr->sa_len;
+        ret = adr->sa_data;
+    }
+
+    return ret;
+}
 
 #endif /* __SYS_SOCKET_H__ */
 
