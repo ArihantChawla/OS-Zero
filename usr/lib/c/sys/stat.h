@@ -5,42 +5,49 @@
 #include <sys/types.h>
 
 #define __S_IFMT   0xff000000
-#define __S_IFDIR  0x01000000
+#define __S_IFIFO  0x01000000
 #define __S_IFCHR  0x02000000
-#define __S_IFBLK  0x03000000
-#define __S_IFREG  0x04000000
-#define __S_IFIFO  0x05000000
-#define __S_IFLNK  0x06000000
+#define __S_IFDIR  0x04000000
+#define __S_IFBLK  0x06000000
+#define __S_IFREG  0x10000000
+#define __S_IFLNK  0x12000000
 #if (_BSD_SOURCE) || (USEUNIX98)
-#define __S_IFSOCK 0x07000000
+#define __S_IFSOCK 0x14000000
 #endif
 #if (_POSIX_SOURCE) && (_POSIX_C_SOURCE >= 199309L)
 #define __S_IFMQ   0x08000000
 #define __S_IFSEM  0x09000000
 #define __S_IFSHM  0x0a000000
 #endif
+#if !defined(_POSIX_SOURCE)
+#define __S_IFWHT  0x16000000
+#endif
 
 #if (_BSD_SOURCE) || (USEUNIX98)
 /* public names */
 #define S_IFMT     __S_IFMT
-#define S_IFDIR    __S_IFDIR
+#define S_IFIFO    __S_IFIFO
 #define S_ICHR     __S_ICHR
+#define S_IFDIR    __S_IFDIR
 #define S_IBLK     __S_IBLK
 #define S_IREG     __S_IREG
-#define S_IFIFO     __S_IFIFO
 #define S_ILNK     __S_ILNK
 #define S_IFMT     __S_IFMT
 #if defined(__S_IFSOCK)
 #define S_IFSOCK   __S_IFSOCK
 #endif
+#define S_IFMQ     __S_IFMQ
+#define S_IFSEM    __S_IFSEM
+#define S_IFSHM    __S_IFSHM
+#define S_IFWHT    __S_IFWHT
 #endif
 
 #define __S_ISTYPE(mode, mask) (((mode) & __S_IFMT) == (mask))
-#define S_ISDIR(mode)          __S_ISTYPE(mode, __S_IFDIR)
+#define S_ISFIFO(mode)         __S_ISTYPE(mode, __S_IFFIFO)
 #define S_ISCHR(mode)          __S_ISTYPE(mode, __S_IFCHR)
+#define S_ISDIR(mode)          __S_ISTYPE(mode, __S_IFDIR)
 #define S_ISBLK(mode)          __S_ISTYPE(mode, __S_IFDIR)
 #define S_ISREG(mode)          __S_ISTYPE(mode, __S_IFREG)
-#define S_ISFIFO(mode)         __S_ISTYPE(mode, __S_IFFIFO)
 #define S_ISLNK(mode)          __S_ISTYPE(mode, __S_IFLNK)
 #if defined(__S_IFSOCK)
 #define S_ISSOCK(mode)         __S_ISTYPE(mode, __S_IFSOCK)

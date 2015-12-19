@@ -89,7 +89,7 @@ struct sockaddr_in6 {
     uint32_t        sin6_flowinfo;      // traffic class and flow information
     uint32_t        sin6_scope_id;      // scope ID
     struct in6_addr sin6_addr ALIGNED(CLSIZE);
-    uint8_t         _res[SOCK_MAXADDRLEN - sizeof(struct in6_addr)];
+    uint8_t         _res2[SOCK_MAXADDRLEN - sizeof(struct in6_addr)];
 };
 
 struct ipv6_mreq {

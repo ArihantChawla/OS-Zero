@@ -1027,7 +1027,7 @@ blkbktid(size_t size)
     return bktid;
 }
 
-static __inline__ void
+static void
 magsetstk(struct mag *mag)
 {
     long bktid = mag->bktid;

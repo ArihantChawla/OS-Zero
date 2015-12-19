@@ -139,6 +139,9 @@
 #define USESVID                (defined(_SVID_SOURCE))
 #define USEGNU                 (defined(_GNU_SOURCE))
 #define USEOLDBSD              FAVORBSD
+#if (USEBSD)
+#define _BSD                   44
+#endif
 
 /*
  * _POSIX_VERSION

@@ -45,7 +45,7 @@ void        psignal(int sig, const char *message);
  */
 extern int kill(pid_t pid, int sig);
 
-#if (USEPOSIX199506) || (_XOPEN_SOURCE >= 500) && 0
+#if ((USEPOSIX199506) || (_XOPEN_SOURCE >= 500)) && 0
 int pthread_kill(pthread_t thr, int sig);
 int pthread_sigmask(int how, const sigset_t *set, sigset_t *oldset);
 #endif

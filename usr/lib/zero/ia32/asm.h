@@ -14,7 +14,6 @@
 #define m_scanlo1bit(l)         m_bsf32(l)
 #define m_scanhi1bit(l)         m_bsr32(l)
 
-#if !defined(__GNUC__)
 static INLINE void
 m_getretadr(void **pp) {
     void *_ptr;
@@ -35,7 +34,21 @@ m_getfrmadr(void **pp)
 
     return;
 }
-#endif /* !defined(__GNUC__) */
+
+static INLINE void
+m_getfrmadr2(void *fp, void **pp)
+{
+    void *_ptr;
+
+    __asm__ __volatile__ ("movl %1, %%eax\n"
+                          "movl (%%eax), %0"
+                          : "=r" (_ptr)
+                          : "m" (fp)
+                          : "eax");
+    *pp = _ptr;
+
+    return;
+}
 
 static INLINE void
 m_loadretadr(void *frm,
@@ -54,7 +67,7 @@ m_getretfrmadr(void **pp)
 {
     void *_ptr;
 
-    __asm__ __volatile__ ("movl *%%ebp, %0\n" : "=rm" (_ptr));
+    __asm__ __volatile__ ("movl (%%ebp), %0\n" : "=rm" (_ptr));
     *pp = _ptr;
 
     return;

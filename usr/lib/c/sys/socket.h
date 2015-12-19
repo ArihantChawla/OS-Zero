@@ -16,7 +16,7 @@
 
 #if defined(__KERNEL__)
 #include <kern/malloc.h>
-#define CALLOC(n, sz) kcalloc(n * sz)
+#Define CALLOC(n, sz) kcalloc(n * sz)
 #define FREE(adr)     kfree(adr)
 #else
 #include <stdlib.h>
@@ -106,16 +106,16 @@ struct linger {
 
 #if (!__KERNEL__)
 
-extern int     accept(int sock, struct sockadr *adr, socklen_t *adrlen);
-extern int     bind(int sock, const struct sockadr *adr, socklen_t adrlen);
-extern int     connect(int sock, const struct sockadr *adr, socklen_t adrlen);
-extern int     getpeername(int sock, struct sockadr *adr, socklen_t *adrlen);
-extern int     getsockname(int sock, struct sockadr *adr, socklen_t *adrlen);
+extern int     accept(int sock, struct sockaddr *adr, socklen_t *adrlen);
+extern int     bind(int sock, const struct sockaddr *adr, socklen_t adrlen);
+extern int     connect(int sock, const struct sockaddr *adr, socklen_t adrlen);
+extern int     getpeername(int sock, struct sockaddr *adr, socklen_t *adrlen);
+extern int     getsockname(int sock, struct sockaddr *adr, socklen_t *adrlen);
 extern int     getsockopt(int sock, int level, int name, void *val, socklen_t *len);
 extern int     listen(int sock, int backlog);
 extern ssize_t recv(int sock, void *buf, size_t len, int flags);
-extern ssize_t recvfrom(int sock, void *buf, size_t len, int flags, struct sockadr *adr,
-	                    socklen_t *adrlen);
+extern ssize_t recvfrom(int sock, void *buf, size_t len, int flags,
+                        struct sockaddr *adr, socklen_t *adrlen);
 extern ssize_t recvmsg(int sock, struct msghdr *msg, int flags);
 extern ssize_t send(int sock, const void *msg, size_t len, int flags);
 extern ssize_t sendmsg(int sock, const struct msghdr *msg, int flags);
