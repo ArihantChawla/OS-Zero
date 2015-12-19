@@ -2,6 +2,7 @@
 #define __NETINET_IN_H__
 
 #include <inttypes.h>
+#include <endian.h>
 #include <sys/socket.h>
 #include <zero/cdefs.h>
 #include <zero/param.h>
@@ -32,14 +33,43 @@ struct in_addr {
 };
 
 struct sockaddr_in {
-    sa_family_t sin_family;
-    socklen_t   sin_len;
-    in_port_t   sin_port;
-#if defined(EMPTY)
-    char        sin_addr[EMPTY] ALIGNED(CLSIZE);
+    sa_family_t    sin_family;
+    socklen_t      sin_len;
+    in_port_t      sin_port;
+    struct in_addr sin_addr ALIGNED(CLSIZE);
+    uint8_t        _res[SOCK_MAXADDRLEN - sizeof(struct in_addr)];
+};
+
+#define INADDR_ANY       { 0 }
+#define INADDR_BROADCAST { 0xffffffff }
+#if (__BYTE_ORDER == __LITTLE_ENDIAN)
+#define INADDR_LOOPBACK  { 0x0100007f }
 #else
-    char        sin_addr[1] ALIGNED(CLSIZE);
+#define INADDR_LOOPBACK  { 0x7f000001 }
 #endif
+
+struct ip_mreqn {
+    struct in_addr imr_multiaddr;       // multicast group address
+    struct in_addr imr_address;         // local interface address
+    int            imr_ifindex;         // interface index
+};
+
+struct ip_mreq_source {
+    struct in_addr imr_multiaddr;       // multicast group address
+    struct in_addr imr_interface;       // local interface address
+    struct in_addr imr_sourceaddr;      // multicast source address
+};
+
+#define MCAST_EXCLUDE 0
+#define MCAST_INCLUDE 1
+#define IP_MSFILTER_SIZE(n)                                             \
+    (offsetof(struct ip_msfilter, imsf_slist) + (n) * sizeof(struct in_addr))
+struct ip_msfilter {
+    struct in_addr imsf_multiaddr;
+    struct in_addr imsf_interface;
+    uint32_t       imsf_fmode;
+    uint32_t       imsf_numsrc;
+    struct in_addr imsf_slist[1];
 };
 
 #define IN6ADDR_ANY_INIT { 0 }  // all 0-bits
@@ -57,6 +87,7 @@ struct sockaddr_in6 {
     uint32_t        sin6_flowinfo;      // traffic class and flow information
     uint32_t        sin6_scope_id;      // scope ID
     struct in6_addr sin6_addr ALIGNED(CLSIZE);
+    uint8_t         _res[SOCK_MAXADDRLEN - sizeof(struct in6_addr)];
 };
 
 struct ipv6_mreq {

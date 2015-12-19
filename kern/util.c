@@ -811,52 +811,6 @@ bfindzerol(long *bmap, long ofs, long nbit)
 
 #if defined(__KERNEL__) && (__KERNEL__)
 
-#if !defined(_GNU_SOURCE)
-#define _GNU_SOURCE
-#endif
-#include <dlfcn.h>
-
-void
-kbacktrace(void **buf, int size, long syms)
-{
-    struct Dl_info  info;
-    long            rel = 0;
-    void           *ptr;
-    int             ndx;
-    int             rndx = size;
-
-    if (!buf) {
-        buf = kmalloc(size * sizeof(void *));
-        rel = 1;
-    }
-    if (size) {
-        for (ndx = 0 ; --rndx < size ; ndx++) {
-            if (__builtin_frame_address(ndx)) {
-                buf[rndx] = __builtin_extract_return_address(ndx);
-            } else {
-                
-                break;
-            }
-        }
-        if (syms) {
-            for (ndx = 0 ; ++rndx < size ; ndx++) {
-                ptr = buf[rndx];
-                kprintf("#%d: %p\n (%s:%s)", ndx, ptr,
-                        info.dli_fname, info.dli_sname);
-            }
-        } else {
-            for (ndx = 0 ; ++rndx < size ; ndx++) {
-                kprintf("#%d: %p\n", ndx, buf[rndx]);
-            }
-        }
-    }
-    if (rel) {
-        free(buf);
-    }
-
-    return;
-}
-
 void
 panic(unsigned long pid, int32_t trap, long err)
 {

@@ -167,7 +167,6 @@ static __inline__ struct sockaddr *
 sockaddr_dup(const struct sockaddr *src)
 {
     struct sockaddr *adr = CALLOC(1, sizeof(struct sockaddr));
-    socklen_t        len = src->sa_len;
 
     if (adr) {
         adr->sa_len = SOCK_MAXADDRLEN;
@@ -177,7 +176,7 @@ sockaddr_dup(const struct sockaddr *src)
     return adr;
 }
 
-int
+static __inline__ int
 sockaddr_cmp(const struct sockaddr *sa1, const struct sockaddr *sa2)
 {
     sa_family_t af1 = sa1->sa_family;
@@ -200,7 +199,7 @@ sockaddr_cmp(const struct sockaddr *sa1, const struct sockaddr *sa2)
     return res;
 }
 
-#define sockaddr_free(struct sockaddr *sa) FREE(sa)
+#define sockaddr_free(sa) FREE(sa)
 
 static __inline__ void *
 sockaddr_addr(struct sockaddr *adr, socklen_t *retlen)
@@ -215,7 +214,7 @@ sockaddr_addr(struct sockaddr *adr, socklen_t *retlen)
     return ret;
 }
 
-const void *
+static __inline__ const void *
 sockaddr_const_addr(const struct sockaddr *adr, socklen_t *retlen)
 {
     const void *ret = NULL;
