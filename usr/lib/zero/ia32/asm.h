@@ -18,7 +18,7 @@ static INLINE void
 m_getretadr(void **pp) {
     void *_ptr;
     
-    __asm__ __volatile__ ("movl 4(%%ebp), %0\n" : "=rm" (_ptr));
+    __asm__ __volatile__ ("movl 4(%%ebp), %0\n" : "=r" (_ptr));
     *pp = _ptr;
 
     return;
@@ -29,7 +29,7 @@ m_getfrmadr(void **pp)
 {
     void *_ptr;
 
-    __asm__ __volatile__ ("movl %%ebp, %0\n" : "=rm" (_ptr));
+    __asm__ __volatile__ ("movl %%ebp, %0\n" : "=r" (_ptr));
     *pp = _ptr;
 
     return;
@@ -43,7 +43,7 @@ m_getfrmadr2(void *fp, void **pp)
     __asm__ __volatile__ ("movl %1, %%eax\n"
                           "movl (%%eax), %0"
                           : "=r" (_ptr)
-                          : "m" (fp)
+                          : "rm" (fp)
                           : "eax");
     *pp = _ptr;
 
@@ -56,7 +56,7 @@ m_loadretadr(void *frm,
 {
     void *_ptr;
 
-    __asm__ __volatile__ ("movl 4(%1), %0\n" : "=rm" (_ptr) : "r" (frm));
+    __asm__ __volatile__ ("movl 4(%1), %0\n" : "=r" (_ptr) : "r" (frm));
     *pp = _ptr;
 
     return;
@@ -67,7 +67,7 @@ m_getretfrmadr(void **pp)
 {
     void *_ptr;
 
-    __asm__ __volatile__ ("movl (%%ebp), %0\n" : "=rm" (_ptr));
+    __asm__ __volatile__ ("movl (%%ebp), %0\n" : "=r" (_ptr));
     *pp = _ptr;
 
     return;
