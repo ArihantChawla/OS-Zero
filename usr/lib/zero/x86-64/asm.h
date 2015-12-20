@@ -1,8 +1,11 @@
 #ifndef __ZERO_X86_64_ASM_H__
 #define __ZERO_X86_64_ASM_H__
 
+#include <stdint.h>
 #include <zero/cdefs.h>
 #include <zero/x86/asm.h>
+
+extern uint64_t asmgetpc(void);
 
 #define m_atominc(p)            m_atominc64(p)
 #define m_atomdec(p)            m_atomdec64(p)

@@ -1,8 +1,11 @@
 #ifndef __ZERO_IA32_ASM_H__
 #define __ZERO_IA32_ASM_H__
 
+#include <stdint.h>
 #include <zero/cdefs.h>
 #include <zero/x86/asm.h>
+
+extern uint32_t asmgetpc(void);
 
 #define m_atominc(p)            m_atominc32(p)
 #define m_atomdec(p)            m_atomdec32(p)

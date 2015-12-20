@@ -8,5 +8,5 @@ CCWARNFLAGS="-D_FORTIFY_SOURCE=2 -Wall -Wundef -Wextra -Wpointer-arith -Wuniniti
 #$CC -Wextra -D_REENTRANT=1 -DSHUNTC=1 -DNVALGRIND -DZERONEWMTX=0 -DZEROMALLOC=0 -DPTHREAD=1 -D_REENTRANT -g -Wall -O -I.. -I.. -fPIC -shared -o zerolib.so daemon.c data.c file.c futex.c hash.c maplk.c randk.c randlfg2.c randlfg.c randmt32.c randmt64.c unix.c util.c shuntc.c shunt.c -pthread
 #$CC $CCWARNFLAGS -m32 -D_REENTRANT=1 -D_ZERO_SOURCE=1 -D_GNU_SOURCE=1 -DZEROCOND=1 -DZEROMTX=1 -DSHUNTC=1 -DNVALGRIND -DZEROMTX=1 -DZEROMALLOC=0 -DPTHREAD=1 -DZEROTHR=1 -g -O -I.. -fPIC -shared -o zerolib32.so *.c ia32/*.c -pthread
 
-$CC $CCWARNFLAGS -D_REENTRANT=1 -D_ZERO_SOURCE=1 -D_GNU_SOURCE=1 -DZEROCOND=1 -DZEROMTX=1 -DSHUNTC=1 -DNVALGRIND -DZEROMTX=1 -DZEROMALLOC=0 -DPTHREAD=1 -DZEROTHR=1 -g -O -I.. -fPIC -shared -o zerolib.so *.c x86-64/*.c -pthread
+$CC $CCWARNFLAGS -D_REENTRANT=1 -D_ZERO_SOURCE=1 -D_GNU_SOURCE=1 -DZEROCOND=1 -DZEROMTX=1 -DSHUNTC=1 -DNVALGRIND -DZEROMTX=1 -DZEROMALLOC=0 -DPTHREAD=1 -DZEROTHR=1 -g -O -I.. -fPIC -shared -o zerolib.so *.c x86-64/*.c x86-64/*.S -pthread
 
