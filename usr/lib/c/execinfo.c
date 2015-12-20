@@ -18,7 +18,7 @@
 #define _BTTABLEN    4096
 
 uintptr_t
-_btprintf(void **buf, __btsize_t size, const char *fmt, int fd)
+_btprintf(__btsymadrlist_t buf, __btsize_t size, const char *fmt, int fd)
 {
     Dl_info       info;
     FILE         *fp = (fd >= 0) ? fdopen(fd, "a") : NULL;
