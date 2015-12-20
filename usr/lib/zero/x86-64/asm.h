@@ -19,7 +19,7 @@ extern uint64_t asmgetpc(void);
 #define m_scanlo1bit(l)         m_bsf64(l)
 #define m_scanhi1bit(l)         m_bsr64(l)
 
-#define __RAXFRAMEOFS           offsetof(struct m_stkframe, pc)
+#define __RIPFRAMEOFS           offsetof(struct m_stkframe, pc)
 
 static INLINE void
 m_getretadr(void **pp)
@@ -28,7 +28,7 @@ m_getretadr(void **pp)
     
     __asm__ __volatile__ ("movq %c1(%%rbp), %0\n"
                           : "=r" (_ptr)
-                          : "i" (__RAXFRAMEOFS));
+                          : "i" (__RIPFRAMEOFS));
     *pp = _ptr;
 
     return;
@@ -65,7 +65,9 @@ m_loadretadr(void *frm, void **pp)
 {
     void *_ptr;
 
-    __asm__ __volatile__ ("movq 8(%1), %0\n" : "=r" (_ptr) : "r" (frm));
+    __asm__ __volatile__ ("movq %c1(%2), %0\n"
+                          : "=r" (_ptr)
+                          : "i" (__RIPFRAMEOFS), "r" (frm));
     *pp = _ptr;
 
     return;

@@ -19,15 +19,16 @@ extern uint32_t asmgetpc(void);
 #define m_scanlo1bit(l)         m_bsf32(l)
 #define m_scanhi1bit(l)         m_bsr32(l)
 
-#define __EAXFRAMEOFS           offsetof(struct m_stkframe, pc)
+#define __EIPFRAMEOFS           offsetof(struct m_stkframe, pc)
 
 static INLINE void
-m_getretadr(void **pp) {
+m_getretadr(void **pp)
+{
     void *_ptr;
     
     __asm__ __volatile__ ("movl %c1(%%ebp), %0\n"
                           : "=r" (_ptr)
-                          : "i" (__EAXFRAMEOFS));
+                          : "i" (__EIPFRAMEOFS));
     *pp = _ptr;
 
     return;
@@ -65,7 +66,9 @@ m_loadretadr(void *frm,
 {
     void *_ptr;
 
-    __asm__ __volatile__ ("movl 4(%1), %0\n" : "=r" (_ptr) : "r" (frm));
+    __asm__ __volatile__ ("movl %c1(%2), %0\n"
+                          : "=r" (_ptr)
+                          : "i" (__EIPFRAMEOFS), "r" (frm));
     *pp = _ptr;
 
     return;
