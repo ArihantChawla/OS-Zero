@@ -5,7 +5,7 @@
 #include <stdint.h>
 #include <errno.h>
 #include <sys/types.h>
-//#include <zero/param.h>
+#include <zero/param.h>
 #if (USEBSD) && (!USEPOSIX)
 #include <ucontext.h>
 #include <zero/types.h>
@@ -103,6 +103,9 @@ typedef __sighandler_t sighandler_t;
 union sigval {
     void *sival_ptr;
     int   sival_int;
+#if (PTRBITS == 64)
+    int   _pad;
+#endif
 };
 
 /* values for sigev_notify */
@@ -110,13 +113,18 @@ union sigval {
 #define SIGEV_SIGNAL 1
 #define SIGEV_THREAD 2
 struct sigevent {
-    int              sigev_notify;
-    int              sigev_signo;
     union sigval     sigev_value;
     void           (*sigev_notify_function)(union sigval);
 #if defined(PTHREAD)
     pthread_attr_t  *sigev_notify_attributes;
 #endif
+    int              sigev_notify;
+    int              sigev_signo;
+    uint8_t          _res[CLSIZE - sizeof(union sigval) - sizeof(void *)
+#if defined(PTHREAD)
+                          - sizeof(pthread_attr_t *)
+#endif
+                          - 2 * sizeof(int)];
 };
 
 #if defined(_POSIX_SOURCE) && (USEPOSIX199309)
@@ -204,6 +212,9 @@ typedef struct {
 struct sigstack {
     char *ss_sp;        // signal stack pointer
     int   ss_onstack;   // non-zero when signal-stack in use
+#if (PTRBITS == 64)
+    int   _pad;
+#endif
 };
 
 #define SIGSTKSZ     (4 * PAGESIZE)

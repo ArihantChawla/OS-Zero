@@ -2,9 +2,11 @@
 #define __AIO_H__
 
 #include <features.h>
+#include <stdint.h>
 #include <signal.h>
 #include <time.h>
 #include <sys/types.h>
+#include <zero/param.h>
 
 /* return values for cancelation */
 #define AIO_CANCELED    0
@@ -20,6 +22,18 @@
 #define LIO_WRITE       2
 #define LIO_NOP         3
 struct aiocb {
+    off_t            aio_offset;        // file offset
+    volatile void   *aio_buf;           // buffer location
+    size_t           aio_nbytes;        // transfer length in bytes
+    struct sigevent  aio_sigevent;      // signal number and value
+    int              aio_fildes;        // file descriptor
+    int              aio_lio_opcode;    // operation
+    int              aio_reqprio;       // request priority offset
+    uint8_t          _res[CLSIZE - sizeof(off_t) - sizeof(void *)
+                          - sizeof(struct sigevent) - 3 * sizeof(int)];
+};
+#if 0
+struct aiocb {
     int              aio_fildes;        // file descriptor
     off_t            aio_offset;        // file offset
     volatile void   *aio_buf;           // buffer location
@@ -28,6 +42,7 @@ struct aiocb {
     int              aio_lio_opcode;    // operation
     int              aio_reqprio;       // request priority offset
 };
+#endif
 
 #if (USEGNU)
 struct aioinit {
