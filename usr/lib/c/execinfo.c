@@ -1,7 +1,10 @@
 #include <features.h>
 
-#if defined(_GNU_SOURCE)
+#if defined(_GNU_SOURCE) || defined(_BSD_SOURCE)
 
+#if defined(_BSD_SOURCE)
+#include <stddef.h>
+#endif
 #include <stdio.h>
 #include <stdio.h>
 #include <stdlib.h>
@@ -15,12 +18,12 @@
 #define _BTTABLEN    4096
 
 uintptr_t
-_btprintf(void **buf, int size, const char *fmt, int fd)
+_btprintf(void **buf, __btsize_t size, const char *fmt, int fd)
 {
     Dl_info       info;
     FILE         *fp = (fd >= 0) ? fdopen(fd, "a") : NULL;
-    unsigned int  lim = size;
-    int           slen = 0;
+    __btsize_t    lim = size;
+    __btsize_t    slen = 0;
     char         *mptr = NULL;
     size_t        len;
     uintptr_t     pdif;
@@ -28,7 +31,7 @@ _btprintf(void **buf, int size, const char *fmt, int fd)
     const char   *fptr;
     char         *cptr;
     char         *tab;
-    unsigned int  ndx;
+    __btsize_t    ndx;
     long          nl;
 
     if (!fp) {
@@ -143,22 +146,25 @@ _btprintf(void **buf, int size, const char *fmt, int fd)
 }
 
 uintptr_t
-_backtrace(void **buf, int size, long syms, int fd)
+_backtrace(void **buf, __btsize_t size, long syms, int fd)
 {
     Dl_info        info;
     FILE          *fp = (fd >= 0) ? fdopen(fd, "a") : NULL;
     void          *ptr = NULL;
     void          *oldptr;
     void          *fptr = NULL;
-    unsigned int   lim = size - 1;
-    int            ret = 0;
+    __btsize_t     lim = size - 1;
+    uintptr_t      ret = 0;
     void          *adr;
     void         **pptr;
     uintptr_t      delta;
-    unsigned int   ndx;
+    __btsize_t     ndx;
 
     if ((syms) && !fp) {
         buf = malloc(size * sizeof(void *));
+    } else if (!buf || !size) {
+
+        return ret;
     }
     pptr = buf;
     if (size) {
@@ -210,13 +216,13 @@ _backtrace(void **buf, int size, long syms, int fd)
     if (fp) {
         fclose(fp);
 
-        return 0;
+        ret = 0;
     } else if (syms) {
 
-        return (uintptr_t)buf;
+        ret = (uintptr_t)buf;
     }
 
-    return (uintptr_t)ret;
+    return ret;
 }
 
 #endif /* defined(_GNU_SOURCE) */
