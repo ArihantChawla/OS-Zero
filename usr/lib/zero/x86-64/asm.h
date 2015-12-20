@@ -1,8 +1,10 @@
 #ifndef __ZERO_X86_64_ASM_H__
 #define __ZERO_X86_64_ASM_H__
 
+#include <stddef.h>
 #include <stdint.h>
 #include <zero/cdefs.h>
+#include <zero/types.h>
 #include <zero/x86/asm.h>
 
 extern uint64_t asmgetpc(void);
@@ -17,12 +19,16 @@ extern uint64_t asmgetpc(void);
 #define m_scanlo1bit(l)         m_bsf64(l)
 #define m_scanhi1bit(l)         m_bsr64(l)
 
+#define __RAXFRAMEOFS           offsetof(struct m_stkframe, pc)
+
 static INLINE void
 m_getretadr(void **pp)
 {
     void *_ptr;
     
-    __asm__ __volatile__ ("movq 8(%%rbp), %0\n" : "=r" (_ptr));
+    __asm__ __volatile__ ("movq %c1(%%rbp), %0\n"
+                          : "=r" (_ptr)
+                          : "i" (__RAXFRAMEOFS));
     *pp = _ptr;
 
     return;
