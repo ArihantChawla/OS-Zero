@@ -2,6 +2,9 @@
 #include <stddef.h>
 #include <stdlib.h>
 #include <stdint.h>
+#if defined(_GNU_SOURCE)
+#include <alloca.h>
+#endif
 #include <zero/cdefs.h>
 #include <zero/param.h>
 #include <zero/trix.h>
@@ -724,6 +727,91 @@ strnlen(const char *str, size_t maxlen)
     }
 
     return len;
+}
+
+#endif
+
+#if (defined(_SVID_SOURCE) || defined(_BSD_SOURCE)                      \
+     || (defined(_XOPEN_SOURCE)                                         \
+         && (_XOPEN_SOURCE >= 500 || defined(_XOPEN_SOURCE_EXTENDED))))
+char *
+strdup(const char *str)
+{
+    size_t  len = strlen(str);
+    char   *buf = (len) ? malloc(len + 1) : NULL;
+
+    if (buf) {
+        memcpy(buf, str, len);
+        buf[len] = '\0';
+    } else {
+#if defined(ENOMEM)
+        errno = ENOMEM;
+#endif
+    }
+
+    return buf;
+}
+#endif
+
+#if ((defined(_POSIX_C_SOURCE) && _POSIX_C_SOURCE >= 200809L)           \
+     || (defined(_XOPEN_SOURCE) && _XOPEN_SOURCE >= 700))
+char *
+strndup(const char *str, size_t maxlen)
+{
+    size_t  len = strlen(str);
+    size_t  sz = min(len, maxlen);
+    char   *buf = (sz) ? malloc(sz + 1) : NULL;
+
+    if (buf) {
+        memcpy(buf, str, sz);
+        buf[sz] = '\0';
+    } else {
+#if defined(ENOMEM)
+        errno = ENOMEM;
+#endif
+    }
+
+    return buf;
+}
+#endif
+
+#if defined(_GNU_SOURCE)
+
+char *
+strdupa(const char *str)
+{
+    size_t  len = strlen(str);
+    char   *buf = (len) ? alloca(len + 1) : NULL;
+
+    if (buf) {
+        memcpy(buf, str, len);
+        buf[len] = '\0';
+    } else {
+#if defined(ENOMEM)
+        errno = ENOMEM;
+#endif
+    }
+
+    return buf;
+}
+
+char *
+strndupa(const char *str, size_t maxlen)
+{
+    size_t  len = strlen(str);
+    size_t  sz = min(len, maxlen);
+    char   *buf = (sz) ? alloca(sz + 1) : NULL;
+
+    if (buf) {
+        memcpy(buf, str, sz);
+        buf[sz] = '\0';
+    } else {
+#if defined(ENOMEM)
+        errno = ENOMEM;
+#endif
+    }
+
+    return buf;
 }
 
 #endif

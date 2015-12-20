@@ -25,6 +25,7 @@
     && !defined(_POSIX_C_SOURCE)
 #define _POSIX_C_SOURCE        199506L
 #endif
+#define __XOPEN_VERSION        4
 #if defined(_XOPEN_SOURCE) && (_XOPEN_SOURCE >= 500)
 #define _XOPEN_SOURCE_EXTENDED 1        // activate X/Open extensions
 #endif
@@ -46,6 +47,7 @@
 #define _MSVC_SOURCE           1
 #define _INTEL_SOURCE          1
 #define _MISC_SOURCE           1
+#define _SOLARIS_SOURCE        1
 
 #if (!_REENTRANT)
 #undef _REENTRANT
@@ -107,6 +109,9 @@
 #if (!_MISC_SOURCE)
 #undef _MISC_SOURCE
 #endif
+#if (!_SOLARIS_SOURCE)
+#undef _SOLARIS_SOURCE
+#endif
 
 /* POSIX- and X/Open-features */
 #define USEXOPEN               (defined(_XOPEN_SOURCE))
@@ -142,6 +147,17 @@
 #if (USEBSD)
 #define _BSD                   44
 #endif
+
+#define USEUNIX                (defined(_UNIX_SOURCE)                   \
+                                && (defined(__unix__)                   \
+                                    || defined(__unix)                  \
+                                    || (defined(__APPLE__)              \
+                                        && defined(__MACH__))))
+
+#define USESOLARIS             (defined(_SOLARIS_SOURCE)                \
+                                && defined(__sun) && defined(__SVR4))
+#define USEWIN32               (defined(_WIN32))
+#define USEWIN64               (defined(_WIN64))
 
 /*
  * _POSIX_VERSION

@@ -21,6 +21,11 @@
 #define _BTOFSSTRLEN 32
 #define _BTTABLEN    4096
 
+/*
+ * zero improvements
+ * -----------------
+ */
+
 uintptr_t
 _btprintf(__btsymadrlist_t buf, __btsize_t size, const char *fmt, int fd)
 {
@@ -29,6 +34,7 @@ _btprintf(__btsymadrlist_t buf, __btsize_t size, const char *fmt, int fd)
     __btsize_t    lim = size;
     __btsize_t    slen = 0;
     char         *mptr = NULL;
+    long          nl = 0;
     uintptr_t     ret;
     size_t        len;
     uintptr_t     pdif;
@@ -37,7 +43,6 @@ _btprintf(__btsymadrlist_t buf, __btsize_t size, const char *fmt, int fd)
     char         *cptr;
     char         *tab;
     __btsize_t    ndx;
-    long          nl;
 
     if (!fp) {
         len = _BTTABLEN;
@@ -70,7 +75,7 @@ _btprintf(__btsymadrlist_t buf, __btsize_t size, const char *fmt, int fd)
                     fptr += 2;
                 } else if (fptr[1] == 'd') {
                     pdif = (uintptr_t)ptr - (uintptr_t)info.dli_saddr;
-                    fprintf(fp, "0x%lx", ptr, (long)pdif);
+                    fprintf(fp, "+0x%lx", (long)pdif);
                     fptr += 2;
                 } else if (fptr[1] == 'D') {
                     pdif = (uintptr_t)ptr - (uintptr_t)info.dli_saddr;
@@ -103,8 +108,7 @@ _btprintf(__btsymadrlist_t buf, __btsize_t size, const char *fmt, int fd)
                     fptr += 2;
                 } else if (fptr[1] == 'd') {
                     pdif = (uintptr_t)ptr - (uintptr_t)info.dli_saddr;
-                    slen += snprintf(cptr, len - slen, "0x%lx",
-                                     ptr, (long)pdif);
+                    slen += snprintf(cptr, len - slen, "+0x%lx", (long)pdif);
                     fptr += 2;
                 } else if (fptr[1] == 'D') {
                     pdif = (uintptr_t)ptr - (uintptr_t)info.dli_saddr;
