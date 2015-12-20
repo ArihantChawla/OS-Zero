@@ -13,7 +13,11 @@
 #include <execinfo.h>
 #include <zero/asm.h>
 
+#if defined(_ZERO_SOURCE) && 0
+#define _BTPRINTFMT  "%a <%n%D> at %f%L"
+#else
 #define _BTPRINTFMT  "%a <%n%D> at %f"
+#endif
 #define _BTOFSSTRLEN 32
 #define _BTTABLEN    4096
 
