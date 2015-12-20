@@ -2,12 +2,15 @@
 #define __ZERO_BITS_SCHED_H__
 
 #include <features.h>
+#include <stdint.h>
 #include <stdlib.h>
 #include <string.h>
 #include <limits.h>
 #if defined(_POSIX_SPORADIC_SERVER) || defined(_POSIX_THREAD_SPORADIC_SERVER)
 #include <time.h>
 #endif
+#include <zero/cdefs.h>
+#include <zero/param.h>
 #include <zero/trix.h>
 
 /* __policy-field */
@@ -31,6 +34,7 @@
 #define __SCHED_PROC_SCOPE     (1 << 2) // otherwise, system scope
 struct sched_param {
     int             sched_priority;
+    int             _pad;
 #if defined(_POSIX_SPORADIC_SERVER) || defined(_POSIX_THREAD_SPORADIC_SERVER)
     int             sched_ss_low_priority;
     struct timespec sched_ss_repl_period;
@@ -40,6 +44,8 @@ struct sched_param {
     long            __policy;
     long            __nice;
     long            __flg;
+    uint8_t         __res[2 * CLSIZE - 4 * sizeof(int) - 3 * sizeof(long)
+                          - 2 * sizeof(struct timespec)];
 };
 
 #if defined(_GNU_SOURCE)

@@ -50,6 +50,12 @@ typedef struct __zerothratr {
     void               *cpuset;
 #endif
     struct sched_param  schedparm;
+    uint8_t             _res[4 * CLSIZE - sizeof(struct sched_param)
+#if defined(_GNU_SOURCE)
+                             - sizeof(size_t) - sizeof(void *)
+#endif
+                             - 2 * sizeof(size_t) - sizeof(void *)
+                             - sizeof(long)];
 } zerothratr;
 
 #define ZEROTHR_NOID   (~(zerothrid)0)

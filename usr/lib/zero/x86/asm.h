@@ -43,7 +43,7 @@ m_xadd32(volatile long *p,
 {
     volatile int *_ptr = (volatile int *)p;
     
-    __asm__ __volatile__ ("lock xaddq %%rax, %2\n"
+    __asm__ __volatile__ ("lock xaddl %%eax, %2\n"
                           : "=a" (val)
                           : "a" (val), "m" (*(_ptr))
                           : "memory");

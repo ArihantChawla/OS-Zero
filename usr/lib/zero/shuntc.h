@@ -2,6 +2,7 @@
 #define __ZERO_SHUNTC_H__
 
 #include <stdint.h>
+#include <zero/cdefs.h>
 #include <zero/param.h>
 #include <zero/bits/shuntc.h>
 
@@ -31,6 +32,9 @@ struct shuntctoken {
     /* previous and next in queue/list */
     struct shuntctoken *prev;
     struct shuntctoken *next;
+    /* pad data to cacheline-boundary */
+    uint8_t             _pad[2 * CLSIZE - 3 * sizeof(void *)
+                             - 6 * sizeof(long)];
     /* value union */
     union {
         int8_t          i8;

@@ -42,7 +42,7 @@ m_getfrmadr2(void *fp, void **pp)
     void *_ptr;
 
     __asm__ __volatile__ ("movq %1, %%rax\n"
-                          "movq (%%rax), %0"
+                          "movq (%%rax), %0\n"
                           : "=r" (_ptr)
                           : "rm" (fp)
                           : "rax");
