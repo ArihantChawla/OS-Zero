@@ -186,7 +186,7 @@ m_cmpclrbit64(volatile long *p, long ndx)
 static __inline__ unsigned long
 m_bsf64(unsigned long val)
 {
-    unsigned long ret;
+    unsigned long ret = ~0UL;
 
     __asm__ __volatile__ ("bsfq %1, %0\n" : "=r" (ret) : "rm" (val));
 
@@ -196,7 +196,7 @@ m_bsf64(unsigned long val)
 static __inline__ unsigned long
 m_bsr64(unsigned long val)
 {
-    unsigned long ret;
+    unsigned long ret = ~0UL;
 
     __asm__ __volatile__ ("bsrq %1, %0\n" : "=r" (ret) : "rm" (val));
 

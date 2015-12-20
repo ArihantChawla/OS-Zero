@@ -122,7 +122,7 @@ m_cmpxchg32(volatile long *p,
 static __inline__ unsigned long
 m_bsf32(unsigned long val)
 {
-    unsigned long ret;
+    unsigned long ret = ~0UL;
 
     __asm__ __volatile__ ("bsfl %1, %0\n" : "=r" (ret) : "rm" (val));
 
@@ -132,7 +132,7 @@ m_bsf32(unsigned long val)
 static __inline__ unsigned long
 m_bsr32(unsigned long val)
 {
-    unsigned long ret;
+    unsigned long ret = ~0UL;
 
     __asm__ __volatile__ ("bsrl %1, %0\n" : "=r" (ret) : "rm" (val));
 
