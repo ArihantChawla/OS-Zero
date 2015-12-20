@@ -25,6 +25,7 @@ _btprintf(__btsymadrlist_t buf, __btsize_t size, const char *fmt, int fd)
     __btsize_t    lim = size;
     __btsize_t    slen = 0;
     char         *mptr = NULL;
+    uintptr_t     ret;
     size_t        len;
     uintptr_t     pdif;
     void         *ptr;
@@ -141,8 +142,15 @@ _btprintf(__btsymadrlist_t buf, __btsize_t size, const char *fmt, int fd)
             cptr[0] = '\n';
         }
     }
+    if (fp) {
+        
+        ret = 0;
+    } else {
+        
+        ret = (uintptr_t)mptr;
+    }
     
-    return (uintptr_t)mptr;
+    return ret;
 }
 
 uintptr_t
