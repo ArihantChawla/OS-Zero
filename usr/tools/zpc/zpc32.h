@@ -21,20 +21,19 @@ typedef double  zpcfreg_t;
 #define ZPCOPVECBIT      (1 << 2)
 /* adrmode-bits */
 #define ZPCARGIMMEDBIT   (1 << 0)
-#define ZPCARGREGBIT     (1 << 1)
-#define ZPCARGINDEXBIT   (1 << 2)
-#define ZPCARGINDIRBIT   (1 << 3)
-#define ZPCOPARGBIT      (1 << 4)
-#define ZPCOPADRMODEBITS 5
+#define ZPCARGINDEXBIT   (1 << 1)
+#define ZPCARGINDIRBIT   (1 << 2)
+#define ZPCOPARGBIT      (1 << 3)
+#define ZPCOPADRMODEBITS 4
 #define zpcophasarg(op)  ((op)->argmode & ZPCOPARGBIT)
 struct zpcop {
     unsigned id      : ZPCOPIDBITS;             // 5-bit
     unsigned flg     : ZPCOPFLAGBITS;           // 3-bit
     unsigned src     : ZPCREGBITS;              // 4-bit
     unsigned dest    : ZPCREGBITS;              // 4-bit
-    unsigned adrmode : ZPCOPADRMODEBITS;        // 5-bit
+    unsigned adrmode : ZPCOPADRMODEBITS;        // 4-bit
     unsigned adrreg  : ZPCREGBITS;              // 4-bit
-    unsigned immed   : ZPCOPIMMEDBITS;          // 7-bit
+    unsigned immed   : ZPCOPIMMEDBITS;          // 8-bit
     uint32_t arg[EMPTY];                        // optional argument
 };
 
