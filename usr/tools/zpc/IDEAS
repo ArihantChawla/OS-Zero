@@ -30,8 +30,8 @@ addressing
 
 lea
 
-calls
------
+branches
+--------
 jmp	bra	call
 
 button layout
