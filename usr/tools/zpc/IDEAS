@@ -32,7 +32,11 @@ lea
 
 branches
 --------
-jmp	bra	call
+jmp	bra	call	ret	iret
+
+stack
+-----
+psh	pop
 
 button layout
 -------------
@@ -56,4 +60,33 @@ pc		program-counter	32/64
 msw		machine-status	32/64
 fp		frame-pointer	32/64
 sp		stack-pointer	32/64
+
+msw
+---
+
+flags
+-----
+zf	- zero flag
+cf	- carry-flag
+of	- overflow-flag
+if	- interrupt-flag
+uf	- user-mode execution; only accessible in system mode, i.e. when zero
+
+opcodes
+-------
+
+op
+--
+op	- up to 8-bit instruction ID (5-bit in default configuration)
+
+flags
+-----
+ff	- floating-point instruction
+vf	- vector-operation [use vl-register]
+lf	- lock-prefix bit [atomic operations]
+
+regs
+----
+src	- up to 8-bit source register ID (4-bit in 32-bit configurations)
+dest	- up to 8-bit destination register ID (4-bit in 32-bit configurations)
 
