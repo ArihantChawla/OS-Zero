@@ -1,0 +1,59 @@
+units and operations
+--------------------
+
+shifter
+-------
+shl	shr	sar	rol	ror
+
+adder
+-----
+add	sub
+
+multiplier
+----------
+mul
+
+divisor
+-------
+div	mod
+
+bits
+----
+not	and	or	xor
+
+mem
+---
+lda	sta
+
+addressing
+----------
+
+lea
+
+calls
+-----
+jmp	bra	call
+
+button layout
+-------------
+
+assembly mnemonics			symbols
+------------------			-------
+not	and	or	xor		~	&	|	^
+shl	shr	sar	rol	ror	<<	>>	>>>	<..	..>
+inc	dec	cmp			++	--	<>
+add	sub	mul	div	mod	+	-	*	/	%
+lea	lda	sta			&	<	>
+jmp	bra	call			-->	<*>	()
+
+registers
+---------
+r0..r15		integer		32/64
+st0..st15	stack		64/128
+vl0..vl15	vector-lengths	32/64
+f0..f15		floating-point	64/128
+pc		program-counter	32/64
+msw		machine-status	32/64
+fp		frame-pointer	32/64
+sp		stack-pointer	32/64
+

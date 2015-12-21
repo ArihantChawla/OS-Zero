@@ -167,13 +167,13 @@ _backtrace(void **buf, __btsize_t size, long syms, int fd)
     Dl_info        info;
     FILE          *fp = (fd >= 0) ? fdopen(fd, "a") : NULL;
     void          *ptr = NULL;
-    void          *oldptr;
+    void          *oldptr = NULL;
     void          *fptr = NULL;
     __btsize_t     lim = size - 1;
     uintptr_t      ret = 0;
     void          *adr;
     void         **pptr;
-    uintptr_t      delta;
+    uintptr_t      pdif;
     __btsize_t     ndx;
 
     if ((syms) && !fp) {
@@ -184,10 +184,36 @@ _backtrace(void **buf, __btsize_t size, long syms, int fd)
     }
     pptr = buf;
     if (size) {
+        ndx = 0;
+        m_getretadr(&ptr);
+        if (ptr) {
+            ndx = 1;
+        }
+        if (syms) {
+            if (!fp) {
+                pptr[0] = ptr;
+            } else {
+                dladdr(ptr, &info);
+                adr = info.dli_saddr;
+                if (ptr != info.dli_saddr) {
+                    pdif = (uintptr_t)ptr - (uintptr_t)adr;
+                    fprintf(fp, "0x%p <%s+0x%llx> at %s\n",
+                            ptr, info.dli_sname,
+                            (unsigned long long)pdif, info.dli_fname);
+                } else {
+                    fprintf(fp, "0x%p <%s> at %s\n",
+                            ptr, info.dli_sname, info.dli_fname);
+                }
+                fflush(fp);
+            }
+        } else {
+            pptr[0] = ptr;
+        }
         m_getretfrmadr(&fptr);
         m_loadretadr(fptr, &ptr);
         if (syms) {
-            for (ndx = 0 ; ndx < lim ; ndx++) {
+            for ( ; ndx < lim ; ndx++) {
+                fprintf(stderr, "PTR == %p, OLD == %p\n", ptr, oldptr);
                 if ((ptr) && ptr != oldptr) {
                     if (!fp) {
                         pptr[ndx] = ptr;
@@ -195,10 +221,10 @@ _backtrace(void **buf, __btsize_t size, long syms, int fd)
                         dladdr(ptr, &info);
                         adr = info.dli_saddr;
                         if (ptr != info.dli_saddr) {
-                            delta = (uintptr_t)ptr - (uintptr_t)adr;
+                            pdif = (uintptr_t)ptr - (uintptr_t)adr;
                             fprintf(fp, "0x%p <%s+0x%llx> at %s\n",
                                     ptr, info.dli_sname,
-                                    (unsigned long long)delta, info.dli_fname);
+                                    (unsigned long long)pdif, info.dli_fname);
                         } else {
                             fprintf(fp, "0x%p <%s> at %s\n",
                                     ptr, info.dli_sname, info.dli_fname);
@@ -215,7 +241,7 @@ _backtrace(void **buf, __btsize_t size, long syms, int fd)
                 m_loadretadr(fptr, &ptr);
             }
         } else {
-            for (ndx = 0 ; ndx < lim ; ndx++) {
+            for ( ; ndx < lim ; ndx++) {
                 if ((ptr) && ptr != oldptr) {
                     pptr[ndx] = ptr;
                 } else {

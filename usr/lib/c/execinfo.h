@@ -16,7 +16,7 @@ typedef void         __btsymfdret_t;
 #endif
 typedef void *const *__btsymadrlist_t;
 
-#if defined(_GNU_SOURCE) ||defined(_BSD_SOURCE)
+#if defined(_GNU_SOURCE) ||defined(_BSD_SOURCE) || defined(_ZERO_SOURCE)
 extern uintptr_t _backtrace(void **buf, __btsize_t size, long syms, int fd);
 #if defined(_BSD_SOURCE)
 extern uintptr_t _btprintf(__btsymadrlist_t buf, __btsize_t size,

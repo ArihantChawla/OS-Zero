@@ -4,7 +4,6 @@
 #include <features.h>
 #include <stdint.h>
 #include <errno.h>
-#include <sys/types.h>
 #include <zero/param.h>
 #if (USEBSD) && (!USEPOSIX)
 #include <ucontext.h>
@@ -21,6 +20,7 @@
 #elif defined(__arm__)
 #include <arm/signal.h>
 #endif
+#include <sys/types.h>
 
 /* internal. */
 #define _sigvalid(sig)  ((sig) && (!((sig) & ~_SIGMASK)))

@@ -17,7 +17,8 @@
 #include <bits/signal.h>
 
 #if (_POSIX_SOURCE) && (USEPOSIX199309)
-#include <time.h>
+struct timespec;
+//#include <time.h>
 #endif
 
 #if !defined(__KERNEL__)
