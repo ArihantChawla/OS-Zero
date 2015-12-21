@@ -23,12 +23,7 @@ not	and	or	xor
 
 mem
 ---
-lda	sta
-
-addressing
-----------
-
-lea
+lea	lda	sta
 
 branches
 --------
@@ -36,19 +31,26 @@ jmp	bra	call	ret	iret
 
 stack
 -----
+lsp	- set stack-pointer; privileged instruction
 psh	pop
+
+machine
+-------
+lmsw	- set machine-status word; privileged instruction
+smsw	- store machine-status word
 
 button layout
 -------------
 
 assembly mnemonics			symbols
 ------------------			-------
-not	and	or	xor		~	&	|	^
+not	and	or	xor		~	&	|	^	MODE
 shl	shr	sar	rol	ror	<<	>>	>>>	<..	..>
-inc	dec	cmp			++	--	<>
-add	sub	mul	div	mod	+	-	*	/	%
-lea	lda	sta			&	<	>
-jmp	bra	call			-->	<*>	()
+inc	dec	add	sub	cmp	++	--	+	-	<>
+mul	div	mod			*	/	%	CLR	SAVE
+					PUSH	POP	()	SHIFT	ON/OFF
+					BASE	BITS	UNIT	EDIT	CLEAR
+					PROG	SCR	EXIT	EVAL	ENTER
 
 registers
 ---------
@@ -81,12 +83,12 @@ op	- up to 8-bit instruction ID (5-bit in default configuration)
 
 flags
 -----
+lf	- lock-prefix bit [atomic operations]
 ff	- floating-point instruction
 vf	- vector-operation [use vl-register]
-lf	- lock-prefix bit [atomic operations]
 
 regs
 ----
-src	- up to 8-bit source register ID (4-bit in 32-bit configurations)
-dest	- up to 8-bit destination register ID (4-bit in 32-bit configurations)
+src	- up to 8-bit source register ID (4-bit in default configuration)
+dest	- up to 8-bit destination register ID (4-bit in default configuration)
 
