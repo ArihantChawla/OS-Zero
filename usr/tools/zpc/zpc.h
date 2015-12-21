@@ -12,10 +12,13 @@
 #define ZPCADRREG         (1 << 1)
 #define ZPCADRINDEX       (1 << 2)
 #define ZPCADRINDIR       (1 << 3)
-#define ZPCARG0BIT        (1 << 4)
-#define ZPCARG1BIT        (1 << 5)
-#define ZPCADRARGSMASK    (ZPCARG0BIT | ZPCARG1BIT)
+#define ZPCOPARG0BIT      (1 << 4)
+#define ZPCOPARG1BIT      (1 << 5)
 #define ZPCOPADRMODEBITS  6
+#define ZPCOPARGBITS      2
+#define ZPCADRARGSMASK    (ZPCOPARG0BIT | ZPCOPARG1BIT)
+#define zpcopnargs(op)    (((op)->adrmode >> ZPCOPARG0BIT)              \
+                           & ((1 << ZPCOPARGBITS) - 1))
 
 #if defined(ZPC32BIT)
 struct zpcop {
