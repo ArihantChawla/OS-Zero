@@ -3,9 +3,9 @@
 
 #include <zero/cdefs.h>
 
-#define ZPCNOPIDBITS      5
-#define ZPCNOPFLAGBITS    3
-#define ZPCNREGBITS       4
+#define ZPCOPIDBITS       5
+#define ZPCOPFLAGBITS     3
+#define ZPCREGBITS        4
 #define ZPCOPIMMEDBITS    6
 
 #define ZPCADRIMMED       (1 << 0)
@@ -22,12 +22,12 @@
 
 #if defined(ZPC32BIT)
 struct zpcop {
-    unsigned id      : ZPCNOPIDBITS;            // 5-bit
-    unsigned flg     : ZPCNOPFLAGBITS;          // 3-bit
-    unsigned src     : ZPCNREGBITS;             // 4-bit
-    unsigned dest    : ZPCNREGBITS;             // 4-bit
+    unsigned id      : ZPCOPIDBITS;             // 5-bit
+    unsigned flg     : ZPCOPFLAGBITS;           // 3-bit
+    unsigned src     : ZPCREGBITS;              // 4-bit
+    unsigned dest    : ZPCREGBITS;              // 4-bit
     unsigned adrmode : ZPCOPADRMODEBITS;        // 6-bit
-    unsigned adrreg  : ZPCNREGBITS;             // 4-bit
+    unsigned adrreg  : ZPCREGBITS;              // 4-bit
     unsigned immed   : ZPCOPIMMEDBITS;          // 6-bit
     uint32_t args[EMPTY];                       // address/immediate arguments
 };
