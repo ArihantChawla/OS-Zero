@@ -8,15 +8,17 @@
 #include <zpc/zpc32.h>
 #endif
 
+#define ZPCMREGPC 0
+#define ZPCMREGSW 1
+#define ZPCMREGFP 2
+#define ZPCMREGSP 3
+#define ZPCMREGS  4
 struct zpcmach {
     zpcfreg_t  fregs[ZPCREGS];
     zpcreg_t   regs[ZPCREGS];
     zpcreg_t   vregs[ZPCREGS];
     void      *stk[ZPCREGS];
-    zpcreg_t   pc;
-    zpcreg_t   msw;
-    zpcreg_t   fp;
-    zpcreg_t   sp;
+    zpcreg_t   mregs[ZPCMREGS];
 };
 
 #endif /* __ZPC_ZPC_H__ */
