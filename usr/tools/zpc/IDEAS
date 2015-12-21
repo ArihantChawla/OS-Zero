@@ -39,6 +39,11 @@ machine
 lmsw	- set machine-status word; privileged instruction
 smsw	- store machine-status word
 
+io
+--
+in
+out
+
 button layout
 -------------
 

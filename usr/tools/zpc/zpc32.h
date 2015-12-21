@@ -14,17 +14,24 @@ typedef double  zpcfreg_t;
 #define ZPCOPIDBITS      5
 #define ZPCOPFLAGBITS    3
 #define ZPCREGBITS       4
-#define ZPCOPIMMEDBITS   12
+#define ZPCOPIMMEDBITS   8
 /* flg-bits */
 #define ZPCOPLOCKBIT     (1 << 0)
 #define ZPCOPFPUBIT      (1 << 1)
 #define ZPCOPVECBIT      (1 << 2)
-/* adrmode-bits */
+/* adrflg-bits */
 #define ZPCADRIMMEDBIT   (1 << 0)
 #define ZPCADRINDEXBIT   (1 << 1)
 #define ZPCADRINDIRBIT   (1 << 2)
 #define ZPCOPARGBIT      (1 << 3)
 #define ZPCOPADRFLGBITS  4
+/* size-argument values */
+#define ZPCOPSIZE8       0
+#define ZPCOPSIZE16      1
+#define ZPCOPSIZE32      2
+#define ZPCOPSIZE64      3
+#define ZPCOPSIZE128     4
+#define ZPCOPSIZE256     5
 #define zpcophasarg(op)  ((op)->argmode & ZPCOPARGBIT)
 struct zpcop {
     unsigned id     : ZPCOPIDBITS;              // 5-bit
@@ -32,7 +39,8 @@ struct zpcop {
     unsigned src    : ZPCREGBITS;               // 4-bit
     unsigned dest   : ZPCREGBITS;               // 4-bit
     unsigned adrflg : ZPCOPADRFLGBITS;          // 4-bit
-    unsigned immed  : ZPCOPIMMEDBITS;           // 12-bit
+    unsigned size   : ZPCOPSIZEBITS;            // 4-bit
+    unsigned immed  : ZPCOPIMMEDBITS;           // 8-bit
     uint32_t arg[EMPTY];                        // optional argument
 };
 
