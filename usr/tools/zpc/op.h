@@ -24,15 +24,15 @@
 #define ZPCOPSTA  20            // store accumulator (register)
 #define ZPCOPPSH  21            // push to stack
 #define ZPCOPPOP  22            // pop from stack
-#define ZPCJMP    23            // jump (branch unconditionally)
-#define ZPCBE     24            // branch if equal
-#define ZPCBZ     ZPCBE         // branch if zero
-#define ZPCBNE    25            // branch if not zero
-#define ZPCBNZ    ZPCBNE        // branch if equal
-#define ZPCBLT    25            // branch if less than
-#define ZPCBLE    26            // branch if less than or equal
-#define ZPCBGT    27            // branch if greater than
-#define ZPCBGE    28            // branch if greater than or equal
+#define ZPCOPJMP  23            // jump (branch unconditionally)
+#define ZPCOPBE   24            // branch if equal
+#define ZPCOPBZ   ZPCOPBE       // branch if zero
+#define ZPCOPBNE  25            // branch if not zero
+#define ZPCOPBNZ  ZPCOPBNE      // branch if equal
+#define ZPCOPBLT  25            // branch if less than
+#define ZPCOPBLE  26            // branch if less than or equal
+#define ZPCOPBGT  27            // branch if greater than
+#define ZPCOPBGE  28            // branch if greater than or equal
 #define ZPCOPCALL 29            // call subroutine
 #define ZPCOPRET  30            // return from subroutine
 #define ZPCOPIN   31            // read from I/O port
