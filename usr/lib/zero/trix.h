@@ -591,6 +591,36 @@ union __ieee754d { uint64_t u64; double d; };
 #endif
 
 static __inline__ unsigned long
+divu7(unsigned long x)
+{
+    unsigned long q;
+    unsigned long r;
+
+    q = (x >> 1) + (x >> 4);
+    q = q + (q >> 6);
+    q = q + (q >> 12) + (q >> 24);
+    q = q >> 2;
+    r = n - q * 7;
+
+    return q + ((r + 1) >> 3);
+}
+
+static __inline__ unsigned long
+divu9(unsigned long x)
+{
+    unsigned long q;
+    unsigned long r;
+
+    q = x - (x >> 3);
+    q = q + (q >> 6);
+    q = q + (q >> 12) + (q >> 24);
+    q = q >> 3;
+    r = n - q * 9;
+
+    return q + ((r + 7) >> 4);
+}
+
+static __inline__ unsigned long
 divu10(unsigned long x)
 {
     unsigned long q;
@@ -696,7 +726,9 @@ div1000000(unsigned long x)
     return res;
 }
 
-#define modu10(u)  ((u) - divu10(u) * 100)
+#define modu7(u)   ((u) - divu7(u) * 7)
+#define modu9(u)   ((u) - divu9(u) * 9)
+#define modu10(u)  ((u) - divu10(u) * 10)
 #define modu100(u) ((u) - divu100(u) * 100)
 #define modu400(u) ((u) - (divu100(u) >> 2) * 400)
 
