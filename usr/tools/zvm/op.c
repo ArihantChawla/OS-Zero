@@ -109,7 +109,17 @@ zvmopsar(struct zvmopcode *op)
     zasword_t    *dptr;
     zasword_t     src = zvmgetarg1(op, arg1t);
     zasword_t     dest = zvmgetarg2(op, arg1t, arg2t, dptr);
-    zasword_t     sign = (zasword_t)dest >> (CHAR_BIT * sizeof(zasword_t) - 1);
+//    zasword_t     sign = (zasword_t)dest >> (CHAR_BIT * sizeof(zasword_t) - 1);
+    zasword_t     mask = ~(zasword_t)0;
+#if (ZVM32BIT)
+    zasword_t     sign = (((dest) & (1 << 31))
+                          ? (mask >> (32 - src))
+                          : 0);
+#else
+    zasword_t     sign = (((dest) & (INT64_C(1) << 63))
+                          ? (mask >> (64 - src))
+                          : 0);
+#endif
 
     zvm.cregs[ZVMMSWCREG] &= ~(ZVMZF | ZVMOF | ZVMCF);
     sign = -sign << (CHAR_BIT * sizeof(zasword_t) - src);

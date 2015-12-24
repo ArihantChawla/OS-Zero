@@ -3,6 +3,8 @@
 
 #include <stdint.h>
 
+#define ZPCOPSIZE sizeof(uint32_t)
+
 typedef int32_t zpcreg_t;
 typedef double  zpcfreg_t;
 
@@ -20,10 +22,10 @@ typedef double  zpcfreg_t;
 #define ZPCOPFPUBIT      (1 << 1)
 #define ZPCOPVECBIT      (1 << 2)
 /* adrflg-bits */
-#define ZPCADRIMMEDBIT   (1 << 0)
-#define ZPCADRINDEXBIT   (1 << 1)
-#define ZPCADRINDIRBIT   (1 << 2)
-#define ZPCOPARGBIT      (1 << 3)
+#define ZPCOPARGBIT      (1 << 0)
+#define ZPCADRIMMEDBIT   (1 << 1)
+#define ZPCADRINDEXBIT   (1 << 2)
+#define ZPCADRINDIRBIT   (1 << 3)
 #define ZPCOPADRFLGBITS  4
 /* size-argument values */
 #define ZPCOPSIZE8       0

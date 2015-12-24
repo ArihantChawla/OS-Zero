@@ -38,8 +38,13 @@
 #define ZPCOPIN   31            // read from I/O port
 #define ZPCOPOUT  32            // write to I/O port
 /* privileged mode instructions */
-#define ZPCOPSETB 62            // set or clear bit in machine register
+#define ZPCOPLDB  62            // set or clear bit in machine register
 #define ZPCOPLDR  63            // load machine-register
+
+#define zpcsetzf(zpc, val)                                              \
+    (!(val)                                                             \
+     ? ((zpc)->mregs[ZPCMREGSW] |= ZPCMSWZF, 1)                         \
+     : ((zpc)->mregs[ZPCMREGSW] &= ~ZPCMSWZF), 0)
 
 #endif /* __ZPC_OP_H__ */
 

@@ -77,7 +77,7 @@ zf	- zero flag
 cf	- carry-flag
 of	- overflow-flag
 if	- interrupt-flag
-uf	- user-mode execution; only accessible in system mode, i.e. when zero
+sf	- system-mode execution; only accessible in system mode, i.e. when set
 
 opcodes
 -------
