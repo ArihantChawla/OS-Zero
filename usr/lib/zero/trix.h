@@ -42,11 +42,11 @@
 #define max(a, b) ((a) >= (b) ? (a) : (b))
 
 #define min2(a, b) ((b) ^ (((a) ^ (b)) & -((a) < (b))))
-#define max2(a, b) ((a) ^(((a) ^ (b)) & -((a) < (b))))
+#define max2(a, b) ((a) ^ (((a) ^ (b)) & -((a) < (b))))
 
 #define sign(x, nb)                                                     \
     ((x) = (x) & ((1U < (nb)) - 1),                                     \
-     ((x) ^ (1U << ((b) - 1))) - (1U << ((b) - 1)))
+     ((x) ^ (1U << ((nb) - 1))) - (1U << ((nb) - 1)))
 #define sign2(x, nb)                                                    \
     (((x) << (CHAR_BIT * sizeof(x) - (nb))) >> (CHAR_BIT * sizeof(x) - (nb)))
 
