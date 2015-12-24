@@ -600,7 +600,7 @@ divu7(unsigned long x)
     q = q + (q >> 6);
     q = q + (q >> 12) + (q >> 24);
     q = q >> 2;
-    r = n - q * 7;
+    r = x - q * 7;
 
     return q + ((r + 1) >> 3);
 }
@@ -615,7 +615,7 @@ divu9(unsigned long x)
     q = q + (q >> 6);
     q = q + (q >> 12) + (q >> 24);
     q = q >> 3;
-    r = n - q * 9;
+    r = x - q * 9;
 
     return q + ((r + 7) >> 4);
 }
