@@ -16,11 +16,12 @@ typedef volatile long zerospin;
 static __inline__ long
 spintrylk(volatile long *sp, long val)
 {
-    volatile long res;
-    long          ret;
+    volatile long res = 0;
 
     res = m_cmpswap(sp, ZEROSPININITVAL, val);
-    ret = !res;
+    if (res == ZEROSPININITVAL) {
+        res++;
+    }
     
     return ret;
 }
@@ -35,7 +36,7 @@ spinlk(volatile long *sp, long val)
 
     do {
         res = m_cmpswap(sp, ZEROSPININITVAL, val);
-    } while (res);
+    } while (res != ZEROSPININITVAL);
 
     return;
 }
@@ -46,8 +47,8 @@ spinlk(volatile long *sp, long val)
 static __inline__ void
 spinunlk(volatile long *sp, long val)
 {
-    *sp = ZEROSPININITVAL;
     m_membar();
+    *sp = ZEROSPININITVAL;
 }
 
 #endif /* __ZERO_SPIN_H__ */

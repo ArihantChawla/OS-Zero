@@ -116,7 +116,7 @@ barwaitpool(zerobarpool *pool)
         /* we were too slow, so wait for barrier to be released */
         syswait(&pool->cnt.vals.seq, seq);
     } while (1);
-    if (m_fetchadd(&pool->nref, -1) == 1) {
+    if (m_fetchadd32(&pool->nref, -1) == 1) {
         /* last one to wake up, wake destroying thread */
         syswait(&pool->nref, 1);
     }

@@ -17,19 +17,20 @@
 static __inline__ void
 spinwttrylk(volatile long *sp, long val, long niter)
 {
-    volatile long res = val;
-    long          ret;
+    volatile long res = 0;
 
     if (niter) {
         do {
             res = m_cmpswap(sp, ZEROSPININITVAL, val);
-        } while ((--niter) && (res));
+        } while ((--niter) && (res != ZEROSPINITVAL));
     } else {
         res = m_cmpswap(sp, ZEROSPININITVAL, val);
     }
-    ret = !res;
+    if (res == ZEROSPININITVAL) {
+        res++;
+    }
     
-    return ret;
+    return res;
 }
 
 /*
@@ -47,7 +48,7 @@ spinwtlk(volatile long *sp, long val, long niter)
     } else {
         res = m_cmpswap(sp, ZEROSPININITVAL, val);
     }
-    if (res) {
+    if (res != ZEROSPININITVAL) {
         mtxlk(sp, val);
     }
 
@@ -60,8 +61,8 @@ spinwtlk(volatile long *sp, long val, long niter)
 static __inline__ void
 spinwtunlk(volatile long *sp, long val, long niter)
 {
-    *sp = ZEROSPININITVAL;
     m_membar();
+    *sp = ZEROSPININITVAL;
 }
 
 #endif /* __ZERO_SPINWT_H__ */

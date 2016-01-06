@@ -14,7 +14,7 @@
 /* atomic fetch and add, 16-bit version */
 #define m_fetchadd16(p, val)     m_xadd16((volatile short *)(p), val)
 /* atomic fetch and add, 32-bit version */
-#define m_fetchadd32(p, val)     m_xadd32((volatile long *)(p), val)
+#define m_fetchadd32(p, val)     m_xadd32((volatile int *)(p), val)
 /* atomic compare and swap byte */
 #define m_cmpswapb(p, want, val) m_cmpxchg8(p, want, val)
 

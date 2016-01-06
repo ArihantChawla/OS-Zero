@@ -21,8 +21,8 @@ typedef struct {
 } zerobar;
 
 typedef struct {
-    volatile long                   lk;
-    volatile long                   nref;
+    volatile int                    lk;
+    volatile int                    nref;
     long                            num;
     union {
         struct {

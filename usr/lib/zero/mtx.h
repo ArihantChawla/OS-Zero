@@ -55,13 +55,14 @@ typedef pthread_mutex_t zeromtx;
 static INLINE long
 mtxtrylk(volatile long *lp)
 {
-    volatile long res;
-    long          ret;
+    volatile long res = 0;
 
     res = m_cmpswap(lp, MTXINITVAL, MTXLKVAL);
-    ret = !res;
+    if (res == MTXINITVAL) {
+        res++;
+    }
 
-    return ret;
+    return res;
 }
 
 /*
@@ -75,10 +76,10 @@ mtxlk(volatile long *lp)
     
     do {
         res = m_cmpswap(lp, MTXINITVAL, MTXLKVAL);
-        if (res) {
+        if (res != MTXINITVAL) {
             thryield();
         }
-    } while (res);
+    } while (res != MTXINITVAL);
 
     return;
 }
@@ -90,8 +91,8 @@ mtxlk(volatile long *lp)
 static INLINE void
 mtxunlk(volatile long *lp)
 {
-    *lp = MTXINITVAL;
     m_membar();
+    *lp = MTXINITVAL;
 
     return;
 }
