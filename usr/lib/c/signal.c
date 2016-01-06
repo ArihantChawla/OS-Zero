@@ -10,11 +10,11 @@
 #endif
 
 /* NOTE: SIG_DFL is 0 */
-static THREADLOCAL sigset_t _sigmasktab[NPROCTASK] ALIGNED(PAGESIZE);
-static __sighandler_t       _sigfunctab[_NSIG] = { 0 };
-static const uint64_t       _signocatchbits = _SIGNOCATCHBITS;
+static THREADLOCAL sigset_t sigmasktab[NPROCTASK] ALIGNED(PAGESIZE);
+static __sighandler_t       sigfunctab[_NSIG] = { 0 };
+static const uint64_t       signocatchbits = _SIGNOCATCHBITS;
 
-#define _signocatch(sig) (_signocatchbits & (UINT64_C(1) << (sig)))
+#define _signocatch(sig) (signocatchbits & (UINT64_C(1) << (sig)))
 
 #if (USEBSD) || (USEGNU)
 #undef SYSV_SIGNAL

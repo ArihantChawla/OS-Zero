@@ -280,15 +280,15 @@ struct sigcontext {
       ? (__seterrno(EINVAL), -1L)                                       \
       : (_signorm(sig)                                                  \
          ? ((sp)->norm |= (1UL << (sig)))                               \
-         : ((sp)->rt |= (1UL << ((sig) - SIGRTMIN))))),                 \
-     0)
+         : ((sp)->rt |= (1UL << ((sig) - SIGRTMIN))),                  \
+         0)))
 #define sigdelset(sp, sig)                                              \
     ((!_sigvalid(sig)                                                   \
       ? (__seterrno(EINVAL), -1L)                                       \
       : (_signorm(sig)                                                  \
          ? ((sp)->norm &= ~(1UL << (sig)))                              \
-         : ((sp)->rt &= ~(1UL << ((sig) - SIGRTMIN))))),                \
-     0)
+         : ((sp)->rt &= ~(1UL << ((sig) - SIGRTMIN))),                 \
+         0)))
 #define sigismember(sp, sig)                                            \
     ((!_sigvalid(sig)                                                   \
       ? (__seterrno(EINVAL), -1L)                                       \

@@ -23,7 +23,7 @@ const unsigned char               *collnametab[STRINGNLANG]
 /* TESTED OK */
 void *
 memcpy(void *dest,
-       void *src,
+       const void *src,
        size_t n)
 {
     unsigned long *ulptr1;
@@ -40,7 +40,7 @@ memcpy(void *dest,
     }
 
     nleft = n;
-    u8ptr1 = src;
+    u8ptr1 = (void *)src;
     u8ptr2 = dest;
     val = sizeof(unsigned long);
     if (nleft >= (val << 3)

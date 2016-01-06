@@ -76,7 +76,7 @@
 #define NERRNO       67 // 1 bigger than any errno value */
 
 #if defined(__KERNEL__) && (__KERNEL__)
-#define __seterrno(e) (e)
+//#define __seterrno(e) (e)
 #endif
 
 #endif /* __BITS_ERRNO_H__ */

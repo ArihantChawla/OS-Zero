@@ -22,7 +22,7 @@
 #include <kern/unit/ppc/asm.h>
 #endif
 
-//#define __errnoloc() (&k_curtask->errnum)
+#define __errnoloc() (&k_curtask->errnum)
 
 //extern struct m_cpuinfo cpuinfo;
 

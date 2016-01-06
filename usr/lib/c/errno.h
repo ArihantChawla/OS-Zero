@@ -20,6 +20,8 @@ extern int * __errnoloc(void);
 
 #endif /* defined(__GLIBC__) */
 
+#define __seterrno(num) (errno = (num))
+
 #endif /* !defined(__ASSEMBLER__) && !__KERNEL__ */
 
 #endif /* __ERRNO_H__ */
