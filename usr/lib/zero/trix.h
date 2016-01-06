@@ -163,33 +163,37 @@ long long llabs(long long x);
         uint32_t __tmp;                                                 \
         uint32_t __mask;                                                \
                                                                         \
-        (r) ^= (r);                                                     \
-        __tmp = (u32);                                                  \
-        __mask = 0x01;                                                  \
-        if (!(__tmp & __mask)) {                                        \
-            __mask = 0xffff;                                            \
+        if (u32 == 0) {                                                 \
+            (r) = 32;                                                   \
+        } else {                                                        \
+            (r) = 0;                                                    \
+            __tmp = (u32);                                              \
+            __mask = 0x01;                                              \
             if (!(__tmp & __mask)) {                                    \
-                __tmp >>= 16;                                           \
-                (r) += 16;                                              \
-            }                                                           \
-            __mask >>= 8;                                               \
-            if (!(__tmp & __mask)) {                                    \
-                __tmp >>= 8;                                            \
-                (r) += 8;                                               \
-            }                                                           \
-            __mask >>= 4;                                               \
-            if (!(__tmp & __mask)) {                                    \
-                __tmp >>= 4;                                            \
-                (r) += 4;                                               \
-            }                                                           \
-            __mask >>= 2;                                               \
-            if (!(__tmp & __mask)) {                                    \
-                __tmp >>= 2;                                            \
-                (r) += 2;                                               \
-            }                                                           \
-            __mask >>= 1;                                               \
-            if (!(__tmp & __mask)) {                                    \
-                (r) += 1;                                               \
+                __mask = 0xffff;                                        \
+                if (!(__tmp & __mask)) {                                \
+                    __tmp >>= 16;                                       \
+                    (r) += 16;                                          \
+                }                                                       \
+                __mask >>= 8;                                           \
+                if (!(__tmp & __mask)) {                                \
+                    __tmp >>= 8;                                        \
+                    (r) += 8;                                           \
+                }                                                       \
+                __mask >>= 4;                                           \
+                if (!(__tmp & __mask)) {                                \
+                    __tmp >>= 4;                                        \
+                    (r) += 4;                                           \
+                }                                                       \
+                __mask >>= 2;                                           \
+                if (!(__tmp & __mask)) {                                \
+                    __tmp >>= 2;                                        \
+                    (r) += 2;                                           \
+                }                                                       \
+                __mask >>= 1;                                           \
+                if (!(__tmp & __mask)) {                                \
+                    (r) += 1;                                           \
+                }                                                       \
             }                                                           \
         }                                                               \
     } while (0)
@@ -199,35 +203,39 @@ long long llabs(long long x);
         uint32_t __tmp;                                                 \
         uint32_t __mask;                                                \
                                                                         \
-        (r) ^= (r);                                                     \
-        __tmp = (u32);                                                  \
-        __mask = 0x01;                                                  \
-        __mask <<= CHAR_BIT * sizeof(uint32_t) - 1;                     \
-        if (!(__tmp & __mask)) {                                        \
-            __mask = 0xffffffff;                                        \
-            __mask <<= 16;                                              \
+        if (u32 == 0) {                                                 \
+            (r) = 32;                                                   \
+        } else {                                                        \
+            (r) = 0;                                                    \
+            __tmp = (u32);                                              \
+            __mask = 0x01;                                              \
+            __mask <<= CHAR_BIT * sizeof(uint32_t) - 1;                 \
             if (!(__tmp & __mask)) {                                    \
-                __tmp <<= 16;                                           \
-                (r) += 16;                                              \
-            }                                                           \
-            __mask <<= 8;                                               \
-            if (!(__tmp & __mask)) {                                    \
-                __tmp <<= 8;                                            \
-                (r) += 8;                                               \
-            }                                                           \
-            __mask <<= 4;                                               \
-            if (!(__tmp & __mask)) {                                    \
-                __tmp <<= 4;                                            \
-                (r) += 4;                                               \
-            }                                                           \
-            __mask <<= 2;                                               \
-            if (!(__tmp & __mask)) {                                    \
-                __tmp <<= 2;                                            \
-                (r) += 2;                                               \
-            }                                                           \
-            __mask <<= 1;                                               \
-            if (!(__tmp & __mask)) {                                    \
-                (r)++;                                                  \
+                __mask = 0xffffffff;                                    \
+                __mask <<= 16;                                          \
+                if (!(__tmp & __mask)) {                                \
+                    __tmp <<= 16;                                       \
+                    (r) += 16;                                          \
+                }                                                       \
+                __mask <<= 8;                                           \
+                if (!(__tmp & __mask)) {                                \
+                    __tmp <<= 8;                                        \
+                    (r) += 8;                                           \
+                }                                                       \
+                __mask <<= 4;                                           \
+                if (!(__tmp & __mask)) {                                \
+                    __tmp <<= 4;                                        \
+                    (r) += 4;                                           \
+                }                                                       \
+                __mask <<= 2;                                           \
+                if (!(__tmp & __mask)) {                                \
+                    __tmp <<= 2;                                        \
+                    (r) += 2;                                           \
+                }                                                       \
+                __mask <<= 1;                                           \
+                if (!(__tmp & __mask)) {                                \
+                    (r)++;                                              \
+                }                                                       \
             }                                                           \
         }                                                               \
     } while (0)
@@ -239,38 +247,42 @@ long long llabs(long long x);
         uint64_t __tmp;                                                 \
         uint64_t __mask;                                                \
                                                                         \
-        (r) = 0;                                                        \
-        __tmp = (u64);                                                  \
-        __mask = 0x01;                                                  \
-        if (!(__tmp & __mask)) {                                        \
-            __mask = 0xffffffff;                                        \
+        if (u64 == 0) {                                                 \
+            (r) = 64;                                                   \
+        } else {                                                        \
+            (r) = 0;                                                    \
+            __tmp = (u64);                                              \
+            __mask = 0x01;                                              \
             if (!(__tmp & __mask)) {                                    \
-                __tmp >>= 32;                                           \
-                (r) += 32;                                              \
-            }                                                           \
-            __mask >>= 16;                                              \
-            if (!(__tmp & __mask)) {                                    \
-                __tmp >>= 16;                                           \
-                (r) += 16;                                              \
-            }                                                           \
-            __mask >>= 8;                                               \
-            if (!(__tmp & __mask)) {                                    \
-                __tmp >>= 8;                                            \
-                (r) += 8;                                               \
-            }                                                           \
-            __mask >>= 4;                                               \
-            if (!(__tmp & __mask)) {                                    \
-                __tmp >>= 4;                                            \
-                (r) += 4;                                               \
-            }                                                           \
-            __mask >>= 2;                                               \
-            if (!(__tmp & __mask)) {                                    \
-                __tmp >>= 2;                                            \
-                (r) += 2;                                               \
-            }                                                           \
-            __mask >>= 1;                                               \
-            if (!(__tmp & __mask)) {                                    \
-                (r) += 1;                                               \
+                __mask = 0xffffffff;                                    \
+                if (!(__tmp & __mask)) {                                \
+                    __tmp >>= 32;                                       \
+                    (r) += 32;                                          \
+                }                                                       \
+                __mask >>= 16;                                          \
+                if (!(__tmp & __mask)) {                                \
+                    __tmp >>= 16;                                       \
+                    (r) += 16;                                          \
+                }                                                       \
+                __mask >>= 8;                                           \
+                if (!(__tmp & __mask)) {                                \
+                    __tmp >>= 8;                                        \
+                    (r) += 8;                                           \
+                }                                                       \
+                __mask >>= 4;                                           \
+                if (!(__tmp & __mask)) {                                \
+                    __tmp >>= 4;                                        \
+                    (r) += 4;                                           \
+                }                                                       \
+                __mask >>= 2;                                           \
+                if (!(__tmp & __mask)) {                                \
+                    __tmp >>= 2;                                        \
+                    (r) += 2;                                           \
+                }                                                       \
+                __mask >>= 1;                                           \
+                if (!(__tmp & __mask)) {                                \
+                    (r) += 1;                                           \
+                }                                                       \
             }                                                           \
         }                                                               \
     } while (0)
@@ -280,40 +292,44 @@ long long llabs(long long x);
         uint64_t __tmp;                                                 \
         uint64_t __mask;                                                \
                                                                         \
-        (r) ^= (r);                                                     \
-        __tmp = (u64);                                                  \
-        __mask = 0x01;                                                  \
-        __mask <<= CHAR_BIT * sizeof(uint64_t) - 1;                     \
-        if (!(__tmp & __mask)) {                                        \
-            __mask = 0xffffffff;                                        \
-            __mask <<= 32;                                              \
+        if (u64 == 0) {                                                 \
+            (r) = 64;                                                   \
+        } else {                                                        \
+            (r) = 0;                                                    \
+            __tmp = (u64);                                              \
+            __mask = 0x01;                                              \
+            __mask <<= CHAR_BIT * sizeof(uint64_t) - 1;                 \
             if (!(__tmp & __mask)) {                                    \
-                __tmp <<= 32;                                           \
-                (r) += 32;                                              \
-            }                                                           \
-            __mask <<= 16;                                              \
-            if (!(__tmp & __mask)) {                                    \
-                __tmp <<= 16;                                           \
-                (r) += 16;                                              \
-            }                                                           \
-            __mask <<= 8;                                               \
-            if (!(__tmp & __mask)) {                                    \
-                __tmp <<= 8;                                            \
-                (r) += 8;                                               \
-            }                                                           \
-            __mask <<= 4;                                               \
-            if (!(__tmp & __mask)) {                                    \
-                __tmp <<= 4;                                            \
-                (r) += 4;                                               \
-            }                                                           \
-            __mask <<= 2;                                               \
-            if (!(__tmp & __mask)) {                                    \
-                __tmp <<= 2;                                            \
-                (r) += 2;                                               \
-            }                                                           \
-            __mask <<= 1;                                               \
-            if (!(__tmp & __mask)) {                                    \
-                (r)++;                                                  \
+                __mask = 0xffffffff;                                    \
+                __mask <<= 32;                                          \
+                if (!(__tmp & __mask)) {                                \
+                    __tmp <<= 32;                                       \
+                    (r) += 32;                                          \
+                }                                                       \
+                __mask <<= 16;                                          \
+                if (!(__tmp & __mask)) {                                \
+                    __tmp <<= 16;                                       \
+                    (r) += 16;                                          \
+                }                                                       \
+                __mask <<= 8;                                           \
+                if (!(__tmp & __mask)) {                                \
+                    __tmp <<= 8;                                        \
+                    (r) += 8;                                           \
+                }                                                       \
+                __mask <<= 4;                                           \
+                if (!(__tmp & __mask)) {                                \
+                    __tmp <<= 4;                                        \
+                    (r) += 4;                                           \
+                }                                                       \
+                __mask <<= 2;                                           \
+                if (!(__tmp & __mask)) {                                \
+                    __tmp <<= 2;                                        \
+                    (r) += 2;                                           \
+                }                                                       \
+                __mask <<= 1;                                           \
+                if (!(__tmp & __mask)) {                                \
+                    (r)++;                                              \
+                }                                                       \
             }                                                           \
         }                                                               \
     } while (0)
@@ -321,18 +337,22 @@ long long llabs(long long x);
 /* count number of trailing (low) zero-bits in long-word */
 #if defined(__GNUC__)
 //#define tzero32(u) (__builtin_ctz(u))
-#define tzerol(u)  (!(u)                                                \
-                    ? (LONGSIZE * CHAR_BIT - 1)                         \
-                    : (__builtin_ctzl(u)))
+#define tzerol(u) (!(u)                                                 \
+                   ? (LONGSIZE * CHAR_BIT)                              \
+                   : (__builtin_ctzl(u)))
 #elif defined(__i386__) || defined(__x86_64__) || defined(__amd64__)
-#define tzerol(u)  (m_scanlo1bit(u))
+#define tzerol(u)  (!(u)                                                \
+                    ? (LONGSIZE * CHAR_BIT)                             \
+                    : m_scanlo1bit(u))
 #elif (LONGSIZE == 4)
 static __inline__ long
 tzerol(long l)
 {
-    long ret = 0;
+    long ret = LONGSIZE * CHAR_BIT;
 
-    tzero32(l, ret);
+    if (l) {
+        tzero32(l, ret);
+    }
 
     return ret;
 }
@@ -340,9 +360,11 @@ tzerol(long l)
 static __inline__ long
 tzerol(long l)
 {
-    long ret = 0;
+    long ret = LONG_SIZE * CHAR_BIT;
 
-    tzero64(l, ret);
+    if (l) {
+        tzero64(l, ret);
+    }
 
     return ret;
 }
@@ -351,17 +373,21 @@ tzerol(long l)
 /* count number of leading (high) zero-bits in long-word */
 #if defined(__GNUC__)
 #define lzerol(u) (!(u)                                                 \
-                   ? (LONGSIZE * CHAR_BIT - 1)                          \
+                   ? (LONGSIZE * CHAR_BIT)                              \
                    : (__builtin_clzl(u)))
 #elif defined(__i386__) || defined(__x86_64__) || defined(__amd64__)
-#define lzerol(u) ((1UL << (LONGSIZELOG2 + 3)) - m_scanhi1bit(u))
+#define lzerol(u) (!(u)                                                 \
+                   ? (LONGSIZE * CHAR_BIT)                              \
+                   : (LONGSIZE * CHAR_BIT - m_scanhi1bit(u)))
 #elif (LONGSIZE == 4)
 static __inline__ long
 lzerol(long l)
 {
-    long ret = 0;
+    long ret = LONGSIZE * CHAR_BIT;
 
-    lzero32(l, ret);
+    if (l) {
+        lzero32(l, ret);
+    }
 
     return ret;
 }
@@ -369,9 +395,11 @@ lzerol(long l)
 static __inline__ long
 lzerol(long l)
 {
-    long ret = 0;
+    long ret = LONGSIZE * CHAR_BIT;
 
-    lzero64(l, ret);
+    if (l) {
+        lzero64(l, ret);
+    }
 
     return ret;
 }

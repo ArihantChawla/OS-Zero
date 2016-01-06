@@ -7,7 +7,8 @@
 #include <zero/cdefs.h>
 #include <zero/param.h>
 #include <zero/types.h>
-#include <zero/list.h>
+#include <zero/trix.h>
+//#include <zero/list.h>
 #include <kern/syscall.h>
 #include <kern/unit/x86/cpu.h>
 #if (defined(__i386__) || defined(__i486__)                             \
@@ -21,6 +22,10 @@
 #elif defined(__ppc__)
 #include <kern/unit/ppc/asm.h>
 #endif
+
+#define TASKRUNBITMAPSIZE                                               \
+    rounduppow2(SCHEDNPRIOCLASS * SCHEDNPRIOQUEUE / (LONGSIZE * CHAR_BIT), \
+                CLSIZE / sizeof(long))
 
 #define __errnoloc() (&k_curtask->errnum)
 

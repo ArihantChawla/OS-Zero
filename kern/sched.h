@@ -24,13 +24,14 @@ extern void schedinit(void);
 /* task scheduler classes */
 #define SCHEDDEADLINE     (-3L) // deadline tasks
 #define SCHEDRT           (-2L) // realtime tasks
-#define SCHEDFIXED        (-1L) // SYNC, INPUT, AUDIO, VIDEO
-#define SCHEDRESPONSIVE   0     // system tasks
-#define SCHEDNORMAL       1     // user tasks
-#define SCHEDBATCH        2     // batch tasks
-#define SCHEDIDLE         3     // idle tasks
-#define SCHEDNPRIOCLASS   4     // # of scheduler classes
+#define SCHEDFIXED        0     // SYNC, INPUT, AUDIO, VIDEO
+#define SCHEDRESPONSIVE   1     // system tasks
+#define SCHEDNORMAL       2     // user tasks
+#define SCHEDBATCH        3     // batch tasks
+#define SCHEDIDLE         4     // idle tasks
+#define SCHEDNPRIOCLASS   5     // # of scheduler classes
 #define SCHEDNPRIO        64    // # of priorities per class
+#define SCHEDNPRIOQUEUE   32    // # of scaled priorities per class
 /* fixed priorities */
 #define SCHEDHID          0
 #define SCHEDAUDIO        1

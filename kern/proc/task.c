@@ -28,7 +28,7 @@ void taskaddsleeping(struct task *task);
 void taskaddstopped(struct task *task);
 void taskaddzombie(struct task *task);
 
-struct taskqueue         taskrunqueuetab[NCPU][SCHEDNFIXED + SCHEDNPRIOCLASS * SCHEDNPRIO] ALIGNED(PAGESIZE);
+struct taskqueue         taskrunqueuetab[NCPU][SCHEDNPRIOCLASS * SCHEDNPRIOQUEUE] ALIGNED(PAGESIZE);
 static struct tasktabl0  taskwaittab[NLVL0TASK];
 static struct task      *taskstoppedtab[NTASK];
 static struct task      *taskzombietab[NTASK];
@@ -104,6 +104,7 @@ static long tasknicetab[64]
 };
 static struct taskqueue  taskrtqueue;
 static struct taskqueue  tasksleepqueue;
+static long              taskrunbitmap[NCPU][TASKRUNBITMAPSIZE];
 typedef void taskfunc_t(struct task *);
 taskfunc_t              *taskfunctab[TASKNSTATE]
 = {
@@ -178,6 +179,7 @@ taskadjprio(struct task *task)
         prio = min(SCHEDNFIXED + SCHEDNPRIOCLASS * SCHEDNPRIO - 1, prio);
         prio = max(prio, SCHEDNFIXED);
     }
+    prio >>= 1;
 
     return prio;
 }
@@ -190,6 +192,7 @@ taskwakeprio(struct task *task)
     long prio = ((sched == SCHEDFIXED)
                  ? task->prio
                  : SCHEDNFIXED + sched * SCHEDNPRIO);
+    prio >>= 1;
 
     return prio;
 }
@@ -245,31 +248,33 @@ taskpick(struct task *curtask)
     struct task      *task = NULL;
     struct taskqueue *queue;
     long              sched = curtask->sched;
-    long              prio = curtask->prio;
     long              state = curtask->state;
     taskfunc_t       *func = taskfunctab[state];
+    long              ndx;
+    long              ntz;
 
     if (curtask) {
         func(curtask);
+        k_curtask = NULL;
     }
     do {
-        for (prio = 0 ;
-             prio < SCHEDNFIXED + SCHEDNPRIOCLASS * SCHEDNPRIO ;
-             prio++) {
-            queue = &taskrunqueuetab[cpu][prio].next;
-            mtxlk(&queue->lk);
-            task = queuepop(&queue);
-            mtxunlk(&queue->lk);
+        for (ndx = 0 ; ndx < TASKRUNBITMAPSIZE ; ndx++) {
+            ntz = tzerol(taskrunbitmap[cpu][ndx]);
+            if (ntz != LONGSIZE * CHAR_BIT) {
+                ntz += ndx * LONGSIZE * CHAR_BIT;
+                queue = taskrunqueuetab[cpu][ntz].next;
+                mtxlk(&queue->lk);
+                task = queuepop(&queue);
+                mtxunlk(&queue->lk);
+            }
             if (task) {
-                
-                break;
+
+                return task;
             }
         }
-        if (!task) {
-            k_enabintr();
-            m_waitint();
-        }
-    } while (!task);
+        k_enabintr();
+        m_waitint();
+    } while (1);
 //    taskjmp(task);
 
     return task;
