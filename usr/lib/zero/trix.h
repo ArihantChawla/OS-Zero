@@ -157,6 +157,8 @@ long long llabs(long long x);
     } while (0)
 #define bytepar3(b) ((0x6996 >> (((b) ^ ((b) >> 4)) & 0x0f)) & 0x01)
 
+#if !defined(__GNUC__)
+
 /* count number of trailing zero-bits in u32 */
 #define tzero32(u32, r)                                                 \
     do {                                                                \
@@ -334,75 +336,59 @@ long long llabs(long long x);
         }                                                               \
     } while (0)
 
+#endif /* !defined(__GNUC__) */
+
 /* count number of trailing (low) zero-bits in long-word */
 #if defined(__GNUC__)
 //#define tzero32(u) (__builtin_ctz(u))
-#define tzerol(u) (!(u)                                                 \
-                   ? (LONGSIZE * CHAR_BIT)                              \
-                   : (__builtin_ctzl(u)))
+#define tzerol(u)     (!(u)                                             \
+                       ? (LONGSIZE * CHAR_BIT)                          \
+                       : (__builtin_ctzl(u)))
+#define tzeroll(u)    (!(u)                                             \
+                       ? (LONGLONGSIZE * CHAR_BIT)                      \
+                       : (__builtin_ctzll(u)))
+#define tzero32(u, r) (!(u)                                             \
+                       ? ((r) = 32)                                     \
+                       : (r) = (__builtin_ctz(u)))
+#if (LONGSIZE == 4)
+#define tzero64(u, r) (!(u)                                             \
+                       ? ((r) = 64)                                     \
+                       : (r) = (__builtin_ctzll(u)))
+#elif (LONGSIZE == 8)
+#define tzero64(u, r) (!(u)                                             \
+                       ? ((r) = 64)                                     \
+                       : (r) = (__builtin_ctzl(u)))
+#endif
 #elif defined(__i386__) || defined(__x86_64__) || defined(__amd64__)
 #define tzerol(u)  (!(u)                                                \
                     ? (LONGSIZE * CHAR_BIT)                             \
                     : m_scanlo1bit(u))
-#elif (LONGSIZE == 4)
-static __inline__ long
-tzerol(long l)
-{
-    long ret = LONGSIZE * CHAR_BIT;
-
-    if (l) {
-        tzero32(l, ret);
-    }
-
-    return ret;
-}
-#elif (LONGSIZE == 8)
-static __inline__ long
-tzerol(long l)
-{
-    long ret = LONG_SIZE * CHAR_BIT;
-
-    if (l) {
-        tzero64(l, ret);
-    }
-
-    return ret;
-}
 #endif
 
 /* count number of leading (high) zero-bits in long-word */
 #if defined(__GNUC__)
-#define lzerol(u) (!(u)                                                 \
-                   ? (LONGSIZE * CHAR_BIT)                              \
-                   : (__builtin_clzl(u)))
+#define lzerol(u)     (!(u)                                             \
+                       ? (LONGSIZE * CHAR_BIT)                          \
+                       : (__builtin_clzl(u)))
+#define lzeroll(u)    (!(u)                                             \
+                       ? (LONGLONGSIZE * CHAR_BIT)                      \
+                       : (__builtin_clzll(u)))
+#define lzero32(u, r) (!(u)                                             \
+                       ? ((r) = 32)                                     \
+                       : ((r) = (__builtin_clz(u))))
+#if (LONGSIZE == 4)
+#define lzero64(u, r) (!(u)                                             \
+                       ? ((r) = 64)                                     \
+                       : (r) = (__builtin_clzll(u)))
+#elif (LONGSIZE == 8)
+#define lzero64(u, r) (!(u)                                             \
+                       ? ((r) = 64)                                     \
+                       : (r) = (__builtin_clzl(u)))
+#endif
 #elif defined(__i386__) || defined(__x86_64__) || defined(__amd64__)
 #define lzerol(u) (!(u)                                                 \
                    ? (LONGSIZE * CHAR_BIT)                              \
                    : (LONGSIZE * CHAR_BIT - m_scanhi1bit(u)))
-#elif (LONGSIZE == 4)
-static __inline__ long
-lzerol(long l)
-{
-    long ret = LONGSIZE * CHAR_BIT;
-
-    if (l) {
-        lzero32(l, ret);
-    }
-
-    return ret;
-}
-#elif (LONGSIZE == 8)
-static __inline__ long
-lzerol(long l)
-{
-    long ret = LONGSIZE * CHAR_BIT;
-
-    if (l) {
-        lzero64(l, ret);
-    }
-
-    return ret;
-}
 #endif
 
 /*
@@ -618,6 +604,37 @@ union __ieee754d { uint64_t u64; double d; };
     ((u) - ((((u) * 6554U) >> 16) * 10))
 #endif
 
+#if 0
+static __inline__ unsigned long
+divu3(unsigned long x)
+{
+    unsigned long q;
+    unsigned long r;
+
+    q = (x >> 2) + (x >> 4);
+    q = q + (q >> 4);
+    q = q + (q >> 8);
+    q = q + (q >> 16);
+    r = x - q * 3;
+
+    return q + ((11 * r) >> 5);
+}
+#endif
+
+static __inline__ unsigned long
+divu3(unsigned long uval)
+{
+    unsigned long long mul = UINT64_C(0xaaaaaaaaaaaaaaab);
+    unsigned long long res = uval;
+    unsigned long      cnt = 33;
+    
+    res *= mul;
+    res >>= cnt;
+    uval = (unsigned long)res;
+
+    return uval;
+}
+
 static __inline__ unsigned long
 divu7(unsigned long x)
 {
@@ -722,6 +739,7 @@ divs100(long x) {
     q = q + (q >> 20);
     q = q >> 6;
     r = x - q * 100;
+
     return q + ((r + 28) >> 7);
 }
 
@@ -799,6 +817,12 @@ ratreduce(int64_t *num, int64_t *den)
     *num /= b;
     *den /= b;
 }
+
+/* FIXME: this could be elsewhere */
+struct divul {
+    unsigned long long magic;
+    unsigned long long info;
+};
 
 #endif /* __ZERO_TRIX_H__ */
 

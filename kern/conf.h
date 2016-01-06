@@ -72,5 +72,9 @@
 #define AC97        1           // AC97 audio drivers
 #define ENS1370     0           // Ensoniq 1370 audio driver
 
+#if (!ZEROSCHED)
+#undef ZEROSCHED
+#endif
+
 #endif /* __KERN_CONF_H__ */
 

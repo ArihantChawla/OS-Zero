@@ -156,6 +156,7 @@ tasksetnice(struct task *task, long val)
     return nice;
 }
 
+#if 0
 /* adjust task priority */
 static __inline__ long
 taskadjprio(struct task *task)
@@ -183,6 +184,7 @@ taskadjprio(struct task *task)
 
     return prio;
 }
+#endif
 
 static __inline__ long
 taskwakeprio(struct task *task)
@@ -195,6 +197,133 @@ taskwakeprio(struct task *task)
     prio >>= 1;
 
     return prio;
+}
+
+static __inline__ long
+taskcalcscore(struct task *task)
+{
+    unsigned long run = task->runtime;
+    unsigned long slp = task->slptime;
+    unsigned long div;
+    unsigned long res;
+
+    if (SCHEDSCORETHRESHOLD <= SCHEDSCOREHALF
+        && run >= slp) {
+
+        return SCHEDSCOREHALF;
+    }
+    if (run > slp) {
+        res = SCHEDSCOREMAX;
+        div = max(1, run >> 6);
+        res -= fastuldiv(slp, div);
+
+        return res;
+    }
+    if (slp > run) {
+        div = max(1, slp >> 6);
+        res = fastuldiv(run, div);
+
+        return res;
+    }
+    /* run == slp */
+    if (run) {
+
+        return SCHEDSCOREHALF;
+    }
+
+    /* run == 0 && slp == 0 */
+    return 0;
+}
+
+static __inline__ void
+taskcalcprio(struct task *task)
+{
+    unsigned long score;
+    long          prio;
+    unsigned long delta = SCHEDINTPRIOMAX - SCHEDINTPRIOMIN + 1;
+    unsigned long diff;
+    unsigned long ntick;
+    unsigned long tickhz;
+    unsigned long total;
+    unsigned long div;
+    unsigned long tmp;
+
+    if (!taskistimeshare(task)) {
+
+        return;
+    }
+    score = taskcalcscore(task);
+    score += task->nice;
+    score = max(SCHEDINTPRIOMIN, score);
+    if (score < SCHEDSCORETHRESHOLD) {
+        prio = SCHEDINTPRIOMIN;
+        delta = fastuldiv(delta, SCHEDSCORETHRESHOLD);
+        delta *= score;
+        prio += delta;
+    } else {
+        ntick = task->ntick;
+        total = task->lasttick - task->firsttick;
+        tickhz = ntick >> SCHEDTICKSHIFT;
+        delta = SCHEDBATCH - (SCHEDNPRIO >> 1);
+        prio = SCHEDBATCH + (SCHEDNPRIO >> 1);
+        diff = delta - prio + 1;
+        if (ntick) {
+            tmp = roundup(total, diff);
+            div = fastuldiv(tmp, diff);
+            prio += task->nice;
+            tmp = fastuldiv(tickhz, div);
+            delta = min(delta, tmp);
+            prio += delta;
+        }
+    }
+    task->prio = prio;
+
+    return;
+}
+
+static __inline__ void
+taskadjscore(struct task *task)
+{
+    unsigned long run = task->runtime;
+    unsigned long slp = task->slptime;
+    unsigned long sum = run + slp;
+    unsigned long lim = SCHEDHISTORYSIZE;
+
+    if (sum < lim) {
+
+        return;
+    }
+    lim <<= 1;
+    if (sum > lim) {
+        if (run > slp) {
+            run = SCHEDHISTORYSIZE;
+            slp = 1;
+        } else {
+            run = 1;
+            slp = SCHEDHISTORYSIZE;
+        }
+        task->runtime = run;
+        task->slptime = slp;
+
+        return;
+    }
+    lim = divu3(lim);
+    if (sum > lim) {
+        run >>= 1;
+        slp >>= 1;
+        task->runtime = run;
+        task->slptime = slp;
+
+        return;
+    }
+    run <<= 1;
+    slp <<= 1;
+    run = divu3(run);
+    slp = divu3(slp);
+    task->runtime = run;
+    task->slptime = slp;
+
+    return;
 }
 
 //#undef QUEUE_SINGLE_TYPE
@@ -229,7 +358,8 @@ taskaddready(struct task *task)
     } else {
         queue = &taskrunqueuetab[cpu][prio].next;
         if (sched != SCHEDFIXED) {
-            prio = taskadjprio(task);
+//            prio = taskadjprio(task);
+            taskadjscore(task);
         }
         mtxlk(&queue->lk);
         queueappend(task, &queue);

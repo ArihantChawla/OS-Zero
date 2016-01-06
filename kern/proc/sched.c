@@ -3,6 +3,7 @@
 #include <zero/param.h>
 #include <zero/types.h>
 #include <zero/mtx.h>
+#include <kern/sched.h>
 #include <kern/proc/task.h>
 #include <kern/unit/x86/asm.h>
 #if (!APIC)
@@ -16,6 +17,8 @@ FASTCALL void (*schedpicktask)(struct task *);
 FASTCALL void   taskpick(struct task *task);
 #endif
 
+struct divul scheddivultab[SCHEDHISTORYSIZE];
+
 void
 schedinit(void)
 {
@@ -24,6 +27,7 @@ schedinit(void)
 #else
 #error define supported scheduler such as ZEROSCHED
 #endif
+    fastuldivgentab(scheddivultab, SCHEDHISTORYSIZE);
 
     return;
 }

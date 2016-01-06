@@ -35,8 +35,6 @@
 //#include <zero/mtx.h>
 
 /* process states */
-#define taskistimeshare(t)                                              \
-    ((t)->state >= TASKREADY && (t)->state <= TASKSLEEPING)
 #define TASKNEW      0
 #define TASKREADY    1
 #define TASKSLEEPING 2
@@ -62,6 +60,9 @@ struct task {
     long            state;              // thread state
     unsigned long   runtime;            // # of milliseconds run
     unsigned long   slptime;            // amount of voluntary sleep
+    unsigned long   ntick;              // # of scheduler ticks received
+    unsigned long   firsttick;
+    unsigned long   lasttick;
     time_t          waketime;           // wakeup time for sleeping tasks
     /* linkage */
     struct proc    *proc;               // parent/owner process
