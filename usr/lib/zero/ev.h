@@ -1,6 +1,10 @@
 #ifndef __ZERO_EV_H__
 #define __ZERO_EV_H__
 
+#if defined(__KERNEL__)
+#include <kern/mem/mem.h>
+#endif
+
 #include <stddef.h>
 #include <stdint.h>
 #include <limits.h>
@@ -23,7 +27,7 @@
 #define evsettime(ev, t) ((ev)->hdr.tm = (t))
 /* FIXME: tm may need to be 64-bit */
 struct evhdr {
-    evtime_t  tm;               // timestamp
+    evtime_t  tm;               // timestamp; 32- or 64-bit
     evuword_t type;             // event type such as KEYUP, FSCREAT
 };
 
@@ -40,8 +44,6 @@ struct ev {
         struct evfs   fs;
     } msg;
 };
-
-#if (!__KERNEL__)
 
 /* API */
 #define evmask(id) (1U << (id))
@@ -78,19 +80,21 @@ void    evget(struct deck *deck, struct ev *ev, long flg);
 long    evput(struct deck *deck, struct ev *ev, long flg);
 void    evsync(struct deck *deck, long flg);
 
-#define RING_ITEM struct ev
-#define RING_INVAL NULL
-#define MALLOC(sz) malloc(sz)
-
-#else
+#if defined(__KERNEL__)
 
 #define RING_ITEM struct ev
 #define RING_INVAL NULL
 #define MALLOC(sz) kmalloc(sz)
 
-#endif /* !__KERNEL__ */
+#else
+
+#define RING_ITEM struct ev
+#define RING_INVAL NULL
+#define MALLOC(sz) malloc(sz)
 
 #include <zero/ring.h>
+
+#endif /* defined(__KERNEL__) */
 
 #endif /* __ZERO_EV_H__ */
 

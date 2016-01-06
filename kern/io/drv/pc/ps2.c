@@ -15,6 +15,8 @@
 #include <zero/cdefs.h>
 #include <zero/param.h>
 #include <zero/mtx.h>
+#include <zero/ev.h>
+#include <zero/keysym.h>
 //#define VAL(x)        (x)
 #define NOP(x)        ((void)0)
 #define NOP3(x, y, z) ((void)0)
@@ -86,15 +88,15 @@ ps2initkbd(void)
 }
 
 void
-ps2kbdflush(uint64_t keycode, int32_t keyval)
+ps2kbdflush(uint64_t keysym, int32_t keyval)
 {
     ;
 }
 
 void
-ps2kbdaddkey(uint64_t keycode)
+ps2kbdaddkey(uint64_t keysym)
 {
-    ringput(ps2drv.buf, keycode);
+    ringput(ps2drv.buf, keysym);
 }
 
 /*
@@ -107,72 +109,150 @@ ps2kbdaddkey(uint64_t keycode)
 void
 ps2kbdintr(void)
 {
-    uint64_t keycode;
+    uint32_t keysym;
     uint8_t  u8;
     
     ps2readkbd(u8);
-    keycode = u8;
+    if (u8 == PS2KBD_PREFIX_BYTE) {
+        /* u8 == 0xe0 prefix */
+        ps2readkbd(u8);         // read 0xe0
+        if (u8 == PS2KBD_UP_BYTE) {
+            /* u8 == 0xf0 prefix */
+            ps2readkbd(u8);
+            keysym = EVKBDRELEASE;
+            if (u8 == PS2KBD_SHIFT_CASE_BYTE3) {
+                /* u8 == 0x12 */
+                /* TODO: add shift state-bit for event */
+                ps2readkbd(u8);
+                keysym |= u8;
+            } else if (u8 == PS2KBD_PRINT_BYTE3) {
+                /* u8 == 0xe0 */
+                ps2readkbd(u8); /* 0xf0 */
+                ps2readkbd(u8); /* 0x12 */
+                keysym |= KEYSYM_PRINT;
+            } else {
+                keysym |= u8;
+            }
+        } else if (u8 == PS2KBD_NUM_CASE_BYTE2) {
+            /* TODO: add numlock state-bit for event */
+            ps2readkbd(u8);
+            if (u8 == PS2KBD_PRINT_BYTE3) {
+                /* u8 == 0xe0 */
+                ps2readkbd(u8); /* 0x7c */
+                keysym = KEYSYM_PRINT;
+            } else {
+                keysym = u8;
+            }
+        } else if (u8 == PS2KBD_PRINT_BYTE2) {
+            ps2readkbd(u8); /* 0xe0 */
+            ps2readkbd(u8); /* 0x7c */
+            keysym = KEYSYM_PRINT;
+        } else {
+            keysym = u8;
+        }
+    } else if (u8 == PS2KBD_UP_BYTE) {
+        /* u8 == 0xf0 prefix */
+        keysym |= EVKBDRELEASE;
+        ps2readkbd(u8);
+//        keysym |= (uint64_t)u8 << 8;
+#if 0
+        if (u8 == PS2KBD_PAUSE_UP_BYTE2) {
+            ps2readkbd(u8); /* 0xf0 */
+            keysym |= UINT64_C(0xf0) << 16;
+            ps2readkbd(u8); /* 0x77 */
+            keysym |= UINT64_C(0x77) << 24;
+        }
+#endif
+    } else if (u8 == PS2KBD_PAUSE_BYTE1) {
+        /* u8 == 0xe1 */
+        /* pause/break. */
+        ps2readkbd(u8); /* 0x14 */
+        ps2readkbd(u8); /* 0x77 */
+        ps2readkbd(u8); /* 0xe1 */
+        ps2readkbd(u8); /* 0xf0 */
+        ps2readkbd(u8); /* 0x14 */
+        ps2readkbd(u8); /* 0xf0 */
+        ps2readkbd(u8); /* 0x77 */
+        keysym = KEYSYM_PAUSE;
+    } else {
+        keysym = u8;
+    }
+    ps2kbdaddkey(keysym);
+
+    return;
+}
+
+#if 0
+void
+ps2kbdintr(void)
+{
+    uint64_t keysym;
+    uint8_t  u8;
+    
+    ps2readkbd(u8);
+    keysym = u8;
     if (u8 == PS2KBD_PREFIX_BYTE) {
         /* 0xe0-prefixed. */
         ps2readkbd(u8);
-        keycode |= (uint64_t)(u8) << 8;
+        keysym |= (uint64_t)(u8) << 8;
         if (u8 == PS2KBD_UP_BYTE) {
             /* 0xf0 */
             ps2readkbd(u8);
-            keycode |= (uint64_t)u8 << 16;
+            keysym |= (uint64_t)u8 << 16;
             if (u8 == PS2KBD_SHIFT_CASE_BYTE3) {
                 /* 0x12 */
                 ps2readkbd(u8);
-                keycode |= (uint64_t)u8 << 24;
+                keysym |= (uint64_t)u8 << 24;
             } else if (u8 == PS2KBD_PRINT_BYTE3) {
                 /* 0xe0 */
-                keycode |= UINT64_C(0xe0) << 24;
+                keysym |= UINT64_C(0xe0) << 24;
                 ps2readkbd(u8); /* 0xf0 */
-                keycode |= UINT64_C(0xf0) << 32;
+                keysym |= UINT64_C(0xf0) << 32;
                 ps2readkbd(u8); /* 0x12 */
-                keycode |= UINT64_C(0x12) << 40;
+                keysym |= UINT64_C(0x12) << 40;
             }
         } else if (u8 == PS2KBD_NUM_CASE_BYTE2) {
             ps2readkbd(u8);
-            keycode |= (uint64_t)u8 << 16;
+            keysym |= (uint64_t)u8 << 16;
             if (u8 == PS2KBD_PRINT_BYTE3) {
                 /* 0xe0 */
                 ps2readkbd(u8); /* 0x7c */
-                keycode |= UINT64_C(0x7c);
+                keysym |= UINT64_C(0x7c);
             }
         }
     } else if (u8 == PS2KBD_UP_BYTE) {
         /* 0xf0 */
         ps2readkbd(u8);
-        keycode |= (uint64_t)u8 << 8;
+        keysym |= (uint64_t)u8 << 8;
         if (u8 == PS2KBD_PAUSE_UP_BYTE2) {
             ps2readkbd(u8); /* 0xf0 */
-            keycode |= UINT64_C(0xf0) << 16;
+            keysym |= UINT64_C(0xf0) << 16;
             ps2readkbd(u8); /* 0x77 */
-            keycode |= UINT64_C(0x77) << 24;
+            keysym |= UINT64_C(0x77) << 24;
         }
     } else if (u8 == PS2KBD_PAUSE_BYTE1) {
         /* 0xe1 */
         /* pause/break. */
         ps2readkbd(u8); /* 0x14 */
-        keycode |= UINT64_C(0x14) << 8;
+        keysym |= UINT64_C(0x14) << 8;
         ps2readkbd(u8); /* 0x77 */
-        keycode |= UINT64_C(0x77) << 16;
+        keysym |= UINT64_C(0x77) << 16;
         ps2readkbd(u8); /* 0xe1 */
-        keycode |= UINT64_C(0xe1) << 24;
+        keysym |= UINT64_C(0xe1) << 24;
         ps2readkbd(u8); /* 0xf0 */
-        keycode |= UINT64_C(0xf0) << 32;
+        keysym |= UINT64_C(0xf0) << 32;
         ps2readkbd(u8); /* 0x14 */
-        keycode |= UINT64_C(0x14) << 40;
+        keysym |= UINT64_C(0x14) << 40;
         ps2readkbd(u8); /* 0xf0 */
-        keycode |= UINT64_C(0xe1) << 48;
+        keysym |= UINT64_C(0xe1) << 48;
         ps2readkbd(u8); /* 0x77 */
-        keycode |= UINT64_C(0x77) << 56;
+        keysym |= UINT64_C(0x77) << 56;
     }
-    ps2kbdaddkey(keycode);
+    ps2kbdaddkey(keysym);
 
     return;
 }
+#endif
 
 void
 ps2initmouse(void)

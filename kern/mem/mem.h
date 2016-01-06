@@ -94,11 +94,11 @@ struct membuf {
             struct pkthdr      pkthdr;  // MEMBUF_PKTHDR is set
             union {
                 struct memext  ext;     // MEMBUF_EXT is set
-                char           pktdata[0];
+                char           pktbuf[0];
             } u;
         } s;
-        char                   data[0];
-    } ALIGNED(CLSIZE);
+        char                   buf[0];
+    } data ALIGNED(CLSIZE);
 };
 
 struct memhdr {

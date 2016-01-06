@@ -22,13 +22,13 @@
 
 extern void taskinitids(void);
 
-void taskqueueready(struct task *task);
-void taskaddwait(struct task *task);
-void taskaddsleep(struct task *task);
+void taskaddready(struct task *task);
+//void taskaddwait(struct task *task);
+void taskaddsleeping(struct task *task);
 void taskaddstopped(struct task *task);
 void taskaddzombie(struct task *task);
 
-struct taskqueue         taskrunqueuetab[SCHEDNFIXED + SCHEDNPRIOCLASS * SCHEDNPRIO] ALIGNED(PAGESIZE);
+struct taskqueue         taskrunqueuetab[NCPU][SCHEDNFIXED + SCHEDNPRIOCLASS * SCHEDNPRIO] ALIGNED(PAGESIZE);
 static struct tasktabl0  taskwaittab[NLVL0TASK];
 static struct task      *taskstoppedtab[NTASK];
 static struct task      *taskzombietab[NTASK];
@@ -103,14 +103,13 @@ static long tasknicetab[64]
     48
 };
 static struct taskqueue  taskrtqueue;
-static struct task      *tasksleepqueue;
+static struct taskqueue  tasksleepqueue;
 typedef void taskfunc_t(struct task *);
 taskfunc_t              *taskfunctab[TASKNSTATE]
 = {
     NULL,               // TASKNEW
-    taskqueueready,
-    taskaddwait,
-    taskaddsleep,
+    taskaddready,
+    taskaddsleeping,
     taskaddstopped,
     taskaddzombie
 };
@@ -195,23 +194,26 @@ taskwakeprio(struct task *task)
     return prio;
 }
 
-#undef QUEUE_SINGLE_TYPE
+//#undef QUEUE_SINGLE_TYPE
+#define QUEUE_SINGLE_TYPE 1
 #undef QUEUE_ITEM_TYPE
 #undef QUEUE_TYPE
-#define QUEUE_ITEM_TYPE struct task
-#define QUEUE_TYPE      struct taskqueue
+#define QUEUE_TYPE        struct task
+//#define QUEUE_ITEM_TYPE struct task
+//#define QUEUE_TYPE      struct taskqueue
 #include <zero/queue.h>
 
 void
-taskqueueready(struct task *task)
+taskaddready(struct task *task)
 {
+    long              cpu = k_curcpu;
     long              sched = task->sched;
     long              prio = task->prio;
     long              state = task->state;
     struct taskqueue *queue;
     
     if (sched == SCHEDRT) {
-        queue = &taskrtqueue;
+        queue = &taskrtqueue.next;
         mtxlk(&queue->lk);
         if (prio < 0) {
             /* SCHED_FIFO */
@@ -222,13 +224,13 @@ taskqueueready(struct task *task)
         }
         mtxunlk(&queue->lk);
     } else {
+        queue = &taskrunqueuetab[cpu][prio].next;
         if (sched != SCHEDFIXED) {
             prio = taskadjprio(task);
         }
-        mtxlk(&taskrunqueuetab[prio].lk);
-        queue = &taskrunqueuetab[prio];
+        mtxlk(&queue->lk);
         queueappend(task, &queue);
-        mtxunlk(&taskrunqueuetab[prio].lk);
+        mtxunlk(queue->lk);
     }
 
     return;
@@ -239,6 +241,7 @@ FASTCALL
 struct task *
 taskpick(struct task *curtask)
 {
+    long              cpu = k_curcpu;
     struct task      *task = NULL;
     struct taskqueue *queue;
     long              sched = curtask->sched;
@@ -253,10 +256,10 @@ taskpick(struct task *curtask)
         for (prio = 0 ;
              prio < SCHEDNFIXED + SCHEDNPRIOCLASS * SCHEDNPRIO ;
              prio++) {
-            queue = &taskrunqueuetab[prio];
+            queue = &taskrunqueuetab[cpu][prio].next;
             mtxlk(&queue->lk);
             task = queuepop(&queue);
-            mtxunlk(&taskrunqueuetab[prio].lk);
+            mtxunlk(&queue->lk);
             if (task) {
                 
                 break;
@@ -355,6 +358,7 @@ taskaddwait(struct task *task)
 void
 taskunwait(uintptr_t wtchan)
 {
+    long               cpu = k_curcpu;
     struct tasktabl0  *l0tab;
     struct tasktab    *tab;
     void              *ptr = NULL;
@@ -393,8 +397,8 @@ taskunwait(uintptr_t wtchan)
                         }
                         queue->next = task1->next;
                         task2 = task1->next;
+                        runqueue = &taskrunqueuetab[cpu][prio].next;
                         prio = taskwakeprio(task1);
-                        runqueue = &taskrunqueuetab[prio];
                         mtxlk(&runqueue->lk);
                         queueappend(task1, &runqueue);
                         mtxunlk(&runqueue->lk);
@@ -431,18 +435,20 @@ taskunwait(uintptr_t wtchan)
     mtxunlk(&l0tab->lk);
 }
 
+/* FIXME: add a multilevel tree for sleeping tasks for speed */
 void
-taskaddsleep(struct task *task)
+taskaddsleeping(struct task *task)
 {
-    time_t       waketm = task->waketm;
-    struct task *sleeptask = tasksleepqueue;
+    time_t       waketime = task->waketime;
+    struct task *sleeptask = tasksleepqueue.next;
 
-    if (!sleeptask) {
-        listinit(task);
-        tasksleepqueue = task;
+    if (task->wtchan) {
+        taskaddwait(task);
+    } else if (!sleeptask) {
+        queueinit(task);
     } else {
         while ((sleeptask) && (sleeptask->next)) {
-            if (task->waketm < sleeptask->waketm) {
+            if (task->waketime < sleeptask->waketime) {
                 task->next = sleeptask;
                 task->prev = sleeptask->prev;
                 sleeptask->prev = task;
@@ -451,14 +457,14 @@ taskaddsleep(struct task *task)
             }
             sleeptask = sleeptask->next;
         }
-        if (task->waketm < sleeptask->waketm) {
+        if (task->waketime < sleeptask->waketime) {
             task->next = sleeptask;
             task->prev = sleeptask->prev;
             sleeptask->prev = task;
         } else {
+            task->next = NULL;
             task->prev = sleeptask;
             sleeptask->next = task;
-            task->next = NULL;
         }
     }
 

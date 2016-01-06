@@ -86,7 +86,7 @@ zpcopxor(struct zpc *zpc, struct zpcopcode *op)
 }
 
 void
-zpcopshl(struct zvmopcode *op)
+zpcopshl(struct zpcopcode *op)
 {
     zpcreg_t  sreg = op->src;
     zpcreg_t  dreg = op->dest;
@@ -99,7 +99,7 @@ zpcopshl(struct zvmopcode *op)
     zpc->mregs[ZPCMREGSW] &= ~(ZPCMSWZF | ZPCMSWOF | ZPCMSWCF);
     dest <<= src;
     pc += (1 + (zpc->flg & ZPCOPARGBIT)) * ZPCOPSIZE;
-    zvmsetzf(dest);
+    zpcsetzf(dest);
     *dptr = dest;
     zpc->mregs[ZPCMREGPC] = pc;
 
@@ -107,7 +107,7 @@ zpcopshl(struct zvmopcode *op)
 }
 
 void
-zpcopshr(struct zvmopcode *op)
+zpcopshr(struct zpcopcode *op)
 {
     zpcreg_t  sreg = op->src;
     zpcreg_t  dreg = op->dest;
@@ -120,17 +120,17 @@ zpcopshr(struct zvmopcode *op)
 
     zpc->mregs[ZPCMREGSW] &= ~(ZPCMSWZF | ZPCMSWOF | ZPCMSWCF);
     dest >>= src;
-    dest &= mask;
     pc += (1 + (zpc->flg & ZPCOPARGBIT)) * ZPCOPSIZE;
-    zvmsetzf(dest);
-    *dptr = dest;
+    dest &= mask;
     zpc->mregs[ZPCMREGPC] = pc;
+    zpcsetzf(dest);
+    *dptr = dest;
 
     return;
 }
 
 void
-zpcopsar(struct zvmopcode *op)
+zpcopsar(struct zpcopcode *op)
 {
     zpcreg_t  sreg = op->src;
     zpcreg_t  dreg = op->dest;
@@ -140,7 +140,7 @@ zpcopsar(struct zvmopcode *op)
     zpcreg_t  src = *sptr;
     zpcreg_t  dest = *dptr;
     zpcreg_t  mask = ~(zpcreg_t)0;
-#if (ZVM32BIT)
+#if (ZPC32BIT)
     zpcreg_t  sign = (((dest) & (1 << 31))
                       ? (mask >> (32 - src))
                       : 0);
@@ -154,9 +154,9 @@ zpcopsar(struct zvmopcode *op)
     dest <<= src;
     pc += (1 + (zpc->flg & ZPCOPARGBIT)) * ZPCOPSIZE;
     dest |= sign;
-    zvmsetzf(dest);
-    *dptr = dest;
     zpc->mregs[ZPCMREGPC] = pc;
+    zpcsetzf(dest);
+    *dptr = dest;
 
     return;
 }

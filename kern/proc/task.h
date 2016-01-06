@@ -30,13 +30,14 @@
 //#include <zero/mtx.h>
 
 /* process states */
-#define TASKNEW     0
-#define TASKREADY   1
-#define TASKWAIT    2
-#define TASKSLEEP   3
-#define TASKSTOPPED 4
-#define TASKZOMBIE  5
-#define TASKNSTATE  6
+#define taskistimeshare(t)                                              \
+    ((t)->state >= TASKREADY && (t)->state <= TASKSLEEPING)
+#define TASKNEW      0
+#define TASKREADY    1
+#define TASKSLEEPING 2
+#define TASKSTOPPED  3
+#define TASKZOMBIE   4
+#define TASKNSTATE   5
 
 struct taskstk {
     uint8_t *top;
@@ -54,14 +55,15 @@ struct task {
     long            prio;               // priority; < 0 for SCHEDFIFO realtime
     long            nice;               // priority adjustment
     long            state;              // thread state
+    unsigned long   runtime;            // # of milliseconds run
+    unsigned long   slptime;            // amount of voluntary sleep
+    time_t          waketime;           // wakeup time for sleeping tasks
     /* linkage */
     struct proc    *proc;               // parent/owner process
     struct task    *prev;               // previous in queue
     struct task    *next;               // next in queue
     uintptr_t       wtchan;             // wait channel
-    time_t          waketm;             // wakeup time for sleeping tasks
     long            id;                 // task ID
-    long            runtime;            // run time
     /* system call context */
     struct sysctx   sysctx;             // current system call
     /* signal state */

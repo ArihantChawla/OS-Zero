@@ -2,10 +2,12 @@
 #define __ZERO_BITS_EV_H__
 
 #include <stdint.h>
-#include <zero/cdecl.h>
+#include <zero/cdefs.h>
 
 #if (EVTIMESIZE == 64)
 typedef uint64_t evtime_t;
+#elif (EVTIMESIZE == 32)
+typedef uint32_t evtime_t;
 #endif
 
 typedef int32_t  evkeycode_t;
@@ -108,12 +110,16 @@ typedef int64_t  evnodeid_t;
 /*
  * TODO: move this comment elsewhere...
  * Unicode specifies 0x10ffff as maximum value, leaving us with 11 high bits to
- * be used as flags if need be
+ * be used as flags if need be; let's start using them from the highest ones to
+ * be safer, though
  */
 
 /* flag-bits in code-member */
-#define EVKBDSTATE        0x80000000
-#define EVKBDRELEASE      0x40000000
+#define EVKBDRELEASE      0x80000000    // keyboard release event
+#define EVKBDSTATE        0x40000000    // code followed by state word
+#define EVKBDEXTSTATE     0x20000000    // state word followed by extra one
+#define _EVKBDRESBIT      0x10000000
+#define EVKBDSYMMASK      0x0fffffff
 /* state-bits for modifier keys */
 #define EVKBDSHIFT        0x80000000
 #define EVKBDCAPSLK       0x40000000
@@ -126,34 +132,38 @@ typedef int64_t  evnodeid_t;
 #define EVNUMLOCK         0x00800000
 #define EVKBDNMODBIT      16
 /* button masks/IDs */
-#define BUTTON1           (1 << 0)
-#define BUTTON2           (1 << 1)
-#define BUTTON3           (1 << 2)
-#define BUTTON4           (1 << 3)
-#define BUTTON5           (1 << 4)
-#define BUTTON6           (1 << 5)
-#define BUTTON7           (1 << 6)
-#define BUTTON8           (1 << 7)
-#define BUTTON9           (1 << 8)
-#define BUTTON10          (1 << 9)
-#define BUTTON11          (1 << 10)
-#define BUTTON12          (1 << 11)
-#define BUTTON13          (1 << 12)
-#define BUTTON14          (1 << 13)
-#define BUTTON15          (1 << 14)
-#define BUTTON16          (1 << 15)
-#define EVNBUTTON         16
-#define _kbdevhasstate(ev) ((ev)->code & EVKBDSTATE)
-#define _kbdupevent(ev)    ((ev)->code & EVKBDRELEASE)
-#define _kbddownevent(ev)  (!kbdupevent(ev))
-#define _kbdbutton(ev, b)  ((ev)->state & (1L << (b)))
-#define _kbdmod(ev, mod)   ((ev)->state & (mod))
+#define BUTTON1               (1 << 0)
+#define BUTTON2               (1 << 1)
+#define BUTTON3               (1 << 2)
+#define BUTTON4               (1 << 3)
+#define BUTTON5               (1 << 4)
+#define BUTTON6               (1 << 5)
+#define BUTTON7               (1 << 6)
+#define BUTTON8               (1 << 7)
+#define BUTTON9               (1 << 8)
+#define BUTTON10              (1 << 9)
+#define BUTTON11              (1 << 10)
+#define BUTTON12              (1 << 11)
+#define BUTTON13              (1 << 12)
+#define BUTTON14              (1 << 13)
+#define BUTTON15              (1 << 14)
+#define BUTTON16              (1 << 15)
+#define EVNBUTTON             16
+#define _kbdevhasstate(ev)    ((ev)->code & EVKBDSTATE)
+#define _kbdevhasextstate(ev) ((ev)->code & EVKBDEXTSTATE)
+#define _kbdupevent(ev)       ((ev)->code & EVKBDRELEASE)
+#define _kbddownevent(ev)     (!kbdupevent(ev))
+#define _kbdbutton(ev, b)     ((ev)->state & (1L << (b)))
+#define _kbdmod(ev, mod)      ((ev)->state & (mod))
+#define _kbdextbutton(ev, b)  ((ev)->extstate & (1L << ((b) - EVNBUTTON)))
 /* keyboard event size in octets */
-#define _kbdevsize(ev)     (!((ev)->code & EVKBDSTATE) ? 8 : 12)
+#define _kbdevsize(ev)        (!((ev)->code & EVKBDSTATE) ? 8 : 12)
 struct evkbd {
-    evkeycode_t code;           // keyboard scan-code or something similar
+    evkeycode_t code;           // Unicode-value with a few high flag bits
     /* state may not be present in protocol packets */
     evuword_t   state;          // modifier flags in high bits, buttons in low
+    /* extended state for button IDs 17..48 when present */
+    evuword_t   extstate;       // button-state bits
 };
 
 /* pointer such as mouse device events */

@@ -16,16 +16,16 @@ void mandel_sse(v4sf cr, v4sf ci, unsigned *counts);
 #include <unistd.h>
 #include <pthread.h>
 #include <err.h>
-
 #include <sys/sysinfo.h>
-
 #include <X11/X.h>
 #include <X11/Xlib.h>
 #include <X11/Xutil.h>
+#include <zero/cdefs.h>
+#include <zero/param.h>
 
 struct mandelthr {
-    int ofs;
-    int step;
+    int ymin;
+    int ylim;
 };
 
 /* X11 data */
@@ -151,7 +151,7 @@ static void init_colours(void)
 }
 
 /* For each point, evaluate its colour */
-static void display_sse(int size, float xmin, float xmax, float ymin, float ymax, int ofs, int step)
+static void display_sse(int size, float xmin, float xmax, float ymin, float ymax, int yofs, int ylim)
 {
     int x, y;
 	
@@ -160,7 +160,7 @@ static void display_sse(int size, float xmin, float xmax, float ymin, float ymax
 	
     unsigned counts[4];
 
-    for (y = ofs; y < size; y += step)
+    for (y = yofs; y < ylim; y += ylim)
 	{
             for (x = 0; x < size; x += 4)
 		{
@@ -175,23 +175,19 @@ static void display_sse(int size, float xmin, float xmax, float ymin, float ymax
 
                     mandel_sse(cr, ci, counts);
 			
-                    ((unsigned *) bitmap->data)[x + y*size] = cols[counts[0]];
-                    ((unsigned *) bitmap->data)[x + 1 + y*size] = cols[counts[1]];
-                    ((unsigned *) bitmap->data)[x + 2 + y*size] = cols[counts[2]];
-                    ((unsigned *) bitmap->data)[x + 3 + y*size] = cols[counts[3]];
+                    ((unsigned *) bitmap->data)[x + y * size] = cols[counts[0]];
+                    ((unsigned *) bitmap->data)[x + 1 + y * size] = cols[counts[1]];
+                    ((unsigned *) bitmap->data)[x + 2 + y * size] = cols[counts[2]];
+                    ((unsigned *) bitmap->data)[x + 3 + y * size] = cols[counts[3]];
 		}
 
-#if 0
             /* Display it line-by-line for speed */
             XPutImage(dpy, win, gc, bitmap,
                       0, y, 0, y,
                       size, 1);
-#endif
 	}
 
-#if 0
     XFlush(dpy);
-#endif
 }
 
 /* Image size */
@@ -209,16 +205,20 @@ mandel_start(void *arg)
     float ymax = 1.5;
     struct mandelthr *args = arg;
     
-    display_sse(ASIZE, xmin, xmax, ymin, ymax, args->ofs, args->step);
+    display_sse(ASIZE, xmin, xmax, ymin, ymax, args->ymin, args->ylim);
 
     pthread_exit(NULL);
 }
+
+#define THRNUMUNITS CLSIZE
 
 int main(void)
 {
     int   nthr = get_nprocs_conf();
     int   ndx;
-    struct mandelthr args = { 0, nthr };
+    int   delta = ASIZE / nthr;
+    int   ofs = 0;
+    struct mandelthr *args;
     pthread_t *thrtab = calloc(nthr, sizeof(pthread_t));
     pthread_t **thrptrtab = calloc(nthr, sizeof(pthread_t *));
 
@@ -228,8 +228,11 @@ int main(void)
     init_colours();
 
     for (ndx = 0 ; ndx < nthr ; ndx++) {
-        pthread_create(&thrtab[ndx], NULL, mandel_start, (void *)&args);
-        args.ofs++;
+        args = calloc(1, sizeof(struct mandelthr));
+        args->ymin = ofs;
+        args->ylim = ofs + delta;
+        pthread_create(&thrtab[ndx], NULL, mandel_start, args);
+        ofs += delta;
     }
     for (ndx = 0 ; ndx < nthr ; ndx++) {
         pthread_join(thrtab[ndx], (void **)&thrptrtab[ndx]);
