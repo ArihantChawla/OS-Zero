@@ -2,6 +2,8 @@
 #define __ZERO_MTX_H__
 
 #include <stddef.h>
+#include <stdint.h>
+#include <zero/cdefs.h>
 #include <zero/param.h>
 #include <zero/asm.h>
 #include <zero/thr.h>
@@ -119,7 +121,7 @@ typedef volatile long    zeromtx;
 #define __ZEROMTXATR_INIT     (1L << 31)
 /* error codes */
 #define ZEROMTXATR_NOTDYNAMIC 1
-typedef struct mtxatr {
+typedef struct zeromtxatr {
     long flg;           // feature flag-bits
 } zeromtxatr;
 
@@ -127,12 +129,13 @@ typedef struct mtxatr {
 #define ZEROMTX_INITVAL { MTXINITVAL, ZEROMTXFREE, 0, 0, ZEROMTXATRDEFVAL }
 /* thr for unlocked mutexes */
 #define ZEROMTX_FREE    0
-typedef struct mtxrec {
+typedef struct zeromtxrec {
     volatile long lk;
     volatile long val;  // owner for recursive mutexes, 0 if unlocked
     volatile long cnt;  // access counter
     volatile long rec;  // recursion depth
     zeromtxatr    atr;
+    uint8_t       _pad[CLSIZE - 4 * sizeof(long) - sizeof(zeromtxatr)];
 } zeromtxrec;
 
 #if 0 && !defined(__KERNEL__) && defined(PTHREAD) && defined(ZEROPTHREAD)

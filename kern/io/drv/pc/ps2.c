@@ -15,18 +15,16 @@
 #include <zero/cdefs.h>
 #include <zero/param.h>
 #include <zero/mtx.h>
-#include <zero/ev.h>
-#include <zero/keysym.h>
 //#define VAL(x)        (x)
 #define NOP(x)        ((void)0)
 #define NOP3(x, y, z) ((void)0)
-#define MALLOC(x)     ((void *)0)
 #define FREE          NOP
 #define MEMCPY        NOP3
-#define RING_ITEM     uint64_t
+#define RING_ITEM     uint32_t
 #define RING_INVAL    PS2KBD_NOSYM
+#include <zero/ev.h>
+#include <zero/keysym.h>
 #include <zero/ring.h>
-
 #include <kern/util.h>
 #include <kern/unit/x86/trap.h>
 #include <kern/unit/x86/trap.h>
@@ -88,13 +86,13 @@ ps2initkbd(void)
 }
 
 void
-ps2kbdflush(uint64_t keysym, int32_t keyval)
+ps2kbdflush(uint32_t keysym, int32_t keyval)
 {
     ;
 }
 
 void
-ps2kbdaddkey(uint64_t keysym)
+ps2kbdaddkey(uint32_t keysym)
 {
     ringput(ps2drv.buf, keysym);
 }
@@ -186,7 +184,7 @@ ps2kbdintr(void)
 void
 ps2kbdintr(void)
 {
-    uint64_t keysym;
+    uint32_t keysym;
     uint8_t  u8;
     
     ps2readkbd(u8);

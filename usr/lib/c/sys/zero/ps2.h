@@ -10,8 +10,8 @@
 
 //#define PS2KBD_NBUFKEY              (PAGESIZE >> 3)
 
-#define PS2KBD_NOCODE               0x0000000
-#define PS2KBD_NOSYM                0x0000000
+#define PS2KBD_NOCODE               0x00000000
+#define PS2KBD_NOSYM                0x00000000
 
 #if 0
 #define PS2KBD_US                   0x00

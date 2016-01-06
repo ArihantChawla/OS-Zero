@@ -2,7 +2,7 @@
 #define __ZERO_EV_H__
 
 #if defined(__KERNEL__)
-#include <kern/mem/mem.h>
+#include <kern/malloc.h>
 #endif
 
 #include <stddef.h>
@@ -82,13 +82,19 @@ void    evsync(struct deck *deck, long flg);
 
 #if defined(__KERNEL__)
 
-#define RING_ITEM struct ev
-#define RING_INVAL NULL
+#if !defined(RING_ITEM)
+#define RING_ITEM  struct ev
+#endif
+#if !defined(RING_INVAL)
+#define RING_INVAL { 0 }
+#endif
+#if !defined(MALLOC)
 #define MALLOC(sz) kmalloc(sz)
+#endif
 
 #else
 
-#define RING_ITEM struct ev
+#define RING_ITEM  struct ev
 #define RING_INVAL NULL
 #define MALLOC(sz) malloc(sz)
 

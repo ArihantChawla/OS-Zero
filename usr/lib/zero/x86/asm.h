@@ -11,6 +11,8 @@
 #define m_memwrbar()   __asm__ __volatile__ ("sfence\n" : : : "memory")
 /* wait for an interrupt */
 #define m_waitint()    __asm__ __volatile__ ("pause\n"  : : : "memory")
+/* atomic fetch and add, 16-bit version */
+#define m_fetchadd16(p, val)     m_xadd16((volatile short *)(p), val)
 /* atomic fetch and add, 32-bit version */
 #define m_fetchadd32(p, val)     m_xadd32((volatile long *)(p), val)
 /* atomic compare and swap byte */
@@ -38,14 +40,29 @@ m_atomdec32(volatile long *p)
  * - return original *p
  */
 static __inline__ long
-m_xadd32(volatile long *p,
+m_xadd16(volatile short *p,
+         short val)
+{
+    __asm__ __volatile__ ("lock xaddw %%ax, %2\n"
+                          : "=a" (val)
+                          : "a" (val), "m" (*(p))
+                          : "memory");
+
+    return val;
+}
+
+/*
+ * atomic fetch and add
+ * - let *p = *p + val
+ * - return original *p
+ */
+static __inline__ long
+m_xadd32(volatile int *p,
          long val)
 {
-    volatile int *_ptr = (volatile int *)p;
-    
     __asm__ __volatile__ ("lock xaddl %%eax, %2\n"
                           : "=a" (val)
-                          : "a" (val), "m" (*(_ptr))
+                          : "a" (val), "m" (*(p))
                           : "memory");
 
     return val;
