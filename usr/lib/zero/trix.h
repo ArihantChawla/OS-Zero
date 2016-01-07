@@ -819,10 +819,65 @@ ratreduce(int64_t *num, int64_t *den)
 }
 
 /* FIXME: this could be elsewhere */
+
 struct divul {
     unsigned long long magic;
     unsigned long long info;
 };
+
+/*
+ * The following routines are implemented as demonstrated at
+ *
+ * http://locklessinc.com/articles/sat_arithmetic/
+ */
+
+#include <stdint.h>
+#include <limits.h>
+
+/* compute a + b with 32-bit unsigned saturation */
+#define sataddu32t(a, b, tmp) ((tmp) = (a) + (b), (tmp) | -((tmp) < (a)))
+static __inline__ uint32_t
+sataddu32(uint32_t a, uint32_t b)
+{
+    uint32_t res = a + b;
+
+    res |= -(res < a);  // set res to all 1-bits if overflow occurred
+
+    return res;
+}
+
+/* compute a - b with 32-bit unsigned saturation */
+#define satsubu32t(a, b, tmp) ((tmp) = (a) - (b), (tmp) & - ((tmp) <= (a)))
+static __inline__ uint32_t
+satsubu32(uint32_t a, uint32_t b)
+{
+    uint32_t res = a - b;
+
+    res &= -(res < a);
+
+    return res;
+}
+
+/* compute a * b with 32-bit unsigned saturation */
+static __inline__ uint32_t
+satmulu32(uint32_t a, uint32_t b)
+{
+    uint64_t a64 = a;
+    uint64_t b64 = b;
+    uint64_t res = a64 * b64;
+    uint32_t hi = res >> 32;
+    uint32_t lo = res;
+    uint32_t ret = lo | -!!hi;  // set to all 1-bits (-1) if overflow occurred
+}
+
+/* compute a / b; no under- or overflow possible */
+static __inline__ uint32_
+satdivu32(uint32_t a, uint32_t b)
+{
+    res = a / b;
+
+    return res;
+}
 
 #endif /* __ZERO_TRIX_H__ */
 

@@ -24,6 +24,7 @@
  *  libdivide@ridiculousfish.com
  */
 
+#include <assert.h>
 #include <zero/param.h>
 #include <zero/trix.h>
 
@@ -35,6 +36,10 @@
 #define FASTULDIVADDBIT    0x40
 #define FASTULDIVSHIFTBIT  0x80
 
+/*
+ * This routine precomputes a lookup table with divisors 0..lim.
+ * This 
+ */
 void
 fastuldivgentab(struct divul *duptr, unsigned long lim)
 {
@@ -42,7 +47,11 @@ fastuldivgentab(struct divul *duptr, unsigned long lim)
     unsigned long long info = 0;
     unsigned long      div;
 
-    for (div = 0 ; div < lim ; div++) {
+    /* store array size into the first item to avoid buffer overruns */
+    duptr[0].magic = lim;
+    duptr[0].info = 0;
+    for (div = 1 ; div < lim ; div++) {
+        duptr++;
         if (powerof2(div)) {
             info = tzerol(div);
             magic = 0;
@@ -65,23 +74,23 @@ fastuldivgentab(struct divul *duptr, unsigned long lim)
             } else {
                 rem2 = rem;
                 mul += mul;
+                info = floor2 | FASTULDIVADDBIT;
                 rem2 += rem;
                 if (rem2 >= div || rem2 < rem) {
                     mul++;
                 }
-                info = floor2 | FASTULDIVADDBIT;
             }
             magic = ++mul;
         }
+        duptr->magic = magic;
+        duptr->info = info;
     }
-    duptr->magic = magic;
-    duptr->info = info;
 
     return;
 }
 
 static unsigned long
-_mull32(unsigned long long val1, unsigned long long val2)
+_mullhiu32(unsigned long long val1, unsigned long long val2)
 {
     unsigned long long val = val1 * val2;
     unsigned long      res = val >> 32;
@@ -90,19 +99,24 @@ _mull32(unsigned long long val1, unsigned long long val2)
 }
 
 unsigned long
-fastuldiv(unsigned long long num, const struct divul *denom)
+fastuldiv(unsigned long long num, unsigned long div, const struct divul *tab)
 {
+    const struct divul *ul = &tab[div];
+    unsigned long long magic = denom->magic;
     unsigned long long info = denom->info;
-    unsigned long      res;
+    unsigned long long lim = tab->magic;
+    unsigned long      res = 0;
 
+    assert(lim < div);
+    assert(div != 0);
     if (info & FASTULDIVSHIFTBIT) {
         info &= FASTULDIVSHIFTMASK;
         res = num >> info;
-
+        
         return res;
     } else {
-        unsigned long long quot = _mull32(denom->magic, num);
-
+        unsigned long long quot = _mullhiu32(denom->magic, num);
+        
         res = quot;
         if (info & FASTULDIVADDBIT) {
             num -= quot;
@@ -112,7 +126,7 @@ fastuldiv(unsigned long long num, const struct divul *denom)
         }
         res >>= info;
     }
-
+        
     return res;
 }
 

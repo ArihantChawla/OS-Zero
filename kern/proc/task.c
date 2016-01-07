@@ -28,6 +28,8 @@ void taskaddsleeping(struct task *task);
 void taskaddstopped(struct task *task);
 void taskaddzombie(struct task *task);
 
+extern struct divul      scheddivultab[SCHEDHISTORYSIZE];
+
 struct taskqueue         taskrunqueuetab[NCPU][SCHEDNPRIOCLASS * SCHEDNPRIOQUEUE] ALIGNED(PAGESIZE);
 static struct tasktabl0  taskwaittab[NLVL0TASK];
 static struct task      *taskstoppedtab[NTASK];
@@ -215,13 +217,13 @@ taskcalcscore(struct task *task)
     if (run > slp) {
         res = SCHEDSCOREMAX;
         div = max(1, run >> 6);
-        res -= fastuldiv(slp, div);
+        res -= fastuldiv(slp, div, scheddivultab);
 
         return res;
     }
     if (slp > run) {
         div = max(1, slp >> 6);
-        res = fastuldiv(run, div);
+        res = fastuldiv(run, div, scheddivultab);
 
         return res;
     }
