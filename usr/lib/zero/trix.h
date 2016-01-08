@@ -6,8 +6,15 @@
 #define __ZERO_TRIX_H__
 
 /*
- * this file contains tricks I've gathered together from sources such as MIT
- * HAKMEM and the book Hacker's Delight
+ * This file contains tricks I've gathered together from sources such as MIT
+ * HAKMEM and the book Hacker's Delight.
+ *
+ * REFERENCES
+ * ----------
+ * http://aggregate.org/MAGIC/
+ * http://graphics.stanford.edu/~seander/bithacks.html
+ * http://www.hackersdelight.org/
+ * http://www.inwap.com/pdp10/hbaker/hakmem/hakmem.html
  */
 
 #define ZEROABS 1
@@ -830,9 +837,6 @@ struct divul {
  *
  * http://locklessinc.com/articles/sat_arithmetic/
  */
-
-#include <stdint.h>
-#include <limits.h>
 
 /* compute a + b with 32-bit unsigned saturation */
 #define sataddu32t(a, b, tmp) ((tmp) = (a) + (b), (tmp) | -((tmp) < (a)))
