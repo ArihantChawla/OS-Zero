@@ -108,7 +108,7 @@ apicinittmr(void)
     outb(tmp8, PITCTRL2);
     outb(tmp8 | 1, PITCTRL2);
     freq = ((0xffffffff - apicread(APICTMRCURCNT) + 1) * 100) << 4;
-//    kprintf("APIC interrupt frequency: %ld MHz\n", div1000000(freq));
+//    kprintf("APIC interrupt frequency: %ld MHz\n", divu1000000(freq));
     kprintf("APIC interrupt frequency: %ld MHz\n", freq / 1000000);
     tmrcnt = (freq / HZ) >> 4;
     trapsetintrgate(&kernidt[trapirqid(IRQTMR)], irqtmr, TRAPUSER);

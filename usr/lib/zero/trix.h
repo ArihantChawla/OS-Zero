@@ -760,7 +760,7 @@ divs1000(long x) {
 }
 
 static __inline__ unsigned long
-div1000000(unsigned long x)
+divu1000000(unsigned long x)
 {
     unsigned long long tmp = x;
     unsigned long      res;
@@ -868,13 +868,15 @@ satmulu32(uint32_t a, uint32_t b)
     uint32_t hi = res >> 32;
     uint32_t lo = res;
     uint32_t ret = lo | -!!hi;  // set to all 1-bits (-1) if overflow occurred
+
+    return ret;
 }
 
 /* compute a / b; no under- or overflow possible */
-static __inline__ uint32_
+static __inline__ uint32_t
 satdivu32(uint32_t a, uint32_t b)
 {
-    res = a / b;
+    uint32_t res = a / b;
 
     return res;
 }
