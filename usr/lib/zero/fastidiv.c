@@ -90,7 +90,7 @@ fastuldivgentab(struct divul *duptr, unsigned long lim)
     return;
 }
 
-static unsigned long
+INLINE unsigned long
 _mullhiu32(unsigned long long val1, unsigned long long val2)
 {
     unsigned long long val = val1 * val2;
@@ -110,12 +110,7 @@ fastuldiv(unsigned long long num, unsigned long div, const struct divul *tab)
 
     assert(lim < div);
     assert(div != 0);
-    if (info & FASTULDIVSHIFTBIT) {
-        info &= FASTULDIVSHIFTMASK;
-        res = num >> info;
-        
-        return res;
-    } else {
+    if (!(info & FASTULDIVSHIFTBIT)) {
         unsigned long long quot = _mullhiu32(magic, num);
         
         res = quot;
@@ -126,6 +121,9 @@ fastuldiv(unsigned long long num, unsigned long div, const struct divul *tab)
             res += num;
         }
         res >>= info;
+    } else {
+        info &= FASTULDIVSHIFTMASK;
+        res = num >> info;
     }
         
     return res;
