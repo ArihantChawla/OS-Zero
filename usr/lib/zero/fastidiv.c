@@ -37,10 +37,7 @@
 #define FASTULDIVADDBIT    0x40
 #define FASTULDIVSHIFTBIT  0x80
 
-/*
- * This routine precomputes a lookup table with divisors 0..lim.
- * This 
- */
+/* This routine precomputes a lookup table for divisors 0..lim. */
 void
 fastuldivgentab(struct divul *duptr, unsigned long lim)
 {
@@ -90,6 +87,7 @@ fastuldivgentab(struct divul *duptr, unsigned long lim)
     return;
 }
 
+/* get the high 32 bits of val1 * val2 */
 INLINE unsigned long
 _mullhiu32(unsigned long long val1, unsigned long long val2)
 {
@@ -99,6 +97,7 @@ _mullhiu32(unsigned long long val1, unsigned long long val2)
     return res;
 }
 
+/* compute num/div with [possible] multiplication + shift operations */
 INLINE unsigned long
 fastuldiv(unsigned long long num, unsigned long div, const struct divul *tab)
 {
