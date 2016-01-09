@@ -25,6 +25,7 @@
  */
 
 #include <assert.h>
+#include <zero/cdefs.h>
 #include <zero/param.h>
 #include <zero/trix.h>
 
@@ -98,7 +99,7 @@ _mullhiu32(unsigned long long val1, unsigned long long val2)
     return res;
 }
 
-unsigned long
+INLINE unsigned long
 fastuldiv(unsigned long long num, unsigned long div, const struct divul *tab)
 {
     const struct divul *ulptr = &tab[div];
