@@ -121,6 +121,8 @@ fastuldiv(unsigned long long num, unsigned long div, const struct divul *tab)
             res += num;
         }
         res >>= info;
+
+        return res;
     } else {
         info &= FASTULDIVSHIFTMASK;
         res = num >> info;
