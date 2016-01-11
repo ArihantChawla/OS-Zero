@@ -14,7 +14,7 @@
 
 #else /* !NDEBUG */
 
-#include <zero/cdecl.h>
+#include <zero/cdefs.h>
 
 #define assert(cond)                                                    \
     (!(cond)                                                             \

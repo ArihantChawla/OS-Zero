@@ -2,6 +2,7 @@
 #include <zero/cdefs.h>
 #include <zero/param.h>
 #include <zero/types.h>
+#include <zero/fastidiv.h>
 #include <zero/mtx.h>
 #include <kern/sched.h>
 #include <kern/proc/task.h>
@@ -27,7 +28,7 @@ schedinit(void)
 #else
 #error define supported scheduler such as ZEROSCHED
 #endif
-    fastuldivgentab(scheddivultab, SCHEDHISTORYSIZE);
+    fastuldiv32gentab(scheddivultab, SCHEDHISTORYSIZE);
 
     return;
 }

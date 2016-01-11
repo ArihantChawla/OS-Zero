@@ -37,18 +37,18 @@
 #define FASTULDIVADDBIT    0x40
 #define FASTULDIVSHIFTBIT  0x80
 
-/* This routine precomputes a lookup table for divisors 0..lim. */
+/* This routine precomputes a lookup table for divisors 0..lim32. */
 void
-fastuldivgentab(struct divul *duptr, unsigned long lim)
+fastuldiv32gentab(struct divul *duptr, unsigned long lim32)
 {
     unsigned long long magic = 0;
     unsigned long long info = 0;
     unsigned long      div;
 
     /* store array size into the first item to avoid buffer overruns */
-    duptr[0].magic = lim;
+    duptr[0].magic = lim32;
     duptr[0].info = 0;
-    for (div = 1 ; div < lim ; div++) {
+    for (div = 1 ; div < lim32 ; div++) {
         duptr++;
         if (powerof2(div)) {
             info = tzerol(div);
@@ -63,6 +63,7 @@ fastuldivgentab(struct divul *duptr, unsigned long lim)
             unsigned long long e;
 
             lzero32(div, floor2);
+            floor2 = 31 - floor2;
             val = 1ULL << floor2;
             mul = val / div;
             rem = val % div;
@@ -97,18 +98,24 @@ _mullhiu32(unsigned long long val1, unsigned long long val2)
     return res;
 }
 
-/* compute num/div with [possible] multiplication + shift operations */
+/* compute num/div32 with [possible] multiplication + shift operations */
 INLINE unsigned long
-fastuldiv(unsigned long long num, unsigned long div, const struct divul *tab)
+fastuldiv32(unsigned long long num, uint32_t div32,
+            const struct divul *tab)
 {
-    const struct divul *ulptr = &tab[div];
+    const struct divul *ulptr = &tab[div32];
     unsigned long long  magic = ulptr->magic;
     unsigned long long  info = ulptr->info;
     unsigned long long  lim = tab->magic;
     unsigned long       res = 0;
 
-    assert(lim < div);
-    assert(div != 0);
+#if 0
+    assert(lim < div32);
+    assert(div32 != 0);
+#endif
+    if (lim < div32 || !div32) {
+        panic();
+    }
     if (!(info & FASTULDIVSHIFTBIT)) {
         unsigned long long quot = _mullhiu32(magic, num);
         
