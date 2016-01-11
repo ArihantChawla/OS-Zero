@@ -24,7 +24,6 @@
  *  libdivide@ridiculousfish.com
  */
 
-#include <assert.h>
 #include <zero/cdefs.h>
 #include <zero/param.h>
 #include <zero/trix.h>
@@ -109,10 +108,6 @@ fastuldiv32(unsigned long long num, uint32_t div32,
     unsigned long long  lim = tab->magic;
     unsigned long       res = 0;
 
-#if 0
-    assert(lim < div32);
-    assert(div32 != 0);
-#endif
     if (lim < div32 || !div32) {
         panic();
     }
