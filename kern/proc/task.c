@@ -4,6 +4,7 @@
 #include <sys/io.h>
 #include <zero/cdefs.h>
 #include <zero/param.h>
+#include <zero/fastidiv.h>
 #include <zero/mtx.h>
 #include <zero/trix.h>
 //#include <zero/randlfg2.h>
@@ -217,13 +218,13 @@ taskcalcscore(struct task *task)
     if (run > slp) {
         res = SCHEDSCOREMAX;
         div = max(1, run >> 6);
-        res -= fastuldiv(slp, div, scheddivultab);
+        res -= fastuldiv32(slp, div, scheddivultab);
 
         return res;
     }
     if (slp > run) {
         div = max(1, slp >> 6);
-        res = fastuldiv(run, div, scheddivultab);
+        res = fastuldiv32(run, div, scheddivultab);
 
         return res;
     }
@@ -259,7 +260,7 @@ taskcalcprio(struct task *task)
     score = max(SCHEDINTPRIOMIN, score);
     if (score < SCHEDSCORETHRESHOLD) {
         prio = SCHEDINTPRIOMIN;
-        delta = fastuldiv(delta, SCHEDSCORETHRESHOLD);
+        delta = fastuldiv32(delta, SCHEDSCORETHRESHOLD, scheddivultab);
         delta *= score;
         prio += delta;
     } else {
@@ -271,9 +272,9 @@ taskcalcprio(struct task *task)
         diff = delta - prio + 1;
         if (ntick) {
             tmp = roundup(total, diff);
-            div = fastuldiv(tmp, diff);
+            div = fastuldiv32(tmp, diff, scheddivultab);
             prio += task->nice;
-            tmp = fastuldiv(tickhz, div);
+            tmp = fastuldiv32(tickhz, div, scheddivultab);
             delta = min(delta, tmp);
             prio += delta;
         }

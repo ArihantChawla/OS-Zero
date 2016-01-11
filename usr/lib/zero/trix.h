@@ -825,13 +825,6 @@ ratreduce(int64_t *num, int64_t *den)
     *den /= b;
 }
 
-/* FIXME: this could be elsewhere */
-
-struct divul {
-    unsigned long long magic;
-    unsigned long long info;
-};
-
 /*
  * The following routines are implemented as demonstrated at
  *

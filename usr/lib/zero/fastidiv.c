@@ -24,9 +24,19 @@
  *  libdivide@ridiculousfish.com
  */
 
+#if !defined(__KERNEL__)
+#include <stdlib.h>
+#endif
+#include <stdint.h>
 #include <zero/cdefs.h>
 #include <zero/param.h>
+#include <zero/fastidiv.h>
 #include <zero/trix.h>
+#if defined(__KERNEL__)
+#include <kern/util.h>
+#include <kern/unit/x86/cpu.h>
+#include <kern/unit/x86/trap.h>
+#endif
 
 #if (LONGLONGSIZE == 8)
 #define FASTULDIVSHIFTMASK 0x3f
@@ -45,8 +55,8 @@ fastuldiv32gentab(struct divul *duptr, unsigned long lim32)
     unsigned long      div;
 
     /* store array size into the first item to avoid buffer overruns */
-    duptr[0].magic = lim32;
-    duptr[0].info = 0;
+    duptr->magic = lim32;
+    duptr->info = 0;
     for (div = 1 ; div < lim32 ; div++) {
         duptr++;
         if (powerof2(div)) {
@@ -109,7 +119,11 @@ fastuldiv32(unsigned long long num, uint32_t div32,
     unsigned long       res = 0;
 
     if (lim < div32 || !div32) {
-        panic();
+#if defined(__KERNEL__)
+        panic(k_curpid, -TRAPDE, 0);
+#else
+        abort();
+#endif
     }
     if (!(info & FASTULDIVSHIFTBIT)) {
         unsigned long long quot = _mullhiu32(magic, num);
