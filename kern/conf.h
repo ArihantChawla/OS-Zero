@@ -19,6 +19,7 @@
 #define SMP         0           // enable multiprocessor support; FIXME:  broken
 #define EVHZ        1000        // event timer frequency
 #define ZEROSCHED   1           // default scheduler
+#define ZEROULE     0
 //#define NPROC       1024        // maximum number of running processes on system
 #define NTASK       4096        // maximum number of running tasks on system
 #define NPROCTASK   128
@@ -52,7 +53,7 @@
 #define BOCHS       1
 #define DEVEL       0           // debugging
 
-#define PLASMA      1
+#define PLASMA      0
 
 /* planned and developed drivers */
 #define IOAPIC      1           // enable I/O APIC support

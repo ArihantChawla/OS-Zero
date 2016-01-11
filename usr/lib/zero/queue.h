@@ -109,8 +109,8 @@ queuermitem(QUEUE_TYPE *item, QUEUE_TYPE **queue)
 #else /* !defined(QUEUE_SINGLE_TYPE) */
 
 #define queueinit(item, queue)                                          \
-    ((*queue)->next = (item), (*queue)->prev = (item))
-#define queueissingular(queue)  ((*queue)->next == (*queue)->prev)
+    ((*(queue))->next = (item), (*(queue))->prev = (item))
+#define queueissingular(queue)  ((*(queue))->next == (*(queue))->prev)
 
 /* add item to beginning of queue */
 static __inline__ void

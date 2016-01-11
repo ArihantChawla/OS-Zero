@@ -31,7 +31,7 @@ void taskaddzombie(struct task *task);
 
 extern struct divul      scheddivultab[SCHEDHISTORYSIZE];
 
-struct taskqueue         taskrunqueuetab[NCPU][SCHEDNPRIOCLASS * SCHEDNPRIOQUEUE] ALIGNED(PAGESIZE);
+struct taskqueue         taskrunqueuetab[NCPU][SCHEDNPRIOCLASS * SCHEDNCLASSQUEUE] ALIGNED(PAGESIZE);
 static struct tasktabl0  taskwaittab[NLVL0TASK];
 static struct task      *taskstoppedtab[NTASK];
 static struct task      *taskzombietab[NTASK];
@@ -159,7 +159,7 @@ tasksetnice(struct task *task, long val)
     return nice;
 }
 
-#if 0
+#if !(ZEROULE)
 /* adjust task priority */
 static __inline__ long
 taskadjprio(struct task *task)
@@ -169,21 +169,25 @@ taskadjprio(struct task *task)
     long nice = task->nice;
 
     /* wrap around back to 0 at SCHEDNPRIO */
-    prio++;
     if (sched == SCHEDRESPONSIVE) {
+        prio++;
         if (prio == SCHEDNPRIO) {
             task->sched = SCHEDNORMAL;
             task->prio = 0;
+        } else {
+            task->prio = prio;
+            prio >>= 1;
+            prio += SCHEDNFIXED;
         }
-        prio += SCHEDNFIXED;
     } else {
+        /* sched == SCHEDNORMAL */
         prio &= SCHEDNPRIO - 1;
         task->prio = prio;
         prio += SCHEDNFIXED + SCHEDNPRIO * sched + nice;
         prio = min(SCHEDNFIXED + SCHEDNPRIOCLASS * SCHEDNPRIO - 1, prio);
         prio = max(prio, SCHEDNFIXED);
+        prio >>= 1;
     }
-    prio >>= 1;
 
     return prio;
 }
@@ -201,6 +205,8 @@ taskwakeprio(struct task *task)
 
     return prio;
 }
+
+#if (ZEROULE)
 
 static __inline__ long
 taskcalcscore(struct task *task)
@@ -238,7 +244,7 @@ taskcalcscore(struct task *task)
     return 0;
 }
 
-static __inline__ void
+static __inline__ long
 taskcalcprio(struct task *task)
 {
     unsigned long score;
@@ -267,8 +273,8 @@ taskcalcprio(struct task *task)
         ntick = task->ntick;
         total = task->lasttick - task->firsttick;
         tickhz = ntick >> SCHEDTICKSHIFT;
-        delta = SCHEDBATCH - (SCHEDNPRIO >> 1);
-        prio = SCHEDBATCH + (SCHEDNPRIO >> 1);
+        delta = SCHEDBATCH - (SCHEDNCLASSQUEUE >> 1);
+        prio = SCHEDBATCH + (SCHEDNCLASSQUEUE;
         diff = delta - prio + 1;
         if (ntick) {
             tmp = roundup(total, diff);
@@ -281,7 +287,7 @@ taskcalcprio(struct task *task)
     }
     task->prio = prio;
 
-    return;
+    return prio;
 }
 
 static __inline__ void
@@ -329,26 +335,28 @@ taskadjscore(struct task *task)
     return;
 }
 
-//#undef QUEUE_SINGLE_TYPE
-#define QUEUE_SINGLE_TYPE 1
+#endif /* ZEROULE */
+
+#undef QUEUE_SINGLE_TYPE
 #undef QUEUE_ITEM_TYPE
 #undef QUEUE_TYPE
-#define QUEUE_TYPE        struct task
-//#define QUEUE_ITEM_TYPE struct task
-//#define QUEUE_TYPE      struct taskqueue
+#define QUEUE_ITEM_TYPE struct task
+#define QUEUE_TYPE      struct taskqueue
 #include <zero/queue.h>
 
 void
 taskaddready(struct task *task)
 {
-    long              cpu = k_curcpu;
+    long              cpu = k_curcpu->id;
     long              sched = task->sched;
     long              prio = task->prio;
     long              state = task->state;
+    long             *map;
     struct taskqueue *queue;
-    
+
+    /* TODO: SCHEDDEADLINE */
     if (sched == SCHEDRT) {
-        queue = &taskrtqueue.next;
+        queue = &taskrtqueue;
         mtxlk(&queue->lk);
         if (prio < 0) {
             /* SCHED_FIFO */
@@ -358,59 +366,30 @@ taskaddready(struct task *task)
             queueappend(task, &queue);
         }
         mtxunlk(&queue->lk);
+    } else if (sched == SCHEDRESPONSIVE || sched == SCHEDNORMAL) {
+        map = &taskrunbitmap[cpu][0];
+#if (ZEROULE)
+        taskadjscore(task);
+        prio = taskcalcprio(task);
+#else
+        prio = taskadjprio(task);
+#endif
+    } else if (sched == SCHEDBATCH) {
+        prio++;
+        prio &= SCHEDNPRIO - 1;
+        prio += SCHEDBATCH * SCHEDNPRIO;
+        task->prio = prio;
+        prio >>= 1;
     } else {
-        queue = &taskrunqueuetab[cpu][prio].next;
-        if (sched != SCHEDFIXED) {
-//            prio = taskadjprio(task);
-            taskadjscore(task);
-        }
-        mtxlk(&queue->lk);
-        queueappend(task, &queue);
-        mtxunlk(queue->lk);
+        /* sched == SCHEDIDLE */
     }
+    queue = &taskrunqueuetab[cpu][prio];
+    mtxlk(&queue->lk);
+    queueappend(task, &queue);
+    setbit(map, prio);
+    mtxunlk(&queue->lk);
 
     return;
-}
-
-/* switch tasks */
-FASTCALL
-struct task *
-taskpick(struct task *curtask)
-{
-    long              cpu = k_curcpu;
-    struct task      *task = NULL;
-    struct taskqueue *queue;
-    long              sched = curtask->sched;
-    long              state = curtask->state;
-    taskfunc_t       *func = taskfunctab[state];
-    long              ndx;
-    long              ntz;
-
-    if (curtask) {
-        func(curtask);
-        k_curtask = NULL;
-    }
-    do {
-        for (ndx = 0 ; ndx < TASKRUNBITMAPSIZE ; ndx++) {
-            ntz = tzerol(taskrunbitmap[cpu][ndx]);
-            if (ntz != LONGSIZE * CHAR_BIT) {
-                ntz += ndx * LONGSIZE * CHAR_BIT;
-                queue = taskrunqueuetab[cpu][ntz].next;
-                mtxlk(&queue->lk);
-                task = queuepop(&queue);
-                mtxunlk(&queue->lk);
-            }
-            if (task) {
-
-                return task;
-            }
-        }
-        k_enabintr();
-        m_waitint();
-    } while (1);
-//    taskjmp(task);
-
-    return task;
 }
 
 /* add task to wait queue */
@@ -492,11 +471,116 @@ taskaddwait(struct task *task)
     return;
 }
 
+/* FIXME: add a multilevel tree for sleeping tasks for speed */
+void
+taskaddsleeping(struct task *task)
+{
+    time_t            waketime = task->waketime;
+    struct taskqueue *queue = &tasksleepqueue;
+    struct task      *sleeptask;
+
+    if (task->wtchan) {
+        taskaddwait(task);
+    } else if (!sleeptask) {
+        queueinit(task, &queue);
+    } else {
+        sleeptask = queue->next;
+        while ((sleeptask) && (sleeptask->next)) {
+            if (task->waketime < sleeptask->waketime) {
+                task->prev = sleeptask->prev;
+                task->next = sleeptask;
+                sleeptask->prev = task;
+
+                return;
+            }
+            sleeptask = sleeptask->next;
+        }
+        /* task->waketime >= sleeptask->waketime && sleeptask == queue->prev */
+        task->prev = sleeptask;
+        task->next = NULL;
+        sleeptask->next = task;
+        queue->prev = task;
+    }
+
+    return;
+}
+
+void
+taskaddstopped(struct task *task)
+{
+    long id = task->id;
+
+    taskstoppedtab[id] = task;
+
+    return;
+}
+
+void
+taskaddzombie(struct task *task)
+{
+    long id = task->id;
+
+    taskzombietab[id] = task;
+
+    return;
+}
+
+/* switch tasks */
+FASTCALL
+struct task *
+taskpick(struct task *curtask)
+{
+    long              cpu = k_curcpu->id;
+    struct taskqueue *queue;
+    struct task      *task = NULL;
+    long              sched = curtask->sched;
+    long              state = curtask->state;
+    taskfunc_t       *func = taskfunctab[state];
+    long             *map;
+    unsigned long     ndx;
+    long              val;
+    long              prio;
+
+    if (curtask) {
+        func(curtask);
+        k_curtask = NULL;
+    }
+    do {
+        map = taskrunbitmap[cpu];
+        for (ndx = 0 ; ndx < TASKRUNBITMAPNWORD ; ndx++) {
+            val = map[ndx];
+            if (val) {
+                prio = tzerol(val);
+                prio += ndx * LONGSIZE * CHAR_BIT;
+                queue = &taskrunqueuetab[cpu][prio];
+                mtxlk(&queue->lk);
+                task = queuepop(&queue);
+                if (task && !queue->next) {
+                    clrbit(map, prio);
+                }
+                mtxunlk(&queue->lk);
+                if (task) {
+                    kprintf("%ld: ", prio);
+                    
+                    break;
+                }
+            }
+        }
+        if (!task) {
+            k_enabintr();
+            m_waitint();
+        }
+    } while (!task);
+//    taskjmp(task);
+
+    return task;
+}
+
 /* move a task from wait queue to ready queue */
 void
 taskunwait(uintptr_t wtchan)
 {
-    long               cpu = k_curcpu;
+    long               cpu = k_curcpu->id;
     struct tasktabl0  *l0tab;
     struct tasktab    *tab;
     void              *ptr = NULL;
@@ -535,8 +619,8 @@ taskunwait(uintptr_t wtchan)
                         }
                         queue->next = task1->next;
                         task2 = task1->next;
-                        runqueue = &taskrunqueuetab[cpu][prio].next;
                         prio = taskwakeprio(task1);
+                        runqueue = &taskrunqueuetab[cpu][prio];
                         mtxlk(&runqueue->lk);
                         queueappend(task1, &runqueue);
                         mtxunlk(&runqueue->lk);
@@ -571,62 +655,6 @@ taskunwait(uintptr_t wtchan)
         }
     }
     mtxunlk(&l0tab->lk);
-}
-
-/* FIXME: add a multilevel tree for sleeping tasks for speed */
-void
-taskaddsleeping(struct task *task)
-{
-    time_t       waketime = task->waketime;
-    struct task *sleeptask = tasksleepqueue.next;
-
-    if (task->wtchan) {
-        taskaddwait(task);
-    } else if (!sleeptask) {
-        queueinit(task);
-    } else {
-        while ((sleeptask) && (sleeptask->next)) {
-            if (task->waketime < sleeptask->waketime) {
-                task->next = sleeptask;
-                task->prev = sleeptask->prev;
-                sleeptask->prev = task;
-
-                break;
-            }
-            sleeptask = sleeptask->next;
-        }
-        if (task->waketime < sleeptask->waketime) {
-            task->next = sleeptask;
-            task->prev = sleeptask->prev;
-            sleeptask->prev = task;
-        } else {
-            task->next = NULL;
-            task->prev = sleeptask;
-            sleeptask->next = task;
-        }
-    }
-
-    return;
-}
-
-void
-taskaddstopped(struct task *task)
-{
-    long id = task->id;
-
-    taskstoppedtab[id] = task;
-
-    return;
-}
-
-void
-taskaddzombie(struct task *task)
-{
-    long id = task->id;
-
-    taskzombietab[id] = task;
-
-    return;
 }
 
 void

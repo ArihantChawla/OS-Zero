@@ -40,7 +40,8 @@ procinit(long id)
         task->proc = proc;
         task->state = TASKREADY;
         task->nice = 0;
-        task->sched = SCHEDNORMAL;
+//        task->sched = SCHEDNORMAL;
+        task->sched = SCHEDRESPONSIVE;
         task->prio = id;
         k_curproc = proc;
         k_curtask = task;

@@ -46,17 +46,20 @@
 #define FASTULDIVADDBIT    0x40
 #define FASTULDIVSHIFTBIT  0x80
 
-/* This routine precomputes a lookup table for divisors 0..lim32. */
+/*
+ * This routine precomputes a lookup table for divisors 1..lim32
+ * - table size is stored in item #0 to check for buffer overruns
+ */
 void
 fastuldiv32gentab(struct divul *duptr, unsigned long lim32)
 {
-    unsigned long long magic = 0;
+    unsigned long long magic = lim32;
     unsigned long long info = 0;
     unsigned long      div;
 
     /* store array size into the first item to avoid buffer overruns */
-    duptr->magic = lim32;
-    duptr->info = 0;
+    duptr->magic = magic;
+    duptr->info = info;
     for (div = 1 ; div < lim32 ; div++) {
         duptr++;
         if (powerof2(div)) {
@@ -65,24 +68,24 @@ fastuldiv32gentab(struct divul *duptr, unsigned long lim32)
             info |= FASTULDIVSHIFTBIT;
         } else {
             unsigned long      val;
-            unsigned long long floor2;
+            unsigned long long shift;
             unsigned long long mul;
             unsigned long long rem;
             unsigned long long rem2;
             unsigned long long e;
 
-            lzero32(div, floor2);
-            floor2 = 31 - floor2;
-            val = 1ULL << floor2;
+            lzero32(div, shift);
+            shift = 31 - shift;
+            val = 1ULL << shift;
             mul = val / div;
             rem = val % div;
             e = div - rem;
             if (e < val) {
-                info = floor2;
+                info = shift;
             } else {
                 rem2 = rem;
                 mul += mul;
-                info = floor2 | FASTULDIVADDBIT;
+                info = shift | FASTULDIVADDBIT;
                 rem2 += rem;
                 if (rem2 >= div || rem2 < rem) {
                     mul++;

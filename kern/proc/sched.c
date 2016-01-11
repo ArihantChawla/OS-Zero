@@ -13,12 +13,15 @@
 #endif
 #include <kern/unit/ia32/task.h>
 
-FASTCALL void (*schedpicktask)(struct task *);
+FASTCALL struct task *(*schedpicktask)(struct task *);
 #if (ZEROSCHED)
-FASTCALL void   taskpick(struct task *task);
+FASTCALL struct task   *taskpick(struct task *task);
 #endif
 
+#if (ZEROULE)
+/* lookup table for fast division with multiplication and shift */
 struct divul scheddivultab[SCHEDHISTORYSIZE];
+#endif
 
 void
 schedinit(void)
@@ -28,7 +31,9 @@ schedinit(void)
 #else
 #error define supported scheduler such as ZEROSCHED
 #endif
+#if (ZEROULE)
     fastuldiv32gentab(scheddivultab, SCHEDHISTORYSIZE);
+#endif
 
     return;
 }
@@ -39,9 +44,7 @@ schedyield(void)
     struct task *oldtask = k_curtask;
     struct task *task = NULL;
 
-    do {
-        schedpicktask(oldtask);
-    } while (!task);
+    task = schedpicktask(oldtask);
     if (task != oldtask) {
         m_taskjmp(&task->m_task);
     } else {

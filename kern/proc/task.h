@@ -23,9 +23,10 @@
 #include <kern/unit/ppc/asm.h>
 #endif
 
+#define TASKRUNBITMAPNWORD                                              \
+    (SCHEDNPRIOCLASS * SCHEDNCLASSQUEUE / LONGSIZE * CHAR_BIT)
 #define TASKRUNBITMAPSIZE                                               \
-    rounduppow2(SCHEDNPRIOCLASS * SCHEDNPRIOQUEUE / (LONGSIZE * CHAR_BIT), \
-                CLSIZE / sizeof(long))
+    rounduppow2(TASKRUNBITMAPNWORD, CLSIZE / sizeof(long))
 
 #define __errnoloc() (&k_curtask->errnum)
 
