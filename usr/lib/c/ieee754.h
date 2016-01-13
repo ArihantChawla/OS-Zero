@@ -111,7 +111,16 @@ union __ieee754ld80 {
         unsigned _res  : 16;
         unsigned mant0 : 32;
         unsigned mant1 : 32;
-    };
+    } val;
+    struct {
+        unsigned exp   : 15;
+        unsigned sign  : 1;
+        unsigned _res  : 16;
+        unsigned mant0 : 30;
+        unsigned quiet : 1;
+        unsigned one   : 1;
+        unsigned mant1 : 32;
+    } nan;
 };
 
 #endif /* __FLOAT_WORD_ORDER */
@@ -158,7 +167,16 @@ union __ieee754ld80 {
         unsigned _res  : 16;
         unsigned mant0 : 32;
         unsigned mant1 : 32;
-    };
+    } val;
+    struct {
+        unsigned sign  : 1;
+        unsigned exp   : 15;
+        unsigned _res  : 16;
+        unsigned one   : 1;
+        unsigned quiet : 1;
+        unsigned mant0 : 30;
+        unsigned mant1 : 32;
+    } nan;
 };
 
 #endif /* __BYTE_ORDER */
