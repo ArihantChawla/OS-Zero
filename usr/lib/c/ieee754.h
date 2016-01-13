@@ -12,9 +12,10 @@
 #define __FLOAT_WORD_ORDER __BYTE_ORDER
 #endif
 
-#define IEEE754_FLOAT_BIAS         0x7f
-#define IEEE754_DOUBLE_BIAS        0x3ff
-#define IEEE754_LONG_DOUBLE80_BIAS 0x3fff
+#define IEEE754_FLOAT_BIAS          0x7f
+#define IEEE754_DOUBLE_BIAS         0x3ff
+#define IEEE754_LONG_DOUBLE80_BIAS  0x3fff
+#define IEEE754_LONG_DOUBLE128_BIAS 0x7fff
 
 #if defined(_GNU_SOURCE)
 #define ieee754_float       __ieee754f
@@ -45,6 +46,16 @@ union __ieee754f {
         unsigned exp   : 8;
         unsigned sign  : 1
     } nan;
+};
+
+union __ieee754ld128 {
+    long double ld;
+    struct {
+        unsigned mant1 : 64;
+        unsigned mant0 : 48;
+        unsigned exp   : 15;
+        unsigned sign  : 1;
+    } val;
 };
 
 #if (__FLOAT_WORD_ORDER == __LITTLE_ENDIAN)
@@ -177,6 +188,16 @@ union __ieee754ld80 {
         unsigned mant0 : 30;
         unsigned mant1 : 32;
     } nan;
+};
+
+union __ieee754ld128 {
+    long double ld;
+    struct {
+        unsigned sign  : 1;
+        unsigned exp   : 15;
+        unsigned mant0 : 48;
+        unsigned mant1 : 64;
+    } val;
 };
 
 #endif /* __BYTE_ORDER */
