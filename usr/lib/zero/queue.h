@@ -1,6 +1,7 @@
 #include <stddef.h>
 
 #undef queueinit
+#undef queueisempty
 #undef queueissingular
 
 #if defined(QUEUE_SINGLE_TYPE)
@@ -110,6 +111,7 @@ queuermitem(QUEUE_TYPE *item, QUEUE_TYPE **queue)
 
 #define queueinit(item, queue)                                          \
     ((*(queue))->next = (item), (*(queue))->prev = (item))
+#define queueisempty(queue)     (!(*(queue))->next)
 #define queueissingular(queue)  ((*(queue))->next == (*(queue))->prev)
 
 /* add item to beginning of queue */

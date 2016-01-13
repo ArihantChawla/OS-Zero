@@ -23,10 +23,8 @@
 #include <kern/unit/ppc/asm.h>
 #endif
 
-#define TASKRUNBITMAPNWORD                                              \
-    (SCHEDNPRIOCLASS * SCHEDNCLASSQUEUE / LONGSIZE * CHAR_BIT)
-#define TASKRUNBITMAPSIZE                                               \
-    rounduppow2(TASKRUNBITMAPNWORD, CLSIZE / sizeof(long))
+#define TASKRUNBITMAPNWORD max(SCHEDNTOTALQUEUE / sizeof(long),         \
+                               CLSIZE / sizeof(long))
 
 #define __errnoloc() (&k_curtask->errnum)
 
@@ -56,6 +54,7 @@ struct task {
     struct m_task   m_task;             // machine-thread control block
     /* scheduler parameters */
     long            sched;              // thread scheduler class
+    long            input;              // received user input [interrupt]
     long            prio;               // priority; < 0 for SCHEDFIFO realtime
     long            nice;               // priority adjustment
     long            state;              // thread state

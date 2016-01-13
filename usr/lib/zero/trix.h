@@ -96,6 +96,8 @@ abs32(int a)
 #define _abs(a)         zeroabs(a)
 #define _labs(a)        zeroabs(a)
 #define _llabs(a)       zeroabs(a)
+#else
+#define zeroabs(a) ((a) < 0 ? -(a) : (a))
 #endif
 
 #if 0

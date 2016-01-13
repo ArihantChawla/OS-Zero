@@ -41,11 +41,13 @@ _fpudone:
 	movl	%ebx, %cr3
 	fwait
 	/* set up per-cpu variables */
+#if 0
 	movl	%eax, %gs:8		// k_curtask
 	movl	108(%eax), %ebx		// k_curproc
 	movl	128(%eax), %ecx		// k_curpid
 	movl	%ebx, %gs:4
 	movl	%ecx, %gs:16
+#endif
 	/* pop general purpose registers */
 	popal
 	/* - stack pointer points to top of segregs */
