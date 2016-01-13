@@ -23,11 +23,11 @@
 
 extern void taskinitids(void);
 
-void taskaddready(struct task *task);
-//void taskaddwait(struct task *task);
-void taskaddsleeping(struct task *task);
-void taskaddstopped(struct task *task);
-void taskaddzombie(struct task *task);
+void tasksetready(struct task *task);
+//void tasksetwait(struct task *task);
+void tasksetsleeping(struct task *task);
+void tasksetstopped(struct task *task);
+void tasksetzombie(struct task *task);
 
 extern struct divul      scheddivultab[SCHEDHISTORYSIZE];
 
@@ -107,14 +107,14 @@ static long tasknicetab[64]
 static struct taskqueue  taskrtqueue;
 static struct taskqueue  tasksleepqueue;
 static long              taskrunbitmap[NCPU][TASKRUNBITMAPNWORD];
-typedef void taskaddfunc_t(struct task *);
-taskaddfunc_t           *taskaddfunctab[TASKNSTATE]
+typedef void tasksetfunc_t(struct task *);
+tasksetfunc_t           *tasksetfunctab[TASKNSTATE]
 = {
     NULL,               // TASKNEW
-    taskaddready,
-    taskaddsleeping,
-    taskaddstopped,
-    taskaddzombie
+    tasksetready,
+    tasksetsleeping,
+    tasksetstopped,
+    tasksetzombie
 };
 static long             *taskniceptr = &tasknicetab[32];
 
@@ -323,7 +323,7 @@ taskadjscore(struct task *task)
 #include <zero/queue.h>
 
 void
-taskaddready(struct task *task)
+tasksetready(struct task *task)
 {
     long              cpu = k_curcpu->id;
     long              sched = task->sched;
@@ -332,9 +332,10 @@ taskaddready(struct task *task)
     long              qid;
     struct taskqueue *queue;
 
-    if (sched < 0) {
-        /* system tasks */
-        if (prio < 0) {
+    if (sched == 0) {
+        if (sched == SCHEDDEADLINE) {
+            tasksetdeadline(task);
+        } else if (prio < 0) {
             /* SCHED_FIFO */
             qid = -prio;
             qid >>= 2;
@@ -344,6 +345,7 @@ taskaddready(struct task *task)
             setbit(map, qid);
             mtxunlk(&queue->lk);
         } else {
+            /* SCHED_RR */
             qid = prio;
             qid >>= 2;
             queue = &taskreadyqueuetab[cpu][qid];
@@ -382,7 +384,7 @@ taskaddready(struct task *task)
     
 /* add task to wait table */
 void
-taskaddwait(struct task *task)
+tasksetwait(struct task *task)
 {
     struct tasktabl0  *l0tab;
     struct tasktab    *tab;
@@ -461,19 +463,19 @@ taskaddwait(struct task *task)
 
 /* FIXME: add a multilevel tree for sleeping tasks for speed */
 void
-taskaddsleeping(struct task *task)
+tasksetsleeping(struct task *task)
 {
-    time_t            waketime = task->waketime;
+    time_t            timelim = task->timelim;
     struct taskqueue *queue = &tasksleepqueue;
     struct task      *sleeptask;
 
     if (task->wtchan) {
-        taskaddwait(task);
+        tasksetwait(task);
     } else {
         sleeptask = queue->next;
         if (sleeptask) {
             while ((sleeptask) && (sleeptask->next)) {
-                if (task->waketime < sleeptask->waketime) {
+                if (task->timelim < sleeptask->timelim) {
                     task->prev = sleeptask->prev;
                     task->next = sleeptask;
                     sleeptask->prev = task;
@@ -495,7 +497,7 @@ taskaddsleeping(struct task *task)
 }
 
 void
-taskaddstopped(struct task *task)
+tasksetstopped(struct task *task)
 {
     long id = task->id;
 
@@ -505,7 +507,7 @@ taskaddstopped(struct task *task)
 }
 
 void
-taskaddzombie(struct task *task)
+tasksetzombie(struct task *task)
 {
     long id = task->id;
 
@@ -524,7 +526,7 @@ taskpick(struct task *curtask)
     struct task      *task = NULL;
     long              sched = curtask->sched;
     long              state = curtask->state;
-    taskaddfunc_t    *func = taskaddfunctab[state];
+    tasksetfunc_t    *func = tasksetfunctab[state];
     long             *map = &taskrunbitmap[cpu][0];
     unsigned long     ndx;
     long              val;

@@ -63,7 +63,7 @@ struct task {
     unsigned long   ntick;              // # of scheduler ticks received
     unsigned long   firsttick;
     unsigned long   lasttick;
-    time_t          waketime;           // wakeup time for sleeping tasks
+    time_t          timelim;            // wakeup time or deadline
     /* linkage */
     struct proc    *proc;               // parent/owner process
     struct task    *prev;               // previous in queue
@@ -110,7 +110,7 @@ struct tasktabl0 {
     volatile long   lk;
     long            nref;
     struct tasktab *tab;
-    uint8_t         pad[CLSIZE - 2 * sizeof(long) - sizeof(struct task *)];
+    uint8_t         pad[CLSIZE - 2 * sizeof(long) - sizeof(struct tasktab *)];
 };
 
 struct tasktab {

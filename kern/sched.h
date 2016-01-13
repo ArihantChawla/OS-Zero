@@ -19,18 +19,19 @@ extern void schedinit(void);
 /* task scheduler classes */
 #define SCHEDNCLASSPRIO     64          // # of priorities per class
 #define SCHEDNCLASSQUEUE    16          // # of priority queues per class
-#define SCHEDSYSTEM         (-4)        // system tasks such as shutdown/reboot
-#define SCHEDDEADLINE       (-3)        // deadline tasks
-#define SCHEDREALTIME       (-2)        // realtime tasks
-#define SCHEDFIXED          (-1)        // SYNC, INPUT, AUDIO, VIDEO
+#define SCHEDDEADLINE       (-2)        // deadline tasks
+#define SCHEDREALTIME       (-1)
+#define SCHEDSYSTEM         0           // system tasks such as shutdown/reboot
+#define SCHEDINTERRUPT      1           // interrupt tasks
+#define SCHEDREALTIME       2           // realtime tasks
+#define SCHEDFIXED          3           // SYNC, INPUT, AUDIO, VIDEO
 #define SCHEDNSYSCLASS      4           // # of system scheduler classes
 #define SCHEDUSERBASEPRIO   (SCHEDNSYSCLASS * SCHEDNCLASSPRIO)
-#define SCHEDRESPONSIVE     0           // interrupt and interactive tasks
-#define SCHENORMAL          1           // time-share tasks
-#define SCHEDBATCH          2           // batch tasks
-#define SCHEDIDLE           3           // idle tasks
-#define SCHEDNUSERCLASS     4           // user scheduler classes
-#define SCHEDNCLASS         (SCHEDNSYSCLASS + SCHEDNUSERCLASS)
+#define SCHEDRESPONSIVE     4           // interrupt and interactive tasks
+#define SCHENORMAL          5           // time-share tasks
+#define SCHEDBATCH          6           // batch tasks
+#define SCHEDIDLE           7           // idle tasks
+#define SCHEDNCLASS         8           // user scheduler classes
 #define SCHEDNTOTALQUEUE    (SCHEDNCLASS * SCHEDNCLASSQUEUE)
 #define SCHEDNTOTALPRIO     (SCHEDNCLASS * SCHEDNCLASSPRIO)
 /* minimum (highest) interactive priority */
