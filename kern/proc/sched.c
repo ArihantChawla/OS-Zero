@@ -18,10 +18,8 @@ FASTCALL struct task *(*schedpicktask)(struct task *);
 FASTCALL struct task   *taskpick(struct task *task);
 #endif
 
-#if (ZEROULE)
 /* lookup table for fast division with multiplication and shift */
 struct divul scheddivultab[SCHEDHISTORYSIZE];
-#endif
 
 void
 schedinit(void)
@@ -31,9 +29,7 @@ schedinit(void)
 #else
 #error define supported scheduler such as ZEROSCHED
 #endif
-#if (ZEROULE)
     fastuldiv32gentab(scheddivultab, SCHEDHISTORYSIZE);
-#endif
 
     return;
 }

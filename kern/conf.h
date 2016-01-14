@@ -19,6 +19,7 @@
 #define SMP         0           // enable multiprocessor support; FIXME:  broken
 #define EVHZ        1000        // event timer frequency
 #define ZEROSCHED   1           // default scheduler
+#define ZEROINTERSCHED 1        // interactive scheduler
 #define ZEROULE     0
 //#define NPROC       1024        // maximum number of running processes on system
 #define NTASK       4096        // maximum number of running tasks on system

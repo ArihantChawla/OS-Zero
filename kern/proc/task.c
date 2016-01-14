@@ -32,7 +32,9 @@ void tasksetzombie(struct task *task);
 extern struct divul      scheddivultab[SCHEDHISTORYSIZE];
 
 struct taskqueue         taskreadyqueuetab[NCPU][SCHEDNCLASS * SCHEDNCLASSQUEUE] ALIGNED(PAGESIZE);
-static struct tasktabl0  taskwaittab[NLVL0TASK];
+static struct tasktabl0  taskwaittab[NCPU][NLVL0WAIT];
+static struct tasktabl0  taskdeadlinequeue[NCPU][NLVL0DL];
+static long              taskdeadlinebitmap[NCPU][TASKDEADLINEBITMAPNWORD];
 static struct task      *taskstoppedtab[NTASK];
 static struct task      *taskzombietab[NTASK];
 //static struct task taskruntab[SCHEDNCLASS * SCHEDNPRIO];
@@ -222,52 +224,6 @@ taskcalcscore(struct task *task)
     return 0;
 }
 
-static __inline__ long
-taskcalcprio(struct task *task)
-{
-    unsigned long score;
-    long          prio;
-    unsigned long delta = SCHEDINTPRIOMAX - SCHEDINTPRIOMIN + 1;
-    unsigned long diff;
-    unsigned long ntick;
-    unsigned long tickhz;
-    unsigned long total;
-    unsigned long div;
-    unsigned long tmp;
-
-    if (!taskistimeshare(task)) {
-
-        return;
-    }
-    score = taskcalcscore(task);
-    score += task->nice;
-    score = max(SCHEDINTPRIOMIN, score);
-    if (score < SCHEDSCORETHRESHOLD) {
-        prio = SCHEDINTPRIOMIN;
-        delta = fastuldiv32(delta, SCHEDSCORETHRESHOLD, scheddivultab);
-        delta *= score;
-        prio += delta;
-    } else {
-        ntick = task->ntick;
-        total = task->lasttick - task->firsttick;
-        tickhz = ntick >> SCHEDTICKSHIFT;
-        delta = SCHEDBATCH - (SCHEDNCLASSQUEUE >> 1);
-        prio = SCHEDBATCH + (SCHEDNCLASSQUEUE;
-        diff = delta - prio + 1;
-        if (ntick) {
-            tmp = roundup(total, diff);
-            div = fastuldiv32(tmp, diff, scheddivultab);
-            prio += task->nice;
-            tmp = fastuldiv32(tickhz, div, scheddivultab);
-            delta = min(delta, tmp);
-            prio += delta;
-        }
-    }
-    task->prio = prio;
-
-    return prio;
-}
-
 static __inline__ void
 taskadjscore(struct task *task)
 {
@@ -322,6 +278,152 @@ taskadjscore(struct task *task)
 #define QUEUE_TYPE      struct taskqueue
 #include <zero/queue.h>
 
+/* 32-bit time_t values */
+#define taskdlkey0(dl) (((dl) >> 16) & 0xffff)
+#define taskdlkey1(dl) (((dl) >> 8) & 0xff)
+#define taskdlkey2(dl) ((dl) & 0xff)
+
+void
+tasksetdeadline(struct task *task)
+{
+    struct tasktabl0  *l0tab;
+    struct tasktab    *tab;
+    long               cpu = k_curcpu->id;
+    time_t             deadline = task->timelim;
+    unsigned long      key0 = taskdlkey0(deadline);
+    unsigned long      key1 = taskdlkey1(deadline);
+    unsigned long      key2 = taskdlkey2(deadline);
+    long              *map = &taskdeadlinebitmap[cpu][0];
+    void              *ptr = NULL;
+    void             **pptr = NULL;
+    long               fail = 0;
+    struct taskqueue  *queue;
+    void              *ptab[DLNKEY - 1] = { NULL, NULL };
+
+    ptr = &taskdeadlinequeue[cpu][key0];
+    l0tab = ptr;
+    pptr = ptr;
+    mtxlk(&l0tab->lk);
+    if (!ptr) {
+        ptr = kmalloc(NLVL1DL * sizeof(struct tasktab));
+        if (ptr) {
+            kbzero(ptr, NLVL1DL * sizeof(struct tasktab));
+        }
+        ptab[0] = ptr;
+        pptr = ptr;
+    }
+    if (ptr) {
+        ptr = pptr[key1];
+        if (!ptr) {
+            queue = kmalloc(NLVL3WAIT * sizeof(struct taskqueue));
+            if (queue) {
+                kbzero(queue, NLVL3WAIT * sizeof(struct taskqueue));
+            } 
+            ptab[1] = queue;
+            pptr[key1] = queue;
+        } else {
+            queue = pptr[key1];
+        }
+    } else {
+        fail = 1;
+    }
+    if (!fail) {
+        queue = &queue[key2];
+        queueappend(task, &queue);
+        tab = ptab[0];
+        tab->nref++;
+        tab->tab = ptab[1];
+        tab = ptab[1];
+        tab->nref++;
+    }
+    mtxunlk(&l0tab->lk);
+    
+    return;
+}
+
+static __inline__ long
+taskcalcscore(struct task *task)
+{
+    unsigned long run = task->runtime;
+    unsigned long slp = task->slptime;
+    unsigned long div;
+    unsigned long res;
+
+    if (SCHEDSCORETHRESHOLD <= SCHEDSCOREHALF
+        && run >= slp) {
+
+        return SCHEDSCOREHALF;
+    }
+    if (slp > run) {
+        div = max(1, slp >> 6);
+        res = fastuldiv32(run, div, scheddivultab);
+
+        return res;
+    }
+    if (run > slp) {
+        res = SCHEDSCOREMAX;
+        div = max(1, run >> 6);
+        res -= fastuldiv32(slp, div, scheddivultab);
+
+        return res;
+    }
+    /* run == slp */
+    if (run) {
+
+        return SCHEDSCOREHALF;
+    }
+
+    /* run == 0 && slp == 0 */
+    return 0;
+}
+
+static __inline__ long
+taskcalcprio(struct task *task)
+{
+    unsigned long score;
+    long          prio = task->prio;
+    unsigned long delta = SCHEDINTERPRIOMAX - SCHEDINTERPRIOMIN + 1;
+    unsigned long diff;
+    unsigned long ntick;
+    unsigned long tickhz;
+    unsigned long total;
+    unsigned long div;
+    unsigned long tmp;
+    
+    if (!schedistimeshare(prio)) {
+        
+        return;
+    }
+    score = taskcalcscore(task);
+    score += task->nice;
+    score = max(SCHEDINTERPRIOMIN, score);
+    if (score < SCHEDSCORETHRESHOLD) {
+        prio = SCHEDINTERPRIOMIN;
+        delta = fastuldiv32(delta, SCHEDSCORETHRESHOLD, scheddivultab);
+        delta *= score;
+        prio += delta;
+    } else {
+        ntick = task->ntick;
+        total = task->lasttick - task->firsttick;
+        tickhz = ntick >> SCHEDTICKSHIFT;
+        delta = SCHEDBATCH - (SCHEDNCLASSQUEUE >> 1);
+        prio = SCHEDBATCH + (SCHEDNCLASSQUEUE >> 1);
+        diff = delta - prio + 1;
+        if (ntick) {
+            tmp = roundup(total, diff);
+            div = fastuldiv32(tmp, diff, scheddivultab);
+            prio += task->nice;
+            tmp = fastuldiv32(tickhz, div, scheddivultab);
+            delta = min(delta, tmp);
+            prio += delta;
+        }
+    }
+    task->prio = prio;
+    prio >>= 2;
+    
+    return prio;
+}
+
 void
 tasksetready(struct task *task)
 {
@@ -332,7 +434,7 @@ tasksetready(struct task *task)
     long              qid;
     struct taskqueue *queue;
 
-    if (sched == 0) {
+    if (sched < 0 ) {
         if (sched == SCHEDDEADLINE) {
             tasksetdeadline(task);
         } else if (prio < 0) {
@@ -397,7 +499,7 @@ tasksetwait(struct task *task)
     long               key1;
     long               key2;
     long               key3;
-    void              *ptab[TASKNKEY - 1] = { NULL, NULL, NULL };
+    void              *ptab[WAITNKEY - 1] = { NULL, NULL, NULL };
 
     key0 = taskwaitkey0(wtchan);
     key1 = taskwaitkey1(wtchan);
@@ -408,9 +510,9 @@ tasksetwait(struct task *task)
     pptr = ptr;
     mtxlk(&l0tab->lk);
     if (!ptr) {
-        ptr = kmalloc(NLVL1TASK * sizeof(struct tasktab));
+        ptr = kmalloc(NLVL1WAIT * sizeof(struct tasktab));
         if (ptr) {
-            kbzero(ptr, NLVL1TASK * sizeof(struct tasktab));
+            kbzero(ptr, NLVL1WAIT * sizeof(struct tasktab));
         }
         ptab[0] = ptr;
         pptr = ptr;
@@ -418,9 +520,9 @@ tasksetwait(struct task *task)
     if (ptr) {
         ptr = pptr[key1];
         if (!ptr) {
-            ptr = kmalloc(NLVL2TASK * sizeof(struct tasktab));
+            ptr = kmalloc(NLVL2WAIT * sizeof(struct tasktab));
             if (ptr) {
-                kbzero(ptr, NLVL2TASK * sizeof(struct tasktab));
+                kbzero(ptr, NLVL2WAIT * sizeof(struct tasktab));
             }
         }
         ptab[1] = ptr;
@@ -432,9 +534,9 @@ tasksetwait(struct task *task)
     if (ptr) {
         ptr = pptr[key2];
         if (!ptr) {
-            queue = kmalloc(NLVL3TASK * sizeof(struct taskqueue));
+            queue = kmalloc(NLVL3WAIT * sizeof(struct taskqueue));
             if (queue) {
-                kbzero(queue, NLVL3TASK * sizeof(struct taskqueue));
+                kbzero(queue, NLVL3WAIT * sizeof(struct taskqueue));
             } 
             ptab[2] = queue;
             pptr[key2] = queue;
@@ -594,8 +696,8 @@ taskunwait(uintptr_t wtchan)
     long               key3 = taskwaitkey3(wtchan);
     long               prio;
     void             **pptr;
-    void              *ptab[TASKNKEY - 1] = { NULL, NULL, NULL };
-    void             **pptab[TASKNKEY - 1] = { NULL, NULL, NULL };
+    void              *ptab[WAITNKEY - 1] = { NULL, NULL, NULL };
+    void             **pptab[WAITNKEY - 1] = { NULL, NULL, NULL };
 
     l0tab = &taskwaittab[key0];
     mtxlk(&l0tab->lk);

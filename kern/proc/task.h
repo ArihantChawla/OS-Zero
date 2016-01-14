@@ -23,8 +23,9 @@
 #include <kern/unit/ppc/asm.h>
 #endif
 
-#define TASKRUNBITMAPNWORD max(SCHEDNTOTALQUEUE / sizeof(long),         \
-                               CLSIZE / sizeof(long))
+#define TASKDEADLINEBITMAPNWORD ((1UL << 16) / sizeof(long))
+#define TASKRUNBITMAPNWORD      max(SCHEDNTOTALQUEUE / sizeof(long),    \
+                                    CLSIZE / sizeof(long))
 
 #define __errnoloc() (&k_curtask->errnum)
 
@@ -86,25 +87,30 @@ struct task {
 //    long           interact;
 };
 
+#define NLVL0DL      (1U << 16)
+#define NLVL1DL      (1U << 8)
+#define NLVL2DL      (1U << 8)
+#define DLNKEY       3
+
 #if (PTRSIZE == 8)
-#define NLVLTASKLOG2 16
+#define NLVLWAITLOG2 16
 #elif (PTRSIZE == 4)
-#define NLVLTASKLOG2 8
+#define NLVLWAITLOG2 8
 #endif
-#define NLVL0TASK    (1 << NLVLTASKLOG2)
-#define NLVL1TASK    (1 << NLVLTASKLOG2)
-#define NLVL2TASK    (1 << NLVLTASKLOG2)
-#define NLVL3TASK    (1 << NLVLTASKLOG2)
-#define TASKNKEY     4
+#define NLVL0WAIT    (1 << NLVLWAITLOG2)
+#define NLVL1WAIT    (1 << NLVLWAITLOG2)
+#define NLVL2WAIT    (1 << NLVLWAITLOG2)
+#define NLVL3WAIT    (1 << NLVLWAITLOG2)
+#define WAITNKEY     4
 
 #define taskwaitkey0(wc)                                                \
-    (((wc) >> (3 * NLVLTASKLOG2)) & ((1UL << NLVLTASKLOG2) - 1))
+    (((wc) >> (3 * NLVLWAITLOG2)) & ((1UL << NLVLWAITLOG2) - 1))
 #define taskwaitkey1(wc)                                                \
-    (((wc) >> (2 * NLVLTASKLOG2)) & ((1UL << NLVLTASKLOG2) - 1))
+    (((wc) >> (2 * NLVLWAITLOG2)) & ((1UL << NLVLWAITLOG2) - 1))
 #define taskwaitkey2(wc)                                                \
-    (((wc) >> (1 * NLVLTASKLOG2)) & ((1UL << NLVLTASKLOG2) - 1))
+    (((wc) >> (1 * NLVLWAITLOG2)) & ((1UL << NLVLWAITLOG2) - 1))
 #define taskwaitkey3(wc)                                                \
-    ((wc) & ((1UL << NLVLTASKLOG2) - 1))
+    ((wc) & ((1UL << NLVLWAITLOG2) - 1))
 
 struct tasktabl0 {
     volatile long   lk;

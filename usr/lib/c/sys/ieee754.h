@@ -42,7 +42,9 @@
 #ifndef __SYS_IEEE754_H__
 #define __SYS_IEEE754_H__
 
+#include <features.h>
 #include <endian.h>
+#include <zero/param.h>
 
 /*
  * <sys/ieee754.h> defines the layout of IEEE 754 floating point types.

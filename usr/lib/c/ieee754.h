@@ -3,6 +3,7 @@
 
 #include <features.h>
 #include <endian.h>
+#include <zero/param.h>
 
 /* FIXME: add 128-bit unions and pick the right ones for long double :) */
 
@@ -18,17 +19,29 @@
 #define IEEE754_LONG_DOUBLE128_BIAS 0x7fff
 
 #if defined(_GNU_SOURCE)
-#define ieee754_float       __ieee754f
-#define ieee754_double      __ieee754d
-#define ieee754_long_double __ieee754ld80
-#define val                 ieee
-#define nan                 ieee_nan
-#define mantissa            mant
-#define mantissa0           mant0
-#define mantissa1           mant1
-#define exponent            exp
-#define negative            sign
-#define quiet_nan           quiet
+#define ieee754_float               __ieee754f
+#define ieee754_double              __ieee754d
+#if defined(LONGDOUBLESIZE) && (LONGDOUBLESIZE == 80)
+#define ieee754_long_double         __ieee754ld80
+#elif defined(LONGDOUBLESIZE) && (LONGDOUBLESIZE == 128)
+#define ieee754_long_double         __ieee754ld128
+#endif
+#define val                         ieee
+#define nan                         ieee_nan
+#define mantissa                    mant
+#define mantissa0                   mant0
+#define mantissa1                   mant1
+#define exponent                    exp
+#define negative                    sign
+#define quiet_nan                   quiet
+#endif
+
+#if defined(LONGDOUBLESIZE) && (LONGDOUBLESIZE == 80)
+#define IEEE754_LONG_DOUBLE_BIAS    IEEE754_LONG_DOUBLE80_BIAS
+#define __ieee754ld                 __ieee754ld80
+#elif defined(LONGDOUBLESIZE) && (LONGDOUBLESIZE == 128)
+#define IEEE754_LONG_DOUBLE_BIAS    IEEE754_LONG_DOUBLE128_BIAS
+#define __ieee754ld                 __ieee754ld128
 #endif
 
 #if (__BYTE_ORDER == __LITTLE_ENDIAN)
