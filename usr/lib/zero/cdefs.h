@@ -30,7 +30,7 @@
 /* ALWAYS inline the function */
 #define INLINE       __inline__ __attribute__ ((__always_inline__))
 /* do NOT inline the function */
-#define NOINLINE     __attribute__((__noinline__))
+#define NOINLINE     __attribute__ ((__noinline__))
 #define WEAK         __attribute__ ((__weak__))
 #define WEAKALIAS(n) __attribute__ ((weak, alias(#n)))
 #define UNUSED       __attribute__ ((unused))
