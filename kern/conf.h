@@ -17,9 +17,9 @@
 
 #define HZ          250         // scheduler timer frequency
 #define SMP         0           // enable multiprocessor support; FIXME:  broken
-#define EVHZ        1000        // event timer frequency
+#define FASTHZ      1000        // fast timer frequency (interactive tasks etc.)
 #define ZEROSCHED   1           // default scheduler
-#define ZEROINTERSCHED 1        // interactive scheduler
+#define ZEROINTSCHED 1          // scheduler with interactivity-scoring
 #define ZEROULE     0
 //#define NPROC       1024        // maximum number of running processes on system
 #define NTASK       4096        // maximum number of running tasks on system

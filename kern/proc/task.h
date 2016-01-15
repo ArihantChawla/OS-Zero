@@ -24,7 +24,7 @@
 #endif
 
 #define TASKDEADLINEBITMAPNWORD ((1UL << 16) / sizeof(long))
-#define TASKRUNBITMAPNWORD      max(SCHEDNTOTALQUEUE / sizeof(long),    \
+#define TASKREADYBITMAPNWORD    max(SCHEDNTOTALQUEUE / sizeof(long),    \
                                     CLSIZE / sizeof(long))
 
 #define __errnoloc() (&k_curtask->errnum)
@@ -50,12 +50,14 @@ struct taskstk {
 };
 
 /* process or thread attributes */
+/* bits for schedflg-member */
+#define TASKHASINPUT (1 << 0)
 struct task {
     /* thread control block - KEEP THIS FIRST in the structure */
     struct m_task   m_task;             // machine-thread control block
     /* scheduler parameters */
     long            sched;              // thread scheduler class
-    long            input;              // received user input [interrupt]
+    long            schedflg;           // received user input [interrupt]
     long            prio;               // priority; < 0 for SCHEDFIFO realtime
     long            nice;               // priority adjustment
     long            state;              // thread state

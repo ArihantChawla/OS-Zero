@@ -13,9 +13,9 @@
 #endif
 #include <kern/unit/ia32/task.h>
 
-FASTCALL struct task *(*schedpicktask)(struct task *);
+FASTCALL struct task        *(*schedpicktask)(struct task *);
 #if (ZEROSCHED)
-FASTCALL struct task   *taskpick(struct task *task);
+extern FASTCALL struct task   *taskpick(struct task *task);
 #endif
 
 /* lookup table for fast division with multiplication and shift */

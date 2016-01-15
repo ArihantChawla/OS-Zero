@@ -108,7 +108,7 @@ static long tasknicetab[64]
 };
 static struct taskqueue  taskrtqueue;
 static struct taskqueue  tasksleepqueue;
-static long              taskrunbitmap[NCPU][TASKRUNBITMAPNWORD];
+static long              taskreadybitmap[NCPU][TASKREADYBITMAPNWORD];
 typedef void tasksetfunc_t(struct task *);
 tasksetfunc_t           *tasksetfunctab[TASKNSTATE]
 = {
@@ -160,6 +160,7 @@ tasksetnice(struct task *task, long val)
     return nice;
 }
 
+#if 0
 static __inline__ long
 taskadjprio(struct task *task)
 {
@@ -167,10 +168,11 @@ taskadjprio(struct task *task)
     long prio = task->prio;
 
     prio++;
-    prio = min(prio, SCHEDNORMALPRIOMAX);
+    prio = min(prio, SCHEDUSERPRIOMAX);
 
     return prio;
 }
+#endif
 
 static __inline__ long
 taskwakeprio(struct task *task)
@@ -179,7 +181,7 @@ taskwakeprio(struct task *task)
     long nice = task->nice;
     long prio = ((sched < 0)
                  ? task->prio
-                 : SCHEDINTERPRIOMIN);
+                 : SCHEDINTPRIOMIN);
 
     prio >>= 2;
 
@@ -229,8 +231,8 @@ taskadjscore(struct task *task)
 {
     unsigned long run = task->runtime;
     unsigned long slp = task->slptime;
-    unsigned long sum = run + slp;
     unsigned long lim = SCHEDHISTORYSIZE;
+    unsigned long sum = run + slp;
 
     if (sum < lim) {
 
@@ -239,11 +241,11 @@ taskadjscore(struct task *task)
     lim <<= 1;
     if (sum > lim) {
         if (run > slp) {
-            run = SCHEDHISTORYSIZE;
+            run = lim;
             slp = 1;
         } else {
             run = 1;
-            slp = SCHEDHISTORYSIZE;
+            slp = lim;
         }
         task->runtime = run;
         task->slptime = slp;
@@ -269,7 +271,7 @@ taskadjscore(struct task *task)
     return;
 }
 
-#endif /* ZEROULE */
+#endif /* ZEROULE && 0 */
 
 #undef QUEUE_SINGLE_TYPE
 #undef QUEUE_ITEM_TYPE
@@ -377,12 +379,13 @@ taskcalcscore(struct task *task)
     return 0;
 }
 
+/* applied for time-share tasks of classes SCHEDRESPONSIVE and SCHEDNORMAL */
 static __inline__ long
 taskcalcprio(struct task *task)
 {
     unsigned long score;
     long          prio = task->prio;
-    unsigned long delta = SCHEDINTERPRIOMAX - SCHEDINTERPRIOMIN + 1;
+    unsigned long delta = SCHEDINTPRIOMAX - SCHEDINTPRIOMIN + 1;
     unsigned long diff;
     unsigned long ntick;
     unsigned long tickhz;
@@ -390,15 +393,11 @@ taskcalcprio(struct task *task)
     unsigned long div;
     unsigned long tmp;
     
-    if (!schedistimeshare(prio)) {
-        
-        return;
-    }
     score = taskcalcscore(task);
     score += task->nice;
-    score = max(SCHEDINTERPRIOMIN, score);
+    score = max(SCHEDINTPRIOMIN, score);
     if (score < SCHEDSCORETHRESHOLD) {
-        prio = SCHEDINTERPRIOMIN;
+        prio = SCHEDINTPRIOMIN;
         delta = fastuldiv32(delta, SCHEDSCORETHRESHOLD, scheddivultab);
         delta *= score;
         prio += delta;
@@ -418,7 +417,7 @@ taskcalcprio(struct task *task)
             prio += delta;
         }
     }
-    task->prio = prio;
+//    task->prio = prio;
     prio >>= 2;
     
     return prio;
@@ -430,11 +429,14 @@ tasksetready(struct task *task)
     long              cpu = k_curcpu->id;
     long              sched = task->sched;
     long              prio = task->prio;
-    long             *map = &taskrunbitmap[cpu][0];
+    long             *map = &taskreadybitmap[cpu][0];
+    long              lim;
+    long              flg;
     long              qid;
     struct taskqueue *queue;
 
     if (sched < 0 ) {
+        /* SCHEDDEADLINE or SCHEDREALTIME */
         if (sched == SCHEDDEADLINE) {
             tasksetdeadline(task);
         } else if (prio < 0) {
@@ -456,31 +458,50 @@ tasksetready(struct task *task)
             setbit(map, qid);
             mtxunlk(&queue->lk);
         }
-    } else {
-        /* non-system and idle tasks */
-#if (ZEROINTERSCHED)
-        if (task->input) {
+    } else if (sched != SCHEDIDLE) {
+        /* SCHEDSYSTEM..SCHEDBATCH */
+#if (ZEROINTSCHED)
+        flg = task->schedflg;
+        if (flg & TASKHASINPUT) {
             /* boost user-interrupt task to highest priority */
             task->sched = SCHEDRESPONSIVE;
             prio = SCHEDUSERBASEPRIO;
-            task->input = 0;
+            task->prio = prio;
+        } else if (schedistimeshare(sched)) {
+            /* calculate priority for time-share task */
+            prio = taskcalcprio(task);
         } else {
-            qid = taskcalcprio(task);
+            /* increment priority by one */
+            prio++;
+            lim = SCHEDNCLASSPRIO + sched * SCHEDNCLASSPRIO - 1;
+//            prio = min(prio, SCHEDUSERPRIOMAX);
+            prio = min(prio, lim);
+            task->prio = prio;
         }
 #else
         prio++;
-        prio = min(prio, SCHEDNORMALPRIOMAX);
+        lim = SCHEDNCLASSPRIO + sched * SCHEDNCLASSPRIO - 1;
+        prio = min(prio, lim);
         task->prio = prio;
+#endif
         prio >>= 2;
         qid = prio;
-#endif
+        queue = &taskreadyqueuetab[cpu][qid];
+        mtxlk(&queue->lk);
+        queueappend(task, &queue);
+        setbit(map, qid);
+        mtxunlk(&queue->lk);
+    } else {
+        /* SCHEDIDLE */
+        prio >>= 2;
+        qid = prio;
         queue = &taskreadyqueuetab[cpu][qid];
         mtxlk(&queue->lk);
         queueappend(task, &queue);
         setbit(map, qid);
         mtxunlk(&queue->lk);
     }
-
+    
     return;
 }
     
@@ -629,7 +650,7 @@ taskpick(struct task *curtask)
     long              sched = curtask->sched;
     long              state = curtask->state;
     tasksetfunc_t    *func = tasksetfunctab[state];
-    long             *map = &taskrunbitmap[cpu][0];
+    long             *map = &taskreadybitmap[cpu][0];
     unsigned long     ndx;
     long              val;
     long              prio;
@@ -640,7 +661,7 @@ taskpick(struct task *curtask)
     }
     do {
         ndx = 0;
-        for ( ; ndx < TASKRUNBITMAPNWORD ; ndx++) {
+        for ( ; ndx < TASKREADYBITMAPNWORD ; ndx++) {
             val = map[ndx];
             if (val) {
                 prio = tzerol(val);
