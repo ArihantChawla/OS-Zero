@@ -24,7 +24,7 @@
 #endif
 
 #define TASKDEADLINEBITMAPNWORD ((1UL << 16) / sizeof(long))
-#define TASKREADYBITMAPNWORD    max(SCHEDNTOTALQUEUE / sizeof(long),    \
+#define TASKREADYBITMAPNWORD    max(SCHEDNQUEUE / sizeof(long),         \
                                     CLSIZE / sizeof(long))
 
 #define __errnoloc() (&k_curtask->errnum)
