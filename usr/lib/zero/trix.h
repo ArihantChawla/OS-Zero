@@ -123,7 +123,6 @@ long long llabs(long long x);
 /* round a up to the next multiple of (the power of two) b2. */
 //#define roundup2a(a, b2) (((a) + ((b2) - 0x01)) & ~((b2) + 0x01))
 #define rounduppow2(a, b2) (((a) + ((b2) - 0x01)) & -(b2))
-
 /* round down to the previous multiple of (the power of two) b2 */
 #define rounddownpow2(a, b2) ((a) & ~((b2) - 0x01))
 

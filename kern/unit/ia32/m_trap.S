@@ -54,7 +54,7 @@
 .globl	irqerror, irqspurious, mpspurint, irqtmrcnt
 #endif
 
-.extern	sigfunc, tmrsyncscr, schedpicktask
+.extern	sigfunc, tmrsyncscr, schedswtchtask
 .extern vmpagefault, kbdtrap, mousetrap
 #if (APIC)
 .extern	mpapic
@@ -672,10 +672,10 @@ _havestk:
 	//	movl	%gs:8, %eax		// task structure address
 	/* task structure address is still in %eax */
 	movl	%ebx, 28(%eax)		// task->genregs.ebp = pre-trap EBP
-	movl	schedpicktask, %ecx	// get scheduler-specific function
+	movl	schedswtchtask, %ecx	// get scheduler-specific function
 	leal	4(%ebp), %esp		// restore stack pointer
 	pushl	%eax			// store copy of task pointer
-	call	*%ecx			// call scheduler function (taskpick)
+	call	*%ecx			// call scheduler function (taskswtch)
 	popl	%edx			// pop earlier task pointer
 	cmpl	%eax, %edx		// did we reschedule the same task?
 	jne	_swtch			// if not, branch to _swtch

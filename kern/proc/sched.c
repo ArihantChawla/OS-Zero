@@ -13,9 +13,9 @@
 #endif
 #include <kern/unit/ia32/task.h>
 
-FASTCALL struct task        *(*schedpicktask)(struct task *);
+FASTCALL struct task        *(*schedswtchtask)(struct task *);
 #if (ZEROSCHED)
-extern FASTCALL struct task   *taskpick(struct task *task);
+extern FASTCALL struct task   *taskswtch(struct task *task);
 #endif
 
 /* lookup table for fast division with multiplication and shift */
@@ -25,7 +25,7 @@ void
 schedinit(void)
 {
 #if (ZEROSCHED)
-    schedpicktask = taskpick;
+    schedswtchtask = taskswtch;
 #else
 #error define supported scheduler such as ZEROSCHED
 #endif
@@ -40,7 +40,7 @@ schedyield(void)
     struct task *oldtask = k_curtask;
     struct task *task = NULL;
 
-    task = schedpicktask(oldtask);
+    task = schedswtchtask(oldtask);
     if (task != oldtask) {
         m_taskjmp(&task->m_task);
     } else {

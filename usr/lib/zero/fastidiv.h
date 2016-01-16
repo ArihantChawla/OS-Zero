@@ -8,6 +8,8 @@
 #include <kern/util.h>
 #include <kern/unit/x86/cpu.h>
 #include <kern/unit/x86/trap.h>
+#else /* !defined(__KERNEL__) */
+#include <stdlib.h>
 #endif
 
 #if (LONGLONGSIZE == 8)

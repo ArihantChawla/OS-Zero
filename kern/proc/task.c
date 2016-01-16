@@ -28,30 +28,22 @@ void tasksetsleeping(struct task *task);
 void tasksetstopped(struct task *task);
 void tasksetzombie(struct task *task);
 
-extern struct divul          scheddivultab[SCHEDHISTORYSIZE];
+extern struct divul         scheddivultab[SCHEDHISTORYSIZE];
 
-struct taskqueue             taskreadytab0[NCPU][SCHEDNQUEUE] ALIGNED(PAGESIZE);
-struct taskqueue             taskreadytab1[NCPU][SCHEDNQUEUE];
-static struct taskqueuepair  taskreadytab[NCPU];
-static struct tasktabl0      taskwaittab[TASKNLVL0WAIT] ALIGNED(PAGESIZE);
-static struct tasktabl0      taskdeadlinetab[TASKNLVL0DL];
-static struct task          *taskstoppedtab[NTASK];
-static struct task          *taskzombietab[NTASK];
-static long                  taskdeadlinemap[TASKDEADLINEMAPNWORD];
 static long tasknicetab[64]
 = {
-    -51,
-    -49,
-    -48,
-    -46,
-    -44,
-    -43,
-    -41,
-    -40,
-    -38,
-    -36,
-    -35,
-    -33,
+    0,
+    0,
+    0,
+    0,
+    0,
+    0,
+    0,
+    0,
+    0,
+    0,
+    0,
+    0,
     -31,
     -29,
     -28,
@@ -92,25 +84,101 @@ static long tasknicetab[64]
     27,
     29,
     30,
-    30,
-    32,
-    33,
-    35,
-    36,
-    38,
-    40,
-    41,
-    43,
-    44,
-    46,
-    48
+    0,
+    0,
+    0,
+    0,
+    0,
+    0,
+    0,
+    0,
+    0,
+    0,
+    0,
+    0,
+    0
 };
-static struct taskqueue     taskidletab[SCHEDNCLASSQUEUE];
-static struct taskqueuehdr  taskidlehdr;
-static long                 taskidlemap[TASKIDLEMAPNWORD];
-static struct taskqueue     tasksleepqueue;
+static long taskslicetab[64]
+= {
+    0,
+    0,
+    0,
+    0,
+    0,
+    0,
+    0,
+    0,
+    0,
+    0,
+    0,
+    0,
+    4,
+    4,
+    8,
+    8,
+    12,
+    12,
+    16,
+    16,
+    20,
+    20,
+    24,
+    24,
+    28,
+    28,
+    32,
+    32,
+    36,
+    36,
+    40,
+    40,
+    44,
+    44,
+    48,
+    48,
+    52,
+    52,
+    56,
+    56,
+    60,
+    60,
+    64,
+    64,
+    68,
+    68,
+    72,
+    72,
+    76,
+    76,
+    80,
+    80,
+    0,
+    0,
+    0,
+    0,
+    0,
+    0,
+    0,
+    0,
+    0,
+    0,
+    0,
+    0
+};
+static long                *taskniceptr = &tasknicetab[32];
+static long                *tasksliceptr = &taskslicetab[32];
+static struct tasktabl0     taskwaittab[TASKNLVL0WAIT] ALIGNED(PAGESIZE);
+static struct tasktabl0     taskdeadlinetab[TASKNLVL0DL];
+static struct task         *taskstoppedtab[NTASK];
+static struct task         *taskzombietab[NTASK];
+struct taskqueue            taskreadytab0[NCPU][SCHEDNQUEUE];
+struct taskqueue            taskreadytab1[NCPU][SCHEDNQUEUE];
 static long                 taskreadymap0[NCPU][TASKREADYMAPNWORD];
 static long                 taskreadymap1[NCPU][TASKREADYMAPNWORD];
+static struct taskqueueset  taskreadytab[NCPU];
+static struct taskqueue     taskidletab[NCPU][SCHEDNIDLE];
+static long                 taskidlemap[NCPU][TASKIDLEMAPNWORD];
+static long                 taskdeadlinemap[TASKDEADLINEMAPNWORD];
 typedef void tasksetfunc_t(struct task *);
 tasksetfunc_t              *tasksetfunctab[TASKNSTATE]
 = {
@@ -120,23 +188,24 @@ tasksetfunc_t              *tasksetfunctab[TASKNSTATE]
     tasksetstopped,     // TASKSTOPPED
     tasksetzombie       // TASKZOMBIE
 };
-static long             *taskniceptr = &tasknicetab[32];
+static struct taskqueue  tasksleepqueue;
 
 void
 taskinitsched(void)
 {
-    long                  lim = NCPU;
-    struct taskqueuepair *pair = &taskreadytab[0];
-    long                  cpu;
+    long                 lim = NCPU;
+    struct taskqueueset *cpuset = &taskreadytab[0];
+    long                 cpu;
 
     for (cpu = 0 ; cpu < lim ; cpu++) {
-        pair->cur = &taskreadytab0[cpu][0];
-        pair->next = &taskreadytab1[cpu][0];
-        pair->curmap = &taskreadymap0[cpu][0];
-        pair->nextmap = &taskreadymap1[cpu][0];
-        pair++;
+        cpuset->cur = &taskreadytab0[cpu][0];
+        cpuset->next = &taskreadytab1[cpu][0];
+        cpuset->idle = &taskidletab[cpu][0];
+        cpuset->curmap = &taskreadymap0[cpu][0];
+        cpuset->nextmap = &taskreadymap1[cpu][0];
+        cpuset->idlemap = taskidlemap[cpu][0];
+        cpuset++;
     }
-    taskidlehdr.tab = taskidletab;
 
     return;
 }
@@ -144,10 +213,10 @@ taskinitsched(void)
 void
 taskswapqueues(long cpu)
 {
-    struct taskqueuepair *pair = &taskreadytab[cpu];
+    struct taskqueueset *cpuset = &taskreadytab[cpu];
     
-    ptrswap(pair->cur, pair->next);
-    ptrswap(pair->curmap, pair->nextmap);
+    ptrswap(cpuset->cur, cpuset->next);
+    ptrswap(cpuset->curmap, cpuset->nextmap);
 
     return;
 }
@@ -180,7 +249,7 @@ taskjmp(struct task *task)
 #if (ZEROSCHED)
 
 static __inline__ void
-tasksetnice(struct task *task, long val)
+taskadjnice(struct task *task, long val)
 {
     long nice;
     
@@ -275,11 +344,11 @@ taskcalcscore(struct task *task)
 
 /* applied for time-share tasks of classes SCHEDRESPONSIVE and SCHEDNORMAL */
 static __inline__ long
-taskcalcintparm(struct task *task)
+taskcalcintparm(struct task *task, long *retscore)
 {
     unsigned long score;
     long          prio = task->prio;
-    unsigned long delta = SCHEDINTPRIOMAX - SCHEDINTPRIOMIN + 1;
+    unsigned long range = SCHEDINTPRIOMAX - SCHEDINTPRIOMIN + 1;
     unsigned long diff;
     unsigned long ntick;
     unsigned long tickhz;
@@ -292,26 +361,26 @@ taskcalcintparm(struct task *task)
     score = max(SCHEDINTPRIOMIN, score);
     if (score < SCHEDSCORETHRESHOLD) {
         prio = SCHEDINTPRIOMIN;
-        delta = fastuldiv32(delta, SCHEDSCORETHRESHOLD, scheddivultab);
-        delta *= score;
-        prio += delta;
+        range = fastuldiv32(range, SCHEDSCORETHRESHOLD, scheddivultab);
+        range *= score;
+        prio += range;
     } else {
         ntick = task->ntick;
-        total = task->lasttick - task->firsttick;
+        total = task->lastrun - task->firstrun;
         tickhz = ntick >> SCHEDTICKSHIFT;
-        delta = SCHEDBATCH - (SCHEDNCLASSQUEUE >> 1);
+        diff = SCHEDBATCH - (SCHEDNCLASSQUEUE >> 1);
         prio = SCHEDBATCH + (SCHEDNCLASSQUEUE >> 1);
-        diff = delta - prio + 1;
+        range = diff - prio + 1;
         if (ntick) {
-            tmp = roundup(total, diff);
-            div = fastuldiv32(tmp, diff, scheddivultab);
+            total = roundup(total, range);
+            div = fastuldiv32(total, range, scheddivultab);
             prio += task->nice;
             tmp = fastuldiv32(tickhz, div, scheddivultab);
-            delta = min(delta, tmp);
-            prio += delta;
+            diff = min(diff, tmp);
+            prio += diff;
         }
     }
-    task->score = score;
+    *retscore = score;
     
     return prio;
 }
@@ -404,29 +473,31 @@ tasksetdeadline(struct task *task)
 void
 tasksetready(struct task *task)
 {
-    long              cpu = k_curcpu->id;
-    long              sched = task->sched;
-    long              prio = task->prio;
-    struct taskqueue *queue;
-    long             *map;
-    long              lim;
-    long              flg;
+    long                 cpu = k_curcpu->id;
+    long                 sched = task->sched;
+    long                 prio = task->prio;
+    long                 score = ~0L;
+    struct taskqueueset *cpuset = &taskreadytab[cpu];
+    struct taskqueue    *queue;
+    long                *map;
+    long                 lim;
+    long                 flg;
 
     if (sched == SCHEDFIXED) {
-        /* insert into fixed-priority queue */
-        queue = taskreadytab[cpu].cur;
-        map = taskreadytab[cpu].curmap;
+        /* insert into [current] fixed-priority queue */
+        queue = cpuset->cur;
+        map = cpuset->curmap;
         queue += prio;
         queueappend(task, &queue);
         setbit(map, prio);
     } else if (sched <= SCHEDREALTIME) {
-        /* SCHEDDEADLINE, SCHEDFIXED, SCHEDINTERRUPT or SCHEDREALTIME */
+        /* SCHEDDEADLINE, SCHEDINTERRUPT or SCHEDREALTIME */
         if (sched == SCHEDDEADLINE) {
             tasksetdeadline(task);
         } else {
             /* insert onto current queue */
-            queue = taskreadytab[cpu].cur;
-            map = taskreadytab[cpu].curmap;
+            queue = cpuset->cur;
+            map = cpuset->curmap;
             if (sched == SCHEDINTERRUPT) {
                 queue += prio;
                 queueappend(task, &queue);
@@ -455,37 +526,36 @@ tasksetready(struct task *task)
             task->prio = prio;
         } else if (schedistimeshare(sched)) {
             /* SCHEDRESPONSIVE or SCHEDNORMAL; calculate timeshare priority */
-            prio = taskcalcintparm(task);
-            prio >>= 2;
+            prio = taskcalcintparm(task, &score);
+            prio >>= 1;
         } else {
             /* SCHEDBATCH; increment priority by one */
             lim = SCHEDNCLASS * SCHEDNCLASSPRIO - 1;
             prio++;
             prio = min(prio, lim);
             task->prio = prio;
-            prio >>= 2;
+            prio >>= 1;
         }
-        if (task->score) {
+        if (schedisinteract(score)) {
             /* if interactive, insert onto current queue */
-            queue = taskreadytab[cpu].cur;
-            map = taskreadytab[cpu].curmap;
+            queue = cpuset->cur;
+            map = cpuset->curmap;
         } else {
             /* if not interactive, insert onto next queue */
-            queue = taskreadytab[cpu].next;
-            map = taskreadytab[cpu].nextmap;
+            queue = cpuset->next;
+            map = cpuset->nextmap;
         }
         queue += prio;
+        task->score = score;
         queueappend(task, &queue);
         setbit(map, prio);
     } else {
-        mtxlk(&taskidlehdr.lk);
-        /* insert into idle queue */
-        queue = &taskidlehdr.tab[prio];
-        map = taskidlemap;
         /* SCHEDIDLE */
+        /* insert into idle queue */
+        queue = cpuset->idle;
+        map = cpuset->idlemap;
         queueappend(task, &queue);
         setbit(map, prio);
-        mtxunlk(&taskidlehdr.lk);
     }
     
     return;
@@ -626,24 +696,31 @@ tasksetzombie(struct task *task)
     return;
 }
 
+#define m_settask(task)                                                 \
+    do {                                                                \
+        k_curtask = (task);                                             \
+        k_curproc = (task)->proc;                                       \
+        k_curpid = (task)->id;                                          \
+    } while (0)
+
 /* switch tasks */
 FASTCALL
 struct task *
-taskpick(struct task *curtask)
+taskswtch(struct task *curtask)
 {
-    long              cpu = k_curcpu->id;
-    struct task      *task = NULL;
-    long              sched = curtask->sched;
-    long              state = curtask->state;
-//    long             *map = &taskreadymap0[cpu][0];
-    struct taskqueue *queue;
-    long             *map;
-    tasksetfunc_t    *func;
-    long              ndx;
-    long              val;
-    long              qid;
-    long              lim;
-    long              loop;
+    long                 cpu = k_curcpu->id;
+    struct task         *task = NULL;
+    long                 sched = curtask->sched;
+    long                 state = curtask->state;
+    struct taskqueueset *cpuset = &taskreadytab[cpu];
+    struct taskqueue    *queue;
+    long                *map;
+    tasksetfunc_t       *func;
+    long                 ndx;
+    long                 val;
+    long                 qid;
+    long                 lim;
+    long                 loop;
 
     if (curtask) {
         if (sched >= SCHEDINTERRUPT) {
@@ -657,10 +734,10 @@ taskpick(struct task *curtask)
     do {
         loop = 1;
         do {
-            lim = rounduppow2(SCHEDNQUEUE,
-                              CHAR_BIT * sizeof(long));
-            queue = taskreadytab[cpu].cur;
-            map = taskreadytab[cpu].curmap;
+            /* loop over current and next priority-queues */
+            lim = rounduppow2(SCHEDNQUEUE, CHAR_BIT * sizeof(long));
+            queue = cpuset->cur;
+            map = cpuset->curmap;
             for (ndx = 0 ; ndx < lim ; ndx += CHAR_BIT * sizeof(long)) {
                 val = map[ndx];
                 if (val) {
@@ -668,50 +745,46 @@ taskpick(struct task *curtask)
                     qid += ndx * sizeof(long) * CHAR_BIT;
                     queue += qid;
                     task = queuepop(&queue);
-                    if ((task) && queueisempty(&queue)) {
-                        clrbit(map, qid);
-                    }
                     if (task) {
-                        
-                        break;
-                    }
-                }
-            }
-            if (!task) {
-                lim = rounduppow2(SCHEDNCLASSQUEUE, CHAR_BIT * sizeof(long));
-                mtxlk(&taskidlehdr.lk);
-                map = taskidlemap;
-                for (ndx = 0 ; ndx < lim ; ndx += CHAR_BIT * sizeof(long)) {
-                    val = map[ndx];
-                    if (val) {
-                        qid = tzerol(val);
-                        qid += ndx * sizeof(long) * CHAR_BIT;
-                        queue = &taskidlehdr.tab[qid];
-                        task = queuepop(&queue);
-                        if ((task) && queueisempty(&queue)) {
+                        if (queueisempty(&queue)) {
                             clrbit(map, qid);
                         }
-                        if (task) {
+                        m_settask(task);
 
-                            break;
-                        }
+                        return task;
                     }
                 }
-                mtxunlk(&taskidlehdr.lk);
             }
-            if ((loop) && !task) {
+            if (loop) {
+                /* if no task found during the first iteration, switch queues */
                 taskswapqueues(cpu);
             }
-        } while ((loop--) && !task);
-        if (!task) {
-            k_enabintr();
-            m_waitint();
+        } while (loop--);
+        /* if both current and next queues are empty, look for an idle task */
+        lim = rounduppow2(SCHEDNIDLE, CHAR_BIT * sizeof(long));
+        queue = cpuset->idle;
+        map = cpuset->idlemap;
+        for (ndx = 0 ; ndx < lim ; ndx += CHAR_BIT * sizeof(long)) {
+            val = map[ndx];
+            if (val) {
+                qid = tzerol(val);
+                qid += ndx * sizeof(long) * CHAR_BIT;
+                queue += qid;
+                task = queuepop(&queue);
+                if (task) {
+                    if (queueisempty(&queue)) {
+                        clrbit(map, qid);
+                    }
+                    m_settask(task);
+                    
+                    return task;
+                }
+            }
         }
-    } while (!task);
-    k_curtask = task;
-    k_curproc = task->proc;
-    k_curpid = task->id;
-//    taskjmp(task);
+        /* FIXME: try to pull threads from other cores here */
+        k_enabintr();
+        m_waitint();
+    } while (1);
 
     return task;
 }

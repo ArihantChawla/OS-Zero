@@ -23,10 +23,15 @@
 #include <kern/unit/ppc/asm.h>
 #endif
 
-#define TASKDEADLINEMAPNWORD ((1UL << 16) / sizeof(long))
+#define TASKNLVL0DL      (1U << 16)
+#define TASKNLVL1DL      (1U << 8)
+#define TASKNLVL2DL      (1U << 8)
+#define TASKNDLKEY       3
+
+#define TASKDEADLINEMAPNWORD (TASKNLVL0DL / sizeof(long))
 #define TASKREADYMAPNWORD    max(SCHEDNQUEUE / sizeof(long),            \
                                  CLSIZE / sizeof(long))
-#define TASKIDLEMAPNWORD     max(SCHEDNQUEUE / sizeof(long),            \
+#define TASKIDLEMAPNWORD     max(SCHEDNIDLE / sizeof(long),             \
                                  CLSIZE / sizeof(long))
 
 #define __errnoloc() (&k_curtask->errnum)
@@ -64,12 +69,15 @@ struct task {
     long            nice;               // priority adjustment
     long            state;              // thread state
     long            score;              // interactivity score
-    uintptr_t       waitchan;           // wait channel
-    unsigned long   runtime;            // # of milliseconds run
-    unsigned long   slptime;            // amount of voluntary sleep
+    long            cpu;                // CPU-affinity
+    unsigned long   runtime;            // # of ticks run
+    unsigned long   slptime;            // # of ticks  of slept voluntarily
     unsigned long   ntick;              // # of scheduler ticks received
-    unsigned long   firsttick;
-    unsigned long   lasttick;
+    unsigned long   lastrun;            // last tick we ran on
+    unsigned long   firstrun;           // first tick we ran on
+    unsigned long   ntickleft;          // # of remaining ticks of slice
+    unsigned long   lasttick;           // real last tick for affinity
+     uintptr_t       waitchan;           // wait channel
     time_t          timelim;            // wakeup time or deadline
     /* linkage */
     struct proc    *proc;               // parent/owner process
@@ -91,11 +99,6 @@ struct task {
     int             errnum;             // errno
 //    long           interact;
 };
-
-#define TASKNLVL0DL      (1U << 16)
-#define TASKNLVL1DL      (1U << 8)
-#define TASKNLVL2DL      (1U << 8)
-#define TASKNDLKEY       3
 
 #if (PTRSIZE == 8)
 #define TASKNLVLWAITLOG2 16
@@ -137,20 +140,24 @@ struct taskqueue {
     uint8_t        pad[CLSIZE - sizeof(long) - 2 * sizeof(struct task *)];
 };
 
-struct taskqueuepair {
+struct taskqueueset {
     volatile long     lk;
     struct taskqueue *cur;
     struct taskqueue *next;
+    struct taskqueue *idle;
     long             *curmap;
     long             *nextmap;
-    uint8_t           pad[CLSIZE - sizeof(long) - 4 * sizeof(void *)];
+    long             *idlemap;
+    uint8_t           pad[CLSIZE - sizeof(long) - 6 * sizeof(void *)];
 };
 
+#if 0
 struct taskqueuehdr {
     volatile long     lk;
     struct taskqueue *tab;
     uint8_t           pad[CLSIZE - sizeof(long) - sizeof(struct taskqueue *)];
 };
+#endif
 
 #if 0
 #if (!QEMU)

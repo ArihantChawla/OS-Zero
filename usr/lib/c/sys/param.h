@@ -17,9 +17,17 @@
 #define NOFILE        OPEN_MAX
 
 #ifndef howmany
-#define howmany(x, y) (((x) + ((y) - 1)) / (y))
+#define howmany(a, b) (((a) + ((b) - 1)) / (b))
 #endif
-#define roundup(x, y) ((((x) + ((y) - 1)) / (y)) * (y))
+#if defined(__GNUC__)
+#define roundup(a, b)                                                   \
+    ((__builtin_constant_p(b) && powerof2(b))                           \
+     ? rounduppow2(a, b)                                                \
+     : ((((a) + ((b) - 1)) / (b)) * b))
+#else
+#defined roundup(a, b)                                                  \
+    ((((a) + ((b) - 1)) / (b)) * (b))
+#endif
 #define MIN(a, b)     min((a), (b))
 #define MAX(a, b)     max((a), (b))
 
