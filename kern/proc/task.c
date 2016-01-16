@@ -23,12 +23,12 @@
 
 extern void taskinitids(void);
 
-void tasksetready(struct task *task);
-void tasksetsleeping(struct task *task);
-void tasksetstopped(struct task *task);
-void tasksetzombie(struct task *task);
+void tasksetready(struct task *task, long cpu);
+void tasksetsleeping(struct task *task, long cpu);
+void tasksetstopped(struct task *task, long cpu);
+void tasksetzombie(struct task *task, long cpu);
 
-extern struct divul         scheddivultab[SCHEDHISTORYSIZE];
+extern struct divul scheddivultab[SCHEDHISTORYSIZE];
 
 static long tasknicetab[64]
 = {
@@ -84,7 +84,6 @@ static long tasknicetab[64]
     27,
     29,
     30,
-    0,
     0,
     0,
     0,
@@ -179,7 +178,7 @@ static struct taskqueueset  taskreadytab[NCPU];
 static struct taskqueue     taskidletab[NCPU][SCHEDNIDLE];
 static long                 taskidlemap[NCPU][TASKIDLEMAPNWORD];
 static long                 taskdeadlinemap[TASKDEADLINEMAPNWORD];
-typedef void tasksetfunc_t(struct task *);
+typedef void tasksetfunc_t(struct task *, long);
 tasksetfunc_t              *tasksetfunctab[TASKNSTATE]
 = {
     NULL,               // TASKNEW
@@ -203,7 +202,7 @@ taskinitsched(void)
         cpuset->idle = &taskidletab[cpu][0];
         cpuset->curmap = &taskreadymap0[cpu][0];
         cpuset->nextmap = &taskreadymap1[cpu][0];
-        cpuset->idlemap = taskidlemap[cpu][0];
+        cpuset->idlemap = &taskidlemap[cpu][0];
         cpuset++;
     }
 
@@ -316,12 +315,15 @@ taskcalcscore(struct task *task)
 
     if (SCHEDSCORETHRESHOLD <= SCHEDSCOREHALF
         && run >= slp) {
+        res = SCHEDSCOREHALF;
+        task->score = res;
 
-        return SCHEDSCOREHALF;
+        return res;
     }
     if (slp > run) {
         div = max(1, slp >> 6);
         res = fastuldiv32(run, div, scheddivultab);
+        task->score = res;
 
         return res;
     }
@@ -329,17 +331,84 @@ taskcalcscore(struct task *task)
         res = SCHEDSCOREMAX;
         div = max(1, run >> 6);
         res -= fastuldiv32(slp, div, scheddivultab);
+        task->score = res;
 
         return res;
     }
     /* run == slp */
     if (run) {
+        res = SCHEDSCOREHALF;
+        task->score = res;
 
         return SCHEDSCOREHALF;
     }
+    task->score = 0;
 
     /* run == 0 && slp == 0 */
     return 0;
+}
+
+/*
+ * enforce maximum limit of scheduling history kept; call after either runtime
+ * or slptime is adjusted
+ */
+static __inline__ void
+taskadjintparm(struct task *task)
+{
+    long run = task->runtime;
+    long slp = task->slptime;
+    long sched = task->sched;
+    long sum = run + slp;
+
+    if (sum < SCHEDHISTORYMAX) {
+
+        return;
+    }
+    if (sum > SCHEDHISTORYMAX * 2) {
+        if (run > slp) {
+            task->runtime = SCHEDHISTORYMAX;
+            task->slptime = 1;
+        } else {
+            task->runtime = 1;
+            task->slptime = 1;
+        }
+
+        return;
+    }
+    if (sum > (SCHEDHISTORYMAX / 5) << 2) {
+        /* if sum > 4 * SCHEDHISTORY / 5, sum /= 2; */
+        run >>= 1;
+        slp >>= 1;
+    } else {
+        /* else sum /= 4; sum *= 3; */
+        run >>= 2;
+        slp >>= 2;
+        run *= 3;
+        slp *= 3;
+    }
+    task->runtime = run;
+    task->slptime = slp;
+
+    return;
+}
+
+static __inline__ void
+schedforkintparm(struct task *task)
+{
+    long run = task->runtime;
+    long slp = task->slptime;
+    long ratio;
+    long sum = run + slp;
+
+    if (sum > SCHEDHISTORYFORKMAX) {
+        ratio = fastuldiv32(sum, SCHEDHISTORYFORKMAX, scheddivultab);
+        run /= ratio;
+        slp /= ratio;
+        task->runtime = run;
+        task->slptime = slp;
+    }
+
+    return;
 }
 
 /* applied for time-share tasks of classes SCHEDRESPONSIVE and SCHEDNORMAL */
@@ -471,12 +540,11 @@ tasksetdeadline(struct task *task)
 }
 
 void
-tasksetready(struct task *task)
+tasksetready(struct task *task, long cpu)
 {
-    long                 cpu = k_curcpu->id;
     long                 sched = task->sched;
     long                 prio = task->prio;
-    long                 score = ~0L;
+    long                 score = 0;
     struct taskqueueset *cpuset = &taskreadytab[cpu];
     struct taskqueue    *queue;
     long                *map;
@@ -563,7 +631,7 @@ tasksetready(struct task *task)
     
 /* add task to wait table */
 void
-tasksetwait(struct task *task)
+tasksetwait(struct task *task, long cpu)
 {
     struct tasktabl0  *l0tab;
     struct tasktab    *tab;
@@ -643,14 +711,14 @@ tasksetwait(struct task *task)
 
 /* FIXME: add a multilevel tree for sleeping tasks for speed */
 void
-tasksetsleeping(struct task *task)
+tasksetsleeping(struct task *task, long cpu)
 {
     time_t            timelim = task->timelim;
     struct taskqueue *queue = &tasksleepqueue;
     struct task      *sleeptask;
 
     if (task->waitchan) {
-        tasksetwait(task);
+        tasksetwait(task, cpu);
     } else {
         sleeptask = queue->next;
         if (sleeptask) {
@@ -677,7 +745,7 @@ tasksetsleeping(struct task *task)
 }
 
 void
-tasksetstopped(struct task *task)
+tasksetstopped(struct task *task, long cpu)
 {
     long id = task->id;
 
@@ -687,7 +755,7 @@ tasksetstopped(struct task *task)
 }
 
 void
-tasksetzombie(struct task *task)
+tasksetzombie(struct task *task, long cpu)
 {
     long id = task->id;
 
@@ -723,13 +791,9 @@ taskswtch(struct task *curtask)
     long                 loop;
 
     if (curtask) {
-        if (sched >= SCHEDINTERRUPT) {
-            func = tasksetfunctab[state];
-            func(curtask);
-            k_curtask = NULL;
-        } else {
-            tasksetdeadline(task);
-        }
+        func = tasksetfunctab[state];
+        func(curtask, cpu);
+        k_curtask = NULL;
     }
     do {
         loop = 1;
@@ -832,7 +896,7 @@ taskunwait(uintptr_t wtchan)
                         queue->next = task1->next;
                         task2 = task1->next;
                         taskwakeup(task1);
-                        tasksetready(task1);
+                        tasksetready(task1, cpu);
                         task1 = task2;
                     }
                     tab = ptab[2];

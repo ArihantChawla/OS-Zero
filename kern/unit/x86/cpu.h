@@ -72,8 +72,10 @@ struct m_cpu {
     long              pid;
     struct m_cpuinfo *info;
     /* end of cpu local variables */
+    volatile long     lk;
     volatile long     state;
     long              id;
+    long              ntick;
 #if 0
     struct m_tcb     *schedtcb;
     uint8_t          *kstk;

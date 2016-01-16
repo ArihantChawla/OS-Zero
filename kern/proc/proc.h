@@ -94,11 +94,12 @@ struct procseginfo {
  * - stop signal in third-lowest 8 bits
  * - flags in high bits
  */
-#define procexitstatus(proc) ((proc)->status & 0xff)
-#define procexitsig(proc)    (((proc)->status >> 8) & 0xff)
-#define procstopsig(proc)    (((proc)->status >> 16) & 0xff)
-#define PROCEXITED           (1 << 31)
-#define PROCSIGNALED         (1 << 30)
+#define procgetdesc(proc, id) ((proc)->desctab[(id)])
+#define procexitstatus(proc)  ((proc)->status & 0xff)
+#define procexitsig(proc)     (((proc)->status >> 8) & 0xff)
+#define procstopsig(proc)     (((proc)->status >> 16) & 0xff)
+#define PROCEXITED            (1 << 31)
+#define PROCSIGNALED          (1 << 30)
 struct proc {
     /* process and thread management */
     struct task         *task;

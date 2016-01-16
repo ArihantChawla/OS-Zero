@@ -63,6 +63,7 @@ struct task {
     /* thread control block - KEEP THIS FIRST in the structure */
     struct m_task   m_task;             // machine-thread control block
     /* scheduler parameters */
+    volatile long   lk;
     long            sched;              // thread scheduler class
     long            schedflg;           // received user input [interrupt]
     long            prio;               // priority; < 0 for SCHEDFIFO realtime
@@ -70,6 +71,7 @@ struct task {
     long            state;              // thread state
     long            score;              // interactivity score
     long            cpu;                // CPU-affinity
+    long            slice;              // timeslice in ticks
     unsigned long   runtime;            // # of ticks run
     unsigned long   slptime;            // # of ticks  of slept voluntarily
     unsigned long   ntick;              // # of scheduler ticks received
@@ -77,7 +79,7 @@ struct task {
     unsigned long   firstrun;           // first tick we ran on
     unsigned long   ntickleft;          // # of remaining ticks of slice
     unsigned long   lasttick;           // real last tick for affinity
-     uintptr_t       waitchan;           // wait channel
+    uintptr_t       waitchan;           // wait channel
     time_t          timelim;            // wakeup time or deadline
     /* linkage */
     struct proc    *proc;               // parent/owner process

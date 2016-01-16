@@ -4,8 +4,17 @@
 #include <kern/conf.h>
 #include <zero/trix.h>
 
-extern void schedyield(void);
 extern void schedinit(void);
+extern void schedyield(void);
+
+#include <zero/mtx.h>
+
+#define schedlkcpuntick(cpu)     (mtxlk(&cpu->lk), (cpu)->ntick)
+#define schedlkcpu(cpu)          (mtxlk(&cpu->lk))
+#define schedunlkcpu(cpu)        (mtxunlk(&cpu->lk))
+#define schedlktaskruntime(task) (mtxlk(&task->lk), (task)->runtime)
+#define schedlktask(task)        (mtxlk(&task->lk))
+#define schedunlktask(task)      (mtxunlk(&task->lk))
 
 #if defined(ZEROSCHED)
 
@@ -86,7 +95,7 @@ extern void schedinit(void);
 /* half of maximum interactivity score */
 #define SCHEDSCOREHALF      (SCHEDSCOREMAX >> 1)
 /* number of seconds to keep cpu stats around */
-#define SCHEDHISTORYNSEC    8
+#define SCHEDHISTORYNSEC    10
 //#define SCHEDHISTORYSIZE    (SCHEDHISTORYMAX * (HZ << SCHEDTICKSHIFT))
 /* number of ticks to keep cpu stats around */
 #define SCHEDHISTORYNTICK   (SCHEDHISTORYNSEC * HZ)
@@ -95,7 +104,7 @@ extern void schedinit(void);
 //#define SCHEDTIMEINCR       ((HZ << SCHEDTICKSHIFT) / HZ)
 #define SCHEDTICKSHIFT      10
 /* maximum number of sleep time + run time stored */
-#define SCHEDHISTORYMAX     ((HZ * 5) << SCHEDTICKSHIFT)
+#define SCHEDHISTORYMAX     ((HZ << 2) << SCHEDTICKSHIFT)
 #define SCHEDHISTORYFORKMAX (HZ << (SCHEDTICKSHIFT - 1))
 
 #endif /* defined(ZEROSCHED) */
