@@ -31,9 +31,9 @@ void tasksetzombie(struct task *task);
 
 extern struct divul      scheddivultab[SCHEDHISTORYSIZE];
 
-struct taskqueue         taskreadyqueuetab[NCPU][SCHEDNCLASS * SCHEDNCLASSQUEUE] ALIGNED(PAGESIZE);
-static struct tasktabl0  taskwaittab[NCPU][NLVL0WAIT];
-static struct tasktabl0  taskdeadlinequeue[NCPU][NLVL0DL];
+struct taskqueue         taskreadyqueuetab[NCPU][SCHEDNQUEUE] ALIGNED(PAGESIZE);
+static struct tasktabl0  taskwaittab[NCPU][TASKNLVL0WAIT];
+static struct tasktabl0  taskdeadlinetab[NCPU][TASKNLVL0DL];
 static long              taskdeadlinebitmap[NCPU][TASKDEADLINEBITMAPNWORD];
 static struct task      *taskstoppedtab[NTASK];
 static struct task      *taskzombietab[NTASK];
@@ -113,10 +113,10 @@ typedef void tasksetfunc_t(struct task *);
 tasksetfunc_t           *tasksetfunctab[TASKNSTATE]
 = {
     NULL,               // TASKNEW
-    tasksetready,
-    tasksetsleeping,
-    tasksetstopped,
-    tasksetzombie
+    tasksetready,       // TASKREADY
+    tasksetsleeping,    // TASKSLEEPING
+    tasksetstopped,     // TASKSTOPPED
+    tasksetzombie       // TASKZOMBIE
 };
 static long             *taskniceptr = &tasknicetab[32];
 
@@ -147,7 +147,7 @@ taskjmp(struct task *task)
 
 #if (ZEROSCHED)
 
-static __inline__ long
+static __inline__ void
 tasksetnice(struct task *task, long val)
 {
     long nice;
@@ -157,73 +157,7 @@ tasksetnice(struct task *task, long val)
     nice = taskniceptr[val];
     task->nice = nice;
 
-    return nice;
-}
-
-#if 0
-static __inline__ long
-taskadjprio(struct task *task)
-{
-    long sched = task->sched;
-    long prio = task->prio;
-
-    prio++;
-    prio = min(prio, SCHEDUSERPRIOMAX);
-
-    return prio;
-}
-#endif
-
-static __inline__ long
-taskwakeprio(struct task *task)
-{
-    long sched = task->sched;
-    long nice = task->nice;
-    long prio = ((sched < 0)
-                 ? task->prio
-                 : SCHEDINTPRIOMIN);
-
-    prio >>= 2;
-
-    return prio;
-}
-
-#if (ZEROULE) && 0
-
-static __inline__ long
-taskcalcscore(struct task *task)
-{
-    unsigned long run = task->runtime;
-    unsigned long slp = task->slptime;
-    unsigned long div;
-    unsigned long res;
-
-    if (SCHEDSCORETHRESHOLD <= SCHEDSCOREHALF
-        && run >= slp) {
-
-        return SCHEDSCOREHALF;
-    }
-    if (slp > run) {
-        div = max(1, slp >> 6);
-        res = fastuldiv32(run, div, scheddivultab);
-
-        return res;
-    }
-    if (run > slp) {
-        res = SCHEDSCOREMAX;
-        div = max(1, run >> 6);
-        res -= fastuldiv32(slp, div, scheddivultab);
-
-        return res;
-    }
-    /* run == slp */
-    if (run) {
-
-        return SCHEDSCOREHALF;
-    }
-
-    /* run == 0 && slp == 0 */
-    return 0;
+    return;
 }
 
 static __inline__ void
@@ -268,78 +202,6 @@ taskadjscore(struct task *task)
     task->runtime = run;
     task->slptime = slp;
 
-    return;
-}
-
-#endif /* ZEROULE && 0 */
-
-#undef QUEUE_SINGLE_TYPE
-#undef QUEUE_ITEM_TYPE
-#undef QUEUE_TYPE
-#define QUEUE_ITEM_TYPE struct task
-#define QUEUE_TYPE      struct taskqueue
-#include <zero/queue.h>
-
-/* 32-bit time_t values */
-#define taskdlkey0(dl) (((dl) >> 16) & 0xffff)
-#define taskdlkey1(dl) (((dl) >> 8) & 0xff)
-#define taskdlkey2(dl) ((dl) & 0xff)
-
-void
-tasksetdeadline(struct task *task)
-{
-    struct tasktabl0  *l0tab;
-    struct tasktab    *tab;
-    long               cpu = k_curcpu->id;
-    time_t             deadline = task->timelim;
-    unsigned long      key0 = taskdlkey0(deadline);
-    unsigned long      key1 = taskdlkey1(deadline);
-    unsigned long      key2 = taskdlkey2(deadline);
-    long              *map = &taskdeadlinebitmap[cpu][0];
-    void              *ptr = NULL;
-    void             **pptr = NULL;
-    long               fail = 0;
-    struct taskqueue  *queue;
-    void              *ptab[DLNKEY - 1] = { NULL, NULL };
-
-    ptr = &taskdeadlinequeue[cpu][key0];
-    l0tab = ptr;
-    pptr = ptr;
-    mtxlk(&l0tab->lk);
-    if (!ptr) {
-        ptr = kmalloc(NLVL1DL * sizeof(struct tasktab));
-        if (ptr) {
-            kbzero(ptr, NLVL1DL * sizeof(struct tasktab));
-        }
-        ptab[0] = ptr;
-        pptr = ptr;
-    }
-    if (ptr) {
-        ptr = pptr[key1];
-        if (!ptr) {
-            queue = kmalloc(NLVL3WAIT * sizeof(struct taskqueue));
-            if (queue) {
-                kbzero(queue, NLVL3WAIT * sizeof(struct taskqueue));
-            } 
-            ptab[1] = queue;
-            pptr[key1] = queue;
-        } else {
-            queue = pptr[key1];
-        }
-    } else {
-        fail = 1;
-    }
-    if (!fail) {
-        queue = &queue[key2];
-        queueappend(task, &queue);
-        tab = ptab[0];
-        tab->nref++;
-        tab->tab = ptab[1];
-        tab = ptab[1];
-        tab->nref++;
-    }
-    mtxunlk(&l0tab->lk);
-    
     return;
 }
 
@@ -423,6 +285,91 @@ taskcalcprio(struct task *task)
     return prio;
 }
 
+static __inline__ long
+taskwakeup(struct task *task)
+{
+    long sched = task->sched;
+    long nice = task->nice;
+    long prio = ((sched <= 0)
+                 ? task->prio
+                 : SCHEDUSERPRIOMIN);
+
+    task->state = TASKREADY;
+
+    return prio;
+}
+
+#undef QUEUE_SINGLE_TYPE
+#undef QUEUE_ITEM_TYPE
+#undef QUEUE_TYPE
+#define QUEUE_ITEM_TYPE struct task
+#define QUEUE_TYPE      struct taskqueue
+#include <zero/queue.h>
+
+/* 32-bit time_t values */
+#define taskdlkey0(dl) (((dl) >> 16) & 0xffff)
+#define taskdlkey1(dl) (((dl) >> 8) & 0xff)
+#define taskdlkey2(dl) ((dl) & 0xff)
+
+void
+tasksetdeadline(struct task *task)
+{
+    struct tasktabl0  *l0tab;
+    struct tasktab    *tab;
+    long               cpu = k_curcpu->id;
+    time_t             deadline = task->timelim;
+    unsigned long      key0 = taskdlkey0(deadline);
+    unsigned long      key1 = taskdlkey1(deadline);
+    unsigned long      key2 = taskdlkey2(deadline);
+    long              *map = &taskdeadlinebitmap[cpu][0];
+    void              *ptr = NULL;
+    void             **pptr = NULL;
+    long               fail = 0;
+    struct taskqueue  *queue;
+    void              *ptab[TASKNDLKEY - 1] = { NULL, NULL };
+
+    l0tab = &taskdeadlinetab[cpu][key0];
+    ptr = l0tab->tab;
+    pptr = ptr;
+    mtxlk(&l0tab->lk);
+    if (!ptr) {
+        ptr = kmalloc(TASKNLVL1DL * sizeof(struct tasktab));
+        if (ptr) {
+            kbzero(ptr, TASKNLVL1DL * sizeof(struct tasktab));
+        }
+        l0tab->tab = ptr;
+        ptab[0] = ptr;
+        pptr = ptr;
+    }
+    if (ptr) {
+        ptr = pptr[key1];
+        if (!ptr) {
+            queue = kmalloc(TASKNLVL2DL * sizeof(struct taskqueue));
+            if (queue) {
+                kbzero(queue, TASKNLVL2DL * sizeof(struct taskqueue));
+            } 
+            ptab[1] = queue;
+            pptr[key1] = queue;
+        } else {
+            queue = pptr[key1];
+        }
+    } else {
+        fail = 1;
+    }
+    if (!fail) {
+        queue = &queue[key2];
+        queueappend(task, &queue);
+        tab = ptab[0];
+        tab->nref++;
+        tab->tab = ptab[1];
+        tab = ptab[1];
+        tab->nref++;
+    }
+    mtxunlk(&l0tab->lk);
+    
+    return;
+}
+
 void
 tasksetready(struct task *task)
 {
@@ -435,10 +382,18 @@ tasksetready(struct task *task)
     long              qid;
     struct taskqueue *queue;
 
-    if (sched < 0 ) {
+    if (sched <= SCHEDREALTIME) {
         /* SCHEDDEADLINE or SCHEDREALTIME */
         if (sched == SCHEDDEADLINE) {
             tasksetdeadline(task);
+        } else if (sched == SCHEDINTERRUPT) {
+            qid = prio;
+            qid >>= 2;
+            queue = &taskreadyqueuetab[cpu][qid];
+            mtxlk(&queue->lk);
+            queueappend(task, &queue);
+            setbit(map, qid);
+            mtxunlk(&queue->lk);
         } else if (prio < 0) {
             /* SCHED_FIFO */
             qid = -prio;
@@ -465,7 +420,7 @@ tasksetready(struct task *task)
         if (flg & TASKHASINPUT) {
             /* boost user-interrupt task to highest priority */
             task->sched = SCHEDRESPONSIVE;
-            prio = SCHEDUSERBASEPRIO;
+            prio = SCHEDUSERPRIOMIN;
             task->prio = prio;
         } else if (schedistimeshare(sched)) {
             /* calculate priority for time-share task */
@@ -473,14 +428,13 @@ tasksetready(struct task *task)
         } else {
             /* increment priority by one */
             prio++;
-            lim = SCHEDNCLASSPRIO + sched * SCHEDNCLASSPRIO - 1;
-//            prio = min(prio, SCHEDUSERPRIOMAX);
+            lim = sched * SCHEDNCLASSPRIO - 1;
             prio = min(prio, lim);
             task->prio = prio;
         }
 #else
         prio++;
-        lim = SCHEDNCLASSPRIO + sched * SCHEDNCLASSPRIO - 1;
+        lim = sched * SCHEDNCLASSPRIO - 1;
         prio = min(prio, lim);
         task->prio = prio;
 #endif
@@ -514,36 +468,37 @@ tasksetwait(struct task *task)
     void              *ptr = NULL;
     void             **pptr;
     struct taskqueue  *queue;
-    uintptr_t          wtchan = task->wtchan;
+    uintptr_t          wtchan = task->waitchan;
     long               fail = 0;    
     long               key0;
     long               key1;
     long               key2;
     long               key3;
-    void              *ptab[WAITNKEY - 1] = { NULL, NULL, NULL };
+    void              *ptab[TASKNWAITKEY - 1] = { NULL, NULL, NULL };
 
     key0 = taskwaitkey0(wtchan);
     key1 = taskwaitkey1(wtchan);
     key2 = taskwaitkey2(wtchan);
     key3 = taskwaitkey3(wtchan);
-    ptr = &taskwaittab[key0];
-    l0tab = ptr;
+    l0tab = &taskwaittab[key0];
+    ptr = l0tab->tab;
     pptr = ptr;
     mtxlk(&l0tab->lk);
     if (!ptr) {
-        ptr = kmalloc(NLVL1WAIT * sizeof(struct tasktab));
+        ptr = kmalloc(TASKNLVL1WAIT * sizeof(struct tasktab));
         if (ptr) {
-            kbzero(ptr, NLVL1WAIT * sizeof(struct tasktab));
+            kbzero(ptr, TASKNLVL1WAIT * sizeof(struct tasktab));
         }
+        l0tab->tab = ptr;
         ptab[0] = ptr;
         pptr = ptr;
     }
     if (ptr) {
         ptr = pptr[key1];
         if (!ptr) {
-            ptr = kmalloc(NLVL2WAIT * sizeof(struct tasktab));
+            ptr = kmalloc(TASKNLVL2WAIT * sizeof(struct tasktab));
             if (ptr) {
-                kbzero(ptr, NLVL2WAIT * sizeof(struct tasktab));
+                kbzero(ptr, TASKNLVL2WAIT * sizeof(struct tasktab));
             }
         }
         ptab[1] = ptr;
@@ -555,9 +510,9 @@ tasksetwait(struct task *task)
     if (ptr) {
         ptr = pptr[key2];
         if (!ptr) {
-            queue = kmalloc(NLVL3WAIT * sizeof(struct taskqueue));
+            queue = kmalloc(TASKNLVL3WAIT * sizeof(struct taskqueue));
             if (queue) {
-                kbzero(queue, NLVL3WAIT * sizeof(struct taskqueue));
+                kbzero(queue, TASKNLVL3WAIT * sizeof(struct taskqueue));
             } 
             ptab[2] = queue;
             pptr[key2] = queue;
@@ -592,7 +547,7 @@ tasksetsleeping(struct task *task)
     struct taskqueue *queue = &tasksleepqueue;
     struct task      *sleeptask;
 
-    if (task->wtchan) {
+    if (task->waitchan) {
         tasksetwait(task);
     } else {
         sleeptask = queue->next;
@@ -649,15 +604,20 @@ taskpick(struct task *curtask)
     struct task      *task = NULL;
     long              sched = curtask->sched;
     long              state = curtask->state;
-    tasksetfunc_t    *func = tasksetfunctab[state];
     long             *map = &taskreadybitmap[cpu][0];
+    tasksetfunc_t    *func;
     unsigned long     ndx;
     long              val;
     long              prio;
 
     if (curtask) {
-        func(curtask);
-        k_curtask = NULL;
+        if (sched >= SCHEDINTERRUPT) {
+            func = tasksetfunctab[state];
+            func(curtask);
+            k_curtask = NULL;
+        } else {
+            tasksetdeadline(task);
+        }
     }
     do {
         ndx = 0;
@@ -717,8 +677,8 @@ taskunwait(uintptr_t wtchan)
     long               key3 = taskwaitkey3(wtchan);
     long               prio;
     void             **pptr;
-    void              *ptab[WAITNKEY - 1] = { NULL, NULL, NULL };
-    void             **pptab[WAITNKEY - 1] = { NULL, NULL, NULL };
+    void              *ptab[TASKNWAITKEY - 1] = { NULL, NULL, NULL };
+    void             **pptab[TASKNWAITKEY - 1] = { NULL, NULL, NULL };
 
     l0tab = &taskwaittab[key0];
     mtxlk(&l0tab->lk);
@@ -742,11 +702,8 @@ taskunwait(uintptr_t wtchan)
                         }
                         queue->next = task1->next;
                         task2 = task1->next;
-                        prio = taskwakeprio(task1);
-                        runqueue = &taskreadyqueuetab[cpu][prio];
-                        mtxlk(&runqueue->lk);
-                        queueappend(task1, &runqueue);
-                        mtxunlk(&runqueue->lk);
+                        taskwakeup(task1);
+                        tasksetready(task1);
                         task1 = task2;
                     }
                     tab = ptab[2];

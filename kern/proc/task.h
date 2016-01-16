@@ -61,6 +61,7 @@ struct task {
     long            prio;               // priority; < 0 for SCHEDFIFO realtime
     long            nice;               // priority adjustment
     long            state;              // thread state
+    uintptr_t       waitchan;           // wait channel
     unsigned long   runtime;            // # of milliseconds run
     unsigned long   slptime;            // amount of voluntary sleep
     unsigned long   ntick;              // # of scheduler ticks received
@@ -71,7 +72,6 @@ struct task {
     struct proc    *proc;               // parent/owner process
     struct task    *prev;               // previous in queue
     struct task    *next;               // next in queue
-    uintptr_t       wtchan;             // wait channel
     long            id;                 // task ID
     /* system call context */
     struct sysctx   sysctx;             // current system call
@@ -89,30 +89,30 @@ struct task {
 //    long           interact;
 };
 
-#define NLVL0DL      (1U << 16)
-#define NLVL1DL      (1U << 8)
-#define NLVL2DL      (1U << 8)
-#define DLNKEY       3
+#define TASKNLVL0DL      (1U << 16)
+#define TASKNLVL1DL      (1U << 8)
+#define TASKNLVL2DL      (1U << 8)
+#define TASKNDLKEY       3
 
 #if (PTRSIZE == 8)
-#define NLVLWAITLOG2 16
+#define TASKNLVLWAITLOG2 16
 #elif (PTRSIZE == 4)
-#define NLVLWAITLOG2 8
+#define TASKNLVLWAITLOG2 8
 #endif
-#define NLVL0WAIT    (1 << NLVLWAITLOG2)
-#define NLVL1WAIT    (1 << NLVLWAITLOG2)
-#define NLVL2WAIT    (1 << NLVLWAITLOG2)
-#define NLVL3WAIT    (1 << NLVLWAITLOG2)
-#define WAITNKEY     4
+#define TASKNLVL0WAIT    (1 << TASKNLVLWAITLOG2)
+#define TASKNLVL1WAIT    (1 << TASKNLVLWAITLOG2)
+#define TASKNLVL2WAIT    (1 << TASKNLVLWAITLOG2)
+#define TASKNLVL3WAIT    (1 << TASKNLVLWAITLOG2)
+#define TASKNWAITKEY     4
 
 #define taskwaitkey0(wc)                                                \
-    (((wc) >> (3 * NLVLWAITLOG2)) & ((1UL << NLVLWAITLOG2) - 1))
+    (((wc) >> (3 * TASKNLVLWAITLOG2)) & ((1UL << TASKNLVLWAITLOG2) - 1))
 #define taskwaitkey1(wc)                                                \
-    (((wc) >> (2 * NLVLWAITLOG2)) & ((1UL << NLVLWAITLOG2) - 1))
+    (((wc) >> (2 * TASKNLVLWAITLOG2)) & ((1UL << TASKNLVLWAITLOG2) - 1))
 #define taskwaitkey2(wc)                                                \
-    (((wc) >> (1 * NLVLWAITLOG2)) & ((1UL << NLVLWAITLOG2) - 1))
+    (((wc) >> (1 * TASKNLVLWAITLOG2)) & ((1UL << TASKNLVLWAITLOG2) - 1))
 #define taskwaitkey3(wc)                                                \
-    ((wc) & ((1UL << NLVLWAITLOG2) - 1))
+    ((wc) & ((1UL << TASKNLVLWAITLOG2) - 1))
 
 struct tasktabl0 {
     volatile long   lk;
