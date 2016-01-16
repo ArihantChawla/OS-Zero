@@ -75,7 +75,7 @@ struct ip_msfilter {
 
 #define IN6ADDR_ANY_INIT { 0 }  // all 0-bits
 #define IN6ADDR_LOOPBACK_INIT                                           \
-    { 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 1 }
+    { { 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 1 } }
 struct in6_addr {
     uint8_t s6_addr[16];        // network byte-order
 };

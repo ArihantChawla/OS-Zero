@@ -104,7 +104,7 @@ struct linger {
     int l_linger;	// linger time in seconds
 };
 
-#if (!__KERNEL__)
+#if !defined(__KERNEL__)
 
 extern int     accept(int sock, struct sockaddr *adr, socklen_t *adrlen);
 extern int     bind(int sock, const struct sockaddr *adr, socklen_t adrlen);
@@ -131,7 +131,7 @@ extern int     socketpair(int domain, int type, int proto, int sockvec[2]);
 extern int     sockatmark(int fd);
 #endif
 
-#endif /* !__KERNEL__ */
+#endif /* !defined(__KERNEL__) */
 
 static __inline__ struct sockaddr *
 sockaddr_alloc(sa_family_t af)

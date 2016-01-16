@@ -242,7 +242,7 @@ typedef struct {
 };
 #endif
 
-#if (!__KERNEL__)
+#if !defined(__KERNEL__)
 
 extern intmax_t imaxabs(intmax_t n);
 extern imaxdiv_t imaxdiv(intmax_t numer, intmax_t denom);
@@ -259,7 +259,7 @@ extern uintmax_t wcstoumax(const wchar_t *__restrict nptr,
                            wchar_t **__restrict endptr,
                            int base);
 
-#endif /* !__KERNEL__ */
+#endif /* !defined(__KERNEL__) */
 
 #endif /* __INTTYPES_H__ */
 
