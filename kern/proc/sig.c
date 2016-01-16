@@ -34,7 +34,7 @@ sigfunc(unsigned long pid, int32_t trap, long err, void *frame)
     volatile struct task *task = &tasktab[pid];
     long                  sig = trapsigmap[trap];
     volatile struct proc *proc = task->proc;
-    __sighandler_t        func;
+    __sighandler_t       *func;
 
     if (pid < TASKNPREDEF) {
         panic(pid, trap, err);

@@ -36,6 +36,8 @@
 #define SIG32BIT 1
 #endif
 
+typedef void          *__sighandler_t(int);
+
 /* special values; standard ones */
 #define SIG_ERR      ((__sighandler_t)-1)
 #define SIG_DFL      ((__sighandler_t)0)
@@ -71,8 +73,6 @@ typedef int64_t sigset_t;
 typedef long             pid_t;          // process ID
 #define __pid_t_defined
 #endif
-
-typedef void           (*__sighandler_t)(int);
 
 #if (USEBSD) && (!USEPOSIX)
 typedef void __bsdsig_t(int sig, int code, struct sigcontext *ctx, char *adr);

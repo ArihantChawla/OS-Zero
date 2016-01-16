@@ -25,7 +25,7 @@ struct divul {
 void fastuldiv32gentab(struct divul *duptr, unsigned long lim32);
 
 /* get the high 32 bits of val1 * val2 */
-static __inline__ unsigned long
+static INLINE unsigned long
 _mullhiu32(unsigned long long val1, unsigned long long val2)
 {
     unsigned long long val = val1 * val2;
@@ -35,7 +35,7 @@ _mullhiu32(unsigned long long val1, unsigned long long val2)
 }
 
 /* compute num/div32 with [possible] multiplication + shift operations */
-static __inline__ unsigned long
+static INLINE unsigned long
 fastuldiv32(unsigned long long num, uint32_t div32,
             const struct divul *tab)
 {

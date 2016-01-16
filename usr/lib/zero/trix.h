@@ -79,6 +79,13 @@
         a = b;                                                          \
         b = _tmp;                                                       \
     } while (0)
+#define ptrswap(a, b)                                                   \
+    do {                                                                \
+        void *_tmp = a;                                                 \
+                                                                        \
+        a = b;                                                          \
+        b = _tmp;                                                       \
+    } while (0)
 /* compute absolute value of integer without branching; PATENTED in USA :( */
 #if (ZEROABS)
 #define zeroabs(a)                                                      \

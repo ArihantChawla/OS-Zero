@@ -23,9 +23,11 @@
 #include <kern/unit/ppc/asm.h>
 #endif
 
-#define TASKDEADLINEBITMAPNWORD ((1UL << 16) / sizeof(long))
-#define TASKREADYBITMAPNWORD    max(SCHEDNQUEUE / sizeof(long),         \
-                                    CLSIZE / sizeof(long))
+#define TASKDEADLINEMAPNWORD ((1UL << 16) / sizeof(long))
+#define TASKREADYMAPNWORD    max(SCHEDNQUEUE / sizeof(long),            \
+                                 CLSIZE / sizeof(long))
+#define TASKIDLEMAPNWORD     max(SCHEDNQUEUE / sizeof(long),            \
+                                 CLSIZE / sizeof(long))
 
 #define __errnoloc() (&k_curtask->errnum)
 
@@ -61,6 +63,7 @@ struct task {
     long            prio;               // priority; < 0 for SCHEDFIFO realtime
     long            nice;               // priority adjustment
     long            state;              // thread state
+    long            score;              // interactivity score
     uintptr_t       waitchan;           // wait channel
     unsigned long   runtime;            // # of milliseconds run
     unsigned long   slptime;            // amount of voluntary sleep
@@ -132,6 +135,21 @@ struct taskqueue {
     struct task   *prev;
     struct task   *next;
     uint8_t        pad[CLSIZE - sizeof(long) - 2 * sizeof(struct task *)];
+};
+
+struct taskqueuepair {
+    volatile long     lk;
+    struct taskqueue *cur;
+    struct taskqueue *next;
+    long             *curmap;
+    long             *nextmap;
+    uint8_t           pad[CLSIZE - sizeof(long) - 4 * sizeof(void *)];
+};
+
+struct taskqueuehdr {
+    volatile long     lk;
+    struct taskqueue *tab;
+    uint8_t           pad[CLSIZE - sizeof(long) - sizeof(struct taskqueue *)];
 };
 
 #if 0

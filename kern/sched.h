@@ -20,27 +20,30 @@ extern void schedinit(void);
 #define SCHEDNCLASSQUEUE    16          // # of priority queues per class
 /* 'system' classes */
 #define SCHEDDEADLINE       (-1)        // deadline tasks
-#define SCHEDINTERRUPT      0           // interrupt tasks
-#define SCHEDREALTIME       1           // realtime threads
-#define SCHEDFIXED          2           // SYNC, INPUT, AUDIO, VIDEO
+#define SCHEDFIXED          0           // SYNC, INPUT, AUDIO, VIDEO
+#define SCHEDINTERRUPT      1           // interrupt tasks
+#define SCHEDREALTIME       2           // realtime threads
 #define SCHEDNSYSCLASS      3           // # of system scheduler classes
 /* 'user' classes */
 #define SCHEDUSERPRIOMIN    (SCHEDRESPONSIVE * SCHEDNCLASSPRIO)
-#define SCHEDRESPONSIVE     3           // interrupt and interactive tasks
-#define SCHEDNORMAL         4           // time-share tasks
+#define SCHEDRESPONSIVE     3           // 'quick' timeshare tasks
+#define SCHEDNORMAL         4           // 'normal' timeshare tasks
 #define SCHEDBATCH          5           // batch tasks
 #define SCHEDNUSERCLASS     3
+/* exclude SCHEDFIXED priorities from priority raises by propagation */
+#define SCHEDSYSPRIOMIN     (SCHEDINTERRUPT * SCHEDNCLASSQUEUE)
 #define SCHEDUSERPRIOMAX    (SCHEDIDLE * SCHEDNCLASSPRIO - 1)
-#define SCHEDIDLE           6           // idle tasks
-#define SCHEDNCLASS         7           // user scheduler classes
-#define SCHEDNQUEUE         (SCHEDNCLASS * SCHEDNCLASSPRIO)
+#define SCHEDNCLASS         6           // user scheduler classes
+#define SCHEDIDLE           SCHEDNCLASS // idle tasks
+#define SCHEDNQUEUE         (SCHEDNCLASS * SCHEDNCLASSQUEUE)
 /* fixed priorities */
 #define SCHEDHID            0           // human interface devices (kbd, mouse)
 #define SCHEDAUDIO          1           // audio synchronisation
 #define SCHEDVIDEO          2           // video synchronisation
 #define SCHEDINIT           3           // init; creation of new processes
-#define SCHEDFIXEDPRIOMIN   (SCHEDFIXED * SCHEDNCLASSPRIO)
+#define SCHEDFIXEDPRIOMIN   0
 #define SCHEDNFIXED         SCHEDNCLASSQUEUE
+#define SCHEDNIDLE          SCHEDNCLASSQUEUE
 /* minimum (highest) interactive priority */
 #define SCHEDINTPRIOMIN     SCHEDUSERPRIOMIN
 /* maximum (lowest) interactive priority */
