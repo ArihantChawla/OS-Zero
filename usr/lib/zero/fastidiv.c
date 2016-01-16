@@ -24,9 +24,6 @@
  *  libdivide@ridiculousfish.com
  */
 
-#if !defined(__KERNEL__)
-#include <stdlib.h>
-#endif
 #include <zero/fastidiv.h>
 #include <zero/trix.h>
 
