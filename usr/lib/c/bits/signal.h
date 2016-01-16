@@ -36,7 +36,7 @@
 #define SIG32BIT 1
 #endif
 
-typedef void          *__sighandler_t(int);
+typedef void         (*__sighandler_t)(int);
 
 /* special values; standard ones */
 #define SIG_ERR      ((__sighandler_t)-1)
