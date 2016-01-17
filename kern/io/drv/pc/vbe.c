@@ -46,7 +46,6 @@ long         vbefonth = 13;
 void vbeputpix(gfxargb32_t pix, uint8_t *ptr);
 void vbeputs(char *str);
 void vbeputchar(int ch);
-void vbedrawchar(unsigned char c, int x, int y, gfxargb32_t fg, gfxargb32_t bg);
 
 #define VBEPTR(x)                                                       \
     ((((uint32_t)(x) & 0xffffffff) >> 12) | ((uint32_t)(x) & 0xffff))
@@ -285,7 +284,7 @@ vbeclrscr(gfxargb32_t pix)
 
     while (n--) {
         vbeputpix(pix, ptr);
-        ptr + incr;
+        ptr += incr;
     }
 
     return;
@@ -315,7 +314,7 @@ vbeclrscr(gfxargb32_t pix)
 #if (NEWFONT)
 
 void
-vbedrawchar(unsigned char c, int x, int y, gfxargb32_t fg, gfxargb32_t bg)
+vbedrawchar(unsigned char c, int x, int y, gfxargb32_t fg)
 {
     long      lim = vbefonth;
     long      cy;
@@ -417,7 +416,7 @@ vbedrawcharbg(unsigned char c, int x, int y, gfxargb32_t fg, gfxargb32_t bg)
 #else
 
 void
-vbedrawchar(unsigned char c, int x, int y, gfxargb32_t fg, gfxargb32_t bg)
+vbedrawchar(unsigned char c, int x, int y, gfxargb32_t fg)
 {
     long     cy;
     long     incr = vbescreen.w * (vbescreen.nbpp >> 3);
@@ -518,10 +517,10 @@ vbeputs2(struct cons *cons, char *str)
 #if (PLASMA)
             vbedrawcharbg(ch, x * vbefontw, row * vbefonth, cons->fg, cons->bg);
 #else
-            vbedrawchar(ch, x * vbefontw, row * vbefonth, cons->fg, cons->bg);
+            vbedrawchar(ch, x * vbefontw, row * vbefonth, cons->fg);
 #endif
 #else
-            vbedrawchar(ch, x << 3, row << 3, cons->fg, cons->bg);
+            vbedrawchar(ch, x << 3, row << 3, cons->fg);
 #endif
             if (++x == w) {
                 x = 0;
@@ -562,10 +561,10 @@ vbeputchar(int ch)
 #if (PLASMA)
     vbedrawcharbg(ch, col * vbefontw, row * vbefonth, cons->fg, cons->bg);
 #else
-    vbedrawchar(ch, col * vbefontw, row * vbefonth, cons->fg, cons->bg);
+    vbedrawchar(ch, col * vbefontw, row * vbefonth, cons->fg);
 #endif
 #else
-    vbedrawchar(ch, col << 3, row << 3, cons->fg, cons->bg);
+    vbedrawchar(ch, col << 3, row << 3, cons->fg);
 #endif
 
     return;

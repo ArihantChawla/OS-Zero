@@ -10,7 +10,9 @@
 
 void vbeinitcons(int w, int h);
 void vbeclrscr(gfxargb32_t pix);
-void vbedrawchar(unsigned char c, int x, int y, gfxargb32_t fg, gfxargb32_t bg);
+void vbedrawchar(unsigned char c, int x, int y, gfxargb32_t fg);
+void vbedrawcharbg(unsigned char c, int x, int y, gfxargb32_t fg,
+                   gfxargb32_t bg);
 
 #define VBEINFOADR       0xa000
 #define VBEMODEADR       0xb000

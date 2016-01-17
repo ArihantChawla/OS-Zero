@@ -7,9 +7,9 @@
 #if defined(QUEUE_SINGLE_TYPE)
 
 #define queueinit(item)                                                 \
-    ((item)->next = (item), (item)->prev = (item))
-#define queueissingular(item)                                           \
-    ((item)->next == (item)->prev)
+    ((item)->next = (item),   (item)->prev = (item))
+#define queueisempty(item)    (!(item)->next)
+#define queueissingular(item) ((item)->next == (item)->prev)
 
 /* add item to beginning of queue */
 static __inline__ void
