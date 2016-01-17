@@ -236,7 +236,7 @@ mpmain(struct m_cpu *cpu)
 {
     seginit(cpu->id);
     idtset();
-    m_xchg(&cpu->state, CPUSTARTED);
+    m_xchg(&cpu->statflg, CPUSTARTED);
     /* TODO: initialise HPET; enable [rerouted] interrupts */
 #if (HPET)
     hpetinit();
@@ -286,7 +286,7 @@ mpstart(void)
         *--mpentrystk = MPENTRYSTK - cpu->id * MPSTKSIZE;
         *--mpentrystk = (uint32_t)&kernpagedir;
         apicstart(cpu->id, MPENTRY);
-        while (!cpu->state) {
+        while (!cpu->statflg) {
             ;
         }
     }

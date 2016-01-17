@@ -72,13 +72,14 @@ struct task {
     long            score;              // interactivity score
     long            cpu;                // CPU-affinity
     long            slice;              // timeslice in ticks
-    unsigned long   runtime;            // # of ticks run
-    unsigned long   slptime;            // # of ticks  of slept voluntarily
-    unsigned long   ntick;              // # of scheduler ticks received
-    unsigned long   lastrun;            // last tick we ran on
-    unsigned long   firstrun;           // first tick we ran on
-    unsigned long   ntickleft;          // # of remaining ticks of slice
-    unsigned long   lasttick;           // real last tick for affinity
+    long            runtime;            // # of ticks run
+    long            slptime;            // # of ticks  of slept voluntarily
+    long            ntick;              // # of scheduler ticks received
+    long            lastrun;            // last tick we ran on
+    long            firstrun;           // first tick we ran on
+    long            ntickleft;          // # of remaining ticks of slice
+    long            lasttick;           // real last tick for affinity
+    long            lendprio;
     uintptr_t       waitchan;           // wait channel
     time_t          timelim;            // wakeup time or deadline
     /* linkage */

@@ -30,6 +30,7 @@ void tasksetzombie(struct task *task, long cpu);
 
 extern struct divul scheddivultab[SCHEDHISTORYSIZE];
 
+/* convert nice-values to priority offsets using taskniceptr */
 static long tasknicetab[64]
 = {
     0,
@@ -44,47 +45,46 @@ static long tasknicetab[64]
     0,
     0,
     0,
-    -31,
-    -29,
+    -32,
+    -30,
     -28,
-    -26,
+    -27,
     -25,
-    -23,
-    -21,
+    -24,
+    -22,
     -20,
-    -18,
+    -19,
     -17,
-    -15,
-    -13,
+    -16,
+    -14,
     -12,
-    -10,
+    -11,
     -9,
-    -7,
-    -5,
+    -8,
+    -6,
     -4,
-    -2,
+    -3,
     -1,
     0,
-    2,
+    1,
     3,
-    5,
+    4,
     6,
     8,
-    10,
+    9,
     11,
-    13,
+    12,
     14,
     16,
-    18,
+    17,
     19,
-    21,
+    20,
     22,
     24,
-    26,
+    25,
     27,
-    29,
-    30,
-    0,
+    28,
+    32,
     0,
     0,
     0,
@@ -97,6 +97,7 @@ static long tasknicetab[64]
     0,
     0
 };
+/* convert nice values to [4-millisecond] scheduler ticks using tasksliceptr */
 static long taskslicetab[64]
 = {
     0,
@@ -263,10 +264,10 @@ taskadjnice(struct task *task, long val)
 static __inline__ void
 taskadjscore(struct task *task)
 {
-    unsigned long run = task->runtime;
-    unsigned long slp = task->slptime;
-    unsigned long lim = SCHEDHISTORYSIZE;
-    unsigned long sum = run + slp;
+    long run = task->runtime;
+    long slp = task->slptime;
+    long lim = SCHEDHISTORYSIZE;
+    long sum = run + slp;
 
     if (sum < lim) {
 
@@ -308,10 +309,11 @@ taskadjscore(struct task *task)
 static __inline__ long
 taskcalcscore(struct task *task)
 {
-    unsigned long run = task->runtime;
-    unsigned long slp = task->slptime;
-    unsigned long div;
-    unsigned long res;
+    long run = task->runtime;
+    long slp = task->slptime;
+    long div;
+    long res;
+    long tmp;
 
     if (SCHEDSCORETHRESHOLD <= SCHEDSCOREHALF
         && run >= slp) {
@@ -320,17 +322,19 @@ taskcalcscore(struct task *task)
 
         return res;
     }
-    if (slp > run) {
-        div = max(1, slp >> 6);
-        res = fastuldiv32(run, div, scheddivultab);
+    if (run > slp) {
+        res = SCHEDSCOREHALF;
+        div = max(1, run >> 6);
+        res <<= 1;
+        tmp = fastuldiv32(run, div, scheddivultab);
+        res -= tmp;
         task->score = res;
 
         return res;
     }
-    if (run > slp) {
-        res = SCHEDSCOREMAX;
-        div = max(1, run >> 6);
-        res -= fastuldiv32(slp, div, scheddivultab);
+    if (slp > run) {
+        div = max(1, slp >> 6);
+        res = fastuldiv32(run, div, scheddivultab);
         task->score = res;
 
         return res;
@@ -370,21 +374,21 @@ taskadjintparm(struct task *task)
             task->slptime = 1;
         } else {
             task->runtime = 1;
-            task->slptime = 1;
+            task->slptime = SCHEDHISTORYMAX;
         }
 
         return;
     }
-    if (sum > (SCHEDHISTORYMAX / 5) << 2) {
-        /* if sum > 4 * SCHEDHISTORY / 5, sum /= 2; */
+    if (sum > (SCHEDHISTORYMAX >> 3) * 9) {
+        /* exceeded by more than 1/8th, divide by 2 */
         run >>= 1;
         slp >>= 1;
     } else {
-        /* else sum /= 4; sum *= 3; */
-        run >>= 2;
-        slp >>= 2;
-        run *= 3;
-        slp *= 3;
+        /* multiply by 7 / 8 */
+        run >>= 3;
+        slp >>= 3;
+        run *= 7;
+        slp *= 7;
     }
     task->runtime = run;
     task->slptime = slp;
@@ -393,17 +397,30 @@ taskadjintparm(struct task *task)
 }
 
 static __inline__ void
-schedforkintparm(struct task *task)
+taskforkintparm(struct task *task)
 {
     long run = task->runtime;
     long slp = task->slptime;
-    long ratio;
+    long run2;
+    long slp2;
     long sum = run + slp;
 
     if (sum > SCHEDHISTORYFORKMAX) {
+#if (HZ == 250) && (SCHEDHISTORYNSEC == 8)
+        /* multiply run and slp by 3 / 8 */
+        run2 = run;
+        slp2 = slp;
+        run >>= 3;
+        slp >>= 3;
+        run2 >>= 2;
+        slp2 >>= 2;
+        run += run2;
+        slp += slp2;
+#else
         ratio = fastuldiv32(sum, SCHEDHISTORYFORKMAX, scheddivultab);
-        run /= ratio;
-        slp /= ratio;
+        run = fastuldiv32(run, ratio, scheddivultab);
+        slp = fastuldiv32(slp, ratio, scheddivultab);
+#endif
         task->runtime = run;
         task->slptime = slp;
     }
@@ -411,47 +428,55 @@ schedforkintparm(struct task *task)
     return;
 }
 
-/* applied for time-share tasks of classes SCHEDRESPONSIVE and SCHEDNORMAL */
+/* applied for time-share tasks of classes SCHEDRESPONSIVE..SCHEDBATCH */
+/* return value is new priority */
 static __inline__ long
 taskcalcintparm(struct task *task, long *retscore)
 {
-    unsigned long score;
-    long          prio = task->prio;
-    unsigned long range = SCHEDINTPRIOMAX - SCHEDINTPRIOMIN + 1;
-    unsigned long diff;
-    unsigned long ntick;
-    unsigned long tickhz;
-    unsigned long total;
-    unsigned long div;
-    unsigned long tmp;
+    long range = SCHEDINTPRIOMAX - SCHEDINTPRIOMIN + 1;
+    long score;
+    long diff;
+    long ntick;
+    long tickhz;
+    long total;
+    long div;
+    long res;
+    long tmp;
     
     score = taskcalcscore(task);
     score += task->nice;
-    score = max(SCHEDINTPRIOMIN, score);
+    /* do not overlap highest [fixed] priority tasks */
+    score = max(SCHEDINTRPRIOMIN, score);
     if (score < SCHEDSCORETHRESHOLD) {
-        prio = SCHEDINTPRIOMIN;
+        res = SCHEDINTPRIOMIN;
+#if (SCHEDSCORETHRESHOLD == 32)
+        range >>= 5;
+#else
         range = fastuldiv32(range, SCHEDSCORETHRESHOLD, scheddivultab);
+#endif
         range *= score;
-        prio += range;
+        res += range;
     } else {
         ntick = task->ntick;
-        total = task->lastrun - task->firstrun;
-        tickhz = ntick >> SCHEDTICKSHIFT;
-        diff = SCHEDBATCH - (SCHEDNCLASSQUEUE >> 1);
-        prio = SCHEDBATCH + (SCHEDNCLASSQUEUE >> 1);
-        range = diff - prio + 1;
         if (ntick) {
-            total = roundup(total, range);
-            div = fastuldiv32(total, range, scheddivultab);
-            prio += task->nice;
-            tmp = fastuldiv32(tickhz, div, scheddivultab);
-            diff = min(diff, tmp);
-            prio += diff;
+            total = task->lastrun - task->firstrun;
+            tickhz = ntick >> SCHEDTICKSHIFT;
+            diff = SCHEDBATCHPRIOMAX - SCHEDNICEHALF;
+            res = SCHEDBATCHPRIOMIN + SCHEDNICEHALF;
+            total = max(total, HZ);
+            range = diff - res + 1;
+            tmp = roundup(total, range);
+            res += task->nice;
+            div = fastuldiv32(total, tmp, scheddivultab);
+            range--;
+            total = fastuldiv32(tickhz, div, scheddivultab);
+            diff = min(total, range);
+            res += diff;
         }
     }
     *retscore = score;
     
-    return prio;
+    return res;
 }
 
 static __inline__ long
@@ -566,6 +591,23 @@ tasksetready(struct task *task, long cpu)
             /* insert onto current queue */
             queue = cpuset->cur;
             map = cpuset->curmap;
+            if (prio < 0) {
+                long qid = -prio;
+                
+                /* SCHEDREALTIME with SCHED_FIFO */
+                queue -= prio;
+                queuepush(task, &queue);
+                setbit(map, qid);
+            } else {
+                /* SCHEDINTERRUPT or SCHEDREALTIME with SCHED_RR */
+                queue += prio;
+                queueappend(task, &queue);
+                setbit(map, prio);
+            }
+#if 0
+            /* insert onto current queue */
+            queue = cpuset->cur;
+            map = cpuset->curmap;
             if (sched == SCHEDINTERRUPT) {
                 queue += prio;
                 queueappend(task, &queue);
@@ -583,6 +625,7 @@ tasksetready(struct task *task, long cpu)
                 queueappend(task, &queue);
                 setbit(map, prio);
             }
+#endif
         }
     } else if (sched != SCHEDIDLE) {
         /* SCHEDRESPONSIVE..SCHEDBATCH */
@@ -595,6 +638,7 @@ tasksetready(struct task *task, long cpu)
         } else if (schedistimeshare(sched)) {
             /* SCHEDRESPONSIVE or SCHEDNORMAL; calculate timeshare priority */
             prio = taskcalcintparm(task, &score);
+            prio = min(task->lendprio, prio);
             prio >>= 1;
         } else {
             /* SCHEDBATCH; increment priority by one */

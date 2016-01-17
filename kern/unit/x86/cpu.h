@@ -61,8 +61,8 @@ extern long               k_cpuid    __asm__ ("%gs:56");
 
 #define NCPUWORD     8 /* cpu, proc, task, pdir/pml4, pid, info, state, id */
 /* CPU state values */
-#define CPUSTARTED   1L
-#define CPURESCHED   2L
+#define CPUSTARTED   (1L << 0)
+#define CPURESCHED   (1L << 1)
 struct m_cpu {
     /* cpu-local variables */
     struct m_cpu     *cpu;
@@ -73,9 +73,10 @@ struct m_cpu {
     struct m_cpuinfo *info;
     /* end of cpu local variables */
     volatile long     lk;
-    volatile long     state;
+    volatile long     statflg;
     long              id;
     long              ntick;
+    long              nicemin;
 #if 0
     struct m_tcb     *schedtcb;
     uint8_t          *kstk;
