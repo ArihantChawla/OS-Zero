@@ -30,140 +30,35 @@ void tasksetzombie(struct task *task, long cpu);
 
 extern struct divul scheddivultab[SCHEDHISTORYSIZE];
 
-/* convert nice-values to priority offsets using taskniceptr */
-static long tasknicetab[64]
+/* lookup table to convert nice values to priority offsets */
+/* nice is between -20 and 19 inclusively */
+/* taskniceptr = &tasknicetab[SCHEDNICEHALF]; */
+/* prio += taskniceptr[nice]; */
+static const long tasknicetab[SCHEDNICERANGE]
 = {
-    0,
-    0,
-    0,
-    0,
-    0,
-    0,
-    0,
-    0,
-    0,
-    0,
-    0,
-    0,
-    -32,
-    -30,
-    -28,
-    -27,
-    -25,
-    -24,
-    -22,
-    -20,
-    -19,
-    -17,
-    -16,
-    -14,
-    -12,
-    -11,
-    -9,
-    -8,
-    -6,
-    -4,
-    -3,
-    -1,
-    0,
-    1,
-    3,
-    4,
-    6,
-    8,
-    9,
-    11,
-    12,
-    14,
-    16,
-    17,
-    19,
-    20,
-    22,
-    24,
-    25,
-    27,
-    28,
-    32,
-    0,
-    0,
-    0,
-    0,
-    0,
-    0,
-    0,
-    0,
-    0,
-    0,
-    0
+    0, 0, 0, 0, 0, 0, 0, 0,
+    0, 0, 0, 0, -32, -30, -28, -27,
+    -25, -23, -22, -20, -19, -17, -15, -14,
+    -12, -11, -9, -7, -6, -4, -3, -1,
+    0, 1, 3, 4, 6, 8, 9, 11,
+    13, 14, 16, 17, 19, 21, 22, 24,
+    26, 27, 29, 31, 0, 0, 0, 0,
+    0, 0, 0, 0, 0, 0, 0, 0
 };
-/* convert nice values to [4-millisecond] scheduler ticks using tasksliceptr */
-static long taskslicetab[64]
+/* lookup table to convert nice values to slices in 4-ms ticks */
+/* nice is between -20 and 19 inclusively */
+/* tasksliceptr = &taskslicetab[SCHEDNICEHALF]; */
+/* slice = tasksliceptr[nice]; */
+static const long taskslicetab[SCHEDNICERANGE]
 = {
-    0,
-    0,
-    0,
-    0,
-    0,
-    0,
-    0,
-    0,
-    0,
-    0,
-    0,
-    0,
-    4,
-    4,
-    8,
-    8,
-    12,
-    12,
-    16,
-    16,
-    20,
-    20,
-    24,
-    24,
-    28,
-    28,
-    32,
-    32,
-    36,
-    36,
-    40,
-    40,
-    44,
-    44,
-    48,
-    48,
-    52,
-    52,
-    56,
-    56,
-    60,
-    60,
-    64,
-    64,
-    68,
-    68,
-    72,
-    72,
-    76,
-    76,
-    80,
-    80,
-    0,
-    0,
-    0,
-    0,
-    0,
-    0,
-    0,
-    0,
-    0,
-    0,
-    0,
-    0
+    0, 0, 0, 0, 0, 0, 0, 0,
+    0, 0, 0, 0, 1, 1, 2, 2,
+    3, 3, 4, 4, 5, 5, 6, 6,
+    7, 7, 8, 8, 9, 9, 10, 10,
+    11, 11, 12, 12, 13, 13, 14, 14,
+    15, 15, 16, 16, 17, 17, 18, 18,
+    19, 19, 20, 20, 0, 0, 0, 0,
+    0, 0, 0, 0, 0, 0, 0,
 };
 static long                *taskniceptr = &tasknicetab[32];
 static long                *tasksliceptr = &taskslicetab[32];
@@ -434,13 +329,13 @@ static __inline__ long
 taskcalcintparm(struct task *task, long *retscore)
 {
     long range = SCHEDINTPRIOMAX - SCHEDINTPRIOMIN + 1;
+    long res = 0;
     long score;
     long diff;
     long ntick;
     long tickhz;
     long total;
     long div;
-    long res;
     long tmp;
     
     score = taskcalcscore(task);
@@ -569,7 +464,7 @@ tasksetready(struct task *task, long cpu)
 {
     long                 sched = task->sched;
     long                 prio = task->prio;
-    long                 score = 0;
+    long                 score = ~0L;
     struct taskqueueset *cpuset = &taskreadytab[cpu];
     struct taskqueue    *queue;
     long                *map;
@@ -604,48 +499,19 @@ tasksetready(struct task *task, long cpu)
                 queueappend(task, &queue);
                 setbit(map, prio);
             }
-#if 0
-            /* insert onto current queue */
-            queue = cpuset->cur;
-            map = cpuset->curmap;
-            if (sched == SCHEDINTERRUPT) {
-                queue += prio;
-                queueappend(task, &queue);
-                setbit(map, prio);
-            } else if (prio < 0) {
-                long qid = -prio;
-                
-                /* SCHED_FIFO */
-                queue -= prio;
-                queuepush(task, &queue);
-                setbit(map, qid);
-            } else {
-                /* SCHED_RR */
-                queue += prio;
-                queueappend(task, &queue);
-                setbit(map, prio);
-            }
-#endif
         }
     } else if (sched != SCHEDIDLE) {
-        /* SCHEDRESPONSIVE..SCHEDBATCH */
+        /* SCHEDRESPONSIVE, SCHEDNORMAL, SCHEDBATCH */
         flg = task->schedflg;
         if (flg & TASKHASINPUT) {
             /* boost user-interrupt task to highest priority */
 //            task->sched = SCHEDRESPONSIVE;
             prio = SCHEDUSERPRIOMIN;
             task->prio = prio;
-        } else if (schedistimeshare(sched)) {
+        } else {
             /* SCHEDRESPONSIVE or SCHEDNORMAL; calculate timeshare priority */
             prio = taskcalcintparm(task, &score);
             prio = min(task->lendprio, prio);
-            prio >>= 1;
-        } else {
-            /* SCHEDBATCH; increment priority by one */
-            lim = SCHEDNCLASS * SCHEDNCLASSPRIO - 1;
-            prio++;
-            prio = min(prio, lim);
-            task->prio = prio;
             prio >>= 1;
         }
         if (schedisinteract(score)) {

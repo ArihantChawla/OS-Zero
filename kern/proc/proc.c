@@ -19,7 +19,7 @@ struct proc proctab[NTASK] ALIGNED(PAGESIZE);
 struct task tasktab[NTASK];
 
 long
-procinit(long id)
+procinit(long id, long sched)
 {
     struct m_cpu   *cpu = k_curcpu;
     struct proc    *proc = &proctab[id];
@@ -56,7 +56,11 @@ procinit(long id)
         task->sched = SCHEDFIXED;
         task->prio = id;
     } else {
-        task->sched = SCHEDRESPONSIVE;
+        if (sched == SCHEDNOCLASS) {
+            task->sched = SCHEDRESPONSIVE;
+        } else {
+            task->sched = sched;
+        }
         task->prio = SCHEDPRIOMIN;
         /* initialise page directory */
         ptr = kmalloc(NPDE * sizeof(pde_t));
@@ -148,7 +152,7 @@ newproc(int argc, char *argv[], char *envp[], long sched)
     struct task *task = (id >= 0) ? &tasktab[id] : NULL;
 
     if (proc) {
-        procinit(id);
+        procinit(id, sched);
         proc->argc = argc;
         proc->argv = argv;
         proc->envp = envp;

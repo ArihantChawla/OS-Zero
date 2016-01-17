@@ -20,7 +20,7 @@ __sighandler_t     sigfunctab[NSIG] ALIGNED(PAGESIZE);
 long               traperrbits = TRAPERRBITS;
 
 void
-killproc(volatile struct proc *proc)
+prockill(volatile struct proc *proc)
 {
     ;
 }
@@ -46,7 +46,7 @@ sigfunc(unsigned long pid, int32_t trap, long err, void *frame)
 //        kprintf("PANIC: #GP (0x%lx)\n", errcode);
     } else if (sig == SIGKILL) {
 //        kprintf("trap 0x%lx -> signal 0x%lx\n", trap, sig);
-        killproc(proc);
+        prockill(proc);
     } else if ((sig) && sigismember(&task->sigmask, sig)) {
 //        kprintf("trap 0x%lx -> signal 0x%lx\n", trap, sig);
         func = proc->sigvec[sig];

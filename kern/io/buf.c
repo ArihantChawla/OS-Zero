@@ -46,9 +46,15 @@ static struct bufblk       bufhdrtab[BUFNBLK] ALIGNED(PAGESIZE);
 #if (BUFMULTITAB)
 static void               *buftab[BUFNDEV] ALIGNED(PAGESIZE);
 #else
+#if (BUFNEWHASH)
+static struct bufchain     bufhash[BUFNHASH];
+//static struct bufchain     bufhash[BUFNDEV][BUFNHASH];
+#else
 static void               *bufhash[BUFNDEV][BUFNHASH];
 #endif
-static volatile long       buflktab[BUFNDEV] ALIGNED(PAGESIZE);
+#endif
+//static volatile long       buflktab[BUFNDEV] ALIGNED(PAGESIZE);
+static struct bufdev       bufdevtab[BUFNDEV];
 static struct bufblkqueue  buffreelist;
 static struct bufblkqueue  buflruqueue;
 static volatile long       bufzonelk;
@@ -122,7 +128,7 @@ bufevict(void)
         if (!blk) {
             /* TODO: wait for queuepop(&buflruqueue.head) */
         } else {
-            if (blk->data & BUFDIRTY) {
+            if (blk->flg & BUFDIRTY) {
                 bufwrite(blk);
             }
             bufclr(blk);
@@ -163,10 +169,28 @@ bufalloc(void)
 void
 bufaddblk(struct bufblk *blk)
 {
-    struct bufblk *buf;
-    int64_t        key = hashq128(&blk->num, sizeof(int64_t), BUFNHASHBIT);
-    long           dkey = blk->dev & BUFDEVMASK;
+#if (BUFNEWHASH)
+    int64_t          val = bufmkhashkey(blk->dev, blk->num);
+    int64_t          key = hashq128(&val, sizeof(int64_t), BUFNHASHBIT);
+    struct bufblk   *buf;
+    struct bufchain *chain = &bufhash[key];
+#else
+    int64_t          key = hashq128(&blk->num, sizeof(int64_t), BUFNHASHBIT);
+    long             dkey = blk->dev & BUFDEVMASK;
+    struct bufblk   *buf;
+#endif
 
+#if (BUFNEWHASH)
+    mtxlk(&chain->lk);
+    buf = chain->list;
+    buf->tabprev = NULL;
+    if (buf) {
+        buf->tabprev = blk;
+    }
+    blk->tabnext = buf;
+    chain->list = buf;
+    mtxunlk(&chain->lk);
+#else
     mtxlk(&buflktab[dkey]);
     buf = bufhash[dkey][key];
     if (buf) {
@@ -174,18 +198,46 @@ bufaddblk(struct bufblk *blk)
     }
     bufhash[dkey][key] = blk;
     mtxunlk(&buflktab[dkey]);
+#endif
 
     return;
 }
 
-/* look buffer up from buffer cache */
+/* look buffer up from buffer cache; dev is buffer-device ID, not system */
 struct bufblk *
-buffindblk(dev_t dev, off_t num, long rel)
+buffindblk(long dev, off_t num, long rel)
 {
-    int64_t        key = hashq128(&num, sizeof(int64_t), BUFNHASHBIT);
-    long           dkey = dev & BUFDEVMASK;
-    struct bufblk *blk = NULL;
+#if (BUFNEWHASH)
+    int64_t          val = bufmkhashkey(dev, num);
+    int64_t          key = hashq128(&val, sizeof(int64_t), BUFNHASHBIT);
+    struct bufblk   *blk;
+    struct bufchain *chain = &bufhash[key];
+#else
+    int64_t          key = hashq128(&num, sizeof(int64_t), BUFNHASHBIT);
+    long             dkey = dev & BUFDEVMASK;
+    struct bufblk   *blk = NULL;
+#endif
 
+#if (BUFNEWHASH)
+    mtxlk(&chain->lk);
+    blk = chain->list;
+    while ((blk) && blk->num != num) {
+        blk = blk->tabnext;
+    }
+    if ((blk) && (rel)) {
+        /* remove block from buffer hash chain */
+        if (blk->tabprev) {
+            blk->tabprev->tabnext = blk->tabnext;
+        } else {
+            chain->list = blk->tabnext;
+        }
+        if (blk->tabnext) {
+            blk->tabnext->tabprev = blk->tabprev;
+        }
+    }
+
+    return blk;
+#else
     mtxlk(&buflktab[dkey]);
     blk = bufhash[dkey][key];
     while ((blk) && blk->num != num) {
@@ -205,6 +257,7 @@ buffindblk(dev_t dev, off_t num, long rel)
     mtxunlk(&buflktab[dkey]);
 
     return blk;
+#endif
 }
 
 #else /* BUFMULTITAB */

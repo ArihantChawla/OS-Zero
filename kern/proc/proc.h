@@ -66,7 +66,7 @@
 #include <kern/unit/x86/cpu.h>
 #include <kern/unit/x86/vm.h>
 
-long procinit(long id);
+long procinit(long id, long sched);
 long procgetpid(void);
 void procfreepid(long id);
 

@@ -42,7 +42,7 @@ extern void trapinitprot(void);
 #endif
 extern void cpuinit(volatile struct m_cpu *cpu);
 extern long sysinit(long id);
-//extern long bufinit(void);
+extern long bufinit(void);
 
 #if (HPET)
 extern void hpetinit(void);
@@ -140,7 +140,6 @@ kinitprot(unsigned long pmemsz)
 #if (VBE) && (PLASMA) && (!PLASMAFOREVER)
     plasmaloop(4);
 #endif
-    m_printregs();
     kprintf("%lu free physical pages @ 0x%p..0x%p\n",
             vmpagestat.nphys, vmpagestat.phys, vmpagestat.physend);
 #if 0
@@ -224,7 +223,7 @@ kinitprot(unsigned long pmemsz)
 //    tssinit(0);
 //    machinit();
     /* execution environment */
-    procinit(PROCKERN);
+    procinit(PROCKERN, SCHEDNOCLASS);
 //    k_curtask = &k_curproc->task;
     sysinit(0);
     kprintf("DMA buffers (%ul x %ul kilobytes) @ 0x%p\n",

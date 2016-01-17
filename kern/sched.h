@@ -45,6 +45,7 @@ extern void schedyield(void);
 #define SCHEDNCLASS         6           // user scheduler classes
 #define SCHEDIDLE           SCHEDNCLASS // idle tasks
 #define SCHEDNQUEUE         (SCHEDNCLASS * SCHEDNCLASSQUEUE)
+#define SCHEDNOCLASS        0xff
 /* fixed priorities */
 #define SCHEDHID            0           // human interface devices (kbd, mouse)
 #define SCHEDAUDIO          1           // audio synchronisation

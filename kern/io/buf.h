@@ -2,24 +2,32 @@
 #define __KERN_IO_BUF_H__
 
 #include <stdint.h>
+#include <zero/param.h>
 #include <kern/conf.h>
 #include <kern/perm.h>
 
 #define NEWBUFBLK 1
 
 #if (!BUFMULTITAB)
+#if (BUFNEWHASH)
 #define BUFNHASHBIT 16
+#define bufmkhashkey(dev, num)                                          \
+    (((int64_t)dev << (64 - BUFNDEVBIT))                                \
+     | ((num) & ((INT64_C(1) << (64 - BUFNDEVBIT)) - 1)))
+#else
+#define BUFNHASHBIT 16
+#endif
 #define BUFNHASH    (1UL << BUFNHASHBIT)
 #endif
 
 /*
  * 64-bit off_t
- * 50 significant off_t bits for buffers
+ * 64 - BUFMINSIZELOG2 (51) significant off_t bits for buffers
  * 2^16-byte i.e. 64KB default buffer size optimized for TCP/IP v4
  */
 
 #define BUFMINSIZE     (1UL << BUFMINSIZELOG2)
-#define BUFMINSIZELOG2 14
+#define BUFMINSIZELOG2 13
 #define BUFSIZE        (1UL << BUFSIZELOG2)
 #define BUFSIZELOG2    16
 /* size of buffer cache */
@@ -28,35 +36,40 @@
 #define BUFNBLK        (BUFNBYTE >> BUFMINSIZELOG2)
 #define BUFNIDBIT      (64 - BUFMINSIZELOG2)
 #define BUFNDEV        256
+#define BUFNDEVBIT     8
+#define BUFNDEVBITMAX  16
 #define BUFDEVMASK     (BUFNDEV - 1)
-#define BUFNL1BIT      18
-#define BUFNL2BIT      10
-#define BUFNL3BIT      10
-#define BUFNL4BIT      12
+#define BUFNL1BIT      (BUFNIDBIT - BUFNL2BIT - BUFNL3BIT)
+#define BUFNL2BIT      16
+#define BUFNL3BIT      16
 #define BUFNL1ITEM     (1UL << BUFNL1BIT)
 #define BUFNL2ITEM     (1UL << BUFNL2BIT)
 #define BUFNL3ITEM     (1UL << BUFNL3BIT)
-#define BUFNL4ITEM     (1UL << BUFNL4BIT)
-#define BUFL1SHIFT     (BUFMINSIZELOG2 + BUFNL4BIT + BUFNL3BIT + BUFNL2BIT)
-#define BUFL2SHIFT     (BUFMINSIZELOG2 + BUFNL4BIT + BUFNL3BIT)
-#define BUFL3SHIFT     (BUFMINSIZELOG2 + BUFNL4BIT)
+#define BUFL1SHIFT     (BUFMINSIZELOG2 + BUFNL2BIT + BUFNL3BIT)
+#define BUFL2SHIFT     (BUFMINSIZELOG2 + BUFNL3BIT)
+#define BUFL3SHIFT     (BUFMINSIZELOG2)
 #define BUFL1MASK      (BUFNL1ITEM - 1)
 #define BUFL2MASK      (BUFNL2ITEM - 1)
 #define BUFL3MASK      (BUFNL3ITEM - 1)
 #define BUFL4MASK      (BUFNL4ITEM - 1)
 
-#define bufkey(num) (((num) >> BUFNOFSBIT) & ((UINT64_C(1) << BUFNIDBIT) - 1))
+//#define bufkey(num) (((num) >> BUFNOFSBIT) & ((UINT64_C(1) << BUFNIDBIT) - 1))
 #define bufclr(blk)                                                     \
     do {                                                                \
-        void *_tmp = NULL;                                              \
+        long  _val = 0;                                                 \
+        void *_ptr = NULL;                                              \
                                                                         \
-        blk->data &= BUFADRMASK;                                        \
-        blk->prev = _tmp;                                               \
-        blk->next = _tmp;                                               \
-        blk->tabprev = _tmp;                                            \
-        blk->tabnext = _tmp;                                            \
+        (blk)->flg = _val;                                              \
+        (blk)->num = _val;                                              \
+        (blk)->nref = _val;                                             \
+        (blk)->chksum = _val;                                           \
+        (blk)->dev = _val;                                              \
+        (blk)->prev = _ptr;                                             \
+        (blk)->next = _ptr;                                             \
+        (blk)->tabprev = _ptr;                                          \
+        (blk)->tabnext = _ptr;                                          \
     } while (0)
-/* data values */
+/* contents for the flg-member */
 #define BUFSIZEBITS  6          // shift count 0..63
 #define BUFHASDATA   (1 << 6)   // buffer has valid data
 #define BUFDIRTY     (1 << 7)   // kernel must write before reassigning
@@ -64,16 +77,27 @@
 #define BUFADRMASK   (~((1UL << BUFMINSIZELOG2) - 1))
 #define BUFINFOMASK  (~BUFADRMASK)
 #if (NEWBUFBLK)
+/* this structure has been carefully crafted to fit a cacheline or two */
 struct bufblk {
-    uintptr_t      data;        // address, flags, and size-shift
-    int64_t        dev;         // major and minor device IDs
-    int64_t        nref;        // # of items in subtables
-    int32_t        num;         // per-device block ID
-    int32_t        chksum;      // checksum such as IPv4
+    const void    *data;        // buffer address + flags in low bits
+    long           flg;         // shift count for size + flags as above
+    int64_t        num;         // per-device block ID
+    int32_t        nref;        // # of references
+    int16_t        chksum;      // checksum such as IPv4
+    int16_t        dev;         // buffer-subsystem device ID
     struct bufblk *prev;        // previous block on free-list or LRU
     struct bufblk *next;        // next block on free-list or LRU
     struct bufblk *tabprev;     // previous block in table chain
     struct bufblk *tabnext;     // next block in table chain
+#if (PTRSIZE == 8) && (CLSIZE == 64)
+    uint8_t        _pad[CLSIZE - 5 * sizeof(void) - sizeof(long)
+                        - sizeof(int64_t) - sizeof(int32_t)
+                        - 2 * sizeof(int16_t)];
+#elif (PTRSIZE == 4) && (CLSIZE == 32)
+    uint8_t        _pad[2 * CLSIZE - 5 * sizeof(void) - sizeof(long)
+                        - sizeof(int64_t) - sizeof(int32_t)
+                        - 2 * sizeof(int16_t)];
+#endif
 };
 #else
 struct bufblk {
@@ -91,6 +115,23 @@ struct bufblk {
 };
 #endif
 
+struct bufdev {
+    volatile long lk;
+    long          id;           // system descriptor
+    long          flg;          // flags such as DEVIOSEQ, DEVCANSEEK(?), ...
+    long          type;         // DISK, NET, OPT, TAPE, ...
+    long          prio;         // device priority for I/O scheduling
+    long          timelim;      // time-limit (e.g. to wait before seek)
+    uint8_t       _pad[CLSIZE - 6 * sizeof(long)];
+};
+
+struct bufchain {
+    volatile long  lk;
+    long           nitem;
+    struct bufblk *list;
+    uint8_t        _pad[CLSIZE - 2 * sizeof(long) - sizeof(void *)];
+};
+
 struct bufblkqueue {
     volatile long  lk;
     struct bufblk *head;
@@ -100,7 +141,7 @@ struct bufblkqueue {
 long            bufinit(void);
 struct bufblk * bufalloc(void);
 void            bufaddblk(struct bufblk *blk);
-struct bufblk * buffindblk(dev_t dev, off_t num, long rel);
+struct bufblk * buffindblk(long dev, off_t num, long rel);
 
 #endif /* __KERN_IO_BUF_H__ */
 

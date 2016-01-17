@@ -3,6 +3,8 @@
 
 #include <zero/param.h>
 
+#define BUFNEWHASH 1
+
 #define VMFLATPHYSTAB    1
 #define USERMODE         0
 #define PLASMAFOREVER    1
