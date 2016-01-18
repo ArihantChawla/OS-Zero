@@ -22,48 +22,60 @@ extern void schedyield(void);
 #define HZ                  250
 #endif
 
+/* macros */
+#define schedcalctime(task) ((task)->ntick >> SCHEDTICKSHIFT)
+#define schedestticks(task) (max((task)->lastrun - (task)->firstrun, HZ))
+#define schedcalcnice(task) (tasknicetab[(task)->nice])
+#define schedcalcprio(task)                                             \
+    (fastuldiv32(schedcalctime(task),                                   \
+                 (roundup(schedcalcticks(task), SCHEDPRIORANGE)         \
+                  / SCHEDPRIORANGE),                                    \
+                 divultab))
 /* timeshare-tasks have interactivity scores */
 #define schedistimeshare(sched)                                         \
     ((sched) >= SCHEDRESPONSIVE || (sched) <= SCHEDBATCH)
 #define schedisinteract(score)                                          \
     ((score) < SCHEDSCORETHRESHOLD)
+#define schedprioqueueid(prio) ((prio) >> 1)
 /* task scheduler classes */
 #define SCHEDNCLASSPRIO     64          // # of priorities per class
 #define SCHEDNCLASSQUEUE    32          // # of priority queues per class
 /* 'system' classes */
 #define SCHEDDEADLINE       (-1)        // deadline tasks
-#define SCHEDFIXED          0           // HID, AUDIO, VIDEO, INIT
-#define SCHEDINTERRUPT      1           // interrupt tasks
-#define SCHEDREALTIME       2           // realtime threads
+#define SCHEDINTERRUPT      0           // interrupt tasks
+#define SCHEDREALTIME       1           // realtime threads
+#define SCHEDSYSTEM         2
 #define SCHEDNSYSCLASS      3           // # of system scheduler classes
-/* 'user' classes */
+/* timeshare classes */
 #define SCHEDRESPONSIVE     3           // 'quick' timeshare tasks
 #define SCHEDNORMAL         4           // 'normal' timeshare tasks
 #define SCHEDBATCH          5           // batch tasks
-#define SCHEDNUSERCLASS     3
-/* exclude SCHEDFIXED priorities from priority raises by propagation */
+#define SCHEDNTMSHARECLASS  3
 #define SCHEDNCLASS         6           // user scheduler classes
 #define SCHEDIDLE           SCHEDNCLASS // idle tasks
 #define SCHEDNQUEUE         (SCHEDNCLASS * SCHEDNCLASSQUEUE)
 #define SCHEDNOCLASS        0xff
+#if 0 /* FIXME: these will be handled in SCHEDINTERRUPT */
 /* fixed priorities */
 #define SCHEDHID            0           // human interface devices (kbd, mouse)
 #define SCHEDAUDIO          1           // audio synchronisation
 #define SCHEDVIDEO          2           // video synchronisation
 #define SCHEDINIT           3           // init; creation of new processes
 #define SCHEDFIXEDPRIOMIN   0
+#endif
 #define SCHEDNIDLE          SCHEDNCLASSQUEUE
-/* exclude fixed priorities from calculations */
-#define SCHEDSYSPRIOMIN     (SCHEDINTERRUPT * SCHEDNCLASSPRIO)
+#define SCHEDSYSPRIOMIN     (SCHEDSYSTEM * SCHEDNCLASSPRIO)
 /* interrupt priority limits */
 #define SCHEDINTRPRIOMIN    (SCHEDINTERRUPT * SCHEDNCLASSPRIO)
 #define SCHEDINTRPRIOMAX    (SCHEDINTRPRIOMIN + SCHEDNCLASSPRIO - 1)
 /* realtime priority limits */
 #define SCHEDRTPRIOBASE     (SCHEDREALTIME * SCHEDNCLASSPRIO)
+/* SCHED_FIFO tasks store priorities as negative values */
 #define SCHEDRTPRIOMIN      (-SCHEDNCLASSPRIO + 1)
 #define SCHEDRTPRIOMAX      (SCHEDNCLASSPRIO - 1)
 /* timeshare priority limits */
 #define SCHEDUSERPRIOMIN    (SCHEDRESPONSIVE * SCHEDNCLASSPRIO)
+#define SCHEDNORMALPRIOMIN  (SCHEDNORMAL * SCHEDNCLASSPRIO)
 #define SCHEDUSERPRIOMAX    SCHEDBATCHPRIOMAX
 #define SCHEDUSERRANGE      (SCHEDUSERPRIOMAX - SCHEDUSERPRIOMIN + 1)
 /* batch priority limits */
@@ -88,18 +100,9 @@ extern void schedyield(void);
 #define SCHEDPRIOMAX        (SCHEDUSERPRIOMAX - SCHEDNICEHALF)
 #define SCHEDPRIORANGE      (SCHEDPRIOMAX - SCHEDPRIOMIN)
 /* interactive priority limits */
-#define SCHEDINTPRIOMIN     SCHEDINTRPRIOMIN
+#define SCHEDINTPRIOMIN     SCHEDUSERPRIOMIN
 #define SCHEDINTPRIOMAX     (SCHEDBATCHPRIOMIN + SCHEDBATCHPRIOMAX - 1)
 #define SCHEDINTRANGE       (SCHEDINTPRIOMAX - SCHEDINTPRIOMIN + 1)
-/* macros */
-#define schedcalctime(task) ((task)->ntick >> SCHEDTICKSHIFT)
-#define schedestticks(task) (max((task)->lastrun - (task)->firstrun, HZ))
-#define schedcalcnice(task) (tasknicetab[(task)->nice])
-#define schedcalcprio(task)                                             \
-    (fastuldiv32(schedcalctime(task),                                   \
-                 (roundup(schedcalcticks(task), SCHEDPRIORANGE)         \
-                  / SCHEDPRIORANGE),                                    \
-                 divultab))
 /* interactivity scores are in the range [0, 128] */
 #define SCHEDSCOREMAX       128
 /* minimum score to mark thread as interactive */
@@ -110,14 +113,14 @@ extern void schedyield(void);
 #define SCHEDHISTORYNSEC    8
 //#define SCHEDHISTORYSIZE    (SCHEDHISTORYMAX * (HZ << SCHEDTICKSHIFT))
 /* number of ticks to keep cpu stats around */
-#define SCHEDHISTORYNTICK   (SCHEDHISTORYNSEC * HZ)
+#define SCHEDHISTORYNTICK   (SCHEDHISTORYNSEC * kgethz())
 /* maximum number of ticks before scaling back */
-#define SCHEDHISTORYSIZE    (SCHEDHISTORYNSEC + HZ)
+#define SCHEDHISTORYSIZE    (SCHEDHISTORYNTICK + kgethz())
 //#define SCHEDTIMEINCR       ((HZ << SCHEDTICKSHIFT) / HZ)
 #define SCHEDTICKSHIFT      10
 /* maximum number of sleep time + run time stored */
-#define SCHEDHISTORYMAX     ((HZ << 2) << SCHEDTICKSHIFT)
-#define SCHEDHISTORYFORKMAX ((HZ << 1) << SCHEDTICKSHIFT)
+#define SCHEDHISTORYMAX     ((kgethz() << 2) << SCHEDTICKSHIFT)
+#define SCHEDHISTORYFORKMAX ((kgethz() << 1) << SCHEDTICKSHIFT)
 
 #endif /* defined(ZEROSCHED) */
 

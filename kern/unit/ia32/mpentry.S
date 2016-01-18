@@ -20,7 +20,7 @@
 
 #if (SMP)
 
-#include <kern/unit/ia32/boot.h>
+#include <kern/unit/x86/boot.h>
 #include <kern/unit/ia32/mp.h>
 
 .globl	mpentry, mpend

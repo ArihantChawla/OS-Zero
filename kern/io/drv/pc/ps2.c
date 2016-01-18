@@ -150,7 +150,7 @@ ps2kbdintr(void)
         }
     } else if (u8 == PS2KBD_UP_BYTE) {
         /* u8 == 0xf0 prefix */
-        keysym |= EVKBDRELEASE;
+        keysym = EVKBDRELEASE;
         ps2readkbd(u8);
 //        keysym |= (uint64_t)u8 << 8;
 #if 0

@@ -10,7 +10,7 @@
 #include <zero/trix.h>
 //#include <zero/list.h>
 #include <kern/syscall.h>
-#include <kern/unit/x86/cpu.h>
+#include <kern/cpu.h>
 #if (defined(__i386__) || defined(__i486__)                             \
      || defined(__i586__) || defined(__i686__)                          \
      && (!defined(__x86_64__) && !defined(__amd64__)))
@@ -58,15 +58,20 @@ struct taskstk {
 
 /* process or thread attributes */
 /* bits for schedflg-member */
-#define TASKHASINPUT (1 << 0)
+#define TASKHASINPUT (1 << 0)   // pending HID input
+#define TASKISBOUND  (1 << 1)   // bound to a processor, cannot migrate
+#define TASKXFERABLE (1 << 2)   // task was added as transferable
+#define TASKCATCHSIG (1 << 3)   // sleeping thread awakened by signals
 struct task {
     /* thread control block - KEEP THIS FIRST in the structure */
-    struct m_task   m_task;             // machine-thread control block
+    struct m_task   m_task;             // machine thread control block
     /* scheduler parameters */
     volatile long   lk;
     long            sched;              // thread scheduler class
     long            schedflg;           // received user input [interrupt]
-    long            prio;               // priority; < 0 for SCHEDFIFO realtime
+    long            runprio;            // current priority
+    long            prio;               // base priority
+    long            sysprio;            // kernel-mode priority
     long            nice;               // priority adjustment
     long            state;              // thread state
     long            score;              // interactivity score
@@ -79,7 +84,6 @@ struct task {
     long            firstrun;           // first tick we ran on
     long            ntickleft;          // # of remaining ticks of slice
     long            lasttick;           // real last tick for affinity
-    long            lendprio;
     uintptr_t       waitchan;           // wait channel
     time_t          timelim;            // wakeup time or deadline
     /* linkage */
@@ -145,12 +149,12 @@ struct taskqueue {
 
 struct taskqueueset {
     volatile long     lk;
-    struct taskqueue *cur;
-    struct taskqueue *next;
-    struct taskqueue *idle;
     long             *curmap;
     long             *nextmap;
     long             *idlemap;
+    struct taskqueue *cur;
+    struct taskqueue *next;
+    struct taskqueue *idle;
     uint8_t           pad[CLSIZE - sizeof(long) - 6 * sizeof(void *)];
 };
 

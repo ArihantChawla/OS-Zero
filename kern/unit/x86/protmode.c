@@ -7,6 +7,7 @@
 #include <kern/util.h>
 #include <kern/obj.h>
 #include <kern/sched.h>
+#include <kern/cpu.h>
 #include <kern/proc/proc.h>
 #include <kern/mem/vm.h>
 #include <kern/mem/page.h>
@@ -18,7 +19,6 @@
 #include <kern/io/drv/pc/acpi.h>
 #endif
 #include <kern/unit/x86/boot.h>
-#include <kern/unit/x86/cpu.h>
 #include <kern/unit/x86/pic.h>
 #include <kern/unit/x86/pit.h>
 #include <kern/unit/x86/kern.h>
@@ -40,7 +40,7 @@
 #if (VBE)
 extern void trapinitprot(void);
 #endif
-extern void cpuinit(volatile struct m_cpu *cpu);
+extern void cpuinit(volatile struct cpu *cpu);
 extern long sysinit(long id);
 extern long bufinit(void);
 
@@ -93,7 +93,7 @@ extern uint8_t                   kerniomap[8192] ALIGNED(PAGESIZE);
 extern uint8_t                   kernsysstktab[NCPU * KERNSTKSIZE];
 extern uint8_t                   kernusrstktab[NCPU * KERNSTKSIZE];
 extern struct proc               proctab[NTASK];
-extern struct m_cpu              cputab[NCPU];
+extern struct cpu                cputab[NCPU];
 #if (VBE)
 extern uint64_t                  kernidt[NINTR];
 extern long                      vbefontw;
@@ -122,7 +122,7 @@ kinitprot(unsigned long pmemsz)
     /* zero kernel BSS segment */
     kbzero(&_bssvirt, (uint32_t)&_ebssvirt - (uint32_t)&_bssvirt);
     /* set kernel I/O permission bitmap to all 1-bits */
-    kmemset(&kerniomap, 0xff, sizeof(kerniomap));
+    kmemset(kerniomap, 0xff, sizeof(kerniomap));
     /* INITIALIZE CONSOLES AND SCREEN */
 #if (VBE)
     vbeinitscr();

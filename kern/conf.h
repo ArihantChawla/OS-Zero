@@ -17,8 +17,10 @@
 #define BUFNMEG     64
 #endif
 
+#define kgethz()    HZ
 #define HZ          250         // scheduler timer frequency
 #define SMP         0           // enable multiprocessor support; FIXME:  broken
+#define SMT         0           // enable hardware multithreading ('hyper')
 #define FASTHZ      1000        // fast timer frequency (interactive tasks etc.)
 #define ZEROSCHED   1           // default scheduler
 #define ZEROINTSCHED 1          // scheduler with interactivity-scoring

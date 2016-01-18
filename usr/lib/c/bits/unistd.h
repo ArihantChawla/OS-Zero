@@ -3,6 +3,7 @@
 
 #include <features.h>
 #include <stdint.h>
+#include <zero/trix.h>
 
 /* types (hopefully) not declared yet... :) */
 #if ((_BSD_SOURCE) || (_XOPEN_SOURCE)) && !defined(__socklen_t_defined)
@@ -163,7 +164,7 @@ typedef uint16_t socklen_t;
 #define MINSYSCONF           (-13)
 #endif
 //#define NNEGSYSCONF          (-MINSYSCONF)
-#define NSYSCONF             (26 - MINSYSCONF) // 1 bigger than any name-value
+#define NSYSCONF             (26 + zeroabs(MINSYSCONF)) // 1 bigger than any ID
 
 #if (USEXOPENEXT) && !defined(F_LOCK)
 /* these macros also appear in <fcntl.h> - keep the files consistent */

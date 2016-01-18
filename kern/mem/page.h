@@ -2,19 +2,13 @@
 #define __KERN_MEM_PAGE_H__
 
 #include <stdint.h>
-
 #include <zero/param.h>
 #include <zero/trix.h>
 #define __KERNEL__ 1
 #include <zero/mtx.h>
-
 #include <kern/perm.h>
 #include <kern/time.h>
-#if defined(__x86_64__) || defined(__amd64__)                           \
-    || defined(__i386__) || defined(__i486__)                           \
-    || defined(__i586__) || defined(__i686__)
-#include <kern/unit/x86/cpu.h>
-#endif
+#include <kern/cpu.h>
 
 #define PAGENODEV (-1)
 #define PAGENOOFS (-1)

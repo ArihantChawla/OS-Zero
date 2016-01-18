@@ -9,6 +9,7 @@
 #include <kern/util.h>
 #include <kern/obj.h>
 #include <kern/sched.h>
+#include <kern/cpu.h>
 #include <kern/proc/proc.h>
 #include <kern/mem/page.h>
 #include <kern/io/drv/chr/cons.h>
@@ -19,7 +20,6 @@
 #include <kern/io/drv/pc/acpi.h>
 #endif
 #include <kern/unit/x86/boot.h>
-#include <kern/unit/x86/cpu.h>
 #include <kern/unit/x86/pic.h>
 #include <kern/unit/x86/pit.h>
 #include <kern/unit/x86/kern.h>

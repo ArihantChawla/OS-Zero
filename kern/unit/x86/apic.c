@@ -6,25 +6,25 @@
 #include <sys/io.h>
 #include <zero/trix.h>
 #include <kern/util.h>
+#include <kern/cpu.h>
 #include <kern/mem/vm.h>
 #include <kern/unit/x86/bios.h>
 #include <kern/unit/x86/asm.h>
-#include <kern/unit/x86/cpu.h>
 #include <kern/unit/x86/trap.h>
 #include <kern/unit/x86/pit.h>
 #include <kern/unit/x86/apic.h>
 #include <kern/unit/x86/link.h>
 
-extern void                    irqtmr(void);
-extern void                    irqtmrcnt(void);
-extern void                  (*irqerror)(void);
-extern void                  (*irqspurious)(void);
-extern void                  (*mpspurint)(void);
-extern uint64_t                kernidt[NINTR];
-extern void                   *irqvec[];
-extern volatile struct m_cpu   cputab[NCPU];
-extern volatile struct m_cpu  *mpbootcpu;
-static uint32_t                apictmrcnt;
+extern void                  irqtmr(void);
+extern void                  irqtmrcnt(void);
+extern void                (*irqerror)(void);
+extern void                (*irqspurious)(void);
+extern void                (*mpspurint)(void);
+extern uint64_t              kernidt[NINTR];
+extern void                 *irqvec[];
+extern volatile struct cpu   cputab[NCPU];
+extern volatile struct cpu  *mpbootcpu;
+static uint32_t              apictmrcnt;
 
 /* TODO: fix this kludge */
 void
@@ -121,9 +121,9 @@ apicinittmr(void)
 void
 apicinit(long cpuid)
 {
-    static long            first = 1;
-    volatile struct m_cpu *cpu = &cputab[cpuid];
-    uint32_t               tmrcnt;
+    static long          first = 1;
+    volatile struct cpu *cpu = &cputab[cpuid];
+    uint32_t             tmrcnt;
 
     if (!mpapic) {
         mpapic = (volatile uint32_t *)apicprobe();

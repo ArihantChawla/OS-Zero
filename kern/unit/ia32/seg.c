@@ -4,10 +4,9 @@
 #include <zero/param.h>
 #include <zero/types.h>
 #include <kern/conf.h>
-//#include <kern/proc.h>
+#include <kern/cpu.h>
 #include <kern/mem/vm.h>
 #include <kern/unit/x86/boot.h>
-#include <kern/unit/x86/cpu.h>
 #include <kern/unit/ia32/seg.h>
 
 #if (REENTRANTGDTINIT)
@@ -22,7 +21,7 @@ extern uint64_t        kerngdt[NCPU][NGDT];
 extern uint64_t        kerngdt[NGDT];
 #endif
 //extern struct m_tss    tsstab[NTHR];
-extern struct m_cpu    cputab[NCPU];
+extern struct cpu      cputab[NCPU];
 #if (REENTRANTGDTINIT)
 extern struct m_farptr gdtptrtab[NCPU];
 #else
@@ -32,7 +31,7 @@ extern struct m_farptr gdtptr;
 ASMLINK void
 seginit(long id)
 {
-    struct m_cpu    *cpu = &cputab[id];
+    struct   cpu    *cpu = &cputab[id];
     uint64_t        *gdt;
 #if (REENTRANTGDTINIT)
     struct m_farptr *farptr = &gdtptrtab[id];
@@ -55,8 +54,7 @@ seginit(long id)
     segsetdesc(&gdt[UDATASEG], 0, NPAGEMAX - 1,
                SEGDATA | SEGUSER);
     /* per-CPU data segment */
-    segsetdesc(&gdt[CPUSEG], &cpu->cpu, 4 * sizeof(void *) + 4 * sizeof(long),
-               SEGCPU);
+    segsetdesc(&gdt[CPUSEG], &cpu->m_cpu, sizeof(struct m_cpu), SEGCPU);
 #if (VBE)
     gdt[REALCODESEG] = UINT64_C(0x00009a000000ffff);
     gdt[REALDATASEG] = UINT64_C(0x000092000000ffff);

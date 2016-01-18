@@ -15,6 +15,9 @@
 #include <gfx/rgb.h>
 #include <kern/malloc.h>
 #include <kern/util.h>
+#if (SMP)
+#include <kern/cpu.h>
+#endif
 #include <kern/mem/vm.h>
 #include <kern/io/drv/chr/cons.h>
 #include <kern/io/drv/pc/vga.h>
@@ -56,6 +59,9 @@ static struct vbeinfo vbectlinfo;
 void
 vbeint10(void)
 {
+#if (SMP)
+    long id = k_curcpu->id;
+#endif
     static int       first = 1;
 #if (REENTRANTGDTINIT)
     uint64_t        *gdt;

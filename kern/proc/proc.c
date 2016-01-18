@@ -6,13 +6,13 @@
 #include <kern/util.h>
 #include <kern/obj.h>
 #include <kern/malloc.h>
+#include <kern/cpu.h>
 #include <kern/mem/vm.h>
 #include <kern/mem/page.h>
 #include <kern/proc/proc.h>
 #include <kern/proc/task.h>
 #include <kern/obj.h>
 #include <kern/unit/x86/boot.h>
-#include <kern/unit/x86/cpu.h>
 #include <kern/unit/ia32/task.h>
 
 struct proc proctab[NTASK] ALIGNED(PAGESIZE);
@@ -21,7 +21,7 @@ struct task tasktab[NTASK];
 long
 procinit(long id, long sched)
 {
-    struct m_cpu   *cpu = k_curcpu;
+    struct cpu     *cpu = k_curcpu;
     struct proc    *proc = &proctab[id];
     struct task    *task = &tasktab[id];
     long            val;
@@ -53,8 +53,8 @@ procinit(long id, long sched)
     k_curtask = task;
     proc->pid = id;
     if (id < TASKNPREDEF) {
-        task->sched = SCHEDFIXED;
-        task->prio = id;
+        task->sched = SCHEDSYSTEM;
+        task->prio = SCHEDSYSPRIOMIN + id;
     } else {
         if (sched == SCHEDNOCLASS) {
             task->sched = SCHEDRESPONSIVE;

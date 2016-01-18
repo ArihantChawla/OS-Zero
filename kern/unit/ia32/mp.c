@@ -13,10 +13,10 @@
 #include <zero/types.h>
 #include <kern/util.h>
 #include <kern/malloc.h>
+#include <kern/cpu.h>
 #include <kern/mem/vm.h>
 #include <kern/unit/x86/boot.h>
 #include <kern/unit/x86/asm.h>
-#include <kern/unit/x86/cpu.h>
 #include <kern/unit/x86/apic.h>
 #include <kern/unit/x86/link.h>
 #include <kern/unit/ia32/seg.h>
@@ -41,17 +41,17 @@ extern void      trapinitidt(void);
 #if (IOAPIC)
 extern void      ioapicinit(long id);
 #endif
-extern void      cpuinit(volatile struct m_cpu *cpu);
+extern void      cpuinit(volatile struct cpu *cpu);
 extern void      seginit(long id);
 extern void      idtset(void);
 
-extern volatile struct m_cpu  cputab[NCPU];
-volatile struct m_cpu        *mpbootcpu;
-volatile long                 mpmultiproc;
-volatile long                 mpncpu;
-volatile long                 mpioapicid;
-volatile uint32_t            *mpapic;
-volatile uint32_t            *mpioapic;
+extern volatile struct cpu  cputab[NCPU];
+volatile struct cpu        *mpbootcpu;
+volatile long               mpmultiproc;
+volatile long               mpncpu;
+volatile long               mpioapicid;
+volatile uint32_t          *mpapic;
+volatile uint32_t          *mpioapic;
 
 static long
 mpchksum(uint8_t *ptr, unsigned long len)
@@ -182,7 +182,7 @@ mpinit(void)
                 if (cpu->flags & MPCPUBOOT) {
                     mpbootcpu = &cputab[core];
 #if 0
-                    cpuinit((struct m_cpu *)mpbootcpu);
+                    cpuinit((struct cpu *)mpbootcpu);
 #endif
                 }
                 cputab[core].id = core;
@@ -232,7 +232,7 @@ mpinit(void)
 
 ASMLINK NORETURN
 void
-mpmain(struct m_cpu *cpu)
+mpmain(struct cpu *cpu)
 {
     seginit(cpu->id);
     idtset();
@@ -260,9 +260,9 @@ mpmain(struct m_cpu *cpu)
 void
 mpstart(void)
 {
-    volatile struct m_cpu *cpu;
-    volatile struct m_cpu *lim;
-    uint32_t              *mpentrystk = (uint32_t *)MPENTRYSTK;
+    volatile struct cpu *cpu;
+    volatile struct cpu *lim;
+    uint32_t            *mpentrystk = (uint32_t *)MPENTRYSTK;
 
     lim = &cputab[0] + mpncpu;
 #if 0

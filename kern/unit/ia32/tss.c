@@ -3,10 +3,10 @@
 //#include <mach/mach.h>
 #include <zero/param.h>
 #include <kern/malloc.h>
+#include <kern/cpu.h>
 #include <kern/mem/vm.h>
 #include <kern/proc/task.h>
 #include <kern/unit/x86/boot.h>
-#include <kern/unit/x86/cpu.h>
 #include <kern/unit/ia32/seg.h>
 
 extern uint8_t  kerntsstab[NCPU * TSSLEN];

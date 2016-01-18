@@ -31,13 +31,11 @@
 #endif
 
 #include <stdint.h>
-
 #include <zero/cdefs.h>
 #include <zero/param.h>
 #include <zero/types.h>
-
 #include <kern/util.h>
-#include <kern/unit/x86/cpu.h>
+#include <kern/cpu.h>
 
 #if defined(__ZEROKERNEL__) /* kernel-level stuff only */
 //#include <mach/unit/ia32/cpu.h>

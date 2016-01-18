@@ -61,9 +61,9 @@
 #include <kern/types.h>
 #include <kern/cred.h>
 #include <kern/syscall.h>
+#include <kern/cpu.h>
 #include <kern/proc/kern.h>
 #include <kern/proc/task.h>
-#include <kern/unit/x86/cpu.h>
 #include <kern/unit/x86/vm.h>
 
 long procinit(long id, long sched);

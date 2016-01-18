@@ -90,11 +90,11 @@ struct bufblk {
     struct bufblk *tabprev;     // previous block in table chain
     struct bufblk *tabnext;     // next block in table chain
 #if (PTRSIZE == 8) && (CLSIZE == 64)
-    uint8_t        _pad[CLSIZE - 5 * sizeof(void) - sizeof(long)
+    uint8_t        _pad[CLSIZE - 5 * sizeof(void *) - sizeof(long)
                         - sizeof(int64_t) - sizeof(int32_t)
                         - 2 * sizeof(int16_t)];
 #elif (PTRSIZE == 4) && (CLSIZE == 32)
-    uint8_t        _pad[2 * CLSIZE - 5 * sizeof(void) - sizeof(long)
+    uint8_t        _pad[2 * CLSIZE - 5 * sizeof(void *) - sizeof(long)
                         - sizeof(int64_t) - sizeof(int32_t)
                         - 2 * sizeof(int16_t)];
 #endif
