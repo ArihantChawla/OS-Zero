@@ -4,12 +4,14 @@
 #undef queueisempty
 #undef queueissingular
 
+#define queueisemptyptr(queue)    (!(*(queue))->next)
+#define queueissingularptr(queue) ((*(queue))->next == (*(queue))->prev)
+
 #if defined(QUEUE_SINGLE_TYPE)
 
-#define queueinit(item)                                                 \
-    ((item)->next = (item),   (item)->prev = (item))
-#define queueisempty(item)    (!(item)->next)
-#define queueissingular(item) ((item)->next == (item)->prev)
+#define queueinit(item)           ((item)->next = (item), (item)->prev = (item))
+#define queueisempty(item)        (!(item)->next)
+#define queueissingular(item)     ((item)->next == (item)->prev)
 
 /* add item to beginning of queue */
 static __inline__ void
@@ -111,8 +113,12 @@ queuermitem(QUEUE_TYPE *item, QUEUE_TYPE **queue)
 
 #define queueinit(item, queue)                                          \
     ((*(queue))->next = (item), (*(queue))->prev = (item))
-#define queueisempty(queue)     (!(*(queue))->next)
-#define queueissingular(queue)  ((*(queue))->next == (*(queue))->prev)
+#define queueisempty(queue)    queueisemptyptr(queue)
+#define queueissingular(queue) queueissingularptr(queue)
+#if 0
+#define queueisempty(queue)    (!(*(queue))->next)
+#define queueissingular(queue) ((*(queue))->next == (*(queue))->prev)
+#endif
 
 /* add item to beginning of queue */
 static __inline__ void

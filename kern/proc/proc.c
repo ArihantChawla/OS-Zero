@@ -6,6 +6,7 @@
 #include <kern/util.h>
 #include <kern/obj.h>
 #include <kern/malloc.h>
+#include <kern/sched.h>
 #include <kern/cpu.h>
 #include <kern/mem/vm.h>
 #include <kern/mem/page.h>
@@ -24,6 +25,7 @@ procinit(long id, long sched)
     struct cpu     *cpu = k_curcpu;
     struct proc    *proc = &proctab[id];
     struct task    *task = &tasktab[id];
+    long            prio;
     long            val;
     struct taskstk *stk;
     void           *ptr;
@@ -53,15 +55,18 @@ procinit(long id, long sched)
     k_curtask = task;
     proc->pid = id;
     if (id < TASKNPREDEF) {
+        prio = SCHEDSYSPRIOMIN;
         task->sched = SCHEDSYSTEM;
-        task->prio = SCHEDSYSPRIOMIN + id;
+        task->prio = prio;
     } else {
         if (sched == SCHEDNOCLASS) {
-            task->sched = SCHEDRESPONSIVE;
+            prio = SCHEDUSERPRIOMIN;
+            task->sched = SCHEDNORMAL;
         } else {
+            prio = schedcalcbaseprio(task, sched);
             task->sched = sched;
         }
-        task->prio = SCHEDPRIOMIN;
+        task->prio = prio;
         /* initialise page directory */
         ptr = kmalloc(NPDE * sizeof(pde_t));
         if (ptr) {

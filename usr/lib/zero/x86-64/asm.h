@@ -149,13 +149,13 @@ m_cmpxchg64(volatile long *p,
     return res;
 }
 
-/* atomic set bit operation */
+/* atomic set and test bit operation; returns the old value */
 static __inline__ long
 m_cmpsetbit64(volatile long *p, long ndx)
 {
     volatile long val = 0;
 
-    __asm__ __volatile__ ("lock btsq %c2, %0\n"
+    __asm__ __volatile__ ("lock btsq %2, %0\n"
                           "jnc 1f\n"
                           "movq $0x01, %1\n"
                           "1:\n"
@@ -172,7 +172,7 @@ m_cmpclrbit64(volatile long *p, long ndx)
 {
     volatile long val = 0;
 
-    __asm__ __volatile__ ("lock btrq %c2, %0\n"
+    __asm__ __volatile__ ("lock btrq %2, %0\n"
                           "jnc 1f\n"
                           "movq $0x01, %1\n"
                           "1:\n"

@@ -119,6 +119,40 @@ m_cmpxchg32(volatile long *p,
     return res;
 }
 
+/* atomic set and test bit operation; returns the old value */
+static __inline__ long
+m_cmpsetbit32(volatile long *p, long ndx)
+{
+    volatile long val = 0;
+
+    __asm__ __volatile__ ("lock btsl %2, %0\n"
+                          "jnc 1f\n"
+                          "movl $0x01, %1\n"
+                          "1:\n"
+                          : "=m" (*(p)), "=r" (val)
+                          : "r" (ndx)
+                          : "memory");
+
+    return val;
+}
+
+/* atomic clear bit operation */
+static __inline__ long
+m_cmpclrbit32(volatile long *p, long ndx)
+{
+    volatile long val = 0;
+
+    __asm__ __volatile__ ("lock btrl %2, %0\n"
+                          "jnc 1f\n"
+                          "movl $0x01, %1\n"
+                          "1:\n"
+                          : "=m" (*(p)), "=r" (val)
+                          : "r" (ndx)
+                          : "memory");
+
+    return val;
+}
+
 static __inline__ unsigned long
 m_bsf32(unsigned long val)
 {

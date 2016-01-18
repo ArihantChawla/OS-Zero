@@ -28,10 +28,12 @@
 #define TASKNLVL2DL      (1U << 8)
 #define TASKNDLKEY       3
 
-#define TASKDEADLINEMAPNWORD (TASKNLVL0DL / sizeof(long))
-#define TASKREADYMAPNWORD    max(SCHEDNQUEUE / sizeof(long),            \
+#define TASKDEADLINEMAPNWORD (TASKNLVL0DL / (CHAR_BIT * sizeof(long)))
+#define TASKREADYMAPNWORD    max(SCHEDNQUEUE / (CHAR_BIT * sizeof(long)), \
                                  CLSIZE / sizeof(long))
-#define TASKIDLEMAPNWORD     max(SCHEDNIDLE / sizeof(long),             \
+#define TASKIDLEMAPNWORD     max(SCHEDNIDLE / (CHAR_BIT * sizeof(long)), \
+                                 CLSIZE / sizeof(long))
+#define TASKIDLECPUMAPNWORD  max(NCPU / (CHAR_BIT * sizeof(long)),      \
                                  CLSIZE / sizeof(long))
 
 #define __errnoloc() (&k_curtask->errnum)
@@ -142,20 +144,19 @@ struct tasktab {
 /* this should be a single (aligned) cacheline */
 struct taskqueue {
     volatile long  lk;
-    struct task   *prev;
-    struct task   *next;
-    uint8_t        pad[CLSIZE - sizeof(long) - 2 * sizeof(struct task *)];
+    struct task   *list;
+    uint8_t        pad[CLSIZE - sizeof(long) - sizeof(struct task *)];
 };
 
 struct taskqueueset {
-    volatile long     lk;
-    long             *curmap;
-    long             *nextmap;
-    long             *idlemap;
-    struct taskqueue *cur;
-    struct taskqueue *next;
-    struct taskqueue *idle;
-    uint8_t           pad[CLSIZE - sizeof(long) - 6 * sizeof(void *)];
+    volatile long   lk;
+    long           *curmap;
+    long           *nextmap;
+    long           *idlemap;
+    struct task   **cur;
+    struct task   **next;
+    struct task   **idle;
+    uint8_t         pad[CLSIZE - sizeof(long) - 6 * sizeof(void *)];
 };
 
 #if 0

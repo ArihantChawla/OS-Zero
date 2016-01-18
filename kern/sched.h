@@ -24,19 +24,29 @@ extern void schedyield(void);
 
 /* macros */
 #define schedcalctime(task) ((task)->ntick >> SCHEDTICKSHIFT)
-#define schedestticks(task) (max((task)->lastrun - (task)->firstrun, HZ))
+#define schedestticks(task) (max((task)->lastrun - (task)->firstrun, kgethz()))
 #define schedcalcnice(task) (tasknicetab[(task)->nice])
+#define schedcalcbaseprio(task, sched)                                  \
+    ((sched) * SCHEDNCLASSPRIO)
+#if 0
+#define schedsetprio(task, pri)                                         \
+    ((task)->prio = schedprioqueueid(pri))
+#define schedsetprioincr(task, pri, incr)                               \
+    ((task)->prio = schedprioqueueid(pri) + (incr))
+#endif
+#if 0
 #define schedcalcprio(task)                                             \
     (fastuldiv32(schedcalctime(task),                                   \
                  (roundup(schedcalcticks(task), SCHEDPRIORANGE)         \
                   / SCHEDPRIORANGE),                                    \
                  divultab))
+#endif
 /* timeshare-tasks have interactivity scores */
 #define schedistimeshare(sched)                                         \
     ((sched) >= SCHEDRESPONSIVE || (sched) <= SCHEDBATCH)
-#define schedisinteract(score)                                          \
-    ((score) < SCHEDSCORETHRESHOLD)
-#define schedprioqueueid(prio) ((prio) >> 1)
+#define schedisinteract(score)        ((score) < SCHEDSCORETHRESHOLD)
+#define schedcalcqueueid(pri)         ((pri) >> 1)
+#define schedcalcqueueidofs(pri, ofs) (schedcalcqueueid(pri) + (ofs))
 /* task scheduler classes */
 #define SCHEDNCLASSPRIO     64          // # of priorities per class
 #define SCHEDNCLASSQUEUE    32          // # of priority queues per class
@@ -54,6 +64,7 @@ extern void schedyield(void);
 #define SCHEDNCLASS         6           // user scheduler classes
 #define SCHEDIDLE           SCHEDNCLASS // idle tasks
 #define SCHEDNQUEUE         (SCHEDNCLASS * SCHEDNCLASSQUEUE)
+#define SCHEDNTABQUEUE      512
 #define SCHEDNOCLASS        0xff
 #if 0 /* FIXME: these will be handled in SCHEDINTERRUPT */
 /* fixed priorities */

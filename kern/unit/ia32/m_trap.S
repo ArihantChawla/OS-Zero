@@ -684,10 +684,12 @@ _havestk:
 	leal	20(%eax), %esp
 	popal
 	movl	32(%esp), %esp		// ESP = m_tcb.trapesp
+#if 0
 #if (APIC)
 	_apiceoi
 #else
 	_piceoi1
+#endif
 #endif
 	iretl
 _swtch:
