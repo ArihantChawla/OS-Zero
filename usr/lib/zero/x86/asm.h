@@ -23,7 +23,9 @@ static __inline__ void
 m_atominc32(volatile long *p)
 {
     __asm__ __volatile__ ("lock incl %0\n"
-                          : "+m" (*(p)));
+                          : "+m" (*(p))
+                          :
+                          : "memory");
 }
 
 /* atomic decrement operation */
@@ -31,7 +33,9 @@ static __inline__ void
 m_atomdec32(volatile long *p)
 {
     __asm__ __volatile__ ("lock decl %0\n"
-                          : "+m" (*(p)));
+                          : "+m" (*(p))
+                          :
+                          : "memory");
 }
 
 static __inline__ long
@@ -43,7 +47,7 @@ m_xchg32(volatile long *p,
     __asm__ __volatile__ ("lock xchgl %0, %2\n"
                           : "+m" (*p), "=a" (res)
                           : "r" (val)
-                          : "cc");
+                          : "cc", "memory");
 
     return res;
 }

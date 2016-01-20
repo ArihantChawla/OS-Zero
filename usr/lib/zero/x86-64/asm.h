@@ -89,7 +89,9 @@ static __inline__ void
 m_atominc64(volatile long *p)
 {
     __asm__ __volatile__ ("lock incq %0\n"
-                          : "+m" (*(p)));
+                          : "+m" (*(p))
+                          :
+                          : "memory");
 }
 
 /* atomic decrement operation */
@@ -97,7 +99,9 @@ static __inline__ void
 m_atomdec64(volatile long *p)
 {
     __asm__ __volatile__ ("lock decq %0\n"
-                          : "+m" (*(p)));
+                          : "+m" (*(p))
+                          :
+                          : "memory");
 }
 
 static __inline__ long
@@ -107,7 +111,7 @@ m_xchg64(volatile long *p,
     __asm__ __volatile__ ("lock xchgq %%rax, %q1\n"
                           : "=a" (val)
                           : "m" (*(p))
-                          : "memory");
+                          : "cc", "memory");
     
     return val;
 }
