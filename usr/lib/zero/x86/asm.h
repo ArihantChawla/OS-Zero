@@ -34,6 +34,20 @@ m_atomdec32(volatile long *p)
                           : "+m" (*(p)));
 }
 
+static __inline__ long
+m_xchg32(volatile long *p,
+         long val)
+{
+    volatile long res;
+
+    __asm__ __volatile__ ("lock xchgl %0, %2\n"
+                          : "+m" (*p), "=a" (res)
+                          : "r" (val)
+                          : "cc");
+
+    return res;
+}
+
 /*
  * atomic fetch and add
  * - let *p = *p + val
@@ -69,6 +83,60 @@ m_xadd32(volatile int *p,
 }
 
 /*
+ * atomic compare and exchange longword
+ * - if *p == want, let *p = val
+ * - return original *p
+ */
+static __inline__ long
+m_cmpxchg32(volatile long *p,
+            long want,
+            long val)
+{
+    volatile long res;
+    
+    __asm__ __volatile__("lock cmpxchgl %1, %2\n"
+                         : "=a" (res)
+                         : "q" (val), "m" (*(p)), "0" (want)
+                         : "memory");
+    
+    return res;
+}
+
+/* atomic set and test bit operation; returns the old value */
+static __inline__ long
+m_cmpsetbit32(volatile long *p, long ndx)
+{
+    volatile long val = 0;
+
+    __asm__ __volatile__ ("lock btsl %2, %0\n"
+                          "jnc 1f\n"
+                          "movl $0x01, %1\n"
+                          "1:\n"
+                          : "=m" (*(p)), "=r" (val)
+                          : "r" (ndx)
+                          : "memory");
+
+    return val;
+}
+
+/* atomic clear bit operation */
+static __inline__ long
+m_cmpclrbit32(volatile long *p, long ndx)
+{
+    volatile long val = 0;
+
+    __asm__ __volatile__ ("lock btrl %2, %0\n"
+                          "jnc 1f\n"
+                          "movl $0x01, %1\n"
+                          "1:\n"
+                          : "=m" (*(p)), "=r" (val)
+                          : "r" (ndx)
+                          : "memory");
+
+    return val;
+}
+
+/*
  * atomic compare and exchange byte
  * - if *p == want, let *p = val
  * - return original *p
@@ -86,6 +154,26 @@ m_cmpxchg8(volatile long *p,
                           : "memory");
 
     return (char)res;
+}
+
+static __inline__ unsigned long
+m_bsf32(unsigned long val)
+{
+    unsigned long ret = ~0UL;
+
+    __asm__ __volatile__ ("bsfl %1, %0\n" : "=r" (ret) : "rm" (val));
+
+    return ret;
+}
+
+static __inline__ unsigned long
+m_bsr32(unsigned long val)
+{
+    unsigned long ret = ~0UL;
+
+    __asm__ __volatile__ ("bsrl %1, %0\n" : "=r" (ret) : "rm" (val));
+
+    return ret;
 }
 
 #endif /* __ZERO_X86_ASM_H__ */
