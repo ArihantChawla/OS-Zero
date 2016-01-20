@@ -134,12 +134,12 @@ taskfindidlecpu(void)
 {
     long *map = taskidlecpumap;
     long n = NCPU;
-    long lim = CHAR_BIT * sizeof(long);
+    long lim = min(n, (long)(CHAR_BIT * sizeof(long)));
     long ndx = 0;
     long val = 0;
 
     while (n > 0) {
-        for (ndx = 0 ; ndx < min(n, lim) ; ndx++) {
+        for (ndx = 0 ; ndx < lim ; ndx++) {
             if (m_cmpclrbit(map, ndx)) {
                 /* FIXME: lock the CPU */
                 ndx += val;
@@ -191,14 +191,10 @@ taskcalcscore(struct task *task)
 #if (SCHEDSCOREHALF == 64)
         run >>= 6;
 #else
-        tmp = fastuldiv(run, SCHEDSCOREHALF, scheddivultab);
+        run = fastuldiv(run, SCHEDSCOREHALF, scheddivultab);
 #endif
         res = SCHEDSCOREHALF;
-#if (SCHEDSCOREHALF == 64)
         div = max(1, run);
-#else
-        div = max(1, tmp);
-#endif
         res <<= 1;
         tmp = fastuldiv32(slp, div, scheddivultab);
         res -= tmp;
@@ -209,11 +205,10 @@ taskcalcscore(struct task *task)
     if (slp > run) {
 #if (SCHEDSCOREHALF == 64)
         slp >>= 6;
-        div = max(1, slp);
 #else
-        tmp = fastuldiv(slp, SCHEDHALFSCORE, s);
-        div = max(1, tmp);
+        slp = fastuldiv(slp, SCHEDHALFSCORE, s);
 #endif
+        div = max(1, slp);
         res = fastuldiv32(run, div, scheddivultab);
         task->score = res;
 
