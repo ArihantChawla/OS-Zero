@@ -1,8 +1,8 @@
 #include <stdlib.h>
 #include <stdio.h>
 
-#define MIN (-32)
-#define MAX 31
+#define MIN (-64)
+#define MAX 63
 #define RANGE 40
 
 long nicetab[64];
@@ -10,7 +10,7 @@ long nicetab[64];
 int
 main(int argc, char *argv[])
 {
-    long   *ptr = &nicetab[32];
+    long   *ptr = &nicetab[64];
     double  dval = (double)MIN;
     double  ofs = -dval / 20.0;
     long    ndx;

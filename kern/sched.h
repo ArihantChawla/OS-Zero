@@ -47,9 +47,11 @@ extern void schedyield(void);
 #define schedisinteract(score)        ((score) < SCHEDSCORETHRESHOLD)
 #define schedcalcqueueid(pri)         ((pri) >> 1)
 #define schedcalcqueueidofs(pri, ofs) (schedcalcqueueid(pri) + (ofs))
+
 /* task scheduler classes */
 #define SCHEDNCLASSPRIO     64          // # of priorities per class
 #define SCHEDNCLASSQUEUE    32          // # of priority queues per class
+#define SCHEDNQUEUEPRIO     (SCHEDNCLASSPRIO / SCHEDNCLASSQUEUE)
 /* 'system' classes */
 #define SCHEDDEADLINE       (-1)        // deadline tasks
 #define SCHEDINTERRUPT      0           // interrupt tasks
@@ -66,6 +68,7 @@ extern void schedyield(void);
 #define SCHEDNQUEUE         (SCHEDNCLASS * SCHEDNCLASSQUEUE)
 #define SCHEDNTABQUEUE      512
 #define SCHEDNOCLASS        0xff
+
 #if 0 /* FIXME: these will be handled in SCHEDINTERRUPT */
 /* fixed priorities */
 #define SCHEDHID            0           // human interface devices (kbd, mouse)
@@ -74,6 +77,8 @@ extern void schedyield(void);
 #define SCHEDINIT           3           // init; creation of new processes
 #define SCHEDFIXEDPRIOMIN   0
 #endif
+
+/* priority organisation */
 #define SCHEDNIDLE          SCHEDNCLASSQUEUE
 #define SCHEDSYSPRIOMIN     (SCHEDSYSTEM * SCHEDNCLASSPRIO)
 /* interrupt priority limits */
@@ -98,14 +103,14 @@ extern void schedyield(void);
 #define SCHEDIDLEPRIOMAX    (SCHEDIDLEPRIOMIN + SCHEDNCLASSPRIO - 1)
 #define SCHEDIDLERANGE      (SCHEDIDLEPRIOMAX - SCHEDIDLEPRIOMIN + 1)
 /* nice limits */
-#define SCHEDNICEMIN        (-(SCHEDNCLASSPRIO >> 1))
-#define SCHEDNICEMAX        (SCHEDNCLASSPRIO >> 1)
+#define SCHEDNICEMIN        (-(SCHEDNCLASSPRIO << 1))
+#define SCHEDNICEMAX        (SCHEDNCLASSPRIO << 1)
 #define SCHEDNICERANGE      (SCHEDNICEMAX - SCHEDNICEMIN + 1)
 #define SCHEDNICEHALF       (SCHEDNICERANGE >> 1)
 /* highest and lowest priorities are reserved for nice */
 //#define SCHEDPRIOMIN        (SCHEDUSERPRIOMIN + SCHEDNICEHALF)
 //#define SCHEDPRIOMAX        (SCHEDUSERPRIOMAX - SCHEDNICEHALF)
-/* we allow negative nice values to map to realtime priorities */
+/* we allow negative nice values to map to classes SCHEDREALTIME..SCHEDSYSTEM */
 #define SCHEDPRIOMIN        (SCHEDUSERPRIOMIN)
 /* positive nice values will stay out of the idle queue */
 #define SCHEDPRIOMAX        (SCHEDUSERPRIOMAX - SCHEDNICEHALF)
@@ -114,6 +119,8 @@ extern void schedyield(void);
 #define SCHEDINTPRIOMIN     SCHEDUSERPRIOMIN
 #define SCHEDINTPRIOMAX     (SCHEDBATCHPRIOMIN + SCHEDBATCHPRIOMAX - 1)
 #define SCHEDINTRANGE       (SCHEDINTPRIOMAX - SCHEDINTPRIOMIN + 1)
+
+/* interactivity scoring */
 /* interactivity scores are in the range [0, 128] */
 #define SCHEDSCOREMAX       128
 /* minimum score to mark thread as interactive */
@@ -132,6 +139,17 @@ extern void schedyield(void);
 /* maximum number of sleep time + run time stored */
 #define SCHEDHISTORYMAX     ((kgethz() << 2) << SCHEDTICKSHIFT)
 #define SCHEDHISTORYFORKMAX ((kgethz() << 1) << SCHEDTICKSHIFT)
+
+/* interrupt priorities */
+#define schedintrsoftprio(id)                                           \
+    (SCHEDINTRSOFTPRIO + (id) * SCHEDNQUEUEPRIO)
+#define SCHEDINTRRTPRIO     SCHEDINTRPRIOMIN
+#define SCHEDINTRAVPRIO     (SCHEDINTRPRIOMIN + SCHEDNQUEUEPRIO)
+#define SCHEDINTRHIDPRIO    (SCHEDINTRPRIOMIN + 2 * SCHEDNQUEUEPRIO)
+#define SCHEDINTRNETPRIO    (SCHEDINTRPRIOMIN + 3 * SCHEDNQUEUEPRIO)
+#define SCHEDINTRDISKPRIO   (SCHEDINTRPRIOMIN + 4 * SCHEDNQUEUEPRIO)
+#define SCHEDINTRMISCPRIO   (SCHEDINTRPRIOMIN + 5 * SCHEDNQUEUEPRIO)
+#define SCHEDINTRSOFTPRIO   (SCHEDINTRPRIOMIN + 6 * SCHEDNQUEUEPRIO)
 
 #endif /* defined(ZEROSCHED) */
 

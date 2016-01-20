@@ -41,15 +41,23 @@ extern struct divul scheddivultab[SCHEDHISTORYSIZE] ALIGNED(PAGESIZE);
 /* nice is between -20 and 19 inclusively */
 /* taskniceptr = &tasknicetab[SCHEDNICEHALF]; */
 /* prio += taskniceptr[nice]; */
-static const long tasknicetab[SCHEDNICERANGE] ALIGNED(CLSIZE)
+long tasknicetab[SCHEDNICERANGE]
 = {
     0, 0, 0, 0, 0, 0, 0, 0,
-    0, 0, 0, 0, -32, -30, -28, -27,
-    -25, -23, -22, -20, -19, -17, -15, -14,
-    -12, -11, -9, -7, -6, -4, -3, -1,
-    0, 1, 3, 4, 6, 8, 9, 11,
-    13, 14, 16, 17, 19, 21, 22, 24,
-    26, 27, 29, 31, 0, 0, 0, 0,
+    0, 0, 0, 0, 0, 0, 0, 0,
+    0, 0, 0, 0, 0, 0, 0, 0,
+    0, 0, 0, 0, 0, 0, 0, 0,
+    0, 0, 0, 0, 0, 0, 0, 0,
+    0, 0, 0, 0, -64, -60, -57, -54,
+    -51, -47, -44, -41, -38, -35, -31, -28,
+    -25, -22, -19, -15, -12, -9, -6, -3,
+    0, 3, 6, 9, 13, 16, 19, 23,
+    26, 29, 33, 36, 39, 43, 46, 49,
+    53, 56, 59, 63, 0, 0, 0, 0,
+    0, 0, 0, 0, 0, 0, 0, 0,
+    0, 0, 0, 0, 0, 0, 0, 0,
+    0, 0, 0, 0, 0, 0, 0, 0,
+    0, 0, 0, 0, 0, 0, 0, 0,
     0, 0, 0, 0, 0, 0, 0, 0
 };
 /* lookup table to convert nice values to slices in 4-ms ticks */
