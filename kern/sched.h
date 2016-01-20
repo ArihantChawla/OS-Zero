@@ -103,8 +103,8 @@ extern void schedyield(void);
 #define SCHEDIDLEPRIOMAX    (SCHEDIDLEPRIOMIN + SCHEDNCLASSPRIO - 1)
 #define SCHEDIDLERANGE      (SCHEDIDLEPRIOMAX - SCHEDIDLEPRIOMIN + 1)
 /* nice limits */
-#define SCHEDNICEMIN        (-(SCHEDNCLASSPRIO << 1))
-#define SCHEDNICEMAX        (SCHEDNCLASSPRIO << 1)
+#define SCHEDNICEMIN        (-(SCHEDNCLASSQUEUE << 1))
+#define SCHEDNICEMAX        (SCHEDNCLASSQUEUE << 1)
 #define SCHEDNICERANGE      (SCHEDNICEMAX - SCHEDNICEMIN + 1)
 #define SCHEDNICEHALF       (SCHEDNICERANGE >> 1)
 /* highest and lowest priorities are reserved for nice */
