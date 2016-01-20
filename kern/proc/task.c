@@ -31,9 +31,9 @@
 extern void taskinitids(void);
 
 void tasksetready(struct task *task, long cpu);
-void tasksetsleeping(struct task *task, long cpu);
-void tasksetstopped(struct task *task, long cpu);
-void tasksetzombie(struct task *task, long cpu);
+void tasksetsleeping(struct task *task);
+void tasksetstopped(struct task *task);
+void tasksetzombie(struct proc *proc);
 
 extern struct divul scheddivultab[SCHEDHISTORYSIZE] ALIGNED(PAGESIZE);
 
@@ -80,7 +80,7 @@ static const long          *tasksliceptr = &taskslicetab[SCHEDNICEHALF];
 static struct tasktabl0     taskwaittab[TASKNLVL0WAIT] ALIGNED(PAGESIZE);
 static struct tasktabl0     taskdeadlinetab[TASKNLVL0DL];
 static struct task         *taskstoppedtab[NTASK];
-static struct task         *taskzombietab[NTASK];
+static struct proc         *taskzombieproctab[NTASK];
 struct task                *taskreadytab0[NCPU][SCHEDNTABQUEUE];
 struct task                *taskreadytab1[NCPU][SCHEDNTABQUEUE];
 static long                 taskreadymap0[NCPU][TASKREADYMAPNWORD];
@@ -89,15 +89,6 @@ static struct taskqueueset  taskreadytab[NCPU];
 static struct task         *taskidletab[NCPU][SCHEDNTABQUEUE];
 static long                 taskidlemap[NCPU][TASKIDLEMAPNWORD];
 static long                 taskdeadlinemap[TASKDEADLINEMAPNWORD];
-typedef void tasksetfunc_t(struct task *, long);
-static tasksetfunc_t       *tasksetfunctab[TASKNSTATE]
-= {
-    NULL,               // TASKNEW
-    tasksetready,       // TASKREADY
-    tasksetsleeping,    // TASKSLEEPING
-    tasksetstopped,     // TASKSTOPPED
-    tasksetzombie       // TASKZOMBIE
-};
 static long                 taskidlecpumap[TASKIDLECPUMAPNWORD];
 static struct taskqueue     tasksleepqueue;
 
@@ -163,31 +154,6 @@ taskfindidlecpu(void)
 
     return -1;
 }
-
-#if 0
-/* run task */
-FASTCALL
-void
-taskjmp(struct task *task)
-{
-    uint8_t *fctx;
-
-    if (task != k_curtask) {
-        fctx = task->m_tcb.fctx;
-        if (k_cpuinfo->flags & CPUHASFXSR) {
-            __asm__ __volatile__ ("fxrstor (%0)\n" : : "r" (fctx));
-        } else {
-            __asm__ __volatile__ ("frstor (%0)\n" : : "r" (fctx));
-        }
-    }
-    k_curtask = task;
-    k_curproc = task->proc;
-    k_curpid = task->id;
-    m_tcbjmp(&task->m_tcb);
-
-    /* NOTREACHED */
-}
-#endif
 
 #if (ZEROSCHED)
 
@@ -551,7 +517,7 @@ tasksetready(struct task *task, long cpu)
     
 /* add task to wait table */
 void
-tasksetwait(struct task *task, long cpu)
+tasksetwait(struct task *task)
 {
     struct tasktabl0  *l0tab;
     struct tasktab    *tab;
@@ -631,14 +597,14 @@ tasksetwait(struct task *task, long cpu)
 
 /* FIXME: add a multilevel tree for sleeping tasks for speed */
 void
-tasksetsleeping(struct task *task, long cpu)
+tasksetsleeping(struct task *task)
 {
     time_t            timelim = task->timelim;
     struct taskqueue *queue = &tasksleepqueue;
     struct task      *sleeptask;
 
     if (task->waitchan) {
-        tasksetwait(task, cpu);
+        tasksetwait(task);
     } else {
         sleeptask = queue->list;
         if (sleeptask) {
@@ -666,7 +632,7 @@ tasksetsleeping(struct task *task, long cpu)
 }
 
 void
-tasksetstopped(struct task *task, long cpu)
+tasksetstopped(struct task *task)
 {
     long id = task->id;
 
@@ -676,11 +642,11 @@ tasksetstopped(struct task *task, long cpu)
 }
 
 void
-tasksetzombie(struct task *task, long cpu)
+tasksetzombie(struct proc *proc)
 {
-    long id = task->id;
+    long id = proc->ppid;       // FIXME: might need to use proc->pgrp here
 
-    taskzombietab[id] = task;
+    taskzombieproctab[id] = proc;
 
     return;
 }
@@ -699,22 +665,43 @@ taskswtch(struct task *curtask)
 {
     long                  cpu = k_curcpu->id;
     struct task          *task = NULL;
-//    long                 sched = curtask->sched;
-    long                  state = curtask->state;
+    long                  state = (curtask) ? curtask->state : -1;
     struct taskqueueset  *queueset = &taskreadytab[cpu];
     struct task         **queue;
     long                 *map;
     long                  ntz;
-    tasksetfunc_t        *func;
     long                  val;
     long                  ndx;
     long                  lim;
     long                  loop;
 
     if (curtask) {
-        func = tasksetfunctab[state];
-        func(curtask, cpu);
-        k_curtask = NULL;
+        if (state != TASKNEW) {
+            switch (state) {
+                case TASKREADY:
+                    tasksetready(curtask, cpu);
+
+                    break;
+                case TASKSLEEPING:
+                    tasksetsleeping(curtask);
+
+                    break;
+                case TASKSTOPPED:
+                    tasksetstopped(curtask);
+
+                    break;
+                case TASKZOMBIE:
+                    tasksetzombie(curtask->proc);
+
+                    break;
+                default:
+                    panic(curtask->id, -1, 0); /* FIXME: error # */
+
+                    break;
+            }
+        } else {
+            ; /* TODO */
+        }
     }
     do {
         loop = 1;

@@ -814,9 +814,10 @@ bfindzerol(long *bmap, long ofs, long nbit)
 void
 panic(unsigned long pid, int32_t trap, long err)
 {
-    const char *name = trapnametab[trap];
+    const char *name;
 
     if (trap >= 0) {
+        name = trapnametab[trap];
         if (name) {
             kprintf("PROC %lu CAUGHT TRAP %ld (%s): %lx\n",
                     pid, trap, name, err);

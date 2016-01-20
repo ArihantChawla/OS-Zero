@@ -62,8 +62,8 @@ extern void schedyield(void);
 #define SCHEDRESPONSIVE     3           // 'quick' timeshare tasks
 #define SCHEDNORMAL         4           // 'normal' timeshare tasks
 #define SCHEDBATCH          5           // batch tasks
-#define SCHEDNTMSHARECLASS  3
-#define SCHEDNCLASS         6           // user scheduler classes
+#define SCHEDNUSERCLASS     3           // number of user ('timeshare') classes
+#define SCHEDNCLASS         6           // # of user scheduler classes
 #define SCHEDIDLE           SCHEDNCLASS // idle tasks
 #define SCHEDNQUEUE         (SCHEDNCLASS * SCHEDNCLASSQUEUE)
 #define SCHEDNTABQUEUE      512
