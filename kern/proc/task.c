@@ -30,15 +30,15 @@
 
 extern void taskinitids(void);
 
-void tasksetready(struct task *task, long cpu);
-void tasksetsleeping(struct task *task);
-void tasksetstopped(struct task *task);
-void tasksetzombie(struct proc *proc);
+void        tasksetready(struct task *task, long cpu);
+void        tasksetsleeping(struct task *task);
+void        tasksetstopped(struct task *task);
+void        tasksetzombie(struct proc *proc);
 
-#if (FASTIDIVWORDSIZE == 64)
+#if (FASTIDIVWORDSIZE == 64) && 0
 extern struct divu64 scheddivutab[SCHEDHISTORYSIZE] ALIGNED(PAGESIZE);
 #else
-extern struct divu32 scheddivutab[SCHEDHISTORYSIZE] ALIGNED(PAGESIZE);
+extern struct divu32 fastudiv24tab[SCHEDHISTORYSIZE] ALIGNED(PAGESIZE);
 #endif
 
 /* lookup table to convert nice values to priority offsets */
@@ -195,12 +195,12 @@ taskcalcscore(struct task *task)
 #if (SCHEDSCOREHALF == 64)
         run >>= 6;
 #else
-        run = schedfastudiv(run, SCHEDSCOREHALF, scheddivutab);
+        run = fastu32div24(run, SCHEDSCOREHALF, fastudiv24tab);
 #endif
         res = SCHEDSCOREHALF;
         div = max(1, run);
         res <<= 1;
-        tmp = schedfastudiv(slp, div, scheddivutab);
+        tmp = fastu32div24(slp, div, fastudiv24tab);
         res -= tmp;
         task->score = res;
         
@@ -210,10 +210,10 @@ taskcalcscore(struct task *task)
 #if (SCHEDSCOREHALF == 64)
         slp >>= 6;
 #else
-        slp = schedfastudiv(slp, SCHEDHALFSCORE, s);
+        slp = fastu32div24(slp, SCHEDHALFSCORE, s);
 #endif
         div = max(1, slp);
-        res = schedfastudiv(run, div, scheddivutab);
+        res = fastu32div24(run, div, fastudiv24tab);
         task->score = res;
 
         return res;
@@ -300,9 +300,9 @@ taskforkintparm(struct task *task)
         run += run2;
         slp += slp2;
 #else
-        ratio = schedfastudiv(sum, SCHEDHISTORYFORKMAX, scheddivutab);
-        run = schedfastudiv(run, ratio, scheddivutab);
-        slp = schedfastudiv(slp, ratio, scheddivutab);
+        ratio = fastu32div24(sum, SCHEDHISTORYFORKMAX, fastudiv24tab);
+        run = fastu32div24(run, ratio, fastudiv24tab);
+        slp = fastu32div24(slp, ratio, fastudiv24tab);
 #endif
         task->runtime = run;
         task->slptime = slp;
@@ -335,7 +335,7 @@ taskcalcintparm(struct task *task, long *retscore)
 #if (SCHEDSCORETHRESHOLD == 32)
         range >>= 5;
 #else
-        range = schedfastudiv(range, SCHEDSCORETHRESHOLD, scheddivutab);
+        range = fastu32div24(range, SCHEDSCORETHRESHOLD, fastudiv24tab);
 #endif
         range *= score;
         res += range;
@@ -350,9 +350,9 @@ taskcalcintparm(struct task *task, long *retscore)
             range = diff - res + 1;
             tmp = roundup(total, range);
             res += task->nice;
-            div = schedfastudiv(total, tmp, scheddivutab);
+            div = fastu32div24(total, tmp, fastudiv24tab);
             range--;
-            total = schedfastudiv(tickhz, div, scheddivutab);
+            total = fastu32div24(tickhz, div, fastudiv24tab);
             diff = min(total, range);
             res += diff;
         }

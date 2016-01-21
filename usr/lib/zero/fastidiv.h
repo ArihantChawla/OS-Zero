@@ -30,9 +30,9 @@
 #define FASTU32DIV16SHIFTMASK 0x0f
 #define FASTU32DIV16ADDBIT    0x10
 #define FASTU32DIV16SHIFTBIT  0x20
-#define FASTU32DIV20SHIFTMASK 0x1f
-#define FASTU32DIV20ADDBIT    0x20
-#define FASTU32DIV20SHIFTBIT  0x40
+#define FASTU32DIV24SHIFTMASK 0x1f
+#define FASTU32DIV24ADDBIT    0x20
+#define FASTU32DIV24SHIFTBIT  0x40
     
 struct divu32 {
     uint32_t magic;
@@ -48,7 +48,7 @@ struct divu64 {
 void fastu64div32gentab(struct divu64 *duptr, uint64_t lim32);
 #endif
 void fastu32div16gentab(struct divu32 *duptr, uint32_t lim16);
-void fastu32div20gentab(struct divu32 *duptr, uint32_t lim20);
+void fastu32div24gentab(struct divu32 *duptr, uint32_t lim24);
 
 /* get the high 32 bits of val1 * val2 */
 static INLINE uint64_t
@@ -70,12 +70,12 @@ _mullhiu16(uint32_t val1, uint32_t val2)
     return res;
 }
 
-/* get the high 20 bits of val1 * val2 */
+/* get the high 24 bits of val1 * val2 */
 static INLINE uint32_t
-_mullhiu20(uint32_t val1, uint32_t val2)
+_mullhiu24(uint32_t val1, uint32_t val2)
 {
     uint32_t val = val1 * val2;
-    uint32_t res = val >> 12;
+    uint32_t res = val >> 8;
 
     return res;
 }
@@ -160,29 +160,29 @@ fastu32div16(uint32_t num, uint32_t div16,
 
 /* compute num/div16 with [possible] multiplication + shift operations */
 static INLINE uint32_t
-fastu32div20(uint32_t num, uint32_t div20,
+fastu32div24(uint32_t num, uint32_t div24,
              const struct divu32 *tab)
 {
-    const struct divu32 *ulptr = &tab[div20];
+    const struct divu32 *ulptr = &tab[div24];
     uint32_t             magic = ulptr->magic;
     uint32_t             info = ulptr->info;
     uint32_t             lim = tab->magic;
     uint32_t             res = 0;
 
-    if (lim < div20 || !div20) {
+    if (lim < div24 || !div24) {
 #if defined(__KERNEL__)
         panic(k_curpid, -TRAPDE, 0);
 #else
         abort();
 #endif
     }
-    if (!(info & FASTU32DIV20SHIFTBIT)) {
-        uint32_t quot = _mullhiu20(magic, num);
+    if (!(info & FASTU32DIV24SHIFTBIT)) {
+        uint32_t quot = _mullhiu24(magic, num);
         
         res = quot;
-        if (info & FASTU32DIV20ADDBIT) {
+        if (info & FASTU32DIV24ADDBIT) {
             num -= quot;
-            info &= FASTU32DIV20SHIFTMASK;
+            info &= FASTU32DIV24SHIFTMASK;
             num >>= 1;
             res += num;
         }
@@ -190,7 +190,7 @@ fastu32div20(uint32_t num, uint32_t div20,
 
         return res;
     } else {
-        info &= FASTU32DIV20SHIFTMASK;
+        info &= FASTU32DIV24SHIFTMASK;
         res = num >> info;
     }
         

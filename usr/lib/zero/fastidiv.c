@@ -139,20 +139,20 @@ fastu32div16gentab(struct divu32 *duptr, uint32_t lim16)
 }
 
 /*
- * This routine precomputes a lookup table for divisors 1..lim20
+ * This routine precomputes a lookup table for divisors 1..lim24
  * - table size is stored in item #0 to check for buffer overruns
  */
 void
-fastu32div20gentab(struct divu32 *duptr, uint32_t lim20)
+fastu32div24gentab(struct divu32 *duptr, uint32_t lim24)
 {
-    uint32_t magic = lim20;
+    uint32_t magic = lim24;
     uint32_t info = 0;
     uint32_t div;
 
     /* store array size into the first item to avoid buffer overruns */
     duptr->magic = magic;
     duptr->info = info;
-    for (div = 1 ; div < lim20 ; div++) {
+    for (div = 1 ; div < lim24 ; div++) {
         duptr++;
         if (!powerof2(div)) {
             uint32_t val;
@@ -174,7 +174,7 @@ fastu32div20gentab(struct divu32 *duptr, uint32_t lim20)
                 rem2 = rem;
                 mul += mul;
                 rem2 += rem;
-                info = shift | FASTU32DIV20ADDBIT;
+                info = shift | FASTU32DIV24ADDBIT;
                 if (rem2 >= div || rem2 < rem) {
                     mul++;
                 }
@@ -183,7 +183,7 @@ fastu32div20gentab(struct divu32 *duptr, uint32_t lim20)
         } else {
             info = tzerol(div);
             magic = 0;
-            info |= FASTU32DIV20SHIFTBIT;
+            info |= FASTU32DIV24SHIFTBIT;
         }
         duptr->magic = magic;
         duptr->info = info;

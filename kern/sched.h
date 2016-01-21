@@ -153,12 +153,12 @@ extern void schedyield(void);
 #define SCHEDINTRSOFTPRIO   (SCHEDINTRPRIOMIN + 6 * SCHEDNQUEUEPRIO)
 
 /* miscellaneous stuff */
-#if (FASTIDIVWORDSIZE == 64)
-#define schedfastudivgentab(tab, lim) fastu64div32gentab(tab, lim)
-#define schedfastudiv(num, div, tab)  fastu64div32(num, div, tab)
+#if (FASTIDIVWORDSIZE == 64) && 0
+#define schedfastudivgentab(tab, lim)  fastu64div32gentab(tab, lim)
+#define schedfastudiv(num, div, tab)   fastu64div32(num, div, tab)
 #elif (FASTIDIVWORDSIZE == 32)
-#define schedfastudivgentab(tab, lim) fastu32div20gentab(tab, lim)
-#define schedfastudiv(num, div, tab)  fastu32div20(num, div, tab)
+#define fastudiv24gentab(tab, lim)     fastu32div24gentab(tab, lim)
+#define schedfastudiv24(num, div, tab) fastu32div24(num, div, tab)
 #endif
 
 #endif /* defined(ZEROSCHED) */
