@@ -101,6 +101,8 @@ struct procseginfo {
 #define PROCEXITED            (1 << 31)
 #define PROCSIGNALED          (1 << 30)
 struct proc {
+    /* scheduling parameters */
+    long                 nice;
     /* process and thread management */
     struct task         *task;
     struct task         *thrqueue;

@@ -1,3 +1,4 @@
+#include <kern/conf.h>
 #include <stddef.h>
 #include <limits.h>
 #include <stdint.h>
@@ -9,7 +10,6 @@
 #include <zero/trix.h>
 //#include <zero/randlfg2.h>
 #include <zero/asm.h>
-#include <kern/conf.h>
 #include <kern/util.h>
 #include <kern/obj.h>
 #include <kern/sched.h>
@@ -21,6 +21,8 @@
 #include <kern/unit/ia32/task.h>
 #include <zero/mtx.h>
 
+#if (ZEROSCHED)
+
 #define __LONGBITS     (CHAR_BIT * LONGSIZE)
 #if (__LONGBITS == 32)
 #define __LONGBITSLOG2 5
@@ -28,14 +30,17 @@
 #define __LONGBITSLOG2 6
 #endif
 
+#define SCHEDUNLKTASK (1 << 0)
+#define SCHEDUNLKCPU  (1 << 1)
+
 extern void taskinitids(void);
 
-void        tasksetready(struct task *task, long cpu);
+void        tasksetready(struct task *task, long cpu, long unlk);
 void        tasksetsleeping(struct task *task);
 void        tasksetstopped(struct task *task);
 void        tasksetzombie(struct proc *proc);
 
-extern struct divu32 fastu32div24tab[SCHEDHISTORYSIZE] ALIGNED(PAGESIZE);
+extern struct divu32 fastu32div24tab[rounduppow2(SCHEDHISTORYSIZE, PAGESIZE)];
 
 /* lookup table to convert nice values to priority offsets */
 /* nice is between -20 and 19 inclusively */
@@ -81,12 +86,14 @@ static struct tasktabl0     taskwaittab[TASKNLVL0WAIT] ALIGNED(PAGESIZE);
 static struct tasktabl0     taskdeadlinetab[TASKNLVL0DL];
 static struct task         *taskstoppedtab[NTASK];
 static struct proc         *taskzombieproctab[NTASK];
-struct task                *taskreadytab0[NCPU][SCHEDNTABQUEUE];
-struct task                *taskreadytab1[NCPU][SCHEDNTABQUEUE];
+struct task                *taskreadytab0[NCPU][SCHEDNQUEUE];
+struct task                *taskreadytab1[NCPU][SCHEDNQUEUE];
 static long                 taskreadymap0[NCPU][TASKREADYMAPNWORD];
 static long                 taskreadymap1[NCPU][TASKREADYMAPNWORD];
 static struct taskqueueset  taskreadytab[NCPU];
-static struct task         *taskidletab[NCPU][SCHEDNTABQUEUE];
+static struct task         *taskidletab[NCPU][SCHEDNCLASSQUEUE];
+/* SCHEDIDLE queues are not included in SCHEDNQUEUE */
+static long                *taskloadmap[NCPU][SCHEDNTOTALQUEUE];
 static long                 taskidlemap[NCPU][TASKIDLEMAPNWORD];
 static long                 taskdeadlinemap[TASKDEADLINEMAPNWORD];
 static long                 taskidlecpumap[TASKIDLECPUMAPNWORD];
@@ -155,8 +162,6 @@ taskfindidlecpu(void)
     return -1;
 }
 
-#if (ZEROSCHED)
-
 static __inline__ void
 taskadjnice(struct task *task, long val)
 {
@@ -165,7 +170,7 @@ taskadjnice(struct task *task, long val)
     val = max(-20, val);
     val = min(19, val);
     nice = taskniceptr[val];
-    task->nice = nice;
+    task->proc->nice = nice;
 
     return;
 }
@@ -227,6 +232,45 @@ taskcalcscore(struct task *task)
     return 0;
 }
 
+/* based on sched_priority() from ULE */
+static __inline__ void
+taskcalcprio(struct task *task)
+{
+    long score = taskcalcscore(task);
+    long nice = task->proc->nice;
+    long runprio = task->runprio;
+    long prio;
+    long ntick;
+    long delta;
+    long tmp;
+
+    score += nice;
+    score = max(0, score);
+    if (score < SCHEDSCORETHRESHOLD) {
+        prio = SCHEDINTPRIOMIN;
+        delta = SCHEDINTRANGE;
+#if (SCHEDSCORETHRESHOLD == 32)
+        delta >>= 5;
+#else
+        delta = fastu32div24(delta, SCHEDSCORETHRESHOLD, fastu32div24tab);
+#endif
+        delta *= score;
+        prio += delta;
+    } else {
+        ntick = task->ntick;
+        prio = SCHEDUSERPRIOMIN;
+        if (ntick) {
+            tmp = schedcalcprio(task);
+            prio += min(tmp, SCHEDUSERRANGE - 1);
+        }
+        prio += nice;
+        prio = min(runprio, prio);
+    }
+    task->prio = prio;
+
+    return;
+}
+
 /* based on sched_interact_update() in ULE :) */
 /*
  * enforce maximum limit of scheduling history kept; call after either runtime
@@ -239,27 +283,27 @@ taskadjintparm(struct task *task)
     long slp = task->slptime;
     long sum = run + slp;
 
-    if (sum < SCHEDTIMEMAX) {
+    if (sum < SCHEDRECTIMEMAX) {
 
         return;
     }
-    if (sum > 2 * SCHEDTIMEMAX) {
+    if (sum > 2 * SCHEDRECTIMEMAX) {
         if (run > slp) {
-            task->runtime = SCHEDTIMEMAX;
+            task->runtime = SCHEDRECTIMEMAX;
             task->slptime = 1;
         } else {
             task->runtime = 1;
-            task->slptime = SCHEDTIMEMAX;
+            task->slptime = SCHEDRECTIMEMAX;
         }
 
         return;
     }
-    if (sum > (SCHEDTIMEMAX >> 3) * 9) {
+    if (sum > (SCHEDRECTIMEMAX >> 3) * 9) {
         /* exceeded by more than 1/8th, divide by 2 */
         run >>= 1;
         slp >>= 1;
     } else {
-        /* multiply by 3 / 4; this gives us less than 0.85 * SCHEDTIMEMAX */
+        /* multiply by 3 / 4; this gives us less than 0.85 * SCHEDRECTIMEMAX */
         run >>= 2;
         slp >>= 2;
         run *= 3;
@@ -284,7 +328,7 @@ taskforkintparm(struct task *task)
     long slp2;
     long sum = run + slp;
 
-    if (sum > SCHEDTIMEFORKMAX) {
+    if (sum > SCHEDRECTIMEFORKMAX) {
 #if (HZ == 250) && (SCHEDHISTORYNSEC == 8)
         /* multiply run and slp by 3 / 8 */
         run2 = run;
@@ -296,7 +340,7 @@ taskforkintparm(struct task *task)
         run += run2;
         slp += slp2;
 #else
-        ratio = fastu32div24(sum, SCHEDTIMEFORKMAX, fastu32div24tab);
+        ratio = fastu32div24(sum, SCHEDRECTIMEFORKMAX, fastu32div24tab);
         run = fastu32div24(run, ratio, fastu32div24tab);
         slp = fastu32div24(slp, ratio, fastu32div24tab);
 #endif
@@ -314,6 +358,7 @@ taskcalcintparm(struct task *task, long *retscore)
 {
     long range = SCHEDINTPRIOMAX - SCHEDINTPRIOMIN + 1;
     long res = 0;
+    long nice = task->proc->nice;
     long score;
     long diff;
     long ntick;
@@ -323,7 +368,7 @@ taskcalcintparm(struct task *task, long *retscore)
     long tmp;
     
     score = taskcalcscore(task);
-    score += task->nice;
+    score += nice;
     /* do not overlap highest [fixed] priority tasks */
     score = max(SCHEDINTRPRIOMIN, score);
     if (score < SCHEDSCORETHRESHOLD) {
@@ -345,7 +390,7 @@ taskcalcintparm(struct task *task, long *retscore)
             total = max(total, HZ);
             range = diff - res + 1;
             tmp = roundup(total, range);
-            res += task->nice;
+            res += nice;
             div = fastu32div24(total, tmp, fastu32div24tab);
             range--;
             total = fastu32div24(tickhz, div, fastu32div24tab);
@@ -358,6 +403,7 @@ taskcalcintparm(struct task *task, long *retscore)
     return res;
 }
 
+#if 0
 static __inline__ long
 taskwakeup(struct task *task)
 {
@@ -371,6 +417,43 @@ taskwakeup(struct task *task)
     task->score = 0;
 
     return prio;
+}
+#endif
+
+/* based on sched_wakeup() from ULE :) */
+static __inline__ void
+taskwakeup(struct task *task)
+{
+    long cpu = k_curcpu->id;
+    long sched = task->sched;
+    long slptick = task->slptick;
+    long slp;
+    long tick;
+    long ntick;
+    long diff;
+
+    task->slptick = 0;
+    if (slptick) {
+        tick = k_curcpu->ntick;
+        if (slptick != tick) {
+            diff = tick - slptick;
+            slp = task->slptime;
+            diff <<= SCHEDTICKSHIFT;
+            task->slptime = diff;
+            taskadjintparm(task);
+            schedadjcpupct(task, 0);
+        }
+    }
+    task->slice = 0;
+    if (schedistimeshare(sched)) {
+        taskcalcprio(task);
+    }
+#if (SMP)
+#else
+    task->cpu = cpu;
+    tasksetready(task, cpu, SCHEDUNLKTASK);
+#endif
+    /* FIXME: sched_setpreempt() */
 }
 
 #define QUEUE_SINGLE_TYPE
@@ -441,15 +524,16 @@ tasksetdeadline(struct task *task)
 }
 
 void
-tasksetready(struct task *task, long cpu)
+tasksetready(struct task *task, long cpu, long unlk)
 {
     long                  sched = task->sched;
     long                  prio = task->prio;
     long                  score = SCHEDSCOREMAX;
     struct taskqueueset  *queueset = &taskreadytab[cpu];
-    struct task         **queue;
-    long                 *map;
+    struct task         **queue = NULL;
+    long                 *map = NULL;
     long                  qid = zeroabs(prio);
+    long                  load;
     long                  lim;
     long                  flg;
 
@@ -495,16 +579,20 @@ tasksetready(struct task *task, long cpu)
             map = queueset->nextmap;
         }
         task->score = score;
-        queueappend(task, queue);
-        setbit(map, qid);
     } else {
         /* SCHEDIDLE */
         /* insert into idle queue */
         qid = schedcalcqueueid(prio);
         map = queueset->idlemap;
         queue = &queueset->idle[qid];
-        queueappend(task, queue);
-        setbit(map, qid);
+    }
+    load = queueset->loadmap[qid];
+    queueappend(task, queue);
+    load++;
+    setbit(map, qid);
+    queueset->loadmap[qid] = load;
+    if (unlk & SCHEDUNLKTASK) {
+        mtxunlk(&task->lk);
     }
     
     return;
@@ -674,7 +762,7 @@ taskswtch(struct task *curtask)
         if (state != TASKNEW) {
             switch (state) {
                 case TASKREADY:
-                    tasksetready(curtask, cpu);
+                    tasksetready(curtask, cpu, 0);
 
                     break;
                 case TASKSLEEPING:
@@ -800,13 +888,14 @@ taskunwait(uintptr_t wtchan)
                 if (queue) {
                     task1 = queue->list;
                     while (task1) {
+                        mtxlk(&task1->lk);
                         if (task1->next) {
                             task1->next->prev = NULL;
                         }
                         queue->list = task1->next;
                         task2 = task1->next;
                         taskwakeup(task1);
-                        tasksetready(task1, cpu);
+//                        tasksetready(task1, cpu);
                         task1 = task2;
                     }
                     tab = ptab[2];

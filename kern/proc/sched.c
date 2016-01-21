@@ -18,7 +18,7 @@
 extern FASTCALL struct task   *taskswtch(struct task *task);
 #endif
 
-extern struct divu32 fastu32div24tab[SCHEDHISTORYSIZE];
+extern struct divu32 fastu32div24tab[rounduppow2(SCHEDHISTORYSIZE, PAGESIZE)];
 
 void
 schedinit(void)
@@ -31,43 +31,6 @@ schedinit(void)
 #endif
 #endif
     fastu32div24gentab(fastu32div24tab, SCHEDHISTORYSIZE);
-
-    return;
-}
-
-static __inline__ void
-schedadjcpupct(struct task *task, long run)
-{
-    long     tick = k_curcpu->ntick;
-    unsigned last = task->lastrun;
-    long     diff = tick - last;
-    long     delta;
-    long     ntick;
-    long     val;
-    long     div;
-
-    if (diff >= SCHEDHISTORYNTICK) {
-        task->ntick = 0;
-        task->firstrun = tick - SCHEDHISTORYNTICK;
-    } else {
-        unsigned long first = task->firstrun;
-
-        delta = tick - first;
-        if (delta >= SCHEDHISTORYSIZE) {
-            ntick = task->ntick;
-            div = last - first;
-            val = tick - SCHEDHISTORYNTICK;
-            last -= val;
-            ntick = fastu32div24(ntick, div, fastu32div24tab);
-            ntick *= last;
-            task->firstrun = val;
-        }
-    }
-    if (run) {
-        ntick = diff >> SCHEDTICKSHIFT;
-        task->ntick = ntick;
-    }
-    task->lastrun = tick;
 
     return;
 }

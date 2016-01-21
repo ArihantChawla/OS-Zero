@@ -4,6 +4,7 @@
 #include <kern/conf.h>
 #include <zero/trix.h>
 #include <zero/fastidiv.h>
+#include <kern/proc/task.h>
 
 extern void schedinit(void);
 extern void schedyield(void);
@@ -24,9 +25,9 @@ extern void schedyield(void);
 #endif
 
 /* macros */
-#define schedcalctime(task) ((task)->ntick >> SCHEDTICKSHIFT)
-#define schedestticks(task) (max((task)->lastrun - (task)->firstrun, kgethz()))
-#define schedcalcnice(task) (tasknicetab[(task)->nice])
+#define schedcalctime(task)  ((task)->ntick >> SCHEDTICKSHIFT)
+#define schedcalcticks(task) (max((task)->lastrun - (task)->firstrun, kgethz()))
+#define schedcalcnice(task)  (tasknicetab[(task)->nice])
 #define schedcalcbaseprio(task, sched)                                  \
     ((sched) * SCHEDNCLASSPRIO)
 #if 0
@@ -35,13 +36,11 @@ extern void schedyield(void);
 #define schedsetprioincr(task, pri, incr)                               \
     ((task)->prio = schedprioqueueid(pri) + (incr))
 #endif
-#if 0
 #define schedcalcprio(task)                                             \
-    (fastuldiv32(schedcalctime(task),                                   \
-                 (roundup(schedcalcticks(task), SCHEDPRIORANGE)         \
-                  / SCHEDPRIORANGE),                                    \
-                 divultab))
-#endif
+    (fastu32div24(schedcalctime(task),                                  \
+                  (roundup(schedcalcticks(task), SCHEDPRIORANGE)        \
+                   / SCHEDPRIORANGE),                                   \
+                  fastu32div24tab))
 /* timeshare-tasks have interactivity scores */
 #define schedistimeshare(sched)                                         \
     ((sched) >= SCHEDRESPONSIVE || (sched) <= SCHEDBATCH)
@@ -67,6 +66,7 @@ extern void schedyield(void);
 #define SCHEDNCLASS         6           // # of user scheduler classes
 #define SCHEDIDLE           SCHEDNCLASS // idle tasks
 #define SCHEDNQUEUE         (SCHEDNCLASS * SCHEDNCLASSQUEUE)
+#define SCHEDNTOTALQUEUE    (SCHEDNQUEUE + SCHEDNCLASSQUEUE) // SCHEDIDLE too
 #define SCHEDNTABQUEUE      512
 #define SCHEDNOCLASS        0xff
 
@@ -89,11 +89,12 @@ extern void schedyield(void);
 #define SCHEDRTPRIOBASE     (SCHEDREALTIME * SCHEDNCLASSPRIO)
 /* SCHED_FIFO tasks store priorities as negative values */
 #define SCHEDRTPRIOMIN      (-SCHEDNCLASSPRIO + 1)
+#define SCHEDRTPRIOBASE     (SCHEDREALTIME * SCHEDNCLASSPRIO)
 #define SCHEDRTPRIOMAX      (SCHEDNCLASSPRIO - 1)
 /* timeshare priority limits */
 #define SCHEDUSERPRIOMIN    (SCHEDRESPONSIVE * SCHEDNCLASSPRIO)
 #define SCHEDNORMALPRIOMIN  (SCHEDNORMAL * SCHEDNCLASSPRIO)
-#define SCHEDUSERPRIOMAX    SCHEDBATCHPRIOMAX
+#define SCHEDUSERPRIOMAX    (SCHEDBATCHPRIOMAX - SCHEDNICEHALF)
 #define SCHEDUSERRANGE      (SCHEDUSERPRIOMAX - SCHEDUSERPRIOMIN + 1)
 /* batch priority limits */
 #define SCHEDBATCHPRIOMIN   (SCHEDBATCH * SCHEDNCLASSPRIO)
@@ -117,7 +118,7 @@ extern void schedyield(void);
 #define SCHEDPRIOMAX        (SCHEDUSERPRIOMAX - SCHEDNICEHALF)
 #define SCHEDPRIORANGE      (SCHEDPRIOMAX - SCHEDPRIOMIN)
 /* interactive priority limits */
-#define SCHEDINTPRIOMIN     SCHEDUSERPRIOMIN
+#define SCHEDINTPRIOMIN     SCHEDRTPRIOBASE
 #define SCHEDINTPRIOMAX     (SCHEDBATCHPRIOMIN + SCHEDBATCHPRIOMAX - 1)
 #define SCHEDINTRANGE       (SCHEDINTPRIOMAX - SCHEDINTPRIOMIN + 1)
 
@@ -135,11 +136,11 @@ extern void schedyield(void);
 #define SCHEDHISTORYNTICK   (SCHEDHISTORYNSEC * kgethz())
 /* maximum number of ticks before scaling back */
 #define SCHEDHISTORYSIZE    (SCHEDHISTORYNTICK + kgethz())
-//#define SCHEDTIMEINCR       ((HZ << SCHEDTICKSHIFT) / HZ)
+//#define SCHEDRECTIMEINCR       ((HZ << SCHEDTICKSHIFT) / HZ)
 #define SCHEDTICKSHIFT      10
 /* maximum number of sleep time + run time stored */
-#define SCHEDTIMEMAX        ((kgethz() << 2) << SCHEDTICKSHIFT)
-#define SCHEDTIMEFORKMAX    ((kgethz() << 1) << SCHEDTICKSHIFT)
+#define SCHEDRECTIMEMAX     ((kgethz() << 2) << SCHEDTICKSHIFT)
+#define SCHEDRECTIMEFORKMAX ((kgethz() << 1) << SCHEDTICKSHIFT)
 
 /* interrupt priorities */
 #define schedintrsoftprio(id)                                           \
@@ -151,6 +152,46 @@ extern void schedyield(void);
 #define SCHEDINTRDISKPRIO   (SCHEDINTRPRIOMIN + 4 * SCHEDNQUEUEPRIO)
 #define SCHEDINTRMISCPRIO   (SCHEDINTRPRIOMIN + 5 * SCHEDNQUEUEPRIO)
 #define SCHEDINTRSOFTPRIO   (SCHEDINTRPRIOMIN + 6 * SCHEDNQUEUEPRIO)
+
+extern struct divu32 fastu32div24tab[rounduppow2(SCHEDHISTORYSIZE, PAGESIZE)];
+
+/* based on sched_pctcpu_update from ULE */
+static __inline__ void
+schedadjcpupct(struct task *task, long run)
+{
+    long     tick = k_curcpu->ntick;
+    unsigned last = task->lastrun;
+    long     diff = tick - last;
+    long     delta;
+    long     ntick;
+    long     val;
+    long     div;
+
+    if (diff >= SCHEDHISTORYNTICK) {
+        task->ntick = 0;
+        task->firstrun = tick - SCHEDHISTORYNTICK;
+    } else {
+        unsigned long first = task->firstrun;
+
+        delta = tick - first;
+        if (delta >= SCHEDHISTORYSIZE) {
+            ntick = task->ntick;
+            div = last - first;
+            val = tick - SCHEDHISTORYNTICK;
+            last -= val;
+            ntick = fastu32div24(ntick, div, fastu32div24tab);
+            ntick *= last;
+            task->firstrun = val;
+        }
+    }
+    if (run) {
+        ntick = diff >> SCHEDTICKSHIFT;
+        task->ntick = ntick;
+    }
+    task->lastrun = tick;
+
+    return;
+}
 
 #endif /* defined(ZEROSCHED) */
 

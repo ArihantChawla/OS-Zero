@@ -33,6 +33,8 @@
                                  CLSIZE / sizeof(long))
 #define TASKIDLEMAPNWORD     max(SCHEDNIDLE / (CHAR_BIT * sizeof(long)), \
                                  CLSIZE / sizeof(long))
+#define TASKLOADMAPNWORD     max((SCHEDNTOTALQUEUE) / CHAR_BIT * sizeof(long), \
+                                 CLSIZE / sizeof(long))
 #define TASKIDLECPUMAPNWORD  max(NCPU / (CHAR_BIT * sizeof(long)),      \
                                  CLSIZE / sizeof(long))
 
@@ -74,13 +76,14 @@ struct task {
     long            runprio;            // current priority
     long            prio;               // base priority
     long            sysprio;            // kernel-mode priority
-    long            nice;               // priority adjustment
+//    long            nice;               // priority adjustment
     long            state;              // thread state
     long            score;              // interactivity score
     long            cpu;                // CPU-affinity
     long            slice;              // timeslice in ticks
     long            runtime;            // # of ticks run
     long            slptime;            // # of ticks  of slept voluntarily
+    long            slptick;            // ID of tick when sleeping started
     long            ntick;              // # of scheduler ticks received
     long            lastrun;            // last tick we ran on
     long            firstrun;           // first tick we ran on
@@ -145,7 +148,8 @@ struct tasktab {
 struct taskqueue {
     volatile long  lk;
     struct task   *list;
-    uint8_t        pad[CLSIZE - sizeof(long) - sizeof(struct task *)];
+    long           load;
+    uint8_t        pad[CLSIZE - 2 * sizeof(long) - sizeof(struct task *)];
 };
 
 struct taskqueueset {
@@ -153,6 +157,7 @@ struct taskqueueset {
     long           *curmap;
     long           *nextmap;
     long           *idlemap;
+    long           *loadmap;
     struct task   **cur;
     struct task   **next;
     struct task   **idle;

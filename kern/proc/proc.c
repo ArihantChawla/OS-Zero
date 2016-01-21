@@ -31,6 +31,7 @@ procinit(long id, long sched)
     void           *ptr;
     uint8_t        *u8ptr;
 
+    proc->nice = 0;
     proc->task = task;
     task->m_task.flg = 0;
     if (k_cpuinfo->flags & CPUHASFXSR) {
@@ -38,7 +39,6 @@ procinit(long id, long sched)
     }
     val = 0;
     task->schedflg = val;
-    task->nice = val;
     task->state = TASKNEW;
     task->score = val;
     task->cpu = cpu->id;
