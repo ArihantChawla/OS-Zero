@@ -35,7 +35,11 @@ void tasksetsleeping(struct task *task);
 void tasksetstopped(struct task *task);
 void tasksetzombie(struct proc *proc);
 
-extern struct divul scheddivultab[SCHEDHISTORYSIZE] ALIGNED(PAGESIZE);
+#if (FASTIDIVWORDSIZE == 64)
+extern struct divu64 scheddivutab[SCHEDHISTORYSIZE] ALIGNED(PAGESIZE);
+#else
+extern struct divu32 scheddivutab[SCHEDHISTORYSIZE] ALIGNED(PAGESIZE);
+#endif
 
 /* lookup table to convert nice values to priority offsets */
 /* nice is between -20 and 19 inclusively */
@@ -191,12 +195,12 @@ taskcalcscore(struct task *task)
 #if (SCHEDSCOREHALF == 64)
         run >>= 6;
 #else
-        run = fastuldiv(run, SCHEDSCOREHALF, scheddivultab);
+        run = schedfastudiv(run, SCHEDSCOREHALF, scheddivutab);
 #endif
         res = SCHEDSCOREHALF;
         div = max(1, run);
         res <<= 1;
-        tmp = fastuldiv32(slp, div, scheddivultab);
+        tmp = schedfastudiv(slp, div, scheddivutab);
         res -= tmp;
         task->score = res;
         
@@ -206,10 +210,10 @@ taskcalcscore(struct task *task)
 #if (SCHEDSCOREHALF == 64)
         slp >>= 6;
 #else
-        slp = fastuldiv(slp, SCHEDHALFSCORE, s);
+        slp = schedfastudiv(slp, SCHEDHALFSCORE, s);
 #endif
         div = max(1, slp);
-        res = fastuldiv32(run, div, scheddivultab);
+        res = schedfastudiv(run, div, scheddivutab);
         task->score = res;
 
         return res;
@@ -296,9 +300,9 @@ taskforkintparm(struct task *task)
         run += run2;
         slp += slp2;
 #else
-        ratio = fastuldiv32(sum, SCHEDHISTORYFORKMAX, scheddivultab);
-        run = fastuldiv32(run, ratio, scheddivultab);
-        slp = fastuldiv32(slp, ratio, scheddivultab);
+        ratio = schedfastudiv(sum, SCHEDHISTORYFORKMAX, scheddivutab);
+        run = schedfastudiv(run, ratio, scheddivutab);
+        slp = schedfastudiv(slp, ratio, scheddivutab);
 #endif
         task->runtime = run;
         task->slptime = slp;
@@ -331,7 +335,7 @@ taskcalcintparm(struct task *task, long *retscore)
 #if (SCHEDSCORETHRESHOLD == 32)
         range >>= 5;
 #else
-        range = fastuldiv32(range, SCHEDSCORETHRESHOLD, scheddivultab);
+        range = schedfastudiv(range, SCHEDSCORETHRESHOLD, scheddivutab);
 #endif
         range *= score;
         res += range;
@@ -346,9 +350,9 @@ taskcalcintparm(struct task *task, long *retscore)
             range = diff - res + 1;
             tmp = roundup(total, range);
             res += task->nice;
-            div = fastuldiv32(total, tmp, scheddivultab);
+            div = schedfastudiv(total, tmp, scheddivutab);
             range--;
-            total = fastuldiv32(tickhz, div, scheddivultab);
+            total = schedfastudiv(tickhz, div, scheddivutab);
             diff = min(total, range);
             res += diff;
         }

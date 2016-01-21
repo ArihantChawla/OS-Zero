@@ -24,36 +24,34 @@
  *  libdivide@ridiculousfish.com
  */
 
+#include <stdint.h>
 #include <zero/fastidiv.h>
 #include <zero/trix.h>
 
+#if (FASTIDIVWORDSIZE == 64)
 /*
  * This routine precomputes a lookup table for divisors 1..lim32
  * - table size is stored in item #0 to check for buffer overruns
  */
 void
-fastuldiv32gentab(struct divul *duptr, unsigned long lim32)
+fastu64div32gentab(struct divu64 *duptr, uint64_t lim32)
 {
-    unsigned long long magic = lim32;
-    unsigned long long info = 0;
-    unsigned long      div;
+    uint64_t magic = lim32;
+    uint64_t info = 0;
+    uint64_t div;
 
     /* store array size into the first item to avoid buffer overruns */
     duptr->magic = magic;
     duptr->info = info;
     for (div = 1 ; div < lim32 ; div++) {
         duptr++;
-        if (powerof2(div)) {
-            info = tzerol(div);
-            magic = 0;
-            info |= FASTULDIVSHIFTBIT;
-        } else {
-            unsigned long      val;
-            unsigned long long shift;
-            unsigned long long mul;
-            unsigned long long rem;
-            unsigned long long rem2;
-            unsigned long long e;
+        if (!powerof2(div)) {
+            uint64_t val;
+            uint64_t shift;
+            uint64_t mul;
+            uint64_t rem;
+            uint64_t rem2;
+            uint64_t e;
 
             lzero32(div, shift);
             shift = 31 - shift;
@@ -66,13 +64,72 @@ fastuldiv32gentab(struct divul *duptr, unsigned long lim32)
             } else {
                 rem2 = rem;
                 mul += mul;
-                info = shift | FASTULDIVADDBIT;
+                info = shift | FASTU64DIVADDBIT;
                 rem2 += rem;
                 if (rem2 >= div || rem2 < rem) {
                     mul++;
                 }
             }
             magic = ++mul;
+        } else {
+            info = tzerol(div);
+            magic = 0;
+            info |= FASTU64DIVSHIFTBIT;
+        }
+        duptr->magic = magic;
+        duptr->info = info;
+    }
+
+    return;
+}
+#endif /* FASTIDIVWORDSIZE == 64 */
+
+/*
+ * This routine precomputes a lookup table for divisors 1..lim16
+ * - table size is stored in item #0 to check for buffer overruns
+ */
+void
+fastu32div16gentab(struct divu32 *duptr, uint32_t lim16)
+{
+    uint32_t magic = lim16;
+    uint32_t info = 0;
+    uint32_t div;
+
+    /* store array size into the first item to avoid buffer overruns */
+    duptr->magic = magic;
+    duptr->info = info;
+    for (div = 1 ; div < lim16 ; div++) {
+        duptr++;
+        if (!powerof2(div)) {
+            uint32_t val;
+            uint32_t shift;
+            uint32_t mul;
+            uint32_t rem;
+            uint32_t rem2;
+            uint32_t e;
+
+            lzero32(div, shift);
+            shift = 15 - shift;
+            val = UINT32_C(1) << shift;
+            mul = val / div;
+            rem = val % div;
+            e = div - rem;
+            if (e < val) {
+                info = shift;
+            } else {
+                rem2 = rem;
+                mul += mul;
+                info = shift | FASTU32DIV16ADDBIT;
+                rem2 += rem;
+                if (rem2 >= div || rem2 < rem) {
+                    mul++;
+                }
+            }
+            magic = ++mul;
+        } else {
+            info = tzerol(div);
+            magic = 0;
+            info |= FASTU32DIV16SHIFTBIT;
         }
         duptr->magic = magic;
         duptr->info = info;

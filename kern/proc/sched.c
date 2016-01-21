@@ -19,7 +19,11 @@ extern FASTCALL struct task   *taskswtch(struct task *task);
 #endif
 
 /* lookup table for fast division with multiplication and shift */
-struct divul scheddivultab[SCHEDHISTORYSIZE];
+#if (FASTIDIVWORDSIZE == 64)
+struct divu64 scheddivutab[SCHEDHISTORYSIZE];
+#elif (FASTIDIVWORDSIZE == 32)
+struct divu32 scheddivutab[SCHEDHISTORYSIZE];
+#endif
 
 void
 schedinit(void)
@@ -31,7 +35,7 @@ schedinit(void)
 #error define supported scheduler such as ZEROSCHED
 #endif
 #endif
-    fastuldiv32gentab(scheddivultab, SCHEDHISTORYSIZE);
+    schedfastudivgentab(scheddivutab, SCHEDHISTORYSIZE);
 
     return;
 }
@@ -59,7 +63,7 @@ schedadjcpupct(struct task *task, long run)
             div = last - first;
             val = tick - SCHEDHISTORYNTICK;
             last -= val;
-            ntick = fastuldiv32(ntick, div, scheddivultab);
+            ntick = schedfastudiv(ntick, div, scheddivutab);
             ntick *= last;
             task->firstrun = val;
         }

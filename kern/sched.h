@@ -3,6 +3,7 @@
 
 #include <kern/conf.h>
 #include <zero/trix.h>
+#include <zero/fastidiv.h>
 
 extern void schedinit(void);
 extern void schedyield(void);
@@ -150,6 +151,15 @@ extern void schedyield(void);
 #define SCHEDINTRDISKPRIO   (SCHEDINTRPRIOMIN + 4 * SCHEDNQUEUEPRIO)
 #define SCHEDINTRMISCPRIO   (SCHEDINTRPRIOMIN + 5 * SCHEDNQUEUEPRIO)
 #define SCHEDINTRSOFTPRIO   (SCHEDINTRPRIOMIN + 6 * SCHEDNQUEUEPRIO)
+
+/* miscellaneous stuff */
+#if (FASTIDIVWORDSIZE == 64)
+#define schedfastudivgentab(tab, lim) fastu64div32gentab(tab, lim)
+#define schedfastudiv(num, div, tab)  fastu64div32(num, div, tab)
+#elif (FASTIDIVWORDSIZE == 32)
+#define schedfastudivgentab(tab, lim) fastu32div16gentab(tab, lim)
+#define schedfastudiv(num, div, tab)  fastu32div16(num, div, tab)
+#endif
 
 #endif /* defined(ZEROSCHED) */
 
