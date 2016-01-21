@@ -12,14 +12,12 @@
 #include <stdlib.h>
 #endif
 
-#if ((defined(__i386__) || defined(__i486__)                          \
-      || defined(__i586__) || defined(__i686__))                      \
-     && !defined(__x86_64__) && !defined(__amd64__))
-#define FASTIDIVWORDSIZE 32
+#if defined(__x86_64__) && defined(__amd64__)
+#define FASTIDIVWORDSIZE 64
 #elif (defined(__i386__) || defined(__i486__)                           \
        || defined(__i586__) || defined(__i686__)                        \
        || defined(__arm__))
-#define FASTIDIVWORDSIZE 64
+#define FASTIDIVWORDSIZE 32
 #endif
 
 #if (LONGLONGSIZE == 8)
