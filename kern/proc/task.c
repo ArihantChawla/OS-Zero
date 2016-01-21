@@ -239,31 +239,31 @@ taskadjintparm(struct task *task)
     long slp = task->slptime;
     long sum = run + slp;
 
-    if (sum < SCHEDHISTORYMAX) {
+    if (sum < SCHEDTIMEMAX) {
 
         return;
     }
-    if (sum > 2 * SCHEDHISTORYMAX) {
+    if (sum > 2 * SCHEDTIMEMAX) {
         if (run > slp) {
-            task->runtime = SCHEDHISTORYMAX;
+            task->runtime = SCHEDTIMEMAX;
             task->slptime = 1;
         } else {
             task->runtime = 1;
-            task->slptime = SCHEDHISTORYMAX;
+            task->slptime = SCHEDTIMEMAX;
         }
 
         return;
     }
-    if (sum > (SCHEDHISTORYMAX >> 3) * 9) {
+    if (sum > (SCHEDTIMEMAX >> 3) * 9) {
         /* exceeded by more than 1/8th, divide by 2 */
         run >>= 1;
         slp >>= 1;
     } else {
-        /* multiply by 7 / 8 */
-        run >>= 3;
-        slp >>= 3;
-        run *= 7;
-        slp *= 7;
+        /* multiply by 3 / 4; this gives us less than 0.85 * SCHEDTIMEMAX */
+        run >>= 2;
+        slp >>= 2;
+        run *= 3;
+        slp *= 3;
     }
     task->runtime = run;
     task->slptime = slp;
@@ -284,7 +284,7 @@ taskforkintparm(struct task *task)
     long slp2;
     long sum = run + slp;
 
-    if (sum > SCHEDHISTORYFORKMAX) {
+    if (sum > SCHEDTIMEFORKMAX) {
 #if (HZ == 250) && (SCHEDHISTORYNSEC == 8)
         /* multiply run and slp by 3 / 8 */
         run2 = run;
@@ -296,7 +296,7 @@ taskforkintparm(struct task *task)
         run += run2;
         slp += slp2;
 #else
-        ratio = fastu32div24(sum, SCHEDHISTORYFORKMAX, fastu32div24tab);
+        ratio = fastu32div24(sum, SCHEDTIMEFORKMAX, fastu32div24tab);
         run = fastu32div24(run, ratio, fastu32div24tab);
         slp = fastu32div24(slp, ratio, fastu32div24tab);
 #endif

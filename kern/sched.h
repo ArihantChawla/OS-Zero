@@ -138,8 +138,8 @@ extern void schedyield(void);
 //#define SCHEDTIMEINCR       ((HZ << SCHEDTICKSHIFT) / HZ)
 #define SCHEDTICKSHIFT      10
 /* maximum number of sleep time + run time stored */
-#define SCHEDHISTORYMAX     ((kgethz() << 2) << SCHEDTICKSHIFT)
-#define SCHEDHISTORYFORKMAX ((kgethz() << 1) << SCHEDTICKSHIFT)
+#define SCHEDTIMEMAX        ((kgethz() << 2) << SCHEDTICKSHIFT)
+#define SCHEDTIMEFORKMAX    ((kgethz() << 1) << SCHEDTICKSHIFT)
 
 /* interrupt priorities */
 #define schedintrsoftprio(id)                                           \
