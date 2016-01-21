@@ -36,6 +36,11 @@
 #else
 #define NCPU        1
 #endif
+#if (SMT)
+#define NCORE       8
+#else
+#define NCORE       1
+#endif
 #define NPROCFD     4096        // maximum number of descriptors per process
 
 /* NOTE: it's not recommended to edit anything below unless you develop Zero */

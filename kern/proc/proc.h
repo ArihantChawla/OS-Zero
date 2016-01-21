@@ -102,7 +102,8 @@ struct procseginfo {
 #define PROCSIGNALED          (1 << 30)
 struct proc {
     /* scheduling parameters */
-    long                 nice;
+    long                 nice;          // scaled priority adjustment
+    long                 niceval;       // POSIX nice-value in range [-20, 19]
     /* process and thread management */
     struct task         *task;
     struct task         *thrqueue;

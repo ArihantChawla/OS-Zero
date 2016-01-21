@@ -115,9 +115,11 @@ SECTIONS {
 	m_task.o(.data)
 	m_task.o(.bss)
 
+/*
 	sched.o(.text)
 	sched.o(.data)
 	sched.o(.bss)
+*/
 
     	apic.o(.text)
     	apic.o(.data)

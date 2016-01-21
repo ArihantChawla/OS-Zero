@@ -23,21 +23,6 @@
 #include <kern/unit/ppc/asm.h>
 #endif
 
-#define TASKNLVL0DL      (1U << 16)
-#define TASKNLVL1DL      (1U << 8)
-#define TASKNLVL2DL      (1U << 8)
-#define TASKNDLKEY       3
-
-#define TASKDEADLINEMAPNWORD (TASKNLVL0DL / (CHAR_BIT * sizeof(long)))
-#define TASKREADYMAPNWORD    max(SCHEDNQUEUE / (CHAR_BIT * sizeof(long)), \
-                                 CLSIZE / sizeof(long))
-#define TASKIDLEMAPNWORD     max(SCHEDNIDLE / (CHAR_BIT * sizeof(long)), \
-                                 CLSIZE / sizeof(long))
-#define TASKLOADMAPNWORD     max((SCHEDNTOTALQUEUE) / CHAR_BIT * sizeof(long), \
-                                 CLSIZE / sizeof(long))
-#define TASKIDLECPUMAPNWORD  max(NCPU / (CHAR_BIT * sizeof(long)),      \
-                                 CLSIZE / sizeof(long))
-
 #define __errnoloc() (&k_curtask->errnum)
 
 //extern struct m_cpuinfo cpuinfo;
@@ -112,26 +97,6 @@ struct task {
 //    long           interact;
 };
 
-#if (PTRSIZE == 8)
-#define TASKNLVLWAITLOG2 16
-#elif (PTRSIZE == 4)
-#define TASKNLVLWAITLOG2 8
-#endif
-#define TASKNLVL0WAIT    (1 << TASKNLVLWAITLOG2)
-#define TASKNLVL1WAIT    (1 << TASKNLVLWAITLOG2)
-#define TASKNLVL2WAIT    (1 << TASKNLVLWAITLOG2)
-#define TASKNLVL3WAIT    (1 << TASKNLVLWAITLOG2)
-#define TASKNWAITKEY     4
-
-#define taskwaitkey0(wc)                                                \
-    (((wc) >> (3 * TASKNLVLWAITLOG2)) & ((1UL << TASKNLVLWAITLOG2) - 1))
-#define taskwaitkey1(wc)                                                \
-    (((wc) >> (2 * TASKNLVLWAITLOG2)) & ((1UL << TASKNLVLWAITLOG2) - 1))
-#define taskwaitkey2(wc)                                                \
-    (((wc) >> (1 * TASKNLVLWAITLOG2)) & ((1UL << TASKNLVLWAITLOG2) - 1))
-#define taskwaitkey3(wc)                                                \
-    ((wc) & ((1UL << TASKNLVLWAITLOG2) - 1))
-
 struct tasktabl0 {
     volatile long   lk;
     long            nref;
@@ -148,35 +113,8 @@ struct tasktab {
 struct taskqueue {
     volatile long  lk;
     struct task   *list;
-    long           load;
     uint8_t        pad[CLSIZE - 2 * sizeof(long) - sizeof(struct task *)];
 };
-
-struct taskqueueset {
-    volatile long   lk;
-    long           *curmap;
-    long           *nextmap;
-    long           *idlemap;
-    long           *loadmap;
-    struct task   **cur;
-    struct task   **next;
-    struct task   **idle;
-    uint8_t         pad[CLSIZE - sizeof(long) - 6 * sizeof(void *)];
-};
-
-#if 0
-struct taskqueuehdr {
-    volatile long     lk;
-    struct taskqueue *tab;
-    uint8_t           pad[CLSIZE - sizeof(long) - sizeof(struct taskqueue *)];
-};
-#endif
-
-#if 0
-#if (!QEMU)
-#define FPUCTX 1
-#endif
-#endif
 
 long taskgetid(void);
 void taskfreeid(long id);

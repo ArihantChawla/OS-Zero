@@ -10,7 +10,7 @@ long nicetab[64];
 int
 main(int argc, char *argv[])
 {
-    long   *ptr = &nicetab[64];
+    long   *ptr = &nicetab[32];
     double  dval = (double)MIN;
     double  ofs = -dval / 20.0;
     long    ndx;
@@ -37,11 +37,9 @@ main(int argc, char *argv[])
     printf("/* taskniceptr = &tasknicetab[SCHEDNICEHALF]; */\n");
     printf("/* prio += taskniceptr[nice]; */\n");
     printf("long tasknicetab[SCHEDNICERANGE]\n= {\n   ");
-    ndx = MIN;
-    while (ndx < MAX) {
-        printf(" %ld,", ptr[ndx]);
-        ndx++;
-        if (!(ndx & 0x07)) {
+    for (ndx = 0 ; ndx < 64 ; ndx++) {
+        printf(" %ld,", nicetab[ndx]);
+        if ((ndx) && !(ndx & 0x07)) {
             printf("\n   ");
         }
     }

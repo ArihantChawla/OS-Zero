@@ -25,6 +25,13 @@ extern void schedyield(void);
 #endif
 
 /* macros */
+#define schedsettask(task)                                              \
+    do {                                                                \
+        k_curtask = (task);                                             \
+        k_curproc = (task)->proc;                                       \
+        k_curpid = (task)->id;                                          \
+    } while (0)
+
 #define schedcalctime(task)  ((task)->ntick >> SCHEDTICKSHIFT)
 #define schedcalcticks(task) (max((task)->lastrun - (task)->firstrun, kgethz()))
 #define schedcalcnice(task)  (tasknicetab[(task)->nice])
@@ -36,7 +43,7 @@ extern void schedyield(void);
 #define schedsetprioincr(task, pri, incr)                               \
     ((task)->prio = schedprioqueueid(pri) + (incr))
 #endif
-#define schedcalcprio(task)                                             \
+#define schedcalcuserprio(task)                                         \
     (fastu32div24(schedcalctime(task),                                  \
                   (roundup(schedcalcticks(task), SCHEDPRIORANGE)        \
                    / SCHEDPRIORANGE),                                   \
@@ -63,7 +70,7 @@ extern void schedyield(void);
 #define SCHEDNORMAL         4           // 'normal' timeshare tasks
 #define SCHEDBATCH          5           // batch tasks
 #define SCHEDNUSERCLASS     3           // number of user ('timeshare') classes
-#define SCHEDNCLASS         6           // # of user scheduler classes
+#define SCHEDNCLASS         5           // # of user scheduler classes
 #define SCHEDIDLE           SCHEDNCLASS // idle tasks
 #define SCHEDNQUEUE         (SCHEDNCLASS * SCHEDNCLASSQUEUE)
 #define SCHEDNTOTALQUEUE    (SCHEDNQUEUE + SCHEDNCLASSQUEUE) // SCHEDIDLE too
@@ -93,7 +100,7 @@ extern void schedyield(void);
 #define SCHEDRTPRIOMAX      (SCHEDNCLASSPRIO - 1)
 /* timeshare priority limits */
 #define SCHEDUSERPRIOMIN    (SCHEDRESPONSIVE * SCHEDNCLASSPRIO)
-#define SCHEDNORMALPRIOMIN  (SCHEDNORMAL * SCHEDNCLASSPRIO)
+//#define SCHEDNORMALPRIOMIN  (SCHEDNORMAL * SCHEDNCLASSPRIO)
 #define SCHEDUSERPRIOMAX    (SCHEDBATCHPRIOMAX - SCHEDNICEHALF)
 #define SCHEDUSERRANGE      (SCHEDUSERPRIOMAX - SCHEDUSERPRIOMIN + 1)
 /* batch priority limits */
@@ -114,12 +121,13 @@ extern void schedyield(void);
 //#define SCHEDPRIOMAX        (SCHEDUSERPRIOMAX - SCHEDNICEHALF)
 /* we allow negative nice values to map to classes SCHEDREALTIME..SCHEDSYSTEM */
 #define SCHEDPRIOMIN        (SCHEDUSERPRIOMIN)
-/* positive nice values will stay out of the idle queue */
+/* positive nice values will not be mapped to SCHEDIDLE */
 #define SCHEDPRIOMAX        (SCHEDUSERPRIOMAX - SCHEDNICEHALF)
 #define SCHEDPRIORANGE      (SCHEDPRIOMAX - SCHEDPRIOMIN)
 /* interactive priority limits */
 #define SCHEDINTPRIOMIN     SCHEDRTPRIOBASE
-#define SCHEDINTPRIOMAX     (SCHEDBATCHPRIOMIN + SCHEDBATCHPRIOMAX - 1)
+//#define SCHEDINTPRIOMAX     (SCHEDBATCHPRIOMIN + SCHEDBATCHPRIOMAX - 1)
+#define SCHEDINTPRIOMAX     SCHEDBATCHPRIOMIN
 #define SCHEDINTRANGE       (SCHEDINTPRIOMAX - SCHEDINTPRIOMIN + 1)
 
 /* interactivity scoring */
@@ -153,7 +161,61 @@ extern void schedyield(void);
 #define SCHEDINTRMISCPRIO   (SCHEDINTRPRIOMIN + 5 * SCHEDNQUEUEPRIO)
 #define SCHEDINTRSOFTPRIO   (SCHEDINTRPRIOMIN + 6 * SCHEDNQUEUEPRIO)
 
+/* data structures */
+
 extern struct divu32 fastu32div24tab[rounduppow2(SCHEDHISTORYSIZE, PAGESIZE)];
+
+#define SCHEDNLVL0DL      (1U << 16)
+#define SCHEDNLVL1DL      (1U << 8)
+#define SCHEDNLVL2DL      (1U << 8)
+#define SCHEDNDLKEY       3
+
+/* 32-bit time_t values */
+#define taskdlkey0(dl)    (((dl) >> 16) & 0xffff)
+#define taskdlkey1(dl)    (((dl) >> 8) & 0xff)
+#define taskdlkey2(dl)    ((dl) & 0xff)
+
+#define SCHEDDEADLINEMAPNWORD (SCHEDNLVL0DL / (CHAR_BIT * sizeof(long)))
+#define SCHEDREADYMAPNWORD    max(SCHEDNQUEUE / (CHAR_BIT * sizeof(long)), \
+                                 CLSIZE / sizeof(long))
+#define SCHEDIDLEMAPNWORD     max(SCHEDNIDLE / (CHAR_BIT * sizeof(long)), \
+                                  CLSIZE / sizeof(long))
+#define SCHEDLOADMAPNWORD     max((SCHEDNTOTALQUEUE) / CHAR_BIT * sizeof(long), \
+                                  CLSIZE / sizeof(long))
+#define SCHEDIDLECOREMAPNWORD  max(NCORE / (CHAR_BIT * sizeof(long)),   \
+                                   CLSIZE / sizeof(long))
+
+#if (PTRSIZE == 8)
+#define SCHEDNLVLWAITLOG2 16
+#elif (PTRSIZE == 4)
+#define SCHEDNLVLWAITLOG2 8
+#endif
+#define SCHEDNLVL0WAIT    (1 << SCHEDNLVLWAITLOG2)
+#define SCHEDNLVL1WAIT    (1 << SCHEDNLVLWAITLOG2)
+#define SCHEDNLVL2WAIT    (1 << SCHEDNLVLWAITLOG2)
+#define SCHEDNLVL3WAIT    (1 << SCHEDNLVLWAITLOG2)
+#define SCHEDNWAITKEY     4
+
+#define taskwaitkey0(wc)                                                \
+    (((wc) >> (3 * SCHEDNLVLWAITLOG2)) & ((1UL << SCHEDNLVLWAITLOG2) - 1))
+#define taskwaitkey1(wc)                                                \
+    (((wc) >> (2 * SCHEDNLVLWAITLOG2)) & ((1UL << SCHEDNLVLWAITLOG2) - 1))
+#define taskwaitkey2(wc)                                                \
+    (((wc) >> (1 * SCHEDNLVLWAITLOG2)) & ((1UL << SCHEDNLVLWAITLOG2) - 1))
+#define taskwaitkey3(wc)                                                \
+    ((wc) & ((1UL << SCHEDNLVLWAITLOG2) - 1))
+
+struct schedqueueset {
+    volatile long   lk;
+    long           *curmap;
+    long           *nextmap;
+    long           *idlemap;
+    long           *loadmap;
+    struct task   **cur;
+    struct task   **next;
+    struct task   **idle;
+    uint8_t         pad[CLSIZE - sizeof(long) - 6 * sizeof(void *)];
+};
 
 /* based on sched_pctcpu_update from ULE */
 static __inline__ void

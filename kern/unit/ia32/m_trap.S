@@ -54,7 +54,7 @@
 .globl	irqerror, irqspurious, mpspurint, irqtmrcnt
 #endif
 
-.extern	sigfunc, tmrsyncscr, taskswtch
+.extern	sigfunc, tmrsyncscr, schedswitchtask
 .extern vmpagefault, kbdtrap, mousetrap
 #if (APIC)
 .extern	mpapic
@@ -669,14 +669,11 @@ _havestk:
 	movl	%esi, 64(%eax)		// frame.eip = return address
 	movl	%edi, 84(%eax)		// m_tcb.trapesp = trap frame address
 	/* schedule next thread */
-	//	movl	%gs:8, %eax		// task structure address
 	/* task structure address is still in %eax */
 	movl	%ebx, 28(%eax)		// task->genregs.ebp = pre-trap EBP
-//	movl	schedswtchtask, %ecx	// get scheduler-specific function
 	leal	4(%ebp), %esp		// restore stack pointer
 	pushl	%eax			// store copy of task pointer
-//	call	*%ecx			// call scheduler function (taskswtch)
-	call	taskswtch
+	call	schedswitchtask		// call scheduler function
 	popl	%edx			// pop earlier task pointer
 	cmpl	%eax, %edx		// did we reschedule the same task?
 	jne	_swtch			// if not, branch to _swtch
@@ -684,13 +681,6 @@ _havestk:
 	leal	20(%eax), %esp
 	popal
 	movl	32(%esp), %esp		// ESP = m_tcb.trapesp
-#if 0
-#if (APIC)
-	_apiceoi
-#else
-	_piceoi1
-#endif
-#endif
 	iretl
 _swtch:
 	call	m_taskjmp
