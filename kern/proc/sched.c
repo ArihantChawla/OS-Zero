@@ -18,7 +18,7 @@
 extern FASTCALL struct task   *taskswtch(struct task *task);
 #endif
 
-extern struct divu32 fastudiv24tab[SCHEDHISTORYSIZE];
+extern struct divu32 fastu32div24tab[SCHEDHISTORYSIZE];
 
 void
 schedinit(void)
@@ -30,7 +30,7 @@ schedinit(void)
 #error define supported scheduler such as ZEROSCHED
 #endif
 #endif
-    fastudiv24gentab(fastudiv24tab, SCHEDHISTORYSIZE);
+    fastu32div24gentab(fastu32div24tab, SCHEDHISTORYSIZE);
 
     return;
 }
@@ -58,7 +58,7 @@ schedadjcpupct(struct task *task, long run)
             div = last - first;
             val = tick - SCHEDHISTORYNTICK;
             last -= val;
-            ntick = fastudiv24(ntick, div, fastudiv24tab);
+            ntick = fastu32div24(ntick, div, fastu32div24tab);
             ntick *= last;
             task->firstrun = val;
         }
