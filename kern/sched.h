@@ -157,8 +157,8 @@ extern void schedyield(void);
 #define schedfastudivgentab(tab, lim) fastu64div32gentab(tab, lim)
 #define schedfastudiv(num, div, tab)  fastu64div32(num, div, tab)
 #elif (FASTIDIVWORDSIZE == 32)
-#define schedfastudivgentab(tab, lim) fastu32div16gentab(tab, lim)
-#define schedfastudiv(num, div, tab)  fastu32div16(num, div, tab)
+#define schedfastudivgentab(tab, lim) fastu32div20gentab(tab, lim)
+#define schedfastudiv(num, div, tab)  fastu32div20(num, div, tab)
 #endif
 
 #endif /* defined(ZEROSCHED) */

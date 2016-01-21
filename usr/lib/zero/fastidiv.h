@@ -30,6 +30,9 @@
 #define FASTU32DIV16SHIFTMASK 0x0f
 #define FASTU32DIV16ADDBIT    0x10
 #define FASTU32DIV16SHIFTBIT  0x20
+#define FASTU32DIV20SHIFTMASK 0x1f
+#define FASTU32DIV20ADDBIT    0x20
+#define FASTU32DIV20SHIFTBIT  0x40
     
 struct divu32 {
     uint32_t magic;
@@ -44,7 +47,8 @@ struct divu64 {
 #if (FASTIDIVWORDSIZE == 64)
 void fastu64div32gentab(struct divu64 *duptr, uint64_t lim32);
 #endif
-void fastu32div16gentab(struct divu32 *duptr, uint32_t lim32);
+void fastu32div16gentab(struct divu32 *duptr, uint32_t lim16);
+void fastu32div20gentab(struct divu32 *duptr, uint32_t lim20);
 
 /* get the high 32 bits of val1 * val2 */
 static INLINE uint64_t
@@ -62,6 +66,16 @@ _mullhiu16(uint32_t val1, uint32_t val2)
 {
     uint32_t val = val1 * val2;
     uint32_t res = val >> 16;
+
+    return res;
+}
+
+/* get the high 20 bits of val1 * val2 */
+static INLINE uint32_t
+_mullhiu20(uint32_t val1, uint32_t val2)
+{
+    uint32_t val = val1 * val2;
+    uint32_t res = val >> 12;
 
     return res;
 }
@@ -105,7 +119,7 @@ fastu64div32(uint64_t num, uint32_t div32,
     return res;
 }
 
-/* compute num/div32 with [possible] multiplication + shift operations */
+/* compute num/div16 with [possible] multiplication + shift operations */
 static INLINE uint32_t
 fastu32div16(uint32_t num, uint32_t div16,
              const struct divu32 *tab)
@@ -124,7 +138,7 @@ fastu32div16(uint32_t num, uint32_t div16,
 #endif
     }
     if (!(info & FASTU32DIV16SHIFTBIT)) {
-        uint32_t quot = _mullhiu32(magic, num);
+        uint32_t quot = _mullhiu16(magic, num);
         
         res = quot;
         if (info & FASTU32DIV16ADDBIT) {
@@ -138,6 +152,45 @@ fastu32div16(uint32_t num, uint32_t div16,
         return res;
     } else {
         info &= FASTU32DIV16SHIFTMASK;
+        res = num >> info;
+    }
+        
+    return res;
+}
+
+/* compute num/div16 with [possible] multiplication + shift operations */
+static INLINE uint32_t
+fastu32div20(uint32_t num, uint32_t div20,
+             const struct divu32 *tab)
+{
+    const struct divu32 *ulptr = &tab[div20];
+    uint32_t             magic = ulptr->magic;
+    uint32_t             info = ulptr->info;
+    uint32_t             lim = tab->magic;
+    uint32_t             res = 0;
+
+    if (lim < div20 || !div20) {
+#if defined(__KERNEL__)
+        panic(k_curpid, -TRAPDE, 0);
+#else
+        abort();
+#endif
+    }
+    if (!(info & FASTU32DIV20SHIFTBIT)) {
+        uint32_t quot = _mullhiu20(magic, num);
+        
+        res = quot;
+        if (info & FASTU32DIV20ADDBIT) {
+            num -= quot;
+            info &= FASTU32DIV20SHIFTMASK;
+            num >>= 1;
+            res += num;
+        }
+        res >>= info;
+
+        return res;
+    } else {
+        info &= FASTU32DIV20SHIFTMASK;
         res = num >> info;
     }
         

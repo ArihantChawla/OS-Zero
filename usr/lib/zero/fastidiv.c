@@ -64,8 +64,8 @@ fastu64div32gentab(struct divu64 *duptr, uint64_t lim32)
             } else {
                 rem2 = rem;
                 mul += mul;
-                info = shift | FASTU64DIVADDBIT;
                 rem2 += rem;
+                info = shift | FASTU64DIVADDBIT;
                 if (rem2 >= div || rem2 < rem) {
                     mul++;
                 }
@@ -109,7 +109,7 @@ fastu32div16gentab(struct divu32 *duptr, uint32_t lim16)
             uint32_t e;
 
             lzero32(div, shift);
-            shift = 15 - shift;
+            shift = 31 - shift;
             val = UINT32_C(1) << shift;
             mul = val / div;
             rem = val % div;
@@ -119,8 +119,8 @@ fastu32div16gentab(struct divu32 *duptr, uint32_t lim16)
             } else {
                 rem2 = rem;
                 mul += mul;
-                info = shift | FASTU32DIV16ADDBIT;
                 rem2 += rem;
+                info = shift | FASTU32DIV16ADDBIT;
                 if (rem2 >= div || rem2 < rem) {
                     mul++;
                 }
@@ -130,6 +130,60 @@ fastu32div16gentab(struct divu32 *duptr, uint32_t lim16)
             info = tzerol(div);
             magic = 0;
             info |= FASTU32DIV16SHIFTBIT;
+        }
+        duptr->magic = magic;
+        duptr->info = info;
+    }
+
+    return;
+}
+
+/*
+ * This routine precomputes a lookup table for divisors 1..lim20
+ * - table size is stored in item #0 to check for buffer overruns
+ */
+void
+fastu32div20gentab(struct divu32 *duptr, uint32_t lim20)
+{
+    uint32_t magic = lim20;
+    uint32_t info = 0;
+    uint32_t div;
+
+    /* store array size into the first item to avoid buffer overruns */
+    duptr->magic = magic;
+    duptr->info = info;
+    for (div = 1 ; div < lim20 ; div++) {
+        duptr++;
+        if (!powerof2(div)) {
+            uint32_t val;
+            uint32_t shift;
+            uint32_t mul;
+            uint32_t rem;
+            uint32_t rem2;
+            uint32_t e;
+
+            lzero32(div, shift);
+            shift = 31 - shift;
+            val = UINT32_C(1) << shift;
+            mul = val / div;
+            rem = val % div;
+            e = div - rem;
+            if (e < val) {
+                info = shift;
+            } else {
+                rem2 = rem;
+                mul += mul;
+                rem2 += rem;
+                info = shift | FASTU32DIV20ADDBIT;
+                if (rem2 >= div || rem2 < rem) {
+                    mul++;
+                }
+            }
+            magic = ++mul;
+        } else {
+            info = tzerol(div);
+            magic = 0;
+            info |= FASTU32DIV20SHIFTBIT;
         }
         duptr->magic = magic;
         duptr->info = info;
