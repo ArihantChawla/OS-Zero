@@ -18,7 +18,7 @@
 /* func is routine; ring is TRAPUSER or TRAPSYS */
 #define trapsetintrgate(p64, func, ring)                                \
     do {                                                                \
-        uint64_t _func = (uint64_t)(func);                              \
+        uint64_t _func = (uintptr_t)(func);                             \
                                                                         \
         *(p64) = trapmkdesc(TEXTSEL, _func, ring);                      \
     } while (0)
