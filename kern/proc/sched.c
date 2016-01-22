@@ -941,7 +941,7 @@ taskunwait(uintptr_t wtchan)
         tab = ((void **)l0tab)[key1];
         if (tab) {
             ptab[1] = tab;
-            pptab[1] = (void **)&tab[key0];
+            pptab[1] = (void **)&tab[key1];
             tab = ((void **)tab)[key2];
             if (tab) {
                 ptab[2] = tab;
