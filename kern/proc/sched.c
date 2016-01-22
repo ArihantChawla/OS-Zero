@@ -188,6 +188,7 @@ schedfindidlecore(long cpu, long *retcore)
 
             return unit;
         }
+        ptr++;
     }
     mtxunlk(&unit->lk);
     for (unit = &cputab[0] ; unit != unit0 ; unit++) {
@@ -205,6 +206,7 @@ schedfindidlecore(long cpu, long *retcore)
 
                 return unit;
             }
+            ptr++;
         }
         mtxunlk(&unit->lk);
     }
@@ -225,6 +227,7 @@ schedfindidlecore(long cpu, long *retcore)
 
                 return unit;
             }
+            ptr++;
         }
         mtxunlk(&unit->lk);
     }
