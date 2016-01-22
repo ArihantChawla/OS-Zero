@@ -210,7 +210,7 @@ schedfindidlecore(long cpu, long *retcore)
     }
     cpu++;
     unit++;
-    for ( ; unit != unit0 ; unit++) {
+    for ( ; unit < end ; unit++) {
         mtxlk(&unit->lk);
         ptr = &map[cpu][0];
         for (ndx = 0 ; ndx < lim ; ndx++) {
