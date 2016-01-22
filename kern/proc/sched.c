@@ -479,23 +479,6 @@ schedcalcintparm(struct task *task, long *retscore)
     return res;
 }
 
-#if 0
-static __inline__ long
-schedwakeup(struct task *task)
-{
-    long sched = task->sched;
-    long nice = task->nice;
-    long prio = ((sched < SCHEDNSYSCLASS)
-                 ? task->prio
-                 : SCHEDUSERPRIOMIN);
-
-    task->state = SCHEDREADY;
-    task->score = 0;
-
-    return prio;
-}
-#endif
-
 /* based on sched_wakeup() from ULE :) */
 static __inline__ void
 schedwakeup(struct task *task)
@@ -527,6 +510,7 @@ schedwakeup(struct task *task)
 #if (SMP)
     cpu = schedfindidlecore(cpu);
 #endif
+    task->state = TASKREADY;
     task->cpu = cpu;
     schedsetready(task, cpu, SCHEDUNLKTASK);
     /* FIXME: sched_setpreempt() */
