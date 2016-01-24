@@ -161,19 +161,18 @@ schedswapqueues(long cpu)
 static __inline__ struct cpu *
 schedfindidlecore(long cpu, long *retcore)
 {
-    struct cpu   *unit0 = &cputab[cpu];
-    struct cpu   *unit = unit0;
-    struct cpu   *end = &cputab[NCPU];
-    struct core  *core = NULL;
-    long        **map = schedidlecoremap;
-    long         *ptr = &map[cpu][0];
-    long          nunit = NCPU;
-    long          ncore = NCORE;
-    long          lim = min(ncore, (long)(CHAR_BIT * sizeof(long)));
-    long          ndx = 0;
-    long          val = 0;
-    long          ntz;
-    long          mask;
+    struct cpu *unit = &cputab[cpu];
+    long       *map = &schedidlecoremap[cpu][0];
+    long       *ptr = &map[0];
+    long        nunit = NCPU;
+    long        ncore = NCORE;
+    long        lim = min(ncore, (long)(CHAR_BIT * sizeof(long)));
+    long        ndx = 0;
+    long        val = 0;
+    long        cur;
+    long        last = NCPU;
+    long        ntz;
+    long        mask;
 
     mtxlk(&unit->lk);
     for (ndx = 0 ; ndx < lim ; ndx++) {
@@ -191,15 +190,16 @@ schedfindidlecore(long cpu, long *retcore)
         ptr++;
     }
     mtxunlk(&unit->lk);
-    for (unit = &cputab[0] ; unit != unit0 ; unit++) {
+    ptr = map;
+    for (cur = 0 ; cur != cpu ; cur++) {
         mtxlk(&unit->lk);
-        ptr = &map[cpu][0];
         for (ndx = 0 ; ndx < lim ; ndx++) {
             mask = *ptr;
             if (mask) {
                 ntz = tzerol(mask);
                 clrbit(ptr, ntz);
                 mtxunlk(&unit->lk);
+                unit = &cputab[cur];
                 ndx *= CHAR_BIT * sizeof(long);
                 ndx += ntz;
                 *retcore = ndx;
@@ -210,17 +210,17 @@ schedfindidlecore(long cpu, long *retcore)
         }
         mtxunlk(&unit->lk);
     }
-    cpu++;
-    unit++;
-    for ( ; unit < end ; unit++) {
+    cur++;
+    ptr++;
+    for ( ; cur < last ; cur++) {
         mtxlk(&unit->lk);
-        ptr = &map[cpu][0];
         for (ndx = 0 ; ndx < lim ; ndx++) {
             mask = *ptr;
             if (mask) {
                 ntz = tzerol(mask);
                 clrbit(ptr, ntz);
                 mtxunlk(&unit->lk);
+                unit = &cputab[cur];
                 ndx *= CHAR_BIT * sizeof(long);
                 ndx += ntz;
                 *retcore = ndx;
