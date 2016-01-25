@@ -19,7 +19,6 @@
 void                   schedinitqueues(void);
 FASTCALL struct task * schedswitchtask(struct task *curtask);
 void                   schedsetready(struct task *task, long cpu, long unlk);
-void                   schedsetsleeping(struct task *task);
 void                   schedsetstopped(struct task *task);
 void                   schedsetzombie(struct proc *proc);
 
@@ -74,7 +73,6 @@ static struct task      *schedidletab[NCPU][SCHEDNCLASSQUEUE];
 static long              schedloadmap[NCPU][SCHEDNTOTALQUEUE];
 long                     schedidlecoremap[NCPU][SCHEDIDLECOREMAPNWORD];
 static long              scheddeadlinemap[SCHEDDEADLINEMAPNWORD];
-static struct taskqueue  schedsleepqueue;
 
 void
 schedinit(void)
@@ -277,42 +275,6 @@ schedsetready(struct task *task, long cpu, long unlk)
     return;
 }
     
-/* FIXME: add a multilevel tree for sleeping tasks for speed */
-void
-schedsetsleeping(struct task *task)
-{
-    time_t            timelim = task->timelim;
-    struct taskqueue *queue = &schedsleepqueue;
-    struct task      *sleeptask;
-
-    if (task->waitchan) {
-        tasksetwait(task);
-    } else {
-        sleeptask = queue->list;
-        if (sleeptask) {
-            while ((sleeptask) && (sleeptask->next)) {
-                if (task->timelim < sleeptask->timelim) {
-                    task->prev = sleeptask->prev;
-                    task->next = sleeptask;
-                    sleeptask->prev = task;
-                    
-                    return;
-                }
-                sleeptask = sleeptask->next;
-            }
-            task->prev = sleeptask;
-            task->next = NULL;
-            sleeptask->next = task;
-        } else {
-            task->prev = NULL;
-            task->next = NULL;
-            queue->list = task;
-        }
-    }
-
-    return;
-}
-
 void
 schedsetstopped(struct task *task)
 {
@@ -358,7 +320,7 @@ schedswitchtask(struct task *curtask)
 
                     break;
                 case TASKSLEEPING:
-                    schedsetsleeping(curtask);
+                    tasksetsleep(curtask);
 
                     break;
                 case TASKSTOPPED:

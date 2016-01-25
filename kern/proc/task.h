@@ -159,5 +159,8 @@ struct pid {
     struct pid    *hash;
 };
 
+extern void tasksetsleep(struct task *task);
+extern void tasksetwait(struct task *task);
+
 #endif /* __KERN_PROC_TASK_H__ */
 

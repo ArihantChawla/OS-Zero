@@ -12,6 +12,7 @@
 /* unlk-argument values for schedsetready() */
 #define SCHEDUNLKTASK (1 << 0)
 #define SCHEDUNLKCPU  (1 << 1)
+extern void schedsetready(struct task *task, long cpu, long unlk);
 
 #define schedlkcpuntick(cpu)     (mtxlk(&cpu->lk), (cpu)->ntick)
 #define schedlkcpu(cpu)          (mtxlk(&cpu->lk))

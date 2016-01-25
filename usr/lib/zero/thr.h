@@ -13,6 +13,7 @@
 #elif defined(__linux__) && !defined(__KERNEL__)
 #define thryield() sched_yield();
 #elif defined(__KERNEL__)
+extern void schedyield(void);
 #define thryield() schedyield();
 #elif defined(PTHREAD) || defined(ZEROPTHREAD)
 #define thryield() pthread_yield();
