@@ -19,23 +19,6 @@ extern "C" {
 #include <zero/arm/prof.h>
 #endif
 
-#define tvcmp(tv1, tv2)                                                 \
-    (((tv2)->tv_sec - (tv1)->tv_sec) * 1000000                          \
-     + ((tv2)->tv_usec - (tv1)->tv_usec))
-#define tvgt(tv1, tv2)                                                  \
-    (((tv1)->tv_sec > (tv2)->tv_sec)                                    \
-     || ((tv1)->tv_sec == (tv2)->tv_sec && (tv1)->tv_usec > (tv2)->tv_usec))
-
-#if defined(_MSC_VER)
-#else
-#define tpcmp(tp1, tp2)                                                 \
-    (((tp2)->tv_sec - (tp1)->tv_sec) * 1000000                          \
-     + ((tp2)->tv_usec - (tp1)->tv_usec))
-#define tpgt(tp1, tp2)                                                  \
-    (((tp1)->tv_sec > (tp2)->tv_sec)                                    \
-     || ((tp1)->tv_sec == (tp2)->tv_sec && (tp1)->tv_usec > (tp2)->tv_usec))
-#endif
-
 #define tvaddconst(tv, u)                                               \
   do {                                                                  \
       unsigned long _us = 1000000;                                      \

@@ -6,7 +6,7 @@
 #if !defined(__KERNEL__)
 #define __KERNEL__ 1
 #endif
-#include <zero/mtx.h>
+//#include <zero/mtx.h>
 //#include <kern/buf.h>
 #include <kern/unit/x86/link.h>
 #include <kern/unit/ia32/types.h>

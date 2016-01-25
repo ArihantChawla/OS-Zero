@@ -65,7 +65,7 @@ fastu64div32gentab(struct divu64 *duptr, uint64_t lim32)
                 rem2 = rem;
                 mul += mul;
                 rem2 += rem;
-                info = shift | FASTU64DIVADDBIT;
+                info = shift | FASTU64DIV32ADDBIT;
                 if (rem2 >= div || rem2 < rem) {
                     mul++;
                 }
@@ -74,7 +74,7 @@ fastu64div32gentab(struct divu64 *duptr, uint64_t lim32)
         } else {
             info = tzerol(div);
             magic = 0;
-            info |= FASTU64DIVSHIFTBIT;
+            info |= FASTU64DIV32SHIFTBIT;
         }
         duptr->magic = magic;
         duptr->info = info;

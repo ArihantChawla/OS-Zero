@@ -5,11 +5,11 @@
 #include <stdint.h>
 #include <sys/io.h>
 #include <zero/trix.h>
+#include <kern/asm.h>
 #include <kern/util.h>
 #include <kern/cpu.h>
 #include <kern/mem/vm.h>
 #include <kern/unit/x86/bios.h>
-#include <kern/unit/x86/asm.h>
 #include <kern/unit/x86/trap.h>
 #include <kern/unit/x86/pit.h>
 #include <kern/unit/x86/apic.h>

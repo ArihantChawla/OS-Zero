@@ -11,16 +11,12 @@
 //#include <zero/list.h>
 #include <kern/syscall.h>
 #include <kern/cpu.h>
-#if (defined(__i386__) || defined(__i486__)                             \
-     || defined(__i586__) || defined(__i686__)                          \
-     && (!defined(__x86_64__) && !defined(__amd64__)))
-#include <kern/unit/ia32/asm.h>
-#elif defined(__i386__)
+#include <kern/asm.h>
+#if defined(__x86_64__) || defined(__amd64__)
+#include <kern/unit/x86-64/task.h>
+#elif (defined(__i386__) || defined(__i486__)                           \
+       || defined(__i586__) || defined(__i686__))
 #include <kern/unit/ia32/task.h>
-#elif defined(__arm__)
-#include <kern/unit/arm/asm.h>
-#elif defined(__ppc__)
-#include <kern/unit/ppc/asm.h>
 #endif
 
 #define __errnoloc() (&k_curtask->errnum)

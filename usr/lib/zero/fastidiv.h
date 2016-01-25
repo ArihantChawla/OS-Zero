@@ -6,7 +6,7 @@
 #include <zero/param.h>
 #if defined(__KERNEL__)
 #include <kern/util.h>
-#include <kern/unit/x86/cpu.h>
+#include <kern/cpu.h>
 #include <kern/unit/x86/trap.h>
 #else /* !defined(__KERNEL__) */
 #include <stdlib.h>
@@ -20,12 +20,12 @@
 #define FASTIDIVWORDSIZE 32
 #endif
 
-#if (LONGLONGSIZE == 8)
+#if (FASTIDIVWORDSIZE == 64)
 #define FASTU64DIV32SHIFTMASK 0x3f
 #define FASTU64DIV32ADDBIT    0x40
 #define FASTU64DIV32SHIFTBIT  0x80
 #else
-#warn fastu64div32() not supported by your system
+#warning fastu64div32() not supported by your system
 #endif
 #define FASTU32DIV16SHIFTMASK 0x0f
 #define FASTU32DIV16ADDBIT    0x10
@@ -80,6 +80,8 @@ _mullhiu24(uint32_t val1, uint32_t val2)
     return res;
 }
 
+#if (FASTIDIVWORDSIZE == 64)
+
 /* compute num/div32 with [possible] multiplication + shift operations */
 static INLINE uint64_t
 fastu64div32(uint64_t num, uint32_t div32,
@@ -118,6 +120,8 @@ fastu64div32(uint64_t num, uint32_t div32,
         
     return res;
 }
+
+#endif /* FASTIDIVWORDSIZE == 64 */
 
 /* compute num/div16 with [possible] multiplication + shift operations */
 static INLINE uint32_t

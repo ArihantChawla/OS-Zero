@@ -11,12 +11,12 @@
 #include <zero/cdefs.h>
 #include <zero/param.h>
 #include <zero/types.h>
+#include <kern/asm.h>
 #include <kern/util.h>
 #include <kern/malloc.h>
 #include <kern/cpu.h>
 #include <kern/mem/vm.h>
 #include <kern/unit/x86/boot.h>
-#include <kern/unit/x86/asm.h>
 #include <kern/unit/x86/apic.h>
 #include <kern/unit/x86/link.h>
 #include <kern/unit/ia32/seg.h>

@@ -116,7 +116,6 @@ struct m_tcb {
     struct m_trapframe trapframe;       // return frame for iret
 };
 
-#if 0
 struct m_ctx {
     int              onstk;     // non-zero if on signal-stack
     sigset_t         oldmask;   // signal mask to restore
@@ -125,7 +124,6 @@ struct m_ctx {
     int              fpflg;     // <kern/unit/ia32/task.h>
     struct m_fpstate fpstate;   // FPU state
 };
-#endif
 
 struct m_task {
     int32_t          flg;       //  4 bytes @ 0; task flags

@@ -124,18 +124,18 @@ void
 schedinitqueues(void)
 {
     long                  lim = NCPU;
-    struct schedqueueset *queueset = &schedreadytab[0];
+    struct schedqueueset *set = &schedreadytab[0];
     long                  cpu;
 
     for (cpu = 0 ; cpu < lim ; cpu++) {
-        queueset->curmap = &schedreadymap0[cpu][0];
-        queueset->nextmap = &schedreadymap1[cpu][0];
-        queueset->idlemap = &schedidlecoremap[cpu][0];
-        queueset->loadmap = &schedloadmap[cpu][0];
-        queueset->cur = &schedreadytab0[cpu][0];
-        queueset->next = &schedreadytab1[cpu][0];
-        queueset->idle = &schedidletab[cpu][0];
-        queueset++;
+        set->curmap = &schedreadymap0[cpu][0];
+        set->nextmap = &schedreadymap1[cpu][0];
+        set->idlemap = &schedidlecoremap[cpu][0];
+        set->loadmap = &schedloadmap[cpu][0];
+        set->cur = &schedreadytab0[cpu][0];
+        set->next = &schedreadytab1[cpu][0];
+        set->idle = &schedidletab[cpu][0];
+        set++;
     }
 
     return;
@@ -144,16 +144,16 @@ schedinitqueues(void)
 static __inline__ void
 schedswapqueues(long cpu)
 {
-    struct schedqueueset *queueset = &schedreadytab[cpu];
-    void                 *ptr1 = queueset->cur;
-    void                 *ptr2 = queueset->next;
+    struct schedqueueset *set = &schedreadytab[cpu];
+    void                 *ptr1 = set->cur;
+    void                 *ptr2 = set->next;
 
-    queueset->next = ptr1;
-    queueset->cur = ptr2;
-    ptr1 = queueset->curmap;
-    ptr2 = queueset->nextmap;
-    queueset->nextmap = ptr1;
-    queueset->curmap = ptr2;
+    set->next = ptr1;
+    set->cur = ptr2;
+    ptr1 = set->curmap;
+    ptr2 = set->nextmap;
+    set->nextmap = ptr1;
+    set->curmap = ptr2;
 
     return;
 }
@@ -584,7 +584,7 @@ schedsetready(struct task *task, long cpu, long unlk)
     long                   sched = task->sched;
     long                   prio = task->prio;
     long                   score = SCHEDSCOREMAX;
-    struct schedqueueset  *queueset = &schedreadytab[cpu];
+    struct schedqueueset  *set = &schedreadytab[cpu];
     struct task          **queue = NULL;
     long                  *map = NULL;
     long                   qid = zeroabs(prio);
@@ -599,8 +599,8 @@ schedsetready(struct task *task, long cpu, long unlk)
         } else {
             /* insert onto current queue */
             qid = schedcalcqueueid(qid);
-            map = queueset->curmap;
-            queue = &queueset->cur[qid];
+            map = set->curmap;
+            queue = &set->cur[qid];
             if (prio < 0) {
                 /* SCHEDREALTIME with SCHED_FIFO */
                 queuepush(task, queue);
@@ -626,26 +626,26 @@ schedsetready(struct task *task, long cpu, long unlk)
         qid = schedcalcqueueid(prio);
         if (schedisinteract(score)) {
             /* if interactive, insert onto current queue */
-            queue = &queueset->cur[qid];
-            map = queueset->curmap;
+            queue = &set->cur[qid];
+            map = set->curmap;
         } else {
             /* if not interactive, insert onto next queue */
-            queue = &queueset->next[qid];
-            map = queueset->nextmap;
+            queue = &set->next[qid];
+            map = set->nextmap;
         }
         task->score = score;
     } else {
         /* SCHEDIDLE */
         /* insert into idle queue */
         qid = schedcalcqueueid(prio);
-        map = queueset->idlemap;
-        queue = &queueset->idle[qid];
+        map = set->idlemap;
+        queue = &set->idle[qid];
     }
-    load = queueset->loadmap[qid];
+    load = set->loadmap[qid];
     queueappend(task, queue);
     load++;
     setbit(map, qid);
-    queueset->loadmap[qid] = load;
+    set->loadmap[qid] = load;
     if (unlk & SCHEDUNLKTASK) {
         mtxunlk(&task->lk);
     }
@@ -797,7 +797,7 @@ schedswitchtask(struct task *curtask)
     long                   cpu = k_curcpu->id;
     struct task           *task = NULL;
     long                   state = (curtask) ? curtask->state : -1;
-    struct schedqueueset  *queueset = &schedreadytab[cpu];
+    struct schedqueueset  *set = &schedreadytab[cpu];
     struct task          **queue;
     long                  *map;
     long                   ntz;
@@ -839,8 +839,8 @@ schedswitchtask(struct task *curtask)
         do {
             /* loop over current and next priority-queues */
             lim = rounduppow2(SCHEDNQUEUE, CHAR_BIT * sizeof(long));
-            map = queueset->curmap;
-            queue = &queueset->cur[0];
+            map = set->curmap;
+            queue = &set->cur[0];
             for (ndx = 0 ; ndx < lim ; ndx++) {
                 val = map[ndx];
                 if (val) {
@@ -866,8 +866,8 @@ schedswitchtask(struct task *curtask)
         } while (loop--);
         /* if both current and next queues are empty, look for an idle task */
         lim = rounduppow2(SCHEDNIDLE, CHAR_BIT * sizeof(long));
-        map = queueset->idlemap;
-        queue = &queueset->idle[0];
+        map = set->idlemap;
+        queue = &set->idle[0];
         for (ndx = 0 ; ndx < lim ; ndx++) {
             val = map[ndx];
             if (val) {

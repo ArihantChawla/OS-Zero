@@ -72,11 +72,8 @@ struct m_fpstate {
 
 struct m_trapframe {
     int64_t rip;
+    int64_t cs;
     int64_t rflags;
-    int16_t cs;
-    int16_t gs;
-    int16_t fs;
-    int16_t _pad;
     int64_t ursp;
     int64_t ss;
 };
@@ -88,15 +85,23 @@ struct m_tcb {
 };
 
 struct m_ctx {
-    int64_t               onstk;        // non-zero if on signal-stack
-    sigset_t              oldmask;      // signal mask to be restored
-    struct m_tcb          tcb;          // task control block (machine context)
-    int64_t               err;          // error code or zero
-    int64_t               trapnum;      // # of trap
-    int64_t               cr2;          // page-fault virtual address
-    int64_t               fpflg;        // FPU flags
-    int64_t               fpstatword;   // FPU status word
-    struct m_fpstate      fpstate;      // FPU state
+    int64_t          onstk;             // non-zero if on signal-stack
+    sigset_t         oldmask;           // signal mask to be restored
+    struct m_tcb     tcb;               // task control block (machine context)
+    int64_t          err;               // error code or zero
+    int64_t          trapnum;           // # of trap
+    int64_t          cr2;               // page-fault virtual address
+    int64_t          fpflg;             // FPU flags
+    int64_t          fpstatword;        // FPU status word
+    struct m_fpstate fpstate;           // FPU state
+};
+
+struct m_task {
+    int64_t          flg;       // 8 bytes @ 0; task flags
+    struct m_tcb     tcb;       // 168 bytes @ 8
+    int64_t          trapesp;   // 8 bytes @ 176
+    int8_t           _res[80];  // 80 bytes @ 256; pad to cacheline-boundary
+    struct m_fpstate fpstate;   // X bytes @ 256; FPU state
 };
 
 #endif /* __ZERO_X86_64_TYPES_H__ */

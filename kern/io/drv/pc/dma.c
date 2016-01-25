@@ -3,6 +3,7 @@
 #include <zero/cdefs.h>
 #include <zero/param.h>
 #include <zero/trix.h>
+#include <zero/mtx.h>
 #include <kern/util.h>
 #include <kern/io/drv/pc/dma.h>
 

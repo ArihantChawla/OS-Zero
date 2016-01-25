@@ -55,7 +55,11 @@ vmsignadr(void *adr)
 #endif
 #endif
 
-#endif /* __UNIT_X86_64_VM_H__ */
+struct vmpagemap {
+    pde_t *dir; // page directory address
+};
 
 #endif /* __x86_64__ || __amd64__ */
+
+#endif /* __UNIT_X86_64_VM_H__ */
 

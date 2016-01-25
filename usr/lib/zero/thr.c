@@ -2,6 +2,7 @@
 #include <sys/time.h>
 #include <zero/cdefs.h>
 #include <zero/asm.h>
+#include <zero/time.h>
 #include <zero/thr.h>
 #include <zero/cond.h>
 #include <zero/prof.h>
@@ -66,7 +67,7 @@ thrsleep2(zerothrqueue *queue, const struct timespec *absts)
     gettimeofday(&tvcur, NULL);
     TIMESPEC_TO_TIMEVAL(&tvout, absts);
     do {
-        if (tvcmp(&tvout, &tvcur) > 0) {
+        if (timevalcmp(&tvout, &tvcur) > 0) {
             if (m_atomread(thr->sleep)) {
                 htlistrm(queue, thr);
             }
