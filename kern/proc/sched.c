@@ -25,7 +25,7 @@ void                   schedsetzombie(struct proc *proc);
 
 extern struct cpu        cputab[NCPU];
 extern struct proc      *proczombietab[NTASK];
-extern struct tasktabl0  schedwaittab[TASKNLVL0WAIT] ALIGNED(PAGESIZE);
+extern struct tasktabl0  taskwaittab[TASKNLVL0WAIT] ALIGNED(PAGESIZE);
 extern struct divu32     fastu32div24tab[rounduppow2(SCHEDHISTORYSIZE,
                                                      PAGESIZE)];
 
@@ -286,7 +286,7 @@ schedsetsleeping(struct task *task)
     struct task      *sleeptask;
 
     if (task->waitchan) {
-        schedsetwait(task);
+        tasksetwait(task);
     } else {
         sleeptask = queue->list;
         if (sleeptask) {
