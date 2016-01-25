@@ -18,7 +18,7 @@
 
 void                   schedinitqueues(void);
 FASTCALL struct task * schedswitchtask(struct task *curtask);
-void                   schedsetready(struct task *task, long cpu, long unlk);
+void                   schedsetready(struct task *task, long cpu);
 void                   schedsetstopped(struct task *task);
 void                   schedsetzombie(struct proc *proc);
 
@@ -201,7 +201,7 @@ schedsetdeadline(struct task *task)
 }
 
 void
-schedsetready(struct task *task, long cpu, long unlk)
+schedsetready(struct task *task, long cpu)
 {
     long                   sched = task->sched;
     long                   prio = task->prio;
@@ -218,8 +218,11 @@ schedsetready(struct task *task, long cpu, long unlk)
         /* SCHEDDEADLINE, SCHEDINTERRUPT or SCHEDREALTIME */
         if (sched == SCHEDDEADLINE) {
             schedsetdeadline(task);
+
+            return;
         } else {
             /* insert onto current queue */
+            mtxlk(&set->lk);
             qid = schedcalcqueueid(qid);
             map = set->curmap;
             queue = &set->cur[qid];
@@ -231,6 +234,9 @@ schedsetready(struct task *task, long cpu, long unlk)
                 queueappend(task, queue);
             }
             setbit(map, qid);
+            mtxunlk(&set->lk);
+
+            return;
         }
     } else if (sched < SCHEDIDLE) {
         /* SCHEDRESPONSIVE, SCHEDNORMAL, SCHEDBATCH */
@@ -246,6 +252,7 @@ schedsetready(struct task *task, long cpu, long unlk)
 //            prio = min(task->runprio, prio);
         }
         qid = schedcalcqueueid(prio);
+        mtxlk(&set->lk);
         if (schedisinteract(score)) {
             /* if interactive, insert onto current queue */
             queue = &set->cur[qid];
@@ -260,6 +267,7 @@ schedsetready(struct task *task, long cpu, long unlk)
         /* SCHEDIDLE */
         /* insert into idle queue */
         qid = schedcalcqueueid(prio);
+        mtxlk(&set->lk);
         map = set->idlemap;
         queue = &set->idle[qid];
     }
@@ -268,9 +276,7 @@ schedsetready(struct task *task, long cpu, long unlk)
     load++;
     setbit(map, qid);
     set->loadmap[qid] = load;
-    if (unlk & SCHEDUNLKTASK) {
-        mtxunlk(&task->lk);
-    }
+    mtxunlk(&set->lk);
     
     return;
 }
@@ -316,7 +322,7 @@ schedswitchtask(struct task *curtask)
         if (state != TASKNEW) {
             switch (state) {
                 case TASKREADY:
-                    schedsetready(curtask, cpu, 0);
+                    schedsetready(curtask, cpu);
 
                     break;
                 case TASKSLEEPING:

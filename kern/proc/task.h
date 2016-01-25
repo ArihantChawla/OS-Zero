@@ -3,6 +3,7 @@
 
 #include <kern/conf.h>
 #include <stddef.h>
+#include <time.h>
 #include <sys/types.h>
 #include <zero/cdefs.h>
 #include <zero/param.h>
@@ -57,7 +58,7 @@ struct task {
     long            runprio;            // current priority
     long            prio;               // base priority
     long            sysprio;            // kernel-mode priority
-//    long            nice;               // priority adjustment
+    long            nice;               // priority adjustment
     long            state;              // thread state
     long            score;              // interactivity score
     long            cpu;                // CPU-affinity
@@ -90,7 +91,6 @@ struct task {
     struct taskstk  altstk;             // alternative [signal] stack
 #endif
     int             errnum;             // errno
-//    long           interact;
 };
 
 #if (PTRSIZE == 8)

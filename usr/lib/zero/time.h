@@ -34,6 +34,9 @@ timegetstamp(void)
 #define timespeccmp(ts1, ts2)                                           \
     (((ts2)->tv_sec - (ts1)->tv_sec) * 1000000000                       \
      + (time_t)(ts2)->tv_nsec - (time_t)(ts1)->tv_nsec)
+#define timespecgt(ts1, ts2)                                             \
+    (((ts1)->tv_sec > (ts2)->tv_sec)                                    \
+     || ((ts1)->tv_sec == (ts2)->tv_sec && (ts1)->tv_nsec > (ts2)->tv_nsec))
 
 #endif /* _ZERO_SOURCE */
 

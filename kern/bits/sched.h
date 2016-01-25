@@ -5,14 +5,12 @@
 #include <zero/cdefs.h>
 #include <zero/param.h>
 #include <zero/mtx.h>
+#include <zero/trix.h>
 #include <zero/fastidiv.h>
 //#include <kern/sched.h>
 #include <kern/proc/task.h>
 
-/* unlk-argument values for schedsetready() */
-#define SCHEDUNLKTASK (1 << 0)
-#define SCHEDUNLKCPU  (1 << 1)
-extern void schedsetready(struct task *task, long cpu, long unlk);
+extern void schedsetready(struct task *task, long cpu);
 
 #define schedlkcpuntick(cpu)     (mtxlk(&cpu->lk), (cpu)->ntick)
 #define schedlkcpu(cpu)          (mtxlk(&cpu->lk))
@@ -55,7 +53,7 @@ extern void schedsetready(struct task *task, long cpu, long unlk);
 #define schedistimeshare(sched)                                         \
     ((sched) >= SCHEDRESPONSIVE || (sched) <= SCHEDBATCH)
 #define schedisinteract(score)        ((score) < SCHEDSCORETHRESHOLD)
-#define schedcalcqueueid(pri)         ((pri) >> 1)
+#define schedcalcqueueid(pri)         (zeroabs(pri) >> 1)
 #define schedcalcqueueidofs(pri, ofs) (schedcalcqueueid(pri) + (ofs))
 
 /* interrupt priorities */
@@ -524,7 +522,7 @@ schedwakeup(struct task *task)
 #endif
     task->state = TASKREADY;
     task->cpu = cpu;
-    schedsetready(task, cpu, SCHEDUNLKTASK);
+    schedsetready(task, cpu);
     /* FIXME: sched_setpreempt() */
 }
 

@@ -1,3 +1,4 @@
+#include <time.h>
 #include <kern/proc/task.h>
 
 static struct taskqueue schedsleepqueue;
