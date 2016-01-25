@@ -19,7 +19,7 @@
 
 #include <zero/asm.h>
 //#if defined(__KERNEL__) && (__MTKERNEL__)
-#if defined(__KERNEL__)
+#if defined(__KERNEL__) && 0
 #include <kern/sched.h>
 #elif defined(PTHREAD)
 /* on some Linux setups, the pthread library declares no prototype */

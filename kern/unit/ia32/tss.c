@@ -11,7 +11,8 @@
 
 extern uint8_t  kerntsstab[NCPU * TSSLEN];
 extern uint8_t  kerniomap[8192];
-extern uint64_t kerngdt[NTASK][NGDT];
+extern uint64_t kerngdt[NCPU][NGDT];
+/* FIXME: per-process kernel- and user-mode stacks */
 extern uint8_t  kernsysstktab[NCPU * KERNSTKSIZE];
 extern uint8_t  kernusrstktab[NCPU * KERNSTKSIZE];
 //extern struct m_tss _kerntss[NCPU];

@@ -93,6 +93,26 @@ struct task {
 //    long           interact;
 };
 
+#if (PTRSIZE == 8)
+#define TASKNLVLWAITLOG2 16
+#elif (PTRSIZE == 4)
+#define TASKNLVLWAITLOG2 8
+#endif
+#define TASKNLVL0WAIT    (1 << TASKNLVLWAITLOG2)
+#define TASKNLVL1WAIT    (1 << TASKNLVLWAITLOG2)
+#define TASKNLVL2WAIT    (1 << TASKNLVLWAITLOG2)
+#define TASKNLVL3WAIT    (1 << TASKNLVLWAITLOG2)
+#define TASKNWAITKEY     4
+
+#define taskwaitkey0(wc)                                                \
+    (((wc) >> (3 * TASKNLVLWAITLOG2)) & ((1UL << TASKNLVLWAITLOG2) - 1))
+#define taskwaitkey1(wc)                                                \
+    (((wc) >> (2 * TASKNLVLWAITLOG2)) & ((1UL << TASKNLVLWAITLOG2) - 1))
+#define taskwaitkey2(wc)                                                \
+    (((wc) >> (1 * TASKNLVLWAITLOG2)) & ((1UL << TASKNLVLWAITLOG2) - 1))
+#define taskwaitkey3(wc)                                                \
+    ((wc) & ((1UL << TASKNLVLWAITLOG2) - 1))
+
 struct tasktabl0 {
     volatile long   lk;
     long            nref;

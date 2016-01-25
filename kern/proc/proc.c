@@ -16,8 +16,10 @@
 #include <kern/unit/x86/boot.h>
 #include <kern/unit/ia32/task.h>
 
-struct proc proctab[NTASK] ALIGNED(PAGESIZE);
-struct task tasktab[NTASK];
+extern struct task  tasktab[NTASK];
+
+struct proc         proctab[NTASK] ALIGNED(PAGESIZE);
+struct proc        *proczombietab[NTASK];
 
 long
 procinit(long id, long sched)

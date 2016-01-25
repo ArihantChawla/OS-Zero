@@ -78,7 +78,7 @@ extern void apicstarttmr(uint32_t tmrcnt);
 extern void schedloop(void);
 
 extern uint8_t                   kerniomap[8192] ALIGNED(PAGESIZE);
-extern struct proc               proctab[NPROC];
+extern struct proc               proctab[NTASK];
 extern struct m_cpu              cputab[NCPU];
 #if (VBE)
 extern uint64_t                  kernidt[NINTR];

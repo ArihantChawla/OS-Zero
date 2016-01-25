@@ -123,9 +123,9 @@ kernpagetab1:
 
 kerngdt:
 #if (NGDT < 16)
-	.space	(NCPU * 16)
+	.space	(16 * 8 * NCPU)
 #else
-#error fix GDT size in boot.S
+	.space	(8 * NGDT * NCPU)
 #endif
 
 #else

@@ -26,6 +26,7 @@
 #define ZEROINTSCHED 1          // scheduler with interactivity-scoring
 #define ZEROULE     0
 //#define NPROC       1024        // maximum number of running processes on system
+//#define NPROC       4096
 #define NTASK       4096        // maximum number of running tasks on system
 #define NPROCTASK   128
 #define TASKNDESC   16384       // maximum number of descriptors per process
