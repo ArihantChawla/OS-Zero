@@ -158,12 +158,14 @@ schedswapqueues(long cpu)
     void                 *ptr1 = set->cur;
     void                 *ptr2 = set->next;
 
+    mtxlk(&set->lk);
     set->next = ptr1;
     set->cur = ptr2;
     ptr1 = set->curmap;
     ptr2 = set->nextmap;
     set->nextmap = ptr1;
     set->curmap = ptr2;
+    mtxunlk(&set->lk);
 
     return;
 }
@@ -500,6 +502,9 @@ schedwakeup(struct task *task)
     long tick;
     long ntick;
     long diff;
+#if (SMP)
+    long core;
+#endif
 
     task->slptick = 0;
     if (slptick) {
@@ -518,7 +523,7 @@ schedwakeup(struct task *task)
         schedcalcprio(task);
     }
 #if (SMP)
-    cpu = schedfindidlecore(cpu);
+    cpu = schedfindidlecore(cpu, &core);
 #endif
     task->state = TASKREADY;
     task->cpu = cpu;

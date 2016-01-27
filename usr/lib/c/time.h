@@ -52,6 +52,7 @@ extern int   __daylight;
 
 #if (_POSIX_SOURCE) || (_XOPEN_SOURCE)
 struct tm {
+    /* FIXME: at lest tm_sec _really_ needs to be a 64-bit type :) */
     int         tm_sec;		// seconds [0, 60]
     int         tm_min;         // minutes [0, 59]
     int         tm_hour;        // hour [0, 23]

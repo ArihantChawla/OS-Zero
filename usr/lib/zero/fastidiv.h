@@ -12,15 +12,7 @@
 #include <stdlib.h>
 #endif
 
-#if defined(__x86_64__) && defined(__amd64__)
-#define FASTIDIVWORDSIZE 64
-#elif (defined(__i386__) || defined(__i486__)                           \
-       || defined(__i586__) || defined(__i686__)                        \
-       || defined(__arm__))
-#define FASTIDIVWORDSIZE 32
-#endif
-
-#if (FASTIDIVWORDSIZE == 64)
+#if (WORDSIZE == 8)
 #define FASTU64DIV32SHIFTMASK 0x3f
 #define FASTU64DIV32ADDBIT    0x40
 #define FASTU64DIV32SHIFTBIT  0x80
@@ -44,7 +36,7 @@ struct divu64 {
     uint64_t info;
 };
 
-#if (FASTIDIVWORDSIZE == 64)
+#if (WORDSIZE == 8)
 void fastu64div32gentab(struct divu64 *duptr, uint64_t lim32);
 #endif
 void fastu32div16gentab(struct divu32 *duptr, uint32_t lim16);
@@ -80,7 +72,7 @@ _mullhiu24(uint32_t val1, uint32_t val2)
     return res;
 }
 
-#if (FASTIDIVWORDSIZE == 64)
+#if (WORDSIZE == 8)
 
 /* compute num/div32 with [possible] multiplication + shift operations */
 static INLINE uint64_t
@@ -121,7 +113,7 @@ fastu64div32(uint64_t num, uint32_t div32,
     return res;
 }
 
-#endif /* FASTIDIVWORDSIZE == 64 */
+#endif /* WORDSIZE == 8 */
 
 /* compute num/div16 with [possible] multiplication + shift operations */
 static INLINE uint32_t

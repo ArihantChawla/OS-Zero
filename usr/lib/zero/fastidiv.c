@@ -25,8 +25,9 @@
  */
 
 #include <stdint.h>
-#include <zero/fastidiv.h>
+#include <zero/param.h>
 #include <zero/trix.h>
+#include <zero/fastidiv.h>
 
 #if (FASTIDIVWORDSIZE == 64)
 /*
