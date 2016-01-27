@@ -1,8 +1,11 @@
 acute things
 ------------
+- make threads store context in their own kernel-mode stacks instead of the
+  thread structure - YAY, i get to redo context switches :P
+  - actually implement per-thread stacks (kernel- and user-mode kernel stacks)
 - hack a bitmap to denote which pages are reserved for hardware access
   - initialise the kernel virtual memory allocator with this bitmap
-- hack the keyboard driver to pass scancode-events for real =)
+- hack the keyboard driver to pass keysym-events for real =)
   - improve event interface
 - implement ATA and SATA drivers
 - implement ISO 9660 filesystem for CD and DVD discs

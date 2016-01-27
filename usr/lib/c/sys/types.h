@@ -3,8 +3,11 @@
 
 #include <features.h>
 #include <stdint.h>
-#include <stddef.h>
-//#include <limits.h>
+//#include <stddef.h>
+#include <share/limits.h>
+#if !defined(__time_types_defined)
+#include <share/time.h>
+#endif
 //#include <sys/types.h>
 #if (_BSD_SOURCE)
 #include <endian.h>
@@ -41,8 +44,6 @@ typedef long            blksize_cnt;
 typedef short           cnt_t;
 typedef char           *caddr_t;        // core address
 typedef long            daddr_t;        // disk address
-typedef long            clock_t;
-typedef long            clockid_t;
 typedef int32_t         dev_t;          // device number
 typedef dev_t           major_t;
 typedef dev_t           minor_t;
@@ -69,7 +70,7 @@ typedef uint64_t        fsfilcnt_t;
 #endif
 #if !defined(__pid_t_defined)
 typedef long            pid_t;          // process ID
-#define __pid_t_defined
+#define __pid_t_defined 1
 #endif
 #if defined(_LARGEFILE64_SOURCE)
 typedef int64_t         off64_t;
@@ -84,10 +85,6 @@ typedef long long       ssize_t;
 #else
 typedef long            ssize_t;
 #endif
-typedef unsigned long   useconds_t;
-typedef long            suseconds_t;
-typedef int64_t         time_t;
-typedef long            timer_t;
 typedef int64_t         offset_t;
 typedef uint64_t        u_offset_t;
 typedef uint64_t        len_t;
@@ -125,19 +122,18 @@ typedef uint64_t trace_event_set_t;
  * - http://pubs.opengroup.org/onlinepubs/009696699/basedefs/sys/types.h.html
  */
 
-/* FIXME: this file should #include <time.h> (?) :) */
-#include <time.h>
+//#include <time.h>
 #if (_BSD_SOURCE)
 #include <sys/param.h>
 #endif
 
-#define P_MYPID         ((pid_t)0)
-#define P_MYID          (-1)
-#define NOPID           ((pid_t)-1)
+#define P_MYPID     ((pid_t)0)
+#define P_MYID      (-1)
+#define NOPID       ((pid_t)-1)
 
-#define PFN_INVALID     ((pfn_t)-1)
+#define PFN_INVALID ((pfn_t)-1)
 
-#define NODEV           ((dev_t)-1L)
+#define NODEV       ((dev_t)-1L)
 
 #if (_ZERO_SOURCE)
 #include <kern/conf.h>
@@ -150,7 +146,7 @@ typedef uint64_t trace_event_set_t;
 
 #if (USEBSD) && !defined(NFDBITS)
 
-#include <limits.h>
+//#include <limits.h>
 
 typedef long       fd_mask;
 #define NFDBITS    (sizeof(fd_mask) * CHAR_BIT)

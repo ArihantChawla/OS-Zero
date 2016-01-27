@@ -4,8 +4,7 @@
 #include <features.h>
 
 #if !defined(__size_t_defined)
-typedef unsigned long size_t;
-#define __size_t_defined 1
+#include <share/size.h>
 #endif
 
 #if !defined(__KERNEL__)

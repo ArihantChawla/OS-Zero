@@ -4,9 +4,9 @@
 #include <kern/conf.h>
 #include <zero/cdefs.h>
 #include <zero/param.h>
-#include <zero/mtx.h>
 #include <zero/trix.h>
 #include <zero/fastidiv.h>
+#include <zero/mtx.h>
 //#include <kern/sched.h>
 #include <kern/proc/task.h>
 
@@ -89,6 +89,10 @@ extern void schedsetready(struct task *task, long cpu);
 
 /* data structures */
 
+#define __STRUCT_SCHEDQUEUESET_SIZE                                     \
+    (sizeof(long) + 7 * sizeof(void *))
+#define __STRUCT_SCHEDQUEUESET_PAD                                      \
+    (roundup(__STRUCT_SCHEDQUEUESET_SIZE, CLSIZE) - __STRUCT_SCHEDQUEUESET_SIZE)
 struct schedqueueset {
     volatile long   lk;
     long           *curmap;
@@ -98,7 +102,7 @@ struct schedqueueset {
     struct task   **cur;
     struct task   **next;
     struct task   **idle;
-    uint8_t         pad[CLSIZE - sizeof(long) - 6 * sizeof(void *)];
+    uint8_t         _pad[__STRUCT_SCHEDQUEUESET_PAD];
 };
 
 extern struct cpu            cputab[NCPU];
@@ -493,7 +497,7 @@ schedcalcintparm(struct task *task, long *retscore)
 
 /* based on sched_wakeup() from ULE :) */
 static __inline__ void
-schedwakeup(struct task *task)
+taskwakeup(struct task *task)
 {
     long cpu = k_curcpu->id;
     long sched = task->sched;

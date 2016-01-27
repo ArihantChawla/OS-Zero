@@ -91,7 +91,7 @@ struct lvtreg {
     uint32_t res3[3];
 };
 
-/* TODO: pad this to fill a page */
+/* FIXME: pad this to fill a page; use PAGESIZE in arrays and cast pointers */
 struct apic {
     uint32_t       res1;
     uint32_t       res2;

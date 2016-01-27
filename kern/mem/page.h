@@ -1,11 +1,12 @@
 #ifndef __KERN_MEM_PAGE_H__
 #define __KERN_MEM_PAGE_H__
 
+#define __KERNEL__ 1
 #include <stdint.h>
 #include <zero/param.h>
 #include <zero/trix.h>
-#define __KERNEL__ 1
 #include <zero/mtx.h>
+#include <kern/types.h>
 #include <kern/perm.h>
 #include <kern/time.h>
 #include <kern/cpu.h>
@@ -46,35 +47,50 @@ struct virtpage {
 };
 #endif
 
+#define __STRUCT_PHYSLRUQUEUE_SIZE                                      \
+    (sizeof(long) + sizeof(void *))
+#define __STRUCT_PHYSLRUQUEUE_PAD                                       \
+    (roundup(__STRUCT_PHYSLRUQUEUE_SIZE, CLSIZE) - __STRUCT_PHYSLRUQUEUE_SIZE)
 struct physlruqueue {
     volatile long    lk;
     struct physpage *list;
-    uint8_t          _pad[CLSIZE - sizeof(long) - sizeof(void *)];
+    uint8_t          _pad[__STRUCT_PHYSLRUQUEUE_PAD];
 };
 
+#define __STRUCT_PHYSPAGE_SIZE                                          \
+    (sizeof(long) + 3 * sizeof(void *) + 4 * sizeof(m_ureg_t))
+#define __STRUCT_PHYSPAGE_PAD                                           \
+    (roundup(__STRUCT_PHYSPAGE_SIZE, CLSIZE) - __STRUCT_PHYSPAGE_SIZE)
 struct physpage {
     volatile long    lk;        // mutual exclusion lock
-    uintptr_t        nref;      // reference count
-    uintptr_t        pid;       // owner process ID
-    uintptr_t        adr;       // page address
+    m_ureg_t         nref;      // reference count
+    m_ureg_t         pid;       // owner process ID
+    m_ureg_t         adr;       // page address
     struct perm     *perm;      // permissions
-    uintptr_t        nflt;      // # of page-fault exceptions triggered
+    m_ureg_t         nflt;      // # of page-fault exceptions triggered
     struct physpage *prev;      // previous on queue
     struct physpage *next;      // next on queue
+    uint8_t          _pad[__STRUCT_PHYSPAGE_PAD];
 };
 
-typedef int64_t swapoff_t;
+typedef uint64_t swapoff_t;
 
 #define PAGEDEVMASK        ((UINT64_C(1) << PAGESIZELOG2) - 1)
 #define swapsetblk(u, blk) ((u) |= (blk) << PAGESIZELOG2)
 #define swapsetdev(u, dev) ((u) |= (dev))
 #define swapblkid(adr)     ((adr) >> PAGESIZELOG2)
 #define swapdevid(adr)     ((adr) & PAGEDEVMASK)
+#define __STRUCT_SWAPDEV_SIZE                                           \
+    (sizeof(long) + 2 * sizeof(void *) + sizeof(swapoff_t))
+#define __STRUCT_SWAPDEV_PAD                                            \
+    (roundup(__STRUCT_SWAPDEV_SIZE, CLSIZE) - __STRUCT_SWAPDEV_SIZE)
 struct swapdev {
+    volatile long    lk;
     swapoff_t        npg;
     swapoff_t       *pgmap;
     struct physpage *pgtab;
     struct physpage *freeq;
+    uint8_t          _pad[__STRUCT_SWAPDEV_PAD];
 };
 
 #define QUEUE_SINGLE_TYPE

@@ -18,7 +18,7 @@
 
 #define MEMDIAG   0
 
-extern unsigned long  npagefree;
+extern size_t  npagefree;
 extern struct memzone magvirtzone;
 
 struct memzone        slabvirtzone ALIGNED(PAGESIZE);
@@ -98,14 +98,14 @@ slabdiag(struct memzone *zone)
 #endif
 
 unsigned long
-slabinitzone(struct memzone *zone, unsigned long base, unsigned long nb)
+slabinitzone(struct memzone *zone, uintptr_t base, size_t nb)
 {
-    unsigned long adr = base;
+    uintptr_t adr = base;
 //    unsigned long sz = (nb & (SLABMIN - 1)) ? rounddownpow2(nb, SLABMIN) : nb;
-    unsigned long sz = nb;
-    unsigned long ofs = base & (SLABMIN - 1);
-    unsigned long nslab;
-    unsigned long hdrsz;
+    size_t    sz = nb;
+    intptr_t  ofs = base & (SLABMIN - 1);
+    size_t    nslab;
+    size_t    hdrsz;
 
     if (ofs) {
         adr += SLABMIN - ofs;
@@ -142,14 +142,14 @@ slabinitzone(struct memzone *zone, unsigned long base, unsigned long nb)
 }
 
 void
-slabinit(struct memzone *virtzone, unsigned long base, unsigned long nbphys)
+slabinit(struct memzone *virtzone, uintptr_t base, unsigned long nbphys)
 {
     struct slabhdr **slabtab = (struct slabhdr **)virtzone->tab;
-    unsigned long    adr = ((base & (SLABMIN - 1))
+    uintptr_t        adr = ((base & (SLABMIN - 1))
                             ? rounduppow2(base, SLABMIN)
                             : base);
     unsigned long    bkt = PTRBITS - 1;
-    unsigned long    sz = 1UL << bkt;
+    size_t           sz = 1UL << bkt;
     struct slabhdr  *hdr;
 
     adr = slabinitzone(virtzone, adr, nbphys);
@@ -199,7 +199,7 @@ slabcomb(struct memzone *zone, struct slabhdr *hdr)
     unsigned long    ret  = 0;
     long             prev = 1;
     long             next = 1;
-    long             ofs = 1UL << (bkt1 - SLABMINLOG2);
+    intptr_t         ofs = 1UL << (bkt1 - SLABMINLOG2);
     struct slabhdr  *hdr1;
     struct slabhdr  *hdr2;
     struct slabhdr  *hdr3;
@@ -304,7 +304,7 @@ slabsplit(struct memzone *zone, struct slabhdr *hdr, unsigned long dest)
     unsigned long    bkt = slabgetbkt(hdr);
     uint8_t         *ptr = slabgetadr(hdr, zone);
     struct slabhdr  *hdr1;
-    unsigned long    sz = 1UL << bkt;
+    size_t           sz = 1UL << bkt;
 
     ptr += 1UL << dest;
     while (--bkt >= dest) {

@@ -6,14 +6,14 @@ static struct taskqueue schedsleepqueue;
 /* FIXME: add a multilevel tree for sleeping tasks for speed...? */
 /* FIXME: add a lookup table for tasks that have called nanosleep() */
 void
-tasksetsleep(struct task *task)
+schedsetsleep(struct task *task)
 {
     time_t            timelim = task->timelim;
     struct taskqueue *queue = &schedsleepqueue;
     struct task      *sleeptask;
 
     if (task->waitchan) {
-        tasksetwait(task);
+        schedsetwait(task);
     } else {
         sleeptask = queue->list;
         if (sleeptask) {

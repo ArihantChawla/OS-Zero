@@ -2,10 +2,9 @@
 #define __STDIO_H__
 
 #include <features.h>
-#include <stdint.h>
-#include <stddef.h>
-#include <limits.h>
-#include <stdint.h>
+#if !defined(__size_t_defined)
+#include <share/size.h>
+#endif
 #if (_XOPEN_SOURCE) || (__STDC__)
 #if defined(__GNUC__)
 #include <stdarg.h>
@@ -13,14 +12,12 @@ typedef __gnuc_va_list __stdio_va_list;
 #endif
 #endif
 #include <fcntl.h>
-#include <sys/types.h>
+//#include <sys/types.h>
 #if (_ZERO_SOURCE)
 #include <zero/param.h>
 //#include <kern/io.h>
 //#include <kern/io/buf.h>
 #endif
-
-#include <bits/stdio.h>
 
 #if defined(__GLIBC__)
 typedef struct _IO_FILE FILE;
@@ -38,6 +35,8 @@ typedef off_t         fpos64_t;
 #else
 typedef int64_t       fpos64_t;
 #endif
+
+#include <bits/stdio.h>
 
 #define EOF           (-1)
 #define BUFSIZ        BUFSIZE

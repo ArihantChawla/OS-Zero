@@ -1,12 +1,10 @@
 #ifndef __SYS_PARAM_H__
 #define __SYS_PARAM_H__
 
-//#include <limits.h>
-#include <zero/param.h>
 //#include <zero/trix.h>
 
 /* BSD names for some <limits.h> values */
-#define NBBY          CHAR_BIT
+#define NBBY          8
 #if !defined(NGROUPS)
 #define NGROUPS       NGROUPS_MAX
 #endif
@@ -19,13 +17,13 @@
 #ifndef howmany
 #define howmany(a, b) (((a) + ((b) - 1)) / (b))
 #endif
-#if defined(__GNUC__)
+#if defined(__GNUC__) && 0
 #define roundup(a, b)                                                   \
-    ((__builtin_constant_p(b) && powerof2(b))                           \
+    ((__builtin_constant_p(b) && powerof2(b))                             \
      ? rounduppow2(a, b)                                                \
      : ((((a) + ((b) - 1)) / (b)) * b))
 #else
-#defined roundup(a, b)                                                  \
+#define roundup(a, b)                                                   \
     ((((a) + ((b) - 1)) / (b)) * (b))
 #endif
 #define MIN(a, b)     min((a), (b))

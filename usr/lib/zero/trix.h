@@ -19,8 +19,8 @@
 
 #define ZEROABS 1
 
-#include <stdint.h>
 #include <limits.h>
+#include <stdint.h>
 #include <endian.h>
 #include <zero/param.h>
 //#include <zero/mtx.h>

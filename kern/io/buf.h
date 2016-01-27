@@ -1,8 +1,10 @@
 #ifndef __KERN_IO_BUF_H__
 #define __KERN_IO_BUF_H__
 
+#include <stddef.h>
 #include <stdint.h>
 #include <zero/param.h>
+#include <zero/trix.h>
 #include <kern/conf.h>
 #include <kern/perm.h>
 
@@ -78,6 +80,11 @@
 #define BUFINFOMASK  (~BUFADRMASK)
 #if (NEWBUFBLK)
 /* this structure has been carefully crafted to fit a cacheline or two */
+#define __STRUCT_BUFBLK_SIZE                                            \
+    (sizeof(long) + 5 * sizeof(void *)                                  \
+     + sizeof(int64_t) + sizeof(int32_t) + 2 * sizeof(int16_t))
+#define __STRUCT_BUFBLK_PAD                                             \
+    (roundup(__STRUCT_BUFBLK_SIZE, CLSIZE) - __STRUCT_BUFBLK_SIZE)
 struct bufblk {
     const void    *data;        // buffer address + flags in low bits
     long           flg;         // shift count for size + flags as above
@@ -89,15 +96,7 @@ struct bufblk {
     struct bufblk *next;        // next block on free-list or LRU
     struct bufblk *tabprev;     // previous block in table chain
     struct bufblk *tabnext;     // next block in table chain
-#if (PTRSIZE == 8) && (CLSIZE == 64)
-    uint8_t        _pad[CLSIZE - 5 * sizeof(void *) - sizeof(long)
-                        - sizeof(int64_t) - sizeof(int32_t)
-                        - 2 * sizeof(int16_t)];
-#elif (PTRSIZE == 4) && (CLSIZE == 32)
-    uint8_t        _pad[2 * CLSIZE - 5 * sizeof(void *) - sizeof(long)
-                        - sizeof(int64_t) - sizeof(int32_t)
-                        - 2 * sizeof(int16_t)];
-#endif
+    uint8_t        _pad[__STRUCT_BUFBLK_PAD];
 };
 #else
 struct bufblk {
@@ -115,6 +114,10 @@ struct bufblk {
 };
 #endif
 
+#define __STRUCT_BUFDEV_SIZE                                            \
+    (6 * sizeof(long))
+#define __STRUCT_BUFDEV_PAD                                             \
+    (roundup(__STRUCT_BUFDEV_SIZE, CLSIZE) - __STRUCT_BUFDEV_SIZE)
 struct bufdev {
     volatile long lk;
     long          id;           // system descriptor
@@ -122,20 +125,28 @@ struct bufdev {
     long          type;         // DISK, NET, OPT, TAPE, ...
     long          prio;         // device priority for I/O scheduling
     long          timelim;      // time-limit (e.g. to wait before seek)
-    uint8_t       _pad[CLSIZE - 6 * sizeof(long)];
+    uint8_t       _pad[__STRUCT_BUFDEV_PAD];
 };
 
+#define __STRUCT_BUFCHAIN_SIZE                                          \
+    (2 * sizeof(long) + sizeof(void *))
+#define __STRUCT_BUFCHAIN_PAD                                           \
+    (roundup(__STRUCT_BUFCHAIN_SIZE, CLSIZE) - __STRUCT_BUFCHAIN_SIZE)
 struct bufchain {
     volatile long  lk;
     long           nitem;
     struct bufblk *list;
-    uint8_t        _pad[CLSIZE - 2 * sizeof(long) - sizeof(void *)];
+    uint8_t        _pad[__STRUCT_BUFCHAIN_PAD];
 };
 
+#define __STRUCT_BUFBLKQUEUE_SIZE                                       \
+    (sizeof(long) + sizeof(void *))
+#define __STRUCT_BUFBLKQUEUE_PAD                                        \
+    (roundup(__STRUCT_BUFBLKQUEUE_SIZE, CLSIZE) - __STRUCT_BUFBLKQUEUE_SIZE)
 struct bufblkqueue {
     volatile long  lk;
     struct bufblk *head;
-    uint8_t        _pad[CLSIZE - sizeof(long) - sizeof(void *)];
+    uint8_t        _pad[__STRUCT_BUFBLKQUEUE_PAD];
 };
 
 long            bufinit(void);

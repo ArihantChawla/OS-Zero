@@ -31,7 +31,7 @@
 #define NPROCTASK   128
 #define TASKNDESC   16384       // maximum number of descriptors per process
 #define TASKSTKSIZE 1048576
-#define KERNSTKSIZE (4 * PAGESIZE)
+#define KERNSTKSIZE PAGESIZE
 #if (SMP)
 #define NCPU        8
 #else

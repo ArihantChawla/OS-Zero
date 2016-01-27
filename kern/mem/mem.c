@@ -15,26 +15,17 @@
 extern struct memzone slabvirtzone;
 
 void
-meminit(unsigned long nbphys)
+meminit(size_t nbphys)
 {
     unsigned long lim = max(nbphys, KERNVIRTBASE);
 
 #if (defined(__i386__) && !defined(__x86_64__) && !defined(__amd64__))  \
     || defined(__arm__)
-#if 0
-    vmmapseg((uint32_t)&_pagetab, (uint32_t)&_epagetab, (uint32_t)&_epagetab,
-             lim,
-             PAGEWRITE);
-#endif
     vminitvirt(&_pagetab, &_epagetab,
               lim - (uint32_t)&_epagetab,
               PAGEWRITE);
-    slabinit(&slabvirtzone, (unsigned long)&_epagetab,
-             lim - (unsigned long)&_epagetab);
-#if 0
-    slabinit(&slabvirtzone, (unsigned long)&_epagetab,
-             lim - (unsigned long)&_epagetab);
-#endif
+    slabinit(&slabvirtzone, (size_t)&_epagetab,
+             lim - (size_t)&_epagetab);
 #elif defined(__x86_64__) || defined(__amd64__)
 #error implement x86-64 memory management
 #endif

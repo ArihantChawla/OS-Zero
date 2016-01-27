@@ -2,6 +2,8 @@
 #define __KERN_UNIT_X86_IOAPIC_H__
 
 #include <stdint.h>
+#include <zero/param.h>
+#include <zero/trix.h>
 
 void ioapicinit(long id);
 
@@ -14,10 +16,15 @@ void ioapicinit(long id);
 #define IOAPICACTIVELO 0x00002000
 #define IOAPICLOGICAL  0x00000800
 
+#define __STRUCT_IOAPIC_SIZE                                            \
+    (5 * sizeof(int32_t))
+#define __STRUCT_IOAPIC_PAD                                             \
+    (roundup(__STRUCT_IOAPIC_SIZE, CLSIZE) - __STRUCT_IOAPIC_SIZE)
 struct ioapic {
     uint32_t reg;
-    uint32_t pad[3];
+    uint32_t _pad1[3];
     uint32_t data;
+    uint8_t  _pad[__STRUCT_IOAPIC_PAD];
 };
 
 extern volatile struct ioapic *ioapic;

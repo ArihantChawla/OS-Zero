@@ -12,7 +12,7 @@
 /*
  * ISO limits.
  */
-#define CHAR_BIT      8
+#include <share/limits.h>
 #if (__GNUC__)
 #if defined(__arm__)
 #define CHAR_MAX      UCHAR_MAX
@@ -129,6 +129,7 @@
 #include <signal.h>
 #endif
 #define RTSIG_MAX      NRTSIG
+/* TODO: SIGQUEUE_MAX */
 
 #endif /* __LIMITS_H__ */
 

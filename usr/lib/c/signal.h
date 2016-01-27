@@ -4,21 +4,23 @@
 /* TODO: sysconf(): _SC_SIGRT_MIN, _SC_SIGRT_MAX */
 
 #include <features.h>
+#if !defined(__size_t_defined)
+#include <share/size.h>
+#endif
+#include <bits/signal.h>
 //#include <sys/types.h>
-#include <zero/param.h>
+//#include <zero/param.h>
 //#include <unistd.h>
+#if (_POSIX_SOURCE) && (USEPOSIX199309)
+struct timespec;
+#include <time.h>
+#endif
 #include <zero/param.h>
 #if (_ZERO_SOURCE)
-//#include <kern/signal.h>
+#include <kern/signal.h>
 #endif
 #if (USEPOSIX199506) || (_XOPEN_SOURCE >= 500) && 0
 #include <pthread.h>
-#endif
-#include <bits/signal.h>
-
-#if (_POSIX_SOURCE) && (USEPOSIX199309)
-struct timespec;
-//#include <time.h>
 #endif
 
 #if !defined(__KERNEL__)

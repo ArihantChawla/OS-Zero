@@ -117,7 +117,7 @@ struct tasktabl0 {
     volatile long   lk;
     long            nref;
     struct tasktab *tab;
-    uint8_t         pad[CLSIZE - 2 * sizeof(long) - sizeof(struct tasktab *)];
+    uint8_t         _pad[CLSIZE - 2 * sizeof(long) - sizeof(struct tasktab *)];
 };
 
 struct tasktab {
@@ -129,7 +129,7 @@ struct tasktab {
 struct taskqueue {
     volatile long  lk;
     struct task   *list;
-    uint8_t        pad[CLSIZE - 2 * sizeof(long) - sizeof(struct task *)];
+    uint8_t        _pad[CLSIZE - sizeof(long) - sizeof(struct task *)];
 };
 
 long taskgetid(void);
@@ -142,7 +142,8 @@ struct taskid {
     long           id;
     struct taskid *prev;
     struct taskid *next;
-    uint8_t        pad[CLSIZE - 2 * sizeof(long) - 2 * sizeof(struct taskid *)];
+    uint8_t        _pad[CLSIZE - 2 * sizeof(long)
+                        - 2 * sizeof(struct taskid *)];
 };
 
 #define PIDSPEC_PID  0

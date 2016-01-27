@@ -54,8 +54,8 @@ struct slabhdr {
 #endif
 
 void   slabinit(struct memzone *virtzone,
-                unsigned long base, unsigned long nbphys);
-void * slaballoc(struct memzone *zone, unsigned long nb, unsigned long flg);
+                uintptr_t base, size_t nbphys);
+void * slaballoc(struct memzone *zone, size_t nb, unsigned long flg);
 void   slabfree(struct memzone *zone, void *ptr);
 
 #endif /* __KERN_MEM_SLAB_H__ */

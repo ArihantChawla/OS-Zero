@@ -3,7 +3,7 @@
 
 #include <features.h>
 #include <stdint.h>
-#include <zero/param.h>
+//#include <sys/types.h>
 
 #if !defined(NULL)
 #define NULL               ((void *)0L)
@@ -15,32 +15,11 @@ typedef long long          ptrdiff_t;
 typedef long               ptrdiff_t;
 #endif
 #if !defined(__size_t_defined)
-#if defined(_MSC_VER)
-typedef unsigned long long size_t;
-#else
-typedef unsigned long      size_t;
+#include <share/size.h>
 #endif
-#define __size_t_defined 1
+#if !defined(__wchar_t_defined)
+#include <share/wchar.h>
 #endif
-
-#if defined(__STDC_ISO_10646__) || defined(_ZERO_SOURCE)
-/* full ISO10646 character */
-#define WCHARSIZE      4
-#elif (defined(_WIN32) || defined(_WIN64))
-/* 16-bit Unicode character */
-#define WCHARSIZE      2
-#else
-#error WCHARSIZE not present in <stddef.h>
-#endif
-
-#if (WCHARSIZE == 4)
-typedef int32_t        wchar_t;
-#elif (WCHARSIZE == 2)
-typedef uint16_t       wchar_t;
-#elif (WCHARSIZE == 1)
-typedef uint8_t        wchar_t;
-#endif
-typedef int            wint_t;
 
 #if (_ISOC11_SOURCE)
 typedef long long      max_align_t;

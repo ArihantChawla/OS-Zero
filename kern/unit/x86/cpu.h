@@ -8,7 +8,7 @@
 #if defined(__KERNEL__)
 #include <zero/param.h>
 #include <kern/types.h>
-#include <kern/cpu.h>
+//#include <kern/cpu.h>
 #include <kern/proc/proc.h>
 #include <kern/proc/task.h>
 #include <kern/unit/x86/bits/cpu.h>
@@ -58,6 +58,8 @@ extern long               k_curpid  __asm__ ("%gs:32");
 extern struct m_cpuinfo * k_cpuinfo __asm__ ("%gs:40");
 #endif
 
+#endif /* defined(__KERNEL__) */
+
 //#define NCPUWORD     6 /* cpu, proc, task, pdir, pid, info */
 struct m_cpu {
     /* cpu-local variables */
@@ -68,8 +70,6 @@ struct m_cpu {
     long              pid;
     struct m_cpuinfo *info;
 };
-
-#endif /* defined(__KERNEL__) */
 
 #endif /* __KERN_UNIT_X86_CPU_H__ */
 

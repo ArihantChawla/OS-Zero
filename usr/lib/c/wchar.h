@@ -2,11 +2,13 @@
 #define __WCHAR_H__
 
 #include <features.h>
-#include <stddef.h>
-#include <stdint.h>
+//#include <stddef.h>
+//#include <stdint.h>
 #include <stdio.h>
-
-struct               tm;
+#if !defined(__wchar_t_defined)
+#include <share/wchar.h>
+#endif
+#include <share/wint.h>
 
 #define WCHAR_MIN    0
 #if (WCHARSIZE == 4)
@@ -26,6 +28,8 @@ struct               tm;
 #define WCHARNBIT    8
 #endif /* WCHARSIZE */
 #define WCHARMASK    ((1 << WCHARNBIT) - 1)
+
+struct               tm;
 
 #if !defined(__KERNEL__)
 

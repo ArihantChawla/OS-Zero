@@ -1,6 +1,8 @@
 #ifndef __ZERO_ASM_H__
 #define __ZERO_ASM_H__
 
+#include <stddef.h>
+
 /*
  * TODO
  * ----

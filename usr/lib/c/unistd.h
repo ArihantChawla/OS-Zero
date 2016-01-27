@@ -2,6 +2,9 @@
 #define __UNISTD_H__
 
 #include <features.h>
+#if !defined(__size_t_defined)
+#include <share/size.h>
+#endif
 //#include <stddef.h>
 #include <stdio.h>
 //#include <stdint.h>

@@ -217,7 +217,7 @@ struct sigstack {
 #endif
 };
 
-#define SIGSTKSZ     (4 * PAGESIZE)
+#define SIGSTKSZ     (2 * PAGESIZE)
 #define MINSIGSTKSZ  PAGESIZE
 /* ss_flags bits */
 #define SS_ONSTACK   0x00000001

@@ -7,6 +7,7 @@
 #include <zero/cdefs.h>
 #include <zero/param.h>
 #include <zero/trix.h>
+#include <kern/types.h>
 #include <kern/perm.h>
 
 /* allocation flags */
@@ -36,34 +37,40 @@
 #endif
 
 struct membuf;
-#define MEMBUF_HDRSIZE    offsetof(struct membuf, data)
-#define MEMBUF_PKTHDRSIZE offsetof(struct membuf, pktdata)
-#define MEMBUF_LEN        (MEMBUF_SIZE - MEMBUF_HDRSIZE)
-#define MEMBUF_PKTLEN     (MEMBUF_SIZE - MEMBUF_PKTHDRSIZE)
 
 /* record/packet header in first membuf of chain; MEMBUF_PKTHDR is set */
+#define __STRUCT_PKTHDR_SIZE                                            \
+    (3 * sizeof(void *) + 2 * sizeof(int32_t) + sizeof(size_t))
+#define __STRUCT_PKTHDR_PAD                                             \
+    (rounduppow2(__STRUCT_PKTHDR_SIZE, CLSIZE) - __STRUCT_PKTHDR_SIZE)
 struct pkthdr {
     struct ifnet  *rcvif;       // rcv interface
     size_t         len;         // total packet length
     void          *hdr;         // packet header
-    int            chksumflg;   // checksum flags
-    int            chksum;      // checksum data
+    int32_t        chksumflg;   // checksum flags
+    int32_t        chksum;      // checksum data
     struct membuf *aux;         // extra data buffer, e.g. IPSEC
-    uint8_t        _res[CLSIZE - 3 * sizeof(void *) - 2 * sizeof(int)
-                        - sizeof(size_t)];
+    uint8_t        _pad[__STRUCT_PKTHDR_PAD];
 };
 
+#define __STRUCT_MEMEXT_SIZE                                            \
+    (sizeof(long) + 3 * sizeof(void *) + sizeof(size_t) + sizeof(m_ureg_t))
+#define __STRUCT_MEMEXT_PAD                                             \
+    (rounduppow2(__STRUCT_MEMEXT_SIZE, CLSIZE) - __STRUCT_MEMEXT_SIZE)
 struct memext {
-    uint64_t   refcnt;
+    m_ureg_t   refcnt;
     void      *extbuf;
     void     (*extfree)(void *, void *);
     void      *extargs;
     size_t     size;
     long       type;
-    uint8_t    _res[CLSIZE - 3 * sizeof(void *) - sizeof(long)
-                    - sizeof(size_t) - sizeof(uint64_t)];
+    uint8_t    _res[__STRUCT_MEMEXT_PAD];
 };
 
+#define MEMBUF_HDRSIZE    offsetof(struct membuf, data)
+#define MEMBUF_PKTHDRSIZE offsetof(struct membuf, pktdata)
+#define MEMBUF_LEN        (MEMBUF_SIZE - MEMBUF_HDRSIZE)
+#define MEMBUF_PKTLEN     (MEMBUF_SIZE - MEMBUF_PKTHDRSIZE)
 /* membuf types */
 #define MEMBUF_FREE    0        // on free-list
 #define MEMBUF_EXT     1        // external storage mapped to mbuf
@@ -101,10 +108,14 @@ struct membuf {
     } data ALIGNED(CLSIZE);
 };
 
+#define __STRUCT_MEMHDR_SIZE                                            \
+    (sizeof(long) + sizeof(void *))
+#define __STRUCT_MEMHDR_PAD                                             \
+    (roundup(__STRUCT_MEMHDR_SIZE, CLSIZE) - __STRUCT_MEMHDR_SIZE)
 struct memhdr {
     volatile long  lk;
     void          *list;
-    uint8_t        pad[CLSIZE - sizeof(long) - sizeof(void *)];
+    uint8_t        _pad[__STRUCT_MEMHDR_PAD];
 };
 
 struct memzone {

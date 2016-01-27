@@ -35,12 +35,12 @@ extern struct memzone slabvirtzone;
 struct memzone        magvirtzone;
 
 void *
-memalloc(unsigned long nb, long flg)
+memalloc(size_t nb, long flg)
 {
     struct memzone  *slabzone = &slabvirtzone;
     struct memzone  *magzone = &magvirtzone;
     void            *ptr = NULL;
-    uintptr_t        sz = max(MAGMIN, nb);
+    size_t           sz = max(MAGMIN, nb);
     unsigned long    slab = 0;
     unsigned long    bkt = memgetbkt(sz);
     struct maghdr   *mag;

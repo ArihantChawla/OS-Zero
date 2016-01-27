@@ -9,8 +9,9 @@
 #include <zero/param.h>
 #define ZEROMTX 1
 #include <zero/mtx.h>
+#include <kern/cpu.h>
 #include <kern/io/buf.h>
-#include <kern/unit/x86/cpu.h>
+//#include <kern/unit/x86/cpu.h>
 #if defined(TESTUNISTD)
 #include <stdio.h>
 #include <stdlib.h>

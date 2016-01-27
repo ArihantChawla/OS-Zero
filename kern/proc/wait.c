@@ -15,7 +15,7 @@ struct tasktabl0 taskwaittab[TASKNLVL0WAIT] ALIGNED(PAGESIZE);
 
 /* add task to wait table */
 void
-tasksetwait(struct task *task)
+schedsetwait(struct task *task)
 {
     struct tasktabl0  *l0tab;
     struct tasktab    *tab;
@@ -95,7 +95,7 @@ tasksetwait(struct task *task)
 
 /* awaken tasks waiting on wtchan */
 void
-taskwakeup(uintptr_t wtchan)
+schedwakeup(uintptr_t wtchan)
 {
     long               cpu = k_curcpu->id;
     struct tasktabl0  *l0tab;

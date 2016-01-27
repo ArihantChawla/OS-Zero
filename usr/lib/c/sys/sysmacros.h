@@ -24,10 +24,10 @@
 #if !defined(__KERNEL__)
 
 #if (_GNU_SOURCE)
-extern unsigned int       gnu_dev_major(unsigned long long dev);
-extern unsigned int       gnu_dev_minor(unsigned long long dev);
-extern unsigned long long gnu_dev_makedev(unsigned int major,
-                                          unsigned int minor);
+extern unsigned int          gnu_dev_major(unsigned long long dev);
+extern unsigned int          gnu_dev_minor(unsigned long long dev);
+extern unsigned long long    gnu_dev_makedev(unsigned int major,
+                                             unsigned int minor);
 #endif /* _GNU_SOURCE */
 
 #endif /* !defined(__KERNEL__) */

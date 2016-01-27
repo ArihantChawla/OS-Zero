@@ -10,7 +10,7 @@
 #define  kvalloc(nb)   memalloc(PAGESIZE, 0)
 #define  kcvalloc(nb)  memalloc(PAGESIZE, MEMZERO)
 #define  kcvwalloc(nb) memalloc(PAGESIZE, MEMZERO | MEMWIRE)
-void    *memalloc(unsigned long nb, long flg);
+void    *memalloc(size_t nb, long flg);
 void     kfree(void *ptr);
 
 #endif /* __KERN_MALLOC_H__ */

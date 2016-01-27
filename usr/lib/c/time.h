@@ -1,13 +1,28 @@
 #ifndef __TIME_H__
 #define __TIME_H__
 
+#if !defined(NULL)
+#define NULL               ((void *)0L)
+#endif
+
 #include <features.h>
-#include <stddef.h>
-#include <sys/types.h>
+//#include <stddef.h>
+//#include <sys/types.h>
 #if (_ZERO_SOURCE)
 #include <kern/conf.h>
 #endif
-#include <signal.h>
+#if !defined(__time_types_defined)
+#include <share/time.h>
+#endif
+#if !defined(__size_t_defined)
+#include <share/size.h>
+#endif
+#if !defined(__pid_t_defined)
+typedef long pid_t;          // process ID
+#define __pid_t_defined 1
+#endif
+//#include <signal.h>
+
 #if (_XOPEN_SOURCE) || (USESVID)
 extern int   daylight;
 extern long  timezone;
@@ -23,15 +38,13 @@ extern int   __daylight;
 
 //#include <bits/signal.h>
 
-#if !defined(NULL)
-#define NULL               ((void *)0L)
-#endif
-
+#if !defined(CLOCKS_PER_SEC)
 #if (_ZERO_SOURCE)
-//#include <kern/proc/thr.h>
-#define CLOCKS_PER_SEC           1000000000     // for nanosecond resolution
+/* for nanosecond resolution */
+#define CLOCKS_PER_SEC           ((clock_t)1000000000)
 #else
 #error CLOCKS_PER_SEC undefined
+#endif
 #endif
 #if !(USEXOPEN2K)
 #define CLK_TCK                  CLOCKS_PER_SEC
@@ -99,7 +112,7 @@ extern char *strptime(const char *restrict str, const char *restrict fmt,
                       struct tm *tm);
 #endif
 #if defined(_GNU_SOURCE) && 0 /* TODO: <xlocale.h> */
-#include <xlocale.h>
+//#include <xlocale.h>
 extern size_t strftime_1(char *restrict buf, size_t len,
                          const char *restrict fmt,
                          const struct tm *restrict tm, locale_t loc);
@@ -174,6 +187,8 @@ extern struct tm *getdate_r(const char *restrict str,
 #endif
 
 #endif /* !defined(__KERNEL__) */
+
+#include <sys/select.h>
 
 #endif /* __TIME_H__ */
 

@@ -326,7 +326,7 @@ schedswitchtask(struct task *curtask)
 
                     break;
                 case TASKSLEEPING:
-                    tasksetsleep(curtask);
+                    schedsetsleep(curtask);
 
                     break;
                 case TASKSTOPPED:

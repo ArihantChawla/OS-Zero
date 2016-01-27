@@ -29,7 +29,7 @@
 #include <zero/trix.h>
 #include <zero/fastidiv.h>
 
-#if (FASTIDIVWORDSIZE == 64)
+#if (WORDSIZE == 8)
 /*
  * This routine precomputes a lookup table for divisors 1..lim32
  * - table size is stored in item #0 to check for buffer overruns
@@ -83,7 +83,7 @@ fastu64div32gentab(struct divu64 *duptr, uint64_t lim32)
 
     return;
 }
-#endif /* FASTIDIVWORDSIZE == 64 */
+#endif /* WORDSIZE == 8 */
 
 /*
  * This routine precomputes a lookup table for divisors 1..lim16
