@@ -29,12 +29,12 @@ extern int   __daylight;
 
 #if (_ZERO_SOURCE)
 //#include <kern/proc/thr.h>
-#define CLOCKS_PER_SEC 1000000000       // for nanosecond resolution
+#define CLOCKS_PER_SEC           1000000000     // for nanosecond resolution
 #else
 #error CLOCKS_PER_SEC undefined
 #endif
 #if !(USEXOPEN2K)
-#define CLK_TCK        CLOCKS_PER_SEC
+#define CLK_TCK                  CLOCKS_PER_SEC
 #endif
 
 #define CLOCK_MONOTONIC          0      // monotonic time

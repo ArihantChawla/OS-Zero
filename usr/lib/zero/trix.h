@@ -726,6 +726,19 @@ divu1000(unsigned long x)
     return q + ((r + 24) >> 10);
 }
 
+static __inline__ unsigned long
+divu1000000(unsigned long x)
+{
+    unsigned long long tmp = x;
+    unsigned long      res;
+
+    tmp *= UINT64_C(0x431bde83);
+    tmp >>= 50;
+    res = tmp;
+
+    return res;
+}
+
 static __inline__ long
 divs10(long x)
 {
@@ -772,19 +785,6 @@ divs1000(long x) {
     r = x - q * 1000;
 
     return q + ((r + 24) >> 10);
-}
-
-static __inline__ unsigned long
-divu1000000(unsigned long x)
-{
-    unsigned long long tmp = x;
-    unsigned long      res;
-
-    tmp *= UINT64_C(0x431bde83);
-    tmp >>= 50;
-    res = tmp;
-
-    return res;
 }
 
 #define modu7(u)   ((u) - divu7(u) * 7)

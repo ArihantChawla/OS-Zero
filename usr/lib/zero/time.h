@@ -4,6 +4,8 @@
 #include <features.h>
 #include <time.h>
 
+#define __timespectotm(tp) ((tp)->tv_sec * CLOCKS_PER_SEC + (tp)->tv_nsec)
+
 #if defined(_POSIX_C_SOURCE) && (_POSIX_C_SOURCE >= 199309L)
 static __inline__ time_t
 timegetstamp(void)
@@ -16,7 +18,7 @@ timegetstamp(void)
 #else
     clock_gettime(CLOCK_REALTIME, &ts);
 #endif
-    tm = ts.tv_sec * 1000000000 + ts.tv_nsec;
+    tm = __timespectotm(&ts);
 
     return tm;
 }
@@ -32,7 +34,7 @@ timegetstamp(void)
      || ((tv1)->tv_sec == (tv2)->tv_sec && (tv1)->tv_usec > (tv2)->tv_usec))
 
 #define timespeccmp(ts1, ts2)                                           \
-    (((ts2)->tv_sec - (ts1)->tv_sec) * 1000000000                       \
+    (((ts2)->tv_sec - (ts1)->tv_sec) * CLOCKS_PER_SEC                   \
      + (time_t)(ts2)->tv_nsec - (time_t)(ts1)->tv_nsec)
 #define timespecgt(ts1, ts2)                                             \
     (((ts1)->tv_sec > (ts2)->tv_sec)                                    \
