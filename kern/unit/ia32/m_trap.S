@@ -597,6 +597,77 @@ _tmr0fin:
 	iretl
 
 	/* 32-bit x86 context switch */
+.align	16
+
+#if (PERTHRSTACKS)
+	/*
+	 * top of stack after interrupt
+	 * ----------------------------
+	 * ss		- user-stack segment selector
+	 * esp		- userland stack pointer
+	 * eflags
+	 * cs
+	 * eip	<- esp points here
+	 *
+	 * NOTE: ss and esp are only pushed if the interrupt happened
+	 * in user-mode, i.e. there's a privilege transition to system-mode
+ 	 */
+irqtmr:
+	pushal				// push all general purpose registers
+	pushl	%ds			// push segment registers
+	pushl	%es
+	pushl	%fs
+	pushl	%gs
+	movl	%cr3, %eax		// page-directory address in EAX
+	movl	%gs:8, %ebx		// k_curtask, task pointer
+	movl	(%ebx), %ecx		// store task flags (FPU-type etc.)
+	pushl	%eax			// PDBR
+	leal	$FPUCTXSIZE(%esp), %edx	// prepare to save FPU-context
+	movl	%edx, %esp		// flags below FPU-context
+	pushl	%ecx			// save task flags
+	andl	$CPUHASFXSR, %ecx	// check for FXSAVE/FXRSTOR
+	cmpl	$0, %ecx		// if present, branch to _fxsave
+	jne	_fxsave			//
+	fnsave	(%edx)			// use fnsave instead
+	jmp	_fpusaved0
+_fxsave0:
+	fxsave	(%edx)
+_fpusaved0:
+	fwait
+	pushl	%esp			// store stack pointer
+	pushl	%ebx			// push current task pointer
+	call	schedswitchtask		// call scheduler function
+	popl	%edi			// pop earlier task pointer
+	cmpl	%eax, %edi		// did we reschedule the same task?
+	jne	_swtch			// if not, branch to _swtch
+	/* continue the same task */
+	popl	%eax			// pop earlier task pointer
+	popl	%esp			// pop stack pointer
+	popl	%esi			// task flags
+#if 0
+	andl	$CPUHASFXSR, %esi	// check for FXSAVE/FXRSTOR
+	cmpl	$0, %esi		// if present, branch to _fxsave
+	jne	_fxsave			//
+	fnrstor (%esp)			// use fnsave instead
+	jmp	_fpusaved1
+_fxsave1:
+	fxrstor	(%esp)
+_fpusaved1:
+#endif
+	addl	$FPUCTXSIZE, %esp
+	popl	%edi			// pop PDBR
+	popl	%gs			// pop segment registers
+	popl	%fs
+	popl	%es
+	popl	%ds
+	popal
+	iretl
+_swtch:
+	call	m_taskjmp
+	
+.align	16
+
+#else
 	/*
 	 * registers after interrupt
 	 * -------------------------
@@ -615,9 +686,6 @@ _tmr0fin:
 	 * NOTE: ss and esp are only pushed if the interrupt happened
 	 * in user-mode, i.e. there's a privilege transition to system-mode
  	 */
-
-.align	16
-
 irqtmr:
 	pushl	%ebp			// push frame pointer
 	movl	%esp, %ebp		// store stack pointer
@@ -708,6 +776,7 @@ _irqkbddone:
 	_trapleave
 	sti
 	iretl
+#endif /* PERTHRSTACKS */
 
 .align	16
 

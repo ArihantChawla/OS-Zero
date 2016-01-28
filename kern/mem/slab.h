@@ -15,27 +15,29 @@
 #endif
 #endif
 
+#if (!MEMNEWSLAB)
 #define MEMSLABMIN     (1UL << MEMSLABMINLOG2)
 #define MEMSLABMINLOG2 16 // don't make this less than 16 for now :)
+#endif
 
 #if (MEMNEWSLAB)
 #define memblkclrinfo(bp)                                               \
     ((bp)->info = ((m_ureg_t)0))
-#define memslabclrbkt(bp)                                               \
+#define memblkclrbkt(bp)                                                \
     ((hp)->info &= ~MEMBKTMASK)
-#define memslabsetbkt(hp, bkt)                                          \
-    (memslabclrbkt(hp), (hp)->info |= (bkt))
-#define memslabgetbkt(hp)                                               \
+#define memblksetbkt(hp, bkt)                                           \
+    (memblkclrbkt(hp), (hp)->info |= (bkt))
+#define memblkgetbkt(hp)                                                \
     ((hp)->info & MEMBKTMASK)
-#define memslabisfree(hp)                                               \
+#define memblkisfree(hp)                                                \
     (!((hp)->info) & MEMALLOCBIT)
-#define memslabsetfree(hp)                                              \
+#define memblksetfree(hp)                                               \
     ((hp)->info |= MEMFREE)
-#define memslabclrfree(hp)                                              \
+#define memblkclrfree(hp)                                               \
     ((hp)->info &= ~MEMFREE)
-#define memslabsetflg(hp, flg)                                          \
+#define memblksetflg(hp, flg)                                           \
     ((hp)->info |= (flg))
-#define memslabclrflg(hp)                                               \
+#define memblkclrflg(hp)                                                \
     ((hp)->info &= ~MEMFLGBITS)
 #else
 #define memslabclrinfo(hp)                                              \
@@ -59,11 +61,13 @@
 #endif
 
 #if (MEMNEWSLAB)
+#define __STRUCT_MEMBLK_SIZE                                            \
+    (3 * sizeof(void *) + sizeof(m_ureg_t))
 struct memblk {
     void          *adr;
-    m_ureg_t       info;
     struct memblk *prev;
     struct memblk *next;
+    m_ureg_t       info;
 };
 #else
 struct memslab {
@@ -78,12 +82,12 @@ struct memslab {
 #endif
 
 #if (MEMNEWSLAB)
-#define memgetblknum(ptr, pool, bkt)                                    \
-    (((uintptr_t)(ptr) - (pool)->base) >> (bkt))
-#define memgetadr(hdr, pool, bkt)                                       \
-    ((void *)((pool)->base + (memgetblknum(hdr, pool) << (bkt))))
-#define memgethdr(ptr, pool, bkt)                                       \
-    ((struct memslab *)((pool)->blktab[(bkt)]) + memgetblknum(ptr, pool, bkt))
+#define memgetblknum(ptr, pool)                                         \
+    (((uintptr_t)(ptr) - (pool)->base) >> MEMMINLOG2)
+#define memgetadr(hdr, pool)                                            \
+    ((void *)((pool)->base + (memgetblknum(hdr, pool) << MEMMINLOG2)))
+#define memgethdr(ptr, pool)                                            \
+    ((struct memslab *)((uint8_t *)(pool)->blktab + memgetblknum(ptr, pool))
 #else
 #define memgetblknum(ptr, pool)                                         \
     (((uintptr_t)(ptr) - (pool)->base) >> MEMMINLOG2)

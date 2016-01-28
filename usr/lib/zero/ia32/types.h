@@ -1,6 +1,7 @@
 #ifndef __ZERO_IA32_TYPES_H__
 #define __ZERO_IA32_TYPES_H__
 
+#include <kern/conf.h>
 #include <stdint.h>
 #include <signal.h>
 #include <zero/cdefs.h>
@@ -15,7 +16,7 @@ struct m_stkframe {
     /* call parameters on stack go here in 'reverse order' */
 };
 
-/* general purpose registers - 32 bytes */
+/* general purpose registers - 32 bytes; in PUSHA order */
 struct m_genregs {
     int32_t edi;
     int32_t esi;
@@ -106,6 +107,17 @@ struct m_tss {
     uint8_t  iomap[EMPTY] ALIGNED(PAGESIZE);
 };
 
+#if (PERTHRSTACKS)
+
+struct m_tcb {
+    int32_t             pdbr;
+    struct m_segregs    segregs;
+    struct m_genregs    genregs;
+    struct m_trapframe  trapframe;
+};
+
+#else
+
 /* thread control block */
 struct m_tcb {
     struct m_segregs   segregs;         // data-segment registers
@@ -115,6 +127,8 @@ struct m_tcb {
     int32_t            err;             // error code for trap or zero
     struct m_trapframe trapframe;       // return frame for iret
 };
+
+#endif
 
 struct m_ctx {
     int              onstk;     // non-zero if on signal-stack

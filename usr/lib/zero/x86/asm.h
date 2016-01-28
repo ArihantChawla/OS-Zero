@@ -204,6 +204,11 @@ m_cmpclrbit32(volatile long *p, long ndx)
     return val;
 }
 
+#if defined(__GNUC__)
+#define m_atomor(p, val)  __sync_or_and_fetch((p), (val))
+#define m_atomand(p, val) __sync_and_and_fetch((p), (val))
+#endif
+
 /*
  * atomic compare and exchange byte
  * - if *p == want, let *p = val

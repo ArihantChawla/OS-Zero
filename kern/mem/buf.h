@@ -58,12 +58,12 @@ struct memext {
 #define MEMBUF_IFADDR     13    // interface address
 #define MEMBUF_CONTROL    14    // extra-data protocol message
 #define MEMBUF_OOBDATA    15    // expedited data
-#define membufpkthdr(mb) ((mb)->cont.hdr.pkt)
-#define membufexthdr(mb) ((mb)->cont.hdr.data.ext)
-#define membufpktadr(mb) ((mb)->cont.buf)
-#define membufextadr(mb) ((mb)->cont.hdr.data.buf)
+#define membufpkthdr(mb) ((mb)->data.hdr.pkt)
+#define membufexthdr(mb) ((mb)->data.hdr.ext.hdr)
+#define membufpktadr(mb) ((mb)->data.buf)
+#define membufextadr(mb) ((mb)->data.hdr.ext.hdr)
 #define __STRUCT_MEMBUFHDR_SIZE                                            \
-    (2 * sizeof(long) + 4 * sizeof(void *) + sizeof(size_t))
+    (3 * sizeof(long) + 4 * sizeof(void *) + sizeof(size_t))
 struct membufhdr {
     void          *adr;         // data address
     volatile long  nref;        // # of references
@@ -75,20 +75,20 @@ struct membufhdr {
     struct membuf *nextbuf;     // next chain in queue/record
 };
 
-#define __STRUCT_MEMBUF_PAD                                             \
-    (roundup(__STRUCT_MEMBUF_SIZE, CLSIZE) - __STRUCT_MEMBUF_SIZE)
+#define __STRUCT_MEMBUFHDR_PAD                                          \
+    (roundup(__STRUCT_MEMBUFHDR_SIZE, CLSIZE) - __STRUCT_MEMBUF_SIZE)
 struct membuf {
     uint8_t                    _pad[__STRUCT_MEMBUF_PAD];
     union {
         struct {
             struct pkthdr      pkt;     // MEMBUF_PKTHDR is set
             union {
-                struct memext  ext;     // MEMBUF_EXT is set
+                struct memext  hdr;     // MEMBUF_EXT is set
                 char           buf[0];
-            } data;
+            } ext;
         } hdr;
         char                   buf[0];
-    } cont;
+    } data;
 };
 
 #endif /* __KERN_MEM_BUF_H__ */

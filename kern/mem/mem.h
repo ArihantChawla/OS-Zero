@@ -11,14 +11,18 @@
 #include <zero/param.h>
 #include <zero/trix.h>
 #include <kern/mem/pool.h>
+#include <kern/mem/slab.h>
 
-/* allocation flags */
 #if (MEMNEWSLAB)
-#define MEMNBKTBIT     8 // 8 low bits of info used for bucket ID (max 255)
+/* allocator parameters */
+#define MEMNHDRHASH    (512 * 1024)     // # of entries in header hash table
+#define MEMNHDRBUF     (roundup(__STRUCT_MEMBLK_SIZE, CLSIZE))
+/* allocation flags */
 #define MEMMIN         (1U << MEMMINSHIFT)
 #define MEMMINSHIFT    8 // minimum allocation of 256 bytes
 #define MEMMAXOBJ      (1U << MEMMAXOBJSHIFT)
 #define MEMMAXOBJSHIFT 16
+#define MEMNBKTBIT     8 // 8 low bits of info used for bucket ID (max 255)
 #define MEMNTYPEBIT    8 // up to 256 object types
 #define MEMBKTMASK     ((1UL << (MEMNBKTBIT - 1)) - 1)
 #define MEMFLGSHIFT    (1 << (CHAR_BIT * sizeof(m_ureg_t) - 1))
@@ -30,7 +34,7 @@
 #define MEMFLGMASK                                                      \
     (((m_ureg_t)~0) << (CHAR_BIT * sizeof(m_ureg_t) - MEMNFLGBIT))
 #define memslabsize(bkt)                                                \
-    (1U << max(2, MEXMAXOBJSHIFT - (bkt)))
+    (1UL << (bkt))
 #define memtrylkhdr(hdr)                                                \
     (!m_cmpsetbit(&hdr->info, MEMLOCKBIT))
 #define memlkhdr(hdr)                                                   \
@@ -45,7 +49,7 @@
     (m_unlkbit(&(hdr)->info, MEMLOCKBIT))
 #define memgetbkt(hdr)                                                  \
     (&(hdr)->info & ((1 << MEMNBKTBIT) - 1))
-#else
+#else /* !MEMNEWSLAB */
 #define MEMMIN         (1UL << MEMMINLOG2)
 #define MEMMINLOG2     PAGESIZELOG2
 #define MEMFREE        0x00000001UL
@@ -56,7 +60,7 @@
 #endif
 
 void          meminit(size_t nbphys);
-void          meminitphys(struct mempool *virtpool, uintptr_t base,
+void          meminitphys(struct mempool *physpool, uintptr_t base,
                           size_t nbphys);
 unsigned long meminitpool(struct mempool *pool, uintptr_t base, size_t nb);
 void          memfree(struct mempool *pool, void *ptr);

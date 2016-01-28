@@ -3,6 +3,8 @@
 
 #include <zero/param.h>
 
+#define PERTHRSTACKS 0
+
 #define BUFNEWHASH 1
 
 #define VMFLATPHYSTAB    1
