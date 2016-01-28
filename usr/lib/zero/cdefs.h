@@ -25,6 +25,8 @@
 
 #if defined(__GNUC__) || defined(__clang__)
 
+/* immediate argument test */
+#define IMMEDIATE(x) __builtin_constant_p(x)
 /* align variables, aggregates, and tables to boundary of a */
 #define ALIGNED(a)   __attribute__ ((__aligned__(a)))
 /* ALWAYS inline the function */

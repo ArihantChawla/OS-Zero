@@ -5,6 +5,7 @@
 #include <time.h>
 //#include <sys/types.h>
 #include <zero/param.h>
+#include <zero/trix.h>
 #if defined(__x86_64__) || defined(__amd64__)
 #include <kern/unit/x86-64/types.h>
 #elif defined(__i386__) && !defined(__x86_64__) && !defined(__amd64__)

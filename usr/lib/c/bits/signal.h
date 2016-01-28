@@ -20,7 +20,15 @@
 #elif defined(__arm__)
 #include <arm/signal.h>
 #endif
-#include <sys/types.h>
+//#include <sys/types.h>
+#if !defined(__pid_t_defined)
+typedef long            pid_t;          // process ID
+#define __pid_t_defined 1
+#endif
+#if !defined(__uid_t_defined)
+typedef uint32_t        uid_t;
+#define __uid_t_defined 1
+#endif
 
 /* internal. */
 #define _sigvalid(sig)  ((sig) && (!((sig) & ~_SIGMASK)))
@@ -128,6 +136,15 @@ struct sigevent {
 };
 
 #if defined(_POSIX_SOURCE) && (USEPOSIX199309)
+
+#if !defined(__ctid_t_defined)
+typedef long ctid_t;
+#define __ctid_t_defined 1
+#endif
+#if !defined(__zoneid_t_defined)
+typedef long zoneid_t;
+#define __zoneid_t_defined 1
+#endif
 
 /* si_code-member values */
 /* SIGILL */

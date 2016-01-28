@@ -83,13 +83,16 @@ bufinit(void)
 
         return 0;
     }
+#if (__KERNEL__)
+    kprintf("BUF: reserved %lu bytes for buffer cache\n", sz);
+#endif
     u8ptr = ptr;
     vmpagestat.nbuf = sz >> PAGESIZELOG2;
     vmpagestat.buf = ptr;
     vmpagestat.bufend = u8ptr + sz;
     if (ptr) {
-        /* allocate buffer cache */
-        kbzero(ptr, sz);
+        /* allocate and zero buffer cache */
+//        kbzero(ptr, sz);
         /* initialise buffer headers */
         n = sz >> BUFMINSIZELOG2;
         blk = &bufhdrtab[n - 1];

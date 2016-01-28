@@ -7,6 +7,12 @@
 #include <signal.h>
 #include <time.h>
 #include <sys/time.h>
+#if !defined(__time_types_defined)
+#include <share/time.h>
+#endif
+#if !defined(__struct_timeval_defined)
+#include <sys/share/time.h>
+#endif
 //#include <sys/types.h>
 //#include <zero/param.h>
 //#if !defined(_POSIX_SOURCE) && (USEBSD) && !defined(NFDBITS)
@@ -14,14 +20,24 @@
 #include <kern/conf.h>
 #endif
 
-#include <limits.h>
+#if !defined(CHAR_BIT)
+#include <share/limits.h>
+#endif
 
-#if !defined(NFDBITS)
+#if !defined(__KERNEL__)
 
-#if (_POSIX_SOURCE)
-#define FD_SETSIZE _POSIX_FD_SET_SIZE
-#else
+#if !defined(FD_SETSIZE)
+
+#if (_ZERO_SOURCE)
+#include <kern/conf.h>
+#endif
+#if defined(NPROCFD) && !defined(FD_SETSIZE)
 #define FD_SETSIZE NPROCFD
+#elif (_POSIX_SOURCE) && !defined(FD_SETSIZE)
+#define FD_SETSIZE _POSIX_FD_SET_SIZE
+#elif (USEBSD) && !defined(NFDBITS)
+#include <sys/sysmacros.h>
+#define FD_SETSIZE NFDBITS
 #endif
 
 typedef long       fd_mask;
@@ -44,10 +60,7 @@ typedef struct fd_set fd_set;
 #define FD_COPY(src, dest) memcpy(dest, src, sizeof(fd_set))
 #endif
 
-#endif /* !defined(NFDBITS) */
-#endif /* !defined(__KERNEL__) */
-
-#if !defined(__KERNEL__)
+#endif /* !defined(FD_SETSIZE) */
 
 extern int select(int nfd,
                   fd_set *__restrict readfds,
@@ -62,6 +75,8 @@ extern int pselect(int nfd,
                    const struct timespec *__restrict timeout,
                    const sigset_t *__restrict sigmask);
 #endif
+
+#endif /* !defined(__KERNEL__) */
 
 #endif /* __SYS_SELECT_H__ */
 

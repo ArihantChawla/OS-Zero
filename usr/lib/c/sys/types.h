@@ -4,11 +4,10 @@
 #include <features.h>
 #include <stdint.h>
 //#include <stddef.h>
-#include <share/limits.h>
+#include <sys/time.h>
 #if !defined(__time_types_defined)
 #include <share/time.h>
 #endif
-//#include <sys/types.h>
 #if (_BSD_SOURCE)
 #include <endian.h>
 //#include <sys/select.h>
@@ -16,6 +15,13 @@
 #endif
 #if !defined(_POSIX_SOURCE) && (USEBSD) && !defined(NFDBITS)
 #include <kern/conf.h>
+#endif
+#if !defined(__struct_timeval_defined)
+struct timeval {
+    time_t      tv_sec;
+    suseconds_t tv_usec;
+};
+#define __struct_timeval_defined 1
 #endif
 
 typedef long            register_t;
@@ -49,20 +55,34 @@ typedef dev_t           major_t;
 typedef dev_t           minor_t;
 //typedef uint32_t        fsblkcnt_t;     // filesystem block count
 //typedef uint32_t        fsfilcnt_t;     // filesystem file count
+#if !defined(__id_t_defined)
+typedef uint32_t        id_t;
+#define __id_t_defined 1
+#endif
+#if !defined(__uid_t_defined)
 typedef uint32_t        uid_t;
+#define __uid_t_defined 1
+#endif
 typedef uint32_t        gid_t;          // group ID
 typedef uintptr_t       key_t;          // IPC key
 typedef unsigned long   mode_t;         // file attributes
 typedef int32_t         nlink_t;        // link count
 typedef int64_t         loff_t;
+#if !defined(__off_t_defined)
+#if (_FILE_OFFSET_BITS == 64)
+typedef int64_t         off_t;
+#define __off_t_defined 1
+#else
+typedef int32_t         off_t;
+#define __off_t_defined 1
+#endif
+#endif /* !defined(__off_t_defined) */
 #if (_FILE_OFFSET_BITS == 32)
-typedef int32_t         off_t;          // 32-bit file offset
 typedef int32_t         blkcnt_t;
 typedef uint32_t        ino_t;          // inode number
 typedef uint32_t        fsblkcnt_t;
 typedef uint32_t        fsfilcnt;
 #else
-typedef int64_t         off_t;          // 64-bit file offset
 typedef int64_t         blkcnt_t;
 typedef uint64_t        ino_t;
 typedef uint64_t        fsblkcnt_t;
@@ -79,7 +99,6 @@ typedef int64_t         blkcnt64_t;
 typedef uint64_t        fsblkcnt64_t;
 typedef uint64_t        fsfilcnt64_t;
 #endif
-typedef uintptr_t       id_t;
 #if defined(_MSC_VER)
 typedef long long       ssize_t;
 #else
@@ -101,11 +120,17 @@ typedef short           index_t;
 typedef void           *timeout_id_t;   // opaque handle from timeout()
 typedef void           *bufcall_id_t;   // opaque handle from bufcall()
 
-typedef id_t            taskid_t;
-typedef id_t            projid_t;
+typedef long            taskid_t;
+typedef long            projid_t;
 
-typedef id_t            ctid_t;
-typedef id_t            zoneid_t;
+#if !defined(__ctid_t_defined)
+typedef long            ctid_t;
+#define __ctid_t_defined 1
+#endif
+#if !defined(__zoneid_t_defined)
+typedef long            zoneid_t;
+#define __zoneid_t_defined 1
+#endif
 
 /* FIXME: <trace.h> stuff */
 typedef struct {
@@ -134,49 +159,6 @@ typedef uint64_t trace_event_set_t;
 #define PFN_INVALID ((pfn_t)-1)
 
 #define NODEV       ((dev_t)-1L)
-
-#if (_ZERO_SOURCE)
-#include <kern/conf.h>
-#endif
-#if defined(NPROCFD)
-#define FD_SETSIZE NPROCFD
-#elif (_POSIX_SOURCE)
-#define FD_SETSIZE _POSIX_FD_SETSIZE
-#endif
-
-#if (USEBSD) && !defined(NFDBITS)
-
-//#include <limits.h>
-
-typedef long       fd_mask;
-#define NFDBITS    (sizeof(fd_mask) * CHAR_BIT)
-
-struct fd_set {
-#if (USEXOPEN)
-    fd_mask fds_bits[FD_SETSIZE / NFDBITS];
-#else
-    fd_mask __fds_bits[FD_SETSIZE / NFDBITS];
-#endif
-};
-typedef struct fd_set fd_set;
-
-#define FD_SET(fd, set)    setbit(set->fd_bits, fd)
-#define FD_CLR(fd, set)    clrbit(set->fd_bits, fd)
-#define FD_ISSET(fd, set)  bitset(set->fd_bits, fd)
-#define FD_ZERO(set)       memset(set->fd_bits, 0, FD_SETSIZE / CHAR_BIT)
-#if (USEBSD)
-#define FD_COPY(src, dest) memcpy(dest, src, sizeof(fd_set))
-#endif
-
-#endif /* !defined(NFDBITS) */
-
-#if (USEBSD) && !defined(__struct_timeval_defined)
-#define __struct_timeval_defined 1
-struct timeval {
-    time_t      tv_sec;
-    suseconds_t tv_usec;
-};
-#endif
 
 #endif /* __SYS_TYPES_H__ */
 

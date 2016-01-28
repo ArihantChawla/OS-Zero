@@ -7,6 +7,9 @@
 #if !defined(__size_t_defined)
 #include <share/size.h>
 #endif
+#if !defined(__time_types_defined)
+#include <share/time.h>
+#endif
 #include <bits/signal.h>
 //#include <sys/types.h>
 //#include <zero/param.h>

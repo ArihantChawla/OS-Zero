@@ -73,122 +73,32 @@ const char _ltoxtab[]
     'f',
 };
 
-#define KBZERODEBUG 0
-#if (KBZERODEBUG)
-#include <kern/util.h>
-#endif
-
 /* assumes longword-aligned blocks */
 void
-kbzero(void *adr, uintptr_t len)
-{
-    uintptr_t  nleft = len;
-    long      *ptr = adr;
-    long      *next;
-    char      *cptr;
-    uintptr_t  mask = ((uintptr_t)1 << (LONGSIZELOG2 + 3)) - 1;
-    long       val = 0;
-    long       incr = 8;
-    uintptr_t  n = (uintptr_t)adr & (mask);
-
-    if (len >= 2 * CLSIZE) {
-        nleft -= n;
-#if (KBZERODEBUG)
-        len -= n;
-        kprintf("KBZERO: %ld words (%ld)\n", n, nleft);
-#endif
-        /* zero non-8-word-aligned head long-word by long-word */
-        n >>= LONGSIZELOG2;
-        while (n--) {
-            *ptr++ = val;
-        }
-        n = nleft & ~mask;
-        next = ptr;
-        if (n) {
-            nleft -= n;
-            n >>= LONGSIZELOG2 + 3;
-#if (KBZERODEBUG)
-            len -= n;
-            kprintf("KBZERO: %ld cachelines (%ld)\n",
-                    n >> (LONGSIZELOG2 + 3), nleft);
-#endif
-            /* zero aligned cachelines */
-            while (n--) {
-                ptr[0] = val;
-                ptr[1] = val;
-                ptr[2] = val;
-                ptr[3] = val;
-                next += incr;
-                ptr[4] = val;
-                ptr[5] = val;
-                ptr[6] = val;
-                ptr[7] = val;
-                ptr = next;
-            }
-        }
-    }
-    mask = ~((uintptr_t)1 << LONGSIZELOG2) - 1;
-    if (nleft) {
-        n = nleft & mask;
-        nleft -= n;
-        n >>= LONGSIZELOG2;
-#if (KBZERODEBUG)
-        len -= n << LONGSIZELOG2;
-        kprintf("KBZERO: %ld words (%ld)\n", n, nleft);
-#endif
-        while (n--) {
-            /* zero tail long-words */
-            *ptr++ = val;
-        }
-        cptr = (char *)ptr;
-#if (KBZERODEBUG)
-        kprintf("KBZERO: %ld words\n", nleft);
-        len -= nleft;
-#endif
-        while (nleft--) {
-            *cptr++ = 0;
-        }
-    }
-#if (KBZERODEBUG)
-    kprintf("KBZERO: %ld bytes unzeroed", nleft);
-#endif
-
-    return;
-}
-
-/* assumes longword-aligned blocks with sizes of long-word multiples */
-void
-kmemset(void *adr, int byte, uintptr_t len)
+kbzero(void *adr, size_t len)
 {
     long *next;
     long *ptr = adr;
-    char *cptr;
     long  val = 0;
     long  incr = 8;
-    long  nleft = len;
+    long  nleft = 0;
     
-    val = byte;
-    val |= (val << 8);
-    val |= (val << 16);
-#if (LONGSIZE == 8)
-    val |= (val << 32);
-#endif
-    if (len > ((uintptr_t)1 << (LONGSIZELOG2 + 3))) {
+    if (len > (1UL << (LONGSIZELOG2 + 3))) {
         /* zero non-cacheline-aligned head long-word by long-word */
-        nleft = ((uintptr_t)adr) & (((uintptr_t)1 << (LONGSIZELOG2 + 3)) - 1);
+        nleft = ((uintptr_t)adr) & ((1UL << (LONGSIZELOG2 + 3)) - 1);
         if (nleft) {
-            nleft = ((uintptr_t)1 << (LONGSIZELOG2 + 3)) - nleft;
+            nleft = (1UL << (LONGSIZELOG2 + 3)) - nleft;
             nleft >>= LONGSIZELOG2;
             len -= nleft;
             while (nleft--) {
                 *ptr++ = val;
             }
         }
-        nleft = len & ~(((uintptr_t)1 << (LONGSIZELOG2 + 3)) - 1);
+        nleft = len & ~((1UL << (LONGSIZELOG2 + 3)) - 1);
     }
     next = ptr;
-    if (len >= ((uintptr_t)1 << (LONGSIZELOG2 + 3))) {
-        nleft = len & (((uintptr_t)1 << (LONGSIZELOG2 + 3)) - 1);
+    if (len >= (1UL << (LONGSIZELOG2 + 3))) {
+        nleft = len & ((1UL << (LONGSIZELOG2 + 3)) - 1);
         len >>= LONGSIZELOG2 + 3;
         /* zero aligned cachelines */
         while (len) {
@@ -205,35 +115,81 @@ kmemset(void *adr, int byte, uintptr_t len)
             ptr = next;
         }
     }
-    if (nleft > 0) {
-        len = nleft >> LONGSIZELOG2;
-        nleft -= len << LONGSIZELOG2;
-        while (len--) {
-            /* zero tail long-words */
-            *ptr++ = val;
+    while (nleft--) {
+        /* zero tail long-words */
+        *ptr++ = val;
+    }
+    
+    return;
+}
+
+/* assumes longword-aligned blocks with sizes of long-word multiples */
+void
+kmemset(void *adr, int byte, size_t len)
+{
+    long *next;
+    long *ptr;
+    long  val = 0;
+    long  incr = 8;
+    long  nleft = 0;
+    
+    val = byte;
+    val |= (val << 8);
+    val |= (val << 16);
+#if (LONGSIZE == 8)
+    val |= (val << 32);
+#endif
+    if (len > (1UL << (LONGSIZELOG2 + 3))) {
+        /* zero non-cacheline-aligned head long-word by long-word */
+        nleft = ((uintptr_t)adr) & ((1UL << (LONGSIZELOG2 + 3)) - 1);
+        if (nleft) {
+            nleft = (1UL << (LONGSIZELOG2 + 3)) - nleft;
+            nleft >>= LONGSIZELOG2;
+            len -= nleft;
+            while (nleft--) {
+                *ptr++ = val;
+            }
         }
-        cptr = (char *)ptr;
-        while (nleft--) {
-            *cptr++ = 0;
+        nleft = len & ~((1UL << (LONGSIZELOG2 + 3)) - 1);
+    }
+    next = ptr;
+    if (len >= (1UL << (LONGSIZELOG2 + 3))) {
+        nleft = len & ((1UL << (LONGSIZELOG2 + 3)) - 1);
+        len >>= LONGSIZELOG2 + 3;
+        /* zero aligned cachelines */
+        while (len) {
+            len--;
+            ptr[0] = val;
+            ptr[1] = val;
+            ptr[2] = val;
+            ptr[3] = val;
+            next += incr;
+            ptr[4] = val;
+            ptr[5] = val;
+            ptr[6] = val;
+            ptr[7] = val;
+            ptr = next;
         }
+    }
+    while (nleft--) {
+        /* zero tail long-words */
+        *ptr++ = val;
     }
     
     return;
 }
 
 void
-kmemcpy(void *dest, const void *src, uintptr_t len)
+kmemcpy(void *dest, void *src, unsigned long len)
 {
     unsigned long  nleft = len;
-    long          *dptr = dest;
-    const long    *sptr = src;
-    char          *dcptr;
+    long          *dptr = NULL;
+    long          *sptr = NULL;
     long          *dnext;
-    const char    *scptr;
-    const long    *snext;
+    long          *snext;
     long           incr;
 #if (CACHEPREWARM) && !defined(__GNUC__)
-    long           tmp;
+    long    tmp;
 #endif
 
     dnext = dest;
@@ -265,28 +221,18 @@ kmemcpy(void *dest, const void *src, uintptr_t len)
         dptr[6] = sptr[6];
         dptr[7] = sptr[7];
     }
-    if (nleft > 0) {
-        len = nleft >> LONGSIZELOG2;
-        nleft -= len << LONGSIZELOG2;
-        while (len--) {
-            *dptr++ = *sptr++;
-        }
-        dcptr = (char *)dptr;
-        scptr = (char *)sptr;
-        while (nleft--) {
-            *dcptr++ = *scptr++;
-        }
+    while (nleft--) {
+        *dptr++ = *sptr++;
     }
 
     return;
 }
 
 void
-kbfill(void *adr, uint8_t byte, uintptr_t len)
+kbfill(void *adr, uint8_t byte, unsigned long len)
 {
     unsigned long  nleft = len;
     long          *ptr = NULL;
-    char          *cptr;
     long          *next;
     long           val;
     long           incr;
@@ -322,66 +268,58 @@ kbfill(void *adr, uint8_t byte, uintptr_t len)
         ptr[6] = val;
         ptr[7] = val;
     }
-    if (nleft > 0) {
-        len = nleft >> LONGSIZELOG2;
-        nleft -= len << LONGSIZELOG2;
-        while (len--) {
-            *ptr++ = val;
-        }
-        cptr = (char *)ptr;
-        while (nleft--) {
-            *cptr++ = byte;
-        }
+    while (nleft--) {
+        *ptr++ = val;
     }
 
     return;
 }
 
-intptr_t
+int
 kmemcmp(const void *ptr1,
         const void *ptr2,
-        uintptr_t len)
+        unsigned long nb)
 {
     unsigned char *ucptr1 = (unsigned char *)ptr1;
     unsigned char *ucptr2 = (unsigned char *)ptr2;
-    intptr_t       retval = 0;
+    int            retval = 0;
 
-    if (len) {
-        while ((*ucptr1 == *ucptr2) && (len--)) {
+    if (nb) {
+        while ((*ucptr1 == *ucptr2) && (nb--)) {
             ucptr1++;
             ucptr2++;
         }
-        if (len) {
-            retval = (intptr_t)*ucptr1 - (intptr_t)*ucptr2;
+        if (nb) {
+            retval = (int)*ucptr1 - (int)*ucptr2;
         }
     }
 
     return retval;
 }
 
-intptr_t
+int
 kstrcmp(const char *str1,
         const char *str2)
 {
     unsigned char *ucptr1 = (unsigned char *)str1;
     unsigned char *ucptr2 = (unsigned char *)str2;
-    intptr_t       retval = 0;
+    int            retval = 0;
 
     while ((*ucptr1) && *ucptr1 == *ucptr2) {
         ucptr1++;
         ucptr2++;
     }
     if (*ucptr1) {
-        retval = (intptr_t)*ucptr1 - (intptr_t)*ucptr2;
+        retval = (int)*ucptr1 - (int)*ucptr2;
     }
 
     return retval;
 }
 
-uintptr_t
-kstrncpy(char *dest, const char *src, uintptr_t len)
+long
+kstrncpy(char *dest, const char *src, long len)
 {
-    uintptr_t nb = 0;
+    long nb = 0;
 
     while ((*src) && len--) {
         *dest++ = *src++;
@@ -395,71 +333,51 @@ kstrncpy(char *dest, const char *src, uintptr_t len)
 static unsigned long
 _ltoxn(long val, char *buf, uintptr_t len)
 {
-    uint8_t       u8;
-    unsigned long l;
-    unsigned long m;
-    unsigned long n;
-    long          incr = 4;
-    long          sign = 0;
+    unsigned long uval = zeroabs(val);
+    unsigned long byte;
+    unsigned long l = len - 1;
+    unsigned long incr = 4;
+    unsigned long sign = 0;
 
     if (val < 0) {
         sign = 1;
     }
-    buf[len - 1] = '\0';
-    m = len - 2;
-    buf[m] = 0;
-    n = 0;
-    for (l = 0 ; l < 8 * LONGSIZE ; l += incr) {
-        u8 = (val >> l) & 0xf;
-        buf[m] = _ltoxtab[u8];
-        if (++n == len) {
-
-            break;
-        }
-        m--;
-    }
-    m++;
-    m = min(m, len - 2);
-    while (buf[m] == '0' && m < len - 2) {
-        m++;
-    }
+    buf[l] = '\0';
+    do {
+        byte = uval & 0xf;
+        l--;
+        uval >>= 4;
+        buf[l] = _ltoxtab[byte];
+    } while (uval);
     if (sign) {
-        m--;
-        buf[m] = '-';
+        l--;
+        buf[l] = '-';
     }
 
-    return m;
+    return l;
 }
 
 static unsigned long
 _ltodn(long val, char *buf, uintptr_t len)
 {
-    uint8_t       u8;
-    unsigned long l;
+    unsigned long uval = zeroabs(val);
+    unsigned long tmp;
+    unsigned long byte;
+    unsigned long l = len - 1;
     unsigned long n;
-    long          sign = 0;
+    unsigned long sign = 0;
 
     if (val < 0) {
         sign = 1;
     }
-    buf[len - 1] = '\0';
-    l = len - 2;
-    n = 0;
+    buf[l] = '\0';
     do {
-        u8 = val % 10;
-        val /= 10;
-        buf[l] = _ltoxtab[u8];
-        if (++n == len) {
-            
-            break;
-        }
+        tmp = divu10(uval);
         l--;
-    } while (val);
-    l++;
-    l = min(l, len - 2);
-    while (buf[l] == '0' && l < len - 2) {
-        l++;
-    }
+        byte = uval - 10 * tmp;
+        buf[l] = _ltoxtab[byte];
+        uval = tmp;
+    } while (uval);
     if (sign) {
         l--;
         buf[l] = '-';
@@ -471,59 +389,36 @@ _ltodn(long val, char *buf, uintptr_t len)
 static unsigned long
 _ultoxn(unsigned long uval, char *buf, uintptr_t len)
 {
-    uint8_t       u8;
-    unsigned long l;
-    unsigned long m;
-    unsigned long n;
-    long          incr = 4;
+    unsigned long byte;
+    unsigned long l = len - 1;
 
-    buf[len - 1] = '\0';
-    m = len - 2;
-    buf[m] = 0;
-    n = 0;
-    for (l = 0 ; l < 8 * LONGSIZE ; l += incr) {
-        u8 = (uval >> l) & 0xf;
-        buf[m] = _ltoxtab[u8];
-        if (++n == len) {
+    buf[l] = '\0';
+    do {
+        byte = uval & 0xf;
+        l--;
+        uval >>= 4;
+        buf[l] = _ltoxtab[byte];
+    } while (uval);
 
-            break;
-        }
-        m--;
-    }
-    m++;
-    m = min(m, len - 2);
-    while (buf[m] == '0' && m < len - 2) {
-        m++;
-    }
-
-    return m;
+    return l;
 }
 
 static unsigned long
 _ultodn(unsigned long uval, char *buf, uintptr_t len)
 {
-    uint8_t       u8;
-    unsigned long l;
+    unsigned long byte;
+    unsigned long tmp;
+    unsigned long l = len - 1;
     unsigned long n;
 
-    buf[len - 1] = '\0';
-    l = len - 2;
-    n = 0;
+    buf[l] = '\0';
     do {
-        u8 = uval % 10;
-        uval /= 10;
-        buf[l] = _ltoxtab[u8];
-        if (++n == len) {
-            
-            break;
-        }
+        tmp = divu10(uval);
         l--;
+        byte = uval - 10 * tmp;
+        buf[l] = _ltoxtab[byte];
+        uval = tmp;
     } while (uval);
-    l++;
-    l = min(l, len - 2);
-    while (buf[l] == '0' && l < len - 2) {
-        l++;
-    }
 
     return l;
 }

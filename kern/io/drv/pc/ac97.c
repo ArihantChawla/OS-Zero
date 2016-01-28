@@ -1,6 +1,9 @@
+#include <kern/conf.h>
+
+#if (AC97)
+
 #include <stdint.h>
 #include <sys/io.h>
-
 #include <zero/cdefs.h>
 #include <zero/param.h>
 #include <zero/param.h>
@@ -160,4 +163,6 @@ ac97init(struct pcidev *dev)
 
     return;
 }
+
+#endif /* AC97 */
 

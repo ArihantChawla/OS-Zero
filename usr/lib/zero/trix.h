@@ -126,6 +126,16 @@ long long llabs(long long x);
 /* round down to the previous multiple of (the power of two) b2 */
 #define rounddownpow2(a, b2) ((a) & ~((b2) - 0x01))
 
+#if defined(__GNUC__) && 0
+#define roundup(a, b)                                                   \
+    ((__builtin_constant_p(b) && powerof2(b))                             \
+     ? rounduppow2(a, b)                                                \
+     : ((((a) + ((b) - 1)) / (b)) * b))
+#else
+#define roundup(a, b)                                                   \
+    ((((a) + ((b) - 1)) / (b)) * (b))
+#endif
+
 /* compute the average of a and b without division */
 #define uavg(a, b)      (((a) & (b)) + (((a) ^ (b)) >> 1))
 

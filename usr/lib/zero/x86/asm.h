@@ -106,6 +106,70 @@ m_cmpxchg32(volatile long *p,
     return res;
 }
 
+/* atomic set bit operation */
+static INLINE void
+m_setbit(volatile long *p, long ndx)
+{
+    if (IMMEDIATE(ndx)) {
+        __asm__ __volatile__ ("lock orb %1, %0\n"
+                              : "=m" (*(p))
+                              : "iq" ((uint8_t)(1 << ndx))
+                              : "memory");
+    } else {
+        __asm__ __volatile__ ("lock btsq %1, %0\n"
+                              : "=m" (*(p))
+                              : "Ir" (ndx)
+                              : "memory");
+    }
+
+    return;
+}
+
+/* atomic reset/clear bit operation */
+static INLINE void
+m_clrbit(volatile long *p, long ndx)
+{
+    if (IMMEDIATE(ndx)) {
+        __asm__ __volatile__ ("lock andb %1, %0\n"
+                              : "=m" (*((uint8_t *)(p) + (ndx >> 3)))
+                              : "iq" ((uint8_t)~(1 << ndx))
+                              : "memory");
+    } else {
+        __asm__ __volatile__ ("btrb %1, %0\n"
+                              : "=m" (*((uint8_t *)(p) + (ndx >> 3)))
+                              : "Ir" (ndx));
+    }
+
+    return;
+}
+
+static __inline__ void
+m_unlkbit(volatile long *p, long ndx)
+{
+    m_membar();
+    m_clrbit(p, ndx);
+
+    return;
+}
+
+/* atomic flip/toggle bit operation */
+static INLINE void
+m_flipbit(volatile long *p, long ndx)
+{
+    if (IMMEDIATE(ndx)) {
+        __asm__ __volatile__ ("lock xorb %1, %0\n"
+                              : "=m" (*((uint8_t *)(p) + (ndx >> 3)))
+                              : "iq" ((uint8_t)~(1 << ndx))
+                              : "memory");
+    } else {
+        __asm__ __volatile__ ("lock btcb %1, %0\n"
+                              : "=m" (*((uint8_t *)(p) + (ndx >> 3)))
+                              : "Ir" (ndx));
+    }
+
+    return;
+}
+
 /* atomic set and test bit operation; returns the old value */
 static __inline__ long
 m_cmpsetbit32(volatile long *p, long ndx)

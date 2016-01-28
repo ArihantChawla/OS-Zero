@@ -2,50 +2,33 @@
 #define __KERN_MEM_MAG_H__
 
 #include <stdint.h>
-#include <zero/param.h>
-#include <zero/mtx.h>
-//#include <kern/task.h>
-#include <kern/mem/slab.h>
+#include <kern/mem/mem.h>
 
-#define MAGMIN     (1UL << MAGMINLOG2)
-//#define MAGMINLOG2 PAGESIZELOG2
-#define MAGMINLOG2 PAGESIZELOG2
-//#define MAGMINLOG2 CLSIZELOG2
-
-#define magpop(mp)         ((mp)->ptab[((mp)->ndx)++])
-#define magpush(mp, ptr)   ((mp)->ptab[--((mp)->ndx)] = (ptr))
-#define magempty(mp)       ((mp)->ndx == (mp)->n)
-#define magfull(mp)        (!(mp)->ndx)
-struct maghdr {
-#if 0
-    volatile long  lk;
-#endif
+#define mempop(mp)       ((mp)->ptab[((mp)->ndx)++])
+#define mempush(mp, ptr) ((mp)->ptab[--((mp)->ndx)] = (ptr))
+#define memmagempty(mp)  ((mp)->ndx == (mp)->n)
+#define memmagfull(mp)   (!(mp)->ndx)
+struct memmag {
     uintptr_t      base;
     volatile long  n;
     volatile long  ndx;
     volatile long  bkt;
-    struct maghdr *prev;
-    struct maghdr *next;
-#if 0
-#if (SLABMINLOG2 - MAGMINLOG2 < (LONGSIZELOG2 + 3))
+    struct memmag *prev;
+    struct memmag *next;
+#if defined(MEMPARANOIA)
+#if (MEMSLABMINLOG2 - MEMMINLOG2 < (LONGSIZELOG2 + 3))
     unsigned long  bmap;
 #else
-    uint8_t        bmap[1UL << (SLABMINLOG2 - MAGMINLOG2 - 3)];
+    uint8_t        bmap[1UL << (MEMSLABMINLOG2 - MEMMINLOG2 - 3)];
 #endif
-#endif
-    void          *ptab[1UL << (SLABMINLOG2 - MAGMINLOG2)];
+#endif /* defined(MEMPARANOIA) */
+    void           *ptab[1UL << (MEMSLABMINLOG2 - MEMMINLOG2)];
 };
 
-#define magblknum(ptr, zone)                                            \
-    (((uintptr_t)(ptr) - (zone)->base) >> SLABMINLOG2)
-#if 0
-#define magslabadr(ptr)                                                 \
-    ((void *)((uintptr_t)(ptr) & ~(SLABMIN - 1)))
-#endif
-#define maggethdr(ptr, zone)                                            \
+#define memgetmag(ptr, pool)                                            \
     (!(ptr)                                                             \
      ? NULL                                                             \
-     : (struct maghdr *)(zone)->hdrtab + magblknum(ptr, zone))
+     : (struct memmag *)(pool)->blktab + memgetblknum(ptr, pool))
 
 #endif /* __KERN_MEM_MAG_H__ */
 

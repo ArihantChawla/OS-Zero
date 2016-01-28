@@ -7,32 +7,40 @@
 //#include <kern/proc/task.h>
 #include <kern/mem/slab.h>
 
-#define SLABNHDR     (1UL << (PTRBITS - SLABMINLOG2))
-#define SLABHDRTABSZ (SLABNHDR * sizeof(struct slabhdr))
-#define SLABHDRBASE  (VIRTBASE - SLABHDRTABSZ)
+#define MEMNSLABHDR  (1UL << (PTRBITS - SLABMINLOG2))
+#define MEMSLABTABSZ (MEMNSLABHDR * sizeof(struct memslab))
+#define MEMSLABBASE  (VIRTBASE - MEMSLABTABSZ)
 
-#define slabgetprev(hp, zone)                                           \
+#define memslabgetprev(hp, pool)                                        \
     (!(hp)                                                              \
      ? NULL                                                             \
      : (((hp)->link & 0x0000ffffL)                                      \
-        ? ((struct slabhdr *)((zone)->tab) + ((hp)->link & 0x0000ffffL)) \
+        ? ((struct memslab *)((pool)->tab)                              \
+           + ((hp)->link & 0x0000ffffL))   \
         : NULL))
-#define slabgetnext(hp, zone)                                           \
+#define memslabgetnext(hp, pool)                                        \
     (!(hp)                                                              \
      ? NULL                                                             \
      : (((hp)->link & 0xffff0000L)                                      \
-        ? ((struct slabhdr *)((zone)->tab) + (((hp)->link & 0xffff0000L) >> 16)) \
+        ? ((struct memslab *)((pool)->tab)                              \
+           + (((hp)->link & 0xffff0000L) >> 16))                        \
         : NULL))
-#define slabclrprev(hp)                                                 \
+#define memslabclrprev(hp)                                              \
     ((hp)->link &= 0xffff0000L)
-#define slabclrnext(hp)                                                 \
+#define memslabclrnext(hp)                                              \
     ((hp)->link &= 0x0000ffffL)
-#define slabclrlink(hp)                                                 \
+#define memslabclrlink(hp)                                              \
     ((hp)->link = 0L)
-#define slabsetprev(hp, hdr, zone)                                      \
-    (slabclrprev(hp), (hp)->link |= (hdr) ? slabhdrnum(hdr, zone) : 0)
-#define slabsetnext(hp, hdr, zone)                                      \
-    (slabclrnext(hp), (hp)->link |= (hdr) ? (slabhdrnum(hdr, zone) << 16) : 0)
+#define memslabsetprev(hp, hdr, pool)                                   \
+    (memslabclrprev(hp), (hp)->link                                     \
+     |= ((hdr)                                                          \
+         ? memgetblknum(hdr, pool)                                      \
+         : 0))
+#define memslabsetnext(hp, hdr, pool)                                   \
+    (memslabclrnext(hp), (hp)->link                                     \
+     |= ((hdr)                                                          \
+         ? (memgetblknum(hdr, pool) << 16)                              \
+         : 0))
 
 #endif /* __KERN_MEM_SLAB32_H__ */
 

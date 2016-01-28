@@ -11,6 +11,16 @@
 typedef __gnuc_va_list __stdio_va_list;
 #endif
 #endif
+#if !defined(__off_t_defined)
+#include <stdint.h>
+#if (_FILE_OFFSET_BITS == 64)
+typedef int64_t         off_t;
+#define __off_t_defined 1
+#else
+typedef int32_t         off_t;
+#define __off_t_defined 1
+#endif
+#endif /* !defined(__off_t_defined) */
 #include <fcntl.h>
 //#include <sys/types.h>
 #if (_ZERO_SOURCE)

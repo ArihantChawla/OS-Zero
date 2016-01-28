@@ -11,6 +11,8 @@
 #include <kern/proc/task.h>
 
 extern void schedsetready(struct task *task, long cpu);
+extern void schedsetwait(struct task *task);
+extern void schedsetsleep(struct task *task);
 
 #define schedlkcpuntick(cpu)     (mtxlk(&cpu->lk), (cpu)->ntick)
 #define schedlkcpu(cpu)          (mtxlk(&cpu->lk))

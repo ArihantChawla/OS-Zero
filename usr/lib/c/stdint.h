@@ -89,8 +89,6 @@ typedef int64_t            intptr_t;
 typedef uint64_t           uintptr_t;
 #endif
 
-#include <stddef.h>
-
 /* limits for explicit-size types */
 #define INT8_MIN         (-0x7f - 1)
 #define INT8_MAX         0x7f

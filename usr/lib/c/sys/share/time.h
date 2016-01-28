@@ -9,5 +9,5 @@ struct timeval {
 #define __struct_timeval_defined 1
 #endif
 
-#endif __SYS_SHARE_TIME_H__
+#endif /* __SYS_SHARE_TIME_H__ */
 

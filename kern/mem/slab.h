@@ -2,11 +2,71 @@
 #define __KERN_MEM_SLAB_H__
 
 #include <stdint.h>
-#include <zero/cdefs.h>
+#include <limits.h>
 #include <zero/param.h>
+#include <kern/types.h>
 #include <kern/mem/mem.h>
+#include <kern/mem/pool.h>
+#if (!MEMNEWSLAB)
+#if (PTRBITS <= 32)
+#include <kern/mem/slab32.h>
+#elif (PTRBITS <= 64)
+#include <kern/mem/slab64.h>
+#endif
+#endif
 
-struct slabhdr {
+#define MEMSLABMIN     (1UL << MEMSLABMINLOG2)
+#define MEMSLABMINLOG2 16 // don't make this less than 16 for now :)
+
+#if (MEMNEWSLAB)
+#define memblkclrinfo(bp)                                               \
+    ((bp)->info = ((m_ureg_t)0))
+#define memslabclrbkt(bp)                                               \
+    ((hp)->info &= ~MEMBKTMASK)
+#define memslabsetbkt(hp, bkt)                                          \
+    (memslabclrbkt(hp), (hp)->info |= (bkt))
+#define memslabgetbkt(hp)                                               \
+    ((hp)->info & MEMBKTMASK)
+#define memslabisfree(hp)                                               \
+    (!((hp)->info) & MEMALLOCBIT)
+#define memslabsetfree(hp)                                              \
+    ((hp)->info |= MEMFREE)
+#define memslabclrfree(hp)                                              \
+    ((hp)->info &= ~MEMFREE)
+#define memslabsetflg(hp, flg)                                          \
+    ((hp)->info |= (flg))
+#define memslabclrflg(hp)                                               \
+    ((hp)->info &= ~MEMFLGBITS)
+#else
+#define memslabclrinfo(hp)                                              \
+    ((hp)->info = 0UL)
+#define memslabclrbkt(hp)                                               \
+    ((hp)->info &= MEMFLGBITS)
+#define memslabsetbkt(hp, bkt)                                          \
+    (memslabclrbkt(hp), (hp)->info |= ((bkt) << MEMNFLGBIT))
+#define memslabgetbkt(hp)                                               \
+    ((hp)->info >> MEMNFLGBIT)
+#define memslabisfree(hp)                                               \
+    (((hp)->info) & MEMFREE)
+#define memslabsetfree(hp)                                              \
+    ((hp)->info |= MEMFREE)
+#define memslabclrfree(hp)                                              \
+    ((hp)->info &= ~MEMFREE)
+#define memslabsetflg(hp, flg)                                          \
+    ((hp)->info |= (flg))
+#define memslabclrflg(hp)                                               \
+    ((hp)->info &= ~MEMFLGBITS)
+#endif
+
+#if (MEMNEWSLAB)
+struct memblk {
+    void          *adr;
+    m_ureg_t       info;
+    struct memblk *prev;
+    struct memblk *next;
+};
+#else
+struct memslab {
     unsigned long   info;
 #if (PTRBITS <= 32)
     uint32_t        link;
@@ -15,48 +75,26 @@ struct slabhdr {
     struct slabhdr *next;
 #endif
 };
-
-#define slabnum(ptr, zone)                                              \
-    (((uintptr_t)(ptr) - ((zone)->base)) >> SLABMINLOG2)
-#define slabgetadr(hdr, zone)                                           \
-    ((void *)((zone)->base + ((uintptr_t)slabhdrnum(hdr, zone) << SLABMINLOG2)))
-#define slabhdrnum(hdr, zone)                                           \
-    (!(hdr) ? 0 : (uintptr_t)((hdr) - (struct slabhdr *)(zone)->hdrtab))
-#define slabgethdr(ptr, zone)                                           \
-    (!(ptr) ? NULL : (struct slabhdr *)((zone)->hdrtab) + slabnum(ptr, zone))
-
-#define slabclrinfo(hp)                                                 \
-    ((hp)->info = 0UL)
-#define slabclrbkt(hp)                                                  \
-    ((hp)->info &= MEMFLGBITS)
-#define slabsetbkt(hp, bkt)                                             \
-    (slabclrbkt(hp), (hp)->info |= ((bkt) << MEMNFLGBIT))
-#define slabgetbkt(hp)                                                  \
-    ((hp)->info >> MEMNFLGBIT)
-#define slabisfree(hp)                                                  \
-    (((hp)->info) & MEMFREE)
-#define slabsetfree(hp)                                                 \
-    ((hp)->info |= MEMFREE)
-#define slabclrfree(hp)                                                 \
-    ((hp)->info &= ~MEMFREE)
-#define slabsetflg(hp, flg)                                             \
-    ((hp)->info |= (flg))
-#define slabclrflg(hp)                                                  \
-    ((hp)->info &= ~MEMFLGBITS)
-
-#define SLABMIN     (1UL << SLABMINLOG2)
-#define SLABMINLOG2 16 // don't make this less than 16
-
-#if (PTRBITS <= 32)
-#include <kern/mem/slab32.h>
-#elif (PTRBITS <= 64)
-#include <kern/mem/slab64.h>
 #endif
 
-void   slabinit(struct memzone *virtzone,
-                uintptr_t base, size_t nbphys);
-void * slaballoc(struct memzone *zone, size_t nb, unsigned long flg);
-void   slabfree(struct memzone *zone, void *ptr);
+#if (MEMNEWSLAB)
+#define memgetblknum(ptr, pool, bkt)                                    \
+    (((uintptr_t)(ptr) - (pool)->base) >> (bkt))
+#define memgetadr(hdr, pool, bkt)                                       \
+    ((void *)((pool)->base + (memgetblknum(hdr, pool) << (bkt))))
+#define memgethdr(ptr, pool, bkt)                                       \
+    ((struct memslab *)((pool)->blktab[(bkt)]) + memgetblknum(ptr, pool, bkt))
+#else
+#define memgetblknum(ptr, pool)                                         \
+    (((uintptr_t)(ptr) - (pool)->base) >> MEMMINLOG2)
+#define memgetadr(hdr, pool)                                            \
+    ((void *)((pool)->base + (memgetblknum(hdr, pool) << MEMMINLOG2)))
+#define memgethdr(ptr, pool)                                            \
+    ((struct memslab *)((pool)->blktab) + memgetblknum(ptr, pool))
+#endif
+
+void * slaballoc(struct mempool *pool, unsigned long nb, unsigned long flg);
+void   slabfree(struct mempool *pool, void *ptr);
 
 #endif /* __KERN_MEM_SLAB_H__ */
 

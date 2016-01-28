@@ -1,25 +1,19 @@
 #ifndef __KERN_MEM_SLAB64_H__
 #define __KERN_MEM_SLAB64_H__
 
-#include <zero/param.h>
-#include <zero/mtx.h>
-#include <zero/trix.h>
-//#include <kern/proc/task.h>
-#include <kern/mem/mem.h>
-
-#define slabgetprev(hp, zone)                                           \
+#define memslabgetprev(hp, slab)                                        \
     ((hp)->prev)
-#define slabgetnext(hp, zone)                                           \
+#define memslabgetnext(hp, slab)                                        \
     ((hp)->next)
-#define slabclrprev(hp)                                                 \
+#define memslabclrprev(hp)                                              \
     ((hp)->prev = NULL)
-#define slabclrnext(hp)                                                 \
+#define memslabclrnext(hp)                                              \
     ((hp)->next = NULL)
-#define slabclrlink(hp)                                                 \
+#define memslabclrlink(hp)                                              \
     ((hp)->prev = (hp)->next = NULL)
-#define slabsetprev(hp, hdr, zone)                                      \
+#define memslabsetprev(hp, hdr, slab)                                   \
     ((hp)->prev = (hdr))
-#define slabsetnext(hp, hdr, zone)                                      \
+#define memslabsetnext(hp, hdr, slab)                                   \
     ((hp)->next = (hdr))
 
 #endif /* __KERN_MEM_SLAB64_H__ */

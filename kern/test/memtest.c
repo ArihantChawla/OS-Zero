@@ -6,10 +6,11 @@
 #include <pthread.h>
 #include <zero/cdefs.h>
 #include <zero/param.h>
+#include <zero/mtx.h>
 #include <kern/malloc.h>
 #include <kern/mem/mem.h>
-#include <kern/mem/mag.h>
 #include <kern/mem/slab.h>
+#include <kern/mem/pool.h>
 #include <kern/unit/ia32/vm.h>
 
 #define MEMTESTNTHR   16
@@ -27,43 +28,43 @@ void          *ptrtab[MEMTESTNTHR * MEMTESTNALLOC];
 volatile long  lktab[MEMTESTNTHR * MEMTESTNALLOC];
 pthread_t      thrtab[MEMTESTNTHR];
 
-extern struct memzone slabvirtzone;
-extern struct memzone magvirtzone;
+extern struct mempool slabvirtzone;
+extern struct mempool memvirtpool;
 
 void
-magprint(struct maghdr *mag)
+slabprint(struct memslab *slab)
 {
     unsigned long ul;
 
-    if (!mag) {
+    if (!slab) {
 
         return;
     }
 
-//    printf("FLAGS: %lx\n", mag->flg);
-#if (MAGBITMAP)
-    printf("BASE: %lx\n", (unsigned long)mag->base);
+//    printf("FLAGS: %lx\n", slab->flg);
+#if (SLABBITMAP)
+    printf("BASE: %lx\n", (unsigned long)slab->base);
 #endif
-    printf("N: %ld\n", mag->n);
-    printf("NDX: %ld\n", mag->ndx);
-    printf("BKT: %ld\n", mag->bkt);
-    printf("PREV: %p\n", mag->prev);
-    printf("NEXT: %p\n", mag->next);
-#if (MAGBITMAP)
+    printf("N: %ld\n", slab->n);
+    printf("NDX: %ld\n", slab->ndx);
+    printf("BKT: %ld\n", slab->bkt);
+    printf("PREV: %p\n", slab->prev);
+    printf("NEXT: %p\n", slab->next);
+#if (SLABBITMAP)
     printf("BITMAP:");
-#if ((SLABLOG2 - MAGMINLOG2) < (LONGSIZELOG2 + 3))
-    printf(" %lx", mag->bmap);
+#if ((SLABLOG2 - MEMSLABMINLOG2) < (LONGSIZELOG2 + 3))
+    printf(" %lx", slab->bmap);
 #else
-    printf(" %x", mag->bmap[0]);
-    for (ul = 1 ; ul < (mag->n >> 3) ; ul++) {
-        printf(" %x", mag->bmap[ul]);
+    printf(" %x", slab->bmap[0]);
+    for (ul = 1 ; ul < (slab->n >> 3) ; ul++) {
+        printf(" %x", slab->bmap[ul]);
     }
 #endif
     printf("\n");
 #endif    
     printf("STACK:");
-    for (ul = 0 ; ul < mag->n ; ul++) {
-        printf(" %p", mag->ptab[ul]);
+    for (ul = 0 ; ul < slab->n ; ul++) {
+        printf(" %p", slab->ptab[ul]);
     }
     printf("\n");
 
@@ -71,34 +72,33 @@ magprint(struct maghdr *mag)
 }
 
 void
-magdiag(void)
+slabdiag(void)
 {
-    struct maghdr *mag1;
-    volatile long *lktab = magvirtzone.lktab;
+    struct memslab *slab1;
     unsigned long  l;
 
-    for (l = MAGMINLOG2 ; l < SLABMINLOG2 ; l++) {
+    for (l = MEMSLABMINLOG2 ; l < MEMSLABMINLOG2 ; l++) {
 #if 0
-        maglkq(magvirtzone.lktab, l);
+        slablkq(slabvirtzone.lktab, l);
 #endif
-        if (mtxtrylk(&lktab[l])) {
-            mag1 = magvirtzone.tab[l];
-            while (mag1) {
-                if (mag1->bkt != l) {
+        if (mtxtrylk(&slabvirtzone.tab[l].lk)) {
+            slab1 = slabvirtzone.tab[l].list;
+            while (slab1) {
+                if (slab1->bkt != l) {
                     printf("invalid bkt(%ld) on free list %lu\n",
-                           mag1->bkt, l);
-                    magprint(mag1);
+                           slab1->bkt, l);
+                    slabprint(slab1);
                     
                     abort();
                 }
-                if (mag1->ndx >= mag1->n) {
+                if (slab1->ndx >= slab1->n) {
                     printf("too big index(%ld) on free list %lu: %ld\n",
-                            mag1->ndx, l, mag1->n);
-                    magprint(mag1);
+                            slab1->ndx, l, slab1->n);
+                    slabprint(slab1);
                     
                     abort();
                 }
-                mag1 = mag1->next;
+                slab1 = slab1->next;
             }
             mtxunlk(&lktab[l]);
         }
@@ -108,26 +108,17 @@ magdiag(void)
 }
 
 void
-slabprint(struct slabhdr *hdr)
-{
-    printf("INFO: %lx\n", hdr->info);
-    printf("BKT: %lu\n", slabgetbkt(hdr));
-
-    return;
-}
-
-void
 slabprintall(void)
 {
     unsigned long ul;
-    struct slabhdr *hdr1;
+    struct memslab *hdr1;
 
     for (ul = 0 ; ul < PTRBITS ; ul++) {
         hdr1 = slabvirtzone.tab[ul];
         printf("BKT %lu -", ul);
         while (hdr1) {
-            printf(" %p ", slabgetadr(hdr1, &slabvirtzone));
-            hdr1 = slabgetnext(hdr1, &slabvirtzone);
+            printf(" %p ", memslabgetadr(hdr1, &slabvirtzone));
+            hdr1 = memslabgetnext(hdr1, &slabvirtzone);
         }
         printf("\n");
     }
@@ -141,64 +132,64 @@ diag(void)
 {
     unsigned long   bkt;
     unsigned long   n;
-    struct slabhdr *hdr1;
-    struct slabhdr *hdr2;
-    struct slabhdr *hdr3;
+    struct memslab *hdr1;
+    struct memslab *hdr2;
+    struct memslab *hdr3;
 
-    for (bkt = SLABMINLOG2 ; bkt < PTRBITS ; bkt++) {
+    for (bkt = MEMSLABMINLOG2 ; bkt < PTRBITS ; bkt++) {
         mtxlk(&lktab[bkt]);
         n = 0;
         hdr1 = slabvirtzone.tab[bkt];
         if (hdr1) {
             printf("BKT %lu: ", bkt);
-            if (slabgetprev(hdr1, slabvirthdrtab)) {
-                hdr2 = slabgetprev(hdr1, slabvirthdrtab);
+            if (memslabgetprev(hdr1, slabvirthdrtab)) {
+                hdr2 = memslabgetprev(hdr1, slabvirthdrtab);
                 printf("%p: prev set on head: %p (%p)\n",
-                        slabgetadr(hdr1, &slabvirtzone),
-                        slabgetprev(hdr1, &slabvirtzone),
-                        slabgetadr(hdr2, &slabvirtzone));
+                        memslabgetadr(hdr1, &slabvirtzone),
+                        memslabgetprev(hdr1, &slabvirtzone),
+                        memslabgetadr(hdr2, &slabvirtzone));
                 
                 abort();
             }
             while (hdr1) {
-                printf(" %lu: %p (%p)", n, slabgetadr(hdr1, &slabvirtzone), hdr1);
-                if (slabgetadr(hdr1, &slabvirtzone) == NULL) {
+                printf(" %lu: %p (%p)", n, memslabgetadr(hdr1, &slabvirtzone), hdr1);
+                if (memslabgetadr(hdr1, &slabvirtzone) == NULL) {
                     printf("NULL item on list\n");
                     
                     abort();
                 }
-                if (slabgetbkt(hdr1) != bkt) {
+                if (memslabgetbkt(hdr1) != bkt) {
                     printf("%p: invalid bkt %lu (%lu)\n",
-                            slabgetadr(hdr1, &slabvirtzone),
-                            slabgetbkt(hdr1),
+                            memslabgetadr(hdr1, &slabvirtzone),
+                            memslabgetbkt(hdr1),
                             bkt);
                     slabprint(hdr1);
                     
                     abort();
                 }
-                hdr2 = slabgetnext(hdr1, &slabvirtzone);
+                hdr2 = memslabgetnext(hdr1, &slabvirtzone);
                 if (hdr2) {
-                    printf(" %lu: %p (%p)", n + 1, slabgetadr(hdr2, &slabvirtzone), hdr2);
+                    printf(" %lu: %p (%p)", n + 1, memslabgetadr(hdr2, &slabvirtzone), hdr2);
                     if (hdr1 == hdr2) {
                         printf("%p: next is self\n",
-                                slabgetadr(hdr1, &slabvirtzone));
+                                memslabgetadr(hdr1, &slabvirtzone));
                     }
-                    if (slabgetprev(hdr2, &slabvirtzone) != hdr1) {
-                        hdr3 = slabgetprev(hdr2, &slabvirtzone);
+                    if (memslabgetprev(hdr2, &slabvirtzone) != hdr1) {
+                        hdr3 = memslabgetprev(hdr2, &slabvirtzone);
                         printf(" %p: invalid prev %p(%ld) (%p)\n",
-                                slabgetadr(hdr2, &slabvirtzone),
-                                slabgetadr(hdr3, &slabvirtzone),
-                                slabgetbkt(hdr2),
-                                slabgetadr(hdr1, &slabvirtzone));
+                                memslabgetadr(hdr2, &slabvirtzone),
+                                memslabgetadr(hdr3, &slabvirtzone),
+                                memslabgetbkt(hdr2),
+                                memslabgetadr(hdr1, &slabvirtzone));
                         
                         abort();
                     }
-                    if (slabgetnext(hdr1, &slabvirtzone) != hdr2) {
-                        hdr3 = slabgetnext(hdr1, &slabvirtzone);
+                    if (memslabgetnext(hdr1, &slabvirtzone) != hdr2) {
+                        hdr3 = memslabgetnext(hdr1, &slabvirtzone);
                         printf(" %p: invalid next %p (%p)\n",
-                                slabgetadr(hdr1, &slabvirtzone),
-                                slabgetadr(hdr3, &slabvirtzone),
-                                slabgetadr(hdr2, &slabvirtzone));
+                                memslabgetadr(hdr1, &slabvirtzone),
+                                memslabgetadr(hdr3, &slabvirtzone),
+                                memslabgetadr(hdr2, &slabvirtzone));
                         
                         abort();
                     }
@@ -220,7 +211,7 @@ test(void *dummy)
 
     for ( ; ; ) {
         for (l = 0 ; l < MEMTESTNALLOC ; l++) {
-            ptrtab[l] = memalloc(rand() & (8 * SLABMIN - 1), MEMZERO);
+            ptrtab[l] = memalloc(rand() & (8 * MEMSLABMIN - 1), MEMZERO);
 #if (MEMPRINT)
             if (!ptrtab[l]) {
                 fprintf(stderr, "failed to allocate memory\n");
@@ -246,7 +237,7 @@ int
 main(int argc, char *argv[])
 {
     long  n = MEMTESTNTHR;
-    void *base = memalign(SLABMIN, 256 * 1024 * 1024);
+    void *base = memalign(MEMSLABMIN, 256 * 1024 * 1024);
 
     printf("PTRBITS == %d\n", PTRBITS);
 //    printf("MEMPID == %d\n", MEMPID);

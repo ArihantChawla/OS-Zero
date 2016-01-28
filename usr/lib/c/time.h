@@ -188,7 +188,7 @@ extern struct tm *getdate_r(const char *restrict str,
 
 #endif /* !defined(__KERNEL__) */
 
-#include <sys/select.h>
+//#include <sys/select.h>
 
 #endif /* __TIME_H__ */
 
