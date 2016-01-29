@@ -5,7 +5,7 @@
 
 #include <stddef.h>
 #include <execinfo.h>
-#include <zero/cdecl.h>
+#include <zero/cdefs.h>
 
 #define GNUTRACEMAX 32  // max # of function calls to backtrace
 
