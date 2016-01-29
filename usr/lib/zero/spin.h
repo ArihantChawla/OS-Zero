@@ -6,6 +6,7 @@
 typedef volatile long zerospin;
 
 #define ZEROSPININITVAL 0L
+#define ZEROSPINLKVAL   1L
 
 #define spininit(sp) (*(sp) = ZEROSPININITVAL)
 
@@ -14,38 +15,38 @@ typedef volatile long zerospin;
  * - return non-zero on success, zero if already locked
  */
 static __inline__ long
-spintrylk(volatile long *sp, long val)
+spintrylk(volatile long *sp)
 {
-    volatile long res = 0;
+    volatile long res;
 
-    res = m_cmpswap(sp, ZEROSPININITVAL, val);
+    res = m_cmpswap(sp, ZEROSPININITVAL, ZEROSPINLKVAL);
     if (res == ZEROSPININITVAL) {
         res++;
     }
     
-    return ret;
+    return res;
 }
 
 /*
  * lock spin-lock
  */
-static __inline__ void
-spinlk(volatile long *sp, long val)
+static __inline__ long
+spinlk(volatile long *sp)
 {
-    volatile long res = val;
+    volatile long res;
 
     do {
-        res = m_cmpswap(sp, ZEROSPININITVAL, val);
+        res = m_cmpswap(sp, ZEROSPININITVAL, ZEROSPINLKVAL);
     } while (res != ZEROSPININITVAL);
 
-    return;
+    return res;
 }
 
 /*
  * release spin-lock
  */
 static __inline__ void
-spinunlk(volatile long *sp, long val)
+spinunlk(volatile long *sp)
 {
     m_membar();
     *sp = ZEROSPININITVAL;
