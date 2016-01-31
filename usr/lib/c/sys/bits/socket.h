@@ -105,7 +105,9 @@
 #define SHUT_WR        1 // disable further send operations
 #define SHUT_RDWR      2 // disable further receive and send operations
 
-#define CMSG_ALIGN(sz) (((sz) + sizeof(long) - 1) & ~(sizeof(long)))
+#if !defined(__KERNEL__)
+
+#define CMSG_ALIGN(sz) ((((sz) + sizeof(long) - 1)) & ~(sizeof(long)))
 
 #if defined(EMPTY)
 #define CMSG_DATA(msg) ((void *)&(msg)->cmsg_data)
@@ -123,9 +125,11 @@
         : NULL)                                                         \
      : NULL)
 #define CMSG_LEN(sz)                                                    \
-    (CMSG_ALIGN(sizeof(struct cmsghdr)) + (sz))
+    (CMSG_ALIGN(sizeof(struct cmsghdr)) + CMSG_ALIGN(sz)))
 #define CMSG_SPACE(sz)                                                  \
-    (CMSG_ALIGN(sizeof(struct cmsghdr)) + CMSG_ALIGN(sz))
+    (CMSG_ALIGN(sizeof(struct cmsghdr)) + sz)
+
+#endif /* !defined(__KERNEL__) */
 
 #endif /* __SYS_BITS_SOCKET_H__ */
 
