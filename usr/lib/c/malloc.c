@@ -210,9 +210,11 @@
 struct memhdr {
     void *mag;
 };
+#if 0
 #define magptrid(mag, ptr)                                              \
     (((uintptr_t)(ptr) - (((uintptr_t)((mag)->adr) & ~MAGFLGMASK)       \
                           >> (mag)->bktid)))
+#endif
 #define getmag(ptr)   ((struct mag *)((&((struct memhdr *)(ptr))[-1])->mag))
 #define setmag(p, m)  ((&((struct memhdr *)(ptr))[-1])->mag = (m))
 //#define setptr(a, p) ((&((struct memhdr *)(a))[-1])->base = (p))
@@ -609,19 +611,21 @@ mallocstat(void)
                             + rounduppow2((1UL << magnblklog2(bktid)) \
                                           / CHAR_BIT,                 \
                                           PAGESIZE))
-#else /* (MALLOCFREEMAP) && (MALLOCNEWHDR) */
+#else /* (MALLOCFREEMAP) && (!MALLOCNEWHDR) */
 #define magnbytetab(bktid) ((1UL << magnblklog2(bktid)) * sizeof(void *)\
                             + rounduppow2((1UL << magnblklog2(bktid)) \
                                           / CHAR_BIT,                 \
                                           PAGESIZE))
 #endif /* MALLOCNEWHDR */
 #else /* !MALLOCFREEMAP */
-#if (MALLOCNEWHDR)
+#if (MALLOCHDRPREFIX) && (MALLOCNEWHDR)
 #define magnbytetab(bktid) (((1UL << magnblklog2(bktid)) + 1) * sizeof(void *))
-#else
+#elif (MALLOCHDRPREFIX)
 #define magnbytetab(bktid) ((1UL << magnblklog2(bktid)) * sizeof(void *))
-#endif /* MALLOCNEWHDR */
-#endif /* MALLOCFREEMAP */
+#else
+#define magnbytetab(bktid) (((1UL << magnblklog2(bktid)) + 1) * sizeof(void *))
+#endif
+#endif /* MALLOCHDRPREFIX && MALLOCNEWHDR */
 #elif (MALLOCSTKNDX)
 #if (MALLOCFREEMAP)
 #define magnbytetab(bktid)                                              \
@@ -2009,7 +2013,8 @@ _malloc(size_t size,
 #if (MALLOCHDRPREFIX)
         /* store unaligned source pointer and mag address */
         ptr = (uint8_t *)ptrval + MEMHDRSIZE;
-        if ((align) && ((uintptr_t)ptr & (align - 1))) {
+        if (((uintptr_t)ptr & (MALLOCALIGNMENT - 1))
+            || ((align) && ((uintptr_t)ptr & (align - 1)))) {
             ptr = ptralign(ptr, align);
         }
 #else
