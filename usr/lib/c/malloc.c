@@ -389,7 +389,7 @@ struct memhdr {
 #define maghdrsz()                                                      \
     (rounduppow2(sizeof(struct mag), CLSIZE))
 #define magnbufhdr()                                                    \
-    (MALLOCHDRALLOC / maghdrsz)
+    (MALLOCHDRALLOC / maghdrsz())
 #define magnblklog2(bktid)                                              \
     (((bktid < MALLOCSLABLOG2)                                          \
       ? (MALLOCSLABLOG2 - (bktid))                                      \
@@ -604,16 +604,24 @@ mallocstat(void)
 
 #if (MALLOCHDRPREFIX)
 #if (MALLOCFREEMAP)
+#if (MALLOCNEWHDR)
+#define magnbytetab(bktid) ((1UL << (magnblklog2(bktid) + 1)) * sizeof(void *) \
+                            + rounduppow2((1UL << magnblklog2(bktid)) \
+                                          / CHAR_BIT,                 \
+                                          PAGESIZE))
+#else /* (MALLOCFREEMAP) && (MALLOCNEWHDR) */
 #define magnbytetab(bktid) ((1UL << magnblklog2(bktid)) * sizeof(void *)\
                             + rounduppow2((1UL << magnblklog2(bktid)) \
                                           / CHAR_BIT,                 \
                                           PAGESIZE))
+#endif /* MALLOCNEWHDR */
+#else /* !MALLOCFREEMAP */
 #if (MALLOCNEWHDR)
 #define magnbytetab(bktid) (((1UL << magnblklog2(bktid)) + 1) * sizeof(void *))
 #else
 #define magnbytetab(bktid) ((1UL << magnblklog2(bktid)) * sizeof(void *))
-#endif
-#endif
+#endif /* MALLOCNEWHDR */
+#endif /* MALLOCFREEMAP */
 #elif (MALLOCSTKNDX)
 #if (MALLOCFREEMAP)
 #define magnbytetab(bktid)                                              \
@@ -935,7 +943,7 @@ magsetstk(struct mag *mag)
     
     if (magembedtab(bktid)) {
         /* use magazine header's data-field for allocation stack */
-        mag->stk = ((void *)((uintptr_t)mag + maghdrsize()));
+        mag->stk = ((void *)((uintptr_t)mag + maghdrsz()));
     } else if (!mag->stk) {
         /* map new allocation stack */
         stk = mapanon(g_malloc.zerofd, magnbytetab(bktid));
@@ -994,10 +1002,10 @@ maggethdr(long bktid)
             incr = MALLOCHDRALLOC;
         } else {
             ret = mapanon(g_malloc.zerofd,
-                          rounduppow2(magnbufhdr() * maghdrsize(),
+                          rounduppow2(magnbufhdr() * maghdrsz(),
                                       PAGESIZE));
             ndx = magnbufhdr();
-            incr = maghdrsize();
+            incr = maghdrsz();
         }
         if (ret == MAP_FAILED) {
             
