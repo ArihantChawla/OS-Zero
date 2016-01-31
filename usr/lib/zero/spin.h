@@ -20,9 +20,6 @@ spintrylk(volatile long *sp)
     volatile long res;
 
     res = m_cmpswap(sp, ZEROSPININITVAL, ZEROSPINLKVAL);
-    if (res == ZEROSPININITVAL) {
-        res++;
-    }
     
     return res;
 }
@@ -33,11 +30,11 @@ spintrylk(volatile long *sp)
 static __inline__ long
 spinlk(volatile long *sp)
 {
-    volatile long res;
+    volatile long res = ZEROSPINLKVAL;
 
-    do {
+    while (res != ZEROSPININITVAL) {
         res = m_cmpswap(sp, ZEROSPININITVAL, ZEROSPINLKVAL);
-    } while (res != ZEROSPININITVAL);
+    }
 
     return res;
 }

@@ -9,7 +9,7 @@
 #define MALLOCNEWHDR    1
 #define MALLOCHDRPREFIX 1
 #define MALLOCTLSARN 1
-#define DEBUGMTX 0
+#define DEBUGMTX 1
 #define GNUTRACE 1
 #define MALLOCTRACE 1
 
