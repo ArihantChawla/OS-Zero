@@ -210,14 +210,13 @@
 struct memhdr {
     void *mag;
 };
-#define ptrtomag(ptr) ((struct mag *)(&((struct memhdr **)(ptr))[-1]->mag))
-#if 0
 #define magptrid(mag, ptr)                                              \
     (((uintptr_t)(ptr) - ((uintptr_t)(mag)->adr & ~MAGFLGMASK) >> (mag)->bktid))
 #endif
-#define magputptr(mag, ptr, orig) \
+#define getptr(ptr)                                                     \
+    ((ptrtomag(ptr))->ptrtab[magptrid(ptrtomag(ptr), ptr)])
+#define setptr(mag, ptr, orig)                                          \
     ((mag)->ptrtab[magptrid(mag, ptr)] = (orig))
-#define getptr(ptr)   ((ptrtomag(ptr))->ptrtab[magptrid(ptrtomag(ptr), ptr)])
 //#efine getptr(ptr)  ((&((struct memhdr *)(ptr))[-1])->base)
 #define getmag(ptr)   ((&((struct memhdr *)(ptr))[-1])->mag)
 #define setmag(p, m)  ((&((struct memhdr *)(ptr))[-1])->mag = (m))
@@ -229,9 +228,9 @@ struct memhdr {
     void *mag;
 };
 #define getptr(ptr)  ((&((struct memhdr *)(ptr))[-1])->base)
+#define setptr(a, p) ((&((struct memhdr *)(a))[-1])->base = (p))
 #define getmag(ptr)  ((&((struct memhdr *)(ptr))[-1])->mag)
 #define setmag(p, m) ((&((struct memhdr *)(ptr))[-1])->mag = (m))
-#define setptr(a, p) ((&((struct memhdr *)(a))[-1])->base = (p))
 #endif
 #endif
 
@@ -640,15 +639,6 @@ mallocstat(void)
      ? MALLOCHDRSIZE                                                   \
      : PAGESIZE)
 #define magnbyte(bktid) (1UL << magnbytelog2(bktid))
-#if (MALLOCHDRPREFIX)
-#define blkalignsz(sz, aln)                                             \
-    ((sz) + MEMHDRSIZE + (aln))
-#else
-#define blkalignsz(sz, aln)                                             \
-    (((aln) <= PAGESIZE)                                                \
-     ? max(sz, aln)                                                     \
-     : (sz) + (aln))
-#endif
 #define ptralign(ptr, pow2)                                             \
     (!((uintptr_t)(ptr) & (align - 1))                                  \
      ? (ptr)                                                            \
@@ -1621,7 +1611,11 @@ _malloc(size_t size,
 #if (!MALLOCTLSARN)
     long            arnid;
 #endif
-    unsigned long   sz = max(blkalignsz(size, align), MALLOCMINSIZE);
+#if (MALLOCHDRPREFIX)
+    unsigned long   sz = 1UL << blkbktid(size + MEMHDRSIZE + align);
+#else
+    unsigned long   sz = 1UL << blkbktid(size + align);
+#endif
     long            bktid = blkbktid(sz);
 //    long         mapped = 0;
     long            lim;
@@ -2052,11 +2046,15 @@ _malloc(size_t size,
         }
 #if (MALLOCHDRPREFIX)
         /* store unaligned source pointer and mag address */
-        ptr = (uint8_t *)ptrval + max(MALLOCALIGNMENT, MEMHDRSIZE);
-#endif
+        ptr = (uint8_t *)ptrval + MEMHDRSIZE);
         if ((align) && ((uintptr_t)ptr & (align - 1))) {
             ptr = ptralign(ptr, align);
         }
+#else
+        if ((align) && ((uintptr_t)ptr & (align - 1))) {
+            ptr = ptralign(ptr, align);
+        }
+#endif
         /* store unaligned source pointer */
         magputptr(mag, ptr, clrptr(ptrval));
 #if (MALLOCFREEMAP)
