@@ -7,7 +7,9 @@
 
 #include <features.h>
 #include <stddef.h>
+#if !defined(__KERNEL__)
 #include <string.h>
+#endif
 #if (USEGNU)
 #include <sys/types.h>
 #endif
@@ -33,13 +35,12 @@ typedef uint16_t sa_family_t;
 
 extern const socklen_t sockaddrlentab[AF_NFAMILY];
 
-#define SOCK_MAXADDRLEN (256 - CLSIZE)
+#define SOCK_MAXADDRLEN CLSIZE
 struct sockaddr {
-    sa_family_t sa_family;                                      // family
-    socklen_t   sa_len;                                         // address size
-    uint8_t     _res[rounduppow2(sizeof(sa_family_t) - sizeof(socklen_t),
-                                 CLSIZE)];
-    char        sa_data[SOCK_MAXADDRLEN] ALIGNED(CLSIZE);       // address
+    sa_family_t sa_family;                      // family
+    socklen_t   sa_len;                         // address size
+    uint8_t     _res[CLSIZE - sizeof(sa_family_t) - sizeof(socklen_t)];
+    char        sa_data[SOCK_MAXADDRLEN];       // address
 };
 
 /* control information in raw sockets */
