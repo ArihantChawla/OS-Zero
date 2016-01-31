@@ -211,16 +211,15 @@ struct memhdr {
     void *mag;
 };
 #define magptrid(mag, ptr)                                              \
-    (((uintptr_t)(ptr) - ((uintptr_t)(mag)->adr & ~MAGFLGMASK) >> (mag)->bktid))
-#endif
-#define getptr(ptr)                                                     \
-    ((ptrtomag(ptr))->ptrtab[magptrid(ptrtomag(ptr), ptr)])
-#define setptr(mag, ptr, orig)                                          \
-    ((mag)->ptrtab[magptrid(mag, ptr)] = (orig))
-//#efine getptr(ptr)  ((&((struct memhdr *)(ptr))[-1])->base)
-#define getmag(ptr)   ((&((struct memhdr *)(ptr))[-1])->mag)
+    (((uintptr_t)(ptr) - (((uintptr_t)((mag)->adr) & ~MAGFLGMASK)       \
+                          >> (mag)->bktid)))
+#define getmag(ptr)   ((struct mag *)((&((struct memhdr *)(ptr))[-1])->mag))
 #define setmag(p, m)  ((&((struct memhdr *)(ptr))[-1])->mag = (m))
 //#define setptr(a, p) ((&((struct memhdr *)(a))[-1])->base = (p))
+#define getptr(ptr)                                                     \
+    ((getmag(ptr))->ptrtab[magptrid(getmag(ptr), ptr)])
+#define setptr(mag, ptr, orig)                                          \
+    (((struct mag *)(getmag(ptr)))->ptrtab[magptrid(getmag(ptr), ptr)])
 #else
 #define MEMHDRSIZE (2 * PTRSIZE)
 struct memhdr {
@@ -642,11 +641,12 @@ mallocstat(void)
 #define ptralign(ptr, pow2)                                             \
     (!((uintptr_t)(ptr) & (align - 1))                                  \
      ? (ptr)                                                            \
-     : ((void *)rounduppow2((uintptr_t)(ptr), align)))
+     : ((void *)rounduppow2((uintptr_t)(ptr), pow2)))
 
 #if (MALLOCHDRPREFIX)
 #define magptrid(mag, ptr)                                              \
-    (((uintptr_t)(ptr) - ((uintptr_t)mag->adr & ~MAGFLGMASK)) >> (mag)->bktid)
+    ((uintptr_t)(ptr) - ((((uintptr_t)(mag)->adr) & ~MAGFLGMASK)        \
+                         >> (mag)->bktid))
 #define magputptr(mag, ptr, orig)                                       \
     ((mag)->ptrtab[magptrid(mag, ptr)] = (orig))
 #else
@@ -2046,7 +2046,7 @@ _malloc(size_t size,
         }
 #if (MALLOCHDRPREFIX)
         /* store unaligned source pointer and mag address */
-        ptr = (uint8_t *)ptrval + MEMHDRSIZE);
+        ptr = (uint8_t *)ptrval + MEMHDRSIZE;
         if ((align) && ((uintptr_t)ptr & (align - 1))) {
             ptr = ptralign(ptr, align);
         }
