@@ -97,9 +97,7 @@ struct cmsghdr {
     socklen_t      cmsg_len;
     int            cmsg_level;
     int            cmsg_type;
-#if defined(EMPTY)
-    unsigned char  cmsg_data[EMPTY];
-#endif
+    unsigned char  cmsg_data[1];
 };
 
 struct linger {

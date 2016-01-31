@@ -110,7 +110,7 @@
 #define CMSG_ALIGN(sz) ((((sz) + sizeof(long) - 1)) & ~(sizeof(long)))
 
 #if defined(EMPTY)
-#define CMSG_DATA(msg) ((void *)&(msg)->cmsg_data)
+#define CMSG_DATA(msg) ((unsigned char *)&(msg)->cmsg_data)
 #else
 #define CMSG_DATA(msg) ((unsigned char *)(msg) + CMSG_ALIGN(sizeof(struct cmsghdr)))
 #endif
