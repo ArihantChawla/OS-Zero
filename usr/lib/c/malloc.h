@@ -62,13 +62,24 @@ extern void     malloc_stats(void);
 extern void   * malloc_get_state(void);
 extern int      malloc_set_state(void *ptr);
 
-#if defined(_GNU_SOURCE) && defined(GNUMALLOCHOOKS)
-extern void *(*__malloc_hook)(size_t size, const void *caller);
-extern void *(*__realloc_hook)(void *ptr, size_t size, const void *caller);
-extern void *(*__memalign_hook)(size_t align, size_t size, const void *caller);
-extern void  (*__free_hook)(void *ptr, const void *caller);
-extern void *(*__malloc_initialize_hook)(void);
-extern void  (*__after_morecore_hook)(void);
+#if defined(_GNU_SOURCE) && (GNUMALLOC)
+#if !defined(__MALLOC_HOOK_VOLATILE)
+#define MALLOC_HOOK_MAYBE_VOLATILE /**/
+#else
+#define MALLOC_HOOK_MAYBE_VOLATILE __MALLOC_HOOK_VOLATILE
+#endif
+extern void  (* MALLOC_HOOK_MAYBE_VOLATILE __malloc_initialize_hook)(void);
+extern void *(* MALLOC_HOOK_MAYBE_VOLATILE __malloc_hook)(size_t size,
+                                                          const void *caller);
+extern void *(* MALLOC_HOOK_MAYBE_VOLATILE __realloc_hook)(void *ptr,
+                                                           size_t size,
+                                                           const void *caller);
+extern void *(* MALLOC_HOOK_MAYBE_VOLATILE __memalign_hook)(size_t align,
+                                                            size_t size,
+                                                            const void *caller);
+extern void  (* MALLOC_HOOK_MAYBE_VOLATILE __free_hook)(void *ptr,
+                                                        const void *caller);
+extern void  (* MALLOC_HOOK_MAYBE_VOLATILE __after_morecore_hook)(void);
 #endif
 
 #endif /* !defined(__KERNEL__) */
