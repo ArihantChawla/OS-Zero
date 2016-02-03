@@ -77,8 +77,12 @@ mtxlk(volatile long *lp)
             thryield();
         }
     } while (res != MTXINITVAL);
+    if (res == MTXINITVAL) {
 
-    return;
+        return 1;
+    }
+
+    return 0;
 }
 
 /*
