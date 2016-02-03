@@ -139,9 +139,9 @@
 #endif
 
 struct mag;
-static void * maginit(struct mag *mag, long bktid, void *base);
-static void * maginitslab(struct mag *mag, long bktid, void *base);
-static void * maginittab(struct mag *mag, long bktid, void *base);
+static void * maginit(struct mag *mag, long bktid);
+static void * maginitslab(struct mag *mag, long bktid);
+static void * maginittab(struct mag *mag, long bktid);
 
 #if defined(MALLOCDEBUG)
 #define assert(expr)                                                    \
@@ -999,7 +999,7 @@ maggethdr(long bktid)
 }
 
 static void *
-maginitslab(struct mag *mag, long bktid, void *base)
+maginitslab(struct mag *mag, long bktid)
 {
 #if (MALLOCPTRNDX)
     MAGPTRNDX   *stk;
@@ -1016,31 +1016,25 @@ maginitslab(struct mag *mag, long bktid, void *base)
     long         ndx;
 #endif
 
+    assert((mag->stk) && !mag->base);
     if (!mag->base) {
-        if (!mag->stk) {
-            maginittab(mag, bktid, base);
-        }
-        if (!base) {
-            ptrval = SBRK_FAILED;
+        ptrval = SBRK_FAILED;
 #if (!MALLOCNOSBRK)
-            if (bktid <= MALLOCSLABLOG2) {
-                /* try to allocate slab from heap */
-                __malloclkmtx(&g_malloc.heaplk);
-                ptrval = growheap(rounduppow2(lim * sz, PAGESIZE));
-                __mallocunlkmtx(&g_malloc.heaplk);
-            }
+        if (bktid <= MALLOCSLABLOG2) {
+            /* try to allocate slab from heap */
+            __malloclkmtx(&g_malloc.heaplk);
+            ptrval = growheap(rounduppow2(lim * sz, PAGESIZE));
+            __mallocunlkmtx(&g_malloc.heaplk);
+        }
 #endif
-            if (ptrval == SBRK_FAILED) {
-                /* try to map slab */
-                ptrval = mapanon(g_malloc.zerofd,
-                                 rounduppow2(lim * sz, PAGESIZE));
-                if (ptrval == MAP_FAILED) {
-                    
-                    return NULL;
-                }
+        if (ptrval == SBRK_FAILED) {
+            /* try to map slab */
+            ptrval = mapanon(g_malloc.zerofd,
+                             rounduppow2(lim * sz, PAGESIZE));
+            if (ptrval == MAP_FAILED) {
+                
+                return NULL;
             }
-        } else {
-            ptrval = base;
         }
         ptr = ptrval;
         mag->base = ptr;
@@ -1070,63 +1064,69 @@ maginitslab(struct mag *mag, long bktid, void *base)
             }
         }
     }
+    assert((mag) && (mag->base));
 
     return mag;
 }
 
 static void *
-maginittab(struct mag *mag, long bktid, void *base)
+maginittab(struct mag *mag, long bktid)
 {
     void        *ret;
     long         n = magnblk(bktid);
     size_t       sz;
 
-    if (magembedtab(bktid)) {
+    if (!mag->stk) {
+        if (magembedtab(bktid)) {
 #if (MALLOCPTRNDX)
-        mag->stk = (MAGPTRNDX *)((uint8_t *)mag + maghdrsz());
-        mag->ptrtab = (MAGPTRNDX *)&mag->stk[n];
+            mag->stk = (MAGPTRNDX *)((uint8_t *)mag + maghdrsz());
+            mag->ptrtab = (MAGPTRNDX *)&mag->stk[n];
 #else
-        mag->stk = (void *)((uint8_t *)mag + maghdrsz());
-        mag->ptrtab = (void **)&mag->stk[n];
+            mag->stk = (void *)((uint8_t *)mag + maghdrsz());
+            mag->ptrtab = (void **)&mag->stk[n];
 #endif
 #if (MALLOCFREEMAP)
-        mag->freemap = (uint8_t *)&mag->ptrtab[n];
+            mag->freemap = (uint8_t *)&mag->ptrtab[n];
 #endif
-    } else {
-        sz = magnbytetab(bktid);
-        ret = mapanon(g_malloc.zerofd, rounduppow2(sz, PAGESIZE));
-        if (ret == MAP_FAILED) {
-            
-            return NULL;
+        } else {
+            sz = magnbytetab(bktid);
+            ret = mapanon(g_malloc.zerofd, rounduppow2(sz, PAGESIZE));
+            if (ret == MAP_FAILED) {
+                
+                return NULL;
+            }
+            mag->stk = ret;
+#if (MALLOCPTRNDX)
+            mag->ptrtab = (MAGPTRNDX *)&mag->stk[n];
+#else
+            mag->ptrtab = (void **)&mag->stk[n];
+#endif
+#if (MALLOCFREEMAP)
+            mag->freemap = (uint8_t *)&mag->ptrtab[n];
+#endif
         }
-        mag->stk = ret;
-#if (MALLOCPTRNDX)
-        mag->ptrtab = (MAGPTRNDX *)&mag->stk[n];
-#else
-        mag->ptrtab = (void **)&mag->stk[n];
-#endif
-#if (MALLOCFREEMAP)
-        mag->freemap = (uint8_t *)&mag->ptrtab[n];
-#endif
     }
+    assert(mag->stk);
 
     return mag;
  }
     
 static void *
-maginit(struct mag *mag, long bktid, void *base)
+maginit(struct mag *mag, long bktid)
 {
 #if (!MALLOCTLSARN)
     mag->arnid = arnid;
 #endif
-    if ((base) || !mag->base) {
-        if (!maginitslab(mag, bktid, base)) {
+    if (!mag->stk) {
+        maginittab(mag, bktid);
+    }
+    if (!mag->base) {
+        if (!maginitslab(mag, bktid)) {
             
             return NULL;
         }
-    } else if (!mag->stk) {
-        maginittab(mag, bktid, base);
     }
+    assert(mag->stk);
 
     return mag;
 }
@@ -1725,10 +1725,13 @@ _malloc(size_t size,
         }
         if (!mag) {
             mag = maggethdr(bktid);
-        }
-        if ((mag) && (!mag->stk || !mag->base)) {
-            if (!maginit(mag, bktid, NULL)) {
-                
+            if (mag) {
+                if (!maginit(mag, bktid)) {
+                    
+                    return NULL;
+                }
+            } else {
+
                 return NULL;
             }
         }
