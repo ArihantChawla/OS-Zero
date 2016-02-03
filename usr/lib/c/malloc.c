@@ -139,20 +139,15 @@
 #define ZMALLOCDEBUGHOOKS 0
 #endif
 
+#if (MALLOCDEBUG)
+void *tracetab[64];
+#endif
+
 struct mag;
 static void * maginit(struct mag *mag, long bktid);
 static void * maginitslab(struct mag *mag, long bktid);
 static void * maginittab(struct mag *mag, long bktid);
 
-#if defined(MALLOCDEBUG)
-#define assert(expr)                                                    \
-    do {                                                                \
-        if (!(expr)) {                                                  \
-            *((long *)NULL) = 0;                                        \
-        }                                                               \
-    } while (0)
-//#include <assert.h>
-#endif
 #include <features.h>
 #include <stddef.h>
 #include <stdlib.h>
@@ -220,6 +215,20 @@ static void * maginittab(struct mag *mag, long bktid);
 #include <valgrind/valgrind.h>
 #endif
 
+#if defined(MALLOCDEBUG)
+#define assert(expr)                                                    \
+    do {                                                                \
+        if (!(expr)) {                                                  \
+            int _sz;                                                    \
+                                                                        \
+            _sz = backtrace(tracetab, 64);                              \
+            backtrace_symbols(tracetab, _sz);                           \
+            *((long *)NULL) = 0;                                        \
+        }                                                               \
+    } while (0)
+//#include <assert.h>
+#endif
+
 #if defined(GNUMALLOC) && (GNUMALLOC)
 void * zero_malloc(size_t size);
 void * zero_realloc(void *ptr, size_t size);
@@ -253,73 +262,33 @@ void   zero_free(void *ptr);
 #else
 #define MAGPTRNDX            uint64_t
 #endif
+#endif
 
-#if (MALLOCHDRPREFIX)
-#if (MALLOCNEWHDR)
-#if (MALLOCHDRHACKS)
-/*
- * this structure is here for informative purposes; note that in core, the
- * header is right before the allocated address so you need to index it with
- * negative offsets
- */
-struct memhdr {
-    void      *mag;     // allocation magazine header
-#if (MALLOCHDRHACKS)
-#if (MALLOCPTRNDX)
-    MAGPTRNDX  ndx;
-#else
-    uint16_t   ndx;
-#endif
-    uint8_t    bkt;     // bucket ID for block
-    uint8_t    aln;     // header-imposed alignment for block
-#endif
-};
-#if (MALLOCPTRNDX)
-#define MEMHDRSIZE       (sizeof(void *)                                \
-                          + sizeof(MAGPTRNDX)                           \
-                          + 2 * sizeof(int8_t))
-#define MEMHDRNDXOFS     (offsetof(struct memhdr, ndx) / sizeof(MAGPTRNDX))
-#define getndx(ptr)      (((MAGPTRNDX *)(ptr))[-MEMHDRNDXOFS])
-#define setndx(ptr, ndx) ((((MAGPTRNDX *)(ptr))[-MEMHDRNDXOFS]) = (ndx))
-#else
-#define MEMHDRSIZE       (sizeof(void *)                                \
-                          + sizeof(int16_t)                             \
-                          + 2 * sizeof(int8_t))
-#define MEMHDRNDXOFS     (offsetof(struct memhdr, ndx) / sizeof(uint16_t))
-#define getndx(ptr)      (((uint16_t *)(ptr))[-MEMHDRNDXOFS])
-#define setndx(ptr, ndx) ((((uint16_t *)(ptr))[-MEMHDRNDXOFS]) = (ndx))
-#endif
-#define MEMHDRBKTOFS     (offsetof(struct memhdr, bkt))
-#define MEMHDRALNOFS     (offsetof(struct memhdr, aln))
-#define getbkt(ptr)      (((uint8_t *)(ptr))[-MEMHDRBKTOFS])
-#define setbkt(ptr, bkt) ((((uint8_t *)(ptr))[-MEMHDRBKTOFS]) = (bkt))
-#define getaln(ptr)      (((uint8_t *)(ptr))[-MEMHDRALNOFS])
-#define setaln(ptr, aln) ((((uint8_t *)(ptr))[-MEMHDRALNOFS]) = (aln))
-#else
 #define MEMHDRSIZE   PTRSIZE
-#endif
-#endif
 #define getmag(ptr)      (((void **)(ptr))[-1])
-#define setmag(ptr, mag) (((void **)(ptr))[-1] = (mag))
-//#define setptr(a, p) ((&((struct memhdr *)(a))[-1])->base = (p))
-#if (MALLOCPTRNDX)
-#define getptrndx(ptr)                                                  \
-    ((getmag(ptr))->ptrtab[magptrid(getmag(ptr), ptr)])
-#endif
+#define setmag(ptr, mag) ((((void **)(ptr))[-1]) = (mag))
+#define clrptr(ptr)                                                     \
+    ((void *)((uintptr_t)ptr & ~ADRMASK))
+#define clradr(adr)                                                     \
+    ((uintptr_t)(adr) & ADRMASK)
+#define ptrdiff(ptr1, ptr2)                                             \
+    ((uintptr_t)(ptr2) - (uintptr_t)(ptr1))
+#define ptrid(ptr)                                                      \
+    ((getaln(ptr)) ? ((uintptr_t)(ptr) - getaln(ptr)) : (~0L))
+#if (MALLOCHDRPREFIX)
+#define magptrid(mag, ptr)                                              \
+    (((uintptr_t)(ptr) - (uintptr_t)(mag)->base) >> (mag)->bktid)
+#define magputptr(mag, ptr1, ptr2)                                      \
+    ((mag)->ptrtab[magptrid(mag, ptr1)] = magptrid(mag, ptr2))
+#define maggetptr(mag, ptr)                                             \
+    ((void *)((uint8_t *)(mag)->base + ((rounddownpow2((uintptr_t)(mag)->base - (uintptr_t)(ptr) + MEMHDRSIZE, 1UL << (mag)->bktid)) << (mag)->bktid)))
 #else
-#define MEMHDRSIZE (2 * PTRSIZE)
-struct memhdr {
-    void *base;
-    void *mag;
-};
-#define getptr(ptr)  ((&((struct memhdr *)(ptr))[-1])->base)
-#define setptr(a, p) ((&((struct memhdr *)(a))[-1])->base = (p))
-#define getmag(ptr)  (((struct memhdr *)(ptr))[-1]).mag)
-#define setmag(p, m) (((struct memhdr *)(ptr))[-1]).mag = (m))
+#define magptrid(mag, ptr)                                              \
+    (ptrdiff((mag)->base, (mag)->base + rounddownpow2((uintptr_t)(ptr), \
+                                                      1UL << (mag)->bktid)))
 #endif
+//#define setptr(a, p) ((&((struct memhdr *)(a))[-1])->base = (p))
 
-/* allocation sizes */
-#endif
 /* use non-pointers in allocation tables */
 
 #if (MALLOCVALGRIND) && !defined(NVALGRIND)
@@ -472,9 +441,7 @@ struct mag {
     MAGPTRNDX      *ptrtab;
 #elif (MALLOCHDRPREFIX)
     void          **stk;
-#if (MALLOCNEWHDR)
     void          **ptrtab;
-#endif
 #elif (MALLOCFREEMAP)
     void          **stk;
     void          **ptrtab;
@@ -552,6 +519,49 @@ struct mallopt {
     int mmapmax;
     int mmaplog2;
 };
+
+#if (MALLOCHDRHACKS)
+/*
+ * this structure is here for informative purposes; note that in core, the
+ * header is right before the allocated address so you need to index it with
+ * negative offsets
+ */
+struct memhdr {
+    void      *mag;     // allocation magazine header
+#if (MALLOCHDRHACKS)
+#if (MALLOCPTRNDX)
+    MAGPTRNDX  ndx;
+#else
+    uint16_t   ndx;
+#endif
+    uint8_t    bkt;     // bucket ID for block
+    uint8_t    aln;     // header-imposed alignment for block
+#endif
+};
+
+#if (MALLOCPTRNDX)
+#define MEMHDRSIZE       (sizeof(void *)                                \
+                          + sizeof(MAGPTRNDX)                           \
+                          + 2 * sizeof(int8_t))
+#define MEMHDRNDXOFS     (offsetof(struct memhdr, ndx) / sizeof(MAGPTRNDX))
+#define getndx(ptr)      (((MAGPTRNDX *)(ptr))[-MEMHDRNDXOFS])
+#define setndx(ptr, ndx) ((((MAGPTRNDX *)(ptr))[-MEMHDRNDXOFS]) = (ndx))
+#else
+#define MEMHDRSIZE       (sizeof(void *)                                \
+                          + sizeof(int16_t)                             \
+                          + 2 * sizeof(int8_t))
+#define MEMHDRNDXOFS     (offsetof(struct memhdr, ndx) / sizeof(uint16_t))
+#define getndx(ptr)      (((uint16_t *)(ptr))[-MEMHDRNDXOFS])
+#define setndx(ptr, ndx) ((((uint16_t *)(ptr))[-MEMHDRNDXOFS]) = (ndx))
+#endif
+
+#define MEMHDRBKTOFS     (offsetof(struct memhdr, bkt))
+#define MEMHDRALNOFS     (offsetof(struct memhdr, aln))
+#define getbkt(ptr)      (((uint8_t *)(ptr))[-MEMHDRBKTOFS])
+#define setbkt(ptr, bkt) ((((uint8_t *)(ptr))[-MEMHDRBKTOFS]) = (bkt))
+#define getaln(ptr)      (((uint8_t *)(ptr))[-MEMHDRALNOFS])
+#define setaln(ptr, aln) ((((uint8_t *)(ptr))[-MEMHDRALNOFS]) = (aln))
+#endif
 
 /* malloc global structure */
 #define MALLOCINIT 0x00000001L
@@ -646,31 +656,20 @@ mallocstat(void)
 #define BLKFLGMASK  (MALLOCMINSIZE - 1)
 #endif
 /* clear flag bits at allocation time */
-#define clrptr(ptr)                                                     \
-    ((void *)((uintptr_t)ptr & ~ADRMASK))
-#define clradr(adr)                                                     \
-    ((uintptr_t)(adr) & ADRMASK)
-#define ptrdiff(ptr1, ptr2)                                             \
-    ((uintptr_t)(ptr2) - (uintptr_t)(ptr1))
-#define ptrid(ptr)                                                      \
-    ((getaln(ptr)) ? ((uintptr_t)(ptr) - getaln(ptr)) : (~0L))
-#define magptrid(mag, ptr)                                              \
-    (ptrdiff((mag)->base, rounddownpow2((uintptr_t)(ptr),               \
-                                        1UL << (mag)->bktid))           \
-     >> ((mag)->bktid))
 
-#if (MALLOCFREEMAP)
-#endif
-#if (MALLOCPTRNDX)
 #if (MALLOCFREEMAP)
 #define magnbytetab(bktid)                                              \
     ((magnblk(bktid) << 1) * sizeof(MAGPTRNDX)                          \
      + rounduppow2(((magnblk(bktid) * CHAR_BIT + CHAR_BIT) >> 3),       \
                    PAGESIZE))
-#else /*  MALLOCPTRNDX && !MALLOCFREEMAP */
+#elif (MALLOCPTRNDX) /* !MALLOCFREEMAP */
 #define magnbytetab(bktid)                                              \
     ((magnblk(bktid) << 1) * sizeof(MAGPTRNDX))
+#else
+#define magnbytetab(bktid)                                              \
+    ((magnblk(bktid) << 1) * sizeof(void *))
 #endif /* MALLOCFREEMAP */
+#if (MALLOCPTRNDX)
 #elif (MALLOCFREEMAP) /* !MALLOCPTRNDX */
 #if (MALLOCPTRNDX)
 #define magnbytetab(bktid)                                              \
@@ -694,35 +693,6 @@ mallocstat(void)
     (((aln) <= PAGESIZE)                                                \
      ? max(sz, aln)                                                     \
      : (sz) + (aln))
-
-#if (MALLOCPTRNDX)
-#if (MALLOCHDRPREFIX)
-#define magputptr(mag, ptr1, ptr2)                                      \
-    ((mag)->ptrtab[magptrid(mag, ptr1)] = magptrid(mag, ptr2))
-#else
-#define magputptr(mag, ptr1, ptr2)                                      \
-    ((mag)->ptrtab[magptrid(mag, ptr1)] = magptrid(mag, ptr2))
-#endif
-#if (MALLOCHDRHACKS)
-#define maggetptr(mag, ptr)                                             \
-    ((getaln(ptr))                                                      \
-     ? ((uint8_t *)(ptr) - getaln(ptr))                                 \
-     : (void *)((uintptr_t)(mag)->base                                  \
-                + ptrdiff(mag->base,                                    \
-                          rounddownpow2((uintptr_t)(ptr) - MEMHDRSIZE,  \
-                                        1UL << (mag)->bktid))))
-#else
-#define maggetptr(mag, ptr)                                             \
-    ((void *)(((uintptr_t)(mag)->base                                   \
-               + ptrdiff(mag->base, rounddownpow2((uintptr_t)(ptr),     \
-                                                  1UL << ((mag)->bktid))))))
-#endif
-#else /* !MALLOCPTRNDX */
-#define magputptr(mag, ptr1, ptr2)                                      \
-    (((void **)(mag)->ptrtab)[magptrid(mag, ptr1)] = (ptr2))
-#define maggetptr(mag, ptr)                                             \
-    (((void **)(mag)->ptrtab)[magptrid(mag, ptr)])
-#endif /* MALLOCPTRNDX */
 
 #define mdirl1ndx(ptr) (((uintptr_t)(ptr) >> MDIRL1NDX) & ((1UL << MDIRNL1BIT) - 1))
 #define mdirl2ndx(ptr) (((uintptr_t)(ptr) >> MDIRL2NDX) & ((1UL << MDIRNL2BIT) - 1))
@@ -1839,7 +1809,9 @@ _malloc(size_t size,
         magputptr(mag, ptr, adr);
 #endif
         /* add magazine to lookup structure using ptr as key */
+#if (MALLOCHDRPREFIX)
         setmag(ptr, mag);
+#endif
 #if (MALLOCHDRHACKS)
         ndx = magptrid(mag, adr);
         mag->ptrtab[ndx] = ndx;
@@ -1927,6 +1899,7 @@ _free(void *ptr)
         }
 //        arn = g_malloc.arntab[arnid];
         bktid = mag->bktid;
+        assert(mag->cur);
 #if (MALLOCPTRNDX)
         mag->stk[--mag->cur] = magptrid(mag, ptr);
 #elif (MALLOCHDRPREFIX)
