@@ -66,7 +66,7 @@ mtxtrylk(volatile long *lp)
  * acquire mutex lock
  * - allow other threads to run when blocking
  */
-static INLINE void
+static INLINE long
 mtxlk(volatile long *lp)
 {
     volatile long res;
