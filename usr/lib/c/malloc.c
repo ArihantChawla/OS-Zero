@@ -6,6 +6,7 @@
  * Copyright (C) Tuomo Petteri Venäläinen 2014-2015
  */
 
+#define MALLOCVALGRIND  1
 #define MALLOCHDRHACKS  0
 #define MALLOCNEWHDR    1
 #define MALLOCHDRPREFIX 1
@@ -43,7 +44,7 @@
 
 #if defined(NVALGRIND)
 #define MALLOCVALGRIND    0
-#else
+#elif !defined(MALLOCVALGRIND)
 #define MALLOCVALGRIND    1
 #endif
 #define MALLOCSMALLSLABS  0
@@ -177,8 +178,9 @@ static void * maginittab(struct mag *mag, long bktid);
 #define MUTEX volatile long
 #include <zero/mtx.h>
 #include <zero/spin.h>
-#if (DEBUGMTX) && 0
+#if (DEBUGMTX)
 #define __mallocinitmtx(mp)  mtxinit(mp)
+#define __malloctrylkmtx(mp) mtxtrylk(mp)
 #define __malloclkmtx(mp)   (fprintf(stderr, "LK: %d\n", __LINE__),    \
                              mtxlk(mp))
 #define __mallocunlkmtx(mp) (fprintf(stderr, "UNLK: %d\n", __LINE__),  \
@@ -187,6 +189,7 @@ static void * maginittab(struct mag *mag, long bktid);
 #define __malloclkspin(mp)   (fprintf(stderr, "LK: %d\n", __LINE__), spinlk(mp))
 #define __mallocunlkspin(mp) (fprintf(stderr, "UNLK: %d\n", __LINE__), spinunlk(mp))
 #else
+#define __malloctrylkmtx(mp) mtxtrylk(mp)
 #define __mallocinitmtx(mp)  mtxinit(mp)
 #define __malloclkmtx(mp)    mtxlk(mp)
 #define __mallocunlkmtx(mp)  mtxunlk(mp)
@@ -449,6 +452,7 @@ struct bkt {
 /* magazines for larger/fewer allocations embed the tables in the structure */
 /* magazine header structure */
 struct mag {
+    volatile long   lk;
     struct memtab  *tab;
     void           *base;
     void           *adr;
@@ -1371,8 +1375,8 @@ prefork(void)
 #endif
     for (ndx = 0 ; ndx < MALLOCNBKT ; ndx++) {
         __malloclkmtx(&g_malloc.hdrbuf[ndx].lk);
-        __malloclkmtx(&g_malloc.magbkt[ndx].lk);
         __malloclkmtx(&g_malloc.freetab[ndx].lk);
+        __malloclkmtx(&g_malloc.magbkt[ndx].lk);
     }
     for (ndx = 0 ; ndx < MDIRNL1KEY ; ndx++) {
         __malloclkmtx(&g_malloc.mlktab[ndx]);
@@ -1393,8 +1397,8 @@ postfork(void)
         __mallocunlkmtx(&g_malloc.mlktab[ndx]);
     }
     for (ndx = 0 ; ndx < MALLOCNBKT ; ndx++) {
-        __mallocunlkmtx(&g_malloc.freetab[ndx].lk);
         __mallocunlkmtx(&g_malloc.magbkt[ndx].lk);
+        __mallocunlkmtx(&g_malloc.freetab[ndx].lk);
         __mallocunlkmtx(&g_malloc.hdrbuf[ndx].lk);
     }
 #if (!MALLOCTLSARN)
@@ -1725,7 +1729,7 @@ _malloc(size_t size,
                     return NULL;
                 }
             } else {
-
+                
                 return NULL;
             }
         }
@@ -1754,7 +1758,7 @@ _malloc(size_t size,
                 if (mag->cur == 1) {
                     if ((mag->prev) && (mag->next)) {
                         mag->next->prev = mag->prev;
-                            mag->prev->next = mag->next;
+                        mag->prev->next = mag->next;
                     } else if (mag->prev) {
                         mag->prev->next = NULL;
                     } else if (mag->next) {
@@ -1792,6 +1796,12 @@ _malloc(size_t size,
                 mag->tab = NULL;
                 __mallocunlkmtx(&tab->lk);
             }
+        } else {
+            mag->next = arn->magbkt[bktid].ptr;
+            if (mag->next) {
+                mag->next->prev = mag;
+            }
+            arn->magbkt[bktid].ptr = mag;
         }
     }
     ptr = clrptr(ptrval);
@@ -1800,9 +1810,11 @@ _malloc(size_t size,
         long    ndx;
         uint8_t aln;
 #endif
-        VALGRINDPOOLALLOC(mag->base,
+#if 0
+        VALGRINDPOOLALLOC(clradr(mag->base),
                           ptr,
                           size);
+#endif
         if ((zero) && (((uintptr_t)ptrval & BLKDIRTY))) {
             memset(ptr, 0, 1UL << bktid);
         } else if (g_malloc.mallopt.flg & MALLOPT_PERTURB_BIT) {
@@ -1850,6 +1862,9 @@ _malloc(size_t size,
         setbit(mag->freemap, magptrid(mag, ptr));
 #endif
     }
+    if (ptr) {
+        VALGRINDALLOC(ptr, size, zero);
+    }
     
     return ptr;
 }
@@ -1872,6 +1887,7 @@ _free(void *ptr)
 
         return;
     }
+    VALGRINDFREE(ptr);
 #if (MALLOCTLSARN)
     arn = &thrarn;
 #endif
@@ -1881,8 +1897,10 @@ _free(void *ptr)
     mag = findmag(ptr);
 #endif
     if (mag) {
-        VALGRINDPOOLFREE(mag->base,
+#if 0
+        VALGRINDPOOLFREE(clradr(mag->base),
                          ptr);
+#endif
         /* remove pointer from allocation lookup structure */
 #if (!MALLOCHDRPREFIX)
         setmag(ptr, NULL);
@@ -1934,8 +1952,8 @@ _free(void *ptr)
                 } else {
                     tab->ptr = NULL;
                 }
-                __mallocunlkmtx(&tab->lk);
                 mag->tab = NULL;
+                __mallocunlkmtx(&tab->lk);
             }
             if ((uintptr_t)mag->adr & MAGMAP) {
                 freemap = 1;
@@ -1953,27 +1971,16 @@ _free(void *ptr)
         } else if (mag->cur == lim - 1) {
             /* queue an unqueued earlier fully allocated magazine */
             mag->prev = NULL;
-            if (bktid <= MALLOCBIGSLABLOG2) {
-                mag->next = arn->magbkt[bktid].ptr;
-                if (mag->next) {
-                    mag->next->prev = mag;
-                }
-                arn->magbkt[bktid].ptr = mag;
-            } else {
-                __malloclkmtx(&g_malloc.magbkt[bktid].lk);
-                mag->next = g_malloc.magbkt[bktid].ptr;
-                if (mag->next) {
-                    mag->next->prev = mag;
-                }
-                mag->tab = &g_malloc.magbkt[bktid];
-                g_malloc.magbkt[bktid].ptr = mag;
-                __mallocunlkmtx(&g_malloc.magbkt[bktid].lk);
+            mag->next = arn->magbkt[bktid].ptr;
+            if (mag->next) {
+                mag->next->prev = mag;
             }
+            arn->magbkt[bktid].ptr = mag;
         }
         if (freemap) {
             /* unmap slab */
             adr = (void *)mag->base;
-            VALGRINDRMPOOL(adr);
+//            VALGRINDRMPOOL(adr);
             unmapanon(adr, magnbyte(bktid));
 #if (MALLOCSTAT)
             nmapbyte -= magnbyte(bktid);
@@ -1986,7 +1993,7 @@ _free(void *ptr)
         mallocstat();
 #endif
     }
-    
+
     return;
 }
 
@@ -2066,7 +2073,7 @@ malloc(size_t size)
 #endif
 {
     void *ptr = NULL;
-
+    
     if (!size) {
 #if defined(_GNU_SOURCE)
         ptr = _malloc(MALLOCMINSIZE, 0, 0);
@@ -2077,10 +2084,10 @@ malloc(size_t size)
 #if (ZMALLOCDEBUGHOOKS) || (defined(_ZERO_SOURCE) && (ZMALLOCHOOKS)) && 0
     if (__zmalloc_hook) {
         void *caller = NULL;
-
+        
         m_getretadr(caller);
         ptr = __zmalloc_hook(size, (const void *)caller);
-
+        
         return ptr;
     }
 #endif
@@ -2089,10 +2096,10 @@ malloc(size_t size)
 #if defined(ENOMEM)
         errno = ENOMEM;
 #endif
-
+        
         return NULL;
     }
-
+    
     return ptr;
 }
 
@@ -2171,15 +2178,15 @@ realloc(void *ptr,
 #endif
     if (!size && (ptr)) {
         _free(ptr);
-//        VALGRINDFREELIKE(ptr);
+//        VALGRINDFREE(ptr);
     } else {
         retptr = _realloc(ptr, size, 0);
         if (retptr) {
+//            VALGRINDALLOC(retptr, size, 0);
             if (retptr != ptr) {
                 _free(ptr);
-//                VALGRINDFREELIKE(ptr);
+//                VALGRINDFREE(ptr);
             }
-//            VALGRINDALLOC(retptr, size, 0);
         }
     }
 #if (MALLOCDEBUG)
@@ -2208,7 +2215,7 @@ free(void *ptr)
 #endif
     if (ptr) {
         _free(ptr);
-//        VALGRINDFREELIKE(ptr);
+//        VALGRINDFREE(ptr);
     }
 
     return;
@@ -2411,7 +2418,7 @@ reallocf(void *ptr,
         return NULL;
     }
     if (ptr) {
-//        VALGRINDFREELIKE(ptr);
+//        VALGRINDFREE(ptr);
     }
     if (retptr) {
 //        VALGRINDALLOC(retptr, size, 0);
@@ -2516,7 +2523,7 @@ _aligned_free(void *ptr)
 #endif
     if (ptr) {
         _free(ptr);
-//        VALGRINDFREELIKE(ptr);
+//        VALGRINDFREE(ptr);
     }
 
     return;
@@ -2579,7 +2586,7 @@ _mm_free(void *ptr)
 #endif
     if (ptr) {
         _free(ptr);
-//        VALGRINDFREELIKE(ptr);
+//        VALGRINDFREE(ptr);
     }
 
     return;
@@ -2592,7 +2599,7 @@ cfree(void *ptr)
 {
     if (ptr) {
         _free(ptr);
-//        VALGRINDFREELIKE(ptr);
+//        VALGRINDFREE(ptr);
     }
 
     return;
