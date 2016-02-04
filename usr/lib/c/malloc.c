@@ -1077,14 +1077,12 @@ _malloc(size_t size,
             __malloclkmtx(&tab->lk);
             mag = tab->ptr;
             if (mag) {
-                _assert(!mag->cur);
 #if (MALLOCPTRNDX)
                 ndx = mag->stk[mag->cur++];
                 ptr = (uint8_t *)mag->base + (ndx << bktid);
 #else
                 ptr = mag->stk[mag->cur++];
 #endif
-                mag->next = tab->ptr;
                 if (mag->next) {
                     mag->next->prev = NULL;
                 }
