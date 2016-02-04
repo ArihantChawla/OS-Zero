@@ -176,7 +176,7 @@ _backtrace(void **buf, __btsize_t size, long syms, int fd)
     uintptr_t      pdif;
     __btsize_t     ndx;
 
-    if ((syms) && !fp) {
+    if ((syms) && !buf) {
         buf = malloc(size * sizeof(void *));
     } else if (!buf || !size) {
 

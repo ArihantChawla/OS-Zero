@@ -94,7 +94,7 @@
 #define MALLOCDEBUGHOOKS 0
 #endif
 
-#if (MALLOCDEBUG)
+#if (MALLOCTRACE)
 void *tracetab[64];
 #endif
 
@@ -121,8 +121,6 @@ static void * maginittab(struct mag *mag, long bktid);
 #if (MALLOCGETNPROCS) && 0
 #include <sys/sysinfo.h>
 #endif
-#define PTHREAD 1
-#define ZEROMTX 1
 #if (PTHREAD)
 #include <pthread.h>
 #endif
@@ -518,16 +516,28 @@ thrfreearn(void *arg)
     struct arn    *arn = arg;
     struct memtab *tab;
     struct mag    *mag;
+    struct mag    *tail = NULL;
     long           bktid;
 
     for (bktid = 0 ; bktid < MALLOCNBKT ; bktid++) {
         tab = &arn->magbkt[bktid];
         mag = tab->ptr;
         if (mag) {
+            while (mag->next) {
+                mag = mag->next;
+                tail = mag;
+            }
             __malloclkmtx(&g_malloc.magbkt[bktid].lk);
-            mag->next = g_malloc.magbkt[bktid].ptr;
-            if (mag->next) {
-                mag->next->prev = mag;
+            if (tail) {
+                tail->next = g_malloc.magbkt[bktid].ptr;
+                if (tail->next) {
+                    tail->next->prev = mag;
+                }
+            } else {
+                mag->next = g_malloc.magbkt[bktid].ptr;
+                if (mag->next) {
+                    mag->next->prev = mag;
+                }
             }
             g_malloc.magbkt[bktid].ptr = mag;
             __mallocunlkmtx(&g_malloc.magbkt[bktid].lk);
@@ -977,7 +987,7 @@ _malloc(size_t size,
 {
 #if (MALLOCPTRNDX)
     MAGPTRNDX      *stk;
-    MAGPTRNDX       ndx = 0;
+    MAGPTRNDX       ndx;
 #else
     void          **stk;
 #endif
@@ -1016,8 +1026,10 @@ _malloc(size_t size,
 #endif
     mag = arn->magbkt[bktid].ptr;
     if (mag) {
+        _assert(mag->cur < mag->lim);
 #if (MALLOCPTRNDX)
         ndx = mag->stk[mag->cur++];
+        ptr = (uint8_t *)mag->base + (ndx << bktid);
 #else
         ptr = mag->stk[mag->cur++];
 #endif
@@ -1036,8 +1048,10 @@ _malloc(size_t size,
         __malloclkmtx(&tab->lk);
         mag = tab->ptr;
         if (mag) {
+            _assert(mag->cur < mag->lim);
 #if (MALLOCPTRNDX)
             ndx = mag->stk[mag->cur++];
+            ptr = (uint8_t *)mag->base + (ndx << bktid);
 #else
             ptr = mag->stk[mag->cur++];
 #endif
@@ -1063,8 +1077,10 @@ _malloc(size_t size,
             __malloclkmtx(&tab->lk);
             mag = tab->ptr;
             if (mag) {
+                _assert(!mag->cur);
 #if (MALLOCPTRNDX)
                 ndx = mag->stk[mag->cur++];
+                ptr = (uint8_t *)mag->base + (ndx << bktid);
 #else
                 ptr = mag->stk[mag->cur++];
 #endif
@@ -1101,6 +1117,7 @@ _malloc(size_t size,
         }
     }
     if ((mag) && !ptr) {
+        _assert(mag->cur < mag->lim);
         stk = mag->stk;
         lim = mag->lim;
 #if (MALLOCPTRNDX)
@@ -1127,7 +1144,7 @@ _malloc(size_t size,
         uint8_t pad;
 #endif
         adr = clrptr(ptr);
-        if ((zero) && (((uintptr_t)ptr & BLKDIRTY))) {
+        if (zero) {
             memset(adr, 0, 1UL << bktid);
         } else if (g_malloc.mallopt.flg & MALLOPT_PERTURB_BIT) {
             int perturb = g_malloc.mallopt.perturb;
@@ -1255,8 +1272,6 @@ _free(void *ptr)
         mag->stk[--mag->cur] = magptrid(mag, ptr);
 #elif (MALLOCHDRPREFIX)
         mag->stk[--mag->cur] = maggetptr(mag, ptr);
-#else
-        mag->stk[--mag->cur] = (void *)((uintptr_t)ptr | BLKDIRTY);
 #endif
         lim = mag->lim;
         if (!mag->cur) {
@@ -1277,6 +1292,18 @@ _free(void *ptr)
                     }
                     mag->tab = NULL;
                     __mallocunlkmtx(&tab->lk);
+                } else {
+                    if ((mag->prev) && (mag->next)) {
+                        mag->next->prev = mag->prev;
+                        mag->prev->next = mag->next;
+                    } else if (mag->prev) {
+                        mag->prev->next = NULL;
+                    } else if (mag->next) {
+                        mag->next->prev = NULL;
+                        arn->magbkt[bktid].ptr = mag->next;
+                    } else {
+                        arn->magbkt[bktid].ptr = NULL;
+                    }
                 }
             }
             if ((uintptr_t)mag->adr & MAGMAP) {
@@ -1318,7 +1345,7 @@ _free(void *ptr)
         mallocstat();
 #endif
     }
-
+    
     return;
 }
 
@@ -1396,7 +1423,7 @@ malloc(size_t size)
 #endif
 {
     void *ptr = NULL;
-    
+
     if (!size) {
 #if defined(_GNU_SOURCE)
         ptr = _malloc(MALLOCMINSIZE, 0, 0);
@@ -1423,6 +1450,10 @@ malloc(size_t size)
         return NULL;
     }
     VALGRINDALLOC(ptr, size, 0);
+#if (MALLOCTRACE)
+    __malloctrace();
+    __mallocprnttrace("malloc", size, 0);
+#endif
     
     return ptr;
 }
@@ -1471,6 +1502,10 @@ calloc(size_t n, size_t size)
 #if (MALLOCDEBUG)
     _assert(ptr != NULL);
 #endif
+#if (MALLOCTRACE)
+    __malloctrace();
+    __mallocprnttrace("calloc", size, n);
+#endif
 
     return ptr;
 }
@@ -1516,6 +1551,13 @@ realloc(void *ptr,
 #if (MALLOCDEBUG)
     _assert(retptr != NULL);
 #endif
+#if (MALLOCTRACE)
+    __malloctrace();
+    if (ptr) {
+        fprintf(stderr, "REALLOC: %p\n", ptr);
+    } 
+    __mallocprnttrace("realloc", size, 0);
+#endif
 
     return retptr;
 }
@@ -1527,6 +1569,13 @@ zero_free(void *ptr)
 free(void *ptr)
 #endif
 {
+#if (MALLOCTRACE)
+    __malloctrace();
+    if (ptr) {
+        fprintf(stderr, "free: %p\n", ptr);
+    }
+    __mallocprnttrace("free", 0, 0);
+#endif
 #if (MALLOCDEBUGHOOKS) || (defined(_ZERO_SOURCE) && (MALLOCHOOKS)) && 0
     if (__zfree_hook) {
         void *caller = NULL;
@@ -1566,7 +1615,7 @@ aligned_alloc(size_t align,
         m_getretadr(caller);
         ptr = __zmemalign_hook(align, size, (const void *)caller);
 
-        return ptr
+        return ptr;
     }
 #endif
     if (!powerof2(aln) || (size & (aln - 1))) {
@@ -1579,6 +1628,10 @@ aligned_alloc(size_t align,
     }
 #if (MALLOCDEBUG)
     _assert(ptr != NULL);
+#endif
+#if (MALLOCTRACE)
+    __malloctrace();
+    __mallocprnttrace("aligned_alloc", size, align);
 #endif
 
     return ptr;
@@ -1625,6 +1678,10 @@ posix_memalign(void **ret,
     _assert(ptr != NULL);
 #endif
     *ret = ptr;
+#if (MALLOCTRACE)
+    __malloctrace();
+    __mallocprnttrace("posix_memalign", size, align);
+#endif
 
     return retval;
 }
@@ -1663,6 +1720,10 @@ valloc(size_t size)
     }
 #if (MALLOCDEBUG)
     _assert(ptr != NULL);
+#endif
+#if (MALLOCTRACE)
+    __malloctrace();
+    __mallocprnttrace("valloc", size, 0);
 #endif
     
     return ptr;
@@ -1708,6 +1769,10 @@ memalign(size_t align,
 #if (MALLOCDEBUG)
     _assert(ptr != NULL);
 #endif
+#if (MALLOCTRACE)
+    __malloctrace();
+    __mallocprnttrace("memalign", size, align);
+#endif
 
     return ptr;
 }
@@ -1750,6 +1815,13 @@ reallocf(void *ptr,
 #if (MALLOCDEBUG)
     _assert(retptr != NULL);
 #endif
+#if (MALLOCTRACE)
+    __malloctrace();
+    if (ptr) {
+        fprintf(stderr, "reallocf: %p\n", ptr);
+    }
+    __mallocprnttrace("reallocf", size, align);
+#endif
 
     return retptr;
 }
@@ -1786,6 +1858,10 @@ pvalloc(size_t size)
     }
 #if (MALLOCDEBUG)
     _assert(ptr != NULL);
+#endif
+#if (MALLOCTRACE)
+    __malloctrace();
+    __mallocprnttrace("pvalloc", size, 0);
 #endif
 
     return ptr;
@@ -1828,6 +1904,10 @@ _aligned_malloc(size_t size,
 #if (MALLOCDEBUG)
     _assert(ptr != NULL);
 #endif
+#if (MALLOCTRACE)
+    __malloctrace();
+    __mallocprnttrace("__aligned_malloc", size, align);
+#endif
 
     return ptr;
 }
@@ -1835,6 +1915,13 @@ _aligned_malloc(size_t size,
 void
 _aligned_free(void *ptr)
 {
+#if (MALLOCTRACE)
+    __malloctrace();
+    if (ptr) {
+        fprintf(stderr, "_aligned_free: %p\n", align);
+    }
+    __mallocprnttrace("_aligned_free", 0, 0);
+#endif
 #if (MALLOCDEBUGHOOKS) || (defined(_ZERO_SOURCE) && (MALLOCHOOKS)) && 0
     if (__zfree_hook) {
         void *caller = NULL;
@@ -1891,6 +1978,10 @@ _mm_malloc(int size,
 #if (MALLOCDEBUG)
     _assert(ptr != NULL);
 #endif
+#if (MALLOCTRACE)
+    __malloctrace();
+    __mallocprnttrace("_mm_malloc", size, align);
+#endif
 
     return ptr;
 }
@@ -1898,6 +1989,13 @@ _mm_malloc(int size,
 void
 _mm_free(void *ptr)
 {
+#if (MALLOCTRACE)
+    __malloctrace();
+    if (ptr) {
+        fprintf(stderr, "_mm_malloc: %p\n", ptr);
+    }
+    __mallocprnttrace("_mm_malloc", 0, 0);
+#endif
 #if (MALLOCDEBUGHOOKS) || (defined(_ZERO_SOURCE) && (MALLOCHOOKS)) && 0
     if (__zfree_hook) {
         void *caller = NULL;
@@ -1921,6 +2019,13 @@ _mm_free(void *ptr)
 void
 cfree(void *ptr)
 {
+#if (MALLOCTRACE)
+    __malloctrace();
+    if (ptr) {
+        fprintf(stderr, "cfree: %p\n", ptr);
+    }
+    __mallocprnttrace("cfree", 0, 0);
+#endif
     if (ptr) {
         _free(ptr);
         VALGRINDFREE(ptr);

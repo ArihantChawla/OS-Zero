@@ -6,11 +6,17 @@
 
 /* internal stuff for zero malloc - not for the faint at heart to modify :) */
 
+#define PTHREAD           1
+#define ZEROMTX           1
+
 #if !defined(MALLOCDEBUG)
 #define MALLOCDEBUG       0
 #endif
 #if !defined(GNUTRACE)
-#define GNUTRACE          0
+#define GNUTRACE          1
+#endif
+#if !defined(MALLOCTRACE)
+#define MALLOCTRACE       0
 #endif
 
 /* optional features and other hacks */
@@ -33,8 +39,6 @@
 #define MALLOCDEBUGHOOKS  0
 #define MALLOCDIAG        0 // run [heavy] internal diagnostics for debugging
 #define DEBUGMTX          0
-#define GNUTRACE          0
-#define MALLOCTRACE       0
 
 #define MALLOCSTEALMAG    0
 #define MALLOCMULTITAB    0
@@ -128,24 +132,26 @@
 
 #if defined(MALLOCDEBUG)
 #if (MALLOCTRACE) && (GNUTRACE)
-#define _assert(expr)                                                   \
+#include <execinfo.h>
+extern uintptr_t _backtrace(void *buf, size_t size, long syms, int fd);
+#define __malloctrace()                                                 \
     do {                                                                \
-        if (!(expr)) {                                                  \
-            int _sz;                                                    \
-                                                                        \
-            _sz = backtrace(tracetab, 64);                              \
-            backtrace_symbols(tracetab, _sz);                           \
-            *((long *)NULL) = 0;                                        \
-        }                                                               \
+        _backtrace(tracetab, 64, 1, 1);                                 \
     } while (0)
-#else
-#define _assert(expr)                                                   \
+#define __mallocprnttrace(str, sz, aln)                                 \
     do {                                                                \
-        if (!(expr)) {                                                  \
-            *((long *)NULL) = 0;                                        \
-        }                                                               \
+        fprintf(stderr, "%s: %ull(%ull)\n",                             \
+                str,                                                    \
+                (unsigned long long)(sz),                               \
+                (unsigned long long)(aln));                             \
     } while (0)
 #endif
+#define _assert(expr)                                                   \
+    do {                                                                \
+        if (!(expr)) {                                                  \
+            *((long *)NULL) = 0;                                        \
+        }                                                               \
+    } while (0)
 //#include <assert.h>
 #endif
 

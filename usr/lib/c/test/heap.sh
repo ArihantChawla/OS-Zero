@@ -10,6 +10,7 @@ CCWARNFLAGS="-D_FORTIFY_SOURCE=2 -Wall -Wundef -Wextra -Wpointer-arith -Wuniniti
 # - same thing with -finline-functions and -funroll-loops
 $CC $CCWARNFLAGS -DZEROHASH=0 -DZEROFUTEX=0 -DZEROMALLOC=1 -DPTHREAD=1 -D_REENTRANT -g -Wall -fno-builtin -O -I. -o heap heap.c -pthread
 $CC $CCWARNFLAGS -DX11VIS=0 -DZEROHASH=0 -DZEROFUTEX=0 -DZEROMALLOC=1 -DPTHREAD=1 -D_REENTRANT -g -Wall -fno-builtin -O0 -I../../../.. -I../../../lib -o zheap heap.c ../malloc.c -pthread
+#$CC $CCWARNFLAGS -DX11VIS=0 -DMALLOCTRACE=1 -DZEROHASH=0 -DZEROFUTEX=0 -DZEROMALLOC=1 -DPTHREAD=1 -D_REENTRANT -g -Wall -fno-builtin -O0 -I../../../.. -I../../../lib -o tzheap heap.c ../execinfo.c ../malloc.c -pthread
 $CC $CCWARNFLAGS -DZEROHASH=0 -DZEROFUTEX=0 -DZEROMALLOC=1 -DPTHREAD=1 -D_REENTRANT -DX11VIS=1 -g -Wall -fno-builtin -O -I../../../.. -I../../../lib -o xzheap heap.c ../malloc.c -Wl,-lX11 -pthread
 #$CC $CCWARNFLAGS -DPTHREAD=1 -DX11VIS=1 -D_REENTRANT -g -Wall -fno-builtin -O -I../../../.. -I../../../lib /../include -o xheap heap.c ../stdlib/../malloc.c -pthread -lX11
 #$CC $CCWARNFLAGS -DPTHREAD=1 -D_REENTRANT -g -Wall -fno-builtin -O -I../../../.. -I../../../lib /../include -o jeheap heap.c libjemalloc.a -pthread -ldl
