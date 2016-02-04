@@ -126,34 +126,6 @@ static void * maginittab(struct mag *mag, long bktid);
 #if (PTHREAD)
 #include <pthread.h>
 #endif
-#if defined(ZEROMTX) && (ZEROMTX)
-#define MUTEX volatile long
-#include <zero/mtx.h>
-#include <zero/spin.h>
-#if (ZEROMTX) && (DEBUGMTX)
-#define __mallocinitmtx(mp)  mtxinit(mp)
-#define __malloctrylkmtx(mp) mtxtrylk(mp)
-#define __malloclkmtx(mp)   (fprintf(stderr, "%p\tLK: %d\n", __LINE__, \
-                                     mp),                              \
-                             mtxlk(mp))
-#define __mallocunlkmtx(mp) (fprintf(stderr, "%p\tUNLK: %d\n", __LINE__, \
-                                     mp),                               \
-                             mtxunlk(mp))
-#define __mallocinitspin(mp) spininit(mp)
-#define __malloclkspin(mp)   (fprintf(stderr, "LK: %d\n", __LINE__), spinlk(mp))
-#define __mallocunlkspin(mp) (fprintf(stderr, "UNLK: %d\n", __LINE__), spinunlk(mp))
-#elif (ZEROMTX)
-#define __malloctrylkmtx(mp) mtxtrylk(mp)
-#define __mallocinitmtx(mp)  mtxinit(mp)
-#define __malloclkmtx(mp)    mtxlk(mp)
-#define __mallocunlkmtx(mp)  mtxunlk(mp)
-#endif
-#elif (PTHREAD)
-#define MUTEX pthread_mutex_t
-#define __mallocinitmtx(mp) pthread_mutex_init(mp, NULL)
-#define __malloclkmtx(mp)   pthread_mutex_lock(mp)
-#define __mallocunlkmtx(mp) pthread_mutex_unlock(mp)
-#endif
 #include <zero/cdefs.h>
 #include <zero/param.h>
 #include <zero/unix.h>
@@ -175,22 +147,6 @@ void * zero_realloc(void *ptr, size_t size);
 void * zero_memalign(size_t align,  size_t size);
 void   zero_free(void *ptr);
 #endif /* GNUMALLOC */
-
-#if (MALLOCPTRNDX)
-#if (MALLOCSLABLOG2 - MALLOCMINLOG2 < 8)
-#define PTRFREE              0xff
-#define MAGPTRNDX            uint8_t
-#elif (MALLOCSLABLOG2 - MALLOCMINLOG2 < 16)
-#define PTRFREE              0xffff
-#define MAGPTRNDX            uint16_t
-#elif (MALLOCSLABLOG2 - MALLOCMINLOG2 < 32)
-#define PTRFREE              0xffffffff
-#define MAGPTRNDX            uint32_t
-#else
-#define PTRFREE              UINT64_C(0xffffffffffffffff)
-#define MAGPTRNDX            uint64_t
-#endif
-#endif
 
 #define clrptr(ptr)                                                     \
     ((void *)((uintptr_t)ptr & ~ADRMASK))
@@ -333,53 +289,6 @@ void   zero_free(void *ptr);
 #define magnblk(bktid)                                                  \
     (1UL << magnblklog2(bktid))
 
-struct bkt {
-    volatile long  lk;
-    void          *ptr;
-    volatile long  nref;
-    uint8_t        _pad[CLSIZE - 2 * sizeof(long) - sizeof(void *)];
-};
-
-#if 0
-#define maglkbit(mag)   (!m_cmpsetbit((volatile long *)&mag->adr, 0))
-#define magunlkbit(mag) (m_cmpclrbit((volatile long *)&mag->adr, 0))
-#endif
-#define maglkbit(mag)   1
-#define magunlkbit(mag) 0
-#define MAGLOCK         0x01
-#define MAGMAP          0x02
-#define MAGGLOB         0x04
-#define BLKDIRTY        0x01
-#define ADRMASK         (MALLOCMINSIZE - 1)
-#define MALLOCHDRSIZE   PAGESIZE
-/* magazines for larger/fewer allocations embed the tables in the structure */
-/* magazine header structure */
-struct mag {
-    volatile long   lk;
-    struct memtab  *tab;
-    void           *base;
-    void           *adr;
-    long            cur;
-    long            lim;
-#if (!MALLOCTLSARN)
-    long            arnid;
-#endif
-#if (MALLOCFREEMAP)
-    volatile long   freelk;
-    uint8_t        *freemap;
-#endif
-    long            bktid;
-    struct mag     *prev;
-    struct mag     *next;
-#if (MALLOCPTRNDX)
-    MAGPTRNDX      *stk;
-    MAGPTRNDX      *ptrtab;
-#elif (MALLOCHDRPREFIX)
-    void          **stk;
-    void          **ptrtab;
-#endif
-};
-
 #define maghdrsz()                                                      \
     (rounduppow2(sizeof(struct mag), CLSIZE))
 #if (MALLOCFREEMAP)
@@ -399,126 +308,23 @@ void
 magprint(struct mag *mag)
 {
     fprintf(stderr, "MAG %p\n", mag);
-    fprintf(stderr, "\tadr\t%p\n", mag->base);
+    fprintf(stderr, "\tbase\t%p\n", mag->base);
+    fprintf(stderr, "\tadr\t%p\n", mag->adr);
     fprintf(stderr, "\tcur\t%ld\n", mag->cur);
     fprintf(stderr, "\tlim\t%ld\n", mag->lim);
     fprintf(stderr, "\tbktid\t%ld\n", mag->bktid);
+    fprintf(stderr, "\tstk\t%p\n", mag->stk);
+    fprintf(stderr, "\tptrtab\t%p\n", mag->ptrtab);
 #if (MALLOCFREEMAP)
     fprintf(stderr, "\tfreemap\t%p\n", mag->freemap);
 #endif
-    fprintf(stderr, "\tstk\t%p\n", mag->stk);
-    fprintf(stderr, "\tptrtab\t%p\n", mag->ptrtab);
     fflush(stderr);
 
     return;
 }
 #endif
 
-struct memtab {
-    MUTEX          lk;
-    void          *ptr;
-#if (MALLOCBUFMAP)
-    unsigned long  n;
-    uint8_t        _pad[CLSIZE - 2 * sizeof(long) - sizeof(struct mag *)];
-#else
-    uint8_t        _pad[CLSIZE - sizeof(long) - sizeof(struct mag *)];
-#endif
-};
-
-/* magazine list header structure */
-
-struct magbkt {
-    long        nref;
-    struct mag *tab;
-};
-
-#define MALLOCARNSIZE      rounduppow2(sizeof(struct arn), PAGESIZE)
-/* arena structure */
-struct arn {
-    struct memtab  magbkt[MALLOCNBKT];
-#if (!MALLOCTLSARN)
-    MUTEX          nreflk;
-    long           nref;
-#endif
-};
-
-#define MALLOPT_PERTURB_BIT 0x00000001
-struct mallopt {
-    int action;
-    int flg;
-    int perturb;
-    int mmapmax;
-    int mmaplog2;
-};
-
-#if (MALLOCHDRHACKS)
-/*
- * this structure is here for informative purposes; note that in core, the
- * header is right before the allocated address so you need to index it with
- * negative offsets
- */
-struct memhdr {
-    void      *mag;     // allocation magazine header
-#if (MALLOCPTRNDX)
-    MAGPTRNDX  ndx;
-#endif
-    uint8_t    bkt;     // bucket ID for block
-    uint8_t    pad;     // header-imposed alignment for block
-};
-
-#if (MALLOCPTRNDX)
-#define MEMHDRMAGOFS     (offsetof(struct memhdr, mag) / sizeof(void *))
-#define MEMHDRSIZE       (sizeof(void *)                                \
-                          + sizeof(MAGPTRNDX)                           \
-                          + 2 * sizeof(int8_t))
-#define MEMHDRNDXOFS     (offsetof(struct memhdr, ndx) / sizeof(MAGPTRNDX))
-#define getndx(ptr)      (((MAGPTRNDX *)(ptr))[-(1 + MEMHDRNDXOFS)])
-#define setndx(ptr, ndx) ((((MAGPTRNDX *)(ptr))[-(1 + MEMHDRNDXOFS)]) = (ndx))
-#else /* !MALLOCPTRNDX */
-#define MEMHDRSIZE       (sizeof(void *)                                \
-                          + sizeof(int16_t)                             \
-                          + 2 * sizeof(int8_t))
-#define MEMHDRNDXOFS     (offsetof(struct memhdr, ndx) / sizeof(uint16_t))
-#define getndx(ptr)      (((uint16_t *)(ptr))[-(1 + MEMHDRNDXOFS)])
-#define setndx(ptr, ndx) ((((uint16_t *)(ptr))[-(1 + MEMHDRNDXOFS)]) = (ndx))
-#endif /* MALLOCPTRNDX */
-
-#define MEMHDRBKTOFS     (offsetof(struct memhdr, bkt))
-#define MEMHDRPADOFS     (offsetof(struct memhdr, pad))
-#if 0
-#define getmag(ptr)      (((void **)(ptr))[-1])
-#define setmag(ptr, mag) (((void **)(ptr))[-1] = (mag))
-#endif
-#define setmag(ptr, mag) ((((void **)(ptr))[-(1 + MEMHDRMAGOFS)] = (mag)))
-#define getmag(ptr)      ((((void **)(ptr))[-(1 + MEMHDRMAGOFS)]))
-#define getbkt(ptr)      (((uint8_t *)(ptr))[-(1 + MEMHDRBKTOFS)])
-#define setbkt(ptr, bkt) ((((uint8_t *)(ptr))[-(1 + MEMHDRBKTOFS)]) = (bkt))
-#define getpad(ptr)      (((uint8_t *)(ptr))[-(1 + MEMHDRPADOFS)])
-#define setpad(ptr, pad) ((((uint8_t *)(ptr))[-(1 + MEMHDRPADOFS)]) = (pad))
-#endif
-
-/* malloc global structure */
-#define MALLOCINIT 0x00000001L
-struct malloc {
-    struct memtab     magbkt[MALLOCNBKT];
-    struct memtab     freetab[MALLOCNBKT];
-    struct memtab     hdrbuf[MALLOCNBKT];
-#if (!MALLOCTLSARN)
-    struct arn      **arntab;           // arena structures
-#endif
-    MUTEX            *mlktab;
-    struct magtab   **mdir;             // allocation header lookup structure
-    MUTEX             initlk;           // initialization lock
-    MUTEX             heaplk;           // lock for sbrk()
-#if (!MALLOCTLSARN)
-    long              curarn;
-    long              narn;             // number of arenas in action
-#endif
-    long              flg;              // allocator flags
-    int               zerofd;           // file descriptor for mmap()
-    struct mallopt    mallopt;          // mallopt() interface
-    struct mallinfo   mallinfo;         // mallinfo() interface
-};
+/* start of the allocator proper */
 
 static struct malloc       g_malloc ALIGNED(PAGESIZE);
 #if (MALLOCTLSARN)
@@ -536,6 +342,34 @@ MUTEX                      _arnlk;
 long long                  nheapbyte;
 long long                  nmapbyte;
 long long                  ntabbyte;
+#endif
+
+#if defined(__GLIBC__)
+extern void *(* MALLOC_HOOK_MAYBE_VOLATILE __malloc_hook)(size_t size,
+                                                          const void *caller);
+extern void *(* MALLOC_HOOK_MAYBE_VOLATILE __realloc_hook)(void *ptr,
+                                                           size_t size,
+                                                           const void *caller);
+extern void *(* MALLOC_HOOK_MAYBE_VOLATILE __memalign_hook)(size_t align,
+                                                            size_t size,
+                                                            const void *caller);
+extern void  (* MALLOC_HOOK_MAYBE_VOLATILE __free_hook)(void *ptr,
+                                                        const void *caller);
+extern void  (* MALLOC_HOOK_MAYBE_VOLATILE __malloc_initialize_hook)(void);
+extern void  (* MALLOC_HOOK_MAYBE_VOLATILE __after_morecore_hook)(void);
+#elif defined(_GNU_SOURCE) && defined(GNUMALLOCHOOKS)
+void         (* MALLOC_HOOK_MAYBE_VOLATILE __malloc_initialize_hook)(void);
+void         (* MALLOC_HOOK_MAYBE_VOLATILE __after_morecore_hook)(void);
+void        *(* MALLOC_HOOK_MAYBE_VOLATILE __malloc_hook)(size_t size,
+                                                          const void *caller);
+void        *(* MALLOC_HOOK_MAYBE_VOLATILE __realloc_hook)(void *ptr,
+                                                            size_t size,
+                                                            const void *caller);
+void        *(* MALLOC_HOOK_MAYBE_VOLATILE __memalign_hook)(size_t align,
+                                                            size_t size,
+                                                            const void *caller);
+void         (* MALLOC_HOOK_MAYBE_VOLATILE __free_hook)(void *ptr,
+                                                        const void *caller);
 #endif
 
 #if (MALLOCSTAT)
