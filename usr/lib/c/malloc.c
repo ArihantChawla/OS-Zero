@@ -11,12 +11,12 @@
 #define MALLOCNEWHDR    1
 #define MALLOCHDRPREFIX 1
 #define MALLOCTLSARN    1
-#define DEBUGMTX        1
+#define DEBUGMTX        0
 #define GNUTRACE        1
 #define MALLOCTRACE     1
 
 /* use zero malloc on a GNU system such as a Linux distribution */
-#define GNUMALLOC 0
+#define GNUMALLOC       0
 
 #if defined(__BIGGEST_ALIGNMENT__)
 #define MALLOCALIGNMENT   __BIGGEST_ALIGNMENT__
@@ -167,7 +167,7 @@ static void * maginittab(struct mag *mag, long bktid);
 #include <sys/sysinfo.h>
 #endif
 #define PTHREAD 1
-#define ZEROMTX 1
+#define ZEROMTX 0
 #if defined(ZEROMTX) && (ZEROMTX)
 #undef PTHREAD
 #define MUTEX volatile long
@@ -1705,13 +1705,17 @@ _malloc(size_t size,
 #else
             ptr = mag->stk[mag->cur++];
 #endif
-            if (mag->cur == mag->lim) {
-                mag->next = tab->ptr;
+            if (mag->next) {
+                mag->next->prev = NULL;
+            }
+            tab->ptr = mag->next;
+            mag->tab = NULL;
+            if (mag->cur < mag->lim) {
+                mag->next = arn->magbkt[bktid].ptr;
                 if (mag->next) {
-                    mag->next->prev = NULL;
+                    mag->next->prev = mag;
                 }
-                tab->ptr = mag->next;
-                mag->tab = NULL;
+                arn->magbkt[bktid].ptr = mag;
             }
         }
         __mallocunlkmtx(&tab->lk);
@@ -1725,13 +1729,18 @@ _malloc(size_t size,
 #else
                 ptr = mag->stk[mag->cur++];
 #endif
-                if (mag->cur == mag->lim) {
-                    mag->next = tab->ptr;
+                mag->next = tab->ptr;
+                if (mag->next) {
+                    mag->next->prev = NULL;
+                }
+                tab->ptr = mag->next;
+                mag->tab = NULL;
+                if (mag->cur < mag->lim) {
+                    mag->next = arn->magbkt[bktid].ptr;
                     if (mag->next) {
-                        mag->next->prev = NULL;
+                        mag->next->prev = mag;
                     }
-                    tab->ptr = mag->next;
-                    mag->tab = NULL;
+                    arn->magbkt[bktid].ptr = mag;
                 }
             }
             __mallocunlkmtx(&tab->lk);
@@ -1848,6 +1857,7 @@ _free(void *ptr)
 
         return;
     }
+    VALGRINDFREE(ptr);
 #if (MALLOCTLSARN)
     arn = &thrarn;
 #endif
@@ -1866,7 +1876,7 @@ _free(void *ptr)
         }
         setndx(ptr, PTRFREE);
 #endif
-        VALGRINDFREE(ptr);
+//        VALGRINDFREE(ptr);
 #if 0
         VALGRINDPOOLFREE(clradr(mag->base),
                          ptr);
@@ -1994,9 +2004,11 @@ _realloc(void *ptr,
 #endif
     long           bktid = blkbktid(sz);
 
+#if 0
     if (!(g_malloc.flags & MALLOCINIT)) {
         mallinit();
     }
+#endif
     if (!ptr) {
         retptr = _malloc(sz, 0, 0);
     } else if ((mag) && mag->bktid < bktid) {
