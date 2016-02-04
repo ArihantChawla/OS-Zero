@@ -46,7 +46,7 @@
 /* use zero malloc on a GNU system such as a Linux distribution */
 #define GNUMALLOC         0
 
-/* HAZARD: modifying anything before might break anything and everything BAD */
+/* HAZARD: modifying anything below might break anything and everything BAD */
 
 /* allocator parameters */
 
