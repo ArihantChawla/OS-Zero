@@ -531,7 +531,7 @@ thrfreearn(void *arg)
             if (tail) {
                 tail->next = g_malloc.magbkt[bktid].ptr;
                 if (tail->next) {
-                    tail->next->prev = mag;
+                    tail->next->prev = tail;
                 }
             } else {
                 mag->next = g_malloc.magbkt[bktid].ptr;
