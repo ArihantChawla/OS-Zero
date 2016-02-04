@@ -11,7 +11,7 @@
 #define MALLOCNEWHDR    1
 #define MALLOCHDRPREFIX 1
 #define MALLOCTLSARN    1
-#define DEBUGMTX        1
+#define DEBUGMTX        0
 #define GNUTRACE        0
 #define MALLOCTRACE     0
 
@@ -1028,7 +1028,7 @@ thrinitarn(void)
 }
 
 static void *
-thrinit(struct arn *arn)
+thrinit(void)
 {
     void *ptr = NULL;
 
@@ -1771,7 +1771,7 @@ _malloc(size_t size,
             mag->tab = NULL;
             if (mag->cur < mag->lim) {
                 if (!(thrflg & MALLOCINIT)) {
-                    thrinit(&thrarn);
+                    thrinit();
                 }
                 mag->next = arn->magbkt[bktid].ptr;
                 if (mag->next) {
@@ -1799,7 +1799,7 @@ _malloc(size_t size,
                 mag->tab = NULL;
                 if (mag->cur < mag->lim) {
                     if (!(thrflg & MALLOCINIT)) {
-                        thrinit(&thrarn);
+                        thrinit();
                     }
                     mag->next = arn->magbkt[bktid].ptr;
                     if (mag->next) {
@@ -1838,7 +1838,7 @@ _malloc(size_t size,
 #endif
         if (mag->cur < mag->lim) {
             if (!(thrflg & MALLOCINIT)) {
-                thrinit(&thrarn);
+                thrinit();
             }
             mag->next = arn->magbkt[bktid].ptr;
             if (mag->next) {
