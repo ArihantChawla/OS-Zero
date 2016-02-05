@@ -263,7 +263,9 @@ struct bkt {
 /* magazine header structure */
 struct mag {
     volatile long   lk;
+#if 0
     struct memtab  *tab;
+#endif
     void           *base;
     void           *adr;
     long            cur;
