@@ -34,7 +34,7 @@
 #define MALLOCNOPTRTAB    0
 #define MALLOCNARN        16
 #define MALLOCEXPERIMENT  0
-#define MALLOCNBUFHDR     16
+#define MALLOCNBUFHDR     4
 
 #define MALLOCDEBUGHOOKS  0
 #define MALLOCDIAG        0 // run [heavy] internal diagnostics for debugging

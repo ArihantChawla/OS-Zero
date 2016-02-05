@@ -469,6 +469,7 @@ maginitslab(struct mag *mag, long bktid)
     uintptr_t   mapflg = 0;;
 
     if (!mag->base) {
+        _assert(powerof2(lim) && powerof2(sz));
         ptr = SBRK_FAILED;
 #if (!MALLOCNOSBRK)
         if (bktid <= MALLOCSLABLOG2) {
@@ -943,6 +944,7 @@ _free(void *ptr)
     void       *adr = NULL;
     long        lim;
     long        bktid;
+    long        queue = 0;
 #if (MALLOCHDRHACKS)
     uint8_t     nfo;
 #endif
@@ -1024,39 +1026,18 @@ _free(void *ptr)
                 VALGRINDRMPOOL(adr);
                 unmapanon(adr, mag->size);
 #if (MALLOCSTAT)
-                nmapbyte -= magnbyte(bktid);
+                nmapbyte -= mag->size;
 #endif
                 magputhdr(mag);
             } else {
-                if (arn->magbkt[bktid].ptr) {
-                    __malloclkmtx(&g_malloc.magbkt[bktid].lk);
-                    mag->next = g_malloc.magbkt[bktid].ptr;
-                    if (mag->next) {
-                        mag->next->prev = mag;
-                    }
-                    g_malloc.magbkt[bktid].ptr = mag;
-                    __mallocunlkmtx(&g_malloc.magbkt[bktid].lk);
-                } else {
-                    mag->next = arn->magbkt[bktid].ptr;
-                    if (mag->next) {
-                        mag->next->prev = mag;
-                    }
-                    arn->magbkt[bktid].ptr = mag;
-                }
-#if 0
-//                mag->tab = &g_malloc.freetab[bktid];
-                __malloclkmtx(&g_malloc.freetab[bktid].lk);
-                mag->next = g_malloc.freetab[bktid].ptr;
-                if (mag->next) {
-                    mag->next->prev = mag;
-                }
-                g_malloc.freetab[bktid].ptr = mag;
-                __mallocunlkmtx(&g_malloc.freetab[bktid].lk);
-#endif
+                queue = 1;
             }
         } else if (mag->cur == lim - 1) {
 //            mag->tab = NULL;
             /* queue an unqueued earlier fully allocated magazine */
+            queue = 1;
+        }
+        if (queue) {
             mag->prev = NULL;
             if (arn->magbkt[bktid].ptr) {
                 __malloclkmtx(&g_malloc.magbkt[bktid].lk);
