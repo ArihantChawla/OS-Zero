@@ -796,10 +796,12 @@ _malloc(size_t size,
     if (mag) {
         ptr = mag->stk[mag->cur++];
         if (mag->cur == mag->lim) {
+            mag->prev = NULL;
             if (mag->next) {
                 mag->next->prev = NULL;
             }
             arn->magbkt[bktid].ptr = mag->next;
+            mag->next = NULL;
         }
     }
     if (!mag) {
@@ -811,12 +813,15 @@ _malloc(size_t size,
             }
             g_malloc.magbkt[bktid].ptr = mag->next;
             ptr = mag->stk[mag->cur++];
+            mag->prev = NULL;
             if (mag->cur < mag->lim) {
                 mag->next = arn->magbkt[bktid].ptr;
                 if (mag->next) {
                     mag->next->prev = mag;
                 }
                 arn->magbkt[bktid].ptr = mag;
+            } else {
+                mag->next = NULL;
             }
         }
         __mallocunlkmtx(&g_malloc.magbkt[bktid].lk);
@@ -829,12 +834,15 @@ _malloc(size_t size,
                 }
                 g_malloc.freetab[bktid].ptr = mag->next;
                 ptr = mag->stk[mag->cur++];
+                mag->prev = NULL;
                 if (mag->cur < mag->lim) {
                     mag->next = arn->magbkt[bktid].ptr;
                     if (mag->next) {
                         mag->next->prev = mag;
                     }
                     arn->magbkt[bktid].ptr = mag;
+                } else {
+                    mag->next = NULL;
                 }
             }
             __mallocunlkmtx(&g_malloc.freetab[bktid].lk);
@@ -851,6 +859,7 @@ _malloc(size_t size,
                     lim = mag->lim;
                     ptr = mag->stk[mag->cur++];
                     if (mag->cur < mag->lim) {
+                        mag->prev = NULL;
                         mag->next = arn->magbkt[bktid].ptr;
                         if (mag->next) {
                             mag->next->prev = mag;
@@ -1022,8 +1031,8 @@ _free(void *ptr)
         } else if (mag->cur == lim - 1) {
 //            mag->tab = NULL;
             /* queue an unqueued earlier fully allocated magazine */
+            mag->prev = NULL;
             if (arn->magbkt[bktid].ptr) {
-                mag->prev = NULL;
                 __malloclkmtx(&g_malloc.magbkt[bktid].lk);
                 mag->next = g_malloc.magbkt[bktid].ptr;
                 if (mag->next) {
@@ -1032,7 +1041,6 @@ _free(void *ptr)
                 g_malloc.magbkt[bktid].ptr = mag;
                 __mallocunlkmtx(&g_malloc.magbkt[bktid].lk);
             } else {
-                mag->prev = NULL;
                 mag->next = arn->magbkt[bktid].ptr;
                 if (mag->next) {
                     mag->next->prev = mag;
