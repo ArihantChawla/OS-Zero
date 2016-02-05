@@ -167,7 +167,12 @@ void   zero_free(void *ptr);
     ((uintptr_t)(ptr2) - (uintptr_t)(ptr1))
 
 #define magptrid(mag, ptr)                                              \
-    ((((uintptr_t)(ptr) - (uintptr_t)(mag)->base)) >> (mag)->bktid)
+    (((uintptr_t)(ptr) - (uintptr_t)(mag)->base) >> (mag)->bktid)
+#if 0
+#define magptrid(mag, ptr)                                              \
+    (((uintptr_t)(ptr) - (uintptr_t)(mag)->base)                        \
+     >> (mag)->bktid)
+#endif
 #define magputptr(mag, ptr, orig)                                       \
     ((mag)->ptrtab[magptrid(mag, ptr)] = (orig))
 #define maggetptr(mag, ptr)                                             \
@@ -312,8 +317,9 @@ magputhdr(struct mag *mag)
     long bktid = mag->bktid;
 
 /* add magazine header to header cache */
-    mag->prev = NULL;
+    mag->base = NULL;
     mag->adr = mag;
+    mag->prev = NULL;
     __malloclkmtx(&g_malloc.hdrbuf[bktid].lk);
     mag->next =  g_malloc.hdrbuf[bktid].ptr;
     if (mag->next) {
@@ -950,7 +956,7 @@ _free(void *ptr)
 #endif
 #if (MALLOCHDRHACKS)
         if (!(nfo & MEMHDRALNBIT)) {
-            adr = (uint8_t *)ptr - MALLOCALIGNMENT;
+            adr = (void *)rounddownpow2((uintptr_t)ptr, 1UL << bktid);
         } else {
             adr = maggetptr(mag, ptr);
         }
