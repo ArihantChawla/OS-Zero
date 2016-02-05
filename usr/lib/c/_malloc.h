@@ -20,14 +20,14 @@
 #endif
 
 /* optional features and other hacks */
-//#define MALLOCVALGRIND    0
+#define MALLOCVALGRIND    0
 #define MALLOCHDRHACKS    0
 #define MALLOCNEWHDR      1
 #define MALLOCHDRPREFIX   1
 #define MALLOCTLSARN      1
 #define MALLOCSMALLADR    0
 #define MALLOCSTAT        0
-#define MALLOCPTRNDX      1
+#define MALLOCPTRNDX      0
 #define MALLOCCONSTSLABS  1
 #define MALLOCDYNARN      0
 #define MALLOCGETNPROCS   0
@@ -41,9 +41,9 @@
 #define DEBUGMTX          0
 
 #define MALLOCSTEALMAG    0
-#define MALLOCMULTITAB    0
+#define MALLOCMULTITAB    1
 
-#define MALLOCNOSBRK      1 // do NOT use sbrk()/heap, just mmap()
+#define MALLOCNOSBRK      0 // do NOT use sbrk()/heap, just mmap()
 #define MALLOCFREEMDIR    0 // under construction
 #define MALLOCFREEMAP     0 // use free block bitmaps; bit 1 for allocated
 #define MALLOCBUFMAP      1 // buffer mapped slabs to global pool
@@ -209,9 +209,7 @@ extern uintptr_t _backtrace(void *buf, size_t size, long syms, int fd);
 
 /* internal macros */
 #define ptralign(ptr, pow2)                                             \
-    (!((uintptr_t)ptr & (align - 1))                                    \
-     ? ptr                                                              \
-     : ((void *)rounduppow2((uintptr_t)ptr, align)))
+    ((void *)rounduppow2((uintptr_t)ptr, pow2))
 
 #if defined(__GLIBC__) || (defined(GNUMALLOC) && (GNUMALLOC))
 #if !defined(__MALLOC_HOOK_VOLATILE)
