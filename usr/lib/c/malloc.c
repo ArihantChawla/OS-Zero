@@ -845,6 +845,18 @@ _malloc(size_t size,
                 if (!maginit(mag, bktid)) {
                     
                     return NULL;
+                } else {
+                    _assert(!mag->cur);
+                    stk = mag->stk;
+                    lim = mag->lim;
+                    ptr = mag->stk[mag->cur++];
+                    if (mag->cur < mag->lim) {
+                        mag->next = arn->magbkt[bktid].ptr;
+                        if (mag->next) {
+                            mag->next->prev = mag;
+                        }
+                        arn->magbkt[bktid].ptr = mag;
+                    }
                 }
             } else {
                 
@@ -852,6 +864,7 @@ _malloc(size_t size,
             }
         }
     }
+#if 0
     if ((mag) && !ptr) {
         stk = mag->stk;
         lim = mag->lim;
@@ -864,6 +877,7 @@ _malloc(size_t size,
             arn->magbkt[bktid].ptr = mag;
         }
     }
+#endif
     if (ptr) {
         adr = ptr;
         if (zero) {
