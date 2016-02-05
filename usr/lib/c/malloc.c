@@ -1018,8 +1018,6 @@ _free(void *ptr)
                     arn->magbkt[bktid].ptr = NULL;
                 }
             }
-            mag->prev = NULL;
-            mag->next = NULL;
             if (((uintptr_t)mag->adr & MAGMAP) && bktid > MALLOCBIGMAPLOG2) {
                 /* unmap slab */
                 adr = (void *)mag->base;
