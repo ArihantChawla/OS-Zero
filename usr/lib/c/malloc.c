@@ -151,11 +151,9 @@ void   zero_free(void *ptr);
 #define clrptr(ptr)                                                     \
     ((void *)((uintptr_t)ptr & ~ADRMASK))
 #define clradr(adr)                                                     \
-    ((uintptr_t)(adr) & ADRMASK)
+    ((uintptr_t)(adr) & ~ADRMASK)
 #define ptrdiff(ptr1, ptr2)                                             \
     ((uintptr_t)(ptr2) - (uintptr_t)(ptr1))
-#define ptrid(ptr)                                                      \
-    ((getpad(ptr)) ? ((uintptr_t)(ptr) - getpad(ptr)) : (~0L))
 
 #if (MALLOCHDRPREFIX)
 #define magptrid(mag, ptr)                                              \
@@ -1199,7 +1197,6 @@ _free(void *ptr)
         }
         setndx(ptr, PTRFREE);
 #endif
-//        VALGRINDFREE(ptr);
 #if 0
         VALGRINDPOOLFREE(clradr(mag->base),
                          ptr);
