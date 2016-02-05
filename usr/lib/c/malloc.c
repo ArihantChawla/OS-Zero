@@ -155,16 +155,11 @@ void   zero_free(void *ptr);
 #define ptrdiff(ptr1, ptr2)                                             \
     ((uintptr_t)(ptr2) - (uintptr_t)(ptr1))
 
-#if (MALLOCHDRPREFIX)
 #define magptrid(mag, ptr)                                              \
-    (rounddownpow2((uintptr_t)(ptr) - (uintptr_t)(mag)->base,           \
-                   1UL << (mag)->bktid) >> (mag)->bktid)
+    (((uintptr_t)(ptr) - (uintptr_t)(mag)->base) >> (mag)->bktid)
 #if (MALLOCPTRNDX)
-#define magputptr(mag, ptr, orig)                                       \
-    ((mag)->ptrtab[magptrid(mag, ptr)] = magptrid(mag, orig))
 #define maggetptr(mag, ptr)                                             \
     ((void *)((uint8_t *)(mag)->base + (magptrid(mag, ptr) << (mag)->bktid)))
-#endif
 #endif
 
 //#define setptr(a, p) ((&((struct memhdr *)(a))[-1])->base = (p))
@@ -229,41 +224,10 @@ void   zero_free(void *ptr);
  * magazines for bucket bktid have 1 << magnblklog2(bktid) blocks of
  * 1 << bktid bytes
  */
-#if (MALLOCBUFMAP)
-#if (MALLOCCONSTSLABS)
-#define magnbufmaplog2 0
-#else
-#define magnbufmaplog2(bktid)                                           \
-    (((bktid) <= MALLOCSMALLMAPLOG2)                                    \
-     ? 4                                                                \
-     : (((bktid) <= MALLOCMIDMAPLOG2)                                   \
-        ? 3                                                             \
-        : 2))
-#endif
-#define magnbufmap(bktid)                                               \
-    (1UL << magnbufmaplog2(bktid))
-#endif /* MALLOCBUFMAP */
-#if (MALLOCCONSTSLABS)
 #define magnbytelog2(bktid)                                             \
     (((bktid) <= MALLOCSLABLOG2)                                        \
      ? MALLOCSLABLOG2                                                   \
      : (bktid))
-#else /* !MALLOCCONSTSLABS */
-#define magnbytelog2(bktid)                                             \
-    (((bktid) <= MALLOCTINYSLABLOG2)                                    \
-     ? MALLOCSMALLSLABLOG2                                              \
-     : (((bktid) <= MALLOCSMALLSLABLOG2)                                \
-        ? MALLOCMIDSLABLOG2                                             \
-        : (((bktid) <= MALLOCMIDSLABLOG2)                               \
-           ? MALLOCBIGSLABLOG2                                          \
-           : (((bktid) <= MALLOCSLABLOG2)                               \
-              ? MALLOCSUPERSLABLOG2                                     \
-              : (((bktid) <= MALLOCSMALLMAPLOG2)                        \
-                 ? MALLOCMIDMAPLOG2                                     \
-                 : (((bktid) <= MALLOCMIDMAPLOG2)                       \
-                    ? MALLOCBIGMAPLOG2                                  \
-                    : (bktid)))))))
-#endif
 #define magnblklog2(bktid)                                              \
     (((bktid) <= MALLOCSLABLOG2)                                        \
      ? (MALLOCSLABLOG2 - (bktid))                                       \
@@ -276,11 +240,11 @@ void   zero_free(void *ptr);
 #if (MALLOCFREEMAP)
 #define magtabsz(bktid)                                                 \
     ((maghdrsz()                                                        \
-      + (magnblk(bktid) << 1) * sizeof(void *)                          \
+      + (magnblk(bktid) << 1) * sizeof(MAGPTRNDX)                       \
       + ((magnblk(bktid) + CHAR_BIT) >> 3)))
 #else
 #define magtabsz(bktid)                                                 \
-    (maghdrsz() + (magnblk(bktid) << 1) * sizeof(void *))
+    (maghdrsz() + (magnblk(bktid) << 1) * sizeof(MAGPTRNDX))
 #endif
 #define magembedtab(bktid)                                              \
     (magtabsz(bktid) <= MALLOCHDRSIZE)
@@ -559,7 +523,6 @@ maginitslab(struct mag *mag, long bktid)
     void       **stk;
 #endif
     size_t       sz = 1UL << bktid;
-    void        *ptrval;
     uint8_t     *ptr;
     long         lim = magnblk(bktid);
 #if (MALLOCPTRNDX)
@@ -570,48 +533,37 @@ maginitslab(struct mag *mag, long bktid)
     long         mapflg = 0;;
 
     if (!mag->base) {
-        ptrval = SBRK_FAILED;
+        ptr = SBRK_FAILED;
 #if (!MALLOCNOSBRK)
         if (bktid <= MALLOCSLABLOG2) {
             /* try to allocate slab from heap */
             __malloclkmtx(&g_malloc.heaplk);
-            ptrval = growheap(rounduppow2(lim * sz, PAGESIZE));
+            ptr = growheap(rounduppow2(lim * sz, PAGESIZE));
             __mallocunlkmtx(&g_malloc.heaplk);
         }
 #endif
-        if (ptrval == SBRK_FAILED) {
+        if (ptr == SBRK_FAILED) {
             /* try to map slab */
-            ptrval = mapanon(g_malloc.zerofd,
+            ptr = mapanon(g_malloc.zerofd,
                              rounduppow2(lim * sz, PAGESIZE));
-            if (ptrval == MAP_FAILED) {
+            if (ptr == MAP_FAILED) {
                 
                 return NULL;
             }
-            mag->size = lim * sz;
             mapflg = MAGMAP;
         }
-        ptr = ptrval;
         mag->base = ptr;
         mag->adr = (void *)((uintptr_t)ptr | mapflg);
+        mag->size = rounduppow2(lim * sz, PAGESIZE);
         mag->cur = 0;
         mag->lim = lim;
         mag->bktid = bktid;
         stk = mag->stk;
-        ptr = ptrval;
         if (ptr) {
             ndx = 0;
             /* initialise allocation stack */
             while (lim--) {
-#if (MALLOCPTRNDX)
                 stk[ndx] = (MAGPTRNDX)ndx;
-#elif (MALLOCHDRPREFIX)
-                stk[ndx] = ptr;
-#else
-                stk[ndx] = ptr;
-#endif
-#if (!MALLOCPTRNDX)
-                ptr += sz;
-#endif
                 ndx++;
             }
         }
@@ -957,7 +909,7 @@ void *
 #if defined(__GNUC__)
 __attribute__ ((alloc_size(1)))
 __attribute__ ((alloc_align(2)))
-__attribute__ ((assume_aligned(MALLOCMINSIZE)))
+__attribute__ ((assume_aligned(MALLOCALIGNMENT)))
 __attribute__ ((malloc))
 #endif
 _malloc(size_t size,
@@ -977,15 +929,9 @@ _malloc(size_t size,
 #if (!MALLOCTLSARN)
     long            arnid;
 #endif
-#if (MALLOCHDRPREFIX)
-    size_t          sz = rounduppow2(size + MALLOCALIGNMENT,
-                                     max(align, MALLOCALIGNMENT));
-#else
-    size_t          sz = 1UL << blkbktid(size + align);
-#endif
+    size_t          sz = 1UL << (blkbktid(size + MALLOCALIGNMENT + align));
     long            bktid = blkbktid(sz);
     long            lim;
-//    long         mapped = 0;
 #if (MALLOCSTEALMAG)
     long            id;
     long            stolen = 0;
@@ -1000,7 +946,7 @@ _malloc(size_t size,
     if (!(g_malloc.flg & MALLOCINIT)) {
         mallinit();
     }
-//    align = max(align, MALLOCALIGNMENT);
+    align = max(align, MALLOCALIGNMENT);
     /* try to allocate from a partially used magazine */
 #if (!MALLOCTLSARN)
     __malloclkmtx(&arn->magbkt[bktid].lk);
@@ -1089,10 +1035,6 @@ _malloc(size_t size,
 #if (MALLOCPTRNDX)
         ndx = stk[mag->cur++];
         ptr = (uint8_t *)mag->base + (ndx << bktid);
-#elif (MALLOCHDRPREFIX)
-        ptr = stk[mag->cur++];
-#else
-        ptr = mag->stk[mag->cur++];
 #endif
         if (mag->cur < mag->lim) {
 //            mag->tab = NULL;
@@ -1104,9 +1046,6 @@ _malloc(size_t size,
         }
     }
     if (ptr) {
-#if (MALLOCHDRHACKS)
-        uint8_t pad;
-#endif
         adr = clrptr(ptr);
         if (zero) {
             memset(adr, 0, 1UL << bktid);
@@ -1118,25 +1057,11 @@ _malloc(size_t size,
         }
         /* store unaligned source pointer and mag address */
         ptr = adr;
-#if (MALLOCHDRPREFIX)
         ptr += MEMHDRSIZE;
-        ptr = (void *)rounduppow2((uintptr_t)(ptr),
-                                  max(align, MALLOCALIGNMENT));
-#else
         if ((uintptr_t)ptr & (align - 1)) {
             ptr = ptralign(ptr, align);
         }
-#endif
-#if (!MALLOCHDRHACKS)
-        /* store unaligned source pointer */
-        magputptr(mag, ptr, adr);
-#endif
         setmag(ptr, mag);
-#if (MALLOCHDRHACKS)
-        ndx = magptrid(mag, adr);
-        setndx(ptr, ndx);
-        setbkt(ptr, bktid);
-#endif
 #if (MALLOCFREEMAP)
         __malloclkmtx(&mag->freelk);
         if (bitset(mag->freemap, ndx)) {
@@ -1182,21 +1107,8 @@ _free(void *ptr)
         return;
     }
 //    VALGRINDFREE(ptr);
-#if (MALLOCHDRPREFIX)
     mag = getmag(ptr);
-#else
-    mag = findmag(ptr);
-#endif
     if (mag) {
-#if (MALLOCHDRHACKS)
-        ndx = getndx(ptr);
-        if (ndx == PTRFREE) {
-            fprintf(stderr, "duplicate free of 0x%p detected\n", ptr);
-            
-            return;
-        }
-        setndx(ptr, PTRFREE);
-#endif
 #if 0
         VALGRINDPOOLFREE(clradr(mag->base),
                          ptr);
@@ -1216,11 +1128,7 @@ _free(void *ptr)
 #endif
         if (g_malloc.mallopt.flg & MALLOPT_PERTURB_BIT) {
             int   perturb = g_malloc.mallopt.perturb;
-#if (MALLOCHDRPREFIX) && (!MALLOCNEWHDR)
-            void *vptr = getptr(ptr);
-#else
             void *vptr = maggetptr(mag, ptr);
-#endif
             
             perturb &= 0xff;
             memset(vptr, perturb, 1UL << bktid);
@@ -1229,8 +1137,6 @@ _free(void *ptr)
         bktid = mag->bktid;
 #if (MALLOCPTRNDX)
         mag->stk[--mag->cur] = magptrid(mag, ptr);
-#elif (MALLOCHDRPREFIX)
-        mag->stk[--mag->cur] = maggetptr(mag, ptr);
 #endif
         lim = mag->lim;
         if (!mag->cur) {
@@ -1295,24 +1201,16 @@ _free(void *ptr)
 void *
 #if defined(__GNUC__)
 __attribute__ ((alloc_size(2)))
-__attribute__ ((assume_aligned(MALLOCMINSIZE)))
+__attribute__ ((assume_aligned(MALLOCALIGNMENT)))
 #endif
 _realloc(void *ptr,
          size_t size,
          long rel)
 {
-    uint8_t       *retptr = NULL;
-#if (MALLOCHDRPREFIX)
-    size_t         sz = rounduppow2(size + MALLOCALIGNMENT, MALLOCALIGNMENT);
-#else
-    size_t         sz = 1UL << blkbktid(size);
-#endif
-#if (MALLOCHDRPREFIX)
-    struct mag    *mag = (ptr) ? getmag(ptr) : NULL;
-#else
-    struct mag    *mag = (ptr) ? findmag(ptr) : NULL;
-#endif
-    long           bktid = blkbktid(sz);
+    uint8_t    *retptr = NULL;
+    size_t      sz = 1UL << (blkbktid(size + MALLOCALIGNMENT));
+    struct mag *mag = (ptr) ? getmag(ptr) : NULL;
+    long        bktid = blkbktid(sz);
 
     if (!ptr) {
         retptr = _malloc(sz, 0, 0);
@@ -1350,7 +1248,7 @@ _realloc(void *ptr,
 void *
 #if defined(__GNUC__)
 __attribute__ ((alloc_size(1)))
-__attribute__ ((assume_aligned(MALLOCMINSIZE)))
+__attribute__ ((assume_aligned(MALLOCALIGNMENT)))
 __attribute__ ((malloc))
 #endif
 #if defined(GNUMALLOC) && (GNUMALLOC)
@@ -1363,7 +1261,7 @@ malloc(size_t size)
 
     if (!size) {
 #if defined(_GNU_SOURCE)
-        ptr = _malloc(MALLOCMINSIZE, 0, 0);
+        ptr = _malloc(MALLOCALIGNMENT, 0, 0);
 #endif
         
         return ptr;
@@ -1398,7 +1296,7 @@ malloc(size_t size)
 void *
 #if defined(__GNUC__)
 __attribute__ ((alloc_size(1, 2)))
-__attribute__ ((assume_aligned(MALLOCMINSIZE)))
+__attribute__ ((assume_aligned(MALLOCALIGNMENT)))
 __attribute__ ((malloc))
 #endif
 #if defined(GNUMALLOC) && (GNUMALLOC)
@@ -1407,17 +1305,12 @@ zero_calloc(size_t n, size_t size)
 calloc(size_t n, size_t size)
 #endif
 {
-#if (MALLOCHDRPREFIX)
-    size_t sz = n * rounduppow2(size + MEMHDRSIZE,
-                                MALLOCALIGNMENT);
-#else
-    size_t sz = max(n * size, MALLOCMINSIZE);
-#endif
+    size_t sz = n * (size + MALLOCALIGNMENT);
     void *ptr = NULL;
 
     if (!n || !size) {
 #if defined(_GNU_SOURCE)
-        ptr = _malloc(MALLOCMINSIZE, 0, 1);
+        ptr = _malloc(MALLOCALIGNMENT, 0, 1);
 #endif
         
         return ptr;
@@ -1450,7 +1343,7 @@ calloc(size_t n, size_t size)
 void *
 #if defined(__GNUC__)
 __attribute__ ((alloc_size(2)))
-__attribute__ ((assume_aligned(MALLOCMINSIZE)))
+__attribute__ ((assume_aligned(MALLOCALIGNMENT)))
 #endif
 #if defined(GNUMALLOC) && (GNUMALLOC)
 zero_realloc(void *ptr,
@@ -1536,14 +1429,14 @@ void *
 #if defined(__GNUC__)
 __attribute__ ((alloc_size(2)))
 __attribute__ ((alloc_align(1)))
-__attribute__ ((assume_aligned(MALLOCMINSIZE)))
+__attribute__ ((assume_aligned(MALLOCALIGNMENT)))
 __attribute__ ((malloc))
 #endif
 aligned_alloc(size_t align,
               size_t size)
 {
     void   *ptr = NULL;
-    size_t  aln = max(align, MALLOCMINSIZE);
+    size_t  aln = max(align, MALLOCALIGNMENT);
 
 #if (MALLOCDEBUGHOOKS) || (defined(_ZERO_SOURCE) && (MALLOCHOOKS)) && 0
     if (__zmemalign_hook) {
@@ -1587,7 +1480,7 @@ posix_memalign(void **ret,
                size_t size)
 {
     void   *ptr = NULL;
-    size_t  aln = max(align, MALLOCMINSIZE);
+    size_t  aln = max(align, MALLOCALIGNMENT);
     int     retval = -1;
 
 #if (MALLOCDEBUGHOOKS) || (defined(_ZERO_SOURCE) && (MALLOCHOOKS)) && 0
@@ -1671,7 +1564,7 @@ void *
 #if defined(__GNUC__)
 __attribute__ ((alloc_align(1)))
 __attribute__ ((alloc_size(2)))
-__attribute__ ((assume_aligned(MALLOCMINSIZE)))
+__attribute__ ((assume_aligned(MALLOCALIGNMENT)))
 __attribute__ ((malloc))
 #endif
 #if defined(GNUMALLOC) && (GNUMALLOC)
@@ -1683,7 +1576,7 @@ memalign(size_t align,
 #endif
 {
     void   *ptr = NULL;
-    size_t  aln = max(align, MALLOCMINSIZE);
+    size_t  aln = max(align, MALLOCALIGNMENT);
 
 #if (MALLOCDEBUGHOOKS) || (defined(_ZERO_SOURCE) && (MALLOCHOOKS)) && 0
     if (__zmemalign_hook) {
@@ -1718,7 +1611,7 @@ memalign(size_t align,
 void *
 #if defined(__GNUC__)
 __attribute__ ((alloc_size(2)))
-__attribute__ ((assume_aligned(MALLOCMINSIZE)))
+__attribute__ ((assume_aligned(MALLOCALIGNMENT)))
 #endif
 reallocf(void *ptr,
          size_t size)
@@ -1773,12 +1666,7 @@ __attribute__ ((malloc))
 #endif
 pvalloc(size_t size)
 {
-#if (MALLOCHDRPREFIX)
-    size_t  sz = size + MEMHDRSIZE;
-#else
-    size_t  sz = size;
-#endif
-    void   *ptr = _malloc(sz, PAGESIZE, 0);
+    void   *ptr = _malloc(rounduppow2(size, PAGESIZE), PAGESIZE, 0);
 
 #if (MALLOCDEBUGHOOKS) || (defined(_ZERO_SOURCE) && (MALLOCHOOKS)) && 0
     if (__zmemalign_hook) {
@@ -1811,14 +1699,14 @@ void *
 #if defined(__GNUC__)
 __attribute__ ((alloc_align(2)))
 __attribute__ ((alloc_size(1)))
-__attribute__ ((assume_aligned(MALLOCMINSIZE)))
+__attribute__ ((assume_aligned(MALLOCALIGNMENT)))
 __attribute__ ((malloc))
 #endif
 _aligned_malloc(size_t size,
                 size_t align)
 {
     void   *ptr = NULL;
-    size_t  aln = max(align, MALLOCMINSIZE);
+    size_t  aln = max(align, MALLOCALIGNMENT);
 
 #if (MALLOCDEBUGHOOKS) || (defined(_ZERO_SOURCE) && (MALLOCHOOKS)) && 0
     if (__zmemalign_hook) {
@@ -1885,14 +1773,14 @@ void *
 #if defined(__GNUC__)
 __attribute__ ((alloc_align(2)))
 __attribute__ ((alloc_size(1)))
-__attribute__ ((assume_aligned(MALLOCMINSIZE)))
+__attribute__ ((assume_aligned(MALLOCALIGNMENT)))
 __attribute__ ((malloc))
 #endif
 _mm_malloc(int size,
            int align)
 {
     void   *ptr = NULL;
-    size_t  aln = max((unsigned long)align, MALLOCMINSIZE);
+    size_t  aln = max((size_t)align, MALLOCALIGNMENT);
 
 #if (MALLOCDEBUGHOOKS) || (defined(_ZERO_SOURCE) && (MALLOCHOOKS)) && 0
     if (__zmemalign_hook) {
@@ -1982,7 +1870,7 @@ malloc_usable_size(void *ptr)
 #if (MALLOCHDRPREFIX)
     size_t      sz = ((mag)
                       ? ((1UL << mag->bktid)
-                         - (ptrdiff(ptr, maggetptr(mag, ptr))))
+                         - (ptrdiff(maggetptr(mag, ptr), ptr)))
                       : 0);
 #else
     size_t      sz = (mag) ? (1UL << mag->bktid) : 0;
