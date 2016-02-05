@@ -209,7 +209,7 @@ extern uintptr_t _backtrace(void *buf, size_t size, long syms, int fd);
 
 /* internal macros */
 #define ptralign(ptr, pow2)                                             \
-    ((void *)rounduppow2((uintptr_t)ptr, pow2))
+    ((void *)rounduppow2((uintptr_t)(ptr), pow2))
 
 #if defined(__GLIBC__) || (defined(GNUMALLOC) && (GNUMALLOC))
 #if !defined(__MALLOC_HOOK_VOLATILE)
