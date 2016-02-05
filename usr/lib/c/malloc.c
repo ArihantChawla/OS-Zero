@@ -813,7 +813,7 @@ _malloc(size_t size,
             }
             g_malloc.magbkt[bktid].ptr = mag->next;
             ptr = mag->stk[mag->cur++];
-            mag->prev = NULL;
+//            mag->prev = NULL;
             if (mag->cur < mag->lim) {
                 mag->next = arn->magbkt[bktid].ptr;
                 if (mag->next) {
@@ -871,20 +871,6 @@ _malloc(size_t size,
             }
         }
     }
-#if 0
-    if ((mag) && !ptr) {
-        stk = mag->stk;
-        lim = mag->lim;
-        ptr = mag->stk[mag->cur++];
-        if (mag->cur < mag->lim) {
-            mag->next = arn->magbkt[bktid].ptr;
-            if (mag->next) {
-                mag->next->prev = mag;
-            }
-            arn->magbkt[bktid].ptr = mag;
-        }
-    }
-#endif
     if (ptr) {
         adr = ptr;
         if (zero) {
@@ -909,20 +895,20 @@ _malloc(size_t size,
 #endif
 #if (MALLOCFREEMAP)
         __malloclkmtx(&mag->freelk);
-        if (bitset(mag->freemap, magptrid(mag, ptr))) {
+        if (bitset(mag->freemap, magptrid(mag, adr))) {
             magprint(mag);
             fprintf(stderr, "trying to reallocate block");
             fflush(stderr);
             
             abort();
         }
-        setbit(mag->freemap, magptrid(mag, ptr));
+        setbit(mag->freemap, magptrid(mag, adr));
         __mallocunlkmtx(&mag->freelk);
 #endif
         VALGRINDPOOLALLOC(mag->base,
                           adr,
                           size);
-        magputptr(mag, adr, ptr);
+        magputptr(mag, ptr, adr);
     }
     if (!ptr) {
         magprint(mag);
