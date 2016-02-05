@@ -1022,12 +1022,23 @@ _free(void *ptr)
         } else if (mag->cur == lim - 1) {
 //            mag->tab = NULL;
             /* queue an unqueued earlier fully allocated magazine */
-            mag->prev = NULL;
-            mag->next = arn->magbkt[bktid].ptr;
-            if (mag->next) {
-                mag->next->prev = mag;
+            if (arn->magbkt[bktid].ptr) {
+                mag->prev = NULL;
+                __malloclkmtx(&g_malloc.magbkt[bktid].lk);
+                mag->next = g_malloc.magbkt[bktid].ptr;
+                if (mag->next) {
+                    mag->next->prev = mag;
+                }
+                g_malloc.magbkt[bktid].ptr = mag;
+                __mallocunlkmtx(&g_malloc.magbkt[bktid].lk);
+            } else {
+                mag->prev = NULL;
+                mag->next = arn->magbkt[bktid].ptr;
+                if (mag->next) {
+                    mag->next->prev = mag;
+                }
+                arn->magbkt[bktid].ptr = mag;
             }
-            arn->magbkt[bktid].ptr = mag;
         }
         if (freemap) {
             /* unmap slab */
