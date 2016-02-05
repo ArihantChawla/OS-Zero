@@ -1,9 +1,9 @@
 /*
- * Zero Malloc Revision 2
+ * Zero Malloc Revision 3
  *
  * - a beta version of a new malloc for Zero.
  *
- * Copyright (C) Tuomo Petteri Venäläinen 2014-2015
+ * Copyright (C) Tuomo Petteri Venäläinen 2014-2016
  */
 
 #define MALLOCDEBUG 1
