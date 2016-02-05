@@ -43,7 +43,7 @@
 #define MALLOCSTEALMAG    0
 #define MALLOCMULTITAB    0
 
-#define MALLOCNOSBRK      0 // do NOT use sbrk()/heap, just mmap()
+#define MALLOCNOSBRK      1 // do NOT use sbrk()/heap, just mmap()
 #define MALLOCFREEMDIR    0 // under construction
 #define MALLOCFREEMAP     0 // use free block bitmaps; bit 1 for allocated
 #define MALLOCBUFMAP      1 // buffer mapped slabs to global pool
@@ -65,7 +65,7 @@
 
 /* <= MALLOCSLABLOG2 are tried to get from heap #if (!MALLOCNOSBRK) */
 /* <= MALLOCBIGSLABLOG2 are kept in per-thread arenas which are lock-free */
-#define MALLOCSLABLOG2    16
+#define MALLOCSLABLOG2    18
 #define MALLOCBIGSLABLOG2 20
 #define MALLOCBIGMAPLOG2  24
 
@@ -82,6 +82,60 @@
 /* invariant parameters */
 #define MALLOCMINSIZE     (1UL << MALLOCMINLOG2)
 #define MALLOCNBKT        PTRBITS
+
+#if (MALLOCVALGRIND) && !defined(NVALGRIND)
+#define VALGRINDMKPOOL(adr, z)                                          \
+    do {                                                                \
+        if (RUNNING_ON_VALGRIND) {                                      \
+            VALGRIND_CREATE_MEMPOOL(adr, 0, z);                         \
+        }                                                               \
+    } while (0)
+#define VALGRINDRMPOOL(adr)                                             \
+    do {                                                                \
+        if (RUNNING_ON_VALGRIND) {                                      \
+            VALGRIND_DESTROY_MEMPOOL(adr);                              \
+        }                                                               \
+    } while (0)
+#define VALGRINDMKSUPER(adr)                                            \
+    do {                                                                \
+        if (RUNNING_ON_VALGRIND) {                                      \
+            VALGRIND_CREATE_MEMPOOL(adr, 0, z);                         \
+        }                                                               \
+    } while (0)
+#define VALGRINDPOOLALLOC(pool, adr, sz)                                \
+    do {                                                                \
+        if (RUNNING_ON_VALGRIND) {                                      \
+            VALGRIND_MEMPOOL_ALLOC(pool, adr, sz);                      \
+        }                                                               \
+    } while (0)
+#define VALGRINDPOOLFREE(pool, adr)                                     \
+    do {                                                                \
+        if (RUNNING_ON_VALGRIND) {                                      \
+            VALGRIND_MEMPOOL_FREE(pool, adr);                           \
+        }                                                               \
+    } while (0)
+#define VALGRINDALLOC(adr, sz, z)                                       \
+    do {                                                                \
+        if (RUNNING_ON_VALGRIND) {                                      \
+            VALGRIND_MALLOCLIKE_BLOCK((adr), (sz), 0, (z));             \
+        }                                                               \
+    } while (0)
+#define VALGRINDFREE(adr)                                               \
+    do {                                                                \
+        if (RUNNING_ON_VALGRIND) {                                      \
+            VALGRIND_FREELIKE_BLOCK((adr), 0);                          \
+        }                                                               \
+    } while (0)
+#else /* !MALLOCVALGRIND */
+#define VALGRINMKPOOL(adr, z)
+#define VALGRINDMARKPOOL(adr, sz)
+#define VALGRINDRMPOOL(adr)
+#define VALGRINDMKSUPER(adr)
+#define VALGRINDPOOLALLOC(pool, adr, sz)
+#define VALGRINDPOOLFREE(pool, adr)
+#define VALGRINDALLOC(adr, sz, z)
+#define VALGRINDFREE(adr)
+#endif
 
 #if defined(ZEROMTX) && (ZEROMTX)
 #define MUTEX volatile long
@@ -154,35 +208,10 @@ extern uintptr_t _backtrace(void *buf, size_t size, long syms, int fd);
 #endif
 
 /* internal macros */
-#if (MALLOCFREEMAP) && (MALLOCPTRNDX)
-#define magnbytetab(bktid)                                              \
-    ((magnblk(bktid) << 1) * sizeof(MAGPTRNDX)                          \
-     + rounduppow2(((magnblk(bktid) * CHAR_BIT + CHAR_BIT) >> 3),       \
-                   PAGESIZE))
-#elif (MALLOCPTRNDX) /* !MALLOCFREEMAP */
-#define magnbytetab(bktid)                                              \
-    ((magnblk(bktid) << 1) * sizeof(MAGPTRNDX))
-#elif (MALLOCFREEMAP)
-#define magnbytetab(bktid)                                              \
-    ((magnblk(bktid) << 1) * sizeof(void *)                             \
-     + rounduppow2(((magnblk(bktid) * CHAR_BIT + CHAR_BIT) >> 3),       \
-                   PAGESIZE))
-#else
-#define magnbytetab(bktid)                                              \
-    ((magnblk(bktid) << 1) * sizeof(void *))
-#endif /* MALLOCFREEMAP && MALLOCPTRNDX */
-
-#define magnbyte(bktid) (1UL << magnbytelog2(bktid))
 #define ptralign(ptr, pow2)                                             \
     (!((uintptr_t)ptr & (align - 1))                                    \
      ? ptr                                                              \
      : ((void *)rounduppow2((uintptr_t)ptr, align)))
-#if 0
-#define blkalignsz(sz, aln)                                             \
-    (((aln) <= PAGESIZE)                                                \
-     ? max(sz, aln)                                                     \
-     : (sz) + (aln))
-#endif
 
 #if defined(__GLIBC__) || (defined(GNUMALLOC) && (GNUMALLOC))
 #if !defined(__MALLOC_HOOK_VOLATILE)

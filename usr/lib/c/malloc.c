@@ -156,23 +156,19 @@ void   zero_free(void *ptr);
     ((uintptr_t)(ptr2) - (uintptr_t)(ptr1))
 #define ptrid(ptr)                                                      \
     ((getpad(ptr)) ? ((uintptr_t)(ptr) - getpad(ptr)) : (~0L))
+
 #if (MALLOCHDRPREFIX)
 #define magptrid(mag, ptr)                                              \
-    (((uintptr_t)(ptr) - (uintptr_t)(mag)->base) >> (mag)->bktid)
+    (rounddownpow2((uintptr_t)(ptr) - (uintptr_t)(mag)->base, \
+                   1UL << (mag)->bktid) >> (mag)->bktid)
 #if (MALLOCPTRNDX)
-#define magputptr(mag, dest, orig)                                      \
-    ((mag)->ptrtab[magptrid(mag, dest)] = magptrid(mag, orig))
-#else
-#define magputptr(mag, dest, orig)                                      \
-    ((mag)->ptrtab[magptrid(dest)] = (orig))
-#endif
+#define magputptr(mag, ptr, orig)                                      \
+    ((mag)->ptrtab[magptrid(mag, ptr)] = magptrid(mag, orig))
 #define maggetptr(mag, ptr)                                             \
-    ((void *)((uint8_t *)(mag)->base + ((rounddownpow2((uintptr_t)(mag)->base - (uintptr_t)(ptr) + MEMHDRSIZE, 1UL << (mag)->bktid)) << (mag)->bktid)))
-#else
-#define magptrid(mag, ptr)                                              \
-    (ptrdiff((mag)->base, (mag)->base + rounddownpow2((uintptr_t)(ptr), \
-                                                      1UL << (mag)->bktid)))
+    ((void *)((uint8_t *)(mag)->base + ((rounddownpow2((uintptr_t)(mag)->base - (uintptr_t)(ptr) - MEMHDRSIZE, 1UL << (mag)->bktid) << (mag)->bktid))))
 #endif
+#endif
+
 //#define setptr(a, p) ((&((struct memhdr *)(a))[-1])->base = (p))
 
 /* use non-pointers in allocation tables */
@@ -646,7 +642,7 @@ maginittab(struct mag *mag, long bktid)
             mag->freemap = (uint8_t *)&mag->ptrtab[n];
 #endif
         } else {
-            sz = magnbytetab(bktid);
+            sz = magtabsz(bktid);
             ret = mapanon(g_malloc.zerofd, rounduppow2(sz, PAGESIZE));
             if (ret == MAP_FAILED) {
                 
