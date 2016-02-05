@@ -43,7 +43,7 @@
 #define MALLOCSTEALMAG    0
 #define MALLOCMULTITAB    1
 
-#define MALLOCNOSBRK      0 // do NOT use sbrk()/heap, just mmap()
+#define MALLOCNOSBRK      1 // do NOT use sbrk()/heap, just mmap()
 #define MALLOCFREEMDIR    0 // under construction
 #define MALLOCFREEMAP     0 // use free block bitmaps; bit 1 for allocated
 #define MALLOCBUFMAP      1 // buffer mapped slabs to global pool
@@ -66,7 +66,7 @@
 /* <= MALLOCSLABLOG2 are tried to get from heap #if (!MALLOCNOSBRK) */
 /* <= MALLOCBIGSLABLOG2 are kept in per-thread arenas which are lock-free */
 #define MALLOCSLABLOG2    16
-#define MALLOCBIGSLABLOG2 18
+//#define MALLOCBIGSLABLOG2 18
 #define MALLOCBIGMAPLOG2  24
 
 #if !defined(MALLOCALIGNMENT) || (MALLOCALIGNMENT == 32)

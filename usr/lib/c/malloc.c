@@ -818,7 +818,7 @@ _malloc(size_t size,
             }
             g_malloc.magbkt[bktid].ptr = mag->next;
             __mallocunlkmtx(&g_malloc.magbkt[bktid].lk);
-            _assert(mag->cur);
+//            _assert(mag->cur);
             mag->prev = NULL;
             ptr = mag->stk[mag->cur++];
             _assert(mag->cur <= mag->lim);
