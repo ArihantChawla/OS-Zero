@@ -159,13 +159,13 @@ void   zero_free(void *ptr);
 
 #if (MALLOCHDRPREFIX)
 #define magptrid(mag, ptr)                                              \
-    (rounddownpow2((uintptr_t)(ptr) - (uintptr_t)(mag)->base, \
+    (rounddownpow2((uintptr_t)(ptr) - (uintptr_t)(mag)->base,           \
                    1UL << (mag)->bktid) >> (mag)->bktid)
 #if (MALLOCPTRNDX)
-#define magputptr(mag, ptr, orig)                                      \
+#define magputptr(mag, ptr, orig)                                       \
     ((mag)->ptrtab[magptrid(mag, ptr)] = magptrid(mag, orig))
 #define maggetptr(mag, ptr)                                             \
-    ((void *)((uint8_t *)(mag)->base + ((rounddownpow2((uintptr_t)(mag)->base - (uintptr_t)(ptr) - MEMHDRSIZE, 1UL << (mag)->bktid) << (mag)->bktid))))
+    ((void *)((uint8_t *)(mag)->base + (magptrid(mag, ptr) << (mag)->bktid)))
 #endif
 #endif
 
