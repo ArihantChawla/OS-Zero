@@ -20,8 +20,8 @@
 #endif
 
 /* optional features and other hacks */
-#define MALLOCVALGRIND    0
-#define MALLOCHDRHACKS    1 
+//#define MALLOCVALGRIND    0
+#define MALLOCHDRHACKS    0
 #define MALLOCNEWHDR      1
 #define MALLOCHDRPREFIX   1
 #define MALLOCTLSARN      1
@@ -43,7 +43,7 @@
 #define MALLOCSTEALMAG    0
 #define MALLOCMULTITAB    0
 
-#define MALLOCNOSBRK      1 // do NOT use sbrk()/heap, just mmap()
+#define MALLOCNOSBRK      0 // do NOT use sbrk()/heap, just mmap()
 #define MALLOCFREEMDIR    0 // under construction
 #define MALLOCFREEMAP     0 // use free block bitmaps; bit 1 for allocated
 #define MALLOCBUFMAP      1 // buffer mapped slabs to global pool
@@ -318,6 +318,7 @@ struct arn {
 };
 
 #if (MALLOCHDRHACKS)
+
 /*
  * this structure is here for informative purposes; note that in core, the
  * header is right before the allocated address so you need to index it with
@@ -357,6 +358,23 @@ struct memhdr {
 #define setbkt(ptr, bkt) ((((uint8_t *)(ptr))[-(1 + MEMHDRBKTOFS)]) = (bkt))
 #define getpad(ptr)      (((uint8_t *)(ptr))[-(1 + MEMHDRPADOFS)])
 #define setpad(ptr, pad) ((((uint8_t *)(ptr))[-(1 + MEMHDRPADOFS)]) = (pad))
+
+#else /* !MALLOCHDRHACKS */
+
+struct memhdr {
+    void *mag;
+};
+#define MEMHDRSIZE       (sizeof(void *))
+#define MEMHDRMAGOFS     (offsetof(struct memhdr, mag) / sizeof(void *))
+#define setmag(ptr, mag) ((((void **)(ptr))[-(1 + MEMHDRMAGOFS)] = (mag)))
+#define getmag(ptr)      ((((void **)(ptr))[-(1 + MEMHDRMAGOFS)]))
+#if (MALLOCPTRNDX)
+#define getndx(ptr)      (getmag(ptr)->ptrtab[getndx(ptr)])
+#define setndx(ptr, ndx) (getmag(ptr)->ptrtab[getndx(ptr)] = (ndx))
+#define getbkt(ptr)      (getmag(ptr)->bktid)
+#define setbkt(ptr, bkt) (getmag(ptr)->bktid = (bkt))
+#endif
+
 #endif /* MALLOCHDRHACKS */
 
 #define MALLOPT_PERTURB_BIT 0x00000001
