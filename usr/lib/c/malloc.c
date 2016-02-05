@@ -408,7 +408,7 @@ thrfreearn(void *arg)
     long           bktid;
 
     for (bktid = 0 ; bktid < MALLOCNBKT ; bktid++) {
-        mag = g_malloc.magbkt[bktid].ptr;
+        mag = arn->magbkt[bktid].ptr;
         if (mag) {
             while (mag->next) {
                 mag = mag->next;
@@ -855,8 +855,6 @@ _malloc(size_t size,
                     return NULL;
                 } else {
                     _assert(!mag->cur);
-                    stk = mag->stk;
-                    lim = mag->lim;
                     ptr = mag->stk[mag->cur++];
                     if (mag->cur < mag->lim) {
                         mag->prev = NULL;
