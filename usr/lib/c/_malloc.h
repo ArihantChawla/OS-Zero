@@ -66,7 +66,7 @@
 /* <= MALLOCSLABLOG2 are tried to get from heap #if (!MALLOCNOSBRK) */
 /* <= MALLOCBIGSLABLOG2 are kept in per-thread arenas which are lock-free */
 #define MALLOCSLABLOG2    16
-#define MALLOCBIGSLABLOG2 20
+#define MALLOCBIGSLABLOG2 18
 #define MALLOCBIGMAPLOG2  24
 
 #if !defined(MALLOCALIGNMENT) || (MALLOCALIGNMENT == 32)
