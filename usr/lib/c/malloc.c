@@ -1015,11 +1015,12 @@ _free(void *ptr)
                     arn->magbkt[bktid].ptr = NULL;
                 }
             }
+            mag->prev = NULL;
+            mag->next = NULL;
             if (((uintptr_t)mag->adr & MAGMAP) && bktid > MALLOCBIGMAPLOG2) {
                 freemap = 1;
             } else {
 //                mag->tab = &g_malloc.freetab[bktid];
-                mag->prev = NULL;
                 __malloclkmtx(&g_malloc.freetab[bktid].lk);
                 mag->next = g_malloc.freetab[bktid].ptr;
                 if (mag->next) {
