@@ -76,7 +76,7 @@
 #elif !defined(MALLOCALIGNMENT) || (MALLOCALIGNMENT == 8)
 #define MALLOCMINLOG2     3  // double
 #else
-#error fix MALLOCMILOG2 in _malloc.h
+#error fix MALLOCMINLOG2 in _malloc.h
 #endif
 
 /* invariant parameters */
