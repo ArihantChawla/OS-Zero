@@ -329,18 +329,18 @@ magprint(struct mag *mag)
 static struct malloc       g_malloc ALIGNED(PAGESIZE);
 #if (MALLOCTLSARN)
 THREADLOCAL struct arn     *thrarn;
-THREADLOCAL pthread_once_t thronce;
-THREADLOCAL pthread_key_t  thrkey;
+THREADLOCAL pthread_once_t  thronce;
+THREADLOCAL pthread_key_t   thrkey;
 #else
-THREADLOCAL pthread_key_t  _thrkey;
-THREADLOCAL long           _arnid = -1;
-MUTEX                      _arnlk;
+THREADLOCAL pthread_key_t   _thrkey;
+THREADLOCAL long            _arnid = -1;
+MUTEX                       _arnlk;
 #endif
 //long                 curarn;
 #if (MALLOCSTAT)
-long long                  nheapbyte;
-long long                  nmapbyte;
-long long                  ntabbyte;
+long long                   nheapbyte;
+long long                   nmapbyte;
+long long                   ntabbyte;
 #endif
 
 #if defined(__GLIBC__)
@@ -524,8 +524,10 @@ thrfreearn(void *arg)
         tab = &arn->magbkt[bktid];
         mag = tab->ptr;
         if (mag) {
+            mag->tab = &g_malloc.magbkt[bktid];
             while (mag->next) {
                 mag = mag->next;
+                mag->tab = &g_malloc.magbkt[bktid];
                 tail = mag;
             }
             __malloclkmtx(&g_malloc.magbkt[bktid].lk);
@@ -545,6 +547,8 @@ thrfreearn(void *arg)
             tab->ptr = NULL;
         }
     }
+    thrarn = NULL;
+    unmapanon(arn, rounduppow2(sizeof(struct arn), PAGESIZE));
 
     return;
 }
@@ -1030,7 +1034,7 @@ _malloc(size_t size,
 #endif
     mag = arn->magbkt[bktid].ptr;
     if (mag) {
-//        _assert(mag->cur < mag->lim);
+        _assert(mag->cur < mag->lim);
 #if (MALLOCPTRNDX)
         ndx = mag->stk[mag->cur++];
         ptr = (uint8_t *)mag->base + (ndx << bktid);
@@ -1057,7 +1061,7 @@ _malloc(size_t size,
             }
             tab->ptr = mag->next;
             mag->tab = NULL;
-//            _assert(mag->cur < mag->lim);
+            _assert(mag->cur < mag->lim);
 #if (MALLOCPTRNDX)
             ndx = mag->stk[mag->cur++];
             ptr = (uint8_t *)mag->base + (ndx << bktid);
@@ -1078,11 +1082,11 @@ _malloc(size_t size,
             __malloclkmtx(&tab->lk);
             mag = tab->ptr;
             if (mag) {
+                mag->tab = NULL;
                 if (mag->next) {
                     mag->next->prev = NULL;
                 }
                 tab->ptr = mag->next;
-                mag->tab = NULL;
 #if (MALLOCPTRNDX)
                 ndx = mag->stk[mag->cur++];
                 ptr = (uint8_t *)mag->base + (ndx << bktid);
@@ -1124,6 +1128,7 @@ _malloc(size_t size,
         ptr = mag->stk[mag->cur++];
 #endif
         if (mag->cur < mag->lim) {
+            mag->tab = NULL;
             mag->next = arn->magbkt[bktid].ptr;
             if (mag->next) {
                 mag->next->prev = mag;
@@ -1166,7 +1171,7 @@ _malloc(size_t size,
         setbkt(ptr, bktid);
 #endif
 #if (MALLOCFREEMAP)
-        mtxlk(&mag->freelk);
+        __malloclkmtx(&mag->freelk);
         if (bitset(mag->freemap, ndx)) {
             magprint(mag);
             fprintf(stderr, "trying to reallocate block");
@@ -1175,7 +1180,7 @@ _malloc(size_t size,
             abort();
         }
         setbit(mag->freemap, magptrid(mag, ptr));
-        mtxunlk(&mag->freelk);
+        __mallocunlkmtx(&mag->freelk);
 #endif
 #if 0
         VALGRINDPOOLALLOC(clradr(mag->base),
@@ -1191,7 +1196,7 @@ _malloc(size_t size,
 void
 _free(void *ptr)
 {
-    struct memtab *tab;
+    struct memtab *tab = NULL;
     struct arn    *arn;
     struct mag    *mag;
     void          *adr = NULL;
@@ -1204,6 +1209,7 @@ _free(void *ptr)
     long           lim;
     long           bktid;
     long           freemap = 0;
+    long           globmag = 0;
 
     if (!ptr) {
 
@@ -1222,6 +1228,12 @@ _free(void *ptr)
     mag = findmag(ptr);
 #endif
     if (mag) {
+#if 0
+        if (mag->tab) {
+            tab = mag->tab;
+            __malloclkmtx(&tab->lk);
+        }
+#endif
 #if (MALLOCHDRHACKS)
         ndx = getndx(ptr);
         if (ndx == PTRFREE) {
@@ -1239,7 +1251,7 @@ _free(void *ptr)
         setmag(ptr, NULL);
         bktid = mag->bktid;
 #if (MALLOCFREEMAP)
-        mtxlk(&mag->freelk);
+        __malloclkmtx(&mag->freelk);
         if (!bitset(mag->freemap, ndx)) {
             magprint(mag);
             fprintf(stderr, "trying to free an unused block\n");
@@ -1247,7 +1259,7 @@ _free(void *ptr)
             abort();
         }
         clrbit(mag->freemap, magptrid(mag, ptr));
-        mtxunlk(&mag->freelk);
+        __mallocunlkmtx(&mag->freelk);
 #endif
         if (g_malloc.mallopt.flg & MALLOPT_PERTURB_BIT) {
             int   perturb = g_malloc.mallopt.perturb;
@@ -1303,17 +1315,18 @@ _free(void *ptr)
             if ((uintptr_t)mag->adr & MAGMAP && bktid > MALLOCBIGMAPLOG2) {
                 freemap = 1;
             } else {
+                mag->tab = &g_malloc.freetab[bktid];
                 mag->prev = NULL;
                 __malloclkmtx(&g_malloc.freetab[bktid].lk);
                 mag->next = g_malloc.freetab[bktid].ptr;
                 if (mag->next) {
                     mag->next->prev = mag;
                 }
-                mag->tab = &g_malloc.freetab[bktid];
                 g_malloc.freetab[bktid].ptr = mag;
                 __mallocunlkmtx(&g_malloc.freetab[bktid].lk);
             }
         } else if (mag->cur == lim - 1) {
+            mag->tab = NULL;
             /* queue an unqueued earlier fully allocated magazine */
             mag->prev = NULL;
             mag->next = arn->magbkt[bktid].ptr;
@@ -1322,6 +1335,11 @@ _free(void *ptr)
             }
             arn->magbkt[bktid].ptr = mag;
         }
+#if 0
+        if (tab) {
+            __mallocunlkmtx(&tab->lk);
+        }
+#endif
         if (freemap) {
             /* unmap slab */
             adr = (void *)mag->base;

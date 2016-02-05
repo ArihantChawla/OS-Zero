@@ -90,11 +90,9 @@
 #if (ZEROMTX) && (DEBUGMTX)
 #define __mallocinitmtx(mp)  mtxinit(mp)
 #define __malloctrylkmtx(mp) mtxtrylk(mp)
-#define __malloclkmtx(mp)   (fprintf(stderr, "%p\tLK: %d\n", __LINE__, \
-                                     mp),                              \
+#define __malloclkmtx(mp)   (fprintf(stderr, "%p\tLK: %d\n", mp, __LINE__), \
                              mtxlk(mp))
-#define __mallocunlkmtx(mp) (fprintf(stderr, "%p\tUNLK: %d\n", __LINE__, \
-                                     mp),                               \
+#define __mallocunlkmtx(mp) (fprintf(stderr, "%p\tUNLK: %d\n", mp, __LINE__), \
                              mtxunlk(mp))
 #define __mallocinitspin(mp) spininit(mp)
 #define __malloclkspin(mp)   (fprintf(stderr, "LK: %d\n", __LINE__), spinlk(mp))
