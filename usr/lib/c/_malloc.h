@@ -65,7 +65,7 @@
 
 /* <= MALLOCSLABLOG2 are tried to get from heap #if (!MALLOCNOSBRK) */
 /* <= MALLOCBIGSLABLOG2 are kept in per-thread arenas which are lock-free */
-#define MALLOCSLABLOG2    16
+#define MALLOCSLABLOG2    15
 #define MALLOCBIGSLABLOG2 20
 #define MALLOCBIGMAPLOG2  24
 
@@ -268,6 +268,7 @@ struct mag {
 #endif
     void           *base;
     void           *adr;
+    size_t          size;
     long            cur;
     long            lim;
 #if (!MALLOCTLSARN)

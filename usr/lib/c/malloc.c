@@ -509,13 +509,10 @@ thrfreearn(void *arg)
     long           bktid;
 
     for (bktid = 0 ; bktid < MALLOCNBKT ; bktid++) {
-        tab = &arn->magbkt[bktid];
-        mag = tab->ptr;
+        mag = g_malloc.magbkt[bktid].ptr;
         if (mag) {
-//            mag->tab = &g_malloc.magbkt[bktid];
             while (mag->next) {
                 mag = mag->next;
-//                mag->tab = &g_malloc.magbkt[bktid];
                 tail = mag;
             }
             __malloclkmtx(&g_malloc.magbkt[bktid].lk);
@@ -532,7 +529,6 @@ thrfreearn(void *arg)
             }
             g_malloc.magbkt[bktid].ptr = mag;
             __mallocunlkmtx(&g_malloc.magbkt[bktid].lk);
-            tab->ptr = NULL;
         }
     }
 
@@ -577,6 +573,7 @@ maginitslab(struct mag *mag, long bktid)
 #else
     long         ndx;
 #endif
+    long         mapflg = 0;;
 
     if (!mag->base) {
         ptrval = SBRK_FAILED;
@@ -596,10 +593,12 @@ maginitslab(struct mag *mag, long bktid)
                 
                 return NULL;
             }
+            mag->size = lim * sz;
+            mapflg = MAGMAP;
         }
         ptr = ptrval;
         mag->base = ptr;
-        mag->adr = ptr;
+        mag->adr = (void *)((uintptr_t)ptr | mapflg);
         mag->cur = 0;
         mag->lim = lim;
         mag->bktid = bktid;
@@ -1014,7 +1013,6 @@ _malloc(size_t size,
 #endif
     mag = arn->magbkt[bktid].ptr;
     if (mag) {
-        _assert(mag->cur < mag->lim);
 #if (MALLOCPTRNDX)
         ndx = mag->stk[mag->cur++];
         ptr = (uint8_t *)mag->base + (ndx << bktid);
@@ -1032,16 +1030,13 @@ _malloc(size_t size,
     __mallocunlkmtx(&arn->magbkt[bktid].lk);
 #endif
     if (!mag) {
-        tab = &g_malloc.magbkt[bktid];
-        __malloclkmtx(&tab->lk);
-        mag = tab->ptr;
+        __malloclkmtx(&g_malloc.magbkt[bktid].lk);
+        g_malloc.magbkt[bktid].ptr;
         if (mag) {
             if (mag->next) {
                 mag->next->prev = NULL;
             }
-            tab->ptr = mag->next;
-//            mag->tab = NULL;
-            _assert(mag->cur < mag->lim);
+            g_malloc.magbkt[bktid].ptr = mag->next;
 #if (MALLOCPTRNDX)
             ndx = mag->stk[mag->cur++];
             ptr = (uint8_t *)mag->base + (ndx << bktid);
@@ -1056,17 +1051,15 @@ _malloc(size_t size,
                 arn->magbkt[bktid].ptr = mag;
             }
         }
-        __mallocunlkmtx(&tab->lk);
+        __mallocunlkmtx(&g_malloc.magbkt[bktid].lk);
         if (!mag) {
-            tab = &g_malloc.freetab[bktid];
-            __malloclkmtx(&tab->lk);
-            mag = tab->ptr;
+            __malloclkmtx(&g_malloc.freetab[bktid].lk);
+            mag = g_malloc.freetab[bktid].ptr;
             if (mag) {
-//                mag->tab = NULL;
                 if (mag->next) {
                     mag->next->prev = NULL;
                 }
-                tab->ptr = mag->next;
+                g_malloc.freetab[bktid].ptr = mag->next;
 #if (MALLOCPTRNDX)
                 ndx = mag->stk[mag->cur++];
                 ptr = (uint8_t *)mag->base + (ndx << bktid);
@@ -1081,7 +1074,7 @@ _malloc(size_t size,
                     arn->magbkt[bktid].ptr = mag;
                 }
             }
-            __mallocunlkmtx(&tab->lk);
+            __mallocunlkmtx(&g_malloc.freetab[bktid].lk);
         }
         if (!mag) {
             mag = maggethdr(bktid);
@@ -1261,7 +1254,7 @@ _free(void *ptr)
                     arn->magbkt[bktid].ptr = NULL;
                 }
             }
-            if ((uintptr_t)mag->adr & MAGMAP && bktid > MALLOCBIGMAPLOG2) {
+            if (((uintptr_t)mag->adr & MAGMAP) && bktid > MALLOCBIGMAPLOG2) {
                 freemap = 1;
             } else {
 //                mag->tab = &g_malloc.freetab[bktid];
@@ -1288,7 +1281,7 @@ _free(void *ptr)
             /* unmap slab */
             adr = (void *)mag->base;
 //            VALGRINDRMPOOL(adr);
-            unmapanon(adr, magnbyte(bktid));
+            unmapanon(adr, mag->size);
 #if (MALLOCSTAT)
             nmapbyte -= magnbyte(bktid);
 #endif
