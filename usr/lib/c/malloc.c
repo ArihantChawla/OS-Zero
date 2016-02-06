@@ -11,6 +11,16 @@
 
 #include "_malloc.h"
 
+/*
+ * TODO
+ * ----
+ * - lookups;
+ *   - multiples of page-size with a "v-tree" / multilevel table
+ *   - cacheline-aligned ones;
+ *     - pointer-prefix (allocation magazines)
+ * - ...
+ */
+
 #if 0
 #undef  __malloctrace
 #define __malloctrace()
