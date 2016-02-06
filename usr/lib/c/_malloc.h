@@ -284,7 +284,7 @@ struct bkt {
 #define magunlkbit(mag) 0
 #define MAGLOCK         0x01
 #define MAGMAP          0x02
-#define MAGGLOB         0x04
+#define MAGGLOBAL       0x04
 #define BLKDIRTY        0x01
 #define ADRMASK         (MALLOCMINSIZE - 1)
 #define MALLOCHDRSIZE   PAGESIZE
