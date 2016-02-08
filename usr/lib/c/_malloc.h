@@ -293,27 +293,27 @@ struct mag {
 #if 0
     struct memtab  *tab;
 #endif
-    void           *base;
-    void           *adr;
-    size_t          size;
-    long            cur;
-    long            lim;
+    void          *base;
+    void          *adr;
+    size_t         size;
+    long           cur;
+    long           lim;
 #if (!MALLOCTLSARN)
-    long            arnid;
+    long           arnid;
 #endif
 #if (MALLOCFREEMAP)
-    volatile long   freelk;
-    uint8_t        *freemap;
+    volatile long  freelk;
+    uint8_t       *freemap;
 #endif
-    long            bktid;
-    struct mag     *prev;
-    struct mag     *next;
+    long           bktid;
+    struct mag    *prev;
+    struct mag    *next;
 #if (MALLOCPTRNDX)
-    MAGPTRNDX      *stk;
-    MAGPTRNDX      *ptrtab;
+    MAGPTRNDX     *stk;
+    MAGPTRNDX     *ptr;
 #elif (MALLOCHDRPREFIX)
-    void          **stk;
-    void          **ptrtab;
+    void          *stk;
+    void          *ptr;
 #endif
 };
 

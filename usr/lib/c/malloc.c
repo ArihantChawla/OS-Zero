@@ -185,9 +185,9 @@ void   zero_free(void *ptr);
      >> (mag)->bktid)
 #endif
 #define magputptr(mag, ptr, orig)                                       \
-    ((mag)->ptrtab[magptrid(mag, ptr)] = (orig))
+    (((void **)(mag)->ptr)[magptrid(mag, ptr)] = (orig))
 #define maggetptr(mag, ptr)                                             \
-    ((mag)->ptrtab[magptrid(mag, ptr)])
+    (((void **)(mag)->ptr)[magptrid(mag, ptr)])
 
 //#define setptr(a, p) ((&((struct memhdr *)(a))[-1])->base = (p))
 
@@ -202,16 +202,21 @@ void   zero_free(void *ptr);
 #define magnblk(bktid)                                                  \
     (1UL << magnblklog2(bktid))
 
-#define maghdrsz()                                                      \
+#define maghdrsz(bktid)                                                 \
     (rounduppow2(sizeof(struct mag), CLSIZE))
 #if (MALLOCFREEMAP)
 #define magtabsz(bktid)                                                 \
     ((maghdrsz()                                                        \
-      + (magnblk(bktid) << 1) * sizeof(void *)                          \
-      + ((magnblk(bktid) + CHAR_BIT) >> 3)))
+      + ((!magnblklog2(bktid)                                           \
+          ? 0                                                           \
+          : ((magnblk(bktid) << 1) * sizeof(void *)                     \
+             + ((magnblk(bktid) + CHAR_BIT) >> 3))))))
 #else
 #define magtabsz(bktid)                                                 \
-    (maghdrsz() + (magnblk(bktid) << 1) * sizeof(void *))
+    ((maghdrsz()                                                        \
+      + (!magnblklog2(bktid)                                            \
+         ? 0                                                            \
+         : (magnblk(bktid) << 1) * sizeof(void *))))
 #endif
 #define magembedtab(bktid)                                              \
     (magtabsz(bktid) <= MALLOCHDRSIZE)
@@ -227,7 +232,7 @@ magprint(struct mag *mag)
     fprintf(stderr, "\tlim\t%ld\n", mag->lim);
     fprintf(stderr, "\tbktid\t%ld\n", mag->bktid);
     fprintf(stderr, "\tstk\t%p\n", mag->stk);
-    fprintf(stderr, "\tptrtab\t%p\n", mag->ptrtab);
+    fprintf(stderr, "\tptr\t%p\n", mag->ptr);
 #if (MALLOCFREEMAP)
     fprintf(stderr, "\tfreemap\t%p\n", mag->freemap);
 #endif
@@ -478,12 +483,12 @@ maginitslab(struct mag *mag, long bktid)
     void      **stk;
     size_t      sz = 1UL << bktid;
     uint8_t    *ptr;
-    long        lim = magnblk(bktid);
+    long        n = magnblk(bktid);
     long        ndx;
     uintptr_t   mapflg = 0;;
 
     if (!mag->base) {
-        _assert(powerof2(lim) && powerof2(sz));
+        _assert(powerof2(n) && powerof2(sz));
         ptr = SBRK_FAILED;
 #if (!MALLOCNOSBRK)
         if (bktid <= MALLOCSLABLOG2) {
@@ -496,7 +501,7 @@ maginitslab(struct mag *mag, long bktid)
         if (ptr == SBRK_FAILED) {
             /* try to map slab */
             ptr = mapanon(g_malloc.zerofd,
-                             rounduppow2(lim * sz, PAGESIZE));
+                             rounduppow2(n * sz, PAGESIZE));
             if (ptr == MAP_FAILED) {
                 
                 return NULL;
@@ -504,20 +509,24 @@ maginitslab(struct mag *mag, long bktid)
             mapflg = MAGMAP;
         }
         fprintf(stderr, "allocating %ld %ld-byte blocks (%ld)\n",
-                lim, sz, bktid);
+                n, sz, bktid);
         mag->base = ptr;
         mag->adr = (void *)((uintptr_t)ptr | mapflg);
-        mag->size = rounduppow2(lim * sz, PAGESIZE);
+        mag->size = rounduppow2(n * sz, PAGESIZE);
         mag->cur = 0;
-        mag->lim = lim;
+        mag->lim = n;
         mag->bktid = bktid;
-        stk = mag->stk;
-        ndx = 0;
-        /* initialise allocation stack */
-        while (lim--) {
-            stk[ndx] = ptr;
-            ndx++;
-            ptr += sz;
+        if (n == 1) {
+            mag->ptr = ptr;
+        } else {
+            stk = mag->stk;
+            ndx = 0;
+            /* initialise allocation stack */
+            while (n--) {
+                stk[ndx] = ptr;
+                ndx++;
+                ptr += sz;
+            }
         }
         VALGRINDMKPOOL(mag->base, 0);
     }
@@ -533,11 +542,17 @@ maginittab(struct mag *mag, long bktid)
     size_t       sz;
 
     if (!mag->stk) {
-        if (magembedtab(bktid)) {
-            mag->stk = (void **)((uint8_t *)mag + maghdrsz());
-            mag->ptrtab = (void **)&mag->stk[n];
+        if (n == 1) {
+            mag->stk = NULL;
+            mag->ptr = NULL;
 #if (MALLOCFREEMAP)
-            mag->freemap = (uint8_t *)&mag->ptrtab[n];
+            mag->freemap = NULL;
+#endif
+        } else if (magembedtab(bktid)) {
+            mag->stk = (void **)((uint8_t *)mag + maghdrsz());
+            mag->ptr = &((void **)&mag->stk)[n];
+#if (MALLOCFREEMAP)
+            mag->freemap = &((void **)&mag->stk)[n << 1];
 #endif
         } else {
             sz = magtabsz(bktid);
@@ -547,9 +562,9 @@ maginittab(struct mag *mag, long bktid)
                 return NULL;
             }
             mag->stk = ret;
-            mag->ptrtab = (void **)&mag->stk[n];
+            mag->ptr = &((void **)&mag->stk)[n];
 #if (MALLOCFREEMAP)
-            mag->freemap = (uint8_t *)&mag->ptrtab[n];
+            mag->freemap = &((void **)&mag->stk)[n << 1];
 #endif
         }
     }
@@ -815,7 +830,7 @@ _malloc(size_t size,
     mag = arn->magbkt[bktid].ptr;
     if (mag) {
         _assert(mag->cur <= mag->lim);
-        ptr = mag->stk[mag->cur++];
+        ptr = ((void **)mag->stk)[mag->cur++];
         _assert(mag->cur <= mag->lim);
         if (mag->cur == mag->lim) {
             if (mag->next) {
@@ -838,7 +853,7 @@ _malloc(size_t size,
 //            _assert(mag->cur);
             mag->adr = (void *)((uintptr_t)mag->adr & ~MAGGLOBAL);
             mag->prev = NULL;
-            ptr = mag->stk[mag->cur++];
+            ptr = ((void **)mag->stk)[mag->cur++];
             _assert(mag->cur <= mag->lim);
 //            mag->prev = NULL;
             if (mag->cur < mag->lim) {
@@ -861,7 +876,7 @@ _malloc(size_t size,
                     return NULL;
                 } else {
                     _assert(!mag->cur);
-                    ptr = mag->stk[mag->cur++];
+                    ptr = ((void **)mag->stk)[mag->cur++];
                     _assert(mag->cur == 1 && mag->cur <= mag->lim);
                     if (mag->cur < mag->lim) {
                         mag->prev = NULL;
@@ -908,20 +923,27 @@ _malloc(size_t size,
 #endif
 #if (MALLOCFREEMAP)
         __malloclkmtx(&mag->freelk);
-        if (bitset(mag->freemap, magptrid(mag, adr))) {
+        if (mag->lim == 1) {
+            mag->freemap = ~(uintptr_t)NULL;
+        } else if (bitset(mag->freemap, magptrid(mag, adr))) {
             magprint(mag);
             fprintf(stderr, "trying to reallocate block");
             fflush(stderr);
             
             abort();
+        } else {
+            setbit(mag->freemap, magptrid(mag, adr));
         }
-        setbit(mag->freemap, magptrid(mag, adr));
         __mallocunlkmtx(&mag->freelk);
 #endif
         VALGRINDPOOLALLOC(mag->base,
                           adr,
                           size);
-        magputptr(mag, ptr, adr);
+        if (mag->lim == 1) {
+            mag->ptr = adr;
+        } else {
+            magputptr(mag, ptr, adr);
+        }
     }
     if (!ptr) {
         magprint(mag);
@@ -980,13 +1002,17 @@ _free(void *ptr)
 #if (MALLOCFREEMAP)
         /* FIXME: use m_cmpclrbit() */
         __malloclkmtx(&mag->freelk);
-        if (!bitset(mag->freemap, ndx)) {
+        if ((mag->lim == 1 && (mag->freemap))
+            || !bitset(mag->freemap, ndx)) {
             magprint(mag);
             fprintf(stderr, "trying to free an unused block\n");
             
             abort();
+        } else if (mag->cur == 1) {
+            mag->freemap = ~(uinptr_t)NULL;
+        } else {
+            clrbit(mag->freemap, magptrid(mag, adr));
         }
-        clrbit(mag->freemap, magptrid(mag, adr));
         __mallocunlkmtx(&mag->freelk);
 #endif
         if (g_malloc.mallopt.flg & MALLOPT_PERTURB_BIT) {
@@ -997,7 +1023,7 @@ _free(void *ptr)
         }
         _assert(mag->cur);
         _assert(mag->cur <= mag->lim);
-        mag->stk[--mag->cur] = adr;
+        ((void **)mag->stk)[--mag->cur] = adr;
         lim = mag->lim;
         if (!mag->cur) {
             if (gtpow2(lim, 1)) {
@@ -1023,10 +1049,16 @@ _free(void *ptr)
                 /* unmap slab */
                 adr = (void *)mag->base;
                 VALGRINDRMPOOL(adr);
-                if (!magembedtab(bktid)) {
+                if (mag->lim == 1) {
+                    mag->stk = NULL;
+                    mag->ptr = NULL;
+#if (MALLOCFREEMAP)
+                    mag->freemap = NULL;
+#endif
+                } else if (!magembedtab(bktid)) {
                     unmapanon(mag->stk, magtabsz(bktid));
                     mag->stk = NULL;
-                    mag->ptrtab = NULL;
+                    mag->ptr = NULL;
 #if (MALLOCFREEMAP)
                     mag->freemap = NULL;
 #endif
