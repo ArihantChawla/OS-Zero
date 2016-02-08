@@ -21,7 +21,7 @@
 
 /* optional features and other hacks */
 #define MALLOCVALGRIND    1
-#define MALLOCHDRHACKS    1
+#define MALLOCHDRHACKS    0
 #define MALLOCNEWHDR      1
 #define MALLOCHDRPREFIX   1
 #define MALLOCTLSARN      1
@@ -282,11 +282,9 @@ struct bkt {
 #endif
 #define maglkbit(mag)   1
 #define magunlkbit(mag) 0
-#define MAGLOCK         0x01
-#define MAGMAP          0x02
-#define MAGGLOBAL       0x04
-#define BLKDIRTY        0x01
-#define ADRMASK         (MALLOCMINSIZE - 1)
+#define MAGMAP          0x01
+#define MAGGLOBAL       0x02
+#define ADRMASK         (MAGMAP | MAGGLOBAL)
 #define MALLOCHDRSIZE   PAGESIZE
 /* magazines for larger/fewer allocations embed the tables in the structure */
 /* magazine header structure */
