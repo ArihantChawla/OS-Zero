@@ -1,6 +1,7 @@
 #ifndef ___MALLOC_H__
 #define ___MALLOC_H__
 
+#include <stdint.h>
 #include <malloc.h>
 #include <zero/param.h>
 
@@ -26,7 +27,7 @@
 #define MALLOCHDRPREFIX   1
 #define MALLOCTLSARN      1
 #define MALLOCSMALLADR    0
-#define MALLOCSTAT        0
+#define MALLOCSTAT        1
 #define MALLOCPTRNDX      0
 #define MALLOCCONSTSLABS  1
 #define MALLOCDYNARN      0
@@ -43,10 +44,10 @@
 #define MALLOCSTEALMAG    0
 #define MALLOCMULTITAB    1
 
-#define MALLOCNOSBRK      1 // do NOT use sbrk()/heap, just mmap()
+#define MALLOCNOSBRK      0 // do NOT use sbrk()/heap, just mmap()
 #define MALLOCFREEMDIR    0 // under construction
 #define MALLOCFREEMAP     0 // use free block bitmaps; bit 1 for allocated
-#define MALLOCBUFMAP      1 // buffer mapped slabs to global pool
+#define MALLOCBUFMAP      0 // buffer mapped slabs to global pool
 
 /* use zero malloc on a GNU system such as a Linux distribution */
 #define GNUMALLOC         0
@@ -274,9 +275,9 @@ struct memtab {
     void          *ptr;
 #if (MALLOCBUFMAP)
     unsigned long  n;
-    uint8_t        _pad[CLSIZE - 2 * sizeof(long) - sizeof(struct mag *)];
+    uint8_t        _pad[CLSIZE - 2 * sizeof(long) - sizeof(void *)];
 #else
-    uint8_t        _pad[CLSIZE - sizeof(long) - sizeof(struct mag *)];
+    uint8_t        _pad[CLSIZE - sizeof(long) - sizeof(void *)];
 #endif
 };
 
@@ -297,16 +298,15 @@ struct arn {
 #define maglkbit(mag)   1
 #define magunlkbit(mag) 0
 #define MAGMAP          0x01
-#define MAGGLOBAL       0x02
-#define ADRMASK         (MAGMAP | MAGGLOBAL)
+#define ADRMASK         (MAGMAP)
+#define PTRFLGMASK      0
+#define PTRADRMASK      (~PTRFLGMASK)
 #define MALLOCHDRSIZE   PAGESIZE
 /* magazines for larger/fewer allocations embed the tables in the structure */
 /* magazine header structure */
 struct mag {
-    volatile long   lk;
-#if 0
-    struct memtab  *tab;
-#endif
+    volatile long  lk;
+    struct arn    *arn;
     void          *base;
     void          *adr;
     size_t         size;
