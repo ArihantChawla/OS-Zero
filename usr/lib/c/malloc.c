@@ -1148,14 +1148,14 @@ _malloc(size_t size,
         __malloclkmtx(&g_malloc.magbkt[bktid].lk);
         mag = g_malloc.magbkt[bktid].ptr;
         if (!mag) {
-            __mallocunlkmtx(&g_malloc.magbkt[bktid].lk);
+//            __mallocunlkmtx(&g_malloc.magbkt[bktid].lk);
             mag = magget(bktid);
         } else {
             if (mag->next) {
                 mag->next->prev = NULL;
             }
             g_malloc.magbkt[bktid].ptr = mag->next;
-            __mallocunlkmtx(&g_malloc.magbkt[bktid].lk);
+//            __mallocunlkmtx(&g_malloc.magbkt[bktid].lk);
         }
         if (mag) {
 //            _assert(mag->cur);
@@ -1167,14 +1167,14 @@ _malloc(size_t size,
             }
             mag->prev = NULL;
             if (mag->cur < mag->lim) {
-                if (arn->magbkt[bktid].ptr || (bktid > MALLOCSLABLOG2)) {
-                    __malloclkmtx(&g_malloc.magbkt[bktid].lk);
+                if (arn->magbkt[bktid].ptr || (bktid > MALLOCBIGSLABLOG2)) {
+//                    __malloclkmtx(&g_malloc.magbkt[bktid].lk);
                     mag->next = g_malloc.magbkt[bktid].ptr;
                     if (mag->next) {
                         mag->next->prev = mag;
                     }
                     g_malloc.magbkt[bktid].ptr = mag;
-                    __malloclkmtx(&g_malloc.magbkt[bktid].lk);
+//                    __malloclkmtx(&g_malloc.magbkt[bktid].lk);
                 } else {
                     mag->arn = arn;
                     mag->next = NULL;
@@ -1184,6 +1184,7 @@ _malloc(size_t size,
                 mag->next = NULL;
             }
         }
+        __mallocunlkmtx(&g_malloc.magbkt[bktid].lk);
     }
     if (!ptr) {
 #if defined(ENOMEM)
@@ -1344,7 +1345,6 @@ _free(void *ptr)
             memset(adr, perturb, sz);
         }
 #endif
-        _assert(mag->cur);
         _assert(mag->cur <= mag->lim);
         if (mag->lim == 1) {
             mag->ptr = NULL;
@@ -1388,6 +1388,7 @@ _free(void *ptr)
                     queue = 1;
                 }
             } else if (!mag->arn || (mag->arn == arn)) {
+                __malloclkmtx(&g_malloc.magbkt[bktid].lk);
                 if ((mag->prev) && (mag->next)) {
                     mag->next->prev = mag->prev;
                     mag->prev->next = mag->next;
@@ -1396,17 +1397,18 @@ _free(void *ptr)
                 } else if (mag->next) {
                     mag->next->prev = NULL;
                     if (mag->arn) {
-                        mag->arn = NULL;
                         arn->magbkt[bktid].ptr = mag->next;
+                        mag->arn = NULL;
                     } else {
                         g_malloc.magbkt[bktid].ptr = mag->next;
                     }
                 } else if (mag->arn) {
-                    mag->arn = NULL;
                     arn->magbkt[bktid].ptr = NULL;
+                    mag->arn = NULL;
                 } else {
                     g_malloc.magbkt[bktid].ptr = NULL;
                 }
+                __mallocunlkmtx(&g_malloc.magbkt[bktid].lk);
                 mag->arn = NULL;
                 queue = 1;
             }
@@ -1417,7 +1419,7 @@ _free(void *ptr)
         }
         if (queue) {
             mag->prev = NULL;
-            if (arn->magbkt[bktid].ptr || (bktid > MALLOCSLABLOG2)) {
+            if (arn->magbkt[bktid].ptr || (bktid > MALLOCBIGSLABLOG2)) {
                 mag->arn = NULL;
                 __malloclkmtx(&g_malloc.magbkt[bktid].lk);
                 mag->next = g_malloc.magbkt[bktid].ptr;

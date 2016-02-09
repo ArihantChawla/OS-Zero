@@ -66,16 +66,16 @@
 
 /* <= MALLOCSLABLOG2 are tried to get from heap #if (!MALLOCNOSBRK) */
 /* <= MALLOCBIGSLABLOG2 are kept in per-thread arenas which are lock-free */
-#define MALLOCSLABLOG2    16
-//#define MALLOCBIGSLABLOG2 18
+#define MALLOCSLABLOG2    17
+#define MALLOCBIGSLABLOG2 20
 #define MALLOCBIGMAPLOG2  24
 
 #if !defined(MALLOCALIGNMENT) || (MALLOCALIGNMENT == 32)
-#define MALLOCMINLOG2     5  // SIMD types
+#define MALLOCMINLOG2     6
 #elif !defined(MALLOCALIGNMENT) || (MALLOCALIGNMENT == 16)
-#define MALLOCMINLOG2     4  // SIMD types
+#define MALLOCMINLOG2     5
 #elif !defined(MALLOCALIGNMENT) || (MALLOCALIGNMENT == 8)
-#define MALLOCMINLOG2     3  // double
+#define MALLOCMINLOG2     4
 #else
 #error fix MALLOCMINLOG2 in _malloc.h
 #endif
