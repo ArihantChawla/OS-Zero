@@ -289,10 +289,11 @@ void         (* MALLOC_HOOK_MAYBE_VOLATILE __free_hook)(void *ptr,
 void
 mallocstat(void)
 {
-    fprintf(stderr, "HEAP: %lld KB\tMAP: %lld KB\tTAB: %lld KB\n",
+    fprintf(stderr, "HEAP: %lld KB\tMAP: %lld KB\tTAB: %lld KB\tHDR: %lld KB\n",
             nheapbyte >> 10,
             nmapbyte >> 10,
-            ntabbyte >> 10);
+            ntabbyte >> 10,
+            nhdrbyte >> 10);
     fflush(stderr);
 
     return;
@@ -638,9 +639,9 @@ prefork(void)
     __malloclkmtx(&g_malloc.initlk);
     __malloclkmtx(&g_malloc.heaplk);
     for (ndx = 0 ; ndx < MALLOCNBKT ; ndx++) {
+        __malloclkmtx(&g_malloc.magbkt[ndx].lk);
         __malloclkmtx(&g_malloc.hdrbuf[ndx].lk);
 //        __malloclkmtx(&g_malloc.freetab[ndx].lk);
-        __malloclkmtx(&g_malloc.magbkt[ndx].lk);
     }
 #if (MALLOCMULTITAB)
     for (ndx = 0 ; ndx < MDIRNL1KEY ; ndx++) {
@@ -662,9 +663,8 @@ postfork(void)
     }
 #endif
     for (ndx = 0 ; ndx < MALLOCNBKT ; ndx++) {
-        __mallocunlkmtx(&g_malloc.magbkt[ndx].lk);
-//        __mallocunlkmtx(&g_malloc.freetab[ndx].lk);
         __mallocunlkmtx(&g_malloc.hdrbuf[ndx].lk);
+        __mallocunlkmtx(&g_malloc.magbkt[ndx].lk);
     }
     __mallocunlkmtx(&g_malloc.heaplk);
     __mallocunlkmtx(&g_malloc.initlk);
@@ -1205,6 +1205,11 @@ _malloc(size_t size,
     if (((uintptr_t)ptr & (PAGESIZE - 1)) || (align > PAGESIZE)) {
         /* store unaligned source pointer and mag address */
         ptr += max(align, MALLOCALIGNMENT);
+#if (MALLOCSTAT)
+        if (!align) {
+            nhdrbyte += MALLOCALIGNMENT;
+        }
+#endif
         if (align) {
             if ((uintptr_t)ptr & (align - 1)) {
                 ptr = ptralign(ptr, align);
