@@ -234,15 +234,15 @@ static void   gnu_free_hook(void *ptr);
 #if (PTRBITS == 32)
 #define MDIRNL1BIT     10
 #define MDIRNL2BIT     10
-#define MDIRNL3BIT     (PTRBITS - MDIRNL1BIT - MDIRNL2BIT - MALLOCMINLOG2)
+#define MDIRNL3BIT     (PTRBITS - MDIRNL1BIT - MDIRNL2BIT - PAGESIZELOG2)
 #elif (PTRBITS == 64)
 #define MDIRNL1BIT     16
 #define MDIRNL2BIT     12
 #define MDIRNL3BIT     12
 #if (MALLOCSMALLADR)
-#define MDIRNL4BIT     (ADRBITS - MDIRNL1BIT - MDIRNL2BIT - MDIRNL3BIT - MALLOCMINLOG2)
+#define MDIRNL4BIT     (ADRBITS - MDIRNL1BIT - MDIRNL2BIT - MDIRNL3BIT - PAGESIZELOG2)
 #else
-#define MDIRNL4BIT     (PTRBITS - MDIRNL1BIT - MDIRNL2BIT - MDIRNL3BIT - MALLOCMINLOG2)
+#define MDIRNL4BIT     (PTRBITS - MDIRNL1BIT - MDIRNL2BIT - MDIRNL3BIT - PAGESIZELOG2)
 #endif
 #else /* PTRBITS != 32 && PTRBITS != 64 */
 #error fix PTRBITS for _malloc.h
@@ -258,7 +258,7 @@ static void   gnu_free_hook(void *ptr);
 #define MDIRL1NDX      (MDIRL2NDX + MDIRNL2BIT)
 #define MDIRL2NDX      (MDIRL3NDX + MDIRNL3BIT)
 #define MDIRL3NDX      (MDIRL4NDX + MDIRNL4BIT)
-#define MDIRL4NDX      MALLOCMINLOG2
+#define MDIRL4NDX      PAGESIZELOG2
 
 #define mdirl1ndx(ptr) (((uintptr_t)(ptr) >> MDIRL1NDX) & ((1UL << MDIRNL1BIT) - 1))
 #define mdirl2ndx(ptr) (((uintptr_t)(ptr) >> MDIRL2NDX) & ((1UL << MDIRNL2BIT) - 1))
@@ -269,11 +269,25 @@ static void   gnu_free_hook(void *ptr);
 
 #endif /* MALLOCMULTITAB */
 
-struct bkt {
-    volatile long  lk;
+struct memtab {
+    MUTEX          lk;
     void          *ptr;
-    volatile long  nref;
-    uint8_t        _pad[CLSIZE - 2 * sizeof(long) - sizeof(void *)];
+#if (MALLOCBUFMAP)
+    unsigned long  n;
+    uint8_t        _pad[CLSIZE - 2 * sizeof(long) - sizeof(struct mag *)];
+#else
+    uint8_t        _pad[CLSIZE - sizeof(long) - sizeof(struct mag *)];
+#endif
+};
+
+#define MALLOCARNSIZE rounduppow2(sizeof(struct arn), PAGESIZE)
+/* arena structure */
+struct arn {
+    struct memtab  magbkt[MALLOCNBKT];
+#if (!MALLOCTLSARN)
+    MUTEX          nreflk;
+    long           nref;
+#endif
 };
 
 #if 0
@@ -317,32 +331,11 @@ struct mag {
 #endif
 };
 
-struct memtab {
-    MUTEX          lk;
-    void          *ptr;
-#if (MALLOCBUFMAP)
-    unsigned long  n;
-    uint8_t        _pad[CLSIZE - 2 * sizeof(long) - sizeof(struct mag *)];
-#else
-    uint8_t        _pad[CLSIZE - sizeof(long) - sizeof(struct mag *)];
-#endif
-};
-
 /* magazine list header structure */
 
 struct magbkt {
     long        nref;
     struct mag *tab;
-};
-
-#define MALLOCARNSIZE rounduppow2(sizeof(struct arn), PAGESIZE)
-/* arena structure */
-struct arn {
-    struct memtab  magbkt[MALLOCNBKT];
-#if (!MALLOCTLSARN)
-    MUTEX          nreflk;
-    long           nref;
-#endif
 };
 
 #if (MALLOCHDRHACKS)
