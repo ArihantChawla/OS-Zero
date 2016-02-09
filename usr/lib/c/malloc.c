@@ -6,6 +6,7 @@
  * Copyright (C) Tuomo Petteri Venäläinen 2014-2016
  */
 
+#define VALGRINDINTERNALS 1
 #define MALLOCDEBUG 1
 #define MALLOCTRACE 0
 
@@ -879,7 +880,7 @@ mtsetmag(void *ptr,
                     mptr2->ptr = mptr1;
                     mptr2->nref++;
 #if defined(VALGRINDINTERNALS)
-                    VALGRINDALLOC(mptr2, MDIRNL4KEY * sizeof(void *), 0);
+                    VALGRINDALLOC(mptr1, MDIRNL4KEY * sizeof(void *), 0);
 #endif
                 } else {
                     fail = 1;
