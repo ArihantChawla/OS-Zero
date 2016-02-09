@@ -44,8 +44,8 @@
 #define MALLOCSTEALMAG    0
 #define MALLOCMULTITAB    1
 
-#define MALLOCNOSBRK      0 // do NOT use sbrk()/heap, just mmap()
-#define MALLOCFREEMDIR    0 // under construction
+#define MALLOCNOSBRK      1 // do NOT use sbrk()/heap, just mmap()
+#define MALLOCFREEMDIR    1 // under construction
 #define MALLOCFREEMAP     0 // use free block bitmaps; bit 1 for allocated
 #define MALLOCBUFMAP      0 // buffer mapped slabs to global pool
 
@@ -271,6 +271,17 @@ static void   gnu_free_hook(void *ptr);
 #endif /* MALLOCMULTITAB */
 
 struct memtab {
+    void          *ptr;
+    volatile long  nref;
+#if (MALLOCBUFMAP)
+    unsigned long  n;
+    uint8_t        _pad[CLSIZE - 2 * sizeof(long) - sizeof(void *)];
+#else
+    uint8_t        _pad[CLSIZE - sizeof(long) - sizeof(void *)];
+#endif
+};
+
+struct magtab {
     MUTEX          lk;
     void          *ptr;
 #if (MALLOCBUFMAP)
@@ -284,10 +295,10 @@ struct memtab {
 #define MALLOCARNSIZE rounduppow2(sizeof(struct arn), PAGESIZE)
 /* arena structure */
 struct arn {
-    struct memtab  magbkt[MALLOCNBKT];
+    struct magtab magbkt[MALLOCNBKT];
 #if (!MALLOCTLSARN)
-    MUTEX          nreflk;
-    long           nref;
+    MUTEX         nreflk;
+    long          nref;
 #endif
 };
 
@@ -386,9 +397,9 @@ struct mallopt {
 /* malloc global structure */
 #define MALLOCINIT 0x00000001L
 struct malloc {
-    struct memtab     magbkt[MALLOCNBKT];
-    struct memtab     freetab[MALLOCNBKT];
-    struct memtab     hdrbuf[MALLOCNBKT];
+    struct magtab     magbkt[MALLOCNBKT];
+    struct magtab     freetab[MALLOCNBKT];
+    struct magtab     hdrbuf[MALLOCNBKT];
 #if (!MALLOCTLSARN)
     struct arn      **arntab;           // arena structures
 #endif
