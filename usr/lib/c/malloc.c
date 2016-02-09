@@ -1049,7 +1049,7 @@ _malloc(size_t size,
             _assert(mag->cur <= mag->lim);
 //        _assert(mag->stk);
             if (mag->lim == 1) {
-                ptr = mag->ptr;
+                ptr = mag->base;
                 mag->cur = 1;
             } else {
                 ptr = ((void **)mag->stk)[mag->cur++];
@@ -1078,7 +1078,7 @@ _malloc(size_t size,
 //            _assert(mag->cur);
             mag->prev = NULL;
             if (mag->lim == 1) {
-                ptr = mag->ptr;
+                ptr = mag->base;
                 mag->cur = 1;
             } else {
                 ptr = ((void **)mag->stk)[mag->cur++];
@@ -1110,7 +1110,7 @@ _malloc(size_t size,
                     _assert(mag->lim);
                     mag->prev = NULL;
                     if (mag->lim == 1) {
-                        ptr = mag->ptr;
+                        ptr = mag->base;
                         mag->cur = 1;
                     } else {
                         ptr = ((void **)mag->stk)[mag->cur++];
@@ -1267,7 +1267,11 @@ _free(void *ptr)
         }
         _assert(mag->cur);
         _assert(mag->cur <= mag->lim);
-        ((void **)mag->stk)[--mag->cur] = adr;
+        if (mag->lim == 1) {
+            mag->ptr = NULL;
+        } else {
+            ((void **)mag->stk)[--mag->cur] = adr;
+        }
         lim = mag->lim;
         if (!mag->cur) {
             if (gtpow2(lim, 1)) {
@@ -1293,11 +1297,10 @@ _free(void *ptr)
                 /* unmap slab */
                 adr = (void *)mag->base;
                 VALGRINDRMPOOL(adr);
-                if ((mag->lim > 1) && !magembedtab(bktid)) {
+                if (!magembedtab(bktid)) {
                     unmapanon(mag->stk, magtabsz(bktid));
                 }
                 mag->stk = NULL;
-                mag->ptr = NULL;
 #if (MALLOCFREEMAP)
                 mag->freemap = NULL;
 #endif
