@@ -712,8 +712,8 @@ mtsetmag(void *ptr,
 #endif
 
     __malloclkmtx(&g_malloc.mlktab[l1]);
-#if (MALLOCFREEMDIR)
     if (!mag) {
+#if (MALLOCFREEMDIR)
         mptr1 = g_malloc.mdir[l1];
         if (mptr1) {
             mptr2 = mptr1->ptr;
@@ -738,21 +738,56 @@ mtsetmag(void *ptr,
                 }
             }
         }
-    }
 #else
-    ptr1 = g_malloc.mdir[l1];
-    if (ptr1) {
-        ptr2 = ((void **)ptr1)[l2];
-        if (ptr2) {
-            ptr1 = ((void **)ptr2)[l3];
-            if (ptr1) {
-                ((void **)ptr1)[l4] = mag;
+        ptr1 = g_malloc.mdir[l1];
+        if (ptr1) {
+            ptr2 = ((void **)ptr1)[l2];
+            if (ptr2) {
+                ptr1 = ((void **)ptr2)[l3];
+                if (ptr1) {
+                    ((void **)ptr1)[l4] = mag;
+                }
             }
         }
-    }
 #endif
-#if (MALLOCFREEMDIR)
+    }
     if (mag) {
+#if (!MALLOCFREEMDIR)
+        ptr1 = g_malloc.mdir[l1];
+        if (!ptr1) {
+            ptr1 = mapanon(g_malloc.zerofd,
+                           MDIRNL2KEY * sizeof(void *));
+            if (ptr1 == MAP_FAILED) {
+                abort();
+            }
+            g_malloc.mdir[l1] = ptr1;
+        }
+        if (ptr1) {
+            ptr2 = ((void **)ptr1)[l2];
+            if (!ptr2) {
+                ptr2 = mapanon(g_malloc.zerofd,
+                               MDIRNL3KEY * sizeof(void *));
+                if (ptr2 == MAP_FAILED) {
+                    abort();
+                }
+                ((void **)ptr1)[l2] = ptr2;
+            }
+            if (ptr2) {
+                ptr1 = ((void **)ptr2)[l3];
+                if (!ptr1) {
+                    ptr1 = mapanon(g_malloc.zerofd,
+                                   MDIRNL4KEY * sizeof(void *));
+                    if (ptr1 == MAP_FAILED) {
+                        abort();
+                    }
+                    ((void **)ptr2)[l3] = ptr1;
+                }
+                if (ptr1) {
+                    ((void **)ptr1)[l4] = mag;
+                }
+            }
+        }
+#else  /* MALLOCFREEMDIR */
         mptr1 = g_malloc.mdir[l1];
         if (!mptr1) {
             empty = 1;
@@ -834,8 +869,8 @@ mtsetmag(void *ptr,
                 }
             }
         }
+#endif /* MALLOCFREEMDIR */
     }
-#endif
     __mallocunlkmtx(&g_malloc.mlktab[l1]);
     
     return;
@@ -1991,8 +2026,8 @@ malloc_usable_size(void *ptr)
 #if (MALLOCHDRPREFIX)
     size_t      sz = ((mag)
                       ? ((1UL << mag->bktid)
-                         - ((mag->lim == 1)                             \
-                            ? 0                                         \
+                         - (((mag->lim == 1) || (mag->bktid >= PAGESIZELOG2))
+                            ? 0
                             : (ptrdiff(ptr, maggetptr(mag, ptr)))))
                       : 0);
 #else
