@@ -24,6 +24,8 @@
 #define PTRSIZE        8
 #define PTRBITS        64
 #define ADRBITS        48 // # of significant bytes in phys and virt addresses
+#define ADRHIBITCOPY   1
+#undef  ADRHIBITZERO
 #define PAGESIZELOG2   12 // 4-kilobyte pages
 
 #define CLSIZE         64

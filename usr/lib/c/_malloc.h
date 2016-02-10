@@ -26,7 +26,7 @@
 #define MALLOCNEWHDR      1
 #define MALLOCHDRPREFIX   1
 #define MALLOCTLSARN      1
-#define MALLOCSMALLADR    0
+#define MALLOCSMALLADR    1
 #define MALLOCSTAT        1
 #define MALLOCPTRNDX      0
 #define MALLOCCONSTSLABS  1
@@ -44,10 +44,10 @@
 #define MALLOCSTEALMAG    0
 #define MALLOCMULTITAB    1
 
-#define MALLOCNOSBRK      1 // do NOT use sbrk()/heap, just mmap()
-#define MALLOCFREEMDIR    1 // under construction
+#define MALLOCNOSBRK      0 // do NOT use sbrk()/heap, just mmap()
+#define MALLOCFREEMDIR    0 // under construction
 #define MALLOCFREEMAP     0 // use free block bitmaps; bit 1 for allocated
-#define MALLOCBUFMAP      0 // buffer mapped slabs to global pool
+#define MALLOCBUFMAG      1 // buffer mapped slabs to global pool
 
 /* use zero malloc on a GNU system such as a Linux distribution */
 #define GNUMALLOC         0
@@ -66,16 +66,16 @@
 
 /* <= MALLOCSLABLOG2 are tried to get from heap #if (!MALLOCNOSBRK) */
 /* <= MALLOCBIGSLABLOG2 are kept in per-thread arenas which are lock-free */
-#define MALLOCSLABLOG2    17
-#define MALLOCBIGSLABLOG2 20
+#define MALLOCSLABLOG2    18
+#define MALLOCBIGSLABLOG2 21
 #define MALLOCBIGMAPLOG2  24
 
 #if !defined(MALLOCALIGNMENT) || (MALLOCALIGNMENT == 32)
-#define MALLOCMINLOG2     6
+#define MALLOCMINLOG2     5     // stuff such as SIMD types
 #elif !defined(MALLOCALIGNMENT) || (MALLOCALIGNMENT == 16)
-#define MALLOCMINLOG2     5
+#define MALLOCMINLOG2     4     // stuff such as SIMD types
 #elif !defined(MALLOCALIGNMENT) || (MALLOCALIGNMENT == 8)
-#define MALLOCMINLOG2     4
+#define MALLOCMINLOG2     3     // IEEE double
 #else
 #error fix MALLOCMINLOG2 in _malloc.h
 #endif
@@ -143,20 +143,26 @@
 #include <zero/mtx.h>
 #include <zero/spin.h>
 #if (ZEROMTX) && (DEBUGMTX)
-#define __mallocinitmtx(mp)  mtxinit(mp)
-#define __malloctrylkmtx(mp) mtxtrylk(mp)
-#define __malloclkmtx(mp)   (fprintf(stderr, "%p\tLK: %d\n", mp, __LINE__), \
-                             mtxlk(mp))
-#define __mallocunlkmtx(mp) (fprintf(stderr, "%p\tUNLK: %d\n", mp, __LINE__), \
-                             mtxunlk(mp))
-#define __mallocinitspin(mp) spininit(mp)
-#define __malloclkspin(mp)   (fprintf(stderr, "LK: %d\n", __LINE__), spinlk(mp))
-#define __mallocunlkspin(mp) (fprintf(stderr, "UNLK: %d\n", __LINE__), spinunlk(mp))
+#define __mallocinitmtx(mp)   mtxinit(mp)
+#define __malloctrylkmtx(mp)  mtxtrylk(mp)
+#define __malloclkmtx(mp)     (fprintf(stderr, "%p\tLK: %d\n", mp, __LINE__), \
+                               mtxlk(mp))
+#define __mallocunlkmtx(mp)   (fprintf(stderr, "%p\tUNLK: %d\n", mp, __LINE__), \
+                               mtxunlk(mp))
+#define __mallocinitspin(mp)  spininit(mp)
+#define __malloclkspin(mp)    (fprintf(stderr, "LK: %d\n", __LINE__),   \
+                               spinlk(mp))
+#define __mallocunlkspin(mp)  (fprintf(stderr, "UNLK: %d\n", __LINE__), \
+                               spinunlk(mp))
 #elif (ZEROMTX)
-#define __malloctrylkmtx(mp) mtxtrylk(mp)
-#define __mallocinitmtx(mp)  mtxinit(mp)
-#define __malloclkmtx(mp)    mtxlk(mp)
-#define __mallocunlkmtx(mp)  mtxunlk(mp)
+#define __mallocinitmtx(mp)   mtxinit(mp)
+#define __malloctrylkmtx(mp)  mtxtrylk(mp)
+#define __malloclkmtx(mp)     mtxlk(mp)
+#define __mallocunlkmtx(mp)   mtxunlk(mp)
+#define __mallocinitspin(mp)  spininit(mp)
+#define __malloctrylkspin(mp) spintrylk(mp)
+#define __malloclkspin(mp)    spinlk(mp)
+#define __mallocunlkspin(mp)  spinunlk(mp)
 #endif
 #elif (PTHREAD)
 #include <pthread.h>
@@ -237,12 +243,18 @@ static void   gnu_free_hook(void *ptr);
 #define MDIRNL2BIT     10
 #define MDIRNL3BIT     (PTRBITS - MDIRNL1BIT - MDIRNL2BIT - PAGESIZELOG2)
 #elif (PTRBITS == 64)
-#define MDIRNL1BIT     16
+#define MDIRNL1BIT     12
 #define MDIRNL2BIT     12
 #define MDIRNL3BIT     12
 #if (MALLOCSMALLADR)
-#define MDIRNL4BIT     (ADRBITS - MDIRNL1BIT - MDIRNL2BIT - MDIRNL3BIT - PAGESIZELOG2)
-#else
+#if (ADRHIBITCOPY)
+#define MDIRNL4BIT     (ADRBITS + 1 - MDIRNL1BIT - MDIRNL2BIT - MDIRNL3BIT \
+                        - PAGESIZELOG2)
+#elif (ADRHIBITZERO)
+#define MDIRNL4BIT     (ADRBITS - MDIRNL1BIT - MDIRNL2BIT - MDIRNL3BIT  \
+                        - PAGESIZELOG2)
+#endif
+#else /* !MALLOCSMALLADR */
 #define MDIRNL4BIT     (PTRBITS - MDIRNL1BIT - MDIRNL2BIT - MDIRNL3BIT - PAGESIZELOG2)
 #endif
 #else /* PTRBITS != 32 && PTRBITS != 64 */
@@ -273,22 +285,16 @@ static void   gnu_free_hook(void *ptr);
 struct memtab {
     void          *ptr;
     volatile long  nref;
-#if (MALLOCBUFMAP)
-    unsigned long  n;
-    uint8_t        _pad[CLSIZE - 2 * sizeof(long) - sizeof(void *)];
-#else
-    uint8_t        _pad[CLSIZE - sizeof(long) - sizeof(void *)];
-#endif
 };
 
 struct magtab {
     MUTEX          lk;
     void          *ptr;
-#if (MALLOCBUFMAP)
+#if (MALLOCBUFMAG)
     unsigned long  n;
-    uint8_t        _pad[CLSIZE - 2 * sizeof(long) - sizeof(void *)];
+    uint8_t        _pad[CLSIZE - sizeof(long) - sizeof(void *) - sizeof(MUTEX)];
 #else
-    uint8_t        _pad[CLSIZE - sizeof(long) - sizeof(void *)];
+    uint8_t        _pad[CLSIZE - sizeof(MUTEX) - sizeof(void *)];
 #endif
 };
 
@@ -404,7 +410,11 @@ struct malloc {
     struct arn      **arntab;           // arena structures
 #endif
     MUTEX            *mlktab;
-    struct magtab   **mdir;             // allocation header lookup structure
+#if (MALLOCFREEMDIR)
+    struct memtab    *mdir;             // allocation header lookup structure
+#else
+    void            **mdir;
+#endif
     MUTEX             initlk;           // initialization lock
     MUTEX             heaplk;           // lock for sbrk()
 #if (!MALLOCTLSARN)
