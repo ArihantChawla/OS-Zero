@@ -576,7 +576,6 @@ maginitslab(struct mag *mag, long bktid)
     uint8_t    *ptr;
     long        ndx;
     uintptr_t   magflg = 0;
-    uintptr_t   ptrflg = 0;
 
     if (!mag->base) {
         _assert(powerof2(n) && powerof2(sz));
@@ -774,7 +773,7 @@ mtfindmag(void *ptr)
     __malloclkmtx(&g_malloc.mlktab[l1]);
 #endif
 #if (MALLOCFREEMDIR)
-    mptr1 = &g_malloc.mdir[l1];
+    mptr1 = g_malloc.mdir[l1].ptr;
     if (mptr1) {
         mptr2 = mptr1->ptr;
         if (mptr2) {
@@ -857,7 +856,7 @@ mtsetmag(void *ptr,
 #endif
     if (!mag) {
 #if (MALLOCFREEMDIR)
-        mptr1 = &g_malloc.mdir[l1];
+        mptr1 = g_malloc.mdir[l1].ptr;
         if (mptr1) {
             mptr2 = mptr1->ptr;
             if (mptr2) {
@@ -954,7 +953,7 @@ mtsetmag(void *ptr,
         }
     }
 #else /* MALLOCFREEMDIR */
-    mptr1 = &g_malloc.mdir[l1].ptr;
+    mptr1 = g_malloc.mdir[l1].ptr;
     if (!mptr1) {
         mptr1 = mapanon(g_malloc.zerofd,
                         MDIRNL2KEY * sizeof(struct memtab));
