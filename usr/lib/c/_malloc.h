@@ -45,7 +45,7 @@
 #define MALLOCMULTITAB    1
 
 #define MALLOCNOSBRK      0 // do NOT use sbrk()/heap, just mmap()
-#define MALLOCFREEMDIR    0 // under construction
+#define MALLOCFREEMDIR    1 // under construction
 #define MALLOCFREEMAP     0 // use free block bitmaps; bit 1 for allocated
 #define MALLOCBUFMAG      1 // buffer mapped slabs to global pool
 
@@ -66,7 +66,7 @@
 
 /* <= MALLOCSLABLOG2 are tried to get from heap #if (!MALLOCNOSBRK) */
 /* <= MALLOCBIGSLABLOG2 are kept in per-thread arenas which are lock-free */
-#define MALLOCSLABLOG2    18
+#define MALLOCSLABLOG2    17
 #define MALLOCBIGSLABLOG2 21
 #define MALLOCBIGMAPLOG2  24
 
@@ -242,21 +242,20 @@ static void   gnu_free_hook(void *ptr);
 #define MDIRNL1BIT     10
 #define MDIRNL2BIT     10
 #define MDIRNL3BIT     (PTRBITS - MDIRNL1BIT - MDIRNL2BIT - PAGESIZELOG2)
-#elif (PTRBITS == 64)
+#elif (PTRBITS == 64) && (!MALLOCSMALLADR)
 #define MDIRNL1BIT     12
 #define MDIRNL2BIT     12
 #define MDIRNL3BIT     12
-#if (MALLOCSMALLADR)
+#define MDIRNL4BIT     (PTRBITS - MDIRNL1BIT - MDIRNL2BIT - MDIRNL3BIT  \
+                        - PAGESIZELOG2)
+#elif (PTRBITS == 64) && (MALLOCSMALLADR)
+#define MDIRNL1BIT     20
 #if (ADRHIBITCOPY)
-#define MDIRNL4BIT     (ADRBITS + 1 - MDIRNL1BIT - MDIRNL2BIT - MDIRNL3BIT \
-                        - PAGESIZELOG2)
+#define MDIRNL2BIT     (ADRBITS + 1 - MDIRNL1BIT - MDIRNL3BIT)
 #elif (ADRHIBITZERO)
-#define MDIRNL4BIT     (ADRBITS - MDIRNL1BIT - MDIRNL2BIT - MDIRNL3BIT  \
-                        - PAGESIZELOG2)
+#define MDIRNL2BIT     (ADRBITS - MDIRNL1BIT - MDIRNL3BIT)
 #endif
-#else /* !MALLOCSMALLADR */
-#define MDIRNL4BIT     (PTRBITS - MDIRNL1BIT - MDIRNL2BIT - MDIRNL3BIT - PAGESIZELOG2)
-#endif
+#define MDIRNL3BIT     (MALLOCSLABLOG2 - MALLOCMINLOG2)
 #else /* PTRBITS != 32 && PTRBITS != 64 */
 #error fix PTRBITS for _malloc.h
 #endif
@@ -270,8 +269,12 @@ static void   gnu_free_hook(void *ptr);
 
 #define MDIRL1NDX      (MDIRL2NDX + MDIRNL2BIT)
 #define MDIRL2NDX      (MDIRL3NDX + MDIRNL3BIT)
+#if defined(MDIRNL4BIT) && (MDIRNL4BIT)
 #define MDIRL3NDX      (MDIRL4NDX + MDIRNL4BIT)
 #define MDIRL4NDX      PAGESIZELOG2
+#else
+#define MDIRL3NDX      PAGESIZELOG2
+#endif
 
 #define mdirl1ndx(ptr) (((uintptr_t)(ptr) >> MDIRL1NDX) & ((1UL << MDIRNL1BIT) - 1))
 #define mdirl2ndx(ptr) (((uintptr_t)(ptr) >> MDIRL2NDX) & ((1UL << MDIRNL2BIT) - 1))
@@ -401,7 +404,8 @@ struct mallopt {
 };
 
 /* malloc global structure */
-#define MALLOCINIT 0x00000001L
+#define MALLOCINIT   0x00000001L
+#define MALLOCNOHEAP 0x00000002L
 struct malloc {
     struct magtab     magbkt[MALLOCNBKT];
     struct magtab     freetab[MALLOCNBKT];
@@ -421,7 +425,7 @@ struct malloc {
     long              curarn;
     long              narn;             // number of arenas in action
 #endif
-    long              flg;              // allocator flags
+    volatile long     flg;              // allocator flags
     int               zerofd;           // file descriptor for mmap()
     struct mallopt    mallopt;          // mallopt() interface
     struct mallinfo   mallinfo;         // mallinfo() interface

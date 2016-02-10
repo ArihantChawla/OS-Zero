@@ -12,6 +12,7 @@
 #define LONGSIZELOG2   2
 #define LONGLONGSIZE   8
 #define PTRSIZE        4
+#define PTRSIZELOG2    2
 #define PTRBITS        32
 #define ADRBITS        32
 #define PAGESIZELOG2   12
