@@ -8,7 +8,11 @@
 #include <zero/cdefs.h>
 #include <zero/param.h>
 #include <zero/trix.h>
+#if !defined(__GLIBC__)
 #include <bits/string.h>
+#endif
+
+#if !defined(__GLIBC__)
 
 extern const uint8_t stringcolltab_c_en_US[256];
 
@@ -19,6 +23,8 @@ const unsigned char               *collnametab[STRINGNLANG]
 = {
     (unsigned char *)"en_US"
 };
+
+#endif /* !defined(__GLIBC__) */
 
 /* TESTED OK */
 void *
@@ -43,7 +49,7 @@ memcpy(void *dest,
     u8ptr1 = (void *)src;
     u8ptr2 = dest;
     val = sizeof(unsigned long);
-    if (nleft >= (val << 3)
+    if (nleft > (val << 3)
         && (((uintptr_t)u8ptr1 & (val - 1))
             == ((uintptr_t)u8ptr2 & (val - 1)))) {
         cnt = (uintptr_t)u8ptr1 & (val - 1);
@@ -488,6 +494,7 @@ strstr(const char *str1,
     return retptr;
 }
 
+#if !defined(__GLIBC__)
 char *
 strtok(char *str1,
        const char *str2)
@@ -524,6 +531,7 @@ strtok(char *str1,
     
     return retptr;
 }
+#endif /* !defined(__GLIBC__) */
 
 #if defined(MEMSETDUALBANK) && (MEMSETDUALBANK)
 
@@ -552,7 +560,7 @@ memset(void *ptr,
     tmp = sizeof(unsigned long) - 1;
     val = sizeof(unsigned long);
     u8 = (uint8_t)ch;
-    if (nleft >= (val << 4)) {
+    if (nleft > (val << 3)) {
         n = (uintptr_t)u8ptr & tmp;
         if (n) {
             n = val - n;
@@ -649,7 +657,7 @@ memset(void *ptr,
     u8ptr = ptr;
     val = sizeof(unsigned long);
     u8 = (uint8_t)ch;
-    if (nleft >= (val << 5)) {
+    if (nleft > (val << 3)) {
         cnt = (uintptr_t)u8ptr & (val - 1);
         if (cnt) {
             cnt = val - cnt;

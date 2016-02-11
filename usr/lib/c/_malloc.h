@@ -66,9 +66,10 @@
 
 /* <= MALLOCSLABLOG2 are tried to get from heap #if (!MALLOCNOSBRK) */
 /* <= MALLOCBIGSLABLOG2 are kept in per-thread arenas which are lock-free */
-#define MALLOCSLABLOG2    18
-#define MALLOCBIGSLABLOG2 21
+#define MALLOCSLABLOG2    19
+#define MALLOCBIGSLABLOG2 22
 #define MALLOCBIGMAPLOG2  24
+#define MALLOCHUGEMAPLOG2 26
 
 #if !defined(MALLOCALIGNMENT) || (MALLOCALIGNMENT == 32)
 #define MALLOCMINLOG2     5     // stuff such as SIMD types
@@ -207,12 +208,16 @@ extern uintptr_t _backtrace(void *buf, size_t size, long syms, int fd);
     } while (0)
 #endif
 #endif
+#if (MALLOCDEBUG)
 #define _assert(expr)                                                   \
     do {                                                                \
         if (!(expr)) {                                                  \
             *((long *)NULL) = 0;                                        \
         }                                                               \
     } while (0)
+#else
+#define _assert(expr)
+#endif
 //#include <assert.h>
 #endif
 

@@ -14,7 +14,7 @@
 #define VALGRINDINTERNALS 1
 #define MALLOCDEBUG 0
 #define MALLOCTRACE 0
-#define MALLOCSPINLOCKS 0
+#define MALLOCSPINLOCKS 1
 
 #include "_malloc.h"
 
@@ -178,6 +178,8 @@ static void * maginit(struct mag *mag, long bktid);
 #include <valgrind/valgrind.h>
 #endif
 
+void _memsetbk(void *ptr, int byte, size_t len);
+
 #if defined(GNUMALLOC) && (GNUMALLOC)
 void * zero_malloc(size_t size);
 void * zero_realloc(void *ptr, size_t size);
@@ -219,10 +221,12 @@ void   zero_free(void *ptr);
 
 #define magnglobbuflog2(bktid)                                          \
     (((bktid) <= MALLOCSLABLOG2)                                        \
-     ? 5                                                                \
+     ? 4                                                                \
      : (((bktid) <= MALLOCBIGMAPLOG2)                                   \
         ? 3                                                             \
-        : 0))
+        : (((bktid <= MALLOCHUGEMAPLOG2)                                \
+            ? 2                                                         \
+            : 1))))
 #define magnglobbuf(bktid)                                              \
     (1UL << magnglobbuflog2(bktid))
 
@@ -1551,13 +1555,13 @@ _malloc(size_t size,
     adr = clrptr(ptr);
     if (zero) {
 //        memset(adr, 0, size);
-        memset(adr, 0, size);
+        _memsetbk(adr, 0, sz);
     } else if (g_malloc.mallopt.flg & MALLOPT_PERTURB_BIT) {
         int perturb = g_malloc.mallopt.perturb;
         
         perturb = (~perturb) & 0xff;
 //        memset(adr, perturb, 1UL << bktid);
-        memset(adr, perturb, 1UL << bktid);
+        _memsetbk(adr, perturb, sz);
     }
     if ((sz < (PAGESIZE >> 1)) || (align > PAGESIZE)) {
         /* store unaligned source pointer and mag address */
@@ -1795,7 +1799,7 @@ _free(void *ptr)
             mag->prev = NULL;
             if (
 #if (MALLOCBUFMAG)
-                ((arn->magbkt[bktid].n > 2) || (bktid > MALLOCBIGSLABLOG2))
+                (arn->magbkt[bktid].n > magnarnbuf(bktid))
 #else
                 ((arn->magbkt[bktid].ptr) || (bktid > MALLOCBIGSLABLOG2))
 #endif

@@ -25,7 +25,7 @@ extern void schedyield(void);
 
 #if !defined(__KERNEL__)
 
-#if defined(ZEROTHR)
+#if defined(ZEROTHR) && (ZEROTHR)
 
 #include <sched.h>
 
