@@ -9,8 +9,8 @@
 #define MALLOCZEROQUEUE 0
 #undef MALLOCDIAG
 #define MALLOCDIAG 0
-#undef MALLOCBUFMAG
-#define MALLOCBUFMAG 0
+//#undef MALLOCBUFMAG
+//#define MALLOCBUFMAG 0
 #define VALGRINDINTERNALS 1
 #define MALLOCDEBUG 0
 #define MALLOCTRACE 0
@@ -1607,7 +1607,7 @@ _malloc(size_t size,
     }
     __mallocunlkmtx(&mag->freelk);
 #endif
-    VALGRINDALLOC(adr,
+    VALGRINDALLOC(ptr,
                   size,
                   zero);
 #if (MALLOCDIAG)
@@ -1684,7 +1684,7 @@ _free(void *ptr)
             adr = maggetptr(mag, ptr);
         }
 #endif
-        VALGRINDFREE(adr);
+        VALGRINDFREE(ptr);
 #if (MALLOCFREEMAP)
         /* FIXME: use m_cmpclrbit() */
         ndx = magptrid(mag, adr);

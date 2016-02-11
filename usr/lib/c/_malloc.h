@@ -45,7 +45,7 @@
 #define MALLOCMULTITAB    1
 
 #define MALLOCNOSBRK      0 // do NOT use sbrk()/heap, just mmap()
-#define MALLOCFREEMDIR    1 // under construction
+#define MALLOCFREEMDIR    0 // under construction
 #define MALLOCFREEMAP     0 // use free block bitmaps; bit 1 for allocated
 #define MALLOCBUFMAG      1 // buffer mapped slabs to global pool
 
