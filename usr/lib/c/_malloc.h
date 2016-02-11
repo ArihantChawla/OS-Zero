@@ -66,7 +66,7 @@
 
 /* <= MALLOCSLABLOG2 are tried to get from heap #if (!MALLOCNOSBRK) */
 /* <= MALLOCBIGSLABLOG2 are kept in per-thread arenas which are lock-free */
-#define MALLOCSLABLOG2    17
+#define MALLOCSLABLOG2    18
 #define MALLOCBIGSLABLOG2 21
 #define MALLOCBIGMAPLOG2  24
 
@@ -292,7 +292,7 @@ struct memtab {
 
 struct magtab {
     MUTEX          lk;
-    void          *ptr;
+    struct mag    *ptr;
 #if (MALLOCBUFMAG)
     unsigned long  n;
     uint8_t        _pad[CLSIZE - sizeof(long) - sizeof(void *) - sizeof(MUTEX)];

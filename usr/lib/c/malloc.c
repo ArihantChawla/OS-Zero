@@ -6,8 +6,11 @@
  * Copyright (C) Tuomo Petteri Venäläinen 2014-2016
  */
 
+#define MALLOCZEROQUEUE 0
 #undef MALLOCDIAG
 #define MALLOCDIAG 0
+#undef MALLOCBUFMAG
+#define MALLOCBUFMAG 0
 #define VALGRINDINTERNALS 1
 #define MALLOCDEBUG 0
 #define MALLOCTRACE 0
@@ -1547,14 +1550,16 @@ _malloc(size_t size,
     }
     adr = clrptr(ptr);
     if (zero) {
+//        memset(adr, 0, size);
         memset(adr, 0, size);
     } else if (g_malloc.mallopt.flg & MALLOPT_PERTURB_BIT) {
         int perturb = g_malloc.mallopt.perturb;
         
         perturb = (~perturb) & 0xff;
+//        memset(adr, perturb, 1UL << bktid);
         memset(adr, perturb, 1UL << bktid);
     }
-    if ((size < PAGESIZE) || (align > PAGESIZE)) {
+    if ((sz < (PAGESIZE >> 1)) || (align > PAGESIZE)) {
         /* store unaligned source pointer and mag address */
         ptr += max(align, MALLOCALIGNMENT);
 #if (MALLOCSTAT)
@@ -1741,7 +1746,7 @@ _free(void *ptr)
                 __mallocunlkmtx(&g_malloc.magbkt[bktid].lk);
                 mag->arn = NULL;
             } else if (lim == 1) {
-                if ((uintptr_t)mag->adr & MAGMAP
+                if (((uintptr_t)mag->adr & MAGMAP)
 #if (MALLOCBUFMAG)
                     && (arn->magbkt[bktid].n > magnarnbuf(bktid))
                     && (g_malloc.magbkt[bktid].n > magnglobbuf(bktid))
