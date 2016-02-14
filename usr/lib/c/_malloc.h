@@ -45,7 +45,7 @@
 #define MALLOCMULTITAB    1
 
 #define MALLOCNOSBRK      0 // do NOT use sbrk()/heap, just mmap()
-#define MALLOCFREEMDIR    0 // under construction
+#define MALLOCFREEPAGEDIR    0 // under construction
 #define MALLOCFREEMAP     0 // use free block bitmaps; bit 1 for allocated
 #define MALLOCBUFMAG      1 // buffer mapped slabs to global pool
 
@@ -244,48 +244,53 @@ static void   gnu_free_hook(void *ptr);
 #if (MALLOCMULTITAB)
 
 #if (PTRBITS == 32)
-#define MDIRNL1BIT     10
-#define MDIRNL2BIT     10
-#define MDIRNL3BIT     (PTRBITS - MDIRNL1BIT - MDIRNL2BIT - PAGESIZELOG2)
+#define PAGEDIRNL1BIT     10
+#define PAGEDIRNL2BIT     10
+#define PAGEDIRNL3BIT     (PTRBITS - PAGEDIRNL1BIT - PAGEDIRNL2BIT      \
+                           - PAGESIZELOG2)
 #elif (PTRBITS == 64) && (!MALLOCSMALLADR)
-#define MDIRNL1BIT     12
-#define MDIRNL2BIT     12
-#define MDIRNL3BIT     12
-#define MDIRNL4BIT     (PTRBITS - MDIRNL1BIT - MDIRNL2BIT - MDIRNL3BIT  \
-                        - PAGESIZELOG2)
+#define PAGEDIRNL1BIT     12
+#define PAGEDIRNL2BIT     12
+#define PAGEDIRNL3BIT     12
+#define PAGEDIRNL4BIT     (PTRBITS - PAGEDIRNL1BIT - PAGEDIRNL2BIT \
+                           - PAGEDIRNL3BIT - PAGESIZELOG2)
 #elif (PTRBITS == 64) && (MALLOCSMALLADR)
-#define MDIRNL1BIT     20
+#define PAGEDIRNL1BIT     20
 #if (ADRHIBITCOPY)
-#define MDIRNL2BIT     (ADRBITS + 1 - MDIRNL1BIT - MDIRNL3BIT)
+#define PAGEDIRNL2BIT     (ADRBITS + 1 - PAGEDIRNL1BIT - PAGEDIRNL3BIT)
 #elif (ADRHIBITZERO)
-#define MDIRNL2BIT     (ADRBITS - MDIRNL1BIT - MDIRNL3BIT)
+#define PAGEDIRNL2BIT     (ADRBITS - PAGEDIRNL1BIT - PAGEDIRNL3BIT)
 #endif
-#define MDIRNL3BIT     (MALLOCSLABLOG2 - MALLOCMINLOG2)
+#define PAGEDIRNL3BIT     (MALLOCSLABLOG2 - MALLOCMINLOG2)
 #else /* PTRBITS != 32 && PTRBITS != 64 */
 #error fix PTRBITS for _malloc.h
 #endif
 
-#define MDIRNL1KEY     (1L << MDIRNL1BIT)
-#define MDIRNL2KEY     (1L << MDIRNL2BIT)
-#define MDIRNL3KEY     (1L << MDIRNL3BIT)
-#if defined(MDIRNL1BIT)
-#define MDIRNL4KEY     (1L << MDIRNL4BIT)
+#define PAGEDIRNL1KEY     (1L << PAGEDIRNL1BIT)
+#define PAGEDIRNL2KEY     (1L << PAGEDIRNL2BIT)
+#define PAGEDIRNL3KEY     (1L << PAGEDIRNL3BIT)
+#if defined(PAGEDIRNL1BIT)
+#define PAGEDIRNL4KEY     (1L << PAGEDIRNL4BIT)
 #endif
 
-#define MDIRL1NDX      (MDIRL2NDX + MDIRNL2BIT)
-#define MDIRL2NDX      (MDIRL3NDX + MDIRNL3BIT)
-#if defined(MDIRNL4BIT) && (MDIRNL4BIT)
-#define MDIRL3NDX      (MDIRL4NDX + MDIRNL4BIT)
-#define MDIRL4NDX      PAGESIZELOG2
+#define PAGEDIRL1NDX      (PAGEDIRL2NDX + PAGEDIRNL2BIT)
+#define PAGEDIRL2NDX      (PAGEDIRL3NDX + PAGEDIRNL3BIT)
+#if defined(PAGEDIRNL4BIT) && (PAGEDIRNL4BIT)
+#define PAGEDIRL3NDX      (PAGEDIRL4NDX + PAGEDIRNL4BIT)
+#define PAGEDIRL4NDX      PAGESIZELOG2
 #else
-#define MDIRL3NDX      PAGESIZELOG2
+#define PAGEDIRL3NDX      PAGESIZELOG2
 #endif
 
-#define mdirl1ndx(ptr) (((uintptr_t)(ptr) >> MDIRL1NDX) & ((1UL << MDIRNL1BIT) - 1))
-#define mdirl2ndx(ptr) (((uintptr_t)(ptr) >> MDIRL2NDX) & ((1UL << MDIRNL2BIT) - 1))
-#define mdirl3ndx(ptr) (((uintptr_t)(ptr) >> MDIRL3NDX) & ((1UL << MDIRNL3BIT) - 1))
-#if defined(MDIRNL4BIT)
-#define mdirl4ndx(ptr) (((uintptr_t)(ptr) >> MDIRL4NDX) & ((1UL << MDIRNL4BIT) - 1))
+#define pagedirl1ndx(ptr) (((uintptr_t)(ptr) >> PAGEDIRL1NDX)           \
+                           & ((1UL << PAGEDIRNL1BIT) - 1))
+#define pagedirl2ndx(ptr) (((uintptr_t)(ptr) >> PAGEDIRL2NDX)           \
+                           & ((1UL << PAGEDIRNL2BIT) - 1))
+#define pagedirl3ndx(ptr) (((uintptr_t)(ptr) >> PAGEDIRL3NDX)           \
+                           & ((1UL << PAGEDIRNL3BIT) - 1))
+#if defined(PAGEDIRNL4BIT)
+#define pagedirl4ndx(ptr) (((uintptr_t)(ptr) >> PAGEDIRL4NDX)           \
+                           & ((1UL << PAGEDIRNL4BIT) - 1))
 #endif
 
 #endif /* MALLOCMULTITAB */
@@ -418,11 +423,11 @@ struct malloc {
 #if (!MALLOCTLSARN)
     struct arn      **arntab;           // arena structures
 #endif
-    MUTEX            *mlktab;
-#if (MALLOCFREEMDIR)
-    struct memtab    *mdir;             // allocation header lookup structure
+    MUTEX            *pagedirlktab;
+#if (MALLOCFREEPAGEDIR)
+    struct memtab    *pagedir;          // allocation header lookup structure
 #else
-    void            **mdir;
+    void            **pagedir;
 #endif
     MUTEX             initlk;           // initialization lock
     MUTEX             heaplk;           // lock for sbrk()
