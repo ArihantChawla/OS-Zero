@@ -1,6 +1,8 @@
 #ifndef __KERN_MEM_BUF_H__
 #define __KERN_MEM_BUF_H__
 
+#include <kern/types.h>
+
 #define MEMBUF_SIZE 256                 // membuf size
 #define MEMCL_SHIFT (PAGESIZELOG2 - 1)
 #define MEMCL_SIZE  (1 << MEMCL_SHIFT)  // cluster smaller than PAGESIZE
@@ -16,29 +18,28 @@ struct pkthdr {
     struct ifnet  *rcvif;       // rcv interface
     size_t         len;         // total packet length
     void          *hdr;         // packet header
-    int32_t        chksumflg;   // checksum flags
-    int32_t        chksum;      // checksum data
+    int32_t        flg;         // checksum and other flags
+    int32_t        chksum;      // checksum data (for IP4)
     struct membuf *aux;         // extra data buffer, e.g. IPSEC
     uint8_t        _pad[__STRUCT_PKTHDR_PAD];
 };
 
 #define __STRUCT_MEMEXT_SIZE                                            \
-    (sizeof(long) + 3 * sizeof(void *) + sizeof(size_t) + sizeof(m_ureg_t))
+    (sizeof(long) + 3 * sizeof(void *) + sizeof(size_t))
 #define __STRUCT_MEMEXT_PAD                                             \
     (rounduppow2(__STRUCT_MEMEXT_SIZE, CLSIZE) - __STRUCT_MEMEXT_SIZE)
 struct memext {
-    m_ureg_t   refcnt;
-    void      *extbuf;
-    void     (*extfree)(void *, void *);
-    void      *extargs;
-    size_t     size;
-    long       type;
-    uint8_t    _pad[__STRUCT_MEMEXT_PAD];
+    volatile long   nref;
+    void           *buf;
+    void          (*free)(void *, void *);
+    void           *args;
+    size_t          size;
+    long            type;
+    uint8_t         _pad[__STRUCT_MEMEXT_PAD];
 };
 
 #define MEMBUF_HDRSIZE    roundup(offsetof(struct membuf, data), CLSIZE)
 #define MEMBUF_PKTHDRSIZE 
-//#define MEMBUF_PKTHDRSIZE offsetof(struct membuf, pktdata)
 #define MEMBUF_LEN        (MEMBUF_SIZE - MEMBUF_HDRSIZE)
 #define MEMBUF_PKTLEN     (MEMBUF_SIZE - MEMBUF_PKTHDRSIZE)
 /* membuf types */
@@ -62,8 +63,10 @@ struct memext {
 #define membufexthdr(mb) ((mb)->data.hdr.ext.hdr)
 #define membufpktadr(mb) ((mb)->data.buf)
 #define membufextadr(mb) ((mb)->data.hdr.ext.hdr)
-#define __STRUCT_MEMBUFHDR_SIZE                                            \
+#define __STRUCT_MEMBUFHDR_SIZE                                         \
     (3 * sizeof(long) + 4 * sizeof(void *) + sizeof(size_t))
+#define __STRUCT_MEMBUFHDR_PAD                                          \
+    (rounduppow2(__STRUCT_MEMBUFHDR_SIZE, CLSIZE) - __STRUCT_MEMBUFHDR_SIZE)
 struct membufhdr {
     void          *adr;         // data address
     volatile long  nref;        // # of references
@@ -75,10 +78,7 @@ struct membufhdr {
     struct membuf *nextbuf;     // next chain in queue/record
 };
 
-#define __STRUCT_MEMBUFHDR_PAD                                          \
-    (roundup(__STRUCT_MEMBUFHDR_SIZE, CLSIZE) - __STRUCT_MEMBUF_SIZE)
 struct membuf {
-    uint8_t                    _pad[__STRUCT_MEMBUF_PAD];
     union {
         struct {
             struct pkthdr      pkt;     // MEMBUF_PKTHDR is set

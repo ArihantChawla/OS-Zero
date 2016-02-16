@@ -7,7 +7,7 @@
 
 /* FIXME: assert size/alignments! */
 #define __STRUCT_ACL_SIZE                                               \
-    (sizeof(long) + 2 * sizeof(void *)                                  \
+    (sizeof(long) + 4 * sizeof(void *)                                  \
      + sizeof(size_t) + sizeof(uid_t) + sizeof(gid_t))
 #define __STRUCT_ACL_PAD                                                \
     (roundup(__STRUCT_ACL_SIZE, CLSIZE) - __STRUCT_ACL_SIZE)
