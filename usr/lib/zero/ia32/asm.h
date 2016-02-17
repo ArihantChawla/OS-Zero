@@ -11,7 +11,7 @@ extern uint32_t asmgetpc(void);
 
 #define m_atominc(p)               m_atominc32(p)
 #define m_atomdec(p)               m_atomdec32(p)
-#define m_xchg(p, val)             m_xchg32(p, val)
+#define m_swap(p, val)             m_xchg32(p, val)
 #define m_fetchadd(p, val)         m_xadd32(p, val)
 #define m_cmpswap(p, want, val)    m_cmpxchg32(p, want, val)
 #define m_cmpswapptr(p, want, val) m_cmpxchg32ptr(p, want, val)

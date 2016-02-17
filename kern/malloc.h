@@ -1,6 +1,15 @@
 #ifndef __KERN_MALLOC_H__
 #define __KERN_MALLOC_H__
 
+/* TODO: linmalloc() which works like BSD contigmalloc() */
+
+/* flg arguments for memalloc() */
+#define MEM_ZERO        (1 << 0)        // initiliaze memory to all zero-bits
+#define MEM_NODUMP      (1 << 1)        // > PAGESIZE allocs left out of dumps
+#define MEM_NOWAIT      (1 << 2)        // fail instead of waiting
+#define MEM_WAITOK      (1 << 3)        // okay to wait for some allocations
+#define MEM_USE_RESERVE (1 << 31)       // use reserved memory with MEM_NOWAIT
+
 #include <zero/param.h>
 #include <kern/mem/mem.h>
 #define  kwalloc(nb)   memalloc(nb, MEMWIRE)

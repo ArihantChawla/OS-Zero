@@ -3,6 +3,7 @@
 
 #include <zero/param.h>
 
+#define NMEMBUFBLK   8192
 #define PERTHRSTACKS 0
 
 #define BUFNEWHASH 1

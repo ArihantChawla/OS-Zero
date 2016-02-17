@@ -1,6 +1,11 @@
 #include <zero/param.h>
 #include <kern/x86-64/vm.h>
 
+uint64_t vmkpml4phys;
+uint64_t vmkpdpphys;
+uint64_t vmnkernpagetab;
+
+#if 0
 extern uint64_t kernpagetab4[NPAGETAB];
 extern uint64_t kernpagetab3[NPAGETAB];
 extern uint64_t kernpagetab2[NPAGETAB];
@@ -55,4 +60,5 @@ vminitlong(void *pagemap)
     dirtab[0] = (uint64_t)pagetab | PAGEPRES | PAGEWRITE;
     pginitlong();
 }
+#endif /* 0 */
 

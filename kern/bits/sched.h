@@ -28,6 +28,11 @@ extern void schedsetsleep(struct task *task);
 #endif
 
 /* macros */
+#define schedsetcpu(cpu)                                                \
+    do {                                                                \
+        k_curcpu = (cpu);                                               \
+        k_curunit = (cpu)->id;                                          \
+    } while (0)
 #define schedsettask(task)                                              \
     do {                                                                \
         k_curtask = (task);                                             \
@@ -533,6 +538,7 @@ taskwakeup(struct task *task)
 #endif
     task->state = TASKREADY;
     task->cpu = cpu;
+    schedsetcpu(cpu);
     schedsetready(task, cpu);
     /* FIXME: sched_setpreempt() */
 }

@@ -51,11 +51,10 @@
     (&(hdr)->info & ((1 << MEMNBKTBIT) - 1))
 #else /* !MEMNEWSLAB */
 #define MEMMIN         (1UL << MEMMINLOG2)
-#define MEMMINLOG2     PAGESIZELOG2
-#define MEMFREE        0x00000001UL
-#define MEMZERO        0x00000002UL
-#define MEMWIRE        0x00000004UL
-#define MEMFLGBITS     (MEMFREE | MEMZERO | MEMWIRE)
+#define MEMMINLOG2     CLSIZELOG2
+#define MEMZERO        0x00000001UL
+#define MEMWIRE        0x00000002UL
+#define MEMFLGBITS     (MEMZERO | MEMWIRE)
 #define MEMNFLGBIT     4
 #endif
 

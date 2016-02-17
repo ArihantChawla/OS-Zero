@@ -3,6 +3,8 @@
 
 #include <stdint.h>
 
+typedef uint64_t pml4e_t;
+typedef uint64_t pdpe_t;
 typedef uint64_t pde_t;
 typedef uint64_t pte_t;
 

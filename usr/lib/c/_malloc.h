@@ -9,6 +9,8 @@
 
 /* internal stuff for zero malloc - not for the faint at heart to modify :) */
 
+#define MALLOCSLABTAB     1
+
 #define PTHREAD           1
 #define ZEROMTX           1
 
@@ -49,8 +51,12 @@
 #define MALLOCMULTITAB    1
 
 #define MALLOCNOSBRK      0 // do NOT use sbrk()/heap, just mmap()
+<<<<<<< HEAD
 #define MALLOCFREETABS    1 // under construction
 #define MALLOCFREEMAP     0 // use free block bitmaps; bit 1 for allocated
+=======
+#define MALLOCFREETABS    0 // use free block bitmaps; bit 1 for allocated
+>>>>>>> 1acb545d96222112086eb616ba23a56ae145166b
 #define MALLOCBUFMAG      1 // buffer mapped slabs to global pool
 
 /* use zero malloc on a GNU system such as a Linux distribution */
@@ -257,6 +263,7 @@ static void   gnu_free_hook(void *ptr);
 #define MALLOCSLABTAB     1
 
 #if (PTRBITS == 32)
+<<<<<<< HEAD
 #define SLABDIRNL1BIT     (PTRBITS - SLABDIRNL2BIT)
 #define SLABDIRNL2BIT     (MALLOCSLABLOG2 - MALLOCMINLOG2)
 #define PAGEDIRNL1BIT     10
@@ -265,11 +272,25 @@ static void   gnu_free_hook(void *ptr);
 #define SLABDIRNL1BIT     20
 #define SLABDIRNL2BIT     16
 #define SLABDIRNL3BIT     (MALLOCSLABLOG2 - MALLOCMINLOG2)
+=======
+#if (MALLOCSLABTAB)
+#define SLABDIRNL1BIT     (PTRBITS - MALLOCSLABLOG2)
+#endif
+#define PAGEDIRNL1BIT     10
+#define PAGEDIRNL2BIT     (PTRBITS - PAGEDIRNL1BIT - PAGESIZELOG2)
+#elif (PTRBITS == 64) && (!MALLOCSMALLADR)
+#if (MALLOCSLABTAB)
+#define SLABDIRNL1BIT     20
+#define SLABDIRNL2BIT     16
+#define SLABDIRNL3BIT     MALLOCSLABLOG2
+#endif
+>>>>>>> 1acb545d96222112086eb616ba23a56ae145166b
 #define PAGEDIRNL1BIT     20
 #define PAGEDIRNL2BIT     20
 #define PAGEDIRNL3BIT     (PTRBITS - PAGEDIRNL1BIT - PAGEDIRNL2BIT      \
                            - PAGESIZELOG2)
 #elif (PTRBITS == 64) && (MALLOCSMALLADR)
+<<<<<<< HEAD
 #define SLABDIRNL1BIT     20
 #define SLABDIRNL2BIT     (MALLOCSLABLOG2 - MALLOCMINLOG2)
 #define PAGEDIRNL1BIT     20
@@ -279,23 +300,57 @@ static void   gnu_free_hook(void *ptr);
 #define PAGEDIRNL3BIT     (ADRBITS + 1 - PAGEDIRNL1BIT - PAGEDIRNL2BIT)
 #elif (ADRHIBITZERO)
 #define SLABDIRNL3BIT     (ADRBITS - SLABDIRNL1BIT - SLABDIRNL2BIT)
+=======
+#if (MALLOCSLABTAB)
+#define SLABDIRNL1BIT      20
+#define SLABDIRNL2BIT      MALLOCSLABLOG2
+#endif
+#define PAGEDIRNL1BIT     20
+#define PAGEDIRNL2BIT     PAGESIZELOG2
+#if (ADRHIBITCOPY)
+#if (MALLOCSLABTAB)
+#define SLABDIRNL3BIT     (ADRBITS + 1 - SLABDIRNL1BIT - SLABDIRNL2BIT)
+#endif
+#define PAGEDIRNL3BIT     (ADRBITS + 1 - PAGEDIRNL1BIT - PAGEDIRNL2BIT)
+#elif (ADRHIBITZERO)
+#if (MALLOCSLABTAB)
+#define SLABDIRNL3BIT     (ADRBITS - SLABDIRNL1BIT - SLABDIRNL2BIT)
+#endif
+>>>>>>> 1acb545d96222112086eb616ba23a56ae145166b
 #define PAGEDIRNL3BIT     (ADRBITS - PAGEDIRNL1BIT - PAGESIZENL2BIT)
 #endif
 #else /* PTRBITS != 32 && PTRBITS != 64 */
 #error fix PTRBITS for _malloc.h
 #endif
 
+<<<<<<< HEAD
+=======
+#if (MALLOCSLABTAB)
+>>>>>>> 1acb545d96222112086eb616ba23a56ae145166b
 #define SLABDIRNL1KEY     (1L << SLABDIRNL1BIT)
 #define SLABDIRNL2KEY     (1L << SLABDIRNL2BIT)
 #if defined(SLABDIRNL3BIT) && (SLABDIRNL3BIT)
 #define SLABDIRNL3KEY     (1L << SLABDIRNL3BIT)
+<<<<<<< HEAD
 #endif
 #define PAGEDIRNL1KEY     (1L << PAGEDIRNL1BIT)
 #define PAGEDIRNL2KEY     (1L << PAGEDIRNL2BIT)
 #if defined(PAGEDIRNL3BIT) && (PAGEDIRNL3BIT)
 #define PAGEDIRNL3KEY     (1L << PAGEDIRNL3BIT)
+=======
+>>>>>>> 1acb545d96222112086eb616ba23a56ae145166b
 #endif
+#endif
+#define PAGEDIRNL1KEY     (1L << PAGEDIRNL1BIT)
+#define PAGEDIRNL2KEY     (1L << PAGEDIRNL2BIT)
+#if defined(PAGEDIRNL3BIT) && (PAGEDIRNL3BIT)
+#define PAGEDIRNL3KEY     (1L << PAGEDIRNL3BIT)
+#ENDIF
 
+<<<<<<< HEAD
+=======
+#if (MALLOCSLABTAB)
+>>>>>>> 1acb545d96222112086eb616ba23a56ae145166b
 #define SLABDIRL1NDX      (SLABDIRL2NDX + SLABDIRNL2BIT)
 #if defined(SLABDIRNL3BIT) && (SLABDIRNL3BIT)
 #define SLABDIRL2NDX      (SLABDIRL3NDX + SLABDIRNL3BIT)
@@ -304,6 +359,7 @@ static void   gnu_free_hook(void *ptr);
 #define SLABDIRL2NDX      MALLOCSLABLOG2
 #endif
 #define PAGEDIRL1NDX      (PAGEDIRL2NDX + PAGEDIRNL2BIT)
+<<<<<<< HEAD
 #if defined(PAGEDIRNL3BIT) && (PAGEDIRNL3BIT)
 #define PAGEDIRL2NDX      (PAGEDIRL3NDX + PAGEDIRNL3BIT)
 #define PAGEDIRL3NDX      PAGESIZELOG2
@@ -320,11 +376,32 @@ static void   gnu_free_hook(void *ptr);
                            & ((1UL << SLABDIRNL3BIT) - 1))
 #endif
 
+=======
+#if defined(PAGEDIRL3BIT) && (PAGEDIRNL3BIT)
+#define PAGEDIRL2NDX      (PAGEDIRL3NDX + PAGEDIRNL3BIT)
+#else
+#define PAGEDIRL2NDX      PAGESIZELOG2
+#endif
+
+#define slabdirl1ndx(ptr) (((uintptr_t)(ptr) >> SLABDIRL1NDX)           \
+                           & ((1UL << SLABDIRNL1BIT) - 1))
+#define slabdirl2ndx(ptr) (((uintptr_t)(ptr) >> SLABDIRL2NDX)           \
+                           & ((1UL << SLABDIRNL2BIT) - 1))
+#if defined(SLABDIRL3BIT) && (SLABDIRNL3BIT)
+#define slabdirl3ndx(ptr) (((uintptr_t)(ptr) >> SLABDIRL3NDX)           \
+                           & ((1UL << SLABDIRNL3BIT) - 1))
+#endif
+
+>>>>>>> 1acb545d96222112086eb616ba23a56ae145166b
 #define pagedirl1ndx(ptr) (((uintptr_t)(ptr) >> PAGEDIRL1NDX)           \
                            & ((1UL << PAGEDIRNL1BIT) - 1))
 #define pagedirl2ndx(ptr) (((uintptr_t)(ptr) >> PAGEDIRL2NDX)           \
                            & ((1UL << PAGEDIRNL2BIT) - 1))
+<<<<<<< HEAD
 #if defined(PAGEDIRNL3BIT) && (PAGEDIRNL3BIT)
+=======
+#if defined(PAGEDIRL3BIT) && (PAGEDIRNL3BIT)
+>>>>>>> 1acb545d96222112086eb616ba23a56ae145166b
 #define pagedirl3ndx(ptr) (((uintptr_t)(ptr) >> PAGEDIRL3NDX)           \
                            & ((1UL << PAGEDIRNL3BIT) - 1))
 #endif
@@ -461,6 +538,7 @@ struct malloc {
     struct magtab     magbkt[MALLOCNBKT];
     struct magtab     freetab[MALLOCNBKT];
     struct magtab     hdrbuf[MALLOCNBKT];
+<<<<<<< HEAD
     MUTEX            *pagelktab;
     MUTEX            *slablktab;
 #if (MALLOCFREETABS)
@@ -469,6 +547,16 @@ struct malloc {
 #else
     void            **pagedir;
     void            **slabdir;
+=======
+#if (!MALLOCTLSARN)
+    struct arn      **arntab;           // arena structures
+#endif
+    MUTEX            *pagedirlktab;
+#if (MALLOCFREEPAGEDIR)
+    struct memtab    *pagedir;          // allocation header lookup structure
+#else
+    void            **pagedir;
+>>>>>>> 1acb545d96222112086eb616ba23a56ae145166b
 #endif
     MUTEX             initlk;           // initialization lock
     MUTEX             heaplk;           // lock for sbrk()

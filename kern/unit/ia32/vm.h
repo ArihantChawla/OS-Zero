@@ -18,7 +18,7 @@ void vmmapseg(void *pagetab, uint32_t virt, uint32_t phys, uint32_t lim,
 
 #define KERNVIRTBASE      0xc0000000U
 #define vmlinkadr(adr)    ((uint32_t)(adr) - KERNVIRTBASE)
-#define vmphysadr(adr)    ((uintptr_t)(((uint32_t *)&_pagetab)[vmpagenum(adr)]) & VMPGMASK)
+#define vmphysadr(adr)    ((uintptr_t)(((uint32_t *)&_pagetab)[vmpagenum(adr)]) & VMPAGEMASK)
 #define vmpagedirnum(adr) ((uint32_t)(adr) >> PDSHIFT)
 #define vmpagenum(adr)    ((uint32_t)(adr) >> PTSHIFT)
 #define vmpageofs(adr)    ((uint32_t)(adr) & (PAGESIZE - 1))
@@ -58,19 +58,21 @@ vmflushtlb(void *adr)
 #define PAGEPRES        0x00000001U	// present
 #define PAGEWRITE       0x00000002U	// writeable
 #define PAGEUSER        0x00000004U	// user-accessible
+#define PAGEWRITETHRU   0x00000008U
 #define PAGENOCACHE     0x00000010U     // disable caching
 #define PAGEREF         0x00000020U	// has been referenced
 #define PAGEDIRTY       0x00000040U	// has been written to
-#define PAGESUPER       0x00000080U	// 4M page
+#define PAGESUPERPTE    0x00000080U	// 4M/2M page
 #define PAGEGLOBAL      0x00000100U	// global
 #define PAGESYS1        0x00000200U	// reserved for system
 #define PAGESYS2        0x00000400U	// reserved for system
 #define PAGESYS3        0x00000800U	// reserved for system
+#define PAGESUPERPDE    0x00001000U
 /* custom flags */
-#define PAGESWAPPED     PAGESYS1        // swapped out
-#define PAGEBUF         PAGESYS2        // buffer cache
+//#define PAGESWAPPED     PAGESYS1        // swapped out
+//#define PAGEBUF         PAGESYS2        // buffer cache
 #define PAGEWIRED       PAGESYS3        // wired
-#define PAGESYSFLAGS (PAGESWAPPED | PAGEBUF | PAGEWIRED)
+#define PAGESYSFLAGS    (PAGESWAPPED | PAGEBUF | PAGEWIRED)
 
 /* page fault management */
 

@@ -65,16 +65,17 @@
     (3 * sizeof(void *) + sizeof(m_ureg_t))
 struct memblk {
     void          *adr;
+    m_ureg_t       info;
     struct memblk *prev;
     struct memblk *next;
-    m_ureg_t       info;
 };
 #else
 struct memslab {
-    unsigned long   info;
 #if (PTRBITS <= 32)
+    uint32_t        info;
     uint32_t        link;
 #else
+    unsigned long   info;
     struct slabhdr *prev;
     struct slabhdr *next;
 #endif

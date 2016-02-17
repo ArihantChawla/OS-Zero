@@ -11,7 +11,7 @@ extern uint64_t asmgetpc(void);
 
 #define m_atominc(p)               m_atominc64(p)
 #define m_atomdec(p)               m_atomdec64(p)
-#define m_xchg(p, val)             m_xchg64(p, val)
+#define m_swap(p, val)             m_xchg64(p, val)
 #define m_fetchadd(p, val)         m_xadd64(p, val)
 #define m_cmpswap(p, want, val)    m_cmpxchg64(p, want, val)
 #define m_cmpswapptr(p, want, val) m_cmpxchg64ptr(p, want, val)
