@@ -42,10 +42,10 @@ extern void trapinitprot(void);
 #endif
 extern void cpuinit(volatile struct cpu *cpu);
 extern long sysinit(long id);
-extern long bufinit(void);
+extern long ioinitbuf(void);
 
 #if (HPET)
-extern void hpetinit(void);
+extern void hpetinit(void)
 #endif
 #if (SMP)
 extern void mpstart(void);
@@ -180,7 +180,7 @@ kinitprot(unsigned long pmemsz)
     acpiinit();
 #endif
     /* initialise block I/O buffer cache */
-    if (!bufinit()) {
+    if (!ioinitbuf()) {
         kprintf("failed to allocate buffer cache\n");
 
         while (1) {
@@ -218,6 +218,7 @@ kinitprot(unsigned long pmemsz)
 #endif
     /* CPU interface */
     taskinitenv();
+    k_curunit = 0;
     k_curcpu = &cputab[0];
     cpuinit(k_curcpu);
 //    tssinit(0);

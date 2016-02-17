@@ -63,7 +63,7 @@ static long                bufnbyte;
 
 /* initialise buffer cache; called at boot time */
 long
-bufinit(void)
+ioinitbuf(void)
 {
     long           retval = 0;
     uint8_t       *u8ptr;

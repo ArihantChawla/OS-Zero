@@ -11,7 +11,8 @@
 #define memmagempty(mp)  ((mp)->ndx == (mp)->n)
 #define memmagfull(mp)   (!(mp)->ndx)
 
-/* FIXME */
+#define __STRUCT_MEMMAG_PTAB_SIZE                                       \
+    ((1UL << (MEMSLABMINLOG2 - MEMMINLOG2)) * sizeof(void *))
 #if defined(MEMPARANOIA)
 #if (MEMSLABMINLOG2 - MEMMINLOG2 < (LONGSIZELOG2 + 3))
 #define __STRUCT_MEMMAG_BMAP_SIZE sizeof(long)
@@ -24,19 +25,23 @@
 #define __STRUCT_MEMMAG_BMAP_SIZE 0
 #endif /* defined(MEMPARANOIA) */
 #define __STRUCT_MEMMAG_SIZE                                            \
-    (3 * sizeof(long) + 2 * sizeof(void *) + sizeof(uintptr_t))
+    (3 * sizeof(long) + 2 * sizeof(void *) + sizeof(uintptr_t)          \
+     + __STRUCT_MEMMAG_PTAB_SIZE                                        \
+     + __STRUCT_MEMMAG_BMAP_SIZE)
+#define __STRUCT_MEMMAM_PAD                                             \
+    (rounduppow2(__STRUCT_MEMMAG_SIZE, CLSIZE) - __STRUCT_MEMMAG_SIZE)
 struct memmag {
     uintptr_t      base;
     volatile long  bkt;
     struct memmag *prev;
     struct memmag *next;
+#if defined(MEMPARANOIA) && (MEMSLABMINLOG2 - MEMMINLOG2 < (LONGSIZELOG2 + 3))
+    unsigned long  bmap;
+#endif
     volatile long  ndx;
     volatile long  n;
     void          *ptab[1UL << (MEMSLABMINLOG2 - MEMMINLOG2)];
-#if defined(MEMPARANOIA)
-#if (MEMSLABMINLOG2 - MEMMINLOG2 < (LONGSIZELOG2 + 3))
-    unsigned long  bmap;
-#else
+#if defined(MEMPARANOIA) &&  !(MEMSLABMINLOG2 - MEMMINLOG2 < (LONGSIZELOG2 + 3))
     uint8_t        bmap[__STRUCT_MEMMAG_BMAP_SIZE];
 #endif
 #endif /* defined(MEMPARANOIA) */
