@@ -5,6 +5,8 @@
 #include <malloc.h>
 #include <zero/param.h>
 
+#define MALLOCQUEUETAIL   1
+
 /* internal stuff for zero malloc - not for the faint at heart to modify :) */
 
 #define PTHREAD           1
@@ -29,7 +31,7 @@
 #define MALLOCHDRPREFIX   1
 #define MALLOCTLSARN      1
 #define MALLOCSMALLADR    1
-#define MALLOCSTAT        1
+#define MALLOCSTAT        0
 #define MALLOCPTRNDX      0
 #define MALLOCCONSTSLABS  1
 #define MALLOCDYNARN      0
@@ -49,7 +51,7 @@
 #define MALLOCNOSBRK      0 // do NOT use sbrk()/heap, just mmap()
 #define MALLOCFREETABS    1 // under construction
 #define MALLOCFREEMAP     0 // use free block bitmaps; bit 1 for allocated
-#define MALLOCBUFMAG      0 // buffer mapped slabs to global pool
+#define MALLOCBUFMAG      1 // buffer mapped slabs to global pool
 
 /* use zero malloc on a GNU system such as a Linux distribution */
 #define GNUMALLOC         0
@@ -68,9 +70,9 @@
 
 /* <= MALLOCSLABLOG2 are tried to get from heap #if (!MALLOCNOSBRK) */
 /* <= MALLOCBIGSLABLOG2 are kept in per-thread arenas which are lock-free */
-#define MALLOCSLABLOG2    19
-#define MALLOCBIGSLABLOG2 22
-#define MALLOCBIGMAPLOG2  24
+#define MALLOCSLABLOG2    18
+#define MALLOCBIGSLABLOG2 20
+#define MALLOCBIGMAPLOG2  23
 #define MALLOCHUGEMAPLOG2 26
 
 #if !defined(MALLOCALIGNMENT) || (MALLOCALIGNMENT == 32)
@@ -146,8 +148,9 @@
 
 #if defined(ZEROMTX) && (ZEROMTX)
 
-#define MUTEX volatile long
 #include <zero/mtx.h>
+#define MUTEX                 volatile long
+#define MUTEXINITVAL          MTXINITVAL
 #include <zero/spin.h>
 
 #if (ZEROMTX) && (DEBUGMTX)
@@ -176,7 +179,8 @@
 #elif (PTHREAD)
 
 #include <pthread.h>
-#define MUTEX pthread_mutex_t
+#define MUTEX               pthread_mutex_t
+#define MUTEXINITVAL        PTHREAD_MUTEX_INITIALIZER
 #define __mallocinitmtx(mp) pthread_mutex_init(mp, NULL)
 #define __malloclkmtx(mp)   pthread_mutex_lock(mp)
 #define __mallocunlkmtx(mp) pthread_mutex_unlock(mp)
@@ -340,6 +344,10 @@ struct magtab {
     uint8_t        _pad[CLSIZE - sizeof(long) - sizeof(void *) - sizeof(MUTEX)];
 #else
     uint8_t        _pad[CLSIZE - sizeof(MUTEX) - sizeof(void *)];
+#endif
+#if (MALLOCQUEUETAIL)
+    MUTEX          taillk;
+    struct mag    *tail;
 #endif
 };
 
