@@ -22,11 +22,11 @@
 #define IO_DMA     (1 << 3)
 #define IO_MAPPED  (1 << 4)
 struct desc {
-    long         type;  /* CDEV, BDEV, FILE, DIR, SOCK, MQ, SEM, SHM, LFB */
-    long         flg;   /* type-specific flags */
-    long         nref;  /* reference count */
-    struct perm  perm;  /* permission structure */
-    void        *obj;   /* type-specific attributes */
+    volatile long  nref;  /* reference count */
+    long           type;  /* CDEV, BDEV, FILE, DIR, SOCK, MQ, SEM, SHM, LFB */
+    long           flg;   /* type-specific flags */
+    struct perm    perm;  /* permission structure */
+    void          *obj;   /* type-specific attributes */
 };
 
 #endif /* __KERN_OBJ_H__ */

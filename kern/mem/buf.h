@@ -68,17 +68,20 @@ struct pkthdr {
 };
 
 /* external buffer types */
-#define MEMBUF_EXT_NETDRV     (-1L)     // custom extbuf provide by net driver
-#define MEMBUF_EXT_MODULE     (-2L)     // custom module-specific extbuf type
-#define MEMBUF_EXT_DISPOSABLE (-3L)     // may throw away with page-flipping
-#define MEMBUF_EXT_EXTREF     (-4L)     // external reference count
-#define MEMBUF_EXT_BLK        1         // membuf block ('cluster')
-#define MEMBUF_EXT_FILEBUF    2         // buffer for sendfile()-like things
-#define MEMBUF_EXT_PAGE       3         // PAGESIZE-byte buffer
-#define MEMBUF_EXT_DUAL_PAGE  4         // 2 * PAGESIZE bytes
-#define MEMBUF_EXT_QUAD_PAGE  5         // 4 * PAGESIZE bytes
-#define MEMBUF_EXT_PACKET     6         // membuf + memblk from packet zone
-#define MEMBUF_EXT_MBUF       7         // external mbuf (M_IOVEC)
+#define MEMBUF_EXT_NETDRV     0x01000000 // custom extbuf provide by net driver
+#define MEMBUF_EXT_MODULE     0x02000000 // custom module-specific extbuf type
+#define MEMBUF_EXT_DISPOSABLE 0x04000000 // may throw away with page-flipping
+#define MEMBUF_EXT_EXTREF     0x08000000 // external reference count
+#define MEMBUF_EXT_RDONLY     0x10000000 //
+#define MEMBUF_EXT_RDWR       0x20000000
+#define MEMBUF_EXT_BITS       0xff000000
+#define MEMBUF_EXT_BLK        1          // membuf block ('cluster')
+#define MEMBUF_EXT_FILEBUF    2          // buffer for sendfile()-like things
+#define MEMBUF_EXT_PAGE       3          // PAGESIZE-byte buffer
+#define MEMBUF_EXT_DUAL_PAGE  4          // 2 * PAGESIZE bytes
+#define MEMBUF_EXT_QUAD_PAGE  5          // 4 * PAGESIZE bytes
+#define MEMBUF_EXT_PACKET     6          // membuf + memblk from packet zone
+#define MEMBUF_EXT_MBUF       7          // external mbuf (M_IOVEC)
 #define __STRUCT_MEMEXT_SIZE                                            \
     (2 * sizeof(long) + 5 * sizeof(void *) + sizeof(size_t))
 #define __STRUCT_MEMEXT_PAD                                             \
@@ -152,9 +155,11 @@ struct memext {
     (MEMBUF_PKTHDRBIT | MEMBUF_EORBIT | MEMBUF_RDONLY                   \
      | MEMBUF_BROADCAST_BIT | MEMBUF_MULTICAST_BIT | MEMBUF_PROMISC_BIT \
      | MEMBUF_VLANTAG_BIT                                               \
-     | MEMBUF_PROTOFLAGS)
+     | MEMBUF_PROTO_BITS)
+#define MEMBUF_EXT_COPYBITS                                             \
+    (MEMBUF_EXT_BIT | MEMBUF_EXT_BITS)
 #define __STRUCT_MEMHDR_SIZE                                            \
-    (3 * sizeof(long) + 4 * sizeof(void *) + sizeof(size_t))
+    (3 * sizeof(long) + 3 * sizeof(void *) + sizeof(size_t))
 #define __STRUCT_MEMHDR_PAD                                             \
     (rounduppow2(__STRUCT_MEMHDR_SIZE, CLSIZE) - __STRUCT_MEMHDR_SIZE)
 struct memhdr {
@@ -167,19 +172,18 @@ struct memhdr {
     struct membuf *nextpkt;     // next chain in queue/record
 };
 
-#define membuftodata(mb)                                                \
-    ((mb)->hdr.adr)
-#define memdatatobuf(ptr) (rounddownpow2((uintptr_t ptr), MEMBUFSIZE))
-#define membufexthdr(mb)  (&((mb)->data.hdr.mem.ext))
-#define membufextadr(mb)  ((mb)->data.hdr.ext.adr)
-#define membufextnref(mb) (!(((mb)->data.hdr.ext.flg & MEMBUF_EXT_EXTREF)) \
-                           ? (&((mb)->data.hdr.mem.ext.nref.val))       \
-                           : ((mb)->data.hdr.mem.ext.nref.ptr))
-    
-#define membufextsize(mb) ((mb)->data.hdr.mem.ext.size)
-#define membufpkthdr(mb)  (&((mb)->data.hdr.pkt))
-#define membufpktlen(mb)  ((mb)->data.hdr.pkt.len)
-#define membufpktdata(mb) ((mb)->data.hdr.mem.buf)
+#define membuftodata(mb, type) ((type)((mb)->hdr.adr))
+#define memdatatobuf(ptr)      (rounddownpow2((uintptr_t ptr), MEMBUFSIZE))
+#define membufexthdr(mb)       (&((mb)->data.hdr.mem.ext))
+#define membufextadr(mb)       ((mb)->data.hdr.ext.adr)
+#define membufextnref(mb)                                               \
+    (!(((mb)->data.hdr.ext.flg & MEMBUF_EXT_EXTREF))                    \
+     ? (&((mb)->data.hdr.mem.ext.nref.val))                             \
+     : ((mb)->data.hdr.mem.ext.nref.ptr))
+#define membufextsize(mb)      ((mb)->data.hdr.mem.ext.size)
+#define membufpkthdr(mb)       (&((mb)->data.hdr.pkt))
+#define membufpktlen(mb)       ((mb)->data.hdr.pkt.len)
+#define membufpktdata(mb)      ((mb)->data.hdr.mem.buf)
 struct membuf {
     struct memhdr              hdr;
     union {

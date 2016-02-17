@@ -1,6 +1,9 @@
 #ifndef __KERN_VFS_H__
 #define __KERN_VFS_H__
 
+#include <zero/ref.h>
+#include <zero/mtx.h>
+#include <kern/perm.h>
 #include <kern/list.h>
 #include <kern/io/dc.h>
 
@@ -54,6 +57,54 @@ struct vnodedata {
     union {
         struct openintent open;
     } intent;
+};
+
+/* locks and unlocks vnode */
+#define vfsrefnode(vp)                                                  \
+    do {                                                                \
+        mtxlk(&(vp)->lk);                                               \
+        refinc(&(vp)->usecnt);                                          \
+        mtxunlk(&(vp)->lk);                                             \
+    } while (0)
+    
+/* takes unlocked vnode, does not lock it */
+#define vfsunrefnode(vp)                                                \
+    do {                                                                \
+        refdec(&(vp)->usecnt);                                          \
+    } while (0)
+    
+/* locks and unlocks vnode */
+#define vfsrelnode(vp)                                                  \
+    do {                                                                \
+        mtxlk(&(vp)->lk);                                               \
+        refdec(&(vp)->usecnt);                                          \
+        mtxunlk(&(vp)->lk);                                             \
+    } while (0)
+
+/* takes locked vnode, releases the lock */
+#define vfsputnode(vp)                                                  \
+    do {                                                                \
+        refdec(&(vp)->usecnt);                                          \
+        mtxunlk(&(vp)->lk);                                             \
+    } while (0)
+
+#define VNODE_NOTYPE 0          // no type (uninitialised)
+#define VNODE_REG    1          // regular file
+#define VNODE_DIR    2          // directory
+#define VNODE_BLK    3          // block device
+#define VNODE_CHR    4          // character device
+#define VNODE_LNK    5          // symbolic link
+#define VNODE_SOCK   6          // socket
+#define VNODE_FIFO   7          // named pipe
+#define VNODE_BAD    (~0L)      // reclaimed vnode
+struct vnode {
+    volatile long lk;           // mutual exclusion for modifications
+    uintptr_t     id;           // vnode ID (kernel pointer)
+    long          type;
+    struct perm   perm;
+    volatile long usecnt;       // # of user clients
+    volatile long holdcnt;      // # of users who veto the recycling of the node
+    volatile long writecnt;     // # of writers for file
 };
 
 struct vfssupblkops {
