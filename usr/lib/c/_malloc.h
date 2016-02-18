@@ -5,10 +5,9 @@
 #include <malloc.h>
 #include <zero/param.h>
 
-#define MALLOCQUEUETAIL   1
-
 /* internal stuff for zero malloc - not for the faint at heart to modify :) */
 
+#define MALLOCFREEMAP     0
 #define MALLOCSLABTAB     1
 
 #define PTHREAD           1
@@ -17,11 +16,9 @@
 #if !defined(MALLOCDEBUG)
 #define MALLOCDEBUG       0
 #endif
-
 #if !defined(GNUTRACE)
 #define GNUTRACE          1
 #endif
-
 #if !defined(MALLOCTRACE)
 #define MALLOCTRACE       0
 #endif
@@ -33,7 +30,7 @@
 #define MALLOCHDRPREFIX   1
 #define MALLOCTLSARN      1
 #define MALLOCSMALLADR    1
-#define MALLOCSTAT        0
+#define MALLOCSTAT        1
 #define MALLOCPTRNDX      0
 #define MALLOCCONSTSLABS  1
 #define MALLOCDYNARN      0
@@ -51,12 +48,7 @@
 #define MALLOCMULTITAB    1
 
 #define MALLOCNOSBRK      0 // do NOT use sbrk()/heap, just mmap()
-<<<<<<< HEAD
-#define MALLOCFREETABS    1 // under construction
-#define MALLOCFREEMAP     0 // use free block bitmaps; bit 1 for allocated
-=======
-#define MALLOCFREETABS    0 // use free block bitmaps; bit 1 for allocated
->>>>>>> 1acb545d96222112086eb616ba23a56ae145166b
+#define MALLOCFREETABS    1 // use free block bitmaps; bit 1 for allocated
 #define MALLOCBUFMAG      1 // buffer mapped slabs to global pool
 
 /* use zero malloc on a GNU system such as a Linux distribution */
@@ -76,9 +68,9 @@
 
 /* <= MALLOCSLABLOG2 are tried to get from heap #if (!MALLOCNOSBRK) */
 /* <= MALLOCBIGSLABLOG2 are kept in per-thread arenas which are lock-free */
-#define MALLOCSLABLOG2    18
-#define MALLOCBIGSLABLOG2 20
-#define MALLOCBIGMAPLOG2  23
+#define MALLOCSLABLOG2    19
+#define MALLOCBIGSLABLOG2 22
+#define MALLOCBIGMAPLOG2  24
 #define MALLOCHUGEMAPLOG2 26
 
 #if !defined(MALLOCALIGNMENT) || (MALLOCALIGNMENT == 32)
@@ -96,7 +88,6 @@
 #define MALLOCNBKT        PTRBITS
 
 #if (MALLOCVALGRIND) && !defined(NVALGRIND)
-
 #define VALGRINDMKPOOL(adr, z)                                          \
     do {                                                                \
         if (RUNNING_ON_VALGRIND) {                                      \
@@ -139,7 +130,6 @@
             VALGRIND_FREELIKE_BLOCK((adr), 0);                          \
         }                                                               \
     } while (0)
-
 #else /* !MALLOCVALGRIND */
 #define VALGRINMKPOOL(adr, z)
 #define VALGRINDMARKPOOL(adr, sz)
@@ -149,16 +139,12 @@
 #define VALGRINDPOOLFREE(pool, adr)
 #define VALGRINDALLOC(adr, sz, z)
 #define VALGRINDFREE(adr)
-
 #endif
 
 #if defined(ZEROMTX) && (ZEROMTX)
-
+#define MUTEX volatile long
 #include <zero/mtx.h>
-#define MUTEX                 volatile long
-#define MUTEXINITVAL          MTXINITVAL
 #include <zero/spin.h>
-
 #if (ZEROMTX) && (DEBUGMTX)
 #define __mallocinitmtx(mp)   mtxinit(mp)
 #define __malloctrylkmtx(mp)  mtxtrylk(mp)
@@ -181,16 +167,12 @@
 #define __malloclkspin(mp)    spinlk(mp)
 #define __mallocunlkspin(mp)  spinunlk(mp)
 #endif
-
 #elif (PTHREAD)
-
 #include <pthread.h>
-#define MUTEX               pthread_mutex_t
-#define MUTEXINITVAL        PTHREAD_MUTEX_INITIALIZER
+#define MUTEX pthread_mutex_t
 #define __mallocinitmtx(mp) pthread_mutex_init(mp, NULL)
 #define __malloclkmtx(mp)   pthread_mutex_lock(mp)
 #define __mallocunlkmtx(mp) pthread_mutex_unlock(mp)
-
 #endif
 
 #if (MALLOCPTRNDX)
@@ -208,34 +190,23 @@
 #define PTRFREE              UINT64_C(0xffffffffffffffff)
 #define MAGPTRNDX            uint64_t
 #endif
-#endif /* MALLOCPTRNDX */
+#endif
 
 #if defined(MALLOCDEBUG)
 #if (MALLOCTRACE) && (GNUTRACE)
-#include <execinfo.h>
-extern uintptr_t _backtrace(void *buf, size_t size, long syms, int fd);
-#define __malloctrace()                                                 \
-    do {                                                                \
-        _backtrace(tracetab, 64, 1, 1);                                 \
-    } while (0)
-#define __mallocprnttrace(str, sz, aln)                                 \
-    do {                                                                \
-        fprintf(stderr, "%s: %ull(%ull)\n",                             \
-                str,                                                    \
-                (unsigned long long)(sz),                               \
-                (unsigned long long)(aln));                             \
-    } while (0)
-#define __crash(expr)                                                   \
+#endif
+#if (MALLOCDEBUG)
+#define _assert(expr)                                                   \
     do {                                                                \
         if (!(expr)) {                                                  \
             *((long *)NULL) = 0;                                        \
         }                                                               \
     } while (0)
-#endif /* MALLOCTRACE && GNUTRACE */
-#else /* !MALLOCDEBUG */
-#define __crash(expr)
+#else
+#define _assert(expr)
 #endif
 //#include <assert.h>
+#endif
 
 /* internal macros */
 #define ptralign(ptr, pow2)                                             \
@@ -257,100 +228,72 @@ static void * gnu_memalign_hook(size_t align, size_t size);
 static void   gnu_free_hook(void *ptr);
 #endif /* defined(GNUMALLOC) */
 
-#if (MALLOCMULTITAB)
-
 #define MALLOCPAGETAB     0
 #define MALLOCSLABTAB     1
 
 #if (PTRBITS == 32)
-<<<<<<< HEAD
-#define SLABDIRNL1BIT     (PTRBITS - SLABDIRNL2BIT)
-#define SLABDIRNL2BIT     (MALLOCSLABLOG2 - MALLOCMINLOG2)
-#define PAGEDIRNL1BIT     10
-#define PAGEDIRNL2BIT     (PTRBITS - PAGEDIRNL1BIT - PAGESIZELOG2)
-#elif (PTRBITS == 64) && (!MALLOCSMALLADR)
-#define SLABDIRNL1BIT     20
-#define SLABDIRNL2BIT     16
-#define SLABDIRNL3BIT     (MALLOCSLABLOG2 - MALLOCMINLOG2)
-=======
+
 #if (MALLOCSLABTAB)
 #define SLABDIRNL1BIT     (PTRBITS - MALLOCSLABLOG2)
 #endif
 #define PAGEDIRNL1BIT     10
 #define PAGEDIRNL2BIT     (PTRBITS - PAGEDIRNL1BIT - PAGESIZELOG2)
+
 #elif (PTRBITS == 64) && (!MALLOCSMALLADR)
+
 #if (MALLOCSLABTAB)
 #define SLABDIRNL1BIT     20
 #define SLABDIRNL2BIT     16
 #define SLABDIRNL3BIT     MALLOCSLABLOG2
 #endif
->>>>>>> 1acb545d96222112086eb616ba23a56ae145166b
 #define PAGEDIRNL1BIT     20
 #define PAGEDIRNL2BIT     20
 #define PAGEDIRNL3BIT     (PTRBITS - PAGEDIRNL1BIT - PAGEDIRNL2BIT      \
                            - PAGESIZELOG2)
+
 #elif (PTRBITS == 64) && (MALLOCSMALLADR)
-<<<<<<< HEAD
-#define SLABDIRNL1BIT     20
-#define SLABDIRNL2BIT     (MALLOCSLABLOG2 - MALLOCMINLOG2)
-#define PAGEDIRNL1BIT     20
-#define PAGEDIRNL2BIT     PAGESIZELOG2
-#if (ADRHIBITCOPY)
-#define SLABDIRNL3BIT     (ADRBITS + 1 - SLABDIRNL1BIT - SLABDIRNL2BIT)
-#define PAGEDIRNL3BIT     (ADRBITS + 1 - PAGEDIRNL1BIT - PAGEDIRNL2BIT)
-#elif (ADRHIBITZERO)
-#define SLABDIRNL3BIT     (ADRBITS - SLABDIRNL1BIT - SLABDIRNL2BIT)
-=======
+
 #if (MALLOCSLABTAB)
 #define SLABDIRNL1BIT      20
 #define SLABDIRNL2BIT      MALLOCSLABLOG2
 #endif
 #define PAGEDIRNL1BIT     20
 #define PAGEDIRNL2BIT     PAGESIZELOG2
+
 #if (ADRHIBITCOPY)
+
 #if (MALLOCSLABTAB)
 #define SLABDIRNL3BIT     (ADRBITS + 1 - SLABDIRNL1BIT - SLABDIRNL2BIT)
 #endif
 #define PAGEDIRNL3BIT     (ADRBITS + 1 - PAGEDIRNL1BIT - PAGEDIRNL2BIT)
+
 #elif (ADRHIBITZERO)
+
 #if (MALLOCSLABTAB)
 #define SLABDIRNL3BIT     (ADRBITS - SLABDIRNL1BIT - SLABDIRNL2BIT)
 #endif
->>>>>>> 1acb545d96222112086eb616ba23a56ae145166b
 #define PAGEDIRNL3BIT     (ADRBITS - PAGEDIRNL1BIT - PAGESIZENL2BIT)
-#endif
-#else /* PTRBITS != 32 && PTRBITS != 64 */
-#error fix PTRBITS for _malloc.h
+
 #endif
 
-<<<<<<< HEAD
-=======
-#if (MALLOCSLABTAB)
->>>>>>> 1acb545d96222112086eb616ba23a56ae145166b
+#else /* PTRBITS != 32 && PTRBITS != 64 */
+
+#error fix PTRBITS for _malloc.h
+
+#endif
+
 #define SLABDIRNL1KEY     (1L << SLABDIRNL1BIT)
 #define SLABDIRNL2KEY     (1L << SLABDIRNL2BIT)
 #if defined(SLABDIRNL3BIT) && (SLABDIRNL3BIT)
 #define SLABDIRNL3KEY     (1L << SLABDIRNL3BIT)
-<<<<<<< HEAD
 #endif
 #define PAGEDIRNL1KEY     (1L << PAGEDIRNL1BIT)
 #define PAGEDIRNL2KEY     (1L << PAGEDIRNL2BIT)
 #if defined(PAGEDIRNL3BIT) && (PAGEDIRNL3BIT)
 #define PAGEDIRNL3KEY     (1L << PAGEDIRNL3BIT)
-=======
->>>>>>> 1acb545d96222112086eb616ba23a56ae145166b
 #endif
-#endif
-#define PAGEDIRNL1KEY     (1L << PAGEDIRNL1BIT)
-#define PAGEDIRNL2KEY     (1L << PAGEDIRNL2BIT)
-#if defined(PAGEDIRNL3BIT) && (PAGEDIRNL3BIT)
-#define PAGEDIRNL3KEY     (1L << PAGEDIRNL3BIT)
-#ENDIF
 
-<<<<<<< HEAD
-=======
 #if (MALLOCSLABTAB)
->>>>>>> 1acb545d96222112086eb616ba23a56ae145166b
 #define SLABDIRL1NDX      (SLABDIRL2NDX + SLABDIRNL2BIT)
 #if defined(SLABDIRNL3BIT) && (SLABDIRNL3BIT)
 #define SLABDIRL2NDX      (SLABDIRL3NDX + SLABDIRNL3BIT)
@@ -359,26 +302,9 @@ static void   gnu_free_hook(void *ptr);
 #define SLABDIRL2NDX      MALLOCSLABLOG2
 #endif
 #define PAGEDIRL1NDX      (PAGEDIRL2NDX + PAGEDIRNL2BIT)
-<<<<<<< HEAD
 #if defined(PAGEDIRNL3BIT) && (PAGEDIRNL3BIT)
 #define PAGEDIRL2NDX      (PAGEDIRL3NDX + PAGEDIRNL3BIT)
 #define PAGEDIRL3NDX      PAGESIZELOG2
-#else
-#define PAGEDIRL2NDX      PAGESIZELOG2
-#endif
-
-#define slabdirl1ndx(ptr) (((uintptr_t)(ptr) >> SLABDIRL1NDX)           \
-                           & ((1UL << SLABDIRNL1BIT) - 1))
-#define slabdirl2ndx(ptr) (((uintptr_t)(ptr) >> SLABDIRL2NDX)           \
-                           & ((1UL << SLABDIRNL2BIT) - 1))
-#if defined(SLABDIRNL3BIT) && (SLABDIRNL3BIT)
-#define slabdirl3ndx(ptr) (((uintptr_t)(ptr) >> SLABDIRL3NDX)           \
-                           & ((1UL << SLABDIRNL3BIT) - 1))
-#endif
-
-=======
-#if defined(PAGEDIRL3BIT) && (PAGEDIRNL3BIT)
-#define PAGEDIRL2NDX      (PAGEDIRL3NDX + PAGEDIRNL3BIT)
 #else
 #define PAGEDIRL2NDX      PAGESIZELOG2
 #endif
@@ -392,16 +318,11 @@ static void   gnu_free_hook(void *ptr);
                            & ((1UL << SLABDIRNL3BIT) - 1))
 #endif
 
->>>>>>> 1acb545d96222112086eb616ba23a56ae145166b
 #define pagedirl1ndx(ptr) (((uintptr_t)(ptr) >> PAGEDIRL1NDX)           \
                            & ((1UL << PAGEDIRNL1BIT) - 1))
 #define pagedirl2ndx(ptr) (((uintptr_t)(ptr) >> PAGEDIRL2NDX)           \
                            & ((1UL << PAGEDIRNL2BIT) - 1))
-<<<<<<< HEAD
 #if defined(PAGEDIRNL3BIT) && (PAGEDIRNL3BIT)
-=======
-#if defined(PAGEDIRL3BIT) && (PAGEDIRNL3BIT)
->>>>>>> 1acb545d96222112086eb616ba23a56ae145166b
 #define pagedirl3ndx(ptr) (((uintptr_t)(ptr) >> PAGEDIRL3NDX)           \
                            & ((1UL << PAGEDIRNL3BIT) - 1))
 #endif
@@ -421,10 +342,6 @@ struct magtab {
     uint8_t        _pad[CLSIZE - sizeof(long) - sizeof(void *) - sizeof(MUTEX)];
 #else
     uint8_t        _pad[CLSIZE - sizeof(MUTEX) - sizeof(void *)];
-#endif
-#if (MALLOCQUEUETAIL)
-    MUTEX          taillk;
-    struct mag    *tail;
 #endif
 };
 
@@ -493,10 +410,9 @@ struct magbkt {
  * negative offsets
  */
 struct memhdr {
-    void    *mag;       // allocation magazine header
-    void    *base;
+    void      *mag;     // allocation magazine header
 #if (MALLOCHDRNFO)
-    uint8_t  bkt;       // bucket ID for block + 2 flag bits
+    uint8_t    bkt;     // bucket ID for block + 2 flag bits
 #endif
 };
 //#define MEMHDRSIZE       (sizeof(void *) + sizeof(uint8_t))
@@ -538,28 +454,21 @@ struct malloc {
     struct magtab     magbkt[MALLOCNBKT];
     struct magtab     freetab[MALLOCNBKT];
     struct magtab     hdrbuf[MALLOCNBKT];
-<<<<<<< HEAD
-    MUTEX            *pagelktab;
-    MUTEX            *slablktab;
-#if (MALLOCFREETABS)
-    struct memtab    *pagedir;          // allocation header lookup structure
-    struct memtab    *slabdir;
-#else
-    void            **pagedir;
-    void            **slabdir;
-=======
 #if (!MALLOCTLSARN)
     struct arn      **arntab;           // arena structures
 #endif
     MUTEX            *pagedirlktab;
-#if (MALLOCFREEPAGEDIR)
+#if (MALLOCFREETABS)
     struct memtab    *pagedir;          // allocation header lookup structure
 #else
     void            **pagedir;
->>>>>>> 1acb545d96222112086eb616ba23a56ae145166b
 #endif
     MUTEX             initlk;           // initialization lock
     MUTEX             heaplk;           // lock for sbrk()
+#if (!MALLOCTLSARN)
+    long              curarn;
+    long              narn;             // number of arenas in action
+#endif
     volatile long     flg;              // allocator flags
     int               zerofd;           // file descriptor for mmap()
     struct mallopt    mallopt;          // mallopt() interface

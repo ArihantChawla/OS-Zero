@@ -9,7 +9,7 @@ CCWARNFLAGS="-D_FORTIFY_SOURCE=2 -Wall -Wundef -Wextra -Wpointer-arith -Wuniniti
 # As of October 24 2011, gcc -O2 produces slower code than -O // vendu
 # - same thing with -finline-functions and -funroll-loops
 $CC $CCWARNFLAGS -DZEROHASH=0 -DZEROFUTEX=0 -DZEROMALLOC=1 -DPTHREAD=1 -D_REENTRANT -g -Wall -fno-builtin -O -I. -o heap heap.c -pthread
-$CC $CCWARNFLAGS -DX11VIS=0 -DZEROHASH=0 -DZEROFUTEX=0 -DZEROMALLOC=1 -DPTHREAD=1 -D_REENTRANT -g -Wall -fno-builtin -DZEROTHR=0 -O -I../../../.. -I../../../lib -o zheap ../_string.c ../string.c heap.c ../malloc.c -pthread
+$CC $CCWARNFLAGS -DX11VIS=0 -DZEROHASH=0 -DZEROFUTEX=0 -DZEROMALLOC=1 -DPTHREAD=1 -D_REENTRANT -g -Wall -fno-builtin -DZEROTHR=0 -O -I../../../.. -I../../../lib -o zheap ../_string.c heap.c ../malloc.c -pthread
 #$CC $CCWARNFLAGS -DX11VIS=0 -DMALLOCTRACE=1 -DZEROHASH=0 -DZEROFUTEX=0 -DZEROMALLOC=1 -DPTHREAD=1 -D_REENTRANT -g -Wall -fno-builtin -O -I../../../.. -I../../../lib -o tzheap heap.c ../execinfo.c ../malloc.c -pthread
 $CC $CCWARNFLAGS -DZEROHASH=0 -DZEROFUTEX=0 -DZEROMALLOC=1 -DPTHREAD=1 -D_REENTRANT -DX11VIS=1 -g -Wall -fno-builtin -O -I../../../.. -I../../../lib -o xzheap heap.c ../malloc.c -Wl,-lX11 -pthread
 $CC $CCWARNFLAGS -DZEROHASH=0 -DZEROFUTEX=0 -DZEROMALLOC=1 -DPTHREAD=1 -D_REENTRANT -DX11VIS=1 -g -Wall -fno-builtin -O -I../../../.. -I../../../lib -o t-test1 ../_string.c ../malloc.c t-test1.c -Wl,-lX11 -pthread

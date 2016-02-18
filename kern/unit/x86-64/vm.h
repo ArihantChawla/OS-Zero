@@ -98,7 +98,7 @@ vmsignadr(void *adr)
 #define PAGEFALTINST      0x10  // instruction fetch fault
 
 #if defined(AMD64_NPT_AWARE)
-#undef PAGESYS1
+//#undef PAGESYS1
 #undef PAGEGLOBAL
 #undef PAGEREF
 #undef PAGEDIRTY

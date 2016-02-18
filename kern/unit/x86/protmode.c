@@ -45,7 +45,7 @@ extern long sysinit(long id);
 extern long ioinitbuf(void);
 
 #if (HPET)
-extern void hpetinit(void)
+extern void hpetinit(void);
 #endif
 #if (SMP)
 extern void mpstart(void);

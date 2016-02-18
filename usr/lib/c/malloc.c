@@ -11,10 +11,6 @@
 //#undef MALLOCBUFMAG
 //#define MALLOCBUFMAG 0
 #define MALLOCVALGRINDTABS 1
-<<<<<<< HEAD
-#undef MALLOCDEBUG
-=======
->>>>>>> 1acb545d96222112086eb616ba23a56ae145166b
 #define MALLOCDEBUG 0
 #define MALLOCTRACE 0
 #define MALLOCSPINLOCKS 0
@@ -58,7 +54,7 @@
 #define MALLOCVALGRIND    1
 #endif
 #define MALLOCSMALLSLABS  0
-#define MALLOCSIG         0
+#define MALLOCSIG         1
 #define MALLOC4LEVELTAB   1
 
 /*
@@ -290,10 +286,10 @@ magprint(struct mag *mag)
 /* start of the allocator proper */
 
 static struct malloc        g_malloc ALIGNED(PAGESIZE);
+//THREADLOCAL struct arn     thrarn ALIGNED(CLSIZE);
 THREADLOCAL struct arn     *thrarn;
 THREADLOCAL pthread_once_t  thronce;
 THREADLOCAL pthread_key_t   thrkey;
-THREADLOCAL MUTEX           thrinitlk = MUTEXINITVAL;
 THREADLOCAL long            thrflg;
 #if (MALLOCSTAT)
 unsigned long long          nheapbyte;
@@ -509,6 +505,8 @@ magget(long bktid)
             
             return NULL;
         }
+        _assert(!mag->cur);
+        _assert(mag->lim);
         mag->prev = NULL;
         mag->next = NULL;
     }
@@ -533,19 +531,6 @@ thrfreearn(void *arg)
                 mag->arn = NULL;
                 tail = mag;
             }
-#if (MALLOCQUEUETAIL)
-            __malloclkmtx(&g_malloc.magbkt[bktid].lk);
-            __malloclkmtx(&g_malloc.magbkt[bktid].taillk);
-            mag->prev = g_malloc.magbkt[bktid].tail;
-            if (mag->prev) {
-                mag->prev->next = mag;
-            } else {
-                g_malloc.magbkt[bktid].ptr = mag;
-            }
-            g_malloc.magbkt[bktid].tail = tail;
-            __mallocunlkmtx(&g_malloc.magbkt[bktid].taillk);
-            __mallocunlkmtx(&g_malloc.magbkt[bktid].lk);
-#else
             __malloclkmtx(&g_malloc.magbkt[bktid].lk);
             if (tail) {
                 tail->next = g_malloc.magbkt[bktid].ptr;
@@ -560,7 +545,6 @@ thrfreearn(void *arg)
             }
             g_malloc.magbkt[bktid].ptr = mag;
             __mallocunlkmtx(&g_malloc.magbkt[bktid].lk);
-#endif
         }
     }
     unmapanon(arn, rounduppow2(sizeof(struct arn), PAGESIZE));
@@ -581,12 +565,15 @@ thrinit(void)
     void *ptr = NULL;
 
     pthread_once(&thronce, thrinitarn);
-    ptr = mapanon(g_malloc.zerofd, rounduppow2(sizeof(struct arn),
-                                               PAGESIZE));
-    if (ptr == MAP_FAILED) {
-        abort();
+    ptr = pthread_getspecific(thrkey);
+    if (!ptr) {
+        ptr = mapanon(g_malloc.zerofd, rounduppow2(sizeof(struct arn),
+                                                   PAGESIZE));
+        if (ptr == MAP_FAILED) {
+            abort();
+        }
+        pthread_setspecific(thrkey, ptr);
     }
-    pthread_setspecific(thrkey, ptr);
     
     return ptr;
 }
@@ -602,6 +589,7 @@ maginitslab(struct mag *mag, long bktid)
     uintptr_t   magflg = 0;
 
     if (!mag->base) {
+        _assert(powerof2(n) && powerof2(sz));
         ptr = SBRK_FAILED;
 #if (!MALLOCNOSBRK)
         if (bktid <= MALLOCSLABLOG2 && !(g_malloc.flg & MALLOCNOHEAP)) {
@@ -736,15 +724,9 @@ prefork(void)
 #if (MALLOCMULTITAB)
     for (ndx = 0 ; ndx < PAGEDIRNL1KEY ; ndx++) {
 #if (MALLOCSPINLOCKS)
-<<<<<<< HEAD
-        __malloclkspin(&g_malloc.pagelktab[ndx]);
-#else
-        __malloclkmtx(&g_malloc.pagelktab[ndx]);
-=======
         __malloclkspin(&g_malloc.pagedirlktab[ndx]);
 #else
         __malloclkmtx(&g_malloc.pagedirlktab[ndx]);
->>>>>>> 1acb545d96222112086eb616ba23a56ae145166b
 #endif
     }
 #endif
@@ -760,15 +742,9 @@ postfork(void)
 #if (MALLOCMULTITAB)
     for (ndx = 0 ; ndx < PAGEDIRNL1KEY ; ndx++) {
 #if (MALLOCSPINLOCKS)
-<<<<<<< HEAD
-        __mallocunlkspin(&g_malloc.pagelktab[ndx]);
-#else
-        __mallocunlkmtx(&g_malloc.pagelktab[ndx]);
-=======
         __mallocunlkspin(&g_malloc.pagedirlktab[ndx]);
 #else
         __mallocunlkmtx(&g_malloc.pagedirlktab[ndx]);
->>>>>>> 1acb545d96222112086eb616ba23a56ae145166b
 #endif
     }
 #endif
@@ -784,7 +760,7 @@ postfork(void)
 
 #if (MALLOCMULTITAB)
 
-#if (MALLOCFREETABS)
+#if defined(MALLOCFREETABS) && (MALLOCFREETABS)
 
 static struct mag *
 mtfindmag(void *ptr, long type)
@@ -799,23 +775,11 @@ mtfindmag(void *ptr, long type)
     if (type == MALLOCPAGETAB) {
         l1 = pagedirl1ndx(ptr);
         l2 = pagedirl2ndx(ptr);
-<<<<<<< HEAD
-#if defined(PAGEDIRNL3BIT) && (PAGEDIRNL3BIT)
         l3 = pagedirl3ndx(ptr);
-#endif
-#if (MALLOCSPINLOCKS)
-        __malloclkspin(&g_malloc.pagelktab[l1]);
-#else
-        __malloclkmtx(&g_malloc.pagelktab[l1]);
-=======
-#if defined(PAGEDIRNLVL3BIT) && (PAGEDIRNLVL3BIT)
-        l3 = pagedirl3ndx(ptr);
-#endif
 #if (MALLOCSPINLOCKS)
         __malloclkspin(&g_malloc.pagedirlktab[l1]);
 #else
         __malloclkmtx(&g_malloc.pagedirlktab[l1]);
->>>>>>> 1acb545d96222112086eb616ba23a56ae145166b
 #endif
         mptr1 = g_malloc.pagedir[l1].ptr;
         if (mptr1) {
@@ -824,62 +788,18 @@ mtfindmag(void *ptr, long type)
                 mptr1 = &mptr2[l2];
                 if (mptr1) {
                     mptr2 = mptr1->ptr;
-#if defined(PAGEDIRNL3BIT) && (PAGEDIRNL3BIT)
                     if (mptr2) {
                         mag = ((void **)mptr2)[l3];
                     }
-#else
-                    mag = *((void **)mptr1);
-#endif /* PAGEDIRNL3BIT */
                 }
             }
         }
 #if (MALLOCSPINLOCKS)
-<<<<<<< HEAD
-        __mallocunlkspin(&g_malloc.pagelktab[l1]);
-#else
-        __mallocunlkmtx(&g_malloc.pagelktab[l1]);
-#endif
-    } else {
-        l1 = slabdirl1ndx(ptr);
-        l2 = slabdirl2ndx(ptr);
-#if defined(SLABDIRNL3BIT) && (SLABDIRNL3BIT)
-        l3 = slabdirl3ndx(ptr);
-#endif
-#if (MALLOCSPINLOCKS)
-        __malloclkspin(&g_malloc.slablktab[l1]);
-#else
-        __malloclkmtx(&g_malloc.slablktab[l1]);
-#endif
-        mptr1 = g_malloc.slabdir[l1].ptr;
-        if (mptr1) {
-            mptr2 = mptr1->ptr;
-            if (mptr2) {
-                mptr1 = &mptr2[l2];
-                if (mptr1) {
-                    mptr2 = mptr1->ptr;
-#if defined(SLABDIRNL3BIT) && (SLABDIRNL3BIT)
-                    if (mptr2) {
-                        mag = ((void **)mptr2)[l3];
-                    }
-#else
-                    mag = *((void **)mptr1);
-#endif /* SLABDIRNL3BIT */
-                }
-            }
-#if (MALLOCSPINLOCKS)
-            __mallocunlkspin(&g_malloc.slablktab[l1]);
-#else
-            __mallocunlkmtx(&g_malloc.slablktab[l1]);
-#endif
-        }
-    }
-    
-=======
         __mallocunlkspin(&g_malloc.pagedirlktab[l1]);
 #else
         __mallocunlkmtx(&g_malloc.pagedirlktab[l1]);
 #endif
+#if 0
     } else {
         l1 = slabdirl1ndx(ptr);
         l2 = slabdirl2ndx(ptr);
@@ -913,9 +833,9 @@ mtfindmag(void *ptr, long type)
             __mallocunlkmtx(&g_malloc.slabdirlktab[l1]);
 #endif
         }
+#endif /* 0 */
     }
 
->>>>>>> 1acb545d96222112086eb616ba23a56ae145166b
     return mag;
 }
     
@@ -935,192 +855,21 @@ mtsetmag(void *ptr,
     if (type == MALLOCPAGETAB) {
         l1 = pagedirl1ndx(ptr);
         l2 = pagedirl2ndx(ptr);
-<<<<<<< HEAD
-#if defined(PAGEDIRNL3BIT) && (PAGEDIRNL3BIT)
         l3 = pagedirl3ndx(ptr);
-#endif
-#if (MALLOCSPINLOCKS)
-        __malloclkspin(&g_malloc.pagelktab[l1]);
-#else
-        __malloclkmtx(&g_malloc.pagelktab[l1]);
-#endif
-        if (mag) {
-            mptr1 = g_malloc.pagedir[l1].ptr;
-#if defined(PAGEDIRNL3BIT) && (PAGEDIRNL3BIT)
-            if (!mptr1) {
-                mptr1 = mapanon(g_malloc.zerofd,
-                                PAGEDIRNL2KEY * sizeof(struct memtab));
-                if (mptr1 != MAP_FAILED) {
-                    ptab[0] = mptr1;
-                    g_malloc.pagedir[l1].ptr = (void *)mptr1;
-                    mptr1->nref++;
-#if defined(MALLOCVALGRINDTABS)
-                    VALGRINDALLOC(mptr1,
-                                  PAGEDIRNL2KEY * sizeof(struct memtab), 1);
-#endif
-#if (MALLOCSTAT)
-                    ntabbyte += PAGEDIRNL2KEY * sizeof(struct memtab);
-#endif
-                } else {
-                    fail = 1;
-                }
-            }
-            if (!fail) {
-                mptr2 = mptr1->ptr;
-                if (!mptr2) {
-                    mptr2 = mapanon(g_malloc.zerofd,
-                                    PAGEDIRNL3KEY * sizeof(void *));
-#if defined(MALLOCVALGRINDTABS)
-                    VALGRINDALLOC(mptr2,
-                                  PAGEDIRNL3KEY * sizeof(void *), 1);
-#endif
-#if (MALLOCSTAT)
-                    ntabbyte += PAGEDIRNL3KEY * sizeof(struct memtab);
-#endif
-                }
-                if (mptr2 != MAP_FAILED) {
-                    ptab[1] = mptr2;
-                    mptr1->ptr = mptr2;
-                    mptr1->nref++;
-                } else {
-                    fail = 1;
-                }
-            }
-#else /* !PAGEDIRNL3BIT */
-            if (!mptr1) {
-                mptr1 = mapanon(g_malloc.zerofd,
-                                PAGEDIRNL2KEY * sizeof(struct void *));
-                if (mptr1 != MAP_FAILED) {
-                    ptab[0] = mptr1;
-                    g_malloc.pagedir[l1].ptr = (void *)mptr1;
-                    mptr1->nref++;
-#if defined(MALLOCVALGRINDTABS)
-                    VALGRINDALLOC(mptr1,
-                                  PAGEDIRNL2KEY * sizeof(void *), 1);
-#endif
-#if (MALLOCSTAT)
-                    ntabbyte += PAGEDIRNL2KEY * sizeof(void *);
-#endif
-#if defined(MALLOCVALGRINDTABS)
-                    VALGRINDALLOC(mptr1,
-                                  PAGEDIRNL2KEY * sizeof(void *), 1);
-#endif
-#if (MALLOCSTAT)
-                    ntabbyte += PAGEDIRNL2KEY * sizeof(void *);
-#endif
-                } else {
-                    fail = 1;
-                }
-            }
-#endif /* !PAGEDIRNL3BIT */
-        }
-        if (!mag || !fail) {
-            mptr1 = g_malloc.pagedir[l1].ptr;
-            if (mptr1) {
-                mptr2 = mptr1->ptr;
-                if (mptr2) {
-                    mptr1 = ((void **)mptr2)[l2];
-                    if (mptr1) {
-                        ptab[0] = mptr2;
-                        mptr2 = mptr1->ptr;
-#if defined(PAGEDIRNL3BIT) && (PAGEDIRNL3BIT)
-                        if (mptr2) {
-                            mptr1 = ((void **)mptr2)[l3];
-                            if (mptr1) {
-                                ptab[1] = mptr2;
-                            }
-                        }
-#else
-                        *((void **)mptr1) = mag;
-#endif
-                    }
-                }
-            }
-            mptr2 = ptab[0];
-#if defined(PAGEDIRNL3BIT) && (PAGEDIRNL3BIT)
-            mptr1 = ptab[1];
-            if ((mptr1) && (mptr2)) {
-                if (!--mptr2->nref) {
-                    unmapanon(mptr1, PAGEDIRNL3KEY * sizeof(void *));
-#if defined(MALLOCVALGRINDTABS)
-                    VALGRINDFREE(mptr1);
-#endif
-#if (MALLOCSTAT)
-                    ntabbyte -= PAGEDIRNL3KEY * sizeof(void *);
-#endif
-                }
-            }
-            mptr1 = &g_malloc.pagedir[l1];
-            if ((mptr2) && (mptr1)) {
-                if (!--mptr1->nref) {
-                    unmapanon(mptr2, PAGEDIRNL2KEY * sizeof(struct memtab));
-#if defined(MALLOCVALGRINDTABS)
-                    VALGRINDFREE(mptr2);
-#endif
-#if (MALLOCSTAT)
-                    ntabbyte -= PAGEDIRNL2KEY * sizeof(struct memtab);
-#endif
-                    g_malloc.pagedir[l1].ptr = NULL;
-                }
-            }
-#else /* !PAGEDIRNL3BIT */
-            mptr1 = &g_malloc.pagedir[l1];
-            if ((mptr2) && (mptr1)) {
-                if (!--mptr1->nref) {
-                    unmapanon(mptr2, PAGEDIRNL2KEY * sizeof(void *));
-#if defined(MALLOCVALGRINDTABS)
-                    VALGRINDFREE(mptr2);
-#endif
-#if (MALLOCSTAT)
-                    ntabbyte -= PAGEDIRNL2KEY * sizeof(void *);
-#endif
-                    g_malloc.pagedir[l1].ptr = NULL;
-                }
-            }
-#endif /* PAGEDIRNL3BIT */
-        }
-#if (MALLOCSPINLOCKS)
-        __mallocunlkspin(&g_malloc.pagelktab[l1]);
-#else
-        __mallocunlkmtx(&g_malloc.pagelktab[l1]);
-#endif
-    } else {
-        /* type != MALLOCPAGETAB */
-        l1 = slabdirl1ndx(ptr);
-        l2 = slabdirl2ndx(ptr);
-#if defined(SLABDIRNL3BIT) && (SLABDIRNL3BIT)
-        l3 = slabdirl3ndx(ptr);
-#endif
-#if (MALLOCSPINLOCKS)
-        __malloclkspin(&g_malloc.slablktab[l1]);
-#else
-        __malloclkmtx(&g_malloc.slablktab[l1]);
-#endif
-        if (mag) {
-            mptr1 = g_malloc.pagedir[l1].ptr;
-#if defined(SLABDIRNL3BIT) && (SLABDIRNL3BIT)
-            if (!mptr1) {
-                mptr1 = mapanon(g_malloc.zerofd,
-                                PAGEDIRNL2KEY * sizeof(struct memtab));
-=======
-#if defined(PAGEDIRNLVL3BIT) && (PAGEDIRNLVL3BIT)
-        l3 = pagedirl3ndx(ptr);
-#endif
 #if (MALLOCSPINLOCKS)
         __malloclkspin(&g_malloc.pagedirlktab[l1]);
 #else
         __malloclkmtx(&g_malloc.pagedirlktab[l1]);
 #endif
         if (mag) {
+            mptr1 = g_malloc.pagedir[l1].ptr;
             if (!mptr1) {
-#if defined(PAGEDIRNLVL3BIT) && (PAGEDIRNLVL3BIT)
                 mptr1 = mapanon(g_malloc.zerofd,
                                 PAGEDIRNL2KEY * sizeof(struct memtab));
                 if (mptr1 != MAP_FAILED) {
                     ptab[0] = mptr1;
-                    g_malloc.slabdir[l1].ptr = (void *)mptr1;
+                    g_malloc.pagedir[l1].ptr = (void *)mptr1;
                     mptr1->nref++;
-#if (PAGEDIRNLVL3BIT) && (PAGEDIRNLVL3BIT)
 #if defined(MALLOCVALGRINDTABS)
                     VALGRINDALLOC(mptr1,
                                   PAGEDIRNL2KEY * sizeof(struct memtab), 1);
@@ -1128,16 +877,6 @@ mtsetmag(void *ptr,
 #if (MALLOCSTAT)
                     ntabbyte += PAGEDIRNL2KEY * sizeof(struct memtab);
 #endif
-#else
-#if defined(MALLOCVALGRINDTABS)
-                    VALGRINDALLOC(mptr1,
-                                  PAGEDIRNL2KEY * sizeof(void *), 1);
-#endif
-#if (MALLOCSTAT)
-                    ntabbyte += PAGEDIRNL2KEY * sizeof(void *);
-#endif
-#else
-#if defined(PAGEDIRNL3BIT) && (PAGEDIRNL3BIT)
                     if (!fail) {
                         mptr2 = mptr1->ptr;
                         if (!mptr2) {
@@ -1162,7 +901,6 @@ mtsetmag(void *ptr,
                             fail = 1;
                         }
                     }
-#endif /* !PAGENLVL3BIT */
                 }
             }
         }
@@ -1175,18 +913,12 @@ mtsetmag(void *ptr,
                     if (mptr1) {
                         ptab[0] = mptr2;
                         mptr2 = mptr1->ptr;
-#if defined(PAGDIRNLVL3BIT) && (PAGEDIRNLVL3BIT)
                         if (mptr2) {
                             mptr1 = ((void **)mptr2)[l3];
                             if (mptr1) {
                                 ptab[1] = mptr2;
                             }
                         }
-#else
-                        if (mptr1) {
-                            (void **)mptr1 = mag;
-                        }
-#endif
                     }
                 }
             }
@@ -1224,13 +956,12 @@ mtsetmag(void *ptr,
 #else
         __mallocunlkmtx(&g_malloc.pagedirlktab[l1]);
 #endif
+#if 0
     } else {
         /* type != MALLOCPAGETAB */
         l1 = slabdirl1ndx(ptr);
         l2 = slabdirl2ndx(ptr);
-#if defined(SLABDIRNLVL3BIT) && (SLABDIRNLVL3BIT)
         l3 = slabdirl3ndx(ptr);
-#endif
 #if (MALLOCSPINLOCKS)
         __malloclkspin(&g_malloc.slabdirlktab[l1]);
 #else
@@ -1238,47 +969,12 @@ mtsetmag(void *ptr,
 #endif
         if (mag) {
             if (!mptr1) {
-#if defined(SLABDIRNLVL3BIT) && (SLABDIRNLVL3BIT)
                 mptr1 = mapanon(g_malloc.zerofd,
                                 SLABDIRNL2KEY * sizeof(struct memtab));
->>>>>>> 1acb545d96222112086eb616ba23a56ae145166b
                 if (mptr1 != MAP_FAILED) {
                     ptab[0] = mptr1;
                     g_malloc.slabdir[l1].ptr = (void *)mptr1;
                     mptr1->nref++;
-<<<<<<< HEAD
-#if defined(MALLOCVALGRINDTABS)
-                    VALGRINDALLOC(mptr1,
-                                  PAGEDIRNL2KEY * sizeof(struct memtab), 1);
-#endif
-#if (MALLOCSTAT)
-                    ntabbyte += PAGEDIRNL2KEY * sizeof(struct memtab);
-#endif
-                } else {
-                    fail = 1;
-                }
-            }
-            if (!fail) {
-                mptr2 = mptr1->ptr;
-                if (!mptr2) {
-                    mptr2 = mapanon(g_malloc.zerofd,
-                                    PAGEDIRNL3KEY * sizeof(void *));
-#if (MALLOCSTAT)
-                    ntabbyte += PAGEDIRNL3KEY * sizeof(void *);
-#endif
-                }
-                if (mptr2 != MAP_FAILED) {
-                    ptab[1] = mptr2;
-                    mptr1->ptr = mptr2;
-                    mptr1->nref++;
-#if defined(MALLOCVALGRINDTABS)
-                    VALGRINDALLOC(mptr2,
-                                  PAGEDIRNL3KEY * sizeof(void *), 1);
-#endif
-#if (MALLOCSTAT)
-                    ntabbyte += PAGEDIRNL3KEY * sizeof(struct memtab);
-=======
-#if (SLABDIRNLVL3BIT) && (SLABDIRNLVL3BIT)
 #if defined(MALLOCVALGRINDTABS)
                     VALGRINDALLOC(mptr1,
                                   SLABDIRNL2KEY * sizeof(struct memtab), 1);
@@ -1286,16 +982,6 @@ mtsetmag(void *ptr,
 #if (MALLOCSTAT)
                     ntabbyte += SLABDIRNL2KEY * sizeof(struct memtab);
 #endif
-#else
-#if defined(MALLOCVALGRINDTABS)
-                    VALGRINDALLOC(mptr1,
-                                  SLABDIRNL2KEY * sizeof(void *), 1);
-#endif
-#if (MALLOCSTAT)
-                    ntabbyte += SLABDIRNL2KEY * sizeof(void *);
-#endif
-#else
-#if defined(SLABDIRNL3BIT) && (SLABDIRNL3BIT)
                     if (!fail) {
                         mptr2 = mptr1->ptr;
                         if (!mptr2) {
@@ -1314,40 +1000,14 @@ mtsetmag(void *ptr,
                                           SLABDIRNL3KEY * sizeof(void *), 1);
 #endif
 #if (MALLOCSTAT)
-                            ntabbyte += SLABDIRNL3KEY * sizeof(struct memtab);
->>>>>>> 1acb545d96222112086eb616ba23a56ae145166b
+                            ntabbyte += SLABDIRNL3KEY * sizeof(void *);
 #endif
                         } else {
                             fail = 1;
                         }
                     }
-#endif /* !SLABNLVL3BIT */
                 }
             }
-<<<<<<< HEAD
-#else /* !SLABDIRNL3BIT */
-            if (!mptr1) {
-                mptr1 = g_malloc.pagedir[l1].ptr;
-                mptr1 = mapanon(g_malloc.zerofd,
-                                PAGEDIRNL2KEY * sizeof(struct void *));
-                if (mptr1 != MAP_FAILED) {
-                    ptab[0] = mptr1;
-                    g_malloc.slabdir[l1].ptr = (void *)mptr1;
-                    mptr1->nref++;
-#if defined(MALLOCVALGRINDTABS)
-                    VALGRINDALLOC(mptr1,
-                                  PAGEDIRNL2KEY * sizeof(void *), 1);
-#endif
-#if (MALLOCSTAT)
-                    ntabbyte += PAGEDIRNL2KEY * sizeof(void *);
-#endif
-#if defined(MALLOCVALGRINDTABS)
-                    VALGRINDALLOC(mptr1,
-                                  PAGEDIRNL2KEY * sizeof(void *), 1);
-#endif
-#if (MALLOCSTAT)
-                    ntabbyte += PAGEDIRNL2KEY * sizeof(void *);
-=======
         }
         if (!mag || !fail) {
             mptr1 = g_malloc.slabdir[l1].ptr;
@@ -1369,44 +1029,14 @@ mtsetmag(void *ptr,
                         if (mptr1) {
                             (void **)mptr1 = mag;
                         }
->>>>>>> 1acb545d96222112086eb616ba23a56ae145166b
 #endif
                     }
                 }
             }
-#endif /* !PAGEDIRNL3BIT */
         }
-<<<<<<< HEAD
-        if (!mag || !fail) {
-            mptr1 = g_malloc.slabdir[l1].ptr;
-            if (mptr1) {
-                mptr2 = mptr1->ptr;
-                if (mptr2) {
-                    mptr1 = ((void **)mptr2)[l2];
-                    if (mptr1) {
-                        ptab[0] = mptr2;
-                        mptr2 = mptr1->ptr;
-#if defined(SLABDIRNL3BIT) && (SLABDIRNL3BIT)
-                        if (mptr2) {
-                            mptr1 = ((void **)mptr2)[l3];
-                            if (mptr1) {
-                                ptab[1] = mptr2;
-                            }
-                        }
-#else
-                        *((void **)mptr1) = mag;
-#endif
-                    }
-                }
-            }
-            mptr2 = ptab[0];
-#if (SLABDIRNL3BIT)
-            mptr1 = ptab[1];
-=======
         if (!mag || (fail)) {
             mptr1 = ptab[1];
             mptr2 = ptab[0];
->>>>>>> 1acb545d96222112086eb616ba23a56ae145166b
             if ((mptr1) && (mptr2)) {
                 if (!--mptr2->nref) {
                     unmapanon(mptr1, SLABDIRNL3KEY * sizeof(void *));
@@ -1431,21 +1061,13 @@ mtsetmag(void *ptr,
                     g_malloc.slabdir[l1].ptr = NULL;
                 }
             }
-<<<<<<< HEAD
-#else /* !SLABDIRNL3BIT */
-            mptr1 = &g_malloc.slabdir[l1];
-            if ((mptr2) && (mptr1)) {
-                if (!--mptr1->nref) {
-                    unmapanon(mptr2, SLABDIRNL2KEY * sizeof(void *));
-#if defined(MALLOCVALGRINDTABS)
-                    VALGRINDFREE(mptr2);
-=======
         }
 #if (MALLOCSPINLOCKS)
         __mallocunlkspin(&g_malloc.slabdirlktab[l1]);
 #else
         __mallocunlkmtx(&g_malloc.slabdirlktab[l1]);
 #endif
+#endif /* 0 */
     }
     
     return;
@@ -1460,10 +1082,9 @@ mtsetmag(void *ptr,
 {
     void      *ptr1;
     void      *ptr2;
-    uintptr_t  l1;
-    uintptr_t  l2;
-    uintptr_t  l3;
-    long       fail = 0;
+    uintptr_t  l1 = pagedirl1ndx(ptr);
+    uintptr_t  l2 = pagedirl2ndx(ptr);
+    uintptr_t  l3 = pagedirl3ndx(ptr);
     
     if (type == MALLOCPAGETAB) {
 #if (MALLOCSPINLOCKS)
@@ -1483,7 +1104,6 @@ mtsetmag(void *ptr,
                 if (ptr2) {
                     *((void **)ptr2) = mag;
                 }
->>>>>>> 1acb545d96222112086eb616ba23a56ae145166b
 #endif
             }
         } else {
@@ -1495,94 +1115,12 @@ mtsetmag(void *ptr,
                     abort();
                 }
 #if (MALLOCSTAT)
-<<<<<<< HEAD
-                    ntabbyte -= SLABDIRNL2KEY * sizeof(void *);
-#endif
-                    g_malloc.slabdir[l1].ptr = NULL;
-                }
-            }
-#endif /* SLABDIRNL3BIT */
-        }
-#if (MALLOCSPINLOCKS)
-        __mallocunlkspin(&g_malloc.slablktab[l1]);
-#else
-        __mallocunlkmtx(&g_malloc.slablktab[l1]);
-#endif
-    }
-    
-    return;
-}
-
-#else /* !MALLOCFREETABS */
-
-static struct mag *
-mtfindmag(void *ptr, long type)
-{
-    uintptr_t      l1;
-    uintptr_t      l2;
-#if defined(PAGEDIRNL3BIT) && (PAGEDIRNL3BIT)
-    uintptr_t      l3;
-#endif
-    void          *ptr1;
-    void          *ptr2;
-    struct mag    *mag = NULL;
-
-    if (type == MALLOCPAGETAB) {
-        l1 = pagedirl1ndx(ptr);
-        l2 = pagedirl2ndx(ptr);
-#if defined(PAGEDIRNL3BIT) && (PAGEDIRNL3BIT)
-        l3 = pagedirl3ndx(ptr);
-#endif
-#if (MALLOCSPINLOCKS)
-        __malloclkspin(&g_malloc.pagelktab[l1]);
-#else
-        __malloclkmtx(&g_malloc.pagelktab[l1]);
-#endif
-        ptr1 = g_malloc.pagedir[l1];
-        if (ptr1) {
-            ptr2 = ((void **)ptr1)[l2];
-            if (ptr2) {
-#if defined(PAGEDIRNL3BIT) && (PAGEDIRNL3BIT)
-                mag = ((void **)ptr2)[l3];
-#else
-                mag = *((void **)ptr2);
-#endif
-            }
-        }
-#if (MALLOCSPINLOCKS)
-        __mallocunlkspin(&g_malloc.pagelktab[l1]);
-#else
-        __mallocunlkmtx(&g_malloc.pagelktab[l1]);
-#endif
-    } else {
-        /* type != MALLOCPAGETAB */
-        l1 = slabdirl1ndx(ptr);
-        l2 = slabdirl2ndx(ptr);
-#if defined(SLABDIRNL3BIT) && (SLABDIRNL3BIT)
-        l3 = slabdirl3ndx(ptr);
-#endif
-#if (MALLOCSPINLOCKS)
-        __malloclkspin(&g_malloc.slablktab[l1]);
-#else
-        __malloclkmtx(&g_malloc.slablktab[l1]);
-#endif
-        ptr1 = g_malloc.slabdir[l1];
-        if (ptr1) {
-            ptr2 = ((void **)ptr1)[l2];
-            if (ptr2) {
-#if defined(SLABDIRNL3BIT) && (SLABDIRNL3BIT)
-                mag = ((void **)ptr2)[l3];
-#else
-                mag = *((void **)ptr2);
-#endif
-=======
                 ntabbyte += PAGEDIRNL2KEY * sizeof(void *);
 #endif
                 g_malloc.pagedir[l1] = ptr1;
             }
             if (ptr1) {
                 ptr2 = ((void **)ptr1)[l2];
-#if defined(PAGEDIRNLVL3BIT) && (PAGEDIRNLVL3BIT)
                 if (!ptr2) {
                     ptr2 = mapanon(g_malloc.zerofd,
                                    PAGEDIRNL3KEY * sizeof(void *));
@@ -1597,76 +1135,12 @@ mtfindmag(void *ptr, long type)
                 if (ptr2) {
                     ((void **)ptr2)[l3] = mag;
                 }
-#else
-                if (ptr2) {
-                    *((void **)ptr2) = mag;
-                }
             }
-#endif
 #if (MALLOCSPINLOCKS)
             __mallocunlkspin(&g_malloc.pagedirlktab[l1]);
 #else
             __mallocunlkmtx(&g_malloc.pagedirlktab[l1]);
 #endif
-        } else {
-            /* type != MALLOCPAGETAB */
-#if (MALLOCSPINLOCKS)
-            __malloclkspin(&g_malloc.slabdirlktab[l1]);
-#else
-            __malloclkmtx(&g_malloc.slabdirlktab[l1]);
-#endif
-            if (!mag) {
-                ptr1 = g_malloc.slabdir[l1];
-                if (ptr1) {
-                    ptr2 = ((void **)ptr1)[l2];
-#if defined(SLABDIRNL3BIT) && (SLABDIRNL3BIT)
-                    if (ptr2) {
-                        ((void **)ptr2)[l3] = mag;
-                    }
-#else
-                    if (ptr2) {
-                        *((void **)ptr2) = mag;
-                    }
-#endif
-                }
-            } else {
-                ptr1 = g_malloc.slabdir[l1];
-                if (!ptr1) {
-                    ptr1 = mapanon(g_malloc.zerofd,
-                                   SLABDIRNL2KEY * sizeof(void *));
-                    if (ptr1 == MAP_FAILED) {
-                        abort();
-                    }
-#if (MALLOCSTAT)
-                    ntabbyte += SLABDIRNL2KEY * sizeof(void *);
-#endif
-                    g_malloc.slabdir[l1] = ptr1;
-                }
-                if (ptr1) {
-                    ptr2 = ((void **)ptr1)[l2];
-#if defined(SLABDIRNLVL3BIT) && (SLABDIRNLVL3BIT)
-                    if (!ptr2) {
-                        ptr2 = mapanon(g_malloc.zerofd,
-                                       SLABDIRNL3KEY * sizeof(void *));
-                        if (ptr2 == MAP_FAILED) {
-                            abort();
-                        }
-#if (MALLOCSTAT)
-                        ntabbyte += SLABDIRNL3KEY * sizeof(void *);
-#endif
-                    }
-                    ((void **)ptr2)[l3] = mag;
-#else
-                    *((void **)ptr2) = mag;
-                }
-                
-#endif
-#if (MALLOCSPINLOCKS)
-                __mallocunlkspin(&g_malloc.slabdirlktab[l1]);
-#else
-                __mallocunlkmtx(&g_malloc.slabdirlktab[l1]);
-#endif
-            }
         }
     }
     
@@ -1679,9 +1153,6 @@ mtfindmag(void *ptr)
     uintptr_t      l1 = pagedirl1ndx(ptr);
     uintptr_t      l2 = pagedirl2ndx(ptr);
     uintptr_t      l3 = pagedirl3ndx(ptr);
-#if defined(PAGEDIRNL4BIT) && (PAGEDIRNL4BIT)
-    uintptr_t      l4 = pagedirl4ndx(ptr);
-#endif
 #if (MALLOCFREETABS)
     struct memtab *mptr1;
     struct memtab *mptr2;
@@ -1696,191 +1167,6 @@ mtfindmag(void *ptr)
 #else
     __malloclkmtx(&g_malloc.pagedirlktab[l1]);
 #endif
-#if (MALLOCFREETABS)
-    mptr1 = g_malloc.pagedir[l1].ptr;
-    if (mptr1) {
-        mptr2 = mptr1->ptr;
-        if (mptr2) {
-            mptr1 = &mptr2[l2];
-            if (mptr1) {
-                mptr2 = mptr1->ptr;
-#if !defined(PAGEDIRNL4BIT) || (!PAGEDIRNL4BIT)
-                if (mptr2) {
-                    mag = ((void **)mptr2)[l3];
-                }
-#else
-                if (mptr2) {
-                    mptr1 = &mptr2[l3];
-                    if (mptr1) {
-                        mptr2 = mptr1->ptr;
-                        if (mptr2) {
-                            mag = ((void **)mptr2)[l4];
-                        }
-                    }
-                }
-#endif /* PAGEDIRNL4BIT */
->>>>>>> 1acb545d96222112086eb616ba23a56ae145166b
-            }
-        }
-#if (MALLOCSPINLOCKS)
-        __mallocunlkspin(&g_malloc.slablktab[l1]);
-#else
-        __mallocunlkmtx(&g_malloc.slablktab[l1]);
-#endif
-    }
-<<<<<<< HEAD
-    
-    return mag;
-}
-
-static void
-mtsetmag(void *ptr,
-         struct mag *mag,
-         long type)
-{
-    void      *ptr1;
-    void      *ptr2;
-    uintptr_t  l1;
-    uintptr_t  l2;
-    uintptr_t  l3;
-    
-    if (type == MALLOCPAGETAB) {
-        l1 = pagedirl1ndx(ptr);
-        l2 = pagedirl2ndx(ptr);
-#if defined(PAGEDIRNL3BIT) && (PAGEDIRNL3BIT)
-        l3 = pagedirl3ndx(ptr);
-#endif
-#if (MALLOCSPINLOCKS)
-        __malloclkspin(&g_malloc.pagelktab[l1]);
-#else
-        __malloclkmtx(&g_malloc.pagelktab[l1]);
-#endif
-        if (!mag) {
-            ptr1 = g_malloc.pagedir[l1];
-            if (ptr1) {
-                ptr2 = ((void **)ptr1)[l2];
-                if (ptr2) {
-#if defined(PAGEDIRNL3BIT) && (PAGEDIRNL3BIT)
-                    ((void **)ptr2)[l3] = mag;
-#else
-                    *((void **)ptr2) = mag;
-#endif
-                }
-            }
-        } else {
-            ptr1 = g_malloc.pagedir[l1];
-            if (!ptr1) {
-                ptr1 = mapanon(g_malloc.zerofd,
-                               PAGEDIRNL2KEY * sizeof(void *));
-                if (ptr1 == MAP_FAILED) {
-                    abort();
-                }
-#if (MALLOCSTAT)
-                ntabbyte += PAGEDIRNL2KEY * sizeof(void *);
-#endif
-                g_malloc.pagedir[l1] = ptr1;
-            }
-            if (ptr1) {
-                ptr2 = ((void **)ptr1)[l2];
-#if defined(PAGEDIRNL3BIT) && (PAGEDIRNL3BIT)
-                if (!ptr2) {
-                    ptr2 = mapanon(g_malloc.zerofd,
-                                   PAGEDIRNL3KEY * sizeof(void *));
-                    if (ptr2 == MAP_FAILED) {
-                        abort();
-                    }
-#if (MALLOCSTAT)
-                    ntabbyte += PAGEDIRNL3KEY * sizeof(void *);
-#endif
-                    ((void **)ptr1)[l2] = ptr2;
-                }
-                if (ptr2) {
-                    ((void **)ptr2)[l3] = mag;
-                }
-#else
-                if (ptr2) {
-                    *((void **)ptr2) = mag;
-                }
-#endif
-            }
-#if (MALLOCSPINLOCKS)
-            __mallocunlkspin(&g_malloc.pagelktab[l1]);
-#else
-            __mallocunlkmtx(&g_malloc.pagelktab[l1]);
-#endif
-        }
-    } else {
-        /* type != MALLOCPAGETAB */
-        l1 = slabdirl1ndx(ptr);
-        l2 = slabdirl2ndx(ptr);
-#if defined(SLABDIRNL3BIT) && (SLABDIRNL3BIT)
-        l3 = slabdirl3ndx(ptr);
-#endif
-#if (MALLOCSPINLOCKS)
-        __malloclkspin(&g_malloc.slablktab[l1]);
-#else
-        __malloclkmtx(&g_malloc.slablktab[l1]);
-#endif
-        if (!mag) {
-            ptr1 = g_malloc.slabdir[l1];
-            if (ptr1) {
-                ptr2 = ((void **)ptr1)[l2];
-#if defined(SLABDIRNL3BIT) && (SLABDIRNL3BIT)
-                if (ptr2) {
-                    ((void **)ptr2)[l3] = mag;
-                }
-#else
-                if (ptr2) {
-                    *((void **)ptr2) = mag;
-                }
-#endif
-            }
-        } else {
-            ptr1 = g_malloc.pagedir[l1];
-            if (!ptr1) {
-                ptr1 = mapanon(g_malloc.zerofd,
-                               SLABDIRNL2KEY * sizeof(void *));
-                if (ptr1 == MAP_FAILED) {
-                    abort();
-                }
-#if (MALLOCSTAT)
-                ntabbyte += SLABDIRNL2KEY * sizeof(void *);
-#endif
-                g_malloc.slabdir[l1] = ptr1;
-            }
-            if (ptr1) {
-                ptr2 = ((void **)ptr1)[l2];
-#if defined(SLABDIRNL3BIT) && (SLABDIRNL3BIT)
-                if (!ptr2) {
-                    ptr2 = mapanon(g_malloc.zerofd,
-                                   SLABDIRNL3KEY * sizeof(void *));
-                    if (ptr2 == MAP_FAILED) {
-                        abort();
-                    }
-#if (MALLOCSTAT)
-                    ntabbyte += SLABDIRNL3KEY * sizeof(void *);
-#endif
-                }
-                ((void **)ptr2)[l3] = mag;
-#else
-                *((void **)ptr2) = mag;
-#endif
-            }
-            
-#if (MALLOCSPINLOCKS)
-            __mallocunlkspin(&g_malloc.slablktab[l1]);
-#else
-            __mallocunlkmtx(&g_malloc.slablktab[l1]);
-#endif
-        }
-    }
-    
-    return;
-}
-
-#endif /* MALLOCFREETABS */
-=======
-#else /* !MALLOCFREETABS */
     ptr1 = g_malloc.pagedir[l1];
     if (ptr1) {
         ptr2 = ((void **)ptr1)[l2];
@@ -1895,7 +1181,6 @@ mtsetmag(void *ptr,
 #endif
         }
     }
-#endif /* MALLOCFREETABS */
 #if (MALLOCSPINLOCKS)
     __mallocunlkspin(&g_malloc.pagedirlktab[l1]);
 #else
@@ -1906,7 +1191,6 @@ mtsetmag(void *ptr,
 }
 
 #endif
->>>>>>> 1acb545d96222112086eb616ba23a56ae145166b
 
 #endif /* MALLOCMULTITAB */
 
@@ -1918,7 +1202,7 @@ mallocdiag(void)
     struct mag *mag1;
     struct mag *mag2;
     long        ndx;
-    
+
     if (arn) {
         for (ndx = 0 ; ndx < MALLOCNBKT ; ndx++) {
             mag1 = arn->magbkt[ndx].ptr;
@@ -2013,7 +1297,7 @@ mallocdiag(void)
         }
         __mallocunlkmtx(&g_malloc.magbkt[ndx].lk);
     }
-    
+
     return;
 }
 #endif /* MALLOCDIAG */
@@ -2075,15 +1359,9 @@ mallinit(void)
     __mallocunlkmtx(&g_malloc.heaplk);
 #endif /* !MALLOCNOSBRK */
 #if (MALLOCMULTITAB)
-<<<<<<< HEAD
-    g_malloc.pagelktab = mapanon(g_malloc.zerofd,
-                                 PAGEDIRNL1KEY * sizeof(MUTEX));
-    if (g_malloc.pagelktab == MAP_FAILED) {
-=======
     g_malloc.pagedirlktab = mapanon(g_malloc.zerofd, PAGEDIRNL1KEY
                                     * sizeof(MUTEX));
     if (g_malloc.pagedirlktab == MAP_FAILED) {
->>>>>>> 1acb545d96222112086eb616ba23a56ae145166b
         abort();
     }
     ndx = PAGEDIRNL1KEY;
@@ -2092,15 +1370,9 @@ mallinit(void)
 #endif
     while (ndx--) {
 #if (MALLOCSPINLOCKS)
-<<<<<<< HEAD
-        __mallocinitspin(&g_malloc.pagelktab[ndx]);
-#else
-        __mallocinitmtx(&g_malloc.pagelktab[ndx]);
-=======
         __mallocinitspin(&g_malloc.pagedirlktab[ndx]);
 #else
         __mallocinitmtx(&g_malloc.pagedirlktab[ndx]);
->>>>>>> 1acb545d96222112086eb616ba23a56ae145166b
 #endif
     }
 #if (MALLOCFREETABS)
@@ -2255,13 +1527,9 @@ _malloc(size_t size,
         mallinit();
     }
     arn = thrarn;
-    if (!arn) {
-        __malloclkmtx(&thrinitlk);
-        if (!thrarn) {
-            thrarn = thrinit();
-        }
-        __mallocunlkmtx(&thrinitlk);
-        arn = thrarn;
+    if (!thrarn) {
+        arn = thrinit();
+        thrarn = arn;
     }
 //    align = max(align, MALLOCALIGNMENT);
     /* try to allocate from a partially used magazine */
@@ -2274,12 +1542,14 @@ _malloc(size_t size,
                 mallocdiag();
             }
 #endif
+            _assert((mag->stk) || (mag->ptr));
             if (lim == 1) {
                 ptr = mag->ptr;
                 mag->cur = 1;
             } else {
                 ptr = ((void **)mag->stk)[mag->cur++];
             }
+//            _assert(mag->cur <= lim);
 #if (MALLOCDIAG)
             if (mag->cur > lim) {
                 mallocdiag();
@@ -2292,10 +1562,6 @@ _malloc(size_t size,
 #endif
                 if (mag->next) {
                     mag->next->prev = NULL;
-#if (MALLOCQUEUETAIL)
-                } else {
-                    arn->magbkt[bktid].tail = NULL;
-#endif
                 }
                 arn->magbkt[bktid].ptr = mag->next;
                 mag->prev = NULL;
@@ -2310,23 +1576,14 @@ _malloc(size_t size,
             __mallocunlkmtx(&g_malloc.magbkt[bktid].lk);
             mag = magget(bktid);
         } else {
-#if (MALLOCQUEUETAIL)
-            __malloclkmtx(&g_malloc.magbkt[bktid].taillk);
-#endif
             if (mag->next) {
                 mag->next->prev = NULL;
-#if (MALLOCQUEUETAIL)
-            } else {
-                g_malloc.magbkt[bktid].tail = NULL;
-#endif
             }
             g_malloc.magbkt[bktid].ptr = mag->next;
-#if (MALLOCQUEUETAIL)
-            __mallocunlkmtx(&g_malloc.magbkt[bktid].taillk);
-#endif
             __mallocunlkmtx(&g_malloc.magbkt[bktid].lk);
         }
         if (mag) {
+//            _assert(mag->cur);
             if (mag->lim == 1) {
                 ptr = mag->ptr;
                 mag->cur = 1;
@@ -2343,47 +1600,23 @@ _malloc(size_t size,
                     ((arn->magbkt[bktid].ptr) || (bktid > MALLOCBIGSLABLOG2))
 #endif
                     ) {
-#if (MALLOCQUEUETAIL)
-                    __malloclkmtx(&g_malloc.magbkt[bktid].lk);
-                    __malloclkmtx(&g_malloc.magbkt[bktid].taillk);
-                    mag->prev = g_malloc.magbkt[bktid].tail;
-                    if (mag->prev) {
-                        mag->prev->next = mag;
-                    } else {
-                        g_malloc.magbkt[bktid].ptr = mag;
-                    }
-                    g_malloc.magbkt[bktid].tail = mag;
-                    __mallocunlkmtx(&g_malloc.magbkt[bktid].taillk);
-                    __mallocunlkmtx(&g_malloc.magbkt[bktid].lk);
-#else
                     __malloclkmtx(&g_malloc.magbkt[bktid].lk);
                     mag->next = g_malloc.magbkt[bktid].ptr;
                     if (mag->next) {
                         mag->next->prev = mag;
                     }
                     g_malloc.magbkt[bktid].ptr = mag;
-                    __mallocunlkmtx(&g_malloc.magbkt[bktid].lk);
-#endif
+                    __malloclkmtx(&g_malloc.magbkt[bktid].lk);
                 } else {
                     mag->arn = arn;
 #if (MALLOCBUFMAG)
                     arn->magbkt[bktid].n++;
 #endif
-#if (MALLOCQUEUETAIL)
-                    mag->prev = arn->magbkt[bktid].tail;
-                    if (mag->prev) {
-                        mag->prev->next = mag;
-                    } else {
-                        arn->magbkt[bktid].ptr = mag;
-                    }
-                    arn->magbkt[bktid].tail = mag;
-#else
                     mag->next = arn->magbkt[bktid].ptr;
                     if (mag->next) {
                         mag->next->prev = mag;
                     }
                     arn->magbkt[bktid].ptr = mag;
-#endif
                 }
             } else {
                 mag->next = NULL;
@@ -2399,17 +1632,16 @@ _malloc(size_t size,
     }
     adr = clrptr(ptr);
     if (zero) {
-//        memset(adr, 0, 1UL << bktid);
-        memset(adr, 0, sz);
+//        memset(adr, 0, size);
+        _memsetbk(adr, 0, sz);
     } else if (g_malloc.mallopt.flg & MALLOPT_PERTURB_BIT) {
         int perturb = g_malloc.mallopt.perturb;
         
         perturb = (~perturb) & 0xff;
 //        memset(adr, perturb, 1UL << bktid);
-        memset(adr, perturb, sz);
+        _memsetbk(adr, perturb, sz);
     }
-//    if (sz <= (PAGESIZE >> 1)) {
-    if (bktid < PAGESIZELOG2) {
+    if ((sz < (PAGESIZE >> 1)) || (align > PAGESIZE)) {
         /* store unaligned source pointer and mag address */
         ptr += max(align, MALLOCALIGNMENT);
 #if (MALLOCSTAT)
@@ -2445,6 +1677,7 @@ _malloc(size_t size,
     __malloclkmtx(&mag->freelk);
     if (((mag->lim == 1) && (mag->freemap))
         || ((mag->lim > 1) && bitset(mag->freemap, magptrid(mag, adr)))) {
+        magprint(mag);
         fprintf(stderr, "trying to reallocate block");
         fflush(stderr);
         
@@ -2493,19 +1726,18 @@ _free(void *ptr)
     }
     if ((uintptr_t)ptr & (PAGESIZE - 1)) {
         mag = getmag(ptr);
-        if (mag) {
-            setmag(ptr, NULL);
-        }
     } else {
         mag = mtfindmag(ptr, MALLOCPAGETAB);
-        if (mag) {
-            mtsetmag(ptr, NULL, MALLOCPAGETAB);
-        }
     }
 #if (MALLOCHDRHACKS)
     nfo = getnfo(ptr);
 #endif
     if (mag) {
+        if ((uintptr_t)ptr & (PAGESIZE - 1)) {
+            setmag(ptr, NULL);
+        } else {
+            mtsetmag(ptr, NULL, MALLOCPAGETAB);
+        }
 #if (MALLOCHDRHACKS)
         bktid = nfo & MEMHDRBKTMASK;
 #else
@@ -2541,10 +1773,11 @@ _free(void *ptr)
         __malloclkmtx(&mag->freelk);
         if ((mag->lim == 1 && (mag->freemap))
             || ((mag->lim > 1) && !bitset(mag->freemap, ndx))) {
+            magprint(mag);
             fprintf(stderr, "trying to free an unused block\n");
             
             abort();
-        } else if (mag->lim == 1) {
+        } else if (mag->cur == 1) {
             mag->freemap = (void *)(~(uintptr_t)NULL);
         } else {
             clrbit(mag->freemap, magptrid(mag, adr));
@@ -2573,17 +1806,11 @@ _free(void *ptr)
         if (!mag->cur) {
             if ((lim > 1) && (!mag->arn || (mag->arn == arn))) {
                 __malloclkmtx(&g_malloc.magbkt[bktid].lk);
-#if (MALLOCQUEUETAIL)
-                __malloclkmtx(&g_malloc.magbkt[bktid].taillk);
-#endif
                 if ((mag->prev) && (mag->next)) {
                     mag->next->prev = mag->prev;
                     mag->prev->next = mag->next;
                 } else if (mag->prev) {
                     mag->prev->next = NULL;
-#if (MALLOCQUEUETAIL)
-                    g_malloc.magbkt[bktid].tail = mag->prev;
-#endif
                 } else if (mag->next) {
                     mag->next->prev = NULL;
                     if (mag->arn) {
@@ -2595,18 +1822,9 @@ _free(void *ptr)
                 } else if (mag->arn) {
                     mag->arn = NULL;
                     arn->magbkt[bktid].ptr = NULL;
-#if (MALLOCQUEUETAIL)
-                    arn->magbkt[bktid].tail = NULL;
-#endif
                 } else {
                     g_malloc.magbkt[bktid].ptr = NULL;
-#if (MALLOCQUEUETAIL)
-                    g_malloc.magbkt[bktid].tail = NULL;
-#endif
                 }
-#if (MALLOCQUEUETAIL)
-                __mallocunlkmtx(&g_malloc.magbkt[bktid].taillk);
-#endif
                 __mallocunlkmtx(&g_malloc.magbkt[bktid].lk);
                 mag->arn = NULL;
             } else if (lim == 1) {
@@ -2665,19 +1883,6 @@ _free(void *ptr)
 #endif
                 ) {
                 mag->arn = NULL;
-#if (MALLOCQUEUETAIL) && 0
-                __malloclkmtx(&g_malloc.magbkt[bktid].lk);
-                __malloclkmtx(&g_malloc.magbkt[bktid].taillk);
-                mag->prev = g_malloc.magbkt[bktid].tail;
-                if (mag->prev) {
-                    mag->prev->next = mag;
-                } else {
-                    g_malloc.magbkt[bktid].ptr = mag;
-                }
-                g_malloc.magbkt[bktid].tail = mag;
-                __mallocunlkmtx(&g_malloc.magbkt[bktid].taillk);
-                __mallocunlkmtx(&g_malloc.magbkt[bktid].lk);
-#else
                 __malloclkmtx(&g_malloc.magbkt[bktid].lk);
                 mag->next = g_malloc.magbkt[bktid].ptr;
                 if (mag->next) {
@@ -2685,7 +1890,6 @@ _free(void *ptr)
                 }
                 g_malloc.magbkt[bktid].ptr = mag;
                 __mallocunlkmtx(&g_malloc.magbkt[bktid].lk);
-#endif
             } else {
                 mag->arn = arn;
 #if (MALLOCBUFMAG)
@@ -2742,7 +1946,7 @@ _realloc(void *ptr,
         _free(ptr);
     }
 #if (MALLOCDEBUG)
-    __crash(retptr != NULL);
+    _assert(retptr != NULL);
 #endif
     if (!retptr) {
 #if defined(ENOMEM)
@@ -2839,7 +2043,7 @@ calloc(size_t n, size_t size)
 #endif
     ptr = _malloc(sz, 0, 1);
 #if (MALLOCDEBUG)
-    __crash(ptr != NULL);
+    _assert(ptr != NULL);
 #endif
 #if (MALLOCTRACE)
     __malloctrace();
@@ -2885,7 +2089,7 @@ realloc(void *ptr,
         }
     }
 #if (MALLOCDEBUG)
-    __crash(retptr != NULL);
+    _assert(retptr != NULL);
 #endif
 #if (MALLOCTRACE)
     __malloctrace();
@@ -2959,7 +2163,7 @@ aligned_alloc(size_t align,
         ptr = _malloc(size, aln, 0);
     }
 #if (MALLOCDEBUG)
-    __crash(ptr != NULL);
+    _assert(ptr != NULL);
 #endif
 #if (MALLOCTRACE)
     __malloctrace();
@@ -3004,7 +2208,7 @@ posix_memalign(void **ret,
         }
     }
 #if (MALLOCDEBUG)
-    __crash(ptr != NULL);
+    _assert(ptr != NULL);
 #endif
     *ret = ptr;
 #if (MALLOCTRACE)
@@ -3045,7 +2249,7 @@ valloc(size_t size)
 #endif
     ptr = _malloc(size, PAGESIZE, 0);
 #if (MALLOCDEBUG)
-    __crash(ptr != NULL);
+    _assert(ptr != NULL);
 #endif
 #if (MALLOCTRACE)
     __malloctrace();
@@ -3090,7 +2294,7 @@ memalign(size_t align,
         ptr = _malloc(size, aln, 0);
     }
 #if (MALLOCDEBUG)
-    __crash(ptr != NULL);
+    _assert(ptr != NULL);
 #endif
 #if (MALLOCTRACE)
     __malloctrace();
@@ -3130,7 +2334,7 @@ reallocf(void *ptr,
         return NULL;
     }
 #if (MALLOCDEBUG)
-    __crash(retptr != NULL);
+    _assert(retptr != NULL);
 #endif
 #if (MALLOCTRACE)
     __malloctrace();
@@ -3166,7 +2370,7 @@ pvalloc(size_t size)
     }
 #endif
 #if (MALLOCDEBUG)
-    __crash(ptr != NULL);
+    _assert(ptr != NULL);
 #endif
 #if (MALLOCTRACE)
     __malloctrace();
@@ -3208,7 +2412,7 @@ _aligned_malloc(size_t size,
         ptr = _malloc(size, aln, 0);
     }
 #if (MALLOCDEBUG)
-    __crash(ptr != NULL);
+    _assert(ptr != NULL);
 #endif
 #if (MALLOCTRACE)
     __malloctrace();
@@ -3278,7 +2482,7 @@ _mm_malloc(int size,
         ptr = _malloc(size, aln, 0);
     }
 #if (MALLOCDEBUG)
-    __crash(ptr != NULL);
+    _assert(ptr != NULL);
 #endif
 #if (MALLOCTRACE)
     __malloctrace();
