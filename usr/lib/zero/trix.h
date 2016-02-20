@@ -896,5 +896,83 @@ satdivu32(uint32_t a, uint32_t b)
     return res;
 }
 
+/* FIXME: verify chkmulrng32() and chkmulrng64()... :) */
+
+/*
+ * check if multiplication will overflow or underflow
+ * - return zero if not, negative for underflow, positive for overflow
+ */
+static __inline__ int32_t
+chkmulrng32(int32_t a, int32_t b, int32_t res)
+{
+    int     nsigbit;    // # of significant bits
+    int32_t ret;        // return value
+    
+    if (!a || !b || a == 1 || b == 1) {
+        /* never over- or underflows */
+        
+        return 0;
+    }
+    if (a == INT_MIN || b == INT_MIN) {
+        /* always underflows */
+        
+        return -1;
+    }
+    if ((powerof2(a) && res == INT_MIN)
+        || (powerof2(b) && res == INT_MIN)) {
+        /* okay, minimum negative value */
+        
+        return 0;
+    }
+    a = zeroabs(a);
+    b = zeroabs(b);
+    nsigbit = 32 - lzero32(a);
+    nsigbit += 32 - lzero32(b);
+    if (nsigbit == 32) {
+        /* need slow division */
+        ret = (a > INT_MAX / b);
+    } else {
+        ret = (nsigbit > 32);
+    }
+    
+    return ret;
+}
+
+/*
+ * check if multiplication will overflow or underflow
+ * - return zero if not, negative for underflow, positive for overflow
+ */
+static __inline__ int64_t
+chkmulrng64(int64_t a, int64_t b, int64_t res)
+{
+    int     nsigbit;
+    int64_t ret;
+    
+    if (!a || !b || a == 1 || b == 1) {
+        
+        return 0;
+    }
+    if (a == INT_MIN || b == INT_MIN) {
+        
+        return -1;
+    }
+    if ((powerof2(a) && res == INT_MIN)
+        || (powerof2(b) && res == INT_MIN)) {
+        
+        return 0;
+    }
+    a = zeroabs(a);
+    b = zeroabs(b);
+    nsigbit = 64 - lzero64(a);
+    nsigbit += 64 - lzero64(b);
+    if (nsigbit == 64) {
+        ret = (a > INT_MAX / b);
+    } else {
+        ret = (nsigbit > 64);
+    }
+    
+    return ret;
+}
+
 #endif /* __ZERO_TRIX_H__ */
 
