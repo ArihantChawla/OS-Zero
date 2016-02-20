@@ -4,6 +4,7 @@
 #include <zero/param.h>
 #include <zero/trix.h>
 #include <kern/util.h>
+#include <kern/cpu.h>
 #include <kern/mem/vm.h>
 #include <kern/mem/buf.h>
 #include <kern/mem/pool.h>
@@ -86,7 +87,7 @@ meminitphys(struct mempool *physpool, uintptr_t base, size_t nbphys)
 long
 meminitcpubuf(long unit, long how)
 {
-    struct membufbkt *bkt = &membufbkttab[unit];
+    struct membufbkt *bkt = &membufcputab[unit];
     uint8_t          *u8ptr = kwalloc(PAGESIZE);
     long              n = PAGESIZE / MEMBUF_SIZE;
     struct membuf    *buf;
@@ -97,7 +98,7 @@ meminitcpubuf(long unit, long how)
         return 0;
     }
     u8ptr += PAGESIZE;
-    bkt.n = n;
+    bkt->nbuf = n;
     while (n--) {
         u8ptr -= MEMBUF_SIZE;
         buf = (struct membuf *)u8ptr;
@@ -122,13 +123,13 @@ meminitbuf(void)
     /* allocate wired memory for membufs and memblks */
     u8ptr1 = kwalloc(MEMNBUF * MEMBUF_SIZE);
     if (!u8ptr1) {
-        kprintf(stderr, "FAILED to allocate membufs\n");
+        kprintf("FAILED to allocate membufs\n");
         m_waitint();
     }
     kbzero(u8ptr1, MEMNBUF * MEMBUF_SIZE);
     u8ptr2 = kwalloc(NMEMBUFBLK * MEMBUF_BLK_SIZE);
     if (!u8ptr2) {
-        kprintf(stderr, "FAILED to allocate blks for membufs\n");
+        kprintf("FAILED to allocate blks for membufs\n");
         m_waitint();
     }
     /* zero all allocated memory */
@@ -180,13 +181,13 @@ memgetbuf(long how)
     mtxlk(&membufcputab[unit].lk);
     ret = membufcputab[unit].buflist;
     if (ret) {
-        membufcputab[unit].buflist = buf->next;
+        membufcputab[unit].buflist = buf->hdr.next;
         membufcputab[unit].nbuf--;
     } else {
         mtxlk(&membufbkt.lk);
         ret = membufbkt.buflist;
         if (ret) {
-            membufbkt.buflist = buf->next;
+            membufbkt.buflist = buf->hdr.next;
             membufbkt.nbuf--;
             mtxunlk(&membufbkt.lk);
         } else {
@@ -205,10 +206,10 @@ memputbuf(struct membuf *buf)
     struct membkt *bkt = &membufbkt;
 
     mtxlk(&bkt->lk);
-    buf->next = membufbkt.buflist;
+    buf->hdr.next = membufbkt.buflist;
     membufbkt.buflist = buf;
     membufbkt.nbuf++;
-    mtxunlk(&bkt->lk;
+    mtxunlk(&bkt->lk);
 }
 
 /* FIXME: steal mbufs from other CPUs if need arises */
@@ -251,7 +252,7 @@ memputblk(struct memblk *blk)
     blk->next = membufbkt.blklist;
     membufbkt.blklist = blk;
     membufbkt.nblk++;
-    mtxunlk(&bkt->lk;
+    mtxunlk(&bkt->lk);
 }
 
 struct membuf *
@@ -259,10 +260,10 @@ membufprepend(struct membuf *buf, size_t len, long how)
 {
     struct membuf *mb;
 
-    if (buf->hdr.flags & MEMBUF_PKTHDRBIT) {
-        _memgetpkthdr(mb, how, (mb)->hdr.type);
+    if (buf->hdr.flg & MEMBUF_PKTHDR_BIT) {
+        _memgetpkthdr(mb, how, mb->hdr.type);
     } else {
-        _memgetbuf(mb, how, (mb)->hdr.type);
+        _memgetbuf(mb, how, mb->hdr.type);
     }
     if (!mb) {
         while (buf) {
@@ -271,7 +272,7 @@ membufprepend(struct membuf *buf, size_t len, long how)
 
         return NULL;
     }
-    if (buf->hdr.flg & MEMBUF_PKTHDRBIT) {
+    if (buf->hdr.flg & MEMBUF_PKTHDR_BIT) {
         memmovepkthdr(mb, buf);
     }
     mb->hdr.next = buf;

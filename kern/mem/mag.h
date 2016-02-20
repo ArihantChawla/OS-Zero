@@ -2,7 +2,7 @@
 #define __KERN_MEM_MAG_H__
 
 #include <stdint.h>
-#include <zero/cdecl.h>
+#include <zero/cdefs.h>
 #include <zero/param.h>
 #include <kern/mem/mem.h>
 
@@ -28,7 +28,7 @@
     (3 * sizeof(long) + 2 * sizeof(void *) + sizeof(uintptr_t)          \
      + __STRUCT_MEMMAG_PTAB_SIZE                                        \
      + __STRUCT_MEMMAG_BMAP_SIZE)
-#define __STRUCT_MEMMAM_PAD                                             \
+#define __STRUCT_MEMMAG_PAD                                             \
     (rounduppow2(__STRUCT_MEMMAG_SIZE, CLSIZE) - __STRUCT_MEMMAG_SIZE)
 struct memmag {
     uintptr_t      base;
@@ -43,7 +43,6 @@ struct memmag {
     void          *ptab[1UL << (MEMSLABMINLOG2 - MEMMINLOG2)];
 #if defined(MEMPARANOIA) &&  !(MEMSLABMINLOG2 - MEMMINLOG2 < (LONGSIZELOG2 + 3))
     uint8_t        bmap[__STRUCT_MEMMAG_BMAP_SIZE];
-#endif
 #endif /* defined(MEMPARANOIA) */
     uint8_t        _pad[__STRUCT_MEMMAG_PAD];
 };

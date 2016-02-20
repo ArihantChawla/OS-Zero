@@ -27,11 +27,15 @@ struct memobj {
  * init()       - called when memory cached into a zone
  * fini()       - called when zone memory released to system for other use
  */
+typedef long __memobjctor(void *adr, size_t size, void *arg, long flg);
+typedef void __memobjdtor(void *adr, size_t size, void *arg);
+typedef long __memobjinit(void *adr, size_t size, long flg);
+typedef void __memobjfini(void *adr, size_t size);
 struct memobjfuncs {
-    long ctor(void *adr, size_t size, void *arg, long flg);
-    void dtor(void *adr, size_t size, void *arg);
-    long init(void *adr, size_t size, long flg);
-    long fini(void *adr, size_t size);
+    __memobjctor *ctor;
+    __memobjdtor *dtor;
+    __memobjinit *init;
+    __memobjfini *fini;
 };
 
 #endif /* __KERN_MEM_OBJ_H__ */

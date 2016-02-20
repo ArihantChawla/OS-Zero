@@ -19,16 +19,16 @@
 /* TODO: I hope we don't need another suballocator for membufs... :) */
 
 /* get and initialise a standard membuf */
-#define _memgetbuf(mp, how, type)                                       \
+#define _memgetbuf(mp, how, t)                                          \
     do {                                                                \
-        struct membuf *_mb = memgetbuf();                               \
+        struct membuf *_mb = memgetbuf(how);                            \
                                                                         \
         while (!_mb && (how == MEM_TRYWAIT)) {                          \
             m_waitint();                                                \
             _mb = memgetbuf(how);                                       \
         }                                                               \
         if (_mb) {                                                      \
-            _mb->hdr.type = (type);                                     \
+            _mb->hdr.type = (t);                                        \
             _mb->hdr.next = NULL;                                       \
             _mb->hdr.nextpkt = NULL;                                    \
             _mb->hdr.adr = _mb->data.buf;                               \
@@ -47,7 +47,7 @@
             _ext->adr = _ptr;                                           \
             ext->nref = 0;                                              \
             _mb->hdr.adr = _ptr;                                        \
-            _mb->hdr.flg |= MEMBUF_PKTHDRBIT;                           \
+            _mb->hdr.flg |= MEMBUF_PKTHDR_BIT;                          \
             _ext->free = NULL;                                          \
             _ext->arg = NULL;                                           \
             _ext->size = MEMBUF_BLK_SIZE;                               \
@@ -55,31 +55,28 @@
         }                                                               \
     } while (0)
 
-#define _memgetpkthdr(mp, how, type)                                    \
+#define _memgetpkthdr(mp, how, t)                                       \
     do {                                                                \
-        struct membuf *_mb = kmalloc(MEMBUF_SIZE);                      \
+        struct membuf *_mb = memgetbuf(how);                            \
                                                                         \
-        while (!_mb && (how == MEM_TRYWAIT)) {                          \
-            m_waitint();                                                \
-            _mb = kmalloc(MEMBUF_SIZE);                                 \
-        }                                                               \
         if (_mb) {                                                      \
             struct pkthdr *_pkt = &_mb->data.hdr.pkt;                   \
-            _mb->hdr.type = (type);                                     \
+                                                                        \
+            _mb->hdr.type = (t);                                        \
             _mb->hdr.next = NULL;                                       \
             _mb->hdr.nextpkt = NULL;                                    \
             _mb->hdr.adr = membufpktdata(_mb);                          \
-            _mb->hdr.flg = MEMBUF_PKTHDRBIT;                            \
-            pkt->rcvif = NULL;                                          \
-            pkt->flg = 0;                                               \
-            pkt->aux = NULL;                                            \
+            _mb->hdr.flg = MEMBUF_PKTHDR_BIT;                           \
+            _pkt->rcvif = NULL;                                         \
+            _pkt->flg = 0;                                              \
+            _pkt->aux = NULL;                                           \
         }                                                               \
         (mp) = _mb;                                                     \
     } while (0)
 
 #define _memaddext(mb, how, size, free, arg, flg, type)                 \
     do {                                                                \
-        struct membuf *_mb = (mb);                                      \
+        struct membuf *_mb = memgetbuf(how);                            \
         void          *_buf = kmalloc(size);                            \
                                                                         \
         while (!buf && (how == MEM_TRYWAIT)) {                          \
@@ -155,7 +152,7 @@
 #define __membufsize(mb)                                                \
     (((mb)->hdr.flg & MEMBUF_EXTBIT)                                    \
      ? (membufextsize(mb))                                              \
-     : (((mb)->hdr.flg & MEMBUF_PKTHDRBIT)                              \
+     : (((mb)->hdr.flg & MEMBUF_PKTHDR_BIT)                             \
         ? MEMBUF_PKTLEN                                                 \
         : MEMBUF_LEN))
 
@@ -170,7 +167,7 @@
 #define _membufleadspace(mb)                                            \
     (((mb)->hdr.flg & MEMBUF_EXTBIT)                                    \
      ? 0                                                                \
-     : (((mb)->hdr.flg & MEMBUF_PKTHDRBIT)                              \
+     : (((mb)->hdr.flg & MEMBUF_PKTHDR_BIT)                             \
         ? ((mb)->hdr.adr - membufpktdata(mb))                           \
         : ((mb)->hdr.adr - (mb)->data.buf)))
 
@@ -193,7 +190,7 @@
         } else {                                                        \
             _mb = membufprepend(_mb, _len, _how);                       \
         }                                                               \
-        if ((_mb) && ((mb)->hdr.flg & MEMBUF_PKTHDRBIT)) {              \
+        if ((_mb) && ((mb)->hdr.flg & MEMBUF_PKTHDR_BIT)) {             \
             struct pkthdr *_pkt = membufpkthdr(_mb);                    \
                                                                         \
             _pkt->len += _len;                                          \

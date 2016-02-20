@@ -3,7 +3,7 @@
 
 #include <stdint.h>
 #include <zero/param.h>
-#include <zero/spinrw.h>
+//#include <zero/spinrw.h>
 
 #if (PAGESIZE == 4096)
 #define VMPAGEBITS 0xff

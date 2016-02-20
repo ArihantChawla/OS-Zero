@@ -58,7 +58,7 @@ extern void schedsetsleep(struct task *task);
                   fastu32div24tab))
 /* timeshare-tasks have interactivity scores */
 #define schedistimeshare(sched)                                         \
-    ((sched) >= SCHEDRESPONSIVE || (sched) <= SCHEDBATCH)
+    ((sched) >= SCHEDRESPONSIVE && (sched) <= SCHEDBATCH)
 #define schedisinteract(score)        ((score) < SCHEDSCORETHRESHOLD)
 #define schedcalcqueueid(pri)         (zeroabs(pri) >> 1)
 #define schedcalcqueueidofs(pri, ofs) (schedcalcqueueid(pri) + (ofs))
@@ -538,7 +538,7 @@ taskwakeup(struct task *task)
 #endif
     task->state = TASKREADY;
     task->cpu = cpu;
-    schedsetcpu(cpu);
+    schedsetcpu(&cputab[cpu]);
     schedsetready(task, cpu);
     /* FIXME: sched_setpreempt() */
 }

@@ -54,7 +54,8 @@
 #define MEMMINLOG2     CLSIZELOG2
 #define MEMZERO        0x00000001UL
 #define MEMWIRE        0x00000002UL
-#define MEMFLGBITS     (MEMZERO | MEMWIRE)
+#define MEMFREE        0x000000004ul
+#define MEMFLGBITS     (MEMZERO | MEMWIRE | MEMFREE)
 #define MEMNFLGBIT     4
 #endif
 

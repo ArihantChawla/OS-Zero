@@ -9,7 +9,7 @@
 #include <zero/cdefs.h>
 #include <zero/param.h>
 #include <kern/types.h>
-#include <kern/bits/mem.h>
+#include <kern/bits/mem/buf.h>
 
 /* allocation flags */
 #define MEM_TRYWAIT       0
@@ -152,7 +152,7 @@ struct memext {
      | MEMBUF_PROTO_BIT10 | MEMBUF_PROTO_BIT11 | MEMBUF_PROTO_BIT12)
 /* flags copied for pkthdr */
 #define MEMBUF_COPYBITS                                                 \
-    (MEMBUF_PKTHDRBIT | MEMBUF_EORBIT | MEMBUF_RDONLY                   \
+    (MEMBUF_PKTHDR_BIT | MEMBUF_EORBIT | MEMBUF_RDONLY                  \
      | MEMBUF_BROADCAST_BIT | MEMBUF_MULTICAST_BIT | MEMBUF_PROMISC_BIT \
      | MEMBUF_VLANTAG_BIT                                               \
      | MEMBUF_PROTO_BITS)
