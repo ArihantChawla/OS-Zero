@@ -1,6 +1,8 @@
 #ifndef __UNIT_X86_64_VM_H__
 #define __UNIT_X86_64_VM_H__
 
+/* REFERENCE: http://fxr.watson.org/fxr/source/amd64/amd64/pmap.c */
+
 #include <kern/types.h>
 
 /*
@@ -200,11 +202,11 @@ vmadrtopde(uintptr_t adr)
     return (PDMAP + ((adr >> PDRSHIFT) & mask));
 }
 
-#define pte_load_store(ptep, pte) m_swap(ptep, pte)
-#define pte_load_clear(ptep)      m_swap(ptep, 0)
-#define pte_store(ptep, pte)      (*(uintptr_t *)(ptep) = (uintptr_t)(pte))
-#define pte_clear(ptep)           pte_store(ptep, 0)
-#define pde_store(pdep, pde)      pte_store(pdep, pde)
+#define pteloadstore(ptep, pte) m_swap(ptep, pte)
+#define pteloadclear(ptep)      m_swap(ptep, 0)
+#define ptestore(ptep, pte)     (*(uintptr_t *)(ptep) = (uintptr_t)(pte))
+#define pteclear(ptep)          pte_store(ptep, 0)
+#define pdestore(pdep, pde)     pte_store(pdep, pde)
 
 #endif /* defined(__KERNEL__) */
 
@@ -212,10 +214,10 @@ vmadrtopde(uintptr_t adr)
 #define PMAP_EPT    1   // Intel's nested page tables
 #define PMAP_PT_RVI 2   // AMD's nested page tables
 
-struct vmmachpage {
-    struct vmmachpage *list;
-    int                gen;
-    int                pat;
+struct vmpage {
+    struct vmpage *list;
+    int            gen;
+    int            pat;
 };
 
 #define PMAP_PCID_NONE    0xffffffff
@@ -248,10 +250,10 @@ struct vmpagemap {
 
 #define _NPCM   3
 #define _NPCPV  168
-struct memchunk {
+struct vmchunk {
     struct vmpagemap  *pagemap;
-    struct memchunk   *list;
-    struct memchunk   *lruqueue;
+    struct vmchunk    *list;
+    struct vmchunk    *lruqueue;
     uint64_t           bitmap[_NPCM];  /* bitmap; 1 = free */
     struct vmmapentry  mapqueue[_NPCPV];
 };
