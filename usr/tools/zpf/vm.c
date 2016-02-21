@@ -6,6 +6,9 @@
 struct zpfopinfo  zpcopinfo ALIGNED(PAGESIZE);
 static zpfword_t *zpfopmap[ZPF_NUNIT];
 
+/*
+ * detect overflow of (a) + (b) with a < UINT_MAX - b
+ */
 static __inline__ zpfword_t
 zpfaddop(struct zpfvm *vm, struct zpfop *op,
          struct zpfopinfo *info, long bits)

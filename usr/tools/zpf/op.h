@@ -1,4 +1,4 @@
-#IFNDEF __ZPF_OP_H__
+#ifndef __ZPF_OP_H__
 #define __ZPF_OP_H__
 
 #include <limits.h>
@@ -12,7 +12,6 @@ typedef long zpfopfunc(struct zpfvm *vm,
                        struct zpfop *op,
                        struct zpfopinfo *info,
                        long bits);
-
 /*
  * addressing modes
  * ----------------
@@ -29,7 +28,8 @@ typedef long zpfopfunc(struct zpfvm *vm,
  * SYM                  L               jump label L
  * JMP + JMP2_BIT       #k,Lt,Lf        jump to Lt if true, otherwise jump to Lf
  * JMP + JMPT_BIT       #k,Lt           jump to Lt if predicate is true
- * EXT                 extension       BPF extension
+ * EXT                 extension        BPF
+ extension
  */
 /* 8-bit instruction ID in low 8 bits of op->code */
 /* bits 28..31 in op->k */
