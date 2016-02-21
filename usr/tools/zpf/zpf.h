@@ -5,6 +5,8 @@
 #include <zero/trix.h>
 #include <zpm/op.h>
 
+#define ZPM_NHASH          1024
+
 /* number of items in scratch memory storage (vm->mem) */
 #define ZPF_MEM_NWORD      16   // scratch memory store region
 

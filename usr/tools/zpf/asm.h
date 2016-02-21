@@ -1,6 +1,15 @@
 #ifndef __ZPF_ASM_H__
 #define __ZPF_ASM_H__
 
+#define ZPF_REQ_REG_BIT   0x01
+#define ZPF_REQ_VAR_BIT   0x02
+#define ZPF_REQ_SYM_BIT   0x04
+#define ZPF_REQ_ALPHA_BIT 0x08
+#define ZPF_REQ_DIGIT_BIT 0x10
+#define ZPF_REQ_IMMED_BIT 0x20
+#define ZPF_REQ_IND_BIT   0x40
+#define ZPF_REQ_OFS_BIT   0x80
+
 #define zpfgetarg1(vm, op, argt, argp, bits, req)                       \
     do {                                                                \
         zpfword_t _inst = (op)->code & ZPF_OP_INST_MASK;                \

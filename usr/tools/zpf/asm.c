@@ -1,5 +1,4 @@
-struct zpfopfunc  *zpfopfunctab[ZPF_OP_NUNIT][ZPF_OP_NINST];
-struct zpfop     **zpfoptab;
+#include <zpf/op-h>
 
 struct zpfop *
 zpfasmop(struct zvm *vm, struct zpfop *op)
@@ -33,46 +32,409 @@ zpfasmfile(const char *name, long flg)
     }
 }
 
-struct zpfop *
-zpfasmreadline(FILE *fp, unsigned char *buf, size_t bufsize)
-{
-    zpfword_t     narg = 0;
-    struct zpfop *op;
-    size_t        n = 0;
-    int           ch = 0;
+#define zpfhextonum(cp)                                                 \
+    ((*(cp) >= 0 && *(cp) <= 9)                                         \
+     ? (*(cp) - '0')                                                    \
+     : (*(cp) = toupper(*cp),                                           \
+        ((*(cp) >= 'A' && *(cp) <= 'F')                                 \
+         ? (10 + *(cp) - 'A')                                           \
+         : 0)))
 
+struct zpfop *
+zpfasmreadline(FILE *fp)
+{
+    long              nospc = 0;
+    long              of = 0;
+    uint32_t          bits = 0;
+    zpfword_t         sum;
+    zpfword_t         word;
+    zpfword_t         tmp;
+    unsigned char     uc = 0;
+    unsigned char    *ptr;
+    unsigned char    *str;
+    unsigned char    *buf = NULL;
+    struct zpfop     *op = NULL;
+    struct zpfopinfo *info = NULL;
+    size_t            n = 0;
+    size_t            sz;
+    int               ch = 0;
+
+    sz = 128 * sizeof(unsigned char);
+    ptr = malloc(sz);
+    if (!ptr) {
+
+        return NULL;
+    }
+    buf = ptr;
     do {
-       ch = zpfgetcbuf(zpfiobuf);
-    } while (isspace(ch));
-    if (ch != EOF) {
-        if (isalpha(ch)) {
+        ch = zpfgetcbuf(zpfiobuf);
+#if 0
+        if ((nospc) && isspace(ch)) {
+            fprintf(stderr, "loose space after %c in source file\n",
+                    ch);
         }
+        nospc = bitset(zpfnospacemap, ch);
+#enDIF
+        if (!isspace(ch)) {
+            n++;
+            *buf++ = ch;
+            if (n == sz) {
+                sz <<= 1;
+                str = realloc(ptr, sz);
+                if (!str) {
+                    
+                    return NULL;
+                }
+                ptr = str;
+                buf = str + n;
+            }
+        }
+    } while ((ch != EOF) && (ch != '\n'));
+    inst = zpffindinst(ptr, &ptr);
+    ch = *buf++;
+    switch (ch) {
+        case '%':
+            /* register or label */
+            ch = *buf++;
+            if (toupper(ch) == 'A' && isspace(*buf)) {
+                bits |= ZPF_A_REG_BIT;
+                buf++;
+            }
+        case '#':
+            ch = zpfgetbuf(zpfiobuf);
+            if (!isalpha(ch)) {
+                /* skip comment to end of line */
+                do {
+                    ch = zpfgetcbuf(zpfiobuf);
+                } while (ch != EOF && (ch != '\n'));
+            }
+            
+            break;
+        case 'M':
+
+            break;
+        case '#':
+
+            break;
+        case '[':
+
+            break;
+        case 'P':
+
+            break;
+    } while (ch != EOF && ch != '\n');
+    if (str) {
+        buf = str;
+        if (!isalpha(ch)) {
+            free(str);
+
+            return NULL;
+        }
+        while (isalpha(*buf)) {
+            buf++;
+        }
+        buf[0] = '\0';
+        inst = zpffindinst(str);
+        if (!inst) {
+            fprintf(stderr, "invalid code line: %s\n", str);
+            free(str);
+
+            return NULL;
+        }
+        str = ++buf;
+        ch = *buf++;
+        switch (ch) {
+                ch = *buf++;
+                if (!isalpha(ch)) {
+                    free(ptr);
+
+                    return NULL;
+                } else {
+                    do {
+                        ch = zpfgetcbuf(zpfiobuf);
+                    } while ((ch != EOF) && (ch != '\n'));
+                }
+                if (toupper(ch) == 'A') {
+                    bits =| ZPM_A_REG_BIT;
+                } else if (toupper(ch) == 'X') {
+                    bits |= ZPM_X_REG_BIT;
+                }
+
+                break;
+        }
+    } else if (ch != EOF && isdigit(ch)) {
+        free(str);
+        do {
+            ch = zpfgetcbuf(zpfiobuf);
+        } while (ch != '\n');
+
+        return NULL;
     }
     if (ch != EOF) {
-        switch (ch) {
-            case 'x':
-            case 'X':
-                /* X-register */
-
+        uc = ch;
+        ch = zpfgetcbuf(zpfiobuf);
+        if (uc == '#' && isspace(ch)) {
+            /* comment till the end of line */
+            free(str);
+            
+            do {
+                ch = zpfgetcbuf(zpfiobuf);
+            } while (ch != '\n');
+            
+            return NULL;
+        }
+        while (isspace(ch)) {
+            ch = zpfgetcbuf(zpfiobuf);
+        }
+        if (isxdigit(ch)) {
+            word = 0;
+            if (ch == 0) {
+                ch = zpfgetcbuf(zpfiobuf);
+                if (toupper(ch) == 'X') {
+                    /* hex digits */
+                    ch = zpfgetcbuf(zpfiobuf);
+                    while (isxdigit(ch)) {
+                        word <<= 4;
+//                        word += hextonum(ch);
+                        tmp = hextonum(ch);
+                        sum = tmp + word;
+                        if (sum < (tmp | word)) {
+                            of = 1;
+                        }
+                        word = sum;
+                        ch = zpfgetcbuf(zpfiobuf);
+                    }
+                } else {
+                    /* octal digits */
+                    while ((ch >= '0') && (ch <= '7')) {
+                        word <<= 3;
+                        tmp = ch - '0';
+                        sum = tmp + word;
+                        if (sum < (tmp | word)) {
+                            of = 1;
+                        }
+                        word = sum;
+                        ch = zpfgetcbuf(zpfiobuf);
+                    }
+                }
+            } else {
+                /* decimal digits */
+                while (isdigit(ch)) {
+                    word *= 10;
+                    word += ch - '0';
+                    ch = zpfgetcbuf(zpfiobuf);
+                }
+            }
+        } else if (isalpha(ch)) {
+            sz = 32 * sizeof(unsigned char);
+            str = malloc(sz);
+            if (!str) {
+                
+                return NULL;
+            }
+            buf = str;
+            while (isalpha(ch)) {
+                *buf++ = ch;
+                n++;
+                if (n == sz) {
+                    sz <<= 1;
+                    ptr = realloc(str, sz);
+                    if (!ptr) {
+                        
+                        return NULL;
+                    }
+                    str = ptr;
+                    buf = ptr + n;
+                }
+                ch = zpfgetcbuf(zpfiobuf);
+            }
+            buf = str;
+        }
+        switch (uc) {
+            case '%':
+                /* label or register */
+                if (buf) {
+                    if (toupper(buf[0]) == 'A' && !isalpha(buf[1])) {
+                        bits |= ZPF_A_REG_BIT;
+                    } else if (toupper(buf[0]) == 'X' && !isalpha(buf[1])) {
+                        bits |= ZPF_X_REG_BIT;
+                    } else if (toupper(buf[0]) == 'K' && !isalpha(buf[1])) {
+                        bits |= ZPF_K_ARG_BIT;
+                    } else {
+                        var = zpffindvar(str);
+                        if (!var) {
+                            sym = zpffindsym(str);
+                            free(str);
+                            if (!sym) {
+                                
+                                return NULL;
+                            }
+                        } else {
+                            free(str);
+                        }
+                    }
+                }
+                
                 break;
             case '#':
-                /* IMMEDIATE k-argument, #len, or #pktlen */
-
-                break;
+                /* IMMEDIATE argument, VARIABLE, or COMMENT */
+                if ((word) && !of) {
+                    op->k = word;
+                    bits |= ZPF_K_ARG_BIT;
+                } else if (buf) {
+                    if (toupper(buf[0]) == 'K' && !isalpha(buf[1])) {
+                        bits |= ZPF_K_ARG_BIT;
+                    } else {
+                        var = zpffindvar(buf);
+                        free(buf);
+                        if (!var) {
+                            
+                            return NULL;
+                        }
+                    }
+                } else {
+                    free(buf);
+                    
+                    return NULL;
+                }
             case '[':
-                /* LITERAL argument */
-
+                /* LITERAL packet argument */
+                if ((word) && !of) {
+                    op->k = word;
+                    bits = ZPF_K_OFS_BIT;
+                } else if (buf) {
+                    if (isxdigit(buf[0))) {
+                        word = 0;
+                        if (!buf[0]) {
+                            buf++;
+                            if (toupper(buf[0]) == 'X') {
+                                /* hexadecimal digits */
+                                buf++;
+                                do {
+                                    word <<= 4;
+                                    tmp = hextonum(buf[0]);
+                                    sum = word + tmp;
+                                    if (sum < (word | tmp)) {
+                                        of = 1;
+                                    }
+                                    word = sum;
+                                    buf++;
+                                } while (ishexdigit(buf[0]));
+                            } else {
+                                /* octal digits */
+                                buf++;
+                                do {
+                                    word <<= 3;
+                                    word += buf[0] - '0';
+                                    buf++;
+                                } while (buf[0] >= '0' && buf[0] <= '7');
+                            }
+                        } else {
+                            /* decimal digits */
+                            buf++;
+                            do {
+                                word *= 10;
+                                word += buf[0] - '0';
+                                buf++;
+                            } while (isdigit(buf[0]));
+                        }
+                    } else {
+                        if (toupper(buf[0]) == 'K' && !isalpha(buf[0])) {
+                            bits |= ZPF_K_ARG_BIT;
+                        } else if (toupper(buf[0]) == 'X' && !isalpha(buf[0])) {
+                            bits |= ZPF_X_REG_BIT;
+                        }
+                        ch = zpfgetcbuf(zpfiobuf);
+                        while (isspace(ch)) {
+                            ch = zpfgetcbuf(zpfiobuf);
+                        }
+                        if (ch == '+') {
+                            ch = zpfgetcbuf(zpfiobuf);
+                            while (isspace(ch)) {
+                                ch = zpfgetcbuf(zpfiobuf);
+                            }
+                            if ((bits & ZPF_X_REG_BIT)
+                                && (toupper(ch) == 'K')) {
+                                ch = zpfgetcbuf(zpfiobuf);
+                                if (isspace(ch)) {
+                                    bits |= ZPF_K_OFS_BIT;
+                                }
+                            } else if ((bits & ZPF_K_ARG_BIT)
+                                       && toupper(buf[0]) == 'X')
+                                ch = zpfgetcbuf(zpfiobuf);
+                            bits |= ZPF_X_OFS_BIT;
+                        }
+                    }
+                }
+                
                 break;
             case 'M':
                 /* scratch memory operation */
-
-                break;
             case 'P':
                 /* packet operation */
+                if (buf[0] == '[') {
+                    word = 0;
+                    buf++;
+                    do {
+                        ch = zpfgetcbuf(zpfiobuf);
+                    } while (isspace(ch));
+                    while (isdigit(ch)) {
+                        word *= 10;
+                        tmp = ch - '0';
+                        if ((uc == 'M') && word > 15) {
+                            free(str);
+                            
+                            return NULL;
+                        }
+                        sum = word + tmp;
+                        if (sum < (word | tmp)) {
+                            of = 1;
+                        }
+                        zpfgetcbuf(zpfiobuf);
+                    }
+                    while (isspace(ch)) {
+                        ch = zpfgetcbuf(zpfiobuf);
+                    }
+                    if (ch == ']') {
+                        if (uc == 'M') {
+                            bits |= ZPF_MEM_BIT | ZPF_K_OFS_BIT;
+                        } else {
+                            bits |= ZPF_PKT_BIT | ZPF_K_OFS_BIT;
+                        }
+                    }
+                }
 
                 break;
         }
     }
+
+    return;
+}
+
+void
+zpfinitasmops(void)
+{
+    long          ndx;
+    unsigned char bits;
+    
+    setbit(zpfnospacemap, '%');
+    setbit(zpfnospacemap, '#');
+    zpmreqargsmap['%'] = ZPM_REQ_REG_BIT | ZPM_REQ_ALPHA_BIT;
+    zpmreqargsmap['#'] = ZPM_REQ_VAR_BIT | ZPM_REQ_DIGIT_BIT;
+    zpmreqargsmap['['] = (ZPM_REQ_ALPHA_BIT
+                          | ZPM_REQ_DIGIT_BIT
+                          | ZPM_REG_IND_BIT);
+    zpmreqargsmap['M'] = ZPM_REQ_DIGIT_BIT | ZPM_REQ_IND_BIT;
+    zpmreqargsmap['P'] = ZPM_REQ_DIGIT_BIT | ZPM_REQ_IND_BIT;
+
+    return;
+}
+
+void
+zpfinitasm(void)
+{
+    zpfinitasmops();
+    return;
 }
 
 int
@@ -98,7 +460,7 @@ main(int argc, char *argv[])
  * #len                 -> packet length
  * M[k]                 -> word k in stcratch memory store
  * [k]                  -> byte, halfword, or word at byte offset k in packet
- * [x+k}                -> byte, halfword, or word at byte offset x+k in packet
+ * [x+k]                -> byte, halfword, or word at byte offset x+k in packet
  * L                    -> offset from current instruction to L
  * #k, Lt, Lf           -> branches for true and false predicates
  * x                    -> the index register
@@ -210,7 +572,7 @@ struct ebpfop {
  * eBPF
  * ----
  * - close relation with X86
-¨* - calling convention
+Â¨* - calling convention
  *   - R0       - return vaLue
  *   - R1..R5   - function arguents
  *   - R6..R9   - callee saved

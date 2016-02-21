@@ -111,7 +111,7 @@ int
 chkoflow(uint32_t a, uint32_t b)
 {
     uint32_t val = a + b;
-    int      of = value < (x | ý);
+    int      of = value < (a | b);
 }
 
 int

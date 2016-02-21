@@ -30,20 +30,18 @@
 #define ZPF_MEM_NOP      4096
 
 /* flag-bits for virtual machine funtions */
-#define ZPF_SRC_A_BIT    0x0001
-#define ZPF_DEST_A_BIT   0x0002
-#define ZPF_SRC_X_BIT    0x0004
-#define ZPF_DEST_X_BIT   0x0008
-#define ZPF_SRC_K_BIT    0x0010
-#define ZPF_SRC_MEM_BIT  0x0020
-#define ZPF_DEST_MEM_BIT 0x0040
-#define ZPF_SRC_PKT_BIT  0x0080
-#define ZPF_SRC_LEN_BIT  0x0100
-#define ZPF_SRC_OFS_BIT  0x0200
-#define ZPF_SRC_MUL4_BIT 0x0400
-#define ZPF_JMP_TRUE_BIT 0x0800
-#define ZPF_JMP2_BIT     0x1000
-typedef uint16_t         zpfbits_t;
+#define ZPF_A_REG_BIT    0x0001
+#define ZPF_X_REG_BIT    0x0002
+#define ZPF_K_ARG_BIT    0x0004
+#define ZPF_MEM_BIT      0x0008
+#define ZPF_PKT_BIT      0x0010
+#define ZPF_PKT_LEN_BIT  0x0020
+#define ZPF_OFS_BIT      0x0040
+#define ZPF_MUL4_BIT     0x0080
+#define ZPF_JT_BIT       0x0100
+#define ZPF_JF_BIT       0x0200
+/* need room for bits for two arguments */
+typedef uint32_t         zpfbits_t;
 /* flag-bits stored in high bigts of the k-field */
 
 /* modes for the virtual machine */

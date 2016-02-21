@@ -3,7 +3,13 @@
 #include <zero/trix.h>
 #include <zpf/zpf.h>
 
-#define zpfaluprologue(vm, op, info, bits,
+#define zpfaluprologue(vm, op, info, bits)
+
+extern uint32_t        zpfopargbits[ZPF_NUNIT][ZPF_UNIT_NOP];
+extern unsigned char   zpfreqargsmap[256];
+extern unsigned char   zpfnospacemap[256 / CHAR_BIT];
+extern zpfopfunc      *zpfopfunctab[ZPF_OP_NUNIT][ZPF_OP_NINST];
+extern zpfop         **zpfoptab;
 
 struct zpfopinfo  zpcopinfo ALIGNED(PAGESIZE);
 static zpfword_t *zpfopmap[ZPF_NUNIT];

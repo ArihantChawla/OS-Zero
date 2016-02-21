@@ -5,6 +5,14 @@
 #include <zero/trix.h>
 #include <zpf/zpf.h>
 
+void
+zpfinitopspacetab(struct zpfopinfo *info)
+{
+    memset(info->nospacemap, 0, 256 * sizeof(unsigned char) / CHAR_BIT);
+    setbit(info->nospacetab, '%');
+    setbit(info->nospacetab, '#');
+}
+
 /* initialise dispatch function pointer tables */
 void
 zpfinitopfuncs(struct zpfopinfo *info)
@@ -175,6 +183,7 @@ zpfinitopadrbits(struct zpfopinfo *info)
 void
 zpfinitopinfo(struct zpfopinfo *info)
 {
+    zpfinitnospacetab(info);
     zpfinitopfuncs(info);
     zpfinitnargs(info);
     zpfinitadrbits(info);

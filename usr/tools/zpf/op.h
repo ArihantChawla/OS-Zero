@@ -7,6 +7,20 @@
 
 /* operation dispatch function */
 
+#define ZPF_REG_BIT   (1 << 0)
+#define ZPF_A_BIT     (1 << 1)
+#define ZPF_X_BIT     (1 << 2)
+#define ZPF_K_BIT     (1 << 3)
+#define ZPF_MEM_BIT   (1 << 4)
+#define ZPF_LABEL_BIT (1 << 5)
+#define ZPF_PKT_BIT   (1 << 6)
+#define ZPF_OFS_BIT   (1 << 7)
+#define ZPF_LEN_BIT   (1 << 8)
+#define ZPF_MUL4_BIT  (1 << 9)
+#define ZPF_JMPT_BIT  (1 << 10)
+#define ZPF_JMP2_BIT  (1 << 11)
+typedef uint32_t zpfopargbits_t;
+
 #define ZPF_OP_FAILURE     (-1L)
 typedef zpfword_t zpfopfunc(struct zpfvm *vm, zpfword_t src, zpfword_t dest);
 /*
@@ -131,7 +145,7 @@ typedef zpfword_t zpfopfunc(struct zpfvm *vm, zpfword_t src, zpfword_t dest);
 
 /* load instructions */
 /* instruction                  brief                   addressing modes */
-#define ZPF_MEM_UNIT     0x01
+#define ZPF_REG_UNIT     0x01
 #define ZPF_LDB          0x01   // load byte into A     1, 2
 #define ZPF_LDH          0x02   // load halfword into A 1, 2
 #define ZPF_LDI          0x03   // load word into A     4
@@ -143,7 +157,7 @@ typedef zpfword_t zpfopfunc(struct zpfvm *vm, zpfword_t src, zpfword_t dest);
 /* instruction                  brief                   addressing modes */
 #define ZPF_ST           0x08   // store A into M[];    3
 #define ZPF_STX          0x09   // store X into M[];    3
-#define ZPF_MEM_NOP      10     // # of table items for unit
+#define ZPF_REG_NOP      10     // # of table items for unit
 
 /* control flow */
 
@@ -172,8 +186,11 @@ typedef zpfword_t zpfopfunc(struct zpfvm *vm, zpfword_t src, zpfword_t dest);
 #define ZPF_TXA          0x02   // copy X into A
 #define ZPF_XFER_NOP     3      // # of table items for unit
 
+#define ZPF_NUNIT        4
+
 /* operation decoding */
 
+#define ZPF_UNIT_NOP     16
 #define ZPF_OP_NBIT      16
 #define ZPF_INST_NBIT    4      // per-unit instruction IDs
 #define ZPF_UNIT_NBIT    2      // unit IDs
@@ -201,6 +218,8 @@ typedef zpfword_t zpfopfunc(struct zpfvm *vm, zpfword_t src, zpfword_t dest);
 #define zpfgetjmpfadr(vm, op) ((vm)->pc + (op)->jf)
 #define zpfgetsymadr(vm, op)  (zpfgetadrbit((op)->k))
 #define ZPF_K_NBIT    32
+
+#define ZPF_UNIT_NOP        16
 
 /*
  * code field format
@@ -257,6 +276,15 @@ struct zpfop {
     uint8_t   jt;       // 8-bit offset from PC to true-branch
     uint8_t   jf;       // 8-bit offset rom PC to false-branch
     zpfword_t k;        // signed 32-bit miscellaneous argument
+};
+
+struct zpfinst {
+    const char     *name;
+    struct zpfinst *chain;
+    long            key;
+    uint32_t        flg;
+    uint8_t         unit;
+    uint8_t         inst;
 };
 
 /* index values for accessing argument structures */
@@ -320,21 +348,22 @@ struct zpfopdata {
 };
 
 struct zpfopinfo {
-    zpfopfunc **unitfuncs[ZPF_NUNIT];
-    uint16_t  **unitargbits[ZPF_NUNIT];
-    uint8_t    *unitopnargs[ZPF_NUNIT];
-    zpfopfunc  *alufunctab[(1L << ZPF_UNIT_NBIT)];
-    zpfopfunc  *memfunctab[(1L << ZPF_MEM_NBIT)};
-    zpfopfunc  *flowfunctab[ZPF_NFLOW_NBIT];
-    zpfopfunc  *xferfunctab[ZPF_NXFER_NBIT];
-    uint16_t    aluargbits[ZPF_UNIT_NOP];
-    uint16_t    memargbits[ZPF_NMEM_OP];
-    uint16_t    flowargbits[ZPF_NFLOW_OP];
-    uint16_t    xferargbits[ZPF_NXFER_OP];
-    uint8_t     alunargtab[ZPF_NALU_OP];
-    uint8_t     memnargbit[ZPF_NMEM_OP];
-    uint8_t     flownargbit[ZPF_NMEM_OP];
-    uint8_t     xfernargbit[ZPF_NXFER_OP];
+    unsigned char   nospacemap[256 / CHAR_BIT];
+    zpfopfunc     **unitfuncs[ZPF_NUNIT];
+    uint16_t      **unitargbits[ZPF_NUNIT];
+    uint8_t        *unitopnargs[ZPF_NUNIT];
+    zpfopfunc      *alufunctab[ZPF_UNIT_NOP];
+    zpfopfunc      *memfunctab[ZPF_UNIT_NOP];
+    zpfopfunc      *flowfunctab[ZPF_UNIT_NOP];
+    zpfopfunc      *xferfunctab[ZPF_UNIT_NOP];
+    uint16_t        aluargbits[ZPF_UNIT_NOP];
+    uint16_t        memargbits[ZPF_NMEM_OP];
+    uint16_t        flowargbits[ZPF_NFLOW_OP];
+    uint16_t        xferargbits[ZPF_NXFER_OP];
+    uint8_t         alunargtab[ZPF_NALU_OP];
+    uint8_t         memnargbit[ZPF_NMEM_OP];
+    uint8_t         flownargbit[ZPF_NMEM_OP];
+    uint8_t         xfernargbit[ZPF_NXFER_OP];
 };
 
 /* bits-argument */
