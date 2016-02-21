@@ -11,12 +11,14 @@
                                                                         \
                 break;                                                  \
             case ZPF_ARG_REG:                                           \
-                if ((bits) & (ZPF_REG_X_BIT))                           \
-                (op)->args.val1 = (vm)->a;                              \
-                                                                        \
+                if ((bits) & (ZPF_REG_X_BIT)) {                         \
+                    (op)->args.val1 = (vm)->x;                          \
+                } else {                                                \
+                    (op)->args.val1 = (vm)->a;                          \
+                }                                                       \
                 break;                                                  \
             case ZPF_ARG_IMMED:                                         \
-                (op)-> = ZPC_SYM_UNRESOLVED;                            \
+                (op)->args[0] = (op)->k;                                \
                                                                         \
                 break;                                                  \
             case ZPF_ARG_MEM:                                           \
@@ -62,10 +64,11 @@ struct zpftrap {
 #define ZPF_SYM_NONE       0    // 0 is always start
 #define ZPF_SYM_UNRESOLVED (~(zpfword_t)0)
 struct zpfsym {
-    const char    *name;        // symbol/label name
-    zpfhashkey     key;         // symbol hash key
-    zpfword_t      adr;         // symbol address or ZPF_SYM_UNRESOLVED
     struct zpfsym *chain;       // hash-table chain
+    long           key;         // symbol hash key
+    const char    *name;        // symbol/label name
+    zpfword_t      adr;         // symbol address or ZPF_SYM_UNRESOLVED
+    long           flg;         // SYM_RESOLVED
 };
 
 struct zpfasmfile {
@@ -73,11 +76,16 @@ struct zpfasmfile {
     int             fd;         // file descriptor
     size_t          nop;        // number of ops in use
     size_t          noptab;     // number of ops allocated in optab
-    struct zpmop   *optab;      // program image
+    struct zpfop   *optab;      // program image
     size_t          nsym;       // # of symbols in use
     size_t          nsymtab;    // # of symbols allocated in symtab
-    struct zpmsym **symtab;     // symbol/label hash table
+    struct zpfsym **symtab;     // symbol/label hash table
 };
+
+struct zpfasm {
+    size_t            nfile;
+    struct zpfiofile *filetab;
+}
 
 #endif /* __ZPF_ASM_H__ */
 

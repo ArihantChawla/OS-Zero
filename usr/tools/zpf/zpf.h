@@ -16,5 +16,7 @@
 typedef int32_t zpfword_t;
 #define bpfnsigbit(w)      (32 - lzero32(w))
 
+#define zpfgetarg1(vm, args)
+
 #endif /* __ZPF_ZPF_H__ */
 

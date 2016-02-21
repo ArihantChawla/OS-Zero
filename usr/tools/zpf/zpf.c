@@ -1,6 +1,8 @@
+#include <stdint.h>
 #include <limits.h>
 #include <zero/cdefs.h>
 #include <zero/param.h>
+#include <zero/trix.h>
 #include <zpf/zpf.h>
 
 /* initialise dispatch function pointer tables */

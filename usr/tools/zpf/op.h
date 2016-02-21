@@ -10,7 +10,8 @@
 #define ZPF_OP_FAILURE     (-1L)
 typedef long zpfopfunc(struct zpfvm *vm,
                        struct zpfop *op,
-                       struct zpfopinfo *info);
+                       struct zpfopinfo *info,
+                       long bits);
 
 /*
  * addressing modes
@@ -90,41 +91,36 @@ typedef long zpfopfunc(struct zpfvm *vm,
  */
 
 /* first 8 addressing modes can be encoded in op->code */
+/* argument types */
 #define ZPF_REG_ARG         0   // source and destination registers
 #define ZPF_IMMED_ARG       1   // immediate argument in k-field
 #define ZPF_MEM_ARG         2   // 4-bit acratch memory area offset   
 #define ZPF_PKT_ARG         3   // address relative to packet
 #define ZPF_SYM_ARG         4   // symbol [label] address for branches
 #define ZPF_JMP_ARG         5   // branch offset from pc for true predicate
-#define ZPF_BIG_WORD_ARG    6
-#define ZPF_EXT_ARG         7  // BPF extension
-#define ZPF_OP_FLG_NBIT     8
-#if 0
-/* flag-bits for these in high bits of op->args.val[1|2|3] */
-#define ZPF_REG_BIT         (1L << ZPF_REG_ARG)
-#define ZPF_IMMED_BIT       (1L << ZPF_IMMED_ARG)
-#define ZPF_MEM_BIT         (1L << ZPF_MEM_ARG)
-#define ZPF_PKT_BIT         (1L << ZPF_PKT_ARG)
-#define ZPF_SYM_BIT         (1L << ZPF_SYM_ARG)
-#define ZPF_JMP_BIT         (1L << ZPF_JMP_ARG)
-#define ZPF_BIG_WORD_BIT    (1L << ZPF_BIG_WORD_ARG)
-#define ZPF_EXT_BIT         (1L << ZPF_EXT_ARG)
-#endif
-#define ZPF_REG_X_BIT       (1L << 31)  // else REG_A
-#define ZPF_OFS_BIT         (1L << 30)  // for PKT or MEM
-#define ZPF_PKT_MUL4_BIT    (1L << 29)  // for PKT + 4 * ([k] & 0x0f)
-#define ZPF_JMP_TRUE_BIT    (1L << 28)  // branch offset for true predicate
-#define ZPF_JMP2_BIT        (1L << 27)  // branch offsets for false and true
-#define ZPF_PKT_LEN_BIT     (1L << 26)  // current packet lenght in VM
-#define ZPF_K_FLG_NBIT      6
-#define ZPF_K_FLG_NBIT      0
+#define ZPF_BIG_WORD_ARG    6   // full 32-bit word without flag-bits in k
+#define ZPF_LEN_ARG         7   // packet length argument
+#define ZPF_OP_ARG_NBIT     8   // max # of argument-bits in opcode */
+#define ZPF_ARG_TYPE_NBIT   3   // room reserved for future extensions
+#defin4 ZPF_ARG_NTYPE       8
+#define ZPF_BIG_WORD_NBIT   32  // full 32-bit k-field without flag-bits
+#define ZPF_BIG_WORD_MASK   (0xffffffffU)
+#define ZPF_BIG_WORD_MIN    INT32_MIN
+#define ZPF_BIG_WORD_MAX    INT32_MAX
+/* flag-bits stored in high bigts of the k-field */
+#define ZPF_K_REG_X_BIT     (1L << 31)  // else REG_A
+#define ZPF_K_OFS_BIT       (1L << 30)  // for PKT or MEM
+#define ZPF_K_MUL4_BIT      (1L << 29)  // for PKT + 4 * ([k] & 0x0f)
+#define ZPF_K_TRUE_BIT      (1L << 28)  // branch offset for true predicate
+#define ZPF_K_JMP2_BIT      (1L << 27)  // branch offsets for false and true
+#define ZPF_K_PKT_BIT       (1L << 26)  // current packet lenght in VM
+#define ZPF_K_ARG_NBIT      (32 - 26)
+#define ZPF_ARG_NBIT        (ZPF_OP_ARG_NBIT + ZPF_K_ARG_NBIT)
  // arguments in high bits of (vm)->k
-#define ZPF_K_IMMED_NBIT    (1L << (32 - ZPF_K_FLG_NBIT))
-#define ZPF_K_VAL_MASK      ((1UL << (32 - ZPF_K_FLG_NBIT)) - 1)
-#define ZPF_OP_FLG_LO_NBIT  0
-#define ZPF_OP_ADR_NONE     0   // os is always optional trap vector or start
-#define ZPF_OP_FLG_HI_NONE  0
-#define ZPF_OP_FLG_NONE     0
+#define ZPF_K_IMMED_NBIT    (32 - ZPF_K_ARG_NBIT)
+#define ZPF_K_VAL_MASK      ((1UL << ZPF_K_ARG_OFS) - 1)
+#define ZPF_OP_ARG_NONE     (((1L << ZPF_OP_ARG_NBIT) - 1) << ZPF_OP_ARG_OFS)
+#define ZPF_K_ARG_NONE      (((1L << ZPF_K_ARG_NBIT) - 1) << ZPF_K_ARG_OFS)
 
 /* ALU instructions */
 
@@ -194,14 +190,10 @@ typedef long zpfopfunc(struct zpfvm *vm,
 #define ZPF_INST_NBIT    4      // per-unit instruction IDs
 #define ZPF_UNIT_NBIT    2      // unit IDs
 #define ZPF_OP_UNIT_OFS  ZPF_INST_NBIT
-#define ZPF_OP_INST_MSSK ((1L << ZPF_INST_NBIT) - 1)
-#define ZPF_OP_UNIT_MSSK ((1L << ZPF_UNIT_NBIT) - 1)
-#define zpfgetinst(op)   ((op)->code & ZPF_INST_MASK)
-#define zpfgetunit(op)   (((op)->code >> ZPF_OP_UNIT_OFS) & ZPF_UNIT_MASK)
-#define zpfgetargs(op)   ((op)->code & ZPF_OP_FLG_MASK)
-//#define ZPF_OP_UNIT_NBIT 2
-#define ZPF_OP_FLG_NBIT  (ZPF_OP_NBIT - ZPF_INST_NBIT - ZPF_UNIT_NBIT)
-//#define ZPF_OP_ADR_NBIT  (16 - ZPF_OP_NBIT - ZPF_UNIT_NBIT)
+#define ZPF_INST_MSSK    ((1L << ZPF_INST_NBIT) - 1)
+#define ZPF_UNIT_MSSK    ((1L << ZPF_UNIT_NBIT) - 1)
+#define ZPF_OP_ARG_NBIT  (ZPF_OP_NBIT - ZPF_INST_NBIT - ZPF_UNIT_NBIT)
+//#define ZPF_OP_ARG_NBIT  (16 - ZPF_OP_NBIT - ZPF_UNIT_NBIT)
 
 #define ZPF_JMP_OFS_NBIT 8
 #define ZPF_JMP_MASK     ((1L << ZPF_JMP_OFS_NBIT) - 1)
@@ -220,7 +212,7 @@ typedef long zpfopfunc(struct zpfvm *vm,
 #define zpfgetjmptadr(vm, op) ((vm)->pc + (op)->jt)
 #define zpfgetjmpfadr(vm, op) ((vm)->pc + (op)->jf)
 #define zpfgetsymadr(vm, op)  (zpfgetadrbit((op)->k))
-#define ZPF_OP_K_NBIT    32
+#define ZPF_K_NBIT    32
 
 /*
  * code field format
@@ -229,85 +221,72 @@ typedef long zpfopfunc(struct zpfvm *vm,
  * next 4 bits: unit ID
  * low  4 bits: instruction ID
  */
-/* instruction in bits [0, ZPF_OP_FLG_NLO_BIT - 1], low 8 bits in (op)->code */
+/* instruction in bits [0, ZPF_OP_ARG_NLO_BIT - 1], low 8 bits in (op)->code */
 #define ZPF_OP_INST_OFS     0
 #define ZPF_OP_INST_NBIT    8
 #define ZPF_OP_INST_MASK    ((1L << ZPF_OP_NINST_BIT) - 1)
 /* unit ID in bits [ZPF_OP_UNIT_OFS, ZPF_OP_UNIT_OFS + ZPF_OP_UNIT_BITS - 1] */
 #define ZPF_OP_UNIT_OFS     ZPF_OP_NINST_BIT
-#define ZPF_OP_UNIT_NBIT    4
+#define ZPF_OP_UNIT_NBIT    2
 #define ZPF_OP_UNIT_MASK    (((1L << ZPF_OP_NUNIT_BIT) - 1)             \
                              << ZPF_OP_UNIT_OFS)
 #define ZPF_UNIT_MASK       ((1L << ZPF_OP_UNIT_NBIT) - 1)
-#define ZPF_FLG_LO_MASK     (ZPF_INST_MASK | ZPF_UNIT_MASK)
-#define ZPF_OP_ADR_OFS      (ZPF_OP_UNIT_OFS + ZPF_OP_NUNIT_BIT)
-#define ZPF_OP_ADR_MASK     (((1L << ZPF_OP_ADR_NBIT) - 1) << ZPF_OP_ADR_OFS)
-#define ZPF_ADR_NONE         0
-#define ZPF_ADR_NBIT        (16 - ZPF_OP_NBIT - ZPF_OP_UNIT_NBIT)
-#define ZPF_FLG_MASK        (ZPF_OP_INST_MASK                           \
-                             | ZPF_OP_UNIT_MASK                         \
-                             | ZPF_OP_ADR_MASK                          \
-                             | ZPF_FLG_HI_MASK)
-#define ZPF_EXT_BIT         (1L << 31)
-#define BPF_LEN_BIT         (1L << 30)
-#define ZPF_OP_FLG_HI_NBIT  2
-#define ZPF_OP_FLG_HI_OFS   (32 - ZPF_OP_FLG_HI_NBIT)
-#define ZPF_OP_FLG_HI_MASK  (((1L << ZPF_OP_FLG_HI_NBIT) - 1)            \
-                             << ZPF_OP_ADR_HI_OFS)
-#define zpfgetarg(op)       (((op)->code & ZPF_FLG_LO_MASK)
-#define zpfgetinst(op)      ((op)->code & ((1 << ZPF_NOP_BIT) - 1))
+#define ZPF_OP_ARG_OFS      (ZPF_OP_UNIT_OFS + ZPF_OP_NUNIT_BIT)
+#define ZPF_OP_ARG_MASK     ((1L << ZPF_OP_ARG_NBIT) - 1)
+#define ZPF_K_ARG_NBIT      2
+#define ZPF_K_ARG_OFS       (32 - ZPF_K_ARG_NBIT)
+#define ZPF_K_ARG_MASK      ((1L << ZPF_K_ARG_NBIT) - 1)
+#define ZPF_ARG_NONE         0
+#define ZPF_ARG_NBIT        (16 - ZPF_OP_NBIT - ZPF_OP_UNIT_NBIT)
+#define ZPF_K_ARG_MASK      ((1L << (ZPF_K_ARG_NBIT)) - 1)
+#define zpfgetinst(op)      ((op)->code & ZPF_OP_INST_MASK)
 #define zpfgetunit(op)      (((op)->code >> ZPF_UNIT_OFS) & ZPF_UNIT_MASK)
-#define zpfgetadrmode(op, i) (zpgetadrlobits(op) & (1L << (i)))
-#define zpfgetadrbits(op)   ((op)->code & ZPF_OP_ADR_MASK)
-#define zpfgetargbits(op)   (((op)->code & ZPF_OP_FLG_MASK)             \
-                             | ((op)->k & ZPF_OP_FLG_HI_MASK))
-#define zpfgetarglo(op, i)  (zpfgetargbits(op) >> (ZPF_OP_ADR_OFS + (i)))
-#define zpfgetarghibits(op) ((op)->k & ZPF_OP_FLG_HI_MASK)
-#define zpfgetarghi(op, i)                                              \
-    ((op)->k >> (32 - ZPF_OP_FLG_HI_OFS + (i) - ZPF_FLG_LO_NBIT))
-#define zpfgetarg(op, i)                                                \
-    (((i) < ZPF_FLG_LO_NBIT)                                            \
-     ? (zpfgetarglo(op, i))                                             \
-     : (zpfgetarghi(op, i)))
-#define zpfgetadrbit(op, i) ((op)->code & (1L << (ZPF_OP_ADR_OFS + (i))))
-#define zpfgetadrbits(op)   ((op)->code & ZPF_OP_ADR_MASK)
-#define zpfgetadr(op)       ((op)->code >> ZPF_OP_ADR_OFS)
+#define zpfgetoparg(op)     (((op)->code >> ZPF_OP_ARG_OFS)& ZPF_OP_ARG_MASK)
+#define zpfgetargbit(op, i)                                             \
+    (((i) < ZPF_OP_ARG_LO_NBIT)                                         \
+     ? ((op)->code >> (ZPF_OP_ARG_OFS + (i)))                           \
+     : ((op)->k >> (ZPF_K_ARG_OFS + (i) - ZPF_OP_ARG_NBIT)))
+#define zpfgetkargbit(op, i)                                            \
+    ((op)->k >> (ZPF_K_ARG_OFS + (i) - ZPF_OP_ARG_NBIT))
+#define zpfmergeargbits(op)                                             \
+    ((((op)->code >> ZPF_OP_ARG_OFS) & ZPF_OP_ARG_MASK)                 \
+     | ((op)->k >> (ZPF_K_ARG_OFS - ZPF_OP_ARG_NBIT)))
 #if (LONG_SIZE == 8)
+/* read opcode in one 64-bit word :) */
+#define zpfreadop(op, dest) (*((uint64_t *)dest) = *((uint64_t *)op))
 #define zpfopuninit(op)     (*((uint64_t *)op) == UINT64_C(0))
 #else
-#define zpfopuninit(op)     (!(op)->code & !(op)->jt && !(op)->jf & !(op)->k)
+/* read opcode in 2 32-bit words */
+#define zpfreadop(op, dest) (((uint32_t *)dest)[0] = *((uint32_t *)op),   \
+                             ((uint32_t *)dest)[1] = (op)->k)
+#define zpfopuninit(op)     (!*((uint32_t *)(op)) && !(op)->k)
 #endif
-#define zpfinstisnone(op)   (!zpfgetinst(op))
-#define zpfargisnone(op)    (!zpfgetargbits(op))
-#define zpfadrbitsnone(op)  (!zpfgetadrbits(op))
-#define zpfargisreg(op)     (zpfgetargbit(op, ZPF_REG_BIT))
-#define zpfargisimmed(op)   (zpfgetargbit(op, ZPF_IMMED_BIT))
-#define zpfargismem(op)     (zpfgetargbit(op, ZPF_MEM_BIT))
-#define zpfargismul4(op)    (zpfgetargbit(op, ZPF_MUL4_BIT))
-#define zpfargissym(op)     (zpfgetargbit(op, ZPF_SYM_BIT))
-#define zpfargistjmp(op)    (zpfgetargbit(op, ZPF_TJMP_BIT))
-#define zpfargisfjmp(op)    (zpfgetargbit(op, ZPF_FJMP_BIT))
+#define zpfinstisok(u, i)    (bitset(&zpfopmap[(u)][0], (i)))
+#define zpfgetjtadr(vm, op)  ((vm)->jtadr = (vm)->pc + 1 + (op)->jt)
+#define zpfgetjfadr(vm, op)  ((vm)->jfadr = (vm)->pc + 1 + (op)->jf)
 struct zpfop {
-    uint16_t  code;     // bits 0..15: 4-bit OP, 4-bit UNIT, 8 address mode bits
+    uint16_t  code;     // bits 0..15: 4-bit OP, 4-bit UNIT, 8 argument bits
     uint8_t   jt;       // 8-bit offset from PC to true-branch
     uint8_t   jf;       // 8-bit offset rom PC to false-branch
-    zpfword_t k;        // currently, 32-bit miscellaneous argument
+    zpfword_t k;        // signed 32-bit miscellaneous argument
 };
-#define ZPF_FLG1_NDX        0
-#define ZPF_FLG2_NDX        1
-#define ZPF_FLG3_NDX        2
+
+/* index values for accessing argument structures */
+#define ZPF_ARG1_NDX        0
+#define ZPF_ARG2_NDX        1
+#define ZPF_ARG3_NDX        2
+
 #define zpfgetargbyte(op, ndx)                                          \
-    (((op)->args.vals[(ndx)])                                           \
-     >> (((ndx) * ZPF_OP_FLG_NBIT)                                      \
-         & ((1L << ZPF_OP_FLG_NBIT) - 1)))
+    ((((op)->args.vals[(ndx)]) >> ((ndx) * ZPF_OP_ARG_NBIT)) & ZPF_OP_ARG_MASK)
+         & ((1L << ZPF_OP_ARG_NBIT) - 1)))
 #define zpfgetargbits(op, ndx)                                          \
-    ((((op)->args.vals[(ndx)]) >> ((ndx) * ZPF_OP_FLG_NBIT)) & ZPF_OP_FLG_MASK)
+    ((((op)->args.vals[(ndx)]) >> ((ndx) * ZPF_OP_ARG_NBIT)) & ZPF_OP_ARG_MASK)
 #define zpfgetargbit(op, ndx, i)                                        \
-    ((((op)->args.vals[(ndx)]) >> ((ndx) * ZPF_OP_FLG_NBIT + (i))) & 0x01)
-#define zpfsetargbyte(op, ndx, b)                                       \
-    ((op)->args.vals[(ndx)] = (b))
-#define zpfsetargbits(op, ndx, b)                                       \
-    ((op)->args.vals[(ndx)] |= (b))
+    ((((op)->args.vals[(ndx)]) >> ((ndx) * ZPF_OP_ARG_NBIT + (i))) & 0x01)
+#define zpfsetargbyte(op, ndx, i)                                       \
+    ((op)->args.vals[(ndx)] = (i))
+#define zpfsetargbits(op, ndx, i)                                       \
+    ((op)->args.vals[(ndx)] |= (i))
 #define zpfsetargbit(op, ndx, i)                                        \
     ((op)->args.vals[(ndx)] |= (1L << (i)))
 #define zpfsetargbit(op, ndx, i)                                        \
@@ -316,8 +295,16 @@ struct zpfop {
     ((op)->args.vals[ndx] &= ~(1L << (i)))
 #define zpfflipbit(op, ndx, i)                                          \
     ((op)->flg ^ (1L << (i)))
-#define zpfsetflgbit(info
+#define zpfsetflgbit(info, ndx, i)
 
+#define zpfgetargtype(args, ndx, tptr)                               \
+    
+#define zpfgetarg(args, ndx, tptr)                                   \
+    (((tptr))                                                        \
+     ? (*(tptr) = zofgetargtype(args, ndx), (args)->vals[(ndx)])     \
+     : ((args)->vals[(ndx)]))
+
+#define ZPF_ARG_FLG_NBIT 8
 
 struct zpfopargs {
     /*
@@ -325,34 +312,30 @@ struct zpfopargs {
      * ----------------
      * hi bits: REG, INMED, MEM, PKT, MUL4, SYM, TJMP, FJMP
      */
-    zpfword_t vals;  // arguments #1, #2, #3 with flags
-    zpfword_t flg;   // per-argument flag bits
-    zpfword_t adr;      // label or branch address
-    zpfword_t pc;       // program counter for relative addressing
-    zpfword_t sym;      // target label for branches
-    zpfword_t ofs;      // offset for certain addressing modes
-    uint32_t  type;     // argument bits or types for up to 3 arguments
+    zpfword_t          type;    // argument bits or types for up to 3 arguments
+    zpfword_t          flg;     // per-argument flag bits
+    zpfword_t          vals[ZVM_ARG_MAX]; // arguments #1, #2, #3 with flags
+    union {
+        struct zpfsym *sym;     // target label for branches
+        zpfword_t      arg;     // label or branch address
+        zpfword_t      pc;      // program counter for relative addressing
+        zpfword_t      ofs;     // offset for certain addressing modes
+    }
 };
 
 #define ZPF_NARG 3
 
-#define __STRUCT_ZPFOPDATA_SIZE                                         \
-    (sizeof(struct zpfop) + ZPF_NARG * sizeof(struct zpfopargs))
-#define __STRUCT_ZPFOPDATA_PAD                                          \
-    (rounduppow2(__STRUCT_ZPFOPDATA_SIZE, CLSIZE) - __STRUCT_ZPFOPDATA_SIZE)
+#define zpfgetoparg(data, ndx) ((data)->args[(ndx)])
 struct zpfopdata {
-    struct zpfop     op;
-    struct zpfopargs args[ZPF_NARG];
-#if (__STRUCT_ZPFOPDATA_PAD)
-    uint8_t          _pad[__STRUCT_ZPFOPDATA_PAD];
-#endif
+    struct zpfop     *op;
+    struct zpfopargs  args[ZPF_NARG];
 };
 
 struct zpfopinfo {
     zpfopfunc **unitfuncs[ZPF_NUNIT];
-    uint16_t  **unitadrbits[ZPF_NUNIT];
+    uint16_t  **unitargbits[ZPF_NUNIT];
     uint8_t    *unitopnargs[ZPF_NUNIT];
-    zpfopfunc  *alufunctab[(1L << ZPF_ALU_NBIT)];
+    zpfopfunc  *alufunctab[(1L << ZPF_UNIT_NBIT)];
     zpfopfunc  *memfunctab[(1L << ZPF_MEM_NBIT)};
     zpfopfunc  *flowfunctab[ZPF_NFLOW_NBIT];
     zpfopfunc  *xferfunctab[ZPF_NXFER_NBIT];
@@ -365,6 +348,99 @@ struct zpfopinfo {
     uint8_t     flownargbit[ZPF_NMEM_OP];
     uint8_t     xfernargbit[ZPF_NXFER_OP];
 };
+
+/* bits-argument */
+#define ZPF_UNIT_NBIT     8
+#define ZPF_ALU_NBIT      ZPF_UNIT_NBIT
+#define ZPF_MEM_NBIT      ZPF_UNIT_NBIT
+#define ZPF_FLOW_NBIT     ZPF_UNIT_NBIT
+#define ZPF_XFER_NBIT     ZPF_UNIT_NBIT
+#define ZPF_UNIT_SRC      (1 << 0)
+#define ZPF_UNIT_DEST     (1 << 1)
+#define ZPF_UNIT_DPTR     (1 << 2)
+#define ZPF_UNIT_SYNC     (1 << 3)
+#define ZPF_UNIT_FILT     (1 << 4)
+#define ZPF_UNIT_DYN_MEM  (1 << 5)
+#define ZPF_UNIT_SEND_EV  (1 << 6)
+#define ZPF_UNIT_TERM     (1 << 7)
+#define ZPF_UNIT_ARG_NBIT 8
+
+#define zpfgetfunc(vm, op)                                              \
+    ((vm)->opinfo->unitfuncs[zpfgetunit(op)][zpfgetinst(op)])
+
+static __inline__ zpfword_t
+zpfinitaluop(struct zpfvm *vm, struct zpfop *op,
+             struct zpfopinfo *info, long bits)
+{
+    zpfword_t  unit = zpfgetunit(op)
+    zpfword_t  inst = zpfgetinst(op)
+    zpfword_t  darg = zpfgetarg2byte(op);
+    zpfword_t  sarg = zpfgetarg1byte(op);
+    zpfopfunc *func = zpfopfunctab[unit][inst];
+
+    if (instisvalid(unit, inst)) {
+        if ((func)
+            && (((bits) && (ZPF_UNIT_SRC | ZPF_UNIT_DEST | ZPF_UNIT_DPTR))
+                == (ZPF_UNIT_SRC | ZPF_UNIT_DEST | ZPF_UNIT_DPTR))) {
+            pc = func(vm, op, info, bits);
+        } else {
+            *((uint8_t *)NULL);
+        }
+        vm->pc = pc;
+    } else {
+        
+    }
+
+    return pc;
+}
+
+static __inline__ zpfword_t
+zpfinitmemop(struct zpfvm *vm, struct zpfop *op,
+             struct zpfopinfo *info, long bits)
+{
+    zpfword_t    unit = zpfgetunit(op)
+    zpfword_t    inst = zpfgetinst(op)
+    zpfword_t    darg = zpfgetarg2byte(op);
+    zpfword_t    sarg = zpfgetarg1byte(op);
+    zpfopfunc_t *func = zpfopfunctab[unit][inst];
+
+    if ((func)
+        && (((bits) & (ZPF_UNIT_SRC | ZPF_UNIT_DEST))
+            == (ZPF_UNIT_SRC_ | ZPF_UNIT_DEST))) {
+        pc = func(vm, op, info, bits);
+    } else {
+        *((uint8_t *)NULL);
+    }
+    vm->pc = pc;
+
+    return pc;
+}
+
+static __inline__
+zpfinitldop1(sttuct zpfvm *vm, sturct zpfop *op,
+             struct zpfopinfo *info, long bits)
+{
+    do {
+        zpfword_t *_a = (vm)-a;                                         \
+        zpfword_t  _destb = zpfgetarg2byte(op);                         \
+        zpfword_t  _dest = (dest);                                      \
+        zpfword_t  _srcb = zpfgetarg1byte(op);                          \
+        zpfword_t  _src = (src);                                        \
+        zpfword_t *_dptr = &(dest);                                     \
+        zpfword_t  _val;                                                \
+                                                                        \
+        (pc) = vm->pc;                                                  \
+        if (bits) {                                                     \
+            if (_arg1t & ZPF_IMMED_BIT) {                               \
+                (vm)->a = _val;                                         \
+            } else if (_arg1t & ZPF_PKT_BIT) {                          \
+                _arg += (vm)->pkt;                                      \
+                if (_arg1t & ZPF_OFS_FIT) {                             \
+                    _arg += (op)->k;                                    \
+                }                                                       \
+            }                                                           \
+        }                                                               \
+    } while (0);
 
 #endif /* __ZPF_OP_H__ */
 
