@@ -65,7 +65,7 @@ struct zpftrap {
 #define ZPF_SYM_UNRESOLVED (~(zpfword_t)0)
 struct zpfsym {
     struct zpfsym *chain;       // hash-table chain
-    long           key;         // symbol hash key
+    size_t         key;         // symbol hash key
     const char    *name;        // symbol/label name
     zpfword_t      adr;         // symbol address or ZPF_SYM_UNRESOLVED
     long           flg;         // SYM_RESOLVED

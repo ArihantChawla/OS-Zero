@@ -8,10 +8,7 @@
 /* operation dispatch function */
 
 #define ZPF_OP_FAILURE     (-1L)
-typedef long zpfopfunc(struct zpfvm *vm,
-                       struct zpfop *op,
-                       struct zpfopinfo *info,
-                       long bits);
+typedef zpfword_t zpfopfunc(struct zpfvm *vm, zpfword_t src, zpfword_t dest);
 /*
  * addressing modes
  * ----------------
@@ -107,15 +104,6 @@ typedef long zpfopfunc(struct zpfvm *vm,
 #define ZPF_BIG_WORD_MASK   (0xffffffffU)
 #define ZPF_BIG_WORD_MIN    INT32_MIN
 #define ZPF_BIG_WORD_MAX    INT32_MAX
-/* flag-bits stored in high bigts of the k-field */
-#define ZPF_K_REG_X_BIT     (1L << 31)  // else REG_A
-#define ZPF_K_OFS_BIT       (1L << 30)  // for PKT or MEM
-#define ZPF_K_MUL4_BIT      (1L << 29)  // for PKT + 4 * ([k] & 0x0f)
-#define ZPF_K_TRUE_BIT      (1L << 28)  // branch offset for true predicate
-#define ZPF_K_JMP2_BIT      (1L << 27)  // branch offsets for false and true
-#define ZPF_K_PKT_BIT       (1L << 26)  // current packet lenght in VM
-#define ZPF_K_ARG_NBIT      (32 - 26)
-#define ZPF_ARG_NBIT        (ZPF_OP_ARG_NBIT + ZPF_K_ARG_NBIT)
  // arguments in high bits of (vm)->k
 #define ZPF_K_IMMED_NBIT    (32 - ZPF_K_ARG_NBIT)
 #define ZPF_K_VAL_MASK      ((1UL << ZPF_K_ARG_OFS) - 1)
@@ -370,25 +358,17 @@ struct zpfopinfo {
 
 static __inline__ zpfword_t
 zpfinitaluop(struct zpfvm *vm, struct zpfop *op,
-             struct zpfopinfo *info, long bits)
+             struct zpfopinfo *info)
 {
-    zpfword_t  unit = zpfgetunit(op)
-    zpfword_t  inst = zpfgetinst(op)
-    zpfword_t  darg = zpfgetarg2byte(op);
-    zpfword_t  sarg = zpfgetarg1byte(op);
+    zpfword_t  k = op->k;
+    zpfword_t  a = wm->a;
+    zpfword_t  unit = zpfgetunit(op);
+    zpfword_t  inst = zpfgetinst(op);
     zpfopfunc *func = zpfopfunctab[unit][inst];
 
     if (instisvalid(unit, inst)) {
-        if ((func)
-            && (((bits) && (ZPF_UNIT_SRC | ZPF_UNIT_DEST | ZPF_UNIT_DPTR))
-                == (ZPF_UNIT_SRC | ZPF_UNIT_DEST | ZPF_UNIT_DPTR))) {
-            pc = func(vm, op, info, bits);
-        } else {
-            *((uint8_t *)NULL);
-        }
+        pc = func(vm, k, a);
         vm->pc = pc;
-    } else {
-        
     }
 
     return pc;
@@ -396,22 +376,18 @@ zpfinitaluop(struct zpfvm *vm, struct zpfop *op,
 
 static __inline__ zpfword_t
 zpfinitmemop(struct zpfvm *vm, struct zpfop *op,
-             struct zpfopinfo *info, long bits)
+             struct zpfopinfo *info)
 {
+    zpfword_t    src;
+    zpfword_t    dest;
     zpfword_t    unit = zpfgetunit(op)
     zpfword_t    inst = zpfgetinst(op)
-    zpfword_t    darg = zpfgetarg2byte(op);
-    zpfword_t    sarg = zpfgetarg1byte(op);
     zpfopfunc_t *func = zpfopfunctab[unit][inst];
 
-    if ((func)
-        && (((bits) & (ZPF_UNIT_SRC | ZPF_UNIT_DEST))
-            == (ZPF_UNIT_SRC_ | ZPF_UNIT_DEST))) {
-        pc = func(vm, op, info, bits);
-    } else {
-        *((uint8_t *)NULL);
+    if (instisvalid(unit, inst)) {
+        pc = func(vm, src, dest);
+        vm->pc = pc;
     }
-    vm->pc = pc;
 
     return pc;
 }

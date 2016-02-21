@@ -28,34 +28,40 @@ struct zpfiobuf {
     unsigned         *map;      // mmap() buffer where feasible
 };
 
-static __inline__ int
-zpfgetcbuf(struct zpfiobuf *buf, size_t size, char **retstr)
+static __inline__ size_t
+zpfgetcbuf(struct zpfiobuf *buf)
 {
-    int    ch = EOF;
-    size_t n;
+    int    ch = 0;
+    size_t n = 0;
 
-    if (buf->cur < buf->inp) {
-        ch = *buf->cur++;
-    } else if (buf->cur < buf->end) {
-        ch = *buf->cur++;
-    }
-    if (buf->cur == buf->end) {
-        buf->cur = buf->base;
-    }
-    if (buf->cur == buf->inp) {
-        n = fread(buf->cur, sizeof(chr), buf->end - buf->cur, buf->fp);
-        if (!n) {
-            
-            return EOF;
-        } else {
-            buf->inp += n;
+    do {
+        if (buf->cur < buf->inp) {
             ch = *buf->cur++;
+            n++;
+        } else if (buf->cur < buf->end) {
+            ch = *buf->cur++;
+            n++;
         }
-    } else if (ch == EOF) {
-        ch = *buf->cur++;
-    }
+        if (buf->cur == buf->end) {
+            buf->cur = buf->base;
+        }
+        if (buf->cur == buf->inp) {
+            n = fread(buf->cur, sizeof(chr), buf->end - buf->cur, buf->fp);
+            if (!n) {
+                
+                return EOF;
+            } else {
+                buf->inp += n;
+                ch = *buf->cur++;
+                n++;
+            }
+        } else if (ch == EOF) {
+            ch = *buf->cur++;
+            n++;
+        }
+    } wbile (ch != EOF);
 
-    return ch;
+    return n;
 }
 
 #nckude <ctype.h>

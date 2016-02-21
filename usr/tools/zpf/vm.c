@@ -3,31 +3,29 @@
 #include <zero/trix.h>
 #include <zpf/zpf.h>
 
+#define zpfaluprologue(vm, op, info, bits,
+
 struct zpfopinfo  zpcopinfo ALIGNED(PAGESIZE);
 static zpfword_t *zpfopmap[ZPF_NUNIT];
 
 /*
  * detect overflow of (a) + (b) with a < UINT_MAX - b
  */
-static __inline__ zpfword_t
-zpfaddop(struct zpfvm *vm, struct zpfop *op,
-         struct zpfopinfo *info, long bits)
+static zpfword_t
+zpfaddop(struct zpfvm *vm, zpfword_t src, zpfword_t dest)
 {
-    zpfword_t a = vm->a;;
-    zpfword_t pc;
-    zpfword_t arg;
-    zpfword_t bits = ZPF_ALU_NBIT;
+    zpfword_t pc = vm->pc;
 
     if (opisvalid(op)) {
-        zpfinitaluop(vm, op, pc, src, dest, &zpcopinfo);
-        if (arg < 0 && a < ZPFWORD_MIN - arg) {
+        zpfinitaluop(vm, op, &zpcopinfo);
+        if (src < 0 && dest < ZPFWORD_MIN - src) {
 #if (ZPF_FAIL_UNDERFLOW)
             vm->exit = ZPF_UNDERFLOW;
             return -1;
 #else
             vm->msw |= ZPF_UF_BIT;
 #endif
-        } else if (a > ZPFWORD_MAX - arg) {
+        } else if (dest > ZPFWORD_MAX - src) {
 #if (ZPF_FAIL_OVERFLOW)
             vm->exit = ZPF_OVERFLOW;
             
@@ -37,26 +35,21 @@ zpfaddop(struct zpfvm *vm, struct zpfop *op,
 #endif
         }
         pc++;
-        a += arg;
+        dest += src;
         vm->pc = pc;
-        vm->a = a;
+        vm->a = dest;
     }
     
     return pc;
 }
 
-zpfword_t
-zpfsubop(struct zpfvm *vm, struct zpfop *op,
-         struct zpfopinfo *info, long bits)
+static zpfword_t
+zpfsubop(struct zpfvm *vm, zpmword_t src, zpfword_t dest)
 {
-    zpfword_t a;
-    zpfword_t pc;
-    zpfword_t arg;
+    zpfword_t pc = vm->pc;
     
-    zpfinitaluop(vm, op, pc, src, dest, dptr,
-                 ZPF_ALU_SRC | ZPF_ALU_DEST | ZPF_ALU_DPTR);
-    zpfinitaluop(vm, op, pc, a, arg);
-    if (arg < 0 && a > ZPFWORD_MAX + arg) {
+    zpfinitaluop(vm, op, info);
+    if (src < 0 && dest > ZPFWORD_MAX + src) {
 #if (ZPF_FAIL_OVERFLOW)
         wm->exit = ZPF_OVERFLOW;
         
@@ -74,53 +67,40 @@ zpfsubop(struct zpfvm *vm, struct zpfop *op,
 #endif
     }
     pc++;
-    a -= arg;
+    dest -= src;
     vm->pc = pc;
-    vm->a = a;
+    vm->a = dest;
     
     return pc;
 }
 
-zpfword_t
-zpfmulop(struct zpfvm *vm, struct zpfop *op,
-         struct zpfopinfo *info, long bits)
+static zpfword_t
+zpfmulop(struct zpfvm *vm, zpfword_t src, zpfword_t dest)
 {
-#if (LONG_MAX > ZPFWORD_MAX)
-    zpfword_t a;
-    zpfword_t arg;
-    zpfword_t tmp = ZPFWORD_MAX;
-#else
-    zpfword_t a;
-    zpfword_t arg;
+    zpfword_t tmp;
     zpfword_t abs1;
     zpfword_t abs2;
     zpfword_t nsig1;
     zpfword_t nsig2;
 #endif
-#if (LONG_MAX <= ZPFWORD_MAX)
-    zpfword_t tmp;
-#endif
-    zpfword_t pc;
     
-    zpfinitaluop(vm, op, pc, a, arg);
+    zpfinitaluop(vm, op, info);
 #if (!(LONG_MAX > ZPFWORD_MAX))
-        abs1 = zeroabs(a);
-        abs2 = zeroabs(arg);
-        nsig1 = bpfnsigbit(a);
-        nsig2 = bpfnsigbit(arg);
-        tmp = nsig1 + nsig2;
+    abs1 = zeroabs(dest);
+    abs2 = zeroabs(src);
+    nsig1 = bpfnsigbit(dest);
+    nsig2 = bpfnsigbit(src);
+    tmp = nsig1 + nsig2;
 #endif
-    if ((a < 0 && arg < 0) || (a > 0 && arg > 0)) {
+    if ((dest < 0 && src < 0) || (dest > 0 && src > 0)) {
 #if (LONG_MAX > ZPFWORD_MAX)
         tmp = ~tmp;
 #else
-        tmp = a;
+        tmp = dest;
 #endif
-        pc++;
-        a *= arg;
-        vm->pc = pc;
+        dest *= src;
 #if (LONG_MAX > ZPFWORD_MAX)
-        if (a & tmp) {
+        if (dest & tmp) {
 #if (ZPF_FAIL_OVERFLOW)
             vm->exit = ZPF_OVERFLOW;
             
@@ -131,7 +111,7 @@ zpfmulop(struct zpfvm *vm, struct zpfop *op,
         }
 #else /* !(LONG_MAX > ZPFWORD_MAX */
         if (tmp == ZPFWORD_SIZE * CHAR_BIT) {
-            if ((arg) && a / arg != tmp) {
+            if ((src) && dest / src != tmp) {
 #if (ZPF_FAIL_OVERFLOW)
                 vm->exit = ZPF_OVERFLOW;
                 
@@ -151,7 +131,7 @@ zpfmulop(struct zpfvm *vm, struct zpfop *op,
         }
 #endif /* (LONG_MAX > ZPFWORD_MAX */
     } else if (tmp == ZPFWORD_SIZE * CHAR_BIT) {
-        if ((arg) && a / arg != tmp) {
+        if ((src) && dest / src != tmp) {
 #if (ZPF_FAIL_UNDERFLOW)
             vm->exit = ZPF_UNDERFLOW;
             
@@ -169,168 +149,151 @@ zpfmulop(struct zpfvm *vm, struct zpfop *op,
         vm->msw |= ZPF_UF_BIT;
 #endif
     }
-    vm->a = a;
+    pc++;
+    vm->a = dest;
+    vm->pc = pc;
     
     return pc;
 }
 
-zpfword_t
-zpfdivop(struct zpfvm *vm, struct zpfop *op,
-         struct zpfopinfo *info, long bits)
+static zpfword_t
+zpfdivop(struct zpfvm *vm, zpfword_t src, zpfword_t dest)
 {
-    zpfword_t a;
-    zpfword_t pc;
-    zpfword_t arg;
-
-    zpfinitaluop(vm, op, pc, a, arg);
-    if (!arg) {
+    zpfword_t pc = vm->pc;
+    
+    zpfinitaluop(vm, op, info);
+    if (!src) {
         vm->exit = ZPF_DIVZERO;
 
         return -1;
     } else {
         pc++;
-        a /= arg;
+        dest /= src;
         vm->pc = pc;
-        vm->a = a;
+        vm->a = dest;
     }
 
     return pc;
 }
 
-zpfword_t
-zpfmodop(struct zpfvm *vm, struct zpfop *op,
-         struct zpfopinfo *info, long bits)
+static zpfword_t
+zpfmodop(struct zpfvm *vm, zpfword_t src, zpfword_t dest)
 {
-    zpfword_t a;
-    zpfword_t pc;
-    zpfword_t arg;
-
-    zpfinitaluop(vm, op, pc, a, arg);
-    if (!arg) {
+    zpfword_t pc = vm->pc;
+    
+    zpfinitaluop(vm, op, info);
+    if (!src) {
         vm->exit = ZPF_DIVZERO;
 
         return -1;
     } else {
         pc++;
-        a %= arg;
+        if (!powerof2(src)) {
+            dest %= src;
+        } else {
+            dest &= --src;
+        }
         vm->pc = pc;
-        vm->a = a;
+        vm->a = dest;
     }
 
     return pc;
 }
 
-zpfword_t
-zpfandop(struct zpfvm *vm, struct zpfop *op,
-         struct zpfopinfo *info, long bits)
+static zpfword_t
+zpfandop(struct zpfvm *vm, zpfword_t src, zpfword_t dest)
 {
-    zpfword_t a;
-    zpfword_t pc;
-    zpfword_t arg;
-
-    zpfinitaluop(vm, op, pc, a, arg);
+    zpfword_t pc = vm->pc;
+    
+    zpfinitaluop(vm, op, info);
     pc++;
-    a &= arg;
+    dest &= src;
     vm->pc = pc;
-    vm->a = a
+    vm->a = dest;
 
     return pc;
 }
 
-zpfword_t
-zpforop(struct zpfvm *vm, struct zpfop *op,
-        struct zpfopinfo *info, long bits)
+static zpfword_t
+zpforop(struct zpfvm *vm, zpfword_t src, zpfword_t dest)
 {
-    zpfword_t a;
-    zpfword_t pc;
-    zpfword_t arg;
+    zpfword_t pc = vm->pc;
 
-    zpfinitaluop(vm, op, pc, a, arg);
+    zpfinitaluop(vm, op, info);
     pc++;
-    a |= arg;
+    dest |= src;
     vm->pc = pc;
-    vm->a = a;
+    vm->a = dest;
 
     return pc;
 }
 
-zpfword_t
-pfxorop(struct zpfvm *vm, struct zpfop *op,
-        struct zpfopinfo *info, long bits)
+static zpfword_t
+pfxorop(struct zpfvm *vm, zpfword_t src, zpfword_t dest)
 {
-    zpfword_t a;
-    zpfword_t pc;
-    zpfword_t arg;
+    zpfword_t pc = vm->pc;
 
-    zpfinitaluop(vm, op, pc, a, arg);
+    zpfinitaluop(vm, op, info);
     pc++;
-    a ^= arg;
+    dest ^= src;
     vm->pc = pc;
-    vm->a = a;
+    vm->a = dest;
 
     return pc;
 }
 
-zpfword_t
-zpflshop(struct zpfvm *vm, struct zpfop *op,
-         struct zpfopinfo *info, long bits)
+static zpfword_t
+zpflshop(struct zpfvm *vm, zpfword_t src, zpfword_t dest)
 {
-    zpfword_t a;
-    zpfword_t pc;
-    zpfword_t arg;
+    zpfword_t pc = vm->pc;
 
-    zpfinitaluop(vm, op, pc, a, arg);
+    zpfinitaluop(vm, op, info);
     pc++;
-    a <<= arg;
+    dest <<= src;
     vm->pc = pc;
-    vm->a = a;
+    vm->a = dest;
 
     return pc;
 }
 
-zpfword_t
-zpfrshop(struct zpfvm *vm, struct zpfop *op,
-         struct zpfopinfo *info, long bits)
+static zpfword_t
+zpfrshop(struct zpfvm *vm, zpfword_t src, zpfword_t dest)
 {
-    zpfword_t a;
-    zpfword_t pc;
-    zpfword_t arg;
+    zpfword_t pc = vm->pc;
 
-    zpfinitaluop(vm, op, pc, a, arg);
+    zpfinitaluop(vm, op, info);
     pc++;
-    a >>= arg;
+    dest >>= src;
     vm->pc = pc;
-    vm->a = a;
+    vm->a = dest;
 
     return pc;
 }
 
-zpfword_t
-zpfnegop(struct zpfvm *vm, struct zpfop *op,
-         struct zpfopinfo *info, long bits)
+static zpfword_t
+zpfnegop(struct zpfvm *vm, zpfword_t src, zpfword_t dest)
 {
-    zpfword_t a;
-    zpfword_t pc;
+    zpfword_t pc = vm->pc;
 
-    zpfinitaluop1(vm, op, pc, a);
+    zpfinitaluop1(vm, op, info);
     pc++;
-    if (a) {
-        a = ~a;
+    if (dest) {
+        dest = -dest;
     }
     vm->pc = pc;
-    vm->a = a;
+    vm->a = dest;
 
     return pc;
 }
 
-void
-zpfldop(struct zpfvm *vm, struct zpfop *op,
-        struct zpfopinfo *info, long bits)
+static void
+zpfldop(struct zpfvm *vm, zpfword_t src)
 {
-    zpfword_t k = (vm)->k;
     zpfword_t pc = (vm)->pc;
     
-    zpfinitldop(vm, op, pc, a);
+    zpfinitldop(vm, op, info);
+    pc++;
+    
 }
 
 #define ZPF_LD           0x01   // load word into A     1, 2, 3, 4, 10
@@ -386,6 +349,8 @@ zpfinitopmap(uint8_t *tab)
 struct zpfvm *
 zpfinitvm(struct zpfvm *vm, int argc, char *argv[])
 {
+    zpfbits_t *map;
+
     info = zpfopmap;
     if (!vm) {
         vm = malloc(sizeof(struct zpcopvm));
@@ -401,9 +366,15 @@ zpfinitvm(struct zpfvm *vm, int argc, char *argv[])
 
             exit(ZPF_NOMEM);
         }
+        map = malloc(ZPF_MEM_NOP * sizeof(zpfbits_t));
+        if (!map) {
+
+            exit(ZPF_NOMEM);
+        }
+        vm->bits = map;
     }
 
-    return info;
+    return vm;
 }
 
 void

@@ -4,27 +4,22 @@ struct zpfop     **zpfoptab;
 struct zpfop *
 zpfasmop(struct zvm *vm, struct zpfop *op)
 {
+    zpfword_t  pc = vm->pc;
     zpfword_t  unit = zpfgetunit(op);
     zpfword_t  inst = zpfgetinst(op);
     uint8_t    narg = vm->opinfo->unitopnargs[unit][0];
-    zpfword_t  reg;
-    zpfword_t  arg;
     zpfword_t *bitmsp = &zpfopbitmap[unit][0];
     zpfopfunc *func = vm->opinfo->unitfuncs[unit][inst];
-    
-    if (opisvalid(unit, inst)) {
-        switch (unit) {
-            case ZPF_ALU_UNIT:
-                zpfinitaluop(vm, op, pc, xreg, arg);
-                
-                break;
-        }
-    }
+    zpfbits_t  bits = 0;
 
+    if (narg == 1) {
+        bits |= ZPF_SINGLE_ARG_BIT;
+    }
+    
     return;
 }
 
-struct zpfop *op
+struct zpfop *
 zpfasmfile(const char *name, long flg)
 {
     FILE *fp;
@@ -34,6 +29,48 @@ zpfasmfile(const char *name, long flg)
         if (!fp) {
 
             return NULL;
+        }
+    }
+}
+
+struct zpfop *
+zpfasmreadline(FILE *fp, unsigned char *buf, size_t bufsize)
+{
+    zpfword_t     narg = 0;
+    struct zpfop *op;
+    size_t        n = 0;
+    int           ch = 0;
+
+    do {
+       ch = zpfgetcbuf(zpfiobuf);
+    } while (isspace(ch));
+    if (ch != EOF) {
+        if (isalpha(ch)) {
+        }
+    }
+    if (ch != EOF) {
+        switch (ch) {
+            case 'x':
+            case 'X':
+                /* X-register */
+
+                break;
+            case '#':
+                /* IMMEDIATE k-argument, #len, or #pktlen */
+
+                break;
+            case '[':
+                /* LITERAL argument */
+
+                break;
+            case 'M':
+                /* scratch memory operation */
+
+                break;
+            case 'P':
+                /* packet operation */
+
+                break;
         }
     }
 }
@@ -70,13 +107,18 @@ main(int argc, char *argv[])
  * additions
  * ----------
  * P[I:n]               -> byte, halfword or word at offset I in packet
+ * #pktlen              -> pseudo-variable containing packet length
  * - perhaps add htonl and htons
  *
  * possible architecture
  * ---------------------
  */
+#define ebpfgetdest(op) ((op)->dest)
+#define ebpfgetsrc(op)  ((op)->src)
+#define ebpfgetofs(op)  ((op)->ofs)
+#define ebpfgetimm(op)  ((op)->imm)
 struct ebpfop {
-    uint8_t code;
+    uint8_t  code;
     unsigned dest : 4;
     unsigned src  : 4;
     unsigned ofs  : 16;
@@ -224,3 +266,4 @@ struct ebpfop {
  *   arithmetic expressions
  * - logical operations AND and NOT
  */
+
