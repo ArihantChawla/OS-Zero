@@ -933,7 +933,7 @@ chkmulrng32(int32_t a, int32_t b, int32_t res)
     nsigbit += 32 - tmp;
     if (nsigbit == 32) {
         /* need slow division */
-        ret = (a > INT_MAX / b);
+        ret = (a > (int32_t)(INT_MAX / b));
     } else {
         ret = (nsigbit > 32);
     }

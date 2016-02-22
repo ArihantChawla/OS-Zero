@@ -2024,6 +2024,10 @@ calloc(size_t n, size_t size)
     size_t sz = n * (size + MALLOCALIGNMENT);
     void *ptr = NULL;
 
+    if (sz < n * size) {
+
+        return NULL;
+    }
     if (!n || !size) {
 #if defined(_GNU_SOURCE)
         ptr = _malloc(MALLOCALIGNMENT, 0, 1);

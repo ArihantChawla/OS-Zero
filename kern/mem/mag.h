@@ -24,10 +24,6 @@
 #else
 #define __STRUCT_MEMMAG_BMAP_SIZE 0
 #endif /* defined(MEMPARANOIA) */
-#define __STRUCT_MEMMAG_SIZE (rounduppow2(offsetof(struct memmag, _pad), \
-                                          CLSIZE))
-#define __STRUCT_MEMMAG_PAD                                             \
-    (__STRUCT_MEMMAG_SIZE - offsetof(struct memmag, _pad))
 struct memmag {
     uintptr_t      base;
     volatile long  bkt;
@@ -42,7 +38,6 @@ struct memmag {
 #if defined(MEMPARANOIA) &&  !(MEMSLABMINLOG2 - MEMMINLOG2 < (LONGSIZELOG2 + 3))
     uint8_t        bmap[__STRUCT_MEMMAG_BMAP_SIZE];
 #endif /* defined(MEMPARANOIA) */
-    uint8_t        _pad[__STRUCT_MEMMAG_PAD];
 };
     
 #define memgetmag(ptr, pool)                                            \

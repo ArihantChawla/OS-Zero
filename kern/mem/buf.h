@@ -6,62 +6,16 @@
 #define MEMNBUF (4 * NMEMBUFBLK)
 
 #include <stdint.h>
+#include <stddef.h>
 #include <zero/cdefs.h>
 #include <zero/param.h>
+#include <zero/trix.h>
 #include <kern/types.h>
 #include <kern/bits/mem/buf.h>
 
 /* allocation flags */
 #define MEM_TRYWAIT       0
 #define MEM_DONTWAIT      1
-
-/* membuf convenience macros */
-#define MEMBUF_SIZE        256                          // membuf size
-#define MEMBUF_BLK_SHIFT   PAGESIZELOG2                 // blk of PAGESIZE
-#define MEMBUF_BLK_SIZE    (1 << MEMBUF_BLK_SHIFT)      // blk == PAGESIZE
-#define MEMBUF_BLK_MINSIZE (MEMBUF_PKTLEN + 1)
-#define MEMBUF_HDR_SIZE    (sizeof(struct membufhdr)                    \
-                            + sizeof(union membufdata))
-#define MEMBUF_PKTHDR_SIZE sizeof(struct pkthdr)
-#define MEMBUF_LEN         (MEMBUF_SIZE - MEMBUF_HDR_SIZE)
-#define MEMBUF_PKT_LEN     (MEMBUF_LEN - MEMBUF_PKTHDR_SIZE)
-
-//struct membuf;
-
-struct mempktaux {
-    long af;
-    long type;
-};
-
-/* checksum flg-bits */
-#define MEMBUF_CHKSUM_IP         (1 << 0) // checksum IP
-#define MEMBUF_CHKSUM_UDP        (1 << 1) // checksum UDP
-#define MEMBUF_CHKSUM_TCP        (1 << 2) // checksum TCP
-#define MEMBUF_CHKSUM_STCP       (1 << 3) // checksum UDP
-#define MEMBUF_CHKSUM_IP_TSO     (1 << 4) // TCP segmentation offload
-#define MEMBUF_CHKSUM_ISCSI      (1 << 5) // iSCSI checksum offload
-#define MEMBUF_CHKSUM_IP6_UDP    (1 << 9)  // more checksum offloads
-#define MEMBUF_CHKSUM_IP6_TCP    (1 << 10)
-#define MEMBUF_CHKSUM_IP6_SCTP   (1 << 11)
-#define MEMBUF_CHKSUM_IP6_TSO    (1 << 12)
-#define MEMBUF_CHKSUM_IP6_ISCSI  (1 << 13)
-/* hardware-verified inbound checksum support */
-#define MEMBUF_CHKSUM_L3_CALC    (1 << 24)
-#define MEMBUF_CHKSUM_L3_VALID   (1 << 25)
-#define MEMBUF_CHKSUM_L4_CALC    (1 << 26)
-#define MEMBUF_CHKSUM_L4_VALID   (1 << 27)
-#define MEMBUF_CHKSUM_L5_CALC    (1 << 28)
-#define MEMBUF_CHKSUM_L5_VALID   (1 << 29)
-#define MEMBUF_CHKSUM_MERGED     (1 << 30)
-/* record/packet header in first membuf of chain; MEMBUF_PKTHDR is set */
-struct pkthdr {
-    struct ifnet  *rcvif;       // rcv interface
-    size_t         len;         // total packet length
-    void          *hdr;         // packet header
-    int32_t        flg;         // checksum and other flags
-    int32_t        chksum;      // checksum data
-    struct membuf *aux;         // extra data buffer, e.g. IPSEC
-};
 
 /* external buffer types */
 #define MEMBUF_EXT_NETDRV     0x01000000 // custom extbuf provide by net driver
@@ -148,6 +102,47 @@ struct memext {
      | MEMBUF_VLANTAG_BIT                                               \
      | MEMBUF_PROTO_BITS)
 #define MEMBUF_EXT_COPYBITS (MEMBUF_EXT_BITS)
+
+/* checksum flg-bits */
+#define MEMBUF_CHKSUM_IP         (1 << 0) // checksum IP
+#define MEMBUF_CHKSUM_UDP        (1 << 1) // checksum UDP
+#define MEMBUF_CHKSUM_TCP        (1 << 2) // checksum TCP
+#define MEMBUF_CHKSUM_STCP       (1 << 3) // checksum UDP
+#define MEMBUF_CHKSUM_IP_TSO     (1 << 4) // TCP segmentation offload
+#define MEMBUF_CHKSUM_ISCSI      (1 << 5) // iSCSI checksum offload
+#define MEMBUF_CHKSUM_IP6_UDP    (1 << 9)  // more checksum offloads
+#define MEMBUF_CHKSUM_IP6_TCP    (1 << 10)
+#define MEMBUF_CHKSUM_IP6_SCTP   (1 << 11)
+#define MEMBUF_CHKSUM_IP6_TSO    (1 << 12)
+#define MEMBUF_CHKSUM_IP6_ISCSI  (1 << 13)
+/* hardware-verified inbound checksum support */
+#define MEMBUF_CHKSUM_L3_CALC    (1 << 24)
+#define MEMBUF_CHKSUM_L3_VALID   (1 << 25)
+#define MEMBUF_CHKSUM_L4_CALC    (1 << 26)
+#define MEMBUF_CHKSUM_L4_VALID   (1 << 27)
+#define MEMBUF_CHKSUM_L5_CALC    (1 << 28)
+#define MEMBUF_CHKSUM_L5_VALID   (1 << 29)
+#define MEMBUF_CHKSUM_MERGED     (1 << 30)
+/* record/packet header in first membuf of chain; MEMBUF_PKTHDR is set */
+struct pkthdr {
+    struct ifnet  *rcvif;       // rcv interface
+    size_t         len;         // total packet length
+    void          *hdr;         // packet header
+    int32_t        flg;         // checksum and other flags
+    int32_t        chksum;      // checksum data
+    struct membuf *aux;         // extra data buffer, e.g. IPSEC
+};
+
+/* membuf convenience macros */
+#define MEMBUF_SIZE        256                          // membuf size
+#define MEMBUF_BLK_SHIFT   PAGESIZELOG2                 // blk of PAGESIZE
+#define MEMBUF_BLK_SIZE    (1 << MEMBUF_BLK_SHIFT)      // blk == PAGESIZE
+#define MEMBUF_BLK_MINSIZE (MEMBUF_PKT_LEN + 1)
+#define MEMBUF_PKTHDR_SIZE (sizeof(struct pkthdr))
+#define MEMBUF_HDR_SIZE    (sizeof(struct membufhdr))
+#define MEMBUF_LEN         (MEMBUF_SIZE - MEMBUF_HDR_SIZE)
+#define MEMBUF_PKT_LEN     (MEMBUF_LEN - MEMBUF_PKTHDR_SIZE)
+
 struct membufhdr {
     volatile long  nref;        // # of references
     uint8_t       *adr;         // data address
@@ -160,13 +155,18 @@ struct membufhdr {
 
 union membufdata {
     struct {
-        struct pkthdr      pkt; // MEMBUF_PKTHDR is set
+        struct pkthdr     pkt;  // MEMBUF_PKTHDR is set
         union {
-            struct memext  ext; // MEMBUF_EXT is set
-            char           buf[MEMBUF_PKTLEN];
+            struct memext ext;  // MEMBUF_EXT is set
+            char          buf[MEMBUF_PKT_LEN];
         } mem;
     } hdr;
-    char                   buf[MEMBUF_LEN];
+    char                  buf[MEMBUF_LEN];
+};
+
+struct membuf {
+    struct membufhdr hdr;
+    union membufdata data;
 };
 
 #define membuftodata(mb, type) ((type)((mb)->hdr.adr))
@@ -181,22 +181,18 @@ union membufdata {
 #define membufpkthdr(mb)       (&((mb)->data.hdr.pkt))
 #define membufpktlen(mb)       ((mb)->data.hdr.pkt.len)
 #define membufpktdata(mb)      ((mb)->data.hdr.mem.buf)
-struct membuf {
-    struct membufhdr hdr;
-    union membufdata data;
+
+struct mempktaux {
+    long af;
+    long type;
 };
 
-struct membufblk {
+struct memblk {
     uint8_t       *ptr;
     struct memblk *next;
     uint8_t        data[MEMBUF_BLK_SIZE - 2 * sizeof(void *)];
 };
 
-#define __STRUCT_MEMBUFBKT_SIZE                                         \
-    (rounduppow2(offsetof(struct membufbkt, _pad), CLSIZE))
-#define __STRUCT_MEMBUFBKT_PAD                                          \
-    (STRUCT_MEMBUFBKT_SIZE - offsetof(struct membufbkt, _pad))
-     
 struct membufbkt {
     volatile long      lk;
     volatile long      nref;
@@ -205,9 +201,7 @@ struct membufbkt {
     long               nblk;
     struct membuf     *buflist;
     struct memcluster *blklist;
-#if (__STRUCT_MEMBUFBKT_PAD)
-    uint8_t            _pad[__STRUCT_MEMBUFBKT_PAD];
-#endif
+    uint8_t            _pad[CLSIZE - 5 * sizeof(long) - 2 * sizeof(void *)];
 };
 
 #endif /* __KERN_MEM_BUF_H__ */
