@@ -24,12 +24,10 @@
 #else
 #define __STRUCT_MEMMAG_BMAP_SIZE 0
 #endif /* defined(MEMPARANOIA) */
-#define __STRUCT_MEMMAG_SIZE                                            \
-    (3 * sizeof(long) + 2 * sizeof(void *) + sizeof(uintptr_t)          \
-     + __STRUCT_MEMMAG_PTAB_SIZE                                        \
-     + __STRUCT_MEMMAG_BMAP_SIZE)
+#define __STRUCT_MEMMAG_SIZE (rounduppow2(offsetof(struct memmag, _pad), \
+                                          CLSIZE))
 #define __STRUCT_MEMMAG_PAD                                             \
-    (rounduppow2(__STRUCT_MEMMAG_SIZE, CLSIZE) - __STRUCT_MEMMAG_SIZE)
+    (__STRUCT_MEMMAG_SIZE - offsetof(struct memmag, _pad))
 struct memmag {
     uintptr_t      base;
     volatile long  bkt;

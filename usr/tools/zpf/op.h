@@ -287,6 +287,25 @@ struct zpfinst {
     uint8_t         inst;
 };
 
+#define ZPF_VAR_TYPE_INT32 1    // signed 32-bit integer value
+#define ZPF_VAR_TYPE_SYM   2    // sym in union u
+#define ZPF_VAR_TYPE_JMP2  3    // 8-bit offsets for true and false branches
+#define ZPF_VAR_TYPE_LOCK  4    // mutexes and such
+struct zpfvar {
+    const char    *name;
+    struct zpfvar *chain;
+    long           type;
+    union {
+        /* symbol structure pointer */
+        struct zpfsym *sym;
+        int32_t        val;     // arbitrary signed 32-bit value
+        struct {
+            uint8_t    tofs;    // true-predicate branch
+            uint8_t    fofs;    // false-predicate branch
+        } jmp;
+    } u;
+};
+
 /* index values for accessing argument structures */
 #define ZPF_ARG1_NDX        0
 #define ZPF_ARG2_NDX        1

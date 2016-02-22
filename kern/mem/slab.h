@@ -61,13 +61,18 @@
 #endif
 
 #if (MEMNEWSLAB)
-#define __STRUCT_MEMBLK_SIZE                                            \
-    (3 * sizeof(void *) + sizeof(m_ureg_t))
-struct memblk {
+#define __STRUCT_MEMQUEUE_SIZE                                          \
+    (rounduppow2(offsetof(struct memblk, _pad), CLSIZE))
+#define __STRUCT_MEMQUEUE_PAD                                           \
+    (__STRUCT_MEMBLK_SIZE - offsetof(struct memblk, _pad))
+struct memqueue {
     void          *adr;
     m_ureg_t       info;
     struct memblk *prev;
     struct memblk *next;
+#if (__STRUCT_MEMBLK_PAD)
+    uint8_t        _pad[__STRUCT_MEMBLK_PAD];
+#endif
 };
 #else
 struct memslab {

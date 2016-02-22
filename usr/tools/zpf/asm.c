@@ -1,37 +1,5 @@
 #include <zpf/op-h>
 
-struct zpfop *
-zpfasmop(struct zvm *vm, struct zpfop *op)
-{
-    zpfword_t  pc = vm->pc;
-    zpfword_t  unit = zpfgetunit(op);
-    zpfword_t  inst = zpfgetinst(op);
-    uint8_t    narg = vm->opinfo->unitopnargs[unit][0];
-    zpfword_t *bitmsp = &zpfopbitmap[unit][0];
-    zpfopfunc *func = vm->opinfo->unitfuncs[unit][inst];
-    zpfbits_t  bits = 0;
-
-    if (narg == 1) {
-        bits |= ZPF_SINGLE_ARG_BIT;
-    }
-    
-    return;
-}
-
-struct zpfop *
-zpfasmfile(const char *name, long flg)
-{
-    FILE *fp;
-    
-    if (name) {
-        fp = fopen(nme, "r");
-        if (!fp) {
-
-            return NULL;
-        }
-    }
-}
-
 #define zpfhextonum(cp)                                                 \
     ((*(cp) >= 0 && *(cp) <= 9)                                         \
      ? (*(cp) - '0')                                                    \
@@ -90,77 +58,89 @@ zpfasmreadline(FILE *fp)
             }
         }
     } while ((ch != EOF) && (ch != '\n'));
-    inst = zpffindinst(ptr, &ptr);
-    ch = *buf++;
-    switch (ch) {
-        case '%':
-            /* register or label */
-            ch = *buf++;
-            if (toupper(ch) == 'A' && isspace(*buf)) {
-                bits |= ZPF_A_REG_BIT;
-                buf++;
-            }
-        case '#':
-            ch = zpfgetbuf(zpfiobuf);
-            if (!isalpha(ch)) {
-                /* skip comment to end of line */
-                do {
-                    ch = zpfgetcbuf(zpfiobuf);
-                } while (ch != EOF && (ch != '\n'));
-            }
-            
-            break;
-        case 'M':
-
-            break;
-        case '#':
-
-            break;
-        case '[':
-
-            break;
-        case 'P':
-
-            break;
-    } while (ch != EOF && ch != '\n');
-    if (str) {
-        buf = str;
-        if (!isalpha(ch)) {
-            free(str);
-
-            return NULL;
-        }
-        while (isalpha(*buf)) {
-            buf++;
-        }
-        buf[0] = '\0';
-        inst = zpffindinst(str);
-        if (!inst) {
-            fprintf(stderr, "invalid code line: %s\n", str);
-            free(str);
-
-            return NULL;
-        }
-        str = ++buf;
+    if (ch != EOF) {
+        inst = zpffindinst(ptr, &ptr);
         ch = *buf++;
         switch (ch) {
+            case '%':
+                /* register or label */
+                ch = *buf++;
+                if (toupper(ch) == 'A' && isspace(*buf)) {
+                    bits |= ZPF_A_REG_BIT;
+                    buf++;
+                } else if (toupper(ch) == 'X' && isspace(*buf)) {
+                    bits |= ZPF_X_REG_BIT;
+                    buf++;
+                }
+                
+                break;
+            case '#':
+                /* immediate and variable access */
+                n++;
                 ch = *buf++;
                 if (!isalpha(ch)) {
-                    free(ptr);
-
-                    return NULL;
-                } else {
+                    /* skip comment to end of line */
                     do {
                         ch = zpfgetcbuf(zpfiobuf);
-                    } while ((ch != EOF) && (ch != '\n'));
+                    } while (ch != EOF && (ch != '\n'));
+                } else if (toupper(ch) == 'K') {
+                    bits |= ZPF_K_BIT;
+                } else {
+                    var = zpffindvar(buf);
                 }
-                if (toupper(ch) == 'A') {
-                    bits =| ZPM_A_REG_BIT;
-                } else if (toupper(ch) == 'X') {
-                    bits |= ZPM_X_REG_BIT;
-                }
-
+                    
                 break;
+            case 'M':
+                
+                break;
+            case '#':
+                
+                break;
+            case '[':
+                
+                break;
+            case 'P':
+                
+                break;
+        } while (ch != EOF && ch != '\n');
+        if (str) {
+                    buf = str;
+                    if (!isalpha(ch)) {
+                        free(str);
+                        
+                        return NULL;
+                    }
+                    while (isalpha(*buf)) {
+                        buf++;
+                    }
+                    buf[0] = '\0';
+                    inst = zpffindinst(str);
+                    if (!inst) {
+                        fprintf(stderr, "invalid code line: %s\n", str);
+                        free(str);
+                        
+                        return NULL;
+                    }
+                    str = ++buf;
+                    ch = *buf++;
+                    switch (ch) {
+                        ch = *buf++;
+                        if (!isalpha(ch)) {
+                            free(ptr);
+                            
+                            return NULL;
+                        } else {
+                            do {
+                                ch = zpfgetcbuf(zpfiobuf);
+                            } while ((ch != EOF) && (ch != '\n'));
+                        }
+                        if (toupper(ch) == 'A') {
+                            bits =| ZPM_A_REG_BIT;
+                } else if (toupper(ch) == 'X') {
+                            bits |= ZPM_X_REG_BIT;
+                        }
+
+                        break;
         }
     } else if (ch != EOF && isdigit(ch)) {
         free(str);

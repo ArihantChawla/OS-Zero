@@ -404,11 +404,11 @@ long long llabs(long long x);
 #if (LONGSIZE == 4)
 #define lzero64(u, r) (!(u)                                             \
                        ? ((r) = 64)                                     \
-                       : (r) = (__builtin_clzll(u)))
+                       : ((r) = (__builtin_clzll(u))))
 #elif (LONGSIZE == 8)
 #define lzero64(u, r) (!(u)                                             \
                        ? ((r) = 64)                                     \
-                       : (r) = (__builtin_clzl(u)))
+                       : ((r) = (__builtin_clzl(u))))
 #endif
 #elif defined(__i386__) || defined(__x86_64__) || defined(__amd64__)
 #define lzerol(u) (!(u)                                                 \
@@ -906,6 +906,7 @@ static __inline__ int32_t
 chkmulrng32(int32_t a, int32_t b, int32_t res)
 {
     int     nsigbit;    // # of significant bits
+    int     tmp;
     int32_t ret;        // return value
     
     if (!a || !b || a == 1 || b == 1) {
@@ -926,8 +927,10 @@ chkmulrng32(int32_t a, int32_t b, int32_t res)
     }
     a = zeroabs(a);
     b = zeroabs(b);
-    nsigbit = 32 - lzero32(a);
-    nsigbit += 32 - lzero32(b);
+    lzero32(a, tmp);
+    nsigbit = 32 - tmp;
+    lzero32(b, tmp);
+    nsigbit += 32 - tmp;
     if (nsigbit == 32) {
         /* need slow division */
         ret = (a > INT_MAX / b);
@@ -946,6 +949,7 @@ static __inline__ int64_t
 chkmulrng64(int64_t a, int64_t b, int64_t res)
 {
     int     nsigbit;
+    int     tmp;
     int64_t ret;
     
     if (!a || !b || a == 1 || b == 1) {
@@ -963,8 +967,10 @@ chkmulrng64(int64_t a, int64_t b, int64_t res)
     }
     a = zeroabs(a);
     b = zeroabs(b);
-    nsigbit = 64 - lzero64(a);
-    nsigbit += 64 - lzero64(b);
+    lzero64(a, tmp);
+    nsigbit = 64 - tmp;
+    lzero64(b, tmp);
+    nsigbit += 64 - tmp;
     if (nsigbit == 64) {
         ret = (a > INT_MAX / b);
     } else {

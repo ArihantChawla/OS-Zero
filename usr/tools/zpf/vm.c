@@ -11,8 +11,9 @@ extern unsigned char   zpfnospacemap[256 / CHAR_BIT];
 extern zpfopfunc      *zpfopfunctab[ZPF_OP_NUNIT][ZPF_OP_NINST];
 extern zpfop         **zpfoptab;
 
-struct zpfopinfo  zpcopinfo ALIGNED(PAGESIZE);
-static zpfword_t *zpfopmap[ZPF_NUNIT];
+struct zpfopinfo       zpfopinfo ALIGNED(PAGESIZE);
+static zpfword_t      *zpfopmap[ZPF_NUNIT];
+struct zpfvm           zpfvm;
 
 /*
  * detect overflow of (a) + (b) with a < UINT_MAX - b

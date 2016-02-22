@@ -5,7 +5,7 @@
 #include <zpm/conf.h>
 #include <zpf/zpf.h>
 
-#define ZVM_MEM_NWORD    16
+#define ZPF_MEM_NWORD    16
 
 /* msw (machine status word) bits */
 #define ZPF_TF_BIT       (1L << 0) // traps enabled
@@ -62,23 +62,21 @@ typedef uint32_t         zpfbits_t;
 #define ZPF_VM_PROF_BIT  (1 << 7)
 #define ZPF_VM_TRACE_BIT (1 << 8)
 #define zpfvmsuccess(vm) ((vm)->exit == ZPF_VM_SUCCESS)
+#define __STRUCT_ZPFVM_PAD                                              \
+    (rounduppow2(sizeof(struct zpfvm), CLSIZE)) // padded to cacheline-boundary
 struct zpfvm {
     zpfword_t         mem[ZPF_MEM_NWORD];
     zpfword_t         flg;      // virtual machine feature-bits
+    zpfword_t         msw;      // machine-status word
     zpfword_t         pc;       // program counter aka instrution pointer
-    zpfword_t         nop;      // number of struct zpfops in img
-    struct zpfop     *prog;     // program image
     zpfword_t         a;        // accumulator A
     zpfword_t         x;        // index register X
     zpfbits_t        *bits;     // flags for running program's instructions
-    struct zpfsym    *sym;      // current symbol/label
     zpfword_t         len;      // #of bytes in pkt
     uint8_t          *pkt;      // network packet address
-    zpfword_t         msw;      // machine-status word
     struct zpfopinfo *opinfo;   // information on instructions
-#if (ZPFDEBUGVM)
-    struct zpfop     *op;       // current operation for debugging
-#endif
+    zpfword_t         nop;      // number of 64-bit opcodes in prog
+    struct zpfop     *prog;     // program image
     zpfword_t         mode;     // see above
     int               stat;     // exit status for exit()
 };
