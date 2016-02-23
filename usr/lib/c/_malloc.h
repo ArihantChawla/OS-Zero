@@ -705,6 +705,11 @@ struct malloc {
     struct magtab     magbkt[MALLOCNBKT];
     struct magtab     freetab[MALLOCNBKT];
     struct magtab     hdrbuf[MALLOCNBKT];
+#if (MALLOCNBKT == 64)
+    uint64_t          magemptybits;
+#elif (MALLOCNBKT == 32)
+    uint32_t          magemptybits;
+#endif
 #if (!MALLOCTLSARN)
     struct arn      **arntab;           // arena structures
 #endif

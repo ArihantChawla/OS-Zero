@@ -1296,6 +1296,11 @@ mallinit(void)
 #endif
 #endif
 #endif /* MALLOCMULTITAB */
+#if (MALLOCNBKT == 64)
+    g_malloc.magemptybits = ̃(UINT64_C(0));
+#else
+    g_malloc.emptybits = ̃0L;
+#endif
 #if (MALLOCDEBUGHOOKS) || (defined(_ZERO_SOURCE) && (MALLOCHOOKS)) && 0
     if (__zmalloc_initialize_hook) {
         __zmalloc_initialize_hook();
@@ -1472,6 +1477,8 @@ _malloc(size_t size,
                 mag->prev = NULL;
                 mag->next = NULL;
             }
+        } else {
+            g_malloc.magemptybits |= 1L << bktid;
         }
     }
     if (!mag) {
