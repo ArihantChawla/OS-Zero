@@ -337,14 +337,48 @@ struct memtab {
     volatile long  nref;
 };
 
+#if (MALLOCNBSTK)
+
+/* request types */
+#define MAG_MARK_BIT (1L << 0)
+#define MAG_POP_REQ  (1L << 1)
+#define MAG_PUSH_REQ (1L << 2)
+/* request status */
+#define MAG_REQ_FAIL 0L
+#define MAG_REQ_DONE (~0L)
+struct magreq {
+    long           type;
+    long           stat;
+    struct mag    *mag;
+    struct magtab *tab;
+};
+
+#if (MALLOCBUFMAG)
+#define MAGNREQ 12
+#else
+#define MAGNREQ 13
+#endif
+struct magreqs {
+    volatile long  ndx;
+    struct magreq *stk[MAGNREQ];
+};
+
+#endif /* MALLOCNBSTK */
+
 struct magtab {
     MUTEX          lk;
     struct mag    *ptr;
 #if (MALLOCBUFMAG)
     unsigned long  n;
-    uint8_t        _pad[CLSIZE - sizeof(long) - sizeof(void *) - sizeof(MUTEX)];
+#endif
+#if (MALLOCNBSTK)
+    struct magreqs reqs;
+#elif (MALLOCBUFMAG)
+    uint8_t        _pad[rounduppow2(sizeof(MUTEX) + 2 * sizeof(long),
+                                    CLSIZE) - sizeof(MUTEX) - 2 * sizeof(long)];
 #else
-    uint8_t        _pad[CLSIZE - sizeof(MUTEX) - sizeof(void *)];
+    uint8_t        _pad[rounduppow2(sizeof(MUTEX) + sizeof(long),
+                                    CLSIZE) - sizeof(MUTEX) - sizeof(long)];
 #endif
 };
 
@@ -376,6 +410,7 @@ struct mag {
     struct arn    *arn;
     void          *base;
     void          *adr;
+    uint8_t       *ptr;
     size_t         size;
     long           cur;
     long           lim;
@@ -391,10 +426,10 @@ struct mag {
     struct mag    *next;
 #if (MALLOCPTRNDX)
     PTRNDX        *stk;
-    PTRNDX        *ptr;
+    PTRNDX        *idtab;
 #elif (MALLOCHDRPREFIX)
     void          *stk;
-    void          *ptr;
+    void          *ptrtab;
 #endif
 };
 
@@ -427,21 +462,21 @@ struct magbkt {
 #define magptrid(mag, ptr)                                              \
     ((PTRNDX)((uintptr_t)clrptr(ptr) - (uintptr_t)(mag)->base) >> (mag)->bktid)
 #define magputid(mag, ptr, id)                                          \
-    (((mag)->ptr)[magptrid(mag, ptr)] = (id))
+    (((mag)->idtab)[magptrid(mag, ptr)] = (id))
 #define maggetid(mag, ptr)                                             \
-    (((mag)->ptr)[magptrid(mag, ptr)])
+    (((mag)->idtab)[magptrid(mag, ptr)])
 #define magptr(mag, ndx)                                                \
     ((void *)((uint8_t *)((mag)->base + (ndx * (1UL << (mag)->bktid)))))
 #define maggetptr(mag, ptr)                                             \
-    (((void **)(mag)->ptr)[magptrid(mag, ptr)])
+    (((void **)(mag)->idtab)[magptrid(mag, ptr)])
 #endif
 #else
 #define magptrid(mag, ptr)                                              \
     (((uintptr_t)clrptr(ptr) - (uintptr_t)(mag)->base) >> (mag)->bktid)
 #define magputptr(mag, ptr, orig)                                       \
-    (((void **)(mag)->ptr)[magptrid(mag, ptr)] = (orig))
+    (((void **)(mag)->ptrtab)[magptrid(mag, ptr)] = (orig))
 #define maggetptr(mag, ptr)                                             \
-    (((void **)(mag)->ptr)[magptrid(mag, ptr)])
+    (((void **)(mag)->ptrtab)[magptrid(mag, ptr)])
 #endif
 
 /*
@@ -478,21 +513,73 @@ struct magbkt {
 #define maghdrsz(bktid)                                                 \
     (rounduppow2(sizeof(struct mag), CLSIZE))
 #if (MALLOCFREEMAP)
-#define magtabsz(bktid)                                                 \
-    ((maghdrsz()                                                        \
-      + ((!magnblklog2(bktid)                                           \
-          ? 0                                                           \
-          : ((magnblk(bktid) << 1) * sizeof(void *)                     \
-             + ((magnblk(bktid) + CHAR_BIT) >> 3))))))
+#if (MALLOCPTRNDX)
+(maghdrsz()                                                             \
+ + ((!magnblklog2(bktid)                                                \
+     ? 0                                                                \
+     : (magnblk(bktid) * sizeof(void *)
+        + magnblk(bktid) * sizeof(PTRNDX)
+        + ((magnblk(bktid) + CHAR_BIT) >> 3)))))
 #else
 #define magtabsz(bktid)                                                 \
-    ((maghdrsz()                                                        \
-      + (!magnblklog2(bktid)                                            \
+    (maghdrsz()                                                         \
+     + ((!magnblklog2(bktid)                                            \
          ? 0                                                            \
-         : (magnblk(bktid) << 1) * sizeof(void *))))
+         : ((magnblk(bktid) << 1) * sizeof(void *)                      \
+            + ((magnblk(bktid) + CHAR_BIT) >> 3)))))
 #endif
-#define magembedtab(bktid)                                              \
-    (magtabsz(bktid) <= MALLOCHDRSIZE)
+#else
+#if (MALLOCPTRNDX)
+#define magtabsz(bktid)                                                 \
+    (maghdrsz()                                                         \
+     + (!magnblklog2(bktid)                                             \
+        ? 0                                                             \
+        : (magnblk(bktid) * sizeof(void *)                              \
+           + magnblk(bktid) * sizeof(PTRNDX))))
+#else
+#define magtabsz(bktid)                                                 \
+    (maghdrsz()                                                         \
+     + (!magnblklog2(bktid)                                             \
+        ? 0                                                             \
+        : (magnblk(bktid) << 1) * sizeof(void *)))
+#endif
+#endif
+#define magembedtab(bktid) (magtabsz(bktid) <= MALLOCHDRSIZE)
+
+#define magrmhead(bkt, head)                                            \
+    do {                                                                \
+        if ((head)->next) {                                             \
+            (head)->next->prev = NULL;                                  \
+        }                                                               \
+        (bkt)->ptr = (head)->next;                                      \
+    } while (0)
+#define magrm(mag, bkt, lock)                                           \
+    do {                                                                \
+        if (lock) {                                                     \
+            mtxlk(&(bkt)->lk);                                          \
+        }                                                               \
+        if (((mag)->prev) && ((mag)->next)) {                           \
+            (mag)->next->prev = (mag)->prev;                            \
+            (mag)->prev->next = (mag)->next;                            \
+        } else if ((mag)->prev) {                                       \
+            (mag)->prev->next = NULL;                                   \
+        } else if ((mag)->next) {                                       \
+            (mag)->next->prev = NULL;                                   \
+            if ((mag)->arn) {                                           \
+                (mag)->arn->magbkt[bktid].ptr = (mag)->next;            \
+            } else {                                                    \
+                (bkt)->ptr = (mag)->next;                               \
+            }                                                           \
+        } else if ((mag)->arn) {                                        \
+            (mag)->arn->magbkt[bktid].ptr = NULL;                       \
+        } else {                                                        \
+            (bkt)->ptr = NULL;                                          \
+        }                                                               \
+        if (lock) {                                                     \
+            mtxunlk(&(bkt)->lk);                                        \
+        }                                                               \
+        (mag)->arn = NULL;                                              \
+    } while (0)
 
 #define magpop(bkt, mag, lock)                                          \
     do {                                                                \
@@ -503,10 +590,7 @@ struct magbkt {
         }                                                               \
         _mag = (bkt)->ptr;                                              \
         if (_mag) {                                                     \
-            if (_mag->next) {                                           \
-                _mag->next->prev = NULL;                                \
-            }                                                           \
-            (bkt)->ptr = _mag->next;                                    \
+            magrmhead((bkt), _mag);                                     \
         }                                                               \
         if (lock) {                                                     \
             mtxunlk(&(bkt)->lk);                                        \
