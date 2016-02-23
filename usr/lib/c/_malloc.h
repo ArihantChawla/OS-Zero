@@ -483,21 +483,29 @@ struct magbkt {
  * magazines for bucket bktid have 1 << magnblklog2(bktid) blocks of
  * 1 << bktid bytes
  */
+#define magnmaplog2(bktid)                                              \
+    (((bktid) <= MALLOCBIGMAPLOG2)                                      \
+     ? 2                                                                \
+     : (((bktid <= MALLOCHUGEMAPLOG2)                                   \
+         ? 1                                                            \
+         : 0)))
+    
 #define magnblklog2(bktid)                                              \
-    (((bktid) < MALLOCSLABLOG2)                                         \
+    (((bktid) <= MALLOCSLABLOG2)                                        \
      ? (MALLOCSLABLOG2 - (bktid))                                       \
-     : 0)
+     : magnmaplog2(bktid))
 #define magnblk(bktid)                                                  \
     (1UL << magnblklog2(bktid))
 
+#if (MALLOCBUFMAG)
 #define magnglobbuflog2(bktid)                                          \
     (((bktid) <= MALLOCSLABLOG2)                                        \
-     ? 4                                                                \
+     ? 3                                                                \
      : (((bktid) <= MALLOCBIGMAPLOG2)                                   \
-        ? 3                                                             \
+        ? 2                                                             \
         : (((bktid <= MALLOCHUGEMAPLOG2)                                \
-            ? 2                                                         \
-            : 1))))
+            ? 1                                                         \
+            : 0))))
 #define magnglobbuf(bktid)                                              \
     (1UL << magnglobbuflog2(bktid))
 
@@ -505,10 +513,14 @@ struct magbkt {
     (((bktid) <= MALLOCSLABLOG2)                                        \
      ? 2                                                                \
      : (((bktid) <= MALLOCBIGMAPLOG2)                                   \
-        ? 1                                                             \
+        ? 2                                                             \
         : 0))
 #define magnarnbuf(bktid)                                               \
     (1UL << magnarnbuflog2(bktid))
+#else
+#define magnglobbuf(bktid) 1
+#define magnarnbuf(bktid)  1
+#endif
 
 #define maghdrsz(bktid)                                                 \
     (rounduppow2(sizeof(struct mag), CLSIZE))
@@ -581,6 +593,16 @@ struct magbkt {
         (mag)->arn = NULL;                                              \
     } while (0)
 
+#if (MALLOCBUFMAG)
+#define bktaddmag(bkt)       ((bkt)->n++)
+#define bktrmmag(bkt)        ((bkt)->n--)
+#define bktaddmany(bkt, num) ((bkt)->n += (num))
+#else
+#define bktaddmag(bkt)
+#define bktrmmag(bkt)
+#define bktaddmany(bkt, num)
+#endif
+
 #define magpop(bkt, mag, lock)                                          \
     do {                                                                \
         struct mag *_mag;                                               \
@@ -591,6 +613,7 @@ struct magbkt {
         _mag = (bkt)->ptr;                                              \
         if (_mag) {                                                     \
             magrmhead((bkt), _mag);                                     \
+            bktrmmag(bkt);                                              \
         }                                                               \
         if (lock) {                                                     \
             mtxunlk(&(bkt)->lk);                                        \
@@ -606,12 +629,13 @@ struct magbkt {
         if ((mag)->next) {                                              \
             (mag)->next->prev = (mag);                                  \
         }                                                               \
+        bktaddmag(bkt);                                                 \
         (bkt)->ptr = (mag);                                             \
         if (lock) {                                                     \
             mtxunlk(&(bkt)->lk);                                        \
         }                                                               \
     } while (0)
-#define magpushmany(first, last, bkt, lock)                             \
+#define magpushmany(first, last, bkt, lock, n)                          \
     do {                                                                \
         (first)->prev = NULL;                                           \
         if (lock) {                                                     \
@@ -621,6 +645,7 @@ struct magbkt {
         if ((last)->next) {                                             \
             (last)->next->prev = (last);                                \
         }                                                               \
+        bktaddmany(bkt, n);                                             \
         (bkt)->ptr = (first);                                           \
         if (lock) {                                                     \
             mtxunlk(&(bkt)->lk);                                        \
