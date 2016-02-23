@@ -526,12 +526,13 @@ struct magbkt {
     (rounduppow2(sizeof(struct mag), CLSIZE))
 #if (MALLOCFREEMAP)
 #if (MALLOCPTRNDX)
-(maghdrsz()                                                             \
- + ((!magnblklog2(bktid)                                                \
-     ? 0                                                                \
-     : (magnblk(bktid) * sizeof(void *)
-        + magnblk(bktid) * sizeof(PTRNDX)
-        + ((magnblk(bktid) + CHAR_BIT) >> 3)))))
+#define magtabsz(bktid)                                                 \
+    (maghdrsz()                                                         \
+     + ((!magnblklog2(bktid)                                            \
+         ? 0                                                            \
+         : (magnblk(bktid) * sizeof(void *)                             \
+            + magnblk(bktid) * sizeof(PTRNDX)                           \
+            + ((magnblk(bktid) + CHAR_BIT) >> 3)))))
 #else
 #define magtabsz(bktid)                                                 \
     (maghdrsz()                                                         \
