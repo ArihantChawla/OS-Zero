@@ -5,16 +5,16 @@
 #include <zero/asm.h>
 #include <zero/trix.h>
 
-#define _membufchtype(mb, t)                                            \
+#define membufchtype(mb, t)                                            \
     ((mb)->hdr.type = (t))
-#define _membufwritable(mb)                                             \
+#define membufwritable(mb)                                             \
     (!((mb)->flg & MEMBUF_RDONLY)                                       \
      && (!((mb)->flg & MEMBUF_EXTBIT)                                   \
          || !memextisref(mb)))
 
-#define _memextisref(mb)  ((membufextnref) && ((*membufextnref(mb)) > 1))
-#define _memaddextref(mb) m_atominc(membufextnref(mb))
-#define _memrmextref(mb)  m_atomdec(membufextnref(mb))
+#define memextisref(mb)  ((membufextnref) && ((*membufextnref(mb)) > 1))
+#define memaddextref(mb) m_atominc(membufextnref(mb))
+#define memrmextref(mb)  m_atomdec(membufextnref(mb))
 
 /* TODO: I hope we don't need another suballocator for membufs... :) */
 
@@ -30,14 +30,14 @@
         if (_mb) {                                                      \
             _mb->hdr.type = (t);                                        \
             _mb->hdr.next = NULL;                                       \
-            _mb->hdr.nextpkt = NULL;                                    \
+            _mb->hdr.chain = NULL;                                      \
             _mb->hdr.adr = _mb->data.buf;                               \
             _mb->hdr.flg = 0;                                           \
         }                                                               \
         (mp) = _mb;                                                     \
     } while (0)
 
-#define _memgetblk(mp, how)                                             \
+#define _memgetblk(mp, how, type)                                       \
     do {                                                                \
         struct membuf *_mb = (mp);                                      \
         struct memext *_ext = membufexthdr(_mb);                        \
@@ -60,11 +60,11 @@
         struct membuf *_mb = memgetbuf(how);                            \
                                                                         \
         if (_mb) {                                                      \
-            struct pkthdr *_pkt = &_mb->data.hdr.pkt;                   \
+            struct pkthdr *_pkt = &_mb->pkt;                            \
                                                                         \
             _mb->hdr.type = (t);                                        \
             _mb->hdr.next = NULL;                                       \
-            _mb->hdr.nextpkt = NULL;                                    \
+            _mb->hdr.chain = NULL;                                      \
             _mb->hdr.adr = membufpktdata(_mb);                          \
             _mb->hdr.flg = MEMBUF_PKTHDR_BIT;                           \
             _pkt->rcvif = NULL;                                         \
@@ -79,7 +79,7 @@
         struct membuf *_mb = memgetbuf(how);                            \
         void          *_buf = kmalloc(size);                            \
                                                                         \
-        while (!buf && (how == MEM_TRYWAIT)) {                          \
+        while (!_buf && (how == MEM_TRYWAIT)) {                         \
             m_waitint();                                                \
             _buf = kmalloc(size);                                       \
         }                                                               \
@@ -90,7 +90,7 @@
             _ext->adr = buf;                                            \
             _mb->hdr.adr = _buf;                                        \
             _mb->hdr.flg |= (MEMBUF_EXTBIT | (flg));                    \
-            _ext->free = (free);                                        \
+            _ext->free = kfree;                                         \
             _ext->arg = (arg);                                          \
             _ext->size = (size);                                        \
         }                                                               \
@@ -113,13 +113,12 @@
         _mb->hdr.flg &= ~MEMBUF_EXTBIT;                                 \
     } while (0)
 
-#define _memfreebuf(mp, next)                                           \
+#define _memfreebuf(mp)                                                 \
     do {                                                                \
         struct membuf *_mb = *(mp);                                     \
                                                                         \
-        (next) = _mb->next;                                             \
         if (_mb->hdr.flg & MEMBUF_EXTBIT) {                             \
-            _memfreeext(_mb);                                           \
+            memfreeext(_mb);                                            \
         }                                                               \
         memputbuf(_mb);                                                 \
         (mp) = NULL;                                                    \
@@ -142,14 +141,14 @@
         struct membuf *_src = (src);                                    \
                                                                         \
         _dest->hdr.flg = ((_src->hdr.flg & MEMBUF_COPYBITS)             \
-                          | (_dest->hdr.flg & MEMBUF_EXTBIT));          \
+                          | (_dest->hdr.flg & MEMBUF_EXTBITS));         \
         if (!(_dest->hdr.flg & MEMBUF_EXTBIT)) {                        \
             _dest->hdr.adr = membufpktdata(_dest);                      \
         }                                                               \
         *(membufpkthdr(_dest)) = *(membufpkthdr(_src));                 \
     } while (0)
 
-#define __membufsize(mb)                                                \
+#define _membufsize(mb)                                                 \
     (((mb)->hdr.flg & MEMBUF_EXTBIT)                                    \
      ? (membufextsize(mb))                                              \
      : (((mb)->hdr.flg & MEMBUF_PKTHDR_BIT)                             \
@@ -164,12 +163,12 @@
     rounddownpow2((uintptr_t)(mb)->hdr.adr + MEMBUF_BKTLEN - (len),     \
                   sizeof(long))
 
-#define _membufleadspace(mb)                                            \
+#define _membufleadspace(mb)                                                             \
     (((mb)->hdr.flg & MEMBUF_EXTBIT)                                    \
      ? 0                                                                \
      : (((mb)->hdr.flg & MEMBUF_PKTHDR_BIT)                             \
-        ? ((mb)->hdr.adr - membufpktdata(mb))                           \
-        : ((mb)->hdr.adr - (mb)->data.buf)))
+        ? (membufpktdata(mb) - (mb))                                    \
+        : ((mb)->hdr.buf - (mb))))
 
 #define _membuftrailspace(mb)                                           \
     (((mb)->hdr.flg & MEMBUF_EXTBIT)                                    \

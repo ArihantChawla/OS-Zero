@@ -18,9 +18,9 @@
 #include <kern/unit/arm/link.h>
 #endif
 
-extern struct mempool    memphyspool;
-//static struct membufbkt  membufbkttab[NCPU] ALIGNED(PAGESIZE);
-//static struct membufbkt  membufbkt;
+extern struct mempool   memphyspool;
+static struct membufbkt membufbkttab[NCPU] ALIGNED(PAGESIZE);
+static struct membufbkt membufbkt;
 
 void
 meminit(size_t nbphys)
@@ -84,8 +84,6 @@ meminitphys(struct mempool *physpool, uintptr_t base, size_t nbphys)
     return;
 }
 
-#if 0
-
 /*
  * called without locks at boot time, or with locks held by memgetbuf() */
 long
@@ -106,6 +104,7 @@ meminitcpubuf(long unit, long how)
     while (n--) {
         u8ptr -= MEMBUF_SIZE;
         buf = (struct membuf *)u8ptr;
+        buf->hdr.adr = (uint8_t *)buf + sizeof(struct membufhdr);
         buf->hdr.next = last;
         last = buf;
     }
@@ -117,12 +116,14 @@ meminitcpubuf(long unit, long how)
 long
 meminitbuf(void)
 {
-    struct membuf *buf;
-    struct memblk *blk;
-    void          *last;
-    uint8_t       *u8ptr1;
-    uint8_t       *u8ptr2;
-    long           n;
+    long              unit = k_curunit;
+    struct membufbkt *bkt = &membufbkttab[unit];
+    struct membuf    *buf;
+    struct memblk    *blk;
+    void             *last;
+    uint8_t          *u8ptr1;
+    uint8_t          *u8ptr2;
+    long              n;
 
     /* allocate wired memory for membufs and memblks */
     u8ptr1 = kwalloc(MEMNBUF * MEMBUF_SIZE);
@@ -140,7 +141,7 @@ meminitbuf(void)
     kbzero(u8ptr2, NMEMBUFBLK * MEMBUF_BLK_SIZE);
     /* allocate global buf container */
     n = MEMNBUF;
-    membufbkt.nbuf = n;
+    bkt->nbuf = n;
     u8ptr1 += MEMNBUF * MEMBUF_SIZE;
     last = NULL;
     while (n--) {
@@ -149,10 +150,10 @@ meminitbuf(void)
         buf->hdr.next = last;
         last = buf;
     }
-    membufbkt.buflist = last;
+    bkt->buflist = last;
     /* allocate global blk container */
     n = NMEMBUFBLK;
-    membufbkt.nblk = n;
+    bkt->nblk = n;
     u8ptr2 += NMEMBUFBLK * MEMBUF_BLK_SIZE;
     last = NULL;
     while (n--) {
@@ -162,7 +163,7 @@ meminitbuf(void)
         blk->next = last;
         last = blk;
     }
-    membufbkt.blklist = last;
+    bkt->blklist = last;
     /* initialise per-CPU buf containers */
     n = NCPU;
     while (n--) {
@@ -176,30 +177,30 @@ memgetbuf(long how)
 {
     volatile long     unit = k_curunit;
     uint8_t          *ptr;
-    struct membufbkt *bkt;
+    struct membufbkt *bkt = &membufbkttab[unit];
     struct membuf    *ret = NULL;
     struct membuf    *buf;
     struct membuf    *last;
     long              n;
 
-    mtxlk(&membufbkttab[unit].lk);
-    ret = membufbkttab[unit].buflist;
+    mtxlk(&bkt->lk);
+    ret = bkt->buflist;
     if (ret) {
-        membufbkttab[unit].buflist = buf->hdr.next;
-        membufbkttab[unit].nbuf--;
+        bkt->buflist = buf->hdr.next;
+        bkt->nbuf--;
     } else {
-        mtxlk(&membufbkttab[unit].lk);
-        ret = membufbkt.buflist;
+        mtxlk(&bkt->lk);
+        ret = bkt->buflist;
         if (ret) {
-            membufbkt.buflist = buf->hdr.next;
-            membufbkt.nbuf--;
-            mtxunlk(&membufbkttab[unit].lk);
+            bkt->buflist = buf->hdr.next;
+            bkt->nbuf--;
+            mtxunlk(&bkt->lk);
         } else {
-            mtxunlk(&membufbkttab[unit].lk);
+            mtxunlk(&bkt->lk);
             meminitcpubuf(unit, MEM_TRYWAIT);
         }
     }
-    mtxunxlk(&membufbkttab[unit].lk);
+    mtxunlk(&bkt->lk);
 
     return ret;
 }
@@ -207,12 +208,13 @@ memgetbuf(long how)
 void
 memputbuf(struct membuf *buf)
 {
-    struct membufbkt *bkt = &membufbkt;
+    long              unit = k_curunit;
+    struct membufbkt *bkt = &membufbkttab[unit];
 
     mtxlk(&bkt->lk);
-    buf->hdr.next = membufbkt.buflist;
-    membufbkt.buflist = buf;
-    membufbkt.nbuf++;
+    buf->hdr.next = bkt->buflist;
+    bkt->buflist = buf;
+    bkt->nbuf++;
     mtxunlk(&bkt->lk);
 }
 
@@ -221,27 +223,28 @@ void *
 memgetblk(long how)
 {
     volatile long  unit = k_curunit;
+    struct membufbkt *bkt = &membufbkttab[unit];
     uint8_t       *ptr;
     struct memblk *ret = NULL;
     struct memblk *blk;
     struct memblk *last;
     long           n;
 
-    mtxlk(&membufbkttab[unit].lk);
-    ret = membufbkttab[unit].blklist;
+    mtxlk(&bkt->lk);
+    ret = bkt->blklist;
     if (ret) {
-        membufbkttab[unit].blklist = blk->next;
-        membufbkttab[unit].nblk--;
+        bkt->blklist = blk->next;
+        bkt->nblk--;
     } else {
-        mtxlk(&membufbkttab[unit].lk);
-        ret = membufbkt.blklist;
+        mtxlk(&bkt->lk);
+        ret = bkt->blklist;
         if (ret) {
-            membufbkt.blklist = blk->next;
-            membufbkt.nblk--;
+            bkt->blklist = blk->next;
+            bkt->nblk--;
         }
-        mtxunlk(membufbkt.lk);
+        mtxunlk(&bkt->lk);
     }
-    mtunxlk(&membufbkttab[unit].lk);
+    mtxunlk(&bkt->lk);
 
     return ret;
 }
@@ -249,19 +252,20 @@ memgetblk(long how)
 void
 memputblk(struct memblk *blk)
 {
-    struct membufbkt *bkt = &membufbkt;
+    long              unit = k_curunit;
+    struct membufbkt *bkt = &membufbkttab[unit];
 
     mtxlk(&bkt->lk);
-    blk->next = membufbkt.blklist;
-    membufbkt.blklist = blk;
-    membufbkt.nblk++;
+    blk->next = bkt->blklist;
+    bkt->blklist = blk;
+    bkt->nblk++;
     mtxunlk(&bkt->lk);
 }
 
 struct membuf *
 membufprepend(struct membuf *buf, size_t len, long how)
 {
-    struct membuf *mb;
+    struct membuf *mb = (buf);
 
     if (buf->hdr.flg & MEMBUF_PKTHDR_BIT) {
         _memgetpkthdr(mb, how, mb->hdr.type);
@@ -269,24 +273,19 @@ membufprepend(struct membuf *buf, size_t len, long how)
         _memgetbuf(mb, how, mb->hdr.type);
     }
     if (!mb) {
-        while (buf) {
-            buf = memfreebuf(buf);
-        }
 
         return NULL;
     }
     if (buf->hdr.flg & MEMBUF_PKTHDR_BIT) {
-        memmovepkthdr(mb, buf);
+        _memmovepkthdr(mb, buf);
     }
     mb->hdr.next = buf;
     buf = mb;
     if (len < membuflen(buf)) {
-        _membufalign(buf, len);
+        _memalignbuf(buf, len);
     }
     buf->hdr.len = len;
 
     return buf;
 }
-
-#endif /* 0 */
 

@@ -7,6 +7,7 @@
 
 /* internal stuff for zero malloc - not for the faint at heart to modify :) */
 
+#define MALLOCNBSTK       1
 #define MALLOCFREEMAP     0
 #define MALLOCSLABTAB     1
 
@@ -31,7 +32,7 @@
 #define MALLOCTLSARN      1
 #define MALLOCSMALLADR    1
 #define MALLOCSTAT        1
-#define MALLOCPTRNDX      0
+#define MALLOCPTRNDX      1
 #define MALLOCCONSTSLABS  1
 #define MALLOCDYNARN      0
 #define MALLOCGETNPROCS   0
@@ -166,7 +167,6 @@
 #define __malloctrylkspin(mp) spintrylk(mp)
 #define __malloclkspin(mp)    spinlk(mp)
 #define __mallocunlkspin(mp)  spinunlk(mp)
-#endif
 #elif (PTHREAD)
 #include <pthread.h>
 #define MUTEX pthread_mutex_t
@@ -179,16 +179,16 @@
 #include <stdint.h>
 #if (MALLOCSLABLOG2 - MALLOCMINLOG2 < 8)
 #define PTRFREE              0xff
-#define MAGPTRNDX            uint8_t
+#define PTRNDX               uint8_t
 #elif (MALLOCSLABLOG2 - MALLOCMINLOG2 < 16)
 #define PTRFREE              0xffff
-#define MAGPTRNDX            uint16_t
+#define PTRNDX               uint16_t
 #elif (MALLOCSLABLOG2 - MALLOCMINLOG2 < 32)
 #define PTRFREE              0xffffffff
-#define MAGPTRNDX            uint32_t
+#define PTRNDX               uint32_t
 #else
 #define PTRFREE              UINT64_C(0xffffffffffffffff)
-#define MAGPTRNDX            uint64_t
+#define PTRNDX               uint64_t
 #endif
 #endif
 
@@ -219,6 +219,13 @@
 #define MALLOC_HOOK_MAYBE_VOLATILE __MALLOC_HOOK_VOLATILE
 #endif
 #endif
+
+#if defined(GNUMALLOC) && (GNUMALLOC)
+void * zero_malloc(size_t size);
+void * zero_realloc(void *ptr, size_t size);
+void * zero_memalign(size_t align,  size_t size);
+void   zero_free(void *ptr);
+#endif /* GNUMALLOC */
 
 #if defined(GNUMALLOC) && (GNUMALLOC)
 static void   gnu_malloc_init(void);
@@ -313,19 +320,15 @@ static void   gnu_free_hook(void *ptr);
                            & ((1UL << SLABDIRNL1BIT) - 1))
 #define slabdirl2ndx(ptr) (((uintptr_t)(ptr) >> SLABDIRL2NDX)           \
                            & ((1UL << SLABDIRNL2BIT) - 1))
-#if defined(SLABDIRL3BIT) && (SLABDIRNL3BIT)
 #define slabdirl3ndx(ptr) (((uintptr_t)(ptr) >> SLABDIRL3NDX)           \
                            & ((1UL << SLABDIRNL3BIT) - 1))
-#endif
 
 #define pagedirl1ndx(ptr) (((uintptr_t)(ptr) >> PAGEDIRL1NDX)           \
                            & ((1UL << PAGEDIRNL1BIT) - 1))
 #define pagedirl2ndx(ptr) (((uintptr_t)(ptr) >> PAGEDIRL2NDX)           \
                            & ((1UL << PAGEDIRNL2BIT) - 1))
-#if defined(PAGEDIRNL3BIT) && (PAGEDIRNL3BIT)
 #define pagedirl3ndx(ptr) (((uintptr_t)(ptr) >> PAGEDIRL3NDX)           \
                            & ((1UL << PAGEDIRNL3BIT) - 1))
-#endif
 
 #endif /* MALLOCMULTITAB */
 
@@ -387,8 +390,8 @@ struct mag {
     struct mag    *prev;
     struct mag    *next;
 #if (MALLOCPTRNDX)
-    MAGPTRNDX     *stk;
-    MAGPTRNDX     *ptr;
+    PTRNDX        *stk;
+    PTRNDX        *ptr;
 #elif (MALLOCHDRPREFIX)
     void          *stk;
     void          *ptr;
@@ -398,9 +401,147 @@ struct mag {
 /* magazine list header structure */
 
 struct magbkt {
-    long        nref;
+    volatile long   nref;
+#if (MALLOCNBSTK)
+    volatile long   cur;
+    volatile long   n;
+    struct mag    **tab;
+#else
     struct mag *tab;
+#endif
 };
+
+#if (!PTRFLGMASK)
+#define clrptr(ptr)                                                     \
+    ((ptr))
+#else
+#define clrptr(ptr)                                                     \
+    ((void *)((uintptr_t)ptr & ~PTRADRMASK))
+#endif
+#define clradr(adr)                                                     \
+    ((uintptr_t)(adr) & ~ADRMASK)
+#define ptrdiff(ptr1, ptr2)                                             \
+    ((uintptr_t)(ptr2) - (uintptr_t)(ptr1))
+
+#if (MALLOCPTRNDX)
+#define magptrid(mag, ptr)                                              \
+    ((PTRNDX)((uintptr_t)clrptr(ptr) - (uintptr_t)(mag)->base) >> (mag)->bktid)
+#define magputid(mag, ptr, id)                                          \
+    (((mag)->ptr)[magptrid(mag, ptr)] = (id))
+#define maggetid(mag, ptr)                                             \
+    (((mag)->ptr)[magptrid(mag, ptr)])
+#define magptr(mag, ndx)                                                \
+    ((void *)((uint8_t *)((mag)->base + (ndx * (1UL << (mag)->bktid)))))
+#define maggetptr(mag, ptr)                                             \
+    (((void **)(mag)->ptr)[magptrid(mag, ptr)])
+#endif
+#else
+#define magptrid(mag, ptr)                                              \
+    (((uintptr_t)clrptr(ptr) - (uintptr_t)(mag)->base) >> (mag)->bktid)
+#define magputptr(mag, ptr, orig)                                       \
+    (((void **)(mag)->ptr)[magptrid(mag, ptr)] = (orig))
+#define maggetptr(mag, ptr)                                             \
+    (((void **)(mag)->ptr)[magptrid(mag, ptr)])
+#endif
+
+/*
+ * magazines for bucket bktid have 1 << magnblklog2(bktid) blocks of
+ * 1 << bktid bytes
+ */
+#define magnblklog2(bktid)                                              \
+    (((bktid) < MALLOCSLABLOG2)                                         \
+     ? (MALLOCSLABLOG2 - (bktid))                                       \
+     : 0)
+#define magnblk(bktid)                                                  \
+    (1UL << magnblklog2(bktid))
+
+#define magnglobbuflog2(bktid)                                          \
+    (((bktid) <= MALLOCSLABLOG2)                                        \
+     ? 4                                                                \
+     : (((bktid) <= MALLOCBIGMAPLOG2)                                   \
+        ? 3                                                             \
+        : (((bktid <= MALLOCHUGEMAPLOG2)                                \
+            ? 2                                                         \
+            : 1))))
+#define magnglobbuf(bktid)                                              \
+    (1UL << magnglobbuflog2(bktid))
+
+#define magnarnbuflog2(bktid)                                           \
+    (((bktid) <= MALLOCSLABLOG2)                                        \
+     ? 2                                                                \
+     : (((bktid) <= MALLOCBIGMAPLOG2)                                   \
+        ? 1                                                             \
+        : 0))
+#define magnarnbuf(bktid)                                               \
+    (1UL << magnarnbuflog2(bktid))
+
+#define maghdrsz(bktid)                                                 \
+    (rounduppow2(sizeof(struct mag), CLSIZE))
+#if (MALLOCFREEMAP)
+#define magtabsz(bktid)                                                 \
+    ((maghdrsz()                                                        \
+      + ((!magnblklog2(bktid)                                           \
+          ? 0                                                           \
+          : ((magnblk(bktid) << 1) * sizeof(void *)                     \
+             + ((magnblk(bktid) + CHAR_BIT) >> 3))))))
+#else
+#define magtabsz(bktid)                                                 \
+    ((maghdrsz()                                                        \
+      + (!magnblklog2(bktid)                                            \
+         ? 0                                                            \
+         : (magnblk(bktid) << 1) * sizeof(void *))))
+#endif
+#define magembedtab(bktid)                                              \
+    (magtabsz(bktid) <= MALLOCHDRSIZE)
+
+#define magpop(bkt, mag, lock)                                          \
+    do {                                                                \
+        struct mag *_mag;                                               \
+                                                                        \
+        if (lock) {                                                     \
+            mtxlk(&(bkt)->lk);                                          \
+        }                                                               \
+        _mag = (bkt)->ptr;                                              \
+        if (_mag) {                                                     \
+            if (_mag->next) {                                           \
+                _mag->next->prev = NULL;                                \
+            }                                                           \
+            (bkt)->ptr = _mag->next;                                    \
+        }                                                               \
+        if (lock) {                                                     \
+            mtxunlk(&(bkt)->lk);                                        \
+        }                                                               \
+        (mag) = _mag;                                                   \
+    } while (0)
+#define magpush(mag, bkt, lock)                                         \
+    do {                                                                \
+        if (lock) {                                                     \
+            mtxlk(&(bkt)->lk);                                          \
+        }                                                               \
+        (mag)->next = (bkt)->ptr;                                       \
+        if ((mag)->next) {                                              \
+            (mag)->next->prev = (mag);                                  \
+        }                                                               \
+        (bkt)->ptr = (mag);                                             \
+        if (lock) {                                                     \
+            mtxunlk(&(bkt)->lk);                                        \
+        }                                                               \
+    } while (0)
+#define magpushmany(first, last, bkt, lock)                             \
+    do {                                                                \
+        (first)->prev = NULL;                                           \
+        if (lock) {                                                     \
+            mtxlk(&(bkt)->lk);                                          \
+        }                                                               \
+        (last)->next = (bkt)->ptr;                                      \
+        if ((last)->next) {                                             \
+            (last)->next->prev = (last);                                \
+        }                                                               \
+        (bkt)->ptr = (first);                                           \
+        if (lock) {                                                     \
+            mtxunlk(&(bkt)->lk);                                        \
+        }                                                               \
+    } while (0)
 
 #if (MALLOCHDRHACKS)
 #define MALLOCHDRNFO (MALLOCALIGNMENT > PTRSIZE)
