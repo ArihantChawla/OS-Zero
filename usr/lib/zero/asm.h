@@ -17,7 +17,7 @@
  * m_membar()   	- memory barrier for serialised access
  * m_waitint()  	- pause until interrupt received
  * m_cmpswap()  	- atomic compare and swap operation
- * m_fetadd()   	- atomic fetch and add
+ * m_fetchadd()   	- atomic fetch and add
  * m_getretadr(pp)      - get return address of current function to *(pp)
  * m_setretadr(pp)      - store return address of current function to *(pp)
  */
@@ -46,8 +46,11 @@
     (__builtin_extract_return_addr(__builtin_return_address(0)))
 #define m_getfrmadr(p)                                                  \
     (__builtin_frame_address(0))
-/* atomic operations */
-#define m_atomread(v) (*(volatile typeof(v) *)&(v))
+/* atomic operations - FIXME: are the barriers used correctly? */
+#define m_atomread(v)     ((*(volatile typeof(v) *)&(v))
+#define m_syncread(v)     (m_memwrbar(), (*(volatile typeof(v) *)&(v)))
+#define m_atomwrite(v, a) ((*(volatile typeof(v) *)&(a)) = (v))
+#define m_syncwrite(v, a) ((*(volatile typeof(v) *)&(a)) = (v), m_memrdbar())
 #endif
 
 #endif /* __ZERO_ASM_H__ */
