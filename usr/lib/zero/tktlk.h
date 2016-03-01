@@ -7,78 +7,82 @@
 #include <zero/cdefs.h>
 #include <zero/param.h>
 #include <zero/asm.h>
+#define PTHREAD 1
 #include <zero/thr.h>
 
 #if (LONGSIZE == 4)
 
-typedef union zerotktlk {
+union zerotktlk {
     volatile unsigned int uval;
-    union {
+    struct {
         unsigned short    val;
         unsigned short    nref;
-    }
-} zerotktlk;
+    } s;
+};
 
 #elif (LONGSIZE == 8)
 
-typedef union zerotktlk {
+union zerotktlk {
     volatile unsigned long uval;
-    union {
+    struct {
         unsigned int       val;
         unsigned int       nref;
-    }
-} zerotktlk;
+    } s;
+};
 
 #endif /* LONGSIZE */
+
+typedef union zerotktlk zerotktlk;
 
 #if (LONGSIZE == 4)
 
 static INLINE void
-tktlk(zerotktlk *tp)
+tktlk(union zerotktlk *tp)
 {
-    volatile unsigned short val = m_fetchadd16(&tp->nref, 1);
-
-    while (tp->val != val) {
+    volatile unsigned short val = m_fetchaddu16(&tp->s.nref, 1);
+    
+    while (tp->s.val != val) {
         thryield();
     }
-
+    
     return;
 }
 
 static INLINE void
-tktunlk(zerotktlk *tp)
+tktunlk(union zerotktlk *tp)
 {
     m_membar();
-    tp->val++;
-
+    tp->s.val++;
+    
     return;
 }
 
 /* return 1 if lock succeeds, 0 otherwise */
 static INLINE long
-tkttrylk(zerotktlk *tp)
+tkttrylk(union zerotktlk *tp)
 {
-    volatile unsigned short val = tp->nref;
+    volatile unsigned short val = tp->s.nref;
     unsigned short          next = val + 1;
     unsigned int            cmp = (val << 16) | val;
     unsigned int            cmpnew = (next << 16) | val;
     long                    res = 0;
-
-    if (m_cmpswap(&tp->uval, cmp, cmpnew)) {
+    
+    if (m_cmpswapu(&tp->uval, cmp, cmpnew) == cmp) {
         res++;
     }
-
+    
     return res;
 }
 
 #elif (LONGSIZE == 8)
 
 static INLINE void
-tktlk(zerotktlk *tp)
+tktlk(union zerotktlk *tp)
 {
-    volatile unsigned long val = m_fetchadd32(&tp->nref, 1);
+    volatile unsigned long val;
 
-    while (tp->val != val) {
+    val = m_fetchaddu32(&tp->s.nref, 1);
+    while (tp->s.val != val) {
         thryield();
     }
 
@@ -86,25 +90,25 @@ tktlk(zerotktlk *tp)
 }
 
 static INLINE void
-tktunlk(zerotktlk *tp)
+tktunlk(union zerotktlk *tp)
 {
     m_membar();
-    tp->val++;
+    tp->s.val++;
 
     return;
 }
 
 /* return 1 if lock succeeds, 0 otherwise */
 static INLINE long
-tkttrylk(zerotktlk *tp)
+tkttrylk(union zerotktlk *tp)
 {
-    volatile unsigned long val = tp->nref;
+    volatile unsigned long val = tp->s.nref;
     unsigned long          next = val + 1;
     unsigned long          cmp = (val << 32) | val;
     unsigned long          cmpnew = (next << 32) | val;
     long                   res = 0;
 
-    if (m_cmpswap(&tp->uval, cmp, cmpnew)) {
+    if (m_cmpswapu(&tp->uval, cmp, cmpnew) == cmp) {
         res++;
     }
 

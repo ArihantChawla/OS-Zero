@@ -8,15 +8,15 @@
 #define thrid() ((uintptr_t)pthread_self())
 #endif
 
-#if defined(_WIN64) || defined(_WIN32)
+#if defined(PTHREAD) || defined(ZEROPTHREAD)
+#define thryield() pthread_yield();
+#elif defined(_WIN64) || defined(_WIN32)
 #define thryield() kYieldProcessor()
 #elif defined(__linux__) && !defined(__KERNEL__)
 #define thryield() sched_yield();
 #elif defined(__KERNEL__)
 extern void schedyield(void);
 #define thryield() schedyield();
-#elif defined(PTHREAD) || defined(ZEROPTHREAD)
-#define thryield() pthread_yield();
 //#elif defined(ZEROTHR)
 //#define thryield() /* FIXME */
 #endif

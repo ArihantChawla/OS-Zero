@@ -13,8 +13,10 @@
 #define m_waitint()    __asm__ __volatile__ ("pause\n"  : : : "memory")
 /* atomic fetch and add, 16-bit version */
 #define m_fetchadd16(p, val)     m_xadd16((volatile short *)(p), val)
+#define m_fetchaddu16(p, val)    m_xaddu16((volatile unsigned short *)(p), val)
 /* atomic fetch and add, 32-bit version */
 #define m_fetchadd32(p, val)     m_xadd32((volatile int *)(p), val)
+#define m_fetchaddu32(p, val)    m_xaddu32((volatile unsigned int *)(p), val)
 /* atomic compare and swap byte */
 #define m_cmpswapb(p, want, val) m_cmpxchg8(p, want, val)
 
@@ -69,6 +71,18 @@ m_xadd16(volatile short *p,
     return val;
 }
 
+static __inline__ long
+m_xaddu16(volatile unsigned short *p,
+          unsigned short val)
+{
+    __asm__ __volatile__ ("lock xaddw %%ax, %2\n"
+                          : "=a" (val)
+                          : "a" (val), "m" (*(p))
+                          : "memory");
+
+    return val;
+}
+
 /*
  * atomic fetch and add
  * - let *p = *p + val
@@ -77,6 +91,18 @@ m_xadd16(volatile short *p,
 static __inline__ long
 m_xadd32(volatile int *p,
          long val)
+{
+    __asm__ __volatile__ ("lock xaddl %%eax, %2\n"
+                          : "=a" (val)
+                          : "a" (val), "m" (*(p))
+                          : "memory");
+
+    return val;
+}
+
+static __inline__ long
+m_xaddu32(volatile unsigned int *p,
+          unsigned long val)
 {
     __asm__ __volatile__ ("lock xaddl %%eax, %2\n"
                           : "=a" (val)

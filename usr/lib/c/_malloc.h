@@ -10,7 +10,12 @@
 
 /* internal stuff for zero malloc - not for the faint at heart to modify :) */
 
+#define MALLOCCASQUEUE    1
+#define MALLOCTKTLK       0
+#define MALLOCNBTAIL      0
+#define MALLOCNBDELAY     0
 #define MALLOCNBSTK       0
+#define MALLOCNBHEADLK    0
 #define MALLOCFREEMAP     0
 #define MALLOCSLABTAB     1
 
@@ -145,37 +150,45 @@
 #define VALGRINDFREE(adr)
 #endif
 
-#if defined(ZEROMTX) && (ZEROMTX)
-#define MUTEX volatile long
+#if defined(MALLOCTKTLK) && (MALLOCTKTLK)
+#include <zero/tktlk.h>
+#define LOCK union zerotktlk
+#define __mallocinitlk(mp)
+#define __malloctrylk(mp)     tkttrylk(mp)
+#define __malloclk(mp)        tktlk(mp)
+#define __mallocunlk(mp)      tktunlk(mp)
+#elif defined(ZEROMTX) && (ZEROMTX)
+#define LOCK volatile long
 #include <zero/mtx.h>
 #include <zero/spin.h>
-#if (ZEROMTX) && (DEBUGMTX)
-#define __mallocinitmtx(mp)   mtxinit(mp)
-#define __malloctrylkmtx(mp)  mtxtrylk(mp)
-#define __malloclkmtx(mp)     (fprintf(stderr, "%p\tLK: %d\n", mp, __LINE__), \
+#if defined(DEBUGMTX) && (DEBUGMTX)
+#define __mallocinitlk(mp)    mtxinit(mp)
+#define __malloctrylk(mp)   mtxtrylk(mp)
+#define __malloclk(mp)      (fprintf(stderr, "%p\tLK: %d\n", mp, __LINE__), \
                                mtxlk(mp))
-#define __mallocunlkmtx(mp)   (fprintf(stderr, "%p\tUNLK: %d\n", mp, __LINE__), \
+#define __mallocunlk(mp)    (fprintf(stderr, "%p\tUNLK: %d\n", mp, __LINE__), \
                                mtxunlk(mp))
 #define __mallocinitspin(mp)  spininit(mp)
 #define __malloclkspin(mp)    (fprintf(stderr, "LK: %d\n", __LINE__),   \
                                spinlk(mp))
 #define __mallocunlkspin(mp)  (fprintf(stderr, "UNLK: %d\n", __LINE__), \
                                spinunlk(mp))
-#elif (ZEROMTX)
-#define __mallocinitmtx(mp)   mtxinit(mp)
-#define __malloctrylkmtx(mp)  mtxtrylk(mp)
-#define __malloclkmtx(mp)     mtxlk(mp)
-#define __mallocunlkmtx(mp)   mtxunlk(mp)
+#else
+#define __mallocinitlk(mp)   mtxinit(mp)
+#define __malloctrylk(mp)  mtxtrylk(mp)
+#define __malloclk(mp)     mtxlk(mp)
+#define __mallocunlk(mp)   mtxunlk(mp)
 #define __mallocinitspin(mp)  spininit(mp)
 #define __malloctrylkspin(mp) spintrylk(mp)
 #define __malloclkspin(mp)    spinlk(mp)
 #define __mallocunlkspin(mp)  spinunlk(mp)
+#endif
 #elif (PTHREAD)
 #include <pthread.h>
-#define MUTEX pthread_mutex_t
-#define __mallocinitmtx(mp) pthread_mutex_init(mp, NULL)
-#define __malloclkmtx(mp)   pthread_mutex_lock(mp)
-#define __mallocunlkmtx(mp) pthread_mutex_unlock(mp)
+#define LOCK pthread_mutex_t
+#define __mallocinitlk(mp) pthread_mutex_init(mp, NULL)
+#define __malloclk(mp)   pthread_mutex_lock(mp)
+#define __mallocunlk(mp) pthread_mutex_unlock(mp)
 #endif
 
 #if (MALLOCPTRNDX)
@@ -343,14 +356,18 @@ struct memtab {
 #if (MALLOCNBSTK)
 
 /* request state */
-#define BKT_REQ_NONE 0L
-#define BKT_MARK_POS 0
-#define BKT_MARK_BIT (1L << 0)
-#define BKT_REQ_FAIL (1L << 1)
-#define BKT_POP_REQ  (1L << 2)
-#define BKT_PUSH_REQ (1L << 3)
+#define BKT_REQ_NONE      0L
+#define BKT_MARK_POS      0
+#define BKT_MARK_BIT      (1L << 0)
+#define BKT_REQ_FAIL      (1L << 1)
+#define BKT_POP_REQ       (1L << 2)
+#define BKT_PUSH_REQ      (1L << 3)
+#if (MALLOCNBTAIL)
+#define BKT_POP_TAIL_REQ  (1L << 4)
+#define BKT_PUSH_TAIL_REQ (1L << 5)
+#endif
 /* request status */
-#define BKT_REQ_DONE (1L << 31)
+#define BKT_REQ_DONE      (1L << 31)
 struct bktreq {
     long           state;       // request type and state
     long           bktid;       // bucket ID for request
@@ -367,34 +384,10 @@ struct bktreqs {
 
 #endif /* MALLOCNBSTK */
 
-struct magtab {
-    MUTEX          lk;
-    struct mag    *ptr;
-#if (MALLOCBUFMAG)
-    unsigned long  n;
-#endif
-#if (MALLOCBUFMAG)
-    uint8_t        _pad[rounduppow2(sizeof(MUTEX) + 2 * sizeof(long),
-                                    CLSIZE - sizeof(MUTEX) - 2 * sizeof(long))];
-#else
-    uint8_t        _pad[rounduppow2(sizeof(MUTEX) + sizeof(long),
-                                    CLSIZE - sizeof(MUTEX) - sizeof(long))];
-#endif
-};
-
-#define MALLOCARNSIZE rounduppow2(sizeof(struct arn), PAGESIZE)
-/* arena structure */
-struct arn {
-    struct magtab magbkt[MALLOCNBKT];
 #if (MALLOCNBSTK)
-    struct magtab hdrbuf[MALLOCNBKT];
+#define MAG_FREE_POS    0
+#define MAG_FREE_BIT    (1 << 0)
 #endif
-#if (!MALLOCTLSARN)
-    MUTEX         nreflk;
-    long          nref;
-#endif
-};
-
 #define maglkbit(mag)   1
 #define magunlkbit(mag) 0
 #define MAGMAP          0x01
@@ -406,6 +399,9 @@ struct arn {
 /* magazine header structure */
 struct mag {
     volatile long  lk;
+#if (MALLOCNBSTK)
+    volatile long  flg;
+#endif
     struct arn    *arn;
     void          *base;
     void          *adr;
@@ -426,9 +422,43 @@ struct mag {
 #if (MALLOCPTRNDX)
     PTRNDX        *stk;
     PTRNDX        *idtab;
-#elif (MALLOCHDRPREFIX)
+#else
     void          *stk;
     void          *ptrtab;
+#endif
+};
+
+struct magtab {
+    LOCK             lk;
+    struct mag      *ptr;
+#if (MALLOCNBTAIL) || (MALLOCCASLIST)
+    struct mag      *tail;
+#endif
+#if (MALLOCBUFMAG)
+    unsigned long    n;
+#endif
+#if (MALLOCBUFMAG)
+    uint8_t          _pad[rounduppow2(sizeof(LOCK)
+                                      + 2 * sizeof(long),
+                                      CLSIZE - sizeof(LOCK)
+                                      - 2 * sizeof(long))];
+#else
+    uint8_t          _pad[rounduppow2(sizeof(LOCK) + sizeof(long),
+                                      CLSIZE - sizeof(LOCK)
+                                      - sizeof(long))];
+#endif
+};
+
+#define MALLOCARNSIZE rounduppow2(sizeof(struct arn), PAGESIZE)
+/* arena structure */
+struct arn {
+    struct magtab magbkt[MALLOCNBKT];
+#if (MALLOCNBSTK)
+    struct magtab hdrbuf[MALLOCNBKT];
+#endif
+#if (!MALLOCTLSARN)
+    LOCK          nreflk;
+    long          nref;
 #endif
 };
 
@@ -444,6 +474,10 @@ struct magbkt {
     struct mag *tab;
 #endif
 };
+
+static void * maginitslab(struct mag *mag, long bktid);
+static void * maginittab(struct mag *mag, long bktid);
+static void * maginit(struct mag *mag, long bktid);
 
 #if (!PTRFLGMASK)
 #define clrptr(ptr)                                                     \
@@ -475,7 +509,6 @@ struct magbkt {
     (((void **)(mag)->ptrtab)[magptrid(mag, ptr)] = (orig))
 #define maggetptr(mag, ptr)                                             \
     (((void **)(mag)->ptrtab)[magptrid(mag, ptr)])
-#endif
 
 /*
  * magazines for bucket bktid have 1 << magnblklog2(bktid) blocks of
@@ -557,16 +590,59 @@ struct magbkt {
 #endif
 #define magembedtab(bktid) (magtabsz(bktid) <= MALLOCHDRSIZE)
 
-#if (MALLOCNBSTK)
+#if (MALLOCCASQUEUE)
+
 #define arnrmhead(bkt, head)                                            \
     do {                                                                \
         if ((head)->next) {                                             \
             (head)->next->prev = NULL;                                  \
+        } else {                                                        \
+            (bkt)->tail = NULL;                                         \
+        }                                                               \
+        (bkt)->ptr = (head)->next;                                      \
+        (head)->arn = NULL;                                             \
+
+#define arnrmtail(bkt, tail)                                            \
+    do {                                                                \
+        if ((tail)->prev) {                                             \
+            (bkt)->tail = (tail)->prev;                                 \
+        } else {                                                        \
+            (bkt)->ptr = NULL;                                          \
+            (bkt)->tail = NULL;                                         \
+        }                                                               \
+    } while (0)
+
+#define arnrmmag(mag)                                                   \
+    do {                                                                \
+        if (((mag)->prev) && ((mag)->next)) {                           \
+            (mag)->next->prev = (mag)->prev;                            \
+            (mag)->prev->next = (mag)->next;                            \
+        } else if ((mag)->prev) {                                       \
+            (mag)->prev->next = NULL;                                   \
+        } else if ((mag)->next) {                                       \
+            (mag)->next->prev = NULL;                                   \
+            (mag)->arn->magbkt[bktid].ptr = (mag)->next;                \
+        } else if ((mag)->arn) {                                        \
+            (mag)->arn->magbkt[bktid].ptr = NULL;                       \
+        }                                                               \
+        (mag)->arn = NULL;                                              \
+    } while (0)
+
+#elif (MALLOCNBSTK)
+
+#define arnrmhead(bkt, head)                                            \
+    do {                                                                \
+        if ((head)->next) {                                             \
+            (head)->next->prev = NULL;                                  \
+        } else {                                                        \
+            (bkt)->tail = NULL;                                         \
         }                                                               \
         (bkt)->ptr = (head)->next;                                      \
         (head)->arn = NULL;                                             \
     } while (0)
-#else
+
+#endif
+
 #define magrmhead(bkt, head)                                            \
     do {                                                                \
         if ((head)->next) {                                             \
@@ -574,11 +650,10 @@ struct magbkt {
         }                                                               \
         (bkt)->ptr = (head)->next;                                      \
     } while (0)
-#endif
 #define magrm(mag, bkt, lock)                                           \
     do {                                                                \
-        if (lock) {                                                     \
-            mtxlk(&(bkt)->lk);                                          \
+        if ((lock) && !mag->arn) {                                      \
+            __malloclk(&(bkt)->lk);                                     \
         }                                                               \
         if (((mag)->prev) && ((mag)->next)) {                           \
             (mag)->next->prev = (mag)->prev;                            \
@@ -597,8 +672,8 @@ struct magbkt {
         } else {                                                        \
             (bkt)->ptr = NULL;                                          \
         }                                                               \
-        if (lock) {                                                     \
-            mtxunlk(&(bkt)->lk);                                        \
+        if ((lock) && !mag->arn) {                                      \
+            __mallocunlk(&(bkt)->lk);                                   \
         }                                                               \
         (mag)->arn = NULL;                                              \
     } while (0)
@@ -613,13 +688,49 @@ struct magbkt {
 #define bktaddmany(bkt, num)
 #endif
 
-#if (MALLOCNBSTK)
+#if (MALLOCCASQUEUE)
+
+#define arnpushmag(mag, tab)                                            \
+    do {                                                                \
+        struct mag *_next = (tab)->ptr;                                 \
+                                                                        \
+        (mag)->next =  _next;                                           \
+        if (_next) {                                                    \
+            _next->prev = (mag);                                        \
+        }                                                               \
+        (tab)->ptr = (mag);                                             \
+    } while (0)
+
+#define arnpopmag(bkt, mag)                                             \
+    do {                                                                \
+        struct mag *_mag = NULL;                                        \
+                                                                        \
+        _mag = (bkt)->ptr;                                              \
+        if (_mag) {                                                     \
+            arnrmhead((bkt), _mag);                                     \
+            bktrmmag(bkt);                                              \
+        }                                                               \
+        (mag) = _mag;                                                   \
+    } while (0)
+
+#define magpush(mag, tab) casqueuepush(mag, &(tab)-ptr)
+
+#define magpushmany(first, last, tab)                                   \
+    casqueuepushmany(first, last, &tab->ptr)
+
+#define magpushtail(mag, bkt)                                           \
+
+#define magpushtailmany(first, last, bkt, n)                            \
+
+#elif (MALLOCNBSTK)
 
 #define arnpushmag(mag, bkt)                                            \
     do {                                                                \
         (mag)->next = (bkt)->ptr;                                       \
         if ((mag)->next) {                                              \
             (mag)->next->prev = (mag);                                  \
+        } else {                                                        \
+            (bkt)->tail = (mag);                                        \
         }                                                               \
         bktaddmag(bkt);                                                 \
         (bkt)->ptr = (mag);                                             \
@@ -630,6 +741,8 @@ struct magbkt {
         (mag)->next = (bkt)->ptr;                                       \
         if ((mag)->next) {                                              \
             (mag)->next->prev = (mag);                                  \
+        } else {                                                        \
+            (bkt)-tail = (mag);                                         \
         }                                                               \
         bktaddmag(bkt);                                                 \
         (bkt)->ptr = (mag);                                             \
@@ -640,6 +753,8 @@ struct magbkt {
         (last)->next = (bkt)->ptr;                                      \
         if ((last)->next) {                                             \
             (last)->next->prev = (last);                                \
+        } else {                                                        \
+            (bkt)->tail = (last);                                       \
         }                                                               \
         bktaddmany(bkt, n);                                             \
         (bkt)->ptr = (first);                                           \
@@ -657,6 +772,59 @@ struct magbkt {
         (mag) = _mag;                                                   \
     } while (0)
 
+#if (MALLOCNBTAIL)
+
+#define arnpushtail(mag, bkt)                                           \
+    do {                                                                \
+        (mag)->prev = (bkt)->tail;                                      \
+        if ((mag)->prev) {                                              \
+            (mag)->prev->next = (mag);                                  \
+        } else {                                                        \
+            (bkt)->ptr = (mag);                                         \
+        }                                                               \
+        bktaddmag(bkt);                                                 \
+        (bkt)->tail = (mag);                                            \
+    } while (0)
+
+#define magpushtail(mag, bkt)                                           \
+    do {                                                                \
+        (mag)->prev = (bkt)->tail;                                      \
+        if ((mag)->prev) {                                              \
+            (mag)->prev->next = (mag);                                  \
+        } else {                                                        \
+            (bkt)->ptr = (mag);                                         \
+        }                                                               \
+        bktaddmag(bkt);                                                 \
+        (bkt)->tail = (mag);                                            \
+    } while (0)
+
+#define magpushtailmany(first, last, bkt, n)                            \
+        do {                                                            \
+            (first)->prev = (bkt)->tail;                                \
+            (last)->next = NULL;                                        \
+            if ((first)->prev) {                                        \
+                (first)->prev->next = (first);                          \
+            } else {                                                    \
+                (bkt)->ptr = (first);                                   \
+            }                                                           \
+            bktaddmany(bkt, n);                                         \
+            (bkt)->tail = (last);                                       \
+        } while (0)
+
+#define arnpopmagtail(bkt, mag)                                         \
+    do {                                                                \
+        struct mag *_mag = NULL;                                        \
+                                                                        \
+        _mag = (bkt)->tail;                                             \
+        if (_mag) {                                                     \
+            arnrmtail((bkt), _mag);                                     \
+            bktrmmag(bkt);                                              \
+        }                                                               \
+        (mag) = _mag;                                                   \
+    } while (0)
+
+#endif
+
 #else
 
 #define magpop(bkt, mag, lock)                                          \
@@ -664,7 +832,7 @@ struct magbkt {
         struct mag *_mag = NULL;                                        \
                                                                         \
         if (lock) {                                                     \
-            mtxlk(&(bkt)->lk);                                          \
+            __malloclk(&(bkt)->lk);                                     \
         }                                                               \
         _mag = (bkt)->ptr;                                              \
         if (_mag) {                                                     \
@@ -672,7 +840,7 @@ struct magbkt {
             bktrmmag(bkt);                                              \
         }                                                               \
         if (lock) {                                                     \
-            mtxunlk(&(bkt)->lk);                                        \
+            __mallocunlk(&(bkt)->lk);                                   \
         }                                                               \
         (mag) = _mag;                                                   \
     } while (0)
@@ -680,7 +848,7 @@ struct magbkt {
 #define magpush(mag, bkt, lock)                                         \
     do {                                                                \
         if (lock) {                                                     \
-            mtxlk(&(bkt)->lk);                                          \
+            __malloclk(&(bkt)->lk);                                     \
         }                                                               \
         (mag)->next = (bkt)->ptr;                                       \
         if ((mag)->next) {                                              \
@@ -689,14 +857,14 @@ struct magbkt {
         bktaddmag(bkt);                                                 \
         (bkt)->ptr = (mag);                                             \
         if (lock) {                                                     \
-            mtxunlk(&(bkt)->lk);                                        \
+            __mallocunlk(&(bkt)->lk);                                   \
         }                                                               \
     } while (0)
 #define magpushmany(first, last, bkt, lock, n)                          \
     do {                                                                \
         (first)->prev = NULL;                                           \
         if (lock) {                                                     \
-            mtxlk(&(bkt)->lk);                                          \
+            __malloclk(&(bkt)->lk);                                     \
         }                                                               \
         (last)->next = (bkt)->ptr;                                      \
         if ((last)->next) {                                             \
@@ -705,7 +873,7 @@ struct magbkt {
         bktaddmany(bkt, n);                                             \
         (bkt)->ptr = (first);                                           \
         if (lock) {                                                     \
-            mtxunlk(&(bkt)->lk);                                        \
+            __mallocunlk(&(bkt)->lk);                                   \
         }                                                               \
     } while (0)
 
@@ -737,14 +905,14 @@ struct malloc {
 #if (!MALLOCTLSARN)
     struct arn      **arntab;           // arena structures
 #endif
-    MUTEX            *pagedirlktab;
+    LOCK             *pagedirlktab;
 #if (MALLOCFREETABS)
     struct memtab    *pagedir;          // allocation header lookup structure
 #else
     void            **pagedir;
 #endif
-    MUTEX             initlk;           // initialization lock
-    MUTEX             heaplk;           // lock for sbrk()
+    LOCK             initlk;            // initialization lock
+    LOCK             heaplk;            // lock for sbrk()
 #if (!MALLOCTLSARN)
     long              curarn;
     long              narn;             // number of arenas in action
@@ -796,7 +964,6 @@ magtrypop(long bktid)
     
     return mag;
 }
-
 static __inline__ struct mag *
 magtrypush(struct mag *mag, long bktid)
 {
@@ -822,11 +989,82 @@ magtrypush(struct mag *mag, long bktid)
                 }
             } else {
                 mag->next = mark;
+#if (MALLOCNBTAIL)
+                bkt->tail = new;
+#endif
                 bkt->ptr = new;
             }
             if (!mag->arn) {
                 m_cmpclrbit((volatile long *)&mag->next, BKT_MARK_POS);
             }
+            mag = NULL;
+            mag->arn = NULL;
+        }
+        m_cmpclrbit((volatile long *)&bkt->ptr, BKT_MARK_POS);
+    }
+
+    return mag;
+}
+
+#if (MALLOCNBTAIL)
+
+static __inline__ struct mag *
+magtrypoptail(long bktid)
+{
+    struct magtab *bkt = &g_malloc.magbkt[bktid];
+    struct mag    *mag = NULL;
+    struct mag    *tail;
+    struct mag    *prev;
+    
+    if (!m_cmpsetbit((volatile long *)&bkt->ptr, BKT_MARK_POS)) {
+        tail = bkt->tail;
+        if (tail) {
+            if (!m_cmpsetbit((volatile long *)&tail->next, BKT_MARK_POS)) {
+                prev = tail->prev;
+                if (prev) {
+                    if (!m_cmpsetbit((volatile long *)&prev->next,
+                                     BKT_MARK_POS)) {
+                        prev->next = (struct mag *)BKT_MARK_BIT;
+                        mag = tail;
+                        bkt->tail = prev;
+                    }
+                } else {
+                    mag = tail;
+                    bkt->tail = NULL;
+                    bkt->ptr = (struct mag *)BKT_MARK_BIT;
+                }
+                m_cmpclrbit((volatile long *)&tail->next, BKT_MARK_POS);
+            }
+        }
+        m_cmpclrbit((volatile long *)&bkt->ptr, BKT_MARK_POS);
+    }
+    
+    return mag;
+}
+
+static __inline__ struct mag *
+magtrypushtail(struct mag *mag, long bktid)
+{
+    struct magtab *bkt = &g_malloc.magbkt[bktid];
+    struct mag    *tail;
+    struct mag    *new;
+    struct mag    *prev;
+    
+    mag->prev = NULL;
+    if (!m_cmpsetbit((volatile long *)&bkt->ptr, BKT_MARK_POS)) {
+        new = (struct mag *)((uintptr_t)mag | BKT_MARK_BIT);
+        tail = bkt->tail;
+        if (tail) {
+            if (!m_cmpsetbit((volatile long *)&tail->next, BKT_MARK_POS)) {
+                prev = tail;
+                mag->prev = prev;
+                prev->next = mag;
+                bkt->tail = new;
+                m_cmpclrbit((volatile long *)&tail->next, BKT_MARK_POS);
+            }
+        } else {
+            bkt->tail = mag;
+            bkt->ptr = new;
             mag = NULL;
             mag->arn = NULL;
         }
@@ -851,7 +1089,7 @@ bkthelpreq(long bktid)
             req = &dest->tab[slot];
             reqptr = &dest->stk[slot];
             if (req->state & BKT_POP_REQ) {
-                if (!req->state & BKT_REQ_DONE) {
+                if (!(req->state & BKT_REQ_DONE)) {
                     mag = magtrypop(bktid);
                     if (mag) {
                         req->state |= BKT_REQ_DONE;
@@ -859,7 +1097,7 @@ bkthelpreq(long bktid)
                     }
                 }
             } else if (req->state & BKT_PUSH_REQ) {
-                if (!req->state & BKT_REQ_DONE) {
+                if (!(req->state & BKT_REQ_DONE)) {
                     mag = req->mag;
                     mag = magtrypush(mag, bktid);
                     if (!mag) {
@@ -869,13 +1107,216 @@ bkthelpreq(long bktid)
                         *reqptr = NULL;
                     }
                 }
-            } 
+            } else if (req->state & BKT_POP_TAIL_REQ) {
+                if (!(req->state & BKT_REQ_DONE)) {
+                    mag = magtrypoptail(bktid);
+                    if (mag) {
+                        req->state |= BKT_REQ_DONE;
+                        req->mag = mag;
+                    }
+                }
+            } else if (req->state & BKT_PUSH_TAIL_REQ) {
+                mag = req->mag;
+                mag = magtrypushtail(mag, bktid);
+                if (!mag) {
+                    req->state = BKT_REQ_NONE;
+                    req->bktid = 0;
+                    req->mag = NULL;
+                    *reqptr = NULL;
+                }
+                
+            }
             m_cmpclrbit(&dest->slotbits, slot);
         }
     }
     
     return;
 }
+
+static __inline__ struct bktreq **
+magpoptailreq(long bktid, long *slotret)
+{
+    struct bktreq   *req = NULL;
+    struct bktreq  **reqptr = NULL;
+    struct bktreqs  *dest;
+    long             slot;
+
+    dest = &bktreqs[(bktid)];
+    for (slot = 0 ; slot < BKTNREQ ; slot++) {
+        if (!m_cmpsetbit(&dest->slotbits, slot)) {
+            reqptr = &dest->stk[slot];
+            req->state = BKT_POP_TAIL_REQ;
+            req->bktid = bktid;
+            req->mag = NULL;
+            *reqptr = req;
+            m_cmpclrbit(&dest->slotbits, slot);
+
+            break;
+        }
+    }
+    if (reqptr) {
+        *slotret = slot;
+    }
+
+    return reqptr;
+}
+
+static __inline__ struct mag *
+magpoptailnb(long bktid)
+{
+    struct mag     *mag = NULL;
+    struct bktreq  *req;
+    struct bktreq **reqptr = NULL;
+    struct bktreqs *dest;
+    long            slot = -1;
+    long            done = 0;
+    long            nloop = 8;
+    long            nspin;
+    
+    dest = &bktreqs[bktid];
+    while (!mag && (nloop--)) {
+        mag = magtrypoptail(bktid);
+        if ((mag) && !reqptr) {
+            
+            return mag;
+        }
+        if (reqptr) {
+            bkthelpreq(bktid);
+            nspin = 8;
+            do {
+                if (!m_cmpsetbit(&dest->slotbits, slot)) {
+                    done = 1;
+                }
+            } while (--nspin);
+            if (done) {
+                if (req->state & BKT_REQ_DONE) {
+                    mag = req->mag;
+                    req->state = BKT_REQ_NONE;
+                    req->bktid = 0;
+                    req->mag = NULL;
+                    *reqptr = NULL;
+                    reqptr = NULL;
+                }
+                m_cmpclrbit(&dest->slotbits, slot);
+            }
+        } else {
+            reqptr = magpoptailreq(bktid, &slot);
+            if (reqptr) {
+                req = *reqptr;
+            }
+        }
+    }
+    if (reqptr) {
+        do {
+            ;
+        } while (m_cmpsetbit(&dest->slotbits, slot));
+        if (req->state & BKT_REQ_DONE) {
+            mag = req->mag;
+        }
+        req->state = BKT_REQ_NONE;
+        req->bktid = 0;
+        req->mag = NULL;
+        *reqptr = NULL;
+        m_cmpclrbit(&dest->slotbits, slot);
+    }
+    
+    return mag;
+}
+
+static __inline__ struct bktreq **
+magpushtailreq(struct mag *mag, long bktid, long *slotret)
+{
+    struct bktreq   *req = NULL;
+    struct bktreq  **reqptr = NULL;
+    struct bktreqs  *dest;
+    long             slot;
+    
+    dest = &bktreqs[bktid];
+    /* try to post a request */
+    for (slot = 0 ; slot < BKTNREQ ; slot++) {
+        if (!m_cmpsetbit(&dest->slotbits, slot)) {
+            req = &dest->tab[slot];
+            reqptr = &dest->stk[slot];
+            req->state = BKT_PUSH_TAIL_REQ;
+            req->bktid = bktid;
+            req->mag = mag;
+            *reqptr = req;
+            m_cmpclrbit(&dest->slotbits, slot);
+            
+            break;
+        }
+    }
+    if (reqptr) {
+        *slotret = slot;
+    }
+
+    return reqptr;
+}
+
+static __inline__ struct mag *
+magpushtailnb(struct mag *mag, long bktid)                       
+{
+    struct mag     *src = mag;
+    struct bktreqs *dest;
+    struct bktreq  *req;
+    struct bktreq **reqptr = NULL;
+    long            slot;
+    long            nloop = 8;
+    long            nspin;
+    long            done = 0;
+    
+    mag->prev = NULL;
+    dest = &bktreqs[bktid];
+    while ((mag) && (nloop--)) {
+        mag = magtrypushtail(src, bktid);
+        if (!mag && !reqptr) {
+            
+            return mag;
+        }
+        if (reqptr) {
+            bkthelpreq(bktid);
+            nspin = 8;
+            do {
+                if (!m_cmpsetbit(&dest->slotbits, slot)) {
+                    done = 1;
+                }
+            } while (!done && (--nspin));
+            if (done) {
+                if (req->state & BKT_REQ_DONE) {
+                    req->state = BKT_REQ_NONE;
+                    req->bktid = 0;
+                    req->mag = NULL;
+                    *reqptr = NULL;
+                    reqptr = NULL;
+                    mag = NULL;
+                    m_cmpclrbit(&dest->slotbits, slot);
+                }
+            }
+        } else {
+            reqptr = magpushtailreq(mag, bktid, &slot);
+            if (reqptr) {
+                req = *reqptr;
+            }
+        }
+    }
+    if (reqptr) {
+        do {
+            ;
+        } while (m_cmpsetbit(&dest->slotbits, slot));
+        if (req->state & BKT_REQ_DONE) {
+            mag = NULL;
+        }
+        req->state = BKT_REQ_NONE;
+        req->bktid = 0;
+        req->mag = NULL;
+        *reqptr = NULL;
+        m_cmpclrbit(&dest->slotbits, slot);
+    }
+    
+    return mag;
+}
+
+#endif /* MALLOCNBTAIL */
 
 static __inline__ struct bktreq **
 magpopreq(long bktid, struct mag *mag, long *slotret)
@@ -1098,6 +1539,9 @@ magrmnb(struct mag *mag, long bktid)
             (bkt)->ptr = mag->next;
         }
     } else if ((mag)->arn) {
+#if (MALLOCNBTAIL)
+        (mag)->arn->magbkt[bktid]. tail = NULL;
+#endif
         (mag)->arn->magbkt[bktid].ptr = NULL;
     } else {
         bkt->ptr = NULL;

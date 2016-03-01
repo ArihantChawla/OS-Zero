@@ -23,7 +23,7 @@
 #include <kern/sched.h>
 #elif defined(PTHREAD)
 /* on some Linux setups, the pthread library declares no prototype */
-//extern int pthread_yield(void);
+extern int pthread_yield(void);
 #endif
 #if defined(__linux__) && !defined(__KERNEL__)
 #include <sched.h>

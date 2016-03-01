@@ -13,7 +13,9 @@ extern uint64_t asmgetpc(void);
 #define m_atomdec(p)               m_atomdec64(p)
 #define m_swap(p, val)             m_xchg64(p, val)
 #define m_fetchadd(p, val)         m_xadd64(p, val)
+#define m_fetchaddu(p, val)        m_xaddu64(p, val)
 #define m_cmpswap(p, want, val)    m_cmpxchg64(p, want, val)
+#define m_cmpswapu(p, want, val)   m_cmpxchgu64(p, want, val)
 #define m_cmpswapptr(p, want, val) m_cmpxchg64ptr(p, want, val)
 #define m_cmpsetbit(p, ndx)        m_cmpsetbit64(p, ndx)
 #define m_cmpclrbit(p, ndx)        m_cmpclrbit64(p, ndx)
@@ -135,6 +137,23 @@ m_xadd64(volatile long *p,
 }
 
 /*
+ * atomic fetch and add
+ * - let *p = *p + val
+ * - return original *p
+ */
+static __inline__ long
+m_xaddu64(volatile unsigned long *p,
+          long val)
+{
+    __asm__ __volatile__ ("lock xaddq %%rax, %q2\n"
+                          : "=a" (val)
+                          : "a" (val), "m" (*(p))
+                          : "memory");
+
+    return val;
+}
+
+/*
  * atomic compare and exchange longword
  * - if *p == want, let *p = val
  * - return original *p
@@ -143,6 +162,21 @@ static __inline__ long
 m_cmpxchg64(volatile long *p,
            long want,
            long val)
+{
+    volatile long res;
+    
+    __asm__ __volatile__ ("lock cmpxchgq %1, %2\n"
+                          : "=a" (res)
+                          : "q" (val), "m" (*(p)), "0" (want)
+                          : "memory");
+    
+    return res;
+}
+
+static __inline__ long
+m_cmpxchgu64(volatile unsigned long *p,
+             unsigned long want,
+             unsigned long val)
 {
     volatile long res;
     
