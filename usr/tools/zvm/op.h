@@ -1,53 +1,7 @@
 #ifndef __ZVM_OP_H__
 #define __ZVM_OP_H__
 
-void zvmopnot(struct zvmopcode *op);
-void zvmopand(struct zvmopcode *op);
-void zvmopor(struct zvmopcode *op);
-void zvmopxor(struct zvmopcode *op);
-void zvmopshr(struct zvmopcode *op);
-void zvmopsar(struct zvmopcode *op);
-void zvmopshl(struct zvmopcode *op);
-void zvmopror(struct zvmopcode *op);
-void zvmoprol(struct zvmopcode *op);
-void zvmopinc(struct zvmopcode *op);
-void zvmopdec(struct zvmopcode *op);
-void zvmopadd(struct zvmopcode *op);
-void zvmopsub(struct zvmopcode *op);
-void zvmopcmp(struct zvmopcode *op);
-void zvmopmul(struct zvmopcode *op);
-void zvmopdiv(struct zvmopcode *op);
-void zvmopmod(struct zvmopcode *op);
-void zvmopjmp(struct zvmopcode *op);
-void zvmopbz(struct zvmopcode *op);
-void zvmopbnz(struct zvmopcode *op);
-void zvmopblt(struct zvmopcode *op);
-void zvmopble(struct zvmopcode *op);
-void zvmopbgt(struct zvmopcode *op);
-void zvmopbge(struct zvmopcode *op);
-void zvmopbo(struct zvmopcode *op);
-void zvmopbno(struct zvmopcode *op);
-void zvmopbc(struct zvmopcode *op);
-void zvmopbnc(struct zvmopcode *op);
-void zvmoppop(struct zvmopcode *op);
-void zvmoppush(struct zvmopcode *op);
-void zvmoppusha(struct zvmopcode *op);
-void zvmopmovl(struct zvmopcode *op);
-void zvmopmovb(struct zvmopcode *op);
-void zvmopmovw(struct zvmopcode *op);
-#if (!ZVM32BIT)
-void zvmopmovq(struct zvmopcode *op);
-#endif
-void zvmopcall(struct zvmopcode *op);
-void zvmopenter(struct zvmopcode *op);
-void zvmopleave(struct zvmopcode *op);
-void zvmopret(struct zvmopcode *op);
-void zvmoplmsw(struct zvmopcode *op);
-void zvmopsmsw(struct zvmopcode *op);
-void zvmopreset(struct zvmopcode *op);
-void zvmophlt(struct zvmopcode *op);
-
-#define ZVMOPNOP    0xff // dummy operation
+#define ZVMOPNOP    0x00 // dummy operation
 /* logical operations */
 #define ZVMOPLOGIC  0x00
 #define ZVMOPNOT    0x01 // 2's complement
@@ -56,9 +10,9 @@ void zvmophlt(struct zvmopcode *op);
 #define ZVMOPXOR    0x04 // logical exclusive OR
 /* shift operations */
 #define ZVMOPSHIFT  0x01
-#define ZVMOPSHR    0x01 // logical shift right (fill with zero)
-#define ZVMOPSAR    0x02 // arithmetic shift right (fill with sign)
-#define ZVMOPSHL    0x03 // shift left (fill with zero)
+#define ZVMOPSHL    0x01 // shift left (fill with zero)
+#define ZVMOPSHR    0x02 // logical shift right (fill with zero)
+#define ZVMOPSAR    0x03 // arithmetic shift right (fill with sign)
 #define ZVMOPROR    0x04 // rotate right
 #define ZVMOPROL    0x05 // rotate left
 /* arithmetic operations */
@@ -90,11 +44,9 @@ void zvmophlt(struct zvmopcode *op);
 #define ZVMOPPUSH   0x02 // push to stack
 #define ZVMOPPUSHA  0x03 // push all registers to stack
 /* load-store */
-#define ZVMOPMOV    0x05
-#define ZVMOPMOVL   0x01 // load/store 32-bit longword
-#define ZVMOPMOVB   0x02 // load/store 8-bit byte
-#define ZVMOPMOVW   0x03 // load/store 16-bit word
-#define ZVMOPMOVQ   0x03 // load/store 64-bit quadword
+#define ZVMOPMEM    0x05
+#define ZVMOPLDR    0x01
+#define ZVMOPSTR    0x02
 /* function calls */
 #define ZVMOPFUNC   0x06
 #define ZVMOPCALL   0x01 // call subroutine
@@ -102,8 +54,8 @@ void zvmophlt(struct zvmopcode *op);
 #define ZVMOPLEAVE  0x03 // subroutine epilogue
 #define ZVMOPRET    0x04 // return from subroutine
 #define ZVMOPTHR    0x05 // launch a new thread
-/* machine status word manipulation */
-#define ZVMOPMSW    0x07
+/* system operations */
+#define ZVMOPSYS    0x07
 #define ZVMOPLMSW   0x01 // load machine status word
 #define ZVMOPSMSW   0x02 // store machine status word
 /* machine state */
@@ -112,19 +64,90 @@ void zvmophlt(struct zvmopcode *op);
 #define ZVMOPHLT    0x02 // halt execution
 /* I/O */
 #define ZVMOPIO     0x09
-#define ZVMINB      0x01
-#define ZVMINW      0x02
-#define ZVMINL      0x03
-#if (!ZVM32BIT)
-#define ZVMINQ      0x04
-#endif
-#define ZVMOUTB     0x05
-#define ZVMOUTW     0x06
-#define ZVMOUTL     0x07
-#if (!ZVM32BIT)
-#define ZVMOUTQ     0x08
-#endif
+#define ZVMIN       0x01
+#define ZVMOUT      0x02
 
+/* operations for the LOGIC unit */
+void zvmopnot(struct zvmopcode *op);
+void zvmopand(struct zvmopcode *op);
+void zvmopor(struct zvmopcode *op);
+void zvmopxor(struct zvmopcode *op);
+void zvmopshl(struct zvmopcode *op);
+void zvmopshr(struct zvmopcode *op);
+void zvmopsar(struct zvmopcode *op);
+void zvmopror(struct zvmopcode *op);
+void zvmoprol(struct zvmopcode *op);
+void zvmopinc(struct zvmopcode *op);
+void zvmopdec(struct zvmopcode *op);
+void zvmopadd(struct zvmopcode *op);
+void zvmopsub(struct zvmopcode *op);
+void zvmopcmp(struct zvmopcode *op);
+void zvmopmul(struct zvmopcode *op);
+void zvmopdiv(struct zvmopcode *op);
+void zvmopmod(struct zvmopcode *op);
+void zvmopjmp(struct zvmopcode *op);
+void zvmopbz(struct zvmopcode *op);
+void zvmopbnz(struct zvmopcode *op);
+void zvmopblt(struct zvmopcode *op);
+void zvmopble(struct zvmopcode *op);
+void zvmopbgt(struct zvmopcode *op);
+void zvmopbge(struct zvmopcode *op);
+void zvmopbo(struct zvmopcode *op);
+void zvmopbno(struct zvmopcode *op);
+void zvmopbc(struct zvmopcode *op);
+void zvmopbnc(struct zvmopcode *op);
+void zvmoppop(struct zvmopcode *op);
+void zvmoppush(struct zvmopcode *op);
+void zvmoppusha(struct zvmopcode *op);
+void zvmopldr(struct zvmopcode *op);
+void zvmopstr(struct zvmopcode *op);
+#if 0
+void zvmopmovl(struct zvmopcode *op);
+void zvmopmovb(struct zvmopcode *op);
+void zvmopmovw(struct zvmopcode *op);
+void zvmopmovq(struct zvmopcode *op);
+#endif
+void zvmopcall(struct zvmopcode *op);
+void zvmopenter(struct zvmopcode *op);
+void zvmopleave(struct zvmopcode *op);
+void zvmopret(struct zvmopcode *op);
+void zvmoplmsw(struct zvmopcode *op);
+void zvmopsmsw(struct zvmopcode *op);
+void zvmopreset(struct zvmopcode *op);
+void zvmophlt(struct zvmopcode *op);
+
+#define zvmgetjmparg(vm, op)                                            \
+    zvmgetsrcarg(vm, op)
+#define zvmgetsrcarg(vm, op)                                            \
+    (((op)->adr == ZVM_REG_VAL)                                         \
+     ? (((vm)->regs[(op)->reg1])                                        \
+        ? (((op)->adr == ZVM_IMM8_VAL)                                  \
+           ? ((op)->imm8)                                               \
+           : ((op)->args[0]))))
+#define zvmgetdestarg(vm, op, retp)                                     \
+    (((op)->adr == ZVM_REG_VAL)                                         \
+     ? ((*(retp) = &(vm)->regs[(op)->reg2], *(retp))                    \
+        ? (((op)->adr == ZVM_IMM8_VAL)                                  \
+           ? ((op)->imm8)                                               \
+           : ((op)->args[0]))))
+#define zvmgetldrsrcarg(vm, op)                                         \
+    (((op)->adr == ZVM_REG_ADR)                                         \
+     ? (&(vm)->physmem[(op)->reg1])                                     \
+     : (((op)->adr == ZVM_IMM_ADR)                                      \
+        ? (&(vm)->physmem[(op)->args[0]])                               \
+        : (((op)->adr == ZVM_REG_NDX)                                   \
+           ? (&(vm)->physmem[(op)->reg1 + (op)->args[0]])               \
+           : NULL)))
+#define zvmgetstrdestarg(vm, op)                                        \
+    (((op)->adr == ZVM_REG_ADR)                                         \
+     ? (&(vm)->physmem[(op)->reg2])                                     \
+     : (((op)->adr == ZVM_IMM_ADR)                                      \
+        ? (&(vm)->physmem[(op)->args[0]])                               \
+        : (((op)->adr == ZVM_REG_NDX)                                   \
+           ? (&(vm)->physmem[(op)->reg2 + (op)->args[0]])               \
+           : NULL)))
+
+#if 0
 #define zvmgetarg(op, arg1t, ptr)                                       \
     (((ptr) = &zvm.regs[(op)->reg1],                                    \
      ((arg1t) == ZVMARGREG))                                            \
@@ -196,6 +219,8 @@ void zvmophlt(struct zvmopcode *op);
               : (ptr = (t *)&zvm.regs[(op)->args[1]],                   \
                  *(ptr))))))))
 #endif
+#endif /* 0 */
+
 #define zvmsetzf(val)                                                   \
     (!(val) \
      ? (zvm.cregs[ZVMMSWCREG] |= ZVMZF) \
