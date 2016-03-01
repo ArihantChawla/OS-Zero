@@ -10,7 +10,7 @@
 
 /* internal stuff for zero malloc - not for the faint at heart to modify :) */
 
-#define MALLOCCASQUEUE    1
+#define MALLOCCASQUEUE    0
 #define MALLOCTKTLK       0
 #define MALLOCNBTAIL      0
 #define MALLOCNBDELAY     0
@@ -431,7 +431,7 @@ struct mag {
 struct magtab {
     LOCK             lk;
     struct mag      *ptr;
-#if (MALLOCNBTAIL) || (MALLOCCASLIST)
+#if (MALLOCNBTAIL) || (MALLOCCASQUEUE)
     struct mag      *tail;
 #endif
 #if (MALLOCBUFMAG)
