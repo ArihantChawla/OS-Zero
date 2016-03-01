@@ -14,7 +14,7 @@
  * try to acquire spin-wait lock
  * - return non-zero on success, zero if already locked
  */
-static __inline__ void
+static __inline__ long
 spinwttrylk(volatile long *sp, long val, long niter)
 {
     volatile long res = 0;
@@ -27,10 +27,11 @@ spinwttrylk(volatile long *sp, long val, long niter)
         res = m_cmpswap(sp, ZEROSPININITVAL, val);
     }
     if (res == ZEROSPININITVAL) {
-        res++;
+
+        return 1;
     }
     
-    return res;
+    return 0;
 }
 
 /*
@@ -63,6 +64,8 @@ spinwtunlk(volatile long *sp, long val, long niter)
 {
     m_membar();
     *sp = ZEROSPININITVAL;
+
+    return;
 }
 
 #endif /* __ZERO_SPINWT_H__ */

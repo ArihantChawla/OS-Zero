@@ -20,14 +20,18 @@ spintrylk(volatile long *sp)
     volatile long res;
 
     res = m_cmpswap(sp, ZEROSPININITVAL, ZEROSPINLKVAL);
+    if (res == ZEROSPININITVAL) {
+
+        return 1;
+    }
     
-    return res;
+    return 0;
 }
 
 /*
  * lock spin-lock
  */
-static __inline__ long
+static __inline__ void
 spinlk(volatile long *sp)
 {
     volatile long res = ZEROSPINLKVAL;
@@ -36,7 +40,7 @@ spinlk(volatile long *sp)
         res = m_cmpswap(sp, ZEROSPININITVAL, ZEROSPINLKVAL);
     }
 
-    return res;
+    return;
 }
 
 /*
@@ -47,6 +51,8 @@ spinunlk(volatile long *sp)
 {
     m_membar();
     *sp = ZEROSPININITVAL;
+
+    return;
 }
 
 #endif /* __ZERO_SPIN_H__ */

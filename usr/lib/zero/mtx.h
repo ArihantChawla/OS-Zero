@@ -58,15 +58,19 @@ mtxtrylk(volatile long *lp)
     volatile long res;
 
     res = m_cmpswap(lp, MTXINITVAL, MTXLKVAL);
+    if (res == MTXINITVAL) {
 
-    return res;
+        return 1;
+    }
+
+    return 0;
 }
 
 /*
  * acquire mutex lock
  * - allow other threads to run when blocking
  */
-static INLINE long
+static INLINE void
 mtxlk(volatile long *lp)
 {
     volatile long res;
@@ -77,12 +81,8 @@ mtxlk(volatile long *lp)
             thryield();
         }
     } while (res != MTXINITVAL);
-    if (res == MTXINITVAL) {
 
-        return 1;
-    }
-
-    return 0;
+    return;
 }
 
 /*
