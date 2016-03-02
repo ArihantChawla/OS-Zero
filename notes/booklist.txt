@@ -63,6 +63,9 @@ clive maxfield - the definitive guide to how computers do math
 	       	 - an unconventional guide to electronics
 marshall kirk mckusick & george v. neville-neil
 	       - the design and implementation of the freebsd operating system
+marshall kirk mckusick & george v neville-neil & robert n.m. watson
+	       - the design and implementation of the freebsd operating system,
+	         second edition
 daniel mitchell
                - basicsynth
 mitnick, simon
@@ -82,3 +85,5 @@ richard w stevens
 	       - advanced programming in the unix environment
 henry s warren jr.
 		- hacker's delight, first edition
+		- hacker's delight, second edition
+
