@@ -1,6 +1,8 @@
 #ifndef __ZERO_MTX_H__
 #define __ZERO_MTX_H__
 
+#define ZEROMTXYIELD 0
+
 #include <stddef.h>
 #include <stdint.h>
 #include <zero/cdefs.h>
@@ -78,7 +80,11 @@ mtxlk(volatile long *lp)
     do {
         res = m_cmpswap(lp, MTXINITVAL, MTXLKVAL);
         if (res != MTXINITVAL) {
+#if (ZEROMTXYIELD)
             thryield();
+#else
+            m_waitint();
+#endif
         }
     } while (res != MTXINITVAL);
 

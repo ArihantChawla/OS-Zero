@@ -534,6 +534,7 @@ thrfreetls(void *arg)
     return;
 }
 
+#if (MALLOCPRIOLK)
 unsigned long
 priogetval(void)
 {
@@ -548,6 +549,7 @@ priogetval(void)
 
     return val;
 }
+#endif
 
 static void
 thrinitarn(void)
