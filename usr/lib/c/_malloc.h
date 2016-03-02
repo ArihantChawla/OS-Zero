@@ -1,12 +1,20 @@
 #ifndef ___MALLOC_H__
 #define ___MALLOC_H__
 
+#define MALLOCPRIOLK       1
+#define MALLOCREDBLACKTREE 0
+
 #include <limits.h>
 #include <stdint.h>
 #include <malloc.h>
 #include <zero/asm.h>
 #include <zero/param.h>
 #include <zero/trix.h>
+#if (MALLOCREDBLACKTREE)
+#define rbtmalloc(sz) rbtgetnode()
+#define rbtfree(ptr)  rbtputnode(ptr)
+#include <zero/rbt.h>
+#endif
 
 /* internal stuff for zero malloc - not for the faint at heart to modify :) */
 
@@ -18,6 +26,7 @@
 #define MALLOCNBHEADLK    0
 #define MALLOCFREEMAP     0
 #define MALLOCSLABTAB     1
+#define MALLOCMULTITAB    1
 
 #define PTHREAD           1
 #define ZEROMTX           1
@@ -39,8 +48,8 @@
 #define MALLOCHDRPREFIX   1
 #define MALLOCTLSARN      1
 #define MALLOCSMALLADR    1
-#define MALLOCSTAT        1
-#define MALLOCPTRNDX      0
+#define MALLOCSTAT        0
+#define MALLOCPTRNDX      1
 #define MALLOCCONSTSLABS  1
 #define MALLOCDYNARN      0
 #define MALLOCGETNPROCS   0
@@ -54,14 +63,13 @@
 #define DEBUGMTX          0
 
 #define MALLOCSTEALMAG    0
-#define MALLOCMULTITAB    1
 
 #define MALLOCNOSBRK      0 // do NOT use sbrk()/heap, just mmap()
 #define MALLOCFREETABS    1 // use free block bitmaps; bit 1 for allocated
 #define MALLOCBUFMAG      1 // buffer mapped slabs to global pool
 
 /* use zero malloc on a GNU system such as a Linux distribution */
-#define GNUMALLOC         0
+#define GNUMALLOC         1
 
 /* HAZARD: modifying anything below might break anything and everything BAD */
 
@@ -150,12 +158,22 @@
 #define VALGRINDFREE(adr)
 #endif
 
-#if defined(MALLOCTKTLK) && (MALLOCTKTLK)
+#if (ZEROMTX)
+#include <zero/mtx.h>
+#endif
+#if defined (MALLOCPRIOLK)
+#include <zero/priolk.h>
+#define LOCK struct priolk
+#define __mallocinitlk(mp)
+//#define __malloctrylk(mp)     priotrylk(mp)
+#define __malloclk(mp)        priolk(mp)
+#define __mallocunlk(mp)      priounlk(mp)
+#elif defined(MALLOCTKTLK) && (MALLOCTKTLK)
 #include <zero/tktlk.h>
 #define LOCK union zerotktlk
 #define __mallocinitlk(mp)
 #define __malloctrylk(mp)     tkttrylk(mp)
-#define __malloclk(mp)        tktlk(mp)
+#define __malloclk(mp)        tktlkspin(mp)
 #define __mallocunlk(mp)      tktunlk(mp)
 #elif defined(ZEROMTX) && (ZEROMTX)
 #define LOCK volatile long
@@ -267,7 +285,8 @@ static void   gnu_free_hook(void *ptr);
 #if (MALLOCSLABTAB)
 #define SLABDIRNL1BIT     20
 #define SLABDIRNL2BIT     16
-#define SLABDIRNL3BIT     MALLOCSLABLOG2
+#define SLABDIRNL3BIT     (PTRBITS - SLABDIRNL1BIT - SLABDIRNL2BIT      \
+                           - MALLOCSLABLOG2)
 #endif
 #define PAGEDIRNL1BIT     20
 #define PAGEDIRNL2BIT     20
@@ -277,8 +296,8 @@ static void   gnu_free_hook(void *ptr);
 #elif (PTRBITS == 64) && (MALLOCSMALLADR)
 
 #if (MALLOCSLABTAB)
-#define SLABDIRNL1BIT      20
-#define SLABDIRNL2BIT      MALLOCSLABLOG2
+#define SLABDIRNL1BIT     20
+#define SLABDIRNL2BIT     MALLOCSLABLOG2
 #endif
 #define PAGEDIRNL1BIT     20
 #define PAGEDIRNL2BIT     PAGESIZELOG2
@@ -429,23 +448,18 @@ struct mag {
 };
 
 struct magtab {
-    LOCK             lk;
-    struct mag      *ptr;
+    LOCK           lk;
+    struct mag    *ptr;
 #if (MALLOCNBTAIL) || (MALLOCCASQUEUE)
-    struct mag      *tail;
+    struct mag    *tail;
 #endif
 #if (MALLOCBUFMAG)
-    unsigned long    n;
+    unsigned long  n;
 #endif
 #if (MALLOCBUFMAG)
-    uint8_t          _pad[rounduppow2(sizeof(LOCK)
-                                      + 2 * sizeof(long),
-                                      CLSIZE - sizeof(LOCK)
-                                      - 2 * sizeof(long))];
+    uint8_t        _pad[CLSIZE - sizeof(LOCK) - 2 * sizeof(void *) - sizeof(long)];
 #else
-    uint8_t          _pad[rounduppow2(sizeof(LOCK) + sizeof(long),
-                                      CLSIZE - sizeof(LOCK)
-                                      - sizeof(long))];
+    uint8_t        _pad[CLSIZE - sizeof(LOCK) - 2 * sizeof(void *)];
 #endif
 };
 
@@ -499,16 +513,17 @@ static void * maginit(struct mag *mag, long bktid);
 #define maggetid(mag, ptr)                                              \
     (((mag)->idtab)[magptrid(mag, ptr)])
 #define magptr(mag, ndx)                                                \
-    ((void *)((uint8_t *)((mag)->base + (ndx * (1UL << (mag)->bktid)))))
+    ((void *)((uint8_t *)(mag)->base + (ndx * (1UL << (mag)->bktid))))
 #define maggetptr(mag, ptr)                                             \
     (((void **)(mag)->idtab)[magptrid(mag, ptr)])
-#endif
+#else
 #define magptrid(mag, ptr)                                              \
     (((uintptr_t)clrptr(ptr) - (uintptr_t)(mag)->base) >> (mag)->bktid)
 #define magputptr(mag, ptr, orig)                                       \
     (((void **)(mag)->ptrtab)[magptrid(mag, ptr)] = (orig))
 #define maggetptr(mag, ptr)                                             \
     (((void **)(mag)->ptrtab)[magptrid(mag, ptr)])
+#endif
 
 /*
  * magazines for bucket bktid have 1 << magnblklog2(bktid) blocks of
@@ -544,7 +559,7 @@ static void * maginit(struct mag *mag, long bktid);
     (((bktid) <= MALLOCSLABLOG2)                                        \
      ? 2                                                                \
      : (((bktid) <= MALLOCBIGMAPLOG2)                                   \
-        ? 2                                                             \
+        ? 1                                                             \
         : 0))
 #define magnarnbuf(bktid)                                               \
     (1UL << magnarnbuflog2(bktid))
@@ -592,23 +607,24 @@ static void * maginit(struct mag *mag, long bktid);
 
 #if (MALLOCCASQUEUE)
 
-#define arnrmhead(bkt, head)                                            \
+#define arnrmhead(tab, head)                                            \
     do {                                                                \
         if ((head)->next) {                                             \
             (head)->next->prev = NULL;                                  \
         } else {                                                        \
-            (bkt)->tail = NULL;                                         \
+            (tab)->tail = NULL;                                         \
         }                                                               \
-        (bkt)->ptr = (head)->next;                                      \
+        (tab)->ptr = (head)->next;                                      \
         (head)->arn = NULL;                                             \
+    } while (0)
 
-#define arnrmtail(bkt, tail)                                            \
+#define arnrmtail(tab, tail)                                            \
     do {                                                                \
         if ((tail)->prev) {                                             \
-            (bkt)->tail = (tail)->prev;                                 \
+            (tab)->tail = (tail)->prev;                                 \
         } else {                                                        \
-            (bkt)->ptr = NULL;                                          \
-            (bkt)->tail = NULL;                                         \
+            (tab)->ptr = NULL;                                          \
+            (tab)->tail = NULL;                                         \
         }                                                               \
     } while (0)
 
@@ -628,6 +644,41 @@ static void * maginit(struct mag *mag, long bktid);
         (mag)->arn = NULL;                                              \
     } while (0)
 
+#define magrmhead(tab, head)                                            \
+    do {                                                                \
+        if ((head)->next) {                                             \
+            (head)->next->prev = NULL;                                  \
+        }                                                               \
+        (tab)->ptr = (head)->next;                                      \
+    } while (0)
+#define magrm(mag, bkt, lock)                                           \
+    do {                                                                \
+        if ((lock) && !mag->arn) {                                      \
+            __malloclk(&(bkt)->lk);                                     \
+        }                                                               \
+        if (((mag)->prev) && ((mag)->next)) {                           \
+            (mag)->next->prev = (mag)->prev;                            \
+            (mag)->prev->next = (mag)->next;                            \
+        } else if ((mag)->prev) {                                       \
+            (mag)->prev->next = NULL;                                   \
+        } else if ((mag)->next) {                                       \
+            (mag)->next->prev = NULL;                                   \
+            if ((mag)->arn) {                                           \
+                (mag)->arn->magbkt[bktid].ptr = (mag)->next;            \
+            } else {                                                    \
+                (bkt)->ptr = (mag)->next;                               \
+            }                                                           \
+        } else if ((mag)->arn) {                                        \
+            (mag)->arn->magbkt[bktid].ptr = NULL;                       \
+        } else {                                                        \
+            (bkt)->ptr = NULL;                                          \
+        }                                                               \
+        if ((lock) && !mag->arn) {                                      \
+            __mallocunlk(&(bkt)->lk);                                   \
+        }                                                               \
+        (mag)->arn = NULL;                                              \
+    } while (0)
+
 #elif (MALLOCNBSTK)
 
 #define arnrmhead(bkt, head)                                            \
@@ -643,12 +694,12 @@ static void * maginit(struct mag *mag, long bktid);
 
 #endif
 
-#define magrmhead(bkt, head)                                            \
+#define magrmhead(tab, head)                                            \
     do {                                                                \
         if ((head)->next) {                                             \
             (head)->next->prev = NULL;                                  \
         }                                                               \
-        (bkt)->ptr = (head)->next;                                      \
+        (tab)->ptr = (head)->next;                                      \
     } while (0)
 #define magrm(mag, bkt, lock)                                           \
     do {                                                                \
@@ -701,26 +752,42 @@ static void * maginit(struct mag *mag, long bktid);
         (tab)->ptr = (mag);                                             \
     } while (0)
 
-#define arnpopmag(bkt, mag)                                             \
+#define arnpushtail(mag, bkt)                                           \
+    do {                                                                \
+        (mag)->prev = (bkt)->tail;                                      \
+        if ((mag)->prev) {                                              \
+            (mag)->prev->next = (mag);                                  \
+        } else {                                                        \
+            (bkt)->ptr = (mag);                                         \
+        }                                                               \
+        bktaddmag(bkt);                                                 \
+        (bkt)->tail = (mag);                                            \
+    } while (0)
+
+#define arnpopmag(tab, mag)                                             \
     do {                                                                \
         struct mag *_mag = NULL;                                        \
                                                                         \
-        _mag = (bkt)->ptr;                                              \
+        _mag = (tab)->ptr;                                              \
         if (_mag) {                                                     \
-            arnrmhead((bkt), _mag);                                     \
-            bktrmmag(bkt);                                              \
+            arnrmhead((tab), _mag);                                     \
+            bktrmmag(tab);                                              \
         }                                                               \
         (mag) = _mag;                                                   \
     } while (0)
+    
+#define magpush(mag, tab)             casqueuepush(mag, tab)
+#define magpop(tab)                   casqueuepop(tab)
 
-#define magpush(mag, tab) casqueuepush(mag, &(tab)-ptr)
+#define magpushmany(first, last, tab) casqueuepushmany(first, last, tab)
 
-#define magpushmany(first, last, tab)                                   \
-    casqueuepushmany(first, last, &tab->ptr)
+#if 0
 
 #define magpushtail(mag, bkt)                                           \
 
 #define magpushtailmany(first, last, bkt, n)                            \
+
+#endif
 
 #elif (MALLOCNBSTK)
 
@@ -906,18 +973,28 @@ struct malloc {
     struct arn      **arntab;           // arena structures
 #endif
     LOCK             *pagedirlktab;
-#if (MALLOCFREETABS)
-    struct memtab    *pagedir;          // allocation header lookup structure
+    LOCK             *slabdirlktab;
+#if (MALLOCREDBLACKTREE)
+    struct rbtnode   *rbtlist;
+    struct rbt        ptrtree;
+#elif (MALLOCFREETABS)
+    struct memtab    *pagedir;
+    struct memtab    *slabdir;
 #else
     void            **pagedir;
+    void            **slabdir;
 #endif
-    LOCK             initlk;            // initialization lock
-    LOCK             heaplk;            // lock for sbrk()
+    volatile long    initlk;            // initialization lock
+    volatile long    heaplk;            // lock for sbrk()
 #if (!MALLOCTLSARN)
     long              curarn;
     long              narn;             // number of arenas in action
 #endif
     volatile long     flg;              // allocator flags
+#if (MALLOCPRIOLK)
+    volatile long            priolk;
+    volatile unsigned long   prioval;
+#endif
     int               zerofd;           // file descriptor for mmap()
     struct mallopt    mallopt;          // mallopt() interface
     struct mallinfo   mallinfo;         // mallinfo() interface

@@ -1,35 +1,66 @@
+/*
+ * REFERENCES
+ * ----------
+ * https://opensource.apple.com/source/sudo/sudo-46/src/redblack.c
+ * https://opensource.apple.com/source/sudo/sudo-46/src/redblack.h
+ */
+
 #include <stdlib.h>
 #include <stdio.h>
 #include <zero/rbt.h>
 
+extern struct rbtnode * rbtgetnode(void);
+extern void             rbtputnode(struct rbtnode *);
+
 struct rbt *
-rbtinit(int (*cmp)(const void *, const void *))
+#if defined(RBT_UINTPTR_DATA)
+rbtinit(struct rbt *tree)
+#else
+rbtinit(long (*cmp)(const void *, const void *))
+#endif
 {
-    struct rbt *rbt;
-    struct rbt *nil;
-    
-    rbt = malloc(sizeof(struct rbt));
-    if (!rbt) {
+    struct rbtnode *nil;
+
+    if (!tree) {
+        tree = malloc(sizeof(struct rbt));
+    }
+    if (!tree) {
         fprintf(stderr, "rbt failed to allocated memory\n");
             
         exit(1);
     }
-    rbt->cmp = cmp;
-    nil = &rbt->nil;
-    rbt->nil.data = NULL;
-    rbt->nil.color = RBT_BLACK;
-    rbt->root.parent = nil;
-    rbt->root.left = nil;
-    rbt->root.right = nil;
-    rbt->root.color = RBT_BLACK;
-    rbt->nil.parent = nil;
-    rbt->nil.left = nil;
-    rbt->nil.right = nil;
+#if !defined(RBT_UINTPTR_DATA)
+    tree->cmp = cmp;
+#endif
+    nil = &tree->nil;
+#if defined(RBT_UINTPTR_DATA)
+#if defined(RBT_DATA_COLOR)
+    nil->data = RBT_BLACK;
+#else
+    nil->data = 0;
+    nil->color = RBT_BLACK;
+#endif
+#else
+    nil->data = NULL;
+    nil->color = RBT_BLACK;
+#endif
+    nil->parent = nil;
+    nil->left = nil;
+    nil->right = nil;
+#if defined(RBT_UINTPTR_DATA) && defined(RBT_DATA_COLOR)
+    tree->root.data = RBT_BLACK;
+#else
+    tree->root.data = NULL;
+    tree->root.color = RBT_BLACK;
+#endif
+    tree->root.parent = nil;
+    tree->root.left = nil;
+    tree->root.right = nil;
 
-    return rbt;
+    return tree;
 }
 
-void
+struct rbtnode *
 rbtrotleft(struct rbt *tree, struct rbtnode *node)
 {
     struct rbtnode *child;
@@ -48,10 +79,10 @@ rbtrotleft(struct rbt *tree, struct rbtnode *node)
     child->left = node;
     node->parent = child;
 
-    return;
+    return child;
 }
 
-void
+struct rbtnode *
 rbtrotright(struct rbt *tree, struct rbtnode *node)
 {
     struct rbtnode *child;
@@ -70,20 +101,98 @@ rbtrotright(struct rbt *tree, struct rbtnode *node)
     child->right = node;
     node->parent = child;
 
+    return child;
+}
+
+void
+rbtfix(struct rbt *tree, struct rbtnode *node)
+{
+    struct rbtnode *parent = node->parent;
+    struct rbtnode *uncle;
+    
+    while (rbtgetcolor(parent) == RBT_RED) {
+        if (parent == parent->parent->left) {
+            uncle = parent->parent->right;
+            if (rbtgetcolor(uncle) == RBT_RED) {
+#if defined(RBT_DATA_COLOR)
+                rbtsetcolor(parent, RBT_BLACK);
+                rbtsetcolor(uncle, RBT_BLACK);
+                rbtsetcolor(parent->parent, RBT_RED);
+#else
+                parent->color = RBT_BLACK;
+                uncle->color = RBT_BLACK;
+                parent->parent->color = RBT_RED;
+#endif
+                node = parent->parent;
+                parent = node->parent;
+            } else {
+                if (node == parent->right) {
+                    node = parent;
+                    rbtrotleft(tree, node);
+                }
+#if defined(RBT_DATA_COLOR)
+                rbtsetcolor(parent, RBT_BLACK);
+                rbtsetcolor(parent->parent, RBT_RED);
+#else
+                parent->color = RBT_BLACK;
+                parent->parent->color = RBT_RED;
+#endif
+                parent = rbtrotright(tree, parent->parent);
+            }
+        } else {
+            uncle = parent->parent->left;
+            if (rbtgetcolor(uncle) == RBT_RED) {
+#if defined(RBT_DATA_COLOR)
+                rbtsetcolor(parent, RBT_BLACK);
+                rbtsetcolor(uncle, RBT_BLACK);
+                rbtsetcolor(parent->parent, RBT_RED);
+#else
+                parent->color = RBT_BLACK;
+                uncle->color = RBT_BLACK;
+                parent->parent->color = RBT_RED;
+#endif
+                node = parent->parent;
+                parent = node->parent;
+            } else {
+                if (node == node->parent->left) {
+                    node = node->parent;
+                    rbtrotright(tree, node);
+                }
+#if defined(RBT_DATA_COLOR)
+                rbtsetcolor(parent, RBT_BLACK);
+                rbtsetcolor(parent->parent, RBT_RED);
+#else
+                parent->color = RBT_BLACK;
+                parent->parent->color = RBT_RED;
+#endif
+                parent = rbtrotleft(tree, node->parent->parent);
+            }
+        }
+    }
+    rbtsetcolor(&tree->root, RBT_BLACK);
+
     return;
 }
 
 struct rbtnode *
+#if defined(RBT_UINTPTR_DATA)
+rbtinsert(struct rbt *tree, uintptr_t key, uintptr_t data)
+#else
 rbtinsert(struct rbt *tree, void *data)
+#endif
 {
-    struct rbtnode *node = tree->root.left;
-    struct rbtnode *parent = &tree->root;
+    struct rbtnode *node = &tree->root;
+    struct rbtnode *parent = NULL;
     struct rbtnode *nil = &tree->nil;
-    int             res;
+    long            res;
     
-    while (node != &tree->nil) {
+    while (node != nil) {
         parent = node;
+#if defined(RBT_UINTPTR_DATA)
+        res = rbtcmpkeys(key, node->key);
+#else
         res = tree->cmp(data, node->data);
+#endif
         if (!res) {
             
             return node;
@@ -94,72 +203,56 @@ rbtinsert(struct rbt *tree, void *data)
             node = node->right;
         }
     }
-    node = malloc(sizeof(struct rbtnode));
+    node = rbtgetnode();
     if (!node) {
         fprintf(stderr, "rbt failed to allocated memory\n");
         
         exit(1);
     }
+    node->key = key;
     node->data = data;
+#if defined(RBT_UINTPTR_DATA) && defined(RBT_DATA_COLOR)
+    rbtsetcolor(node, RBT_RED);
+#else
     node->color = RBT_RED;
+#endif
     node->parent = parent;
     node->left = nil;
     node->right = nil;
-    if (parent == &tree->nil || data < parent->data) {
+    if (
+        parent == &tree->root
+#if !defined(RBT_UINTPTR_DATA)
+        || rbtcmpkeys(key, node->key)
+#else
+        || data < parent->data
+#endif
+            ) {
         parent->left = node;
     } else {
         parent->right = node;
     }
-    while (node->parent->color == RBT_RED) {
-        struct rbtnode *uncle;
-        
-        if (node->parent == parent->parent->left) {
-            uncle = parent->parent->right;
-            if (uncle->color == RBT_RED) {
-                parent->color = RBT_BLACK;
-                uncle->color = RBT_BLACK;
-                parent->parent->color = RBT_RED;
-                node = parent->parent;
-            } else {
-                if (node == parent->right) {
-                    node = parent;
-                    rbtrotleft(tree, node);
-                }
-                parent->color = RBT_BLACK;
-                parent->parent->color = RBT_RED;
-                rbtrotright(tree, parent->parent);
-            }
-        } else {
-            uncle = parent->parent->left;
-            if (uncle->color == RBT_RED) {
-                parent->color = RBT_BLACK;
-                uncle->color = RBT_BLACK;
-                parent->parent->color = RBT_RED;
-                node = parent->parent;
-            } else {
-                if (node == node->parent->left) {
-                    node = node->parent;
-                    rbtrotright(tree, node);
-                }
-                node->parent->color = RBT_BLACK;
-                node->parent->parent->color = RBT_RED;
-                rbtrotleft(tree, node->parent->parent);
-            }
-        }
-    }
-    tree->root.left->color = RBT_BLACK;
+    rbtfix(tree, node);
     
     return NULL;
 }
 
 struct rbtnode *
+#if defined(RBT_UINTPTR_DATA)
+rbtfind(struct rbt *tree, uintptr_t key)
+#else
 rbtfind(struct rbt *tree, void *key)
+#endif
 {
-    struct rbtnode *node = tree->root.left;
-    int             res;
+    struct rbtnode *node = &tree->root;
+    struct rbtnode *nil = &tree->nil;
+    long            res;
 
-    while (node != &tree->nil) {
-        res = tree->cmp(key, node->data);
+    while (node != nil) {
+#if defined(RBT_UINTPTR_DATA)
+        res  = rbtcmpkeys(key, node->key);
+#else
+        res = tree->cmp(key, node->key);
+#endif
         if (!res) {
 
             return node;
@@ -175,12 +268,18 @@ rbtfind(struct rbt *tree, void *key)
 }
 
 int
-rbtapply(struct rbt *tree, struct rbtnode *node,
-         int (*func)(void *, void *),
+rbtapply(struct rbt *tree,
+         struct rbtnode *node,
+#if defined(RBT_UINTPTR_DATA)
+         long (*func)(uintptr_t, uintptr_t),
+         uintptr_t cookie,
+#else
+         long (*func)(void *, void *),
          void *cookie,
-         int order)
+#endif
+         long order)
 {
-    int error;
+    long            error;
 
     if (node != &tree->nil) {
         if (order == RBT_PREORDER) {
@@ -244,58 +343,60 @@ rbtsuccessor(struct rbt *tree, struct rbtnode *node)
 void
 rbtrepair(struct rbt *tree, struct rbtnode *node)
 {
+    struct rbtnode *parent;
     struct rbtnode *sibling;
 
-    while (node->color == RBT_BLACK) {
-        if (node == node->parent->left) {
-            sibling = node->parent->right;
-            if (sibling->color == RBT_RED) {
-                sibling->color = RBT_BLACK;
-                node->parent->color = RBT_RED;
-                rbtrotleft(tree, node->parent);
-                sibling = node->parent->right;
+    while (rbtgetcolor(node) == RBT_BLACK) {
+        parent = node->parent;
+        if (node == parent->left) {
+            sibling = parent->right;
+            if (rbtgetcolor(sibling) == RBT_RED) {
+                rbtsetcolor(sibling, RBT_BLACK);
+                rbtsetcolor(parent, RBT_RED);
+                rbtrotleft(tree, parent);
+                sibling = parent->right;
             }
-            if (sibling->right->color == RBT_BLACK
-                &&  sibling->left->color == RBT_BLACK) {
-                sibling->color = RBT_RED;
-                node = node->parent;
+            if (rbtgetcolor(sibling->right) == RBT_BLACK
+                &&  rbtgetcolor(sibling->left) == RBT_BLACK) {
+                rbtsetcolor(sibling, RBT_RED);
+                node = parent;
             } else {
-                if (sibling->right->color == RBT_BLACK) {
-                    sibling->left->color = RBT_BLACK;
-                    sibling->color = RBT_RED;
+                if (rbtgetcolor(sibling->right) == RBT_BLACK) {
+                    rbtsetcolor(sibling->left, RBT_BLACK);
+                    rbtsetcolor(sibling, RBT_RED);
                     rbtrotright(tree, sibling);
-                    sibling = node->parent->right;
+                    sibling = parent->right;
                 }
-                sibling->color = node->parent->color;
-                node->parent->color = RBT_BLACK;
-                sibling->right->color = RBT_BLACK;
-                rbtrotleft(tree, node->parent);
+                rbtsetcolor(sibling, rbtgetcolor(parent));
+                rbtsetcolor(parent, RBT_BLACK);
+                rbtsetcolor(sibling->right, RBT_BLACK);
+                rbtrotleft(tree, parent);
 
                 break;
             }
         } else {
-            sibling = node->parent->left;
-            if (sibling->color == RBT_RED) {
-                sibling->color = RBT_BLACK;
-                node->parent->color = RBT_RED;
-                rbtrotright(tree, node->parent);
-                sibling = node->parent->left;
+            sibling = parent->left;
+            if (rbtgetcolor(sibling) == RBT_RED) {
+                rbtsetcolor(sibling, RBT_BLACK);
+                rbtsetcolor(parent, RBT_RED);
+                rbtrotright(tree, parent);
+                sibling = parent->left;
             }
-            if (sibling->right->color == RBT_BLACK
-                && sibling->left->color == RBT_BLACK) {
-                sibling->color = RBT_RED;
-                node = node->parent;
+            if (rbtgetcolor(sibling->right) == RBT_BLACK
+                && rbtgetcolor(sibling->left) == RBT_BLACK) {
+                rbtsetcolor(sibling, RBT_RED);
+                node = parent;
             } else {
-                if (sibling->left->color == RBT_BLACK) {
-                    sibling->right->color = RBT_BLACK;
-                    sibling->color = RBT_RED;
+                if (rbtgetcolor(sibling->left) == RBT_BLACK) {
+                    rbtsetcolor(sibling->right, RBT_BLACK);
+                    rbtsetcolor(sibling, RBT_RED);
                     rbtrotleft(tree, sibling);
-                    sibling = node->parent->left;
+                    sibling = parent->left;
                 }
-                sibling->color = node->parent->color;
-                node->parent->color = RBT_BLACK;
-                sibling->left->color = RBT_BLACK;
-                rbtrotright(tree, node->parent);
+                rbtsetcolor(sibling, rbtgetcolor(parent));
+                rbtsetcolor(parent, RBT_BLACK);
+                rbtsetcolor(sibling->left, RBT_BLACK);
+                rbtrotright(tree, parent);
                 
                 break;
             }
@@ -305,71 +406,101 @@ rbtrepair(struct rbt *tree, struct rbtnode *node)
     return;
 }
 
+/* FIXME: this function is recursive */
 void
+#if defined(RBT_UINTPTR_DATA)
+_rbtdestroy(struct rbt *tree, struct rbtnode *node)
+#else
 _rbtdestroy(struct rbt *tree, struct rbtnode *node, void (*destroy)(void *))
+#endif
 {
     struct rbtnode *nil = &tree->nil;
     
     if (node != nil) {
-        _rbdestroy(tree, node->left, destroy);
-        _rbdestroy(tree, node->right, destroy);
+#if defined(RBT_UINTPTR_DATA)
+        _rbtdestroy(tree, node->left);
+        _rbtdestroy(tree, node->right);
+#else
+        _rbtdestroy(tree, node->left, destroy);
+        _rbtdestroy(tree, node->right, destroy);
+#endif
+#if !defined(RBT_UINTPTR_DATA)
         if (destroy) {
             destroy(node->data);
         }
-        free(node);
+#endif
+        rbtputnode(node);
     }
 
     return;
 }
 
 void
+#if defined(RBT_UINTPTR_DATA)
+rbtdestroy(struct rbt *tree)
+#else
 rbtdestroy(struct rbt *tree, void (*destroy)(void *))
+#endif
 {
-    _rbtdestroy(tree, tree->root.left, destroy);
+#if defined(RBT_UINTPTR_DATA)
+    _rbtdestroy(tree, &tree->root);
+#else
+    _rbtdestroy(tree, &tree->root, destroy);
+#endif
     free(tree);
 
     return;
 }
 
-void
-*rbtdelete(struct rbt *tree, struct rbtnode *node)
+#if defined(RBT_UINTPTR_DATA)
+uintptr_t
+#else
+void *
+#endif
+rbtdelete(struct rbt *tree, struct rbtnode *node)
 {
     struct rbtnode *nil = &tree->nil;
-    struct rbtnode *x;
-    struct rbtnode *y;
+    struct rbtnode *node1;
+    struct rbtnode *node2;
+#if defined(RBT_UINTPTR_DATA)
+    uintptr_t       data = node->data;
+#else
     void           *data = node->data;
+#endif
 
     if (node->left == nil || node->right == nil) {
-        y = node;
+        node2 = node;
     } else {
-        y = rbtsuccessor(tree, node);
+        node2 = rbtsuccessor(tree, node);
     }
-    x = (y->left == nil) ? y->right : y->left;
-    x->parent = y->parent;
-    if (x->parent == &tree->root) {
-        tree->root.left = x;
-    } else if (y == y->parent->left) {
-        y->parent->left = x;
+    node1 = (node2->left == nil) ? node2->right : node2->left;
+    node1->parent = node2->parent;
+    if (node1->parent == &tree->root) {
+        tree->root.left = node1;
+    } else if (node2 == node2->parent->left) {
+        node2->parent->left = node1;
     } else {
-        y->parent->right = x;
+        node2->parent->right = node1;
     }
-    if (y->color == RBT_BLACK) {
-        rbtrepair(tree, x);
+    if (rbtgetcolor(node2) == RBT_BLACK) {
+        rbtrepair(tree, node1);
     }
-    if (y != node) {
-        y->left = node->left;
-        y->right = node->right;
-        y->parent = node->parent;
-        y->color = node->color;
-        node->left->parent = y;
-        node->right->parent = y;
+    if (node2 != node) {
+        node2->parent = node->parent;
+        node2->left = node->left;
+        node2->right = node->right;
+#if !defined(RBT_DATA_COLOR)
+        node2->color = node->color;
+#endif
+        node->left->parent = node2;
+        node->right->parent = node2;
         if (node == node->parent->left) {
-            node->parent->left = y;
+            node->parent->left = node2;
         } else {
-            node->parent->right = y;
+            node->parent->right = node2;
         }
     }
-    free(node);
+    rbtputnode(node);
 
     return data;
 }

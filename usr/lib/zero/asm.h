@@ -47,10 +47,18 @@
 #define m_getfrmadr(p)                                                  \
     (__builtin_frame_address(0))
 /* atomic operations - FIXME: are the barriers used correctly? */
-#define m_atomread(v)     ((*(volatile typeof(v) *)&(v))
-#define m_syncread(v)     (m_memwrbar(), (*(volatile typeof(v) *)&(v)))
-#define m_atomwrite(v, a) ((*(volatile typeof(v) *)&(a)) = (v))
-#define m_syncwrite(v, a) ((*(volatile typeof(v) *)&(a)) = (v), m_memrdbar())
+#define m_atomread(v)     ((*(volatile typeof(v) *)&(v)))
+#define m_atomwrite(a, v) ((*(volatile typeof(v) *)(a)) = (v))
+#define m_syncread(a, res)                                              \
+    do {                                                                \
+        m_memwrbar();                                                   \
+        (res) = m_atomread(a);                                          \
+    } while (0)
+#define m_syncwrite(a, val)                                             \
+    do {                                                                \
+        m_memwrbar();                                                   \
+        m_atomwrite(a, val);                                            \
+    } while (0)
 #endif
 
 #endif /* __ZERO_ASM_H__ */

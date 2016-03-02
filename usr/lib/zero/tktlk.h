@@ -10,6 +10,8 @@
 #define PTHREAD 1
 #include <zero/thr.h>
 
+#define TKTLKNSPIN 4096
+
 #if (LONGSIZE == 4)
 
 union zerotktlk {
@@ -35,6 +37,22 @@ union zerotktlk {
 typedef union zerotktlk zerotktlk;
 
 #if (LONGSIZE == 4)
+
+static INLINE void
+tktlkspin(union zerotktlk *tp)
+{
+    volatile unsigned short val = m_fetchaddu16(&tp->s.nref, 1);
+    long                    nspin = TKTLKNSPIN;
+
+    do {
+        nspin--;
+    } while ((nspin) && tp->s.val != val) {
+    while (tp->s.val != val) {
+        thryield();
+    }
+    
+    return;
+}
 
 static INLINE void
 tktlk(union zerotktlk *tp)
@@ -77,11 +95,25 @@ tkttrylk(union zerotktlk *tp)
 #elif (LONGSIZE == 8)
 
 static INLINE void
+tktlkspin(union zerotktlk *tp)
+{
+    volatile unsigned long val = m_fetchaddu32(&tp->s.nref, 1);
+    long                   nspin = TKTLKNSPIN;
+    
+    do {
+        nspin--;
+    } while ((nspin) && tp->s.val != val);
+    while (tp->s.val != val) {
+        thryield();
+    }
+
+    return;
+}
+
+static INLINE void
 tktlk(union zerotktlk *tp)
 {
-    volatile unsigned long val;
-
-    val = m_fetchaddu32(&tp->s.nref, 1);
+    volatile unsigned long val = m_fetchaddu32(&tp->s.nref, 1);
     while (tp->s.val != val) {
         thryield();
     }

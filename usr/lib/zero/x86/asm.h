@@ -1,7 +1,7 @@
 #ifndef __ZERO_X86_ASM_H__
 #define __ZERO_X86_ASM_H__
 
-#define frameisusr(tcb) ((tcb)->frame.cs == UTEXTSEL)
+//#define frameisusr(tcb) ((tcb)->frame.cs == UTEXTSEL)
 
 /* memory barrier */
 #define m_membar()     __asm__ __volatile__ ("mfence\n" : : : "memory")
@@ -71,7 +71,7 @@ m_xadd16(volatile short *p,
     return val;
 }
 
-static __inline__ long
+static __inline__ unsigned long
 m_xaddu16(volatile unsigned short *p,
           unsigned short val)
 {
@@ -100,7 +100,7 @@ m_xadd32(volatile int *p,
     return val;
 }
 
-static __inline__ long
+static __inline__ unsigned long
 m_xaddu32(volatile unsigned int *p,
           unsigned long val)
 {

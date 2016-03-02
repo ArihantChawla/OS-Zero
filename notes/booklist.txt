@@ -1,7 +1,5 @@
-This file currently lists some books I own or have owned, many of which I have
-bought recently. Have fun & enjoy reading. :) I will add items to the list as I
-come by them in my collection. Unfortunately, I lost my copy of Michael Abrash's
-Graphics Programming Black Book during a move... :(
+UPDATE: managed to score a copy of Michael Abrash's Graphics Programming Black
+Book! :D
 
 michael abrash - graphics programming black book
 gregory r. andrews

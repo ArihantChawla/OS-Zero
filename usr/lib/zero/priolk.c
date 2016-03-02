@@ -2,6 +2,7 @@
 #include <stdio.h>
 #include <zero/cdefs.h>
 #include <zero/asm.h>
+#define ZEROMTX 1
 #include <zero/mtx.h>
 #include <zero/priolk.h>
 
@@ -13,10 +14,12 @@ void
 priolkset(unsigned long prio)
 {
     t_priolkptr->val = 1UL << prio;
+
+    return;
 }
 
 void
-priolkinit(unsigned long val)
+priolkinit(struct priolkdata *data, unsigned long val)
 {
     unsigned long prio = 1UL << val;
 
@@ -24,6 +27,8 @@ priolkinit(unsigned long val)
     if (priofree) {
         t_priolkptr = priofree;
         priofree = t_priolkptr->next;
+    } else if (data) {
+        t_priolkptr = data;
     } else {
         t_priolkptr = malloc(sizeof(struct priolkdata));
         if (!t_priolkptr) {
@@ -35,6 +40,8 @@ priolkinit(unsigned long val)
     t_priolkptr->val = prio;
     t_priolkptr->orig = prio;
     mtxunlk(&priolkmtx);
+
+    return;
 }
 
 void
@@ -65,7 +72,10 @@ priolk(struct priolk *priolk)
         }
         priolkyield();
     }
-    owner = priolkcmpswap(&priolk->owner, NULL, t_priolkptr);
+//    owner = priolkcmpswap(&priolk->owner, NULL, t_priolkptr);
+    owner = m_cmpswapptr((volatile long *)&priolk->owner,
+                         NULL,
+                         (volatile long *)t_priolkptr);
     if (!owner) {
 
         return;
@@ -81,8 +91,13 @@ priolk(struct priolk *priolk)
             }
             priolkyield();
         }
+#if 0
         owner = priolkcmpswap(&priolk->owner,
-                                  NULL, prio);
+                              NULL, prio);
+#endif
+        owner = m_cmpswapptr((volatile long *)&priolk->owner,
+                             NULL,
+                             (volatile long *)t_priolkptr);
         if (!owner) {
             m_atomand(&priolk->waitbits, ~prio);
 

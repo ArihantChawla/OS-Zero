@@ -141,9 +141,9 @@ m_xadd64(volatile long *p,
  * - let *p = *p + val
  * - return original *p
  */
-static __inline__ long
+static __inline__ unsigned long
 m_xaddu64(volatile unsigned long *p,
-          long val)
+          unsigned long val)
 {
     __asm__ __volatile__ ("lock xaddq %%rax, %q2\n"
                           : "=a" (val)
@@ -173,12 +173,12 @@ m_cmpxchg64(volatile long *p,
     return res;
 }
 
-static __inline__ long
+static __inline__ unsigned long
 m_cmpxchgu64(volatile unsigned long *p,
              unsigned long want,
              unsigned long val)
 {
-    volatile long res;
+    volatile unsigned long res;
     
     __asm__ __volatile__ ("lock cmpxchgq %1, %2\n"
                           : "=a" (res)
