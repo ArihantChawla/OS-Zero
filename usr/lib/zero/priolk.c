@@ -6,12 +6,13 @@
 #include <zero/mtx.h>
 #include <zero/priolk.h>
 
+/* <vendu> eliminated the giant mutex */
 #define PRIOLKNONBLOCK
 
-static THREADLOCAL struct priolkdata *t_priolkptr;
-static volatile struct priolkdata    *priofree;
+static THREADLOCAL volatile struct priolkdata *t_priolkptr;
+static volatile struct priolkdata             *priofree;
 #if !defined(PRIOLKNONBLOCK)
-static volatile long                  priolkmtx = MTXINITVAL;
+static volatile long                           priolkmtx = MTXINITVAL;
 #endif
 
 void
@@ -25,8 +26,8 @@ priolkset(unsigned long prio)
 void
 priolkinit(struct priolkdata *data, unsigned long val)
 {
-    unsigned long      prio = 1UL << val;
-    struct priolkdata *next;
+    unsigned long               prio = 1UL << val;
+    volatile struct priolkdata *next;
 
 #if !defined(PRIOLKNONBLOCK)
     mtxlk(&priolkmtx);
@@ -93,11 +94,13 @@ priolkfinish(void)
 void
 priolk(struct priolk *priolk)
 {
-    unsigned long               prio = t_priolkptr->val;
+//    unsigned long               prio = t_priolkptr->val;
+    unsigned long               prio;
     volatile struct priolkdata *owner;
     unsigned long               mask;
 
     m_membar();
+    prio = t_priolkptr->val;
     mask = prio - 1;
     while (priolk->waitbits & mask) {
         if (t_priolkptr->val != prio) {

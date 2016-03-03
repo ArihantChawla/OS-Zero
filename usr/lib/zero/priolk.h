@@ -1,6 +1,9 @@
 #ifndef __ZERO_PRIOLK_H__
 #define __ZERO_PRIOLK_H__
 
+#include <stdint.h>
+#include <zero/param.h>
+
 /*
  * REFERENCE: http://locklessinc.com/articles/priority_locks/
  */
@@ -11,9 +14,12 @@
     } while (0)
 
 struct priolkdata {
-    unsigned long      val;
-    unsigned long      orig;
-    struct priolkdata *next;
+    unsigned long               val;
+    unsigned long               orig;
+    volatile struct priolkdata *next;
+    uint8_t                     _pad[CLSIZE
+                                     - 2 * sizeof(long)
+                                     - sizeof(void *)];
 };
 
 struct priolk {

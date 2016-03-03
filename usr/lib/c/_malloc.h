@@ -1,7 +1,7 @@
 #ifndef ___MALLOC_H__
 #define ___MALLOC_H__
 
-#define MALLOCPRIOLK       0
+#define MALLOCPRIOLK       1
 #define MALLOCREDBLACKTREE 0
 
 #include <limits.h>
