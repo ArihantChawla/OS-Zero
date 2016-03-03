@@ -27,8 +27,12 @@ void
 priolkinit(struct priolkdata *data, unsigned long val)
 {
     unsigned long               prio = 1UL << val;
+    volatile struct priolkdata *head;
     volatile struct priolkdata *next;
 
+    if (data) {
+        data->next = NULL;
+    }
 #if !defined(PRIOLKNONBLOCK)
     mtxlk(&priolkmtx);
 #endif
@@ -38,11 +42,23 @@ priolkinit(struct priolkdata *data, unsigned long val)
         priofree = t_priolkptr->next;
 #else
         do {
-            next = priofree;
+            next = NULL;
+            head = priofree;
+            if (head) {
+                next = head->next;
+            }
+            if (!next) {
+
+                break;
+            }
         } while (!m_cmpswapptr((volatile long *)priofree,
-                               (volatile long *)next,
-                               (volatile long *)priofree->next));
-        t_priolkptr = next;
+                               (volatile long *)head,
+                               (volatile long *)next));
+        if (head) {
+            t_priolkptr = head;
+        } else {
+            t_priolkptr = data;
+        }
 #endif
     } else if (data) {
         t_priolkptr = data;
@@ -77,9 +93,9 @@ priolkfinish(void)
     do {
         next = priofree;
         t_priolkptr->next = next;
-    } while (!m_cmpswapptr((volatile long *)priofree,
-                           (volatile long *)next,
-                           (volatile long *)t_priolkptr));
+    } while ((next) && !m_cmpswapptr((volatile long *)priofree,
+                                     (volatile long *)next,
+                                     (volatile long *)t_priolkptr));
 #else
     t_priolkptr->next = priofree;
     priofree = t_priolkptr;
