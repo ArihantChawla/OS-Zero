@@ -143,8 +143,8 @@ struct mempkt {
                             + sizeof(struct membufinfo))
 #define MEMBUF_HDR_SIZE    (sizeof(struct membufhdr)                    \
                             + sizeof(struct membufinfo))
-#define MEMBUF_LEN         (MEMBUF_SIZE - offsetof(struct membuf, hdr.buf.data))
-#define MEMBUF_PKT_LEN     (MEMBUF_LEN)
+#define MEMBUF_LEN         (MEMBUF_SIZE - offsetof(struct membuf, hdr.data))
+#define MEMBUF_PKT_LEN     (MEMBUF_SIZE - offsetof(struct membuf, pkt.data)
 
 struct membufhdr {
     volatile long  nref;        // # of references
