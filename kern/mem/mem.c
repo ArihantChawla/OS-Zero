@@ -26,8 +26,8 @@ void
 meminitphys(struct mempool *physpool, uintptr_t base, size_t nbphys)
 {
     struct memslab **blktab = (struct memslab **)physpool->tab;
-    uintptr_t        adr = ((base & (MEMMIN - 1))
-                            ? rounduppow2(base, MEMMIN)
+    uintptr_t        adr = ((base & (MEMMINSIZE - 1))
+                            ? rounduppow2(base, MEMMINSIZE)
                             : base);
     unsigned long    bkt = PTRBITS - 1;
     size_t           sz = 1UL << bkt;
@@ -35,14 +35,14 @@ meminitphys(struct mempool *physpool, uintptr_t base, size_t nbphys)
     
     adr = meminitpool(physpool, adr, nbphys);
     nbphys -= adr - base;
-    nbphys = rounddownpow2(nbphys, MEMMIN);
+    nbphys = rounddownpow2(nbphys, MEMMINSIZE);
     vmmapseg((uint32_t *)&_pagetab, adr, adr, adr + nbphys,
              PAGEWRITE);
 #if (__KERNEL__)
     kprintf("%ld kilobytes kernel virtual memory free @ 0x%lx\n",
             nbphys >> 10, adr);
 #endif
-    while ((nbphys) && bkt >= MEMMINLOG2) {
+    while ((nbphys) && bkt >= MEMMINSHIFT) {
         if (nbphys & sz) {
             slab = memgethdr(adr, physpool);
             memslabclrinfo(slab);

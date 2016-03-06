@@ -3,6 +3,7 @@
 
 #include <zero/param.h>
 
+#define MEMPARANOIA  0
 #define BUFDYNALLOC  1
 #define NMEMBUFBLK   8192
 #define PERTHRSTACKS 0

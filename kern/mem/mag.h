@@ -12,38 +12,42 @@
 #define memmagfull(mp)   (!(mp)->ndx)
 
 #define __STRUCT_MEMMAG_PTAB_SIZE                                       \
-    ((1UL << (MEMSLABMINLOG2 - MEMMINLOG2)) * sizeof(void *))
+    ((1UL << (MEMSLABSHIFT - MEMMINSHIFT)) * sizeof(void *))
 #if defined(MEMPARANOIA)
-#if (MEMSLABMINLOG2 - MEMMINLOG2 < (LONGSIZELOG2 + 3))
+#if (MEMSLABSHIFT - MEMMINSHIFT < (LONGSIZESHIFT + 3))
 #define __STRUCT_MEMMAG_BMAP_SIZE sizeof(long)
 #else
 #define
 #define __STRUCT_MEMMAG_BMAP_SIZE                                       \
-    (1UL << (MEMSLABMINLOG2 - MEMMINLOG2 - 3))
+    (1UL << (MEMSLABSHIFT - MEMMINSHIFT - 3))
 #endif
 #else
 #define __STRUCT_MEMMAG_BMAP_SIZE 0
 #endif /* defined(MEMPARANOIA) */
 struct memmag {
     uintptr_t      base;
-    volatile long  bkt;
+    volatile long  bktid;
     struct memmag *prev;
     struct memmag *next;
-#if defined(MEMPARANOIA) && (MEMSLABMINLOG2 - MEMMINLOG2 < (LONGSIZELOG2 + 3))
+#if defined(MEMPARANOIA) && (MEMSLABSHIFT - MEMMINSHIFT < (LONGSIZESHIFT + 3))
     unsigned long  bmap;
 #endif
     volatile long  ndx;
     volatile long  n;
-    void          *ptab[1UL << (MEMSLABMINLOG2 - MEMMINLOG2)];
-#if defined(MEMPARANOIA) &&  !(MEMSLABMINLOG2 - MEMMINLOG2 < (LONGSIZELOG2 + 3))
+    void          *ptab[1UL << (MEMSLABSHIFT - MEMMINSHIFT)];
+#if defined(MEMPARANOIA) &&  !(MEMSLABSHIFT - MEMMINSHIFT < (LONGSIZESHIFT + 3))
     uint8_t        bmap[__STRUCT_MEMMAG_BMAP_SIZE];
 #endif /* defined(MEMPARANOIA) */
 };
+
+#if 0
     
 #define memgetmag(ptr, pool)                                            \
     (((ptr)                                                             \
-      ? ((struct memmag *)(pool)->blktab + memgetblknum(ptr, pool))     \
+      ? ((struct memmag *)(pool)->blktab + memgetmagnum(ptr, pool))     \
       : NULL))
+
+#endif
 
 #endif /* __KERN_MEM_MAG_H__ */
 

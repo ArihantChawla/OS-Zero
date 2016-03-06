@@ -1,7 +1,7 @@
 #ifndef __KERN_MEM_MEM_H__
 #define __KERN_MEM_MEM_H__
 
-#define MEMNEWSLAB  0
+#define MEMNEWSLAB  1
 //#define MEMPARANOIA 1
 #undef MEMPARANOIA
 
@@ -17,21 +17,26 @@
 /* allocator parameters */
 #define MEMNHDRHASH    (512 * 1024)     // # of entries in header hash table
 #define MEMNHDRBUF     (roundup(__STRUCT_MEMBLK_SIZE, CLSIZE))
-/* allocation flags */
-#define MEMMIN         (1U << MEMMINSHIFT)
+#define MEMMINSIZE     (1U << MEMMINSHIFT)
+#define MEMSLABSIZE    (1U << MEMSLABSHIFT)
 #define MEMMINSHIFT    8 // minimum allocation of 256 bytes
+#define MEMSLABSHIFT   16
+#if 0
 #define MEMMAXOBJ      (1U << MEMMAXOBJSHIFT)
 #define MEMMAXOBJSHIFT 16
+#endif
 #define MEMNBKTBIT     8 // 8 low bits of info used for bucket ID (max 255)
 #define MEMNTYPEBIT    8 // up to 256 object types
 #define MEMBKTMASK     ((1UL << (MEMNBKTBIT - 1)) - 1)
+/* allocation flags */
 #define MEMFLGSHIFT    (1 << (CHAR_BIT * sizeof(m_ureg_t) - 1))
 #define MEMLOCKBIT     (1 << MEMFLGSHIFT) // set when manipulating header
 #define MEMALLOCBIT    (1 << (MEMFLGSHIFT - 1))
 #define MEMDIRTYBIT    (1 << (MEMFLGSHIFT - 2))
-#define MEMWIREDBIT    (1 << (MEMBASEFHIT - 3))
+#define MEMWIREDBIT    (1 << (MEMFLGSHIFT - 3))
+#define MEMZEROBIT     (1 << (MEMFLGSHIFT - 4))
 #define MEMNFLGBIT     8
-#define MEMFLGMASK                                                      \
+#define MEMFLGMASK     \
     (((m_ureg_t)~0) << (CHAR_BIT * sizeof(m_ureg_t) - MEMNFLGBIT))
 #define memslabsize(bkt)                                                \
     (1UL << (bkt))
@@ -54,7 +59,7 @@
 #define MEMMINLOG2     CLSIZELOG2
 #define MEMZERO        0x00000001UL
 #define MEMWIRE        0x00000002UL
-#define MEMFREE        0x000000004ul
+#define MEMFREE        0x000000004UL
 #define MEMFLGBITS     (MEMZERO | MEMWIRE | MEMFREE)
 #define MEMNFLGBIT     4
 #endif

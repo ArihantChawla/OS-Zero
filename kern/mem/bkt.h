@@ -43,8 +43,8 @@ __memcalcbkt(unsigned long size)
 #define __memfastbkt(sz)                                                \
     ((!isconst(sz)                                                      \
       ? __memcalcbkt(sz)                                                \
-      : (((sz) <= MEMMIN)                                               \
-         ? MEMMINLOG2                                                   \
+      : (((sz) <= MEMMINSIZE)                                           \
+         ? MEMMINSHIFT                                                  \
          : (((sz) <= (1UL << 4))                                        \
             ? 4                                                         \
             : (((sz) <= (1UL << 5))                                     \
@@ -106,8 +106,8 @@ __memcalcbkt(unsigned long size)
 #define memfastbkt(sz)                                                  \
     ((!isconst(sz)                                                      \
       ? __memcalcbkt(sz)                                                \
-      : (((sz) <= MEMMIN)                                               \
-         ? MEMMINLOG2                                                   \
+      : (((sz) <= MEMMINSIZE)                                           \
+         ? MEMMINSHIFT                                                  \
          : (((sz) <= (UINT64_C(1) << 4))                                        \
             ? 4                                                         \
             : (((sz) <= (UINT64_C(1) << 5))                                     \

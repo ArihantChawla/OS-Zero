@@ -101,8 +101,6 @@ ioinitbuf(void)
         return 0;
     }
 #if (__KERNEL__)
-    kprintf("BUF: %ld headers of %ld bytes -> total %ld bytes\n",
-            BUFNBLK, sizeof(struct bufblk), BUFNBLK * sizeof(struct bufblk));
     kprintf("BUF: reserved %lu bytes for buffer cache\n", sz);
 #endif
     u8ptr = ptr;
@@ -111,7 +109,7 @@ ioinitbuf(void)
     vmpagestat.bufend = u8ptr + sz;
     if (ptr) {
         /* zero buffer cache */
-//        kbzero(ptr, sz);
+        kbzero(ptr, sz);
         /* initialise buffer headers */
         n = sz >> BUFMINSIZELOG2;
         blk = &bufhdrtab[0];

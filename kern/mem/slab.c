@@ -2,6 +2,7 @@
 #include <stdint.h>
 #include <zero/param.h>
 #include <zero/trix.h>
+#include <zero/mtx.h>
 #include <kern/util.h>
 #include <kern/mem/mem.h>
 #include <kern/mem/slab.h>
@@ -37,7 +38,7 @@ memdiag(struct mempool *pool)
     for (bkt = 0 ; bkt < PTRBITS ; bkt++) {
             slab1 = (struct memslab **)pool->tab[bkt];
             if (slab1) {
-                if (memgetprev(slab1, pool)) {
+                if (memgetprev(slab1)) {
 #if (__KERNEL__)
                     fprintf(stderr, "DIAG: non-NULL prev on head of list %ld\n",
                             bkt);
@@ -56,9 +57,9 @@ memdiag(struct mempool *pool)
                     
                     *null = *slab1;
                 }
-                slab2 = memgetnext(slab1, pool);
+                slab2 = memgetnext(slab1);
                 while (slab2) {
-                    if (memgetprev(slab2, pool) != slab1) {
+                    if (memgetprev(slab2) != slab1) {
 #if (__KERNEL__)
                         fprintf(stderr, "DIAG: invalid prev on list %ld\n",
                                 bkt);
@@ -79,7 +80,7 @@ memdiag(struct mempool *pool)
                         *null = *slab1;
                     }
                     slab1 = slab2;
-                    slab2 = memgetnext(slab2, pool);
+                    slab2 = memgetnext(slab2);
                 }
             }
         }
@@ -105,7 +106,7 @@ slabcomb(struct mempool *pool, struct memslab *slab)
     unsigned long    ret  = 0;
     long             prev = 1;
     long             next = 1;
-    intptr_t         ofs = 1UL << (bkt1 - MEMMINLOG2);
+    intptr_t         ofs = 1UL << (bkt1 - MEMMINSHIFT);
     struct memslab  *slab1;
     struct memslab  *slab2;
     struct memslab  *slab3;
@@ -121,15 +122,15 @@ slabcomb(struct mempool *pool, struct memslab *slab)
             if (bkt2 == bkt1 && memslabisfree(slab1)) {
                 prev++;
                 ret++;
-                slab3 = memslabgetprev(slab1, pool);
-                slab4 = memslabgetnext(slab1, pool);
+                slab3 = memslabgetprev(slab1);
+                slab4 = memslabgetnext(slab1);
                 if ((slab3) && (slab4)) {
-                    memslabsetnext(slab3, slab4, pool);
-                    memslabsetprev(slab4, slab3, pool);
+                    memslabsetnext(slab3, slab4);
+                    memslabsetprev(slab4, slab3);
                 } else if (slab3) {
-                    memslabsetnext(slab3, slab4, pool); // NULL
+                    memslabsetnext(slab3, slab4); // NULL
                 } else if (slab4) {
-                    memslabsetprev(slab4, slab3, pool); // NULL
+                    memslabsetprev(slab4, slab3); // NULL
                     slabtab[bkt1] = slab4;
                 } else {
                     slabtab[bkt1] = NULL;
@@ -150,15 +151,15 @@ slabcomb(struct mempool *pool, struct memslab *slab)
             if (bkt2 == bkt1 && memslabisfree(slab2)) {
                 next++;
                 ret++;
-                slab3 = memslabgetprev(slab2, pool);
-                slab4 = memslabgetnext(slab2, pool);
+                slab3 = memslabgetprev(slab2);
+                slab4 = memslabgetnext(slab2);
                 if ((slab3) && (slab4)) {
-                    memslabsetnext(slab3, slab4, pool);
-                    memslabsetprev(slab4, slab3, pool);
+                    memslabsetnext(slab3, slab4);
+                    memslabsetprev(slab4, slab3);
                 } else if (slab3) {
-                    memslabsetnext(slab3, slab4, pool); // NULL;
+                    memslabsetnext(slab3, slab4); // NULL;
                 } else if (slab4) {
-                    memslabsetprev(slab4, slab3, pool); // NULL
+                    memslabsetprev(slab4, slab3); // NULL
                     slabtab[bkt1] = slab4;
                 } else {
                     slabtab[bkt1] = NULL;
@@ -185,8 +186,8 @@ slabcomb(struct mempool *pool, struct memslab *slab)
         memslabsetbkt(slab, bkt1);
         memslabsetfree(slab);
         if (slabtab[bkt1]) {
-            memslabsetprev(slabtab[bkt1], slab, pool);
-            memslabsetnext(slab, slabtab[bkt1], pool);
+            memslabsetprev(slabtab[bkt1], slab);
+            memslabsetnext(slab, slabtab[bkt1]);
         }
         slabtab[bkt1] = slab;
     }
@@ -222,19 +223,19 @@ slabsplit(struct mempool *pool, struct memslab *slab, unsigned long dest)
         memslabsetbkt(slab1, bkt);
         memslabsetfree(slab1);
         if (blktab[bkt]) {
-            memslabsetprev(blktab[bkt], slab1, pool);
-            memslabsetnext(slab1, blktab[bkt], pool);
+            memslabsetprev(blktab[bkt], slab1);
+            memslabsetnext(slab1, blktab[bkt]);
         }
         blktab[bkt] = slab1;
     }
-//    slab1 = memgethdr(ptr, pool);
+//    slab1 = memgethdr(ptr);
     memslabclrinfo(slab);
     memslabclrlink(slab);
     memslabsetbkt(slab, dest);
     memslabsetfree(slab);
     if (blktab[dest]) {
-        memslabsetprev(blktab[dest], slab, pool);
-        memslabsetnext(slab, blktab[dest], pool);
+        memslabsetprev(blktab[dest], slab);
+        memslabsetnext(slab, blktab[dest]);
     }
     blktab[dest] = slab;
 #if (__KERNEL__ && (MEMDIAG))
@@ -263,7 +264,7 @@ slaballoc(struct mempool *pool, unsigned long nb, unsigned long flg)
         while (!slab1 && ++bkt2 < PTRBITS) {
             slab1 = blktab[bkt2];
             if (slab1) {
-                slab2 = memslabgetnext(slab1, pool);
+                slab2 = memslabgetnext(slab1);
                 if (slab2) {
                     memslabclrprev(slab2);
                 }
@@ -275,7 +276,7 @@ slaballoc(struct mempool *pool, unsigned long nb, unsigned long flg)
         }
     }
     if (slab1) {
-        slab2 = memslabgetnext(slab1, pool);
+        slab2 = memslabgetnext(slab1);
         if (slab2) {
             memslabclrprev(slab2);
         }
@@ -311,9 +312,9 @@ slabfree(struct mempool *physpool, void *ptr)
     if (!slabcomb(physpool, slab1)) {
         memslabclrlink(slab1);
         if (blktab[bkt]) {
-            memslabsetprev(blktab[bkt], slab1, physpool);
+            memslabsetprev(blktab[bkt], slab1);
         }
-        memslabsetnext(slab1, blktab[bkt], physpool);
+        memslabsetnext(slab1, blktab[bkt]);
         blktab[bkt] = slab1;
     }
     mtxunlk(&memphyspoollk);

@@ -36,46 +36,46 @@ memalloc(size_t nb, long flg)
 {
     struct mempool  *physpool = &memphyspool;
     struct mempool  *virtpool = &memvirtpool;
-    struct memmag  **magtab = (struct maghdr **)virtpool->tab;
     void            *ptr = NULL;
-    size_t           sz = max(MEMMIN, nb);
+    size_t           sz = max(MEMMINSIZE, nb);
     size_t           bsz;
     unsigned long    slab = 0;
-    unsigned long    bkt = memcalcbkt(sz);
+    unsigned long    bktid = memcalcbkt(sz);
 #if defined(MEMPARANOIA)
     unsigned long   *bmap;
 #endif
-    struct memmag   *mag;
+//    struct memmag   *mag;
     uint8_t         *u8ptr;
     unsigned long    ndx;
     unsigned long    n;
-    struct membkt   *hdr = &virtpool->tab[bkt];
+    struct membkt   *bkt = &virtpool->tab[bktid];
+    struct memmag   *mag;
 
-    mtxlk(&hdr->lk);
-    if (bkt >= MEMSLABMINLOG2) {
+    mtxlk(&bkt->lk);
+    if (bktid >= MEMSLABSHIFT) {
         ptr = slaballoc(physpool, sz, flg);
         if (ptr) {
 #if (!MEMTEST)
             vminitvirt(&_pagetab, ptr, sz, flg);
 #endif
             slab++;
-            mag = memgetmag(ptr, virtpool);
+            mag = memgethdr(ptr, virtpool);
             mag->base = (uintptr_t)ptr;
             mag->n = 1;
             mag->ndx = 1;
-            mag->bkt = bkt;
+            mag->bktid = bktid;
             mag->prev = NULL;
             mag->next = NULL;
         }
     } else {
-        mag = magtab[bkt];
+        mag = bkt->list;
         if (mag) {
             ptr = mempop(mag);
             if (memmagempty(mag)) {
                 if (mag->next) {
                     mag->next->prev = NULL;
                 }
-                magtab[bkt] = mag->next;
+                bkt->list = mag->next;
             }
         } else {
             ptr = slaballoc(physpool, sz, flg);
@@ -85,13 +85,13 @@ memalloc(size_t nb, long flg)
 #endif
                 u8ptr = ptr;
                 slab++;
-                bsz = (uintptr_t)1 << bkt;
-                n = (uintptr_t)1 << (MEMSLABMINLOG2 - bkt);
-                mag = memgetmag(ptr, virtpool);
+                bsz = (uintptr_t)1 << bktid;
+                n = (uintptr_t)1 << (MEMSLABSHIFT - bktid);
+                mag = memgethdr(ptr, virtpool);
                 mag->base = (uintptr_t)ptr;
                 mag->n = n;
                 mag->ndx = 1;
-                mag->bkt = bkt;
+                mag->bktid = bktid;
                 for (ndx = 1 ; ndx < n ; ndx++) {
                     u8ptr += bsz;
                     mag->ptab[ndx] = u8ptr;
@@ -99,20 +99,20 @@ memalloc(size_t nb, long flg)
                 mag->prev = NULL;
                 mag->next = NULL;
                 if (n > 1) {
-                    mag->next = magtab[bkt];
-                    magtab[bkt] = mag;
+                    mag->next = bkt->list;
+                    bkt->list = mag;
                 }
             }
         }
     }
     if (ptr) {
 #if defined(MEMPARANOIA)
-#if ((MEMSLABMINLOG2 - MEMMINLOG2) < (LONGSIZELOG2 + 3))
+#if ((MEMSLABSHIFT - MEMMINSHIFT) < (LONGSIZELOG2 + 3))
         bmap = &mag->bmap;
 #else
         bmap = mag->bmap;
 #endif
-        ndx = ((uintptr_t)ptr - mag->base) >> bkt;
+        ndx = ((uintptr_t)ptr - mag->base) >> bktid;
         if (bitset(bmap, ndx)) {
             kprintf("duplicate allocation %p (%ld/%ld)\n",
                     ptr, ndx, mag->n);
@@ -121,14 +121,14 @@ memalloc(size_t nb, long flg)
         }
         setbit(bmap, ndx);
 #endif /* defined(MEMPARANOIA) */
-        if (!slab && (flg & MEMZERO)) {
-            kbzero(ptr, 1UL << bkt);
+        if (!slab && (flg & MEMZEROBIT)) {
+            kbzero(ptr, 1UL << bktid);
         }
     }
     if (!ptr) {
         panic(k_curproc->pid, TRAPNONE, -ENOMEM);
     }
-    mtxunlk(&hdr->lk);
+    mtxunlk(&bkt->lk);
 
     return ptr;
 }
@@ -139,23 +139,23 @@ kfree(void *ptr)
 {
     struct mempool *physpool = &memphyspool;
     struct mempool *virtpool = &memvirtpool;
-    struct memmag  *mag = memgetmag(ptr, virtpool);
-    unsigned long   bkt = (mag) ? mag->bkt : 0;
+    struct memmag  *mag = memgethdr(ptr, virtpool);
+    unsigned long   bktid = (mag) ? mag->bktid : 0;
 #if defined(MEMPARANOIA)
     unsigned long   ndx;
     unsigned long  *bmap;
 #endif
-    struct membkt  *hdr = &virtpool->tab[bkt];
-    struct memmag  *list = hdr->list;
+    struct membkt  *bkt = &virtpool->tab[bktid];
+    struct memmag  *head;
 
     if (!ptr || !mag) {
 
         return;
     }
-    mtxlk(&hdr->lk);
+    mtxlk(&bkt->lk);
 #if defined(MEMPARANOIA)
-    ndx = ((uintptr_t)ptr - mag->base) >> bkt;
-#if ((MEMSLABMINLOG2 - MEMMINLOG2) < (LONGSIZELOG2 + 3))
+    ndx = ((uintptr_t)ptr - mag->base) >> bktid;
+#if ((MEMSLABSHIFT - MEMMINSHIFT) < (LONGSIZELOG2 + 3))
     bmap = &mag->bmap;
 #else
     bmap = mag->bmap;
@@ -177,25 +177,26 @@ kfree(void *ptr)
                 mag->prev->next = NULL;
             } else if (mag->next) {
                 mag->next->prev = NULL;
-                hdr->list = mag->next;
+                bkt->list = mag->next;
             } else {
-                hdr->list = NULL;
+                bkt->list = NULL;
             }
         }
         slabfree(physpool, ptr);
         mag->base = 0;
     } else if (mag->ndx == mag->n - 1) {
+        head = bkt->list;
         mag->prev = NULL;
-        if (list) {
-            list->prev = mag;
+        if (head) {
+            head->prev = mag;
         }
-        mag->next = list;
-        hdr->list = mag;
+        mag->next = head;
+        bkt->list = mag;
     }
 #if defined(MEMPARANOIA)
     clrbit(bmap, ndx);
 #endif
-    mtxunlk(&hdr->lk);
+    mtxunlk(&bkt->lk);
 
     return;
 }
@@ -204,17 +205,17 @@ unsigned long
 meminitpool(struct mempool *physpool, uintptr_t base, size_t nb)
 {
     uintptr_t adr = base;
-//    unsigned long sz = (nb & (MEMMIN - 1)) ? rounddownpow2(nb, MEMMIN) : nb;
+//    unsigned long sz = (nb & (MEMSLABSIZE - 1)) ? rounddownpow2(nb, MEMSLABSIZE) : nb;
     size_t    sz = nb;
-    intptr_t  ofs = base & (MEMMIN - 1);
+    intptr_t  ofs = base & (MEMSLABSIZE - 1);
     size_t    nblk;
     size_t    hdrsz;
 
     if (ofs) {
-        adr += MEMMIN - ofs;
+        adr += MEMSLABSIZE - ofs;
         sz -= adr - base;
     }
-    nblk = sz >> MEMMINLOG2;
+    nblk = sz >> MEMSLABSHIFT;
     /* configure slab headers */
     hdrsz = nblk * sizeof(struct memslab);
     hdrsz = rounduppow2(hdrsz, PAGESIZE);
