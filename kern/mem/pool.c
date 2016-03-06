@@ -93,7 +93,7 @@ memalloc(size_t nb, long flg)
                 mag->ndx = 1;
                 mag->bkt = bkt;
                 for (ndx = 1 ; ndx < n ; ndx++) {
-                    u8ptr += sz;
+                    u8ptr += bsz;
                     mag->ptab[ndx] = u8ptr;
                 }
                 mag->prev = NULL;

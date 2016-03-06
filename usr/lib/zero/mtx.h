@@ -80,7 +80,7 @@ mtxlk(volatile long *lp)
     do {
         res = m_cmpswap(lp, MTXINITVAL, MTXLKVAL);
         if (res != MTXINITVAL) {
-#if (ZEROMTXYIELD)
+#if (ZEROMTXYIELD) || defined(__KERNEL__)
             thryield();
 #else
             m_waitint();

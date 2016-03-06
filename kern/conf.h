@@ -3,10 +3,12 @@
 
 #include <zero/param.h>
 
+#define BUFDYNALLOC  1
 #define NMEMBUFBLK   8192
 #define PERTHRSTACKS 0
 
-#define BUFNEWHASH 0
+#define NEWBUFBLK   1
+#define BUFNEWHASH  0
 #define BUFMULTITAB 1
 
 #define VMFLATPHYSTAB    1

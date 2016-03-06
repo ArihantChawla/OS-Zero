@@ -23,27 +23,6 @@ static struct membufbkt membufbkttab[NCPU] ALIGNED(PAGESIZE);
 static struct membufbkt membufbkt;
 
 void
-meminit(size_t nbphys)
-{
-    size_t lim = max(nbphys, KERNVIRTBASE);
-
-#if (defined(__i386__) && !defined(__x86_64__) && !defined(__amd64__))  \
-    || defined(__arm__)
-    vminitvirt(&_pagetab, &_epagetab,
-              lim - (uint32_t)&_epagetab,
-              PAGEWRITE);
-    meminitphys(&memphyspool, (size_t)&_epagetab,
-                lim - (size_t)&_epagetab);
-#elif defined(__x86_64__) || defined(__amd64__)
-#error implement x86-64 memory management
-#endif
-    
-//    swapinit(0, 0x00000000, 1024);
-    
-    return;
-}
-
-void
 meminitphys(struct mempool *physpool, uintptr_t base, size_t nbphys)
 {
     struct memslab **blktab = (struct memslab **)physpool->tab;
@@ -168,6 +147,27 @@ meminitbuf(void)
     while (n--) {
         meminitcpubuf(n, MEM_DONTWAIT);
     }
+}
+
+void
+meminit(size_t nbphys)
+{
+    size_t lim = max(nbphys, KERNVIRTBASE);
+
+#if (defined(__i386__) && !defined(__x86_64__) && !defined(__amd64__))  \
+    || defined(__arm__)
+    vminitvirt(&_pagetab, &_epagetab,
+              lim - (uint32_t)&_epagetab,
+              PAGEWRITE);
+    meminitphys(&memphyspool, (size_t)&_epagetab,
+                lim - (size_t)&_epagetab);
+#elif defined(__x86_64__) || defined(__amd64__)
+#error implement x86-64 memory management
+#endif
+//    meminitbuf();
+//    swapinit(0, 0x00000000, 1024);
+    
+    return;
 }
 
 /* FIXME: steal mbufs from other CPUs if need arises */

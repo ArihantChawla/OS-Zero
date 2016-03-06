@@ -179,7 +179,6 @@ kinitprot(unsigned long pmemsz)
     /* initialise ACPI subsystem */
     acpiinit();
 #endif
-#if 0
     /* initialise block I/O buffer cache */
     if (!ioinitbuf()) {
         kprintf("failed to allocate buffer cache\n");
@@ -191,7 +190,6 @@ kinitprot(unsigned long pmemsz)
     kprintf("%lu kilobytes of buffer cache @ %p..%p\n",
             vmpagestat.nbuf << (PAGESIZELOG2 - 10),
             vmpagestat.buf, vmpagestat.bufend);
-#endif
     /* allocate unused device regions (in 3.5G..4G) */
 //    pageaddzone(DEVMEMBASE, &vmshmq, 0xffffffffU - DEVMEMBASE + 1);
 #if (SMP) || (APIC)
@@ -239,14 +237,13 @@ kinitprot(unsigned long pmemsz)
              << (PAGESIZELOG2 - 10)),
             vmpagestat.nwire << (PAGESIZELOG2 - 10),
             vmpagestat.nphys << (PAGESIZELOG2 - 10));
-    /* initialise block I/O buffer cache */
-    schedinit();
 #if (PS2DRV)
     ps2init();
 #endif
     __asm__ __volatile__ ("movl %0, %%esp\n"
                           :
                           : "rm" (sp));
+    schedinit();
 #if (APIC)
     apicstarttmr();
 #else

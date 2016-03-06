@@ -1,14 +1,12 @@
 #ifndef __KERN_IO_BUF_H__
 #define __KERN_IO_BUF_H__
 
+#include <kern/conf.h>
 #include <stddef.h>
 #include <stdint.h>
 #include <zero/param.h>
 #include <zero/trix.h>
-#include <kern/conf.h>
 #include <kern/perm.h>
-
-#define NEWBUFBLK 1
 
 #if (!BUFMULTITAB)
 #if (BUFNEWHASH)
@@ -73,12 +71,9 @@
         (blk)->tabnext = _ptr;                                          \
     } while (0)
 /* contents for the flg-member */
-#define BUFSIZEBITS  6          // shift count 0..63
-#define BUFHASDATA   (1 << 6)   // buffer has valid data
-#define BUFDIRTY     (1 << 7)   // kernel must write before reassigning
-#define BUFDOINGIO   (1 << 8)   // kernel is reading or writing data
-#define BUFADRMASK   (~((1UL << BUFMINSIZELOG2) - 1))
-#define BUFINFOMASK  (~BUFADRMASK)
+#define BUFHASDATA   (1 << 31)   // buffer has valid data
+#define BUFDIRTY     (1 << 30)   // kernel must write before reassigning
+#define BUFDOINGIO   (1 << 29)   // kernel is reading or writing data
 #if (NEWBUFBLK)
 /* this structure has been carefully crafted to fit a cacheline or two */
 #define __STRUCT_BUFBLK_SIZE                                            \
@@ -153,7 +148,7 @@ struct bufblkqueue {
 long            bufinit(void);
 struct bufblk * bufalloc(void);
 void            bufaddblk(struct bufblk *blk);
-struct bufblk * buffindblk(dev_t dev, off_t num, long rel);
+struct bufblk * buffindblk(long dev, off_t num, long rel);
 
 #endif /* __KERN_IO_BUF_H__ */
 

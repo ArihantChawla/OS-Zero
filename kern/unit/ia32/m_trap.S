@@ -599,7 +599,7 @@ _tmr0fin:
 	/* 32-bit x86 context switch */
 .align	16
 
-#if (PERTHRSTACKS)
+#if defined(PERTHRSTACKS) && (PERTHRSTACKS) && 0
 	/*
 	 * top of stack after interrupt
 	 * ----------------------------

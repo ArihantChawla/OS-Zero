@@ -40,18 +40,22 @@
 extern struct vmpagestat   vmpagestat;
 
 #define bufadrtoid(ptr)                                                 \
-    ((bufzone) ? ((uint8_t *)ptr - (uint8_t *)bufzone) >> BUFSIZELOG2 : NULL)
+    ((bufzone) ? ((uint8_t *)ptr - (uint8_t *)bufzone) >> BUFMINSIZELOG2 : NULL)
 
+#if (BUFDYNALLOC)
+static struct bufblk      *bufhdrtab;
+#else
 static struct bufblk       bufhdrtab[BUFNBLK] ALIGNED(PAGESIZE);
+#endif
 #if (BUFMULTITAB)
+static volatile long       buflktab[BUFNDEV] ALIGNED(PAGESIZE);
 static void               *buftab[BUFNDEV] ALIGNED(PAGESIZE);
-#if (BUFNEWHASH)
+#elif (BUFNEWHASH)
 static struct bufchain     bufhash[BUFNHASH];
 //static struct bufchain     bufhash[BUFNDEV][BUFNHASH];
-static void               *bufhash[BUFNDEV][BUFNHASH];
 #else
 static volatile long       buflktab[BUFNDEV] ALIGNED(PAGESIZE);
-#endif
+static void               *bufhash[BUFNDEV][BUFNHASH];
 #endif
 static struct bufdev       bufdevtab[BUFNDEV];
 static struct bufblkqueue  buffreelist;
@@ -60,17 +64,29 @@ static volatile long       bufzonelk;
 static void               *bufzone;
 static long                bufnbyte;
 
-/* initialise buffer cache; called at boot time */
+/* allocate and initialise buffer cache; called at boot time */
 long
 ioinitbuf(void)
 {
     uint8_t       *u8ptr;
     void          *ptr = NULL;
     struct bufblk *blk;
+    struct bufblk *prev;
     long           n;
     long           sz;
     long           end;
 
+#if (BUFDYNCALLOC)
+    sz = BUFNBLK * sizeof(struct bufblk);
+    ptr = memalloc(sz, PAGEWIRED);
+    if (!ptr) {
+        kprintf("failed to allocate buffer cache headers\n");
+
+        return 0;
+    }
+    bufhdrtab = ptr;
+#endif
+    /* allocate block I/O buffer cache */
     sz = BUFNBYTE;
     ptr = memalloc(sz, PAGEWIRED);
     if (!ptr) {
@@ -85,6 +101,8 @@ ioinitbuf(void)
         return 0;
     }
 #if (__KERNEL__)
+    kprintf("BUF: %ld headers of %ld bytes -> total %ld bytes\n",
+            BUFNBLK, sizeof(struct bufblk), BUFNBLK * sizeof(struct bufblk));
     kprintf("BUF: reserved %lu bytes for buffer cache\n", sz);
 #endif
     u8ptr = ptr;
@@ -92,8 +110,34 @@ ioinitbuf(void)
     vmpagestat.buf = ptr;
     vmpagestat.bufend = u8ptr + sz;
     if (ptr) {
-        /* allocate and zero buffer cache */
+        /* zero buffer cache */
 //        kbzero(ptr, sz);
+        /* initialise buffer headers */
+        n = sz >> BUFMINSIZELOG2;
+        blk = &bufhdrtab[0];
+        blk->flg = BUFMINSIZELOG2;
+        blk->data = u8ptr;
+//            queueappend(blk, &buffreelist.head);
+        u8ptr += BUFMINSIZE;
+        prev = blk;
+        blk++;
+        while (--n) {
+            prev->next = blk;
+            blk->flg = BUFMINSIZELOG2;
+            blk->data = u8ptr;
+//            queueappend(blk, &buffreelist.head);
+            u8ptr += BUFMINSIZE;
+            blk++;
+            prev = blk;
+        }
+        buffreelist.head = ptr;
+        bufzone = ptr;
+        bufnbyte = sz;
+    }
+#if 0
+    if (ptr) {
+        /* allocate and zero buffer cache */
+        kbzero(ptr, sz);
         /* initialise buffer headers */
         n = sz >> BUFMINSIZELOG2;
         blk = &bufhdrtab[n - 1];
@@ -107,6 +151,7 @@ ioinitbuf(void)
         bufzone = ptr;
         bufnbyte = sz;
     }
+#endif
 
     return 1;
 }
@@ -364,7 +409,7 @@ bufaddblk(struct bufblk *blk)
 
 /* look buffer up from buffer cache */
 struct bufblk *
-buffindblk(dev_t dev, off_t num, long rel)
+buffindblk(long dev, off_t num, long rel)
 {
     int64_t        key = bufkey(num);
     struct bufblk *blk = NULL;
