@@ -11,7 +11,6 @@
 #include <zero/param.h>
 #include <zero/trix.h>
 #include <kern/types.h>
-#include <kern/bits/mem/buf.h>
 
 /* allocation flags */
 #define MEM_TRYWAIT       0
@@ -33,8 +32,7 @@
 #define MEMBUF_EXT_PACKET     6          // membuf + memblk from packet zone
 #define MEMBUF_EXT_MBUF       7          // external mbuf (M_IOVEC)
 struct memext {
-    uint8_t            *adr;    // buffer base address
-    void              (*free)(void *)
+//    uint8_t            *adr;    // buffer base address
     union {
         volatile long   val;    // local reference count
         volatile long  *ptr;    // external reference count
@@ -97,12 +95,12 @@ struct memext {
      | MEMBUF_PROTO_BIT7 | MEMBUF_PROTO_BIT8 | MEMBUF_PROTO_BIT9        \
      | MEMBUF_PROTO_BIT10 | MEMBUF_PROTO_BIT11 | MEMBUF_PROTO_BIT12)
 /* flags copied for pkthdr */
-#define MEMBUF_COPYBITS                                                 \
+#define MEMBUF_PKT_COPY_BITS                                            \
     (MEMBUF_PKTHDR_BIT | MEMBUF_EOR_BIT | MEMBUF_RDONLY                 \
      | MEMBUF_BROADCAST_BIT | MEMBUF_MULTICAST_BIT | MEMBUF_PROMISC_BIT \
      | MEMBUF_VLANTAG_BIT                                               \
      | MEMBUF_PROTO_BITS)
-#define MEMBUF_EXT_COPYBITS (MEMBUF_EXT_BITS)
+#define MEMBUF_EXT_COPY_BITS (MEMBUF_EXT_BITS)
 
 /* checksum flg-bits */
 #define MEMBUF_CHKSUM_IP         (1 << 0) // checksum IP
@@ -125,13 +123,15 @@ struct memext {
 #define MEMBUF_CHKSUM_L5_VALID   (1 << 29)
 #define MEMBUF_CHKSUM_MERGED     (1 << 30)
 /* record/packet header in first membuf of chain; MEMBUF_PKTHDR is set */
-struct pkthdr {
+struct mempkt {
     struct ifnet  *rcvif;       // rcv interface
     size_t         len;         // total packet length
     void          *hdr;         // packet header
     int32_t        flg;         // checksum and other flags
     int32_t        chksum;      // checksum data
     struct membuf *aux;         // extra data buffer, e.g. IPSEC
+    struct membuf *next;        // next buffer in chain
+    uint8_t        data[EMPTY];
 };
 
 /* membuf convenience macros */
@@ -139,52 +139,45 @@ struct pkthdr {
 #define MEMBUF_BLK_SHIFT   PAGESIZELOG2                 // blk of PAGESIZE
 #define MEMBUF_BLK_SIZE    (1 << MEMBUF_BLK_SHIFT)      // blk == PAGESIZE
 #define MEMBUF_BLK_MINSIZE (MEMBUF_PKT_LEN + 1)
-#define MEMBUF_PKTHDR_SIZE (sizeof(struct pkthdr) + sizeof(long))
-#define MEMBUF_HDR_SIZE    (sizeof(struct membufhdr) + sizeof(long)))
-#define MEMBUF_LEN         (MEMBUF_SIZE - offsetof(struct membuf, data))
+#define MEMBUF_PKTHDR_SIZE (sizeof(struct mempkt)                       \
+                            + sizeof(struct membufinfo))
+#define MEMBUF_HDR_SIZE    (sizeof(struct membufhdr)                    \
+                            + sizeof(struct membufinfo))
+#define MEMBUF_LEN         (MEMBUF_SIZE - offsetof(struct membuf, hdr.buf.data))
 #define MEMBUF_PKT_LEN     (MEMBUF_LEN)
 
 struct membufhdr {
     volatile long  nref;        // # of references
-    uint8_t       *adr;         // data address
+//    uint8_t       *base;        // data address
     size_t         len;         // # of bytes in membuf
+    long           type;
     long           flg;         // flags
     struct membuf *next;        // next buffer in chain
-    struct membuf *chain;       // next chain in queue/record
-    uint8_t        buf[EMPTY];
+    struct membuf *nextpkt;     // next pkt in chain
+    uint8_t        data[EMPTY];
 };
-
-struct membufinfo {
-    long  type;         // type of data
-    void *base;         // buffer base address
-    long  hdrsz;        // size of the following header
-    /* data buffer is located here */
-}   
 
 struct membuf {
-    struct membufinfo info;
-#if 0
+    struct membufhdr hdr;
     union {
-        struct membufhdr  buf;
-        struct pkthdr     pkt;  // MEMBUF_PKTHDR is set
-        struct memext     ext;  // MEMBUF_EXT is set
-    } hdr;
-#endif
+        struct mempkt pkt;      // MEMBUF_PKTHDR is set
+        struct memext ext;      // MEMBUF_EXT is set
+    } info;
+    uint8_t           data[EMPTY];
 };
 
-#define membuftodata(mb, type) ((type)((mb)->base))
-#define memdatatobuf(ptr)      (rounddownpow2((uintptr_t ptr), MEMBUFSIZE))
-#define membufexthdr(mb)                                                \
-    ((struct memext *)((uint8_t *)(mb) + sizeof(struct membufinfo)))
-#define membufextadr(mb)       (membufexthdr(mb)->adr)
+#define membuftodata(mb, type) ((type)((mb)->hdr.data))
+#define memdatatobuf(ptr)      (rounddownpow2((uintptr_t)(ptr), MEMBUFSIZE))
+#define membufexthdr(mb)       (&(mb)->info.ext)
+#define membufextadr(mb)       ((mb)->info.ext.adr)
 #define membufextnref(mb)                                               \
-    (!(((mb)->data.hdr.ext.flg & MEMBUF_EXT_EXTREF))                    \
-     ? (&((mb)->data.hdr.mem.ext.nref.val))                             \
-     : ((mb)->data.hdr.mem.ext.nref.ptr))
+    (!(((mb)->info.ext.flg & MEMBUF_EXT_EXTREF))                    \
+     ? (&((mb)->info.ext.nref.val))                             \
+     : ((mb)->info.ext.nref.ptr))
 #define membufextsize(mb)      (membufexthdr(mb)->size)
-#define membufpkthdr(mb)       ((uint8_t *)(mb) + sizeof(struct membufinfo))
+#define membufpkthdr(mb)       (&(mb)->info.pkt)
 #define membufpktlen(mb)       (membufpkthdr(mb)->len)
-#define membufpktdata(mb)      (membufbkthdr(mb) + sizeof(struct pkthdr))
+#define membufpktdata(mb)      (membufpkthdr(mb)->data)
 
 struct mempktaux {
     long af;
@@ -207,6 +200,8 @@ struct membufbkt {
     struct memcluster *blklist;
     uint8_t            _pad[CLSIZE - 5 * sizeof(long) - 2 * sizeof(void *)];
 };
+
+#include <kern/bits/mem/buf.h>
 
 #endif /* __KERN_MEM_BUF_H__ */
 

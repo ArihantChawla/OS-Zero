@@ -104,7 +104,6 @@ meminitcpubuf(long unit, long how)
     while (n--) {
         u8ptr -= MEMBUF_SIZE;
         buf = (struct membuf *)u8ptr;
-        buf->hdr.adr = (uint8_t *)buf + sizeof(struct membufhdr);
         buf->hdr.next = last;
         last = buf;
     }
