@@ -19,6 +19,7 @@
 #include <stdlib.h>
 #include <string.h>
 #include <stdint.h>
+#include <endian.h>
 
 #if defined(__amd64__) || defined(__x86_64__)
 #define bswapq128(r)                                                   \
@@ -34,6 +35,9 @@
 #define bswapq128(r)     ((r) = bswap_64(r))
 #define mulq128(a, d, r) ((d) = (a) * (r))
 #endif
+
+#if (defined(__amd64__) || defined(__x86_64__)                          \
+     || defined(__i568__) || defined(__i686__))
 
 uint64_t
 hashq128(const void *ptr,
@@ -73,6 +77,56 @@ hashq128(const void *ptr,
         }
         rcx ^= rdx;
     }
+    mulq128(rax, rdx, r8);
+    rcx = (rcx * r9) + rdx;
+    rax ^= rcx;
+    mulq128(rax, rdx, r8);
+    rcx = (rcx * r9) + rdx;
+    rax ^= rcx;
+    
+    if (nkeybit < 32) {
+        rcx = rax >> 32;
+        rax ^= rcx;
+    }
+    rax &= (1UL << nkeybit) - 1;
+    
+    return rax;
+}
+
+uint64_t
+hashq128uptr(uintptr_t uptr,
+             size_t nkeybit)
+{
+    register uint64_t r8 = 0x1591aefa5e7e5a17ULL;
+    register uint64_t r9 = 0x2bb6863566c4e761ULL;
+    register uint64_t rax = 8 ^ 0x1591aefa5e7e5a17ULL;
+    register uint64_t rcx = 0x2bb6863566c4e761ULL;
+    register uint64_t rdx;
+
+#if 0
+    if (len) {
+        if (len & 8) {
+            rdx = 0;
+            rax ^= ((uint64_t *)ptr)[0];
+            ptr = &((uint64_t *)ptr)[1];
+        }
+        if (len & 4) {
+            rdx = ((uint32_t *)ptr)[0];
+            ptr = &((uint32_t *)ptr)[1];
+        }
+        if (len & 2) {
+            rdx = (rdx << 16) | ((uint16_t *)ptr)[0];
+            ptr = &((uint16_t *)ptr)[1];
+        }
+        if (len & 1) {
+            rdx = (rdx << 8) | ((uint8_t *)ptr)[0];
+        }
+        rcx ^= rdx;
+    }
+#endif
+    rax ^= uptr;
+    rdx = 0;
+    rcx = 0;
     mulq128(rax, rdx, r8);
     rcx = (rcx * r9) + rdx;
     rax ^= rcx;

@@ -804,7 +804,22 @@ postfork(void)
     return;
 }
 
-#if (MALLOCMULTITAB)
+#if (MALLOCHASH)
+
+#define MALLOC_HASH_MARK_POS 0
+#define MALLOC_HASH_MARK_BIT (1L << 0)
+
+static struct mag *
+magfind(void *ptr)
+{
+    uintptr_t     uptr = (uintptr_t)ptr;
+    struct mag   *mag;
+    unsigned long key;
+
+    key = hashq128uptr(uptr, MALLOCNHASHBIT);
+}
+
+#elif (MALLOCMULTITAB)
 
 #if defined(MALLOCFREETABS) && (MALLOCFREETABS)
 

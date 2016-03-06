@@ -25,8 +25,9 @@
 #define MALLOCNBSTK       0
 #define MALLOCNBHEADLK    0
 #define MALLOCFREEMAP     0
-#define MALLOCSLABTAB     1
-#define MALLOCMULTITAB    1
+#define MALLOCSLABTAB     0
+#define MALLOCMULTITAB    0
+#define MALLOCHASH        1
 
 #define PTHREAD           1
 #define ZEROMTX           1
@@ -82,6 +83,8 @@
 #if (!defined(MALLOCALIGNMENT))
 #define MALLOCALIGNMENT   CLSIZE
 #endif
+
+#define MALLOCNHASHBIT    22
 
 /* <= MALLOCSLABLOG2 are tried to get from heap #if (!MALLOCNOSBRK) */
 /* <= MALLOCBIGSLABLOG2 are kept in per-thread arenas which are lock-free */
