@@ -15,6 +15,7 @@
 #define HASHTEST 0
 #endif
 
+#include <stddef.h>
 #include <stdio.h>
 #include <stdlib.h>
 #include <string.h>
@@ -93,7 +94,7 @@ hashq128(const void *ptr,
     return rax;
 }
 
-#if (defined(__amd64__) || defined(__x86_64__)
+#if (defined(__amd64__) || defined(__x86_64__))
 
 uint64_t
 hashq128uptr(uintptr_t uptr,

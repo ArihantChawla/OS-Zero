@@ -18,8 +18,8 @@
 #include <zero/param.h>
 #include <zero/mtx.h>
 #include <zero/trix.h>
-#if (!BUFMULTITAB)
-#include <zero/hash.c>
+#if (!BUFMULTITAB) && (BUFNEWHASH)
+#include <zero/hash.h>
 #endif
 #include <kern/util.h>
 #include <kern/malloc.h>
