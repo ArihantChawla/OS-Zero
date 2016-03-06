@@ -148,7 +148,7 @@ struct mempkt {
 
 struct membufhdr {
     volatile long  nref;        // # of references
-//    uint8_t       *base;        // data address
+    uint8_t       *base;        // data address
     size_t         len;         // # of bytes in membuf
     long           type;
     long           flg;         // flags

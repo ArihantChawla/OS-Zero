@@ -40,10 +40,11 @@
     do {                                                                \
         struct membuf *_mb = (mp);                                      \
         struct memext *_ext = membufexthdr(_mb);                        \
-        void          *_ptr = memgetblk(how);                           \
+        void          *_buf = memgetblk(how);                           \
                                                                         \
-        if (_ptr) {                                                     \
-            _ext->adr = _ptr;                                           \
+        if (_buf) {                                                     \
+            _mb->hdr->adr = _buf;                                       \
+            _ext->adr = _buf;                                           \
             _ext->nref = 0;                                             \
             _mb->hdr.flg |= MEMBUF_PKTHDR_BIT;                          \
             _ext->free = NULL;                                          \
@@ -83,6 +84,7 @@
             struct memext *_ext = &_mb->info.ext;                       \
                                                                         \
             _mb_->hdr.adr = _buf;                                       \
+            _ext->adr = _buf;
             _ext->nref = NULL;                                          \
             _ext->free = kfree;                                         \
             _ext->arg = (arg);                                          \
@@ -150,15 +152,13 @@
         ? MEMBUF_PKTLEN                                                 \
         : MEMBUF_LEN))
 
-#if 0
 #define _memalignbuf(mb, len)                                           \
     rounddownpow2((uintptr_t)(mb)->hdr.adr + MEMBUF_LEN - (len),        \
                   sizeof(long))
 
 #define _memalignpkt(mb, len)                                           \
-    rounddownpow2((uintptr_t)(mb)->hdr.adr + MEMBUF_BKTLEN - (len),     \
+    rounddownpow2((uintptr_t)(mb)->hdr.adr + MEMBUF_PTKLEN - (len),     \
                   sizeof(long))
-#endif
 
 #define _membufleadspace(mb)                                            \
     (((mb)->hdr.flg & MEMBUF_EXTBIT)                                    \
