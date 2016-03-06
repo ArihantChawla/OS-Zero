@@ -29,12 +29,12 @@
 #define MEMNTYPEBIT    8 // up to 256 object types
 #define MEMBKTMASK     ((1UL << (MEMNBKTBIT - 1)) - 1)
 /* allocation flags */
-#define MEMFLGSHIFT    (1 << (CHAR_BIT * sizeof(m_ureg_t) - 1))
-#define MEMLOCKBIT     (1 << MEMFLGSHIFT) // set when manipulating header
-#define MEMALLOCBIT    (1 << (MEMFLGSHIFT - 1))
-#define MEMDIRTYBIT    (1 << (MEMFLGSHIFT - 2))
-#define MEMWIREDBIT    (1 << (MEMFLGSHIFT - 3))
-#define MEMZEROBIT     (1 << (MEMFLGSHIFT - 4))
+#define MEMFLGSHIFT    (CHAR_BIT * sizeof(m_ureg_t) - 1)
+#define MEMLOCKBIT     (1UL << MEMFLGSHIFT) // set when manipulating header
+#define MEMALLOCBIT    (1UL << (MEMFLGSHIFT - 1))
+#define MEMDIRTYBIT    (1UL << (MEMFLGSHIFT - 2))
+#define MEMWIREDBIT    (1UL << (MEMFLGSHIFT - 3))
+#define MEMZEROBIT     (1UL << (MEMFLGSHIFT - 4))
 #define MEMNFLGBIT     8
 #define MEMFLGMASK     \
     (((m_ureg_t)~0) << (CHAR_BIT * sizeof(m_ureg_t) - MEMNFLGBIT))
@@ -64,7 +64,7 @@
 #define MEMNFLGBIT     4
 #endif
 
-void          meminit(size_t nbphys);
+void          meminit(size_t nbphys, size_t nvirt);
 void          meminitphys(struct mempool *physpool, uintptr_t base,
                           size_t nbphys);
 unsigned long meminitpool(struct mempool *pool, uintptr_t base, size_t nb);

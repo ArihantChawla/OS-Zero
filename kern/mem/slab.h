@@ -30,7 +30,7 @@
 #define memslabgetbkt(sp)                                               \
     ((sp)->info & MEMBKTMASK)
 #define memslabisfree(sp)                                               \
-    (!((sp)->info) & MEMALLOCBIT)
+    (!((sp)->info & MEMALLOCBIT))
 #define memslabsetfree(sp)                                              \
     ((sp)->info &= ~MEMALLOCBIT)
 #define memslabclrfree(sp)                                              \
@@ -100,12 +100,14 @@ struct memslab {
 #endif
 
 #define memgetblknum(ptr, pool)                                         \
-    (((uintptr_t)(ptr) - (pool)->base) >> MEMMINSHIFT)
+    (((uintptr_t)(ptr) - (pool)->base) >> MEMSLABSHIFT)
 #define memgetadr(hdr, pool)                                            \
     ((void *)((uint8_t *)(pool)->base                                   \
-              + (memgetblknum(hdr, pool) << MEMMINSHIFT)))
-#define memgethdr(ptr, pool)                                            \
+              + (memgetblknum(hdr, pool) << MEMSLABSHIFT)))
+#define memgetslab(ptr, pool)                                           \
     ((struct memslab *)(pool)->blktab + memgetblknum(ptr, pool))
+#define memgetmag(ptr, pool)                                            \
+    ((struct memmag *)(pool)->blktab + memgetblknum(ptr, pool))
 
 void * slaballoc(struct mempool *pool, unsigned long nb, unsigned long flg);
 void   slabfree(struct mempool *pool, void *ptr);

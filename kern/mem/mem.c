@@ -19,45 +19,48 @@
 #endif
 
 extern struct mempool   memphyspool;
+extern struct mempool   memvirtpool;
 static struct membufbkt membufbkttab[NCPU] ALIGNED(PAGESIZE);
 static struct membufbkt membufbkt;
 
 void
-meminitphys(struct mempool *physpool, uintptr_t base, size_t nbphys)
+meminitzone(struct mempool *pool, uintptr_t base, size_t nbyte, long map)
 {
-    struct memslab **blktab = (struct memslab **)physpool->tab;
     uintptr_t        adr = ((base & (MEMMINSIZE - 1))
                             ? rounduppow2(base, MEMMINSIZE)
                             : base);
-    unsigned long    bkt = PTRBITS - 1;
-    size_t           sz = 1UL << bkt;
+    unsigned long    bktid = PTRBITS - 1;
+    struct membkt   *bkt = &pool->blktab[bktid];
+    size_t           sz = 1UL << bktid;
     struct memslab  *slab;
     
-    adr = meminitpool(physpool, adr, nbphys);
-    nbphys -= adr - base;
-    nbphys = rounddownpow2(nbphys, MEMMINSIZE);
-    vmmapseg((uint32_t *)&_pagetab, adr, adr, adr + nbphys,
-             PAGEWRITE);
+    adr = meminitpool(pool, adr, nbyte);
+    nbyte -= adr - base;
+    nbyte = rounddownpow2(nbyte, PAGESIZE);
+    if (map) {
+        vmmapseg((uint32_t *)&_pagetab, adr, adr, adr + nbyte,
+                 PAGEWRITE);
+    }
 #if (__KERNEL__)
     kprintf("%ld kilobytes kernel virtual memory free @ 0x%lx\n",
-            nbphys >> 10, adr);
+            nbyte >> 10, adr);
 #endif
-    while ((nbphys) && bkt >= MEMMINSHIFT) {
-        if (nbphys & sz) {
-            slab = memgethdr(adr, physpool);
+    while ((nbyte) && bktid >= PAGESIZELOG2) {
+        if (nbyte & sz) {
+            slab = memgetslab(adr, pool);
             memslabclrinfo(slab);
             memslabclrlink(slab);
-            memslabsetbkt(slab, bkt);
+            memslabsetbkt(slab, bktid);
             memslabsetfree(slab);
-            blktab[bkt] = slab;
-            nbphys &= ~sz;
+            bkt->list = slab;
+            nbyte -= sz;
             adr += sz;
         }
-        bkt--;
+        bktid--;
         sz >>= 1;
     }
 #if (__KERNEL__ && defined(MEMDIAG)) && 0
-    memdiag(physpool);
+    memdiag(pool);
 #endif
     
     return;
@@ -150,7 +153,7 @@ meminitbuf(void)
 }
 
 void
-meminit(size_t nbphys)
+meminit(size_t nbphys, size_t nbvirt)
 {
     size_t lim = max(nbphys, KERNVIRTBASE);
 
@@ -159,8 +162,11 @@ meminit(size_t nbphys)
     vminitvirt(&_pagetab, &_epagetab,
               lim - (uint32_t)&_epagetab,
               PAGEWRITE);
-    meminitphys(&memphyspool, (size_t)&_epagetab,
-                lim - (size_t)&_epagetab);
+    meminitzone(&memphyspool, (size_t)&_epagetab,
+                lim - (size_t)&_epagetab, 1);
+    lim = max(nbvirt, KERNVIRTBASE);
+    meminitzone(&memvirtpool, (size_t)&_epagetab,
+                lim - (size_t)&_epagetab, 0);
 #elif defined(__x86_64__) || defined(__amd64__)
 #error implement x86-64 memory management
 #endif

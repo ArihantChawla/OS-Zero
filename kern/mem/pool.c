@@ -53,13 +53,13 @@ memalloc(size_t nb, long flg)
 
     mtxlk(&bkt->lk);
     if (bktid >= MEMSLABSHIFT) {
-        ptr = slaballoc(physpool, sz, flg);
+        ptr = slaballoc(virtpool, sz, flg);
         if (ptr) {
 #if (!MEMTEST)
             vminitvirt(&_pagetab, ptr, sz, flg);
 #endif
             slab++;
-            mag = memgethdr(ptr, virtpool);
+            mag = memgetmag(ptr, virtpool);
             mag->base = (uintptr_t)ptr;
             mag->n = 1;
             mag->ndx = 1;
@@ -87,7 +87,7 @@ memalloc(size_t nb, long flg)
                 slab++;
                 bsz = (uintptr_t)1 << bktid;
                 n = (uintptr_t)1 << (MEMSLABSHIFT - bktid);
-                mag = memgethdr(ptr, virtpool);
+                mag = memgetmag(ptr, virtpool);
                 mag->base = (uintptr_t)ptr;
                 mag->n = n;
                 mag->ndx = 1;
@@ -139,7 +139,7 @@ kfree(void *ptr)
 {
     struct mempool *physpool = &memphyspool;
     struct mempool *virtpool = &memvirtpool;
-    struct memmag  *mag = memgethdr(ptr, virtpool);
+    struct memmag  *mag = memgetmag(ptr, virtpool);
     unsigned long   bktid = (mag) ? mag->bktid : 0;
 #if defined(MEMPARANOIA)
     unsigned long   ndx;
@@ -202,11 +202,11 @@ kfree(void *ptr)
 }
 
 unsigned long
-meminitpool(struct mempool *physpool, uintptr_t base, size_t nb)
+meminitpool(struct mempool *pool, uintptr_t base, size_t nbyte)
 {
     uintptr_t adr = base;
-//    unsigned long sz = (nb & (MEMSLABSIZE - 1)) ? rounddownpow2(nb, MEMSLABSIZE) : nb;
-    size_t    sz = nb;
+//    unsigned long sz = (nbyte & (MEMSLABSIZE - 1)) ? rounddownpow2(nbyte, MEMSLABSIZE) : nbyte;
+    size_t    sz = nbyte;
     intptr_t  ofs = base & (MEMSLABSIZE - 1);
     size_t    nblk;
     size_t    hdrsz;
@@ -223,11 +223,11 @@ meminitpool(struct mempool *physpool, uintptr_t base, size_t nb)
     kprintf("MEM: reserved %lu bytes for %lu slab headers\n", hdrsz, nblk);
 #endif
     vmmapseg((uint32_t *)&_pagetab, adr, adr, adr + hdrsz,
-             PAGEPRES | PAGEWRITE);
-    physpool->nblk = nblk;
-    physpool->blktab = (void *)adr;
+             PAGEPRES | PAGEWRITE | PAGEWIRED);
+    pool->nblk = nblk;
+    pool->blktab = (void *)adr;
     adr += hdrsz;
-//    kbzero((void *)adr, hdrsz);
+    kbzero((void *)adr, hdrsz);
     /* configure magazine headers */
     hdrsz = nblk * sizeof(struct memmag);
     hdrsz = rounduppow2(hdrsz, PAGESIZE);
@@ -237,11 +237,10 @@ meminitpool(struct mempool *physpool, uintptr_t base, size_t nb)
     memvirtpool.nblk = nblk;
     memvirtpool.blktab = (void *)adr;
     vmmapseg((uint32_t *)&_pagetab, adr, adr, adr + hdrsz,
-             PAGEPRES | PAGEWRITE);
-//    kbzero((void *)adr, hdrsz);
+             PAGEPRES | PAGEWRITE | PAGEWIRED);
+    kbzero((void *)adr, hdrsz);
     adr += hdrsz;
-    memvirtpool.base = adr;
-    memphyspool.base = adr;
+    pool->base = adr;
 #if (__KERNEL__ && (MEMDIAG))
     memdiag(memvirtpool);
 #endif

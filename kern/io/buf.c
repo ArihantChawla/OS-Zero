@@ -76,7 +76,7 @@ ioinitbuf(void)
     long           sz;
     long           end;
 
-#if (BUFDYNCALLOC)
+#if (BUFDYNALLOC)
     sz = BUFNBLK * sizeof(struct bufblk);
     ptr = memalloc(sz, PAGEWIRED);
     if (!ptr) {

@@ -217,7 +217,7 @@ slabsplit(struct mempool *pool, struct memslab *slab, unsigned long dest)
     while (--bkt >= dest) {
         sz >>= 1;
         ptr -= sz;
-        slab1 = memgethdr(ptr, pool);
+        slab1 =memgetslab(ptr, pool);
         memslabclrinfo(slab1);
         memslabclrlink(slab1);
         memslabsetbkt(slab1, bkt);
@@ -228,7 +228,7 @@ slabsplit(struct mempool *pool, struct memslab *slab, unsigned long dest)
         }
         blktab[bkt] = slab1;
     }
-//    slab1 = memgethdr(ptr);
+//    slab1 =memgetslab(ptr);
     memslabclrinfo(slab);
     memslabclrlink(slab);
     memslabsetbkt(slab, dest);
@@ -301,7 +301,7 @@ void
 slabfree(struct mempool *physpool, void *ptr)
 {
     struct memslab **blktab = (struct memslab **)physpool->tab;
-    struct memslab  *slab1 = memgethdr(ptr, physpool);
+    struct memslab  *slab1 = memgetslab(ptr, physpool);
     unsigned long    bkt = memslabgetbkt(slab1);
 
     mtxlk(&memphyspoollk);

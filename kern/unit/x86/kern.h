@@ -7,7 +7,7 @@ void trapinit(void);
 void seginit(long core);
 void vminit(void *pagetab);
 void picinit(void);
-void meminit(unsigned long nbphys);
+void meminit(unsigned long nbphys, unsigned long nbvirt);
 void vgainitcon(int w, int h);
 void kbdinit(void);
 void mouseinit(void);

@@ -135,7 +135,7 @@ kinitprot(unsigned long pmemsz)
     /* TODO: use memory map from GRUB? */
 //    vminitphys((uintptr_t)&_epagetab, lim);
     vminitphys((uintptr_t)&_epagetab, lim);
-    meminit(min(pmemsz, lim));
+    meminit(min(pmemsz, lim), min(KERNVIRTBASE, lim));
     tssinit(0);
 #if (VBE) && (PLASMA) && (!PLASMAFOREVER)
     plasmaloop(4);
