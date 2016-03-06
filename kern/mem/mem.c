@@ -261,6 +261,8 @@ memputblk(struct memblk *blk)
     mtxunlk(&bkt->lk);
 }
 
+#if 0
+
 struct membuf *
 membufprepend(struct membuf *buf, size_t len, long how)
 {
@@ -281,10 +283,12 @@ membufprepend(struct membuf *buf, size_t len, long how)
     mb->hdr.next = buf;
     buf = mb;
     if (len < membuflen(buf)) {
-        _memalignbuf(buf, len);
+        buf->hdr.adr = _memalignbuf(buf, len);
     }
     buf->hdr.len = len;
 
     return buf;
 }
+
+#endif
 
