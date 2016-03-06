@@ -45,7 +45,7 @@
         if (_buf) {                                                     \
             _mb->hdr->adr = _buf;                                       \
             _ext->adr = _buf;                                           \
-            _ext->nref = 0;                                             \
+            _ext->nref->val = 0;                                        \
             _mb->hdr.flg |= MEMBUF_PKTHDR_BIT;                          \
             _ext->free = NULL;                                          \
             _ext->arg = NULL;                                           \
@@ -84,8 +84,8 @@
             struct memext *_ext = &_mb->info.ext;                       \
                                                                         \
             _mb_->hdr.adr = _buf;                                       \
-            _ext->adr = _buf;
-            _ext->nref = NULL;                                          \
+            _ext->adr = _buf;                                           \
+            _ext->nref->ptr = NULL;                                     \
             _ext->free = kfree;                                         \
             _ext->arg = (arg);                                          \
             _ext->size = (size);                                        \
@@ -99,7 +99,7 @@
         struct memext *_ext = &_mb->data.hdr.mem.ext;                   \
                                                                         \
         memrmextref(_mb);                                               \
-        if (m_cmpswap(_ext->nref, 0, 1)) {                              \
+        if (m_cmpswap(_ext->nref->val, 0, 1)) {                         \
             if (_ext->type != MEMBUF_EXT_BLK) {                         \
             (*(_ext->free))(_ext->adr, _ext->arg);                      \
             } else {                                                    \
