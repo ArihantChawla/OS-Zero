@@ -37,9 +37,6 @@
 #define mulq128(a, d, r) ((d) = (a) * (r))
 #endif
 
-#if (defined(__amd64__) || defined(__x86_64__)                          \
-     || defined(__i568__) || defined(__i686__))
-
 uint64_t
 hashq128(const void *ptr,
          size_t len,
@@ -94,8 +91,6 @@ hashq128(const void *ptr,
     return rax;
 }
 
-#if (defined(__amd64__) || defined(__x86_64__))
-
 uint64_t
 hashq128uptr(uintptr_t uptr,
              size_t nkeybit)
@@ -145,10 +140,6 @@ hashq128uptr(uintptr_t uptr,
     
     return rax;
 }
-
-#endif /* x86-64 */
-
-#endif /* x86 */
 
 #if (HASHTEST)
 

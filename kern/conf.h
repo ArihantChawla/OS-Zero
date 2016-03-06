@@ -6,7 +6,8 @@
 #define NMEMBUFBLK   8192
 #define PERTHRSTACKS 0
 
-#define BUFNEWHASH 1
+#define BUFNEWHASH 0
+#define BUFMULTITAB 1
 
 #define VMFLATPHYSTAB    1
 #define USERMODE         0
@@ -19,6 +20,7 @@
 #if !defined(BUFNMEG)
 #define BUFNMEG     64
 #endif
+#define BUFNBYTE    (BUFNMEG * 1024 * 1024)
 
 #define kgethz()    HZ
 #define HZ          250         // scheduler timer frequency
@@ -61,8 +63,6 @@
 
 #define LOCORE      0
 #define NCONS       8
-
-#define BUFMULTITAB 0
 
 #define BOCHS       1
 #define DEVEL       0           // debugging

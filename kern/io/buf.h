@@ -30,6 +30,7 @@
 
 #define BUFMINSIZE     (1UL << BUFMINSIZELOG2)
 #define BUFMINSIZELOG2 13
+#define BUFNOFSBIT     BUFMINSIZELOG2
 #define BUFSIZE        (1UL << BUFSIZELOG2)
 #define BUFSIZELOG2    16
 /* size of buffer cache */
@@ -55,7 +56,7 @@
 #define BUFL3MASK      (BUFNL3ITEM - 1)
 #define BUFL4MASK      (BUFNL4ITEM - 1)
 
-//#define bufkey(num) (((num) >> BUFNOFSBIT) & ((UINT64_C(1) << BUFNIDBIT) - 1))
+#define bufkey(num) (((num) >> BUFNOFSBIT) & ((UINT64_C(1) << BUFNIDBIT) - 1))
 #define bufclr(blk)                                                     \
     do {                                                                \
         long  _val = 0;                                                 \
@@ -152,7 +153,7 @@ struct bufblkqueue {
 long            bufinit(void);
 struct bufblk * bufalloc(void);
 void            bufaddblk(struct bufblk *blk);
-struct bufblk * buffindblk(long dev, off_t num, long rel);
+struct bufblk * buffindblk(dev_t dev, off_t num, long rel);
 
 #endif /* __KERN_IO_BUF_H__ */
 

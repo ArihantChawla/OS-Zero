@@ -13,6 +13,7 @@
 /* TODO: implement per-device buffers */
 
 #define __KERNEL__ 1
+#include <kern/conf.h>
 #include <sys/types.h>
 #include <zero/cdefs.h>
 #include <zero/param.h>
@@ -23,7 +24,6 @@
 #endif
 #include <kern/util.h>
 #include <kern/malloc.h>
-#include <kern/conf.h>
 #include <kern/mem/vm.h>
 #include <kern/io/buf.h>
 #if defined(__x86_64__) || defined(__amd64__)
@@ -45,15 +45,14 @@ extern struct vmpagestat   vmpagestat;
 static struct bufblk       bufhdrtab[BUFNBLK] ALIGNED(PAGESIZE);
 #if (BUFMULTITAB)
 static void               *buftab[BUFNDEV] ALIGNED(PAGESIZE);
-#else
 #if (BUFNEWHASH)
 static struct bufchain     bufhash[BUFNHASH];
 //static struct bufchain     bufhash[BUFNDEV][BUFNHASH];
-#else
 static void               *bufhash[BUFNDEV][BUFNHASH];
+#else
+static volatile long       buflktab[BUFNDEV] ALIGNED(PAGESIZE);
 #endif
 #endif
-//static volatile long       buflktab[BUFNDEV] ALIGNED(PAGESIZE);
 static struct bufdev       bufdevtab[BUFNDEV];
 static struct bufblkqueue  buffreelist;
 static struct bufblkqueue  buflruqueue;
@@ -65,7 +64,6 @@ static long                bufnbyte;
 long
 ioinitbuf(void)
 {
-    long           retval = 0;
     uint8_t       *u8ptr;
     void          *ptr = NULL;
     struct bufblk *blk;
@@ -74,10 +72,13 @@ ioinitbuf(void)
     long           end;
 
     sz = BUFNBYTE;
-    do {
-        ptr = memalloc(sz, PAGEWIRED);
-        sz >>= 1;
-    } while ((sz) && !ptr);
+    ptr = memalloc(sz, PAGEWIRED);
+    if (!ptr) {
+        do {
+            sz >>= 1;
+            ptr = memalloc(sz, PAGEWIRED);
+        } while ((sz) && !ptr);
+    }
     if (!ptr) {
         kprintf("failed to allocate buffer cache\n");
 
@@ -105,10 +106,9 @@ ioinitbuf(void)
         }
         bufzone = ptr;
         bufnbyte = sz;
-        retval = 1;
     }
 
-    return retval;
+    return 1;
 }
 
 void
