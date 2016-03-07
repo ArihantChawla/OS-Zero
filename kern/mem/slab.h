@@ -7,53 +7,17 @@
 #include <kern/types.h>
 #include <kern/mem/mem.h>
 #include <kern/mem/pool.h>
+#if 0
 #if (!MEMNEWSLAB)
-#if (PTRBITS <= 32)
+#if (PTRBITS <= 32) 
 #include <kern/mem/slab32.h>
 #elif (PTRBITS <= 64)
 #include <kern/mem/slab64.h>
 #endif
 #endif
-
-#if (!MEMNEWSLAB)
-#define MEMSLABMIN   (1UL << MEMSLABSHIFT)
-#define MEMSLABSHIFT 16 // don't make this less than 16 for now :)
 #endif
 
-#if (MEMNEWSLAB)
-#define memslabclrinfo(sp)                                              \
-    ((sp)->info = ((m_ureg_t)0))
-#define memslabclrbkt(sp)                                               \
-    ((sp)->info &= ~MEMBKTMASK)
-#define memslabsetbkt(sp, bkt)                                          \
-    (memslabclrbkt(sp), (sp)->info |= (bkt))
-#define memslabgetbkt(sp)                                               \
-    ((sp)->info & MEMBKTMASK)
-#define memslabisfree(sp)                                               \
-    (!((sp)->info & MEMALLOCBIT))
-#define memslabsetfree(sp)                                              \
-    ((sp)->info &= ~MEMALLOCBIT)
-#define memslabclrfree(sp)                                              \
-    ((sp)->info |= MEMALLOCBIT)
-#define memslabsetflg(sp, flg)                                          \
-    ((sp)->info |= (flg))
-#define memslabclrflg(sp)                                               \
-    ((sp)->info &= ~MEMFLGBITS)
-#define memslabclrlink(sp)                                              \
-    ((sp)->prev = (sp)->next = NULL)
-#define memslabsetprev(sp, hdr)                                         \
-    ((sp)->prev = hdr)
-#define memslabsetnext(sp, hdr)                                         \
-    ((sp)->next = hdr)
-#define memslabgetprev(sp)                                              \
-    ((sp)->prev)
-#define memslabgetnext(sp)                                              \
-    ((sp)->next)
-#define memslabclrprev(sp)                                              \
-    ((sp)->prev = NULL)
-#define memslabclrnext(sp)                                              \
-    ((sp)->next = NULL)
-#else
+#if !(MEMNEWSLAB)
 #define memslabclrinfo(sp)                                              \
     ((sp)->info = 0UL)
 #define memslabclrbkt(sp)                                               \
@@ -105,9 +69,9 @@ struct memslab {
     ((void *)((uint8_t *)(pool)->base                                   \
               + (memgetblknum(hdr, pool) << MEMSLABSHIFT)))
 #define memgetslab(ptr, pool)                                           \
-    ((struct memslab *)(pool)->blktab + memgetblknum(ptr, pool))
+    ((struct memslab *)(pool)->hdrtab + memgetblknum(ptr, pool))
 #define memgetmag(ptr, pool)                                            \
-    ((struct memmag *)(pool)->blktab + memgetblknum(ptr, pool))
+    ((struct memmag *)(pool)->hdrtab + memgetblknum(ptr, pool))
 
 void * slaballoc(struct mempool *pool, unsigned long nb, unsigned long flg);
 void   slabfree(struct mempool *pool, void *ptr);

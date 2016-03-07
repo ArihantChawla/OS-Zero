@@ -31,11 +31,11 @@ unsigned char               vmsetbitmap[NPAGEMAX / CHAR_BIT];
 unsigned long
 pageinitphyszone(uintptr_t base,
                  struct physpage **zone,
-                 unsigned long nbram)
+                 size_t nbphys)
 {
     struct physpage *page = &vmphystab[pagenum(base)];
     uintptr_t        adr = rounduppow2(base, PAGESIZE);
-    unsigned long    n = rounddownpow2(nbram - adr, PAGESIZE) >> PAGESIZELOG2;
+    unsigned long    n = rounddownpow2(nbphys - adr, PAGESIZE) >> PAGESIZELOG2;
     unsigned long    size = n * PAGESIZE;
     unsigned long    end = base - 1;
 
@@ -59,12 +59,12 @@ pageinitphyszone(uintptr_t base,
 unsigned long
 pageaddphyszone(uintptr_t base,
                 struct physpage **zone,
-                unsigned long nbram)
+                size_t nbphys)
 {
     uintptr_t        adr = rounduppow2(base, PAGESIZE);
     struct physpage *page = &vmphystab[pagenum(adr)];
     uint32_t        *pte = (uint32_t *)&_pagetab + vmpagenum(adr);
-    unsigned long    n  = rounduppow2(nbram - adr, PAGESIZE) >> PAGESIZELOG2;
+    unsigned long    n  = rounduppow2(nbphys - adr, PAGESIZE) >> PAGESIZELOG2;
     unsigned long    size = n * PAGESIZE;
 
     adr += n << PAGESIZELOG2;
@@ -87,12 +87,12 @@ pageaddphyszone(uintptr_t base,
 }
 
 unsigned long
-pageinitphys(uintptr_t base, unsigned long nbram)
+pageinitphys(uintptr_t base, size_t nbphys)
 {
     unsigned long size;
     
     mtxlk(&vmphyslk);
-    size = pageinitphyszone(base, &vmphysqueue, nbram);
+    size = pageinitphyszone(base, &vmphysqueue, nbphys);
     mtxunlk(&vmphyslk);
 
     return size;

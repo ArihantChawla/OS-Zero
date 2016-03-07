@@ -16,11 +16,11 @@
 #if (MEMNEWSLAB)
 /* allocator parameters */
 #define MEMNHDRHASH    (512 * 1024)     // # of entries in header hash table
-#define MEMNHDRBUF     (roundup(__STRUCT_MEMBLK_SIZE, CLSIZE))
+//#define MEMNHDRBUF     (roundup(__STRUCT_MEMBLK_SIZE, CLSIZE))
 #define MEMMINSIZE     (1U << MEMMINSHIFT)
 #define MEMSLABSIZE    (1U << MEMSLABSHIFT)
 #define MEMMINSHIFT    8 // minimum allocation of 256 bytes
-#define MEMSLABSHIFT   16
+#define MEMSLABSHIFT   20
 #if 0
 #define MEMMAXOBJ      (1U << MEMMAXOBJSHIFT)
 #define MEMMAXOBJSHIFT 16

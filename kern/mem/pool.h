@@ -7,9 +7,10 @@
 
 struct mempool {
     struct membkt  tab[PTRBITS];
+    volatile long  lk;
     uintptr_t      base;
     unsigned long  nblk;
-    void          *blktab;
+    void          *hdrtab;
 };
 
 #endif /* __KERN_MEM_POOL_H__ */

@@ -10,8 +10,8 @@
 #include <kern/mem/vm.h>
 #include <kern/mem/buf.h>
 #include <kern/mem/pool.h>
-#include <kern/mem/slab.h>
-#if defined(__i386__) && !defined(__x86_64__) && !defined(__amd64__)
+#include <kern/mem/mag.h>
+#if defined(__i386__) && !defined(__x86_64__) && !defined(__amd64__) && 0
 #include <kern/mem/slab32.h>
 #include <kern/unit/x86/link.h>
 #elif defined(__arm__)
@@ -24,35 +24,33 @@ static struct membufbkt membufbkttab[NCPU] ALIGNED(PAGESIZE);
 static struct membufbkt membufbkt;
 
 void
-meminitzone(struct mempool *pool, uintptr_t base, size_t nbyte, long map)
+meminitvirtpool(struct mempool *pool, uintptr_t base, size_t nbyte)
 {
-    uintptr_t        adr = ((base & (MEMMINSIZE - 1))
-                            ? rounduppow2(base, MEMMINSIZE)
-                            : base);
-    unsigned long    bktid = PTRBITS - 1;
-    struct membkt   *bkt = &pool->blktab[bktid];
-    size_t           sz = 1UL << bktid;
-    struct memslab  *slab;
+    uintptr_t       adr = ((base & (MEMMINSIZE - 1))
+                           ? rounduppow2(base, MEMMINSIZE)
+                           : base);
+    unsigned long   bktid = PTRBITS - 1;
+    struct membkt   *tab = pool->tab;
+    size_t          sz = 1UL << bktid;
+    struct memmag  *mag;
     
     adr = meminitpool(pool, adr, nbyte);
     nbyte -= adr - base;
     nbyte = rounddownpow2(nbyte, PAGESIZE);
-    if (map) {
-        vmmapseg((uint32_t *)&_pagetab, adr, adr, adr + nbyte,
-                 PAGEWRITE);
-    }
+    vmmapseg((uint32_t *)&_pagetab, adr, adr, adr + nbyte,
+             PAGEWRITE);
 #if (__KERNEL__)
     kprintf("%ld kilobytes kernel virtual memory free @ 0x%lx\n",
             nbyte >> 10, adr);
 #endif
     while ((nbyte) && bktid >= PAGESIZELOG2) {
         if (nbyte & sz) {
-            slab = memgetslab(adr, pool);
-            memslabclrinfo(slab);
-            memslabclrlink(slab);
-            memslabsetbkt(slab, bktid);
-            memslabsetfree(slab);
-            bkt->list = slab;
+            mag = memgetmag(adr, pool);
+            memmagclrinfo(mag);
+            memmagclrlink(mag);
+            memmagsetbkt(mag, bktid);
+            memmagsetfree(mag);
+            tab[bktid].list = mag;
             nbyte -= sz;
             adr += sz;
         }
@@ -66,12 +64,63 @@ meminitzone(struct mempool *pool, uintptr_t base, size_t nbyte, long map)
     return;
 }
 
+#if 0
+void
+meminitphyspool(struct mempool *pool, uintptr_t base, size_t nbyte)
+{
+    uintptr_t       adr = ((base & (MEMMINSIZE - 1))
+                           ? rounduppow2(base, MEMMINSIZE)
+                           : base);
+    unsigned long   bktid = PTRBITS - 1;
+    struct membkt  *tab = pool->tab;
+    size_t          sz = PAGESIZE;
+    size_t          n;
+    struct memmag *mag;
+    
+    adr = meminitpool(pool, adr, nbyte);
+    nbyte -= adr - base;
+    nbyte = rounddownpow2(nbyte, PAGESIZE);
+    n = nbyte >> PAGESIZELOG2;
+    if (map) {
+        vmmapseg((uint32_t *)&_pagetab, adr, adr, adr + nbyte,
+                 PAGEWRITE);
+    }
+#if (__KERNEL__)
+    kprintf("%ld kilobytes kernel physical memory free @ 0x%lx\n",
+            nbyte >> 10, adr);
+#endif
+    while (n--) {
+    }
+#if 0
+    while ((nbyte) && bktid >= PAGESIZELOG2) {
+        if (nbyte & sz) {
+            mag = memgetmag(adr, pool);
+            memmagclrinfo(mag);
+            memmagclrlink(mag);
+            memmagsetbkt(mag, bktid);
+            memmagsetfree(mag);
+            tab[bktid].list = mag;
+            nbyte -= sz;
+            adr += sz;
+        }
+        bktid--;
+        sz >>= 1;
+    }
+#endif
+#if (__KERNEL__ && defined(MEMDIAG)) && 0
+    memdiag(pool);
+#endif
+    
+    return;
+}
+#endif
+
 /*
  * called without locks at boot time, or with locks held by memgetbuf() */
 long
 meminitcpubuf(long unit, long how)
 {
-    struct membufbkt *bkt = &membufbkttab[unit];
+    struct membufbkt *tab = &membufbkttab[unit];
     uint8_t          *u8ptr = kwalloc(PAGESIZE);
     long              n = PAGESIZE / MEMBUF_SIZE;
     void             *last = NULL;
@@ -82,14 +131,14 @@ meminitcpubuf(long unit, long how)
         return 0;
     }
     u8ptr += PAGESIZE;
-    bkt->nbuf = n;
+    tab->nbuf = n;
     while (n--) {
         u8ptr -= MEMBUF_SIZE;
         buf = (struct membuf *)u8ptr;
         buf->hdr.next = last;
         last = buf;
     }
-    bkt->buflist = last;
+    tab->buflist = last;
 
     return 1;
 }
@@ -98,7 +147,7 @@ long
 meminitbuf(void)
 {
     long              unit = k_curunit;
-    struct membufbkt *bkt = &membufbkttab[unit];
+    struct membufbkt *tab = &membufbkttab[unit];
     struct membuf    *buf;
     struct memblk    *blk;
     void             *last;
@@ -122,7 +171,7 @@ meminitbuf(void)
     kbzero(u8ptr2, NMEMBUFBLK * MEMBUF_BLK_SIZE);
     /* allocate global buf container */
     n = MEMNBUF;
-    bkt->nbuf = n;
+    tab->nbuf = n;
     u8ptr1 += MEMNBUF * MEMBUF_SIZE;
     last = NULL;
     while (n--) {
@@ -131,10 +180,10 @@ meminitbuf(void)
         buf->hdr.next = last;
         last = buf;
     }
-    bkt->buflist = last;
+    tab->buflist = last;
     /* allocate global blk container */
     n = NMEMBUFBLK;
-    bkt->nblk = n;
+    tab->nblk = n;
     u8ptr2 += NMEMBUFBLK * MEMBUF_BLK_SIZE;
     last = NULL;
     while (n--) {
@@ -144,7 +193,7 @@ meminitbuf(void)
         blk->next = last;
         last = blk;
     }
-    bkt->blklist = last;
+    tab->blklist = last;
     /* initialise per-CPU buf containers */
     n = NCPU;
     while (n--) {
@@ -155,18 +204,15 @@ meminitbuf(void)
 void
 meminit(size_t nbphys, size_t nbvirt)
 {
-    size_t lim = max(nbphys, KERNVIRTBASE);
+    size_t    lim = max(nbphys, KERNVIRTBASE);
+    uintptr_t adr = (uintptr_t)&_ebss;
 
 #if (defined(__i386__) && !defined(__x86_64__) && !defined(__amd64__))  \
     || defined(__arm__)
-    vminitvirt(&_pagetab, &_epagetab,
-              lim - (uint32_t)&_epagetab,
-              PAGEWRITE);
-    meminitzone(&memphyspool, (size_t)&_epagetab,
-                lim - (size_t)&_epagetab, 1);
+    pageinitphys((uintptr_t)&_epagetab, lim - (size_t)&_epagetab);
     lim = max(nbvirt, KERNVIRTBASE);
-    meminitzone(&memvirtpool, (size_t)&_epagetab,
-                lim - (size_t)&_epagetab, 0);
+    meminitvirtpool(&memvirtpool, (uintptr_t)&_eusr,
+                    lim - (size_t)&_eusr);
 #elif defined(__x86_64__) || defined(__amd64__)
 #error implement x86-64 memory management
 #endif
@@ -182,30 +228,30 @@ memgetbuf(long how)
 {
     volatile long     unit = k_curunit;
     uint8_t          *ptr;
-    struct membufbkt *bkt = &membufbkttab[unit];
+    struct membufbkt *tab = &membufbkttab[unit];
     struct membuf    *ret = NULL;
     struct membuf    *buf;
     struct membuf    *last;
     long              n;
 
-    mtxlk(&bkt->lk);
-    ret = bkt->buflist;
+    mtxlk(&tab->lk);
+    ret = tab->buflist;
     if (ret) {
-        bkt->buflist = buf->hdr.next;
-        bkt->nbuf--;
+        tab->buflist = buf->hdr.next;
+        tab->nbuf--;
     } else {
-        mtxlk(&bkt->lk);
-        ret = bkt->buflist;
+        mtxlk(&tab->lk);
+        ret = tab->buflist;
         if (ret) {
-            bkt->buflist = buf->hdr.next;
-            bkt->nbuf--;
-            mtxunlk(&bkt->lk);
+            tab->buflist = buf->hdr.next;
+            tab->nbuf--;
+            mtxunlk(&tab->lk);
         } else {
-            mtxunlk(&bkt->lk);
+            mtxunlk(&tab->lk);
             meminitcpubuf(unit, MEM_TRYWAIT);
         }
     }
-    mtxunlk(&bkt->lk);
+    mtxunlk(&tab->lk);
 
     return ret;
 }
@@ -214,42 +260,42 @@ void
 memputbuf(struct membuf *buf)
 {
     long              unit = k_curunit;
-    struct membufbkt *bkt = &membufbkttab[unit];
+    struct membufbkt *tab = &membufbkttab[unit];
 
-    mtxlk(&bkt->lk);
-    buf->hdr.next = bkt->buflist;
-    bkt->buflist = buf;
-    bkt->nbuf++;
-    mtxunlk(&bkt->lk);
+    mtxlk(&tab->lk);
+    buf->hdr.next = tab->buflist;
+    tab->buflist = buf;
+    tab->nbuf++;
+    mtxunlk(&tab->lk);
 }
 
 /* FIXME: steal mbufs from other CPUs if need arises */
 void *
 memgetblk(long how)
 {
-    volatile long  unit = k_curunit;
-    struct membufbkt *bkt = &membufbkttab[unit];
-    uint8_t       *ptr;
-    struct memblk *ret = NULL;
-    struct memblk *blk;
-    struct memblk *last;
-    long           n;
+    volatile long     unit = k_curunit;
+    struct membufbkt *tab = &membufbkttab[unit];
+    uint8_t          *ptr;
+    struct memblk    *ret = NULL;
+    struct memblk    *blk;
+    struct memblk    *last;
+    long              n;
 
-    mtxlk(&bkt->lk);
-    ret = bkt->blklist;
+    mtxlk(&tab->lk);
+    ret = tab->blklist;
     if (ret) {
-        bkt->blklist = blk->next;
-        bkt->nblk--;
+        tab->blklist = blk->next;
+        tab->nblk--;
     } else {
-        mtxlk(&bkt->lk);
-        ret = bkt->blklist;
+        mtxlk(&tab->lk);
+        ret = tab->blklist;
         if (ret) {
-            bkt->blklist = blk->next;
-            bkt->nblk--;
+            tab->blklist = blk->next;
+            tab->nblk--;
         }
-        mtxunlk(&bkt->lk);
+        mtxunlk(&tab->lk);
     }
-    mtxunlk(&bkt->lk);
+    mtxunlk(&tab->lk);
 
     return ret;
 }
@@ -258,13 +304,13 @@ void
 memputblk(struct memblk *blk)
 {
     long              unit = k_curunit;
-    struct membufbkt *bkt = &membufbkttab[unit];
+    struct membufbkt *tab = &membufbkttab[unit];
 
-    mtxlk(&bkt->lk);
-    blk->next = bkt->blklist;
-    bkt->blklist = blk;
-    bkt->nblk++;
-    mtxunlk(&bkt->lk);
+    mtxlk(&tab->lk);
+    blk->next = tab->blklist;
+    tab->blklist = blk;
+    tab->nblk++;
+    mtxunlk(&tab->lk);
 }
 
 #if 0

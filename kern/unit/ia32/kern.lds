@@ -213,8 +213,7 @@ SECTIONS {
     }
 
     _kernsize = PAGETAB + PAGETABSIZE + SIZEOF(.text) + SIZEOF(.data)
-    	      + SIZEOF(.bss)
-	      + SIZEOF(.usr);
+    	      + SIZEOF(.bss) + SIZEOF(.usr);
 /*
     _kernsize = PAGETAB + PAGETABSIZE + SIZEOF(.text) + SIZEOF(.data)
     	      + SIZEOF(.bss);
