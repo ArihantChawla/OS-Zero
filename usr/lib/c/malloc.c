@@ -847,6 +847,26 @@ hashgetmag(void)
     return item;
 }
 
+static void
+hashputmag(struct hashmag *item)
+{
+    struct hashmag *orig;
+    struct hashmag **head;
+
+    head = &g_malloc.hashbuf;
+    do {
+        orig = *head;
+    } while ((orig) && (m_cmpsetbit((volatile long *)head,
+                                    MALLOC_HASH_MARK_POS)));
+    item->ptr = NULL;
+    item->adr = NULL;
+    item->next  = orig;
+    m_atomwrite((volatile long *)head,
+                item);
+
+    return;
+}
+
 static struct mag *
 hashfindmag(void *ptr)
 {
@@ -921,6 +941,7 @@ hashsetmag(void *ptr, struct mag *mag)
                 } else {
                     m_atomwrite((volatile long *)head, cur->next);
                 }
+                hashputmag(cur);
 
                 return NULL;
             }
