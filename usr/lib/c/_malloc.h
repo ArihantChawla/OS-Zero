@@ -19,7 +19,7 @@
 /* internal stuff for zero malloc - not for the faint at heart to modify :) */
 
 #define MALLOCCASQUEUE    0
-#define MALLOCTKTLK       1
+#define MALLOCTKTLK       0
 #define MALLOCNBTAIL      0
 #define MALLOCNBDELAY     0
 #define MALLOCNBSTK       0
@@ -176,7 +176,7 @@
 #if (ZEROMTX)
 #include <zero/mtx.h>
 #endif
-#if defined (MALLOCPRIOLK)
+#if defined (MALLOCPRIOLK) && (MALLOCPRIOLK)
 #include <zero/priolk.h>
 #define LOCK struct priolk
 #define __mallocinitlk(mp)

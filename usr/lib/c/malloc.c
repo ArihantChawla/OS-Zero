@@ -1792,13 +1792,13 @@ _malloc(size_t size,
     uint8_t     nfo = bktid;
 #endif
     
-    if (!(g_malloc.flg & MALLOCINIT)) {
-        mallinit();
-    }
     arn = &thrarn;
     if (!(thrflg & MALLOCINIT)) {
         thrinit();
         thrflg |= MALLOCINIT;
+    }
+    if (!(g_malloc.flg & MALLOCINIT)) {
+        mallinit();
     }
 //    align = max(align, MALLOCALIGNMENT);
     /* try to allocate from a partially used magazine */
@@ -2511,7 +2511,6 @@ posix_memalign(void **ret,
 {
     void   *ptr = NULL;
     size_t  aln = max(align, MALLOCALIGNMENT);
-    int     retval = -1;
 
 #if (MALLOCDEBUGHOOKS) || (defined(_ZERO_SOURCE) && (MALLOCHOOKS)) && 0
     if (__zmemalign_hook) {
@@ -2519,16 +2518,26 @@ posix_memalign(void **ret,
         
         m_getretadr(caller);
         ptr = __zmemalign_hook(align, size, (const void *)caller);
+        *ret = ptr;
+        if (ptr) {
 
-        return ptr
+            return 0;
+        }
+
+        return -1;
     }
 #endif
     if (!powerof2(align) || (align & (sizeof(void *) - 1))) {
         errno = EINVAL;
+        *ret = NULL;
+
+        return -1;
     } else {
         ptr = _malloc(size, aln, 0);
-        if (ptr) {
-            retval = 0;
+        if (!ptr) {
+            *ret = NULL;
+            
+            return -1;
         }
     }
 #if (MALLOCDEBUG)
@@ -2540,7 +2549,7 @@ posix_memalign(void **ret,
     __mallocprnttrace("posix_memalign", size, align);
 #endif
 
-    return retval;
+    return 0;
 }
 #endif
 
