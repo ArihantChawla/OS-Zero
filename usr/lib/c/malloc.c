@@ -930,10 +930,13 @@ hashsetmag(void *ptr, struct mag *mag)
     while (cur) {
         if (cur->upval == upage) {
             if (mag) {
-                m_atominc(&cur->nref);
+//                m_atominc(&cur->nref);
+                cur->nref++;
+                m_cmpclrbit((volatile long *)head,
+                            MALLOC_HASH_MARK_POS);
 
                 return mag;
-            } else if (m_fetchadd(&cur->nref, -1) == 1) {
+            } else if (!--cur->nref) {
                 if (prev) {
                     prev->next = cur->next;
                 } else {
