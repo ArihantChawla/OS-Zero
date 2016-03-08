@@ -870,7 +870,7 @@ hashputmag(struct hashmag *item)
 static struct mag *
 hashfindmag(void *ptr)
 {
-    uintptr_t        uptr = (uintptr_t)ptr;
+    uintptr_t        upval = (uintptr_t)ptr >> MALLOCALIGNMENTSHIFT;
     struct mag      *mag;
     struct hashmag  *item;
     struct hashmag  *orig;
@@ -879,8 +879,8 @@ hashfindmag(void *ptr)
     struct hashmag **head;
     unsigned long    key;
     
-//    key = hashq128uptr(uptr, MALLOCNHASHBIT);
-    key = uptr & ((1UL << (MALLOCNHASHBIT)) - 1);
+//    key = hashq128upval(upval, MALLOCNHASHBIT);
+    key = upval & ((1UL << (MALLOCNHASHBIT)) - 1);
     head = &g_malloc.maghash[key];
     do {
         orig = *head;
@@ -907,7 +907,7 @@ hashfindmag(void *ptr)
 static struct mag *
 hashsetmag(void *ptr, struct mag *mag)
 {
-    uintptr_t        uptr = (uintptr_t)ptr;
+    uintptr_t        upval = (uintptr_t)ptr >> MALLOCALIGNMENTSHIFT;
     struct hashmag  *item;
     struct hashmag  *orig;
     struct hashmag  *cur;
@@ -915,8 +915,8 @@ hashsetmag(void *ptr, struct mag *mag)
     struct hashmag **head;
     unsigned long    key;
 
-    key = uptr & ((1UL << (MALLOCNHASHBIT)) - 1);
-//    key = hashq128uptr(uptr, MALLOCNHASHBIT);
+    key = upval & ((1UL << (MALLOCNHASHBIT)) - 1);
+//    key = hashq128upval(upval, MALLOCNHASHBIT);
     head = &g_malloc.maghash[key];
     if (mag) {
         item = hashgetmag();
