@@ -84,6 +84,7 @@
 #define MALLOCALIGNMENT   CLSIZE
 #endif
 
+#define MALLOCNHASHITEM   (1U << MALLOCNHASHBIT)
 #define MALLOCNHASHBIT    22
 
 /* <= MALLOCSLABLOG2 are tried to get from heap #if (!MALLOCNOSBRK) */
@@ -273,7 +274,6 @@ static void   gnu_free_hook(void *ptr);
 #endif /* defined(GNUMALLOC) */
 
 #define MALLOCPAGETAB     0
-#define MALLOCSLABTAB     1
 
 #if (PTRBITS == 32)
 
@@ -958,6 +958,13 @@ struct mallopt {
     int mmaplog2;
 };
 
+struct hashmag {
+    void           *ptr;
+    struct mag     *adr;
+    struct hashmag *next;
+    uint8_t         _pad[WORDSIZE];
+};
+
 /* malloc global structure */
 #define MALLOCINIT   0x00000001L
 #define MALLOCNOHEAP 0x00000002L
@@ -975,13 +982,16 @@ struct malloc {
 #if (!MALLOCTLSARN)
     struct arn      **arntab;           // arena structures
 #endif
-    LOCK             *pagedirlktab;
-    LOCK             *slabdirlktab;
-#if (MALLOCREDBLACKTREE)
+#if (MALLOCHASH)
+    struct hashmag   *hashbuf;
+    struct hashmag  **maghash;
+#elif (MALLOCREDBLACKTREE)
     struct rbtnode   *rbtlist;
     struct rbt        ptrtree;
 #elif (MALLOCFREETABS)
+    LOCK             *pagedirlktab;
     struct memtab    *pagedir;
+    LOCK             *slabdirlktab;
     struct memtab    *slabdir;
 #else
     void            **pagedir;

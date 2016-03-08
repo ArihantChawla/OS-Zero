@@ -133,8 +133,7 @@ kinitprot(unsigned long pmemsz)
     consinit(768 >> 3, 1024 >> 3);
 #endif
     /* TODO: use memory map from GRUB? */
-//    vminitphys((uintptr_t)&_epagetab, lim);
-    vminitphys((uintptr_t)&_eusr, lim);
+    vminitphys((uintptr_t)&_eusr, lim - (unsigned long)&_eusr);
     meminit(min(pmemsz, lim), min(KERNVIRTBASE, lim));
     tssinit(0);
 #if (VBE) && (PLASMA) && (!PLASMAFOREVER)
