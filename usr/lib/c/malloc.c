@@ -808,11 +808,16 @@ postfork(void)
 
 #if (MALLOCHASH)
 
+/*
+ * NOTE: the hash table is based on knowing that pages from different magazines
+ * do not overlap
+ */
+
 #define MALLOC_HASH_MARK_POS 0
 #define MALLOC_HASH_MARK_BIT (1L << 0)
 
 static struct hashmag *
-hashgetmag(void)
+hashgetitem(void)
 {
     struct hashmag  *item;
     struct hashmag  *cur;
@@ -846,7 +851,7 @@ hashgetmag(void)
 }
 
 static void
-hashputmag(struct hashmag *item)
+hashbufitem(struct hashmag *item)
 {
     struct hashmag *orig;
     struct hashmag **head;
@@ -942,7 +947,7 @@ hashsetmag(void *ptr, struct mag *mag)
                 } else {
                     m_atomwrite((volatile long *)head, cur->next);
                 }
-                hashputmag(cur);
+                hashbufitem(cur);
             
                 return NULL;
             }
@@ -951,7 +956,7 @@ hashsetmag(void *ptr, struct mag *mag)
         cur = cur->next;
     }
     if (mag) {
-        item = hashgetmag();
+        item = hashgetitem();
         if (!item) {
             if (!ptr) {
                 
