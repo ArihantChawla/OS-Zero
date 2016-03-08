@@ -569,8 +569,6 @@ thrinitarn(void)
 static void
 thrinit(void)
 {
-    void *ptr = NULL;
-
     pthread_once(&thronce, thrinitarn);
 #if 0
     ptr = pthread_getspecific(thrkey);
@@ -610,9 +608,9 @@ maginitslab(struct mag *mag, long bktid)
 #if (!MALLOCNOSBRK)
         if (bktid <= MALLOCSLABLOG2 && !(g_malloc.flg & MALLOCNOHEAP)) {
             /* try to allocate slab from heap */
-            mtxlk(&g_malloc.heaplk);
+            __malloclk(&g_malloc.heaplk);
             ptr = growheap(rounduppow2(n * sz, PAGESIZE));
-            mtxunlk(&g_malloc.heaplk);
+            __mallocunlk(&g_malloc.heaplk);
             if (ptr == SBRK_FAILED) {
                 g_malloc.flg |= MALLOCNOHEAP;
             }
@@ -747,8 +745,8 @@ prefork(void)
 {
     long ndx;
 
-    mtxlk(&g_malloc.initlk);
-    mtxlk(&g_malloc.heaplk);
+    __malloclk(&g_malloc.initlk);
+    __malloclk(&g_malloc.heaplk);
     for (ndx = 0 ; ndx < MALLOCNBKT ; ndx++) {
 #if (!MALLOCNBSTK)
         __malloclk(&g_malloc.magbkt[ndx].lk);
@@ -802,8 +800,8 @@ postfork(void)
         __mallocunlk(&g_malloc.magbkt[ndx].lk);
     }
 #endif
-    mtxunlk(&g_malloc.heaplk);
-    mtxunlk(&g_malloc.initlk);
+    __mallocunlk(&g_malloc.heaplk);
+    __mallocunlk(&g_malloc.initlk);
     
     return;
 }
@@ -813,7 +811,7 @@ postfork(void)
 #define MALLOC_HASH_MARK_POS 0
 #define MALLOC_HASH_MARK_BIT (1L << 0)
 
-static struct mag *
+static struct hashmag *
 hashgetmag(void)
 {
     struct hashmag  *item;
@@ -858,7 +856,7 @@ hashputmag(struct hashmag *item)
         orig = *head;
     } while ((orig) && (m_cmpsetbit((volatile long *)head,
                                     MALLOC_HASH_MARK_POS)));
-    item->ptr = NULL;
+    item->upval = 0;
     item->adr = NULL;
     item->next  = orig;
     m_atomwrite((volatile long *)head,
@@ -870,9 +868,11 @@ hashputmag(struct hashmag *item)
 static struct mag *
 hashfindmag(void *ptr)
 {
+#if 0
     uintptr_t        upval = (uintptr_t)ptr >> MALLOCALIGNMENTSHIFT;
+#endif
+    uintptr_t        upage = (uintptr_t)ptr >> PAGESIZELOG2;
     struct mag      *mag;
-    struct hashmag  *item;
     struct hashmag  *orig;
     struct hashmag  *cur;
     struct hashmag  *prev;
@@ -880,7 +880,7 @@ hashfindmag(void *ptr)
     unsigned long    key;
     
 //    key = hashq128upval(upval, MALLOCNHASHBIT);
-    key = upval & ((1UL << (MALLOCNHASHBIT)) - 1);
+    key = upage & ((1UL << (MALLOCNHASHBIT)) - 1);
     head = &g_malloc.maghash[key];
     do {
         orig = *head;
@@ -888,7 +888,7 @@ hashfindmag(void *ptr)
                                     MALLOC_HASH_MARK_POS)));
     cur = orig;
     while (cur) {
-        if (cur->ptr == ptr) {
+        if (cur->upval == upage) {
             mag = cur->adr;
             m_cmpclrbit((volatile long *)head,
                         MALLOC_HASH_MARK_POS);
@@ -907,7 +907,10 @@ hashfindmag(void *ptr)
 static struct mag *
 hashsetmag(void *ptr, struct mag *mag)
 {
+#if 0
     uintptr_t        upval = (uintptr_t)ptr >> MALLOCALIGNMENTSHIFT;
+#endif
+    uintptr_t        upage = (uintptr_t)ptr >> PAGESIZELOG2;
     struct hashmag  *item;
     struct hashmag  *orig;
     struct hashmag  *cur;
@@ -915,9 +918,35 @@ hashsetmag(void *ptr, struct mag *mag)
     struct hashmag **head;
     unsigned long    key;
 
-    key = upval & ((1UL << (MALLOCNHASHBIT)) - 1);
+    key = upage & ((1UL << (MALLOCNHASHBIT)) - 1);
 //    key = hashq128upval(upval, MALLOCNHASHBIT);
     head = &g_malloc.maghash[key];
+    do {
+        orig = *head;
+    } while ((orig) && (m_cmpsetbit((volatile long *)head,
+                                    MALLOC_HASH_MARK_POS)));
+    prev = NULL;
+    cur = orig;
+    while (cur) {
+        if (cur->upval == upage) {
+            if (mag) {
+                m_atominc(&cur->nref);
+
+                return mag;
+            } else if (m_fetchadd(&cur->nref, -1) == 1) {
+                if (prev) {
+                    prev->next = cur->next;
+                } else {
+                    m_atomwrite((volatile long *)head, cur->next);
+                }
+                hashputmag(cur);
+            
+                return NULL;
+            }
+        }
+        prev = cur;
+        cur = cur->next;
+    }
     if (mag) {
         item = hashgetmag();
         if (!item) {
@@ -928,36 +957,15 @@ hashsetmag(void *ptr, struct mag *mag)
                 abort();
             }
         }
-    }
-    do {
-        orig = *head;
-    } while ((orig) && (m_cmpsetbit((volatile long *)head,
-                                    MALLOC_HASH_MARK_POS)));
-    if (!mag) {
-        prev = NULL;
-        cur = orig;
-        while (cur) {
-            if (cur->ptr == ptr) {
-                if (prev) {
-                    prev->next = cur->next;
-                } else {
-                    m_atomwrite((volatile long *)head, cur->next);
-                }
-                hashputmag(cur);
-
-                return NULL;
-            }
-            prev = cur;
-            cur = cur->next;
-        }
-    } else {
-        item->ptr = ptr;
+        item->upval = upage;
         item->adr = mag;
         item->next = orig;
         m_atomwrite((volatile long *)head, item);
+
+        return mag;
     }
 
-    return item;
+    return NULL;
 }
 
 #elif (MALLOCMULTITAB)
@@ -1505,9 +1513,9 @@ mallinit(void)
     void *ptr;
 #endif
 
-    mtxlk(&g_malloc.initlk);
+    __malloclk(&g_malloc.initlk);
     if (g_malloc.flg & MALLOCINIT) { 
-        mtxunlk(&g_malloc.initlk);
+        __mallocunlk(&g_malloc.initlk);
        
         return;
     }
@@ -1542,13 +1550,13 @@ mallinit(void)
 //        __mallocinitlk(&g_malloc.freetab[bktid].lk);
     }
 #if (!MALLOCNOSBRK)
-    mtxlk(&g_malloc.heaplk);
+    __malloclk(&g_malloc.heaplk);
     heap = growheap(0);
     ofs = (1UL << PAGESIZELOG2) - ((long)heap & (PAGESIZE - 1));
     if (ofs != PAGESIZE) {
         growheap(ofs);
     }
-    mtxunlk(&g_malloc.heaplk);
+    __mallocunlk(&g_malloc.heaplk);
 #endif /* !MALLOCNOSBRK */
 #if (!MALLOCHASH)
 #if (MALLOCREDBLACKTREE)
@@ -1652,7 +1660,7 @@ mallinit(void)
 #endif
     pthread_atfork(prefork, postfork, postfork);
     g_malloc.flg |= MALLOCINIT;
-    mtxunlk(&g_malloc.initlk);
+    __mallocunlk(&g_malloc.initlk);
     
     return;
 }
@@ -1926,7 +1934,7 @@ _malloc(size_t size,
         setnfo(ptr, nfo);
 #endif
 #if (MALLOCFREEMAP)
-        mtxlk(&mag->freelk);
+        __malloclk(&mag->freelk);
         if (((mag->lim == 1) && (mag->freemap))
             || ((mag->lim > 1) && bitset(mag->freemap, magptrid(mag, adr)))) {
             magprint(mag);
@@ -1939,7 +1947,7 @@ _malloc(size_t size,
         } else {
             setbit(mag->freemap, magptrid(mag, adr));
         }
-        mtxunlk(&mag->freelk);
+        __mallocunlk(&mag->freelk);
 #endif
         VALGRINDALLOC(ptr,
                       size,
@@ -2069,7 +2077,7 @@ _free(void *ptr)
 #if (MALLOCFREEMAP)
         /* FIXME: use m_cmpclrbit() */
         ndx = magptrid(mag, adr);
-        mtxlk(&mag->freelk);
+        __malloclk(&mag->freelk);
         if ((mag->lim == 1 && (mag->freemap))
             || ((mag->lim > 1) && !bitset(mag->freemap, ndx))) {
             magprint(mag);
@@ -2081,7 +2089,7 @@ _free(void *ptr)
         } else {
             clrbit(mag->freemap, magptrid(mag, adr));
         }
-        mtxunlk(&mag->freelk);
+        __mallocunlk(&mag->freelk);
 #endif
 #if 0
         if (g_malloc.mallopt.flg & MALLOPT_PERTURB_BIT) {

@@ -19,7 +19,7 @@
 /* internal stuff for zero malloc - not for the faint at heart to modify :) */
 
 #define MALLOCCASQUEUE    0
-#define MALLOCTKTLK       0
+#define MALLOCTKTLK       1
 #define MALLOCNBTAIL      0
 #define MALLOCNBDELAY     0
 #define MALLOCNBSTK       0
@@ -970,58 +970,63 @@ struct mallopt {
 };
 
 struct hashmag {
-    void           *ptr;
+    volatile long   nref;
+    uintptr_t       upval;
     struct mag     *adr;
     struct hashmag *next;
-    uint8_t         _pad[WORDSIZE];
 };
 
 /* malloc global structure */
 #define MALLOCINIT   0x00000001L
 #define MALLOCNOHEAP 0x00000002L
 struct malloc {
-    struct magtab     magbkt[MALLOCNBKT];
-    struct magtab     freetab[MALLOCNBKT];
+    struct magtab            magbkt[MALLOCNBKT];
+    struct magtab            freetab[MALLOCNBKT];
 #if (!MALLOCNBSTK)
-    struct magtab     hdrbuf[MALLOCNBKT];
+    struct magtab            hdrbuf[MALLOCNBKT];
 #endif
 #if (MALLOCNBKT == 64)
-    uint64_t          magemptybits;
+    uint64_t                 magemptybits;
 #elif (MALLOCNBKT == 32)
-    uint32_t          magemptybits;
+    uint32_t                 magemptybits;
 #endif
 #if (!MALLOCTLSARN)
-    struct arn      **arntab;           // arena structures
+    struct arn             **arntab;    // arena structures
 #endif
 #if (MALLOCHASH)
-    struct hashmag   *hashbuf;
-    struct hashmag  **maghash;
+    struct hashmag          *hashbuf;
+    struct hashmag         **maghash;
 #elif (MALLOCREDBLACKTREE)
-    struct rbtnode   *rbtlist;
-    struct rbt        ptrtree;
+    struct rbtnode          *rbtlist;
+    struct rbt               ptrtree;
 #elif (MALLOCFREETABS)
-    LOCK             *pagedirlktab;
-    struct memtab    *pagedir;
-    LOCK             *slabdirlktab;
-    struct memtab    *slabdir;
+    LOCK                    *pagedirlktab;
+    struct memtab           *pagedir;
+    LOCK                    *slabdirlktab;
+    struct memtab           *slabdir;
 #else
-    void            **pagedir;
-    void            **slabdir;
+    void                   **pagedir;
+    void                   **slabdir;
 #endif
-    volatile long    initlk;            // initialization lock
-    volatile long    heaplk;            // lock for sbrk()
-#if (!MALLOCTLSARN)
-    long              curarn;
-    long              narn;             // number of arenas in action
+#if (MALLOCTKTLK)
+    LOCK                     initlk;
+    LOCK                     heaplk;
+#else
+    volatile long            initlk;    // initialization lock
+    volatile long            heaplk;    // lock for sbrk()
 #endif
-    volatile long     flg;              // allocator flags
 #if (MALLOCPRIOLK)
     volatile long            priolk;
     volatile unsigned long   prioval;
 #endif
-    int               zerofd;           // file descriptor for mmap()
-    struct mallopt    mallopt;          // mallopt() interface
-    struct mallinfo   mallinfo;         // mallinfo() interface
+#if (!MALLOCTLSARN)
+    long                     curarn;
+    long                     narn;      // number of arenas in action
+#endif
+    volatile long            flg;       // allocator flags
+    int                      zerofd;    // file descriptor for mmap()
+    struct mallopt           mallopt;   // mallopt() interface
+    struct mallinfo          mallinfo;  // mallinfo() interface
 };
 
 #if (MALLOCNBSTK)
