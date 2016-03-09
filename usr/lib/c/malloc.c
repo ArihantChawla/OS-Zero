@@ -809,8 +809,10 @@ postfork(void)
 #if (MALLOCHASH)
 
 /*
- * NOTE: the hash table is based on knowing that pages from different magazines
- * do not overlap
+ * NOTES 
+ * -----
+ * - the hash table is based on knowing that pages from different magazines do
+ *   not overlap
  */
 
 #define MALLOC_HASH_MARK_POS 0
@@ -819,31 +821,35 @@ postfork(void)
 static struct hashmag *
 hashgetitem(void)
 {
+    struct hashmag  *first;
     struct hashmag  *item;
     struct hashmag  *cur;
     struct hashmag  *prev;
     struct hashmag **head;
     size_t           n;
 
+    /* obtain bit-lock on the chain head */
     head = &g_malloc.hashbuf;
     do {
-        item = *head;
-    } while ((item) && (m_cmpsetbit((volatile long *)head,
-                                    MALLOC_HASH_MARK_POS)));
-    if (!item) {
-        n = PAGESIZE / sizeof(struct hashmag);
-        item = mapanon(g_malloc.zerofd, PAGESIZE);
-        if (item == MAP_FAILED) {
-            abort();
-        }
-        prev = item;
-        cur = item;
-        while (--n) {
-            cur++;
-            prev->next = cur;
-            prev = cur;
-        }
+        first = *head;
+    } while (m_cmpsetbit((volatile long *)head,
+                         MALLOC_HASH_MARK_POS));
+    /* allocate a page's worth of hash table magazine chain entries */
+    n = PAGESIZE / sizeof(struct hashmag);
+    item = mapanon(g_malloc.zerofd, PAGESIZE);
+    if (item == MAP_FAILED) {
+        abort();
     }
+    /* chain entries */
+    prev = item;
+    cur = item;
+    while (--n) {
+        cur++;
+        prev->next = cur;
+        prev = cur;
+    }
+    /* add item to the head of queue; the head will be unlocked */
+    item->next = first;
     m_atomwrite((volatile long *)head,
                 item->next);
 
