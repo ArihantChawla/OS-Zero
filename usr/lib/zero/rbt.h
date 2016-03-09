@@ -3,20 +3,20 @@
 
 #include <stdint.h>
 
-#define RBT_DATA_COLOR   1
-#define RBT_UINTPTR_DATA 1
-#define RBT_BLACK        0
-#define RBT_RED          1
-#define RBT_PREORDER     0
-#define RBT_INORDER      1
-#define RBT_POSTORDER    2
+#define RBT_DATA_COLOR  1
+#define RBT_INTPTR_DATA 1
+#define RBT_BLACK       0
+#define RBT_RED         1
+#define RBT_PREORDER    0
+#define RBT_INORDER     1
+#define RBT_POSTORDER   2
 
-#if defined(RBT_UINTPTR_DATA)
+#if defined(RBT_INTPTR_DATA)
 #define rbtcmpkeys(k1, k2) ((k1) - (k2))
 #endif
 
 #if defined(RBT_DATA_COLOR)
-#define RBT_DATA_COLOR_BIT ((uintptr_t)1 << 0)
+#define RBT_DATA_COLOR_BIT ((intptr_t)1 << 0)
 #define rbtsetcolor(np, c) ((np)->data |= (c))
 #define rbtgetcolor(np)    ((np)->data & RBT_DATA_COLOR_BIT)
 #define rbtclrcolor(np)    ((np)->data & ~RBT_DATA_COLOR_BIT)
@@ -29,8 +29,8 @@
     ((tp)->root.left == &(tp)->nil && (tp)->root.right == &(tp)->nil)
 
 struct rbtnode {
-#if defined(RBT_UINTPTR_DATA)
-    uintptr_t       key;
+#if defined(RBT_INTPTR_DATA)
+    intptr_t        key;
     uintptr_t       data;
 #else    
     void           *data;
@@ -42,7 +42,7 @@ struct rbtnode {
 };
 
 struct rbt {
-#if !defined(RBT_UINTPTR_DATA)
+#if !defined(RBT_INTPTR_DATA)
     int            (*cmp)(const void *, const void *);
 #endif
     struct rbtnode   root;
