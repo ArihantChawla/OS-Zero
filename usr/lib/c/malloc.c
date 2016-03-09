@@ -818,6 +818,7 @@ postfork(void)
 #define MALLOC_HASH_MARK_POS 0
 #define MALLOC_HASH_MARK_BIT (1L << 0)
 
+/* allocate a hash table magazine chain item */
 static struct hashmag *
 hashgetitem(void)
 {
@@ -862,12 +863,14 @@ hashgetitem(void)
     return item;
 }
 
+/* buffer an allocated hash table magazine chain item */
 static void
 hashbufitem(struct hashmag *item)
 {
     struct hashmag *orig;
     struct hashmag **head;
 
+    /* obtain bit-lock on the chain head */
     head = &g_malloc.hashbuf;
     do {
         orig = *head;
@@ -882,6 +885,7 @@ hashbufitem(struct hashmag *item)
     return;
 }
 
+/* find a hash table magazine chain item */
 static struct mag *
 hashfindmag(void *ptr)
 {
@@ -898,6 +902,7 @@ hashfindmag(void *ptr)
     
 //    key = hashq128upval(upval, MALLOCNHASHBIT);
     key = upage & ((1UL << (MALLOCNHASHBIT)) - 1);
+    /* obtain bit-lock on the chain head */
     head = &g_malloc.maghash[key];
     do {
         orig = *head;
@@ -937,6 +942,7 @@ hashsetmag(void *ptr, struct mag *mag)
 
     key = upage & ((1UL << (MALLOCNHASHBIT)) - 1);
 //    key = hashq128upval(upval, MALLOCNHASHBIT);
+    /* obtain bit-lock on the chain head */
     head = &g_malloc.maghash[key];
     do {
         orig = *head;
