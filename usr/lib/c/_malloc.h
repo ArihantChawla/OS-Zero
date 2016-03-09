@@ -100,10 +100,10 @@
 
 /* <= MALLOCSLABLOG2 are tried to get from heap #if (!MALLOCNOSBRK) */
 /* <= MALLOCBIGSLABLOG2 are kept in per-thread arenas which are lock-free */
-#define MALLOCSLABLOG2    19
-#define MALLOCBIGSLABLOG2 22
-#define MALLOCBIGMAPLOG2  24
-#define MALLOCHUGEMAPLOG2 26
+#define MALLOCSLABLOG2    17
+#define MALLOCBIGSLABLOG2 20
+#define MALLOCBIGMAPLOG2  22
+#define MALLOCHUGEMAPLOG2 24
 
 #if !defined(MALLOCALIGNMENT) || (MALLOCALIGNMENT == 32)
 #define MALLOCMINLOG2     5     // stuff such as SIMD types
