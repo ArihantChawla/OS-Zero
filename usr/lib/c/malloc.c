@@ -834,24 +834,30 @@ hashgetitem(void)
         first = *head;
     } while (m_cmpsetbit((volatile long *)head,
                          MALLOC_HASH_MARK_POS));
-    /* allocate a page's worth of hash table magazine chain entries */
-    n = PAGESIZE / sizeof(struct hashmag);
-    item = mapanon(g_malloc.zerofd, PAGESIZE);
-    if (item == MAP_FAILED) {
-        abort();
+    if (!first) {
+        /* allocate a page's worth of hash table magazine chain entries */
+        n = PAGESIZE / sizeof(struct hashmag);
+        item = mapanon(g_malloc.zerofd, PAGESIZE);
+        if (item == MAP_FAILED) {
+            abort();
+        }
+        /* chain entries */
+        prev = item;
+        cur = item;
+        while (--n) {
+            cur++;
+            prev->next = cur;
+            prev = cur;
+        }
+        /* add item to the head of queue; the head will be unlocked */
+        item->next = first;
+        m_atomwrite((volatile long *)head,
+                    item->next);
+    } else {
+        item = first;
+        m_atomwrite((volatile long *)head,
+                    first->next);
     }
-    /* chain entries */
-    prev = item;
-    cur = item;
-    while (--n) {
-        cur++;
-        prev->next = cur;
-        prev = cur;
-    }
-    /* add item to the head of queue; the head will be unlocked */
-    item->next = first;
-    m_atomwrite((volatile long *)head,
-                item->next);
 
     return item;
 }
