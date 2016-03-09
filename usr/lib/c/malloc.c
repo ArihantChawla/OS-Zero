@@ -1796,6 +1796,8 @@ _malloc(size_t size,
     struct arn *arn;
     uint8_t    *adr;
     uint8_t    *ptr = NULL;
+    size_t      sz = size + align - 1;
+#if 0
     size_t      sz = ((size < PAGESIZE)
                       ? ((align)
                          ? (size + align)
@@ -1804,6 +1806,7 @@ _malloc(size_t size,
                          + ((align <= PAGESIZE)
                             ? 0
                             : rounduppow2(size + align, PAGESIZE))));
+#endif
     long        bktid = blkbktid(sz);
     long        lim;
 #if (MALLOCHDRHACKS)
@@ -2250,7 +2253,7 @@ _realloc(void *ptr,
          long rel)
 {
     uint8_t        *retptr = NULL;
-    size_t          sz = 1UL << (blkbktid(size + MALLOCALIGNMENT));
+    size_t          sz = 1UL << blkbktid(size);
 #if (MALLOCHASH)
     struct mag     *mag = ((ptr)
                            ? hashfindmag(ptr)
@@ -2316,7 +2319,7 @@ malloc(size_t size)
 
     if (!size) {
 #if defined(_GNU_SOURCE)
-        ptr = _malloc(MALLOCALIGNMENT, 0, 0);
+        ptr = _malloc(MALLOCMINSIZE, 0, 0);
 #endif
         
         return ptr;
@@ -2359,7 +2362,7 @@ zero_calloc(size_t n, size_t size)
 calloc(size_t n, size_t size)
 #endif
 {
-    size_t sz = n * (size + MALLOCALIGNMENT);
+    size_t sz = n * size;
     void *ptr = NULL;
 
     if (sz < n * size) {
@@ -2368,7 +2371,7 @@ calloc(size_t n, size_t size)
     }
     if (!n || !size) {
 #if defined(_GNU_SOURCE)
-        ptr = _malloc(MALLOCALIGNMENT, 0, 1);
+        ptr = _malloc(MALLOCMINSIZE, 0, 1);
 #endif
         
         return ptr;
@@ -2487,7 +2490,6 @@ aligned_alloc(size_t align,
               size_t size)
 {
     void   *ptr = NULL;
-    size_t  aln = max(align, MALLOCALIGNMENT);
 
 #if (MALLOCDEBUGHOOKS) || (defined(_ZERO_SOURCE) && (MALLOCHOOKS)) && 0
     if (__zmemalign_hook) {
@@ -2499,10 +2501,10 @@ aligned_alloc(size_t align,
         return ptr;
     }
 #endif
-    if (!powerof2(aln) || (size & (aln - 1))) {
+    if (!powerof2(align) || (size & (align - 1))) {
         errno = EINVAL;
     } else {
-        ptr = _malloc(size, aln, 0);
+        ptr = _malloc(size, align, 0);
     }
 #if (MALLOCDEBUG)
     _assert(ptr != NULL);
@@ -2528,7 +2530,6 @@ posix_memalign(void **ret,
                size_t size)
 {
     void   *ptr = NULL;
-    size_t  aln = max(align, MALLOCALIGNMENT);
 
 #if (MALLOCDEBUGHOOKS) || (defined(_ZERO_SOURCE) && (MALLOCHOOKS)) && 0
     if (__zmemalign_hook) {
@@ -2551,7 +2552,7 @@ posix_memalign(void **ret,
 
         return -1;
     } else {
-        ptr = _malloc(size, aln, 0);
+        ptr = _malloc(size, align, 0);
         if (!ptr) {
             *ret = NULL;
             
@@ -2627,7 +2628,6 @@ memalign(size_t align,
 #endif
 {
     void   *ptr = NULL;
-    size_t  aln = max(align, MALLOCALIGNMENT);
 
 #if (MALLOCDEBUGHOOKS) || (defined(_ZERO_SOURCE) && (MALLOCHOOKS)) && 0
     if (__zmemalign_hook) {
@@ -2642,7 +2642,7 @@ memalign(size_t align,
     if (!powerof2(align)) {
         errno = EINVAL;
     } else {
-        ptr = _malloc(size, aln, 0);
+        ptr = _malloc(size, align, 0);
     }
 #if (MALLOCDEBUG)
     _assert(ptr != NULL);
@@ -2745,7 +2745,6 @@ _aligned_malloc(size_t size,
                 size_t align)
 {
     void   *ptr = NULL;
-    size_t  aln = max(align, MALLOCALIGNMENT);
 
 #if (MALLOCDEBUGHOOKS) || (defined(_ZERO_SOURCE) && (MALLOCHOOKS)) && 0
     if (__zmemalign_hook) {
@@ -2760,7 +2759,7 @@ _aligned_malloc(size_t size,
     if (!powerof2(align)) {
         errno = EINVAL;
     } else {
-        ptr = _malloc(size, aln, 0);
+        ptr = _malloc(size, align, 0);
     }
 #if (MALLOCDEBUG)
     _assert(ptr != NULL);
@@ -2815,7 +2814,6 @@ _mm_malloc(int size,
            int align)
 {
     void   *ptr = NULL;
-    size_t  aln = max((size_t)align, MALLOCALIGNMENT);
 
 #if (MALLOCDEBUGHOOKS) || (defined(_ZERO_SOURCE) && (MALLOCHOOKS)) && 0
     if (__zmemalign_hook) {
@@ -2830,7 +2828,7 @@ _mm_malloc(int size,
     if (!powerof2(align)) {
         errno = EINVAL;
     } else {
-        ptr = _malloc(size, aln, 0);
+        ptr = _malloc(size, align, 0);
     }
 #if (MALLOCDEBUG)
     _assert(ptr != NULL);
