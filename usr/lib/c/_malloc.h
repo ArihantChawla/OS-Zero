@@ -96,7 +96,7 @@
 #endif
 
 #define MALLOCNHASHITEM   (1U << MALLOCNHASHBIT)
-#define MALLOCNHASHBIT    22
+#define MALLOCNHASHBIT    21
 
 /* <= MALLOCSLABLOG2 are tried to get from heap #if (!MALLOCNOSBRK) */
 /* <= MALLOCBIGSLABLOG2 are kept in per-thread arenas which are lock-free */
