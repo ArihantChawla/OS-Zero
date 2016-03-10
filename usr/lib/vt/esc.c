@@ -6,7 +6,7 @@
 #include <stdio.h>
 #include <ctype.h>
 #include <stdint.h>
-#include <zero/cdecl.h>
+#include <zero/cdefs.h>
 #include <zero/param.h>
 #include <vt/vt.h>
 

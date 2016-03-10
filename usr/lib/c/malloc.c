@@ -20,10 +20,7 @@
 /*
  * TODO
  * ----
- * - lookups;
- *   - multiples of page-size with a "v-tree" / multilevel table - DONE
- *   - smaller ones with a v-tree indexed by slab ID
- * - ...
+ * - test and fix; there's a bug about posix_memalign(), it seems
  *
  * IMPROVEMENTS
  * ------------

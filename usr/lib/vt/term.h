@@ -4,7 +4,7 @@
 #include <vt/conf.h>
 #include <stdint.h>
 #include <unistd.h>
-#include <zero/cdecl.h>
+#include <zero/cdefs.h>
 #include <zero/param.h>
 #include <sys/select.h>
 
