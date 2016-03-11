@@ -18,6 +18,7 @@
 
 /* internal stuff for zero malloc - not for the faint at heart to modify :) */
 
+#define MALLOCHASH        1
 #define MALLOCCASQUEUE    0
 #define MALLOCTKTLK       0
 #define MALLOCNBTAIL      0
@@ -27,7 +28,6 @@
 #define MALLOCFREEMAP     0
 #define MALLOCSLABTAB     0
 #define MALLOCMULTITAB    0
-#define MALLOCHASH        1
 
 #define PTHREAD           1
 #define ZEROMTX           1
@@ -1008,7 +1008,7 @@ struct malloc {
     void                   **pagedir;
     void                   **slabdir;
 #endif
-#if (MALLOCTKTLK)
+#if (MALLOCTKTLK) || (MALLOCPRIOLK)
     LOCK                     initlk;
     LOCK                     heaplk;
 #else

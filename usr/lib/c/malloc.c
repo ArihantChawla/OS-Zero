@@ -1617,6 +1617,7 @@ mallinit(void)
         __mallocinitlk(&g_malloc.slabdirlktab[ndx]);
 #endif
     }
+#endif /* MALLOCREDBLACKTREE */
 #endif /* !MALLOCHASH */
 #if (MALLOCHASH)
     g_malloc.maghash = mapanon(g_malloc.zerofd,
@@ -1653,7 +1654,6 @@ mallinit(void)
 #if (MALLOCSTAT)
     ntabbyte += PAGEDIRNL1KEY * sizeof(void *);
     ntabbyte += SLABDIRNL1KEY * sizeof(void *);
-#endif
 #endif
 #endif
 #if (MALLOCNBSTK)
@@ -1793,7 +1793,7 @@ _malloc(size_t size,
     struct arn *arn;
     uint8_t    *adr;
     uint8_t    *ptr = NULL;
-    size_t      sz = size + align - 1;
+    size_t      sz = !align ? size : size + align - 1;
 #if 0
     size_t      sz = ((size < PAGESIZE)
                       ? ((align)
@@ -1901,13 +1901,8 @@ _malloc(size_t size,
             _memsetbk(adr, perturb, sz);
         }
 #if (MALLOCHASH)
-        if (align > sz) {
-            /* store unaligned source pointer and mag address */
-            if (align) {
-                if ((uintptr_t)ptr & (align - 1)) {
-                    ptr = ptralign(ptr, align);
-                }
-            }
+        if ((align) && ((uintptr_t)ptr & (align - 1))) {
+            ptr = ptralign(ptr, align);
         }
         hashsetmag(ptr, mag);
 #elif (MALLOCREDBLACKTREE)
@@ -2023,12 +2018,6 @@ _free(void *ptr)
         thrinit();
         thrflg |= MALLOCINIT;
     }
-#if 0
-    if (!thrarn) {
-        arn = thrinit();
-        thrarn = arn;
-    }
-#endif
 #if (MALLOCHASH)
     mag = hashfindmag(ptr);
 #elif (MALLOCREDBLACKTREE)
