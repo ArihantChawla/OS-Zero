@@ -96,11 +96,11 @@
 #endif
 
 #define MALLOCNHASHITEM   (1U << MALLOCNHASHBIT)
-#define MALLOCNHASHBIT    21
+#define MALLOCNHASHBIT    22
 
 /* <= MALLOCSLABLOG2 are tried to get from heap #if (!MALLOCNOSBRK) */
-/* <= MALLOCBIGSLABLOG2 are kept in per-thread arenas which are lock-free */
-#define MALLOCSLABLOG2    17
+/* <= MALLOCSLABLOG2 are allocated 1UL << MALLOCBIGSLABLOG2 bytes per slab */
+#define MALLOCSLABLOG2    18
 #define MALLOCBIGSLABLOG2 20
 #define MALLOCBIGMAPLOG2  22
 #define MALLOCHUGEMAPLOG2 24
@@ -544,15 +544,15 @@ static void * maginit(struct mag *mag, long bktid);
  * 1 << bktid bytes
  */
 #define magnmaplog2(bktid)                                              \
-    (((bktid) <= MALLOCBIGMAPLOG2)                                      \
-     ? 2                                                                \
-     : (((bktid <= MALLOCHUGEMAPLOG2)                                   \
-         ? 1                                                            \
+    (((bktid) < MALLOCBIGMAPLOG2)                                       \
+     ? (MALLOCBIGMAPLOG2 - (bktid))                                     \
+     : (((bktid < MALLOCHUGEMAPLOG2)                                    \
+         ? (MALLOCHUGEMAPLOG2 - (bktid))                                \
          : 0)))
-    
+
 #define magnblklog2(bktid)                                              \
     (((bktid) <= MALLOCSLABLOG2)                                        \
-     ? (MALLOCSLABLOG2 - (bktid))                                       \
+     ? (MALLOCBIGSLABLOG2 - (bktid))                                    \
      : magnmaplog2(bktid))
 #define magnblk(bktid)                                                  \
     (1UL << magnblklog2(bktid))

@@ -819,20 +819,26 @@ postfork(void)
 static struct hashmag *
 hashgetitem(void)
 {
-    struct hashmag  *first;
+    uintptr_t        upval;
+    struct hashmag  *head;
     struct hashmag  *item;
     struct hashmag  *cur;
     struct hashmag  *prev;
-    struct hashmag **head;
+    struct hashmag **hptr;
     size_t           n;
 
     /* obtain bit-lock on the chain head */
+    hptr = &g_malloc.hashbuf;
     head = &g_malloc.hashbuf;
-    do {
-        first = *head;
-    } while (m_cmpsetbit((volatile long *)head,
-                         MALLOC_HASH_MARK_POS));
-    if (!first) {
+    while (m_cmpsetbit((volatile long *)hptr,
+                       MALLOC_HASH_MARK_POS)) {
+        ;
+    }
+    head = *hptr;
+    upval = (uintptr_t)head;
+    upval &= ~MALLOC_HASH_MARK_BIT;
+    head = (struct hashmag *)upval;
+    if (!head) {
         /* allocate a page's worth of hash table magazine chain entries */
         n = PAGESIZE / sizeof(struct hashmag);
         item = mapanon(g_malloc.zerofd, PAGESIZE);
@@ -847,15 +853,12 @@ hashgetitem(void)
             prev->next = cur;
             prev = cur;
         }
-        /* add item to the head of queue; the head will be unlocked */
-        item->next = first;
-        m_atomwrite((volatile long *)head,
-                    item->next);
     } else {
-        item = first;
-        m_atomwrite((volatile long *)head,
-                    first->next);
+        item = head;
     }
+    /* add item->next to the head of queue; the head will be unlocked */
+    m_atomwrite((volatile long *)hptr,
+                item->next);
 
     return item;
 }
@@ -864,19 +867,26 @@ hashgetitem(void)
 static void
 hashbufitem(struct hashmag *item)
 {
-    struct hashmag *orig;
-    struct hashmag **head;
+    uintptr_t        upval;
+    struct hashmag  *head;
+    struct hashmag **hptr;
 
     /* obtain bit-lock on the chain head */
+    hptr = &g_malloc.hashbuf;
     head = &g_malloc.hashbuf;
-    do {
-        orig = *head;
-    } while ((orig) && (m_cmpsetbit((volatile long *)head,
-                                    MALLOC_HASH_MARK_POS)));
+    while (m_cmpsetbit((volatile long *)hptr,
+                       MALLOC_HASH_MARK_POS)) {
+        ;
+    }
+    head = *hptr;
+    upval = (uintptr_t)head;
+    upval &= ~MALLOC_HASH_MARK_BIT;
+    head = (struct hashmag *)upval;
     item->upval = 0;
     item->adr = NULL;
-    item->next  = orig;
-    m_atomwrite((volatile long *)head,
+    item->next  = head;
+    /* add item to the head of queue; the head will be unlocked */
+    m_atomwrite((volatile long *)hptr,
                 item);
 
     return;
@@ -886,30 +896,34 @@ hashbufitem(struct hashmag *item)
 static struct mag *
 hashfindmag(void *ptr)
 {
-#if 0
-    uintptr_t        upval = (uintptr_t)ptr >> MALLOCALIGNMENTSHIFT;
-#endif
+    uintptr_t        upval;
     uintptr_t        upage = (uintptr_t)ptr >> PAGESIZELOG2;
     struct mag      *mag;
     struct hashmag  *orig;
     struct hashmag  *cur;
     struct hashmag  *prev;
-    struct hashmag **head;
+    struct hashmag  *head;
+    struct hashmag **hptr;
     unsigned long    key;
     
 //    key = hashq128upval(upval, MALLOCNHASHBIT);
     key = upage & ((1UL << (MALLOCNHASHBIT)) - 1);
     /* obtain bit-lock on the chain head */
-    head = &g_malloc.maghash[key];
-    do {
-        orig = *head;
-    } while ((orig) && (m_cmpsetbit((volatile long *)head,
-                                    MALLOC_HASH_MARK_POS)));
-    cur = orig;
+    hptr = &g_malloc.maghash[key];
+    head = g_malloc.maghash[key];
+    while (m_cmpsetbit((volatile long *)hptr,
+                       MALLOC_HASH_MARK_POS)) {
+        ;
+    }
+    head = *hptr;
+    upval = (uintptr_t)head;
+    upval &= ~MALLOC_HASH_MARK_BIT;
+    head = (struct hashmag *)upval;
+    cur = head;
     while (cur) {
         if (cur->upval == upage) {
             mag = cur->adr;
-            m_cmpclrbit((volatile long *)head,
+            m_cmpclrbit((volatile long *)hptr,
                         MALLOC_HASH_MARK_POS);
             
             return mag;
@@ -917,7 +931,7 @@ hashfindmag(void *ptr)
         prev = cur;
         cur = cur->next;
     }
-    m_cmpclrbit((volatile long *)head,
+    m_cmpclrbit((volatile long *)hptr,
                 MALLOC_HASH_MARK_POS);
     
     return NULL;
@@ -926,66 +940,97 @@ hashfindmag(void *ptr)
 static struct mag *
 hashsetmag(void *ptr, struct mag *mag)
 {
-#if 0
-    uintptr_t        upval = (uintptr_t)ptr >> MALLOCALIGNMENTSHIFT;
-#endif
+    uintptr_t        upval;
     uintptr_t        upage = (uintptr_t)ptr >> PAGESIZELOG2;
+    struct hashmag  *head;
+    struct hashmag **hptr;
+    struct hashmag  *cur = NULL;
     struct hashmag  *item;
     struct hashmag  *orig;
-    struct hashmag  *cur;
     struct hashmag  *prev;
-    struct hashmag **head;
     unsigned long    key;
 
     key = upage & ((1UL << (MALLOCNHASHBIT)) - 1);
 //    key = hashq128upval(upval, MALLOCNHASHBIT);
     /* obtain bit-lock on the chain head */
-    head = &g_malloc.maghash[key];
-    do {
-        orig = *head;
-    } while ((orig) && (m_cmpsetbit((volatile long *)head,
-                                    MALLOC_HASH_MARK_POS)));
+    /* obtain bit-lock on the chain head */
+    hptr = &g_malloc.maghash[key];
+    head = g_malloc.maghash[key];
+    while (m_cmpsetbit((volatile long *)hptr,
+                       MALLOC_HASH_MARK_POS)) {
+        ;
+    }
+    head = *hptr;
+    upval = (uintptr_t)head;
+    upval &= ~MALLOC_HASH_MARK_BIT;
+    head = (struct hashmag *)upval;
     prev = NULL;
-    cur = orig;
-    while (cur) {
+    cur = head;
+    if (cur) {
         if (cur->upval == upage) {
             if (mag) {
 //                m_atominc(&cur->nref);
                 cur->nref++;
-                m_cmpclrbit((volatile long *)head,
+                m_cmpclrbit((volatile long *)hptr,
                             MALLOC_HASH_MARK_POS);
-
+                
                 return mag;
             } else if (!--cur->nref) {
-                if (prev) {
-                    prev->next = cur->next;
-                } else {
-                    m_atomwrite((volatile long *)head, cur->next);
-                }
+                m_atomwrite((volatile long *)hptr, cur->next);
                 hashbufitem(cur);
-            
-                return NULL;
-            }
-        }
-        prev = cur;
-        cur = cur->next;
-    }
-    if (mag) {
-        item = hashgetitem();
-        if (!item) {
-            if (!ptr) {
                 
                 return NULL;
             } else {
-                abort();
+                m_cmpclrbit((volatile long *)hptr,
+                            MALLOC_HASH_MARK_POS);
+                
+                return mag;
             }
+        } else {
+            prev = cur;
+            cur = cur->next;
+            while (cur) {
+                if (cur->upval == upage) {
+                    if (mag) {
+//                m_atominc(&cur->nref);
+                        cur->nref++;
+                        m_cmpclrbit((volatile long *)hptr,
+                                    MALLOC_HASH_MARK_POS);
+                        
+                        return mag;
+                    } else if (!--cur->nref) {
+                        prev->next = cur->next;
+                        hashbufitem(cur);
+                        m_cmpclrbit((volatile long *)hptr,
+                                    MALLOC_HASH_MARK_POS);
+                        
+                        return NULL;
+                    } else {
+                        m_cmpclrbit((volatile long *)hptr,
+                                    MALLOC_HASH_MARK_POS);
+                        
+                        return mag;
+                    }
+                }
+                prev = cur;
+                cur = cur->next;
+            }
+        }
+    }
+    if (!cur && (mag)) {
+        item = hashgetitem();
+        if (!item) {
+            abort();
         }
         item->upval = upage;
         item->adr = mag;
-        item->next = orig;
-        m_atomwrite((volatile long *)head, item);
+        item->next = head;
+        m_atomwrite((volatile long *)hptr, item);
 
         return mag;
+    } else {
+        m_cmpclrbit((volatile long *)hptr,
+                    MALLOC_HASH_MARK_POS);
     }
 
     return NULL;
