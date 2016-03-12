@@ -121,7 +121,7 @@ memalloc(size_t nb, long flg)
         }
         setbit(bmap, ndx);
 #endif /* defined(MEMPARANOIA) */
-        if (!slab && (flg & MEMZEROBIT)) {
+        if (!slab && (flg & MEMZERO)) {
             kbzero(ptr, 1UL << bktid);
         }
     }

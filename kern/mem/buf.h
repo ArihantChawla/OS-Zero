@@ -185,21 +185,23 @@ struct mempktaux {
     long type;
 };
 
+#if 0
 struct memblk {
     uint8_t       *ptr;
     struct memblk *next;
     uint8_t        data[MEMBUF_BLK_SIZE - 2 * sizeof(void *)];
 };
+#endif
 
 struct membufbkt {
-    volatile long      lk;
-    volatile long      nref;
-    long               flg;
-    long               nbuf;
-    long               nblk;
-    struct membuf     *buflist;
-    struct memcluster *blklist;
-    uint8_t            _pad[CLSIZE - 5 * sizeof(long) - 2 * sizeof(void *)];
+    volatile long  lk;
+    volatile long  nref;
+    long           flg;
+    long           nbuf;
+    long           nblk;
+    struct membuf *buflist;
+//    struct membuf *blklist;
+    uint8_t        _pad[CLSIZE - 5 * sizeof(long) - 2 * sizeof(void *)];
 };
 
 #include <kern/bits/mem/buf.h>

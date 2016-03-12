@@ -58,11 +58,11 @@ struct memmag {
 #define memmaggetbkt(mp)                                                \
     ((mp)->info & MEMBKTMASK)
 #define memmagisfree(mp)                                                \
-    (!((mp)->info & MEMALLOCBIT))
+    (!((mp)->info & MEMFREE))
 #define memmagsetfree(mp)                                               \
-    ((mp)->info &= ~MEMALLOCBIT)
+    ((mp)->info |= MEMFREE)
 #define memmagclrfree(mp)                                               \
-    ((mp)->info |= MEMALLOCBIT)
+    ((mp)->info &= ~MEMFREE)
 #define memmagsetflg(mp, flg)                                           \
     ((mp)->info |= (flg))
 #define memmagclrflg(mp)                                                \

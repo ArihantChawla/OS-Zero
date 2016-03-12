@@ -155,21 +155,14 @@ meminitbuf(void)
     uint8_t          *u8ptr2;
     long              n;
 
-    /* allocate wired memory for membufs and memblks */
+    /* allocate wired memory for membufs */
     u8ptr1 = kwalloc(MEMNBUF * MEMBUF_SIZE);
     if (!u8ptr1) {
         kprintf("FAILED to allocate membufs\n");
         m_waitint();
     }
     kbzero(u8ptr1, MEMNBUF * MEMBUF_SIZE);
-    u8ptr2 = kwalloc(NMEMBUFBLK * MEMBUF_BLK_SIZE);
-    if (!u8ptr2) {
-        kprintf("FAILED to allocate blks for membufs\n");
-        m_waitint();
-    }
-    /* zero all allocated memory */
-    kbzero(u8ptr2, NMEMBUFBLK * MEMBUF_BLK_SIZE);
-    /* allocate global buf container */
+    /* initialise global membuf container */
     n = MEMNBUF;
     tab->nbuf = n;
     u8ptr1 += MEMNBUF * MEMBUF_SIZE;
@@ -181,19 +174,6 @@ meminitbuf(void)
         last = buf;
     }
     tab->buflist = last;
-    /* allocate global blk container */
-    n = NMEMBUFBLK;
-    tab->nblk = n;
-    u8ptr2 += NMEMBUFBLK * MEMBUF_BLK_SIZE;
-    last = NULL;
-    while (n--) {
-        u8ptr2 -= MEMBUF_BLK_SIZE;
-        blk = (struct memblk *)u8ptr1;
-        blk->ptr = blk;
-        blk->next = last;
-        last = blk;
-    }
-    tab->blklist = last;
     /* initialise per-CPU buf containers */
     n = NCPU;
     while (n--) {
@@ -239,17 +219,6 @@ memgetbuf(long how)
     if (ret) {
         tab->buflist = buf->hdr.next;
         tab->nbuf--;
-    } else {
-        mtxlk(&tab->lk);
-        ret = tab->buflist;
-        if (ret) {
-            tab->buflist = buf->hdr.next;
-            tab->nbuf--;
-            mtxunlk(&tab->lk);
-        } else {
-            mtxunlk(&tab->lk);
-            meminitcpubuf(unit, MEM_TRYWAIT);
-        }
     }
     mtxunlk(&tab->lk);
 
@@ -267,8 +236,11 @@ memputbuf(struct membuf *buf)
     tab->buflist = buf;
     tab->nbuf++;
     mtxunlk(&tab->lk);
+
+    return;
 }
 
+#if 0
 /* FIXME: steal mbufs from other CPUs if need arises */
 void *
 memgetblk(long how)
@@ -282,15 +254,15 @@ memgetblk(long how)
     long              n;
 
     mtxlk(&tab->lk);
-    ret = tab->blklist;
+    ret = tab->buflist;
     if (ret) {
-        tab->blklist = blk->next;
+        tab->buflist = blk->next;
         tab->nblk--;
     } else {
         mtxlk(&tab->lk);
-        ret = tab->blklist;
+        ret = tab->buflist;
         if (ret) {
-            tab->blklist = blk->next;
+            tab->buflist = blk->next;
             tab->nblk--;
         }
         mtxunlk(&tab->lk);
@@ -307,11 +279,12 @@ memputblk(struct memblk *blk)
     struct membufbkt *tab = &membufbkttab[unit];
 
     mtxlk(&tab->lk);
-    blk->next = tab->blklist;
-    tab->blklist = blk;
+    blk->next = tab->buflist;
+    tab->buflist = blk;
     tab->nblk++;
     mtxunlk(&tab->lk);
 }
+#endif
 
 #if 0
 
