@@ -1,8 +1,7 @@
 #ifndef ___MALLOC_H__
 #define ___MALLOC_H__
 
-#define MALLOCPRIOLK       1
-#define MALLOCREDBLACKTREE 0
+#define MALLOCPRIOLK      1     // use locks lifted from locklessinc.com
 
 #include <limits.h>
 #include <stdint.h>
@@ -10,11 +9,6 @@
 #include <zero/asm.h>
 #include <zero/param.h>
 #include <zero/trix.h>
-#if (MALLOCREDBLACKTREE)
-#define rbtmalloc(sz) rbtgetnode()
-#define rbtfree(ptr)  rbtputnode(ptr)
-#include <zero/rbt.h>
-#endif
 
 /* internal stuff for zero malloc - not for the faint at heart to modify :) */
 
@@ -47,7 +41,6 @@
 #define MALLOCHDRHACKS    0
 #define MALLOCNEWHDR      1
 #define MALLOCHDRPREFIX   1
-#define MALLOCTLSARN      1
 #define MALLOCSMALLADR    1
 #define MALLOCSTAT        0
 #define MALLOCPTRNDX      1
@@ -100,8 +93,8 @@
 
 /* <= MALLOCSLABLOG2 are tried to get from heap #if (!MALLOCNOSBRK) */
 /* <= MALLOCSLABLOG2 are allocated 1UL << MALLOCBIGSLABLOG2 bytes per slab */
-#define MALLOCSLABLOG2    18
-#define MALLOCBIGSLABLOG2 20
+#define MALLOCSLABLOG2    17
+#define MALLOCBIGSLABLOG2 19
 #define MALLOCBIGMAPLOG2  22
 #define MALLOCHUGEMAPLOG2 24
 
@@ -442,9 +435,6 @@ struct mag {
     size_t         size;
     long           cur;
     long           lim;
-#if (!MALLOCTLSARN)
-    long           arnid;
-#endif
 #if (MALLOCFREEMAP)
     volatile long  freelk;
     uint8_t       *freemap;
@@ -483,10 +473,6 @@ struct arn {
     struct magtab magbkt[MALLOCNBKT];
 #if (MALLOCNBSTK)
     struct magtab hdrbuf[MALLOCNBKT];
-#endif
-#if (!MALLOCTLSARN)
-    LOCK          nreflk;
-    long          nref;
 #endif
 };
 
@@ -990,15 +976,9 @@ struct malloc {
 #elif (MALLOCNBKT == 32)
     uint32_t                 magemptybits;
 #endif
-#if (!MALLOCTLSARN)
-    struct arn             **arntab;    // arena structures
-#endif
 #if (MALLOCHASH)
     struct hashmag          *hashbuf;
     struct hashmag         **maghash;
-#elif (MALLOCREDBLACKTREE)
-    struct rbtnode          *rbtlist;
-    struct rbt               ptrtree;
 #elif (MALLOCFREETABS)
     LOCK                    *pagedirlktab;
     struct memtab           *pagedir;
@@ -1018,10 +998,6 @@ struct malloc {
 #if (MALLOCPRIOLK)
     volatile long            priolk;
     volatile unsigned long   prioval;
-#endif
-#if (!MALLOCTLSARN)
-    long                     curarn;
-    long                     narn;      // number of arenas in action
 #endif
     volatile long            flg;       // allocator flags
     int                      zerofd;    // file descriptor for mmap()

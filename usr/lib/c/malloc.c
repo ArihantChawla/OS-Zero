@@ -307,50 +307,6 @@ blkbktid(size_t size)
     return bktid;
 }
 
-#if (MALLOCREDBLACKTREE)
-struct rbtnode *
-rbtgetnode(void)
-{
-    struct rbtnode *node;
-    struct rbtnode *next;
-    struct rbtnode *last;
-    size_t          n = PAGESIZE / sizeof(struct rbtnode);
-
-    do {
-        node = g_malloc.rbtlist;
-        if (!node) {
-            node = mapanon(g_malloc.zerofd, PAGESIZE);
-            next = node;
-            next++;
-            last = NULL;
-            g_malloc.rbtlist = next;
-            while (--n) {
-                last = next;
-                next++;
-                last->right = next;
-            }
-            next->right = NULL;
-
-            return node;
-        }
-    } while (!m_cmpswapptr(&g_malloc.rbtlist, node, node->right));
-
-    return node;
-}
-
-void
-rbtputnode(struct rbtnode *node)
-{
-    struct rbtnode *head;
-
-    do {
-        head = g_malloc.rbtlist;
-    } while (!m_cmpswap(g_malloc.rbtlist, head, node));
-
-    return;
-}
-#endif
-
 static void
 magputhdr(struct mag *mag)
 {
@@ -882,10 +838,11 @@ hashbufitem(struct hashmag *item)
     upval = (uintptr_t)head;
     upval &= ~MALLOC_HASH_MARK_BIT;
     head = (struct hashmag *)upval;
+    item->nref = 0;
     item->upval = 0;
     item->adr = NULL;
-    item->next  = head;
     /* add item to the head of queue; the head will be unlocked */
+    item->next = head;
     m_atomwrite((volatile long *)hptr,
                 item);
 
@@ -966,6 +923,7 @@ hashsetmag(void *ptr, struct mag *mag)
     head = (struct hashmag *)upval;
     cur = head;
     if (cur) {
+        /* look for an existing item to update */
         if (cur->upval == upage) {
             if (mag) {
 //                m_atominc(&cur->nref);
@@ -1021,8 +979,10 @@ hashsetmag(void *ptr, struct mag *mag)
         if (!item) {
             abort();
         }
+        item->nref = 1;
         item->upval = upage;
         item->adr = mag;
+        /* add item to the head of queue; the head will be unlocked */
         item->next = head;
         m_atomwrite((volatile long *)hptr, item);
 
@@ -1626,9 +1586,7 @@ mallinit(void)
     __mallocunlk(&g_malloc.heaplk);
 #endif /* !MALLOCNOSBRK */
 #if (!MALLOCHASH)
-#if (MALLOCREDBLACKTREE)
-    rbtinit(&g_malloc.ptrtree);
-#elif (MALLOCMULTITAB)
+#if (MALLOCMULTITAB)
     g_malloc.pagedirlktab = mapanon(g_malloc.zerofd, PAGEDIRNL1KEY
                                     * sizeof(LOCK));
     if (g_malloc.pagedirlktab == MAP_FAILED) {
@@ -1661,7 +1619,7 @@ mallinit(void)
         __mallocinitlk(&g_malloc.slabdirlktab[ndx]);
 #endif
     }
-#endif /* MALLOCREDBLACKTREE */
+#endif /* MALLOCMULTITAB */
 #endif /* !MALLOCHASH */
 #if (MALLOCHASH)
     g_malloc.maghash = mapanon(g_malloc.zerofd,
@@ -1837,7 +1795,7 @@ _malloc(size_t size,
     struct arn *arn;
     uint8_t    *adr;
     uint8_t    *ptr = NULL;
-    size_t      sz = !align ? size : size + align - 1;
+    size_t      sz = align <= MALLOCALIGNMENT ? size : size + align - 1;
 #if 0
     size_t      sz = ((size < PAGESIZE)
                       ? ((align)
@@ -1949,16 +1907,6 @@ _malloc(size_t size,
             ptr = ptralign(ptr, align);
         }
         hashsetmag(ptr, mag);
-#elif (MALLOCREDBLACKTREE)
-        if (align > sz) {
-            /* store unaligned source pointer and mag address */
-            if (align) {
-                if ((uintptr_t)ptr & (align - 1)) {
-                    ptr = ptralign(ptr, align);
-                }
-            }
-        }
-        rbtinsert(&g_malloc.ptrtree, (uintptr_t)ptr, (uintptr_t)mag);
 #elif (MALLOCHDRPREFIX)
         if ((sz < (PAGESIZE >> 1)) || (align > PAGESIZE)) {
             /* store unaligned source pointer and mag address */
@@ -1977,7 +1925,7 @@ _malloc(size_t size,
         } else {
             mtsetmag(ptr, mag, MALLOCPAGETAB);
         }
-#else /* !MALLOCREDBLACKTREE && !MALLOCHDRPREFIX */
+#else /* !MALLOCHDRPREFIX */
         if (align > sz) {
             /* store unaligned source pointer and mag address */
             if (align) {
@@ -2033,9 +1981,6 @@ void
 _free(void *ptr)
 {
     struct arn     *arn;
-#if (MALLOCREDBLACKTREE)
-    struct rbtnode *rbt;
-#endif
     struct mag     *mag = NULL;
     void           *adr = NULL;
     long            bktid;
@@ -2064,12 +2009,6 @@ _free(void *ptr)
     }
 #if (MALLOCHASH)
     mag = hashfindmag(ptr);
-#elif (MALLOCREDBLACKTREE)
-    rbt = rbtfind(&g_malloc.ptrtree, (uintptr_t)ptr);
-    if (rbt) {
-        mag = (struct mag *)rbtclrcolor(rbt);
-        rbtdelete(&g_malloc.ptrtree, (uintptr_t)ptr);
-    }
 #elif (MALLOCHDRPREFIX)
     if ((uintptr_t)ptr & (PAGESIZE - 1)) {
         mag = getmag(ptr);
@@ -2079,7 +2018,7 @@ _free(void *ptr)
 #if (MALLOCHDRHACKS)
     nfo = getnfo(ptr);
 #endif
-#else /* !MALLOCREDBLACKTREE && !MALLOCHDRPREFIX */
+#else /* !MALLOCHASH && !MALLOCHDRPREFIX */
     mag = mtfindmag(ptr, MALLOCSLABTAB);
     if (!mag) {
         mag = mtfindmag(ptr, MALLOCPAGETAB);
@@ -2095,12 +2034,6 @@ _free(void *ptr)
 #endif
 #if (MALLOCHASH)
         hashsetmag(ptr, NULL);
-#elif (!MALLOCREDBLACKTREE)
-        if ((uintptr_t)ptr & (PAGESIZE - 1)) {
-            setmag(ptr, NULL);
-        } else {
-            mtsetmag(ptr, NULL, MALLOCPAGETAB);
-        }
 #endif
 #if (MALLOCHDRHACKS)
         bktid = nfo & MEMHDRBKTMASK;
@@ -2288,9 +2221,6 @@ _realloc(void *ptr,
     struct mag     *mag = ((ptr)
                            ? hashfindmag(ptr)
                            : NULL);
-#elif (MALLOCREDBLACKTREE)
-    struct rbtnode *rbt = rbtfind(&g_malloc.ptrtree, (uintptr_t)ptr);
-    struct mag     *mag = (struct mag *)rbtclrcolor(rbt);
 #else
     struct mag     *mag = ((ptr)
                            ? (((uintptr_t)ptr & (PAGESIZE - 1))
@@ -2343,9 +2273,6 @@ malloc(size_t size)
 #endif
 {
     void   *ptr = NULL;
-    size_t  sz = ((size & (PAGESIZE - 1))
-                  ? (size)
-                  : rounduppow2(size, PAGESIZE));
 
     if (!size) {
 #if defined(_GNU_SOURCE)
@@ -2364,7 +2291,7 @@ malloc(size_t size)
         return ptr;
     }
 #endif
-    ptr = _malloc(sz, 0, 0);
+    ptr = _malloc(size, 0, 0);
     if (!ptr) {
 #if defined(ENOMEM)
         errno = ENOMEM;
@@ -2392,10 +2319,11 @@ zero_calloc(size_t n, size_t size)
 calloc(size_t n, size_t size)
 #endif
 {
-    size_t sz = n * size;
-    void *ptr = NULL;
+    size_t  sz = n * size;
+    void   *ptr = NULL;
 
     if (sz < n * size) {
+        /* integer overflow occurred */
 
         return NULL;
     }
@@ -2924,9 +2852,6 @@ malloc_usable_size(void *ptr)
     struct mag     *mag = ((ptr)
                            ? hashfindmag(ptr)
                            : NULL);
-#elif (MALLOCREDBLACKTREE)
-    struct rbtnode *rbt = rbtfind(&g_malloc.ptrtree, (uintptr_t)ptr);
-    struct mag     *mag = (struct mag *)rbtclrcolor(rbt);
 #elif (MALLOCHDRPREFIX)
     struct mag *mag = (((uintptr_t)ptr & (PAGESIZE - 1))
                        ? mtfindmag(ptr, MALLOCPAGETAB)
@@ -2970,9 +2895,6 @@ malloc_size(void *ptr)
     struct mag     *mag = ((ptr)
                            ? hashfindmag(ptr)
                            : NULL);
-#elif (MALLOCREDBLACKTREE)
-    struct rbtnode *rbt = rbtfind(&g_malloc.ptrtree, (uintptr_t)ptr);
-    struct mag     *mag = (struct mag *)rbtclrcolor(rbt);
 #elif (MALLOCHDRPREFIX)
     struct mag     *mag = (((uintptr_t)ptr & (PAGESIZE - 1))
                            ? mtfindmag(ptr, MALLOCPAGETAB)

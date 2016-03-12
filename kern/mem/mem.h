@@ -29,15 +29,12 @@
 #define MEMNTYPEBIT    8 // up to 256 object types
 #define MEMBKTMASK     ((1UL << (MEMNBKTBIT - 1)) - 1)
 /* allocation flags */
-#define MEMFLGSHIFT    (CHAR_BIT * sizeof(m_ureg_t) - 1)
-#define MEMLOCKBIT     (1UL << MEMFLGSHIFT) // set when manipulating header
-#define MEMALLOCBIT    (1UL << (MEMFLGSHIFT - 1))
-#define MEMDIRTYBIT    (1UL << (MEMFLGSHIFT - 2))
-#define MEMWIREDBIT    (1UL << (MEMFLGSHIFT - 3))
-#define MEMZEROBIT     (1UL << (MEMFLGSHIFT - 4))
-#define MEMNFLGBIT     8
-#define MEMFLGMASK     \
-    (((m_ureg_t)~0) << (CHAR_BIT * sizeof(m_ureg_t) - MEMNFLGBIT))
+#define MEMFREE        0x00000001UL
+#define MEMZERO        0x00000002UL
+#define MEMWIRE        0x00000004UL
+#define MEMDIRTY       0x00000008UL
+#define MEMFLGBITS     (MEMFREE | MEMZERO | MEMWIRE | MEMDIRTY)
+#define MEMNFLGBIT     4
 #define memslabsize(bkt)                                                \
     (1UL << (bkt))
 #define memtrylkhdr(hdr)                                                \
