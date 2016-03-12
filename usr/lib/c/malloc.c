@@ -829,7 +829,7 @@ hashgetitem(void)
 
     /* obtain bit-lock on the chain head */
     hptr = &g_malloc.hashbuf;
-    head = &g_malloc.hashbuf;
+    head = g_malloc.hashbuf;
     while (m_cmpsetbit((volatile long *)hptr,
                        MALLOC_HASH_MARK_POS)) {
         ;
@@ -873,7 +873,7 @@ hashbufitem(struct hashmag *item)
 
     /* obtain bit-lock on the chain head */
     hptr = &g_malloc.hashbuf;
-    head = &g_malloc.hashbuf;
+    head = g_malloc.hashbuf;
     while (m_cmpsetbit((volatile long *)hptr,
                        MALLOC_HASH_MARK_POS)) {
         ;
@@ -964,7 +964,6 @@ hashsetmag(void *ptr, struct mag *mag)
     upval = (uintptr_t)head;
     upval &= ~MALLOC_HASH_MARK_BIT;
     head = (struct hashmag *)upval;
-    prev = NULL;
     cur = head;
     if (cur) {
         if (cur->upval == upage) {
@@ -1000,9 +999,9 @@ hashsetmag(void *ptr, struct mag *mag)
                         return mag;
                     } else if (!--cur->nref) {
                         prev->next = cur->next;
-                        hashbufitem(cur);
                         m_cmpclrbit((volatile long *)hptr,
                                     MALLOC_HASH_MARK_POS);
+                        hashbufitem(cur);
                         
                         return NULL;
                     } else {
