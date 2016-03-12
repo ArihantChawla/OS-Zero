@@ -781,15 +781,16 @@ hashgetitem(void)
     struct hashmag  *cur;
     struct hashmag  *prev;
     struct hashmag **hptr;
+    long             res;
     size_t           n;
 
     /* obtain bit-lock on the chain head */
     hptr = &g_malloc.hashbuf;
-    head = g_malloc.hashbuf;
-    while (m_cmpsetbit((volatile long *)hptr,
-                       MALLOC_HASH_MARK_POS)) {
-        ;
-    }
+//    head = g_malloc.hashbuf;
+    do {
+        res = m_cmpsetbit((volatile long *)hptr,
+                          MALLOC_HASH_MARK_POS);
+    } while (res);
     head = *hptr;
     upval = (uintptr_t)head;
     upval &= ~MALLOC_HASH_MARK_BIT;
@@ -826,14 +827,15 @@ hashbufitem(struct hashmag *item)
     uintptr_t        upval;
     struct hashmag  *head;
     struct hashmag **hptr;
+    long             res;
 
     /* obtain bit-lock on the chain head */
     hptr = &g_malloc.hashbuf;
-    head = g_malloc.hashbuf;
-    while (m_cmpsetbit((volatile long *)hptr,
-                       MALLOC_HASH_MARK_POS)) {
-        ;
-    }
+//    head = g_malloc.hashbuf;
+    do {
+        res = m_cmpsetbit((volatile long *)hptr,
+                          MALLOC_HASH_MARK_POS);
+    } while (res);
     head = *hptr;
     upval = (uintptr_t)head;
     upval &= ~MALLOC_HASH_MARK_BIT;
@@ -861,17 +863,19 @@ hashfindmag(void *ptr)
     struct hashmag  *prev;
     struct hashmag  *head;
     struct hashmag **hptr;
+    long             res;
     unsigned long    key;
     
 //    key = hashq128upval(upval, MALLOCNHASHBIT);
     key = upage & ((1UL << (MALLOCNHASHBIT)) - 1);
     /* obtain bit-lock on the chain head */
     hptr = &g_malloc.maghash[key];
-    head = g_malloc.maghash[key];
-    while (m_cmpsetbit((volatile long *)hptr,
-                       MALLOC_HASH_MARK_POS)) {
-        ;
-    }
+//    head = g_malloc.maghash[key];
+    do {
+        res = m_cmpsetbit((volatile long *)hptr,
+                          MALLOC_HASH_MARK_POS);
+    } while (res);
+
     head = *hptr;
     upval = (uintptr_t)head;
     upval &= ~MALLOC_HASH_MARK_BIT;
@@ -905,6 +909,7 @@ hashsetmag(void *ptr, struct mag *mag)
     struct hashmag  *item;
     struct hashmag  *orig;
     struct hashmag  *prev;
+    long             res;
     unsigned long    key;
 
     key = upage & ((1UL << (MALLOCNHASHBIT)) - 1);
@@ -912,11 +917,11 @@ hashsetmag(void *ptr, struct mag *mag)
     /* obtain bit-lock on the chain head */
     /* obtain bit-lock on the chain head */
     hptr = &g_malloc.maghash[key];
-    head = g_malloc.maghash[key];
-    while (m_cmpsetbit((volatile long *)hptr,
-                       MALLOC_HASH_MARK_POS)) {
-        ;
-    }
+//    head = g_malloc.maghash[key];
+    do {
+        res = m_cmpsetbit((volatile long *)hptr,
+                          MALLOC_HASH_MARK_POS);
+    } while (res);
     head = *hptr;
     upval = (uintptr_t)head;
     upval &= ~MALLOC_HASH_MARK_BIT;
@@ -2444,8 +2449,13 @@ __attribute__ ((alloc_align(1)))
 __attribute__ ((assume_aligned(MALLOCALIGNMENT)))
 __attribute__ ((malloc))
 #endif
+#if defined(GNUMALLOC) && (GNUMALLOC)
+zero_aligned_alloc(size_t align,
+                   size_t size)
+#else
 aligned_alloc(size_t align,
               size_t size)
+#endif
 {
     void   *ptr = NULL;
 
@@ -2483,9 +2493,15 @@ int
 __attribute__ ((alloc_size(3)))
 __attribute__ ((alloc_align(2)))
 #endif
+#if defined(GNUMALLOC) && (GNUMALLOC)
+zero_posix_memalign(void **ret,
+                    size_t align,
+                    size_t size)
+#else
 posix_memalign(void **ret,
                size_t align,
                size_t size)
+#endif
 {
     void   *ptr = NULL;
 
@@ -2543,7 +2559,11 @@ __attribute__ ((alloc_size(1)))
 __attribute__ ((assume_aligned(PAGESIZE)))
 __attribute__ ((malloc))
 #endif
+#if defined(GNUMALLOC) && (GNUMALLOC)
+zero_valloc(size_t size)
+#else
 valloc(size_t size)
+#endif
 {
     void *ptr;
 
@@ -2664,7 +2684,11 @@ __attribute__ ((alloc_size(1)))
 __attribute__ ((assume_aligned(PAGESIZE)))
 __attribute__ ((malloc))
 #endif
+#if defined(GNUMALLOC) && (GNUMALLOC)
+zero_pvalloc(size_t size)
+#else
 pvalloc(size_t size)
+#endif
 {
     void   *ptr = _malloc(rounduppow2(size, PAGESIZE), PAGESIZE, 0);
 
@@ -2699,8 +2723,13 @@ __attribute__ ((alloc_size(1)))
 __attribute__ ((assume_aligned(MALLOCALIGNMENT)))
 __attribute__ ((malloc))
 #endif
+#if defined(GNUMALLOC) && (GNUMALLOC)
+zero__aligned_malloc(size_t size,
+                     size_t align)
+#else
 _aligned_malloc(size_t size,
                 size_t align)
+#endif
 {
     void   *ptr = NULL;
 
@@ -2731,7 +2760,11 @@ _aligned_malloc(size_t size,
 }
 
 void
+#if defined(GNUMALLOC) && (GNUMALLOC)
+zero__aligned_free(void *ptr)
+#else
 _aligned_free(void *ptr)
+#endif
 {
 #if (MALLOCTRACE)
     __malloctrace();
@@ -2768,8 +2801,13 @@ __attribute__ ((alloc_size(1)))
 __attribute__ ((assume_aligned(MALLOCALIGNMENT)))
 __attribute__ ((malloc))
 #endif
+#if defined(GNUMALLOC) && (GNUMALLOC)
+zero__mm_malloc(int size,
+                int align)
+#else
 _mm_malloc(int size,
            int align)
+#endif
 {
     void   *ptr = NULL;
 
@@ -2800,7 +2838,11 @@ _mm_malloc(int size,
 }
 
 void
+#if defined(GNUMALLOC) && (GNUMALLOC)
+zero__mm_free(void *ptr)
+#else
 _mm_free(void *ptr)
+#endif
 {
 #if (MALLOCTRACE)
     __malloctrace();
@@ -2829,7 +2871,11 @@ _mm_free(void *ptr)
 #endif /* _INTEL_SOURCE */
 
 void
+#if defined(GNUMALLOC) && (GNUMALLOC)
+zero_cfree(void *ptr)
+#else
 cfree(void *ptr)
+#endif
 {
 #if (MALLOCTRACE)
     __malloctrace();

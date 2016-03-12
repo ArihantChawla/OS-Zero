@@ -7,15 +7,6 @@
 #include <kern/types.h>
 #include <kern/mem/mem.h>
 #include <kern/mem/pool.h>
-#if 0
-#if (!MEMNEWSLAB)
-#if (PTRBITS <= 32) 
-#include <kern/mem/slab32.h>
-#elif (PTRBITS <= 64)
-#include <kern/mem/slab64.h>
-#endif
-#endif
-#endif
 
 #if !(MEMNEWSLAB)
 #define memslabclrinfo(sp)                                              \
@@ -38,7 +29,6 @@
     ((sp)->info &= ~MEMFLGBITS)
 #endif
 
-#if (MEMNEWSLAB)
 #define __STRUCT_MEMSLAB_PAD                                            \
     (CLSIZE - 3 * PTRSIZE - WORDSIZE)
 struct memslab {
@@ -50,18 +40,6 @@ struct memslab {
     uint8_t         _pad[__STRUCT_MEMSLAB_PAD];
 #endif
 };
-#else
-struct memslab {
-#if (PTRBITS <= 32)
-    uint32_t        info;
-    uint32_t        link;
-#else
-    unsigned long   info;
-    struct slabhdr *prev;
-    struct slabhdr *next;
-#endif
-};
-#endif
 
 #define memgethdrnum(hdr, pool)                                         \
     ((uintptr_t)(hdr) - (uintptr_t)(pool)->hdrtab)

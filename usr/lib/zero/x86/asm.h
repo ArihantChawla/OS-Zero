@@ -200,12 +200,13 @@ m_flipbit(volatile long *p, long ndx)
 static __inline__ long
 m_cmpsetbit32(volatile long *p, long ndx)
 {
-    volatile long val = 0;
+    volatile long val;
 
     __asm__ __volatile__ ("lock btsl %2, %0\n"
                           "jnc 1f\n"
                           "movl $0x01, %1\n"
                           "1:\n"
+                          "xorl %1, %1\n"
                           : "=m" (*(p)), "=r" (val)
                           : "r" (ndx)
                           : "memory");
@@ -217,12 +218,13 @@ m_cmpsetbit32(volatile long *p, long ndx)
 static __inline__ long
 m_cmpclrbit32(volatile long *p, long ndx)
 {
-    volatile long val = 0;
+    volatile long val;
 
     __asm__ __volatile__ ("lock btrl %2, %0\n"
                           "jnc 1f\n"
                           "movl $0x01, %1\n"
                           "1:\n"
+                          "xorl %1, %1\n"
                           : "=m" (*(p)), "=r" (val)
                           : "r" (ndx)
                           : "memory");

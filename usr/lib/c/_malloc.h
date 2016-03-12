@@ -1,7 +1,7 @@
 #ifndef ___MALLOC_H__
 #define ___MALLOC_H__
 
-#define MALLOCPRIOLK      1     // use locks lifted from locklessinc.com
+#define MALLOCPRIOLK      0     // use locks lifted from locklessinc.com
 
 #include <limits.h>
 #include <stdint.h>

@@ -1,7 +1,6 @@
 #ifndef __KERN_MEM_MEM_H__
 #define __KERN_MEM_MEM_H__
 
-#define MEMNEWSLAB  1
 //#define MEMPARANOIA 1
 #undef MEMPARANOIA
 
@@ -13,7 +12,6 @@
 #include <kern/mem/pool.h>
 #include <kern/mem/slab.h>
 
-#if (MEMNEWSLAB)
 /* allocator parameters */
 #define MEMNHDRHASH    (512 * 1024)     // # of entries in header hash table
 //#define MEMNHDRBUF     (roundup(__STRUCT_MEMBLK_SIZE, CLSIZE))
@@ -21,10 +19,6 @@
 #define MEMSLABSIZE    (1U << MEMSLABSHIFT)
 #define MEMMINSHIFT    8 // minimum allocation of 256 bytes
 #define MEMSLABSHIFT   16
-#if 0
-#define MEMMAXOBJ      (1U << MEMMAXOBJSHIFT)
-#define MEMMAXOBJSHIFT 16
-#endif
 #define MEMNBKTBIT     8 // 8 low bits of info used for bucket ID (max 255)
 #define MEMNTYPEBIT    8 // up to 256 object types
 #define MEMBKTMASK     ((1UL << (MEMNBKTBIT - 1)) - 1)
@@ -51,20 +45,6 @@
     (m_unlkbit(&(hdr)->info, MEMLOCKBIT))
 #define memgetbkt(hdr)                                                  \
     (&(hdr)->info & ((1 << MEMNBKTBIT) - 1))
-#else /* !MEMNEWSLAB */
-#define MEMMINSIZE   (1UL << MEMMINSHIFT)
-#define MEMMINSHIFT  CLSIZELOG2
-#define MEMSLABSIZE  (1UL << MEMSLABSHIFT)
-#define MEMSLABSHIFT 16
-#define MEMNBKTBIT   8 // 8 low bits of info used for bucket ID (max 255)
-#define MEMNTYPEBIT  8 // up to 256 object types
-#define MEMBKTMASK   ((1UL << (MEMNBKTBIT - 1)) - 1)
-#define MEMZERO      0x00000001UL
-#define MEMWIRE      0x00000002UL
-#define MEMFREE      0x00000004UL
-#define MEMFLGBITS   (MEMZERO | MEMWIRE | MEMFREE)
-#define MEMNFLGBIT   4
-#endif
 
 void meminit(size_t nbphys, size_t nbvirt);
 void meminitphys(struct mempool *pool, uintptr_t base, size_t nbyte);

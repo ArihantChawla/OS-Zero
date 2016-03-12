@@ -25,13 +25,9 @@
 #include <kern/util.h>
 #include <kern/malloc.h>
 #include <kern/mem/vm.h>
-#include <kern/io/buf.h>
-#if defined(__x86_64__) || defined(__amd64__)
-#include <kern/mem/slab64.h>
-#elif defined(__i386__)
-#include <kern/mem/slab32.h>
-#endif
+#include <kern/mem/slab.h>
 #include <kern/mem/mag.h>
+#include <kern/io/buf.h>
 
 #define QUEUE_ITEM_TYPE struct bufblk
 #define QUEUE_TYPE      struct bufblk
