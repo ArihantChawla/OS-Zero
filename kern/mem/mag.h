@@ -29,13 +29,13 @@ struct memmag {
     volatile long  info;
     struct memmag *prev;
     struct memmag *next;
-#if defined(MEMPARANOIA) && (MEMSLABSHIFT - MEMMINSHIFT < (LONGSIZESHIFT + 3))
+#if defined(MEMPARANOIA) && (MEMSLABSHIFT - MEMMINSHIFT < (LONGSIZESHIFT + 3)) && 0
     unsigned long  bmap;
 #endif
     volatile long  ndx;
     volatile long  n;
     void          *ptab[1UL << (MEMSLABSHIFT - MEMMINSHIFT)];
-#if defined(MEMPARANOIA) &&  !(MEMSLABSHIFT - MEMMINSHIFT < (LONGSIZESHIFT + 3))
+#if defined(MEMPARANOIA) &&  !(MEMSLABSHIFT - MEMMINSHIFT < (LONGSIZESHIFT + 3)) && 0
     uint8_t        bmap[__STRUCT_MEMMAG_BMAP_SIZE];
 #endif /* defined(MEMPARANOIA) */
 };

@@ -445,6 +445,9 @@ _strtok(void *ptr, int ch)
 /*
  * %x, %c, %h, %d, %ld, %uc, %uh, %ud, %ul, %lx, %x, %p
  */
+#if defined(__GNUC__)
+__attribute__ ((format(printf, 1, 2)))
+#endif
 void
 kprintf(const char *fmt, ...)
 {
@@ -715,10 +718,10 @@ panic(unsigned long pid, int32_t trap, long err)
         name = trapnametab[trap];
         if (name) {
             kprintf("PROC %lu CAUGHT TRAP %ld (%s): %lx\n",
-                    pid, trap, name, err);
+                    pid, (long)trap, name, err);
         } else {
             kprintf("PROC %lu CAUGHT RESERVED TRAP %ld (%s)\n",
-                    pid, trap, name);
+                    pid, (long)trap, name);
         }
     }
     k_halt();

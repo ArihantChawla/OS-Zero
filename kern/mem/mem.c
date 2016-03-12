@@ -8,6 +8,7 @@
 #include <kern/cpu.h>
 #include <kern/malloc.h>
 #include <kern/mem/vm.h>
+#include <kern/mem/page.h>
 #include <kern/mem/buf.h>
 #include <kern/mem/pool.h>
 #include <kern/mem/mag.h>
@@ -26,19 +27,22 @@ static struct membufbkt membufbkt;
 void
 meminitvirtpool(struct mempool *pool, uintptr_t base, size_t nbyte)
 {
-    uintptr_t       adr = ((base & (MEMMINSIZE - 1))
-                           ? rounduppow2(base, MEMMINSIZE)
+    uintptr_t       adr = ((base & (MEMSLABSIZE - 1))
+                           ? rounduppow2(base, MEMSLABSIZE)
                            : base);
     unsigned long   bktid = PTRBITS - 1;
     struct membkt   *tab = pool->tab;
     size_t          sz = 1UL << bktid;
+    uintptr_t       orig = adr;
     struct memmag  *mag;
-    
-    adr = meminitpool(pool, adr, nbyte);
+
     nbyte -= adr - base;
     nbyte = rounddownpow2(nbyte, PAGESIZE);
+    adr = meminitpool(pool, adr, nbyte);
+    nbyte -= adr - orig;
     vmmapseg((uint32_t *)&_pagetab, adr, adr, adr + nbyte,
              PAGEWRITE);
+//    kbzero((void *)adr, nbyte);
 #if (__KERNEL__)
     kprintf("%ld kilobytes kernel virtual memory free @ 0x%lx\n",
             nbyte >> 10, adr);
@@ -159,7 +163,8 @@ meminitbuf(void)
     u8ptr1 = kwalloc(MEMNBUF * MEMBUF_SIZE);
     if (!u8ptr1) {
         kprintf("FAILED to allocate membufs\n");
-        m_waitint();
+
+        return 0;
     }
     kbzero(u8ptr1, MEMNBUF * MEMBUF_SIZE);
     /* initialise global membuf container */
@@ -179,6 +184,8 @@ meminitbuf(void)
     while (n--) {
         meminitcpubuf(n, MEM_DONTWAIT);
     }
+
+    return 1;
 }
 
 void
@@ -191,8 +198,8 @@ meminit(size_t nbphys, size_t nbvirt)
     || defined(__arm__)
     pageinitphys((uintptr_t)&_epagetab, lim - (size_t)&_epagetab);
     lim = max(nbvirt, KERNVIRTBASE);
-    meminitvirtpool(&memvirtpool, (uintptr_t)&_eusr,
-                    lim - (size_t)&_eusr);
+    meminitvirtpool(&memvirtpool, (uintptr_t)&_epagetab,
+                    lim - (size_t)&_epagetab);
 #elif defined(__x86_64__) || defined(__amd64__)
 #error implement x86-64 memory management
 #endif
@@ -217,7 +224,7 @@ memgetbuf(long how)
     mtxlk(&tab->lk);
     ret = tab->buflist;
     if (ret) {
-        tab->buflist = buf->hdr.next;
+        tab->buflist = ret->hdr.next;
         tab->nbuf--;
     }
     mtxunlk(&tab->lk);

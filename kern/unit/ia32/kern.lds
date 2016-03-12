@@ -75,9 +75,16 @@ SECTIONS {
 	seg.o(.text)
 	seg.o(.data)
 	seg.o(.bss)
+
 	mem.o(.text)
 	mem.o(.data)
 	mem.o(.bss)
+	pool.o(.text)
+	pool.o(.data)
+	pool.o(.bss)
+	slab.o(.text)
+	slab.o(.data)
+	slab.o(.bss)
 
 	page.o(.text)
 	page.o(.data)
@@ -206,7 +213,6 @@ SECTIONS {
         _usr = _bss + SIZEOF(.bss);
 	_usrvirt = _ebssvirt + SIZEOF(.bss);
 	usr.o(.text)
-	test.o(.text)
 	_eusr = _usr + SIZEOF(.usr);
 	_eusrvirt = _usrvirt + SIZEOF(.usr);
 	. = ALIGN(PAGESIZE);
@@ -218,6 +224,5 @@ SECTIONS {
     _kernsize = PAGETAB + PAGETABSIZE + SIZEOF(.text) + SIZEOF(.data)
     	      + SIZEOF(.bss);
 */
-
 }
 

@@ -201,7 +201,7 @@ kfree(void *ptr)
     return;
 }
 
-unsigned long
+uintptr_t
 meminitpool(struct mempool *pool, uintptr_t base, size_t nbyte)
 {
     uintptr_t adr = base;
@@ -216,31 +216,31 @@ meminitpool(struct mempool *pool, uintptr_t base, size_t nbyte)
         sz -= adr - base;
     }
     nblk = sz >> MEMSLABSHIFT;
-#if 0
     /* configure slab headers */
     hdrsz = nblk * sizeof(struct memslab);
     hdrsz = rounduppow2(hdrsz, MEMSLABSIZE);
-#if (__KERNEL__)
-    kprintf("MEM: reserved %lu bytes for %lu slab headers\n", hdrsz, nblk);
-#endif
     vmmapseg((uint32_t *)&_pagetab, adr, adr, adr + hdrsz,
              PAGEPRES | PAGEWRITE | PAGEWIRED);
+    kbzero((void *)adr, hdrsz);
     pool->nblk = nblk;
     pool->hdrtab = (void *)adr;
-    adr += hdrsz;
-    kbzero((void *)adr, hdrsz);
+#if (__KERNEL__)
+    kprintf("MEM: reserved %lu bytes @%lx for %lu slab headers\n",
+            hdrsz, adr, nblk);
 #endif
+    adr += hdrsz;
     /* configure magazine headers */
     hdrsz = nblk * sizeof(struct memmag);
     hdrsz = rounduppow2(hdrsz, MEMSLABSIZE);
-#if (__KERNEL__)
-    kprintf("MEM: reserved %lu bytes for %lu magazine headers\n", hdrsz, nblk);
-#endif
-    memvirtpool.nblk = nblk;
-    memvirtpool.hdrtab = (void *)adr;
     vmmapseg((uint32_t *)&_pagetab, adr, adr, adr + hdrsz,
              PAGEPRES | PAGEWRITE | PAGEWIRED);
     kbzero((void *)adr, hdrsz);
+    memvirtpool.nblk = nblk;
+    memvirtpool.hdrtab = (void *)adr;
+#if (__KERNEL__)
+    kprintf("MEM: reserved %lu bytes @%lx for %lu magazine headers\n",
+            hdrsz, adr, nblk);
+#endif
     adr += hdrsz;
     pool->base = adr;
 #if (__KERNEL__ && (MEMDIAG))
