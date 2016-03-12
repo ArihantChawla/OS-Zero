@@ -66,10 +66,10 @@
 #define MEMNFLGBIT   4
 #endif
 
-void      meminit(size_t nbphys, size_t nvirt);
-void      meminitphys(struct mempool *physpool, uintptr_t base, size_t nbphys);
-uintptr_t meminitpool(struct mempool *pool, uintptr_t base, size_t nb);
-void      memfree(struct mempool *pool, void *ptr);
+void meminit(size_t nbphys, size_t nbvirt);
+void meminitphys(struct mempool *pool, uintptr_t base, size_t nbyte);
+void meminitvirt(struct mempool *pool, size_t nbvirt);
+void memfree(struct mempool *pool, void *ptr);
 
 #endif /* __KERN_MEM_MEM_H__ */
 

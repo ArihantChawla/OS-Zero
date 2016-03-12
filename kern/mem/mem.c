@@ -25,21 +25,68 @@ static struct membufbkt membufbkttab[NCPU] ALIGNED(PAGESIZE);
 static struct membufbkt membufbkt;
 
 void
-meminitvirtpool(struct mempool *pool, uintptr_t base, size_t nbyte)
+meminitphys(struct mempool *pool, uintptr_t base, size_t nbyte)
 {
-    uintptr_t       adr = ((base & (MEMSLABSIZE - 1))
-                           ? rounduppow2(base, MEMSLABSIZE)
-                           : base);
-    unsigned long   bktid = PTRBITS - 1;
-    struct membkt   *tab = pool->tab;
-    size_t          sz = 1UL << bktid;
-    uintptr_t       orig = adr;
+    uintptr_t       adr = base;
+//    unsigned long sz = (nbyte & (MEMSLABSIZE - 1)) ? rounddownpow2(nbyte, MEMSLABSIZE) : nbyte;
+    size_t          sz = nbyte;
+    intptr_t        ofs = base & (MEMSLABSIZE - 1);
+    struct memslab *slab;
     struct memmag  *mag;
+    size_t          nblk;
+    size_t          hdrsz;
 
-    nbyte -= adr - base;
-    nbyte = rounddownpow2(nbyte, PAGESIZE);
-    adr = meminitpool(pool, adr, nbyte);
-    nbyte -= adr - orig;
+    if (ofs) {
+        adr += MEMSLABSIZE - ofs;
+        sz -= adr - base;
+    }
+    nblk = sz >> MEMMINSHIFT;
+    /* configure slab headers */
+    hdrsz = nblk * sizeof(struct memslab);
+    hdrsz = rounduppow2(hdrsz, MEMSLABSIZE);
+    vmmapseg((uint32_t *)&_pagetab, adr, adr, adr + hdrsz,
+             PAGEPRES | PAGEWRITE | PAGEWIRED);
+//    kbzero((void *)adr, hdrsz);
+    pool->nblk = nblk;
+    pool->hdrtab = (void *)adr;
+#if (__KERNEL__)
+    kprintf("MEM: reserved %lu bytes @%lx for %lu slab headers\n",
+            hdrsz, adr, nblk);
+#endif
+    adr += hdrsz;
+    /* configure magazine headers */
+    hdrsz = nblk * sizeof(struct memmag);
+    hdrsz = rounduppow2(hdrsz, MEMSLABSIZE);
+    vmmapseg((uint32_t *)&_pagetab, adr, adr, adr + hdrsz,
+             PAGEPRES | PAGEWRITE | PAGEWIRED);
+//    kbzero((void *)adr, hdrsz);
+    memvirtpool.nblk = nblk;
+    memvirtpool.hdrtab = (void *)adr;
+#if (__KERNEL__)
+    kprintf("MEM: reserved %lu bytes @%lx for %lu magazine headers\n",
+            hdrsz, adr, nblk);
+#endif
+    adr += hdrsz;
+    pool->base = adr;
+    memvirtpool.base = adr;
+#if (__KERNEL__ && (MEMDIAG))
+    memdiag(memvirtpool);
+#endif
+
+    return adr;
+}
+
+void
+meminitvirt(struct mempool *pool, size_t lim)
+{
+    uintptr_t      adr = pool->base;
+    unsigned long  bktid = PTRBITS - 1;
+    struct membkt *tab = pool->tab;
+    size_t         sz = 1UL << bktid;
+    size_t         nbyte = lim - adr;
+    uintptr_t      orig = adr;
+    struct memmag *mag;
+
     vmmapseg((uint32_t *)&_pagetab, adr, adr, adr + nbyte,
              PAGEWRITE);
 //    kbzero((void *)adr, nbyte);
@@ -67,57 +114,6 @@ meminitvirtpool(struct mempool *pool, uintptr_t base, size_t nbyte)
     
     return;
 }
-
-#if 0
-void
-meminitphyspool(struct mempool *pool, uintptr_t base, size_t nbyte)
-{
-    uintptr_t       adr = ((base & (MEMMINSIZE - 1))
-                           ? rounduppow2(base, MEMMINSIZE)
-                           : base);
-    unsigned long   bktid = PTRBITS - 1;
-    struct membkt  *tab = pool->tab;
-    size_t          sz = PAGESIZE;
-    size_t          n;
-    struct memmag *mag;
-    
-    adr = meminitpool(pool, adr, nbyte);
-    nbyte -= adr - base;
-    nbyte = rounddownpow2(nbyte, PAGESIZE);
-    n = nbyte >> PAGESIZELOG2;
-    if (map) {
-        vmmapseg((uint32_t *)&_pagetab, adr, adr, adr + nbyte,
-                 PAGEWRITE);
-    }
-#if (__KERNEL__)
-    kprintf("%ld kilobytes kernel physical memory free @ 0x%lx\n",
-            nbyte >> 10, adr);
-#endif
-    while (n--) {
-    }
-#if 0
-    while ((nbyte) && bktid >= PAGESIZELOG2) {
-        if (nbyte & sz) {
-            mag = memgetmag(adr, pool);
-            memmagclrinfo(mag);
-            memmagclrlink(mag);
-            memmagsetbkt(mag, bktid);
-            memmagsetfree(mag);
-            tab[bktid].list = mag;
-            nbyte -= sz;
-            adr += sz;
-        }
-        bktid--;
-        sz >>= 1;
-    }
-#endif
-#if (__KERNEL__ && defined(MEMDIAG)) && 0
-    memdiag(pool);
-#endif
-    
-    return;
-}
-#endif
 
 /*
  * called without locks at boot time, or with locks held by memgetbuf() */
@@ -192,14 +188,16 @@ void
 meminit(size_t nbphys, size_t nbvirt)
 {
     size_t    lim = max(nbphys, KERNVIRTBASE);
-    uintptr_t adr = (uintptr_t)&_ebss;
+    uintptr_t adr;
 
 #if (defined(__i386__) && !defined(__x86_64__) && !defined(__amd64__))  \
     || defined(__arm__)
     pageinitphys((uintptr_t)&_epagetab, lim - (size_t)&_epagetab);
+    meminitphys(&memphyspool, (uintptr_t)&_epagetab,
+                lim - (size_t)&_epagetab);
     lim = max(nbvirt, KERNVIRTBASE);
-    meminitvirtpool(&memvirtpool, (uintptr_t)&_epagetab,
-                    lim - (size_t)&_epagetab);
+    meminitvirt(&memvirtpool,
+                lim);
 #elif defined(__x86_64__) || defined(__amd64__)
 #error implement x86-64 memory management
 #endif

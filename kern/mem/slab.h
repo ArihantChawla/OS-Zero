@@ -63,11 +63,13 @@ struct memslab {
 };
 #endif
 
+#define memgethdrnum(hdr, pool)                                         \
+    ((uintptr_t)(hdr) - (uintptr_t)(pool)->hdrtab)
 #define memgetblknum(ptr, pool)                                         \
     (((uintptr_t)(ptr) - (pool)->base) >> MEMSLABSHIFT)
 #define memgetadr(hdr, pool)                                            \
     ((void *)((uint8_t *)(pool)->base                                   \
-              + (memgetblknum(hdr, pool) << MEMSLABSHIFT)))
+              + (memgethdrnum(hdr, pool) << MEMMINSIZE)))
 #define memgetslab(ptr, pool)                                           \
     ((struct memslab *)(pool)->hdrtab + memgetblknum(ptr, pool))
 #define memgetmag(ptr, pool)                                            \

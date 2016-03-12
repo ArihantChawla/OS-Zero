@@ -99,7 +99,7 @@ memdiag(struct mempool *pool)
 unsigned long
 slabcomb(struct mempool *pool, struct memslab *slab)
 {
-    struct membkt  *slabtab = pool->tab;
+    struct membkt  *bkt = pool->tab;
     unsigned long   nblk = pool->nblk;
     unsigned long   bktid = memslabgetbkt(slab);
     unsigned long   bktid1 = bktid;
@@ -132,9 +132,9 @@ slabcomb(struct mempool *pool, struct memslab *slab)
                     memslabsetnext(slab3, slab4); // NULL
                 } else if (slab4) {
                     memslabsetprev(slab4, slab3); // NULL
-                    slabtab[bktid1].list = slab4;
+                    bkt[bktid1].list = slab4;
                 } else {
-                    slabtab[bktid1].list = NULL;
+                    bkt[bktid1].list = NULL;
                 }
                 memslabclrinfo(slab);
                 memslabclrlink(slab);
@@ -161,9 +161,9 @@ slabcomb(struct mempool *pool, struct memslab *slab)
                     memslabsetnext(slab3, slab4); // NULL;
                 } else if (slab4) {
                     memslabsetprev(slab4, slab3); // NULL
-                    slabtab[bktid1].list = slab4;
+                    bkt[bktid1].list = slab4;
                 } else {
-                    slabtab[bktid1].list = NULL;
+                    bkt[bktid1].list = NULL;
                 }
                 memslabclrinfo(slab2);
                 memslabclrlink(slab2);
@@ -182,7 +182,7 @@ slabcomb(struct mempool *pool, struct memslab *slab)
         }
     }
     if (ret) {
-        slab1 = slabtab[bktid].list;
+        slab1 = bkt[bktid].list;
         memslabclrinfo(slab);
         memslabclrlink(slab);
         memslabsetbkt(slab, bktid1);
@@ -191,7 +191,7 @@ slabcomb(struct mempool *pool, struct memslab *slab)
             memslabsetprev(slab1, slab);
             memslabsetnext(slab, slab1);
         }
-        slabtab[bktid1].list = slab;
+        bkt[bktid1].list = slab;
     }
 #if (__KERNEL__ && (MEMDIAG))
     memdiag(pool);
@@ -209,7 +209,7 @@ slabcomb(struct mempool *pool, struct memslab *slab)
 void
 slabsplit(struct mempool *pool, struct memslab *slab, unsigned long dest)
 {
-    struct membkt  *slabtab = pool->tab;
+    struct membkt  *bkt = pool->tab;
     unsigned long   bktid = memslabgetbkt(slab);
     uint8_t        *ptr = memgetadr(slab, pool);
     struct memslab *slab1;
@@ -221,7 +221,7 @@ slabsplit(struct mempool *pool, struct memslab *slab, unsigned long dest)
         sz >>= 1;
         ptr -= sz;
         slab1 = memgetslab(ptr, pool);
-        slab2 = slabtab[bktid].list;
+        slab2 = bkt[bktid].list;
         memslabclrinfo(slab1);
         memslabclrlink(slab1);
         memslabsetbkt(slab1, bktid);
@@ -230,9 +230,9 @@ slabsplit(struct mempool *pool, struct memslab *slab, unsigned long dest)
             memslabsetprev(slab2, slab1);
             memslabsetnext(slab1, slab2);
         }
-        slabtab[bktid].list = slab1;
+        bkt[bktid].list = slab1;
     }
-    slab1 = slabtab[dest].list;
+    slab1 = bkt[dest].list;
     memslabclrinfo(slab);
     memslabclrlink(slab);
     memslabsetbkt(slab, dest);
@@ -241,7 +241,7 @@ slabsplit(struct mempool *pool, struct memslab *slab, unsigned long dest)
         memslabsetprev(slab1, slab);
         memslabsetnext(slab, slab1);
     }
-    slabtab[dest].list = slab;
+    bkt[dest].list = slab;
 #if (__KERNEL__ && (MEMDIAG))
     memdiag(pool);
 #endif
@@ -257,7 +257,7 @@ slabsplit(struct mempool *pool, struct memslab *slab, unsigned long dest)
 unsigned long
 slabcomb(struct mempool *pool, struct memmag *mag)
 {
-    struct membkt *slabtab = pool->tab;
+    struct membkt *bkt = pool->tab;
     unsigned long  nblk = pool->nblk;
     unsigned long  bktid = memmaggetbkt(mag);
     unsigned long  bktid1 = bktid;
@@ -290,9 +290,9 @@ slabcomb(struct mempool *pool, struct memmag *mag)
                     memmagsetnext(mag3, mag4); // NULL
                 } else if (mag4) {
                     memmagsetprev(mag4, mag3); // NULL
-                    slabtab[bktid1].list = mag4;
+                    bkt[bktid1].list = mag4;
                 } else {
-                    slabtab[bktid1].list = NULL;
+                    bkt[bktid1].list = NULL;
                 }
                 memmagclrinfo(mag);
                 memmagclrlink(mag);
@@ -319,9 +319,9 @@ slabcomb(struct mempool *pool, struct memmag *mag)
                     memmagsetnext(mag3, mag4); // NULL;
                 } else if (mag4) {
                     memmagsetprev(mag4, mag3); // NULL
-                    slabtab[bktid1].list = mag4;
+                    bkt[bktid1].list = mag4;
                 } else {
-                    slabtab[bktid1].list = NULL;
+                    bkt[bktid1].list = NULL;
                 }
                 memmagclrinfo(mag2);
                 memmagclrlink(mag2);
@@ -340,7 +340,7 @@ slabcomb(struct mempool *pool, struct memmag *mag)
         }
     }
     if (ret) {
-        mag1 = slabtab[bktid].list;
+        mag1 = bkt[bktid].list;
         memmagclrinfo(mag);
         memmagclrlink(mag);
         memmagsetbkt(mag, bktid1);
@@ -349,7 +349,7 @@ slabcomb(struct mempool *pool, struct memmag *mag)
             memmagsetprev(mag1, mag);
             memmagsetnext(mag, mag1);
         }
-        slabtab[bktid1].list = mag;
+        bkt[bktid1].list = mag;
     }
 #if (__KERNEL__ && (MEMDIAG))
     memdiag(pool);
@@ -367,7 +367,7 @@ slabcomb(struct mempool *pool, struct memmag *mag)
 void
 slabsplit(struct mempool *pool, struct memmag *mag, unsigned long dest)
 {
-    struct membkt *slabtab = pool->tab;
+    struct membkt *bkt = pool->tab;
     unsigned long  bktid = memmaggetbkt(mag);
     uint8_t       *ptr = memgetadr(mag, pool);
     struct memmag *mag1;
@@ -379,7 +379,7 @@ slabsplit(struct mempool *pool, struct memmag *mag, unsigned long dest)
         sz >>= 1;
         ptr -= sz;
         mag1 = memgetmag(ptr, pool);
-        mag2 = slabtab[bktid].list;
+        mag2 = bkt[bktid].list;
         memmagclrinfo(mag1);
         memmagclrlink(mag1);
         memmagsetbkt(mag1, bktid);
@@ -388,9 +388,9 @@ slabsplit(struct mempool *pool, struct memmag *mag, unsigned long dest)
             memmagsetprev(mag2, mag1);
             memmagsetnext(mag1, mag2);
         }
-        slabtab[bktid].list = mag1;
+        bkt[bktid].list = mag1;
     }
-    mag1 = slabtab[dest].list;
+    mag1 = bkt[dest].list;
     memmagclrinfo(mag);
     memmagclrlink(mag);
     memmagsetbkt(mag, dest);
@@ -399,7 +399,7 @@ slabsplit(struct mempool *pool, struct memmag *mag, unsigned long dest)
         memmagsetprev(mag1, mag);
         memmagsetnext(mag, mag1);
     }
-    slabtab[dest].list = mag;
+    bkt[dest].list = mag;
 #if (__KERNEL__ && (MEMDIAG))
     memdiag(pool);
 #endif
@@ -413,7 +413,7 @@ slabsplit(struct mempool *pool, struct memmag *mag, unsigned long dest)
 void *
 slaballoc(struct mempool *pool, unsigned long nb, unsigned long flg)
 {
-    struct membkt *slabtab = pool->tab;
+    struct membkt *bkt = pool->tab;
     unsigned long  bktid1 = memcalcbkt(nb);
     unsigned long  bktid2 = bktid1;
     uint8_t       *ptr = NULL;
@@ -421,7 +421,7 @@ slaballoc(struct mempool *pool, unsigned long nb, unsigned long flg)
     struct memmag *mag2;
 
     mtxlk(&pool->lk);
-    mag1 = slabtab[bktid1].list;
+    mag1 = bkt[bktid1].list;
     if (!mag1) {
         while (!mag1 && ++bktid2 < PTRBITS) {
             mag1 = pool->tab[bktid2].list;
@@ -462,7 +462,7 @@ slaballoc(struct mempool *pool, unsigned long nb, unsigned long flg)
 void
 slabfree(struct mempool *pool, void *ptr)
 {
-    struct membkt *slabtab = pool->tab;
+    struct membkt *bkt = pool->tab;
     struct memmag *mag1 = memgetmag(ptr, pool);
     unsigned long  bktid = memmaggetbkt(mag1);
     struct memmag *mag2;
@@ -473,13 +473,13 @@ slabfree(struct mempool *pool, void *ptr)
 #endif
     memmagsetfree(mag1);
     if (!slabcomb(pool, mag1)) {
-        mag2 = slabtab[bktid].list;
+        mag2 = bkt[bktid].list;
         memmagclrlink(mag1);
         if (mag2) {
             memmagsetprev(mag2, mag1);
         }
         memmagsetnext(mag1, mag2);
-        slabtab[bktid].list = mag1;
+        bkt[bktid].list = mag1;
     }
     mtxunlk(&pool->lk);
 #if (__KERNEL__ && (MEMDIAG))
