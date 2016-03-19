@@ -1,0 +1,9 @@
+The purpose of this file is to eventually describe a couple of different virtual
+machines, their implementation as well as some essential utilities for them such
+as the small and simple zas assembler.
+
+One of the virtual machines to be described in this paper is my implementation
+of the game of Core War(s). I also plan to describe Zero Virtual Machine (zvm),
+which is a simple RISC-like virtual architecture with an AT&T syntax assembler
+as well as a bytecode interpreter ("virtual machine").
+
