@@ -110,11 +110,29 @@
 #define pc_reg         xtraregs[ZPM_EIP_REG]
 #define msw_reg        xtragregs[ZPME_EFLAGS_REG]
 struct zpm {
-    double   fpuregs[ZPM_NFPUREG];
-    int32_t  genregs[ZPM_NGENREG];      // general purpose register context
-    int32_t  xtraregs[ZPM_NEXTRAREG];   // special register context
-    size_t   pmemsize;                  // size of "physical" memory in bytes
-    int8_t  *physmem;                   // dynamic "physical" memory
+    double     fpuregs[ZPM_NFPUREG];
+    zasword_t  genregs[ZPM_NGENREG];    // general purpose register context
+    zasword_t  xtraregs[ZPM_NEXTRAREG]; // special register context
+    size_t     pmemsize;                // size of "physical" memory in bytes
+    int8_t    *physmem;                 // dynamic "physical" memory
+};
+
+/* bits for adrmode member */
+#define ZPM_REG_VAL   (1 << 0)
+#define ZPM_IMM8_VAL  (1 << 1)
+#define ZPM_IMM_VAL   (1 << 2)
+#define ZPM_IMM_ADR   (1 << 3)
+#define ZPM_REG_NDX   (1 << 4)
+#define ZPM_REG_INDIR (1 << 5)
+struct zpmopcode {
+    unsigned int unit    : 4;   // execution unit
+    unsigned int code    : 4;   // instruction code
+    unsigned int reg1    : 4;   // argument register
+    unsigned int reg2    : 4;   // argument register
+    unsigned int adrmode : 6;   // addressing mode
+    unsigned int argsz   : 2;   // argument size is (8 << argsz)
+    unsigned int imm8    : 8;   // possible 8-bit immediate argument
+    zasword_t    args[EMPTY];   // optional arguments
 };
 
 /* MACHINE INTERFACE */

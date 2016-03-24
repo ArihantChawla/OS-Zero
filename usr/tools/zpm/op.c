@@ -3,7 +3,6 @@
 /* zero virtual machine instruction set implementation */
 
 #include <zpm/conf.h>
-
 #include <limits.h>
 #include <stdint.h>
 #include <zero/trix.h>
@@ -14,7 +13,7 @@
 void
 zpmopnot(struct zpmopcode *op)
 {
-    zasword_t  src = zpmgetarg1(&zpm, op);
+    zasword_t  src = zpmgetsrcarg(&zpm, op);
     zasword_t *dptr;
     zasword_t  dest = zpmgetdestarg(&zpm, op, dptr);
 
@@ -30,7 +29,7 @@ zpmopnot(struct zpmopcode *op)
 void
 zpmopand(struct zpmopcode *op)
 {
-    zasword_t  src = zpmgetarg1(&zpm, op);
+    zasword_t  src = zpmgetsrcarg(&zpm, op);
     zasword_t *dptr;
     zasword_t  dest = zpmgetdestarg(&zpm, op, dptr);
 
@@ -46,7 +45,7 @@ zpmopand(struct zpmopcode *op)
 void
 zpmopor(struct zpmopcode *op)
 {
-    zasword_t  src = zpmgetarg1(&zpm, op);
+    zasword_t  src = zpmgetsrcarg(&zpm, op);
     zasword_t *dptr;
     zasword_t  dest = zpmgetdestarg(&zpm, op, dptr);
 
@@ -62,7 +61,7 @@ zpmopor(struct zpmopcode *op)
 void
 zpmopxor(struct zpmopcode *op)
 {
-    zasword_t  src = zpmgetarg1(&zpm, op);
+    zasword_t  src = zpmgetsrcarg(&zpm, op);
     zasword_t *dptr;
     zasword_t  dest = zpmgetdestarg(&zpm, op, dptr);
 
@@ -78,7 +77,7 @@ zpmopxor(struct zpmopcode *op)
 void
 zpmopshr(struct zpmopcode *op)
 {
-    zasword_t  src = zpmgetarg1(&zpm, op);
+    zasword_t  src = zpmgetsrcarg(&zpm, op);
     zasword_t *dptr;
     zasword_t  dest = zpmgetdestarg(&zpm, op, dptr);
     zasword_t  fill = ~((zasword_t)0) >> src;
@@ -96,7 +95,7 @@ zpmopshr(struct zpmopcode *op)
 void
 zpmopsar(struct zpmopcode *op)
 {
-    zasword_t  src = zpmgetarg1(&zpm, op);
+    zasword_t  src = zpmgetsrcarg(&zpm, op);
     zasword_t *dptr;
     zasword_t  dest = zpmgetdestarg(&zpm, op, dptr);
     zasword_t  mask = ~(zasword_t)0;
@@ -124,7 +123,7 @@ zpmopsar(struct zpmopcode *op)
 void
 zpmopshl(struct zpmopcode *op)
 {
-    zasword_t  src = zpmgetarg1(&zpm, op);
+    zasword_t  src = zpmgetsrcarg(&zpm, op);
     zasword_t *dptr;
     zasword_t  dest = zpmgetdestarg(&zpm, op, dptr);
 
@@ -140,7 +139,7 @@ zpmopshl(struct zpmopcode *op)
 void
 zpmopror(struct zpmopcode *op)
 {
-    zasword_t  src = zpmgetarg1(&zpm, op);
+    zasword_t  src = zpmgetsrcarg(&zpm, op);
     zasword_t *dptr;
     zasword_t  dest = zpmgetdestarg(&zpm, op, dptr);
     zasword_t  mask = ~((zasword_t)0) >> (CHAR_BIT * sizeof(zasword_t) - src);
@@ -164,7 +163,7 @@ zpmopror(struct zpmopcode *op)
 void
 zpmoprol(struct zpmopcode *op)
 {
-    zasword_t  src = zpmgetarg1(&zpm, op);
+    zasword_t  src = zpmgetsrcarg(&zpm, op);
     zasword_t *dptr;
     zasword_t  dest = zpmgetdestarg(&zpm, op, dptr);
     zasword_t  mask = (~((zasword_t)0) << (CHAR_BIT * sizeof(zasword_t) - src));
@@ -188,7 +187,7 @@ zpmoprol(struct zpmopcode *op)
 void
 zpmopinc(struct zpmopcode *op)
 {
-    zasword_t  src = zpmgetarg1(&zpm, op);
+    zasword_t  src = zpmgetsrcarg(&zpm, op);
     zasword_t *dptr;
     zasword_t  dest = zpmgetdestarg(&zpm, op, dptr);
 
@@ -207,7 +206,7 @@ zpmopinc(struct zpmopcode *op)
 void
 zpmopdec(struct zpmopcode *op)
 {
-    zasword_t  src = zpmgetarg1(&zpm, op);
+    zasword_t  src = zpmgetsrcarg(&zpm, op);
     zasword_t *dptr;
     zasword_t  dest = zpmgetdestarg(&zpm, op, dptr);
 
@@ -223,7 +222,7 @@ zpmopdec(struct zpmopcode *op)
 void
 zpmopadd(struct zpmopcode *op)
 {
-    zasword_t  src = zpmgetarg1(&zpm, op);
+    zasword_t  src = zpmgetsrcarg(&zpm, op);
     zasword_t *dptr;
     zasword_t  dest = zpmgetdestarg(&zpm, op, dptr);
     zasword_t  res = src + dest;
@@ -242,7 +241,7 @@ zpmopadd(struct zpmopcode *op)
 void
 zpmopsub(struct zpmopcode *op)
 {
-    zasword_t  src = zpmgetarg1(&zpm, op);
+    zasword_t  src = zpmgetsrcarg(&zpm, op);
     zasword_t *dptr;
     zasword_t  dest = zpmgetdestarg(&zpm, op, dptr);
 
@@ -258,7 +257,7 @@ zpmopsub(struct zpmopcode *op)
 void
 zpmopcmp(struct zpmopcode *op)
 {
-    zasword_t  src = zpmgetarg1(&zpm, op);
+    zasword_t  src = zpmgetsrcarg(&zpm, op);
     zasword_t *dptr;
     zasword_t  dest = zpmgetdestarg(&zpm, op, dptr);
 
@@ -277,7 +276,7 @@ zpmopcmp(struct zpmopcode *op)
 void
 zpmopmul(struct zpmopcode *op)
 {
-    zasword_t  src = zpmgetarg1(&zpm, op);
+    zasword_t  src = zpmgetsrcarg(&zpm, op);
     zasword_t *dptr;
     zasword_t  dest = zpmgetdestarg(&zpm, op, dptr);
     int64_t    res = dest * src;
@@ -301,7 +300,7 @@ zpmopmul(struct zpmopcode *op)
 void
 zpmopdiv(struct zpmopcode *op)
 {
-    zasword_t  src = zpmgetarg1(&zpm, op);
+    zasword_t  src = zpmgetsrcarg(&zpm, op);
     zasword_t *dptr;
     zasword_t  dest = zpmgetdestarg(&zpm, op, dptr);
 
@@ -320,7 +319,7 @@ zpmopdiv(struct zpmopcode *op)
 void
 zpmopmod(struct zpmopcode *op)
 {
-    zasword_t  src = zpmgetarg1(&zpm, op);
+    zasword_t  src = zpmgetsrcarg(&zpm, op);
     zasword_t *dptr;
     zasword_t  dest = zpmgetdestarg(&zpm, op, dptr);
 
@@ -510,7 +509,7 @@ zpmoppop(struct zpmopcode *op)
 void
 zpmoppush(struct zpmopcode *op)
 {
-    zasword_t  src = zpmgetarg1(&zpm, op);
+    zasword_t  src = zpmgetsrcarg(&zpm, op);
     zasword_t  sp = zpm.sp_reg;
     zasword_t *dptr;
 
@@ -547,12 +546,19 @@ zpmoppusha(struct zpmopcode *op)
 /* MARK */
 
 void
+zpmopldr(struct zpmopcode *op)
+{
+    zasword_t *sptr = zpmgetldrsrcptr(&zpm, op);
+    zasword_t  dest = zpmgetdestptr(&zpm, op);
+}
+
+void
 zpmopmovl(struct zpmopcode *op)
 {
     zasword_t  arg1 = op->reg1;
     zasword_t  arg2t = op->arg2t;
     uint32_t  *dptr;
-    uint32_t   src = zpmgetarg1mov(op, arg1t, arg2t);
+    uint32_t   src = zpmgetsrcargmov(op, arg1t, arg2t);
 
     zpmgetarg2mov(op, arg1t, arg2t, dptr, uint32_t);
     *dptr = src;
@@ -565,7 +571,7 @@ zpmopmovb(struct zpmopcode *op)
     zasword_t  arg1 = op->reg1;
     zasword_t  arg2t = op->arg2t;
     uint8_t   *dptr;
-    uint8_t    src = zpmgetarg1mov(op, arg1t, arg2t);
+    uint8_t    src = zpmgetsrcargmov(op, arg1t, arg2t);
 
     zpmgetarg2mov(op, arg1t, arg2t, dptr, uint8_t);
     *dptr = src;
@@ -578,7 +584,7 @@ zpmopmovw(struct zpmopcode *op)
     zasword_t  arg1 = op->reg1;
     zasword_t  arg2t = op->arg2t;
     uint16_t  *dptr;
-    uint16_t   src = zpmgetarg1mov(op, arg1t, arg2t);
+    uint16_t   src = zpmgetsrcargmov(op, arg1t, arg2t);
 
     zpmgetarg2mov(op, arg1t, arg2t, dptr, uint16_t);
     *dptr = src;
@@ -592,7 +598,7 @@ zpmopmovq(struct zpmopcode *op)
     zasword_t  arg1 = op->reg1;
     zasword_t  arg2t = op->arg2t;
     uint64_t  *dptr;
-    uint64_t   src = zpmgetarg1mov(op, arg1t, arg2t);
+    uint64_t   src = zpmgetsrcargmov(op, arg1t, arg2t);
     uint64_t   dest = zpmgetarg2mov(op, arg1t, arg2t, dptr, uint64_t);
 
     *dptr = src;
@@ -605,7 +611,7 @@ zpmopcall(struct zpmopcode *op)
 {
     zasword_t  arg1 = op->reg1;
     zasword_t *dptr = (zasword_t *)&zpm.physmem[zpm.sp_reg];
-    zasword_t  dest = zpmgetarg1(op, arg1t);
+    zasword_t  dest = zpmgetsrcarg(op, arg1t);
     zasword_t  src;
     long       l;
     
@@ -627,7 +633,7 @@ zpmopenter(struct zpmopcode *op)
 {
     zasword_t  arg1t = op->reg1;
     zasword_t *dptr = (zasword_t *)&zpm.physmem[zpm.sp_reg] - sizeof(zasword_t);
-    zasword_t  ofs = zpmgetarg1(op, reg1);
+    zasword_t  ofs = zpmgetsrcarg(op, reg1);
 
     *dptr = zpm.fp_reg;
     zpm.sp_reg -= ofs + sizeof(zasword_t);
