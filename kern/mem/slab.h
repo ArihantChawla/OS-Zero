@@ -8,27 +8,6 @@
 #include <kern/mem/mem.h>
 #include <kern/mem/pool.h>
 
-#if !(MEMNEWSLAB)
-#define memslabclrinfo(sp)                                              \
-    ((sp)->info = 0UL)
-#define memslabclrbkt(sp)                                               \
-    ((sp)->info &= MEMFLGBITS)
-#define memslabsetbkt(sp, bkt)                                          \
-    (memslabclrbkt(sp), (sp)->info |= ((bkt) << MEMNFLGBIT))
-#define memslabgetbkt(sp)                                               \
-    ((sp)->info >> MEMNFLGBIT)
-#define memslabisfree(sp)                                               \
-    (((sp)->info) & MEMFREE)
-#define memslabsetfree(sp)                                              \
-    ((sp)->info |= MEMFREE)
-#define memslabclrfree(sp)                                              \
-    ((sp)->info &= ~MEMFREE)
-#define memslabsetflg(sp, flg)                                          \
-    ((sp)->info |= (flg))
-#define memslabclrflg(sp)                                               \
-    ((sp)->info &= ~MEMFLGBITS)
-#endif
-
 #define __STRUCT_MEMSLAB_PAD                                            \
     (CLSIZE - 3 * PTRSIZE - WORDSIZE)
 struct memslab {
