@@ -203,6 +203,7 @@ asmprocinst(struct zastoken *token, zasmemadr_t adr, zasmemadr_t *retadr)
     struct zastoken  *token1 = NULL;
     struct zastoken  *token2 = NULL;
     struct zastoken  *retval = NULL;
+    zasmemadr_t       argsz = 0;
     struct zassymrec *sym;
     zasuword_t        uval;
     uint8_t           narg = token->data.inst.narg;
@@ -222,7 +223,6 @@ asmprocinst(struct zastoken *token, zasmemadr_t adr, zasmemadr_t *retadr)
     op->code = token->data.inst.op;
     if (op->code == ZPMOPNOP) {
         retval = token->next;
-        adr++;
     } else if (!narg) {
         op->reg1 = 0;
         op->reg2 = 0;
@@ -241,7 +241,7 @@ asmprocinst(struct zastoken *token, zasmemadr_t adr, zasmemadr_t *retadr)
                     } else {
                         op->adrmode |= ZPM_IMM_VAL;
                         op->args[0] = val;
-                        op->argsz = sizeof(zasword_t);
+                        argsz = sizeof(zasword_t);
                     }
                     
                     break;
@@ -256,7 +256,7 @@ asmprocinst(struct zastoken *token, zasmemadr_t adr, zasmemadr_t *retadr)
                     sym->name = strdup((char *)token1->data.sym.name);
                     sym->adr = (uintptr_t)&op->args[0];
                     zasqueuesym(sym);
-                    op->argsz = sizeof(zasmemadr_t);
+                    argsz = sizeof(zasmemadr_t);
                     
                     break;
                 case ZASTOKENINDIR:
@@ -279,7 +279,7 @@ asmprocinst(struct zastoken *token, zasmemadr_t adr, zasmemadr_t *retadr)
                     } else {
                         op->adrmode |= ZPM_IMM_VAL;
                         op->args[0] = token1->val;
-                        op->argsz = sizeof(zasword_t);
+                        argsz = sizeof(zasword_t);
                     }
                     
                     break;
@@ -290,7 +290,7 @@ asmprocinst(struct zastoken *token, zasmemadr_t adr, zasmemadr_t *retadr)
                     sym->name = strdup((char *)token1->data.sym.name);
                     sym->adr = (uintptr_t)&op->args[0];
                     zasqueuesym(sym);
-                    op->argsz = sizeof(zasmemadr_t);
+                    argsz = sizeof(zasmemadr_t);
                     
                     break;
                 case ZASTOKENINDEX:
@@ -298,7 +298,7 @@ asmprocinst(struct zastoken *token, zasmemadr_t adr, zasmemadr_t *retadr)
                     op->adrmode |= ZPM_REG_VAL;
                     op->reg1 = token1->data.ndx.reg;
                     op->args[0] = token1->data.ndx.val;
-                    op->argsz = sizeof(zasword_t);
+                    argsz = sizeof(zasword_t);
                     
                     break;
                 default:
@@ -318,7 +318,7 @@ asmprocinst(struct zastoken *token, zasmemadr_t adr, zasmemadr_t *retadr)
                 case ZASTOKENVALUE:
                     op_>adrmode |= ZPM_IMM_ADR;
                     op->args[0] = token2->data.value.val;
-                    op->argsz = sizeof(zasword_t);
+                    argsz = sizeof(zasword_t);
                     
                     break;
                 case ZASTOKENREG:
@@ -331,7 +331,7 @@ asmprocinst(struct zastoken *token, zasmemadr_t adr, zasmemadr_t *retadr)
                     sym->name = strdup((char *)token2->data.sym.name);
                     sym->adr = (uintptr_t)&op->args[0];
                     zasqueuesym(sym);
-                    op->argsz = sizeof(zasmemadr_t);
+                    argsz = sizeof(zasmemadr_t);
                     
                     break;
                 case ZASTOKENINDIR:
@@ -349,7 +349,7 @@ asmprocinst(struct zastoken *token, zasmemadr_t adr, zasmemadr_t *retadr)
                 case ZASTOKENIMMED:
                     op->adrmode |= ZPM_IMM_ADR;
                     op->args[0] = token2->val;
-                    op->argsz = sizeof(zasword_t);
+                    argsz = sizeof(zasword_t);
                     
                     break;
                 case ZASTOKENADR:
@@ -358,14 +358,14 @@ asmprocinst(struct zastoken *token, zasmemadr_t adr, zasmemadr_t *retadr)
                     sym->name = strdup((char *)token2->data.sym.name);
                     sym->adr = (uintptr_t)&op->args[0];
                     zasqueuesym(sym);
-                    op->argsz = sizeof(zasmemadr_t);
+                    argsz = sizeof(zasmemadr_t);
                     
                     break;
                 case ZASTOKENINDEX:
                     op->adrmode |= ZPM_REG_NDX;
                     op->reg2 = token2->data.ndx.reg;
                     op->args[0] = token2->data.ndx.val;
-                    op->argsz = sizeof(zasword_t);
+                    argsz = sizeof(zasword_t);
                     
                     break;
                 default:
@@ -380,7 +380,8 @@ asmprocinst(struct zastoken *token, zasmemadr_t adr, zasmemadr_t *retadr)
             zasfreetoken(token2);
         }
     }
-    *retadr = adr + len + op->argsz;
+    op->argsz = argsz;
+    *retadr = adr + len + argsz;
     
     return retval;
 }
