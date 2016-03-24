@@ -236,10 +236,10 @@ asmprocinst(struct zastoken *token, zasmemadr_t adr, zasmemadr_t *retadr)
                     /* FIXME: do NOT allow this for STR */
                     uval = *((uint8_t *)&token1->data.value.val);
                     if (val <= 0xff) {
-                        op->adrmode |= ZPF_IMM8_VAL;
+                        op->adrmode |= ZPM_IMM8_VAL;
                         op->imm8 = uval;
                     } else {
-                        op->adrmode |= ZPF_IMM_VAL;
+                        op->adrmode |= ZPM_IMM_VAL;
                         op->args[0] = val;
                         op->argsz = sizeof(zasword_t);
                     }
