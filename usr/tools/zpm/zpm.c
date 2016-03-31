@@ -54,11 +54,11 @@ zpmloop(struct zpm *vm)
         &&doin,
         &&doout
     };
-    uint8_t *text = vm->segs[ZPM_TEXT];
+    uint8_t *text = &vm->mem[vm->segs[ZPM_TEXT]];
     uint8_t *op = text;
 
     opjmp(op);
-    while (1) {
+    while (op) {
         donot:
             op = zpmnot(vm, op, pc);
 

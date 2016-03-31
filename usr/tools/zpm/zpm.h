@@ -123,8 +123,8 @@ typedef zpmulong zpmureg;
 struct zpm {
     zpmreg   genregs[ZPM_NGENREG];
     zpmureg  sysregs[ZPM_NSYSREG];
-    uint8_t *segs[ZPM_NSEG];
-    zpmureg  segszs[ZPM_NSEG];
+    zpmureg *segs[ZPM_NSEG];
+    zpmureg  seglims[ZPM_NSEG];
     uint8_t *mem;
 };
 
@@ -146,6 +146,15 @@ struct zpmop {
     unsigned int imm8  : 8;     // immediate argument such as shift count
     zpmreg       imm[EMPTY];    // possible immediate argument
 };
+
+/* predefined I/O ports */
+#define ZPM_STDIN_PORT  0       // keyboard input
+#define ZPM_STDOUT_PORT 1       // console or framebuffer output
+#define ZPM_STDERR_PORT 2       // console or framebuffer output
+#define ZPM_MOUSE_PORT  3       // mouse input
+
+/* framebuffer graphics interface */
+#define ZPM_FB_BASE     (3UL * 1024 * 1024 * 1024)      // base address
 
 /* operation function prototypes */
 

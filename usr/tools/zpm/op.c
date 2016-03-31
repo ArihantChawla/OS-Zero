@@ -9,7 +9,7 @@ zpmnot(struct zpm *vm, uint8_t *ptr, zpmureg pc)
     dest = ~src;
     pc += sizeof(struct zpmop);
     *dptr = dest;
-    if (pc > vm->segszs[ZPM_TEXT]) {
+    if (pc > vm->seglims[ZPM_TEXT]) {
 
         return NULL;
     }
@@ -29,7 +29,7 @@ zpmand(struct zpm *vm, uint8_t *ptr, zpmureg pc)
     zpmget2argsgenreg(vm, op, dptr, src, dest);
     pc += sizeof(struct zpmop);
     dest &= src;
-    if (pc > vm->segszs[ZPM_TEXT]) {
+    if (pc > vm->seglims[ZPM_TEXT]) {
 
         return NULL;
     }
@@ -50,7 +50,7 @@ zpmor(struct zpm *vm, uint8_t *ptr, zpmureg pc)
     zpmget2argsgenreg(vm, op, dptr, src, dest);
     pc += sizeof(struct zpmop);
     dest |= src;
-    if (pc > vm->segszs[ZPM_TEXT]) {
+    if (pc > vm->seglims[ZPM_TEXT]) {
 
         return NULL;
     }
@@ -71,7 +71,7 @@ zpmxor(struct zpm *vm, uint8_t *ptr, zpmureg pc)
     zpmget2argsgenreg(vm, op, dptr, src, dest);
     pc += sizeof(struct zpmop);
     dest ^= src;
-    if (pc > vm->segszs[ZPM_TEXT]) {
+    if (pc > vm->seglims[ZPM_TEXT]) {
 
         return NULL;
     }
@@ -85,15 +85,15 @@ __inline__ uint8_t *
 zpmshl(struct zpm *vm, uint8_t *ptr, zpmureg pc)
 {
     struct zpmop *op = (struct zpmop *)ptr;
-    zpmreg       *dptr = &vm->genregs[(op)->reg2];
+    zpmreg       *dptr = &vm->genregs[op->reg2];
     zpmreg        src = ((op->argt & ZPM_IMM_VAL)
                          ? op->imm8
-                         : vm->genregs[(op)->reg1]);
+                         : vm->genregs[op->reg1]);
     zpmreg  dest = *dptr;
 
     dest <<= src;
     pc += sizeof(struct zpmop);
-    if (pc > vm->segszs[ZPM_TEXT]) {
+    if (pc > vm->seglims[ZPM_TEXT]) {
 
         return NULL;
     }
@@ -107,17 +107,17 @@ __inline__ uint8_t *
 zpmshr(struct zpm *vm, uint8_t *ptr, zpmureg pc)
 {
     struct zpmop *op = (struct zpmop *)ptr;
-    zpmreg       *dptr = &vm->genregs[(op)->reg2];
+    zpmreg       *dptr = &vm->genregs[op->reg2];
     zpmreg        src = ((op->argt & ZPM_IMM_VAL)
                          ? op->imm8
-                         : vm->genregs[(op)->reg1]);
+                         : vm->genregs[op->reg1]);
     zpmreg        dest = *dptr;
     zpmreg        fill = ~((zpmreg)0) >> src;
 
     dest >>= src;
     pc += sizeof(struct zpmop);
     dest &= fill;
-    if (pc > vm->segszs[ZPM_TEXT]) {
+    if (pc > vm->seglims[ZPM_TEXT]) {
 
         return NULL;
     }
@@ -131,10 +131,10 @@ __inline__ uint8_t *
 zpmsar(struct zpm *vm, uint8_t *ptr, zpmureg pc)
 {
     struct zpmop *op = (struct zpmop *)ptr;
-    zpmreg       *dptr = &vm->genregs[(op)->reg2];
+    zpmreg       *dptr = &vm->genregs[op->reg2];
     zpmreg        src = ((op->argt & ZPM_IMM_VAL)
                          ? op->imm8
-                         : vm->genregs[(op)->reg1]);
+                         : vm->genregs[op->reg1]);
     zpmreg        dest = *dptr;
     zpmreg        mask = ~(zpmreg)0;
 #if defined(ZPM64BIT)
@@ -151,7 +151,7 @@ zpmsar(struct zpm *vm, uint8_t *ptr, zpmureg pc)
     fill = -fill << (CHAR_BIT * sizeof(zpmreg) - src);
     pc += sizeof(struct zpmop);
     dest &= fill;
-    if (pc > vm->segszs[ZPM_TEXT]) {
+    if (pc > vm->seglims[ZPM_TEXT]) {
 
         return NULL;
     }
@@ -165,10 +165,10 @@ __inline__ uint8_t *
 zpmrol(struct zpm *vm, uint8_t *ptr, zpmureg pc)
 {
     struct zpmop *op = (struct zpmop *)ptr;
-    zpmreg       *dptr = &vm->genregs[(op)->reg2];
+    zpmreg       *dptr = &vm->genregs[op->reg2];
     zpmreg        src = ((op->argt & ZPM_IMM_VAL)
                          ? op->imm8
-                         : vm->genregs[(op)->reg1]);
+                         : vm->genregs[op->reg1]);
     zpmreg        dest = *dptr;
     zpmreg        mask = (~(zpmreg)0) << (CHAR_BIT * sizeof(zpmreg) - src);
     zpmreg        bits = dest & mask;
@@ -178,7 +178,7 @@ zpmrol(struct zpm *vm, uint8_t *ptr, zpmureg pc)
     dest <<= src;
     pc += sizeof(struct zpmop);
     dest |= bits;
-    if (pc > vm->segszs[ZPM_TEXT]) {
+    if (pc > vm->seglims[ZPM_TEXT]) {
 
         return NULL;
     }
@@ -192,10 +192,10 @@ __inline__ uint8_t *
 zpmror(struct zpm *vm, uint8_t *ptr, zpmureg pc)
 {
     struct zpmop *op = (struct zpmop *)ptr;
-    zpmreg       *dptr = &vm->genregs[(op)->reg2];
+    zpmreg       *dptr = &vm->genregs[op->reg2];
     zpmreg        src = ((op->argt & ZPM_IMM_VAL)
                          ? op->imm8
-                         : vm->genregs[(op)->reg1]);
+                         : vm->genregs[op->reg1]);
     zpmreg        dest = *dptr;
     zpmreg        mask = (~(zpmreg)0) >> (CHAR_BIT * sizeof(zpmreg) - src);
     zpmreg        bits = dest & mask;
@@ -205,7 +205,7 @@ zpmror(struct zpm *vm, uint8_t *ptr, zpmureg pc)
     dest >>= src;
     pc += sizeof(struct zpmop);
     dest |= bits;
-    if (pc > vm->segszs[ZPM_TEXT]) {
+    if (pc > vm->seglims[ZPM_TEXT]) {
 
         return NULL;
     }
@@ -219,13 +219,13 @@ __inline__ uint8_t *
 zpminc(struct zpm *vm, uint8_t *ptr, zpmureg pc)
 {
     struct zpmop *op = (struct zpmop *)ptr;
-    zpmreg       *dptr = &vm->genregs[(op)->reg1];
+    zpmreg       *dptr = &vm->genregs[op->reg1];
     zpmreg        src = *dptr;
 
     src++;
     pc += sizeof(struct zpmop);
     dest = src;
-    if (pc > vm->segszs[ZPM_TEXT]) {
+    if (pc > vm->seglims[ZPM_TEXT]) {
 
         return NULL;
     }
@@ -239,13 +239,13 @@ __inline__ uint8_t *
 zpmdec(struct zpm *vm, uint8_t *ptr, zpmureg pc)
 {
     struct zpmop *op = (struct zpmop *)ptr;
-    zpmreg       *dptr = &vm->genregs[(op)->reg1];
+    zpmreg       *dptr = &vm->genregs[op->reg1];
     zpmreg        src = *dptr;
 
     src--;
     pc += sizeof(struct zpmop);
     dest = src;
-    if (pc > vm->segszs[ZPM_TEXT]) {
+    if (pc > vm->seglims[ZPM_TEXT]) {
 
         return NULL;
     }
@@ -267,7 +267,7 @@ zpmadd(struct zpm *vm, uint8_t *ptr, zpmureg pc)
     zpmget2argsgenreg(vm, op, dptr, src, dest);
     pc += sizeof(struct zpmop);
     res = src + dest;
-    if (pc > vm->segszs[ZPM_TEXT]) {
+    if (pc > vm->seglims[ZPM_TEXT]) {
 
         return NULL;
     }
@@ -291,7 +291,7 @@ zpmsub(struct zpm *vm, uint8_t *ptr, zpmureg pc)
     zpmget2argsgenreg(vm, op, dptr, src, dest);
     pc += sizeof(struct zpmop);
     dest -= src;
-    if (pc > vm->segszs[ZPM_TEXT]) {
+    if (pc > vm->seglims[ZPM_TEXT]) {
 
         return NULL;
     }
@@ -312,7 +312,7 @@ zpmcmp(struct zpm *vm, uint8_t *ptr, zpmureg pc)
     zpmget2argsgenreg(vm, op, dptr, src, dest);
     pc += sizeof(struct zpmop);
     dest -= src;
-    if (pc > vm->segszs[ZPM_TEXT]) {
+    if (pc > vm->seglims[ZPM_TEXT]) {
 
         return NULL;
     }
@@ -349,61 +349,161 @@ zpmjmp(struct zpm *vm, uint8_t *ptr, zpmureg pc)
 __inline__ uint8_t *
 zpmbz(struct zpm *vm, uint8_t *ptr, zpmureg pc)
 {
-    ;
+    struct zpmop *op = (struct zpmop *)ptr;
+    zpmreg        dest = vm->genregs[op->reg1];
+
+    pc += sizeof(struct zpmop);
+    if (zpmzfset(vm)) {
+        ptr = &vm->mem[dest];
+    } else {
+        ptr = &vm->mem[pc];
+    }
+
+    return ptr;
 }
 
 __inline__ uint8_t *
 zpmbnz(struct zpm *vm, uint8_t *ptr, zpmureg pc)
 {
-    ;
+    struct zpmop *op = (struct zpmop *)ptr;
+    zpmreg        dest = vm->genregs[op->reg1];
+
+    pc += sizeof(struct zpmop);
+    if (!zpmzfset(vm)) {
+        ptr = &vm->mem[dest];
+    } else {
+        ptr = &vm->mem[pc];
+    }
+
+    return ptr;
 }
 
 __inline__ uint8_t *
 zpmblt(struct zpm *vm, uint8_t *ptr, zpmureg pc)
 {
-    ;
+    struct zpmop *op = (struct zpmop *)ptr;
+    zpmreg        dest = vm->genregs[op->reg1];
+
+    pc += sizeof(struct zpmop);
+    if (!zpmofset(vm)) {
+        ptr = &vm->mem[dest];
+    } else {
+        ptr = &vm->mem[pc];
+    }
+
+    return ptr;
 }
 
 __inline__ uint8_t *
 zpmble(struct zpm *vm, uint8_t *ptr, zpmureg pc)
 {
-    ;
+    struct zpmop *op = (struct zpmop *)ptr;
+    zpmreg        dest = vm->genregs[op->reg1];
+
+    pc += sizeof(struct zpmop);
+    if (!zpmofset(vm) || zpmzfset(vm)) {
+        ptr = &vm->mem[dest];
+    } else {
+        ptr = &vm->mem[pc];
+    }
+
+    return ptr;
 }
 
 __inline__ uint8_t *
 zpmbgt(struct zpm *vm, uint8_t *ptr, zpmureg pc)
 {
-    ;
+    struct zpmop *op = (struct zpmop *)ptr;
+    zpmreg        dest = vm->genregs[op->reg1];
+
+    pc += sizeof(struct zpmop);
+    if (zpmofset(vm)) {
+        ptr = &vm->mem[dest];
+    } else {
+        ptr = &vm->mem[pc];
+    }
+
+    return ptr;
 }
 
 __inline__ uint8_t *
 zpmbge(struct zpm *vm, uint8_t *ptr, zpmureg pc)
 {
-    ;
+    struct zpmop *op = (struct zpmop *)ptr;
+    zpmreg        dest = vm->genregs[op->reg1];
+
+    pc += sizeof(struct zpmop);
+    if (zpmofset(vm) || zpmzfset(vm)) {
+        ptr = &vm->mem[dest];
+    } else {
+        ptr = &vm->mem[pc];
+    }
+
+    return ptr;
 }
 
 __inline__ uint8_t *
 zpmbo(struct zpm *vm, uint8_t *ptr, zpmureg pc)
 {
-    ;
+    struct zpmop *op = (struct zpmop *)ptr;
+    zpmreg        dest = vm->genregs[op->reg1];
+
+    pc += sizeof(struct zpmop);
+    if (zpmofset(vm)) {
+        ptr = &vm->mem[dest];
+    } else {
+        ptr = &vm->mem[pc];
+    }
+
+    return ptr;
 }
 
 __inline__ uint8_t *
 zpmbno(struct zpm *vm, uint8_t *ptr, zpmureg pc)
 {
-    ;
+    struct zpmop *op = (struct zpmop *)ptr;
+    zpmreg        dest = vm->genregs[op->reg1];
+
+    pc += sizeof(struct zpmop);
+    if (!zpmofset(vm)) {
+        ptr = &vm->mem[dest];
+    } else {
+        ptr = &vm->mem[pc];
+    }
+
+    return ptr;
 }
 
 __inline__ uint8_t *
 zpmbc(struct zpm *vm, uint8_t *ptr, zpmureg pc)
 {
-    ;
+    struct zpmop *op = (struct zpmop *)ptr;
+    zpmreg        dest = vm->genregs[op->reg1];
+
+    pc += sizeof(struct zpmop);
+    if (zpmcfset(vm)) {
+        ptr = &vm->mem[dest];
+    } else {
+        ptr = &vm->mem[pc];
+    }
+
+    return ptr;
 }
 
 __inline__ uint8_t *
 zpmbnc(struct zpm *vm, uint8_t *ptr, zpmureg pc)
 {
-    ;
+    struct zpmop *op = (struct zpmop *)ptr;
+    zpmreg        dest = vm->genregs[op->reg1];
+
+    pc += sizeof(struct zpmop);
+    if (!zpmcfset(vm)) {
+        ptr = &vm->mem[dest];
+    } else {
+        ptr = &vm->mem[pc];
+    }
+
+    return ptr;
 }
 
 __inline__ uint8_t *
