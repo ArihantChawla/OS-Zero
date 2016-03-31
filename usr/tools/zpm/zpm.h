@@ -3,7 +3,7 @@
 
 #include <zpm/conf.h>
 #include <stdint.h>
-#include <zero/cdecl.h>
+#include <zero/cdefs.h>
 
 typedef int8_t   zpmbyte;
 typedef uint8_t  zpmubyte;
@@ -83,6 +83,14 @@ typedef zpmulong zpmureg;
 
 /* VIRTUAL MACHINE */
 
+#define zpmclrmsw(vm) ((vm)->sysregs[ZPM_MSW] = 0)
+#define zpmsetzf(vm)  ((vm)->sysregs[ZPM_MSW] |= ZPM_MSW_ZF)
+#define zpmsetcf(vm)  ((vm)->sysregs[ZPM_MSW] |= ZPM_MSW_CF)
+#define zpmsetof(vm)  ((vm)->sysregs[ZPM_MSW] |= ZPM_MSW_OF)
+#define zpmzfset(vm)  ((vm)->sysregs[ZPM_MSW] & ZPM_MSW_ZF)
+#define zpmcfset(vm)  ((vm)->sysregs[ZPM_MSW] & ZPM_MSW_CF)
+#define zpmofset(vm)  ((vm)->sysregs[ZPM_MSW] & ZPM_MSW_OF)
+
 /* accumulator (general-purpose register) IDs */
 #define ZPM_REG0    0x00
 #define ZPM_REG1    0x01
@@ -159,51 +167,6 @@ struct zpmop {
 #define ZPM_FB_BASE     (3UL * 1024 * 1024 * 1024)      // base address
 
 /* operation function prototypes */
-
-void zpmnot(struct zpm *vm, uint8_t *op, zpmureg pc);
-void zpmand(struct zpm *vm, uint8_t *op, zpmureg pc);
-void zpmor(struct zpm *vm, uint8_t *op, zpmureg pc);
-void zpmxor(struct zpm *vm, uint8_t *op, zpmureg pc);
-void zpmshl(struct zpm *vm, uint8_t *op, zpmureg pc);
-void zpmshr(struct zpm *vm, uint8_t *op, zpmureg pc);
-void zpmsar(struct zpm *vm, uint8_t *op, zpmureg pc);
-void zpmrol(struct zpm *vm, uint8_t *op, zpmureg pc);
-void zpmror(struct zpm *vm, uint8_t *op, zpmureg pc);
-void zpminc(struct zpm *vm, uint8_t *op, zpmureg pc);
-void zpmdec(struct zpm *vm, uint8_t *op, zpmureg pc);
-void zpmadd(struct zpm *vm, uint8_t *op, zpmureg pc);
-void zpmsub(struct zpm *vm, uint8_t *op, zpmureg pc);
-void zpmcmp(struct zpm *vm, uint8_t *op, zpmureg pc);
-void zpmmul(struct zpm *vm, uint8_t *op, zpmureg pc);
-void zpmdiv(struct zpm *vm, uint8_t *op, zpmureg pc);
-void zpmjmp(struct zpm *vm, uint8_t *op, zpmureg pc);
-void zpmbz(struct zpm *vm, uint8_t *op, zpmureg pc);
-void zpmbnz(struct zpm *vm, uint8_t *op, zpmureg pc);
-void zpmblt(struct zpm *vm, uint8_t *op, zpmureg pc);
-void zpmble(struct zpm *vm, uint8_t *op, zpmureg pc);
-void zpmbgt(struct zpm *vm, uint8_t *op, zpmureg pc);
-void zpmbge(struct zpm *vm, uint8_t *op, zpmureg pc);
-void zpmbo(struct zpm *vm, uint8_t *op, zpmureg pc);
-void zpmbno(struct zpm *vm, uint8_t *op, zpmureg pc);
-void zpmbc(struct zpm *vm, uint8_t *op, zpmureg pc);
-void zpmbnc(struct zpm *vm, uint8_t *op, zpmureg pc);
-void zpmpop(struct zpm *vm, uint8_t *op, zpmureg pc);
-void zpmpush(struct zpm *vm, uint8_t *op, zpmureg pc);
-void zpmpusha(struct zpm *vm, uint8_t *op, zpmureg pc);
-void zpmlda(struct zpm *vm, uint8_t *op, zpmureg pc);
-void zpmsta(struct zpm *vm, uint8_t *op, zpmureg pc);
-void zpmcall(struct zpm *vm, uint8_t *op, zpmureg pc);
-void zpmenter(struct zpm *vm, uint8_t *op, zpmureg pc);
-void zpmleave(struct zpm *vm, uint8_t *op, zpmureg pc);
-void zpmret(struct zpm *vm, uint8_t *op, zpmureg pc);
-void zpmthr(struct zpm *vm, uint8_t *op, zpmureg pc);
-void zpmltb(struct zpm *vm, uint8_t *op, zpmureg pc);
-void zpmldr(struct zpm *vm, uint8_t *op, zpmureg pc);
-void zpmstr(struct zpm *vm, uint8_t *op, zpmureg pc);
-void zpmrst(struct zpm *vm, uint8_t *op, zpmureg pc);
-void zpmhlt(struct zpm *vm, uint8_t *op, zpmureg pc);
-void zpmin(struct zpm *vm, uint8_t *op, zpmureg pc);
-void zpmout(struct zpm *vm, uint8_t *op, zpmureg pc);
 
 #endif /* __ZPM_ZPM_H__ */
 

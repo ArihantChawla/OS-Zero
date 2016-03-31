@@ -1,4 +1,7 @@
-#define opjmp(op) goto *jmptab[(struct zpmop *)op->code]
+#include <zpm/zpm.h>
+#include <zpm/op.h>
+
+#define opjmp(op) goto *jmptab[((struct zpmop *)op)->code]
 
 
 #if defined(__GNUC__)
@@ -6,7 +9,7 @@
 /* this version of zpmloop uses GCC computed gotos to dispatch VM operations */
 
 int
-zpmloop(struct zpm *vm)
+zpmloop(struct zpm *vm, zpmureg pc)
 {
     static void *jmptab[] = {
         &&donot,
@@ -54,7 +57,6 @@ zpmloop(struct zpm *vm)
         &&doin,
         &&doout
     };
-    zpmureg  pc = vm->sysregs[ZPM_PC];
     uint8_t *text = &vm->mem[pc];
     uint8_t *op = text;
 
@@ -109,7 +111,7 @@ zpmloop(struct zpm *vm)
             
             opjmp(op);
         dosub:
-            zpsub(vm, op, pc);
+            zpmsub(vm, op, pc);
             
             opjmp(op);
         docmp:
