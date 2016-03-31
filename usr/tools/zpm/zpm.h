@@ -108,6 +108,10 @@ typedef zpmulong zpmureg;
 #define ZPM_SP      0x03        // stack pointer
 #define ZPM_PDB     0x04        // page director base address register
 #define ZPM_NSYSREG 16
+/* values for sysregs[ZPM_MSW] */
+#define ZPM_MSW_ZF  (1 << 0)
+#define ZPM_MSW_CF  (1 << 1)
+#define ZPM_MSW_OF  (1 << 2)
 /* program segments */
 #define ZPM_TEXT    0x00        // code
 #define ZPM_RODATA  0x01        // read-only data (string literals etc.)
