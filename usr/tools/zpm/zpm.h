@@ -44,35 +44,35 @@ typedef uint64_t zpmuquad;
 #define ZPM_BLT     0x14        // branch if less than
 #define ZPM_BLE     0x15        // branch if less than or equal
 #define ZPM_BGT     0x16        // branch if greater than
-#define ZPM_BGE     0x16        // branch if greater than or equal
-#define ZPM_BO      0x17        // branch if overflow set
-#define ZPM_BNO     0x18        // branch if overflow not set
-#define ZPM_BC      0x19        // branch if carry set
-#define ZPM_BNC     0x20        // branch if carry not set
+#define ZPM_BGE     0x17        // branch if greater than or equal
+#define ZPM_BO      0x18        // branch if overflow set
+#define ZPM_BNO     0x19        // branch if overflow not set
+#define ZPM_BC      0x1a        // branch if carry set
+#define ZPM_BNC     0x1b        // branch if carry not set
 /* stack operations */
-#define ZPM_POP     0x21        // pop from stack
-#define ZPM_PUSH    0x22        // push on stack
-#define ZPM_PUSHA   0x23        // push all registers on stack
+#define ZPM_POP     0x1c        // pop from stack
+#define ZPM_PUSH    0x1d        // push on stack
+#define ZPM_PUSHA   0x1e        // push all registers on stack
 /* load and store operations */
-#define ZPM_LDA     0x24        // load accumulator (register)
-#define ZPM_STA     0x25        // store accumulator
+#define ZPM_LDA     0x1f        // load accumulator (register)
+#define ZPM_STA     0x20        // store accumulator
 /* subroutine operations */
-#define ZPM_CALL    0x26        // call subroutine
-#define ZPM_ENTER   0x27        // subroutine prologue
-#define ZPM_LEAVE   0x28        // subroutine epilogue
-#define ZPM_RET     0x29        // return from subroutine
+#define ZPM_CALL    0x21        // call subroutine
+#define ZPM_ENTER   0x22        // subroutine prologue
+#define ZPM_LEAVE   0x23        // subroutine epilogue
+#define ZPM_RET     0x24        // return from subroutine
 /* thread operations */
-#define ZPM_THR     0x2a        // launch new thread
-#define ZPM_LTB     0x2b        // load base address for thread-local storage
+#define ZPM_THR     0x25        // launch new thread
+#define ZPM_LTB     0x26        // load base address for thread-local storage
 /* system operations */
-#define ZPM_LDR     0x2c        // load special register
-#define ZPM_STR     0x2d        // store special register
-#define ZPM_RST     0x2e        // reset
-#define ZPM_HLT     0x2f        // halt
+#define ZPM_LDR     0x27        // load special register
+#define ZPM_STR     0x28        // store special register
+#define ZPM_RST     0x29        // reset
+#define ZPM_HLT     0x2a        // halt
 /* I/O operations */
-#define ZPM_IN      0x30        // read data from port
-#define ZPM_OUT     0x31        // write data to port
-#define ZPM_NALU_OP 0x32        // number of ALU operations
+#define ZPM_IN      0x2b        // read data from port
+#define ZPM_OUT     0x2c        // write data to port
+#define ZPM_NALU_OP 0x2d        // number of ALU operations
 
 /* accumulator (general-purpose register) IDs */
 #define ZPM_REG0    0x00
