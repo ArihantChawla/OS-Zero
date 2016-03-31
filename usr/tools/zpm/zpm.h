@@ -131,7 +131,7 @@ struct zpmop {
     unsigned int unit  : 2;     // ALU, FPU, SYS, IO
     unsigned int reg1  : 4;     // argument #1 register ID
     unsigned int reg2  : 4;     // argument #2 register ID
-    unsigned int argt  : 6;     // arguemnt types
+    unsigned int argt  : 6;     // argument types
     unsigned int argsz : 2;     // argument size is 8 << argsz
     unsigned int imm8  : 8;     // immediate argument such as shift count
 };
