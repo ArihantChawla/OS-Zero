@@ -1,141 +1,124 @@
 #ifndef __ZPM_ZPM_H__
 #define __ZPM_ZPM_H__
 
+#include <stdint.h>
+
+typedef int8_t   zpmbyte;
+typedef uint8_t  zpmubyte;
+typedef int16_t  zpmword;
+typedef uint16_t zpmuword;
+typedef int32_t  zpmlong;
+typedef uint32_t zpmulong;
+#if defined(ZPM64BIT)
+typedef int64_t  zpmquad;
+typedef uint64_t zpmuquad;
+#endif
+
 /* INSTRUCTION SET */
 
-#define ZPM_OP_NOP     0x00 // dummy operation
-/* logical operations */
-#define ZPM_OP_LOGIC   0x00
-#define ZPM_OP_NOT     0x01 // 2's complement
-#define ZPM_OP_AND     0x02 // logical AND
-#define ZPM_OP_OR      0x03 // logical OR
-#define ZPM_OP_XOR     0x04 // logical exclusive OR
-/* shift operations */
-#define ZPM_OP_SHIFT   0x01
-#define ZPM_OP_SHL     0x01 // shift left (fill with zero)
-#define ZPM_OP_SHR     0x02 // logical shift right (fill with zero)
-#define ZPM_OP_SAR     0x03 // arithmetic shift right (fill with sign)
-#define ZPM_OP_ROR     0x04 // rotate right
-#define ZPM_OP_ROL     0x05 // rotate left
+/* no operation */
+#define ZPM_NOP     0x00        // no operation
+/* ALU (arithmetic-logical unit) instructions */
+/* bitwise operations */
+#define ZPM_NOT     0x01        // 2's complement (reverse all bits)
+#define ZPM_AND     0x02        // logical bitwise AND
+#define ZPM_OR      0x03        // logical bitwise OR
+#define ZPM_XOR     0x04        // logical bitwise XOR (exclusive OR)
+#define ZPM_SHL     0x05        // shift left
+#define ZPM_SHR     0x06        // logical shift right (fill with zero)
+#define ZPM_SAR     0x07        // arithmetic shift right (fill with sign-bit)
+#define ZPM_ROL     0x08        // rotate left
+#define ZPM_ROR     0x09        // rotate right
 /* arithmetic operations */
-#define ZPM_OP_ARITH   0x02
-#define ZPM_OP_INC     0x01 // increment by one
-#define ZPM_OP_DEC     0x02 // decrement by one
-#define ZPM_OP_ADD     0x03 // addition
-#define ZPM_OP_SUB     0x04 // subtraction
-#define ZPM_OP_CMP     0x05 // compare
-#define ZPM_OP_MUL     0x06 // multiplication
-#define ZPM_OP_DIV     0x07 // division
-#define ZPM_OP_MOD     0x08 // modulus
-/* branch instructions */
-#define ZPM_OP_BRANCH  0x03
-#define ZPM_OP_JMP     0x01 // unconditional jump to given address
-#define ZPM_OP_BZ      0x02 // branch if zero
-#define ZPM_OP_BNZ     0x03 // branch if not zero
-#define ZPM_OP_BLT     0x04 // branch if less than
-#define ZPM_OP_BLE     0x05 // branch if less than or equal to
-#define ZPM_OP_BGT     0x06 // branch if greater than
-#define ZPM_OP_BGE     0x07 // branch if greater than or equal to
-#define ZPM_OP_BO      0x08 // branch if overflow
-#define ZPM_OP_BNO     0x09 // branch if no overflow
-#define ZPM_OP_BC      0x0a // branch if carry
-#define ZPM_OP_BNC     0x0b // branch if no carry
+#define ZPM_INC     0x0a        // increment by one
+#define ZPM_DEC     0x0b        // decrement by one
+#define ZPM_ADD     0x0c        // addition
+#define ZPM_SUB     0x0d        // subtraction
+#define ZPM_CMP     0x0e        // compare; subtract and set flags
+#define ZPM_MUL     0x0f        // multiplication
+#define ZPM_DIV     0x10        // division; also yields modulus
+/* branch operations */
+#define ZPM_JMP     0x11        // branch unconditionally
+#define ZPM_BZ      0x12        // branch if zero (ZF == 1)
+#define ZPM_BNZ     0x13        // branch if non-zero (ZF == 0)
+#define ZPM_BLT     0x14        // branch if less than
+#define ZPM_BLE     0x15        // branch if less than or equal
+#define ZPM_BGT     0x16        // branch if greater than
+#define ZPM_BGE     0x16        // branch if greater than or equal
+#define ZPM_BO      0x17        // branch if overflow set
+#define ZPM_BNO     0x18        // branch if overflow not set
+#define ZPM_BC      0x19        // branch if carry set
+#define ZPM_BNC     0x20        // branch if carry not set
 /* stack operations */
-#define ZPM_OP_STACK   0x04
-#define ZPM_OP_POP     0x01 // pop from stack
-#define ZPM_OP_PUSH    0x02 // push to stack
-#define ZPM_OP_PUSHA   0x03 // push all registers to stack
-/* load-store */
-#define ZPM_OP_MEM     0x05
-#define ZPM_OP_LDR     0x01
-#define ZPM_OP_STR     0x02
-/* function calls */
-#define ZPM_OP_FUNC    0x06
-#define ZPM_OP_CALL    0x01 // call subroutine
-#define ZPM_OP_ENTER   0x02 // subroutine prologue
-#define ZPM_OP_LEAVE   0x03 // subroutine epilogue
-#define ZPM_OP_RET     0x04 // return from subroutine
-#define ZPM_OP_THR     0x05 // launch a new thread
+#define ZPM_POP     0x21        // pop from stack
+#define ZPM_PUSH    0x22        // push on stack
+#define ZPM_PUSHA   0x23        // push all registers on stack
+/* load and store operations */
+#define ZPM_LDA     0x24        // load accumulator (register)
+#define ZPM_STA     0x25        // store accumulator
+/* subroutine operations */
+#define ZPM_CALL    0x26        // call subroutine
+#define ZPM_ENTER   0x27        // subroutine prologue
+#define ZPM_LEAVE   0x28        // subroutine epilogue
+#define ZPM_RET     0x29        // return from subroutine
+/* thread operations */
+#define ZPM_THR     0x2a        // launch new thread
+#define ZPM_LTB     0x2b        // load base address for thread-local storage
 /* system operations */
-#define ZPM_OP_SYS     0x07
-#define ZPM_OP_LMSW    0x01 // load machine status word
-#define ZPM_OP_SMSW    0x02 // store machine status word
-/* machine state */
-#define ZPM_OP_MACH    0x08
-#define ZPM_OP_RESET   0x01 // reset into well-known state
-#define ZPM_OP_HLT     0x02 // halt execution
-/* I/O */
-#define ZPM_OP_IO      0x09
-#define ZVM_OP_IN      0x01
-#define ZVM_OP_OUT     0x02
+#define ZPM_LDR     0x2c        // load special register
+#define ZPM_STR     0x2d        // store special register
+#define ZPM_RST     0x2e        // reset
+#define ZPM_HLT     0x2f        // halt
+/* I/O operations */
+#define ZPM_IN      0x30        // read data from port
+#define ZPM_OUT     0x31        // write data to port
+#define ZPM_NALU_OP 0x32        // number of ALU operations
 
-/* MACHINE DESCRIPTION */
+/* accumulator (general-purpose register) IDs */
+#define ZPM_REG0    0x00
+#define ZPM_REG1    0x01
+#define ZPM_REG2    0x02
+#define ZPM_REG3    0x03
+#define ZPM_REG4    0x04
+#define ZPM_REG5    0x05
+#define ZPM_REG6    0x06
+#define ZPM_REG7    0x07
+#define ZPM_REG8    0x08
+#define ZPM_REG9    0x09
+#define ZPM_REGA    0x0a
+#define ZPM_REGB    0x0b
+#define ZPM_REGC    0x0c
+#define ZPM_REGD    0x0d
+#define ZPM_REGE    0x0e
+#define ZPM_REGF    0x0f
+#define ZPM_NGENREG 16
+/* special register IDs */
+#define ZPM_MSW     0x00        // machine status word
+#define ZPM_PC      0x01        // program counter i.e. instruction pointer
+#define ZPM_FP      0x02        // frame pointer
+#define ZPM_SP      0x03        // stack pointer
+#define ZPM_PDB     0x04        // page director base address register
+#define ZPM_NSYSREG 16
 
-/* general purpose registers */
-#define ZPM_EAX_REG    0 // first function argument, function return value
-#define ZPM_EDX_REG    1 // second function argument
-#define ZPM_ECX_REG    2 // third function argument
-#define ZPM_EBX_REG    3
-#define ZPM_EDI_REG    4
-#define ZPM_ESI_REG    5
-#define ZPM_EBP_REG    6 // frame pointer register
-#define ZPM_ESP_REG    7 // stack pointer register
-#define ZPM_NGENREG    8
-/* special registers */
-#define ZPM_EIP_REG    0 // program counter / instruction pointer register
-#define ZPM_EFLAGS_REG 1 // machine status word register
-#define ZPM_NEXTRA_REG 8
-/* FPU registers */
-#define ZPM_F0_REG     0
-#define ZPM_F1_REG     1
-#define ZPM_F2_REG     2
-#define ZPM_F3_REG     3
-#define ZPM_F4_REG     4
-#define ZPM_F5_REG     5
-#define ZPM_F6_REG     6
-#define ZPM_F7_REG     7
-#define ZPM_NFPUREG    8
-
-/* macros for accessing virtual machine members */
-#define eax_reg        genregs[ZPM_EAX_REG]
-#define edx_reg        genregs[ZPM_EDX_REG]
-#define ecx_reg        genregs[ZPM_ECX_REG]
-#define ebx_reg        genregs[ZPM_EBX_REG]
-#define edi_reg        genregs[ZPM_EDI_REG]
-#define esi_reg        genregs[ZPM_ESI_REG]
-#define ebp_reg        genregs[ZPM_EBP_REG]
-#define esp_reg        genregs[ZPM_ESP_REG]
-#define fp_reg         genregs[ZPM_EBP_REG]
-#define sp_reg         genregs[ZPM_ESP_REG]
-#define pc_reg         xtraregs[ZPM_EIP_REG]
-#define msw_reg        xtragregs[ZPME_EFLAGS_REG]
 struct zpm {
-    double     fpuregs[ZPM_NFPUREG];
-    zasword_t  genregs[ZPM_NGENREG];    // general purpose register context
-    zasword_t  xtraregs[ZPM_NEXTRAREG]; // special register context
-    size_t     pmemsize;                // size of "physical" memory in bytes
-    int8_t    *physmem;                 // dynamic "physical" memory
 };
 
-/* bits for adrmode member */
-#define ZPM_REG_VAL   (1 << 0)
-#define ZPM_IMM8_VAL  (1 << 1)
-#define ZPM_IMM_VAL   (1 << 2)
-#define ZPM_IMM_ADR   (1 << 3)
-#define ZPM_REG_NDX   (1 << 4)
-#define ZPM_REG_INDIR (1 << 5)
-struct zpmopcode {
-    unsigned int unit    : 4;   // execution unit
-    unsigned int code    : 4;   // instruction code
-    unsigned int reg1    : 4;   // argument register
-    unsigned int reg2    : 4;   // argument register
-    unsigned int adrmode : 6;   // addressing mode
-    unsigned int argsz   : 2;   // argument size is (8 << argsz)
-    unsigned int imm8    : 8;   // possible 8-bit immediate argument
-    zasword_t    args[EMPTY];   // optional arguments
+/* argument type flags */
+#define ZPM_REG_ARG (1 << 0)    // argument is a register
+#define ZPM_IMM_VAL (1 << 1)    // argument is an immediate value
+#define ZPM_IMM_ADR (1 << 2)    // argument is an immediate address
+#define ZPM_IMM_NDX (1 << 3)    // argument is an immediate index
+#define ZPM_REG_ADR (1 << 4)    // argument is an address in register
+#define ZPM_REG_NDX (1 << 5)    // argumetn is an index in register
+struct zpmop {
+    unsigned int code  : 6;
+    unsigned int unit  : 2;     // ALU, FPU, SYS, IO
+    unsigned int reg1  : 4;     // argument #1 register ID
+    unsigned int reg2  : 4;     // argument #2 register ID
+    unsigned int argt  : 6;     // arguemnt types
+    unsigned int argsz : 2;     // argument size is 8 << argsz
+    unsigned int imm8  : 8;     // immediate argument such as shift count
 };
-
-/* MACHINE INTERFACE */
 
 #endif /* __ZPM_ZPM_H__ */
 

@@ -1,0 +1,23 @@
+Zero Pseudo Machine
+-------------------
+
+Zero Pseudo Machine, later called ZPM for short, aims to be a simple virtual
+machine designed and implemented with education in mind; teaching and learning
+programming is a vital thing today.
+
+I wanted to create a RISC-like architecture with an instruction set closely
+resembling the C programming language; the "machine" will first be programmable
+in its own assembly dialect (AT&T syntax), but I hope to extend it with
+languages such as Basic, Forth, and possibly a subset/version of C.
+
+ALU Instruction Set
+-------------------
+
+FPU Instruction Set
+-------------------
+
+Memory Management
+-----------------
+
+I/O Interface
+-------------

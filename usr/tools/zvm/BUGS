@@ -1,3 +1,0 @@
-- overflow conditions are not detected if zasword_t is the native machine word
-  size
-- not sure if I should deal with the carry-flag...
