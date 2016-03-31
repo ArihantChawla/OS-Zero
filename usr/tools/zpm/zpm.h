@@ -74,6 +74,8 @@ typedef uint64_t zpmuquad;
 #define ZPM_OUT     0x2c        // write data to port
 #define ZPM_NALU_OP 0x2d        // number of ALU operations
 
+/* VIRTUAL MACHINE */
+
 /* accumulator (general-purpose register) IDs */
 #define ZPM_REG0    0x00
 #define ZPM_REG1    0x01
@@ -111,13 +113,14 @@ struct zpm {
 #if defined(ZPM64BIT)
     zpmquad genregs[ZPM_NGENREG];
     zpmquad sysregs[ZPM_NSYSREG];
-    zpmquad segs[ZPM_NSEG];
 #else
     zpmlong genregs[ZPM_NGENREG];
     zpmlong sysregs[ZPM_NSYSREG];
-    zpmlong segs[ZPM_NSEG];
 #endif
+    uint8_t *segs[ZPM_NSEG];
 };
+
+/* OPCODES */
 
 /* argument type flags */
 #define ZPM_REG_ARG (1 << 0)    // argument is a register
@@ -127,14 +130,60 @@ struct zpm {
 #define ZPM_REG_ADR (1 << 4)    // argument is an address in register
 #define ZPM_REG_NDX (1 << 5)    // argumetn is an index in register
 struct zpmop {
-    unsigned int code  : 6;
-    unsigned int unit  : 2;     // ALU, FPU, SYS, IO
+    unsigned int code  : 8;
     unsigned int reg1  : 4;     // argument #1 register ID
     unsigned int reg2  : 4;     // argument #2 register ID
     unsigned int argt  : 6;     // argument types
     unsigned int argsz : 2;     // argument size is 8 << argsz
     unsigned int imm8  : 8;     // immediate argument such as shift count
 };
+
+/* operation function prototypes */
+
+void zpmnot(uint8_t *op);
+void zpmand(uint8_t *op);
+void zpmor(uint8_t *op);
+void zpmxor(uint8_t *op);
+void zpmshl(uint8_t *op);
+void zpmshr(uint8_t *op);
+void zpmsar(uint8_t *op);
+void zpmrol(uint8_t *op);
+void zpmror(uint8_t *op);
+void zpminc(uint8_t *op);
+void zpmdec(uint8_t *op);
+void zpmadd(uint8_t *op);
+void zpmsub(uint8_t *op);
+void zpmcmp(uint8_t *op);
+void zpmmul(uint8_t *op);
+void zpmdiv(uint8_t *op);
+void zpmjmp(uint8_t *op);
+void zpmbz(uint8_t *op);
+void zpmbnz(uint8_t *op);
+void zpmblt(uint8_t *op);
+void zpmble(uint8_t *op);
+void zpmbgt(uint8_t *op);
+void zpmbge(uint8_t *op);
+void zpmbo(uint8_t *op);
+void zpmbno(uint8_t *op);
+void zpmbc(uint8_t *op);
+void zpmbnc(uint8_t *op);
+void zpmpop(uint8_t *op);
+void zpmpush(uint8_t *op);
+void zpmpusha(uint8_t *op);
+void zpmlda(uint8_t *op);
+void zpmsta(uint8_t *op);
+void zpmcall(uint8_t *op);
+void zpmenter(uint8_t *op);
+void zpmleave(uint8_t *op);
+void zpmret(uint8_t *op);
+void zpmthr(uint8_t *op);
+void zpmltb(uint8_t *op);
+void zpmldr(uint8_t *op);
+void zpmstr(uint8_t *op);
+void zpmrst(uint8_t *op);
+void zpmhlt(uint8_t *op);
+void zpmin(uint8_t *op);
+void zpmout(uint8_t *op);
 
 #endif /* __ZPM_ZPM_H__ */
 
