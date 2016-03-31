@@ -1,7 +1,9 @@
 #ifndef __ZPM_ZPM_H__
 #define __ZPM_ZPM_H__
 
+#include <zpm/conf.h>
 #include <stdint.h>
+#include <zero/cdecl.h>
 
 typedef int8_t   zpmbyte;
 typedef uint8_t  zpmubyte;
@@ -12,6 +14,11 @@ typedef uint32_t zpmulong;
 #if defined(ZPM64BIT)
 typedef int64_t  zpmquad;
 typedef uint64_t zpmuquad;
+typedef zpmquad  zpmreg;
+typedef zpmuquad zpmureg;
+#else
+typedef zpmlong  zpmreg;
+typedef zpmulong zpmureg;
 #endif
 
 /* INSTRUCTION SET */
@@ -110,14 +117,11 @@ typedef uint64_t zpmuquad;
 #define ZPM_STACK   0x05        // stack
 #define ZPM_NSEG    0x08
 struct zpm {
-#if defined(ZPM64BIT)
-    zpmquad genregs[ZPM_NGENREG];
-    zpmquad sysregs[ZPM_NSYSREG];
-#else
-    zpmlong genregs[ZPM_NGENREG];
-    zpmlong sysregs[ZPM_NSYSREG];
-#endif
+    zpmreg   genregs[ZPM_NGENREG];
+    zpmureg  sysregs[ZPM_NSYSREG];
     uint8_t *segs[ZPM_NSEG];
+    zpmureg  segszs[ZPM_NSEG];
+    uint8_t *mem;
 };
 
 /* OPCODES */
@@ -136,54 +140,55 @@ struct zpmop {
     unsigned int argt  : 6;     // argument types
     unsigned int argsz : 2;     // argument size is 8 << argsz
     unsigned int imm8  : 8;     // immediate argument such as shift count
+    zpmreg       imm[EMPTY];    // possible immediate argument
 };
 
 /* operation function prototypes */
 
-void zpmnot(uint8_t *op);
-void zpmand(uint8_t *op);
-void zpmor(uint8_t *op);
-void zpmxor(uint8_t *op);
-void zpmshl(uint8_t *op);
-void zpmshr(uint8_t *op);
-void zpmsar(uint8_t *op);
-void zpmrol(uint8_t *op);
-void zpmror(uint8_t *op);
-void zpminc(uint8_t *op);
-void zpmdec(uint8_t *op);
-void zpmadd(uint8_t *op);
-void zpmsub(uint8_t *op);
-void zpmcmp(uint8_t *op);
-void zpmmul(uint8_t *op);
-void zpmdiv(uint8_t *op);
-void zpmjmp(uint8_t *op);
-void zpmbz(uint8_t *op);
-void zpmbnz(uint8_t *op);
-void zpmblt(uint8_t *op);
-void zpmble(uint8_t *op);
-void zpmbgt(uint8_t *op);
-void zpmbge(uint8_t *op);
-void zpmbo(uint8_t *op);
-void zpmbno(uint8_t *op);
-void zpmbc(uint8_t *op);
-void zpmbnc(uint8_t *op);
-void zpmpop(uint8_t *op);
-void zpmpush(uint8_t *op);
-void zpmpusha(uint8_t *op);
-void zpmlda(uint8_t *op);
-void zpmsta(uint8_t *op);
-void zpmcall(uint8_t *op);
-void zpmenter(uint8_t *op);
-void zpmleave(uint8_t *op);
-void zpmret(uint8_t *op);
-void zpmthr(uint8_t *op);
-void zpmltb(uint8_t *op);
-void zpmldr(uint8_t *op);
-void zpmstr(uint8_t *op);
-void zpmrst(uint8_t *op);
-void zpmhlt(uint8_t *op);
-void zpmin(uint8_t *op);
-void zpmout(uint8_t *op);
+void zpmnot(struct zpm *vm, uint8_t *op);
+void zpmand(struct zpm *vm, uint8_t *op);
+void zpmor(struct zpm *vm, uint8_t *op);
+void zpmxor(struct zpm *vm, uint8_t *op);
+void zpmshl(struct zpm *vm, uint8_t *op);
+void zpmshr(struct zpm *vm, uint8_t *op);
+void zpmsar(struct zpm *vm, uint8_t *op);
+void zpmrol(struct zpm *vm, uint8_t *op);
+void zpmror(struct zpm *vm, uint8_t *op);
+void zpminc(struct zpm *vm, uint8_t *op);
+void zpmdec(struct zpm *vm, uint8_t *op);
+void zpmadd(struct zpm *vm, uint8_t *op);
+void zpmsub(struct zpm *vm, uint8_t *op);
+void zpmcmp(struct zpm *vm, uint8_t *op);
+void zpmmul(struct zpm *vm, uint8_t *op);
+void zpmdiv(struct zpm *vm, uint8_t *op);
+void zpmjmp(struct zpm *vm, uint8_t *op);
+void zpmbz(struct zpm *vm, uint8_t *op);
+void zpmbnz(struct zpm *vm, uint8_t *op);
+void zpmblt(struct zpm *vm, uint8_t *op);
+void zpmble(struct zpm *vm, uint8_t *op);
+void zpmbgt(struct zpm *vm, uint8_t *op);
+void zpmbge(struct zpm *vm, uint8_t *op);
+void zpmbo(struct zpm *vm, uint8_t *op);
+void zpmbno(struct zpm *vm, uint8_t *op);
+void zpmbc(struct zpm *vm, uint8_t *op);
+void zpmbnc(struct zpm *vm, uint8_t *op);
+void zpmpop(struct zpm *vm, uint8_t *op);
+void zpmpush(struct zpm *vm, uint8_t *op);
+void zpmpusha(struct zpm *vm, uint8_t *op);
+void zpmlda(struct zpm *vm, uint8_t *op);
+void zpmsta(struct zpm *vm, uint8_t *op);
+void zpmcall(struct zpm *vm, uint8_t *op);
+void zpmenter(struct zpm *vm, uint8_t *op);
+void zpmleave(struct zpm *vm, uint8_t *op);
+void zpmret(struct zpm *vm, uint8_t *op);
+void zpmthr(struct zpm *vm, uint8_t *op);
+void zpmltb(struct zpm *vm, uint8_t *op);
+void zpmldr(struct zpm *vm, uint8_t *op);
+void zpmstr(struct zpm *vm, uint8_t *op);
+void zpmrst(struct zpm *vm, uint8_t *op);
+void zpmhlt(struct zpm *vm, uint8_t *op);
+void zpmin(struct zpm *vm, uint8_t *op);
+void zpmout(struct zpm *vm, uint8_t *op);
 
 #endif /* __ZPM_ZPM_H__ */
 
