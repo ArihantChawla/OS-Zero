@@ -61,7 +61,7 @@ zpmloop(struct zpm *vm, zpmureg pc)
     uint8_t *op = text;
 
     opjmp(op);
-    while (op) {
+    while (pc >= 0) {
         donot:
             op = zpmnot(vm, op, pc);
 
