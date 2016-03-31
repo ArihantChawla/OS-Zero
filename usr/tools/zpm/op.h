@@ -32,7 +32,7 @@ zpmnot(struct zpm *vm, uint8_t *ptr, zpmureg pc)
     *dptr = dest;
     if (pc > vm->seglims[ZPM_TEXT]) {
 
-        return -1;
+        return ~(zpmureg)0;
     }
     vm->pc = pc;
 
@@ -56,7 +56,7 @@ zpmand(struct zpm *vm, uint8_t *ptr, zpmureg pc)
     dest &= src;
     if (pc > vm->seglims[ZPM_TEXT]) {
 
-        return -1;
+        return ~(zpmureg)0;
     }
     *dptr = dest;
     vm->pc = pc;
@@ -81,7 +81,7 @@ zpmor(struct zpm *vm, uint8_t *ptr, zpmureg pc)
     dest |= src;
     if (pc > vm->seglims[ZPM_TEXT]) {
 
-        return -1;
+        return ~(zpmureg)0;
     }
     *dptr = dest;
     vm->pc = pc;
@@ -106,7 +106,7 @@ zpmxor(struct zpm *vm, uint8_t *ptr, zpmureg pc)
     dest ^= src;
     if (pc > vm->seglims[ZPM_TEXT]) {
 
-        return -1;
+        return ~(zpmureg)0;
     }
     *dptr = dest;
     vm->pc = pc;
@@ -128,7 +128,7 @@ zpmshl(struct zpm *vm, uint8_t *ptr, zpmureg pc)
     pc += sizeof(struct zpmop);
     if (pc > vm->seglims[ZPM_TEXT]) {
 
-        return -1;
+        return ~(zpmureg)0;
     }
     *dptr = dest;
     vm->pc = pc;
@@ -152,7 +152,7 @@ zpmshr(struct zpm *vm, uint8_t *ptr, zpmureg pc)
     dest &= fill;
     if (pc > vm->seglims[ZPM_TEXT]) {
 
-        return -1;
+        return ~(zpmureg)0;
     }
     *dptr = dest;
     vm->pc = pc;
@@ -186,7 +186,7 @@ zpmsar(struct zpm *vm, uint8_t *ptr, zpmureg pc)
     dest &= fill;
     if (pc > vm->seglims[ZPM_TEXT]) {
 
-        return -1;
+        return ~(zpmureg)0;
     }
     *dptr = dest;
     vm->pc = pc;
@@ -213,7 +213,7 @@ zpmrol(struct zpm *vm, uint8_t *ptr, zpmureg pc)
     dest |= bits;
     if (pc > vm->seglims[ZPM_TEXT]) {
 
-        return -1;
+        return ~(zpmureg)0;
     }
     *dptr = dest;
     vm->pc = pc;
@@ -240,7 +240,7 @@ zpmror(struct zpm *vm, uint8_t *ptr, zpmureg pc)
     dest |= bits;
     if (pc > vm->seglims[ZPM_TEXT]) {
 
-        return -1;
+        return ~(zpmureg)0;
     }
     *dptr = dest;
     vm->pc = pc;
@@ -261,7 +261,7 @@ zpminc(struct zpm *vm, uint8_t *ptr, zpmureg pc)
     dest = src;
     if (pc > vm->seglims[ZPM_TEXT]) {
 
-        return -1;
+        return ~(zpmureg)0;
     }
     *dptr = dest;
     vm->pc = pc;
@@ -282,7 +282,7 @@ zpmdec(struct zpm *vm, uint8_t *ptr, zpmureg pc)
     dest = src;
     if (pc > vm->seglims[ZPM_TEXT]) {
 
-        return -1;
+        return ~(zpmureg)0;
     }
     *dptr = dest;
     vm->pc = pc;
@@ -308,7 +308,7 @@ zpmadd(struct zpm *vm, uint8_t *ptr, zpmureg pc)
     res = src + dest;
     if (pc > vm->seglims[ZPM_TEXT]) {
 
-        return -1;
+        return ~(zpmureg)0;
     }
     if (res < dest) {
         zpmsetof(vm);
@@ -336,7 +336,7 @@ zpmsub(struct zpm *vm, uint8_t *ptr, zpmureg pc)
     dest -= src;
     if (pc > vm->seglims[ZPM_TEXT]) {
 
-        return -1;
+        return ~(zpmureg)0;
     }
     *dptr = dest;
     vm->pc = pc;
@@ -361,7 +361,7 @@ zpmcmp(struct zpm *vm, uint8_t *ptr, zpmureg pc)
     dest -= src;
     if (pc > vm->seglims[ZPM_TEXT]) {
 
-        return -1;
+        return ~(zpmureg)0;
     }
     zpmclrmsw(vm);
     if (!dest) {
