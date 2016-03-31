@@ -54,7 +54,8 @@ zpmloop(struct zpm *vm)
         &&doin,
         &&doout
     };
-    uint8_t *text = &vm->mem[vm->segs[ZPM_TEXT]];
+    zpmureg  pc = vm->sysregs[ZPM_PC];
+    uint8_t *text = &vm->mem[pc];
     uint8_t *op = text;
 
     opjmp(op);
