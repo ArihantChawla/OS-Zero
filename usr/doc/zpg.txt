@@ -1,0 +1,8 @@
+Zero Programming Game
+---------------------
+
+32-bit virtual processor
+------------------------
+- RISC-like instruction set
+- 32-bit and 64-bit instruction sizes (32-bit argument)
+
