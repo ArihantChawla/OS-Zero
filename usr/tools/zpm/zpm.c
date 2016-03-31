@@ -1,7 +1,7 @@
 #include <zpm/zpm.h>
 #include <zpm/op.h>
 
-#define opjmp(op) goto *jmptab[((struct zpmop *)op)->code]
+#define opjmp(op) goto *jmptab[(&vm->mem[pc])->code]
 
 
 #if defined(__GNUC__)
@@ -60,184 +60,184 @@ zpmloop(struct zpm *vm, zpmureg pc)
     uint8_t *text = &vm->mem[pc];
     uint8_t *op = text;
 
-    opjmp(op);
+    opjmp(pc);
     while (pc >= 0) {
         donot:
-            op = zpmnot(vm, op, pc);
+            pc = zpmnot(vm, op, pc);
 
-            opjmp(op);
+            opjmp(pc);
         doand:
-            op = zpmand(vm, op, pc);
+            pc = zpmand(vm, op, pc);
 
-            opjmp(op);
+            opjmp(pc);
         door:
-            op = zpmor(vm, op, pc);
+            pc = zpmor(vm, op, pc);
 
-            opjmp(op);
+            opjmp(pc);
         doxor:
-            op = zpmxor(vm, op, pc);
+            pc = zpmxor(vm, op, pc);
 
-            opjmp(op);
+            opjmp(pc);
         doshl:
-            op = zpmshl(vm, op, pc);
+            pc = zpmshl(vm, op, pc);
             
-            opjmp(op);
+            opjmp(pc);
         doshr:
-            op = zpmshr(vm, op, pc);
+            pc = zpmshr(vm, op, pc);
             
-            opjmp(op);
+            opjmp(pc);
         dosar:
-            op = zpmsar(vm, op, pc);
+            pc = zpmsar(vm, op, pc);
             
-            opjmp(op);
+            opjmp(pc);
         dorol:
-            op = zpmrol(vm, op, pc);
+            pc = zpmrol(vm, op, pc);
             
-            opjmp(op);
+            opjmp(pc);
         doror:
-            op = zpmror(vm, op, pc);
+            pc = zpmror(vm, op, pc);
             
-            opjmp(op);
+            opjmp(pc);
         doinc:
-            op = zpminc(vm, op, pc);
+            pc = zpminc(vm, op, pc);
             
-            opjmp(op);
+            opjmp(pc);
         dodec:
-            op = zpmdec(vm, op, pc);
+            pc = zpmdec(vm, op, pc);
             
-            opjmp(op);
+            opjmp(pc);
         doadd:
-            op = zpmadd(vm, op, pc);
+            pc = zpmadd(vm, op, pc);
             
-            opjmp(op);
+            opjmp(pc);
         dosub:
             zpmsub(vm, op, pc);
             
-            opjmp(op);
+            opjmp(pc);
         docmp:
-            op = zpmcmp(vm, op, pc);
+            pc = zpmcmp(vm, op, pc);
             
-            opjmp(op);
+            opjmp(pc);
         domul:
-            op = zpmmul(vm, op, pc);
+            pc = zpmmul(vm, op, pc);
             
-            opjmp(op);
+            opjmp(pc);
         dodiv:
-            op = zpmdiv(vm, op, pc);
+            pc = zpmdiv(vm, op, pc);
             
-            opjmp(op);
+            opjmp(pc);
         dojmp:
-            op = zpmjmp(vm, op, pc);
+            pc = zpmjmp(vm, op, pc);
             
-            opjmp(op);
+            opjmp(pc);
         dobz:
-            op = zpmbz(vm, op, pc);
+            pc = zpmbz(vm, op, pc);
             
-            opjmp(op);
+            opjmp(pc);
         dobnz:
-            op = zpmbnz(vm, op, pc);
+            pc = zpmbnz(vm, op, pc);
             
-            opjmp(op);
+            opjmp(pc);
         doblt:
-            op = zpmblt(vm, op, pc);
+            pc = zpmblt(vm, op, pc);
             
-            opjmp(op);
+            opjmp(pc);
         doble:
-            op = zpmble(vm, op, pc);
+            pc = zpmble(vm, op, pc);
             
-            opjmp(op);
+            opjmp(pc);
         dobgt:
-            op = zpmbgt(vm, op, pc);
+            pc = zpmbgt(vm, op, pc);
             
-            opjmp(op);
+            opjmp(pc);
         dobge:
-            op = zpmbge(vm, op, pc);
+            pc = zpmbge(vm, op, pc);
             
-            opjmp(op);
+            opjmp(pc);
         dobo:
-            op = zpmbo(vm, op, pc);
+            pc = zpmbo(vm, op, pc);
             
-            opjmp(op);
+            opjmp(pc);
         dobno:
-            op = zpmbno(vm, op, pc);
+            pc = zpmbno(vm, op, pc);
             
-            opjmp(op);
+            opjmp(pc);
         dobc:
-            op = zpmbc(vm, op, pc);
+            pc = zpmbc(vm, op, pc);
             
-            opjmp(op);
+            opjmp(pc);
         dobnc:
-            op = zpmbnc(vm, op, pc);
+            pc = zpmbnc(vm, op, pc);
             
-            opjmp(op);
+            opjmp(pc);
         dopop:
-            op = zpmpop(vm, op, pc);
+            pc = zpmpop(vm, op, pc);
             
-            opjmp(op);
+            opjmp(pc);
         dopush:
-            op = zpmpush(vm, op, pc);
+            pc = zpmpush(vm, op, pc);
             
-            opjmp(op);
+            opjmp(pc);
         dopusha:
-            op = zpmpusha(vm, op, pc);
+            pc = zpmpusha(vm, op, pc);
             
-            opjmp(op);
+            opjmp(pc);
         dolda:
-            op = zpmlda(vm, op, pc);
+            pc = zpmlda(vm, op, pc);
             
-            opjmp(op);
+            opjmp(pc);
         dosta:
-            op = zpmsta(vm, op, pc);
+            pc = zpmsta(vm, op, pc);
             
-            opjmp(op);
+            opjmp(pc);
         docall:
-            op = zpmcall(vm, op, pc);
+            pc = zpmcall(vm, op, pc);
             
-            opjmp(op);
+            opjmp(pc);
         doenter:
-            op = zpmenter(vm, op, pc);
+            pc = zpmenter(vm, op, pc);
             
-            opjmp(op);
+            opjmp(pc);
         doleave:
-            op = zpmleave(vm, op, pc);
+            pc = zpmleave(vm, op, pc);
             
-            opjmp(op);
+            opjmp(pc);
         doret:
-            op = zpmret(vm, op, pc);
+            pc = zpmret(vm, op, pc);
             
-            opjmp(op);
+            opjmp(pc);
         dothr:
-            op = zpmthr(vm, op, pc);
+            pc = zpmthr(vm, op, pc);
             
-            opjmp(op);
+            opjmp(pc);
         doltb:
-            op = zpmltb(vm, op, pc);
+            pc = zpmltb(vm, op, pc);
             
-            opjmp(op);
+            opjmp(pc);
         doldr:
-            op = zpmldr(vm, op, pc);
+            pc = zpmldr(vm, op, pc);
             
-            opjmp(op);
+            opjmp(pc);
         dostr:
-            op = zpmstr(vm, op, pc);
+            pc = zpmstr(vm, op, pc);
             
-            opjmp(op);
+            opjmp(pc);
         dorst:
-            op = zpmrst(vm, op, pc);
+            pc = zpmrst(vm, op, pc);
             
-            opjmp(op);
+            opjmp(pc);
         dohlt:
-            op = zpmhlt(vm, op, pc);
+            pc = zpmhlt(vm, op, pc);
             
-            opjmp(op);
+            opjmp(pc);
         doin:
-            op = zpmin(vm, op, pc);
+            pc = zpmin(vm, op, pc);
             
-            opjmp(op);
+            opjmp(pc);
         doout:
-            op = zpmout(vm, op, pc);
+            pc = zpmout(vm, op, pc);
             
-            opjmp(op);
+            opjmp(pc);
     }
 
     /* NOTREACHED */

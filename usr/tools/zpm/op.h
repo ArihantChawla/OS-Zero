@@ -47,10 +47,11 @@ zpmand(struct zpm *vm, uint8_t *ptr, zpmureg pc)
     zpmreg        src;
     zpmreg        dest;
 
-    pc += sizeof(struct zpmop);
     zpmget2argsgenreg(vm, op, dptr, src, dest);
     if (op->argt & ZPM_IMM_VAL) {
-        pc += sizeof(zpmreg);
+        pc += sizeof(struct zpmop) + sizeof(zpmreg);
+    } else {
+        pc += sizeof(struct zpmop);
     }
     dest &= src;
     if (pc > vm->seglims[ZPM_TEXT]) {
@@ -71,10 +72,11 @@ zpmor(struct zpm *vm, uint8_t *ptr, zpmureg pc)
     zpmreg        src;
     zpmreg        dest;
 
-    pc += sizeof(struct zpmop);
     zpmget2argsgenreg(vm, op, dptr, src, dest);
     if (op->argt & ZPM_IMM_VAL) {
-        pc += sizeof(zpmreg);
+        pc += sizeof(struct zpmop) + sizeof(zpmreg);
+    } else {
+        pc += sizeof(struct zpmop);
     }
     dest |= src;
     if (pc > vm->seglims[ZPM_TEXT]) {
@@ -95,10 +97,11 @@ zpmxor(struct zpm *vm, uint8_t *ptr, zpmureg pc)
     zpmreg        src;
     zpmreg        dest;
 
-    pc += sizeof(struct zpmop);
     zpmget2argsgenreg(vm, op, dptr, src, dest);
     if (op->argt & ZPM_IMM_VAL) {
-        pc += sizeof(zpmreg);
+        pc += sizeof(struct zpmop) + sizeof(zpmreg);
+    } else {
+        pc += sizeof(struct zpmop);
     }
     dest ^= src;
     if (pc > vm->seglims[ZPM_TEXT]) {
@@ -296,10 +299,11 @@ zpmadd(struct zpm *vm, uint8_t *ptr, zpmureg pc)
     zpmreg        dest;
     zpmreg        res;
 
-    pc += sizeof(struct zpmop);
     zpmget2argsgenreg(vm, op, dptr, src, dest);
     if (op->argt & ZPM_IMM_VAL) {
-        pc += sizeof(zpmreg);
+        pc += sizeof(struct zpmop) + sizeof(zpmreg);
+    } else {
+        pc += sizeof(struct zpmop);
     }
     res = src + dest;
     if (pc > vm->seglims[ZPM_TEXT]) {
@@ -323,10 +327,11 @@ zpmsub(struct zpm *vm, uint8_t *ptr, zpmureg pc)
     zpmreg        src;
     zpmreg        dest;
 
-    pc += sizeof(struct zpmop);
     zpmget2argsgenreg(vm, op, dptr, src, dest);
     if (op->argt & ZPM_IMM_VAL) {
-        pc += sizeof(zpmreg);
+        pc += sizeof(struct zpmop) + sizeof(zpmreg);
+    } else {
+        pc += sizeof(struct zpmop);
     }
     dest -= src;
     if (pc > vm->seglims[ZPM_TEXT]) {
@@ -347,10 +352,11 @@ zpmcmp(struct zpm *vm, uint8_t *ptr, zpmureg pc)
     zpmreg        src;
     zpmreg        dest;
 
-    pc += sizeof(struct zpmop);
     zpmget2argsgenreg(vm, op, dptr, src, dest);
     if (op->argt & ZPM_IMM_VAL) {
-        pc += sizeof(zpmreg);
+        pc += sizeof(struct zpmop) + sizeof(zpmreg);
+    } else {
+        pc += sizeof(struct zpmop);
     }
     dest -= src;
     if (pc > vm->seglims[ZPM_TEXT]) {
