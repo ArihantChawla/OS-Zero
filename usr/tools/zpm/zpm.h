@@ -99,8 +99,24 @@ typedef uint64_t zpmuquad;
 #define ZPM_SP      0x03        // stack pointer
 #define ZPM_PDB     0x04        // page director base address register
 #define ZPM_NSYSREG 16
-
+/* program segments */
+#define ZPM_TEXT    0x00        // code
+#define ZPM_RODATA  0x01        // read-only data (string literals etc.)
+#define ZPM_DATA    0x02        // read-write (initialised) data
+#define ZPM_BSS     0x03        // uninitialised (zeroed) runtime-allocated data
+#define ZPM_TLS     0x04        // thread-local storage
+#define ZPM_STACK   0x05        // stack
+#define ZPM_NSEG    0x08
 struct zpm {
+#if defined(ZPM64BIT)
+    zpmquad genregs[ZPM_NGENREG];
+    zpmquad sysregs[ZPM_NSYSREG];
+    zpmquad segs[ZPM_NSEG];
+#else
+    zpmlong genregs[ZPM_NGENREG];
+    zpmlong sysregs[ZPM_NSYSREG];
+    zpmlong segs[ZPM_NSEG];
+#endif
 };
 
 /* argument type flags */
