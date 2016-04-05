@@ -1,0 +1,7 @@
+V86
+---
+- instruction set resembling a subset of the i386 one
+- timings for all instructions
+- runtime translation of assembly into virtual machine bytecode
+- score code by size in bytes, execution time in cycles
+
