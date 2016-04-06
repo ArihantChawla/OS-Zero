@@ -1,7 +1,7 @@
 V86
 ---
 - instruction set resembling a subset of the i386 one
-  - instead of MOV, LDA and STA to implement a load-store architecture
+  - instead of MOV, LDR and STR to implement a load-store architecture
 - timings for all instructions
 - runtime translation of assembly into virtual machine bytecode
 - score code by size in bytes, execution time in cycles

@@ -45,8 +45,8 @@ typedef uint32_t v86adr;
 #define V86_JNO              0x18
 #define V86_CALL             0x19
 #define V86_RET              0x1a
-#define V86_LDA              0x1b
-#define V86_STA              0x1c
+#define V86_LDR              0x1b
+#define V86_STR              0x1c
 #define V86_PUSH             0x1d
 #define V86_PUSHA            0x1e
 #define V86_POP              0x1f
@@ -57,14 +57,15 @@ typedef uint32_t v86adr;
 /* codes through 0x3f reserved for future use */
 #define V86_MAX_OPERATIONS   64         // maximum # of operations supported
 
-/* operand types */
+/* operand type flags */
 #define V86_REGISTER_OPERAND (1 << 0)   // register
 #define V86_CONSTANT_OPERAND (1 << 1)   // constant
-#define V86_DIRECT_ADDRESS   (1 << 2)   // direct addressing
-#define V86_INDEXED_ADDRESS  (1 << 3)   // indexed addressing
-#define V86_INDIRECT_ADDRESS (1 << 4)   // indirect addressing
+/* addressing mode flags */
+#define V86_DIRECT_ADDRESS   (1 << 2)   // direct addressing; ldr adr, %r
+#define V86_INDIRECT_ADDRESS (1 << 3)   // indirect addressing; ldr *%ar, %r
+#define V86_INDEXED_ADDRESS  (1 << 4)   // indexed addressing; ldr ofs(%ar), %r
 #define V86_ARGUMENT_MASK                                               \
-    (V86_CONSTANT_OPERAND | V86_INDEXED_ADDRESS | V86_INDIRECT_ADDRESS)
+    (V86_CONSTANT_OPERAND | V86_INDIRECT_ADDRESS | V86_INDEXED_ADDRESS)
 
 /* user-accessible register IDs */
 #define V86_AX_REGISTER      0x00       // general purpose register AX
@@ -83,8 +84,8 @@ typedef uint32_t v86adr;
 struct v86op {
     unsigned int code : 6;      // operation ID
     unsigned int oper : 5;      // operand type
-    unsigned int reg1 : 2;      // register #1 ID
-    unsigned int reg2 : 2;      // register #2 ID
+    unsigned int sreg : 2;      // source register ID
+    unsigned int dreg : 2;      // destination register ID
     unsigned int _res : 1;      // reserved bits for future extension
     unsigned int imm  : 16;     // 16-bit immediate offset or constant
     uint32_t     arg[EMPTY];    // possible 32-bit constant, address, or offset
