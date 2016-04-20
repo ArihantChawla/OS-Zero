@@ -6,7 +6,8 @@
 
 /* pseudo-machine parameters */
 
-#define V86_OPERAND_SIZE     32
+#define V86_OPERAND_SIZE     32 // in bits
+#define V86_CACHELINE_SIZE   16 // in bytes
 
 /* pseudo-machine types */
 
@@ -90,6 +91,83 @@ struct v86op {
     unsigned int imm  : 16;     // 16-bit immediate offset or constant
     uint32_t     arg[EMPTY];    // possible 32-bit constant, address, or offset
 };
+
+/* INSTRUCTION TIMINGS (prof) */
+
+/* REFERENCE: http://www.agner.org/optimize/instruction_tables.pdf */
+/* instruction timings in cycles (as listed for pentium [mmx] in REFERENCE */
+
+/*
+ * MEMORY
+ * ------
+ * - cacheline fetch: 4 + CLSIZE clock cycles (size on 32-bit words)
+ * - instruction fetch: 1 clock cycle
+ * - instruction decode: 1 clock cycle
+ * - immediate operand fetch: 2 clock cycles
+ * - memory read/write: 4 clock cycles
+ *
+ */
+/* NOP
+ * ---
+ * - 1 clock cycle
+ */
+/* NOT
+ * ---
+ * - 1 clock cycle
+ */
+/* AND, OR, XOR
+ * ------------
+ * - 1 clock cycle + operands
+ */
+/* SHR, SHL, SAR, ROR, ROL
+ * -----------------------
+ * - 3 clock cycles + 1 for immediate operand
+ */
+/* INC, DEC
+ * --------
+ * - 1 clock cycle
+ */
+/* ADD, SUB
+ * --------
+ * - 2 clock cycles if both are registers
+ * - 3 clock cycles with immediate operand
+ */
+/* CMP
+ * ---
+ * - 3 clock cycles if both are registers
+ * - 4 clock cycles with immediate operand
+ */
+/* MUL
+ * ---
+ * - 8 clock cycles
+ */
+/* DIV
+ * ---
+ * - 16 clock cycles
+ */
+/* LDA, STA
+ * --------
+ * - src and dest are registers: 2
+ * - src/dest is immediate operand: 3
+ * - src/dest is a memory operand: 4
+ */
+/* PUSH, POP
+ * ---------
+ * - 8 cycles if src/dest is a register
+ * - 10 cycles if src/dest is an immediate operand
+ */
+/* PUSHA, POPA
+ * - 4 * 8 = 16 cycles
+ */
+/*
+ * JMP, branches
+ * -------------
+ * - 8 clock cycles for the jump
+ */
+/*
+ * IN, OUT
+ * - 16 clock cycles
+ */
 
 #endif /* __V86_V86_H__ */
 
