@@ -1,0 +1,53 @@
+assembly editor topbar menus
+----------------------------
+
+bits	arith	branch	func	mem	io	sys
+----	-----	------	----	---	--	---
+nop	add	jmp	call	ldr	in	hlt
+not	sub	je	ret	str	out
+and	cmp	jne		push
+or	mul	jlt		pusha
+xor	div	jle		pop
+shr		jgt		popa
+shl		jge
+sar		jc
+		jnc
+		jo
+		jno
+
+debugger windows
+----------------
+
+call stack view
+---------------
+- arguments
+- return address	(caller function name)
+- caller frame
+- local variables
+
+registers
+---------
+
+AX	  0xc0ffee	PC
+BX	  0xb14b14	FP
+CX	0xffffffff	SP
+DX	      0x00	MSW
+
+console
+-------
+$ pop %ax		- pop top of stack
+$ print #seg		- print segment address (text, data, bss, stk, map)
+$ read $port, 32	- read 32-bit word from I/O space
+
+console commands
+----------------
+
+command		arguments		brief
+-------		---------		-----
+dump		adr, cnt | func, sym	dump memory contents or function code
+poke		%r, $i | sym, adr	write value into memory
+peek		sym, adr | %r 		read value from memory
+print		%r, $i, $sym, adr, expr	print value or evaluate expression
+read		port | %r
+write		%r, $i | port
+

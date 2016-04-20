@@ -35,26 +35,25 @@ typedef uint32_t v86adr;
 #define V86_JMP              0x0d
 #define V86_JE               0x0e
 #define V86_JNE              0x0f
-#define V86_JB               0x10
-#define V86_JLT              0x11
-#define V86_JLE              0x12
-#define V86_JGT              0x13
-#define V86_JGE              0x14
-#define V86_JC               0x15
-#define V86_JNC              0x16
-#define V86_JO               0x17
-#define V86_JNO              0x18
-#define V86_CALL             0x19
-#define V86_RET              0x1a
-#define V86_LDR              0x1b
-#define V86_STR              0x1c
-#define V86_PUSH             0x1d
-#define V86_PUSHA            0x1e
-#define V86_POP              0x1f
-#define V86_POPA             0x20
-#define V86_IN               0x21
-#define V86_OUT              0x22
-#define V86_HLT              0x23
+#define V86_JLT              0x10
+#define V86_JLE              0x11
+#define V86_JGT              0x12
+#define V86_JGE              0x13
+#define V86_JC               0x14
+#define V86_JNC              0x15
+#define V86_JO               0x16
+#define V86_JNO              0x17
+#define V86_CALL             0x18
+#define V86_RET              0x19
+#define V86_LDR              0x1a
+#define V86_STR              0x1b
+#define V86_PUSH             0x1c
+#define V86_PUSHA            0x1d
+#define V86_POP              0x1e
+#define V86_POPA             0x1f
+#define V86_IN               0x20
+#define V86_OUT              0x21
+#define V86_HLT              0x22
 /* codes through 0x3f reserved for future use */
 #define V86_MAX_OPERATIONS   64         // maximum # of operations supported
 
