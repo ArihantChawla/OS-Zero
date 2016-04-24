@@ -81,7 +81,7 @@
 
 #define V86_BRANCH_CYCLES 8     // control transfer
 #define V86_MEM_CYCLES    4     // [uncached] memory access
-#define V86_FETCH_CYCLES  (V86_MEM_CYCLES + V86_CACHELINE_WORDS) // cacheline
+#define V86_FETCH_CYCLES  (V86_MEM_CYCLES * V86_CACHELINE_WORDS) // cacheline
 #define V86_CACHE_CYCLES  1     // cached memory access
 #define V86_IO_CYCLES     8     // IN, OUT
 
