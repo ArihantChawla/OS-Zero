@@ -112,11 +112,11 @@ struct v86op {
  */
 /* NOT
  * ---
- * - 1 clock cycle
+ * - 2 clock cycles
  */
 /* AND, OR, XOR
  * ------------
- * - 1 clock cycle + operands
+ * - 2 clock cycles+ operands
  */
 /* SHR, SHL, SAR, ROR, ROL
  * -----------------------
@@ -124,7 +124,7 @@ struct v86op {
  */
 /* INC, DEC
  * --------
- * - 1 clock cycle
+ * - 2 clock cycles
  */
 /* ADD, SUB
  * --------
@@ -133,8 +133,8 @@ struct v86op {
  */
 /* CMP
  * ---
- * - 3 clock cycles if both are registers
- * - 4 clock cycles with immediate operand
+ * - 2 clock cycles if both are registers
+ * - 3 clock cycles with immediate operand
  */
 /* MUL
  * ---
@@ -142,7 +142,7 @@ struct v86op {
  */
 /* DIV
  * ---
- * - 16 clock cycles
+ * - 32 clock cycles
  */
 /* LDA, STA
  * --------
@@ -152,11 +152,10 @@ struct v86op {
  */
 /* PUSH, POP
  * ---------
- * - 8 cycles if src/dest is a register
- * - 10 cycles if src/dest is an immediate operand
+ * - 4 cycles if src/dest is a register
  */
 /* PUSHA, POPA
- * - 4 * 8 = 16 cycles
+ * - 4 cycles + 1 cycle per register
  */
 /*
  * JMP, branches
@@ -165,7 +164,7 @@ struct v86op {
  */
 /*
  * IN, OUT
- * - 16 clock cycles
+ * - 8 clock cycles
  */
 
 #endif /* __V86_V86_H__ */
