@@ -6,3 +6,8 @@ V86
 - runtime translation of assembly into virtual machine bytecode
 - score code by size in bytes, execution time in cycles
 
+puzzles
+-------
+- fibonacci series
+- prime numbers in given range
+

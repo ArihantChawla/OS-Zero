@@ -57,14 +57,13 @@ typedef uint32_t v86adr;
 /* codes through 0x3f reserved for future use */
 #define V86_MAX_OPERATIONS   64         // maximum # of operations supported
 
-/* operand type flags */
-#define V86_REGISTER_OPERAND (1 << 0)   // register
-#define V86_CONSTANT_OPERAND (1 << 1)   // constant
+/* operand type flags; 0 for register */
+#define V86_CONSTANT_OPERAND (1 << 0)   // constant
 /* addressing mode flags */
-#define V86_DIRECT_ADDRESS   (1 << 2)   // direct addressing; ldr adr, %r
-#define V86_INDIRECT_ADDRESS (1 << 3)   // indirect addressing; ldr *%ar, %r
-#define V86_INDEXED_ADDRESS  (1 << 4)   // indexed addressing; ldr ofs(%ar), %r
-#define V86_ARGUMENT_MASK                                               \
+#define V86_DIRECT_ADDRESS   (1 << 1)   // direct addressing; ldr adr, %r
+#define V86_INDIRECT_ADDRESS (1 << 2)   // indirect addressing; ldr *%ar, %r
+#define V86_INDEXED_ADDRESS  (1 << 3)   // indexed addressing; ldr ofs(%ar), %r
+#define V86_IMMEDIATE_MASK                                              \
     (V86_CONSTANT_OPERAND | V86_INDIRECT_ADDRESS | V86_INDEXED_ADDRESS)
 
 /* user-accessible register IDs */
@@ -82,12 +81,12 @@ typedef uint32_t v86adr;
 
 /* opcode format; 32 bits + possible 32-bit argument */
 struct v86op {
-    unsigned int code : 6;      // operation ID
-    unsigned int oper : 5;      // operand type
-    unsigned int sreg : 2;      // source register ID
-    unsigned int dreg : 2;      // destination register ID
-    unsigned int _res : 1;      // reserved bits for future extension
-    unsigned int imm  : 16;     // 16-bit immediate offset or constant
+    unsigned int code   : 6;    // operation ID
+    unsigned int opsize : 2;    // operand size is 8 << opsize
+    unsigned int oper   : 4;    // operand type
+    unsigned int sreg   : 2;    // source register ID
+    unsigned int dreg   : 2;    // destination register ID
+    unsigned int imm    : 16;   // 16-bit immediate offset or constant
     uint32_t     arg[EMPTY];    // possible 32-bit constant, address, or offset
 };
 
