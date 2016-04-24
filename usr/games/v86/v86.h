@@ -6,12 +6,13 @@
 
 /* pseudo-machine parameters */
 
-#define V86_OPERAND_SIZE     32 // in bits
+#define V86_WORD_SIZE        4  // in bytes
 #define V86_CACHELINE_SIZE   16 // in bytes
+#define V86_CACHELINE_WORDS  (V86_CACHELINE_SIZE / V86_WORD_SIZE)
 
 /* pseudo-machine types */
 
-#if (V86_OPERAND_SIZE == 32)
+#if (V86_WORD_SIZE == 32)
 typedef int32_t  v86word;
 typedef uint32_t v86uword;
 typedef uint32_t v86adr;
@@ -63,24 +64,24 @@ typedef uint32_t v86adr;
 /* operand type flags; 0 for register */
 #define V86_IMMEDIATE_OPERAND (1 << 0)  // immediate
 /* addressing mode flags */
-#define V86_DIRECT_ADDRESS   (1 << 1)   // direct addressing; ldr adr, %r
-#define V86_INDIRECT_ADDRESS (1 << 2)   // indirect addressing; ldr *%ar, %r
-#define V86_INDEXED_ADDRESS  (1 << 3)   // indexed addressing; ldr ofs(%ar), %r
+#define V86_DIRECT_ADDRESS    (1 << 1)  // direct addressing; ldr adr, %r
+#define V86_INDIRECT_ADDRESS  (1 << 2)  // indirect addressing; ldr *%ar, %r
+#define V86_INDEXED_ADDRESS   (1 << 3)  // indexed addressing; ldr ofs(%ar), %r
 #define V86_ARGUMENT_MASK                                               \
     (V86_IMMEDIATE_OPERAND | V86_INDIRECT_ADDRESS | V86_INDEXED_ADDRESS)
 
 /* user-accessible register IDs */
-#define V86_AX_REGISTER      0x00       // general purpose register AX
-#define V86_BX_REGISTER      0x01       // general purpose register BX
-#define V86_CX_REGISTER      0x02       // general purpose register CX
-#define V86_DX_REGISTER      0x03       // general purpose register DX
-#define V86_USER_REGISTERS   4          // # of user-accessible registers
+#define V86_AX_REGISTER       0x00      // general purpose register AX
+#define V86_BX_REGISTER       0x01      // general purpose register BX
+#define V86_CX_REGISTER       0x02      // general purpose register CX
+#define V86_DX_REGISTER       0x03      // general purpose register DX
+#define V86_USER_REGISTERS    4         // # of user-accessible registers
 /* system register IDs */
-#define V86_PC_REGISTER      0x04       // program counter (instruction pointer)
-#define V86_FP_REGISTER      0x05       // frame pointer
-#define V86_SP_REGISTER      0x06       // stack pointer
-#define V86_MSW_REGISTER     0x07       // machine status word
-#define V86_REGISTERS        8
+#define V86_PC_REGISTER       0x04      // program counter (instruction pointer)
+#define V86_FP_REGISTER       0x05      // frame pointer
+#define V86_SP_REGISTER       0x06      // stack pointer
+#define V86_MSW_REGISTER      0x07      // machine status word
+#define V86_REGISTERS         8
 
 /* opcode format; 32 bits + possible 32-bit argument */
 struct v86op {
