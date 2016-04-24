@@ -109,8 +109,10 @@
 #define V86_JNC_CYCLES    V86_BRANCH_CYCLES
 #define V86_JO_CYCLES     V86_BRANCH_CYCLES
 #define V86_JNO_CYCLES    V86_BRANCH_CYCLES
-#define V86_CALL_CYCLES   V86_BRANCH_CYCLES /* FIXME */
-#define V86_RET_CYCLES    V86_BRANCH_CYCLES /* FIXME */
+#define V86_CALL_CYCLES   (V86_PUSHA_CYCLES + V86_BRANCH_CYCLES)
+#define V86_RET_CYCLES    (2 * V86_CACHE_CYCLES                         \
+                           + V86_BRANCH_CYCLES                          \
+                           + V86_POPA_CYCLES)
 #define V86_LDR_CYCLES    2
 #define V86_STR_CYCLES    2
 #define V86_PUSH_CYCLES   4
