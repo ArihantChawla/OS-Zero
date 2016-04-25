@@ -33,32 +33,33 @@ typedef uint32_t v86adr;
 #define V86_CMP              0x0a       // CMP r/i, r - set flags
 #define V86_MUL              0x0b       // MUL r/i, r
 #define V86_DIV              0x0c       // DIV r/i, r
-#define V86_JMP              0x0d       // JMP r/m      - unconditional
-#define V86_JZ               0x0e       // JE r/m       - ZF == 1
+#define V86_JMP              0x0d       // JMP i8       - short jump with offset
+#define V86_LJMP             0x0e       // LJMP r/m     - long jump
+#define V86_JZ               0x0f       // JE r/m       - ZF == 1
 #define V86_JE               V86_JZ     // JZ r/m       - ZF == 1
-#define V86_JNZ              0x0f       // JNE r/m      - ZF == 0
+#define V86_JNZ              0x10       // JNE r/m      - ZF == 0
 #define V86_JNE              V86_JNZ    // JNZ r/m      - ZF == 0
-#define V86_JC               0x10       // JC r/m       - CF == 1
+#define V86_JC               0x11       // JC r/m       - CF == 1
 #define V86_JLT              V86_JC     // JLT r/m      - CF == 1
-#define V86_JNC              0x11       // JNC r/m      - CF == 0
-#define V86_JO               0x12       // JO r/m       - OF == 1
-#define V86_JNO              0x13       // JNO r/m      - OF == 0
-#define V86_JLE              0x14       // JLE r/m      - SF != OF || ZF == 1
-#define V86_JGT              0x15       // JGT r/m      - ZF == 0 || SF == OF
-#define V86_JGE              0x16       // JGE r/m      - SF == OF
-#define V86_CALL             0x17       // CALL r/m
-#define V86_RET              0x18       // RET i
-#define V86_LDR              0x19       // LDR i/m, r
-#define V86_STR              0x1a       // STR r, i/m
-#define V86_PUSH             0x1b       // PUSH r/i
-#define V86_PUSHA            0x1c       // PUSHA m
-#define V86_POP              0x1d       // POP r
-#define V86_POPA             0x1e       // POPA
-#define V86_IN               0x1f       // IN r/i, r
-#define V86_OUT              0x20       // OUT r, r/i
-#define V86_HLT              0x21       // HLT
+#define V86_JNC              0x12       // JNC r/m      - CF == 0
+#define V86_JO               0x13       // JO r/m       - OF == 1
+#define V86_JNO              0x14       // JNO r/m      - OF == 0
+#define V86_JLE              0x15       // JLE r/m      - SF != OF || ZF == 1
+#define V86_JGT              0x16       // JGT r/m      - ZF == 0 || SF == OF
+#define V86_JGE              0x17       // JGE r/m      - SF == OF
+#define V86_CALL             0x18       // CALL r/m
+#define V86_RET              0x19       // RET i
+#define V86_LDR              0x1a       // LDR i/m, r
+#define V86_STR              0x1b       // STR r, i/m
+#define V86_PUSH             0x1c       // PUSH r/i
+#define V86_PUSHA            0x1d       // PUSHA m
+#define V86_POP              0x1e       // POP r
+#define V86_POPA             0x1f       // POPA
+#define V86_IN               0x20       // IN r/i, r
+#define V86_OUT              0x21       // OUT r, r/i
+#define V86_HLT              0x22       // HLT
 /* codes through 0x3f reserved for future use */
-#define V86_OPERATIONS       0x22
+#define V86_OPERATIONS       0x23
 #define V86_MAX_OPERATIONS   64         // maximum # of operations supported
 
 /* operand type flags; 0 for register */
@@ -71,11 +72,15 @@ typedef uint32_t v86adr;
     (V86_IMMEDIATE_OPERAND | V86_INDIRECT_ADDRESS | V86_INDEXED_ADDRESS)
 
 /* user-accessible register IDs */
-#define V86_AX_REGISTER       0x00      // general purpose register AX
-#define V86_BX_REGISTER       0x01      // general purpose register BX
-#define V86_CX_REGISTER       0x02      // general purpose register CX
-#define V86_DX_REGISTER       0x03      // general purpose register DX
-#define V86_USER_REGISTERS    4         // # of user-accessible registers
+#define V86_R0_REGISTER       0x00      // general purpose register AX
+#define V86_R1_REGISTER       0x01      // general purpose register BX
+#define V86_R2_REGISTER       0x02      // general purpose register CX
+#define V86_R3_REGISTER       0x03      // general purpose register DX
+#define V86_R4_REGISTER       0x04      // general purpose register AX
+#define V86_R5_REGISTER       0x05      // general purpose register BX
+#define V86_R6_REGISTER       0x06      // general purpose register CX
+#define V86_R7_REGISTER       0x07      // general purpose register DX
+#define V86_USER_REGISTERS    8         // # of user-accessible registers
 /* system register IDs */
 #define V86_PC_REGISTER       0x04      // program counter (instruction pointer)
 #define V86_FP_REGISTER       0x05      // frame pointer
@@ -85,14 +90,27 @@ typedef uint32_t v86adr;
 
 /* opcode format; 32 bits + possible 32-bit argument */
 struct v86op {
+    unsigned int unit   : 4;    // processor unit
+    unsigned int mode   : 1;    // unit mode; 32/64-bit, float/rational, ...
+    unsigned int code   : 6;    // operation ID
+    unsigned int opsize : 3;    // operand size is 8 << opsize (max 1024-bit)
+    unsigned int opflg  : 4;    // operand type flag-bits
+    unsigned int sreg   : 3;    // source register ID
+    unsigned int dreg   : 3;    // destination register ID
+    unsigned int imm    : 8;    // 8-bit immediate offset, constant, or port
+    int32_t      arg[EMPTY];    // possible 32-bit constant, address, or offset
+};
+#if 0
+struct v86op {
     unsigned int code   : 6;    // operation ID
     unsigned int opsize : 2;    // operand size is 8 << opsize
     unsigned int oper   : 4;    // operand type
     unsigned int sreg   : 2;    // source register ID
     unsigned int dreg   : 2;    // destination register ID
-    unsigned int imm    : 16;   // 16-bit immediate offset or constant
+    unsigned int imm    : 16;   // 16-bit immediate offset, constant, or port
     int32_t      arg[EMPTY];    // possible 32-bit constant, address, or offset
 };
+#endif
 
 #endif /* __V86_V86_H__ */
 
