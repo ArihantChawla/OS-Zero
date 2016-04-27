@@ -9,7 +9,7 @@
 /*
  * MEMORY
  * ------
- * - cacheline fetch: 4 + CLSIZE clock cycles (size in 32-bit words)
+ * - cacheline fetch: 4 + CLSIZE clock cycles (size in 32- or 64-bit words)
  * - instruction fetch: 1 clock cycle
  * - instruction decode: 1 clock cycle
  * - immediate operand fetch: 2 clock cycles

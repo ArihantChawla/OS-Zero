@@ -72,14 +72,15 @@ typedef uint32_t v86adr;
     (V86_IMMEDIATE_OPERAND | V86_INDIRECT_ADDRESS | V86_INDEXED_ADDRESS)
 
 /* user-accessible register IDs */
-#define V86_R0_REGISTER       0x00      // general purpose register AX
-#define V86_R1_REGISTER       0x01      // general purpose register BX
-#define V86_R2_REGISTER       0x02      // general purpose register CX
-#define V86_R3_REGISTER       0x03      // general purpose register DX
-#define V86_R4_REGISTER       0x04      // general purpose register AX
-#define V86_R5_REGISTER       0x05      // general purpose register BX
-#define V86_R6_REGISTER       0x06      // general purpose register CX
-#define V86_R7_REGISTER       0x07      // general purpose register DX
+#define V86_R0_REGISTER       0x00      // general purpose register R9
+#define V86_R1_REGISTER       0x01      // general purpose register R1
+#define V86_R2_REGISTER       0x02      // general purpose register R2
+#define V86_R3_REGISTER       0x03      // general purpose register R3
+#define V86_R4_REGISTER       0x04      // general purpose register R4
+#define V86_R5_REGISTER       0x05      // general purpose register R5
+#define V86_R6_REGISTER       0x06      // general purpose register R6
+#define V86_R7_REGISTER       0x07      // general purpose register R7
+
 #define V86_USER_REGISTERS    8         // # of user-accessible registers
 /* system register IDs */
 #define V86_PC_REGISTER       0x04      // program counter (instruction pointer)
