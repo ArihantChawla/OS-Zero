@@ -14,10 +14,17 @@ puzzles
 macros
 ------
 - fenter: push %fp; mov %sp, %fp
-- fsetret %r|$i: movl %r|$i, %ax
-- fleave $n: mov %fp, %sp; ret $n -> ret; "pop %pc; add $n, %sp"
+- fsetret %r|$i: movl %r|$i, %r0
+- fleave $n: mov %fp, %sp; ret $n -> ret; "add $n, %sp; pop %p"
 
 function calls
 --------------
-- pass up to 4 arguments in %ax, %bx, %cx, %dx
+- pass up to 4 arguments in %r0, %r1, %r2, %r3
 
+I/O-ports
+---------
+0	V86_RTC_PORT		64-bit timestamp in seconds
+1	V86_KEYBOARD_PORT	signed 32-bit Unicode character value
+2	V86_MOUSE_PORT		mouse interface
+3	V86_POINTER_PORT	other pointer devices
+3	V86_AUDIO_PORT
