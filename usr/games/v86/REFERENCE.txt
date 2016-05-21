@@ -1,0 +1,70 @@
+V86 Programmer's Reference
+--------------------------
+
+Call Conventions
+----------------
+- up to 4 [first] arguments are passed in registers %r0 through %r3
+- return value is passed in register %r0
+- caller-saved registers are %r0 through %r3
+- callee-saved registers are %r4 through %r7
+- the registers %pc, %fp, %sp, and %msw may be accessed directly only in
+  system-mode
+- the %ar register is used to store the number of function argument bytes
+
+Function Call Implementation
+----------------------------
+
+Caller Side
+-----------
+begin:
+	load nparm * WORDSIZE in %pr
+	; push caller-save registers
+	push %r3
+	push %r2
+	push %r1
+	push %r0
+	.if (nparm >= 4)
+	{
+		; push stack parameters for callee
+		load nparm * WORDSIZE int into %ar
+		push argument #(n - 1)
+		...//...
+		push argument #4
+	}
+	; load register arguments for callee
+	load argument #0 into %r0
+	load argument #1 into %r1
+	load argument #2 into %r2
+	load argument #3 into %r3
+	load address of finish into %lr
+	call func	; places %lr on top of stack
+	; DO THINGS HERE
+finish:
+	; return value is in %r0
+	decrement %pr from %sp	; remove callee arguments from stack
+	pop %r0			; restore caller-saved registers
+	pop %r1
+	pop %r2
+	pop %r3
+
+; NOTE: compiler needs to initialise 
+func:
+	push %fp
+	move %sp to %fp
+	decrement $(nauto) from %sp
+	push values of inialised variables
+	push %r7
+	push %r6
+	push %r5
+	push %r4
+	; FUNCTION BODY
+	; leave return value in %r0
+	move %fp to %sp
+	; restore caller frame pointer
+	pop %fp
+	pop %r4
+	pop %r5
+	pop %r6
+	pop %r7
+	; deallocate local variables
+

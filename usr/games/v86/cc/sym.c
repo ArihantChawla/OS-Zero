@@ -1,5 +1,5 @@
 #include <string.h>
-#include <v86/sym.h>
+#include <v86/asm/sym.h>
 
 #define _v86hashsym(str, key)                                           \
     do {                                                                \

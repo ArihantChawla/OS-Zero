@@ -1,0 +1,6 @@
+addressing modes
+----------------
+
+direct addressing
+-----------------
+
