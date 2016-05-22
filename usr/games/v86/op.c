@@ -137,7 +137,10 @@ v86opshl(struct v86vm *vm, struct v86op *op)
     _v86getreg2(vm, op);
     res = dest << imm8;
     pc += sizeof(uint32_t);
-    vmsetureg(
+    vmsetureg(dptr, res);
+    vmsetpc(pc);
+
+    return;
 }
 
 /* SHR i, r */
