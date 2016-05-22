@@ -70,7 +70,8 @@ typedef uint32_t v86ureg;
 
 /* operand type flags; 0 for register */
 #define V86_IMMEDIATE_OPERAND   (1 << 0) // immediate
-/* addressing mode flags */
+/* operand/addressing mode flag-bits */
+#define V86_REGISTER_OPERAND    (1 << 0)
 #define V86_DIRECT_ADDRESS      (1 << 1) // direct addressing; ldr adr, %r
 #define V86_INDIRECT_ADDRESS    (1 << 2) // indirect addressing; ldr *adr, %r
 #define V86_INDEXED_ADDRESS     (1 << 3) // indexed addressing; ldr ofs(%r), %r
@@ -97,7 +98,7 @@ struct v86op {
     unsigned int sreg   : 3;    // source register ID
     unsigned int dreg   : 3;    // destination register ID
     unsigned int imm    : 8;    // 8-bit immediate offset, constant, or port
-    int32_t      arg[EMPTY];    // possible 32-bit constant, address, or offset
+    v86word      arg[EMPTY];    // possible 32-bit constant, address, or offset
 };
 #if 0
 struct v86op {
@@ -107,7 +108,7 @@ struct v86op {
     unsigned int sreg   : 2;    // source register ID
     unsigned int dreg   : 2;    // destination register ID
     unsigned int imm    : 16;   // 16-bit immediate offset, constant, or port
-    int32_t      arg[EMPTY];    // possible 32-bit constant, address, or offset
+    v86word      arg[EMPTY];    // possible 32-bit constant, address, or offset
 };
 #endif
 
