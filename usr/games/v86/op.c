@@ -65,7 +65,7 @@ static struct v86vmop v86optab[V86_OPERATIONS]
 #define vmsetpc(val)                                                    \
     (vm->sysregs[V86_PC_REGISTER] = (val))
 #define vmsetureg(ptr, val)                                             \
-    (vm->usrregs[(id)] = (val))
+    (*ptr = (val))
 
 /* NOT r/a, r */
 void
