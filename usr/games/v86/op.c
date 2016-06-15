@@ -44,26 +44,20 @@ static struct v86vmop v86optab[V86_OPERATIONS]
     { 2, v86ophlt }     // V86_HLT
 };
 
-#define _v86getimm8(vm, op)                                             \
-    v86reg imm8 = op->imm8
-#define _v86getreg1(vm, op)                                             \
-    v86reg sreg = op->sreg;                                             \
-    v86reg pc = vm->sysregs[V86_PC_REGISTER];                           \
-    v86reg src = vm->usrregs[sreg]
-#define _v86getreg1orarg(vm, op)                                        \
-    v86reg sreg = (((op)->opflg & V86_REGISTER_OPERAND)                 \
-                   ? ((op)->sreg)                                       \
-                   : ((op)->arg));                                      \
-    v86reg pc = vm->sysregs[V86_PC_REGISTER];                           \
-    v86reg src = vm->usrregs[sreg]
-
-#define _v86getreg2(vm, op)                                             \
-    v86reg dreg = op->dreg;                                             \
-    v86reg dptr = &vm->usrregs[dreg];                                   \
-    v86reg dest = vm->usrregs[dreg]
+#define _v86getargs(vm, op)                                             \
+    v86reg *dptr = NULL;                                                \
+    v86reg  dest = (((op)->opflg & V86_DESTINATION_REGISTER)            \
+                    ? (dptr = &(vm)->usrregs[(op)->dreg], *dptr)        \
+                    : (v86reg)((op)->arg));                             \
+    v86reg  src = (((op)->opflg & V86_IMMEDIATE_OPERAND)                \
+                   ? (v86reg)((op)->imm8)                               \
+                   : (((op)->opflg & V86_SOURCE_REGISTER)               \
+                      ? (v86reg)((vm)->usrregs[(op)->sreg])             \
+                      : (v86reg)((op)->arg)));                          \
+    v86reg  pc = (vm)->sysregs[V86_PC_REGISTER]
 
 #define vmsetpc(val)                                                    \
-    (vm->sysregs[V86_PC_REGISTER] = (val))
+    ((vm)->sysregs[V86_PC_REGISTER] = (val))
 #define vmsetureg(ptr, val)                                             \
     (*ptr = (val))
 
@@ -71,14 +65,11 @@ static struct v86vmop v86optab[V86_OPERATIONS]
 void
 v86opnot(struct v86vm *vm, struct v86op *op)
 {
-    v86reg *sptr;
-    v86reg  res;
-
-    _v86getreg2(vm, op);
-    res = ~src;
+    _v86getargs(vm, op);
+    dest = ~src;
     pc += sizeof(uint32_t);
-    vmsetureg(dptr, res);
-    vmsetpc(pc)
+    vmsetureg(dptr, dest);
+    vmsetpc(pc);
 
     return;
 }
@@ -89,12 +80,11 @@ v86opnot(struct v86vm *vm, struct v86op *op)
 void
 v86opand(struct v86vm *vm, struct v86op *op)
 {
-    _v86getreg2(vm, op);
-    _v86getreg1(vm, op);
+    _v86getargs(vm, op);
     dest &= src;
     pc += sizeof(uint32_t);
     vmsetureg(dptr, dest);
-    vmsetpc(pc)
+    vmsetpc(pc);
 
     return;
 }
@@ -103,12 +93,11 @@ v86opand(struct v86vm *vm, struct v86op *op)
 void
 v86opor(struct v86vm *vm, struct v86op *op)
 {
-    _v86getreg2(vm, op);
-    _v86getreg1(vm, op);
+    _v86getargs(vm, op);
     dest |= src;
     pc += sizeof(uint32_t);
     vmsetureg(dptr, dest);
-    vmsetpc(pc)
+    vmsetpc(pc);
 
     return;
 }
@@ -117,12 +106,11 @@ v86opor(struct v86vm *vm, struct v86op *op)
 void
 v86opxor(struct v86vm *vm, struct v86op *op)
 {
-    _v86getreg2(vm, op);
-    _v86getreg1(vm, op);
+    _v86getargs(vm, op);
     dest ^= src;
     pc += sizeof(uint32_t);
     vmsetureg(dptr, dest);
-    vmsetpc(pc)
+    vmsetpc(pc);
 
     return;
 }
@@ -133,12 +121,11 @@ v86opshl(struct v86vm *vm, struct v86op *op)
 {
     v86reg res;
     
-    _v86getimm8(vm, op);
-    _v86getreg2(vm, op);
-    res = dest << imm8;
+    _v86getargs(vm, op);
+    res = dest << src;
     pc += sizeof(uint32_t);
     vmsetureg(dptr, res);
-    vmsetpc(pc);
+    vmsetpc(pc);;
 
     return;
 }

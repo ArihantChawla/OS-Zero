@@ -69,12 +69,13 @@ typedef uint32_t v86ureg;
 #define V86_MAX_OPERATIONS      64      // maximum # of operations supported
 
 /* operand type flags; 0 for register */
-#define V86_IMMEDIATE_OPERAND   (1 << 0) // immediate
+#define V86_IMMEDIATE_OPERAND    (1 << 0) // immediate
 /* operand/addressing mode flag-bits */
-#define V86_REGISTER_OPERAND    (1 << 0)
-#define V86_DIRECT_ADDRESS      (1 << 1) // direct addressing; ldr adr, %r
-#define V86_INDIRECT_ADDRESS    (1 << 2) // indirect addressing; ldr *adr, %r
-#define V86_INDEXED_ADDRESS     (1 << 3) // indexed addressing; ldr ofs(%r), %r
+#define V86_SOURCE_REGISTER      (1 << 0)
+#define V86_DESTINATION_REGISTER (1 << 1)
+#define V86_DIRECT_ADDRESS       (1 << 2) // direct addressing; ldr adr, %r
+#define V86_INDIRECT_ADDRESS     (1 << 3) // indirect addressing; ldr *adr, %r
+#define V86_INDEXED_ADDRESS      (1 << 4) // indexed addressing; ldr ofs(%r), %r
 #define V86_ARGUMENT_MASK                                               \
     (V86_DIRECT_ADDRESS | V86_INDIRECT_ADDRESS | V86_INDEXED_ADDRESS)
 
@@ -93,11 +94,11 @@ struct v86op {
     unsigned int unit   : 4;    // processor unit
     unsigned int mode   : 1;    // unit mode; 32/64-bit, float/rational, ...
     unsigned int code   : 6;    // operation ID
-    unsigned int opsize : 3;    // operand size is 8 << opsize (max 1024-bit)
-    unsigned int opflg  : 4;    // operand type flag-bits
+    unsigned int opsize : 2;    // operand size is 8 << opsize (max 512-bit)
+    unsigned int opflg  : 5;    // operation flags
     unsigned int sreg   : 3;    // source register ID
     unsigned int dreg   : 3;    // destination register ID
-    unsigned int imm    : 8;    // 8-bit immediate offset, constant, or port
+    unsigned int imm8   : 8;    // 8-bit immediate offset, constant, or port
     v86word      arg[EMPTY];    // possible 32-bit constant, address, or offset
 };
 #if 0
