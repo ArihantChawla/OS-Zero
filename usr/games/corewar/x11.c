@@ -680,9 +680,9 @@ zeusloadx11buttonimgs(UNUSED struct zeusx11 *x11)
 {
     Imlib_Image *img;
 
-    img = imlib_load_image("../../share/img/button/button.png");
+    img = imlib_load_image("../../share/img/button/olde/buttonnormal.png");
     if (!img) {
-        fprintf(stderr, "failed to load button image\n");
+        fprintf(stderr, "failed to load button image NORMAL\n");
 
         exit(1);
     }
@@ -690,9 +690,9 @@ zeusloadx11buttonimgs(UNUSED struct zeusx11 *x11)
     imlib_render_pixmaps_for_whole_image_at_size(&zeusx11buttons.pmaps.norm,
                                                  &zeusx11buttons.pmaps.normmask,
                                                  ZEUSBUTTONW, ZEUSBUTTONH);
-    img = imlib_load_image("../../share/img/button/buttonhilite.png");
+    img = imlib_load_image("../../share/img/button/olde/buttonhilite.png");
     if (!img) {
-        fprintf(stderr, "failed to load button image\n");
+        fprintf(stderr, "failed to load button image HIGHLIGHT\n");
 
         exit(1);
     }
@@ -701,9 +701,9 @@ zeusloadx11buttonimgs(UNUSED struct zeusx11 *x11)
                                                  &zeusx11buttons.pmaps.hovermask,
                                                  ZEUSBUTTONW, ZEUSBUTTONH);
 
-    img = imlib_load_image("../../share/img/button/buttonpress.png");
+    img = imlib_load_image("../../share/img/button/olde/buttonpress.png");
     if (!img) {
-        fprintf(stderr, "failed to load button image\n");
+        fprintf(stderr, "failed to load button image PRESS\n");
 
         exit(1);
     }

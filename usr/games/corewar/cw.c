@@ -95,43 +95,43 @@ cwgetargs(struct cwinstr *op, long pc, long *argp1, long *argp2)
     long arg2 = 0;
     long tmp;
     
-    if ((op)->aflg & CWIMMBIT) {
-        arg1 = (op)->a;
+    if (op->aflg & CWIMMBIT) {
+        arg1 = op->a;
     } else {
-        tmp = (pc) + (op)->a;
+        tmp = pc + op->a;
         tmp %= CWCORESIZE;
-        if ((op)->aflg & (CWINDIRBIT | CWPREDECBIT)) {
+        if (op->aflg & (CWINDIRBIT | CWPREDECBIT)) {
             struct cwinstr *ptr;
             
             ptr = &cwmars.optab[tmp];
             tmp = ptr->b;
-            if ((op)->aflg & CWPREDECBIT) {
+            if (op->aflg & CWPREDECBIT) {
                 tmp--;
                 ptr->b = tmp;
             }
             arg1 = tmp;
-            arg1 += (pc);
+            arg1 += pc;
         } else {
             arg1 = tmp;
         }
     }
     arg1 %= CWCORESIZE;
-    if ((op)->bflg & CWIMMBIT) {
-        arg2 = (op)->b;
+    if (op->bflg & CWIMMBIT) {
+        arg2 = op->b;
     } else {
-        tmp = (pc) + (op)->b;
+        tmp = pc + op->b;
         tmp %= CWCORESIZE;
-        if ((op)->bflg & (CWINDIRBIT | CWPREDECBIT)) {
+        if (op->bflg & (CWINDIRBIT | CWPREDECBIT)) {
             struct cwinstr *ptr;
             
             ptr = &cwmars.optab[tmp];
             tmp = ptr->b;
-            if ((op)->bflg & CWPREDECBIT) {
+            if (op->bflg & CWPREDECBIT) {
                 tmp--;
                 ptr->b = tmp;
             }
             arg2 = tmp;
-            arg2 += (pc);
+            arg2 += pc;
         } else {
             arg2 = tmp;
         }
