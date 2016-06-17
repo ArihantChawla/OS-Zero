@@ -121,6 +121,8 @@ rcinitop(void)
     rcaddop("SLT", CWOPSLT);
     rcaddop("DJN", CWOPDJN);
     rcaddop("SPL", CWOPSPL);
+
+    return;
 }
 
 /* read instruction from source file */

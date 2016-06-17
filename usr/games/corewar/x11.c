@@ -673,6 +673,8 @@ zeusinitimlib2(struct zeusx11 *x11)
     imlib_context_set_colormap(x11->colormap);
     imlib_context_set_blend(0);
     imlib_context_set_mask(0);
+
+    return;
 }
 
 void
