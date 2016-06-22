@@ -6,22 +6,37 @@ cbtfind(struct cbt *tree, uintptr_t key)
 {
     struct cbtnode *node = &tree->root;
 
-    if (key < node->key && (node->left)) {
+    if (key == node->key) {
+
+        return node;
+    } else if (key < node->key && (node->left)) {
         do {
             node = node->left;
-            if ((node) && node->key == key) {
-                
-                return node;
+            if (node) {
+                if (key == node->key) {
+                    
+                    return node;
+                } else if (key < node->key) {
+                    node = node->left;
+                } else {
+                    node = node->right;
+                }
             }
-        } while (key < node->key && (node->left));
+        } while ((node) && key != node->key);
     } else {
         do {
             node = node->right;
-            if ((node) && node->key == key) {
-                
-                return node;
+            if (node) {
+                if (key == node->key) {
+                    
+                    return node;
+                } else if (key < node->key) {
+                    node = node->left;
+                } else {
+                    node = node->right;
+                }
             }
-        } while (key < node->key && (node->right));
+        } while ((node) && key != node->key);
     }
     if (key == node->key) {
 
