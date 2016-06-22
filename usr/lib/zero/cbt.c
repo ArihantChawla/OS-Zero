@@ -1,3 +1,4 @@
+#include <stddef.h>
 #include <zero/cbt.h>
 
 struct cbtnode *
@@ -22,7 +23,11 @@ cbtfind(struct cbt *tree, uintptr_t key)
             }
         } while (key < node->key && (node->right));
     }
+    if (key == node->key) {
 
-    return node;
+        return node;
+    }
+
+    return NULL;
 }
 
