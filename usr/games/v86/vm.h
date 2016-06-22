@@ -4,13 +4,14 @@
 #include <stdint.h>
 #include <zero/cdefs.h>
 #include <zero/param.h>
+#include <v86/conf.h>
 
 /* virtual machine register and address sizes in bits */
-//#if (V86_WORD_SIZE == 32)
+#if (V86_WORD_SIZE == 4)
 typedef int32_t  v86word;
 typedef uint32_t v86uword;
-typedef uint32_t v86adr;
-//#endif
+//typedef uint32_t v86adr;
+#endif
 
 /* pseudo-machine types */
 
@@ -21,9 +22,11 @@ typedef uint32_t v86adr;
 #if (WORDSIZE == 8)
 typedef int64_t  v86reg;
 typedef uint64_t v86ureg;
+typedef uint64_t v86adr;
 #else
 typedef int32_t  v86reg;
 typedef uint32_t v86ureg;
+typedef uint32_t v86adr;
 #endif
 
 #define V86_NOP                 0x00    // no operation

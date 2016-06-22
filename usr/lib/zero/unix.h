@@ -85,6 +85,10 @@
 
 #define growheap(ofs) sbrk(ofs)
 
+#define openrd(fname) open(fname, O_RDONLY)
+#define openrdwr(fname) open(fname, O_RDWR)
+#define openexec(fname) open(fname, O_RDONLY | O_EXEC)
+
 void * readfile(char *filename, size_t *sizeret);
 
 #if defined(_SC_OPEN_MAX)

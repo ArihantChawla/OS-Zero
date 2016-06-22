@@ -50,5 +50,10 @@ void v86opin(struct v86vm *vm, struct v86op *op);
 void v86opout(struct v86vm *vm, struct v86op *op);
 void v86ophlt(struct v86vm *vm, struct v86op *op);
 
+#if (V86_WORD_SIZE == 4)
+#define v86chkof(res) ((res) & ~(v86ureg)UINT32_MAX)
+#define v86chkuf(res) ((res) < (v86ureg)INT32_MIN)
+#endif
+
 #endif /* __V86_OP_H__ */
 
