@@ -2,7 +2,7 @@
 #define __BITS_SIGNAL_H__
 
 #include <features.h>
-#include <stdint.h>
+//#include <stdint.h>
 #include <errno.h>
 #include <zero/param.h>
 #if (USEBSD) && (!USEPOSIX)

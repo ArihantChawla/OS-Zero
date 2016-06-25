@@ -1,9 +1,10 @@
 #ifndef __V86_ASM_H__
 #define __V86_ASM_H__
 
-#include <v86asm/op.h>
+#include <v86/op.h>
+#include <v86/sym.h>
 
-#if (V86_ASM_OP_HASH_ITEMS <= 65536)
+#if (V86_SYM_HASH_ITEMS <= 65536)
 typedef uint16_t v86asmopkey;
 #endif
 
@@ -26,18 +27,6 @@ typedef uint16_t v86asmopkey;
 
 /* special adr-member value */
 #define V86_ASM_SYM_UNRESOLVED (~(v86asmadr)0)
-
-struct v86asmsym {
-    char   *name;
-    size_t  namelen;
-    long    adr;
-    long    val;
-};
-
-struct v86asmhashsym {
-    struct v86asmsym     *sym;
-    struct v86asmhashsym *next;
-};
 
 #endif /* __V86_ASM_H__ */
 

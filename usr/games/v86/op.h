@@ -2,8 +2,6 @@
 #define __V86_OP_H__
 
 #include <stdint.h>
-#include <zero/cdefs.h>
-#include <zero/param.h>
 #include <v86/vm.h>
 
 /* instruction set */
@@ -269,10 +267,10 @@ struct v86vmop {
            : (((op)->opflg & V86_SOURCE_REGISTER)                       \
               ? (v86reg)((vm)->usrregs[(op)->sreg])                     \
               : (v86reg)((op)->arg)));                                  \
-    pc = (vm)->sysregs[V86_PC_REGISTER]
+    pc = (vm)->sysregs[V86_PC_REGISTER - V86_USER_REGISTERS]
 
 #define vmsetpc(val)                                                    \
-    ((vm)->sysregs[V86_PC_REGISTER] = (val))
+    ((vm)->sysregs[V86_PC_REGISTER - V86_USER_REGISTERS] = (val))
 #define vmsetureg(ptr, val)                                             \
     (*ptr = (val))
 

@@ -6,7 +6,6 @@
 #define __LIMITS_H__
 
 #include <features.h>
-#include <stdint.h>
 #include <zero/param.h>
 
 /*

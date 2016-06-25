@@ -10,7 +10,6 @@
 #if (V86_WORD_SIZE == 4)
 typedef int32_t  v86word;
 typedef uint32_t v86uword;
-//typedef uint32_t v86adr;
 #endif
 
 /* pseudo-machine types */
@@ -19,7 +18,7 @@ typedef uint32_t v86uword;
  * use 64-bit math where available and detected... better catches for overflows,
  * for one... :)
  */
-#if (WORDSIZE == 8)
+#if (WORDSIZE == 8) || (v86_WORD_SIZE == 8)
 typedef int64_t  v86reg;
 typedef uint64_t v86ureg;
 typedef uint64_t v86adr;
@@ -141,7 +140,7 @@ struct v86op {
 #define V86_LINK_REGISTER       0x1d    // link/return address
 #define V86_STATUS_REGISTER     0x1e    // instruction status bits
 #define V86_CONTROL_REGISTER    0x1f    // feature control etc. bits
-#define V86_SYSTEM_REGISTERS    5
+#define V86_SYSTEM_REGISTERS    8
 
 struct v86vm {
     v86reg   usrregs[V86_USER_REGISTERS];
