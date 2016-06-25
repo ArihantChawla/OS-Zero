@@ -91,6 +91,8 @@ typedef uint32_t v86adr;
 #define V86_STK_PARAMETERS_MASK (0x1f << 4)
 #define V86_MAX_STK_PARAMETERS  32
 
+#define v86opisnop(op) (!(op)->code)
+#define v86opsetnop(op) (*(uint32_t *)op = UINT32_C(0))
 /* opcode format; 32 bits + possible 32-bit argument */
 struct v86op {
     unsigned int unit   : 4;    // processor unit
@@ -136,17 +138,47 @@ struct v86op {
 #define V86_FP_REGISTER         0x09    // frame pointer
 #define V86_SP_REGISTER         0x0a    // stack pointer
 #define V86_MSW_REGISTER        0x1b    // machine status word
-#define V86_FUNC_REGISTER       0x1c    // current function information
-#define V86_LINK_REGISTER       0x1d    // link/return address
-#define V86_STATUS_REGISTER     0x1e    // instruction status bits
-#define V86_CONTROL_REGISTER    0x1f    // feature control etc. bits
+#define V86_LINK_REGISTER       0x1c    // link/return address
+#define V86_DEBUG_REGISTER      0x1d    // link/return address
+#define V86_CONTROL_REGISTER    0x1e    // feature control etc. bits
+#define V86_EXCEPTION_REGISTER  0x1f    // bitmap for pending exceptions
 #define V86_SYSTEM_REGISTERS    8
-
+/* page-table entry bits */
+#define V86_PTE_USER_BIT        (1 << 0)
+#define V86_PTE_PRESENT_BIT     (1 << 1)
+#define V86_PTE_EXEC_BIT        (1 << 2)
 struct v86vm {
-    v86reg   usrregs[V86_USER_REGISTERS];
-    v86reg   sysregs[V86_SYSTEM_REGISTERS];
-    uint8_t *mem;
+    v86reg    usrregs[V86_USER_REGISTERS];
+    v86reg    sysregs[V86_SYSTEM_REGISTERS];
+    v86adr   *pagetab;
+    uint64_t  tsc;                      // timestamp/cycle counter [global]
 } ALIGNED(PAGESIZE);
+
+#define V86_NO_EXCEPTION        0x00    // no exception specified
+#define V86_INST_EXCEPTION      0x01    // illegal instruction
+#define V86_MEM_EXCEPTION       0x02    // illegal memory reference
+/* inst-exception reason-bits */
+#define V86_INST_OPCODE         0x01    // illegal opcode
+#define V86_INST_ARG1           0x02    // illegal argument/operand #1
+#define V86_INST_ARG2           0x04    // illegal argument/operand #2
+#define V86_INST_BREAK          0x08    // breakpoint
+#define V86_INST_NOREAD         0x10    // non-readable memory location
+#define V86_INST_NOWRITE        0x20
+#define V86_INST_NOEXEC         0x40    // non-executable memory location
+/* permission bits for perm-field */
+#define V86_PERM_USER_READ      0x01
+#define V86_PERM_USER_WRITE     0x02
+#define V86_PERM_USER_EXEC      0x04
+#define V86_PERM_SYS_READ       0x08
+#define V86_PERM_SYS_WRITE      0x10
+#define V86_PERM_SYS_EXEC       0x20
+#define V86_PERM_USER           0x80
+struct v86vmxcpt {
+    uint8_t type;       // 0 for not specified; otherwise, ID == type - 1
+    uint8_t reason;     // error-codes based on exception type
+    uint8_t perm;       // violated permission bits
+    uint8_t unit;       // processor unit ID
+};
 
 #endif /* __V86_VM_H__ */
 

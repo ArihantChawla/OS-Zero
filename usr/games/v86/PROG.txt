@@ -1,0 +1,53 @@
+V86 Instruction Set
+-------------------
+
+Notes
+-----
+
+- immediates of 8 or fewer bits can be stored in the operations imm8-field
+
+Operand Types
+-------------
+
+r	- register
+i	- immediate
+m	- memory
+
+NOP	// no operation
+NOT     // NOT r/i, r
+AND     // AND r/i, r
+OR      // OR r/i, r
+XOR     // XOR r/i, r
+SHL     // SHL r/i, r
+SHR     // SHR r/i, r
+SAR     // SAR r/i, r
+ADD     // ADD r/i, r
+SUB     // SUB r/i, r
+CMP     // CMP r/i, r - set flags
+MUL     // MUL r/i, r
+DIV     // DIV r/i, r
+JMP     // JMP i8       - short jump with offset
+LJMP    // LJMP r/m     - long jump
+JZ      // JE r/m       - ZF == 1
+JE      // JZ r/m       - ZF == 1
+JNZ     // JNE r/m      - ZF == 0
+JNE     // JNZ r/m      - ZF == 0
+JC      // JC r/m       - CF == 1
+JLT     // JLT r/m      - CF == 1
+JNC     // JNC r/m      - CF == 0
+JO      // JO r/m       - OF == 1
+JNO     // JNO r/m      - OF == 0
+JLE     // JLE r/m      - SF != OF || ZF == 1
+JGT     // JGT r/m      - ZF == 0 || SF == OF
+JGE     // JGE r/m      - SF == OF
+CALL    // CALL r/m
+RET     // RET i
+LDR     // LDR i/m, r
+STR     // STR r, i/m
+PUSH    // PUSH r/i
+PUSHA   // PUSHA m
+POP     // POP r
+POPA    // POPA
+IN      // IN r/i, r
+OUT     // OUT r, r/i
+HLT     // HLT

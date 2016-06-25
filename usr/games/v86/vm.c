@@ -13,21 +13,21 @@ vmdov86op(struct v86vm *vm, struct v86op *op)
     v86reg  pc;
     
     {
-        if (!code) {
-            goto _doit;
-        }
+
+        goto _doit;
+
         __v86not:
-          _v86opnot(vm, op, retval);
+            _v86opnot(vm, op, retval);
         
-          return retval;
+            return retval;
         __v86and:
-          _v86opand(vm, op, retval);
+            _v86opand(vm, op, retval);
         
-          return retval;
+            return retval;
         __v86or:
-          _v86opor(vm, op, retval);
+            _v86opor(vm, op, retval);
         
-        return retval;
+            return retval;
         __v86xor:
             _v86opxor(vm, op, retval);
         
@@ -35,127 +35,127 @@ vmdov86op(struct v86vm *vm, struct v86op *op)
         __v86shl:
             _v86opshl(vm, op, retval);
         
-        return retval;
+            return retval;
         __v86shr:
             _v86opshr(vm, op, retval);
         
-        return retval;
+            return retval;
         __v86sar:
             _v86opsar(vm, op, retval);
         
-        return retval;
+            return retval;
         __v86add:
             _v86opadd(vm, op, retval);
         
-        return retval;
+            return retval;
         __v86sub:
             _v86opsub(vm, op, retval);
         
-        return retval;
+            return retval;
         __v86cmp:
             _v86opcmp(vm, op, retval);
         
-        return retval;
+            return retval;
         __v86mul:
             _v86opmul(vm, op, retval);
         
-        return retval;
+            return retval;
         __v86div:
             _v86opdiv(vm, op, retval);
         
-        return retval;
+            return retval;
         __v86jmp:
             _v86opjmp(vm, op, retval);
         
-        return retval;
+            return retval;
         __v86ljmp:
             _v86opljmp(vm, op, retval);
         
-        return retval;
+            return retval;
         __v86jz:
             _v86opjz(vm, op, retval);
         
-        return retval;
+            return retval;
         __v86jnz:
             _v86opjnz(vm, op, retval);
         
-        return retval;
+            return retval;
         __v86jc:
             _v86opjc(vm, op, retval);
         
-        return retval;
+            return retval;
         __v86jnc:
             _v86opjnc(vm, op, retval);
         
-        return retval;
+            return retval;
         __v86jo:
             _v86opjo(vm, op, retval);
         
-        return retval;
+            return retval;
         __v86jno:
             _v86opjno(vm, op, retval);
         
-        return retval;
+            return retval;
         __v86jle:
             _v86opjle(vm, op, retval);
         
-        return retval;
+            return retval;
         __v86jgt:
             _v86opjgt(vm, op, retval);
         
-        return retval;
+            return retval;
         __v86jge:
             _v86opjge(vm, op, retval);
         
-        return retval;
+            return retval;
         __v86call:
             _v86opcall(vm, op, retval);
         
-        return retval;
+            return retval;
         __v86ret:
             _v86opret(vm, op, retval);
         
-        return retval;
+            return retval;
         __v86ldr:
             _v86opldr(vm, op, retval);
         
-        return retval;
+            return retval;
         __v86str:
             _v86opstr(vm, op, retval);
         
-        return retval;
+            return retval;
         __v86push:
             _v86oppush(vm, op, retval);
         
-        return retval;
+            return retval;
         __v86pusha:
             _v86oppusha(vm, op, retval);
         
-        return retval;
+            return retval;
         __v86pop:
             _v86oppop(vm, op, retval);
         
-        return retval;
+            return retval;
         __v86popa:
             _v86oppopa(vm, op, retval);
         
-        return retval;
+            return retval;
         __v86in:
             _v86opin(vm, op, retval);
         
-        return retval;
+            return retval;
         __v86out:
             _v86opout(vm, op, retval);
         
-        return retval;
+            return retval;
         __v86hlt:
             _v86ophlt(vm, op, retval);
         
-        return retval;
+            return retval;
 
         _doit:
         {
-            void *jmptab[V86_OPERATIONS] = {
+            static const void *jmptab[V86_OPERATIONS] = {
                 NULL,
                 &&__v86not,
                 &&__v86and,

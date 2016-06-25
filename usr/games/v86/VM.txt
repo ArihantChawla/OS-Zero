@@ -1,0 +1,42 @@
+system initialised state
+------------------------
+
+r7 0xffffffff	pc   0x00000000 (N/A)		// program counter
+r6 0xffffffff	fp   0x00000000 (NULL)		// frame pointer
+r5 0xffffffff	sp   0x00000000 (_stk)		// stack pointer
+r4 0xffffffff	msw  0x00000000 (zero)		// machine status word
+r3 0xffffffff   link 0x00001000 (_start)	// return address
+r2 0xffffffff   dbg  0x00000000			// debug-mode flags
+r1 0xffffffff	ctrl 0x00000000 (zero)		// control register
+r0 0xffffffff	xsr  0x00000000 (zero)		// exception status register
+
+virtual machine environment
+---------------------------
+
+- 32-bit machine words and addresses in default configuration
+- 8 general purpose registers r0 through r7
+
+system special registers
+------------------------
+- PC; program counter ("instruction pointer")
+- FP; frame pointer (current functions stack frame)
+- SP; stack pointer
+- MSW; IF, ZF, SF, CF (interrupt, zero, sign, carry)
+- LINK; return address for function calls
+- DBG; debug-mode flag register
+- CTRL; control register; RING (0 for system, 1 for user)
+- PDBR; page-directory base register (page directory physical address)
+- TSC; global cycle counter (64-bit)
+
+virtual machine memory map
+--------------------------
+
+permissions
+-----------
+- SR = system-read, SW = system-write, SX = system-execute
+- UR = user-read,   UW = user-write,   UX = user-execute
+
+address		brief		permissions
+-------		-----		-----------
+PAGEDIR		page directory	SR | SW
+
