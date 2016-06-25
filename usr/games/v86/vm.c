@@ -144,7 +144,7 @@ vmdov86op(struct v86vm *vm, struct v86op *op)
 
             return retval;
           __v86out:
-            _v86opnout(vm, op, retval);
+            _v86opout(vm, op, retval);
 
             return retval;
           __v86hlt:
@@ -192,6 +192,7 @@ vmdov86op(struct v86vm *vm, struct v86op *op)
                 &&__v86hlt
             };
             code = op->code;
+            _v86getargs(vm, op);
 
             goto *jmptab[code];
         } while (code);

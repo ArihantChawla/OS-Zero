@@ -260,16 +260,16 @@ struct v86vmop {
 #endif
 
 #define _v86getargs(vm, op)                                             \
-    v86reg *dptr = NULL;                                                \
-    v86reg  dest = (((op)->opflg & V86_DESTINATION_REGISTER)            \
-                    ? (dptr = &(vm)->usrregs[(op)->dreg], *dptr)        \
-                    : (v86reg)((op)->arg));                             \
-    v86reg  src = (((op)->opflg & V86_IMMEDIATE_OPERAND)                \
-                   ? (v86reg)((op)->imm8)                               \
-                   : (((op)->opflg & V86_SOURCE_REGISTER)               \
-                      ? (v86reg)((vm)->usrregs[(op)->sreg])             \
-                      : (v86reg)((op)->arg)));                          \
-    v86reg  pc = (vm)->sysregs[V86_PC_REGISTER]
+    dptr = NULL;                                                        \
+    dest = (((op)->opflg & V86_DESTINATION_REGISTER)                    \
+            ? (dptr = &(vm)->usrregs[(op)->dreg], *dptr)                \
+            : (v86reg)((op)->arg));                                     \
+    src = (((op)->opflg & V86_IMMEDIATE_OPERAND)                        \
+           ? (v86reg)((op)->imm8)                                       \
+           : (((op)->opflg & V86_SOURCE_REGISTER)                       \
+              ? (v86reg)((vm)->usrregs[(op)->sreg])                     \
+              : (v86reg)((op)->arg)));                                  \
+    pc = (vm)->sysregs[V86_PC_REGISTER]
 
 #define vmsetpc(val)                                                    \
     ((vm)->sysregs[V86_PC_REGISTER] = (val))
