@@ -36,7 +36,7 @@ permissions
 - SR = system-read, SW = system-write, SX = system-execute
 - UR = user-read,   UW = user-write,   UX = user-execute
 
-address		brief		permissions
+address		field  	 	brief		permissions
 -------		-----		-----------
-PAGEDIR		page directory	SR | SW
-
+4G - PAGESIZE	PAGEDIR		page directory	SR | SW
+XCPTAB		exception info  pending-bitmap	SR | SW | UR
