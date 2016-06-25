@@ -81,16 +81,6 @@ typedef uint32_t v86adr;
 #define V86_ARGUMENT_MASK                                               \
     (V86_DIRECT_ADDRESS | V86_INDIRECT_ADDRESS | V86_INDEXED_ADDRESS)
 
-/* macros for V86_FUNC_REGISTER */
-#define V86_FUNC_REG3_ARG       (1 << 0)
-#define V86_FUNC_REG2_ARG       (1 << 1)
-#define V86_FUNC_REG1_ARG       (1 << 2)
-#define V86_FUNC_REG0_ARG       (1 << 3)
-#define v86getstkparmnum(vm)    ((vm)->sysregs[V86_FUNC_REGISTER]       \
-                                 & V86_STK_PARAMETERS_MASK)
-#define V86_STK_PARAMETERS_MASK (0x1f << 4)
-#define V86_MAX_STK_PARAMETERS  32
-
 #define v86opisnop(op) (!(op)->code)
 #define v86opsetnop(op) (*(uint32_t *)op = UINT32_C(0))
 /* opcode format; 32 bits + possible 32-bit argument */
@@ -143,14 +133,21 @@ struct v86op {
 #define V86_CONTROL_REGISTER    0x1e    // feature control etc. bits
 #define V86_EXCEPTION_REGISTER  0x1f    // bitmap for pending exceptions
 #define V86_SYSTEM_REGISTERS    8
+#if defined(V86_VM_SUPPORT) && (V86_VM_SUPPORT)
 /* page-table entry bits */
 #define V86_PTE_USER_BIT        (1 << 0)
 #define V86_PTE_PRESENT_BIT     (1 << 1)
 #define V86_PTE_EXEC_BIT        (1 << 2)
+#define V86_PTE_NOCACHE_BIT     (1 << 3)
+#endif
 struct v86vm {
     v86reg    usrregs[V86_USER_REGISTERS];
     v86reg    sysregs[V86_SYSTEM_REGISTERS];
+#if defined(V86_VM_SUPPORT) && (V86_VM_SUPPORT)
     v86adr   *pagetab;
+#else
+    uint8_t  *mem;
+#endif
     uint64_t  tsc;                      // timestamp/cycle counter [global]
 } ALIGNED(PAGESIZE);
 
@@ -163,16 +160,15 @@ struct v86vm {
 #define V86_INST_ARG2           0x04    // illegal argument/operand #2
 #define V86_INST_BREAK          0x08    // breakpoint
 #define V86_INST_NOREAD         0x10    // non-readable memory location
-#define V86_INST_NOWRITE        0x20
-#define V86_INST_NOEXEC         0x40    // non-executable memory location
-/* permission bits for perm-field */
-#define V86_PERM_USER_READ      0x01
-#define V86_PERM_USER_WRITE     0x02
-#define V86_PERM_USER_EXEC      0x04
-#define V86_PERM_SYS_READ       0x08
-#define V86_PERM_SYS_WRITE      0x10
-#define V86_PERM_SYS_EXEC       0x20
-#define V86_PERM_USER           0x80
+#define V86_INST_NOEXEC         0x20    // non-executable memory location
+/* [missing] permission bits for perm-field */
+#define V86_PERM_USER           0x01
+#define V86_PERM_USER_READ      0x02
+#define V86_PERM_USER_WRITE     0x04
+#define V86_PERM_USER_EXEC      0x08
+#define V86_PERM_SYS_READ       0x10
+#define V86_PERM_SYS_WRITE      0x20
+#define V86_PERM_SYS_EXEC       0x40
 struct v86vmxcpt {
     uint8_t type;       // 0 for not specified; otherwise, ID == type - 1
     uint8_t reason;     // error-codes based on exception type
