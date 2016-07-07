@@ -257,6 +257,7 @@ mpmain(struct cpu *cpu)
     for ( ; ; ) { ; }
 }
 
+#if 0
 void
 mpstart(void)
 {
@@ -293,6 +294,7 @@ mpstart(void)
 
     return;
 }
+#endif
 
 /* spurious interrupt handler for SMP */
 void

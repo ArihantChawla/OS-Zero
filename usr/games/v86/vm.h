@@ -95,17 +95,6 @@ struct v86op {
     unsigned int imm8   : 8;    // 8-bit immediate offset, constant, or port
     v86word      arg[EMPTY];    // possible 32-bit constant, address, or offset
 };
-#if 0
-struct v86op {
-    unsigned int code   : 6;    // operation ID
-    unsigned int opsize : 2;    // operand size is 8 << opsize
-    unsigned int oper   : 4;    // operand type
-    unsigned int sreg   : 2;    // source register ID
-    unsigned int dreg   : 2;    // destination register ID
-    unsigned int imm    : 16;   // 16-bit immediate offset, constant, or port
-    v86word      arg[EMPTY];    // possible 32-bit constant, address, or offset
-};
-#endif
 
 /* pseudo-machine parameters */
 

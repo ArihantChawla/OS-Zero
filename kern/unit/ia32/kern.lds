@@ -20,6 +20,7 @@ ENTRY(_start)
 
 SECTIONS {
 
+/*
     . = MPENTRY;
 
     .mp : AT(MPENTRY) {
@@ -30,6 +31,7 @@ SECTIONS {
         mp.o(.data)
         mp.o(.bss)
     }
+*/
 
     . = HICORE;
 
@@ -44,9 +46,14 @@ SECTIONS {
 	real.o(.text)
 	real.o(.data)
 	real.o(.bss)
+        mp.o(.text)
+        mp.o(.data)
+        mp.o(.bss)
+/*
 	vga.o(.text)
 	vga.o(.data)
 	vga.o(.bss)
+*/
 	vbe.o(.text)
 	vbe.o(.data)
 	vbe.o(.bss)

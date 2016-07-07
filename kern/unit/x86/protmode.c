@@ -210,7 +210,7 @@ kinitprot(unsigned long pmemsz)
     ioapicinit(0);
 #endif
 #endif /* SMP || APIC */
-#if (SMP)
+#if (SMP) && 0
     if (mpmultiproc) {
         mpstart();
     }
