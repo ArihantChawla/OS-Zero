@@ -1339,7 +1339,7 @@ mallinit(void)
        
         return;
     }
-#if defined(GNUMALLOC) && (GNUMALLOC)
+#if defined(GNUMALLOC) && (GNUMALLOC) && 0
     __malloc_hook = gnu_malloc_hook;
     __realloc_hook = gnu_realloc_hook;
     __memalign_hook = gnu_memalign_hook;
