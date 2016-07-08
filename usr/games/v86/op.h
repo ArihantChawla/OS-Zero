@@ -145,6 +145,24 @@ struct v86vmop {
     } while (0)
 
 /* NOT r/a, r */
+#define _v86opjle(vm, op, ret)                                          \
+    do {                                                                \
+        ret = dest;                                                     \
+    } while (0)
+
+/* NOT r/a, r */
+#define _v86opjgt(vm, op, ret)                                          \
+    do {                                                                \
+        ret = dest;                                                     \
+    } while (0)
+
+/* NOT r/a, r */
+#define _v86opjge(vm, op, ret)                                          \
+    do {                                                                \
+        ret = dest;                                                     \
+    } while (0)
+
+/* NOT r/a, r */
 #define _v86opjc(vm, op, ret)                                           \
     do {                                                                \
         ret = dest;                                                     \
@@ -164,24 +182,6 @@ struct v86vmop {
 
 /* NOT r/a, r */
 #define _v86opjno(vm, op, ret)                                          \
-    do {                                                                \
-        ret = dest;                                                     \
-    } while (0)
-
-/* NOT r/a, r */
-#define _v86opjle(vm, op, ret)                                          \
-    do {                                                                \
-        ret = dest;                                                     \
-    } while (0)
-
-/* NOT r/a, r */
-#define _v86opjgt(vm, op, ret)                                          \
-    do {                                                                \
-        ret = dest;                                                     \
-    } while (0)
-
-/* NOT r/a, r */
-#define _v86opjge(vm, op, ret)                                          \
     do {                                                                \
         ret = dest;                                                     \
     } while (0)

@@ -47,14 +47,14 @@ typedef uint32_t v86adr;
 #define V86_JE                  V86_JZ  // JZ r/m       - ZF == 1
 #define V86_JNZ                 0x10    // JNE r/m      - ZF == 0
 #define V86_JNE                 V86_JNZ // JNZ r/m      - ZF == 0
-#define V86_JC                  0x11    // JC r/m       - CF == 1
 #define V86_JLT                 V86_JC  // JLT r/m      - CF == 1
-#define V86_JNC                 0x12    // JNC r/m      - CF == 0
-#define V86_JO                  0x13    // JO r/m       - OF == 1
-#define V86_JNO                 0x14    // JNO r/m      - OF == 0
-#define V86_JLE                 0x15    // JLE r/m      - SF != OF || ZF == 1
-#define V86_JGT                 0x16    // JGT r/m      - ZF == 0 || SF == OF
-#define V86_JGE                 0x17    // JGE r/m      - SF == OF
+#define V86_JLE                 0x11    // JLE r/m      - SF != OF || ZF == 1
+#define V86_JGT                 0x12    // JGT r/m      - ZF == 0 || SF == OF
+#define V86_JGE                 0x13    // JGE r/m      - SF == OF
+#define V86_JC                  0x14    // JC r/m       - CF == 1
+#define V86_JNC                 0x15    // JNC r/m      - CF == 0
+#define V86_JO                  0x16    // JO r/m       - OF == 1
+#define V86_JNO                 0x17    // JNO r/m      - OF == 0
 #define V86_CALL                0x18    // CALL r/m
 #define V86_RET                 0x19    // RET i
 #define V86_LDR                 0x1a    // LDR i/m, r

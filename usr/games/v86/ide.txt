@@ -9,14 +9,35 @@ and	cmp	jz			pop
 or	mul	jnz			popa
 xor	div	je			
 shr		jne			
-shl		jc
-sar		jnc
+shl		jlt
+sar		jle
+		jg
+		jge
+		jc
+		jnc
 		jo
 		jno
-		jle
-		jgt
-		jge
 
+topbar menu symbols
+-------------------
+
+bits	arith	branch
+----	-----	------
+   .	   +	  ->
+   ~	   -	 -->
+   &	 <->	!(x)
+   |	   *	 (x)
+   ^	   /	  ==
+  >>	   	  !=
+  <<		 (^)
+ >>>		!(^)
+ 		  ->
+		 !->
+		   <
+		  <=
+		   >
+		  >=
+		
 debugger windows
 ----------------
 

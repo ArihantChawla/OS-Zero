@@ -80,6 +80,18 @@ vmdov86op(struct v86vm *vm, struct v86op *op)
             _v86opjnz(vm, op, retval);
         
             return retval;
+        __v86jle:
+            _v86opjle(vm, op, retval);
+        
+            return retval;
+        __v86jgt:
+            _v86opjgt(vm, op, retval);
+        
+            return retval;
+        __v86jge:
+            _v86opjge(vm, op, retval);
+        
+            return retval;
         __v86jc:
             _v86opjc(vm, op, retval);
         
@@ -94,18 +106,6 @@ vmdov86op(struct v86vm *vm, struct v86op *op)
             return retval;
         __v86jno:
             _v86opjno(vm, op, retval);
-        
-            return retval;
-        __v86jle:
-            _v86opjle(vm, op, retval);
-        
-            return retval;
-        __v86jgt:
-            _v86opjgt(vm, op, retval);
-        
-            return retval;
-        __v86jge:
-            _v86opjge(vm, op, retval);
         
             return retval;
         __v86call:
@@ -173,13 +173,12 @@ vmdov86op(struct v86vm *vm, struct v86op *op)
                 &&__v86ljmp,
                 &&__v86jz,
                 &&__v86jnz,
-                &&__v86jc,
-                &&__v86jnc,
-                &&__v86jo,
-                &&__v86jno,
+                &&__v86jz,      // JE
+                &&__v86jnz,     // JNE
+                &&__v86jc,      // JLT
                 &&__v86jle,
-                &&__v86jgt,
                 &&__v86jge,
+                &&__v86jgt,
                 &&__v86call,
                 &&__v86ret,
                 &&__v86ldr,
