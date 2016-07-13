@@ -40,6 +40,7 @@ m_atomdec32(volatile long *p)
                           : "memory");
 }
 
+/* atomic exchange operation */
 static __inline__ long
 m_xchg32(volatile long *p,
          long val)

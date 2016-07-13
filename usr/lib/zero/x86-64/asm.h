@@ -196,7 +196,7 @@ m_cmpxchgu64(volatile unsigned long *p,
 static __inline__ volatile void *
 m_cmpxchg64ptr(volatile long *p,
                volatile long *want,
-               volatile long *val)
+               volatile void *val)
 {
     volatile void *res;
     

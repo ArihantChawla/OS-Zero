@@ -94,7 +94,7 @@ m_getretfrmadr(void **pp)
 static __inline__ volatile void *
 m_cmpxchg32ptr(volatile long *p,
                volatile long *want,
-               volatile long *val)
+               volatile void *val)
 {
     volatile void *res;
     
