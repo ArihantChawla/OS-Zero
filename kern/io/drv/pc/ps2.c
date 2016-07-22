@@ -18,8 +18,8 @@
 //#define VAL(x)        (x)
 #define NOP(x)        ((void)0)
 #define NOP3(x, y, z) ((void)0)
-#define FREE          NOP
-#define MEMCPY        NOP3
+#define RING_FREE     NOP
+#define RING_MEMCPY   NOP3
 #define RING_ITEM     uint32_t
 #define RING_INVAL    PS2KBD_NOSYM
 #include <zero/ev.h>

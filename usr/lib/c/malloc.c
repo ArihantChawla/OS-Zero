@@ -160,6 +160,7 @@ void *tracetab[64];
 #endif
 #include <zero/cdefs.h>
 #include <zero/param.h>
+#include <zero/asm.h>
 #include <zero/unix.h>
 #include <zero/trix.h>
 #if defined(MALLOCTKTLK) && (MALLOCTKTLK)
@@ -640,6 +641,7 @@ prefork(void)
 //        __malloclk(&g_malloc.freetab[ndx].lk);
     }
 #if (!MALLOCHASH)
+#if (!MALLOCNEWMULTITAB)
 #if (MALLOCMULTITAB)
     for (ndx = 0 ; ndx < PAGEDIRNL1KEY ; ndx++) {
 #if (MALLOCSPINLOCKS)
@@ -652,6 +654,7 @@ prefork(void)
     }
 #endif
 #endif
+#endif
     
     return;
 }
@@ -662,6 +665,7 @@ postfork(void)
     long ndx;
 
 #if (!MALLOCHASH)    
+#if (!MALLOCNEWMULTITAB)
 #if (MALLOCMULTITAB)
     for (ndx = 0 ; ndx < PAGEDIRNL1KEY ; ndx++) {
 #if (MALLOCSPINLOCKS)
@@ -678,6 +682,7 @@ postfork(void)
         __mallocunlk(&g_malloc.slabdirlktab[ndx]);
 #endif
     }
+#endif
 #endif
 #endif
 #endif /* 0 */
@@ -715,10 +720,26 @@ hashgetitem(void)
     /* obtain bit-lock on the chain head */
     hptr = &g_malloc.hashbuf;
 //    head = g_malloc.hashbuf;
+#if (!MALLOCNEWHASH)
     do {
         res = m_cmpsetbit((volatile long *)hptr,
                           MALLOC_HASH_MARK_POS);
     } while (res);
+#else
+    res = m_cmpsetbit((volatile long *)hptr,
+                      MALLOC_HASH_MARK_POS);
+    while (res) {
+        unsigned long nloop = 4096;
+        
+        do {
+            res = m_cmpsetbit((volatile long *)hptr,
+                              MALLOC_HASH_MARK_POS);
+        } while (nloop--);
+        if (res) {
+            pthread_yield();
+        }
+    }
+#endif
     head = *hptr;
     upval = (uintptr_t)head;
     upval &= ~MALLOC_HASH_MARK_BIT;
@@ -760,10 +781,26 @@ hashbufitem(struct hashmag *item)
     /* obtain bit-lock on the chain head */
     hptr = &g_malloc.hashbuf;
 //    head = g_malloc.hashbuf;
+#if (!MALLOCNEWHASH)
     do {
         res = m_cmpsetbit((volatile long *)hptr,
                           MALLOC_HASH_MARK_POS);
     } while (res);
+#else
+    res = m_cmpsetbit((volatile long *)hptr,
+                      MALLOC_HASH_MARK_POS);
+    while (res) {
+        unsigned long nloop = 4096;
+        
+        do {
+            res = m_cmpsetbit((volatile long *)hptr,
+                              MALLOC_HASH_MARK_POS);
+        } while (nloop--);
+        if (res) {
+            pthread_yield();
+        }
+    }
+#endif
     head = *hptr;
     upval = (uintptr_t)head;
     upval &= ~MALLOC_HASH_MARK_BIT;
@@ -793,17 +830,35 @@ hashfindmag(void *ptr)
     struct hashmag **hptr;
     long             res;
     unsigned long    key;
-    
-//    key = hashq128upval(upval, MALLOCNHASHBIT);
+
+#if (MALLOCNEWHASH) && 0
+    key = hashq128uptr(upval, MALLOCNHASHBIT);
+#else
     key = upage & ((1UL << (MALLOCNHASHBIT)) - 1);
+#endif
     /* obtain bit-lock on the chain head */
     hptr = &g_malloc.maghash[key];
 //    head = g_malloc.maghash[key];
+#if (!MALLOCNEWHASH)
     do {
         res = m_cmpsetbit((volatile long *)hptr,
                           MALLOC_HASH_MARK_POS);
     } while (res);
-
+#else
+    res = m_cmpsetbit((volatile long *)hptr,
+                      MALLOC_HASH_MARK_POS);
+    while (res) {
+        unsigned long nloop = 4096;
+        
+        do {
+            res = m_cmpsetbit((volatile long *)hptr,
+                              MALLOC_HASH_MARK_POS);
+        } while (nloop--);
+        if (res) {
+            pthread_yield();
+        }
+    }
+#endif
     head = *hptr;
     upval = (uintptr_t)head;
     upval &= ~MALLOC_HASH_MARK_BIT;
@@ -840,16 +895,34 @@ hashsetmag(void *ptr, struct mag *mag)
     long             res;
     unsigned long    key;
 
+#if (MALLOCNEWHASH) && 0
+    key = hashq128uptr(upval, MALLOCNHASHBIT);
+#else
     key = upage & ((1UL << (MALLOCNHASHBIT)) - 1);
-//    key = hashq128upval(upval, MALLOCNHASHBIT);
-    /* obtain bit-lock on the chain head */
+#endif
     /* obtain bit-lock on the chain head */
     hptr = &g_malloc.maghash[key];
 //    head = g_malloc.maghash[key];
+#if (!MALLOCNEWHASH)
     do {
         res = m_cmpsetbit((volatile long *)hptr,
                           MALLOC_HASH_MARK_POS);
     } while (res);
+#else
+    res = m_cmpsetbit((volatile long *)hptr,
+                      MALLOC_HASH_MARK_POS);
+    while (res) {
+        unsigned long nloop = 4096;
+        
+        do {
+            res = m_cmpsetbit((volatile long *)hptr,
+                              MALLOC_HASH_MARK_POS);
+        } while (nloop--);
+        if (res) {
+            pthread_yield();
+        }
+    }
+#endif
     head = *hptr;
     upval = (uintptr_t)head;
     upval &= ~MALLOC_HASH_MARK_BIT;
@@ -927,6 +1000,8 @@ hashsetmag(void *ptr, struct mag *mag)
 
     return NULL;
 }
+
+#elif defined(MALLOCNEWMULTITAB) && (MALLOCNEWMULTITAB)
 
 #elif (MALLOCMULTITAB)
 
@@ -1379,6 +1454,7 @@ mallinit(void)
     __mallocunlk(&g_malloc.heaplk);
 #endif /* !MALLOCNOSBRK */
 #if (!MALLOCHASH)
+#if (!MALLOCNEWMULTITAB)
 #if (MALLOCMULTITAB)
     g_malloc.pagedirlktab = mapanon(g_malloc.zerofd, PAGEDIRNL1KEY
                                     * sizeof(LOCK));
@@ -1396,6 +1472,7 @@ mallinit(void)
         __mallocinitlk(&g_malloc.pagedirlktab[ndx]);
 #endif
     }
+#endif
 #endif
 #endif /* !MALLOCHASH */
 #if (MALLOCHASH)
@@ -2563,9 +2640,11 @@ size_t
 malloc_usable_size(void *ptr)
 {
 #if (MALLOCHASH)
-    struct mag     *mag = ((ptr)
-                           ? hashfindmag(ptr)
-                           : NULL);
+    struct mag *mag = ((ptr)
+                       ? hashfindmag(ptr)
+                       : NULL);
+#elif (MALLOCMULTITAB)
+    struct mag *mag = mtfindmag(ptr);
 #elif (MALLOCHDRPREFIX)
     struct mag *mag = (((uintptr_t)ptr & (PAGESIZE - 1))
                        ? mtfindmag(ptr)
@@ -2609,6 +2688,8 @@ malloc_size(void *ptr)
     struct mag     *mag = ((ptr)
                            ? hashfindmag(ptr)
                            : NULL);
+#elif (MALLOCMULTITAB)
+    struct mag     *mag = mtfindmag(ptr);
 #elif (MALLOCHDRPREFIX)
     struct mag     *mag = (((uintptr_t)ptr & (PAGESIZE - 1))
                            ? mtfindmag(ptr)

@@ -1,7 +1,7 @@
 #ifndef ___MALLOC_H__
 #define ___MALLOC_H__
 
-#define MALLOCPRIOLK      0     // use locks lifted from locklessinc.com
+#define MALLOCPRIOLK      1     // use locks lifted from locklessinc.com
 
 #include <limits.h>
 #include <stdint.h>
@@ -12,6 +12,8 @@
 
 /* internal stuff for zero malloc - not for the faint at heart to modify :) */
 
+#define MALLOCNEWMULTITAB 0
+#define MALLOCNEWHASH     1
 #define MALLOCHASH        1
 #define MALLOCTKTLK       0
 #define MALLOCNBTAIL      0
@@ -38,8 +40,12 @@
 /* optional features and other hacks */
 #define MALLOCVALGRIND    1
 #define MALLOCHDRHACKS    0
+#define MALLOCNEWHDR      0
+#define MALLOCHDRPREFIX   0
+/*
 #define MALLOCNEWHDR      1
 #define MALLOCHDRPREFIX   1
+*/
 #define MALLOCSMALLADR    1
 #define MALLOCSTAT        0
 #define MALLOCPTRNDX      1
@@ -54,8 +60,6 @@
 #define MALLOCDEBUGHOOKS  0
 #define MALLOCDIAG        0 // run [heavy] internal diagnostics for debugging
 #define DEBUGMTX          0
-
-#define MALLOCSTEALMAG    0
 
 #define MALLOCNOSBRK      0 // do NOT use sbrk()/heap, just mmap()
 #define MALLOCFREETABS    1 // use free block bitmaps; bit 1 for allocated
@@ -88,14 +92,25 @@
 #endif
 
 #define MALLOCNHASHITEM   (1U << MALLOCNHASHBIT)
+#if (MALLOCNEWHASH)
+#define MALLOCNHASHBIT    22
+#else
 #define MALLOCNHASHBIT    20
+#endif
 
+#if (MALLOCNEWMULTITAB)
+#define MALLOCSLABLOG2    18
+#define MALLOCBIGSLABLOG2 21
+#define MALLOCBIGMAPLOG2  23
+#define MALLOCHUGEMAPLOG2 25
+#else
 /* <= MALLOCSLABLOG2 are tried to get from heap #if (!MALLOCNOSBRK) */
 /* <= MALLOCSLABLOG2 are allocated 1UL << MALLOCBIGSLABLOG2 bytes per slab */
 #define MALLOCSLABLOG2    18
 #define MALLOCBIGSLABLOG2 20
 #define MALLOCBIGMAPLOG2  22
 #define MALLOCHUGEMAPLOG2 24
+#endif
 
 #if !defined(MALLOCALIGNMENT) || (MALLOCALIGNMENT == 32)
 #define MALLOCMINLOG2     5     // stuff such as SIMD types
@@ -315,13 +330,39 @@ static void   gnu_free_hook(void *ptr);
 
 #endif /* MALLOCMULTITAB */
 
+#if (MALLOCNEWMULTITAB)
+
+#define MALLOC_TAB_LK_BIT 0x01L
+#define mttrylktab(tab) (!m_cmpsetbit((volatile long *)&tab->ptr,       \
+                                      MALLOC_TAB_LK_BIT))
+#define mtlktab(tab)                                                    \
+    do {                                                                \
+        long _res;                                                      \
+                                                                        \
+        _res = m_cmpsetbit((volatile long *)&tab->ptr,                  \
+                           MALLOC_TAB_LK_BIT);                          \
+    } while (res)
+#define mtunlktab(tab)                                                  \
+    m_cmpclrbit((volatile long *)&tab->ptr,                             \
+                MALLOC_TAB_LK_BIT)
+
 struct memtab {
     void          *ptr;
     volatile long  nref;
 };
 
+#else
+
 #define maglkbit(mag)   1
 #define magunlkbit(mag) 0
+
+struct memtab {
+    void          *ptr;
+    volatile long  nref;
+};
+
+#endif
+
 #define MAGMAP          0x01
 #define ADRMASK         (MAGMAP)
 #define PTRFLGMASK      (MAGMAP)
@@ -691,7 +732,9 @@ struct malloc {
 #elif (MALLOCNBKT == 32)
     uint32_t                 magemptybits;
 #endif
-#if (MALLOCHASH)
+#if (MALLOCNEWMULTITAB)
+    struct memtab           *pagedir;
+#elif (MALLOCHASH)
     struct hashmag          *hashbuf;
     struct hashmag         **maghash;
 #elif (MALLOCFREETABS)

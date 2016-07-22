@@ -4,6 +4,8 @@
  * REFERENCE: https://www.pvk.ca/Blog/2015/01/13/lock-free-mutual-exclusion/
  */
 
+/* FIXME: deal with seq->want */
+
 #ifndef __ZERO_LFSEQ_H__
 #define __ZERO_LFSEQ_H__
 

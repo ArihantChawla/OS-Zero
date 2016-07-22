@@ -1,6 +1,12 @@
 #ifndef __ZERO_RING_H__
 #define __ZERO_RING_H__
 
+/* RING_MALLOC  - function used to allocate data buffer */
+/* RING_FREE    - function used to free buffers */
+/* RING_MEMCPY  - function used to copy data */
+/* RING_ITEM    - type of items in ring buffer */
+/* RING_INVAL   - invalid/non-present item value */
+
 #if !defined(RINGSHAREBUF)
 #define RINGSHAREBUF 0
 #endif
@@ -19,36 +25,36 @@
 #include <zero/mtx.h>
 #include <zero/trix.h>
 #if !defined(__KERNEL__)
-#if !defined(MALLOC) || !defined(FREE)
+#if !defined(RING_MALLOC) || !defined(RING_FREE)
 #include <stdlib.h>
 #endif
-#if !defined(MEMCPY)
+#if !defined(RING_MEMCPY)
 #include <string.h>
 #endif
-#if !defined(MALLOC)
-#define MALLOC(n)            malloc(n)
+#if !defined(RING_MALLOC)
+#define RING_MALLOC(sz)           malloc(sz)
 #endif
-#if !defined(FREE)
-#define FREE(ptr)            free(ptr)
+#if !defined(RING_FREE)
+#define RING_FREE(ptr)            free(ptr)
 #endif
-#if !defined(MEMCPY)
-#define MEMCPY(dest, src, n) memcpy(dest, src, n)
+#if !defined(RING_MEMCPY)
+#define RING_MEMCPY(dest, src, n) memcpy(dest, src, n)
 #endif
 #endif /* !defined(__KERNEL__) */
 
 #if (RINGSHAREBUF) && !defined(__KERNEL__)
 #if defined(_ISOC11_SOURCE) && (_ISOC11_SOURCE)
-#defined VALLOC(n)           aligned_alloc(PAGESIZE, n)
+#defined RING_VALLOC(n)           aligned_alloc(PAGESIZE, n)
 #elif (((defined(_BSD_SOURCE) && (_BSD_SOURCE))                         \
         || (defined(_XOPEN_SOURCE) && (_XOPEN_SOURCE >= 500             \
                                        || ((defined(_XOPEN_SOURCE_EXTENDED) \
                                             && (_XOPEN_SOURCE_EXTENDED)))))) \
        && !((USEPOSIX200112)                                            \
             || (defined(_XOPEN_SOURCE) && (_XOPEN_SOURCE >= 600))))     \
-#define VALLOC(n)            valloc(n)
+#define RING_VALLOC(n)            valloc(n)
 #elif (USEPOSIX200112 || (defined(_XOPEN_SOURCE) && (_XOPEN_SOURCE >= 600)))
 static __inline__ void *
-VALLOC(size_t n)
+RING_VALLOC(size_t n)
 {
     void *ptr;
 
@@ -60,15 +66,9 @@ VALLOC(size_t n)
     return ptr;
 }
 #else
-#define VALLOC(n) memalign(PAGESIZE, n)
+#define RING_VALLOC(n) memalign(PAGESIZE, n)
 #endif
 #endif /* RINGSHAREBUF && !__KERNEL__ */
-
-/* MALLOC       - function used to allocate data buffer */
-/* FREE         - function used to free buffers */
-/* MEMCPY       - function used to copy data */
-/* RING_ITEM    - type of items in ring buffer */
-/* RING_INVAL   - invalid/non-present item value */
 
 /* flg-member bits */
 #define RINGBUF_INIT (1 << 0)
@@ -107,9 +107,9 @@ ringinit(void *ptr, void *base, long nitem)
     }
     if (!base) {
 #if (RINGSHAREBUF)
-        base = VALLOC(nitem * sizeof(RING_ITEM));
+        base = RING_VALLOC(nitem * sizeof(RING_ITEM));
 #else
-        base = MALLOC(nitem * sizeof(RING_ITEM));
+        base = RING_MALLOC(nitem * sizeof(RING_ITEM));
 #endif
         if (base) {
             retval++;
@@ -362,12 +362,12 @@ ringresize(struct ringbuf *buf, long nitem)
         nin = (int8_t *)buf->inptr - (int8_t *)buf->base;
         nout = (int8_t *)buf->outptr - (int8_t *)buf->base;
         src = buf->base;
-        ptr = MALLOC(nitem * sizeof(RING_ITEM));
+        ptr = RING_MALLOC(nitem * sizeof(RING_ITEM));
         if (ptr) {
             if (src && (buf->flg & RINGBUF_INIT)) {
-                MEMCPY(ptr, src, buf->nitem);
+                RING_MEMCPY(ptr, src, buf->nitem);
             }
-            FREE(src);
+            RING_FREE(src);
             buf->nitem = nitem;
             buf->base = ptr;
             buf->lim = (RING_ITEM *)((int8_t *)ptr
