@@ -17,6 +17,7 @@ extern uint64_t asmgetpc(void);
 #define m_cmpswap(p, want, val)    m_cmpxchg64(p, want, val)
 #define m_cmpswapu(p, want, val)   m_cmpxchgu64(p, want, val)
 #define m_cmpswapptr(p, want, val) m_cmpxchg64ptr(p, want, val)
+#define m_cmpswapdbl(p, want, val) m_cmpxchg128(p, want, val)
 #define m_cmpsetbit(p, ndx)        m_cmpsetbit64(p, ndx)
 #define m_cmpclrbit(p, ndx)        m_cmpclrbit64(p, ndx)
 #define m_scanlo1bit(l)            m_bsf64(l)
@@ -207,6 +208,63 @@ m_cmpxchg64ptr(volatile long *p,
     
     return res;
 }
+
+#if defined(__GNUC__) && 0
+
+/*
+ * atomic 128-bit compare and swap
+ * - if *p == want, let *p = val
+ * - return original nonzero on success, zero on failure
+ */
+static __inline__ long
+m_cmpxchg128(volatile long *p64,
+             volatile long *want,
+             volatile long *val)
+{
+    return __sync_bool_compare_and_swap(p64, want, val);
+}
+
+#elif defined(_MSC_VER)
+
+static __inline__ long
+m_cmpxchg128(volatile int64_t *p64,
+             volatile int64_t *want,
+             volatile int64_t *val)
+{
+    __i64 lo = val[0];
+    __i64 hi = val[1];
+
+    return InterlockedCompareExchange128(p64, hi, lo, want);
+}
+
+#else
+
+/*
+ * atomic 128-bit compare and swap
+ * - if *p == want, let *p = val
+ * - return original nonzero on success, zero on failure
+ */
+static __inline__ long
+m_cmpxchg128(volatile long *p64,
+             volatile long *want,
+             volatile long *val)
+{
+    uint64_t rax = p64[0];
+    uint64_t rdx = p64[1];
+    uint64_t val0 = val[0];
+    uint64_t val1 = val[1];
+    long     res;
+    
+    __asm__ __volatile__ ("lock cmpxchg16b %1\n"
+                          "setz %0\n"
+                          : "=q" (res), "+m" (*val), "+a" (rax), "+d" (rdx)
+                          : "b" (val0), "c" (val1)
+                          : "cc", "memory");
+
+    return res;
+}
+
+#endif
 
 /* atomic set and test bit operation; returns the old value */
 static __inline__ long
