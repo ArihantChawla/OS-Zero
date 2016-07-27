@@ -15,14 +15,14 @@
 #include <zero/tagptr.h>
 
 struct lfqnode {
-    LFQ_VAL_T     val;
-    struct tagptr prev;
-    struct tagptr next;
+    TAGPTR_T  prev;
+    TAGPTR_T  next;
+    LFQ_VAL_T val;
 };
 
 struct lfq {
-    struct tagptr  head;
-    struct tagptr  tail;
+    TAGPTR_T       head;
+    TAGPTR_T       tail;
     struct lfqnode dummy;
 };
 

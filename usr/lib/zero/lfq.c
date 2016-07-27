@@ -1,30 +1,28 @@
+#include <stdint.h>
+#include <zero/asm.h>
 #include <zero/atomic.h>
 #include <zero/lfq.h>
 
 void
 lfqqueue(struct lfq *q, struct lfqnode *node)
 {
-    struct tagptr tail;
-    struct tagptr tag;
-    struct tagptr tptr;
-    struct tagptr src;
+    TAGPTR_T tail;
+    TAGPTR_T tmp;
+    TAGPTR_T src;
 
     do {
-//        src = *node;
-        src.data.adr = node;
-        tptr.data.adr = node;
+        tagptrinitadr(node, src);               // src.adr = node
         tail = q->tail;
-        src.data.tag = tail.data.tag;
-        tptr.data.tag = tail.data.tag + 1;
-        tag.data.adr = tail.data.adr;
-        tag.data.tag = tptr.data.tag;
-        node->next = tag;
-        if (m_cmpswapdbl((volatile long *)&q->tail,
-                         (volatile long *)&tail,
-                         tptr)) {
-            ((struct lfqnode *)tail.data.adr)->prev = src;
+        tagptrcpytag(tail, src);                // src.tag = tail.tag
+        tmp = src;
+        tagptrinctag(tmp);                      // tmp.tag = tail.tag + 1
+        node->next = tmp;
+        if (tagptrcmpswap(&q->tail, &tail, &tmp)) {
+            ((struct lfqnode *)tagptrgetadr(tail))->prev = src;
+
+            break;
         }
-    } while (1);
+    } while (1);        
 
     return;
 }

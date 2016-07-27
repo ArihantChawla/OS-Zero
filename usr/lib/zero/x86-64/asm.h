@@ -265,7 +265,7 @@ m_cmpxchg128(volatile long *p64,
     long     *res;
     
     __asm__ __volatile__ ("lock cmpxchg16b %1\n"
-                          "setz %0\n"
+                          "setz %b0\n"
                           : "=q" (res), "+m" (*val), "+a" (rax), "+d" (rdx)
                           : "b" (val0), "c" (val1)
                           : "cc", "memory");
