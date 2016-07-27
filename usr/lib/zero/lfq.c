@@ -20,7 +20,7 @@ lfqqueue(struct lfq *q, struct lfqnode *node)
         if (tagptrcmpswap(&q->tail, &tail, &tmp)) {
             ((struct lfqnode *)tagptrgetadr(tail))->prev = src;
 
-            break;
+            return;
         }
     } while (1);        
 
