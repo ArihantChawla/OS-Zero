@@ -96,6 +96,8 @@ m_atominc64(volatile long *p)
                           : "+m" (*(p))
                           :
                           : "memory");
+
+    return;
 }
 
 /* atomic decrement operation */
@@ -106,6 +108,8 @@ m_atomdec64(volatile long *p)
                           : "+m" (*(p))
                           :
                           : "memory");
+
+    return;
 }
 
 static __inline__ long
@@ -157,56 +161,61 @@ m_xaddu64(volatile unsigned long *p,
 /*
  * atomic compare and exchange longword
  * - if *p == want, let *p = val
- * - return original *p
+ * - return nonzero on success, zero on failure
  */
 static __inline__ long
 m_cmpxchg64(volatile long *p,
            long want,
            long val)
 {
-    volatile long res;
+    long res;
     
     __asm__ __volatile__ ("lock cmpxchgq %1, %2\n"
                           : "=a" (res)
                           : "q" (val), "m" (*(p)), "0" (want)
                           : "memory");
     
-    return res;
+    return (res == want);
 }
 
+/*
+ * atomic compare and exchange unsigned longword
+ * - if *p == want, let *p = val
+ * - return nonzero on success, zero on failure
+ */
 static __inline__ unsigned long
 m_cmpxchgu64(volatile unsigned long *p,
              unsigned long want,
              unsigned long val)
 {
-    volatile unsigned long res;
+    unsigned long res;
     
     __asm__ __volatile__ ("lock cmpxchgq %1, %2\n"
                           : "=a" (res)
                           : "q" (val), "m" (*(p)), "0" (want)
                           : "memory");
     
-    return res;
+    return (res == want);
 }
 
 /*
  * atomic compare and exchange pointer
  * - if *p == want, let *p = val
- * - return original *p
+ * - return nonzero on success, zero on failure
  */
-static __inline__ volatile void *
+static __inline__ long
 m_cmpxchg64ptr(volatile long *p,
                volatile long *want,
                volatile void *val)
 {
-    volatile void *res;
+    void *res;
     
     __asm__ __volatile__("lock cmpxchgq %1, %2\n"
                          : "=a" (res)
                          : "q" (val), "m" (*(p)), "0" (want)
                          : "memory");
     
-    return res;
+    return (res == want);
 }
 
 #if defined(__GNUC__) && 0
@@ -261,7 +270,7 @@ m_cmpxchg128(volatile long *p64,
                           : "b" (val0), "c" (val1)
                           : "cc", "memory");
 
-    return res;
+    return (res == want);
 }
 
 #endif

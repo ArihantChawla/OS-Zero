@@ -60,12 +60,8 @@ mtxtrylk(volatile long *lp)
     volatile long res;
 
     res = m_cmpswap(lp, MTXINITVAL, MTXLKVAL);
-    if (res == MTXINITVAL) {
 
-        return 1;
-    }
-
-    return 0;
+    return res;
 }
 
 /*
@@ -79,14 +75,14 @@ mtxlk(volatile long *lp)
     
     do {
         res = m_cmpswap(lp, MTXINITVAL, MTXLKVAL);
-        if (res != MTXINITVAL) {
+        if (!res) {
 #if (ZEROMTXYIELD) || defined(__KERNEL__)
             thryield();
 #else
             m_waitint();
 #endif
         }
-    } while (res != MTXINITVAL);
+    } while (!res);
 
     return;
 }

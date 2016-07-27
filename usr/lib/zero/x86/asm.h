@@ -45,7 +45,7 @@ static __inline__ long
 m_xchg32(volatile long *p,
          long val)
 {
-    volatile long res;
+    long res;
 
     __asm__ __volatile__ ("lock xchgl %0, %2\n"
                           : "+m" (*p), "=a" (res)
@@ -116,21 +116,21 @@ m_xaddu32(volatile unsigned int *p,
 /*
  * atomic compare and exchange longword
  * - if *p == want, let *p = val
- * - return original *p
+ * - return nonzero on success, zero on failure
  */
 static __inline__ long
 m_cmpxchg32(volatile long *p,
             long want,
             long val)
 {
-    volatile long res;
+    long res;
     
     __asm__ __volatile__("lock cmpxchgl %1, %2\n"
                          : "=a" (res)
                          : "q" (val), "m" (*(p)), "0" (want)
                          : "memory");
     
-    return res;
+    return (res == want);
 }
 
 /* atomic set bit operation */
@@ -243,19 +243,19 @@ m_cmpclrbit32(volatile long *p, long ndx)
  * - if *p == want, let *p = val
  * - return original *p
  */
-static __inline__ char
+static __inline__ long
 m_cmpxchg8(volatile long *p,
            long want,
            long val)
 {
-    volatile long res;
+    long res;
 
     __asm__ __volatile__ ("lock cmpxchgb %b1, %2\n"
                           : "=a" (res)
                           : "q" (val), "m" (*(p)), "0" (want)
                           : "memory");
 
-    return (char)res;
+    return (res == want);
 }
 
 static __inline__ unsigned long

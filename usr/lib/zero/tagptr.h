@@ -3,6 +3,8 @@
 
 /* tagged pointers for libzero */
 
+#define tagptrcmpswap(ptr, want, src) m_cmpswapdbl(ptr, want, src)
+
 #if defined(__x86_64__) || defined(__amd64__)
 
 struct tagptr {

@@ -89,21 +89,21 @@ m_getretfrmadr(void **pp)
 /*
  * atomic compare and exchange pointer
  * - if *p == want, let *p = val
- * - return original *p
+ * return nonzero on success, zero on failure
  */
-static __inline__ volatile void *
+static __inline__ long
 m_cmpxchg32ptr(volatile long *p,
                volatile long *want,
                volatile void *val)
 {
-    volatile void *res;
+    long *res;
     
     __asm__ __volatile__("lock cmpxchgl %1, %2\n"
                          : "=a" (res)
                          : "q" (val), "m" (*(p)), "0" (want)
                          : "memory");
     
-    return res;
+    return (res == want);
 }
 
 #endif /* __ZERO_IA32_ASM_H__ */

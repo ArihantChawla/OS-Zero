@@ -26,7 +26,7 @@ struct memslab {
     (((uintptr_t)(ptr) - (pool)->base) >> MEMSLABSHIFT)
 #define memgetadr(hdr, pool)                                            \
     ((void *)((uint8_t *)(pool)->base                                   \
-              + (memgethdrnum(hdr, pool) << MEMMINSIZE)))
+              + (memgethdrnum(hdr, pool) << MEMMINSHIFT)))
 #define memgetslab(ptr, pool)                                           \
     ((struct memslab *)(pool)->hdrtab + memgetblknum(ptr, pool))
 #define memgetmag(ptr, pool)                                            \

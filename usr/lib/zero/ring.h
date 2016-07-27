@@ -34,12 +34,6 @@
 #if !defined(RING_MALLOC)
 #define RING_MALLOC(sz)           malloc(sz)
 #endif
-#if !defined(RING_FREE)
-#define RING_FREE(ptr)            free(ptr)
-#endif
-#if !defined(RING_MEMCPY)
-#define RING_MEMCPY(dest, src, n) memcpy(dest, src, n)
-#endif
 #endif /* !defined(__KERNEL__) */
 
 #if (RINGSHAREBUF) && !defined(__KERNEL__)
@@ -108,8 +102,10 @@ ringinit(void *ptr, void *base, long nitem)
     if (!base) {
 #if (RINGSHAREBUF)
         base = RING_VALLOC(nitem * sizeof(RING_ITEM));
-#else
+#elif defined(RING_MALLOC)
         base = RING_MALLOC(nitem * sizeof(RING_ITEM));
+#else
+        base = &buf->data;
 #endif
         if (base) {
             retval++;
@@ -348,6 +344,8 @@ ringputmany32(struct ringbuf *buf, int32_t *src, long len)
     return ret;
 }
 
+#if defined(RING_MALLOC)
+
 /* resize data buffer */
 static __inline__ void *
 ringresize(struct ringbuf *buf, long nitem)
@@ -382,6 +380,8 @@ ringresize(struct ringbuf *buf, long nitem)
 
     return ptr;
 }
+
+#endif
 
 #endif /* __ZERO_RING_H__ */
 
