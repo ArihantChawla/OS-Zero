@@ -31,6 +31,8 @@ div128(i128 a, i128 b) {
     return a / b;
 }
 
+#define mod128(a, b) rem128(a, b)
+
 static __inline__ i128
 rem128(i128 a, i128 b) {
 

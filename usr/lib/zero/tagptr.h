@@ -15,6 +15,7 @@
 #include <xmmintrin.h>
 #include <emmintrin.h>
 
+/* pointer in the high-order 64 bits, tag [counter] in the low */
 #define TAGPTR_T __m128i
 
 #define tagptrinitadr(adr, tp)                                          \
@@ -25,16 +26,6 @@
     (_mm_add_ss((__m128)tp, (__m128)_mm_cvtsi64_si128(INT64_C(1))))
 #define tagptrgetadr(tp)                                                \
     ((void *)((uintptr_t)_mm_cvtsi128_si64(_mm_srli_si128(tp, 64))))
-
-struct tagptr {
-    union {
-        TAGPTR_T     _aln;      // force dualword-alignment
-        struct {
-            uint64_t  tag;      // tag in low word to allow easy increment
-            void     *adr;      // pointer value
-        } ptr;
-    } data;
-};
 
 #endif
 
