@@ -3,9 +3,15 @@
 
 #include <xmmintrin.h>
 #include <emmintrin.h>
+#include <zero/asm.h>
 
 /* pointer in the high-order 64 bits, tag [counter] in the low */
 #define TAGPTR_T __m128i
+
+#define tagptrcmpswap(tp, want, src)                                    \
+    m_cmpswapdbl((volatile long *)tp,                                   \
+                 (volatile long *)want,                                 \
+                 (volatile long *)src)
 
 #define tagptrinitadr(adr, tp)                                          \
     ((tp) = _mm_cvtsi64_si128((long long)adr), (tp) = _mm_slli_si128((tp), 64))
