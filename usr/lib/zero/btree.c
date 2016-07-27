@@ -16,19 +16,19 @@
 static BTREE_ITEM_T *
 btreeins(BTREE_T *tree, BTREE_ITEM_T *item)
 {
-    ;
+    return NULL;
 }
 
 static struct btreeitem *
 btreefind(struct btree *tree, BTREE_KEY_T key)
 {
-    ;
+    return NULL;
 }
 
 /* delete node associated with key from tree */
-static BTREE_ITEM_T
+static BTREE_DATA_T
 btreedel(struct btree *tree, BTREE_KEY_T key)
 {
-    ;
+    BTREE_DATA_NONE;
 }
 

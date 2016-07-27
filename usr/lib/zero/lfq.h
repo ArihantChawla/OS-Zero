@@ -7,10 +7,15 @@
  * REFERENCE: https://www.offblast.org/stuff/books/FIFO_Queues.pdf
  */
 
+#if !defined(LFQ_VAL_T)
+#include <stdint.h>
+#define LFQ_VAL_T uintptr_t
+#endif
+
 #include <zero/tagptr.h>
 
 struct lfqnode {
-    LFQVAL_T      val;
+    LFQ_VAL_T     val;
     struct tagptr prev;
     struct tagptr next;
 };

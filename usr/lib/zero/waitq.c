@@ -1,14 +1,10 @@
+#include <stddef.h>
 #include <stdint.h>
-#include <zero/cdecl.h>
+#include <zero/cdefs.h>
 #include <zero/mtx.h>
 #include <zero/waitq.h>
 
 THREADLOCAL struct waitq *thrwaitq;
-
-struct waitqitem {
-    struct waitq *wq;
-    struct waitq *next;
-};
 
 static struct waitq     *waitqtab[WAITQ_MAX];
 static struct waitqitem  waitqitemtab[WAITQ_MAX];
@@ -20,7 +16,7 @@ static struct waitq *
 waitqinit(struct waitq *wq)
 {
     if (!wq) {
-        wq = malloc(1, sizeof(struct waitq));
+        wq = malloc(sizeof(struct waitq));
     }
     if (wq) {
         wq->lk = MTXINITVAL;
@@ -29,7 +25,7 @@ waitqinit(struct waitq *wq)
         wq->event = WAITQ_NONE;
         wq->prev = WAITQ_NONE;
         wq->next = WAITQ_NONE;
-        wq->data = WAITQ_NONE;
+        wq->data = NULL;
         condinit(&wq->cond);
         wq->signal = NULL;
         wq->wait = NULL;
@@ -61,8 +57,9 @@ waitqgetnext(long waitq)
         wq = waitqtab[waitq];
         waitq = wq->next;
     }
+    waitq = wq->id;
 
-    return id;
+    return waitq;
 }
 
 struct waitq *
@@ -79,7 +76,7 @@ waitqget(void)
     mtxunlk(&waitqlk);
     if (item) {
         wq = item->wq;
-    } else if (waitqmaxid < WAITQMAX) {
+    } else if (waitqmaxid < WAITQ_MAX) {
         wq = waitqinit(NULL);
         mtxlk(&waitqlk);
         wq->id = waitqmaxid++;
@@ -92,18 +89,19 @@ waitqget(void)
 long
 waitqgetsize(long waitq)
 {
-    struct wq *wq;
-    long       nwait = 0;
+    struct waitq *wq;
+    long          nwait = 0;
 
-    while (waitq != WAITQ_NONE) {
+    do {
         wq = waitqtab[waitq];
         waitq = wq->next;
         nwait++;
-    }
+    } while (waitq != WAITQ_NONE);
 
     return nwait;
 }
 
+#if 0
 static void
 waitqrel(struct waitq *wq)
 {
@@ -123,6 +121,7 @@ waitqrel(struct waitq *wq)
 
     return;
 }
+#endif
 
 void
 waitqwakeup(long waitq)

@@ -30,12 +30,12 @@ lwlkunlkfair(struct lwlk *lk)
             newlk->nread--;
         }
         if (!((newlk->flg & LWLK_WRLK_BIT) || (newlk->nread > 0))) {
-            waitq = waitqgetnext(newlk->waitq);
-            newlk->waitq = waitq;
-            if (waitq != WAITQ_NONE) {
-                wq = waitqfind(waitq);
+            wq = waitqgetnext(newlk->waitq);
+            newlk->waitq = wq;
+            if (wq != WAITQ_NONE) {
+                wq = waitqfind(wq);
                 if (wq->status != LWLK_WRLK) {
-                    newlk->nread = waitqgetsize(waitq);
+                    newlk->nread = waitqgetsize(wq);
                 } else {
                     newlk->flg |= LWLK_WRLK_BIT;
                 }
@@ -54,18 +54,18 @@ static long
 lwlklkasync(struct lwlk *lk, long wrlk)
 {
     struct waitq *wq;
-    struct lwlk   oldlk;
+    struct lwlk  *oldlk;
     struct lwlk  *newlk;
 
     wq = waitqget();
     do {
         oldlk = lk;
         newlk = lk;
-        if (!wrlk && !(o->flg & LWLK_WRLK_BIT)
+        if (!wrlk && !(oldlk->flg & LWLK_WRLK_BIT)
             && (oldlk->waitq == WAITQ_NONE
                 || (oldlk->flg & LWLK_RDBIAS_BIT))) {
             /* read lock */
-            old->nread++;
+            oldlk->nread++;
         } else if ((wrlk) &&
                    !((newlk->flg & LWLK_WRLK_BIT) || (newlk->nread > 0))) {
             /* write lock */
@@ -74,7 +74,7 @@ lwlklkasync(struct lwlk *lk, long wrlk)
             /* need to block */
             wq->status = LWLK_WRLK;
             wq->next = oldlk->waitq;
-            newlk->waitq = waitq;
+            newlk->waitq = wq;
         }
     } while (!m_cmpswapptr(lk, oldlk, newlk));
     if (newlk->waitq == wq->id) {

@@ -34,35 +34,36 @@
 #define BTREE_KEY_T  intptr_t
 #endif
 #if !defined (BTREE_DATA_T)
-#define BTREE_DATA_T void *
+#define BTREE_DATA_NONE     (~(uintptr_t)0)
+#define BTREE_DATA_T uintptr_t
 #endif
 #if !defined(BTREE_ITEM_T)
-#define BTREE_ITEM_T struct btreeitem
+#define BTREE_ITEM_T        struct btreeitem
 struct btreeitem {
     BTREE_KEY_T  key;
     BTREE_DATA_T data;
 };
 #endif
 #if !defined(BTREE_RANGE_T)
-#define BTREE_RANGET_T struct btreerange
+#define BTREE_RANGE_T       struct btreerange
 struct btreerange {
     BTREE_KEY_T lokey;
     BTREE_KEY_T hikey;
 };
 #endif
 
-#define BTREE_LEFT_LIST   0
-#define BTREE_MIDDLE_LIST 1
-#define BTREE_RIGHT_LIST  2
+#define BTREE_LEFT_LIST     0
+#define BTREE_MIDDLE_LIST   1
+#define BTREE_RIGHT_LIST    2
 /* tree node structure */
-#define BTREE_NODE struct btreenode
+#define BTREE_NODE_T        struct btreenode
 struct btreenode {
-    unsigned long bits;
-    BTREE_KEY_T   nleft;
-    BTREE_KEY_T   nmid;
-    BTREE_KEY_T   nright;
-    BTREE_RANGE_T limtab[BTREE_NODE_LISTS];
-    BTREE_ITEM_T *tab[BTREE_NODE_ITEMS];
+    unsigned long  bits;
+    BTREE_KEY_T    nleft;
+    BTREE_KEY_T    nmid;
+    BTREE_KEY_T    nright;
+    BTREE_RANGE_T  limtab[BTREE_NODE_LISTS];
+    BTREE_ITEM_T  *tab[BTREE_NODE_ITEMS];
 };
 
 #define BTREE_T struct btree

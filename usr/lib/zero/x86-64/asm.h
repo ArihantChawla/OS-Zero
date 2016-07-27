@@ -208,7 +208,7 @@ m_cmpxchg64ptr(volatile long *p,
                volatile long *want,
                volatile void *val)
 {
-    void *res;
+    long *res;
     
     __asm__ __volatile__("lock cmpxchgq %1, %2\n"
                          : "=a" (res)
@@ -258,11 +258,11 @@ m_cmpxchg128(volatile long *p64,
              volatile long *want,
              volatile long *val)
 {
-    uint64_t rax = p64[0];
-    uint64_t rdx = p64[1];
-    uint64_t val0 = val[0];
-    uint64_t val1 = val[1];
-    long     res;
+    uint64_t  rax = p64[0];
+    uint64_t  rdx = p64[1];
+    uint64_t  val0 = val[0];
+    uint64_t  val1 = val[1];
+    long     *res;
     
     __asm__ __volatile__ ("lock cmpxchg16b %1\n"
                           "setz %0\n"

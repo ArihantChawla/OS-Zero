@@ -7,22 +7,22 @@ lfqqueue(struct lfq *q, struct lfqnode *node)
     struct tagptr tail;
     struct tagptr tag;
     struct tagptr tptr;
-    struct lfqstr src;
+    struct tagptr src;
 
     do {
-        src = *node;
-        src.ptr = node;
-        tptr.ptr = node;
+//        src = *node;
+        src.data.adr = node;
+        tptr.data.adr = node;
         tail = q->tail;
-        src.tag = tail.tag;
-        tptr.tag = tail.tag + 1;
-        tag.ptr = tail.ptr;
-        tag.tag = tptr.tag;
+        src.data.tag = tail.data.tag;
+        tptr.data.tag = tail.data.tag + 1;
+        tag.data.adr = tail.data.adr;
+        tag.data.tag = tptr.data.tag;
         node->next = tag;
         if (m_cmpswapdbl((volatile long *)&q->tail,
                          (volatile long *)&tail,
                          tptr)) {
-            tail.ptr->prev = *src;
+            ((struct lfqnode *)tail.data.adr)->prev = src;
         }
     } while (1);
 

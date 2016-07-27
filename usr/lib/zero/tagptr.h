@@ -14,7 +14,7 @@ struct tagptr {
             void          *adr;
             unsigned long  tag;
         }
-    }
+    } data;
 };
 
 #endif
