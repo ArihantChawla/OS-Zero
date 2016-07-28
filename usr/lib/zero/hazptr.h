@@ -87,7 +87,6 @@ hazptrpoll(struct hazptrbin *bin)
         m_atomdec(&bin->cur);
     }
 
-    /* NOTREACHED */
     return ptr;
 }
 
