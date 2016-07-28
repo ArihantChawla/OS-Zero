@@ -7,23 +7,29 @@
  * REFERENCE: https://www.offblast.org/stuff/books/FIFO_Queues.pdf
  */
 
-#if !defined(LFQ_VAL_T)
 #include <stdint.h>
+#if !defined(LFQ_VAL_T)
 #define LFQ_VAL_T uintptr_t
 #endif
-
+#include <zero/param.h>
 #include <zero/tagptr.h>
 
 struct lfqnode {
     TAGPTR_T  prev;
     TAGPTR_T  next;
     LFQ_VAL_T val;
+    uint8_t   _pad[CLSIZE
+                   - 2 * sizeof(TAGPTR_T)
+                   - sizeof(LFQ_VAL_T)];
 };
 
 struct lfq {
     TAGPTR_T       head;
     TAGPTR_T       tail;
     struct lfqnode dummy;
+    uint8_t        _pad[2 * CLSIZE
+                        - 2 * sizeof(TAGPTR_T)
+                        - sizeof(struct lfqnode)];
 };
 
 #endif /* __ZERO_LFQ_H__ */

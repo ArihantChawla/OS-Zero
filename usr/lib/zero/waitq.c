@@ -1,6 +1,7 @@
 #include <stddef.h>
 #include <stdint.h>
 #include <zero/cdefs.h>
+#include <zero/asm.h>
 #include <zero/mtx.h>
 #include <zero/waitq.h>
 

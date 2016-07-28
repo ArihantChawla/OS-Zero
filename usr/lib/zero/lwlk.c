@@ -2,6 +2,8 @@
 #include <zero/lwlk.h>
 #include <zero/waitq.h>
 
+/* FIXME: the stuff here is broken :) */
+
 static void
 lwlklk(struct lwlk *lk, long wrlk)
 {
