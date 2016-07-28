@@ -13,7 +13,7 @@
 #endif
 #define HAZPTR_BIN_ITEMS (PAGESIZE / sizeof(void *))
 
-#define HAZPTR_BIN_INIT     (1L << 0)
+#define HAZPTR_BIN_INIT  (1L << 0)
 struct hazptrbin {
     volatile long   flg;                // bin flag-bits
     long            cur;                // top of stack
@@ -75,7 +75,7 @@ hazptrpop(struct hazptrbin *bin)
 
 /* pop hazard pointer from bin; return HAZPTR_NONE if none present */
 static __inline__ HAZPTR_T
-hazptrget(struct hazptrbin *bin)
+hazptrpoll(struct hazptrbin *bin)
 {
     HAZPTR_T ptr = HAZPTR_NONE;
     long     ndx = m_fetchadd(&bin->cur, 1);
