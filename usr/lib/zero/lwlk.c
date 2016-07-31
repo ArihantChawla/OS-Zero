@@ -44,8 +44,8 @@ lwlkunlkfair(struct lwlk *lk)
             }
         }
     } while (!m_cmpswapptr((volatile long *)lk,
-                           (volatile long *)&oldlk,
-                           (volatile long *)&newlk));
+                           (volatile long *)oldlk,
+                           (volatile long *)newlk));
     if (wq) {
         wq->next = WAITQ_NONE;
     }
@@ -81,8 +81,8 @@ lwlklkasync(struct lwlk *lk, long wrlk)
             newlk->waitq = wq;
         }
     } while (!m_cmpswapptr((volatile long *)lk,
-                           (volatile long *)&oldlk,
-                           (volatile long *)&newlk));
+                           (volatile long *)oldlk,
+                           (volatile long *)newlk));
     if (newlk->waitq == wq->id) {
 
         return LWLK_FAILURE;
