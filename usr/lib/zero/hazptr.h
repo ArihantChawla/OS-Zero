@@ -10,22 +10,23 @@
 #if !defined(HAZPTR_T)
 #define HAZPTR_T         void *
 #define HAZPTR_NONE      NULL
+#define HAZPTR_BUSY_BIT  (1L << 1)
 #endif
 #define HAZPTR_BIN_ITEMS (PAGESIZE / sizeof(void *))
 
 #define HAZPTR_BIN_INIT  (1L << 0)
 struct hazptrbin {
     volatile long   flg;                // bin flag-bits
-    long            cur;                // top of stack
-    long            lim;                // maximum stack index (# of items)
+    long            nmax;               // maximum # of items [in tab]
     HAZPTR_T       *tab;                // hazard pointers
     void          (*free)(void *);      // reclaim function
     void          (*buf)();             // buffer function
     uint8_t         _pad[CLSIZE         // pad to cacheline boundary
-                         - 3 * sizeof(long)
+                         - 2 * sizeof(long)
                          - 3 * sizeof(void *)];
 };
 
+#if 0
 /* push hazard pointer into bin; wait till success */
 static __inline__ void
 hazptrpush(struct hazptrbin *bin, HAZPTR_T ptr)
@@ -70,7 +71,7 @@ hazptrpop(struct hazptrbin *bin)
     } while (1);
 
     /* NOTREACHED */
-    return ptr;
+    return HAZPTR_NONE;
 }
 
 /* pop hazard pointer from bin; return HAZPTR_NONE if none present */
@@ -89,6 +90,7 @@ hazptrpoll(struct hazptrbin *bin)
 
     return ptr;
 }
+#endif /* 0 */
 
 #endif /* __ZERO_HAZPTR_H__ */
 
