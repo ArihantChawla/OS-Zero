@@ -12,18 +12,16 @@ hazptrinitbin(struct hazptrbin *bin,
 {
     void *ptr;
     long  rel = 0;
-    long  ndx;
     
     if (!bin) {
-        bin = HAZPTR_MALLOC(sizeof(struct hazptrbin));
+        bin = HAZPTR_MALLOC(n * sizeof(struct hazptrbin));
         rel = 1;
     }
     if (bin) {
         ptr = HAZPTR_MALLOC(n * sizeof(HAZPTR_T));
         if (ptr) {
             bin->flg |= HAZPTR_BIN_INIT;
-            bin->cur = n;
-            bin->lim = n;
+            bin->nmax = n;
             bin->tab = ptr;
             bin->free = recl;
             bin->buf = buf;
@@ -50,15 +48,15 @@ hazptrfree(struct hazptrbin *bin)
 
     if (func) {
         lim = bin->nmax;
-        while (for ndx = 0 ; ndx < lim ; ndx++) {
-            ptr = bin->tab[ndx];
+        for (ndx = 0 ; ndx < lim ; ndx++) {
+            ptr = tab[ndx];
             tmp = (long)ptr & HAZPTR_BUSY_BIT;
-            if (!m_cmpsetbit((volatile long *)&bin->tab[ndx],
+            if (!m_cmpsetbit((volatile long *)(&bin->tab[ndx]),
                              HAZPTR_BUSY_BIT)
                 && !hazptrfind(ptr)
-                && m_cmpswap((volatile long *)&bin->tab[ndx],
-                             tmp,
-                             HAZPTR_NONE)) {
+                && m_cmpswap((volatile long *)(&bin->tab[ndx]),
+                             (long)tmp,
+                             (long)HAZPTR_NONE)) {
                 func(ptr);
             }
         }

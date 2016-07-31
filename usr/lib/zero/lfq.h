@@ -9,7 +9,8 @@
 
 #include <stdint.h>
 #if !defined(LFQ_VAL_T)
-#define LFQ_VAL_T uintptr_t
+#define LFQ_VAL_T    uintptr_t
+#define LFQ_VAL_NONE (~(uintptr_t)0)
 #endif
 #include <zero/param.h>
 #include <zero/tagptr.h>
@@ -24,12 +25,12 @@ struct lfqnode {
 };
 
 struct lfq {
+    struct lfqnode dummy;
     TAGPTR_T       head;
     TAGPTR_T       tail;
-    struct lfqnode dummy;
     uint8_t        _pad[2 * CLSIZE
-                        - 2 * sizeof(TAGPTR_T)
-                        - sizeof(struct lfqnode)];
+                        - sizeof(struct lfqnode)
+                        - 2 * sizeof(TAGPTR_T)];
 };
 
 #endif /* __ZERO_LFQ_H__ */

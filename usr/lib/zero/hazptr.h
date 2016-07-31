@@ -1,6 +1,11 @@
 #ifndef __ZERO_HAZPTR_H__
 #define __ZERO_HAZPTR_H__
 
+/* REFERENCE
+ * ---------
+ * http://www.open-std.org/jtc1/sc22/wg21/docs/papers/2016/p0233r0.pdf
+ */
+
 #include <stddef.h>
 #include <limits.h>
 #include <stdint.h>
