@@ -42,6 +42,16 @@ _lfqfixqueue(struct lfq *lfq, TAGPTR_T head, TAGPTR_T tail)
 }
 
 void
+lfqinitqueue(struct lfq *lfq)
+{
+    TAGPTR_T dummy;
+
+    tagptrinitadr(&lfq->dummy, dummy);
+    lfq->head = dummy;
+    lfq->tail = dummy;
+}
+
+void
 lfqenqueue(struct lfq *lfq, struct lfqnode *node)
 {
     TAGPTR_T     tail;

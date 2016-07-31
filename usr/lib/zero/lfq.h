@@ -33,5 +33,9 @@ struct lfq {
                         - 2 * sizeof(TAGPTR_T)];
 };
 
+void      lfqinitqueue(struct lfq *lfq);
+void      lfqenqueue(struct lfq *lfq, struct lfqnode *node);
+LFQ_VAL_T lfqdequeue(struct lfq *lfq);
+
 #endif /* __ZERO_LFQ_H__ */
 
