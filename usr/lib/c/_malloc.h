@@ -49,7 +49,7 @@
 #define MALLOCVALGRIND    1
 #define MALLOCHDRHACKS    0
 #define MALLOCNEWHDR      0
-#define MALLOCHDRPREFIX   0
+#define MALLOCHDRPREFIX   1
 /*
 #define MALLOCNEWHDR      1
 #define MALLOCHDRPREFIX   1
@@ -108,14 +108,14 @@
 
 #if (MALLOCNEWMULTITAB)
 #define MALLOCSLABLOG2    18
-#define MALLOCBIGSLABLOG2 21
+//#define MALLOCBIGSLABLOG2 21
 #define MALLOCBIGMAPLOG2  23
 #define MALLOCHUGEMAPLOG2 25
 #else
 /* <= MALLOCSLABLOG2 are tried to get from heap #if (!MALLOCNOSBRK) */
 /* <= MALLOCSLABLOG2 are allocated 1UL << MALLOCBIGSLABLOG2 bytes per slab */
 #define MALLOCSLABLOG2    18
-#define MALLOCBIGSLABLOG2 20
+//#define MALLOCBIGSLABLOG2 20
 #define MALLOCBIGMAPLOG2  22
 #define MALLOCHUGEMAPLOG2 24
 #endif
@@ -453,9 +453,9 @@ struct magbkt {
     struct mag    *tab;
 };
 
-static void * maginitslab(struct mag *mag, long bktid);
+static void * maginitslab(struct mag *mag, long bktid, long *zeroret);
 static void * maginittab(struct mag *mag, long bktid);
-static void * maginit(struct mag *mag, long bktid);
+static void * maginit(struct mag *mag, long bktid, long *zeroret);
 
 #if (!PTRFLGMASK)
 #define clrptr(ptr)                                                     \
@@ -500,9 +500,15 @@ static void * maginit(struct mag *mag, long bktid);
          ? (MALLOCHUGEMAPLOG2 - (bktid))                                \
          : 0)))
 
+#if 0
 #define magnblklog2(bktid)                                              \
     (((bktid) <= MALLOCSLABLOG2)                                        \
      ? (MALLOCBIGSLABLOG2 - (bktid))                                    \
+     : magnmaplog2(bktid))
+#endif
+#define magnblklog2(bktid)                                              \
+    (((bktid) <= MALLOCSLABLOG2)                                        \
+     ? (MALLOCSLABLOG2 - (bktid))                                       \
      : magnmaplog2(bktid))
 #define magnblk(bktid)                                                  \
     (1UL << magnblklog2(bktid))
@@ -521,10 +527,12 @@ static void * maginit(struct mag *mag, long bktid);
 
 #define magnarnbuflog2(bktid)                                           \
     (((bktid) <= MALLOCSLABLOG2)                                        \
-     ? 2                                                                \
+     ? 3                                                                \
      : (((bktid) <= MALLOCBIGMAPLOG2)                                   \
-        ? 1                                                             \
-        : 0))
+        ? 2                                                             \
+        : (((bktid) <= MALLOCHUGEMAPLOG2)                               \
+           ? 1                                                          \
+           : 0)))
 #define magnarnbuf(bktid)                                               \
     (1UL << magnarnbuflog2(bktid))
 #else
@@ -783,6 +791,9 @@ struct hashmag {
 struct malloc {
 #if (MALLOCLFQ)
     struct lfq               magbuf[MALLOCNBKT];
+#if (MALLOCLAZYUNMAP)
+    struct lfq               mapbuf[MALLOCNBKT];
+#endif
 //    struct lfq               freebuf[MALLOCNBKT];
     struct lfq               hdrbuf[MALLOCNBKT];
 #else

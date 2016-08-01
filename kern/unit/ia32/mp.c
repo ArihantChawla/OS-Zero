@@ -236,7 +236,7 @@ mpmain(struct cpu *cpu)
 {
     seginit(cpu->id);
     idtset();
-    m_swap(&cpu->statflg, CPUSTARTED);
+    m_atomswap(&cpu->statflg, CPUSTARTED);
     /* TODO: initialise HPET; enable [rerouted] interrupts */
 #if (HPET)
     hpetinit();
