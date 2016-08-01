@@ -457,7 +457,7 @@ magget(long bktid, long *zeroret)
 
 #if (MALLOCLFQ) && (MALLOCLAZYUNMAP)
 
-#define MALLOCUNMAPFREQ (1L << 3)
+#define MALLOCUNMAPFREQ (1L << 6)
 
 static void
 mapfree(struct mag *mag, struct lfq *lfq)
@@ -476,6 +476,7 @@ mapfree(struct mag *mag, struct lfq *lfq)
             ntabbyte -= magtabsz(bktid);
 #endif
         }
+        adr = (void *)mag->base;
         unmapanon(adr, mag->size);
 #if (MALLOCSTAT)
         nmapbyte -= mag->size;
@@ -483,7 +484,6 @@ mapfree(struct mag *mag, struct lfq *lfq)
 #if (MALLOCSTAT)
         nmapbyte -= mag->size;
 #endif
-        adr = (void *)mag->base;
         VALGRINDRMPOOL(adr);
         magsetfree(mag);
         if (!magembedtab(bktid)) {
@@ -521,11 +521,11 @@ mapfree(struct mag *mag)
         ntabbyte -= magtabsz(bktid);
 #endif
     }
+    adr = (void *)mag->base;
     unmapanon(adr, mag->size);
 #if (MALLOCSTAT)
     nmapbyte -= mag->size;
 #endif
-    adr = (void *)mag->base;
     VALGRINDRMPOOL(adr);
     magsetfree(mag);
     if (!magembedtab(bktid)) {
