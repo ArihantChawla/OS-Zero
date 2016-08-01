@@ -1146,9 +1146,6 @@ mtsetmag(void *ptr,
     uintptr_t       l1;
     uintptr_t       l2;
     uintptr_t       l3;
-#if (MALLOCPTRNDX)
-    PTRNDX          ndx;
-#endif
     uintptr_t       upval1;
     uintptr_t       upval2;
     uintptr_t       upval3;
@@ -1186,9 +1183,9 @@ mtsetmag(void *ptr,
                         mptr2 = mptr1->ptr;
                         if (!mptr2) {
                             mptr2 = mapanon(g_malloc.zerofd,
-                                            PAGEDIRNL3KEY * sizeof(PTRNDX));
+                                            PAGEDIRNL3KEY * sizeof(void *));
 #if (MALLOCSTAT)
-                            ntabbyte += PAGEDIRNL3KEY * sizeof(PTRNDX);
+                            ntabbyte += PAGEDIRNL3KEY * sizeof(void *);
 #endif
                         }
                         if (mptr2 != MAP_FAILED) {
@@ -1199,10 +1196,10 @@ mtsetmag(void *ptr,
                             mptr1->ptr = mptr2;
 #if defined(MALLOCVALGRINDTABS)
                             VALGRINDALLOC(mptr2,
-                                          PAGEDIRNL3KEY * sizeof(PTRNDX), 1);
+                                          PAGEDIRNL3KEY * sizeof(void *), 1);
 #endif
 #if (MALLOCSTAT)
-                            ntabbyte += PAGEDIRNL3KEY * sizeof(PTRNDX);
+                            ntabbyte += PAGEDIRNL3KEY * sizeof(void *);
 #endif
                         } else {
                             fail = 1;
@@ -1215,9 +1212,6 @@ mtsetmag(void *ptr,
         } while (1);
     }
     if (!mag && !fail) {
-#if (MALLOCPTRNDX)
-        ndx = magptrid(mag, ptr);
-#endif
         mptr1 = g_malloc.pagedir[l1].ptr;
         upval1 = (uintptr_t)mptr1;
         upval1 &= ~MALLOC_TAB_LK_BIT;
@@ -1237,11 +1231,7 @@ mtsetmag(void *ptr,
                         if (mptr3) {
                             mptr1 = ((void **)mptr3)[l3];
                             if (mptr1) {
-#if (MALLOCPTRNDX)
-                                ((PTRNDX *)ptab)[1] = ndx;
-#else
                                 ptab[1] = mptr3;
-#endif
                             }
                         }
                     }
