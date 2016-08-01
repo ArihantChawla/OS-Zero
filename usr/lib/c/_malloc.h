@@ -19,9 +19,10 @@
 
 /* internal stuff for zero malloc - not for the faint at heart to modify :) */
 
-#define MALLOCNEWMULTITAB 0
-#define MALLOCNEWHASH     1
-#define MALLOCHASH        1
+#define MALLOCNEWMULTITAB 1
+#define MALLOCMULTITAB    1
+#define MALLOCNEWHASH     0
+#define MALLOCHASH        0
 #define MALLOCTKTLK       0
 #define MALLOCNBTAIL      0
 #define MALLOCNBDELAY     0
@@ -29,7 +30,6 @@
 #define MALLOCNBHEADLK    0
 #define MALLOCFREEMAP     0
 #define MALLOCSLABTAB     0
-#define MALLOCMULTITAB    0
 
 #define PTHREAD           1
 #define ZEROMTX           1
@@ -284,7 +284,7 @@ static void   gnu_free_hook(void *ptr);
 
 #define MALLOCPAGETAB     1
 
-#if (MALLOCMULTITAB)
+#if (MALLOCMULTITAB) || (MALLOCNEWMULTITAB)
 
 #if (PTRBITS == 32)
 
@@ -310,9 +310,10 @@ static void   gnu_free_hook(void *ptr);
 #elif (ADRHIBITZERO)
 
 #define PAGEDIRNL3BIT     (ADRBITS - PAGEDIRNL1BIT - PAGESIZENL2BIT)
-#endif
 
-#endif
+#endif /* ADRHIBITCOPY */
+
+#endif /* PTRBITS */
 
 #define PAGEDIRL1NDX      (PAGEDIRL2NDX + PAGEDIRNL2BIT)
 #if defined(PAGEDIRNL3BIT) && (PAGEDIRNL3BIT)
@@ -335,23 +336,22 @@ static void   gnu_free_hook(void *ptr);
 #define pagedirl3ndx(ptr) (((uintptr_t)(ptr) >> PAGEDIRL3NDX)           \
                            & ((1UL << PAGEDIRNL3BIT) - 1))
 
-#endif /* MALLOCMULTITAB */
-
 #if (MALLOCNEWMULTITAB)
 
+#define MALLOC_TAB_LK_POS 0x00
 #define MALLOC_TAB_LK_BIT 0x01L
-#define mttrylktab(tab) (!m_cmpsetbit((volatile long *)&tab->ptr,       \
-                                      MALLOC_TAB_LK_BIT))
+#define mttrylktab(tab) (!m_cmpsetbit((volatile long *)(&(tab)->ptr),   \
+                                      MALLOC_TAB_LK_POS))
 #define mtlktab(tab)                                                    \
     do {                                                                \
         long _res;                                                      \
                                                                         \
-        _res = m_cmpsetbit((volatile long *)&tab->ptr,                  \
-                           MALLOC_TAB_LK_BIT);                          \
+        _res = m_cmpsetbit((volatile long *)(&(tab)->ptr),              \
+                           MALLOC_TAB_LK_POS);                          \
     } while (res)
 #define mtunlktab(tab)                                                  \
-    m_cmpclrbit((volatile long *)&tab->ptr,                             \
-                MALLOC_TAB_LK_BIT)
+    m_cmpclrbit((volatile long *)(&(tab)->ptr),                         \
+                MALLOC_TAB_LK_POS)
 
 struct memtab {
     void          *ptr;
@@ -367,6 +367,8 @@ struct memtab {
     void          *ptr;
     volatile long  nref;
 };
+
+#endif
 
 #endif
 
