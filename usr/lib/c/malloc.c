@@ -2233,8 +2233,8 @@ _free(void *ptr)
                 adr = (void *)mag->base;
                 VALGRINDRMPOOL(adr);
 #if (MALLOCLAZYUNMAP)
-                nfree = m_atominc(&nfree);
-                if (nfree == MALLOCUNMAPFREQ) {
+                nfree = m_fetchadd(&nfree, 1);
+                if (nfree == MALLOCUNMAPFREQ - 1) {
                     nfree = 0;
                     do {
                         if ((mag->lim > 1) && !magembedtab(bktid)) {
@@ -3065,6 +3065,18 @@ static void
 gnu_malloc_init(void)
 {
     mallinit();
+}
+
+void *
+xmalloc(size_t size)
+{
+    return malloc(size);
+}
+
+void
+xfree(void *ptr)
+{
+    free(ptr);
 }
 
 static void *

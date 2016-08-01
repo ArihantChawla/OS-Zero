@@ -10,6 +10,7 @@ CCWARNFLAGS="-D_FORTIFY_SOURCE=2 -Wall -Wundef -Wextra -Wpointer-arith -Wuniniti
 # - same thing with -finline-functions and -funroll-loops
 $CC $CCWARNFLAGS -DZEROHASH=0 -DZEROFUTEX=0 -DZEROMALLOC=1 -DPTHREAD=1 -D_REENTRANT -g -Wall -fno-builtin -O -fno-omit-frame-pointer -I../.. -o heap heap.c -pthread
 $CC $CCWARNFLAGS -DZEROHASH=0 -DZEROFUTEX=0 -DZEROMALLOC=1 -DPTHREAD=1 -D_REENTRANT -g -Wall -fno-builtin -O -fno-omit-frame-pointer -I../.. -o llheap lockless_allocator/ll_alloc.c heap.c -pthread
+$CC $CCWARNFLAGS -DZEROHASH=0 -DZEROFUTEX=0 -DZEROMALLOC=1 -DPTHREAD=1 -D_REENTRANT -g -Wall -fno-builtin -O -fno-omit-frame-pointer -I../.. -o tcheap heap.c -Wl,-L/usr/local/lib -ltcmalloc -pthread
 $CC $CCWARNFLAGS -DX11VIS=0 -DZEROHASH=0 -DZEROFUTEX=0 -DZEROMALLOC=1 -DPTHREAD=1 -D_REENTRANT -g -Wall -fno-builtin -DZEROTHR=0 -O -fno-omit-frame-pointer -I../.. -I../../../.. -I../../../lib -o zheap ../_string.c heap.c ../../zero/lfq.c ../../zero/hash64.c ../../zero/priolk.c ../malloc.c -pthread
 #$CC $CCWARNFLAGS -DX11VIS=0 -DMALLOCTRACE=1 -DZEROHASH=0 -DZEROFUTEX=0 -DZEROMALLOC=1 -DPTHREAD=1 -D_REENTRANT -g -Wall -fno-builtin -O -fno-omit-frame-pointer -I../../../.. -I../../../lib -o tzheap heap.c ../execinfo.c ../../zero/priolk.c ../malloc.c -pthread
 $CC $CCWARNFLAGS -DZEROHASH=0 -DZEROFUTEX=0 -DZEROMALLOC=1 -DPTHREAD=1 -D_REENTRANT -DX11VIS=1 -g -Wall -fno-builtin -O -fno-omit-frame-pointer -I../.. -I../../../.. -I../../../lib -o xzheap ../_string.c heap.c ../../zero/lfq.c ../../zero/hash64.c ../../zero/priolk.c ../malloc.c -Wl,-lX11 -pthread

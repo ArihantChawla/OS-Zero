@@ -3,6 +3,7 @@
 
 #define MALLOCPRIOLK      1     // use locks lifted from locklessinc.com
 #define MALLOCLFQ         1
+#define MALLOCLAZYUNMAP   1
 
 #include <limits.h>
 #include <stdint.h>
