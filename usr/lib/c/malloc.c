@@ -446,6 +446,7 @@ magget(long bktid, long *zeroret)
 
 #define magsetfree(mag)                                                 \
     do {                                                                \
+        mag->nfree = 0;                                                 \
         mag->base = NULL;                                               \
         mag->adr = NULL;                                                \
         mag->ptr = NULL;                                                \
@@ -693,6 +694,7 @@ maginitslab(struct mag *mag, long bktid, long *zeroret)
         }
 #endif
         if (ptr == SBRK_FAILED) {
+            mag->nfree = 0;
             /* try to map slab */
             ptr = mapanon(g_malloc.zerofd,
                              rounduppow2(n * sz, PAGESIZE));
