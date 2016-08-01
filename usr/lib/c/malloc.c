@@ -1146,8 +1146,8 @@ mtsetmag(void *ptr,
     uintptr_t       l1;
     uintptr_t       l2;
     uintptr_t       l3;
-#if (MALLOCMAPNDX)
-    MAPNDX          ndx;
+#if (MALLOCPTRNDX)
+    PTRNDX          ndx;
 #endif
     uintptr_t       upval1;
     uintptr_t       upval2;
@@ -1186,9 +1186,9 @@ mtsetmag(void *ptr,
                         mptr2 = mptr1->ptr;
                         if (!mptr2) {
                             mptr2 = mapanon(g_malloc.zerofd,
-                                            PAGEDIRNL3KEY * sizeof(MAPNDX));
+                                            PAGEDIRNL3KEY * sizeof(PTRNDX));
 #if (MALLOCSTAT)
-                            ntabbyte += PAGEDIRNL3KEY * sizeof(MAPNDX);
+                            ntabbyte += PAGEDIRNL3KEY * sizeof(PTRNDX);
 #endif
                         }
                         if (mptr2 != MAP_FAILED) {
@@ -1199,10 +1199,10 @@ mtsetmag(void *ptr,
                             mptr1->ptr = mptr2;
 #if defined(MALLOCVALGRINDTABS)
                             VALGRINDALLOC(mptr2,
-                                          PAGEDIRNL3KEY * sizeof(MAPNDX), 1);
+                                          PAGEDIRNL3KEY * sizeof(PTRNDX), 1);
 #endif
 #if (MALLOCSTAT)
-                            ntabbyte += PAGEDIRNL3KEY * sizeof(MAPNDX);
+                            ntabbyte += PAGEDIRNL3KEY * sizeof(PTRNDX);
 #endif
                         } else {
                             fail = 1;
@@ -1215,7 +1215,7 @@ mtsetmag(void *ptr,
         } while (1);
     }
     if (!mag && !fail) {
-#if (MALLOCMAPNDX)
+#if (MALLOCPTRNDX)
         ndx = magptrid(mag, ptr);
 #endif
         mptr1 = g_malloc.pagedir[l1].ptr;
@@ -1237,8 +1237,8 @@ mtsetmag(void *ptr,
                         if (mptr3) {
                             mptr1 = ((void **)mptr3)[l3];
                             if (mptr1) {
-#if (MALLOCMAPNDX)
-                                ((MAPNDX *)ptab)[1] = ndx;
+#if (MALLOCPTRNDX)
+                                ((PTRNDX *)ptab)[1] = ndx;
 #else
                                 ptab[1] = mptr3;
 #endif
