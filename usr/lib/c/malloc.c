@@ -1146,6 +1146,9 @@ mtsetmag(void *ptr,
     uintptr_t       l1;
     uintptr_t       l2;
     uintptr_t       l3;
+#if (MALLOCMAPNDX)
+    MAPNDX          ndx;
+#endif
     uintptr_t       upval1;
     uintptr_t       upval2;
     uintptr_t       upval3;
@@ -1183,9 +1186,9 @@ mtsetmag(void *ptr,
                         mptr2 = mptr1->ptr;
                         if (!mptr2) {
                             mptr2 = mapanon(g_malloc.zerofd,
-                                            PAGEDIRNL3KEY * sizeof(void *));
+                                            PAGEDIRNL3KEY * sizeof(MAPNDX));
 #if (MALLOCSTAT)
-                            ntabbyte += PAGEDIRNL3KEY * sizeof(void *);
+                            ntabbyte += PAGEDIRNL3KEY * sizeof(MAPNDX);
 #endif
                         }
                         if (mptr2 != MAP_FAILED) {
@@ -1193,13 +1196,13 @@ mtsetmag(void *ptr,
                             ptab[1] = mptr2;
                             upval1 |= MALLOC_TAB_LK_BIT;
                             mptr1->nref++;
-                            mptr1->ptr = mptr3;
+                            mptr1->ptr = mptr2;
 #if defined(MALLOCVALGRINDTABS)
-                            VALGRINDALLOC(mptr3,
-                                          PAGEDIRNL3KEY * sizeof(void *), 1);
+                            VALGRINDALLOC(mptr2,
+                                          PAGEDIRNL3KEY * sizeof(MAPNDX), 1);
 #endif
 #if (MALLOCSTAT)
-                            ntabbyte += PAGEDIRNL3KEY * sizeof(struct memtab);
+                            ntabbyte += PAGEDIRNL3KEY * sizeof(MAPNDX);
 #endif
                         } else {
                             fail = 1;
@@ -1212,6 +1215,9 @@ mtsetmag(void *ptr,
         } while (1);
     }
     if (!mag && !fail) {
+#if (MALLOCMAPNDX)
+        ndx = magptrid(mag, ptr);
+#endif
         mptr1 = g_malloc.pagedir[l1].ptr;
         upval1 = (uintptr_t)mptr1;
         upval1 &= ~MALLOC_TAB_LK_BIT;
@@ -1231,7 +1237,11 @@ mtsetmag(void *ptr,
                         if (mptr3) {
                             mptr1 = ((void **)mptr3)[l3];
                             if (mptr1) {
+#if (MALLOCMAPNDX)
+                                ((MAPNDX *)ptab)[1] = ndx;
+#else
                                 ptab[1] = mptr3;
+#endif
                             }
                         }
                     }

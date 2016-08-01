@@ -19,6 +19,7 @@
 
 /* internal stuff for zero malloc - not for the faint at heart to modify :) */
 
+#define MALLOCMAPNDX      1
 #define MALLOCNEWMULTITAB 1
 #define MALLOCMULTITAB    1
 #define MALLOCNEWHASH     0
@@ -53,7 +54,7 @@
 #define MALLOCNEWHDR      1
 #define MALLOCHDRPREFIX   1
 */
-#define MALLOCSMALLADR    1
+#define MALLOCSMALLADR    0
 #define MALLOCSTAT        0
 #define MALLOCPTRNDX      1
 #define MALLOCCONSTSLABS  1
@@ -253,6 +254,25 @@
 #define PTRFREE              UINT64_C(0xffffffffffffffff)
 #define PTRNDX               uint64_t
 #endif
+#if (MALLOCMAPNDX)
+#define MAPNDXBITS           max(MALLOCBIGMAPLOG2 - MALLOCSLABLOG2,     \
+                                 MALLOCHUGEMAPLOG2 - MALLOCBIGMAPLOG2)
+#if (MAPNDXBITS < 8)
+#define MAPFREE              0xff
+#define MAPNDX               uint8_t
+#elif (MAPNDXBITS < 16)
+#define MAPFREE              0xffff
+#define MAPNDX               uint16_t
+#elif (MAPNDXBITS < 32)
+#define MAPFREE              0xffffffff
+#define MAPNDX               uint32_t
+#else
+#define MAPFREE              UINT64_C(0xffffffffffffffff)
+#define MAPNDX               uint64_t
+#endif
+#else /* !MALLOCMAPNDX */
+#define MAPNDX               void *
+#endif
 #endif
 
 /* internal macros */
@@ -293,8 +313,8 @@ static void   gnu_free_hook(void *ptr);
 
 #elif (PTRBITS == 64) && (!MALLOCSMALLADR)
 
-#define PAGEDIRNL1BIT     20
-#define PAGEDIRNL2BIT     20
+#define PAGEDIRNL1BIT     16
+#define PAGEDIRNL2BIT     16
 #define PAGEDIRNL3BIT     (PTRBITS - PAGEDIRNL1BIT - PAGEDIRNL2BIT      \
                            - PAGESIZELOG2)
 
@@ -808,6 +828,8 @@ struct malloc {
     struct mallinfo          mallinfo;  // mallinfo() interface
 };
 
+#if (MALLOCHDRPREFIX)
+
 #if (MALLOCHDRHACKS)
 #define MALLOCHDRNFO (MALLOCALIGNMENT > PTRSIZE)
 /*
@@ -843,6 +865,8 @@ struct memhdr {
 #define MEMHDRMAGOFS     (offsetof(struct memhdr, mag) / sizeof(void *))
 #define setmag(ptr, mag) ((((void **)(ptr))[-(1 + MEMHDRMAGOFS)] = (mag)))
 #define getmag(ptr)      ((((void **)(ptr))[-(1 + MEMHDRMAGOFS)]))
+
+#endif (MALLOCHDRPREFIX)
 
 #endif /* ___MALLOC_H__ */
 
