@@ -455,9 +455,7 @@ magget(long bktid, long *zeroret)
         mag->lim = 0;                                                   \
     } while (0)
 
-#if (MALLOCLFQ)
-
-#if (MALLOCLAZYUNMAP)
+#if (MALLOCLFQ) && (MALLOCLAZYUNMAP)
 
 #define MALLOCUNMAPFREQ (1L << 3)
 
@@ -501,7 +499,7 @@ mapfree(struct mag *mag, struct lfq *lfq)
             magputhdr(mag);
         }
     } else {
-        magenqueue(mag, &g_malloc.freebuf[bktid]);
+        magenqueue(mag, lfq);
     }
 
     return;
@@ -510,7 +508,7 @@ mapfree(struct mag *mag, struct lfq *lfq)
 #else /* !MALLOCLAZYUNMAP */
 
 static void
-mapfree(struct mag *mag, struct lfq *lfq)
+mapfree(struct mag *mag)
 {
     long  bktid = mag->bktid;
     void *adr;
@@ -546,9 +544,7 @@ mapfree(struct mag *mag, struct lfq *lfq)
     return;
 }
 
-#endif /* MALLOCLAZYUNMAP */
-
-#endif /* MALLOCLFQ */
+#endif /* MALLOCLFQ && MALLOCLAZYUNMAP */
 
 static void
 thrfreetls(void *arg)
@@ -2294,7 +2290,11 @@ _free(void *ptr)
                 magpush(mag, &arn->magbuf[bktid], 0);
             } else if ((uintptr_t)mag->adr & MAGMAP) {
                 /* unmap slab */
+#if (MALLOCLFQ)
                 mapfree(mag, &g_malloc.freebuf[bktid]);
+#else
+                mapfree(mag);
+#endif
             } else {
                 mag->arn = arn;
                 magpush(mag, &arn->magbuf[bktid], 0);
