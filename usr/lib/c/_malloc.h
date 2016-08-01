@@ -403,6 +403,7 @@ struct memtab {
 struct mag {
 #if (MALLOCLFQ)
     struct lfqnode  node;
+    long            nfree;
 #endif
     struct mag     *prev;
     struct mag     *next;
@@ -792,14 +793,14 @@ struct hashmag {
 struct malloc {
 #if (MALLOCLFQ)
     struct lfq               magbuf[MALLOCNBKT];
-#if (MALLOCLAZYUNMAP)
+#if (MALLOCLAZYUNMAP) && 0
     struct lfq               mapbuf[MALLOCNBKT];
 #endif
-//    struct lfq               freebuf[MALLOCNBKT];
+    struct lfq               freebuf[MALLOCNBKT];
     struct lfq               hdrbuf[MALLOCNBKT];
 #else
     struct magtab            magbuf[MALLOCNBKT];
-//    struct magtab            freebuf[MALLOCNBKT];
+    struct magtab            freebuf[MALLOCNBKT];
     struct magtab            hdrbuf[MALLOCNBKT];
 #endif
 #if (MALLOCNBKT == 64)
