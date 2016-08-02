@@ -862,11 +862,7 @@ postfork(void)
     return;
 }
 
-#if (PTRBITS == 32)
-
-
-
-#elif (MALLOCHASH)
+#if (MALLOCHASH)
 
 /*
  * NOTES 
@@ -1193,12 +1189,20 @@ mtfindmag(void *ptr)
     
     l1 = pagedirl1ndx(ptr);
     l2 = pagedirl2ndx(ptr);
+#if (PTRBITS > 32)
     l3 = pagedirl3ndx(ptr);
+#endif
     do {
         if (mttrylktab(&g_malloc.pagedir[l1])) {
             upval1 = (uintptr_t)g_malloc.pagedir[l1].ptr;
             upval1 &= MALLOC_TAB_LK_BIT;
             mptr1 = (void *)(upval1 & MALLOC_TAB_LK_BIT);
+#if (PTRBITS == 32)
+            if (mptr1) {
+                mag = ((void **)mptr1)[l2];
+            }
+            mtunlktab(&g_malloc.pagedir[l1]);
+#else /* PTRBITS == 32 */
             if (mptr1) {
                 if (mttrylktab(mptr1)) {
                     upval2 = (uintptr_t)mptr1->ptr;
@@ -1240,6 +1244,7 @@ mtfindmag(void *ptr)
             } else {
                 mtunlktab(mptr1);
             }
+#endif /* PTRBITS == 32 */
         } else {
 
             return NULL;
@@ -1267,13 +1272,32 @@ mtsetmag(void *ptr,
     
     l1 = pagedirl1ndx(ptr);
     l2 = pagedirl2ndx(ptr);
+#if (PTRBITS > 32)
     l3 = pagedirl3ndx(ptr);
+#endif
     if (mag) {
         do {
             if (mttrylktab(&g_malloc.pagedir[l1])) {
                 upval1 = (uintptr_t)g_malloc.pagedir[l1].ptr;
                 upval1 &= ~MALLOC_TAB_LK_BIT;
                 mptr1 = (void *)upval1;
+#if (PTRBITS == 32)
+                if (!mptr1) {
+                    mptr2 = mapanon(g_malloc.zerofd,
+                                    PAGEDIRNL2KEY * sizeof(void *));
+                    if (mptr2 != MAP_FAILED) {
+                        ptab[0] = mptr2;
+                        g_malloc.pagedir[l1].ptr = mptr2;
+                        if (mag) {
+                            mptr2->nref++;
+                        }
+                    } else {
+                        fail = 1;
+                    }
+                } else if (mag) {
+                    mptr1->nref++;
+                }
+#else /* PTRBITS == 32 */
                 if (!mptr1) {
                     mptr1 = mapanon(g_malloc.zerofd,
                                     PAGEDIRNL2KEY * sizeof(struct memtab));
@@ -1281,7 +1305,9 @@ mtsetmag(void *ptr,
                         upval2 = (uintptr_t)mptr1;
                         ptab[0] = mptr1;
                         upval2 |= MALLOC_TAB_LK_BIT;
-                        mptr1->nref++;
+                        if (mag) {
+                            mptr1->nref++;
+                        }
                         g_malloc.pagedir[l1].ptr = (void *)upval2;
 #if defined(MALLOCVALGRINDTABS)
                         VALGRINDALLOC(mptr1,
@@ -1302,7 +1328,9 @@ mtsetmag(void *ptr,
                             upval1 = (uintptr_t)mptr2;
                             ptab[1] = mptr2;
                             upval1 |= MALLOC_TAB_LK_BIT;
-                            mptr1->nref++;
+                            if (mag) {
+                                mptr1->nref++;
+                            }
                             mptr1->ptr = mptr2;
 #if defined(MALLOCVALGRINDTABS)
                             VALGRINDALLOC(mptr2,
@@ -1317,7 +1345,10 @@ mtsetmag(void *ptr,
                     } else {
                         fail = 1;
                     }
+                } else if (mag) {
+                    mptr1->nref++;
                 }
+#endif
             }
         } while (1);
     }
@@ -1325,6 +1356,11 @@ mtsetmag(void *ptr,
         mptr1 = g_malloc.pagedir[l1].ptr;
         upval1 = (uintptr_t)mptr1;
         upval1 &= ~MALLOC_TAB_LK_BIT;
+#if (PTRBITS == 32)
+        if (mptr1) {
+            ptab[0] = (void *)upval1;
+        }
+#else /* PTRBITS == 32 */
         if (upval1) {
             mptr2 = (void *)upval1;
             if (mptr2) {
@@ -1348,8 +1384,23 @@ mtsetmag(void *ptr,
                 }
             }
         }
+#endif /* PTRBITS == 32 */
     }
     if (!mag || (fail)) {
+#if (PTRBITS == 32)
+        mptr1 = ptab[0];
+        if (mptr1) {
+            if (!--mptr1->nref) {
+                unmapanon(mptr1, PAGEDIRNL2KEY * sizeof(void *));
+#if defined(MALLOCVALGRINDTABS)
+                VALGRINDFREE(mptr1);
+#endif
+#if (MALLOCSTAT)
+                ntabbyte -= PAGEDIRNL2KEY * sizeof(void *);
+#endif
+            }
+        }
+#else /* PTRBITS == 32 */
         mptr1 = ptab[1];
         mptr2 = ptab[0];
         if ((mptr1) && (mptr2)) {
@@ -1379,6 +1430,7 @@ mtsetmag(void *ptr,
             mtunlktab(mptr1);
             mtunlktab(&g_malloc.pagedir[l1]);
         }
+#endif /* PTRBITS == 32 */
     }
 
     return;
@@ -1862,7 +1914,7 @@ mallinit(void)
     if (!g_malloc.maghash) {
         abort();
     }
-#elif (MALLOCFREETABS)
+#elif (MALLOCFREETABS) && (PTRBITS > 32)
     g_malloc.pagedir = mapanon(g_malloc.zerofd,
                                PAGEDIRNL1KEY * sizeof(struct memtab));
     if (g_malloc.pagedir == MAP_FAILED) {
@@ -1871,7 +1923,7 @@ mallinit(void)
 #if (MALLOCSTAT)
     ntabbyte += PAGEDIRNL1KEY * sizeof(struct memtab);
 #endif
-#else /* !MALLOCHASH && !MALLOCFREETABS */
+#elif (PTRBITS > 32) /* !MALLOCHASH && !MALLOCFREETABS */
     g_malloc.pagedir = mapanon(g_malloc.zerofd,
                                PAGEDIRNL1KEY * sizeof(void *));
     if (g_malloc.pagedir == MAP_FAILED) {

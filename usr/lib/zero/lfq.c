@@ -12,7 +12,7 @@ _lfqfixqueue(struct lfq *lfq, TAGPTR_T head, TAGPTR_T tail)
     TAGPTR_T        cur;
     TAGPTR_T        prev;
     TAGPTR_T        next;
-    TAGPTR_T        tmp = TAGPTR_NONE;
+    TAGPTR_T        tmp;
     TAGPTR_TAG_T    tag1;
     TAGPTR_TAG_T    tag2;
     struct lfqnode *node;
@@ -55,7 +55,7 @@ lfqinitqueue(struct lfq *lfq)
 void
 lfqenqueue(struct lfq *lfq, struct lfqnode *node)
 {
-    TAGPTR_T     tmp = TAGPTR_NONE;
+    TAGPTR_T     tmp;
     TAGPTR_T     tail;
     TAGPTR_T     src;
     TAGPTR_TAG_T tag;

@@ -309,7 +309,9 @@ static void   gnu_free_hook(void *ptr);
 
 #define PAGEDIRNL1BIT     10
 #define PAGEDIRNL2BIT     10
-#define PAGEDIRNL3BIT     (PTRBITS - PAGEDIRNL1BIT - PAGEDIRNL2BIT)
+
+#define PAGEDIRL1NDX      (PAGEDIRNL2BIT + PAGESIZELOG2)
+#define PAGEDIRL2NDX      PAGESIZELOG2
 
 #elif (MALLOCMULTITAB) || (MALLOCNEWMULTITAB)
 
@@ -335,7 +337,7 @@ static void   gnu_free_hook(void *ptr);
 
 #endif /* ADRHIBITCOPY */
 
-#endif /* PTRBITS */
+#endif /* PTRBITS == 64 && !MALLOCSMALLADR */
 
 #define PAGEDIRL1NDX      (PAGEDIRL2NDX + PAGEDIRNL2BIT)
 #if defined(PAGEDIRNL3BIT) && (PAGEDIRNL3BIT)
@@ -344,6 +346,8 @@ static void   gnu_free_hook(void *ptr);
 #else
 #define PAGEDIRL2NDX      PAGESIZELOG2
 #endif
+
+#endif /* PTRBITS == 32 */
 
 #define PAGEDIRNL1KEY     (1L << PAGEDIRNL1BIT)
 #define PAGEDIRNL2KEY     (1L << PAGEDIRNL2BIT)
@@ -392,9 +396,7 @@ struct memtab {
     volatile long  nref;
 };
 
-#endif
-
-#endif
+#endif /* MALLOCNEWMULTITAB */
 
 #define MAGMAP          0x01
 #define ADRMASK         (MAGMAP)
@@ -812,7 +814,7 @@ struct malloc {
     uint32_t                 magemptybits;
 #endif
 #if (PTRBITS == 32)
-    void                    *pagedir[PTRBITS - PAGESIZELOG2];
+    struct memtab            pagedir[PTRBITS - PAGESIZELOG2];
 #elif (MALLOCNEWMULTITAB)
     struct memtab           *pagedir;
 #elif (MALLOCHASH)
