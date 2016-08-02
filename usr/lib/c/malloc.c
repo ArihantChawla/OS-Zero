@@ -93,7 +93,8 @@
  *
  *        mag
  *        ---
- *        - magazine cache with allocation stack of pointers into the slab *          - LIFO to reuse freed blocks of virtual memory
+ *        - magazine cache with allocation stack of pointers into the slab
+ *        - LIFO to reuse freed blocks of virtual memory
  *
  *        slab
  *        ----
@@ -861,7 +862,11 @@ postfork(void)
     return;
 }
 
-#if (MALLOCHASH)
+#if (PTRBITS == 32)
+
+
+
+#elif (MALLOCHASH)
 
 /*
  * NOTES 

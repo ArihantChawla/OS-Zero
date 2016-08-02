@@ -305,14 +305,15 @@ static void   gnu_free_hook(void *ptr);
 
 #define MALLOCPAGETAB     1
 
-#if (MALLOCMULTITAB) || (MALLOCNEWMULTITAB)
-
 #if (PTRBITS == 32)
 
 #define PAGEDIRNL1BIT     10
-#define PAGEDIRNL2BIT     (PTRBITS - PAGEDIRNL1BIT - PAGESIZELOG2)
+#define PAGEDIRNL2BIT     10
+#define PAGEDIRNL3BIT     (PTRBITS - PAGEDIRNL1BIT - PAGEDIRNL2BIT)
 
-#elif (PTRBITS == 64) && (!MALLOCSMALLADR)
+#elif (MALLOCMULTITAB) || (MALLOCNEWMULTITAB)
+
+#if (PTRBITS == 64) && (!MALLOCSMALLADR)
 
 #define PAGEDIRNL1BIT     16
 #define PAGEDIRNL2BIT     16
@@ -354,8 +355,10 @@ static void   gnu_free_hook(void *ptr);
                            & ((1UL << PAGEDIRNL1BIT) - 1))
 #define pagedirl2ndx(ptr) (((uintptr_t)(ptr) >> PAGEDIRL2NDX)           \
                            & ((1UL << PAGEDIRNL2BIT) - 1))
+#if defined(PAGEDIRL3NDX)
 #define pagedirl3ndx(ptr) (((uintptr_t)(ptr) >> PAGEDIRL3NDX)           \
                            & ((1UL << PAGEDIRNL3BIT) - 1))
+#endif
 
 #if (MALLOCNEWMULTITAB)
 
@@ -808,7 +811,9 @@ struct malloc {
 #elif (MALLOCNBKT == 32)
     uint32_t                 magemptybits;
 #endif
-#if (MALLOCNEWMULTITAB)
+#if (PTRBITS == 32)
+    void                    *pagedir[PTRBITS - PAGESIZELOG2];
+#elif (MALLOCNEWMULTITAB)
     struct memtab           *pagedir;
 #elif (MALLOCHASH)
     struct hashmag          *hashbuf;
@@ -879,7 +884,7 @@ struct memhdr {
 #define setmag(ptr, mag) ((((void **)(ptr))[-(1 + MEMHDRMAGOFS)] = (mag)))
 #define getmag(ptr)      ((((void **)(ptr))[-(1 + MEMHDRMAGOFS)]))
 
-#endif (MALLOCHDRPREFIX)
+#endif /* (MALLOCHDRPREFIX) */
 
 #endif /* ___MALLOC_H__ */
 

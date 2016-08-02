@@ -1,6 +1,7 @@
 #include <stdint.h>
 #include <zero/asm.h>
 #include <zero/atomic.h>
+#include <zero/tagptr.h>
 #include <zero/lfq.h>
 
 /* REFERENCE: https://www.offblast.org/stuff/books/FIFO_Queues.pdf */
@@ -11,7 +12,7 @@ _lfqfixqueue(struct lfq *lfq, TAGPTR_T head, TAGPTR_T tail)
     TAGPTR_T        cur;
     TAGPTR_T        prev;
     TAGPTR_T        next;
-    TAGPTR_T        tmp;
+    TAGPTR_T        tmp = TAGPTR_NONE;
     TAGPTR_TAG_T    tag1;
     TAGPTR_TAG_T    tag2;
     struct lfqnode *node;
@@ -27,13 +28,13 @@ _lfqfixqueue(struct lfq *lfq, TAGPTR_T head, TAGPTR_T tail)
                 
                 return;
             } else {
-                    node = ((struct lfqnode *)tagptrgetadr(next));
-                    tag1--;
-                    prev = node->prev;
-                    tagptrsettag(tag1, cur);
-                    if (!tagptrcmp(&prev, &cur)) {
-                        node->prev = cur;
-                    }
+                node = ((struct lfqnode *)tagptrgetadr(next));
+                tag1--;
+                prev = node->prev;
+                tagptrsettag(tag1, cur);
+                if (!tagptrcmp(&prev, &cur)) {
+                    node->prev = cur;
+                }
             }
         }
     } while (1);
@@ -54,8 +55,8 @@ lfqinitqueue(struct lfq *lfq)
 void
 lfqenqueue(struct lfq *lfq, struct lfqnode *node)
 {
+    TAGPTR_T     tmp = TAGPTR_NONE;
     TAGPTR_T     tail;
-    TAGPTR_T     tmp;
     TAGPTR_T     src;
     TAGPTR_TAG_T tag;
 
