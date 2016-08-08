@@ -1,0 +1,32 @@
+__kernel void compute_hw(__global uint * a,
+			 __global uint * colormap,
+                         int nx,int ny,
+                         int offset,int lda,
+			 real_t leftX,real_t topY    ,
+			 real_t stepX,real_t stepY,  
+			 int itmax)
+{
+    for (int iy = 0 ; iy < ny ; iy++) {
+        for (int ix = 0 ; ix < nx; ix++) {
+            int xpix = get_global_id(0) * nx + ix;
+            int ypix = get_global_id(1) * ny + iy;
+            real_t xc = leftX + (real_t)xpix * stepX;
+            real_t yc = topY  - (real_t)ypix * stepY;
+            int it;
+            real_t x,y;
+            
+            x = y = (real_t)0;
+            for (it = 0 ; it < itmax ; it++) {
+                real_t x2 = x * x;
+                real_t y2 = y * y;
+                if (x2+y2 > (real_t)4) break; // Out!
+                real_t twoxy = (real_t)2 * x * y;
+                x = x2 - y2 + xc;
+                y = twoxy + yc;
+            }
+            uint color = (it < itmax) ? colormap[it] : 0xFF000000;
+            a[offset + xpix + lda * ypix] = color;
+        }
+    }
+}
+

@@ -1258,17 +1258,17 @@ static void
 mtsetmag(void *ptr,
          struct mag *mag)
 {
-    uintptr_t       l1;
-    uintptr_t       l2;
-    uintptr_t       l3;
-    uintptr_t       upval1;
-    uintptr_t       upval2;
-    uintptr_t       upval3;
-    long            fail = 0;
-    struct memtab  *mptr1;
-    struct memtab  *mptr2;
-    struct memtab  *mptr3;
-    struct memtab  *ptab[3] = { NULL, NULL, NULL };
+    uintptr_t      l1;
+    uintptr_t      l2;
+    uintptr_t      l3;
+    uintptr_t      upval1;
+    uintptr_t      upval2;
+    uintptr_t      upval3;
+    long           fail = 0;
+    struct memtab *mptr1;
+    struct memtab *mptr2;
+    struct memtab *mptr3;
+    struct memtab *ptab[3] = { NULL, NULL, NULL };
     
     l1 = pagedirl1ndx(ptr);
     l2 = pagedirl2ndx(ptr);

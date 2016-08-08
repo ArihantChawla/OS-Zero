@@ -1,6 +1,7 @@
 #ifndef __ZERO_ARM_PARAM_H__
 #define __ZERO_ARM_PARAM_H__
 
+#if !defined(__arm64__) && !defined(__aarch64__)
 #define WORDSIZE     4
 #define CHARSIZE     1
 #define SHORTSIZE    2
@@ -12,6 +13,9 @@
 #define PTRBITS      32
 #define ADRBITS      32
 #define PAGESIZELOG2 12
+#else
+#error arm64 not supported by <zero/param.h> yet
+#endif
 
 #define CLSIZE       32
 #define CLSIZELOG2   5
