@@ -778,7 +778,7 @@ static void * maginit(struct mag *mag, long bktid, long *zeroret);
 #endif
 #if (MALLOCTAILQ)
 #define DEQ_SINGLE_TYPE
-#define DEQ_TYPE      struct mag
+#define DEQ_TYPE struct mag
 #include <zero/deq.h>
 #define magqueue(mag, bkt, lock)                                        \
     do {                                                                \
