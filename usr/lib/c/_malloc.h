@@ -786,6 +786,7 @@ static void * maginit(struct mag *mag, long bktid, long *zeroret);
             __malloclk(&(bkt)->lk);                                     \
         }                                                               \
         deqappend(mag, &(bkt)->ptr);                                    \
+        bktaddmag(bkt);                                                 \
         if (lock) {                                                     \
             __mallocunlk(&(bkt)->lk);                                   \
         }                                                               \
@@ -807,6 +808,7 @@ static void * maginit(struct mag *mag, long bktid, long *zeroret);
             (last)->next = (first);                                     \
             *deq = (first);                                             \
         }                                                               \
+        bktaddmany(bkt, n);                                             \
         if (lock) {                                                     \
             __mallocunlk(&(bkt)->lk);                                   \
         }                                                               \
