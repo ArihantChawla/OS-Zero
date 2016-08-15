@@ -3,6 +3,7 @@
 
 #define MALLOCPRIOLK      1     // use locks lifted from locklessinc.com
 #define MALLOCLFQ         1
+#define MALLOCTAILQ       1
 #define MALLOCLAZYUNMAP   1
 
 #include <limits.h>
@@ -776,6 +777,40 @@ static void * maginit(struct mag *mag, long bktid, long *zeroret);
     } while (0)
 #endif
 #if (MALLOCTAILQ)
+#define DEQ_SINGLE_TYPE
+#define DEQ_TYPE      struct mag
+#include <zero/deq.h>
+#define magqueue(mag, bkt, lock)                                        \
+    do {                                                                \
+        if (lock) {                                                     \
+            __malloclk(&(bkt)->lk);                                     \
+        }                                                               \
+        deqappend(mag, &(bkt)->ptr);                                    \
+        if (lock) {                                                     \
+            __mallocunlk(&(bkt)->lk);                                   \
+        }                                                               \
+    } while (0)
+#define magqueuemany(first, last, bkt, lock, n)                         \
+    do {                                                                \
+        DEQ_TYPE *_list = *deq;                                         \
+                                                                        \
+        if (lock) {                                                     \
+            __malloclk(&(bkt)->lk);                                     \
+        }                                                               \
+        if (_list) {                                                    \
+            _list->prev->next = (first);                                \
+            (first)->prev = _list->prev;                                \
+            (last)->next = _list;                                       \
+            _list->prev = (last);                                       \
+        } else {                                                        \
+            (first)->prev = (last);                                     \
+            (last)->next = (first);                                     \
+            *deq = (first);                                             \
+        }                                                               \
+        if (lock) {                                                     \
+            __mallocunlk(&(bkt)->lk);                                   \
+        }                                                               \
+    } while (0)
 #endif /* MALLOCTAILQ */
 
 #define MALLOPT_PERTURB_BIT 0x00000001
