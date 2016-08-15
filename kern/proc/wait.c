@@ -7,9 +7,9 @@
 #include <kern/sched.h>
 #include <kern/proc/task.h>
 
-#define QUEUE_SINGLE_TYPE
-#define QUEUE_TYPE struct task
-#include <zero/queue.h>
+#define DEQ_SINGLE_TYPE
+#define DEQ_TYPE struct task
+#include <zero/deq.h>
 
 struct tasktabl0 taskwaittab[TASKNLVL0WAIT] ALIGNED(PAGESIZE);
 
@@ -78,7 +78,7 @@ schedsetwait(struct task *task)
     }
     if (!fail) {
         queue = &queue[key3];
-        queueappend(task, &queue->list);
+        deqappend(task, &queue->list);
         tab = ptab[0];
         tab->nref++;
         tab->tab = ptab[1];

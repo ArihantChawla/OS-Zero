@@ -310,6 +310,8 @@ magputhdr(struct mag *mag)
 
 #if (MALLOCLFQ)
     magenqueue(mag, &g_malloc.hdrbuf[bktid]);
+#elif (MALLOCTAILQ)
+    magqueue(mag, &g_malloc.hdrbuf[bktid], 1);
 #else
     magpush(mag, &g_malloc.hdrbuf[bktid], 1);
 #endif
@@ -391,6 +393,8 @@ maggethdr(long bktid)
                 magenqueue(hdr, &g_malloc.hdrbuf[bktid]);
                 hdr = tagptrgetadr(hdr->node.next);
             }
+#elif (MALLOCTAILQ)
+            magqueuemany(hdr, last, &g_malloc.hdrbuf[bktid], 1, n);
 #else
             magpushmany(hdr, last, &g_malloc.hdrbuf[bktid], 1, n);
 #endif
@@ -594,12 +598,16 @@ thrfreetls(void *arg)
                 }
                 /* tail */
                 magenqueue(mag, &g_malloc.magbuf[bktid]);
+#elif (MALLOCTAILQ)
+                magqueuemany(first, tail, &g_malloc.magbuf[bktid], 1, n);
 #else
                 magpushmany(first, tail, &g_malloc.magbuf[bktid], 1, n);
 #endif
             } else {
 #if (MALLOCLFQ)
                 magenqueue(mag, &g_malloc.magbuf[bktid]);
+#elif (MALLOCTAILQ)
+                magqueue(mag, &g_malloc.magbuf[bktid], 1);
 #else
                 magpush(mag, &g_malloc.magbuf[bktid], 1);
 #endif
@@ -2132,7 +2140,11 @@ _malloc(size_t size,
 #if (MALLOCBUFMAG)
                 arn->magbuf[bktid].n++;
 #endif
+#if (MALLOCTAILQ)
+                magqueue(mag, &arn->magbuf[bktid], 0);
+#else
                 magpush(mag, &arn->magbuf[bktid], 0);
+#endif
             } else {
                 mag->next = NULL;
             }
@@ -2346,7 +2358,11 @@ _free(void *ptr)
             }
             if (arn->magbuf[bktid].n < magnarnbuf(bktid)) {
 //                mag->arn = arn;
+#if (MALLOCTAILQ)
+                magqueue(mag, &arn->magbuf[bktid], 0);
+#else
                 magpush(mag, &arn->magbuf[bktid], 0);
+#endif
             } else if ((uintptr_t)mag->adr & MAGMAP) {
                 /* unmap slab */
 #if (MALLOCLFQ)
@@ -2356,12 +2372,18 @@ _free(void *ptr)
 #endif
             } else {
                 mag->arn = arn;
+#if (MALLOCTAILQ)
+                magqueue(mag, &arn->magbuf[bktid], 0);
+#else
                 magpush(mag, &arn->magbuf[bktid], 0);
+#endif
             }
         } else if (mag->cur == lim - 1) {
             /* queue an unqueued earlier fully allocated magazine */
 #if (MALLOCLFQ)
             magenqueue(mag, &g_malloc.magbuf[bktid]);
+#elif (MALLOCTAILQ)
+            magqueue(mag, &g_malloc.magbuf[bktid], 1);
 #else
             magpush(mag, &g_malloc.magbuf[bktid], 1);
 #endif

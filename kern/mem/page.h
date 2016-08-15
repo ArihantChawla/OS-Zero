@@ -93,9 +93,9 @@ struct swapdev {
     uint8_t          _pad[__STRUCT_SWAPDEV_PAD];
 };
 
-#define QUEUE_SINGLE_TYPE
-#define QUEUE_TYPE      struct physpage
-#include <zero/queue.h>
+#define DEQ_SINGLE_TYPE
+#define DEQ_TYPE struct physpage
+#include <zero/deq.h>
 
 unsigned long     pageinitphyszone(uintptr_t base, struct physpage **zone,
                                    unsigned long nb);

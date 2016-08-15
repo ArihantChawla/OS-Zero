@@ -138,9 +138,9 @@ schedinitqueues(void)
     return;
 }
 
-#define QUEUE_SINGLE_TYPE
-#define QUEUE_TYPE struct task
-#include <zero/queue.h>
+#define DEQ_SINGLE_TYPE
+#define DEQ_TYPE struct task
+#include <zero/deq.h>
 
 void
 schedsetdeadline(struct task *task)
@@ -188,7 +188,7 @@ schedsetdeadline(struct task *task)
     }
     if (!fail) {
         queue = &queue[key2];
-        queueappend(task, &queue->list);
+        deqappend(task, &queue->list);
         tab = ptab[0];
         tab->nref++;
         tab->tab = ptab[1];
@@ -228,10 +228,10 @@ schedsetready(struct task *task, long cpu)
             queue = &set->cur[qid];
             if (prio < 0) {
                 /* SCHEDREALTIME with SCHED_FIFO */
-                queuepush(task, queue);
+                deqpush(task, queue);
             } else {
                 /* SCHEDINTERRUPT, SCHEDREALTIME with SCHED_RR, SCHEDSYSTEM */
-                queueappend(task, queue);
+                deqappend(task, queue);
             }
             setbit(map, qid);
             mtxunlk(&set->lk);
@@ -272,7 +272,7 @@ schedsetready(struct task *task, long cpu)
         queue = &set->idle[qid];
     }
     load = set->loadmap[qid];
-    queueappend(task, queue);
+    deqappend(task, queue);
     load++;
     setbit(map, qid);
     set->loadmap[qid] = load;
@@ -360,9 +360,9 @@ schedswitchtask(struct task *curtask)
                     ndx <<= __LONGBITSLOG2;
                     ntz += ndx;
                     queue += ntz;
-                    task = queuepop(queue);
+                    task = deqpop(queue);
                     if (task) {
-                        if (queueisemptyptr(queue)) {
+                        if (deqisemptyptr(queue)) {
                             clrbit(map, ntz);
                         }
                         schedsettask(task);
@@ -387,9 +387,9 @@ schedswitchtask(struct task *curtask)
                 ndx <<= __LONGBITSLOG2;
                 ntz += ndx;
                 queue += ntz;
-                task = queuepop(queue);
+                task = deqpop(queue);
                 if (task) {
-                    if (queueisemptyptr(queue)) {
+                    if (deqisemptyptr(queue)) {
                         clrbit(map, ntz);
                     }
                     schedsettask(task);

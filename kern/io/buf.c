@@ -29,9 +29,9 @@
 #include <kern/mem/mag.h>
 #include <kern/io/buf.h>
 
-#define QUEUE_ITEM_TYPE struct bufblk
-#define QUEUE_TYPE      struct bufblk
-#include <zero/queue.h>
+#define DEQ_ITEM_TYPE struct bufblk
+#define DEQ_TYPE      struct bufblk
+#include <zero/deq.h>
 
 extern struct vmpagestat   vmpagestat;
 
@@ -111,7 +111,7 @@ ioinitbuf(void)
         blk = &bufhdrtab[0];
         blk->flg = BUFMINSIZELOG2;
         blk->data = u8ptr;
-//            queueappend(blk, &buffreelist.head);
+//            deqappend(blk, &buffreelist.head);
         u8ptr += BUFMINSIZE;
         prev = blk;
         blk++;
@@ -119,7 +119,7 @@ ioinitbuf(void)
             prev->next = blk;
             blk->flg = BUFMINSIZELOG2;
             blk->data = u8ptr;
-//            queueappend(blk, &buffreelist.head);
+//            deqappend(blk, &buffreelist.head);
             u8ptr += BUFMINSIZE;
             blk++;
             prev = blk;
@@ -139,7 +139,7 @@ ioinitbuf(void)
         while (n--) {
             u8ptr -= BUFMINSIZE;
             blk->data = u8ptr;
-            queuepush(blk, &buffreelist.head);
+            deqpush(blk, &buffreelist.head);
             blk--;
         }
         bufzone = ptr;
@@ -165,10 +165,10 @@ bufevict(void)
 
     do {
         mtxlk(&buflruqueue.lk);
-        blk = queuepop(&buflruqueue.head);
+        blk = deqpop(&buflruqueue.head);
         mtxunlk(&buflruqueue.lk);
         if (!blk) {
-            /* TODO: wait for queuepop(&buflruqueue.head) */
+            /* TODO: wait for deqpop(&buflrudeq.head) */
         } else {
             if (blk->flg & BUFDIRTY) {
                 bufwrite(blk);
@@ -187,7 +187,7 @@ bufalloc(void)
     struct bufblk *blk = NULL;
 
     mtxlk(&buffreelist.lk);
-    blk = queuepop(&buffreelist.head);
+    blk = deqpop(&buffreelist.head);
     mtxunlk(&buffreelist.lk);
     if (!blk) {
         blk = bufevict();
@@ -395,7 +395,7 @@ bufaddblk(struct bufblk *blk)
     }
     mtxunlk(&buflktab[dkey]);
     if (!fail) {
-        queueappend(blk, &buflruqueue.head);
+        deqappend(blk, &buflruqueue.head);
     }
     
     return;
@@ -489,7 +489,7 @@ bufrel(long dev, int64_t num, long flush)
         }
 #endif
         mtxlk(&buffreelist.lk);
-        queuepush(blk, &buffreelist.head);
+        deqpush(blk, &buffreelist.head);
         mtxunlk(&buffreelist.lk);
     }
 

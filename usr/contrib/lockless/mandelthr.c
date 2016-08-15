@@ -3,7 +3,10 @@
  *
  * THANKS A MILLION to the original authors. ;)
  */
-#define SSE 1
+
+#define FLOAT  1
+#define DOUBLE 0
+#define SSE    0
 #if (SSE)
 typedef float v4sf __attribute__((vector_size(16)));
 
@@ -34,6 +37,7 @@ static Window win;
 static XImage *bitmap;
 static Atom wmDeleteMessage;
 static GC gc;
+static int g_nthr;
 
 static void exit_x11(void)
 {
@@ -150,6 +154,120 @@ static void init_colours(void)
     cols[MAX_ITER] = 0;
 }
 
+#if (DOUBLE)
+
+static unsigned mandel_double(double cr, double ci)
+{
+    double zr = cr, zi = ci;
+    double tmp;
+	
+    unsigned i;
+	
+    for (i = 0; i < MAX_ITER; i++)
+	{
+            tmp = zr * zr - zi * zi + cr;
+            zi *= 2 * zr;
+            zi += ci;
+            zr = tmp;
+		
+            if (zr * zr + zi * zi > 4.0) break;
+	}
+	
+    return i;
+}
+
+/* For each point, evaluate its colour */
+static void display_double(int size, double xmin, double xmax, double ymin, double ymax, int yofs, int ylim)
+{
+    int x, y;
+	
+    double cr, ci;
+	
+    double xscal = (xmax - xmin) / size;
+    double yscal = (ymax - ymin) / size;
+	
+    unsigned counts;
+
+    for (y = yofs; y < ylim; y++)
+	{
+            for (x = 0; x < size; x++)
+		{
+                    cr = xmin + x * xscal;
+                    ci = ymin + y * yscal;
+			
+                    counts = mandel_double(cr, ci);
+			
+                    ((unsigned *) bitmap->data)[x + y*size] = cols[counts];
+		}
+		
+            /* Display it line-by-line for speed */
+            XPutImage(dpy, win, gc, bitmap,
+                      0, y, 0, y,
+                      size, 1);
+	}
+	
+    XFlush(dpy);
+}
+
+#elif FLOAT
+
+static unsigned mandel_float(float cr, float ci)
+{
+    float zr = cr, zi = ci;
+    float tmp;
+	
+    unsigned i;
+	
+    for (i = 0; i < MAX_ITER; i++)
+	{
+            tmp = zr * zr - zi * zi + cr;
+            zi *= 2 * zr;
+            zi += ci;
+            zr = tmp;
+		
+            if (zr * zr + zi * zi > 4.0) break;
+	}
+	
+    return i;
+}
+
+/* For each point, evaluate its colour */
+static void display_float(int size, float xmin, float xmax, float ymin, float ymax, int yofs, int ylim)
+{
+    int x, y;
+	
+    float cr, ci;
+	
+    float xscal = (xmax - xmin) / size;
+    float yscal = (ymax - ymin) / size;
+	
+    unsigned counts;
+
+    for (y = yofs; y < ylim; y++)
+	{
+            for (x = 0; x < size; x++)
+		{
+                    cr = xmin + x * xscal;
+                    ci = ymin + y * yscal;
+			
+                    counts = mandel_float(cr, ci);
+			
+                    ((unsigned *) bitmap->data)[x + y*size] = cols[counts];
+		}
+
+#if 0
+            /* Display it line-by-line for speed */
+            XPutImage(dpy, win, gc, bitmap,
+                      0, y, 0, y,
+                      size, 1);
+#endif
+	}
+	
+    XFlush(dpy);
+}
+
+#elif (SSE)
+
 /* For each point, evaluate its colour */
 static void display_sse(int size, float xmin, float xmax, float ymin, float ymax, int yofs, int ylim)
 {
@@ -190,6 +308,8 @@ static void display_sse(int size, float xmin, float xmax, float ymin, float ymax
     XFlush(dpy);
 }
 
+#endif /* SSE */
+
 /* Image size */
 #define ASIZE 1000
 
@@ -205,7 +325,8 @@ mandel_start(void *arg)
     float ymax = 1.5;
     struct mandelthr *args = arg;
     
-    display_sse(ASIZE, xmin, xmax, ymin, ymax, args->ymin, args->ylim);
+    display_float(ASIZE, xmin, xmax, ymin, ymax, args->ymin, args->ylim);
+    g_nthr--;
 
     pthread_exit(NULL);
 }
@@ -234,15 +355,20 @@ int main(void)
         pthread_create(&thrtab[ndx], NULL, mandel_start, args);
         ofs += delta;
     }
+    g_nthr = nthr;
     for (ndx = 0 ; ndx < nthr ; ndx++) {
         pthread_join(thrtab[ndx], (void **)&thrptrtab[ndx]);
     }
+    do {
+        pthread_yield();
+    } while (g_nthr);
+
     XPutImage(dpy, win, gc, bitmap,
               0, 0, 0, 0,
               ASIZE, ASIZE);
     XFlush(dpy);
 
-//    display_sse(ASIZE, xmin, xmax, ymin, ymax);
+//    display_double(ASIZE, xmin, xmax, ymin, ymax);
 
 #ifdef WAIT_EXIT
     while(1)

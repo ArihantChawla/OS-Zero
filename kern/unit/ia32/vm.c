@@ -8,9 +8,9 @@
 #include <kern/conf.h>
 #include <stddef.h>
 #include <stdint.h>
-#include <zero/trix.h>
 #include <zero/cdefs.h>
 #include <zero/param.h>
+#include <zero/trix.h>
 //#include <kern/io/dev.h>
 #include <kern/util.h>
 #include <kern/mem/vm.h>
@@ -291,7 +291,7 @@ vmpagefault(unsigned long pid, uint32_t adr, uint32_t flags, void *frame)
                 if (!(adr & PAGEWIRED)) {
                     qid = pagecalcqid(page);
                     mtxlk(&vmlrutab[qid].lk);
-                    queuepush(page, &vmlrutab[qid].list);
+                    deqpush(page, &vmlrutab[qid].list);
                     mtxunlk(&vmlrutab[qid].lk);
                 }
             }
@@ -307,7 +307,7 @@ vmpagefault(unsigned long pid, uint32_t adr, uint32_t flags, void *frame)
             page->nflt++;
             qid = pagecalcqid(page);
             mtxlk(&vmlrutab[qid].lk);
-            queuepush(page, &vmlrutab[qid].list);
+            deqpush(page, &vmlrutab[qid].list);
             mtxunlk(&vmlrutab[qid].lk);
             mtxunlk(&page->lk);
         }

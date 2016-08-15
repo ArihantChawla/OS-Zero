@@ -3,9 +3,9 @@
 #include <zero/mtx.h>
 #include <kern/proc/task.h>
 
-#define QUEUE_SINGLE_TYPE
-#define QUEUE_TYPE struct taskid
-#include <zero/queue.h>
+#define DEQ_SINGLE_TYPE
+#define DEQ_TYPE struct taskid
+#include <zero/deq.h>
 
 struct task          tasktab[NTASK] ALIGNED(PAGESIZE);
 static struct taskid taskidtab[NTASK];
@@ -22,7 +22,7 @@ taskinitids(void)
     for (id = TASKNPREDEF ; id < NTASK ; id++) {
         taskid = &taskidtab[id];
         taskid->id = id;
-        queueappend(taskid, &queue);
+        deqappend(taskid, &queue);
     }
     mtxunlk(&queue->lk);
 
@@ -45,7 +45,7 @@ taskgetid(void)
     long           retval = -1;
 
     mtxlk(&queue->lk);
-    taskid = queuepop(&queue);
+    taskid = deqpop(&queue);
     if (taskid) {
         retval = taskid->id;
     }
@@ -61,7 +61,7 @@ taskfreeid(long id)
     struct taskid *taskid = &taskidtab[id];
     
     mtxlk(&queue->lk);
-    queueappend(taskid, &queue);
+    deqappend(taskid, &queue);
     mtxunlk(&queue->lk);
 
     return;

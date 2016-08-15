@@ -775,6 +775,8 @@ static void * maginit(struct mag *mag, long bktid, long *zeroret);
         }                                                               \
     } while (0)
 #endif
+#if (MALLOCTAILQ)
+#endif /* MALLOCTAILQ */
 
 #define MALLOPT_PERTURB_BIT 0x00000001
 struct mallopt {
