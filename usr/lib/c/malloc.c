@@ -2051,6 +2051,9 @@ _malloc(size_t size,
         size_t align,
         long zero)
 {
+#if (MALLOCATOMIC)
+    long        id;
+#endif
 #if (MALLOCPTRNDX)
     PTRNDX      ndx = 0;
 #endif
@@ -2093,11 +2096,16 @@ _malloc(size_t size,
                 ptr = mag->base;
                 mag->cur = 1;
             } else {
+#if (MALLOCATOMIC)
+                id = m_fetchadd(mag->cur, 1);
+#else
+                id = mag->cur++;
+#endif
 #if (MALLOCPTRNDX)
-                ndx = mag->stk[mag->cur++];
+                ndx = mag->stk[id];
                 ptr = magptr(mag, ndx);
 #else
-                ptr = ((void **)mag->stk)[mag->cur++];
+                ptr = ((void **)mag->stk)[id];
 #endif
             }
             if (mag->cur == lim) {
@@ -2128,11 +2136,16 @@ _malloc(size_t size,
                 ptr = mag->base;
                 mag->cur = 1;
             } else {
+#if (MALLOCATOMIC)
+                id = m_fetchadd(mag->cur, 1);
+#else
+                id = mag->cur++;
+#endif
 #if (MALLOCPTRNDX)
-                ndx = mag->stk[mag->cur++];
+                ndx = mag->stk[id];
                 ptr = magptr(mag, ndx);
 #else
-                ptr = ((void **)mag->stk)[mag->cur++];
+                ptr = ((void **)mag->stk)[id];
 #endif
             }
             if (mag->cur < lim) {
@@ -2244,8 +2257,11 @@ _free(void *ptr)
 #if (MALLOCLAZYUNMAP)
     static long     nfree = 0;
 #endif
+#if (MALLOCATOMIC)
+    long            id;
+#endif
 #if (MALLOCFREEMAP)
-    long            ndx;
+    long            pos;
 #endif
 #if (MALLOCHDRHACKS)
     uint8_t         nfo = 0;
@@ -2313,10 +2329,10 @@ _free(void *ptr)
         VALGRINDFREE(ptr);
 #if (MALLOCFREEMAP)
         /* FIXME: use m_cmpclrbit() */
-        ndx = magptrid(mag, adr);
+        pos = magptrid(mag, adr);
         __malloclk(&mag->freelk);
         if ((mag->lim == 1 && (mag->freemap))
-            || ((mag->lim > 1) && !bitset(mag->freemap, ndx))) {
+            || ((mag->lim > 1) && !bitset(mag->freemap, pos))) {
             magprint(mag);
             fprintf(stderr, "trying to free an unused block\n");
             
@@ -2344,11 +2360,17 @@ _free(void *ptr)
         if (mag->lim == 1) {
             mag->ptr = adr;
         } else {
+#if (MALLOCATOMIC)
+            id = m_fetchadd(mag->cur, -1);
+            id--;
+#else
+            id = --mag->cur;
+#endif
 #if (MALLOCPTRNDX)
             ndx = magptrid(mag, ptr);
-            mag->stk[--mag->cur] = ndx;
+            mag->stk[id] = ndx;
 #else
-            ((void **)mag->stk)[--mag->cur] = adr;
+            ((void **)mag->stk)[id] = adr;
 #endif
         }
         lim = mag->lim;
