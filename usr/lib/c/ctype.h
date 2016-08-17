@@ -41,6 +41,8 @@ extern volatile uint8_t *ctypeparamptr;
 #define toascii(c)       ((c) & 0x7f)
 #define tolower(c)       (ctypelowptr[(c)])
 #define toupper(c)       (ctypeupptr[(c)])
+#define _toupper(c)      ((c) - ('a' - 'A'))
+#define _tolower(c)      ((c) + ('a' - 'A'))
 #endif
 
 #endif /* __CTYPE_H__ */

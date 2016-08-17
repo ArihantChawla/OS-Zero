@@ -4,6 +4,8 @@
 /* Internet Protocol Version 4 support package for libzero */
 
 #include <stdint.h>
+#include <zero/cdefs.h>
+#include <zero/pack.h>  // pack ALL structs */
 
 #define IP4_DGRAM_VERSION      4
 #define ip4dgramhasopts(dg)    ((dg)->ihlen > IP4_DGRAM_MIN_HDR_SIZE / 4)
@@ -45,6 +47,7 @@ struct ip4dgram {
     /* followed by variale options, padding, and data fields */
 };
 
+/* NOTE: TCP-header is padded to a multiple of 32 bits with zero-bits */
 #define ip4padtcphdr(hdr, nb)                                           \
     do {                                                                \
         uint8_t *_u8ptr = (uint8_t *)(hdr) + (nb);                      \
@@ -57,12 +60,13 @@ struct ip4dgram {
                 _u8ptr[1] = 0x00;                                       \
             case 1:                                                     \
                 _u8ptr[0] = 0x00;                                       \
+            case 0:
             default:                                                    \
                                                                         \
                 break;                                                  \
         }                                                               \
     } while (0)
-/* NOTE: TCP-header is padded to a multiple of 32 bits with zero-bits */
+
 #define TCP4_OPT_LIST_END       0x00 // kind == 0
 #define TCP4_OPT_NO_OP          0x01 // kind == 1
 #define TCP4_MAX_SEG_SZZE       0x02 // length 4 octets

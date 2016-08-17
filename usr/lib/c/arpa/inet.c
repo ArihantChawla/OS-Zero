@@ -1,6 +1,6 @@
 #include <sys/socket.h>
 #include <netinet/in.h>
-#include <zero/cdecl.h>
+#include <zero/cdefs.h>
 #include <zero/param.h>
 #include <zero/trix.h>
 
@@ -22,7 +22,7 @@ const char _asctodectab[10]
 char *
 inet_ntoa(struct in_addr *adr)
 {
-    uint8_t  u8ptr = (unsigned char *)_inaddrstr;
+    uint8_t *u8ptr = (unsigned char *)_inaddrstr;
     uint8_t *ptr = (uint8_t *)adr;
     long     val;
     long     tmp1;
@@ -35,7 +35,7 @@ inet_ntoa(struct in_addr *adr)
 
     for (ndx = 0 ; ndx < 4 ; ndx++) {
         val = ptr[ndx];
-        size = 1;
+//        size = 1;
         tmp1 = modu10(val);         // ptr[0] % 10
         tmp2 = divu10(val);         // ptr[0] / 10
         tmp3 = divu100(val);        // ptr[0] / 100

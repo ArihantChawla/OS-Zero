@@ -4,6 +4,9 @@
 #if !defined(__KERNEL__)
 
 #include <stddef.h>
+#if !defined(__GLIBC__)
+#include <bits/string.h>
+#endif
 
 void * memcpy(void *dest, const void *src, size_t n);
 void * memmove(void *dest, void *src, size_t n);

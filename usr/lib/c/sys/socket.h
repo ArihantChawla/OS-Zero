@@ -35,7 +35,7 @@ typedef uint16_t sa_family_t;
 
 extern const socklen_t sockaddrlentab[AF_NFAMILY];
 
-#define SOCK_MAXADDRLEN CLSIZE
+#define SOCK_MAXADDRLEN 255
 struct sockaddr {
     sa_family_t sa_family;                      // family
     socklen_t   sa_len;                         // address size

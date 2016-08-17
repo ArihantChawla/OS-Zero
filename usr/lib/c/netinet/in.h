@@ -6,6 +6,7 @@
 #include <sys/socket.h>
 #include <zero/cdefs.h>
 #include <zero/param.h>
+#include <zero/trix.h>
 
 #define __INADDRSZ          4
 #define __IN6ADDRSZ         16
@@ -13,17 +14,21 @@
 #define INET_ADDRSTRLEN     16
 #define INET6_ADDRSTRLEN    46
 
-#define IPPROTO_RAW         1
-#define IPPROTO_IP          2
-#define IPPROTO_ICMP        3
-#define IPPROTO_TCP         4
-#define IPPROTO_UDP         5
+#define IPPROTO_RAW         1   // raw IP packets
+#define IPPROTO_ICMP        2   // control message
+#define IPPROTO_TCP         3   // transmission control protocol
+#define IPPROTO_IP          4   // internet protocol
+#define IPPROTO_UDP         5   // user datagram prtocol
+#define IPPROTO_IPV6        6   // internet protocol version 6
 
-#define IPV6_JOIN_GROUP     1
-#define IPV6_LEAVE_GROUP    2
-#define IPV6_MULTICAST_HOPS 3
-#define IPV6_MULTICAST_IF   4
-#define IPV6_MULTICAST_LOOP 5
+#define IPV6_JOIN_GROUP     1   // join a multicast group
+#define IPV6_LEAVE_GROUP    2   // leave a multicast group
+#define IPV6_MULTICAST_HOPS 3   // multicast hop limit
+#define IPV6_MULTICAST_IF   4   // interface for outgoing multicast packets
+#define IPV6_MULTICAST_LOOP 5   // loo multicast packets back to application
+
+#define IPV6_UNICAST_HOPS   6   // unicast hop limit
+#define IPV6_V6ONLY         7   // restrict AF_INET6 socket to IPv6 only
 
 typedef uint16_t in_port_t;
 typedef uint32_t in_addr_t;
@@ -32,20 +37,22 @@ struct in_addr {
     in_addr_t s_addr;
 };
 
+#define sin_zero _res           // compatibility with older systems
 struct sockaddr_in {
     sa_family_t    sin_family;
     socklen_t      sin_len;
     in_port_t      sin_port;
     struct in_addr sin_addr ALIGNED(CLSIZE);
-    uint8_t        _res[SOCK_MAXADDRLEN - sizeof(struct in_addr)];
+    uint8_t        _res[rounduppow2(SOCK_MAXADDRLEN, CLSIZE)
+                        - sizeof(struct in_addr)];
 };
 
 #define INADDR_ANY       { 0 }
-#define INADDR_BROADCAST { 0xffffffff }
+#define INADDR_BROADCAST { 0xffffffffU }
 #if (__BYTE_ORDER == __LITTLE_ENDIAN)
-#define INADDR_LOOPBACK  { 0x0100007f }
+#define INADDR_LOOPBACK  { 0x0100007fU }
 #else
-#define INADDR_LOOPBACK  { 0x7f000001 }
+#define INADDR_LOOPBACK  { 0x7f000001U }
 #endif
 
 struct ip_mreqn {
@@ -89,7 +96,8 @@ struct sockaddr_in6 {
     uint32_t        sin6_flowinfo;      // traffic class and flow information
     uint32_t        sin6_scope_id;      // scope ID
     struct in6_addr sin6_addr ALIGNED(CLSIZE);
-    uint8_t         _res2[SOCK_MAXADDRLEN - sizeof(struct in6_addr)];
+    uint8_t         _res2[rounduppow2(SOCK_MAXADDRLEN, CLSIZE)
+                          - sizeof(struct in6_addr)];
 };
 
 struct ipv6_mreq {

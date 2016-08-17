@@ -1,9 +1,10 @@
 #if !defined(IP4TEST)
-#define IP4TEST 0
-#endif
-
+#define IP4TEST    0
+#else
 #define IP4NPKT    16384
 #define IP4PKTSIZE 65536
+#endif
+
 #include <stddef.h>
 #include <stdlib.h>
 #include <stdint.h>

@@ -2,9 +2,9 @@
 
 #undef PACKED
 #if defined(__GNUC__)
-#define PACKED __attribute__ ((__packed__))
+#define PACKED() __attribute__ ((__packed__))
 #elif defined(_MSC_VER)
-#define PACKED
-#pragma pack(push, 1)
+#define PACKED()
+#pragma __pragma(pack(push, 1))
 #endif
 

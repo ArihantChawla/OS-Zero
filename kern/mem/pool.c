@@ -133,6 +133,27 @@ memalloc(size_t nb, long flg)
     return ptr;
 }
 
+void
+memwtalloc(size_t nb, long flg, long spin)
+{
+    void *ptr = NULL;
+    long  nloop;
+
+    do {
+        nloop = spin;
+        do {
+            ptr = memalloc(nb, flg);
+            if (ptr) {
+                
+                return ptr;
+            }
+        } while (spin--);
+        m_waitint();
+    } while (1);
+
+    return ptr;
+}
+
 /* TODO: deal with unmapping/freeing physical memory */
 void
 kfree(void *ptr)

@@ -115,6 +115,31 @@ meminitvirt(struct mempool *pool, size_t lim)
     return;
 }
 
+void
+meminit(size_t nbphys, size_t nbvirt)
+{
+    size_t    lim = max(nbphys, KERNVIRTBASE);
+    uintptr_t adr;
+
+#if (defined(__i386__) && !defined(__x86_64__) && !defined(__amd64__))  \
+    || defined(__arm__)
+    pageinitphys((uintptr_t)&_epagetab, lim - (size_t)&_epagetab);
+    meminitphys(&memphyspool, (uintptr_t)&_epagetab,
+                lim - (size_t)&_epagetab);
+    lim = max(nbvirt, KERNVIRTBASE);
+    meminitvirt(&memvirtpool,
+                lim);
+#elif defined(__x86_64__) || defined(__amd64__)
+#error implement x86-64 memory management
+#endif
+//    meminitbuf();
+//    swapinit(0, 0x00000000, 1024);
+    
+    return;
+}
+
+#if 0
+
 /*
  * called without locks at boot time, or with locks held by memgetbuf() */
 long
@@ -184,29 +209,6 @@ meminitbuf(void)
     return 1;
 }
 
-void
-meminit(size_t nbphys, size_t nbvirt)
-{
-    size_t    lim = max(nbphys, KERNVIRTBASE);
-    uintptr_t adr;
-
-#if (defined(__i386__) && !defined(__x86_64__) && !defined(__amd64__))  \
-    || defined(__arm__)
-    pageinitphys((uintptr_t)&_epagetab, lim - (size_t)&_epagetab);
-    meminitphys(&memphyspool, (uintptr_t)&_epagetab,
-                lim - (size_t)&_epagetab);
-    lim = max(nbvirt, KERNVIRTBASE);
-    meminitvirt(&memvirtpool,
-                lim);
-#elif defined(__x86_64__) || defined(__amd64__)
-#error implement x86-64 memory management
-#endif
-//    meminitbuf();
-//    swapinit(0, 0x00000000, 1024);
-    
-    return;
-}
-
 /* FIXME: steal mbufs from other CPUs if need arises */
 struct membuf *
 memgetbuf(long how)
@@ -245,7 +247,6 @@ memputbuf(struct membuf *buf)
     return;
 }
 
-#if 0
 /* FIXME: steal mbufs from other CPUs if need arises */
 void *
 memgetblk(long how)
@@ -289,9 +290,6 @@ memputblk(struct memblk *blk)
     tab->nblk++;
     mtxunlk(&tab->lk);
 }
-#endif
-
-#if 0
 
 struct membuf *
 membufprepend(struct membuf *buf, size_t len, long how)
@@ -320,5 +318,5 @@ membufprepend(struct membuf *buf, size_t len, long how)
     return buf;
 }
 
-#endif
+#endif /* 0 */
 

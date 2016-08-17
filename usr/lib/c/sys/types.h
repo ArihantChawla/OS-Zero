@@ -13,6 +13,7 @@
 //#include <sys/select.h>
 #include <sys/sysmacros.h>
 #endif
+#include <zero/param.h>
 #if !defined(_POSIX_SOURCE) && (USEBSD) && !defined(NFDBITS)
 #include <kern/conf.h>
 #endif
@@ -24,7 +25,12 @@ struct timeval {
 #define __struct_timeval_defined 1
 #endif
 
+/* register-sized type */
+#if (WORDSIZE == LONGSIZE)
 typedef long            register_t;
+#elif (WORDSIZE == LONGLONGSIZE)
+typedef long long       register_t;
+#endif
 typedef uint8_t         u_int8_t;
 typedef uint16_t        u_int16_t;
 typedef uint32_t        u_int32_t;
@@ -37,9 +43,12 @@ typedef unsigned long   u_long;
 typedef int64_t         quad_t;
 typedef uint64_t        u_quad_t;
 typedef quad_t         *qaddr_t;
+/* SysV compatibility */
+typedef unsigned char   unchar;
 #endif
-typedef unsigned int    uint;
+typedef unsigned char   uchar;
 typedef unsigned short  ushort;
+typedef unsigned int    uint;
 typedef unsigned long   ulong;
 #if 0
 typedef int64_t         blkcnt_t;

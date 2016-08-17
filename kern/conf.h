@@ -3,9 +3,11 @@
 
 #include <zero/param.h>
 
+#define MEMBUFNOLK   0  // FIXME: implement lock-free data (stack?)
+
 #define MEMPARANOIA  0
 #define BUFDYNALLOC  0
-#define NMEMBUFBLK   8192
+#define MEMNBUFBLK   8192
 #define PERTHRSTACKS 0
 
 #define NEWBUFBLK   1

@@ -1,6 +1,7 @@
 #include <features.h>
 #include <stddef.h>
 #include <stdlib.h>
+#include <string.h>
 #include <stdint.h>
 #if defined(_GNU_SOURCE)
 #include <alloca.h>
@@ -8,9 +9,6 @@
 #include <zero/cdefs.h>
 #include <zero/param.h>
 #include <zero/trix.h>
-#if !defined(__GLIBC__)
-#include <bits/string.h>
-#endif
 
 #if !defined(__GLIBC__)
 
