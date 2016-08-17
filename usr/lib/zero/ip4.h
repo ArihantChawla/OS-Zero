@@ -1,10 +1,12 @@
-#ifndef __KERN_IO_NET_IP4_H__
-#define __KERN_IO_NET_IP4_H__
+#ifndef __ZERO_IP4_H__
+#define __ZERO_IP4_H__
+
+/* Internet Protocol Version 4 support package for libzero */
 
 #include <stdint.h>
 
 #define IP4_DGRAM_VERSION      4
-#define ip4dgramhasopts(dg)    ((dg)->ihl > IP4_DGRAM_MIN_HDR_SIZE / 4)
+#define ip4dgramhasopts(dg)    ((dg)->ihlen > IP4_DGRAM_MIN_HDR_SIZE / 4)
 /* IP4 DATAGRAM HEADER */
 #define IP4_DGRAM_MIN_HDR_SIZE 20
 /* flg-bits */
@@ -28,12 +30,12 @@
 #define IP4_DGRAM_L2TP         0x73
 struct ip4dgram {
     unsigned version   : 4;     // 4 for IPv4
-    unsigned ihl       : 4;     // internet header length in 32-bit words
+    unsigned ihlen     : 4;     // internet header length in 32-bit words
     uint8_t  tos;               // type of service
-    uint16_t tl;                // total length
+    uint16_t dglen;                // total length
     uint16_t ident;             // used for packet reassembly
     unsigned flg       : 2;     // fragmentation control-flags
-    unsigned _reserved : 1;
+    unsigned _reserved : 1;     // reserved bit
     unsigned fragofs   : 13;    // fragment offset in message, 64-bit units
     uint8_t  ttl;               // time to live
     uint8_t  protocol;          // see above
@@ -70,7 +72,7 @@ struct tcp4maxsegsize {
     uint16_t val;
 }
 /* bits for the ctlbits-field */
-#define TCP4_CWR_BIT 0x80       // congestion wibndow reduced
+#define TCP4_CWR_BIT 0x80       // congestion window reduced
 #define TCP4_ECE_BIT 0x40       // ECN echo (ECE)
 #define TCP4_URG_BIT 0x20       // urgent pointer field significant
 #define TCP4_ACK_BIT 0x10       // acknowledgeme nt fiedl significant
@@ -92,5 +94,5 @@ struct tcp4hdr {
     /* followed by variable options and data */
 };
 
-#endif /* __KERN_IO_NET_IP4_H__ */
+#endif /* __ZERO_IP4_H__ */
 
