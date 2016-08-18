@@ -20,7 +20,7 @@ extern void * _aligned_malloc(size_t size, size_t align);
 extern void   _aligned_free(void *);
 #endif
 #if defined(_INTEL_SOURCE) && !defined(__GNUC__)
-extern void * _mm_malloc(int size, int align);
+extern void * _mm_malloc(size_t size, size_t align);
 extern void   _mm_free(void *ptr);
 #endif
 

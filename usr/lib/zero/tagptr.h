@@ -4,6 +4,7 @@
 /* tagged pointers for libzero */
 
 #include <stdint.h>
+#include <zero/bignum.h>
 
 #if ((defined(__i386__) || defined(__i486__)                            \
       || defined(__i586__) || defined(__i686__))                        \

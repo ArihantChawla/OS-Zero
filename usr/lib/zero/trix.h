@@ -587,7 +587,12 @@ union __ieee754d { uint64_t u64; double d; };
     (_ftou32(f) & 0x7fffffff)
 #endif /* 0 */
 
-/* TODO: IEEE 128-bit */
+/*
+ * TODO: IEEE 128-bit
+ * - 0..112   - mantissa
+ * - 113..125 - exponent
+ * - 127      - sign
+ */
 
 /* TODO: test the stuff below. */
 

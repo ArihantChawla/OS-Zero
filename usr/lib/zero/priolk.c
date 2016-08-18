@@ -53,8 +53,8 @@ priolkinit(struct priolkdata *data, unsigned long val)
                 break;
             }
         } while (!m_cmpswapptr((volatile long *)priofree,
-                               (volatile long *)head,
-                               (volatile long *)next));
+                               (long *)head,
+                               (long *)next));
         if (head) {
             t_priolkptr = head;
         } else {
@@ -95,8 +95,8 @@ priolkfin(void)
         next = priofree;
         t_priolkptr->next = next;
     } while ((next) && !m_cmpswapptr((volatile long *)priofree,
-                                     (volatile long *)next,
-                                     (volatile long *)t_priolkptr));
+                                     (long *)next,
+                                     (long *)t_priolkptr));
 #else
     t_priolkptr->next = priofree;
     priofree = t_priolkptr;
@@ -129,7 +129,7 @@ priolk(struct priolk *priolk)
     }
     res = m_cmpswapptr((volatile long *)&priolk->owner,
                        NULL,
-                       (volatile long *)t_priolkptr);
+                       (long *)t_priolkptr);
     if (!res) {
 
         return;
@@ -147,7 +147,7 @@ priolk(struct priolk *priolk)
         }
         res = m_cmpswapptr((volatile long *)&priolk->owner,
                            NULL,
-                           (volatile long *)t_priolkptr);
+                           (long *)t_priolkptr);
         if (!res) {
             m_atomand(&priolk->waitbits, ~prio);
 

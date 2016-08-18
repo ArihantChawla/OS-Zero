@@ -2,9 +2,9 @@
 #define ___MALLOC_H__
 
 #define MALLOCPRIOLK      1     // use locks lifted from locklessinc.com
-#define MALLOCLFQ         1
-#define MALLOCTAILQ       1
-#define MALLOCATOMIC      1
+#define MALLOCLFDEQ       1
+#define MALLOCTAILQ       0
+#define MALLOCATOMIC      0
 #define MALLOCLAZYUNMAP   1
 
 #include <limits.h>
@@ -13,11 +13,11 @@
 #include <zero/asm.h>
 #include <zero/param.h>
 #include <zero/trix.h>
-#if (MALLOCLFQ)
-#define LFQ_VAL_T    struct mag *
-#define LFQ_VAL_NONE NULL
+#if (MALLOCLFDEQ)
+#define LFDEQ_VAL_T    struct mag *
+#define LFDEQ_VAL_NONE NULL
 #include <zero/tagptr.h>
-#include <zero/lfq.h>
+#include <zero/lfdeq.h>
 #endif
 
 /* internal stuff for zero malloc - not for the faint at heart to modify :) */
@@ -190,7 +190,6 @@
 #define VALGRINDFREE(adr)
 #endif
 
-#include <zero/mtx.h>
 #if defined (MALLOCPRIOLK) && (MALLOCPRIOLK)
 #include <zero/priolk.h>
 #define LOCK struct priolk
@@ -198,14 +197,14 @@
 //#define __malloctrylk(mp)     priotrylk(mp)
 #define __malloclk(mp)        priolk(mp)
 #define __mallocunlk(mp)      priounlk(mp)
-#elif defined(MALLOCTKTLK) && (MALLOCTKTLK)
+#elif defined(MALLOCTKTLK) && (MALLOCTKTLK) && !(DEBUGMTX)
 #include <zero/tktlk.h>
 #define LOCK union zerotktlk
 #define __mallocinitlk(mp)
 #define __malloctrylk(mp)     tkttrylk(mp)
 #define __malloclk(mp)        tktlkspin(mp)
 #define __mallocunlk(mp)      tktunlk(mp)
-#elif defined(ZEROFMTX)
+#elif !defined(PTHREAD)
 #define LOCK zerofmtx
 #include <zero/mtx.h>
 #include <zero/spin.h>
@@ -405,42 +404,47 @@ struct memtab {
 /* magazines for larger/fewer allocations embed the tables in the structure */
 /* magazine header structure */
 struct mag {
-#if (MALLOCLFQ)
-    struct lfqnode  node;
-    long            nfree;
+#if (MALLOCLFDEQ)
+    struct lfdeqnode  node;
 #endif
-    struct mag     *prev;
-    struct mag     *next;
-    volatile long   lk;
-    struct arn     *arn;
-    void           *base;
-    void           *adr;
-    uint8_t        *ptr;
-    size_t          size;
-    long            cur;
-    long            lim;
+    long              nfree;
+    struct mag       *prev;
+    struct mag       *next;
+    volatile long     lk;
+    struct arn       *arn;
+    void             *base;
+    void             *adr;
+    uint8_t          *ptr;
+    size_t            size;
+    long              cur;
+    long              lim;
 #if (MALLOCFREEMAP)
-    volatile long   freelk;
-    uint8_t        *freemap;
+    volatile long     freelk;
+    uint8_t          *freemap;
 #endif
-    long            bktid;
+    long              bktid;
 #if (MALLOCPTRNDX)
-    PTRNDX         *stk;
-    PTRNDX         *idtab;
+    PTRNDX           *stk;
+    PTRNDX           *idtab;
 #else
-    void           *stk;
-    void           *ptrtab;
+    void             *stk;
+    void             *ptrtab;
 #endif
 };
 
 struct magtab {
+#if (MALLOCLFDEQ)
+    struct lfdeq   lfdeq;
+#endif
     LOCK           lk;
     struct mag    *ptr;
 #if (MALLOCBUFMAG)
     unsigned long  n;
 #endif
 #if (MALLOCBUFMAG)
-    uint8_t        _pad[CLSIZE - sizeof(LOCK) - 2 * sizeof(void *) - sizeof(long)];
+    uint8_t        _pad[CLSIZE
+                        - sizeof(LOCK)
+                        - 2 * sizeof(void *) - sizeof(long)];
 #else
     uint8_t        _pad[CLSIZE - sizeof(LOCK) - 2 * sizeof(void *)];
 #endif
@@ -627,6 +631,7 @@ static void * maginit(struct mag *mag, long bktid, long *zeroret);
         }                                                               \
         (tab)->ptr = (head)->next;                                      \
     } while (0)
+
 #define magrm(mag, bkt, lock)                                           \
     do {                                                                \
         if ((lock) && !mag->arn) {                                      \
@@ -652,6 +657,7 @@ static void * maginit(struct mag *mag, long bktid, long *zeroret);
         if ((lock) && !mag->arn) {                                      \
             __mallocunlk(&(bkt)->lk);                                   \
         }                                                               \
+        bktrmmag(bkt);                                                  \
         (mag)->arn = NULL;                                              \
     } while (0)
 
@@ -662,6 +668,7 @@ static void * maginit(struct mag *mag, long bktid, long *zeroret);
         }                                                               \
         (tab)->ptr = (head)->next;                                      \
     } while (0)
+#if 0
 #define magrm(mag, bkt, lock)                                           \
     do {                                                                \
         if ((lock) && !mag->arn) {                                      \
@@ -689,6 +696,7 @@ static void * maginit(struct mag *mag, long bktid, long *zeroret);
         }                                                               \
         (mag)->arn = NULL;                                              \
     } while (0)
+#endif
 
 #if (MALLOCBUFMAG)
 #define bktaddmag(bkt)       ((bkt)->n++)
@@ -700,9 +708,11 @@ static void * maginit(struct mag *mag, long bktid, long *zeroret);
 #define bktaddmany(bkt, num)
 #endif
 
-#if (MALLOCLFQ)
-#define magenqueue(mag, bkt) (mag->node.val = mag, lfqenqueue(bkt, &mag->node))
-#define magdequeue(bkt)      lfqdequeue(bkt)
+#if (MALLOCLFDEQ)
+#define magenqueue(mag, bkt)                                            \
+    (mag->node.val = mag, lfdeqenqueue(&(bkt)->lfdeq, &mag->node))
+#define magdequeue(bkt)                                                 \
+    lfdeqdequeue(&(bkt)->lfdeq)
 #endif
 #define magpop(bkt, mag, lock)                                          \
     do {                                                                \
@@ -721,7 +731,7 @@ static void * maginit(struct mag *mag, long bktid, long *zeroret);
         }                                                               \
         (mag) = _mag;                                                   \
     } while (0)
-#if (MALLOCLFQ)
+#if (MALLOCLFDEQ)
 #define magpush(mag, bkt, lock)                                         \
     do {                                                                \
         (mag)->next = (bkt)->ptr;                                       \
@@ -791,7 +801,7 @@ static void * maginit(struct mag *mag, long bktid, long *zeroret);
     } while (0)
 #define magqueuemany(first, last, bkt, lock, n)                         \
     do {                                                                \
-        DEQ_TYPE *_list = *deq;                                         \
+        DEQ_TYPE *_list = (bkt)->ptr;                                   \
                                                                         \
         if (lock) {                                                     \
             __malloclk(&(bkt)->lk);                                     \
@@ -804,7 +814,7 @@ static void * maginit(struct mag *mag, long bktid, long *zeroret);
         } else {                                                        \
             (first)->prev = (last);                                     \
             (last)->next = (first);                                     \
-            *deq = (first);                                             \
+            _list = (first);                                            \
         }                                                               \
         bktaddmany(bkt, n);                                             \
         if (lock) {                                                     \
@@ -833,18 +843,9 @@ struct hashmag {
 #define MALLOCINIT   0x00000001L
 #define MALLOCNOHEAP 0x00000002L
 struct malloc {
-#if (MALLOCLFQ)
-    struct lfq               magbuf[MALLOCNBKT];
-#if (MALLOCLAZYUNMAP) && 0
-    struct lfq               mapbuf[MALLOCNBKT];
-#endif
-    struct lfq               freebuf[MALLOCNBKT];
-    struct lfq               hdrbuf[MALLOCNBKT];
-#else
     struct magtab            magbuf[MALLOCNBKT];
     struct magtab            freebuf[MALLOCNBKT];
     struct magtab            hdrbuf[MALLOCNBKT];
-#endif
 #if (MALLOCNBKT == 64)
     uint64_t                 magemptybits;
 #elif (MALLOCNBKT == 32)

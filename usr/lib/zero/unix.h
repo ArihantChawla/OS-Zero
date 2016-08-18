@@ -50,7 +50,9 @@
 
 #define SBRK_FAILED        ((void *)-1L)
 
+#if !defined(MMAP_DEV_ZERO)
 #define MMAP_DEV_ZERO      0 /* set mmap to use /dev/zero; otherwise, MAP_ANON */
+#endif
 
 /* some systems may need MAP_FILE with MAP_ANON(YMOUS). */
 #ifndef MAP_FILE

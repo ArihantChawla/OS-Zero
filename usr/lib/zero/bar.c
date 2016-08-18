@@ -99,7 +99,7 @@ barwaitpool(zerobarpool *pool)
 
     do {
         unsigned long seq = m_atomread(pool->cnt.vals.seq);
-        long          cnt = m_fetchadd32(&pool->cnt.vals.cnt, 1);
+        long          cnt = m_fetchaddu32(&pool->cnt.vals.cnt, 1);
 
         if (cnt < pool->num) {
             while (m_atomread(pool->cnt.vals.seq) == seq) {

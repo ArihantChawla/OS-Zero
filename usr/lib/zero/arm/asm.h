@@ -15,7 +15,7 @@
 static __inline__ long
 m_cmpswap_armv6(volatile long *p, long want, long val)
 {
-    volatile long res = MTXINITVAL;
+    volatile long res = 0;
 
     __asm__ __volatile__ ("ldr r1, %1\n"                // r1 = want;
                           "mov %0, #0\n"                // res = 0;
@@ -39,7 +39,7 @@ m_cmpswap_armv6(volatile long *p, long want, long val)
 static __inline__ long
 m_cmpswap(volatile long *p, long want, long val)
 {
-    volatile long res;
+    volatile long res = 0;
     volatile long tmp;
 
     __asm__ __volatile__ ("0:\n"

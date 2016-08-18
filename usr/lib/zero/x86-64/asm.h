@@ -205,8 +205,8 @@ m_cmpxchgu64(volatile unsigned long *p,
  */
 static __inline__ long
 m_cmpxchg64ptr(volatile long *p,
-               volatile long *want,
-               volatile void *val)
+               long *want,
+               void *val)
 {
     long res;
     
@@ -227,8 +227,8 @@ m_cmpxchg64ptr(volatile long *p,
  */
 static __inline__ long
 m_cmpxchg128(volatile long *p64,
-             volatile long *want,
-             volatile long *val)
+             long *want,
+             long *val)
 {
     return __sync_bool_compare_and_swap(p64, want, val);
 }
@@ -237,8 +237,8 @@ m_cmpxchg128(volatile long *p64,
 
 static __inline__ long
 m_cmpxchg128(volatile long long *p64,
-             volatile long long *want,
-             volatile long long *val)
+             long long *want,
+             long long *val)
 {
     long long     lo = val[0];
     long long     hi = val[1];
@@ -258,8 +258,8 @@ m_cmpxchg128(volatile long long *p64,
  */
 static __inline__ long
 m_cmpxchg128(volatile long *p64,
-             volatile long *want,
-             volatile long *val)
+             long *want,
+             long *val)
 {
     uint64_t rax = want[0];
     uint64_t rdx = want[1];
@@ -282,7 +282,7 @@ m_cmpxchg128(volatile long *p64,
 static __inline__ long
 m_cmpsetbit64(volatile long *p, long ndx)
 {
-    volatile long val;
+    long val;
 
     __asm__ __volatile__ ("xorq %1, %1\n"
                           "lock btsq %2, %0\n"
@@ -300,7 +300,7 @@ m_cmpsetbit64(volatile long *p, long ndx)
 static __inline__ long
 m_cmpclrbit64(volatile long *p, long ndx)
 {
-    volatile long val;
+    long val;
 
     __asm__ __volatile__ ("xorq %1, %1\n"
                           "lock btrq %2, %0\n"
@@ -314,20 +314,20 @@ m_cmpclrbit64(volatile long *p, long ndx)
     return val;
 }
 
-static __inline__ unsigned long
+static __inline__ long
 m_bsf64(unsigned long val)
 {
-    unsigned long ret = ~0UL;
+    long ret = ~0UL;
 
     __asm__ __volatile__ ("bsfq %1, %0\n" : "=r" (ret) : "rm" (val));
 
     return ret;
 }
 
-static __inline__ unsigned long
+static __inline__ long
 m_bsr64(unsigned long val)
 {
-    unsigned long ret = ~0UL;
+    long ret = ~0UL;
 
     __asm__ __volatile__ ("bsrq %1, %0\n" : "=r" (ret) : "rm" (val));
 
