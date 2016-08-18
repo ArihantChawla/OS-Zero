@@ -13,6 +13,11 @@ static volatile long     waitqlk;
 static long              waitqmaxid;
 static struct waitqitem *waitqstk;
 
+#if (ZEROFMTX)
+#define __waitqlk(lp)   fmtxlk(lp)
+#define __waitqunlk(lp) fmtxunlk(lp)
+#endif
+
 static struct waitq *
 waitqinit(struct waitq *wq)
 {
@@ -20,7 +25,9 @@ waitqinit(struct waitq *wq)
         wq = malloc(sizeof(struct waitq));
     }
     if (wq) {
-        wq->lk = MTXINITVAL;
+#if (ZEROFMTX)
+        wq->lk = FMTXINITVAL;
+#endif
         wq->flg = 0;
         wq->status = WAITQ_STATUS_NONE;
         wq->event = WAITQ_NONE;
@@ -69,19 +76,19 @@ waitqget(void)
     struct waitq     *wq = NULL;
     struct waitqitem *item;
 
-    mtxlk(&waitqlk);
+    __waitqlk(&waitqlk);
     item = waitqstk;
     if (item) {
         waitqstk = item->next;
     }
-    mtxunlk(&waitqlk);
+    __waitqunlk(&waitqlk);
     if (item) {
         wq = item->wq;
     } else if (waitqmaxid < WAITQ_MAX) {
         wq = waitqinit(NULL);
-        mtxlk(&waitqlk);
+        __waitqlk(&waitqlk);
         wq->id = waitqmaxid++;
-        mtxunlk(&waitqlk);
+        __waitqunlk(&waitqlk);
     }
 
     return wq;
@@ -114,10 +121,10 @@ waitqrel(struct waitq *wq)
         item = &waitqitemtab[id];
         waitqinit(wq);
         item->q = wq;
-        mtxlk(&waitqlk);
+        __waitqlk(&waitqlk);
         item->next = waitqstk;
         waitqstk = item;
-        mtxunlk(&waitqlk);
+        __waitqunlk(&waitqlk);
     }
 
     return;

@@ -1,9 +1,10 @@
 #include <errno.h>
+#if defined(PTHREAD) && !defined(ZEROPTHREAD)
 #include <pthread.h>
-#include <zero/asm.h>
-#define ZEROMTX 1
-#define ZEROPTHREAD 1
+#else
 #include <zero/mtx.h>
+#endif
+#include <zero/asm.h>
 #include <zero/sem.h>
 //#include <zero/thr.h>
 
@@ -15,8 +16,8 @@ semwait(zerosem *sem)
         while (!pthread_mutex_trylock(&sem->lk)) {
             thryield();
         }
-#elif defined(ZEROMTX)
-        while (m_cmpswap(&sem->lk, MTXINITVAL, MTXLKVAL)) {
+#elif defined(ZEROFMTX)
+        while (!fmtxtrylk(&sem->lk)) {
             thryield();
         }
 #endif
@@ -24,16 +25,16 @@ semwait(zerosem *sem)
             sem->val--;
 #if defined(PTHREAD)
             pthread_mutex_unlock(&sem->lk);
-#elif defined(ZEROMTX)
-            sem->lk = MTXINITVAL;
+#elif defined(ZEROFMTX)
+            fmtxunlk(&sem->lk);
 #endif
 
             return 0;
         } else {
 #if defined(PTHREAD)
             pthread_mutex_unlock(&sem->lk);
-#elif defined(ZEROMTX)
-            sem->lk = MTXINITVAL;
+#elif defined(ZEROFMTX)
+            fmtxunlk(&sem->lk);
 #endif
             thryield();
         }
@@ -50,8 +51,8 @@ semtrywait(zerosem *sem)
         while (!pthread_mutex_trylock(&sem->lk)) {
             thryield();
         }
-#elif defined(ZEROMTX)
-        while (m_cmpswap(&sem->lk, MTXINITVAL, MTXLKVAL)) {
+#elif defined(ZEROfMTX)
+        while (!fmtxtrylk(&sem->lk)) {
             thryield();
         }
 #endif
@@ -59,16 +60,16 @@ semtrywait(zerosem *sem)
             sem->val--;
 #if defined(PTHREAD)
             pthread_mutex_unlock(&sem->lk);
-#elif defined(ZEROMTX)
-            sem->lk = MTXINITVAL;
+#elif defined(ZEROFMTX)
+            fmtxunlk(&sem->lk);
 #endif
 
             return 0;
         } else {
 #if defined(PTHREAD)
             pthread_mutex_unlock(&sem->lk);
-#elif defined(ZEROMTX)
-            sem->lk = MTXINITVAL;
+#elif defined(ZEROFMTX)
+            fmtxunlk(&sem->lk);
 #endif
             errno = EAGAIN;
 
@@ -87,24 +88,24 @@ sempost(zerosem *sem)
         while (!pthread_mutex_trylock(&sem->lk)) {
             thryield();
         }
-#elif defined(ZEROMTX)
-        while (m_cmpswap(&sem->lk, MTXINITVAL, MTXLKVAL)) {
+#elif defined(ZEROFMTX)
+        while (fmtxtrylk(&sem->lk)) {
             thryield();
         }
 #endif
         if (!sem->val) {
 #if defined(PTHREAD)
             pthread_mutex_unlock(&sem->lk);
-#elif defined(ZEROMTX)
-            sem->lk = MTXINITVAL;
+#elif defined(ZEROFMTX)
+            fmtxunlk(&sem->lk);
 #endif
             thryield();
         } else if (sem->val != ZEROSEM_MAXVAL) {
             sem->val++;
 #if defined(PTHREAD)
             pthread_mutex_unlock(&sem->lk);
-#elif defined(ZEROMTX)
-            sem->lk = MTXINITVAL;
+#elif defined(ZEROFMTX)
+            fmtxunlk(&sem->lk);
 #endif
 
             return 0;

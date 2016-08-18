@@ -25,12 +25,12 @@ struct lfqnode {
 };
 
 struct lfq {
-    struct lfqnode dummy;
     TAGPTR_T       head;
     TAGPTR_T       tail;
+    struct lfqnode dummy;
     uint8_t        _pad[2 * CLSIZE
-                        - sizeof(struct lfqnode)
-                        - 2 * sizeof(TAGPTR_T)];
+                        - 2 * sizeof(TAGPTR_T)
+                        - sizeof(struct lfqnode)];
 };
 
 void      lfqinitqueue(struct lfq *lfq);

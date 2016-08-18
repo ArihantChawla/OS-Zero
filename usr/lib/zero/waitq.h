@@ -5,6 +5,7 @@
 
 #include <stdlib.h>
 #include <zero/cdefs.h>
+#include <zero/mtx.h>
 #include <zero/cond.h>
 #if !defined(COND_T)
 #define COND_T zerocond
@@ -22,18 +23,20 @@ struct waitqitem {
 #define WAITQ_SIGNAL_BIT  0x01L
 #define WAITQ_WAITER_BIT  0x02L
 struct waitq {
-    volatile long  lk;           // mutual exclusion
-    void          *data;
-    long           id;           // waitq ID
-    long           flg;          // flag-bits
-    long           status;       // application status
-    long           event;        // event type
-    long           prev;         // previous on queue
-    long           next;         // next on queue
-    COND_T         cond;         // condition variable
-    void          (*signal)(void);
-    void          (*wait)(void);
-    long          (*poll)(void);
+#if (ZEROFMTX)
+    zerofmtx   lk;      // mutual exclusion
+#endif
+    void      *data;
+    long       id;      // waitq ID
+    long       flg;     // flag-bits
+    long       status;  // application status
+    long       event;   // event type
+    long       prev;    // previous on queue
+    long       next;    // next on queue
+    COND_T     cond;    // condition variable
+    void     (*signal)(void);
+    void     (*wait)(void);
+    long     (*poll)(void);
 };
 
 #endif /* __ZERO_WAITQ_H__ */

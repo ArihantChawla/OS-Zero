@@ -1,5 +1,5 @@
-#ifndef __ZERO_IA32_PROF_H__
-#define __ZERO_IA32_PROF_H__
+#ifndef __ZERO_X86_PROF_H__
+#define __ZERO_X86_PROF_H__
 
 #if defined(__cplusplus)
 extern "C" {
@@ -50,18 +50,28 @@ struct _tickval {
 static __inline__ uint64_t
 _rdtsc(struct _tickval *tp)
 {
+    unsigned long      lo;
+    unsigned long      hi;
+    unsigned long long ret;
+    
+    m_membar();
     __asm__("rdtsc\n"
-            "movl %%eax, %0\n"
-            "movl %%edx, %1\n"
-            : "=m" ((tp)->u.u32v[0]), "=m" ((tp)->u.u32v[1])
+            : "=a" (lo), "=d" (hi)
             :
             : "eax", "edx");
+    ret = hi;
+    ret <<= 32;
+    ret |= lo;
+    if (tp) {
+        tp->u.u64 = ret;
+    }
 
-    return tp->u.u64;
+    return ret;
 }
+
 #if 0
 /* read TSC (time stamp counter) */
-#define _rdtsc(tp)                                                      \
+#define _rdtsc(tp)  
     __asm__("rdtsc\n"                                                   \
             "movl %%eax, %0\n"                                          \
             "movl %%edx, %1\n"                                          \
@@ -102,5 +112,5 @@ _rdpmc(struct _tickval *tp, int id)
 }
 #endif
 
-#endif /* __ZERO_IA32_PROF_H__ */
+#endif /* __ZERO_X86_PROF_H__ */
 

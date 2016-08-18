@@ -2,7 +2,6 @@
 #include <stdio.h>
 #include <zero/cdefs.h>
 #include <zero/asm.h>
-#define ZEROMTX 1
 #include <zero/mtx.h>
 #include <zero/priolk.h>
 
@@ -12,7 +11,9 @@
 static THREADLOCAL volatile struct priolkdata *t_priolkptr;
 static volatile struct priolkdata             *priofree;
 #if !defined(PRIOLKNONBLOCK)
-static volatile long                           priolkmtx = MTXINITVAL;
+#if (ZEROFMTX)
+static zerofmtx                                priolkmtx = FMTXINITVAL;
+#endif
 #endif
 
 void
@@ -34,7 +35,7 @@ priolkinit(struct priolkdata *data, unsigned long val)
         data->next = NULL;
     }
 #if !defined(PRIOLKNONBLOCK)
-    mtxlk(&priolkmtx);
+    fmtxlk(&priolkmtx);
 #endif
     if (priofree) {
 #if !defined(PRIOLKNONBLOCK)
@@ -73,21 +74,21 @@ priolkinit(struct priolkdata *data, unsigned long val)
     t_priolkptr->val = prio;
     t_priolkptr->orig = prio;
 #if !defined(PRIOLKNONBLOCK)
-    mtxunlk(&priolkmtx);
+    fmtxunlk(&priolkmtx);
 #endif
 
     return;
 }
 
 void
-priolkfinish(void)
+priolkfin(void)
 {
 #if defined(PRIOLKNONBLOCK)
     volatile struct priolkdata *next;
 #endif
     
 #if !defined(PRIOLKNONBLOCK)
-    mtxlk(&priolkmtx);
+    fmtxlk(&priolkmtx);
 #endif
 #if defined(PRIOLKNONBLOCK)
     do {
@@ -101,7 +102,7 @@ priolkfinish(void)
     priofree = t_priolkptr;
 #endif
 #if !defined(PRIOLKNONBLOCK)
-    mtxunlk(&priolkmtx);
+    fmtxunlk(&priolkmtx);
 #endif
 
     return;

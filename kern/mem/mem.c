@@ -69,7 +69,7 @@ meminitphys(struct mempool *pool, uintptr_t base, size_t nbyte)
     adr += hdrsz;
     pool->base = adr;
     memvirtpool.base = adr;
-#if (__KERNEL__ && (MEMDIAG))
+#if (__KERNEL__ && defined(MEMDIAG) && (MEMDIAG))
     memdiag(memvirtpool);
 #endif
 
@@ -228,13 +228,13 @@ memallocbuf(long how)
 
     loop = how & MEM_WAIT;
     do {
-        mtxlk(&tab->lk);
+        fmtxlk(&tab->lk);
         ret = tab->buflist;
         if (ret) {
             tab->buflist = ret->hdr.next;
             tab->nbuf--;
         }
-        mtxunlk(&tab->lk);
+        fmtxunlk(&tab->lk);
     } while (!ret && (loop));
 
     return ret;
@@ -247,11 +247,11 @@ memfreebuf(struct membuf *buf)
 //    struct membufbkt *tab = &membufbkttab[unit];
     struct membufbkt *tab = &membufbkt;
 
-    mtxlk(&tab->lk);
+    fmtxlk(&tab->lk);
     buf->hdr.next = tab->buflist;
     tab->buflist = buf;
     tab->nbuf++;
-    mtxunlk(&tab->lk);
+    fmtxunlk(&tab->lk);
 
     return;
 }
@@ -273,21 +273,21 @@ memallocblk(long how)
 
     loop = how & MEM_WAIT;
     do {
-        mtxlk(&tab->lk);
+        fmtxlk(&tab->lk);
         ret = tab->buflist;
         if (ret) {
             tab->buflist = blk->next;
             tab->nblk--;
         } else {
-            mtxlk(&tab->lk);
+            fmtxlk(&tab->lk);
             ret = tab->buflist;
             if (ret) {
                 tab->buflist = blk->next;
                 tab->nblk--;
             }
-            mtxunlk(&tab->lk);
+            fmtxunlk(&tab->lk);
         }
-        mtxunlk(&tab->lk);
+        fmtxunlk(&tab->lk);
     } while (!ptr && (loop));
 
     return ret;
@@ -299,11 +299,11 @@ memfreeblk(struct memblk *blk)
     long              unit = k_curunit;
     struct membufbkt *tab = &membufbkttab[unit];
 
-    mtxlk(&tab->lk);
+    fmtxlk(&tab->lk);
     blk->next = tab->buflist;
     tab->buflist = blk;
     tab->nblk++;
-    mtxunlk(&tab->lk);
+    fmtxunlk(&tab->lk);
 }
 
 #endif

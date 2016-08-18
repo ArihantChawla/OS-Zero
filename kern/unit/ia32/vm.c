@@ -281,7 +281,7 @@ vmpagefault(unsigned long pid, uint32_t adr, uint32_t flags, void *frame)
     if (!(adr & ~(PAGEFLTADRMASK | PAGESYSFLAGS))) {
         page = pageallocphys();
         if (page) {
-            mtxlk(&page->lk);
+            fmtxlk(&page->lk);
             page->nref++;
             if (flg & PAGEWIRED) {
                 vmpagestat.nwire++;
@@ -290,12 +290,12 @@ vmpagefault(unsigned long pid, uint32_t adr, uint32_t flags, void *frame)
                 page->nflt++;
                 if (!(adr & PAGEWIRED)) {
                     qid = pagecalcqid(page);
-                    mtxlk(&vmlrutab[qid].lk);
+                    fmtxlk(&vmlrutab[qid].lk);
                     deqpush(page, &vmlrutab[qid].list);
-                    mtxunlk(&vmlrutab[qid].lk);
+                    fmtxunlk(&vmlrutab[qid].lk);
                 }
             }
-            mtxunlk(&page->lk);
+            fmtxunlk(&page->lk);
             *pte = adr | flg | PAGEPRES;
         }
 #if (PAGEDEV)
@@ -303,13 +303,13 @@ vmpagefault(unsigned long pid, uint32_t adr, uint32_t flags, void *frame)
         // pageout();
         page = vmpagein(page);
         if (page) {
-            mtxlk(&page->lk);
+            fmtxlk(&page->lk);
             page->nflt++;
             qid = pagecalcqid(page);
-            mtxlk(&vmlrutab[qid].lk);
+            fmtxlk(&vmlrutab[qid].lk);
             deqpush(page, &vmlrutab[qid].list);
-            mtxunlk(&vmlrutab[qid].lk);
-            mtxunlk(&page->lk);
+            fmtxunlk(&vmlrutab[qid].lk);
+            fmtxunlk(&page->lk);
         }
 #endif
     }
@@ -337,11 +337,11 @@ vmpagein(uint32_t adr)
     struct physpage *page = pagefind(adr);
     void            *data;
 
-    mtxlk(&vmdevlktab[dev], MEMPID);
+    fmtxlk(&vmdevlktab[dev], MEMPID);
     vmseekdev(dev, blk * PAGESIZE);
     page->nflt++;
 //    data = pageread(dev, PAGESIZE);
-    mtxunlk(&vmdevlktab[pagedev], MEMPID);
+    fmtxunlk(&vmdevlktab[pagedev], MEMPID);
 }
 
 void

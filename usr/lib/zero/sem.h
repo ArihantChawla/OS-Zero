@@ -2,12 +2,13 @@
 #define __ZERO_SEM_H__
 
 #include <limits.h>
-#define ZEROPTHREAD 1
 #include <zero/mtx.h>
 
 #define ZEROSEM_MAXVAL ULONG_MAX
 typedef struct sem {
-    zeromtx       lk;
+#if (ZEROFMTX)
+    zerofmtx      lk;
+#endif
     unsigned long val;
 } zerosem;
 

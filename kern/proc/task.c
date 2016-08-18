@@ -18,13 +18,13 @@ taskinitids(void)
     struct taskid *taskid;
     long           id;
 
-    mtxlk(&queue->lk);
+    fmtxlk(&queue->lk);
     for (id = TASKNPREDEF ; id < NTASK ; id++) {
         taskid = &taskidtab[id];
         taskid->id = id;
         deqappend(taskid, &queue);
     }
-    mtxunlk(&queue->lk);
+    fmtxunlk(&queue->lk);
 
     return;
 }
@@ -44,12 +44,12 @@ taskgetid(void)
     struct taskid *taskid;
     long           retval = -1;
 
-    mtxlk(&queue->lk);
+    fmtxlk(&queue->lk);
     taskid = deqpop(&queue);
     if (taskid) {
         retval = taskid->id;
     }
-    mtxunlk(&taskid->lk);
+    fmtxunlk(&taskid->lk);
 
     return retval;
 }
@@ -60,9 +60,9 @@ taskfreeid(long id)
     struct taskid *queue = &taskidqueue;
     struct taskid *taskid = &taskidtab[id];
     
-    mtxlk(&queue->lk);
+    fmtxlk(&queue->lk);
     deqappend(taskid, &queue);
-    mtxunlk(&queue->lk);
+    fmtxunlk(&queue->lk);
 
     return;
 }

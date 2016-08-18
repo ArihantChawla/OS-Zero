@@ -14,7 +14,7 @@ extern "C" {
 #include <sys/time.h>
 
 #if defined(_MSC_VER) || defined(__x86_64__) || defined(__amd64__) || defined(__i386__) || defined(__i486__) || defined(__i586__) || defined(__i686__)
-#include <zero/ia32/prof.h>
+#include <zero/x86/prof.h>
 #elif defined(__arm__)
 #include <zero/arm/prof.h>
 #endif

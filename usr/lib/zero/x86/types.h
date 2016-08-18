@@ -6,7 +6,7 @@
 struct m_farptr {
     uint16_t lim;
     uint32_t adr;
-} PACKED;
+} PACKED();
 #include <zero/nopack.h>
 
 /* FPU registers */

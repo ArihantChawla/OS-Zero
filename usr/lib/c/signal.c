@@ -32,7 +32,9 @@ sigaction(int sig, const struct sigaction *act, struct sigaction *oldact)
 
         return -1;
     }
+
     /* FIXME: finish this function */
+    return -1;
 }
 
 __sighandler_t

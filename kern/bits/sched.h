@@ -14,12 +14,12 @@ extern void schedsetready(struct task *task, long cpu);
 extern void schedsetwait(struct task *task);
 extern void schedsetsleep(struct task *task);
 
-#define schedlkcpuntick(cpu)     (mtxlk(&cpu->lk), (cpu)->ntick)
-#define schedlkcpu(cpu)          (mtxlk(&cpu->lk))
-#define schedunlkcpu(cpu)        (mtxunlk(&cpu->lk))
-#define schedlktaskruntime(task) (mtxlk(&task->lk), (task)->runtime)
-#define schedlktask(task)        (mtxlk(&task->lk))
-#define schedunlktask(task)      (mtxunlk(&task->lk))
+#define schedlkcpuntick(cpu)     (fmtxlk(&cpu->lk), (cpu)->ntick)
+#define schedlkcpu(cpu)          (fmtxlk(&cpu->lk))
+#define schedunlkcpu(cpu)        (fmtxunlk(&cpu->lk))
+#define schedlktaskruntime(task) (fmtxlk(&task->lk), (task)->runtime)
+#define schedlktask(task)        (fmtxlk(&task->lk))
+#define schedunlktask(task)      (fmtxunlk(&task->lk))
 
 #if defined(ZEROSCHED)
 
@@ -169,14 +169,14 @@ schedswapqueues(long cpu)
     void                 *ptr1 = set->cur;
     void                 *ptr2 = set->next;
 
-    mtxlk(&set->lk);
+    fmtxlk(&set->lk);
     set->next = ptr1;
     set->cur = ptr2;
     ptr1 = set->curmap;
     ptr2 = set->nextmap;
     set->nextmap = ptr1;
     set->curmap = ptr2;
-    mtxunlk(&set->lk);
+    fmtxunlk(&set->lk);
 
     return;
 }
@@ -197,13 +197,13 @@ schedfindidlecore(long cpu, long *retcore)
     long        ntz;
     long        mask;
 
-    mtxlk(&unit->lk);
+    fmtxlk(&unit->lk);
     for (ndx = 0 ; ndx < lim ; ndx++) {
         mask = *ptr;
         if (mask) {
             ntz = tzerol(mask);
             clrbit(ptr, ntz);
-            mtxunlk(&unit->lk);
+            fmtxunlk(&unit->lk);
             ndx *= CHAR_BIT * sizeof(long);
             ndx += ntz;
             *retcore = ndx;
@@ -212,16 +212,16 @@ schedfindidlecore(long cpu, long *retcore)
         }
         ptr++;
     }
-    mtxunlk(&unit->lk);
+    fmtxunlk(&unit->lk);
     ptr = map;
     for (cur = 0 ; cur != cpu ; cur++) {
-        mtxlk(&unit->lk);
+        fmtxlk(&unit->lk);
         for (ndx = 0 ; ndx < lim ; ndx++) {
             mask = *ptr;
             if (mask) {
                 ntz = tzerol(mask);
                 clrbit(ptr, ntz);
-                mtxunlk(&unit->lk);
+                fmtxunlk(&unit->lk);
                 unit = &cputab[cur];
                 ndx *= CHAR_BIT * sizeof(long);
                 ndx += ntz;
@@ -231,18 +231,18 @@ schedfindidlecore(long cpu, long *retcore)
             }
             ptr++;
         }
-        mtxunlk(&unit->lk);
+        fmtxunlk(&unit->lk);
     }
     cur++;
     ptr++;
     for ( ; cur < last ; cur++) {
-        mtxlk(&unit->lk);
+        fmtxlk(&unit->lk);
         for (ndx = 0 ; ndx < lim ; ndx++) {
             mask = *ptr;
             if (mask) {
                 ntz = tzerol(mask);
                 clrbit(ptr, ntz);
-                mtxunlk(&unit->lk);
+                fmtxunlk(&unit->lk);
                 unit = &cputab[cur];
                 ndx *= CHAR_BIT * sizeof(long);
                 ndx += ntz;
@@ -252,7 +252,7 @@ schedfindidlecore(long cpu, long *retcore)
             }
             ptr++;
         }
-        mtxunlk(&unit->lk);
+        fmtxunlk(&unit->lk);
     }
 
     return NULL;

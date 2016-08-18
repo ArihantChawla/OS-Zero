@@ -1,3 +1,4 @@
+#include <ctype.h>
 #include <sys/socket.h>
 #include <netinet/in.h>
 #include <zero/cdefs.h>
@@ -24,6 +25,7 @@ inet_ntoa(struct in_addr *adr)
 {
     uint8_t *u8ptr = (unsigned char *)_inaddrstr;
     uint8_t *ptr = (uint8_t *)adr;
+    int      len = 0;
     long     val;
     long     tmp1;
     long     tmp2;
@@ -31,7 +33,6 @@ inet_ntoa(struct in_addr *adr)
     long     tmp4;
     long     tmp5;
     int      ndx;
-    int      len;
 
     for (ndx = 0 ; ndx < 4 ; ndx++) {
         val = ptr[ndx];
@@ -45,6 +46,8 @@ inet_ntoa(struct in_addr *adr)
             len = 3;
         } else if (val >= 10) {
             len = 2;
+        } else {
+            val = 1;
         }
         switch (len) {
             case 3:

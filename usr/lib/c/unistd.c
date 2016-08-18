@@ -7,7 +7,6 @@
 #include <sys/sysinfo.h>
 #include <zero/cdefs.h>
 #include <zero/param.h>
-#define ZEROMTX 1
 #include <zero/mtx.h>
 #include <kern/cpu.h>
 #include <kern/io/buf.h>
@@ -50,7 +49,7 @@ long sysconftab[NSYSCONF]
     TZNAME_MAX                  /* _SC_TZNAME_MAX */
 };
 volatile long sysconfbits;
-zeromtx       sysconflk;
+zerofmtx      sysconflk;
 
 #define _sysconfneedupd(name)                                           \
     ((name) <= _SC_PHYS_PAGES && (name) >= _SC_NPROCESSORS_ONLN)
@@ -89,7 +88,7 @@ sysconfinit(long *tab)
     struct m_cpuinfo  cpuinfo;
     long             *ptr = tab - MINSYSCONF;
 
-    mtxlk(&sysconflk);
+    fmtxlk(&sysconflk);
     if (!(sysconfbits & SYSCONF_CPUPROBE)) {
         /* probe persistent values */
         cpuprobe(&cpuinfo);
@@ -103,13 +102,13 @@ sysconfinit(long *tab)
         sysconfbits |= SYSCONF_CPUPROBE;
     }
     if (sysconfbits & SYSCONF_INIT) {
-        mtxunlk(&sysconflk);
+        fmtxunlk(&sysconflk);
 
         return;
     }
 //    sysconfupd();
     sysconfbits |= SYSCONF_INIT;
-    mtxunlk(&sysconflk);
+    fmtxunlk(&sysconflk);
 
     return;
 }

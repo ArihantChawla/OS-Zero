@@ -37,7 +37,7 @@ dmagetchan(long is16bit)
     long bits;
     long tmp;
 
-    mtxlk(&dmadrv.lk);
+    fmtxlk(&dmadrv.lk);
     bits = dmadrv.chanbits;
     if (is16bit) {
         if ((bits & 0xf0) == 0xf0) {
@@ -56,7 +56,7 @@ dmagetchan(long is16bit)
         bits |= 1 << retval;
         dmadrv.chanbits = bits;
     }
-    mtxunlk(&dmadrv.lk);
+    fmtxunlk(&dmadrv.lk);
 
     return retval;
 }
@@ -73,7 +73,7 @@ dmatakechan(unsigned long chan)
 
         return retval;
     }
-    mtxlk(&dmadrv.lk);
+    fmtxlk(&dmadrv.lk);
     bits = dmadrv.chanbits;
     if (!(bits & (1 << chan))) {
         bits |= 1 << chan;
@@ -82,7 +82,7 @@ dmatakechan(unsigned long chan)
     } else {
         kprintf("%s: DMA channel in use already: %ld\n", __FUNCTION__, chan);
     }
-    mtxunlk(&dmadrv.lk);
+    fmtxunlk(&dmadrv.lk);
 
     return retval;
 }
@@ -96,11 +96,11 @@ dmarelchan(unsigned long chan)
     if (gtepow2(chan, 8)) {
         kprintf("%s: invalid DMA channel: %ld\n", __FUNCTION__, chan);
     }
-    mtxlk(&dmadrv.lk);
+    fmtxlk(&dmadrv.lk);
     bits = dmadrv.chanbits;
     bits &= ~(1 << chan);
     dmadrv.chanbits = bits;
-    mtxunlk(&dmadrv.lk);
+    fmtxunlk(&dmadrv.lk);
 
     return;
 }

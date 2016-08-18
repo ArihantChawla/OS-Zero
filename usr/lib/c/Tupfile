@@ -1,6 +1,6 @@
 include_rules
 
-CFLAGS += -DMTSAFE=1 -D_REENTRANT -DPTHREAD=1 -nostdlib -g -Wall -o -fno-builtin -I. -I.. -I../../..
+CFLAGS += -DMTSAFE=1 -D_REENTRANT -DPTHREAD=1 -fPIC -shared -nostdlib -g -Wall -o -fno-builtin -I. -I.. -I../../..
 LDFLAGS += -fPIC -shared
 CFLAGS_setjmp = -fno-omit-frame-pointer
 CFLAGS_alloca = -fno-omit-frame-pointer

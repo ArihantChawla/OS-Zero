@@ -158,7 +158,7 @@ schedsetdeadline(struct task *task)
     struct taskqueue  *queue;
     void              *ptab[SCHEDNDLKEY - 1] = { NULL, NULL };
 
-    mtxlk(&scheddeadlinetab[key0].lk);
+    fmtxlk(&scheddeadlinetab[key0].lk);
     l0tab = &scheddeadlinetab[key0];
     ptr = l0tab->tab;
     pptr = ptr;
@@ -195,7 +195,7 @@ schedsetdeadline(struct task *task)
         tab = ptab[1];
         tab->nref++;
     }
-    mtxunlk(&scheddeadlinetab[key0].lk);
+    fmtxunlk(&scheddeadlinetab[key0].lk);
     
     return;
 }
@@ -222,7 +222,7 @@ schedsetready(struct task *task, long cpu)
             return;
         } else {
             /* insert onto current queue */
-            mtxlk(&set->lk);
+            fmtxlk(&set->lk);
             qid = schedcalcqueueid(qid);
             map = set->curmap;
             queue = &set->cur[qid];
@@ -234,7 +234,7 @@ schedsetready(struct task *task, long cpu)
                 deqappend(task, queue);
             }
             setbit(map, qid);
-            mtxunlk(&set->lk);
+            fmtxunlk(&set->lk);
 
             return;
         }
@@ -252,7 +252,7 @@ schedsetready(struct task *task, long cpu)
 //            prio = min(task->runprio, prio);
         }
         qid = schedcalcqueueid(prio);
-        mtxlk(&set->lk);
+        fmtxlk(&set->lk);
         if (schedisinteract(score)) {
             /* if interactive, insert onto current queue */
             queue = &set->cur[qid];
@@ -267,7 +267,7 @@ schedsetready(struct task *task, long cpu)
         /* SCHEDIDLE */
         /* insert into idle queue */
         qid = schedcalcqueueid(prio);
-        mtxlk(&set->lk);
+        fmtxlk(&set->lk);
         map = set->idlemap;
         queue = &set->idle[qid];
     }
@@ -276,7 +276,7 @@ schedsetready(struct task *task, long cpu)
     load++;
     setbit(map, qid);
     set->loadmap[qid] = load;
-    mtxunlk(&set->lk);
+    fmtxunlk(&set->lk);
     
     return;
 }

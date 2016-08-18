@@ -52,7 +52,7 @@ memalloc(size_t nb, long flg)
     struct membkt   *bkt = &virtpool->tab[bktid];
     struct memmag   *mag;
 
-    mtxlk(&bkt->lk);
+    fmtxlk(&bkt->lk);
     if (bktid >= MEMSLABSHIFT) {
         ptr = slaballoc(virtpool, sz, flg);
         if (ptr) {
@@ -129,7 +129,7 @@ memalloc(size_t nb, long flg)
     if (!ptr) {
         panic(k_curproc->pid, TRAPNONE, -ENOMEM);
     }
-    mtxunlk(&bkt->lk);
+    fmtxunlk(&bkt->lk);
 
     return ptr;
 }
@@ -174,7 +174,7 @@ kfree(void *ptr)
 
         return;
     }
-    mtxlk(&bkt->lk);
+    fmtxlk(&bkt->lk);
 #if defined(MEMPARANOIA)
     ndx = ((uintptr_t)ptr - mag->base) >> bktid;
 #if ((MEMSLABSHIFT - MEMMINSHIFT) < (LONGSIZELOG2 + 3))
@@ -218,7 +218,7 @@ kfree(void *ptr)
 #if defined(MEMPARANOIA)
     clrbit(bmap, ndx);
 #endif
-    mtxunlk(&bkt->lk);
+    fmtxunlk(&bkt->lk);
 
     return;
 }

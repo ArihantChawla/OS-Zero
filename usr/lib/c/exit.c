@@ -2,7 +2,6 @@
 #include <stdlib.h>
 #include <stdio.h>
 #include <zero/cdefs.h>
-#define ZEROMTX 1
 #include <zero/mtx.h>
 #include <sys/zero/syscall.h>
 
@@ -17,7 +16,7 @@ struct exitcmd {
 };
 
 struct exit {
-    volatile long   lk;
+    zerofmtx        lk;
     size_t          natexit;
     struct exitcmd *atexitq;
     size_t          non_exit;
@@ -31,7 +30,7 @@ atexit(void (*func)(void))
 {
     struct exitcmd *item;
 
-    mtxlk(&g_exit.lk);
+    fmtxlk(&g_exit.lk);
     item = malloc(sizeof(struct exitcmd));
     if (!item) {
         fprintf(stderr, "ATEXIT: failed to allocate item\n");
@@ -42,7 +41,7 @@ atexit(void (*func)(void))
     item->arg = NULL;
     item->next = g_exit.atexitq;
     g_exit.atexitq = item;
-    mtxunlk(&g_exit.lk);
+    fmtxunlk(&g_exit.lk);
 
     return 0;
 }
@@ -52,7 +51,7 @@ on_exit(void (*func)(int, void *), void *arg)
 {
     struct exitcmd *item;
 
-    mtxlk(&g_exit.lk);
+    fmtxlk(&g_exit.lk);
     item = malloc(sizeof(struct exitcmd));
     if (!item) {
         fprintf(stderr, "ON_EXIT: failed to allocate item\n");
@@ -63,7 +62,7 @@ on_exit(void (*func)(int, void *), void *arg)
     item->arg = arg;
     item->next = g_exit.on_exitq;
     g_exit.on_exitq = item;
-    mtxunlk(&g_exit.lk);
+    fmtxunlk(&g_exit.lk);
 
     return 0;
 }
@@ -74,17 +73,17 @@ __on_exit(int status)
     struct exitcmd  *item;
     void           (*func)(int, void *);
 
-    mtxlk(&g_exit.lk);
+    fmtxlk(&g_exit.lk);
     item = g_exit.on_exitq;
     while (item) {
         g_exit.on_exitq = item->next;
-        mtxunlk(&g_exit.lk);
+        fmtxunlk(&g_exit.lk);
         func = item->func;
         func(status, item->arg);
-        mtxlk(&g_exit.lk);
+        fmtxlk(&g_exit.lk);
         item = g_exit.on_exitq;
     }
-    mtxunlk(&g_exit.lk);
+    fmtxunlk(&g_exit.lk);
 }
 
 void
@@ -93,17 +92,17 @@ __atexit(void)
     struct exitcmd  *item;
     void           (*func)(void);
 
-    mtxlk(&g_exit.lk);
+    fmtxlk(&g_exit.lk);
     item = g_exit.atexitq;
     while (item) {
         g_exit.atexitq = item->next;
-        mtxunlk(&g_exit.lk);
+        fmtxunlk(&g_exit.lk);
         func = item->func;
         func();
-        mtxlk(&g_exit.lk);
+        fmtxlk(&g_exit.lk);
         item = g_exit.on_exitq;
     }
-    mtxunlk(&g_exit.lk);
+    fmtxunlk(&g_exit.lk);
 }
 
 NORETURN

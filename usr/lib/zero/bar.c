@@ -6,21 +6,27 @@
 #include <zero/cond.h>
 #include <zero/bar.h>
 
+#if (ZEROFMTX)
+#define __barinitlk(lp) (*(lp) = FMTXINITVAL)
+#define __barlk(lp)     fmtxlk(lp)
+#define __barunlk(lp)   fmtxunlk(lp)
+#endif
+
 void
 barfree(zerobar *bar)
 {
-    mtxlk(&bar->lk);
+    __barlk(&bar->lk);
     while (bar->num > BARFLAGBIT) {
         condwait(&bar->cond, &bar->lk);
     }
-    mtxunlk(&bar->lk);
+    __barunlk(&bar->lk);
 //    condfree(&bar->cond);
 }
 
 void
 barinit(zerobar *bar, unsigned long cnt)
 {
-    mtxinit(&bar->lk);
+    __barinitlk(&bar->lk);
     condinit(&bar->cond);
     bar->cnt = cnt;
     bar->num = BARFLAGBIT;
@@ -29,7 +35,7 @@ barinit(zerobar *bar, unsigned long cnt)
 long
 barwait(zerobar *bar)
 {
-    mtxlk(&bar->lk);
+    __barlk(&bar->lk);
     while (bar->num > BARFLAGBIT) {
         condwait(&bar->cond, &bar->lk);
     }
@@ -40,7 +46,7 @@ barwait(zerobar *bar)
     if (bar->num == bar->cnt) {
         bar->num += BARFLAGBIT - 1;
         condbroadcast(&bar->cond);
-        mtxunlk(&bar->lk);
+        __barunlk(&bar->lk);
 
         return BARSERIALTHR;
     } else {
@@ -51,7 +57,7 @@ barwait(zerobar *bar)
         if (bar->num == BARFLAGBIT) {
             condbroadcast(&bar->cond);
         }
-        mtxunlk(&bar->lk);
+        __barunlk(&bar->lk);
 
         return 0;
     }

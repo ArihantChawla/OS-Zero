@@ -1,6 +1,9 @@
 #ifndef __ZERO_RING_H__
 #define __ZERO_RING_H__
 
+/* FIXME: do this! :) */
+#define RINGATOMIC 0
+
 /* RING_MALLOC  - function used to allocate data buffer */
 /* RING_FREE    - function used to free buffers */
 /* RING_MEMCPY  - function used to copy data */
@@ -21,20 +24,27 @@
 #endif
 #include <zero/cdefs.h>
 #include <zero/param.h>
-#define ZEROMTX 1
+#if (!RINGATOMIC)
 #include <zero/mtx.h>
+#endif
 #include <zero/trix.h>
-#if !defined(__KERNEL__)
 #if !defined(RING_MALLOC) || !defined(RING_FREE)
+#undef RING_MALLOC
+#undef RING_FREE
+#if defined(__KERNEL__)
+#include <kern/malloc.h>
+#define RING_MALLOC(sz)            kmalloc(sz)
+#define RING_FREE(ptr)             kfree(ptr)
+#else
 #include <stdlib.h>
+#define RING_MALLOC(sz)            malloc(sz)
+#define RING_FREE(ptr)             free(ptr)
+#endif
 #endif
 #if !defined(RING_MEMCPY)
 #include <string.h>
+#define RING_MEMCPY(dest, src, nb) memcpy(dest, src, nb)
 #endif
-#if !defined(RING_MALLOC)
-#define RING_MALLOC(sz)           malloc(sz)
-#endif
-#endif /* !defined(__KERNEL__) */
 
 #if (RINGSHAREBUF) && !defined(__KERNEL__)
 #if defined(_ISOC11_SOURCE) && (_ISOC11_SOURCE)
@@ -67,7 +77,7 @@ RING_VALLOC(size_t n)
 /* flg-member bits */
 #define RINGBUF_INIT (1 << 0)
 struct ringbuf {
-    zeromtx    lk;
+    zerofmtx   lk;
     long       flg;
     long       nitem;
     RING_ITEM *base;
@@ -93,9 +103,9 @@ ringinit(void *ptr, void *base, long nitem)
     struct ringbuf *buf = ptr; 
     long            retval = 0;
 
-    mtxlk(&buf->lk);
+    fmtxlk(&buf->lk);
     if (buf->flg & RINGBUF_INIT) {
-        mtxunlk(&buf->lk);
+        fmtxunlk(&buf->lk);
 
         return 1;
     }
@@ -121,7 +131,7 @@ ringinit(void *ptr, void *base, long nitem)
         buf->inptr = base;
         buf->outptr = base;
     }
-    mtxunlk(&buf->lk);
+    fmtxunlk(&buf->lk);
 
     return retval;
 }
@@ -149,14 +159,14 @@ ringget(struct ringbuf *buf)
 {
     RING_ITEM item = RING_INVAL;
 
-    mtxlk(&buf->lk);
+    fmtxlk(&buf->lk);
     if (buf->outptr == buf->lim) {
         buf->outptr = buf->base;
     }
     if (buf->outptr != buf->inptr) {
         item = *buf->outptr++;
     }
-    mtxunlk(&buf->lk);
+    fmtxunlk(&buf->lk);
 
     return item;
 }
@@ -167,7 +177,7 @@ ringput(struct ringbuf *buf, RING_ITEM val)
 {
     RING_ITEM item = RING_INVAL;
 
-    mtxlk(&buf->lk);
+    fmtxlk(&buf->lk);
     if (buf->inptr == buf->lim) {
         buf->inptr = buf->base;
     }
@@ -179,7 +189,7 @@ ringput(struct ringbuf *buf, RING_ITEM val)
         item = val;
         buf->flg |= RINGBUF_INIT;
     }
-    mtxunlk(&buf->lk);
+    fmtxunlk(&buf->lk);
 
     return item;
 }
@@ -191,7 +201,7 @@ ringgetmany(struct ringbuf *buf, RING_ITEM *dest, long len)
     long nitem;
     long ret;
 
-    mtxlk(&buf->lk);
+    fmtxlk(&buf->lk);
     if (buf->outptr > buf->inptr) {
         nitem = buf->lim - buf->outptr;
     } else {
@@ -214,7 +224,7 @@ ringgetmany(struct ringbuf *buf, RING_ITEM *dest, long len)
             *dest++ = *buf->outptr++;
         }
     }
-    mtxunlk(&buf->lk);
+    fmtxunlk(&buf->lk);
 
     return ret;
 }
@@ -226,7 +236,7 @@ ringputmany(struct ringbuf *buf, RING_ITEM *src, long len)
     long nitem;
     long ret;
 
-    mtxlk(&buf->lk);
+    fmtxlk(&buf->lk);
     if (buf->inptr < buf->outptr) {
         nitem = buf->outptr - buf->inptr;
     } else {
@@ -249,7 +259,7 @@ ringputmany(struct ringbuf *buf, RING_ITEM *src, long len)
             *buf->inptr++ = *src++;
         }
     }
-    mtxunlk(&buf->lk);
+    fmtxunlk(&buf->lk);
 
     return ret;
 }
@@ -264,7 +274,7 @@ ringgetmany32(struct ringbuf *buf, int32_t *dest, long len)
     long     ret;
     long     ofs;
 
-    mtxlk(&buf->lk);
+    fmtxlk(&buf->lk);
     i8ptr = (int8_t *)buf->outptr;
     ofs = sizeof(int32_t) - ((uintptr_t)i8ptr & (sizeof(int32_t) - 1));
     i8ptr += ofs;
@@ -292,7 +302,7 @@ ringgetmany32(struct ringbuf *buf, int32_t *dest, long len)
         }
     }
     buf->outptr = (RING_ITEM *)ptr;
-    mtxunlk(&buf->lk);
+    fmtxunlk(&buf->lk);
 
     return ret;
 }
@@ -307,7 +317,7 @@ ringputmany32(struct ringbuf *buf, int32_t *src, long len)
     long     ret;
     long     ofs;
 
-    mtxlk(&buf->lk);
+    fmtxlk(&buf->lk);
     i8ptr = (int8_t *)buf->inptr;
     ofs = sizeof(int32_t) - ((uintptr_t)i8ptr & (sizeof(int32_t) - 1));
     ptr = (int32_t *)(i8ptr + ofs);
@@ -339,7 +349,7 @@ ringputmany32(struct ringbuf *buf, int32_t *src, long len)
         }
     }
     buf->inptr = (RING_ITEM *)ptr;
-    mtxunlk(&buf->lk);
+    fmtxunlk(&buf->lk);
 
     return ret;
 }
@@ -355,7 +365,7 @@ ringresize(struct ringbuf *buf, long nitem)
     long       nin;
     long       nout;
 
-    mtxlk(&buf->lk);
+    fmtxlk(&buf->lk);
     if (nitem > buf->nitem) {
         nin = (int8_t *)buf->inptr - (int8_t *)buf->base;
         nout = (int8_t *)buf->outptr - (int8_t *)buf->base;
@@ -376,12 +386,12 @@ ringresize(struct ringbuf *buf, long nitem)
     } else {
         ptr = buf->base;
     }
-    mtxunlk(&buf->lk);
+    fmtxunlk(&buf->lk);
 
     return ptr;
 }
 
-#endif
+#endif /* RING_MALLOC */
 
 #endif /* __ZERO_RING_H__ */
 

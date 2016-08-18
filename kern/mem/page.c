@@ -7,6 +7,7 @@
 #include <zero/cdefs.h>
 #include <zero/param.h>
 #include <zero/trix.h>
+#include <zero/mtx.h>
 #include <kern/util.h>
 #include <kern/malloc.h>
 #include <kern/time.h>
@@ -91,9 +92,9 @@ pageinitphys(uintptr_t base, size_t nbphys)
 {
     unsigned long size;
     
-    mtxlk(&vmphyslk);
+    fmtxlk(&vmphyslk);
     size = pageinitphyszone(base, &vmphysqueue, nbphys);
-    mtxunlk(&vmphyslk);
+    fmtxunlk(&vmphyslk);
 
     return size;
 }
@@ -125,13 +126,13 @@ pageallocphys(void)
     long              qid;
     long              q;
 
-    mtxlk(&vmphyslk);
+    fmtxlk(&vmphyslk);
     page = deqpop(&vmphysqueue);
-    mtxunlk(&vmphyslk);
+    fmtxunlk(&vmphyslk);
     if (!page) {
         do {
             for (q = 0 ; q < LONGSIZE * CHAR_BIT ; q++) {
-                mtxlk(&vmlrutab[q].lk);
+                fmtxlk(&vmlrutab[q].lk);
                 queue = &vmlrutab[q].list;
                 page = deqgetlast(queue);
                 if (page) {
@@ -139,17 +140,17 @@ pageallocphys(void)
                     page->nflt++;
                     qid = pagecalcqid(page);
                     if (qid != q) {
-                        mtxlk(&vmlrutab[q].lk);
+                        fmtxlk(&vmlrutab[q].lk);
                     }
                     queue = &vmlrutab[qid].list;
                     deqpush(page, queue);
                     if (qid != q) {
-                        mtxunlk(&vmlrutab[qid].lk);
+                        fmtxunlk(&vmlrutab[qid].lk);
                     }
                     
                     break;
                 }
-                mtxunlk(&vmlrutab[q].lk);
+                fmtxunlk(&vmlrutab[q].lk);
             }
             if (found) {
                 
@@ -168,16 +169,16 @@ pagefreephys(void *adr)
     struct physpage *page;
 
     /* free physical page */
-    mtxlk(&vmphyslk);
+    fmtxlk(&vmphyslk);
     id = vmpagenum(adr);
     page = &vmphystab[id];
-    mtxlk(&page->lk);
+    fmtxlk(&page->lk);
     if (!--page->nref) {
         vmflushtlb(adr);
         deqpush(page, &vmphysqueue);
     }
-    mtxunlk(&page->lk);
-    mtxunlk(&vmphyslk);
+    fmtxunlk(&page->lk);
+    fmtxunlk(&vmphyslk);
 
     return;
 }

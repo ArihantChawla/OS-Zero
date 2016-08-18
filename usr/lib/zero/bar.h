@@ -1,6 +1,8 @@
 #ifndef __ZERO_BAR_H__
 #define __ZERO_BAR_H__
 
+#define ZEROFMTX 1
+
 #include <stdint.h>
 #include <zero/param.h>
 #include <zero/mtx.h>
@@ -14,15 +16,21 @@
 #define BARSERIALTHR (-1L)
 
 typedef struct {
+#if (ZEROFMTX)
+    volatile long lk;
+#else
     zeromtx       lk;
+#endif
     unsigned long num;
     unsigned long cnt;
     zerocond      cond;
 } zerobar;
 
 typedef struct {
+#if (ZEROFMTX)
     volatile int                    lk;
     volatile int                    nref;
+#endif
     long                            num;
     union {
         struct {

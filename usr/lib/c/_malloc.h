@@ -36,7 +36,6 @@
 #define MALLOCSLABTAB     0
 
 #define PTHREAD           1
-#define ZEROMTX           1
 
 #if !defined(MALLOCDEBUG)
 #define MALLOCDEBUG       0
@@ -77,7 +76,7 @@
 #define MALLOCBUFMAG      1 // buffer mapped slabs to global pool
 
 /* use zero malloc on a GNU system such as a Linux distribution */
-#define GNUMALLOC         1
+#define GNUMALLOC         0
 
 /* HAZARD: modifying anything below might break anything and everything BAD */
 
@@ -181,7 +180,7 @@
         }                                                               \
     } while (0)
 #else /* !MALLOCVALGRIND */
-#define VALGRINMKPOOL(adr, z)
+#define VALGRINDMKPOOL(adr, z)
 #define VALGRINDMARKPOOL(adr, sz)
 #define VALGRINDRMPOOL(adr)
 #define VALGRINDMKSUPER(adr)
@@ -191,9 +190,7 @@
 #define VALGRINDFREE(adr)
 #endif
 
-#if (ZEROMTX)
 #include <zero/mtx.h>
-#endif
 #if defined (MALLOCPRIOLK) && (MALLOCPRIOLK)
 #include <zero/priolk.h>
 #define LOCK struct priolk
@@ -208,27 +205,27 @@
 #define __malloctrylk(mp)     tkttrylk(mp)
 #define __malloclk(mp)        tktlkspin(mp)
 #define __mallocunlk(mp)      tktunlk(mp)
-#elif defined(ZEROMTX) && (ZEROMTX)
-#define LOCK volatile long
+#elif defined(ZEROFMTX)
+#define LOCK zerofmtx
 #include <zero/mtx.h>
 #include <zero/spin.h>
 #if defined(DEBUGMTX) && (DEBUGMTX)
-#define __mallocinitlk(mp)    mtxinit(mp)
-#define __malloctrylk(mp)   mtxtrylk(mp)
-#define __malloclk(mp)      (fprintf(stderr, "%p\tLK: %d\n", mp, __LINE__), \
-                               mtxlk(mp))
-#define __mallocunlk(mp)    (fprintf(stderr, "%p\tUNLK: %d\n", mp, __LINE__), \
-                               mtxunlk(mp))
+#define __mallocinitlk(mp)    fmtxinit(mp)
+#define __malloctrylk(mp)     fmtxtrylk(mp)
+#define __malloclk(mp)       (fprintf(stderr, "%p\tLK: %d\n", mp, __LINE__), \
+                              fmtxlk(mp))
+#define __mallocunlk(mp)     (fprintf(stderr, "%p\tUNLK: %d\n", mp, __LINE__), \
+                              fmtxunlk(mp))
 #define __mallocinitspin(mp)  spininit(mp)
-#define __malloclkspin(mp)    (fprintf(stderr, "LK: %d\n", __LINE__),   \
-                               spinlk(mp))
-#define __mallocunlkspin(mp)  (fprintf(stderr, "UNLK: %d\n", __LINE__), \
-                               spinunlk(mp))
+#define __malloclkspin(mp)   (fprintf(stderr, "LK: %d\n", __LINE__),   \
+                              spinlk(mp))
+#define __mallocunlkspin(mp) (fprintf(stderr, "UNLK: %d\n", __LINE__), \
+                              spinunlk(mp))
 #else
-#define __mallocinitlk(mp)   mtxinit(mp)
-#define __malloctrylk(mp)  mtxtrylk(mp)
-#define __malloclk(mp)     mtxlk(mp)
-#define __mallocunlk(mp)   mtxunlk(mp)
+#define __mallocinitlk(mp)    fmtxinit(mp)
+#define __malloctrylk(mp)     fmtxtrylk(mp)
+#define __malloclk(mp)        fmtxlk(mp)
+#define __mallocunlk(mp)      fmtxunlk(mp)
 #define __mallocinitspin(mp)  spininit(mp)
 #define __malloctrylkspin(mp) spintrylk(mp)
 #define __malloclkspin(mp)    spinlk(mp)
@@ -237,9 +234,9 @@
 #elif (PTHREAD)
 #include <pthread.h>
 #define LOCK pthread_mutex_t
-#define __mallocinitlk(mp) pthread_mutex_init(mp, NULL)
-#define __malloclk(mp)   pthread_mutex_lock(mp)
-#define __mallocunlk(mp) pthread_mutex_unlock(mp)
+#define __mallocinitlk(mp)    pthread_mutex_init(mp, NULL)
+#define __malloclk(mp)        pthread_mutex_lock(mp)
+#define __mallocunlk(mp)      pthread_mutex_unlock(mp)
 #endif
 
 #if (MALLOCPTRNDX)
@@ -879,7 +876,7 @@ struct malloc {
     volatile long            heaplk;    // lock for sbrk()
 #endif
 #if (MALLOCPRIOLK)
-    volatile long            priolk;
+//    volatile long            priolk;
     volatile unsigned long   prioval;
 #endif
     volatile long            flg;       // allocator flags

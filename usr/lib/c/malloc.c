@@ -626,12 +626,8 @@ priogetval(void)
 {
     unsigned long val;
 
-    mtxlk(&g_malloc.priolk);
     val = g_malloc.prioval;
-    val++;
-    val &= 1UL << (sizeof(long) * CHAR_BIT  - 1);
-    g_malloc.prioval = val;
-    mtxunlk(&g_malloc.priolk);
+    g_malloc.prioval = (++val) & (sizeof(long) * CHAR_BIT - 1);
 
     return val;
 }
@@ -1875,6 +1871,11 @@ mallinit(void)
 #endif
     ndx = MALLOCNBKT;
     while (ndx--) {
+#if (MALLOCLFQ)
+        lfqinitqueue(&g_malloc.hdrbuf[ndx]);
+        lfqinitqueue(&g_malloc.freebuf[ndx]);
+        lfqinitqueue(&g_malloc.magbuf[ndx]);
+#endif
 #if (!MALLOCTKTLK)
 #if (MALLOCSPINLOCKS)
         __mallocinitspin(&g_malloc.hdrbuf[ndx].lk);

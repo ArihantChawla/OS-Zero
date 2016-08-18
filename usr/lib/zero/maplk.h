@@ -1,19 +1,11 @@
 #ifndef __ZERO_MAPLK_H__
 #define __ZERO_MAPLK_H__
 
-#include <stdlib.h>
 #include <zero/asm.h>
-#include <zero/mtx.h>
-#include <zero/trix.h>
-#if defined(__KERNEL__)
 #include <limits.h>
 #include <zero/param.h>
-#endif
-
-#define ZEROMAPLKINIT { ZEROMTXINITVAL, 0, NULL }
 
 typedef struct {
-    zeromtx        lk;
     unsigned long  nbit;
     volatile long *bits;
 } zeromaplk;
@@ -25,13 +17,10 @@ maplktrybit(zeromaplk *maplk, long ndx)
 {
     long word = ndx >> LONGSIZELOG2;
     long id = word & (LONGSIZE * CHAR_BIT - 1);
-    long val = 0L;
-    long bit = 1L << id;
+    long val;
     long ret;
 
-    mtxlk(&maplk->lk);
-    val = m_cmpsetbit(&maplk->bits[word], bit);
-    mtxunlk(&maplk->lk);
+    val = m_cmpsetbit(&maplk->bits[word], id);
     ret = !val;
 
     return ret;
@@ -42,13 +31,10 @@ maplkbit(zeromaplk *maplk, long ndx)
 {
     long word = ndx >> LONGSIZELOG2;
     long id = word & (LONGSIZE * CHAR_BIT - 1);
-    long val = 0L;
-    long bit = 1L << id;
+    long val;
 
     do {
-        mtxlk(&maplk->lk);
-        val = m_cmpsetbit(&maplk->bits[word], bit);
-        mtxunlk(&maplk->lk);
+        val = m_cmpsetbit(&maplk->bits[word], id);
     } while (val);
 
     return;
@@ -59,15 +45,8 @@ mapunlkbit(zeromaplk *maplk, long ndx)
 {
     long word = ndx >> LONGSIZELOG2;
     long id = word & (LONGSIZE * CHAR_BIT - 1);
-    long bit = 1L << id;
-    long mask = ~bit;
-    long tmp;
 
-    mtxlk(&maplk->lk);
-    tmp = maplk->bits[word];
-    tmp &= mask;
-    maplk->bits[word] = tmp;
-    mtxunlk(&maplk->lk);
+    m_cmpclrbit(&maplk->bits[word], id);
 
     return;
 }

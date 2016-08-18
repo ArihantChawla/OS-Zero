@@ -18,8 +18,12 @@
                  (volatile long *)src)
 
 /* tp = { 0, adr } */
+#if 0
 #define tagptrinitadr(adr, tp)                                          \
     ((tp) = _mm_cvtsi64_si128((long long)adr), (tp) = _mm_slli_si128((tp), 64))
+#endif
+#define tagptrinitadr(adr, tp)                                          \
+    ((tp) = _mm_slli_si128(_mm_cvtsi64_si128(adr), 64))
 /* dest.tag = src.tag */
 #define tagptrgettag(tp)                                                \
     _mm_cvtsi128_si64(tp)

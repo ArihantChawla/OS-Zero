@@ -1,7 +1,9 @@
 #ifndef __ZERO_MTX_H__
 #define __ZERO_MTX_H__
 
-#define ZEROMTXYIELD 0
+#define ZEROFMTXYIELD 0
+#define ZEROMTX       0
+#define ZEROFMTX      1
 
 #include <stddef.h>
 #include <stdint.h>
@@ -31,52 +33,52 @@ extern int pthread_yield(void);
 #include <sched.h>
 #endif
 
-#if (defined(__KERNEL__) || defined(ZEROMTX) || !defined(ZEROPTHREAD))
-typedef volatile long   zeromtx;
+#if (defined(__KERNEL__) || defined(ZEROFMTX))
+typedef volatile long   zerofmtx;
 #elif defined(PTHREAD) && defined(ZEROPTHREAD)
-typedef pthread_mutex_t zeromtx;
+typedef pthread_mutex_t zerofmtx;
 #endif
 
-#if defined(ZEROMTX) || defined(ZEROPTHREAD)
+#if (defined(__KERNEL__) || defined(ZEROFMTX))
 
 //#include <zero/thr.h>
 
-#define MTXINITVAL 0
-#define MTXLKVAL   1
-#if defined(ZERONEWMTX)
-#define MTXCONTVAL 2
+#define FMTXINITVAL 0
+#define FMTXLKVAL   1
+#if defined(ZERONEWFMTX)
+#define FMTXCONTVAL 2
 #endif
 
-#define mtxinit(lp) (*(lp) = MTXINITVAL)
-#define mtxfree(lp) /* no-op */
+#define fmtxinit(lp) (*(lp) = FMTXINITVAL)
+#define fmtxfree(lp) /* no-op */
 
 /*
- * try to acquire mutex lock
+ * try to acquire fast mutex lock
  * - return non-zero on success, zero if already locked
  */
 static INLINE long
-mtxtrylk(volatile long *lp)
+fmtxtrylk(volatile long *lp)
 {
     volatile long res;
 
-    res = m_cmpswap(lp, MTXINITVAL, MTXLKVAL);
+    res = m_cmpswap(lp, FMTXINITVAL, FMTXLKVAL);
 
     return res;
 }
 
 /*
- * acquire mutex lock
+ * acquire fast mutex lock
  * - allow other threads to run when blocking
  */
 static INLINE void
-mtxlk(volatile long *lp)
+fmtxlk(volatile long *lp)
 {
     volatile long res;
     
     do {
-        res = m_cmpswap(lp, MTXINITVAL, MTXLKVAL);
+        res = m_cmpswap(lp, FMTXINITVAL, FMTXLKVAL);
         if (!res) {
-#if (ZEROMTXYIELD) || defined(__KERNEL__)
+#if (ZEROFMTXYIELD) || defined(__KERNEL__)
             thryield();
 #else
             m_waitint();
@@ -88,32 +90,43 @@ mtxlk(volatile long *lp)
 }
 
 /*
- * unlock mutex
+ * unlock fast mutex
  * - must use full memory barrier to guarantee proper write-ordering
  */
 static INLINE void
-mtxunlk(volatile long *lp)
+fmtxunlk(volatile long *lp)
 {
     m_membar();
-    *lp = MTXINITVAL;
+    *lp = FMTXINITVAL;
 
     return;
 }
 
-#define zerotrylkmtx(mp) mtxtrylk(mp)
-#define zerolkmtx(mp)    mtxlk(mp)
-#define zerounlkmtx(mp)  mtxunlk(mp)
+#define zerotrylkfmtx(mp) fmtxtrylk(mp)
+#define zerolkfmtx(mp)    fmtxlk(mp)
+#define zerounlkfmtx(mp)  fmtxunlk(mp)
 
-#elif defined(PTHREAD) && !defined(ZEROPTHREAD)
+#endif /* ZEROFMTX */
+
+#if defined(PTHREAD) && !defined(ZEROPTHREAD)
 
 #define MTXINITVAL PTHREAD_MUTEX_INITIALIZER
-typedef volatile long    zeromtx;
 
 #define zerotrylkmtx(mp) pthread_mutex_trylock(mp)
 #define zerolkmtx(mp)    pthread_mutex_lock(mp)
 #define zerounlkmtx(mp)  pthread_mutex_unlock(mp)
 
-#endif
+#elif defined(ZEROPTHREAD)
+
+#define PTHREAD_MUTEX_INITIALIZER MTXINITVAL
+
+#define pthread_mutex_init(mp, atr) mtxinit(mp, atr)
+#define pthread_mutex_destroy(mp)   mtxfree(mp)
+#define pthread_mutex_trylock(mp)   mtxtrylk(mp)
+#define pthread_mutex_lock(mp)      mtxlk(mp)
+#define pthread_mutex_unlock(mp)    mtxunlk(mp)
+
+#elif defined(ZEROMTX)
 
 /* initializer for non-dynamic attributes */
 #define ZEROMTXATR_DEFVAL     { 0L }
@@ -130,29 +143,16 @@ typedef struct zeromtxatr {
 } zeromtxatr;
 
 /* initializer for non-dynamic mutexes */
-#define ZEROMTX_INITVAL { MTXINITVAL, ZEROMTXFREE, 0, 0, ZEROMTXATRDEFVAL }
+#define ZEROMTX_INITVAL { ZEROMTXFREE, 0, 0, ZEROMTXATRDEFVAL }
 /* thr for unlocked mutexes */
 #define ZEROMTX_FREE    0
-typedef struct zeromtxrec {
-    volatile long lk;
+typedef struct zeromtx {
     volatile long val;  // owner for recursive mutexes, 0 if unlocked
     volatile long cnt;  // access counter
     volatile long rec;  // recursion depth
     zeromtxatr    atr;
-    uint8_t       _pad[CLSIZE - 4 * sizeof(long) - sizeof(zeromtxatr)];
-} zeromtxrec;
-
-#if 0 && !defined(__KERNEL__) && defined(PTHREAD) && defined(ZEROPTHREAD)
-
-#include <stddef.h>
-
-#define MTXINITVAL PTHREAD_MUTEX_INITIALIZER
-
-#define mtxinit(mp)  pthread_mutex_init(mp, NULL)
-#define mtxfree(mp)  pthread_mutex_destroy(mp)
-#define mtxtrylk(mp) pthread_mutex_trylock(mp)
-#define mtxlk(mp)    pthread_mutex_lock(mp)
-#define mtxunlk(mp)  pthread_mutex_unlock(mp)
+    uint8_t       _pad[CLSIZE - 3 * sizeof(long) - sizeof(zeromtxatr)];
+} zeromtx;
 
 #endif
 

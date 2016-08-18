@@ -34,7 +34,7 @@ schedsetwait(struct task *task)
     key1 = taskwaitkey1(wtchan);
     key2 = taskwaitkey2(wtchan);
     key3 = taskwaitkey3(wtchan);
-    mtxlk(&taskwaittab[key0].lk);
+    fmtxlk(&taskwaittab[key0].lk);
     l0tab = &taskwaittab[key0];
     ptr = l0tab->tab;
     pptr = ptr;
@@ -88,7 +88,7 @@ schedsetwait(struct task *task)
         tab = ptab[2];
         tab->nref++;
     }
-    mtxunlk(&taskwaittab[key0].lk);
+    fmtxunlk(&taskwaittab[key0].lk);
     
     return;
 }
@@ -113,7 +113,7 @@ schedwakeup(uintptr_t wtchan)
     void              *ptab[TASKNWAITKEY - 1] = { NULL, NULL, NULL };
     void             **pptab[TASKNWAITKEY - 1] = { NULL, NULL, NULL };
 
-    mtxlk(&taskwaittab[key0].lk);
+    fmtxlk(&taskwaittab[key0].lk);
     l0tab = &taskwaittab[key0];
     if (l0tab) {
         ptab[0] = l0tab;
@@ -130,7 +130,7 @@ schedwakeup(uintptr_t wtchan)
                 if (queue) {
                     task1 = queue->list;
                     while (task1) {
-                        mtxlk(&task1->lk);
+                        fmtxlk(&task1->lk);
                         if (task1->next) {
                             task1->next->prev = NULL;
                         }
@@ -167,6 +167,8 @@ schedwakeup(uintptr_t wtchan)
             }
         }
     }
-    mtxunlk(&taskwaittab[key0].lk);
+    fmtxunlk(&taskwaittab[key0].lk);
+
+    return;
 }
 
