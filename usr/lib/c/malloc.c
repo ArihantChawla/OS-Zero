@@ -2097,7 +2097,7 @@ _malloc(size_t size,
                 mag->cur = 1;
             } else {
 #if (MALLOCATOMIC)
-                id = m_fetchadd(mag->cur, 1);
+                id = m_fetchadd(&mag->cur, 1);
 #else
                 id = mag->cur++;
 #endif
@@ -2137,7 +2137,7 @@ _malloc(size_t size,
                 mag->cur = 1;
             } else {
 #if (MALLOCATOMIC)
-                id = m_fetchadd(mag->cur, 1);
+                id = m_fetchadd(&mag->cur, 1);
 #else
                 id = mag->cur++;
 #endif
@@ -2361,7 +2361,7 @@ _free(void *ptr)
             mag->ptr = adr;
         } else {
 #if (MALLOCATOMIC)
-            id = m_fetchadd(mag->cur, -1);
+            id = m_fetchadd(&mag->cur, -1);
             id--;
 #else
             id = --mag->cur;

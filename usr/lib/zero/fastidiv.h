@@ -12,10 +12,14 @@
 #include <stdlib.h>
 #endif
 
-#if (WORDSIZE == 8)
-#define FASTU64DIV32SHIFTMASK 0x3f
-#define FASTU64DIV32ADDBIT    0x40
-#define FASTU64DIV32SHIFTBIT  0x80
+#if (LONGSIZE == 8)
+#define FASTU64DIV32SHIFTMASK 0x3fUL
+#define FASTU64DIV32ADDBIT    0x40UL
+#define FASTU64DIV32SHIFTBIT  0x80UL
+#elif (LONGLONGSIZE == 8)
+#define FASTU64DIV32SHIFTMASK 0x3fULL
+#define FASTU64DIV32ADDBIT    0x40ULL
+#define FASTU64DIV32SHIFTBIT  0x80ULL
 #else
 #warning fastu64div32() not supported by your system
 #endif
@@ -36,7 +40,7 @@ struct divu64 {
     uint64_t info;
 };
 
-#if (WORDSIZE == 8)
+#if (LONGSIZE == 8 || LONGLONGSIZE == 8)
 void fastu64div32gentab(struct divu64 *duptr, uint64_t lim32);
 #endif
 void fastu32div16gentab(struct divu32 *duptr, uint32_t lim16);

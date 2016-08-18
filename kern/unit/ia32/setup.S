@@ -35,7 +35,7 @@ gdtinit:
 	movw	%cx, %ds
 	movw	%cx, %es
 	movw	%cx, %fs
-//	movw	%cx, %ss
+	movw	%cx, %ss
 	movw	%dx, %gs
 	ljmp	$TEXTSEL, $_gdtret
 _gdtret:

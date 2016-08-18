@@ -1,12 +1,13 @@
 include_rules
 
-CFLAGS += -DMTSAFE=1 -D_REENTRANT -nostdinc -nostdlib -g -Wall -o -fno-builtin -I. -I.. -pthread
+CFLAGS += -DMTSAFE=1 -D_REENTRANT -nostdlib -g -Wall -o -fno-builtin -I. -I.. -I../../..
 LDFLAGS += -fPIC -shared
 CFLAGS_setjmp = -fno-omit-frame-pointer
 CFLAGS_alloca = -fno-omit-frame-pointer
 
 ifeq (@(TUP_ARCH),x86_64)
 ALLOCA = x86-64/alloca.S
+CFLAGS += -msse
 endif
 ifeq (@(TUP_ARCH),i386)
 ALLOCA = ia32/alloca.S

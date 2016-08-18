@@ -7,7 +7,7 @@
 
 #if ((defined(__i386__) || defined(__i486__)                            \
       || defined(__i586__) || defined(__i686__))                        \
-     && !defined(__x86_64__) && !defined(__amd64__))
+     && (!defined(__x86_64__) && !defined(__amd64__) && !defined(SSE)))
 
 #include <zero/ia32/tagptr.h>
 
