@@ -8,7 +8,7 @@
 /* flg arguments for memalloc() */
 #define MEM_ZERO        (1 << 0)        // initiliaze memory to all zero-bits
 #define MEM_NODUMP      (1 << 1)        // > PAGESIZE allocs left out of dumps
-#define MEM_WAIT        (1 << 3)        // wait for allocation to succeed
+#define MEM_WAIT        (1 << 2)        // wait for allocation to succeed
 #define MEM_USE_RESERVE (1 << 31)       // use reserved memory with MEM_NOWAIT
 
 #include <zero/param.h>
@@ -21,7 +21,9 @@
 #define  kcvalloc(nb)        memalloc(PAGESIZE, MEMZERO)
 #define  kcvwalloc(nb)       memalloc(PAGESIZE, MEMZERO | MEMWIRE)
 #define  kwtmalloc(nb)       memwtalloc(nb, 0, 0)
+#define  kwtwalloc(nb)       memwtalloc(nb, MEMWIRE, 0)
 #define  kwtsmalloc(nb, cnt) memwtalloc(nb, 0, cnt)
+#define  kwtswalloc(nb, cnt) memwtalloc(nb, MEMWIRE, cnt)
 void    *memalloc(size_t nb, long flg);
 void    *memwtalloc(size_t nb, long flg, long spin);
 void     kfree(void *ptr);

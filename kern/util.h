@@ -4,6 +4,8 @@
 #include <stdint.h>
 #include <zero/cdefs.h>
 
+#define  kbcopy(src, dest, len) kmemcpy(dest, src, len)
+
 void     kbzero(void *adr, uintptr_t len);
 void     kmemset(void *adr, int byte, uintptr_t len);
 void     kmemcpy(void *dest, const void *src, uintptr_t len);

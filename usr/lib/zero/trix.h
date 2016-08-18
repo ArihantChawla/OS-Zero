@@ -45,6 +45,8 @@
 /* m - mask of bits to be copied from a. 1 -> copy, 0 -> leave alone. */
 #define copybits(a, b, m) (((a) | (m)) | ((b) & ~(m)))
 
+/* FIXME: test min2() and max2() */
+    
 #define min(a, b) ((a) <= (b) ? (a) : (b))
 #define max(a, b) ((a) >= (b) ? (a) : (b))
 
