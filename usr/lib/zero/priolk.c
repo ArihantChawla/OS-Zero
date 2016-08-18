@@ -112,9 +112,9 @@ void
 priolk(struct priolk *priolk)
 {
 //    unsigned long               prio = t_priolkptr->val;
-    unsigned long               prio;
-    volatile struct priolkdata *owner;
-    unsigned long               mask;
+    unsigned long prio;
+    unsigned long mask;
+    long          res;
 
     m_membar();
     prio = t_priolkptr->val;
@@ -127,10 +127,10 @@ priolk(struct priolk *priolk)
         }
         priolkwait();
     }
-    owner = m_cmpswapptr((volatile long *)&priolk->owner,
-                         NULL,
-                         (volatile long *)t_priolkptr);
-    if (!owner) {
+    res = m_cmpswapptr((volatile long *)&priolk->owner,
+                       NULL,
+                       (volatile long *)t_priolkptr);
+    if (!res) {
 
         return;
     }
@@ -145,16 +145,16 @@ priolk(struct priolk *priolk)
             }
             priolkwait();
         }
-        owner = m_cmpswapptr((volatile long *)&priolk->owner,
-                             NULL,
-                             (volatile long *)t_priolkptr);
-        if (!owner) {
+        res = m_cmpswapptr((volatile long *)&priolk->owner,
+                           NULL,
+                           (volatile long *)t_priolkptr);
+        if (!res) {
             m_atomand(&priolk->waitbits, ~prio);
 
             return;
         }
-        if (owner->val > prio) {
-            owner->val = prio;
+        if (t_priolkptr->val > prio) {
+            t_priolkptr->val = prio;
         }
         priolkwait();
     } while (1);

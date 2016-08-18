@@ -195,7 +195,7 @@ m_cmpxchgu64(volatile unsigned long *p,
                           : "q" (val), "m" (*(p)), "0" (want)
                           : "memory");
     
-    return (res == want);
+    return res;
 }
 
 /*
@@ -215,7 +215,7 @@ m_cmpxchg64ptr(volatile long *p,
                          : "q" (val), "m" (*(p)), "0" (want)
                          : "memory");
     
-    return (res == *want);
+    return res;
 }
 
 #if defined(__GNUC__) && 0
@@ -261,17 +261,17 @@ m_cmpxchg128(volatile long *p64,
              volatile long *want,
              volatile long *val)
 {
-    uint64_t rax = p64[0];
-    uint64_t rdx = p64[1];
+    uint64_t rax = want[0];
+    uint64_t rdx = want[1];
     uint64_t rbx = val[0];
     uint64_t rcx = val[1];
-    long     res;
+    long     res = 0;
     
     __asm__ __volatile__ ("lock cmpxchg16b %1\n"
                           "setz %b0\n"
-                          : "=q" (res), "+m" (*val), "+a" (rax), "+d" (rdx)
+                          : "=q" (res), "+m" (*p64), "+a" (rax), "+d" (rdx)
                           : "b" (rbx), "c" (rcx)
-                          : "cc", "memory");
+                          : "cc");
 
     return res;
 }
