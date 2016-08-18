@@ -30,15 +30,13 @@ gdtinit:
 #else
 	lgdt	(gdtptr)
 #endif
-	movw	$DATASEL, %ax
-	movw	$CPUSEL, %bx
-//	movw	$STKSEL, %bx
-	movw	%ax, %ds
-	movw	%ax, %es
-	movw	%ax, %fs
-//	movw	%bx, %ss
-	movw	%ax, %ss
-	movw	%bx, %gs
+	movw	$DATASEL, %cx
+	movw	$CPUSEL, %dx
+	movw	%cx, %ds
+	movw	%cx, %es
+	movw	%cx, %fs
+//	movw	%cx, %ss
+	movw	%dx, %gs
 	ljmp	$TEXTSEL, $_gdtret
 _gdtret:
 #if !(NEWCLI)

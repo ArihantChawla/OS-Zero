@@ -21,7 +21,7 @@
                 buf->hdr.next = NULL;                                   \
                 buf->hdr.nextpkt = NULL;                                \
             }                                                           \
-            buf->hdr.buf = mbdata(buf);                                 \
+            buf->hdr.data = mbdata(buf);                                \
         }                                                               \
     } while (0)
 #define __memgetblk(buf, nb, how)                                       \
@@ -55,7 +55,7 @@ memgetbuf(long type, long how)
 
     __memgetbuf(buf, MB_SIZE, how);
     if (buf) {
-        buf->hdr.buf = mbdata(buf);
+        buf->hdr.data = mbdata(buf);
         buf->hdr.type = type;
     }
 
@@ -68,13 +68,15 @@ memgetblk(struct membuf *buf, long how)
 {
     struct membuf *mb;
     struct memext *ext;
+    uint8_t       *adr;
 
     __memgetblk(mb, MB_BLK_SIZE, how);
     if (buf) {
+        adr = (uint8_t *)buf;
         ext = mbexthdr(buf);
-        buf->hdr.buf = mb;
+        buf->hdr.data = adr;
         buf->hdr.flg |= MB_EXT_BIT;
-        ext->buf = mb;
+        ext->buf = adr;
         ext->size = MB_BLK_SIZE;
         ext->type = MB_EXT_BLK;
     }
@@ -90,7 +92,7 @@ memgetpkt(long type, long how)
 
     __memgetbuf(buf, MB_SIZE, how);
     if (buf) {
-        buf->hdr.buf = mbpktbuf(buf);
+        buf->hdr.data = mbpktbuf(buf);
         buf->hdr.type = type;
         buf->hdr.flg = MB_PKTHDR_BIT;
     }
@@ -107,7 +109,7 @@ memsetext(struct membuf *buf, void *adr, long size,
     struct memext *ext;
 
     ext = mbexthdr(buf);
-    buf->hdr.buf = adr;
+    buf->hdr.data = adr;
     buf->hdr.flg |= MB_EXT_BIT | flg;
     ext->buf = adr;
     ext->size = size;
@@ -126,7 +128,7 @@ memrelext(struct membuf *buf)
 
     ext = mbexthdr(buf);
     mbdecref(buf);
-    if (m_cmpswap(ext->nref, 0, 1)) {
+    if (m_cmpswap(&ext->nref, 0, 1)) {
         if (ext->type != MB_EXT_BLK) {
             ext->rel(ext->buf, ext->args);
         } else {
@@ -147,7 +149,7 @@ memrelbuf(struct membuf *buf)
 
     next = mbnext(buf);
     if (buf->hdr.flg & MB_EXT_BIT) {
-        mbrelext(buf);
+        memrelext(buf);
     }
     __memputbuf(buf);
 
@@ -230,7 +232,7 @@ memgetchain(struct membuf *buf, long len, long how, long type)
             }
         }
         tail = mb;
-        len -= mtrailspace(mb);
+        len -= mbtrailspace(mb);
     }
     if (last != NULL) {
         last->hdr.next = top;
@@ -251,7 +253,7 @@ memcpypkthdr(struct membuf *src, struct membuf *dest)
 
     spkt = mbpkthdr(src);
     dpkt = mbpkthdr(dest);
-    dest->hdr.buf = mbpktbuf(src);
+    dest->hdr.data = mbpktbuf(src);
     dest->hdr.flg = spkt->flg & MB_PKT_COPY_BITS;
     *dpkt = *spkt;
     spkt->aux = NULL;
@@ -272,12 +274,12 @@ _memprepend(struct membuf *buf, long nb, long how)
         return NULL;
     }
     if (mbflg(buf) & MB_PKTHDR_BIT) {
-        mbcpypkthdr(buf, mb);
+        memcpypkthdr(buf, mb);
         buf->hdr.flg &= ~MB_PKTHDR_BIT;
     }
     mb->hdr.next = buf;
     if (nb < MB_PKT_LEN) {
-        memalignpkt(mb, nb);
+        mbalignpkt(mb, nb);
     }
     mb->hdr.len = nb;
 
@@ -291,7 +293,7 @@ memprepend(struct membuf *buf, long nb, long how)
     struct mempkt *pkt;
     
     if (mbleadspace(buf) >= nb) {
-        buf->hdr.buf -= nb;
+        buf->hdr.data -= nb;
         buf->hdr.len += nb;
     } else {
         buf = _memprepend(buf, nb, how);
@@ -346,7 +348,7 @@ memcpychain(struct membuf *buf, int ofs0, long nb, long how)
         len = mblen(buf);
         *hi = mb;
         if (!mb) {
-            mrelchain(top);
+            memrelchain(top);
 
             return NULL;
         }
@@ -364,7 +366,7 @@ memcpychain(struct membuf *buf, int ofs0, long nb, long how)
         if (mbflg(buf) & MB_EXT_BIT) {
             ext1 = mbexthdr(buf);
             ext2 = mbexthdr(mb);
-            mb->hdr.buf = buf->hdr.buf + ofs;
+            mb->hdr.data = buf->hdr.data + ofs;
             *ext2 = *ext1;
             mb->hdr.flg |= MB_EXT_BIT;
             mbincref(buf);
@@ -414,21 +416,21 @@ memcpypkt(struct membuf *buf, long how)
     if (mbflg(buf) & MB_EXT_BIT) {
         ext1 = mbexthdr(mb1);
         ext2 = mbexthdr(buf);
-        mb1->hdr.buf = mbadr(buf);
+        mb1->hdr.data = mbadr(buf);
         *ext1 = *ext2;
         mb1->hdr.flg |= MB_EXT_BIT;
         mbincref(buf);
     } else {
         buf1 = mbpktbuf(mb1);
         buf2 = mbpktbuf(buf);
-        mb1->hdr.buf = buf1 + (buf->hdr.buf - buf2);
+        mb1->hdr.data = buf1 + (buf->hdr.data - buf2);
         kbcopy(mtod(buf, uint8_t *),
                mtod(mb1, uint8_t *),
                (uintptr_t)mblen(mb1));
     }
     buf = mbnext(buf);
     while (buf) {
-        mb2 = mgetbuf(mbtype(buf), how);
+        mb2 = memgetbuf(mbtype(buf), how);
         if (!mb2) {
             memrelchain(top);
             
@@ -440,7 +442,7 @@ memcpypkt(struct membuf *buf, long how)
         if (mbflg(buf) & MB_EXT_BIT) {
             ext1 = mbexthdr(mb1);
             ext2 = mbexthdr(buf);
-            mb1->hdr.buf = mbadr(buf);;
+            mb1->hdr.data = mbadr(buf);;
             mb1->hdr.flg |= MB_EXT_BIT;
             *ext1 = *ext2;
             mbincref(buf);

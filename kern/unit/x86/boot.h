@@ -78,12 +78,12 @@ struct mboothdr {
 #define UTEXTSEG     4
 #define UDATASEG     5
 #define CPUSEG       6
+#define NGDT         7
 #if (VBE)
+#undef NGDT
 #define REALCODESEG  7
 #define REALDATASEG  8
 #define NGDT         9
-#else
-#define NGDT         7
 #endif
 
 /* segment selectors */

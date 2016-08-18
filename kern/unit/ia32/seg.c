@@ -62,7 +62,11 @@ seginit(long id)
     /* initialize segmentation */
     farptr->lim = NGDT * sizeof(uint64_t) - 1;
     farptr->adr = (uint32_t)gdt;
+#if (REENTRANTGDTINIT)
     gdtinit(farptr);
+#else
+    gdtinit();
+#endif
 
     return;
 }

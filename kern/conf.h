@@ -3,6 +3,8 @@
 
 #include <zero/param.h>
 
+#define REENTRANTGDTINIT 0
+#define LONGMODE     0
 #define MEMBUFNOLK   0  // FIXME: implement lock-free data (stack?)
 
 #define MEMPARANOIA  0
@@ -17,7 +19,6 @@
 #define VMFLATPHYSTAB    1
 #define USERMODE         0
 #define PLASMAFOREVER    1
-#define REENTRANTGDTINIT 1
 
 #define FASTINTR    1
 
@@ -75,11 +76,11 @@
 #define PLASMA      1
 
 /* planned and developed drivers */
-#define IOAPIC      1           // enable I/O APIC support
-#define SMBIOS      1           // SMBIOS (system management) support
+#define IOAPIC      0           // enable I/O APIC support
+#define SMBIOS      0           // SMBIOS (system management) support
 #define APIC        1           // local [per-CPU] APIC support
-#define PCI         0           // PCI bus driver
-#define ATA         0           // ATA/ATAPI/SATA/SATAPI
+#define PCI         1           // PCI bus driver
+#define ATA         1           // ATA/ATAPI/SATA/SATAPI
 #define ACPI        0           // ACPI
 #define ACPICA      0           // ACPICA
 #define HPET        1           // high precision event timer support

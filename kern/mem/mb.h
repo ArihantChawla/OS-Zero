@@ -140,7 +140,7 @@ struct memext {
 };
 
 struct memhdr {
-    uint8_t       *buf;         // data address
+    uint8_t       *data;         // data address
     long           len;         // # of bytes in membuf
     long           type;        // buffer type
     long           flg;         // flags
@@ -163,16 +163,16 @@ struct membuf {
 };
 
 #if (SMP)
-#define mbincref(mb)      m_atominc((mbexthdr(mb))->nref)
-#define mbdecref(mb)      m_atomadd((mbexthdr(mb))->nref, -1)
-#define mbgetref(mb, res) m_syncread((mbexthdr(mb))->nref, (res))
+#define mbincref(mb)      m_atominc(&(mbexthdr(mb))->nref)
+#define mbdecref(mb)      m_atomadd(&(mbexthdr(mb))->nref, -1)
+#define mbgetref(mb, res) m_syncread(&(mbexthdr(mb))->nref, (res))
 #else
 #define mbincref(mb)      ((mbexthdr(mb))->nref++)
 #define mbdecref(mb)      ((mbexthdr(mb))->nref--)
 #define mbgetref(mb, res) ((mbexthdr(mb))->nref)
 #endif
 
-#define mbadr(mb)         ((mb)->hdr.buf)
+#define mbadr(mb)         ((mb)->hdr.data)
 #define mblen(mb)         ((mb)->hdr.len)
 #define mbtype(mb)        ((mb)->hdr.type)
 #define mbflg(mb)         ((mb)->hdr.flg)
@@ -185,10 +185,10 @@ struct membuf {
 #define mbextbuf(mb)      (((mb)->u.s.data.ext.buf))
 #define mbextsize(mb)     (((mb)->u.s.data.ext.size))
 
-    struct mempktaux {
-        long af;
-        long type;
-    };
+struct mempktaux {
+    long af;
+    long type;
+};
 
 struct membufbkt {
     volatile long  lk;

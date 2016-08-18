@@ -112,10 +112,6 @@ SECTIONS {
 	mpentry.o(.data)
 	mpentry.o(.bss)
 */
-	mp.o(.text)
-	mp.o(.data)
-	mp.o(.bss)
-
 	proc.o(.text)
 	proc.o(.data)
 	proc.o(.bss)

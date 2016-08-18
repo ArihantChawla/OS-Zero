@@ -50,12 +50,16 @@ _start2:
 	movl	%esp, %ebp
 	pushl	$0			// store longmode argument for kmain()
 	pushl	%ebx			// store boot-header address
+#if (LONGMODE)
 	call	_chkcpuid
 	call	_chklongmode
 	cmp	$0, %eax
 	je	_protmode
 	movl	$1, 4(%esp)		// longmode argument for kmain()
-_protmode:	
+_protmode:
+#else
+	xorl	%eax, %eax
+#endif
 	call	kmain			// call kmain()
 
 /* check for presence of CPUID by trying to flip bit 21 in %eflags */

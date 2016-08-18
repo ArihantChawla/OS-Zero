@@ -133,7 +133,7 @@ memalloc(size_t nb, long flg)
     return ptr;
 }
 
-void
+void *
 memwtalloc(size_t nb, long flg, long spin)
 {
     void *ptr = NULL;

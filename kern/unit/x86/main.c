@@ -28,7 +28,6 @@ kmain(struct mboothdr *boothdr, unsigned long longmode)
     pmemsz = grubmemsz(boothdr);
     /* bootstrap kernel */
     /* INITIALISE BASE HARDWARE */
-    /* initialise memory segmentation */
     seginit(0);
 #if (VBE)
     /* initialise VBE graphics subsystem */

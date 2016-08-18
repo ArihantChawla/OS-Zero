@@ -15,7 +15,7 @@
 #include <kern/malloc.h>
 #include <kern/util.h>
 
-#define mtod(m, t) ((t)((m)->hdr.buf))
+#define mtod(m, t) ((t)((m)->hdr.data))
 
 /* TODO: perhaps hack a dedicated pool/allocator for memory blocks? */
 
@@ -26,17 +26,17 @@
          || (mbexthdr(buf)->nref > 1)))
 /* longword-align buffer data pointer for object of len */
 #define mbalignbuf(buf, len)                                            \
-    ((buf)->hdr.buf += (MB_DATA_LEN - (len)) & ~(sizeof(long) - 1))
+    ((buf)->hdr.data += (MB_DATA_LEN - (len)) & ~(sizeof(long) - 1))
 /* longword-align buffer packet data pointer for object of len */
 #define mbalignpkt(buf, len)                                            \
-    ((buf)->hdr.buf += (MB_PKT_LEN - (len)) & ~(sizeof(long) - 1))
+    ((buf)->hdr.data += (MB_PKT_LEN - (len)) & ~(sizeof(long) - 1))
 /* compute amount of space before current start of data */
 #define mbleadspace(buf)                                                \
     (((buf)->hdr.flg & MB_EXT_BIT)                                      \
      ? 0                                                                \
      : (((buf)->hdr.flg & MB_PKTHDR)                                    \
-        ? ((buf)->hdr.buf - mbpktbuf(buf))                              \
-        : ((buf)->hdr.buf - mbdata(buf))))
+        ? ((buf)->hdr.data - mbpktbuf(buf))                             \
+        : ((buf)->hdr.data - mbdata(buf))))
 /* compute amount of space after current end of data */
 #define mbtrailspace(buf)                                               \
     (((buf)->hdr.flg & MB_EXT_BIT)                                      \

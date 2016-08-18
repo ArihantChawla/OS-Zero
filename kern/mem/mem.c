@@ -73,7 +73,7 @@ meminitphys(struct mempool *pool, uintptr_t base, size_t nbyte)
     memdiag(memvirtpool);
 #endif
 
-    return adr;
+    return;
 }
 
 void
