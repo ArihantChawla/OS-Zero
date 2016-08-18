@@ -208,14 +208,14 @@ m_cmpxchg64ptr(volatile long *p,
                volatile long *want,
                volatile void *val)
 {
-    long *res;
+    long res;
     
     __asm__ __volatile__("lock cmpxchgq %1, %2\n"
                          : "=a" (res)
                          : "q" (val), "m" (*(p)), "0" (want)
                          : "memory");
     
-    return (res == want);
+    return (res == *want);
 }
 
 #if defined(__GNUC__) && 0
@@ -236,14 +236,17 @@ m_cmpxchg128(volatile long *p64,
 #elif defined(_MSC_VER)
 
 static __inline__ long
-m_cmpxchg128(volatile int64_t *p64,
-             volatile int64_t *want,
-             volatile int64_t *val)
+m_cmpxchg128(volatile long long *p64,
+             volatile long long *want,
+             volatile long long *val)
 {
-    __i64 lo = val[0];
-    __i64 hi = val[1];
+    long long     lo = val[0];
+    long long     hi = val[1];
+    unsigned char res;
 
-    return InterlockedCompareExchange128(p64, hi, lo, want);
+    res = InterlockedCompareExchange128(p64, hi, lo, want);
+
+    return res;
 }
 
 #else
@@ -258,19 +261,19 @@ m_cmpxchg128(volatile long *p64,
              volatile long *want,
              volatile long *val)
 {
-    uint64_t  rax = p64[0];
-    uint64_t  rdx = p64[1];
-    uint64_t  val0 = val[0];
-    uint64_t  val1 = val[1];
-    long     *res;
+    uint64_t rax = p64[0];
+    uint64_t rdx = p64[1];
+    uint64_t rbx = val[0];
+    uint64_t rcx = val[1];
+    long     res;
     
     __asm__ __volatile__ ("lock cmpxchg16b %1\n"
                           "setz %b0\n"
                           : "=q" (res), "+m" (*val), "+a" (rax), "+d" (rdx)
-                          : "b" (val0), "c" (val1)
+                          : "b" (rbx), "c" (rcx)
                           : "cc", "memory");
 
-    return (res == want);
+    return res;
 }
 
 #endif

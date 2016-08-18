@@ -97,14 +97,14 @@ m_cmpxchg32ptr(volatile long *p,
                volatile long *want,
                volatile void *val)
 {
-    long *res;
+    long res;
     
     __asm__ __volatile__("lock cmpxchgl %1, %2\n"
                          : "=a" (res)
                          : "q" (val), "m" (*(p)), "0" (want)
                          : "memory");
     
-    return (res == want);
+    return (res == *want);
 }
 
 #if defined(__GNUC__) && 0
@@ -115,9 +115,9 @@ m_cmpxchg32ptr(volatile long *p,
  * - return original nonzero on success, zero on failure
  */
 static __inline__ long
-m_cmpxchg128(volatile long *p64,
-             volatile long *want,
-             volatile long *val)
+m_cmpxchg64(volatile long *p64,
+            volatile long *want,
+            volatile long *val)
 {
     return __sync_bool_compare_and_swap(p64, want, val);
 }
@@ -125,11 +125,17 @@ m_cmpxchg128(volatile long *p64,
 #elif defined(_MSC_VER)
 
 static __inline__ long
-m_cmpxchg64(volatile int64_t *p64,
-             volatile int64_t *want,
-             volatile int64_t *val)
+m_cmpxchg64(volatile long long *p64,
+            volatile long long *want,
+            volatile long long *val)
 {
-    return InterlockedCompareExchange64(p64, hi, lo, want);
+    long long ask = *want;
+    long long say = *val;
+    long long res;
+
+    res = InterlockedCompareExchange64(p64, say, ask);
+
+    return (res == ask);
 }
 
 #else
