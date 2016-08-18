@@ -1,6 +1,5 @@
 #include <kern/conf.h>
 #include <stdint.h>
-#define __KERNEL__ 1
 #include <signal.h>
 #include <zero/cdefs.h>
 #include <zero/param.h>

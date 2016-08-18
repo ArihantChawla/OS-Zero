@@ -31,7 +31,7 @@ extern int pthread_yield(void);
 #include <sched.h>
 #endif
 
-#if (defined(__KERNEL__) || defined(ZEROMTX)) && !defined(ZEROPTHREAD)
+#if (defined(__KERNEL__) || defined(ZEROMTX) || !defined(ZEROPTHREAD))
 typedef volatile long   zeromtx;
 #elif defined(PTHREAD) && defined(ZEROPTHREAD)
 typedef pthread_mutex_t zeromtx;

@@ -24,7 +24,6 @@
 
 //extern struct m_cpuinfo cpuinfo;
 
-#define __KERNEL__ 1
 //#include <zero/mtx.h>
 
 /* process states */

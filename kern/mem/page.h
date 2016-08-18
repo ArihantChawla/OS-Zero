@@ -1,7 +1,6 @@
 #ifndef __KERN_MEM_PAGE_H__
 #define __KERN_MEM_PAGE_H__
 
-#define __KERNEL__ 1
 #include <stdint.h>
 #include <zero/param.h>
 #include <zero/trix.h>

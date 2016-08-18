@@ -49,7 +49,6 @@
  *   - call exit()
  */
 
-#define __KERNEL__ 1
 #include <stddef.h>
 #include <limits.h>
 #include <signal.h>

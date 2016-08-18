@@ -1,3 +1,4 @@
+#include <kern/conf.h>
 #include <stddef.h>
 #include <stdint.h>
 #if (MEMTEST)

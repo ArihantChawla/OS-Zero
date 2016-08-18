@@ -1,5 +1,4 @@
 #include <stdint.h>
-#define __KERNEL__ 1
 #include <signal.h>
 #include <sys/io.h>
 #include <kern/conf.h>

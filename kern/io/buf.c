@@ -12,7 +12,6 @@
 
 /* TODO: implement per-device buffers */
 
-#define __KERNEL__ 1
 #include <kern/conf.h>
 #include <sys/types.h>
 #include <zero/cdefs.h>
