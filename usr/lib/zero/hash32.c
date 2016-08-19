@@ -66,15 +66,18 @@ pphash(char *str)
 }
 
 #define SEED 0xf0e1d2
-/* Ramakrishana & Zobel hash function */
+/* Ramakrishna & Zobel hash function */
 unsigned long
 razohash(const char *str)
 {
-    unsigned long hash = SEED;
+    unsigned char *ucp = (unsigned char *)str;
+    unsigned long  hash = SEED;
+    unsigned int   u;
 
-    while (*str) {
-        hash ^= (hash << 7) + (hash >> 2) + *str;
-        str++;
+    while (*ucp) {
+        u = *ucp;
+        hash ^= (hash << 7) + (hash >> 2) + u;
+        ucp++;
     }
 
     return hash;

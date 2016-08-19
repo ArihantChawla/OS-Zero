@@ -204,7 +204,7 @@ lfdeqdequeue(struct lfdeq *lfdeq)
     TAGPTR_TAG_T      ttag;
     TAGPTR_TAG_T      tag;
     struct lfdeqnode *hptr;
-    struct lfqdenode *tptr;
+    struct lfdeqnode *tptr;
     struct lfdeqnode *iptr;
     struct lfdeqnode *node;
 
@@ -268,7 +268,7 @@ lfdeqdequeue(struct lfdeq *lfdeq)
             }
         } else if (hptr == tptr) {
                 
-            return NULL;
+            return LFDEQ_VAL_NONE;
         } else {
             tagptrgettag(item, tag);
             tagptrgettag(head, htag);
