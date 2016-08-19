@@ -3,7 +3,7 @@
 
 #include <zero/param.h>
 
-#define REENTRANTGDTINIT 0
+#define REENTRANTGDTINIT 1
 #define LONGMODE     0
 #define MEMBUFNOLK   0  // FIXME: implement lock-free data (stack?)
 
@@ -30,7 +30,7 @@
 
 #define kgethz()    HZ
 #define HZ          250         // scheduler timer frequency
-#define SMP         0           // enable multiprocessor support; FIXME:  broken
+#define SMP         1           // enable multiprocessor support; FIXME:  broken
 #define SMT         0           // enable hardware multithreading ('hyper')
 #define FASTHZ      1000        // fast timer frequency (interactive tasks etc.)
 #define ZEROSCHED   1           // default scheduler
@@ -80,7 +80,7 @@
 #define SMBIOS      0           // SMBIOS (system management) support
 #define APIC        1           // local [per-CPU] APIC support
 #define PCI         1           // PCI bus driver
-#define ATA         1           // ATA/ATAPI/SATA/SATAPI
+#define ATA         0           // ATA/ATAPI/SATA/SATAPI
 #define ACPI        0           // ACPI
 #define ACPICA      0           // ACPICA
 #define HPET        1           // high precision event timer support

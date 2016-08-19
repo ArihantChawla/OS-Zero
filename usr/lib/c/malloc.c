@@ -626,10 +626,10 @@ priogetval(void)
 {
     unsigned long val;
 
-    fmtxlk(&g_malloc.priolk);
+//    fmtxlk(&g_malloc.priolk);
     val = g_malloc.prioval;
     g_malloc.prioval = (val++) & (sizeof(long) * CHAR_BIT - 1);
-    fmtxunlk(&g_malloc.priolk);
+//    fmtxunlk(&g_malloc.priolk);
 
     return val;
 }

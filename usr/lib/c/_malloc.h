@@ -3,7 +3,7 @@
 
 #define ZEROFMTX          1
 
-#define MALLOCPRIOLK      0     // use locks lifted from locklessinc.com
+#define MALLOCPRIOLK      1     // use locks lifted from locklessinc.com
 #define MALLOCLFDEQ       0
 #define MALLOCTAILQ       1
 #define MALLOCATOMIC      1
@@ -52,7 +52,7 @@
 #define MALLOCVALGRIND    1
 #define MALLOCHDRHACKS    0
 #define MALLOCNEWHDR      0
-#define MALLOCHDRPREFIX   0
+#define MALLOCHDRPREFIX   1
 /*
 #define MALLOCNEWHDR      1
 #define MALLOCHDRPREFIX   1

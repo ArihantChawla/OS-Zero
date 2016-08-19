@@ -6,7 +6,7 @@
 #include <zero/priolk.h>
 
 /* <vendu> eliminated the giant mutex */
-#define PRIOLKNONBLOCK
+#define PRIOLKNONBLOCK 1
 
 THREADLOCAL volatile struct priolkdata *t_priolkptr;
 static volatile struct priolkdata      *priofree;
