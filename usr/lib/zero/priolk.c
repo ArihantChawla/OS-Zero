@@ -8,11 +8,11 @@
 /* <vendu> eliminated the giant mutex */
 #define PRIOLKNONBLOCK
 
-static THREADLOCAL volatile struct priolkdata *t_priolkptr;
-static volatile struct priolkdata             *priofree;
+THREADLOCAL volatile struct priolkdata *t_priolkptr;
+static volatile struct priolkdata      *priofree;
 #if !defined(PRIOLKNONBLOCK)
 #if (ZEROFMTX)
-static zerofmtx                                priolkmtx = FMTXINITVAL;
+static zerofmtx                         priolkmtx = FMTXINITVAL;
 #endif
 #endif
 

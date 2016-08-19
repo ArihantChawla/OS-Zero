@@ -17,6 +17,7 @@ struct _tagptr {
     uint64_t adr;
 };
 
+#define tagptrzero(tp) opstzero128(tp)
 #define tagptrcmpswap(tp, want, src)                                    \
   m_cmpswapdbl((volatile long *)tp, (long *)want, (long *)src)
 

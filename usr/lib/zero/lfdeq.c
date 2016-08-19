@@ -17,6 +17,18 @@
 
 static struct lfdeqnode *lfdeqbufchain;
 
+static void
+_lfdeqzeronode(struct lfdeqnode *node)
+{
+    tagptrzero(&node->prev);
+    tagptrzero(&node->next);
+#if (LFDEQMAPBUF)
+    node->chain = NULL;
+#endif
+
+    return;
+}
+
 static struct lfdeqnode *
 lfdeqallocpage(void)
 {
@@ -59,12 +71,14 @@ lfdeqalloc(void)
             up = (uintptr_t)lfdeqbufchain;
             buf = (void *)(up & ~LFDEQLKBIT);
             if (!buf) {
+                m_syncwrite(&lfdeqbufchain, buf);
                 buf = lfdeqallocpage();
             } else {
                 m_syncwrite(&lfdeqbufchain, buf->next);
             }
         }
     } while (!buf);
+    _lfdeqzeronode(buf);
 
     return buf;
 }
@@ -149,27 +163,31 @@ lfdeqinitqueue(struct lfdeq *lfdeq)
 }
 
 void
-lfdeqenqueue(struct lfdeq *lfdeq, struct lfdeqnode *node)
+lfdeqenqueue(struct lfdeq *lfdeq, LFDEQ_VAL_T val)
 {
     TAGPTR_T          tail;
     TAGPTR_TAG_T      ttag;
     TAGPTR_TAG_T      tag;
+    struct lfdeqnode *node;
     struct lfdeqnode *last;
 
+    node = lfdeqalloc();
+    node->val = val;
     do {
         tail = lfdeq->tail;
         tagptrgettag(tail, ttag);
-        tag = ttag + 1;
         tagptrgetadr(tail, last);
+        tag = ttag + 1;
         tagptrsetadr(last, node->next);
         tagptrsettag(tag, node->next);
         if (tagptrcmpswap(&lfdeq->tail, &tail, &node->next)) {
-            tagptrsettag(ttag, last->prev);
+            tagptrsetadr(node, node->prev);
+            tagptrsettag(ttag, node->prev);
             tagptrsetadr(node, last->prev);
 
             return;
         }
-    } while (1);        
+    } while (1);
 
     return;
 }
@@ -180,24 +198,24 @@ lfdeqdequeue(struct lfdeq *lfdeq)
     TAGPTR_T          item;
     TAGPTR_T          head;
     TAGPTR_T          tail;
-    TAGPTR_T          tmp;
     LFDEQ_VAL_T       val;
-    TAGPTR_ADR_T      adr1;
     TAGPTR_ADR_T      adr2;
     TAGPTR_TAG_T      htag;
     TAGPTR_TAG_T      ttag;
     TAGPTR_TAG_T      tag;
-    struct lfdeqnode *ptr1;
-    struct lfdeqnode *ptr2;
+    struct lfdeqnode *hptr;
+    struct lfqdenode *tptr;
+    struct lfdeqnode *iptr;
     struct lfdeqnode *node;
 
     do {
         head = lfdeq->head;
-        tagptrgetadr(head, ptr1);
+        tagptrgetadr(head, hptr);
         tail = lfdeq->tail;
-        item = ptr1->prev;
-        tagptrgetadr(item, ptr2);
-        val = ptr1->val;
+        item = hptr->prev;
+        tagptrgetadr(tail, tptr);
+        tagptrgetadr(item, iptr);
+        val = hptr->val;
         if (tagptrcmp(&head, &lfdeq->head)) {
             if (val != LFDEQ_VAL_NONE) {
                 tagptrgettag(head, htag);
@@ -210,7 +228,7 @@ lfdeqdequeue(struct lfdeq *lfdeq)
                         continue;
                     }
                 } else {
-                    tagptrgetadr(tail, adr1);
+                    tagptrgetadr(tail, tptr);
 #if (LFDEQMAPBUF)
                     node = lfdeqalloc();
 #else
@@ -218,10 +236,13 @@ lfdeqdequeue(struct lfdeq *lfdeq)
 #endif
                     tag = ttag + 1;
                     node->val = LFDEQ_VAL_NONE;
-                    tagptrsetadr(adr1, node->next);
+                    tagptrsetadr(tptr, node->next);
                     tagptrsettag(tag, node->next);
-                    if (tagptrcmpswap(&lfdeq->tail, &tail, &node)) {
-                        tagptrsettag(ttag, item);
+                    tagptrsetadr(node, node->prev);
+                    tagptrsettag(tag, node->prev);
+                    if (tagptrcmpswap(&lfdeq->tail, &tail, &node->prev)) {
+                        tagptrsettag(ttag, node->prev);
+                        tagptrsetadr(node, hptr->prev);
                     } else {
 #if (LFDEQMAPBUF)
                         lfdeqfree(node);
@@ -233,38 +254,32 @@ lfdeqdequeue(struct lfdeq *lfdeq)
                     continue;
                 }
                 tag = htag + 1;
-                tagptrsetadr(ptr2, tmp);
-                tagptrsettag(tag, tmp);
-                if (tagptrcmpswap(&lfdeq->head, &head, &tmp)) {
+                tagptrsettag(tag, item);
+                if (tagptrcmpswap(&lfdeq->head, &head, &item)) {
+                    val = hptr->val;
 #if (LFDEQMAPBUF)
-                    lfdeqfree(ptr1);
+                    lfdeqfree(hptr);
 #else
-                    free(ptr1);
+                    free(hptr);
 #endif
                     
                     return val;
                 }
-            } else {
-                tagptrgetadr(head, adr1);
-                tagptrgetadr(tail, adr2);
-                if (adr1 == adr2) {
-                    
-                    return NULL;
-                } else {
-                    tagptrgettag(item, tag);
-                    tagptrgettag(head, htag);
-                    if (tag != htag) {
-                        _lfdeqfixqueue(lfdeq, head, tail);
-                        
-                        continue;
-                    } else {
-                        tag = htag + 1;
-                        tagptrsetadr(ptr2, tmp);
-                        tagptrsettag(tag, tmp);
-                        tagptrcmpswap(&lfdeq->head, &head, &tmp);
-                    }
-                }
             }
+        } else if (hptr == tptr) {
+                
+            return NULL;
+        } else {
+            tagptrgettag(item, tag);
+            tagptrgettag(head, htag);
+            if (tag != htag) {
+                _lfdeqfixqueue(lfdeq, head, tail);
+                
+                continue;
+            }
+            tag = htag + 1;
+            tagptrsettag(tag, item);
+            tagptrcmpswap(&lfdeq->head, &head, &item);
         }
     } while (1);
 

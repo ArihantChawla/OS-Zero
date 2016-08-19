@@ -52,7 +52,7 @@ struct lfdeq {
 };
 
 void        lfdeqinitqueue(struct lfdeq *lfdeq);
-void        lfdeqenqueue(struct lfdeq *lfdeq, struct lfdeqnode *node);
+void        lfdeqenqueue(struct lfdeq *lfdeq, LFDEQ_VAL_T val);
 LFDEQ_VAL_T lfdeqdequeue(struct lfdeq *lfdeq);
 
 #endif /* __ZERO_LFDEQ_H__ */

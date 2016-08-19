@@ -1,10 +1,12 @@
 #ifndef ___MALLOC_H__
 #define ___MALLOC_H__
 
-#define MALLOCPRIOLK      1     // use locks lifted from locklessinc.com
-#define MALLOCLFDEQ       1
-#define MALLOCTAILQ       0
-#define MALLOCATOMIC      0
+#define ZEROFMTX          1
+
+#define MALLOCPRIOLK      0     // use locks lifted from locklessinc.com
+#define MALLOCLFDEQ       0
+#define MALLOCTAILQ       1
+#define MALLOCATOMIC      1
 #define MALLOCLAZYUNMAP   1
 
 #include <limits.h>
@@ -22,8 +24,7 @@
 
 /* internal stuff for zero malloc - not for the faint at heart to modify :) */
 
-#define MALLOCMAPNDX      1
-#define MALLOCNEWMULTITAB 1
+#define MALLOCNEWMULTITAB 0
 #define MALLOCMULTITAB    1
 #define MALLOCNEWHASH     0
 #define MALLOCHASH        0
@@ -51,7 +52,7 @@
 #define MALLOCVALGRIND    1
 #define MALLOCHDRHACKS    0
 #define MALLOCNEWHDR      0
-#define MALLOCHDRPREFIX   1
+#define MALLOCHDRPREFIX   0
 /*
 #define MALLOCNEWHDR      1
 #define MALLOCHDRPREFIX   1
@@ -71,12 +72,12 @@
 #define MALLOCDIAG        0 // run [heavy] internal diagnostics for debugging
 #define DEBUGMTX          0
 
-#define MALLOCNOSBRK      0 // do NOT use sbrk()/heap, just mmap()
+#define MALLOCNOSBRK      1 // do NOT use sbrk()/heap, just mmap()
 #define MALLOCFREETABS    1 // use free block bitmaps; bit 1 for allocated
 #define MALLOCBUFMAG      1 // buffer mapped slabs to global pool
 
 /* use zero malloc on a GNU system such as a Linux distribution */
-#define GNUMALLOC         0
+#define GNUMALLOC         1
 
 /* HAZARD: modifying anything below might break anything and everything BAD */
 
@@ -192,6 +193,7 @@
 
 #if defined (MALLOCPRIOLK) && (MALLOCPRIOLK)
 #include <zero/priolk.h>
+#include <zero/mtx.h>
 #define LOCK struct priolk
 #define __mallocinitlk(mp)
 //#define __malloctrylk(mp)     priotrylk(mp)
@@ -204,7 +206,7 @@
 #define __malloctrylk(mp)     tkttrylk(mp)
 #define __malloclk(mp)        tktlkspin(mp)
 #define __mallocunlk(mp)      tktunlk(mp)
-#elif !defined(PTHREAD)
+#elif defined(ZEROFMTX)
 #define LOCK zerofmtx
 #include <zero/mtx.h>
 #include <zero/spin.h>
@@ -220,6 +222,12 @@
                               spinlk(mp))
 #define __mallocunlkspin(mp) (fprintf(stderr, "UNLK: %d\n", __LINE__), \
                               spinunlk(mp))
+#elif (PTHREAD) && !(DEBUGMTX)
+#include <pthread.h>
+#define LOCK pthread_mutex_t
+#define __mallocinitlk(mp)    pthread_mutex_init(mp, NULL)
+#define __malloclk(mp)        pthread_mutex_lock(mp)
+#define __mallocunlk(mp)      pthread_mutex_unlock(mp)
 #else
 #define __mallocinitlk(mp)    fmtxinit(mp)
 #define __malloctrylk(mp)     fmtxtrylk(mp)
@@ -230,12 +238,6 @@
 #define __malloclkspin(mp)    spinlk(mp)
 #define __mallocunlkspin(mp)  spinunlk(mp)
 #endif
-#elif (PTHREAD)
-#include <pthread.h>
-#define LOCK pthread_mutex_t
-#define __mallocinitlk(mp)    pthread_mutex_init(mp, NULL)
-#define __malloclk(mp)        pthread_mutex_lock(mp)
-#define __mallocunlk(mp)      pthread_mutex_unlock(mp)
 #endif
 
 #if (MALLOCPTRNDX)
@@ -372,9 +374,11 @@ static void   gnu_free_hook(void *ptr);
     do {                                                                \
         long _res;                                                      \
                                                                         \
-        _res = m_cmpsetbit((volatile long *)(&(tab)->ptr),              \
-                           MALLOC_TAB_LK_POS);                          \
-    } while (res)
+        do {                                                            \
+            _res = m_cmpsetbit((volatile long *)(&(tab)->ptr),          \
+                               MALLOC_TAB_LK_POS);                      \
+        } while (_res);                                                 \
+    } while (0)
 #define mtunlktab(tab)                                                  \
     m_cmpclrbit((volatile long *)(&(tab)->ptr),                         \
                 MALLOC_TAB_LK_POS)
@@ -404,32 +408,30 @@ struct memtab {
 /* magazines for larger/fewer allocations embed the tables in the structure */
 /* magazine header structure */
 struct mag {
-#if (MALLOCLFDEQ)
-    struct lfdeqnode  node;
-#endif
-    long              nfree;
-    struct mag       *prev;
-    struct mag       *next;
-    volatile long     lk;
-    struct arn       *arn;
-    void             *base;
-    void             *adr;
-    uint8_t          *ptr;
-    size_t            size;
-    long              cur;
-    long              lim;
-#if (MALLOCFREEMAP)
-    volatile long     freelk;
-    uint8_t          *freemap;
-#endif
-    long              bktid;
+    volatile long  lk;
+    long           cur;
+    long           lim;
 #if (MALLOCPTRNDX)
-    PTRNDX           *stk;
-    PTRNDX           *idtab;
+    PTRNDX        *stk;
+    PTRNDX        *idtab;
 #else
-    void             *stk;
-    void             *ptrtab;
+    void          *stk;
+    void          *ptrtab;
 #endif
+    long           nfree;
+    struct arn    *arn;
+    struct mag    *prev;
+    struct mag    *next;
+    void          *base;
+    void          *adr;
+    uint8_t       *ptr;
+    size_t         size;
+#if (MALLOCFREEMAP)
+    volatile long  freelk;
+    uint8_t       *freemap;
+#endif
+    long           bktid;
+    struct magteb *bkt;
 };
 
 struct magtab {
@@ -438,15 +440,9 @@ struct magtab {
 #endif
     LOCK           lk;
     struct mag    *ptr;
+    long           bktid;
 #if (MALLOCBUFMAG)
     unsigned long  n;
-#endif
-#if (MALLOCBUFMAG)
-    uint8_t        _pad[CLSIZE
-                        - sizeof(LOCK)
-                        - 2 * sizeof(void *) - sizeof(long)];
-#else
-    uint8_t        _pad[CLSIZE - sizeof(LOCK) - 2 * sizeof(void *)];
 #endif
 };
 
@@ -463,9 +459,9 @@ struct magbkt {
     struct mag    *tab;
 };
 
-static void * maginitslab(struct mag *mag, long bktid, long *zeroret);
+static void * maginitslab(struct mag *mag, struct magtab *bkt, long *zeroret);
 static void * maginittab(struct mag *mag, long bktid);
-static void * maginit(struct mag *mag, long bktid, long *zeroret);
+static void * maginit(struct mag *mag, struct magtab *bkt, long *zeroret);
 
 #if (!PTRFLGMASK)
 #define clrptr(ptr)                                                     \
@@ -710,7 +706,7 @@ static void * maginit(struct mag *mag, long bktid, long *zeroret);
 
 #if (MALLOCLFDEQ)
 #define magenqueue(mag, bkt)                                            \
-    (mag->node.val = mag, lfdeqenqueue(&(bkt)->lfdeq, &mag->node))
+    lfdeqenqueue(&(bkt)->lfdeq, (LFDEQ_VAL_T)(mag))
 #define magdequeue(bkt)                                                 \
     lfdeqdequeue(&(bkt)->lfdeq)
 #endif
@@ -854,6 +850,7 @@ struct malloc {
 #if (PTRBITS == 32)
     struct memtab            pagedir[PTRBITS - PAGESIZELOG2];
 #elif (MALLOCNEWMULTITAB)
+    LOCK                    *pagedirlktab;
     struct memtab           *pagedir;
 #elif (MALLOCHASH)
     struct hashmag          *hashbuf;
@@ -877,7 +874,7 @@ struct malloc {
     volatile long            heaplk;    // lock for sbrk()
 #endif
 #if (MALLOCPRIOLK)
-//    volatile long            priolk;
+    volatile long            priolk;
     volatile unsigned long   prioval;
 #endif
     volatile long            flg;       // allocator flags
