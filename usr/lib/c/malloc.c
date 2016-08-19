@@ -317,7 +317,7 @@ magputhdr(struct mag *mag)
 #elif (MALLOCTAILQ)
     magqueue(mag, &g_malloc.hdrbuf[bktid], 1);
 #else
-    magpush(mag, &g_malloc.hdrbuf[bktid], 1);
+    magpush(mag, &g_malloc.hdrbuf[bktid]);
 #endif
     
     return;
@@ -339,7 +339,7 @@ maggethdr(long bktid)
 #if (MALLOCLFDEQ)
     mag = magdequeue(&g_malloc.hdrbuf[bktid]);
 #else
-    magpop(&g_malloc.hdrbuf[bktid], mag, 1);
+    magpop(&g_malloc.hdrbuf[bktid], mag);
 #endif
     if (mag) {
         mag->bktid = bktid;
@@ -390,7 +390,7 @@ maggethdr(long bktid)
 #if (MALLOCTAILQ)
             magqueuemany(hdr, last, bkt, 1, n);
 #else
-            magpushmany(hdr, last, bkt, 1, n);
+            magpushmany(hdr, last, bkt, n);
 #endif
         }
 #endif
@@ -495,7 +495,7 @@ mapfree(struct mag *mag, struct lfdeq *lfdeq)
 #if (MALLOCTAILQ)
         magqueue(mag, &mag->arn->magbuf[bktid], 0);
 #else
-        magpush(mag, &mag->arn->magbuf[bktid], 0);
+        magpush(mag, &mag->arn->magbuf[bktid]);
 #endif
     }
 
@@ -599,7 +599,7 @@ thrfreetls(void *arg)
 #elif (MALLOCTAILQ)
                 magqueuemany(first, tail, dbkt, 1, n);
 #else
-                magpushmany(first, tail, dbkt, 1, n);
+                magpushmany(first, tail, dbkt, n);
 #endif
             } else {
 #if (MALLOCLFDEQ)
@@ -607,7 +607,7 @@ thrfreetls(void *arg)
 #elif (MALLOCTAILQ)
                 magqueue(mag, dbkt, 1);
 #else
-                magpush(mag, dbkt, 1);
+                magpush(mag, dbkt);
 #endif
             }
         }
@@ -990,7 +990,7 @@ hashbufitem(struct hashmag *item)
 
 /* find a hash table magazine chain item */
 static struct mag *
-hashfindmag(void *ptr)
+hashfindmag(void *ptr, long rm)
 {
     uintptr_t        upval;
     uintptr_t        upage = (uintptr_t)ptr >> PAGESIZELOG2;
@@ -1036,19 +1036,38 @@ hashfindmag(void *ptr)
     upval &= ~MALLOC_HASH_MARK_BIT;
     head = (struct hashmag *)upval;
     cur = head;
-    while (cur) {
-        if (cur->upval == upage) {
-            mag = cur->adr;
-            m_cmpclrbit((volatile long *)hptr,
-                        MALLOC_HASH_MARK_POS);
-            
-            return mag;
+    if (cur) {
+        while (cur) {
+            if (cur->upval == upage) {
+                mag = cur->adr;
+                if (rm) {
+                    cur->nref--;
+                    if (!cur->nref) {
+                        if (prev) {
+                            prev->next = cur->next;
+                        } else {
+                            head = cur->next;
+                        }
+                        hashbufitem(cur);
+                    }
+                } else {
+                    if (prev) {
+                        prev->next = cur->next;
+                    }
+                    mag->next = head;
+                    head = mag;
+                }
+                m_syncwrite(hptr, head);
+                    
+                return mag;
+            }
+            prev = cur;
+            cur = cur->next;
         }
-        prev = cur;
-        cur = cur->next;
+    } else {
+        m_cmpclrbit((volatile long *)hptr,
+                    MALLOC_HASH_MARK_POS);
     }
-    m_cmpclrbit((volatile long *)hptr,
-                MALLOC_HASH_MARK_POS);
     
     return NULL;
 }
@@ -2101,6 +2120,9 @@ _malloc(size_t size,
 #endif
             }
             if (mag->cur == lim) {
+                do {
+                    ;
+                } while (m_cmpsetbit(&(bkt)->ptr, MALLOC_LK_BIT_POS));
 #if (MALLOCBUFMAG)
                 arn->magbuf[bktid].n--;
 #endif
@@ -2117,14 +2139,14 @@ _malloc(size_t size,
 #if (MALLOCLFDEQ)
         mag = magdequeue(bkt);
 #else
-        magpop(bkt, mag, 1);
+        magpop(bkt, mag);
 #endif
         if (!mag) {
             bkt = &g_malloc.freebuf[bktid];
 #if (MALLOCLFDEQ)
             mag = magdequeue(bkt);
 #else
-            magpop(bkt, mag, 1);
+            magpop(bkt, mag);
 #endif
             if (!mag) {
                 bkt = &arn->magbuf[bktid];
@@ -2151,7 +2173,7 @@ _malloc(size_t size,
 #if (MALLOCBUFMAG)
                 bkt->n++;
 #endif
-                magpush(mag, bkt, 0);
+                magpush(mag, bkt);
                 mag->bkt = bkt;
             } else {
                 mag->arn = NULL;
@@ -2368,7 +2390,7 @@ _free(void *ptr)
         if (!mag->cur) {
             if (lim > 1) {
                 bkt = mag->bkt;
-                magrm(mag, bkt, 1);
+                magrm(mag, bkt);
                 mag->arn = NULL;
                 mag->bkt = NULL;
             }
@@ -2376,7 +2398,7 @@ _free(void *ptr)
                 bkt = &arn->magbuf[bktid];;
                 arn = &thrarn;
                 mag->arn = arn;
-                magpush(mag, bkt, 0);
+                magpush(mag, bkt);
             } else if ((uintptr_t)mag->adr & MAGMAP) {
                 /* unmap slab */
 #if (MALLOCLFDEQ)
@@ -2388,7 +2410,7 @@ _free(void *ptr)
                 bkt = &g_malloc.freebuf[bktid];
                 mag->arn = arn;
                 mag->bkt = bkt;
-                magpush(mag, bkt, 1);
+                magpush(mag, bkt);
             }
         } else if (mag->cur == lim - 1) {
             bkt = &g_malloc.magbuf[bktid];
@@ -2399,7 +2421,7 @@ _free(void *ptr)
 #elif (MALLOCTAILQ)
             magqueue(mag, bkt, 1);
 #else
-            magpush(mag, bkt, 1);
+            magpush(mag, bkt);
 #endif
         }
     }

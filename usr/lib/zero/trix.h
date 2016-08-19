@@ -833,6 +833,16 @@ uint32_t gcdu32(uint32_t a, uint32_t b)
     return a;
 }
 
+static __inline__
+uint32_t rem32(uint32_t a, uint32_t b)
+{
+    while (a > b) {
+        a - = b;
+    }
+
+    return a;
+}
+
 /* Thanks to Jeremy 'jercos' Sturdivant for this one. */
 static __inline__ void
 ratreduce(int64_t *num, int64_t *den)

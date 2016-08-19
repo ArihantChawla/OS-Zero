@@ -20,14 +20,14 @@
    not be smaller than the sval type.
    
 */
-#if 0
+#define REG_BITS 32
 typedef unsigned int uval;
 typedef signed int sval;
-#endif
 
-#define REG_BITS 32
-typedef uint64_t uval;
-typedef int64_t  sval;
+#if 0
+typedef uint32_t uval;
+typedef int32_t  sval;
+#endif
 
 
 /* Computes "magic info" for performing signed division by a fixed integer D.
@@ -130,7 +130,8 @@ struct magicu_info compute_unsigned_magic_info(uval D, unsigned num_bits) {
     struct magicu_info result;
     
     // Bits in a uval
-    const unsigned UVAL_BITS = sizeof(uval) * CHAR_BIT;
+//    const unsigned UVAL_BITS = sizeof(uval) * CHAR_BIT;
+    const unsigned UVAL_BITS = num_bits;    
     
     // The extra shift implicit in the difference between UVAL_BITS and num_bits
     const unsigned extra_shift = UVAL_BITS - num_bits;
@@ -283,32 +284,50 @@ int
 main(int argc, char *argv[])
 {
     struct magicu_info info;
-    unsigned long      uval;
-    unsigned long      cnt;
+    unsigned int       uval;
+    unsigned int       cnt;
+    unsigned int       nbit = sizeof(unsigned long);
 
     if (argc > 1) {
-        uval = strtoul(argv[1], NULL, 16);
-        info = compute_unsigned_magic_info(uval, 64);
+        uval = strtoul(argv[1], NULL, 10);
+        if (argc == 3) {
+            nbit = strtoul(argv[2], NULL, 10);
+        }
+        info = compute_unsigned_magic_info(uval, nbit);
     } else {
         uval = 1193182;
-        info = compute_unsigned_magic_info(1193182, 64);
+        info = compute_unsigned_magic_info(1193182, nbit);
     }
     cnt = info.post_shift;
+#if 0
     if (cnt) {
         cnt += REG_BITS;
     }
+#endif
     fprintf(stderr, "MUL: %lu, pre: %ud, post: %lu, incr %d\n",
             (unsigned long)info.multiplier,
             info.pre_shift,
             cnt,
             info.increment);
-    printf("unsigned long\n");
-    printf("divu0x%lx(unsigned long uval)\n", uval);
+    if (nbit == 32) {
+        printf("unsigned int\n");
+        printf("divu%ld(unsigned int uval)\n", uval);
+    } else {
+        printf("unsigned long\n");
+        printf("divu%ld(unsigned long uval)\n", uval);
+    }
     printf("{\n");
-    printf("\tunsigned long long mul = UINT64_C(0x%lx);\n",
-           (unsigned long)info.multiplier);
-    printf("\tunsigned long long res = uval;\n");
-    printf("\tunsigned long      cnt = %lu;\n\n", cnt);
+    if (nbit == 32) {
+        printf("\tuint32_t mul = UINT32_C(%ld);\n",
+               (unsigned long)info.multiplier);
+        printf("\tuint32_t res = uval;\n");
+        printf("\tuint32_t cnt = %lu;\n\n", cnt);
+    } else {
+        printf("\tunsigned long long mul = UINT64_C(0x%lx);\n",
+               (unsigned long)info.multiplier);
+        printf("\tunsigned long long res = uval;\n");
+        printf("\tunsigned long      cnt = %lu;\n\n", cnt);
+    }
     if (info.pre_shift) {
         printf("\tres >>= %u;\n", info.pre_shift);
     }
