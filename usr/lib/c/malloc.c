@@ -1154,7 +1154,7 @@ hashputmag(void *ptr, struct mag *mag)
     struct hashblk  *prev;
     long             res;
     long             key;
-    long             n;
+    unsigned long    n;
 
 #if (MALLOCNEWHASH) && 0
     key = hashq128uptr(upval, MALLOCNHASHBIT);
