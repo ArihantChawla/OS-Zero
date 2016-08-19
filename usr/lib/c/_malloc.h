@@ -9,6 +9,7 @@
 #define MALLOCATOMIC      1
 #define MALLOCLAZYUNMAP   1
 
+#include <stddef.h>
 #include <limits.h>
 #include <stdint.h>
 #include <malloc.h>
@@ -26,7 +27,7 @@
 
 #define MALLOCNEWMULTITAB 0
 #define MALLOCMULTITAB    1
-#define MALLOCNEWHASH     0
+#define MALLOCNEWHASH     1
 #define MALLOCHASH        0
 #define MALLOCTKTLK       0
 #define MALLOCNBTAIL      0
@@ -254,25 +255,6 @@
 #else
 #define PTRFREE              UINT64_C(0xffffffffffffffff)
 #define PTRNDX               uint64_t
-#endif
-#if (MALLOCMAPNDX)
-#define MAPNDXBITS           max(MALLOCBIGMAPLOG2 - MALLOCSLABLOG2,     \
-                                 MALLOCHUGEMAPLOG2 - MALLOCBIGMAPLOG2)
-#if (MAPNDXBITS < 8)
-#define MAPFREE              0xff
-#define MAPNDX               uint8_t
-#elif (MAPNDXBITS < 16)
-#define MAPFREE              0xffff
-#define MAPNDX               uint16_t
-#elif (MAPNDXBITS < 32)
-#define MAPFREE              0xffffffff
-#define MAPNDX               uint32_t
-#else
-#define MAPFREE              UINT64_C(0xffffffffffffffff)
-#define MAPNDX               uint64_t
-#endif
-#else /* !MALLOCMAPNDX */
-#define MAPNDX               void *
 #endif
 #endif
 
@@ -907,19 +889,24 @@ struct memhdr {
 #define getnfo(ptr)      (((uint8_t *)(ptr))[-(1 + MEMHDRBKTOFS)])
 #define setnfo(ptr, nfo) ((((uint8_t *)(ptr))[-(1 + MEMHDRBKTOFS)]) = (nfo))
 #endif /* MALLOCHDRNFO */
-
 #else /* !MALLOCHDRHACKS */
-#define MALLOCHDRNFO     0
+#define MALLOCHDRBASE    (MALLOCALIGNMENT >= (2 * PTRSIZE))
 struct memhdr {
     void *mag;
+    void *base;
 };
-//#define MEMHDRSIZE       (sizeof(void *))
+#define MEMHDRSIZE       sizeof(struct memhdr)
 
 #endif /* MALLOCHDRHACKS */
 
 #define MEMHDRMAGOFS     (offsetof(struct memhdr, mag) / sizeof(void *))
 #define setmag(ptr, mag) ((((void **)(ptr))[-(1 + MEMHDRMAGOFS)] = (mag)))
 #define getmag(ptr)      ((((void **)(ptr))[-(1 + MEMHDRMAGOFS)]))
+#if (MALLOCHDRBASE)
+#define MEMHDRBASEOFS    (offsetof(struct memhdr, base) / sizeof(void *))
+#define setbase(ptr)     ((((void **)(ptr))[-(1 + MEMHDRMAGOFS)] = (ptr)))
+#define getbase(ptr)      ((((void **)(ptr))[-(1 + MEMHDRMAGOFS)]))
+#endif
 
 #endif /* (MALLOCHDRPREFIX) */
 
