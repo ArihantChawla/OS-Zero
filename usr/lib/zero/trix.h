@@ -837,7 +837,7 @@ static __inline__
 uint32_t rem32(uint32_t a, uint32_t b)
 {
     while (a > b) {
-        a - = b;
+        a -= b;
     }
 
     return a;
