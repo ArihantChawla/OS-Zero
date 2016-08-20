@@ -3,10 +3,10 @@
 
 #define ZEROFMTX          1
 
-#define MALLOCHASH        1
-#define MALLOCARRAYHASH   1
+#define MALLOCHASH        0
+#define MALLOCARRAYHASH   0
 #define MALLOCPRIOLK      1     // use locks lifted from locklessinc.com
-#define MALLOCLFDEQ       1
+#define MALLOCLFDEQ       0
 #define MALLOCTAILQ       1
 #define MALLOCATOMIC      1
 #define MALLOCLAZYUNMAP   1
@@ -27,7 +27,7 @@
 
 /* internal stuff for zero malloc - not for the faint at heart to modify :) */
 
-#define MALLOCNEWMULTITAB 0
+#define MALLOCNEWMULTITAB 1
 #define MALLOCMULTITAB    1
 #define MALLOCNEWHASH     1
 #define MALLOCTKTLK       0
@@ -90,7 +90,7 @@
 #define MALLOCALIGNMENT      __BIGGEST_ALIGNMENT__
 #endif
 #if (!defined(MALLOCALIGNMENT))
-#define MALLOCALIGNMENT      CLSIZE
+#define MALLOCALIGNMENT      4
 #endif
 #if (MALLOCALIGNMENT == 4)
 #define MALLOCALIGNMENTSHIFT 2
@@ -609,7 +609,7 @@ static void * maginit(struct mag *mag, struct magtab *bkt, long *zeroret);
         if ((head)->next) {                                             \
             (head)->next->prev = NULL;                                  \
         }                                                               \
-        m_syncwrite(&(tab)->ptr, (head)->next);                         \
+        m_syncwrite((volatile long *)&(tab)->ptr, (head)->next);        \
     } while (0)
 
 #define magrm(mag, bkt)                                                 \
@@ -620,7 +620,8 @@ static void * maginit(struct mag *mag, struct magtab *bkt, long *zeroret);
                                                                         \
         do {                                                            \
             ;                                                           \
-        } while (m_cmpsetbit((volatile long *)&(bkt)->ptr, MALLOC_LK_BIT_POS)); \
+        } while (m_cmpsetbit((volatile long *)&(bkt)->ptr,              \
+                             MALLOC_LK_BIT_POS));                       \
         _upval = (uintptr_t)(bkt)->ptr;                                 \
         _upval &= ~MALLOC_LK_BIT;                                       \
         _mag = (struct mag *)_upval;                                    \
@@ -641,13 +642,15 @@ static void * maginit(struct mag *mag, struct magtab *bkt, long *zeroret);
         m_syncwrite((bkt)->ptr, _mag);                                  \
     } while (0)
 
+#if 0
 #define magrmhead(tab, head)                                            \
     do {                                                                \
         if ((head)->next) {                                             \
             (head)->next->prev = NULL;                                  \
         }                                                               \
-        (tab)->ptr = (head)->next;                                      \
+        m_syncwrite((volatile long *)&(tab)->ptr, (head)->next);        \
     } while (0)
+#endif
 #if 0
 #define magrm(mag, bkt, lock)                                           \
     do {                                                                \

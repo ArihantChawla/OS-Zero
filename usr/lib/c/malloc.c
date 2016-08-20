@@ -11,10 +11,13 @@
 //#undef MALLOCBUFMAG
 //#define MALLOCBUFMAG 0
 #define MALLOCVALGRINDTABS 1
-#define MALLOCDEBUG 0
-#define MALLOCTRACE 0
+#define MALLOCDEBUG 1
+#define MALLOCTRACE 1
 #define MALLOCSPINLOCKS 0
 
+#if (MALLOCDEBUG)
+#include <assert.h>
+#endif
 #include "_malloc.h"
 
 /*
@@ -886,8 +889,8 @@ hashgetblk(void)
 {
     uintptr_t        upval;
     struct hashblk  *head;
-    struct hashblk  *item;
     struct hashblk  *first;
+    struct hashblk  *item;
     struct hashblk  *cur;
     struct hashblk  *prev;
     struct hashblk **hptr;
@@ -937,7 +940,7 @@ hashgetblk(void)
     }
     /* add item->next to the head of queue; the head will be unlocked */
     cur->next = head;
-    m_atomwrite((volatile long *)hptr, cur);
+    m_syncwrite((volatile long *)hptr, first);
 
     return item;
 }
@@ -1028,9 +1031,9 @@ hashfindmag(void *ptr)
     head = (struct hashblk *)upval;
     cur = head;
     if (cur) {
+        mag = NULL;
         while (cur) {
             n = hashgetitemcnt(cur);
-            mag = NULL;
             switch (n) {
                 case 15:
                     if (cur->tab[14].key == key) {
@@ -2220,7 +2223,7 @@ mallinit(void)
        
         return;
     }
-#if defined(GNUMALLOC) && (GNUMALLOC) && 0
+#if defined(GNUMALLOC) && (GNUMALLOC)
     __malloc_hook = gnu_malloc_hook;
     __realloc_hook = gnu_realloc_hook;
     __memalign_hook = gnu_memalign_hook;
@@ -2483,6 +2486,9 @@ _malloc(size_t size,
                 ptr = ((void **)mag->stk)[ndx];
 #endif
             }
+#if (MALLOCDEBUG)
+            assert(ptr != NULL);
+#endif
             if (mag->cur == lim) {
                 do {
                     ;
@@ -2518,6 +2524,9 @@ _malloc(size_t size,
                 mag = magget(bkt, &zero);
             }
         }
+#if (MALLOCDEBUG)
+        assert(mag != NULL);
+#endif
         if (mag) {
             lim = mag->lim;
             if (lim == 1) {
@@ -2547,6 +2556,9 @@ _malloc(size_t size,
             }
         }
     }
+#if (MALLOCDEBUG)
+    assert(ptr != NULL);
+#endif
     if (ptr) {
         adr = ptr;
         ptr = clrptr(ptr);
@@ -2645,6 +2657,9 @@ _malloc(size_t size,
         errno = ENOMEM;
 #endif
     }
+#if (MALLOCDEBUG)
+    assert(ptr != NULL);
+#endif
     
     return ptr;
 }
@@ -2697,6 +2712,9 @@ _free(void *ptr)
 #endif
 #endif
     }
+#if (MALLOCDEBUG)
+    assert(mag != NULL);
+#endif
     if (mag) {
         arn = mag->arn;
 #if (MALLOCHASH) && 0
@@ -2719,6 +2737,9 @@ _free(void *ptr)
 #endif
             }
         }
+#if (MALLOCDEBUG)
+    assert(adr != NULL);
+#endif
 #if (MALLOCFREEMAP)
         /* FIXME: use m_cmpclrbit() */
         pos = magptrid(mag, adr);
@@ -2761,6 +2782,9 @@ _free(void *ptr)
             ((void **)mag->stk)[cur] = adr;
 #endif
         }
+#if (MALLOCDEBUG)
+        assert(mag != NULL);
+#endif
         lim = mag->lim;
         if (!mag->cur) {
             if (lim > 1) {
@@ -2850,7 +2874,7 @@ _realloc(void *ptr,
         _free(ptr);
     }
 #if (MALLOCDEBUG)
-    _assert(retptr != NULL);
+    assert(retptr != NULL);
 #endif
     if (!retptr) {
 #if defined(ENOMEM)
@@ -2949,7 +2973,7 @@ calloc(size_t n, size_t size)
 #endif
     ptr = _malloc(sz, 0, 1);
 #if (MALLOCDEBUG)
-    _assert(ptr != NULL);
+    assert(ptr != NULL);
 #endif
 #if (MALLOCTRACE)
     __malloctrace();
@@ -2995,7 +3019,7 @@ realloc(void *ptr,
         }
     }
 #if (MALLOCDEBUG)
-    _assert(retptr != NULL);
+    assert(retptr != NULL);
 #endif
 #if (MALLOCTRACE)
     __malloctrace();
@@ -3073,7 +3097,7 @@ aligned_alloc(size_t align,
         ptr = _malloc(size, align, 0);
     }
 #if (MALLOCDEBUG)
-    _assert(ptr != NULL);
+    assert(ptr != NULL);
 #endif
 #if (MALLOCTRACE)
     __malloctrace();
@@ -3132,7 +3156,7 @@ posix_memalign(void **ret,
         }
     }
 #if (MALLOCDEBUG)
-    _assert(ptr != NULL);
+    assert(ptr != NULL);
 #endif
     *ret = ptr;
 #if (MALLOCTRACE)
@@ -3177,7 +3201,7 @@ valloc(size_t size)
 #endif
     ptr = _malloc(size, PAGESIZE, 0);
 #if (MALLOCDEBUG)
-    _assert(ptr != NULL);
+    assert(ptr != NULL);
 #endif
 #if (MALLOCTRACE)
     __malloctrace();
@@ -3221,7 +3245,7 @@ memalign(size_t align,
         ptr = _malloc(size, align, 0);
     }
 #if (MALLOCDEBUG)
-    _assert(ptr != NULL);
+    assert(ptr != NULL);
 #endif
 #if (MALLOCTRACE)
     __malloctrace();
@@ -3261,7 +3285,7 @@ reallocf(void *ptr,
         return NULL;
     }
 #if (MALLOCDEBUG)
-    _assert(retptr != NULL);
+    assert(retptr != NULL);
 #endif
 #if (MALLOCTRACE)
     __malloctrace();
@@ -3301,7 +3325,7 @@ pvalloc(size_t size)
     }
 #endif
 #if (MALLOCDEBUG)
-    _assert(ptr != NULL);
+    assert(ptr != NULL);
 #endif
 #if (MALLOCTRACE)
     __malloctrace();
@@ -3347,7 +3371,7 @@ _aligned_malloc(size_t size,
         ptr = _malloc(size, align, 0);
     }
 #if (MALLOCDEBUG)
-    _assert(ptr != NULL);
+    assert(ptr != NULL);
 #endif
 #if (MALLOCTRACE)
     __malloctrace();
@@ -3425,7 +3449,7 @@ _mm_malloc(size_t size,
         ptr = _malloc(size, align, 0);
     }
 #if (MALLOCDEBUG)
-    _assert(ptr != NULL);
+    assert(ptr != NULL);
 #endif
 #if (MALLOCTRACE)
     __malloctrace();

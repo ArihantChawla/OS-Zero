@@ -154,8 +154,6 @@ _lfdeqfixqueue(struct lfdeq *lfdeq, TAGPTR_T head, TAGPTR_T tail)
 void
 lfdeqinitqueue(struct lfdeq *lfdeq)
 {
-    TAGPTR_T dummy;
-
     tagptrsetadr(&lfdeq->dummy, lfdeq->head);
     tagptrsetadr(&lfdeq->dummy, lfdeq->tail);
 
@@ -199,7 +197,6 @@ lfdeqdequeue(struct lfdeq *lfdeq)
     TAGPTR_T          head;
     TAGPTR_T          tail;
     LFDEQ_VAL_T       val;
-    TAGPTR_ADR_T      adr2;
     TAGPTR_TAG_T      htag;
     TAGPTR_TAG_T      ttag;
     TAGPTR_TAG_T      tag;
