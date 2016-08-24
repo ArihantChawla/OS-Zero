@@ -2498,6 +2498,8 @@ _malloc(size_t size,
                 mag->prev = NULL;
                 mag->next = NULL;
                 mag->bkt = NULL;
+            } else {
+                m_syncwrite(&bkt->ptr, mag);
             }
         } else {
             m_syncwrite(&bkt->ptr, NULL);
