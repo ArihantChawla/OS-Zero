@@ -2464,46 +2464,44 @@ _malloc(size_t size,
     }
 //    align = max(align, MALLOCALIGNMENT);
     /* try to allocate from a partially used magazine */
-    if (arn) {
-        bkt = &arn->magbuf[bktid];
-        do {
-            ;
-        } while (m_cmpsetbit((volatile long *)&(bkt)->ptr,
-                             MALLOC_LK_BIT_POS));
-        upval = (uintptr_t)mag->ptr;
-        mag = (void *)(upval & ~MALLOC_LK_BIT);
-        if (mag) {
-            lim = mag->lim;
-            if (lim == 1) {
-                ptr = mag->base;
-                mag->cur = 1;
-            } else {
-                ndx = --mag->cur;
-#if (MALLOCPTRNDX)
-                ndx = mag->stk[id];
-                ptr = magptr(mag, ndx);
-#else
-                ptr = ((void **)mag->stk)[ndx];
-#endif
-            }
-#if (MALLOCDEBUG)
-            assert(ptr != NULL);
-#endif
-            if (mag->cur == lim) {
-#if (MALLOCBUFMAG)
-                arn->magbuf[bktid].n--;
-#endif
-                magrmhead(bkt, mag);
-                mag->arn = NULL;
-                mag->prev = NULL;
-                mag->next = NULL;
-                mag->bkt = NULL;
-            } else {
-                m_syncwrite(&bkt->ptr, mag);
-            }
+    bkt = &arn->magbuf[bktid];
+    do {
+        ;
+    } while (m_cmpsetbit((volatile long *)&(bkt)->ptr,
+                         MALLOC_LK_BIT_POS));
+    upval = (uintptr_t)mag->ptr;
+    mag = (void *)(upval & ~MALLOC_LK_BIT);
+    if (mag) {
+        lim = mag->lim;
+        if (lim == 1) {
+            ptr = mag->base;
+            mag->cur = 1;
         } else {
-            m_syncwrite(&bkt->ptr, NULL);
+            ndx = --mag->cur;
+#if (MALLOCPTRNDX)
+            ndx = mag->stk[id];
+            ptr = magptr(mag, ndx);
+#else
+            ptr = ((void **)mag->stk)[ndx];
+#endif
         }
+#if (MALLOCDEBUG)
+        assert(ptr != NULL);
+#endif
+        if (mag->cur == lim) {
+#if (MALLOCBUFMAG)
+            arn->magbuf[bktid].n--;
+#endif
+            magrmhead(bkt, mag);
+            mag->arn = NULL;
+            mag->prev = NULL;
+            mag->next = NULL;
+            mag->bkt = NULL;
+        } else {
+            m_syncwrite(&bkt->ptr, mag);
+        }
+    } else {
+        m_syncwrite(&bkt->ptr, NULL);
     }
     if (!mag) {
         bkt = &g_malloc.magbuf[bktid];
