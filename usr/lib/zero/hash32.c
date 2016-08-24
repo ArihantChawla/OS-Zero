@@ -66,9 +66,12 @@ pphash(char *str)
 }
 
 #define SEED 0xf0e1d2
+/* let's try Mersenne primes */
 #define SEED32 (UINT32_C(0x7fffffff))
 #define SEED64 ((UINT64_C(2) << 61) - 1)
-/* Ramakrishna & Zobel hash function */
+/* Ramakrishna & Zobel hash function, improvised for 32- and 64-bit keys*/
+#define SHLCNT 7
+#define SHRCNT 2
 #if (LONGSIZE == 8) || (LONGLONGSIZE == 8)
 uint64_t
 #elif (LONGSIZE == 4)
@@ -85,14 +88,14 @@ razohash(void *ptr, size_t len, size_t nbit)
         uint64_t *vp = ptr;
         uint64_t  val = *vp;
 
-        hash ^= (hash << 7) + (hash >> 2) + (val & 0xffU);
-        hash ^= (hash << 7) + (hash >> 2) + ((val >> 8) & 0xffU);
-        hash ^= (hash << 7) + (hash >> 2) + ((val >> 16) & 0xffU);
-        hash ^= (hash << 7) + (hash >> 2) + ((val >> 24) & 0xffU);
-        hash ^= (hash << 7) + (hash >> 2) + ((val >> 32) & 0xffU);
-        hash ^= (hash << 7) + (hash >> 2) + ((val >> 40) & 0xffU);
-        hash ^= (hash << 7) + (hash >> 2) + ((val >> 48) & 0xffU);
-        hash ^= (hash << 7) + (hash >> 2) + ((val >> 56) & 0xffU);
+        hash ^= (hash << SHLCNT) + (hash >> SHRCNT) + (val & 0xffU);
+        hash ^= (hash << SHLCNT) + (hash >> SHRCNT) + ((val >> 8) & 0xffU);
+        hash ^= (hash << SHLCNT) + (hash >> SHRCNT) + ((val >> 16) & 0xffU);
+        hash ^= (hash << SHLCNT) + (hash >> SHRCNT) + ((val >> 24) & 0xffU);
+        hash ^= (hash << SHLCNT) + (hash >> SHRCNT) + ((val >> 32) & 0xffU);
+        hash ^= (hash << SHLCNT) + (hash >> SHRCNT) + ((val >> 40) & 0xffU);
+        hash ^= (hash << SHLCNT) + (hash >> SHRCNT) + ((val >> 48) & 0xffU);
+        hash ^= (hash << SHLCNT) + (hash >> SHRCNT) + ((val >> 56) & 0xffU);
     } else if (len == 4) {
         uint32_t *vp = ptr;
     } else {

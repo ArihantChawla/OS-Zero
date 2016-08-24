@@ -2433,7 +2433,7 @@ _mallocarn(struct magtab *bkt)
         ;
     } while (m_cmpsetbit((volatile long *)&bkt->ptr,
                          MALLOC_LK_BIT_POS));
-    upval = (uintptr_t)mag->ptr;
+    upval = (uintptr_t)bkt->ptr;
     mag = (void *)(upval & ~MALLOC_LK_BIT);
     if (mag) {
         lim = mag->lim;
