@@ -998,8 +998,10 @@ hashfindmag(void *ptr)
 
 #if (MALLOCNEWHASH) && 0
     key = hashq128uptr(upval, MALLOCNHASHBIT);
+#elif (MALLOCRAZOHASH)
+    key = razohash(upage, sizeof(uintptr_t), MALLOCNHASHBIT);
 #else
-    key = (upage * 31) & ((1UL << (MALLOCNHASHBIT)) - 1);
+    key = (upage * 127) & ((1UL << (MALLOCNHASHBIT)) - 1);
 #endif
     /* obtain bit-lock on the chain head */
     hptr = &g_malloc.hashtab[key];
@@ -1157,8 +1159,10 @@ hashputmag(void *ptr, struct mag *mag)
 
 #if (MALLOCNEWHASH) && 0
     key = hashq128uptr(upval, MALLOCNHASHBIT);
+#elif (MALLOCRAZOHASH)
+    key = razohash(upage, sizeof(uintptr_t), MALLOCNHASHBIT);
 #else
-    key = (upage * 31) & ((1UL << (MALLOCNHASHBIT)) - 1);
+    key = (upage * 127) & ((1UL << (MALLOCNHASHBIT)) - 1);
 #endif
     /* obtain bit-lock on the chain head */
     hptr = &g_malloc.hashtab[key];
@@ -2552,13 +2556,11 @@ _malloc(size_t size,
             if (mag->cur < lim) {
                 bkt = &arn->magbuf[bktid];
                 mag->arn = arn;
-#if (MALLOCBUFMAG)
-                bkt->n++;
-#endif
                 magpush(mag, bkt);
                 mag->bkt = bkt;
             } else {
                 mag->arn = NULL;
+                mag->prev = NULL;
                 mag->next = NULL;
                 mag->bkt = NULL;
             }

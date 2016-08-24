@@ -1,8 +1,10 @@
 #include <stdint.h>
 #include <stdio.h>
+#include <zero/param.h>
 
 #define _min(a, b) ((b) ^ (((a) ^ (b)) & -((a) < (b))))
 
+/* NOTE: THIS ONE IS BORKED :) */
 unsigned int
 _divu131071(unsigned int uval)
 {
@@ -15,7 +17,7 @@ _divu131071(unsigned int uval)
     
     return res;
 }
-#define _modu131071(u) ((u) - (_divu131071(u) * 131071))
+//#define _modu131071(u) ((u) - (_divu131071(u) * 131071))
 
 /* hashpwj from the dragon book as supplied on the internet */
 #define PRIME 131071    /* was 211 in the implementation I saw */
@@ -38,10 +40,8 @@ hashpjw(char *str)
         h ^= (g >> 24);
         h ^= g;
     }
-    u = _modu131071(h);
-    fprintf(stderr, "%u (%u)\n", h % PRIME, u >> 16);
 
-    return _modu131071(h);
+    return h % PRIME;
 }
 
 #define MULT 31
@@ -66,19 +66,46 @@ pphash(char *str)
 }
 
 #define SEED 0xf0e1d2
+#define SEED32 (UINT32_C(0x7fffffff))
+#define SEED64 ((UINT64_C(2) << 61) - 1)
 /* Ramakrishna & Zobel hash function */
-unsigned long
-razohash(const char *str)
+#if (LONGSIZE == 8) || (LONGLONGSIZE == 8)
+uint64_t
+#elif (LONGSIZE == 4)
+uint32_t
+#endif
+razohash(void *ptr, size_t len, size_t nbit)
 {
-    unsigned char *ucp = (unsigned char *)str;
-    unsigned long  hash = SEED;
-    unsigned int   u;
+#if (LONGSIZE == 8) || (LONGLONGSIZE == 8)
+    uint64_t hash = SEED64;
+#elif (LONGSIZE == 4)
+    uint32_t hash = (len <= 4) ? SEED32 : SEED;
+#endif
+    if (len == 8) {
+        uint64_t *vp = ptr;
+        uint64_t  val = *vp;
 
-    while (*ucp) {
-        u = *ucp;
-        hash ^= (hash << 7) + (hash >> 2) + u;
-        ucp++;
+        hash ^= (hash << 7) + (hash >> 2) + (val & 0xffU);
+        hash ^= (hash << 7) + (hash >> 2) + ((val >> 8) & 0xffU);
+        hash ^= (hash << 7) + (hash >> 2) + ((val >> 16) & 0xffU);
+        hash ^= (hash << 7) + (hash >> 2) + ((val >> 24) & 0xffU);
+        hash ^= (hash << 7) + (hash >> 2) + ((val >> 32) & 0xffU);
+        hash ^= (hash << 7) + (hash >> 2) + ((val >> 40) & 0xffU);
+        hash ^= (hash << 7) + (hash >> 2) + ((val >> 48) & 0xffU);
+        hash ^= (hash << 7) + (hash >> 2) + ((val >> 56) & 0xffU);
+    } else if (len == 4) {
+        uint32_t *vp = ptr;
+    } else {
+        unsigned char *ucp = (unsigned char *)ptr;
+        unsigned int   u;
+
+        while (*ucp) {
+            u = *ucp;
+            hash ^= (hash << 7) + (hash >> 2) + u;
+            ucp++;
+        }
     }
+    hash &= (1UL << nbit) - 1;
 
     return hash;
 }

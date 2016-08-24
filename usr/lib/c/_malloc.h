@@ -3,8 +3,9 @@
 
 #define ZEROFMTX          1
 
-#define MALLOCHASH        0
-#define MALLOCARRAYHASH   0
+#define MALLOCHASH        1
+#define MALLOCRAZOHASH    1
+#define MALLOCARRAYHASH   1
 #define MALLOCPRIOLK      1     // use locks lifted from locklessinc.com
 #define MALLOCLFDEQ       0
 #define MALLOCTAILQ       1
@@ -27,8 +28,8 @@
 
 /* internal stuff for zero malloc - not for the faint at heart to modify :) */
 
-#define MALLOCNEWMULTITAB 1
-#define MALLOCMULTITAB    1
+#define MALLOCNEWMULTITAB 0
+#define MALLOCMULTITAB    0
 #define MALLOCNEWHASH     1
 #define MALLOCTKTLK       0
 #define MALLOCNBTAIL      0
@@ -105,10 +106,10 @@
 #endif
 
 #define MALLOCNHASHITEM   (1U << MALLOCNHASHBIT)
-#if (MALLOCNEWHASH)
+#if (PTRBITS > 32)
 #define MALLOCNHASHBIT    20
 #else
-#define MALLOCNHASHBIT    20
+#define MALLOCNHASHBIT    (32 - PAGESIZELOG2)
 #endif
 
 #if (MALLOCNEWMULTITAB)
