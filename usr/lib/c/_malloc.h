@@ -604,12 +604,13 @@ static void * maginit(struct mag *mag, struct magtab *bkt, long *zeroret);
         (mag)->arn = NULL;                                              \
     } while (0)
 
-#define magrmhead(tab, head)                                            \
+#define magrmhead(bkt, head)                                            \
     do {                                                                \
         if ((head)->next) {                                             \
             (head)->next->prev = NULL;                                  \
         }                                                               \
-        m_syncwrite((volatile long *)&(tab)->ptr, (head)->next);        \
+        bktrmmag(bkt);                                                  \
+        m_syncwrite((volatile long *)&(bkt)->ptr, (head)->next);        \
     } while (0)
 
 #define magrm(mag, bkt)                                                 \
