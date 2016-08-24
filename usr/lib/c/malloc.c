@@ -3,7 +3,7 @@
  *
  * - a beta version of a new malloc for Zero.
  *
- * Copyright (C) Tuomo Petteri Ven√§l√§inen 2014-2016
+ * Copyright (C) Tuomo Petteri Ven‰l‰inen 2014-2016
  */
 
 #undef MALLOCDIAG
@@ -30,6 +30,7 @@
  * - "real" thread-local arenas to avoid locking on the fast paths
  * - much better readability thanks to dropping testing kludges and such +
  *   splitting things into a few more functions (might work a bit more on this)
+ * - adding much more testing kludges to make things a bit messy again :)
  */
 
 #if 0
@@ -56,7 +57,7 @@
 #define MALLOCVALGRIND    1
 #endif
 #define MALLOCSMALLSLABS  0
-#define MALLOCSIG         0
+#define MALLOCSIG         1
 #define MALLOC4LEVELTAB   1
     
 /*
@@ -2227,11 +2228,12 @@ mallinit(void)
     __memalign_hook = gnu_memalign_hook;
     __free_hook = gnu_free_hook;
 #endif
-#if (MALLOCSIG)
+#if (MALLOCSIG) && (!MALLOCSTAT)
     signal(SIGQUIT, mallquit);
     signal(SIGINT, mallquit);
     signal(SIGSEGV, mallquit);
     signal(SIGABRT, mallquit);
+    signal(SIGTERM, mallquit);
 #endif
 #if (MALLOCSTAT)
     atexit(mallocstat);

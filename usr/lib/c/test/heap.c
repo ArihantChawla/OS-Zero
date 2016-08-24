@@ -16,6 +16,10 @@
 #define EXIT_FAILURE 1
 #endif
 
+#if (MALLOCSTAT)
+void mallocstat(void);
+#endif
+
 struct list_node
 {
   void * m;
@@ -301,6 +305,9 @@ main(int argc, char * argv[])
 
   free(tcbs);
   assert(pthread_barrier_destroy(&barrier) == 0);
+#if (MALLOCSTAT)
+  mallocstat();
+#endif
 
   return EXIT_SUCCESS;
 }

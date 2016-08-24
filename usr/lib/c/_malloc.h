@@ -61,7 +61,7 @@
 #define MALLOCHDRPREFIX   1
 */
 #define MALLOCSMALLADR    0
-#define MALLOCSTAT        0
+#define MALLOCSTAT        1
 #define MALLOCPTRNDX      0
 #define MALLOCCONSTSLABS  1
 #define MALLOCDYNARN      0
