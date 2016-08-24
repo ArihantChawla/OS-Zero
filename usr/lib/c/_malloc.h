@@ -618,11 +618,16 @@ static void * maginit(struct mag *mag, struct magtab *bkt, long *zeroret);
         struct mag  *_mag = NULL;                                       \
         uintptr_t    _upval;                                            \
                                                                         \
+        if (mag->arn) {                                                 \
+            _mp = &(mag)->arn->magbuf[bktid].ptr;                       \
+        } else {                                                        \
+            _mp = &(bkt)->ptr;                                          \
+        }                                                               \
         do {                                                            \
             ;                                                           \
-        } while (m_cmpsetbit((volatile long *)&(bkt)->ptr,              \
+        } while (m_cmpsetbit((volatile long *)_mp,                      \
                              MALLOC_LK_BIT_POS));                       \
-        _upval = (uintptr_t)(bkt)->ptr;                                 \
+        _upval = (uintptr_t)*_mp;                                       \
         _upval &= ~MALLOC_LK_BIT;                                       \
         _mag = (struct mag *)_upval;                                    \
         if (((mag)->prev) && ((mag)->next)) {                           \
@@ -635,11 +640,12 @@ static void * maginit(struct mag *mag, struct magtab *bkt, long *zeroret);
             _mag = (mag)->next;                                         \
         } else if ((mag)->arn) {                                        \
             (mag)->arn->magbuf[bktid].ptr = NULL;                       \
+            _mag = (mag)->next;                                         \
         } else {                                                        \
             (bkt)->ptr = NULL;                                          \
         }                                                               \
         bktrmmag(bkt);                                                  \
-        m_syncwrite((bkt)->ptr, _mag);                                  \
+        m_syncwrite(_mp, _mag);                                         \
     } while (0)
 
 #if 0

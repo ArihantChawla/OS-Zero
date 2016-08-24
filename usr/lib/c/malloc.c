@@ -989,10 +989,9 @@ hashfindmag(void *ptr)
     uintptr_t        upval;
     uintptr_t        upage = (uintptr_t)ptr >> PAGESIZELOG2;
     struct mag      *mag;
-    struct hashblk  *orig;
-    struct hashblk  *cur;
-    struct hashblk  *head;
     struct hashblk **hptr;
+    struct hashblk  *head;
+    struct hashblk  *cur;
     long             res;
     long             key;
     unsigned long    n;
@@ -1044,8 +1043,6 @@ hashfindmag(void *ptr)
                 case 14:
                     if (cur->tab[13].key == key) {
                         mag = cur->tab[13].mag;
-
-                        break;
                     }
                 case 13:
                     if (cur->tab[12].key == key) {
@@ -1149,11 +1146,10 @@ hashputmag(void *ptr, struct mag *mag)
 {
     uintptr_t        upval;
     uintptr_t        upage = (uintptr_t)ptr >> PAGESIZELOG2;
-    struct hashblk  *head;
     struct hashblk **hptr;
-    struct hashblk  *cur = NULL;
+    struct hashblk  *head;
+    struct hashblk  *cur;
     struct hashblk  *item;
-    struct hashblk  *orig;
     struct hashblk  *prev;
     long             res;
     long             key;
@@ -1351,11 +1347,10 @@ hashfindmag(void *ptr, long rm)
     uintptr_t        upval;
     uintptr_t        upage = (uintptr_t)ptr >> PAGESIZELOG2;
     struct mag      *mag;
-    struct hashmag  *orig;
+    struct hashmag **hptr;
+    struct hashmag  *head;
     struct hashmag  *cur;
     struct hashmag  *prev = NULL;
-    struct hashmag  *head;
-    struct hashmag **hptr;
     long             res;
     unsigned long    key;
 
@@ -1437,7 +1432,6 @@ hashsetmag(void *ptr, struct mag *mag)
     struct hashmag **hptr;
     struct hashmag  *cur = NULL;
     struct hashmag  *item;
-    struct hashmag  *orig;
     struct hashmag  *prev;
     long             res;
     unsigned long    key;
@@ -2434,6 +2428,7 @@ _malloc(size_t size,
         long zero)
 {
     struct magtab *bkt;
+    uintptr_t      upval;
 #if (MALLOCPTRNDX)
     PTRNDX         ndx;
 #else
@@ -2471,7 +2466,12 @@ _malloc(size_t size,
     /* try to allocate from a partially used magazine */
     if (arn) {
         bkt = &arn->magbuf[bktid];
-        mag = bkt->ptr;
+        do {
+            ;
+        } while (m_cmpsetbit((volatile long *)&(bkt)->ptr,
+                             MALLOC_LK_BIT_POS));
+        upval = (uintptr_t)mag->ptr;
+        mag = (void *)(upval & ~MALLOC_LK_BIT);
         if (mag) {
             lim = mag->lim;
             if (lim == 1) {
@@ -2490,10 +2490,6 @@ _malloc(size_t size,
             assert(ptr != NULL);
 #endif
             if (mag->cur == lim) {
-                do {
-                    ;
-                } while (m_cmpsetbit((volatile long *)&(bkt)->ptr,
-                                     MALLOC_LK_BIT_POS));
 #if (MALLOCBUFMAG)
                 arn->magbuf[bktid].n--;
 #endif
@@ -2503,6 +2499,8 @@ _malloc(size_t size,
                 mag->next = NULL;
                 mag->bkt = NULL;
             }
+        } else {
+            m_syncwrite(&bkt->ptr, NULL);
         }
     }
     if (!mag) {
