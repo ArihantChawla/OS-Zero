@@ -184,10 +184,9 @@ m_flipbit(volatile int *p, int ndx)
 static __inline__ int
 m_cmpsetbit32(volatile int *p, int ndx)
 {
-    int val;
+    int val = 0;
 
-    __asm__ __volatile__ ("xorl %1, %1\n"
-                          "lock btsl %2, %0\n"
+    __asm__ __volatile__ ("lock btsl %2, %0\n"
                           "jnc 1f\n"
                           "incl %1\n"
                           "1:\n"
@@ -202,10 +201,9 @@ m_cmpsetbit32(volatile int *p, int ndx)
 static __inline__ int
 m_cmpclrbit32(volatile int *p, int ndx)
 {
-    int val;
+    int val = 0;
 
-    __asm__ __volatile__ ("xorl %1, %1\n"
-                          "lock btrl %2, %0\n"
+    __asm__ __volatile__ ("lock btrl %2, %0\n"
                           "jnc 1f\n"
                           "incl %1\n"
                           "1:\n"

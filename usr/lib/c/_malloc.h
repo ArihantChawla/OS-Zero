@@ -8,8 +8,8 @@
 #define MALLOCARRAYHASH   1
 #define MALLOCPRIOLK      1     // use locks lifted from locklessinc.com
 #define MALLOCLFDEQ       0
-#define MALLOCTAILQ       1
-#define MALLOCATOMIC      1
+#define MALLOCTAILQ       0
+#define MALLOCATOMIC      0
 #define MALLOCLAZYUNMAP   1
 
 #include <stddef.h>
@@ -80,7 +80,7 @@
 #define MALLOCBUFMAG      1 // buffer mapped slabs to global pool
 
 /* use zero malloc on a GNU system such as a Linux distribution */
-#define GNUMALLOC         1
+#define GNUMALLOC         0
 
 /* HAZARD: modifying anything below might break anything and everything BAD */
 
@@ -88,7 +88,7 @@
 
 /* compiler-specified [GCC] alignment requirement for allocations */
 #if defined(__BIGGEST_ALIGNMENT__)
-#define MALLOCALIGNMENT      __BIGGEST_ALIGNMENT__
+#define MALLOCALIGNMENT      max(__BIGGEST_ALIGNMENT__, 2 * PTRSIZE)
 #endif
 #if (!defined(MALLOCALIGNMENT))
 #define MALLOCALIGNMENT      4
@@ -109,7 +109,7 @@
 #if (PTRBITS > 32)
 #define MALLOCNHASHBIT    20
 #else
-#define MALLOCNHASHBIT    (32 - PAGESIZELOG2)
+#define MALLOCNHASHBIT    20
 #endif
 
 #if (MALLOCNEWMULTITAB)
@@ -384,8 +384,8 @@ struct memtab {
 
 #endif /* MALLOCNEWMULTITAB */
 
-#define MAGMAP        0x01
-#define MAGUSED       0x02
+#define MAGMAP        0x01UL
+#define MAGUSED       0x02UL
 #define ADRMASK       (MAGMAP | MAGUSED)
 #define PTRFLGMASK    (MAGMAP | MAGUSED)
 #define PTRADRMASK    (~PTRFLGMASK)
@@ -453,7 +453,11 @@ static void * maginit(struct mag *mag, struct magtab *bkt, long *zeroret);
     (ptr)
 #else
 #define clrptr(ptr)                                                     \
-    ((void *)((uintptr_t)ptr & ~PTRADRMASK))
+    ((void *)((uintptr_t)ptr & PTRADRMASK))
+#define markptr(mag, ptr)                                               \
+    ((void *)((uintptr_t)ptr                                            \
+              | (MAGUSED) \
+              | ((uintptr_t)(mag)->adr & PTRFLGMASK)))
 #endif
 #define clradr(adr)                                                     \
     ((uintptr_t)(adr) & ~ADRMASK)
@@ -611,7 +615,6 @@ static void * maginit(struct mag *mag, struct magtab *bkt, long *zeroret);
             (head)->next->prev = NULL;                                  \
         }                                                               \
         bktrmmag(bkt);                                                  \
-        m_syncwrite((volatile long *)&(bkt)->ptr, (head)->next);        \
     } while (0)
 
 #define magrm(mag, bkt)                                                 \
@@ -721,6 +724,9 @@ static void * maginit(struct mag *mag, struct magtab *bkt, long *zeroret);
         if (_mag) {                                                     \
             bktrmmag(bkt);                                              \
             magrmhead((bkt), _mag);                                     \
+            m_syncwrite(&(bkt)->ptr, _mag->next);                       \
+        } else {                                                        \
+            m_syncwrite(&(bkt)->ptr, NULL);                             \
         }                                                               \
         (mag) = _mag;                                                   \
     } while (0)
@@ -754,9 +760,6 @@ static void * maginit(struct mag *mag, struct magtab *bkt, long *zeroret);
         _upval &= ~MALLOC_LK_BIT;                                       \
         _mag = (struct mag *)_upval;                                    \
         (first)->prev = NULL;                                           \
-        if (lock) {                                                     \
-            __malloclk(&(bkt)->lk);                                     \
-        }                                                               \
         (last)->next = _mag;                                            \
         if ((last)->next) {                                             \
             (last)->next->prev = (last);                                \
@@ -770,36 +773,42 @@ static void * maginit(struct mag *mag, struct magtab *bkt, long *zeroret);
 #include <zero/deq.h>
 #define magqueue(mag, bkt, lock)                                        \
     do {                                                                \
-        if (lock) {                                                     \
-            __malloclk(&(bkt)->lk);                                     \
-        }                                                               \
-        deqappend(mag, &(bkt)->ptr);                                    \
-        bktaddmag(bkt);                                                 \
-        if (lock) {                                                     \
-            __mallocunlk(&(bkt)->lk);                                   \
-        }                                                               \
-    } while (0)
-#define magqueuemany(first, last, bkt, lock, n)                         \
-    do {                                                                \
-        DEQ_TYPE *_list = (bkt)->ptr;                                   \
+        struct mag *_mag = NULL;                                        \
+        uintptr_t   _upval;                                             \
                                                                         \
-        if (lock) {                                                     \
-            __malloclk(&(bkt)->lk);                                     \
-        }                                                               \
-        if (_list) {                                                    \
-            _list->prev->next = (first);                                \
-            (first)->prev = _list->prev;                                \
-            (last)->next = _list;                                       \
-            _list->prev = (last);                                       \
+        do {                                                            \
+            ;                                                           \
+        } while (m_cmpsetbit((volatile long *)&(bkt)->ptr, MALLOC_LK_BIT_POS)); \
+        _upval = (uintptr_t)(bkt)->ptr;                                 \
+        _upval &= ~MALLOC_LK_BIT;                                       \
+        _mag = (struct mag *)_upval;                                    \
+        deqappend(mag, mag);                                            \
+        bktaddmag(bkt);                                                 \
+        m_syncwrite(&(bkt)->ptr, _mag);                                 \
+    } while (0)
+#define magqueuemany(first, last, bkt, n)                               \
+    do {                                                                \
+        struct mag *_mag = NULL;                                        \
+        uintptr_t   _upval;                                             \
+                                                                        \
+        do {                                                            \
+            ;                                                           \
+        } while (m_cmpsetbit((volatile long *)&(bkt)->ptr, MALLOC_LK_BIT_POS)); \
+        _upval = (uintptr_t)(bkt)->ptr;                                 \
+        _upval &= ~MALLOC_LK_BIT;                                       \
+        _mag = (struct mag *)_upval;                                    \
+        if (_mag) {                                                     \
+            _mag->prev->next = (first);                                 \
+            (first)->prev = _mag->prev;                                 \
+            (last)->next = _mag;                                        \
+            _mag->prev = (last);                                        \
         } else {                                                        \
             (first)->prev = (last);                                     \
             (last)->next = (first);                                     \
-            _list = (first);                                            \
+            _mag = (first);                                             \
         }                                                               \
         bktaddmany(bkt, n);                                             \
-        if (lock) {                                                     \
-            __mallocunlk(&(bkt)->lk);                                   \
-        }                                                               \
+        m_syncwrite(&(bkt)->ptr, (first));                              \
     } while (0)
 #endif /* MALLOCTAILQ */
 
@@ -858,9 +867,13 @@ struct malloc {
 #elif (MALLOCNBKT == 32)
     uint32_t                 magemptybits;
 #endif
+#if (MALLOCHASHSTAT)
+    struct hashstat         *hashstat;
+#endif
 #if (MALLOCARRAYHASH)
     struct hashblk          *hashblkbuf;
     struct hashblk         **hashtab;
+    uint8_t                 *hashmap;
 #elif (PTRBITS == 32)
     struct memtab            pagedir[PTRBITS - PAGESIZELOG2];
 #elif (MALLOCNEWMULTITAB)
@@ -931,13 +944,13 @@ struct memhdr {
 
 #endif /* MALLOCHDRHACKS */
 
-#define MEMHDRMAGOFS     (offsetof(struct memhdr, mag) / sizeof(void *))
-#define setmag(ptr, mag) ((((void **)(ptr))[-(1 + MEMHDRMAGOFS)] = (mag)))
-#define getmag(ptr)      ((((void **)(ptr))[-(1 + MEMHDRMAGOFS)]))
+#define MEMHDRMAGOFS       (offsetof(struct memhdr, mag) / sizeof(void *))
+#define setmag(ptr, mag)   ((((void **)(ptr))[-(1 + MEMHDRMAGOFS)] = (mag)))
+#define getmag(ptr)        ((((void **)(ptr))[-(1 + MEMHDRMAGOFS)]))
 #if (MALLOCHDRBASE)
-#define MEMHDRBASEOFS    (offsetof(struct memhdr, base) / sizeof(void *))
-#define setbase(ptr)     ((((void **)(ptr))[-(1 + MEMHDRMAGOFS)] = (ptr)))
-#define getbase(ptr)      ((((void **)(ptr))[-(1 + MEMHDRMAGOFS)]))
+#define MEMHDRBASEOFS      (offsetof(struct memhdr, base) / sizeof(void *))
+#define setbase(ptr, base) ((((void **)(ptr))[-(1 + MEMHDRMAGOFS)] = (ptr)))
+#define getbase(ptr)       ((((void **)(ptr))[-(1 + MEMHDRMAGOFS)]))
 #endif
 
 #endif /* (MALLOCHDRPREFIX) */

@@ -85,7 +85,7 @@ razohash(void *ptr, size_t len, size_t nbit)
     uint32_t hash = (len <= 4) ? SEED32 : SEED;
 #endif
     if (len == 8) {
-        uint64_t *vp = ptr;
+        uint64_t *vp = (uint64_t *)&ptr;
         uint64_t  val = *vp;
 
         hash ^= (hash << SHLCNT) + (hash >> SHRCNT) + (val & 0xffU);

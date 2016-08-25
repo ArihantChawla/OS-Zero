@@ -19,6 +19,9 @@
 #if (MALLOCSTAT)
 void mallocstat(void);
 #endif
+#if (MALLOCHASHSTAT)
+void mallochashstat(void);
+#endif
 
 struct list_node
 {
@@ -307,6 +310,9 @@ main(int argc, char * argv[])
   assert(pthread_barrier_destroy(&barrier) == 0);
 #if (MALLOCSTAT)
   mallocstat();
+#endif
+#if (MALLOCHASHSTAT)
+  mallochashstat();
 #endif
 
   return EXIT_SUCCESS;

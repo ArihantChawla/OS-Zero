@@ -6,7 +6,7 @@
 #include <zero/op128.h>
 #elif (defined(__i386__) || defined(__i486__)                           \
        || defined(__i586__) || defined(__i686__))
-#include <zero/ia32/bignum.h>
+//#include <zero/ia32/bignum.h>
 #include <zero/op64.h>
 #elif defined(__arm__)
 #include <zero/arm/bignum.h>

@@ -12,7 +12,7 @@
 #endif
 
 #if defined(USEINT64) && (USEINT64)
-typedef op64_t             int64_t;
+typedef int64_t            op64_t;
 #define OP64_ZERO          INT64_C(0)
 #else
 #if (__BYTE_ORDER == __LITTLE_ENDIAN)
@@ -31,8 +31,6 @@ typedef struct {
 
 #define op64zero(dest)     (*(op64_t *)dest = OP64_ZERO)
 #define op64cpy(src, dest) (*(op64_t *)dest = *(op64_t *)src)
-
-#endif /* __x86_64__ || __amd64__ */
 
 #endif /* __ZERO_OP64_H__ */
 
