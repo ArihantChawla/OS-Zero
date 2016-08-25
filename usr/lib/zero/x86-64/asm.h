@@ -282,9 +282,10 @@ m_cmpxchg128(volatile long *p64,
 static __inline__ long
 m_cmpsetbit64(volatile long *p, long ndx)
 {
-    long val = 0;
+    long val;
 
-    __asm__ __volatile__ ("lock btsq %2, %0\n"
+    __asm__ __volatile__ ("xorq %1, %1\n"
+                          "lock btsq %2, %0\n"
                           "jnc 1f\n"
                           "incq %1\n"
                           "1:\n"
@@ -299,11 +300,12 @@ m_cmpsetbit64(volatile long *p, long ndx)
 static __inline__ long
 m_cmpclrbit64(volatile long *p, long ndx)
 {
-    long val = 0;
+    long val;
 
-    __asm__ __volatile__ ("lock btrq %2, %0\n"
+    __asm__ __volatile__ ("xorq %1, %1\n"
+                          "lock btrq %2, %0\n"
                           "jnc 1f\n"
-                          "movq $0x01, %1\n"
+                          "incq %1\n"
                           "1:\n"
                           : "=m" (*(p)), "=r" (val)
                           : "r" (ndx)

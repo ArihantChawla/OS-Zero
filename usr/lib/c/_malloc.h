@@ -6,6 +6,7 @@
 #define MALLOCHASH        1
 #define MALLOCRAZOHASH    1
 #define MALLOCARRAYHASH   1
+#define MALLOCNEWHASH     0
 #define MALLOCPRIOLK      1     // use locks lifted from locklessinc.com
 #define MALLOCLFDEQ       0
 #define MALLOCTAILQ       0
@@ -30,7 +31,6 @@
 
 #define MALLOCNEWMULTITAB 0
 #define MALLOCMULTITAB    0
-#define MALLOCNEWHASH     1
 #define MALLOCTKTLK       0
 #define MALLOCNBTAIL      0
 #define MALLOCNBDELAY     0
@@ -55,7 +55,7 @@
 #define MALLOCVALGRIND    1
 #define MALLOCHDRHACKS    0
 #define MALLOCNEWHDR      0
-#define MALLOCHDRPREFIX   1
+#define MALLOCHDRPREFIX   0
 /*
 #define MALLOCNEWHDR      1
 #define MALLOCHDRPREFIX   1
@@ -826,6 +826,8 @@ struct mallopt {
 struct hashmag {
     struct mag *mag;
     long        key;
+    long        nref;
+    long        flg;
 };
 
 /* this structure is tuned for 8 machine words (cacheline) */
@@ -838,10 +840,10 @@ struct hashmag {
 struct hashblk {
     long            info;
     struct hashblk *next;
-    struct hashmag  tab[(2 * CLSIZE
-                         - sizeof(long)
-                         - sizeof(void *))
-                        / sizeof(void *)];
+    struct hashmag  tab[15];
+    uint8_t         _pad[15 * sizeof(struct hashmag)
+                         - sizeof(void *)
+                         - sizeof(long)];
 };
 
 #elif (MALLOCHASH)
@@ -870,18 +872,18 @@ struct malloc {
 #if (MALLOCHASHSTAT)
     struct hashstat         *hashstat;
 #endif
-#if (MALLOCARRAYHASH)
+#if (PTRBITS == 32)
+    struct memtab            pagedir[PTRBITS - PAGESIZELOG2];
+#elif (MALLOCARRAYHASH)
     struct hashblk          *hashblkbuf;
     struct hashblk         **hashtab;
     uint8_t                 *hashmap;
-#elif (PTRBITS == 32)
-    struct memtab            pagedir[PTRBITS - PAGESIZELOG2];
-#elif (MALLOCNEWMULTITAB)
-    LOCK                    *pagedirlktab;
-    struct memtab           *pagedir;
 #elif (MALLOCHASH)
+    struct memtab           *pagedir;
     struct hashmag          *hashbuf;
     struct hashmag         **maghash;
+#elif (MALLOCNEWMULTITAB)
+    LOCK                    *pagedirlktab;
 #elif (MALLOCFREETABS)
     LOCK                    *pagedirlktab;
     struct memtab           *pagedir;
