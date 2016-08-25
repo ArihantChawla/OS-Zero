@@ -36,7 +36,7 @@
 #define MALLOCNBDELAY     0
 #define MALLOCNBSTK       0
 #define MALLOCNBHEADLK    0
-#define MALLOCFREEMAP     0
+#define MALLOCFREEMAP     1
 #define MALLOCSLABTAB     0
 
 #define PTHREAD           1
@@ -287,6 +287,8 @@ static void * gnu_memalign_hook(size_t align, size_t size);
 static void   gnu_free_hook(void *ptr);
 #endif /* defined(GNUMALLOC) */
 
+#if (MALLOCMULTITAB)
+
 #define MALLOCPAGETAB     1
 
 #if (PTRBITS == 32)
@@ -348,6 +350,8 @@ static void   gnu_free_hook(void *ptr);
                            & ((1UL << PAGEDIRNL3BIT) - 1))
 #endif
 
+#endif /* MALLOCMULTITAB */
+
 #if (MALLOCNEWMULTITAB)
 
 #define MALLOC_TAB_LK_POS 0x00
@@ -396,7 +400,7 @@ struct mag {
     volatile long  lk;
     long           cur;
     long           lim;
-#if (MALLOCPTRNDX)
+#if (MALLOCPTRNDX) && 0
     PTRNDX        *stk;
     PTRNDX        *idtab;
 #else
@@ -614,7 +618,7 @@ static void * maginit(struct mag *mag, struct magtab *bkt, long *zeroret);
         if ((head)->next) {                                             \
             (head)->next->prev = NULL;                                  \
         }                                                               \
-        bktrmmag(bkt);                                                  \
+        (bkt)->ptr = (head)->next;                                      \
     } while (0)
 
 #define magrm(mag, bkt)                                                 \
@@ -710,22 +714,26 @@ static void * maginit(struct mag *mag, struct magtab *bkt, long *zeroret);
 #endif
 #define MALLOC_LK_BIT_POS 0
 #define MALLOC_LK_BIT     (1L << 0)
-#define magpop(bkt, mag)                                                \
+#define magpop(bkt, mag, lk)                                            \
     do {                                                                \
         struct mag *_mag = NULL;                                        \
         uintptr_t   _upval;                                             \
                                                                         \
-        do {                                                            \
-            ;                                                           \
-        } while (m_cmpsetbit((volatile long *)&(bkt)->ptr, MALLOC_LK_BIT_POS)); \
+        if (!lk) {                                                      \
+            do {                                                        \
+                ;                                                       \
+            } while (m_cmpsetbit((volatile long *)&(bkt)->ptr, MALLOC_LK_BIT_POS)); \
+        }                                                               \
         _upval = (uintptr_t)(bkt)->ptr;                                 \
         _upval &= ~MALLOC_LK_BIT;                                       \
         _mag = (struct mag *)_upval;                                    \
         if (_mag) {                                                     \
             bktrmmag(bkt);                                              \
             magrmhead((bkt), _mag);                                     \
-            m_syncwrite(&(bkt)->ptr, _mag->next);                       \
-        } else {                                                        \
+            if (!lk) {                                                  \
+                m_syncwrite(&(bkt)->ptr, _mag->next);                   \
+            }                                                           \
+        } else if (!lk) {                                               \
             m_syncwrite(&(bkt)->ptr, NULL);                             \
         }                                                               \
         (mag) = _mag;                                                   \
@@ -825,9 +833,7 @@ struct mallopt {
 
 struct hashmag {
     struct mag *mag;
-    long        key;
-    long        nref;
-    long        flg;
+    void       *ptr;
 };
 
 /* this structure is tuned for 8 machine words (cacheline) */
@@ -841,9 +847,6 @@ struct hashblk {
     long            info;
     struct hashblk *next;
     struct hashmag  tab[15];
-    uint8_t         _pad[15 * sizeof(struct hashmag)
-                         - sizeof(void *)
-                         - sizeof(long)];
 };
 
 #elif (MALLOCHASH)
@@ -883,6 +886,7 @@ struct malloc {
     struct hashmag          *hashbuf;
     struct hashmag         **maghash;
 #elif (MALLOCNEWMULTITAB)
+    struct memtab           *pagedir;
     LOCK                    *pagedirlktab;
 #elif (MALLOCFREETABS)
     LOCK                    *pagedirlktab;

@@ -11,7 +11,7 @@
 //#undef MALLOCBUFMAG
 //#define MALLOCBUFMAG 0
 #define MALLOCVALGRINDTABS 1
-#define MALLOCDEBUG 1
+#define MALLOCDEBUG 0
 #define MALLOCTRACE 0
 #define MALLOCSPINLOCKS 0
 
@@ -384,11 +384,9 @@ maggethdr(long bktid)
 #if (MALLOCLFDEQ)
     mag = magdequeue(&g_malloc.hdrbuf[bktid]);
 #else
-    magpop(&g_malloc.hdrbuf[bktid], mag);
+    magpop(&g_malloc.hdrbuf[bktid], mag, 0);
 #endif
-    if (mag) {
-        mag->bktid = bktid;
-    } else {
+    if (!mag) {
         if (magembedtab(bktid)) {
             n = MALLOCNBUFHDR;
             sz = MALLOCHDRSIZE;
@@ -508,7 +506,7 @@ magget(long bktid, struct magtab *bkt, long *zeroret)
 
 #if (MALLOCLAZYUNMAP)
 
-#define MALLOCUNMAPFREQ (1L << 6)
+#define MALLOCUNMAPFREQ (1L << 16)
 
 static void
 mapfree(struct mag *mag)
@@ -537,13 +535,18 @@ mapfree(struct mag *mag)
 #endif
         VALGRINDRMPOOL(adr);
         magsetfree(mag);
-        if (!magembedtab(bktid)) {
+        if ((mag->lim > 1) && !magembedtab(bktid)) {
+            mag->cur = 0;
+            mag->lim = 0;
             mag->stk = NULL;
 #if (MALLOCPTRNDX)
             mag->idtab = NULL;
 #else
             mag->ptrtab = NULL;
 #endif
+            mag->base = NULL;
+            mag->adr = NULL;
+            mag->size = 0;
 #if (MALLOCFREEMAP)
             mag->freemap = NULL;
 #endif
@@ -966,12 +969,12 @@ hashgetblk(void)
             pthread_yield();
         }
     }
-    head = *hptr;
+    head = g_malloc.hashblkbuf;
     upval = (uintptr_t)head;
     upval &= ~MALLOC_HASH_MARK_BIT;
     head = (struct hashblk *)upval;
     if (head) {
-        m_syncwrite(&g_malloc.hashblkbuf, head->next);
+        m_syncwrite((volatile long *)hptr, head->next);
 
         return head;
     }
@@ -985,14 +988,16 @@ hashgetblk(void)
     prev = item;
     cur = item;
     cur++;
+    n--;
     first = cur;
+    prev = first;
     while (--n) {
-        prev = cur;
         cur++;
         prev->next = cur;
+        prev = cur;
     }
+    cur->next = NULL;
     /* add item->next to the head of queue; the head will be unlocked */
-    cur->next = head;
     m_syncwrite((volatile long *)hptr, first);
 
     return item;
@@ -1023,7 +1028,7 @@ hashbufblk(struct hashblk *blk)
             pthread_yield();
         }
     }
-    head = *hptr;
+    head = g_malloc.hashblkbuf;
     upval = (uintptr_t)head;
     upval &= ~MALLOC_HASH_MARK_BIT;
     head = (struct hashblk *)upval;
@@ -1042,7 +1047,7 @@ hashbufblk(struct hashblk *blk)
 static struct mag *
 hashfindmag(void *ptr, long act)
 {
-    uintptr_t        upval = (uintptr_t)ptr >> PAGESIZELOG2;
+    uintptr_t        upval = (uintptr_t)ptr;
     struct mag      *mag;
     struct hashblk **hptr;
     struct hashmag  *blk;
@@ -1102,91 +1107,91 @@ hashfindmag(void *ptr, long act)
             n = hashgetitemcnt(cur);
             switch (n) {
                 case 15:
-                    if (cur->tab[14].key == key) {
+                    if (cur->tab[14].ptr == ptr) {
                         blk = &cur->tab[14];
 
                         break;
                     }
                 case 14:
-                    if (cur->tab[13].key == key) {
+                    if (cur->tab[13].ptr == ptr) {
                         blk = &cur->tab[13];
 
                         break;
                     }
                 case 13:
-                    if (cur->tab[12].key == key) {
+                    if (cur->tab[12].ptr == ptr) {
                         blk = &cur->tab[12];
 
                         break;
                     }
                 case 12:
-                    if (cur->tab[11].key == key) {
+                    if (cur->tab[11].ptr == ptr) {
                         blk = &cur->tab[11];
 
                         break;
                     }
                 case 11:
-                    if (cur->tab[10].key == key) {
+                    if (cur->tab[10].ptr == ptr) {
                         blk = &cur->tab[10];
 
                         break;
                     }
                 case 10:
-                    if (cur->tab[9].key == key) {
+                    if (cur->tab[9].ptr == ptr) {
                         blk = &cur->tab[9];
 
                         break;
                     }
                 case 9:
-                    if (cur->tab[8].key == key) {
+                    if (cur->tab[8].ptr == ptr) {
                         blk = &cur->tab[8];
 
                         break;
                     }
                 case 8:
-                    if (cur->tab[7].key == key) {
+                    if (cur->tab[7].ptr == ptr) {
                         blk = &cur->tab[7];
 
                         break;
                     }
                 case 7:
-                    if (cur->tab[6].key == key) {
+                    if (cur->tab[6].ptr == ptr) {
                         blk = &cur->tab[6];
 
                         break;
                     }
                 case 6:
-                    if (cur->tab[5].key == key) {
+                    if (cur->tab[5].ptr == ptr) {
                         blk = &cur->tab[5];
 
                         break;
                     }
                 case 5:
-                    if (cur->tab[4].key == key) {
+                    if (cur->tab[4].ptr == ptr) {
                         blk = &cur->tab[4];
 
                         break;
                     }
                 case 4:
-                    if (cur->tab[3].key == key) {
+                    if (cur->tab[3].ptr == ptr) {
                         blk = &cur->tab[3];
 
                         break;
                     }
                 case 3:
-                    if (cur->tab[2].key == key) {
+                    if (cur->tab[2].ptr == ptr) {
                         blk = &cur->tab[2];
 
                         break;
                     }
                 case 2:
-                    if (cur->tab[1].key == key) {
+                    if (cur->tab[1].ptr == ptr) {
                         blk = &cur->tab[1];
 
                         break;
                     }
                 case 1:
-                    if (cur->tab[0].key == key) {
+                    if (cur->tab[0].ptr == ptr) {
                         blk = &cur->tab[0];
 
                         break;
@@ -1201,12 +1206,10 @@ hashfindmag(void *ptr, long act)
                     mag = blk->mag;
                 } else if (act == MALLOCHASHPUT) {
                     blk->mag = mag;
-                    blk->nref++;
-                } else if (act == MALLOCHASHGET && !--blk->nref) {
+                    blk->ptr = ptr;
+                } else if (act == MALLOCHASHGET) {
                     mag = blk->mag;
-                    blk->key = 0;
-                    blk->mag = NULL;
-                } else {
+                    blk->ptr = NULL;
                 }
                 if (prev) {
                     prev->next = cur->next;
@@ -1219,6 +1222,14 @@ hashfindmag(void *ptr, long act)
             prev = cur;
             cur = cur->next;
         }
+    }
+    if (!cur && act == MALLOCHASHPUT) {
+        cur = hashgetblk();
+        cur->tab[0].mag = mag;
+        cur->tab[0].ptr = ptr;
+        hashsetitemcnt(cur, 1);
+        cur->next = head;
+        head = cur;
     }
     m_syncwrite(hptr, head);
 
@@ -2317,7 +2328,7 @@ mallinit(void)
     if (g_malloc.maghash == MAP_FAILED) {
         abort();
     }
-#elif (MALLOCFREETABS) && (PTRBITS > 32)
+#elif (MALLOCFREETABS) && (PTRBITS > 32) && (MALLOCMULTITAB)
     g_malloc.pagedir = mapanon(g_malloc.zerofd,
                                PAGEDIRNL1KEY * sizeof(struct memtab));
     if (g_malloc.pagedir == MAP_FAILED) {
@@ -2326,7 +2337,7 @@ mallinit(void)
 #if (MALLOCSTAT)
     ntabbyte += PAGEDIRNL1KEY * sizeof(struct memtab);
 #endif
-#elif (PTRBITS > 32) /* !MALLOCHASH && !MALLOCFREETABS */
+#elif (PTRBITS > 32) && !(MALLOCHDRPREFIX) /* !MALLOCHASH && !MALLOCFREETABS */
     g_malloc.pagedir = mapanon(g_malloc.zerofd,
                                PAGEDIRNL1KEY * sizeof(void *));
     if (g_malloc.pagedir == MAP_FAILED) {
@@ -2523,21 +2534,44 @@ _malloc(size_t size,
         m_syncwrite(&bkt->ptr, mag->next);
     } else {
         m_syncwrite(&bkt->ptr, NULL);
-    }
-    if (!mag) {
         bkt = &g_malloc.magbuf[bktid];
-#if (MALLOCLFDEQ)
-        mag = magdequeue(bkt);
-#else
-        magpop(bkt, mag);
-#endif
+        do {
+            ;
+        } while (m_cmpsetbit((volatile long *)&bkt->ptr,
+                             MALLOC_LK_BIT_POS));
+        upval = (uintptr_t)bkt->ptr;
+        mag = (void *)(upval & ~MALLOC_LK_BIT);
         if (!mag) {
-            bkt = &g_malloc.freebuf[bktid];
+            m_syncwrite(&bkt->ptr, NULL);
+        } else {
 #if (MALLOCLFDEQ)
             mag = magdequeue(bkt);
 #else
-            magpop(bkt, mag);
+            magpop(bkt, mag, 0);
 #endif
+            if (!mag) {
+                bkt = &g_malloc.freebuf[bktid];
+                do {
+                    ;
+                } while (m_cmpsetbit((volatile long *)&bkt->ptr,
+                                     MALLOC_LK_BIT_POS));
+                upval = (uintptr_t)bkt->ptr;
+                mag = (void *)(upval & ~MALLOC_LK_BIT);
+                if (!mag) {
+                    m_syncwrite(&bkt->ptr, NULL);
+                } else {
+#if (MALLOCLFDEQ)
+                    mag = magdequeue(bkt);
+#else
+                    magpop(bkt, mag, 1);
+#endif
+                    if (mag) {
+                        m_syncwrite(&bkt->ptr, mag->next);
+                    } else {
+                        m_syncwrite(&bkt->ptr, NULL);
+                    }
+                }
+            }
         }
         if (!mag) {
             bkt = &arn->magbuf[bktid];
@@ -2547,6 +2581,10 @@ _malloc(size_t size,
         assert(mag != NULL);
 #endif
         if (mag) {
+            do {
+                ;
+            } while (m_cmpsetbit((volatile long *)&mag->lk,
+                                 MALLOC_LK_BIT_POS));
             lim = mag->lim;
             if (lim == 1) {
                 ptr = mag->base;
@@ -2578,6 +2616,8 @@ _malloc(size_t size,
                 mag->next = NULL;
                 mag->bkt = NULL;
             }
+            m_cmpclrbit((volatile long *)&mag->lk,
+                        MALLOC_LK_BIT_POS);
         }
     }
 #if (MALLOCDEBUG)
@@ -2597,40 +2637,53 @@ _malloc(size_t size,
             _memsetbk(ptr, perturb, size);
         }
 #if (MALLOCHDRPREFIX)
-//        if (sz <= PAGESIZE) {
-            /* store unaligned source pointer and mag address */
-            ptr += max(align, MALLOCALIGNMENT);
+        /* store unaligned source pointer and mag address */
+        ptr += max(align, MALLOCALIGNMENT);
 #if (MALLOCSTAT)
-            if (!align) {
-                nhdrbyte += MALLOCALIGNMENT;
-            }
+        if (!align) {
+            nhdrbyte += MALLOCALIGNMENT;
+        }
 #endif
-            if (align) {
+        if (align) {
                 if ((uintptr_t)ptr & (align - 1)) {
                     ptr = ptralign(ptr, align);
                 }
-            }
-            setmag(ptr, mag);
+        }
+        setmag(ptr, mag);
 #if (MALLOCHDRBASE)
-            setbase(ptr, adr);
+        setbase(ptr, adr);
 #endif
-//        } else {
 #else /* !MALLOCHDRPREFIX */
-            if (align) {
-                if ((uintptr_t)ptr & (align - 1)) {
-                    ptr = ptralign(ptr, align);
-                }
+        if (align) {
+            if ((uintptr_t)ptr & (align - 1)) {
+                ptr = ptralign(ptr, align);
             }
+        }
 #if (MALLOCARRAYHASH)
-//            if (!((uintptr_t)adr & MAGUSED)) {
-                hashputmag(ptr, mag);
-//            }
+        if (!((uintptr_t)adr & MAGUSED)) {
+            hashputmag(ptr, mag);
+        }
 #elif (MALLOCHASH)
-            hashsetmag(ptr, mag);
+        hashsetmag(ptr, mag);
 #elif (MALLOCMULTITAB)
-            mtsetmag(ptr, mag);
+        mtsetmag(ptr, mag);
 #endif
-//        }
+#endif /* MALLOCHDRPREFIX */
+#if 0
+        if (align) {
+            if ((uintptr_t)ptr & (align - 1)) {
+                ptr = ptralign(ptr, align);
+            }
+        }
+#if (MALLOCARRAYHASH)
+        if (!((uintptr_t)adr & MAGUSED)) {
+            hashputmag(ptr, mag);
+        }
+#elif (MALLOCHASH)
+        hashsetmag(ptr, mag);
+#elif (MALLOCMULTITAB)
+        mtsetmag(ptr, mag);
+#endif
 #endif
 #if (MALLOCPTRNDX)
         magputid(mag, ptr, ndx);
@@ -2644,7 +2697,9 @@ _malloc(size_t size,
         __malloclk(&mag->freelk);
         if (((mag->lim == 1) && (mag->freemap))
             || ((mag->lim > 1) && bitset(mag->freemap, magptrid(mag, adr)))) {
+#if (MALLOCDEBUG)
             magprint(mag);
+#endif
             fprintf(stderr, "trying to reallocate block");
             fflush(stderr);
             
@@ -2710,6 +2765,14 @@ _free(void *ptr)
         thrinit();
         thrflg |= MALLOCINIT;
     }
+#if (MALLOCHDRPREFIX)
+    if ((uintptr_t)ptr & (PAGESIZE - 1)) {
+        mag = getmag(ptr);
+#if (MALLOCHDRBASE)
+        adr = getbase(ptr);
+#endif
+    }
+#else /* !MALLOCHDRPREFIX */
 #if (MALLOCARRAYHASH)
     mag = hashfindmag(ptr, MALLOCHASHGET);
 #elif (MALLOCHASH)
@@ -2717,23 +2780,19 @@ _free(void *ptr)
 #elif (MALLOCMULTITAB)
     mag = mtfindmag(ptr);
 #endif
-#if (MALLOCHDRPREFIX)
-    if (!mag) {
-        mag = getmag(ptr);
-#if (MALLOCHDRBASE)
-        adr = getbase(ptr);
-#endif
-    }
-#endif
+#endif /* MALLOCHDRPREFIX */
 #if (MALLOCDEBUG)
-//    assert(mag != NULL);
+    assert(mag != NULL);
 #endif
     if (mag) {
+        do {
+            ;
+        } while (m_cmpsetbit((volatile long *)&mag->lk,
+                             MALLOC_LK_BIT_POS));
         arn = mag->arn;
-        if (!adr) {
-            adr = markptr(mag, ptr);
-        }
-#if !(MALLOCARRAYHASH)
+#if (MALLOCHDRPREFIX)
+        setmag(ptr, NULL);
+#elif !(MALLOCARRAYHASH)
 #if (MALLOCHASH)
         hashsetmag(ptr, NULL);
 #endif
@@ -2754,28 +2813,35 @@ _free(void *ptr)
         lim = mag->lim;
         if (lim == 1) {
             adr = mag->base;
-        } else {
+        } else if (!adr) {
             adr = maggetptr(mag, ptr);
         }
+        ptr = clrptr(adr);
+        adr = markptr(mag, adr);
+#if (MALLOCDEBUG)
+        assert(ptr != NULL);
+#endif
 #if (MALLOCFREEMAP)
         /* FIXME: use m_cmpclrbit() */
-        pos = magptrid(mag, adr);
+        pos = magptrid(mag, ptr);
         __malloclk(&mag->freelk);
         if ((mag->lim == 1 && (mag->freemap))
             || ((mag->lim > 1) && !bitset(mag->freemap, pos))) {
+#if (MALLOCDEBUG)
             magprint(mag);
+#endif
             fprintf(stderr, "trying to free an unused block\n");
             
             abort();
         } else if (mag->cur == 1) {
             mag->freemap = (void *)(~(uintptr_t)NULL);
         } else {
-            clrbit(mag->freemap, magptrid(mag, adr));
+            clrbit(mag->freemap, magptrid(mag, ptr));
         }
         __mallocunlk(&mag->freelk);
 #endif
         if (lim == 1) {
-            mag->ptr = adr;
+            mag->base = ptr;
         } else {
 #if (MALLOCATOMIC)
             id = m_fetchadd(&mag->cur, -1);
@@ -2787,10 +2853,10 @@ _free(void *ptr)
             ndx = magptrid(mag, ptr);
             mag->stk[id] = ndx;
 #else
-            ((void **)mag->stk)[id] = adr;
+            ((void **)mag->stk)[id] = ptr;
 #endif
-         }
-        if (!mag->cur) {
+        }
+        if (!id) {
             arn = &thrarn;
             mapflg = (uintptr_t)mag->adr & MAGMAP;
             if (lim > 1 || (mapflg)) {
@@ -2816,7 +2882,7 @@ _free(void *ptr)
                 mag->bkt = bkt;
                 magpush(mag, bkt);
             }
-        } else if (mag->cur == lim - 1) {
+        } else if (lim > 1 && id == lim - 1) {
             bkt = &g_malloc.magbuf[bktid];
             /* queue an unqueued earlier fully allocated magazine */
             mag->bkt = bkt;
@@ -2828,10 +2894,11 @@ _free(void *ptr)
             magpush(mag, bkt);
 #endif
         }
-#if (MALLOCDEBUG)
-        assert(mag != NULL);
-#endif
+        m_cmpclrbit(&mag->lk, MALLOC_LK_BIT_POS);
     }
+#if (MALLOCDEBUG)
+    assert(mag != NULL);
+#endif
 #if (MALLOCDIAG)
     mallocdiag();
 #endif
@@ -2860,6 +2927,8 @@ _realloc(void *ptr,
                        ? hashfindmag(ptr)
                        : NULL);
 #elif (MALLOCHDRPREFIX)
+    struct mag *mag = getmag(ptr);
+#elif (MALLOCHDRPREFIX) && 0
     struct mag *mag = (((uintptr_t)ptr & (PAGESIZE - 1))
                        ? mtfindmag(ptr)
                        : getmag(ptr));
@@ -3539,6 +3608,8 @@ malloc_usable_size(void *ptr)
 #elif (MALLOCMULTITAB) || (MALLOCNEWMULTITAB)
     struct mag *mag = mtfindmag(ptr);
 #elif (MALLOCHDRPREFIX)
+    struct mag *mag = getmag(ptr);
+#elif (MALLOCHDRPREFIX) && 0
     struct mag *mag = (((uintptr_t)ptr & (PAGESIZE - 1))
                        ? mtfindmag(ptr)
                        : getmag(ptr));
@@ -3588,6 +3659,8 @@ malloc_size(void *ptr)
 #elif (MALLOCMULTITAB) || (MALLOCNEWMULTITAB)
     struct mag     *mag = mtfindmag(ptr);
 #elif (MALLOCHDRPREFIX)
+    struct mag     *mag = getmag(ptr);
+#elif (MALLOCHDRPREFIX) && 0
     struct mag     *mag = (((uintptr_t)ptr & (PAGESIZE - 1))
                            ? mtfindmag(ptr)
                            : getmag(ptr));
