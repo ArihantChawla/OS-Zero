@@ -3,11 +3,11 @@
 
 #define ZEROFMTX          1
 
-#define MALLOCHASH        1
-#define MALLOCRAZOHASH    1
-#define MALLOCARRAYHASH   1
+#define MALLOCHASH        0
+#define MALLOCRAZOHASH    0
+#define MALLOCARRAYHASH   0
 #define MALLOCNEWHASH     0
-#define MALLOCPRIOLK      1     // use locks lifted from locklessinc.com
+#define MALLOCPRIOLK      0     // use locks lifted from locklessinc.com
 #define MALLOCLFDEQ       0
 #define MALLOCTAILQ       0
 #define MALLOCATOMIC      0
@@ -30,7 +30,7 @@
 /* internal stuff for zero malloc - not for the faint at heart to modify :) */
 
 #define MALLOCNEWMULTITAB 0
-#define MALLOCMULTITAB    0
+#define MALLOCMULTITAB    1
 #define MALLOCTKTLK       0
 #define MALLOCNBTAIL      0
 #define MALLOCNBDELAY     0
@@ -76,7 +76,7 @@
 #define DEBUGMTX          0
 
 #define MALLOCNOSBRK      1 // do NOT use sbrk()/heap, just mmap()
-#define MALLOCFREETABS    1 // use free block bitmaps; bit 1 for allocated
+#define MALLOCFREETABS    0 // use free block bitmaps; bit 1 for allocated
 #define MALLOCBUFMAG      1 // buffer mapped slabs to global pool
 
 /* use zero malloc on a GNU system such as a Linux distribution */
@@ -853,8 +853,8 @@ struct hashblk {
 
 struct hashmag {
     volatile long   nref;
-    uintptr_t       upval;
-    struct mag     *adr;
+    void           *ptr;
+    struct mag     *mag;
     struct hashmag *next;
 };
 
@@ -877,6 +877,9 @@ struct malloc {
 #endif
 #if (PTRBITS == 32)
     struct memtab            pagedir[PTRBITS - PAGESIZELOG2];
+#elif (MALLOCMULTITAB)
+    LOCK                    *pagedirlktab;
+    struct memtab          **pagedir;
 #elif (MALLOCARRAYHASH)
     struct hashblk          *hashblkbuf;
     struct hashblk         **hashtab;
@@ -885,16 +888,6 @@ struct malloc {
     struct memtab           *pagedir;
     struct hashmag          *hashbuf;
     struct hashmag         **maghash;
-#elif (MALLOCNEWMULTITAB)
-    struct memtab           *pagedir;
-    LOCK                    *pagedirlktab;
-#elif (MALLOCFREETABS)
-    LOCK                    *pagedirlktab;
-    struct memtab           *pagedir;
-#if 0
-    LOCK                    *slabdirlktab;
-    struct memtab           *slabdir;
-#endif
 #else
     void                   **pagedir;
     void                   **slabdir;
