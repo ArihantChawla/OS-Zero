@@ -354,8 +354,9 @@ blkbktid(size_t size)
 static void
 magputhdr(struct mag *mag)
 {
-    long        bktid = mag->bktid;
+    long bktid = mag->bktid;
 
+    mag->bkt = &g_malloc.hdrbuf[bktid];
 #if (MALLOCLFDEQ)
     magenqueue(mag, &g_malloc.hdrbuf[bktid]);
 #elif (MALLOCTAILQ)
@@ -402,14 +403,17 @@ maggethdr(long bktid)
         mag = ret;
         ptr = ret;
         lim = n;
+        bkt = &g_malloc.hdrbuf[bktid];
         mag->adr = mag;
         mag->bktid = bktid;
+        mag->bkt = bkt;
         last = NULL;
         while (--lim) {
             ptr += sz;
             hdr = (struct mag *)ptr;
             hdr->adr = hdr;
             hdr->bktid = bktid;
+            hdr->bkt = bkt;
 #if (MALLOCLFDEQ)
             tagptrinitadr(last, hdr->node.prev);
             if (last) {
@@ -511,10 +515,11 @@ magget(long bktid, struct magtab *bkt, long *zeroret)
 static void
 mapfree(struct mag *mag)
 {
-    struct arn *arn;
-    long        bktid = mag->bktid;
-    void       *adr;
-    long        nfree;
+    struct arn    *arn;
+    struct magtab *bkt;
+    long           bktid = mag->bktid;
+    void          *adr;
+    long           nfree;
 
     arn = &thrarn;
     nfree = m_fetchadd(&mag->nfree, 1);
@@ -555,6 +560,8 @@ mapfree(struct mag *mag)
             magputhdr(mag);
         }
     } else {
+        bkt = &arn->magbuf[bktid];
+        mag->bkt = bkt;
 #if (MALLOCTAILQ)
         magqueue(mag, &arn->magbuf[bktid], 0);
 #else
@@ -1545,7 +1552,7 @@ hashsetmag(void *ptr, struct mag *mag)
     return NULL;
 }
 
-#else /* !MALLOCFREETABS */
+#elif (!MALLOCHDRPREFIX)
 
 static void
 mtsetmag(void *ptr,
@@ -2155,8 +2162,8 @@ _malloc(size_t size,
             if (id < lim) {
                 bkt = &arn->magbuf[bktid];
                 mag->arn = arn;
-                magpush(mag, bkt);
                 mag->bkt = bkt;
+                magpush(mag, bkt);
             } else {
                 mag->arn = NULL;
                 mag->prev = NULL;
@@ -2313,12 +2320,10 @@ _free(void *ptr)
         thrflg |= MALLOCINIT;
     }
 #if (MALLOCHDRPREFIX)
-    if ((uintptr_t)ptr & (PAGESIZE - 1)) {
-        mag = getmag(ptr);
+    mag = getmag(ptr);
 #if (MALLOCHDRBASE)
-        adr = getbase(ptr);
+    adr = getbase(ptr);
 #endif
-    }
 #else /* !MALLOCHDRPREFIX */
 #if (MALLOCARRAYHASH)
     mag = hashfindmag(ptr, MALLOCHASHGET);
@@ -2413,6 +2418,7 @@ _free(void *ptr)
             if ((arn) && arn->magbuf[bktid].n < magnarnbuf(bktid)) {
                 bkt = &arn->magbuf[bktid];;
                 mag->arn = arn;
+                mag->bkt = bkt;
                 magpush(mag, bkt);
             } else if ((uintptr_t)mag->adr & MAGMAP) {
                 /* unmap slab */

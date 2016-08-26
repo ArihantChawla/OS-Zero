@@ -30,7 +30,7 @@
 /* internal stuff for zero malloc - not for the faint at heart to modify :) */
 
 #define MALLOCNEWMULTITAB 0
-#define MALLOCMULTITAB    1
+#define MALLOCMULTITAB    0
 #define MALLOCTKTLK       0
 #define MALLOCNBTAIL      0
 #define MALLOCNBDELAY     0
@@ -55,7 +55,7 @@
 #define MALLOCVALGRIND    1
 #define MALLOCHDRHACKS    0
 #define MALLOCNEWHDR      0
-#define MALLOCHDRPREFIX   0
+#define MALLOCHDRPREFIX   1
 /*
 #define MALLOCNEWHDR      1
 #define MALLOCHDRPREFIX   1

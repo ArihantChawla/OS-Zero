@@ -40,7 +40,7 @@ void plasmasync(void);
 #include <kern/io/drv/pc/vbe.h>
 #include <kern/unit/x86/asm.h>
 #include <kern/unit/x86/pit.h>
-#include <kern/unit/i387/math.h>
+#include <kern/math/i387/math.h>
 #endif
 
 #if (__KERNEL__)
