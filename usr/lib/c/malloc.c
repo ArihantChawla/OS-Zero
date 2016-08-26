@@ -882,28 +882,37 @@ maginittab(struct mag *mag, long bktid)
 static void
 prefork(void)
 {
-    long ndx;
+    long   ndx;
+#if (MALLOCATOMIC)
+    long   res;
+    void **bptr;
+#endif
 
     __malloclk(&g_malloc.initlk);
     __malloclk(&g_malloc.heaplk);
-#if 0
     for (ndx = 0 ; ndx < MALLOCNBKT ; ndx++) {
+#if (MALLOCATOMIC)
+        bptr = &g_malloc.hdrbuf[ndx].ptr;
+        do {
+            res = m_cmpsetbit((volatile long *)bptr,
+                              MALLOC_LK_BIT_POS);
+        } while (res);
+        bptr = &g_malloc.magbuf[ndx].ptr;
+        do {
+            res = m_cmpsetbit((volatile long *)bptr,
+                              MALLOC_LK_BIT_POS);
+        } while (res);
+        bptr = &g_malloc.freebuf[ndx].ptr;
+        do {
+            res = m_cmpsetbit((volatile long *)bptr,
+                              MALLOC_LK_BIT_POS);
+        } while (res);
+#else
         __malloclk(&g_malloc.hdrbuf[ndx].lk);
         __malloclk(&g_malloc.magbuf[ndx].lk);
         __malloclk(&g_malloc.freebuf[ndx].lk);
-    }
-#if (MALLOCMULTITAB)
-    for (ndx = 0 ; ndx < PAGEDIRNL1KEY ; ndx++) {
-#if (MALLOCSPINLOCKS)
-        __malloclkspin(&g_malloc.pagedirlktab[ndx]);
-//        __malloclkspin(&g_malloc.slabdirlktab[ndx]);
-#elif (!MALLOCHASH)
-        __malloclk(&g_malloc.pagedirlktab[ndx]);
-//        __malloclk(&g_malloc.slabdirlktab[ndx]);
 #endif
     }
-#endif
-#endif
     
     return;
 }
@@ -911,24 +920,28 @@ prefork(void)
 static void
 postfork(void)
 {
-    long ndx;
+    long   ndx;
+#if (MALLOCATOMIC)
+    void **bptr;
+#endif
 
-#if 0
-#if (MALLOCMULTITAB)
-    for (ndx = 0 ; ndx < PAGEDIRNL1KEY ; ndx++) {
-#if (MALLOCSPINLOCKS)
-        __mallocunlkspin(&g_malloc.pagedirlktab[ndx]);
-#else
-        __mallocunlk(&g_malloc.pagedirlktab[ndx]);
-#endif
-    }
-#endif
     for (ndx = 0 ; ndx < MALLOCNBKT ; ndx++) {
+#if (MALLOCATOMIC)
+        bptr = &g_malloc.freebuf[ndx].ptr;
+        m_cmpclrbit((volatile long *)bptr,
+                    MALLOC_LK_BIT_POS);
+        bptr = &g_malloc.magbuf[ndx].ptr;
+        m_cmpclrbit((volatile long *)bptr,
+                    MALLOC_LK_BIT_POS);
+        bptr = &g_malloc.hdrbuf[ndx].ptr;
+        m_cmpclrbit((volatile long *)bptr,
+                    MALLOC_LK_BIT_POS);
+#else
         __malloclk(&g_malloc.freebuf[ndx].lk);
         __malloclk(&g_malloc.magbuf[ndx].lk);
         __malloclk(&g_malloc.hdrbuf[ndx].lk);
+#endif
     }
-#endif /* 0 */
     __mallocunlk(&g_malloc.heaplk);
     __mallocunlk(&g_malloc.initlk);
     

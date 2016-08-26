@@ -11,7 +11,7 @@
 #define MALLOCPRIOLK      1     // use locks lifted from locklessinc.com
 #define MALLOCLFDEQ       0
 #define MALLOCTAILQ       0
-#define MALLOCATOMIC      0
+#define MALLOCATOMIC      1
 #define MALLOCLAZYUNMAP   1
 
 #include <stddef.h>
