@@ -36,7 +36,7 @@
 #define MALLOCNBDELAY     0
 #define MALLOCNBSTK       0
 #define MALLOCNBHEADLK    0
-#define MALLOCFREEMAP     1
+#define MALLOCFREEMAP     0
 #define MALLOCSLABTAB     0
 
 #define PTHREAD           1
