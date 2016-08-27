@@ -284,14 +284,25 @@ m_cmpsetbit64(volatile long *p, long ndx)
 {
     long val;
 
-    __asm__ __volatile__ ("xorq %1, %1\n"
-                          "lock btsq %2, %0\n"
-                          "jnc 1f\n"
-                          "incq %1\n"
-                          "1:\n"
-                          : "=m" (*(p)), "=r" (val)
-                          : "r" (ndx)
-                          : "memory");
+    if (IMMEDIATE(ndx)) {
+        __asm__ __volatile__ ("xorq %1, %1\n"
+                              "lock btsq %2, %0\n"
+                              "jnc 1f\n"
+                              "incq %1\n"
+                              "1:\n"
+                              : "+m" (*(p)), "=r" (val)
+                              : "i" (ndx)
+                              : "cc", "memory");
+    } else {
+        __asm__ __volatile__ ("xorq %1, %1\n"
+                              "lock btsq %2, %0\n"
+                              "jnc 1f\n"
+                              "incq %1\n"
+                              "1:\n"
+                              : "+m" (*(p)), "=r" (val)
+                              : "r" (ndx)
+                              : "cc", "memory");
+    }
 
     return val;
 }
@@ -302,14 +313,25 @@ m_cmpclrbit64(volatile long *p, long ndx)
 {
     long val;
 
-    __asm__ __volatile__ ("xorq %1, %1\n"
-                          "lock btrq %2, %0\n"
-                          "jnc 1f\n"
-                          "incq %1\n"
-                          "1:\n"
-                          : "=m" (*(p)), "=r" (val)
-                          : "r" (ndx)
-                          : "memory");
+    if (IMMEDIATE(ndx)) {
+        __asm__ __volatile__ ("xorq %1, %1\n"
+                              "lock btrq %2, %0\n"
+                              "jnc 1f\n"
+                              "incq %1\n"
+                              "1:\n"
+                              : "+m" (*(p)), "=r" (val)
+                              : "i" (ndx)
+                              : "cc", "memory");
+    } else {
+        __asm__ __volatile__ ("xorq %1, %1\n"
+                              "lock btrq %2, %0\n"
+                              "jnc 1f\n"
+                              "incq %1\n"
+                              "1:\n"
+                              : "+m" (*(p)), "=r" (val)
+                              : "r" (ndx)
+                              : "cc", "memory");
+    }
 
     return val;
 }
