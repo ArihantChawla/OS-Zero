@@ -262,21 +262,21 @@ lfdeqdequeue(struct lfdeq *lfdeq)
                     
                     return val;
                 }
-            }
-        } else if (hptr == tptr) {
+            } else if (hptr == tptr) {
                 
-            return LFDEQ_VAL_NONE;
-        } else {
-            tagptrgettag(item, tag);
-            tagptrgettag(head, htag);
-            if (tag != htag) {
-                _lfdeqfixqueue(lfdeq, head, tail);
-                
-                continue;
+                return LFDEQ_VAL_NONE;
+            } else {
+                tagptrgettag(item, tag);
+                tagptrgettag(head, htag);
+                if (tag != htag) {
+                    _lfdeqfixqueue(lfdeq, head, tail);
+                    
+                    continue;
+                }
+                tag = htag + 1;
+                tagptrsettag(tag, item);
+                tagptrcmpswap(&lfdeq->head, &head, &item);
             }
-            tag = htag + 1;
-            tagptrsettag(tag, item);
-            tagptrcmpswap(&lfdeq->head, &head, &item);
         }
     } while (1);
 

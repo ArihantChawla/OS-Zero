@@ -96,12 +96,12 @@ memcpy(void *dest,
 /* TESTED OK */
 static void *
 _memcpybk(void *dest,
-          void *src,
+          const void *src,
           size_t n)
 {
     unsigned long *ulptr1;
     unsigned long *ulptr2;
-    uint8_t       *u8ptr1;
+    const uint8_t *u8ptr1;
     uint8_t       *u8ptr2;
     size_t         cnt;
     size_t         nleft;

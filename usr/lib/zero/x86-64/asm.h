@@ -18,6 +18,9 @@ extern uint64_t asmgetpc(void);
 #define m_cmpswapu(p, want, val)   m_cmpxchgu64(p, want, val)
 #define m_cmpswapptr(p, want, val) m_cmpxchg64ptr(p, want, val)
 #define m_cmpswapdbl(p, want, val) m_cmpxchg128(p, want, val)
+#define m_setbit(p, ndx)           m_setbit64(p, ndx)
+#define m_clrbit(p, ndx)           m_clrbit64(p, ndx)
+#define m_flipbit(p, ndx)          m_flipbit64(p, ndx)
 #define m_cmpsetbit(p, ndx)        m_cmpsetbit64(p, ndx)
 #define m_cmpclrbit(p, ndx)        m_cmpclrbit64(p, ndx)
 #define m_scanlo1bit(l)            m_bsf64(l)
@@ -133,10 +136,10 @@ static __inline__ long
 m_xadd64(volatile long *p,
          long val)
 {
-    __asm__ __volatile__ ("lock xaddq %%rax, %q2\n"
-                          : "=a" (val)
-                          : "a" (val), "m" (*(p))
-                          : "memory");
+    __asm__ __volatile__ ("lock xaddq %1, %q0\n"
+                          : "+m" (*(p)), "=a" (val)
+                          :
+                          : "cc", "memory");
 
     return val;
 }
@@ -150,10 +153,10 @@ static __inline__ unsigned long
 m_xaddu64(volatile unsigned long *p,
           unsigned long val)
 {
-    __asm__ __volatile__ ("lock xaddq %%rax, %q2\n"
-                          : "=a" (val)
-                          : "a" (val), "m" (*(p))
-                          : "memory");
+    __asm__ __volatile__ ("lock xaddq %1, %q0\n"
+                          : "+m" (*(p)), "=a" (val)
+                          :
+                          : "cc", "memory");
 
     return val;
 }
@@ -277,6 +280,40 @@ m_cmpxchg128(volatile long *p64,
 }
 
 #endif
+
+/* atomic set bit operation */
+static INLINE void
+m_setbit64(volatile int *p, int ndx)
+{
+    __asm__ __volatile__ ("lock btsq %1, %0\n"
+                          : "=m" (*(p))
+                          : "Ir" (ndx)
+                          : "memory");
+
+    return;
+}
+
+/* atomic reset/clear bit operation */
+static INLINE void
+m_clrbit64(volatile int *p, int ndx)
+{
+    __asm__ __volatile__ ("lock btrq %1, %0\n"
+                          : "=m" (*((uint8_t *)(p) + (ndx >> 3)))
+                          : "Ir" (ndx));
+
+    return;
+}
+
+/* atomic flip/toggle bit operation */
+static INLINE void
+m_flipbit64(volatile int *p, int ndx)
+{
+    __asm__ __volatile__ ("lock btcq %1, %0\n"
+                          : "=m" (*((uint8_t *)(p) + (ndx >> 3)))
+                          : "Ir" (ndx));
+
+    return;
+}
 
 /* atomic set and test bit operation; returns the old value */
 static __inline__ long
