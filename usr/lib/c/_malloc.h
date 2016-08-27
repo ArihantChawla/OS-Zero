@@ -239,7 +239,7 @@
 
 /* internal macros */
 #define ptralign(ptr, pow2)                                             \
-    ((void *)rounduppow2((uintptr_t)(ptr), pow2))
+    ((void *)rounduppow2((uintptr_t)(ptr), (pow2)))
 
 #if defined(__GLIBC__) || (defined(GNUMALLOC) && (GNUMALLOC))
 #if !defined(__MALLOC_HOOK_VOLATILE)
@@ -395,7 +395,7 @@ struct memhdr {
     void *mag;
     void *base;
 };
-#define MEMHDRSIZE       sizeof(struct memhdr)
+#define MEMHDRSIZE         sizeof(struct memhdr)
 
 #endif /* MALLOCHDRHACKS */
 
@@ -408,6 +408,46 @@ struct memhdr {
 #define setbase(ptr, base) ((((void **)(ptr))[-(1 + MEMHDRBASEOFS)] = (ptr)))
 #define getbase(ptr)       ((((void **)(ptr))[-(1 + MEMHDRBASEOFS)]))
 #endif
+#endif /* MALLOCHDRPREFIX */
+#if 0
+#if (MALLOCHDRPREFIX)
+#define MEMHDRMAGOFS       (offsetof(struct memhdr, mag) / sizeof(void *))
+static __inline__ void
+setmag(void *ptr, struct mag *mag)
+{
+    m_syncwrite(&((void **)ptr)[-(1 + MEMHDRMAGOFS)], mag);
+
+    return;
+}
+static __inline__ struct mag *
+getmag(void *ptr)
+{
+    struct mag *mag;
+    
+    m_syncread(((void **)ptr)[-(1 + MEMHDRMAGOFS)], mag);
+
+    return mag;
+}
+#if (MALLOCHDRBASE)
+#define MEMHDRBASEOFS      (offsetof(struct memhdr, base) / sizeof(void *))
+static __inline__ void
+setbase(void *ptr, void *base)
+{
+    m_syncwrite(&((void **)ptr)[-(1 + MEMHDRBASEOFS)], base);
+
+    return;
+}
+static __inline__ void *
+getbase(void *ptr)
+{
+    void *adr;
+    
+    m_syncread(((void **)ptr)[-(1 + MEMHDRBASEOFS)], adr);
+
+    return adr;
+}
+#endif /* MALLOCHDRBASE */
+#endif /* 0 */
 #endif /* MALLOCHDRPREFIX */
 
 #endif /* (MALLOCHDRPREFIX) */
@@ -476,9 +516,9 @@ struct magbkt {
     struct mag    *tab;
 };
 
-static void * maginitslab(struct mag *mag, struct magtab *bkt, long *zeroret);
+static void * maginitslab(struct mag *mag, long bktid, long *zeroret);
 static void * maginittab(struct mag *mag, long bktid);
-static void * maginit(struct mag *mag, struct magtab *bkt, long *zeroret);
+static void * maginit(struct mag *mag, long bktid, long *zeroret);
 
 #if (!PTRFLGMASK)
 #define clrptr(ptr)                                                     \

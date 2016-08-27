@@ -457,13 +457,13 @@ maggethdr(long bktid)
 }
 
 static void *
-maginit(struct mag *mag, struct magtab *bkt, long *zeroret)
+maginit(struct mag *mag, long bktid, long *zeroret)
 {
     if (!mag->stk) {
-        maginittab(mag, mag->bktid);
+        maginittab(mag, bktid);
     }
     if (!mag->base) {
-        if (!maginitslab(mag, bkt, zeroret)) {
+        if (!maginitslab(mag, bktid, zeroret)) {
             
             return NULL;
         }
@@ -473,12 +473,12 @@ maginit(struct mag *mag, struct magtab *bkt, long *zeroret)
 }
 
 static struct mag *
-magget(long bktid, struct magtab *bkt, long *zeroret)
+magget(long bktid, long *zeroret)
 {
     struct mag *mag = maggethdr(bktid);
     
     if (mag) {
-        if (!maginit(mag, bkt, zeroret)) {
+        if (!maginit(mag, bktid, zeroret)) {
             
             return NULL;
         }
@@ -730,9 +730,8 @@ thrinit(void)
 }
 
 static void *
-maginitslab(struct mag *mag, struct magtab *bkt, long *zeroret)
+maginitslab(struct mag *mag, long bktid, long *zeroret)
 {
-    long        bktid = mag->bktid;
     void      **stk;
     size_t      sz = 1UL << bktid;
     long        n = magnblk(bktid);
@@ -785,7 +784,6 @@ maginitslab(struct mag *mag, struct magtab *bkt, long *zeroret)
         mag->size = rounduppow2(n * sz, PAGESIZE);
         mag->cur = 0;
         mag->lim = n;
-        mag->tab = bkt;
         if (gtpow2(n, 1)) {
             stk = mag->stk;
             ndx = 0;
@@ -2031,7 +2029,7 @@ _malloc(size_t size,
     uint8_t       *adr;
     uint8_t       *ptr = NULL;
 #if (MALLOCHDRPREFIX)
-    size_t         sz = ((align <= MALLOCALIGNMENT)
+    size_t         sz = ((align <= max(MEMHDRSIZE, MALLOCALIGNMENT))
                          ? (size + max(MEMHDRSIZE, MALLOCALIGNMENT))
                          : (size + max(MEMHDRSIZE, MALLOCALIGNMENT) + align));
 #else
@@ -2119,7 +2117,7 @@ _malloc(size_t size,
             }
             if (!mag) {
                 bkt = &arn->magbuf[bktid];
-                mag = magget(bktid, bkt, &zeroflg);
+                mag = magget(bktid, &zeroflg);
             }
         }
 #if (MALLOCDEBUG)
@@ -2160,8 +2158,8 @@ _malloc(size_t size,
     assert(ptr != NULL);
 #endif
     if (ptr) {
-        adr = clrptr(ptr);
-        ptr = adr;
+        ptr = clrptr(ptr);
+        adr = ptr;
         sz = 1UL << bktid;
         if ((zero) && (zeroflg)) {
 //            _memsetbk(ptr, 0, sz);
@@ -2347,9 +2345,9 @@ _free(void *ptr)
         lim = mag->lim;
 #if (!MALLOCHDRPREFIX)
         if (lim == 1) {
-            ptr = mag->base;
+            adr = mag->base;
         } else if (!adr) {
-            ptr = maggetptr(mag, ptr);
+            adr = maggetptr(mag, ptr);
         }
 //        ptr = clrptr(adr);
 #endif
@@ -2361,7 +2359,7 @@ _free(void *ptr)
         /* FIXME: use m_cmpclrbit() */
         __malloclk(&mag->freelk);
         if (lim == 1 && (mag->freemap)
-            || ((mag->lim > 1) && !bitset(mag->freemap, magptrid(mag, ptr)))) {
+            || ((mag->lim > 1) && !bitset(mag->freemap, magptrid(mag, adr)))) {
 #if (MALLOCDEBUG)
             magprint(mag);
 #endif
@@ -2371,13 +2369,13 @@ _free(void *ptr)
         } else if (mag->cur == 1) {
             mag->freemap = (void *)(~(uintptr_t)NULL);
         } else {
-            clrbit(mag->freemap, magptrid(mag, ptr));
+            clrbit(mag->freemap, magptrid(mag, adr));
         }
         __mallocunlk(&mag->freelk);
 #endif
         if (lim == 1) {
             ndx = 0;
-            mag->base = clrptr(ptr);
+            mag->base = clrptr(adr);
             mag->adr = adr;
             mag->cur = 0;
         } else {
