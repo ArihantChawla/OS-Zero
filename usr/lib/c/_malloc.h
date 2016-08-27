@@ -1,6 +1,7 @@
 #ifndef ___MALLOC_H__
 #define ___MALLOC_H__
 
+#define MALLOCDEBUGLIST   1
 #define MALLOCBUFMAPTABS  1
 #define MALLOCPARANOIA    0
 #define ZEROFMTX          1
@@ -14,7 +15,7 @@
 #define MALLOCLFDEQ       0
 #define MALLOCTAILQ       0
 #define MALLOCATOMIC      1
-#define MALLOCLAZYUNMAP   0
+#define MALLOCLAZYUNMAP   1
 
 #include <stddef.h>
 #include <limits.h>
@@ -75,7 +76,7 @@
 #define MALLOCDIAG        0 // run [heavy] internal diagnostics for debugging
 #define DEBUGMTX          0
 
-#define MALLOCNOSBRK      1 // do NOT use sbrk()/heap, just mmap()
+#define MALLOCNOSBRK      0 // do NOT use sbrk()/heap, just mmap()
 #define MALLOCFREETABS    0 // use free block bitmaps; bit 1 for allocated
 #define MALLOCBUFMAG      0 // buffer mapped slabs to global pool
 #define MALLOCBUFMAP      1
@@ -116,9 +117,9 @@
 /* <= MALLOCSLABLOG2 are tried to get from heap #if (!MALLOCNOSBRK) */
 /* <= MALLOCSLABLOG2 are allocated 1UL << MALLOCBIGSLABLOG2 bytes per slab */
 #define MALLOCSLABLOG2    20
-#define MALLOCBIGSLABLOG2 23
-#define MALLOCBIGMAPLOG2  25
-#define MALLOCHUGEMAPLOG2 28
+//#define MALLOCBIGSLABLOG2 23
+#define MALLOCBIGMAPLOG2  23
+#define MALLOCHUGEMAPLOG2 26
 
 #if !defined(MALLOCALIGNMENT) || (MALLOCALIGNMENT == 32)
 #define MALLOCMINLOG2     5     // stuff such as SIMD types
@@ -453,25 +454,21 @@ getbase(void *ptr)
 #endif /* (MALLOCHDRPREFIX) */
 
 #define MAGMAP        0x01UL
-#define MAGUSED       0x02UL
-#define ADRMASK       (MAGMAP | MAGUSED)
-#define PTRFLGMASK    (MAGMAP | MAGUSED)
-#define PTRADRMASK    (~PTRFLGMASK)
 #define MALLOCHDRSIZE PAGESIZE
 /* magazines for larger/fewer allocations embed the tables in the structure */
 /* magazine header structure */
 struct mag {
-    volatile long  lk;
     struct arn    *arn;
     void          *base;
     void          *adr;
-    long           bktid;
+    void          *ptr;
     long           cur;
     long           lim;
     void          *stk;
 #if !defined(MALLOCHDRBASE) || (!MALLOCHDRBASE)
     void          *ptrtab;
 #endif
+    long           bktid;
 #if (MALLOCLAZYUNMAP)
     long           nfree;
 #endif
@@ -493,6 +490,10 @@ struct magtab {
 #if (MALLOCBUFMAG) || (MALLOCBUFMAP)
     unsigned long  n;
 #endif
+#if (MALLOCDEBUGLIST)
+    char          *file;
+    int            line;
+#else
     uint8_t        _pad[CLSIZE
 #if (MALLOCLFDEQ)
                         - sizeof(struct lfdeq)
@@ -501,6 +502,7 @@ struct magtab {
                         - sizeof(long)
 #endif
                         - sizeof(void *)];
+#endif
 };
 
 #define MALLOCARNSIZE rounduppow2(sizeof(struct arn), PAGESIZE)
@@ -520,21 +522,8 @@ static void * maginitslab(struct mag *mag, long bktid, long *zeroret);
 static void * maginittab(struct mag *mag, long bktid);
 static void * maginit(struct mag *mag, long bktid, long *zeroret);
 
-#if (!PTRFLGMASK)
-#define clrptr(ptr)                                                     \
-    (ptr)
-#else
-#define clrptr(ptr)                                                     \
-    ((void *)((uintptr_t)ptr & PTRADRMASK))
-#define markptr(ptr)                                                    \
-    ((void *)((uintptr_t)ptr | MAGUSED))
-
-#endif
-#define clradr(adr)                                                     \
-    ((uintptr_t)(adr) & ~ADRMASK)
 #define ptrdiff(ptr1, ptr2)                                             \
     ((uintptr_t)(ptr2) - (uintptr_t)(ptr1))
-
 #define magptrid(mag, ptr)                                              \
     (((uintptr_t)clrptr(ptr) - (uintptr_t)(mag)->base) >> (mag)->bktid)
 #if (!MALLOCHDRPREFIX)
@@ -550,9 +539,9 @@ static void * maginit(struct mag *mag, long bktid, long *zeroret);
  */
 #define magnmaplog2(bktid)                                              \
     (((bktid) < MALLOCBIGMAPLOG2)                                       \
-     ? (MALLOCBIGMAPLOG2 - (bktid) + 2)                                 \
+     ? (min(MALLOCBIGMAPLOG2 - (bktid) + 2, 3))                         \
      : (((bktid < MALLOCHUGEMAPLOG2)                                    \
-         ? (MALLOCHUGEMAPLOG2 - (bktid) + 1)                            \
+         ? (min(MALLOCHUGEMAPLOG2 - (bktid) + 1, 2))                    \
          : 0)))
 
 #define magnblklog2(bktid)                                              \
@@ -571,7 +560,7 @@ static void * maginit(struct mag *mag, long bktid, long *zeroret);
 #if (MALLOCBUFMAP)
 #define magnglobbuflog2(bktid)                                          \
     (((bktid) <= MALLOCSLABLOG2)                                        \
-     ? ULONG_MAX                                                        \
+     ? LONG_MAX                                                         \
      : (((bktid) <= MALLOCBIGMAPLOG2)                                   \
         ? (ADRBITS - (bktid) - 6)                                       \
         : (((bktid <= MALLOCHUGEMAPLOG2)                                \
@@ -706,22 +695,21 @@ static void * maginit(struct mag *mag, long bktid, long *zeroret);
         (head)->tab = NULL;                                             \
     } while (0)
 
-#define magrm(mag, bkt)                                                 \
+#define magrm(mag, bkt, lk)                                             \
     do {                                                                \
-        struct mag **_mp = &(bkt)->ptr;                                 \
+        struct mag **_mptr = &(bkt)->ptr;                               \
         struct mag  *_mag = NULL;                                       \
         uintptr_t    _upval;                                            \
                                                                         \
-        if (mag->arn) {                                                 \
-            _mp = &(mag)->arn->magbuf[bktid].ptr;                       \
-        } else {                                                        \
-            _mp = &(bkt)->ptr;                                          \
+        if (lk) {                                                       \
+            do {                                                        \
+                ;                                                       \
+            } while (m_cmpsetbit((volatile long *)_mptr,                \
+                                 MALLOC_LK_BIT_POS));                   \
+            (bkt)->file = __FILE__;                                     \
+            (bkt)->line = __LINE__;                                     \
         }                                                               \
-        do {                                                            \
-            ;                                                           \
-        } while (m_cmpsetbit((volatile long *)_mp,                      \
-                             MALLOC_LK_BIT_POS));                       \
-        _upval = (uintptr_t)*_mp;                                       \
+        _upval = (uintptr_t)*_mptr;                                     \
         _upval &= ~MALLOC_LK_BIT;                                       \
         _mag = (struct mag *)_upval;                                    \
         if (((mag)->prev) && ((mag)->next)) {                           \
@@ -733,10 +721,10 @@ static void * maginit(struct mag *mag, long bktid, long *zeroret);
             (mag)->next->prev = NULL;                                   \
             _mag = (mag)->next;                                         \
         } else {                                                        \
-            _mag = (mag)->next;                                         \
+            _mag = NULL;                                                \
         }                                                               \
         bktdecnmag(bkt);                                                \
-        m_syncwrite(_mp, _mag);                                         \
+        m_syncwrite(_mptr, _mag);                                       \
         (mag)->arn = NULL;                                              \
         (mag)->prev = NULL;                                             \
         (mag)->next = NULL;                                             \
@@ -809,6 +797,8 @@ static void * maginit(struct mag *mag, long bktid, long *zeroret);
             ;                                                           \
         } while (m_cmpsetbit((volatile long *)&(bkt)->ptr,              \
                              MALLOC_LK_BIT_POS));                       \
+        (bkt)->file = __FILE__;                                         \
+        (bkt)->line = __LINE__;                                         \
         _upval = (uintptr_t)(bkt)->ptr;                                 \
         _upval &= ~MALLOC_LK_BIT;                                       \
         _mag = (struct mag *)_upval;                                    \
@@ -820,15 +810,19 @@ static void * maginit(struct mag *mag, long bktid, long *zeroret);
         }                                                               \
         (mag) = _mag;                                                   \
     } while (0)
-#define magpush(mag, bkt)                                               \
+#define magpush(mag, bkt, lk)                                           \
     do {                                                                \
         struct mag *_mag;                                               \
         uintptr_t   _upval;                                             \
                                                                         \
-        do {                                                            \
-            ;                                                           \
-        } while (m_cmpsetbit((volatile long *)&(bkt)->ptr,              \
-                             MALLOC_LK_BIT_POS));                       \
+        if (lk) {                                                       \
+            do {                                                        \
+                ;                                                       \
+            } while (m_cmpsetbit((volatile long *)&(bkt)->ptr,          \
+                                 MALLOC_LK_BIT_POS));                   \
+            (bkt)->file = __FILE__;                                     \
+            (bkt)->line = __LINE__;                                     \
+        }                                                               \
         _upval = (uintptr_t)(bkt)->ptr;                                 \
         _upval &= ~MALLOC_LK_BIT;                                       \
         _mag = (struct mag *)_upval;                                    \
@@ -838,9 +832,6 @@ static void * maginit(struct mag *mag, long bktid, long *zeroret);
         }                                                               \
         (mag)->next = _mag;                                             \
         (mag)->tab = (bkt);                                             \
-        if ((mag)->next) {                                              \
-            (mag)->next->prev = (mag);                                  \
-        }                                                               \
         bktincnmag(bkt);                                                \
         m_syncwrite(&(bkt)->ptr, (mag));                                \
     } while (0)
@@ -853,6 +844,8 @@ static void * maginit(struct mag *mag, long bktid, long *zeroret);
             ;                                                           \
         } while (m_cmpsetbit((volatile long *)&(bkt)->ptr,              \
                              MALLOC_LK_BIT_POS));                       \
+        (bkt)->file = __FILE__;                                         \
+        (bkt)->line = __LINE__;                                         \
         _upval = (uintptr_t)(bkt)->ptr;                                 \
         _upval &= ~MALLOC_LK_BIT;                                       \
         _mag = (struct mag *)_upval;                                    \

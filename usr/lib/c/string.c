@@ -10,7 +10,14 @@
 #include <zero/param.h>
 #include <zero/trix.h>
 
-#if !defined(__GLIBC__)
+#if defined(__GLIBC__)
+
+#undef strdupa
+#undef strndupa
+#undef mempcpy
+#undef __mempcpy
+
+#else
 
 extern const uint8_t stringcolltab_c_en_US[256];
 
@@ -22,7 +29,7 @@ const unsigned char               *collnametab[STRINGNLANG]
     (unsigned char *)"en_US"
 };
 
-#endif /* !defined(__GLIBC__) */
+#endif /* __GLIBC__ */
 
 /* TESTED OK */
 void *
@@ -154,7 +161,7 @@ _memcpybk(void *dest,
 /* TESTED OK */
 void *
 memmove(void *dest,
-        void *src,
+        const void *src,
         size_t n)
 {
     if (!n) {
@@ -271,6 +278,8 @@ memcmp(const void *ptr1,
     return retval;
 }
 
+#if !defined(__GLIBC__)
+
 /* TESTED OK */
 int
 strcmp(const char *str1,
@@ -289,13 +298,6 @@ strcmp(const char *str1,
     }
 
     return retval;
-}
-
-int
-strcoll(const char *str1,
-        const char *str2)
-{
-    exit(1);
 }
 
 /* TESTED OK */
@@ -321,9 +323,18 @@ strncmp(const char *str1,
     return retval;
 }
 
+#endif /* !__GLIBC__ */
+
+int
+strcoll(const char *str1,
+        const char *str2)
+{
+    exit(1);
+}
+
 size_t
-strxfrm(char *str1,
-        char *str2,
+strxfrm(char *RESTRICT str1,
+        const char *RESTRICT str2,
         size_t n)
 {
 //    fprintf(stderr, "TODO: strxfrm() not implemented\n");
@@ -353,6 +364,8 @@ memchr(const void *ptr,
     return retval;
 }
 
+#if !defined(__GLIBC__)
+
 /* TESTED OK */
 void *
 strchr(const char *str,
@@ -371,6 +384,8 @@ strchr(const char *str,
 
     return retval;
 }
+
+#endif /* !__GLIBC__ */
 
 /* TESTED OK */
 size_t
@@ -493,6 +508,7 @@ strstr(const char *str1,
 }
 
 #if !defined(__GLIBC__)
+
 char *
 strtok(char *str1,
        const char *str2)
@@ -529,7 +545,8 @@ strtok(char *str1,
     
     return retptr;
 }
-#endif /* !defined(__GLIBC__) */
+
+#endif /* !__GLIBC__ */
 
 #if defined(MEMSETDUALBANK) && (MEMSETDUALBANK)
 
@@ -700,8 +717,8 @@ memset(void *ptr,
 
 #endif /* MEMSETDUALBANK */
 
-char
-*strerror(int errnum)
+char *
+strerror(int errnum)
 {
 //    fprintf(stderr, "TODO: strerror() not implemented\n");
     
@@ -759,6 +776,8 @@ strdup(const char *str)
 }
 #endif
 
+#if !defined(__GLIBC__)
+
 #if ((defined(_POSIX_C_SOURCE) && _POSIX_C_SOURCE >= 200809L)           \
      || (defined(_XOPEN_SOURCE) && _XOPEN_SOURCE >= 700))
 char *
@@ -780,6 +799,8 @@ strndup(const char *str, size_t maxlen)
     return buf;
 }
 #endif
+
+#endif /* !__GLIBC__ */
 
 #if defined(_GNU_SOURCE)
 
