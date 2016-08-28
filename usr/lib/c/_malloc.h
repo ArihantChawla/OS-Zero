@@ -1,9 +1,8 @@
 #ifndef ___MALLOC_H__
 #define ___MALLOC_H__
 
-#define MALLOCLFDEQ       0
+#define MALLOCLFDEQ       1
 #define MALLOCBUFMAP      1
-#define MALLOCDEBUGLIST   0
 #define MALLOCBUFMAPTABS  1
 #define ZEROFMTX          1
 
@@ -115,7 +114,7 @@
 
 /* <= MALLOCSLABLOG2 are tried to get from heap #if (!MALLOCNOSBRK) */
 /* <= MALLOCSLABLOG2 are allocated 1UL << MALLOCBIGSLABLOG2 bytes per slab */
-#define MALLOCSLABLOG2    18
+#define MALLOCSLABLOG2    17
 //#define MALLOCBIGSLABLOG2 23
 #define MALLOCBIGMAPLOG2  21
 #define MALLOCHUGEMAPLOG2 24
@@ -419,17 +418,6 @@ struct magtab {
 #endif
     struct mag    *ptr;
     unsigned long  n;
-#if (MALLOCDEBUGLIST)
-    const char    *file;
-    int            line;
-#else
-    uint8_t        _pad[CLSIZE
-#if (MALLOCLFDEQ)
-                        - sizeof(struct lfdeq)
-#endif
-                        - sizeof(void *)
-                        - sizeof(long)];
-#endif
 };
 
 #define MALLOCARNSIZE rounduppow2(sizeof(struct arn), PAGESIZE)

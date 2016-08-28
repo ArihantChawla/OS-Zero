@@ -283,7 +283,7 @@ m_cmpxchg128(volatile long *p64,
 
 /* atomic set bit operation */
 static INLINE void
-m_setbit64(volatile int *p, int ndx)
+m_setbit64(volatile long *p, int ndx)
 {
     __asm__ __volatile__ ("lock btsq %1, %0\n"
                           : "=m" (*(p))
@@ -295,10 +295,10 @@ m_setbit64(volatile int *p, int ndx)
 
 /* atomic reset/clear bit operation */
 static INLINE void
-m_clrbit64(volatile int *p, int ndx)
+m_clrbit64(volatile long *p, int ndx)
 {
     __asm__ __volatile__ ("lock btrq %1, %0\n"
-                          : "=m" (*((uint8_t *)(p) + (ndx >> 3)))
+                          : "=m" (*(p))
                           : "Ir" (ndx));
 
     return;
@@ -306,10 +306,10 @@ m_clrbit64(volatile int *p, int ndx)
 
 /* atomic flip/toggle bit operation */
 static INLINE void
-m_flipbit64(volatile int *p, int ndx)
+m_flipbit64(volatile long *p, int ndx)
 {
     __asm__ __volatile__ ("lock btcq %1, %0\n"
-                          : "=m" (*((uint8_t *)(p) + (ndx >> 3)))
+                          : "=m" (*(p))
                           : "Ir" (ndx));
 
     return;
