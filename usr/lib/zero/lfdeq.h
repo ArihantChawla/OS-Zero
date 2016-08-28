@@ -1,6 +1,9 @@
 #ifndef __ZERO_LFDEQ_H__
 #define __ZERO_LFDEQ_H__
 
+#include <zero/param.h>
+#include <zero/trix.h>
+
 #define LFDEQMAPBUF   1
 #if (LFDEQMAPBUF)
 #define LFDEQLKBITPOS 0
@@ -26,7 +29,6 @@
 #include <zero/param.h>
 #include <zero/tagptr.h>
 
-#define LFDEQNODESIZE CLSIZE
 struct lfdeqnode {
     TAGPTR_T          prev;
     TAGPTR_T          next;
@@ -34,22 +36,16 @@ struct lfdeqnode {
     struct lfdeqnode *chain;
 #endif
     LFDEQ_VAL_T       val;
-    uint8_t           _pad[CLSIZE
-                           - 2 * sizeof(TAGPTR_T)
-#if (LFDEQMAPBUF)
-                           - sizeof(struct lfdeqnode *)
-#endif
-                           - sizeof(LFDEQ_VAL_T)];
 };
+#define LFDEQNODESIZE rounduppow2(sizeof(struct lfdeqnode), CLSIZE)
 
 struct lfdeq {
     TAGPTR_T         head;
     TAGPTR_T         tail;
     struct lfdeqnode dummy;
-    uint8_t          _pad[2 * CLSIZE
-                          - 2 * sizeof(TAGPTR_T)
-                          - sizeof(struct lfdeqnode)];
+    long             nitem;
 };
+#define LFDEQSIZE rounduppow2(sizeof(struct lfdeq), CLSIZE)
 
 void        lfdeqinitqueue(struct lfdeq *lfdeq);
 void        lfdeqenqueue(struct lfdeq *lfdeq, LFDEQ_VAL_T val);
