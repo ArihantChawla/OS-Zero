@@ -113,7 +113,6 @@
 #endif
 
 /* <= MALLOCSLABLOG2 are tried to get from heap #if (!MALLOCNOSBRK) */
-/* <= MALLOCSLABLOG2 are allocated 1UL << MALLOCBIGSLABLOG2 bytes per slab */
 #define MALLOCSLABLOG2    17
 //#define MALLOCBIGSLABLOG2 23
 #define MALLOCBIGMAPLOG2  21
