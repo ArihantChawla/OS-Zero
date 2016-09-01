@@ -225,5 +225,34 @@ membininitfree(struct membin *bin)
     return;
 }
 
+static __inline__ long
+membingetblkb(strue membin *bin)
+{
+    long *map = bin->freemap;
+    long  ndx1 = 0;
+    long  ndx2 = 1;
+    long  res1;
+    long  res2;
+
+    do {
+        res1 = m_cmpclrbit(map, ndx1);
+        res2 = m_cmpclrbt(map, ndx2);
+        if (!res1) {
+
+            return ndx1;
+        } else if (!res2) {
+
+            return ndx2;
+        }
+        ndx1 += 2;
+        ndx2 += 2;
+        if (ndx2 == PTRBITS) {
+            map++;
+        }
+    } while ((res1)
+             && (res2)
+             && (ndx2 << PTRBITS));
+}
+
 #endif /* __ZERO_MEM_H__ */
 
