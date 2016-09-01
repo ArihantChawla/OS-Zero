@@ -99,6 +99,7 @@ typedef volatile long MEMLK_T;
     ((mag)->adrtab[memptrid(mag, ptr)] = (adr))
 #define memgetadr(mag, ptr)                                             \
     ((mag)->adrtab[memptrid(mag, ptr)])
+#define memmapsize(slot) ((slot) * PAGESIZE)
 
 #if defined(__BIGGEST_ALIGNMENT__)
 #define MEMMINALIGN     __BIGGEST_ALIGNMENT__
@@ -131,10 +132,11 @@ typedef volatile long MEMLK_T;
 #define MEMINITBIT   (1L << 0)
 #define MEMNOHEAPBIT (1L << 1)
 struct mem {
-    MEMWORD_T      flg;
-    struct membin *heap;
-    MEMLK_T        initlk;
-    MEMLK_T        heaplk;
+    MEMWORD_T      flg;         // memory interface flags
+    struct membin *heap;        // heap allocations (try sbrk(), then mmap())
+    struct membin *maps;        // mapped regions
+    MEMLK_T        initlk;      // lock for initialising the structure
+    MEMLK_T        heaplk;      // lock for sbrk()
 };
 
 struct membin {
@@ -156,26 +158,36 @@ struct membinbkt {
     MEMWORD_T      nbuf;        // number of bins to allocate/buffer at a time
 };
 
+struct memmagbkt {
+    struct memmag *list;        // bi-directional list of bins + lock-bit
+    MEMWORD_T      slot;        // bucket slot #
+    MEMWORD_T      nbin;        // number of bins in list
+    MEMWORD_T      nbuf;        // number of bins to allocate/buffer at a time
+};
+
 #if (MEMLFDEQ)
-typedef struct lfdeqnode MEMLISTNODE_T;
-typedef struct lfdeq     MEMLIST_T;
+typedef struct lfdeqnode MEMLFQDEQLISTNODE_T;
+typedef struct lfdeq     MEMLFDEQLIST_T;
 #else
 typedef struct {
-    struct memmag *prev;
-    struct memmag *next;
-} MEMLISTNODE_T;
-typedef struct memmag * MEMLIST_T;
+    struct memmagbkt *list;
+} MEMMAGLISTNODE_T;
+typedef struct memmag * MEMMAGLIST_T;
+typedef struct {
+    struct membin *list;
+} MEMBINLISTNODE_T;
+typedef struct membinbkt * MEMBINLIST_T;
 #endif
 
 struct memmag {
-    MEMLISTNODE_T   link;       // list-linkage
-    long            flg;        // magazine flag-bits + lock-bitn
-    long            top;        // current top of stack index
-    long            nblk;       // number of entries in stk
-    void          **stk;        // pointer stack + unaligned pointers
-    long            bkt;        // bucket ID; allocations are 1UL << bkt bytes
-    MEMADR_T        base;       // magazine base address
-    MEMUWORD_T      size;       // magazine size (header + blocks)
+    MEMMAGLISTNODE_T   link;    // list-linkage
+    long               flg;     // magazine flag-bits + lock-bitn
+    long               top;     // current top of stack index
+    long               nblk;    // number of entries in stk
+    void             **stk;     // pointer stack + unaligned pointers
+    long               bkt;     // bucket ID; allocations are 1UL << bkt bytes
+    MEMADR_T           base;    // magazine base address
+    MEMUWORD_T         size;    // magazine (header + blocks) or map block size
 } ALIGNED(CLSIZE);
 
 /*
@@ -185,17 +197,18 @@ struct memmag {
 #define MEMARNSIZE PAGESIZE
 #define memarndatasize() (PAGESIZE - sizeof(struct memarn))
 struct memarn {
-    MEMLIST_T qtab[PTRBITS];    // magazine buckets
-    uint8_t   data[EMPTY];      // room for data
+    MEMBINLIST_T qtab[PTRBITS]; // magazine buckets of size 1 << slot
+    MEMBINLIST_T mtab[PTRBITS]; // mapped regions of PAGESIZE * slot
+    uint8_t      data[EMPTY];   // room for data
 };
 
-struct memmagbkt {
-    MEMLIST_T qtab[PTRBITS];
+struct membkt {
+    MEMBINLIST_T qtab[PTRBITS];
 } ALIGNED(CLSIZE);
 
-/* mark the first block of bin as allocated; bit #0 is unused */
+/* mark the first block of bin as allocated; bit #0 is magazine header */
 #define _memfillmap0(ptr, ofs, mask)                                    \
-    ((ptr)[(ofs)] = (mask) & ~MEMWORD(2),                               \
+    ((ptr)[(ofs)] = (mask) & ~MEMWORD(0x03),                            \
      (ptr)[(ofs) + 1] = (mask),                                         \
      (ptr)[(ofs) + 2] = (mask),                                         \
      (ptr)[(ofs) + 3] = (mask))
@@ -226,7 +239,7 @@ membininitfree(struct membin *bin)
 }
 
 static __inline__ long
-membingetblkb(strue membin *bin)
+membingetblk(struct membin *bin)
 {
     long *map = bin->freemap;
     long  ndx1 = 0;
@@ -236,7 +249,7 @@ membingetblkb(strue membin *bin)
 
     do {
         res1 = m_cmpclrbit(map, ndx1);
-        res2 = m_cmpclrbt(map, ndx2);
+        res2 = m_cmpclrbit(map, ndx2);
         if (!res1) {
 
             return ndx1;
