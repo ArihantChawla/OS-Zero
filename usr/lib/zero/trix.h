@@ -376,15 +376,15 @@ long long llabs(long long x);
                        : (__builtin_ctzll(u)))
 #define tzero32(u, r) (!(u)                                             \
                        ? ((r) = 32)                                     \
-                       : (r) = (__builtin_ctz(u)))
+                       : ((r) = (__builtin_ctz(u))))
 #if (LONGSIZE == 4)
 #define tzero64(u, r) (!(u)                                             \
                        ? ((r) = 64)                                     \
-                       : (r) = (__builtin_ctzll(u)))
+                       : ((r) = (__builtin_ctzll(u))))
 #elif (LONGSIZE == 8)
 #define tzero64(u, r) (!(u)                                             \
                        ? ((r) = 64)                                     \
-                       : (r) = (__builtin_ctzl(u)))
+                       : ((r) = (__builtin_ctzl(u))))
 #endif
 #elif defined(__i386__) || defined(__x86_64__) || defined(__amd64__)
 #define tzerol(u)  (!(u)                                                \
@@ -419,8 +419,7 @@ long long llabs(long long x);
 #endif
 
 /*
- * round longword u to next power of two if not power of two;
- * store result in r.
+ * round longword u to next power of two if not power of two
  */
 static __inline__ unsigned long
 ceilpow2l(unsigned long u)
@@ -436,12 +435,28 @@ ceilpow2l(unsigned long u)
     return ret;
 }
 
+static __inline__ uint32_t
+ceilpow2_32(uint32_t u)
+{
+    long     tmp;
+    uint32_t ret;
+
+    tzero32(u, tmp);
+    if (!powerof2(u)) {
+        tmp++;
+    }
+    ret = UINT32_C(1) << tmp;
+
+    return ret;
+}
+
 static __inline__ uint64_t
 ceilpow2_64(uint64_t u)
 {
-    long     tmp = tzerol(u);
+    long     tmp;
     uint64_t ret;
 
+    tzero64(u, tmp);
     if (!powerof2(u)) {
         tmp++;
     }
@@ -449,6 +464,7 @@ ceilpow2_64(uint64_t u)
 
     return ret;
 }
+
 #if 0
 #define ceilpow2_32(u, r)                                               \
     do {                                                                \

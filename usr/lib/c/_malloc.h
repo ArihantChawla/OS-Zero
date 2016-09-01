@@ -697,9 +697,9 @@ struct hashmag {
 #define MALLOCINIT   0x00000001L
 #define MALLOCNOHEAP 0x00000002L
 struct malloc {
+    struct magtab            hdrbuf[MALLOCNBKT];
     struct magtab            magbuf[MALLOCNBKT];
     struct magtab            freebuf[MALLOCNBKT];
-    struct magtab            hdrbuf[MALLOCNBKT];
 #if (MALLOCNBKT == 64)
     uint64_t                 magemptybits;
 #elif (MALLOCNBKT == 32)
