@@ -25,9 +25,9 @@ meminitbin(struct mem *mem, long slot)
     MEMPTR_T         *adr = SBRK_FAILED;
     struct membinbkt *bkt = &arn->qtab[slot]->list;
     struct membin    *bin;
-    uint8_t          *ptr;
+    MEMPTR_T          ptr;
     struct membin    *bptr;
-    uintptr_t         upval;
+    MEMADR_T          upval;
 
     if (!(mem->flg & MEMNOHEAPBIT)) {
         /* try to allocate from heap (sbrk()) */
@@ -48,7 +48,7 @@ meminitbin(struct mem *mem, long slot)
         }
     }
     bin = (struct membin *)adr;
-    ptr = (uint8_t *)rounduppow2((uintptr_t)adr
+    ptr = (MEMPTR_T)rounduppow2((MEMADR_T)adr
                                  + sizeof(struct membin),
                                  blksz);
     bin->flg = flg;
@@ -83,6 +83,7 @@ meminitbin(struct mem *mem, long slot)
 
 /*
  * allocate a bin with MEM_BIN_MAX_BLOCKS blocks of 1 << slot bytes
+ * - the first block is the header
  * - try sbrk() for a heap allocation first, use mmap() if that should fail
  */
 static void *
@@ -93,11 +94,11 @@ meminitmap(struct mem *mem, long slot)
     MEMUWORD_T        blksz = MEMUWORD(1) << (slot);
     MEMWORD_T         flg = 0;
     struct membinbkt *bkt = &arn->mtab[slot]->list;
-    MEMPTR_T         *adr;
+    MEMPTR_T          adr;
     struct membin    *bin;
-    uint8_t          *ptr;
+    MEMPTR_T          ptr;
     struct membin    *bptr;
-    uintptr_t         upval;
+    MEMADR_T          upval;
 
     /* mmap() blocks */
     memrellk(&mem->heaplk);
@@ -111,13 +112,13 @@ meminitmap(struct mem *mem, long slot)
         return NULL;
     }
     bin = (struct membin *)adr;
-    ptr = (uint8_t *)rounduppow2((uintptr_t)adr
+    ptr = (MEMPTR_T)rounduppow2((MEMADR_T)adr
                                  + sizeof(struct membin),
                                  PAGESIZE);
     bin->flg = flg;             // MAMMAPBIT
     bin->base = adr;            // our newly allocated region
     bin->bkt = bkt;             // parent bucket
-    bin->slot = slot;           // slot #
+    bin->slot = slot;           // allocations 1 << slot, PAGESIZE * slot
     membininitfree(bin);        // zero freemap, mark block #1 (0 is bin) in use
     if (!flg) {
         /* link block from sbrk() to global heap (put it on top) */
@@ -142,5 +143,12 @@ meminitmap(struct mem *mem, long slot)
     m_syncwrite(&bkt->list, bin);
 
     return ptr;                 // return pointer to first block
+}
+
+/* find a bin or magazine address */
+static void *
+memfindpool(void *ptr)
+{
+    ;
 }
 

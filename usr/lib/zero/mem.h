@@ -1,3 +1,4 @@
+
 #ifndef __ZERO_MEM_H__
 #define __ZERO_MEM_H__
 
@@ -40,7 +41,7 @@ typedef uint64_t  MEMUWORD_T;
 #endif
 typedef uintptr_t MEMADR_T;     // address (with possible flag/lock-bits)
 typedef intptr_t  MEMADRDIFF_T; // for possible negative values
-typedef uint8_t * MEMPTR_T;     // could be char * for older systems
+typedef uint8_t * MEMPTR_T;     // could be char * too; needs to be single-byte
 
 #if (MEM_LK_TYPE == MEM_LK_PRIO)
 typedef struct priolk MEMLK_T;
@@ -190,6 +191,25 @@ struct memmag {
     MEMUWORD_T         size;    // magazine (header + blocks) or map block size
 } ALIGNED(CLSIZE);
 
+/* toplevel lookup table item */
+struct memtab {
+    MEMLK_T         lk;
+    struct memitem *tab;
+};
+/*
+ * we'll have 2 or 3 levels of these + a level of MEMADR_T values for lookups
+ * under the toplevel table
+ */
+/* type-bits for the final-level table pointers */
+#define MEMBIN 0x00
+#define MEMMAP 0x01
+#define MEMMAG 0x02
+/* lookup table structure for upper levels */
+struct memitem {
+    volatile long nref;
+    MEMPTR_T      tab;
+};
+
 /*
  * NOTE: the arenas are mmap()'d as PAGESIZE-allocations so there's going
  * to be some room in the end for arbitrary data
@@ -199,7 +219,7 @@ struct memmag {
 struct memarn {
     MEMBINLIST_T qtab[PTRBITS]; // magazine buckets of size 1 << slot
     MEMBINLIST_T mtab[PTRBITS]; // mapped regions of PAGESIZE * slot
-    uint8_t      data[EMPTY];   // room for data
+/* possible auxiliary data here; arena is of PAGESIZE */
 };
 
 struct membkt {
