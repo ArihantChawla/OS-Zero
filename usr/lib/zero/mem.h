@@ -136,6 +136,7 @@ struct mem {
     MEMWORD_T      flg;         // memory interface flags
     struct membin *heap;        // heap allocations (try sbrk(), then mmap())
     struct membin *maps;        // mapped regions
+    struct memtab *tab;         // allocation lookup structure
     MEMLK_T        initlk;      // lock for initialising the structure
     MEMLK_T        heaplk;      // lock for sbrk()
 };
@@ -148,6 +149,7 @@ struct membin {
     struct membin    *next;     // next bin in chain
     struct membinbkt *bkt;      // pointer to parent bucket
     MEMWORD_T         slot;     // bucket slot #
+    MEMPTR_T         *atab;     // unaligned base pointers for aligned blocks
     /* note: the first bit in freemap is reserved (unused) */
     MEMWORD_T         freemap[MEMBINFREEWORDS] ALIGNED(CLSIZE);
 };
@@ -159,27 +161,32 @@ struct membinbkt {
     MEMWORD_T      nbuf;        // number of bins to allocate/buffer at a time
 };
 
+#if 0
 struct memmagbkt {
     struct memmag *list;        // bi-directional list of bins + lock-bit
     MEMWORD_T      slot;        // bucket slot #
     MEMWORD_T      nbin;        // number of bins in list
     MEMWORD_T      nbuf;        // number of bins to allocate/buffer at a time
 };
+#endif
 
 #if (MEMLFDEQ)
 typedef struct lfdeqnode MEMLFQDEQLISTNODE_T;
 typedef struct lfdeq     MEMLFDEQLIST_T;
 #else
+#if 0
 typedef struct {
     struct memmagbkt *list;
 } MEMMAGLISTNODE_T;
 typedef struct memmag * MEMMAGLIST_T;
+#endif
 typedef struct {
     struct membin *list;
 } MEMBINLISTNODE_T;
 typedef struct membinbkt * MEMBINLIST_T;
 #endif
 
+#if 0
 struct memmag {
     MEMMAGLISTNODE_T   link;    // list-linkage
     long               flg;     // magazine flag-bits + lock-bitn
@@ -190,6 +197,7 @@ struct memmag {
     MEMADR_T           base;    // magazine base address
     MEMUWORD_T         size;    // magazine (header + blocks) or map block size
 } ALIGNED(CLSIZE);
+#endif
 
 /* toplevel lookup table item */
 struct memtab {

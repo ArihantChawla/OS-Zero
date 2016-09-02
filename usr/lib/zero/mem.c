@@ -120,6 +120,7 @@ meminitmap(struct mem *mem, long slot)
     bin->bkt = bkt;             // parent bucket
     bin->slot = slot;           // allocations 1 << slot, PAGESIZE * slot
     membininitfree(bin);        // zero freemap, mark block #1 (0 is bin) in use
+    bin->atab = NULL;           // allocate on-demand
     if (!flg) {
         /* link block from sbrk() to global heap (put it on top) */
         bptr = mem->heap;
