@@ -6,10 +6,12 @@
 
 #define FLOAT  1
 #define DOUBLE 0
-#define SSE    0
-#if (SSE)
-typedef float v4sf __attribute__((vector_size(16)));
+#if defined(__SSE2__) && 0
+#define SSE2   1
+#endif
 
+#if (SSE2)
+typedef float v4sf __attribute__((vector_size(16)));
 void mandel_sse(v4sf cr, v4sf ci, unsigned *counts);
 #endif
 
@@ -27,7 +29,7 @@ void mandel_sse(v4sf cr, v4sf ci, unsigned *counts);
 #include <zero/param.h>
 
 struct mandelthr {
-    int ymin;
+    int yofs;
     int ylim;
 };
 
@@ -37,7 +39,7 @@ static Window win;
 static XImage *bitmap;
 static Atom wmDeleteMessage;
 static GC gc;
-static int g_nthr;
+static volatile int g_nthr;
 
 static void exit_x11(void)
 {
@@ -69,16 +71,26 @@ static void init_x11(int size)
                               white);
 	
     /* We want to be notified when the window appears */
-    XSelectInput(dpy, win, StructureNotifyMask);
+//    XSelectInput(dpy, win, StructureNotifyMask);
+    XSelectInput(dpy, win, ExposureMask);
 	
     /* Make it appear */
     XMapWindow(dpy, win);
-	
+
+#if 0
     while (1)
 	{
             XEvent e;
             XNextEvent(dpy, &e);
             if (e.type == MapNotify) break;
+	}
+#endif
+    /* we need to wait for the Expose event instead of MapNotify */
+    while (1)
+	{
+            XEvent e;
+            XNextEvent(dpy, &e);
+            if (e.type == Expose) break;
 	}
 	
     XTextProperty tp;
@@ -154,7 +166,49 @@ static void init_colours(void)
     cols[MAX_ITER] = 0;
 }
 
-#if (DOUBLE)
+#if (SSE2)
+
+/* For each point, evaluate its colour */
+static void display_sse2(int size, float xmin, float xmax, float ymin, float ymax, float yofs, float ylim)
+{
+    int x, y;
+	
+    float xscal = (xmax - xmin) / size;
+    float yscal = (ymax - ymin) / size;
+	
+    unsigned counts[4];
+
+    for (y = yofs; y < ylim; y += 2)
+	{
+            for (x = 0; x < size; x += 4)
+		{
+                    v4sf cr = { xmin + x * xscal,
+                                xmin + (x + 1) * xscal,
+                                xmin + (x + 2) * xscal,
+                                xmin + (x + 3) * xscal };
+                    v4sf ci = { ymin + y * yscal,
+                                ymin + y * yscal,
+                                ymin + y * yscal,
+                                ymin + y * yscal };
+
+                    mandel_sse(cr, ci, counts);
+			
+                    ((unsigned *) bitmap->data)[x + y * size] = cols[counts[0]];
+                    ((unsigned *) bitmap->data)[x + 1 + y * size] = cols[counts[1]];
+                    ((unsigned *) bitmap->data)[x + 2 + y * size] = cols[counts[2]];
+                    ((unsigned *) bitmap->data)[x + 3 + y * size] = cols[counts[3]];
+		}
+
+            /* Display it line-by-line for speed */
+            XPutImage(dpy, win, gc, bitmap,
+                      0, y, 0, y,
+                      size, 1);
+	}
+
+    XFlush(dpy);
+}
+
+#elif (DOUBLE)
 
 static unsigned mandel_double(double cr, double ci)
 {
@@ -177,7 +231,7 @@ static unsigned mandel_double(double cr, double ci)
 }
 
 /* For each point, evaluate its colour */
-static void display_double(int size, double xmin, double xmax, double ymin, double ymax, int yofs, int ylim)
+static void display_double(int size, double xmin, double xmax, double ymin, double ymax)
 {
     int x, y;
 	
@@ -188,7 +242,7 @@ static void display_double(int size, double xmin, double xmax, double ymin, doub
 	
     unsigned counts;
 
-    for (y = yofs; y < ylim; y++)
+    for (y = ymin; y < ymax; y++)
 	{
             for (x = 0; x < size; x++)
 		{
@@ -232,7 +286,7 @@ static unsigned mandel_float(float cr, float ci)
 }
 
 /* For each point, evaluate its colour */
-static void display_float(int size, float xmin, float xmax, float ymin, float ymax, int yofs, int ylim)
+static void display_float(int size, float xmin, float xmax, float ymin, float ymax, float yofs, float ylim)
 {
     int x, y;
 	
@@ -255,60 +309,16 @@ static void display_float(int size, float xmin, float xmax, float ymin, float ym
                     ((unsigned *) bitmap->data)[x + y*size] = cols[counts];
 		}
 
-#if 0
-            /* Display it line-by-line for speed */
-            XPutImage(dpy, win, gc, bitmap,
-                      0, y, 0, y,
-                      size, 1);
-#endif
-	}
-	
-    XFlush(dpy);
-}
-
-#elif (SSE)
-
-/* For each point, evaluate its colour */
-static void display_sse(int size, float xmin, float xmax, float ymin, float ymax, int yofs, int ylim)
-{
-    int x, y;
-	
-    float xscal = (xmax - xmin) / size;
-    float yscal = (ymax - ymin) / size;
-	
-    unsigned counts[4];
-
-    for (y = yofs; y < ylim; y += ylim)
-	{
-            for (x = 0; x < size; x += 4)
-		{
-                    v4sf cr = { xmin + x * xscal,
-                                xmin + (x + 1) * xscal,
-                                xmin + (x + 2) * xscal,
-                                xmin + (x + 3) * xscal };
-                    v4sf ci = { ymin + y * yscal,
-                                ymin + y * yscal,
-                                ymin + y * yscal,
-                                ymin + y * yscal };
-
-                    mandel_sse(cr, ci, counts);
-			
-                    ((unsigned *) bitmap->data)[x + y * size] = cols[counts[0]];
-                    ((unsigned *) bitmap->data)[x + 1 + y * size] = cols[counts[1]];
-                    ((unsigned *) bitmap->data)[x + 2 + y * size] = cols[counts[2]];
-                    ((unsigned *) bitmap->data)[x + 3 + y * size] = cols[counts[3]];
-		}
-
             /* Display it line-by-line for speed */
             XPutImage(dpy, win, gc, bitmap,
                       0, y, 0, y,
                       size, 1);
 	}
-
+	
     XFlush(dpy);
 }
 
-#endif /* SSE */
+#endif /* SSE2 */
 
 /* Image size */
 #define ASIZE 1000
@@ -317,15 +327,19 @@ static void display_sse(int size, float xmin, float xmax, float ymin, float ymax
 #define WAIT_EXIT
 
 void *
-mandel_start(void *arg)
+mandel_start(void *arg, int tid, int nthr)
 {
     float xmin = -2;
     float xmax = 1.0;
     float ymin = -1.5;
     float ymax = 1.5;
     struct mandelthr *args = arg;
-    
-    display_float(ASIZE, xmin, xmax, ymin, ymax, args->ymin, args->ylim);
+
+#if (SSE2)
+    display_sse2(ASIZE, xmin, xmax, ymin, ymax, (float)args->yofs, (float)args->ylim);
+#else
+    display_float(ASIZE, xmin, xmax, (float)args->ymin, (float)args->ylim);
+#endif
     g_nthr--;
 
     pthread_exit(NULL);
@@ -348,14 +362,14 @@ int main(void)
 	
     init_colours();
 
+    g_nthr = nthr;
     for (ndx = 0 ; ndx < nthr ; ndx++) {
         args = calloc(1, sizeof(struct mandelthr));
-        args->ymin = ofs;
+        args->yofs = ofs;
         args->ylim = ofs + delta;
         pthread_create(&thrtab[ndx], NULL, mandel_start, args);
         ofs += delta;
     }
-    g_nthr = nthr;
     for (ndx = 0 ; ndx < nthr ; ndx++) {
         pthread_join(thrtab[ndx], (void **)&thrptrtab[ndx]);
     }
