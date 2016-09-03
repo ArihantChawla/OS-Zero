@@ -250,29 +250,24 @@ static __inline__ long
 membingetblk(struct membin *bin)
 {
     long *map = bin->freemap;
-    long  ndx1 = 0;
-    long  ndx2 = 1;
-    long  res1;
-    long  res2;
+    long  ndx = 0;
+    long *lim = map + MEMBINFREEWORDS;
+    long  res;
 
     do {
-        res1 = m_cmpclrbit(map, ndx1);
-        res2 = m_cmpclrbit(map, ndx2);
-        if (!res1) {
-
-            return ndx1;
-        } else if (!res2) {
-
-            return ndx2;
-        }
-        ndx1 += 2;
-        ndx2 += 2;
-        if (ndx2 == PTRBITS) {
+        ndx++;
+        res = m_cmpclrbit(map, ndx);
+        if (ndx == PTRBITS - 1) {
             map++;
+            ndx = 0;
         }
-    } while ((res1)
-             && (res2)
-             && (ndx2 << PTRBITS));
+    } while ((res) && map < lim);
+    if (!res) {
+
+        return ndx;
+    }
+
+    return 0;
 }
 
 #endif /* __ZERO_MEM_H__ */
