@@ -153,7 +153,7 @@ meminitbigbin(struct mem *mem, struct membin *bin, MEMUWORD_T nblk)
 
 /* FIXME: nblk */
 static void *
-memmkbin(struct mem *mem, long slot, long type)
+memgetbin(struct mem *mem, long slot, long type)
 {
     struct memarn *arn = tls_arn;
     MEMPTR_T       ptr = NULL;
