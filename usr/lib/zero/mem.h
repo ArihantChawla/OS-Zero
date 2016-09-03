@@ -5,6 +5,9 @@
 #if !defined(MEMLFDEQ)
 #define MEMLFDEQ      0
 #endif
+#if !defined(MEMTABNREF)
+#define MEMTABNREF    0
+#endif
 
 /* generic memory manager definitions for libzero */
 
@@ -75,15 +78,13 @@ typedef volatile long MEMLK_T;
 #endif
 
 /* use the low-order bit of the word or pointer to lock data */
-#define MEMLKBITID 0
-#define MEMLKBIT   (1L << MEMLKBITID)
-#define MEMHEAPBIT (1L << 1)
-#define MEMMAPBIT  (1L << 2)
+#define MEMLKBITID  0
+#define MEMLKBIT    (1L << MEMLKBITID)
 #define memlkbit(lp)                                                    \
     do {                                                                \
         ;                                                               \
     } while (m_cmpsetbit((volatile long *)lp, MEMLKBITID))
-#define memrelbit(lp) m_cmpclrbit((MEMLK_T *)lp, MEMLKBITID)
+#define memrelbit(lp) m_cmpclrbit((volatile long *)lp, MEMLKBITID)
 
 #if (WORDSIZE == 4)
 #define memcalcslot(sz)                                                 \
@@ -101,7 +102,10 @@ typedef volatile long MEMLK_T;
     ((mag)->adrtab[memptrid(mag, ptr)] = (adr))
 #define memgetadr(mag, ptr)                                             \
     ((mag)->adrtab[memptrid(mag, ptr)])
-#define mempagebinsize(slot) (MEMBINBLKS * (slot) * PAGESIZE)
+#define mempagebinsize(slot)                                            \
+    (MEMBINBLKS * (slot) * PAGESIZE)
+#define membigbinsize(slot, n)                                          \
+    ((n) + ((n) << (slot)))
 
 #if defined(__BIGGEST_ALIGNMENT__)
 #define MEMMINALIGN     __BIGGEST_ALIGNMENT__
@@ -142,9 +146,17 @@ struct mem {
     MEMLK_T        heaplk;      // lock for sbrk()
 };
 
+#define MEMHEAPBIT    (1L << 1)
+#define MEMEMPTYBIT   (1L << 2)
+#define MEMBINFLGMASK ((1L << MEMBINFLGBITS) - 1)
+#define MEMBINFLGBITS 3
+#define memsetbinflg(bin, flg) ((bin)->info |= (flg))
+#define memsetbinnblk(bin, n)                                           \
+    ((bin)->info = ((bin)->info & MEMBINFLGMASK) | ((n) << MEMBINFLGBITS))
+#define memgetbinnblk(bin)     ((bin)->info >> MEMBINFLGBITS)
 struct membin {
-    MEMWORD_T      flg;         // flag-bits + lock-bit
-    MEMPTR_T      *base;        // base address
+    MEMUWORD_T     info;        // flag-bits + lock-bit
+    MEMPTR_T       base;        // base address
     struct membin *heap;        // previous bin in heap for bins from sbrk()
     struct membin *prev;        // previous bin in chain
     struct membin *next;        // next bin in chain
@@ -156,7 +168,11 @@ struct membin {
 };
 
 struct membkt {
+#if (MEMLFDEQ)
+    struct lfdeq   list;
+#else
     struct membin *list;        // bi-directional list of bins + lock-bit
+#endif
     MEMWORD_T      slot;        // bucket slot #
     MEMWORD_T      nbin;        // number of bins in list
     MEMWORD_T      nbuf;        // number of bins to allocate/buffer at a time
@@ -169,16 +185,6 @@ struct memmagbkt {
     MEMWORD_T      nbin;        // number of bins in list
     MEMWORD_T      nbuf;        // number of bins to allocate/buffer at a time
 };
-#endif
-
-#if (MEMLFDEQ)
-typedef struct lfdeqnode MEMLFQDEQLISTNODE_T;
-typedef struct lfdeq     MEMLFDEQLIST_T;
-#else
-typedef struct {
-    struct membin *list;
-} MEMBINLISTNODE_T;
-typedef struct membkt * MEMBINLIST_T;
 #endif
 
 /* toplevel lookup table item */
@@ -197,8 +203,10 @@ struct memtab {
 #define MEMBINTYPES 3
 /* lookup table structure for upper levels */
 struct memitem {
-    volatile long nref;
-    MEMPTR_T      tab;
+#if (MEMTABNREF)
+    volatile long   nref;
+#endif
+    struct memitem *tab;
 };
 
 /*
@@ -208,9 +216,9 @@ struct memitem {
 #define MEMARNSIZE PAGESIZE
 #define memarndatasize() (PAGESIZE - sizeof(struct memarn))
 struct memarn {
-    MEMBINLIST_T small[PTRBITS]; // magazine buckets of size 1 << slot
-    MEMBINLIST_T page[PTRBITS];  // mapped regions of PAGESIZE * slot
-    MEMBINLIST_T big[PTRBITS];   // mapped regions of PAGESIZE << slot
+    struct membkt small[PTRBITS]; // magazine buckets of size 1 << slot
+    struct membkt page[PTRBITS];  // mapped regions of PAGESIZE * slot
+    struct membkt big[PTRBITS];   // mapped regions of PAGESIZE << slot
 /* possible auxiliary data here; arena is of PAGESIZE */
 };
 
@@ -249,26 +257,73 @@ membininitfree(struct membin *bin)
 static __inline__ long
 membingetblk(struct membin *bin)
 {
+    MEMUWORD_T nblk = memgetbinnblk(bin);
     long *map = bin->freemap;
     long  ndx = 0;
     long *lim = map + MEMBINFREEWORDS;
     long  res;
 
-    do {
-        ndx++;
-        res = m_cmpclrbit(map, ndx);
-        if (res) {
-
-            return ndx;
-        }
-        if (ndx == PTRBITS - 1) {
-            map++;
-            ndx = 0;
-        }
-    } while (!res && map < lim);
+    if (!nblk) {
+        do {
+            ndx++;
+            res = m_cmpclrbit((volatile long *)map, ndx);
+            if (res) {
+                
+                return ndx;
+            }
+            if (ndx == PTRBITS - 1) {
+                map++;
+                ndx = 0;
+            }
+        } while (!res && map < lim);
+    } else {
+        do {
+            ndx++;
+            res = m_cmpclrbit((volatile long *)map, ndx);
+            if (res) {
+                
+                return ndx;
+            }
+            if (ndx == PTRBITS - 1) {
+                map++;
+                ndx = 0;
+            }
+        } while ((--nblk) && !res && map < lim);
+    }
 
     return 0;
 }
+
+/*
+ * for 32-bit pointers, we can use a flat lookup table for bookkeeping pointers
+ * - for bigger pointers, we use a multilevel table
+ */
+#if (PTRBITS > 32)
+#define MEMLVLITEMS   (MEMWORD(1) << MEMLVLBITS)
+#define MEMLVL4ITEMS  (MEMWORD(1) << MEMLVL4BITS)
+#define MEMADRBITS    (ADRBITS - PAGESIZELOG2 - MEMALIGNSHIFT)
+#define MEMLVLBITS    8
+#define MEMLVL4BITS   (MEMADRBITS - 3 * MEMLVLBITS)
+#define MEMLVL4SHIFT  (PAGESIZELOG2 + MEMALIGNSHIFT)
+#define MEMLVLMASK    ((MEMWORD(1) << MEMLVLBITS) - 1)
+#define MEMLVL4MASK   ((MEMWORD(1) << MEMLVL4BITS) - 1)
+#define memlvl1key(p) (((MEMADR_T)(p) >> MEMLVL1SHIFT) & MEMLVL1MASK)
+#define memlvl2key(p) (((MEMADR_T)(p) >> MEMLVL2SHIFT) & MEMLVL2MASK)
+#define memlvl3key(p) (((MEMADR_T)(p) >> MEMLVL3SHIFT) & MEMLVL3MASK)
+#define memlvl4key(p) (((MEMADR_T)(p) >> MEMLVL4SHIFT) & MEMLVL4MASK)
+#define memgetkeybits(p, k1, k2, k3, k4)                                \
+    do {                                                                \
+        MEMADR_T _p1 = (MEMADR_T)(p) >> MEMLVL4SHIFT;                   \
+        MEMADR_T _p2 = (MEMADR_T)(p) >> (MEMLVL4SHIFT + MEMLVLBITS);    \
+                                                                        \
+        (k4) = _p1 & MEMLVL4MASK;                                       \
+        (k3) = _p2 & MEMLVLMASK;                                        \
+        _p1 >>= 2 * MEMLVLBITS;                                         \
+        _p2 >>= 2 * MEMLVLBITS;                                         \
+        (k2) = _p1 & MEMLVLMASK;                                        \
+        (k1) = _p2 & MEMLVLMASK;                                        \
+    } while (0)
+#endif
 
 #endif /* __ZERO_MEM_H__ */
 
