@@ -257,7 +257,6 @@ memputbin(void *ptr, long type)
                     
                     return NULL;
                 }
-                pstk[2] = itab;
                 item->tab = itab;
             }
             if (itab) {
