@@ -95,7 +95,8 @@ memallocpagebin(struct mem *mem, long slot)
         return NULL;
     }
     bin->flg = MEMMAPBIT;
-    bin->base = adr;            // our newly allocated region
+    bin->base = adr;
+    // our newly allocated region
     bin->slot = slot;           // slot #
 
     return bin;
@@ -173,7 +174,6 @@ memmkbin(struct mem *mem, long slot, long type)
     } else {
         bkt = &arn->big[slot]->list;
     }
-
     memlkbit(&bkt->list);
     bin = membinallocfuncs[type](mem, slot);
     if (bin) {
