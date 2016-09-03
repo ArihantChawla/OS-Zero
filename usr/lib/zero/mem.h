@@ -273,7 +273,7 @@ membingetblk(struct membin *bin)
             }
             if (ndx == PTRBITS - 1) {
                 map++;
-                ndx = 0;
+                ndx = -1;
             }
         } while (!res && map < lim);
     } else {
@@ -286,7 +286,7 @@ membingetblk(struct membin *bin)
             }
             if (ndx == PTRBITS - 1) {
                 map++;
-                ndx = 0;
+                ndx = -1;
             }
         } while ((--nblk) && !res && map < lim);
     }
