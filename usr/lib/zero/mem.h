@@ -56,10 +56,10 @@ typedef volatile long MEMLK_T;
 /* macros */
 
 #if (WORDSIZE == 4)
-#define MEMWORD(u)  INT32_C(u)
+#define MEMWORD(i)  INT32_C(i)
 #define MEMUWORD(u) UINT32_C(u)
 #elif (WORDSIZE == 8)
-#define MEMWORD(u)  INT64_C(u)
+#define MEMWORD(i)  INT64_C(i)
 #define MEMUWORD(u) UINT64_C(u)
 #endif
 

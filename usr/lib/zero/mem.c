@@ -202,7 +202,7 @@ memmkbin(struct mem *mem, long slot, long type)
     return ptr;                 // return pointer to first block
 }
 
-/* find a bin or magazine address */
+/* find a bin address; type encoded in the low 2 bits */
 static void *
 memfindbin(void *ptr)
 {
