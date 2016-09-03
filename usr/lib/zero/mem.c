@@ -1,3 +1,4 @@
+#include <stddef.h>
 #include <stdint.h>
 #include <zero/cdefs.h>
 #include <zero/param.h>
@@ -77,9 +78,9 @@ meminitsmallbin(struct mem *mem, struct membin *bin)
 }
 
 static struct membin *
-memallocpagebin(struct mem *mem, long slot)
+memallocpagebin(struct mem *mem, long slot, MEMUWORD_T nblk)
 {
-    MEMWORD_T      mapsz = mempagebinsize(slot);
+    MEMWORD_T      mapsz = mempagebinsize(slot, nblk);
     MEMPTR_T       adr;
     struct membin *bin;
 
@@ -150,6 +151,7 @@ meminitbigbin(struct mem *mem, struct membin *bin, MEMUWORD_T nblk)
     return ptr;
 }
 
+/* FIXME: nblk */
 static void *
 memmkbin(struct mem *mem, long slot, long type)
 {
@@ -172,7 +174,7 @@ memmkbin(struct mem *mem, long slot, long type)
     } else if (type == 1) {
         bkt = &arn->page[slot];
         memlkbit(&bkt->list);
-        bin = memallocpagebin(mem, slot);
+        bin = memallocpagebin(mem, slot, nblk);
         if (bin) {
             ptr = meminitpagebin(mem, bin);
         }
@@ -195,7 +197,7 @@ memmkbin(struct mem *mem, long slot, long type)
         bin->prev = NULL;
         bin->next = bptr;
         bin->bkt = bkt;
-        bin->atab = NULL;           // allocate on-demand
+        bin->atab = (MEMPTR_T)bin + membinatabofs();
         if (info & MEMHEAPBIT) {
             /* this unlocks the global heap (low-bit becomes zero) */
             m_syncwrite(&mem->heap, bin);

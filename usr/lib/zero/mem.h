@@ -1,4 +1,3 @@
-
 #ifndef __ZERO_MEM_H__
 #define __ZERO_MEM_H__
 
@@ -19,6 +18,7 @@
 #define MEM_LK_TYPE   MEM_LK_PRIO       // type of locks to use
 
 #include <limits.h>
+#include <stddef.h>
 #include <stdint.h>
 #include <zero/cdefs.h>
 #include <zero/param.h>
@@ -93,19 +93,6 @@ typedef volatile long MEMLK_T;
 #define memcalcslot(sz)                                                 \
     ceilpow2_64(sz)
 #endif
-#define membinhdrsize() (sizeof(struct membin))
-#define memsmallbinsize(slot)                                           \
-    (rounduppow2(membinhdrsize() + (MEMBINBLKS << (slot)), PAGESIZE))
-#define memptrid(mag, ptr)                                              \
-    (((MEMPTR_T)(ptr) - (mag)->base) >> (mag)->bkt)
-#define memputadr(mag, ptr, adr)                                        \
-    ((mag)->adrtab[memptrid(mag, ptr)] = (adr))
-#define memgetadr(mag, ptr)                                             \
-    ((mag)->adrtab[memptrid(mag, ptr)])
-#define mempagebinsize(slot)                                            \
-    (MEMBINBLKS * (slot) * PAGESIZE)
-#define membigbinsize(slot, n)                                          \
-    ((n) + ((n) << (slot)))
 
 #if defined(__BIGGEST_ALIGNMENT__)
 #define MEMMINALIGN     __BIGGEST_ALIGNMENT__
@@ -164,7 +151,7 @@ struct membin {
     MEMWORD_T      slot;        // bucket slot #
     MEMPTR_T      *atab;        // unaligned base pointers for aligned blocks
     /* note: the first bit in freemap is reserved (unused) */
-    MEMWORD_T         freemap[MEMBINFREEWORDS] ALIGNED(CLSIZE);
+    MEMWORD_T      freemap[MEMBINFREEWORDS] ALIGNED(CLSIZE);
 };
 
 struct membkt {
@@ -324,6 +311,31 @@ membingetblk(struct membin *bin)
         (k1) = _p2 & MEMLVLMASK;                                        \
     } while (0)
 #endif
+
+#define membinhdrsize()       (sizeof(struct membin))
+#define membinatabofs(slot)   (membinhdrsize())
+#define membinatabsize()      (MEMBINBLKS * sizeof(MEMPTR_T))
+#define memsmallbinsize(slot)                                           \
+    (rounduppow2(rounduppow2(membinhdrsize()                            \
+                             + membinatabsize(),                        \
+                             PAGESIZE)                                  \
+                 + (MEMBINBLKS << (slot)),                              \
+                 PAGESIZE))
+#define mempagebinsize(slot, nblk)                                      \
+    (rounduppow2(rounduppow2(membinhdrsize()                            \
+                             + membinatabsize(),                        \
+                             PAGESIZE)                                  \
+                 + PAGESIZE * (slot) * (nblk),                          \
+                 PAGESIZE))
+#define membigbinsize(slot, nblk)                                       \
+    (rounduppow2(rounduppow2(membinhdrsize()                            \
+                             + membinatabsize(),                        \
+                             PAGESIZE)                                  \
+                 + (nblk) + ((nblk) << (slot)),                         \
+                 PAGESIZE))
+
+#define memptrid(mag, ptr)                                              \
+    (((MEMPTR_T)(ptr) - (mag)->base) >> (mag)->bkt)
 
 #endif /* __ZERO_MEM_H__ */
 
