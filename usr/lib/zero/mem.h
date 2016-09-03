@@ -77,7 +77,8 @@ typedef volatile long MEMLK_T;
 /* use the low-order bit of the word or pointer to lock data */
 #define MEMLKBITID 0
 #define MEMLKBIT   (1L << MEMLKBITID)
-#define MEMMAPBIT  (1L << 1)
+#define MEMHEAPBIT (1L << 1)
+#define MEMMAPBIT  (1L << 2)
 #define memlkbit(lp)                                                    \
     do {                                                                \
         ;                                                               \
@@ -92,7 +93,7 @@ typedef volatile long MEMLK_T;
     ceilpow2_64(sz)
 #endif
 #define membinhdrsize() (sizeof(struct membin))
-#define membinsize(slot)                                                \
+#define memsmallbinsize(slot)                                           \
     (rounduppow2(membinhdrsize() + (MEMBINBLKS << (slot)), PAGESIZE))
 #define memptrid(mag, ptr)                                              \
     (((MEMPTR_T)(ptr) - (mag)->base) >> (mag)->bkt)
@@ -100,7 +101,7 @@ typedef volatile long MEMLK_T;
     ((mag)->adrtab[memptrid(mag, ptr)] = (adr))
 #define memgetadr(mag, ptr)                                             \
     ((mag)->adrtab[memptrid(mag, ptr)])
-#define memmapsize(slot) ((slot) * PAGESIZE)
+#define mempagebinsize(slot) (MEMBINBLKS * (slot) * PAGESIZE)
 
 #if defined(__BIGGEST_ALIGNMENT__)
 #define MEMMINALIGN     __BIGGEST_ALIGNMENT__
@@ -142,19 +143,19 @@ struct mem {
 };
 
 struct membin {
-    MEMWORD_T         flg;      // flag-bits + lock-bit
-    MEMPTR_T         *base;     // base address
-    struct membin    *heap;     // previous bin in heap for bins from sbrk()
-    struct membin    *prev;     // previous bin in chain
-    struct membin    *next;     // next bin in chain
-    struct membinbkt *bkt;      // pointer to parent bucket
-    MEMWORD_T         slot;     // bucket slot #
-    MEMPTR_T         *atab;     // unaligned base pointers for aligned blocks
+    MEMWORD_T      flg;         // flag-bits + lock-bit
+    MEMPTR_T      *base;        // base address
+    struct membin *heap;        // previous bin in heap for bins from sbrk()
+    struct membin *prev;        // previous bin in chain
+    struct membin *next;        // next bin in chain
+    struct membkt *bkt;         // pointer to parent bucket
+    MEMWORD_T      slot;        // bucket slot #
+    MEMPTR_T      *atab;        // unaligned base pointers for aligned blocks
     /* note: the first bit in freemap is reserved (unused) */
     MEMWORD_T         freemap[MEMBINFREEWORDS] ALIGNED(CLSIZE);
 };
 
-struct membinbkt {
+struct membkt {
     struct membin *list;        // bi-directional list of bins + lock-bit
     MEMWORD_T      slot;        // bucket slot #
     MEMWORD_T      nbin;        // number of bins in list
@@ -174,29 +175,10 @@ struct memmagbkt {
 typedef struct lfdeqnode MEMLFQDEQLISTNODE_T;
 typedef struct lfdeq     MEMLFDEQLIST_T;
 #else
-#if 0
-typedef struct {
-    struct memmagbkt *list;
-} MEMMAGLISTNODE_T;
-typedef struct memmag * MEMMAGLIST_T;
-#endif
 typedef struct {
     struct membin *list;
 } MEMBINLISTNODE_T;
-typedef struct membinbkt * MEMBINLIST_T;
-#endif
-
-#if 0
-struct memmag {
-    MEMMAGLISTNODE_T   link;    // list-linkage
-    long               flg;     // magazine flag-bits + lock-bitn
-    long               top;     // current top of stack index
-    long               nblk;    // number of entries in stk
-    void             **stk;     // pointer stack + unaligned pointers
-    long               bkt;     // bucket ID; allocations are 1UL << bkt bytes
-    MEMADR_T           base;    // magazine base address
-    MEMUWORD_T         size;    // magazine (header + blocks) or map block size
-} ALIGNED(CLSIZE);
+typedef struct membkt * MEMBINLIST_T;
 #endif
 
 /* toplevel lookup table item */
@@ -209,9 +191,10 @@ struct memtab {
  * under the toplevel table
  */
 /* type-bits for the final-level table pointers */
-#define MEMBIN 0x00
-#define MEMMAP 0x01
-#define MEMMAG 0x02
+#define MEMSMALLBLK 0x00
+#define MEMPAGEBLK  0x01
+#define MEMBIGBLK   0x02
+#define MEMBINTYPES 3
 /* lookup table structure for upper levels */
 struct memitem {
     volatile long nref;
@@ -225,14 +208,11 @@ struct memitem {
 #define MEMARNSIZE PAGESIZE
 #define memarndatasize() (PAGESIZE - sizeof(struct memarn))
 struct memarn {
-    MEMBINLIST_T qtab[PTRBITS]; // magazine buckets of size 1 << slot
-    MEMBINLIST_T mtab[PTRBITS]; // mapped regions of PAGESIZE * slot
+    MEMBINLIST_T small[PTRBITS]; // magazine buckets of size 1 << slot
+    MEMBINLIST_T page[PTRBITS];  // mapped regions of PAGESIZE * slot
+    MEMBINLIST_T big[PTRBITS];   // mapped regions of PAGESIZE << slot
 /* possible auxiliary data here; arena is of PAGESIZE */
 };
-
-struct membkt {
-    MEMBINLIST_T qtab[PTRBITS];
-} ALIGNED(CLSIZE);
 
 /* mark the first block of bin as allocated; bit #0 is magazine header */
 #define _memfillmap0(ptr, ofs, mask)                                    \
