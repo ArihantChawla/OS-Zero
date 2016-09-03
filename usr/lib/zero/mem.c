@@ -167,21 +167,21 @@ memmkbin(struct mem *mem, long slot, long type)
         memlkbit(&bkt->list);
         bin = memallocsmallbin(mem, slot);
         if (bin) {
-            meminitsmallbin(mem, bin);
+            ptr = meminitsmallbin(mem, bin);
         }
     } else if (type == 1) {
         bkt = &arn->page[slot];
         memlkbit(&bkt->list);
         bin = memallocpagebin(mem, slot);
         if (bin) {
-            meminitpagebin(mem, bin);
+            ptr = meminitpagebin(mem, bin);
         }
     } else {
         bkt = &arn->big[slot];
         memlkbit(&bkt->list);
         bin = memallocbigbin(mem, slot, nblk);
         if (bin) {
-            meminitbigbin(mem, bin, nblk);
+            ptr = meminitbigbin(mem, bin, nblk);
         }
     }
     if (bin) {
@@ -200,7 +200,7 @@ memmkbin(struct mem *mem, long slot, long type)
             /* this unlocks the global heap (low-bit becomes zero) */
             m_syncwrite(&mem->heap, bin);
         }
-        /* this unlocks the arena slot (low-bit becomes zero) */
+        /* this unlocks the arena bucket (low-bit becomes zero) */
         m_syncwrite(&bkt->list, bin);
     } else {
         memrelbit(&bkt->list);
