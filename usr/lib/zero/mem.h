@@ -257,15 +257,15 @@ membingetblk(struct membin *bin)
     do {
         ndx++;
         res = m_cmpclrbit(map, ndx);
+        if (res) {
+
+            return ndx;
+        }
         if (ndx == PTRBITS - 1) {
             map++;
             ndx = 0;
         }
-    } while ((res) && map < lim);
-    if (!res) {
-
-        return ndx;
-    }
+    } while (!res && map < lim);
 
     return 0;
 }
