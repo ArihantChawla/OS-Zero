@@ -213,61 +213,69 @@ memgetbin(struct mem *mem, long slot, long type)
 
 /* find a bin address; type encoded in the low 2 bits */
 static void *
-memputbin(void *ptr, long type)
+memputbin(void *ptr, struct membin *bin, long type)
 {
     struct memitem *itab;
     struct memitem *item;
     long            k1;
     long            k2;
     long            k3;
+#if (ADRBITS > 52)
     long            k4;
     void           *pstk[2] = { NULL };
-
+#else
+    void           *pstk[1] = { NULL };
+#endif
+    
+#if (ADRBITS > 52)
     memgetkeybits(ptr, k1, k2, k3, k4);
+#else
+    memgetkeybits(ptr, k1, k2, k3);
+#endif
     memgetlk(&g_mem.tab[k1].lk);
     itab = g_mem.tab[k1].tab;
     if (!itab) {
         itab = mapanon(0, MEMLVLITEMS * sizeof(struct memitem));
         if (itab == MAP_FAILED) {
-
+            
             return NULL;
         }
         pstk[0] = itab;
         g_mem.tab[k1].tab = itab;
     }
-    if (itab) {
-        item = &itab[k2];
-        itab = item->tab;
-        if (!itab) {
-            itab = mapanon(0, MEMLVLITEMS * sizeof(struct memitem));
-            if (itab == MAP_FAILED) {
-                unmapanon(pstk[0], MEMLVLITEMS * sizeof(struct memitem));
-                
-                return NULL;
-            }
-            pstk[1] = itab;
-            item->tab = itab;
+    item = &itab[k2];
+    itab = item->tab;
+    if (!itab) {
+        itab = mapanon(0, MEMLVLITEMS * sizeof(struct memitem));
+        if (itab == MAP_FAILED) {
+            unmapanon(pstk[0], MEMLVLITEMS * sizeof(struct memitem));
+            
+            return NULL;
         }
-        if (itab) {
-            item = &itab[k3];
-            itab = item->tab;
-            if (!itab) {
-                itab = mapanon(0, MEMLVLITEMS * sizeof(MEMADR_T));
-                if (itab == MAP_FAILED) {
-                    unmapanon(pstk[0], MEMLVLITEMS * sizeof(struct memitem));
-                    unmapanon(pstk[1], MEMLVLITEMS * sizeof(struct memitem));
-                    
-                    return NULL;
-                }
-                item->tab = itab;
-            }
-            if (itab) {
-                ((MEMADR_T *)itab)[k4] = (MEMADR_T)ptr | type;
-            }
-        }
+#if (ADRBITS > 52)
+        pstk[1] = itab;
+#endif
+        item->tab = itab;
     }
+#if (ADRBITS <= 52)
+    ((MEMADR_T *)itab)[k3] = (MEMADR_T)bin | type;
+#else
+    item = &itab[k3];
+    itab = item->tab;
+    if (!itab) {
+        itab = mapanon(0, MEMLVLITEMS * sizeof(MEMADR_T));
+        if (itab == MAP_FAILED) {
+            unmapanon(pstk[0], MEMLVLITEMS * sizeof(struct memitem));
+            unmapanon(pstk[1], MEMLVLITEMS * sizeof(struct memitem));
+             
+            return NULL;
+        }
+        item->tab = itab;
+    }
+    ((MEMADR_T *)itab)[k4] = (MEMADR_T)bin | type;
+#endif
     memrellk(&g_mem.tab[k1].lk);
-
+    
     return ptr;
 }
 
@@ -280,14 +288,25 @@ memfindbin(void *ptr)
     long            k1;
     long            k2;
     long            k3;
+#if (ADRBITS > 52)
     long            k4;
+#endif
 
+#if (ADRBITS > 52)
     memgetkeybits(ptr, k1, k2, k3, k4);
+#else
+    memgetkeybits(ptr, k1, k2, k3);
+#endif
     memgetlk(&g_mem.tab[k1].lk);
     itab = g_mem.tab[k1].tab;
     if (itab) {
         item = &itab[k2];
         itab = item->tab;
+#if (ADRBITS <= 52)
+        if (itab) {
+            ret = ((MEMADR_T *)itab)[k3];
+        }
+#else
         if (itab) {
             item = &itab[k3];
             itab = item->tab;
@@ -295,6 +314,7 @@ memfindbin(void *ptr)
                 ret = ((MEMADR_T *)itab)[k4];
             }
         }
+#endif
     }
     memrellk(&g_mem.tab[k1].lk);
 

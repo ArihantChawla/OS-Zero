@@ -286,30 +286,53 @@ membingetblk(struct membin *bin)
  * - for bigger pointers, we use a multilevel table
  */
 #if (PTRBITS > 32)
+#define MEMADRSHIFT   (PAGESIZELOG2 + MEMALIGNSHIFT)
+#define MEMADRBITS    (ADRBITS - MEMADRSHIFT)
+#if (ADRBITS > 52)
+#define MEMLVL1BITS   (MEMADRBITS - 3 * MEMLVLBITS)
+#else
+#define MEMLVL1BITS   (MEMADRBITS - 2 * MEMLVLBITS)
+#endif
+#if (ADRBITS <= 52)
+#define MEMLVLBITS    10
+#else
+#define MEMLVLBITS    12
+#endif
+#define MEMLVL1ITEMS  (MEMWORD(1) << MEMLVL1BITS)
 #define MEMLVLITEMS   (MEMWORD(1) << MEMLVLBITS)
-#define MEMLVL4ITEMS  (MEMWORD(1) << MEMLVL4BITS)
-#define MEMADRBITS    (ADRBITS - PAGESIZELOG2 - MEMALIGNSHIFT)
-#define MEMLVLBITS    8
-#define MEMLVL4BITS   (MEMADRBITS - 3 * MEMLVLBITS)
-#define MEMLVL4SHIFT  (PAGESIZELOG2 + MEMALIGNSHIFT)
+#define MEMLVL1MASK   ((MEMWORD(1) << MEMLVL1BITS) - 1)
 #define MEMLVLMASK    ((MEMWORD(1) << MEMLVLBITS) - 1)
-#define MEMLVL4MASK   ((MEMWORD(1) << MEMLVL4BITS) - 1)
 #define memlvl1key(p) (((MEMADR_T)(p) >> MEMLVL1SHIFT) & MEMLVL1MASK)
-#define memlvl2key(p) (((MEMADR_T)(p) >> MEMLVL2SHIFT) & MEMLVL2MASK)
-#define memlvl3key(p) (((MEMADR_T)(p) >> MEMLVL3SHIFT) & MEMLVL3MASK)
-#define memlvl4key(p) (((MEMADR_T)(p) >> MEMLVL4SHIFT) & MEMLVL4MASK)
+#define memlvl2key(p) (((MEMADR_T)(p) >> MEMLVL2SHIFT) & MEMLVLMASK)
+#define memlvl3key(p) (((MEMADR_T)(p) >> MEMLVL3SHIFT) & MEMLVLMASK)
+#if (ADRBITS > 52)
+#define memlvl4key(p) (((MEMADR_T)(p) >> MEMLVL4SHIFT) & MEMLVLMASK)
+#endif
+#if (ADRBITS <= 52)
+#define memgetkeybits(p, k1, k2, k3)                                    \
+    do {                                                                \
+        MEMADR_T _p1 = (MEMADR_T)(p) >> MEMADRSHIFT;                    \
+        MEMADR_T _p2 = (MEMADR_T)(p) >> (MEMADRSHIFT + MEMLVLBITS);     \
+        MEMADR_T _p3 = (MEMADR_T)(p) >> (MEMADRSHIFT + 2 * MEMLVLBITS); \
+                                                                        \
+        (k3) = _p1 & MEMLVLMASK;                                        \
+        (k2) = _p2 & MEMLVLMASK;                                        \
+        (k1) = _p3 & MEMLVL1MASK;                                       \
+    } while (0)
+#else
 #define memgetkeybits(p, k1, k2, k3, k4)                                \
     do {                                                                \
-        MEMADR_T _p1 = (MEMADR_T)(p) >> MEMLVL4SHIFT;                   \
-        MEMADR_T _p2 = (MEMADR_T)(p) >> (MEMLVL4SHIFT + MEMLVLBITS);    \
+        MEMADR_T _p1 = (MEMADR_T)(p) >> MEMADRSHIFT;                    \
+        MEMADR_T _p2 = (MEMADR_T)(p) >> (MEMADRSHIFT + MEMLVLBITS);     \
                                                                         \
-        (k4) = _p1 & MEMLVL4MASK;                                       \
+        (k4) = _p1 & MEMLVLMASK;                                        \
         (k3) = _p2 & MEMLVLMASK;                                        \
         _p1 >>= 2 * MEMLVLBITS;                                         \
         _p2 >>= 2 * MEMLVLBITS;                                         \
         (k2) = _p1 & MEMLVLMASK;                                        \
-        (k1) = _p2 & MEMLVLMASK;                                        \
+        (k1) = _p2 & MEMLVL1MASK;                                       \
     } while (0)
+#endif
 #endif
 
 #define membinhdrsize()       (sizeof(struct membin))
