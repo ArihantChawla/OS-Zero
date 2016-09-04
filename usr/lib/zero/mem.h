@@ -247,22 +247,22 @@ membininitfree(struct membin *bin)
  * - return index or 0 if not found (bit #0 indicates bin header)
  * - the routine is bitorder-agnostic... =)
  */
-static __inline__ long
+static __inline__ MEMWORD_T
 membinfindblk(struct membin *bin)
 {
     MEMUWORD_T  nblk = memgetbinnblk(bin);
-    long       *map = bin->freemap;
-    long        ndx = 0;
-    long       *lim = map + MEMBINFREEMAPWORDS;
-    long        word;
-    long        res;
-    long        bit;
+    MEMWORD_T  *map = bin->freemap;
+    MEMWORD_T   ndx = 0;
+    MEMWORD_T  *lim = map + MEMBINFREEMAPWORDS;
+    MEMWORD_T   word;
+    MEMWORD_T   res;
+    MEMWORD_T   bit;
 
     /* determine how many words to scan for free-bit (1) */
     if (!nblk) {
         lim = map + MEMBINFREEMAPWORDS;
     } else {
-        lim = map + rounduppow2(nblk, LONGSIZE * CHAR_BIT) / LONGSIZE;
+        lim = map + rounduppow2(nblk, WORDSIZE * CHAR_BIT) / WORDSIZE;
     }
     do {
         word = *map;
@@ -278,7 +278,7 @@ membinfindblk(struct membin *bin)
             return 0;
         }
         map++;                                  // try next word in freemap
-        ndx += LONGSIZE * CHAR_BIT;
+        ndx += WORDSIZE * CHAR_BIT;
     } while (map < lim);
 
     return 0;                                   // 1-bit not found
