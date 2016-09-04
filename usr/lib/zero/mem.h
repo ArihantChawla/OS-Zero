@@ -106,13 +106,13 @@ typedef volatile long MEMLK_T;
 #elif (MEMMINALIGN == 32)
 #define MEMALIGNSHIFT   5
 #endif
-#define MEMMINBLK       (MEMUWORD(1) << MEMALIGNSHIFT)
-#define MEMBINMAXBLK    (MEMUWORD(1) << MEMBINMAXSLOT)
-#define MEMBINMAXSLOT   (PAGESIZELOG2 - 1)
-#define MEMBINFREEWORDS (CLSIZE / WORDSIZE)
+#define MEMMINBLK          (MEMUWORD(1) << MEMALIGNSHIFT)
+#define MEMBINMAXBLK       (MEMUWORD(1) << MEMBINMAXSLOT)
+#define MEMBINMAXSLOT      (PAGESIZELOG2 - 1)
+#define MEMBINFREEMAPWORDS (CLSIZE / WORDSIZE)
 /* NOTE: the first block is the bin header */
-#define MEMBINBLKS      (MEMBINFREEWORDS * WORDSIZE * CHAR_BIT)
-#define MEMMAPMINSIZE   (1UL << 20)
+#define MEMBINBLKS         (MEMBINFREEMAPWORDS * WORDSIZE * CHAR_BIT)
+#define MEMMAPMINSIZE      (1UL << 20)
 
 /*
  * bin structure for allocating runs of pages; crafted to fit in a cacheline
@@ -151,7 +151,7 @@ struct membin {
     MEMWORD_T      slot;        // bucket slot #
     MEMPTR_T      *atab;        // unaligned base pointers for aligned blocks
     /* note: the first bit in freemap is reserved (unused) */
-    MEMWORD_T      freemap[MEMBINFREEWORDS] ALIGNED(CLSIZE);
+    MEMWORD_T      freemap[MEMBINFREEMAPWORDS] ALIGNED(CLSIZE);
 };
 
 struct membkt {
@@ -227,9 +227,9 @@ membininitfree(struct membin *bin)
     MEMWORD_T  bits = ~MEMWORD(0); // all 1-bits
     MEMWORD_T *ptr = bin->freemap;
 
-#if (MEMBINFREEWORDS >= 4)
+#if (MEMBINFREEMAPWORDS >= 4)
     _memfillmap0(ptr, 0, bits);
-#elif (MEMBINFREEWORDS >= 8)
+#elif (MEMBINFREEMAPWORDS >= 8)
     _memfillmap(ptr, 4, bits);
 #elif (MEMBINFREEWORD == 16)
     _memfillmap(ptr, 8, bits);
@@ -241,13 +241,57 @@ membininitfree(struct membin *bin)
     return;
 }
 
+/*
+ * find the lowest 1-bit (free block) in bin->freemap
+ * - caller has to lock the bin; memlkbit(&bin->flg, MEMLKBIT);
+ * - return index or 0 if not found (bit #0 indicates bin header)
+ * - the routine is bitorder-agnostic... =)
+ */
+static __inline__ long
+membinfindblk(struct membin *bin)
+{
+    MEMUWORD_T  nblk = memgetbinnblk(bin);
+    long       *map = bin->freemap;
+    long        ndx = 0;
+    long       *lim = map + MEMBINFREEMAPWORDS;
+    long        word;
+    long        res;
+    long        bit;
+
+    /* determine how many words to scan for free-bit (1) */
+    if (!nblk) {
+        lim = map + MEMBINFREEMAPWORDS;
+    } else {
+        lim = map + rounduppow2(nblk, LONGSIZE * CHAR_BIT) / LONGSIZE;
+    }
+    do {
+        word = *map;
+        if (word) {                             // skip 0-words
+            bit = lo1bit(word);                 // extract low 1 in word
+            tzerol(bit, res);                   // count trailing zeroes
+            ndx += res;                         // add to ndx
+            if (ndx < nblk) {
+                
+                return ndx;                     // return index of first 1-bit
+            }
+
+            return 0;
+        }
+        map++;                                  // try next word in freemap
+        ndx += LONGSIZE * CHAR_BIT;
+    } while (map < lim);
+
+    return 0;                                   // 1-bit not found
+}
+
+#if 0
 static __inline__ long
 membingetblk(struct membin *bin)
 {
     MEMUWORD_T nblk = memgetbinnblk(bin);
     long *map = bin->freemap;
     long  ndx = 0;
-    long *lim = map + MEMBINFREEWORDS;
+    long *lim = map + MEMBINFREEMAPWORDS;
     long  res;
 
     if (!nblk) {
@@ -280,6 +324,7 @@ membingetblk(struct membin *bin)
 
     return 0;
 }
+#endif
 
 /*
  * for 32-bit pointers, we can use a flat lookup table for bookkeeping pointers
