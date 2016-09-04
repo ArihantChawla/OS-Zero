@@ -242,13 +242,13 @@ membininitfree(struct membin *bin)
 }
 
 /*
- * find the lowest 1-bit (free block) in bin->freemap
+ * find and clear the lowest 1-bit (free block) in bin->freemap
  * - caller has to lock the bin; memlkbit(&bin->flg, MEMLKBIT);
  * - return index or 0 if not found (bit #0 indicates bin header)
  * - the routine is bitorder-agnostic... =)
  */
 static __inline__ MEMWORD_T
-membinfindblk(struct membin *bin)
+membinfindfree(struct membin *bin)
 {
     MEMUWORD_T  nblk = memgetbinnblk(bin);
     MEMWORD_T  *map = bin->freemap;
@@ -271,6 +271,7 @@ membinfindblk(struct membin *bin)
             tzerol(bit, res);                   // count trailing zeroes
             ndx += res;                         // add to ndx
             if (ndx < nblk) {
+                *map = ~bit;
                 
                 return ndx;                     // return index of first 1-bit
             }
@@ -284,47 +285,18 @@ membinfindblk(struct membin *bin)
     return 0;                                   // 1-bit not found
 }
 
-#if 0
-static __inline__ long
-membingetblk(struct membin *bin)
+static __inline__ void
+membinputfree(struct membin *bin, MEMWORD_T ndx)
 {
-    MEMUWORD_T nblk = memgetbinnblk(bin);
-    long *map = bin->freemap;
-    long  ndx = 0;
-    long *lim = map + MEMBINFREEMAPWORDS;
-    long  res;
+    MEMWORD_T *map = bin->freemap;
+    MEMWORD_T  word = ndx / WORDSIZE;
+    MEMWORD_T  pos = ndx & (WORDSIZE - 1);
+    MEMWORD_T  bit = MEMWORD(1) << pos;
 
-    if (!nblk) {
-        do {
-            ndx++;
-            res = m_cmpclrbit((volatile long *)map, ndx);
-            if (res) {
-                
-                return ndx;
-            }
-            if (ndx == PTRBITS - 1) {
-                map++;
-                ndx = -1;
-            }
-        } while (!res && map < lim);
-    } else {
-        do {
-            ndx++;
-            res = m_cmpclrbit((volatile long *)map, ndx);
-            if (res) {
-                
-                return ndx;
-            }
-            if (ndx == PTRBITS - 1) {
-                map++;
-                ndx = -1;
-            }
-        } while ((--nblk) && !res && map < lim);
-    }
+    map[word] |= bit;
 
-    return 0;
+    return;
 }
-#endif
 
 /*
  * for 32-bit pointers, we can use a flat lookup table for bookkeeping pointers
