@@ -213,7 +213,7 @@ memgetbin(struct mem *mem, long slot, long type)
 
 /* find a bin address; type encoded in the low 2 bits */
 static void *
-memputbin(void *ptr, struct membin *bin, long type)
+memputbkt(void *ptr, struct membkt *bkt, long type)
 {
     struct memitem *itab;
     struct memitem *item;
@@ -258,7 +258,7 @@ memputbin(void *ptr, struct membin *bin, long type)
         item->tab = itab;
     }
 #if (ADRBITS <= 52)
-    ((MEMADR_T *)itab)[k3] = (MEMADR_T)bin | type;
+    ((MEMADR_T *)itab)[k3] = (MEMADR_T)bkt | type;
 #else
     item = &itab[k3];
     itab = item->tab;
@@ -272,7 +272,7 @@ memputbin(void *ptr, struct membin *bin, long type)
         }
         item->tab = itab;
     }
-    ((MEMADR_T *)itab)[k4] = (MEMADR_T)bin | type;
+    ((MEMADR_T *)itab)[k4] = (MEMADR_T)bkt | type;
 #endif
     memrellk(&g_mem.tab[k1].lk);
     
@@ -280,7 +280,7 @@ memputbin(void *ptr, struct membin *bin, long type)
 }
 
 static MEMADR_T
-memfindbin(void *ptr)
+memfindbkt(void *ptr)
 {
     MEMADR_T        ret = 0;
     struct memitem *itab;

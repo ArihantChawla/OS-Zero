@@ -256,7 +256,6 @@ membinfindfree(struct membin *bin)
     MEMWORD_T  *lim = map + MEMBINFREEMAPWORDS;
     MEMWORD_T   word;
     MEMWORD_T   res;
-    MEMWORD_T   bit;
 
     /* determine how many words to scan for free-bit (1) */
     if (!nblk) {
@@ -267,8 +266,7 @@ membinfindfree(struct membin *bin)
     do {
         word = *map;
         if (word) {                             // skip 0-words
-            bit = lo1bit(word);                 // extract low 1 in word
-            tzerol(bit, res);                   // count trailing zeroes
+            tzerol(word, res);                  // count trailing zeroes
             ndx += res;                         // add to ndx
             if (ndx < nblk) {
                 *map = ~bit;
