@@ -58,16 +58,20 @@ memallocsmallbin(struct mem *mem, long slot)
 static void *
 meminitsmallbin(struct mem *mem, struct membin *bin)
 {
-    long           slot = bin->slot;
-    MEMPTR_T       adr = bin->base;
-    MEMWORD_T      blksz = MEMWORD(1) << (slot);
-    MEMUWORD_T     info = bin->info;
-    MEMPTR_T       ptr = (MEMPTR_T)rounduppow2((MEMADR_T)adr
+    MEMWORD_T  nblk = MEMBINFREEMAPWORDS * CHAR_BIT * sizeof(MEMWORD_T);
+    long       slot = bin->slot;
+    MEMPTR_T   adr = bin->base;
+    MEMWORD_T  blksz = MEMWORD(1) << (slot);
+    MEMUWORD_T info = bin->info;
+    MEMPTR_T   ptr = (MEMPTR_T)rounduppow2((MEMADR_T)adr
                                                + sizeof(struct membin),
                                                blksz);
     struct membin *bptr;
 
-    membininitfree(bin);        // zero freemap, mark block #1 (0 is bin) in use
+    /* set number of blocks for bin */
+    memsetbinnblk(bin, nblk);
+    /* zero freemap, mark block #1 (0 is bin) in use */
+    membininitfree(bin, nblk);
     if (!info) {
         /* link block from sbrk() to global heap (put it on top) */
         bptr = mem->heap;
@@ -78,7 +82,7 @@ meminitsmallbin(struct mem *mem, struct membin *bin)
 }
 
 static struct membin *
-memallocpagebin(struct mem *mem, long slot, MEMUWORD_T nblk)
+memallocpagebin(struct mem *mem, long slot, MEMWORD_T nblk)
 {
     MEMWORD_T      mapsz = mempagebinsize(slot, nblk);
     MEMPTR_T       adr;
@@ -91,8 +95,7 @@ memallocpagebin(struct mem *mem, long slot, MEMUWORD_T nblk)
         
         return NULL;
     }
-    bin->base = adr;
-    // our newly allocated region
+    bin->base = adr;            // our newly allocated region
     bin->slot = slot;           // slot #
 
     return bin;
@@ -101,15 +104,18 @@ memallocpagebin(struct mem *mem, long slot, MEMUWORD_T nblk)
 static void *
 meminitpagebin(struct mem *mem, struct membin *bin)
 {
-    long       slot = bin->slot;
-    MEMPTR_T   adr = bin->base;
-    MEMWORD_T  blksz = slot * PAGESIZE;
-//    long       info = bin->info;
+    MEMWORD_T nblk = MEMBINFREEMAPWORDS * CHAR_BIT * sizeof(MEMWORD_T);
+    long      slot = bin->slot;
+    MEMPTR_T  adr = bin->base;
+    MEMWORD_T blksz = slot * PAGESIZE;
     MEMPTR_T   ptr = (MEMPTR_T)rounduppow2((MEMADR_T)adr
                                            + sizeof(struct membin),
                                            blksz);
 
-    membininitfree(bin);        // zero freemap, mark block #1 (0 is bin) in use
+    /* set number of blocks for bin */
+    memsetbinnblk(bin, nblk);
+    /* zero freemap, mark block #1 (0 is bin) in use */
+    membininitfree(bin, nblk);
 
     return ptr;
 }
@@ -140,18 +146,19 @@ meminitbigbin(struct mem *mem, struct membin *bin, MEMUWORD_T nblk)
     long       slot = bin->slot;
     MEMPTR_T   adr = bin->base;
     MEMUWORD_T blksz = MEMWORD(1) << (slot);
-//    long       info = bin->info;
     MEMPTR_T   ptr = (MEMPTR_T)rounduppow2((MEMADR_T)adr
                                            + sizeof(struct membin),
                                            blksz);
 
+    /* set number of blocks for bin */
     memsetbinnblk(bin, nblk);
-    membininitfree(bin);        // zero freemap, mark block #1 (0 is bin) in use
+    // zero freemap, mark block #1 (0 is bin) in use
+    membininitfree(bin, nblk);
 
     return ptr;
 }
 
-/* FIXME: nblk */
+/* FIXME */
 static void *
 memgetbin(struct mem *mem, long slot, long type)
 {

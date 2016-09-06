@@ -222,9 +222,9 @@ struct memarn {
      (ptr)[(ofs) + 3] = (mask))
 
 static __inline__ void
-membininitfree(struct membin *bin)
+membininitfree(struct membin *bin, MEMWORD_T nblk)
 {
-    MEMWORD_T  bits = ~MEMWORD(0); // all 1-bits
+    MEMWORD_T  bits = ~MEMWORD(0);      // all 1-bits
     MEMWORD_T *ptr = bin->freemap;
 
 #if (MEMBINFREEMAPWORDS >= 4)
@@ -237,6 +237,7 @@ membininitfree(struct membin *bin)
 #else
     memset(bin->freemap, 0xff, sizeof(bin->freemap));
 #endif
+    memsetbinnblk(bin, nblk);
 
     return;
 }
@@ -253,36 +254,29 @@ membinfindfree(struct membin *bin)
     MEMUWORD_T  nblk = memgetbinnblk(bin);
     MEMWORD_T  *map = bin->freemap;
     MEMWORD_T   ndx = 0;
-    MEMWORD_T  *lim = map + MEMBINFREEMAPWORDS;
     MEMWORD_T   word;
     MEMWORD_T   mask;
     MEMWORD_T   res;
 
-    /* determine how many words to scan for free-bit (1) */
-    if (!nblk) {
-        lim = map + MEMBINFREEMAPWORDS;
-    } else {
-        lim = map + rounduppow2(nblk, WORDSIZE * CHAR_BIT) / WORDSIZE;
-    }
     do {
         word = *map;
         if (word) {                             // skip 0-words
-            tzerol(word, res);                  // count trailing zeroes
+            res = tzerol(word);                 // count trailing zeroes
             ndx += res;                         // add to ndx
             if (ndx < nblk) {
                 mask = 1L << res;               // create bit
-                mask ~= mask;                   // invert for mask
+                mask = ~mask;                   // invert for mask
                 word &= mask;                   // mask the bit out
                 *map = word;                    // write
                 
                 return ndx;                     // return index of first 1-bit
             }
 
-            return 0;
+            return 0;                           // 1-bit not found
         }
         map++;                                  // try next word in freemap
         ndx += WORDSIZE * CHAR_BIT;
-    } while (map < lim);
+    } while (ndx < nblk);
 
     return 0;                                   // 1-bit not found
 }
