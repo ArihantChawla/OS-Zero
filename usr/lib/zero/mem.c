@@ -5,8 +5,8 @@
 #include <zero/unix.h>
 #include <zero/mem.h>
 
-typedef struct membin * memallocbinfunc(struct mem *mem, long slot);
-typedef void * meminitbinfunc(struct mem *mem, struct membin *bin);
+typedef struct membuf * memallocbuffunc(struct mem *mem, long slot);
+typedef void * meminitbuffunc(struct mem *mem, struct membuf *buf);
 
 static THREADLOCAL struct memarn     *tls_arn ALIGNED(PAGESIZE);
 #if (MEM_LK_TYPE == MEM_LK_PRIO)
@@ -17,18 +17,18 @@ static THREADLOCAL pthread_key_t      tls_key;
 static THREADLOCAL long               tls_flg;
 static struct                         mem g_mem ALIGNED(CLSIZE);
 
-static struct membin *
-memallocsmallbin(struct mem *mem, long slot)
+static struct membuf *
+memallocsmallbuf(struct mem *mem, long slot)
 {
     MEMPTR_T       adr = SBRK_FAILED;
-    MEMWORD_T      binsz = memsmallbinsize(slot);
+    MEMWORD_T      bufsz = memsmallbufsize(slot);
     MEMUWORD_T     info = 0;
-    struct membin *bin;
+    struct membuf *buf;
 
     if (!(mem->flg & MEMNOHEAPBIT)) {
         /* try to allocate from heap (sbrk()) */
         memgetlk(&mem->heaplk);
-        adr = growheap(binsz);
+        adr = growheap(bufsz);
         if (adr == SBRK_FAILED) {
             memrellk(&mem->heaplk);
         } else {
@@ -38,7 +38,7 @@ memallocsmallbin(struct mem *mem, long slot)
     if (adr == SBRK_FAILED) {
         /* sbrk() failed, let's try mmap() */
         memrellk(&mem->heaplk);
-        adr = mapanon(0, binsz);
+        adr = mapanon(0, bufsz);
         if (adr == MAP_FAILED) {
 #if defined(ENOMEM)
             errno = ENOMEM;
@@ -47,170 +47,170 @@ memallocsmallbin(struct mem *mem, long slot)
             return NULL;
         }
     }
-    bin = (struct membin *)adr;
-    bin->info = info;             // possible MEMMAPBIT
-    bin->base = adr;            // our newly allocated region
-    bin->slot = slot;           // slot #
+    buf = (struct membuf *)adr;
+    buf->info = info;             // possible MEMMAPBIT
+    buf->base = adr;            // our newly allocated region
+    buf->slot = slot;           // slot #
 
-    return bin;
+    return buf;
 }
 
 static void *
-meminitsmallbin(struct mem *mem, struct membin *bin)
+meminitsmallbuf(struct mem *mem, struct membuf *buf)
 {
-    MEMWORD_T  nblk = MEMBINFREEMAPWORDS * CHAR_BIT * sizeof(MEMWORD_T);
-    long       slot = bin->slot;
-    MEMPTR_T   adr = bin->base;
+    MEMWORD_T  nblk = MEMBUFFREEMAPWORDS * CHAR_BIT * sizeof(MEMWORD_T);
+    long       slot = buf->slot;
+    MEMPTR_T   adr = buf->base;
     MEMWORD_T  blksz = MEMWORD(1) << (slot);
-    MEMUWORD_T info = bin->info;
+    MEMUWORD_T info = buf->info;
     MEMPTR_T   ptr = (MEMPTR_T)rounduppow2((MEMADR_T)adr
-                                               + sizeof(struct membin),
+                                               + sizeof(struct membuf),
                                                blksz);
-    struct membin *bptr;
+    struct membuf *bptr;
 
-    /* set number of blocks for bin */
-    memsetbinnblk(bin, nblk);
-    /* zero freemap, mark block #1 (0 is bin) in use */
-    membininitfree(bin, nblk);
+    /* set number of blocks for buf */
+    memsetbufnblk(buf, nblk);
+    /* zero freemap, mark block #1 (0 is buf) in use */
+    membufinitfree(buf, nblk);
     if (!info) {
         /* link block from sbrk() to global heap (put it on top) */
         bptr = mem->heap;
-        bin->heap = bptr;
+        buf->heap = bptr;
     }
 
     return ptr;
 }
 
-static struct membin *
-memallocpagebin(struct mem *mem, long slot, MEMWORD_T nblk)
+static struct membuf *
+memallocpagebuf(struct mem *mem, long slot, MEMWORD_T nblk)
 {
-    MEMWORD_T      mapsz = mempagebinsize(slot, nblk);
+    MEMWORD_T      mapsz = mempagebufsize(slot, nblk);
     MEMPTR_T       adr;
-    struct membin *bin;
+    struct membuf *buf;
 
     /* mmap() blocks */
     adr = mapanon(0, mapsz);
-    bin = (struct membin *)adr;
+    buf = (struct membuf *)adr;
     if (adr == MAP_FAILED) {
         
         return NULL;
     }
-    bin->base = adr;            // our newly allocated region
-    bin->slot = slot;           // slot #
+    buf->base = adr;            // our newly allocated region
+    buf->slot = slot;           // slot #
 
-    return bin;
+    return buf;
 }
 
 static void *
-meminitpagebin(struct mem *mem, struct membin *bin)
+meminitpagebuf(struct mem *mem, struct membuf *buf)
 {
-    MEMWORD_T nblk = MEMBINFREEMAPWORDS * CHAR_BIT * sizeof(MEMWORD_T);
-    long      slot = bin->slot;
-    MEMPTR_T  adr = bin->base;
+    MEMWORD_T nblk = MEMBUFFREEMAPWORDS * CHAR_BIT * sizeof(MEMWORD_T);
+    long      slot = buf->slot;
+    MEMPTR_T  adr = buf->base;
     MEMWORD_T blksz = slot * PAGESIZE;
     MEMPTR_T   ptr = (MEMPTR_T)rounduppow2((MEMADR_T)adr
-                                           + sizeof(struct membin),
+                                           + sizeof(struct membuf),
                                            blksz);
 
-    /* set number of blocks for bin */
-    memsetbinnblk(bin, nblk);
-    /* zero freemap, mark block #1 (0 is bin) in use */
-    membininitfree(bin, nblk);
+    /* set number of blocks for buf */
+    memsetbufnblk(buf, nblk);
+    /* zero freemap, mark block #1 (0 is buf) in use */
+    membufinitfree(buf, nblk);
 
     return ptr;
 }
 
-static struct membin *
-memallocbigbin(struct mem *mem, long slot, MEMUWORD_T nblk)
+static struct membuf *
+memallocbigbuf(struct mem *mem, long slot, MEMUWORD_T nblk)
 {
-    MEMWORD_T      mapsz = membigbinsize(slot, nblk);
+    MEMWORD_T      mapsz = membigbufsize(slot, nblk);
     MEMPTR_T       adr;
-    struct membin *bin;
+    struct membuf *buf;
 
     /* mmap() blocks */
     adr = mapanon(0, mapsz);
-    bin = (struct membin *)adr;
+    buf = (struct membuf *)adr;
     if (adr == MAP_FAILED) {
         
         return NULL;
     }
-    bin->base = adr;            // our newly allocated region
-    bin->slot = slot;           // slot #
+    buf->base = adr;            // our newly allocated region
+    buf->slot = slot;           // slot #
 
-    return bin;
+    return buf;
 }
 
 static void *
-meminitbigbin(struct mem *mem, struct membin *bin, MEMUWORD_T nblk)
+meminitbigbuf(struct mem *mem, struct membuf *buf, MEMUWORD_T nblk)
 {
-    long       slot = bin->slot;
-    MEMPTR_T   adr = bin->base;
+    long       slot = buf->slot;
+    MEMPTR_T   adr = buf->base;
     MEMUWORD_T blksz = MEMWORD(1) << (slot);
     MEMPTR_T   ptr = (MEMPTR_T)rounduppow2((MEMADR_T)adr
-                                           + sizeof(struct membin),
+                                           + sizeof(struct membuf),
                                            blksz);
 
-    /* set number of blocks for bin */
-    memsetbinnblk(bin, nblk);
-    // zero freemap, mark block #1 (0 is bin) in use
-    membininitfree(bin, nblk);
+    /* set number of blocks for buf */
+    memsetbufnblk(buf, nblk);
+    // zero freemap, mark block #1 (0 is buf) in use
+    membufinitfree(buf, nblk);
 
     return ptr;
 }
 
 /* FIXME */
 static void *
-memgetbin(struct mem *mem, long slot, long type)
+memgetbuf(struct mem *mem, long slot, long type)
 {
     struct memarn *arn = tls_arn;
     MEMPTR_T       ptr = NULL;
     struct membkt *bkt;
-    struct membin *bin;
+    struct membuf *buf;
     MEMUWORD_T     info;
     MEMUWORD_T     nblk = 1;
-    struct membin *bptr;
+    struct membuf *bptr;
     MEMADR_T       upval;
 
     if (!type) {
         bkt = &arn->small[slot];
         memlkbit(&bkt->list);
-        bin = memallocsmallbin(mem, slot);
-        if (bin) {
-            ptr = meminitsmallbin(mem, bin);
+        buf = memallocsmallbuf(mem, slot);
+        if (buf) {
+            ptr = meminitsmallbuf(mem, buf);
         }
     } else if (type == 1) {
         bkt = &arn->page[slot];
         memlkbit(&bkt->list);
-        bin = memallocpagebin(mem, slot, nblk);
-        if (bin) {
-            ptr = meminitpagebin(mem, bin);
+        buf = memallocpagebuf(mem, slot, nblk);
+        if (buf) {
+            ptr = meminitpagebuf(mem, buf);
         }
     } else {
         bkt = &arn->big[slot];
         memlkbit(&bkt->list);
-        bin = memallocbigbin(mem, slot, nblk);
-        if (bin) {
-            ptr = meminitbigbin(mem, bin, nblk);
+        buf = memallocbigbuf(mem, slot, nblk);
+        if (buf) {
+            ptr = meminitbigbuf(mem, buf, nblk);
         }
     }
-    if (bin) {
-        /* link bin to bucket */
+    if (buf) {
+        /* link buf to bucket */
         upval = (MEMADR_T)bkt->list;
         upval &= ~MEMLKBIT;
-        bptr = (struct membin *)upval;
+        bptr = (struct membuf *)upval;
         if (bptr) {
-            bptr->prev = bin;
+            bptr->prev = buf;
         }
-        bin->prev = NULL;
-        bin->next = bptr;
-        bin->bkt = bkt;
-        bin->atab = (MEMPTR_T)bin + membinatabofs();
+        buf->prev = NULL;
+        buf->next = bptr;
+        buf->bkt = bkt;
+        buf->atab = (MEMPTR_T)buf + membufatabofs();
         if (info & MEMHEAPBIT) {
             /* this unlocks the global heap (low-bit becomes zero) */
-            m_syncwrite(&mem->heap, bin);
+            m_syncwrite(&mem->heap, buf);
         }
         /* this unlocks the arena bucket (low-bit becomes zero) */
-        m_syncwrite(&bkt->list, bin);
+        m_syncwrite(&bkt->list, buf);
     } else {
         memrelbit(&bkt->list);
     }
@@ -218,7 +218,7 @@ memgetbin(struct mem *mem, long slot, long type)
     return ptr;                 // return pointer to first block
 }
 
-/* find a bin address; type encoded in the low 2 bits */
+/* find a buf address; type encoded in the low 2 bits */
 static void *
 memputbkt(void *ptr, struct membkt *bkt, long type)
 {

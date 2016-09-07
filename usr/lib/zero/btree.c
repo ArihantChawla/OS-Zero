@@ -29,6 +29,6 @@ btreefind(struct btree *tree, BTREE_KEY_T key)
 static BTREE_DATA_T
 btreedel(struct btree *tree, BTREE_KEY_T key)
 {
-    BTREE_DATA_NONE;
+    return BTREE_DATA_NONE;
 }
 

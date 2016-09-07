@@ -107,15 +107,15 @@ typedef volatile long MEMLK_T;
 #define MEMALIGNSHIFT   5
 #endif
 #define MEMMINBLK          (MEMUWORD(1) << MEMALIGNSHIFT)
-#define MEMBINMAXBLK       (MEMUWORD(1) << MEMBINMAXSLOT)
-#define MEMBINMAXSLOT      (PAGESIZELOG2 - 1)
-#define MEMBINFREEMAPWORDS (CLSIZE / WORDSIZE)
-/* NOTE: the first block is the bin header */
-#define MEMBINBLKS         (MEMBINFREEMAPWORDS * WORDSIZE * CHAR_BIT)
+#define MEMBUFMAXBLK       (MEMUWORD(1) << MEMBUFMAXSLOT)
+#define MEMBUFMAXSLOT      (PAGESIZELOG2 - 1)
+#define MEMBUFFREEMAPWORDS (CLSIZE / WORDSIZE)
+/* NOTE: the first block is the buf header */
+#define MEMBUFBLKS         (MEMBUFFREEMAPWORDS * WORDSIZE * CHAR_BIT)
 #define MEMMAPMINSIZE      (1UL << 20)
 
 /*
- * bin structure for allocating runs of pages; crafted to fit in a cacheline
+ * buf structure for allocating runs of pages; crafted to fit in a cacheline
  * - a second cacheline is used for the bitmap; 1-bits denote blocks in use
  * - the actual runs will be prefixed by this structure
  * - allocation shall take place with sbrk() or mmap() (see MEMMAPBIT)
@@ -126,8 +126,8 @@ typedef volatile long MEMLK_T;
 #define MEMNOHEAPBIT (1L << 1)
 struct mem {
     MEMWORD_T      flg;         // memory interface flags
-    struct membin *heap;        // heap allocations (try sbrk(), then mmap())
-    struct membin *maps;        // mapped regions
+    struct membuf *heap;        // heap allocations (try sbrk(), then mmap())
+    struct membuf *maps;        // mapped regions
     struct memtab *tab;         // allocation lookup structure
     MEMLK_T        initlk;      // lock for initialising the structure
     MEMLK_T        heaplk;      // lock for sbrk()
@@ -135,42 +135,48 @@ struct mem {
 
 #define MEMHEAPBIT    (1L << 1)
 #define MEMEMPTYBIT   (1L << 2)
-#define MEMBINFLGMASK ((1L << MEMBINFLGBITS) - 1)
-#define MEMBINFLGBITS 3
-#define memsetbinflg(bin, flg) ((bin)->info |= (flg))
-#define memsetbinnblk(bin, n)                                           \
-    ((bin)->info = ((bin)->info & MEMBINFLGMASK) | ((n) << MEMBINFLGBITS))
-#define memgetbinnblk(bin)     ((bin)->info >> MEMBINFLGBITS)
-struct membin {
+#define MEMBUFFLGMASK ((1L << MEMBUFFLGBITS) - 1)
+#define MEMBUFFLGBITS 3
+#define memsetbufflg(buf, flg) ((buf)->info |= (flg))
+#define memsetbufnblk(buf, n)                                           \
+    ((buf)->info = ((buf)->info & MEMBUFFLGMASK) | ((n) << MEMBUFFLGBITS))
+#define memgetbufnblk(buf)     ((buf)->info >> MEMBUFFLGBITS)
+struct membuf {
     MEMUWORD_T     info;        // flag-bits + lock-bit
     MEMPTR_T       base;        // base address
-    struct membin *heap;        // previous bin in heap for bins from sbrk()
-    struct membin *prev;        // previous bin in chain
-    struct membin *next;        // next bin in chain
+    struct membuf *heap;        // previous buf in heap for bufs from sbrk()
+    struct membuf *prev;        // previous buf in chain
+    struct membuf *next;        // next buf in chain
     struct membkt *bkt;         // pointer to parent bucket
     MEMWORD_T      slot;        // bucket slot #
     MEMPTR_T      *atab;        // unaligned base pointers for aligned blocks
     /* note: the first bit in freemap is reserved (unused) */
-    MEMWORD_T      freemap[MEMBINFREEMAPWORDS] ALIGNED(CLSIZE);
+    MEMWORD_T      freemap[MEMBUFFREEMAPWORDS] ALIGNED(CLSIZE);
 };
 
 struct membkt {
 #if (MEMLFDEQ)
     struct lfdeq   list;
 #else
-    struct membin *list;        // bi-directional list of bins + lock-bit
+    struct membuf *list;        // bi-directional list of bufs + lock-bit
 #endif
     MEMWORD_T      slot;        // bucket slot #
-    MEMWORD_T      nbin;        // number of bins in list
-    MEMWORD_T      nbuf;        // number of bins to allocate/buffer at a time
+    MEMWORD_T      nbuf;        // number of bufs in list
+    uint8_t        _pad[CLSIZE
+#if (MEMLFDEQ)
+                        - sizeof(struct lfdeq)
+#else
+                        - sizeof(struct membuf *)
+#endif
+                        - 2 * sizeof(MEMWORD_T)];
 };
 
 #if 0
 struct memmagbkt {
-    struct memmag *list;        // bi-directional list of bins + lock-bit
+    struct memmag *list;        // bi-directional list of bufs + lock-bit
     MEMWORD_T      slot;        // bucket slot #
-    MEMWORD_T      nbin;        // number of bins in list
-    MEMWORD_T      nbuf;        // number of bins to allocate/buffer at a time
+    MEMWORD_T      nbuf;        // number of bufs in list
+    MEMWORD_T      nbuf;        // number of bufs to allocate/buffer at a time
 };
 #endif
 
@@ -187,7 +193,7 @@ struct memtab {
 #define MEMSMALLBLK 0x00
 #define MEMPAGEBLK  0x01
 #define MEMBIGBLK   0x02
-#define MEMBINTYPES 3
+#define MEMBUFTYPES 3
 /* lookup table structure for upper levels */
 struct memitem {
 #if (MEMTABNREF)
@@ -209,7 +215,7 @@ struct memarn {
 /* possible auxiliary data here; arena is of PAGESIZE */
 };
 
-/* mark the first block of bin as allocated; bit #0 is magazine header */
+/* mark the first block of buf as allocated; bit #0 is magazine header */
 #define _memfillmap0(ptr, ofs, mask)                                    \
     ((ptr)[(ofs)] = (mask) & ~MEMWORD(0x03),                            \
      (ptr)[(ofs) + 1] = (mask),                                         \
@@ -222,37 +228,37 @@ struct memarn {
      (ptr)[(ofs) + 3] = (mask))
 
 static __inline__ void
-membininitfree(struct membin *bin, MEMWORD_T nblk)
+membufinitfree(struct membuf *buf, MEMWORD_T nblk)
 {
     MEMWORD_T  bits = ~MEMWORD(0);      // all 1-bits
-    MEMWORD_T *ptr = bin->freemap;
+    MEMWORD_T *ptr = buf->freemap;
 
-#if (MEMBINFREEMAPWORDS >= 4)
+#if (MEMBUFFREEMAPWORDS >= 4)
     _memfillmap0(ptr, 0, bits);
-#elif (MEMBINFREEMAPWORDS >= 8)
+#elif (MEMBUFFREEMAPWORDS >= 8)
     _memfillmap(ptr, 4, bits);
-#elif (MEMBINFREEWORD == 16)
+#elif (MEMBUFFREEWORD == 16)
     _memfillmap(ptr, 8, bits);
     _memfillmap(ptr, 12, bits);
 #else
-    memset(bin->freemap, 0xff, sizeof(bin->freemap));
+    memset(buf->freemap, 0xff, sizeof(buf->freemap));
 #endif
-    memsetbinnblk(bin, nblk);
+    memsetbufnblk(buf, nblk);
 
     return;
 }
 
 /*
- * find and clear the lowest 1-bit (free block) in bin->freemap
- * - caller has to lock the bin; memlkbit(&bin->flg, MEMLKBIT);
- * - return index or 0 if not found (bit #0 indicates bin header)
+ * find and clear the lowest 1-bit (free block) in buf->freemap
+ * - caller has to lock the buf; memlkbit(&buf->flg, MEMLKBIT);
+ * - return index or 0 if not found (bit #0 indicates buf header)
  * - the routine is bitorder-agnostic... =)
  */
 static __inline__ MEMWORD_T
-membinfindfree(struct membin *bin)
+membuffindfree(struct membuf *buf)
 {
-    MEMUWORD_T  nblk = memgetbinnblk(bin);
-    MEMWORD_T  *map = bin->freemap;
+    MEMUWORD_T  nblk = memgetbufnblk(buf);
+    MEMWORD_T  *map = buf->freemap;
     MEMWORD_T   ndx = 0;
     MEMWORD_T   word;
     MEMWORD_T   mask;
@@ -268,13 +274,13 @@ membinfindfree(struct membin *bin)
                 mask = ~mask;                   // invert for mask
                 word &= mask;                   // mask the bit out
                 *map = word;                    // write
-                
-                return ndx;                     // return index of first 1-bit
+
+                return ndx;             // return index of first 1-bit
             }
 
-            return 0;                           // 1-bit not found
+            return 0;                   // 1-bit not found
         }
-        map++;                                  // try next word in freemap
+        map++;                          // try next word in freemap
         ndx += WORDSIZE * CHAR_BIT;
     } while (ndx < nblk);
 
@@ -282,9 +288,9 @@ membinfindfree(struct membin *bin)
 }
 
 static __inline__ void
-membinputfree(struct membin *bin, MEMWORD_T ndx)
+membufputfree(struct membuf *buf, MEMWORD_T ndx)
 {
-    MEMWORD_T *map = bin->freemap;
+    MEMWORD_T *map = buf->freemap;
     MEMWORD_T  word = ndx / WORDSIZE;
     MEMWORD_T  pos = ndx & (WORDSIZE - 1);
     MEMWORD_T  bit = MEMWORD(1) << pos;
@@ -348,24 +354,24 @@ membinputfree(struct membin *bin, MEMWORD_T ndx)
 #endif
 #endif
 
-#define membinhdrsize()       (sizeof(struct membin))
-#define membinatabofs(slot)   (membinhdrsize())
-#define membinatabsize()      (MEMBINBLKS * sizeof(MEMPTR_T))
-#define memsmallbinsize(slot)                                           \
-    (rounduppow2(rounduppow2(membinhdrsize()                            \
-                             + membinatabsize(),                        \
+#define membufhdrsize()       (sizeof(struct membuf))
+#define membufatabofs(slot)   (membufhdrsize())
+#define membufatabsize()      (MEMBUFBLKS * sizeof(MEMPTR_T))
+#define memsmallbufsize(slot)                                           \
+    (rounduppow2(rounduppow2(membufhdrsize()                            \
+                             + membufatabsize(),                        \
                              PAGESIZE)                                  \
-                 + (MEMBINBLKS << (slot)),                              \
+                 + (MEMBUFBLKS << (slot)),                              \
                  PAGESIZE))
-#define mempagebinsize(slot, nblk)                                      \
-    (rounduppow2(rounduppow2(membinhdrsize()                            \
-                             + membinatabsize(),                        \
+#define mempagebufsize(slot, nblk)                                      \
+    (rounduppow2(rounduppow2(membufhdrsize()                            \
+                             + membufatabsize(),                        \
                              PAGESIZE)                                  \
                  + PAGESIZE * (slot) * (nblk),                          \
                  PAGESIZE))
-#define membigbinsize(slot, nblk)                                       \
-    (rounduppow2(rounduppow2(membinhdrsize()                            \
-                             + membinatabsize(),                        \
+#define membigbufsize(slot, nblk)                                       \
+    (rounduppow2(rounduppow2(membufhdrsize()                            \
+                             + membufatabsize(),                        \
                              PAGESIZE)                                  \
                  + (nblk) + ((nblk) << (slot)),                         \
                  PAGESIZE))
