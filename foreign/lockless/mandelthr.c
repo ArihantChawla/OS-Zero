@@ -176,12 +176,12 @@ static void display_sse2(int size, float xmin, float xmax, float ymin, float yma
 	
     float xscal = (xmax - xmin) / size;
     float yscal = (ymax - ymin) / size;
-	
+    
     unsigned counts[4];
 
-    for (y = yofs; y < ylim; y += 2)
+    for (y = yofs; y < ylim; y++) {
 	{
-            for (x = 0; x < size; x += 4)
+            for (x = 0; x < size; x += 4) {
 		{
                     v4sf cr = { xmin + x * xscal,
                                 xmin + (x + 1) * xscal,
@@ -191,27 +191,29 @@ static void display_sse2(int size, float xmin, float xmax, float ymin, float yma
                                 ymin + y * yscal,
                                 ymin + y * yscal,
                                 ymin + y * yscal };
-
+                    
                     mandel_sse(cr, ci, counts);
-			
+                    
                     ((unsigned *) bitmap->data)[x + y * size] = cols[counts[0]];
                     ((unsigned *) bitmap->data)[x + 1 + y * size] = cols[counts[1]];
                     ((unsigned *) bitmap->data)[x + 2 + y * size] = cols[counts[2]];
                     ((unsigned *) bitmap->data)[x + 3 + y * size] = cols[counts[3]];
 		}
-
+            
             /* Display it line-by-line for speed */
-            XPutImage(dpy, win, gc, bitmap,
-                      0, y, 0, y,
-                      size, 1);
-	}
-
+                XPutImage(dpy, win, gc, bitmap,
+                          0, y, 0, y,
+                          size, 1);
+            }
+        }
+    }
+        
     XFlush(dpy);
 }
 
 #elif (DOUBLE)
-
-static unsigned mandel_double(double cr, double ci)
+    
+    static unsigned mandel_double(double cr, double ci)
 {
     double zr = cr, zi = ci;
     double tmp;
@@ -349,7 +351,7 @@ static void display_float(int size, float xmin, float xmax, float ymin, float ym
 #define ASIZE 1000
 
 /* Comment out this for benchmarking */
-#define WAIT_EXIT
+//#define WAIT_EXIT
 
 void *
 mandel_start(void *arg, int tid, int nthr)
