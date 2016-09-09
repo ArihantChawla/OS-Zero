@@ -4,10 +4,11 @@
  * THANKS A MILLION to the original authors. ;)
  */
 
-#define FLOAT  1
+#define OPTIMIZED 1
+#define FLOAT  0
 #define DOUBLE 0
-#if defined(__SSE2__) && 0
 #define SSE2   1
+#if defined(__SSE2__) && 0
 #endif
 
 #if (SSE2)
@@ -169,7 +170,7 @@ static void init_colours(void)
 #if (SSE2)
 
 /* For each point, evaluate its colour */
-static void display_sse2(int size, float xmin, float xmax, float ymin, float ymax, float yofs, float ylim)
+static void display_sse2(int size, float xmin, float xmax, float ymin, float ymax, int yofs, int ylim)
 {
     int x, y;
 	
@@ -231,7 +232,7 @@ static unsigned mandel_double(double cr, double ci)
 }
 
 /* For each point, evaluate its colour */
-static void display_double(int size, double xmin, double xmax, double ymin, double ymax)
+static void display_double(int size, double xmin, double xmax, double ymin, double ymax, int yofs, int ylim)
 {
     int x, y;
 	
@@ -242,22 +243,36 @@ static void display_double(int size, double xmin, double xmax, double ymin, doub
 	
     unsigned counts;
 
-    for (y = ymin; y < ymax; y++)
+#if (OPTIMIZED)
+    cr = xmin;
+    ci = ymin;
+#endif
+
+    for (y = yofs ; y < ylim; y++)
 	{
             for (x = 0; x < size; x++)
 		{
+#if (!OPTIMIZED)
                     cr = xmin + x * xscal;
                     ci = ymin + y * yscal;
+#endif
 			
                     counts = mandel_double(cr, ci);
 			
                     ((unsigned *) bitmap->data)[x + y*size] = cols[counts];
+
+#if (OPTIMIZED)
+                    cr += xscal;
+#endif
 		}
 		
             /* Display it line-by-line for speed */
             XPutImage(dpy, win, gc, bitmap,
                       0, y, 0, y,
                       size, 1);
+#if (OPTIMIZED)
+            ci += yscal;
+#endif
 	}
 	
     XFlush(dpy);
@@ -286,33 +301,43 @@ static unsigned mandel_float(float cr, float ci)
 }
 
 /* For each point, evaluate its colour */
-static void display_float(int size, float xmin, float xmax, float ymin, float ymax, float yofs, float ylim)
+static void display_float(int size, float xmin, float xmax, float ymin, float ymax, int yofs, float ylim)
 {
     int x, y;
 	
     float cr, ci;
-	
+
     float xscal = (xmax - xmin) / size;
     float yscal = (ymax - ymin) / size;
 	
     unsigned counts;
 
+#if (OPTIMIZED)
+    cr = xmin;
+    ci = ymin;
+#endif
     for (y = yofs; y < ylim; y++)
 	{
             for (x = 0; x < size; x++)
 		{
+#if (!OPTIMIZED)
                     cr = xmin + x * xscal;
                     ci = ymin + y * yscal;
-			
+#endif
                     counts = mandel_float(cr, ci);
-			
                     ((unsigned *) bitmap->data)[x + y*size] = cols[counts];
+#if (OPTIMIZED)
+                    cr += xscal;
+#endif
 		}
 
             /* Display it line-by-line for speed */
             XPutImage(dpy, win, gc, bitmap,
                       0, y, 0, y,
                       size, 1);
+#if (OPTIMIZED)
+            ci += yscal;
+#endif
 	}
 	
     XFlush(dpy);
@@ -335,10 +360,12 @@ mandel_start(void *arg, int tid, int nthr)
     float ymax = 1.5;
     struct mandelthr *args = arg;
 
-#if (SSE2)
-    display_sse2(ASIZE, xmin, xmax, ymin, ymax, (float)args->yofs, (float)args->ylim);
-#else
-    display_float(ASIZE, xmin, xmax, (float)args->ymin, (float)args->ylim);
+#if (DOUBLE)
+    display_double(ASIZE, xmin, xmax, ymin, ymax, args->yofs, args->ylim);
+#elif (SSE2)
+    display_sse2(ASIZE, xmin, xmax, ymin, ymax, args->yofs, args->ylim);
+#elif (FLOAT)
+    display_float(ASIZE, xmin, xmax, ymin, ymax, args->yofs, args->ylim);
 #endif
     g_nthr--;
 
