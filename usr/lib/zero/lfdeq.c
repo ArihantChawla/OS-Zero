@@ -121,31 +121,32 @@ _lfdeqfixqueue(struct lfdeq *lfdeq, TAGPTR_T head, TAGPTR_T tail)
 
     cur = tail;
     do {
-        tmp = lfdeq->head;
-        tagptrgetadr(tmp, node1);
-        next = node1->next;
-        tagptrgettag(cur, tag1);
         while ((tagptrcmp(&head, &lfdeq->head)) && (!tagptrcmp(&cur, &head))) {
-            tag3 = tag1;
-            tagptrgetadr(cur, node2);
-            next = node2->next;
-            tagptrgetadr(next, node3);
-            tagptrgettag(next, tag2);
+            tmp = lfdeq->head;                      // tmp = head
+            tagptrgetadr(tmp, node1);               // node1 = tmp.adr
+            next = node1->next;                     // next = tmp.next
+            tagptrgettag(cur, tag1);                // tag1 = cur.tag
+            tag3 = tag1;                        // tag3 = cur.tag
+            tagptrgetadr(cur, node2);           // node2 = cur.tag
+            next = node2->next;                 // next = cur->next
+            tagptrgetadr(next, node3);          // node3 = next.adr
+            tagptrgettag(next, tag2);           // tag2 = next.tag
             if (tag1 != tag2) {
+                /* cur == next */
                 
                 return;
             }
-            tagptrgetadr(cur, node1);
-            tag3--;
-            prev = node1->prev;
-            tagptrsettag(tag3, cur);
+            tagptrgetadr(cur, node1);           // node1 = cur.adr
+            tag3--;                             // tag3 = cur.tag - 1
+            prev = node1->prev;                 // prev = tmp.prev
+            tagptrsettag(tag3, cur);            // cur.tag = cur.tag - 1
             if (!tagptrcmp(&prev, &cur)) {
-                node3->prev = cur;
+                node3->prev = cur;              // next->prev = cur;
             }
+            tag1--;                             // tag1 = cur.tag - 1
+            tagptrsetadr(node3, cur);           // cur.adr = cur->next
+            tagptrsettag(tag1, cur);            // cur.tag = cur.tag - 1
         }
-        tag1--;
-        tagptrsetadr(node3, cur);
-        tagptrsettag(tag1, cur);
     } while (1);
 
     return;
@@ -284,3 +285,10 @@ lfdeqdequeue(struct lfdeq *lfdeq)
     return LFDEQ_VAL_NONE;
 }
 
+#if (LFDEQTEST)
+int
+main(int argc, char *argv[])
+{
+    ;
+}
+#endif

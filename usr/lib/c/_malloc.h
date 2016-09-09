@@ -1,7 +1,7 @@
 #ifndef ___MALLOC_H__
 #define ___MALLOC_H__
 
-#define MALLOCLFDEQ       1
+#define MALLOCLFDEQ       0
 #define MALLOCBUFMAP      1
 #define MALLOCBUFMAPTABS  1
 #define ZEROFMTX          1

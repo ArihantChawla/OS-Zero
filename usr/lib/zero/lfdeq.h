@@ -3,6 +3,7 @@
 
 #include <zero/param.h>
 #include <zero/trix.h>
+#include <zero/op128.h>
 
 #define LFDEQMAPBUF   1
 #if (LFDEQMAPBUF)

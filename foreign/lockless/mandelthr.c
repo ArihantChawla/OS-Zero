@@ -5,15 +5,17 @@
  */
 
 #define OPTIMIZED 1
-#define FLOAT  0
-#define DOUBLE 0
-#define SSE2   1
-#if defined(__SSE2__) && 0
-#endif
+#define FLOAT     0
+#define DOUBLE    0
+#define NEWSSE2   1
+#define SSE2      1
 
 #if (SSE2)
-typedef float v4sf __attribute__((vector_size(16)));
-void mandel_sse(v4sf cr, v4sf ci, unsigned *counts);
+#include <xmmintrin.h>
+//typedef float v4sf __attribute__((vector_size(16)));
+typedef __v4sf v4sf;
+//void mandel_sse(v4sf cr, v4sf ci, unsigned *counts);
+void mandel_sse(__m128 cr, __m128 ci, unsigned *counts);
 #endif
 
 #include <math.h>
@@ -167,18 +169,79 @@ static void init_colours(void)
     cols[MAX_ITER] = 0;
 }
 
-#if (SSE2)
+#if (NEWSSE2)
 
 /* For each point, evaluate its colour */
 static void display_sse2(int size, float xmin, float xmax, float ymin, float ymax, int yofs, int ylim)
 {
     int x, y;
-	
+    
     float xscal = (xmax - xmin) / size;
     float yscal = (ymax - ymin) / size;
     
     unsigned counts[4];
+    
+#if (OPTIMIZED) && 0
+    __m128 ci = (__m128){ ymin, ymin, ymin, ymin };
+    __m128 di = (__m128){ yscal, yscal, yscal, yscal };
+#if 0
+    v4sf ci = { ymin,
+                ymin,
+                ymin,
+                ymin };
+    v4sf di = { yscal, yscal, yscal, yscal };
+#endif
+#endif
+    
+    for (y = yofs; y < ylim; y++) {
+	{
+            for (x = 0; x < size; x += 4) {
+		{
+                    v4sf cr = { xmin + x * xscal,
+                                xmin + (x + 1) * xscal,
+                                xmin + (x + 2) * xscal,
+                                xmin + (x + 3) * xscal };
+#if (!OPTIMIZED) || 1
+                    v4sf ci = { ymin + y * yscal,
+                                ymin + y * yscal,
+                                ymin + y * yscal,
+                                ymin + y * yscal };
+#endif
+                    
+                    mandel_sse(cr, (v4sf)ci, counts);
+                    
+                    ((unsigned *) bitmap->data)[x + y * size] = cols[counts[0]];
+                    ((unsigned *) bitmap->data)[x + 1 + y * size] = cols[counts[1]];
+                    ((unsigned *) bitmap->data)[x + 2 + y * size] = cols[counts[2]];
+                    ((unsigned *) bitmap->data)[x + 3 + y * size] = cols[counts[3]];
+		}
+                
+                /* Display it line-by-line for speed */
+                XPutImage(dpy, win, gc, bitmap,
+                          0, y, 0, y,
+                          size, 1);
+            }
+#if (OPTIMIZED) && 0
+            ci = _mm_add_ps(ci, di);
+#endif
+        }
+    }
+    
+    XFlush(dpy);
+}
 
+#elif (SSE2)
+
+/* For each point, evaluate its colour */
+static void display_sse2(int size, float xmin, float xmax, float ymin, float ymax, int yofs, int ylim)
+{
+    int x, y;
+    
+    float xscal = (xmax - xmin) / size;
+    float yscal = (ymax - ymin) / size;
+    
+    unsigned counts[4];
+    
     for (y = yofs; y < ylim; y++) {
 	{
             for (x = 0; x < size; x += 4) {
@@ -207,13 +270,13 @@ static void display_sse2(int size, float xmin, float xmax, float ymin, float yma
             }
         }
     }
-        
+    
     XFlush(dpy);
 }
 
 #elif (DOUBLE)
-    
-    static unsigned mandel_double(double cr, double ci)
+
+static unsigned mandel_double(double cr, double ci)
 {
     double zr = cr, zi = ci;
     double tmp;
@@ -354,7 +417,7 @@ static void display_float(int size, float xmin, float xmax, float ymin, float ym
 //#define WAIT_EXIT
 
 void *
-mandel_start(void *arg, int tid, int nthr)
+mandel_start(void *arg)
 {
     float xmin = -2;
     float xmax = 1.0;
@@ -362,10 +425,12 @@ mandel_start(void *arg, int tid, int nthr)
     float ymax = 1.5;
     struct mandelthr *args = arg;
 
-#if (DOUBLE)
-    display_double(ASIZE, xmin, xmax, ymin, ymax, args->yofs, args->ylim);
+#if (NEWSSE2)
+    display_sse2(ASIZE, xmin, xmax, ymin, ymax, args->yofs, args->ylim);
 #elif (SSE2)
     display_sse2(ASIZE, xmin, xmax, ymin, ymax, args->yofs, args->ylim);
+#elif (DOUBLE)
+    display_double(ASIZE, xmin, xmax, ymin, ymax, args->yofs, args->ylim);
 #elif (FLOAT)
     display_float(ASIZE, xmin, xmax, ymin, ymax, args->yofs, args->ylim);
 #endif

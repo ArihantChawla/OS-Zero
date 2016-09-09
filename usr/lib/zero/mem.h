@@ -131,6 +131,28 @@ typedef volatile long MEMLK_T;
 /* minimum allocation block size in bigbins */
 #define MEMBIGMINSIZE      (PAGESIZE * 2 * PTRBITS)
 
+#define MEMBUFSMALLMAPLIM  16
+#define MEMBUFMIDMAPLIM    19
+#define MEMBUFBIGMAPLIM    22
+#define MEMBUFHUGEMAPLIM   25
+
+struct membkt {
+#if (MEMLFDEQ)
+    struct lfdeq   list;
+#else
+    struct membuf *list;        // bi-directional list of bufs + lock-bit
+#endif
+    MEMWORD_T      slot;        // bucket slot #
+    MEMWORD_T      nbuf;        // number of bufs in list
+    uint8_t        _pad[CLSIZE
+#if (MEMLFDEQ)
+                        - sizeof(struct lfdeq)
+#else
+                        - sizeof(struct membuf *)
+#endif
+                        - 2 * sizeof(MEMWORD_T)];
+};
+
 /*
  * buf structure for allocating runs of pages; crafted to fit in a cacheline
  * - a second cacheline is used for the bitmap; 1-bits denote blocks in use
@@ -167,28 +189,12 @@ struct membuf {
     struct membuf *prev;        // previous buf in chain
     struct membuf *next;        // next buf in chain
     struct membkt *bkt;         // pointer to parent bucket
-    MEMWORD_T      slot;        // bucket slot #
+//    MEMWORD_T      slot;        // bucket slot #
+    MEMWORD_T      size;        // buffer bookkeeping + allocation blocks
     MEMPTR_T       base;        // base address
     MEMPTR_T      *ptrtab;      // unaligned base pointers for aligned blocks
     /* note: the first bit in freemap is reserved (unused) */
     MEMWORD_T      freemap[MEMBUFFREEMAPWORDS] ALIGNED(CLSIZE);
-};
-
-struct membkt {
-#if (MEMLFDEQ)
-    struct lfdeq   list;
-#else
-    struct membuf *list;        // bi-directional list of bufs + lock-bit
-#endif
-    MEMWORD_T      slot;        // bucket slot #
-    MEMWORD_T      nbuf;        // number of bufs in list
-    uint8_t        _pad[CLSIZE
-#if (MEMLFDEQ)
-                        - sizeof(struct lfdeq)
-#else
-                        - sizeof(struct membuf *)
-#endif
-                        - 2 * sizeof(MEMWORD_T)];
 };
 
 #if 0
@@ -376,8 +382,8 @@ membufputfree(struct membuf *buf, MEMWORD_T ndx)
 #endif
 
 #define membufhdrsize()       (sizeof(struct membuf))
-#define membufptrtabofs(slot) (membufhdrsize())
 #define membufptrtabsize()    (MEMBUFBLKS * sizeof(MEMPTR_T))
+#define membufslot(buf)       ((buf)->bkt->slot)
 #define membufblkofs()                                                  \
     (rounduppow2(membufhdrsize() + membufptrtabsize(), PAGESIZE))
 #define memsmallbufsize(slot)                                           \
@@ -390,11 +396,21 @@ membufputfree(struct membuf *buf, MEMWORD_T ndx)
 #define membigbufsize(slot, nblk)                                       \
     (rounduppow2(membufblkofs() + (nblk) + ((nblk) << (slot)),          \
                  PAGESIZE))
+#define membufnpage(slot)                                               \
+    (((slot) < MEMBUFSMALLMAPLIM)                                       \
+     ? 4                                                                \
+     : (((slot) < MEMBUFMIDMAPLIM)                                      \
+        ? 3                                                             \
+        : (((slot) < MEMBUFBIGMAPLIM)                                   \
+           ? 2                                                          \
+           : (((slot) < MEMBUFHUGEMAPLIM)                               \
+              ? 1                                                       \
+              : 0))))
 
 #define membufblkadr(buf, ndx)                                          \
-    ((buf)->base + ((ndx) << slot))
+    ((buf)->base + ((ndx) << (buf)->bkt->slot))
 #define membufpageadr(buf, ndx)                                         \
-    ((buf)->base + (PAGESIZE * (buf)->slot * (ndx)))
+    ((buf)->base + (PAGESIZE * (buf)->bkt->slot * (ndx)))
 #define membufblkid(buf, ptr)                                           \
     (((MEMPTR_T)(ptr) - (buf)->base) >> (mag)->bkt)
 #define membufpageid(ptr)                                               \

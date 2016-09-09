@@ -10,23 +10,21 @@
      && ((__clang_major__ > 3)                                          \
          || (__clang_major__ == 3 && __clang_minor__ >= 1))             \
      && !defined(__SIZEOF_INT128__))
-#define __SIZEOF_INT128__ 16
+#define __SIZEOF_INT128__   16
 #endif
-#if defined(__SSE__) || defined(__AVX__)
-#if defined(__SSE2__) || defined(__AVX__)
+#if defined(__SIZEOF_INT128__)
+typedef __int128_t          op128_t;
+#define OP128_ZERO          ((op128_t)0)
+#define opdwload(ptr)       (*(ptr))
+#define opdwstore(val, ptr) (*(ptr) = (val))
+#define opdwcpy(src, dest)  (*(dest) = (src))
+#elif defined(__SSE2__) || defined(__AVX__)
 #include <emmintrin.h>
 typedef __m128i             op128_t;
 #define OP128_ZERO          _mm_setzero_si128()
 #define opdwload(ptr)       _mm_load_si128(ptr)
 #define opdwstore(val, ptr) _mm_store_si128(ptr, val)
 #define opdwcpy(src, dest)  (*(__m128i *)(dest) = _mm_store_si128(src))
-#elif defined(__GNUC__)
-typedef __int128_t          op128_t;
-#define OP128_ZERO          ((__int128_t)0)
-#define opdwload(ptr)       (*(__int128_t *)(ptr))
-#define opdwstore(val, ptr) (*(__int128_t *)(ptr) = (val))
-#define opdwcpy(src, dest)  (*(__int128_t *)(des) = (src))
-#endif
 #else /* !__SSE__ && !__AVX__ */
 #define OP128_ZERO { UINT64_C(0), INT64_C(0) }
 typedef struct {

@@ -1,8 +1,10 @@
 /* Change the define to point to the function you want to use */
 #define mandel_softlab mandel_sse
+//#define mandel_vodnaya mandel_sse
 
 /* The gnu assembler supports C-style macros nicely */
-#define MAX_ITER (1 << 14)
+//#define MAX_ITER (1 << 14)
+#define MAX_ITER (1 << 16)
 
 /* SSE constants, aligned to prevent access errors */
 	.align 16
@@ -234,4 +236,48 @@ mandel_vodnaya:
 	movaps	%xmm6, (%rdi)
 	ret
 .size mandel_vodnaya, .-mandel_vodnaya
+
+	/* TODO: in case i can do something faster */
+.globl mandel_vendu
+.type mandel_vendu,@function
+mandel_vendu:
+	xor     %ecx, %ecx
+	movaps  fours(%rip), %xmm5
+	movaps  %xmm0, %xmm6 # real parts
+	movaps  %xmm1, %xmm7 # imaginary parts
+	
+	xorps   %xmm3, %xmm3 # Clear counters
+
+1:	movaps  %xmm0, %xmm2
+	mulps   %xmm1, %xmm2 # xmm2 = x * y
+	mulps   %xmm0, %xmm0 # xmm0 = x * x
+	mulps   %xmm1, %xmm1 # xmm1 = y * y
+	
+	movaps  %xmm0, %xmm4
+	addps   %xmm1, %xmm4 # xmm4 = x*x + y*y
+	subps   %xmm1, %xmm0 # xmm0 = x*x - y*y
+	addps   %xmm6, %xmm0 # xmm0 = new real part
+
+	movaps  %xmm2, %xmm1
+	addps	%xmm1, %xmm1
+	addps   %xmm7, %xmm1 # xmm1 = new imaginary part
+
+	cmpleps %xmm5, %xmm4
+	movaps  %xmm4, %xmm2 # xmm2 is all 1s in non-overflowed pixels
+	movmskps %xmm4, %eax # lower four bits reflect comparison
+	
+	andps   ones(%rip), %xmm4
+	addps   %xmm4, %xmm3 # Increment counters
+
+	or      %eax, %eax   # Have they all overflowed?
+	jz      2f
+
+	inc     %ecx
+	cmp     $MAX_ITER, %ecx # Done all the iterations?
+	jnz     1b
+
+2:	cvtps2dq %xmm3, %xmm3 # Done: write counters to memory
+	movaps	%xmm3, (%rdi)
+	ret
+.size mandel_vendu, .-mandel_vendu
 
