@@ -170,7 +170,7 @@ membufgetblk(struct membuf *head, MEMPTR_T *retptr, struct membkt *bkt)
             head->next->prev = NULL;
         }
         head = head->next;
-        ndx = memgetfree(head);
+        ndx = membufgetfree(head);
         prev->prev = NULL;
         prev->next = NULL;
     }
@@ -201,7 +201,7 @@ membufgetpages(struct membuf *head, MEMPTR_T *retptr, struct membkt *bkt)
             head->next->prev = NULL;
         }
         head = head->next;
-        ndx = memgetfree(head);
+        ndx = membufgetfree(head);
         prev->prev = NULL;
         prev->next = NULL;
     }
@@ -218,8 +218,8 @@ membufgetpages(struct membuf *head, MEMPTR_T *retptr, struct membkt *bkt)
     return head;
 }
 
-static MEMPTR_T
-memgetblk(struct mem *mem, long slot, long type)
+MEMPTR_T
+memgetblk(long slot, long type)
 {
     struct memarn *arn = tls_arn;
     MEMPTR_T       ptr = NULL;
@@ -249,9 +249,9 @@ memgetblk(struct mem *mem, long slot, long type)
             buf = (struct membuf *)bufval;
         } else {
             /* TODO: try global buffer */
-            buf = memallocsmallbuf(mem, slot);
+            buf = memallocsmallbuf(&g_mem, slot);
             if (buf) {
-                ptr = meminitsmallbuf(mem, buf);
+                ptr = meminitsmallbuf(&g_mem, buf);
             }
         }
     } else if (type == 1) {
@@ -270,9 +270,9 @@ memgetblk(struct mem *mem, long slot, long type)
             buf = (struct membuf *)bufval;
         } else {
             /* TODO: try global buffer */
-            buf = memallocpagebuf(mem, slot, nblk);
+            buf = memallocpagebuf(&g_mem, slot, nblk);
             if (buf) {
-                ptr = meminitpagebuf(mem, buf, membufnpage(slot));
+                ptr = meminitpagebuf(&g_mem, buf, membufnblk(slot));
             }
         }
     } else {
@@ -291,9 +291,9 @@ memgetblk(struct mem *mem, long slot, long type)
             buf = (struct membuf *)bufval;
         } else {
             /* TODO: try global buffer */
-            buf = memallocbigbuf(mem, slot, nblk);
+            buf = memallocbigbuf(&g_mem, slot, nblk);
             if (buf) {
-                ptr = meminitbigbuf(mem, buf, nblk);
+                ptr = meminitbigbuf(&g_mem, buf, nblk);
             }
         }
     }
@@ -308,10 +308,10 @@ memgetblk(struct mem *mem, long slot, long type)
         buf->prev = NULL;
         buf->next = bptr;
         buf->bkt = bkt;
-        buf->ptrtab = (MEMPTR_T)buf + membufatabofs();
+        buf->ptrtab = (MEMPTR_T)buf + membufblkofs();
         if (info & MEMHEAPBIT) {
             /* this unlocks the global heap (low-bit becomes zero) */
-            m_syncwrite(&mem->heap, buf);
+            m_syncwrite(&g_mem.heap, buf);
         }
         /* this unlocks the arena bucket (low-bit becomes zero) */
         m_syncwrite((volatile long *)&bkt->list, buf);

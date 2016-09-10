@@ -18,7 +18,7 @@ int    memcmp(const void *ptr1, const void *ptr2, size_t n);
 int    strcmp(const char *str1, const char *str2);
 int    strcoll(const char *str1, const char *str2);
 int    strncmp(const char *str1, const char *str2, size_t n);
-size_t strxfrm(char *str1, char *str2, size_t n);
+size_t strxfrm(char *RESTRICT str1, char *RESTRICT str2, size_t n);
 void * memchr(const void *ptr, int ch, size_t n);
 void * strchr(const char *str, int ch);
 size_t strcspn(const char *str1, const char *str2);

@@ -121,32 +121,32 @@ _lfdeqfixqueue(struct lfdeq *lfdeq, TAGPTR_T head, TAGPTR_T tail)
 
     cur = tail;
     do {
+        tmp = lfdeq->head;                  // tmp = head
+        tagptrgetadr(tmp, node1);           // node1 = tmp.adr
+        next = node1->next;                 // next = tmp.next
+        tagptrgettag(cur, tag1);            // tag1 = cur.tag
         while ((tagptrcmp(&head, &lfdeq->head)) && (!tagptrcmp(&cur, &head))) {
-            tmp = lfdeq->head;                  // tmp = head
-            tagptrgetadr(tmp, node1);           // node1 = tmp.adr
-            next = node1->next;                 // next = tmp.next
-            tagptrgettag(cur, tag1);            // tag1 = cur.tag
-            tag3 = tag1;                        // tag3 = cur.tag
-            tagptrgetadr(cur, node2);           // node2 = cur.tag
-            next = node2->next;                 // next = cur->next
-            tagptrgetadr(next, node3);          // node3 = next.adr
-            tagptrgettag(next, tag2);           // tag2 = next.tag
+            tag3 = tag1;                    // tag3 = cur.tag
+            tagptrgetadr(cur, node2);       // node2 = cur.tag
+            next = node2->next;             // next = cur->next
+            tagptrgetadr(next, node3);      // node3 = next.adr
+            tagptrgettag(next, tag2);       // tag2 = next.tag
             if (tag1 != tag2) {
                 /* cur == next */
                 
                 return;
             }
-            tagptrgetadr(cur, node1);           // node1 = cur.adr
-            tag3--;                             // tag3 = cur.tag - 1
-            prev = node1->prev;                 // prev = tmp.prev
-            tagptrsettag(tag3, cur);            // cur.tag = cur.tag - 1
+            tagptrgetadr(cur, node1);       // node1 = cur.adr
+            tag3--;                         // tag3 = cur.tag - 1
+            prev = node1->prev;             // prev = tmp.prev
+            tagptrsettag(tag3, cur);        // cur.tag = cur.tag - 1
             if (!tagptrcmp(&prev, &cur)) {
-                node3->prev = cur;              // next->prev = cur;
+                node3->prev = cur;          // next->prev = cur;
             }
-            tag1--;                             // tag1 = cur.tag - 1
-            tagptrsetadr(node3, cur);           // cur.adr = cur->next
-            tagptrsettag(tag1, cur);            // cur.tag = cur.tag - 1
         }
+        tag1--;                             // tag1 = cur.tag - 1
+        tagptrsetadr(node3, cur);           // cur.adr = cur->next
+        tagptrsettag(tag1, cur);            // cur.tag = cur.tag - 1
     } while (1);
 
     return;
@@ -182,7 +182,7 @@ lfdeqenqueue(struct lfdeq *lfdeq, LFDEQ_VAL_T val)
         if (tagptrcmpswap(&lfdeq->tail, &tail, &node->next)) {
             tagptrsetadr(node, node->prev);
             tagptrsettag(ttag, node->prev);
-//            tagptrsetadr(last->prev, node);
+            tagptrsetadr(node, last->prev);
 
             return;
         }
