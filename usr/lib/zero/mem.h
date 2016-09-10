@@ -88,10 +88,10 @@ typedef volatile long MEMLK_T;
 
 #if (WORDSIZE == 4)
 #define memcalcslot(sz)                                                 \
-    ceilpow2_32(sz)
+    tzerol(ceilpow2_32(sz))
 #elif (WORDSIZE == 8)
 #define memcalcslot(sz)                                                 \
-    ceilpow2_64(sz)
+    tzerol(ceilpow2_64(sz))
 #endif
 
 /* determine minimal required alignment for blocks */
@@ -114,7 +114,7 @@ typedef volatile long MEMLK_T;
 /* NOTES
  * -----
  * - all allocations except those from pagebin are power-of-two sizes
- * - pagebin allocations are PAGESIZE * slot bytes
+ * - pagebin allocations are PAGESIZE << slot bytes
  */
 /* minimum allocation block size */
 #define MEMMINBLK          (MEMUWORD(1) << MEMALIGNSHIFT)
@@ -129,7 +129,7 @@ typedef volatile long MEMLK_T;
 /* maximum number of block-bits in buf freemap (internal limitation) */
 #define MEMMAXBUFBLKS      (MEMWORD(1) << PAGESIZELOG2)
 /* minimum allocation block size in bigbins */
-#define MEMBIGMINSIZE      (2 * PAGESIZE)
+//#define MEMBIGMINSIZE      (2 * PAGESIZE)
 
 #define MEMBUFSMALLBLKLIM  PAGESIZELOG2
 #define MEMBUFSMALLMAPLIM  16
@@ -166,24 +166,32 @@ struct membkt {
 #define MEMNOHEAPBIT (1L << 1)
 struct mem {
     struct membkt  smallbin[PTRBITS]; // blocks of 1 << slot
-    struct membkt  pagebin[PTRBITS];  // mapped blocks of PAGESIZE * slot
+    struct membkt  pagebin[PTRBITS];  // mapped blocks of PAGESIZE << slot
     struct membkt  bigbin[PTRBITS];   // mapped blocks of 1 << slot
     MEMWORD_T      flg;         // memory interface flags
     struct membuf *heap;        // heap allocations (try sbrk(), then mmap())
     struct membuf *maps;        // mapped blocks
     struct memtab *tab;         // allocation lookup structure
+    unsigned long  prioval;     // locklessinc priority locks
     MEMLK_T        initlk;      // lock for initialising the structure
     MEMLK_T        heaplk;      // lock for sbrk()
 };
 
-#define MEMHEAPBIT    (1L << 1)
-#define MEMEMPTYBIT   (1L << 2)
-#define MEMBUFFLGMASK ((1L << MEMBUFFLGBITS) - 1)
-#define MEMBUFFLGBITS 3
+#define MEMHEAPBIT     (0x01L << (sizeof(MEMWORD_T) * CHAR_BIT - 1))
+#define MEMEMPTYBIT    (0x01L << (sizeof(MEMWORD_T) * CHAR_BIT - 2))
+#define MEMBUFFLGMASK  (MEMHEAPBIT | MEMEMPTYBIT)
+#define MEMBUFTYPEMASK (0x03L << (sizeof(MEMWORD_T) * CHAR_BIT - 4))
+#define MEMBUFNBLKMASK ((0x01L << (sizeof(MEMWORD_T) * CHAR_BIT - 4)) - 1)
 #define memsetbufflg(buf, flg) ((buf)->info |= (flg))
 #define memsetbufnblk(buf, n)                                           \
-    ((buf)->info = ((buf)->info & MEMBUFFLGMASK) | ((n) << MEMBUFFLGBITS))
-#define memgetbufnblk(buf)     ((buf)->info >> MEMBUFFLGBITS)
+    ((buf)->info = ((buf)->info & MEMBUFFLGMASK) | (n))
+#define memsetbuftype(buf, t)                                           \
+    ((buf)->info = ((buf)->info & ~MEMBUFTYPEMASK)                      \
+     | ((t) << (sizeof(MEMWORD_T) * CHAR_BIT - 4)))
+#define memgetbufflg(buf, flg) ((buf)->info & (flg))
+#define memgetbufnblk(buf)     ((buf)->info & MEMBUFNBLKMASK)
+#define memgetbuftype(buf)                                              \
+    (((buf)->info >> (sizeof(MEMWORD_T) * CHAR_BIT - 1)) & MEMBUFTYPEBITS)
 struct membuf {
     MEMUWORD_T     info;        // flag-bits + lock-bit
     struct membuf *heap;        // previous buf in heap for bufs from sbrk()
@@ -217,10 +225,11 @@ struct memtab {
  * under the toplevel table
  */
 /* type-bits for the final-level table pointers */
-#define MEMSMALLBLK 0x00
-#define MEMPAGEBLK  0x01
-#define MEMBIGBLK   0x02
-#define MEMBUFTYPES 3
+#define MEMSMALLBLK    0x00
+#define MEMPAGEBLK     0x01
+#define MEMBIGBLK      0x02
+#define MEMBUFTYPES    3
+#define MEMBUFTYPEBITS 0x03
 /* lookup table structure for upper levels */
 struct memitem {
 #if (MEMTABNREF)
@@ -233,12 +242,10 @@ struct memitem {
  * NOTE: the arenas are mmap()'d as PAGESIZE-allocations so there's going
  * to be some room in the end for arbitrary data
  */
-#define MEMARNSIZE PAGESIZE
-#define memarndatasize() (PAGESIZE - sizeof(struct memarn))
+#define MEMARNSIZE rounduppow2(sizeof(struct memarn), PAGESIZE)
 struct memarn {
     struct membkt smallbin[PTRBITS]; // blocks of size 1 << slot
-    struct membkt pagebin[PTRBITS];  // mapped blocks of PAGESIZE * slot
-//    struct membkt bigbin[PTRBITS];   // mapped blocks of PAGESIZE << slot
+    struct membkt pagebin[PTRBITS];  // mapped blocks of PAGESIZE << slot
 /* possible auxiliary data here; arena is of PAGESIZE */
 };
 
@@ -388,22 +395,22 @@ membufputfree(struct membuf *buf, MEMWORD_T ndx)
 #define membufblkofs()                                                  \
     (rounduppow2(membufhdrsize() + membufptrtabsize(), PAGESIZE))
 #define memusesmallbuf(sz)    ((sz) <= (MEMUWORD(1) << MEMBUFSMALLBLKLIM))
-#define memusepagebuf(sz)     ((sz) <= MEMBUFSMALLMAPLIM)
+#define memusepagebuf(sz)     ((sz) <= (PAGESIZE * MEMBUFSMALLMAPLIM))
 #define memcalcbufslot(sz, t)                                           \
     (((t) == MEMSMALLBLK)                                               \
      ? memcalcslot(sz)                                                  \
      : (((t) == MEMPAGEBLK)                                             \
-        ? (rounduppow2((sz), PAGESIZE) >> PAGESIZELOG2)                 \
+        ? (memcalcslot(sz) >> PAGESIZELOG2)                             \
         : memcalcslot(sz)))
 #define memsmallbufsize(slot)                                           \
     (rounduppow2(membufblkofs() + (MEMBUFBLKS << (slot)),               \
                  PAGESIZE))
-/* allocations of PAGESIZE * slot bytes */
+/* allocations of PAGESIZE << slot bytes */
 #define mempagebufsize(slot, nblk)                                      \
-    (rounduppow2(membufblkofs() + PAGESIZE * (slot) * (nblk),           \
+    (rounduppow2(membufblkofs() + (PAGESIZE << (slot)) * (nblk),        \
                  PAGESIZE))
 #define membigbufsize(slot, nblk)                                       \
-    (rounduppow2(membufblkofs() + (nblk) + ((nblk) << (slot)),          \
+    (rounduppow2(membufblkofs() + ((nblk) << (slot)),                   \
                  PAGESIZE))
 #define membufnblk(slot)                                                \
     (((slot) <= MEMBUFSMALLBLKLIM)                                      \
@@ -418,14 +425,25 @@ membufputfree(struct membuf *buf, MEMWORD_T ndx)
               ? max(MEMBUFBIGMAPLIM - (slot), 1)                        \
                  : 0)))))
 
+#define memadrpageid(ptr)                                               \
+    ((MEMADR_T)(ptr) & ((1L << PAGESIZELOG2) - 1))
+#define membufblksize(buf)                                              \
+    ((memgetbuftype(buf) == MEMSMALLBLK                                 \
+      || memgetbuftype(buf) == MEMBIGBLK)                               \
+     ? (MEMWORD(1) << (buf)->bkt->slot)                                 \
+     : (PAGESIZE << ((buf)->bkt->slot)))
 #define membufblkadr(buf, ndx)                                          \
     ((buf)->base + ((ndx) << (buf)->bkt->slot))
 #define membufpageadr(buf, ndx)                                         \
     ((buf)->base + (PAGESIZE * (buf)->bkt->slot * (ndx)))
 #define membufblkid(buf, ptr)                                           \
-    (((MEMPTR_T)(ptr) - (buf)->base) >> (mag)->bkt)
-#define membufpageid(ptr)                                               \
-    ((MEMADR_T)(ptr) & ((1L << PAGESIZELOG2) - 1))
+    (((MEMPTR_T)(ptr) - (buf)->base) >> (buf)->bkt->slot)
+#define membufpageid(buf, ptr)                                          \
+    (((MEMPTR_T)(ptr) - (buf)->base) >> (PAGESIZELOG2 + (buf)->bkt->slot))
+#define membufgetptr(buf, ptr)                                          \
+    ((buf)->ptrtab[membufblkid(buf, ptr)])
+#define membufsetptr(buf, ptr, adr)                                     \
+    ((buf)->ptrtab[membufblkid(buf, ptr)] = (adr))
     
 MEMPTR_T memgetblk(long slot, long type);
 
