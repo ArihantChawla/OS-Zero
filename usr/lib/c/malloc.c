@@ -1,3 +1,4 @@
+#include <features.h>
 #include <stdint.h>
 #if (MEMDEBUG)
 #include <stdio.h>
@@ -7,6 +8,7 @@
 #include <zero/cdefs.h>
 #include <zero/param.h>
 #include <zero/mem.h>
+#include <zero/trix.h>
 #include "_malloc.h"
 
 extern struct mem g_mem;
@@ -14,22 +16,24 @@ extern struct mem g_mem;
 static void *
 _malloc(size_t size, size_t align, long flg)
 {
-    size_t  aln = max(align, MEMMINALIGN);
-    size_t  sz = max(size, MEMMINBLK);
-    size_t  bsz = (align <= sz) ? sz : sz + align;
-    long    type = (memusesmallbuf(bsz)
-                    ? MEMSMALLBLK
-                    : (memusepagebuf(bsz)
-                       ? MEMPAGEBLK
-                       : MEMBIGBLK));
-    long    slot;
-    void   *ptr;
+    size_t         aln = max(align, MEMMINALIGN);
+    size_t         sz = max(size, MEMMINBLK);
+    size_t         bsz = (align <= sz) ? sz : sz + align;
+    long           type = (memusesmallbuf(bsz)
+                           ? MEMSMALLBLK
+                           : (memusepagebuf(bsz)
+                              ? MEMPAGEBLK
+                              : MEMBIGBLK));
+    struct membuf *buf;
+    long           slot;
+    void          *ptr;
+    MEMPTR_T       adr;
 
     memcalcslot(sz, slot);
     if (type == MEMPAGEBLK) {
         slot -= PAGESIZELOG2;
     }
-    ptr = memgetblk(slot, type);
+    ptr = memgetblk(slot, type, aln);
     if (!ptr) {
 #if defined(ENOMEM)
         errno = ENOMEM;
@@ -43,6 +47,9 @@ _malloc(size_t size, size_t align, long flg)
     if (ptr) {
         VALGRINDALLOC(ptr, size, 0, flg & MALLOCZEROBIT);
     }
+#if (MEMDEBUG)
+    assert(ptr != NULL);
+#endif
 
     return ptr;
 }
@@ -50,7 +57,17 @@ _malloc(size_t size, size_t align, long flg)
 static void
 _free(void *ptr)
 {
-    if (ptr) {
+    struct membuf *buf = memfindbuf(ptr);
+    MEMWORD_T      type;
+    MEMPTR_T       adr;
+    
+#if (MEMDEBUG)
+    assert(ptr != NULL);
+    assert(buf != NULL);
+    assert((MEMPTR_T)ptr < buf->base);
+#endif
+    if (buf) {
+        memputblk(ptr, buf);
         VALGRINDFREE(ptr);
     }
 
@@ -67,15 +84,17 @@ _realloc(void *ptr,
          long rel)
 {
     void          *retptr = NULL;
-    struct membuf *buf = memfindbuf(ptr);
-    void          *oldptr = membufgetptr(buf, ptr);
+    struct membuf *buf = (ptr) ? memfindbuf(ptr) : NULL;
+    void          *oldptr = (ptr) ? membufgetptr(buf, ptr) : NULL;
     size_t         sz = membufblksize(buf);
 
     if (!ptr) {
         retptr = _malloc(size, 0, 0);
     }
     if (retptr) {
-        memcpy(retptr, oldptr, sz);
+        if (oldptr) {
+            memcpy(retptr, oldptr, sz);
+        }
         _free(ptr);
         ptr = NULL;
     }
@@ -161,6 +180,40 @@ realloc(void *ptr, size_t size)
     return retptr;
 }
 
+#if (_POSIX_C_SOURCE >= 200112L || _XOPEN_SOURCE >= 600)
+int
+#if defined(__GNUC__)
+__attribute__ ((alloc_size(3)))
+__attribute__ ((alloc_align(2)))
+#endif
+posix_memalign(void **ret,
+               size_t align,
+               size_t size)
+{
+    void   *ptr = NULL;
+
+    if (!powerof2(align) || (align & (sizeof(void *) - 1))) {
+        errno = EINVAL;
+        *ret = NULL;
+
+        return -1;
+    } else {
+        ptr = _malloc(size, align, 0);
+        if (!ptr) {
+            *ret = NULL;
+            
+            return -1;
+        }
+    }
+#if (MEMDEBUG)
+    assert(ptr != NULL);
+#endif
+    *ret = ptr;
+
+    return 0;
+}
+#endif
+
 void
 free(void *ptr)
 {
@@ -173,7 +226,7 @@ free(void *ptr)
 void *
 #if defined(__GNUC__)
 __attribute__ ((alloc_size(2)))
-__attribute__ ((assume_aligned(MALLOCALIGNMENT)))
+__attribute__ ((assume_aligned(MEMMINALIGN)))
 #endif
 reallocf(void *ptr,
          size_t size)
@@ -195,4 +248,189 @@ reallocf(void *ptr,
     return retptr;
 }
 #endif
+
+void *
+#if defined(__GNUC__)
+__attribute__ ((alloc_align(1)))
+__attribute__ ((alloc_size(2)))
+__attribute__ ((assume_aligned(MEMMINALIGN)))
+__attribute__ ((malloc))
+#endif
+memalign(size_t align,
+         size_t size)
+{
+    void   *ptr = NULL;
+
+    if (!powerof2(align)) {
+        errno = EINVAL;
+    } else {
+        ptr = _malloc(size, align, 0);
+    }
+#if (MEMDEBUG)
+    assert(ptr != NULL);
+#endif
+
+    return ptr;
+}
+
+#if (defined(_BSD_SOURCE)                                                      \
+     || (defined(_XOPEN_SOURCE) && _XOPEN_SOURCE >= 500                 \
+         || (defined(_XOPEN_SOURCE) && defined(_XOPEN_SOURCE_EXTENDED))) \
+     && !((defined(_POSIX_SOURCE) && _POSIX_C_SOURCE >= 200112L)        \
+          || (defined(_XOPEN_SOURCE) && _XOPEN_SOURCE >= 600)))
+void *
+#if defined(__GNUC__)
+__attribute__ ((alloc_size(1)))
+__attribute__ ((assume_aligned(PAGESIZE)))
+__attribute__ ((malloc))
+#endif
+valloc(size_t size)
+{
+    void *ptr;
+
+    ptr = _malloc(size, PAGESIZE, 0);
+#if (MEMDEBUG)
+    assert(ptr != NULL);
+#endif
+    
+    return ptr;
+}
+#endif
+
+#if defined(_GNU_SOURCE)
+void *
+#if defined(__GNUC__)
+__attribute__ ((alloc_size(1)))
+__attribute__ ((assume_aligned(PAGESIZE)))
+__attribute__ ((malloc))
+#endif
+pvalloc(size_t size)
+{
+    void   *ptr = _malloc(rounduppow2(size, PAGESIZE), PAGESIZE, 0);
+
+#if (MEMDEBUG)
+    assert(ptr != NULL);
+#endif
+
+    return ptr;
+}
+#endif
+
+#if defined(_MSVC_SOURCE)
+
+void *
+#if defined(__GNUC__)
+__attribute__ ((alloc_align(2)))
+__attribute__ ((alloc_size(1)))
+__attribute__ ((assume_aligned(MEMMINALIGN)))
+__attribute__ ((malloc))
+#endif
+_aligned_malloc(size_t size,
+                size_t align)
+{
+    void   *ptr = NULL;
+
+    if (!powerof2(align)) {
+        errno = EINVAL;
+    } else {
+        ptr = _malloc(size, align, 0);
+    }
+#if (MEMDEBUG)
+    assert(ptr != NULL);
+#endif
+
+    return ptr;
+}
+
+void
+_aligned_free(void *ptr)
+{
+    if (ptr) {
+        _free(ptr);
+    }
+
+    return;
+}
+
+#endif /* _MSVC_SOURCE */
+
+#if defined(_INTEL_SOURCE) && !defined(__GNUC__)
+
+void *
+#if defined(__GNUC__)
+__attribute__ ((alloc_align(2)))
+__attribute__ ((alloc_size(1)))
+__attribute__ ((assume_aligned(MEMMINALIGN)))
+__attribute__ ((malloc))
+#endif
+_mm_malloc(size_t size,
+           size_t align)
+{
+    void   *ptr = NULL;
+
+    if (!powerof2(align)) {
+        errno = EINVAL;
+    } else {
+        ptr = _malloc(size, align, 0);
+    }
+#if (MEMDEBUG)
+    assert(ptr != NULL);
+#endif
+
+    return ptr;
+}
+
+void
+_mm_free(void *ptr)
+{
+    if (ptr) {
+        _free(ptr);
+    }
+
+    return;
+}
+
+#endif /* _INTEL_SOURCE && !__GNUC__ */
+
+void
+cfree(void *ptr)
+{
+    if (ptr) {
+        _free(ptr);
+    }
+
+    return;
+}
+
+size_t
+malloc_usable_size(void *ptr)
+{
+    struct membuf *buf = memfindbuf(ptr);
+    size_t         sz = membufblksize(buf);
+    
+    return sz;
+}
+
+size_t
+malloc_good_size(size_t size)
+{
+    size_t sz = 0;
+    
+#if (WORDSIZE == 4)
+    ceilpow2_32(size, sz);
+#elif (WORDSIZE == 8)
+    ceilpow2_64(size, sz);
+#endif
+
+    return sz;
+}
+
+size_t
+malloc_size(void *ptr)
+{
+    struct membuf *buf = memfindbuf(ptr);
+    size_t         sz = membufblksize(buf);
+
+    return sz;
+}
 

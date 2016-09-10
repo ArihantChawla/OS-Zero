@@ -15,7 +15,7 @@
 #define MEM_LK_FMTX   2                 // anonymous non-recursive mutex
 #define MEM_LK_SPIN   3                 // spinlock
 
-#define MEM_LK_TYPE   MEM_LK_PRIO       // type of locks to use
+#define MEM_LK_TYPE   MEM_LK_FMTX       // type of locks to use
 
 #include <limits.h>
 #include <stddef.h>
@@ -195,21 +195,38 @@ struct mem {
     MEMLK_T        heaplk;      // lock for sbrk()
 };
 
-#define MEMHEAPBIT     (0x01L << (sizeof(MEMWORD_T) * CHAR_BIT - 1))
-#define MEMEMPTYBIT    (0x01L << (sizeof(MEMWORD_T) * CHAR_BIT - 2))
-#define MEMBUFFLGMASK  (MEMHEAPBIT | MEMEMPTYBIT)
-#define MEMBUFTYPEMASK (0x03L << (sizeof(MEMWORD_T) * CHAR_BIT - 4))
-#define MEMBUFNBLKMASK ((0x01L << (sizeof(MEMWORD_T) * CHAR_BIT - 4)) - 1)
+#define MEMHEAPBIT      (0x01L << (sizeof(MEMWORD_T) * CHAR_BIT - 1))
+#define MEMEMPTYBIT     (0x01L << (sizeof(MEMWORD_T) * CHAR_BIT - 2))
+#define MEMBUFFLGMASK   (MEMHEAPBIT | MEMEMPTYBIT)
+#define MEMBUFTYPESHIFT (sizeof(MEMWORD_T) * CHAR_BIT - 4)
+#define MEMBUFTYPEMASK  (0x03L << MEMBUFTYPESHIFT)
+#if (PTRBITS == 64)
+#define MEMBUFSLOTBITS  0x3f
+//#define MEMBUFSLOTSHIFT (sizeof(MEMWORD_T) * CHAR_BIT - 10)
+#define MEMBUFSLOTSHIFT 16
+#elif (PTRBITS == 32)
+#define MEMBUFSLOTBITS  0x1f
+//#define MEMBUFSLOTSHIFT (sizeof(MEMWORD_T) * CHAR_BIT - 9)
+#define MEMBUFSLOTSHIFT 16
+#endif
+#define MEMBUFSLOTMASK  (MEMBUFSLOTBITS << MEMBUFSLOTSHIFT)
+#define MEMBUFNBLKMASK  ((0x01L << MEMBUFSLOTSHIFT) - 1)
 #define memsetbufflg(buf, flg) ((buf)->info |= (flg))
 #define memsetbufnblk(buf, n)                                           \
-    ((buf)->info = ((buf)->info & MEMBUFFLGMASK) | (n))
+    ((buf)->info = ((buf)->info & ~MEMBUFNBLKMASK) | (n))
 #define memsetbuftype(buf, t)                                           \
     ((buf)->info = ((buf)->info & ~MEMBUFTYPEMASK)                      \
-     | ((t) << (sizeof(MEMWORD_T) * CHAR_BIT - 4)))
+     | ((t) << MEMBUFTYPESHIFT))
+#define memsetbufslot(buf, slot)                                        \
+    ((buf->info) = ((buf)->info & ~MEMBUFSLOTMASK)                      \
+     | ((slot) << MEMBUFSLOTSHIFT))
 #define memgetbufflg(buf, flg) ((buf)->info & (flg))
-#define memgetbufnblk(buf)     ((buf)->info & MEMBUFNBLKMASK)
 #define memgetbuftype(buf)                                              \
-    (((buf)->info >> (sizeof(MEMWORD_T) * CHAR_BIT - 1)) & MEMBUFTYPEBITS)
+    (((buf)->info >> MEMBUFTYPESHIFT) & MEMBUFTYPEBITS)
+#define memgetbufslot(buf)                                              \
+    (((buf)->info >> MEMBUFSLOTSHIFT) & MEMBUFSLOTBITS)
+#define memgetbufnblk(buf)                                              \
+    ((buf)->info & MEMBUFNBLKMASK)
 struct membuf {
     MEMUWORD_T     info;        // flag-bits + lock-bit
     struct membuf *heap;        // previous buf in heap for bufs from sbrk()
@@ -353,6 +370,9 @@ membufputfree(struct membuf *buf, MEMWORD_T ndx)
     return;
 }
 
+#define memalignptr(ptr, pow2)                                          \
+    ((void *)rounduppow2((uintptr_t)(ptr), (pow2)))
+
 /*
  * for 32-bit pointers, we can use a flat lookup table for bookkeeping pointers
  * - for bigger pointers, we use a multilevel table
@@ -446,6 +466,8 @@ membufputfree(struct membuf *buf, MEMWORD_T ndx)
                  : 0)))))
 #endif
 
+#define memblkrealsize(sz)                                              \
+    (((sz) <= MEMBUFSMALLBLKLIM) || ((sz) >= 
 #define memadrpageid(ptr)                                               \
     ((MEMADR_T)(ptr) & ((1L << PAGESIZELOG2) - 1))
 #define membufblksize(buf)                                              \
@@ -458,15 +480,19 @@ membufputfree(struct membuf *buf, MEMWORD_T ndx)
 #define membufpageadr(buf, ndx)                                         \
     ((buf)->base + (PAGESIZE * (buf)->bkt->slot * (ndx)))
 #define membufblkid(buf, ptr)                                           \
-    (((MEMPTR_T)(ptr) - (buf)->base) >> (buf)->bkt->slot)
+    (((MEMPTR_T)(ptr) - (buf)->base) >> memgetbufslot(buf))
 #define membufpageid(buf, ptr)                                          \
-    (((MEMPTR_T)(ptr) - (buf)->base) >> (PAGESIZELOG2 + (buf)->bkt->slot))
+    (((MEMPTR_T)(ptr) - (buf)->base) >> (PAGESIZELOG2 + memgetbufslot(buf)))
 #define membufgetptr(buf, ptr)                                          \
     ((buf)->ptrtab[membufblkid(buf, ptr)])
 #define membufsetptr(buf, ptr, adr)                                     \
     ((buf)->ptrtab[membufblkid(buf, ptr)] = (adr))
+#define membufgetpage(buf, ptr)                                          \
+    ((buf)->ptrtab[membufpageid(buf, ptr)])
+#define membufsetpage(buf, ptr, adr)                                     \
+    ((buf)->ptrtab[membufpageid(buf, ptr)] = (adr))
     
-MEMPTR_T memgetblk(long slot, long type);
+MEMPTR_T memgetblk(long slot, long type, size_t align);
 
 #endif /* __ZERO_MEM_H__ */
 
