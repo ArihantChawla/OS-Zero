@@ -9,6 +9,8 @@
 
 extern uint64_t asmgetpc(void);
 
+typedef volatile int64_t m_atomic_t;
+
 #define m_atominc(p)               m_atominc64(p)
 #define m_atomdec(p)               m_atomdec64(p)
 #define m_atomswap(p, val)         m_xchg64(p, val)
@@ -93,7 +95,7 @@ m_getretfrmadr(void **pp)
 
 /* atomic increment operation */
 static __inline__ void
-m_atominc64(volatile long *p)
+m_atominc64(m_atomic_t *p)
 {
     __asm__ __volatile__ ("lock incq %0\n"
                           : "+m" (*(p))
@@ -105,7 +107,7 @@ m_atominc64(volatile long *p)
 
 /* atomic decrement operation */
 static __inline__ void
-m_atomdec64(volatile long *p)
+m_atomdec64(m_atomic_t *p)
 {
     __asm__ __volatile__ ("lock decq %0\n"
                           : "+m" (*(p))
@@ -116,7 +118,7 @@ m_atomdec64(volatile long *p)
 }
 
 static __inline__ long
-m_xchg64(volatile long *p,
+m_xchg64(m_atomic_t *p,
          long val)
 {
     __asm__ __volatile__ ("lock xchgq %%rax, %q1\n"
@@ -133,7 +135,7 @@ m_xchg64(volatile long *p,
  * - return original *p
  */
 static __inline__ long
-m_xadd64(volatile long *p,
+m_xadd64(m_atomic_t *p,
          long val)
 {
     __asm__ __volatile__ ("lock xaddq %1, %q0\n"
@@ -167,7 +169,7 @@ m_xaddu64(volatile unsigned long *p,
  * - return nonzero on success, zero on failure
  */
 static __inline__ long
-m_cmpxchg64(volatile long *p,
+m_cmpxchg64(m_atomic_t *p,
            long want,
            long val)
 {
@@ -207,7 +209,7 @@ m_cmpxchgu64(volatile unsigned long *p,
  * - return nonzero on success, zero on failure
  */
 static __inline__ long
-m_cmpxchg64ptr(volatile long *p,
+m_cmpxchg64ptr(m_atomic_t *p,
                long *want,
                void *val)
 {
@@ -229,7 +231,7 @@ m_cmpxchg64ptr(volatile long *p,
  * - return original nonzero on success, zero on failure
  */
 static __inline__ long
-m_cmpxchg128(volatile long *p64,
+m_cmpxchg128(m_atomic_t *p64,
              long *want,
              long *val)
 {
@@ -239,7 +241,7 @@ m_cmpxchg128(volatile long *p64,
 #elif defined(_MSC_VER)
 
 static __inline__ long
-m_cmpxchg128(volatile long long *p64,
+m_cmpxchg128(m_atomic_t long *p64,
              long long *want,
              long long *val)
 {
@@ -260,7 +262,7 @@ m_cmpxchg128(volatile long long *p64,
  * - return original nonzero on success, zero on failure
  */
 static __inline__ long
-m_cmpxchg128(volatile long *p64,
+m_cmpxchg128(m_atomic_t *p64,
              long *want,
              long *val)
 {
@@ -283,7 +285,7 @@ m_cmpxchg128(volatile long *p64,
 
 /* atomic set bit operation */
 static INLINE void
-m_setbit64(volatile long *p, int ndx)
+m_setbit64(m_atomic_t *p, long ndx)
 {
     __asm__ __volatile__ ("lock btsq %1, %0\n"
                           : "=m" (*(p))
@@ -295,7 +297,7 @@ m_setbit64(volatile long *p, int ndx)
 
 /* atomic reset/clear bit operation */
 static INLINE void
-m_clrbit64(volatile long *p, int ndx)
+m_clrbit64(m_atomic_t *p, long ndx)
 {
     __asm__ __volatile__ ("lock btrq %1, %0\n"
                           : "=m" (*(p))
@@ -306,7 +308,7 @@ m_clrbit64(volatile long *p, int ndx)
 
 /* atomic flip/toggle bit operation */
 static INLINE void
-m_flipbit64(volatile long *p, int ndx)
+m_flipbit64(m_atomic_t *p, long ndx)
 {
     __asm__ __volatile__ ("lock btcq %1, %0\n"
                           : "=m" (*(p))
@@ -317,7 +319,7 @@ m_flipbit64(volatile long *p, int ndx)
 
 /* atomic set and test bit operation; returns the old value */
 static __inline__ long
-m_cmpsetbit64(volatile long *p, long ndx)
+m_cmpsetbit64(m_atomic_t *p, long ndx)
 {
     long val;
 
@@ -346,7 +348,7 @@ m_cmpsetbit64(volatile long *p, long ndx)
 
 /* atomic clear bit operation */
 static __inline__ long
-m_cmpclrbit64(volatile long *p, long ndx)
+m_cmpclrbit64(m_atomic_t *p, long ndx)
 {
     long val;
 

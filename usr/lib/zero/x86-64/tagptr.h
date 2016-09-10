@@ -2,13 +2,13 @@
 #define __ZERO_X86_64_TAGPTR_H__
 
 #include <stddef.h>
-//#include <xmmintrin.h>
+#include <xmmintrin.h>
 #include <emmintrin.h>
 #include <zero/asm.h>
 //#include <zero/op128.h>
 #include <zero/x86-64/bignum.h>
 
-#if defined(__SIZEOF_INT128__)
+#if defined(__SIZEOF_INT128__) && 0
 #define TAGPTR_T     op128_t
 #else
 /* pointer in the high-order 64 bits, tag [counter] in the low */
@@ -25,7 +25,7 @@ struct _tagptr {
 #define tagptrcmpswap(tp, want, src)                                    \
 m_cmpswapdbl((volatile long *)tp, (long *)want, (long *)src)
 
-#if defined(__SIZEOF_INT128__)
+#if defined(__SIZEOF_INT128__) && 0
 #define tagptrzero(tp) (*(tp) = (TAGPTR_T)0)
 /* tp.adr = adr */
 #define tagptrsetadr(adr, tp)                                           \
@@ -65,7 +65,7 @@ do {                                                                    \
       _tp |= _tag;                                                      \
       (tp) = _tp;                                                       \
   } while (0)
-#define tagptrcmp(tp1, tp2) ((tp1) == (tp2))
+#define tagptrcmp(tp1, tp2) (*(tp1) == *(tp2))
 #else
 #define tagptrzero(tp) opstzero128(tp)
 /* tp.adr = adr */

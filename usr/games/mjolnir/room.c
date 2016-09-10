@@ -1,9 +1,9 @@
-
 #include <stdio.h>
 #include <stdlib.h>
+#include <time.h>
 #include <mjolnir/conf.h>
 #if (MJOL_HASH)
-#include <zero/hash.h>
+//#include <zero/hash.h>
 #include <zero/trix.h>
 #endif
 #if (MJOL_USE_ZERO_RANDMT32)

@@ -54,9 +54,9 @@ mjoldrawchrtty(struct mjolgame *game, struct mjolchr *chr)
         scr->moveto(x, y);
     }
 #if (MJOL_VT)
-    printf("%c", game->objtab[lvl][x][y]->id);
+    printf("%lx", game->objtab[lvl][x][y]->id);
 #elif (MJOL_CURSES)
-    printw("%c", game->objtab[lvl][x][y]->id);
+    printw("%lx", game->objtab[lvl][x][y]->id);
 #endif
 }
 

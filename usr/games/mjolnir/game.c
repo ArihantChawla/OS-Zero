@@ -4,19 +4,6 @@
 #include <mjolnir/mjol.h>
 #include <mjolnir/scr.h>
 
-extern long               mjolgetopt(struct mjolgame *game,
-                                     int argc, char *argv[]);
-extern struct mjolchr   * mjolmkplayer(struct mjolgame *game);
-extern struct mjolrect ** mjolinitrooms(struct mjolgame *game, long *nroom);
-extern void               mjolopenscr(struct mjolgame *game);
-extern void               mjolinitcmd(void);
-extern void               mjolinitobj(void);
-void                      mjolgendng(struct mjolgame *game);
-extern void               mjoldocmd(struct mjolgame *game, int ch);
-extern long               mjoldoturn(struct mjolgame *game,
-                                     struct mjolchr *data);
-extern long               mjolchaseall(struct mjolgame *game);
-
 extern struct mjolchr *mjolplayer;
 extern struct mjolchr *mjolchaseq;
 
@@ -89,7 +76,7 @@ mjolinit(struct mjolgame *game, int argc, char *argv[])
     game->nick = calloc(1, sizeof(struct dngchr *));
     mjolgetopt(game, argc, argv);
     if (!game->player) {
-        game->player = mjolmkplayer(game);
+        game->player = mjolmkplayer();
     }
     if (!game->nick) {
         game->nick = MJOL_DEF_NICK;

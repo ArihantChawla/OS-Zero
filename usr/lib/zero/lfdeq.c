@@ -122,10 +122,10 @@ _lfdeqfixqueue(struct lfdeq *lfdeq, TAGPTR_T head, TAGPTR_T tail)
     cur = tail;
     do {
         while ((tagptrcmp(&head, &lfdeq->head)) && (!tagptrcmp(&cur, &head))) {
-            tmp = lfdeq->head;                      // tmp = head
-            tagptrgetadr(tmp, node1);               // node1 = tmp.adr
-            next = node1->next;                     // next = tmp.next
-            tagptrgettag(cur, tag1);                // tag1 = cur.tag
+            tmp = lfdeq->head;                  // tmp = head
+            tagptrgetadr(tmp, node1);           // node1 = tmp.adr
+            next = node1->next;                 // next = tmp.next
+            tagptrgettag(cur, tag1);            // tag1 = cur.tag
             tag3 = tag1;                        // tag3 = cur.tag
             tagptrgetadr(cur, node2);           // node2 = cur.tag
             next = node2->next;                 // next = cur->next
@@ -182,7 +182,7 @@ lfdeqenqueue(struct lfdeq *lfdeq, LFDEQ_VAL_T val)
         if (tagptrcmpswap(&lfdeq->tail, &tail, &node->next)) {
             tagptrsetadr(node, node->prev);
             tagptrsettag(ttag, node->prev);
-            tagptrsetadr(node, last->prev);
+//            tagptrsetadr(last->prev, node);
 
             return;
         }
