@@ -424,7 +424,7 @@ long long llabs(long long x);
 static __inline__ unsigned long
 ceilpow2l(unsigned long u)
 {
-    long          tmp = tzerol(u);
+    long          tmp = sizeof(long) * CHAR_BIT - lzerol(u);
     unsigned long ret;
 
     if (!powerof2(u)) {
@@ -435,37 +435,6 @@ ceilpow2l(unsigned long u)
     return ret;
 }
 
-static __inline__ uint32_t
-ceilpow2_32(uint32_t u)
-{
-    long     tmp;
-    uint32_t ret;
-
-    tzero32(u, tmp);
-    if (!powerof2(u)) {
-        tmp++;
-    }
-    ret = UINT32_C(1) << tmp;
-
-    return ret;
-}
-
-static __inline__ uint64_t
-ceilpow2_64(uint64_t u)
-{
-    long     tmp;
-    uint64_t ret;
-
-    tzero64(u, tmp);
-    if (!powerof2(u)) {
-        tmp++;
-    }
-    ret = UINT64_C(1) << tmp;
-
-    return ret;
-}
-
-#if 0
 #define ceilpow2_32(u, r)                                               \
     do {                                                                \
         (r) = (u);                                                      \
@@ -495,7 +464,6 @@ ceilpow2_64(uint64_t u)
             (r)++;                                                      \
         }                                                               \
     } while (0)
-#endif
 
 /*
  * IEEE 32-bit

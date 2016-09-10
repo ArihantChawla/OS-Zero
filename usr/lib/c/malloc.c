@@ -1,4 +1,8 @@
 #include <stdint.h>
+#if (MEMDEBUG)
+#include <stdio.h>
+#include <assert.h>
+#endif
 #include <errno.h>
 #include <zero/cdefs.h>
 #include <zero/param.h>
@@ -18,15 +22,26 @@ _malloc(size_t size, size_t align, long flg)
                     : (memusepagebuf(bsz)
                        ? MEMPAGEBLK
                        : MEMBIGBLK));
-    long    slot = memcalcbufslot(sz, type);
-    void   *ptr = memgetblk(slot, type);
+    long    slot;
+    void   *ptr;
 
+    memcalcslot(sz, slot);
+    if (type == MEMPAGEBLK) {
+        slot -= PAGESIZELOG2;
+    }
+    ptr = memgetblk(slot, type);
     if (!ptr) {
 #if defined(ENOMEM)
         errno = ENOMEM;
 #endif
     } else if (flg & MALLOCZEROBIT) {
         memset(ptr, 0, size);
+    }
+#if (MEMDEBUG)
+    fprintf(stderr, "%lx @ %p\n", size, ptr);
+#endif
+    if (ptr) {
+        VALGRINDALLOC(ptr, size, 0, flg & MALLOCZEROBIT);
     }
 
     return ptr;
@@ -35,7 +50,11 @@ _malloc(size_t size, size_t align, long flg)
 static void
 _free(void *ptr)
 {
-    ;
+    if (ptr) {
+        VALGRINDFREE(ptr);
+    }
+
+    return;
 }
 
 void *
