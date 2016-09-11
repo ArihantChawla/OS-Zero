@@ -23,11 +23,15 @@ _malloc(size_t size, size_t align, long flg)
     size_t         aln = max(align, MEMMINALIGN);
     size_t         sz = max(size, MEMMINBLK);
     size_t         bsz = (align <= sz) ? sz : sz + align;
+#if (MEMPAGEBIN)
     long           type = (memusesmallbuf(bsz)
                            ? MEMSMALLBLK
                            : (memusepagebuf(bsz)
                               ? MEMPAGEBLK
                               : MEMBIGBLK));
+#else
+    long           type = memusesmallbuf(bsz) ? MEMSMALLBLK : MEMBIGBLK;
+#endif
     long           slot;
     void          *ptr;
     MEMPTR_T       adr;
@@ -71,17 +75,19 @@ _free(void *ptr)
     
 #if (MEMDEBUG)
     assert(ptr != NULL);
-    assert(buf != NULL);
 #endif
     if (!tls_arn && !meminitarn()) {
 
-        exit(1);
+    exit(1);
     }
     buf = memfindbuf(ptr, 1);
+#if (MEMDEBUG)
+    assert(buf != NULL);
+#endif
     if (buf) {
-        memrelblk(ptr, buf);
-        VALGRINDFREE(ptr);
-    }
+    memrelblk(ptr, buf);
+    VALGRINDFREE(ptr);
+}
 
     return;
 }
@@ -95,15 +101,23 @@ _realloc(void *ptr,
          size_t size,
          long rel)
 {
-    void          *retptr = NULL;
+    void          *retptr = ptr;
     struct membuf *buf = (ptr) ? memfindbuf(ptr, 0) : NULL;
-    void          *oldptr = (ptr) ? membufgetptr(buf, ptr) : NULL;
+#if (MEMPAGEBIN)
+    void          *oldptr = ((buf)
+                             ? (memgetbuftype(buf) != MEMPAGEBLK
+                                ? membufgetptr(buf, ptr)
+                                : membufgetpage(buf, ptr))
+                             : NULL);
+#else
+    void          *oldptr = (buf) ? membufgetptr(buf, ptr) : NULL;
+#endif
     size_t         sz = membufblksize(buf);
 
     if (!ptr) {
         retptr = _malloc(size, 0, 0);
     }
-    if (retptr) {
+    if ((retptr) && (retptr != ptr)) {
         if (oldptr) {
             memcpy(retptr, oldptr, sz);
         }
@@ -227,7 +241,7 @@ posix_memalign(void **ret,
 #endif
 
 void
-free(void *ptr)
+    free(void *ptr)
 {
     _free(ptr);
 
@@ -285,7 +299,7 @@ memalign(size_t align,
     return ptr;
 }
 
-#if (defined(_BSD_SOURCE)                                                      \
+#if (defined(_BSD_SOURCE)                                               \
      || (defined(_XOPEN_SOURCE) && _XOPEN_SOURCE >= 500                 \
          || (defined(_XOPEN_SOURCE) && defined(_XOPEN_SOURCE_EXTENDED))) \
      && !((defined(_POSIX_SOURCE) && _POSIX_C_SOURCE >= 200112L)        \
@@ -355,7 +369,7 @@ _aligned_malloc(size_t size,
 }
 
 void
-_aligned_free(void *ptr)
+    _aligned_free(void *ptr)
 {
     if (ptr) {
         _free(ptr);
@@ -393,7 +407,7 @@ _mm_malloc(size_t size,
 }
 
 void
-_mm_free(void *ptr)
+    _mm_free(void *ptr)
 {
     if (ptr) {
         _free(ptr);
@@ -405,7 +419,7 @@ _mm_free(void *ptr)
 #endif /* _INTEL_SOURCE && !__GNUC__ */
 
 void
-cfree(void *ptr)
+    cfree(void *ptr)
 {
     if (ptr) {
         _free(ptr);
@@ -415,7 +429,7 @@ cfree(void *ptr)
 }
 
 size_t
-malloc_usable_size(void *ptr)
+    malloc_usable_size(void *ptr)
 {
     struct membuf *buf = memfindbuf(ptr, 0);
     size_t         sz = membufblksize(buf);
@@ -424,7 +438,7 @@ malloc_usable_size(void *ptr)
 }
 
 size_t
-malloc_good_size(size_t size)
+    malloc_good_size(size_t size)
 {
     size_t sz = 0;
     
@@ -438,7 +452,7 @@ malloc_good_size(size_t size)
 }
 
 size_t
-malloc_size(void *ptr)
+    malloc_size(void *ptr)
 {
     struct membuf *buf = memfindbuf(ptr, 0);
     size_t         sz = membufblksize(buf);
