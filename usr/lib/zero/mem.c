@@ -959,10 +959,6 @@ memrelblk(void *ptr, struct membuf *buf)
     MEMADR_T       upval;
     MEMWORD_T      id;
 
-    if (!ptr) {
-
-        return;
-    }
     if (bkt) {
         memlkbit((m_atomic_t *)&bkt->list);
     }
@@ -999,10 +995,7 @@ memrelblk(void *ptr, struct membuf *buf)
 #endif
     setbit(buf->freemap, id);
     memsetbufnfree(buf, nfree);
-    if (bkt) {
-        memrelbit((m_atomic_t *)&bkt->list);
-    } else if (nfree == 1 && nblk > 1) {
-        memlkbit((m_atomic_t *)&bkt->list);
+    if (nfree == 1 && nblk > 1) {
         upval = (MEMADR_T)bkt->list;
         upval &= ~MEMLKBIT;
         buf->next = (struct membuf *)upval;
@@ -1010,6 +1003,8 @@ memrelblk(void *ptr, struct membuf *buf)
             buf->next->prev = buf;
         }
         m_syncwrite((m_atomic_t *)&bkt->list, buf);
+    } else if (bkt) {
+        memrelbit((m_atomic_t *)&bkt->list);
     }
 
     return;

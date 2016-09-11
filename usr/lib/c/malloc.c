@@ -86,12 +86,11 @@ _free(void *ptr)
     buf = memfindbuf(ptr, 1);
 #if (MEMDEBUG)
     fprintf(stderr, "_FREE: %p (%p)\n", ptr, buf);
-    assert(buf != NULL);
 #endif
     if (buf) {
-    memrelblk(ptr, buf);
-    VALGRINDFREE(ptr);
-}
+        memrelblk(ptr, buf);
+        VALGRINDFREE(ptr);
+    }
 
     return;
 }

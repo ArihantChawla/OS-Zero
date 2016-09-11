@@ -440,12 +440,10 @@ membufgetfree(struct membuf *buf)
     (((type) == MEMSMALLBLK)                                            \
      ? (MEMBUFBLKS)                                                     \
      : (((slot) <= MEMBUFMIDMAPSHIFT)                                   \
-        ? 8                                                             \
+        ? 4                                                             \
         : (((slot) <= MEMBUFBIGMAPSHIFT)                                \
-           ? 4                                                          \
-           : (((slot) <= MEMBUFHUGEMAPSHIFT)                            \
-              ? 2                                                       \
-              : 1))))
+           ? 2                                                          \
+           : 1)))
 #define membufnarn(slot, type)                                          \
     (2)
 #define membufnglob(slot, type)                                         \
