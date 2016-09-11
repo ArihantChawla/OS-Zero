@@ -668,7 +668,7 @@ memrelblk(void *ptr, struct membuf *buf)
     } else {
         id = membufpageid(buf, adr);
     }
-    clrbit(buf->freemap, id);
+    setbit(buf->freemap, id);
     memsetbufnfree(buf, nfree);
     if (ins) {
         upval = (MEMADR_T)bkt->list;
