@@ -39,7 +39,7 @@ _malloc(size_t size, size_t align, long flg)
     if (!(g_mem.flg & MEMINITBIT)) {
         meminit();
     }
-    memcalcslot(sz, slot);
+    memcalcslot(bsz, slot);
     if (type == MEMPAGEBLK) {
         slot -= PAGESIZELOG2;
     }

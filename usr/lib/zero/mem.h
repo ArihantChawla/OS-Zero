@@ -149,11 +149,11 @@ typedef volatile long MEMLK_T;
 /* minimum allocation block size in bigbins */
 //#define MEMBIGMINSIZE      (2 * PAGESIZE)
 
-#define MEMBUFSMALLBLKLIM  PAGESIZELOG2
-#define MEMBUFSMALLMAPLIM  16
-#define MEMBUFMIDMAPLIM    19
-#define MEMBUFBIGMAPLIM    22
-#define MEMBUFHUGEMAPLIM   25
+#define MEMBUFSMALLBLKSHIFT  8
+#define MEMBUFSMALLMAPSHIFT  8
+#define MEMBUFMIDMAPSHIFT    16
+#define MEMBUFBIGMAPSHIFT    20
+#define MEMBUFHUGEMAPSHIFT   24
 
 struct membkt {
 #if (MEMLFDEQ)
@@ -246,18 +246,8 @@ struct membuf {
     MEMWORD_T      freemap[MEMBUFFREEMAPWORDS] ALIGNED(CLSIZE);
 };
 
-#if 0
-struct memmagbkt {
-    struct memmag *list;        // bi-directional list of bufs + lock-bit
-    MEMWORD_T      slot;        // bucket slot #
-    MEMWORD_T      nbuf;        // number of bufs in list
-    MEMWORD_T      nbuf;        // number of bufs to allocate/buffer at a time
-};
-#endif
-
 /* toplevel lookup table item */
 struct memtab {
-    MEMLK_T         lk;
     struct memitem *tab;
 };
 /*
@@ -367,6 +357,7 @@ membufgetfree(struct membuf *buf)
     return -1;                          // 1-bit not found
 }
 
+#if 0
 static __inline__ void
 membufputfree(struct membuf *buf, MEMWORD_T ndx)
 {
@@ -379,6 +370,7 @@ membufputfree(struct membuf *buf, MEMWORD_T ndx)
 
     return;
 }
+#endif
 
 #define memalignptr(ptr, pow2)                                          \
     ((void *)rounduppow2((uintptr_t)(ptr), (pow2)))
@@ -437,8 +429,8 @@ membufputfree(struct membuf *buf, MEMWORD_T ndx)
 //#define membufslot(buf)       ((buf)->bkt->slot)
 #define membufblkofs()                                                  \
     (rounduppow2(membufhdrsize() + membufptrtabsize(), PAGESIZE))
-#define memusesmallbuf(sz)    ((sz) <= (MEMUWORD(1) << MEMBUFSMALLBLKLIM))
-#define memusepagebuf(sz)     ((sz) <= (PAGESIZE * MEMBUFSMALLMAPLIM))
+#define memusesmallbuf(sz)    ((sz) <= (MEMUWORD(1) << MEMBUFSMALLBLKSHIFT))
+#define memusepagebuf(sz)     ((sz) <= (PAGESIZE << MEMBUFSMALLMAPSHIFT))
 #define memsmallbufsize(slot)                                           \
     (rounduppow2(membufblkofs() + (MEMBUFBLKS << (slot)),               \
                  PAGESIZE))
@@ -452,38 +444,18 @@ membufputfree(struct membuf *buf, MEMWORD_T ndx)
 #define membufnblk(slot, type)                                          \
     (((type) == MEMSMALLBLK)                                            \
      ? (MEMBUFBLKS)                                                     \
-     : 1)
-#if 0
-#define membufnblk(slot, type)                                          \
-    (((type) == MEMSMALLBLK)                                            \
-     ? (MEMBUFBLKS)                                                     \
-     : (((type) == MEMPAGEBLK)                                          \
-        ? (((slot) < MEMBUFSMALLMAPLIM)                                 \
-           ? (MEMWORD(1) << min(MEMBUFSMALLMAPLIM - (slot), 3))         \
-           : (((slot) < MEMBUFMIDMAPLIM)                                \
-              ? (MEMWORD(1) << min(MEMBUFMIDMAPLIM - (slot), 2))        \
-              : (((slot) < MEMBUFBIGMAPLIM)                             \
-                 ? (MEMWORD(1) << min(MEMBUFBIGMAPLIM - (slot), 1))     \
-                 : 1)))                                                 \
-        : 1))
-#endif
-#if 0
-#define membufnblk(slot)                                                \
-    (((slot) <= MEMBUFSMALLBLKLIM)                                      \
-     ? MEMBUFBLKS                                                       \
-     : (((slot) < MEMBUFSMALLMAPLIM)                                    \
-        ? max(MEMBUFSMALLMAPLIM - (slot), 4)                            \
-        : (((slot) < MEMBUFMIDMAPLIM)                                   \
-           ? max(MEMBUFMIDMAPLIM - (slot), 3)                           \
-           : (((slot) < MEMBUFBIGMAPLIM)                                \
-              ? max(MEMBUFBIGMAPLIM - (slot), 2)                        \
-              : (((slot) < MEMBUFHUGEMAPLIM)                            \
-              ? max(MEMBUFBIGMAPLIM - (slot), 1)                        \
-                 : 0)))))
-#endif
+     : (((slot) <= MEMBUFMIDMAPSHIFT)                                   \
+        ? 8                                                             \
+        : (((slot) <= MEMBUFBIGMAPSHIFT)                                \
+           ? 4                                                          \
+           : (((slot) <= MEMBUFHUGEMAPSHIFT)                            \
+              ? 2                                                       \
+              : 1))))
+#define membufnarn(slot, type)                                          \
+    (4)
+#define membufnglob(slot, type)                                         \
+    (8)
 
-#define memblkrealsize(sz)                                              \
-    (((sz) <= MEMBUFSMALLBLKLIM) || ((sz) >= 
 #define memadrpageid(ptr)                                               \
     ((MEMADR_T)(ptr) & ((1L << PAGESIZELOG2) - 1))
 #define membufblksize(buf)                                              \
