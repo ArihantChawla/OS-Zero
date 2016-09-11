@@ -250,7 +250,7 @@ meminitbigbuf(struct membuf *buf, MEMUWORD_T nblk)
 }
 
 void *
-membufgetblk(struct membuf *head, struct membkt *bkt)
+memgetbufblk(struct membuf *head, struct membkt *bkt, MEMUWORD_T *retinfo)
 {
     void          *ptr = NULL;
     MEMWORD_T      nfree = (head) ? memgetbufnfree(head) : 0;
@@ -287,19 +287,22 @@ membufgetblk(struct membuf *head, struct membkt *bkt)
             head = head->next;
             bkt->nbuf--;
         }
+        if (retinfo) {
+            *retinfo = ndx;
+        }
     }
     m_syncwrite((m_atomic_t *)&bkt->list, head);
 
     return ptr;
 }
 
-/* find a buf address; type encoded in the low 2 bits */
 void *
-memputbuf(void *ptr, struct membuf *buf)
+memputbuf(void *ptr, struct membuf *buf, MEMUWORD_T info)
 {
+    MEMADR_T        val = (MEMADR_T)buf | info;
     struct memtab  *itab;
-    struct memtab  *item;
-    struct memitem *bitem;
+    struct memtab  *tab;
+    struct memitem *item;
     m_atomic_t     *lk1;
     m_atomic_t     *lk2;
     long             k1;
@@ -330,12 +333,12 @@ memputbuf(void *ptr, struct membuf *buf)
         pstk[0] = itab;
         g_mem.tab[k1].tab = (struct memtab *)((MEMADR_T)itab | MEMLKBIT);
     }
-    item = &itab[k2];
-    lk2 = &item->tab;
-    if (item->tab) {
+    tab = &itab[k2];
+    lk2 = &tab->tab;
+    if (tab->tab) {
         memlkbit(lk2);
         memrelbit(lk1);
-        itab = (struct memtab *)((MEMADR_T)item->tab & ~MEMLKBIT);
+        itab = (struct memtab *)((MEMADR_T)tab->tab & ~MEMLKBIT);
     } else {
 #if (ADRBITS >= 48)
         itab = mapanon(0, MEMLVLITEMS * sizeof(struct memtab));
@@ -351,22 +354,22 @@ memputbuf(void *ptr, struct membuf *buf)
 #if (ADRBITS >= 48)
         pstk[1] = itab;
 #endif
-        lk2 = &item->tab;
-        item->tab = (struct memtab *)((MEMADR_T)itab | MEMLKBIT);
+        lk2 = &tab->tab;
+        tab->tab = (struct memtab *)((MEMADR_T)itab | MEMLKBIT);
         memrelbit(lk1);
     }
 #if (ADRBITS < 48)
-    bitem = (struct memitem *)&itab[k3];
-    bitem->nref++;
-    bitem->buf = buf;
+    item = (struct memitem *)&itab[k3];
+    item->nref++;
+    item->val = val;
     memrelbit(lk2);
 #else
-    item = &itab[k3];
-    lk1 = &item->tab;
-    if (item->tab) {
+    tab = &itab[k3];
+    lk1 = &tab->tab;
+    if (tab->tab) {
         memlkbit(lk1);
         memrelbit(lk2);
-        itab = (struct memtab *)((MEMADR_T)item->tab & ~MEMLKBIT);
+        itab = (struct memtab *)((MEMADR_T)tab->tab & ~MEMLKBIT);
     } else {
         itab = mapanon(0, MEMLVLITEMS * sizeof(struct memitem));
         if (itab == MAP_FAILED) {
@@ -375,25 +378,26 @@ memputbuf(void *ptr, struct membuf *buf)
             
             return NULL;
         }
-        item->tab = (struct memtab *)((MEMADR_T)itab | MEMLKBIT);
+        tab->tab = (struct memtab *)((MEMADR_T)itab | MEMLKBIT);
         memrelbit(lk2);
     }
-    bitem = (struct memitem *)&itab[k4];
-    bitem->nref++;
-    bitem->buf = buf;
+    item = (struct memitem *)&itab[k4];
+    item->nref++;
+    item->val = val;
     memrelbit(lk1);
 #endif
     
     return ptr;
 }
 
-struct membuf *
+MEMADR_T
 memfindbuf(void *ptr, long rel)
 {
+    MEMADR_T        ret = 0;
     struct membuf  *buf = NULL;
     struct memtab  *itab;
-    struct memtab  *item;
-    struct memitem *bitem;
+    struct memtab  *tab;
+    struct memitem *item;
     m_atomic_t     *lk1;
     m_atomic_t     *lk2;
     long            k1;
@@ -413,35 +417,35 @@ memfindbuf(void *ptr, long rel)
     memlkbit(lk1);
     itab = (struct memtab *)((MEMADR_T)g_mem.tab[k1].tab & ~MEMLKBIT);
     if (itab) {
-        item = &itab[k2];
-        lk2 = &item->tab;
+        tab = &itab[k2];
+        lk2 = &tab->tab;
         memlkbit(lk2);
         memrelbit(lk1);
-        itab = (struct memtab *)((MEMADR_T)item->tab & ~MEMLKBIT);
+        itab = (struct memtab *)((MEMADR_T)tab->tab & ~MEMLKBIT);
 #if (ADRBITS < 48)
         if (itab) {
-            bitem = (struct membufitam *)&itab[k3];
-            buf = bitem->buf;
+            item = (struct membufitam *)&itab[k3];
+            ret = item->val;
             if (rel) {
-                if (!--bitem->nref) {
-                    bitem->buf = NULL;
+                if (!--item->nref) {
+                    item->val = 0;
                 }
             }
         }
         memrelbit(lk2);
 #else
         if (itab) {
-            item = &itab[k3];
-            lk1 = &item->tab;
+            tab = &itab[k3];
+            lk1 = &tab->tab;
             memlkbit(lk1);
             memrelbit(lk2);
-            itab = (struct memtab *)((MEMADR_T)item->tab & ~MEMLKBIT);
+            itab = (struct memtab *)((MEMADR_T)tab->tab & ~MEMLKBIT);
             if (itab) {
-                bitem = (struct memitem *)&itab[k4];
-                buf = bitem->buf;
+                item = (struct memitem *)&itab[k4];
+                ret = item->val;
                 if (rel) {
-                    if (!--bitem->nref) {
-                        bitem->buf = NULL;
+                    if (!--item->nref) {
+                        item->val = 0;
                     }
                 }
             }
@@ -470,24 +474,23 @@ memopenbuf(struct membkt *bkt)
     return upval;
 }
 
+/* for pagebin, val is the allocation index */
 void
-memputptr(struct membuf *buf, void *ptr, size_t align, long type)
+memputptr(struct membuf *buf, void *ptr, size_t align, long info)
 {
-    MEMPTR_T adr;
+    MEMUWORD_T ndx = info & MEMPAGENDXMASK;
+    MEMPTR_T   adr;
     
     adr = ptr;
     if ((MEMADR_T)ptr & (align - 1)) {
         ptr = memalignptr(adr, align);
     }
-#if 0
-    if (type != MEMPAGEBLK) {
+    if (!ndx) {
         membufsetptr(buf, ptr, adr);
     } else {
-        membufsetpage(buf, ptr, adr);
+        membufsetpage(buf, ndx, adr);
     }
-#endif
-    membufsetptr(buf, ptr, adr);
-    memputbuf(ptr, buf);
+    memputbuf(ptr, buf, info);
 
     return;
 }
@@ -500,6 +503,7 @@ memgetblk(long slot, long type, size_t align)
     struct membkt *bkt;
     struct membuf *buf;
     MEMUWORD_T     info = 0;
+    MEMUWORD_T     flg = 0;
     MEMUWORD_T     nblk = membufnblk(slot, type);
     struct membuf *bptr;
     MEMADR_T       upval = NULL;
@@ -518,14 +522,14 @@ memgetblk(long slot, long type, size_t align)
             buf = (struct membuf *)upval;
             if (upval) {
                 /* TODO */
-                ptr = membufgetblk(buf, bkt);
+                ptr = memgetbufblk(buf, bkt, NULL);
                 if (!ptr) {
                      memrelbit((m_atomic_t *)&bkt->list);
                      buf = memallocsmallbuf(slot);
                      if (buf) {
                          ptr = meminitsmallbuf(buf);
                          if (ptr) {
-                             memputptr(buf, ptr, align, type);
+                             memputptr(buf, ptr, align, 0);
                          }
                          memlkbit((m_atomic_t *)&bkt->list);
                          upval = (MEMADR_T)bkt->list;
@@ -545,7 +549,7 @@ memgetblk(long slot, long type, size_t align)
                 if (buf) {
                     ptr = meminitsmallbuf(buf);
                     if (ptr) {
-                        memputptr(buf, ptr, align, type);
+                        memputptr(buf, ptr, align, 0);
                     }
                     m_syncwrite((m_atomic_t *)&bkt->list, (m_atomic_t)buf);
                 } else {
@@ -564,14 +568,14 @@ memgetblk(long slot, long type, size_t align)
             upval = memopenbuf(bkt);
             buf = (struct membuf *)upval;
             if (upval) {
-                ptr = membufgetblk(buf, bkt);
+                ptr = memgetbufblk(buf, bkt, &info);
                 if (!ptr) {
                     memrelbit((m_atomic_t *)&bkt->list);
                     buf = memallocpagebuf(slot, nblk);
                     if (buf) {
                         ptr = meminitpagebuf(buf, nblk);
                         if (ptr) {
-                            memputptr(buf, ptr, align, type);
+                            memputptr(buf, ptr, align, 0 | MEMPAGEBIT);
                         }
                         memlkbit((m_atomic_t *)&bkt->list);
                         upval = (MEMADR_T)bkt->list;
@@ -583,6 +587,7 @@ memgetblk(long slot, long type, size_t align)
                         m_syncwrite((m_atomic_t *)&bkt->list, (m_atomic_t)buf);
                     }
                 } else {
+                    flg |= MEMPAGEBIT;
                     memrelbit((m_atomic_t *)&bkt->list);
                 }
             } else {
@@ -603,31 +608,25 @@ memgetblk(long slot, long type, size_t align)
             buf = (struct membuf *)upval;
         } else {
             memrelbit((m_atomic_t *)&bkt->list);
-            ptr = membufgetblk(buf, bkt);
-            if (!ptr) {
-                memrelbit((m_atomic_t *)&bkt->list);
-                buf = memallocbigbuf(slot, nblk);
-                if (buf) {
-                    ptr = meminitbigbuf(buf, nblk);
-                    if (ptr) {
-                        memputptr(buf, ptr, align, type);
-                    }
-                    memlkbit((m_atomic_t *)&bkt->list);
-                    upval = (MEMADR_T)bkt->list;
-                    upval &= ~MEMLKBIT;
-                    buf->next = (struct membuf *)upval;
-                    if (buf->next) {
-                        buf->next->prev = buf;
-                    }
-                    m_syncwrite((m_atomic_t *)&bkt->list, (m_atomic_t)buf);
-                    }
-            } else {
-                memrelbit((m_atomic_t *)&bkt->list);
+            buf = memallocbigbuf(slot, nblk);
+            if (buf) {
+                ptr = meminitbigbuf(buf, nblk);
+                if (ptr) {
+                    memputptr(buf, ptr, align, 0);
+                }
+                memlkbit((m_atomic_t *)&bkt->list);
+                upval = (MEMADR_T)bkt->list;
+                upval &= ~MEMLKBIT;
+                buf->next = (struct membuf *)upval;
+                if (buf->next) {
+                    buf->next->prev = buf;
+                }
+                m_syncwrite((m_atomic_t *)&bkt->list, (m_atomic_t)buf);
             }
         }
     }
     if ((buf) && (ptr)) {
-        if (info & MEMHEAPBIT) {
+        if (flg & MEMHEAPBIT) {
             memlkbit(&g_mem.heap);
             upval = (MEMADR_T)g_mem.heap;
             upval &= ~MEMLKBIT;
@@ -642,14 +641,14 @@ memgetblk(long slot, long type, size_t align)
             bkt = &arn->pagebin[slot];
             memlkbit(&bkt->list);
         }
-        memputptr(buf, ptr, align, type);
+        memputptr(buf, ptr, align, info);
         /* this unlocks the arena bucket (low-bit becomes zero) */
         m_syncwrite((m_atomic_t *)&bkt->list, buf);
     } else {
         memrelbit((m_atomic_t *)&bkt->list);
     }
     if (ptr) {
-        memputbuf(ptr, buf);
+        memputbuf(ptr, buf, info);
     }
 
     return ptr;
@@ -736,9 +735,10 @@ memrelblk(void *ptr, struct membuf *buf)
 #endif
 
 void
-memrelblk(void *ptr, struct membuf *buf)
+memrelblk(void *ptr, struct membuf *buf, MEMUWORD_T info)
 {
     struct membkt *bkt = buf->bkt;
+    MEMUWORD_T     ndx = info & MEMPAGENDXMASK;
     MEMWORD_T      nblk = memgetbufnblk(buf);
     MEMWORD_T      nfree = memgetbufnfree(buf);
     MEMWORD_T      ins = 0;
@@ -757,31 +757,23 @@ memrelblk(void *ptr, struct membuf *buf)
 //        ins = 1;
         if (type == MEMSMALLBLK) {
             bkt = &tls_arn->smallbin[slot];
-#if (MEMPAGEBIN)
         } else if (type == MEMPAGEBLK) {
             bkt = &tls_arn->pagebin[slot];
-#endif
         } else {
             bkt = &g_mem.bigbin[slot];
         }
         memlkbit((m_atomic_t *)&bkt->list);
     }
     nfree++;
-#if (MEMPAGEBIN) && 0
-    if (type != MEMPAGEBLK) {
+    if (!(info & MEMPAGEBIT)) {
         adr = membufgetptr(buf, ptr);
         membufsetptr(buf, ptr, NULL);
         id = membufblkid(buf, adr);
     } else {
-        adr = membufgetpage(buf, ptr);
-        membufsetpage(buf, ptr, NULL);
-        id = membufpageid(buf, adr);
+        adr = membufpageadr(buf, ndx);
+        membufsetpage(buf, ndx, NULL);
+        id = ndx;
     }
-#else
-    adr = membufgetptr(buf, ptr);
-    membufsetptr(buf, ptr, NULL);
-    id = membufblkid(buf, adr);
-#endif
     setbit(buf->freemap, id);
     memsetbufnfree(buf, nfree);
     if (nfree == 1 && nblk > 1) {

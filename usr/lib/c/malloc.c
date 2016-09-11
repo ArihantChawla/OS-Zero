@@ -54,7 +54,7 @@ _malloc(size_t size, size_t align, long flg)
         memset(ptr, 0, size);
     }
 #if (MEMDEBUG)
-    fprintf(stderr, "%ld bytes @ %p\n", size, ptr);
+//    fprintf(stderr, "%ld bytes @ %p\n", size, ptr);
 #endif
     if (ptr) {
         VALGRINDALLOC(ptr, size, 0, flg & MALLOCZEROBIT);
@@ -69,19 +69,21 @@ _malloc(size_t size, size_t align, long flg)
 static void
 _free(void *ptr)
 {
-    struct membuf *buf;
+    MEMADR_T   desc;
+    MEMUWORD_T info;
     
 #if (MEMDEBUG)
     assert(ptr != NULL);
-    assert(buf != NULL);
 #endif
     if (!tls_arn && !meminitarn()) {
 
         exit(1);
     }
-    buf = memfindbuf(ptr, 1);
-    if (buf) {
-        memrelblk(ptr, buf);
+    desc = memfindbuf(ptr, 1);
+    info = desc & MEMPAGEINFOMASK;
+    desc &= ~MEMPAGEINFOMASK;
+    if (desc) {
+        memrelblk(ptr, (struct membuf *)desc, info);
         VALGRINDFREE(ptr);
     }
 
@@ -99,8 +101,8 @@ _realloc(void *ptr,
 {
     void          *retptr = NULL;
     struct membuf *buf = (ptr) ? memfindbuf(ptr, 0) : NULL;
-    void          *oldptr = (ptr) ? membufgetptr(buf, ptr) : NULL;
-    size_t         sz = membufblksize(buf);
+    void          *oldptr = (buf) ? membufgetptr(buf, ptr) : NULL;
+    size_t         sz = (buf) ? membufblksize(buf) : 0;
 
     if (!ptr) {
         retptr = _malloc(size, 0, 0);
@@ -109,8 +111,10 @@ _realloc(void *ptr,
         if (oldptr) {
             memcpy(retptr, oldptr, sz);
         }
-        _free(ptr);
-        ptr = NULL;
+        if (ptr) {
+            _free(ptr);
+            ptr = NULL;
+        }
     }
     ptr = retptr;
     if (((rel) && (ptr)) || (retptr != ptr)) {
