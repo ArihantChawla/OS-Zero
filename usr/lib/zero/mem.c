@@ -588,6 +588,7 @@ memgetblk(long slot, long type, size_t align)
             buf->heap = g_mem.heap;
             /* this unlocks the global heap (low-bit becomes zero) */
             m_syncwrite(&g_mem.heap, buf);
+            memrellk(&g_mem.heaplk);
         }
         memputptr(buf, ptr, align, type);
         /* this unlocks the arena bucket (low-bit becomes zero) */
@@ -658,7 +659,7 @@ memrelblk(void *ptr, struct membuf *buf)
         if (upval) {
             buf->next->prev = buf;
         }
-        m_syncwrite((m_atomic_t)&bkt->list, (m_atomic_t)buf);
+        m_syncwrite((m_atomic_t *)&bkt->list, (m_atomic_t)buf);
     } else {
         memrelbit((m_atomic_t *)&bkt->list);
     }
