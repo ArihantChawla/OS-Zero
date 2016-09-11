@@ -643,6 +643,33 @@ memgetblk(long slot, long type, size_t align)
         upval = memopenbuf(bkt);
         if (upval) {
             buf = (struct membuf *)upval;
+            buf = membufgetblk(buf, &ptr);
+            if (!buf) {
+                memrelbit((m_atomic_t *)&bkt->list);
+                buf = memallocsmallbuf(slot);
+                if (buf) {
+                    ptr = meminitsmallbuf(buf);
+                    if (ptr) {
+                        ptr = memputptr(buf, ptr, align, type);
+                    }
+#if 0
+                        m_syncwrite((m_atomic_t *)&bkt->list, (m_atomic_t)buf);
+                } else {
+                    memrelbit((m_atomic_t *)&bkt->list);
+#endif
+                }
+            } else {
+                bufval = (MEMADR_T)buf;
+                buf = (struct membuf *)bufval;
+                if (bufval == upval) {
+                    ptr = memputptr(buf, ptr, align, type);
+                    m_syncwrite((m_atomic_t *)&bkt->list, bufval);
+                        
+                    return ptr;
+                }
+                m_syncwrite((m_atomic_t *)&bkt->list,
+                            (m_atomic_t)bufval);
+            }
         } else {
             memrelbit((m_atomic_t *)&bkt->list);
             bkt = &arn->smallbin[slot];
@@ -693,7 +720,6 @@ memgetblk(long slot, long type, size_t align)
 #endif
                 }
             }
-            upval = 0;
         }
 #if (MEMPAGEBIN)
     } else if (type == MEMPAGEBLK) {
@@ -701,6 +727,32 @@ memgetblk(long slot, long type, size_t align)
         upval = memopenbuf(bkt);
         if (upval) {
             buf = (struct membuf *)upval;
+            buf = membufgetblk(buf, &ptr);
+            if (!buf) {
+                memrelbit((m_atomic_t *)&bkt->list);
+                buf = memallocpagebuf(slot, nblk);
+                if (buf) {
+                    ptr = meminitpagebuf(buf, nblk);
+                    if (ptr) {
+                            ptr = memputptr(buf, ptr, align, type);
+                    }
+#if 0
+                    m_syncwrite((m_atomic_t *)&bkt->list, (m_atomic_t)buf);
+                } else {
+                    memrelbit((m_atomic_t *)&bkt->list);
+#endif
+                }
+            } else {
+                bufval = (MEMADR_T)buf;
+                buf = (struct membuf *)bufval;
+                if (bufval == upval) {
+                    ptr = memputptr(buf, ptr, align, type);
+                        m_syncwrite((m_atomic_t *)&bkt->list, bufval);
+                        
+                        return ptr;
+                    }
+                m_syncwrite((m_atomic_t *)&bkt->list, (m_atomic_t)bufval);
+            }
         } else {
             memrelbit((m_atomic_t *)&bkt->list);
             bkt = &arn->pagebin[slot];
@@ -746,7 +798,6 @@ memgetblk(long slot, long type, size_t align)
 #endif
                 }
             }
-            upval = 0;
         }
 #endif /* MEMPAGEBIN */
     } else {
@@ -754,6 +805,29 @@ memgetblk(long slot, long type, size_t align)
         upval = memopenbuf(bkt);
         if (upval) {
             buf = (struct membuf *)upval;
+            buf = membufgetblk(buf, &ptr);
+            if (!buf) {
+                memrelbit((m_atomic_t *)&bkt->list);
+                buf = memallocbigbuf(slot, nblk);
+                if (buf) {
+                    ptr = meminitbigbuf(buf, nblk);
+#if 0
+                    m_syncwrite((m_atomic_t *)&bkt->list, (m_atomic_t)buf);
+                } else {
+                    memrelbit((m_atomic_t *)&bkt->list);
+#endif
+                }
+            } else {
+                bufval = (MEMADR_T)buf;
+                buf = (struct membuf *)bufval;
+                if (bufval == upval) {
+                    ptr = memputptr(buf, ptr, align, type);
+                    m_syncwrite((m_atomic_t *)&bkt->list, bufval);
+                    
+                    return ptr;
+                }
+                m_syncwrite((m_atomic_t *)&bkt->list, (m_atomic_t)bufval);
+            }
         } else {
             memrelbit((m_atomic_t *)&bkt->list);
             buf = membufgetblk(buf, &ptr);
@@ -779,13 +853,9 @@ memgetblk(long slot, long type, size_t align)
                 }
                 m_syncwrite((m_atomic_t *)&bkt->list, (m_atomic_t)bufval);
             }
-            upval = 0;
         }
     }
     if ((buf) && (ptr)) {
-        if (upval) {
-            memrelbit((m_atomic_t *)&bkt->list);
-        }
         if (bkt == &g_mem.smallbin[slot]) {
             bkt = &arn->smallbin[slot];
             memlkbit(&bkt->list);
@@ -797,17 +867,13 @@ memgetblk(long slot, long type, size_t align)
         }
         ptr = memputptr(buf, ptr, align, type);
         /* this unlocks the arena bucket (low-bit becomes zero) */
-        if (bkt) {
-            upval = (MEMADR_T)bkt->list;
-            upval &= ~MEMLKBIT;
-            buf->next = (struct membuf *)upval;
-            if (buf->next) {
-                buf->next->prev = buf;
-            }
-            m_syncwrite((m_atomic_t *)&bkt->list, buf);
+        upval = (MEMADR_T)bkt->list;
+        upval &= ~MEMLKBIT;
+        buf->next = (struct membuf *)upval;
+        if (buf->next) {
+            buf->next->prev = buf;
         }
-    } else if (upval) {
-        memrelbit((m_atomic_t *)&bkt->list);
+        m_syncwrite((m_atomic_t *)&bkt->list, buf);
     }
     if (ptr) {
         memputbuf(ptr, buf);
