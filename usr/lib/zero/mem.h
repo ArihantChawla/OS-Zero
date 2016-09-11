@@ -2,20 +2,23 @@
 #define __ZERO_MEM_H__
 
 #if !defined(MEMLFDEQ)
-#define MEMLFDEQ      0
+#define MEMLFDEQ    0
 #endif
 #if !defined(MEMTABNREF)
-#define MEMTABNREF    0
+#define MEMTABNREF  0
+#endif
+#if !defined(MEMDEBUG)
+#define MEMDEBUG    0
 #endif
 
 /* generic memory manager definitions for libzero */
 
-#define MEM_LK_NONE   0                 // don't use locks; single-thread
-#define MEM_LK_PRIO   1                 // priority-based locklessinc.com lock
-#define MEM_LK_FMTX   2                 // anonymous non-recursive mutex
-#define MEM_LK_SPIN   3                 // spinlock
+#define MEM_LK_NONE 0           // don't use locks; single-thread
+#define MEM_LK_PRIO 1           // priority-based locklessinc.com lock
+#define MEM_LK_FMTX 2           // anonymous non-recursive mutex
+#define MEM_LK_SPIN 3           // spinlock
 
-#define MEM_LK_TYPE   MEM_LK_PRIO       // type of locks to use
+#define MEM_LK_TYPE MEM_LK_PRIO // type of locks to use
 
 #include <limits.h>
 #include <stddef.h>

@@ -34,7 +34,6 @@ _malloc(size_t size, size_t align, long flg)
 #endif
     long           slot;
     void          *ptr;
-    MEMPTR_T       adr;
 
     if (!tls_arn && !meminitarn()) {
 
@@ -141,6 +140,13 @@ _realloc(void *ptr,
 }
 
 /* API FUNCTIONS */
+
+int
+malloc_trim(size_t pad)
+{
+    /* TODO: not implemented yet */
+    ;
+}
 
 void *
 #if defined(__GNUC__)

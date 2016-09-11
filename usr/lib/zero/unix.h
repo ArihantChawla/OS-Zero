@@ -64,7 +64,7 @@
 #endif
 #endif /* !MMAP_DEV_ZERO */
 #if !defined(MAP_FAILED)
-#define MAP_FAILED          ((void *)-1L)
+#define MAP_FAILED          ((void *)-1)
 #endif
 #if (defined(MMAP_DEV_ZERO) && MMAP_DEV_ZERO)
 #define mapanon(fd, size)                                               \
