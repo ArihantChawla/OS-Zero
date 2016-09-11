@@ -93,8 +93,8 @@ m_getretfrmadr(void **pp)
  * return nonzero on success, zero on failure
  */
 static __inline__ long
-m_cmpxchg32ptr(volatile long *p,
-               volatile long *want,
+m_cmpxchg32ptr(m_atomic32_t *p,
+               m_atomic32_t *want,
                volatile void *val)
 {
     long res;
@@ -115,9 +115,9 @@ m_cmpxchg32ptr(volatile long *p,
  * - return original nonzero on success, zero on failure
  */
 static __inline__ long
-m_cmpxchg64(volatile long *p64,
-            volatile long *want,
-            volatile long *val)
+m_cmpxchg64(m_atomic64_t *p64,
+            m_atomic64_t *want,
+            m_atomic64_t *val)
 {
     return __sync_bool_compare_and_swap(p64, want, val);
 }
@@ -125,9 +125,9 @@ m_cmpxchg64(volatile long *p64,
 #elif defined(_MSC_VER)
 
 static __inline__ long
-m_cmpxchg64(volatile long long *p64,
-            volatile long long *want,
-            volatile long long *val)
+m_cmpxchg64(m_atomic64_t long *p64,
+            m_atomic64_t long *want,
+            m_atomic64_t long *val)
 {
     long long ask = *want;
     long long say = *val;
@@ -146,9 +146,9 @@ m_cmpxchg64(volatile long long *p64,
  * - return original nonzero on success, zero on failure
  */
 static __inline__ long
-m_cmpxchg64(volatile long *p32,
-            volatile long *want,
-            volatile long *val)
+m_cmpxchg64(m_atomic64_t *p32,
+            m_atomic64_t *want,
+            m_atomic64_t *val)
 {
     uint32_t eax = p32[0];
     uint32_t ecx = p32[1];

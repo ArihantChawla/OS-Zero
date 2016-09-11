@@ -3,6 +3,16 @@
 
 //#define frameisusr(tcb) ((tcb)->frame.cs == UTEXTSEL)
 
+#include <stdint.h>
+#if defined(__x86_64__) || defined(__amd64__)
+#include <x86-64/asm.h>
+#endif
+
+typedef volatile int8_t  m_atomic8_t;
+typedef volatile int16_t m_atomic16_t;
+typedef volatile int32_t m_atomic32_t;
+typedef volatile int64_t m_atomic64_t;
+
 /* memory barrier */
 #define m_membar()     __asm__ __volatile__ ("mfence\n" : : : "memory")
 /* memory read barrier */
@@ -22,7 +32,7 @@
 
 /* atomic increment operation */
 static __inline__ void
-m_atominc32(volatile int *p)
+m_atominc32(m_atomic32_t *p)
 {
     __asm__ __volatile__ ("lock incl %0\n"
                           : "+m" (*(p))
@@ -34,7 +44,7 @@ m_atominc32(volatile int *p)
 
 /* atomic decrement operation */
 static __inline__ void
-m_atomdec32(volatile int *p)
+m_atomdec32(m_atomic32_t *p)
 {
     __asm__ __volatile__ ("lock decl %0\n"
                           : "+m" (*(p))
@@ -46,7 +56,7 @@ m_atomdec32(volatile int *p)
 
 /* atomic exchange operation */
 static __inline__ int
-m_xchg32(volatile int *p,
+m_xchg32(m_atomic32_t *p,
          int val)
 {
     int res;
@@ -99,7 +109,7 @@ m_xaddu16(volatile unsigned short *p,
  * - return original *p
  */
 static __inline__ int
-m_xadd32(volatile int *p,
+m_xadd32(m_atomic32_t *p,
          int val)
 {
     __asm__ __volatile__ ("lock xaddl %1, %0\n"
@@ -133,7 +143,7 @@ m_xaddu32(volatile unsigned int *p,
  * - return nonzero on success, zero on failure
  */
 static __inline__ int
-m_cmpxchg32(volatile int *p,
+m_cmpxchg32(m_atomic32_t *p,
             int want,
             int val)
 {
@@ -149,7 +159,7 @@ m_cmpxchg32(volatile int *p,
 
 /* atomic set bit operation */
 static INLINE void
-m_setbit32(volatile int *p, int ndx)
+m_setbit32(m_atomic32_t *p, int ndx)
 {
     __asm__ __volatile__ ("lock btsl %1, %0\n"
                           : "=m" (*(p))
@@ -161,7 +171,7 @@ m_setbit32(volatile int *p, int ndx)
 
 /* atomic reset/clear bit operation */
 static INLINE void
-m_clrbit32(volatile int *p, int ndx)
+m_clrbit32(m_atomic32_t *p, int ndx)
 {
     __asm__ __volatile__ ("lock btrl %1, %0\n"
                           : "=m" (*((uint8_t *)(p) + (ndx >> 3)))
@@ -172,7 +182,7 @@ m_clrbit32(volatile int *p, int ndx)
 
 /* atomic flip/toggle bit operation */
 static INLINE void
-m_flipbit32(volatile int *p, int ndx)
+m_flipbit32(m_atomic32_t *p, int ndx)
 {
     __asm__ __volatile__ ("lock btcl %1, %0\n"
                           : "=m" (*((uint8_t *)(p) + (ndx >> 3)))
@@ -183,7 +193,7 @@ m_flipbit32(volatile int *p, int ndx)
 
 /* atomic set and test bit operation; returns the old value */
 static __inline__ int
-m_cmpsetbit32(volatile int *p, int ndx)
+m_cmpsetbit32(m_atomic32_t *p, int ndx)
 {
     int val;
 
@@ -212,7 +222,7 @@ m_cmpsetbit32(volatile int *p, int ndx)
 
 /* atomic clear bit operation */
 static __inline__ int
-m_cmpclrbit32(volatile int *p, int ndx)
+m_cmpclrbit32(m_atomic32_t *p, int ndx)
 {
     int val;
 

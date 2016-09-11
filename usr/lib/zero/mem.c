@@ -624,7 +624,7 @@ memgetblk(long slot, long type, size_t align)
 }
 
 void
-memputblk(void *ptr, struct membuf *buf)
+memrelblk(void *ptr, struct membuf *buf)
 {
     struct membkt *bkt = buf->bkt;
     MEMWORD_T      ins = 0;

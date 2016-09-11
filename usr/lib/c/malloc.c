@@ -78,7 +78,7 @@ _free(void *ptr)
     }
     buf = memfindbuf(ptr, 1);
     if (buf) {
-        memputblk(ptr, buf);
+        memrelblk(ptr, buf);
         VALGRINDFREE(ptr);
     }
 

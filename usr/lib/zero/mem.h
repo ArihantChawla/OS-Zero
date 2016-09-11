@@ -508,7 +508,7 @@ struct memarn * meminitarn(void);
 MEMPTR_T        memgetblk(long slot, long type, size_t align);
 void *          memputbuf(void *ptr, struct membuf *buf);
 struct membuf * memfindbuf(void *ptr, long rel);
-void            memputblk(void *ptr, struct membuf *buf);
+void            memrelblk(void *ptr, struct membuf *buf);
 
 #endif /* __ZERO_MEM_H__ */
 
