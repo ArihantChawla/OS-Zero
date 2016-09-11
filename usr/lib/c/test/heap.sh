@@ -9,7 +9,7 @@ CCWARNFLAGS="-D_FORTIFY_SOURCE=2 -Wall -Wundef -Wextra -Wpointer-arith -Wuniniti
 # As of October 24 2011, gcc -O2 produces slower code than -O // vendu
 # - same thing with -finline-functions and -funroll-loops
 $CC $CCOPTFLAGS $CCWARNFLAGS -DMALLOCSTAT=0 -DMALLOCHASHSTAT=0 -DZEROFUTEX=0 -DZEROMALLOC=1 -DPTHREAD=1 -D_REENTRANT -g -Wall -I../.. -o heap heap.c -pthread
-$CC $CCOPTFLAGS $CCWARNFLAGS -DMALLOCSTAT=0 -DMALLOCHASHSTAT=0 -DZEROFUTEX=0 -DZEROMALLOC=1 -DPTHREAD=1 -D_REENTRANT -g -Wall -I../.. -o llheap lockless_allocator/ll_alloc.c heap.c -pthread
+$CC $CCOPTFLAGS $CCWARNFLAGS -DMALLOCSTAT=0 -DMALASHSTAT=0 -DZEROFUTEX=0 -DZEROMALLOC=1 -DPTHREAD=1 -D_REENTRANT -g -Wall -I../.. -o llheap lockless_allocator/ll_alloc.c heap.c -pthread
 $CC $CCOPTFLAGS $CCWARNFLAGS -DMALLOCSTAT=0 -DMALLOCHASHSTAT=0 -DZEROFUTEX=0 -DZEROMALLOC=1 -DPTHREAD=1 -D_REENTRANT -g -Wall -I../.. -o tcheap heap.c -Wl,-L/usr/local/lib -ltcmalloc -pthread
 $CC $CCOPTFLAGS $CCWARNFLAGS -DMALLOCSTAT=0 -DMALLOCHASHSTAT=0 -DZEROFUTEX=0 -DZEROMALLOC=1 -DPTHREAD=1 -D_REENTRANT -g -Wall -I../.. -o jeheap heap.c -Wl,-L/usr/local/lib -ljemalloc -pthread
 $CC $CCOPTFLAGS $CCWARNFLAGS -DX11VIS=0 -DMALLOCSTAT=0 -DMALLOCHASHSTAT=0 -DZEROFUTEX=0 -DZEROMALLOC=1 -DPTHREAD=1 -D_REENTRANT -g -Wall -fno-builtin -fno-tree-loop-distribute-patterns -DZEROTHR=0 -fno-omit-frame-pointer -I../.. -I../../../.. -I../../../lib -o zheap heap.c ../../zero/hash64.c ../../zero/priolk.c ../../zero/lfdeq.c ../../zero/hash32.c  ../../zero/mem.c ../malloc.c -pthread

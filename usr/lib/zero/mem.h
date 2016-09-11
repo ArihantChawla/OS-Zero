@@ -153,9 +153,9 @@ typedef volatile long MEMLK_T;
 //#define MEMBIGMINSIZE      (2 * PAGESIZE)
 
 #define MEMBUFSMALLBLKSHIFT 8
-#define MEMBUFSMALLMAPSHIFT 12
-#define MEMBUFMIDMAPSHIFT   16
-#define MEMBUFBIGMAPSHIFT   20
+#define MEMBUFSMALLMAPSHIFT 18
+#define MEMBUFMIDMAPSHIFT   20
+#define MEMBUFBIGMAPSHIFT   22
 #define MEMBUFHUGEMAPSHIFT  24
 
 struct membkt {
@@ -424,7 +424,7 @@ membufgetfree(struct membuf *buf)
     (rounduppow2(membufhdrsize() + membufptrtabsize(), PAGESIZE))
 #define memusesmallbuf(sz)    ((sz) <= (MEMUWORD(1) << MEMBUFSMALLBLKSHIFT))
 #if (MEMPAGEBIN)
-#define memusepagebuf(sz)     ((sz) <= (PAGESIZE << MEMBUFSMALLMAPSHIFT))
+#define memusepagebuf(sz)     ((sz) <= (1 << MEMBUFSMALLMAPSHIFT))
 /* allocations of PAGESIZE << slot */
 #define mempagebufsize(slot, nblk)                                      \
     (rounduppow2(membufblkofs() + (PAGESIZE << (slot)) * (nblk),        \

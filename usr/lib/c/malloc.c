@@ -71,16 +71,21 @@ static void
 _free(void *ptr)
 {
     struct membuf *buf;
-    
+
+    if (!ptr) {
+
+        return;
+    }
 #if (MEMDEBUG)
     assert(ptr != NULL);
 #endif
     if (!tls_arn && !meminitarn()) {
-
-    exit(1);
+        
+        abort();
     }
     buf = memfindbuf(ptr, 1);
 #if (MEMDEBUG)
+    fprintf(stderr, "_FREE: %p (%p)\n", ptr, buf);
     assert(buf != NULL);
 #endif
     if (buf) {
