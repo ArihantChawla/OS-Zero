@@ -10,7 +10,6 @@
 extern uint64_t asmgetpc(void);
 
 typedef volatile int64_t m_atomic_t;
-typedef volatile int64_t m_atomic64_t;
 
 #define m_atominc(p)               m_atominc64(p)
 #define m_atomdec(p)               m_atomdec64(p)

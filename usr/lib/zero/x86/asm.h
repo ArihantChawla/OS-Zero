@@ -4,9 +4,6 @@
 //#define frameisusr(tcb) ((tcb)->frame.cs == UTEXTSEL)
 
 #include <stdint.h>
-#if defined(__x86_64__) || defined(__amd64__)
-#include <x86-64/asm.h>
-#endif
 
 typedef volatile int8_t  m_atomic8_t;
 typedef volatile int16_t m_atomic16_t;

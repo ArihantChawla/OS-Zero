@@ -200,20 +200,23 @@ struct mem {
 #define MEMBUFFLGMASK   (MEMHEAPBIT | MEMEMPTYBIT)
 #define MEMBUFTYPESHIFT (sizeof(MEMWORD_T) * CHAR_BIT - 4)
 #define MEMBUFTYPEMASK  (0x03L << MEMBUFTYPESHIFT)
+#define MEMBUFNBLKBITS  10
 #if (PTRBITS == 64)
 #define MEMBUFSLOTBITS  0x3f
 //#define MEMBUFSLOTSHIFT (sizeof(MEMWORD_T) * CHAR_BIT - 10)
-#define MEMBUFSLOTSHIFT 16
 #elif (PTRBITS == 32)
 #define MEMBUFSLOTBITS  0x1f
 //#define MEMBUFSLOTSHIFT (sizeof(MEMWORD_T) * CHAR_BIT - 9)
-#define MEMBUFSLOTSHIFT 16
 #endif
+#define MEMBUFSLOTSHIFT (2 * MEMBUFNBLKBITS)
 #define MEMBUFSLOTMASK  (MEMBUFSLOTBITS << MEMBUFSLOTSHIFT)
-#define MEMBUFNBLKMASK  ((0x01L << MEMBUFSLOTSHIFT) - 1)
+#define MEMBUFNBLKMASK  ((MEMWORD(1) << MEMBUFNBLKBITS) - 1)
+#define MEMBUFNFREEMASK (MEMBUFNBLKMASK << MEMBUFNBLKBITS)
 #define memsetbufflg(buf, flg) ((buf)->info |= (flg))
 #define memsetbufnblk(buf, n)                                           \
     ((buf)->info = ((buf)->info & ~MEMBUFNBLKMASK) | (n))
+#define memsetbufnfree(buf, n)                                          \
+    ((buf)->info = ((buf)->info & ~MEMBUFNFREEMASK) | ((n) << MEMBUFNBLKBITS))
 #define memsetbuftype(buf, t)                                           \
     ((buf)->info = ((buf)->info & ~MEMBUFTYPEMASK)                      \
      | ((t) << MEMBUFTYPESHIFT))
@@ -221,14 +224,16 @@ struct mem {
     ((buf->info) = ((buf)->info & ~MEMBUFSLOTMASK)                      \
      | ((slot) << MEMBUFSLOTSHIFT))
 #define memgetbufflg(buf, flg) ((buf)->info & (flg))
+#define memgetbufnblk(buf)                                              \
+    ((buf)->info & MEMBUFNBLKMASK)
+#define memgetbufnfree(buf)                                             \
+    (((buf)->info >> MEMBUFNBLKBITS) & MEMBUFNBLKMASK)
 #define memgetbuftype(buf)                                              \
     (((buf)->info >> MEMBUFTYPESHIFT) & MEMBUFTYPEBITS)
 #define memgetbufslot(buf)                                              \
     (((buf)->info >> MEMBUFSLOTSHIFT) & MEMBUFSLOTBITS)
-#define memgetbufnblk(buf)                                              \
-    ((buf)->info & MEMBUFNBLKMASK)
 struct membuf {
-    MEMUWORD_T     info;        // flag-bits + lock-bit
+    MEMUWORD_T     info;        // flag-bits + lock-bit + # of total & free blks
     struct membuf *heap;        // previous buf in heap for bufs from sbrk()
     struct membuf *prev;        // previous buf in chain
     struct membuf *next;        // next buf in chain

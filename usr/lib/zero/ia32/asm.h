@@ -9,6 +9,8 @@
 
 extern uint32_t asmgetpc(void);
 
+typedef volatile int32_t m_atomic_t;
+
 #define m_atominc(p)               m_atominc32(p)
 #define m_atomdec(p)               m_atomdec32(p)
 #define m_atomswap(p, val)         m_xchg32(p, val)

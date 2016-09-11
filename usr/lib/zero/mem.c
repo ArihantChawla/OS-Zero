@@ -146,7 +146,7 @@ memallocsmallbuf(long slot)
 static void *
 meminitsmallbuf(struct membuf *buf)
 {
-    MEMWORD_T  nblk = MEMBUFFREEMAPWORDS * CHAR_BIT * sizeof(MEMWORD_T);
+    MEMWORD_T  nblk = MEMBUFBLKS;
     MEMPTR_T   adr = (MEMPTR_T)buf;
     MEMUWORD_T info = buf->info;
     MEMPTR_T   ptr = adr + membufblkofs();
@@ -157,12 +157,14 @@ meminitsmallbuf(struct membuf *buf)
     /* initialise freemap */
     membufinitfree(buf, nblk);
     buf->base = ptr;
+    nblk--;
     if (info & MEMHEAPBIT) {
         /* link block from sbrk() to global heap (put it on top) */
         bptr = g_mem.heap;
         buf->heap = bptr;
         memrellk(&g_mem.heaplk);
     }
+    memsetbufnfree(buf, nblk);
     VALGRINDMKPOOL(ptr, 0, 0);
 
     return ptr;
@@ -217,10 +219,12 @@ memallocbigbuf(long slot, MEMUWORD_T nblk)
     adr = mapanon(0, mapsz);
     buf = (struct membuf *)adr;
     memsetbufslot(buf, slot);
+    nblk--;
     if (adr == MAP_FAILED) {
         
         return NULL;
     }
+    memsetbufnfree(buf, nblk);
     buf->size = mapsz;
     buf->bkt = &g_mem.smallbin[slot];
     buf->ptrtab = (MEMPTR_T *)((MEMPTR_T)buf + membufhdrsize());
@@ -238,7 +242,9 @@ meminitbigbuf(struct membuf *buf, MEMUWORD_T nblk)
     memsetbufnblk(buf, nblk);
     /* initialise freemap */
     membufinitfree(buf, nblk);
+    nblk--;
     buf->base = ptr;
+    memsetbufnfree(buf, nblk);
     VALGRINDMKPOOL(ptr, 0, 0);
 
     return ptr;
@@ -248,6 +254,7 @@ struct membuf *
 membufgetblk(struct membuf *head, MEMPTR_T *retptr)
 {
     MEMWORD_T      ndx = (head) ? membufgetfree(head) : -1;
+    MEMWORD_T      nfree;
     struct membuf *prev;
 
     *retptr = NULL;
@@ -266,7 +273,10 @@ membufgetblk(struct membuf *head, MEMPTR_T *retptr)
         }
     }
     if (head) {
+        nfree = memgetbufnfree(head);
         *retptr = membufblkadr(head, ndx);
+        nfree--;
+        memsetbufnfree(head, nfree);
     }
 #if (MEMDEBUG)
     assert(retptr != NULL);
@@ -627,6 +637,7 @@ void
 memrelblk(void *ptr, struct membuf *buf)
 {
     struct membkt *bkt = buf->bkt;
+    MEMWORD_T      nfree = memgetbufnfree(buf);
     MEMWORD_T      ins = 0;
     MEMPTR_T       adr;
     MEMWORD_T      slot;
@@ -661,12 +672,14 @@ memrelblk(void *ptr, struct membuf *buf)
         adr = membufgetpage(buf, ptr);
         membufsetpage(buf, ptr, NULL);
     }
+    nfree++;
     if (type == MEMSMALLBLK || type == MEMBIGBLK) {
         id = membufblkid(buf, adr);
     } else {
         id = membufpageid(buf, adr);
     }
     clrbit(buf->freemap, id);
+    memsetbufnfree(buf, nfree);
     if (ins) {
         upval = (MEMADR_T)bkt->list;
         upval &= ~MEMLKBIT;

@@ -1,4 +1,5 @@
 #include <features.h>
+#include <stdlib.h>
 #include <string.h>
 #include <stdint.h>
 #if (MEMDEBUG)
@@ -33,7 +34,7 @@ _malloc(size_t size, size_t align, long flg)
 
     if (!tls_arn && !meminitarn()) {
 
-        exit(1);
+        abort();
     }
     if (!(g_mem.flg & MEMINITBIT)) {
         meminit();
