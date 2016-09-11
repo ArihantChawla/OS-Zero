@@ -317,6 +317,7 @@ memputbuf(void *ptr, struct membuf *buf)
     if (!itab) {
         itab = mapanon(0, MEMLVLITEMS * sizeof(struct memitem));
         if (itab == MAP_FAILED) {
+            memrellk(&g_mem.tab[k1].lk);
             
             return NULL;
         }
@@ -333,6 +334,7 @@ memputbuf(void *ptr, struct membuf *buf)
 #endif
         if (itab == MAP_FAILED) {
             unmapanon(pstk[0], MEMLVLITEMS * sizeof(struct memitem));
+            memrellk(&g_mem.tab[k1].lk);
             
             return NULL;
         }
@@ -353,6 +355,7 @@ memputbuf(void *ptr, struct membuf *buf)
         if (itab == MAP_FAILED) {
             unmapanon(pstk[0], MEMLVLITEMS * sizeof(struct memitem));
             unmapanon(pstk[1], MEMLVLITEMS * sizeof(struct memitem));
+            memrellk(&g_mem.tab[k1].lk);
              
             return NULL;
         }
