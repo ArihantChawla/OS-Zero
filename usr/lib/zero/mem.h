@@ -261,14 +261,16 @@ struct memtab {
 #define MEMBUFTYPES    3
 #define MEMBUFTYPEBITS 0x03
 /* lookup table structure for upper levels */
+#if 0
 struct memitem {
 #if (MEMTABNREF)
     volatile long  nref;
 #endif
     void          *tab;
 };
+#endif
 
-struct membufitem {
+struct memitem {
     volatile long  nref;
     struct membuf *buf;
 };

@@ -297,19 +297,19 @@ membufgetblk(struct membuf *head, MEMPTR_T *retptr)
 void *
 memputbuf(void *ptr, struct membuf *buf)
 {
-    struct memitem    *itab;
-    struct memitem    *item;
-    struct membufitem *bitem;
-    m_atomic_t        *lk1;
-    m_atomic_t        *lk2;
-    long               k1;
-    long               k2;
-    long               k3;
+    struct memtab  *itab;
+    struct memtab  *item;
+    struct memitem *bitem;
+    m_atomic_t     *lk1;
+    m_atomic_t     *lk2;
+    long             k1;
+    long             k2;
+    long             k3;
 #if (ADRBITS >= 48)
-    long               k4;
-    void              *pstk[2] = { NULL };
+    long             k4;
+    void            *pstk[2] = { NULL };
 #else
-    void              *pstk[1] = { NULL };
+    void            *pstk[1] = { NULL };
 #endif
     
 #if (ADRBITS >= 48)
@@ -319,31 +319,31 @@ memputbuf(void *ptr, struct membuf *buf)
 #endif
     lk1 = &g_mem.tab[k1].tab;
     memlkbit(lk1);
-    itab = (struct memitem *)((MEMADR_T)g_mem.tab[k1].tab & ~MEMLKBIT);
+    itab = (struct memtab *)((MEMADR_T)g_mem.tab[k1].tab & ~MEMLKBIT);
     if (!itab) {
-        itab = mapanon(0, MEMLVLITEMS * sizeof(struct memitem));
+        itab = mapanon(0, MEMLVLITEMS * sizeof(struct memtab));
         if (itab == MAP_FAILED) {
             memrelbit(lk1);
             
             return NULL;
         }
         pstk[0] = itab;
-        g_mem.tab[k1].tab = (struct memitem *)((MEMADR_T)itab | MEMLKBIT);
+        g_mem.tab[k1].tab = (struct memtab *)((MEMADR_T)itab | MEMLKBIT);
     }
     item = &itab[k2];
     lk2 = &item->tab;
     if (item->tab) {
         memlkbit(lk2);
         memrelbit(lk1);
-        itab = (struct memitem *)((MEMADR_T)item->tab & ~MEMLKBIT);
+        itab = (struct memtab *)((MEMADR_T)item->tab & ~MEMLKBIT);
     } else {
 #if (ADRBITS >= 48)
-        itab = mapanon(0, MEMLVLITEMS * sizeof(struct memitem));
+        itab = mapanon(0, MEMLVLITEMS * sizeof(struct memtab));
 #else
-        itab = mapanon(0, MEMLVLITEMS * sizeof(struct membufitem));
+        itab = mapanon(0, MEMLVLITEMS * sizeof(struct memitem));
 #endif
         if (itab == MAP_FAILED) {
-            unmapanon(pstk[0], MEMLVLITEMS * sizeof(struct memitem));
+            unmapanon(pstk[0], MEMLVLITEMS * sizeof(struct memtab));
             memrelbit(lk1);
             
             return NULL;
@@ -352,11 +352,11 @@ memputbuf(void *ptr, struct membuf *buf)
         pstk[1] = itab;
 #endif
         lk2 = &item->tab;
-        item->tab = (struct memitem *)((MEMADR_T)itab | MEMLKBIT);
+        item->tab = (struct memtab *)((MEMADR_T)itab | MEMLKBIT);
         memrelbit(lk1);
     }
 #if (ADRBITS < 48)
-    bitem = (struct membufitem *)&itab[k3];
+    bitem = (struct memitem *)&itab[k3];
     bitem->nref++;
     bitem->buf = buf;
     memrelbit(lk2);
@@ -366,19 +366,19 @@ memputbuf(void *ptr, struct membuf *buf)
     if (item->tab) {
         memlkbit(lk1);
         memrelbit(lk2);
-        itab = (struct memitem *)((MEMADR_T)item->tab & ~MEMLKBIT);
+        itab = (struct memtab *)((MEMADR_T)item->tab & ~MEMLKBIT);
     } else {
-        itab = mapanon(0, MEMLVLITEMS * sizeof(struct membufitem));
+        itab = mapanon(0, MEMLVLITEMS * sizeof(struct memitem));
         if (itab == MAP_FAILED) {
-            unmapanon(pstk[0], MEMLVLITEMS * sizeof(struct memitem));
-            unmapanon(pstk[1], MEMLVLITEMS * sizeof(struct memitem));
+            unmapanon(pstk[0], MEMLVLITEMS * sizeof(struct memtab));
+            unmapanon(pstk[1], MEMLVLITEMS * sizeof(struct memtab));
             
             return NULL;
         }
-        item->tab = (struct memitem *)((MEMADR_T)itab | MEMLKBIT);
+        item->tab = (struct memtab *)((MEMADR_T)itab | MEMLKBIT);
         memrelbit(lk2);
     }
-    bitem = (struct membufitem *)&itab[k4];
+    bitem = (struct memitem *)&itab[k4];
     bitem->nref++;
     bitem->buf = buf;
     memrelbit(lk1);
@@ -390,17 +390,17 @@ memputbuf(void *ptr, struct membuf *buf)
 struct membuf *
 memfindbuf(void *ptr, long rel)
 {
-    struct membuf     *buf = NULL;
-    struct memitem    *itab;
-    struct memitem    *item;
-    struct membufitem *bitem;
-    m_atomic_t        *lk1;
-    m_atomic_t        *lk2;
-    long               k1;
-    long               k2;
-    long               k3;
+    struct membuf  *buf = NULL;
+    struct memtab  *itab;
+    struct memtab  *item;
+    struct memitem *bitem;
+    m_atomic_t     *lk1;
+    m_atomic_t     *lk2;
+    long            k1;
+    long            k2;
+    long            k3;
 #if (ADRBITS >= 48)
-    long               k4;
+    long            k4;
 #endif
 
 #if (ADRBITS >= 48)
@@ -411,13 +411,13 @@ memfindbuf(void *ptr, long rel)
 //    memgetlk(&g_mem.tab[k1].lk);
     lk1 = &g_mem.tab[k1].tab;
     memlkbit(lk1);
-    itab = (struct memitem *)((MEMADR_T)g_mem.tab[k1].tab & ~MEMLKBIT);
+    itab = (struct memtab *)((MEMADR_T)g_mem.tab[k1].tab & ~MEMLKBIT);
     if (itab) {
         item = &itab[k2];
         lk2 = &item->tab;
         memlkbit(lk2);
         memrelbit(lk1);
-        itab = (struct memitem *)((MEMADR_T)item->tab & ~MEMLKBIT);
+        itab = (struct memtab *)((MEMADR_T)item->tab & ~MEMLKBIT);
 #if (ADRBITS < 48)
         if (itab) {
             bitem = (struct membufitam *)&itab[k3];
@@ -435,9 +435,9 @@ memfindbuf(void *ptr, long rel)
             lk1 = &item->tab;
             memlkbit(lk1);
             memrelbit(lk2);
-            itab = (struct memitem *)((MEMADR_T)item->tab & ~MEMLKBIT);
+            itab = (struct memtab *)((MEMADR_T)item->tab & ~MEMLKBIT);
             if (itab) {
-                bitem = (struct membufitem *)&itab[k4];
+                bitem = (struct memitem *)&itab[k4];
                 buf = bitem->buf;
                 if (rel) {
                     if (!--bitem->nref) {
