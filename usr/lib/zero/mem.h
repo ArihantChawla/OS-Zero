@@ -15,13 +15,14 @@
 #define MEM_LK_FMTX   2                 // anonymous non-recursive mutex
 #define MEM_LK_SPIN   3                 // spinlock
 
-#define MEM_LK_TYPE   MEM_LK_FMTX       // type of locks to use
+#define MEM_LK_TYPE   MEM_LK_PRIO       // type of locks to use
 
 #include <limits.h>
 #include <stddef.h>
 #include <stdint.h>
 #include <zero/cdefs.h>
 #include <zero/param.h>
+#include <zero/asm.h>
 #include <zero/unix.h>
 #include <zero/trix.h>
 #if (MEM_LK_TYPE == MEM_LK_PRIO)
@@ -31,7 +32,6 @@
 #elif (MEM_LK_TYPE == MEM_LK_SPIN)
 #include <zero/spin.h>
 #endif
-#include <zero/asm.h>
 #if defined(MEMVALGRIND) && (MEMVALGRIND)
 #define ZEROVALGRIND 1
 #include <zero/valgrind.h>
@@ -268,9 +268,14 @@ struct memtab {
 /* lookup table structure for upper levels */
 struct memitem {
 #if (MEMTABNREF)
-    volatile long   nref;
+    volatile long  nref;
 #endif
-    struct memitem *tab;
+    void          *tab;
+};
+
+struct membufitem {
+    volatile long  nref;
+    struct membuf *buf;
 };
 
 /*
@@ -378,14 +383,15 @@ membufputfree(struct membuf *buf, MEMWORD_T ndx)
  * - for bigger pointers, we use a multilevel table
  */
 #if (PTRBITS > 32)
-#define MEMADRSHIFT   (PAGESIZELOG2 + MEMALIGNSHIFT)
+//#define MEMADRSHIFT   (PAGESIZELOG2 + MEMALIGNSHIFT)
+#define MEMADRSHIFT   (PAGESIZELOG2)
 #define MEMADRBITS    (ADRBITS - MEMADRSHIFT)
-#if (ADRBITS > 52)
+#if (ADRBITS >= 48)
 #define MEMLVL1BITS   (MEMADRBITS - 3 * MEMLVLBITS)
 #else
 #define MEMLVL1BITS   (MEMADRBITS - 2 * MEMLVLBITS)
 #endif
-#if (ADRBITS <= 52)
+#if (ADRBITS <= 48)
 #define MEMLVLBITS    10
 #else
 #define MEMLVLBITS    12
@@ -394,7 +400,7 @@ membufputfree(struct membuf *buf, MEMWORD_T ndx)
 #define MEMLVLITEMS   (MEMWORD(1) << MEMLVLBITS)
 #define MEMLVL1MASK   ((MEMWORD(1) << MEMLVL1BITS) - 1)
 #define MEMLVLMASK    ((MEMWORD(1) << MEMLVLBITS) - 1)
-#if (ADRBITS <= 52)
+#if (ADRBITS < 48)
 #define memgetkeybits(p, k1, k2, k3)                                    \
     do {                                                                \
         MEMADR_T _p1 = (MEMADR_T)(p) >> MEMADRSHIFT;                    \
@@ -423,7 +429,7 @@ membufputfree(struct membuf *buf, MEMWORD_T ndx)
 
 #define membufhdrsize()       (sizeof(struct membuf))
 #define membufptrtabsize()    (MEMBUFBLKS * sizeof(MEMPTR_T))
-#define membufslot(buf)       ((buf)->bkt->slot)
+//#define membufslot(buf)       ((buf)->bkt->slot)
 #define membufblkofs()                                                  \
     (rounduppow2(membufhdrsize() + membufptrtabsize(), PAGESIZE))
 #define memusesmallbuf(sz)    ((sz) <= (MEMUWORD(1) << MEMBUFSMALLBLKLIM))
@@ -441,6 +447,11 @@ membufputfree(struct membuf *buf, MEMWORD_T ndx)
 #define membufnblk(slot, type)                                          \
     (((type) == MEMSMALLBLK)                                            \
      ? (MEMBUFBLKS)                                                     \
+     : 1)
+#if 0
+#define membufnblk(slot, type)                                          \
+    (((type) == MEMSMALLBLK)                                            \
+     ? (MEMBUFBLKS)                                                     \
      : (((type) == MEMPAGEBLK)                                          \
         ? (((slot) < MEMBUFSMALLMAPLIM)                                 \
            ? (MEMWORD(1) << min(MEMBUFSMALLMAPLIM - (slot), 3))         \
@@ -448,9 +459,9 @@ membufputfree(struct membuf *buf, MEMWORD_T ndx)
               ? (MEMWORD(1) << min(MEMBUFMIDMAPLIM - (slot), 2))        \
               : (((slot) < MEMBUFBIGMAPLIM)                             \
                  ? (MEMWORD(1) << min(MEMBUFBIGMAPLIM - (slot), 1))     \
-                 : 0)))                                                 \
+                 : 1)))                                                 \
         : 1))
-              
+#endif
 #if 0
 #define membufnblk(slot)                                                \
     (((slot) <= MEMBUFSMALLBLKLIM)                                      \
@@ -491,8 +502,13 @@ membufputfree(struct membuf *buf, MEMWORD_T ndx)
     ((buf)->ptrtab[membufpageid(buf, ptr)])
 #define membufsetpage(buf, ptr, adr)                                     \
     ((buf)->ptrtab[membufpageid(buf, ptr)] = (adr))
-    
-MEMPTR_T memgetblk(long slot, long type, size_t align);
+
+void            meminit(void);
+struct memarn * meminitarn(void);
+MEMPTR_T        memgetblk(long slot, long type, size_t align);
+void *          memputbuf(void *ptr, struct membuf *buf);
+struct membuf * memfindbuf(void *ptr, long rel);
+void            memputblk(void *ptr, struct membuf *buf);
 
 #endif /* __ZERO_MEM_H__ */
 

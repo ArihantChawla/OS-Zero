@@ -1,17 +1,20 @@
 #include <features.h>
+#include <string.h>
 #include <stdint.h>
 #if (MEMDEBUG)
 #include <stdio.h>
 #include <assert.h>
 #endif
 #include <errno.h>
+#include <malloc.h>
 #include <zero/cdefs.h>
 #include <zero/param.h>
 #include <zero/mem.h>
 #include <zero/trix.h>
 #include "_malloc.h"
 
-extern struct mem g_mem;
+extern THREADLOCAL volatile struct memarn *tls_arn;
+extern struct mem                          g_mem;
 
 static void *
 _malloc(size_t size, size_t align, long flg)
@@ -24,11 +27,17 @@ _malloc(size_t size, size_t align, long flg)
                            : (memusepagebuf(bsz)
                               ? MEMPAGEBLK
                               : MEMBIGBLK));
-    struct membuf *buf;
     long           slot;
     void          *ptr;
     MEMPTR_T       adr;
 
+    if (!tls_arn && !meminitarn()) {
+
+        exit(1);
+    }
+    if (!(g_mem.flg & MEMINITBIT)) {
+        meminit();
+    }
     memcalcslot(sz, slot);
     if (type == MEMPAGEBLK) {
         slot -= PAGESIZELOG2;
@@ -42,7 +51,7 @@ _malloc(size_t size, size_t align, long flg)
         memset(ptr, 0, size);
     }
 #if (MEMDEBUG)
-    fprintf(stderr, "%lx @ %p\n", size, ptr);
+    fprintf(stderr, "%ld bytes @ %p\n", size, ptr);
 #endif
     if (ptr) {
         VALGRINDALLOC(ptr, size, 0, flg & MALLOCZEROBIT);
@@ -57,15 +66,17 @@ _malloc(size_t size, size_t align, long flg)
 static void
 _free(void *ptr)
 {
-    struct membuf *buf = memfindbuf(ptr);
-    MEMWORD_T      type;
-    MEMPTR_T       adr;
+    struct membuf *buf;
     
 #if (MEMDEBUG)
     assert(ptr != NULL);
     assert(buf != NULL);
-    assert((MEMPTR_T)ptr < buf->base);
 #endif
+    if (!tls_arn && !meminitarn()) {
+
+        exit(1);
+    }
+    buf = memfindbuf(ptr, 1);
     if (buf) {
         memputblk(ptr, buf);
         VALGRINDFREE(ptr);
@@ -84,7 +95,7 @@ _realloc(void *ptr,
          long rel)
 {
     void          *retptr = NULL;
-    struct membuf *buf = (ptr) ? memfindbuf(ptr) : NULL;
+    struct membuf *buf = (ptr) ? memfindbuf(ptr, 0) : NULL;
     void          *oldptr = (ptr) ? membufgetptr(buf, ptr) : NULL;
     size_t         sz = membufblksize(buf);
 
@@ -405,7 +416,7 @@ cfree(void *ptr)
 size_t
 malloc_usable_size(void *ptr)
 {
-    struct membuf *buf = memfindbuf(ptr);
+    struct membuf *buf = memfindbuf(ptr, 0);
     size_t         sz = membufblksize(buf);
     
     return sz;
@@ -428,7 +439,7 @@ malloc_good_size(size_t size)
 size_t
 malloc_size(void *ptr)
 {
-    struct membuf *buf = memfindbuf(ptr);
+    struct membuf *buf = memfindbuf(ptr, 0);
     size_t         sz = membufblksize(buf);
 
     return sz;
