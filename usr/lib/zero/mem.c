@@ -253,12 +253,12 @@ meminitbigbuf(struct membuf *buf, MEMUWORD_T nblk)
 struct membuf *
 membufgetblk(struct membuf *head, MEMPTR_T *retptr)
 {
-    MEMWORD_T      ndx = (head) ? membufgetfree(head) : -1;
-    MEMWORD_T      nfree;
+    MEMWORD_T      nfree = (head) ? memgetbufnfree(head) : 0;
+    MEMWORD_T      ndx;
     struct membuf *prev;
 
     *retptr = NULL;
-    while ((head) && ndx < 0) {
+    while ((head) && !nfree) {
         /* remove fully-allocated bufs from the front of list */
         prev = head;
         if (head->next) {
@@ -269,51 +269,27 @@ membufgetblk(struct membuf *head, MEMPTR_T *retptr)
         prev->prev = NULL;
         prev->next = NULL;
         if (head) {
-            ndx = membufgetfree(head);
+            nfree = memgetbufnfree(head);
         }
     }
     if (head) {
-        nfree = memgetbufnfree(head);
-        *retptr = membufblkadr(head, ndx);
+        ndx = membufgetfree(head);
         nfree--;
+        *retptr = membufblkadr(head, ndx);
         memsetbufnfree(head, nfree);
-    }
-#if (MEMDEBUG)
-    assert(retptr != NULL);
-#endif
-
-    return head;
-}
-
-#if 0
-struct membuf *
-membufgetpages(struct membuf *head, MEMPTR_T *retptr)
-{
-    MEMWORD_T      ndx = (head) ? membufgetfree(head) : -1;
-    struct membuf *prev;
-
-    *retptr = NULL;
-    while ((head) && ndx < 0) {
-        /* remove fully-allocated bufs from the front of list */
-        prev = head;
-        if (head->next) {
-            head->next->prev = NULL;
+        if (!nfree) {
+            if (head->next) {
+                head->next->prev = NULL;
+            }
+            head->bkt = NULL;
+            head->prev = NULL;
+            head->next = NULL;
+            head = head->next;
         }
-        head = head->next;
-        prev->bkt = NULL;
-        prev->prev = NULL;
-        prev->next = NULL;
-        if (head) {
-            ndx = membufgetfree(head);
-        }
-    }
-    if (head) {
-        *retptr = membufpageadr(head, ndx);
     }
 
     return head;
 }
-#endif
 
 /* find a buf address; type encoded in the low 2 bits */
 void *
@@ -488,8 +464,8 @@ memgetblk(long slot, long type, size_t align)
     MEMUWORD_T     info = 0;
     MEMUWORD_T     nblk = membufnblk(slot, type);
     struct membuf *bptr;
-    MEMADR_T       upval;
-    MEMADR_T       bufval;
+    MEMADR_T       upval = NULL;
+    MEMADR_T       bufval = NULL;
 
     arn = tls_arn;
     if (!type) {
@@ -519,6 +495,7 @@ memgetblk(long slot, long type, size_t align)
                     
                     return ptr;
                 }
+                m_syncwrite((m_atomic_t *)&bkt->list, (m_atomic_t)buf->next);
             }
         } else {
             /* TODO: try global buffer */
@@ -559,6 +536,7 @@ memgetblk(long slot, long type, size_t align)
                     
                     return ptr;
                 }
+                m_syncwrite((m_atomic_t *)&bkt->list, (m_atomic_t)buf->next);
             }
         } else {
             /* TODO: try global buffer */
@@ -593,6 +571,7 @@ memgetblk(long slot, long type, size_t align)
                     
                     return ptr;
                 }
+                m_syncwrite((m_atomic_t *)&bkt->list, (m_atomic_t)buf->next);
             }
         } else {
             buf = memallocbigbuf(slot, nblk);
@@ -605,18 +584,8 @@ memgetblk(long slot, long type, size_t align)
         }
     }
     if (buf) {
-        /* link buf to bucket */
-        upval = (MEMADR_T)bkt->list;
-        upval &= ~MEMLKBIT;
-        bptr = (struct membuf *)upval;
-        if (bptr) {
-            bptr->prev = buf;
-        }
-        buf->prev = NULL;
-        buf->next = bptr;
-        buf->bkt = bkt;
-//        buf->ptrtab = (MEMPTR_T)buf + membufhdrsize();
         if (info & MEMHEAPBIT) {
+            buf->heap = g_mem.heap;
             /* this unlocks the global heap (low-bit becomes zero) */
             m_syncwrite(&g_mem.heap, buf);
         }
