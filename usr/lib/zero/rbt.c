@@ -29,11 +29,11 @@ rbtinit(long (*cmp)(const void *, const void *))
             
         exit(1);
     }
-#if !defined(RBT_INTPTR_DATA)
+#if !defined(RBT_INTPTR_DATA) && !defined(RBT_UINTPTR_DATA)
     tree->cmp = cmp;
 #endif
     nil = &tree->nil;
-#if defined(RBT_INTPTR_DATA)
+#if defined(RBT_INTPTR_DATA) || defined(RBT_UINPTR_DATA)
 #if defined(RBT_DATA_COLOR)
     nil->data = RBT_BLACK;
 #else
@@ -47,7 +47,7 @@ rbtinit(long (*cmp)(const void *, const void *))
     nil->parent = nil;
     nil->left = nil;
     nil->right = nil;
-#if defined(RBT_INTPTR_DATA) && defined(RBT_DATA_COLOR)
+#if (defined(RBT_INTPTR_DATA) || defined(RBG_UINTPTR_DATA)) && defined(RBT_DATA_COLOR)
     tree->root.data = RBT_BLACK;
 #else
     tree->root.data = NULL;
@@ -177,6 +177,8 @@ rbtfix(struct rbt *tree, struct rbtnode *node)
 struct rbtnode *
 #if defined(RBT_INTPTR_DATA)
 rbtinsert(struct rbt *tree, intptr_t key, uintptr_t data)
+#elif defined(RBT_UINTPTR_DATA)
+rbtinsert(struct rbt *tree, uintptr_t key, uintptr_t data)
 #else
 rbtinsert(struct rbt *tree, void *data)
 #endif
@@ -188,7 +190,7 @@ rbtinsert(struct rbt *tree, void *data)
     
     while (node != nil) {
         parent = node;
-#if defined(RBT_INTPTR_DATA)
+#if defined(RBT_INTPTR_DATA) || defined(RBT_UINTPTR_DATA)
         res = rbtcmpkeys(key, node->key);
 #else
         res = tree->cmp(data, node->data);
@@ -211,7 +213,7 @@ rbtinsert(struct rbt *tree, void *data)
     }
     node->key = key;
     node->data = data;
-#if defined(RBT_INTPTR_DATA) && defined(RBT_DATA_COLOR)
+#if (defined(RBT_INTPTR_DATA) || defined(RBT_UINTPTR_DATA)) && defined(RBT_DATA_COLOR)
     rbtsetcolor(node, RBT_RED);
 #else
     node->color = RBT_RED;
@@ -221,7 +223,7 @@ rbtinsert(struct rbt *tree, void *data)
     node->right = nil;
     if (
         parent == &tree->root
-#if !defined(RBT_INTPTR_DATA)
+#if !defined(RBT_INTPTR_DATA) && !defined(RBT_UINTPTR_DATA)
         || rbtcmpkeys(key, node->key)
 #else
         || data < parent->data
@@ -239,6 +241,8 @@ rbtinsert(struct rbt *tree, void *data)
 struct rbtnode *
 #if defined(RBT_INTPTR_DATA)
 rbtfind(struct rbt *tree, intptr_t key)
+#elif defined(RBT_INTPTR_DATA)
+rbtfind(struct rbt *tree, uintptr_t key)
 #else
 rbtfind(struct rbt *tree, void *key)
 #endif
@@ -248,7 +252,7 @@ rbtfind(struct rbt *tree, void *key)
     long            res;
 
     while (node != nil) {
-#if defined(RBT_INTPTR_DATA)
+#if defined(RBT_INTPTR_DATA) || defined(RBT_UINTPTR_DATA)
         res  = rbtcmpkeys(key, node->key);
 #else
         res = tree->cmp(key, node->key);
@@ -272,6 +276,9 @@ rbtapply(struct rbt *tree,
          struct rbtnode *node,
 #if defined(RBT_INTPTR_DATA)
          long (*func)(intptr_t, intptr_t),
+         intptr_t cookie,
+#elif defined(RBT_UINTPTR_DATA)
+         long (*func)(uintptr_t, uintptr_t),
          intptr_t cookie,
 #else
          long (*func)(void *, void *),
@@ -408,7 +415,7 @@ rbtrepair(struct rbt *tree, struct rbtnode *node)
 
 /* FIXME: this function is recursive */
 void
-#if defined(RBT_INTPTR_DATA)
+#if defined(RBT_INTPTR_DATA) || defined(RBT_UINTPTR_DATA)
 _rbtdestroy(struct rbt *tree, struct rbtnode *node)
 #else
 _rbtdestroy(struct rbt *tree, struct rbtnode *node, void (*destroy)(void *))
@@ -417,14 +424,14 @@ _rbtdestroy(struct rbt *tree, struct rbtnode *node, void (*destroy)(void *))
     struct rbtnode *nil = &tree->nil;
     
     if (node != nil) {
-#if defined(RBT_INTPTR_DATA)
+#if defined(RBT_INTPTR_DATA) || defined(RBT_UINTPTR_DATA)
         _rbtdestroy(tree, node->left);
         _rbtdestroy(tree, node->right);
 #else
         _rbtdestroy(tree, node->left, destroy);
         _rbtdestroy(tree, node->right, destroy);
 #endif
-#if !defined(RBT_INTPTR_DATA)
+#if !defined(RBT_INTPTR_DATA) && !defined(RBT_UINTPTR_DATA)
         if (destroy) {
             destroy(node->data);
         }
@@ -436,13 +443,13 @@ _rbtdestroy(struct rbt *tree, struct rbtnode *node, void (*destroy)(void *))
 }
 
 void
-#if defined(RBT_INTPTR_DATA)
+#if defined(RBT_INTPTR_DATA) || defined(RBT_UINTPTR_DATA)
 rbtdestroy(struct rbt *tree)
 #else
 rbtdestroy(struct rbt *tree, void (*destroy)(void *))
 #endif
 {
-#if defined(RBT_INTPTR_DATA)
+#if defined(RBT_INTPTR_DATA) || defined(RBT_UINTPTR_DATA)
     _rbtdestroy(tree, &tree->root);
 #else
     _rbtdestroy(tree, &tree->root, destroy);
@@ -454,6 +461,8 @@ rbtdestroy(struct rbt *tree, void (*destroy)(void *))
 
 #if defined(RBT_INTPTR_DATA)
 intptr_t
+#elif defined(RBT_INTPTR_DATA)
+uintptr_t
 #else
 void *
 #endif
@@ -462,7 +471,7 @@ rbtdelete(struct rbt *tree, struct rbtnode *node)
     struct rbtnode *nil = &tree->nil;
     struct rbtnode *node1;
     struct rbtnode *node2;
-#if defined(RBT_INTPTR_DATA)
+#if defined(RBT_INTPTR_DATA) || defined(RBT_UINTPTR_DATA)
     uintptr_t       data = node->data;
 #else
     void           *data = node->data;

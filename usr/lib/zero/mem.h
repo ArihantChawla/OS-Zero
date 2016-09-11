@@ -90,11 +90,21 @@ typedef volatile long MEMLK_T;
 /* use the low-order bit of the word or pointer to lock data */
 #define MEMLKBITID      0
 #define MEMLKBIT        (1L << MEMLKBITID)
+#if (MEMDEBUGLOCK)
+#define memlkbit(lp)                                                    \
+    do {                                                                \
+        fprintf(stderr, "LK: %s: %d\n", __FILE__, __LINE__);            \
+    } while (m_cmpsetbit((volatile long *)lp, MEMLKBITID))
+#define memrelbit(lp) (fprintf(stderr, "UNLK: %s: %d\n", __FILE__, __LINE__), \
+                       m_cmpclrbit((volatile long *)lp, MEMLKBITID))
+
+#else
 #define memlkbit(lp)                                                    \
     do {                                                                \
         ;                                                               \
     } while (m_cmpsetbit((volatile long *)lp, MEMLKBITID))
 #define memrelbit(lp) m_cmpclrbit((volatile long *)lp, MEMLKBITID)
+#endif
 
 #if (WORDSIZE == 4)
 #define memcalcslot(sz, slot)                                           \
@@ -190,16 +200,23 @@ struct membkt {
 #define MEMINITBIT   (1L << 0)
 #define MEMNOHEAPBIT (1L << 1)
 struct mem {
-    struct membkt  smallbin[PTRBITS]; // blocks of 1 << slot
-    struct membkt  pagebin[PTRBITS];  // mapped blocks of PAGESIZE * (slot + 1)
-    struct membkt  bigbin[PTRBITS];   // mapped blocks of 1 << slot
-    MEMWORD_T      flg;         // memory interface flags
-    struct membuf *heap;        // heap allocations (try sbrk(), then mmap())
-    struct membuf *maps;        // mapped blocks
-    struct memtab *tab;         // allocation lookup structure
-    unsigned long  prioval;     // locklessinc priority locks
-    MEMLK_T        initlk;      // lock for initialising the structure
-    MEMLK_T        heaplk;      // lock for sbrk()
+    struct membkt    smallbin[PTRBITS]; // blocks of 1 << slot
+    struct membkt    pagebin[PTRBITS]; // mapped blocks of PAGESIZE * (slot + 1)
+    struct membkt    bigbin[PTRBITS]; // mapped blocks of 1 << slot
+#if (MEMHASH)
+    struct memhash  *hash;      // hash table
+    struct memhash  *hashbuf;   // buffer for hash items
+#elif (MEMHUGELOCK)
+    struct memtabl0 *tab;       // allocation lookup structure
+#else
+    struct memtab   *tab;       // allocation lookup structure
+#endif
+    MEMWORD_T        flg;       // memory interface flags
+    struct membuf   *heap;      // heap allocations (try sbrk(), then mmap())
+    struct membuf   *maps;      // mapped blocks
+    unsigned long    prioval;   // locklessinc priority locks
+    MEMLK_T          initlk;    // lock for initialising the structure
+    MEMLK_T          heaplk;    // lock for sbrk()
 };
 
 #define MEMHEAPBIT      (0x01L << (sizeof(MEMWORD_T) * CHAR_BIT - 1))
@@ -253,20 +270,29 @@ struct membuf {
     MEMWORD_T      freemap[MEMBUFFREEMAPWORDS];
 };
 
+#if (MEMHASH)
+
+struct memhash {
+    struct memhash     *chain;
+    volatile MEMWORD_T  nref;
+    MEMADR_T            key;
+    MEMADR_T            val;
+};
+
+#else
+
+#if (MEMHUGELOCK)
+struct memtabl0 {
+    MEMLK_T        lk;
+    struct memtab *tab;
+};
+#endif
+
 /* toplevel lookup table item */
 struct memtab {
     struct memtab *tab;
 };
-/*
- * we'll have 2 or 3 levels of these + a level of MEMADR_T values for lookups
- * under the toplevel table
- */
-/* type-bits for the final-level table pointers */
-#define MEMSMALLBLK    0x00
-#define MEMPAGEBLK     0x01
-#define MEMBIGBLK      0x02
-#define MEMBUFTYPES    3
-#define MEMBUFTYPEBITS 0x03
+
 /* lookup table structure for upper levels */
 #if 0
 struct memitem {
@@ -281,6 +307,19 @@ struct memitem {
     volatile long nref;
     MEMADR_T      val;
 };
+
+#endif
+
+/*
+ * we'll have 2 or 3 levels of these + a level of MEMADR_T values for lookups
+ * under the toplevel table
+ */
+/* type-bits for the final-level table pointers */
+#define MEMSMALLBLK    0x00
+#define MEMPAGEBLK     0x01
+#define MEMBIGBLK      0x02
+#define MEMBUFTYPES    3
+#define MEMBUFTYPEBITS 0x03
 
 /*
  * NOTE: the arenas are mmap()'d as PAGESIZE-allocations so there's going
@@ -373,35 +412,18 @@ membufgetfree(struct membuf *buf)
  * for 32-bit pointers, we can use a flat lookup table for bookkeeping pointers
  * - for bigger pointers, we use a multilevel table
  */
-#if (PTRBITS > 32)
+#if (MEMHASH)
+#define MEMHASHBITS   20
+#define MEMHASHITEMS  (MEMUWORD(1) << MEMHASHBITS)
+#elif (PTRBITS > 32)
 #define MEMADRSHIFT   PAGESIZELOG2
 #define MEMADRBITS    (ADRBITS - MEMADRSHIFT)
-#if (ADRBITS >= 48)
 #define MEMLVL1BITS   (MEMADRBITS - 3 * MEMLVLBITS)
-#else
-#define MEMLVL1BITS   (MEMADRBITS - 2 * MEMLVLBITS)
-#endif
-#if (ADRBITS <= 48)
-#define MEMLVLBITS    10
-#else
 #define MEMLVLBITS    12
-#endif
 #define MEMLVL1ITEMS  (MEMWORD(1) << MEMLVL1BITS)
 #define MEMLVLITEMS   (MEMWORD(1) << MEMLVLBITS)
 #define MEMLVL1MASK   ((MEMWORD(1) << MEMLVL1BITS) - 1)
 #define MEMLVLMASK    ((MEMWORD(1) << MEMLVLBITS) - 1)
-#if (ADRBITS < 48)
-#define memgetkeybits(p, k1, k2, k3)                                    \
-    do {                                                                \
-        MEMADR_T _p1 = (MEMADR_T)(p) >> MEMADRSHIFT;                    \
-        MEMADR_T _p2 = (MEMADR_T)(p) >> (MEMADRSHIFT + MEMLVLBITS);     \
-        MEMADR_T _p3 = (MEMADR_T)(p) >> (MEMADRSHIFT + 2 * MEMLVLBITS); \
-                                                                        \
-        (k3) = _p1 & MEMLVLMASK;                                        \
-        (k2) = _p2 & MEMLVLMASK;                                        \
-        (k1) = _p3 & MEMLVL1MASK;                                       \
-    } while (0)
-#else
 #define memgetkeybits(p, k1, k2, k3, k4)                                \
     do {                                                                \
         MEMADR_T _p1 = (MEMADR_T)(p) >> MEMADRSHIFT;                    \
@@ -413,6 +435,19 @@ membufgetfree(struct membuf *buf)
         _p2 >>= 2 * MEMLVLBITS;                                         \
         (k2) = _p1 & MEMLVLMASK;                                        \
         (k1) = _p2 & MEMLVL1MASK;                                       \
+    } while (0)
+#if 0
+#define memgetkeybits(p, k1, k2, k3, k4)                                \
+    do {                                                                \
+        MEMADR_T _p1 = (MEMADR_T)(p) >> MEMADRSHIFT;                    \
+        MEMADR_T _p2 = (MEMADR_T)(p) >> (MEMADRSHIFT + MEMLVLBITS);     \
+                                                                        \
+        (k1) = _p1 & MEMLVLMASK;                                        \
+        (k2) = _p2 & MEMLVLMASK;                                        \
+        _p1 >>= 2 * MEMLVLBITS;                                         \
+        _p2 >>= 2 * MEMLVLBITS;                                         \
+        (k3) = _p1 & MEMLVLMASK;                                        \
+        (k4) = _p2 & MEMLVL1MASK;                                       \
     } while (0)
 #endif
 #endif
@@ -460,7 +495,7 @@ membufgetfree(struct membuf *buf)
     (((MEMPTR_T)(ptr) - (buf)->base) >> memgetbufslot(buf))
 #define membufblksize(buf)                                              \
     ((memgetbuftype(buf) != MEMPAGEBLK)                                 \
-     ? (MEMWORD(1) << memgetbufslot(buf))                               \
+     ? (MEMUWORD(1) << memgetbufslot(buf))                              \
      : (PAGESIZE + PAGESIZE * memgetbufslot(buf)))
 #define membufgetptr(buf, ptr)                                          \
     ((buf)->ptrtab[membufblkid(buf, ptr)])
