@@ -378,20 +378,24 @@ membufhashitem(struct memhash *item)
 MEMADR_T
 memfindbuf(void *ptr, long incr)
 {
-    MEMADR_T        upval = (MEMADR_T)ptr >> PAGESIZELOG2;
-    long            key = razohash((void *)upval, sizeof(void *), MEMHASHBITS);
+    MEMADR_T        upval = (MEMADR_T)ptr;
+    long            key;
     struct memhash *item = &g_mem.hash[key];
     struct memhash *prev = NULL;
     MEMADR_T        val;
 
+    upval >>= PAGESIZELOG2;
+    key = razohash((void *)upval, sizeof(void *), MEMHASHBITS);
     memlkbit(&g_mem.hash[key].chain);
-    item = (struct memhash *)((MEMADR_T)item->chain & ~MEMLKBIT);
+    item = (struct memhash *)((MEMADR_T)g_mem.hash[key].chain & ~MEMLKBIT);
     while (item) {
         if (item->key == upval) {
             val = item->val;
             if (incr) {
                 item->nref += incr;
-                if (!item->nref) {
+                if (item->nref) {
+                    memrelbit(&g_mem.hash[key].chain);
+                } else {
                     if (prev) {
                         prev->chain = item->chain;
                         memrelbit(&g_mem.hash[key].chain);
@@ -400,8 +404,6 @@ memfindbuf(void *ptr, long incr)
                                     (m_atomic_t)item->chain);
                     }
                     membufhashitem(item);
-                } else {
-                    memrelbit(&g_mem.hash[key].chain);
                 }
             } else {
                 memrelbit(&g_mem.hash[key].chain);
@@ -414,18 +416,18 @@ memfindbuf(void *ptr, long incr)
     }
     memrelbit(&g_mem.hash[key].chain);
 
-    return NULL;
+    return 0;
 }
 
 void *
 memputbuf(void *ptr, struct membuf *buf, MEMUWORD_T info)
 {
+    MEMADR_T        upval = (MEMADR_T)ptr;
     MEMADR_T        val = memfindbuf(ptr, 1);
-    MEMADR_T        upval = (MEMADR_T)ptr >> PAGESIZELOG2;
     struct memhash *item;
     MEMADR_T        key;
 
-    
+    upval >>= PAGESIZELOG2;
     if (!val) {
         key = razohash((void *)upval, sizeof(void *), MEMHASHBITS);
         item = memgethashitem();
