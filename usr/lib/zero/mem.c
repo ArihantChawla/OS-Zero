@@ -370,9 +370,7 @@ MEMADR_T
 memfindbuf(void *ptr, long incr)
 {
     MEMADR_T        upval = (MEMADR_T)ptr >> PAGESIZELOG2;
-    long            key = razohash((void *)upval,
-                                   sizeof(void *),
-                                   MEMHASHBITS);
+    long            key = razohash((void *)upval, sizeof(void *), MEMHASHBITS);
     struct memhash *item = &g_mem.hash[key];
     struct memhash *prev = NULL;
     MEMADR_T        val;
@@ -392,13 +390,14 @@ memfindbuf(void *ptr, long incr)
                         m_syncwrite((m_atomic_t *)&g_mem.hash[key].chain,
                                     (m_atomic_t)item->chain);
                     }
+                    membufhashitem(item);
                 } else {
                     memrelbit(&g_mem.hash[key].chain);
                 }
             } else {
                 memrelbit(&g_mem.hash[key].chain);
             }
-
+            
             return val;
         }
         prev = item;
@@ -413,13 +412,12 @@ void *
 memputbuf(void *ptr, struct membuf *buf, MEMUWORD_T info)
 {
     MEMADR_T        val = memfindbuf(ptr, 1);
+    MEMADR_T        upval = (MEMADR_T)ptr >> PAGESIZELOG2;
     struct memhash *item;
     MEMADR_T        key;
-    MEMADR_T        upval;
 
     
     if (!val) {
-        upval = (MEMADR_T)ptr >> PAGESIZELOG2;
         key = razohash((void *)upval, sizeof(void *), MEMHASHBITS);
         item = memgethashitem();
         item->nref = 1;
