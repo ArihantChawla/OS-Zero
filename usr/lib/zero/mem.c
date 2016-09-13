@@ -174,12 +174,15 @@ meminitsmallbuf(struct membuf *buf)
     }
     memsetbufnfree(buf, nblk);
     VALGRINDMKPOOL(ptr, 0, 0);
+#if (MEMTEST)
+    _memchkbuf(buf);
+#endif
 
     return ptr;
 }
 
 static struct membuf *
-memallocpagebuf(long slot, MEMWORD_T nblk)
+memallocpagebuf(long slot, MEMUWORD_T nblk)
 {
     MEMWORD_T      mapsz = mempagebufsize(slot, nblk);
     MEMPTR_T       adr;
@@ -212,6 +215,9 @@ meminitpagebuf(struct membuf *buf, MEMUWORD_T nblk)
     membufinitfree(buf, nblk);
     buf->base = ptr;
     VALGRINDMKPOOL(ptr, 0, 0);
+#if (MEMTEST)
+    _memchkbuf(buf);
+#endif
 
     return ptr;
 }
@@ -254,6 +260,9 @@ meminitbigbuf(struct membuf *buf, MEMUWORD_T nblk)
     buf->base = ptr;
     memsetbufnfree(buf, nblk);
     VALGRINDMKPOOL(ptr, 0, 0);
+#if (MEMTEST)
+    _memchkbuf(buf);
+#endif
 
     return ptr;
 }
@@ -718,7 +727,7 @@ memgetblk(long slot, long type, size_t align)
     MEMADR_T       bufval = NULL;
 
     arn = tls_arn;
-    if (type == MEMSMALLBLK) {
+    if (type == MEMSMALLBUF) {
         bkt = &arn->smallbin[slot];
         upval = memopenbuf(bkt);
         if (upval) {
@@ -765,7 +774,7 @@ memgetblk(long slot, long type, size_t align)
                 }
             }
         }
-    } else if (type == MEMPAGEBLK) {
+    } else if (type == MEMPAGEBUF) {
         bkt = &arn->pagebin[slot];
         upval = memopenbuf(bkt);
         if (upval) {
@@ -890,7 +899,7 @@ memgetblk(long slot, long type, size_t align)
     MEMADR_T       bufval = NULL;
 
     arn = tls_arn;
-    if (type == MEMSMALLBLK) {
+    if (type == MEMSMALLBUF) {
         bkt = &arn->smallbin[slot];
         upval = memopenbuf(bkt);
         buf = (struct membuf *)upval;
@@ -942,7 +951,7 @@ memgetblk(long slot, long type, size_t align)
                 }
             }
         }
-    } else if (type == MEMPAGEBLK) {
+    } else if (type == MEMPAGEBUF) {
         bkt = &arn->pagebin[slot];
         upval = memopenbuf(bkt);
         buf = (struct membuf *)upval;
@@ -1071,13 +1080,16 @@ memgetblk(long slot, long type, size_t align)
     if (ptr) {
         memputbuf(ptr, buf, info);
     }
+#if (MEMTEST)
+    _memchkptr(buf, ptr);
+#endif
 
     return ptr;
 }
 
 #if 0
 void
-memrelblk(void *ptr, struct membuf *buf)
+memputblk(void *ptr, struct membuf *buf)
 {
     struct membkt *bkt = buf->bkt;
     MEMWORD_T      nblk = memgetbufnblk(buf);
@@ -1100,9 +1112,9 @@ memrelblk(void *ptr, struct membuf *buf)
     slot = memgetbufslot(buf);
     if (!bkt) {
         ins = 1;
-        if (type == MEMSMALLBLK) {
+        if (type == MEMSMALLBUF) {
             bkt = &tls_arn->smallbin[slot];
-        } else if (type == MEMPAGEBLK) {
+        } else if (type == MEMPAGEBUF) {
             bkt = &tls_arn->pagebin[slot];
         } else {
             bkt = &g_mem.bigbin[slot];
@@ -1110,7 +1122,7 @@ memrelblk(void *ptr, struct membuf *buf)
         memlkbit((m_atomic_t *)&bkt->list);
     }
 #if 0
-    if (type != MEMPAGEBLK) {
+    if (type != MEMPAGEBUF) {
         adr = membufgetptr(buf, ptr);
         membufsetptr(buf, ptr, NULL);
     } else {
@@ -1121,7 +1133,7 @@ memrelblk(void *ptr, struct membuf *buf)
     adr = membufgetptr(buf, ptr);
     membufsetptr(buf, ptr, NULL);
     nfree++;
-    if (type == MEMSMALLBLK || type == MEMBIGBLK) {
+    if (type == MEMSMALLBUF || type == MEMBIGBUF) {
         id = membufblkid(buf, adr);
     } else {
         id = membufpageid(buf, adr);
@@ -1130,8 +1142,8 @@ memrelblk(void *ptr, struct membuf *buf)
     memsetbufnfree(buf, nfree);
     if (ins) {
         if (!(buf->info & MEMHEAPBIT)
-            && ((type <= MEMPAGEBLK && bkt->nbuf >= membufnarn(slot, type))
-                || (type == MEMBIGBLK
+            && ((type <= MEMPAGEBUF && bkt->nbuf >= membufnarn(slot, type))
+                || (type == MEMBIGBUF
                     && bkt->nbuf >= membufnglob(slot, type)))) {
             unmapanon(buf, buf->size);
             memrelbit((m_atomic_t *)&bkt->list);
@@ -1156,7 +1168,7 @@ memrelblk(void *ptr, struct membuf *buf)
 #endif
 
 void
-memrelblk(void *ptr, struct membuf *buf, MEMUWORD_T info)
+memputblk(void *ptr, struct membuf *buf, MEMUWORD_T info)
 {
     struct membkt *bkt = buf->bkt;
     MEMUWORD_T     ndx = info & MEMPAGENDXMASK;
@@ -1169,6 +1181,9 @@ memrelblk(void *ptr, struct membuf *buf, MEMUWORD_T info)
     MEMADR_T       upval;
     MEMWORD_T      id;
 
+#if (MEMTEST)
+    _memchkptr(buf, ptr);
+#endif
     if (bkt) {
         memlkbit((m_atomic_t *)&bkt->list);
     }
@@ -1176,9 +1191,9 @@ memrelblk(void *ptr, struct membuf *buf, MEMUWORD_T info)
     slot = memgetbufslot(buf);
     if (!bkt) {
 //        ins = 1;
-        if (type == MEMSMALLBLK) {
+        if (type == MEMSMALLBUF) {
             bkt = &tls_arn->smallbin[slot];
-        } else if (type == MEMPAGEBLK) {
+        } else if (type == MEMPAGEBUF) {
             bkt = &tls_arn->pagebin[slot];
         } else {
             bkt = &g_mem.bigbin[slot];

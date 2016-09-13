@@ -315,9 +315,9 @@ struct memitem {
  * under the toplevel table
  */
 /* type-bits for the final-level table pointers */
-#define MEMSMALLBLK    0x00
-#define MEMPAGEBLK     0x01
-#define MEMBIGBLK      0x02
+#define MEMSMALLBUF    0x00
+#define MEMPAGEBUF     0x01
+#define MEMBIGBUF      0x02
 #define MEMBUFTYPES    3
 #define MEMBUFTYPEBITS 0x03
 
@@ -471,13 +471,13 @@ membufgetfree(struct membuf *buf)
     (rounduppow2(membufblkofs() + (MEMBUFBLKS << (slot)),               \
                  PAGESIZE))
 #define mempagebufsize(slot, nblk)                                      \
-    (rounduppow2(membufblkofs() + (PAGESIZE + PAGESIZE * (slot)),       \
+    (rounduppow2(membufblkofs() + (PAGESIZE + PAGESIZE * (slot)) * (nblk), \
                  PAGESIZE))
 #define membigbufsize(slot, nblk)                                       \
-    (rounduppow2(membufblkofs() + (MEMUWORD(1) << (slot)),              \
+    (rounduppow2(membufblkofs() + (MEMUWORD(1) << (slot)) * (nblk),     \
                  PAGESIZE))
 #define membufnblk(slot, type)                                          \
-    (((type) == MEMSMALLBLK)                                            \
+    (((type) == MEMSMALLBUF)                                            \
      ? (MEMBUFBLKS)                                                     \
      : (((slot) <= MEMBUFMIDMAPSHIFT)                                   \
         ? 4                                                             \
@@ -494,7 +494,7 @@ membufgetfree(struct membuf *buf)
 #define membufblkid(buf, ptr)                                           \
     (((MEMPTR_T)(ptr) - (buf)->base) >> memgetbufslot(buf))
 #define membufblksize(buf)                                              \
-    ((memgetbuftype(buf) != MEMPAGEBLK)                                 \
+    ((memgetbuftype(buf) != MEMPAGEBUF)                                 \
      ? (MEMUWORD(1) << memgetbufslot(buf))                              \
      : (PAGESIZE + PAGESIZE * memgetbufslot(buf)))
 #define membufgetptr(buf, ptr)                                          \
@@ -513,7 +513,7 @@ struct memarn * meminitarn(void);
 MEMPTR_T        memgetblk(long slot, long type, size_t align);
 void *          memputbuf(void *ptr, struct membuf *buf, MEMUWORD_T info);
 MEMADR_T        memfindbuf(void *ptr, long rel);
-void            memrelblk(void *ptr, struct membuf *buf, MEMUWORD_T info);
+void            memputblk(void *ptr, struct membuf *buf, MEMUWORD_T info);
 
 #endif /* __ZERO_MEM_H__ */
 

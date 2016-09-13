@@ -24,10 +24,10 @@ _malloc(size_t size, size_t align, long flg)
     size_t    sz = max(size, MEMMINBLK);
     size_t    bsz = (aln <= sz) ? sz : sz + aln;
     long      type = (memusesmallbuf(bsz)
-                      ? MEMSMALLBLK
+                      ? MEMSMALLBUF
                       : (memusepagebuf(bsz)
-                         ? MEMPAGEBLK
-                         : MEMBIGBLK));
+                         ? MEMPAGEBUF
+                         : MEMBIGBUF));
     long      slot;
     void     *ptr;
     MEMPTR_T  adr;
@@ -41,7 +41,7 @@ _malloc(size_t size, size_t align, long flg)
     }
     memcalcslot(bsz, slot);
 #if 0
-    if (type == MEMPAGEBLK) {
+    if (type == MEMPAGEBUF) {
         slot -= PAGESIZELOG2;
     }
 #endif
@@ -91,7 +91,7 @@ _free(void *ptr)
     info = desc & MEMPAGEINFOMASK;
     desc &= ~MEMPAGEINFOMASK;
     if (desc) {
-        memrelblk(ptr, (struct membuf *)desc, info);
+        memputblk(ptr, (struct membuf *)desc, info);
         VALGRINDFREE(ptr);
     }
 
