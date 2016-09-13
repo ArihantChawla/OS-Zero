@@ -1063,6 +1063,7 @@ memgetblk(long slot, long type, size_t align)
             /* this unlocks the global heap (low-bit becomes zero) */
             m_syncwrite(&g_mem.heap, buf);
         }
+#if 0
         if (bkt == &g_mem.smallbin[slot]) {
             bkt = &arn->smallbin[slot];
             memlkbit(&bkt->list);
@@ -1070,6 +1071,7 @@ memgetblk(long slot, long type, size_t align)
             bkt = &arn->pagebin[slot];
             memlkbit(&bkt->list);
         }
+#endif
         memputptr(buf, ptr, align, info);
         /* this unlocks the arena bucket (low-bit becomes zero) */
 #if 0

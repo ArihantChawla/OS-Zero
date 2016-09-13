@@ -109,7 +109,7 @@ _realloc(void *ptr,
 {
     void          *retptr = NULL;
 #if (MEMHASH)
-    MEMADR_T       val = (ptr) ? memfindbuf(ptr, 0) : 0;
+    MEMADR_T       val = (ptr) ? memfindbuf(ptr, -1) : 0;
     struct membuf *buf = (struct membuf *)(val & ~MEMPAGEINFOMASK);
 #else
     struct membuf *buf = (ptr) ? memfindbuf(ptr, 0) : NULL;
