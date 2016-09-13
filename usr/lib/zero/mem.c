@@ -430,7 +430,7 @@ memputbuf(void *ptr, struct membuf *buf, MEMUWORD_T info)
         key = razohash((void *)upval, sizeof(void *), MEMHASHBITS);
         item = memgethashitem();
         item->nref = 1;
-        item->key = key;
+        item->key = upval;
         item->val = (MEMADR_T)buf | info;
         memlkbit(&g_mem.hash[key].chain);
         upval = (MEMADR_T)g_mem.hash[key].chain;
