@@ -96,14 +96,14 @@ typedef volatile long MEMLK_T;
         fprintf(stderr, "LK: %s: %d\n", __FILE__, __LINE__);            \
     } while (m_cmpsetbit((volatile long *)lp, MEMLKBITID))
 #define memrelbit(lp) (fprintf(stderr, "UNLK: %s: %d\n", __FILE__, __LINE__), \
-                       m_cmpclrbit((volatile long *)lp, MEMLKBITID))
+                       m_clrbit((volatile long *)lp, MEMLKBITID))
 
 #else
 #define memlkbit(lp)                                                    \
     do {                                                                \
         ;                                                               \
     } while (m_cmpsetbit((volatile long *)lp, MEMLKBITID))
-#define memrelbit(lp) m_cmpclrbit((volatile long *)lp, MEMLKBITID)
+#define memrelbit(lp) m_clrbit((volatile long *)lp, MEMLKBITID)
 #endif
 
 #if (WORDSIZE == 4)
@@ -492,7 +492,8 @@ membufgetfree(struct membuf *buf)
 #define membufblkadr(buf, ndx)                                          \
     ((buf)->base + ((ndx) << memgetbufslot(buf)))
 #define membufblkid(buf, ptr)                                           \
-    (((MEMPTR_T)(ptr) - (buf)->base) >> memgetbufslot(buf))
+    ((((MEMPTR_T)(ptr) - (buf)->base) >> memgetbufslot(buf)) \
+     & ((MEMUWORD(1) << memgetbufslot(buf)) - 1))
 #define membufblksize(buf)                                              \
     ((memgetbuftype(buf) != MEMPAGEBUF)                                 \
      ? (MEMUWORD(1) << memgetbufslot(buf))                              \

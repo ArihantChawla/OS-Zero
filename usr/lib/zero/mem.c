@@ -105,7 +105,7 @@ meminit(void)
         growheap(ofs);
     }
     memrellk(&g_mem.heaplk);
-    g_mem.flg |= MEMINITBIT;
+    g_mem.flg |= MEMINITBIT | MEMNOHEAPBIT;
     memrellk(&g_mem.initlk);
 
     return;
@@ -794,7 +794,7 @@ memgetblk(long slot, long type, size_t align)
                     if (buf) {
                         ptr = meminitpagebuf(buf, nblk);
                         if (ptr) {
-                            info = MEMPAGEBIT;
+                            info |= MEMPAGEBIT;
                             memputptr(buf, ptr, align, info);
                         }
                         memlkbit((m_atomic_t *)&bkt->list);
@@ -959,7 +959,7 @@ memgetblk(long slot, long type, size_t align)
         buf = (struct membuf *)upval;
         if (upval) {
             /* TODO */
-            ptr = memgetbufblk(buf, bkt, NULL);
+            ptr = memgetbufblk(buf, bkt, &info);
         } else {
             memrelbit((m_atomic_t *)&bkt->list);
         }
@@ -1006,6 +1006,8 @@ memgetblk(long slot, long type, size_t align)
                     memrelbit((m_atomic_t *)&bkt->list);
                 }
             }
+        } else {
+            info |= MEMPAGEBIT;
         }
     } else {
         bkt = &g_mem.bigbin[slot];
