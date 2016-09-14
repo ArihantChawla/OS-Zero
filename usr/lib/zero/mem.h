@@ -437,7 +437,37 @@ membufgetfree(struct membuf *buf)
 }
 
 #define memalignptr(ptr, pow2)                                          \
-    ((void *)rounduppow2((uintptr_t)(ptr), (pow2)))
+    ((MEMPTR_T)rounduppow2((uintptr_t)(ptr), (pow2)))
+#define memadjptr(ptr, sz)                                              \
+    (&((MEMPTR_T)(ptr))[sz])
+
+/* this routine came from the lockless allocator, courtesy of locklessinc.com */
+static __inline__ uint32_t
+memrandptr(MEMPTR_T ptr)
+{
+    uint64_t val = (uint64_t)ptr;
+
+    val *= UINT64_C(7319936632422683443);
+    val ^= val >> 32;
+    val *= UINT64_C(7319936632422683443);
+    val ^= val >> 32;
+
+    return (uint32_t)val;
+}
+
+static __inline__ MEMPTR_T
+memgenptr(MEMPTR_T ptr, MEMUWORD_T blksz, MEMUWORD_T size)
+{
+    uint64_t xtra = blksz - size;
+    uint64_t rnd = memrandptr(ptr);
+    uint64_t ofs = (xtra * rnd) >> 32;
+    MEMPTR_T ret;
+
+    ofs = rounddownpow2(ofs, MEMMINALIGN);
+    ret = memadjptr(ptr, ofs);
+
+    return ret;
+}
 
 /*
  * for 32-bit pointers, we can use a flat lookup table for bookkeeping pointers
@@ -560,7 +590,8 @@ membufgetfree(struct membuf *buf)
 
 void                 meminit(void);
 struct memarn *      meminitarn(void);
-MEMPTR_T             memgetblk(long slot, long type, size_t align);
+MEMPTR_T             memgetblk(long slot, long type,
+                               MEMUWORD_T size, MEMUWORD_T align);
 void *               memsetbuf(void *ptr, struct membuf *buf, MEMUWORD_T info);
 #if (MEMARRAYHASH)
 struct memhashitem * memfindbuf(void *ptr, MEMWORD_T incr, MEMADR_T *keyret);

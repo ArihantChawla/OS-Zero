@@ -44,7 +44,7 @@ _malloc(size_t size, size_t align, long flg)
         slot -= PAGESIZELOG2;
     }
 #endif
-    ptr = memgetblk(slot, type, aln);
+    ptr = memgetblk(slot, type, size, aln);
     if (!ptr) {
 #if defined(ENOMEM)
         errno = ENOMEM;

@@ -969,13 +969,16 @@ memopenbuf(struct membkt *bkt)
 
 /* for pagebin, val is the allocation index */
 MEMPTR_T
-memputptr(struct membuf *buf, void *ptr, size_t align, long info)
+memputptr(struct membuf *buf, void *ptr, size_t size, size_t align, long info)
 {
+    MEMUWORD_T bsz = membufblksize(buf);
     MEMUWORD_T ndx = info & MEMPAGENDXMASK;
     MEMPTR_T   adr;
     
     adr = ptr;
-    if ((MEMADR_T)ptr & (align - 1)) {
+    if (align <= MEMMINALIGN) {
+        ptr = memgenptr(adr, bsz, size);
+    } else if ((MEMADR_T)ptr & (align - 1)) {
         ptr = memalignptr(adr, align);
     }
     if (!ndx) {
@@ -988,7 +991,7 @@ memputptr(struct membuf *buf, void *ptr, size_t align, long info)
 }
 
 MEMPTR_T
-memgetblk(long slot, long type, size_t align)
+memgetblk(long slot, long type, MEMUWORD_T size, MEMUWORD_T align)
 {
     volatile struct memarn *arn;
     MEMPTR_T                ptr = NULL;
@@ -1105,7 +1108,7 @@ memgetblk(long slot, long type, size_t align)
     crash(buf != NULL);
 #endif
     if (ptr) {
-        ptr = memputptr(buf, ptr, align, info);
+        ptr = memputptr(buf, ptr, size, align, info);
         memsetbuf(ptr, buf, info);
     }
 #if (MEMTEST)
