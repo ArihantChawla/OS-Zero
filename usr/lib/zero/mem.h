@@ -173,11 +173,14 @@ typedef volatile long MEMLK_T;
 /* minimum allocation block size in bigbins */
 //#define MEMBIGMINSIZE      (2 * PAGESIZE)
 
-#define MEMBUFSMALLBLKSHIFT (PAGESIZELOG2 - 1)
-#define MEMBUFSMALLMAPSHIFT 18
-#define MEMBUFMIDMAPSHIFT   20
-#define MEMBUFBIGMAPSHIFT   23
-#define MEMBUFHUGEMAPSHIFT  26
+#define MEMSMALLPAGESLOT      16
+#define MEMMIDPAGESLOT        24
+#define MEMBIGPAGESLOT        32
+#define MEMSMALLBLKSHIFT      (PAGESIZELOG2 - 1)
+#define MEMSMALLMAPSHIFT      20
+//#define MEMBUFMIDMAPSHIFT   22
+#define MEMBIGMAPSHIFT        24
+//#define MEMBUFHUGEMAPSHIFT  26
 
 struct membkt {
 #if (MEMLFDEQ)
@@ -471,7 +474,7 @@ membufgetfree(struct membuf *buf)
 //#define membufslot(buf)       (memgetbufslot(buf))
 #define membufblkofs()                                                  \
     (rounduppow2(membufhdrsize() + membufptrtabsize(), PAGESIZE))
-#define memusesmallbuf(sz)    ((sz) <= (MEMUWORD(1) << MEMBUFSMALLBLKSHIFT))
+#define memusesmallbuf(sz)    ((sz) <= (MEMUWORD(1) << MEMSMALLBLKSHIFT))
 #define memusepagebuf(sz)     ((sz) <= (PAGESIZE * PTRBITS))
 /* allocations of PAGESIZE << slot */
 #define memsmallbufsize(slot)                                           \
@@ -483,6 +486,7 @@ membufgetfree(struct membuf *buf)
 #define membigbufsize(slot, nblk)                                       \
     (rounduppow2(membufblkofs() + (MEMUWORD(1) << (slot)) * (nblk),     \
                  PAGESIZE))
+#if 0
 #define membufnblk(slot, type)                                          \
     (((type) == MEMSMALLBUF)                                            \
      ? (MEMBUFBLKS)                                                     \
@@ -491,6 +495,23 @@ membufgetfree(struct membuf *buf)
         : (((slot) <= MEMBUFBIGMAPSHIFT)                                \
            ? 2                                                          \
            : 1)))
+#endif
+#define membufnblk(slot, type)                                          \
+    (((type) == MEMSMALLBUF)                                            \
+     ? (MEMBUFBLKS)                                                     \
+     : (((type) == MEMPAGEBUF)                                          \
+        ? (((slot) <= MEMSMALLPAGESLOT)                                 \
+           ? 16                                                         \
+           : (((slot) <= MEMMIDPAGESLOT)                                \
+              ? 8                                                       \
+              : (((slot <= MEMBIGPAGESLOT)                              \
+                  ? 4                                                   \
+                  : 2))))                                               \
+        : (((slot) <= MEMSMALLMAPSHIFT)                                 \
+           ? 4                                                          \
+           : (((slot) <= MEMBIGMAPSHIFT)                                \
+              ? 2                                                       \
+              : 1))))
 #define membufnarn(slot, type)                                          \
     (2)
 #define membufnglob(slot, type)                                         \
