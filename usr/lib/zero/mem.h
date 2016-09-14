@@ -93,9 +93,7 @@ typedef volatile long MEMLK_T;
 #define memrellk(lp) spinunlk(lp)
 #endif
 
-#define MEMPAGEBIT      (1L << (PAGESIZELOG2 - 1))
-#define MEMPAGENDXMASK  (MEMPAGEBIT - 1)
-#define MEMPAGEINFOMASK (MEMPAGEBIT | MEMPAGENDXMASK)
+#define MEMPAGENDXMASK  ((MEMUWORD(1) << PAGESIZELOG2) - 1)
 /* use the low-order bit of the word or pointer to lock data */
 #define MEMLKBITID      0
 #define MEMLKBIT        (1L << MEMLKBITID)
@@ -384,34 +382,34 @@ membufinitfree(struct membuf *buf, MEMWORD_T nblk)
 static __inline__ MEMWORD_T
 membufgetfree(struct membuf *buf)
 {
-    MEMWORD_T  nblk = memgetbufnblk(buf);
-    MEMWORD_T *map = buf->freemap;
-    MEMWORD_T  ndx = 0;
-    MEMWORD_T  word;
-    MEMWORD_T  mask;
-    MEMWORD_T  res;
+    MEMUWORD_T  nblk = memgetbufnblk(buf);
+    MEMUWORD_T *map = buf->freemap;
+    MEMUWORD_T  ndx = 0;
+    MEMUWORD_T  word;
+    MEMUWORD_T  mask;
+    MEMUWORD_T  res;
 
     do {
         word = *map;
-        if (word) {                     // skip 0-words
-            res = tzerol(word);         // count trailing zeroes
-            ndx += res;                 // add to ndx
+        if (word) {                             // skip 0-words
+            res = tzerol(word);                 // count trailing zeroes
+            ndx += res;                         // add to ndx
             if (ndx < nblk) {
-                mask = 1L << res;       // create bit
-                mask = ~mask;           // invert for mask
-                word &= mask;           // mask the bit out
-                *map = word;            // update
+                mask = MEMUWORD(1) << res;      // create bit
+                mask = ~mask;                   // invert for mask
+                word &= mask;                   // mask the bit out
+                *map = word;                    // update
 
-                return ndx;             // return index of first 1-bit
+                return ndx;                     // return index of first 1-bit
             }
 
-            return -1;                  // 1-bit not found
+            return -1;                          // 1-bit not found
         }
-        map++;                          // try next word in freemap
+        map++;                                  // try next word in freemap
         ndx += WORDSIZE * CHAR_BIT;
     } while (ndx < nblk);
 
-    return -1;                          // 1-bit not found
+    return -1;                                  // 1-bit not found
 }
 
 #define memalignptr(ptr, pow2)                                          \
@@ -419,7 +417,7 @@ membufgetfree(struct membuf *buf)
 
 /*
  * for 32-bit pointers, we can use a flat lookup table for bookkeeping pointers
- * - for bigger pointers, we use a multilevel table
+ * - for bigger pointers, we use a hash (or multilevel) table
  */
 #if (MEMHASH)
 #define MEMHASHBITS   20
