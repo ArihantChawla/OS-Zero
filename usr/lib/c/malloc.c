@@ -68,8 +68,11 @@ _malloc(size_t size, size_t align, long flg)
 static void
 _free(void *ptr)
 {
-    MEMADR_T   desc;
-    MEMUWORD_T info;
+#if (MEMARRAYHASH)
+    struct memhashitem *item;
+#endif
+    MEMADR_T            desc;
+    MEMUWORD_T          info;
 
     if (!ptr) {
 
@@ -82,7 +85,11 @@ _free(void *ptr)
 
         exit(1);
     }
-#if (MEMHASH)
+#if (MEMARRAYHASH)
+    item = memfindbuf(ptr, MEMHASHDEL, NULL);
+    crash(item != NULL);
+    desc = item->val;
+#elif (MEMHASH)
     desc = memfindbuf(ptr, -1, NULL);
 #else
     desc = memfindbuf(ptr, 1);
@@ -108,14 +115,19 @@ _realloc(void *ptr,
          long rel)
 {
     void          *retptr = NULL;
-#if (MEMHASH)
-    MEMADR_T       desc = (ptr) ? memfindbuf(ptr, 0, NULL) : 0;
-    struct membuf *buf = (struct membuf *)(desc & ~MEMPAGENDXMASK);
-#else
-    struct membuf *buf = (ptr) ? memfindbuf(ptr, 0) : NULL;
+#if (MEMARRAYHASH)
+    struct memhashitem *item = (ptr) ? memfindbuf(ptr, MEMHASHCHK, NULL) : NULL;
+    MEMADR_T            desc = (item) ? item->val : 0;
+#elif (MEMHASH)
+    MEMADR_T            desc = (ptr) ? memfindbuf(ptr, 0, NULL) : 0;
 #endif
-    void          *oldptr = (buf) ? membufgetptr(buf, ptr) : NULL;
-    size_t         sz = (buf) ? membufblksize(buf) : 0;
+#if (MEMHASH) || (MEMARRAYHASH)
+    struct membuf       *buf = (struct membuf *)(desc & ~MEMPAGENDXMASK);
+#else
+    struct membuf       *buf = (ptr) ? memfindbuf(ptr, 0) : NULL;
+#endif
+    void                *oldptr = (buf) ? membufgetptr(buf, ptr) : NULL;
+    size_t              sz = (buf) ? membufblksize(buf) : 0;
 
     retptr = _malloc(size, 0, 0);
     if (retptr) {
@@ -433,13 +445,18 @@ cfree(void *ptr)
 size_t
 malloc_usable_size(void *ptr)
 {
-#if (MEMHASH)
-    MEMADR_T       val = (ptr) ? memfindbuf(ptr, 0, NULL) : 0;
-    struct membuf *buf = (struct membuf *)(val & ~MEMPAGENDXMASK);
-#else
-    struct membuf *buf = memfindbuf(ptr, 0);
+#if (MEMARRAYHASH)
+    struct memhashitem *item = (ptr) ? memfindbuf(ptr, MEMHASHCHK, NULL) : NULL;
+    MEMADR_T            val = (item) ? item->val : 0;
+#elif (MEMHASH)
+    MEMADR_T            val = (ptr) ? memfindbuf(ptr, 0, NULL) : 0;
 #endif
-    size_t         sz = membufblksize(buf);
+#if (MEMHASH) || (MEMARRAYHASH)
+    struct membuf      *buf = (struct membuf *)(val & ~MEMPAGENDXMASK);
+#else
+    struct membuf      *buf = memfindbuf(ptr, 0);
+#endif
+    size_t              sz = membufblksize(buf);
     
     return sz;
 }
@@ -450,9 +467,21 @@ malloc_good_size(size_t size)
     size_t sz = 0;
     
 #if (WORDSIZE == 4)
-    ceilpow2_32(size, sz);
+    if (memusesmallbuf(sz)) {
+        ceilpow2_32(size, sz);
+    } else if (memusepagebuf(sz)) {
+        sz = rounduppow2(sz, PAGESIZE);
+    } else {
+        ceilpow2_32(size, sz);
+    }
 #elif (WORDSIZE == 8)
-    ceilpow2_64(size, sz);
+    if (memusesmallbuf(sz)) {
+        ceilpow2_64(size, sz);
+    } else if (memusepagebuf(sz)) {
+        sz = rounduppow2(sz, PAGESIZE);
+    } else {
+        ceilpow2_64(size, sz);
+    }
 #endif
 
     return sz;
@@ -461,13 +490,18 @@ malloc_good_size(size_t size)
 size_t
 malloc_size(void *ptr)
 {
-#if (MEMHASH)
-    MEMADR_T       val = (ptr) ? memfindbuf(ptr, 0, NULL) : 0;
-    struct membuf *buf = (struct membuf *)(val & ~MEMPAGENDXMASK);
-#else
-    struct membuf *buf = memfindbuf(ptr, 0);
+#if (MEMARRAYHASH)
+    struct memhashitem *item = (ptr) ? memfindbuf(ptr, MEMHASHCHK, NULL) : NULL;
+    MEMADR_T            val = (item) ? item->val : 0;
+#elif (MEMHASH)
+    MEMADR_T            val = (ptr) ? memfindbuf(ptr, 0, NULL) : 0;
 #endif
-    size_t         sz = membufblksize(buf);
+#if (MEMHASH) || (MEMARRAYHASH)
+    struct membuf      *buf = (struct membuf *)(val & ~MEMPAGENDXMASK);
+#else
+    struct membuf      *buf = memfindbuf(ptr, 0);
+#endif
+    size_t              sz = membufblksize(buf);
 
     return sz;
 }

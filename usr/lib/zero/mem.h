@@ -282,18 +282,23 @@ struct membuf {
 
 #if (MEMARRAYHASH)
 
+#define MEMHASHDEL (-1)
+#define MEMHASHCHK (0)
+#define MEMHASHADD (1)
+
 struct memhashitem {
     MEMWORD_T nref;
     MEMADR_T  adr;
     MEMADR_T  val;
 };
 
+#define MEMHASHTABITEMS 10
 /* in practice, this structure is 32 machine words in size */
 #define memhashsize() rounduppow2(sizeof(struct memhash), CLSIZE)
 struct memhash {
     struct memhash     *chain;
-    MEMWORD_T           nitem;
-    struct memhashitem  tab[10];
+    MEMWORD_T           ntab;
+    struct memhashitem  tab[MEMHASHTABITEMS];
 };
 
 #elif (MEMHASH)
@@ -553,19 +558,21 @@ membufgetfree(struct membuf *buf)
 #define membufsetpage(buf, ndx, adr)                                    \
     ((buf)->ptrtab[(ndx)] = (adr))
 
-void            meminit(void);
-struct memarn * meminitarn(void);
-MEMPTR_T        memgetblk(long slot, long type, size_t align);
-void *          memsetbuf(void *ptr, struct membuf *buf, MEMUWORD_T info);
-#if (MEMHASH)
-MEMADR_T        memfindbuf(void *ptr, MEMWORD_T incr, MEMADR_T *keyret);
+void                 meminit(void);
+struct memarn *      meminitarn(void);
+MEMPTR_T             memgetblk(long slot, long type, size_t align);
+void *               memsetbuf(void *ptr, struct membuf *buf, MEMUWORD_T info);
+#if (MEMARRAYHASH)
+struct memhashitem * memfindbuf(void *ptr, MEMWORD_T incr, MEMADR_T *keyret);
+#elif (MEMHASH)
+MEMADR_T             memfindbuf(void *ptr, MEMWORD_T incr, MEMADR_T *keyret);
 #else
-MEMADR_T        memfindbuf(void *ptr, long rel);
+MEMADR_T             memfindbuf(void *ptr, long rel);
 #endif
-void            memputblk(void *ptr, struct membuf *buf, MEMUWORD_T info);
+void                 memputblk(void *ptr, struct membuf *buf, MEMUWORD_T info);
 #if (MEMTEST)
-long            _memchkptr(struct membuf *buf, MEMPTR_T ptr);
-long            _memchkbuf(struct membuf *buf);
+long                 _memchkptr(struct membuf *buf, MEMPTR_T ptr);
+long                 _memchkbuf(struct membuf *buf);
 #endif
 
 #endif /* __ZERO_MEM_H__ */
