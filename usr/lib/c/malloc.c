@@ -4,7 +4,7 @@
 #include <stdint.h>
 #if (MEMDEBUG)
 #include <stdio.h>
-#include <assert.h>
+//#include <crash.h>
 #endif
 #include <errno.h>
 #include <malloc.h>
@@ -59,7 +59,7 @@ _malloc(size_t size, size_t align, long flg)
         VALGRINDALLOC(ptr, size, 0, flg & MALLOCZEROBIT);
     }
 #if (MEMDEBUG)
-    assert(ptr != NULL);
+    crash(ptr != NULL);
 #endif
 
     return ptr;
@@ -76,23 +76,24 @@ _free(void *ptr)
         return;
     }
 #if (MEMDEBUG)
-    assert(ptr != NULL);
+    crash(ptr != NULL);
 #endif
     if (!tls_arn && !meminitarn()) {
 
         exit(1);
     }
 #if (MEMHASH)
-    desc = memfindbuf(ptr, -1);
+    desc = memfindbuf(ptr, -1, NULL);
 #else
     desc = memfindbuf(ptr, 1);
 #endif
+#if (MEMDEBUG)
+    crash(desc != 0);
+#endif
     info = desc & MEMPAGEINFOMASK;
     desc &= ~MEMPAGEINFOMASK;
-    if (desc) {
-        memputblk(ptr, (struct membuf *)desc, info);
-        VALGRINDFREE(ptr);
-    }
+    memputblk(ptr, (struct membuf *)desc, info);
+    VALGRINDFREE(ptr);
 
     return;
 }
@@ -108,8 +109,8 @@ _realloc(void *ptr,
 {
     void          *retptr = NULL;
 #if (MEMHASH)
-    MEMADR_T       val = (ptr) ? memfindbuf(ptr, -1) : 0;
-    struct membuf *buf = (struct membuf *)(val & ~MEMPAGEINFOMASK);
+    MEMADR_T       desc = (ptr) ? memfindbuf(ptr, 0, NULL) : 0;
+    struct membuf *buf = (struct membuf *)(desc & ~MEMPAGEINFOMASK);
 #else
     struct membuf *buf = (ptr) ? memfindbuf(ptr, 0) : NULL;
 #endif
@@ -130,7 +131,7 @@ _realloc(void *ptr,
         _free(ptr);
     }
 #if (MEMDEBUG)
-    assert(retptr != NULL);
+    crash(retptr != NULL);
 #endif
     if (!retptr) {
 #if defined(ENOMEM)
@@ -201,7 +202,7 @@ realloc(void *ptr, size_t size)
         }
     }
 #if (MEMDEBUG)
-    assert(retptr != NULL);
+    crash(retptr != NULL);
 #endif
 
     return retptr;
@@ -233,7 +234,7 @@ posix_memalign(void **ret,
         }
     }
 #if (MEMDEBUG)
-    assert(ptr != NULL);
+    crash(ptr != NULL);
 #endif
     *ret = ptr;
 
@@ -269,7 +270,7 @@ reallocf(void *ptr,
         return NULL;
     }
 #if (MEMDEBUG)
-    assert(retptr != NULL);
+    crash(retptr != NULL);
 #endif
 
     return retptr;
@@ -294,7 +295,7 @@ memalign(size_t align,
         ptr = _malloc(size, align, 0);
     }
 #if (MEMDEBUG)
-    assert(ptr != NULL);
+    crash(ptr != NULL);
 #endif
 
     return ptr;
@@ -317,7 +318,7 @@ valloc(size_t size)
 
     ptr = _malloc(size, PAGESIZE, 0);
 #if (MEMDEBUG)
-    assert(ptr != NULL);
+    crash(ptr != NULL);
 #endif
     
     return ptr;
@@ -336,7 +337,7 @@ pvalloc(size_t size)
     void   *ptr = _malloc(rounduppow2(size, PAGESIZE), PAGESIZE, 0);
 
 #if (MEMDEBUG)
-    assert(ptr != NULL);
+    crash(ptr != NULL);
 #endif
 
     return ptr;
@@ -363,7 +364,7 @@ _aligned_malloc(size_t size,
         ptr = _malloc(size, align, 0);
     }
 #if (MEMDEBUG)
-    assert(ptr != NULL);
+    crash(ptr != NULL);
 #endif
 
     return ptr;
@@ -401,7 +402,7 @@ _mm_malloc(size_t size,
         ptr = _malloc(size, align, 0);
     }
 #if (MEMDEBUG)
-    assert(ptr != NULL);
+    crash(ptr != NULL);
 #endif
 
     return ptr;
@@ -433,7 +434,7 @@ size_t
 malloc_usable_size(void *ptr)
 {
 #if (MEMHASH)
-    MEMADR_T       val = (ptr) ? memfindbuf(ptr, 0) : 0;
+    MEMADR_T       val = (ptr) ? memfindbuf(ptr, 0, NULL) : 0;
     struct membuf *buf = (struct membuf *)(val & ~MEMPAGEINFOMASK);
 #else
     struct membuf *buf = memfindbuf(ptr, 0);
@@ -461,7 +462,7 @@ size_t
 malloc_size(void *ptr)
 {
 #if (MEMHASH)
-    MEMADR_T       val = (ptr) ? memfindbuf(ptr, 0) : 0;
+    MEMADR_T       val = (ptr) ? memfindbuf(ptr, 0, NULL) : 0;
     struct membuf *buf = (struct membuf *)(val & ~MEMPAGEINFOMASK);
 #else
     struct membuf *buf = memfindbuf(ptr, 0);

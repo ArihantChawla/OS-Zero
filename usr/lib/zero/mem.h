@@ -11,6 +11,15 @@
 #define MEMDEBUG    0
 #endif
 
+#if defined(MEMDEBUG)
+#define crash(expr)                                                     \
+    do {                                                                \
+        if (!(expr)) {                                                  \
+            *(uint8_t *)NULL = 0x00;                                    \
+        }                                                               \
+    } while (0)
+#endif
+
 /* generic memory manager definitions for libzero */
 
 #define MEM_LK_NONE 0           // don't use locks; single-thread
@@ -91,19 +100,19 @@ typedef volatile long MEMLK_T;
 #define MEMLKBITID      0
 #define MEMLKBIT        (1L << MEMLKBITID)
 #if (MEMDEBUGLOCK)
-#define memlkbit(lp)                                                    \
+#define memlkbit(ptr)                                                   \
     do {                                                                \
         fprintf(stderr, "LK: %s: %d\n", __FILE__, __LINE__);            \
-    } while (m_cmpsetbit((volatile long *)lp, MEMLKBITID))
-#define memrelbit(lp) (fprintf(stderr, "UNLK: %s: %d\n", __FILE__, __LINE__), \
-                       m_clrbit((volatile long *)lp, MEMLKBITID))
+    } while (m_cmpsetbit((m_atomic_t *)ptr, MEMLKBITID))
+#define memrelbit(ptr) (fprintf(stderr, "UNLK: %s: %d\n", __FILE__, __LINE__), \
+                        m_clrbit((m_atomic_t *)ptr, MEMLKBITID))
 
 #else
-#define memlkbit(lp)                                                    \
+#define memlkbit(ptr)                                                   \
     do {                                                                \
         ;                                                               \
-    } while (m_cmpsetbit((volatile long *)lp, MEMLKBITID))
-#define memrelbit(lp) m_clrbit((volatile long *)lp, MEMLKBITID)
+    } while (m_cmpsetbit((m_atomic_t *)ptr, MEMLKBITID))
+#define memrelbit(ptr) m_clrbit((m_atomic_t *)ptr, MEMLKBITID)
 #endif
 
 #if (WORDSIZE == 4)
@@ -512,8 +521,12 @@ membufgetfree(struct membuf *buf)
 void            meminit(void);
 struct memarn * meminitarn(void);
 MEMPTR_T        memgetblk(long slot, long type, size_t align);
-void *          memputbuf(void *ptr, struct membuf *buf, MEMUWORD_T info);
+void *          memsetbuf(void *ptr, struct membuf *buf, MEMUWORD_T info);
+#if (MEMHASH)
+MEMADR_T        memfindbuf(void *ptr, MEMWORD_T incr, MEMADR_T *keyret);
+#else
 MEMADR_T        memfindbuf(void *ptr, long rel);
+#endif
 void            memputblk(void *ptr, struct membuf *buf, MEMUWORD_T info);
 #if (MEMTEST)
 long            _memchkptr(struct membuf *buf, MEMPTR_T ptr);
