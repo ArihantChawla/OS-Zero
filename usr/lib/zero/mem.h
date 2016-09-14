@@ -267,26 +267,42 @@ struct mem {
 #define memgetbufslot(buf)                                              \
     (((buf)->info >> MEMBUFSLOTSHIFT) & MEMBUFSLOTBITS)
 struct membuf {
-    MEMUWORD_T     info;        // flag-bits + lock-bit + # of total & free blks
-    struct membuf *heap;        // previous buf in heap for bufs from sbrk()
-    struct membuf *prev;        // previous buf in chain
-    struct membuf *next;        // next buf in chain
-    struct membkt *bkt;         // pointer to parent bucket
+    MEMUWORD_T              info; // flags + lock-bit + # of total & free blks
+    struct membuf          *heap; // previous buf in heap for bufs from sbrk()
+    struct membuf          *prev; // previous buf in chain
+    struct membuf          *next; // next buf in chain
+    volatile struct membkt *bkt;  // pointer to parent bucket
 //    MEMWORD_T      slot;        // bucket slot #
-    MEMWORD_T      size;        // buffer bookkeeping + allocation blocks
-    MEMPTR_T       base;        // base address
-    MEMPTR_T      *ptrtab;      // unaligned base pointers for aligned blocks
+    MEMUWORD_T              size; // buffer bookkeeping + allocation blocks
+    MEMPTR_T                base; // base address for allocations
+    MEMPTR_T               *ptrtab; // original pointers for aligned blocks
     /* note: the first bit in freemap is reserved (unused) */
-    MEMWORD_T      freemap[MEMBUFFREEMAPWORDS];
+    MEMUWORD_T              freemap[MEMBUFFREEMAPWORDS];
 };
 
-#if (MEMHASH)
+#if (MEMARRAYHASH)
 
+struct memhashitem {
+    MEMWORD_T nref;
+    MEMADR_T  adr;
+    MEMADR_T  val;
+};
+
+/* in practice, this structure is 32 machine words in size */
+#define memhashsize() rounduppow2(sizeof(struct memhash), CLSIZE)
 struct memhash {
     struct memhash     *chain;
-    volatile MEMWORD_T  nref;
-    MEMADR_T            adr;
-    MEMADR_T            val;
+    MEMWORD_T           nitem;
+    struct memhashitem  tab[10];
+};
+
+#elif (MEMHASH)
+
+struct memhash {
+    struct memhash *chain;
+    MEMWORD_T       nref;
+    MEMADR_T        adr;
+    MEMADR_T        val;
 };
 
 #else
@@ -358,8 +374,8 @@ struct memarn {
 static __inline__ void
 membufinitfree(struct membuf *buf, MEMWORD_T nblk)
 {
-    MEMWORD_T  bits = ~MEMWORD(0);      // all 1-bits
-    MEMWORD_T *ptr = buf->freemap;
+    MEMUWORD_T  bits = ~MEMUWORD(0);      // all 1-bits
+    MEMUWORD_T *ptr = buf->freemap;
 
 #if (MEMBUFFREEMAPWORDS >= 4)
     _memfillmap0(ptr, 0, bits);

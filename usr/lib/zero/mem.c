@@ -160,7 +160,6 @@ meminitsmallbuf(struct membuf *buf)
 {
     MEMUWORD_T nblk = MEMBUFBLKS;
     MEMPTR_T   adr = (MEMPTR_T)buf;
-    MEMUWORD_T info = buf->info;
     MEMPTR_T   ptr = adr + membufblkofs();
 
     /* set number of blocks for buf */
@@ -272,27 +271,10 @@ void *
 memgetbufblk(struct membuf *head, struct membkt *bkt, MEMUWORD_T *retndx)
 {
     void          *ptr = NULL;
-    struct membuf *prev = NULL;
     MEMUWORD_T     nfree = memgetbufnfree(head);
     MEMUWORD_T     type = memgetbuftype(head);
     MEMUWORD_T     ndx;
 
-#if 0
-    while ((head) && !nfree) {
-        /* remove fully-allocated bufs from the front of list */
-        prev = head;
-        if (head->next) {
-            head->next->prev = NULL;
-        }
-        head = head->next;
-        prev->bkt = NULL;
-        prev->prev = NULL;
-        prev->next = NULL;
-        if (head) {
-            nfree = memgetbufnfree(head);
-        }
-    }
-#endif
     ndx = membufgetfree(head);
     nfree--;
     if (type != MEMPAGEBUF) {
@@ -732,13 +714,13 @@ memputptr(struct membuf *buf, void *ptr, size_t align, long info)
 MEMPTR_T
 memgetblk(long slot, long type, size_t align)
 {
-    struct memarn *arn;
-    MEMPTR_T       ptr = NULL;
-    struct membkt *bkt;
-    struct membuf *buf;
-    MEMUWORD_T     info = 0;
-    MEMUWORD_T     nblk = membufnblk(slot, type);
-    MEMADR_T       upval = 0;
+    volatile struct memarn *arn;
+    MEMPTR_T                ptr = NULL;
+    volatile struct membkt *bkt;
+    struct membuf          *buf;
+    MEMUWORD_T              info = 0;
+    MEMUWORD_T              nblk = membufnblk(slot, type);
+    MEMADR_T                upval = 0;
     
     arn = tls_arn;
     if (type == MEMSMALLBUF) {
@@ -760,11 +742,6 @@ memgetblk(long slot, long type, size_t align)
                 buf = memallocsmallbuf(slot);
                 if (buf) {
                     ptr = meminitsmallbuf(buf);
-#if 0
-                    if (ptr) {
-                        memputptr(buf, ptr, align, 0);
-                    }
-#endif
                     upval = (MEMADR_T)bkt->list;
                     upval &= ~MEMLKBIT;
                     buf->next = (struct membuf *)upval;
@@ -808,11 +785,6 @@ memgetblk(long slot, long type, size_t align)
                 buf = memallocpagebuf(slot, nblk);
                 if (buf) {
                     ptr = meminitpagebuf(buf, nblk);
-#if 0
-                    if (ptr) {
-                        memputptr(buf, ptr, align, 0);
-                    }
-#endif
                     upval = (MEMADR_T)bkt->list;
                     upval &= ~MEMLKBIT;
                     buf->next = (struct membuf *)upval;
@@ -835,11 +807,6 @@ memgetblk(long slot, long type, size_t align)
             buf = memallocbigbuf(slot, nblk);
             if (buf) {
                 ptr = meminitbigbuf(buf, nblk);
-#if 0
-                if (ptr) {
-                    memputptr(buf, ptr, align, 0);
-                }
-#endif
                 upval = (MEMADR_T)bkt->list;
                 upval &= ~MEMLKBIT;
                 buf->next = (struct membuf *)upval;
@@ -869,15 +836,15 @@ memgetblk(long slot, long type, size_t align)
 void
 memputblk(void *ptr, struct membuf *buf, MEMUWORD_T info)
 {
-    struct membkt *bkt = buf->bkt;
-    MEMUWORD_T     ndx = info & MEMPAGENDXMASK;
-    MEMUWORD_T     slot = memgetbufslot(buf);;
-    MEMUWORD_T     nblk = memgetbufnblk(buf);
-    MEMUWORD_T     nfree = memgetbufnfree(buf);
-    MEMUWORD_T     type = memgetbuftype(buf);;
-    MEMPTR_T       adr;
-    MEMADR_T       upval;
-    MEMUWORD_T     id;
+    volatile struct membkt *bkt = buf->bkt;
+    MEMUWORD_T              ndx = info & MEMPAGENDXMASK;
+    MEMUWORD_T              slot = memgetbufslot(buf);
+    MEMUWORD_T              nblk = memgetbufnblk(buf);
+    MEMUWORD_T              nfree = memgetbufnfree(buf);
+    MEMUWORD_T              type = memgetbuftype(buf);
+    MEMPTR_T                adr;
+    MEMADR_T                upval;
+    MEMUWORD_T              id;
 
 #if (MEMTEST)
     _memchkptr(buf, ptr);
