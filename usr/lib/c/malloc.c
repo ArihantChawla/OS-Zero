@@ -30,7 +30,6 @@ _malloc(size_t size, size_t align, long flg)
                          : MEMBIGBUF));
     long      slot;
     void     *ptr;
-    MEMPTR_T  adr;
 
     if (!tls_arn && !meminitarn()) {
 

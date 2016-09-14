@@ -105,3 +105,10 @@
         *(rpp) = _item;                                                 \
     } while (FALSE)
 
+#if (LONGSIZE == 8) || (LONGLONGSIZE == 8)
+uint64_t
+#elif (LONGSIZE == 4)
+uint32_t
+#endif
+razohash(void *ptr, size_t len, size_t nbit);
+

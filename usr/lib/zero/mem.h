@@ -275,7 +275,7 @@ struct membuf {
 struct memhash {
     struct memhash     *chain;
     volatile MEMWORD_T  nref;
-    MEMADR_T            key;
+    MEMADR_T            adr;
     MEMADR_T            val;
 };
 
@@ -515,6 +515,10 @@ MEMPTR_T        memgetblk(long slot, long type, size_t align);
 void *          memputbuf(void *ptr, struct membuf *buf, MEMUWORD_T info);
 MEMADR_T        memfindbuf(void *ptr, long rel);
 void            memputblk(void *ptr, struct membuf *buf, MEMUWORD_T info);
+#if (MEMTEST)
+long            _memchkptr(struct membuf *buf, MEMPTR_T ptr);
+long            _memchkbuf(struct membuf *buf);
+#endif
 
 #endif /* __ZERO_MEM_H__ */
 

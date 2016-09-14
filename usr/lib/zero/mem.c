@@ -11,6 +11,7 @@
 #include <zero/param.h>
 #include <zero/unix.h>
 #include <zero/mem.h>
+#include <zero/hash.h>
 #if (MEM_LK_TYPE == MEM_LK_PRIO)
 #include <zero/priolk.h>
 #endif
@@ -27,6 +28,8 @@ struct mem                          g_mem;
 static void
 memfreetls(void *arg)
 {
+    long slot;
+
     ;
 }
 
@@ -316,7 +319,7 @@ memgetbufblk(struct membuf *head, struct membkt *bkt, MEMUWORD_T *retinfo)
 
 #if (MEMHASH)
 
-static struct memash *
+static struct memhash *
 memgethashitem(void)
 {
     struct memhash *item = NULL;
@@ -327,7 +330,7 @@ memgethashitem(void)
     long            n;
 
     memlkbit(&g_mem.hashbuf);
-    upval = g_mem.hashbuf;
+    upval = (MEMADR_T)g_mem.hashbuf;
     upval &= ~MEMLKBIT;
     if (upval) {
         item = (struct memhash *)upval;
@@ -348,7 +351,7 @@ memgethashitem(void)
             cur++;
             prev->chain = cur;
         }
-        upval = g_mem.hashbuf;
+        upval = (MEMADR_T)g_mem.hashbuf;
         upval &= ~MEMLKBIT;
         cur->chain = (struct memhash *)upval;
         m_syncwrite(&g_mem.hashbuf, first);
@@ -364,7 +367,7 @@ membufhashitem(struct memhash *item)
 {
     MEMADR_T upval;
 
-    item->key = 0;
+    item->adr = 0;
     item->val = 0;
     memlkbit(&g_mem.hashbuf);
     upval = (MEMADR_T)g_mem.hashbuf;
@@ -378,18 +381,21 @@ membufhashitem(struct memhash *item)
 MEMADR_T
 memfindbuf(void *ptr, long incr)
 {
-    MEMADR_T        upval = (MEMADR_T)ptr;
+    MEMADR_T        adr = (MEMADR_T)ptr;
+    MEMADR_T        upval;
     long            key;
-    struct memhash *item = &g_mem.hash[key];
+    struct memhash *item;
     struct memhash *prev = NULL;
     MEMADR_T        val;
 
-    upval >>= PAGESIZELOG2;
-    key = razohash((void *)upval, sizeof(void *), MEMHASHBITS);
+    adr >>= PAGESIZELOG2;
+    key = razohash((void *)adr, sizeof(void *), MEMHASHBITS);
     memlkbit(&g_mem.hash[key].chain);
-    item = (struct memhash *)((MEMADR_T)g_mem.hash[key].chain & ~MEMLKBIT);
+    upval = (MEMADR_T)g_mem.hash[key].chain;
+    upval &= ~MEMLKBIT;
+    item = (struct memhash *)upval;
     while (item) {
-        if (item->key == upval) {
+        if (item->adr == adr) {
             val = item->val;
             if (incr) {
                 item->nref += incr;
@@ -422,17 +428,18 @@ memfindbuf(void *ptr, long incr)
 void *
 memputbuf(void *ptr, struct membuf *buf, MEMUWORD_T info)
 {
-    MEMADR_T        upval = (MEMADR_T)ptr;
+    MEMADR_T        adr = (MEMADR_T)ptr;
     MEMADR_T        val = memfindbuf(ptr, 1);
+    MEMADR_T        upval;
     struct memhash *item;
     MEMADR_T        key;
 
-    upval >>= PAGESIZELOG2;
+    adr >>= PAGESIZELOG2;
     if (!val) {
-        key = razohash((void *)upval, sizeof(void *), MEMHASHBITS);
+        key = razohash((void *)adr, sizeof(void *), MEMHASHBITS);
         item = memgethashitem();
         item->nref = 1;
-        item->key = upval;
+        item->adr = adr;
         item->val = (MEMADR_T)buf | info;
         memlkbit(&g_mem.hash[key].chain);
         upval = (MEMADR_T)g_mem.hash[key].chain;
@@ -896,9 +903,7 @@ memgetblk(long slot, long type, size_t align)
     MEMUWORD_T     info = 0;
     MEMUWORD_T     flg = 0;
     MEMUWORD_T     nblk = membufnblk(slot, type);
-    struct membuf *bptr;
-    MEMADR_T       upval = NULL;
-    MEMADR_T       bufval = NULL;
+    MEMADR_T       upval = 0;
 
     arn = tls_arn;
     if (type == MEMSMALLBUF) {
@@ -1100,7 +1105,6 @@ memputblk(void *ptr, struct membuf *buf)
     struct membkt *bkt = buf->bkt;
     MEMWORD_T      nblk = memgetbufnblk(buf);
     MEMWORD_T      nfree = memgetbufnfree(buf);
-    MEMWORD_T      ins = 0;
     MEMPTR_T       adr;
     MEMWORD_T      slot;
     MEMWORD_T      type;
@@ -1117,7 +1121,6 @@ memputblk(void *ptr, struct membuf *buf)
     type = memgetbuftype(buf);
     slot = memgetbufslot(buf);
     if (!bkt) {
-        ins = 1;
         if (type == MEMSMALLBUF) {
             bkt = &tls_arn->smallbin[slot];
         } else if (type == MEMPAGEBUF) {
@@ -1127,15 +1130,6 @@ memputblk(void *ptr, struct membuf *buf)
         }
         memlkbit((m_atomic_t *)&bkt->list);
     }
-#if 0
-    if (type != MEMPAGEBUF) {
-        adr = membufgetptr(buf, ptr);
-        membufsetptr(buf, ptr, NULL);
-    } else {
-        adr = membufgetpage(buf, ptr);
-        membufsetpage(buf, ptr, NULL);
-    }
-#endif
     adr = membufgetptr(buf, ptr);
     membufsetptr(buf, ptr, NULL);
     nfree++;
@@ -1180,7 +1174,6 @@ memputblk(void *ptr, struct membuf *buf, MEMUWORD_T info)
     MEMUWORD_T     ndx = info & MEMPAGENDXMASK;
     MEMWORD_T      nblk = memgetbufnblk(buf);
     MEMWORD_T      nfree = memgetbufnfree(buf);
-    MEMWORD_T      ins = 0;
     MEMPTR_T       adr;
     MEMWORD_T      slot;
     MEMWORD_T      type;
@@ -1196,7 +1189,6 @@ memputblk(void *ptr, struct membuf *buf, MEMUWORD_T info)
     type = memgetbuftype(buf);
     slot = memgetbufslot(buf);
     if (!bkt) {
-//        ins = 1;
         if (type == MEMSMALLBUF) {
             bkt = &tls_arn->smallbin[slot];
         } else if (type == MEMPAGEBUF) {
