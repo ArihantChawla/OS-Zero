@@ -423,8 +423,8 @@ struct memhashitem *
 memfindbuf(void *ptr, MEMWORD_T incr, MEMADR_T *keyret)
 {
     MEMADR_T            adr = (MEMADR_T)ptr;
+    struct memhashitem *slot = NULL;
     MEMADR_T            upval;
-    struct memhashitem *slot;
     long                key;
     struct memhash     *head;
     struct memhash     *blk;
@@ -676,8 +676,8 @@ memsetbuf(void *ptr, struct membuf *buf, MEMUWORD_T info)
     MEMADR_T            key;
     struct memhashitem *slot = memfindbuf(ptr, MEMHASHADD, &key);
     MEMADR_T            val = (MEMADR_T)buf;
+    struct memhash     *item = NULL;
     MEMADR_T            upval;
-    struct memhash     *item;
     struct memhash     *chain;
 
     adr >>= PAGESIZELOG2;
@@ -696,7 +696,7 @@ memsetbuf(void *ptr, struct membuf *buf, MEMUWORD_T info)
         upval &= ~MEMLKBIT;
         slot->adr = adr;
         slot->val = val;
-        chain = (struct memhash *)chain;
+        chain = (struct memhash *)upval;
         item->chain = chain;
         m_syncwrite((m_atomic_t *)&g_mem.hash[key].chain, (m_atomic_t)item);
     }
