@@ -3,6 +3,8 @@
 #include <zero/cdefs.h>
 #include <zero/asm.h>
 #include <zero/mtx.h>
+#define PRIOLKUSEMMAP 1
+#include <zero/unix.h>
 #include <zero/priolk.h>
 
 /* <vendu> eliminated the giant mutex */
@@ -64,8 +66,8 @@ priolkinit(struct priolkdata *data, unsigned long val)
     } else if (data) {
         t_priolkptr = data;
     } else {
-        t_priolkptr = malloc(sizeof(struct priolkdata));
-        if (!t_priolkptr) {
+        t_priolkptr = PRIOLKALLOC(sizeof(struct priolkdata));
+        if (t_priolkptr == ALLOCFAILED) {
             fprintf(stderr, "PRIOLK: failed to allocate priority structure\n");
 
             exit(1);

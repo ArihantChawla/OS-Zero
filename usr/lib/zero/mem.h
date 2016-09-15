@@ -22,12 +22,12 @@
 
 /* generic memory manager definitions for libzero */
 
-#define MEM_LK_NONE 0           // don't use locks; single-thread
-#define MEM_LK_PRIO 1           // priority-based locklessinc.com lock
-#define MEM_LK_FMTX 2           // anonymous non-recursive mutex
-#define MEM_LK_SPIN 3           // spinlock
+#define MEM_LK_NONE 0x01        // don't use locks; single-thread
+#define MEM_LK_PRIO 0x02        // priority-based locklessinc.com lock
+#define MEM_LK_FMTX 0x04        // anonymous non-recursive mutex
+#define MEM_LK_SPIN 0x08        // spinlock
 
-#define MEM_LK_TYPE MEM_LK_PRIO // type of locks to use
+#define MEM_LK_TYPE (MEM_LK_PRIO | MEM_LK_FMTX) // types of locks to use
 
 #include <limits.h>
 #include <stddef.h>
@@ -38,11 +38,13 @@
 #include <zero/asm.h>
 #include <zero/unix.h>
 #include <zero/trix.h>
-#if (MEM_LK_TYPE == MEM_LK_PRIO)
+#if (MEM_LK_TYPE & MEM_LK_PRIO)
 #include <zero/priolk.h>
-#elif (MEM_LK_TYPE == MEM_LK_FMTX)
+#endif
+#if (MEM_LK_TYPE & MEM_LK_FMTX)
 #include <zero/mtx.h>
-#elif (MEM_LK_TYPE == MEM_LK_SPIN)
+#endif
+#if (MEM_LK_TYPE & MEM_LK_SPIN)
 #include <zero/spin.h>
 #endif
 #if defined(MEMVALGRIND) && (MEMVALGRIND)
@@ -63,14 +65,12 @@ typedef uintptr_t MEMADR_T;     // address (with possible flag/lock-bits)
 typedef intptr_t  MEMADRDIFF_T; // for possible negative values
 typedef uint8_t * MEMPTR_T;     // could be char * too; needs to be single-byte
 
-#if (MEM_LK_TYPE == MEM_LK_PRIO)
+#if (MEM_LK_TYPE & MEM_LK_PRIO)
 typedef struct priolk MEMLK_T;
-#elif (MEM_LK_TYPE == MEM_LK_FMTX)
+#elif (MEM_LK_TYPE & MEM_LK_FMTX)
 typedef zerofmtx      MEMLK_T;
-#elif (MEM_LK_TYPE == MEM_LK_SPIN)
+#elif (MEM_LK_TYPE & MEM_LK_SPIN)
 typedef zerospin      MEMLK_T;
-#elif (MEM_LK_TYPE == MEM_LK_BIT)
-typedef volatile long MEMLK_T;
 #endif
 
 /* macros */
@@ -83,19 +83,19 @@ typedef volatile long MEMLK_T;
 #define MEMUWORD(u) UINT64_C(u)
 #endif
 
-#if (MEM_LK_TYPE == MEM_LK_PRIO)
+#if (MEM_LK_TYPE & MEM_LK_PRIO)
 #define memgetlk(lp) priolk(lp)
 #define memrellk(lp) priounlk(lp)
-#elif (MEM_LK_TYPE == MEM_LK_FMTX)
+#elif (MEM_LK_TYPE & MEM_LK_FMTX)
 #define memgetlk(lp) fmtxlk(lp)
 #define memrellk(lp) fmtxunlk(lp)
-#elif (MEM_LK_TYPE == MEM_LK_SPIN)
+#elif (MEM_LK_TYPE & MEM_LK_SPIN)
 #define memgetlk(lp) spinlk(lp)
 #define memrellk(lp) spinunlk(lp)
 #endif
 
 #define MEMPAGEBIT      (MEMUWORD(1) << (PAGESIZELOG2 - 1))
-#define MEMPAGEIDMASK   ((MEMUWORD(1) << (PAGESIZELOG2 - 1)) - 1)
+#define MEMPAGEIDMASK   (MEMPAGEBIT - 1)
 #define MEMPAGEINFOMASK (MEMPAGEBIT | MEMPAGEIDMASK)
 /* use the low-order bit of the word or pointer to lock data */
 #define MEMLKBITID      0
@@ -207,7 +207,7 @@ struct membkt {
 #define MEMPAGEBUF     0x01
 #define MEMBIGBUF      0x02
 #define MEMBUFTYPES    3
-#define MEMBUFTYPEBITS 0x03
+#define MEMBUFTYPEBITS 2
 
 struct membufvals {
     MEMUWORD_T *nblk[MEMBUFTYPES];
@@ -245,6 +245,7 @@ struct mem {
     MEMWORD_T           flg;     // memory interface flags
     struct membuf      *heap;    // heap allocations (try sbrk(), then mmap())
     struct membuf      *maps;    // mapped blocks
+    zerofmtx            priolk;
     unsigned long       prioval; // locklessinc priority locks
     MEMLK_T             initlk;  // lock for initialising the structure
     MEMLK_T             heaplk;  // lock for sbrk()
@@ -252,20 +253,39 @@ struct mem {
 
 #define MEMHEAPBIT      (0x01L << (sizeof(MEMWORD_T) * CHAR_BIT - 1))
 #define MEMBUFFLGMASK   (MEMHEAPBIT)
-#define MEMBUFTYPESHIFT (sizeof(MEMWORD_T) * CHAR_BIT - 3)
-#define MEMBUFTYPEMASK  (0x03L << MEMBUFTYPESHIFT)
+#define MEMBUFFLGBITS   1
+#define MEMBUFTYPESHIFT (sizeof(MEMWORD_T) * CHAR_BIT - 1 - MEMBUFTYPEBITS)
+#define MEMBUFTYPEMASK  (((MEMUWORD(1) << MEMBUFTYPEBITS) - 1)          \
+                         << MEMBUFTYPESHIFT)
 #define MEMBUFNBLKBITS  10
 #if (MEMPAGESLOTS == 256)
-#define MEMBUFSLOTBITS  0xff
+#define MEMBUFSLOTBITS  8
 //#define MEMBUFSLOTSHIFT (sizeof(MEMWORD_T) * CHAR_BIT - 10)
 #elif (PTRBITS == 128)
-#define MEMBUFSLOTBITS  0x7f
+#define MEMBUFSLOTBITS  7
 //#define MEMBUFSLOTSHIFT (sizeof(MEMWORD_T) * CHAR_BIT - 9)
 #endif
+#define MEMBUFSLOTMASK  ((MEMUWORD(1) << MEMBUFSLOTBITS) - 1)
 #define MEMBUFSLOTSHIFT (2 * MEMBUFNBLKBITS)
-#define MEMBUFSLOTMASK  (MEMBUFSLOTBITS << MEMBUFSLOTSHIFT)
 #define MEMBUFNBLKMASK  ((MEMWORD(1) << MEMBUFNBLKBITS) - 1)
 #define MEMBUFNFREEMASK (MEMBUFNBLKMASK << MEMBUFNBLKBITS)
+
+#if (MEMBITFIELD)
+
+#define memsetbufflg(buf, f)   ((buf)->info.flg = (f))
+#define memclrbufflg(buf, f)   ((buf)->info.flg &= ~(f))
+#define memsetbufnblk(buf, n)  ((buf)->info.nblk = (n))
+#define memsetbufnfree(buf, n) ((buf)->info.nfree = (n))
+#define memsetbuftype(buf, t)  ((buf)->info.type = (t))
+#define memsetbufslot(buf, id) ((buf)->info.slot = (id))
+#define memgetbufflg(buf, f)   ((buf)->info.flg & (f))
+#define memgetbufnblk(buf)     ((buf)->info.nblk)
+#define memgetbufnfree(buf)    ((buf)->info.nfree)
+#define memgetbuftype(buf)     ((buf)->info.type)
+#define memgetbufslot(buf)     ((buf)->info.slot)
+
+#else
+
 #define memsetbufflg(buf, flg) ((buf)->info |= (flg))
 #define memsetbufnblk(buf, n)                                           \
     ((buf)->info = ((buf)->info & ~MEMBUFNBLKMASK) | (n))
@@ -283,11 +303,28 @@ struct mem {
 #define memgetbufnfree(buf)                                             \
     (((buf)->info >> MEMBUFNBLKBITS) & MEMBUFNBLKMASK)
 #define memgetbuftype(buf)                                              \
-    (((buf)->info >> MEMBUFTYPESHIFT) & MEMBUFTYPEBITS)
+    (((buf)->info >> MEMBUFTYPESHIFT) & MEMBUFTYPEMASK)
 #define memgetbufslot(buf)                                              \
-    (((buf)->info >> MEMBUFSLOTSHIFT) & MEMBUFSLOTBITS)
+    (((buf)->info >> MEMBUFSLOTSHIFT) & MEMBUFSLOTMASK)
+
+#endif
+
+#if (MEMBITFIELD)
+struct membufinfo {
+    unsigned int nblk  : MEMBUFNBLKBITS;
+    unsigned int nfree : MEMBUFNBLKBITS;
+    unsigned int slot  : MEMBUFSLOTBITS;
+    unsigned int type  : MEMBUFTYPEBITS;
+    unsigned int flg   : MEMBUFFLGBITS;
+};
+#endif
+
 struct membuf {
+#if (MEMBITFIELD)
+    struct membufinfo       info;
+#else
     MEMUWORD_T              info; // flags + lock-bit + # of total & free blks
+#endif
     struct membuf          *heap; // previous buf in heap for bufs from sbrk()
     struct membuf          *prev; // previous buf in chain
     struct membuf          *next; // next buf in chain
@@ -377,7 +414,7 @@ struct memitem {
 struct memtls {
     struct membkt     smallbin[PTRBITS]; // blocks of size 1 << slot
     struct membkt     pagebin[MEMPAGESLOTS]; // maps of PAGESIZE * (slot + 1)
-#if (MEM_LK_TYPE == MEM_LK_PRIO)
+#if (MEM_LK_TYPE & MEM_LK_PRIO)
     struct priolkdata priolkdata;
 #endif
     pthread_once_t    once;
@@ -631,37 +668,37 @@ memgenptrcl(MEMPTR_T ptr, MEMUWORD_T blksz, MEMUWORD_T size)
 #define membufsetpage(buf, ndx, adr)                                    \
     ((buf)->ptrtab[(ndx)] = (adr))
 
+#if 0
 #define memgetnblk(slot, type)                                          \
     (membufnblk(type, slot))
 #define memgetntls(slot, type)                                          \
     (membufntls(type, slot))
 #define memgetnglob(slot, type)                                         \
     (membufnglob(type, slot))
-#if 0
+#endif
 #define memgetnblk(slot, type)                                          \
     (g_mem.bufvals.nblk[type][slot])
 #define memgetntls(slot, type)                                          \
     (g_mem.bufvals.ntls[type][slot])
 #define memgetnglob(slot, type)                                         \
     (g_mem.bufvals.nglob[type][slot])
-#endif
 
-void                 meminit(void);
-struct memtls *      meminittls(void);
-MEMPTR_T             memgetblk(MEMUWORD_T slot, MEMUWORD_T type,
-                               MEMUWORD_T size, MEMUWORD_T align);
-void *               memsetbuf(void *ptr, struct membuf *buf, MEMUWORD_T info);
+void            meminit(void);
+struct memtls * meminittls(void);
+MEMPTR_T        memgetblk(MEMUWORD_T slot, MEMUWORD_T type,
+                          MEMUWORD_T size, MEMUWORD_T align);
+void *          memsetbuf(void *ptr, struct membuf *buf, MEMUWORD_T info);
 #if (MEMARRAYHASH)
-struct memhashitem * memfindbuf(void *ptr, MEMWORD_T incr, MEMADR_T *keyret);
+MEMADR_T        memfindbuf(void *ptr, MEMWORD_T incr, MEMADR_T val);
 #elif (MEMHASH)
-MEMADR_T             memfindbuf(void *ptr, MEMWORD_T incr, MEMADR_T *keyret);
+MEMADR_T        memfindbuf(void *ptr, MEMWORD_T incr, MEMADR_T *keyret);
 #else
-MEMADR_T             memfindbuf(void *ptr, long rel);
+MEMADR_T        memfindbuf(void *ptr, long rel);
 #endif
-void                 memputblk(void *ptr, struct membuf *buf, MEMUWORD_T info);
+void            memputblk(void *ptr, struct membuf *buf, MEMUWORD_T info);
 #if (MEMTEST)
-long                 _memchkptr(struct membuf *buf, MEMPTR_T ptr);
-long                 _memchkbuf(struct membuf *buf);
+long            _memchkptr(struct membuf *buf, MEMPTR_T ptr);
+long            _memchkbuf(struct membuf *buf);
 #endif
 
 #if (MEMSTAT)

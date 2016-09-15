@@ -14,7 +14,7 @@
 #include <zero/trix.h>
 #include "_malloc.h"
 
-extern THREADLOCAL volatile struct memarn *g_memtls;
+extern THREADLOCAL volatile struct memtls *g_memtls;
 extern struct mem                          g_mem;
 
 static void *
@@ -63,9 +63,6 @@ _malloc(size_t size, size_t align, long flg)
 static void
 _free(void *ptr)
 {
-#if (MEMARRAYHASH)
-    struct memhashitem *item;
-#endif
     MEMADR_T            desc;
     MEMUWORD_T          info;
 
@@ -81,9 +78,7 @@ _free(void *ptr)
         exit(1);
     }
 #if (MEMARRAYHASH)
-    item = memfindbuf(ptr, MEMHASHDEL, NULL);
-    crash(item != NULL);
-    desc = item->val;
+    desc = memfindbuf(ptr, MEMHASHDEL, 0);
 #elif (MEMHASH)
     desc = memfindbuf(ptr, -1, NULL);
 #else
@@ -114,18 +109,17 @@ _realloc(void *ptr,
 {
     void          *retptr = NULL;
 #if (MEMARRAYHASH)
-    struct memhashitem *item = (ptr) ? memfindbuf(ptr, MEMHASHCHK, NULL) : NULL;
-    MEMADR_T            desc = (item) ? item->val : 0;
+    MEMADR_T       desc = (ptr) ? memfindbuf(ptr, MEMHASHCHK, 0) : 0;
 #elif (MEMHASH)
-    MEMADR_T            desc = (ptr) ? memfindbuf(ptr, 0, NULL) : 0;
+    MEMADR_T       desc = (ptr) ? memfindbuf(ptr, 0, NULL) : 0;
 #endif
 #if (MEMHASH) || (MEMARRAYHASH)
-    struct membuf       *buf = (struct membuf *)(desc & ~MEMPAGEINFOMASK);
+    struct membuf *buf = (struct membuf *)(desc & ~MEMPAGEINFOMASK);
 #else
-    struct membuf       *buf = (ptr) ? memfindbuf(ptr, 0) : NULL;
+    struct membuf *buf = (ptr) ? memfindbuf(ptr, 0) : NULL;
 #endif
-    void                *oldptr = (buf) ? membufgetptr(buf, ptr) : NULL;
-    size_t              sz = (buf) ? membufblksize(buf) : 0;
+    void          *oldptr = (buf) ? membufgetptr(buf, ptr) : NULL;
+    size_t         sz = (buf) ? membufblksize(buf) : 0;
 
     retptr = _malloc(size, 0, 0);
     if (retptr) {
@@ -444,17 +438,16 @@ size_t
 malloc_usable_size(void *ptr)
 {
 #if (MEMARRAYHASH)
-    struct memhashitem *item = (ptr) ? memfindbuf(ptr, MEMHASHCHK, NULL) : NULL;
-    MEMADR_T            val = (item) ? item->val : 0;
+    MEMADR_T       desc = (ptr) ? memfindbuf(ptr, MEMHASHCHK, 0) : 0;
 #elif (MEMHASH)
-    MEMADR_T            val = (ptr) ? memfindbuf(ptr, 0, NULL) : 0;
+    MEMADR_T       desc = (ptr) ? memfindbuf(ptr, 0, NULL) : 0;
 #endif
 #if (MEMHASH) || (MEMARRAYHASH)
-    struct membuf      *buf = (struct membuf *)(val & ~MEMPAGEINFOMASK);
+    struct membuf *buf = (struct membuf *)(desc & ~MEMPAGEINFOMASK);
 #else
-    struct membuf      *buf = memfindbuf(ptr, 0);
+    struct membuf *buf = memfindbuf(ptr, 0);
 #endif
-    size_t              sz = membufblksize(buf);
+    size_t         sz = membufblksize(buf);
     
     return sz;
 }
@@ -489,17 +482,16 @@ size_t
 malloc_size(void *ptr)
 {
 #if (MEMARRAYHASH)
-    struct memhashitem *item = (ptr) ? memfindbuf(ptr, MEMHASHCHK, NULL) : NULL;
-    MEMADR_T            val = (item) ? item->val : 0;
+    MEMADR_T       desc = (ptr) ? memfindbuf(ptr, MEMHASHCHK, 0) : 0;
 #elif (MEMHASH)
-    MEMADR_T            val = (ptr) ? memfindbuf(ptr, 0, NULL) : 0;
+    MEMADR_T       desc = (ptr) ? memfindbuf(ptr, 0, NULL) : 0;
 #endif
 #if (MEMHASH) || (MEMARRAYHASH)
-    struct membuf      *buf = (struct membuf *)(val & ~MEMPAGEINFOMASK);
+    struct membuf *buf = (struct membuf *)(desc & ~MEMPAGEINFOMASK);
 #else
-    struct membuf      *buf = memfindbuf(ptr, 0);
+    struct membuf *buf = memfindbuf(ptr, 0);
 #endif
-    size_t              sz = membufblksize(buf);
+    size_t         sz = membufblksize(buf);
 
     return sz;
 }
