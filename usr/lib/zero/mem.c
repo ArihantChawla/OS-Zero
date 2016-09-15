@@ -22,9 +22,70 @@ struct mem                          g_mem;
 static void
 memfreetls(void *arg)
 {
-    long slot;
+    struct memtls *tls = arg;
+    struct membkt *src;
+    struct membkt *dest;
+    MEMUWORD_T     slot;
+    MEMUWORD_T     n;
+    struct membuf *head;
+    struct membuf *buf;
+    MEMADR_T       upval;
 
-    ;
+    src = &tls->smallbin[0];
+    dest = &g_mem.smallbin[0];
+    for (slot = 0 ; slot < PTRBITS ; slot++) {
+        memlkbit(&src->list);
+        upval = (MEMADR_T)src->list;
+        upval &= ~MEMLKBIT;
+        head = (struct membuf *)upval;
+        if (head) {
+            buf = head;
+            buf->bkt = dest;
+            while (buf->next) {
+                buf = buf->next;
+                buf->bkt = dest;
+            }
+            n = src->nbuf;
+            memlkbit(&dest->list);
+            upval = (MEMADR_T)dest->list;
+            upval &= ~MEMLKBIT;
+            dest->nbuf += n;
+            buf->next = (struct membuf *)upval;
+            m_syncwrite((m_atomic_t *)&dest->list, (m_atomic_t)head);
+        }
+        memrelbit(&src->list);
+        src++;
+        dest++;
+    }
+    src = &tls->pagebin[0];
+    dest = &g_mem.pagebin[0];
+    for (slot = 0 ; slot < MEMPAGESLOTS ; slot++) {
+        memlkbit(&src->list);
+        upval = (MEMADR_T)src->list;
+        upval &= ~MEMLKBIT;
+        head = (struct membuf *)upval;
+        if (head) {
+            buf = head;
+            buf->bkt = dest;
+            while (buf->next) {
+                buf = buf->next;
+                buf->bkt = dest;
+            }
+            n = src->nbuf;
+            memlkbit(&dest->list);
+            upval = (MEMADR_T)dest->list;
+            upval &= ~MEMLKBIT;
+            dest->nbuf += n;
+            buf->next = (struct membuf *)upval;
+            m_syncwrite((m_atomic_t *)&dest->list, (m_atomic_t)head);
+        }
+        memrelbit(&src->list);
+        src++;
+        dest++;
+    }
+    unmapanon(tls, memtlssize());
+
+    return;
 }
 
 static unsigned long
@@ -42,24 +103,22 @@ memgetprioval(void)
 struct memtls *
 meminittls(void)
 {
-    struct memtls *tls;
+    struct memtls *tls = NULL;
+    MEMPTR_T       adr;
     unsigned long  val;
-//    long           slot;
 
-    tls = mapanon(0, MEMTLSSIZE);
-    if (tls != MAP_FAILED) {
+    adr = mapanon(0, memtlssize());
+    if (adr != MAP_FAILED) {
+#if 0
+        tls = (struct memtls *)memgenptrcl(adr, memtlssize(),
+                                           sizeof(struct memtls));
+#endif
+        tls = (struct memtls *)adr;
         val = memgetprioval();
         pthread_key_create(&tls->key, memfreetls);
+        pthread_setspecific(tls->key, tls);
 #if (MEM_LK_TYPE == MEM_LK_PRIO)
         priolkinit(&tls->priolkdata, val);
-#endif
-#if 0
-        for (slot = 0 ; slot < PTRBITS ; slot++) {
-            tls->smallbin[slot].slot = slot;
-        }
-        for (slot = 0 ; slot < MEMPAGEBINS ; slot++) {
-            tls->pagebin[slot].slot = slot;
-        }
 #endif
         g_memtls = tls;
     }
@@ -70,19 +129,19 @@ meminittls(void)
 static void
 memprefork(void)
 {
-    MEMUWORD_T bin;
+    MEMUWORD_T slot;
 
     memgetlk(&g_mem.initlk);
     memgetlk(&g_mem.heaplk);
-    for (bin = 0 ; bin < PTRBITS ; bin++) {
-        memlkbit(&g_mem.smallbin[bin].list);
-        memlkbit(&g_mem.bigbin[bin].list);
+    for (slot = 0 ; slot < PTRBITS ; slot++) {
+        memlkbit(&g_mem.smallbin[slot].list);
+        memlkbit(&g_mem.bigbin[slot].list);
     }
-    for (bin = 0 ; bin < MEMPAGEBINS ; bin++) {
-        memlkbit(&g_mem.pagebin[bin].list);
+    for (slot = 0 ; slot < MEMPAGESLOTS ; slot++) {
+        memlkbit(&g_mem.pagebin[slot].list);
     }
-    for (bin = 0 ; bin < MEMHASHITEMS ; bin++) {
-        memlkbit(&g_mem.hash[bin].chain);
+    for (slot = 0 ; slot < MEMHASHITEMS ; slot++) {
+        memlkbit(&g_mem.hash[slot].chain);
     }
 
     return;
@@ -91,17 +150,17 @@ memprefork(void)
 static void
 mempostfork(void)
 {
-    MEMUWORD_T bin;
+    MEMUWORD_T slot;
 
-    for (bin = 0 ; bin < MEMHASHITEMS ; bin++) {
-        memrelbit(&g_mem.hash[bin].chain);
+    for (slot = 0 ; slot < MEMHASHITEMS ; slot++) {
+        memrelbit(&g_mem.hash[slot].chain);
     }
-    for (bin = 0 ; bin < MEMPAGEBINS ; bin++) {
-        memrelbit(&g_mem.pagebin[bin].list);
+    for (slot = 0 ; slot < MEMPAGESLOTS ; slot++) {
+        memrelbit(&g_mem.pagebin[slot].list);
     }
-    for (bin = 0 ; bin < PTRBITS ; bin++) {
-        memrelbit(&g_mem.bigbin[bin].list);
-        memrelbit(&g_mem.smallbin[bin].list);
+    for (slot = 0 ; slot < PTRBITS ; slot++) {
+        memrelbit(&g_mem.bigbin[slot].list);
+        memrelbit(&g_mem.smallbin[slot].list);
     }
     memrellk(&g_mem.heaplk);
     memrellk(&g_mem.initlk);
@@ -430,9 +489,7 @@ memfindbuf(void *ptr, MEMWORD_T incr, MEMADR_T *keyret)
     struct memhash     *blk;
     struct memhash     *prev;
     struct memhashitem *src;
-    MEMADR_T            val;
     MEMUWORD_T          n;
-    MEMUWORD_T          ndx;
     MEMUWORD_T          found;
 
     adr >>= PAGESIZELOG2;

@@ -152,7 +152,6 @@ typedef volatile long MEMLK_T;
 /* maximum small buf size is (MEMBUFBLKS << MEMMAXSMALLSHIFT) + bookkeeping */
 #define MEMMAXSMALLSHIFT   (PAGESIZELOG2 - 1)
 /* maximum page bin block size is PAGESIZE * PTRBITS */
-#define MEMPAGEBINS        (4 * PTRBITS)
 //#define MEMMAXPAGESLOT     (PTRBITS - 1)
 /* NOTES
  * -----
@@ -191,7 +190,7 @@ struct membkt {
     struct membuf *list;        // bi-directional list of bufs + lock-bit
 #endif
 //    MEMWORD_T      slot;        // bucket slot #
-    MEMWORD_T      nbuf;        // number of bufs in list
+    MEMUWORD_T     nbuf;        // number of bufs in list
     uint8_t        _pad[CLSIZE
 #if (MEMLFDEQ)
                         - sizeof(struct lfdeq)
@@ -211,10 +210,11 @@ struct membkt {
 
 #define MEMINITBIT   (1L << 0)
 #define MEMNOHEAPBIT (1L << 1)
+#define MEMPAGESLOTS (4 * PTRBITS)
 struct mem {
     struct membkt    smallbin[PTRBITS]; // blocks of 1 << slot
     struct membkt    bigbin[PTRBITS]; // mapped blocks of 1 << slot
-    struct membkt    pagebin[MEMPAGEBINS]; // maps of PAGESIZE * (slot + 1)
+    struct membkt    pagebin[MEMPAGESLOTS]; // maps of PAGESIZE * (slot + 1)
 #if (MEMHASH)
     struct memhash  *hash;      // hash table
     struct memhash  *hashbuf;   // buffer for hash items
@@ -232,16 +232,15 @@ struct mem {
 };
 
 #define MEMHEAPBIT      (0x01L << (sizeof(MEMWORD_T) * CHAR_BIT - 1))
-#define MEMEMPTYBIT     (0x01L << (sizeof(MEMWORD_T) * CHAR_BIT - 2))
-#define MEMBUFFLGMASK   (MEMHEAPBIT | MEMEMPTYBIT)
-#define MEMBUFTYPESHIFT (sizeof(MEMWORD_T) * CHAR_BIT - 4)
+#define MEMBUFFLGMASK   (MEMHEAPBIT)
+#define MEMBUFTYPESHIFT (sizeof(MEMWORD_T) * CHAR_BIT - 3)
 #define MEMBUFTYPEMASK  (0x03L << MEMBUFTYPESHIFT)
 #define MEMBUFNBLKBITS  10
-#if (PTRBITS == 64)
-#define MEMBUFSLOTBITS  0x3f
+#if (MEMPAGESLOTS == 256)
+#define MEMBUFSLOTBITS  0xff
 //#define MEMBUFSLOTSHIFT (sizeof(MEMWORD_T) * CHAR_BIT - 10)
-#elif (PTRBITS == 32)
-#define MEMBUFSLOTBITS  0x1f
+#elif (PTRBITS == 128)
+#define MEMBUFSLOTBITS  0x7f
 //#define MEMBUFSLOTSHIFT (sizeof(MEMWORD_T) * CHAR_BIT - 9)
 #endif
 #define MEMBUFSLOTSHIFT (2 * MEMBUFNBLKBITS)
@@ -362,10 +361,10 @@ struct memitem {
  * NOTE: the arenas are mmap()'d as PAGESIZE-allocations so there's going
  * to be some room in the end for arbitrary data
  */
-#define MEMTLSSIZE rounduppow2(sizeof(struct memtls), PAGESIZE)
+#define memtlssize() rounduppow2(sizeof(struct memtls), PAGESIZE)
 struct memtls {
     struct membkt     smallbin[PTRBITS]; // blocks of size 1 << slot
-    struct membkt     pagebin[PTRBITS];  // map blocks of PAGESIZE * (slot + 1)
+    struct membkt     pagebin[MEMPAGESLOTS]; // maps of PAGESIZE * (slot + 1)
 #if (MEM_LK_TYPE == MEM_LK_PRIO)
     struct priolkdata priolkdata;
 #endif
