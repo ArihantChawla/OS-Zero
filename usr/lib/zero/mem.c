@@ -70,9 +70,6 @@ meminit(void)
     long  ofs;
     void *ptr;
 
-#if (MEMDEBUG)
-    fprintf(stderr, "MEMALIGNSHIFT: %ld\n", MEMALIGNSHIFT);
-#endif
     memgetlk(&g_mem.initlk);
     if (g_mem.flg & MEMINITBIT) {
         memrellk(&g_mem.initlk);
@@ -305,6 +302,7 @@ memgethashitem(void)
     struct memhash *first;
     struct memhash *prev;
     struct memhash *cur;
+    MEMUWORD_T      bsz;
     MEMADR_T        upval;
     long            n;
 
@@ -315,8 +313,17 @@ memgethashitem(void)
         item = (struct memhash *)upval;
         m_syncwrite((m_atomic_t *)&g_mem.hashbuf, (m_atomic_t)item->chain);
     } else {
+#if (MEMBIGARRAYHASH)
+        n = 4 * PAGESIZE / memhashsize();
+        bsz = 4 * PAGESIZE;
+#elif (MEMARRAYHASH)
+        n = PAGESIZE / memhashsize();
+        bsz = PAGESIZE;
+#else
         n = PAGESIZE / sizeof(struct memhash);
-        item = mapanon(0, PAGESIZE);
+        bsz = PAGESIZE;
+#endif
+        item = mapanon(0, bsz);
         if (item == MAP_FAILED) {
 
             abort();
@@ -398,6 +405,78 @@ memfindbuf(void *ptr, MEMWORD_T incr, MEMADR_T *keyret)
         do {
             n = blk->ntab;
             switch (n) {
+#if (MEMBIGARRAYHASH)
+                case 20:
+                    slot = &blk->tab[19];
+                    if (slot->adr == adr) {
+                        found++;
+                        
+                        break;
+                    }
+                case 19:
+                    slot = &blk->tab[18];
+                    if (slot->adr == adr) {
+                        found++;
+                        
+                        break;
+                    }
+                case 18:
+                    slot = &blk->tab[17];
+                    if (slot->adr == adr) {
+                        found++;
+                        
+                        break;
+                    }
+                case 17:
+                    slot = &blk->tab[16];
+                    if (slot->adr == adr) {
+                        found++;
+                        
+                        break;
+                    }
+                case 16:
+                    slot = &blk->tab[15];
+                    if (slot->adr == adr) {
+                        found++;
+                        
+                        break;
+                    }
+                case 15:
+                    slot = &blk->tab[14];
+                    if (slot->adr == adr) {
+                        found++;
+                        
+                        break;
+                    }
+                case 14:
+                    slot = &blk->tab[13];
+                    if (slot->adr == adr) {
+                        found++;
+                        
+                        break;
+                    }
+                case 13:
+                    slot = &blk->tab[12];
+                    if (slot->adr == adr) {
+                        found++;
+                        
+                        break;
+                    }
+                case 12:
+                    slot = &blk->tab[11];
+                    if (slot->adr == adr) {
+                        found++;
+                        
+                        break;
+                    }
+                case 11:
+                    slot = &blk->tab[10];
+                    if (slot->adr == adr) {
+                        found++;
+                        
+                        break;
+                    }
+#endif
                 case 10:
                     slot = &blk->tab[9];
                     if (slot->adr == adr) {
@@ -484,7 +563,14 @@ memfindbuf(void *ptr, MEMWORD_T incr, MEMADR_T *keyret)
             if (incr == MEMHASHDEL) {
                 n--;
                 if (slot->nref) {
-                    memrelbit(&g_mem.hash[key].chain);
+                    if (prev) {
+                        prev->chain = blk->chain;
+                        blk->chain = head;
+                        m_syncwrite((m_atomic_t *)&g_mem.hash[key].chain,
+                                    (m_atomic_t)blk);
+                    } else {
+                        memrelbit(&g_mem.hash[key].chain);
+                    }
                 } else if (blk->ntab == 1) {
                     if (prev) {
                         prev->chain = blk->chain;
@@ -503,7 +589,14 @@ memfindbuf(void *ptr, MEMWORD_T incr, MEMADR_T *keyret)
                     memrelbit(&g_mem.hash[key].chain);
                 }
             } else {
-                memrelbit(&g_mem.hash[key].chain);
+                if (prev) {
+                    prev->chain = blk->chain;
+                    blk->chain = head;
+                    m_syncwrite((m_atomic_t *)&g_mem.hash[key].chain,
+                                (m_atomic_t)blk);
+                } else {
+                    memrelbit(&g_mem.hash[key].chain);
+                }
             }
         } else {
             memrelbit(&g_mem.hash[key].chain);
@@ -565,63 +658,6 @@ memsetbuf(void *ptr, struct membuf *buf, MEMUWORD_T info)
 }
 
 #elif (MEMHASH)
-
-#if 0
-MEMADR_T
-memfindbuf(void *ptr, MEMWORD_T incr, MEMADR_T *keyret)
-{
-    MEMADR_T        adr = (MEMADR_T)ptr;
-    MEMADR_T        upval;
-    long            key;
-    struct memhash *item;
-    struct memhash *prev;
-    MEMADR_T        val;
-
-    adr >>= PAGESIZELOG2;
-//    key = razohash((void *)adr, sizeof(void *), MEMHASHBITS);
-    key = adr & ((MEMWORD(1) << MEMHASHBITS) - 1);
-    if (keyret) {
-        *keyret = key;
-    }
-    memlkbit(&g_mem.hash[key].chain);
-    upval = (MEMADR_T)g_mem.hash[key].chain;
-    upval &= ~MEMLKBIT;
-    item = (struct memhash *)upval;
-    prev = NULL;
-    while (item) {
-        if (item->adr == adr) {
-            val = item->val;
-            if (incr) {
-                item->nref += incr;
-#if (MEMDEBUG)
-                crash(item->nref >= 0);
-#endif
-                if (item->nref) {
-                    memrelbit(&g_mem.hash[key].chain);
-                } else {
-                    if (prev) {
-                        prev->chain = item->chain;
-                        memrelbit(&g_mem.hash[key].chain);
-                    } else {
-                        m_syncwrite((m_atomic_t *)&g_mem.hash[key].chain,
-                                    (m_atomic_t)item->chain);
-                    }
-                    membufhashitem(item);
-                }
-            } else {
-                memrelbit(&g_mem.hash[key].chain);
-            }
-            
-            return val;
-        }
-        prev = item;
-        item = item->chain;
-    }
-    memrelbit(&g_mem.hash[key].chain);
-
-    return 0;
-}
-#endif
 
 MEMADR_T
 memfindbuf(void *ptr, MEMWORD_T incr, MEMADR_T *keyret)

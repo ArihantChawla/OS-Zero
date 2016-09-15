@@ -293,8 +293,12 @@ struct memhashitem {
     MEMADR_T  val;
 };
 
+/* in practice, this structure is 32 or 64 machine words in size */
+#if (MEMBIGARRAYHASH)
+#define MEMHASHTABITEMS 20
+#else
 #define MEMHASHTABITEMS 10
-/* in practice, this structure is 32 machine words in size */
+#endif
 #define memhashsize() rounduppow2(sizeof(struct memhash), CLSIZE)
 struct memhash {
     struct memhash     *chain;
