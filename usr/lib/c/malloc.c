@@ -39,11 +39,6 @@ _malloc(size_t size, size_t align, long flg)
         meminit();
     }
     memcalcslot(bsz, slot);
-#if 0
-    if (type == MEMPAGEBUF) {
-        slot -= PAGESIZELOG2;
-    }
-#endif
     ptr = memgetblk(slot, type, size, aln);
     if (!ptr) {
 #if defined(ENOMEM)
@@ -72,7 +67,7 @@ _free(void *ptr)
     struct memhashitem *item;
 #endif
     MEMADR_T            desc;
-    MEMUWORD_T          info;
+    MEMUWORD_T          ndx;
 
     if (!ptr) {
 
@@ -97,9 +92,12 @@ _free(void *ptr)
 #if (MEMDEBUG)
     crash(desc != 0);
 #endif
-    info = desc & MEMPAGENDXMASK;
+#if 0
     desc &= ~MEMPAGENDXMASK;
-    memputblk(ptr, (struct membuf *)desc, info);
+#endif
+    ndx = desc & MEMPAGENDXMASK;
+    desc &= ~MEMPAGEINFOMASK;
+    memputblk(ptr, (struct membuf *)desc, ndx);
     VALGRINDFREE(ptr);
 
     return;

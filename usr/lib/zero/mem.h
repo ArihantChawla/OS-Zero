@@ -94,7 +94,9 @@ typedef volatile long MEMLK_T;
 #define memrellk(lp) spinunlk(lp)
 #endif
 
-#define MEMPAGENDXMASK  ((MEMUWORD(1) << PAGESIZELOG2) - 1)
+#define MEMPAGEBIT      (MEMUWORD(1) << (PAGESIZELOG2 - 1))
+#define MEMPAGENDXMASK  ((MEMUWORD(1) << (PAGESIZELOG2 - 1)) - 1)
+#define MEMPAGEINFOMASK (MEMPAGEBIT | MEMPAGENDXMASK)
 /* use the low-order bit of the word or pointer to lock data */
 #define MEMLKBITID      0
 #define MEMLKBIT        (1L << MEMLKBITID)
