@@ -202,17 +202,6 @@ struct membkt {
                         - sizeof(MEMWORD_T)];
 };
 
-/* type-bits for the final-level table pointers */
-#define MEMSMALLBUF    0x00
-#define MEMPAGEBUF     0x01
-#define MEMBIGBUF      0x02
-#define MEMBUFTYPES    3
-#define MEMBUFTYPEBITS 0x03
-
-struct memnblk {
-    MEMUWORD_T *tab[MEMBUFTYPES];
-};
-
 /*
  * buf structure for allocating runs of pages; crafted to fit in a cacheline
  * - a second cacheline is used for the bitmap; 1-bits denote blocks in use
@@ -228,7 +217,6 @@ struct mem {
     struct membkt       smallbin[PTRBITS]; // blocks of 1 << slot
     struct membkt       bigbin[PTRBITS]; // mapped blocks of 1 << slot
     struct membkt       pagebin[MEMPAGESLOTS]; // maps of PAGESIZE * (slot + 1)
-    struct memnblk      nblk;
 #if (MEMARRAYHASH)
     struct memhashlist *hash;    // hash table
     struct memhash     *hashbuf; // buffer for hash items
@@ -366,6 +354,17 @@ struct memitem {
 };
 
 #endif
+
+/*
+ * we'll have 2 or 3 levels of these + a level of MEMADR_T values for lookups
+ * under the toplevel table
+ */
+/* type-bits for the final-level table pointers */
+#define MEMSMALLBUF    0x00
+#define MEMPAGEBUF     0x01
+#define MEMBIGBUF      0x02
+#define MEMBUFTYPES    3
+#define MEMBUFTYPEBITS 0x03
 
 /*
  * NOTE: the arenas are mmap()'d as PAGESIZE-allocations so there's going
@@ -628,9 +627,6 @@ memgenptrcl(MEMPTR_T ptr, MEMUWORD_T blksz, MEMUWORD_T size)
     ((buf)->ptrtab[(ndx)])
 #define membufsetpage(buf, ndx, adr)                                    \
     ((buf)->ptrtab[(ndx)] = (adr))
-
-#define memgetnblk(slot, type)                                          \
-    (g_mem.nblk.tab[(type)][(slot)])
 
 void                 meminit(void);
 struct memtls *      meminittls(void);

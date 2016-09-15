@@ -67,7 +67,7 @@ _free(void *ptr)
     struct memhashitem *item;
 #endif
     MEMADR_T            desc;
-    MEMUWORD_T          ndx;
+    MEMUWORD_T          info;
 
     if (!ptr) {
 
@@ -93,11 +93,11 @@ _free(void *ptr)
     crash(desc != 0);
 #endif
 #if 0
-    desc &= ~MEMPAGENDXMASK;
+    desc &= ~MEMPAGEIDMASK;
 #endif
-    ndx = desc & MEMPAGENDXMASK;
+    info = desc & MEMPAGEINFOMASK;
     desc &= ~MEMPAGEINFOMASK;
-    memputblk(ptr, (struct membuf *)desc, ndx);
+    memputblk(ptr, (struct membuf *)desc, info);
     VALGRINDFREE(ptr);
 
     return;
@@ -120,7 +120,7 @@ _realloc(void *ptr,
     MEMADR_T            desc = (ptr) ? memfindbuf(ptr, 0, NULL) : 0;
 #endif
 #if (MEMHASH) || (MEMARRAYHASH)
-    struct membuf       *buf = (struct membuf *)(desc & ~MEMPAGENDXMASK);
+    struct membuf       *buf = (struct membuf *)(desc & ~MEMPAGEINFOMASK);
 #else
     struct membuf       *buf = (ptr) ? memfindbuf(ptr, 0) : NULL;
 #endif
@@ -450,7 +450,7 @@ malloc_usable_size(void *ptr)
     MEMADR_T            val = (ptr) ? memfindbuf(ptr, 0, NULL) : 0;
 #endif
 #if (MEMHASH) || (MEMARRAYHASH)
-    struct membuf      *buf = (struct membuf *)(val & ~MEMPAGENDXMASK);
+    struct membuf      *buf = (struct membuf *)(val & ~MEMPAGEINFOMASK);
 #else
     struct membuf      *buf = memfindbuf(ptr, 0);
 #endif
@@ -495,7 +495,7 @@ malloc_size(void *ptr)
     MEMADR_T            val = (ptr) ? memfindbuf(ptr, 0, NULL) : 0;
 #endif
 #if (MEMHASH) || (MEMARRAYHASH)
-    struct membuf      *buf = (struct membuf *)(val & ~MEMPAGENDXMASK);
+    struct membuf      *buf = (struct membuf *)(val & ~MEMPAGEINFOMASK);
 #else
     struct membuf      *buf = memfindbuf(ptr, 0);
 #endif
