@@ -63,6 +63,44 @@ meminittls(void)
     return tls;
 }
 
+static void
+memprefork(void)
+{
+    long ndx;
+
+    memgetlk(&g_mem.initlk);
+    memgetlk(&g_mem.heaplk);
+    for (ndx = 0 ; ndx < PTRBITS ; ndx++) {
+        memlkbit(&g_mem.smallbin[ndx].list);
+        memlkbit(&g_mem.pagebin[ndx].list);
+        memlkbit(&g_mem.bigbin[ndx].list);
+    }
+    for (ndx = 0 ; ndx < MEMHASHITEMS ; ndx++) {
+        memlkbit(&g_mem.hash[ndx].chain);
+    }
+
+    return;
+}
+
+static void
+mempostfork(void)
+{
+    long ndx;
+
+    for (ndx = 0 ; ndx < MEMHASHITEMS ; ndx++) {
+        memlkbit(&g_mem.hash[ndx].chain);
+    }
+    for (ndx = 0 ; ndx < PTRBITS ; ndx++) {
+        memlkbit(&g_mem.bigbin[ndx].list);
+        memlkbit(&g_mem.pagebin[ndx].list);
+        memlkbit(&g_mem.smallbin[ndx].list);
+    }
+    memgetlk(&g_mem.heaplk);
+    memgetlk(&g_mem.initlk);
+
+    return;
+}
+
 void
 meminit(void)
 {
@@ -99,6 +137,7 @@ meminit(void)
         growheap(ofs);
     }
     memrellk(&g_mem.heaplk);
+    pthread_atfork(memprefork, mempostfork, mempostfork);
     g_mem.flg |= MEMINITBIT | MEMNOHEAPBIT;
     memrellk(&g_mem.initlk);
 
