@@ -692,11 +692,11 @@ memsetbuf(void *ptr, struct membuf *buf, MEMUWORD_T info)
         upval = (MEMADR_T)g_mem.hash[key].chain;
         slot = &item->tab[0];
         item->ntab = 1;
-        slot->nref = 1;
         upval &= ~MEMLKBIT;
+        slot->nref = 1;
+        chain = (struct memhash *)upval;
         slot->adr = adr;
         slot->val = val;
-        chain = (struct memhash *)upval;
         item->chain = chain;
         m_syncwrite((m_atomic_t *)&g_mem.hash[key].chain, (m_atomic_t)item);
     }
