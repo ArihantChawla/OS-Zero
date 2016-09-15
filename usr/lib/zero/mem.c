@@ -44,7 +44,7 @@ meminittls(void)
 {
     struct memtls *tls;
     unsigned long  val;
-    long           slot;
+//    long           slot;
 
     tls = mapanon(0, MEMTLSSIZE);
     if (tls != MAP_FAILED) {
@@ -53,10 +53,14 @@ meminittls(void)
 #if (MEM_LK_TYPE == MEM_LK_PRIO)
         priolkinit(&tls->priolkdata, val);
 #endif
+#if 0
         for (slot = 0 ; slot < PTRBITS ; slot++) {
             tls->smallbin[slot].slot = slot;
+        }
+        for (slot = 0 ; slot < MEMPAGEBINS ; slot++) {
             tls->pagebin[slot].slot = slot;
         }
+#endif
         g_memtls = tls;
     }
 
@@ -66,17 +70,19 @@ meminittls(void)
 static void
 memprefork(void)
 {
-    long ndx;
+    long bin;
 
     memgetlk(&g_mem.initlk);
     memgetlk(&g_mem.heaplk);
-    for (ndx = 0 ; ndx < PTRBITS ; ndx++) {
-        memlkbit(&g_mem.smallbin[ndx].list);
-        memlkbit(&g_mem.pagebin[ndx].list);
-        memlkbit(&g_mem.bigbin[ndx].list);
+    for (bin = 0 ; bin < PTRBITS ; bin++) {
+        memlkbit(&g_mem.smallbin[bin].list);
+        memlkbit(&g_mem.bigbin[bin].list);
     }
-    for (ndx = 0 ; ndx < MEMHASHITEMS ; ndx++) {
-        memlkbit(&g_mem.hash[ndx].chain);
+    for (bin = 0 ; bin < MEMPAGEBINS ; bin++) {
+        memlkbit(&g_mem.pagebin[bin].list);
+    }
+    for (bin = 0 ; bin < MEMHASHITEMS ; bin++) {
+        memlkbit(&g_mem.hash[bin].chain);
     }
 
     return;
@@ -85,18 +91,20 @@ memprefork(void)
 static void
 mempostfork(void)
 {
-    long ndx;
+    long bin;
 
-    for (ndx = 0 ; ndx < MEMHASHITEMS ; ndx++) {
-        memlkbit(&g_mem.hash[ndx].chain);
+    for (bin = 0 ; bin < MEMHASHITEMS ; bin++) {
+        memlkbit(&g_mem.hash[bin].chain);
     }
-    for (ndx = 0 ; ndx < PTRBITS ; ndx++) {
-        memlkbit(&g_mem.bigbin[ndx].list);
-        memlkbit(&g_mem.pagebin[ndx].list);
-        memlkbit(&g_mem.smallbin[ndx].list);
+    for (bin = 0 ; bin < MEMPAGEBINS ; bin++) {
+        memlkbit(&g_mem.pagebin[bin].list);
     }
-    memgetlk(&g_mem.heaplk);
-    memgetlk(&g_mem.initlk);
+    for (bin = 0 ; bin < PTRBITS ; bin++) {
+        memlkbit(&g_mem.bigbin[bin].list);
+        memlkbit(&g_mem.smallbin[bin].list);
+    }
+    memrellk(&g_mem.heaplk);
+    memrellk(&g_mem.initlk);
 
     return;
 }

@@ -152,7 +152,8 @@ typedef volatile long MEMLK_T;
 /* maximum small buf size is (MEMBUFBLKS << MEMMAXSMALLSHIFT) + bookkeeping */
 #define MEMMAXSMALLSHIFT   (PAGESIZELOG2 - 1)
 /* maximum page bin block size is PAGESIZE * PTRBITS */
-#define MEMMAXPAGESLOT     (PTRBITS - 1)
+#define MEMPAGEBINS        (4 * PTRBITS)
+//#define MEMMAXPAGESLOT     (PTRBITS - 1)
 /* NOTES
  * -----
  * - all allocations except those from pagebin are power-of-two sizes
@@ -189,7 +190,7 @@ struct membkt {
 #else
     struct membuf *list;        // bi-directional list of bufs + lock-bit
 #endif
-    MEMWORD_T      slot;        // bucket slot #
+//    MEMWORD_T      slot;        // bucket slot #
     MEMWORD_T      nbuf;        // number of bufs in list
     uint8_t        _pad[CLSIZE
 #if (MEMLFDEQ)
@@ -197,7 +198,7 @@ struct membkt {
 #else
                         - sizeof(struct membuf *)
 #endif
-                        - 2 * sizeof(MEMWORD_T)];
+                        - sizeof(MEMWORD_T)];
 };
 
 /*
@@ -212,8 +213,8 @@ struct membkt {
 #define MEMNOHEAPBIT (1L << 1)
 struct mem {
     struct membkt    smallbin[PTRBITS]; // blocks of 1 << slot
-    struct membkt    pagebin[PTRBITS]; // mapped blocks of PAGESIZE * (slot + 1)
     struct membkt    bigbin[PTRBITS]; // mapped blocks of 1 << slot
+    struct membkt    pagebin[MEMPAGEBINS]; // maps of PAGESIZE * (slot + 1)
 #if (MEMHASH)
     struct memhash  *hash;      // hash table
     struct memhash  *hashbuf;   // buffer for hash items
