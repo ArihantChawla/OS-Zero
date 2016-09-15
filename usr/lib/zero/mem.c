@@ -94,14 +94,14 @@ mempostfork(void)
     long bin;
 
     for (bin = 0 ; bin < MEMHASHITEMS ; bin++) {
-        memlkbit(&g_mem.hash[bin].chain);
+        memrelbit(&g_mem.hash[bin].chain);
     }
     for (bin = 0 ; bin < MEMPAGEBINS ; bin++) {
-        memlkbit(&g_mem.pagebin[bin].list);
+        memrelbit(&g_mem.pagebin[bin].list);
     }
     for (bin = 0 ; bin < PTRBITS ; bin++) {
-        memlkbit(&g_mem.bigbin[bin].list);
-        memlkbit(&g_mem.smallbin[bin].list);
+        memrelbit(&g_mem.bigbin[bin].list);
+        memrelbit(&g_mem.smallbin[bin].list);
     }
     memrellk(&g_mem.heaplk);
     memrellk(&g_mem.initlk);
