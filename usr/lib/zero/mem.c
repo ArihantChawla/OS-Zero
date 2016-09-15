@@ -70,7 +70,7 @@ meminittls(void)
 static void
 memprefork(void)
 {
-    long bin;
+    MEMUWORD_T bin;
 
     memgetlk(&g_mem.initlk);
     memgetlk(&g_mem.heaplk);
@@ -91,7 +91,7 @@ memprefork(void)
 static void
 mempostfork(void)
 {
-    long bin;
+    MEMUWORD_T bin;
 
     for (bin = 0 ; bin < MEMHASHITEMS ; bin++) {
         memrelbit(&g_mem.hash[bin].chain);
@@ -695,7 +695,7 @@ memsetbuf(void *ptr, struct membuf *buf, MEMUWORD_T info)
         slot->nref = 1;
         slot->adr = adr;
         slot->val = val;
-        item->chain = (struct membuf *)upval;
+        item->chain = (struct memhash *)upval;
         m_syncwrite((m_atomic_t *)&g_mem.hash[key].chain, (m_atomic_t)item);
     }
 
