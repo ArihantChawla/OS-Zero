@@ -16,13 +16,7 @@
 #include <zero/priolk.h>
 #endif
 
-#if (MEM_LK_TYPE == MEM_LK_PRIO)
-THREADLOCAL struct priolkdata       tls_priolkdata;
-#endif
-THREADLOCAL volatile struct memarn *tls_arn;
-THREADLOCAL pthread_once_t          tls_once;
-THREADLOCAL pthread_key_t           tls_key;
-THREADLOCAL long                    tls_flg;
+THREADLOCAL volatile struct memtls *g_memtls;
 struct mem                          g_mem;
 
 static void
@@ -45,28 +39,28 @@ memgetprioval(void)
     return val;
 }
 
-struct memarn *
-meminitarn(void)
+struct memtls *
+meminittls(void)
 {
-    struct memarn *arn = NULL;
+    struct memtls *tls;
     unsigned long  val;
     long           slot;
 
-    arn = mapanon(0, MEMARNSIZE);
-    if (arn) {
+    tls = mapanon(0, MEMTLSSIZE);
+    if (tls != MAP_FAILED) {
         val = memgetprioval();
-        pthread_key_create(&tls_key, memfreetls);
+        pthread_key_create(&tls->key, memfreetls);
 #if (MEM_LK_TYPE == MEM_LK_PRIO)
-        priolkinit(&tls_priolkdata, val);
+        priolkinit(&tls->priolkdata, val);
 #endif
         for (slot = 0 ; slot < PTRBITS ; slot++) {
-            arn->smallbin[slot].slot = slot;
-            arn->pagebin[slot].slot = slot;
+            tls->smallbin[slot].slot = slot;
+            tls->pagebin[slot].slot = slot;
         }
-        tls_arn = arn;
+        g_memtls = tls;
     }
 
-    return arn;
+    return tls;
 }
 
 void
@@ -149,7 +143,7 @@ memallocsmallbuf(long slot)
     memsetbufslot(buf, slot);
     memsetbufnblk(buf, MEMBUFBLKS);
     buf->size = bufsz;
-    buf->bkt = &tls_arn->smallbin[slot];
+    buf->bkt = &g_memtls->smallbin[slot];
     buf->ptrtab = (MEMPTR_T *)((MEMPTR_T)buf + membufhdrsize());
 
     return buf;
@@ -194,7 +188,7 @@ memallocpagebuf(long slot, MEMUWORD_T nblk)
         
         return NULL;
     }
-    buf->bkt = &tls_arn->pagebin[slot];
+    buf->bkt = &g_memtls->pagebin[slot];
     buf->ptrtab = (MEMPTR_T *)((MEMPTR_T)buf + membufhdrsize());
 
     return buf;
@@ -475,6 +469,7 @@ memfindbuf(void *ptr, MEMWORD_T incr, MEMADR_T *keyret)
                     break;
                 }
                 case 0:
+                default:
                     blk = blk->chain;
                     prev = blk;
             }
@@ -993,15 +988,15 @@ memputptr(struct membuf *buf, void *ptr, size_t size, size_t align, long info)
 MEMPTR_T
 memgetblk(long slot, long type, MEMUWORD_T size, MEMUWORD_T align)
 {
-    volatile struct memarn *arn;
-    MEMPTR_T                ptr = NULL;
-    volatile struct membkt *bkt;
-    struct membuf          *buf;
-    MEMUWORD_T              info = 0;
-    MEMUWORD_T              nblk = membufnblk(slot, type);
-    MEMADR_T                upval = 0;
+    struct memtls *arn;
+    MEMPTR_T       ptr = NULL;
+    struct membkt *bkt;
+    struct membuf *buf;
+    MEMUWORD_T     info = 0;
+    MEMUWORD_T     nblk = membufnblk(slot, type);
+    MEMADR_T       upval = 0;
     
-    arn = tls_arn;
+    arn = g_memtls;
     if (type == MEMSMALLBUF) {
         bkt = &arn->smallbin[slot];
         upval = memopenbuf(bkt);
@@ -1121,15 +1116,15 @@ memgetblk(long slot, long type, MEMUWORD_T size, MEMUWORD_T align)
 void
 memputblk(void *ptr, struct membuf *buf, MEMUWORD_T info)
 {
-    volatile struct membkt *bkt = buf->bkt;
-    MEMUWORD_T              ndx = info & MEMPAGENDXMASK;
-    MEMUWORD_T              slot = memgetbufslot(buf);
-    MEMUWORD_T              nblk = memgetbufnblk(buf);
-    MEMUWORD_T              nfree = memgetbufnfree(buf);
-    MEMUWORD_T              type = memgetbuftype(buf);
-    MEMPTR_T                adr;
-    MEMADR_T                upval;
-    MEMUWORD_T              id;
+    struct membkt *bkt = buf->bkt;
+    MEMUWORD_T     ndx = info & MEMPAGENDXMASK;
+    MEMUWORD_T     slot = memgetbufslot(buf);
+    MEMUWORD_T     nblk = memgetbufnblk(buf);
+    MEMUWORD_T     nfree = memgetbufnfree(buf);
+    MEMUWORD_T     type = memgetbuftype(buf);
+    MEMPTR_T       adr;
+    MEMADR_T       upval;
+    MEMUWORD_T     id;
 
 #if (MEMTEST)
     _memchkptr(buf, ptr);
@@ -1192,9 +1187,9 @@ memputblk(void *ptr, struct membuf *buf, MEMUWORD_T info)
         }
     } else if (nfree == 1 && nblk > 1) {
         if (type == MEMSMALLBUF) {
-            bkt = &tls_arn->smallbin[slot];
+            bkt = &g_memtls->smallbin[slot];
         } else if (type == MEMPAGEBUF) {
-            bkt = &tls_arn->pagebin[slot];
+            bkt = &g_memtls->pagebin[slot];
         } else {
             bkt = &g_mem.bigbin[slot];
         }

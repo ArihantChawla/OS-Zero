@@ -32,6 +32,7 @@
 #include <limits.h>
 #include <stddef.h>
 #include <stdint.h>
+#include <pthread.h>
 #include <zero/cdefs.h>
 #include <zero/param.h>
 #include <zero/asm.h>
@@ -356,10 +357,16 @@ struct memitem {
  * NOTE: the arenas are mmap()'d as PAGESIZE-allocations so there's going
  * to be some room in the end for arbitrary data
  */
-#define MEMARNSIZE rounduppow2(sizeof(struct memarn), PAGESIZE)
-struct memarn {
-    struct membkt smallbin[PTRBITS]; // blocks of size 1 << slot
-    struct membkt pagebin[PTRBITS];  // mapped blocks of PAGESIZE * (slot + 1)
+#define MEMTLSSIZE rounduppow2(sizeof(struct memtls), PAGESIZE)
+struct memtls {
+    struct membkt     smallbin[PTRBITS]; // blocks of size 1 << slot
+    struct membkt     pagebin[PTRBITS];  // map blocks of PAGESIZE * (slot + 1)
+#if (MEM_LK_TYPE == MEM_LK_PRIO)
+    struct priolkdata priolkdata;
+#endif
+    pthread_once_t    once;
+    pthread_key_t     key;
+    long              flg;
 /* possible auxiliary data here; arena is of PAGESIZE */
 };
 
@@ -464,6 +471,20 @@ memgenptr(MEMPTR_T ptr, MEMUWORD_T blksz, MEMUWORD_T size)
     MEMPTR_T ret;
 
     ofs = rounddownpow2(ofs, MEMMINALIGN);
+    ret = memadjptr(ptr, ofs);
+
+    return ret;
+}
+
+static __inline__ MEMPTR_T
+memgenptrcl(MEMPTR_T ptr, MEMUWORD_T blksz, MEMUWORD_T size)
+{
+    uint64_t xtra = blksz - size;
+    uint64_t rnd = memrandptr(ptr);
+    uint64_t ofs = (xtra * rnd) >> 32;
+    MEMPTR_T ret;
+
+    ofs = rounddownpow2(ofs, CLSIZE);
     ret = memadjptr(ptr, ofs);
 
     return ret;
@@ -589,7 +610,7 @@ memgenptr(MEMPTR_T ptr, MEMUWORD_T blksz, MEMUWORD_T size)
     ((buf)->ptrtab[(ndx)] = (adr))
 
 void                 meminit(void);
-struct memarn *      meminitarn(void);
+struct memtls *      meminittls(void);
 MEMPTR_T             memgetblk(long slot, long type,
                                MEMUWORD_T size, MEMUWORD_T align);
 void *               memsetbuf(void *ptr, struct membuf *buf, MEMUWORD_T info);

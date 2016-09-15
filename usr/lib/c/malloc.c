@@ -14,7 +14,7 @@
 #include <zero/trix.h>
 #include "_malloc.h"
 
-extern THREADLOCAL volatile struct memarn *tls_arn;
+extern THREADLOCAL volatile struct memarn *g_memtls;
 extern struct mem                          g_mem;
 
 static void *
@@ -31,7 +31,7 @@ _malloc(size_t size, size_t align, long flg)
     long      slot;
     void     *ptr;
 
-    if (!tls_arn && !meminitarn()) {
+    if (!g_memtls && !meminittls()) {
 
         abort();
     }
@@ -81,7 +81,7 @@ _free(void *ptr)
 #if (MEMDEBUG)
     crash(ptr != NULL);
 #endif
-    if (!tls_arn && !meminitarn()) {
+    if (!g_memtls && !meminittls()) {
 
         exit(1);
     }
