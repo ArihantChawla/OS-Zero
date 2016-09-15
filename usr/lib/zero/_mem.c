@@ -1,10 +1,31 @@
 /* internal/test routines for the zero/mem.c module */
 
-#if (MEMTEST)
+#if (MEMTEST) || (MEMSTAT)
 
 #include <stdlib.h>
 #include <stdio.h>
 #include <zero/mem.h>
+
+#if (MEMSTAT)
+
+extern struct memstat g_memstat;
+
+void
+memprintstat(void)
+{
+    struct memstat *stat = &g_memstat;
+
+    fprintf(stderr, "MEMSTAT\n");
+    fprintf(stderr, "--------\n");
+    fprintf(stderr, "small\t%llu KB\n",  stat->nbsmall >> 10);
+    fprintf(stderr, "page\t%llu KB\n",  stat->nbpage >> 10);
+    fprintf(stderr, "big\t%llu KB\n",  stat->nbbig >> 10);
+    fprintf(stderr, "heap\t%llu KB\n",  stat->nbheap >> 10);
+    fprintf(stderr, "map\t%llu KB\n",  stat->nbmap >> 10);
+    fprintf(stderr, "book\t%llu KB\n",  stat->nbbook >> 10);
+    fprintf(stderr, "hash\t%llu KB\n",  stat->nbhash >> 10);
+}
+#endif
 
 long
 _memchkptr(struct membuf *buf, MEMPTR_T ptr)

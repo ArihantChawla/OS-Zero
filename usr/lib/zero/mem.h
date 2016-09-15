@@ -214,23 +214,26 @@ struct membkt {
 #define MEMNOHEAPBIT (1L << 1)
 #define MEMPAGESLOTS (4 * PTRBITS)
 struct mem {
-    struct membkt    smallbin[PTRBITS]; // blocks of 1 << slot
-    struct membkt    bigbin[PTRBITS]; // mapped blocks of 1 << slot
-    struct membkt    pagebin[MEMPAGESLOTS]; // maps of PAGESIZE * (slot + 1)
-#if (MEMHASH)
-    struct memhash  *hash;      // hash table
-    struct memhash  *hashbuf;   // buffer for hash items
+    struct membkt       smallbin[PTRBITS]; // blocks of 1 << slot
+    struct membkt       bigbin[PTRBITS]; // mapped blocks of 1 << slot
+    struct membkt       pagebin[MEMPAGESLOTS]; // maps of PAGESIZE * (slot + 1)
+#if (MEMARRAYHASH)
+    struct memhashlist *hash;    // hash table
+    struct memhash     *hashbuf; // buffer for hash items
+#elif (MEMHASH)
+    struct memhash     *hash;    // hash table
+    struct memhash     *hashbuf; // buffer for hash items
 #elif (MEMHUGELOCK)
-    struct memtabl0 *tab;       // allocation lookup structure
+    struct memtabl0    *tab;     // allocation lookup structure
 #else
-    struct memtab   *tab;       // allocation lookup structure
+    struct memtab      *tab;     // allocation lookup structure
 #endif
-    MEMWORD_T        flg;       // memory interface flags
-    struct membuf   *heap;      // heap allocations (try sbrk(), then mmap())
-    struct membuf   *maps;      // mapped blocks
-    unsigned long    prioval;   // locklessinc priority locks
-    MEMLK_T          initlk;    // lock for initialising the structure
-    MEMLK_T          heaplk;    // lock for sbrk()
+    MEMWORD_T           flg;     // memory interface flags
+    struct membuf      *heap;    // heap allocations (try sbrk(), then mmap())
+    struct membuf      *maps;    // mapped blocks
+    unsigned long       prioval; // locklessinc priority locks
+    MEMLK_T             initlk;  // lock for initialising the structure
+    MEMLK_T             heaplk;  // lock for sbrk()
 };
 
 #define MEMHEAPBIT      (0x01L << (sizeof(MEMWORD_T) * CHAR_BIT - 1))
@@ -288,6 +291,10 @@ struct membuf {
 #define MEMHASHDEL (-1)
 #define MEMHASHCHK (0)
 #define MEMHASHADD (1)
+
+struct memhashlist {
+    struct memhash *chain;
+};
 
 struct memhashitem {
     MEMWORD_T nref;
@@ -591,9 +598,15 @@ memgenptrcl(MEMPTR_T ptr, MEMUWORD_T blksz, MEMUWORD_T size)
               ? 2                                                       \
               : 1))))
 #define membufntls(slot, type)                                          \
-    (2)
+    (((type) == MEMSMALLBUF)                                            \
+     ? 8                                                                \
+     : 2)
 #define membufnglob(slot, type)                                         \
-    (4)
+    (((type) == MEMSMALLBUF)                                            \
+     ? 8                                                                \
+     : (((type) == MEMPAGEBUF)                                          \
+        ? 4                                                             \
+        : 2))
 
 #define membufblkadr(buf, ndx)                                          \
     ((buf)->base + ((ndx) << memgetbufslot(buf)))
@@ -631,6 +644,19 @@ void                 memputblk(void *ptr, struct membuf *buf, MEMUWORD_T info);
 #if (MEMTEST)
 long                 _memchkptr(struct membuf *buf, MEMPTR_T ptr);
 long                 _memchkbuf(struct membuf *buf);
+#endif
+
+#if (MEMSTAT)
+void                 memprintstat(void);
+struct memstat {
+    MEMUWORD_T nbsmall;
+    MEMUWORD_T nbpage;
+    MEMUWORD_T nbbig;
+    MEMUWORD_T nbheap;
+    MEMUWORD_T nbmap;
+    MEMUWORD_T nbbook;
+    MEMUWORD_T nbhash;
+};
 #endif
 
 #endif /* __ZERO_MEM_H__ */
