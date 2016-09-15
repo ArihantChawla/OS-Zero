@@ -588,7 +588,7 @@ memgenptrcl(MEMPTR_T ptr, MEMUWORD_T blksz, MEMUWORD_T size)
            : (((slot) <= MEMBIGMAPSHIFT)                                \
               ? 2                                                       \
               : 1))))
-#define membufnarn(slot, type)                                          \
+#define membufntls(slot, type)                                          \
     (2)
 #define membufnglob(slot, type)                                         \
     (4)
@@ -615,7 +615,7 @@ memgenptrcl(MEMPTR_T ptr, MEMUWORD_T blksz, MEMUWORD_T size)
 
 void                 meminit(void);
 struct memtls *      meminittls(void);
-MEMPTR_T             memgetblk(long slot, long type,
+MEMPTR_T             memgetblk(MEMUWORD_T slot, MEMUWORD_T type,
                                MEMUWORD_T size, MEMUWORD_T align);
 void *               memsetbuf(void *ptr, struct membuf *buf, MEMUWORD_T info);
 #if (MEMARRAYHASH)
