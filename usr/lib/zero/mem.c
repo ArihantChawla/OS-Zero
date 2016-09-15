@@ -678,7 +678,6 @@ memsetbuf(void *ptr, struct membuf *buf, MEMUWORD_T info)
     MEMADR_T            val = (MEMADR_T)buf;
     struct memhash     *item = NULL;
     MEMADR_T            upval;
-    struct memhash     *chain;
 
     adr >>= PAGESIZELOG2;
     val |= info;
@@ -694,10 +693,9 @@ memsetbuf(void *ptr, struct membuf *buf, MEMUWORD_T info)
         item->ntab = 1;
         upval &= ~MEMLKBIT;
         slot->nref = 1;
-        chain = (struct memhash *)upval;
         slot->adr = adr;
         slot->val = val;
-        item->chain = chain;
+        item->chain = (struct membuf *)upval;
         m_syncwrite((m_atomic_t *)&g_mem.hash[key].chain, (m_atomic_t)item);
     }
 
