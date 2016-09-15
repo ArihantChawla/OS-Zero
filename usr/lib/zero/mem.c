@@ -678,6 +678,7 @@ memsetbuf(void *ptr, struct membuf *buf, MEMUWORD_T info)
     MEMADR_T            val = (MEMADR_T)buf;
     struct memhash     *item = NULL;
     MEMADR_T            upval;
+    struct memhash     *chain;
 
     adr >>= PAGESIZELOG2;
     val |= info;
