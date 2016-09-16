@@ -91,7 +91,9 @@ _free(void *ptr)
 #if (MEMMULTITAB)
     buf = memfindbuf(ptr, 1);
     desc = (MEMADR_T)buf;
-#elif (MEMARRAYHASH) || (MEMNEWHASH)
+#elif (MEMNEWHASH)
+    desc = memfindbuf(ptr, MEMHASHDEL, NULL);
+#elif (MEMARRAYHASH)
     desc = memfindbuf(ptr, MEMHASHDEL);
 #elif (MEMHASH)
     desc = memfindbuf(ptr, -1, NULL);
@@ -126,7 +128,9 @@ _realloc(void *ptr,
     void          *retptr = NULL;
 #if (MEMMULTITAB)
     struct membuf *buf = (ptr) ? memfindbuf(ptr, 0) : NULL;
-#elif (MEMARRAYHASH) || (MEMNEWHASH)
+#elif (MEMNEWHASH)
+    MEMADR_T       desc = (ptr) ? memfindbuf(ptr, MEMHASHCHK, NULL) : 0;
+#elif (MEMARRAYHASH
     MEMADR_T       desc = (ptr) ? memfindbuf(ptr, MEMHASHCHK) : 0;
 #elif (MEMHASH)
     MEMADR_T       desc = (ptr) ? memfindbuf(ptr, 0, NULL) : 0;
@@ -462,7 +466,9 @@ malloc_usable_size(void *ptr)
 {
 #if (MEMMULTITAB)
     struct membuf *buf = (ptr) ? memfindbuf(ptr, 0) : NULL;
-#elif (MEMARRAYHASH) || (MEMNEWHASH)
+#elif (MEMNEWHASH)
+    MEMADR_T       desc = (ptr) ? memfindbuf(ptr, MEMHASHCHK, NULL) : 0;
+#elif (MEMARRAYHASH)
     MEMADR_T       desc = (ptr) ? memfindbuf(ptr, MEMHASHCHK) : 0;
 #elif (MEMHASH)
     MEMADR_T       desc = (ptr) ? memfindbuf(ptr, 0, NULL) : 0;
@@ -508,7 +514,9 @@ malloc_size(void *ptr)
 {
 #if (MEMMULTITAB)
     struct membuf *buf = (ptr) ? memfindbuf(ptr, 0) : NULL;
-#elif (MEMARRAYHASH) || (MEMNEWHASH)
+#elif (MEMNEWHASH)
+    MEMADR_T       desc = (ptr) ? memfindbuf(ptr, MEMHASHCHK, NULL) : 0;
+#elif (MEMARRAYHASH)
     MEMADR_T       desc = (ptr) ? memfindbuf(ptr, MEMHASHCHK) : 0;
 #elif (MEMHASH)
     MEMADR_T       desc = (ptr) ? memfindbuf(ptr, 0, NULL) : 0;

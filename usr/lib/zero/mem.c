@@ -557,13 +557,13 @@ membufhashitem(struct memhash *item)
 }
 
 MEMADR_T
-memfindbuf(void *ptr, MEMWORD_T incr)
+memfindbuf(void *ptr, MEMWORD_T incr, MEMUWORD_T *keyret)
 {
     MEMADR_T            adr = (MEMADR_T)ptr;
     struct memhashitem *slot = NULL;
     MEMADR_T            ret = 0;
     MEMADR_T            upval;
-    long                key;
+    MEMUWORD_T          key;
     struct memhash     *head;
     struct memhash     *blk;
     struct memhash     *prev;
@@ -575,7 +575,6 @@ memfindbuf(void *ptr, MEMWORD_T incr)
     MEMUWORD_T          lim;
 #endif
     MEMUWORD_T          found;
-    MEMUWORD_T          gone;
 
     adr >>= PAGESIZELOG2;
     key = razohash((void *)adr, sizeof(void *), MEMHASHBITS);
@@ -590,7 +589,6 @@ memfindbuf(void *ptr, MEMWORD_T incr)
     head = (struct memhash *)upval;
     found = 0;
     blk = head;
-    gone = 0;
     if (blk) {
         prev = NULL;
         do {
@@ -730,30 +728,25 @@ memfindbuf(void *ptr, MEMWORD_T incr)
             }
         } while (!found && (blk));
     }
-    if (!gone) {
-        if ((prev) && (blk)) {
-            prev->chain = blk->chain;
-            blk->chain = head;
+    if ((prev) && (blk)) {
+        prev->chain = blk->chain;
+        blk->chain = head;
 #if (MEMHASHLOCK)
-            g_mem.hash[key].chain = blk;
-            memrellk(&g_mem.hash[key].lk);
+        g_mem.hash[key].chain = blk;
+        memrellk(&g_mem.hash[key].lk);
 #else
-            m_syncwrite((m_atomic_t *)&g_mem.hash[key].chain,
-                        (m_atomic_t)blk);
+        m_syncwrite((m_atomic_t *)&g_mem.hash[key].chain,
+                    (m_atomic_t)blk);
 #endif
-        } else {
-#if (MEMHASHLOCK)
-            memrellk(&g_mem.hash[key].lk);
-#else
-            memrelbit(&g_mem.hash[key].chain);
-#endif
-        }
     } else {
 #if (MEMHASHLOCK)
         memrellk(&g_mem.hash[key].lk);
 #else
         memrelbit(&g_mem.hash[key].chain);
 #endif
+    }
+    if (keyret) {
+        *keyret = key;
     }
 
     return ret;
@@ -762,17 +755,18 @@ memfindbuf(void *ptr, MEMWORD_T incr)
 void *
 memsetbuf(void *ptr, struct membuf *buf, MEMUWORD_T info)
 {
-    MEMADR_T            adr = (MEMADR_T)ptr;
-    MEMADR_T            key;
     MEMADR_T            val = (MEMADR_T)buf;
+    MEMADR_T            adr;
+    MEMUWORD_T          key;
     MEMADR_T            ret;
     struct memhash     *item = NULL;
     struct memhashitem *slot;
     MEMADR_T            upval;
 
-    adr >>= PAGESIZELOG2;
+//    adr >>= PAGESIZELOG2;
     val |= info;
-    ret = memfindbuf(ptr, MEMHASHADD);
+    ret = memfindbuf(ptr, MEMHASHADD, &key);
+    slot = (struct memhashitem *)ret;
     if (ret == MEMHASHPRESENT) {
 
         return ptr;
@@ -786,7 +780,8 @@ memsetbuf(void *ptr, struct membuf *buf, MEMUWORD_T info)
 
         return ptr;
     } else {
-        key = razohash((void *)adr, sizeof(void *), MEMHASHBITS);
+        adr = (MEMADR_T)ptr;
+//        key = razohash((void *)adr, sizeof(void *), MEMHASHBITS);
 //        key = adr & ((MEMWORD(1) << MEMHASHBITS) - 1);
         item = memgethashitem();
 #if (MEMHASHLOCK)
@@ -797,6 +792,7 @@ memsetbuf(void *ptr, struct membuf *buf, MEMUWORD_T info)
         upval = (MEMADR_T)g_mem.hash[key].chain;
         slot = &item->tab[0];
         item->ntab = 1;
+        adr >>= PAGESIZELOG2;
         upval &= ~MEMLKBIT;
         slot->nref = 1;
         slot->page = adr;
@@ -1367,8 +1363,6 @@ memfindbuf(void *ptr, long rel)
     struct memtab  *itab;
     struct memtab  *tab;
     struct memitem *item;
-    m_atomic_t     *lk1;
-    m_atomic_t     *lk2;
     long            k1;
     long            k2;
     long            k3;
@@ -1393,8 +1387,6 @@ memfindbuf(void *ptr, long rel)
                 }
             }
         }
-    } else {
-        memrelbit(lk1);
     }
     memrellk(&g_mem.tab[k1].lk);
 

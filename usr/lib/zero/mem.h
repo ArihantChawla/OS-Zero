@@ -761,7 +761,9 @@ struct memtls * meminittls(void);
 MEMPTR_T        memgetblk(MEMUWORD_T slot, MEMUWORD_T type,
                           MEMUWORD_T size, MEMUWORD_T align);
 void *          memsetbuf(void *ptr, struct membuf *buf, MEMUWORD_T info);
-#if (MEMARRAYHASH) || (MEMNEWHASH)
+#if (MEMNEWHASH)
+MEMADR_T        memfindbuf(void *ptr, MEMWORD_T incr, MEMUWORD_T *keyret);
+#elif (MEMARRAYHASH)
 MEMADR_T        memfindbuf(void *ptr, MEMWORD_T incr);
 #elif (MEMHASH)
 MEMADR_T        memfindbuf(void *ptr, MEMWORD_T incr, MEMADR_T *keyret);
