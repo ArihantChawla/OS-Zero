@@ -200,7 +200,7 @@ m_cmpxchgu64(volatile uint64_t *p,
                           : "q" (val), "m" (*(p)), "0" (want)
                           : "memory");
     
-    return res;
+    return (res == want);
 }
 
 /*
@@ -213,14 +213,14 @@ m_cmpxchg64ptr(m_atomic64_t *p,
                long *want,
                void *val)
 {
-    long res;
+    long *res;
     
     __asm__ __volatile__("lock cmpxchgq %1, %2\n"
                          : "=a" (res)
                          : "q" (val), "m" (*(p)), "0" (want)
                          : "memory");
     
-    return res;
+    return (res == want);
 }
 
 #if defined(__GNUC__) && 0

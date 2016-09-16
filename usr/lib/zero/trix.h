@@ -845,6 +845,66 @@ ratreduce(int64_t *num, int64_t *den)
 }
 
 /*
+ * These were found at http://homepage.cs.uiowa.edu/~jones/bcd/mod.shtml
+ */
+
+static __inline__ uint32_t
+bitcnt32a(uint32_t a) {
+    a = ((a >> 1) & 0x55555555) + (a & 0x55555555);
+    /* each 2-bit chunk sums 2 bits */
+    a = ((a >> 2) & 0x33333333) + (a & 0x33333333);
+    /* each 4-bit chunk sums 4 bits */
+    a = ((a >> 4) & 0x0F0F0F0F) + (a & 0x0F0F0F0F);
+    /* each 8-bit chunk sums 8 bits */
+    a = ((a >> 8) & 0x00FF00FF) + (a & 0x00FF00FF);
+    /* each 16-bit chunk sums 16 bits */
+
+    return (a >> 16) + (a & 0x0000FFFF);
+}
+
+static __inline__ uint32_t
+bitcnt32b(uint32_t a) {
+    a = ((a >> 1) & 0x55555555) + (a & 0x55555555);
+    a = ((a >> 2) & 0x33333333) + (a & 0x33333333);
+    a = ((a >> 4) & 0x07070707) + (a & 0x07070707);
+    a = ((a >> 8) & 0x000f000f) + (a & 0x000f000f);
+
+    return (a >> 16) + (a & 0x0000001f);
+}
+
+
+
+static __inline__ uint32_t
+mod15(uint32_t a) {
+    a = (a >> 16) + (a & 0xffff); /* sum base 2**16 digits */
+    a = (a >>  8) + (a & 0xff);   /* sum base 2**8 digits */
+    a = (a >>  4) + (a & 0xf);    /* sum base 2**4 digits */
+    if (a < 15) return a;
+    if (a < (2 * 15)) return a - 15;
+
+    return a - (2 * 15);
+}
+
+static __inline__ uint32_t
+mod255(uint32_t a) {
+    a = (a >> 16) + (a & 0xffff); /* sum base 2**16 digits */
+    a = (a >>  8) + (a & 0xff);   /* sum base 2**8 digits */
+    if (a < 255) return a;
+    if (a < (2 * 255)) return a - 255;
+
+    return a - (2 * 255);
+}
+
+static __inline__ uint32_t
+mod65535(uint32_t a) {
+    a = (a >> 16) + (a & 0xffff); /* sum base 2**16 digits */
+    if (a < 65535) return a;
+    if (a < (2 * 65535)) return a - 65535;
+    
+    return a - (2 * 65535);
+}
+
+/*
  * The following routines are implemented as demonstrated at
  *
  * http://locklessinc.com/articles/sat_arithmetic/

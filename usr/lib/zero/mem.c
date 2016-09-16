@@ -16,6 +16,8 @@
 #include <zero/priolk.h>
 #endif
 
+static pthread_once_t               g_thronce = PTHREAD_ONCE_INIT;
+static pthread_key_t                g_thrkey;
 THREADLOCAL volatile struct memtls *g_memtls;
 struct mem                          g_mem;
 #if (MEMSTAT)
@@ -25,7 +27,8 @@ struct memstat                      g_memstat;
 static void
 memfreetls(void *arg)
 {
-    struct memtls *tls = arg;
+    struct memtls *tls = g_memtls;
+    void          *adr = arg;
     struct membkt *src;
     struct membkt *dest;
     MEMUWORD_T     slot;
@@ -86,7 +89,7 @@ memfreetls(void *arg)
         src++;
         dest++;
     }
-    unmapanon(tls, memtlssize());
+    unmapanon(adr, memtlssize());
 
     return;
 }
@@ -96,12 +99,12 @@ memgetprioval(void)
 {
     unsigned long val;
 
-    fmtxlk(&g_mem.priolk);
+//    fmtxlk(&g_mem.priolk);
     val = g_mem.prioval;
     val++;
     val &= sizeof(long) * CHAR_BIT - 1;
     g_mem.prioval = val;
-    fmtxunlk(&g_mem.priolk);
+//    fmtxunlk(&g_mem.priolk);
 
     return val;
 }
@@ -118,11 +121,11 @@ meminittls(void)
         tls = (struct memtls *)memgenptrcl(adr, memtlssize(),
                                            sizeof(struct memtls));
         val = memgetprioval();
-        pthread_key_create(&tls->key, memfreetls);
-        pthread_setspecific(tls->key, adr);
 #if (MEM_LK_TYPE & MEM_LK_PRIO)
         priolkinit(&tls->priolkdata, val);
 #endif
+        pthread_once(&g_thronce, meminit);
+        pthread_setspecific(g_thrkey, adr);
         g_memtls = tls;
     }
 
@@ -134,8 +137,7 @@ memprefork(void)
 {
     MEMUWORD_T slot;
 
-    memgetlk(&g_mem.initlk);
-    fmtxlk(&g_mem.priolk);
+//    fmtxlk(&g_mem.priolk);
     memgetlk(&g_mem.heaplk);
     for (slot = 0 ; slot < PTRBITS ; slot++) {
         memlkbit(&g_mem.smallbin[slot].list);
@@ -144,9 +146,15 @@ memprefork(void)
     for (slot = 0 ; slot < MEMPAGESLOTS ; slot++) {
         memlkbit(&g_mem.pagebin[slot].list);
     }
+#if (MEMMULTITAB)
+    for (slot = 0 ; slot < MEMLVL1ITEMS ; slot++) {
+        memlkbit(&g_mem.tab[slot].tab);
+    }
+#else
     for (slot = 0 ; slot < MEMHASHITEMS ; slot++) {
         memlkbit(&g_mem.hash[slot].chain);
     }
+#endif
 
     return;
 }
@@ -156,9 +164,15 @@ mempostfork(void)
 {
     MEMUWORD_T slot;
 
+#if (MEMMULTITAB)
+    for (slot = 0 ; slot < MEMLVL1ITEMS ; slot++) {
+        memrelbit(&g_mem.tab[slot].tab);
+    }
+#else
     for (slot = 0 ; slot < MEMHASHITEMS ; slot++) {
         memrelbit(&g_mem.hash[slot].chain);
     }
+#endif
     for (slot = 0 ; slot < MEMPAGESLOTS ; slot++) {
         memrelbit(&g_mem.pagebin[slot].list);
     }
@@ -167,8 +181,7 @@ mempostfork(void)
         memrelbit(&g_mem.smallbin[slot].list);
     }
     memrellk(&g_mem.heaplk);
-    fmtxunlk(&g_mem.priolk);
-    memrellk(&g_mem.initlk);
+//    fmtxunlk(&g_mem.priolk);
 
     return;
 }
@@ -182,12 +195,8 @@ meminit(void)
     MEMPTR_T   *adr;
     MEMUWORD_T  slot;
 
-    memgetlk(&g_mem.initlk);
-    if (g_mem.flg & MEMINITBIT) {
-        memrellk(&g_mem.initlk);
-
-        return;
-    }
+    pthread_atfork(memprefork, mempostfork, mempostfork);
+    pthread_key_create(&g_thrkey, memfreetls);
 #if (MEMSTAT)
     atexit(memprintstat);
 #endif
@@ -218,7 +227,7 @@ meminit(void)
         g_mem.bufvals.ntls[MEMPAGEBUF][slot] = membufntls(MEMPAGEBUF, slot);
         g_mem.bufvals.nglob[MEMPAGEBUF][slot] = membufnglob(MEMPAGEBUF, slot);
     }
-#if (MEMARRAYHASH)
+#if (MEMARRAYHASH) || (MEMNEWHASH)
     ptr = mapanon(0, MEMHASHITEMS * sizeof(struct memhashlist));
 #elif (MEMHASH)
     ptr = mapanon(0, MEMHASHITEMS * sizeof(struct memhash));
@@ -234,7 +243,7 @@ meminit(void)
 
         abort();
     }
-#if (MEMHASH) || (MEMARRAYHASH)
+#if (MEMHASH) || (MEMARRAYHASH) || (MEMNEWHASH)
     g_mem.hash = ptr;
 #else
     g_mem.tab = ptr;
@@ -246,9 +255,6 @@ meminit(void)
         growheap(ofs);
     }
     memrellk(&g_mem.heaplk);
-    pthread_atfork(memprefork, mempostfork, mempostfork);
-    g_mem.flg |= MEMINITBIT;
-    memrellk(&g_mem.initlk);
 
     return;
 }
@@ -258,6 +264,8 @@ memallocsmallbuf(MEMUWORD_T slot)
 {
     MEMPTR_T       adr = SBRK_FAILED;
     MEMWORD_T      bufsz = memsmallbufsize(slot);
+    MEMUWORD_T     nblk = MEMBUFBLKS;
+    MEMUWORD_T     type = MEMSMALLBUF;
     MEMUWORD_T     info = 0;
     struct membuf *buf;
 
@@ -300,10 +308,13 @@ memallocsmallbuf(MEMUWORD_T slot)
     buf->info = info;             // possible MEMHEAPBIT
 #endif
     memsetbufslot(buf, slot);
-    memsetbufnblk(buf, MEMBUFBLKS);
+    memsetbufnblk(buf, nblk);
+    memsetbuftype(buf, type);
     buf->size = bufsz;
-    buf->bkt = &g_memtls->smallbin[slot];
     buf->ptrtab = (MEMPTR_T *)((MEMPTR_T)buf + membufhdrsize());
+#if (MEMTEST)
+    _memchkbuf(buf, slot, type, nblk, info, __FUNCTION__);
+#endif
 
     return buf;
 }
@@ -315,17 +326,12 @@ meminitsmallbuf(struct membuf *buf)
     MEMPTR_T   adr = (MEMPTR_T)buf;
     MEMPTR_T   ptr = adr + membufblkofs();
 
-    /* set number of blocks for buf */
-    memsetbufnblk(buf, nblk);
     /* initialise freemap */
     membufinitfree(buf, nblk);
     buf->base = ptr;
     nblk--;
     VALGRINDMKPOOL(ptr, 0, 0);
     memsetbufnfree(buf, nblk);
-#if (MEMTEST)
-    _memchkbuf(buf);
-#endif
 
     return ptr;
 }
@@ -333,7 +339,8 @@ meminitsmallbuf(struct membuf *buf)
 static struct membuf *
 memallocpagebuf(MEMUWORD_T slot, MEMUWORD_T nblk)
 {
-    MEMWORD_T      mapsz = mempagebufsize(slot, nblk);
+    MEMUWORD_T     mapsz = mempagebufsize(slot, nblk);
+    MEMUWORD_T     type = MEMPAGEBUF;
     MEMPTR_T       adr;
     struct membuf *buf;
 
@@ -346,6 +353,8 @@ memallocpagebuf(MEMUWORD_T slot, MEMUWORD_T nblk)
     buf->info = 0;
 #endif
     memsetbufslot(buf, slot);
+    memsetbufnblk(buf, nblk);
+    memsetbuftype(buf, type);
     buf->size = mapsz;
     if (adr == MAP_FAILED) {
         
@@ -356,8 +365,10 @@ memallocpagebuf(MEMUWORD_T slot, MEMUWORD_T nblk)
     g_memstat.nbmap += mapsz;
     g_memstat.nbbook += membufblkofs();
 #endif
-    buf->bkt = &g_memtls->pagebin[slot];
     buf->ptrtab = (MEMPTR_T *)((MEMPTR_T)buf + membufhdrsize());
+#if (MEMTEST)
+    _memchkbuf(buf, slot, type, nblk, 0, __FUNCTION__);
+#endif
 
     return buf;
 }
@@ -368,17 +379,12 @@ meminitpagebuf(struct membuf *buf, MEMUWORD_T nblk)
     MEMPTR_T  adr = (MEMPTR_T)buf;
     MEMPTR_T  ptr = adr + membufblkofs();
 
-    /* set number of blocks for buf */
-    memsetbufnblk(buf, nblk);
     /* initialise freemap */
     membufinitfree(buf, nblk);
     buf->base = ptr;
     nblk--;
     VALGRINDMKPOOL(ptr, 0, 0);
     memsetbufnfree(buf, nblk);
-#if (MEMTEST)
-    _memchkbuf(buf);
-#endif
 
     return ptr;
 }
@@ -386,12 +392,17 @@ meminitpagebuf(struct membuf *buf, MEMUWORD_T nblk)
 static struct membuf *
 memallocbigbuf(MEMUWORD_T slot, MEMUWORD_T nblk)
 {
-    MEMWORD_T      mapsz = membigbufsize(slot, nblk);
+    MEMUWORD_T     mapsz = membigbufsize(slot, nblk);
+    MEMUWORD_T     type = MEMBIGBUF;
     MEMPTR_T       adr;
     struct membuf *buf;
 
     /* mmap() blocks */
     adr = mapanon(0, mapsz);
+    if (adr == MAP_FAILED) {
+        
+        return NULL;
+    }
     buf = (struct membuf *)adr;
 #if (MEMBITFIELD)
     memclrbufflg(buf, 1);
@@ -399,20 +410,18 @@ memallocbigbuf(MEMUWORD_T slot, MEMUWORD_T nblk)
     buf->info = 0;
 #endif
     memsetbufslot(buf, slot);
-    nblk--;
-    if (adr == MAP_FAILED) {
-        
-        return NULL;
-    }
+    memsetbufnblk(buf, nblk);
+    memsetbuftype(buf, type);
 #if (MEMSTAT)
     g_memstat.nbbig += mapsz;
     g_memstat.nbmap += mapsz;
     g_memstat.nbbook += membufblkofs();
 #endif
-    memsetbufnfree(buf, nblk);
     buf->size = mapsz;
-    buf->bkt = &g_mem.smallbin[slot];
     buf->ptrtab = (MEMPTR_T *)((MEMPTR_T)buf + membufhdrsize());
+#if (MEMTEST)
+    _memchkbuf(buf, slot, type, nblk, 0, __FUNCTION__);
+#endif
 
     return buf;
 }
@@ -423,17 +432,11 @@ meminitbigbuf(struct membuf *buf, MEMUWORD_T nblk)
     MEMPTR_T adr = (MEMPTR_T)buf;
     MEMPTR_T ptr = adr + membufblkofs();
 
-    /* set number of blocks for buf */
-    memsetbufnblk(buf, nblk);
-    /* initialise freemap */
     membufinitfree(buf, nblk);
     buf->base = ptr;
     nblk--;
     VALGRINDMKPOOL(ptr, 0, 0);
     memsetbufnfree(buf, nblk);
-#if (MEMTEST)
-    _memchkbuf(buf);
-#endif
 
     return ptr;
 }
@@ -473,7 +476,345 @@ memgetbufblk(struct membuf *head, struct membkt *bkt, MEMUWORD_T *inforet)
     return ptr;
 }
 
-#if (MEMHASH) || (MEMARRAYHASH)
+#if (MEMNEWHASH)
+
+static void
+meminithashitem(struct memhash *item)
+{
+    MEMUWORD_T *adr = (MEMUWORD_T *)item;
+    MEMUWORD_T *uptr;
+    MEMUWORD_T  ofs;
+
+    adr += sizeof(struct memhash);
+    item->chain = NULL;
+    uptr = memgenhashadr(adr);
+    item->ntab = NULL;
+    item->tab = (struct memhashitem *)uptr;
+    item->list = NULL;
+
+    return;
+}
+
+static struct memhash *
+memgethashitem(void)
+{
+    struct memhash *item = NULL;
+    struct memhash *first;
+    struct memhash *prev;
+    struct memhash *cur;
+    MEMUWORD_T      bsz;
+    MEMADR_T        upval;
+    long            n;
+
+    memlkbit(&g_mem.hashbuf);
+    upval = (MEMADR_T)g_mem.hashbuf;
+    upval &= ~MEMLKBIT;
+    if (upval) {
+        item = (struct memhash *)upval;
+        m_syncwrite((m_atomic_t *)&g_mem.hashbuf, (m_atomic_t)item->chain);
+    } else {
+        n = 4 * PAGESIZE / memhashsize();
+        bsz = 4 * PAGESIZE;
+#if (MEMSTAT)
+        g_memstat.nbhash += bsz;
+#endif
+        item = mapanon(0, bsz);
+        first = item;
+        if (item == MAP_FAILED) {
+
+            abort();
+        }
+        upval = (MEMADR_T)g_mem.hashbuf;
+        first++;
+        n--;
+        cur = first;;
+        upval &= ~MEMLKBIT;
+        while (--n) {
+            prev = cur;
+            cur++;
+            prev->chain = cur;
+        }
+        cur->chain = (struct memhash *)upval;
+        m_syncwrite((m_atomic_t *)&g_mem.hashbuf, (m_atomic_t)first);
+    }
+    meminithashitem(item);
+
+    return item;
+}
+
+static void
+membufhashitem(struct memhash *item)
+{
+    MEMADR_T upval;
+
+    memlkbit(&g_mem.hashbuf);
+    upval = (MEMADR_T)g_mem.hashbuf;
+    upval &= ~MEMLKBIT;
+    item->chain = (struct memhash *)upval;
+    m_syncwrite((m_atomic_t *)&g_mem.hashbuf, (m_atomic_t)item);
+
+    return;
+}
+
+MEMADR_T
+memfindbuf(void *ptr, MEMWORD_T incr)
+{
+    MEMADR_T            adr = (MEMADR_T)ptr;
+    struct memhashitem *slot = NULL;
+    MEMADR_T            ret = 0;
+    MEMADR_T            upval;
+    long                key;
+    struct memhash     *head;
+    struct memhash     *blk;
+    struct memhash     *prev;
+    struct memhashitem *src;
+    MEMUWORD_T          n;
+    MEMUWORD_T          lim;
+#if (MEMHASHLOOP)
+    struct memhash     *hptr;
+    MEMUWORD_T          lim;
+#endif
+    MEMUWORD_T          found;
+    MEMUWORD_T          gone;
+
+    adr >>= PAGESIZELOG2;
+    key = razohash((void *)adr, sizeof(void *), MEMHASHBITS);
+//    key = adr & ((MEMWORD(1) << MEMHASHBITS) - 1);
+#if (MEMHASHLOCK)
+    memgetlk(&g_mem.hash[key].lk);
+#else
+    memlkbit(&g_mem.hash[key].chain);
+#endif
+    upval = (MEMADR_T)g_mem.hash[key].chain;
+    upval &= ~MEMLKBIT;
+    head = (struct memhash *)upval;
+    found = 0;
+    blk = head;
+    gone = 0;
+    if (blk) {
+        prev = NULL;
+        do {
+            lim = blk->ntab;
+            src = blk->tab;
+            do {
+                n = min(lim, 4);
+                switch (n) {
+                    case 4:
+                        slot = &src[3];
+                        if (slot->page == adr) {
+                            found++;
+                            
+                            break;
+                        }
+                    case 3:
+                        slot = &src[2];
+                        if (slot->page == adr) {
+                            found++;
+                            
+                            break;
+                        }
+                    case 2:
+                        slot = &src[1];
+                        if (slot->page == adr) {
+                            found++;
+                            
+                            break;
+                        }
+                    case 1:
+                        slot = &src[0];
+                        if (slot->page == adr) {
+                            found++;
+                            
+                            break;
+                        }
+                    case 0:
+                    default:
+                        
+                        break;
+                }
+                src += n;
+                lim -= n;
+            } while (lim);
+            if (!found) {
+                prev = blk;
+                blk = blk->chain;
+            }
+        } while (!found && (blk));
+    }
+    if (found) {
+        ret = slot->val;
+        if (incr) {
+            slot->nref += incr;
+            if (incr == MEMHASHDEL) {
+                n--;
+                if (!slot->nref) {
+                    if (blk->ntab == 1) {
+                        if (prev) {
+                            prev->chain = blk->chain;
+                            memrelbit(&g_mem.hash[key].chain);
+                        } else {
+#if (MEMHASHLOCK)
+                            g_mem.hash[key].chain = blk->chain;
+                            memrellk(&g_mem.hash[key].lk);
+#else
+                            m_syncwrite((m_atomic_t *)&g_mem.hash[key].chain,
+                                        (m_atomic_t)blk->chain);
+#endif
+                        }
+                        membufhashitem(blk);
+                    } else {
+                        src = &blk->tab[n];
+                        slot->nref = src->nref;
+                        slot->page = src->page;
+                        slot->val = src->val;
+                        blk->ntab = n;
+                    }
+                }
+#if (MEMHASHLOCK)
+                memrellk(&g_mem.hash[key].lk);
+#else
+                memrelbit(&g_mem.hash[key].chain);
+#endif
+
+                return ret;
+            } else if (incr == MEMHASHADD) {
+                if (prev) {
+                    prev->chain = blk->chain;
+                    blk->chain = head;
+#if (MEMHASHLOCK)
+                    g_mem.hash[key].chain = blk;
+                    memrellk(&g_mem.hash[key].lk);
+#else
+                    m_syncwrite((m_atomic_t *)&g_mem.hash[key].chain,
+                                (m_atomic_t)blk);
+#endif
+                } else {
+#if (MEMHASHLOCK)
+                    memrellk(&g_mem.hash[key].lk);
+#else
+                    memrelbit(&g_mem.hash[key].chain);
+#endif
+                }
+                
+                return MEMHASHPRESENT;
+            }
+        }
+    } else if (incr == MEMHASHADD && (head)) {
+        blk = head;
+        prev = NULL;
+        do {
+            n = blk->ntab;
+            if (n < MEMHASHITEMS) {
+                slot = &blk->tab[n];
+                n++;
+                slot->nref = 1;
+                slot->page = adr;
+                blk->ntab = n;
+                if (prev) {
+                    prev->chain = blk->chain;
+                    blk->chain = head;
+#if (MEMHASHLOCK)
+                    g_mem.hash[key].chain = blk;
+#else
+                    blk = (struct memhash *)((MEMADR_T)ptr | MEMLKBIT);
+                    m_syncwrite((m_atomic_t *)&g_mem.hash[key].chain,
+                                (m_atomic_t)blk);
+#endif
+                }
+
+                return slot;
+            }
+            if (!found) {
+                prev = blk;
+                blk = blk->chain;
+            }
+        } while (!found && (blk));
+    }
+    if (!gone) {
+        if ((prev) && (blk)) {
+            prev->chain = blk->chain;
+            blk->chain = head;
+#if (MEMHASHLOCK)
+            g_mem.hash[key].chain = blk;
+            memrellk(&g_mem.hash[key].lk);
+#else
+            m_syncwrite((m_atomic_t *)&g_mem.hash[key].chain,
+                        (m_atomic_t)blk);
+#endif
+        } else {
+#if (MEMHASHLOCK)
+            memrellk(&g_mem.hash[key].lk);
+#else
+            memrelbit(&g_mem.hash[key].chain);
+#endif
+        }
+    } else {
+#if (MEMHASHLOCK)
+        memrellk(&g_mem.hash[key].lk);
+#else
+        memrelbit(&g_mem.hash[key].chain);
+#endif
+    }
+
+    return ret;
+}
+
+void *
+memsetbuf(void *ptr, struct membuf *buf, MEMUWORD_T info)
+{
+    MEMADR_T            adr = (MEMADR_T)ptr;
+    MEMADR_T            key;
+    MEMADR_T            val = (MEMADR_T)buf;
+    MEMADR_T            ret;
+    struct memhash     *item = NULL;
+    struct memhashitem *slot;
+    MEMADR_T            upval;
+
+    adr >>= PAGESIZELOG2;
+    val |= info;
+    ret = memfindbuf(ptr, MEMHASHADD);
+    if (ret == MEMHASHPRESENT) {
+
+        return ptr;
+    } else if (ret) {
+        slot->val = val;
+#if (MEMHASHLOCK)
+        memrellk(&g_mem.hash[key].lk);
+#else
+        memrelbit(&g_mem.hash[key].chain);
+#endif
+
+        return ptr;
+    } else {
+        key = razohash((void *)adr, sizeof(void *), MEMHASHBITS);
+//        key = adr & ((MEMWORD(1) << MEMHASHBITS) - 1);
+        item = memgethashitem();
+#if (MEMHASHLOCK)
+        memgetlk(&g_mem.hash[key].lk);
+#else
+        memlkbit(&g_mem.hash[key].chain);
+#endif
+        upval = (MEMADR_T)g_mem.hash[key].chain;
+        slot = &item->tab[0];
+        item->ntab = 1;
+        upval &= ~MEMLKBIT;
+        slot->nref = 1;
+        slot->page = adr;
+        item->chain = (struct memhash *)upval;
+        slot->val = val;
+        item->list = &g_mem.hash[key];
+#if (MEMHASHLOCK)
+        g_mem.hash[key].chain = item;
+        memrellk(&g_mem.hash[key].lk);
+#else
+        m_syncwrite((m_atomic_t *)&g_mem.hash[key].chain, (m_atomic_t)item);
+#endif
+    }
+
+    return ptr;
+}
+
+#elif (MEMHASH) || (MEMARRAYHASH)
 
 static struct memhash *
 memgethashitem(void)
@@ -514,9 +855,9 @@ memgethashitem(void)
         }
         first++;
         n--;
-        cur = first;;
-        prev = cur;
+        cur = first;
         while (--n) {
+            prev = cur;
             cur++;
             prev->chain = cur;
         }
@@ -524,8 +865,6 @@ memgethashitem(void)
         upval &= ~MEMLKBIT;
         cur->chain = (struct memhash *)upval;
         m_syncwrite((m_atomic_t *)&g_mem.hashbuf, (m_atomic_t)first);
-
-        return item;
     }
 
     return item;
@@ -553,10 +892,10 @@ membufhashitem(struct memhash *item)
 
 #endif
 
-#if (MEMARRAYHASH)
+#if (MEMARRAYHASH) && !(MEMNEWHASH)
 
 MEMADR_T
-memfindbuf(void *ptr, MEMWORD_T incr, MEMADR_T val)
+memfindbuf(void *ptr, MEMWORD_T incr)
 {
     MEMADR_T            adr = (MEMADR_T)ptr;
     struct memhashitem *slot = NULL;
@@ -575,7 +914,6 @@ memfindbuf(void *ptr, MEMWORD_T incr, MEMADR_T val)
     MEMUWORD_T          found;
     MEMUWORD_T          gone;
 
-    fprintf("FIND: %p (%lx)\n", ptr, (unsigned long)val);
     adr >>= PAGESIZELOG2;
     key = razohash((void *)adr, sizeof(void *), MEMHASHBITS);
 //    key = adr & ((MEMWORD(1) << MEMHASHBITS) - 1);
@@ -590,73 +928,74 @@ memfindbuf(void *ptr, MEMWORD_T incr, MEMADR_T val)
         prev = NULL;
         do {
             n = blk->ntab;
+            src = blk->tab;
             switch (n) {
 #if (MEMBIGARRAYHASH)
                 case 20:
-                    slot = &blk->tab[19];
+                    slot = &src[19];
                     if (slot->adr == adr) {
                         found++;
                         
                         break;
                     }
                 case 19:
-                    slot = &blk->tab[18];
+                    slot = &src[18];
                     if (slot->adr == adr) {
                         found++;
                         
                         break;
                     }
                 case 18:
-                    slot = &blk->tab[17];
+                    slot = &src[17];
                     if (slot->adr == adr) {
                         found++;
                         
                         break;
                     }
                 case 17:
-                    slot = &blk->tab[16];
+                    slot = &src[16];
                     if (slot->adr == adr) {
                         found++;
                         
                         break;
                     }
                 case 16:
-                    slot = &blk->tab[15];
+                    slot = &src[15];
                     if (slot->adr == adr) {
                         found++;
                         
                         break;
                     }
                 case 15:
-                    slot = &blk->tab[14];
+                    slot = &src[14];
                     if (slot->adr == adr) {
                         found++;
                         
                         break;
                     }
                 case 14:
-                    slot = &blk->tab[13];
+                    slot = &src[13];
                     if (slot->adr == adr) {
                         found++;
                         
                         break;
                     }
                 case 13:
-                    slot = &blk->tab[12];
+                    slot = &src[12];
                     if (slot->adr == adr) {
                         found++;
                         
                         break;
                     }
                 case 12:
-                    slot = &blk->tab[11];
+                    slot = &src[11];
                     if (slot->adr == adr) {
                         found++;
                         
                         break;
                     }
                 case 11:
-                    slot = &blk->tab[10];
+                    slot = &src[10];
                     if (slot->adr == adr) {
                         found++;
                         
@@ -664,70 +1003,70 @@ memfindbuf(void *ptr, MEMWORD_T incr, MEMADR_T val)
                     }
 #endif
                 case 10:
-                    slot = &blk->tab[9];
+                    slot = &src[9];
                     if (slot->adr == adr) {
                         found++;
                         
                         break;
                     }
                 case 9:
-                    slot = &blk->tab[8];
+                    slot = &src[8];
                     if (slot->adr == adr) {
                         found++;
                         
                         break;
                     }
                 case 8:
-                    slot = &blk->tab[7];
+                    slot = &src[7];
                     if (slot->adr == adr) {
                         found++;
                         
                         break;
                     }
                 case 7:
-                    slot = &blk->tab[6];
+                    slot = &src[6];
                     if (slot->adr == adr) {
                         found++;
                         
                         break;
                     }
                 case 6:
-                    slot = &blk->tab[5];
+                    slot = &src[5];
                     if (slot->adr == adr) {
                         found++;
                         
                         break;
                     }
                 case 5:
-                    slot = &blk->tab[4];
+                    slot = &src[4];
                     if (slot->adr == adr) {
                         found++;
                         
                         break;
                     }
                 case 4:
-                    slot = &blk->tab[3];
+                    slot = &src[3];
                     if (slot->adr == adr) {
                         found++;
                         
                         break;
                     }
                 case 3:
-                    slot = &blk->tab[2];
+                    slot = &src[2];
                     if (slot->adr == adr) {
                         found++;
                         
                         break;
                     }
                 case 2:
-                    slot = &blk->tab[1];
+                    slot = &src[1];
                     if (slot->adr == adr) {
                         found++;
                         
                         break;
                     }
                 case 1:
-                    slot = &blk->tab[0];
+                    slot = &src[0];
                 if (slot->adr == adr) {
                     found++;
                     
@@ -739,8 +1078,8 @@ memfindbuf(void *ptr, MEMWORD_T incr, MEMADR_T val)
                     break;
             }
             if (!found) {
-                blk = blk->chain;
                 prev = blk;
+                blk = blk->chain;
             }
         } while (!found && (blk));
     }
@@ -769,6 +1108,17 @@ memfindbuf(void *ptr, MEMWORD_T incr, MEMADR_T val)
                         blk->ntab = n;
                     }
                 }
+            } else if (incr == MEMHASHADD) {
+                if (prev) {
+                    prev->chain = blk->chain;
+                    blk->chain = head;
+                    m_syncwrite((m_atomic_t *)&g_mem.hash[key].chain,
+                                (m_atomic_t)blk);
+                } else {
+                    memrelbit(&g_mem.hash[key].chain);
+                }
+
+                return MEMHASHPRESENT;
             }
         }
     } else if (incr == MEMHASHADD && (head)) {
@@ -781,15 +1131,20 @@ memfindbuf(void *ptr, MEMWORD_T incr, MEMADR_T val)
                 n++;
                 slot->nref = 1;
                 slot->adr = adr;
-                slot->val = val;
                 blk->ntab = n;
-                found++;
+                if (prev) {
+                    prev->chain = blk->chain;
+                    blk->chain = head;
+                    blk = (struct memhash *)((MEMADR_T)ptr | MEMLKBIT);
+                    m_syncwrite((m_atomic_t *)&g_mem.hash[key].chain,
+                                (m_atomic_t)blk);
+                }
+
+                return (MEMADR_T)slot;
             }
-            if (!found) {
-                prev = blk;
-                blk = blk->chain;
-            }
-        } while (!found && (blk));
+            prev = blk;
+            blk = blk->chain;
+        } while (blk);
     }
     if (!gone) {
         if ((prev) && (blk)) {
@@ -818,27 +1173,38 @@ memsetbuf(void *ptr, struct membuf *buf, MEMUWORD_T info)
 
     adr >>= PAGESIZELOG2;
     val |= info;
-    fprintf("HASH: %p (%lx)\n", ptr, (unsigned long)val);
-    ret = memfindbuf(ptr, MEMHASHADD, val);
-    if (!ret) {
+    ret = memfindbuf(ptr, MEMHASHADD);
+    slot = (struct memhashitem *)ret;
+    if (ret == MEMHASHPRESENT) {
+
+        return ptr;
+    } else {
         key = razohash((void *)adr, sizeof(void *), MEMHASHBITS);
 //        key = adr & ((MEMWORD(1) << MEMHASHBITS) - 1);
-        item = memgethashitem();
-        upval = (MEMADR_T)g_mem.hash[key].chain;
-        slot = &item->tab[0];
-        item->ntab = 1;
-        upval &= ~MEMLKBIT;
-        slot->nref = 1;
-        slot->adr = adr;
-        slot->val = val;
-        item->chain = (struct memhash *)upval;
-        m_syncwrite((m_atomic_t *)&g_mem.hash[key].chain, (m_atomic_t)item);
+        if (ret) {
+            slot->val = val;
+            memrelbit(&g_mem.hash[key].chain);
+            
+            return ptr;
+        } else {
+            item = memgethashitem();
+            memlkbit(&g_mem.hash[key].chain);
+            upval = (MEMADR_T)g_mem.hash[key].chain;
+            slot = &item->tab[0];
+            item->ntab = 1;
+            upval &= ~MEMLKBIT;
+            slot->nref = 1;
+            slot->adr = adr;
+            slot->val = val;
+            item->chain = (struct memhash *)upval;
+            m_syncwrite((m_atomic_t *)&g_mem.hash[key].chain, (m_atomic_t)item);
+        }
     }
 
     return ptr;
 }
 
-#elif (MEMHASH)
+#elif (MEMHASH) && !(MEMNEWHASH)
 
 MEMADR_T
 memfindbuf(void *ptr, MEMWORD_T incr, MEMADR_T *keyret)
@@ -931,7 +1297,7 @@ memsetbuf(void *ptr, struct membuf *buf, MEMUWORD_T info)
     return ptr;
 }
 
-#elif (MEMHUGELOCK)
+#elif (MEMHUGELOCK) && (MEMMULTITAB)
 
 void *
 memsetbuf(void *ptr, struct membuf *buf, MEMUWORD_T info)
@@ -940,8 +1306,6 @@ memsetbuf(void *ptr, struct membuf *buf, MEMUWORD_T info)
     struct memtab  *itab;
     struct memtab  *tab;
     struct memitem *item;
-    m_atomic_t     *lk1;
-    m_atomic_t     *lk2;
     long             k1;
     long             k2;
     long             k3;
@@ -954,7 +1318,7 @@ memsetbuf(void *ptr, struct membuf *buf, MEMUWORD_T info)
     if (!itab) {
         itab = mapanon(0, MEMLVLITEMS * sizeof(struct memtab));
         if (itab == MAP_FAILED) {
-            memrelbit(lk1);
+            memrelbit(&g_mem.tab[k1].lk);
             
             return NULL;
         }
@@ -995,7 +1359,7 @@ memsetbuf(void *ptr, struct membuf *buf, MEMUWORD_T info)
     return ptr;
 }
 
-MEMADR_T
+struct membuf *
 memfindbuf(void *ptr, long rel)
 {
     MEMADR_T        ret = 0;
@@ -1034,10 +1398,10 @@ memfindbuf(void *ptr, long rel)
     }
     memrellk(&g_mem.tab[k1].lk);
 
-    return ret;
+    return (struct membuf *)ret;
 }
 
-#else
+#elif (MEMMULTITAB)
 
 void *
 memsetbuf(void *ptr, struct membuf *buf, MEMUWORD_T info)
@@ -1112,7 +1476,7 @@ memsetbuf(void *ptr, struct membuf *buf, MEMUWORD_T info)
     return ptr;
 }
 
-MEMADR_T
+struct membuf *
 memfindbuf(void *ptr, long rel)
 {
     MEMADR_T        ret = 0;
@@ -1190,12 +1554,12 @@ memopenbuf(struct membkt *bkt)
 MEMPTR_T
 memputptr(struct membuf *buf, void *ptr, size_t size, size_t align, long info)
 {
-    MEMUWORD_T bsz = membufblksize(buf);
     MEMUWORD_T type = memgetbuftype(buf);
+    MEMUWORD_T slot = memgetbufslot(buf);
+    MEMUWORD_T bsz = membufblksize(buf, type, slot);
     MEMUWORD_T id = info & MEMPAGEIDMASK;
-    MEMPTR_T   adr;
+    MEMPTR_T   adr = ptr;
     
-    adr = ptr;
     if (align <= MEMMINALIGN) {
         ptr = memgenptr(adr, bsz, size);
     } else if ((MEMADR_T)ptr & (align - 1)) {
@@ -1259,6 +1623,7 @@ memtryblk(MEMUWORD_T slot, MEMUWORD_T type,
                 if (buf->next) {
                     buf->next->prev = buf;
                 }
+                buf->bkt = dest;
                 m_syncwrite((m_atomic_t *)&dest->list, (m_atomic_t)buf);
             } else {
                 memrelbit(&dest->list);
@@ -1276,10 +1641,10 @@ memtryblk(MEMUWORD_T slot, MEMUWORD_T type,
 MEMPTR_T
 memgetblk(MEMUWORD_T slot, MEMUWORD_T type, MEMUWORD_T size, MEMUWORD_T align)
 {
-    struct membuf     *buf;
-    MEMPTR_T           ptr = NULL;
-    MEMUWORD_T         info;
-    MEMADR_T           upval = 0;
+    struct membuf *buf;
+    MEMPTR_T       ptr = NULL;
+    MEMUWORD_T     info;
+    MEMADR_T       upval = 0;
     
     if (type == MEMSMALLBUF) {
         ptr = memtryblk(slot, MEMSMALLBUF,
@@ -1324,7 +1689,7 @@ memgetblk(MEMUWORD_T slot, MEMUWORD_T type, MEMUWORD_T size, MEMUWORD_T align)
 
 void
 memrelblk(MEMUWORD_T slot, MEMUWORD_T type,
-            struct membuf *buf, struct membkt *src)
+          struct membuf *buf, struct membkt *src)
 {
     struct membkt *dest;
     MEMADR_T       upval;

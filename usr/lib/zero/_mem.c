@@ -6,6 +6,8 @@
 #include <stdio.h>
 #include <zero/mem.h>
 
+static const char *bufnames[3] = { "SMALL", "PAGE", "BIG" };
+
 #if (MEMSTAT)
 
 extern struct memstat g_memstat;
@@ -33,7 +35,7 @@ _memchkptr(struct membuf *buf, MEMPTR_T ptr)
     MEMUWORD_T nblk = memgetbufnblk(buf);
     MEMUWORD_T type = memgetbuftype(buf);
     MEMUWORD_T slot = memgetbufslot(buf);
-    MEMUWORD_T sz = membufblksize(buf);
+    MEMUWORD_T sz = membufblksize(buf, type, slot);
     long       fail = 0;
     MEMPTR_T   lim;
 
@@ -63,39 +65,58 @@ _memchkptr(struct membuf *buf, MEMPTR_T ptr)
 }
 
 long
-_memchkbuf(struct membuf *buf)
+_memchkbuf(struct membuf *buf, MEMUWORD_T slot, MEMUWORD_T type,
+           MEMUWORD_T nblk, MEMUWORD_T flg, const char *func)
 {
-    MEMUWORD_T nblk = memgetbufnblk(buf);
-    MEMUWORD_T nfree = memgetbufnfree(buf);
-    MEMUWORD_T type = memgetbuftype(buf);
-    MEMUWORD_T slot = memgetbufslot(buf);
-    MEMUWORD_T sz = membufblksize(buf);
+    MEMUWORD_T bflg = memgetbufflg(buf);
+    MEMUWORD_T bnblk = memgetbufnblk(buf);
+    MEMUWORD_T bnfree = memgetbufnfree(buf);
+    MEMUWORD_T btype = memgetbuftype(buf);
+    MEMUWORD_T bslot = memgetbufslot(buf);
+    MEMUWORD_T bsz = membufblksize(buf, type, slot);
+    MEMUWORD_T bufsz;
     long       fail = 0;
     MEMPTR_T   lim;
 
-    if (nfree > nblk) {
+    if ((flg) && !bflg) {
+        fprintf(stderr, "HEAP-bit not set\n");
+        fail++;
+    }
+    if ((nblk) && bnblk != nblk) {
+        fprintf(stderr, "WRONG block count: %lx (%lx)\n", bnblk, nblk);
+        fail++;
+    }
+    if (bnfree > bnblk) {
         fprintf(stderr, "nfree > nblk\n");
         fail++;
     }
-    if (type == MEMSMALLBUF) {
-        lim = buf->base + memsmallbufsize(slot);
-    } else if (type == MEMPAGEBUF) {
-        lim = buf->base + mempagebufsize(slot, nblk);
-    } else {
-        lim = buf->base + membigbufsize(slot, nblk);
-    }
-    if (buf->base + nblk * sz >= lim) {
-        fprintf(stderr, "bufsize too small\n");
+    if ((bnfree) && !buf->bkt) {
+        fprintf(stderr, "NOT in any bucket (%lx free blocks)\n", bnblk);
         fail++;
     }
+    if (type != btype) {
+        fprintf(stderr, "WRONG type: %lx (%s)\n", btype, bufnames[type]);
+        fail++;
+    }
+    if (btype == MEMSMALLBUF) {
+        bufsz = memsmallbufsize(slot);
+        lim = buf->base + memsmallbufsize(bslot) - membufblkofs();
+    } else if (btype == MEMPAGEBUF) {
+        bufsz = mempagebufsize(slot, nblk) - membufblkofs();
+        lim = buf->base + mempagebufsize(bslot, bnblk);
+    } else {
+        bufsz = membigbufsize(slot, nblk) - membufblkofs();
+        lim = buf->base + membigbufsize(bslot, bnblk);
+    }
     if (fail) {
-        fprintf(stderr, "BUF\n");
-        fprintf(stderr, "---\n");
-        fprintf(stderr, "nblk:\t%lx\n", nblk);
-        fprintf(stderr, "nfree:\t%lx\n", nfree);
-        fprintf(stderr, "type:\t%lx\n", type);
-        fprintf(stderr, "slot:\t%lx\n", slot);
-        fprintf(stderr, "bufsz:\t%lx\n", sz);
+        fprintf(stderr, "BUF: (%s)\n", func);
+        fprintf(stderr, "--------\n");
+        fprintf(stderr, "nblk:\t%lx\t(%lx)\n", bnblk, nblk);
+        fprintf(stderr, "nfree:\t%lx\n", bnfree);
+        fprintf(stderr, "type:\t%lx\t(%lx)\n", btype, type);
+        fprintf(stderr, "slot:\t%lx\t(%lx)\n", bslot, slot);
+        fprintf(stderr, "blksz:\t%lx\t(%lx)\n", bsz);
+        fprintf(stderr, "bufsize:\t%lx\t(%lx)n", buf->size, bufsz);
 
         abort();
     }

@@ -112,6 +112,122 @@ razohash(void *ptr, size_t len, size_t nbit)
     return hash;
 }
 
+/* this hash function is said to have come from Donald Knuth */
+uint32_t
+dkhash(unsigned long u)
+{
+    unsigned long hash = u;
+
+    hash *= 2654435761;
+    hash &= 0xffffffff;
+
+    return hash;
+}
+
+/* the following two snippets were posted on stackoverflow by Thomas Mueller */
+
+uint32_t
+tmhash32(unsigned long u)
+{
+    u = ((u >> 16) ^ u) * 0x45d9f3b;
+    u = ((u >> 16) ^ u) * 0x45d9f3b;
+    u = (u >> 16) ^ u;
+
+    return u;
+}
+
+uint64_t
+tmhash64(uint64_t u)
+{
+    u = (u ^ (u >> 30)) * UINT64_C(0xbf58476d1ce4e5b9);
+    u = (u ^ (u >> 27)) * UINT64_C(0x94d049bb133111eb);
+    u = u ^ (u >> 31);
+
+    return u;    
+}
+
+/* this one is Austin Appleby's MurmurHash3 */
+
+uint64_t MurmurHash3Mixer(uint64_t u)
+{
+    u ^= (u >> 33);
+    u *= UINT64_C(0xff51afd7ed558ccd);
+    u ^= (u >> 33);
+    u *= UINT64_C(0xc4ceb9fe1a85ec53);
+    u ^= (u >> 33);
+    
+    return u;
+}
+
+/* I found these on the Internet, too - again, from Thomas Mueller */
+
+unsigned int
+tmhash(unsigned int u)
+{
+    u = ((u >> 16) ^ u) * 0x45d9f3b;
+    u = ((u >> 16) ^ u) * 0x45d9f3b;
+    u = ((u >> 16) ^ u);
+
+    return u;
+}
+
+unsigned int
+tmunhash(unsigned int u)
+{
+    u = ((u >> 16) ^ u) * 0x119de1f3;
+    u = ((u >> 16) ^ u) * 0x119de1f3;
+    u = ((u >> 16) ^ u);
+
+    return u;
+}
+
+/* here is a version of FNV1A by Georgi 'Kaze' 'Sanmayce' :) */
+
+uint32_t
+FNV1A_Hash_WHIZ(const char *str, size_t wrdlen)
+{
+    const uint32_t  prime = 1607;
+    uint32_t        hash32 = 2166136261;
+    const char     *p = str;
+ 
+    for( ;
+         wrdlen >= sizeof(uint32_t);
+         wrdlen -= sizeof(uint32_t), p += sizeof(uint32_t)) {
+        hash32 = (hash32 ^ *(uint32_t *)p) * prime;
+    }
+    if (wrdlen & sizeof(uint16_t)) {
+        hash32 = (hash32 ^ *(uint16_t *)p) * prime;
+        p += sizeof(uint16_t);
+    }
+    if (wrdlen & 1) 
+        hash32 = (hash32 ^ *p) * prime;
+ 
+    return hash32 ^ (hash32 >> 16);
+}
+
+/* this one I found on ariya.io */
+
+/*
+ * modulus of k with a mersenne prime p; k % p
+ * "This works only for k up to (1 < < (2 * s)) - 1, so careful with small
+ *  Mersenne primes. Otherwise you need to call the function recursively."
+ */
+
+/*
+ * "The above division/modulus operation can be avoided if the prime number p
+ * is chosen to be the Mersenne primes only, i.e there is a positive integer
+ * s such as p = 2^s-1. In 32-bit range, there are Mersenne primes: 3, 7, 31,
+ * 127, 8191, 131071, 524287, and 2147483647.
+ */
+
+int
+mpmod(int k, int p, int s)
+{
+    int i = (k & p) + (k >> s);
+    
+    return (i >= p) ? i - p : i;
+}
+
 #if 0
 int
 main(int argc, char *argv[])

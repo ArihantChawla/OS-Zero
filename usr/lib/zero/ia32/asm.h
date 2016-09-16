@@ -143,7 +143,7 @@ m_cmpxchg64(m_atomic64_t long *p64,
 #else
 
 /*
- * atomic 128-bit compare and swap
+ * atomic 64-bit compare and swap
  * - if *p == want, let *p = val
  * - return original nonzero on success, zero on failure
  */
@@ -162,7 +162,7 @@ m_cmpxchg64(m_atomic64_t *p32,
                           : "m" (*val), "a" (eax), "c" (ecx)
                           : "cc", "memory");
 
-    return (res == *want);
+    return res;
 }
 
 #endif
