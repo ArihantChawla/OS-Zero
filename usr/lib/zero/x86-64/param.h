@@ -32,7 +32,7 @@
 
 #define CLSIZE         64
 #define CLSIZELOG2     6
-#define PAGESIZE       (1 << PAGESIZELOG2)
+#define PAGESIZE       4096
 
 #define LONGDOUBLESIZE 80
 

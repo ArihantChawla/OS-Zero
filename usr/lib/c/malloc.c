@@ -35,11 +35,6 @@ _malloc(size_t size, size_t align, long flg)
 
         abort();
     }
-#if 0
-    if (!(g_mem.flg & MEMINITBIT)) {
-        meminit();
-    }
-#endif
     if (type != MEMPAGEBUF) {
         memcalcslot(bsz, slot);
     } else {
@@ -81,18 +76,11 @@ _free(void *ptr)
 
         return;
     }
-    if (!g_memtls && !meminittls()) {
-
-        abort();
-    }
-#if (MEMDEBUG)
-    crash(ptr != NULL);
-#endif
 #if (MEMMULTITAB)
     buf = memfindbuf(ptr, 1);
     desc = (MEMADR_T)buf;
 #elif (MEMNEWHASH)
-    desc = memfindbuf(ptr, MEMHASHDEL, NULL);
+    desc = membufop(ptr, MEMHASHDEL, NULL);
 #elif (MEMARRAYHASH)
     desc = memfindbuf(ptr, MEMHASHDEL);
 #elif (MEMHASH)
@@ -101,15 +89,10 @@ _free(void *ptr)
 #if (MEMDEBUG)
     crash(desc != 0);
 #endif
-#if 0
-    desc &= ~MEMPAGEIDMASK;
-#endif
-    info = desc & MEMPAGEINFOMASK;
-    desc &= ~MEMPAGEINFOMASK;
 #if (MEMMULTITAB)
     memputblk(ptr, buf, info);
 #else
-    memputblk(ptr, (struct membuf *)desc, info);
+    memputblk(ptr, (struct membuf *)desc);
 #endif
     VALGRINDFREE(ptr);
 
@@ -129,7 +112,9 @@ _realloc(void *ptr,
 #if (MEMMULTITAB)
     struct membuf *buf = (ptr) ? memfindbuf(ptr, 0) : NULL;
 #elif (MEMNEWHASH)
-    MEMADR_T       desc = (ptr) ? memfindbuf(ptr, MEMHASHCHK, NULL) : 0;
+    MEMADR_T       desc = ((ptr)
+                           ? membufop(ptr, MEMHASHCHK, NULL)
+                           : 0);
 #elif (MEMARRAYHASH
     MEMADR_T       desc = (ptr) ? memfindbuf(ptr, MEMHASHCHK) : 0;
 #elif (MEMHASH)
@@ -467,7 +452,9 @@ malloc_usable_size(void *ptr)
 #if (MEMMULTITAB)
     struct membuf *buf = (ptr) ? memfindbuf(ptr, 0) : NULL;
 #elif (MEMNEWHASH)
-    MEMADR_T       desc = (ptr) ? memfindbuf(ptr, MEMHASHCHK, NULL) : 0;
+    MEMADR_T       desc = ((ptr)
+                           ? membufop(ptr, MEMHASHCHK, NULL)
+                           : 0);
 #elif (MEMARRAYHASH)
     MEMADR_T       desc = (ptr) ? memfindbuf(ptr, MEMHASHCHK) : 0;
 #elif (MEMHASH)
@@ -476,10 +463,16 @@ malloc_usable_size(void *ptr)
 #if (MEMHASH) || (MEMARRAYHASH) || (MEMNEWHASH)
     struct membuf *buf = (struct membuf *)(desc & ~MEMPAGEINFOMASK);
 #endif
-    MEMUWORD_T     type = memgetbuftype(buf);
-    MEMUWORD_T     slot = memgetbufslot(buf);
-    size_t         sz = membufblksize(buf, type, slot);
+    size_t         sz = 0;
+    MEMUWORD_T     type;
+    MEMUWORD_T     slot;
     
+    if (buf) {
+        type = memgetbuftype(buf);
+        slot = memgetbufslot(buf);
+        sz = membufblksize(buf, type, slot);
+    }
+
     return sz;
 }
 
@@ -515,7 +508,9 @@ malloc_size(void *ptr)
 #if (MEMMULTITAB)
     struct membuf *buf = (ptr) ? memfindbuf(ptr, 0) : NULL;
 #elif (MEMNEWHASH)
-    MEMADR_T       desc = (ptr) ? memfindbuf(ptr, MEMHASHCHK, NULL) : 0;
+    MEMADR_T       desc = ((ptr)
+                           ? membufop(ptr, MEMHASHCHK, NULL)
+                           : 0);
 #elif (MEMARRAYHASH)
     MEMADR_T       desc = (ptr) ? memfindbuf(ptr, MEMHASHCHK) : 0;
 #elif (MEMHASH)
@@ -524,9 +519,15 @@ malloc_size(void *ptr)
 #if (MEMHASH) || (MEMARRAYHASH) || (MEMNEWHASH)
     struct membuf *buf = (struct membuf *)(desc & ~MEMPAGEINFOMASK);
 #endif
-    MEMUWORD_T     type = memgetbuftype(buf);
-    MEMUWORD_T     slot = memgetbufslot(buf);
-    size_t         sz = membufblksize(buf, type, slot);
+    size_t         sz = 0;
+    MEMUWORD_T     type;
+    MEMUWORD_T     slot;
+
+    if (buf) {
+        type = memgetbuftype(buf);
+        slot = memgetbufslot(buf);
+        sz = membufblksize(buf, type, slot);
+    }
 
     return sz;
 }
