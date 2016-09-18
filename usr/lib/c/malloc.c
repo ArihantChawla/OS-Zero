@@ -67,7 +67,7 @@ _free(void *ptr)
 #if (MEMMULTITAB)
     struct membuf *buf;
     MEMADR_T       desc;
-#else
+#elif (!MEMNEWHASH)
     MEMADR_T       desc;
 #endif
     MEMUWORD_T     info;
@@ -80,7 +80,7 @@ _free(void *ptr)
     buf = memfindbuf(ptr, 1);
     desc = (MEMADR_T)buf;
 #elif (MEMNEWHASH)
-    desc = membufop(ptr, MEMHASHDEL, NULL);
+    membufop(ptr, MEMHASHDEL, NULL);
 #elif (MEMARRAYHASH)
     desc = memfindbuf(ptr, MEMHASHDEL);
 #elif (MEMHASH)

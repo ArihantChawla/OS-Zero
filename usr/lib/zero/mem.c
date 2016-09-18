@@ -307,9 +307,6 @@ memallocsmallbuf(MEMUWORD_T slot)
         g_memstat.nbmap += bufsz;
 #endif
     }
-#if (MEMSTAT)
-    g_memstat.nbbook += membufblkofs();
-#endif
     buf = (struct membuf *)adr;
 #if (MEMBITFIELD)
     memsetbufflg(buf, 1);
@@ -321,6 +318,11 @@ memallocsmallbuf(MEMUWORD_T slot)
     memsetbuftype(buf, type);
     buf->size = bufsz;
     buf->ptrtab = (MEMPTR_T *)((MEMPTR_T)buf + membufhdrsize());
+#if (MEMSTAT)
+    g_memstat.nbsmall += bufsz;
+    g_memstat.nbheap += bufsz;
+    g_memstat.nbbook += membufblkofs();
+#endif
 #if (MEMTEST)
     _memchkbuf(buf, slot, type, nblk, info, __FUNCTION__);
 #endif
@@ -1515,7 +1517,7 @@ memopenbuf(struct membkt *bkt)
 
 /* for pagebin, val is the allocation index */
 MEMPTR_T
-memputptr(struct membuf *buf, void *ptr, size_t size, size_t align, long info)
+memputptr(struct membuf *buf, void *ptr, size_t size, size_t align)
 {
     MEMUWORD_T type = memgetbuftype(buf);
     MEMUWORD_T slot = memgetbufslot(buf);
@@ -1667,7 +1669,7 @@ memgetblk(MEMUWORD_T slot, MEMUWORD_T type, MEMUWORD_T size, MEMUWORD_T align)
 #endif
     }
     if (ptr) {
-        ptr = memputptr(buf, ptr, size, align, info);
+        ptr = memputptr(buf, ptr, size, align);
         memsetbuf(ptr, buf);
 #if (MEMTEST)
         _memchkptr(buf, ptr);

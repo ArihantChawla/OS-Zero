@@ -27,7 +27,7 @@
 #define MEM_LK_FMTX 0x04        // anonymous non-recursive mutex
 #define MEM_LK_SPIN 0x08        // spinlock
 
-#define MEM_LK_TYPE (MEM_LK_PRIO | MEM_LK_FMTX) // types of locks to use
+#define MEM_LK_TYPE MEM_LK_FMTX // types of locks to use
 
 #include <limits.h>
 #include <stddef.h>
@@ -38,13 +38,13 @@
 #include <zero/asm.h>
 #include <zero/unix.h>
 #include <zero/trix.h>
-#if (MEM_LK_TYPE & MEM_LK_PRIO)
+#if (MEM_LK_TYPE == MEM_LK_PRIO)
 #include <zero/priolk.h>
 #endif
-#if (MEM_LK_TYPE & MEM_LK_FMTX)
+#if (MEM_LK_TYPE == MEM_LK_FMTX)
 #include <zero/mtx.h>
 #endif
-#if (MEM_LK_TYPE & MEM_LK_SPIN)
+#if (MEM_LK_TYPE == MEM_LK_SPIN)
 #include <zero/spin.h>
 #endif
 #if defined(MEMVALGRIND) && (MEMVALGRIND)
@@ -83,13 +83,13 @@ typedef zerospin      MEMLK_T;
 #define MEMUWORD(u) UINT64_C(u)
 #endif
 
-#if (MEM_LK_TYPE & MEM_LK_PRIO)
+#if (MEM_LK_TYPE == MEM_LK_PRIO)
 #define memgetlk(lp) priolk(lp)
 #define memrellk(lp) priounlk(lp)
-#elif (MEM_LK_TYPE & MEM_LK_FMTX)
+#elif (MEM_LK_TYPE == MEM_LK_FMTX)
 #define memgetlk(lp) fmtxlk(lp)
 #define memrellk(lp) fmtxunlk(lp)
-#elif (MEM_LK_TYPE & MEM_LK_SPIN)
+#elif (MEM_LK_TYPE == MEM_LK_SPIN)
 #define memgetlk(lp) spinlk(lp)
 #define memrellk(lp) spinunlk(lp)
 #endif
@@ -257,15 +257,13 @@ struct membkt {
 
 #define memsetbufflg(buf, flg) ((buf)->info |= (flg))
 #define memsetbufnblk(buf, n)                                           \
-    ((buf)->info = ((buf)->info & ~MEMBUFNBLKMASK) | (n))
+    ((buf)->info |= (n))
+#define memsetbuftype(buf, t)                                           \
+    ((buf)->info |=  (t) << MEMBUFTYPESHIFT)
+#define memsetbufslot(buf, slot)                                        \
+    ((buf->info)  |= (slot) << MEMBUFSLOTSHIFT)
 #define memsetbufnfree(buf, n)                                          \
     ((buf)->info = ((buf)->info & ~MEMBUFNFREEMASK) | ((n) << MEMBUFNBLKBITS))
-#define memsetbuftype(buf, t)                                           \
-    ((buf)->info = ((buf)->info & ~MEMBUFTYPEMASK)                      \
-     | ((t) << MEMBUFTYPESHIFT))
-#define memsetbufslot(buf, slot)                                        \
-    ((buf->info) = ((buf)->info & ~MEMBUFSLOTMASK)                      \
-     | ((slot) << MEMBUFSLOTSHIFT))
 #define memgetbufflg(buf)                                               \
     ((buf)->info & (flg))
 #define memgetbufnblk(buf)                                              \
