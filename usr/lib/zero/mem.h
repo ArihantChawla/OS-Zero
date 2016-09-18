@@ -700,7 +700,7 @@ memgenhashtabadr(MEMUWORD_T *adr)
     (rounduppow2(membufblkofs() + (MEMUWORD(1) << (slot)) * (nblk),     \
                  PAGESIZE))
 #if 0
-#define membufnblk(slot, type)                                          \
+#define memnbufblk(slot, type)                                          \
     (((type) == MEMSMALLBUF)                                            \
      ? (MEMBUFBLKS)                                                     \
      : (((slot) <= MEMBUFMIDMAPSHIFT)                                   \
@@ -709,7 +709,7 @@ memgenhashtabadr(MEMUWORD_T *adr)
            ? 2                                                          \
            : 1)))
 #endif
-#define membufnblk(slot, type)                                          \
+#define memnbufblk(slot, type)                                          \
     (((type) == MEMSMALLBUF)                                            \
      ? (MEMBUFBLKS)                                                     \
      : (((type) == MEMPAGEBUF)                                          \
@@ -725,11 +725,11 @@ memgenhashtabadr(MEMUWORD_T *adr)
            : (((slot) <= MEMBIGMAPSHIFT)                                \
               ? 2                                                       \
               : 1))))
-#define membufntls(slot, type)                                          \
+#define memnbuftls(slot, type)                                          \
     (((type) == MEMSMALLBUF)                                            \
      ? 8                                                                \
      : 2)
-#define membufnglob(slot, type)                                         \
+#define memnbufglob(slot, type)                                         \
     (((type) == MEMSMALLBUF)                                            \
      ? 8                                                                \
      : (((type) == MEMPAGEBUF)                                          \
@@ -761,16 +761,16 @@ memgenhashtabadr(MEMUWORD_T *adr)
 #if 0
 #define memgetnblk(slot, type)                                          \
     (membufnblk(type, slot))
-#define memgetntls(slot, type)                                          \
+#define membufntls(slot, type)                                          \
     (membufntls(type, slot))
-#define memgetnglob(slot, type)                                         \
+#define membufnglob(slot, type)                                         \
     (membufnglob(type, slot))
 #endif
-#define memgetnblk(slot, type)                                          \
+#define memgetnbufblk(slot, type)                                       \
     (g_mem.bufvals.nblk[type][slot])
-#define memgetntls(slot, type)                                          \
+#define memgetnbuftls(slot, type)                                       \
     (g_mem.bufvals.ntls[type][slot])
-#define memgetnglob(slot, type)                                         \
+#define memgetnbufglob(slot, type)                                      \
     (g_mem.bufvals.nglob[type][slot])
 
 void            meminit(void);
