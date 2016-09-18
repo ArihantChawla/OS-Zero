@@ -1054,6 +1054,7 @@ memfindbuf(void *ptr, MEMWORD_T incr)
         if (incr) {
             slot->nref += incr;
             if (incr == MEMHASHDEL) {
+                memputblk(ptr, (struct membuf *)ret);
                 n--;
                 if (!slot->nref) {
                     if (blk->ntab == 1) {

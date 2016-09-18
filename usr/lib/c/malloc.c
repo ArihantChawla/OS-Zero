@@ -92,7 +92,7 @@ _free(void *ptr)
 #if (MEMMULTITAB)
     memputblk(ptr, buf, info);
 #else
-    memputblk(ptr, (struct membuf *)desc);
+//    memputblk(ptr, (struct membuf *)desc);
 #endif
     VALGRINDFREE(ptr);
 
