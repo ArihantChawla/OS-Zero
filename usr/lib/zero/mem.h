@@ -376,7 +376,7 @@ struct memhashlist {
  */
 #define MEMHASHBITS     20
 #define MEMHASHITEMS    (1U << MEMHASHBITS)
-#define MEMHASHSIZE     (128 * WORDSIZE)
+#define MEMHASHSIZE     (256 * WORDSIZE)
 #define MEMHASHTABITEMS 32      // allow a bit of table-address randomization
 
 #define memhashsize()   MEMHASHSIZE
@@ -393,7 +393,7 @@ struct memhash {
     MEMUWORD_T          ntab;   // number of occupied slots in this table
     struct memhashitem *tab;    // pointer to the item table
     struct memhashlist *list;   // pointer for head of list
-    uint8_t             data;
+    MEMUWORD_T          data;   // base address for generating table address
 };
 
 #elif (MEMARRAYHASH)
@@ -619,9 +619,11 @@ memgenhashtabadr(MEMUWORD_T *adr)
     q = q >> 3;
     r = res - q * 9;
     div9 = q + ((r + 7) >> 4);
-    /* calculate res -= res/9 * 9 */
+    /* calculate res -= res/9 * 9 i.e. res % 9 (max 8) */
     dec = div9 * 9;
     res -= dec;
+    /* scale res to 0..32 (machine words) */
+    res <<= 2;
     /* add to original pointer */
     adr += res;
     /* align to machine word boundary */
