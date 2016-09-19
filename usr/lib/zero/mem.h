@@ -397,7 +397,6 @@ struct memhashlist {
 #define MEMHASHSIZE     (128 * WORDSIZE)
 #define MEMHASHTABITEMS 24
 #endif
-
 #define memhashsize()   MEMHASHSIZE
 
 struct memhashitem {

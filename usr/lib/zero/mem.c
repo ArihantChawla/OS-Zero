@@ -124,12 +124,10 @@ struct memtls *
 meminittls(void)
 {
     struct memtls *tls = NULL;
-    MEMPTR_T       adr;
     unsigned long  val;
 
-    adr = mapanon(0, memtlssize());
-    if (adr != MAP_FAILED) {
-        tls = adr;
+    tls = mapanon(0, memtlssize());
+    if (tls != MAP_FAILED) {
 #if 0
         tls = (struct memtls *)memgenptrcl(adr, memtlssize(),
                                            sizeof(struct memtls));
@@ -139,7 +137,7 @@ meminittls(void)
         priolkinit(&tls->priolkdata, val);
 #endif
         pthread_once(&g_thronce, meminit);
-        pthread_setspecific(g_thrkey, adr);
+        pthread_setspecific(g_thrkey, tls);
         g_memtls = tls;
     }
 
@@ -278,13 +276,13 @@ meminit(void)
 }
 
 MEMPTR_T
-memputptr(struct membuf *buf, void *ptr, MEMUWORD_T size, MEMUWORD_T align)
+memputptr(struct membuf *buf, MEMPTR_T ptr, MEMUWORD_T size, MEMUWORD_T align)
 {
     MEMUWORD_T type = memgetbuftype(buf);
     MEMUWORD_T slot = memgetbufslot(buf);
     MEMUWORD_T bsz = membufblksize(buf, type, slot);
     MEMUWORD_T id;
-    MEMADR_T   adr = ptr;
+    MEMPTR_T   adr = ptr;
     MEMADR_T   delta;
 
     if ((MEMADR_T)ptr & (align - 1)) {
@@ -377,6 +375,7 @@ meminitsmallbuf(struct membuf *buf, MEMUWORD_T slot,
     MEMPTR_T       adr = (MEMPTR_T)buf;
     MEMPTR_T       ptr = adr + membufblkofs();
     struct membkt *dest = &g_memtls->smallbin[slot];
+    MEMUWORD_T     info;
     MEMADR_T       upval;
 
     /* initialise freemap */
@@ -391,7 +390,24 @@ meminitsmallbuf(struct membuf *buf, MEMUWORD_T slot,
     _memchkptr(buf, ptr);
 #endif
     /* FIXME */
-#if 0
+    if (dest->nbuf >= memgetnbuftls(slot, MEMSMALLBUF)) {
+        dest = &g_mem.pagebin[slot];
+    }
+#if (MEMBITFIELD)
+    info = memgetbufflg(buf, 1);
+#else
+    info = buf->info;
+#endif
+    if (info & MEMHEAPBIT) {
+        memlkbit(&g_mem.heap);
+        upval = (MEMADR_T)g_mem.heap;
+        upval &= ~MEMLKBIT;
+        buf->heap = (struct membuf *)upval;
+        /* this unlocks the global heap (low-bit becomes zero) */
+        m_syncwrite(&g_mem.heap, buf);
+        memrellk(&g_mem.heaplk);
+    }
+#if (MEMINITBUFFIXED)
     memlkbit(&dest->list);
     upval = (MEMADR_T)dest->list;
     upval &= ~MEMLKBIT;
@@ -466,8 +482,11 @@ meminitpagebuf(struct membuf *buf, MEMUWORD_T slot,
     _memchkptr(buf, ptr);
 #endif
     /* FIXME */
-#if 0
+#if (MEMINITBUFFIXED)
     if (nblk > 0) {
+        if (dest->nbuf >= memgetnbuftls(slot, MEMSMALLBUF)) {
+            dest = &g_mem.pagebin[slot];
+        }
         memlkbit(&dest->list);
         upval = (MEMADR_T)dest->list;
         upval &= ~MEMLKBIT;
@@ -542,8 +561,11 @@ meminitbigbuf(struct membuf *buf, MEMUWORD_T slot,
     _memchkptr(buf, ptr);
 #endif
     /* FIXME */
-#if 0
+#if (MEMINITBUFFIXED)
     if (nblk > 0) {
+        if (dest->nbuf >= memgetnbuftls(slot, MEMSMALLBUF)) {
+            dest = &g_mem.pagebin[slot];
+        }
         memlkbit(&dest->list);
         upval = (MEMADR_T)dest->list;
         upval &= ~MEMLKBIT;
@@ -585,11 +607,11 @@ memgetbufblk(struct membuf *head, struct membkt *bkt,
         if (head->next) {
             head->next->prev = NULL;
         }
+        bkt->nbuf--;
         m_syncwrite((m_atomic_t *)&bkt->list, (m_atomic_t)head->next);
         head->bkt = NULL;
         head->prev = NULL;
         head->next = NULL;
-        bkt->nbuf--;
     } else {
         memrelbit(&bkt->list);
     }
@@ -620,10 +642,10 @@ static struct memhash *
 memgethashitem(void)
 {
     struct memhash *item = NULL;
-    uint8_t        *first;
+    MEMPTR_T        first;
     struct memhash *prev;
     struct memhash *cur;
-    uint8_t        *next;
+    MEMPTR_T        next;
     MEMUWORD_T      bsz;
     MEMADR_T        upval;
     long            n;
@@ -642,7 +664,7 @@ memgethashitem(void)
         g_memstat.nbhash += bsz;
 #endif
         item = mapanon(0, bsz);
-        first = item;
+        first = (MEMPTR_T)item;
         if (item == MAP_FAILED) {
 
             abort();
@@ -650,17 +672,15 @@ memgethashitem(void)
         meminithashitem(first);
         upval = (MEMADR_T)g_mem.hashbuf;
         first += memhashsize();
-        n--;
-        next = first;
-        meminithashitem(next);
         upval &= ~MEMLKBIT;
+        next = first;
         while (--n) {
             prev = (struct memhash *)next;
-            next += memhashsize();
             meminithashitem(next);
+            next += memhashsize();
             prev->chain = (struct memhash *)next;
         }
-        cur = (struct memhash *)next;
+        cur = (struct memhash *)prev;
         cur->chain = (struct memhash *)upval;
         m_syncwrite((m_atomic_t *)&g_mem.hashbuf, (m_atomic_t)first);
     }
@@ -963,22 +983,6 @@ memtryblk(MEMUWORD_T slot, MEMUWORD_T type,
                     ptr = meminitbigbuf(buf, slot, size, align, nblk);
                 }
             }
-        }
-    }
-    if (!src && (ptr) && type == MEMSMALLBUF) {
-#if (MEMBITFIELD)
-        info = memgetbufflg(buf, 1);
-#else
-        info = buf->info;
-#endif
-        if (info & MEMHEAPBIT) {
-            memlkbit(&g_mem.heap);
-            upval = (MEMADR_T)g_mem.heap;
-            upval &= ~MEMLKBIT;
-            buf->heap = (struct membuf *)upval;
-            /* this unlocks the global heap (low-bit becomes zero) */
-            m_syncwrite(&g_mem.heap, buf);
-            memrellk(&g_mem.heaplk);
         }
     }
 
