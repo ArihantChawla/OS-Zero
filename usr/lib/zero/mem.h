@@ -166,7 +166,7 @@ typedef zerospin      MEMLK_T;
 /* NOTES
  * -----
  * - all allocations except those from pagebin are power-of-two sizes
- * - pagebin allocations are PAGESIZE << slot
+ * - pagebin allocations are PAGESIZE * slot
  */
 /* minimum allocation block size */
 #define MEMMINBLK          (MEMUWORD(1) << MEMALIGNSHIFT)
@@ -293,7 +293,7 @@ struct membufvals {
 struct mem {
     struct membkt       smallbin[PTRBITS]; // blocks of 1 << slot
     struct membkt       bigbin[PTRBITS]; // mapped blocks of 1 << slot
-    struct membkt       pagebin[MEMPAGESLOTS]; // maps of PAGESIZE << slot
+    struct membkt       pagebin[MEMPAGESLOTS]; // maps of PAGESIZE * slot
     struct membufvals   bufvals;
 #if (MEMARRAYHASH) || (MEMNEWHASH)
     struct memhashlist *hash;    // hash table
@@ -469,7 +469,7 @@ struct memitem {
 #define memtlssize() rounduppow2(sizeof(struct memtls), PAGESIZE)
 struct memtls {
     struct membkt     smallbin[PTRBITS]; // blocks of size 1 << slot
-    struct membkt     pagebin[MEMPAGESLOTS]; // maps of PAGESIZE << slot
+    struct membkt     pagebin[MEMPAGESLOTS]; // maps of PAGESIZE * slot
 #if (MEM_LK_TYPE & MEM_LK_PRIO)
     struct priolkdata priolkdata;
 #endif
@@ -682,7 +682,7 @@ memgenhashtabadr(MEMUWORD_T *adr)
  * allocation headers
  * - 3 allocation classes:
  *   - small; block size is 1 << slot
- *   - page; block size is PAGESIZE << slot
+ *   - page; block size is PAGESIZE * slot
  *   - big; block size is 1 << slot
  */
 #define membufhdrsize()       (sizeof(struct membuf))
@@ -692,7 +692,7 @@ memgenhashtabadr(MEMUWORD_T *adr)
     (rounduppow2(membufhdrsize() + membufptrtabsize(), PAGESIZE))
 #define memusesmallbuf(sz)    ((sz) <= (MEMUWORD(1) << MEMSMALLBLKSHIFT))
 #define memusepagebuf(sz)     ((sz) <= (PAGESIZE * MEMPAGESLOTS))
-/* allocations of PAGESIZE << slot */
+/* allocations of PAGESIZE * slot */
 #define memsmallbufsize(slot)                                           \
     (rounduppow2(membufblkofs() + (MEMBUFBLKS << (slot)),               \
                  PAGESIZE))
@@ -777,14 +777,6 @@ memgenhashtabadr(MEMUWORD_T *adr)
 #define membufsetpage(buf, ndx, adr)                                    \
     ((buf)->ptrtab[(ndx)] = (adr))
 
-#if 0
-#define memgetnblk(slot, type)                                          \
-    (membufnblk(type, slot))
-#define membufntls(slot, type)                                          \
-    (membufntls(type, slot))
-#define membufnglob(slot, type)                                         \
-    (membufnglob(type, slot))
-#endif
 #define memgetnbufblk(slot, type)                                       \
     (g_mem.bufvals.nblk[type][slot])
 #define memgetnbuftls(slot, type)                                       \
