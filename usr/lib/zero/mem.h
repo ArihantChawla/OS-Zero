@@ -280,14 +280,6 @@ struct membufvals {
     MEMUWORD_T *nglob[MEMBUFTYPES];
 };
 
-/*
- * buf structure for allocating runs of pages; crafted to fit in a cacheline
- * - a second cacheline is used for the bitmap; 1-bits denote blocks in use
- * - the actual runs will be prefixed by this structure
- * - allocation shall take place with sbrk() or mmap() (see MEMMAPBIT)
- * - data is a placeholder/marker for the beginning of allocated blocks
- */
-
 #define MEMINITBIT   (1L << 0)
 #define MEMNOHEAPBIT (1L << 1)
 struct mem {
@@ -314,6 +306,7 @@ struct mem {
     unsigned long       prioval; // locklessinc priority locks
 #endif
     MEMLK_T             heaplk;  // lock for sbrk()
+    MEMLK_T             initlk;  // lock for initialisation
 };
 
 #if (MEMBITFIELD)
@@ -325,6 +318,14 @@ struct membufinfo {
     unsigned int flg   : MEMBUFFLGBITS;
 };
 #endif
+
+/*
+ * buf structure for allocating runs of pages; crafted to fit in 8 words
+ * (typical cacheline size)
+ * - a second cacheline is used for the bitmap; 1-bits denote free blocks
+ * - the actual buffers will be prefixed by this structure
+ * - allocation shall take place with sbrk() or mmap()
+ */
 
 struct membuf {
 #if (MEMBITFIELD)

@@ -152,6 +152,7 @@ memprefork(void)
     MEMUWORD_T slot;
 
 //    fmtxlk(&g_mem.priolk);
+    memgetlk(&g_mem.initlk);
     memgetlk(&g_mem.heaplk);
     for (slot = 0 ; slot < PTRBITS ; slot++) {
         memlkbit(&g_mem.smallbin[slot].list);
@@ -195,6 +196,7 @@ mempostfork(void)
         memrelbit(&g_mem.smallbin[slot].list);
     }
     memrellk(&g_mem.heaplk);
+    memrellk(&g_mem.initlk);
 //    fmtxunlk(&g_mem.priolk);
 
     return;
@@ -209,6 +211,7 @@ meminit(void)
     MEMPTR_T   *adr;
     MEMUWORD_T  slot;
 
+    memgetlk(&g_mem.initlk);
     pthread_atfork(memprefork, mempostfork, mempostfork);
     pthread_key_create(&g_thrkey, memfreetls);
 #if (MEMSTAT)
@@ -269,6 +272,7 @@ meminit(void)
         growheap(ofs);
     }
     memrellk(&g_mem.heaplk);
+    memrellk(&g_mem.initlk);
 
     return;
 }
@@ -1867,7 +1871,6 @@ memputblk(void *ptr, struct membuf *buf)
     MEMUWORD_T     nblk = memgetbufnblk(buf);
     MEMUWORD_T     nfree = memgetbufnfree(buf);
     MEMUWORD_T     type = memgetbuftype(buf);
-    MEMPTR_T       adr;
     MEMUWORD_T     id;
     MEMADR_T       upval;
 
@@ -1880,11 +1883,9 @@ memputblk(void *ptr, struct membuf *buf)
     nfree++;
     if (type != MEMPAGEBUF) {
         id = membufblkid(buf, ptr);
-        adr = membufblkadr(buf, id);
         membufsetptr(buf, ptr, NULL);
     } else {
         id = membufpageid(buf, ptr);
-        adr = membufpageadr(buf, id);
         membufsetpage(buf, id, NULL);
     }
     setbit(buf->freemap, id);
