@@ -86,9 +86,6 @@ _free(void *ptr)
 #elif (MEMHASH)
     desc = memfindbuf(ptr, -1, NULL);
 #endif
-#if (MEMDEBUG)
-    crash(desc != 0);
-#endif
 #if (MEMMULTITAB)
     memputblk(ptr, buf, info);
 #else
@@ -108,7 +105,7 @@ _realloc(void *ptr,
          size_t size,
          long rel)
 {
-    void          *retptr = NULL;
+    MEMPTR_T       retptr = NULL;
 #if (MEMMULTITAB)
     struct membuf *buf = (ptr) ? memfindbuf(ptr, 0) : NULL;
 #elif (MEMNEWHASH)
@@ -123,27 +120,33 @@ _realloc(void *ptr,
 #if (MEMHASH) || (MEMARRAYHASH) || (MEMNEWHASH)
     struct membuf *buf = (struct membuf *)(desc & ~MEMPAGEINFOMASK);
 #endif
-    void          *oldptr = (buf) ? membufgetptr(buf, ptr) : NULL;
+    MEMPTR_T       oldptr = (buf) ? membufgetptr(buf, ptr) : NULL;
     MEMUWORD_T     type;
     MEMUWORD_T     slot;
     size_t         sz;
+    size_t         delta;
 
     if (buf) {
         type = memgetbuftype(buf);
+        delta = (MEMPTR_T)ptr - oldptr;
         slot = memgetbufslot(buf);
         sz = membufblksize(buf, type, slot);
+        sz -= delta;
     }
     retptr = _malloc(size, 0, 0);
     if (retptr) {
+#if 0
         if (oldptr) {
             memcpy(retptr, oldptr, sz);
         }
+#endif
         if (ptr) {
+            memcpy(retptr, ptr, sz);
             _free(ptr);
+            ptr = NULL;
         }
     }
-    ptr = retptr;
-    if (((rel) && (ptr)) || (retptr != ptr)) {
+    if ((rel) && (ptr)) {
         _free(ptr);
     }
 #if (MEMDEBUG)

@@ -14,7 +14,7 @@
 #if defined(MEMDEBUG)
 #define crash(expr)                                                     \
     do {                                                                \
-        if ((expr)) {                                                   \
+        if (!(expr)) {                                                  \
             *(uint8_t *)NULL = 0x00;                                    \
         }                                                               \
     } while (0)
@@ -39,6 +39,8 @@
 #include <zero/unix.h>
 #include <zero/trix.h>
 #if (MEM_LK_TYPE == MEM_LK_PRIO)
+#define PRIOLKALLOC(sz) mapanon(0, rounduppow2(sz, PAGESIZELOG2))
+#define PRIOLKALLOCFAILED MAP_FAILED
 #include <zero/priolk.h>
 #endif
 #if (MEM_LK_TYPE == MEM_LK_FMTX)
@@ -109,6 +111,8 @@ typedef zerospin      MEMLK_T;
                         m_clrbit((m_atomic_t *)ptr, MEMLKBITID))
 
 #else
+#define memtrylkbit(ptr)                                                \
+    (!m_cmpsetbit((m_atomic_t *)ptr, MEMLKBITID))
 #define memlkbit(ptr)                                                   \
     do {                                                                \
         ;                                                               \
@@ -182,11 +186,11 @@ typedef zerospin      MEMLK_T;
 #define MEMMAXBUFBLKS       (MEMWORD(1) << PAGESIZELOG2)
 /* minimum allocation block size in bigbins */
 //#define MEMBIGMINSIZE      (2 * PAGESIZE)
-#define MEMPAGESLOTS        8
+#define MEMPAGESLOTS        10
 
-#define MEMSMALLPAGESLOT    16
-#define MEMMIDPAGESLOT      24
-#define MEMBIGPAGESLOT      32
+#define MEMSMALLPAGESLOT    3
+#define MEMMIDPAGESLOT      5
+#define MEMBIGPAGESLOT      8
 #define MEMSMALLBLKSHIFT    (PAGESIZELOG2 - 1)
 #define MEMSMALLMAPSHIFT    20
 //#define MEMBUFMIDMAPSHIFT 22
@@ -312,9 +316,10 @@ struct mem {
     MEMWORD_T           flg;     // memory interface flags
     struct membuf      *heap;    // heap allocations (try sbrk(), then mmap())
     struct membuf      *maps;    // mapped blocks
-    zerofmtx            priolk;
+#if (MEM_LK_TYPE == MEM_LK_PRIO)
+    MEMLK_T             priolk;
     unsigned long       prioval; // locklessinc priority locks
-    MEMLK_T             initlk;  // lock for initialising the structure
+#endif
     MEMLK_T             heaplk;  // lock for sbrk()
 };
 
@@ -374,8 +379,13 @@ struct memhashlist {
  */
 #define MEMHASHBITS     20
 #define MEMHASHITEMS    (1U << MEMHASHBITS)
+#if (MEMBIGHASHTAB)
 #define MEMHASHSIZE     (256 * WORDSIZE)
 #define MEMHASHTABITEMS 32      // allow a bit of table-address randomization
+#else
+#define MEMHASHSIZE     (128 * WORDSIZE)
+#define MEMHASHTABITEMS 24
+#endif
 
 #define memhashsize()   MEMHASHSIZE
 
@@ -574,12 +584,9 @@ memgenptr(MEMPTR_T ptr, MEMUWORD_T blksz, MEMUWORD_T size)
     uint64_t ofs = xtra * rnd;
     MEMPTR_T ret;
 
-#if 0
     ofs >>= 32;
     ofs = rounddownpow2(ofs, MEMMINALIGN);
     ret = memadjptr(ptr, ofs);
-#endif
-    ret = (MEMPTR_T)ptr;
 
     return ret;
 }
@@ -620,8 +627,13 @@ memgenhashtabadr(MEMUWORD_T *adr)
     /* calculate res -= res/9 * 9 i.e. res % 9 (max 8) */
     dec = div9 * 9;
     res -= dec;
+#if (MEMBIGHASHTAB)
     /* scale res to 0..32 (machine words) */
     res <<= 2;
+#else
+    /* scale res to 0..16 (machine words) */
+    res <<= 1;
+#endif
     /* add to original pointer */
     adr += res;
     /* align to machine word boundary */
@@ -686,7 +698,7 @@ memgenhashtabadr(MEMUWORD_T *adr)
 #define membufblkofs()                                                  \
     (rounduppow2(membufhdrsize() + membufptrtabsize(), PAGESIZE))
 #define memusesmallbuf(sz)    ((sz) <= (MEMUWORD(1) << MEMSMALLBLKSHIFT))
-#define memusepagebuf(sz)     ((sz) <= (PAGESIZE * MEMPAGESLOTS))
+#define memusepagebuf(sz)     ((sz) <= (PAGESIZE << MEMPAGESLOTS))
 /* allocations of PAGESIZE << slot */
 #define memsmallbufsize(slot)                                           \
     (rounduppow2(membufblkofs() + (MEMBUFBLKS << (slot)),               \
@@ -707,6 +719,7 @@ memgenhashtabadr(MEMUWORD_T *adr)
            ? 2                                                          \
            : 1)))
 #endif
+#if 0
 #define memnbufblk(slot, type)                                          \
     (((type) == MEMSMALLBUF)                                            \
      ? (MEMBUFBLKS)                                                     \
@@ -718,6 +731,21 @@ memgenhashtabadr(MEMUWORD_T *adr)
               : (((slot <= MEMBIGPAGESLOT)                              \
                   ? 4                                                   \
                   : 2))))                                               \
+        : (((slot) <= MEMSMALLMAPSHIFT)                                 \
+           ? 4                                                          \
+           : (((slot) <= MEMBIGMAPSHIFT)                                \
+              ? 2                                                       \
+              : 1))))
+#endif
+#define memnbufblk(slot, type)                                          \
+    (((type) == MEMSMALLBUF)                                            \
+     ? (MEMBUFBLKS)                                                     \
+     : (((type) == MEMPAGEBUF)                                          \
+        ? (((slot) <= MEMSMALLPAGESLOT)                                 \
+           ? 8                                                          \
+           : (((slot) <= MEMMIDPAGESLOT)                                \
+              ? 4                                                       \
+              : 2))                                                     \
         : (((slot) <= MEMSMALLMAPSHIFT)                                 \
            ? 4                                                          \
            : (((slot) <= MEMBIGMAPSHIFT)                                \

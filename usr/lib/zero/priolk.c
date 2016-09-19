@@ -5,6 +5,11 @@
 #include <zero/mtx.h>
 #include <zero/priolk.h>
 
+#if !defined(PRIOLKALLOC)
+#define PRIOLKALLOC(sz) malloc(sz)
+#define PRIOLKALLOCFAILED NULL
+#endif
+
 /* <vendu> eliminated the giant mutex */
 #define PRIOLKNONBLOCK 1
 
@@ -64,8 +69,8 @@ priolkinit(struct priolkdata *data, unsigned long val)
     } else if (data) {
         t_priolkptr = data;
     } else {
-        t_priolkptr = malloc(sizeof(struct priolkdata));
-        if (t_priolkptr == ALLOCFAILED) {
+        t_priolkptr = PRIOLKALLOC(sizeof(struct priolkdata));
+        if (t_priolkptr == PRIOLKALLOCFAILED) {
             fprintf(stderr, "PRIOLK: failed to allocate priority structure\n");
 
             exit(1);
