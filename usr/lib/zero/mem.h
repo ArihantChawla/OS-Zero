@@ -792,7 +792,7 @@ MEMPTR_T        memgetblk(MEMUWORD_T slot, MEMUWORD_T type,
 #if (MEMNEWHASH)
 MEMPTR_T        memsetbuf(MEMPTR_T ptr, struct membuf *buf);
 #else
-void *          memsetbuf(void *ptr, struct membuf *buf, MEMUWORD_T info);
+void *          memsetbuf(void *ptr, struct membuf *buf);
 #endif
 #if (MEMNEWHASH)
 MEMADR_T        membufop(MEMPTR_T ptr, MEMWORD_T op, struct membuf *buf);
