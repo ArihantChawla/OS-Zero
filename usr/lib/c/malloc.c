@@ -64,11 +64,19 @@ _malloc(size_t size, size_t align, long flg)
 static void
 _free(void *ptr)
 {
+#if (MEMMULTITAB)
+    struct membuf *buf;
+#endif
+    
     if (!ptr) {
 
         return;
     }
+#if (MEMMULTITAB)
+    memfindbuf(ptr, 1);
+#else
     membufop(ptr, MEMHASHDEL, NULL);
+#endif
     VALGRINDFREE(ptr);
 
     return;
@@ -84,32 +92,29 @@ _realloc(void *ptr,
          long rel)
 {
     MEMPTR_T       retptr = NULL;
+#if (MEMMULTITAB)
+    struct membuf *buf = (ptr) ? memfindbuf(ptr, 0) : NULL;
+#else
     MEMADR_T       desc = ((ptr)
                            ? membufop(ptr, MEMHASHCHK, NULL)
                            : 0);
-    struct membuf *buf = (struct membuf *)(desc & ~MEMPAGEINFOMASK);
-    MEMPTR_T       oldptr = (buf) ? membufgetptr(buf, ptr) : NULL;
+    struct membuf *buf = (struct membuf *)desc;
+#endif
+//    MEMPTR_T       oldptr = (buf) ? membufgetptr(buf, ptr) : NULL;
     MEMUWORD_T     type;
     MEMUWORD_T     slot;
     size_t         sz;
-    size_t         delta;
 
     if (buf) {
         type = memgetbuftype(buf);
-        delta = (MEMPTR_T)ptr - oldptr;
         slot = memgetbufslot(buf);
         sz = membufblksize(buf, type, slot);
-        sz -= delta;
     }
     retptr = _malloc(size, 0, 0);
     if (retptr) {
-#if 0
-        if (oldptr) {
-            memcpy(retptr, oldptr, sz);
-        }
-#endif
         if (ptr) {
             memcpy(retptr, ptr, sz);
+            /* TODO: we looked the buf up already */
             _free(ptr);
             ptr = NULL;
         }
@@ -420,10 +425,14 @@ cfree(void *ptr)
 size_t
 malloc_usable_size(void *ptr)
 {
+#if (MEMMULTITAB)
+    struct membuf *buf = (ptr) ? memfindbuf(ptr, 0) : NULL;
+#else
     MEMADR_T       desc = ((ptr)
                            ? membufop(ptr, MEMHASHCHK, NULL)
                            : 0);
     struct membuf *buf = (struct membuf *)desc;
+#endif
     size_t         sz = 0;
     MEMUWORD_T     type;
     MEMUWORD_T     slot;
@@ -466,10 +475,14 @@ malloc_good_size(size_t size)
 size_t
 malloc_size(void *ptr)
 {
+#if (MEMMULTITAB)
+    struct membuf *buf = (ptr) ? memfindbuf(ptr, 0) : NULL;
+#else
     MEMADR_T       desc = ((ptr)
                            ? membufop(ptr, MEMHASHCHK, NULL)
                            : 0);
     struct membuf *buf = (struct membuf *)desc;
+#endif
     size_t         sz = 0;
     MEMUWORD_T     type;
     MEMUWORD_T     slot;

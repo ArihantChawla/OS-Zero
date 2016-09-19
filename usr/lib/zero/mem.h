@@ -296,7 +296,7 @@ struct mem {
 #elif (MEMHUGELOCK)
     struct memtabl0    *tab;     // allocation lookup structure
 #else
-    struct memtab      *tab;     // allocation lookup structure
+    struct memtabl0    *tab;     // allocation lookup structure
 #endif
     MEMWORD_T           flg;     // memory interface flags
     struct membuf      *heap;    // heap allocations (try sbrk(), then mmap())
@@ -344,14 +344,31 @@ struct membuf {
     MEMUWORD_T              freemap[MEMBUFFREEMAPWORDS];
 };
 
+#if (MEMMULTITAB)
+
+/* toplevel lookup table item */
+struct memtabl0 {
+    MEMLK_T        lk;
+    struct memtab *tab;
+};
+
+/* lookup table item */
+struct memtab {
+    struct memtab *tab;
+};
+
+struct memitem {
+    MEMADR_T val;
+};
+
+#elif (MEMNEWHASH)
+
 struct memhashlist {
 #if (MEMHASHLOCK)
     MEMLK_T         lk;
 #endif
     struct memhash *chain;
 };
-
-#if (MEMNEWHASH)
 
 #define MEMHASHDEL (-1)
 #define MEMHASHCHK (0)
@@ -430,35 +447,6 @@ struct memhash {
     MEMWORD_T       nref;
     MEMADR_T        adr;
     MEMADR_T        val;
-};
-
-#else
-
-#if (MEMHUGELOCK)
-struct memtabl0 {
-    MEMLK_T        lk;
-    struct memtab *tab;
-};
-#endif
-
-/* toplevel lookup table item */
-struct memtab {
-    struct memtab *tab;
-};
-
-/* lookup table structure for upper levels */
-#if 0
-struct memitem {
-#if (MEMTABNREF)
-    volatile long  nref;
-#endif
-    void          *tab;
-};
-#endif
-
-struct memitem {
-    volatile long nref;
-    MEMADR_T      val;
 };
 
 #endif
@@ -642,11 +630,12 @@ memgenhashtabadr(MEMUWORD_T *adr)
 #if (MEMHASH) && !defined(MEMHASHITEMS)
 #define MEMHASHBITS   20
 #define MEMHASHITEMS  (MEMUWORD(1) << MEMHASHBITS)
-#elif (PTRBITS > 32)
-#define MEMADRSHIFT   PAGESIZELOG2
-#define MEMADRBITS    (ADRBITS - MEMADRSHIFT)
+#elif (MEMMULTITAB)
+#if (PTRBITS > 32)
+#define MEMADRBITS    (ADRBITS - PAGESIZELOG2)
+#define MEMADRSHIFT   (PAGESIZELOG2)
 #define MEMLVL1BITS   (MEMADRBITS - 3 * MEMLVLBITS)
-#define MEMLVLBITS    12
+#define MEMLVLBITS    10
 #define MEMLVL1ITEMS  (MEMWORD(1) << MEMLVL1BITS)
 #define MEMLVLITEMS   (MEMWORD(1) << MEMLVLBITS)
 #define MEMLVL1MASK   ((MEMWORD(1) << MEMLVL1BITS) - 1)
@@ -677,7 +666,8 @@ memgenhashtabadr(MEMUWORD_T *adr)
         (k4) = _p2 & MEMLVL1MASK;                                       \
     } while (0)
 #endif
-#endif
+#endif /* PTRBITS > 32 */
+#endif /* MEMHASH && !defined(MEMHASHITEMS) */
 
 /*
  * allocation headers

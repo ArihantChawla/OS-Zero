@@ -597,7 +597,109 @@ memgetbufblk(struct membuf *head, struct membkt *bkt,
     return ptr;
 }
 
-#if (MEMNEWHASH)
+#if (MEMMULTITAB)
+
+void *
+memsetbuf(void *ptr, struct membuf *buf)
+{
+    MEMADR_T        val = (MEMADR_T)buf;
+    struct memtab  *itab;
+    struct memtab  *tab;
+    struct memitem *item;
+    long             k1;
+    long             k2;
+    long             k3;
+    long             k4;
+    void            *pstk[2] = { NULL };
+    
+    memgetkeybits(ptr, k1, k2, k3, k4);
+    memgetlk(&g_mem.tab[k1].lk);
+    itab = g_mem.tab[k1].tab;
+    if (!itab) {
+        itab = mapanon(0, MEMLVLITEMS * sizeof(struct memtabl0));
+        if (itab == MAP_FAILED) {
+            memrellk(&g_mem.tab[k1].lk);
+            
+            return NULL;
+        }
+        pstk[0] = itab;
+        g_mem.tab[k1].tab = itab;
+    }
+    tab = &itab[k2];
+    itab = tab->tab;
+    if (!itab) {
+        itab = mapanon(0, MEMLVLITEMS * sizeof(struct memtab));
+        if (itab == MAP_FAILED) {
+            unmapanon(pstk[0], MEMLVLITEMS * sizeof(struct memtab));
+            memrellk(&g_mem.tab[k1].lk);
+
+            return NULL;
+        }
+        pstk[1] = itab;
+        tab->tab = itab;
+    }
+    tab = &itab[k3];
+    itab = tab->tab;
+    if (!itab) {
+        itab = mapanon(0, MEMLVLITEMS * sizeof(struct memitem));
+        if (itab == MAP_FAILED) {
+            unmapanon(pstk[0], MEMLVLITEMS * sizeof(struct memtab));
+            unmapanon(pstk[1], MEMLVLITEMS * sizeof(struct memtab));
+            memrellk(&g_mem.tab[k1].lk);
+            
+            return NULL;
+        }
+        tab->tab = itab;
+    }
+    item = (struct memitem *)&itab[k4];
+//    item->nref++;
+    item->val = val;
+    memrellk(&g_mem.tab[k1].lk);
+    
+    return ptr;
+}
+
+struct membuf *
+memfindbuf(void *ptr, long rel)
+{
+    struct membuf  *buf = NULL;
+    struct memtab  *itab;
+    struct memtab  *tab;
+    struct memitem *item;
+    long            k1;
+    long            k2;
+    long            k3;
+    long            k4;
+
+    memgetkeybits(ptr, k1, k2, k3, k4);
+//    memgetlk(&g_mem.tab[k1].lk);
+    itab = g_mem.tab[k1].tab;
+    if (itab) {
+        tab = &itab[k2];
+        itab = tab->tab;
+        if (itab) {
+            tab = &itab[k3];
+            itab = tab->tab;
+            if (itab) {
+                item = (struct memitem *)&itab[k4];
+                buf = item->val;
+                if (rel) {
+                    memputblk(ptr, buf);
+#if 0
+                    if (!--item->nref) {
+                        item->val = 0;
+                    }
+#endif
+                }
+            }
+        }
+    }
+//    memrellk(&g_mem.tab[k1].lk);
+
+    return buf;
+}
+
+#elif (MEMNEWHASH)
 
 static void
 meminithashitem(MEMPTR_T data)
