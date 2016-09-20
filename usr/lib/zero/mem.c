@@ -1167,6 +1167,32 @@ memgetblk(MEMUWORD_T slot, MEMUWORD_T type, MEMUWORD_T size, MEMUWORD_T align)
 }
 
 void
+memdeqbuf(struct membuf *buf, struct membkt *src)
+{
+    struct membuf *head;
+    MEMADR_T       upval;
+    
+    upval = (MEMADR_T)src->list;
+    upval &= ~MEMLKBIT;
+    if ((buf->prev) && (buf->next)) {
+        buf->prev->next = buf->next;
+        buf->next->prev = buf->prev;
+        head = (struct membkt *)upval;
+    } else if (buf->prev) {
+        buf->prev->next = NULL;
+        head = (struct membkt *)upval;
+    } else if (buf->next) {
+        buf->next->prev = NULL;
+        head = buf->next;
+    } else {
+        head = NULL;
+    }
+    m_syncwrite((m_atomic_t)&src->list, (m_atomic_t)head);
+
+    return;
+}
+
+void
 memrelbuf(MEMUWORD_T slot, MEMUWORD_T type,
           struct membuf *buf, struct membkt *src)
 {
@@ -1181,38 +1207,7 @@ memrelbuf(MEMUWORD_T slot, MEMUWORD_T type,
 
                 return;
             } else {
-                upval = (MEMADR_T)src->list;
-                upval &= ~MEMLKBIT;
-                if ((buf->prev) && (buf->next)) {
-                    buf->prev->next = buf->next;
-                    buf->next->prev = buf->prev;
-                    head = (struct membkt *)upval;
-                } else if (buf->prev) {
-                    buf->prev->next = NULL;
-                    head = (struct membkt *)upval;
-                } else if (buf->next) {
-                    buf->next->prev = NULL;
-                    head = buf->next;
-                } else {
-                    head = NULL;
-                }
-                m_syncwrite((m_atomic_t)&src->list, (m_atomic_t)head);
-#if 0
-                if (buf->prev) {
-                    buf->prev->next = buf->next;
-#if (MEMDEBUGDEADLOCK)
-                    memrelbitln(src);
-#else
-                    memrelbit(&src->list);
-#endif
-                } else {
-#if (MEMDEBUGDEADLOCK)
-                    src->line = -1;
-#endif
-                    m_syncwrite((m_atomic_t *)&src->list,
-                                (m_atomic_t)buf->next);
-                }
-#endif
+                memdeqbuf(buf, src);
 #if (MEMDEBUGDEADLOCK)
                 memlkbitln(dest);
 #else
@@ -1233,26 +1228,6 @@ memrelbuf(MEMUWORD_T slot, MEMUWORD_T type,
             }
 
             return;
-        } else if (src != &g_mem.smallbin[slot]) {
-#if (MEMDEBUGDEADLOCK)
-            memlkbitln(dest);
-#else
-            memlkbit(&dest->list);
-#endif
-            upval = (MEMADR_T)dest->list;
-            upval &= ~MEMLKBIT;
-            buf->prev = NULL;
-            buf->next = (struct membuf *)upval;
-            if (upval) {
-                ((struct membuf *)upval)->prev = buf;
-            }
-            dest->nbuf++;
-#if (MEMDEBUGDEADLOCK)
-            dest->line = -1;
-#endif
-            m_syncwrite((m_atomic_t *)&dest->list, (m_atomic_t *)buf);
-
-            return;
         }
     } else if (type == MEMPAGEBUF) {
         dest = &g_mem.pagebin[slot];
@@ -1261,20 +1236,7 @@ memrelbuf(MEMUWORD_T slot, MEMUWORD_T type,
 
                 return;
             } else {
-                if (buf->prev) {
-                    buf->prev->next = buf->next;
-#if (MEMDEBUGDEADLOCK)
-                    memrelbitln(src);
-#else
-                    memrelbit(&src->list);
-#endif
-                } else {
-#if (MEMDEBUGDEADLOCK)
-                    src->line = -1;
-#endif
-                    m_syncwrite((m_atomic_t *)&src->list,
-                                (m_atomic_t *)buf->next);
-                }
+                memdeqbuf(buf, src);
                 if (dest->nbuf < memgetnbufglob(slot, MEMPAGEBUF)) {
 #if (MEMDEBUGDEADLOCK)
                     memlkbitln(dest);
@@ -1295,66 +1257,22 @@ memrelbuf(MEMUWORD_T slot, MEMUWORD_T type,
                     m_syncwrite((m_atomic_t *)&dest->list, (m_atomic_t *)buf);
 
                     return;
-                }
-            }
-        }
-        if (dest->nbuf >= memgetnbufglob(slot, MEMPAGEBUF)) {
-            if (src == dest) {
-                if (buf->prev) {
-                    buf->prev->next = buf->next;
-#if (MEMDEBUGDEADLOCK)
-                    memrelbitln(src);
-#else
-                    memrelbit(&src->list);
-#endif
                 } else {
-#if (MEMDEBUGDEADLOCK)
-                    src->line = -1;
+                    unmapanon(buf, buf->size);
+#if (MEMSTAT)
+                    g_memstat.nbmap -= buf->size;
+                    g_memstat.nbbig -= buf->size;
+                    g_memstat.nbbook -= membufblkofs();
 #endif
-                    m_syncwrite((m_atomic_t *)&src->list,
-                                (m_atomic_t *)buf->next);
                 }
             }
-            unmapanon(buf->base, buf->size);
-#if (MEMSTAT)
-            g_memstat.nbpage -= buf->size;
-            g_memstat.nbmap -= buf->size;
-            g_memstat.nbbook -= membufblkofs();
-#endif
-        } else if (src != &g_mem.pagebin[slot]) {
-#if (MEMDEBUGDEADLOCK)
-            memlkbitln(dest);
-#else
-            memlkbit(&dest->list);
-#endif
-            upval = (MEMADR_T)dest->list;
-            upval &= ~MEMLKBIT;
-            buf->prev = NULL;
-            buf->next = (struct membuf *)upval;
-            if (upval) {
-                ((struct membuf *)upval)->prev = buf;
-            }
-            dest->nbuf++;
-#if (MEMDEBUGDEADLOCK)
-            dest->line = -1;
-#endif
-            m_syncwrite((m_atomic_t *)&dest->list, (m_atomic_t *)buf);
+        } else if (src->nbuf >= memgetnbufglob(slot, MEMPAGEBUF)) {
+            memdeqbuf(buf, src);
+            unmapanon(buf, buf->size);
         }
     } else if (type == MEMBIGBUF) {
         if (src->nbuf >= memgetnbufglob(slot, MEMBIGBUF)) {
-            if (buf->prev) {
-                buf->prev->next = buf->next;
-#if (MEMDEBUGDEADLOCK)
-                memrelbitln(src);
-#else
-                memrelbit(&src->list);
-#endif
-            } else {
-#if (MEMDEBUGDEADLOCK)
-                src->line = -1;
-#endif
-                m_syncwrite((m_atomic_t *)&src->list, (m_atomic_t *)buf->next);
-            }
+            memdeqbuf(buf, src);
             unmapanon(buf, buf->size);
 #if (MEMSTAT)
             g_memstat.nbmap -= buf->size;
