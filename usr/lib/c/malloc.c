@@ -11,10 +11,13 @@
 #include <zero/cdefs.h>
 #include <zero/param.h>
 #include <zero/mem.h>
+#include <zero/mtx.h>
 #include <zero/trix.h>
 #include "_malloc.h"
 
 extern THREADLOCAL volatile struct memtls *g_memtls;
+extern THREADLOCAL zerofmtx                g_memtlsinitlk;
+extern THREADLOCAL MEMUWORD_T              g_memtlsinit;
 extern struct mem                          g_mem;
 
 static void *
@@ -31,9 +34,18 @@ _malloc(size_t size, size_t align, long flg)
     long      slot;
     void     *ptr;
 
+#if 0
     if (!g_memtls && !meminittls()) {
 
         abort();
+    }
+#endif
+    if (!g_memtlsinit) {
+        fmtxlk(&g_memtlsinitlk);
+        if (!g_memtlsinit) {
+            meminittls();
+        }
+        fmtxunlk(&g_memtlsinitlk);
     }
     if (type != MEMPAGEBUF) {
         memcalcslot(bsz, slot);
@@ -71,6 +83,24 @@ _free(void *ptr)
 
         return;
     }
+#if (MEMTLSINITFIXED)
+    if (!g_memtlsinit) {
+        fmtxtrylk(&g_memtlsinitlk);
+        if (!g_memtlsinit) {
+
+            abort();
+        }
+        fmtxunlk(&g_memtlsinitlk);
+    }
+#else
+    if (!g_memtlsinit) {
+        fmtxlk(&g_memtlsinitlk);
+        if (!g_memtlsinit) {
+            meminittls();
+        }
+        fmtxunlk(&g_memtlsinitlk);
+    }
+#endif
 #if (MEMMULTITAB)
     memfindbuf(ptr, 1);
 #else

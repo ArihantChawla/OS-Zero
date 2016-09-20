@@ -11,11 +11,14 @@
 #include <zero/cdefs.h>
 #include <zero/param.h>
 #include <zero/unix.h>
+#include <zero/mtx.h>
 #include <zero/mem.h>
 #include <zero/hash.h>
 
 static pthread_once_t               g_thronce = PTHREAD_ONCE_INIT;
 static pthread_key_t                g_thrkey;
+THREADLOCAL zerofmtx                g_memtlsinitlk = FMTXINITVAL;
+THREADLOCAL MEMUWORD_T              g_memtlsinit;
 THREADLOCAL volatile struct memtls *g_memtls;
 struct mem                          g_mem;
 #if (MEMSTAT)
@@ -166,6 +169,7 @@ meminittls(void)
         pthread_once(&g_thronce, meminit);
         pthread_setspecific(g_thrkey, tls);
         g_memtls = tls;
+        m_syncwrite(&g_memtlsinit, 1);
     }
 
     return tls;
