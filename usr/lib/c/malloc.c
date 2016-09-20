@@ -48,12 +48,11 @@ _malloc(size_t size, size_t align, long flg)
     } else if (flg & MALLOCZEROBIT) {
         memset(ptr, 0, size);
     }
-#if (MEMDEBUG)
-//    fprintf(stderr, "%ld bytes @ %p\n", size, ptr);
-#endif
+#if 0
     if (ptr) {
         VALGRINDALLOC(ptr, size, 0, flg & MALLOCZEROBIT);
     }
+#endif
 #if (MEMDEBUG)
     crash(ptr != NULL);
 #endif
@@ -77,7 +76,9 @@ _free(void *ptr)
 #else
     membufop(ptr, MEMHASHDEL, NULL);
 #endif
+#if 0
     VALGRINDFREE(ptr);
+#endif
 
     return;
 }
@@ -105,10 +106,14 @@ _realloc(void *ptr,
     MEMUWORD_T     slot;
     size_t         sz;
 
-    if (buf) {
+    if (ptr) {
         type = memgetbuftype(buf);
         slot = memgetbufslot(buf);
         sz = membufblksize(buf, type, slot);
+        if (size < sz) {
+
+            return ptr;
+        }
     }
     retptr = _malloc(size, 0, 0);
     if (retptr) {

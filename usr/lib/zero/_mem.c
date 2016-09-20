@@ -29,6 +29,30 @@ memprintstat(void)
 }
 #endif
 
+void
+memprintbuf(struct membuf *buf, const char *func)
+{
+    MEMUWORD_T nblk = memgetbufnblk(buf);
+    MEMUWORD_T type = memgetbuftype(buf);
+    MEMUWORD_T slot = memgetbufslot(buf);
+    MEMUWORD_T blksz = membufblksize(buf, type, slot);
+
+    if (func) {
+        fprintf(stderr, "BUF: (%s)\n", func);
+    } else {
+        fprintf(stderr, "BUF\n");
+    }
+    fprintf(stderr, "--------\n");
+    fprintf(stderr, "nblk:\t%lx\n", nblk);
+    fprintf(stderr, "nfree:\t%lx\n", memgetbufnfree(buf));
+    fprintf(stderr, "type:\t%lx\n", type);
+    fprintf(stderr, "slot:\t%lx\n", slot);
+    fprintf(stderr, "blksz:\t%lx\n", blksz);
+    fprintf(stderr, "bufsize:\t%lx\n", buf->size);
+
+    return;
+}
+
 long
 _memchkptr(struct membuf *buf, MEMPTR_T ptr)
 {
@@ -109,14 +133,7 @@ _memchkbuf(struct membuf *buf, MEMUWORD_T slot, MEMUWORD_T type,
         lim = buf->base + membigbufsize(bslot, bnblk);
     }
     if (fail) {
-        fprintf(stderr, "BUF: (%s)\n", func);
-        fprintf(stderr, "--------\n");
-        fprintf(stderr, "nblk:\t%lx\t(%lx)\n", bnblk, nblk);
-        fprintf(stderr, "nfree:\t%lx\n", bnfree);
-        fprintf(stderr, "type:\t%lx\t(%lx)\n", btype, type);
-        fprintf(stderr, "slot:\t%lx\t(%lx)\n", bslot, slot);
-        fprintf(stderr, "blksz:\t%lx\t(%lx)\n", bsz);
-        fprintf(stderr, "bufsize:\t%lx\t(%lx)n", buf->size, bufsz);
+        memprintbuf(buf, func);
 
         abort();
     }

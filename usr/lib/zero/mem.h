@@ -306,11 +306,8 @@ struct mem {
     struct membufvals   bufvals;
 #if (MEMMULTITAB)
     struct memtabl0    *tab;     // allocation lookup structure
-#elif (MEMARRAYHASH) || (MEMNEWHASH)
+#elif (MEMNEWHASH)
     struct memhashlist *hash;    // hash table
-    struct memhash     *hashbuf; // buffer for hash items
-#elif (MEMHASH)
-    struct memhash     *hash;    // hash table
     struct memhash     *hashbuf; // buffer for hash items
 #endif
     MEMWORD_T           flg;     // memory interface flags
@@ -429,40 +426,6 @@ struct memhash {
     MEMUWORD_T          data;   // base address for generating table address
 };
 
-#elif (MEMARRAYHASH)
-
-#define MEMHASHDEL (-1)
-#define MEMHASHCHK (0)
-#define MEMHASHADD (1)
-
-struct memhashitem {
-    MEMWORD_T nref;
-    MEMADR_T  adr;
-    MEMADR_T  val;
-};
-
-/* in practice, this structure is 32 or 64 machine words in size */
-#if (MEMBIGARRAYHASH)
-#define MEMHASHTABITEMS 20
-#else
-#define MEMHASHTABITEMS 10
-#endif
-#define memhashsize() rounduppow2(sizeof(struct memhash), CLSIZE)
-struct memhash {
-    struct memhash     *chain;
-    MEMWORD_T           ntab;
-    struct memhashitem  tab[MEMHASHTABITEMS];
-};
-
-#elif (MEMHASH)
-
-struct memhash {
-    struct memhash *chain;
-    MEMWORD_T       nref;
-    MEMADR_T        adr;
-    MEMADR_T        val;
-};
-
 #endif
 
 /*
@@ -546,8 +509,8 @@ membufgetfree(struct membuf *buf)
 
             return -1;                          // 1-bit not found
         }
+        ndx += sizeof(MEMUWORD_T) * CHAR_BIT;
         map++;                                  // try next word in freemap
-        ndx += WORDSIZE * CHAR_BIT;
     } while (ndx < nblk);
 
     return -1;                                  // 1-bit not found
@@ -805,6 +768,7 @@ struct membuf * memfindbuf(void *ptr, long rel);
 #endif
 void            memputblk(void *ptr, struct membuf *buf);
 #if (MEMTEST)
+void            memprintbuf(struct membuf *buf, const char *func);
 long            _memchkptr(struct membuf *buf, MEMPTR_T ptr);
 long            _memchkbuf(struct membuf *buf, MEMUWORD_T slot, MEMUWORD_T type,
                            MEMUWORD_T nblk, MEMUWORD_T flg, const char *func);

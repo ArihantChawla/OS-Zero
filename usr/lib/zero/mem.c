@@ -593,6 +593,7 @@ memgetbufblk(struct membuf *head, struct membkt *bkt,
 #if (MEMTEST)
     _memchkptr(head, ptr);
 #endif
+    VALGRINDPOOLALLOC(head->base, ptr, size);
     if (!nfree) {
         if (head->next) {
             head->next->prev = NULL;
@@ -886,7 +887,7 @@ membufop(MEMPTR_T ptr, MEMWORD_T op, struct membuf *buf)
                 do {
                     n = blk->ntab;
                     if (n < MEMHASHITEMS) {
-                        slot = blk->tab;
+                        slot = &blk->tab[n];
                         found++;
                         n++;
                         slot->nref = 1;
@@ -953,8 +954,9 @@ membufop(MEMPTR_T ptr, MEMWORD_T op, struct membuf *buf)
     slot->nact++;
     if (op == MEMHASHDEL) {
         slot->nref--;
+        n = blk->ntab;
         if (!slot->nref) {
-            if (blk->ntab == 1) {
+            if (n == 1) {
                 if (prev) {
                     prev->chain = blk->chain;
                     memrelbit(&g_mem.hash[key].chain);
@@ -967,6 +969,7 @@ membufop(MEMPTR_T ptr, MEMWORD_T op, struct membuf *buf)
                 src = &blk->tab[n];
                 slot->nref = src->nref;
                 slot->nact = src->nact;
+                n--;
                 upval &= ~MEMLKBIT;
                 slot->page = src->page;
                 slot->val = src->val;
@@ -1047,7 +1050,6 @@ memtryblk(MEMUWORD_T slot, MEMUWORD_T type,
 {
     MEMADR_T       upval = memopenbuf(bkt1);
     struct membuf *buf = (struct membuf *)upval;
-    struct membkt *src = NULL;
     MEMPTR_T       ptr = NULL;
     MEMUWORD_T     info = 0;
     MEMUWORD_T     nblk = memgetnbufblk(slot, type);
@@ -1061,16 +1063,22 @@ memtryblk(MEMUWORD_T slot, MEMUWORD_T type,
         dest = &g_mem.bigbin[slot];
     }
     if (buf) {
-        src = bkt1;
         ptr = memgetbufblk(buf, bkt1, size, align);
+#if (MEMTEST)
+        fprintf(stderr, "GET: %p (%p)\n", buf, ptr);
+        memprintbuf(buf, NULL);
+#endif
     } else {
         if (bkt2) {
             upval = memopenbuf(bkt2);
             buf = (struct membuf *)upval;
         }
         if (buf) {
-            src = bkt2;
             ptr = memgetbufblk(buf, bkt2, size, align);
+#if (MEMTEST)
+            fprintf(stderr, "GET: %p (%p)\n", buf, ptr);
+            memprintbuf(buf, NULL);
+#endif
         } else {
             if (type == MEMSMALLBUF) {
                 buf = memallocsmallbuf(slot);
@@ -1088,9 +1096,26 @@ memtryblk(MEMUWORD_T slot, MEMUWORD_T type,
                     ptr = meminitbigbuf(buf, slot, size, align, nblk);
                 }
             }
+            if (type == MEMSMALLBUF && (ptr)) {
+                info = buf->info;
+                if (info & MEMHEAPBIT) {                    
+                    memlkbit(&g_mem.heap);
+                    upval = (MEMADR_T)g_mem.heap;
+                    upval &= ~MEMLKBIT;
+                    buf->heap = (struct membuf *)upval;
+                    /* this unlocks the global heap (low-bit becomes zero) */
+                    m_syncwrite(&g_mem.heap, buf);
+                        memrellk(&g_mem.heaplk);
+                }
+            }
 #if (MEMINITBUFFIXED)
             if (nblk > 1) {
+#if (MEMTEST)
+                fprintf(stderr, "ADD: %p (%p)\n", buf, dest);
+                memprintbuf(buf, NULL);
+#endif
 #if (MEMDEBUGDEADLOCK)
+                fprintf(stderr, "OWNED: %ld\n", dest->line);
                 memlkbitln(dest);
 #else
                 memlkbit(&dest->list);
@@ -1110,20 +1135,6 @@ memtryblk(MEMUWORD_T slot, MEMUWORD_T type,
                 m_syncwrite((m_atomic_t *)&dest->list, (m_atomic_t)buf);
             }
 #endif
-            if (ptr) {
-                if (type == MEMSMALLBUF) {
-                    info = buf->info;
-                    if (info & MEMHEAPBIT) {                    
-                        memlkbit(&g_mem.heap);
-                        upval = (MEMADR_T)g_mem.heap;
-                        upval &= ~MEMLKBIT;
-                        buf->heap = (struct membuf *)upval;
-                        /* this unlocks the global heap (low-bit becomes zero) */
-                        m_syncwrite(&g_mem.heap, buf);
-                        memrellk(&g_mem.heaplk);
-                    }
-                }
-            }
         }
     }
     
@@ -1258,6 +1269,7 @@ memrelbuf(MEMUWORD_T slot, MEMUWORD_T type,
 
                     return;
                 } else {
+                    VALGRINDRMPOOL(buf->base);
                     unmapanon(buf, buf->size);
 #if (MEMSTAT)
                     g_memstat.nbmap -= buf->size;
@@ -1268,11 +1280,13 @@ memrelbuf(MEMUWORD_T slot, MEMUWORD_T type,
             }
         } else if (src->nbuf >= memgetnbufglob(slot, MEMPAGEBUF)) {
             memdeqbuf(buf, src);
+            VALGRINDRMPOOL(buf->base);
             unmapanon(buf, buf->size);
         }
     } else if (type == MEMBIGBUF) {
         if (src->nbuf >= memgetnbufglob(slot, MEMBIGBUF)) {
             memdeqbuf(buf, src);
+            VALGRINDRMPOOL(buf->base);
             unmapanon(buf, buf->size);
 #if (MEMSTAT)
             g_memstat.nbmap -= buf->size;
@@ -1365,6 +1379,7 @@ memputblk(void *ptr, struct membuf *buf)
         memrelbit(&bkt->list);
 #endif
     }
+    VALGRINDPOOLFREE(buf, ptr);
     
     return;
 }
