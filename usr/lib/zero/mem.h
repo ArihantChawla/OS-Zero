@@ -102,13 +102,24 @@ typedef zerospin      MEMLK_T;
 /* use the low-order bit of the word or pointer to lock data */
 #define MEMLKBITID      0
 #define MEMLKBIT        (1L << MEMLKBITID)
+#if (MEMDEBUGDEADLOCK)
+#define memlkbitln(ptr)                                                 \
+    do {                                                                \
+        do {                                                            \
+            ;                                                           \
+        } while (m_cmpsetbit((m_atomic_t *)&(ptr)->list, MEMLKBITID));  \
+        (ptr)->line = __LINE__;                                         \
+    } while (0)
+#define memrelbitln(ptr) \
+    ((ptr)->line = -1, m_cmpclrbit((m_atomic_t *)&(ptr)->list, MEMLKBITID))
+#endif
 #if (MEMDEBUGLOCK)
 #define memlkbit(ptr)                                                   \
     do {                                                                \
         fprintf(stderr, "LK: %s: %d\n", __FILE__, __LINE__);            \
     } while (m_cmpsetbit((m_atomic_t *)ptr, MEMLKBITID))
 #define memrelbit(ptr) (fprintf(stderr, "UNLK: %s: %d\n", __FILE__, __LINE__), \
-                        m_clrbit((m_atomic_t *)ptr, MEMLKBITID))
+                        m_cmpclrbit((m_atomic_t *)ptr, MEMLKBITID))
 
 #else
 #define memtrylkbit(ptr)                                                \
@@ -117,7 +128,7 @@ typedef zerospin      MEMLK_T;
     do {                                                                \
         ;                                                               \
     } while (m_cmpsetbit((m_atomic_t *)ptr, MEMLKBITID))
-#define memrelbit(ptr) m_clrbit((m_atomic_t *)ptr, MEMLKBITID)
+#define memrelbit(ptr) m_cmpclrbit((m_atomic_t *)ptr, MEMLKBITID)
 #endif
 
 #if (WORDSIZE == 4)
@@ -203,12 +214,18 @@ struct membkt {
     struct membuf *list;        // bi-directional list of bufs + lock-bit
 #endif
 //    MEMWORD_T      slot;        // bucket slot #
+#if (MEMDEBUGDEADLOCK)
+    MEMWORD_T      line;
+#endif
     MEMUWORD_T     nbuf;        // number of bufs in list
     uint8_t        _pad[CLSIZE
 #if (MEMLFDEQ)
                         - sizeof(struct lfdeq)
 #else
                         - sizeof(struct membuf *)
+#endif
+#if (MEMDEBUGDEADLOCK)
+                        - sizeof(MEMWORD_T)
 #endif
                         - sizeof(MEMWORD_T)];
 };
@@ -287,16 +304,14 @@ struct mem {
     struct membkt       bigbin[PTRBITS]; // mapped blocks of 1 << slot
     struct membkt       pagebin[MEMPAGESLOTS]; // maps of PAGESIZE * slot
     struct membufvals   bufvals;
-#if (MEMARRAYHASH) || (MEMNEWHASH)
+#if (MEMMULTITAB)
+    struct memtabl0    *tab;     // allocation lookup structure
+#elif (MEMARRAYHASH) || (MEMNEWHASH)
     struct memhashlist *hash;    // hash table
     struct memhash     *hashbuf; // buffer for hash items
 #elif (MEMHASH)
     struct memhash     *hash;    // hash table
     struct memhash     *hashbuf; // buffer for hash items
-#elif (MEMHUGELOCK)
-    struct memtabl0    *tab;     // allocation lookup structure
-#else
-    struct memtabl0    *tab;     // allocation lookup structure
 #endif
     MEMWORD_T           flg;     // memory interface flags
     struct membuf      *heap;    // heap allocations (try sbrk(), then mmap())
@@ -778,15 +793,11 @@ void            meminit(void);
 struct memtls * meminittls(void);
 MEMPTR_T        memgetblk(MEMUWORD_T slot, MEMUWORD_T type,
                           MEMUWORD_T size, MEMUWORD_T align);
-#if (MEMNEWHASH)
 MEMPTR_T        memsetbuf(MEMPTR_T ptr, struct membuf *buf);
-#else
-void *          memsetbuf(void *ptr, struct membuf *buf);
-#endif
-#if (MEMNEWHASH)
+#if (MEMMULTITAB)
+struct membuf * memfindbuf(void *ptr, MEMWORD_T incr);
+#elif (MEMNEWHASH)
 MEMADR_T        membufop(MEMPTR_T ptr, MEMWORD_T op, struct membuf *buf);
-#elif (MEMARRAYHASH)
-MEMADR_T        memfindbuf(void *ptr, MEMWORD_T incr);
 #elif (MEMHASH)
 MEMADR_T        memfindbuf(void *ptr, MEMWORD_T incr, MEMADR_T *keyret);
 #else
