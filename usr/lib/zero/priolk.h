@@ -4,11 +4,11 @@
 #include <stdint.h>
 #include <zero/param.h>
 #if defined(PRIOLKUSEMMAP)
-#define ALLOCFAILED MAP_FAILED
+#define PRIOLKALLOCFAILED MAP_FAILED
 #define PRIOLKALLOC(sz) mapanon(0, sz)
 #include <zero/unix.h>
 #else
-#define ALLOCFAILED NULL
+#define PRIOLKALLOCFAILED NULL
 #define PRIOLKALLOC(sz) malloc(sz)
 #endif
 

@@ -27,7 +27,7 @@
 #define MEM_LK_FMTX 0x04        // anonymous non-recursive mutex
 #define MEM_LK_SPIN 0x08        // spinlock
 
-#define MEM_LK_TYPE MEM_LK_FMTX // types of locks to use
+#define MEM_LK_TYPE MEM_LK_SPIN // type of locks to use
 
 #include <limits.h>
 #include <stddef.h>
@@ -39,8 +39,7 @@
 #include <zero/unix.h>
 #include <zero/trix.h>
 #if (MEM_LK_TYPE == MEM_LK_PRIO)
-#define PRIOLKALLOC(sz) mapanon(0, rounduppow2(sz, PAGESIZELOG2))
-#define PRIOLKALLOCFAILED MAP_FAILED
+#define PRIOLKUSEMMAP
 #include <zero/priolk.h>
 #endif
 #if (MEM_LK_TYPE == MEM_LK_FMTX)
@@ -111,7 +110,8 @@ typedef zerospin      MEMLK_T;
         (ptr)->line = __LINE__;                                         \
     } while (0)
 #define memrelbitln(ptr) \
-    ((ptr)->line = -1, m_cmpclrbit((m_atomic_t *)&(ptr)->list, MEMLKBITID))
+    ((ptr)->line = __LINE__,                                            \
+     m_cmpclrbit((m_atomic_t *)&(ptr)->list, MEMLKBITID))
 #endif
 #if (MEMDEBUGLOCK)
 #define memlkbit(ptr)                                                   \
