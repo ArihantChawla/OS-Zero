@@ -51,7 +51,7 @@ struct virtpage {
 #define __STRUCT_PHYSLRUQUEUE_PAD                                       \
     (roundup(__STRUCT_PHYSLRUQUEUE_SIZE, CLSIZE) - __STRUCT_PHYSLRUQUEUE_SIZE)
 struct physlruqueue {
-    volatile long    lk;
+    m_atomic_t       lk;
     struct physpage *list;
     uint8_t          _pad[__STRUCT_PHYSLRUQUEUE_PAD];
 };
@@ -61,7 +61,7 @@ struct physlruqueue {
 #define __STRUCT_PHYSPAGE_PAD                                           \
     (roundup(__STRUCT_PHYSPAGE_SIZE, CLSIZE) - __STRUCT_PHYSPAGE_SIZE)
 struct physpage {
-    volatile long    lk;        // mutual exclusion lock
+    m_atomic_t       lk;        // mutual exclusion lock
     m_ureg_t         nref;      // reference count
     m_ureg_t         pid;       // owner process ID
     m_ureg_t         adr;       // page address
@@ -84,7 +84,7 @@ typedef uint64_t swapoff_t;
 #define __STRUCT_SWAPDEV_PAD                                            \
     (roundup(__STRUCT_SWAPDEV_SIZE, CLSIZE) - __STRUCT_SWAPDEV_SIZE)
 struct swapdev {
-    volatile long    lk;
+    m_atomic_t       lk;
     swapoff_t        npg;
     swapoff_t       *pgmap;
     struct physpage *pgtab;

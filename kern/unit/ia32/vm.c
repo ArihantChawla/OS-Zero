@@ -29,25 +29,25 @@
 
 extern void pginit(void);
 
-extern uint8_t        kernsysstktab[NCPU * KERNSTKSIZE];
-extern uint8_t        kernusrstktab[NCPU * KERNSTKSIZE];
-extern pde_t          kernpagedir[NPDE];
-extern pde_t          usrpagedir[NPDE];
+extern uint8_t       kernsysstktab[NCPU * KERNSTKSIZE];
+extern uint8_t       kernusrstktab[NCPU * KERNSTKSIZE];
+extern pde_t         kernpagedir[NPDE];
+extern pde_t         usrpagedir[NPDE];
 #if (VMFLATPHYSTAB)
-struct physpage       vmphystab[NPAGEMAX] ALIGNED(PAGESIZE);
+struct physpage      vmphystab[NPAGEMAX] ALIGNED(PAGESIZE);
 #endif
-//volatile long         vmlrulktab[PTRBITS];
-struct physlruqueue   vmlrutab[PTRBITS];
+//m_atomic_t         vmlrulktab[PTRBITS];
+struct physlruqueue  vmlrutab[PTRBITS];
 
 //static struct vmpage  vmpagetab[NPAGEMAX] ALIGNED(PAGESIZE);
 #if (PAGEDEV)
-static struct dev     vmdevtab[NPAGEDEV];
-static volatile long  vmdevlktab[NPAGEDEV];
+static struct dev    vmdevtab[NPAGEDEV];
+static m_atomic_t    vmdevlktab[NPAGEDEV];
 #endif
-volatile long         vmphyslk;
-struct physpage      *vmphysqueue;
-struct physpage      *vmshmqueue;
-struct vmpagestat     vmpagestat;
+m_atomic_t           vmphyslk;
+struct physpage     *vmphysqueue;
+struct physpage     *vmshmqueue;
+struct vmpagestat    vmpagestat;
 
 /*
  * 32-bit page directory is flat 4-megabyte table of page-tables.

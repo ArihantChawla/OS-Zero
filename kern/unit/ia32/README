@@ -20,3 +20,24 @@ debug
 1. execute qemudebug.sh
 2. gdb -x gdbscript
 
+TROUBLESHOOTING
+---------------
+
+THANKS: gde33
+
+Building the Mess =)
+--------------------
+
+- make sure you have the following [packages] installed:
+
+- [GNU] autoconf
+- [GNU] automake
+- [GNU] bison
+- [GNU] flex
+
+Running It
+----------
+
+- if your mouse gets grabbed by (locked in) the Qemu window, press Ctrl + Alt
+  to unlock it
+

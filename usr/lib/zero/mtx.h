@@ -34,7 +34,7 @@ extern int pthread_yield(void);
 #endif
 
 #if (defined(__KERNEL__) || defined(ZEROFMTX))
-typedef volatile long   zerofmtx;
+typedef m_atomic_t      zerofmtx;
 #elif defined(PTHREAD) && defined(ZEROPTHREAD)
 typedef pthread_mutex_t zerofmtx;
 #endif
@@ -57,9 +57,9 @@ typedef pthread_mutex_t zerofmtx;
  * - return non-zero on success, zero if already locked
  */
 static INLINE long
-fmtxtrylk(volatile long *lp)
+fmtxtrylk(m_atomic_t *lp)
 {
-    volatile long res;
+    m_atomic_t res;
 
     res = m_cmpswap(lp, FMTXINITVAL, FMTXLKVAL);
 
@@ -71,9 +71,9 @@ fmtxtrylk(volatile long *lp)
  * - allow other threads to run when blocking
  */
 static INLINE void
-fmtxlk(volatile long *lp)
+fmtxlk(m_atomic_t *lp)
 {
-    volatile long res;
+    m_atomic_t res;
     
     do {
         res = m_cmpswap(lp, FMTXINITVAL, FMTXLKVAL);
@@ -94,7 +94,7 @@ fmtxlk(volatile long *lp)
  * - must use full memory barrier to guarantee proper write-ordering
  */
 static INLINE void
-fmtxunlk(volatile long *lp)
+fmtxunlk(m_atomic_t *lp)
 {
     m_membar();
     *lp = FMTXINITVAL;
@@ -147,11 +147,11 @@ typedef struct zeromtxatr {
 /* thr for unlocked mutexes */
 #define ZEROMTX_FREE    0
 typedef struct zeromtx {
-    volatile long val;  // owner for recursive mutexes, 0 if unlocked
-    volatile long cnt;  // access counter
-    volatile long rec;  // recursion depth
-    zeromtxatr    atr;
-    uint8_t       _pad[CLSIZE - 3 * sizeof(long) - sizeof(zeromtxatr)];
+    m_atomic_t val;     // owner for recursive mutexes, 0 if unlocked
+    m_atomic_t cnt;     // access counter
+    m_atomic_t rec;     // recursion depth
+    zeromtxatr atr;
+    uint8_t    _pad[CLSIZE - 3 * sizeof(long) - sizeof(zeromtxatr)];
 } zeromtx;
 
 #endif

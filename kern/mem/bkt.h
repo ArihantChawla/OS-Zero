@@ -15,9 +15,9 @@
 #define __STRUCT_MEMBKT_PAD                                          \
     (roundup(__STRUCT_MEMBKT_SIZE, CLSIZE) - __STRUCT_MEMBKT_SIZE)
 struct membkt {
-    volatile long  lk;
-    void          *list;
-    uint8_t        _pad[__STRUCT_MEMBKT_PAD];
+    m_atomic_t  lk;
+    void       *list;
+    uint8_t     _pad[__STRUCT_MEMBKT_PAD];
 };
 
 static __inline__ unsigned long

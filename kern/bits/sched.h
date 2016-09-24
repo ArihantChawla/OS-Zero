@@ -101,11 +101,11 @@ extern void schedsetsleep(struct task *task);
 #define __STRUCT_SCHEDQUEUESET_PAD                                      \
     (roundup(__STRUCT_SCHEDQUEUESET_SIZE, CLSIZE) - __STRUCT_SCHEDQUEUESET_SIZE)
 struct schedqueueset {
-    volatile long   lk;
-    long           *curmap;
-    long           *nextmap;
-    long           *idlemap;
-    long           *loadmap;
+    m_atomic_t      lk;
+    m_atomic_t     *curmap;
+    m_atomic_t     *nextmap;
+    m_atomic_t     *idlemap;
+    m_atomic_t     *loadmap;
     struct task   **cur;
     struct task   **next;
     struct task   **idle;
@@ -113,7 +113,7 @@ struct schedqueueset {
 };
 
 extern struct cpu            cputab[NCPU];
-extern long                  schedidlecoremap[NCPU][SCHEDIDLECOREMAPNWORD];
+extern m_atomic_t            schedidlecoremap[NCPU][SCHEDIDLECOREMAPNWORD];
 extern struct task          *schedreadytab0[NCPU][SCHEDNQUEUE];
 extern struct task          *schedreadytab1[NCPU][SCHEDNQUEUE];
 extern struct schedqueueset  schedreadytab[NCPU];
@@ -185,8 +185,8 @@ static __inline__ struct cpu *
 schedfindidlecore(long cpu, long *retcore)
 {
     struct cpu *unit = &cputab[cpu];
-    long       *map = &schedidlecoremap[cpu][0];
-    long       *ptr = &map[0];
+    m_atomic_t *map = &schedidlecoremap[cpu][0];
+    m_atomic_t *ptr = &map[0];
     long        nunit = NCPU;
     long        ncore = NCORE;
     long        lim = min(ncore, (long)(CHAR_BIT * sizeof(long)));

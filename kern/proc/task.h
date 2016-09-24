@@ -51,7 +51,7 @@ struct task {
     /* thread control block - KEEP THIS FIRST in the structure */
     struct m_task   m_task;             // machine thread control block
     /* scheduler parameters */
-    volatile long   lk;
+    m_atomic_t      lk;
     long            sched;              // thread scheduler class
     long            schedflg;           // received user input [interrupt]
     long            runprio;            // current priority
@@ -113,7 +113,7 @@ struct task {
     ((wc) & ((1UL << TASKNLVLWAITLOG2) - 1))
 
 struct tasktabl0 {
-    volatile long   lk;
+    m_atomic_t      lk;
     long            nref;
     struct tasktab *tab;
     uint8_t         _pad[CLSIZE - 2 * sizeof(long) - sizeof(struct tasktab *)];
@@ -126,9 +126,9 @@ struct tasktab {
 
 /* this should be a single (aligned) cacheline */
 struct taskqueue {
-    volatile long  lk;
-    struct task   *list;
-    uint8_t        _pad[CLSIZE - sizeof(long) - sizeof(struct task *)];
+    m_atomic_t   lk;
+    struct task *list;
+    uint8_t      _pad[CLSIZE - sizeof(long) - sizeof(struct task *)];
 };
 
 long taskgetid(void);
@@ -137,7 +137,7 @@ void taskfreeid(long id);
 #define THRSTKSIZE  (64 * 1024)
 
 struct taskid {
-    volatile long  lk;
+    m_atomic_t     lk;
     long           id;
     struct taskid *prev;
     struct taskid *next;
@@ -152,11 +152,11 @@ struct taskid {
 #define PIDSPEC_MAX  4
 
 struct pid {
-    long           num;
-    volatile long  cnt;
-    struct task   *task;
-    struct pid    *list;
-    struct pid    *hash;
+    long         num;
+    m_atomic_t   cnt;
+    struct task *task;
+    struct pid  *list;
+    struct pid  *hash;
 };
 
 extern void tasksetsleep(struct task *task);

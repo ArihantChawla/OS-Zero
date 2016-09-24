@@ -109,7 +109,7 @@ long dmatakechan(unsigned long chan);
 #define DMANOCHAN       0xff
 struct dmadrv {
     const uint8_t *ports;
-    volatile long  lk;
+    m_atomic_t     lk;
     long           chanbits;
 };
 

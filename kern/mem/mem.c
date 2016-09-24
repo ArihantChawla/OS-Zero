@@ -9,7 +9,7 @@
 #include <kern/malloc.h>
 #include <kern/mem/vm.h>
 #include <kern/mem/page.h>
-#include <kern/mem/mb.h>
+#include <kern/mem/mbuf.h>
 #include <kern/mem/pool.h>
 #include <kern/mem/mag.h>
 #if defined(__i386__) && !defined(__x86_64__) && !defined(__amd64__) && 0
@@ -146,7 +146,7 @@ meminitcpubuf(long unit, long how)
 {
     struct membufbkt *tab = &membufbkttab[unit];
     uint8_t          *u8ptr = kwalloc(PAGESIZE);
-    long              n = PAGESIZE / MB_SIZE;
+    long              n = PAGESIZE / MBUF_SIZE;
     void             *last = NULL;
     struct membuf    *buf;
 
@@ -157,7 +157,7 @@ meminitcpubuf(long unit, long how)
     u8ptr += PAGESIZE;
     tab->nbuf = n;
     while (n--) {
-        u8ptr -= MB_SIZE;
+        u8ptr -= MBUF_SIZE;
         buf = (struct membuf *)u8ptr;
         buf->hdr.next = last;
         last = buf;
@@ -182,20 +182,20 @@ meminitbuf(void)
     long              n;
 
     /* allocate wired memory for membufs */
-    u8ptr1 = kwalloc(MEMNBUF * MB_SIZE);
+    u8ptr1 = kwalloc(MEMNBUF * MBUF_SIZE);
     if (!u8ptr1) {
         kprintf("FAILED to allocate membufs\n");
 
         return 0;
     }
-    kbzero(u8ptr1, MEMNBUF * MB_SIZE);
+    kbzero(u8ptr1, MEMNBUF * MBUF_SIZE);
     /* initialise global membuf container */
     n = MEMNBUF;
     tab->nbuf = n;
-    u8ptr1 += MEMNBUF * MB_SIZE;
+    u8ptr1 += MEMNBUF * MBUF_SIZE;
     last = NULL;
     while (n--) {
-        u8ptr1 -= MB_SIZE;
+        u8ptr1 -= MBUF_SIZE;
         buf = (struct membuf *)u8ptr1;
         buf->hdr.next = last;
         last = buf;

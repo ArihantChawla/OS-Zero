@@ -115,13 +115,13 @@ struct bufblk {
 #define __STRUCT_BUFDEV_PAD                                             \
     (roundup(__STRUCT_BUFDEV_SIZE, CLSIZE) - __STRUCT_BUFDEV_SIZE)
 struct bufdev {
-    volatile long lk;
-    long          id;           // system descriptor
-    long          flg;          // flags such as DEVIOSEQ, DEVCANSEEK(?), ...
-    long          type;         // DISK, NET, OPT, TAPE, ...
-    long          prio;         // device priority for I/O scheduling
-    long          timelim;      // time-limit (e.g. to wait before seek)
-    uint8_t       _pad[__STRUCT_BUFDEV_PAD];
+    m_atomic_t lk;
+    long       id;              // system descriptor
+    long       flg;             // flags such as DEVIOSEQ, DEVCANSEEK(?), ...
+    long       type;            // DISK, NET, OPT, TAPE, ...
+    long       prio;            // device priority for I/O scheduling
+    long       timelim;         // time-limit (e.g. to wait before seek)
+    uint8_t    _pad[__STRUCT_BUFDEV_PAD];
 };
 
 #define __STRUCT_BUFCHAIN_SIZE                                          \
@@ -129,7 +129,7 @@ struct bufdev {
 #define __STRUCT_BUFCHAIN_PAD                                           \
     (roundup(__STRUCT_BUFCHAIN_SIZE, CLSIZE) - __STRUCT_BUFCHAIN_SIZE)
 struct bufchain {
-    volatile long  lk;
+    m_atomic_t     lk;
     long           nitem;
     struct bufblk *list;
     uint8_t        _pad[__STRUCT_BUFCHAIN_PAD];
@@ -140,7 +140,7 @@ struct bufchain {
 #define __STRUCT_BUFBLKQUEUE_PAD                                        \
     (roundup(__STRUCT_BUFBLKQUEUE_SIZE, CLSIZE) - __STRUCT_BUFBLKQUEUE_SIZE)
 struct bufblkqueue {
-    volatile long  lk;
+    m_atomic_t     lk;
     struct bufblk *head;
     uint8_t        _pad[__STRUCT_BUFBLKQUEUE_PAD];
 };

@@ -65,14 +65,14 @@ static struct tasktabl0  scheddeadlinetab[SCHEDNLVL0DL];
 static struct task      *schedstoppedtab[NTASK];
 struct task             *schedreadytab0[NCPU][SCHEDNQUEUE];
 struct task             *schedreadytab1[NCPU][SCHEDNQUEUE];
-static long              schedreadymap0[NCPU][SCHEDREADYMAPNWORD];
-static long              schedreadymap1[NCPU][SCHEDREADYMAPNWORD];
+static m_atomic_t        schedreadymap0[NCPU][SCHEDREADYMAPNWORD];
+static m_atomic_t        schedreadymap1[NCPU][SCHEDREADYMAPNWORD];
 struct schedqueueset     schedreadytab[NCPU];
 static struct task      *schedidletab[NCPU][SCHEDNCLASSQUEUE];
 /* SCHEDIDLE queues are not included in SCHEDNQUEUE */
-static long              schedloadmap[NCPU][SCHEDNTOTALQUEUE];
-long                     schedidlecoremap[NCPU][SCHEDIDLECOREMAPNWORD];
-static long              scheddeadlinemap[SCHEDDEADLINEMAPNWORD];
+static m_atomic_t        schedloadmap[NCPU][SCHEDNTOTALQUEUE];
+m_atomic_t               schedidlecoremap[NCPU][SCHEDIDLECOREMAPNWORD];
+static m_atomic_t        scheddeadlinemap[SCHEDDEADLINEMAPNWORD];
 
 void
 schedinit(void)
@@ -151,7 +151,7 @@ schedsetdeadline(struct task *task)
     unsigned long      key0 = taskdlkey0(deadline);
     unsigned long      key1 = taskdlkey1(deadline);
     unsigned long      key2 = taskdlkey2(deadline);
-    long              *map = scheddeadlinemap;
+    m_atomic_t        *map = scheddeadlinemap;
     void              *ptr = NULL;
     void             **pptr = NULL;
     long               fail = 0;
@@ -208,7 +208,7 @@ schedsetready(struct task *task, long cpu)
     long                   score = SCHEDSCOREMAX;
     struct schedqueueset  *set = &schedreadytab[cpu];
     struct task          **queue = NULL;
-    long                  *map = NULL;
+    m_atomic_t            *map = NULL;
     long                   qid = zeroabs(prio);
     long                   load;
     long                   lim;
@@ -311,7 +311,7 @@ schedswitchtask(struct task *curtask)
     long                   state = (curtask) ? curtask->state : -1;
     struct schedqueueset  *set = &schedreadytab[cpu];
     struct task          **queue;
-    long                  *map;
+    m_atomic_t            *map;
     long                   ntz;
     long                   val;
     long                   ndx;

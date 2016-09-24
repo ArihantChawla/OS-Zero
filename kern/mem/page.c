@@ -17,14 +17,14 @@
 #if (VMFLATPHYSTAB)
 extern struct physpage      vmphystab[NPAGEMAX];
 #endif
-//extern volatile long      vmlrulktab[PTRBITS];
+//extern m_atomic_t      vmlrulktab[PTRBITS];
 extern struct physlruqueue  vmlrutab[PTRBITS];
 extern struct vmpagestat    vmpagestat;
-extern volatile long        vmphyslk;
+extern m_atomic_t           vmphyslk;
 extern struct physpage     *vmphysqueue;
 extern struct physpage     *vmshmqueue;
 #if 0
-static volatile long        vmsetlk;
+static m_atomic_t           vmsetlk;
 //pid_t                     vmsetmap[NPAGEMAX];
 unsigned char               vmsetbitmap[NPAGEMAX / CHAR_BIT];
 #endif

@@ -43,19 +43,19 @@ static struct bufblk      *bufhdrtab;
 static struct bufblk       bufhdrtab[BUFNBLK] ALIGNED(PAGESIZE);
 #endif
 #if (BUFMULTITAB)
-static volatile long       buflktab[BUFNDEV] ALIGNED(PAGESIZE);
+static m_atomic_t          buflktab[BUFNDEV] ALIGNED(PAGESIZE);
 static void               *buftab[BUFNDEV] ALIGNED(PAGESIZE);
 #elif (BUFNEWHASH)
 static struct bufchain     bufhash[BUFNHASH];
 //static struct bufchain     bufhash[BUFNDEV][BUFNHASH];
 #else
-static volatile long       buflktab[BUFNDEV] ALIGNED(PAGESIZE);
+static m_atomic_t          buflktab[BUFNDEV] ALIGNED(PAGESIZE);
 static void               *bufhash[BUFNDEV][BUFNHASH];
 #endif
 static struct bufdev       bufdevtab[BUFNDEV];
 static struct bufblkqueue  buffreelist;
 static struct bufblkqueue  buflruqueue;
-static volatile long       bufzonelk;
+static m_atomic_t          bufzonelk;
 static void               *bufzone;
 static long                bufnbyte;
 

@@ -154,25 +154,28 @@ struct memtls *
 meminittls(void)
 {
     struct memtls *tls = NULL;
+    struct memtls *adr = NULL;
     unsigned long  val;
 
     tls = mapanon(0, memtlssize());
     if (tls != MAP_FAILED) {
+//        adr = (struct memtls *)memgentlsadr(adr);
+        adr = tls;
 #if 0
         tls = (struct memtls *)memgenptrcl(adr, memtlssize(),
                                            sizeof(struct memtls));
 #endif
 #if (MEM_LK_TYPE & MEM_LK_PRIO)
         val = memgetprioval();
-        priolkinit(&tls->priolkdata, val);
+        priolkinit(&adr->priolkdata, val);
 #endif
         pthread_once(&g_thronce, meminit);
         pthread_setspecific(g_thrkey, tls);
-        g_memtls = tls;
+        g_memtls = adr;
         m_syncwrite(&g_memtlsinit, 1);
     }
 
-    return tls;
+    return adr;
 }
 
 static void

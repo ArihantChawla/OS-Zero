@@ -863,7 +863,7 @@ bitcnt32a(uint32_t a) {
 }
 
 static __inline__ uint32_t
-bitcnt32b(uint32_t a) {
+bitcntu32(uint32_t a) {
     a = ((a >> 1) & 0x55555555) + (a & 0x55555555);
     a = ((a >> 2) & 0x33333333) + (a & 0x33333333);
     a = ((a >> 4) & 0x07070707) + (a & 0x07070707);
@@ -875,7 +875,7 @@ bitcnt32b(uint32_t a) {
 
 
 static __inline__ uint32_t
-mod15(uint32_t a) {
+mod15u32(uint32_t a) {
     a = (a >> 16) + (a & 0xffff); /* sum base 2**16 digits */
     a = (a >>  8) + (a & 0xff);   /* sum base 2**8 digits */
     a = (a >>  4) + (a & 0xf);    /* sum base 2**4 digits */
@@ -886,7 +886,7 @@ mod15(uint32_t a) {
 }
 
 static __inline__ uint32_t
-mod255(uint32_t a) {
+mod255u32(uint32_t a) {
     a = (a >> 16) + (a & 0xffff); /* sum base 2**16 digits */
     a = (a >>  8) + (a & 0xff);   /* sum base 2**8 digits */
     if (a < 255) return a;
@@ -896,7 +896,7 @@ mod255(uint32_t a) {
 }
 
 static __inline__ uint32_t
-mod65535(uint32_t a) {
+mod65535u32(uint32_t a) {
     a = (a >> 16) + (a & 0xffff); /* sum base 2**16 digits */
     if (a < 65535) return a;
     if (a < (2 * 65535)) return a - 65535;

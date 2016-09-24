@@ -3,11 +3,12 @@
 
 #include <stdint.h>
 #include <zero/param.h>
+#include <zero/asm.h>
 #include <kern/mem/bkt.h>
 
 struct mempool {
     struct membkt  tab[PTRBITS];
-    volatile long  lk;
+    m_atomic_t     lk;
     uintptr_t      base;
     unsigned long  nblk;
     void          *hdrtab;

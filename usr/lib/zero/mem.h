@@ -174,6 +174,7 @@ typedef zerospin      MEMLK_T;
 #endif
 /* maximum small buf size is (MEMBUFBLKS << MEMMAXSMALLSHIFT) + bookkeeping */
 #define MEMMAXSMALLSHIFT   (PAGESIZELOG2 - 1)
+#define MEMSMALLSLOTS      (MEMMAXSMALLSHIFT + 1)
 /* NOTES
  * -----
  * - all allocations except those from pagebin are power-of-two sizes
@@ -300,9 +301,9 @@ struct membufvals {
 #define MEMINITBIT   (1L << 0)
 #define MEMNOHEAPBIT (1L << 1)
 struct mem {
-    struct membkt       smallbin[PTRBITS]; // blocks of 1 << slot
-    struct membkt       bigbin[PTRBITS]; // mapped blocks of 1 << slot
-    struct membkt       pagebin[MEMPAGESLOTS]; // maps of PAGESIZE * slot
+    struct membkt       smallbin[MEMSMALLSLOTS]; // blocks of 1 << slot
+    struct membkt       bigbin[PTRBITS];         // mapped blocks of 1 << slot
+    struct membkt       pagebin[MEMPAGESLOTS];   // maps of PAGESIZE * slot
     struct membufvals   bufvals;
 #if (MEMMULTITAB)
     struct memtabl0    *tab;     // allocation lookup structure
@@ -439,7 +440,7 @@ struct memtls {
 #if (MEM_LK_TYPE & MEM_LK_PRIO)
     struct priolkdata priolkdata;
 #endif
-    long              flg;
+    MEMUWORD_T        flg;
 /* possible auxiliary data here; arena is of PAGESIZE */
 };
 
@@ -564,7 +565,41 @@ memgenptrcl(MEMPTR_T ptr, MEMUWORD_T blksz, MEMUWORD_T size)
     return ret;
 }
 
-/* compute adr + adr % 9 (aligned to word boundary) */
+/* compute adr + adr % 9 (# of cachelines in offset, aligned to cl boundary) */
+static __inline__ MEMUWORD_T *
+memgentlsadr(MEMPTR_T *adr)
+{
+    /* division by 9 */
+    MEMADR_T res = (MEMADR_T)adr;
+    MEMADR_T q;
+    MEMADR_T r;
+    MEMADR_T div9;
+    MEMADR_T dec;
+
+    res >>= 16;
+    /* divide by 9 */
+    q = res - (res >> 3);
+    q = q + (q >> 6);
+    q = q + (q >> 12) + (q >> 24);
+    q = q >> 3;
+    r = res - q * 9;
+    div9 = q + ((r + 7) >> 4);
+    /* calculate res -= res/9 * 9 i.e. res % 9 (max 8) */
+    dec = div9 * 9;
+    res -= dec;
+    /* multiply by structure size */
+    res *= sizeof(struct memtls);
+    /* align to cacheline */
+    res &= ~(CLSIZE - 1);
+    /* add to original pointer */
+    adr += res;
+    /* align to machine word boundary */
+
+    return adr;
+}
+
+
+/* compute adr + adr % 9 (# of words in offset, aligned to word boundary) */
 static __inline__ MEMUWORD_T *
 memgenhashtabadr(MEMUWORD_T *adr)
 {
@@ -575,6 +610,7 @@ memgenhashtabadr(MEMUWORD_T *adr)
     MEMADR_T div9;
     MEMADR_T dec;
 
+    /* shift out some [mostly-aligned] low bits */
     res >>= 16;
     /* divide by 9 */
     q = res - (res >> 3);
@@ -725,7 +761,7 @@ memgenhashtabadr(MEMUWORD_T *adr)
 
 #define membufblkadr(buf, ndx)                                          \
     ((buf)->base + ((ndx) << memgetbufslot(buf)))
-#define membufblkid(buf, ptr)                                           \
+#define membufsmallblkid(buf, ptr)                           \
     ((((MEMPTR_T)(ptr) - (buf)->base) >> memgetbufslot(buf)) \
      & ((MEMUWORD(1) << memgetbufslot(buf)) - 1))
 #define membufblksize(buf, type, slot)                                  \
@@ -737,7 +773,8 @@ memgenhashtabadr(MEMUWORD_T *adr)
 #define membufsetptr(buf, ptr, adr)                                     \
     ((buf)->ptrtab[membufblkid(buf, ptr)] = (adr))
 #define membufpageid(buf, ptr)                                          \
-    (((MEMADR_T)(ptr) - (MEMADR_T)(buf)->base) >> PAGESIZELOG2)
+    ((((MEMADR_T)(ptr) - (MEMADR_T)(buf)->base)                         \
+      >> PAGESIZELOG2) / memgetbufslot(buf))
 #define membufpageadr(buf, ndx)                                         \
     ((buf)->base + (ndx) * MEMUWORD(PAGESIZE) * memgetbufslot(buf))
 #define membufgetpage(buf, ndx)                                         \

@@ -23,9 +23,9 @@
 #define CPURESCHED   (1L << 1)
 struct cpu {
     struct m_cpu   m_cpu;       // machine-specific structure
-    volatile long  lk;          // mutual exclusion lock
+    m_atomic_t     lk;          // mutual exclusion lock
     struct m_core *coretab;     // SMT
-    volatile long  statflg;     // status flags
+    m_atomic_t     statflg;     // status flags
     long           id;          // numerical ID
     unsigned long  ntick;       // tick count
     long           nicemin;     // minimum nice in effect

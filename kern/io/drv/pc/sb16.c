@@ -242,7 +242,7 @@ sb16intr(void)
         case SB16DMA8MIDIBIT:
             reg = SB16DMA8MIDISTAT;
             val = DMAIOBUFSIZE >> 1;
-            fmtxlk(&sb16drv.buflock);
+            fmtxlk(&sb16drv.buflk);
             if (op == DMAREADOP) {
                 if (sb16drv.dmain8full) {
                     sb16flushinbuf8();
@@ -276,13 +276,13 @@ sb16intr(void)
                     sb16drv.dmaout8empty = 1;
                 }
             }
-            fmtxunlk(&sb16drv.buflock);
+            fmtxunlk(&sb16drv.buflk);
 
             break;
         case SB16DMA16BIT:
             reg = SB16DMA16STAT;
             val = DMAIOBUFSIZE >> 2;
-            fmtxlk(&sb16drv.buflock);
+            fmtxlk(&sb16drv.buflk);
             if (op == DMAREADOP) {
                 if (sb16drv.dmain16full) {
                     sb16flushinbuf16();
@@ -316,7 +316,7 @@ sb16intr(void)
                     sb16drv.dmaout16empty = 1;
                 }
             }
-            fmtxunlk(&sb16drv.buflock);
+            fmtxunlk(&sb16drv.buflk);
 
             break;
         case SB16MPU401BIT:
