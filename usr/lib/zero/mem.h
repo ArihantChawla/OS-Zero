@@ -567,7 +567,7 @@ memgenptrcl(MEMPTR_T ptr, MEMUWORD_T blksz, MEMUWORD_T size)
 
 /* compute adr + adr % 9 (# of cachelines in offset, aligned to cl boundary) */
 static __inline__ MEMUWORD_T *
-memgentlsadr(MEMPTR_T *adr)
+memgentlsadr(MEMPTR_T adr)
 {
     /* division by 9 */
     MEMADR_T res = (MEMADR_T)adr;
@@ -587,8 +587,8 @@ memgentlsadr(MEMPTR_T *adr)
     /* calculate res -= res/9 * 9 i.e. res % 9 (max 8) */
     dec = div9 * 9;
     res -= dec;
-    /* multiply by structure size */
-    res *= sizeof(struct memtls);
+    /* scale to 0..64 (machine words) */
+    res <<= 3;
     /* align to cacheline */
     res &= ~(CLSIZE - 1);
     /* add to original pointer */
