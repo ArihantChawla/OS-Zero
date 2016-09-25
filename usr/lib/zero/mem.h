@@ -95,9 +95,9 @@ typedef zerospin      MEMLK_T;
 #define memrellk(lp) spinunlk(lp)
 #endif
 
-#define MEMPAGEBIT      (MEMUWORD(1) << (PAGESIZELOG2 - 1))
-#define MEMPAGEIDMASK   (MEMPAGEBIT - 1)
-#define MEMPAGEINFOMASK (MEMPAGEBIT | MEMPAGEIDMASK)
+//#define MEMPAGEBIT      (MEMUWORD(1) << (PAGESIZELOG2 - 1))
+//#define MEMPAGEIDMASK   (MEMPAGEBIT - 1)
+#define MEMPAGEINFOMASK ((MEMUWORD(1) << PAGESIZELOG2) - 1)
 /* use the low-order bit of the word or pointer to lock data */
 #define MEMLKBITID      0
 #define MEMLKBIT        (1L << MEMLKBITID)
@@ -761,25 +761,26 @@ memgenhashtabadr(MEMUWORD_T *adr)
 
 #define membufblkadr(buf, ndx)                                          \
     ((buf)->base + ((ndx) << memgetbufslot(buf)))
-#define membufsmallblkid(buf, ptr)                           \
-    ((((MEMPTR_T)(ptr) - (buf)->base) >> memgetbufslot(buf)) \
-     & ((MEMUWORD(1) << memgetbufslot(buf)) - 1))
+#define membufblkid(buf, ptr)                                           \
+    (((MEMPTR_T)(ptr) - (buf)->base) >> memgetbufslot(buf))
+#define membufpageadr(buf, ndx)                                         \
+    ((buf)->base + (ndx) * (MEMUWORD(PAGESIZE) + MEMUWORD(PAGESIZE) * memgetbufslot(buf)))
+#if 0
+#define membufpageid(buf, ptr)                                          \
+    (((MEMADR_T)(ptr) - (MEMADR_T)(buf)->base)                          \
+     / (MEMUWORD(PAGESIZE) + MEMUWORD(PAGESIZE) * memgetbufslot(buf)))
+#endif
 #define membufblksize(buf, type, slot)                                  \
     ((type != MEMPAGEBUF)                                               \
      ? (MEMUWORD(1) << (slot))                                          \
-     : (MEMUWORD(PAGESIZE) * (slot)))
+     : (MEMUWORD(PAGESIZE) + MEMUWORD(PAGESIZE) * (slot)))
 #define membufgetptr(buf, ptr)                                          \
     ((buf)->ptrtab[membufblkid(buf, ptr)])
 #define membufsetptr(buf, ptr, adr)                                     \
     ((buf)->ptrtab[membufblkid(buf, ptr)] = (adr))
-#define membufpageid(buf, ptr)                                          \
-    ((((MEMADR_T)(ptr) - (MEMADR_T)(buf)->base)                         \
-      >> PAGESIZELOG2) / memgetbufslot(buf))
-#define membufpageadr(buf, ndx)                                         \
-    ((buf)->base + (ndx) * MEMUWORD(PAGESIZE) * memgetbufslot(buf))
-#define membufgetpage(buf, ndx)                                         \
+#define membufgetpageadr(buf, ndx)                                      \
     ((buf)->ptrtab[(ndx)])
-#define membufsetpage(buf, ndx, adr)                                    \
+#define membufsetpageadr(buf, ndx, adr)                                 \
     ((buf)->ptrtab[(ndx)] = (adr))
 
 #define memgetnbufblk(slot, type)                                       \
@@ -793,17 +794,18 @@ void            meminit(void);
 struct memtls * meminittls(void);
 MEMPTR_T        memgetblk(MEMUWORD_T slot, MEMUWORD_T type,
                           MEMUWORD_T size, MEMUWORD_T align);
-MEMPTR_T        memsetbuf(MEMPTR_T ptr, struct membuf *buf);
+MEMPTR_T        memsetbuf(MEMPTR_T ptr, struct membuf *buf, MEMUWORD_T id);
 #if (MEMMULTITAB)
 struct membuf * memfindbuf(void *ptr, MEMWORD_T incr);
 #elif (MEMNEWHASH)
-MEMADR_T        membufop(MEMPTR_T ptr, MEMWORD_T op, struct membuf *buf);
+MEMADR_T        membufop(MEMPTR_T ptr, MEMWORD_T op, struct membuf *buf,
+                         MEMUWORD_T id);
 #elif (MEMHASH)
 MEMADR_T        memfindbuf(void *ptr, MEMWORD_T incr, MEMADR_T *keyret);
 #else
 struct membuf * memfindbuf(void *ptr, long rel);
 #endif
-void            memputblk(void *ptr, struct membuf *buf);
+void            memputblk(void *ptr, struct membuf *buf, MEMUWORD_T id);
 #if (MEMTEST)
 void            memprintbuf(struct membuf *buf, const char *func);
 long            _memchkptr(struct membuf *buf, MEMPTR_T ptr);

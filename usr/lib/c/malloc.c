@@ -104,7 +104,7 @@ _free(void *ptr)
 #if (MEMMULTITAB)
     memfindbuf(ptr, 1);
 #else
-    membufop(ptr, MEMHASHDEL, NULL);
+    membufop(ptr, MEMHASHDEL, NULL, 0);
 #endif
 #if 0
     VALGRINDFREE(ptr);
@@ -127,7 +127,7 @@ _realloc(void *ptr,
     struct membuf *buf = (ptr) ? memfindbuf(ptr, 0) : NULL;
 #else
     MEMADR_T       desc = ((ptr)
-                           ? membufop(ptr, MEMHASHCHK, NULL)
+                           ? membufop(ptr, MEMHASHCHK, NULL, 0)
                            : 0);
     struct membuf *buf = (struct membuf *)desc;
 #endif
@@ -464,7 +464,7 @@ malloc_usable_size(void *ptr)
     struct membuf *buf = (ptr) ? memfindbuf(ptr, 0) : NULL;
 #else
     MEMADR_T       desc = ((ptr)
-                           ? membufop(ptr, MEMHASHCHK, NULL)
+                           ? membufop(ptr, MEMHASHCHK, NULL, 0)
                            : 0);
     struct membuf *buf = (struct membuf *)desc;
 #endif
@@ -514,7 +514,7 @@ malloc_size(void *ptr)
     struct membuf *buf = (ptr) ? memfindbuf(ptr, 0) : NULL;
 #else
     MEMADR_T       desc = ((ptr)
-                           ? membufop(ptr, MEMHASHCHK, NULL)
+                           ? membufop(ptr, MEMHASHCHK, NULL, 0)
                            : 0);
     struct membuf *buf = (struct membuf *)desc;
 #endif
