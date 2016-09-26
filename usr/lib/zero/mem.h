@@ -100,7 +100,7 @@ typedef zerospin      MEMLK_T;
 #define MEMPAGEINFOMASK ((MEMUWORD(1) << PAGESIZELOG2) - 1)
 /* use the low-order bit of the word or pointer to lock data */
 #define MEMLKBITID      0
-#define MEMLKBIT        (1L << MEMLKBITID)
+#define MEMLKBIT        (MEMUWORD(1) << MEMLKBITID)
 #if (MEMDEBUGDEADLOCK)
 #define memlkbitln(ptr)                                                 \
     do {                                                                \
@@ -156,6 +156,7 @@ typedef zerospin      MEMLK_T;
     do {                                                                \
         MEMUWORD_T _slot = (sz) >> PAGESIZELOG2;                        \
                                                                         \
+        _slot--;                                                        \
         (slot) = _slot;                                                 \
     } while (0)
 
@@ -219,6 +220,7 @@ struct membkt {
     MEMWORD_T      line;
 #endif
     MEMUWORD_T     nbuf;        // number of bufs in list
+#if 0
     uint8_t        _pad[CLSIZE
 #if (MEMLFDEQ)
                         - sizeof(struct lfdeq)
@@ -229,6 +231,7 @@ struct membkt {
                         - sizeof(MEMWORD_T)
 #endif
                         - sizeof(MEMWORD_T)];
+#endif
 };
 
 /* type-bits for allocation buffers */
@@ -441,7 +444,6 @@ struct memtls {
     struct priolkdata priolkdata;
 #endif
     MEMUWORD_T        flg;
-/* possible auxiliary data here; arena is of PAGESIZE */
 };
 
 /* mark the first block of buf as allocated */
@@ -701,7 +703,9 @@ memgenhashtabadr(MEMUWORD_T *adr)
     (rounduppow2(membufblkofs() + (MEMBUFBLKS << (slot)),               \
                  PAGESIZE))
 #define mempagebufsize(slot, nblk)                                      \
-    (rounduppow2(membufblkofs() + MEMUWORD(PAGESIZE) * (slot) * (nblk), \
+    (rounduppow2(membufblkofs()                                         \
+                 + (MEMUWORD(PAGESIZE) + MEMUWORD(PAGESIZE) * (slot))   \
+                 * (nblk),                                              \
                  PAGESIZE))
 #define membigbufsize(slot, nblk)                                       \
     (rounduppow2(membufblkofs() + (MEMUWORD(1) << (slot)) * (nblk),     \
@@ -765,11 +769,6 @@ memgenhashtabadr(MEMUWORD_T *adr)
     (((MEMPTR_T)(ptr) - (buf)->base) >> memgetbufslot(buf))
 #define membufpageadr(buf, ndx)                                         \
     ((buf)->base + (ndx) * (MEMUWORD(PAGESIZE) + MEMUWORD(PAGESIZE) * memgetbufslot(buf)))
-#if 0
-#define membufpageid(buf, ptr)                                          \
-    (((MEMADR_T)(ptr) - (MEMADR_T)(buf)->base)                          \
-     / (MEMUWORD(PAGESIZE) + MEMUWORD(PAGESIZE) * memgetbufslot(buf)))
-#endif
 #define membufblksize(buf, type, slot)                                  \
     ((type != MEMPAGEBUF)                                               \
      ? (MEMUWORD(1) << (slot))                                          \

@@ -17,7 +17,7 @@
 
 extern THREADLOCAL volatile struct memtls *g_memtls;
 extern THREADLOCAL zerofmtx                g_memtlsinitlk;
-extern THREADLOCAL MEMUWORD_T              g_memtlsinit;
+extern THREADLOCAL volatile MEMUWORD_T     g_memtlsinit;
 extern struct mem                          g_mem;
 
 static void *
@@ -60,11 +60,9 @@ _malloc(size_t size, size_t align, long flg)
     } else if (flg & MALLOCZEROBIT) {
         memset(ptr, 0, size);
     }
-#if 0
     if (ptr) {
         VALGRINDALLOC(ptr, size, 0, flg & MALLOCZEROBIT);
     }
-#endif
 #if (MEMDEBUG)
     crash(ptr != NULL);
 #endif
@@ -83,32 +81,19 @@ _free(void *ptr)
 
         return;
     }
-#if (MEMTLSINITFIXED)
     if (!g_memtlsinit) {
-        fmtxtrylk(&g_memtlsinitlk);
-        if (!g_memtlsinit) {
-
-            abort();
-        }
-        fmtxunlk(&g_memtlsinitlk);
-    }
-#else
-    if (!g_memtlsinit) {
-        fmtxlk(&g_memtlsinitlk);
+        memgetlk(&g_memtlsinitlk);
         if (!g_memtlsinit) {
             meminittls();
         }
-        fmtxunlk(&g_memtlsinitlk);
+        memgetlk(&g_memtlsinitlk);
     }
-#endif
 #if (MEMMULTITAB)
     memfindbuf(ptr, 1);
 #else
     membufop(ptr, MEMHASHDEL, NULL, 0);
 #endif
-#if 0
     VALGRINDFREE(ptr);
-#endif
 
     return;
 }

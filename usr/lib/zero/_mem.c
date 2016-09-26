@@ -43,6 +43,7 @@ memprintbuf(struct membuf *buf, const char *func)
         fprintf(stderr, "BUF\n");
     }
     fprintf(stderr, "--------\n");
+    fprintf(stderr, "base:\t%p\n", buf->base);
     fprintf(stderr, "nblk:\t%lx\n", nblk);
     fprintf(stderr, "nfree:\t%lx\n", memgetbufnfree(buf));
     fprintf(stderr, "type:\t%lx\n", type);
@@ -70,13 +71,17 @@ _memchkptr(struct membuf *buf, MEMPTR_T ptr)
     } else {
         lim = buf->base + membigbufsize(slot, nblk);
     }
-    if (buf->base + nblk * sz >= lim) {
+    if (ptr < buf->base) {
+        fprintf(stderr, "pointer out of bounds: %p\n", ptr);
+        fail++;
+    } else if (ptr + sz > lim) {
         fprintf(stderr, "pointer out of bounds: %p\n", ptr);
         fail++;
     }
     if (fail) {
         fprintf(stderr, "BUF\n");
         fprintf(stderr, "---\n");
+        fprintf(stderr, "base:\t%p\n", buf->base);
         fprintf(stderr, "nblk:\t%lx\n", nblk);
         fprintf(stderr, "type:\t%lx\n", type);
         fprintf(stderr, "slot:\t%lx\n", slot);
