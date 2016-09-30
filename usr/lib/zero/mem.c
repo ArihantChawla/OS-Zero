@@ -516,7 +516,7 @@ memallocsmallbuf(MEMUWORD_T slot)
 #if (MEMSTAT)
     g_memstat.nbsmall += bufsz;
     g_memstat.nbheap += bufsz;
-    g_memstat.nbbook += membufblkofs();
+    g_memstat.nbbook += membufblkofs(nblk);
 #endif
 #if (MEMTEST)
     _memchkbuf(buf, slot, type, nblk, info, __FUNCTION__);
@@ -531,7 +531,7 @@ meminitsmallbuf(struct membuf *buf, MEMUWORD_T slot,
 {
     MEMUWORD_T nblk = MEMBUFBLKS;
     MEMPTR_T   adr = (MEMPTR_T)buf;
-    MEMPTR_T   ptr = adr + membufblkofs();
+    MEMPTR_T   ptr = adr + membufblkofs(nblk);
     MEMUWORD_T info;
     MEMADR_T   upval;
 
@@ -577,7 +577,7 @@ memallocpagebuf(MEMUWORD_T slot, MEMUWORD_T nblk)
 #if (MEMSTAT)
     g_memstat.nbpage += mapsz;
     g_memstat.nbmap += mapsz;
-    g_memstat.nbbook += membufblkofs();
+    g_memstat.nbbook += membufblkofs(nblk);
 #endif
     buf->ptrtab = (MEMPTR_T *)((MEMPTR_T)buf + membufhdrsize());
 #if (MEMTEST)
@@ -593,7 +593,7 @@ meminitpagebuf(struct membuf *buf, MEMUWORD_T slot,
                MEMUWORD_T nblk)
 {
     MEMPTR_T adr = (MEMPTR_T)buf;
-    MEMPTR_T ptr = adr + membufblkofs();
+    MEMPTR_T ptr = adr + membufblkofs(nblk);
     MEMADR_T upval;
 
     /* initialise freemap */
@@ -637,7 +637,7 @@ memallocbigbuf(MEMUWORD_T slot, MEMUWORD_T nblk)
 #if (MEMSTAT)
     g_memstat.nbbig += mapsz;
     g_memstat.nbmap += mapsz;
-    g_memstat.nbbook += membufblkofs();
+    g_memstat.nbbook += membufblkofs(nblk);
 #endif
     buf->size = mapsz;
     buf->ptrtab = (MEMPTR_T *)((MEMPTR_T)buf + membufhdrsize());
@@ -654,7 +654,7 @@ meminitbigbuf(struct membuf *buf, MEMUWORD_T slot,
               MEMUWORD_T nblk)
 {
     MEMPTR_T adr = (MEMPTR_T)buf;
-    MEMPTR_T ptr = adr + membufblkofs();
+    MEMPTR_T ptr = adr + membufblkofs(nblk);
     MEMADR_T upval;
 
     membufinitfree(buf, nblk);
@@ -1377,12 +1377,12 @@ memrelbuf(MEMUWORD_T slot, MEMUWORD_T type,
                     return;
                 } else {
                     VALGRINDRMPOOL(buf->base);
-                    unmapanon(buf, buf->size);
 #if (MEMSTAT)
                     g_memstat.nbmap -= buf->size;
                     g_memstat.nbbig -= buf->size;
-                    g_memstat.nbbook -= membufblkofs();
+                    g_memstat.nbbook -= membufblkofs(nblk);
 #endif
+                    unmapanon(buf, buf->size);
                 }
             }
         } else if (src->nbuf >= memgetnbufglob(slot, MEMPAGEBUF)) {
@@ -1394,12 +1394,12 @@ memrelbuf(MEMUWORD_T slot, MEMUWORD_T type,
         if (src->nbuf >= memgetnbufglob(slot, MEMBIGBUF)) {
             memdequeuebuf(buf, src);
             VALGRINDRMPOOL(buf->base);
-            unmapanon(buf, buf->size);
 #if (MEMSTAT)
             g_memstat.nbmap -= buf->size;
             g_memstat.nbbig -= buf->size;
-            g_memstat.nbbook -= membufblkofs();
+            g_memstat.nbbook -= membufblkofs(nblk);
 #endif
+            unmapanon(buf, buf->size);
         }
     }
 

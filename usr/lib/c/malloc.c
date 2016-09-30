@@ -25,10 +25,11 @@ _malloc(size_t size, size_t align, long flg)
 {
     size_t    aln = max(align, MEMMINALIGN);
     size_t    sz = max(size, MEMMINBLK);
-    size_t    bsz = (aln <= sz) ? sz : sz + aln;
-    long      type = (memusesmallbuf(bsz)
+    size_t    asz = (aln <= PAGESIZE) ? sz : sz + aln;
+    size_t    bsz;
+    long      type = (memusesmallbuf(asz)
                       ? MEMSMALLBUF
-                      : (memusepagebuf(bsz)
+                      : (memusepagebuf(asz)
                          ? MEMPAGEBUF
                          : MEMBIGBUF));
     long      slot;
@@ -48,8 +49,9 @@ _malloc(size_t size, size_t align, long flg)
         fmtxunlk(&g_memtlsinitlk);
     }
     if (type != MEMPAGEBUF) {
-        memcalcslot(bsz, slot);
+        memcalcslot(asz, slot);
     } else {
+        bsz = rounduppow2(asz, PAGESIZE);
         memcalcpageslot(bsz, slot);
     }
     ptr = memgetblk(slot, type, size, aln);
