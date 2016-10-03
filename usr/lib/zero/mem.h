@@ -154,10 +154,11 @@ typedef zerospin      MEMLK_T;
 #endif
 #define memcalcpageslot(sz, slot)                                       \
     do {                                                                \
-        MEMUWORD_T _slot = (sz) >> PAGESIZELOG2;                        \
+        MEMUWORD_T _res = sz;                                           \
                                                                         \
-        _slot--;                                                        \
-        (slot) = _slot;                                                 \
+        _res--;                                                         \
+        _res >>= PAGESIZELOG2;                                          \
+        (slot) = _res;                                                  \
     } while (0)
 
 /* determine minimal required alignment for blocks */
@@ -200,9 +201,9 @@ typedef zerospin      MEMLK_T;
 //#define MEMBIGMINSIZE      (2 * PAGESIZE)
 #define MEMPAGESLOTS        (MEMUWORD(1) << MEMBUFSLOTBITS)
 
-#define MEMSMALLPAGESLOT    3
-#define MEMMIDPAGESLOT      5
-#define MEMBIGPAGESLOT      8
+#define MEMSMALLPAGESLOT    64
+#define MEMMIDPAGESLOT      128
+#define MEMBIGPAGESLOT      192
 //#define MEMSMALLBLKSHIFT    (PAGESIZELOG2 - 1)
 #define MEMSMALLMAPSHIFT    20
 //#define MEMBUFMIDMAPSHIFT 22
@@ -728,7 +729,7 @@ memgenhashtabadr(MEMUWORD_T *adr)
            ? 4                                                          \
            : (((slot) <= MEMMIDPAGESLOT)                                \
               ? 2                                                       \
-              : 2))                                                     \
+              : 1))                                                     \
         : (((slot) <= MEMSMALLMAPSHIFT)                                 \
            ? 4                                                          \
            : (((slot) <= MEMBIGMAPSHIFT)                                \
@@ -736,8 +737,8 @@ memgenhashtabadr(MEMUWORD_T *adr)
               : 1))))
 #define memnbuftls(slot, type)                                          \
     (((type) == MEMSMALLBUF)                                            \
-     ? 4                                                                \
-     : 2)
+     ? 2                                                                \
+     : 1)
 #define memnbufglob(slot, type)                                         \
     (((type) == MEMSMALLBUF)                                            \
      ? 8                                                                \

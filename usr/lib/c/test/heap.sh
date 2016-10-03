@@ -5,7 +5,7 @@
 CC=gcc
 CCFLAGS=""
 #CCOPTFLAGS="-DMEMBIGHASHTAB=0 -DMEMHASHLOCK=0 -DMEMNEWHASH=1 -DMEMBITFIELD=0 -DMEMSTAT=0 -DMEMDEBUG=1 -DMEMDEBUGLOCK=0 -DMEMTEST=1 -DMEMHASHLOOP=0 -DMEMBIGARRAYHASH=0 -DMEMARRAYHASH=0 -DMEMHASH=0 -DMEMHUGELOCK=1 -DMEMMULTITAB=0 -DMEMVALGRIND=1 -O0 -fno-builtin" # -fno-tree-loop-distribute-patterns -fno-omit-frame-pointer"
-CCOPTFLAGS="-DMEMDEBUGDEADLOCK=1 -DMEMMULTITAB=0 -DMEMBIGHASHTAB=0 -DMEMHASHLOCK=0 -DMEMNEWHASH=1 -DMEMBITFIELD=0 -DMEMSTAT=0 -DMEMDEBUG=1 -DMEMDEBUGLOCK=0 -DMEMTEST=1 -DMEMVALGRIND=1 -O0 -fno-builtin" # -fno-tree-loop-distribute-patterns -fno-omit-frame-pointer"
+CCOPTFLAGS="-DMEMLFHASH=1 -DMEMDEBUGDEADLOCK=0 -DMEMMULTITAB=0 -DMEMBIGHASHTAB=0 -DMEMHASHLOCK=0 -DMEMNEWHASH=1 -DMEMBITFIELD=0 -DMEMSTAT=0 -DMEMDEBUG=1 -DMEMDEBUGLOCK=0 -DMEMTEST=1 -DMEMVALGRIND=1 -O0 -fno-builtin" # -fno-tree-loop-distribute-patterns -fno-omit-frame-pointer"
 CCWARNFLAGS="-D_FORTIFY_SOURCE=2 -Wall -Wundef -Wextra -Wpointer-arith -Wuninitialized -Winit-self -Wmissing-include-dirs -Wparentheses -Wswitch-default -Wswitch-bool -Wunused-parameter -Wstrict-aliasing -Wsuggest-attribute=pure -Wsuggest-attribute=const -Wsuggest-attribute=noreturn -Wsuggest-attribute=format -Wtrampolines -Wfloat-equal -Wshadow -Wstack-usage=16384 -Wunsafe-loop-optimizations -Wbad-function-cast -Wc99-c11-compat -Wcast-align -Wwrite-strings -Wdate-time -Wjump-misses-init -Wlogical-op -Waggregate-return -Wstrict-prototypes -Wnormalized -Wopenmp-simd -Wpacked -Wredundant-decls -Wnested-externs -Winline -Wvector-operation-performance -Wvla -Wstack-protector -Woverlength-strings -Wno-designated-init -Wdeclaration-after-statement -Wformat-security -Wmissing-format-attribute"
 
 # As of October 24 2011, gcc -O2 produces slower code than -O // vendu

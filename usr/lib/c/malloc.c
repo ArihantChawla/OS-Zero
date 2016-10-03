@@ -26,7 +26,6 @@ _malloc(size_t size, size_t align, long flg)
     size_t    aln = max(align, MEMMINALIGN);
     size_t    sz = max(size, MEMMINBLK);
     size_t    asz = (aln <= PAGESIZE) ? sz : sz + aln;
-    size_t    bsz;
     long      type = (memusesmallbuf(asz)
                       ? MEMSMALLBUF
                       : (memusepagebuf(asz)
@@ -51,8 +50,7 @@ _malloc(size_t size, size_t align, long flg)
     if (type != MEMPAGEBUF) {
         memcalcslot(asz, slot);
     } else {
-        bsz = rounduppow2(asz, PAGESIZE);
-        memcalcpageslot(bsz, slot);
+        memcalcpageslot(asz, slot);
     }
     ptr = memgetblk(slot, type, size, aln);
     if (!ptr) {
