@@ -687,7 +687,7 @@ memgenhashtabadr(MEMUWORD_T *adr)
     (rounduppow2(membufhdrsize(), PAGESIZE))
 #endif
 #define membufblkofs(nblk)                                              \
-    (rounduppow2(membufhdrsize() + MEMBUFBLKS * sizeof(MEMPTR_T), PAGESIZE))
+    (rounduppow2(membufhdrsize(), PAGESIZE))
 #define memusesmallbuf(sz)     ((sz) <= (MEMUWORD(1) << MEMMAXSMALLSHIFT))
 #define memusepagebuf(sz)      ((sz) <= (PAGESIZE * MEMPAGESLOTS))
 /* allocations of PAGESIZE * slot */
@@ -728,13 +728,13 @@ memgenhashtabadr(MEMUWORD_T *adr)
               : 1))))
 #define memnbuftls(slot, type)                                          \
     (((type) == MEMSMALLBUF)                                            \
-     ? 2                                                                \
-     : 1)
+     ? 4                                                                \
+     : 2)
 #define memnbufglob(slot, type)                                         \
     (((type) == MEMSMALLBUF)                                            \
-     ? 8                                                                \
+     ? 16                                                                \
      : (((type) == MEMPAGEBUF)                                          \
-        ? 4                                                             \
+        ? 8                                                             \
         : 2))
 
 #define membufblkadr(buf, ndx)                                          \
