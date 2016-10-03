@@ -201,9 +201,9 @@ typedef zerospin      MEMLK_T;
 //#define MEMBIGMINSIZE      (2 * PAGESIZE)
 #define MEMPAGESLOTS        (MEMUWORD(1) << MEMBUFSLOTBITS)
 
-#define MEMSMALLPAGESLOT    64
-#define MEMMIDPAGESLOT      128
-#define MEMBIGPAGESLOT      192
+#define MEMSMALLPAGESLOT    32
+#define MEMMIDPAGESLOT      64
+#define MEMBIGPAGESLOT      128
 //#define MEMSMALLBLKSHIFT    (PAGESIZELOG2 - 1)
 #define MEMSMALLMAPSHIFT    20
 //#define MEMBUFMIDMAPSHIFT 22
@@ -245,9 +245,11 @@ struct membkt {
 #define MEMBUFFLGMASK    (MEMHEAPBIT)
 #define MEMBUFFLGSHIFT   (sizeof(MEMUWORD_T) * CHAR_BIT - 1)
 #define MEMBUFFLGBITS    1
+#if 0
 #define MEMBUFTYPESHIFT  (sizeof(MEMUWORD_T) * CHAR_BIT - 3)
 #define MEMBUFTYPEMASK   (((MEMUWORD(1) << MEMBUFTYPEBITS) - 1)          \
                           << MEMBUFTYPESHIFT)
+#endif
 #define MEMBUFSLOTBITS   8
 #define MEMBUFSLOTMASK   (((MEMUWORD(1) << MEMBUFSLOTBITS) - 1)          \
                           << MEMBUFSLOTSHIFT)
@@ -258,27 +260,11 @@ struct membkt {
 #define MEMBUFNFREEMASK  (MEMBUFNBLKMASK << MEMBUFNFREESHIFT)
 #define MEMBUFNFREESHIFT MEMBUFNBLKBITS
 
-#if (MEMBITFIELD)
-
-#define memsetbufflg(buf, f)   ((buf)->info.flg = (f))
-#define memclrbufflg(buf, f)   ((buf)->info.flg &= ~(f))
-#define memsetbufnblk(buf, n)  ((buf)->info.nblk = (n))
-#define memsetbufnfree(buf, n) ((buf)->info.nfree = (n))
-#define memsetbuftype(buf, t)  ((buf)->info.type = (t))
-#define memsetbufslot(buf, id) ((buf)->info.slot = (id))
-#define memgetbufflg(buf)      ((buf)->info.flg)
-#define memgetbufnblk(buf)     ((buf)->info.nblk)
-#define memgetbufnfree(buf)    ((buf)->info.nfree)
-#define memgetbuftype(buf)     ((buf)->info.type)
-#define memgetbufslot(buf)     ((buf)->info.slot)
-
-#else
-
-#define memsetbufflg(buf, flg) ((buf)->info |= (flg))
+#define memsetbufflg(buf, flg) ((buf)->flg |= (flg))
 #define memsetbufnblk(buf, n)                                           \
     ((buf)->info |= (n))
 #define memsetbuftype(buf, t)                                           \
-    ((buf)->info |=  (t) << MEMBUFTYPESHIFT)
+    ((buf)->flg |=  (t))
 #define memsetbufslot(buf, slot)                                        \
     ((buf->info)  |= (slot) << MEMBUFSLOTSHIFT)
 #define memsetbufnfree(buf, n)                                          \
@@ -290,11 +276,9 @@ struct membkt {
 #define memgetbufnfree(buf)                                             \
     (((buf)->info >> MEMBUFNFREESHIFT) & ((MEMUWORD(1) << MEMBUFNFREEBITS) - 1))
 #define memgetbuftype(buf)                                              \
-    (((buf)->info >> MEMBUFTYPESHIFT) & ((MEMUWORD(1) << MEMBUFTYPEBITS) - 1))
+    ((buf)->flg & ((MEMUWORD(1) << MEMBUFTYPEBITS) - 1))
 #define memgetbufslot(buf)                                              \
     (((buf)->info >> MEMBUFSLOTSHIFT) & ((MEMUWORD(1) << MEMBUFSLOTBITS) - 1))
-
-#endif
 
 struct membufvals {
     MEMUWORD_T *nblk[MEMBUFTYPES];
@@ -348,7 +332,7 @@ struct membuf {
 #if (MEMBITFIELD)
     struct membufinfo       info;
 #else
-    MEMUWORD_T              info; // flags + lock-bit + # of total & free blks
+    MEMUWORD_T              info; // slot + # of total & free blks
 #endif
     struct membuf          *heap; // previous buf in heap for bufs from sbrk()
     struct membuf          *prev; // previous buf in chain
@@ -357,8 +341,10 @@ struct membuf {
 //    MEMWORD_T      slot;        // bucket slot #
     MEMUWORD_T              size; // buffer bookkeeping + allocation blocks
     MEMPTR_T                base; // base address for allocations
-    MEMPTR_T               *ptrtab; // original pointers for aligned blocks
+    MEMUWORD_T              flg;  // flags + buffer type
+//    MEMPTR_T               *ptrtab; // original pointers for aligned blocks
     MEMUWORD_T              freemap[MEMBUFFREEMAPWORDS];
+    MEMPTR_T                ptrtab[MEMBUFBLKS];
 };
 
 #if (MEMMULTITAB)
@@ -393,10 +379,10 @@ struct memhashlist {
 
 #if (WORDSIZE == 4)
 #define memhashptr(page)                                                \
-    (tmhash32((unsigned long)page))
+    (tmhash32((MEMADR_T)page))
 #elif (WORDSIZE == 8)
 #define memhashptr(page)                                                \
-    (tmhash64((unsigned long)page))
+    (tmhash64((MEMADR_T)page))
 #endif
 #define MEMHASHNOTFOUND  0
 #define MEMHASHFOUND     (~(MEMADR_T)0)
@@ -568,6 +554,7 @@ memgenptrcl(MEMPTR_T ptr, MEMUWORD_T blksz, MEMUWORD_T size)
     return ret;
 }
 
+#if 0
 /* compute adr + adr % 9 (# of cachelines in offset, aligned to cl boundary) */
 static __inline__ MEMUWORD_T *
 memgentlsadr(MEMPTR_T adr)
@@ -600,7 +587,7 @@ memgentlsadr(MEMPTR_T adr)
 
     return adr;
 }
-
+#endif
 
 /* compute adr + adr % 9 (# of words in offset, aligned to word boundary) */
 static __inline__ MEMUWORD_T *
@@ -689,14 +676,18 @@ memgenhashtabadr(MEMUWORD_T *adr)
  * allocation headers
  * - 3 allocation classes:
  *   - small; block size is 1 << slot
- *   - page; block size is PAGESIZE * slot
+ *   - page; block size is PAGESIZE + PAGESIZE * slot
  *   - big; block size is 1 << slot
  */
 #define membufhdrsize()        (sizeof(struct membuf))
-#define membufptrtabsize(nblk) (MEMBUFBLKS * sizeof(MEMPTR_T))
+//#define membufptrtabsize(nblk) (MEMBUFBLKS * sizeof(MEMPTR_T))
 //#define membufslot(buf)       (memgetbufslot(buf))
+#if 0
 #define membufblkofs(nblk)                                              \
-    (rounduppow2(membufhdrsize() + membufptrtabsize(nblk), PAGESIZE))
+    (rounduppow2(membufhdrsize(), PAGESIZE))
+#endif
+#define membufblkofs(nblk)                                              \
+    (rounduppow2(membufhdrsize() + MEMBUFBLKS * sizeof(MEMPTR_T), PAGESIZE))
 #define memusesmallbuf(sz)     ((sz) <= (MEMUWORD(1) << MEMMAXSMALLSHIFT))
 #define memusepagebuf(sz)      ((sz) <= (PAGESIZE * MEMPAGESLOTS))
 /* allocations of PAGESIZE * slot */
@@ -726,10 +717,10 @@ memgenhashtabadr(MEMUWORD_T *adr)
      ? (MEMBUFBLKS)                                                     \
      : (((type) == MEMPAGEBUF)                                          \
         ? (((slot) <= MEMSMALLPAGESLOT)                                 \
-           ? 4                                                          \
+           ? 8                                                          \
            : (((slot) <= MEMMIDPAGESLOT)                                \
-              ? 2                                                       \
-              : 1))                                                     \
+              ? 4                                                       \
+              : 2))                                                     \
         : (((slot) <= MEMSMALLMAPSHIFT)                                 \
            ? 4                                                          \
            : (((slot) <= MEMBIGMAPSHIFT)                                \

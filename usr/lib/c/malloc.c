@@ -25,7 +25,7 @@ _malloc(size_t size, size_t align, long flg)
 {
     size_t    aln = max(align, MEMMINALIGN);
     size_t    sz = max(size, MEMMINBLK);
-    size_t    asz = (aln <= PAGESIZE) ? sz : sz + aln;
+    size_t    asz = (aln <= PAGESIZE && aln <= sz) ? sz : sz + aln;
     long      type = (memusesmallbuf(asz)
                       ? MEMSMALLBUF
                       : (memusepagebuf(asz)
@@ -41,11 +41,11 @@ _malloc(size_t size, size_t align, long flg)
     }
 #endif
     if (!g_memtlsinit) {
-        fmtxlk(&g_memtlsinitlk);
+        memgetlk(&g_memtlsinitlk);
         if (!g_memtlsinit) {
             meminittls();
         }
-        fmtxunlk(&g_memtlsinitlk);
+        memrellk(&g_memtlsinitlk);
     }
     if (type != MEMPAGEBUF) {
         memcalcslot(asz, slot);
@@ -60,9 +60,11 @@ _malloc(size_t size, size_t align, long flg)
     } else if (flg & MALLOCZEROBIT) {
         memset(ptr, 0, size);
     }
+#if 0
     if (ptr) {
         VALGRINDALLOC(ptr, size, 0, flg & MALLOCZEROBIT);
     }
+#endif
 #if (MEMDEBUG)
     crash(ptr != NULL);
 #endif
@@ -81,19 +83,23 @@ _free(void *ptr)
 
         return;
     }
+#if 0
     if (!g_memtlsinit) {
         memgetlk(&g_memtlsinitlk);
         if (!g_memtlsinit) {
             meminittls();
         }
-        memgetlk(&g_memtlsinitlk);
+        memrellk(&g_memtlsinitlk);
     }
+#endif
 #if (MEMMULTITAB)
     memfindbuf(ptr, 1);
 #else
     membufop(ptr, MEMHASHDEL, NULL, 0);
 #endif
+#if 0
     VALGRINDFREE(ptr);
+#endif
 
     return;
 }
