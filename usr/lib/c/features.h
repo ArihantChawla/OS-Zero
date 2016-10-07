@@ -48,6 +48,8 @@
 #define _INTEL_SOURCE          1
 #define _MISC_SOURCE           1
 #define _SOLARIS_SOURCE        1
+#define _BORLANDC_SOURCE       1
+#define _TURBOC_SOURCE         1
 
 #if (!_REENTRANT)
 #undef _REENTRANT

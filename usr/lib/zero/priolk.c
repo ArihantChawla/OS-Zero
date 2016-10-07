@@ -2,22 +2,33 @@
 #include <stdio.h>
 #include <zero/cdefs.h>
 #include <zero/asm.h>
+#if (ZEROSPIN)
+#include <zero/spin.h>
+#elif (ZEROFMTX)
 #include <zero/mtx.h>
-#include <zero/priolk.h>
-
-#if !defined(PRIOLKALLOC)
-#define PRIOLKALLOC(sz) malloc(sz)
-#define PRIOLKALLOCFAILED NULL
 #endif
+#include <zero/priolk.h>
 
 /* <vendu> eliminated the giant mutex */
 #define PRIOLKNONBLOCK 1
 
 THREADLOCAL volatile struct priolkdata *t_priolkptr;
-static volatile struct priolkdata      *priofree;
+static volatile struct priolkdata      *g_priofree;
 #if !defined(PRIOLKNONBLOCK)
-#if (ZEROFMTX)
-static zerofmtx                         priolkmtx = FMTXINITVAL;
+#if (ZEROSPIN)
+static zerospin                         g_priolkspin = SPININITVAL;
+#elif (ZEROFMTX)
+static zerofmtx                         g_priolkmtx = FMTXINITVAL;
+#endif
+#endif
+
+#if !defined(PRIOLKNONBLOCK)
+#if (ZEROSPIN)
+#define priolkgetspin(lp) spinlk(lp)
+#define priolkrelspin(lp) spinunlk(lp)
+#elif (ZEROFMTX)
+#define priolkgetmtx(lp)  fmtxlk(lp)
+#define priolkrelmtx(lp)  fmtxunlk(lp)
 #endif
 #endif
 
@@ -40,16 +51,20 @@ priolkinit(struct priolkdata *data, unsigned long val)
         data->next = NULL;
     }
 #if !defined(PRIOLKNONBLOCK)
-    fmtxlk(&priolkmtx);
+#if (ZEROSPIN)
+    priolkgetspin(&g_priolkspin);
+#elif (ZEROFMTX)
+    priolkgetmtx(&g_priolkmtx);
 #endif
-    if (priofree) {
+#endif
+    if (g_priofree) {
 #if !defined(PRIOLKNONBLOCK)
-        t_priolkptr = priofree;
-        priofree = t_priolkptr->next;
+        t_priolkptr = g_priofree;
+        g_priofree = t_priolkptr->next;
 #else
         do {
             next = NULL;
-            head = priofree;
+            head = g_priofree;
             if (head) {
                 next = head->next;
             }
@@ -57,7 +72,7 @@ priolkinit(struct priolkdata *data, unsigned long val)
 
                 break;
             }
-        } while (!m_cmpswapptr((volatile long *)priofree,
+        } while (!m_cmpswapptr((volatile long *)g_priofree,
                                (long *)head,
                                (long *)next));
         if (head) {
@@ -79,7 +94,11 @@ priolkinit(struct priolkdata *data, unsigned long val)
     t_priolkptr->val = prio;
     t_priolkptr->orig = prio;
 #if !defined(PRIOLKNONBLOCK)
-    fmtxunlk(&priolkmtx);
+#if (ZEROSPIN)
+    priolkrelspin(&g_priolkspin);
+#elif (ZEROFMTX)
+    priolkrelmtx(&g_priolkmtx);
+#endif
 #endif
 
     return;
@@ -93,28 +112,36 @@ priolkfin(void)
 #endif
     
 #if !defined(PRIOLKNONBLOCK)
-    fmtxlk(&priolkmtx);
+#if (ZEROSPIN)
+    priolkgetspin(&g_priolkspin);
+#elif (ZEROFMTX)
+    priolkgetmtx(&g_priolkmtx);
+#endif
 #endif
 #if defined(PRIOLKNONBLOCK)
     do {
-        next = priofree;
+        next = g_priofree;
         t_priolkptr->next = next;
-    } while ((next) && !m_cmpswapptr((volatile long *)priofree,
+    } while ((next) && !m_cmpswapptr((volatile long *)g_priofree,
                                      (long *)next,
                                      (long *)t_priolkptr));
 #else
-    t_priolkptr->next = priofree;
-    priofree = t_priolkptr;
+    t_priolkptr->next = g_priofree;
+    g_priofree = t_priolkptr;
 #endif
 #if !defined(PRIOLKNONBLOCK)
-    fmtxunlk(&priolkmtx);
+#if (ZEROSPIN)
+    priolkrelspin(&g_priolkspin);
+#elif (ZEROFMTX)
+    priolkrelmtx(&6_priolkmtx);
+#endif
 #endif
 
     return;
 }
 
 void
-priolk(struct priolk *priolk)
+priolkget(struct priolk *priolk)
 {
 //    unsigned long               prio = t_priolkptr->val;
     unsigned long prio;
@@ -168,7 +195,7 @@ priolk(struct priolk *priolk)
 }
 
 void
-priounlk(struct priolk *priolk)
+priolkrel(struct priolk *priolk)
 {
     m_membar();
     priolk->owner = NULL;

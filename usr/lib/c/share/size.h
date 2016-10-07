@@ -2,7 +2,6 @@
 #define __SHARE_SIZE_H__
 
 //#include <zero/param.h>
-
 #if !defined(__size_t_defined)
 #if defined(_MSC_VER)
 typedef unsigned long long size_t;
