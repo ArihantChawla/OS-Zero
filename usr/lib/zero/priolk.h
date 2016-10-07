@@ -5,11 +5,11 @@
 #include <zero/param.h>
 #if defined(PRIOLKUSEMMAP)
 #define PRIOLKALLOCFAILED MAP_FAILED
-#define PRIOLKALLOC(sz) mapanon(0, sz)
+#define PRIOLKALLOC(sz)   mapanon(0, sz)
 #include <zero/unix.h>
 #else
 #define PRIOLKALLOCFAILED NULL
-#define PRIOLKALLOC(sz) malloc(sz)
+#define PRIOLKALLOC(sz)   malloc(sz)
 #endif
 
 /*
@@ -36,8 +36,8 @@ struct priolk {
 };
 
 void priolkinit(struct priolkdata *data, unsigned long val);
-void priolk(struct priolk *priolk);
-void priounlk(struct priolk *priolk);
+void priolkget(struct priolk *priolk);
+void priolkrel(struct priolk *priolk);
 
 #endif /* __ZERO_PRIOLK_H__ */
 
