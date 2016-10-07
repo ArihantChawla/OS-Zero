@@ -717,10 +717,10 @@ memgenhashtabadr(MEMUWORD_T *adr)
      ? (MEMBUFBLKS)                                                     \
      : (((type) == MEMPAGEBUF)                                          \
         ? (((slot) <= MEMSMALLPAGESLOT)                                 \
-           ? 8                                                          \
+           ? 4                                                          \
            : (((slot) <= MEMMIDPAGESLOT)                                \
-              ? 4                                                       \
-              : 2))                                                     \
+              ? 2                                                       \
+              : 1))                                                     \
         : (((slot) <= MEMSMALLMAPSHIFT)                                 \
            ? 4                                                          \
            : (((slot) <= MEMBIGMAPSHIFT)                                \
@@ -728,13 +728,13 @@ memgenhashtabadr(MEMUWORD_T *adr)
               : 1))))
 #define memnbuftls(slot, type)                                          \
     (((type) == MEMSMALLBUF)                                            \
-     ? 4                                                                \
-     : 2)
+     ? 2                                                                \
+     : 1)
 #define memnbufglob(slot, type)                                         \
     (((type) == MEMSMALLBUF)                                            \
-     ? 16                                                                \
+     ? 8                                                                \
      : (((type) == MEMPAGEBUF)                                          \
-        ? 8                                                             \
+        ? 4                                                             \
         : 2))
 
 #define membufblkadr(buf, ndx)                                          \
