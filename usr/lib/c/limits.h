@@ -52,6 +52,15 @@
 #define ULLONG_MAX    0xffffffffffffffffULL
 #define MB_LEN_MAX    1
 
+/* TODO: feature-macro these out etc... */
+#if !defined(_POSIX_SOURCE)
+#if !defined(_ZERO_SOURCE) && defined(PAGE_SIZE)
+#define PAGESIZE  PAGE_SIZE
+#elif defined(PAGESIZE)
+#define PAGE_SIZE PAGESIZE
+#endif
+#endif /* !defined(_POSIX_SOURCE) */
+
 #if defined(_POSIX_SOURCE) && (_POSIX_C_SOURCE >= 200112L)
 
 /*

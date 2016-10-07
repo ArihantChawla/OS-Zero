@@ -15,13 +15,16 @@ extern void   cfree(void *ptr);
 
 extern int    malloc_info(int opt, FILE *fp);
 
-#if defined(_MSVC_SOURCE)
 extern void * _aligned_malloc(size_t size, size_t align);
 extern void   _aligned_free(void *);
+#define
 #endif
 #if defined(_INTEL_SOURCE) && !defined(__GNUC__)
 extern void * _mm_malloc(size_t size, size_t align);
 extern void   _mm_free(void *ptr);
+#endif
+#if defined(_MSVC_SOURCE)
+#define coreleft() _memavl()
 #endif
 
 /* TODO: implement SVID2/XPG mallinfo; might need long-fields... */

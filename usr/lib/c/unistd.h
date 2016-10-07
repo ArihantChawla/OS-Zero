@@ -255,20 +255,19 @@ extern int            fsync(int fd);
 #if defined(_BSD_SOURCE) || (USEXOPENEXT)
 extern long           gethostid(void);
 extern void           sync(void);
+#endif
+#if (defined(_BSD_SOURCE)                                               \
+     || !(_POSIX_C_SOURCE >= 200112L || _XOPEN_SOURCE >= 600))
 #if defined(PAGESIZE) && (PAGESIZE)
 #define getpagesize() PAGESIZE
-#elif (_POSIX_SOURCE)
-#if defined(_SC_PAGESIZE)
+#elif defined(_SC_PAGESIZE)
 #define getpagesize() sysconf(_SC_PAGESIZE)
 #elif defined(_SC_PAGE_SIZE)
 #define getpagesize() sysconf(_SC_PAGE_SIZE)
 #else
 extern int            getpagesize(void);
 #endif /* PAGESIZE */
-#else /* !_POSIX_SOURCE */
-extern int            getpagesize(void);
-#endif
-#endif
+#endif /* _BSD_SOURCE... */
 #if defined(_ZERO_SOURCE)
 #if defined(CLSIZE) && (CLSIZE)
 #define getclsize()   CLSIZE
@@ -284,7 +283,7 @@ extern int            ftruncate(int fd, off_t len);
 #endif
 #if (USEXOPENEXT)
 extern int            brk(void *adr);
-extern void         * sbrk(intptr_t delta);
+extern void         * sbrk(intptr_t incr);
 #endif
 extern long           syscall(long num, ...);
 extern int            lockf(int fd, int cmd, off_t len);

@@ -131,7 +131,7 @@ _realloc(void *ptr,
         type = memgetbuftype(buf);
         slot = memgetbufslot(buf);
         sz = membufblksize(buf, type, slot);
-        if (size < sz) {
+        if (size <= sz) {
 
             return ptr;
         }
@@ -140,7 +140,6 @@ _realloc(void *ptr,
     if (retptr) {
         if (ptr) {
             memcpy(retptr, ptr, sz);
-            /* TODO: we looked the buf up already */
             _free(ptr);
             ptr = NULL;
         }
@@ -186,16 +185,14 @@ calloc(size_t n, size_t size)
     size_t  sz = n * size;
     void   *ptr = NULL;
 
-    if (sz < n * size) {
+    if (!sz) {
+        sz++;
+    } else if (sz < n * size) {
         /* integer overflow */
 
         return NULL;
     }
-    if (!sz) {
-        ptr = _malloc(MEMMINBLK, 0, MALLOCZEROBIT);
-    } else {
-        ptr = _malloc(sz, 0, MALLOCZEROBIT);
-    }
+    ptr = _malloc(sz, 0, MALLOCZEROBIT);
 
     return ptr;
 }
@@ -213,11 +210,6 @@ realloc(void *ptr, size_t size)
         _free(ptr);
     } else {
         retptr = _realloc(ptr, size, 0);
-        if (retptr) {
-            if (retptr != ptr) {
-                _free(ptr);
-            }
-        }
     }
 #if (MEMDEBUG)
     crash(retptr != NULL);
@@ -236,19 +228,23 @@ posix_memalign(void **ret,
                size_t align,
                size_t size)
 {
-    void   *ptr = NULL;
+    void *ptr = NULL;
+    int   ret = 0;
 
+    if (!size) {
+
+        return NULL;
+    }
     if (!powerof2(align) || (align & (sizeof(void *) - 1))) {
-        errno = EINVAL;
         *ret = NULL;
 
-        return -1;
+        return EINVAL;
     } else {
         ptr = _malloc(size, align, 0);
         if (!ptr) {
             *ret = NULL;
             
-            return -1;
+            return ENOMEM;
         }
     }
 #if (MEMDEBUG)
@@ -319,6 +315,30 @@ memalign(size_t align,
     return ptr;
 }
 
+#if defined(__ISOC11_SOURCE)
+#if defined(__GNUC__)
+__attribute__ ((alloc_align(1)))
+__attribute__ ((alloc_size(2)))
+__attribute__ ((assume_aligned(MEMMINALIGN)))
+__attribute__ ((malloc))
+#endif
+aligned_alloc(size_t align,
+         size_t size)
+{
+    void   *ptr = NULL;
+
+    if (!powerof2(align) || (size & (align - 1))) {
+        errno = EINVAL;
+    } else {
+        ptr = _malloc(size, align, 0);
+    }
+#if (MEMDEBUG)
+    crash(ptr != NULL);
+#endif
+
+    return ptr;
+}
+
 #if (defined(_BSD_SOURCE)                                                      \
      || (defined(_XOPEN_SOURCE) && _XOPEN_SOURCE >= 500                 \
          || (defined(_XOPEN_SOURCE) && defined(_XOPEN_SOURCE_EXTENDED))) \
@@ -352,7 +372,8 @@ __attribute__ ((malloc))
 #endif
 pvalloc(size_t size)
 {
-    void   *ptr = _malloc(rounduppow2(size, PAGESIZE), PAGESIZE, 0);
+    size_t  sz = rounduppow2(size, PAGESIZE);
+    void   *ptr = _malloc(sz, PAGESIZE, 0);
 
 #if (MEMDEBUG)
     crash(ptr != NULL);
