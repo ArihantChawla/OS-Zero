@@ -1274,11 +1274,6 @@ memdequeuebufglob(struct membuf *buf, volatile struct membkt *src)
     struct membuf *head;
     MEMADR_T       upval;
 
-#if (MEMDEBUGDEADLOCK)
-    memlkbitln(src);
-#else
-    memlkbit(&src->list);
-#endif
     upval = (MEMADR_T)src->list;
     upval &= ~MEMLKBIT;
     if ((buf->prev) && (buf->next)) {
@@ -1427,7 +1422,7 @@ memputblk(void *ptr, struct membuf *buf, MEMUWORD_T id)
             dest = &g_mem.bigbin[slot];
         }
     } else if (bkt != &g_memtls->smallbin[slot]
-        && bkt != &g_memtls->pagebin[slot]) {
+               && bkt != &g_memtls->pagebin[slot]) {
 #if (MEMDEBUGDEADLOCK)
         memlkbitln(bkt);
 #else
