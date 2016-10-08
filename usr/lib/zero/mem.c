@@ -11,13 +11,13 @@
 #include <zero/cdefs.h>
 #include <zero/param.h>
 #include <zero/unix.h>
-#include <zero/mtx.h>
+#include <zero/spin.h>
 #include <zero/mem.h>
 #include <zero/hash.h>
 
 static pthread_once_t               g_initonce = PTHREAD_ONCE_INIT;
 static pthread_key_t                g_thrkey;
-//THREADLOCAL zerofmtx                g_memtlsinitlk = FMTXINITVAL;
+THREADLOCAL zerospin                g_memtlsinitlk = ZEROSPININITVAL;
 THREADLOCAL MEMUWORD_T              g_memtlsinit;
 THREADLOCAL volatile struct memtls *g_memtls;
 struct mem                          g_mem;
@@ -35,7 +35,7 @@ memfreetls(void *arg)
     MEMUWORD_T              n;
     struct membuf          *head;
     struct membuf          *buf;
-//    MEMADR_T                upval;
+    MEMADR_T                upval;
 
     if (g_memtls) {
         for (slot = 0 ; slot < PTRBITS ; slot++) {
@@ -405,7 +405,7 @@ memallocsmallbuf(MEMUWORD_T slot)
 #if (MEMBITFIELD)
     memsetbufflg(buf, 1);
 #else
-    buf->info = info;             // possible MEMHEAPBIT
+    buf->info = flg;    // possible MEMHEAPBIT
 #endif
     memsetbufslot(buf, slot);
     memsetbufnblk(buf, nblk);
@@ -418,7 +418,7 @@ memallocsmallbuf(MEMUWORD_T slot)
     g_memstat.nbbook += membufblkofs();
 #endif
 #if (MEMTEST)
-    _memchkbuf(buf, slot, type, nblk, info, __FUNCTION__);
+    _memchkbuf(buf, slot, type, nblk, flg, __FUNCTION__);
 #endif
 
     return buf;
@@ -1426,8 +1426,7 @@ memputblk(void *ptr, struct membuf *buf, MEMUWORD_T id)
         } else if (type == MEMBIGBUF) {
             dest = &g_mem.bigbin[slot];
         }
-    }
-    if (bkt != &g_memtls->smallbin[slot]
+    } else if (bkt != &g_memtls->smallbin[slot]
         && bkt != &g_memtls->pagebin[slot]) {
 #if (MEMDEBUGDEADLOCK)
         memlkbitln(bkt);
@@ -1454,7 +1453,6 @@ memputblk(void *ptr, struct membuf *buf, MEMUWORD_T id)
     VALGRINDPOOLFREE(buf->base, ptr);
     if (nfree == nblk) {
         memrelbuf(slot, type, buf, bkt);
-#if 0
         if ((lock) && bkt != dest) {
 #if (MEMDEBUGDEADLOCK)
             memrelbitln(bkt);
@@ -1462,7 +1460,6 @@ memputblk(void *ptr, struct membuf *buf, MEMUWORD_T id)
             memrelbit(&bkt->list);
 #endif
         }
-#endif
     } else if (nfree == 1) {
 #if (MEMDEBUGDEADLOCK)
         memlkbitln(dest);

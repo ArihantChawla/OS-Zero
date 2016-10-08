@@ -16,7 +16,7 @@
 #include "_malloc.h"
 
 extern THREADLOCAL volatile struct memtls *g_memtls;
-extern THREADLOCAL zerofmtx                g_memtlsinitlk;
+extern THREADLOCAL zerospin                g_memtlsinitlk;
 extern THREADLOCAL volatile MEMUWORD_T     g_memtlsinit;
 extern struct mem                          g_mem;
 
@@ -229,12 +229,8 @@ posix_memalign(void **ret,
                size_t size)
 {
     void *ptr = NULL;
-    int   ret = 0;
+    int   retval = 0;
 
-    if (!size) {
-
-        return NULL;
-    }
     if (!powerof2(align) || (align & (sizeof(void *) - 1))) {
         *ret = NULL;
 
@@ -315,7 +311,7 @@ memalign(size_t align,
     return ptr;
 }
 
-#if defined(__ISOC11_SOURCE)
+#if defined(_ISOC11_SOURCE)
 #if defined(__GNUC__)
 __attribute__ ((alloc_align(1)))
 __attribute__ ((alloc_size(2)))
@@ -338,6 +334,7 @@ aligned_alloc(size_t align,
 
     return ptr;
 }
+#endif /* _ISOC11_SOURCE */
 
 #if (defined(_BSD_SOURCE)                                                      \
      || (defined(_XOPEN_SOURCE) && _XOPEN_SOURCE >= 500                 \
