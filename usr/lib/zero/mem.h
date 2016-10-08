@@ -707,10 +707,10 @@ memgenhashtabadr(MEMUWORD_T *adr)
      : 1)
 #define memnbufglob(slot, type)                                         \
     (((type) == MEMSMALLBUF)                                            \
-     ? 8                                                                \
+     ? 32                                                               \
      : (((type) == MEMPAGEBUF)                                          \
-        ? 4                                                             \
-        : 2))
+        ? 16                                                            \
+        : 8))
 
 #define membufblkadr(buf, ndx)                                          \
     ((buf)->base + ((ndx) << memgetbufslot(buf)))
