@@ -17,7 +17,6 @@
 
 static pthread_once_t               g_initonce = PTHREAD_ONCE_INIT;
 static pthread_key_t                g_thrkey;
-THREADLOCAL zerospin                g_memtlsinitlk = ZEROSPININITVAL;
 THREADLOCAL MEMUWORD_T              g_memtlsinit;
 THREADLOCAL volatile struct memtls *g_memtls;
 struct mem                          g_mem;
@@ -112,12 +111,12 @@ memgetprioval(void)
 {
     unsigned long val;
 
-//    fmtxlk(&g_mem.priolk);
+    spinlk(&g_mem.priolk);
     val = g_mem.prioval;
     val++;
     val &= sizeof(long) * CHAR_BIT - 1;
     g_mem.prioval = val;
-//    fmtxunlk(&g_mem.priolk);
+    spinunlk(&g_mem.priolk);
 
     return val;
 }
@@ -127,7 +126,7 @@ struct memtls *
 meminittls(void)
 {
     struct memtls *tls = NULL;
-    struct memtls *adr = NULL;
+//    struct memtls *adr = NULL;
 #if (MEM_LK_TYPE == MEM_LK_PRIO)
     unsigned long  val;
 #endif
@@ -136,21 +135,21 @@ meminittls(void)
     tls = mapanon(0, memtlssize());
     if (tls != MAP_FAILED) {
 //        adr = (struct memtls *)memgentlsadr((MEMPTR_T)adr);
-        adr = tls;
+//        adr = tls;
 #if 0
         tls = (struct memtls *)memgenptrcl(adr, memtlssize(),
                                            sizeof(struct memtls));
 #endif
 #if (MEM_LK_TYPE == MEM_LK_PRIO)
         val = memgetprioval();
-        priolkinit(&adr->priolkdata, val);
+        priolkinit(&tls->priolkdata, val);
 #endif
         pthread_setspecific(g_thrkey, tls);
-        g_memtls = adr;
+        g_memtls = tls;
         g_memtlsinit = 1;
     }
 
-    return adr;
+    return tls;
 }
 
 static void
@@ -257,6 +256,10 @@ meminit(void)
     MEMPTR_T   *adr;
     MEMUWORD_T  slot;
 
+#if (MEM_LK_TYPE == MEM_LK_PRIO)
+    priolkinit(&g_mem.priolk, 0);
+    g_mem.prioval = 1;
+#endif
     memgetlk(&g_mem.initlk);
     signal(SIGQUIT, memexit);
     signal(SIGINT, memexit);

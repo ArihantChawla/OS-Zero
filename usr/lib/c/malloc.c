@@ -16,7 +16,7 @@
 #include "_malloc.h"
 
 extern THREADLOCAL volatile struct memtls *g_memtls;
-extern THREADLOCAL zerospin                g_memtlsinitlk;
+static zerofmtx                            g_memtlsinitlk;
 extern THREADLOCAL volatile MEMUWORD_T     g_memtlsinit;
 extern struct mem                          g_mem;
 
@@ -34,18 +34,12 @@ _malloc(size_t size, size_t align, long flg)
     long      slot;
     void     *ptr;
 
-#if 0
-    if (!g_memtls && !meminittls()) {
-
-        abort();
-    }
-#endif
     if (!g_memtlsinit) {
-        memgetlk(&g_memtlsinitlk);
+        fmtxlk(&g_memtlsinitlk);
         if (!g_memtlsinit) {
             meminittls();
         }
-        memrellk(&g_memtlsinitlk);
+        fmtxunlk(&g_memtlsinitlk);
     }
     if (type != MEMPAGEBUF) {
         memcalcslot(asz, slot);

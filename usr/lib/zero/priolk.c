@@ -72,9 +72,10 @@ priolkinit(struct priolkdata *data, unsigned long val)
 
                 break;
             }
-        } while (!m_cmpswapptr((volatile long *)g_priofree,
-                               (long *)head,
-                               (long *)next));
+        } while ((head)
+                 && !m_cmpswapptr((volatile long *)g_priofree,
+                                  (long *)head,
+                                  (long *)next));
         if (head) {
             t_priolkptr = head;
         } else {

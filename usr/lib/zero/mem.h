@@ -27,7 +27,7 @@
 #define MEM_LK_FMTX 0x04        // anonymous non-recursive mutex
 #define MEM_LK_SPIN 0x08        // spinlock
 
-#define MEM_LK_TYPE MEM_LK_SPIN // type of locks to use
+#define MEM_LK_TYPE MEM_LK_PRIO // type of locks to use
 
 #include <limits.h>
 #include <stddef.h>
@@ -38,13 +38,12 @@
 #include <zero/asm.h>
 #include <zero/unix.h>
 #include <zero/trix.h>
+#include <zero/spin.h>
 #if (MEM_LK_TYPE == MEM_LK_PRIO)
 #define PRIOLKUSEMMAP
 #include <zero/priolk.h>
 #elif (MEM_LK_TYPE == MEM_LK_FMTX)
 #include <zero/mtx.h>
-#elif (MEM_LK_TYPE == MEM_LK_SPIN)
-#include <zero/spin.h>
 #endif
 #if defined(MEMVALGRIND) && (MEMVALGRIND)
 #define ZEROVALGRIND 1
@@ -83,8 +82,8 @@ typedef zerospin      MEMLK_T;
 #endif
 
 #if (MEM_LK_TYPE == MEM_LK_PRIO)
-#define memgetlk(lp) priolk(lp)
-#define memrellk(lp) priounlk(lp)
+#define memgetlk(lp) priolkget(lp)
+#define memrellk(lp) priolkrel(lp)
 #elif (MEM_LK_TYPE == MEM_LK_FMTX)
 #define memgetlk(lp) fmtxlk(lp)
 #define memrellk(lp) fmtxunlk(lp)
@@ -290,7 +289,7 @@ struct mem {
     struct membuf      *heap;    // heap allocations (try sbrk(), then mmap())
     struct membuf      *maps;    // mapped blocks
 #if (MEM_LK_TYPE == MEM_LK_PRIO)
-    MEMLK_T             priolk;
+    zerospin            priolk;
     unsigned long       prioval; // locklessinc priority locks
 #endif
     MEMLK_T             heaplk;  // lock for sbrk()
