@@ -1396,7 +1396,7 @@ void
 memputblk(void *ptr, struct membuf *buf, MEMUWORD_T id)
 {
     volatile struct membkt *bkt = buf->bkt;
-    volatile struct membkt *dest;
+    volatile struct membkt *dest = NULL;
     MEMUWORD_T              type = memgetbuftype(buf);
     MEMUWORD_T              slot = memgetbufslot(buf);
     MEMUWORD_T              nblk;
@@ -1408,7 +1408,16 @@ memputblk(void *ptr, struct membuf *buf, MEMUWORD_T id)
 #if (MEMTEST)
     _memchkptr(buf, ptr);
 #endif
-    if (!bkt) {
+    if ((bkt)
+        && bkt != &g_memtls->smallbin[slot]
+        && bkt != &g_memtls->pagebin[slot]) {
+#if (MEMDEBUGDEADLOCK)
+        memlkbitln(bkt);
+#else
+        memlkbit(&bkt->list);
+#endif
+        lock = 1;
+    } else if (!bkt) {
         if (type == MEMSMALLBUF) {
             dest = &g_mem.smallbin[slot];
         } else if (type == MEMPAGEBUF) {
@@ -1416,14 +1425,6 @@ memputblk(void *ptr, struct membuf *buf, MEMUWORD_T id)
         } else if (type == MEMBIGBUF) {
             dest = &g_mem.bigbin[slot];
         }
-    } else if (bkt != &g_memtls->smallbin[slot]
-               && bkt != &g_memtls->pagebin[slot]) {
-#if (MEMDEBUGDEADLOCK)
-        memlkbitln(bkt);
-#else
-        memlkbit(&bkt->list);
-#endif
-        lock = 1;
     }
     nblk = memgetbufnblk(buf);
     nfree = memgetbufnfree(buf);
@@ -1443,7 +1444,7 @@ memputblk(void *ptr, struct membuf *buf, MEMUWORD_T id)
     VALGRINDPOOLFREE(buf->base, ptr);
     if (nfree == nblk) {
         memrelbuf(slot, type, buf, bkt);
-        if ((lock) && bkt != dest) {
+        if ((lock) && (bkt) && bkt != dest) {
 #if (MEMDEBUGDEADLOCK)
             memrelbitln(bkt);
 #else

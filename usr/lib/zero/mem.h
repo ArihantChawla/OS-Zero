@@ -692,10 +692,10 @@ memgenhashtabadr(MEMUWORD_T *adr)
      ? (MEMBUFBLKS)                                                     \
      : (((type) == MEMPAGEBUF)                                          \
         ? (((slot) <= MEMSMALLPAGESLOT)                                 \
-           ? 4                                                          \
+           ? 8                                                          \
            : (((slot) <= MEMMIDPAGESLOT)                                \
-              ? 2                                                       \
-              : 1))                                                     \
+              ? 4                                                       \
+              : 2))                                                     \
         : (((slot) <= MEMSMALLMAPSHIFT)                                 \
            ? 4                                                          \
            : (((slot) <= MEMBIGMAPSHIFT)                                \
