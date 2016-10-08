@@ -2,8 +2,10 @@
 #define __SHARE_NULL_H__
 
 #if defined(_ZERO_SOURCE)
+
 #include <zero/param.h>
 #include <stdint.h>
+
 #if (PTRSIZE == 8)
 #if !defined(NULL)
 #define NULL ((void *)UINT64_C(0))
@@ -21,6 +23,8 @@
 #define NULL ((void *)0UL))
 #endif
 #endif
+
+#endif /* _ZERO_SOURCE */
 
 #endif /* __SHARE_NULL_H__ */
 

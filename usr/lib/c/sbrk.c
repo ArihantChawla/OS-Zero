@@ -13,7 +13,7 @@ sbrk(intptr_t incr)
 
     if (u8ptr) {
         u8ptr += incr;
-        if (size) {
+        if (incr) {
             if (!brk(u8ptr)) {
                 
                 g_curbrk = u8ptr;

@@ -318,8 +318,9 @@ __attribute__ ((alloc_size(2)))
 __attribute__ ((assume_aligned(MEMMINALIGN)))
 __attribute__ ((malloc))
 #endif
+void *
 aligned_alloc(size_t align,
-         size_t size)
+              size_t size)
 {
     void   *ptr = NULL;
 

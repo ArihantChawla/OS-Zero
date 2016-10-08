@@ -333,9 +333,7 @@ strcoll(const char *str1,
 }
 
 size_t
-strxfrm(char *RESTRICT str1,
-        const char *RESTRICT str2,
-        size_t n)
+strxfrm(char *RESTRICT str1, char *RESTRICT str2, size_t n)
 {
 //    fprintf(stderr, "TODO: strxfrm() not implemented\n");
 

@@ -4,6 +4,7 @@
 #if !defined(__KERNEL__)
 
 #include <stddef.h>
+#include <zero/cdefs.h>
 #if !defined(__GLIBC__)
 #include <bits/string.h>
 #endif
