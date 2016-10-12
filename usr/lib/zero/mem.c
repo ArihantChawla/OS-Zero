@@ -941,8 +941,12 @@ membufop(MEMPTR_T ptr, MEMWORD_T op, struct membuf *buf, MEMUWORD_T id)
                         slot = &blk->tab[n];
                         found++;
                         n++;
+#if defined(MEMHASHNREF) && (MEMHASHNREF)
                         slot->nref = 1;
+#endif
+#if defined(MEMHASHNACT) && (MEMHASHNACT)
                         slot->nact = 1;
+#endif
                         slot->page = page;
                         blk->ntab = n;
                         slot->val = desc;
@@ -981,8 +985,12 @@ membufop(MEMPTR_T ptr, MEMWORD_T op, struct membuf *buf, MEMUWORD_T id)
                 blk = memgethashitem();
                 slot = blk->tab;
                 blk->ntab = 1;
+#if defined(MEMHASHNREF) && (MEMHASHNREF)
                 slot->nref = 1;
+#endif
+#if defined(MEMHASHNACT) && (MEMHASHNACT)
                 slot->nact = 1;
+#endif
                 blk->chain = (struct memhash *)upval;
                 blk->list = &g_mem.hash[key];
                 slot->page = page;
@@ -1009,14 +1017,19 @@ membufop(MEMPTR_T ptr, MEMWORD_T op, struct membuf *buf, MEMUWORD_T id)
     desc = slot->val;
 //    upval &= ~MEMLKBIT;
     bufval = desc;
+#if defined(MEMHASHNACT) && (MEMHASHNACT)
     slot->nact++;
+#endif
 //    desc &= ~MEMPAGEINFOMASK;
     if (op == MEMHASHDEL) {
         bufval &= ~MEMPAGEINFOMASK;
+#if defined(MEMHASHNREF) && (MEMHASHNREF)
         slot->nref--;
+#endif
         id = desc & MEMPAGEINFOMASK;
         n = blk->ntab;
         memputblk(ptr, (struct membuf *)bufval, id);
+#if (MEMHASHNREF)
         if (!slot->nref) {
             if (n == 1) {
                 if (prev) {
@@ -1032,7 +1045,9 @@ membufop(MEMPTR_T ptr, MEMWORD_T op, struct membuf *buf, MEMUWORD_T id)
             } else {
                 src = &blk->tab[n];
                 slot->nref = src->nref;
+#if defined(MEMHASHNACT) && (MEMHASHNACT)
                 slot->nact = src->nact;
+#endif
                 n--;
 //                upval &= ~MEMLKBIT;
                 slot->page = src->page;
@@ -1040,6 +1055,7 @@ membufop(MEMPTR_T ptr, MEMWORD_T op, struct membuf *buf, MEMUWORD_T id)
                 blk->ntab = n;
             }
         }
+#endif
 #if (MEMDEBUG)
         crash(desc != 0);
 #endif
@@ -1054,7 +1070,9 @@ membufop(MEMPTR_T ptr, MEMWORD_T op, struct membuf *buf, MEMUWORD_T id)
             desc = MEMHASHFOUND;
         }
 #endif
-        slot->nref += op;
+#if defined(MEMHASHNREF) && (MEMHASHNREF)
+        slot->nref += op;       // zero for MEMHASHCHK
+#endif
     }
 //    upval &= ~MEMLKBIT;
     if (prev) {

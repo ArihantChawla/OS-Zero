@@ -381,7 +381,15 @@ struct memhashlist {
 #define MEMHASHITEMS    (1U << MEMHASHBITS)
 #if (MEMBIGHASHTAB)
 #define MEMHASHSIZE     (256 * WORDSIZE)
+#if defined(MEMHASHNREF) && (MEMHASHNREF)                               \
+    && defined(MEMHASHNACT) && (MEMHASHNACT)
 #define MEMHASHTABITEMS 32      // allow a bit of table-address randomization
+#elif ((defined(MEMHASHNREF) && (MEMHASHNREF))                          \
+       ||  defined(MEMHASNACT) && (MEMHASHNACT))
+#define MEMHASHTABITEMS 42      // allow a bit of table-address randomization
+#else
+#define MEMHASHTABITEMS 64      // allow a bit of table-address randomization
+#endif
 #else
 #define MEMHASHSIZE     (128 * WORDSIZE)
 #define MEMHASHTABITEMS 24
@@ -389,8 +397,12 @@ struct memhashlist {
 #define memhashsize()   MEMHASHSIZE
 
 struct memhashitem {
+#if defined(MEMHASHNREF) && (MEMHASHNREF)
     MEMUWORD_T nref;            // reference count for the page
+#endif
+#if defined(MEMHASHNACT) && (MEMHASHNACT)
     MEMUWORD_T nact;            // number of inserts, finds, and deletes
+#endif
     MEMADR_T   page;            // page address
     MEMADR_T   val;             // stored value
 };
@@ -689,21 +701,20 @@ memgenhashtabadr(MEMUWORD_T *adr)
 #define memnbufblk(slot, type)                                          \
     (((type) == MEMSMALLBUF)                                            \
      ? (MEMBUFBLKS)                                                     \
-     : (((type) == MEMPAGEBUF)                                          \
-        ? (((slot) <= MEMSMALLPAGESLOT)                                 \
-           ? 8                                                          \
-           : (((slot) <= MEMMIDPAGESLOT)                                \
-              ? 4                                                       \
-              : 2))                                                     \
-        : (((slot) <= MEMSMALLMAPSHIFT)                                 \
-           ? 4                                                          \
-           : (((slot) <= MEMBIGMAPSHIFT)                                \
-              ? 2                                                       \
-              : 1))))
+     : ((((type) == MEMPAGEBUF)                                         \
+         ? (((slot <= MEMSMALLMAPSHIFT)                                 \
+             ? 8                                                        \
+             : 4))                                                      \
+         : (((slot <= MEMBIGMAPSHIFT))                                  \
+            ? 8                                                         \
+            : 1))))
 #define memnbuftls(slot, type)                                          \
     (((type) == MEMSMALLBUF)                                            \
-     ? 2                                                                \
-     : 1)
+     ? 4                                                                \
+     : (((type == MEMPAGEBUF) && (slot <= MEMBIGMAPSHIFT))              \
+        ? 2                                                             \
+        : 1))
+    
 #define memnbufglob(slot, type)                                         \
     (((type) == MEMSMALLBUF)                                            \
      ? 32                                                               \
