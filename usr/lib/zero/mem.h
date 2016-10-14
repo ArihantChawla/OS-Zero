@@ -292,8 +292,8 @@ struct mem {
     zerospin            priolk;
     unsigned long       prioval; // locklessinc priority locks
 #endif
+    zerospin            initlk;  // lock for initialisation
     MEMLK_T             heaplk;  // lock for sbrk()
-    MEMLK_T             initlk;  // lock for initialisation
 };
 
 #if (MEMBITFIELD)

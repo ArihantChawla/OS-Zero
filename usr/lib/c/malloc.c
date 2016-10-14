@@ -77,6 +77,10 @@ _free(void *ptr)
 
         return;
     }
+    if (!g_memtlsinit) {
+
+        return;
+    }
 #if 0
     if (!g_memtlsinit) {
         memgetlk(&g_memtlsinitlk);
