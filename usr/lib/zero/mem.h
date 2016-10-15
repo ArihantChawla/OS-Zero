@@ -425,7 +425,7 @@ struct memhash {
  */
 #define memtlssize() rounduppow2(sizeof(struct memtls), 2 * PAGESIZE)
 struct memtls {
-    struct membkt     smallbin[PTRBITS]; // blocks of size 1 << slot
+    struct membkt     smallbin[MEMSMALLSLOTS]; // blocks of size 1 << slot
     struct membkt     pagebin[MEMPAGESLOTS]; // maps of PAGESIZE * slot
 #if (MEM_LK_TYPE & MEM_LK_PRIO)
     struct priolkdata priolkdata;
@@ -546,6 +546,8 @@ memgenptrcl(MEMPTR_T ptr, MEMUWORD_T blksz, MEMUWORD_T size)
     return ret;
 }
 
+#endif
+
 /* compute adr + adr % 9 (# of cachelines in offset, aligned to cl boundary) */
 static __inline__ MEMUWORD_T *
 memgentlsadr(MEMPTR_T adr)
@@ -568,8 +570,8 @@ memgentlsadr(MEMPTR_T adr)
     /* calculate res -= res/9 * 9 i.e. res % 9 (max 8) */
     dec = div9 * 9;
     res -= dec;
-    /* scale to 0..256 (machine words) */
-    res <<= 5;
+    /* scale to 0..128 (machine words) */
+    res <<= 4;
     /* align to cacheline */
     res &= ~(CLSIZE - 1);
     /* add to original pointer */
@@ -577,7 +579,6 @@ memgentlsadr(MEMPTR_T adr)
 
     return adr;
 }
-#endif
 
 static __inline__ MEMPTR_T
 memgenptr(MEMPTR_T ptr, MEMUWORD_T blksz, MEMUWORD_T size)
