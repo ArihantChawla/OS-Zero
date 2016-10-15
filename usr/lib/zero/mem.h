@@ -209,11 +209,11 @@ struct membkt {
 #else
     struct membuf *list;        // bi-directional list of bufs + lock-bit
 #endif
-//    MEMWORD_T      slot;        // bucket slot #
 #if (MEMDEBUGDEADLOCK)
     MEMUWORD_T     line;
 #endif
     MEMUWORD_T     nbuf;        // number of bufs in list
+    MEMUWORD_T     nmax;        // max # to buffer; 0 for default
     uint8_t        _pad[CLSIZE
 #if (MEMLFDEQ)
                         - sizeof(struct lfdeq)
@@ -223,7 +223,7 @@ struct membkt {
 #if (MEMDEBUGDEADLOCK)
                         - sizeof(MEMUWORD_T)
 #endif
-                        - sizeof(MEMUWORD_T)];
+                        - 2 * sizeof(MEMUWORD_T)];
 };
 
 /* type-bits for allocation buffers */
@@ -398,7 +398,15 @@ struct memhashlist {
 #endif
 #else
 #define MEMHASHSIZE     (128 * WORDSIZE)
+#if defined(MEMHASHNREF) && (MEMHASHNREF)                               \
+    && defined(MEMHASHNACT) && (MEMHASHNACT)
 #define MEMHASHTABITEMS 24
+#elif ((defined(MEMHASHNREF) && (MEMHASHNREF))                          \
+       ||  defined(MEMHASNACT) && (MEMHASHNACT))
+#define MEMHASHTABITEMS 32
+#else
+#define MEMHASHTABITEMS 48
+#endif
 #endif
 #define memhashsize()   MEMHASHSIZE
 
@@ -743,12 +751,12 @@ memgenhashtabadr(MEMUWORD_T *adr)
 #define membufsetpageadr(buf, ndx, adr)                                 \
     ((buf)->ptrtab[(ndx)] = (adr))
 
-#define memgetnbufblk(slot, type)                                       \
+#define memgetnbufblk(type, slot)                                       \
     (g_mem.bufvals.nblk[type][slot])
-#define memgetnbuftls(slot, type)                                       \
-    (g_mem.bufvals.ntls[type][slot])
-#define memgetnbufglob(slot, type)                                      \
-    (g_mem.bufvals.nglob[type][slot])
+#define memgetnbuftls(bkt, type, slot)                                  \
+    ((bkt)->nmax ? (bkt)->nmax : g_mem.bufvals.ntls[type][slot])
+#define memgetnbufglob(bkt, type, slot)                                 \
+    ((bkt)->nmax ? (bkt)->nmax : g_mem.bufvals.nglob[type][slot])
 
 void            meminit(void);
 struct memtls * meminittls(void);
