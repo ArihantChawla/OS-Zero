@@ -1520,18 +1520,8 @@ memrelblk(void *ptr, struct membuf *buf, MEMWORD_T id)
     if (nfree == nblk) {
         memrelbuf(slot, type, buf, bkt);
     } else if (nfree == 1) {
-#if (MEMDEBUGDEADLOCK)
-        memlkbitln(gbkt);
-#else
-        memlkbit(&gbkt->list);
-#endif
         if (type != MEMBIGBUF
             && tbkt->nbuf < memgetnbuftls(slot, type)) {
-#if (MEMDEBUGDEADLOCK)
-            memrelbitln(gbkt);
-#else
-            memrelbit(&gbkt->list);
-#endif
             upval = (MEMADR_T)tbkt->list;
             buf->prev = NULL;
             buf->bkt = tbkt;
@@ -1541,6 +1531,11 @@ memrelblk(void *ptr, struct membuf *buf, MEMWORD_T id)
             buf->next = (struct membuf *)upval;
             tbkt->nbuf++;
         } else {
+#if (MEMDEBUGDEADLOCK)
+            memlkbitln(gbkt);
+#else
+            memlkbit(&gbkt->list);
+#endif
             upval = (MEMADR_T)gbkt->list;
             buf->prev = NULL;
             upval &= ~MEMLKBIT;
