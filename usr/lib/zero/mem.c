@@ -1531,6 +1531,7 @@ memrelblk(void *ptr, struct membuf *buf, MEMWORD_T id)
             }
             buf->next = (struct membuf *)upval;
             tbkt->nbuf++;
+            tbkt->list = buf;
         } else {
 #if (MEMDEBUGDEADLOCK)
             memlkbitln(gbkt);
