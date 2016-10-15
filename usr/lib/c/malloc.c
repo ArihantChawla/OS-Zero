@@ -227,7 +227,6 @@ posix_memalign(void **ret,
                size_t size)
 {
     void *ptr = NULL;
-    int   retval = 0;
 
     if (!powerof2(align) || (align & (sizeof(void *) - 1))) {
         *ret = NULL;

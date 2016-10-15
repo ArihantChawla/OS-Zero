@@ -423,7 +423,7 @@ struct memhash {
  * NOTE: the arenas are mmap()'d as PAGESIZE-allocations so there's going
  * to be some room in the end for arbitrary data
  */
-#define memtlssize() rounduppow2(sizeof(struct memtls), PAGESIZE)
+#define memtlssize() rounduppow2(sizeof(struct memtls), 2 * PAGESIZE)
 struct memtls {
     struct membkt     smallbin[PTRBITS]; // blocks of size 1 << slot
     struct membkt     pagebin[MEMPAGESLOTS]; // maps of PAGESIZE * slot
@@ -568,13 +568,12 @@ memgentlsadr(MEMPTR_T adr)
     /* calculate res -= res/9 * 9 i.e. res % 9 (max 8) */
     dec = div9 * 9;
     res -= dec;
-    /* scale to 0..64 (machine words) */
-    res <<= 3;
+    /* scale to 0..256 (machine words) */
+    res <<= 5;
     /* align to cacheline */
     res &= ~(CLSIZE - 1);
     /* add to original pointer */
     adr += res;
-    /* align to machine word boundary */
 
     return adr;
 }
