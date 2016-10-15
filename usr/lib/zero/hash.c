@@ -2,7 +2,7 @@
 #include <stdio.h>
 #include <zero/param.h>
 
-#define _min(a, b) ((b) ^ (((a) ^ (b)) & -((a) < (b))))
+//#define _min(a, b) ((b) ^ (((a) ^ (b)) & -((a) < (b))))
 
 /* NOTE: THIS ONE IS BORKED :) */
 unsigned int
@@ -148,7 +148,8 @@ tmhash64(uint64_t u)
 
 /* this one is Austin Appleby's MurmurHash3 */
 
-uint64_t MurmurHash3Mixer(uint64_t u)
+uint64_t
+MurmurHash3Mixer(uint64_t u)
 {
     u ^= (u >> 33);
     u *= UINT64_C(0xff51afd7ed558ccd);
@@ -162,7 +163,7 @@ uint64_t MurmurHash3Mixer(uint64_t u)
 /* I found these on the Internet, too - again, from Thomas Mueller */
 
 unsigned int
-tmhash(unsigned int u)
+tmhash2(unsigned int u)
 {
     u = ((u >> 16) ^ u) * 0x45d9f3b;
     u = ((u >> 16) ^ u) * 0x45d9f3b;
@@ -172,7 +173,7 @@ tmhash(unsigned int u)
 }
 
 unsigned int
-tmunhash(unsigned int u)
+tmunhash2(unsigned int u)
 {
     u = ((u >> 16) ^ u) * 0x119de1f3;
     u = ((u >> 16) ^ u) * 0x119de1f3;
@@ -184,23 +185,23 @@ tmunhash(unsigned int u)
 /* here is a version of FNV1A by Georgi 'Kaze' 'Sanmayce' :) */
 
 uint32_t
-FNV1A_Hash_WHIZ(const char *str, size_t wrdlen)
+FNV1A_Hash_WHIZ(const char *str, size_t wsz)
 {
     const uint32_t  prime = 1607;
     uint32_t        hash32 = 2166136261;
-    const char     *p = str;
+    const char     *ptr = str;
  
     for( ;
-         wrdlen >= sizeof(uint32_t);
-         wrdlen -= sizeof(uint32_t), p += sizeof(uint32_t)) {
-        hash32 = (hash32 ^ *(uint32_t *)p) * prime;
+         wsz >= sizeof(uint32_t);
+         wsz -= sizeof(uint32_t), ptr += sizeof(uint32_t)) {
+        hash32 = (hash32 ^ *(uint32_t *)ptr) * prime;
     }
-    if (wrdlen & sizeof(uint16_t)) {
-        hash32 = (hash32 ^ *(uint16_t *)p) * prime;
-        p += sizeof(uint16_t);
+    if (wsz & sizeof(uint16_t)) {
+        hash32 = (hash32 ^ *(uint16_t *)ptr) * prime;
+        ptr += sizeof(uint16_t);
     }
-    if (wrdlen & 1) 
-        hash32 = (hash32 ^ *p) * prime;
+    if (wsz & 1) 
+        hash32 = (hash32 ^ *ptr) * prime;
  
     return hash32 ^ (hash32 >> 16);
 }

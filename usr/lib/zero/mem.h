@@ -365,12 +365,16 @@ struct memhashlist {
 #define MEMHASHCHK (0)
 #define MEMHASHADD (1)
 
+#if (MEMHASHMURMUR)
+#define memhashptr(page) MurmurHash3Mixer((MEMADR_T)page)
+#else
 #if (WORDSIZE == 4)
 #define memhashptr(page)                                                \
     (tmhash32((MEMADR_T)page))
 #elif (WORDSIZE == 8)
 #define memhashptr(page)                                                \
     (tmhash64((MEMADR_T)page))
+#endif
 #endif
 #define MEMHASHNOTFOUND  0
 #define MEMHASHFOUND     (~(MEMADR_T)0)
@@ -695,15 +699,17 @@ memgenhashtabadr(MEMUWORD_T *adr)
 #define memnbufblk(slot, type)                                          \
     (((type) == MEMSMALLBUF)                                            \
      ? (MEMBUFBLKS)                                                     \
-     : ((((type) == MEMPAGEBUF)                                         \
-         ? (((slot) <= MEMMIDPAGESLOT)                                  \
-            ? 8                                                         \
-            : (((slot) <= MEMBIGPAGESLOT)                               \
-               ? 4                                                      \
-               : 2))                                                    \
-         : (((slot <= MEMBIGMAPSHIFT))                                  \
-            ? 8                                                         \
-            : 1))))
+     : (((type) == MEMPAGEBUF)                                          \
+        ? (((slot) <= MEMMIDPAGESLOT)                                   \
+           ? 8                                                          \
+           : (((slot) <= MEMBIGPAGESLOT)                                \
+              ? 4                                                       \
+              : 2))                                                     \
+        : (((slot) <= MEMSMALLMAPSHIFT)                                 \
+           ? 8                                                          \
+           : (((slot) <= MEMBIGMAPSHIFT)                                \
+              ? 4                                                       \
+              : 1))))
 #define memnbuftls(slot, type)                                          \
     (((type) == MEMSMALLBUF)                                            \
      ? 4                                                                \

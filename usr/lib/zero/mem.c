@@ -397,7 +397,7 @@ memallocsmallbuf(MEMWORD_T slot, MEMWORD_T nblk)
         }
 #if (MEMSTAT)
         g_memstat.nbsmall += bufsz;
-        g_memstat.nbmap += bufsz;
+//        g_memstat.nbmap += bufsz;
 #endif
     }
     buf = (struct membuf *)adr;
@@ -472,7 +472,7 @@ memallocpagebuf(MEMWORD_T slot, MEMWORD_T nblk)
     }
 #if (MEMSTAT)
     g_memstat.nbpage += mapsz;
-    g_memstat.nbmap += mapsz;
+//    g_memstat.nbmap += mapsz;
     g_memstat.nbbook += membufblkofs();
 #endif
 //    buf->ptrtab = (MEMPTR_T *)((MEMPTR_T)buf + membufhdrsize());
@@ -531,7 +531,7 @@ memallocbigbuf(MEMWORD_T slot, MEMWORD_T nblk)
     memsetbuftype(buf, MEMBIGBUF);
 #if (MEMSTAT)
     g_memstat.nbbig += mapsz;
-    g_memstat.nbmap += mapsz;
+//    g_memstat.nbmap += mapsz;
     g_memstat.nbbook += membufblkofs();
 #endif
     buf->size = mapsz;
@@ -827,6 +827,7 @@ memgethashitem(void)
     return item;
 }
 
+#if defined(MEMHASHNREF) && (MEMHASHNREF)
 static void
 membufhashitem(struct memhash *item)
 {
@@ -840,6 +841,7 @@ membufhashitem(struct memhash *item)
 
     return;
 }
+#endif
 
 MEMADR_T
 membufop(MEMPTR_T ptr, MEMWORD_T op, struct membuf *buf, MEMWORD_T id)
@@ -848,7 +850,6 @@ membufop(MEMPTR_T ptr, MEMWORD_T op, struct membuf *buf, MEMWORD_T id)
     MEMADR_T            page = adr >> PAGESIZELOG2;
     MEMUWORD_T          key = memhashptr(page) & (MEMHASHITEMS - 1);
     MEMADR_T            desc;
-    MEMADR_T            val;
     MEMADR_T            bufval;
     MEMADR_T            upval;
     struct memhash     *blk;
@@ -1384,7 +1385,7 @@ memrelbuf(MEMWORD_T slot, MEMWORD_T type,
 #endif
                 VALGRINDRMPOOL(buf->base);
 #if (MEMSTAT)
-                g_memstat.nbmap -= buf->size;
+//                g_memstat.nbmap -= buf->size;
                 g_memstat.nbpage -= buf->size;
                 g_memstat.nbbook -= membufblkofs();
 #endif
@@ -1400,7 +1401,7 @@ memrelbuf(MEMWORD_T slot, MEMWORD_T type,
             memdequeuebufglob(buf, dest);
             VALGRINDRMPOOL(buf->base);
 #if (MEMSTAT)
-            g_memstat.nbmap -= buf->size;
+//            g_memstat.nbmap -= buf->size;
             g_memstat.nbbig -= buf->size;
             g_memstat.nbbook -= membufblkofs();
 #endif

@@ -107,7 +107,6 @@ _memchkbuf(struct membuf *buf, MEMWORD_T slot, MEMWORD_T type,
     MEMUWORD_T bsz = membufblksize(buf, type, slot);
     MEMUWORD_T bufsz;
     long       fail = 0;
-    MEMPTR_T   lim;
 
     if ((flg) && !bflg) {
         fprintf(stderr, "HEAP-bit not set\n");
@@ -128,16 +127,6 @@ _memchkbuf(struct membuf *buf, MEMWORD_T slot, MEMWORD_T type,
     if (type != btype) {
         fprintf(stderr, "WRONG type: %lx (%s)\n", btype, bufnames[type]);
         fail++;
-    }
-    if (btype == MEMSMALLBUF) {
-        bufsz = memsmallbufsize(slot);
-        lim = buf->base + memsmallbufsize(bslot) - membufblkofs();
-    } else if (btype == MEMPAGEBUF) {
-        bufsz = mempagebufsize(slot, nblk) - membufblkofs();
-        lim = buf->base + mempagebufsize(bslot, bnblk);
-    } else {
-        bufsz = membigbufsize(slot, nblk) - membufblkofs();
-        lim = buf->base + membigbufsize(bslot, bnblk);
     }
     if (fail) {
         memprintbuf(buf, func);

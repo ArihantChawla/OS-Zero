@@ -112,3 +112,6 @@ uint32_t
 #endif
 razohash(void *ptr, size_t len, size_t nbit);
 
+uint32_t tmhash32(unsigned long u);
+uint64_t tmhash64(uint64_t u);
+
