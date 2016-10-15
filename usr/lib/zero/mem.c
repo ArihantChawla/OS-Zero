@@ -1340,9 +1340,9 @@ memrelbuf(MEMWORD_T slot, MEMWORD_T type,
             if (bkt != gbkt) {
                 memdequeuebuftls(buf, bkt);
 #if (MEMDEBUGDEADLOCK)
-                memrelbitln(gbkt);
+                memlkbitln(gbkt);
 #else
-                memrelbit(&gbkt->list);
+                memlkbit(&gbkt->list);
 #endif
                 upval = (MEMADR_T)gbkt->list;
                 buf->prev = NULL;
