@@ -450,7 +450,7 @@ membufinitfree(struct membuf *buf, MEMWORD_T nblk)
     MEMUWORD_T *ptr = buf->freemap;
 
     _memfillmap0(ptr, 0, bits);
-#if (MEMBUFFREEMAPWORDS >= 4)
+#if (MEMBUFFREEMAPWORDS >= 8)
     _memfillmap(ptr, 4, bits);
 #endif
 #if (MEMBUFFREEMAPWORDS == 16)
