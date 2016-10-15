@@ -37,7 +37,7 @@ memfreetls(void *arg)
     MEMADR_T                upval;
 
     if (g_memtls) {
-        for (slot = 0 ; slot < PTRBITS ; slot++) {
+        for (slot = 0 ; slot < MEMSMALLSLOTS ; slot++) {
             src = &g_memtls->smallbin[slot];
             dest = &g_mem.smallbin[slot];
             head = src->list;
@@ -350,7 +350,7 @@ memsetadr(struct membuf *buf, MEMPTR_T ptr, MEMUWORD_T size, MEMUWORD_T align,
     if (align <= CLSIZE) {
         slot = memgetbufslot(buf);
         bsz = membufblksize(buf, type, slot);
-        ptr = memgenptr(adr, bsz, size);
+        ptr = memgenadr(adr, bsz, size);
     } else if ((MEMADR_T)ptr & (align - 1)) {
         ptr = memalignptr(adr, align);
     }

@@ -198,9 +198,9 @@ typedef zerospin      MEMLK_T;
 #define MEMMIDPAGESLOT      64
 #define MEMBIGPAGESLOT      128
 //#define MEMSMALLBLKSHIFT    (PAGESIZELOG2 - 1)
-#define MEMSMALLMAPSHIFT    20
+#define MEMSMALLMAPSHIFT    23
 //#define MEMBUFMIDMAPSHIFT 22
-#define MEMBIGMAPSHIFT      24
+#define MEMBIGMAPSHIFT      26
 //#define MEMBUFHUGEMAPSHIFT  26
 
 struct membkt {
@@ -501,53 +501,6 @@ membufgetfree(struct membuf *buf)
 #define memadjptr(ptr, sz)                                              \
     (&((MEMPTR_T)(ptr))[sz])
 
-#if 0
-
-/* this routine came from the lockless allocator, courtesy of locklessinc.com */
-static __inline__ uint32_t
-memrandptr(MEMPTR_T ptr)
-{
-    uint64_t val = (uint64_t)ptr;
-
-    val *= UINT64_C(7319936632422683443);
-    val ^= val >> 32;
-    val *= UINT64_C(7319936632422683443);
-    val ^= val >> 32;
-
-    return (uint32_t)val;
-}
-
-static __inline__ MEMPTR_T
-memgenptr(MEMPTR_T ptr, MEMUWORD_T blksz, MEMUWORD_T size)
-{
-    uint64_t xtra = blksz - size;
-    uint64_t rnd = memrandptr(ptr);
-    uint64_t ofs = xtra * rnd;
-    MEMPTR_T ret;
-
-    ofs >>= 32;
-    ofs = rounddownpow2(ofs, MEMMINALIGN);
-    ret = memadjptr(ptr, ofs);
-
-    return ret;
-}
-
-static __inline__ MEMPTR_T
-memgenptrcl(MEMPTR_T ptr, MEMUWORD_T blksz, MEMUWORD_T size)
-{
-    uint64_t xtra = blksz - size;
-    uint64_t rnd = memrandptr(ptr);
-    uint64_t ofs = (xtra * rnd) >> 32;
-    MEMPTR_T ret;
-
-    ofs = rounddownpow2(ofs, CLSIZE);
-    ret = memadjptr(ptr, ofs);
-
-    return ret;
-}
-
-#endif
-
 /* compute adr + adr % 9 (# of cachelines in offset, aligned to cl boundary) */
 static __inline__ MEMUWORD_T *
 memgentlsadr(MEMPTR_T adr)
@@ -570,8 +523,8 @@ memgentlsadr(MEMPTR_T adr)
     /* calculate res -= res/9 * 9 i.e. res % 9 (max 8) */
     dec = div9 * 9;
     res -= dec;
-    /* scale to 0..128 (machine words) */
-    res <<= 4;
+    /* scale to 0..256 (machine words) */
+    res <<= 5;
     /* align to cacheline */
     res &= ~(CLSIZE - 1);
     /* add to original pointer */
@@ -581,7 +534,7 @@ memgentlsadr(MEMPTR_T adr)
 }
 
 static __inline__ MEMPTR_T
-memgenptr(MEMPTR_T ptr, MEMUWORD_T blksz, MEMUWORD_T size)
+memgenadr(MEMPTR_T ptr, MEMUWORD_T blksz, MEMUWORD_T size)
 {
     MEMPTR_T   adr = ptr;
     MEMADR_T   res = (MEMADR_T)ptr;
@@ -743,9 +696,11 @@ memgenhashtabadr(MEMUWORD_T *adr)
     (((type) == MEMSMALLBUF)                                            \
      ? (MEMBUFBLKS)                                                     \
      : ((((type) == MEMPAGEBUF)                                         \
-         ? (((slot <= MEMSMALLMAPSHIFT)                                 \
-             ? 8                                                        \
-             : 4))                                                      \
+         ? (((slot) <= MEMMIDPAGESLOT)                                  \
+            ? 8                                                         \
+            : (((slot) <= MEMBIGPAGESLOT)                               \
+               ? 4                                                      \
+               : 2))                                                    \
          : (((slot <= MEMBIGMAPSHIFT))                                  \
             ? 8                                                         \
             : 1))))
