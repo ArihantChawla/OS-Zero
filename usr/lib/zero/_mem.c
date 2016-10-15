@@ -32,9 +32,9 @@ memprintstat(void)
 void
 memprintbuf(struct membuf *buf, const char *func)
 {
-    MEMUWORD_T nblk = memgetbufnblk(buf);
-    MEMUWORD_T type = memgetbuftype(buf);
-    MEMUWORD_T slot = memgetbufslot(buf);
+    MEMWORD_T  nblk = memgetbufnblk(buf);
+    MEMWORD_T  type = memgetbuftype(buf);
+    MEMWORD_T  slot = memgetbufslot(buf);
     MEMUWORD_T blksz = membufblksize(buf, type, slot);
 
     if (func) {
@@ -57,9 +57,10 @@ memprintbuf(struct membuf *buf, const char *func)
 long
 _memchkptr(struct membuf *buf, MEMPTR_T ptr)
 {
-    MEMUWORD_T nblk = memgetbufnblk(buf);
-    MEMUWORD_T type = memgetbuftype(buf);
-    MEMUWORD_T slot = memgetbufslot(buf);
+    MEMWORD_T  nblk = memgetbufnblk(buf);
+    MEMWORD_T  nfree = memgetbufnfree(buf);
+    MEMWORD_T  type = memgetbuftype(buf);
+    MEMWORD_T  slot = memgetbufslot(buf);
     MEMUWORD_T sz = membufblksize(buf, type, slot);
     long       fail = 0;
     MEMPTR_T   lim;
@@ -83,6 +84,7 @@ _memchkptr(struct membuf *buf, MEMPTR_T ptr)
         fprintf(stderr, "---\n");
         fprintf(stderr, "base:\t%p\n", buf->base);
         fprintf(stderr, "nblk:\t%lx\n", nblk);
+        fprintf(stderr, "nfree:\t%lx\n", nfree);
         fprintf(stderr, "type:\t%lx\n", type);
         fprintf(stderr, "slot:\t%lx\n", slot);
         fprintf(stderr, "bufsz:\t%lx\n", sz);
@@ -94,14 +96,14 @@ _memchkptr(struct membuf *buf, MEMPTR_T ptr)
 }
 
 long
-_memchkbuf(struct membuf *buf, MEMUWORD_T slot, MEMUWORD_T type,
-           MEMUWORD_T nblk, MEMUWORD_T flg, const char *func)
+_memchkbuf(struct membuf *buf, MEMWORD_T slot, MEMWORD_T type,
+           MEMWORD_T nblk, MEMUWORD_T flg, const char *func)
 {
     MEMUWORD_T bflg = memgetbufflg(buf);
-    MEMUWORD_T bnblk = memgetbufnblk(buf);
-    MEMUWORD_T bnfree = memgetbufnfree(buf);
-    MEMUWORD_T btype = memgetbuftype(buf);
-    MEMUWORD_T bslot = memgetbufslot(buf);
+    MEMWORD_T  bnblk = memgetbufnblk(buf);
+    MEMWORD_T  bnfree = memgetbufnfree(buf);
+    MEMWORD_T  btype = memgetbuftype(buf);
+    MEMWORD_T  bslot = memgetbufslot(buf);
     MEMUWORD_T bsz = membufblksize(buf, type, slot);
     MEMUWORD_T bufsz;
     long       fail = 0;
