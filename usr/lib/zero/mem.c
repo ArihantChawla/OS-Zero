@@ -1335,6 +1335,7 @@ memrelbuf(MEMWORD_T slot, MEMWORD_T type,
                 }
                 buf->next = (struct membuf *)upval;
                 tbkt->nbuf++;
+                tbkt->list = buf;
             }
         } else {
             if (bkt != gbkt) {
@@ -1368,6 +1369,7 @@ memrelbuf(MEMWORD_T slot, MEMWORD_T type,
             return;
         }
     } else if (type == MEMPAGEBUF) {
+        tbkt = &g_memtls->pagebin[slot];
         gbkt = &g_mem.pagebin[slot];
         if (tbkt->nbuf < memgetnbuftls(slot, MEMPAGEBUF)) {
             if (bkt == gbkt) {
@@ -1385,6 +1387,7 @@ memrelbuf(MEMWORD_T slot, MEMWORD_T type,
                 }
                 buf->next = (struct membuf *)upval;
                 tbkt->nbuf++;
+                tbkt->list = buf;
             }
         } else if (gbkt->nbuf < memgetnbufglob(slot, MEMPAGEBUF)) {
             if (bkt != gbkt) {
