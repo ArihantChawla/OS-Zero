@@ -66,7 +66,7 @@ _memchkptr(struct membuf *buf, MEMPTR_T ptr)
     MEMPTR_T   lim;
 
     if (type == MEMSMALLBUF) {
-        lim = buf->base + memsmallbufsize(slot);
+        lim = buf->base + memsmallbufsize(slot, nblk);
     } else if (type == MEMPAGEBUF) {
         lim = buf->base + mempagebufsize(slot, nblk);
     } else {

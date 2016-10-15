@@ -364,7 +364,7 @@ static struct membuf *
 memallocsmallbuf(MEMWORD_T slot, MEMWORD_T nblk)
 {
     MEMPTR_T       adr = SBRK_FAILED;
-    MEMWORD_T      bufsz = memsmallbufsize(slot);
+    MEMWORD_T      bufsz = memsmallbufsize(slot, nblk);
     MEMUWORD_T     flg = 0;
     struct membuf *buf;
 
@@ -1132,12 +1132,10 @@ memtryblk(MEMWORD_T slot, MEMWORD_T type,
     struct membuf          *buf = (struct membuf *)upval;
     MEMPTR_T                ptr = NULL;
     MEMUWORD_T              flg = 0;
-    MEMWORD_T               nblk = MEMBUFBLKS;
+    MEMWORD_T               nblk;
     volatile struct membkt *dest;
 
-    if (type != MEMSMALLBUF) {
-        nblk = memgetnbufblk(type, slot);
-    }
+    nblk = memgetnbufblk(type, slot);
     if ((buf) && (tbkt)) {
         ptr = memgetblktls(buf, tbkt, size, align);
 #if (MEMTEST)
@@ -1194,12 +1192,14 @@ memtryblk(MEMWORD_T slot, MEMWORD_T type,
 //                fprintf(stderr, "ADD: %p (%p)\n", buf, dest);
 //                memprintbuf(buf, NULL);
 #endif
+                if (type == MEMBIGBUF) {
 #if (MEMDEBUGDEADLOCK)
 //                fprintf(stderr, "OWNED: %ld\n", dest->line);
-                memlkbitln(dest);
+                    memlkbitln(dest);
 #else
-                memlkbit(&dest->list);
+                    memlkbit(&dest->list);
 #endif
+                }
                 upval = (MEMADR_T)dest->list;
                 buf->prev = NULL;
                 upval &= ~MEMLKBIT;
@@ -1212,7 +1212,11 @@ memtryblk(MEMWORD_T slot, MEMWORD_T type,
                 dest->line = __LINE__;
 #endif
                 dest->nbuf++;
-                m_syncwrite((m_atomic_t *)&dest->list, (m_atomic_t)buf);
+                if (type != MEMBIGBUF) {
+                    dest->list = buf;
+                } else {
+                    m_syncwrite((m_atomic_t *)&dest->list, (m_atomic_t)buf);
+                }
             }
         }
     }
