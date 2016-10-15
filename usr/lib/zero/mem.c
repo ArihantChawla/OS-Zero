@@ -160,12 +160,17 @@ memprefork(void)
 //    fmtxlk(&g_mem.priolk);
     spinlk(&g_mem.initlk);
     memgetlk(&g_mem.heaplk);
-    for (slot = 0 ; slot < PTRBITS ; slot++) {
+    for (slot = 0 ; slot < MEMSMALLSLOTS ; slot++) {
 #if (MEMDEBUGDEADLOCK)
         memlkbitln(&g_mem.smallbin[slot]);
-        memlkbitln(&g_mem.bigbin[slot]);
 #else
         memlkbit(&g_mem.smallbin[slot].list);
+#endif
+    }
+    for (slot = 0 ; slot < PTRBITS ; slot++) {
+#if (MEMDEBUGDEADLOCK)
+        memlkbitln(&g_mem.bigbin[slot]);
+#else
         memlkbit(&g_mem.bigbin[slot].list);
 #endif
     }
@@ -213,9 +218,14 @@ mempostfork(void)
     for (slot = 0 ; slot < PTRBITS ; slot++) {
 #if (MEMDEBUGDEADLOCK)
         memrelbitln(&g_mem.bigbin[slot]);
-        memrelbitln(&g_mem.smallbin[slot]);
 #else
         memrelbit(&g_mem.bigbin[slot].list);
+#endif
+    }
+    for (slot = 0 ; slot < MEMSMALLSLOTS ; slot++) {
+#if (MEMDEBUGDEADLOCK)
+        memrelbitln(&g_mem.smallbin[slot]);
+#else
         memrelbit(&g_mem.smallbin[slot].list);
 #endif
     }
@@ -283,12 +293,13 @@ meminit(void)
     g_mem.bufvals.nglob[MEMSMALLBUF] = (MEMUWORD_T *)&adr[4 * PTRBITS + 2 * MEMPAGESLOTS];
     g_mem.bufvals.nglob[MEMPAGEBUF] = (MEMUWORD_T *)&adr[5 * PTRBITS + 2 * MEMPAGESLOTS];
     g_mem.bufvals.nglob[MEMBIGBUF] = (MEMUWORD_T *)&adr[5 * PTRBITS + 3 * MEMPAGESLOTS];
-    for (slot = 0 ; slot < PTRBITS ; slot++) {
+    for (slot = 0 ; slot < MEMSMALLSLOTS ; slot++) {
         g_mem.bufvals.nblk[MEMSMALLBUF][slot] = memnbufblk(MEMSMALLBUF, slot);
-        g_mem.bufvals.nblk[MEMBIGBUF][slot] = memnbufblk(MEMSMALLBUF, slot);
         g_mem.bufvals.ntls[MEMSMALLBUF][slot] = memnbuftls(MEMSMALLBUF, slot);
-//        g_mem.bufvals.ntls[MEMBIGBUF][slot] = memnbufblk(MEMSMALLBUF, slot);
         g_mem.bufvals.nglob[MEMSMALLBUF][slot] = memnbufglob(MEMSMALLBUF, slot);
+    }
+    for (slot = 0 ; slot < PTRBITS ; slot++) {
+        g_mem.bufvals.nblk[MEMBIGBUF][slot] = memnbufblk(MEMSMALLBUF, slot);
         g_mem.bufvals.nglob[MEMBIGBUF][slot] = memnbufglob(MEMSMALLBUF, slot);
     }
     for (slot = 0 ; slot < MEMPAGESLOTS ; slot++) {
@@ -575,7 +586,7 @@ memgetbufblktls(struct membuf *head, volatile struct membkt *bkt,
     MEMWORD_T   id = membufgetfree(head);
 
 #if (MEMDEBUG)
-    crash(id >= 0);
+    crash(id != MEMNOBLK);
     crash(nfree != 0);
 #endif
     nfree--;

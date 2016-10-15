@@ -173,7 +173,7 @@ typedef zerospin      MEMLK_T;
 #endif
 /* maximum small buf size is (MEMBUFBLKS << MEMMAXSMALLSHIFT) + bookkeeping */
 #define MEMMAXSMALLSHIFT    (PAGESIZELOG2 - 1)
-#define MEMSMALLSLOTS       (MEMMAXSMALLSHIFT + 1)
+#define MEMSMALLSLOTS       PAGESIZELOG2
 /* NOTES
  * -----
  * - all allocations except those from pagebin are power-of-two sizes
@@ -313,6 +313,8 @@ struct membufinfo {
  * - the actual buffers will be prefixed by this structure
  * - allocation shall take place with sbrk() or mmap()
  */
+
+#define MEMNOBLK (MEMWORD(-1))
 
 struct membuf {
 #if (MEMBITFIELD)
@@ -485,13 +487,13 @@ membufgetfree(struct membuf *buf)
                 return ndx;                     // return index of first 1-bit
             }
 
-            return -1;                          // 1-bit not found
+            return MEMNOBLK;                    // 1-bit not found
         }
         ndx += sizeof(MEMUWORD_T) * CHAR_BIT;
         map++;                                  // try next word in freemap
     } while (ndx < nblk);
 
-    return -1;                                  // 1-bit not found
+    return MEMNOBLK;                            // 1-bit not found
 }
 
 #define memalignptr(ptr, pow2)                                          \
