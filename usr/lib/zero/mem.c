@@ -342,30 +342,26 @@ meminit(void)
     return;
 }
 
+/* FIXME: hack cache-coloring for allocated blocks */
 MEMPTR_T
 memsetptr(struct membuf *buf, MEMPTR_T ptr, MEMUWORD_T size, MEMUWORD_T align,
           MEMWORD_T id)
 {
-    MEMWORD_T type = memgetbuftype(buf);
-//    MEMUWORD_T bsz = membufblksize(buf, type, slot);
-//    MEMWORD_T id;
     MEMPTR_T   adr = ptr;
-//    MEMADR_T   delta;
+    MEMWORD_T  type = memgetbuftype(buf);
+    MEMWORD_T  slot;
+    MEMUWORD_T bsz;
 
-    if ((MEMADR_T)ptr & (align - 1)) {
+    if (align <= CLSIZE) {
+        slot = memgetbufslot(buf);
+        bsz = membufblksize(buf, type, slot);
+        ptr = memgenptr(adr, bsz, size);
+    } else if ((MEMADR_T)ptr & (align - 1)) {
         ptr = memalignptr(adr, align);
-#if 0
-        delta = (MEMADR_T)ptr - adr;
-        bsz -= delta;
-        if (bsz < size) {
-            ptr = memgenptr(ptr, bsz, size);
-        }
-#endif
     }
     if (type != MEMPAGEBUF) {
         membufsetptr(buf, ptr, adr);
     } else {
-//        id = membufpageid(buf, ptr);
         membufsetpageadr(buf, id, adr);
     }
 
@@ -443,7 +439,7 @@ meminitsmallbuf(struct membuf *buf, MEMUWORD_T size, MEMUWORD_T align)
     MEMPTR_T  ptr = adr + membufblkofs();
 
     /* initialise freemap */
-    membufinitfree(buf, nblk);
+    membufinitfree(buf);
     buf->base = ptr;
     nblk--;
     VALGRINDMKPOOL(ptr, 0, 0);
@@ -503,7 +499,7 @@ meminitpagebuf(struct membuf *buf,
     MEMPTR_T ptr = adr + membufblkofs();
 
     /* initialise freemap */
-    membufinitfree(buf, nblk);
+    membufinitfree(buf);
     buf->base = ptr;
     nblk--;
     VALGRINDMKPOOL(ptr, 0, 0);
@@ -562,7 +558,7 @@ meminitbigbuf(struct membuf *buf,
     MEMPTR_T adr = (MEMPTR_T)buf;
     MEMPTR_T ptr = adr + membufblkofs();
 
-    membufinitfree(buf, nblk);
+    membufinitfree(buf);
     buf->base = ptr;
     nblk--;
     VALGRINDMKPOOL(ptr, 0, 0);

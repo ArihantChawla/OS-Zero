@@ -241,7 +241,7 @@ struct membkt {
                           << MEMBUFSLOTSHIFT)
 #define MEMBUFSLOTSHIFT  (2 * MEMBUFNBLKBITS)
 #define MEMBUFNBLKBITS   12
-#define MEMBUFNBLKMASK   ((MEMUWORD(1) << MEMBUFNBLKBITS) - 1)
+#define MEMBUFNBLKMASK   ((MEMWORD(1) << MEMBUFNBLKBITS) - 1)
 #define MEMBUFNFREEBITS  MEMBUFNBLKBITS
 #define MEMBUFNFREEMASK  (MEMBUFNBLKMASK << MEMBUFNFREESHIFT)
 #define MEMBUFNFREESHIFT MEMBUFNBLKBITS
@@ -264,7 +264,7 @@ struct membkt {
 #define memgetbuftype(buf)                                              \
     ((buf)->flg & ((MEMUWORD(1) << MEMBUFTYPEBITS) - 1))
 #define memgetbufslot(buf)                                              \
-    (((buf)->info >> MEMBUFSLOTSHIFT) & ((MEMUWORD(1) << MEMBUFSLOTBITS) - 1))
+    (((buf)->info >> MEMBUFSLOTSHIFT) & ((MEMWORD(1) << MEMBUFSLOTBITS) - 1))
 
 struct membufvals {
     MEMUWORD_T *nblk[MEMBUFTYPES];
@@ -446,7 +446,7 @@ struct memtls {
      (ptr)[(ofs) + 3] = (mask))
 
 static __inline__ void
-membufinitfree(struct membuf *buf, MEMWORD_T nblk)
+membufinitfree(struct membuf *buf)
 {
     MEMUWORD_T  bits = ~MEMUWORD(0);      // all 1-bits
     MEMUWORD_T *ptr = buf->freemap;
@@ -580,11 +580,60 @@ memgentlsadr(MEMPTR_T adr)
 }
 #endif
 
+static __inline__ MEMPTR_T
+memgenptr(MEMPTR_T ptr, MEMUWORD_T blksz, MEMUWORD_T size)
+{
+    MEMPTR_T   adr = ptr;
+    MEMADR_T   res = (MEMADR_T)ptr;
+    MEMUWORD_T lim = blksz - size;
+    MEMWORD_T  shift;
+    MEMADR_T   q;
+    MEMADR_T   r;
+    MEMADR_T   div9;
+    MEMADR_T   dec;
+
+    if (lim <= 2 * CLSIZE) {
+
+        return ptr;
+    } else if (lim >= 4 * CLSIZE) {
+#if (CLSIZE == 32)
+        shift = 4;
+#elif (CLSIZE == 64)
+        shift = 5;
+#endif
+    } else {
+#if (CLSIZE == 32)
+        shift = 3;
+#elif (CLSIZE == 64)
+        shift = 4;
+#endif
+    }
+    /* shift out some [mostly-aligned] low bits */
+    res >>= 16;
+    /* divide by 9 */
+    q = res - (res >> 3);
+    q = q + (q >> 6);
+    q = q + (q >> 12) + (q >> 24);
+    q = q >> 3;
+    r = res - q * 9;
+    div9 = q + ((r + 7) >> 4);
+    /* calculate res -= res/9 * 9 i.e. res % 9 (max 8) */
+    dec = div9 * 9;
+    res -= dec;
+    /* scale by shifting the result of the range 0..8 */
+    res <<= shift;
+    /* round down to a multiple of cacheline */
+    res &= ~(CLSIZE - 1);
+    /* add offset to original address */
+    adr += res;
+
+    return adr;
+}
+
 /* compute adr + adr % 9 (# of words in offset, aligned to word boundary) */
 static __inline__ MEMUWORD_T *
 memgenhashtabadr(MEMUWORD_T *adr)
 {
-    /* division by 9 */
     MEMADR_T res = (MEMADR_T)adr;
     MEMADR_T q;
     MEMADR_T r;
