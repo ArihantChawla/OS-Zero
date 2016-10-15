@@ -134,7 +134,7 @@ meminittls(void)
     pthread_once(&g_initonce, meminit);
     tls = mapanon(0, memtlssize());
     if (tls != MAP_FAILED) {
-        adr = (struct memtls *)memgentlsadr((MEMPTR_T)tls);
+        adr = (struct memtls *)memgentlsadr((MEMUWORD_T *)tls);
 #if (MEM_LK_TYPE == MEM_LK_PRIO)
         val = memgetprioval();
         priolkinit(&adr->priolkdata, val);
@@ -152,7 +152,6 @@ memprefork(void)
 {
     MEMWORD_T slot;
 
-//    fmtxlk(&g_mem.priolk);
     spinlk(&g_mem.initlk);
     memgetlk(&g_mem.heaplk);
     for (slot = 0 ; slot < MEMSMALLSLOTS ; slot++) {
@@ -226,7 +225,6 @@ mempostfork(void)
     }
     memrellk(&g_mem.heaplk);
     spinunlk(&g_mem.initlk);
-//    fmtxunlk(&g_mem.priolk);
 
     return;
 }
@@ -256,7 +254,7 @@ void
 meminit(void)
 {
     void       *heap;
-    long        ofs;
+    intptr_t    ofs;
     void       *ptr;
     MEMPTR_T   *adr;
     MEMUWORD_T  slot;
