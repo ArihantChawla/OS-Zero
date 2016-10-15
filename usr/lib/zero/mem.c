@@ -1503,9 +1503,7 @@ memrelblk(void *ptr, struct membuf *buf, MEMWORD_T id)
 #endif
     }
     nblk = memgetbufnblk(buf);
-    upval = (MEMADR_T)gbkt->list;
     nfree = memgetbufnfree(buf);
-    upval &= ~MEMLKBIT;
 #if (MEMDEBUG)
     crash(nfree < nblk);
 #endif
