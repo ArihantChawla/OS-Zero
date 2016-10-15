@@ -736,7 +736,7 @@ memgenhashtabadr(MEMUWORD_T *adr)
      : (MEMUWORD(PAGESIZE) + MEMUWORD(PAGESIZE) * (slot)))
 #define membufgetptr(buf, ptr)                                          \
     ((buf)->ptrtab[membufblkid(buf, ptr)])
-#define membufsetptr(buf, ptr, adr)                                     \
+#define membufsetadr(buf, ptr, adr)                                     \
     ((buf)->ptrtab[membufblkid(buf, ptr)] = (adr))
 #define membufgetpageadr(buf, ndx)                                      \
     ((buf)->ptrtab[(ndx)])
