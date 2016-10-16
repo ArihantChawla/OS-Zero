@@ -663,6 +663,12 @@ memgetblkglob(struct membuf *head, volatile struct membkt *gbkt,
             }
             tbkt->list = head;
         }
+    } else {
+#if (MEMDEBUGDEADLOCK)
+        memrelbitln(gbkt);
+#else
+        memrelbit(&gbkt->list);
+#endif
     }
 
     return ptr;
@@ -1611,10 +1617,6 @@ memrelblk(void *ptr, struct membuf *buf, MEMWORD_T id)
 #endif
         /* this will unlock the list (set the low-bit to zero) */
         m_syncwrite((m_atomic_t *)&gbkt->list, (m_atomic_t *)buf);
-#if 0
-        /* queue an unchained buffer */
-        memqueuebuf(slot, type, buf);
-#endif
     } else if (nfree == nblk) {
         /* queue or reclaim a free buffer */
         memrelbuf(slot, type, buf, bkt);
